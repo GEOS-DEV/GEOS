@@ -316,12 +316,12 @@ buildElemToNodesImpl( AllMeshes & meshes,
 }
 
 
- /**
-  * @brief Build the element to nodes mappings for all the @p meshes.
-  * @tparam INDEX_TYPE The indexing type that will be used by the toolbox that will perfomrn the parallel split.
-  * @param meshes All the meshes involved (volumic and surfacic (for fractures))l
-  * @return The mapping.
-  */
+/**
+ * @brief Build the element to nodes mappings for all the @p meshes.
+ * @tparam INDEX_TYPE The indexing type that will be used by the toolbox that will perfomrn the parallel split.
+ * @param meshes All the meshes involved (volumic and surfacic (for fractures))l
+ * @return The mapping.
+ */
 template< typename INDEX_TYPE >
 ArrayOfArrays< INDEX_TYPE, INDEX_TYPE >
 buildElemToNodes( AllMeshes & meshes )
@@ -542,8 +542,7 @@ loadMesh( Path const & filePath,
 
 AllMeshes loadAllMeshes( Path const & filePath,
                          string const & mainBlockName,
-                         array1d< string > const & faceBlockNames,
-                         bool forceRead )
+                         array1d< string > const & faceBlockNames )
 {
   int const lastRank = MpiWrapper::commSize() - 1;
   vtkSmartPointer< vtkDataSet > main = loadMesh( filePath, mainBlockName );
@@ -591,13 +590,12 @@ AllMeshes redistributeByCellGraph( AllMeshes & input,
     MpiWrapper::allGather( numElems, elemCounts, comm );
     std::partial_sum( elemCounts.begin(), elemCounts.end(), elemDist.begin() + 1 );
   }
-  pmet_idx_t const offset = elemDist.back();
 
   vtkIdType localNumFracCells = 0;
   if( isLastMpiRank ) // Let's add artificially the fracture to the last rank (for numbering reasons).
   {
     // Adding one fracture element
-    for( auto fracture: input.getFaceBlocks() )
+    for( auto const & fracture: input.getFaceBlocks() )
     {
       localNumFracCells += fracture.second->GetNumberOfCells();
     }
@@ -638,7 +636,7 @@ AllMeshes redistributeByCellGraph( AllMeshes & input,
   }();
 
   // Extract the partition information related to the fracture mesh.
-  std::map< string , array1d< pmet_idx_t > > newFracturePartitions;
+  std::map< string, array1d< pmet_idx_t > > newFracturePartitions;
   vtkIdType fracOffset = input.getMainMesh()->GetNumberOfCells();
   for( auto const & nf: input.getFaceBlocks() )
   {
@@ -661,11 +659,8 @@ AllMeshes redistributeByCellGraph( AllMeshes & input,
   vtkSmartPointer< vtkUnstructuredGrid > finalMesh = vtk::redistribute( *splitMesh, MPI_COMM_GEOSX );
   // ... and then for the fractures.
   std::map< string, vtkSmartPointer< vtkDataSet > > finalFractures;
-  for( auto const & nf: input.getFaceBlocks() )
+  for( auto const & [fractureName, fracture]: input.getFaceBlocks() )
   {
-    string const fractureName = nf.first;
-    vtkSmartPointer< vtkDataSet > fracture = nf.second;
-
     vtkSmartPointer< vtkPartitionedDataSet > const splitFracMesh = splitMeshByPartition( fracture, numRanks, newFracturePartitions[fractureName].toViewConst() );
     vtkSmartPointer< vtkUnstructuredGrid > const finalFracMesh = vtk::redistribute( *splitFracMesh, MPI_COMM_GEOSX );
     finalFractures[fractureName] = finalFracMesh;
@@ -721,7 +716,7 @@ findNeighborRanks( std::vector< vtkBoundingBox > boundingBoxes )
 
 vtkSmartPointer< vtkDataSet > manageGlobalIds( vtkSmartPointer< vtkDataSet > mesh, int useGlobalIds )
 {
-  auto hasGlobalIds = [](vtkSmartPointer< vtkDataSet > m ) -> bool
+  auto hasGlobalIds = []( vtkSmartPointer< vtkDataSet > m ) -> bool
   {
     return m->GetPointData()->GetGlobalIds() != nullptr && m->GetCellData()->GetGlobalIds() != nullptr;
   };
@@ -875,12 +870,12 @@ ensureNoEmptyRank( vtkSmartPointer< vtkDataSet > mesh,
 
 
 AllMeshes
-redistributeMesh( vtkSmartPointer< vtkDataSet > loadedMesh,
-                  std::map< string, vtkSmartPointer< vtkDataSet > > & namesToFractures,
-                  MPI_Comm const comm,
-                  PartitionMethod const method,
-                  int const partitionRefinement,
-                  int const useGlobalIds )
+redistributeMeshes( vtkSmartPointer< vtkDataSet > loadedMesh,
+                    std::map< string, vtkSmartPointer< vtkDataSet > > & namesToFractures,
+                    MPI_Comm const comm,
+                    PartitionMethod const method,
+                    int const partitionRefinement,
+                    int const useGlobalIds )
 {
   GEOS_MARK_FUNCTION;
 

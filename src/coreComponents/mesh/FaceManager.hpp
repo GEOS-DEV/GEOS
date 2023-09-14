@@ -141,6 +141,7 @@ public:
 
   /**
    * @brief Builds the face-on-domain-boundary indicator.
+   * @param[in] elemRegionManager The element region manager.
    * @note Based on the face to element region mapping that must be defined.
    * @see ObjectManagerBase::getDomainBoundaryIndicator()
    */

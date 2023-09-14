@@ -305,16 +305,16 @@ void MeshLevel::generateAdjacencyLists( arrayView1d< localIndex const > const & 
   // Add the nodes, edges, and faces connected to the volumic element.
   auto const addVolumicSupport = [&]( localIndex const er,
                                       localIndex const esr,
-                                      auto const & subRegion )
+                                      CellElementSubRegion const & subRegion )
   {
     arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemsToNodes = subRegion.nodeList();
     arrayView2d< localIndex const > const elemsToFaces = subRegion.faceList();
 
     for( localIndex const ei: elementAdjacencySet[er][esr] )
     {
-      for( localIndex const & ni: elemsToNodes[ei] )
+      for( localIndex a = 0; a < elemsToNodes.size( 1 ); ++a )  // Range-based for loop not supported for GPU layout.
       {
-        nodeAdjacencySet.insert( ni );
+        nodeAdjacencySet.insert( elemsToNodes( ei, a ) );
       }
       for( localIndex const fi: elemsToFaces[ei] )
       {
@@ -353,10 +353,24 @@ void MeshLevel::generateAdjacencyLists( arrayView1d< localIndex const > const & 
     }
   };
 
+  // Add all the nodes connected/related to the well elements.
+  auto const addWellSupport = [&]( localIndex const er,
+                                   localIndex const esr,
+                                   WellElementSubRegion const & subRegion )
+  {
+    arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemsToNodes = subRegion.nodeList();
+
+    for( localIndex const ei: elementAdjacencySet[er][esr] )
+    {
+      for( localIndex a = 0; a < elemsToNodes.size( 1 ); ++a )  // Range-based for loop not supported for GPU layout.
+      {
+        nodeAdjacencySet.insert( elemsToNodes( ei, a ) );
+      }
+    }
+  };
+
   // Add all the collocated nodes of the fracture element.
-  auto const addCollocatedFractureNodes = [&]( localIndex const er,
-                                               localIndex const esr,
-                                               FaceElementSubRegion const & subRegion )
+  auto const addCollocatedFractureNodes = [&]( FaceElementSubRegion const & subRegion )
   {
     auto const & l2g = nodeManager.localToGlobalMap();
     auto const & g2l = nodeManager.globalToLocalMap();
@@ -407,18 +421,21 @@ void MeshLevel::generateAdjacencyLists( arrayView1d< localIndex const > const & 
     {
       ElementRegionBase const & elemRegion = elemManager.getRegion( er );
 
-      elemRegion.forElementSubRegionsIndex< CellElementSubRegion,
-                                            WellElementSubRegion >( [&]( localIndex const esr,
-                                                                         auto const & subRegion )
+      elemRegion.forElementSubRegionsIndex< CellElementSubRegion >( [&]( localIndex const esr,
+                                                                         CellElementSubRegion const & subRegion )
       {
         addVolumicSupport( er, esr, subRegion );
       } );
-
       elemRegion.forElementSubRegionsIndex< FaceElementSubRegion >( [&]( localIndex const esr,
                                                                          FaceElementSubRegion const & subRegion )
       {
         addFractureSupport( er, esr, subRegion );
-        addCollocatedFractureNodes( er, esr, subRegion );
+        addCollocatedFractureNodes( subRegion );
+      } );
+      elemRegion.forElementSubRegionsIndex< WellElementSubRegion >( [&]( localIndex const esr,
+                                                                         WellElementSubRegion const & subRegion )
+      {
+        addWellSupport( er, esr, subRegion );
       } );
     }
   }

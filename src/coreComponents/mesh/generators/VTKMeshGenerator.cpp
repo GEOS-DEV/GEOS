@@ -88,7 +88,7 @@ void VTKMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockManager
     GEOS_LOG_LEVEL_RANK_0( 2, "  reading the dataset..." );
     vtk::AllMeshes allMeshes = vtk::loadAllMeshes( m_filePath, m_mainBlockName, m_faceBlockNames );
     GEOS_LOG_LEVEL_RANK_0( 2, "  redistributing mesh..." );
-    vtk::AllMeshes redistributedMeshes = vtk::redistributeMesh( allMeshes.getMainMesh(), allMeshes.getFaceBlocks(), comm, m_partitionMethod, m_partitionRefinement, m_useGlobalIds );
+    vtk::AllMeshes redistributedMeshes = vtk::redistributeMeshes( allMeshes.getMainMesh(), allMeshes.getFaceBlocks(), comm, m_partitionMethod, m_partitionRefinement, m_useGlobalIds );
     m_vtkMesh = redistributedMeshes.getMainMesh();
     m_faceBlockMeshes = redistributedMeshes.getFaceBlocks();
     GEOS_LOG_LEVEL_RANK_0( 2, "  finding neighbor ranks..." );
@@ -115,9 +115,9 @@ void VTKMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockManager
   GEOS_LOG_LEVEL_RANK_0( 2, "  building connectivity maps..." );
   cellBlockManager.buildMaps();
 
-  for( auto nameToMesh: m_faceBlockMeshes )
+  for( auto const & [name, mesh]: m_faceBlockMeshes )
   {
-    vtk::importFractureNetwork( nameToMesh.first, nameToMesh.second, m_vtkMesh, cellBlockManager );
+    vtk::importFractureNetwork( name, mesh, m_vtkMesh, cellBlockManager );
   }
 
   GEOS_LOG_LEVEL_RANK_0( 2, "  done!" );
@@ -169,8 +169,8 @@ void VTKMeshGenerator::importSurfacicFieldOnArray( string const & faceBlockName,
   // We always take the whole data, we do not select cell type by cell type.
   vtkSmartPointer< vtkDataSet > faceMesh = m_faceBlockMeshes.at( faceBlockName );
 
-  // I've noticed that there may be some issues when reading empty arrays.
-  // It looks like we may be reading above the limits of the array...
+  // I've noticed that there may be some issues when reading empty arrays (empty, not nulls).
+  // It looks like we may be reading above the limits of the array; ghosting is surely at stake here.
   if( faceMesh->GetNumberOfCells() == 0 )
   {
     return;

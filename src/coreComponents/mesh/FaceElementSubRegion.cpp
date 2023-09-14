@@ -127,14 +127,14 @@ void FaceElementSubRegion::copyFromCellBlock( FaceBlockABC const & faceBlock )
     m_2dElemToCollocatedNodesBuckets = faceBlock.get2dElemsToCollocatedNodesBuckets();
     // Checking if all the 2d elements are homogeneous.
     // We rely on the number of nodes for each element to find out.
-    std::vector< integer > sizes( num2dElements );
+    std::vector< integer > numNodesPerElement( num2dElements );
     for( int i = 0; i < num2dElements; ++i )
     {
-      sizes[i] = m_2dElemToCollocatedNodesBuckets[i].size();
+      numNodesPerElement[i] = m_2dElemToCollocatedNodesBuckets[i].size();
     }
-    std::set< integer > const s( sizes.cbegin(), sizes.cend() );
+    std::set< integer > const sizes( numNodesPerElement.cbegin(), numNodesPerElement.cend() );
 
-    if( s.size() > 1 )
+    if( sizes.size() > 1 )
     {
       // If we have found that the input face block contains 2d elements of different types,
       // we inform the used that the situation may be at risk.
@@ -142,8 +142,8 @@ void FaceElementSubRegion::copyFromCellBlock( FaceBlockABC const & faceBlock )
       GEOS_WARNING( "Heterogeneous face element sub region found and stored as homogeneous. Use at your own risk." );
     }
 
-    auto const it = std::max_element( s.cbegin(), s.cend() );
-    integer const maxSize = *it;
+    auto const it = std::max_element( sizes.cbegin(), sizes.cend() );
+    integer const maxSize = it != sizes.cend() ? *it : 0;
     m_elementType = deduce3dElemType( maxSize );
     m_numNodesPerElement = maxSize;
   }
@@ -217,15 +217,19 @@ void FaceElementSubRegion::calculateElementGeometricQuantities( NodeManager cons
 
 ElementType FaceElementSubRegion::getElementType( localIndex ei ) const
 {
-  switch( m_2dElemToCollocatedNodesBuckets[ei].size() )
+  // We try to get the element type information from the bucket.
+  // If this information does not appear to be reliable,
+  // let's fall back on the 2d elem to nodes.
+  auto const sizeFromBuckets = m_2dElemToCollocatedNodesBuckets[ei].size();
+  auto const size = sizeFromBuckets > 0 ? sizeFromBuckets : m_toNodesRelation[ei].size() / 2;
+  switch( size )
   {
     case 3:
       return ElementType::Triangle;
     case 4:
       return ElementType::Quadrilateral;
     default:
-      GEOS_ERROR( "Unsupported surfacic element type." );
-      return {};
+      return ElementType::Polygon;
   }
 }
 
@@ -353,6 +357,64 @@ localIndex FaceElementSubRegion::unpackUpDownMaps( buffer_unit_type const * & bu
   return unPackedSize;
 }
 
+
+/**
+ * @brief The two mappings @p elem2dToElems3d and @p elem2dToFaces have to be consistent
+ * in the sense that each @p face for a given index must "belong" to @p 3d @p element at the same index.
+ * @param[in] fractureName The name of the fracture for which we're checking the mapping consistency.
+ * @param[in] elem2dToElems3d A mapping.
+ * @param[inout] elem2dToFaces This mapping will be corrected if needed to match @p elem2dToElems3d.
+ */
+void fixNeighborMappingsInconsistency( string const & fractureName,
+                                       OrderedVariableToManyElementRelation const & elem2dToElems3d,
+                                       FaceElementSubRegion::FaceMapType & elem2dToFaces )
+{
+  {
+    localIndex const num2dElems = elem2dToFaces.size();
+    for( int e2d = 0; e2d < num2dElems; ++e2d )
+    {
+      auto const s = elem2dToFaces[e2d].size();
+      GEOS_ASSERT_EQ( elem2dToElems3d.m_toElementRegion[e2d].size(), s );
+      GEOS_ASSERT_EQ( elem2dToElems3d.m_toElementSubRegion[e2d].size(), s );
+      GEOS_ASSERT_EQ( elem2dToElems3d.m_toElementIndex[e2d].size(), s );
+
+      if( s != 2 )
+      {
+        continue;
+      }
+
+      localIndex const f0 = elem2dToFaces[e2d][0];
+      localIndex const er0 = elem2dToElems3d.m_toElementRegion[e2d][0];
+      localIndex const esr0 = elem2dToElems3d.m_toElementSubRegion[e2d][0];
+      localIndex const ei0 = elem2dToElems3d.m_toElementIndex[e2d][0];
+      auto const & faces0 = elem2dToElems3d.getElementRegionManager()->getRegion( er0 ).getSubRegion< CellElementSubRegion >( esr0 ).faceList()[ei0];
+
+      localIndex const f1 = elem2dToFaces[e2d][1];
+      localIndex const er1 = elem2dToElems3d.m_toElementRegion[e2d][1];
+      localIndex const esr1 = elem2dToElems3d.m_toElementSubRegion[e2d][1];
+      localIndex const ei1 = elem2dToElems3d.m_toElementIndex[e2d][1];
+      auto const & faces1 = elem2dToElems3d.getElementRegionManager()->getRegion( er1 ).getSubRegion< CellElementSubRegion >( esr1 ).faceList()[ei1];
+
+      bool const match00 = std::find( faces0.begin(), faces0.end(), f0 ) != faces0.end();
+      bool const match11 = std::find( faces1.begin(), faces1.end(), f1 ) != faces1.end();
+      bool const match01 = std::find( faces0.begin(), faces0.end(), f1 ) != faces0.end();
+      bool const match10 = std::find( faces1.begin(), faces1.end(), f0 ) != faces1.end();
+
+      bool const matchCrossed = !match00 && !match11 && match01 && match10;
+      bool const matchStraight = match00 && match11 && !match01 && !match10;
+
+      if( matchCrossed )
+      {
+        std::swap( elem2dToFaces[e2d][0], elem2dToFaces[e2d][1] );
+      }
+      else if( !matchStraight )
+      {
+        GEOS_ERROR( "Mapping neighbor inconsistency detected for fracture " << fractureName );
+      }
+    }
+  }
+}
+
 void FaceElementSubRegion::fixUpDownMaps( bool const clearIfUnmapped )
 {
   ObjectManagerBase::fixUpDownMaps( m_toNodesRelation,
@@ -366,13 +428,16 @@ void FaceElementSubRegion::fixUpDownMaps( bool const clearIfUnmapped )
   ObjectManagerBase::fixUpDownMaps( m_toFacesRelation,
                                     m_unmappedGlobalIndicesInToFaces,
                                     clearIfUnmapped );
+
+  fixNeighborMappingsInconsistency( getName(), m_2dElemToElems, m_toFacesRelation );
 }
 
 /**
  * @brief Returns a mapping that links any collocated node to the collocated node with the lowest index.
  * @param elem2dToCollocatedNodesBuckets All the collocated nodes buckets.
  * @return The computed mapping.
- * @details For each collocated node, the returned mapping will provide the lowest id among all the collocated nodes sharing the same position.
+ * @details For each collocated node, the returned mapping will provide
+ * the lowest id among all the collocated nodes sharing the same position.
  * That way, it's possible to know if two nodes are collocated of each other by checking if they share the same lowest id.
  */
 std::map< globalIndex, globalIndex > buildReferenceCollocatedNodes( ArrayOfArrays< array1d< globalIndex > > const & elem2dToCollocatedNodesBuckets )
@@ -606,12 +671,12 @@ void FaceElementSubRegion::fixSecondaryMappings( NodeManager const & nodeManager
     }
   };
 
-  // We are building the mapping that connect all the reference (collocated) nodes of any face to the elements those nodes are touching.
+  // We are building the mapping that connects all the reference (collocated) nodes of any face to the elements those nodes are touching.
   // Using this nodal information will let use reconnect the fracture 2d element to its 3d neighbor.
   std::map< std::set< globalIndex >, std::set< ElemPath > > faceRefNodesToElems;
   elemManager.forElementSubRegionsComplete< CellElementSubRegion >( [&]( localIndex const er,
                                                                          localIndex const esr,
-                                                                         ElementRegionBase const & region,
+                                                                         ElementRegionBase const & GEOS_UNUSED_PARAM( region ),
                                                                          CellElementSubRegion const & subRegion )
   {
     auto const & elemToFaces = subRegion.faceList().base();
@@ -655,7 +720,9 @@ void FaceElementSubRegion::fixSecondaryMappings( NodeManager const & nodeManager
   for( int e2d = 0; e2d < num2dElems; ++e2d )
   {
     if( m_2dElemToElems.m_toElementIndex.sizeOfArray( e2d ) >= 2 )  // All the neighbors are known.
-    { continue; }
+    {
+      continue;
+    }
 
     std::set< globalIndex > refNodes;
     if( m_toNodesRelation[e2d].size() != 0 )
@@ -722,6 +789,8 @@ void FaceElementSubRegion::fixSecondaryMappings( NodeManager const & nodeManager
   }
   GEOS_ERROR_IF( !isolatedFractureElements.empty(),
                  "Fracture " << this->getName() << " has elements {" << stringutilities::join( isolatedFractureElements, ", " ) << "} with less than two neighbors." );
+
+  fixNeighborMappingsInconsistency( getName(), m_2dElemToElems, m_toFacesRelation );
 }
 
 void FaceElementSubRegion::inheritGhostRankFromParentFace( FaceManager const & faceManager,

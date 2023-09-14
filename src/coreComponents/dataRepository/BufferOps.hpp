@@ -281,7 +281,7 @@ localIndex Unpack( buffer_unit_type const * & buffer,
 //------------------------------------------------------------------------------
 inline
 localIndex
-Unpack( buffer_unit_type const *& buffer,
+Unpack( buffer_unit_type const * & buffer,
         ArrayOfArrays< array1d< globalIndex > > & var,
         localIndex const subArrayIndex );
 
@@ -467,7 +467,7 @@ Pack( buffer_unit_type * & buffer,
 //------------------------------------------------------------------------------
 template< bool DO_PACKING >
 localIndex
-Pack( buffer_unit_type *& buffer,
+Pack( buffer_unit_type * & buffer,
       ArrayOfArraysView< array1d< globalIndex > const > const & var,
       arrayView1d< localIndex const > const & indices,
       arrayView1d< globalIndex const > const & localToGlobalMap );
@@ -508,7 +508,7 @@ Unpack( buffer_unit_type const * & buffer,
 template< typename SORTED0 >
 inline
 localIndex
-Unpack( buffer_unit_type const *& buffer,
+Unpack( buffer_unit_type const * & buffer,
         ArrayOfArrays< array1d< globalIndex > > & var,
         array1d< localIndex > & indices,
         mapBase< globalIndex, localIndex, SORTED0 > const & globalToLocalMap );

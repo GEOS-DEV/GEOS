@@ -68,15 +68,23 @@ using CellMapType = std::map< ElementType, std::unordered_map< int, std::vector<
  */
 vtkSmartPointer< vtkMultiProcessController > getController();
 
+/**
+ * @brief Gathers all the vtk meshes together.
+ */
 class AllMeshes
 {
 public:
   AllMeshes() = default;
 
+  /**
+   * @brief Builds the compound from values.
+   * @param main The main 3d mesh (the matrix).
+   * @param faceBlocks The fractures meshes.
+   */
   AllMeshes( vtkSmartPointer< vtkDataSet > const & main,
-             std::map< string, vtkSmartPointer< vtkDataSet>> const & faceBlocks )
+             std::map< string, vtkSmartPointer< vtkDataSet > > const & faceBlocks )
     : m_main( main ),
-      m_faceBlocks( faceBlocks )
+    m_faceBlocks( faceBlocks )
   { }
 
   /**
@@ -114,7 +122,10 @@ public:
   }
 
 private:
+  /// The main 3d mesh (namely the matrix).
   vtkSmartPointer< vtkDataSet > m_main;
+
+  /// The face meshes (namely the fractures).
   std::map< string, vtkSmartPointer< vtkDataSet > > m_faceBlocks;
 };
 
@@ -127,8 +138,7 @@ private:
  */
 AllMeshes loadAllMeshes( Path const & filePath,
                          string const & mainBlockName,
-                         array1d <string> const & faceBlockNames,
-                         bool forceRead = false );
+                         array1d< string > const & faceBlockNames );
 
 /**
  * @brief Compute the rank neighbor candidate list.
@@ -141,6 +151,7 @@ findNeighborRanks( std::vector< vtkBoundingBox > boundingBoxes );
 /**
  * @brief Generate global point/cell IDs and redistribute the mesh among MPI ranks.
  * @param[in] loadedMesh the mesh that was loaded on one or several MPI ranks
+ * @param[in] namesToFractures the fracture meshes
  * @param[in] comm the MPI communicator
  * @param[in] method the partitionning method
  * @param[in] partitionRefinement number of graph partitioning refinement cycles
@@ -148,12 +159,12 @@ findNeighborRanks( std::vector< vtkBoundingBox > boundingBoxes );
  * @return the vtk grid redistributed
  */
 AllMeshes
-redistributeMesh( vtkSmartPointer< vtkDataSet > loadedMesh,
-                  std::map< string, vtkSmartPointer< vtkDataSet > > & namesToFractures,
-                  MPI_Comm const comm,
-                  PartitionMethod const method,
-                  int const partitionRefinement,
-                  int const useGlobalIds );
+redistributeMeshes( vtkSmartPointer< vtkDataSet > loadedMesh,
+                    std::map< string, vtkSmartPointer< vtkDataSet > > & namesToFractures,
+                    MPI_Comm const comm,
+                    PartitionMethod const method,
+                    int const partitionRefinement,
+                    int const useGlobalIds );
 
 /**
  * @brief Collect lists of VTK cell indices organized by type and attribute value.

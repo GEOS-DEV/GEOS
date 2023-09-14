@@ -249,9 +249,20 @@ bool EmbeddedSurfaceSubRegion::addNewEmbeddedSurface( localIndex const cellIndex
       m_toNodesRelation( surfaceIndex, inode ) = elemNodes[ inode ];
     }
 
-    m_2dElemToElems.m_toElementIndex[ surfaceIndex ][0]     = cellIndex;
-    m_2dElemToElems.m_toElementSubRegion[ surfaceIndex ][0] =  subRegionIndex;
-    m_2dElemToElems.m_toElementRegion[ surfaceIndex ][0]    =  regionIndex;
+    // For now 2d elements are always only connected to a single 3d element.
+    if( m_2dElemToElems.m_toElementIndex[surfaceIndex].size() > 0 )
+    {
+      m_2dElemToElems.m_toElementIndex[surfaceIndex][0] = cellIndex;
+      m_2dElemToElems.m_toElementSubRegion[surfaceIndex][0] = subRegionIndex;
+      m_2dElemToElems.m_toElementRegion[surfaceIndex][0] = regionIndex;
+    }
+    else
+    {
+      m_2dElemToElems.m_toElementIndex.emplaceBack( surfaceIndex, cellIndex );
+      m_2dElemToElems.m_toElementSubRegion.emplaceBack( surfaceIndex, subRegionIndex );
+      m_2dElemToElems.m_toElementRegion.emplaceBack( surfaceIndex, regionIndex );
+    }
+
     m_parentPlaneName[ surfaceIndex ] = fracture->getName();
     LvArray::tensorOps::copy< 3 >( m_normalVector[ surfaceIndex ], normalVector );
     LvArray::tensorOps::copy< 3 >( m_tangentVector1[ surfaceIndex ], fracture->getWidthVector());

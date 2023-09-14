@@ -105,8 +105,7 @@ public:
    * @brief Set the node of the domain boundary object.
    * @param[in] faceManager The reference of the face manager.
    */
-  void setDomainBoundaryObjects( FaceManager const & faceManager,
-                                 ElementRegionManager const & elemRegionManager );
+  void setDomainBoundaryObjects( FaceManager const & faceManager );
 
   /**
    * @brief Set external edges.

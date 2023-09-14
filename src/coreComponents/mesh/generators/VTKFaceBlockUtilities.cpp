@@ -61,8 +61,8 @@ public:
         g2l[g] = l;
       }
 
-		m_cbe[c] = g2l;
-		m_cbf[c] = cb.getElemToFacesConstView();
+      m_cbe[c] = g2l;
+      m_cbf[c] = cb.getElemToFacesConstView();
     }
   }
 
@@ -105,10 +105,10 @@ private:
   std::map< globalIndex, localIndex > m_elementToCellBlock;
 
   /// Cell block index to a mapping from global element index to the local (to the cell block) element index.
-  std::map< localIndex , std::map< globalIndex, localIndex > > m_cbe;
+  std::map< localIndex, std::map< globalIndex, localIndex > > m_cbe;
 
   /// Cell block index to a mapping from global element index to the faces indices.
-  std::map< localIndex , arrayView2d< localIndex const > > m_cbf;
+  std::map< localIndex, arrayView2d< localIndex const > > m_cbf;
 };
 
 } // end of namespace internal
@@ -277,7 +277,7 @@ array1d< localIndex > buildFace2dToEdge( vtkIdTypeArray const * globalPtIds,
                                          CollocatedNodes const & collocatedNodes,
                                          ArrayOfArraysView< localIndex const > nodeToEdges )
 {
-  std::map< globalIndex , std::vector< localIndex > > n2e;
+  std::map< globalIndex, std::vector< localIndex > > n2e;
   for( auto i = 0; i < nodeToEdges.size(); ++i )
   {
     std::vector< localIndex > es;
@@ -541,7 +541,9 @@ ArrayOfArrays< localIndex > buildElem2dToNodes( vtkIdType num2dElements,
     for( localIndex const & faceIndex: elem2dToFaces[elem2dIndex] )
     {
       if( faceIndex < 0 )
-      { continue; }
+      {
+        continue;
+      }
       std::set< localIndex > tmp;
       for( auto j = 0; j < faceToNodes[faceIndex].size(); ++j )
       {
@@ -637,12 +639,12 @@ void importFractureNetwork( string const & faceBlockName,
   faceBlock.setLocalToGlobalMap(
     buildLocalToGlobal( vtkIdTypeArray::FastDownCast( faceMesh->GetCellData()->GetGlobalIds() ),
                         vtkIdTypeArray::FastDownCast( mesh->GetCellData()->GetGlobalIds() ) )
-  );
+    );
 
   faceBlock.set2dElemsToCollocatedNodesBuckets(
     buildCollocatedNodesBucketsOf2dElemsMap( build2dElemTo2dNodes( faceMesh ),
                                              buildCollocatedNodesMap( collocatedNodes ) )
-  );
+    );
 }
 
 } // end of namespace

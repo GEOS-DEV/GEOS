@@ -18,30 +18,13 @@
   </Solvers>
 
   <Mesh>
-<!--    <VTKMesh-->
-<!--      name="mesh1"-->
-<!--      useGlobalIds="0"-->
-<!--      file="/tmp/tmp.EtfQgEUXLg/inputFiles/tmp_buffer/cube-3x1x1.vtu"/>-->
-
-<!--    <VTKMesh-->
-<!--      name="mesh1"-->
-<!--      useGlobalIds="0"-->
-<!--      faceBlocks="{fracture}"-->
-<!--      file="/tmp/tmp.EtfQgEUXLg/inputFiles/tmp_buffer/toy.vtm"/>-->
-
-<!--    <VTKMesh-->
-<!--      surfacicFieldsToImport="{aperture}"-->
-<!--      surfacicFieldsInGEOSX="{elementAperture}"-->
-<!--      name="mesh1"-->
-<!--      useGlobalIds="0"-->
-<!--      faceBlocks="{fracture}"-->
-<!--      file="/tmp/tmp.EtfQgEUXLg/inputFiles/tmp_buffer/tShapedFracturedCube.vtm"/>-->
     <VTKMesh
+      surfacicFieldsToImport="{aperture}"
+      surfacicFieldsInGEOSX="{elementAperture}"
       name="mesh1"
       useGlobalIds="1"
       faceBlocks="{fracture}"
-      file="/tmp/tmp.EtfQgEUXLg/inputFiles/tmp_buffer/x-shape-fracture/xShapedFracturedCube.vtm"/>
-<!--      file="tShapedFracturedCube.vtm"/>-->
+      file="tShapedFracturedCube.vtm"/>
   </Mesh>
 
   <Geometry>
@@ -100,12 +83,8 @@
   <ElementRegions>
     <CellElementRegion
       name="Region"
-      cellBlocks="{ hexahedra }"
+      cellBlocks="{ hexahedra, wedges }"
       materialList="{ water, rock }"/>
-<!--    <CellElementRegion-->
-<!--      name="Region"-->
-<!--      cellBlocks="{ hexahedra, wedges }"-->
-<!--      materialList="{ water, rock }"/>-->
 
     <SurfaceElementRegion
       name="Fracture"
@@ -195,7 +174,6 @@
     <VTK
       name="vtkOutput"
       format="ascii"
-      writeGhostCells="1"
       plotFileRoot="fractureFlow_conforming_2d_vtk_input-vtk"/>
 
     <Silo

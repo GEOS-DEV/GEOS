@@ -38,7 +38,8 @@ public:
    * @brief Build a convenience wrapper around the raw vtk collocated nodes information.
    * @param faceBlockName The face block name.
    * @param faceMesh The face mesh for which the collocated nodes structure will be fed.
-   * @param isParallel Regardless if the global simulation is parallel or serial, this structure can be built on one unique rank or on multiple ranks.
+   * @param isParallel Regardless if the global simulation is parallel or serial,
+   * this structure can be built on one unique rank or on multiple ranks.
    * When built on multiple ranks for the same face mesh, some additional extra checks are performed.
    * Those checks are useless when the data is manipulated on one unique rank.
    */

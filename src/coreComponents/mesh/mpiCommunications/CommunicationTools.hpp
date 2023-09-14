@@ -140,7 +140,8 @@ private:
   static CommunicationTools * m_instance;
 
   /**
-   * @brief Exchange the boundary objects managed by the @p manager and find the objects that are equivalent in order to assign them a unique global id.
+   * @brief Exchange the boundary objects managed by the @p manager and
+   * find the objects that are equivalent in order to assign them a unique global id.
    * @param manager The instance managing the (boundary) objects.
    * @param allNeighbors The neighbors involved in the check.
    * @return For each neighbor, the global indices of boundary objects (not necessarily the matching objects).

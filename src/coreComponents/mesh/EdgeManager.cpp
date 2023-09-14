@@ -18,13 +18,9 @@
 
 #include "EdgeManager.hpp"
 
-#include "SurfaceElementRegion.hpp"
-#include "ElementRegionManager.hpp"
-
 #include "BufferOps.hpp"
 #include "NodeManager.hpp"
 #include "FaceManager.hpp"
-#include "codingUtilities/Utilities.hpp"
 #include "common/TimingMacros.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
 
@@ -116,8 +112,7 @@ void EdgeManager::setupRelatedObjectsInRelations( NodeManager const & nodeManage
   m_toFacesRelation.setRelatedObject( faceManager );
 }
 
-void EdgeManager::setDomainBoundaryObjects( FaceManager const & faceManager,
-                                            ElementRegionManager const & elemRegionManager )
+void EdgeManager::setDomainBoundaryObjects( FaceManager const & faceManager )
 {
   // get the "isDomainBoundary" field from the faceManager. This should have been set already!
   arrayView1d< integer const > const isFaceOnDomainBoundary = faceManager.getDomainBoundaryIndicator();

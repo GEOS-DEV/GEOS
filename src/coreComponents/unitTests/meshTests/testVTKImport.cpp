@@ -149,18 +149,18 @@ private:
         { -1, 1, 0 },
         { -1, 1, 1 },
         { -1, 0, 1 },
-        { 0,  0, 0 },
-        { 0,  1, 0 },
-        { 0,  1, 1 },
-        { 0,  0, 1 },
-        { 0,  0, 0 },
-        { 0,  1, 0 },
-        { 0,  1, 1 },
-        { 0,  0, 1 },
-        { 1,  0, 0 },
-        { 1,  1, 0 },
-        { 1,  1, 1 },
-        { 1,  0, 1 } };
+        { 0, 0, 0 },
+        { 0, 1, 0 },
+        { 0, 1, 1 },
+        { 0, 0, 1 },
+        { 0, 0, 0 },
+        { 0, 1, 0 },
+        { 0, 1, 1 },
+        { 0, 0, 1 },
+        { 1, 0, 0 },
+        { 1, 1, 0 },
+        { 1, 1, 1 },
+        { 1, 0, 1 } };
       vtkNew< vtkPoints > points;
       points->Allocate( numPoints );
       for( double const * pointsCoord: pointsCoords )
@@ -171,7 +171,7 @@ private:
 
       int constexpr numHexs = 2;
       vtkIdType const cubes[numHexs][8] = {
-        { 0, 1, 2,  3,  4,  5,  6,  7 },
+        { 0, 1, 2, 3, 4, 5, 6, 7 },
         { 8, 9, 10, 11, 12, 13, 14, 15 }
       };
       main->Allocate( numHexs );
@@ -241,8 +241,8 @@ private:
     multiBlock->SetNumberOfBlocks( 2 );
     multiBlock->SetBlock( 0, main );
     multiBlock->SetBlock( 1, fracture );
-    multiBlock->GetMetaData( int( 0 ) )->Set( multiBlock->NAME(), "main" );
-    multiBlock->GetMetaData( 1 )->Set( multiBlock->NAME(), "fracture" );
+    multiBlock->GetMetaData( static_cast< unsigned int >( 0 ) )->Set( multiBlock->NAME(), "main" );
+    multiBlock->GetMetaData( static_cast< unsigned int >( 1 ) )->Set( multiBlock->NAME(), "fracture" );
 
     vtkNew< vtkXMLMultiBlockDataWriter > writer;
     std::filesystem::path const vtkFile = folder / ( MULTI_BLOCK_NAME + ".vtm" );

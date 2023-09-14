@@ -113,8 +113,7 @@ void FaceManager::setDomainBoundaryObjects( ElementRegionManager const & elemReg
 
   // We want to tag as boundary faces all the faces that touch a surface element (mainly a fracture),
   // if this element only has one unique neighbor.
-  auto const f = [&]( localIndex er,
-                      SurfaceElementRegion const & region )
+  auto const f = [&]( SurfaceElementRegion const & region )
   {
     if( region.subRegionType() != SurfaceElementRegion::SurfaceSubRegionType::faceElement )
     {
@@ -126,7 +125,9 @@ void FaceManager::setDomainBoundaryObjects( ElementRegionManager const & elemReg
     for( int ei = 0; ei < elem2dToFaces.size(); ++ei )
     {
       if( elem2dToFaces.sizeOfArray( ei ) == 2 )
-      { continue; }
+      {
+        continue;
+      }
 
       for( localIndex const & face: elem2dToFaces[ei] )
       {
@@ -134,7 +135,7 @@ void FaceManager::setDomainBoundaryObjects( ElementRegionManager const & elemReg
       }
     }
   };
-  elemRegionManager.forElementRegionsComplete< SurfaceElementRegion >( f );
+  elemRegionManager.forElementRegions< SurfaceElementRegion >( f );
 }
 
 void FaceManager::setGeometricalRelations( CellBlockManagerABC const & cellBlockManager,
