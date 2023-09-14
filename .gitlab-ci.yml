@@ -179,7 +179,7 @@ lassen_gcc_8_cuda_11_build:
 
 ####
 # Pull nightlyTests repo and update files
-# Note: Arguments to update.sh needs to be kept updated with build jobs
+# Note: Arguments to update.sh need to be kept updated with build jobs
 nightly-job:
   stage: nightly
   script:
