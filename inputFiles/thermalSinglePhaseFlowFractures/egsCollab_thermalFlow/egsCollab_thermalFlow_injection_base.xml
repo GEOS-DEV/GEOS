@@ -20,7 +20,7 @@
   </ElementRegions>
 
   <Events
-     maxTime="1.57852800e9">
+     maxTime="1.576972800e10">
      <SoloEvent
      name="preFracture"
      target="/Solvers/SurfaceGenerator"/>
@@ -35,27 +35,27 @@
     <PeriodicEvent
        name="solverApplications2"
        beginTime="1e6"
-       endTime="1.5768e9"
-       maxEventDt="1.5e7"
+       endTime="1.5768e10"
+       maxEventDt="3e7"
        target="/Solvers/singleFlow"/>
 
     <PeriodicEvent
        name="solverApplications3"
        forceDt="1"
-       beginTime="1.5768e9"
-       endTime="1.576800001e9"
+       beginTime="1.5768e10"
+       endTime="1.5768000001e10"
        target="/Solvers/singleFlow"/>
 
     <PeriodicEvent
        name="solverApplications4"
-       beginTime="1.576800001e9"
-       endTime="1.57852800e9"
-       maxEventDt="2"
+       beginTime="1.5768000001e10"
+       endTime="1.576972800e9"
+       maxEventDt="4"
        target="/Solvers/singleFlow"/>   
 
      <PeriodicEvent
        name="outputs"
-       cycleFrequency="1"
+       cycleFrequency="10"
        target="/Outputs/vtkOutput"/>
    </Events>
 
