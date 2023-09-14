@@ -51,6 +51,9 @@ struct StencilTraits
   /// The array view to const type for the stencil weights
   using WeightContainerViewConstType = LvArray::typeManipulation::NestedViewTypeConst< WeightContainerType >;
 
+  /// The array view to type for the stencil weights
+  using WeightContainerViewType = LvArray::typeManipulation::NestedViewType< WeightContainerType >;
+
   /// Maximum number of points the flux
   static constexpr localIndex maxNumPointsInFlux = MAX_NUM_POINTS_IN_FLUX;
 
@@ -91,7 +94,7 @@ public:
     m_elementRegionIndices( elementRegionIndices.toViewConst() ),
     m_elementSubRegionIndices( elementSubRegionIndices.toViewConst() ),
     m_elementIndices( elementIndices.toViewConst() ),
-    m_weights( weights.toViewConst() )
+    m_weights( weights.toView() )
   {};
 
   /**
@@ -134,7 +137,7 @@ protected:
   typename TRAITS::IndexContainerViewConstType m_elementIndices;
 
   /// The container for the weights for each point in each stencil
-  typename TRAITS::WeightContainerViewConstType m_weights;
+  typename TRAITS::WeightContainerViewType m_weights;
 };
 
 

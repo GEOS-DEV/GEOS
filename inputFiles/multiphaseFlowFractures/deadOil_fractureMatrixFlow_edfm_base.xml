@@ -14,9 +14,9 @@
       targetPhaseVolFractionChangeInTimeStep="1"
       maxCompFractionChange="1"
       maxRelativePressureChange="1"
-      initialDt="1e4">
+      initialDt="1e2">
       <NonlinearSolverParameters
-        newtonTol="1.0e-6"
+        newtonTol="1.0e-5"
         newtonMaxIter="15"
         maxTimeStepCuts="2"
         lineSearchMaxCuts="2"/>
@@ -62,20 +62,20 @@
   </NumericalMethods>
 
   <Events
-    maxTime="5e5">
+    maxTime="1e5">
     <SoloEvent
       name="preFracture"
       target="/Solvers/SurfaceGenerator"/>
 
     <PeriodicEvent
       name="outputs"
-      timeFrequency="1e5"
+      timeFrequency="1e4"
       targetExactTimestep="1"
       target="/Outputs/vtkOutput"/>
 
     <PeriodicEvent
       name="restarts"
-      timeFrequency="2e5"
+      timeFrequency="0.5e5"
       targetExactTimestep="0"
       target="/Outputs/sidreRestart"/>
 

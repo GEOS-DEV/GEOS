@@ -108,7 +108,7 @@
 
     <ConstantPermeability
       name="rockPerm"
-      permeabilityComponents="{ 1.0e-15, 1.0e-15, 1.0e-15 }"/>
+      permeabilityComponents="{ 1.0e-12, 1.0e-12, 1.0e-12 }"/>
 
     <CompressibleSinglePhaseFluid
       name="water"

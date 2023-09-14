@@ -524,6 +524,14 @@ real64 SurfaceGenerator::solverStep( real64 const & time_n,
       } );
     }
 
+    string const permModelName = getConstitutiveName< PermeabilityBase >( fractureSubRegion );
+    if( !permModelName.empty() )
+    {
+      // if a permeability model exists we need to set the intial value to something meaningful
+      PermeabilityBase & permModel = getConstitutiveModel< PermeabilityBase >( fractureSubRegion, permModelName );
+      permModel.initializeState();
+    }
+
   } );
 
   return rval;
