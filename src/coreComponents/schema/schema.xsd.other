@@ -90,12 +90,12 @@
 	</xsd:simpleType>
 	<xsd:simpleType name="path">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value=".*[\[\]`$].*|[^*?&lt;&gt;\|:&quot;;,\s]*\s*" />
+			<xsd:pattern value=".*[\[\]`$].*|[^*?&lt;>\|:&quot;;,\s]*\s*" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="path_array">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value=".*[\[\]`$].*|\{\s*(([^*?&lt;&gt;\|:&quot;;,\s]+\s*,\s*)*[^*?&lt;&gt;\|:&quot;;,\s]+\s*)?\s*\}" />
+			<xsd:pattern value=".*[\[\]`$].*|\{\s*(([^*?&lt;>\|:&quot;;,\s]+\s*,\s*)*[^*?&lt;>\|:&quot;;,\s]+\s*)?\s*\}" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="real32">
@@ -449,7 +449,7 @@
 		<!--fractureStencil => (no description available)-->
 		<xsd:attribute name="fractureStencil" type="geos_SurfaceElementStencil" />
 		<!--targetRegions => List of regions to build the stencil for-->
-		<xsd:attribute name="targetRegions" type="geos_mapBase&lt;string, LvArray_Array&lt;string, 1, camp_int_seq&lt;long, 0l&gt;, int, LvArray_ChaiBuffer&gt;, std_integral_constant&lt;bool, true&gt; &gt;" />
+		<xsd:attribute name="targetRegions" type="geos_mapBase&lt;string, LvArray_Array&lt;string, 1, camp_int_seq&lt;long, 0l>, int, LvArray_ChaiBuffer>, std_integral_constant&lt;bool, true> >" />
 	</xsd:complexType>
 	<xsd:complexType name="OutputsType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -525,7 +525,7 @@
 		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
 		<xsd:attribute name="maxStableDt" type="real64" />
 		<!--meshTargets => MeshBody/Region combinations that the solver will be applied to.-->
-		<xsd:attribute name="meshTargets" type="geos_mapBase&lt;std_pair&lt;string, string &gt;, LvArray_Array&lt;string, 1, camp_int_seq&lt;long, 0l&gt;, int, LvArray_ChaiBuffer&gt;, std_integral_constant&lt;bool, true&gt; &gt;" />
+		<xsd:attribute name="meshTargets" type="geos_mapBase&lt;std_pair&lt;string, string >, LvArray_Array&lt;string, 1, camp_int_seq&lt;long, 0l>, int, LvArray_ChaiBuffer>, std_integral_constant&lt;bool, true> >" />
 		<!--pressureNp1AtReceivers => Pressure value at each receiver for each timestep-->
 		<xsd:attribute name="pressureNp1AtReceivers" type="real32_array2d" />
 		<!--rcvElem => Element containing the receivers-->
@@ -588,7 +588,7 @@
 		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
 		<xsd:attribute name="maxStableDt" type="real64" />
 		<!--meshTargets => MeshBody/Region combinations that the solver will be applied to.-->
-		<xsd:attribute name="meshTargets" type="geos_mapBase&lt;std_pair&lt;string, string &gt;, LvArray_Array&lt;string, 1, camp_int_seq&lt;long, 0l&gt;, int, LvArray_ChaiBuffer&gt;, std_integral_constant&lt;bool, true&gt; &gt;" />
+		<xsd:attribute name="meshTargets" type="geos_mapBase&lt;std_pair&lt;string, string >, LvArray_Array&lt;string, 1, camp_int_seq&lt;long, 0l>, int, LvArray_ChaiBuffer>, std_integral_constant&lt;bool, true> >" />
 		<!--pressureNp1AtReceivers => Pressure value at each receiver for each timestep-->
 		<xsd:attribute name="pressureNp1AtReceivers" type="real32_array2d" />
 		<!--receiverIsLocal => Flag that indicates whether the receiver is local to this MPI rank-->
@@ -617,7 +617,7 @@
 		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
 		<xsd:attribute name="maxStableDt" type="real64" />
 		<!--meshTargets => MeshBody/Region combinations that the solver will be applied to.-->
-		<xsd:attribute name="meshTargets" type="geos_mapBase&lt;std_pair&lt;string, string &gt;, LvArray_Array&lt;string, 1, camp_int_seq&lt;long, 0l&gt;, int, LvArray_ChaiBuffer&gt;, std_integral_constant&lt;bool, true&gt; &gt;" />
+		<xsd:attribute name="meshTargets" type="geos_mapBase&lt;std_pair&lt;string, string >, LvArray_Array&lt;string, 1, camp_int_seq&lt;long, 0l>, int, LvArray_ChaiBuffer>, std_integral_constant&lt;bool, true> >" />
 	</xsd:complexType>
 	<xsd:complexType name="CompositionalMultiphaseHybridFVMType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -628,7 +628,7 @@
 		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
 		<xsd:attribute name="maxStableDt" type="real64" />
 		<!--meshTargets => MeshBody/Region combinations that the solver will be applied to.-->
-		<xsd:attribute name="meshTargets" type="geos_mapBase&lt;std_pair&lt;string, string &gt;, LvArray_Array&lt;string, 1, camp_int_seq&lt;long, 0l&gt;, int, LvArray_ChaiBuffer&gt;, std_integral_constant&lt;bool, true&gt; &gt;" />
+		<xsd:attribute name="meshTargets" type="geos_mapBase&lt;std_pair&lt;string, string >, LvArray_Array&lt;string, 1, camp_int_seq&lt;long, 0l>, int, LvArray_ChaiBuffer>, std_integral_constant&lt;bool, true> >" />
 	</xsd:complexType>
 	<xsd:complexType name="CompositionalMultiphaseReservoirType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -641,7 +641,7 @@
 		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
 		<xsd:attribute name="maxStableDt" type="real64" />
 		<!--meshTargets => MeshBody/Region combinations that the solver will be applied to.-->
-		<xsd:attribute name="meshTargets" type="geos_mapBase&lt;std_pair&lt;string, string &gt;, LvArray_Array&lt;string, 1, camp_int_seq&lt;long, 0l&gt;, int, LvArray_ChaiBuffer&gt;, std_integral_constant&lt;bool, true&gt; &gt;" />
+		<xsd:attribute name="meshTargets" type="geos_mapBase&lt;std_pair&lt;string, string >, LvArray_Array&lt;string, 1, camp_int_seq&lt;long, 0l>, int, LvArray_ChaiBuffer>, std_integral_constant&lt;bool, true> >" />
 	</xsd:complexType>
 	<xsd:complexType name="CompositionalMultiphaseWellType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -655,7 +655,7 @@
 		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
 		<xsd:attribute name="maxStableDt" type="real64" />
 		<!--meshTargets => MeshBody/Region combinations that the solver will be applied to.-->
-		<xsd:attribute name="meshTargets" type="geos_mapBase&lt;std_pair&lt;string, string &gt;, LvArray_Array&lt;string, 1, camp_int_seq&lt;long, 0l&gt;, int, LvArray_ChaiBuffer&gt;, std_integral_constant&lt;bool, true&gt; &gt;" />
+		<xsd:attribute name="meshTargets" type="geos_mapBase&lt;std_pair&lt;string, string >, LvArray_Array&lt;string, 1, camp_int_seq&lt;long, 0l>, int, LvArray_ChaiBuffer>, std_integral_constant&lt;bool, true> >" />
 	</xsd:complexType>
 	<xsd:complexType name="WellControlsType">
 		<!--currentControl => Current well control-->
@@ -683,7 +683,7 @@
 		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
 		<xsd:attribute name="maxStableDt" type="real64" />
 		<!--meshTargets => MeshBody/Region combinations that the solver will be applied to.-->
-		<xsd:attribute name="meshTargets" type="geos_mapBase&lt;std_pair&lt;string, string &gt;, LvArray_Array&lt;string, 1, camp_int_seq&lt;long, 0l&gt;, int, LvArray_ChaiBuffer&gt;, std_integral_constant&lt;bool, true&gt; &gt;" />
+		<xsd:attribute name="meshTargets" type="geos_mapBase&lt;std_pair&lt;string, string >, LvArray_Array&lt;string, 1, camp_int_seq&lt;long, 0l>, int, LvArray_ChaiBuffer>, std_integral_constant&lt;bool, true> >" />
 		<!--rcvElem => Element containing the receivers-->
 		<xsd:attribute name="rcvElem" type="integer_array" />
 		<!--receiverIsLocal => Flag that indicates whether the receiver is local to this MPI rank-->
@@ -726,7 +726,7 @@
 		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
 		<xsd:attribute name="maxStableDt" type="real64" />
 		<!--meshTargets => MeshBody/Region combinations that the solver will be applied to.-->
-		<xsd:attribute name="meshTargets" type="geos_mapBase&lt;std_pair&lt;string, string &gt;, LvArray_Array&lt;string, 1, camp_int_seq&lt;long, 0l&gt;, int, LvArray_ChaiBuffer&gt;, std_integral_constant&lt;bool, true&gt; &gt;" />
+		<xsd:attribute name="meshTargets" type="geos_mapBase&lt;std_pair&lt;string, string >, LvArray_Array&lt;string, 1, camp_int_seq&lt;long, 0l>, int, LvArray_ChaiBuffer>, std_integral_constant&lt;bool, true> >" />
 		<!--receiverIsLocal => Flag that indicates whether the receiver is local to this MPI rank-->
 		<xsd:attribute name="receiverIsLocal" type="integer_array" />
 		<!--receiverNodeIds => Indices of the nodes (in the right order) for each receiver point-->
@@ -753,7 +753,7 @@
 		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
 		<xsd:attribute name="maxStableDt" type="real64" />
 		<!--meshTargets => MeshBody/Region combinations that the solver will be applied to.-->
-		<xsd:attribute name="meshTargets" type="geos_mapBase&lt;std_pair&lt;string, string &gt;, LvArray_Array&lt;string, 1, camp_int_seq&lt;long, 0l&gt;, int, LvArray_ChaiBuffer&gt;, std_integral_constant&lt;bool, true&gt; &gt;" />
+		<xsd:attribute name="meshTargets" type="geos_mapBase&lt;std_pair&lt;string, string >, LvArray_Array&lt;string, 1, camp_int_seq&lt;long, 0l>, int, LvArray_ChaiBuffer>, std_integral_constant&lt;bool, true> >" />
 	</xsd:complexType>
 	<xsd:complexType name="FlowProppantTransportType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -766,7 +766,7 @@
 		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
 		<xsd:attribute name="maxStableDt" type="real64" />
 		<!--meshTargets => MeshBody/Region combinations that the solver will be applied to.-->
-		<xsd:attribute name="meshTargets" type="geos_mapBase&lt;std_pair&lt;string, string &gt;, LvArray_Array&lt;string, 1, camp_int_seq&lt;long, 0l&gt;, int, LvArray_ChaiBuffer&gt;, std_integral_constant&lt;bool, true&gt; &gt;" />
+		<xsd:attribute name="meshTargets" type="geos_mapBase&lt;std_pair&lt;string, string >, LvArray_Array&lt;string, 1, camp_int_seq&lt;long, 0l>, int, LvArray_ChaiBuffer>, std_integral_constant&lt;bool, true> >" />
 	</xsd:complexType>
 	<xsd:complexType name="HydrofractureType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -779,7 +779,7 @@
 		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
 		<xsd:attribute name="maxStableDt" type="real64" />
 		<!--meshTargets => MeshBody/Region combinations that the solver will be applied to.-->
-		<xsd:attribute name="meshTargets" type="geos_mapBase&lt;std_pair&lt;string, string &gt;, LvArray_Array&lt;string, 1, camp_int_seq&lt;long, 0l&gt;, int, LvArray_ChaiBuffer&gt;, std_integral_constant&lt;bool, true&gt; &gt;" />
+		<xsd:attribute name="meshTargets" type="geos_mapBase&lt;std_pair&lt;string, string >, LvArray_Array&lt;string, 1, camp_int_seq&lt;long, 0l>, int, LvArray_ChaiBuffer>, std_integral_constant&lt;bool, true> >" />
 		<!--performStressInitialization => Flag to indicate that the solver is going to perform stress initialization-->
 		<xsd:attribute name="performStressInitialization" type="integer" />
 	</xsd:complexType>
@@ -792,7 +792,7 @@
 		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
 		<xsd:attribute name="maxStableDt" type="real64" />
 		<!--meshTargets => MeshBody/Region combinations that the solver will be applied to.-->
-		<xsd:attribute name="meshTargets" type="geos_mapBase&lt;std_pair&lt;string, string &gt;, LvArray_Array&lt;string, 1, camp_int_seq&lt;long, 0l&gt;, int, LvArray_ChaiBuffer&gt;, std_integral_constant&lt;bool, true&gt; &gt;" />
+		<xsd:attribute name="meshTargets" type="geos_mapBase&lt;std_pair&lt;string, string >, LvArray_Array&lt;string, 1, camp_int_seq&lt;long, 0l>, int, LvArray_ChaiBuffer>, std_integral_constant&lt;bool, true> >" />
 	</xsd:complexType>
 	<xsd:complexType name="LaplaceFEMType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -803,7 +803,7 @@
 		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
 		<xsd:attribute name="maxStableDt" type="real64" />
 		<!--meshTargets => MeshBody/Region combinations that the solver will be applied to.-->
-		<xsd:attribute name="meshTargets" type="geos_mapBase&lt;std_pair&lt;string, string &gt;, LvArray_Array&lt;string, 1, camp_int_seq&lt;long, 0l&gt;, int, LvArray_ChaiBuffer&gt;, std_integral_constant&lt;bool, true&gt; &gt;" />
+		<xsd:attribute name="meshTargets" type="geos_mapBase&lt;std_pair&lt;string, string >, LvArray_Array&lt;string, 1, camp_int_seq&lt;long, 0l>, int, LvArray_ChaiBuffer>, std_integral_constant&lt;bool, true> >" />
 	</xsd:complexType>
 	<xsd:complexType name="MultiphasePoromechanicsType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -816,7 +816,7 @@
 		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
 		<xsd:attribute name="maxStableDt" type="real64" />
 		<!--meshTargets => MeshBody/Region combinations that the solver will be applied to.-->
-		<xsd:attribute name="meshTargets" type="geos_mapBase&lt;std_pair&lt;string, string &gt;, LvArray_Array&lt;string, 1, camp_int_seq&lt;long, 0l&gt;, int, LvArray_ChaiBuffer&gt;, std_integral_constant&lt;bool, true&gt; &gt;" />
+		<xsd:attribute name="meshTargets" type="geos_mapBase&lt;std_pair&lt;string, string >, LvArray_Array&lt;string, 1, camp_int_seq&lt;long, 0l>, int, LvArray_ChaiBuffer>, std_integral_constant&lt;bool, true> >" />
 		<!--performStressInitialization => Flag to indicate that the solver is going to perform stress initialization-->
 		<xsd:attribute name="performStressInitialization" type="integer" />
 	</xsd:complexType>
@@ -831,7 +831,7 @@
 		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
 		<xsd:attribute name="maxStableDt" type="real64" />
 		<!--meshTargets => MeshBody/Region combinations that the solver will be applied to.-->
-		<xsd:attribute name="meshTargets" type="geos_mapBase&lt;std_pair&lt;string, string &gt;, LvArray_Array&lt;string, 1, camp_int_seq&lt;long, 0l&gt;, int, LvArray_ChaiBuffer&gt;, std_integral_constant&lt;bool, true&gt; &gt;" />
+		<xsd:attribute name="meshTargets" type="geos_mapBase&lt;std_pair&lt;string, string >, LvArray_Array&lt;string, 1, camp_int_seq&lt;long, 0l>, int, LvArray_ChaiBuffer>, std_integral_constant&lt;bool, true> >" />
 	</xsd:complexType>
 	<xsd:complexType name="PhaseFieldDamageFEMType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -842,7 +842,7 @@
 		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
 		<xsd:attribute name="maxStableDt" type="real64" />
 		<!--meshTargets => MeshBody/Region combinations that the solver will be applied to.-->
-		<xsd:attribute name="meshTargets" type="geos_mapBase&lt;std_pair&lt;string, string &gt;, LvArray_Array&lt;string, 1, camp_int_seq&lt;long, 0l&gt;, int, LvArray_ChaiBuffer&gt;, std_integral_constant&lt;bool, true&gt; &gt;" />
+		<xsd:attribute name="meshTargets" type="geos_mapBase&lt;std_pair&lt;string, string >, LvArray_Array&lt;string, 1, camp_int_seq&lt;long, 0l>, int, LvArray_ChaiBuffer>, std_integral_constant&lt;bool, true> >" />
 	</xsd:complexType>
 	<xsd:complexType name="PhaseFieldFractureType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -855,7 +855,7 @@
 		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
 		<xsd:attribute name="maxStableDt" type="real64" />
 		<!--meshTargets => MeshBody/Region combinations that the solver will be applied to.-->
-		<xsd:attribute name="meshTargets" type="geos_mapBase&lt;std_pair&lt;string, string &gt;, LvArray_Array&lt;string, 1, camp_int_seq&lt;long, 0l&gt;, int, LvArray_ChaiBuffer&gt;, std_integral_constant&lt;bool, true&gt; &gt;" />
+		<xsd:attribute name="meshTargets" type="geos_mapBase&lt;std_pair&lt;string, string >, LvArray_Array&lt;string, 1, camp_int_seq&lt;long, 0l>, int, LvArray_ChaiBuffer>, std_integral_constant&lt;bool, true> >" />
 	</xsd:complexType>
 	<xsd:complexType name="ProppantTransportType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -866,7 +866,7 @@
 		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
 		<xsd:attribute name="maxStableDt" type="real64" />
 		<!--meshTargets => MeshBody/Region combinations that the solver will be applied to.-->
-		<xsd:attribute name="meshTargets" type="geos_mapBase&lt;std_pair&lt;string, string &gt;, LvArray_Array&lt;string, 1, camp_int_seq&lt;long, 0l&gt;, int, LvArray_ChaiBuffer&gt;, std_integral_constant&lt;bool, true&gt; &gt;" />
+		<xsd:attribute name="meshTargets" type="geos_mapBase&lt;std_pair&lt;string, string >, LvArray_Array&lt;string, 1, camp_int_seq&lt;long, 0l>, int, LvArray_ChaiBuffer>, std_integral_constant&lt;bool, true> >" />
 	</xsd:complexType>
 	<xsd:complexType name="ReactiveCompositionalMultiphaseOBLType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -877,7 +877,7 @@
 		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
 		<xsd:attribute name="maxStableDt" type="real64" />
 		<!--meshTargets => MeshBody/Region combinations that the solver will be applied to.-->
-		<xsd:attribute name="meshTargets" type="geos_mapBase&lt;std_pair&lt;string, string &gt;, LvArray_Array&lt;string, 1, camp_int_seq&lt;long, 0l&gt;, int, LvArray_ChaiBuffer&gt;, std_integral_constant&lt;bool, true&gt; &gt;" />
+		<xsd:attribute name="meshTargets" type="geos_mapBase&lt;std_pair&lt;string, string >, LvArray_Array&lt;string, 1, camp_int_seq&lt;long, 0l>, int, LvArray_ChaiBuffer>, std_integral_constant&lt;bool, true> >" />
 	</xsd:complexType>
 	<xsd:complexType name="SinglePhaseFVMType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -888,7 +888,7 @@
 		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
 		<xsd:attribute name="maxStableDt" type="real64" />
 		<!--meshTargets => MeshBody/Region combinations that the solver will be applied to.-->
-		<xsd:attribute name="meshTargets" type="geos_mapBase&lt;std_pair&lt;string, string &gt;, LvArray_Array&lt;string, 1, camp_int_seq&lt;long, 0l&gt;, int, LvArray_ChaiBuffer&gt;, std_integral_constant&lt;bool, true&gt; &gt;" />
+		<xsd:attribute name="meshTargets" type="geos_mapBase&lt;std_pair&lt;string, string >, LvArray_Array&lt;string, 1, camp_int_seq&lt;long, 0l>, int, LvArray_ChaiBuffer>, std_integral_constant&lt;bool, true> >" />
 	</xsd:complexType>
 	<xsd:complexType name="SinglePhaseHybridFVMType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -899,7 +899,7 @@
 		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
 		<xsd:attribute name="maxStableDt" type="real64" />
 		<!--meshTargets => MeshBody/Region combinations that the solver will be applied to.-->
-		<xsd:attribute name="meshTargets" type="geos_mapBase&lt;std_pair&lt;string, string &gt;, LvArray_Array&lt;string, 1, camp_int_seq&lt;long, 0l&gt;, int, LvArray_ChaiBuffer&gt;, std_integral_constant&lt;bool, true&gt; &gt;" />
+		<xsd:attribute name="meshTargets" type="geos_mapBase&lt;std_pair&lt;string, string >, LvArray_Array&lt;string, 1, camp_int_seq&lt;long, 0l>, int, LvArray_ChaiBuffer>, std_integral_constant&lt;bool, true> >" />
 	</xsd:complexType>
 	<xsd:complexType name="SinglePhasePoromechanicsType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -912,7 +912,7 @@
 		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
 		<xsd:attribute name="maxStableDt" type="real64" />
 		<!--meshTargets => MeshBody/Region combinations that the solver will be applied to.-->
-		<xsd:attribute name="meshTargets" type="geos_mapBase&lt;std_pair&lt;string, string &gt;, LvArray_Array&lt;string, 1, camp_int_seq&lt;long, 0l&gt;, int, LvArray_ChaiBuffer&gt;, std_integral_constant&lt;bool, true&gt; &gt;" />
+		<xsd:attribute name="meshTargets" type="geos_mapBase&lt;std_pair&lt;string, string >, LvArray_Array&lt;string, 1, camp_int_seq&lt;long, 0l>, int, LvArray_ChaiBuffer>, std_integral_constant&lt;bool, true> >" />
 		<!--performStressInitialization => Flag to indicate that the solver is going to perform stress initialization-->
 		<xsd:attribute name="performStressInitialization" type="integer" />
 	</xsd:complexType>
@@ -927,7 +927,7 @@
 		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
 		<xsd:attribute name="maxStableDt" type="real64" />
 		<!--meshTargets => MeshBody/Region combinations that the solver will be applied to.-->
-		<xsd:attribute name="meshTargets" type="geos_mapBase&lt;std_pair&lt;string, string &gt;, LvArray_Array&lt;string, 1, camp_int_seq&lt;long, 0l&gt;, int, LvArray_ChaiBuffer&gt;, std_integral_constant&lt;bool, true&gt; &gt;" />
+		<xsd:attribute name="meshTargets" type="geos_mapBase&lt;std_pair&lt;string, string >, LvArray_Array&lt;string, 1, camp_int_seq&lt;long, 0l>, int, LvArray_ChaiBuffer>, std_integral_constant&lt;bool, true> >" />
 	</xsd:complexType>
 	<xsd:complexType name="SinglePhasePoromechanicsEmbeddedFracturesType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -940,7 +940,7 @@
 		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
 		<xsd:attribute name="maxStableDt" type="real64" />
 		<!--meshTargets => MeshBody/Region combinations that the solver will be applied to.-->
-		<xsd:attribute name="meshTargets" type="geos_mapBase&lt;std_pair&lt;string, string &gt;, LvArray_Array&lt;string, 1, camp_int_seq&lt;long, 0l&gt;, int, LvArray_ChaiBuffer&gt;, std_integral_constant&lt;bool, true&gt; &gt;" />
+		<xsd:attribute name="meshTargets" type="geos_mapBase&lt;std_pair&lt;string, string >, LvArray_Array&lt;string, 1, camp_int_seq&lt;long, 0l>, int, LvArray_ChaiBuffer>, std_integral_constant&lt;bool, true> >" />
 		<!--performStressInitialization => Flag to indicate that the solver is going to perform stress initialization-->
 		<xsd:attribute name="performStressInitialization" type="integer" />
 	</xsd:complexType>
@@ -955,7 +955,7 @@
 		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
 		<xsd:attribute name="maxStableDt" type="real64" />
 		<!--meshTargets => MeshBody/Region combinations that the solver will be applied to.-->
-		<xsd:attribute name="meshTargets" type="geos_mapBase&lt;std_pair&lt;string, string &gt;, LvArray_Array&lt;string, 1, camp_int_seq&lt;long, 0l&gt;, int, LvArray_ChaiBuffer&gt;, std_integral_constant&lt;bool, true&gt; &gt;" />
+		<xsd:attribute name="meshTargets" type="geos_mapBase&lt;std_pair&lt;string, string >, LvArray_Array&lt;string, 1, camp_int_seq&lt;long, 0l>, int, LvArray_ChaiBuffer>, std_integral_constant&lt;bool, true> >" />
 	</xsd:complexType>
 	<xsd:complexType name="SinglePhaseProppantFVMType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -966,7 +966,7 @@
 		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
 		<xsd:attribute name="maxStableDt" type="real64" />
 		<!--meshTargets => MeshBody/Region combinations that the solver will be applied to.-->
-		<xsd:attribute name="meshTargets" type="geos_mapBase&lt;std_pair&lt;string, string &gt;, LvArray_Array&lt;string, 1, camp_int_seq&lt;long, 0l&gt;, int, LvArray_ChaiBuffer&gt;, std_integral_constant&lt;bool, true&gt; &gt;" />
+		<xsd:attribute name="meshTargets" type="geos_mapBase&lt;std_pair&lt;string, string >, LvArray_Array&lt;string, 1, camp_int_seq&lt;long, 0l>, int, LvArray_ChaiBuffer>, std_integral_constant&lt;bool, true> >" />
 	</xsd:complexType>
 	<xsd:complexType name="SinglePhaseReservoirType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -979,7 +979,7 @@
 		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
 		<xsd:attribute name="maxStableDt" type="real64" />
 		<!--meshTargets => MeshBody/Region combinations that the solver will be applied to.-->
-		<xsd:attribute name="meshTargets" type="geos_mapBase&lt;std_pair&lt;string, string &gt;, LvArray_Array&lt;string, 1, camp_int_seq&lt;long, 0l&gt;, int, LvArray_ChaiBuffer&gt;, std_integral_constant&lt;bool, true&gt; &gt;" />
+		<xsd:attribute name="meshTargets" type="geos_mapBase&lt;std_pair&lt;string, string >, LvArray_Array&lt;string, 1, camp_int_seq&lt;long, 0l>, int, LvArray_ChaiBuffer>, std_integral_constant&lt;bool, true> >" />
 	</xsd:complexType>
 	<xsd:complexType name="SinglePhaseWellType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -993,7 +993,7 @@
 		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
 		<xsd:attribute name="maxStableDt" type="real64" />
 		<!--meshTargets => MeshBody/Region combinations that the solver will be applied to.-->
-		<xsd:attribute name="meshTargets" type="geos_mapBase&lt;std_pair&lt;string, string &gt;, LvArray_Array&lt;string, 1, camp_int_seq&lt;long, 0l&gt;, int, LvArray_ChaiBuffer&gt;, std_integral_constant&lt;bool, true&gt; &gt;" />
+		<xsd:attribute name="meshTargets" type="geos_mapBase&lt;std_pair&lt;string, string >, LvArray_Array&lt;string, 1, camp_int_seq&lt;long, 0l>, int, LvArray_ChaiBuffer>, std_integral_constant&lt;bool, true> >" />
 	</xsd:complexType>
 	<xsd:complexType name="SolidMechanicsEmbeddedFracturesType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -1006,7 +1006,7 @@
 		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
 		<xsd:attribute name="maxStableDt" type="real64" />
 		<!--meshTargets => MeshBody/Region combinations that the solver will be applied to.-->
-		<xsd:attribute name="meshTargets" type="geos_mapBase&lt;std_pair&lt;string, string &gt;, LvArray_Array&lt;string, 1, camp_int_seq&lt;long, 0l&gt;, int, LvArray_ChaiBuffer&gt;, std_integral_constant&lt;bool, true&gt; &gt;" />
+		<xsd:attribute name="meshTargets" type="geos_mapBase&lt;std_pair&lt;string, string >, LvArray_Array&lt;string, 1, camp_int_seq&lt;long, 0l>, int, LvArray_ChaiBuffer>, std_integral_constant&lt;bool, true> >" />
 	</xsd:complexType>
 	<xsd:complexType name="SolidMechanicsLagrangianSSLEType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -1019,7 +1019,7 @@
 		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
 		<xsd:attribute name="maxStableDt" type="real64" />
 		<!--meshTargets => MeshBody/Region combinations that the solver will be applied to.-->
-		<xsd:attribute name="meshTargets" type="geos_mapBase&lt;std_pair&lt;string, string &gt;, LvArray_Array&lt;string, 1, camp_int_seq&lt;long, 0l&gt;, int, LvArray_ChaiBuffer&gt;, std_integral_constant&lt;bool, true&gt; &gt;" />
+		<xsd:attribute name="meshTargets" type="geos_mapBase&lt;std_pair&lt;string, string >, LvArray_Array&lt;string, 1, camp_int_seq&lt;long, 0l>, int, LvArray_ChaiBuffer>, std_integral_constant&lt;bool, true> >" />
 	</xsd:complexType>
 	<xsd:complexType name="SolidMechanics_LagrangianFEMType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -1032,7 +1032,7 @@
 		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
 		<xsd:attribute name="maxStableDt" type="real64" />
 		<!--meshTargets => MeshBody/Region combinations that the solver will be applied to.-->
-		<xsd:attribute name="meshTargets" type="geos_mapBase&lt;std_pair&lt;string, string &gt;, LvArray_Array&lt;string, 1, camp_int_seq&lt;long, 0l&gt;, int, LvArray_ChaiBuffer&gt;, std_integral_constant&lt;bool, true&gt; &gt;" />
+		<xsd:attribute name="meshTargets" type="geos_mapBase&lt;std_pair&lt;string, string >, LvArray_Array&lt;string, 1, camp_int_seq&lt;long, 0l>, int, LvArray_ChaiBuffer>, std_integral_constant&lt;bool, true> >" />
 	</xsd:complexType>
 	<xsd:complexType name="SurfaceGeneratorType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -1047,15 +1047,15 @@
 		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
 		<xsd:attribute name="maxStableDt" type="real64" />
 		<!--meshTargets => MeshBody/Region combinations that the solver will be applied to.-->
-		<xsd:attribute name="meshTargets" type="geos_mapBase&lt;std_pair&lt;string, string &gt;, LvArray_Array&lt;string, 1, camp_int_seq&lt;long, 0l&gt;, int, LvArray_ChaiBuffer&gt;, std_integral_constant&lt;bool, true&gt; &gt;" />
+		<xsd:attribute name="meshTargets" type="geos_mapBase&lt;std_pair&lt;string, string >, LvArray_Array&lt;string, 1, camp_int_seq&lt;long, 0l>, int, LvArray_ChaiBuffer>, std_integral_constant&lt;bool, true> >" />
 		<!--tipEdges => Set containing all the tip edges-->
-		<xsd:attribute name="tipEdges" type="LvArray_SortedArray&lt;int, int, LvArray_ChaiBuffer&gt;" />
+		<xsd:attribute name="tipEdges" type="LvArray_SortedArray&lt;int, int, LvArray_ChaiBuffer>" />
 		<!--tipFaces => Set containing all the tip faces-->
-		<xsd:attribute name="tipFaces" type="LvArray_SortedArray&lt;int, int, LvArray_ChaiBuffer&gt;" />
+		<xsd:attribute name="tipFaces" type="LvArray_SortedArray&lt;int, int, LvArray_ChaiBuffer>" />
 		<!--tipNodes => Set containing all the nodes at the fracture tip-->
-		<xsd:attribute name="tipNodes" type="LvArray_SortedArray&lt;int, int, LvArray_ChaiBuffer&gt;" />
+		<xsd:attribute name="tipNodes" type="LvArray_SortedArray&lt;int, int, LvArray_ChaiBuffer>" />
 		<!--trailingFaces => Set containing all the trailing faces-->
-		<xsd:attribute name="trailingFaces" type="LvArray_SortedArray&lt;int, int, LvArray_ChaiBuffer&gt;" />
+		<xsd:attribute name="trailingFaces" type="LvArray_SortedArray&lt;int, int, LvArray_ChaiBuffer>" />
 	</xsd:complexType>
 	<xsd:complexType name="TasksType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -1115,7 +1115,7 @@
 			<xsd:element name="MeshBodies" type="MeshBodiesType" />
 		</xsd:choice>
 		<!--Neighbors => (no description available)-->
-		<xsd:attribute name="Neighbors" type="std_vector&lt;geos_NeighborCommunicator, std_allocator&lt;geos_NeighborCommunicator&gt; &gt;" />
+		<xsd:attribute name="Neighbors" type="std_vector&lt;geos_NeighborCommunicator, std_allocator&lt;geos_NeighborCommunicator> >" />
 		<!--partitionManager => (no description available)-->
 		<xsd:attribute name="partitionManager" type="geos_PartitionBase" />
 	</xsd:complexType>
@@ -1219,7 +1219,7 @@
 		<!--PVTO => (no description available)-->
 		<xsd:attribute name="PVTO" type="geos_constitutive_PVTOData" />
 		<!--dPhaseCompFraction => Derivative of phase component fraction with respect to pressure, temperature, and global component fractions-->
-		<xsd:attribute name="dPhaseCompFraction" type="LvArray_Array&lt;double, 5, camp_int_seq&lt;long, 0l, 1l, 2l, 3l, 4l&gt;, int, LvArray_ChaiBuffer&gt;" />
+		<xsd:attribute name="dPhaseCompFraction" type="LvArray_Array&lt;double, 5, camp_int_seq&lt;long, 0l, 1l, 2l, 3l, 4l>, int, LvArray_ChaiBuffer>" />
 		<!--dPhaseDensity => Derivative of phase density with respect to pressure, temperature, and global component fractions-->
 		<xsd:attribute name="dPhaseDensity" type="real64_array4d" />
 		<!--dPhaseEnthalpy => Derivative of phase enthalpy with respect to pressure, temperature, and global component fractions-->
@@ -1235,7 +1235,7 @@
 		<!--dTotalDensity => Derivative of total density with respect to pressure, temperature, and global component fractions-->
 		<xsd:attribute name="dTotalDensity" type="real64_array3d" />
 		<!--formationVolFactorTableWrappers => (no description available)-->
-		<xsd:attribute name="formationVolFactorTableWrappers" type="LvArray_Array&lt;geos_TableFunction_KernelWrapper, 1, camp_int_seq&lt;long, 0l&gt;, int, LvArray_ChaiBuffer&gt;" />
+		<xsd:attribute name="formationVolFactorTableWrappers" type="LvArray_Array&lt;geos_TableFunction_KernelWrapper, 1, camp_int_seq&lt;long, 0l>, int, LvArray_ChaiBuffer>" />
 		<!--hydrocarbonPhaseOrder => (no description available)-->
 		<xsd:attribute name="hydrocarbonPhaseOrder" type="integer_array" />
 		<!--phaseCompFraction => Phase component fraction-->
@@ -1271,7 +1271,7 @@
 		<!--useMass => (no description available)-->
 		<xsd:attribute name="useMass" type="integer" />
 		<!--viscosityTableWrappers => (no description available)-->
-		<xsd:attribute name="viscosityTableWrappers" type="LvArray_Array&lt;geos_TableFunction_KernelWrapper, 1, camp_int_seq&lt;long, 0l&gt;, int, LvArray_ChaiBuffer&gt;" />
+		<xsd:attribute name="viscosityTableWrappers" type="LvArray_Array&lt;geos_TableFunction_KernelWrapper, 1, camp_int_seq&lt;long, 0l>, int, LvArray_ChaiBuffer>" />
 	</xsd:complexType>
 	<xsd:complexType name="BrooksCoreyBakerRelativePermeabilityType">
 		<!--dPhaseRelPerm_dPhaseVolFraction => Derivative of phase relative permeability with respect to phase volume fraction-->
@@ -1319,7 +1319,7 @@
 	</xsd:complexType>
 	<xsd:complexType name="CO2BrineEzrokhiFluidType">
 		<!--dPhaseCompFraction => Derivative of phase component fraction with respect to pressure, temperature, and global component fractions-->
-		<xsd:attribute name="dPhaseCompFraction" type="LvArray_Array&lt;double, 5, camp_int_seq&lt;long, 0l, 1l, 2l, 3l, 4l&gt;, int, LvArray_ChaiBuffer&gt;" />
+		<xsd:attribute name="dPhaseCompFraction" type="LvArray_Array&lt;double, 5, camp_int_seq&lt;long, 0l, 1l, 2l, 3l, 4l>, int, LvArray_ChaiBuffer>" />
 		<!--dPhaseDensity => Derivative of phase density with respect to pressure, temperature, and global component fractions-->
 		<xsd:attribute name="dPhaseDensity" type="real64_array4d" />
 		<!--dPhaseEnthalpy => Derivative of phase enthalpy with respect to pressure, temperature, and global component fractions-->
@@ -1365,7 +1365,7 @@
 	</xsd:complexType>
 	<xsd:complexType name="CO2BrineEzrokhiThermalFluidType">
 		<!--dPhaseCompFraction => Derivative of phase component fraction with respect to pressure, temperature, and global component fractions-->
-		<xsd:attribute name="dPhaseCompFraction" type="LvArray_Array&lt;double, 5, camp_int_seq&lt;long, 0l, 1l, 2l, 3l, 4l&gt;, int, LvArray_ChaiBuffer&gt;" />
+		<xsd:attribute name="dPhaseCompFraction" type="LvArray_Array&lt;double, 5, camp_int_seq&lt;long, 0l, 1l, 2l, 3l, 4l>, int, LvArray_ChaiBuffer>" />
 		<!--dPhaseDensity => Derivative of phase density with respect to pressure, temperature, and global component fractions-->
 		<xsd:attribute name="dPhaseDensity" type="real64_array4d" />
 		<!--dPhaseEnthalpy => Derivative of phase enthalpy with respect to pressure, temperature, and global component fractions-->
@@ -1411,7 +1411,7 @@
 	</xsd:complexType>
 	<xsd:complexType name="CO2BrinePhillipsFluidType">
 		<!--dPhaseCompFraction => Derivative of phase component fraction with respect to pressure, temperature, and global component fractions-->
-		<xsd:attribute name="dPhaseCompFraction" type="LvArray_Array&lt;double, 5, camp_int_seq&lt;long, 0l, 1l, 2l, 3l, 4l&gt;, int, LvArray_ChaiBuffer&gt;" />
+		<xsd:attribute name="dPhaseCompFraction" type="LvArray_Array&lt;double, 5, camp_int_seq&lt;long, 0l, 1l, 2l, 3l, 4l>, int, LvArray_ChaiBuffer>" />
 		<!--dPhaseDensity => Derivative of phase density with respect to pressure, temperature, and global component fractions-->
 		<xsd:attribute name="dPhaseDensity" type="real64_array4d" />
 		<!--dPhaseEnthalpy => Derivative of phase enthalpy with respect to pressure, temperature, and global component fractions-->
@@ -1457,7 +1457,7 @@
 	</xsd:complexType>
 	<xsd:complexType name="CO2BrinePhillipsThermalFluidType">
 		<!--dPhaseCompFraction => Derivative of phase component fraction with respect to pressure, temperature, and global component fractions-->
-		<xsd:attribute name="dPhaseCompFraction" type="LvArray_Array&lt;double, 5, camp_int_seq&lt;long, 0l, 1l, 2l, 3l, 4l&gt;, int, LvArray_ChaiBuffer&gt;" />
+		<xsd:attribute name="dPhaseCompFraction" type="LvArray_Array&lt;double, 5, camp_int_seq&lt;long, 0l, 1l, 2l, 3l, 4l>, int, LvArray_ChaiBuffer>" />
 		<!--dPhaseDensity => Derivative of phase density with respect to pressure, temperature, and global component fractions-->
 		<xsd:attribute name="dPhaseDensity" type="real64_array4d" />
 		<!--dPhaseEnthalpy => Derivative of phase enthalpy with respect to pressure, temperature, and global component fractions-->
@@ -1511,7 +1511,7 @@
 	</xsd:complexType>
 	<xsd:complexType name="CompositionalMultiphaseFluidType">
 		<!--dPhaseCompFraction => Derivative of phase component fraction with respect to pressure, temperature, and global component fractions-->
-		<xsd:attribute name="dPhaseCompFraction" type="LvArray_Array&lt;double, 5, camp_int_seq&lt;long, 0l, 1l, 2l, 3l, 4l&gt;, int, LvArray_ChaiBuffer&gt;" />
+		<xsd:attribute name="dPhaseCompFraction" type="LvArray_Array&lt;double, 5, camp_int_seq&lt;long, 0l, 1l, 2l, 3l, 4l>, int, LvArray_ChaiBuffer>" />
 		<!--dPhaseDensity => Derivative of phase density with respect to pressure, temperature, and global component fractions-->
 		<xsd:attribute name="dPhaseDensity" type="real64_array4d" />
 		<!--dPhaseEnthalpy => Derivative of phase enthalpy with respect to pressure, temperature, and global component fractions-->
@@ -1663,7 +1663,7 @@
 	</xsd:complexType>
 	<xsd:complexType name="DeadOilFluidType">
 		<!--dPhaseCompFraction => Derivative of phase component fraction with respect to pressure, temperature, and global component fractions-->
-		<xsd:attribute name="dPhaseCompFraction" type="LvArray_Array&lt;double, 5, camp_int_seq&lt;long, 0l, 1l, 2l, 3l, 4l&gt;, int, LvArray_ChaiBuffer&gt;" />
+		<xsd:attribute name="dPhaseCompFraction" type="LvArray_Array&lt;double, 5, camp_int_seq&lt;long, 0l, 1l, 2l, 3l, 4l>, int, LvArray_ChaiBuffer>" />
 		<!--dPhaseDensity => Derivative of phase density with respect to pressure, temperature, and global component fractions-->
 		<xsd:attribute name="dPhaseDensity" type="real64_array4d" />
 		<!--dPhaseEnthalpy => Derivative of phase enthalpy with respect to pressure, temperature, and global component fractions-->
@@ -1679,7 +1679,7 @@
 		<!--dTotalDensity => Derivative of total density with respect to pressure, temperature, and global component fractions-->
 		<xsd:attribute name="dTotalDensity" type="real64_array3d" />
 		<!--formationVolFactorTableWrappers => (no description available)-->
-		<xsd:attribute name="formationVolFactorTableWrappers" type="LvArray_Array&lt;geos_TableFunction_KernelWrapper, 1, camp_int_seq&lt;long, 0l&gt;, int, LvArray_ChaiBuffer&gt;" />
+		<xsd:attribute name="formationVolFactorTableWrappers" type="LvArray_Array&lt;geos_TableFunction_KernelWrapper, 1, camp_int_seq&lt;long, 0l>, int, LvArray_ChaiBuffer>" />
 		<!--hydrocarbonPhaseOrder => (no description available)-->
 		<xsd:attribute name="hydrocarbonPhaseOrder" type="integer_array" />
 		<!--phaseCompFraction => Phase component fraction-->
@@ -1715,7 +1715,7 @@
 		<!--useMass => (no description available)-->
 		<xsd:attribute name="useMass" type="integer" />
 		<!--viscosityTableWrappers => (no description available)-->
-		<xsd:attribute name="viscosityTableWrappers" type="LvArray_Array&lt;geos_TableFunction_KernelWrapper, 1, camp_int_seq&lt;long, 0l&gt;, int, LvArray_ChaiBuffer&gt;" />
+		<xsd:attribute name="viscosityTableWrappers" type="LvArray_Array&lt;geos_TableFunction_KernelWrapper, 1, camp_int_seq&lt;long, 0l>, int, LvArray_ChaiBuffer>" />
 	</xsd:complexType>
 	<xsd:complexType name="DelftEggType">
 		<!--bulkModulus => Elastic Bulk Modulus Field-->
@@ -1892,7 +1892,7 @@
 		<!--jFuncMultiplier => Multiplier for the Leverett J-function-->
 		<xsd:attribute name="jFuncMultiplier" type="real64_array2d" />
 		<!--jFunctionWrappers => (no description available)-->
-		<xsd:attribute name="jFunctionWrappers" type="LvArray_Array&lt;geos_TableFunction_KernelWrapper, 1, camp_int_seq&lt;long, 0l&gt;, int, LvArray_ChaiBuffer&gt;" />
+		<xsd:attribute name="jFunctionWrappers" type="LvArray_Array&lt;geos_TableFunction_KernelWrapper, 1, camp_int_seq&lt;long, 0l>, int, LvArray_ChaiBuffer>" />
 		<!--phaseCapPressure => Phase capillary pressure-->
 		<xsd:attribute name="phaseCapPressure" type="real64_array3d" />
 		<!--phaseOrder => (no description available)-->
@@ -2077,7 +2077,7 @@
 	<xsd:complexType name="ProppantSolidProppantPermeabilityType" />
 	<xsd:complexType name="ReactiveBrineType">
 		<!--dPhaseCompFraction => Derivative of phase component fraction with respect to pressure, temperature, and global component fractions-->
-		<xsd:attribute name="dPhaseCompFraction" type="LvArray_Array&lt;double, 5, camp_int_seq&lt;long, 0l, 1l, 2l, 3l, 4l&gt;, int, LvArray_ChaiBuffer&gt;" />
+		<xsd:attribute name="dPhaseCompFraction" type="LvArray_Array&lt;double, 5, camp_int_seq&lt;long, 0l, 1l, 2l, 3l, 4l>, int, LvArray_ChaiBuffer>" />
 		<!--dPhaseDensity => Derivative of phase density with respect to pressure, temperature, and global component fractions-->
 		<xsd:attribute name="dPhaseDensity" type="real64_array4d" />
 		<!--dPhaseEnthalpy => Derivative of phase enthalpy with respect to pressure, temperature, and global component fractions-->
@@ -2131,7 +2131,7 @@
 	</xsd:complexType>
 	<xsd:complexType name="ReactiveBrineThermalType">
 		<!--dPhaseCompFraction => Derivative of phase component fraction with respect to pressure, temperature, and global component fractions-->
-		<xsd:attribute name="dPhaseCompFraction" type="LvArray_Array&lt;double, 5, camp_int_seq&lt;long, 0l, 1l, 2l, 3l, 4l&gt;, int, LvArray_ChaiBuffer&gt;" />
+		<xsd:attribute name="dPhaseCompFraction" type="LvArray_Array&lt;double, 5, camp_int_seq&lt;long, 0l, 1l, 2l, 3l, 4l>, int, LvArray_ChaiBuffer>" />
 		<!--dPhaseDensity => Derivative of phase density with respect to pressure, temperature, and global component fractions-->
 		<xsd:attribute name="dPhaseDensity" type="real64_array4d" />
 		<!--dPhaseEnthalpy => Derivative of phase enthalpy with respect to pressure, temperature, and global component fractions-->
@@ -2205,7 +2205,7 @@
 	</xsd:complexType>
 	<xsd:complexType name="TableCapillaryPressureType">
 		<!--capPresWrappers => (no description available)-->
-		<xsd:attribute name="capPresWrappers" type="LvArray_Array&lt;geos_TableFunction_KernelWrapper, 1, camp_int_seq&lt;long, 0l&gt;, int, LvArray_ChaiBuffer&gt;" />
+		<xsd:attribute name="capPresWrappers" type="LvArray_Array&lt;geos_TableFunction_KernelWrapper, 1, camp_int_seq&lt;long, 0l>, int, LvArray_ChaiBuffer>" />
 		<!--dPhaseCapPressure_dPhaseVolFraction => Derivative of phase capillary pressure with respect to phase volume fraction-->
 		<xsd:attribute name="dPhaseCapPressure_dPhaseVolFraction" type="real64_array4d" />
 		<!--phaseCapPressure => Phase capillary pressure-->
@@ -2231,7 +2231,7 @@
 		<!--phaseTypes => (no description available)-->
 		<xsd:attribute name="phaseTypes" type="integer_array" />
 		<!--relPermWrappers => (no description available)-->
-		<xsd:attribute name="relPermWrappers" type="LvArray_Array&lt;geos_TableFunction_KernelWrapper, 1, camp_int_seq&lt;long, 0l&gt;, int, LvArray_ChaiBuffer&gt;" />
+		<xsd:attribute name="relPermWrappers" type="LvArray_Array&lt;geos_TableFunction_KernelWrapper, 1, camp_int_seq&lt;long, 0l>, int, LvArray_ChaiBuffer>" />
 	</xsd:complexType>
 	<xsd:complexType name="TableRelativePermeabilityHysteresisType">
 		<!--dPhaseRelPerm_dPhaseVolFraction => Derivative of phase relative permeability with respect to phase volume fraction-->
@@ -2243,7 +2243,7 @@
 		<!--drainagePhaseRelPermEndPoint => (no description available)-->
 		<xsd:attribute name="drainagePhaseRelPermEndPoint" type="real64_array" />
 		<!--drainageRelPermWrappers => (no description available)-->
-		<xsd:attribute name="drainageRelPermWrappers" type="LvArray_Array&lt;geos_TableFunction_KernelWrapper, 1, camp_int_seq&lt;long, 0l&gt;, int, LvArray_ChaiBuffer&gt;" />
+		<xsd:attribute name="drainageRelPermWrappers" type="LvArray_Array&lt;geos_TableFunction_KernelWrapper, 1, camp_int_seq&lt;long, 0l>, int, LvArray_ChaiBuffer>" />
 		<!--imbibitionPhaseMaxVolumeFraction => (no description available)-->
 		<xsd:attribute name="imbibitionPhaseMaxVolumeFraction" type="real64_array" />
 		<!--imbibitionPhaseMinVolumeFraction => (no description available)-->
@@ -2251,7 +2251,7 @@
 		<!--imbibitionPhaseRelPermEndPoint => (no description available)-->
 		<xsd:attribute name="imbibitionPhaseRelPermEndPoint" type="real64_array" />
 		<!--imbibitionRelPermWrappers => (no description available)-->
-		<xsd:attribute name="imbibitionRelPermWrappers" type="LvArray_Array&lt;geos_TableFunction_KernelWrapper, 1, camp_int_seq&lt;long, 0l&gt;, int, LvArray_ChaiBuffer&gt;" />
+		<xsd:attribute name="imbibitionRelPermWrappers" type="LvArray_Array&lt;geos_TableFunction_KernelWrapper, 1, camp_int_seq&lt;long, 0l>, int, LvArray_ChaiBuffer>" />
 		<!--landParameter => (no description available)-->
 		<xsd:attribute name="landParameter" type="real64_array" />
 		<!--phaseHasHysteresis => (no description available)-->
@@ -2455,7 +2455,7 @@
 		<!--ghostRank => (no description available)-->
 		<xsd:attribute name="ghostRank" type="integer_array" />
 		<!--globalToLocalMap => (no description available)-->
-		<xsd:attribute name="globalToLocalMap" type="geos_mapBase&lt;long long, int, std_integral_constant&lt;bool, false&gt; &gt;" />
+		<xsd:attribute name="globalToLocalMap" type="geos_mapBase&lt;long long, int, std_integral_constant&lt;bool, false> >" />
 		<!--isExternal => (no description available)-->
 		<xsd:attribute name="isExternal" type="integer_array" />
 		<!--localToGlobalMap => Array that contains a map from localIndex to globalIndex.-->
@@ -2465,7 +2465,7 @@
 	<xsd:complexType name="neighborDataType" />
 	<xsd:complexType name="setsType">
 		<!--externalSet => (no description available)-->
-		<xsd:attribute name="externalSet" type="LvArray_SortedArray&lt;int, int, LvArray_ChaiBuffer&gt;" />
+		<xsd:attribute name="externalSet" type="LvArray_SortedArray&lt;int, int, LvArray_ChaiBuffer>" />
 	</xsd:complexType>
 	<xsd:complexType name="edgeManagerType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -2475,17 +2475,17 @@
 		<!--domainBoundaryIndicator => (no description available)-->
 		<xsd:attribute name="domainBoundaryIndicator" type="integer_array" />
 		<!--faceList => (no description available)-->
-		<xsd:attribute name="faceList" type="geos_InterObjectRelation&lt;LvArray_ArrayOfSets&lt;int, int, LvArray_ChaiBuffer&gt; &gt;" />
+		<xsd:attribute name="faceList" type="geos_InterObjectRelation&lt;LvArray_ArrayOfSets&lt;int, int, LvArray_ChaiBuffer> >" />
 		<!--ghostRank => (no description available)-->
 		<xsd:attribute name="ghostRank" type="integer_array" />
 		<!--globalToLocalMap => (no description available)-->
-		<xsd:attribute name="globalToLocalMap" type="geos_mapBase&lt;long long, int, std_integral_constant&lt;bool, false&gt; &gt;" />
+		<xsd:attribute name="globalToLocalMap" type="geos_mapBase&lt;long long, int, std_integral_constant&lt;bool, false> >" />
 		<!--isExternal => (no description available)-->
 		<xsd:attribute name="isExternal" type="integer_array" />
 		<!--localToGlobalMap => Array that contains a map from localIndex to globalIndex.-->
 		<xsd:attribute name="localToGlobalMap" type="globalIndex_array" />
 		<!--nodeList => (no description available)-->
-		<xsd:attribute name="nodeList" type="geos_InterObjectRelation&lt;LvArray_Array&lt;int, 2, camp_int_seq&lt;long, 0l, 1l&gt;, int, LvArray_ChaiBuffer&gt; &gt;" />
+		<xsd:attribute name="nodeList" type="geos_InterObjectRelation&lt;LvArray_Array&lt;int, 2, camp_int_seq&lt;long, 0l, 1l>, int, LvArray_ChaiBuffer> >" />
 	</xsd:complexType>
 	<xsd:complexType name="embeddedSurfacesEdgeManagerType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -2495,17 +2495,17 @@
 		<!--domainBoundaryIndicator => (no description available)-->
 		<xsd:attribute name="domainBoundaryIndicator" type="integer_array" />
 		<!--faceList => (no description available)-->
-		<xsd:attribute name="faceList" type="geos_InterObjectRelation&lt;LvArray_ArrayOfSets&lt;int, int, LvArray_ChaiBuffer&gt; &gt;" />
+		<xsd:attribute name="faceList" type="geos_InterObjectRelation&lt;LvArray_ArrayOfSets&lt;int, int, LvArray_ChaiBuffer> >" />
 		<!--ghostRank => (no description available)-->
 		<xsd:attribute name="ghostRank" type="integer_array" />
 		<!--globalToLocalMap => (no description available)-->
-		<xsd:attribute name="globalToLocalMap" type="geos_mapBase&lt;long long, int, std_integral_constant&lt;bool, false&gt; &gt;" />
+		<xsd:attribute name="globalToLocalMap" type="geos_mapBase&lt;long long, int, std_integral_constant&lt;bool, false> >" />
 		<!--isExternal => (no description available)-->
 		<xsd:attribute name="isExternal" type="integer_array" />
 		<!--localToGlobalMap => Array that contains a map from localIndex to globalIndex.-->
 		<xsd:attribute name="localToGlobalMap" type="globalIndex_array" />
 		<!--nodeList => (no description available)-->
-		<xsd:attribute name="nodeList" type="geos_InterObjectRelation&lt;LvArray_Array&lt;int, 2, camp_int_seq&lt;long, 0l, 1l&gt;, int, LvArray_ChaiBuffer&gt; &gt;" />
+		<xsd:attribute name="nodeList" type="geos_InterObjectRelation&lt;LvArray_Array&lt;int, 2, camp_int_seq&lt;long, 0l, 1l>, int, LvArray_ChaiBuffer> >" />
 	</xsd:complexType>
 	<xsd:complexType name="embeddedSurfacesNodeManagerType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -2515,17 +2515,17 @@
 		<!--domainBoundaryIndicator => (no description available)-->
 		<xsd:attribute name="domainBoundaryIndicator" type="integer_array" />
 		<!--edgeList => (no description available)-->
-		<xsd:attribute name="edgeList" type="geos_InterObjectRelation&lt;LvArray_ArrayOfSets&lt;int, int, LvArray_ChaiBuffer&gt; &gt;" />
+		<xsd:attribute name="edgeList" type="geos_InterObjectRelation&lt;LvArray_ArrayOfSets&lt;int, int, LvArray_ChaiBuffer> >" />
 		<!--elemList => (no description available)-->
-		<xsd:attribute name="elemList" type="LvArray_ArrayOfArrays&lt;int, int, LvArray_ChaiBuffer&gt;" />
+		<xsd:attribute name="elemList" type="LvArray_ArrayOfArrays&lt;int, int, LvArray_ChaiBuffer>" />
 		<!--elemRegionList => (no description available)-->
-		<xsd:attribute name="elemRegionList" type="LvArray_ArrayOfArrays&lt;int, int, LvArray_ChaiBuffer&gt;" />
+		<xsd:attribute name="elemRegionList" type="LvArray_ArrayOfArrays&lt;int, int, LvArray_ChaiBuffer>" />
 		<!--elemSubRegionList => (no description available)-->
-		<xsd:attribute name="elemSubRegionList" type="LvArray_ArrayOfArrays&lt;int, int, LvArray_ChaiBuffer&gt;" />
+		<xsd:attribute name="elemSubRegionList" type="LvArray_ArrayOfArrays&lt;int, int, LvArray_ChaiBuffer>" />
 		<!--ghostRank => (no description available)-->
 		<xsd:attribute name="ghostRank" type="integer_array" />
 		<!--globalToLocalMap => (no description available)-->
-		<xsd:attribute name="globalToLocalMap" type="geos_mapBase&lt;long long, int, std_integral_constant&lt;bool, false&gt; &gt;" />
+		<xsd:attribute name="globalToLocalMap" type="geos_mapBase&lt;long long, int, std_integral_constant&lt;bool, false> >" />
 		<!--isExternal => (no description available)-->
 		<xsd:attribute name="isExternal" type="integer_array" />
 		<!--localToGlobalMap => Array that contains a map from localIndex to globalIndex.-->
@@ -2545,7 +2545,7 @@
 		<!--domainBoundaryIndicator => (no description available)-->
 		<xsd:attribute name="domainBoundaryIndicator" type="integer_array" />
 		<!--edgeList => (no description available)-->
-		<xsd:attribute name="edgeList" type="geos_InterObjectRelation&lt;LvArray_ArrayOfArrays&lt;int, int, LvArray_ChaiBuffer&gt; &gt;" />
+		<xsd:attribute name="edgeList" type="geos_InterObjectRelation&lt;LvArray_ArrayOfArrays&lt;int, int, LvArray_ChaiBuffer> >" />
 		<!--elemList => (no description available)-->
 		<xsd:attribute name="elemList" type="integer_array2d" />
 		<!--elemRegionList => (no description available)-->
@@ -2563,7 +2563,7 @@
 		<!--ghostRank => (no description available)-->
 		<xsd:attribute name="ghostRank" type="integer_array" />
 		<!--globalToLocalMap => (no description available)-->
-		<xsd:attribute name="globalToLocalMap" type="geos_mapBase&lt;long long, int, std_integral_constant&lt;bool, false&gt; &gt;" />
+		<xsd:attribute name="globalToLocalMap" type="geos_mapBase&lt;long long, int, std_integral_constant&lt;bool, false> >" />
 		<!--isExternal => (no description available)-->
 		<xsd:attribute name="isExternal" type="integer_array" />
 		<!--localToGlobalMap => Array that contains a map from localIndex to globalIndex.-->
@@ -2571,7 +2571,7 @@
 		<!--mimGravityCoefficient => Mimetic gravity coefficient => CompositionalMultiphaseHybridFVM-->
 		<xsd:attribute name="mimGravityCoefficient" type="real64_array" />
 		<!--nodeList => (no description available)-->
-		<xsd:attribute name="nodeList" type="geos_InterObjectRelation&lt;LvArray_ArrayOfArrays&lt;int, int, LvArray_ChaiBuffer&gt; &gt;" />
+		<xsd:attribute name="nodeList" type="geos_InterObjectRelation&lt;LvArray_ArrayOfArrays&lt;int, int, LvArray_ChaiBuffer> >" />
 	</xsd:complexType>
 	<xsd:complexType name="nodeManagerType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -2583,19 +2583,19 @@
 		<!--domainBoundaryIndicator => (no description available)-->
 		<xsd:attribute name="domainBoundaryIndicator" type="integer_array" />
 		<!--edgeList => (no description available)-->
-		<xsd:attribute name="edgeList" type="geos_InterObjectRelation&lt;LvArray_ArrayOfSets&lt;int, int, LvArray_ChaiBuffer&gt; &gt;" />
+		<xsd:attribute name="edgeList" type="geos_InterObjectRelation&lt;LvArray_ArrayOfSets&lt;int, int, LvArray_ChaiBuffer> >" />
 		<!--elemList => (no description available)-->
-		<xsd:attribute name="elemList" type="LvArray_ArrayOfArrays&lt;int, int, LvArray_ChaiBuffer&gt;" />
+		<xsd:attribute name="elemList" type="LvArray_ArrayOfArrays&lt;int, int, LvArray_ChaiBuffer>" />
 		<!--elemRegionList => (no description available)-->
-		<xsd:attribute name="elemRegionList" type="LvArray_ArrayOfArrays&lt;int, int, LvArray_ChaiBuffer&gt;" />
+		<xsd:attribute name="elemRegionList" type="LvArray_ArrayOfArrays&lt;int, int, LvArray_ChaiBuffer>" />
 		<!--elemSubRegionList => (no description available)-->
-		<xsd:attribute name="elemSubRegionList" type="LvArray_ArrayOfArrays&lt;int, int, LvArray_ChaiBuffer&gt;" />
+		<xsd:attribute name="elemSubRegionList" type="LvArray_ArrayOfArrays&lt;int, int, LvArray_ChaiBuffer>" />
 		<!--faceList => (no description available)-->
-		<xsd:attribute name="faceList" type="geos_InterObjectRelation&lt;LvArray_ArrayOfSets&lt;int, int, LvArray_ChaiBuffer&gt; &gt;" />
+		<xsd:attribute name="faceList" type="geos_InterObjectRelation&lt;LvArray_ArrayOfSets&lt;int, int, LvArray_ChaiBuffer> >" />
 		<!--ghostRank => (no description available)-->
 		<xsd:attribute name="ghostRank" type="integer_array" />
 		<!--globalToLocalMap => (no description available)-->
-		<xsd:attribute name="globalToLocalMap" type="geos_mapBase&lt;long long, int, std_integral_constant&lt;bool, false&gt; &gt;" />
+		<xsd:attribute name="globalToLocalMap" type="geos_mapBase&lt;long long, int, std_integral_constant&lt;bool, false> >" />
 		<!--isExternal => (no description available)-->
 		<xsd:attribute name="isExternal" type="integer_array" />
 		<!--localToGlobalMap => Array that contains a map from localIndex to globalIndex.-->
@@ -2614,7 +2614,7 @@
 		<!--ghostRank => (no description available)-->
 		<xsd:attribute name="ghostRank" type="integer_array" />
 		<!--globalToLocalMap => (no description available)-->
-		<xsd:attribute name="globalToLocalMap" type="geos_mapBase&lt;long long, int, std_integral_constant&lt;bool, false&gt; &gt;" />
+		<xsd:attribute name="globalToLocalMap" type="geos_mapBase&lt;long long, int, std_integral_constant&lt;bool, false> >" />
 		<!--isExternal => (no description available)-->
 		<xsd:attribute name="isExternal" type="integer_array" />
 		<!--localToGlobalMap => Array that contains a map from localIndex to globalIndex.-->
@@ -2636,7 +2636,7 @@
 		<!--ghostRank => (no description available)-->
 		<xsd:attribute name="ghostRank" type="integer_array" />
 		<!--globalToLocalMap => (no description available)-->
-		<xsd:attribute name="globalToLocalMap" type="geos_mapBase&lt;long long, int, std_integral_constant&lt;bool, false&gt; &gt;" />
+		<xsd:attribute name="globalToLocalMap" type="geos_mapBase&lt;long long, int, std_integral_constant&lt;bool, false> >" />
 		<!--isExternal => (no description available)-->
 		<xsd:attribute name="isExternal" type="integer_array" />
 		<!--localToGlobalMap => Array that contains a map from localIndex to globalIndex.-->
@@ -2653,7 +2653,7 @@
 		<!--ghostRank => (no description available)-->
 		<xsd:attribute name="ghostRank" type="integer_array" />
 		<!--globalToLocalMap => (no description available)-->
-		<xsd:attribute name="globalToLocalMap" type="geos_mapBase&lt;long long, int, std_integral_constant&lt;bool, false&gt; &gt;" />
+		<xsd:attribute name="globalToLocalMap" type="geos_mapBase&lt;long long, int, std_integral_constant&lt;bool, false> >" />
 		<!--isExternal => (no description available)-->
 		<xsd:attribute name="isExternal" type="integer_array" />
 		<!--localToGlobalMap => Array that contains a map from localIndex to globalIndex.-->
@@ -2679,7 +2679,7 @@
 		<!--ghostRank => (no description available)-->
 		<xsd:attribute name="ghostRank" type="integer_array" />
 		<!--globalToLocalMap => (no description available)-->
-		<xsd:attribute name="globalToLocalMap" type="geos_mapBase&lt;long long, int, std_integral_constant&lt;bool, false&gt; &gt;" />
+		<xsd:attribute name="globalToLocalMap" type="geos_mapBase&lt;long long, int, std_integral_constant&lt;bool, false> >" />
 		<!--isExternal => (no description available)-->
 		<xsd:attribute name="isExternal" type="integer_array" />
 		<!--localToGlobalMap => Array that contains a map from localIndex to globalIndex.-->
@@ -2689,7 +2689,7 @@
 		<!--nextWellElementIndexGlobal => (no description available)-->
 		<xsd:attribute name="nextWellElementIndexGlobal" type="integer_array" />
 		<!--nodeList => (no description available)-->
-		<xsd:attribute name="nodeList" type="geos_InterObjectRelation&lt;LvArray_Array&lt;int, 2, camp_int_seq&lt;long, 0l, 1l&gt;, int, LvArray_ChaiBuffer&gt; &gt;" />
+		<xsd:attribute name="nodeList" type="geos_InterObjectRelation&lt;LvArray_Array&lt;int, 2, camp_int_seq&lt;long, 0l, 1l>, int, LvArray_ChaiBuffer> >" />
 		<!--numEdgesPerElement => (no description available)-->
 		<xsd:attribute name="numEdgesPerElement" type="integer" />
 		<!--numFacesPerElement => (no description available)-->
@@ -2716,7 +2716,7 @@
 		<!--ghostRank => (no description available)-->
 		<xsd:attribute name="ghostRank" type="integer_array" />
 		<!--globalToLocalMap => (no description available)-->
-		<xsd:attribute name="globalToLocalMap" type="geos_mapBase&lt;long long, int, std_integral_constant&lt;bool, false&gt; &gt;" />
+		<xsd:attribute name="globalToLocalMap" type="geos_mapBase&lt;long long, int, std_integral_constant&lt;bool, false> >" />
 		<!--isExternal => (no description available)-->
 		<xsd:attribute name="isExternal" type="integer_array" />
 		<!--localToGlobalMap => Array that contains a map from localIndex to globalIndex.-->
