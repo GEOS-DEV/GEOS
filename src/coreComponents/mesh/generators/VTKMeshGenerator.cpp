@@ -169,8 +169,8 @@ void VTKMeshGenerator::importSurfacicFieldOnArray( string const & faceBlockName,
   // We always take the whole data, we do not select cell type by cell type.
   vtkSmartPointer< vtkDataSet > faceMesh = m_faceBlockMeshes.at( faceBlockName );
 
-  // I've noticed that there may be some issues when reading empty arrays.
-  // It looks like we may be reading above the limits of the array...
+  // I've noticed that there may be some issues when reading empty arrays (empty, not nulls).
+  // It looks like we may be reading above the limits of the array; ghosting is surely at stake here.
   if( faceMesh->GetNumberOfCells() == 0 )
   {
     return;
