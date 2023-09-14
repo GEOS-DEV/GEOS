@@ -38,7 +38,42 @@ struct Dense3x3Tensor
       dst[1] = data[0][1] * src[0] + data[1][1] * src[1] + data[2][1] * src[2];
       dst[2] = data[0][2] * src[0] + data[1][2] * src[1] + data[2][2] * src[2];
   };
+
+  real64 inPlaceInvert()
+  {
+    real64 const temp[3][3] = 
+    { { data[1][1]*data[2][2] - data[1][2]*data[2][1], data[0][2]*data[2][1] - data[0][1]*data[2][2], data[0][1]*data[1][2] - data[0][2]*data[1][1] },
+      { data[1][2]*data[2][0] - data[1][0]*data[2][2], data[0][0]*data[2][2] - data[0][2]*data[2][0], data[0][2]*data[1][0] - data[0][0]*data[1][2] },
+      { data[1][0]*data[2][1] - data[1][1]*data[2][0], data[0][1]*data[2][0] - data[0][0]*data[2][1], data[0][0]*data[1][1] - data[0][1]*data[1][0] } };   
+
+    real64 const det = data[0][0] * temp[0][0] + data[1][0] * temp[0][1] + data[2][0] * temp[0][2];
+    real64 const invDet = 1.0 / det;
+
+    for( int i=0; i<3; ++i )
+    {
+      for( int j=0; j<3; ++j )
+      {
+        data[i][j] = temp[i][j] * invDet;
+      }
+    }
+    return det;
+  };
   
+  void add_XiYj( real64 const (&X)[3],
+                 real64 const (&Y)[3] )
+  {
+    data[0][0] += X[0] * Y[0]; 
+    data[0][1] += X[0] * Y[1]; 
+    data[0][2] += X[0] * Y[2]; 
+    data[1][0] += X[1] * Y[0]; 
+    data[1][1] += X[1] * Y[1]; 
+    data[1][2] += X[1] * Y[2]; 
+    data[2][0] += X[2] * Y[0]; 
+    data[2][1] += X[2] * Y[1]; 
+    data[2][2] += X[2] * Y[2]; 
+  };
+
+
 };
 
 // namespace Polynomials
@@ -173,15 +208,7 @@ public:
 
           int vertexInd = 4 * k + 2 * j + i;
 
-          J.data[0][0] += m_nodeCoords[vertexInd][0] * gradPhi[0]; 
-          J.data[0][1] += m_nodeCoords[vertexInd][0] * gradPhi[1]; 
-          J.data[0][2] += m_nodeCoords[vertexInd][0] * gradPhi[2]; 
-          J.data[1][0] += m_nodeCoords[vertexInd][1] * gradPhi[0]; 
-          J.data[1][1] += m_nodeCoords[vertexInd][1] * gradPhi[1]; 
-          J.data[1][2] += m_nodeCoords[vertexInd][1] * gradPhi[2]; 
-          J.data[2][0] += m_nodeCoords[vertexInd][2] * gradPhi[0]; 
-          J.data[2][1] += m_nodeCoords[vertexInd][2] * gradPhi[1]; 
-          J.data[2][2] += m_nodeCoords[vertexInd][2] * gradPhi[2]; 
+          J.add_XiYj( m_nodeCoords[vertexInd], gradPhi );
         }
       }
     }
@@ -291,15 +318,7 @@ public:
 
         int vertexInd = linearMap( a, b );
 
-        J.data[0][0] += m_nodeCoords[vertexInd][0] * gradPhi[0]; 
-        J.data[0][1] += m_nodeCoords[vertexInd][0] * gradPhi[1]; 
-        J.data[0][2] += m_nodeCoords[vertexInd][0] * gradPhi[2]; 
-        J.data[1][0] += m_nodeCoords[vertexInd][1] * gradPhi[0]; 
-        J.data[1][1] += m_nodeCoords[vertexInd][1] * gradPhi[1]; 
-        J.data[1][2] += m_nodeCoords[vertexInd][1] * gradPhi[2]; 
-        J.data[2][0] += m_nodeCoords[vertexInd][2] * gradPhi[0]; 
-        J.data[2][1] += m_nodeCoords[vertexInd][2] * gradPhi[1]; 
-        J.data[2][2] += m_nodeCoords[vertexInd][2] * gradPhi[2]; 
+        J.add_XiYj( m_nodeCoords[vertexInd], gradPhi );
       }
     }
 
@@ -423,39 +442,26 @@ public:
     JacobianType J;
     
     // Compute Jacobian
-    real64 const psi0[2] = { 0.5 - 0.5*refPointCoords[0],
-                             0.5 + 0.5*refPointCoords[0] };
-    real64 const psi1[2] = { 0.5 - 0.5*refPointCoords[1],
-                             0.5 + 0.5*refPointCoords[1] };
-    real64 const psi2 = 0.5 - 0.5*refPointCoords[2];
-    constexpr real64 dpsi[2] = { -0.5, 0.5 };
+    real64 dPhiLin[2] = { -1.0, 1.0 };
 
-    for( int a=0; a<2; ++a )
+    for( int j = 0; j < 2; ++j )
     {
-      for( int b=0; b<2; ++b )
+      for( int i = 0; i < 2; ++i )
       {
-        real64 gradPhi[3]{ dpsi[a] * psi1[b] * psi2,
-                           psi0[a] * dpsi[b] * psi2,
-                           psi0[a] * psi1[b] * dpsi[0] };
+        real64 gradPhi[3]{ 0.125 * (       dPhiLin[i]                     ) * ( 1.0 + dPhiLin[j] * refPointCoords[1] ) * ( 1.0 - refPointCoords[2] ),
+                           0.125 * ( 1.0 + dPhiLin[i] * refPointCoords[0] ) * (       dPhiLin[j]                     ) * ( 1.0 - refPointCoords[2] ),
+                           - 0.125 * ( 1.0 + dPhiLin[i] * refPointCoords[0] ) * ( 1.0 + dPhiLin[j] * refPointCoords[1] ) };
 
-        int vertexInd = linearMap( a, b );
+        int vertexInd = linearMap( i, j );
 
-        J.data[0][0] += m_nodeCoords[vertexInd][0] * gradPhi[0]; 
-        J.data[0][1] += m_nodeCoords[vertexInd][0] * gradPhi[1]; 
-        J.data[0][2] += m_nodeCoords[vertexInd][0] * gradPhi[2]; 
-        J.data[1][0] += m_nodeCoords[vertexInd][1] * gradPhi[0]; 
-        J.data[1][1] += m_nodeCoords[vertexInd][1] * gradPhi[1]; 
-        J.data[1][2] += m_nodeCoords[vertexInd][1] * gradPhi[2]; 
-        J.data[2][0] += m_nodeCoords[vertexInd][2] * gradPhi[0]; 
-        J.data[2][1] += m_nodeCoords[vertexInd][2] * gradPhi[1]; 
-        J.data[2][2] += m_nodeCoords[vertexInd][2] * gradPhi[2]; 
+        J.add_XiYj( m_nodeCoords[vertexInd], gradPhi );
       }
     }
     
     // Contribution from the basis function paired with the apex nodes
-    J.data[0][2] += m_nodeCoords[4][0] * dpsi[1]; 
-    J.data[1][2] += m_nodeCoords[4][1] * dpsi[1]; 
-    J.data[2][2] += m_nodeCoords[4][2] * dpsi[1]; 
+    J.data[0][2] += m_nodeCoords[4][0] * 0.5;
+    J.data[1][2] += m_nodeCoords[4][1] * 0.5;
+    J.data[2][2] += m_nodeCoords[4][2] * 0.5;
 
     return J;
   }
