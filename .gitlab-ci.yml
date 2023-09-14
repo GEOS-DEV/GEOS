@@ -39,8 +39,7 @@ stages:
     # CONFIGURE
     - echo "~~~~~~~~~~ START - configure ~~~~~~~~~~~"
     - config_code=0
-    #- python scripts/config-build.py -hc host-configs/LLNL/${HOST_CONFIG} -bt Release -bp build -DENABLE_DOXYGEN=OFF 2>&1 | tee ${SYSTEM_COMPILER}/${SYSTEM_COMPILER}_configure.log || config_code=$?
-    - echo Testing 2>&1 | tee ${SYSTEM_COMPILER}/${SYSTEM_COMPILER}_configure.log || config_code=$?
+    - python scripts/config-build.py -hc host-configs/LLNL/${HOST_CONFIG} -bt Release -bp build -DENABLE_DOXYGEN=OFF 2>&1 | tee ${SYSTEM_COMPILER}/${SYSTEM_COMPILER}_configure.log || config_code=$?
     - mv ${SYSTEM_COMPILER}/${SYSTEM_COMPILER}_configure.log ${SYSTEM_COMPILER}/${SYSTEM_COMPILER}_configure_$([ $config_code == 0 ] && echo "SUCCESS" || echo "FAILURE").log
     - echo "~~~~~~~~~~ END - configure ~~~~~~~~~~~~~"
 
@@ -98,9 +97,9 @@ stages:
   artifacts:
     when: always
     paths:
-      - quartz/
-      - lassen/
-      - tioga/
+      - quartz*/
+      - lassen*/
+      - tioga/*
   # Allow job to always fail, so nightly-job in next stage will run
   allow_failure: true
 
@@ -111,7 +110,6 @@ stages:
   variables:
     ALLOC_COMMAND: "salloc -N1 -ppdebug"
     INTEGRATED_ALLOC_COMMAND: "salloc -N1 -n 36 -ppdebug"
-    SYSTEM_COMPILER: "quartz"
   tags:
     - shell
     - quartz
