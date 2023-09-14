@@ -130,6 +130,72 @@ struct Helper< TetrahedronCell,
   }
 };
 
+template<>
+struct Helper< PyramidCell,
+               Rule::Gauss,
+               5 >
+{
+  constexpr static real64 quadratureCrossSectionCoord = 0.584237394672177; 
+  constexpr static real64 quadratureLongitudinalCoordNeg = -2.0 / 3.0; 
+  constexpr static real64 quadratureLongitudinalCoordDelta = 16.0 / 15.0; 
+
+  constexpr static real64 weight = 81.0 / 100.0;
+  constexpr static real64 weightDelta  = 125.0 / 27.0 - weight;
+
+  GEOS_HOST_DEVICE
+  inline
+  constexpr static real64 parentCoords0( int const a )
+  {
+    return -1.0 + 2.0 * ( a & 1 ) + 0.25 * ( a & 4 );
+  }
+
+  GEOS_HOST_DEVICE
+  inline
+  constexpr static real64 parentCoords1( int const a )
+  {
+    return -1.0 + ( a & 2 ) + 0.25 * ( a & 4 );
+  }
+
+  GEOS_HOST_DEVICE
+  inline
+  constexpr static real64 parentCoords2( int const a )
+  {
+    return -1.0 + 0.5 * ( a & 4 );
+  } 
+
+  GEOS_HOST_DEVICE
+  inline
+  constexpr static real64 quadratureParentCoords0( localIndex const q )
+  {
+    return parentCoords0( q ) * quadratureCrossSectionCoord;
+  }
+
+  GEOS_HOST_DEVICE
+  inline
+  constexpr static real64 quadratureParentCoords1( localIndex const q )
+  {
+    return parentCoords1( q ) * quadratureCrossSectionCoord;
+  }
+
+  GEOS_HOST_DEVICE
+  inline
+  constexpr static real64 quadratureParentCoords2( localIndex const q )
+  {
+    return quadratureLongitudinalCoordNeg + 0.5 * ( 1 + parentCoords2( q ) ) * quadratureLongitudinalCoordDelta;
+  }
+
+  GEOS_HOST_DEVICE
+  static Data getData( int q )
+  {
+    Data data;
+    data.wq = weight + 0.5 * ( 1 + parentCoords2( q ) ) * weightDelta;
+    data.Xiq[0] = quadratureParentCoords0( q );
+    data.Xiq[1] = quadratureParentCoords1( q );
+    data.Xiq[2] = quadratureParentCoords2( q );
+    return data;
+  }
+};
+
 // getQuadratureData< CELL_TYPE, INTEGRATION_RULE, INTEGRATION_ORDER >
 
 template< typename CELL_TYPE,

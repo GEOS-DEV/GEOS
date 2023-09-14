@@ -158,6 +158,44 @@ struct Helper< TetrahedronCell,
   }
 };
 
+template<>
+struct Helper< PyramidCell,
+               BasisFunction::Lagrange,
+               5 >
+{
+  GEOS_HOST_DEVICE
+  static Gradient getParentGradient( int const BasisIndex,
+                               real64 const (&Xiq)[3] )
+  { 
+    constexpr real64 dPhiLin[2] = { -1.0, 1.0 };
+
+    int const a = BasisIndex & 1;
+    int const b = ( BasisIndex & 2 ) >> 1;
+    int const c = ( BasisIndex & 4 ) >> 2;
+
+    Gradient gradient;
+    gradient.data[0] = (1 - c ) * 0.125 * (       dPhiLin[a]          ) * ( 1.0 + dPhiLin[b] * Xiq[1] ) * ( 1.0 + dPhiLin[c] * Xiq[2] );
+    gradient.data[1] = (1 - c ) * 0.125 * ( 1.0 + dPhiLin[a] * Xiq[0] ) * (       dPhiLin[b]          ) * ( 1.0 + dPhiLin[c] * Xiq[2] );
+    gradient.data[2] = (1 - c ) * 0.125 * ( 1.0 + dPhiLin[a] * Xiq[0] ) * ( 1.0 + dPhiLin[b] * Xiq[1] ) * (       dPhiLin[c]          ) + c * 0.5;
+    return gradient;
+  }
+
+  GEOS_HOST_DEVICE
+  static void getGradient( real64 const (&Xiq)[3],
+                           typename PyramidCell::JacobianType const & Jinv,
+                           real64 (&dNdX)[5][3] )
+  {
+    for( int i = 0; i < 5; ++i )
+    {
+      // ... ... Parent space
+      Gradient dNdXi = getParentGradient( i, Xiq );
+
+      // ... ... Physical space
+      Jinv.leftMultiplyTranspose( dNdXi.data, dNdX[i] );
+    }
+  }
+};
+
 // template< typename CELL_TYPE,
 //           BasisFunction BASIS_FUNCTION >
 // GEOS_HOST_DEVICE

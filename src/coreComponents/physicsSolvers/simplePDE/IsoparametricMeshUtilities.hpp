@@ -194,6 +194,44 @@ public :
 };
 
 
+template< typename ARRAY_VIEW_TYPE  >
+class isoparametricPyramidMesh : public isoparametricMesh< ARRAY_VIEW_TYPE >
+{
+public :
+
+ using CellIndexType = typename isoparametricMesh< ARRAY_VIEW_TYPE >::CellIndexType;
+ using CellType = PyramidCell;
+  // ... 
+  constexpr static int numCellVertex = PyramidCell::numVertex;
+
+  // ...
+  // constructor
+  isoparametricPyramidMesh( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X,
+                          ARRAY_VIEW_TYPE const elementToNodes ) : isoparametricMesh< ARRAY_VIEW_TYPE >( X, elementToNodes )
+  {
+
+  }
+
+  // 
+  PyramidCell getCell( CellIndexType k ) const
+  {
+    real64 xLocal[numCellVertex][3]{};
+
+    for( int i=0; i<numCellVertex; ++i )
+    {
+      localIndex const localNodeIndex = this->m_elementToNodes( k, i );
+      xLocal[ i ][ 0 ] = this->m_X[ localNodeIndex ][ 0 ];
+      xLocal[ i ][ 1 ] = this->m_X[ localNodeIndex ][ 1 ];
+      xLocal[ i ][ 2 ] = this->m_X[ localNodeIndex ][ 2 ];
+    }
+
+    return PyramidCell( xLocal );
+  }
+
+  // localInde{x numCells() const;
+};
+
+
 // Factory selectign dynamically the appropriate isopametric mesh
 template< typename ARRAY_VIEW_TYPE  >
 isoparametricMesh< ARRAY_VIEW_TYPE > selectIsoparametricMesh( ElementType elemType,
@@ -235,6 +273,12 @@ struct NumVertexToSubregionMesh< ARRAY_VIEW_TYPE, 4 >
 };
 
 template< typename ARRAY_VIEW_TYPE >
+struct NumVertexToSubregionMesh< ARRAY_VIEW_TYPE, 5 >
+{
+  using type = isoparametricPyramidMesh< ARRAY_VIEW_TYPE >;
+};
+
+template< typename ARRAY_VIEW_TYPE >
 struct NumVertexToSubregionMesh< ARRAY_VIEW_TYPE, 6 >
 {
   using type = isoparametricWedgeMesh< ARRAY_VIEW_TYPE >;
@@ -246,7 +290,6 @@ struct NumVertexToSubregionMesh< ARRAY_VIEW_TYPE, 8 >
 {
   using type = isoparametricHexahedronMesh< ARRAY_VIEW_TYPE >;
 };
-
 
 } // namespace geos
 

@@ -17,12 +17,11 @@
  */
 
 // Source includes
-#define SELECTED_FE_TYPES \
-  H1_Wedge_Lagrange1_Gauss6, \
-  H1_Hexahedron_Lagrange1_GaussLegendre2, \
-  H1_Tetrahedron_Lagrange1_Gauss1
-// #define SELECTED_FE_TYPES H1_Hexahedron_Lagrange1_GaussLegendre2
-//                          H1_Wedge_Lagrange1_Gauss6 
+#define SELECTED_FE_TYPES FE_1_TYPES
+  // H1_Wedge_Lagrange1_Gauss6,
+  // H1_Hexahedron_Lagrange1_GaussLegendre2,
+  // H1_Tetrahedron_Lagrange1_Gauss1,
+  // H1_Pyramid_Lagrange1_Gauss5
 
 #include "LaplaceFEM.hpp"
 // #include "LaplaceFEMKernels.hpp"
