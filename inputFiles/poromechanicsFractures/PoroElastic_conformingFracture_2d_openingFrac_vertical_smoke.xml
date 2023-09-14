@@ -13,16 +13,21 @@
       xCoords="{ -1, 1 }"
       yCoords="{ -1, 1 }"
       zCoords="{ 0, 1 }"
-      nx="{ 2 }"
-      ny="{ 4 }"
+      nx="{ 8 }"
+      ny="{ 10 }"
       nz="{ 1 }"
       cellBlockNames="{ cb1 }"/>
   </Mesh>
 
   <Geometry>
     <Box
-      name="fracture"
+      name="fractureTip"
       xMin="{ -0.01, -0.8, -0.01 }"
+      xMax="{ 0.01,  -0.59,  1.01 }"/>
+
+    <Box
+      name="fracture"
+      xMin="{ -0.01, -0.61, -0.01 }"
       xMax="{ 0.01,  0.8,  1.01 }"/>
 
     <Box name="bottomFace" 
@@ -32,7 +37,6 @@
     <Box name="topFace" 
          xMax="{1.01, 1.01,   1.01 }" 
          xMin="{-1.01, -1.01, 0.99 }"/>     
-  
   </Geometry>
   
   <Events
@@ -65,7 +69,7 @@
     <FieldSpecification
       name="frac"
       initialCondition="1"
-      setNames="{ fracture }"
+      setNames="{ fracture, fractureTip }"
       objectPath="faceManager"
       fieldName="ruptureState"
       scale="1"/>
@@ -73,7 +77,7 @@
     <FieldSpecification
       name="separableFace"
       initialCondition="1"
-      setNames="{ fracture }" 
+      setNames="{ fracture, fractureTip}" 
       objectPath="faceManager"
       fieldName="isFaceSeparable"
       scale="1"/>
@@ -88,11 +92,10 @@
 
     <FieldSpecification
       name="prescribedFracturePressure"
-      setNames="{ all }"
+      setNames="{ fractureTip }"
       objectPath="ElementRegions/Fracture"
       fieldName="pressure"
-      scale="1.0e5"
-      functionName="injectionSchedule"/>
+      scale="1.0e5"/>
 
     <FieldSpecification 
       name="initialStress"
@@ -101,7 +104,7 @@
       objectPath="ElementRegions/Domain"
       fieldName="rock_stress"
       component="0"
-      scale="-1.0e5"/>
+      scale="-1.0e0"/>
 
     <FieldSpecification
       name="xconstraint"
