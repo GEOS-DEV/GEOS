@@ -55,6 +55,7 @@ using namespace constitutive;
 using namespace dataRepository;
 using namespace fields;
 using namespace finiteElement;
+const localIndex geos::SolidMechanicsConformingFracturesVEM::m_MFN = 11; 
 
 SolidMechanicsConformingFracturesVEM::SolidMechanicsConformingFracturesVEM( const string & name,
                                                   Group * const parent ):
@@ -858,7 +859,7 @@ void SolidMechanicsConformingFracturesVEM::computeProjectors( localIndex const f
                                                               array1d< real64 > & basisIntegrals )
 {
   GEOS_MARK_FUNCTION;
-  localIndex const MFN = 11; // Max number of face vertices.
+  localIndex const MFN = m_MFN; // Max number of face vertices.
   localIndex const numFaceNodes = faceToNodeMap[ faceIndex ].size();
   GEOS_ASSERT( numFaceNodes <= MFN );
 
@@ -911,7 +912,7 @@ void SolidMechanicsConformingFracturesVEM::computeFaceIntegrals( arrayView2d< re
                                                                 real64 (& threeDMonomialIntegrals)[3] )
 {
   GEOS_MARK_FUNCTION;
-  localIndex const MFN = 11; // Max number of face vertices.
+  localIndex const MFN = m_MFN; // Max number of face vertices.
   basisIntegrals.resize( numFaceVertices );
   // Rotate the face.
   //  - compute rotation matrix.
@@ -1224,9 +1225,9 @@ void SolidMechanicsConformingFracturesVEM::
       { return; }
       localIndex const numNodesPerFace = faceToNodeMap.sizeOfArray( elemsToFaces[kfe][0] );
 
-      globalIndex rowDOF[12]; // this needs to be changed when dealing with arbitrary element types
-      real64 nodeRHS[12];
-      stackArray2d< real64, 3*4*3 > dRdT( 3*numNodesPerFace, 3 );
+      globalIndex rowDOF[3 * m_MFN]; // this needs to be changed when dealing with arbitrary element types
+      real64 nodeRHS[3 * m_MFN];
+      stackArray2d< real64, 3*m_MFN*3 > dRdT( 3*numNodesPerFace, 3 );
       globalIndex colDOF[3];
       for( localIndex i = 0; i < 3; ++i )
       {
@@ -1354,7 +1355,7 @@ void SolidMechanicsConformingFracturesVEM::
         if( ghostRank[kfe] < 0 )
         {
           localIndex const numNodesPerFace = faceToNodeMap.sizeOfArray( elemsToFaces[kfe][0] );
-          globalIndex nodeDOF[24];
+          globalIndex nodeDOF[2 * 3 * m_MFN];
           globalIndex elemDOF[3];
           for( localIndex i = 0; i < 3; ++i )
           {
@@ -1364,7 +1365,7 @@ void SolidMechanicsConformingFracturesVEM::
           real64 elemRHS[3] = {0.0, 0.0, 0.0};
           real64 const Ja = area[kfe];
 
-          stackArray2d< real64, 2 * 3 * 4 * 3 > dRdU( 3, 2 * 3 * numNodesPerFace );
+          stackArray2d< real64, 2 * 3 * m_MFN * 3 > dRdU( 3, 2 * 3 * numNodesPerFace );
           stackArray2d< real64, 3 * 3 > dRdT( 3, 3 );
 
           switch( fractureState[kfe] )
