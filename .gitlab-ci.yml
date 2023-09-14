@@ -188,7 +188,7 @@ nightly-job:
   script:
     - |
       echo "~~~~~~~~~~ START - write to nightlyTests Repo ~~~~~~~~~~~~~"
-      git clone git@github.com:GEOS-DEV/nightlyTests.git
+      git clone -b feature/han12/add_compilers git@github.com:GEOS-DEV/nightlyTests.git
       cd nightlyTests
       ./update.sh \
         quartz-clang-14 \
