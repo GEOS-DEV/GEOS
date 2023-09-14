@@ -2930,7 +2930,7 @@ void SurfaceGenerator::calculateNodeAndFaceSif( DomainPartition const & domain,
       }
     }
 
-    if( unpinchedNodeID.size() < 3 )
+    if( unpinchedNodeID.size() < 2 || (unpinchedNodeID.size() == 2 && tipEdgesID.size() < 2) )
     {
       for( localIndex const nodeIndex : pinchedNodeID )
       {
@@ -3229,9 +3229,12 @@ void SurfaceGenerator::calculateNodeAndFaceSif( DomainPartition const & domain,
   for( localIndex const nodeIndex : m_tipNodes )
   {
     if( isNodeGhost[nodeIndex] < 0 )
-    {
-      SIFNode[nodeIndex] = *min_element( SIFNode_All[nodeIndex].begin(), SIFNode_All[nodeIndex].end());
-
+    {      
+      if( SIFNode_All[nodeIndex].size() >= 1 )
+      {
+        SIFNode[nodeIndex] = *min_element( SIFNode_All[nodeIndex].begin(), SIFNode_All[nodeIndex].end());
+      }
+      
       for( localIndex const edgeIndex: m_tipEdges )
       {
         if( edgeToNodeMap[edgeIndex][0] == nodeIndex || edgeToNodeMap[edgeIndex][1] == nodeIndex )
@@ -3240,7 +3243,10 @@ void SurfaceGenerator::calculateNodeAndFaceSif( DomainPartition const & domain,
           {
             if( m_tipFaces.contains( faceIndex ))
             {
-              SIFonFace[faceIndex] = *max_element( SIFonFace_All[faceIndex].begin(), SIFonFace_All[faceIndex].end());
+              if( SIFonFace_All[faceIndex].size() >= 1 )
+              {
+                SIFonFace[faceIndex] = *max_element( SIFonFace_All[faceIndex].begin(), SIFonFace_All[faceIndex].end());
+              }
             }
           }
         }
