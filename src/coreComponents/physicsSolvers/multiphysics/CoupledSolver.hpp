@@ -312,6 +312,18 @@ public:
     return nextDt;
   }
 
+  virtual void cleanup( real64 const time_n,
+                        integer const cycleNumber,
+                        integer const eventCounter,
+                        real64 const eventProgress,
+                        DomainPartition & domain ) override
+  {
+    forEachArgInTuple( m_solvers, [&]( auto & solver, auto )
+    {
+      solver->cleanup( time_n, cycleNumber, eventCounter, eventProgress, domain );
+    } );
+    SolverBase::cleanup( time_n, cycleNumber, eventCounter, eventProgress, domain );
+  }
 
   /**@}*/
 
@@ -391,6 +403,7 @@ protected:
         forEachArgInTuple( m_solvers, [&]( auto & solver, auto )
         {
           solver->resetStateToBeginningOfStep( domain );
+          solver->getSolverStatistics().initializeTimeStepStatistics(); // initialize counters for subsolvers
         } );
         resetStateToBeginningOfStep( domain );
       }
@@ -425,6 +438,11 @@ protected:
 
       if( isConverged )
       {
+        // Save Time step statistics for the subsolvers
+        forEachArgInTuple( m_solvers, [&]( auto & solver, auto )
+        {
+          solver->getSolverStatistics().saveTimeStepStatistics();
+        } );
         break;
       }
       // Add convergence check:
