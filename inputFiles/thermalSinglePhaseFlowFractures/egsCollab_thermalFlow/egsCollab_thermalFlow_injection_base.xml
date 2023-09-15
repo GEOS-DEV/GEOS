@@ -36,7 +36,7 @@
        name="solverApplications2"
        beginTime="1e6"
        endTime="1.5768e10"
-       maxEventDt="3e7"
+       maxEventDt="5e8"
        target="/Solvers/singleFlow"/>
 
     <PeriodicEvent
@@ -50,12 +50,12 @@
        name="solverApplications4"
        beginTime="1.5768000001e10"
        endTime="1.576972800e10"
-       maxEventDt="4"
+       maxEventDt="2"
        target="/Solvers/singleFlow"/>   
 
      <PeriodicEvent
        name="outputs"
-       cycleFrequency="10"
+       cycleFrequency="1"
        target="/Outputs/vtkOutput"/>
    </Events>
 
@@ -137,7 +137,7 @@
       objectPath="ElementRegions/fracture"                                                                                                                                              
       fieldName="temperature"                                                                                                                                                            
       functionName="injectionSchedule_temperature"
-      beginTime="1.5768e9"
+      beginTime="1.5768e10"
       scale="1"                                                                                                                                                                          
       setNames="{ TU_injector }"/>
 
