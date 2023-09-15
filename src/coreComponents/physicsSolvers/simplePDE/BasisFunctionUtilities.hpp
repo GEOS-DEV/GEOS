@@ -41,14 +41,14 @@ struct Gradient
   real64 data[3];
 };
 
-template< typename CELL_TYPE,
+template< CellUtilities::ReferenceCell REFERENCE_CELL_TYPE,
           BasisFunction BASIS_FUNCTION,
           int NUM_SUPPORT_POINTS >
 struct Helper
 {};
 
 template<>
-struct Helper< HexahedronCell,
+struct Helper< CellUtilities::ReferenceCell::Cube,//HexahedronCell,
                BasisFunction::Lagrange,
                8 >
 {
@@ -86,7 +86,7 @@ struct Helper< HexahedronCell,
 };
 
 template<>
-struct Helper< WedgeCell,
+struct Helper< CellUtilities::ReferenceCell::Wedge,//WedgeCell,
                BasisFunction::Lagrange,
                6 >
 {
@@ -126,7 +126,7 @@ struct Helper< WedgeCell,
 };
 
 template<>
-struct Helper< TetrahedronCell,
+struct Helper< CellUtilities::ReferenceCell::Tetrahedron,//TetrahedronCell,
                BasisFunction::Lagrange,
                4 >
 {
@@ -159,7 +159,7 @@ struct Helper< TetrahedronCell,
 };
 
 template<>
-struct Helper< PyramidCell,
+struct Helper< CellUtilities::ReferenceCell::Pyramid,//PyramidCell,
                BasisFunction::Lagrange,
                5 >
 {
@@ -221,7 +221,7 @@ static void getGradient( real64 const (&Xiq)[3],
   //   // ... ... Physical space
   //   Jinv.leftMultiplyTranspose( dNdXi.data, dNdX[i] );
   // }
-  Helper< CELL_TYPE, BASIS_FUNCTION, NUM_SUPPORT_POINTS >::getGradient( Xiq, Jinv, dNdX );
+  Helper< CELL_TYPE::getReferenceCellType(), BASIS_FUNCTION, NUM_SUPPORT_POINTS >::getGradient( Xiq, Jinv, dNdX );
 }
 
 

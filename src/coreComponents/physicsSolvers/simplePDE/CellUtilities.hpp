@@ -79,6 +79,18 @@ struct Dense3x3Tensor
 namespace CellUtilities
 {
 
+/**
+ * @brief Reference cell type
+ */
+enum class ReferenceCell : integer
+{
+  Tetrahedron,
+  Pyramid,
+  Wedge,
+  Cube
+};
+
+
 template< typename CELL_TYPE >
 GEOS_HOST_DEVICE
 static camp::tuple< real64, typename CELL_TYPE::JacobianType >
@@ -101,12 +113,11 @@ getJacobianDeterminantAndJacobianInverse( CELL_TYPE cell,
 
 
 
-
-
 class HexahedronCell
 {
 public:
   constexpr static int numVertex = 8;
+  constexpr static CellUtilities::ReferenceCell referenceCell = CellUtilities::ReferenceCell::Cube;
 
   using JacobianType = Dense3x3Tensor;
 
@@ -120,6 +131,13 @@ public:
         m_nodeCoords[i][j] = nodeCoords[i][j];
       }
     }
+  }
+
+  GEOS_HOST_DEVICE
+  inline
+  constexpr static CellUtilities::ReferenceCell getReferenceCellType()
+  {
+    return CellUtilities::ReferenceCell::Cube;
   }
 
   GEOS_HOST_DEVICE
@@ -205,6 +223,7 @@ class WedgeCell
 {
 public:
   constexpr static int numVertex = 6;
+  constexpr static CellUtilities::ReferenceCell referenceCell = CellUtilities::ReferenceCell::Wedge;
 
   using JacobianType = Dense3x3Tensor;
  
@@ -222,6 +241,13 @@ public:
     }
   }
   
+  GEOS_HOST_DEVICE
+  inline
+  constexpr static CellUtilities::ReferenceCell getReferenceCellType()
+  {
+    return CellUtilities::ReferenceCell::Wedge;
+  }
+
   GEOS_HOST_DEVICE
   inline
   constexpr static int linearMap( int const indexT, int const indexL )
@@ -285,6 +311,7 @@ class TetrahedronCell
 {
 public:
   constexpr static int numVertex = 4;
+  constexpr static CellUtilities::ReferenceCell referenceCell = CellUtilities::ReferenceCell::Tetrahedron;
 
   using JacobianType = Dense3x3Tensor;
  
@@ -300,6 +327,13 @@ public:
     }
   }
   
+  GEOS_HOST_DEVICE
+  inline
+  constexpr static CellUtilities::ReferenceCell getReferenceCellType()
+  {
+    return CellUtilities::ReferenceCell::Tetrahedron;
+  }
+
   GEOS_HOST_DEVICE
   JacobianType getJacobian( real64 const refPointCoords[3] ) const
   {
@@ -363,6 +397,13 @@ public:
     }
   }
   
+  GEOS_HOST_DEVICE
+  inline
+  constexpr static CellUtilities::ReferenceCell getReferenceCellType()
+  {
+    return CellUtilities::ReferenceCell::Pyramid;
+  }
+
   GEOS_HOST_DEVICE
   inline
   constexpr static int linearMap( int const i, int const j )
