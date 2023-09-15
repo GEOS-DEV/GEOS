@@ -108,6 +108,7 @@ extensions = [
     'matplotlib.sphinxext.plot_directive',
     'sphinx.ext.napoleon',
     'sphinxcontrib.plantuml',
+    'sphinxcontrib.programoutput'
 ]
 
 plantuml = "/usr/bin/plantuml"
