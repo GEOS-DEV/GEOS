@@ -12,6 +12,8 @@ To list all the modules available through ``mesh_doctor`` you can simply use the
 
 .. program-output:: mesh_doctor --help
 
+.. program-output:: pwd
+
 Then, it you are interested in a specific module, you can ask for its documentation using the ``mesh_doctor module_name --help`` pattern.
 For example
 
