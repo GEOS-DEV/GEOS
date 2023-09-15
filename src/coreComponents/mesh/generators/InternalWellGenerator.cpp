@@ -370,15 +370,13 @@ void InternalWellGenerator::connectPerforationsToWellElements()
     real64 const wellLength = m_nodeDistFromHead[m_elemToNodesMap[iwelemBottom][LineBlockABC::NodeLocation::BOTTOM]];
 
     GEOS_THROW_IF( m_perfDistFromHead[iperf] > wellLength,
-                   GEOS_FMT( "{}: Distance from well perforation to head ({} = {}) is larger than well"
-                             " polyline length ({})\n \n You should check the following values:"
-                             "\n   1 - {}\n   2 - {}, Z values",
-                             perf.getWrapperDataContext( Perforation::viewKeyStruct::distanceFromHeadString() ),
-                             Perforation::viewKeyStruct::distanceFromHeadString(),
-                             m_perfDistFromHead[iperf], wellLength,
-                             perf.getWrapperDataContext( Perforation::viewKeyStruct::distanceFromHeadString() ),
-                             WellControls::viewKeyStruct::refElevString(), m_wellControlsName,
-                             getWrapperDataContext( viewKeyStruct::polylineNodeCoordsString() ) ),
+                   perf.getWrapperDataContext( Perforation::viewKeyStruct::distanceFromHeadString() ) <<
+                   ": Distance from well perforation to head (" <<
+                   Perforation::viewKeyStruct::distanceFromHeadString() << " = " << m_perfDistFromHead[iperf]
+                   ") is larger than well polyline length (" << wellLength <<
+                   ")\n \n You should check the following values:" <<
+                   "\n   1 - " << perf.getWrapperDataContext( Perforation::viewKeyStruct::distanceFromHeadString() ) <<
+                   "\n   2 - " << getWrapperDataContext( viewKeyStruct::polylineNodeCoordsString() ) << ", Z values",
                    InputError );
 
     // start binary search
