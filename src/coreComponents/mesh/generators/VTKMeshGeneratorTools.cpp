@@ -95,9 +95,9 @@ redistribute( vtkPartitionedDataSet & localParts,
     }
   } );
 
-  // At this point of the process, it is legitimate to have ranks with no cells for the case of fractures.
+  // At this point of the process, it is legitimate to have ranks with no cells for the cases with fractures.
   // But this leaves us with a technical problem since `vtkAppendFilter`
-  // (that will be using to merge the different pieces of the meshes)
+  // (that will be used to merge the different pieces of the meshes)
   // discards the empty the data sets it merges.
   // The definition of "empty" in its context is having no points nor cells...
   //

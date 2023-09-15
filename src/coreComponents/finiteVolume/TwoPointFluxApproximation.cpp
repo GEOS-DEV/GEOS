@@ -736,6 +736,8 @@ void TwoPointFluxApproximation::addFractureMatrixConnectionsDFM( MeshLevel & mes
         real64 const c2fDistance = LvArray::tensorOps::normalize< 3 >( cellToFaceVec );
 
         real64 const ht = faceArea[faceIndex] / c2fDistance;
+        // Note: this is done solely to avoid crashes when using the LagrangianContactSolver that builds a stencil but does not register the
+        // hydraulicAperture
         real64 const aperture_h =  hydraulicAperture[fractureRegionIndex][0].size() == 0 ? 1.0 : hydraulicAperture[fractureRegionIndex][0][kfe];
 
         localIndex const stencilCellsRegionIndex[2]{ er, fractureRegionIndex };
