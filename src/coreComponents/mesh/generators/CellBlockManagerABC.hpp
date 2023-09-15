@@ -208,6 +208,13 @@ public:
   virtual ToCellRelation< array2d< localIndex > > getFaceToElements() const = 0;
 
   /**
+   * @brief Returns the embedded surface to elements mapping.
+   * @return A 1 to many relationship. The result is jagged array mapping each embedded element
+   * To the elements it intersect.
+   *
+   */
+  virtual ToCellRelation<ArrayOfArrays< localIndex >> getEmbeddedSurfaceToElements() const = 0;
+  /**
    * @brief The node to global mapping for nodes.
    * @return The mapping as an array of size numNodes.
    */
