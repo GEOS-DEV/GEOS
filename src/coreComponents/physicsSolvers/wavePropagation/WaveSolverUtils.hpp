@@ -69,7 +69,8 @@ struct WaveSolverUtils
     return pulse;
   }
 
-  static void writeSeismoTrace( localIndex iSeismo,
+  static void writeSeismoTrace( string const & name,
+                                localIndex iSeismo,
                                 arrayView2d< real64 const > const receiverConstants,
                                 arrayView1d< localIndex const > const receiverIsLocal,
                                 localIndex const nsamplesSeismoTrace,
@@ -89,7 +90,7 @@ struct WaveSolverUtils
           {
             // Note: this "manual" output to file is temporary
             //       It should be removed as soon as we can use TimeHistory to output data not registered on the mesh
-            string const fn = joinPath( outputDir, GEOS_FMT( "seismoTraceReceiver{:03}.txt", ircv ) );
+            string const fn = joinPath( outputDir, GEOS_FMT( "seismoTraceReceiver_{}_{:03}.txt", name, ircv ) );
             std::ofstream f( fn, std::ios::app );
             if( !f )
             {
@@ -107,7 +108,8 @@ struct WaveSolverUtils
     }
   }
 
-  static void computeSeismoTrace( real64 const time_n,
+  static void computeSeismoTrace( string const & name,
+                                  real64 const time_n,
                                   real64 const dt,
                                   real64 const timeSeismo,
                                   localIndex iSeismo,
@@ -144,10 +146,11 @@ struct WaveSolverUtils
       } );
     }
 
-    writeSeismoTrace( iSeismo, receiverConstants, receiverIsLocal, nsamplesSeismoTrace, outputSeismoTrace, varAtReceivers );
+    writeSeismoTrace( name, iSeismo, receiverConstants, receiverIsLocal, nsamplesSeismoTrace, outputSeismoTrace, varAtReceivers );
   }
 
-  static void compute2dVariableSeismoTrace( real64 const time_n,
+  static void compute2dVariableSeismoTrace( string const & name,
+                                            real64 const time_n,
                                             real64 const dt,
                                             localIndex const regionIndex,
                                             arrayView1d< localIndex const > const receiverRegion,
@@ -189,7 +192,7 @@ struct WaveSolverUtils
       } );
     }
 
-    writeSeismoTrace( iSeismo, receiverConstants, receiverIsLocal, nsamplesSeismoTrace, outputSeismoTrace, varAtReceivers );
+    writeSeismoTrace( name, iSeismo, receiverConstants, receiverIsLocal, nsamplesSeismoTrace, outputSeismoTrace, varAtReceivers );
   }
 
   /**

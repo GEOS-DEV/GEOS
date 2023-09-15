@@ -606,9 +606,8 @@ void AcousticFirstOrderWaveEquationSEM::computeAllSeismoTraces( real64 const tim
        (timeSeismo = m_dtSeismoTrace*indexSeismoTrace) <= (time_n + epsilonLoc) && indexSeismoTrace < m_nsamplesSeismoTrace;
        indexSeismoTrace++ )
   {
-    WaveSolverUtils::computeSeismoTrace( time_n, dt, timeSeismo, indexSeismoTrace, m_receiverNodeIds, m_receiverConstants, m_receiverIsLocal, m_nsamplesSeismoTrace,
-                                         m_outputSeismoTrace,
-                                         var_np1, var_n, varAtReceivers );
+    WaveSolverUtils::computeSeismoTrace( getName(), time_n, dt, timeSeismo, indexSeismoTrace, m_receiverNodeIds, m_receiverConstants,
+                                         m_receiverIsLocal, m_nsamplesSeismoTrace, m_outputSeismoTrace, var_np1, var_n, varAtReceivers );
   }
 }
 
@@ -624,9 +623,9 @@ void AcousticFirstOrderWaveEquationSEM::compute2dVariableAllSeismoTraces( localI
        (timeSeismo = m_dtSeismoTrace*indexSeismoTrace) <= (time_n + epsilonLoc) && indexSeismoTrace < m_nsamplesSeismoTrace;
        indexSeismoTrace++ )
   {
-    WaveSolverUtils::compute2dVariableSeismoTrace( time_n, dt, regionIndex, m_receiverRegion, timeSeismo, indexSeismoTrace, m_rcvElem, m_receiverConstants, m_receiverIsLocal, m_nsamplesSeismoTrace,
-                                                   m_outputSeismoTrace,
-                                                   var_np1, var_n, varAtReceivers );
+    WaveSolverUtils::compute2dVariableSeismoTrace( getName(), time_n, dt, regionIndex, m_receiverRegion, timeSeismo,
+                                                   indexSeismoTrace, m_rcvElem, m_receiverConstants, m_receiverIsLocal,
+                                                   m_nsamplesSeismoTrace, m_outputSeismoTrace, var_np1, var_n, varAtReceivers );
   }
 }
 

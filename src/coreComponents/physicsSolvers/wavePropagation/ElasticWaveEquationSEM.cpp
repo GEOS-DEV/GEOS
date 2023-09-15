@@ -930,8 +930,9 @@ void ElasticWaveEquationSEM::computeAllSeismoTraces( real64 const time_n,
        (timeSeismo = m_dtSeismoTrace*indexSeismoTrace) <= (time_n + epsilonLoc) && indexSeismoTrace < m_nsamplesSeismoTrace;
        indexSeismoTrace++ )
   {
-    WaveSolverUtils::computeSeismoTrace( time_n, dt, timeSeismo, indexSeismoTrace, m_receiverNodeIds, m_receiverConstants, m_receiverIsLocal,
-                                         m_nsamplesSeismoTrace, m_outputSeismoTrace, var_np1, var_n, varAtReceivers );
+    WaveSolverUtils::computeSeismoTrace( getName(), time_n, dt, timeSeismo, indexSeismoTrace, m_receiverNodeIds,
+                                         m_receiverConstants, m_receiverIsLocal, m_nsamplesSeismoTrace,
+                                         m_outputSeismoTrace, var_np1, var_n, varAtReceivers );
   }
 }
 
