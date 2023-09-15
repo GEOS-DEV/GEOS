@@ -33,43 +33,70 @@ Here is now a summury of all the modules available.
 
 ``collocated_nodes``
 """"""""""""""""""""
-.. program-output:: mesh_doctor collocated_nodes --help
 
+Displays the nodes that are closer than a prescribed threshold.
+It is not uncommon to find multiple nodes in the exact same position.
+This will typically be an issue for ``geos`` and should be fixed.
+
+.. program-output:: mesh_doctor collocated_nodes --help
 
 ``element_volumes``
 """""""""""""""""""
+
+Computes the volumes of all the cells and displays the ones that are above a prescribed threshold.
+Cells with negative volumes will typically be an issue for ``geos`` and should be fixed.
+
 .. program-output:: mesh_doctor element_volumes --help
 
-
 ``fix_elements_orderings``
-"""""""""""""""""""""""""
-.. program-output:: mesh_doctor fix_elements_orderings --help
+""""""""""""""""""""""""""
 
+It can happen that an exported mesh does not abide by the ``vtk`` orderings.
+The ``fix_elements_orderings`` module can rearrange the nodes of given types of elements.
+This can be convenient if you cannot regenerate the mesh.
+
+.. program-output:: mesh_doctor fix_elements_orderings --help
 
 ``generate_cube``
 """""""""""""""""
-.. program-output:: mesh_doctor generate_cube --help
 
+This module conveniently generates cubic meshes in ``vtk``.
+It can also generate fields with simple values.
+This tool can also be useful to generate a first mesh that will be refined or customized.
+
+.. program-output:: mesh_doctor generate_cube --help
 
 ``generate_fractures``
 """"""""""""""""""""""
-.. program-output:: mesh_doctor generate_fractures --help
 
+For a conformal to be defined in a mesh, ``geos`` requires the mesh to be split at the faces where the fracture gets across the mesh.
+The ``generate_fractures`` module will split the mesh and generate the multi-block ``vtk`` files.
+
+.. program-output:: mesh_doctor generate_fractures --help
 
 ``generate_global_ids``
 """""""""""""""""""""""
-.. program-output:: mesh_doctor generate_global_ids --help
 
+When running ``geos`` in parallel, using global ids can be used to refer to data across the ranks.
+The ``generate_global_ids`` can generate global ids for the input ``vkt`` mesh.
+
+.. program-output:: mesh_doctor generate_global_ids --help
 
 ``non_conformal``
 """""""""""""""""
-.. program-output:: mesh_doctor non_conformal --help
 
+This module will detect elements close enough (there's a user defined threshold) but are not in front of each other (another threshold can be defined).
+This module can be a little time consuming.
+
+.. program-output:: mesh_doctor non_conformal --help
 
 ``self_intersecting_elements``
 """""""""""""""""""""""""""""
-.. program-output:: mesh_doctor self_intersecting_elements --help
 
+Some meshes can have elements that auto-intersect.
+This module will display the elements that have faces intersecting.
+
+.. program-output:: mesh_doctor self_intersecting_elements --help
 
 ``supported_elements``
 """"""""""""""""""""""
