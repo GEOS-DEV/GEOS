@@ -1,9 +1,9 @@
 [submodule "src/coreComponents/LvArray"]
 	path = src/coreComponents/LvArray
-	url = ../LvArray
+	url = ../../GEOS-DEV/LvArray.git
 [submodule "src/cmake/blt"]
 	path = src/cmake/blt
-	url = ../blt
+	url = ../../LLNL/blt.git
 [submodule "src/coreComponents/constitutive/PVTPackage"]
 	path = src/coreComponents/constitutive/PVTPackage
 	url = ../../GEOS-DEV/PVTPackage.git
