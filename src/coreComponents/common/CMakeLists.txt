@@ -15,6 +15,7 @@ set( common_headers
      Path.hpp
      Span.hpp
      Stopwatch.hpp
+     Timer.hpp
      Tensor.hpp
      TimingMacros.hpp
      TypeDispatch.hpp

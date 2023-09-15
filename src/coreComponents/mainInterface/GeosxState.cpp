@@ -18,6 +18,7 @@
 #include "mainInterface/ProblemManager.hpp"
 #include "mainInterface/initialization.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
+#include "common/Timer.hpp"
 
 // TPL includes
 #include <conduit.hpp>

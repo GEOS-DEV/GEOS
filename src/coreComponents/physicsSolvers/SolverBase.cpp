@@ -20,7 +20,7 @@
 #include "linearAlgebra/solvers/KrylovSolver.hpp"
 #include "mesh/DomainPartition.hpp"
 #include "math/interpolation/Interpolation.hpp"
-#include "mainInterface/GeosxState.hpp"
+#include "common/Timer.hpp"
 
 #if defined(GEOSX_USE_PYGEOSX)
 #include "python/PySolverType.hpp"
