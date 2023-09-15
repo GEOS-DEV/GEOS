@@ -64,8 +64,8 @@ public:
   using PermeabilityAccessors = AbstractBase::PermeabilityAccessors;
 
   using DissCompFlowAccessors =
-    StencilAccessors< fields::flow::pressure_n , 
-                      fields::flow::globalCompDensity, 
+    StencilAccessors< fields::flow::pressure_n,
+                      fields::flow::globalCompDensity,
                       fields::flow::globalCompFraction,
                       fields::elementVolume >;
 
@@ -74,13 +74,13 @@ public:
                               fields::multifluid::phaseDensity_n,
                               fields::multifluid::phaseMassDensity,
                               fields::multifluid::phaseCompFraction_n,
-                              fields::multifluid::phaseViscosity >;  
-                                                                                
+                              fields::multifluid::phaseViscosity >;
+
   using RelPermAccessors =
     StencilMaterialAccessors< RelativePermeabilityBase, fields::relperm::phaseRelPerm_n >;
 
-  using PorosityAccessors = 
-    StencilMaterialAccessors< PorosityBase, fields::porosity::porosity_n >;  
+  using PorosityAccessors =
+    StencilMaterialAccessors< PorosityBase, fields::porosity::porosity_n >;
 
   using AbstractBase::m_dt;
   using AbstractBase::m_numPhases;
@@ -149,7 +149,7 @@ public:
                            arrayView1d< real64 > const & localRhs,
                            real64 const omega,
                            integer const curNewton,
-                           integer const continuation, 
+                           integer const continuation,
                            integer const miscible,
                            real64 const kappamin,
                            real64 const contMultiplier )
@@ -165,7 +165,7 @@ public:
             permeabilityAccessors,
             dt,
             localMatrix,
-            localRhs),
+            localRhs ),
     m_pres_n( dissCompFlowAccessors.get( fields::flow::pressure_n {} ) ),
     m_compDens( dissCompFlowAccessors.get( fields::flow::globalCompDensity {} ) ),
     m_compFrac( dissCompFlowAccessors.get( fields::flow::globalCompFraction {} ) ),
@@ -175,15 +175,15 @@ public:
     m_phaseCompFrac_n( dissMultiFluidAccessors.get( fields::multifluid::phaseCompFraction_n {} ) ),
     m_permeability( permeabilityAccessors.get( fields::permeability::permeability {} ) ),
     m_dPerm_dPres( permeabilityAccessors.get( fields::permeability::dPerm_dPressure {} ) ),
-    m_omegaDBC(omega),
-    m_curNewton(curNewton),
-    m_continuationDBC(continuation),
-    m_miscibleDBC(miscible),
-    m_kappaminDBC(kappamin),
-    m_contMultiplierDBC(contMultiplier),
+    m_omegaDBC( omega ),
+    m_curNewton( curNewton ),
+    m_continuationDBC( continuation ),
+    m_miscibleDBC( miscible ),
+    m_kappaminDBC( kappamin ),
+    m_contMultiplierDBC( contMultiplier ),
     m_volume( dissCompFlowAccessors.get( fields::elementVolume {} ) ),
     m_porosity_n( porosityAccessors.get( fields::porosity::porosity_n {} ) )
-  {} 
+  {}
 
   struct StackVariables : public Base::StackVariables
   {
@@ -213,7 +213,7 @@ public:
   void computeFlux( localIndex const iconn,
                     StackVariables & stack ) const
   {
-    
+
     m_stencilWrapper.computeWeights( iconn,
                                      m_permeability,
                                      m_dPerm_dPres,
@@ -240,7 +240,7 @@ public:
                                            real64 const (&dPhaseFlux_dP)[2],
                                            real64 const (&dPhaseFlux_dC)[2][numComp] )
     {
-      GEOS_UNUSED_VAR(k_up, potGrad, phaseFlux, dPhaseFlux_dP, dPhaseFlux_dC, er_up, esr_up, ei_up );
+      GEOS_UNUSED_VAR( k_up, potGrad, phaseFlux, dPhaseFlux_dP, dPhaseFlux_dC, er_up, esr_up, ei_up );
 
       /// Storing dissipation flux and its derivatives locally
       real64 dissFlux[numComp]{};
@@ -253,50 +253,50 @@ public:
       /// Step 1. Calculate the continuation parameter based on the current Newton iteration
       real64 kappaDBC = 1.0; // default value
 
-      if (m_continuationDBC) // if continuation is enabled
+      if( m_continuationDBC ) // if continuation is enabled
       {
-        if (m_curNewton >= 5) 
+        if( m_curNewton >= 5 )
         {
           kappaDBC = m_kappaminDBC;
         }
-        else 
+        else
         {
-          for (int mp = 0; mp < m_curNewton; mp++) kappaDBC *= m_contMultiplierDBC; 
-          kappaDBC = std::max(kappaDBC, m_kappaminDBC);
+          for( int mp = 0; mp < m_curNewton; mp++ ) kappaDBC *= m_contMultiplierDBC;
+          kappaDBC = std::max( kappaDBC, m_kappaminDBC );
         }
       }
       /// Step 2. Collect all contributions
       real64 poreVolume_n = 0; // Pore volume contribution
       real64 trans = 0; // Transmissibility contribution
-      for( integer ke = 0; ke < numFluxSupportPoints; ++ke ) 
+      for( integer ke = 0; ke < numFluxSupportPoints; ++ke )
       {
-        trans = std::max(stack.transmissibility[connectionIndex][ke], trans);
+        trans = std::max( stack.transmissibility[connectionIndex][ke], trans );
         poreVolume_n += 0.5 *  m_volume[seri[ke]][sesri[ke]][sei[ke]] * m_porosity_n[seri[ke]][sesri[ke]][sei[ke]][0];
       }
 
       // potential gradient contribution
       // pressure
       real64 pressure_gradient = 0;
-      for( integer ke = 0; ke < numFluxSupportPoints; ++ke ) 
-          pressure_gradient += fluxPointCoef[ke] * m_pres_n[seri[ke]][sesri[ke]][sei[ke]];
+      for( integer ke = 0; ke < numFluxSupportPoints; ++ke )
+        pressure_gradient += fluxPointCoef[ke] * m_pres_n[seri[ke]][sesri[ke]][sei[ke]];
 
-      real64 potential_gradient = abs(pressure_gradient);
+      real64 potential_gradient = abs( pressure_gradient );
 
       real64 grad_depth = 0;
-      for( integer ke = 0; ke < numFluxSupportPoints; ++ke ) 
+      for( integer ke = 0; ke < numFluxSupportPoints; ++ke )
       {
-          grad_depth += fluxPointCoef[ke] * m_gravCoef[seri[ke]][sesri[ke]][sei[ke]];
+        grad_depth += fluxPointCoef[ke] * m_gravCoef[seri[ke]][sesri[ke]][sei[ke]];
       }
-      
+
       // bias towards x and y direction for miscible
       real64 directional_coef;
-      if (m_miscibleDBC) 
+      if( m_miscibleDBC )
       {
         directional_coef = 100.0;
-        if (abs(grad_depth) != 0) 
+        if( abs( grad_depth ) != 0 )
         {
-          if (1000.f / abs(grad_depth * grad_depth) < 100)
-            directional_coef = 1000.f / abs(grad_depth * grad_depth);
+          if( 1000.f / abs( grad_depth * grad_depth ) < 100 )
+            directional_coef = 1000.f / abs( grad_depth * grad_depth );
         }
       }
       else
@@ -308,26 +308,28 @@ public:
       real64 multiplier_n = kappaDBC * m_omegaDBC * trans / poreVolume_n * m_dt * potential_gradient * directional_coef;
 
       /// Step 3. Compute the dissipation flux and its derivative
-      for( integer ke = 0; ke < numFluxSupportPoints; ++ke ) {
-          for( integer ic = 0; ic < numComp; ++ic ) {
-            localIndex const er  = seri[ke];
-            localIndex const esr = sesri[ke];
-            localIndex const ei  = sei[ke];
+      for( integer ke = 0; ke < numFluxSupportPoints; ++ke )
+      {
+        for( integer ic = 0; ic < numComp; ++ic )
+        {
+          localIndex const er  = seri[ke];
+          localIndex const esr = sesri[ke];
+          localIndex const ei  = sei[ke];
 
-            // composition gradient contribution to the dissipation flux
-            dissFlux[ic] += multiplier_n * viscosityMult[ip] * fluxPointCoef[ke] * m_compFrac[er][esr][ei][ic];
+          // composition gradient contribution to the dissipation flux
+          dissFlux[ic] += multiplier_n * viscosityMult[ip] * fluxPointCoef[ke] * m_compFrac[er][esr][ei][ic];
 
-            dDissFlux_dP[ke][ic] = 0; 
+          dDissFlux_dP[ke][ic] = 0;
 
-            for( integer jc = 0; jc < numComp; ++jc ) 
-            {
-              // composition gradient derivative with respect to component density contribution to the dissipation flux
-              dDissFlux_dC[ke][ic][jc] += multiplier_n * viscosityMult[ip] * fluxPointCoef[ke] * m_dCompFrac_dCompDens[er][esr][ei][ic][jc];
-            }
+          for( integer jc = 0; jc < numComp; ++jc )
+          {
+            // composition gradient derivative with respect to component density contribution to the dissipation flux
+            dDissFlux_dC[ke][ic][jc] += multiplier_n * viscosityMult[ip] * fluxPointCoef[ke] * m_dCompFrac_dCompDens[er][esr][ei][ic][jc];
           }
         }
+      }
 
-      
+
       /// Step 4: add the dissipation flux and its derivatives to the residual and Jacobian
       for( integer ic = 0; ic < numComp; ++ic )
       {
@@ -344,11 +346,11 @@ public:
           stack.localFluxJacobian[eqIndex1][localDofIndexPres] -=  m_dt * dDissFlux_dP[ke][ic];
 
           for( integer jc = 0; jc < numComp; ++jc )
-            {
-              localIndex const localDofIndexComp = localDofIndexPres + jc + 1;
-              stack.localFluxJacobian[eqIndex0][localDofIndexComp] += m_dt * dDissFlux_dC[ke][ic][jc];
-              stack.localFluxJacobian[eqIndex1][localDofIndexComp] -= m_dt * dDissFlux_dC[ke][ic][jc];
-            }
+          {
+            localIndex const localDofIndexComp = localDofIndexPres + jc + 1;
+            stack.localFluxJacobian[eqIndex0][localDofIndexComp] += m_dt * dDissFlux_dC[ke][ic][jc];
+            stack.localFluxJacobian[eqIndex1][localDofIndexComp] -= m_dt * dDissFlux_dC[ke][ic][jc];
+          }
         }
       }
 
@@ -372,7 +374,7 @@ protected:
 
   ElementViewConst< arrayView3d< real64 const > > const m_permeability;
   ElementViewConst< arrayView3d< real64 const > > const m_dPerm_dPres;
-  
+
 
   // DBC specific parameters
   real64 m_omegaDBC;
@@ -428,7 +430,7 @@ public:
                    arrayView1d< real64 > const & localRhs,
                    real64 const omega,
                    integer const curNewton,
-                   integer const continuation, 
+                   integer const continuation,
                    integer const miscible,
                    real64 const kappamin,
                    real64 const contMultiplier )
@@ -441,7 +443,7 @@ public:
 
       ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > > dofNumberAccessor =
         elemManager.constructArrayViewAccessor< globalIndex, 1 >( dofKey );
-      dofNumberAccessor.setName( solverName + "/accessors/" + dofKey );  
+      dofNumberAccessor.setName( solverName + "/accessors/" + dofKey );
 
       using KERNEL_TYPE = FaceBasedAssemblyKernel< NUM_COMP, NUM_DOF, STENCILWRAPPER >;
       typename KERNEL_TYPE::CompFlowAccessors compFlowAccessors( elemManager, solverName );
@@ -456,7 +458,7 @@ public:
       KERNEL_TYPE kernel( numPhases, rankOffset, hasCapPressure, stencilWrapper, dofNumberAccessor,
                           compFlowAccessors, dissCompFlowAccessors, multiFluidAccessors, dissMultiFluidAccessors,
                           capPressureAccessors, permeabilityAccessors, porosityAccessors, relPermAccessors,
-                          dt, localMatrix, localRhs, omega, curNewton, continuation, miscible, kappamin, contMultiplier   );
+                          dt, localMatrix, localRhs, omega, curNewton, continuation, miscible, kappamin, contMultiplier );
       KERNEL_TYPE::template launch< POLICY >( stencilWrapper.size(), kernel );
     } );
   }
