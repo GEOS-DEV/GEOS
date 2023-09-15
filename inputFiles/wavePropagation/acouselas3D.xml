@@ -73,9 +73,9 @@
       xCoords="{ 0, 6400 }"
       yCoords="{ 0, 2400 }"
       zCoords="{ 0, 2400, 4800 }"
-      nx="{ 160 }"
-      ny="{ 60 }"
-      nz="{ 60, 60 }"
+      nx="{ 800 }"
+      ny="{ 300 }"
+      nz="{ 300, 300 }"
       cellBlockNames="{ solid, fluid }"/>
   </Mesh>
 
@@ -92,9 +92,10 @@
     maxTime="3">
     <PeriodicEvent
       name="outputs"
-      timeFrequency="1e-2"
+      timeFrequency="1e-1"
       targetExactTimestep="0">
       <PeriodicEvent name="outputs_vtk" target="/Outputs/vtkOutput"/>
+      <!--
       <PeriodicEvent name="tsk_ux_np1" target="/Tasks/displacementxCollection"/>
       <PeriodicEvent name="out_ux_np1" target="/Outputs/timeHistoryOutputx"/>
       <PeriodicEvent name="tsk_uy_np1" target="/Tasks/displacementyCollection"/>
@@ -103,21 +104,22 @@
       <PeriodicEvent name="out_uz_np1" target="/Outputs/timeHistoryOutputz"/>
       <PeriodicEvent name="tsk_p_np1" target="/Tasks/pressureCollection"/>
       <PeriodicEvent name="out_p_np1" target="/Outputs/timeHistoryOutput"/>
+      -->
     </PeriodicEvent>
     <!-- control the timestepping here with forceDt -->
     <PeriodicEvent
       name="solidfluidSolverApplications"
-      forceDt="1e-3"
+      forceDt="1e-4"
       target="/Solvers/acousticelasticSolver"/>
     <!-- FIXME: forceDt hack to satisfy pre-timeloop computation -->
     <SoloEvent
       name="solidSolverApplications"
-      forceDt="1e-3"
+      forceDt="1e-4"
       endTime="0"
       target="/Solvers/elasticSolver"/>
     <SoloEvent
       name="fluidSolverApplications"
-      forceDt="1e-3"
+      forceDt="1e-4"
       endTime="0"
       target="/Solvers/acousticSolver"/>
   </Events>
