@@ -280,7 +280,7 @@ public:
       for( integer ke = 0; ke < numFluxSupportPoints; ++ke )
         pressure_gradient += fluxPointCoef[ke] * m_pres_n[seri[ke]][sesri[ke]][sei[ke]];
 
-      real64 potential_gradient = abs( pressure_gradient );
+      real64 potential_gradient = LvArray::math::abs( pressure_gradient );
 
       real64 grad_depth = 0;
       for( integer ke = 0; ke < numFluxSupportPoints; ++ke )
@@ -293,10 +293,10 @@ public:
       if( m_miscibleDBC )
       {
         directional_coef = 100.0;
-        if( abs( grad_depth ) != 0 )
+        if( LvArray::math::abs( grad_depth ) != 0 )
         {
-          if( 1000.f / abs( grad_depth * grad_depth ) < 100 )
-            directional_coef = 1000.f / abs( grad_depth * grad_depth );
+          if( 1000.f / LvArray::math::abs( grad_depth * grad_depth ) < 100 )
+            directional_coef = 1000.f / LvArray::math::abs( grad_depth * grad_depth );
         }
       }
       else
