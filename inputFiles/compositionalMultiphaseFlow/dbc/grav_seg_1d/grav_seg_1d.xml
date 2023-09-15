@@ -5,7 +5,7 @@
   <Solvers
     gravityVector="{ 0.0, 0.0, -9.81 }">
     <CompositionalMultiphaseFVM
-      name="grav_seg_c1ppu_drain"
+      name="grav_seg_1d"
       logLevel="1"
       discretization="fluidTPFA"
       temperature="300"
@@ -149,7 +149,7 @@
   <Tasks>
      <CompositionalMultiphaseStatistics
       name="compflowstats"
-      flowSolverName="grav_seg_c1ppu_drain"
+      flowSolverName="grav_seg_1d"
       logLevel="1"
       computeCFLNumbers="1"/> 
       <!-- computeRegionStatistics="1" -->
@@ -212,7 +212,7 @@
     <PeriodicEvent
       name="solverApplications"
       maxEventDt="1e5"
-      target="/Solvers/grav_seg_c1ppu_drain"/>
+      target="/Solvers/grav_seg_1d"/>
        
 
     <PeriodicEvent

@@ -4,7 +4,7 @@
   <!-- SPHINX_SOLVER -->
   <Solvers>
     <CompositionalMultiphaseFVM
-      name="buckleyLeverett_benchmark"
+      name="buckleyLeverett_1d"
       logLevel="1"
       discretization="fluidTPFA"
       temperature="300"
@@ -20,9 +20,9 @@
         lineSearchAction="None"
         timeStepDecreaseFactor="1"
         timeStepIncreaseFactor="2"
-        useDBC="1"
+        useDBC="0"
         continuationDBC="1"
-        omegaDBC="1"
+        omegaDBC="0"
         miscibleDBC="0"
         kappaminDBC="1e-20"
         contMultiplierDBC="0.5"/>
@@ -170,7 +170,7 @@
   <Tasks>
      <CompositionalMultiphaseStatistics
       name="compflowstats"
-      flowSolverName="buckleyLeverett_benchmark"
+      flowSolverName="buckleyLeverett_1d"
       logLevel="1"
       computeCFLNumbers="1"/> 
       <!-- computeRegionStatistics="1" -->
@@ -216,7 +216,7 @@
     <PeriodicEvent
       name="solverApplications"
       maxEventDt="160000"  
-      target="/Solvers/buckleyLeverett_benchmark"/>  
+      target="/Solvers/buckleyLeverett_1d"/>  
 
     <PeriodicEvent
       name="statistics"

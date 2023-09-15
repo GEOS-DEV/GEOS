@@ -43,17 +43,22 @@
   </Solvers>
 
   <Events
-    maxTime="2e8">
+    maxTime="2e7">
 
     <PeriodicEvent
       name="solverApplications"
-      maxEventDt="2e8"	
+      maxEventDt="2e7"	
       target="/Solvers/bottom_layer_SPE10"/>
 
     <PeriodicEvent
       name="outputs"
-      timeFrequency="2e8"
-      target="/Outputs/vtkOutput_cont_omega_1"/> 
+      timeFrequency="2e7"
+      target="/Outputs/vtkOutput_cont"/> 
+
+    <PeriodicEvent
+      name="restarts"
+      timeFrequency="2e7" 
+      target="/Outputs/restartOutput"/>   
     
   </Events>
 
@@ -92,7 +97,10 @@
 
   <Outputs>
     <VTK 
-      name="vtkOutput_cont_omega_1"/>
+      name="vtkOutput_cont"/>
+ 
+    <Restart
+      name="restartOutput"/>  
   </Outputs>
 
   
