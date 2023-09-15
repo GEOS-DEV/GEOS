@@ -755,7 +755,14 @@ void ProblemManager::generateMeshLevel( MeshLevel & meshLevel,
   nodeManager.setDomainBoundaryObjects( faceManager );
   edgeManager.setDomainBoundaryObjects( faceManager );
   meshLevel.generateSets();
-
+  
+  /*
+  GEOS_LOG_RANK_0("TEST TESTS: faceToNodes = "<< faceManager.nodeList() );
+  elemManager.forElementSubRegions< CellElementSubRegion >( [=]( CellElementSubRegion & subRegion )
+  {
+      GEOS_LOG_RANK_0("TEST TESTS: elemToNodes = "<< subRegion.nodeList() );
+  } );
+  */
 
   elemManager.forElementSubRegions< ElementSubRegionBase >( [&]( ElementSubRegionBase & subRegion )
   {

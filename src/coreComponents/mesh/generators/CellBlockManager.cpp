@@ -884,7 +884,6 @@ void CellBlockManager::generateHighOrderMaps( localIndex const order,
 
   GEOS_LOG_RANK_0("TEST TEST: numLocalEdges = " << numLocalEdges);
   GEOS_LOG_RANK_0("TEST TEST: numLocalFaces = " << numLocalFaces);
-  GEOS_LOG_RANK_0("TEST TEST: numLocalVertices = " << numLocalVertices);
 
   localIndex numLocalCells = 0;
   this->getCellBlocks().forSubGroups< CellBlock >( [&]( CellBlock & cellBlock )
@@ -900,6 +899,8 @@ void CellBlockManager::generateHighOrderMaps( localIndex const order,
                              + numLocalEdges * numInternalNodesPerEdge
                              + numLocalFaces * numInternalNodesPerFace
                              + numLocalCells * numInternalNodesPerCell;
+
+  GEOS_LOG_RANK_0("TEST TEST: numLocalNodes = " << numLocalNodes );
 
   array1d< globalIndex > const nodeLocalToGlobalSource ( m_nodeLocalToGlobal );
   array2d< localIndex > const edgeToNodesMapSource( m_edgeToNodes );
@@ -1151,11 +1152,14 @@ void CellBlockManager::generateHighOrderMaps( localIndex const order,
                                   globalNodeOffset, glCoords, localNodeOffset ]( localIndex const iter_face)
   {
       localIndex faceVertID[ numVerticesPerFace ];
-      for( localIndex iter_node=0; iter_node<numVerticesPerFace; iter_node++ )
-      {
-        faceVertID[ iter_node ] = faceToNodesMapSource[ iter_face ][ iter_node ];
+      for( localIndex iter_node=0; iter_node<numVerticesPerFace; iter_node++ ) {
         faceToNodeMapNew[ iter_face ][ iter_node ] = faceVertID[ iter_node ];
+        faceVertID[ iter_node ] = faceToNodesMapSource[ iter_face ][ iter_node ];
       }
+
+      if ( std::make_tuple(refPosNew[faceVertID[1]][0], refPosNew[faceVertID[1]][1], refPosNew[faceVertID[1]][2]) >
+           std::make_tuple(refPosNew[faceVertID[3]][0], refPosNew[faceVertID[3]][1], refPosNew[faceVertID[3]][2]) )
+        std::swap( faceVertID[ 1 ], faceVertID[ 3 ] );
 
       for( localIndex iter_edge=0; iter_edge<numEdgesPerFace; iter_edge++ )
         for( localIndex iter_node=0; iter_node<numInternalNodesPerEdge; iter_node++ )
