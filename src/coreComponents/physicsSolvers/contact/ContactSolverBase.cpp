@@ -56,6 +56,9 @@ ContactSolverBase::ContactSolverBase( const string & name,
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Name of the fracture region." );
 
+  this->getWrapper< string >( SolverBase::viewKeyStruct::discretizationString() ).
+    setInputFlag( dataRepository::InputFlags::FALSE );    
+
 }
 
 void ContactSolverBase::postProcessInput()

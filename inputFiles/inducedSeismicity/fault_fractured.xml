@@ -55,7 +55,6 @@
       logLevel="1"
       targetRegions="{ burden, reservoir, Fracture }"
       fractureRegionName="Fracture"
-      discretization="FE1"
       contactRelationName="fractureContact"/>
 
     <!-- SPHINX_MECHANICALSOLVER -->
