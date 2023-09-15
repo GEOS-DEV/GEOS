@@ -23,7 +23,7 @@ If you see a message like
 
 .. code-block:: bash
 
-    [2023-09-15 14:21:25,625][WARNING] Could not load module "collocated_nodes": No module named 'vtkmodules'
+    [1969-07-21 02:56:15,625][WARNING] Could not load module "collocated_nodes": No module named 'vtkmodules'
 
 then most likely ``mesh_doctor`` could not load the ``collocated_nodes`` modules because the ``vtk`` modules was not found.
 Consistently, the documentation for module ``collocated_nodes`` will not be displayed.
