@@ -18,7 +18,7 @@
       isThermal="1">
       <NonlinearSolverParameters
         newtonTol="1.0e-5"
-        newtonMaxIter="10"
+        newtonMaxIter="20"
         maxTimeStepCuts="4"/>
       <LinearSolverParameters
         directParallel="0"

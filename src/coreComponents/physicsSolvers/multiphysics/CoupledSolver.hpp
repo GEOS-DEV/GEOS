@@ -373,6 +373,7 @@ protected:
 
     Timestamp const meshModificationTimestamp = getMeshModificationTimestamp( domain );
 
+    // First call Coupled Solver setup  (important for poromechanics initialization for sequentially coupled)
     implicitStepSetup( time_n, dt, domain );
 
     forEachArgInTuple( m_solvers, [&]( auto & solver, auto )
