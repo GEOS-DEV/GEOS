@@ -30,6 +30,13 @@
     lengthVector="{ -0.4902994003, 0.0000000000, 0.8715540706 }"
     widthVector="{ 0.7951226658, -0.4095126032, 0.4473023297 }"
     dimensions="{ 100, 80 }"/>
+    <!-- <CustomPolarObject
+    name="FracturePlane"
+    normal="{ 0.3569123763, 0.9123044601, 0.2007837838 }"
+    center="{ 100.0000000000, 37.5000000000, 30.0000000000 }"
+    coefficients="{40.0, 10.0}"
+    lengthVector="{ 0.4902994003, 0.0000000000, -0.8715540706 }"
+    widthVector="{ -0.7951226658, 0.4095126032, -0.4473023297 }"/> -->
     <Cylinder
     name="TU_injector"
     firstFaceCenter="{ 107.45351957440417, -0.1, 58.464408823253335 }"
@@ -64,7 +71,14 @@
        name="thermalCond"
        thermalConductivityComponents="{ 3.81, 3.81, 3.81 }"/>  
 
-     <CompressibleSolidParallelPlatesPermeability
+     <!-- <CompressibleSolidParallelPlatesPermeability
+       name="fractureFilling"
+       solidModelName="nullSolid"
+       porosityModelName="fracturePorosity"
+       permeabilityModelName="fracturePerm"
+       solidInternalEnergyModelName="rockInternalEnergy"/> -->
+
+     <CompressibleSolidConstantPermeability
        name="fractureFilling"
        solidModelName="nullSolid"
        porosityModelName="fracturePorosity"
@@ -103,8 +117,11 @@
        referencePressure="0.0"
        compressibility="0.0"/>
 
-     <ParallelPlatesPermeability
-       name="fracturePerm"/>
+     <!-- <ParallelPlatesPermeability
+       name="fracturePerm"/> -->
+     <ConstantPermeability
+       name="fracturePerm"
+       permeabilityComponents="{ 1.0e-16, 1.0e-16, 1.0e-16 }"/>
 
    </Constitutive>
 </Problem>
