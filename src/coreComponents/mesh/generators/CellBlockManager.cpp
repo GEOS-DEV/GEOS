@@ -31,6 +31,7 @@ CellBlockManager::CellBlockManager( string const & name, Group * const parent ):
   this->registerGroup< Group >( viewKeyStruct::cellBlocks() );
   this->registerGroup< Group >( viewKeyStruct::faceBlocks() );
   this->registerGroup< Group >( viewKeyStruct::lineBlocks() );
+  this->registerGroup< Group >( viewKeyStruct::embeddedSurfaceBlocks() );
 }
 
 void CellBlockManager::resize( integer_array const & numElements,

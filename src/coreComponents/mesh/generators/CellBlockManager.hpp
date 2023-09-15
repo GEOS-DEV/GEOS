@@ -24,6 +24,7 @@
 #include "mesh/generators/InternalWellGenerator.hpp"
 #include "mesh/generators/LineBlock.hpp"
 #include "mesh/generators/LineBlockABC.hpp"
+#include "mesh/generators/EmbeddedSurfaceBlock.hpp"
 #include "mesh/generators/CellBlockManagerABC.hpp"
 #include "mesh/generators/PartitionDescriptor.hpp"
 
@@ -80,6 +81,8 @@ public:
 
   ToCellRelation< array2d< localIndex > > getFaceToElements() const override;
 
+  ToCellRelation< ArrayOfArrays< localIndex > > getEmbeddedSurfaceToElements() const override;
+
   array1d< globalIndex > getNodeLocalToGlobal() const override;
 
   /**
@@ -123,6 +126,8 @@ public:
 
   localIndex numFaces() const override;
 
+  localIndex numEmbeddedSurfaces() const override;
+
   using Group::resize;
 
   /**
@@ -160,6 +165,10 @@ public:
 
   Group & getFaceBlocks() override;
 
+  Group & const getEmbeddedSurfaceBlocks() override;
+
+  Group & getEmbeddedSurfaceBlocks() override;
+
   LineBlockABC const & getLineBlock( string name ) const override;
 
   /**
@@ -182,6 +191,12 @@ public:
    * @return A reference to the new line block. The CellBlockManager owns this new instance.
    */
   LineBlock & registerLineBlock( string const & name );
+  /**
+   * @brief Registers and returns an embedded surface block of name @p name.
+   * @param name The name of the created embedded surface block.
+   * @return A reference to the new embedded surface block. The CellBlockManager owns this new instance.
+   */
+  EmbeddedSurfaceBlock & registerEmbeddedSurfaceBlock( string const & name );
   /**
    * @brief Launch kernel function over all the sub-regions
    * @tparam LAMBDA type of the user-provided function
@@ -216,6 +231,9 @@ private:
     /// Line blocks key
     static constexpr char const * lineBlocks()
     { return "lineBlocks"; }
+    /// Embedded Surface blocks key
+    static constexpr char const * embeddedSurfaceBlocks()
+    { return "embeddedSurfaceBlocks"; }
   };
 
   /**
@@ -266,6 +284,8 @@ private:
   ArrayOfArrays< localIndex > m_faceToEdges;
   ToCellRelation< array2d< localIndex > > m_faceToCells;
 
+  ToCellRelation< ArrayOfArrays< localIndex > > m_embeddedSurfToCells;
+
   array1d< globalIndex > m_nodeLocalToGlobal;
 
   std::map< string, SortedArray< localIndex > > m_nodeSets;
@@ -275,6 +295,7 @@ private:
   localIndex m_numNodes;
   localIndex m_numFaces;
   localIndex m_numEdges;
+  localIndex m_numEmbeddedSurfElem;
 };
 
 }
