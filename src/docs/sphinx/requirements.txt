@@ -9,3 +9,5 @@ pandas
 sphinxcontrib-plantuml
 sphinx-argparse
 pydata-sphinx-theme
+# Installing the mesh_doctor requirements to be able to load all the modules and run the help.
+-r ../../coreComponents/python/modules/geosx_mesh_doctor/requirements.txt

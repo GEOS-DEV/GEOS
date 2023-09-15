@@ -51,3 +51,4 @@ Packages
 
     timehistory
 
+    mesh_doctor
