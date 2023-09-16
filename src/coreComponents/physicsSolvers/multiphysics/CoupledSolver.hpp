@@ -674,7 +674,7 @@ protected:
   real64 dotTwoVecs( const std::vector< real64 > & vec1,
                      const std::vector< real64 > & vec2 )
   {
-    assert( vec1.size() == vec2.size );
+    GEOS_ASSERT( vec1.size() == vec2.size() );
     real64 result = 0;
     for( size_t i = 0; i < vec1.size(); i++ )
     {
