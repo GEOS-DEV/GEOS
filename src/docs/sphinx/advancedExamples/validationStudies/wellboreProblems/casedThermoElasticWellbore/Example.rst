@@ -9,7 +9,7 @@ Cased ThermoElastic Wellbore Problem
 Problem description
 ------------------------------------------------------------------
 
-This example uses the thermal option of the ``SinglePhasePoromechanics`` solver to handle a cased wellbore problem subjected to a uniform temperature change on the inner surface of the casing. The completed wellbore is composed of a steel casing, a cement sheath and rock formation. Isotropic linear thermoelastic behavior is assumed for all the three materials. No separation or thermal barrier is allowed for the casing-cement and cement-rock contact interfaces. Plane strain condition is also assumed.
+This example uses the thermal option of the ``SinglePhasePoromechanics`` solver to handle a cased wellbore problem subject to a uniform temperature change on the inner surface of the casing. The wellbore is composed of a steel casing, a cement sheath and rock formation. Isotropic linear thermoelastic behavior is assumed for all three materials. No separation or thermal barrier is allowed for the casing-cement and cement-rock contact interfaces. Plane strain condition is assumed.
 
 .. _problemSketchCasedThermalElasticWellboreFig:
 .. figure:: sketch.png
@@ -25,7 +25,7 @@ Solution to this axisymmetric problem can be obtained in the cylindrical coordin
 **Input file**
 
 This benchmark example uses no external input files and everything required is
-contained within two GEOS xml files that are located at:
+contained within two GEOS XML files located at:
 
 .. code-block:: console
 
@@ -96,14 +96,14 @@ and
   :start-after: <!-- SPHINX_HeatCapacityProperties -->
   :end-before: <!-- SPHINX_HeatCapacityPropertiesEnd -->
 
-An ultra low permeability is defined for the three layers to simulate a thermoelastic problem without the impact of fluid flow.
+An ultra-low permeability is defined for the three layers to simulate a thermoelastic problem without the impact of fluid flow.
 
 .. literalinclude:: ../../../../../../../inputFiles/wellbore/CasedThermoElasticWellbore_base.xml
   :language: xml
   :start-after: <!-- SPHINX_PermeabilityProperties -->
   :end-before: <!-- SPHINX_PermeabilityPropertiesEnd -->
 
-Also, a negligible volumetric heat capacity is defined for fluid to completely ignore the thermal convection effect such that only thermal transfer via the diffusion phenomenon is considered.
+Also, a negligible volumetric heat capacity is defined for the fluid to completely ignore the thermal convection effect such that only thermal transfers via the diffusion phenomenon are considered.
 
 .. literalinclude:: ../../../../../../../inputFiles/wellbore/CasedThermoElasticWellbore_base.xml
   :language: xml
