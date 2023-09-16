@@ -83,6 +83,21 @@ struct Helper< CellUtilities::ReferenceCell::Cube,//HexahedronCell,
       Jinv.leftMultiplyTranspose( dNdXi.data, dNdX[i] );
     }
   }
+
+  GEOS_HOST_DEVICE
+  static void getGradient( real64 const (&Xiq)[3],
+                           typename HexahedronIJKCell::JacobianType const & Jinv,
+                           real64 (&dNdX)[8][3] )
+  {
+    for( int i = 0; i < 8; ++i )
+    {
+      // ... ... Parent space
+      Gradient dNdXi = getParentGradient( i, Xiq );
+
+      // ... ... Physical space
+      Jinv.leftMultiplyTranspose( dNdXi.data, dNdX[i] );
+    }
+  }
 };
 
 template<>

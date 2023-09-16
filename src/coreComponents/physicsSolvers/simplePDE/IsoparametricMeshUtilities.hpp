@@ -52,16 +52,49 @@ protected:
 };
 
 template< typename ARRAY_VIEW_TYPE  >
+class IJKMesh
+{
+public:
+  using CellIndexType = localIndex; // Should be a triple index 
+  using CellType = HexahedronIJKCell;
+
+  IJKMesh( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X,
+           ARRAY_VIEW_TYPE const elementToNodes )
+   : m_h( 0.1 )
+  {
+
+  }
+
+  // 
+  HexahedronIJKCell getCell( CellIndexType k ) const
+  {
+    return HexahedronIJKCell( this->m_h );
+  }
+  
+  // localIndex numCells() const
+  // {
+  //   return m_elementToNodes.size( 0 );
+  // }
+
+protected:
+  real64 m_h;
+  // traits::ViewTypeConst< typename SUBREGION_TYPE::NodeMapType::base_type > const m_elementToNodes;
+  ARRAY_VIEW_TYPE const m_elementToNodes;
+};
+
+
+template< typename ARRAY_VIEW_TYPE  >
 class isoparametricHexahedronMesh : public isoparametricMesh< ARRAY_VIEW_TYPE >
 {
 public :
   // using const_iterator = CellIterator< HexadronCell >;
   //...
- using CellIndexType = typename isoparametricMesh< ARRAY_VIEW_TYPE >::CellIndexType;
- using CellType = HexahedronCell;
+  using CellIndexType = typename isoparametricMesh< ARRAY_VIEW_TYPE >::CellIndexType;
+  
+  using CellType = HexahedronCell;
+  constexpr static int numCellVertex = HexahedronCell::numVertex;
 
   // ... 
-  constexpr static int numCellVertex = HexahedronCell::numVertex;
 
   // ...
   // constructor
@@ -90,33 +123,6 @@ public :
   // localInde{x numCells() const;
 };
 
-// class ijkMesh
-// {
-  // ...
-  // constexpr static nVertex = 8;
-  // ...
-  // constructor
-// 
-  
-  // HexadronIJKCell getCell( localIndex k )
-  // {
-    // return ...;
-  // }
-// private:
-  // ArrayOfArrays< real64 const > const m_h;
-// 
-// };
-
-// class isoparametricWedgeMesh : public isoparametricMesh
-// {
-//   // ... 
-//   constexpr static nVertex = 6;
-//   // ...
-//   WedgeCell getCell( localIndex k )
-//   {
-//     return ...;
-//   }
-// };
 
 template< typename ARRAY_VIEW_TYPE  >
 class isoparametricWedgeMesh : public isoparametricMesh< ARRAY_VIEW_TYPE >
@@ -285,11 +291,21 @@ struct NumVertexToSubregionMesh< ARRAY_VIEW_TYPE, 6 >
 };
 // };
 
-template< typename ARRAY_VIEW_TYPE >
-struct NumVertexToSubregionMesh< ARRAY_VIEW_TYPE, 8 >
-{
-  using type = isoparametricHexahedronMesh< ARRAY_VIEW_TYPE >;
-};
+#define USE_IJK_MESH
+
+#ifdef USE_IJK_MESH
+  template< typename ARRAY_VIEW_TYPE >
+  struct NumVertexToSubregionMesh< ARRAY_VIEW_TYPE, 8 >
+  {
+    using type = IJKMesh< ARRAY_VIEW_TYPE >;
+  };
+#else
+  template< typename ARRAY_VIEW_TYPE >
+  struct NumVertexToSubregionMesh< ARRAY_VIEW_TYPE, 8 >
+  {
+    using type = isoparametricHexahedronMesh< ARRAY_VIEW_TYPE >;
+  };
+#endif
 
 } // namespace geos
 

@@ -27,6 +27,51 @@ namespace geos
 
 //namespace cells TODO?
 
+struct  Scalar3x3Tensor
+{
+  real64 data;
+
+  void leftMultiplyTranspose( real64 const (&src)[3],
+                              real64 (&dst)[3]  ) const
+  {
+      dst[0] = data * src[0];
+      dst[1] = data * src[1];
+      dst[2] = data * src[2];
+  };
+
+  real64 inPlaceInvert()
+  {
+    data = 1. / data;
+    real64 const det = 3. * data;
+    return det;
+  };
+
+};
+
+
+struct  Diagonal3x3Tensor
+{
+  real64 data[3]{};
+
+  void leftMultiplyTranspose( real64 const (&src)[3],
+                              real64 (&dst)[3]  ) const
+  {
+      dst[0] = data[0] * src[0];
+      dst[1] = data[1] * src[1];
+      dst[2] = data[2] * src[2];
+  };
+
+  real64 inPlaceInvert()
+  {
+    data[0] = 1. / data[0];
+    data[1] = 1. / data[1];
+    data[2] = 1. / data[2];
+    real64 const det = data[0] * data[1] * data[2];
+    return det;
+  };
+
+};
+
 struct Dense3x3Tensor
 {
   real64 data[3][3]{{}};
@@ -189,33 +234,37 @@ private:
 };
 
 
-// class HexadronIJKCell
-// {
-// public:
-  // constexpr static int numVertex = 8;
-// 
-  // using JacobianType = real64[3][3];
-// 
-  // GEOS_HOST_DEVICE HexadronIJKCell( real64[3] h )
-    // :
-    // m_h( h )
-  // {
-// 
-  // }
-// 
-  // GEOS_HOST_DEVICE JacobianType getJacobian( real64[3] refPointCoords )
-  // {
-    // return 0.5 * m_h;
-  // }
-// 
-  // GEOS_HOST_DEVICE real64[3] mapping( real64[3] refPointCoords ) const
-  // {
-// 
-  // }
-// 
-// private:
-  // real64[3] m_h;
-// };
+class HexahedronIJKCell
+{
+public:
+  constexpr static int numLength = 1;
+
+  using JacobianType = Scalar3x3Tensor;
+
+  GEOS_HOST_DEVICE
+  HexahedronIJKCell( real64 const h )
+  {
+    m_h = h;
+  }
+
+  GEOS_HOST_DEVICE
+  inline
+  constexpr static CellUtilities::ReferenceCell getReferenceCellType()
+  {
+    return CellUtilities::ReferenceCell::Cube;
+  }
+
+  GEOS_HOST_DEVICE JacobianType getJacobian( real64 const refPointCoords[3] ) const
+  {
+    GEOS_UNUSED_VAR( refPointCoords );
+    JacobianType J;
+    J.data = 0.125 * m_h;
+    return J;
+  }
+
+private:
+  real64 m_h;
+};
 
 // ***************************************************
 

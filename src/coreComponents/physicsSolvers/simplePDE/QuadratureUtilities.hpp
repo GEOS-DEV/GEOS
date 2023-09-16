@@ -42,14 +42,14 @@ struct Data
   real64 Xiq[3];
 };
 
-template< typename CELL_TYPE,
+template< CellUtilities::ReferenceCell REFERENCE_CELL_TYPE,
           Rule RULE,
           int N_INTEGRATION_POINTS >
 struct Helper
 {};
 
 template<>
-struct Helper< HexahedronCell,
+struct Helper< CellUtilities::ReferenceCell::Cube,
                Rule::Gauss,
                8 >
 {
@@ -71,7 +71,7 @@ struct Helper< HexahedronCell,
 };
 
 template<>
-struct Helper< WedgeCell,
+struct Helper< CellUtilities::ReferenceCell::Wedge,
                Rule::Gauss,
                6 >
 {
@@ -112,7 +112,7 @@ struct Helper< WedgeCell,
 };
 
 template<>
-struct Helper< TetrahedronCell,
+struct Helper< CellUtilities::ReferenceCell::Tetrahedron,
                Rule::Gauss,
                1 >
 {
@@ -131,7 +131,7 @@ struct Helper< TetrahedronCell,
 };
 
 template<>
-struct Helper< PyramidCell,
+struct Helper< CellUtilities::ReferenceCell::Pyramid,
                Rule::Gauss,
                5 >
 {
@@ -204,7 +204,7 @@ template< typename CELL_TYPE,
 GEOS_HOST_DEVICE
 static Data getData( int quadraturePointIndex )
 {
-  return Helper< CELL_TYPE, RULE_TYPE, N_INTEGRATION_POINTS >::getData( quadraturePointIndex );
+  return Helper< CELL_TYPE::getReferenceCellType(), RULE_TYPE, N_INTEGRATION_POINTS >::getData( quadraturePointIndex );
 }
 
 /// Declare strings associated with enumeration values.
