@@ -15,7 +15,7 @@ set( gtest_geosx_tests
      testRachfordRice.cpp
    )
 
-set( dependencyList gtest constitutive ${parallelDeps} )
+set( dependencyList blas lapack gtest constitutive ${parallelDeps} )
 
 if( ENABLE_CUDA_NVTOOLSEXT )
   set( dependencyList ${dependencyList} CUDA::nvToolsExt )

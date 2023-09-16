@@ -8,7 +8,7 @@ set( mesh_tests
      testGeometricObjects.cpp
    )
 
-set( dependencyList gtest mesh ${parallelDeps} )
+set( dependencyList blas lapack gtest mesh ${parallelDeps} )
 
 #
 # Add gtest C++ based tests
