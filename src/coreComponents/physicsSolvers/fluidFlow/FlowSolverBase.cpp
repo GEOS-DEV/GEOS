@@ -63,7 +63,7 @@ void updatePorosityAndPermeabilityFromPressureAndTemperature( POROUSWRAPPER_TYPE
                                                            temperature[k],
                                                            temperature[k], // will not be used
                                                            temperature_n[k] ); // will not be used
-                                                          //  1.0 );
+      //  1.0 );
     }
   } );
 }
@@ -77,7 +77,7 @@ void updatePorosityAndPermeabilityFromPressureAndTemperature( POROUSWRAPPER_TYPE
                                                               arrayView1d< real64 const > const & temperature,
                                                               arrayView1d< real64 const > const & temperature_k,
                                                               arrayView1d< real64 const > const & temperature_n )
-                                                              // real64 const omega )
+// real64 const omega )
 {
   forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_DEVICE ( localIndex const k )
   {
@@ -91,7 +91,7 @@ void updatePorosityAndPermeabilityFromPressureAndTemperature( POROUSWRAPPER_TYPE
                                                            temperature[k],
                                                            temperature_k[k],
                                                            temperature_n[k] );
-                                                          //  omega );
+      //  omega );
     }
   } );
 }
@@ -486,7 +486,7 @@ void FlowSolverBase::updatePorosityAndPermeability( CellElementSubRegion & subRe
       updatePorosityAndPermeabilityFromPressureAndTemperature( porousWrapper, subRegion,
                                                                pressure, pressure_k, pressure_n,
                                                                temperature, temperature_k, temperature_n );
-                                                              //  omega );
+      //  omega );
     }
     else // for fully implicit simulations
     {

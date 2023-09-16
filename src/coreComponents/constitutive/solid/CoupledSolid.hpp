@@ -89,12 +89,12 @@ public:
                                                       real64 const & temperature,
                                                       real64 const & temperature_k,
                                                       real64 const & temperature_n ) const
-                                                      // real64 const omega ) const
+  // real64 const omega ) const
   {
     GEOS_UNUSED_VAR( k, q,
                      pressure, pressure_k, pressure_n,
                      temperature, temperature_k, temperature_n );
-                    //  omega );
+    //  omega );
   }
 
   GEOS_HOST_DEVICE

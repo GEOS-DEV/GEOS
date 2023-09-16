@@ -54,7 +54,7 @@ public:
 
     this->getWrapper< string >( SolverBase::viewKeyStruct::discretizationString() ).
       setInputFlag( dataRepository::InputFlags::FALSE );
-    
+
     // rm laterr
     // m_disp( nodeManager.getField< fields::solidMechanics::totalDisplacement >() );
   }
@@ -397,7 +397,7 @@ protected:
     integer & iter = solverParams.m_numNewtonIterations;
     iter = 0;
     bool isConverged = false;
-    
+
     /// Sequential coupling loop
     while( iter < solverParams.m_maxIterNewton )
     {
@@ -430,12 +430,12 @@ protected:
 
         mapSolutionBetweenSolvers( domain, idx() );
 
-        if (idx() == 1)
+        if( idx() == 1 )
         {
           // Nonlinear Acceleration (Aitken): record unaccelerated averageMeanTotalStressIncrement
           afterGeomechanicsInnerLoop( domain );
         }
-        
+
         if( dtReturnTemporary < dtReturn )
         {
           iter = 0;
@@ -447,7 +447,7 @@ protected:
       isConverged = checkSequentialConvergence( iter,
                                                 time_n,
                                                 dtReturn,
-                                                domain );                                          
+                                                domain );
       if( isConverged )
       {
         // Save Time step statistics for the subsolvers
@@ -538,7 +538,7 @@ protected:
 
         // finally, we perform the convergence check on the multiphysics residual
         residualNorm = sqrt( residualNorm );
-        GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "    ( R ) = ( {:4.2e} ) ; ", residualNorm ) );   
+        GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "    ( R ) = ( {:4.2e} ) ; ", residualNorm ) );
 
         isConverged = ( residualNorm < params.m_newtonTol );
 
@@ -597,13 +597,13 @@ protected:
   /* Implementation of Nonlinear Acceleration (Aitken) of averageMeanTotalStressIncrement */
 
   void recordAverageMeanTotalStressIncrement( DomainPartition & domain,
-                                              std::vector<real64> & s )
+                                              std::vector< real64 > & s )
   {
     // s denotes averageMeanTotalStressIncrement
     s.resize( 0 );
     forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
-                                                                MeshLevel & mesh,
-                                                                arrayView1d< string const > const & regionNames )
+                                                                 MeshLevel & mesh,
+                                                                 arrayView1d< string const > const & regionNames )
     {
       mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                             auto & subRegion )
@@ -613,7 +613,7 @@ protected:
         geos::constitutive::CoupledSolidBase & solid = getConstitutiveModel< geos::constitutive::CoupledSolidBase >( subRegion, solidName );
 
         arrayView1d< const real64 > const & averageMeanTotalStressIncrement_k = solid.getAverageMeanTotalStressIncrement_k();
-        for (localIndex k = 0; k < localIndex( averageMeanTotalStressIncrement_k.size() ); k++)
+        for( localIndex k = 0; k < localIndex( averageMeanTotalStressIncrement_k.size() ); k++ )
         {
           s.push_back( averageMeanTotalStressIncrement_k[ k ] );
         }
@@ -622,23 +622,23 @@ protected:
   }
 
   void applyAcceleratedAverageMeanTotalStressIncrement( DomainPartition & domain,
-                                                        std::vector<real64> & s )
+                                                        std::vector< real64 > & s )
   {
     // s denotes averageMeanTotalStressIncrement
     integer i = 0;
     forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
-                                                                MeshLevel & mesh,
-                                                                arrayView1d< string const > const & regionNames )
+                                                                 MeshLevel & mesh,
+                                                                 arrayView1d< string const > const & regionNames )
     {
       mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                             auto & subRegion )
       {
         // get the solid model (to access stress increment)
         string const solidName = subRegion.template getReference< string >( "porousMaterialNames" );
-        geos::constitutive::CoupledSolidBase & solid = getConstitutiveModel< geos::constitutive::CoupledSolidBase >( subRegion, solidName );        
-        auto& porosityModel = dynamic_cast<geos::constitutive::BiotPorosity const &>( solid.getBasePorosityModel() );     
+        geos::constitutive::CoupledSolidBase & solid = getConstitutiveModel< geos::constitutive::CoupledSolidBase >( subRegion, solidName );
+        auto & porosityModel = dynamic_cast< geos::constitutive::BiotPorosity const & >( solid.getBasePorosityModel() );
         arrayView1d< real64 > const & averageMeanTotalStressIncrement_k = solid.getAverageMeanTotalStressIncrement_k();
-        for (localIndex k = 0; k < localIndex( averageMeanTotalStressIncrement_k.size() ); k++)
+        for( localIndex k = 0; k < localIndex( averageMeanTotalStressIncrement_k.size() ); k++ )
         {
           porosityModel.updateAverageMeanTotalStressIncrement( k, s[ i ] );
           i++;
@@ -647,82 +647,82 @@ protected:
     } );
   }
 
-  std::vector<real64> addTwoVecs( const std::vector<real64> & vec1,  
-                                  const std::vector<real64> & vec2,
-                                  const real64 sign)
+  std::vector< real64 > addTwoVecs( const std::vector< real64 > & vec1,
+                                    const std::vector< real64 > & vec2,
+                                    const real64 sign )
   {
     assert( vec1.size() == vec2.size() );
-    std::vector<real64> result;
-    for ( size_t i = 0; i < vec1.size(); i++ )
+    std::vector< real64 > result;
+    for( size_t i = 0; i < vec1.size(); i++ )
     {
       result.push_back( vec1[ i ] + sign * vec2[ i ] );
     }
     return result;
   }
 
-  std::vector<real64> scalarMultiplyAVec( const std::vector<real64> & vec,
-                                          const real64 scalarMult)
+  std::vector< real64 > scalarMultiplyAVec( const std::vector< real64 > & vec,
+                                            const real64 scalarMult )
   {
-    std::vector<real64> result;
-    for ( size_t i = 0; i < vec.size(); i++ )
+    std::vector< real64 > result;
+    for( size_t i = 0; i < vec.size(); i++ )
     {
-      result.push_back( scalarMult * vec[ i ]);
+      result.push_back( scalarMult * vec[ i ] );
     }
     return result;
   }
 
-  real64 dotTwoVecs( const std::vector<real64> & vec1,
-                     const std::vector<real64> & vec2 )
+  real64 dotTwoVecs( const std::vector< real64 > & vec1,
+                     const std::vector< real64 > & vec2 )
   {
     assert( vec1.size() == vec2.size );
     real64 result = 0;
-    for ( size_t i = 0; i < vec1.size(); i++ )
+    for( size_t i = 0; i < vec1.size(); i++ )
     {
       result += vec1[ i ] * vec2[ i ];
     }
     return result;
   }
 
-  real64 computeAitkenRelaxationFactor( const std::vector<real64> & s0,
-                                        const std::vector<real64> & s1, 
-                                        const std::vector<real64> & s1_tilde,
-                                        const std::vector<real64> & s2_tilde, 
+  real64 computeAitkenRelaxationFactor( const std::vector< real64 > & s0,
+                                        const std::vector< real64 > & s1,
+                                        const std::vector< real64 > & s1_tilde,
+                                        const std::vector< real64 > & s2_tilde,
                                         const real64 omega0 )
-  { 
-    std::vector<real64> r1 = addTwoVecs( s1_tilde, s0, -1.0 );
-    std::vector<real64> r2 = addTwoVecs( s2_tilde, s1, -1.0 );
+  {
+    std::vector< real64 > r1 = addTwoVecs( s1_tilde, s0, -1.0 );
+    std::vector< real64 > r2 = addTwoVecs( s2_tilde, s1, -1.0 );
 
     // diff = r2 - r1
-    std::vector<real64> diff = addTwoVecs( r2, r1, -1.0 );
+    std::vector< real64 > diff = addTwoVecs( r2, r1, -1.0 );
 
     real64 denom = dotTwoVecs( diff, diff );
     real64 numer = dotTwoVecs( r1, diff );
 
     real64 omega1 = 1;
-    if ( !isZero( denom ) )
+    if( !isZero( denom ) )
     {
       omega1 = -1.0 * omega0 * numer / denom;
     }
     return omega1;
   }
 
-  std::vector<real64> computeUpdate( const std::vector<real64> & s1,
-                                     const std::vector<real64> & s2_tilde, 
-                                     const real64 omega1 )
+  std::vector< real64 > computeUpdate( const std::vector< real64 > & s1,
+                                       const std::vector< real64 > & s2_tilde,
+                                       const real64 omega1 )
   {
-    return addTwoVecs( scalarMultiplyAVec( s1, 1.0 - omega1 ), 
-                       scalarMultiplyAVec( s2_tilde, omega1 ), 
+    return addTwoVecs( scalarMultiplyAVec( s1, 1.0 - omega1 ),
+                       scalarMultiplyAVec( s2_tilde, omega1 ),
                        1.0 );
   }
 
   void beforeOuterIter( integer const & iter,
                         DomainPartition & domain )
   {
-    if ( iter == 0)
+    if( iter == 0 )
     {
       recordAverageMeanTotalStressIncrement( domain, m_s1 );
     }
-    else 
+    else
     {
       m_s0 = m_s1;
       m_s1 = m_s2;
@@ -739,12 +739,12 @@ protected:
   void afterOuterIter( integer const & iter,
                        DomainPartition & domain )
   {
-    if ( iter == 0)
+    if( iter == 0 )
     {
       m_s2 = m_s2_tilde;
       m_omega1 = 1.0;
     }
-    else 
+    else
     {
       m_omega1 = computeAitkenRelaxationFactor( m_s0, m_s1, m_s1_tilde, m_s2_tilde, m_omega0 );
       m_s2 = computeUpdate( m_s1, m_s2_tilde, m_omega1 );
@@ -761,11 +761,11 @@ protected:
   std::array< string, sizeof...( SOLVERS ) > m_names;
 
   /// member variables needed for Nonlinear Acceleration (Aitken)
-  std::vector<real64> m_s0;
-  std::vector<real64> m_s1;
-  std::vector<real64> m_s1_tilde;
-  std::vector<real64> m_s2;
-  std::vector<real64> m_s2_tilde;
+  std::vector< real64 > m_s0;
+  std::vector< real64 > m_s1;
+  std::vector< real64 > m_s1_tilde;
+  std::vector< real64 > m_s2;
+  std::vector< real64 > m_s2_tilde;
   real64 m_omega0;
   real64 m_omega1;
 };

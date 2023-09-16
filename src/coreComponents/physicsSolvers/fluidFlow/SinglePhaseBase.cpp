@@ -700,7 +700,8 @@ void SinglePhaseBase::implicitStepSetup( real64 const & GEOS_UNUSED_PARAM( time_
 //                                                                   ElementSubRegionBase & subRegion )
 //     {
 //       arrayView1d< real64 const > const dVol = subRegion.getField< fields::flow::deltaVolume >();
-//       arrayView1d< real64 > const vol = subRegion.getReference< array1d< real64 > >( CellElementSubRegion::viewKeyStruct::elementVolumeString() );
+//       arrayView1d< real64 > const vol = subRegion.getReference< array1d< real64 > >(
+// CellElementSubRegion::viewKeyStruct::elementVolumeString() );
 
 //       forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const ei )
 //       {
@@ -708,11 +709,13 @@ void SinglePhaseBase::implicitStepSetup( real64 const & GEOS_UNUSED_PARAM( time_
 //       } );
 
 //       SingleFluidBase const & fluid =
-//         getConstitutiveModel< SingleFluidBase >( subRegion, subRegion.template getReference< string >( viewKeyStruct::fluidNamesString() ) );
+//         getConstitutiveModel< SingleFluidBase >( subRegion, subRegion.template getReference< string >( viewKeyStruct::fluidNamesString()
+// ) );
 //       fluid.saveConvergedState();
 
 //       CoupledSolidBase const & porousSolid =
-//         getConstitutiveModel< CoupledSolidBase >( subRegion, subRegion.template getReference< string >( viewKeyStruct::solidNamesString() ) );
+//         getConstitutiveModel< CoupledSolidBase >( subRegion, subRegion.template getReference< string >( viewKeyStruct::solidNamesString()
+// ) );
 //       if( m_keepFlowVariablesConstantDuringInitStep )
 //       {
 //         porousSolid.ignoreConvergedState(); // newPorosity <- porosity_n

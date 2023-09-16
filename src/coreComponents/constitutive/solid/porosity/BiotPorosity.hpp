@@ -56,7 +56,7 @@ public:
                        arrayView1d< real64 > const & biotCoefficient,
                        arrayView1d< real64 > const & thermalExpansionCoefficient,
                        arrayView2d< real64 > const & meanTotalStressIncrement_k,
-                       arrayView1d< real64  > const & averageMeanTotalStressIncrement_k,
+                       arrayView1d< real64 > const & averageMeanTotalStressIncrement_k,
                        arrayView1d< real64 > const & bulkModulus,
                        real64 const & grainBulkModulus ): PorosityBaseUpdates( newPorosity,
                                                                                porosity_n,
@@ -127,13 +127,13 @@ public:
 
     // total stress formulation for porosity update
     porosity = porosity_n
-              + biotCoefficient * averageMeanTotalStressIncrement_k / bulkModulus // change due to stress increment (at the previous
-                                                                                // sequential iteration)
-              + biotSkeletonModulusInverse * deltaPressureFromBeginningOfTimeStep // change due to pressure increment
-              - porosityThermalExpansion * deltaTemperatureFromBeginningOfTimeStep; // change due to temperature increment
+               + biotCoefficient * averageMeanTotalStressIncrement_k / bulkModulus // change due to stress increment (at the previous
+                                                                                   // sequential iteration)
+               + biotSkeletonModulusInverse * deltaPressureFromBeginningOfTimeStep // change due to pressure increment
+               - porosityThermalExpansion * deltaTemperatureFromBeginningOfTimeStep; // change due to temperature increment
     dPorosity_dPressure = biotSkeletonModulusInverse;
     dPorosity_dTemperature = -porosityThermalExpansion;
-  
+
     if( !isZero( averageMeanTotalStressIncrement_k ) ) // TODO: find a better way to disable this at the first flow iteration
     {
       porosity += fixedStressPressureCoefficient * deltaPressureFromBeginningOfTimeStep // fixed-stress pressure term
@@ -152,7 +152,7 @@ public:
                                                  real64 const & temperature,
                                                  real64 const & temperature_k,
                                                  real64 const & temperature_n ) const override final
-                                                //  real64 omega ) const override final
+  //  real64 omega ) const override final
   {
     real64 const deltaPressureFromBeginningOfTimeStep = pressure - pressure_n;
     real64 const deltaTemperatureFromBeginningOfTimeStep = temperature - temperature_n;

@@ -118,8 +118,8 @@ void SolverStatistics::outputStatistics() const
   bool const printOuterLoopIterations = !(m_numSuccessfulOuterLoopIterations == 0 && m_numDiscardedOuterLoopIterations == 0);
   bool const printIterations = !(m_numSuccessfulNonlinearIterations == 0 && m_numDiscardedNonlinearIterations == 0);
   bool const printLinearIterations = !(m_numSuccessfulLinearIterations == 0 && m_numDiscardedLinearIterations == 0);
-  
-  
+
+
   auto const logStat = [&]( auto const name, auto const value )
   {
     GEOS_LOG_RANK_0( GEOS_FMT( "{}, number of {}: {}",
@@ -128,11 +128,11 @@ void SolverStatistics::outputStatistics() const
 
   // TODO: the print logic is really convoluted to accomodate the needs of the different solvers, needs simplification
 
-  if ( m_numTimeSteps > 0 )
+  if( m_numTimeSteps > 0 )
   {
     logStat( "time steps", m_numTimeSteps );
   }
-  
+
   if( printIterations )
   {
     if( printOuterLoopIterations )
