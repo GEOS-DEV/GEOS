@@ -827,6 +827,7 @@ bool SolverBase::solveNonlinearSystem( real64 const & time_n,
     // get residual norm
     real64 residualNorm = calculateResidualNorm( time_n, stepDt, domain, m_dofManager, m_rhs.values() );
 
+
     GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "    ( R ) = ( {:4.2e} ) ; ", residualNorm ) );
     if( newtonIter > 0 )
     {
@@ -951,6 +952,7 @@ bool SolverBase::solveNonlinearSystem( real64 const & time_n,
 
     lastResidual = residualNorm;
   }
+
   return isNewtonConverged;
 }
 
