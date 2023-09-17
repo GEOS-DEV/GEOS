@@ -137,7 +137,6 @@ public:
                                                  real64 const & temperature,
                                                  real64 const & temperature_k,
                                                  real64 const & temperature_n ) const
-  //  real64 omega ) const
   {
     GEOS_UNUSED_VAR( k, q, pressure, pressure_k, pressure_n, temperature, temperature_k, temperature_n ); //, omega );
     GEOS_ERROR( "updateFromPressureAndTemperature is not implemented for porosityBase." );
