@@ -75,7 +75,6 @@ public:
                                                  real64 const & temperature,
                                                  real64 const & GEOS_UNUSED_PARAM( temperature_k ),
                                                  real64 const & GEOS_UNUSED_PARAM( temperature_n ) ) const override final
-  //  real64 const GEOS_UNUSED_PARAM( omega ) ) const override final
   {
     computePorosity( pressure,
                      temperature,
