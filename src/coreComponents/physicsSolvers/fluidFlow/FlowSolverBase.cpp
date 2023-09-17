@@ -16,8 +16,6 @@
  * @file FlowSolverBase.cpp
  */
 
-#include <fstream>
-
 #include "FlowSolverBase.hpp"
 
 #include "constitutive/ConstitutivePassThru.hpp"
@@ -38,8 +36,6 @@
 
 namespace geos
 {
-
-// static int subRegion_i = -1;
 
 using namespace dataRepository;
 using namespace constitutive;
@@ -63,7 +59,6 @@ void updatePorosityAndPermeabilityFromPressureAndTemperature( POROUSWRAPPER_TYPE
                                                            temperature[k],
                                                            temperature[k], // will not be used
                                                            temperature_n[k] ); // will not be used
-      //  1.0 );
     }
   } );
 }
@@ -77,7 +72,6 @@ void updatePorosityAndPermeabilityFromPressureAndTemperature( POROUSWRAPPER_TYPE
                                                               arrayView1d< real64 const > const & temperature,
                                                               arrayView1d< real64 const > const & temperature_k,
                                                               arrayView1d< real64 const > const & temperature_n )
-// real64 const omega )
 {
   forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_DEVICE ( localIndex const k )
   {
@@ -91,7 +85,6 @@ void updatePorosityAndPermeabilityFromPressureAndTemperature( POROUSWRAPPER_TYPE
                                                            temperature[k],
                                                            temperature_k[k],
                                                            temperature_n[k] );
-      //  omega );
     }
   } );
 }
@@ -462,8 +455,6 @@ void FlowSolverBase::updatePorosityAndPermeability( CellElementSubRegion & subRe
   arrayView1d< real64 const > const & temperature = subRegion.getField< fields::flow::temperature >();
   arrayView1d< real64 const > const & temperature_n = subRegion.getField< fields::flow::temperature_n >();
 
-  // real64 omega = 1.0;
-
   string const & solidName = subRegion.getReference< string >( viewKeyStruct::solidNamesString() );
   CoupledSolidBase & porousSolid = subRegion.template getConstitutiveModel< CoupledSolidBase >( solidName );
 
@@ -486,7 +477,6 @@ void FlowSolverBase::updatePorosityAndPermeability( CellElementSubRegion & subRe
       updatePorosityAndPermeabilityFromPressureAndTemperature( porousWrapper, subRegion,
                                                                pressure, pressure_k, pressure_n,
                                                                temperature, temperature_k, temperature_n );
-      //  omega );
     }
     else // for fully implicit simulations
     {
