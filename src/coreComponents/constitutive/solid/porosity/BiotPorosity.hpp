@@ -26,9 +26,6 @@ namespace geos
 {
 namespace constitutive
 {
-// static std::vector<double> accTtlStrs;
-// static std::vector<double> accEffStrs;
-// static real64 omega_poro = 1.0;
 
 class BiotPorosityUpdates : public PorosityBaseUpdates
 {
@@ -152,7 +149,6 @@ public:
                                                  real64 const & temperature,
                                                  real64 const & temperature_k,
                                                  real64 const & temperature_n ) const override final
-  //  real64 omega ) const override final
   {
     real64 const deltaPressureFromBeginningOfTimeStep = pressure - pressure_n;
     real64 const deltaTemperatureFromBeginningOfTimeStep = temperature - temperature_n;
