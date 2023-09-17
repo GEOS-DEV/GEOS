@@ -19,7 +19,7 @@
 #ifndef GEOS_PHYSICSSOLVERS_FLUIDFLOW_DISSIPATIONCOMPOSITIONALMULTIPHASEFVMKERNELS_HPP
 #define GEOS_PHYSICSSOLVERS_FLUIDFLOW_DISSIPATIONCOMPOSITIONALMULTIPHASEFVMKERNELS_HPP
 
-#include "physicsSolvers/fluidFlow/IsothermalCompositionalMultiphaseFVMKernels.hpp"
+#include "IsothermalCompositionalMultiphaseFVMKernels.hpp"
 #include "constitutive/solid/porosity/PorosityBase.hpp"
 #include "constitutive/solid/porosity/PorosityFields.hpp"
 
@@ -156,7 +156,6 @@ public:
     : Base( numPhases,
             rankOffset,
             hasCapPressure,
-            //0.0,                  // no C1-PPU
             stencilWrapper,
             dofNumberAccessor,
             compFlowAccessors,
@@ -422,8 +421,6 @@ public:
                    integer const hasCapPressure,
                    string const & solverName,
                    ElementRegionManager const & elemManager,
-                   //ElementSubRegionBase const & subRegion,
-                   //CoupledSolidBase const & solid,
                    STENCILWRAPPER const & stencilWrapper,
                    real64 const & dt,
                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
