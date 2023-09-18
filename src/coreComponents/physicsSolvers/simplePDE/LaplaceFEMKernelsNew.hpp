@@ -178,13 +178,6 @@ public:
     {
       localIndex const localNodeIndex = m_elemsToNodes( k, a );
 
-// #if defined(CALC_FEM_SHAPE_IN_KERNEL)
-//       for( int i=0; i<3; ++i )
-//       {
-//         stack.xLocal[ a ][ i ] = m_X[ localNodeIndex ][ i ];
-//       }
-// #endif
-
       stack.primaryField_local[ a ] = m_primaryField[ localNodeIndex ];
       stack.localRowDofIndex[a] = m_dofNumber[localNodeIndex];
       stack.localColDofIndex[a] = m_dofNumber[localNodeIndex];
@@ -220,27 +213,10 @@ public:
     auto [ detJ, Jinv ] = CellUtilities::getJacobianDeterminantAndJacobianInverse( cell, quadratureData.Xiq );
 
     // ... Evaluate basis function gradients
-    //
-    //  TODO
-    //  auto dNdX = BasisFunctionUtilities::getGradient< CellType,
-    //                                                   BasisFunctionUtilities::BasisFunction::Lagrange,
-    //                                                   maxNumTestSupportPointsPerElem >( quadratureData.Xiq, Jinv );
     real64 dNdX[maxNumTestSupportPointsPerElem][3]{{}};
     BasisFunctionUtilities::getGradient< CellType,
                                          BasisFunctionUtilities::BasisFunction::Lagrange,
                                          maxNumTestSupportPointsPerElem >( quadratureData.Xiq, Jinv, dNdX );
-    // real64 dNdX[maxNumTestSupportPointsPerElem][3]{{}};
-
-    // for( int i = 0; i < maxNumTestSupportPointsPerElem; ++i )
-    // {
-    //   // ... ... Parent space
-    //   BasisFunctionUtilities::Gradient dNdXi =
-    //     BasisFunctionUtilities::getParentGradient< CellType,
-    //                                                BasisFunctionUtilities::BasisFunction::Lagrange >( i, quadratureData.Xiq );
-
-    //   // ... ... Physical space
-    //   Jinv.leftMultiplyTranspose( dNdXi.data, dNdX[i] );
-    // }
 
     // ... Compute local stiffness matrix
     real64 const detJxW = detJ * quadratureData.wq;
