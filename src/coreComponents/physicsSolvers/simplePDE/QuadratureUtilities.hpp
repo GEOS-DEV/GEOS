@@ -62,7 +62,7 @@ struct Helper< CellUtilities::ReferenceCell::Cube,
     int const c = ( q & 4 ) >> 2;
 
     Data data;
-    data.wq = 1.0; // weight  
+    data.wq = 1.0; // weight
     data.Xiq[0] = ( 2 * a - 1 ) * val;
     data.Xiq[1] = ( 2 * b - 1 ) * val;
     data.Xiq[2] = ( 2 * c - 1 ) * val;
@@ -94,7 +94,7 @@ struct Helper< CellUtilities::ReferenceCell::Wedge,
   constexpr static real64 parentCoords2( int const a )
   {
     return -1.0 + 2 * ( a & 1 );
-  } 
+  }
 
   GEOS_HOST_DEVICE
   static Data getData( int q )
@@ -103,10 +103,10 @@ struct Helper< CellUtilities::ReferenceCell::Wedge,
     constexpr static real64 quadratureLongitudinalCoord = 1.0 / 1.732050807568877293528;
 
     Data data;
-    data.wq = 1.0 / 6.0; // weight  
-    data.Xiq[0] = quadratureCrossSectionCoord + 0.5 * parentCoords0( q ); 
-    data.Xiq[1] = quadratureCrossSectionCoord + 0.5 * parentCoords1( q ); 
-    data.Xiq[2] = quadratureLongitudinalCoord * parentCoords2( q ); 
+    data.wq = 1.0 / 6.0; // weight
+    data.Xiq[0] = quadratureCrossSectionCoord + 0.5 * parentCoords0( q );
+    data.Xiq[1] = quadratureCrossSectionCoord + 0.5 * parentCoords1( q );
+    data.Xiq[2] = quadratureLongitudinalCoord * parentCoords2( q );
     return data;
   }
 };
@@ -135,9 +135,9 @@ struct Helper< CellUtilities::ReferenceCell::Pyramid,
                Rule::Gauss,
                5 >
 {
-  constexpr static real64 quadratureCrossSectionCoord = 0.584237394672177; 
-  constexpr static real64 quadratureLongitudinalCoordNeg = -2.0 / 3.0; 
-  constexpr static real64 quadratureLongitudinalCoordDelta = 16.0 / 15.0; 
+  constexpr static real64 quadratureCrossSectionCoord = 0.584237394672177;
+  constexpr static real64 quadratureLongitudinalCoordNeg = -2.0 / 3.0;
+  constexpr static real64 quadratureLongitudinalCoordDelta = 16.0 / 15.0;
 
   constexpr static real64 weight = 81.0 / 100.0;
   constexpr static real64 weightDelta  = 125.0 / 27.0 - weight;
@@ -161,7 +161,7 @@ struct Helper< CellUtilities::ReferenceCell::Pyramid,
   constexpr static real64 parentCoords2( int const a )
   {
     return -1.0 + 0.5 * ( a & 4 );
-  } 
+  }
 
   GEOS_HOST_DEVICE
   inline

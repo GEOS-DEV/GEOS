@@ -92,17 +92,17 @@ public:
    *                  (i.e. Temperature, Pressure, etc.)
    */
   LaplaceFEMKernelNew( NodeManager const & nodeManager,
-                    EdgeManager const & edgeManager,
-                    FaceManager const & faceManager,
-                    localIndex const targetRegionIndex,
-                    SUBREGION_TYPE const & elementSubRegion,
-                    FE_TYPE const & finiteElementSpace,
-                    CONSTITUTIVE_TYPE & inputConstitutiveType,
-                    arrayView1d< globalIndex const > const inputDofNumber,
-                    globalIndex const rankOffset,
-                    CRSMatrixView< real64, globalIndex const > const inputMatrix,
-                    arrayView1d< real64 > const inputRhs,
-                    string const fieldName ):
+                       EdgeManager const & edgeManager,
+                       FaceManager const & faceManager,
+                       localIndex const targetRegionIndex,
+                       SUBREGION_TYPE const & elementSubRegion,
+                       FE_TYPE const & finiteElementSpace,
+                       CONSTITUTIVE_TYPE & inputConstitutiveType,
+                       arrayView1d< globalIndex const > const inputDofNumber,
+                       globalIndex const rankOffset,
+                       CRSMatrixView< real64, globalIndex const > const inputMatrix,
+                       arrayView1d< real64 > const inputRhs,
+                       string const fieldName ):
     Base( nodeManager,
           edgeManager,
           faceManager,
@@ -141,7 +141,7 @@ public:
     GEOS_HOST_DEVICE
     StackVariables():
       Base::StackVariables(),
-            // xLocal(),
+      // xLocal(),
             primaryField_local{ 0.0 }
     {}
 
@@ -212,21 +212,21 @@ public:
     CellType cell = m_subregionMesh.getCell( k );
 
     // ... Get coordinates and weight for quadrature point q
-    QuadratureUtilities::Data quadratureData = QuadratureUtilities::getData< CellType, 
+    QuadratureUtilities::Data quadratureData = QuadratureUtilities::getData< CellType,
                                                                              QuadratureUtilities::Rule::Gauss,
                                                                              numQuadraturePointsPerElem >( q );
 
     // ... Evaluate Jacobian determinant and Jacobian inverse
     auto [ detJ, Jinv ] = CellUtilities::getJacobianDeterminantAndJacobianInverse( cell, quadratureData.Xiq );
-    
+
     // ... Evaluate basis function gradients
     //
-    //  TODO 
-    //  auto dNdX = BasisFunctionUtilities::getGradient< CellType, 
+    //  TODO
+    //  auto dNdX = BasisFunctionUtilities::getGradient< CellType,
     //                                                   BasisFunctionUtilities::BasisFunction::Lagrange,
     //                                                   maxNumTestSupportPointsPerElem >( quadratureData.Xiq, Jinv );
     real64 dNdX[maxNumTestSupportPointsPerElem][3]{{}};
-    BasisFunctionUtilities::getGradient< CellType, 
+    BasisFunctionUtilities::getGradient< CellType,
                                          BasisFunctionUtilities::BasisFunction::Lagrange,
                                          maxNumTestSupportPointsPerElem >( quadratureData.Xiq, Jinv, dNdX );
     // real64 dNdX[maxNumTestSupportPointsPerElem][3]{{}};
@@ -248,12 +248,12 @@ public:
                                     TrialSpace,
                                     DifferentialOperator::Gradient,
                                     DifferentialOperator::Gradient >
-  (
-    stack.localJacobian,
-    dNdX,
-    1.0,
-    dNdX,
-    detJxW );
+    (
+      stack.localJacobian,
+      dNdX,
+      1.0,
+      dNdX,
+      detJxW );
   }
 
   /**
@@ -301,20 +301,20 @@ protected:
 
   // using subregionMeshType = isoparametricMesh< traits::ViewTypeConst< typename SUBREGION_TYPE::NodeMapType::base_type > >;
   using SubregionMeshType = typename NumVertexToSubregionMesh< traits::ViewTypeConst< typename SUBREGION_TYPE::NodeMapType::base_type >,
-                                                               FE_TYPE::numNodes  >::type;
+                                                               FE_TYPE::numNodes >::type;
   SubregionMeshType m_subregionMesh;
-   
+
   using CellIndexType = typename SubregionMeshType::CellIndexType;
   using CellType = typename SubregionMeshType::CellType;
 };
 
 /// The factory used to construct a LaplaceFEMKernelNew.
 using LaplaceFEMKernelNewFactory = finiteElement::KernelFactory< LaplaceFEMKernelNew,
-                                                              arrayView1d< globalIndex const > const,
-                                                              globalIndex const,
-                                                              CRSMatrixView< real64, globalIndex const > const,
-                                                              arrayView1d< real64 > const,
-                                                              string const >;
+                                                                 arrayView1d< globalIndex const > const,
+                                                                 globalIndex const,
+                                                                 CRSMatrixView< real64, globalIndex const > const,
+                                                                 arrayView1d< real64 > const,
+                                                                 string const >;
 
 } // namespace geos
 

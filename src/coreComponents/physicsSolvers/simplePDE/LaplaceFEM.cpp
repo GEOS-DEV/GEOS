@@ -18,10 +18,10 @@
 
 // Source includes
 #define SELECTED_FE_TYPES FE_1_TYPES
-  // H1_Wedge_Lagrange1_Gauss6,
-  // H1_Hexahedron_Lagrange1_GaussLegendre2,
-  // H1_Tetrahedron_Lagrange1_Gauss1,
-  // H1_Pyramid_Lagrange1_Gauss5
+// H1_Wedge_Lagrange1_Gauss6,
+// H1_Hexahedron_Lagrange1_GaussLegendre2,
+// H1_Tetrahedron_Lagrange1_Gauss1,
+// H1_Pyramid_Lagrange1_Gauss5
 
 #include "LaplaceFEM.hpp"
 // #include "LaplaceFEMKernels.hpp"
@@ -119,13 +119,13 @@ void LaplaceFEM::setupSystem( DomainPartition & domain,
                                                     8*8*3 );
 
     finiteElement::fillSparsity< CellElementSubRegion,
-                                //  LaplaceFEMKernel >( mesh,
+                                 //  LaplaceFEMKernel >( mesh,
                                  LaplaceFEMKernelNew >( mesh,
-                                                     regionNames,
-                                                     this->getDiscretizationName(),
-                                                     dofIndex,
-                                                     dofManager.rankOffset(),
-                                                     sparsityPattern );
+                                                        regionNames,
+                                                        this->getDiscretizationName(),
+                                                        dofIndex,
+                                                        dofManager.rankOffset(),
+                                                        sparsityPattern );
 
     sparsityPattern.compress();
     localMatrix.assimilate< parallelDevicePolicy<> >( std::move( sparsityPattern ) );

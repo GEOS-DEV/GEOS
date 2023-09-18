@@ -72,7 +72,7 @@ struct Helper< CellUtilities::ReferenceCell::Cube,//HexahedronCell,
   GEOS_HOST_DEVICE
   static void getGradient( real64 const (&Xiq)[3],
                            typename HexahedronCell::JacobianType const & Jinv,
-                           real64 (&dNdX)[8][3] )
+                           real64 (& dNdX)[8][3] )
   {
     for( int i = 0; i < 8; ++i )
     {
@@ -87,7 +87,7 @@ struct Helper< CellUtilities::ReferenceCell::Cube,//HexahedronCell,
   GEOS_HOST_DEVICE
   static void getGradient( real64 const (&Xiq)[3],
                            typename HexahedronIJKCell::JacobianType const & Jinv,
-                           real64 (&dNdX)[8][3] )
+                           real64 (& dNdX)[8][3] )
   {
     for( int i = 0; i < 8; ++i )
     {
@@ -107,8 +107,8 @@ struct Helper< CellUtilities::ReferenceCell::Wedge,//WedgeCell,
 {
   GEOS_HOST_DEVICE
   static Gradient getParentGradient( int const BasisIndex,
-                               real64 const (&Xiq)[3] )
-  { 
+                                     real64 const (&Xiq)[3] )
+  {
     constexpr real64 dpsiTRI[2][3] = { { -1.0, 1.0, 0.0 }, { -1.0, 0.0, 1.0 } };
     constexpr real64 dpsiLIN[2] = { -1.0, 1.0 };
 
@@ -120,14 +120,14 @@ struct Helper< CellUtilities::ReferenceCell::Wedge,//WedgeCell,
     gradient.data[0] = dpsiTRI[0][a] * 0.5 * ( 1.0 + dpsiLIN[b] * Xiq[2] );
     gradient.data[1] = dpsiTRI[1][a] * 0.5 * ( 1.0 + dpsiLIN[b] * Xiq[2] );
     gradient.data[2] = ( ( BasisIndex < 2 ) +  dpsiTRI[0][a] * Xiq[0] + dpsiTRI[1][a] * Xiq[1] )
-                    * dpsiLIN[b];
+                       * dpsiLIN[b];
     return gradient;
   }
 
   GEOS_HOST_DEVICE
   static void getGradient( real64 const (&Xiq)[3],
                            typename WedgeCell::JacobianType const & Jinv,
-                           real64 (&dNdX)[6][3] )
+                           real64 (& dNdX)[6][3] )
   {
     for( int i = 0; i < 6; ++i )
     {
@@ -148,7 +148,8 @@ struct Helper< CellUtilities::ReferenceCell::Tetrahedron,//TetrahedronCell,
   GEOS_HOST_DEVICE
   static Gradient getParentGradient( int const BasisIndex,
                                      real64 const (&Xiq)[3] )
-  { 
+  {
+    GEOS_UNUSED_VAR( Xiq );
     Gradient gradient;
     gradient.data[0] = -1.0 + (BasisIndex > 0) + (BasisIndex == 1 );
     gradient.data[1] = -1.0 + (BasisIndex > 0) + (BasisIndex == 2 );
@@ -159,7 +160,7 @@ struct Helper< CellUtilities::ReferenceCell::Tetrahedron,//TetrahedronCell,
   GEOS_HOST_DEVICE
   static void getGradient( real64 const (&Xiq)[3],
                            typename WedgeCell::JacobianType const & Jinv,
-                           real64 (&dNdX)[4][3] )
+                           real64 (& dNdX)[4][3] )
   {
     GEOS_UNUSED_VAR( Xiq );
     for( int i = 0; i < 4; ++i )
@@ -180,8 +181,8 @@ struct Helper< CellUtilities::ReferenceCell::Pyramid,//PyramidCell,
 {
   GEOS_HOST_DEVICE
   static Gradient getParentGradient( int const BasisIndex,
-                               real64 const (&Xiq)[3] )
-  { 
+                                     real64 const (&Xiq)[3] )
+  {
     constexpr real64 dPhiLin[2] = { -1.0, 1.0 };
 
     int const a = BasisIndex & 1;
@@ -198,7 +199,7 @@ struct Helper< CellUtilities::ReferenceCell::Pyramid,//PyramidCell,
   GEOS_HOST_DEVICE
   static void getGradient( real64 const (&Xiq)[3],
                            typename PyramidCell::JacobianType const & Jinv,
-                           real64 (&dNdX)[5][3] )
+                           real64 (& dNdX)[5][3] )
   {
     for( int i = 0; i < 5; ++i )
     {
@@ -226,7 +227,7 @@ template< typename CELL_TYPE,
 GEOS_HOST_DEVICE
 static void getGradient( real64 const (&Xiq)[3],
                          typename CELL_TYPE::JacobianType const & Jinv,
-                         real64 (&dNdX)[NUM_SUPPORT_POINTS][3] )
+                         real64 (& dNdX)[NUM_SUPPORT_POINTS][3] )
 {
   // for( int i = 0; i < NUM_SUPPORT_POINTS; ++i )
   // {
@@ -238,11 +239,6 @@ static void getGradient( real64 const (&Xiq)[3],
   // }
   Helper< CELL_TYPE::getReferenceCellType(), BASIS_FUNCTION, NUM_SUPPORT_POINTS >::getGradient( Xiq, Jinv, dNdX );
 }
-
-
-
-
-
 
 
 

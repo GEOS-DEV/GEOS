@@ -32,11 +32,11 @@ struct  Scalar3x3Tensor
   real64 data;
 
   void leftMultiplyTranspose( real64 const (&src)[3],
-                              real64 (&dst)[3]  ) const
+                              real64 (& dst)[3] ) const
   {
-      dst[0] = data * src[0];
-      dst[1] = data * src[1];
-      dst[2] = data * src[2];
+    dst[0] = data * src[0];
+    dst[1] = data * src[1];
+    dst[2] = data * src[2];
   };
 
   real64 inPlaceInvert()
@@ -54,11 +54,11 @@ struct  Diagonal3x3Tensor
   real64 data[3]{};
 
   void leftMultiplyTranspose( real64 const (&src)[3],
-                              real64 (&dst)[3]  ) const
+                              real64 (& dst)[3] ) const
   {
-      dst[0] = data[0] * src[0];
-      dst[1] = data[1] * src[1];
-      dst[2] = data[2] * src[2];
+    dst[0] = data[0] * src[0];
+    dst[1] = data[1] * src[1];
+    dst[2] = data[2] * src[2];
   };
 
   real64 inPlaceInvert()
@@ -77,19 +77,19 @@ struct Dense3x3Tensor
   real64 data[3][3]{{}};
 
   void leftMultiplyTranspose( real64 const (&src)[3],
-                              real64 (&dst)[3]  ) const
+                              real64 (& dst)[3] ) const
   {
-      dst[0] = data[0][0] * src[0] + data[1][0] * src[1] + data[2][0] * src[2];
-      dst[1] = data[0][1] * src[0] + data[1][1] * src[1] + data[2][1] * src[2];
-      dst[2] = data[0][2] * src[0] + data[1][2] * src[1] + data[2][2] * src[2];
+    dst[0] = data[0][0] * src[0] + data[1][0] * src[1] + data[2][0] * src[2];
+    dst[1] = data[0][1] * src[0] + data[1][1] * src[1] + data[2][1] * src[2];
+    dst[2] = data[0][2] * src[0] + data[1][2] * src[1] + data[2][2] * src[2];
   };
 
   real64 inPlaceInvert()
   {
-    real64 const temp[3][3] = 
+    real64 const temp[3][3] =
     { { data[1][1]*data[2][2] - data[1][2]*data[2][1], data[0][2]*data[2][1] - data[0][1]*data[2][2], data[0][1]*data[1][2] - data[0][2]*data[1][1] },
       { data[1][2]*data[2][0] - data[1][0]*data[2][2], data[0][0]*data[2][2] - data[0][2]*data[2][0], data[0][2]*data[1][0] - data[0][0]*data[1][2] },
-      { data[1][0]*data[2][1] - data[1][1]*data[2][0], data[0][1]*data[2][0] - data[0][0]*data[2][1], data[0][0]*data[1][1] - data[0][1]*data[1][0] } };   
+      { data[1][0]*data[2][1] - data[1][1]*data[2][0], data[0][1]*data[2][0] - data[0][0]*data[2][1], data[0][0]*data[1][1] - data[0][1]*data[1][0] } };
 
     real64 const det = data[0][0] * temp[0][0] + data[1][0] * temp[0][1] + data[2][0] * temp[0][2];
     real64 const invDet = 1.0 / det;
@@ -103,19 +103,19 @@ struct Dense3x3Tensor
     }
     return det;
   };
-  
+
   void add_XiYj( real64 const (&X)[3],
                  real64 const (&Y)[3] )
   {
-    data[0][0] += X[0] * Y[0]; 
-    data[0][1] += X[0] * Y[1]; 
-    data[0][2] += X[0] * Y[2]; 
-    data[1][0] += X[1] * Y[0]; 
-    data[1][1] += X[1] * Y[1]; 
-    data[1][2] += X[1] * Y[2]; 
-    data[2][0] += X[2] * Y[0]; 
-    data[2][1] += X[2] * Y[1]; 
-    data[2][2] += X[2] * Y[2]; 
+    data[0][0] += X[0] * Y[0];
+    data[0][1] += X[0] * Y[1];
+    data[0][2] += X[0] * Y[2];
+    data[1][0] += X[1] * Y[0];
+    data[1][1] += X[1] * Y[1];
+    data[1][2] += X[1] * Y[2];
+    data[2][0] += X[2] * Y[0];
+    data[2][1] += X[2] * Y[1];
+    data[2][2] += X[2] * Y[2];
   };
 
 
@@ -147,14 +147,11 @@ getJacobianDeterminantAndJacobianInverse( CELL_TYPE cell,
 
   // Compute determinant and invert Jacobian in place
   real64 const detJ = J.inPlaceInvert();
-  
+
   return camp::make_tuple( detJ, J );
 }
 
 } // namespace CellUtilities
-
-
-
 
 
 
@@ -189,7 +186,7 @@ public:
   JacobianType getJacobian( real64 const refPointCoords[3] ) const
   {
     JacobianType J;
-    
+
     // Compute Jacobian
     real64 dPhiLin[2] = { -1.0, 1.0 };
 
@@ -223,9 +220,9 @@ public:
   {
     for( int i = 0; i < numVertex; ++i )
     {
-      xLocal[i][0] = m_nodeCoords[i][0]; 
-      xLocal[i][1] = m_nodeCoords[i][1]; 
-      xLocal[i][2] = m_nodeCoords[i][2]; 
+      xLocal[i][0] = m_nodeCoords[i][0];
+      xLocal[i][1] = m_nodeCoords[i][1];
+      xLocal[i][2] = m_nodeCoords[i][2];
     }
   }
 
@@ -275,7 +272,7 @@ public:
   constexpr static CellUtilities::ReferenceCell referenceCell = CellUtilities::ReferenceCell::Wedge;
 
   using JacobianType = Dense3x3Tensor;
- 
+
   // using IndexType = tripleIndex // to be added for IJK hex meshes
 
   GEOS_HOST_DEVICE
@@ -289,7 +286,7 @@ public:
       }
     }
   }
-  
+
   GEOS_HOST_DEVICE
   inline
   constexpr static CellUtilities::ReferenceCell getReferenceCellType()
@@ -308,14 +305,14 @@ public:
   JacobianType getJacobian( real64 const refPointCoords[3] ) const
   {
     JacobianType J;
-    
+
     // Compute Jacobian
     real64 const psiTRI[3] = { 1.0 - refPointCoords[0] - refPointCoords[1], refPointCoords[0], refPointCoords[1] };
     real64 const psiLIN[2] = { 0.5 - 0.5*refPointCoords[2], 0.5 + 0.5*refPointCoords[2] };
     constexpr real64 dpsiTRI[2][3] = { { -1.0, 1.0, 0.0 }, { -1.0, 0.0, 1.0 } };
     constexpr real64 dpsiLIN[2] = { -0.5, 0.5 };
 
-    
+
 
     for( int a=0; a<3; ++a )
     {
@@ -344,9 +341,9 @@ public:
   {
     for( int i = 0; i < numVertex; ++i )
     {
-      xLocal[i][0] = m_nodeCoords[i][0]; 
-      xLocal[i][1] = m_nodeCoords[i][1]; 
-      xLocal[i][2] = m_nodeCoords[i][2]; 
+      xLocal[i][0] = m_nodeCoords[i][0];
+      xLocal[i][1] = m_nodeCoords[i][1];
+      xLocal[i][2] = m_nodeCoords[i][2];
     }
   }
 
@@ -363,7 +360,7 @@ public:
   constexpr static CellUtilities::ReferenceCell referenceCell = CellUtilities::ReferenceCell::Tetrahedron;
 
   using JacobianType = Dense3x3Tensor;
- 
+
   GEOS_HOST_DEVICE
   TetrahedronCell( real64 const nodeCoords[numVertex][3] )
   {
@@ -375,7 +372,7 @@ public:
       }
     }
   }
-  
+
   GEOS_HOST_DEVICE
   inline
   constexpr static CellUtilities::ReferenceCell getReferenceCellType()
@@ -388,17 +385,17 @@ public:
   {
     GEOS_UNUSED_VAR( refPointCoords );
     JacobianType J;
-    J.data[0][0] = - m_nodeCoords[0][0] + m_nodeCoords[1][0];
-    J.data[0][1] = - m_nodeCoords[0][0] + m_nodeCoords[2][0];
-    J.data[0][2] = - m_nodeCoords[0][0] + m_nodeCoords[3][0];
+    J.data[0][0] = -m_nodeCoords[0][0] + m_nodeCoords[1][0];
+    J.data[0][1] = -m_nodeCoords[0][0] + m_nodeCoords[2][0];
+    J.data[0][2] = -m_nodeCoords[0][0] + m_nodeCoords[3][0];
 
-    J.data[1][0] = - m_nodeCoords[0][1] + m_nodeCoords[1][1];
-    J.data[1][1] = - m_nodeCoords[0][1] + m_nodeCoords[2][1];
-    J.data[1][2] = - m_nodeCoords[0][1] + m_nodeCoords[3][1];
+    J.data[1][0] = -m_nodeCoords[0][1] + m_nodeCoords[1][1];
+    J.data[1][1] = -m_nodeCoords[0][1] + m_nodeCoords[2][1];
+    J.data[1][2] = -m_nodeCoords[0][1] + m_nodeCoords[3][1];
 
-    J.data[2][0] = - m_nodeCoords[0][2] + m_nodeCoords[1][2];
-    J.data[2][1] = - m_nodeCoords[0][2] + m_nodeCoords[2][2];
-    J.data[2][2] = - m_nodeCoords[0][2] + m_nodeCoords[3][2];
+    J.data[2][0] = -m_nodeCoords[0][2] + m_nodeCoords[1][2];
+    J.data[2][1] = -m_nodeCoords[0][2] + m_nodeCoords[2][2];
+    J.data[2][2] = -m_nodeCoords[0][2] + m_nodeCoords[3][2];
 
     return J;
   }
@@ -413,9 +410,9 @@ public:
   {
     for( int i = 0; i < numVertex; ++i )
     {
-      xLocal[i][0] = m_nodeCoords[i][0]; 
-      xLocal[i][1] = m_nodeCoords[i][1]; 
-      xLocal[i][2] = m_nodeCoords[i][2]; 
+      xLocal[i][0] = m_nodeCoords[i][0];
+      xLocal[i][1] = m_nodeCoords[i][1];
+      xLocal[i][2] = m_nodeCoords[i][2];
     }
   }
 
@@ -431,7 +428,7 @@ public:
   constexpr static int numVertex = 5;
 
   using JacobianType = Dense3x3Tensor;
- 
+
   // using IndexType = tripleIndex // to be added for IJK hex meshes
 
   GEOS_HOST_DEVICE
@@ -445,7 +442,7 @@ public:
       }
     }
   }
-  
+
   GEOS_HOST_DEVICE
   inline
   constexpr static CellUtilities::ReferenceCell getReferenceCellType()
@@ -464,7 +461,7 @@ public:
   JacobianType getJacobian( real64 const refPointCoords[3] ) const
   {
     JacobianType J;
-    
+
     // Compute Jacobian
     real64 dPhiLin[2] = { -1.0, 1.0 };
 
@@ -474,14 +471,14 @@ public:
       {
         real64 gradPhi[3]{ 0.125 * (       dPhiLin[i]                     ) * ( 1.0 + dPhiLin[j] * refPointCoords[1] ) * ( 1.0 - refPointCoords[2] ),
                            0.125 * ( 1.0 + dPhiLin[i] * refPointCoords[0] ) * (       dPhiLin[j]                     ) * ( 1.0 - refPointCoords[2] ),
-                           - 0.125 * ( 1.0 + dPhiLin[i] * refPointCoords[0] ) * ( 1.0 + dPhiLin[j] * refPointCoords[1] ) };
+                           -0.125 * ( 1.0 + dPhiLin[i] * refPointCoords[0] ) * ( 1.0 + dPhiLin[j] * refPointCoords[1] ) };
 
         int vertexInd = linearMap( i, j );
 
         J.add_XiYj( m_nodeCoords[vertexInd], gradPhi );
       }
     }
-    
+
     // Contribution from the basis function paired with the apex nodes
     J.data[0][2] += m_nodeCoords[4][0] * 0.5;
     J.data[1][2] += m_nodeCoords[4][1] * 0.5;
@@ -500,9 +497,9 @@ public:
   {
     for( int i = 0; i < numVertex; ++i )
     {
-      xLocal[i][0] = m_nodeCoords[i][0]; 
-      xLocal[i][1] = m_nodeCoords[i][1]; 
-      xLocal[i][2] = m_nodeCoords[i][2]; 
+      xLocal[i][0] = m_nodeCoords[i][0];
+      xLocal[i][1] = m_nodeCoords[i][1];
+      xLocal[i][2] = m_nodeCoords[i][2];
     }
   }
 

@@ -27,7 +27,7 @@
 namespace geos
 {
 
-template< typename ARRAY_VIEW_TYPE  >
+template< typename ARRAY_VIEW_TYPE >
 class isoparametricMesh
 {
 public:
@@ -35,11 +35,9 @@ public:
 
   isoparametricMesh( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X,
                      ARRAY_VIEW_TYPE const elementToNodes )
-   : m_X( X ), m_elementToNodes( elementToNodes )
-  {
+    : m_X( X ), m_elementToNodes( elementToNodes )
+  {}
 
-  }
-  
   localIndex numCells() const
   {
     return m_elementToNodes.size( 0 );
@@ -51,26 +49,29 @@ protected:
   ARRAY_VIEW_TYPE const m_elementToNodes;
 };
 
-template< typename ARRAY_VIEW_TYPE  >
+template< typename ARRAY_VIEW_TYPE >
 class IJKMesh
 {
 public:
-  using CellIndexType = localIndex; // Should be a triple index 
+  using CellIndexType = localIndex; // Should be a triple index
   using CellType = HexahedronIJKCell;
 
   IJKMesh( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X,
            ARRAY_VIEW_TYPE const elementToNodes )
-   : m_h( 0.1 )
+    : m_h( 0.1 )
   {
+    GEOS_UNUSED_VAR( X );
+    GEOS_UNUSED_VAR( elementToNodes );
 
   }
 
-  // 
+  //
   HexahedronIJKCell getCell( CellIndexType k ) const
   {
+    GEOS_UNUSED_VAR( k );
     return HexahedronIJKCell( this->m_h );
   }
-  
+
   // localIndex numCells() const
   // {
   //   return m_elementToNodes.size( 0 );
@@ -83,28 +84,26 @@ protected:
 };
 
 
-template< typename ARRAY_VIEW_TYPE  >
+template< typename ARRAY_VIEW_TYPE >
 class isoparametricHexahedronMesh : public isoparametricMesh< ARRAY_VIEW_TYPE >
 {
-public :
+public:
   // using const_iterator = CellIterator< HexadronCell >;
   //...
   using CellIndexType = typename isoparametricMesh< ARRAY_VIEW_TYPE >::CellIndexType;
-  
+
   using CellType = HexahedronCell;
   constexpr static int numCellVertex = HexahedronCell::numVertex;
 
-  // ... 
+  // ...
 
   // ...
   // constructor
   isoparametricHexahedronMesh( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X,
-                               ARRAY_VIEW_TYPE const elementToNodes ) : isoparametricMesh< ARRAY_VIEW_TYPE >( X, elementToNodes )
-  {
+                               ARRAY_VIEW_TYPE const elementToNodes ): isoparametricMesh< ARRAY_VIEW_TYPE >( X, elementToNodes )
+  {}
 
-  }
-
-  // 
+  //
   HexahedronCell getCell( CellIndexType k ) const
   {
     real64 xLocal[numCellVertex][3]{};
@@ -124,25 +123,23 @@ public :
 };
 
 
-template< typename ARRAY_VIEW_TYPE  >
+template< typename ARRAY_VIEW_TYPE >
 class isoparametricWedgeMesh : public isoparametricMesh< ARRAY_VIEW_TYPE >
 {
-public :
+public:
 
- using CellIndexType = typename isoparametricMesh< ARRAY_VIEW_TYPE >::CellIndexType;
- using CellType = WedgeCell;
-  // ... 
+  using CellIndexType = typename isoparametricMesh< ARRAY_VIEW_TYPE >::CellIndexType;
+  using CellType = WedgeCell;
+  // ...
   constexpr static int numCellVertex = WedgeCell::numVertex;
 
   // ...
   // constructor
   isoparametricWedgeMesh( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X,
-                          ARRAY_VIEW_TYPE const elementToNodes ) : isoparametricMesh< ARRAY_VIEW_TYPE >( X, elementToNodes )
-  {
+                          ARRAY_VIEW_TYPE const elementToNodes ): isoparametricMesh< ARRAY_VIEW_TYPE >( X, elementToNodes )
+  {}
 
-  }
-
-  // 
+  //
   WedgeCell getCell( CellIndexType k ) const
   {
     real64 xLocal[numCellVertex][3]{};
@@ -162,25 +159,23 @@ public :
 };
 
 
-template< typename ARRAY_VIEW_TYPE  >
+template< typename ARRAY_VIEW_TYPE >
 class isoparametricTetrahedronMesh : public isoparametricMesh< ARRAY_VIEW_TYPE >
 {
-public :
+public:
 
- using CellIndexType = typename isoparametricMesh< ARRAY_VIEW_TYPE >::CellIndexType;
- using CellType = TetrahedronCell;
-  // ... 
+  using CellIndexType = typename isoparametricMesh< ARRAY_VIEW_TYPE >::CellIndexType;
+  using CellType = TetrahedronCell;
+  // ...
   constexpr static int numCellVertex = TetrahedronCell::numVertex;
 
   // ...
   // constructor
   isoparametricTetrahedronMesh( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X,
-                          ARRAY_VIEW_TYPE const elementToNodes ) : isoparametricMesh< ARRAY_VIEW_TYPE >( X, elementToNodes )
-  {
+                                ARRAY_VIEW_TYPE const elementToNodes ): isoparametricMesh< ARRAY_VIEW_TYPE >( X, elementToNodes )
+  {}
 
-  }
-
-  // 
+  //
   TetrahedronCell getCell( CellIndexType k ) const
   {
     real64 xLocal[numCellVertex][3]{};
@@ -200,25 +195,23 @@ public :
 };
 
 
-template< typename ARRAY_VIEW_TYPE  >
+template< typename ARRAY_VIEW_TYPE >
 class isoparametricPyramidMesh : public isoparametricMesh< ARRAY_VIEW_TYPE >
 {
-public :
+public:
 
- using CellIndexType = typename isoparametricMesh< ARRAY_VIEW_TYPE >::CellIndexType;
- using CellType = PyramidCell;
-  // ... 
+  using CellIndexType = typename isoparametricMesh< ARRAY_VIEW_TYPE >::CellIndexType;
+  using CellType = PyramidCell;
+  // ...
   constexpr static int numCellVertex = PyramidCell::numVertex;
 
   // ...
   // constructor
   isoparametricPyramidMesh( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X,
-                          ARRAY_VIEW_TYPE const elementToNodes ) : isoparametricMesh< ARRAY_VIEW_TYPE >( X, elementToNodes )
-  {
+                            ARRAY_VIEW_TYPE const elementToNodes ): isoparametricMesh< ARRAY_VIEW_TYPE >( X, elementToNodes )
+  {}
 
-  }
-
-  // 
+  //
   PyramidCell getCell( CellIndexType k ) const
   {
     real64 xLocal[numCellVertex][3]{};
@@ -239,18 +232,18 @@ public :
 
 
 // Factory selectign dynamically the appropriate isopametric mesh
-template< typename ARRAY_VIEW_TYPE  >
+template< typename ARRAY_VIEW_TYPE >
 isoparametricMesh< ARRAY_VIEW_TYPE > selectIsoparametricMesh( ElementType elemType,
-                                           arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const nodePositions,
-                                           ARRAY_VIEW_TYPE const elementToNodes )
+                                                              arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const nodePositions,
+                                                              ARRAY_VIEW_TYPE const elementToNodes )
 {
-  if( elemType == ElementType::Hexahedron)
+  if( elemType == ElementType::Hexahedron )
   {
     return isoparametricHexahedronMesh< ARRAY_VIEW_TYPE >( nodePositions, elementToNodes );
   }
   // else if( elemType == ElementType::Wedge) )
   // {
-    // return isoparametricWedgenMesh( nodePositions, elementToNodes );
+  // return isoparametricWedgenMesh( nodePositions, elementToNodes );
   // }
   else
   {
@@ -261,7 +254,7 @@ isoparametricMesh< ARRAY_VIEW_TYPE > selectIsoparametricMesh( ElementType elemTy
 
 // ***************************************************
 
-template< typename ARRAY_VIEW_TYPE , int NUM_VERTEX >
+template< typename ARRAY_VIEW_TYPE, int NUM_VERTEX >
 struct NumVertexToSubregionMesh
 {
   using type = isoparametricHexahedronMesh< ARRAY_VIEW_TYPE >;
@@ -294,17 +287,17 @@ struct NumVertexToSubregionMesh< ARRAY_VIEW_TYPE, 6 >
 #define USE_IJK_MESH
 
 #ifdef USE_IJK_MESH
-  template< typename ARRAY_VIEW_TYPE >
-  struct NumVertexToSubregionMesh< ARRAY_VIEW_TYPE, 8 >
-  {
-    using type = IJKMesh< ARRAY_VIEW_TYPE >;
-  };
+template< typename ARRAY_VIEW_TYPE >
+struct NumVertexToSubregionMesh< ARRAY_VIEW_TYPE, 8 >
+{
+  using type = IJKMesh< ARRAY_VIEW_TYPE >;
+};
 #else
-  template< typename ARRAY_VIEW_TYPE >
-  struct NumVertexToSubregionMesh< ARRAY_VIEW_TYPE, 8 >
-  {
-    using type = isoparametricHexahedronMesh< ARRAY_VIEW_TYPE >;
-  };
+template< typename ARRAY_VIEW_TYPE >
+struct NumVertexToSubregionMesh< ARRAY_VIEW_TYPE, 8 >
+{
+  using type = isoparametricHexahedronMesh< ARRAY_VIEW_TYPE >;
+};
 #endif
 
 } // namespace geos
