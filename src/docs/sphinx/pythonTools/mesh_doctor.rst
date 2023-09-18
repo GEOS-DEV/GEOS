@@ -10,7 +10,7 @@ Modules
 
 To list all the modules available through ``mesh_doctor`` you can simply use the ``--help`` option which will provide all the modules as well as a quick summuray.
 
-.. program-output:: mesh_doctor --help
+.. command-output:: mesh_doctor --help
 
 .. program-output:: pwd
 
