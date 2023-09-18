@@ -52,11 +52,13 @@ public:
         setDescription( "Name of the " + SolverType::coupledSolverAttributePrefix() + " solver used by the coupled solver" );
     } );
 
+    this->registerWrapper( viewKeyStruct::useNAString(), &m_useNA ).
+      setApplyDefaultValue( 0 ).
+      setInputFlag( dataRepository::InputFlags::OPTIONAL ).
+      setDescription( "Flag to indicate that the solver is going to use nonlinear acceleration" );
+
     this->getWrapper< string >( SolverBase::viewKeyStruct::discretizationString() ).
       setInputFlag( dataRepository::InputFlags::FALSE );
-
-    // rm laterr
-    // m_disp( nodeManager.getField< fields::solidMechanics::totalDisplacement >() );
   }
 
   /// deleted copy constructor
@@ -331,6 +333,12 @@ public:
 
   /**@}*/
 
+  struct viewKeyStruct
+  {
+    /// Flag to indicate that the solver is going to use nonlinear acceleration
+    constexpr static char const * useNAString() { return "useNA"; }
+  };
+
 protected:
 
   /**
@@ -389,6 +397,7 @@ protected:
                              solver->getSystemSolution() );
         solver->setSystemSetupTimestamp( meshModificationTimestamp );
       }
+
       solver->implicitStepSetup( time_n, dt, domain );
 
     } );
@@ -416,8 +425,11 @@ protected:
       // Pass a "0" as argument (0 linear iteration) to skip the output of linear iteration stats at the end
       m_solverStatistics.logNonlinearIteration( 0 );
 
-      // Nonlinear Acceleration (Aitken)
-      beforeOuterIter( iter, domain );
+      if( m_useNA )
+      {
+        // Nonlinear Acceleration (Aitken)
+        beforeOuterIter( iter, domain );
+      }
 
       // Solve the subproblems nonlinearly
       forEachArgInTuple( m_solvers, [&]( auto & solver, auto idx )
@@ -430,10 +442,13 @@ protected:
 
         mapSolutionBetweenSolvers( domain, idx() );
 
-        if( idx() == 1 )
+        if( m_useNA )
         {
-          // Nonlinear Acceleration (Aitken): record unaccelerated averageMeanTotalStressIncrement
-          afterGeomechanicsInnerLoop( domain );
+          if( idx() == 1 )
+          {
+            // Nonlinear Acceleration (Aitken): record unaccelerated averageMeanTotalStressIncrement
+            afterGeomechanicsInnerLoop( domain );
+          }
         }
 
         if( dtReturnTemporary < dtReturn )
@@ -459,8 +474,11 @@ protected:
       }
       else
       {
-        // Nonlinear Acceleration (Aitken)
-        afterOuterIter( iter, domain );
+        if( m_useNA )
+        {
+          // Nonlinear Acceleration (Aitken)
+          afterOuterIter( iter, domain );
+        }
       }
       // Add convergence check:
       ++iter;
@@ -651,7 +669,7 @@ protected:
                                     const std::vector< real64 > & vec2,
                                     const real64 sign )
   {
-    assert( vec1.size() == vec2.size() );
+    GEOS_ASSERT( vec1.size() == vec2.size() );
     std::vector< real64 > result;
     for( size_t i = 0; i < vec1.size(); i++ )
     {
@@ -761,6 +779,7 @@ protected:
   std::array< string, sizeof...( SOLVERS ) > m_names;
 
   /// member variables needed for Nonlinear Acceleration (Aitken)
+  integer m_useNA;
   std::vector< real64 > m_s0;
   std::vector< real64 > m_s1;
   std::vector< real64 > m_s1_tilde;
