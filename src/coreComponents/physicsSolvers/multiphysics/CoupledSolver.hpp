@@ -333,7 +333,7 @@ public:
 
   /**@}*/
 
-  struct viewKeyStruct
+  struct viewKeyStruct : SolverBase::viewKeyStruct
   {
     /// Flag to indicate that the solver is going to use nonlinear acceleration
     constexpr static char const * useNAString() { return "useNA"; }
