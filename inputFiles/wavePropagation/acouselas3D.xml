@@ -89,10 +89,10 @@
   </NumericalMethods>
 
   <Events
-    maxTime="2e-1">
+    maxTime="3">
     <PeriodicEvent
       name="outputs"
-      timeFrequency="1e-1"
+      timeFrequency="2e-1"
       targetExactTimestep="0">
       <PeriodicEvent name="outputs_vtk" target="/Outputs/vtkOutput"/>
       <!--
@@ -203,7 +203,7 @@
   <Outputs>
     <VTK
       name="vtkOutput"
-      plotLevel="1"/>
+      plotLevel="0"/>
     <TimeHistory
       name="timeHistoryOutput"
       sources="{ /Tasks/pressureCollection }"

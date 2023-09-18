@@ -72,25 +72,21 @@ struct WaveSolverUtils
   static void writeSeismoTrace( string const & name,
                                 localIndex const cycleNumber,
                                 localIndex const iSeismo,
-                                arrayView2d< real64 const > const receiverConstants,
+                                localIndex const nrcv,
                                 arrayView1d< localIndex const > const receiverIsLocal,
                                 localIndex const nsamplesSeismoTrace,
                                 localIndex const outputSeismoTrace,
                                 arrayView2d< real32 > varAtReceivers )
   {
-    // TODO DEBUG: the following output is only temporary until our wave propagation kernels are finalized.
-    // Output will then only be done via the previous code.
     if( iSeismo == nsamplesSeismoTrace - 1 )
     {
       string const outputDir = OutputBase::getOutputDirectory();
-      forAll< serialPolicy >( receiverConstants.size( 0 ), [=] ( localIndex const ircv )
+      forAll< serialPolicy >( nrcv, [=] ( localIndex const ircv )
       {
         if( outputSeismoTrace == 1 )
         {
           if( receiverIsLocal[ircv] == 1 )
           {
-            // Note: this "manual" output to file is temporary
-            //       It should be removed as soon as we can use TimeHistory to output data not registered on the mesh
             string const fn = joinPath( outputDir, GEOS_FMT( "seismoTraceReceiver_{}_{:03}.txt", name, ircv ) );
             std::ofstream f( fn, cycleNumber == 0 ? std::ios::app : std::ios::out );
             if( !f )
@@ -100,7 +96,8 @@ struct WaveSolverUtils
             }
             for( localIndex iSample = 0; iSample < nsamplesSeismoTrace; ++iSample )
             {
-              f << iSample << " " << varAtReceivers[iSample][ircv] << std::endl;
+              // index - time - value
+              f << iSample << " " << varAtReceivers[iSample][nrcv] << " " << varAtReceivers[iSample][ircv] << std::endl;
             }
             f.close();
           }
@@ -129,9 +126,11 @@ struct WaveSolverUtils
     real32 const a1 = abs( dt ) < WaveSolverBase::epsilonLoc ? 1.0 : (time_np1 - timeSeismo) / dt;
     real32 const a2 = 1.0 - a1;
 
+    localIndex const nrcv = receiverConstants.size( 0 );
+
     if( nsamplesSeismoTrace > 0 )
     {
-      forAll< WaveSolverBase::EXEC_POLICY >( receiverConstants.size( 0 ), [=] GEOS_HOST_DEVICE ( localIndex const ircv )
+      forAll< WaveSolverBase::EXEC_POLICY >( nrcv, [=] GEOS_HOST_DEVICE ( localIndex const ircv )
       {
         if( receiverIsLocal[ircv] == 1 )
         {
@@ -145,10 +144,10 @@ struct WaveSolverUtils
           varAtReceivers[iSeismo][ircv] = a1 * vtmp_n + a2 * vtmp_np1;
         }
       } );
-      varAtReceivers[iSeismo][receiverConstants.size( 0 )] = a1 * time_n + a2 * time_np1;
+      varAtReceivers[iSeismo][nrcv] = a1 * time_n + a2 * time_np1;  // NOTE: varAtReceivers has size(1) = numReceiversGlobal + 1, this does not OOB
     }
 
-    writeSeismoTrace( name, cycleNumber, iSeismo, receiverConstants, receiverIsLocal, nsamplesSeismoTrace, outputSeismoTrace, varAtReceivers );
+    writeSeismoTrace( name, cycleNumber, iSeismo, nrcv, receiverIsLocal, nsamplesSeismoTrace, outputSeismoTrace, varAtReceivers );
   }
 
   static void compute2dVariableSeismoTrace( string const & name,
@@ -173,9 +172,11 @@ struct WaveSolverUtils
     real32 const a1 = (dt < WaveSolverBase::epsilonLoc) ? 1.0 : (time_np1 - timeSeismo)/dt;
     real32 const a2 = 1.0 - a1;
 
+    localIndex const nrcv = receiverConstants.size( 0 );
+
     if( nsamplesSeismoTrace > 0 )
     {
-      forAll< WaveSolverBase::EXEC_POLICY >( receiverConstants.size( 0 ), [=] GEOS_HOST_DEVICE ( localIndex const ircv )
+      forAll< WaveSolverBase::EXEC_POLICY >( nrcv, [=] GEOS_HOST_DEVICE ( localIndex const ircv )
       {
         if( receiverIsLocal[ircv] == 1 )
         {
@@ -192,9 +193,10 @@ struct WaveSolverUtils
           }
         }
       } );
+      varAtReceivers[iSeismo][nrcv] = a1 * time_n + a2 * time_np1;  // NOTE: varAtReceivers has size(1) = numReceiversGlobal + 1, this does not OOB
     }
 
-    writeSeismoTrace( name, cycleNumber, iSeismo, receiverConstants, receiverIsLocal, nsamplesSeismoTrace, outputSeismoTrace, varAtReceivers );
+    writeSeismoTrace( name, cycleNumber, iSeismo, nrcv, receiverIsLocal, nsamplesSeismoTrace, outputSeismoTrace, varAtReceivers );
   }
 
   /**
