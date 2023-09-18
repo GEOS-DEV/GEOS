@@ -141,7 +141,7 @@ void CompositionalMultiphaseFVM::assembleFluxTerms( real64 const dt,
       {
         if( getNonlinearSolverParameters().useDBC())
         {
-          DissipationCompositionalMultiphaseFVMKernels::
+          dissipationCompositionalMultiphaseFVMKernels::
             FaceBasedAssemblyKernelFactory::
             createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
                                                        m_numPhases,
