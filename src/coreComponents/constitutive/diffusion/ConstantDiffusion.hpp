@@ -100,7 +100,7 @@ protected:
 private:
 
   /// default diffusivity in the subRegion
-  R1Tensor m_diffusivityComponents;
+  array1d< real64 > m_diffusivityComponents;
 
 };
 

@@ -189,7 +189,6 @@ void CompositionalMultiphaseBase::registerDataOnMesh( Group & meshBodies )
       string const diffusionName = getConstitutiveName< DiffusionBase >( subRegion );
       if( !diffusionName.empty() )
       {
-        GEOS_ERROR( "Dispersion is not supported yet, please remove this model from this XML file" );
         m_hasDiffusion = true;
       }
 
@@ -197,6 +196,7 @@ void CompositionalMultiphaseBase::registerDataOnMesh( Group & meshBodies )
       string const dispersionName = getConstitutiveName< DispersionBase >( subRegion );
       if( !dispersionName.empty() )
       {
+        GEOS_ERROR( "Dispersion is not supported yet, please remove this model from this XML file" );
         m_hasDispersion = true;
       }
 
@@ -847,8 +847,8 @@ void CompositionalMultiphaseBase::initializeFluidState( MeshLevel & mesh,
       string const & dispersionName = subRegion.template getReference< string >( viewKeyStruct::dispersionNamesString() );
       DispersionBase const & dispersionMaterial = getConstitutiveModel< DispersionBase >( subRegion, dispersionName );
       GEOS_UNUSED_VAR( dispersionMaterial );
-      // TODO: compute the total velocity here
-      //dispersionMaterial.saveConvergedVelocitySate( totalVelovity );
+      // TODO: compute the phase velocities here
+      //dispersionMaterial.saveConvergedVelocitySate( phaseVelovity );
     }
 
   } );
