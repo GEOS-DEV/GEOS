@@ -26,11 +26,11 @@ VTKVTMWriter::VTKVTMWriter( string filePath )
   : m_filePath( std::move( filePath ) )
 {
   // Declaration of XML version
-  auto declarationNode = m_document.append_child( pugi::node_declaration );
+  auto declarationNode = m_document.appendChild( xmlWrapper::xmlNodeType::node_declaration );
   declarationNode.append_attribute( "version" ) = "1.0";
 
   // Declaration of the node VTKFile
-  auto vtkFileNode = m_document.append_child( "VTKFile" );
+  auto vtkFileNode = m_document.appendChild( "VTKFile" );
   vtkFileNode.append_attribute( "type" ) = "vtkMultiBlockDataSet";
   vtkFileNode.append_attribute( "version" ) = "1.0";
 
@@ -39,7 +39,7 @@ VTKVTMWriter::VTKVTMWriter( string filePath )
 
 void VTKVTMWriter::write() const
 {
-  m_document.save_file( m_filePath.c_str() );
+  m_document.saveFile( m_filePath );
 }
 
 void VTKVTMWriter::addDataSet( std::vector< string > const & blockPath,
