@@ -372,7 +372,7 @@ void InternalWellGenerator::connectPerforationsToWellElements()
     GEOS_THROW_IF( m_perfDistFromHead[iperf] > wellLength,
                    perf.getWrapperDataContext( Perforation::viewKeyStruct::distanceFromHeadString() ) <<
                    ": Distance from well perforation to head (" <<
-                   Perforation::viewKeyStruct::distanceFromHeadString() << " = " << m_perfDistFromHead[iperf]
+                   Perforation::viewKeyStruct::distanceFromHeadString() << " = " << m_perfDistFromHead[iperf] <<
                    ") is larger than well polyline length (" << wellLength <<
                    ")\n \n You should check the following values:" <<
                    "\n   1 - " << perf.getWrapperDataContext( Perforation::viewKeyStruct::distanceFromHeadString() ) <<

@@ -151,6 +151,7 @@ static localIndex getFaceNodesWedge( localIndex const faceNum,
     default:
     {
       GEOS_ERROR( GEOS_FMT( faceIndexError, "Wedge", faceNum ) );
+      return 0;
     }
   }
 }
