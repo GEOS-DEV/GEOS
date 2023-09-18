@@ -13,8 +13,6 @@ To list all the modules available through ``mesh_doctor`` you can simply use the
 .. command-output:: python mesh_doctor.py --help
    :cwd: ../../../coreComponents/python/modules/geosx_mesh_doctor
 
-.. program-output:: pwd
-
 Then, it you are interested in a specific module, you can ask for its documentation using the ``mesh_doctor module_name --help`` pattern.
 For example
 
@@ -42,7 +40,7 @@ Displays the nodes that are closer than a prescribed threshold.
 It is not uncommon to find multiple nodes in the exact same position.
 This will typically be an issue for ``geos`` and should be fixed.
 
-.. program-output:: python mesh_doctor.py collocated_nodes --help
+.. command-output:: python mesh_doctor.py collocated_nodes --help
    :cwd: ../../../coreComponents/python/modules/geosx_mesh_doctor
 
 ``element_volumes``
@@ -61,8 +59,8 @@ It can happen that an exported mesh does not abide by the ``vtk`` orderings.
 The ``fix_elements_orderings`` module can rearrange the nodes of given types of elements.
 This can be convenient if you cannot regenerate the mesh.
 
-.. program-output:: python mesh_doctor.py fix_elements_orderings --help
-   :cwd: ../../../oreComponents/python/modules/geosx_mesh_doctor
+.. command-output:: python mesh_doctor.py fix_elements_orderings --help
+   :cwd: ../../../coreComponents/python/modules/geosx_mesh_doctor
 
 ``generate_cube``
 """""""""""""""""
@@ -71,7 +69,7 @@ This module conveniently generates cubic meshes in ``vtk``.
 It can also generate fields with simple values.
 This tool can also be useful to generate a first mesh that will be refined or customized.
 
-.. program-output:: python mesh_doctor.py generate_cube --help
+.. command-output:: python mesh_doctor.py generate_cube --help
    :cwd: ../../../coreComponents/python/modules/geosx_mesh_doctor
 
 ``generate_fractures``
@@ -80,7 +78,7 @@ This tool can also be useful to generate a first mesh that will be refined or cu
 For a conformal to be defined in a mesh, ``geos`` requires the mesh to be split at the faces where the fracture gets across the mesh.
 The ``generate_fractures`` module will split the mesh and generate the multi-block ``vtk`` files.
 
-.. program-output:: python mesh_doctor.py generate_fractures --help
+.. command-output:: python mesh_doctor.py generate_fractures --help
    :cwd: ../../../coreComponents/python/modules/geosx_mesh_doctor
 
 ``generate_global_ids``
@@ -89,7 +87,7 @@ The ``generate_fractures`` module will split the mesh and generate the multi-blo
 When running ``geos`` in parallel, using global ids can be used to refer to data across the ranks.
 The ``generate_global_ids`` can generate global ids for the input ``vkt`` mesh.
 
-.. program-output:: python mesh_doctor.py generate_global_ids --help
+.. command-output:: python mesh_doctor.py generate_global_ids --help
    :cwd: ../../../coreComponents/python/modules/geosx_mesh_doctor
 
 ``non_conformal``
@@ -98,7 +96,7 @@ The ``generate_global_ids`` can generate global ids for the input ``vkt`` mesh.
 This module will detect elements close enough (there's a user defined threshold) but are not in front of each other (another threshold can be defined).
 This module can be a little time consuming.
 
-.. program-output:: python mesh_doctor.py non_conformal --help
+.. command-output:: python mesh_doctor.py non_conformal --help
    :cwd: ../../../coreComponents/python/modules/geosx_mesh_doctor
 
 ``self_intersecting_elements``
@@ -107,7 +105,7 @@ This module can be a little time consuming.
 Some meshes can have elements that auto-intersect.
 This module will display the elements that have faces intersecting.
 
-.. program-output:: python mesh_doctor.py self_intersecting_elements --help
+.. command-output:: python mesh_doctor.py self_intersecting_elements --help
    :cwd: ../../../coreComponents/python/modules/geosx_mesh_doctor
 
 ``supported_elements``
@@ -120,5 +118,5 @@ The ``supported_elements`` check will validate that no unsupported element is de
 Also, ``geos`` supports the generic ``VTK_POLYHEDRON``/``42`` elements, which are converted on the fly into one of the elements described above.
 The ``supported_elements`` check will also verify that those ``VTK_POLYHEDRON`` cells can effectively get converted.
 
-.. program-output:: python mesh_doctor.py supported_elements --help
+.. command-output:: python mesh_doctor.py supported_elements --help
    :cwd: ../../../coreComponents/python/modules/geosx_mesh_doctor
