@@ -32,7 +32,7 @@ public:
   /**
    * @brief Default constructor.
    */
-  NonlinearSolverParameters() = delete;
+  NonlinearSolverParameters() = default;
 
   /**
    * @brief Constructor
@@ -52,6 +52,36 @@ public:
    * @param The source object of the move.
    */
   NonlinearSolverParameters( NonlinearSolverParameters && ) = default;
+
+  /**
+   * @brief Copy Constructor
+   * @param The source object.
+   */
+  NonlinearSolverParameters & operator=( const NonlinearSolverParameters & params )
+  {
+    m_lineSearchAction = params.m_lineSearchAction;
+    m_lineSearchInterpType = params.m_lineSearchInterpType;
+    m_lineSearchMaxCuts = params.m_lineSearchMaxCuts;
+    m_lineSearchCutFactor = params.m_lineSearchCutFactor;
+
+    m_newtonTol = params.m_newtonTol;
+    m_maxIterNewton = params.m_maxIterNewton;
+    m_minIterNewton = params.m_minIterNewton;
+
+    m_maxAllowedResidualNorm = params.m_maxAllowedResidualNorm;
+    m_allowNonConverged = params.m_allowNonConverged;
+
+    m_timeStepDecreaseIterLimit = params.m_timeStepDecreaseIterLimit;
+    m_timeStepIncreaseIterLimit = params.m_timeStepIncreaseIterLimit;
+    m_timeStepDecreaseFactor = params.m_timeStepDecreaseFactor;
+    m_timeStepIncreaseFactor = params.m_timeStepIncreaseFactor;
+    m_maxSubSteps = params.m_maxSubSteps;
+    m_maxTimeStepCuts = params.m_maxTimeStepCuts;
+    m_timeStepCutFactor = params.m_timeStepCutFactor;
+    m_maxNumConfigurationAttempts = params.m_maxNumConfigurationAttempts;
+
+    return *this;
+  }
 
   /**
    * @brief The name of this object in the catalog.
