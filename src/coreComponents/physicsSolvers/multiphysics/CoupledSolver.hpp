@@ -615,7 +615,7 @@ protected:
   /* Implementation of Nonlinear Acceleration (Aitken) of averageMeanTotalStressIncrement */
 
   void recordAverageMeanTotalStressIncrement( DomainPartition & domain,
-                                              std::vector< real64 > & s )
+                                              array1d< real64 > & s )
   {
     // s denotes averageMeanTotalStressIncrement
     s.resize( 0 );
@@ -633,14 +633,14 @@ protected:
         arrayView1d< const real64 > const & averageMeanTotalStressIncrement_k = solid.getAverageMeanTotalStressIncrement_k();
         for( localIndex k = 0; k < localIndex( averageMeanTotalStressIncrement_k.size() ); k++ )
         {
-          s.push_back( averageMeanTotalStressIncrement_k[ k ] );
+          s.emplace_back( averageMeanTotalStressIncrement_k[ k ] );
         }
       } );
     } );
   }
 
   void applyAcceleratedAverageMeanTotalStressIncrement( DomainPartition & domain,
-                                                        std::vector< real64 > & s )
+                                                        array1d< real64 > & s )
   {
     // s denotes averageMeanTotalStressIncrement
     integer i = 0;
@@ -665,58 +665,61 @@ protected:
     } );
   }
 
-  std::vector< real64 > addTwoVecs( const std::vector< real64 > & vec1,
-                                    const std::vector< real64 > & vec2,
-                                    const real64 sign )
+  array1d< real64 > addTwoVecs( const array1d< real64 > & vec1,
+                                const array1d< real64 > & vec2,
+                                const real64 sign )
   {
     GEOS_ASSERT( vec1.size() == vec2.size() );
-    std::vector< real64 > result;
-    for( size_t i = 0; i < vec1.size(); i++ )
+    array1d< real64 > result;
+    const localIndex N = vec1.size();
+    for( localIndex i = 0; i < N; i++ )
     {
-      result.push_back( vec1[ i ] + sign * vec2[ i ] );
+      result.emplace_back( vec1[ i ] + sign * vec2[ i ] );
     }
     return result;
   }
 
-  std::vector< real64 > scalarMultiplyAVec( const std::vector< real64 > & vec,
-                                            const real64 scalarMult )
+  array1d< real64 > scalarMultiplyAVec( const array1d< real64 > & vec,
+                                        const real64 scalarMult )
   {
-    std::vector< real64 > result;
-    for( size_t i = 0; i < vec.size(); i++ )
+    array1d< real64 > result;
+    const localIndex N = vec.size();
+    for( localIndex i = 0; i < N; i++ )
     {
-      result.push_back( scalarMult * vec[ i ] );
+      result.emplace_back( scalarMult * vec[ i ] );
     }
     return result;
   }
 
-  real64 dotTwoVecs( const std::vector< real64 > & vec1,
-                     const std::vector< real64 > & vec2 )
+  real64 dotTwoVecs( const array1d< real64 > & vec1,
+                     const array1d< real64 > & vec2 )
   {
     GEOS_ASSERT( vec1.size() == vec2.size() );
     real64 result = 0;
-    for( size_t i = 0; i < vec1.size(); i++ )
+    const localIndex N = vec1.size();
+    for( localIndex i = 0; i < N; i++ )
     {
       result += vec1[ i ] * vec2[ i ];
     }
     return result;
   }
 
-  real64 computeAitkenRelaxationFactor( const std::vector< real64 > & s0,
-                                        const std::vector< real64 > & s1,
-                                        const std::vector< real64 > & s1_tilde,
-                                        const std::vector< real64 > & s2_tilde,
+  real64 computeAitkenRelaxationFactor( const array1d< real64 > & s0,
+                                        const array1d< real64 > & s1,
+                                        const array1d< real64 > & s1_tilde,
+                                        const array1d< real64 > & s2_tilde,
                                         const real64 omega0 )
   {
-    std::vector< real64 > r1 = addTwoVecs( s1_tilde, s0, -1.0 );
-    std::vector< real64 > r2 = addTwoVecs( s2_tilde, s1, -1.0 );
+    array1d< real64 > r1 = addTwoVecs( s1_tilde, s0, -1.0 );
+    array1d< real64 > r2 = addTwoVecs( s2_tilde, s1, -1.0 );
 
     // diff = r2 - r1
-    std::vector< real64 > diff = addTwoVecs( r2, r1, -1.0 );
+    array1d< real64 > diff = addTwoVecs( r2, r1, -1.0 );
 
-    real64 denom = dotTwoVecs( diff, diff );
-    real64 numer = dotTwoVecs( r1, diff );
+    const real64 denom = dotTwoVecs( diff, diff );
+    const real64 numer = dotTwoVecs( r1, diff );
 
-    real64 omega1 = 1;
+    real64 omega1 = 1.0;
     if( !isZero( denom ) )
     {
       omega1 = -1.0 * omega0 * numer / denom;
@@ -724,9 +727,9 @@ protected:
     return omega1;
   }
 
-  std::vector< real64 > computeUpdate( const std::vector< real64 > & s1,
-                                       const std::vector< real64 > & s2_tilde,
-                                       const real64 omega1 )
+  array1d< real64 > computeUpdate( const array1d< real64 > & s1,
+                                   const array1d< real64 > & s2_tilde,
+                                   const real64 omega1 )
   {
     return addTwoVecs( scalarMultiplyAVec( s1, 1.0 - omega1 ),
                        scalarMultiplyAVec( s2_tilde, omega1 ),
@@ -780,11 +783,11 @@ protected:
 
   /// member variables needed for Nonlinear Acceleration (Aitken)
   integer m_useNA;
-  std::vector< real64 > m_s0;
-  std::vector< real64 > m_s1;
-  std::vector< real64 > m_s1_tilde;
-  std::vector< real64 > m_s2;
-  std::vector< real64 > m_s2_tilde;
+  array1d< real64 > m_s0;
+  array1d< real64 > m_s1;
+  array1d< real64 > m_s1_tilde;
+  array1d< real64 > m_s2;
+  array1d< real64 > m_s2_tilde;
   real64 m_omega0;
   real64 m_omega1;
 };
