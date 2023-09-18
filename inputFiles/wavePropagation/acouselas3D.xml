@@ -12,7 +12,7 @@
       rickerOrder="3"
       receiverCoordinates="{ { 3752.2935, 1200, 2933.3333 } }"
       outputSeismoTrace="1"
-      dtSeismoTrace="1e-2"/>
+      dtSeismoTrace="1e-3"/>
     <ElasticSEM
       name="elasticSolver"
       discretization="FE1"
@@ -21,7 +21,7 @@
       timeSourceFrequency="0"
       receiverCoordinates="{ { 3752.2935, 1200, 1866.6667 } }"
       outputSeismoTrace="1"
-      dtSeismoTrace="1e-2"/>
+      dtSeismoTrace="1e-3"/>
     <!-- NOTES:
       - coupled solver must be declared at the end (for interface computations)
       - discretization is also needed for the correct mesh to be passed through from the coupled solver to the elastic / acoustic solvers
@@ -73,9 +73,9 @@
       xCoords="{ 0, 6400 }"
       yCoords="{ 0, 2400 }"
       zCoords="{ 0, 2400, 4800 }"
-      nx="{ 160 }"
-      ny="{ 60 }"
-      nz="{ 60, 60 }"
+      nx="{ 1280 }"
+      ny="{ 480 }"
+      nz="{ 480, 480 }"
       cellBlockNames="{ solid, fluid }"/>
   </Mesh>
 
@@ -83,7 +83,7 @@
     <FiniteElements>
       <FiniteElementSpace
         name="FE1"
-        order="2"
+        order="1"
         formulation="SEM"/>
     </FiniteElements>
   </NumericalMethods>
@@ -92,7 +92,7 @@
     maxTime="3">
     <PeriodicEvent
       name="outputs"
-      timeFrequency="2e-1"
+      timeFrequency="3.1"
       targetExactTimestep="0">
       <PeriodicEvent name="outputs_vtk" target="/Outputs/vtkOutput"/>
       <!--
@@ -109,17 +109,17 @@
     <!-- control the timestepping here with forceDt -->
     <PeriodicEvent
       name="solidfluidSolverApplications"
-      forceDt="1e-3"
+      forceDt="1e-4"
       target="/Solvers/acousticelasticSolver"/>
     <!-- FIXME: forceDt hack to satisfy pre-timeloop computation -->
     <SoloEvent
       name="solidSolverApplications"
-      forceDt="1e-3"
+      forceDt="1e-4"
       endTime="0"
       target="/Solvers/elasticSolver"/>
     <SoloEvent
       name="fluidSolverApplications"
-      forceDt="1e-3"
+      forceDt="1e-4"
       endTime="0"
       target="/Solvers/acousticSolver"/>
   </Events>

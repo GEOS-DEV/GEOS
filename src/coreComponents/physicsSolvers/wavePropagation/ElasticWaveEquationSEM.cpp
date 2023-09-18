@@ -801,9 +801,9 @@ void ElasticWaveEquationSEM::synchronizeUnknowns( real64 const & time_n,
   arrayView2d< real32 > const uYReceivers = m_displacementYNp1AtReceivers.toView();
   arrayView2d< real32 > const uZReceivers = m_displacementZNp1AtReceivers.toView();
 
-  computeAllSeismoTraces( time_n, dt, cycleNumber, ux_np1, ux_n, uXReceivers );
-  computeAllSeismoTraces( time_n, dt, cycleNumber, uy_np1, uy_n, uYReceivers );
-  computeAllSeismoTraces( time_n, dt, cycleNumber, uz_np1, uz_n, uZReceivers );
+  computeAllSeismoTraces( time_n, dt, ux_np1, ux_n, uXReceivers, std::ios::out );
+  computeAllSeismoTraces( time_n, dt, uy_np1, uy_n, uYReceivers );
+  computeAllSeismoTraces( time_n, dt, uz_np1, uz_n, uZReceivers );
 
   // increment m_indexSeismoTrace
   while( (m_dtSeismoTrace*m_indexSeismoTrace) <= (time_n + epsilonLoc) && m_indexSeismoTrace < m_nsamplesSeismoTrace )
@@ -899,9 +899,9 @@ void ElasticWaveEquationSEM::cleanup( real64 const time_n,
     arrayView2d< real32 > const uYReceivers  = m_displacementYNp1AtReceivers.toView();
     arrayView2d< real32 > const uZReceivers  = m_displacementZNp1AtReceivers.toView();
 
-    computeAllSeismoTraces( time_n, 0, cycleNumber, ux_np1, ux_n, uXReceivers );
-    computeAllSeismoTraces( time_n, 0, cycleNumber, uy_np1, uy_n, uYReceivers );
-    computeAllSeismoTraces( time_n, 0, cycleNumber, uz_np1, uz_n, uZReceivers );
+    computeAllSeismoTraces( time_n, 0.0, ux_np1, ux_n, uXReceivers, std::ios::out );
+    computeAllSeismoTraces( time_n, 0.0, uy_np1, uy_n, uYReceivers );
+    computeAllSeismoTraces( time_n, 0.0, uz_np1, uz_n, uZReceivers );
 
     /// Compute DAS data if requested
     /// Pairs of receivers are assumed to be modeled ( see WaveSolverBase::initializeDAS() )
@@ -920,10 +920,10 @@ void ElasticWaveEquationSEM::cleanup( real64 const time_n,
 
 void ElasticWaveEquationSEM::computeAllSeismoTraces( real64 const time_n,
                                                      real64 const dt,
-                                                     localIndex const cycleNumber,
                                                      arrayView1d< real32 const > const var_np1,
                                                      arrayView1d< real32 const > const var_n,
-                                                     arrayView2d< real32 > varAtReceivers )
+                                                     arrayView2d< real32 > varAtReceivers,
+                                                     std::ios_base::openmode mode )
 {
   localIndex indexSeismoTrace = m_indexSeismoTrace;
 
@@ -931,9 +931,9 @@ void ElasticWaveEquationSEM::computeAllSeismoTraces( real64 const time_n,
        (timeSeismo = m_dtSeismoTrace*indexSeismoTrace) <= (time_n + epsilonLoc) && indexSeismoTrace < m_nsamplesSeismoTrace;
        indexSeismoTrace++ )
   {
-    WaveSolverUtils::computeSeismoTrace( getName(), time_n, dt, cycleNumber, timeSeismo, indexSeismoTrace, m_receiverNodeIds,
+    WaveSolverUtils::computeSeismoTrace( getName(), time_n, dt, timeSeismo, indexSeismoTrace, m_receiverNodeIds,
                                          m_receiverConstants, m_receiverIsLocal, m_nsamplesSeismoTrace,
-                                         m_outputSeismoTrace, var_np1, var_n, varAtReceivers );
+                                         m_outputSeismoTrace, var_np1, var_n, varAtReceivers, mode );
   }
 }
 

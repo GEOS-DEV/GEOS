@@ -635,12 +635,12 @@ real64 ElasticFirstOrderWaveEquationSEM::explicitStepInternal( real64 const & ti
       arrayView2d< real32 > const sigmaxzReceivers   = m_sigmaxzNp1AtReceivers.toView();
       arrayView2d< real32 > const sigmayzReceivers   = m_sigmayzNp1AtReceivers.toView();
 
-      compute2dVariableAllSeismoTraces( regionIndex, time_n, dt, cycleNumber, stressxx, stressxx, sigmaxxReceivers );
-      compute2dVariableAllSeismoTraces( regionIndex, time_n, dt, cycleNumber, stressyy, stressyy, sigmayyReceivers );
-      compute2dVariableAllSeismoTraces( regionIndex, time_n, dt, cycleNumber, stresszz, stresszz, sigmazzReceivers );
-      compute2dVariableAllSeismoTraces( regionIndex, time_n, dt, cycleNumber, stressxy, stressxy, sigmaxyReceivers );
-      compute2dVariableAllSeismoTraces( regionIndex, time_n, dt, cycleNumber, stressxz, stressxz, sigmaxzReceivers );
-      compute2dVariableAllSeismoTraces( regionIndex, time_n, dt, cycleNumber, stressyz, stressyz, sigmayzReceivers );
+      compute2dVariableAllSeismoTraces( regionIndex, time_n, dt, stressxx, stressxx, sigmaxxReceivers, std::ios::out );
+      compute2dVariableAllSeismoTraces( regionIndex, time_n, dt, stressyy, stressyy, sigmayyReceivers );
+      compute2dVariableAllSeismoTraces( regionIndex, time_n, dt, stresszz, stresszz, sigmazzReceivers );
+      compute2dVariableAllSeismoTraces( regionIndex, time_n, dt, stressxy, stressxy, sigmaxyReceivers );
+      compute2dVariableAllSeismoTraces( regionIndex, time_n, dt, stressxz, stressxz, sigmaxzReceivers );
+      compute2dVariableAllSeismoTraces( regionIndex, time_n, dt, stressyz, stressyz, sigmayzReceivers );
 
 
     } );
@@ -663,9 +663,9 @@ real64 ElasticFirstOrderWaveEquationSEM::explicitStepInternal( real64 const & ti
     arrayView2d< real32 > const uyReceivers   = m_displacementyNp1AtReceivers.toView();
     arrayView2d< real32 > const uzReceivers   = m_displacementzNp1AtReceivers.toView();
 
-    computeAllSeismoTraces( time_n, dt, cycleNumber, ux_np1, ux_np1, uxReceivers );
-    computeAllSeismoTraces( time_n, dt, cycleNumber, uy_np1, uy_np1, uyReceivers );
-    computeAllSeismoTraces( time_n, dt, cycleNumber, uz_np1, uz_np1, uzReceivers );
+    computeAllSeismoTraces( time_n, dt, ux_np1, ux_np1, uxReceivers, std::ios::out );
+    computeAllSeismoTraces( time_n, dt, uy_np1, uy_np1, uyReceivers );
+    computeAllSeismoTraces( time_n, dt, uz_np1, uz_np1, uzReceivers );
 
     // increment m_indexSeismoTrace
     while( (m_dtSeismoTrace*m_indexSeismoTrace) <= (time_n + epsilonLoc) && m_indexSeismoTrace < m_nsamplesSeismoTrace )
@@ -711,12 +711,12 @@ void ElasticFirstOrderWaveEquationSEM::cleanup( real64 const time_n,
       arrayView2d< real32 > const sigmaxzReceivers   = m_sigmaxzNp1AtReceivers.toView();
       arrayView2d< real32 > const sigmayzReceivers   = m_sigmayzNp1AtReceivers.toView();
 
-      compute2dVariableAllSeismoTraces( regionIndex, time_n, 0.0, cycleNumber, stressxx, stressxx, sigmaxxReceivers );
-      compute2dVariableAllSeismoTraces( regionIndex, time_n, 0.0, cycleNumber, stressyy, stressyy, sigmayyReceivers );
-      compute2dVariableAllSeismoTraces( regionIndex, time_n, 0.0, cycleNumber, stresszz, stresszz, sigmazzReceivers );
-      compute2dVariableAllSeismoTraces( regionIndex, time_n, 0.0, cycleNumber, stressxy, stressxy, sigmaxyReceivers );
-      compute2dVariableAllSeismoTraces( regionIndex, time_n, 0.0, cycleNumber, stressxz, stressxz, sigmaxzReceivers );
-      compute2dVariableAllSeismoTraces( regionIndex, time_n, 0.0, cycleNumber, stressyz, stressyz, sigmayzReceivers );
+      compute2dVariableAllSeismoTraces( regionIndex, time_n, 0.0, stressxx, stressxx, sigmaxxReceivers, std::ios::out );
+      compute2dVariableAllSeismoTraces( regionIndex, time_n, 0.0, stressyy, stressyy, sigmayyReceivers );
+      compute2dVariableAllSeismoTraces( regionIndex, time_n, 0.0, stresszz, stresszz, sigmazzReceivers );
+      compute2dVariableAllSeismoTraces( regionIndex, time_n, 0.0, stressxy, stressxy, sigmaxyReceivers );
+      compute2dVariableAllSeismoTraces( regionIndex, time_n, 0.0, stressxz, stressxz, sigmaxzReceivers );
+      compute2dVariableAllSeismoTraces( regionIndex, time_n, 0.0, stressyz, stressyz, sigmayzReceivers );
     } );
     arrayView1d< real32 > const ux_np1 = nodeManager.getField< wavesolverfields::Displacementx_np1 >();
     arrayView1d< real32 > const uy_np1 = nodeManager.getField< wavesolverfields::Displacementy_np1 >();
@@ -727,9 +727,9 @@ void ElasticFirstOrderWaveEquationSEM::cleanup( real64 const time_n,
     arrayView2d< real32 > const uyReceivers   = m_displacementyNp1AtReceivers.toView();
     arrayView2d< real32 > const uzReceivers   = m_displacementzNp1AtReceivers.toView();
 
-    computeAllSeismoTraces( time_n, 0.0, cycleNumber, ux_np1, ux_np1, uxReceivers );
-    computeAllSeismoTraces( time_n, 0.0, cycleNumber, uy_np1, uy_np1, uyReceivers );
-    computeAllSeismoTraces( time_n, 0.0, cycleNumber, uz_np1, uz_np1, uzReceivers );
+    computeAllSeismoTraces( time_n, 0.0, ux_np1, ux_np1, uxReceivers, std::ios::out );
+    computeAllSeismoTraces( time_n, 0.0, uy_np1, uy_np1, uyReceivers );
+    computeAllSeismoTraces( time_n, 0.0, uz_np1, uz_np1, uzReceivers );
 
   } );
 
@@ -743,10 +743,10 @@ void ElasticFirstOrderWaveEquationSEM::cleanup( real64 const time_n,
 
 void ElasticFirstOrderWaveEquationSEM::computeAllSeismoTraces( real64 const time_n,
                                                                real64 const dt,
-                                                               localIndex const cycleNumber,
                                                                arrayView1d< real32 const > const var_np1,
                                                                arrayView1d< real32 const > const var_n,
-                                                               arrayView2d< real32 > varAtReceivers )
+                                                               arrayView2d< real32 > varAtReceivers,
+                                                               std::ios_base::openmode mode )
 {
 
   localIndex indexSeismoTrace = m_indexSeismoTrace;
@@ -754,28 +754,28 @@ void ElasticFirstOrderWaveEquationSEM::computeAllSeismoTraces( real64 const time
        (timeSeismo = m_dtSeismoTrace*indexSeismoTrace) <= (time_n + epsilonLoc) && indexSeismoTrace < m_nsamplesSeismoTrace;
        indexSeismoTrace++ )
   {
-    WaveSolverUtils::computeSeismoTrace( getName(), time_n, dt, cycleNumber, timeSeismo, indexSeismoTrace, m_receiverNodeIds,
+    WaveSolverUtils::computeSeismoTrace( getName(), time_n, dt, timeSeismo, indexSeismoTrace, m_receiverNodeIds,
                                          m_receiverConstants, m_receiverIsLocal, m_nsamplesSeismoTrace, m_outputSeismoTrace,
-                                         var_np1, var_n, varAtReceivers );
+                                         var_np1, var_n, varAtReceivers, mode );
   }
 }
 
 void ElasticFirstOrderWaveEquationSEM::compute2dVariableAllSeismoTraces( localIndex const regionIndex,
                                                                          real64 const time_n,
                                                                          real64 const dt,
-                                                                         localIndex const cycleNumber,
                                                                          arrayView2d< real32 const > const var_np1,
                                                                          arrayView2d< real32 const > const var_n,
-                                                                         arrayView2d< real32 > varAtReceivers )
+                                                                         arrayView2d< real32 > varAtReceivers,
+                                                                         std::ios_base::openmode mode )
 {
   localIndex indexSeismoTrace = m_indexSeismoTrace;
   for( real64 timeSeismo;
        (timeSeismo = m_dtSeismoTrace*indexSeismoTrace) <= (time_n + epsilonLoc) && indexSeismoTrace < m_nsamplesSeismoTrace;
        indexSeismoTrace++ )
   {
-    WaveSolverUtils::compute2dVariableSeismoTrace( getName(), time_n, dt, cycleNumber, regionIndex, m_receiverRegion, timeSeismo,
+    WaveSolverUtils::compute2dVariableSeismoTrace( getName(), time_n, dt, regionIndex, m_receiverRegion, timeSeismo,
                                                    indexSeismoTrace, m_rcvElem, m_receiverConstants, m_receiverIsLocal,
-                                                   m_nsamplesSeismoTrace, m_outputSeismoTrace, var_np1, var_n, varAtReceivers );
+                                                   m_nsamplesSeismoTrace, m_outputSeismoTrace, var_np1, var_n, varAtReceivers, mode );
   }
 }
 

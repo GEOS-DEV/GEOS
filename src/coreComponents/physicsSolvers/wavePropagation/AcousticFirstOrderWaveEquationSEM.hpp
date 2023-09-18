@@ -89,10 +89,10 @@ public:
    */
   virtual void computeAllSeismoTraces( real64 const time_n,
                                        real64 const dt,
-                                       localIndex const cycleNumber,
                                        arrayView1d< real32 const > const var_np1,
                                        arrayView1d< real32 const > const var_n,
-                                       arrayView2d< real32 > varAtReceivers );
+                                       arrayView2d< real32 > varAtReceivers,
+                                       std::ios_base::openmode mode = std::ios::app );
 
   /**
    * TODO: move implementation into WaveSolverUtils
@@ -106,10 +106,10 @@ public:
   virtual void compute2dVariableAllSeismoTraces( localIndex const regionIndex,
                                                  real64 const time_n,
                                                  real64 const dt,
-                                                 localIndex const cycleNumber,
                                                  arrayView2d< real32 const > const var_np1,
                                                  arrayView2d< real32 const > const var_n,
-                                                 arrayView2d< real32 > varAtReceivers );
+                                                 arrayView2d< real32 > varAtReceivers,
+                                                 std::ios_base::openmode mode = std::ios::app );
 
 
   /**

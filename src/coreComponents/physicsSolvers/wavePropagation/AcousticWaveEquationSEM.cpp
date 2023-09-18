@@ -1100,7 +1100,7 @@ void AcousticWaveEquationSEM::synchronizeUnknowns( real64 const & time_n,
   arrayView2d< real32 > const pReceivers = m_pressureNp1AtReceivers.toView();
   if( time_n >= 0 )
   {
-    computeAllSeismoTraces( time_n, dt, cycleNumber, p_np1, p_n, pReceivers );
+    computeAllSeismoTraces( time_n, dt, p_np1, p_n, pReceivers, std::ios::out );
   }
 
   if( m_usePML )
@@ -1150,16 +1150,16 @@ void AcousticWaveEquationSEM::cleanup( real64 const time_n,
     arrayView1d< real32 const > const p_n = nodeManager.getField< fields::Pressure_n >();
     arrayView1d< real32 const > const p_np1 = nodeManager.getField< fields::Pressure_np1 >();
     arrayView2d< real32 > const pReceivers  = m_pressureNp1AtReceivers.toView();
-    computeAllSeismoTraces( time_n, 0.0, cycleNumber, p_np1, p_n, pReceivers );
+    computeAllSeismoTraces( time_n, 0.0, p_np1, p_n, pReceivers, std::ios::out );
   } );
 }
 
 void AcousticWaveEquationSEM::computeAllSeismoTraces( real64 const time_n,
                                                       real64 const dt,
-                                                      localIndex const cycleNumber,
                                                       arrayView1d< real32 const > const var_np1,
                                                       arrayView1d< real32 const > const var_n,
-                                                      arrayView2d< real32 > varAtReceivers )
+                                                      arrayView2d< real32 > varAtReceivers,
+                                                      std::ios_base::openmode mode )
 {
   /*
    * In forward case we compute seismo if time_n + dt is the first time
@@ -1180,9 +1180,9 @@ void AcousticWaveEquationSEM::computeAllSeismoTraces( real64 const time_n,
        timeSeismo = m_dtSeismoTrace * (m_nsamplesSeismoTrace-m_indexSeismoTrace-1) >= (time_n - dt -  epsilonLoc) && m_indexSeismoTrace < m_nsamplesSeismoTrace ;
        m_indexSeismoTrace++ )
   {
-    WaveSolverUtils::computeSeismoTrace( getName(), time_n, m_forward? dt : -dt, cycleNumber, timeSeismo,
-                                        m_forward ? m_indexSeismoTrace : m_nsamplesSeismoTrace-m_indexSeismoTrace-1, m_receiverNodeIds, m_receiverConstants,
-                                         m_receiverIsLocal, m_nsamplesSeismoTrace, m_outputSeismoTrace, var_np1, var_n, varAtReceivers );
+    WaveSolverUtils::computeSeismoTrace( getName(), time_n, m_forward? dt : -dt, timeSeismo,
+                                         m_forward ? m_indexSeismoTrace : m_nsamplesSeismoTrace-m_indexSeismoTrace-1, m_receiverNodeIds, m_receiverConstants,
+                                         m_receiverIsLocal, m_nsamplesSeismoTrace, m_outputSeismoTrace, var_np1, var_n, varAtReceivers, mode );
   }
 }
 
