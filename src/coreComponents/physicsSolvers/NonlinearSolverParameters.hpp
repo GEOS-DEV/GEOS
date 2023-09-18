@@ -32,7 +32,7 @@ public:
   /**
    * @brief Default constructor.
    */
-  NonlinearSolverParameters() = default;
+  NonlinearSolverParameters() = delete;
 
   /**
    * @brief Constructor
