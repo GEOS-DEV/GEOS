@@ -70,7 +70,8 @@ struct WaveSolverUtils
   }
 
   static void writeSeismoTrace( string const & name,
-                                localIndex iSeismo,
+                                localIndex const cycleNumber,
+                                localIndex const iSeismo,
                                 arrayView2d< real64 const > const receiverConstants,
                                 arrayView1d< localIndex const > const receiverIsLocal,
                                 localIndex const nsamplesSeismoTrace,
@@ -91,7 +92,7 @@ struct WaveSolverUtils
             // Note: this "manual" output to file is temporary
             //       It should be removed as soon as we can use TimeHistory to output data not registered on the mesh
             string const fn = joinPath( outputDir, GEOS_FMT( "seismoTraceReceiver_{}_{:03}.txt", name, ircv ) );
-            std::ofstream f( fn, std::ios::app );
+            std::ofstream f( fn, cycleNumber == 0 ? std::ios::app : std::ios::out );
             if( !f )
             {
               GEOS_WARNING( GEOS_FMT( "Failed to open output file {}", fn ) );
@@ -111,8 +112,9 @@ struct WaveSolverUtils
   static void computeSeismoTrace( string const & name,
                                   real64 const time_n,
                                   real64 const dt,
+                                  localIndex const cycleNumber,
                                   real64 const timeSeismo,
-                                  localIndex iSeismo,
+                                  localIndex const iSeismo,
                                   arrayView2d< localIndex const > const receiverNodeIds,
                                   arrayView2d< real64 const > const receiverConstants,
                                   arrayView1d< localIndex const > const receiverIsLocal,
@@ -124,7 +126,7 @@ struct WaveSolverUtils
   {
     real64 const time_np1 = time_n + dt;
 
-    real32 const a1 = (LvArray::math::abs( dt ) < WaveSolverBase::epsilonLoc ) ? 1.0 : (time_np1 - timeSeismo)/dt;
+    real32 const a1 = abs( dt ) < WaveSolverBase::epsilonLoc ? 1.0 : (time_np1 - timeSeismo) / dt;
     real32 const a2 = 1.0 - a1;
 
     if( nsamplesSeismoTrace > 0 )
@@ -133,7 +135,6 @@ struct WaveSolverUtils
       {
         if( receiverIsLocal[ircv] == 1 )
         {
-          varAtReceivers[iSeismo][ircv] = 0.0;
           real32 vtmp_np1 = 0.0, vtmp_n = 0.0;
           for( localIndex inode = 0; inode < receiverConstants.size( 1 ); ++inode )
           {
@@ -141,17 +142,19 @@ struct WaveSolverUtils
             vtmp_n += var_n[receiverNodeIds[ircv][inode]] * receiverConstants[ircv][inode];
           }
           // linear interpolation between the pressure value at time_n and time_(n+1)
-          varAtReceivers[iSeismo][ircv] = a1*vtmp_n + a2*vtmp_np1;
+          varAtReceivers[iSeismo][ircv] = a1 * vtmp_n + a2 * vtmp_np1;
         }
       } );
+      varAtReceivers[iSeismo][receiverConstants.size( 0 )] = a1 * time_n + a2 * time_np1;
     }
 
-    writeSeismoTrace( name, iSeismo, receiverConstants, receiverIsLocal, nsamplesSeismoTrace, outputSeismoTrace, varAtReceivers );
+    writeSeismoTrace( name, cycleNumber, iSeismo, receiverConstants, receiverIsLocal, nsamplesSeismoTrace, outputSeismoTrace, varAtReceivers );
   }
 
   static void compute2dVariableSeismoTrace( string const & name,
                                             real64 const time_n,
                                             real64 const dt,
+                                            localIndex const cycleNumber,
                                             localIndex const regionIndex,
                                             arrayView1d< localIndex const > const receiverRegion,
                                             real64 const timeSeismo,
@@ -178,7 +181,6 @@ struct WaveSolverUtils
         {
           if( receiverRegion[ircv] == regionIndex )
           {
-            varAtReceivers[iSeismo][ircv] = 0.0;
             real32 vtmp_np1 = 0.0, vtmp_n = 0.0;
             for( localIndex inode = 0; inode < receiverConstants.size( 1 ); ++inode )
             {
@@ -186,13 +188,13 @@ struct WaveSolverUtils
               vtmp_n += var_n[rcvElem[ircv]][inode] * receiverConstants[ircv][inode];
             }
             // linear interpolation between the pressure value at time_n and time_(n+1)
-            varAtReceivers[iSeismo][ircv] = a1*vtmp_n + a2*vtmp_np1;
+            varAtReceivers[iSeismo][ircv] = a1 * vtmp_n + a2 * vtmp_np1;
           }
         }
       } );
     }
 
-    writeSeismoTrace( name, iSeismo, receiverConstants, receiverIsLocal, nsamplesSeismoTrace, outputSeismoTrace, varAtReceivers );
+    writeSeismoTrace( name, cycleNumber, iSeismo, receiverConstants, receiverIsLocal, nsamplesSeismoTrace, outputSeismoTrace, varAtReceivers );
   }
 
   /**
