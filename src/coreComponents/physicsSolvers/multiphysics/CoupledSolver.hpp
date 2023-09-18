@@ -553,7 +553,7 @@ protected:
   {
     forEachArgInTuple( m_solvers, [&]( auto & solver, auto )
     {
-      solver->getNonlinearSolverParameters() = m_numNewtonIterations;
+      solver->getNonlinearSolverParameters() = m_nonlinearSolverParameters;
     } );
   }
 
