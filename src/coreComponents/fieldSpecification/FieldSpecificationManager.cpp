@@ -172,7 +172,7 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
       {
         missingSetNames.emplace_back( mapEntry.first );
       }
-      GEOS_THROW( GEOS_FMT( "\n{0}: there is/are no set(s) named `{1}` under the {2} `{3}`.\n",
+      GEOS_THROW( GEOS_FMT( "\n{}: there is/are no set(s) named `{}` under the {} `{}`.\n",
                             fs.getWrapperDataContext( FieldSpecificationBase::viewKeyStruct::objectPathString() ),
                             fmt::join( missingSetNames, ", " ),
                             FieldSpecificationBase::viewKeyStruct::objectPathString(), fs.getObjectPath() ),
@@ -184,15 +184,15 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
     for( auto const & mapEntry : isTargetSetEmpty )
     {
       GEOS_LOG_RANK_0_IF( ( mapEntry.second == 1 ), // target set is empty
-                          GEOS_FMT( "\nWarning!\n{0}: this FieldSpecification targets (an) empty set(s)"
-                                    "\nIf the simulation does not involve the SurfaceGenerator, check the content of the set `{1}` in `{2}`. \n",
+                          GEOS_FMT( "\nWarning!\n{}: this FieldSpecification targets (an) empty set(s)"
+                                    "\nIf the simulation does not involve the SurfaceGenerator, check the content of the set `{}` in `{}`. \n",
                                     fs.getDataContext(), mapEntry.first, fs.getObjectPath() ) );
     }
 
     if( isFieldNameFound == 0 )
     {
       char const fieldNameNotFoundMessage[] =
-        "\n{0}: there is no {1} named `{2}` under the {3} `{4}`.\n";
+        "\n{}: there is no {} named `{}` under the {} `{}`.\n";
       string const errorMsg =
         GEOS_FMT( fieldNameNotFoundMessage,
                   fs.getWrapperDataContext( FieldSpecificationBase::viewKeyStruct::fieldNameString() ),
