@@ -60,6 +60,10 @@
   </Mesh>
 
   <Geometry>
+    <Box
+    name="fractureTip"
+    xMin="{ 1., -0.01, -0.1 }"
+    xMax="{ 2.,  .3,  1.1 }"/>
     <Rectangle
       name="FracturePlane"
       normal="{ 1, 0, 0 }"
@@ -192,7 +196,7 @@
 
     <FieldSpecification
       name="initialPressureFracture"
-      setNames="{ all }"
+      setNames="{ fractureTip }"
       objectPath="ElementRegions/Fracture"
       fieldName="pressure"
       scale="1.0e5"/>
