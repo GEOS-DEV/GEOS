@@ -12,20 +12,20 @@
       useMass="1"
       targetPhaseVolFractionChangeInTimeStep="1.0"
       targetRelativePressureChangeInTimeStep="1.0"
-      targetRegions="{ region }">
+      targetRegions="{ region }"
+      useDBC="1"
+      continuationDBC="1"
+      omegaDBC="1"
+      miscibleDBC="0"
+      kappaminDBC="1e-20"
+      contMultiplierDBC="0.5">
       <NonlinearSolverParameters
         newtonTol="1.0e-6"
         newtonMaxIter="1000"
         maxTimeStepCuts="2000"
         lineSearchAction="None"
         timeStepDecreaseFactor="1"
-        timeStepIncreaseFactor="2"
-        useDBC="1"
-        continuationDBC="1"
-        omegaDBC="1"
-        miscibleDBC="0"
-        kappaminDBC="1e-20"
-        contMultiplierDBC="0.5"/>
+        timeStepIncreaseFactor="2"/>
       <LinearSolverParameters
         solverType="direct"
         directParallel="0"  

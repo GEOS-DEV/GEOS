@@ -19,13 +19,7 @@
         maxTimeStepCuts="2000"
         lineSearchAction="None"
         timeStepDecreaseFactor="1"
-        timeStepIncreaseFactor="2"
-        useDBC="0"
-        continuationDBC="1"
-        omegaDBC="0"
-        miscibleDBC="0"
-        kappaminDBC="1e-20"
-        contMultiplierDBC="0.5"/>
+        timeStepIncreaseFactor="2"/>
       <LinearSolverParameters
         solverType="direct"
         directParallel="0"  

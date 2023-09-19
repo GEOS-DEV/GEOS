@@ -14,7 +14,13 @@
       targetPhaseVolFractionChangeInTimeStep="1.0"
       targetRelativePressureChangeInTimeStep="1.0"
       solutionChangeScalingFactor="0"
-      targetRegions="{ region }">
+      targetRegions="{ region }"
+      useDBC="1"
+      continuationDBC="1"
+      omegaDBC="100"
+      miscibleDBC="0"
+      kappaminDBC="1e-20"
+      contMultiplierDBC="0.2">
       <NonlinearSolverParameters
         newtonTol="1.0e-4"
         newtonMaxIter="100"
@@ -22,13 +28,7 @@
         maxSubSteps="1000"
         lineSearchAction="None"
         timeStepDecreaseFactor="1"
-        timeStepIncreaseFactor="2"
-        useDBC="1"
-        continuationDBC="1"
-        omegaDBC="100"
-        miscibleDBC="0"
-        kappaminDBC="1e-20"
-        contMultiplierDBC="0.2"/>
+        timeStepIncreaseFactor="2"/>
       <LinearSolverParameters
         solverType="direct"
         directParallel="0"  
@@ -42,8 +42,6 @@
     <FiniteVolume>
       <TwoPointFluxApproximation
         name="fluidTPFA"/>
-        <!-- upwindingScheme="C1PPU" -->
-        <!-- epsC1PPU="1e-8" -->
     </FiniteVolume>
   </NumericalMethods>
   <!-- SPHINX_NUMERICAL_END -->

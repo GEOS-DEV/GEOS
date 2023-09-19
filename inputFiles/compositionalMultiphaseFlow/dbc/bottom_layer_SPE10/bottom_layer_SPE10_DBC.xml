@@ -20,23 +20,23 @@
       targetPhaseVolFractionChangeInTimeStep="1.0"
       targetRelativePressureChangeInTimeStep="1.0"
       maxCompFractionChange="1.0"
-      targetRegions="{ region }">
+      targetRegions="{ region }"
+      useDBC="1"
+      continuationDBC="1"
+      omegaDBC="1"
+      miscibleDBC="0"
+      kappaminDBC="1e-3"
+      contMultiplierDBC="0.1">
       <NonlinearSolverParameters
         newtonTol="1e-4"
         newtonMaxIter="20"
         maxTimeStepCuts="1000"
-	      lineSearchAction="None"
+        lineSearchAction="None"
         timeStepDecreaseFactor="0.9"
         timeStepIncreaseFactor="1.5" 
         timeStepDecreaseIterLimit="0.8"
-        timeStepIncreaseIterLimit="0.6" 
-        useDBC="1"
-        continuationDBC="1"
-        omegaDBC="1"
-        miscibleDBC="0"
-        kappaminDBC="1e-3"
-        contMultiplierDBC="0.1"/>
-        <LinearSolverParameters
+        timeStepIncreaseIterLimit="0.6"/>
+      <LinearSolverParameters
         directParallel="0"/>
     </CompositionalMultiphaseFVM>
 
