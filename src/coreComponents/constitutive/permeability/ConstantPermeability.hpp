@@ -97,8 +97,6 @@ public:
   virtual void allocateConstitutiveData( dataRepository::Group & parent,
                                          localIndex const numConstitutivePointsPerParentIndex ) override;
 
-  virtual void initializeState() const override;
-
   static string catalogName() { return "ConstantPermeability"; }
 
   virtual string getCatalogName() const override { return catalogName(); }

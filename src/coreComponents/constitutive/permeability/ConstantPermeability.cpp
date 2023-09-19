@@ -112,6 +112,8 @@ void ConstantPermeability::initializeState() const
       }
     }
   } );
+
+  m_initialPermeability.setValues< parallelDevicePolicy<> >( m_permeability.toViewConst() );
 }
 
 void ConstantPermeability::postProcessInput()
@@ -119,11 +121,6 @@ void ConstantPermeability::postProcessInput()
   // set results as array default values
   this->getWrapper< array1d< real64 > >( viewKeyStruct::referencePressureString() ).
     setApplyDefaultValue( m_defaultReferencePressure );
-}
-
-void ConstantPermeability::initializeState() const
-{
-  m_initialPermeability.setValues< parallelDevicePolicy<> >( m_permeability.toViewConst() );
 }
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, ConstantPermeability, string const &, Group * const )
