@@ -15,12 +15,13 @@
     <SurfaceElementRegion
       name="fracture"
       subRegionType="embeddedElement"
-      materialList="{ water, fractureFilling, thermalCond }"
+      materialList="{ water, fractureFilling, thermalCondFrac }"
       defaultAperture="1e-3"/>  
   </ElementRegions>
 
   <Events
-     maxTime="1.576972800e10">
+     maxTime="1.577102400e10"
+     timeOutputFormat="full">
      <SoloEvent
      name="preFracture"
      target="/Solvers/SurfaceGenerator"/>
@@ -49,13 +50,41 @@
     <PeriodicEvent
        name="solverApplications4"
        beginTime="1.5768000001e10"
-       endTime="1.576972800e10"
-       maxEventDt="2"
+       endTime="1.57680001e10"
+       maxEventDt="1"
+       target="/Solvers/singleFlow"/>   
+
+    <PeriodicEvent
+       name="solverApplications5"
+       beginTime="1.57680001e10"
+       endTime="1.5768001e10"
+       maxEventDt="5"
+       target="/Solvers/singleFlow"/>  
+
+    <PeriodicEvent
+       name="solverApplications6"
+       beginTime="1.5768001e10"
+       endTime="1.57681e10"
+       maxEventDt="50"
+       target="/Solvers/singleFlow"/>   
+
+    <PeriodicEvent
+       name="solverApplications7"
+       beginTime="1.57681e10"
+       endTime="1.57689e10"
+       maxEventDt="100"
+       target="/Solvers/singleFlow"/> 
+
+    <PeriodicEvent
+       name="solverApplications8"
+       beginTime="1.57689e10"
+       endTime="1.577102400e10"
+       maxEventDt="400"
        target="/Solvers/singleFlow"/>   
 
      <PeriodicEvent
        name="outputs"
-       cycleFrequency="1"
+       cycleFrequency="10"
        target="/Outputs/vtkOutput"/>
    </Events>
 
@@ -130,7 +159,7 @@
       setNames="{ TU_injector }"                                                                                                                                                                
       objectPath="ElementRegions/fracture"                                                                                                                                              
       functionName="injectionSchedule_massFlux"                                                                                                                                                      
-      scale="-1.0"/>
+      scale="-1.0e-3"/>
 
     <FieldSpecification                                                                                                                                                                  
       name="TU_temperature"                                                                                                                                                       
@@ -148,7 +177,7 @@
       setNames="{ TN_producer }"                                                                                                                                                                
       objectPath="ElementRegions/fracture"                                                                                                                                              
       functionName="TN_massFlux"                                                                                                                                                      
-      scale="1.0"/>
+      scale="1.0e-3"/>
 
     <SourceFlux                                                                                                                                                                          
       name="TC_massFlux"                                                                                                                                                                  
@@ -156,7 +185,7 @@
       setNames="{ TC_producer }"                                                                                                                                                                
       objectPath="ElementRegions/fracture"                                                                                                                                              
       functionName="TC_massFlux"                                                                                                                                                      
-      scale="1.0"/>
+      scale="1.0e-3"/>
   </FieldSpecifications>
 
   <Functions>
@@ -206,6 +235,6 @@
   <Outputs>
     <VTK
       name="vtkOutput"
-      plotFileRoot="thermalFlowFrac_collab_circulation"/>
+      plotFileRoot="thermalFlowFrac_collab_circulation_cond=1e-3"/>
   </Outputs>
 </Problem>

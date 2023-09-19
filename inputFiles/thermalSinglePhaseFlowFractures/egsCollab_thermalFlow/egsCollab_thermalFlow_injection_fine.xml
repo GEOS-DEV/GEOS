@@ -15,8 +15,9 @@
       targetRegions="{ matrix, fracture }">
       <NonlinearSolverParameters
         newtonTol="1.0e-2"
-        newtonMaxIter="20"
-        maxAllowedResidualNorm="1e25"/>
+        newtonMaxIter="200"
+        maxAllowedResidualNorm="1e25"
+        lineSearchMaxCuts="10"/>
       <LinearSolverParameters
         solverType="gmres"
         preconditionerType="amg"

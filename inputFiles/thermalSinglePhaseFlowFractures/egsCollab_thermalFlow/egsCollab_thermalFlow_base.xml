@@ -70,6 +70,10 @@
      <SinglePhaseConstantThermalConductivity
        name="thermalCond"
        thermalConductivityComponents="{ 3.81, 3.81, 3.81 }"/>  
+      
+    <SinglePhaseConstantThermalConductivity
+       name="thermalCondFrac"
+       thermalConductivityComponents="{ 1e-3, 1e-3, 1e-3 }"/>  
 
      <!-- <CompressibleSolidParallelPlatesPermeability
        name="fractureFilling"
@@ -121,7 +125,7 @@
        name="fracturePerm"/> -->
      <ConstantPermeability
        name="fracturePerm"
-       permeabilityComponents="{ 1.0e-16, 1.0e-16, 1.0e-16 }"/>
+       permeabilityComponents="{ 1.0e-14, 1.0e-14, 1.0e-14 }"/>
 
    </Constitutive>
 </Problem>
