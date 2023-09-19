@@ -109,10 +109,7 @@ void SinglePhaseBase::registerDataOnMesh( Group & meshBodies )
         subRegion.registerField< dMobility_dTemperature >( getName() );
       }
 
-      subRegion.registerWrapper< array2d< real64 > >( viewKeyStruct::pressureGradientString() ).
-        setPlotLevel( PlotLevel::LEVEL_0 ).
-        setRegisteringObjects( this->getName()).
-        setDescription( "An array that holds the cellwise pressure gradient." ).
+      subRegion.registerField< pressureGradient >( getName() ).
         reference().resizeDimension< 1 >( 3 );
 
     } );

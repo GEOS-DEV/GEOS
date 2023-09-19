@@ -650,8 +650,7 @@ void SinglePhaseHybridFVM::updatePressureGradient( DomainPartition & domain )
     mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                           auto & subRegion )
     {
-      arrayView2d< real64 > const presGradient =
-        subRegion.template getReference< array2d< real64 > >( viewKeyStruct::pressureGradientString() );
+      arrayView2d< real64 > const presGradient = subRegion.template getField< fields::flow::pressureGradient >();
 
       // get the cell-centered pressures
       arrayView1d< real64 const > const pres = subRegion.template getField< fields::flow::pressure >();
