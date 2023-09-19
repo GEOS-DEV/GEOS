@@ -160,7 +160,7 @@ void NonlinearSolverParameters::postProcessInput()
 {
   if( m_timeStepDecreaseIterLimit <= m_timeStepIncreaseIterLimit )
   {
-    GEOS_ERROR( " timeStepIncreaseIterLimit should be smaller than timeStepDecreaseIterLimit!!" );
+    GEOS_ERROR( "timeStepIncreaseIterLimit should be smaller than timeStepDecreaseIterLimit!" );
   }
   if( m_scalingType == ScalingType::Local && m_lineSearchAction != LineSearchAction::None )
   {
