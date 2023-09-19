@@ -95,7 +95,7 @@ public:
   /**
    * @brief Check if the input values are in the expected pressure & temperature tables bounds
    * @param pressure input pressure to check
-   * @param temperature input temperature to check
+   * @param temperature input temperature to check (in C)
    * @throw a SimulationError if one of the input values is out of bound.
    */
   virtual void checkTablesParameters( real64 pressure, real64 temperature ) const = 0;
