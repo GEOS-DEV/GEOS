@@ -355,10 +355,10 @@ void matrixLeastSquaresSolutionSolve( arraySlice2d< real64, USD > const & A,
                                       arraySlice1d< real64 > const & X )
 {
   GEOS_ASSERT_MSG( A.size( 1 ) == X.size() && A.size( 0 ) == B.size(),
-                    "Matrix, unknown vector and rhs vector not compatible" );
+                   "Matrix, unknown vector and rhs vector not compatible" );
 
   GEOS_ASSERT_MSG( X.size() <= B.size(),
-                    "Matrix, unknown vector and rhs vector not compatible" );
+                   "Matrix, unknown vector and rhs vector not compatible" );
 
   int const M = LvArray::integerConversion< int >( A.size( 0 ) );
   int const N = LvArray::integerConversion< int >( A.size( 1 ) );
