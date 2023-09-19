@@ -23,15 +23,13 @@
 #include "constitutive/solid/porosity/PorosityBase.hpp"
 #include "constitutive/solid/porosity/PorosityFields.hpp"
 
-#include "codingUtilities/Utilities.hpp"
 namespace geos
 {
 
-namespace DissipationCompositionalMultiphaseFVMKernels
+namespace dissipationCompositionalMultiphaseFVMKernels
 {
 
 using namespace constitutive;
-
 
 /******************************** FaceBasedAssemblyKernel ********************************/
 
@@ -63,6 +61,18 @@ public:
   using CapPressureAccessors = AbstractBase::CapPressureAccessors;
   using PermeabilityAccessors = AbstractBase::PermeabilityAccessors;
 
+  using AbstractBase::m_dt;
+  using AbstractBase::m_gravCoef;
+  using AbstractBase::m_dCompFrac_dCompDens;
+  using AbstractBase::m_permeability;
+  using AbstractBase::m_dPerm_dPres;
+
+  using Base = isothermalCompositionalMultiphaseFVMKernels::FaceBasedAssemblyKernel< NUM_COMP, NUM_DOF, STENCILWRAPPER >;
+  using Base::numComp;
+  using Base::numDof;
+  using Base::numEqn;
+  using Base::numFluxSupportPoints;
+
   using DissCompFlowAccessors =
     StencilAccessors< fields::flow::pressure_n,
                       fields::flow::globalCompDensity,
@@ -72,43 +82,10 @@ public:
   using DissMultiFluidAccessors =
     StencilMaterialAccessors< MultiFluidBase,
                               fields::multifluid::phaseDensity_n,
-                              fields::multifluid::phaseMassDensity,
-                              fields::multifluid::phaseCompFraction_n,
-                              fields::multifluid::phaseViscosity >;
-
-  using RelPermAccessors =
-    StencilMaterialAccessors< RelativePermeabilityBase, fields::relperm::phaseRelPerm_n >;
+                              fields::multifluid::phaseCompFraction_n >;
 
   using PorosityAccessors =
     StencilMaterialAccessors< PorosityBase, fields::porosity::porosity_n >;
-
-  using AbstractBase::m_dt;
-  using AbstractBase::m_numPhases;
-  using AbstractBase::m_hasCapPressure;
-  using AbstractBase::m_rankOffset;
-  using AbstractBase::m_ghostRank;
-  using AbstractBase::m_dofNumber;
-  using AbstractBase::m_gravCoef;
-  using AbstractBase::m_phaseMob;
-  using AbstractBase::m_dPhaseMassDens;
-  using AbstractBase::m_phaseCompFrac;
-  using AbstractBase::m_dPhaseCompFrac;
-  using AbstractBase::m_dCompFrac_dCompDens;
-  using AbstractBase::m_dPhaseCapPressure_dPhaseVolFrac;
-  using AbstractBase::m_pres;
-
-  using Base = isothermalCompositionalMultiphaseFVMKernels::FaceBasedAssemblyKernel< NUM_COMP, NUM_DOF, STENCILWRAPPER >;
-  using Base::numComp;
-  using Base::numDof;
-  using Base::numEqn;
-  using Base::numFluxSupportPoints;
-  using Base::maxNumElems;
-  using Base::maxNumConns;
-  using Base::maxStencilSize;
-  using Base::m_stencilWrapper;
-  using Base::m_seri;
-  using Base::m_sesri;
-  using Base::m_sei;
 
   using Deriv = multifluid::DerivativeOffset;
 
@@ -126,7 +103,6 @@ public:
    * @param[in] capPressureAccessors accessor for wrappers registered by the cap pressure model
    * @param[in] permeabilityAccessors accessor for wrappers registered by the permeability model
    * @param[in] porosityAccessors accessor for wrappers registered by the porosity model
-   * @param[in] relPermAccessors accessor for wrappers registered by the relative permeability model needed for dissipation
    * @param[in] dt time step size
    * @param[inout] localMatrix the local CRS matrix
    * @param[inout] localRhs the local right-hand side vector
@@ -143,7 +119,6 @@ public:
                            CapPressureAccessors const & capPressureAccessors,
                            PermeabilityAccessors const & permeabilityAccessors,
                            PorosityAccessors const & porosityAccessors,
-                           RelPermAccessors const & relPermAccessors,
                            real64 const & dt,
                            CRSMatrixView< real64, globalIndex const > const & localMatrix,
                            arrayView1d< real64 > const & localRhs,
@@ -166,42 +141,31 @@ public:
             localMatrix,
             localRhs ),
     m_pres_n( dissCompFlowAccessors.get( fields::flow::pressure_n {} ) ),
-    m_compDens( dissCompFlowAccessors.get( fields::flow::globalCompDensity {} ) ),
-    m_compFrac( dissCompFlowAccessors.get( fields::flow::globalCompFraction {} ) ),
-    m_phaseRelPerm_n( relPermAccessors.get( fields::relperm::phaseRelPerm_n {} ) ),
-    m_phaseDens_n( dissMultiFluidAccessors.get( fields::multifluid::phaseDensity_n {} ) ),
-    m_phaseMassDens_n( dissMultiFluidAccessors.get( fields::multifluid::phaseMassDensity {} ) ),
-    m_phaseCompFrac_n( dissMultiFluidAccessors.get( fields::multifluid::phaseCompFraction_n {} ) ),
-    m_permeability( permeabilityAccessors.get( fields::permeability::permeability {} ) ),
-    m_dPerm_dPres( permeabilityAccessors.get( fields::permeability::dPerm_dPressure {} ) ),
-    m_omegaDBC( omega ),
-    m_curNewton( curNewton ),
-    m_continuationDBC( continuation ),
-    m_miscibleDBC( miscible ),
-    m_kappaminDBC( kappamin ),
-    m_contMultiplierDBC( contMultiplier ),
+    m_porosity_n( porosityAccessors.get( fields::porosity::porosity_n {} ) ),
     m_volume( dissCompFlowAccessors.get( fields::elementVolume {} ) ),
-    m_porosity_n( porosityAccessors.get( fields::porosity::porosity_n {} ) )
-  {}
-
-  struct StackVariables : public Base::StackVariables
+    m_compFrac( dissCompFlowAccessors.get( fields::flow::globalCompFraction {} ) ),
+    m_omegaDBC( omega ),
+    m_miscibleDBC( miscible )
   {
-public:
+    /// Step 1. Calculate the continuation parameter based on the current Newton iteration
+    m_kappaDBC = 1.0;   // default value
 
-    GEOS_HOST_DEVICE
-    StackVariables( localIndex const size, localIndex numElems )
-      : Base::StackVariables( size, numElems )
-    {}
-
-    using Base::StackVariables::stencilSize;
-    using Base::StackVariables::numConnectedElems;
-    using Base::StackVariables::transmissibility;
-    using Base::StackVariables::dTrans_dPres;
-    using Base::StackVariables::dofColIndices;
-    using Base::StackVariables::localFlux;
-    using Base::StackVariables::localFluxJacobian;
-
-  };
+    if( continuation )   // if continuation is enabled
+    {
+      if( curNewton >= 5 )
+      {
+        m_kappaDBC = kappamin;
+      }
+      else
+      {
+        for( int mp = 0; mp < curNewton; mp++ )
+        {
+          m_kappaDBC *= contMultiplier;
+        }
+        m_kappaDBC = std::max( m_kappaDBC, kappamin );
+      }
+    }
+  }
 
   /**
    * @brief Compute the local flux contributions to the residual and Jacobian, including dissipation
@@ -210,15 +174,8 @@ public:
    */
   GEOS_HOST_DEVICE
   void computeFlux( localIndex const iconn,
-                    StackVariables & stack ) const
+                    typename Base::StackVariables & stack ) const
   {
-
-    m_stencilWrapper.computeWeights( iconn,
-                                     m_permeability,
-                                     m_dPerm_dPres,
-                                     stack.transmissibility,
-                                     stack.dTrans_dPres );
-
     // ***********************************************
     // First, we call the base computeFlux to compute:
     //  1) compFlux and its derivatives,
@@ -249,24 +206,9 @@ public:
 
       real64 viscosityMult[3] = {1.0, 1.0, 1.0}; // for viscosity
 
-      /// Step 1. Calculate the continuation parameter based on the current Newton iteration
-      real64 kappaDBC = 1.0; // default value
-
-      if( m_continuationDBC ) // if continuation is enabled
-      {
-        if( m_curNewton >= 5 )
-        {
-          kappaDBC = m_kappaminDBC;
-        }
-        else
-        {
-          for( int mp = 0; mp < m_curNewton; mp++ ) kappaDBC *= m_contMultiplierDBC;
-          kappaDBC = std::max( kappaDBC, m_kappaminDBC );
-        }
-      }
       /// Step 2. Collect all contributions
-      real64 poreVolume_n = 0; // Pore volume contribution
-      real64 trans = 0; // Transmissibility contribution
+      real64 poreVolume_n = 0.0; // Pore volume contribution
+      real64 trans = 0.0; // Transmissibility contribution
       for( integer ke = 0; ke < numFluxSupportPoints; ++ke )
       {
         trans = std::max( stack.transmissibility[connectionIndex][ke], trans );
@@ -279,7 +221,7 @@ public:
       for( integer ke = 0; ke < numFluxSupportPoints; ++ke )
         pressure_gradient += fluxPointCoef[ke] * m_pres_n[seri[ke]][sesri[ke]][sei[ke]];
 
-      real64 potential_gradient = LvArray::math::abs( pressure_gradient );
+      real64 const potential_gradient = LvArray::math::abs( pressure_gradient );
 
       real64 grad_depth = 0;
       for( integer ke = 0; ke < numFluxSupportPoints; ++ke )
@@ -288,27 +230,25 @@ public:
       }
 
       // bias towards x and y direction for miscible
-      real64 directional_coef;
+      real64 directional_coef = 1.0;
       if( m_miscibleDBC )
       {
         directional_coef = 100.0;
-        if( LvArray::math::abs( grad_depth ) != 0 )
+        if( LvArray::math::abs( grad_depth ) > 0.0 )
         {
-          if( 1000.f / LvArray::math::abs( grad_depth * grad_depth ) < 100 )
-            directional_coef = 1000.f / LvArray::math::abs( grad_depth * grad_depth );
+          real64 const d2 = LvArray::math::abs( grad_depth * grad_depth );
+          if( 1000.0 / d2 < 100.0 )
+            directional_coef = 1000.0 / d2;
         }
-      }
-      else
-      {
-        directional_coef = 1.0;
       }
 
       // multiplier with all contributions
-      real64 multiplier_n = kappaDBC * m_omegaDBC * trans / poreVolume_n * m_dt * potential_gradient * directional_coef;
+      real64 const multiplier = m_kappaDBC * m_omegaDBC * trans / poreVolume_n * m_dt * potential_gradient * directional_coef;
 
       /// Step 3. Compute the dissipation flux and its derivative
       for( integer ke = 0; ke < numFluxSupportPoints; ++ke )
       {
+        real64 const coef = multiplier * viscosityMult[ip] * fluxPointCoef[ke];
         for( integer ic = 0; ic < numComp; ++ic )
         {
           localIndex const er  = seri[ke];
@@ -316,18 +256,17 @@ public:
           localIndex const ei  = sei[ke];
 
           // composition gradient contribution to the dissipation flux
-          dissFlux[ic] += multiplier_n * viscosityMult[ip] * fluxPointCoef[ke] * m_compFrac[er][esr][ei][ic];
+          dissFlux[ic] += coef * m_compFrac[er][esr][ei][ic];
 
-          dDissFlux_dP[ke][ic] = 0;
+          dDissFlux_dP[ke][ic] = 0; // Pavel: TODO ?
 
           for( integer jc = 0; jc < numComp; ++jc )
           {
             // composition gradient derivative with respect to component density contribution to the dissipation flux
-            dDissFlux_dC[ke][ic][jc] += multiplier_n * viscosityMult[ip] * fluxPointCoef[ke] * m_dCompFrac_dCompDens[er][esr][ei][ic][jc];
+            dDissFlux_dC[ke][ic][jc] += coef * m_dCompFrac_dCompDens[er][esr][ei][ic][jc];
           }
         }
       }
-
 
       /// Step 4: add the dissipation flux and its derivatives to the residual and Jacobian
       for( integer ic = 0; ic < numComp; ++ic )
@@ -361,32 +300,17 @@ protected:
 
   /// Views on flow properties at the previous converged time step
   ElementViewConst< arrayView1d< real64 const > > const m_pres_n;
-  ElementViewConst< arrayView2d< real64 const, compflow::USD_COMP > > const m_compDens;
-  ElementViewConst< arrayView2d< real64 const, compflow::USD_COMP > > const m_compFrac;
-
-  ElementViewConst< arrayView3d< real64 const, relperm::USD_RELPERM > > const m_phaseRelPerm_n;
-  //ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const m_phaseVisc_n;
-
-  ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const m_phaseDens_n;
-  ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const m_phaseMassDens_n;
-  ElementViewConst< arrayView4d< real64 const, multifluid::USD_PHASE_COMP > > const m_phaseCompFrac_n;
-
-  ElementViewConst< arrayView3d< real64 const > > const m_permeability;
-  ElementViewConst< arrayView3d< real64 const > > const m_dPerm_dPres;
-
-
-  // DBC specific parameters
-  real64 m_omegaDBC;
-  integer m_curNewton;
-  integer m_continuationDBC;
-  integer m_miscibleDBC;
-  real64 m_kappaminDBC;
-  real64 m_contMultiplierDBC;
-
-
-  ElementViewConst< arrayView1d< real64 const > > const m_volume;
   ElementViewConst< arrayView2d< real64 const > > const m_porosity_n;
 
+  ElementViewConst< arrayView1d< real64 const > > const m_volume;
+  ElementViewConst< arrayView2d< real64 const, compflow::USD_COMP > > const m_compFrac;
+
+  // DBC specific parameters
+  // input
+  real64 m_omegaDBC;
+  integer m_miscibleDBC;
+  // computed
+  real64 m_kappaDBC;
 };
 
 /**
@@ -445,16 +369,15 @@ public:
       using KERNEL_TYPE = FaceBasedAssemblyKernel< NUM_COMP, NUM_DOF, STENCILWRAPPER >;
       typename KERNEL_TYPE::CompFlowAccessors compFlowAccessors( elemManager, solverName );
       typename KERNEL_TYPE::MultiFluidAccessors multiFluidAccessors( elemManager, solverName );
-      typename KERNEL_TYPE::DissCompFlowAccessors dissCompFlowAccessors( elemManager, solverName );
-      typename KERNEL_TYPE::DissMultiFluidAccessors dissMultiFluidAccessors( elemManager, solverName );
       typename KERNEL_TYPE::CapPressureAccessors capPressureAccessors( elemManager, solverName );
       typename KERNEL_TYPE::PermeabilityAccessors permeabilityAccessors( elemManager, solverName );
       typename KERNEL_TYPE::PorosityAccessors porosityAccessors( elemManager, solverName );
-      typename KERNEL_TYPE::RelPermAccessors relPermAccessors( elemManager, solverName );
+      typename KERNEL_TYPE::DissCompFlowAccessors dissCompFlowAccessors( elemManager, solverName );
+      typename KERNEL_TYPE::DissMultiFluidAccessors dissMultiFluidAccessors( elemManager, solverName );
 
       KERNEL_TYPE kernel( numPhases, rankOffset, hasCapPressure, stencilWrapper, dofNumberAccessor,
                           compFlowAccessors, dissCompFlowAccessors, multiFluidAccessors, dissMultiFluidAccessors,
-                          capPressureAccessors, permeabilityAccessors, porosityAccessors, relPermAccessors,
+                          capPressureAccessors, permeabilityAccessors, porosityAccessors,
                           dt, localMatrix, localRhs, omega, curNewton, continuation, miscible, kappamin, contMultiplier );
       KERNEL_TYPE::template launch< POLICY >( stencilWrapper.size(), kernel );
     } );
