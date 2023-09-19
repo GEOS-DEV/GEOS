@@ -100,6 +100,12 @@ public:
    * @param[in] dt time step size
    * @param[inout] localMatrix the local CRS matrix
    * @param[inout] localRhs the local right-hand side vector
+   * @param[in] omega omega coefficient for DBC
+   * @param[in] curNewton current Newton iteration number
+   * @param[in] continuation flag indicating if continuation is used or not
+   * @param[in] miscible flag to trigger some treatment for miscible cases
+   * @param[in] kappamin minimum value for kappa coefficient in DBC
+   * @param[in] contMultiplier continuation multiplier factor (should be < 1)
    */
   FaceBasedAssemblyKernel( integer const numPhases,
                            globalIndex const rankOffset,

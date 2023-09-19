@@ -168,26 +168,23 @@ protected:
   void
   computeCFLNumbers( real64 const & dt, DomainPartition & domain );
 
-  /// Flag to enable Dissipation Based Continuation Method
-  integer m_useDBC;
-
-  /// Factor by which the DBC flux is multiplied
-  real64 m_omegaDBC;
-
-  /// Factor by which the DBC flux is diminished every Newton
-  real64 m_kappaDBC;
-
-  /// Flag to enable continuation for DBC Method
-  integer m_continuationDBC;
-
-  /// Flag to enable DBC formulation
-  integer m_miscibleDBC;
-
-  /// Factor that controls how much dissipation is kept in the system when continuation is used
-  real64 m_kappaminDBC;
-
-  /// Factor by which continuation parameter is changed every newton when DBC is used
-  real64 m_contMultiplierDBC;
+  struct DBCParameters
+  {
+    /// Flag to enable Dissipation Based Continuation Method
+    integer useDBC;
+    /// Factor by which the DBC flux is multiplied
+    real64 omega;
+    /// Factor by which the DBC flux is diminished every Newton
+    real64 kappa;
+    /// Flag to enable continuation for DBC Method
+    integer continuation;
+    /// Flag to enable DBC formulation
+    integer miscible;
+    /// Factor that controls how much dissipation is kept in the system when continuation is used
+    real64 kappamin;
+    /// Factor by which continuation parameter is changed every newton when DBC is used
+    real64 contMultiplier;
+  } m_dbcParams;
 
 private:
 

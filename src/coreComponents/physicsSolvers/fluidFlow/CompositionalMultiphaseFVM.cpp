@@ -53,32 +53,32 @@ CompositionalMultiphaseFVM::CompositionalMultiphaseFVM( const string & name,
   :
   CompositionalMultiphaseBase( name, parent )
 {
-  registerWrapper( viewKeyStruct::useDBCString(), &m_useDBC ).
+  registerWrapper( viewKeyStruct::useDBCString(), &m_dbcParams.useDBC ).
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( 0 ).
     setDescription( "Enable Dissipation-based continuation flux" );
 
-  registerWrapper( viewKeyStruct::omegaDBCString(), &m_omegaDBC ).
+  registerWrapper( viewKeyStruct::omegaDBCString(), &m_dbcParams.omega ).
     setApplyDefaultValue( 1 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Factor by which DBC flux is multiplied" );
 
-  registerWrapper( viewKeyStruct::continuationDBCString(), &m_continuationDBC ).
+  registerWrapper( viewKeyStruct::continuationDBCString(), &m_dbcParams.continuation ).
     setApplyDefaultValue( 1 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Flag for enabling continuation parameter" );
 
-  registerWrapper( viewKeyStruct::miscibleDBCString(), &m_miscibleDBC ).
+  registerWrapper( viewKeyStruct::miscibleDBCString(), &m_dbcParams.miscible ).
     setApplyDefaultValue( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Flag for enabling DBC formulation with/without miscibility" );
 
-  registerWrapper( viewKeyStruct::kappaminDBCString(), &m_kappaminDBC ).
+  registerWrapper( viewKeyStruct::kappaminDBCString(), &m_dbcParams.kappamin ).
     setApplyDefaultValue( 1e-20 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Factor that controls how much dissipation is kept in the system when continuation is used" );
 
-  registerWrapper( viewKeyStruct::contMultiplierDBCString(), &m_contMultiplierDBC ).
+  registerWrapper( viewKeyStruct::contMultiplierDBCString(), &m_dbcParams.contMultiplier ).
     setApplyDefaultValue( 0.5 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Factor by which continuation parameter is changed every newton when DBC is used" );
@@ -169,7 +169,7 @@ void CompositionalMultiphaseFVM::assembleFluxTerms( real64 const dt,
       }
       else
       {
-        if( m_useDBC )
+        if( m_dbcParams.useDBC )
         {
           dissipationCompositionalMultiphaseFVMKernels::
             FaceBasedAssemblyKernelFactory::
@@ -184,12 +184,12 @@ void CompositionalMultiphaseFVM::assembleFluxTerms( real64 const dt,
                                                        dt,
                                                        localMatrix.toViewConstSizes(),
                                                        localRhs.toView(),
-                                                       m_omegaDBC,
+                                                       m_dbcParams.omega,
                                                        getNonlinearSolverParameters().m_numNewtonIterations,
-                                                       m_continuationDBC,
-                                                       m_miscibleDBC,
-                                                       m_kappaminDBC,
-                                                       m_contMultiplierDBC );
+                                                       m_dbcParams.continuation,
+                                                       m_dbcParams.miscible,
+                                                       m_dbcParams.kappamin,
+                                                       m_dbcParams.contMultiplier );
         }
         else
         {
