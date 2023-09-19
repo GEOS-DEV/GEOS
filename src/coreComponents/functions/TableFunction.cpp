@@ -76,8 +76,10 @@ void TableFunction::setInterpolationMethod( InterpolationType const method )
   reInitializeFunction();
 }
 
-void TableFunction::setTableCoordinates( array1d< real64_array > const & coordinates )
+void TableFunction::setTableCoordinates( array1d< real64_array > const & coordinates,
+                                         std::vector< units::Unit > const & dimUnits )
 {
+  m_dimUnits = dimUnits;
   m_coordinates.resize( 0 );
   for( localIndex i = 0; i < coordinates.size(); ++i )
   {
@@ -162,20 +164,18 @@ void TableFunction::reInitializeFunction()
   m_kernelWrapper = createKernelWrapper();
 }
 
-void TableFunction::checkCoord( real64 const coord,
-                                localIndex const dim,
-                                std::string_view dimName,
-                                std::string_view tableName ) const
+void TableFunction::checkCoord( real64 const coord, localIndex const dim ) const
 {
+  // TODO: replace getName() by getDataContext().toString() from incoming PR 2404
   GEOS_THROW_IF( dim >= m_coordinates.size() || dim < 0,
-                 GEOS_FMT( "The {} dimension ( {} ) doesn't exist in the {} table.",
-                           dimName, dim, tableName ),
+                 GEOS_FMT( "{}: The {} dimension ( no. {} ) doesn't exist in the table.",
+                           getName(), units::getDescription( getDimUnit( dim ) ), dim ),
                  SimulationError );
   real64 const lowerBound = m_coordinates[dim][0];
   real64 const upperBound = m_coordinates[dim][m_coordinates.sizeOfArray( dim ) - 1];
   GEOS_THROW_IF( coord > upperBound || coord < lowerBound,
-                 GEOS_FMT( "Requested {} value of {} is out of the {} table bounds ( lower bound: {} -> upper bound: {} ).",
-                           dimName, coord, tableName, lowerBound, upperBound ),
+                 GEOS_FMT( "{}: Requested {} is out of the table bounds ( lower bound: {} -> upper bound: {} ).",
+                           getName(), units::formatValue( coord, getDimUnit( dim ) ), lowerBound, upperBound ),
                  SimulationError );
 }
 

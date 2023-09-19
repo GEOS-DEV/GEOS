@@ -238,7 +238,7 @@ TableFunction const * makeDensityTable( string_array const & inputParams,
   else
   {
     TableFunction * const densityTable = dynamicCast< TableFunction * >( functionManager.createChild( "TableFunction", tableName ) );
-    densityTable->setTableCoordinates( tableCoords.getCoords() );
+    densityTable->setTableCoordinates( tableCoords.getCoords(), tableCoords.coordsUnits );
     densityTable->setTableValues( densities );
     densityTable->setInterpolationMethod( TableFunction::InterpolationType::Linear );
     return densityTable;
@@ -286,11 +286,8 @@ SpanWagnerCO2Density::SpanWagnerCO2Density( string const & name,
 void SpanWagnerCO2Density::checkTablesParameters( real64 const pressure,
                                                   real64 const temperature ) const
 {
-  string const tableName = catalogName() + " CO2 density";
-  m_CO2DensityTable->checkCoord( pressure, 0, "pressure",
-                                 tableName.c_str() );
-  m_CO2DensityTable->checkCoord( temperature, 1, "temperature",
-                                 tableName.c_str() );
+  m_CO2DensityTable->checkCoord( pressure, 0 );
+  m_CO2DensityTable->checkCoord( temperature, 1 );
 }
 
 SpanWagnerCO2Density::KernelWrapper

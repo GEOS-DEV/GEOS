@@ -129,7 +129,7 @@ TableFunction const * makeCO2EnthalpyTable( string_array const & inputParams,
     CO2Enthalpy::calculateCO2Enthalpy( tableCoords, densities, enthalpies );
 
     TableFunction * const enthalpyTable = dynamicCast< TableFunction * >( functionManager.createChild( TableFunction::catalogName(), tableName ) );
-    enthalpyTable->setTableCoordinates( tableCoords.getCoords() );
+    enthalpyTable->setTableCoordinates( tableCoords.getCoords(), tableCoords.coordsUnits );
     enthalpyTable->setTableValues( enthalpies );
     enthalpyTable->setInterpolationMethod( TableFunction::InterpolationType::Linear );
     return enthalpyTable;
@@ -176,7 +176,7 @@ TableFunction const * makeBrineEnthalpyTable( string_array const & inputParams,
 
 
     TableFunction * const enthalpyTable = dynamicCast< TableFunction * >( functionManager.createChild( TableFunction::catalogName(), tableName ) );
-    enthalpyTable->setTableCoordinates( temperatures );
+    enthalpyTable->setTableCoordinates( temperatures, { tableCoords.coordsUnits[1] } );
     enthalpyTable->setTableValues( enthalpies );
     enthalpyTable->setInterpolationMethod( TableFunction::InterpolationType::Linear );
     return enthalpyTable;
@@ -206,15 +206,10 @@ BrineEnthalpy::BrineEnthalpy( string const & name,
 void BrineEnthalpy::checkTablesParameters( real64 const pressure,
                                            real64 const temperature ) const
 {
-  string const brineEnthalpyTableName = catalogName() + " brine enthalpy";
-  m_brineEnthalpyTable->checkCoord( temperature, 0, "temperature",
-                                    brineEnthalpyTableName.c_str() );
+  m_brineEnthalpyTable->checkCoord( temperature, 0 );
 
-  string const co2EnthalpyTableName = catalogName() + " CO2 enthalpy";
-  m_CO2EnthalpyTable->checkCoord( pressure, 0, "pressure",
-                                  co2EnthalpyTableName.c_str() );
-  m_CO2EnthalpyTable->checkCoord( temperature, 1, "temperature",
-                                  co2EnthalpyTableName.c_str() );
+  m_CO2EnthalpyTable->checkCoord( pressure, 0 );
+  m_CO2EnthalpyTable->checkCoord( temperature, 1 );
 }
 
 

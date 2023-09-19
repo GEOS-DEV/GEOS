@@ -147,7 +147,7 @@ void CO2BrineFluid< PHASE1, PHASE2, FLASH >::checkTablesParameters( real64 const
     return;
   }
 
-  real64 const temperatureInCelsius = constants::convertKToC( temperature );
+  real64 const temperatureInCelsius = units::convertKToC( temperature );
   try
   {
     m_phase1->density.checkTablesParameters( pressure, temperatureInCelsius );
@@ -159,6 +159,7 @@ void CO2BrineFluid< PHASE1, PHASE2, FLASH >::checkTablesParameters( real64 const
     string const errorMsg = GEOS_FMT( "{}: Table input error for phase no. 1.\n", getName() );
     throw SimulationError( ex, errorMsg );
   }
+
   try
   {
     m_phase2->density.checkTablesParameters( pressure, temperatureInCelsius );
@@ -170,6 +171,7 @@ void CO2BrineFluid< PHASE1, PHASE2, FLASH >::checkTablesParameters( real64 const
     string const errorMsg = GEOS_FMT( "{}: Table input error for phase no. 2.\n", getName() );
     throw SimulationError( ex, errorMsg );
   }
+  
   try
   {
     m_flash->checkTablesParameters( pressure, temperatureInCelsius );

@@ -52,7 +52,7 @@ void fenghourCO2ViscosityFunction( real64 const & temperatureCent,
   constexpr real64 vcrit = 0.0;
 
   // temperature in Kelvin
-  real64 const temperatureKelvin = constants::convertCToK( temperatureCent );
+  real64 const temperatureKelvin = units::convertCToK( temperatureCent );
   // equation (5) of Fenghour and Wakeham (1998)
   real64 const Tred = temperatureKelvin * esparInv;
   real64 const x = log( Tred );
@@ -124,7 +124,8 @@ TableFunction const * makeViscosityTable( string_array const & inputParams,
   else
   {
     TableFunction * const viscosityTable = dynamicCast< TableFunction * >( functionManager.createChild( "TableFunction", tableName ) );
-    viscosityTable->setTableCoordinates( tableCoords.getCoords() );
+    viscosityTable->setTableCoordinates( tableCoords.getCoords(),
+                                         { units::Pressure, units::TemperatureInC } );
     viscosityTable->setTableValues( viscosity );
     viscosityTable->setInterpolationMethod( TableFunction::InterpolationType::Linear );
     return viscosityTable;
@@ -147,11 +148,8 @@ FenghourCO2Viscosity::FenghourCO2Viscosity( string const & name,
 void FenghourCO2Viscosity::checkTablesParameters( real64 const pressure,
                                                   real64 const temperature ) const
 {
-  string const tableName = catalogName() + " CO2 viscosity";
-  m_CO2ViscosityTable->checkCoord( pressure, 0, "pressure",
-                                   tableName.c_str() );
-  m_CO2ViscosityTable->checkCoord( temperature, 1, "temperature",
-                                   tableName.c_str() );
+  m_CO2ViscosityTable->checkCoord( pressure, 0 );
+  m_CO2ViscosityTable->checkCoord( temperature, 1 );
 }
 
 FenghourCO2Viscosity::KernelWrapper

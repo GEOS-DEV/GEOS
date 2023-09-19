@@ -141,13 +141,13 @@ void BlackOilFluidBase::fillHydrocarbonData( integer const ip,
 
   TableFunction & tablePVDX_B =
     dynamicCast< TableFunction & >( *functionManager.createChild( "TableFunction", formationVolFactorTableName ) );
-  tablePVDX_B.setTableCoordinates( pressureCoords );
+  tablePVDX_B.setTableCoordinates( pressureCoords, { units::Pressure } );
   tablePVDX_B.setTableValues( formationVolFactor );
   tablePVDX_B.setInterpolationMethod( TableFunction::InterpolationType::Linear );
 
   TableFunction & tablePVDX_visc =
     dynamicCast< TableFunction & >( *functionManager.createChild( "TableFunction", viscosityTableName ) );
-  tablePVDX_visc.setTableCoordinates( pressureCoords );
+  tablePVDX_visc.setTableCoordinates( pressureCoords, { units::Pressure } );
   tablePVDX_visc.setTableValues( viscosity );
   tablePVDX_visc.setInterpolationMethod( TableFunction::InterpolationType::Linear );
 }
@@ -229,6 +229,8 @@ void BlackOilFluidBase::initializePostSubGroups()
 void BlackOilFluidBase::checkTablesParameters( real64 const pressure,
                                                real64 const temperature ) const
 {
+  constexpr std::string_view errorMsg = "{} {}: {} table reading error for hydrocarbon phase {}.\n";
+
   GEOS_UNUSED_VAR( temperature );
 
   if( !m_checkPVTTablesRanges )
@@ -238,17 +240,25 @@ void BlackOilFluidBase::checkTablesParameters( real64 const pressure,
 
   for( integer iph = 0; iph < m_hydrocarbonPhaseOrder.size(); ++iph )
   {
-    string const volFactorTableName = GEOS_FMT( "{} formation volume factor '{}'",
-                                                getCatalogName(),
-                                                m_formationVolFactorTableNames[iph] );
-    m_formationVolFactorTables[iph]->checkCoord( pressure, 0, "pressure",
-                                                 volFactorTableName.c_str() );
+    try
+    {
+      m_formationVolFactorTables[iph]->checkCoord( pressure, 0 );
+    } catch( SimulationError const & ex )
+    {
+      //TODO : use data context
+      throw SimulationError( ex, GEOS_FMT( errorMsg, getCatalogName(), getName(),
+                                           "formation volume factor", iph ) );
+    }
 
-    string const viscosityTableName = GEOS_FMT( "{} viscosity '{}'",
-                                                getCatalogName(),
-                                                m_viscosityTableNames[iph] );
-    m_viscosityTables[iph]->checkCoord( pressure, 0, "pressure",
-                                        viscosityTableName.c_str() );
+    try
+    {
+      m_viscosityTables[iph]->checkCoord( pressure, 0 );
+    } catch( SimulationError const & ex )
+    {
+      //TODO : use data context
+      throw SimulationError( ex, GEOS_FMT( errorMsg, getCatalogName(), getName(),
+                                           "viscosity", iph ) );
+    }
   }
 }
 

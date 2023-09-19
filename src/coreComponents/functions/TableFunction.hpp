@@ -23,6 +23,7 @@
 
 #include "codingUtilities/EnumStrings.hpp"
 #include "LvArray/src/tensorOps.hpp"
+#include "common/PhysicsConstants.hpp"
 
 namespace geos
 {
@@ -233,11 +234,9 @@ private:
    * specified dimension, throw an exception otherwise.
    * @param coord the coordinate in the 'dim' dimension that must be checked
    * @param dim the dimension in which the coordinate must be checked
-   * @param dimName the name to designate the dimension of the coordinate in the potential exception
-   * @param tableName the name to designate the table in the potential exception
    * @throw SimulationError if the value is out of the coordinates bounds.
    */
-  void checkCoord( real64 coord, localIndex dim, std::string_view dimName, std::string_view tableName ) const;
+  void checkCoord( real64 coord, localIndex dim ) const;
 
   /**
    * @brief @return Number of table dimensions
@@ -273,6 +272,12 @@ private:
   InterpolationType getInterpolationMethod() const { return m_interpolationMethod; }
 
   /**
+   * @return The unit of a coordinate dimension
+   */
+  units::Unit getDimUnit( localIndex const dim ) const
+  { return size_t(dim) < m_dimUnits.size() ? m_dimUnits[dim] : units::Unknown; }
+
+  /**
    * @brief Set the interpolation method
    * @param method The interpolation method
    */
@@ -281,8 +286,10 @@ private:
   /**
    * @brief Set the table coordinates
    * @param coordinates An array of arrays containing table coordinate definitions
+   * @param dimUnits The units of each dimension of the coordinates, in the same order
    */
-  void setTableCoordinates( array1d< real64_array > const & coordinates );
+  void setTableCoordinates( array1d< real64_array > const & coordinates,
+                            std::vector< units::Unit > const & dimUnits = {} );
 
   /**
    * @brief Set the table values
@@ -338,6 +345,9 @@ private:
 
   /// Table values (in fortran order)
   array1d< real64 > m_values;
+
+  /// List of table coordinate file names
+  std::vector< units::Unit > m_dimUnits;
 
   /// Kernel wrapper object used in evaluate() interface
   KernelWrapper m_kernelWrapper;

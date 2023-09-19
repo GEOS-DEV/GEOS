@@ -266,7 +266,7 @@ CO2BrineFluid< PHASE1, PHASE2, FLASH >::KernelWrapper::
 
   // 2. Compute phase fractions and phase component fractions
 
-  real64 const temperatureInCelsius = constants::convertKToC( temperature );
+  real64 const temperatureInCelsius = units::convertKToC( temperature );
   m_flash.compute( pressure,
                    temperatureInCelsius,
                    compMoleFrac.toSliceConst(),
@@ -421,7 +421,7 @@ CO2BrineFluid< PHASE1, PHASE2, FLASH >::KernelWrapper::
 
   // 2. Compute phase fractions and phase component fractions
 
-  real64 const temperatureInCelsius = constants::convertKToC( temperature );
+  real64 const temperatureInCelsius = units::convertKToC( temperature );
   m_flash.compute( pressure,
                    temperatureInCelsius,
                    compMoleFrac.toSliceConst(),

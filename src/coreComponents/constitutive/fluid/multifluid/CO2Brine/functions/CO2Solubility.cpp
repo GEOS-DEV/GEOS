@@ -240,7 +240,8 @@ TableFunction const * makeSolubilityTable( string_array const & inputParams,
   else
   {
     TableFunction * const solubilityTable = dynamicCast< TableFunction * >( functionManager.createChild( "TableFunction", tableName ) );
-    solubilityTable->setTableCoordinates( tableCoords.getCoords() );
+    solubilityTable->setTableCoordinates( tableCoords.getCoords(),
+                                          { units::Pressure, units::TemperatureInC } );
     solubilityTable->setTableValues( values );
     solubilityTable->setInterpolationMethod( TableFunction::InterpolationType::Linear );
     return solubilityTable;
@@ -283,11 +284,8 @@ CO2Solubility::CO2Solubility( string const & name,
 void CO2Solubility::checkTablesParameters( real64 const pressure,
                                            real64 const temperature ) const
 {
-  string const tableName = catalogName() + " CO2 solubility";
-  m_CO2SolubilityTable->checkCoord( pressure, 0, "pressure",
-                                    tableName.c_str() );
-  m_CO2SolubilityTable->checkCoord( temperature, 1, "temperature",
-                                    tableName.c_str() );
+  m_CO2SolubilityTable->checkCoord( pressure, 0 );
+  m_CO2SolubilityTable->checkCoord( temperature, 1 );
 }
 
 CO2Solubility::KernelWrapper CO2Solubility::createKernelWrapper() const

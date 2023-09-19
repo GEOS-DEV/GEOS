@@ -47,11 +47,8 @@ WaterDensity::WaterDensity( string const & name,
 void WaterDensity::checkTablesParameters( real64 const pressure,
                                           real64 const temperature ) const
 {
-  string const tableName = catalogName() + " water density";
-  m_waterDensityTable->checkCoord( pressure, 0, "pressure",
-                                   tableName.c_str() );
-  m_waterDensityTable->checkCoord( temperature, 1, "temperature",
-                                   tableName.c_str() );
+  m_waterDensityTable->checkCoord( pressure, 0 );
+  m_waterDensityTable->checkCoord( temperature, 1 );
 }
 
 WaterDensity::KernelWrapper
