@@ -8,12 +8,12 @@ Mandel's Problem
 
 **Context**
 
-In this example, we use the coupled solvers in GEOSX to solve Mandel's 2D consolidation problem, a classic benchmark in poroelasticity. The analytical solution `(Cheng and Detournay, 1988)  <https://onlinelibrary.wiley.com/doi/abs/10.1002/nag.1610120508>`__ is employed to verify the accuracy of the modeling predictions on induced pore pressure and the corresponding settlement. In this example, the ``TimeHistory`` function and a Python script are used to output and post-process multi-dimensional data (pore pressure and displacement field).
+In this example, we use the coupled solvers in GEOS to solve Mandel's 2D consolidation problem, a classic benchmark in poroelasticity. The analytical solution `(Cheng and Detournay, 1988)  <https://onlinelibrary.wiley.com/doi/abs/10.1002/nag.1610120508>`__ is employed to verify the accuracy of the modeling predictions on induced pore pressure and the corresponding settlement. In this example, the ``TimeHistory`` function and a Python script are used to output and post-process multi-dimensional data (pore pressure and displacement field).
 
 
 **Input file**
 
-This example uses no external input files and everything required is contained within two GEOSX input files located at:
+This example uses no external input files and everything required is contained within two GEOS input files located at:
 
 .. code-block:: console
 
@@ -21,7 +21,7 @@ This example uses no external input files and everything required is contained w
 
 .. code-block:: console
 
-  inputFiles/poromechanics/PoroElastic_Mandel_benchmark.xml
+  inputFiles/poromechanics/PoroElastic_Mandel_benchmark_fim.xml
 
 
 ------------------------------------------------------------------
@@ -54,7 +54,7 @@ with :math:`\alpha_{n}` denoting the positive roots of the following equation:
 .. math::
    \text{tan} \alpha_{n} = \frac{1- \nu}{\nu_{u}-\nu} \alpha_{n}
 
-Upon sudden application of the verical load, the instantaneous overpressure (:math:`p_0(x,z)`) and settlement (:math:`u_{z,0}(x,z)` and :math:`u_{x,0}(x,z)`) across the sample are derived from the Skempton effect:
+Upon sudden application of the vertical load, the instantaneous overpressure (:math:`p_0(x,z)`) and settlement (:math:`u_{z,0}(x,z)` and :math:`u_{x,0}(x,z)`) across the sample are derived from the Skempton effect:
             
 .. math::
    p_0(x,z) = \frac{1}{3a} B \left( 1 + \nu_{u} \right) F
@@ -93,7 +93,7 @@ Such eight-node hexahedral elements are defined as ``C3D8`` elementTypes, and th
 with one group of cell blocks named here ``cb1``. 
 
 
-.. literalinclude:: ../../../../../../../inputFiles/poromechanics/PoroElastic_Mandel_benchmark.xml
+.. literalinclude:: ../../../../../../../inputFiles/poromechanics/PoroElastic_Mandel_benchmark_fim.xml
     :language: xml
     :start-after: <!-- SPHINX_MESH -->
     :end-before: <!-- SPHINX_MESH_END -->
@@ -103,7 +103,7 @@ with one group of cell blocks named here ``cb1``.
 Solid mechanics solver
 ------------------------
 
-GEOSX is a multi-physics platform. Different combinations of
+GEOS is a multi-physics platform. Different combinations of
 physics solvers available in the code can be applied
 in different regions of the domain and be functional at different stages of the simulation.
 The ``Solvers`` tag in the XML file is used to list and parameterize these solvers.
@@ -112,8 +112,8 @@ To specify a coupling between two different solvers, we define and characterize 
 Then, we customize a *coupling solver* between these single-physics
 solvers as an additional solver.
 This approach allows for generality and flexibility in constructing multi-physics solvers.
-The order of specifying these solvers is not restricted in GEOSX.
-Note that end-users should give each single-physics solver a meaningful and distinct name, as GEOSX will recognize these single-physics solvers based on their customized names and create user-expected coupling.
+The order of specifying these solvers is not restricted in GEOS.
+Note that end-users should give each single-physics solver a meaningful and distinct name, as GEOS will recognize these single-physics solvers based on their customized names and create user-expected coupling.
 
 As demonstrated in this example, to setup a poromechanical coupling, we need to define three different solvers in the XML file:
 
@@ -142,7 +142,7 @@ As demonstrated in this example, to setup a poromechanical coupling, we need to 
 
 
 The two single-physics solvers are parameterized as explained
-in their corresponding documentataion pages. 
+in their corresponding documentation pages. 
 We focus on the coupling solver in this example.
 The solver ``poroSolve`` uses a set of attributes that specifically describe the coupling process within a poromechanical framework.
 For instance, we must point this solver to the designated fluid solver (here: ``SinglePhaseFlow``) and solid solver (here: ``lagsolve``).
@@ -172,7 +172,7 @@ Time history function
 
 In the ``Tasks`` section, ``PackCollection`` tasks are defined to collect time history information from fields. 
 Either the entire field or specified named sets of indices in the field can be collected. 
-In this example, ``pressureCollection`` and ``displacementCollection`` tasks are specified to output the time history of pore pressure ``fieldName="pressure"`` and displacement field ``fieldName="TotalDisplacement"`` across the computational domain.
+In this example, ``pressureCollection`` and ``displacementCollection`` tasks are specified to output the time history of pore pressure ``fieldName="pressure"`` and displacement field ``fieldName="totalDisplacement"`` across the computational domain.
 
 .. literalinclude:: ../../../../../../../inputFiles/poromechanics/PoroElastic_Mandel_base.xml
     :language: xml
@@ -180,7 +180,7 @@ In this example, ``pressureCollection`` and ``displacementCollection`` tasks are
     :end-before: <!-- SPHINX_TASKS_END -->
 
 These two tasks are triggered using the ``Event`` manager with a ``PeriodicEvent`` defined for these recurring tasks. 
-GEOSX writes two files named after the string defined in the ``filename`` keyword and formatted as HDF5 files (displacement_history.hdf5 and pressure_history.hdf5). The TimeHistory file contains the collected time history information from each specified time history collector.
+GEOS writes two files named after the string defined in the ``filename`` keyword and formatted as HDF5 files (displacement_history.hdf5 and pressure_history.hdf5). The TimeHistory file contains the collected time history information from each specified time history collector.
 This information includes datasets for the simulation time, element center, and the time history information.
 A Python script is prepared to read and plot any specified subset of the time history data for verification and visualization. 
 
@@ -191,7 +191,7 @@ Initial and boundary conditions
 
 Next, we specify two fields:
 
-  - The initial value (the displacements and pore pressure have to be initialized, corresponding to the undrained response),
+  - The initial value (the displacements, effective stress, and pore pressure have to be initialized, corresponding to the undrained response),
   - The boundary conditions (the vertical displacement applied at the loaded boundary and the constraints of the outer boundaries have to be set).
 
 In this example, the analytical z-displacement is applied at the top surface (``zpos``) of computational domain to enforce the rigid plate condition.
@@ -207,7 +207,7 @@ These boundary conditions are set up through the ``FieldSpecifications`` section
 
 
  
-The parameters used in the simulation are summarized in the following table. Note that traction has a negative value, due to the negative sign convention for compressive stresses in GEOSX. 
+The parameters used in the simulation are summarized in the following table. Note that traction has a negative value, due to the negative sign convention for compressive stresses in GEOS. 
 
 
 +------------------+-------------------------+------------------+--------------------+
@@ -263,7 +263,7 @@ The next figure shows the distribution of vertical displacement (:math:`u_z(x,z,
    Simulation result of vertical displacement at :math:`t=10 s` 
 
 
-The figure below compares the results from GEOSX (marks) and the corresponding analytical solution (lines) for the pore pressure along the x-direction and vertical displacement along the z-direction. GEOSX reliably captures the short-term Mandel-Cryer effect and shows excellent agreement with the analytical solution at various times. 
+The figure below compares the results from GEOS (marks) and the corresponding analytical solution (lines) for the pore pressure along the x-direction and vertical displacement along the z-direction. GEOS reliably captures the short-term Mandel-Cryer effect and shows excellent agreement with the analytical solution at various times. 
 
 .. plot:: docs/sphinx/advancedExamples/validationStudies/faultMechanics/mandel/mandelFigure.py
 
@@ -277,7 +277,7 @@ To go further
 
 **Feedback on this example**
 
-For any feedback on this example, please submit a `GitHub issue on the project's GitHub page <https://github.com/GEOSX/GEOSX/issues>`_.
+For any feedback on this example, please submit a `GitHub issue on the project's GitHub page <https://github.com/GEOS-DEV/GEOS/issues>`_.
 
 
 

@@ -16,13 +16,15 @@
 #include "hdf5_interface/coupler.hpp"
 #include "mesh/ElementRegionManager.hpp"
 #include "mesh/FaceManager.hpp"
-#include "mesh/ExtrinsicMeshData.hpp"
+#include "mesh/MeshFields.hpp"
+#include "physicsSolvers/solidMechanics/SolidMechanicsFields.hpp"
+#include "physicsSolvers/surfaceGeneration/SurfaceGeneratorFields.hpp"
 
 #include <cstdint>
 #include <tuple>
 #include <cstdio>
 
-namespace geosx
+namespace geos
 {
 
 ChomboCoupler::ChomboCoupler( MPI_Comm const comm, const string & outputPath, const string & inputPath, MeshLevel & mesh ):
@@ -62,7 +64,8 @@ void ChomboCoupler::write( double dt )
     }
   }
 
-  arrayView1d< integer const > const & ruptureState = faces.getExtrinsicData< extrinsicMeshData::RuptureState >();
+  arrayView1d< integer const > const & ruptureState =
+    faces.getField< fields::surfaceGeneration::ruptureState >();
   arrayView1d< integer const > const & ghostRank = faces.ghostRank();
 
   localIndex voidRegionIndex = -1;
@@ -80,7 +83,6 @@ void ChomboCoupler::write( double dt )
   {
     bool isVoid = (faceToElementRegionIndex[i][0] == voidRegionIndex) ||
                   (faceToElementRegionIndex[i][1] == voidRegionIndex);
-    //std::cout<<"face "<<i<<" is attached to a void cell"<<std::endl;
     faceMask[i] = (ruptureState[i] > 1) && (ghostRank[i] < 0) && (!isVoid);
   }
 
@@ -102,22 +104,18 @@ void ChomboCoupler::write( double dt )
   writeBoundaryFile( m_comm, m_outputPath.data(), dt, faceMask,
                      m_face_offset, m_n_faces_written, n_faces, connectivity_array, face_fields,
                      m_node_offset, m_n_nodes_written, m_referencePositionCopy.size( 0 ), node_fields );
-
+  GEOS_LOG_RANK_0( "Wrote file: " << m_outputPath );
   delete[] connectivity_array;
   delete[] faceMask;
 }
 
 void ChomboCoupler::read( bool usePressures )
 {
-  GEOSX_LOG_RANK_0( "Waiting for file existence: " << m_inputPath );
+  GEOS_LOG_RANK_0( "Waiting for file existence: " << m_inputPath );
   waitForFileExistence( m_comm, m_inputPath.data() );
-
-  GEOSX_LOG_RANK_0( "File found: " << m_inputPath );
 
   if( usePressures )
   {
-    GEOSX_LOG_RANK_0( "Reading pressures..." );
-
     FaceManager & faces = m_mesh.getFaceManager();
     NodeManager & nodes = m_mesh.getNodeManager();
 
@@ -159,15 +157,17 @@ void ChomboCoupler::copyNodalData()
   NodeManager const & nodes = m_mesh.getNodeManager();
   localIndex const numNodes = nodes.size();
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & referencePos = nodes.referencePosition();
-  arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const & displacement = nodes.totalDisplacement();
-  arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const & velocity = nodes.velocity();
+  fields::solidMechanics::arrayViewConst2dLayoutTotalDisplacement const & displacement =
+    nodes.getField< fields::solidMechanics::totalDisplacement >();
+  fields::solidMechanics::arrayViewConst2dLayoutVelocity const & velocity =
+    nodes.getField< fields::solidMechanics::velocity >();
 
-  GEOSX_ERROR_IF_NE( referencePos.size( 0 ), numNodes );
-  GEOSX_ERROR_IF_NE( referencePos.size( 1 ), 3 );
-  GEOSX_ERROR_IF_NE( displacement.size( 0 ), numNodes );
-  GEOSX_ERROR_IF_NE( displacement.size( 1 ), 3 );
-  GEOSX_ERROR_IF_NE( velocity.size( 0 ), numNodes );
-  GEOSX_ERROR_IF_NE( velocity.size( 1 ), 3 );
+  GEOS_ERROR_IF_NE( referencePos.size( 0 ), numNodes );
+  GEOS_ERROR_IF_NE( referencePos.size( 1 ), 3 );
+  GEOS_ERROR_IF_NE( displacement.size( 0 ), numNodes );
+  GEOS_ERROR_IF_NE( displacement.size( 1 ), 3 );
+  GEOS_ERROR_IF_NE( velocity.size( 0 ), numNodes );
+  GEOS_ERROR_IF_NE( velocity.size( 1 ), 3 );
 
   m_referencePositionCopy.resizeWithoutInitializationOrDestruction( numNodes, 3 );
   m_displacementCopy.resizeWithoutInitializationOrDestruction( numNodes, 3 );
@@ -185,4 +185,4 @@ void ChomboCoupler::copyNodalData()
 }
 
 
-} // namespace geosx
+} // namespace geos

@@ -17,30 +17,23 @@
  *
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_COUPLEDRESERVOIRANDWELLSBASE_HPP_
-#define GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_COUPLEDRESERVOIRANDWELLSBASE_HPP_
+#ifndef GEOS_PHYSICSSOLVERS_MULTIPHYSICS_COUPLEDRESERVOIRANDWELLSBASE_HPP_
+#define GEOS_PHYSICSSOLVERS_MULTIPHYSICS_COUPLEDRESERVOIRANDWELLSBASE_HPP_
 
 #include "physicsSolvers/multiphysics/CoupledSolver.hpp"
 
 #include "common/TimingMacros.hpp"
-#include "constitutive/permeability/PermeabilityExtrinsicData.hpp"
+#include "constitutive/permeability/PermeabilityFields.hpp"
 #include "constitutive/permeability/PermeabilityBase.hpp"
-#include "mesh/PerforationExtrinsicData.hpp"
+#include "mesh/PerforationFields.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellControls.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellSolverBase.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace coupledReservoirAndWellsInternal
 {
-
-/**
- * @brief Utility function for the implementation details of initializePostInitialConditionsPreSubGroups
- */
-void
-initializePostInitialConditionsPreSubGroups( SolverBase * const solver );
-
 /**
  * @brief Utility function for the implementation details of addCouplingNumZeros
  * @param solver the coupled solver
@@ -61,6 +54,17 @@ addCouplingNumNonzeros( SolverBase const * const solver,
                         integer const wellNumDof,
                         string const & resElemDofName,
                         string const & wellElemDofName );
+
+/**
+ * @brief Validate the well perforations ensuring that each perforation is located in a reservoir region that is also
+ * targetted by the solver
+ * @param reservoirSolver the reservoir solver
+ * @param wellSolver the well solver
+ * @param domain the physical domain object
+ */
+bool validateWellPerforations( SolverBase const * const reservoirSolver,
+                               WellSolverBase const * const wellSolver,
+                               DomainPartition const & domain );
 
 }
 
@@ -90,7 +94,8 @@ public:
    */
   CoupledReservoirAndWellsBase ( const string & name,
                                  dataRepository::Group * const parent )
-    : Base( name, parent )
+    : Base( name, parent ),
+    m_isWellTransmissibilityComputed( false )
   {
     this->template getWrapper< string >( Base::viewKeyStruct::discretizationString() ).
       setInputFlag( dataRepository::InputFlags::FALSE );
@@ -116,9 +121,9 @@ public:
                ParallelVector & solution,
                bool const setSparsity = true ) override
   {
-    GEOSX_MARK_FUNCTION;
+    GEOS_MARK_FUNCTION;
 
-    GEOSX_UNUSED_VAR( setSparsity );
+    GEOS_UNUSED_VAR( setSparsity );
 
     dofManager.setDomain( domain );
 
@@ -187,43 +192,29 @@ public:
 
     DomainPartition & domain = this->template getGroupByPath< DomainPartition >( "/Problem/domain" );
 
-    this->template forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                                                 MeshLevel & meshLevel,
-                                                                                 arrayView1d< string const > const & regionNames )
+    // Validate well perforations: Ensure that each perforation is in a region targeted by the solver
+    if( !validateWellPerforations( domain ))
     {
-      ElementRegionManager & elemManager = meshLevel.getElemManager();
+      return;
+    }
+  }
 
-      // loop over the wells
-      elemManager.forElementSubRegions< WellElementSubRegion >( regionNames, [&]( localIndex const,
-                                                                                  WellElementSubRegion & subRegion )
-      {
-        array1d< array1d< arrayView3d< real64 const > > > const permeability =
-          elemManager.constructMaterialExtrinsicAccessor< constitutive::PermeabilityBase,
-                                                          extrinsicMeshData::permeability::permeability >();
+  virtual void
+  implicitStepSetup( real64 const & time_n,
+                     real64 const & dt,
+                     DomainPartition & domain ) override
+  {
+    Base::implicitStepSetup( time_n, dt, domain );
 
-        PerforationData & perforationData = *subRegion.getPerforationData();
-        WellControls const & wellControls = wellSolver()->getWellControls( subRegion );
-
-        // compute the Peaceman index (if not read from XML)
-        perforationData.computeWellTransmissibility( meshLevel, subRegion, permeability );
-
-        // if the log level is 1, we output the value of the transmissibilities
-        if( wellControls.getLogLevel() >= 2 )
-        {
-          arrayView2d< real64 const > const perfLocation =
-            perforationData.getExtrinsicData< extrinsicMeshData::perforation::location >();
-          arrayView1d< real64 const > const perfTrans =
-            perforationData.getExtrinsicData< extrinsicMeshData::perforation::wellTransmissibility >();
-
-          forAll< serialPolicy >( perforationData.size(), [=] GEOSX_HOST_DEVICE ( localIndex const iperf )
-          {
-            GEOSX_LOG_RANK( GEOSX_FMT( "The perforation at ({},{},{}) has a transmissibility of {} Pa.s.rm^3/s/Pa",
-                                       perfLocation[iperf][0], perfLocation[iperf][1], perfLocation[iperf][2],
-                                       perfTrans[iperf] ) );
-          } );
-        }
-      } );
-    } );
+    // we delay the computation of the transmissibility until the last minute
+    // because we want to make sure that the permeability has been updated (in the flow solver)
+    // this is necessary for some permeability models (like Karman-Kozeny) that do not use the imported permeability
+    // ultimately, we may want to use this mechanism to update the well transmissibility at each time step (if needed)
+    if( !m_isWellTransmissibilityComputed )
+    {
+      computeWellTransmissibility( domain );
+      m_isWellTransmissibilityComputed = true;
+    }
   }
 
 protected:
@@ -261,9 +252,90 @@ protected:
                               DofManager const & dofManager,
                               SparsityPatternView< globalIndex > const & pattern ) const = 0;
 
+  /// Flag to determine whether the well transmissibility needs to be computed
+  bool m_isWellTransmissibilityComputed;
+
+private:
+
+  /**
+   * @brief Validate the well perforations ensuring that each perforation is located in a reservoir region that is also
+   * targeted by the solver
+   * @param domain the physical domain object
+   */
+  bool validateWellPerforations( DomainPartition const & domain ) const
+  {
+    return coupledReservoirAndWellsInternal::validateWellPerforations( reservoirSolver(), wellSolver(), domain );
+  }
+
+  /**
+   * @brief Compute the transmissibility at all the perforations
+   * @param domain the physical domain object
+   */
+  void computeWellTransmissibility( DomainPartition & domain ) const
+  {
+    this->template forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                                 MeshLevel & meshLevel,
+                                                                                 arrayView1d< string const > const & regionNames )
+    {
+      ElementRegionManager & elemManager = meshLevel.getElemManager();
+
+      ElementRegionManager::ElementViewAccessor< arrayView2d< real64 > > const elemCenter =
+        elemManager.constructViewAccessor< array2d< real64 >, arrayView2d< real64 > >( ElementSubRegionBase::viewKeyStruct::elementCenterString() );
+
+      // loop over the wells
+      elemManager.forElementSubRegions< WellElementSubRegion >( regionNames, [&]( localIndex const,
+                                                                                  WellElementSubRegion & subRegion )
+      {
+        array1d< array1d< arrayView3d< real64 const > > > const permeability =
+          elemManager.constructMaterialFieldAccessor< constitutive::PermeabilityBase,
+                                                      fields::permeability::permeability >();
+
+        PerforationData & perforationData = *subRegion.getPerforationData();
+        WellControls const & wellControls = wellSolver()->getWellControls( subRegion );
+
+        // compute the Peaceman index (if not read from XML)
+        perforationData.computeWellTransmissibility( meshLevel, subRegion, permeability );
+
+        // if the log level is 1, we output the value of the transmissibilities
+        if( wellControls.getLogLevel() >= 2 )
+        {
+          arrayView2d< real64 const > const perfLocation =
+            perforationData.getField< fields::perforation::location >();
+          arrayView1d< real64 const > const perfTrans =
+            perforationData.getField< fields::perforation::wellTransmissibility >();
+
+          // get the element region, subregion, index
+          arrayView1d< localIndex const > const resElemRegion =
+            perforationData.getField< fields::perforation::reservoirElementRegion >();
+          arrayView1d< localIndex const > const resElemSubRegion =
+            perforationData.getField< fields::perforation::reservoirElementSubRegion >();
+          arrayView1d< localIndex const > const resElemIndex =
+            perforationData.getField< fields::perforation::reservoirElementIndex >();
+
+          GEOS_UNUSED_VAR( perfLocation ); // unused if geos_error_if is nulld
+          GEOS_UNUSED_VAR( perfTrans ); // unused if geos_error_if is nulld
+          GEOS_UNUSED_VAR( resElemRegion ); // unused if geos_error_if is nulld
+          GEOS_UNUSED_VAR( resElemSubRegion ); // unused if geos_error_if is nulld
+          GEOS_UNUSED_VAR( resElemIndex ); // unused if geos_error_if is nulld
+
+          forAll< serialPolicy >( perforationData.size(), [=] ( localIndex const iperf )
+          {
+            GEOS_UNUSED_VAR( iperf ); // unused if geos_error_if is nulld
+            GEOS_LOG_RANK( GEOS_FMT( "Perforation at ({},{},{}); perforated element center: ({},{},{}); transmissibility: {} Pa.s.rm^3/s/Pa",
+                                     perfLocation[iperf][0], perfLocation[iperf][1], perfLocation[iperf][2],
+                                     elemCenter[resElemRegion[iperf]][resElemSubRegion[iperf]][resElemIndex[iperf]][0],
+                                     elemCenter[resElemRegion[iperf]][resElemSubRegion[iperf]][resElemIndex[iperf]][1],
+                                     elemCenter[resElemRegion[iperf]][resElemSubRegion[iperf]][resElemIndex[iperf]][2],
+                                     perfTrans[iperf] ) );
+          } );
+        }
+      } );
+    } );
+  }
+
 };
 
 
-} /* namespace geosx */
+} /* namespace geos */
 
-#endif /* GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_COUPLEDRESERVOIRANDWELLSBASE_HPP_ */
+#endif /* GEOS_PHYSICSSOLVERS_MULTIPHYSICS_COUPLEDRESERVOIRANDWELLSBASE_HPP_ */

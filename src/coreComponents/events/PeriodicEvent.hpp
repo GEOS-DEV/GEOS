@@ -16,12 +16,12 @@
  * @file PeriodicEvent.hpp
  */
 
-#ifndef GEOSX_EVENTS_PERIODICEVENT_HPP_
-#define GEOSX_EVENTS_PERIODICEVENT_HPP_
+#ifndef GEOS_EVENTS_PERIODICEVENT_HPP_
+#define GEOS_EVENTS_PERIODICEVENT_HPP_
 
 #include "events/EventBase.hpp"
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -33,7 +33,7 @@ class PeriodicEvent : public EventBase
 {
 public:
 
-  /// @copydoc geosx::dataRepository::Group::Group( string const & name, Group * const parent )
+  /// @copydoc geos::dataRepository::Group::Group( string const & name, Group * const parent )
   PeriodicEvent( const string & name,
                  Group * const parent );
 
@@ -102,6 +102,10 @@ public:
                         real64 const eventProgress,
                         DomainPartition & domain ) override;
 
+  /**
+   * @copydoc EventBase::validate
+   */
+  virtual void validate() const override;
 
   /// A pointer to an optional function
   dataRepository::Group * m_functionTarget;
@@ -150,6 +154,6 @@ public:
 
 };
 
-} /* namespace geosx */
+} /* namespace geos */
 
-#endif /* GEOSX_EVENTS_PERIODICEVENT_HPP_ */
+#endif /* GEOS_EVENTS_PERIODICEVENT_HPP_ */

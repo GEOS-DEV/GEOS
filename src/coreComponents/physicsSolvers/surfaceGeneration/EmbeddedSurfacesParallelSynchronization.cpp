@@ -21,12 +21,12 @@
 #include "common/GeosxMacros.hpp"
 #include "common/TimingMacros.hpp"
 #include "mesh/ElementRegionManager.hpp"
-#include "mesh/ExtrinsicMeshData.hpp"
+#include "mesh/MeshFields.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "mesh/mpiCommunications/MPI_iCommData.hpp"
 
 
-namespace geosx
+namespace geos
 {
 
 namespace  embeddedSurfacesParallelSynchronization
@@ -50,14 +50,14 @@ void packNewNodes( NeighborCommunicator * const neighbor,
   localIndex_array newNodesToSend;
 
   arrayView1d< localIndex const > const & edgeGhostsToSend = edgeManager.getNeighborData( neighbor->neighborRank() ).ghostsToSend();
-  arrayView1d< localIndex > const & parentIndex = nodeManager.getExtrinsicData< extrinsicMeshData::ParentEdgeIndex >();
+  arrayView1d< localIndex > const & parentIndex = nodeManager.getField< fields::parentEdgeIndex >();
   arrayView1d< integer const > const & nodeGhostRank = nodeManager.ghostRank();
 
   for( auto const ni : newObjects.newNodes )
   {
     if( nodeGhostRank[ni] == neighborRank )
     {
-      // a node is sent if it is a ghost neighborRank
+      // a node is sent if it is a ghost on neighborRank
       newNodesToSend.emplace_back( ni );
     }
     else
@@ -86,7 +86,7 @@ void packNewNodes( NeighborCommunicator * const neighbor,
 
   packedSize += nodeManager.packNewNodesGlobalMaps( sendBufferPtr, newNodesToSend );
 
-  GEOSX_ERROR_IF( bufferSize != packedSize, "Allocated Buffer Size is not equal to packed buffer size" );
+  GEOS_ERROR_IF( bufferSize != packedSize, "Allocated Buffer Size is not equal to packed buffer size" );
 }
 
 void unpackNewNodes( NeighborCommunicator * const neighbor,
@@ -126,7 +126,7 @@ void packNewObjectsToGhosts( NeighborCommunicator * const neighbor,
   array1d< array1d< localIndex_array > > newElemsToSendData;
 
   arrayView1d< localIndex const > const & edgeGhostsToSend = edgeManager.getNeighborData( neighbor->neighborRank() ).ghostsToSend();
-  arrayView1d< localIndex > const & parentIndex = nodeManager.getExtrinsicData< extrinsicMeshData::ParentEdgeIndex >();
+  arrayView1d< localIndex > const & parentIndex = nodeManager.getField< fields::parentEdgeIndex >();
 
   for( auto const ni : newObjects.newNodes )
   {
@@ -186,7 +186,7 @@ void packNewObjectsToGhosts( NeighborCommunicator * const neighbor,
                                                                              EmbeddedSurfaceSubRegion & subRegion )
       {
         localIndex_array & surfaceElemGhostsToSend = subRegion.getNeighborData( neighborRank ).ghostsToSend();
-        surfaceElemGhostsToSend.move( LvArray::MemorySpace::host );
+        surfaceElemGhostsToSend.move( hostMemorySpace );
 
         for( localIndex const & k : newSurfaceGhostsToSend.at( {er, esr} ) )
         {
@@ -227,7 +227,7 @@ void packNewObjectsToGhosts( NeighborCommunicator * const neighbor,
   packedSize += nodeManager.pack( sendBufferPtr, newNodesToSend, 0, false, packEvents );
   packedSize += elemManager.pack( sendBufferPtr, newElemsToSend );
 
-  GEOSX_ERROR_IF( bufferSize != packedSize, "Allocated Buffer Size is not equal to packed buffer size" );
+  GEOS_ERROR_IF( bufferSize != packedSize, "Allocated Buffer Size is not equal to packed buffer size" );
 }
 
 void unpackNewToGhosts( NeighborCommunicator * const neighbor,
@@ -313,7 +313,7 @@ void packFracturedToGhosts( NeighborCommunicator * const neighbor,
     {
       // we send all the ghosts
       arrayView1d< localIndex const >  const & elemsGhostsToSend = subRegion.getNeighborData( neighborRank ).ghostsToSend();
-      elemsGhostsToSend.move( LvArray::MemorySpace::host );
+      elemsGhostsToSend.move( hostMemorySpace );
       forAll< serialPolicy >( elemsGhostsToSend.size(), [=, &elemsToSendData] ( localIndex const k )
       {
         elemsToSendData[er][esr].emplace_back( elemsGhostsToSend[k] );
@@ -337,7 +337,7 @@ void packFracturedToGhosts( NeighborCommunicator * const neighbor,
 
   packedSize += elemManager.packFracturedElements( sendBufferPtr, elemsToSend, fractureRegionName );
 
-  GEOSX_ERROR_IF( bufferSize != packedSize, "Allocated Buffer Size is not equal to packed buffer size" );
+  GEOS_ERROR_IF( bufferSize != packedSize, "Allocated Buffer Size is not equal to packed buffer size" );
 }
 
 void unpackFracturedToGhosts( NeighborCommunicator * const neighbor,
@@ -621,4 +621,4 @@ void sychronizeTopology( MeshLevel & mesh,
 
 } /* embeddedSurfacesParallelSynchronization */
 
-} /* namespace geosx */
+} /* namespace geos */

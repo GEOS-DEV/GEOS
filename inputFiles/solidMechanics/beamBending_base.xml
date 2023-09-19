@@ -22,20 +22,21 @@
       target="/Outputs/siloOutput"/>
 
     <PeriodicEvent
+      name="timeHistoryCollection"
+      timeFrequency="1.0"
+      target="/Tasks/displacementCollection"/>
+
+    <PeriodicEvent
+      name="timeHistoryOutput"
+      timeFrequency="10.0"
+      target="/Outputs/timeHistoryOutput"/>
+
+    <PeriodicEvent
       name="restarts"
       timeFrequency="1e99"
       targetExactTimestep="0"
       target="/Outputs/restartOutput"/>
   </Events>
-
-  <!-- SPHINX_FEDiscretization -->
-  <NumericalMethods>
-    <FiniteElements>
-      <FiniteElementSpace
-        name="FE1"
-        order="1"/>
-    </FiniteElements>
-  </NumericalMethods>
 
   <!-- SPHINX_FEDiscretizationEnd -->
   <ElementRegions>
@@ -62,7 +63,7 @@
     <FieldSpecification
       name="xnegconstraint"
       objectPath="nodeManager"
-      fieldName="TotalDisplacement"
+      fieldName="totalDisplacement"
       component="0"
       scale="0.0"
       setNames="{ xneg }"/>
@@ -70,7 +71,7 @@
     <FieldSpecification
       name="yconstraint"
       objectPath="nodeManager"
-      fieldName="TotalDisplacement"
+      fieldName="totalDisplacement"
       component="1"
       scale="0.0"
       setNames="{ xneg }"/>
@@ -78,7 +79,7 @@
     <FieldSpecification
       name="zconstraint"
       objectPath="nodeManager"
-      fieldName="TotalDisplacement"
+      fieldName="totalDisplacement"
       component="2"
       scale="0.0"
       setNames="{ zneg, zpos }"/>
@@ -111,5 +112,25 @@
 
     <Restart
       name="restartOutput"/>
+
+    <TimeHistory
+      name="timeHistoryOutput"
+      sources="{ /Tasks/displacementCollection }"
+      filename="displacement_history"/>
   </Outputs>
+
+  <Geometry>
+    <Box
+      name="trace"
+      xMin="{ -0.1, 3.9, -0.1 }"
+      xMax="{ 80.1, 4.1, 0.1 }"/>
+  </Geometry>
+
+  <Tasks>
+    <PackCollection
+      name="displacementCollection"
+      objectPath="nodeManager"
+      setNames="{ trace }"
+      fieldName="totalDisplacement"/>
+  </Tasks>
 </Problem>

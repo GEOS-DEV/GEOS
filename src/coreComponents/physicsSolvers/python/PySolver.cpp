@@ -12,7 +12,7 @@
 #define VERIFY_INITIALIZED( self ) \
   PYTHON_ERROR_IF( self->group == nullptr, PyExc_RuntimeError, "The PySolver is not initialized.", nullptr )
 
-namespace geosx
+namespace geos
 {
 namespace python
 {
@@ -22,15 +22,15 @@ struct PySolver
   PyObject_HEAD
 
   static constexpr char const * docString =
-    "A Python interface to geosx::SolverBase.";
+    "A Python interface to geos::SolverBase.";
 
-  geosx::SolverBase * group;
+  geos::SolverBase * group;
 };
 
 
 static PyObject * PySolver_new( PyTypeObject *type, PyObject *args, PyObject *kwds )
 {
-  GEOSX_UNUSED_VAR( args, kwds );
+  GEOS_UNUSED_VAR( args, kwds );
   PySolver *self;
 
   self = (PySolver *)type->tp_alloc( type, 0 );
@@ -74,7 +74,7 @@ static PyObject * execute( PySolver * self, PyObject * args )
     return nullptr;
   }
 
-  geosx::DomainPartition & domain = self->group->getGroupByPath< DomainPartition >( "/Problem/domain" );
+  geos::DomainPartition & domain = self->group->getGroupByPath< DomainPartition >( "/Problem/domain" );
 
   int cycleNumber = int(round( time/dt ));
 
@@ -88,9 +88,27 @@ static PyObject * reinit( PySolver * self, PyObject *args )
 {
   VERIFY_NON_NULL_SELF( self );
   VERIFY_INITIALIZED( self );
-  GEOSX_UNUSED_VAR( args );
+  GEOS_UNUSED_VAR( args );
 
   self->group->reinit();
+
+  Py_RETURN_NONE;
+}
+
+static PyObject * cleanup( PySolver * self, PyObject *args )
+{
+  VERIFY_NON_NULL_SELF( self );
+  VERIFY_INITIALIZED( self );
+  GEOS_UNUSED_VAR( args );
+
+  double time;
+  if( !PyArg_ParseTuple( args, "d", &time ) )
+  {
+    return nullptr;
+  }
+
+  geos::DomainPartition & domain = self->group->getGroupByPath< DomainPartition >( "/Problem/domain" );
+  self->group->cleanup( time, 0, 0, 0.0, domain );
 
   Py_RETURN_NONE;
 }
@@ -99,6 +117,7 @@ static PyObject * reinit( PySolver * self, PyObject *args )
 static PyMethodDef PySolver_methods[] = {
   { "execute", (PyCFunction) execute, METH_VARARGS, "solver Step" },
   { "reinit", (PyCFunction) reinit, METH_NOARGS, "re-initialize certain variable depending on the solver being used"},
+  { "cleanup", (PyCFunction) cleanup, METH_VARARGS, "Call cleanup step"},
   { nullptr, nullptr, 0, nullptr }      /* Sentinel */
 };
 

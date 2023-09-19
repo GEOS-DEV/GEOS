@@ -1,43 +1,7 @@
 <?xml version="1.0" ?>
 
 <Problem>
-  <Solvers
-    gravityVector="{ 0.0, 0.0, 0.0 }">
-    <!-- SPHINX_POROMECHANICSSOLVER -->
-    <SinglePhasePoromechanics
-      name="poroSolve"
-      solidSolverName="lagsolve"
-      flowSolverName="SinglePhaseFlow"
-      logLevel="1"
-      targetRegions="{ Domain }">
-      <NonlinearSolverParameters
-        newtonMaxIter="2"
-        newtonTol="1.0e-2"
-        maxTimeStepCuts="1"
-        lineSearchMaxCuts="0"/>
-      <LinearSolverParameters
-        directParallel="0"/>
-    </SinglePhasePoromechanics>
-    <!-- SPHINX_POROMECHANICSSOLVER_END -->
 
-    <!-- SPHINX_MECHANICALSOLVER -->
-    <SolidMechanicsLagrangianSSLE
-      name="lagsolve"
-      timeIntegrationOption="QuasiStatic"
-      logLevel="1"
-      discretization="FE1"
-      targetRegions="{ Domain }"/>
-    <!-- SPHINX_MECHANICALSOLVER_END -->
-
-    <!-- SPHINX_SINGLEPHASEFVM -->
-    <SinglePhaseFVM
-      name="SinglePhaseFlow"
-      logLevel="1"
-      discretization="singlePhaseTPFA"
-      targetRegions="{ Domain }"/>
-    <!-- SPHINX_SINGLEPHASEFVM_END -->
-  </Solvers>
- 
   <!-- SPHINX_NUMERICAL -->
   <NumericalMethods>
     <FiniteElements>
@@ -106,13 +70,38 @@
       objectPath="ElementRegions/Domain/cb1"
       fieldName="pressure"
       scale="4934.86"/>
-   
+
+    <FieldSpecification
+      name="initial_sigma_x"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions"
+      fieldName="shaleSolid_stress"
+      component="0"
+      scale="4934.86"/>
+    <FieldSpecification
+      name="initial_sigma_y"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions"
+      fieldName="shaleSolid_stress"
+      component="1"
+      scale="4934.86"/>
+    <FieldSpecification
+      name="initial_sigma_z"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions"
+      fieldName="shaleSolid_stress"
+      component="2"
+      scale="4934.86"/>
+    
     <FieldSpecification
       name="xInitialDisplacement"
       initialCondition="1"
       setNames="{ all }"
       objectPath="nodeManager"
-      fieldName="TotalDisplacement"
+      fieldName="totalDisplacement"
       component="0"
       scale="1.0"
       functionName="initialUxFunc"/>
@@ -122,7 +111,7 @@
       initialCondition="1"
       setNames="{ all }"
       objectPath="nodeManager"
-      fieldName="TotalDisplacement"
+      fieldName="totalDisplacement"
       component="1"
       scale="0.0"/>
 
@@ -131,7 +120,7 @@
       initialCondition="1"
       setNames="{ all }"
       objectPath="nodeManager"
-      fieldName="TotalDisplacement"
+      fieldName="totalDisplacement"
       component="2"
       scale="1.0"
       functionName="initialUzFunc"/>
@@ -139,7 +128,7 @@
     <FieldSpecification
       name="xnegconstraint"
       objectPath="nodeManager"
-      fieldName="TotalDisplacement"
+      fieldName="totalDisplacement"
       component="0"
       scale="0.0"
       setNames="{ xneg }"/>
@@ -147,7 +136,7 @@
     <FieldSpecification
       name="yconstraint"
       objectPath="nodeManager"
-      fieldName="TotalDisplacement"
+      fieldName="totalDisplacement"
       component="1"
       scale="0.0"
       setNames="{ yneg, ypos }"/>
@@ -155,7 +144,7 @@
     <FieldSpecification
       name="zconstraint"
       objectPath="nodeManager"
-      fieldName="TotalDisplacement"
+      fieldName="totalDisplacement"
       component="2"
       scale="0.0"
       setNames="{ zneg }"/>
@@ -163,7 +152,7 @@
     <FieldSpecification
       name="NormalDisplacement"
       objectPath="nodeManager"
-      fieldName="TotalDisplacement"
+      fieldName="totalDisplacement"
       component="2"
       scale="-1.0e-5"
       setNames="{ zpos }"
@@ -210,7 +199,7 @@
     <PackCollection
       name="displacementCollection"
       objectPath="nodeManager" 
-      fieldName="TotalDisplacement"/>  
+      fieldName="totalDisplacement"/>  
   </Tasks>
   <!-- SPHINX_TASKS_END -->
 

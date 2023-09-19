@@ -17,15 +17,16 @@
  * @file CoupledSolid.hpp
  */
 
-#ifndef GEOSX_CONSTITUTIVE_SOLID_COUPLEDSOLIDBASE_HPP_
-#define GEOSX_CONSTITUTIVE_SOLID_COUPLEDSOLIDBASE_HPP_
+#ifndef GEOS_CONSTITUTIVE_SOLID_COUPLEDSOLIDBASE_HPP_
+#define GEOS_CONSTITUTIVE_SOLID_COUPLEDSOLIDBASE_HPP_
 
 #include "constitutive/ConstitutiveBase.hpp"
 #include "constitutive/permeability/PermeabilityBase.hpp"
 #include "constitutive/solid/porosity/PorosityBase.hpp"
+#include "constitutive/solid/SolidBase.hpp"
 #include "constitutive/solid/SolidInternalEnergy.hpp"
 
-namespace geosx
+namespace geos
 {
 namespace constitutive
 {
@@ -101,6 +102,13 @@ public:
   arrayView2d< real64 const > const  getDporosity_dPressure() const
   { return getBasePorosityModel().dPorosity_dPressure(); }
 
+  /**
+   * @brief get the dPorosity_dTemperature.
+   * return a constant arrayView2d to dPorosity_dTemperature
+   */
+  arrayView2d< real64 const > const  getDporosity_dTemperature() const
+  { return getBasePorosityModel().dPorosity_dTemperature(); }
+
 
   /**
    * @brief get the old internal energy.
@@ -134,6 +142,62 @@ public:
   void scaleReferencePorosity( arrayView1d< real64 const > scalingFactors ) const
   { getBasePorosityModel().scaleReferencePorosity( scalingFactors ); }
 
+  /*
+   * @brief get the current bulk modulus
+   * return a constant arrayView1d to bulk modulus
+   */
+  arrayView1d< real64 const > const getBulkModulus() const
+  {
+    return getBaseSolidModel().getBulkModulus();
+  }
+
+  /*
+   * @brief get the current bulk modulus
+   * return a constant arrayView1d to bulk modulus
+   */
+  arrayView1d< real64 const > const getShearModulus() const
+  {
+    return getBaseSolidModel().getShearModulus();
+  }
+
+  /*
+   * @brief get the current solid density
+   * return a constant arrayView2d to solid density
+   */
+  arrayView2d< real64 const > const getDensity() const
+  {
+    return getBaseSolidModel().getDensity();
+  }
+
+
+  /*
+   * @brief get the current biot coefficient
+   * return a constant arrayView1d to biotCoefficient
+   */
+  arrayView1d< real64 const > const getBiotCoefficient() const
+  {
+    return getBasePorosityModel().getBiotCoefficient();
+  }
+
+  /**
+   * @brief Const/non-mutable accessor for the mean stress increment at the previous sequential iteration
+   * @return Accessor
+   */
+  arrayView2d< real64 const > const getMeanEffectiveStressIncrement_k() const
+  {
+    return getBasePorosityModel().getMeanEffectiveStressIncrement_k();
+  }
+
+  /**
+   * @brief Non-const accessor for the mean stress increment at the previous sequential iteration
+   * @return Accessor
+   */
+  arrayView1d< real64 > const getAverageMeanEffectiveStressIncrement_k()
+  {
+    return getBasePorosityModel().getAverageMeanEffectiveStressIncrement_k();
+  }
+
+
   /**
    * @brief initialize the constitutive models fields.
    */
@@ -151,6 +215,14 @@ public:
       /// If the name is provided it has to be saved as well.
       getSolidInternalEnergyModel().saveConvergedState();
     }
+  }
+
+  /**
+   * @brief ignore the porosity update (after initialization step)
+   */
+  virtual void ignoreConvergedState() const
+  {
+    getBasePorosityModel().ignoreConvergedState();
   }
 
   /**
@@ -182,6 +254,15 @@ private:
    */
   PorosityBase const & getBasePorosityModel() const
   { return this->getParent().template getGroup< PorosityBase >( m_porosityModelName ); }
+
+  /**
+   * @brief get a PorosityBase reference to the porosity model
+   * return a PorosityBase reference to the porosity model
+   */
+  PorosityBase & getBasePorosityModel()
+  { return this->getParent().template getGroup< PorosityBase >( m_porosityModelName ); }
+
+
   /**
    * @brief get a Permeability base constant reference to the permeability model
    * return a constant PermeabilityBase reference to the permeability model
@@ -189,10 +270,17 @@ private:
   PermeabilityBase const & getBasePermModel() const
   { return this->getParent().template getGroup< PermeabilityBase >( m_permeabilityModelName ); }
 
+  /**
+   *@brief get a SolidBase constant reference to the solid model
+   * return a constant SolidBase reference to the solid model
+   */
+  SolidBase const & getBaseSolidModel() const
+  { return this->getParent().template getGroup< SolidBase >( m_solidModelName ); }
+
 };
 
 }
 
 }
 
-#endif /* GEOSX_CONSTITUTIVE_SOLID_COUPLEDSOLID_HPP_ */
+#endif /* GEOS_CONSTITUTIVE_SOLID_COUPLEDSOLID_HPP_ */

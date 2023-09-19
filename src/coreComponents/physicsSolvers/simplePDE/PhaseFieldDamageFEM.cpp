@@ -40,7 +40,7 @@
 
 #include "mesh/DomainPartition.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace dataRepository
@@ -69,6 +69,16 @@ PhaseFieldDamageFEM::PhaseFieldDamageFEM( const string & name,
   registerWrapper( viewKeyStruct::localDissipationOptionString(), &m_localDissipationOption ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Type of local dissipation function. Can be Linear or Quadratic" );
+
+  registerWrapper( viewKeyStruct::irreversibilityFlagString(), &m_irreversibilityFlag ).
+    setApplyDefaultValue( 0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "The flag to indicate whether to apply the irreversibility constraint" );
+
+  registerWrapper( viewKeyStruct::damageUpperBoundString(), &m_damageUpperBound ).
+    setApplyDefaultValue( 1.5 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "The upper bound of the damage" );
 }
 
 PhaseFieldDamageFEM::~PhaseFieldDamageFEM()
@@ -106,7 +116,7 @@ void PhaseFieldDamageFEM::registerDataOnMesh( Group & meshBodies )
 
       string & solidMaterialName = subRegion.getReference< string >( viewKeyStruct::solidModelNamesString() );
       solidMaterialName = SolverBase::getConstitutiveName< SolidBase >( subRegion );
-      GEOSX_ERROR_IF( solidMaterialName.empty(), GEOSX_FMT( "SolidBase model not found on subregion {}", subRegion.getName() ) );
+      GEOS_ERROR_IF( solidMaterialName.empty(), GEOS_FMT( "SolidBase model not found on subregion {}", subRegion.getName() ) );
 
     } );
   } );
@@ -133,12 +143,12 @@ void PhaseFieldDamageFEM::postProcessInput()
   }
   else
   {
-    GEOSX_ERROR( "invalid time integration option" );
+    GEOS_ERROR( "invalid time integration option" );
   }
 
   if( m_localDissipationOption != "Linear" && m_localDissipationOption != "Quadratic" )
   {
-    GEOSX_ERROR( "invalid local dissipation option - must be Linear or Quadratic" );
+    GEOS_ERROR( "invalid local dissipation option - must be Linear or Quadratic" );
   }
 
   // Set basic parameters for solver
@@ -157,7 +167,7 @@ real64 PhaseFieldDamageFEM::solverStep( real64 const & time_n,
                                         const int cycleNumber,
                                         DomainPartition & domain )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
   real64 dtReturn = dt;
   if( m_timeIntegrationOption == timeIntegrationOption::ExplicitTransient )
   {
@@ -177,23 +187,23 @@ real64 PhaseFieldDamageFEM::solverStep( real64 const & time_n,
   return dtReturn;
 }
 
-real64 PhaseFieldDamageFEM::explicitStep( real64 const & GEOSX_UNUSED_PARAM( time_n ),
+real64 PhaseFieldDamageFEM::explicitStep( real64 const & GEOS_UNUSED_PARAM( time_n ),
                                           real64 const & dt,
-                                          const int GEOSX_UNUSED_PARAM( cycleNumber ),
-                                          DomainPartition & GEOSX_UNUSED_PARAM( domain ) )
+                                          const int GEOS_UNUSED_PARAM( cycleNumber ),
+                                          DomainPartition & GEOS_UNUSED_PARAM( domain ) )
 {
   return dt;
 }
 
-void PhaseFieldDamageFEM::implicitStepComplete( real64 const & GEOSX_UNUSED_PARAM( time_n ),
-                                                real64 const & GEOSX_UNUSED_PARAM( dt ),
-                                                DomainPartition & GEOSX_UNUSED_PARAM( domain ) )
+void PhaseFieldDamageFEM::implicitStepComplete( real64 const & GEOS_UNUSED_PARAM( time_n ),
+                                                real64 const & GEOS_UNUSED_PARAM( dt ),
+                                                DomainPartition & GEOS_UNUSED_PARAM( domain ) )
 {}
 
-void PhaseFieldDamageFEM::setupDofs( DomainPartition const & GEOSX_UNUSED_PARAM( domain ),
+void PhaseFieldDamageFEM::setupDofs( DomainPartition const & GEOS_UNUSED_PARAM( domain ),
                                      DofManager & dofManager ) const
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
   dofManager.addField( m_fieldName,
                        FieldLocation::Node,
                        1,
@@ -205,14 +215,14 @@ void PhaseFieldDamageFEM::setupDofs( DomainPartition const & GEOSX_UNUSED_PARAM(
 
 }
 
-void PhaseFieldDamageFEM::assembleSystem( real64 const GEOSX_UNUSED_PARAM( time_n ),
-                                          real64 const GEOSX_UNUSED_PARAM( dt ),
+void PhaseFieldDamageFEM::assembleSystem( real64 const GEOS_UNUSED_PARAM( time_n ),
+                                          real64 const GEOS_UNUSED_PARAM( dt ),
                                           DomainPartition & domain,
                                           DofManager const & dofManager,
                                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                           arrayView1d< real64 > const & localRhs )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
                                                                 arrayView1d< string const > const & regionNames )
@@ -253,7 +263,7 @@ void PhaseFieldDamageFEM::assembleSystem( real64 const GEOSX_UNUSED_PARAM( time_
     {
       ElementRegionBase & elementRegion = elemManager->GetRegion( er );
 
-      elementRegion.forElementSubRegionsIndex< CellElementSubRegion >( [&]( localIndex const GEOSX_UNUSED_PARAM( esr ),
+      elementRegion.forElementSubRegionsIndex< CellElementSubRegion >( [&]( localIndex const GEOS_UNUSED_PARAM( esr ),
                                                                             CellElementSubRegion & elementSubRegion )
       {
 
@@ -398,10 +408,10 @@ void PhaseFieldDamageFEM::assembleSystem( real64 const GEOSX_UNUSED_PARAM( time_
 
     if( getLogLevel() == 2 )
     {
-      GEOSX_LOG_RANK_0( "After PhaseFieldDamageFEM::AssembleSystem" );
-      GEOSX_LOG_RANK_0( "\nJacobian:\n" );
+      GEOS_LOG_RANK_0( "After PhaseFieldDamageFEM::AssembleSystem" );
+      GEOS_LOG_RANK_0( "\nJacobian:\n" );
       std::cout << matrix;
-      GEOSX_LOG_RANK_0( "\nResidual:\n" );
+      GEOS_LOG_RANK_0( "\nResidual:\n" );
       std::cout << rhs;
     }
 
@@ -418,7 +428,7 @@ void PhaseFieldDamageFEM::applySystemSolution( DofManager const & dofManager,
                                                real64 const scalingFactor,
                                                DomainPartition & domain )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   dofManager.addVectorToField( localSolution, m_fieldName, m_fieldName, scalingFactor );
 
@@ -440,7 +450,7 @@ void PhaseFieldDamageFEM::applySystemSolution( DofManager const & dofManager,
 
 void PhaseFieldDamageFEM::updateState( DomainPartition & domain )
 {
-  GEOSX_UNUSED_VAR( domain );
+  GEOS_UNUSED_VAR( domain );
 }
 
 void PhaseFieldDamageFEM::applyBoundaryConditions(
@@ -450,15 +460,21 @@ void PhaseFieldDamageFEM::applyBoundaryConditions(
   CRSMatrixView< real64, globalIndex const > const & localMatrix,
   arrayView1d< real64 > const & localRhs )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
   applyDirichletBCImplicit( time_n + dt, dofManager, domain, localMatrix, localRhs );
+
+  // Apply the crack irreversibility constraint
+  if( m_irreversibilityFlag )
+  {
+    applyIrreversibilityConstraint( dofManager, domain, localMatrix, localRhs );
+  }
 
   if( getLogLevel() == 2 )
   {
-    GEOSX_LOG_RANK_0( "After PhaseFieldDamageFEM::applyBoundaryConditions" );
-    GEOSX_LOG_RANK_0( "\nJacobian:\n" );
+    GEOS_LOG_RANK_0( "After PhaseFieldDamageFEM::applyBoundaryConditions" );
+    GEOS_LOG_RANK_0( "\nJacobian:\n" );
     std::cout << localMatrix.toViewConst();
-    GEOSX_LOG_RANK_0( "\nResidual:\n" );
+    GEOS_LOG_RANK_0( "\nResidual:\n" );
     std::cout << localRhs;
   }
 //
@@ -475,18 +491,20 @@ void PhaseFieldDamageFEM::applyBoundaryConditions(
 //                          std::to_string( newtonIter ) + ".mtx";
 //    rhs.write( filename_rhs );
 //
-//    GEOSX_LOG_RANK_0( "After PhaseFieldDamageFEM::applyBoundaryConditions" );
-//    GEOSX_LOG_RANK_0( "Jacobian: written to " << filename_mat );
-//    GEOSX_LOG_RANK_0( "Residual: written to " << filename_rhs );
+//    GEOS_LOG_RANK_0( "After PhaseFieldDamageFEM::applyBoundaryConditions" );
+//    GEOS_LOG_RANK_0( "Jacobian: written to " << filename_mat );
+//    GEOS_LOG_RANK_0( "Residual: written to " << filename_rhs );
 //  }
 }
 
 real64
-PhaseFieldDamageFEM::calculateResidualNorm( DomainPartition const & domain,
+PhaseFieldDamageFEM::calculateResidualNorm( real64 const & GEOS_UNUSED_PARAM( time_n ),
+                                            real64 const & GEOS_UNUSED_PARAM( dt ),
+                                            DomainPartition const & domain,
                                             DofManager const & dofManager,
                                             arrayView1d< real64 const > const & localRhs )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   RAJA::ReduceSum< parallelDeviceReduce, real64 > localSum( 0.0 );
 
@@ -503,7 +521,7 @@ PhaseFieldDamageFEM::calculateResidualNorm( DomainPartition const & domain,
 
 
     forAll< parallelDevicePolicy<> >( nodeManager.size(),
-                                      [localRhs, localSum, dofNumber, rankOffset, ghostRank] GEOSX_HOST_DEVICE ( localIndex const k )
+                                      [localRhs, localSum, dofNumber, rankOffset, ghostRank] GEOS_HOST_DEVICE ( localIndex const k )
     {
       if( ghostRank[k] < 0 )
       {
@@ -545,6 +563,11 @@ PhaseFieldDamageFEM::calculateResidualNorm( DomainPartition const & domain,
 
   const real64 residual = sqrt( globalResidualNorm[0] ) / ( globalResidualNorm[1] );
 
+  if( getLogLevel() >= 1 && logger::internal::rank==0 )
+  {
+    std::cout << GEOS_FMT( "    ( R{} ) = ( {:4.2e} ) ; ", coupledSolverAttributePrefix(), residual );
+  }
+
   return residual;
 }
 
@@ -567,23 +590,79 @@ void PhaseFieldDamageFEM::applyDirichletBCImplicit( real64 const time,
                                                   string const &,
                                                   SortedArrayView< localIndex const > const & targetSet,
                                                   NodeManager & targetGroup,
-                                                  string const GEOSX_UNUSED_PARAM( fieldName ) ) -> void
+                                                  string const GEOS_UNUSED_PARAM( fieldName ) ) -> void
     {
       bc.applyBoundaryConditionToSystem< FieldSpecificationEqual,
-                                         parallelDevicePolicy< 32 > >( targetSet,
-                                                                       time,
-                                                                       targetGroup,
-                                                                       m_fieldName,
-                                                                       dofManager.getKey( m_fieldName ),
-                                                                       dofManager.rankOffset(),
-                                                                       localMatrix,
-                                                                       localRhs );
+                                         parallelDevicePolicy< > >( targetSet,
+                                                                    time,
+                                                                    targetGroup,
+                                                                    m_fieldName,
+                                                                    dofManager.getKey( m_fieldName ),
+                                                                    dofManager.rankOffset(),
+                                                                    localMatrix,
+                                                                    localRhs );
     } );
 
     fsManager.applyFieldValue< serialPolicy >( time, mesh, viewKeyStruct::coeffNameString() );
   } );
 }
 
+void PhaseFieldDamageFEM::applyIrreversibilityConstraint( DofManager const & dofManager,
+                                                          DomainPartition & domain,
+                                                          CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                          arrayView1d< real64 > const & localRhs )
+{
+  GEOS_MARK_FUNCTION;
+
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                MeshLevel & mesh,
+                                                                arrayView1d< string const > const & )
+  {
+    NodeManager & nodeManager = mesh.getNodeManager();
+
+    arrayView1d< globalIndex const > const dofIndex = nodeManager.getReference< array1d< globalIndex > >( dofManager.getKey( m_fieldName ) );
+
+    arrayView1d< real64 const > const nodalDamage = nodeManager.getReference< array1d< real64 > >( m_fieldName );
+
+    globalIndex const rankOffSet = dofManager.rankOffset();
+
+    real64 const damangeUpperBound = m_damageUpperBound;
+
+    forAll< parallelDevicePolicy<> >( nodeManager.size(), [=] GEOS_HOST_DEVICE ( localIndex const nodeIndex )
+    {
+      localIndex const dof = dofIndex[nodeIndex];
+
+      if( dof > -1 )
+      {
+        real64 const damageAtNode = nodalDamage[nodeIndex];
+
+        if( damageAtNode >= damangeUpperBound )
+        {
+
+          // Specify the contribution to rhs
+          real64 rhsContribution;
+
+          FieldSpecificationEqual::SpecifyFieldValue( dof,
+                                                      rankOffSet,
+                                                      localMatrix,
+                                                      rhsContribution,
+                                                      damangeUpperBound,
+                                                      damageAtNode );
+
+          globalIndex const localRow = dof - rankOffSet;
+
+          if( localRow >= 0 && localRow < localRhs.size() )
+          {
+            localRhs[ localRow ] = rhsContribution;
+          }
+        }
+      }
+    } );
+
+  } );
+}
+
+
 REGISTER_CATALOG_ENTRY( SolverBase, PhaseFieldDamageFEM, string const &,
                         Group * const )
-} // namespace geosx
+} // namespace geos

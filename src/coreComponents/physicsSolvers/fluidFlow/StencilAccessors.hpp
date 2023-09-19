@@ -16,8 +16,8 @@
  * @file StencilAccessors.hpp
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_FLUIDFLOW_STENCILACCESSORS_HPP_
-#define GEOSX_PHYSICSSOLVERS_FLUIDFLOW_STENCILACCESSORS_HPP_
+#ifndef GEOS_PHYSICSSOLVERS_FLUIDFLOW_STENCILACCESSORS_HPP_
+#define GEOS_PHYSICSSOLVERS_FLUIDFLOW_STENCILACCESSORS_HPP_
 
 #include "mesh/ElementRegionManager.hpp"
 #include "codingUtilities/traits.hpp"
@@ -25,7 +25,7 @@
 
 #include <tuple>
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -66,11 +66,11 @@ public:
   {
     forEachArgInTuple( std::tuple< TRAITS ... >{}, [&]( auto t, auto idx )
     {
-      GEOSX_UNUSED_VAR( t );
+      GEOS_UNUSED_VAR( t );
       using TRAIT = TYPEOFREF( t );
 
       auto & acc = std::get< idx() >( m_accessors );
-      acc = elemManager.constructExtrinsicAccessor< TRAIT >();
+      acc = elemManager.constructFieldAccessor< TRAIT >();
       acc.setName( solverName + "/accessors/" + TRAIT::key() );
     } );
   }
@@ -111,12 +111,12 @@ public:
   {
     forEachArgInTuple( std::tuple< TRAITS ... >{}, [&]( auto t, auto idx )
     {
-      GEOSX_UNUSED_VAR( t );
+      GEOS_UNUSED_VAR( t );
       using TRAIT = TYPEOFREF( t );
 
       auto & acc = std::get< idx() >( m_accessors );
       bool const allowMissingViews = false;
-      acc = elemManager.constructMaterialExtrinsicAccessor< MATERIAL_TYPE, TRAIT >( allowMissingViews );
+      acc = elemManager.constructMaterialFieldAccessor< MATERIAL_TYPE, TRAIT >( allowMissingViews );
       acc.setName( solverName + "/accessors/" + TRAIT::key() );
     } );
   }
@@ -125,4 +125,4 @@ public:
 
 }
 
-#endif //GEOSX_PHYSICSSOLVERS_FLUIDFLOW_STENCILACCESSORS_HPP_
+#endif //GEOS_PHYSICSSOLVERS_FLUIDFLOW_STENCILACCESSORS_HPP_

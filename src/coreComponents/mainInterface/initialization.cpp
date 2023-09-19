@@ -13,17 +13,18 @@
  */
 
 #include "initialization.hpp"
+#include "version.hpp"
 
 #include "common/DataTypes.hpp"
 #include "common/Path.hpp"
 #include "LvArray/src/system.hpp"
 #include "linearAlgebra/interfaces/InterfaceTypes.hpp"
-#include "mainInterface/GeosxVersion.hpp"
 
 // TPL includes
 #include <optionparser.h>
 
-namespace geosx
+
+namespace geos
 {
 
 /**
@@ -38,7 +39,8 @@ struct Arg : public option::Arg
    */
   static option::ArgStatus unknown( option::Option const & option, bool )
   {
-    GEOSX_LOG_RANK( "Unknown option: " << option.name );
+    GEOS_UNUSED_VAR( option ); // unused if geos_error_if is nulld
+    GEOS_LOG_RANK( "Unknown option: " << option.name );
     return option::ARG_ILLEGAL;
   }
 
@@ -54,7 +56,7 @@ struct Arg : public option::Arg
       return option::ARG_OK;
     }
 
-    GEOSX_LOG_RANK( "Error: " << option.name << " requires a non-empty argument!" );
+    GEOS_LOG_RANK( "Error: " << option.name << " requires a non-empty argument!" );
     return option::ARG_ILLEGAL;
   }
 
@@ -72,7 +74,7 @@ struct Arg : public option::Arg
       return option::ARG_OK;
     }
 
-    GEOSX_LOG_RANK( "Error: " << option.name << " requires a long-int argument!" );
+    GEOS_LOG_RANK( "Error: " << option.name << " requires a long-int argument!" );
     return option::ARG_ILLEGAL;
   }
 };
@@ -99,6 +101,7 @@ std::unique_ptr< CommandLineOptions > parseCommandLineOptions( int argc, char * 
     OUTPUTDIR,
     TIMERS,
     TRACE_DATA_MIGRATION,
+    MEMORY_USAGE,
     PAUSE_FOR,
   };
 
@@ -118,6 +121,7 @@ std::unique_ptr< CommandLineOptions > parseCommandLineOptions( int argc, char * 
     { OUTPUTDIR, 0, "o", "output", Arg::nonEmpty, "\t-o, --output, \t Directory to put the output files" },
     { TIMERS, 0, "t", "timers", Arg::nonEmpty, "\t-t, --timers, \t String specifying the type of timer output" },
     { TRACE_DATA_MIGRATION, 0, "", "trace-data-migration", Arg::None, "\t--trace-data-migration, \t Trace host-device data migration" },
+    { MEMORY_USAGE, 0, "m", "memory-usage", Arg::nonEmpty, "\t-m, --memory-usage, \t Minimum threshold for printing out memory allocations in a member of the data repository." },
     { PAUSE_FOR, 0, "", "pause-for", Arg::numeric, "\t--pause-for, \t Pause geosx for a given number of seconds before starting execution" },
     { 0, 0, nullptr, nullptr, nullptr, nullptr }
   };
@@ -141,7 +145,7 @@ std::unique_ptr< CommandLineOptions > parseCommandLineOptions( int argc, char * 
       throw NotAnError();
     }
 
-    GEOSX_THROW( "Bad command line arguments.", InputError );
+    GEOS_THROW( "Bad command line arguments.", InputError );
   }
 
   // Iterate over the remaining inputs
@@ -220,11 +224,16 @@ std::unique_ptr< CommandLineOptions > parseCommandLineOptions( int argc, char * 
         commandLineOptions->traceDataMigration = true;
       }
       break;
+      case MEMORY_USAGE:
+      {
+        commandLineOptions->printMemoryUsage = std::stod( opt.arg );
+      }
+      break;
       case PAUSE_FOR:
       {
         // we should store this in commandLineOptions and sleep in main
         integer const duration = std::stoi( opt.arg );
-        GEOSX_LOG_RANK_0( "Paused for " << duration << " s" );
+        GEOS_LOG_RANK_0( "Paused for " << duration << " s" );
         std::this_thread::sleep_for( std::chrono::seconds( duration ) );
       }
       break;
@@ -253,10 +262,14 @@ std::unique_ptr< CommandLineOptions > parseCommandLineOptions( int argc, char * 
 }
 
 
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 std::unique_ptr< CommandLineOptions > basicSetup( int argc, char * argv[], bool const parseCommandLine )
 {
   setupEnvironment( argc, argv );
+
+  outputVersionInfo();
+
   setupLAI();
 
   if( parseCommandLine )
@@ -276,15 +289,6 @@ void basicCleanup()
   cleanupEnvironment();
 }
 
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-string getVersion()
-{
-#if defined(GEOSX_GIT_BRANCH) && defined(GEOSX_GIT_HASH)
-  return GEOSX_VERSION_FULL " (" GEOSX_GIT_BRANCH ", sha1: " GEOSX_GIT_HASH ")";
-#else
-  return GEOSX_VERSION_FULL;
-#endif
-}
 
 
-} // namespace geosx
+} // namespace geos

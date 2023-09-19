@@ -16,8 +16,8 @@
  * @file DomainPartition.hpp
  */
 
-#ifndef GEOSX_MESH_DOMAINPARTITION_HPP_
-#define GEOSX_MESH_DOMAINPARTITION_HPP_
+#ifndef GEOS_MESH_DOMAINPARTITION_HPP_
+#define GEOS_MESH_DOMAINPARTITION_HPP_
 
 #include "common/MpiWrapper.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
@@ -26,7 +26,7 @@
 #include "mesh/MeshBody.hpp"
 #include "mesh/mpiCommunications/NeighborCommunicator.hpp"
 
-namespace geosx
+namespace geos
 {
 
 class SiloFile;
@@ -92,6 +92,11 @@ public:
    * @param use_nonblocking If true complete the communications of each phase in the order they are received.
    */
   void setupCommunications( bool use_nonblocking );
+
+  /**
+   * @brief Constructs the global information of this DomainPartition, needed to set up ghosting
+   */
+  void setupBaseLevelMeshGlobalInfo();
 
   /**
    * @brief Recursively builds neighbors if an MPI cartesian topology is used (i.e. not metis).
@@ -175,6 +180,16 @@ public:
   { return this->getGroup( groupKeys.meshBodies ); }
 
   /**
+   * @brief Check if a MeshBody is present given a name.
+   * @tparam KEY_TYPE The type of the key used to look up the MeshBody.
+   * @param key The key to the MeshBody.
+   * @return True is the MeshBody exists in the domain.
+   */
+  template< typename KEY_TYPE >
+  bool hasMeshBody( KEY_TYPE const & key ) const
+  { return getMeshBodies().hasGroup< MeshBody >( key ); }
+
+  /**
    * @brief Get a MeshBody by name, const version.
    * @tparam KEY_TYPE The type of the key used to look up the MeshBody.
    * @param key The key to the MeshBody.
@@ -238,21 +253,6 @@ public:
     getMeshBodies().forSubGroupsIndex< MeshBody >( std::forward< FUNCTION >( function ) );
   }
 
-
-  /**
-   * @brief Get the metis neighbors indices.  @see DomainPartition#m_metisNeighborList
-   * @return Container of global indices.
-   */
-  std::set< int > & getMetisNeighborList()
-  { return m_metisNeighborList; }
-
-  /**
-   * @brief Get the metis neighbors indices, const version. @see DomainPartition#m_metisNeighborList
-   * @return Container of global indices.
-   */
-  std::set< int > const & getMetisNeighborList() const
-  { return m_metisNeighborList; }
-
   /**
    * @brief Get the neighbor communicators. @see DomainPartition#m_neighbors.
    * @return Container of communicators.
@@ -270,15 +270,11 @@ public:
 private:
 
   /**
-   * @brief Contains the global indices of the metis neighbors in case `metis` is used. Empty otherwise.
-   */
-  std::set< int > m_metisNeighborList;
-  /**
    * @brief Contains all the communicators from this DomainPartition to its neighbors.
    */
   std::vector< NeighborCommunicator > m_neighbors;
 };
 
-} /* namespace geosx */
+} /* namespace geos */
 
-#endif /* GEOSX_MESH_DOMAINPARTITION_HPP_ */
+#endif /* GEOS_MESH_DOMAINPARTITION_HPP_ */

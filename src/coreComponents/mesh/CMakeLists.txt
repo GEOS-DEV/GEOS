@@ -11,7 +11,7 @@ set( mesh_headers
      ElementType.hpp
      EmbeddedSurfaceNodeManager.hpp
      EmbeddedSurfaceSubRegion.hpp
-     ExtrinsicMeshData.hpp
+     MeshFields.hpp
      FaceElementSubRegion.hpp
      FaceManager.hpp
      FieldIdentifiers.hpp
@@ -25,7 +25,7 @@ set( mesh_headers
      ObjectManagerBase.hpp
      Perforation.hpp
      PerforationData.hpp
-     PerforationExtrinsicData.hpp	     
+     PerforationFields.hpp
      SurfaceElementRegion.hpp
      SurfaceElementSubRegion.hpp
      ToElementRelation.hpp
@@ -36,14 +36,19 @@ set( mesh_headers
      generators/CellBlockManager.hpp
      generators/CellBlockManagerABC.hpp
      generators/CellBlockUtilities.hpp
+     generators/LineBlock.hpp
+     generators/LineBlockABC.hpp
      generators/ExternalMeshGeneratorBase.hpp
+     generators/FaceBlock.hpp
      generators/FaceBlockABC.hpp
      generators/InternalMeshGenerator.hpp
      generators/InternalWellGenerator.hpp
      generators/InternalWellboreGenerator.hpp
      generators/MeshGeneratorBase.hpp
      generators/ParMETISInterface.hpp
+     generators/PartitionDescriptor.hpp
      generators/PrismUtilities.hpp
+     generators/WellGeneratorBase.hpp
      mpiCommunications/CommID.hpp
      mpiCommunications/CommunicationTools.hpp
      mpiCommunications/MPI_iCommData.hpp
@@ -51,12 +56,17 @@ set( mesh_headers
      mpiCommunications/NeighborData.hpp
      mpiCommunications/PartitionBase.hpp
      mpiCommunications/SpatialPartition.hpp
-     simpleGeometricObjects/BoundedPlane.hpp
+     simpleGeometricObjects/Rectangle.hpp
+     simpleGeometricObjects/Disc.hpp
+     simpleGeometricObjects/CustomPolarObject.hpp
      simpleGeometricObjects/Box.hpp
      simpleGeometricObjects/Cylinder.hpp
      simpleGeometricObjects/GeometricObjectManager.hpp
      simpleGeometricObjects/SimpleGeometricObjectBase.hpp
+     simpleGeometricObjects/PlanarGeometricObject.hpp
      simpleGeometricObjects/ThickPlane.hpp
+     utilities/AverageOverQuadraturePointsKernel.hpp     
+     utilities/CIcomputationKernel.hpp
      utilities/ComputationalGeometry.hpp
      utilities/MeshMapUtilities.hpp
      utilities/StructuredGridUtilities.hpp
@@ -92,50 +102,49 @@ set( mesh_sources
      generators/CellBlock.cpp
      generators/CellBlockManager.cpp
      generators/CellBlockUtilities.cpp
+     generators/LineBlock.cpp
      generators/ExternalMeshGeneratorBase.cpp
+     generators/FaceBlock.cpp
      generators/InternalMeshGenerator.cpp
      generators/InternalWellGenerator.cpp
      generators/InternalWellboreGenerator.cpp
      generators/MeshGeneratorBase.cpp
      generators/ParMETISInterface.cpp
-     generators/PTScotchInterface.cpp
+     generators/WellGeneratorBase.cpp
      mpiCommunications/CommID.cpp
      mpiCommunications/CommunicationTools.cpp
      mpiCommunications/MPI_iCommData.cpp
      mpiCommunications/NeighborCommunicator.cpp
      mpiCommunications/PartitionBase.cpp
      mpiCommunications/SpatialPartition.cpp
-     simpleGeometricObjects/BoundedPlane.cpp
+     simpleGeometricObjects/Rectangle.cpp
+     simpleGeometricObjects/Disc.cpp
+     simpleGeometricObjects/CustomPolarObject.cpp
      simpleGeometricObjects/Box.cpp
      simpleGeometricObjects/Cylinder.cpp
      simpleGeometricObjects/GeometricObjectManager.cpp
      simpleGeometricObjects/SimpleGeometricObjectBase.cpp
+     simpleGeometricObjects/PlanarGeometricObject.cpp
      simpleGeometricObjects/ThickPlane.cpp
      utilities/ComputationalGeometry.cpp
      )
 
-set( dependencyList schema dataRepository constitutive finiteElement parmetis metis )
-
-if ( ENABLE_CUDA )
-  set( dependencyList ${dependencyList} cuda )
-endif()
-
-if( ENABLE_CUDA_NVTOOLSEXT )
-  set( dependencyList ${dependencyList} CUDA::nvToolsExt )
-endif()
-
-if( ENABLE_PAMELA )
-    message( STATUS "Adding PAMELAMeshGenerator sources and headers" )
-    list( APPEND mesh_headers generators/PAMELAMeshGenerator.hpp )
-    list( APPEND mesh_sources generators/PAMELAMeshGenerator.cpp )
-    add_subdirectory( PAMELA )
-    list( APPEND dependencyList PAMELA )
-endif()
+set( dependencyList ${parallelDeps} schema dataRepository constitutive finiteElement parmetis metis )
 
 if( ENABLE_VTK )
     message(STATUS "Adding VTKMeshGenerator sources and headers")
-    set( mesh_headers ${mesh_headers} generators/VTKMeshGenerator.hpp generators/VTKMeshGeneratorTools.hpp )
-    set( mesh_sources ${mesh_sources} generators/VTKMeshGenerator.cpp generators/VTKMeshGeneratorTools.cpp )
+    set( mesh_headers ${mesh_headers}
+         generators/VTKFaceBlockUtilities.hpp
+         generators/VTKMeshGenerator.hpp
+         generators/VTKMeshGeneratorTools.hpp
+         generators/VTKUtilities.hpp
+         )
+    set( mesh_sources ${mesh_sources}
+         generators/VTKFaceBlockUtilities.cpp
+         generators/VTKMeshGenerator.cpp
+         generators/VTKMeshGeneratorTools.cpp
+         generators/VTKUtilities.cpp
+         )
     set( dependencyList ${dependencyList} VTK::IOLegacy VTK::FiltersParallelDIY2 )
     if( ENABLE_MPI )
       set( dependencyList ${dependencyList} VTK::IOParallelXML VTK::ParallelMPI )
@@ -154,10 +163,16 @@ blt_add_library( NAME       mesh
                  DEPENDS_ON ${dependencyList}
                  OBJECT     ${GEOSX_BUILD_OBJ_LIBS}
                )
-               
+
 target_include_directories( mesh PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents )
 
-add_subdirectory( unitTests )
+if( ENABLE_VTK )
+    # Avoid compiling with nvcc which sometimes segfaults in debug
+    set_source_files_properties( generators/VTKMeshGeneratorTools.cpp PROPERTIES LANGUAGE CXX )
+endif()
 
-geosx_add_code_checks( PREFIX mesh
-                       EXCLUDES PAMELA )
+if( GEOS_ENABLE_TESTS )
+    add_subdirectory( unitTests )
+endif( )
+
+geosx_add_code_checks( PREFIX mesh )

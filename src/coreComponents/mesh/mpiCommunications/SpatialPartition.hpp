@@ -12,8 +12,8 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#ifndef GEOSX_MESH_MPICOMMUNICATIONS_SPATIALPARTITION_HPP_
-#define GEOSX_MESH_MPICOMMUNICATIONS_SPATIALPARTITION_HPP_
+#ifndef GEOS_MESH_MPICOMMUNICATIONS_SPATIALPARTITION_HPP_
+#define GEOS_MESH_MPICOMMUNICATIONS_SPATIALPARTITION_HPP_
 
 
 #include "PartitionBase.hpp"
@@ -21,7 +21,7 @@
 #include <map>
 
 constexpr int nsdof = 3;
-namespace geosx
+namespace geos
 {
 
 /**
@@ -45,8 +45,34 @@ public:
 
   int getColor() override;
 
-  /// number of partitions
-  array1d< int > m_Partitions;
+  /**
+   * @brief Get the metis neighbors indices, const version. @see DomainPartition#m_metisNeighborList
+   * @return Container of global indices.
+   */
+  std::set< int > const & getMetisNeighborList() const
+  {
+    return m_metisNeighborList;
+  }
+
+  /**
+   * @brief Sets the list of metis neighbor list.
+   * @param metisNeighborList A reference to the Metis neighbor list.
+   */
+  void setMetisNeighborList( std::vector< int > const & metisNeighborList )
+  {
+    m_metisNeighborList.clear();
+    m_metisNeighborList.insert( metisNeighborList.cbegin(), metisNeighborList.cend() );
+  }
+
+  /**
+   * @brief Get the number of domains in each dimension for a regular partition with InternalMesh.
+   * @return An array containing number of partition in X, Y and Z directions.
+   */
+  array1d< int > const & getPartitions() const
+  {
+    return m_Partitions;
+  }
+
   /**
    * @brief Boolean like array of length 3 (space dimensions).
    *
@@ -103,7 +129,16 @@ private:
    * @brief Ghost position (max).
    */
   real64 m_contactGhostMax[3];
+
+  /// number of partitions
+  array1d< int > m_Partitions;
+
+  /**
+   * @brief Contains the global indices of the metis neighbors in case `metis` is used. Empty otherwise.
+   */
+  std::set< int > m_metisNeighborList;
+
 };
 
 }
-#endif /* GEOSX_MESH_MPICOMMUNICATIONS_SPATIALPARTITION_HPP_ */
+#endif /* GEOS_MESH_MPICOMMUNICATIONS_SPATIALPARTITION_HPP_ */

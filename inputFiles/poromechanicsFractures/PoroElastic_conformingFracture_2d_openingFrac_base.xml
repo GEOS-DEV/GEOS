@@ -1,0 +1,165 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <Solvers
+    gravityVector="{ 0.0, 0.0, 0.0}">
+    <SinglePhasePoromechanicsConformingFractures
+      name="poroSolver"
+      targetRegions="{ Domain, Fracture }"
+      initialDt="1e-3"
+      LagrangianContactSolverName="fractureMechSolver"
+      poromechanicsSolverName="singlePhasePoromechanicsSolver"
+      logLevel="1">
+      <NonlinearSolverParameters
+        maxTimeStepCuts="1"
+        newtonMaxIter="10"
+        maxNumConfigurationAttempts="10"/>
+      <LinearSolverParameters
+        directParallel="0"/>
+    </SinglePhasePoromechanicsConformingFractures>
+
+    <SinglePhasePoromechanics
+      name="singlePhasePoromechanicsSolver"
+      solidSolverName="matrixMechSolver"
+      flowSolverName="flowSolver"
+      logLevel="1"
+      targetRegions="{ Domain }">
+    </SinglePhasePoromechanics>
+
+    <LagrangianContact
+      name="fractureMechSolver"
+      solidSolverName="matrixMechSolver"
+      stabilizationName="singlePhaseTPFA_stab"
+      logLevel="1"
+      targetRegions="{ Domain, Fracture }"
+      fractureRegionName="Fracture"
+      discretization="FE1"
+      contactRelationName="fractureContact"/>  
+
+    <SolidMechanics_LagrangianFEM
+      name="matrixMechSolver"
+      timeIntegrationOption="QuasiStatic"
+      discretization="FE1"
+      targetRegions="{ Domain }"
+      logLevel="1"/>
+
+    <SinglePhaseFVM
+      name="flowSolver"
+      logLevel="1"
+      discretization="singlePhaseTPFA"
+      targetRegions="{ Domain, Fracture }">
+      <NonlinearSolverParameters
+        newtonTol="1.0e-2"
+        newtonMaxIter="8"
+        allowNonConverged="1"/>
+      <LinearSolverParameters
+        directParallel="0"/>
+    </SinglePhaseFVM>
+
+    <SurfaceGenerator
+      logLevel="0"
+      name="SurfaceGen"
+      targetRegions="{ Domain }"
+      fractureRegion="Fracture"
+      rockToughness="1e6"
+      mpiCommOrder="1"/>
+  </Solvers>
+
+
+  <NumericalMethods>
+    <FiniteVolume>
+      <TwoPointFluxApproximation
+        name="singlePhaseTPFA"/>
+      <TwoPointFluxApproximation
+        name="singlePhaseTPFA_stab"/>  
+    </FiniteVolume>
+    <FiniteElements>
+      <FiniteElementSpace
+        name="FE1"
+        order="1"/>
+    </FiniteElements>
+  </NumericalMethods>
+
+  <ElementRegions>
+    <CellElementRegion
+      name="Domain"
+      cellBlocks="{ cb1 }"
+      materialList="{ porousRock, water }"/>
+
+    <SurfaceElementRegion
+      name="Fracture"
+      faceBlock="FractureSubRegion"
+      materialList="{ water, fractureFilling, fractureContact }"
+      defaultAperture="1e-3"/>
+  </ElementRegions>
+
+  <Constitutive>
+    <PorousElasticIsotropic
+      name="porousRock"
+      solidModelName="rock"
+      porosityModelName="rockPorosity"
+      permeabilityModelName="rockPerm"/>
+
+    <ElasticIsotropic
+      name="rock"
+      defaultDensity="1"
+      defaultBulkModulus="5555555555.5556"
+      defaultShearModulus="4166666666.6667"/>
+
+    <ConstantPermeability
+      name="rockPerm"
+      permeabilityComponents="{ 1.0e-12, 1.0e-12, 1.0e-12 }"/>
+
+    <CompressibleSinglePhaseFluid
+      name="water"
+      defaultDensity="1000"
+      defaultViscosity="1.0e-3"
+      referencePressure="1e6"
+      compressibility="0.0e0"
+      referenceViscosity="1e-3"
+      viscosibility="0.0"/>
+
+    <BiotPorosity
+      name="rockPorosity"
+      grainBulkModulus="1.0e27"
+      defaultReferencePorosity="0.2"/>
+
+    <CompressibleSolidParallelPlatesPermeability
+      name="fractureFilling"
+      solidModelName="nullSolid"
+      porosityModelName="fracturePorosity"
+      permeabilityModelName="fracturePerm"/>
+
+    <NullModel
+      name="nullSolid"/>
+
+    <PressurePorosity
+      name="fracturePorosity"
+      defaultReferencePorosity="1.00"
+      referencePressure="0.0"
+      compressibility="0.0"/>
+
+    <ParallelPlatesPermeability
+      name="fracturePerm"/>
+
+    <Coulomb
+      name="fractureContact"
+      cohesion="0.0"
+      frictionCoefficient="0.577350269"
+      apertureTableName="apertureTable"/>
+  </Constitutive>
+
+  <Functions>
+    <TableFunction
+      name="apertureTable"
+      coordinates="{ -1.0e-3, 0.0 }"
+      values="{ 1.0e-6, 1.0e-3 }"/>
+
+    <TableFunction
+      name="injectionSchedule"
+      inputVarNames="{ time }"
+      coordinates="{ 0.0, 10.0 }"
+      values="{ 0.0, 1.5 }"/>
+
+  </Functions>
+</Problem>

@@ -16,12 +16,12 @@
  * @file SurfaceElementRegion.cpp
  */
 
-#include "ExtrinsicMeshData.hpp"
+#include "MeshFields.hpp"
 #include "EdgeManager.hpp"
 #include "SurfaceElementRegion.hpp"
 
 
-namespace geosx
+namespace geos
 {
 using namespace dataRepository;
 
@@ -32,7 +32,7 @@ SurfaceElementRegion::SurfaceElementRegion( string const & name, Group * const p
   registerWrapper( viewKeyStruct::subRegionTypeString(), &m_subRegionType ).
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( m_subRegionType ).
-    setDescription( "Type of surface element subregion. Valid options:\n* " + EnumStrings< SurfaceSubRegionType >::concat( "\n* " ) );
+    setDescription( "Type of surface element subregion. Valid options: {" + EnumStrings< SurfaceSubRegionType >::concat( ", " ) + "}." );
 
   registerWrapper( viewKeyStruct::faceBlockString(), &m_faceBlockName ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -48,7 +48,7 @@ SurfaceElementRegion::~SurfaceElementRegion()
 {}
 
 
-void SurfaceElementRegion::generateMesh( Group & faceBlocks )
+void SurfaceElementRegion::generateMesh( Group const & faceBlocks )
 {
   Group & elementSubRegions = this->getGroup( viewKeyStruct::elementSubRegions() );
 
@@ -66,7 +66,7 @@ void SurfaceElementRegion::generateMesh( Group & faceBlocks )
     }
     else
     {
-      GEOSX_INFO( "No face block \"" << m_faceBlockName << "\" was found in the mesh. Empty surface region was created." );
+      GEOS_LOG_RANK_0( "No face block \"" << m_faceBlockName << "\" was found in the mesh. Empty surface region was created." );
     }
   }
 }
@@ -98,7 +98,7 @@ localIndex SurfaceElementRegion::addToFractureMesh( real64 const time_np1,
   rval = subRegion.size() - 1;
 
 
-  arrayView1d< real64 > const ruptureTime = subRegion.getExtrinsicData< extrinsicMeshData::RuptureTime >();
+  arrayView1d< real64 > const ruptureTime = subRegion.getField< fields::ruptureTime >();
 
   arrayView1d< real64 > const creationMass = subRegion.getReference< real64_array >( FaceElementSubRegion::viewKeyStruct::creationMassString() );
 
@@ -219,4 +219,4 @@ localIndex SurfaceElementRegion::addToFractureMesh( real64 const time_np1,
 
 REGISTER_CATALOG_ENTRY( ObjectManagerBase, SurfaceElementRegion, string const &, Group * const )
 
-} /* namespace geosx */
+} /* namespace geos */

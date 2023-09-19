@@ -19,15 +19,15 @@
 #include "WellSolverBase.hpp"
 
 #include "mesh/DomainPartition.hpp"
-#include "mesh/PerforationExtrinsicData.hpp"
+#include "mesh/PerforationFields.hpp"
 #include "mesh/WellElementRegion.hpp"
 #include "mesh/WellElementSubRegion.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBase.hpp"
-#include "physicsSolvers/fluidFlow/FlowSolverBaseExtrinsicData.hpp"
+#include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellControls.hpp"
-#include "physicsSolvers/fluidFlow/wells/WellSolverBaseExtrinsicData.hpp"
+#include "physicsSolvers/fluidFlow/wells/WellSolverBaseFields.hpp"
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -37,9 +37,7 @@ WellSolverBase::WellSolverBase( string const & name,
                                 Group * const parent )
   : SolverBase( name, parent ),
   m_numDofPerWellElement( 0 ),
-  m_numDofPerResElement( 0 ),
-  m_currentTime( 0 ),
-  m_currentDt( 0 )
+  m_numDofPerResElement( 0 )
 {
   this->getWrapper< string >( viewKeyStruct::discretizationString() ).
     setInputFlag( InputFlags::FALSE );
@@ -89,7 +87,7 @@ void WellSolverBase::registerDataOnMesh( Group & meshBodies )
                                                                             WellElementSubRegion & subRegion )
     {
 
-      subRegion.registerExtrinsicData< extrinsicMeshData::well::gravityCoefficient >( getName() );
+      subRegion.registerField< fields::well::gravityCoefficient >( getName() );
 
       subRegion.registerWrapper< string >( viewKeyStruct::fluidNamesString() ).
         setPlotLevel( PlotLevel::NOPLOT ).
@@ -97,7 +95,7 @@ void WellSolverBase::registerDataOnMesh( Group & meshBodies )
         setSizedFromParent( 0 );
 
       PerforationData * const perforationData = subRegion.getPerforationData();
-      perforationData->registerExtrinsicData< extrinsicMeshData::well::gravityCoefficient >( getName() );
+      perforationData->registerField< fields::well::gravityCoefficient >( getName() );
     } );
   } );
 }
@@ -142,13 +140,9 @@ void WellSolverBase::setupDofs( DomainPartition const & domain,
 }
 
 void WellSolverBase::implicitStepSetup( real64 const & time_n,
-                                        real64 const & dt,
+                                        real64 const & GEOS_UNUSED_PARAM( dt ),
                                         DomainPartition & domain )
 {
-  // saved time and current dt for residual normalization and time-dependent tables
-  m_currentDt = dt;
-  m_currentTime = time_n;
-
   // Initialize the primary and secondary variables for the first time step
   if( time_n <= 0.0 )
   {
@@ -173,7 +167,7 @@ void WellSolverBase::assembleSystem( real64 const time,
   assembleVolumeBalanceTerms( domain, dofManager, localMatrix, localRhs );
 
   // then assemble the pressure relations between well elements
-  assemblePressureRelations( domain, dofManager, localMatrix, localRhs );
+  assemblePressureRelations( time, dt, domain, dofManager, localMatrix, localRhs );
 
   // then compute the perforation rates (later assembled by the coupled solver)
   computePerforationRates( domain );
@@ -234,14 +228,10 @@ void WellSolverBase::precomputeData( DomainPartition & domain )
       real64 const refElev = wellControls.getReferenceElevation();
 
       arrayView2d< real64 const > const wellElemLocation = subRegion.getElementCenter();
-      arrayView1d< real64 > const wellElemGravCoef =
-        subRegion.getExtrinsicData< extrinsicMeshData::well::gravityCoefficient >();
+      arrayView1d< real64 > const wellElemGravCoef = subRegion.getField< fields::well::gravityCoefficient >();
 
-      arrayView2d< real64 const > const perfLocation =
-        perforationData.getExtrinsicData< extrinsicMeshData::perforation::location >();
-
-      arrayView1d< real64 > const perfGravCoef =
-        perforationData.getExtrinsicData< extrinsicMeshData::well::gravityCoefficient >();
+      arrayView2d< real64 const > const perfLocation = perforationData.getField< fields::perforation::location >();
+      arrayView1d< real64 > const perfGravCoef = perforationData.getField< fields::well::gravityCoefficient >();
 
       forAll< serialPolicy >( perforationData.size(), [=]( localIndex const iperf )
       {
@@ -268,4 +258,4 @@ WellControls & WellSolverBase::getWellControls( WellElementSubRegion const & sub
 WellControls const & WellSolverBase::getWellControls( WellElementSubRegion const & subRegion ) const
 { return this->getGroup< WellControls >( subRegion.getWellControlsName() ); }
 
-} // namespace geosx
+} // namespace geos

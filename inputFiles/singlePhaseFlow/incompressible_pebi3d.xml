@@ -19,18 +19,24 @@
   <Mesh>
     <VTKMesh
       name="mesh"
-      file="pebi3d.vtk"/>
+      logLevel="5"	
+      partitionRefinement="3"
+      useGlobalIds="1"
+      fieldsToImport="{ PERM, PORO, NTG }"
+      fieldNamesInGEOSX="{ rockPerm_permeability, rockPorosity_referencePorosity, netToGross }"
+	
+      file="pebi3d_with_properties.vtu"/>
   </Mesh>
 
   <Geometry>
     <Box
       name="source"
-      xMin="{ -0.01, 0.82, -0.01 }"
-      xMax="{  0.18, 1.01,  0.31 }" />
+      xMin="{  -0.01, -0.01, -0.01 }"
+      xMax="{  0.041,  0.046,  1.01 }" />
     <Box
       name="sink"
-      xMin="{ 0.82, -0.01, -0.01 }"
-      xMax="{ 1.01,  0.18,  0.31 }" />
+      xMin="{ 0.955, 0.955, -0.01 }"
+      xMax="{ 1.01,  1.01,  1.01 }" />
   </Geometry>
 
   <Events
@@ -62,7 +68,7 @@
   <ElementRegions>
     <CellElementRegion
       name="Domain"
-      cellBlocks="{ 0_hexahedra, 1_pentagonalPrisms, 2_hexagonalPrisms }"
+      cellBlocks="{ hexahedra, pentagonalPrisms, hexagonalPrisms, heptagonalPrisms, octagonalPrisms }"
       materialList="{ water, rock }"/>
   </ElementRegions>
 
@@ -96,13 +102,6 @@
   </Constitutive>
 
   <FieldSpecifications>
-    <FieldSpecification
-      name="Porosity"
-      initialCondition="1"
-      setNames="{ all }"
-      objectPath="ElementRegions/Domain"
-      fieldName="rockPorosity_referencePorosity"
-      scale="0.05"/>
 
     <FieldSpecification
       name="initialPressure"

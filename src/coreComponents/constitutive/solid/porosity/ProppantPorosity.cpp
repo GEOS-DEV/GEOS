@@ -17,9 +17,9 @@
  */
 
 #include "constitutive/solid/porosity/ProppantPorosity.hpp"
-#include "constitutive/solid/porosity/PorosityExtrinsicData.hpp"
+#include "constitutive/solid/porosity/PorosityFields.hpp"
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -53,10 +53,10 @@ void ProppantPorosity::allocateConstitutiveData( dataRepository::Group & parent,
 
 void ProppantPorosity::postProcessInput()
 {
-  getExtrinsicData< extrinsicMeshData::porosity::referencePorosity >().
+  getField< fields::porosity::referencePorosity >().
     setApplyDefaultValue( m_defaultReferencePorosity );
 }
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, ProppantPorosity, string const &, Group * const )
 }
-} /* namespace geosx */
+} /* namespace geos */

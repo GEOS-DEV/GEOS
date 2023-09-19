@@ -17,13 +17,13 @@
 #include "functions/FunctionManager.hpp"
 #include "mainInterface/GeosxState.hpp"
 #include "mainInterface/initialization.hpp"
-#include "constitutive/capillaryPressure/CapillaryPressureExtrinsicData.hpp"
+#include "constitutive/capillaryPressure/CapillaryPressureFields.hpp"
 
-using namespace geosx;
-using namespace geosx::testing;
-using namespace geosx::constitutive;
-using namespace geosx::constitutive::cappres;
-using namespace geosx::dataRepository;
+using namespace geos;
+using namespace geos::testing;
+using namespace geos::constitutive;
+using namespace geos::constitutive::cappres;
+using namespace geos::dataRepository;
 
 CapillaryPressureBase & makeBrooksCoreyCapPressureTwoPhase( string const & name, Group & parent )
 {
@@ -645,8 +645,8 @@ TEST_F( CapillaryPressureTest, numericalDerivatives_jFunctionCapPressureTwoPhase
 
   // move the multiplier back to the CPU since the test is performed on the CPU
   auto & jFuncMultiplier =
-    m_model->getReference< array2d< real64 > >( extrinsicMeshData::cappres::jFuncMultiplier::key() );
-  jFuncMultiplier.move( LvArray::MemorySpace::host, false );
+    m_model->getReference< array2d< real64 > >( fields::cappres::jFuncMultiplier::key() );
+  jFuncMultiplier.move( hostMemorySpace, false );
 
   // we are ready to proceed to the test
 
@@ -691,8 +691,8 @@ TEST_F( CapillaryPressureTest, numericalDerivatives_jFunctionCapPressureThreePha
 
   // move the multiplier back to the CPU since the test is performed on the CPU
   auto & jFuncMultiplier =
-    m_model->getReference< array2d< real64 > >( extrinsicMeshData::cappres::jFuncMultiplier::key() );
-  jFuncMultiplier.move( LvArray::MemorySpace::host, false );
+    m_model->getReference< array2d< real64 > >( fields::cappres::jFuncMultiplier::key() );
+  jFuncMultiplier.move( hostMemorySpace, false );
 
   // we are ready to proceed to the test
 
@@ -720,11 +720,11 @@ int main( int argc, char * * argv )
 {
   ::testing::InitGoogleTest( &argc, argv );
 
-  geosx::GeosxState state( geosx::basicSetup( argc, argv ) );
+  geos::GeosxState state( geos::basicSetup( argc, argv ) );
 
   int const result = RUN_ALL_TESTS();
 
-  geosx::basicCleanup();
+  geos::basicCleanup();
 
   return result;
 }

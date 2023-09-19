@@ -16,14 +16,14 @@
  * @file ObjectManagerBase.hpp
  */
 
-#ifndef GEOSX_MESH_OBJECTMANAGERBASE_HPP_
-#define GEOSX_MESH_OBJECTMANAGERBASE_HPP_
+#ifndef GEOS_MESH_OBJECTMANAGERBASE_HPP_
+#define GEOS_MESH_OBJECTMANAGERBASE_HPP_
 
 #include "dataRepository/Group.hpp"
 #include "common/TimingMacros.hpp"
 #include "mpiCommunications/NeighborData.hpp"
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -150,7 +150,7 @@ public:
    */
   virtual localIndex packUpDownMapsSize( arrayView1d< localIndex const > const & packList ) const
   {
-    GEOSX_UNUSED_VAR( packList );
+    GEOS_UNUSED_VAR( packList );
     return 0;
   }
 
@@ -163,8 +163,8 @@ public:
   virtual localIndex packUpDownMaps( buffer_unit_type * & buffer,
                                      arrayView1d< localIndex const > const & packList ) const
   {
-    GEOSX_UNUSED_VAR( buffer );
-    GEOSX_UNUSED_VAR( packList );
+    GEOS_UNUSED_VAR( buffer );
+    GEOS_UNUSED_VAR( packList );
     return 0;
   }
 
@@ -181,10 +181,10 @@ public:
                                        bool const overwriteUpMaps,
                                        bool const overwriteDownMaps )
   {
-    GEOSX_UNUSED_VAR( buffer );
-    GEOSX_UNUSED_VAR( packList );
-    GEOSX_UNUSED_VAR( overwriteUpMaps );
-    GEOSX_UNUSED_VAR( overwriteDownMaps );
+    GEOS_UNUSED_VAR( buffer );
+    GEOS_UNUSED_VAR( packList );
+    GEOS_UNUSED_VAR( overwriteUpMaps );
+    GEOS_UNUSED_VAR( overwriteDownMaps );
     return 0;
   }
 
@@ -288,7 +288,7 @@ public:
   void moveSets( LvArray::MemorySpace const targetSpace );
 
   /**
-   * @copydoc geosx::dataRepository::Group::resize(indexType const)
+   * @copydoc geos::dataRepository::Group::resize(indexType const)
    * @return Always 0, whatever the new size is.
    */
   localIndex resize( localIndex const newSize,
@@ -356,7 +356,7 @@ public:
   virtual ArrayOfSets< globalIndex >
   extractMapFromObjectForAssignGlobalIndexNumbers( ObjectManagerBase const & nodeManager )
   {
-    GEOSX_UNUSED_VAR( nodeManager );
+    GEOS_UNUSED_VAR( nodeManager );
     return {};
   }
 
@@ -546,157 +546,104 @@ public:
   }
 
   /**
-   * @brief Register data with this ObjectManagerBase using a
-   *   dataRepository::Wrapper.
-   * @tparam MESH_DATA_TRAIT The trait struct that holds the information for
-   *   the data being registered with the repository.
+   * @brief Register field with this ObjectManagerBase using a @p dataRepository::Wrapper.
+   * @tparam FIELD_TRAIT The trait struct that holds the information for
+   *   the field being registered with the repository.
    * @param nameOfRegisteringObject The name of the object that is requesting
-   *   that this data be registered.
-   * @return A wrapper to the type specified by @p MESH_DATA_TRAIT.
+   *   that this field be registered.
+   * @return A wrapper to the field by @p FIELD_TRAIT.
    */
-  template< typename MESH_DATA_TRAIT >
-  dataRepository::Wrapper< typename MESH_DATA_TRAIT::type > &
-  registerExtrinsicData( string const & nameOfRegisteringObject )
+  template< typename FIELD_TRAIT >
+  dataRepository::Wrapper< typename FIELD_TRAIT::type > &
+  registerField( string const & nameOfRegisteringObject )
   {
     // These are required to work-around the need for instantiation of
     // the static constexpr trait components. This will not be required once
     // we move to c++17.
 
-    //constexpr typename MESH_DATA_TRAIT::DataType defaultValue = MESH_DATA_TRAIT::defaultValue;
     // This is required for the Tensor classes.
-    typename MESH_DATA_TRAIT::dataType defaultValue( MESH_DATA_TRAIT::defaultValue() );
+    typename FIELD_TRAIT::dataType defaultValue( FIELD_TRAIT::defaultValue() );
 
-    return this->registerWrapper< typename MESH_DATA_TRAIT::type >( MESH_DATA_TRAIT::key() ).
+    return this->registerWrapper< typename FIELD_TRAIT::type >( FIELD_TRAIT::key() ).
              setApplyDefaultValue( defaultValue ).
-             setPlotLevel( MESH_DATA_TRAIT::plotLevel ).
-             setRestartFlags( MESH_DATA_TRAIT::restartFlag ).
-             setDescription( MESH_DATA_TRAIT::description ).
+             setPlotLevel( FIELD_TRAIT::plotLevel ).
+             setRestartFlags( FIELD_TRAIT::restartFlag ).
+             setDescription( FIELD_TRAIT::description ).
              setRegisteringObjects( nameOfRegisteringObject );
   }
 
   /**
-   * @brief Helper function to register extrinsic data
-   * @tparam TRAIT the type of extrinsic data
-   * @param[in] extrinsicDataTrait the extrinsic data struct corresponding to the object being registered
+   * @brief Helper function to register fields
+   * @tparam FIELD_TRAIT the type of field
+   * @param[in] fieldTrait the struct corresponding to the field being registered
    * @param[in] newObject a pointer to the object that is being registered
    * @return A reference to the newly registered/created Wrapper
    */
-  template< typename TRAIT >
-  dataRepository::Wrapper< typename TRAIT::type > & registerExtrinsicData( TRAIT const & extrinsicDataTrait,
-                                                                           typename TRAIT::type * newObject )
+  template< typename FIELD_TRAIT >
+  dataRepository::Wrapper< typename FIELD_TRAIT::type > & registerField( FIELD_TRAIT const & fieldTrait,
+                                                                         typename FIELD_TRAIT::type * newObject )
   {
-    return registerWrapper( extrinsicDataTrait.key(), newObject ).
-             setApplyDefaultValue( extrinsicDataTrait.defaultValue() ).
-             setPlotLevel( TRAIT::plotLevel ).
-             setRestartFlags( TRAIT::restartFlag ).
-             setDescription( TRAIT::description );
+    return registerWrapper( fieldTrait.key(), newObject ).
+             setApplyDefaultValue( fieldTrait.defaultValue() ).
+             setPlotLevel( FIELD_TRAIT::plotLevel ).
+             setRestartFlags( FIELD_TRAIT::restartFlag ).
+             setDescription( FIELD_TRAIT::description );
   }
 
   /**
-   * @brief Register a collection of data with this ObjectManagerBase using a
+   * @brief Register a collection of fields with this ObjectManagerBase using a
    *   dataRepository::Wrapper.
-   * @tparam MESH_DATA_TRAIT0 The first of the trait structs that holds the
-   *   information for the data being registered with the repository.
-   * @tparam MESH_DATA_TRAIT1 The second of the trait structs that holds the
-   *   information for the data being registered with the repository.
-   * @tparam MESH_DATA_TRAITS The parameter pack of trait structs that holds
-   *   the information for the data being registered with the repository.
+   * @tparam FIELD_TRAIT0 The first of the trait structs that holds the
+   *   information for the field being registered with the repository.
+   * @tparam FIELD_TRAIT1 The second of the trait structs that holds the
+   *   information for the field being registered with the repository.
+   * @tparam FIELD_TRAITS The parameter pack of trait structs that holds
+   *   the information for the field being registered with the repository.
    * @param nameOfRegisteringObject The name of the object that is requesting
-   *   that this data be registered.
+   *   that this field be registered.
    */
-  template< typename MESH_DATA_TRAIT0, typename MESH_DATA_TRAIT1, typename ... MESH_DATA_TRAITS >
-  void registerExtrinsicData( string const & nameOfRegisteringObject )
+  template< typename FIELD_TRAIT0, typename FIELD_TRAIT1, typename ... FIELD_TRAITS >
+  void registerField( string const & nameOfRegisteringObject )
   {
-    registerExtrinsicData< MESH_DATA_TRAIT0 >( nameOfRegisteringObject );
-    registerExtrinsicData< MESH_DATA_TRAIT1, MESH_DATA_TRAITS... >( nameOfRegisteringObject );
+    registerField< FIELD_TRAIT0 >( nameOfRegisteringObject );
+    registerField< FIELD_TRAIT1, FIELD_TRAITS... >( nameOfRegisteringObject );
   }
 
   /**
-   * @brief Get a view to the data associated with a trait from this
-   *   ObjectManagerBase.
-   * @tparam MESH_DATA_TRAIT The trait that holds the type and key of the data
-   *   to be retrieved from this ObjectManagerBase.
-   * @return A const reference to a view to const data.
+   * @brief Get a view to the field associated with a trait from this @p ObjectManagerBase.
+   * @tparam FIELD_TRAIT The trait that holds the type and key of the field
+   *   to be retrieved from this @p ObjectManagerBase.
+   * @return A const reference to a view to const field.
    */
-  template< typename MESH_DATA_TRAIT >
-  GEOSX_DECLTYPE_AUTO_RETURN getExtrinsicData() const
+  template< typename FIELD_TRAIT >
+  GEOS_DECLTYPE_AUTO_RETURN getField() const
   {
-    return this->getWrapper< typename MESH_DATA_TRAIT::type >( MESH_DATA_TRAIT::key() ).reference();
+    return this->getWrapper< typename FIELD_TRAIT::type >( FIELD_TRAIT::key() ).reference();
   }
 
   /**
-   * @brief Get the data associated with a trait from this ObjectManagerBase.
-   * @tparam MESH_DATA_TRAIT The trait that holds the type and key of the data
-   *   to be retrieved from this ObjectManagerBase.
-   * @return A reference to the data.
+   * @brief Get the field associated with a trait from this @p ObjectManagerBase.
+   * @tparam FIELD_TRAIT The trait that holds the type and key of the field
+   *   to be retrieved from this @p ObjectManagerBase.
+   * @return A reference to the field.
    */
-  template< typename MESH_DATA_TRAIT >
-  GEOSX_DECLTYPE_AUTO_RETURN getExtrinsicData()
+  template< typename FIELD_TRAIT >
+  GEOS_DECLTYPE_AUTO_RETURN getField()
   {
-    return this->getWrapper< typename MESH_DATA_TRAIT::type >( MESH_DATA_TRAIT::key() ).reference();
+    return this->getWrapper< typename FIELD_TRAIT::type >( FIELD_TRAIT::key() ).reference();
   }
 
   /**
-   * @brief Checks if an extrinsic data has been registered.
-   * @tparam MESH_DATA_TRAIT The trait that holds the type and key of the data
+   * @brief Checks if a field has been registered.
+   * @tparam FIELD_TRAIT The trait that holds the type and key of the field
    *   to be retrieved from this ObjectManagerBase.
-   * @return @p true if the data has been registered, @p false otherwise.
+   * @return @p true if the field has been registered, @p false otherwise.
    */
-  template< typename MESH_DATA_TRAIT >
-  bool hasExtrinsicData() const
+  template< typename FIELD_TRAIT >
+  bool hasField() const
   {
-    return this->hasWrapper( MESH_DATA_TRAIT::key() );
+    return this->hasWrapper( FIELD_TRAIT::key() );
   }
-
-#if 0
-  template< typename MESH_DATA_TRAIT >
-  dataRepository::Wrapper< typename MESH_DATA_TRAIT::Type > &
-  registerExtrinsicData( string const & nameOfRegisteringObject,
-                         MESH_DATA_TRAIT const & extrinsicDataTrait )
-  {
-    // These are required to work-around the need for instantiation of
-    // the static constexpr trait components. This will not be required once
-    // we move to c++17.
-
-    //constexpr typename MESH_DATA_TRAIT::DataType defaultValue = MESH_DATA_TRAIT::defaultValue;
-    constexpr dataRepository::PlotLevel plotLevel = MESH_DATA_TRAIT::plotLevel;
-    string const description = MESH_DATA_TRAIT::description;
-
-    // This is required for the Tensor classes.
-    typename MESH_DATA_TRAIT::DataType defaultValue( MESH_DATA_TRAIT::defaultValue() );
-
-    return *(this->registerWrapper< typename MESH_DATA_TRAIT::type >( extrinsicDataTrait.key() ).
-               setApplyDefaultValue( defaultValue ).
-               setPlotLevel( plotLevel ).
-               setDescription( description ).
-               setRegisteringObjects( nameOfRegisteringObject ) );
-  }
-
-  template< typename MESH_DATA_TRAIT0, typename MESH_DATA_TRAIT1, typename ... MESH_DATA_TRAITS >
-  void registerExtrinsicData( string const & nameOfRegisteringObject,
-                              MESH_DATA_TRAIT0 const & extrinsicDataTrait0,
-                              MESH_DATA_TRAIT1 const & extrinsicDataTrait1,
-                              MESH_DATA_TRAITS && ... extrinsicDataTraits )
-  {
-    registerExtrinsicData< MESH_DATA_TRAIT0 >( nameOfRegisteringObject, extrinsicDataTrait0 );
-    registerExtrinsicData< MESH_DATA_TRAIT1,
-                           MESH_DATA_TRAITS... >( nameOfRegisteringObject,
-                                                  extrinsicDataTrait1,
-                                                  std::forward< MESH_DATA_TRAITS >( extrinsicDataTraits )... );
-  }
-
-  template< typename MESH_DATA_TRAIT >
-  auto const & getExtrinsicData( MESH_DATA_TRAIT const & extrinsicDataTrait ) const
-  {
-    return this->getWrapper< typename MESH_DATA_TRAIT::type >( extrinsicDataTrait.key() ).referenceAsView();
-  }
-
-  template< typename MESH_DATA_TRAIT >
-  auto & getExtrinsicData( MESH_DATA_TRAIT const & extrinsicDataTrait )
-  {
-    return this->getWrapper< typename MESH_DATA_TRAIT::type >( extrinsicDataTrait.key() ).referenceAsView();
-  }
-#endif
 
   //**********************************************************************************************************************
 
@@ -957,9 +904,9 @@ public:
    * @return The information in an array of integers, mainly treated as booleans
    *         (1 meaning the "index" is on the boundary).
    */
-  arrayView1d< integer > getDomainBoundaryIndicator()
+  array1d< integer > & getDomainBoundaryIndicator()
   {
-    return m_domainBoundaryIndicator.toView();
+    return m_domainBoundaryIndicator;
   }
 
   /// @copydoc getDomainBoundaryIndicator()
@@ -1018,7 +965,7 @@ void ObjectManagerBase::fixUpDownMaps( TYPE_RELATION & relation,
                                        map< localIndex, array1d< globalIndex > > & unmappedIndices,
                                        bool const )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   bool allValuesMapped = true;
   unordered_map< globalIndex, localIndex > const & globalToLocal = relation.relatedObjectGlobalToLocal();
@@ -1041,10 +988,10 @@ void ObjectManagerBase::fixUpDownMaps( TYPE_RELATION & relation,
           allValuesMapped = false;
         }
       }
-      GEOSX_ERROR_IF( relation[li][a]==unmappedLocalIndexValue, "Index not set" );
+      GEOS_ERROR_IF( relation[li][a]==unmappedLocalIndexValue, "Index not set" );
     }
   }
-  GEOSX_ERROR_IF( !allValuesMapped, "some values of unmappedIndices were not used" );
+  GEOS_ERROR_IF( !allValuesMapped, "some values of unmappedIndices were not used" );
   unmappedIndices.clear();
 }
 
@@ -1054,7 +1001,7 @@ void ObjectManagerBase::fixUpDownMaps( TYPE_RELATION & relation,
                                        map< localIndex, SortedArray< globalIndex > > & unmappedIndices,
                                        bool const clearIfUnmapped )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   unordered_map< globalIndex, localIndex > const & globalToLocal = relation.RelatedObjectGlobalToLocal();
   for( map< localIndex, SortedArray< globalIndex > >::iterator iter = unmappedIndices.begin();
@@ -1091,7 +1038,7 @@ void ObjectManagerBase::fixUpDownMaps( ArrayOfSets< localIndex > & relation,
                                        map< localIndex, SortedArray< globalIndex > > & unmappedIndices,
                                        bool const clearIfUnmapped )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   for( map< localIndex, SortedArray< globalIndex > >::iterator iter = unmappedIndices.begin();
        iter != unmappedIndices.end();
@@ -1121,12 +1068,12 @@ void ObjectManagerBase::fixUpDownMaps( ArrayOfSets< localIndex > & relation,
   unmappedIndices.clear();
 }
 
-} /* namespace geosx */
+} /* namespace geos */
 
 
 /**
  * @brief Alias to ObjectManagerBase
  */
-typedef geosx::ObjectManagerBase ObjectDataStructureBaseT;
+typedef geos::ObjectManagerBase ObjectDataStructureBaseT;
 
-#endif /* GEOSX_MESH_OBJECTMANAGERBASE_HPP_ */
+#endif /* GEOS_MESH_OBJECTMANAGERBASE_HPP_ */

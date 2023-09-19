@@ -27,18 +27,10 @@ if( ENABLE_MATHPRESSO )
 endif()
 
 
-set( dependencyList codingUtilities dataRepository )
+set( dependencyList ${parallelDeps} codingUtilities dataRepository )
 
 if( ENABLE_MATHPRESSO )
    set( dependencyList ${dependencyList} mathpresso )
-endif()
-
-if ( ENABLE_CUDA )
-  set( dependencyList ${dependencyList} cuda )
-endif()
-
-if( ENABLE_CUDA_NVTOOLSEXT )
-  set( dependencyList ${dependencyList} CUDA::nvToolsExt )
 endif()
 
 blt_add_library( NAME       functions
@@ -50,4 +42,7 @@ blt_add_library( NAME       functions
 
 target_include_directories( functions PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents )
 
+if( GEOS_ENABLE_TESTS )
+  add_subdirectory( unitTests )
+endif()
 geosx_add_code_checks( PREFIX functions )

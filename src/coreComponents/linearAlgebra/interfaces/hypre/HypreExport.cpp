@@ -26,7 +26,7 @@
 #include <_hypre_parcsr_mv.h>
 #include <_hypre_IJ_mv.h>
 
-namespace geosx
+namespace geos
 {
 
 HypreExport::HypreExport() = default;
@@ -80,13 +80,13 @@ void exportArray( HYPRE_MemoryLocation const location,
 {
   if( location == HYPRE_MEMORY_HOST )
   {
-    dst.move( LvArray::MemorySpace::host, true );
+    dst.move( hostMemorySpace, true );
     std::transform( src, src + dst.size(), dst.begin(),
                     []( T const v ) { return static_cast< U >( v ); } );
   }
   else // src is on device
   {
-    forAll< hypre::execPolicy >( dst.size(), [dst, src] GEOSX_HYPRE_DEVICE ( localIndex const i )
+    forAll< hypre::execPolicy >( dst.size(), [dst, src] GEOS_HYPRE_DEVICE ( localIndex const i )
     {
       dst[i] = static_cast< U >( src[i] );
     } );
@@ -100,13 +100,13 @@ void exportArray( HYPRE_MemoryLocation const location,
 {
   if( location == HYPRE_MEMORY_HOST )
   {
-    src.move( LvArray::MemorySpace::host, false );
+    src.move( hostMemorySpace, false );
     std::transform( src.begin(), src.end(), dst,
                     []( T const v ) { return static_cast< U >( v ); } );
   }
   else // dst is on device
   {
-    forAll< hypre::execPolicy >( src.size(), [dst, src] GEOSX_HYPRE_DEVICE ( localIndex const i )
+    forAll< hypre::execPolicy >( src.size(), [dst, src] GEOS_HYPRE_DEVICE ( localIndex const i )
     {
       dst[i] = static_cast< U >( src[i] );
     } );
@@ -127,16 +127,16 @@ void HypreExport::exportCRS( HypreMatrix const & mat,
   hypre_CSRMatrix * const localMatrix = m_targetRank < 0
                                       ? hypre_MergeDiagAndOffd( mat.unwrapped() )
                                       : hypre_ParCSRMatrixToCSRMatrixAll( mat.unwrapped() );
-  GEOSX_ERROR_IF( rank == m_targetRank && !localMatrix, "HypreExport: matrix is empty on target rank" );
+  GEOS_ERROR_IF( rank == m_targetRank && !localMatrix, "HypreExport: matrix is empty on target rank" );
 
   if( m_targetRank < 0 || m_targetRank == rank )
   {
     HYPRE_Int const numRow = hypre_CSRMatrixNumRows( localMatrix );
     HYPRE_Int const numNz  = hypre_CSRMatrixNumNonzeros( localMatrix );
 
-    GEOSX_LAI_ASSERT_EQ( rowOffsets.size(), numRow + 1 );
-    GEOSX_LAI_ASSERT_EQ( colIndices.size(), numNz );
-    GEOSX_LAI_ASSERT_EQ( values.size(), numNz );
+    GEOS_LAI_ASSERT_EQ( rowOffsets.size(), numRow + 1 );
+    GEOS_LAI_ASSERT_EQ( colIndices.size(), numNz );
+    GEOS_LAI_ASSERT_EQ( values.size(), numNz );
 
     HYPRE_MemoryLocation const location = hypre_CSRMatrixMemoryLocation( localMatrix );
 
@@ -155,7 +155,7 @@ void HypreExport::exportCRS( HypreMatrix const & mat,
     }
 
     // Sort the values by column index after copying (some solvers expect this)
-    forAll< hypre::execPolicy >( numRow, [rowOffsets, colIndices, values] GEOSX_HYPRE_DEVICE ( HYPRE_Int const i )
+    forAll< hypre::execPolicy >( numRow, [rowOffsets, colIndices, values] GEOS_HYPRE_DEVICE ( HYPRE_Int const i )
     {
       using LvArray::sortedArrayManipulation::dualSort;
       dualSort( colIndices.data() + rowOffsets[i],
@@ -164,7 +164,7 @@ void HypreExport::exportCRS( HypreMatrix const & mat,
     } );
   }
 
-  GEOSX_LAI_CHECK_ERROR( hypre_CSRMatrixDestroy( localMatrix ) );
+  GEOS_LAI_CHECK_ERROR( hypre_CSRMatrixDestroy( localMatrix ) );
 }
 
 void HypreExport::exportVector( HypreVector const & vec,
@@ -176,11 +176,11 @@ void HypreExport::exportVector( HypreVector const & vec,
   hypre_Vector * const localVector = m_targetRank < 0
                                    ? hypre_ParVectorLocalVector( vec.unwrapped() )
                                    : (hypre_Vector *)hypre::parVectorToVectorAll( vec.unwrapped() );
-  GEOSX_ERROR_IF( rank == m_targetRank && !localVector, "HypreExport: vector is empty on target rank" );
+  GEOS_ERROR_IF( rank == m_targetRank && !localVector, "HypreExport: vector is empty on target rank" );
 
   if( m_targetRank < 0 || m_targetRank == rank )
   {
-    GEOSX_LAI_ASSERT_EQ( values.size(), hypre_VectorSize( localVector ) );
+    GEOS_LAI_ASSERT_EQ( values.size(), hypre_VectorSize( localVector ) );
     exportArray( hypre_VectorMemoryLocation( localVector ),
                  hypre_VectorData( localVector ),
                  values );
@@ -188,7 +188,7 @@ void HypreExport::exportVector( HypreVector const & vec,
 
   if( m_targetRank >= 0 )
   {
-    GEOSX_LAI_CHECK_ERROR( hypre_SeqVectorDestroy( localVector ) );
+    GEOS_LAI_CHECK_ERROR( hypre_SeqVectorDestroy( localVector ) );
   }
 }
 
@@ -201,8 +201,8 @@ void HypreExport::importVector( arrayView1d< real64 const > const & values,
     hypre_Vector * wrapperVector{};
     if( MpiWrapper::commRank( vec.comm() ) == m_targetRank )
     {
-      GEOSX_LAI_ASSERT_EQ( values.size(), vec.globalSize() );
-      values.move( LvArray::MemorySpace::host, false );
+      GEOS_LAI_ASSERT_EQ( values.size(), vec.globalSize() );
+      values.move( hostMemorySpace, false );
 
       // HACK: create a hypre vector that points to local data; we have to use const_cast,
       //       but this is ok because we don't modify the values, only scatter the vector.
@@ -224,8 +224,8 @@ void HypreExport::importVector( arrayView1d< real64 const > const & values,
                    hypre_VectorMemoryLocation( localVector ),
                    hypre_ParVectorMemoryLocation( parVector ) );
 
-    GEOSX_LAI_CHECK_ERROR( hypre_ParVectorDestroy( parVector ) );
-    GEOSX_LAI_CHECK_ERROR( hypre_SeqVectorDestroy( wrapperVector ) );
+    GEOS_LAI_CHECK_ERROR( hypre_ParVectorDestroy( parVector ) );
+    GEOS_LAI_CHECK_ERROR( hypre_SeqVectorDestroy( wrapperVector ) );
   }
   else
   {
@@ -256,4 +256,4 @@ INST_HYPRE_EXPORT_CRS( long long, long long );
 
 #undef INST_HYPRE_EXPORT_CRS
 
-} // namespace geosx
+} // namespace geos

@@ -17,10 +17,10 @@
  */
 
 #include "MultiPhaseThermalConductivityBase.hpp"
-#include "ThermalConductivityExtrinsicData.hpp"
-#include "MultiPhaseThermalConductivityExtrinsicData.hpp"
+#include "ThermalConductivityFields.hpp"
+#include "MultiPhaseThermalConductivityFields.hpp"
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -35,8 +35,8 @@ MultiPhaseThermalConductivityBase::MultiPhaseThermalConductivityBase( string con
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "List of fluid phases" );
 
-  registerExtrinsicData( extrinsicMeshData::thermalconductivity::effectiveConductivity{}, &m_effectiveConductivity );
-  registerExtrinsicData( extrinsicMeshData::thermalconductivity::dEffectiveConductivity_dPhaseVolFraction{}, &m_dEffectiveConductivity_dPhaseVolFrac );
+  registerField( fields::thermalconductivity::effectiveConductivity{}, &m_effectiveConductivity );
+  registerField( fields::thermalconductivity::dEffectiveConductivity_dPhaseVolFraction{}, &m_dEffectiveConductivity_dPhaseVolFrac );
 }
 
 void MultiPhaseThermalConductivityBase::postProcessInput()
@@ -44,12 +44,12 @@ void MultiPhaseThermalConductivityBase::postProcessInput()
   ConstitutiveBase::postProcessInput();
 
   integer const numPhases = numFluidPhases();
-  GEOSX_THROW_IF_LT_MSG( numPhases, 2,
-                         GEOSX_FMT( "{}: invalid number of phases", getFullName() ),
-                         InputError );
-  GEOSX_THROW_IF_GT_MSG( numPhases, MAX_NUM_PHASES,
-                         GEOSX_FMT( "{}: invalid number of phases", getFullName() ),
-                         InputError );
+  GEOS_THROW_IF_LT_MSG( numPhases, 2,
+                        GEOS_FMT( "{}: invalid number of phases", getFullName() ),
+                        InputError );
+  GEOS_THROW_IF_GT_MSG( numPhases, MAX_NUM_PHASES,
+                        GEOS_FMT( "{}: invalid number of phases", getFullName() ),
+                        InputError );
 
   m_effectiveConductivity.resize( 0, 0, 3 );
   m_dEffectiveConductivity_dPhaseVolFrac.resize( 0, 0, 3, numPhases );
@@ -68,4 +68,4 @@ void MultiPhaseThermalConductivityBase::allocateConstitutiveData( dataRepository
 
 } // namespace constitutive
 
-} // namespace geosx
+} // namespace geos

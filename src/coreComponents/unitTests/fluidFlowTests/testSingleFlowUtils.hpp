@@ -12,26 +12,26 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#ifndef GEOSX_TESTSINGLEFLOWUTILS_HPP
-#define GEOSX_TESTSINGLEFLOWUTILS_HPP
+#ifndef GEOS_TESTSINGLEFLOWUTILS_HPP
+#define GEOS_TESTSINGLEFLOWUTILS_HPP
 
 #include "codingUtilities/UnitTestUtilities.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
-#include "constitutive/fluid/SingleFluidBase.hpp"
+#include "constitutive/fluid/singlefluid/SingleFluidBase.hpp"
 #include "mesh/MeshManager.hpp"
 #include "mainInterface/ProblemManager.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
-#include "physicsSolvers/fluidFlow/SinglePhaseBaseExtrinsicData.hpp"
+#include "physicsSolvers/fluidFlow/SinglePhaseBaseFields.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseFVM.hpp"
-#include "physicsSolvers/fluidFlow/FlowSolverBaseExtrinsicData.hpp"
+#include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace testing
 {
 
-using namespace geosx::constitutive;
+using namespace geos::constitutive;
 
 void checkDerivative( real64 const valueEps,
                       real64 const value,
@@ -62,7 +62,7 @@ void fillNumericalJacobian( arrayView1d< real64 const > const & residual,
                             real64 const eps,
                             CRSMatrixView< real64, globalIndex const > const & jacobian )
 {
-  forAll< parallelDevicePolicy<> >( residual.size(), [=] GEOSX_HOST_DEVICE ( localIndex const row )
+  forAll< parallelDevicePolicy<> >( residual.size(), [=] GEOS_HOST_DEVICE ( localIndex const row )
   {
     real64 const dRdX = ( residual[row] - residualOrig[row] ) / eps;
     if( fabs( dRdX ) > 0.0 )
@@ -75,12 +75,12 @@ void fillNumericalJacobian( arrayView1d< real64 const > const & residual,
 void setupProblemFromXML( ProblemManager & problemManager, char const * const xmlInput )
 {
   xmlWrapper::xmlDocument xmlDocument;
-  xmlWrapper::xmlResult xmlResult = xmlDocument.load_buffer( xmlInput, strlen( xmlInput ) );
+  xmlWrapper::xmlResult xmlResult = xmlDocument.loadString( xmlInput );
   if( !xmlResult )
   {
-    GEOSX_LOG_RANK_0( "XML parsed with errors!" );
-    GEOSX_LOG_RANK_0( "Error description: " << xmlResult.description());
-    GEOSX_LOG_RANK_0( "Error offset: " << xmlResult.offset );
+    GEOS_LOG_RANK_0( "XML parsed with errors!" );
+    GEOS_LOG_RANK_0( "Error description: " << xmlResult.description());
+    GEOS_LOG_RANK_0( "Error offset: " << xmlResult.offset );
   }
 
   int mpiSize = MpiWrapper::commSize( MPI_COMM_GEOSX );
@@ -91,21 +91,21 @@ void setupProblemFromXML( ProblemManager & problemManager, char const * const xm
   commandLine.registerWrapper< integer >( problemManager.viewKeys.xPartitionsOverride.key() ).
     setApplyDefaultValue( mpiSize );
 
-  xmlWrapper::xmlNode xmlProblemNode = xmlDocument.child( dataRepository::keys::ProblemManager );
-  problemManager.processInputFileRecursive( xmlProblemNode );
+  xmlWrapper::xmlNode xmlProblemNode = xmlDocument.getChild( dataRepository::keys::ProblemManager );
+  problemManager.processInputFileRecursive( xmlDocument, xmlProblemNode );
 
   DomainPartition & domain = problemManager.getDomainPartition();
 
   constitutive::ConstitutiveManager & constitutiveManager = domain.getConstitutiveManager();
   xmlWrapper::xmlNode topLevelNode = xmlProblemNode.child( constitutiveManager.getName().c_str());
-  constitutiveManager.processInputFileRecursive( topLevelNode );
+  constitutiveManager.processInputFileRecursive( xmlDocument, topLevelNode );
 
   MeshManager & meshManager = problemManager.getGroup< MeshManager >( problemManager.groupKeys.meshManager );
   meshManager.generateMeshLevels( domain );
 
   ElementRegionManager & elementManager = domain.getMeshBody( 0 ).getBaseDiscretization().getElemManager();
   topLevelNode = xmlProblemNode.child( elementManager.getName().c_str());
-  elementManager.processInputFileRecursive( topLevelNode );
+  elementManager.processInputFileRecursive( xmlDocument, topLevelNode );
 
   problemManager.problemSetup();
   problemManager.applyInitialConditions();
@@ -130,15 +130,15 @@ void testMobilityNumericalDerivatives( SinglePhaseFVM< SinglePhaseBase > & solve
       SCOPED_TRACE( subRegion.getParent().getParent().getName() + "/" + subRegion.getName() );
 
       arrayView1d< real64 > const pres =
-        subRegion.getExtrinsicData< extrinsicMeshData::flow::pressure >();
+        subRegion.getField< fields::flow::pressure >();
       arrayView1d< real64 const > const pres_n =
-        subRegion.getExtrinsicData< extrinsicMeshData::flow::pressure_n >();
+        subRegion.getField< fields::flow::pressure_n >();
 
       arrayView1d< real64 > const mob =
-        subRegion.getExtrinsicData< extrinsicMeshData::flow::mobility >();
+        subRegion.getField< fields::flow::mobility >();
 
       arrayView1d< real64 > const dMob_dPres =
-        subRegion.getExtrinsicData< extrinsicMeshData::flow::dMobility_dPressure >();
+        subRegion.getField< fields::flow::dMobility_dPressure >();
 
       // reset the solver state to zero out variable updates
       solver.resetStateToBeginningOfStep( domain );
@@ -180,12 +180,12 @@ void testMobilityNumericalDerivatives( SinglePhaseFVM< SinglePhaseBase > & solve
       if( isThermal )
       {
         arrayView1d< real64 > const temp =
-          subRegion.getExtrinsicData< extrinsicMeshData::flow::temperature >();
+          subRegion.getField< fields::flow::temperature >();
         arrayView1d< real64 const > const temp_n =
-          subRegion.getExtrinsicData< extrinsicMeshData::flow::temperature_n >();
+          subRegion.getField< fields::flow::temperature_n >();
 
         arrayView1d< real64 > const dMob_dTemp =
-          subRegion.getExtrinsicData< extrinsicMeshData::flow::dMobility_dTemperature >();
+          subRegion.getField< fields::flow::dMobility_dTemperature >();
 
         // reset the solver state to zero out variable updates (resetting the whole domain is overkill...)
         solver.resetStateToBeginningOfStep( domain );
@@ -246,7 +246,7 @@ void fillCellCenteredNumericalJacobian( SINGLE_PHASE_SOLVER & solver,
         subRegion.getReference< array1d< globalIndex > >( elemDofKey );
 
       arrayView1d< real64 > const pres =
-        subRegion.getExtrinsicData< extrinsicMeshData::flow::pressure >();
+        subRegion.getField< fields::flow::pressure >();
 
       for( localIndex ei = 0; ei < subRegion.size(); ++ei )
       {
@@ -260,11 +260,11 @@ void fillCellCenteredNumericalJacobian( SINGLE_PHASE_SOLVER & solver,
         // Step 1: compute numerical derivatives wrt pressure
 
         {
-          pres.move( LvArray::MemorySpace::host, true ); // to get the correct pres after reset
+          pres.move( hostMemorySpace, true ); // to get the correct pres after reset
           real64 const dP = perturbParameter * ( pres[ei] + perturbParameter );
           pres[ei] += dP;
-#if defined(GEOSX_USE_CUDA)
-          pres.move( LvArray::MemorySpace::cuda, false );
+#if defined(GEOS_USE_CUDA)
+          pres.move( parallelDeviceMemorySpace, false );
 #endif
 
           solver.updateState( domain );
@@ -285,16 +285,16 @@ void fillCellCenteredNumericalJacobian( SINGLE_PHASE_SOLVER & solver,
         if( isThermal )
         {
           arrayView1d< real64 > const temp =
-            subRegion.getExtrinsicData< extrinsicMeshData::flow::temperature >();
-          temp.move( LvArray::MemorySpace::host, false );
+            subRegion.getField< fields::flow::temperature >();
+          temp.move( hostMemorySpace, false );
 
           solver.resetStateToBeginningOfStep( domain );
 
-          temp.move( LvArray::MemorySpace::host, true );
+          temp.move( hostMemorySpace, true );
           real64 const dT = perturbParameter * ( temp[ei] + perturbParameter );
           temp[ei] += dT;
-#if defined(GEOSX_USE_CUDA)
-          temp.move( LvArray::MemorySpace::cuda, false );
+#if defined(GEOS_USE_CUDA)
+          temp.move( parallelDeviceMemorySpace, false );
 #endif
 
           // here, we make sure that rock internal energy is updated
@@ -320,6 +320,6 @@ void fillCellCenteredNumericalJacobian( SINGLE_PHASE_SOLVER & solver,
 
 } // namespace testing
 
-} // namespace geosx
+} // namespace geos
 
-#endif //GEOSX_TESTSINGLEFLOWUTILS_HPP
+#endif //GEOS_TESTSINGLEFLOWUTILS_HPP

@@ -16,14 +16,15 @@
  * @file ExecutableGroup.hpp
  */
 
-#ifndef GEOSX_DATAREPOSITORY_EXECUTABLEGROUP_HPP_
-#define GEOSX_DATAREPOSITORY_EXECUTABLEGROUP_HPP_
+#ifndef GEOS_DATAREPOSITORY_EXECUTABLEGROUP_HPP_
+#define GEOS_DATAREPOSITORY_EXECUTABLEGROUP_HPP_
 
+#include "codingUtilities/EnumStrings.hpp"
 #include "common/DataTypes.hpp"
 #include "Group.hpp"
 
 
-namespace geosx
+namespace geos
 {
 
 class DomainPartition;
@@ -92,30 +93,43 @@ public:
    */
   virtual real64 getTimestepRequest( real64 const time )
   {
-    GEOSX_UNUSED_VAR( time );
+    GEOS_UNUSED_VAR( time );
     return 1e99;
   }
 
+  /**
+   * @brief Timestepping type.
+   */
+  enum class TimesteppingBehavior : integer
+  {
+    DeterminesTimeStepSize, ///< The group (say, the solver) does the timestepping
+    DoesNotDetermineTimeStepSize ///< The event targetting this group does the timestepping
+  };
 
   /**
    * @brief Set the timestep behavior for a target.
-   * @param[in] behavior if positive, target does time stepping
+   * @param[in] timesteppingBehavior the timestepping behavior
    */
-  void setTimestepBehavior( integer const behavior ) { m_timestepType = behavior; }
+  void setTimesteppingBehavior( TimesteppingBehavior const timesteppingBehavior ) { m_timesteppingBehavior = timesteppingBehavior; }
 
   /**
    * @brief Get the target's time step behavior.
-   * @return @p >0 if target does time stepping, @p <=0 otherwise
+   * @return The time stepping type
    */
-  integer getTimestepBehavior() { return m_timestepType; }
-
+  TimesteppingBehavior getTimesteppingBehavior() const { return m_timesteppingBehavior; }
 
 private:
-  integer m_timestepType = 0;
+
+  TimesteppingBehavior m_timesteppingBehavior = TimesteppingBehavior::DoesNotDetermineTimeStepSize;
 };
 
+/** @cond DO_NOT_DOCUMENT */
+ENUM_STRINGS( ExecutableGroup::TimesteppingBehavior,
+              "DeterminesTimeStepSize",
+              "DoesNotDetermineTimeStepSize" );
+/** @endcond */
 
 }
 
 
-#endif /* GEOSX_DATAREPOSITORY_EXECUTABLEGROUP_HPP_ */
+#endif /* GEOS_DATAREPOSITORY_EXECUTABLEGROUP_HPP_ */

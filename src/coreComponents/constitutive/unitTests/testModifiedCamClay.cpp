@@ -17,11 +17,12 @@
 #include "constitutive/ConstitutiveManager.hpp"
 #include "constitutive/solid/ModifiedCamClay.hpp"
 #include "constitutive/solid/InvariantDecompositions.hpp"
+#include "constitutive/solid/SolidUtilities.hpp"
 #include "dataRepository/xmlWrapper.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
 
-using namespace geosx;
-using namespace ::geosx::constitutive;
+using namespace geos;
+using namespace ::geos::constitutive;
 
 
 struct StrainData
@@ -85,17 +86,16 @@ void testModifiedCamClayDriver()
     "</Constitutive>";
 
   xmlWrapper::xmlDocument xmlDocument;
-  xmlWrapper::xmlResult xmlResult = xmlDocument.load_buffer( inputStream.c_str(),
-                                                             inputStream.size() );
+  xmlWrapper::xmlResult xmlResult = xmlDocument.loadString( inputStream );
   if( !xmlResult )
   {
-    GEOSX_LOG_RANK_0( "XML parsed with errors!" );
-    GEOSX_LOG_RANK_0( "Error description: " << xmlResult.description());
-    GEOSX_LOG_RANK_0( "Error offset: " << xmlResult.offset );
+    GEOS_LOG_RANK_0( "XML parsed with errors!" );
+    GEOS_LOG_RANK_0( "Error description: " << xmlResult.description());
+    GEOS_LOG_RANK_0( "Error offset: " << xmlResult.offset );
   }
 
-  xmlWrapper::xmlNode xmlConstitutiveNode = xmlDocument.child( "Constitutive" );
-  constitutiveManager.processInputFileRecursive( xmlConstitutiveNode );
+  xmlWrapper::xmlNode xmlConstitutiveNode = xmlDocument.getChild( "Constitutive" );
+  constitutiveManager.processInputFileRecursive( xmlDocument, xmlConstitutiveNode );
   constitutiveManager.postProcessInputRecursive();
 
   localIndex constexpr numElem = 2;
@@ -121,6 +121,7 @@ void testModifiedCamClayDriver()
 
   StrainData data;
   data.strainIncrement[0] = -1e-4;
+  real64 timeIncrement =0;
 
   // set initial stress
 
@@ -135,12 +136,11 @@ void testModifiedCamClayDriver()
 
   for( localIndex loadstep=0; loadstep < 500; ++loadstep )
   {
-    forAll< parallelDevicePolicy<> >( 1, [=] GEOSX_HOST_DEVICE ( localIndex const k )
+    forAll< POLICY >( 1, [=] GEOS_HOST_DEVICE ( localIndex const k )
     {
       real64 stressLocal[6] = {0};
       real64 stiffnessLocal[6][6] = {{0}};
-      cmw.smallStrainUpdate( k, 0, data.strainIncrement, stressLocal, stiffnessLocal );
-      //    std::cout<< stressLocal[0] <<std::endl;
+      cmw.smallStrainUpdate( k, 0, timeIncrement, data.strainIncrement, stressLocal, stiffnessLocal );
     } );
     cm.saveConvergedState();
   }
@@ -150,7 +150,7 @@ void testModifiedCamClayDriver()
   getStress( cmw, stress );
 
   real64 invariantP, invariantQ;
-  real64 deviator[6];
+  real64 deviator[6]{};
 
   twoInvariant::stressDecomposition( stress,
                                      invariantP,
@@ -162,16 +162,16 @@ void testModifiedCamClayDriver()
   // we now use a finite-difference check of tangent stiffness to confirm
   // the analytical form is working properly.
 
-  cmw.checkSmallStrainStiffness( 0, 0, data.strainIncrement, true );
+  SolidUtilities::checkSmallStrainStiffness( cmw, 0, 0, timeIncrement, data.strainIncrement, true );
 
-  EXPECT_TRUE( cmw.checkSmallStrainStiffness( 0, 0, data.strainIncrement ) );
+  EXPECT_TRUE( SolidUtilities::checkSmallStrainStiffness( cmw, 0, 0, timeIncrement, data.strainIncrement ) );
 }
 
 
-#ifdef USE_CUDA
+#ifdef GEOS_USE_DEVICE
 TEST( ModifiedCamClayTests, testModifiedCamClayDevice )
 {
-  testModifiedCamClayDriver< geosx::parallelDevicePolicy< > >();
+  testModifiedCamClayDriver< geos::parallelDevicePolicy< > >();
 }
 #endif
 TEST( ModifiedCamClayTests, testModifiedCamClayHost )

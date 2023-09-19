@@ -18,8 +18,9 @@
 
 #include "SlipDependentPermeability.hpp"
 #include "LvArray/src/tensorOps.hpp"
+#include "constitutive/permeability/PermeabilityFields.hpp"
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -39,12 +40,11 @@ SlipDependentPermeability::SlipDependentPermeability( string const & name, Group
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Maximum permeability multiplier." );
 
-  registerWrapper( viewKeyStruct::dPerm_dDispJumpString(), &m_dPerm_dDispJump ).
-    setDescription( "Derivative of the permeability w.r.t. the displacement jump." );
-
   registerWrapper( viewKeyStruct::initialPermeabilityString(), &m_initialPermeability ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( " initial permeability of the fracture." );
+
+  registerField( fields::permeability::dPerm_dDispJump{}, &m_dPerm_dDispJump );
 }
 
 std::unique_ptr< ConstitutiveBase >
@@ -66,4 +66,4 @@ void SlipDependentPermeability::allocateConstitutiveData( dataRepository::Group 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, SlipDependentPermeability, string const &, Group * const )
 
 } /* namespace constitutive */
-} /* namespace geosx */
+} /* namespace geos */

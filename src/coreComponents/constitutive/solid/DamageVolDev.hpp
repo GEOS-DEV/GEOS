@@ -18,13 +18,13 @@
  * @brief Overrides the SSLE constitutive updates to account for a damage varible and a volumtric-deviatoric split.
  */
 
-#ifndef GEOSX_CONSTITUTIVE_SOLID_DAMAGEVOLDEV_HPP_
-#define GEOSX_CONSTITUTIVE_SOLID_DAMAGEVOLDEV_HPP_
+#ifndef GEOS_CONSTITUTIVE_SOLID_DAMAGEVOLDEV_HPP_
+#define GEOS_CONSTITUTIVE_SOLID_DAMAGEVOLDEV_HPP_
 #include "Damage.hpp"
 #include "InvariantDecompositions.hpp"
 #include "SolidBase.hpp"
 
-namespace geosx
+namespace geos
 {
 namespace constitutive
 {
@@ -36,12 +36,19 @@ public:
   template< typename ... PARAMS >
   DamageVolDevUpdates( arrayView2d< real64 > const & inputDamage,
                        arrayView2d< real64 > const & inputStrainEnergyDensity,
+                       arrayView2d< real64 > const & inputExtDrivingForce,
                        real64 const & inputLengthScale,
                        real64 const & inputCriticalFractureEnergy,
                        real64 const & inputcriticalStrainEnergy,
+                       real64 const & inputDegradationLowerLimit,
+                       int const & inputExtDrivingForceFlag,
+                       real64 const & inputTensileStrength,
+                       real64 const & inputCompressStrength,
+                       real64 const & inputDeltaCoefficient,
                        PARAMS && ... baseParams ):
-    DamageUpdates< UPDATE_BASE >( inputDamage, inputStrainEnergyDensity, inputLengthScale,
-                                  inputCriticalFractureEnergy, inputcriticalStrainEnergy,
+    DamageUpdates< UPDATE_BASE >( inputDamage, inputStrainEnergyDensity, inputExtDrivingForce, inputLengthScale,
+                                  inputCriticalFractureEnergy, inputcriticalStrainEnergy, inputDegradationLowerLimit, inputExtDrivingForceFlag,
+                                  inputTensileStrength, inputCompressStrength, inputDeltaCoefficient,
                                   std::forward< PARAMS >( baseParams )... )
   {}
 
@@ -57,20 +64,28 @@ public:
 
   using DamageUpdates< UPDATE_BASE >::m_strainEnergyDensity;
   using DamageUpdates< UPDATE_BASE >::m_criticalStrainEnergy;
+  using DamageUpdates< UPDATE_BASE >::m_extDrivingForce;
   using DamageUpdates< UPDATE_BASE >::m_criticalFractureEnergy;
   using DamageUpdates< UPDATE_BASE >::m_lengthScale;
+  using DamageUpdates< UPDATE_BASE >::m_damage;
+  using DamageUpdates< UPDATE_BASE >::m_extDrivingForceFlag;
+  using DamageUpdates< UPDATE_BASE >::m_tensileStrength;
+  using DamageUpdates< UPDATE_BASE >::m_compressStrength;
+  using DamageUpdates< UPDATE_BASE >::m_deltaCoefficient;
   using DamageUpdates< UPDATE_BASE >::m_disableInelasticity;
 
-  GEOSX_HOST_DEVICE
+
+  GEOS_HOST_DEVICE
   virtual void smallStrainUpdate( localIndex const k,
                                   localIndex const q,
+                                  real64 const & timeIncrement,
                                   real64 const ( &strainIncrement )[6],
                                   real64 ( & stress )[6],
                                   DiscretizationOps & stiffness ) const final
   {
     // perform elastic update for "undamaged" stress
 
-    UPDATE_BASE::smallStrainUpdate( k, q, strainIncrement, stress, stiffness );  // elastic trial update
+    UPDATE_BASE::smallStrainUpdate( k, q, timeIncrement, strainIncrement, stress, stiffness );  // elastic trial update
 
     if( m_disableInelasticity )
     {
@@ -130,7 +145,7 @@ public:
   }
 
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   virtual real64 getStrainEnergyDensity( localIndex const k,
                                          localIndex const q ) const override final
   {
@@ -149,9 +164,15 @@ public:
 
   using Damage< BASE >::m_damage;
   using Damage< BASE >::m_strainEnergyDensity;
+  using Damage< BASE >::m_extDrivingForce;
   using Damage< BASE >::m_criticalFractureEnergy;
   using Damage< BASE >::m_lengthScale;
   using Damage< BASE >::m_criticalStrainEnergy;
+  using Damage< BASE >::m_degradationLowerLimit;
+  using Damage< BASE >::m_extDrivingForceFlag;
+  using Damage< BASE >::m_tensileStrength;
+  using Damage< BASE >::m_compressStrength;
+  using Damage< BASE >::m_deltaCoefficient;
 
   DamageVolDev( string const & name, dataRepository::Group * const parent );
   virtual ~DamageVolDev() override;
@@ -165,15 +186,21 @@ public:
   {
     return BASE::template createDerivedKernelUpdates< KernelWrapper >( m_damage.toView(),
                                                                        m_strainEnergyDensity.toView(),
+                                                                       m_extDrivingForce.toView(),
                                                                        m_lengthScale,
                                                                        m_criticalFractureEnergy,
-                                                                       m_criticalStrainEnergy );
+                                                                       m_criticalStrainEnergy,
+                                                                       m_degradationLowerLimit,
+                                                                       m_extDrivingForceFlag,
+                                                                       m_tensileStrength,
+                                                                       m_compressStrength,
+                                                                       m_deltaCoefficient );
   }
 
 };
 
 
 }
-} /* namespace geosx */
+} /* namespace geos */
 
-#endif /* GEOSX_CONSTITUTIVE_SOLID_DAMAGEVOLDEV_HPP_ */
+#endif /* GEOS_CONSTITUTIVE_SOLID_DAMAGEVOLDEV_HPP_ */

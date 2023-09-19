@@ -4,8 +4,8 @@ set( python_headers pygeosx.hpp
 
 set( python_sources pygeosx.cpp
 		    )
-	    	  
-set( dependencyList ${extraComponentsLinkList} ${externalComponentsLinkList} Python3::Python ) 
+
+set( dependencyList ${extraComponentsLinkList} ${externalComponentsLinkList} Python3::Python )
 
 blt_add_library( NAME pygeosx
                  SOURCES ${python_sources}
@@ -32,3 +32,21 @@ target_include_directories( pygeosx PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents )
 geosx_add_code_checks( PREFIX pygeosx )
 
 install(TARGETS pygeosx LIBRARY DESTINATION lib)
+
+if( GEOS_ENABLE_TESTS )
+  add_subdirectory( unitTests )
+endif( )
+
+# Python formatting
+if ( ENABLE_YAPF )
+    set( pygeosx_scripts )
+    file( GLOB_RECURSE pygeosx_scripts "*py" )
+
+    # Note: blt throws an error if sources doesn't include a c-file, so include dummy.cpp
+    blt_add_code_checks( PREFIX  pygeosx_scripts_yapf_style
+                         SOURCES ${pygeosx_scripts} ${CMAKE_SOURCE_DIR}/coreComponents/dummy.cpp
+                         YAPF_CFG_FILE ${PROJECT_SOURCE_DIR}/yapf.cfg )
+
+endif()
+
+

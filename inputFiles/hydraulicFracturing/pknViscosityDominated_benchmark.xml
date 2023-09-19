@@ -14,7 +14,6 @@
       solidSolverName="lagsolve"
       flowSolverName="SinglePhaseFlow"
       surfaceGeneratorName="SurfaceGen"
-      couplingTypeOption="FIM"
       logLevel="1"
       targetRegions="{ Fracture }"
       contactRelationName="fractureContact"
@@ -23,7 +22,8 @@
       <NonlinearSolverParameters
         newtonTol="1.0e-4"
         newtonMaxIter="10"
-        maxTimeStepCuts="5"/>
+        maxTimeStepCuts="5"
+        maxAllowedResidualNorm="1e+15"/>
       <LinearSolverParameters
         solverType="gmres"
         preconditionerType="mgr"
@@ -51,8 +51,7 @@
     <SinglePhaseFVM
       name="SinglePhaseFlow"
       discretization="singlePhaseTPFA"
-      targetRegions="{ Fracture }"
-      inputFluxEstimate="1.0">
+      targetRegions="{ Fracture }">
       <NonlinearSolverParameters
         newtonTol="1.0e-5"
         newtonMaxIter="10"/>
@@ -111,10 +110,52 @@
   </Geometry>
 
   <Events
-    maxTime="200.0"> 
+    maxTime="200.1"> 
     <SoloEvent
       name="preFracture"
       target="/Solvers/SurfaceGen"/>
+
+    <PeriodicEvent
+      name="outputs"
+      beginTime="2.0"
+      timeFrequency="2.0"
+      targetExactTimestep="0"
+      target="/Outputs/vtkOutput"/>
+
+    <PeriodicEvent
+      name="timeHistoryCollection0"
+      beginTime="2.0"
+      timeFrequency="2.0"
+      targetExactTimestep="0"
+      target="/Tasks/pressureCollection" />
+
+    <PeriodicEvent
+      name="timeHistoryCollection1"
+      beginTime="2.0"
+      timeFrequency="2.0"
+      targetExactTimestep="0"
+      target="/Tasks/apertureCollection" />
+
+    <PeriodicEvent
+      name="timeHistoryCollection2"
+      beginTime="2.0"
+      timeFrequency="2.0"
+      targetExactTimestep="0"
+      target="/Tasks/hydraulicApertureCollection" /> 
+
+    <PeriodicEvent
+      name="timeHistoryCollection3"
+      beginTime="2.0"
+      timeFrequency="2.0"
+      targetExactTimestep="0"
+      target="/Tasks/areaCollection" />      
+
+    <PeriodicEvent
+      name="timeHistoryOutput"
+      beginTime="2.0"
+      timeFrequency="2.0"
+      targetExactTimestep="0"
+      target="/Outputs/timeHistoryOutput"/> 
  
     <PeriodicEvent
       name="solverApplications1"
@@ -161,21 +202,7 @@
     <PeriodicEvent
       name="solverApplications7"
       beginTime="100.0"
-      endTime="200.0"
       forceDt="10.0"
       target="/Solvers/hydrofracture"/>
-  
-    <PeriodicEvent
-      name="outputs"
-      beginTime="2.0"
-      timeFrequency="2.0"
-      targetExactTimestep="0"
-      target="/Outputs/siloOutput"/>
-
-    <PeriodicEvent 
-      name="restarts"
-      timeFrequency="100.0"
-      targetExactTimestep="0"
-      target="/Outputs/restartOutput" />
   </Events> 
 </Problem>

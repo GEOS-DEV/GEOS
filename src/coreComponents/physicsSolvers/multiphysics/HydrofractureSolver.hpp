@@ -16,35 +16,45 @@
  * @file HydrofractureSolver.hpp
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_HYDROFRACTURESOLVER_HPP_
-#define GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_HYDROFRACTURESOLVER_HPP_
+#ifndef GEOS_PHYSICSSOLVERS_MULTIPHYSICS_HYDROFRACTURESOLVER_HPP_
+#define GEOS_PHYSICSSOLVERS_MULTIPHYSICS_HYDROFRACTURESOLVER_HPP_
 
 #include "physicsSolvers/multiphysics/CoupledSolver.hpp"
+#include "physicsSolvers/surfaceGeneration/SurfaceGenerator.hpp"
+#include "physicsSolvers/multiphysics/SinglePhasePoromechanics.hpp"
 
-namespace geosx
+namespace geos
 {
 
-class SinglePhaseBase;
-class SolidMechanicsLagrangianFEM;
-class SurfaceGenerator;
+using dataRepository::Group;
 
-class HydrofractureSolver : public CoupledSolver< SolidMechanicsLagrangianFEM,
-                                                  SinglePhaseBase >
+template< typename POROMECHANICS_SOLVER = SinglePhasePoromechanics >
+class HydrofractureSolver : public POROMECHANICS_SOLVER
 {
 public:
 
-  using Base = CoupledSolver< SolidMechanicsLagrangianFEM, SinglePhaseBase >;
+  using Base = POROMECHANICS_SOLVER;
   using Base::m_solvers;
+  using Base::m_names;
   using Base::m_dofManager;
   using Base::m_localMatrix;
   using Base::m_rhs;
   using Base::m_solution;
+  using Base::m_linearSolverParameters;
 
-  enum class SolverType : integer
-  {
-    SolidMechanics = 0,
-    Flow = 1
-  };
+  using Base::registerWrapper;
+  using Base::forDiscretizationOnMeshTargets;
+  using Base::getMeshModificationTimestamp;
+  using Base::getSystemSetupTimestamp;
+  using Base::nonlinearImplicitStep;
+  using Base::implicitStepComplete;
+  using Base::getLogLevel;
+  using Base::setSystemSetupTimestamp;
+  using Base::setupDofs;
+  using Base::flowSolver;
+  using Base::solidMechanicsSolver;
+  using Base::assembleElementBasedTerms;
+
 
   /**
    * @brief main constructor for HydrofractureSolver objects
@@ -57,32 +67,10 @@ public:
   /// Destructor for the class
   ~HydrofractureSolver() override {}
 
-  /**
-   * @brief name of the node manager in the object catalog
-   * @return string that contains the catalog name to generate a new HydrofractureSolver object through the object catalog.
-   */
-  static string catalogName()
-  {
-    return "Hydrofracture";
-  }
+  static string catalogName();
 
-  /**
-   * @brief accessor for the pointer to the solid mechanics solver
-   * @return a pointer to the solid mechanics solver
-   */
-  SolidMechanicsLagrangianFEM * solidMechanicsSolver() const
-  {
-    return std::get< toUnderlying( SolverType::SolidMechanics ) >( m_solvers );
-  }
-
-  /**
-   * @brief accessor for the pointer to the flow solver
-   * @return a pointer to the flow solver
-   */
-  SinglePhaseBase * flowSolver() const
-  {
-    return std::get< toUnderlying( SolverType::Flow ) >( m_solvers );
-  }
+  /// String used to form the solverName used to register solvers in CoupledSolver
+  static string coupledSolverAttributePrefix() { return "poromechanics"; }
 
   /**
    * @defgroup Solver Interface Functions
@@ -94,7 +82,7 @@ public:
   virtual void registerDataOnMesh( Group & MeshBodies ) override final;
 
   virtual void setupCoupling( DomainPartition const & domain,
-                              DofManager & dofManager ) const override;
+                              DofManager & dofManager ) const override final;
 
   virtual void setupSystem( DomainPartition & domain,
                             DofManager & dofManager,
@@ -114,19 +102,8 @@ public:
                                CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                arrayView1d< real64 > const & localRhs ) override;
 
-  virtual real64 solverStep( real64 const & time_n,
-                             real64 const & dt,
-                             int const cycleNumber,
-                             DomainPartition & domain ) override;
-
   virtual real64 setNextDt( real64 const & currentDt,
                             DomainPartition & domain ) override;
-
-
-  virtual real64 explicitStep( real64 const & time_n,
-                               real64 const & dt,
-                               integer const cycleNumber,
-                               DomainPartition & domain ) override;
 
   virtual void updateState( DomainPartition & domain ) override final;
 
@@ -140,12 +117,6 @@ public:
 
   void assembleFluidMassResidualDerivativeWrtDisplacement( DomainPartition const & domain,
                                                            CRSMatrixView< real64, globalIndex const > const & localMatrix );
-
-
-  real64 splitOperatorStep( real64 const & time_n,
-                            real64 const & dt,
-                            integer const cycleNumber,
-                            DomainPartition & domain );
 
   std::unique_ptr< CRSMatrix< real64, localIndex > > & getRefDerivativeFluxResidual_dAperture()
   {
@@ -162,25 +133,16 @@ public:
     return m_derivativeFluxResidual_dAperture->toViewConst();
   }
 
-
-  enum class CouplingTypeOption : integer
+  struct viewKeyStruct : Base::viewKeyStruct
   {
-    FIM,
-    SIM_FixedStress
-  };
-
-
-  struct viewKeyStruct : SolverBase::viewKeyStruct
-  {
-    constexpr static char const * couplingTypeOptionStringString() { return "couplingTypeOption"; }
-
     constexpr static char const * contactRelationNameString() { return "contactRelationName"; }
 
     constexpr static char const * surfaceGeneratorNameString() { return "surfaceGeneratorName"; }
 
-    constexpr static char const * porousMaterialNamesString() { return "porousMaterialNames"; }
-
     constexpr static char const * maxNumResolvesString() { return "maxNumResolves"; }
+
+    constexpr static char const * isMatrixPoroelasticString() { return "isMatrixPoroelastic"; }
+
 
 #ifdef GEOSX_USE_SEPARATION_COEFFICIENT
     constexpr static char const * separationCoeff0String() { return "separationCoeff0"; }
@@ -191,8 +153,6 @@ public:
 protected:
 
   virtual void postProcessInput() override final;
-
-  virtual void initializePreSubGroups() override final;
 
   /**
    * @Brief add the nnz induced by the flux-aperture coupling
@@ -223,7 +183,10 @@ protected:
 
 private:
 
-  CouplingTypeOption m_couplingTypeOption;
+  virtual real64 fullyCoupledSolverStep( real64 const & time_n,
+                                         real64 const & dt,
+                                         int const cycleNumber,
+                                         DomainPartition & domain ) override final;
 
   // name of the contact relation
   string m_contactRelationName;
@@ -234,21 +197,17 @@ private:
   /// pointer to the surface generator
   SurfaceGenerator * m_surfaceGenerator;
 
-  std::unique_ptr< ParallelMatrix > m_blockDiagUU;
-
   // it is only important for this case.
   std::unique_ptr< CRSMatrix< real64, localIndex > > m_derivativeFluxResidual_dAperture;
 
   integer m_maxNumResolves;
   integer m_numResolves[2];
 
+  integer m_isMatrixPoroelastic;
+
 };
 
-ENUM_STRINGS( HydrofractureSolver::CouplingTypeOption,
-              "FIM",
-              "SIM_FixedStress" );
 
+} /* namespace geos */
 
-} /* namespace geosx */
-
-#endif /* GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_HYDROFRACTURESOLVER_HPP_ */
+#endif /* GEOS_PHYSICSSOLVERS_MULTIPHYSICS_HYDROFRACTURESOLVER_HPP_ */

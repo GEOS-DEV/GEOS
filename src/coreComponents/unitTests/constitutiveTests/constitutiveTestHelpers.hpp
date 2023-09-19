@@ -17,7 +17,7 @@
 // Source includes
 #include "common/DataTypes.hpp"
 #include "constitutive/ConstitutiveBase.hpp"
-#include "constitutive/relativePermeability/relativePermeabilitySelector.hpp"
+#include "constitutive/relativePermeability/RelativePermeabilitySelector.hpp"
 #include "constitutive/capillaryPressure/capillaryPressureSelector.hpp"
 #include "functions/FunctionManager.hpp"
 #include "functions/TableFunction.hpp"
@@ -27,7 +27,7 @@
 #include <gtest/gtest.h>
 #include <conduit.hpp>
 
-namespace geosx
+namespace geos
 {
 namespace testing
 {
@@ -142,4 +142,4 @@ protected:
 };
 
 } // namespace testing
-} // namespace geosx
+} // namespace geos

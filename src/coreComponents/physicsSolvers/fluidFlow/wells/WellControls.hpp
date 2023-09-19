@@ -17,14 +17,14 @@
  */
 
 
-#ifndef GEOSX_PHYSICSSOLVERS_FLUIDFLOW_WELLS_WELLCONTROLS_HPP
-#define GEOSX_PHYSICSSOLVERS_FLUIDFLOW_WELLS_WELLCONTROLS_HPP
+#ifndef GEOS_PHYSICSSOLVERS_FLUIDFLOW_WELLS_WELLCONTROLS_HPP
+#define GEOS_PHYSICSSOLVERS_FLUIDFLOW_WELLS_WELLCONTROLS_HPP
 
 #include "codingUtilities/EnumStrings.hpp"
 #include "dataRepository/Group.hpp"
 #include "functions/TableFunction.hpp"
 
-namespace geosx
+namespace geos
 {
 namespace dataRepository
 {
@@ -174,7 +174,7 @@ public:
    */
   real64 getTargetTotalRate( real64 const & currentTime ) const
   {
-    return m_targetTotalRateTable->evaluate( &currentTime );
+    return m_rateSign * m_targetTotalRateTable->evaluate( &currentTime );
   }
 
   /**
@@ -183,7 +183,7 @@ public:
    */
   real64 getTargetPhaseRate( real64 const & currentTime ) const
   {
-    return m_targetPhaseRateTable->evaluate( &currentTime );
+    return m_rateSign * m_targetPhaseRateTable->evaluate( &currentTime );
   }
   /**
    * @brief Get the target phase name
@@ -292,6 +292,8 @@ public:
     static constexpr char const * targetPhaseRateTableNameString() { return "targetPhaseRateTableName"; }
     /// string key for BHP table name
     static constexpr char const * targetBHPTableNameString() { return "targetBHPTableName"; }
+    /// string key for status table name
+    static constexpr char const * statusTableNameString() { return "statusTableName"; }
     /// string key for the crossflow flag
     static constexpr char const * enableCrossflowString() { return "enableCrossflow"; }
     /// string key for the initial pressure coefficient
@@ -304,8 +306,6 @@ public:
 protected:
 
   virtual void postProcessInput() override;
-
-  virtual void initializePreSubGroups() override;
 
 private:
 
@@ -360,20 +360,29 @@ private:
   /// BHP table name
   string m_targetBHPTableName;
 
+  /// Status table name
+  string m_statusTableName;
+
   /// Flag to enable crossflow
   integer m_isCrossflowEnabled;
 
   /// Tuning coefficient for the initial well pressure
   real64 m_initialPressureCoefficient;
 
+  /// Rate sign. +1 for injector, -1 for producer
+  real64 m_rateSign;
+
   /// Total rate table
-  TableFunction * m_targetTotalRateTable;
+  TableFunction const * m_targetTotalRateTable;
 
   /// Phase rate table
-  TableFunction * m_targetPhaseRateTable;
+  TableFunction const * m_targetPhaseRateTable;
 
   /// BHP table
-  TableFunction * m_targetBHPTable;
+  TableFunction const * m_targetBHPTable;
+
+  /// Status table
+  TableFunction const * m_statusTable;
 };
 
 ENUM_STRINGS( WellControls::Type,
@@ -387,6 +396,6 @@ ENUM_STRINGS( WellControls::Control,
               "uninitialized" );
 
 
-} //namespace geosx
+} //namespace geos
 
-#endif //GEOSX_PHYSICSSOLVERS_FLUIDFLOW_WELLS_WELLCONTROLS_HPP
+#endif //GEOS_PHYSICSSOLVERS_FLUIDFLOW_WELLS_WELLCONTROLS_HPP

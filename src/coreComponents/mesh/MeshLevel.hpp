@@ -16,8 +16,8 @@
  * @file MeshLevel.hpp
  */
 
-#ifndef GEOSX_MESH_MESHLEVEL_HPP_
-#define GEOSX_MESH_MESHLEVEL_HPP_
+#ifndef GEOS_MESH_MESHLEVEL_HPP_
+#define GEOS_MESH_MESHLEVEL_HPP_
 
 #include "NodeManager.hpp"
 #include "EmbeddedSurfaceNodeManager.hpp"
@@ -25,7 +25,7 @@
 #include "ElementRegionManager.hpp"
 #include "FaceManager.hpp"
 
-namespace geosx
+namespace geos
 {
 class ElementRegionManager;
 
@@ -218,6 +218,19 @@ public:
   { return *m_embSurfEdgeManager; }
 
   /**
+   * @brief Getter for the modification timestamp
+   * @return the timestamp of the last modification
+   */
+  Timestamp getModificationTimestamp() const
+  { return m_modificationTimestamp; }
+
+  /**
+   * @brief Increment the modification timestamp if the mesh has been modified
+   */
+  void modified()
+  { m_modificationTimestamp++; }
+
+  /**
    * @return value of m_isShallowCopy.
    */
   bool isShallowCopy() const
@@ -263,12 +276,15 @@ private:
   /// Manager for embedded surfaces edge data
   EdgeManager * const m_embSurfEdgeManager;
 
+  /// Timestamp of the last modification of the mesh level
+  Timestamp m_modificationTimestamp;
+
   bool const m_isShallowCopy = false;
 
   MeshLevel * const m_shallowParent;
 
 };
 
-} /* namespace geosx */
+} /* namespace geos */
 
-#endif /* GEOSX_MESH_MESHLEVEL_HPP_ */
+#endif /* GEOS_MESH_MESHLEVEL_HPP_ */

@@ -48,17 +48,11 @@ def main():
         pass
 
     curr_time = problem.get_wrapper("Events/time").value(False)
-    print_and_flush(
-        "In python after initialization: current time = {}".format(curr_time[0])
-    )
+    print_and_flush("In python after initialization: current time = {}".format(curr_time[0]))
 
     pygeosx.apply_initial_conditions()
     curr_time = problem.get_wrapper("Events/time").value(False)
-    print_and_flush(
-        "In python after applyInitialConditions: current time = {}".format(
-            curr_time[0]
-        )
-    )
+    print_and_flush("In python after applyInitialConditions: current time = {}".format(curr_time[0]))
 
     while pygeosx.run() != pygeosx.COMPLETED:
         curr_time = problem.get_wrapper("Events/time").value(True)
@@ -66,15 +60,11 @@ def main():
         curr_time[0] += 1e-6
 
     curr_time = problem.get_wrapper("Events/time").value(False)
-    print_and_flush(
-        "In python after after the simulation has ended: current time = {}".format(
-            curr_time[0]
-        )
-    )
+    print_and_flush("In python after after the simulation has ended: current time = {}".format(curr_time[0]))
 
     # node_manager = problem.get_group("domain/MeshBodies/mesh1/Level0/nodeManager")
     # print_group(node_manager)
-    # x = node_manager.get_wrapper("TotalDisplacement")
+    # x = node_manager.get_wrapper("totalDisplacement")
 
 
 if __name__ == "__main__":

@@ -17,12 +17,12 @@
  */
 
 
-#ifndef GEOSX_MAININTERFACE_PROBLEMMANAGER_HPP_
-#define GEOSX_MAININTERFACE_PROBLEMMANAGER_HPP_
+#ifndef GEOS_MAININTERFACE_PROBLEMMANAGER_HPP_
+#define GEOS_MAININTERFACE_PROBLEMMANAGER_HPP_
 
 #include "events/EventManager.hpp"
 
-namespace geosx
+namespace geos
 {
 
 class PhysicsSolverManager;
@@ -41,7 +41,7 @@ class CellBlockManagerABC;
 
 /**
  * @class ProblemManager
- * @brief This is the class handling the operation flow of the problem being ran in GEOSX
+ * @brief This is the class handling the operation flow of the problem being ran in GEOS
  */
 class ProblemManager : public dataRepository::Group
 {
@@ -119,10 +119,11 @@ public:
   void parseInputString( string const & xmlString );
 
   /**
-   * @brief Parses the input xml document
+   * @brief Parses the input xml document. Also add the includes content to the xmlDocument when
+   * `Include` nodes are encountered.
    * @param xmlDocument The parsed xml document handle
    */
-  void parseXMLDocument( xmlWrapper::xmlDocument const & xmlDocument );
+  void parseXMLDocument( xmlWrapper::xmlDocument & xmlDocument );
 
   /**
    * @brief Generates numerical meshes used throughout the code
@@ -272,7 +273,7 @@ public:
    */
   FunctionManager & getFunctionManager()
   {
-    GEOSX_ERROR_IF( m_functionManager == nullptr, "Not initialized." );
+    GEOS_ERROR_IF( m_functionManager == nullptr, "Not initialized." );
     return *m_functionManager;
   }
 
@@ -282,7 +283,7 @@ public:
    */
   FunctionManager const & getFunctionManager() const
   {
-    GEOSX_ERROR_IF( m_functionManager == nullptr, "Not initialized." );
+    GEOS_ERROR_IF( m_functionManager == nullptr, "Not initialized." );
     return *m_functionManager;
   }
 
@@ -292,7 +293,7 @@ public:
    */
   FieldSpecificationManager & getFieldSpecificationManager()
   {
-    GEOSX_ERROR_IF( m_fieldSpecificationManager == nullptr, "Not initialized." );
+    GEOS_ERROR_IF( m_fieldSpecificationManager == nullptr, "Not initialized." );
     return *m_fieldSpecificationManager;
   }
 
@@ -302,7 +303,7 @@ public:
    */
   FieldSpecificationManager const & getFieldSpecificationManager() const
   {
-    GEOSX_ERROR_IF( m_fieldSpecificationManager == nullptr, "Not initialized." );
+    GEOS_ERROR_IF( m_fieldSpecificationManager == nullptr, "Not initialized." );
     return *m_fieldSpecificationManager;
   }
 
@@ -339,7 +340,7 @@ private:
   getDiscretizations() const;
 
   void generateMeshLevel( MeshLevel & meshLevel,
-                          CellBlockManagerABC & cellBlockManager,
+                          CellBlockManagerABC const & cellBlockManager,
                           Group const * const discretization,
                           arrayView1d< string const > const & targetRegions );
 
@@ -368,6 +369,6 @@ private:
   FieldSpecificationManager * m_fieldSpecificationManager;
 };
 
-} /* namespace geosx */
+} /* namespace geos */
 
-#endif /* GEOSX_MAININTERFACE_PROBLEMMANAGER_HPP_ */
+#endif /* GEOS_MAININTERFACE_PROBLEMMANAGER_HPP_ */

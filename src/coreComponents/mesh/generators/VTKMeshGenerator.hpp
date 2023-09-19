@@ -16,30 +16,16 @@
  * @file VTKMeshGenerator.hpp
  */
 
-#ifndef GEOSX_MESH_GENERATORS_VTKMESHGENERATOR_HPP
-#define GEOSX_MESH_GENERATORS_VTKMESHGENERATOR_HPP
+#ifndef GEOS_MESH_GENERATORS_VTKMESHGENERATOR_HPP
+#define GEOS_MESH_GENERATORS_VTKMESHGENERATOR_HPP
 
-#include "codingUtilities/StringUtilities.hpp"
-#include "codingUtilities/Utilities.hpp"
-#include "mesh/ElementType.hpp"
 #include "mesh/generators/ExternalMeshGeneratorBase.hpp"
-#include "mesh/FieldIdentifiers.hpp"
+#include "mesh/generators/VTKUtilities.hpp"
 
-// TODO can we remove this and use unique_ptr to hold mesh?
-#include <vtkSmartPointer.h>
+#include <vtkDataSet.h>
 
-#include <map>
-#include <unordered_map>
-
-class vtkUnstructuredGrid;
-class vtkDataSet;
-class vtkDataArray;
-
-namespace geosx
+namespace geos
 {
-
-class CellBlockManager;
-class ElementRegionManager;
 
 /**
  *  @class VTKMeshGenerator
@@ -48,15 +34,6 @@ class ElementRegionManager;
 class VTKMeshGenerator : public ExternalMeshGeneratorBase
 {
 public:
-
-  /**
-   * @brief Choice of advanced mesh partitioner
-   */
-  enum class PartitionMethod : integer
-  {
-    parmetis, ///< Use ParMETIS library
-    ptscotch, ///< Use PTScotch library
-  };
 
   /**
    * @brief Main constructor for MeshGenerator base class.
@@ -74,7 +51,8 @@ public:
 
   /**
    * @brief Generate the mesh using the VTK library.
-   * @param[in] domain the DomainPartition to be written
+   * @param[inout] cellBlockManager the CellBlockManager that will receive the meshing information
+   * @param[in] partition the number of domain in each direction (x,y,z) for InternalMesh only, not used here
    * @details This method leverages the VTK library to load the meshes.
    * The supported formats are the official VTK ones dedicated to
    * unstructured grids (.vtu, .pvtu and .vtk) and structured grids (.vts, .vti and .pvts).
@@ -108,42 +86,24 @@ public:
    * surfaces of interest, with triangles and/or quads holding an attribute value
    * of 1, 2 or 3, three node sets named "1", "2" and "3" will be instantiated by this method
    */
-  virtual void generateMesh( DomainPartition & domain ) override;
+  virtual void fillCellBlockManager( CellBlockManager & cellBlockManager, array1d< int >  const & partition ) override;
 
-  virtual void importFields( DomainPartition & domain ) const override;
+  void importFieldOnArray( Block block,
+                           string const & blockName,
+                           string const & meshFieldName,
+                           bool isMaterialField,
+                           dataRepository::WrapperBase & wrapper ) const override;
 
   virtual void freeResources() override;
 
-  /**
-   * @brief Type of map used to store cell lists.
-   *
-   * This should be an unordered_map, but some outdated standard libraries on some systems
-   * do not provide std::hash specialization for enums. This is not performance critical though.
-   */
-  using CellMapType = std::map< ElementType, std::unordered_map< int, std::vector< vtkIdType > > >;
-
 private:
-
-  real64 writeNodes( CellBlockManager & cellBlockManager ) const;
-
-  void importNodesets( vtkDataSet & mesh, CellBlockManager & cellBlockManager ) const;
-
-  void writeCells( CellBlockManager & cellBlockManager ) const;
-
-  void writeSurfaces( CellBlockManager & cellBlockManager ) const;
-
-  void importFieldOnCellElementSubRegion( int const regionId,
-                                          ElementType const elemType,
-                                          std::vector< vtkIdType > const & cellIds,
-                                          ElementRegionManager & elemManager,
-                                          arrayView1d< string const > const & fieldNames,
-                                          std::vector< vtkDataArray * > const & srcArrays,
-                                          FieldIdentifiers & fieldsToBeSync ) const;
 
   ///@cond DO_NOT_DOCUMENT
   struct viewKeyStruct
   {
     constexpr static char const * regionAttributeString() { return "regionAttribute"; }
+    constexpr static char const * mainBlockNameString() { return "mainBlockName"; }
+    constexpr static char const * faceBlockNamesString() { return "faceBlocks"; }
     constexpr static char const * nodesetNamesString() { return "nodesetNames"; }
     constexpr static char const * partitionRefinementString() { return "partitionRefinement"; }
     constexpr static char const * partitionMethodString() { return "partitionMethod"; }
@@ -151,14 +111,33 @@ private:
   };
   /// @endcond
 
+  void importVolumicFieldOnArray( string const & cellBlockName,
+                                  string const & meshFieldName,
+                                  bool isMaterialField,
+                                  dataRepository::WrapperBase & wrapper ) const;
+
+  void importSurfacicFieldOnArray( string const & faceBlockName,
+                                   string const & meshFieldName,
+                                   dataRepository::WrapperBase & wrapper ) const;
+
   /**
    * @brief The VTK mesh to be imported into GEOSX.
    * @note We keep this smart pointer as a member for use in @p importFields().
    */
+  // TODO can we use unique_ptr to hold mesh?
   vtkSmartPointer< vtkDataSet > m_vtkMesh;
 
   /// Name of VTK dataset attribute used to mark regions
   string m_attributeName;
+
+  /// Name of the main block to be imported (for multi-block files).
+  string m_mainBlockName;
+
+  /// Name of the face blocks to be imported (for multi-block files).
+  array1d< string > m_faceBlockNames;
+
+  /// Maps the face block name to its vtk mesh instance.
+  std::map< string, vtkSmartPointer< vtkDataSet > > m_faceBlockMeshes;
 
   /// Names of VTK nodesets to import
   string_array m_nodesetNames;
@@ -170,17 +149,12 @@ private:
   integer m_useGlobalIds = 0;
 
   /// Method (library) used to partition the mesh
-  PartitionMethod m_partitionMethod = PartitionMethod::parmetis;
+  vtk::PartitionMethod m_partitionMethod = vtk::PartitionMethod::parmetis;
 
   /// Lists of VTK cell ids, organized by element type, then by region
-  CellMapType m_cellMap;
+  vtk::CellMapType m_cellMap;
 };
 
-/// Strings for VTKMeshGenerator::PartitionMethod enumeration
-ENUM_STRINGS( VTKMeshGenerator::PartitionMethod,
-              "parmetis",
-              "ptscotch" );
+} // namespace geos
 
-} // namespace geosx
-
-#endif /* GEOSX_MESH_GENERATORS_VTKMESHGENERATOR_HPP */
+#endif /* GEOS_MESH_GENERATORS_VTKMESHGENERATOR_HPP */

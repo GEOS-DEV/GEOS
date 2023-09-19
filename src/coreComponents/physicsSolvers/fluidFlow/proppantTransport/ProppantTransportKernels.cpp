@@ -18,19 +18,20 @@
 
 #include "ProppantTransportKernels.hpp"
 
-#include "constitutive/fluid/ParticleFluidBase.hpp"
+#include "constitutive/fluid/singlefluid/ParticleFluidBase.hpp"
 
 #if defined( __INTEL_COMPILER )
 #pragma GCC optimize "O0"
 #endif
 
-namespace geosx
+namespace geos
 {
 
 namespace proppantTransportKernels
 {
 
-GEOSX_HOST_DEVICE
+GEOS_HOST_DEVICE
+inline
 void
 AccumulationKernel::
   compute( localIndex const numComps,
@@ -38,7 +39,7 @@ AccumulationKernel::
            real64 const proppantConcNew,
            arraySlice1d< real64 const > const & componentDens_n,
            arraySlice1d< real64 const > const & componentDensNew,
-           arraySlice1d< real64 const > const & GEOSX_UNUSED_PARAM( dCompDens_dPres ),
+           arraySlice1d< real64 const > const & GEOS_UNUSED_PARAM( dCompDens_dPres ),
            arraySlice2d< real64 const > const & dCompDens_dCompConc,
            real64 const volume,
            real64 const packPoreVolume,
@@ -99,7 +100,7 @@ AccumulationKernel::
           CRSMatrixView< real64, globalIndex const > const & localMatrix,
           arrayView1d< real64 > const & localRhs )
 {
-  forAll< parallelDevicePolicy<> >( size, [=] GEOSX_HOST_DEVICE ( localIndex const ei )
+  forAll< parallelDevicePolicy<> >( size, [=] GEOS_HOST_DEVICE ( localIndex const ei )
   {
     if( elemGhostRank[ei] < 0 )
     {
@@ -155,7 +156,7 @@ AccumulationKernel::
 
 
 template< localIndex MAX_NUM_FLUX_ELEMS >
-GEOSX_HOST_DEVICE
+GEOS_HOST_DEVICE
 void
 FluxKernel::
   computeJunction( localIndex const numElems,
@@ -176,12 +177,12 @@ FluxKernel::
                    arrayView2d< real64 const > const & dVisc_dProppantConc,
                    arrayView3d< real64 const > const & dVisc_dComponentConc,
                    arrayView2d< real64 const > const & fluidDensity,
-                   arrayView2d< real64 const > const & GEOSX_UNUSED_PARAM( dFluidDens_dPres ),
-                   arrayView3d< real64 const > const & GEOSX_UNUSED_PARAM( dFluidDens_dComponentConc ),
+                   arrayView2d< real64 const > const & GEOS_UNUSED_PARAM( dFluidDens_dPres ),
+                   arrayView3d< real64 const > const & GEOS_UNUSED_PARAM( dFluidDens_dComponentConc ),
                    arrayView1d< real64 const > const & settlingFactor,
-                   arrayView1d< real64 const > const & GEOSX_UNUSED_PARAM( dSettlingFactor_dPres ),
+                   arrayView1d< real64 const > const & GEOS_UNUSED_PARAM( dSettlingFactor_dPres ),
                    arrayView1d< real64 const > const & dSettlingFactor_dProppantConc,
-                   arrayView2d< real64 const > const & GEOSX_UNUSED_PARAM( dSettlingFactor_dComponentConc ),
+                   arrayView2d< real64 const > const & GEOS_UNUSED_PARAM( dSettlingFactor_dComponentConc ),
                    arrayView1d< real64 const > const & collisionFactor,
                    arrayView1d< real64 const > const & dCollisionFactor_dProppantConc,
                    arrayView1d< integer const > const & isProppantMobile,
@@ -779,7 +780,7 @@ void FluxKernel::
   constexpr localIndex DOF1 = maxNumFluxElems * constitutive::ParticleFluidBase::MAX_NUM_COMPONENTS;
   constexpr localIndex DOF2 = maxStencilSize * constitutive::ParticleFluidBase::MAX_NUM_COMPONENTS;
 
-  forAll< parallelDevicePolicy<> >( stencilWrapper.size(), [=] GEOSX_HOST_DEVICE ( localIndex const iconn )
+  forAll< parallelDevicePolicy<> >( stencilWrapper.size(), [=] GEOS_HOST_DEVICE ( localIndex const iconn )
   {
     localIndex const numFluxElems = stencilWrapper.numPointsInFlux( iconn );
 
@@ -858,8 +859,8 @@ void FluxKernel::
         {
           globalIndex const globalRow = dofNumber[seri( iconn, i )][sesri( iconn, i )][sei( iconn, i )];
           localIndex const localRow = LvArray::integerConversion< localIndex >( globalRow - rankOffset );
-          GEOSX_ASSERT_GE( localRow, 0 );
-          GEOSX_ASSERT_GE( localMatrix.numRows(), localRow + numDofPerCell );
+          GEOS_ASSERT_GE( localRow, 0 );
+          GEOS_ASSERT_GE( localMatrix.numRows(), localRow + numDofPerCell );
 
           for( localIndex idof = 0; idof < numDofPerCell; ++idof )
           {
@@ -877,7 +878,7 @@ void FluxKernel::
 
 
 template< localIndex MAX_NUM_FLUX_ELEMS >
-GEOSX_HOST_DEVICE
+GEOS_HOST_DEVICE
 void
 FluxKernel::
   computeCellBasedFlux( localIndex const numElems,
@@ -892,7 +893,7 @@ FluxKernel::
                         real64 const (&geometricWeight)[MAX_NUM_FLUX_ELEMS],
                         arrayView2d< real64 > const & cellBasedFlux )
 {
-  GEOSX_UNUSED_VAR( apertureWeight );
+  GEOS_UNUSED_VAR( apertureWeight );
 
   // get averaged edgeDensity and edgeViscosity
   real64 edgeDensity = 0.0;
@@ -959,7 +960,7 @@ void FluxKernel::
 
   ArrayOfArraysView< R1Tensor const > const & cellCenterToEdgeCenters = stencilWrapper.getCellCenterToEdgeCenters();
 
-  forAll< parallelDevicePolicy<> >( stencilWrapper.size(), [=] GEOSX_HOST_DEVICE ( localIndex const iconn )
+  forAll< parallelDevicePolicy<> >( stencilWrapper.size(), [=] GEOS_HOST_DEVICE ( localIndex const iconn )
   {
     localIndex const numFluxElems = stencilWrapper.numPointsInFlux( iconn );
 
@@ -994,7 +995,8 @@ void FluxKernel::
 }
 
 
-GEOSX_HOST_DEVICE
+GEOS_HOST_DEVICE
+inline
 void
 ProppantPackVolumeKernel::
   computeProppantPackVolume( localIndex const numElems,
@@ -1164,7 +1166,7 @@ void ProppantPackVolumeKernel::
 
   ArrayOfArraysView< R1Tensor const > const & cellCenterToEdgeCenters = stencil.getCellCenterToEdgeCenters();
 
-  forAll< parallelDevicePolicy<> >( stencil.size(), [=] GEOSX_HOST_DEVICE ( localIndex const iconn )
+  forAll< parallelDevicePolicy<> >( stencil.size(), [=] GEOS_HOST_DEVICE ( localIndex const iconn )
   {
     localIndex const numFluxElems = seri.sizeOfArray( iconn );
 
@@ -1199,7 +1201,8 @@ void ProppantPackVolumeKernel::
   } );
 }
 
-GEOSX_HOST_DEVICE
+GEOS_HOST_DEVICE
+inline
 void
 ProppantPackVolumeKernel::
   updateProppantPackVolume( localIndex const numElems,
@@ -1289,7 +1292,7 @@ void ProppantPackVolumeKernel::
 
   ArrayOfArraysView< R1Tensor const > const & cellCenterToEdgeCenters = stencil.getCellCenterToEdgeCenters();
 
-  forAll< parallelDevicePolicy<> >( stencil.size(), [=] GEOSX_HOST_DEVICE ( localIndex const iconn )
+  forAll< parallelDevicePolicy<> >( stencil.size(), [=] GEOS_HOST_DEVICE ( localIndex const iconn )
   {
     localIndex const numFluxElems = seri.sizeOfArray( iconn );
 
@@ -1311,4 +1314,4 @@ void ProppantPackVolumeKernel::
 
 } // namespace proppantTransportKernels
 
-} // namespace geosx
+} // namespace geos

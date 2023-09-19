@@ -1,8 +1,7 @@
 <?xml version="1.0" ?>
 
 <Problem>
-  <Solvers
-    gravityVector="{ 0, 0, 0 }">
+  <Solvers>
 
     <MultiphasePoromechanicsReservoir
       name="reservoirSystem"
@@ -22,6 +21,8 @@
       name="multiphasePoroelasticity"
       solidSolverName="linearElasticity"
       flowSolverName="twoPhaseFlow"
+      stabilizationType="Global"
+      stabilizationRegionNames="{ channel, barrier }"
       logLevel="1"
       targetRegions="{ channel, barrier }"/>
 
@@ -50,19 +51,21 @@
       useMass="1">
       <WellControls
         name="wellControls1"
+        logLevel="1"  
         type="producer"
         control="BHP"
         referenceElevation="62.5"
         targetBHP="9e6"
-        targetPhaseRate="100"
+        targetPhaseRateTableName="producerPhaseRateTable"
         targetPhaseName="water"/>
       <WellControls
         name="wellControls2"
+        logLevel="1"      
         type="injector"
         control="totalVolRate"
         referenceElevation="250"
         targetBHP="1.5e7"
-        targetTotalRate="7"
+        targetTotalRateTableName="injectorTotalRateTable"
         useSurfaceConditions="1"
         surfacePressure="101325"
         surfaceTemperature="288.71"
@@ -82,53 +85,81 @@
       nx="{ 3, 3 }"
       ny="{ 3, 3 }"
       nz="{ 2, 2, 2, 2 }"
-      cellBlockNames="{ b00, b01, b02, b03, b04, b05, b06, b07, b08, b09, b10, b11, b12, b13, b14, b15 }"/>
+      cellBlockNames="{ b00, b01, b02, b03, b04, b05, b06, b07, b08, b09, b10, b11, b12, b13, b14, b15 }">
 
-    <InternalWell
-      name="well_producer1"
-      wellRegionName="wellRegion1"
-      wellControlsName="wellControls1"
-      meshName="mesh"
-      polylineNodeCoords="{ { 468.75, 31.25, 62.5 },
-                            { 468.75, 31.25, 0 } }"
-      polylineSegmentConn="{ { 0, 1 } }"
-      radius="0.1"
-      numElementsPerSegment="2">
-      <Perforation
-        name="producer1_perf1"
-        distanceFromHead="15.625"/>
-      <Perforation
-        name="producer1_perf2"
-        distanceFromHead="46.875"/>
-    </InternalWell>
+      <InternalWell
+        name="well_producer1"
+        wellRegionName="wellRegion1"
+        wellControlsName="wellControls1"
+        polylineNodeCoords="{ { 468.75, 31.25, 62.5 },
+                              { 468.75, 31.25, 0 } }"
+        polylineSegmentConn="{ { 0, 1 } }"
+        radius="0.1"
+        numElementsPerSegment="2">
+        <Perforation
+          name="producer1_perf1"
+          distanceFromHead="15.625"/>
+        <Perforation
+          name="producer1_perf2"
+          distanceFromHead="46.875"/>
+      </InternalWell>
 
-    <InternalWell
-      name="well_injector1"
-      logLevel="1"
-      wellRegionName="wellRegion2"
-      wellControlsName="wellControls2"
-      meshName="mesh"
-      polylineNodeCoords="{ { 468.75, 31.25, 250 },
-                            { 468.75, 31.25, 187.5 } }"
-      polylineSegmentConn="{ { 0, 1 } }"
-      radius="0.1"
-      numElementsPerSegment="2">
-      <Perforation
-        name="injector1_perf1"
-        distanceFromHead="15.625"/>
-      <Perforation
-        name="injector1_perf2"
-        distanceFromHead="46.875"/>
-    </InternalWell>
-    
+      <InternalWell
+        name="well_injector1"
+        logLevel="1"
+        wellRegionName="wellRegion2"
+        wellControlsName="wellControls2"
+        polylineNodeCoords="{ { 468.75, 31.25, 250 },
+                              { 468.75, 31.25, 187.5 } }"
+        polylineSegmentConn="{ { 0, 1 } }"
+        radius="0.1"
+        numElementsPerSegment="2">
+        <Perforation
+          name="injector1_perf1"
+          distanceFromHead="15.625"/>
+        <Perforation
+          name="injector1_perf2"
+          distanceFromHead="46.875"/>
+      </InternalWell>
+    </InternalMesh>
   </Mesh>
 
   <Events
+    minTime="-1e11"  
     maxTime="1e7">
+    
     <PeriodicEvent
       name="outputs"
       timeFrequency="1e6"
       target="/Outputs/vtkOutput"/>
+
+    <SoloEvent
+      name="multiphasePoroelasticityPreEquilibrationStep"
+      targetTime="-1e11"
+      beginTime="-1e11"
+      target="/Tasks/multiphasePoroelasticityPreEquilibrationStep"/>
+    <SoloEvent
+      name="solidMechanicsPreEquilibrationStep"
+      targetTime="-1e11"
+      beginTime="-1e11"      
+      target="/Tasks/solidMechanicsPreEquilibrationStep"/>
+    
+    <PeriodicEvent
+      name="solverApplicationsEquilibration"
+      beginTime="-1e11"
+      endTime="0"
+      maxEventDt="1e11"
+      target="/Solvers/reservoirSystem"/>
+
+    <SoloEvent
+      name="multiphasePoroelasticityPostEquilibrationStep"
+      targetTime="0"
+      target="/Tasks/multiphasePoroelasticityPostEquilibrationStep"/>
+    <SoloEvent
+      name="solidMechanicsPostEquilibrationStep"
+      targetTime="0"
+      target="/Tasks/solidMechanicsPostEquilibrationStep"/>
+    
     <PeriodicEvent
       name="linearElasticityStatistics"
       timeFrequency="1e6"
@@ -137,10 +168,18 @@
       name="twoPhaseFlowStatistics"
       timeFrequency="1e6"
       target="/Tasks/twoPhaseFlowStatistics"/>
+    
     <PeriodicEvent
-      name="solverApplications"
+      name="solverApplications1"
+      endTime="1e3"
+      target="/Solvers/reservoirSystem"/>
+    <PeriodicEvent
+      name="solverApplications2"
+      beginTime="1e3"
       maxEventDt="1e6"
       target="/Solvers/reservoirSystem"/>
+
+    
     <PeriodicEvent
       name="restarts"
       timeFrequency="5e6"
@@ -244,21 +283,21 @@
     <FieldSpecification
       name="xconstraint"
       objectPath="nodeManager"
-      fieldName="TotalDisplacement"
+      fieldName="totalDisplacement"
       component="0"
       scale="0.0"
       setNames="{ xneg, xpos }"/>
     <FieldSpecification
       name="yconstraint"
       objectPath="nodeManager"
-      fieldName="TotalDisplacement"
+      fieldName="totalDisplacement"
       component="1"
       scale="0.0"
       setNames="{ yneg, ypos }"/>
     <FieldSpecification
       name="zconstraint"
       objectPath="nodeManager"
-      fieldName="TotalDisplacement"
+      fieldName="totalDisplacement"
       component="2"
       scale="0.0"
       setNames="{ zneg }"/>
@@ -299,7 +338,23 @@
       name="restartOutput"/>
   </Outputs>
 
+  <Functions>
+    <TableFunction
+      name="producerPhaseRateTable"
+      inputVarNames="{ time }"
+      coordinates="{ -1e9, 0, 1e9 }"
+      values="{ 0, 100, 100 }" 
+      interpolation="lower"/>
+    <TableFunction
+      name="injectorTotalRateTable"
+      inputVarNames="{ time }"
+      coordinates="{ -1e9, 0, 1e9 }"
+      values="{ 0, 7, 7 }" 
+      interpolation="lower"/>
+  </Functions>
+  
   <Tasks>
+    
     <SolidMechanicsStatistics
       name="linearElasticityStatistics"
       solidSolverName="linearElasticity"
@@ -310,6 +365,27 @@
       logLevel="1"
       computeCFLNumbers="1"
       computeRegionStatistics="1"/>
+
+    <MultiphasePoromechanicsInitialization 
+      logLevel="1"      
+      name="multiphasePoroelasticityPreEquilibrationStep"
+      performStressInitialization="1"
+      poromechanicsSolverName="multiphasePoroelasticity"/>
+    <SolidMechanicsStateReset 
+      logLevel="2"      
+      name="solidMechanicsPreEquilibrationStep"
+      solidSolverName="linearElasticity"/>
+    
+    <MultiphasePoromechanicsInitialization 
+      logLevel="1"      
+      name="multiphasePoroelasticityPostEquilibrationStep"
+      performStressInitialization="0"
+      poromechanicsSolverName="multiphasePoroelasticity"/>
+    <SolidMechanicsStateReset 
+      logLevel="2"      
+      name="solidMechanicsPostEquilibrationStep"
+      solidSolverName="linearElasticity"/>
+    
   </Tasks>
   
 </Problem>

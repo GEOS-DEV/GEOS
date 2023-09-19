@@ -51,7 +51,7 @@ macro(find_and_register)
                        PATHS ${arg_LIBRARY_DIRECTORIES}
                        REQUIRED ON)
 
-    blt_import_library(NAME ${arg_NAME}
+    blt_register_library(NAME ${arg_NAME}
                          INCLUDES ${${arg_NAME}_INCLUDE_DIR}
                          LIBRARIES ${${arg_NAME}_LIBRARIES} ${arg_EXTRA_LIBRARIES}
                          TREAT_INCLUDES_AS_SYSTEM ON
@@ -60,22 +60,48 @@ macro(find_and_register)
 endmacro(find_and_register)
 
 
+macro(extract_version_from_header)
+    set(singleValueArgs NAME PACKAGE_NAME
+                        PATH HEADER
+                        MAJOR_VERSION_STRING
+                        MINOR_VERSION_STRING
+                        SUBMINOR_VERSION_STRING )
+
+    cmake_parse_arguments(arg
+    "${options}" "${singleValueArgs}" "${multiValueArgs}" ${ARGN})
+
+    file(READ ${arg_HEADER} header_file )
+
+    string(REGEX MATCH "${arg_MAJOR_VERSION_STRING} *([0-9]+)" _ ${header_file})
+    set(ver_major ${CMAKE_MATCH_1})
+
+    string(REGEX MATCH "${arg_MINOR_VERSION_STRING} *([0-9]*)" _ ${header_file})
+    set(ver_minor ".${CMAKE_MATCH_1}")
+
+    string(REGEX MATCH "${arg_SUBMINOR_VERSION_STRING} *([0-9]*)" _ ${header_file})
+    set(ver_patch ".${CMAKE_MATCH_1}")
+
+    set( ${arg_NAME}_VERSION "${ver_major}${ver_minor}${ver_patch}" CACHE STRING "" FORCE  )
+
+    message( " ----> ${arg_NAME}_VERSION = ${${arg_NAME}_VERSION}")
+
+endmacro( extract_version_from_header)
+
 set(thirdPartyLibs "")
 
 ################################
 # BLAS/LAPACK
 ################################
-
 include(cmake/thirdparty/FindMathLibraries.cmake)
 
 blt_import_library(NAME blas
-                     TREAT_INCLUDES_AS_SYSTEM ON
-                     LIBRARIES ${BLAS_LIBRARIES})
+                   TREAT_INCLUDES_AS_SYSTEM ON
+                   LIBRARIES ${BLAS_LIBRARIES})
 
 blt_import_library(NAME lapack
-                     DEPENDS_ON blas
-                     TREAT_INCLUDES_AS_SYSTEM ON
-                     LIBRARIES ${LAPACK_LIBRARIES})
+                   DEPENDS_ON blas
+                   TREAT_INCLUDES_AS_SYSTEM ON
+                   LIBRARIES ${LAPACK_LIBRARIES})
 
 ################################
 # Intel MKL
@@ -110,6 +136,44 @@ else()
 endif()
 
 ################################
+# Conduit
+################################
+if(DEFINED CONDUIT_DIR)
+    message(STATUS "CONDUIT_DIR = ${CONDUIT_DIR}")
+
+    find_package(Conduit REQUIRED
+                 PATHS ${CONDUIT_DIR}/lib/cmake
+                 NO_DEFAULT_PATH)
+
+    message( " ----> Conduit_VERSION = ${Conduit_VERSION}")
+
+
+    set(CONDUIT_TARGETS conduit conduit_relay conduit_blueprint)
+    foreach(targetName ${CONDUIT_TARGETS} )
+        get_target_property(includeDirs
+                            ${targetName}
+                            INTERFACE_INCLUDE_DIRECTORIES)
+
+        set_property(TARGET ${targetName}
+                     APPEND PROPERTY INTERFACE_SYSTEM_INCLUDE_DIRECTORIES
+                     ${includeDirs})
+    endforeach()
+
+    # Conduit uses our HDF5 and we need to propagate the above fix.
+    # get_target_property(CONDUIT_RELAY_INTERFACE_INCLUDE_DIRECTORIES conduit_relay INTERFACE_INCLUDE_DIRECTORIES)
+    # list(REMOVE_ITEM CONDUIT_RELAY_INTERFACE_INCLUDE_DIRECTORIES /usr/include)
+    # set_target_properties(conduit_relay PROPERTIES INTERFACE_INCLUDE_DIRECTORIES ${CONDUIT_RELAY_INTERFACE_INCLUDE_DIRECTORIES})
+
+    # get_target_property(CONDUIT_RELAY_INTERFACE_SYSTEM_INCLUDE_DIRECTORIES conduit_relay INTERFACE_SYSTEM_INCLUDE_DIRECTORIES)
+    # list(REMOVE_ITEM CONDUIT_RELAY_INTERFACE_SYSTEM_INCLUDE_DIRECTORIES /usr/include)
+    # set_target_properties(conduit_relay PROPERTIES INTERFACE_SYSTEM_INCLUDE_DIRECTORIES ${CONDUIT_RELAY_INTERFACE_SYSTEM_INCLUDE_DIRECTORIES})
+
+    set(thirdPartyLibs ${thirdPartyLibs} conduit::conduit)
+else()
+    message(FATAL_ERROR "GEOSX requires conduit, set CONDUIT_DIR to the conduit installation directory.")
+endif()
+
+################################
 # HDF5
 ################################
 if(DEFINED HDF5_DIR)
@@ -129,6 +193,11 @@ if(DEFINED HDF5_DIR)
                        LIBRARIES ${HDF5_LIBRARIES}
                        TREAT_INCLUDES_AS_SYSTEM ON)
 
+    file(READ "${HDF5_DIR}/include/H5public.h" header_file )
+    string(REGEX MATCH "version: *([0-9]+.[0-9]+.[0-9]+)" _ ${header_file})
+    set( HDF5_VERSION "${CMAKE_MATCH_1}" CACHE STRING "" FORCE )
+    message( " ----> HDF5 version ${HDF5_VERSION}")
+
     set(ENABLE_HDF5 ON CACHE BOOL "")
     set(thirdPartyLibs ${thirdPartyLibs} hdf5)
 else()
@@ -136,44 +205,9 @@ else()
 endif()
 
 ################################
-# Conduit
-################################
-if(DEFINED CONDUIT_DIR)
-    message(STATUS "CONDUIT_DIR = ${CONDUIT_DIR}")
-
-    find_package(Conduit REQUIRED
-                 PATHS ${CONDUIT_DIR}/lib/cmake
-                 NO_DEFAULT_PATH)
-
-    set(CONDUIT_TARGETS conduit conduit_relay conduit_blueprint)
-    foreach(targetName ${CONDUIT_TARGETS} )
-        get_target_property(includeDirs
-                            ${targetName}
-                            INTERFACE_INCLUDE_DIRECTORIES)
-
-        set_property(TARGET ${targetName}
-                     APPEND PROPERTY INTERFACE_SYSTEM_INCLUDE_DIRECTORIES
-                     ${includeDirs})
-    endforeach()
-
-    # Conduit uses our HDF5 and we need to propagate the above fix.
-    get_target_property(CONDUIT_RELAY_INTERFACE_INCLUDE_DIRECTORIES conduit_relay INTERFACE_INCLUDE_DIRECTORIES)
-    list(REMOVE_ITEM CONDUIT_RELAY_INTERFACE_INCLUDE_DIRECTORIES /usr/include)
-    set_target_properties(conduit_relay PROPERTIES INTERFACE_INCLUDE_DIRECTORIES ${CONDUIT_RELAY_INTERFACE_INCLUDE_DIRECTORIES})
-
-    get_target_property(CONDUIT_RELAY_INTERFACE_SYSTEM_INCLUDE_DIRECTORIES conduit_relay INTERFACE_SYSTEM_INCLUDE_DIRECTORIES)
-    list(REMOVE_ITEM CONDUIT_RELAY_INTERFACE_SYSTEM_INCLUDE_DIRECTORIES /usr/include)
-    set_target_properties(conduit_relay PROPERTIES INTERFACE_SYSTEM_INCLUDE_DIRECTORIES ${CONDUIT_RELAY_INTERFACE_SYSTEM_INCLUDE_DIRECTORIES})
-
-    set(thirdPartyLibs ${thirdPartyLibs} conduit::conduit)
-else()
-    message(FATAL_ERROR "GEOSX requires conduit, set CONDUIT_DIR to the conduit installation directory.")
-endif()
-
-################################
 # SILO
 ################################
-if(DEFINED SILO_DIR)
+if(DEFINED SILO_DIR AND ENABLE_SILO)
     message(STATUS "SILO_DIR = ${SILO_DIR}")
 
     find_and_register(NAME silo
@@ -183,10 +217,11 @@ if(DEFINED SILO_DIR)
                       LIBRARIES siloh5
                       DEPENDS hdf5)
 
+
     set(ENABLE_SILO ON CACHE BOOL "")
     set(thirdPartyLibs ${thirdPartyLibs} silo)
 else()
-    message(FATAL_ERROR "GEOSX requires Silo, set SILO_DIR to the Silo installation directory.")
+    message(STATUS "Not using SILO.")
 endif()
 
 ################################
@@ -199,10 +234,25 @@ if(DEFINED PUGIXML_DIR)
                  PATHS ${PUGIXML_DIR}
                  NO_DEFAULT_PATH)
 
+    message( " ----> pugixml_VERSION = ${pugixml_VERSION}")
+
     set(ENABLE_PUGIXML ON CACHE BOOL "")
-    set(thirdPartyLibs ${thirdPartyLibs} pugixml)
+    set(thirdPartyLibs ${thirdPartyLibs} pugixml )
 else()
     message(FATAL_ERROR "GEOSX requires pugixml, set PUGIXML_DIR to the pugixml installation directory.")
+endif()
+
+################################
+# CAMP ( required before raja on crusher / using spack installed tpls )
+################################
+if(DEFINED CAMP_DIR)
+    if( CAMP_STANDALONE )
+        # Should be found by raja, but it is possible for spack to misconfig raja so we need to find it
+        message(STATUS "CAMP_DIR = ${CAMP_DIR}")
+        find_package(camp REQUIRED PATHS ${CAMP_DIR} NO_DEFAULT_PATH)
+        get_target_property(CAMP_INCLUDE_DIRS camp INTERFACE_INCLUDE_DIRECTORIES)
+        set_target_properties(camp PROPERTIES INTERFACE_SYSTEM_INCLUDE_DIRECTORIES "${CAMP_INCLUDE_DIRS}")
+    endif( )
 endif()
 
 ################################
@@ -214,14 +264,27 @@ if(DEFINED RAJA_DIR)
                  PATHS ${RAJA_DIR}
                  NO_DEFAULT_PATH)
 
-    get_target_property(RAJA_INCLUDE_DIRS RAJA INTERFACE_INCLUDE_DIRECTORIES)
-    set_target_properties(RAJA
-                          PROPERTIES INTERFACE_SYSTEM_INCLUDE_DIRECTORIES "${RAJA_INCLUDE_DIRS}")
+    message( " ----> RAJA_VERSION=${RAJA_VERSION}")
 
+    get_target_property(RAJA_INCLUDE_DIRS RAJA INTERFACE_INCLUDE_DIRECTORIES)
+    set_target_properties(RAJA PROPERTIES INTERFACE_SYSTEM_INCLUDE_DIRECTORIES "${RAJA_INCLUDE_DIRS}")
     set(ENABLE_RAJA ON CACHE BOOL "")
     set(thirdPartyLibs ${thirdPartyLibs} RAJA )
 else()
     message(FATAL_ERROR "GEOSX requires RAJA, set RAJA_DIR to the RAJA installation directory.")
+endif()
+
+################################
+# CAMP ( required after raja on lassen / using non-spack installed tpls )
+################################
+if(DEFINED CAMP_DIR)
+    if( NOT DEFINED CAMP_STANDALONE OR NOT CAMP_STANDALONE )
+        # Should be found by raja, but it is possible for spack to misconfig raja so we need to find it
+        message(STATUS "CAMP_DIR = ${CAMP_DIR}")
+        find_package(camp REQUIRED PATHS ${CAMP_DIR} NO_DEFAULT_PATH)
+        get_target_property(CAMP_INCLUDE_DIRS camp INTERFACE_INCLUDE_DIRECTORIES)
+        set_target_properties(camp PROPERTIES INTERFACE_SYSTEM_INCLUDE_DIRECTORIES "${CAMP_INCLUDE_DIRS}")
+    endif()
 endif()
 
 ################################
@@ -234,11 +297,14 @@ if(DEFINED UMPIRE_DIR)
                  PATHS ${UMPIRE_DIR}
                  NO_DEFAULT_PATH)
 
+    message( " ----> umpire_VERSION=${umpire_VERSION}")
+
     set(ENABLE_UMPIRE ON CACHE BOOL "")
     set(thirdPartyLibs ${thirdPartyLibs} umpire)
 else()
     message(FATAL_ERROR "GEOSX requires Umpire, set UMPIRE_DIR to the Umpire installation directory.")
 endif()
+
 
 ################################
 # CHAI
@@ -249,6 +315,8 @@ if(DEFINED CHAI_DIR)
     find_package(chai REQUIRED
                  PATHS ${CHAI_DIR}
                  NO_DEFAULT_PATH)
+
+    message( " ----> chai_VERSION=${chai_VERSION}")
 
     get_target_property(CHAI_INCLUDE_DIRS chai INTERFACE_INCLUDE_DIRECTORIES)
     set_target_properties(chai
@@ -270,15 +338,26 @@ if(DEFINED ADIAK_DIR)
                  PATHS ${ADIAK_DIR}
                  NO_DEFAULT_PATH)
 
-    set_property(TARGET adiak
+    # Header file provides incorrect version 0.3.0
+    message( " ----> adiak_VERSION = 0.2.2")
+
+    set(adiak_target "")
+    if(TARGET adiak::adiak)
+      set(adiak_target ${adiak_target} adiak::adiak)
+    endif()
+    if(TARGET adiak)
+      set(adiak_target ${adiak_target} adiak)
+    endif()
+
+    set_property(TARGET ${adiak_target}
                  APPEND PROPERTY INTERFACE_SYSTEM_INCLUDE_DIRECTORIES
                  ${adiak_INCLUDE_DIR} )
-    set_property(TARGET adiak
+    set_property(TARGET ${adiak_target}
                  APPEND PROPERTY INTERFACE_INCLUDE_DIRECTORIES
                  ${adiak_INCLUDE_DIR} )
 
     set(ENABLE_ADIAK ON CACHE BOOL "")
-    set(thirdPartyLibs ${thirdPartyLibs} adiak)
+    set(thirdPartyLibs ${thirdPartyLibs} ${adiak_target})
 else()
     if(ENABLE_ADIAK)
         message(WARNING "ENABLE_ADIAK is ON but ADIAK_DIR isn't defined.")
@@ -297,6 +376,12 @@ if(DEFINED CALIPER_DIR)
     find_package(caliper REQUIRED
                  PATHS ${CALIPER_DIR}
                  NO_DEFAULT_PATH)
+
+    extract_version_from_header( NAME caliper
+                                 HEADER "${CALIPER_DIR}/include/caliper/caliper-config.h"
+                                 MAJOR_VERSION_STRING "CALIPER_MAJOR_VERSION"
+                                 MINOR_VERSION_STRING "CALIPER_MINOR_VERSION"
+                                 SUBMINOR_VERSION_STRING "CALIPER_PATCH_VERSION")
 
     set_property(TARGET caliper
                  APPEND PROPERTY INTERFACE_SYSTEM_INCLUDE_DIRECTORIES
@@ -352,6 +437,13 @@ if(DEFINED METIS_DIR)
                       HEADER metis.h
                       LIBRARIES metis)
 
+    extract_version_from_header( NAME METIS
+                                 HEADER "${METIS_DIR}/include/metis.h"
+                                 MAJOR_VERSION_STRING "METIS_VER_MAJOR"
+                                 MINOR_VERSION_STRING "METIS_VER_MINOR"
+                                 SUBMINOR_VERSION_STRING "METIS_VER_SUBMINOR")
+
+
     set(ENABLE_METIS ON CACHE BOOL "")
     set(thirdPartyLibs ${thirdPartyLibs} metis)
 else()
@@ -375,6 +467,12 @@ if(DEFINED PARMETIS_DIR)
                       HEADER parmetis.h
                       LIBRARIES parmetis
                       DEPENDS metis)
+
+    extract_version_from_header( NAME PARAMETIS
+                                 HEADER "${PARMETIS_DIR}/include/parmetis.h"
+                                 MAJOR_VERSION_STRING "PARMETIS_MAJOR_VERSION"
+                                 MINOR_VERSION_STRING "PARMETIS_MINOR_VERSION"
+                                 SUBMINOR_VERSION_STRING "PARMETIS_SUBMINOR_VERSION")
 
     set(ENABLE_PARMETIS ON CACHE BOOL "")
     set(thirdPartyLibs ${thirdPartyLibs} parmetis)
@@ -406,6 +504,12 @@ if(DEFINED SCOTCH_DIR)
                       HEADER ptscotch.h
                       LIBRARIES ptscotch ptscotcherr )
 
+    extract_version_from_header( NAME scotch
+                                 HEADER "${SCOTCH_DIR}/include/scotch.h"
+                                 MAJOR_VERSION_STRING "SCOTCH_VERSION"
+                                 MINOR_VERSION_STRING "SCOTCH_RELEASE"
+                                 SUBMINOR_VERSION_STRING "SCOTCH_PATCHLEVEL")
+
     set(ENABLE_SCOTCH ON CACHE BOOL "")
     set(thirdPartyLibs ${thirdPartyLibs} scotch ptscotch)
 else()
@@ -429,6 +533,13 @@ if(DEFINED SUPERLU_DIST_DIR)
                       HEADER superlu_defs.h
                       LIBRARIES superlu_dist
                       DEPENDS parmetis blas lapack)
+
+
+    extract_version_from_header( NAME superlu_dist
+                                 HEADER "${SUPERLU_DIST_DIR}/include/superlu_defs.h"
+                                 MAJOR_VERSION_STRING "SUPERLU_DIST_MAJOR_VERSION"
+                                 MINOR_VERSION_STRING "SUPERLU_DIST_MINOR_VERSION"
+                                 SUBMINOR_VERSION_STRING "SUPERLU_DIST_PATCH_VERSION")
 
     set(ENABLE_SUPERLU_DIST ON CACHE BOOL "")
     set(thirdPartyLibs ${thirdPartyLibs} superlu_dist)
@@ -454,6 +565,12 @@ if(DEFINED SUITESPARSE_DIR)
                       LIBRARIES umfpack
                       DEPENDS blas lapack)
 
+    extract_version_from_header( NAME suitesparse
+                                 HEADER "${SUITESPARSE_DIR}/include/umfpack.h"
+                                 MAJOR_VERSION_STRING "UMFPACK_MAIN_VERSION"
+                                 MINOR_VERSION_STRING "UMFPACK_SUB_VERSION"
+                                 SUBMINOR_VERSION_STRING "UMFPACK_SUBSUB_VERSION")
+
     set(ENABLE_SUITESPARSE ON CACHE BOOL "")
     set(thirdPartyLibs ${thirdPartyLibs} suitesparse)
 else()
@@ -471,11 +588,19 @@ endif()
 if(DEFINED HYPRE_DIR AND ENABLE_HYPRE)
     message(STATUS "HYPRE_DIR = ${HYPRE_DIR}")
 
-    set( HYPRE_DEPENDS blas lapack superlu_dist )
-    if( ENABLE_HYPRE_CUDA )
-        set( EXTRA_LIBS ${CUDA_cusparse_LIBRARY} ${CUDA_cublas_LIBRARY} ${CUDA_curand_LIBRARY} )
-        list( APPEND HYPRE_DEPENDS umpire )
+    set( HYPRE_DEPENDS blas lapack umpire)
+    if( ENABLE_SUPERLU_DIST )
+        set( HYPRE_DEPENDS ${HYPRE_DEPENDS} superlu_dist )
     endif()
+    if( ${ENABLE_HYPRE_DEVICE} STREQUAL "CUDA" )
+        set( EXTRA_LIBS ${CUDA_cusparse_LIBRARY} ${CUDA_cublas_LIBRARY} ${CUDA_curand_LIBRARY} )
+    elseif( ${ENABLE_HYPRE_DEVICE} STREQUAL "HIP" )
+        find_package( rocblas REQUIRED )
+        find_package( rocsolver REQUIRED )
+        find_package( rocsparse REQUIRED )
+        find_package( rocrand REQUIRED )
+        set( HYPRE_DEPENDS ${HYPRE_DEPENDS} roc::rocblas roc::rocsparse roc::rocsolver roc::rocrand )
+    endif( )
 
     find_and_register(NAME hypre
                       INCLUDE_DIRECTORIES ${HYPRE_DIR}/include
@@ -487,21 +612,28 @@ if(DEFINED HYPRE_DIR AND ENABLE_HYPRE)
 
 
     # Prepend Hypre to link flags, fix for Umpire appearing before Hypre on the link line
-    if (NOT CMAKE_HOST_APPLE)
-      blt_add_target_link_flags (TO hypre FLAGS "-Wl,--whole-archive ${HYPRE_DIR}/lib/libHYPRE.a -Wl,--no-whole-archive")
-    endif()
+    # if (NOT CMAKE_HOST_APPLE)
+    #   blt_add_target_link_flags (TO hypre FLAGS "-Wl,--whole-archive ${HYPRE_DIR}/lib/libHYPRE.a -Wl,--no-whole-archive")
+    # endif()
 
-    # if( ENABLE_CUDA AND ( NOT ENABLE_HYPRE_CUDA ) )
+    file(READ ${HYPRE_DIR}/include/HYPRE_config.h hypre_config)
+    string(REGEX MATCH "HYPRE_RELEASE_VERSION \"([0-9]*).([0-9]*).([0-9]*)\"" hypre_version ${hypre_config} )
+    set( HYPRE_VERSION_MAJOR ${CMAKE_MATCH_1} )
+    set( HYPRE_VERSION_MINOR ${CMAKE_MATCH_2} )
+    set( HYPRE_VERSION_PATCH ${CMAKE_MATCH_3} )
+    message(STATUS "Hypre version parsed as: ${HYPRE_VERSION_MAJOR}.${HYPRE_VERSION_MINOR}.${HYPRE_VERSION_PATCH}" )
+
+    # if( ENABLE_CUDA AND ( NOT ${ENABLE_HYPRE_DEVICE} STREQUAL "CUDA" ) )
     #   set(ENABLE_HYPRE OFF CACHE BOOL "" FORCE)
     #   if( GEOSX_LA_INTERFACE STREQUAL "Hypre")
-    #     message( FATAL_ERROR "Hypre LAI selected, but ENABLE_HYPRE_CUDA not ON while ENABLE_CUDA is ON.")
+    #     message( FATAL_ERROR "Hypre LAI selected, but ENABLE_HYPRE_DEVICE not 'CUDA' while ENABLE_CUDA is ON.")
     #   endif()
     # else()
     #   set(ENABLE_HYPRE ON CACHE BOOL "")
     # endif()
 
     set(ENABLE_HYPRE ON CACHE BOOL "")
-    set(thirdPartyLibs ${thirdPartyLibs} hypre)
+    set(thirdPartyLibs ${thirdPartyLibs} hypre ${HYPRE_DEPENDS} )
 else()
     if(ENABLE_HYPRE)
         message(WARNING "ENABLE_HYPRE is ON but HYPRE_DIR isn't defined.")
@@ -530,7 +662,7 @@ if(DEFINED TRILINOS_DIR AND ENABLE_TRILINOS)
 
     # This conditional is due to the lack of mixedInt support on hypre GPU.
     # This can be removed when support is added into hypre.
-    if( NOT ENABLE_HYPRE_CUDA )
+    if( NOT ${ENABLE_HYPRE_DEVICE} STREQUAL "HIP" )
         set(ENABLE_TRILINOS ON CACHE BOOL "")
     endif()
     set(thirdPartyLibs ${thirdPartyLibs} trilinos)
@@ -549,12 +681,17 @@ endif()
 if(DEFINED PETSC_DIR AND ENABLE_PETSC)
     message(STATUS "PETSC_DIR = ${PETSC_DIR}")
 
+    set( PETSC_DEPENDS metis blas lapack )
+    if( ${ENABLE_SUPERLU_DIST} )
+        set( PETSC_DEPENDS ${PETSC_DEPENDS} superlu_dist )
+    endif()
+
     find_and_register(NAME petsc
                       INCLUDE_DIRECTORIES ${PETSC_DIR}/include
                       LIBRARY_DIRECTORIES ${PETSC_DIR}/lib
                       HEADER petscvec.h
                       LIBRARIES petsc
-                      DEPENDS metis superlu_dist blas lapack)
+                      DEPENDS ${PETSC_DEPENDS})
 
     set(ENABLE_PETSC ON CACHE BOOL "")
     set(thirdPartyLibs ${thirdPartyLibs} petsc)
@@ -566,7 +703,6 @@ else()
     set(ENABLE_PETSC OFF CACHE BOOL "" FORCE)
     message(STATUS "Not using PETSc")
 endif()
-
 ################################
 # VTK
 ################################
@@ -575,6 +711,8 @@ if(DEFINED VTK_DIR)
     find_package(VTK REQUIRED
                  PATHS ${VTK_DIR}
                  NO_DEFAULT_PATH)
+
+    message( " ----> VTK_VERSION=${VTK_VERSION}")
 
     set( VTK_TARGETS
          VTK::FiltersParallelDIY2
@@ -589,11 +727,11 @@ if(DEFINED VTK_DIR)
 
         set_property(TARGET ${targetName}
                      APPEND PROPERTY INTERFACE_SYSTEM_INCLUDE_DIRECTORIES
-                     ${includeDirs})
+                     ${includeDirs} )
     endforeach()
 
     set(ENABLE_VTK ON CACHE BOOL "")
-    set(thirdPartyLibs ${thirdPartyLibs} vtk)
+    set(thirdPartyLibs ${thirdPartyLibs} VTK)
 else()
     if(ENABLE_VTK)
         message(WARNING "ENABLE_VTK is ON but VTK_DIR isn't defined.")
@@ -613,8 +751,17 @@ if(DEFINED FMT_DIR)
                  PATHS ${FMT_DIR}
                  NO_DEFAULT_PATH)
 
+    message( " ----> fmt_VERSION = ${fmt_VERSION}")
+
+    get_target_property(includeDirs fmt::fmt INTERFACE_INCLUDE_DIRECTORIES)
+
+    set_property(TARGET fmt::fmt
+                 APPEND PROPERTY INTERFACE_SYSTEM_INCLUDE_DIRECTORIES
+                 ${includeDirs})
+
     set(ENABLE_FMT ON CACHE BOOL "")
-    set(thirdPartyLibs ${thirdPartyLibs} fmt::fmt)
+
+    set(thirdPartyLibs ${thirdPartyLibs} fmt::fmt )
 else()
     message(FATAL_ERROR "GEOSX requires {fmt}, set FMT_DIR to the {fmt} installation directory.")
 endif()
@@ -652,9 +799,19 @@ endif()
 ################################
 # Python
 ################################
+message(" CMAKE_VERSION ${CMAKE_VERSION} ")
+if( ${CMAKE_VERSION} VERSION_LESS "3.19" )
+    set( PYTHON_AND_VERSION Python3 )
+    set( PYTHON_OPTIONAL_COMPONENTS)
+else()
+    set( PYTHON_AND_VERSION Python3 3.7.0...3.11.2 )
+    set( PYTHON_OPTIONAL_COMPONENTS OPTIONAL_COMPONENTS Development NumPy)
+endif()
 if(ENABLE_PYGEOSX)
-    find_package(Python3 REQUIRED
+    find_package(${PYTHON_AND_VERSION} REQUIRED
                  COMPONENTS Development NumPy)
+
+    message( " ----> $Python3_VERSION = ${Python3_VERSION}")
 
     message(STATUS "Python3_EXECUTABLE=${Python3_EXECUTABLE}")
     message(STATUS "Python3_INCLUDE_DIRS = ${Python3_INCLUDE_DIRS}")
@@ -670,6 +827,8 @@ if(ENABLE_PYGEOSX)
     set(thirdPartyLibs ${thirdPartyLibs} Python3::Python Python3::NumPy)
 else()
     message(STATUS "Not building pygeosx.")
+    find_package(${PYTHON_AND_VERSION} ${PYTHON_OPTIONAL_COMPONENTS})
+    message(STATUS "Python3_EXECUTABLE=${Python3_EXECUTABLE}")
 endif()
 
 ################################
@@ -681,12 +840,37 @@ if(NOT ENABLE_${upper_LAI})
 endif()
 option(GEOSX_LA_INTERFACE_${upper_LAI} "${upper_LAI} LA interface is selected" ON)
 
+################################
+# Fesapi
+################################
+# if(DEFINED FESAPI_DIR)
+#     message(STATUS "FESAPI_DIR = ${FESAPI_DIR}")
+
+#     find_and_register(NAME FesapiCpp
+#                  INCLUDE_DIRECTORIES ${FESAPI_DIR}/include
+#                  LIBRARY_DIRECTORIES ${FESAPI_DIR}/lib
+#                  HEADER fesapi/nsDefinitions.h
+#                  LIBRARIES FesapiCpp
+#                  DEPENDS hdf5)
+
+#     set(FESAPI_DIR ON CACHE BOOL "")
+#     set(thirdPartyLibs ${thirdPartyLibs} FesapiCpp)
+# else()
+    message(STATUS "Not using Fesapi")
+# endif()
+
+message(STATUS "thirdPartyLibs = ${thirdPartyLibs}")
+
 ###############################
 # NvToolExt
 ###############################
 if ( ENABLE_CUDA AND ENABLE_CUDA_NVTOOLSEXT )
   find_package(CUDAToolkit REQUIRED)
+
+  message( " ----> $CUDAToolkit_VERSION = ${CUDAToolkit_VERSION}")
+
   set(thirdPartyLibs ${thirdPartyLibs} CUDA::nvToolsExt)
 endif()
 
 message(STATUS "thirdPartyLibs = ${thirdPartyLibs}")
+

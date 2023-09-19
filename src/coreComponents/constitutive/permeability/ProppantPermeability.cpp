@@ -18,9 +18,9 @@
 
 #include "ProppantPermeability.hpp"
 
-#include "constitutive/permeability/PermeabilityExtrinsicData.hpp"
+#include "constitutive/permeability/PermeabilityFields.hpp"
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -48,8 +48,8 @@ ProppantPermeability::ProppantPermeability( string const & name, Group * const p
 
   registerWrapper( viewKeyStruct::proppantPackPermeabilityString(), &m_proppantPackPermeability );
 
-  registerExtrinsicData( extrinsicMeshData::permeability::dPerm_dDispJump{}, &m_dPerm_dDispJump );
-  registerExtrinsicData( extrinsicMeshData::permeability::permeabilityMultiplier{}, &m_permeabilityMultiplier );
+  registerField( fields::permeability::dPerm_dDispJump{}, &m_dPerm_dDispJump );
+  registerField( fields::permeability::permeabilityMultiplier{}, &m_permeabilityMultiplier );
 
 }
 
@@ -82,4 +82,4 @@ REGISTER_CATALOG_ENTRY( ConstitutiveBase, ProppantPermeability, string const &, 
 
 } /* namespace constitutive */
 
-} /* namespace geosx */
+} /* namespace geos */

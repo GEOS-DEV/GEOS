@@ -13,8 +13,8 @@ build:
     python: "3.7"
   jobs:
     post_install:
-    - npm install -g npm
-    - npm install -g @mermaid-js/mermaid-cli
+    - npm install -g npm@9.8.1
+    - npm install -g @mermaid-js/mermaid-cli@10.3.1
 
 # Set requirements to build the docs
 python:
@@ -31,7 +31,6 @@ formats: all
 
 submodules:
   include: 
-  - src/coreComponents/LvArray
   - src/coreComponents/constitutive/PVTPackage
   - integratedTests
   recursive: true

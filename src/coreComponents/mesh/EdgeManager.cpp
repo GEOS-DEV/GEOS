@@ -27,7 +27,7 @@
 
 #include "mesh/generators/CellBlockUtilities.hpp"
 
-namespace geosx
+namespace geos
 {
 using namespace dataRepository;
 
@@ -56,7 +56,7 @@ void EdgeManager::resize( localIndex const newSize )
 
 void EdgeManager::buildSets( NodeManager const & nodeManager )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   // Make sets from node sets.
   auto const & nodeSets = nodeManager.sets().wrappers();
@@ -93,11 +93,13 @@ void EdgeManager::buildEdges( localIndex const numNodes,
   resize( numEdges );
 }
 
-void EdgeManager::setGeometricalRelations( CellBlockManagerABC const & cellBlockManager )
+void EdgeManager::setGeometricalRelations( CellBlockManagerABC const & cellBlockManager, bool baseMeshLevel )
 {
-  GEOSX_MARK_FUNCTION;
-
-  resize( cellBlockManager.numEdges() );
+  GEOS_MARK_FUNCTION;
+  if( baseMeshLevel )
+  {
+    resize( cellBlockManager.numEdges() );
+  }
 
   m_toNodesRelation.base() = cellBlockManager.getEdgeToNodes();
   m_toFacesRelation.base().assimilate< parallelHostPolicy >( cellBlockManager.getEdgeToFaces(),
@@ -169,7 +171,7 @@ void EdgeManager::setIsExternal( FaceManager const & faceManager )
 ArrayOfSets< globalIndex >
 EdgeManager::extractMapFromObjectForAssignGlobalIndexNumbers( ObjectManagerBase const & nodeManager )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   localIndex const numEdges = size();
 
@@ -239,15 +241,15 @@ localIndex EdgeManager::packUpDownMapsImpl( buffer_unit_type * & buffer,
 localIndex EdgeManager::unpackUpDownMaps( buffer_unit_type const * & buffer,
                                           localIndex_array & packList,
                                           bool const overwriteUpMaps,
-                                          bool const GEOSX_UNUSED_PARAM( overwriteDownMaps ) )
+                                          bool const GEOS_UNUSED_PARAM( overwriteDownMaps ) )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   localIndex unPackedSize = 0;
 
   string nodeListString;
   unPackedSize += bufferOps::Unpack( buffer, nodeListString );
-  GEOSX_ERROR_IF_NE( nodeListString, viewKeyStruct::nodeListString() );
+  GEOS_ERROR_IF_NE( nodeListString, viewKeyStruct::nodeListString() );
 
   unPackedSize += bufferOps::Unpack( buffer,
                                      m_toNodesRelation,
@@ -258,7 +260,7 @@ localIndex EdgeManager::unpackUpDownMaps( buffer_unit_type const * & buffer,
 
   string faceListString;
   unPackedSize += bufferOps::Unpack( buffer, faceListString );
-  GEOSX_ERROR_IF_NE( faceListString, viewKeyStruct::faceListString() );
+  GEOS_ERROR_IF_NE( faceListString, viewKeyStruct::faceListString() );
 
   unPackedSize += bufferOps::Unpack( buffer,
                                      m_toFacesRelation,
@@ -295,4 +297,4 @@ void EdgeManager::depopulateUpMaps( std::set< localIndex > const & receivedEdges
 }
 
 
-} /// namespace geosx
+} /// namespace geos

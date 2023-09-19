@@ -16,18 +16,18 @@
  * @file PhaseFieldDamageKernels.hpp
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_SIMPLEPDE_PHASEFIELDDAMAGEKERNELS_HPP_
-#define GEOSX_PHYSICSSOLVERS_SIMPLEPDE_PHASEFIELDDAMAGEKERNELS_HPP_
+#ifndef GEOS_PHYSICSSOLVERS_SIMPLEPDE_PHASEFIELDDAMAGEKERNELS_HPP_
+#define GEOS_PHYSICSSOLVERS_SIMPLEPDE_PHASEFIELDDAMAGEKERNELS_HPP_
 
 #include "finiteElement/kernelInterface/ImplicitKernelBase.hpp"
 
-namespace geosx
+namespace geos
 {
 //*****************************************************************************
 /**
  * @brief Implements kernels for solving the Damage(or phase-field) equation
  * in a phase-field fracture problem.
- * @copydoc geosx::finiteElement::KernelBase
+ * @copydoc geos::finiteElement::KernelBase
  * @tparam NUM_NODES_PER_ELEM The number of nodes per element for the
  *                            @p SUBREGION_TYPE.
  * @tparam UNUSED An unused parameter since we are assuming that the test and
@@ -37,7 +37,7 @@ namespace geosx
  * Implements the KernelBase interface functions required for solving the
  * Damage(or phase-field) equation in a phase-field fracture problem.
  * It uses the finite element kernel application functions such as
- * geosx::finiteElement::RegionBasedKernelApplication.
+ * geos::finiteElement::RegionBasedKernelApplication.
  *
  * In this implementation, the template parameter @p NUM_NODES_PER_ELEM is used
  * in place of both @p NUM_TEST_SUPPORT_POINTS_PER_ELEM and
@@ -84,7 +84,7 @@ public:
 
   /**
    * @brief Constructor
-   * @copydoc geosx::finiteElement::ImplicitKernelBase::ImplicitKernelBase
+   * @copydoc geos::finiteElement::ImplicitKernelBase::ImplicitKernelBase
    * @param fieldName The name of the primary field
    *                  (i.e. Temperature, Pressure, etc.)
    */
@@ -114,13 +114,15 @@ public:
           inputRhs ),
     m_X( nodeManager.referencePosition()),
     m_nodalDamage( nodeManager.template getReference< array1d< real64 > >( fieldName )),
+    m_quadDamage( inputConstitutiveType.getDamage() ),
+    m_quadExtDrivingForce( inputConstitutiveType.getExtDrivingForce() ),
     m_localDissipationOption( localDissipationOption )
   {}
 
   //***************************************************************************
   /**
    * @class StackVariables
-   * @copydoc geosx::finiteElement::ImplicitKernelBase::StackVariables
+   * @copydoc geos::finiteElement::ImplicitKernelBase::StackVariables
    *
    * Adds a stack array for the primary field.
    */
@@ -131,7 +133,7 @@ public:
     /**
      * @brief Constructor
      */
-    GEOSX_HOST_DEVICE
+    GEOS_HOST_DEVICE
     StackVariables():
       Base::StackVariables(),
             xLocal(),
@@ -153,14 +155,14 @@ public:
 
   /**
    * @brief Copy global values from primary field to a local stack array.
-   * @copydoc geosx::finiteElement::ImplicitKernelBase::setup
+   * @copydoc geos::finiteElement::ImplicitKernelBase::setup
    *
    * For the PhaseFieldDamageKernel implementation, global values from the
    * primaryField, and degree of freedom numbers are placed into element local
    * stack storage.
    */
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  GEOS_HOST_DEVICE
+  inline
   void setup( localIndex const k,
               StackVariables & stack ) const
   {
@@ -179,10 +181,10 @@ public:
   }
 
   /**
-   * @copydoc geosx::finiteElement::ImplicitKernelBase::quadraturePointJacobianContribution
+   * @copydoc geos::finiteElement::ImplicitKernelBase::quadraturePointJacobianContribution
    */
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  GEOS_HOST_DEVICE
+  inline
   void quadraturePointKernel( localIndex const k,
                               localIndex const q,
                               StackVariables & stack ) const
@@ -191,14 +193,7 @@ public:
     real64 const strainEnergyDensity = m_constitutiveUpdate.getStrainEnergyDensity( k, q );
     real64 const ell = m_constitutiveUpdate.getRegularizationLength();
     real64 const Gc = m_constitutiveUpdate.getCriticalFractureEnergy();
-    real64 const threshold = m_constitutiveUpdate.getEnergyThreshold();
-
-    real64 D = 0;                                                                   //max between threshold and
-                                                                                    // Elastic energy
-    if( m_localDissipationOption == 1 )
-    {
-      D = fmax( threshold, strainEnergyDensity );
-    }
+    real64 const threshold = m_constitutiveUpdate.getEnergyThreshold( k, q );
 
     //Interpolate d and grad_d
     real64 N[ numNodesPerElem ];
@@ -210,54 +205,61 @@ public:
     real64 qp_grad_damage[3] = {0, 0, 0};
     FE_TYPE::valueAndGradient( N, dNdX, stack.nodalDamageLocal, qp_damage, qp_grad_damage );
 
+    real64 D = 0;                                                                   //max between threshold and
+                                                                                    // Elastic energy
+    if( m_localDissipationOption == 1 )
+    {
+      D = fmax( threshold, strainEnergyDensity );
+    }
+
     for( localIndex a = 0; a < numNodesPerElem; ++a )
     {
       if( m_localDissipationOption == 1 )
       {
-        stack.localResidual[ a ] += detJ * ( -3 * N[a] / 16  -
-                                             0.375*pow( ell, 2 ) * LvArray::tensorOps::AiBi< 3 >( qp_grad_damage, dNdX[a] ) -
-                                             (0.5 * ell * D/Gc) * N[a] * m_constitutiveUpdate.getDegradationDerivative( qp_damage ));
+        stack.localResidual[ a ] -= detJ * ( 3 * N[a] / 16
+                                             + 0.375* ell * ell * LvArray::tensorOps::AiBi< 3 >( qp_grad_damage, dNdX[a] )
+                                             + (0.5 * ell * D/Gc) * m_constitutiveUpdate.getDegradationDerivative( qp_damage ) * N[a]
+                                             + 0.5 * ell * m_quadExtDrivingForce[k][q]/Gc * N[a] );
       }
       else
       {
-        stack.localResidual[ a ] -= detJ * ( N[a] * qp_damage +
-                                             (pow( ell, 2 ) * LvArray::tensorOps::AiBi< 3 >( qp_grad_damage, dNdX[a] ) +
-                                              N[a] * m_constitutiveUpdate.getDegradationDerivative( qp_damage ) * (ell*strainEnergyDensity/Gc)) );
+        stack.localResidual[ a ] -= detJ * ( N[a] * qp_damage
+                                             + ( ell * ell * LvArray::tensorOps::AiBi< 3 >( qp_grad_damage, dNdX[a] )
+                                                 + N[a] * (ell*strainEnergyDensity/Gc) * m_constitutiveUpdate.getDegradationDerivative( qp_damage ) ) );
 
       }
       for( localIndex b = 0; b < numNodesPerElem; ++b )
       {
         if( m_localDissipationOption == 1 )
         {
-          stack.localJacobian[ a ][ b ] -= detJ *
-                                           (0.375*pow( ell, 2 ) * LvArray::tensorOps::AiBi< 3 >( dNdX[a], dNdX[b] ) +
-                                            (0.5 * ell * D/Gc) * m_constitutiveUpdate.getDegradationSecondDerivative( qp_damage ) * N[a] * N[b]);
+          stack.localJacobian[ a ][ b ] -= detJ * ( 0.375* ell * ell * LvArray::tensorOps::AiBi< 3 >( dNdX[a], dNdX[b] )
+                                                    + (0.5 * ell * D/Gc) * m_constitutiveUpdate.getDegradationSecondDerivative( qp_damage ) * N[a] * N[b] );
 
         }
         else
         {
-          stack.localJacobian[ a ][ b ] -= detJ *
-                                           ( pow( ell, 2 ) * LvArray::tensorOps::AiBi< 3 >( dNdX[a], dNdX[b] ) +
-                                             N[a] * N[b] * (1 + m_constitutiveUpdate.getDegradationSecondDerivative( qp_damage ) * ell*strainEnergyDensity/Gc )
-                                           );
+          stack.localJacobian[ a ][ b ] -= detJ * ( pow( ell, 2 ) * LvArray::tensorOps::AiBi< 3 >( dNdX[a], dNdX[b] )
+                                                    + N[a] * N[b] * (1 + m_constitutiveUpdate.getDegradationSecondDerivative( qp_damage ) * ell * strainEnergyDensity/Gc ) );
         }
       }
     }
+
+
   }
 
   /**
-   * @copydoc geosx::finiteElement::ImplicitKernelBase::complete
+   * @copydoc geos::finiteElement::ImplicitKernelBase::complete
    *
    * Form element residual from the fully formed element Jacobian dotted with
    * the primary field and map the element local Jacobian/Residual to the
    * global matrix/vector.
    */
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  GEOS_HOST_DEVICE
+  inline
   real64 complete( localIndex const k,
                    StackVariables & stack ) const
   {
-    GEOSX_UNUSED_VAR( k );
+    GEOS_UNUSED_VAR( k );
     real64 maxForce = 0;
 
     for( int a = 0; a < numNodesPerElem; ++a )
@@ -285,6 +287,12 @@ protected:
   /// The global primary field array.
   arrayView1d< real64 const > const m_nodalDamage;
 
+  /// The array containing the damage on each quadrature point of all elements
+  arrayView2d< real64 const > const m_quadDamage;
+
+  /// The array containing the external driving force on each quadrature point of all elements
+  arrayView2d< real64 const > const m_quadExtDrivingForce;
+
   int const m_localDissipationOption;
 
 };
@@ -297,8 +305,8 @@ using PhaseFieldDamageKernelFactory = finiteElement::KernelFactory< PhaseFieldDa
                                                                     string const,
                                                                     int >;
 
-} // namespace geosx
+} // namespace geos
 
 #include "finiteElement/kernelInterface/SparsityKernelBase.hpp"
 
-#endif // GEOSX_PHYSICSSOLVERS_SIMPLEPDE_PHASEFIELDDAMAGEKERNELS_HPP_
+#endif // GEOS_PHYSICSSOLVERS_SIMPLEPDE_PHASEFIELDDAMAGEKERNELS_HPP_

@@ -12,13 +12,13 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#ifndef GEOSX_MAININTERFACE_INITIALIZATION_HPP_
-#define GEOSX_MAININTERFACE_INITIALIZATION_HPP_
+#ifndef GEOS_MAININTERFACE_INITIALIZATION_HPP_
+#define GEOS_MAININTERFACE_INITIALIZATION_HPP_
 
 // Source includes
 #include "common/initializeEnvironment.hpp"
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -44,12 +44,8 @@ std::unique_ptr< CommandLineOptions > basicSetup( int argc, char * argv[], bool 
  */
 void basicCleanup();
 
-/**
- * @brief Get GEOSX version.
- * @return The full version string.
- */
-string getVersion();
 
-} // namespace geosx
 
-#endif // GEOSX_MAININTERFACE_INITIALIZATION_HPP_
+} // namespace geos
+
+#endif // GEOS_MAININTERFACE_INITIALIZATION_HPP_

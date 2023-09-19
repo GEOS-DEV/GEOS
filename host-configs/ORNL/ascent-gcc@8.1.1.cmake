@@ -1,4 +1,4 @@
-include(${CMAKE_CURRENT_LIST_DIR}/../../src/coreComponents/LvArray/host-configs/ascent-gcc@8.1.1.cmake)
+include(${CMAKE_CURRENT_LIST_DIR}/../../src/coreComponents/LvArray/host-configs/ORNL/ascent-gcc@8.1.1.cmake)
 
 # asmjit doesn't work on PowerPC
 set(ENABLE_MATHPRESSO OFF CACHE BOOL "")
@@ -6,7 +6,6 @@ set(ENABLE_MATHPRESSO OFF CACHE BOOL "")
 # Silo configure script doesn't recognize systype
 set(SILO_BUILD_TYPE powerpc64-unknown-linux-gnu CACHE STRING "")
 
-set(ENABLE_PAMELA ON CACHE BOOL "")
 set(ENABLE_PVTPackage ON CACHE BOOL "")
 
 set(ENABLE_PETSC OFF CACHE BOOL "" FORCE)

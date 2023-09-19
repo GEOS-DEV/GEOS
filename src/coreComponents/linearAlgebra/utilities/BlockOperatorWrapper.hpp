@@ -16,13 +16,12 @@
  * @file BlockOperatorWrapper.hpp
  */
 
-#ifndef GEOSX_LINEARALGEBRA_UTILITIES_BLOCKOPERATORWRAPPER_HPP_
-#define GEOSX_LINEARALGEBRA_UTILITIES_BLOCKOPERATORWRAPPER_HPP_
+#ifndef GEOS_LINEARALGEBRA_UTILITIES_BLOCKOPERATORWRAPPER_HPP_
+#define GEOS_LINEARALGEBRA_UTILITIES_BLOCKOPERATORWRAPPER_HPP_
 
 #include "linearAlgebra/utilities/BlockOperatorView.hpp"
-#include "linearAlgebra/common/common.hpp"
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -86,6 +85,6 @@ public:
   }
 };
 
-} // namespace geosx
+} // namespace geos
 
-#endif //GEOSX_LINEARALGEBRA_UTILITIES_BLOCKOPERATORWRAPPER_HPP_
+#endif //GEOS_LINEARALGEBRA_UTILITIES_BLOCKOPERATORWRAPPER_HPP_

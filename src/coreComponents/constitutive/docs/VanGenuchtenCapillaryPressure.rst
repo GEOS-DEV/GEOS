@@ -8,7 +8,7 @@ Van Genuchten capillary pressure model
 Overview
 ==========================
 
-In GEOSX, the oil-phase pressure is assumed to be the primary
+In GEOS, the oil-phase pressure is assumed to be the primary
 pressure.
 The following paragraphs explain how the
 Van Genuchten capillary pressure model

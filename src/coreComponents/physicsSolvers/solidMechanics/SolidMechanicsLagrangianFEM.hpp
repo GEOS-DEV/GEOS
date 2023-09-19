@@ -16,19 +16,21 @@
  * @file SolidMechanicsLagrangianFEM.hpp
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_SOLIDMECHANICSLAGRANGIANFEM_HPP_
-#define GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_SOLIDMECHANICSLAGRANGIANFEM_HPP_
+#ifndef GEOS_PHYSICSSOLVERS_SOLIDMECHANICS_SOLIDMECHANICSLAGRANGIANFEM_HPP_
+#define GEOS_PHYSICSSOLVERS_SOLIDMECHANICS_SOLIDMECHANICSLAGRANGIANFEM_HPP_
 
 #include "codingUtilities/EnumStrings.hpp"
 #include "common/TimingMacros.hpp"
+#include "kernels/SolidMechanicsLagrangianFEMKernels.hpp"
 #include "mesh/MeshForLoopInterface.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "mesh/mpiCommunications/MPI_iCommData.hpp"
 #include "physicsSolvers/SolverBase.hpp"
+#include "physicsSolvers/fluidFlow/FlowSolverBase.hpp"
 
-#include "SolidMechanicsLagrangianFEMKernels.hpp"
+#include "physicsSolvers/solidMechanics/SolidMechanicsFields.hpp"
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -139,7 +141,7 @@ public:
   virtual void updateState( DomainPartition & domain ) override final
   {
     // There should be nothing to update
-    GEOSX_UNUSED_VAR( domain );
+    GEOS_UNUSED_VAR( domain );
   };
 
   virtual void applyBoundaryConditions( real64 const time,
@@ -150,7 +152,9 @@ public:
                                         arrayView1d< real64 > const & localRhs ) override;
 
   virtual real64
-  calculateResidualNorm( DomainPartition const & domain,
+  calculateResidualNorm( real64 const & time_n,
+                         real64 const & dt,
+                         DomainPartition const & domain,
                          DofManager const & dofManager,
                          arrayView1d< real64 const > const & localRhs ) override;
 
@@ -215,24 +219,21 @@ public:
                             DofManager const & dofManager,
                             arrayView1d< real64 const > const & localSolution ) override;
 
+  void enableFixedStressPoromechanicsUpdate();
+
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
-    static constexpr char const * vTildeString() { return "velocityTilde"; }
-    static constexpr char const * uhatTildeString() { return "uhatTilde"; }
     static constexpr char const * cflFactorString() { return "cflFactor"; }
     static constexpr char const * newmarkGammaString() { return "newmarkGamma"; }
     static constexpr char const * newmarkBetaString() { return "newmarkBeta"; }
     static constexpr char const * massDampingString() { return "massDamping"; }
     static constexpr char const * stiffnessDampingString() { return "stiffnessDamping"; }
-    static constexpr char const * useVelocityEstimateForQSString() { return "useVelocityForQS"; }
     static constexpr char const * timeIntegrationOptionString() { return "timeIntegrationOption"; }
     static constexpr char const * maxNumResolvesString() { return "maxNumResolves"; }
     static constexpr char const * strainTheoryString() { return "strainTheory"; }
     static constexpr char const * solidMaterialNamesString() { return "solidMaterialNames"; }
-    static constexpr char const * forceExternalString() { return "externalForce"; }
     static constexpr char const * contactRelationNameString() { return "contactRelationName"; }
     static constexpr char const * noContactRelationNameString() { return "NOCONTACT"; }
-    static constexpr char const * contactForceString() { return "contactForce"; }
     static constexpr char const * maxForceString() { return "maxForce"; }
     static constexpr char const * elemsAttachedToSendOrReceiveNodesString() { return "elemsAttachedToSendOrReceiveNodes"; }
     static constexpr char const * elemsNotAttachedToSendOrReceiveNodesString() { return "elemsNotAttachedToSendOrReceiveNodes"; }
@@ -240,18 +241,14 @@ public:
     static constexpr char const * sendOrReceiveNodesString() { return "sendOrReceiveNodes";}
     static constexpr char const * nonSendOrReceiveNodesString() { return "nonSendOrReceiveNodes";}
     static constexpr char const * targetNodesString() { return "targetNodes";}
+    static constexpr char const * forceString() { return "Force";}
 
-
-    dataRepository::ViewKey vTilde = { vTildeString() };
-    dataRepository::ViewKey uhatTilde = { uhatTildeString() };
     dataRepository::ViewKey newmarkGamma = { newmarkGammaString() };
     dataRepository::ViewKey newmarkBeta = { newmarkBetaString() };
     dataRepository::ViewKey massDamping = { massDampingString() };
     dataRepository::ViewKey stiffnessDamping = { stiffnessDampingString() };
-    dataRepository::ViewKey useVelocityEstimateForQS = { useVelocityEstimateForQSString() };
     dataRepository::ViewKey timeIntegrationOption = { timeIntegrationOptionString() };
   } solidMechanicsViewKeys;
-
 
   SortedArray< localIndex > & getElemsAttachedToSendOrReceiveNodes( ElementSubRegionBase & subRegion )
   {
@@ -287,12 +284,12 @@ protected:
   real64 m_massDamping;
   real64 m_stiffnessDamping;
   TimeIntegrationOption m_timeIntegrationOption;
-  integer m_useVelocityEstimateForQS;
   real64 m_maxForce = 0.0;
   integer m_maxNumResolves;
   integer m_strainTheory;
   string m_contactRelationName;
   MPI_iCommData m_iComm;
+  bool m_isFixedStressPoromechanicsUpdate;
 
   /// Rigid body modes
   array1d< ParallelVector > m_rigidBodyModes;
@@ -321,7 +318,7 @@ void SolidMechanicsLagrangianFEM::assemblyLaunch( DomainPartition & domain,
                                                   arrayView1d< real64 > const & localRhs,
                                                   PARAMS && ... params )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
@@ -329,7 +326,7 @@ void SolidMechanicsLagrangianFEM::assemblyLaunch( DomainPartition & domain,
   {
     NodeManager const & nodeManager = mesh.getNodeManager();
 
-    string const dofKey = dofManager.getKey( dataRepository::keys::TotalDisplacement );
+    string const dofKey = dofManager.getKey( fields::solidMechanics::totalDisplacement::key() );
     arrayView1d< globalIndex const > const & dofNumber = nodeManager.getReference< globalIndex_array >( dofKey );
 
     real64 const gravityVectorData[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( gravityVector() );
@@ -341,20 +338,33 @@ void SolidMechanicsLagrangianFEM::assemblyLaunch( DomainPartition & domain,
                                   gravityVectorData,
                                   std::forward< PARAMS >( params )... );
 
-    m_maxForce = finiteElement::
-                   regionBasedKernelApplication< parallelDevicePolicy< 32 >,
-                                                 CONSTITUTIVE_BASE,
-                                                 CellElementSubRegion >( mesh,
-                                                                         regionNames,
-                                                                         this->getDiscretizationName(),
-                                                                         viewKeyStruct::solidMaterialNamesString(),
-                                                                         kernelWrapper );
+    if( m_isFixedStressPoromechanicsUpdate )
+    {
+      m_maxForce = finiteElement::
+                     regionBasedKernelApplication< parallelDevicePolicy< >,
+                                                   CONSTITUTIVE_BASE,
+                                                   CellElementSubRegion >( mesh,
+                                                                           regionNames,
+                                                                           this->getDiscretizationName(),
+                                                                           FlowSolverBase::viewKeyStruct::solidNamesString(),
+                                                                           kernelWrapper );
+    }
+    else
+    {
+      m_maxForce = finiteElement::
+                     regionBasedKernelApplication< parallelDevicePolicy< >,
+                                                   CONSTITUTIVE_BASE,
+                                                   CellElementSubRegion >( mesh,
+                                                                           regionNames,
+                                                                           this->getDiscretizationName(),
+                                                                           viewKeyStruct::solidMaterialNamesString(),
+                                                                           kernelWrapper );
+    }
   } );
-
 
   applyContactConstraint( dofManager, domain, localMatrix, localRhs );
 }
 
-} /* namespace geosx */
+} /* namespace geos */
 
-#endif /* GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_SOLIDMECHANICSLAGRANGIANFEM_HPP_ */
+#endif /* GEOS_PHYSICSSOLVERS_SOLIDMECHANICS_SOLIDMECHANICSLAGRANGIANFEM_HPP_ */

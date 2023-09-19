@@ -15,14 +15,15 @@
 // Source includes
 #include "constitutive/ConstitutiveManager.hpp"
 #include "constitutive/solid/ElasticIsotropic.hpp"
+#include "constitutive/solid/SolidUtilities.hpp"
 #include "dataRepository/xmlWrapper.hpp"
 
 // TPL includes
 #include <gtest/gtest.h>
 #include <conduit.hpp>
 
-using namespace geosx;
-using namespace ::geosx::constitutive;
+using namespace geos;
+using namespace ::geos::constitutive;
 
 TEST( ElasticIsotropicTests, testAllocation )
 {
@@ -70,16 +71,16 @@ TEST( ElasticIsotropicTests, testStateUpdatePoint )
                                                                                                                  "</Constitutive>";
 
   xmlWrapper::xmlDocument xmlDocument;
-  xmlWrapper::xmlResult xmlResult = xmlDocument.load_buffer( inputStream.c_str(), inputStream.size() );
+  xmlWrapper::xmlResult xmlResult = xmlDocument.loadString( inputStream );
   if( !xmlResult )
   {
-    GEOSX_LOG_RANK_0( "XML parsed with errors!" );
-    GEOSX_LOG_RANK_0( "Error description: " << xmlResult.description());
-    GEOSX_LOG_RANK_0( "Error offset: " << xmlResult.offset );
+    GEOS_LOG_RANK_0( "XML parsed with errors!" );
+    GEOS_LOG_RANK_0( "Error description: " << xmlResult.description());
+    GEOS_LOG_RANK_0( "Error offset: " << xmlResult.offset );
   }
 
-  xmlWrapper::xmlNode xmlConstitutiveNode = xmlDocument.child( "Constitutive" );
-  constitutiveManager.processInputFileRecursive( xmlConstitutiveNode );
+  xmlWrapper::xmlNode xmlConstitutiveNode = xmlDocument.getChild( "Constitutive" );
+  constitutiveManager.processInputFileRecursive( xmlDocument, xmlConstitutiveNode );
   constitutiveManager.postProcessInputRecursive();
 
   dataRepository::Group disc( "discretization", &rootGroup );
@@ -93,17 +94,18 @@ TEST( ElasticIsotropicTests, testStateUpdatePoint )
   arrayView3d< real64, solid::STRESS_USD > const & stress = cm.getStress();
 
   real64 const strain = 0.1;
-  real64 Ddt[ 6 ] = { 0 };
-  real64 Rot[ 3 ][ 3 ] = { { 0 } };
-
-  real64 pointStress[6];
+  real64 Ddt[ 6 ]{};
+  real64 Rot[ 3 ][ 3 ]{};
+  real64 timeIncrement = 0;
+  real64 pointStress[6]{};
   {
     Ddt[ 0 ] = strain;
     Rot[ 0 ][ 0 ] = 1;
     Rot[ 1 ][ 1 ] = 1;
     Rot[ 2 ][ 2 ] = 1;
+    timeIncrement =0;
 
-    cmw.hypoUpdate_StressOnly( 0, 0, Ddt, Rot, pointStress );
+    SolidUtilities::hypoUpdate_StressOnly( cmw, 0, 0, timeIncrement, Ddt, Rot, pointStress );
 
     EXPECT_DOUBLE_EQ( stress( 0, 0, 0 ), (2.0/3.0*strain)*2*G + strain*K );
     EXPECT_DOUBLE_EQ( stress( 0, 0, 1 ), (-1.0/3.0*strain)*2*G + strain*K );
@@ -121,8 +123,9 @@ TEST( ElasticIsotropicTests, testStateUpdatePoint )
     Rot[ 0 ][ 0 ] = 1;
     Rot[ 1 ][ 1 ] = 1;
     Rot[ 2 ][ 2 ] = 1;
+    timeIncrement = 0;
 
-    cmw.hypoUpdate_StressOnly( 0, 0, Ddt, Rot, pointStress );
+    SolidUtilities::hypoUpdate_StressOnly( cmw, 0, 0, timeIncrement, Ddt, Rot, pointStress );
 
     EXPECT_DOUBLE_EQ( stress( 0, 0, 0 ), (-1.0/3.0*strain)*2*G + strain*K );
     EXPECT_DOUBLE_EQ( stress( 0, 0, 1 ), (2.0/3.0*strain)*2*G + strain*K );
@@ -140,8 +143,9 @@ TEST( ElasticIsotropicTests, testStateUpdatePoint )
     Rot[ 0 ][ 0 ] = 1;
     Rot[ 1 ][ 1 ] = 1;
     Rot[ 2 ][ 2 ] = 1;
+    timeIncrement =0;
 
-    cmw.hypoUpdate_StressOnly( 0, 0, Ddt, Rot, pointStress );
+    SolidUtilities::hypoUpdate_StressOnly( cmw, 0, 0, timeIncrement, Ddt, Rot, pointStress );
 
     EXPECT_DOUBLE_EQ( stress( 0, 0, 0 ), (-1.0/3.0*strain)*2*G + strain*K );
     EXPECT_DOUBLE_EQ( stress( 0, 0, 1 ), (-1.0/3.0*strain)*2*G + strain*K );
@@ -159,8 +163,9 @@ TEST( ElasticIsotropicTests, testStateUpdatePoint )
     Rot[ 0 ][ 0 ] = 1;
     Rot[ 1 ][ 1 ] = 1;
     Rot[ 2 ][ 2 ] = 1;
+    timeIncrement = 0;
 
-    cmw.hypoUpdate_StressOnly( 0, 0, Ddt, Rot, pointStress );
+    SolidUtilities::hypoUpdate_StressOnly( cmw, 0, 0, timeIncrement, Ddt, Rot, pointStress );
 
     EXPECT_DOUBLE_EQ( stress( 0, 0, 0 ), 0 );
     EXPECT_DOUBLE_EQ( stress( 0, 0, 1 ), 0 );
@@ -178,8 +183,9 @@ TEST( ElasticIsotropicTests, testStateUpdatePoint )
     Rot[ 0 ][ 0 ] = 1;
     Rot[ 1 ][ 1 ] = 1;
     Rot[ 2 ][ 2 ] = 1;
+    timeIncrement = 0;
 
-    cmw.hypoUpdate_StressOnly( 0, 0, Ddt, Rot, pointStress );
+    SolidUtilities::hypoUpdate_StressOnly( cmw, 0, 0, timeIncrement, Ddt, Rot, pointStress );
 
     EXPECT_DOUBLE_EQ( stress( 0, 0, 0 ), 0 );
     EXPECT_DOUBLE_EQ( stress( 0, 0, 1 ), 0 );
@@ -198,7 +204,7 @@ TEST( ElasticIsotropicTests, testStateUpdatePoint )
     Rot[ 1 ][ 1 ] = 1;
     Rot[ 2 ][ 2 ] = 1;
 
-    cmw.hypoUpdate_StressOnly( 0, 0, Ddt, Rot, pointStress );
+    SolidUtilities::hypoUpdate_StressOnly( cmw, 0, 0, timeIncrement, Ddt, Rot, pointStress );
 
     EXPECT_DOUBLE_EQ( stress( 0, 0, 0 ), 0 );
     EXPECT_DOUBLE_EQ( stress( 0, 0, 1 ), 0 );

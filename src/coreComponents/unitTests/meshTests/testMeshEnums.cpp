@@ -17,7 +17,7 @@
 
 #include <gtest/gtest.h>
 
-using namespace geosx;
+using namespace geos;
 
 // The `ENUM_STRING` implementation relies on consistency between the order of the `enum`,
 // and the order of the `string` array provided. Since this consistency is not enforced, it can be corrupted anytime.

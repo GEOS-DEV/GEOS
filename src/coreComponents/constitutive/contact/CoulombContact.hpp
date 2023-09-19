@@ -16,12 +16,12 @@
  *  @file CoulombContact.hpp
  */
 
-#ifndef GEOSX_CONSTITUTIVE_CONTACT_COULOMBCONTACT_HPP_
-#define GEOSX_CONSTITUTIVE_CONTACT_COULOMBCONTACT_HPP_
+#ifndef GEOS_CONSTITUTIVE_CONTACT_COULOMBCONTACT_HPP_
+#define GEOS_CONSTITUTIVE_CONTACT_COULOMBCONTACT_HPP_
 
 #include "ContactBase.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace constitutive
@@ -70,12 +70,12 @@ public:
    * @param[out] dLimitTangentialTractionNorm_dTraction the derivative of the limit tangential traction norm wrt normal traction
    * @return the limit tangential traction norm
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   inline
   virtual real64 computeLimitTangentialTractionNorm( real64 const & normalTraction,
                                                      real64 & dLimitTangentialTractionNorm_dTraction ) const override final;
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   inline
   virtual void computeTraction( localIndex const k,
                                 arraySlice1d< real64 const > const & oldDispJump,
@@ -84,7 +84,7 @@ public:
                                 arraySlice1d< real64 > const & tractionVector,
                                 arraySlice2d< real64 > const & dTractionVector_dJump ) const override final;
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   inline
   virtual void updateFractureState( localIndex const k,
                                     arraySlice1d< real64 const > const & dispJump,
@@ -197,7 +197,7 @@ private:
 };
 
 
-GEOSX_HOST_DEVICE
+GEOS_HOST_DEVICE
 real64 CoulombContactUpdates::computeLimitTangentialTractionNorm( real64 const & normalTraction,
                                                                   real64 & dLimitTangentialTractionNorm_dTraction ) const
 {
@@ -206,7 +206,7 @@ real64 CoulombContactUpdates::computeLimitTangentialTractionNorm( real64 const &
 }
 
 
-GEOSX_HOST_DEVICE
+GEOS_HOST_DEVICE
 inline void CoulombContactUpdates::computeTraction( localIndex const k,
                                                     arraySlice1d< real64 const > const & oldDispJump,
                                                     arraySlice1d< real64 const > const & dispJump,
@@ -215,7 +215,7 @@ inline void CoulombContactUpdates::computeTraction( localIndex const k,
                                                     arraySlice2d< real64 > const & dTractionVector_dJump ) const
 {
 
-  bool const isOpen = fractureState == extrinsicMeshData::contact::FractureState::Open;
+  bool const isOpen = fractureState == fields::contact::FractureState::Open;
 
   // Initialize everyting to 0
   tractionVector[0] = 0.0;
@@ -240,7 +240,7 @@ inline void CoulombContactUpdates::computeTraction( localIndex const k,
 
     switch( fractureState )
     {
-      case extrinsicMeshData::contact::FractureState::Stick:
+      case fields::contact::FractureState::Stick:
       {
         // Elastic slip case
         // Tangential components of the traction are equal to tau
@@ -255,7 +255,7 @@ inline void CoulombContactUpdates::computeTraction( localIndex const k,
 
         break;
       }
-      case extrinsicMeshData::contact::FractureState::Slip:
+      case fields::contact::FractureState::Slip:
       {
         // Plastic slip case
         real64 dLimitTau_dNormalTraction;
@@ -289,13 +289,13 @@ inline void CoulombContactUpdates::computeTraction( localIndex const k,
   }
 }
 
-GEOSX_HOST_DEVICE
+GEOS_HOST_DEVICE
 inline void CoulombContactUpdates::updateFractureState( localIndex const k,
                                                         arraySlice1d< real64 const > const & dispJump,
                                                         arraySlice1d< real64 const > const & tractionVector,
                                                         integer & fractureState ) const
 {
-  using namespace extrinsicMeshData::contact;
+  using namespace fields::contact;
 
   if( dispJump[0] >  -m_displacementJumpThreshold )
   {
@@ -322,6 +322,6 @@ inline void CoulombContactUpdates::updateFractureState( localIndex const k,
 
 } /* namespace constitutive */
 
-} /* namespace geosx */
+} /* namespace geos */
 
-#endif /* GEOSX_CONSTITUTIVE_CONTACT_COULOMBCONTACT_HPP_ */
+#endif /* GEOS_CONSTITUTIVE_CONTACT_COULOMBCONTACT_HPP_ */

@@ -16,13 +16,13 @@
  * @file SinglePhaseHybridFVM.hpp
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_FLUIDFLOW_SINGLEPHASEHYBRIDFVM_HPP_
-#define GEOSX_PHYSICSSOLVERS_FLUIDFLOW_SINGLEPHASEHYBRIDFVM_HPP_
+#ifndef GEOS_PHYSICSSOLVERS_FLUIDFLOW_SINGLEPHASEHYBRIDFVM_HPP_
+#define GEOS_PHYSICSSOLVERS_FLUIDFLOW_SINGLEPHASEHYBRIDFVM_HPP_
 
 #include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseHybridFVMKernels.hpp"
 
-namespace geosx
+namespace geos
 {
 
 
@@ -94,15 +94,11 @@ public:
                            arrayView1d< real64 > const & localRhs ) override;
 
   virtual real64
-  calculateResidualNorm( DomainPartition const & domain,
+  calculateResidualNorm( real64 const & time_n,
+                         real64 const & dt,
+                         DomainPartition const & domain,
                          DofManager const & dofManager,
                          arrayView1d< real64 const > const & localRhs ) override;
-
-  virtual bool
-  checkSystemSolution( DomainPartition const & domain,
-                       DofManager const & dofManager,
-                       arrayView1d< real64 const > const & localSolution,
-                       real64 const scalingFactor ) override;
 
   virtual void
   applySystemSolution( DofManager const & dofManager,
@@ -132,13 +128,13 @@ public:
                      arrayView1d< real64 > const & localRhs ) override;
 
   virtual void
-  assemblePoroelasticFluxTerms( real64 const time_n,
-                                real64 const dt,
-                                DomainPartition const & domain,
-                                DofManager const & dofManager,
-                                CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                arrayView1d< real64 > const & localRhs,
-                                string const & jumpDofKey ) override final;
+  assembleEDFMFluxTerms( real64 const time_n,
+                         real64 const dt,
+                         DomainPartition const & domain,
+                         DofManager const & dofManager,
+                         CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                         arrayView1d< real64 > const & localRhs,
+                         string const & jumpDofKey ) override final;
 
   virtual void
   assembleHydrofracFluxTerms( real64 const time_n,
@@ -162,7 +158,24 @@ public:
                              real64 const & dt,
                              DomainPartition & domain ) override;
 
-  void updatePressureGradient( DomainPartition & domain ); 
+  virtual void updatePressureGradient( DomainPartition & domain ) override final;
+
+  /**
+   * @brief Function to perform the application of Dirichlet BCs on faces
+   * @param[in] time_n current time
+   * @param[in] dt time step
+   * @param[in] faceSet degree-of-freedom manager associated with the linear system
+   * @param[in] domain the domain
+   * @param[inout] localMatrix the system matrix
+   * @param[inout] localRhs the system right-hand side vector
+   */
+  void
+  applyFaceDirichletBC( real64 const time_n,
+                        real64 const dt,
+                        DofManager const & faceSet,
+                        DomainPartition & domain,
+                        CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                        arrayView1d< real64 > const & localRhs );
 
   /**@}*/
 
@@ -171,9 +184,6 @@ public:
   {
     // primary face-based field
     static constexpr char const * deltaFacePressureString() { return "deltaFacePressure"; }
-
-    // cellwise pressure gradient
-    static constexpr char const * pressureGradientString() { return "pressureGradient"; }
   };
 
   virtual void initializePreSubGroups() override;
@@ -181,9 +191,6 @@ public:
   virtual void initializePostInitialConditionsPreSubGroups() override;
 
 private:
-
-  /// Dof key for the member functions that do not have access to the coupled Dof manager
-  string m_faceDofKey;
 
   /// relative tolerance (redundant with FluxApproximationBase)
   real64 m_areaRelTol;
@@ -193,6 +200,6 @@ private:
 
 };
 
-} /* namespace geosx */
+} /* namespace geos */
 
-#endif //GEOSX_PHYSICSSOLVERS_FLUIDFLOW_SINGLEPHASEHYBRIDFVM_HPP_
+#endif //GEOS_PHYSICSSOLVERS_FLUIDFLOW_SINGLEPHASEHYBRIDFVM_HPP_

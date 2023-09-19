@@ -26,7 +26,10 @@ set( gtest_pvt_xmls
      testPVT.xml
    )
 
-set( dependencyList gtest )
+set( gtest_reactivefluid_xmls
+     testReactiveFluid.xml )
+
+set( dependencyList ${parallelDeps} gtest )
 
 if ( GEOSX_BUILD_SHARED_LIBS )
   set (dependencyList ${dependencyList} geosx_core )
@@ -40,18 +43,6 @@ if( ENABLE_PVTPackage )
           testCO2BrinePVTModels.cpp )
 
     set( dependencyList ${dependencyList} PVTPackage )
-endif()
-
-if( ENABLE_CUDA )
-  set( dependencyList ${dependencyList} cuda )
-endif()
-
-if( ENABLE_CUDA_NVTOOLSEXT )
-  set( dependencyList ${dependencyList} CUDA::nvToolsExt )
-endif()
-
-if( ENABLE_OPENMP )
-  set( dependencyList ${dependencyList} openmp )
 endif()
 
 #
@@ -102,5 +93,23 @@ foreach(test ${gtest_pvt_xmls})
     get_filename_component( test_name ${test} NAME_WE )
     blt_add_test( NAME ${test_name}
                   COMMAND testPVT -i ${CMAKE_CURRENT_LIST_DIR}/${test}
+                  )
+endforeach()
+
+
+#
+# Add reactivefluiddriver xml based tests
+#
+
+blt_add_executable( NAME testReactiveFluid
+                    SOURCES testReactiveFluid.cpp
+                    OUTPUT_DIR ${TEST_OUTPUT_DIRECTORY}
+                    DEPENDS_ON ${dependencyList} "-lz"
+                  )
+
+foreach(test ${gtest_reactivefluid_xmls})
+    get_filename_component( test_name ${test} NAME_WE )
+    blt_add_test( NAME ${test_name}
+                  COMMAND testReactiveFluid -i ${CMAKE_CURRENT_LIST_DIR}/${test}
                   )
 endforeach()

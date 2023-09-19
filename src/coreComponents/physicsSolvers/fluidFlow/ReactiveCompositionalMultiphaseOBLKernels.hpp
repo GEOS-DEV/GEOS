@@ -16,27 +16,27 @@
  * @file ReactiveCompositionalMultiphaseOBLKernels.hpp
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_FLUIDFLOW_REACTIVECOMPOSITIONALMULTIPHASEOBLKERNELS_HPP
-#define GEOSX_PHYSICSSOLVERS_FLUIDFLOW_REACTIVECOMPOSITIONALMULTIPHASEOBLKERNELS_HPP
+#ifndef GEOS_PHYSICSSOLVERS_FLUIDFLOW_REACTIVECOMPOSITIONALMULTIPHASEOBLKERNELS_HPP
+#define GEOS_PHYSICSSOLVERS_FLUIDFLOW_REACTIVECOMPOSITIONALMULTIPHASEOBLKERNELS_HPP
 
 #include "common/DataLayouts.hpp"
 #include "common/DataTypes.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
-#include "constitutive/permeability/PermeabilityExtrinsicData.hpp"
+#include "constitutive/permeability/PermeabilityFields.hpp"
 #include "functions/MultivariableTableFunctionKernels.hpp"
 #include "mesh/ElementSubRegionBase.hpp"
 #include "mesh/ObjectManagerBase.hpp"
 #include "mesh/utilities/MeshMapUtilities.hpp"
-#include "physicsSolvers/fluidFlow/CompositionalMultiphaseBaseExtrinsicData.hpp"
-#include "physicsSolvers/fluidFlow/ReactiveCompositionalMultiphaseOBLExtrinsicData.hpp"
+#include "physicsSolvers/fluidFlow/CompositionalMultiphaseBaseFields.hpp"
+#include "physicsSolvers/fluidFlow/ReactiveCompositionalMultiphaseOBLFields.hpp"
 #include "physicsSolvers/fluidFlow/StencilAccessors.hpp"
 
 
 
-namespace geosx
+namespace geos
 {
 
-namespace ReactiveCompositionalMultiphaseOBLKernels
+namespace reactiveCompositionalMultiphaseOBLKernels
 {
 
 using namespace constitutive;
@@ -90,7 +90,7 @@ void kernelLaunchSelectorCompSwitch( T numComps, LAMBDA && lambda )
     case 5:
     { lambda( std::integral_constant< T, NUM_PHASES >(), std::integral_constant< T, 5 >(), std::integral_constant< bool, ENABLE_ENERGY >()); return; }
     default:
-    { GEOSX_ERROR( "Unsupported number of components: " << numComps ); }
+    { GEOS_ERROR( "Unsupported number of components: " << numComps ); }
   }
 }
 
@@ -108,7 +108,7 @@ void kernelLaunchSelectorPhaseSwitch( T numPhases, T numComps, LAMBDA && lambda 
     case 3:
     { kernelLaunchSelectorCompSwitch< ENABLE_ENERGY, 3 >( numComps, lambda ); return; }
     default:
-    { GEOSX_ERROR( "Unsupported number of phases: " << numPhases ); }
+    { GEOS_ERROR( "Unsupported number of phases: " << numPhases ); }
   }
 }
 
@@ -166,7 +166,7 @@ public:
   launch( localIndex const numElems,
           KERNEL_TYPE const & kernelComponent )
   {
-    forAll< POLICY >( numElems, [=] GEOSX_HOST_DEVICE ( localIndex const ei )
+    forAll< POLICY >( numElems, [=] GEOS_HOST_DEVICE ( localIndex const ei )
     {
       kernelComponent.compute( ei );
     } );
@@ -181,18 +181,19 @@ public:
                       MultivariableTableFunctionStaticKernel< numDofs, numOps > OBLOperatorsTable )
     :
     m_OBLOperatorsTable( OBLOperatorsTable ),
-    m_pressure( subRegion.getExtrinsicData< extrinsicMeshData::flow::pressure >() ),
-    m_compFrac( subRegion.getExtrinsicData< extrinsicMeshData::flow::globalCompFraction >() ),
-    m_temperature( subRegion.getExtrinsicData< extrinsicMeshData::flow::temperature >() ),
-    m_OBLOperatorValues ( subRegion.getExtrinsicData< extrinsicMeshData::flow::OBLOperatorValues >()),
-    m_OBLOperatorDerivatives ( subRegion.getExtrinsicData< extrinsicMeshData::flow::OBLOperatorDerivatives >())
+    m_pressure( subRegion.getField< fields::flow::pressure >() ),
+    m_compFrac( subRegion.getField< fields::flow::globalCompFraction >() ),
+    m_temperature( subRegion.getField< fields::flow::temperature >() ),
+    m_OBLOperatorValues ( subRegion.getField< fields::flow::OBLOperatorValues >()),
+    m_OBLOperatorDerivatives ( subRegion.getField< fields::flow::OBLOperatorDerivatives >())
   {}
 
   /**
    * @brief Compute the operator values and derivatives for an element
    * @param[in] ei the element index
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
+  inline
   void compute( localIndex const ei ) const
   {
     arraySlice1d< real64 const, compflow::USD_COMP - 1 > const compFrac = m_compFrac[ei];
@@ -343,13 +344,13 @@ public:
     m_rankOffset( rankOffset ),
     m_dofNumber( subRegion.getReference< array1d< globalIndex > >( dofKey ) ),
     m_elemGhostRank( subRegion.ghostRank() ),
-    m_referencePoreVolume( subRegion.getExtrinsicData< extrinsicMeshData::flow::referencePoreVolume >() ),
-    m_referenceRockVolume( subRegion.getExtrinsicData< extrinsicMeshData::flow::referenceRockVolume >() ),
-    m_rockVolumetricHeatCapacity( subRegion.getExtrinsicData< extrinsicMeshData::flow::rockVolumetricHeatCapacity >() ),
-    m_rockKineticRateFactor( subRegion.getExtrinsicData< extrinsicMeshData::flow::rockKineticRateFactor >() ),
-    m_OBLOperatorValues ( subRegion.getExtrinsicData< extrinsicMeshData::flow::OBLOperatorValues >()),
-    m_OBLOperatorValues_n ( subRegion.getExtrinsicData< extrinsicMeshData::flow::OBLOperatorValues_n >()),
-    m_OBLOperatorDerivatives ( subRegion.getExtrinsicData< extrinsicMeshData::flow::OBLOperatorDerivatives >()),
+    m_referencePoreVolume( subRegion.getField< fields::flow::referencePoreVolume >() ),
+    m_referenceRockVolume( subRegion.getField< fields::flow::referenceRockVolume >() ),
+    m_rockVolumetricHeatCapacity( subRegion.getField< fields::flow::rockVolumetricHeatCapacity >() ),
+    m_rockKineticRateFactor( subRegion.getField< fields::flow::rockKineticRateFactor >() ),
+    m_OBLOperatorValues ( subRegion.getField< fields::flow::OBLOperatorValues >()),
+    m_OBLOperatorValues_n ( subRegion.getField< fields::flow::OBLOperatorValues_n >()),
+    m_OBLOperatorDerivatives ( subRegion.getField< fields::flow::OBLOperatorDerivatives >()),
     m_localMatrix( localMatrix ),
     m_localRhs( localRhs )
   {}
@@ -379,7 +380,8 @@ public:
    * @param[in] ei the element index
    * @return the ghost rank of the element
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
+  inline
   integer elemGhostRank( localIndex const ei ) const
   { return m_elemGhostRank( ei ); }
 
@@ -389,7 +391,8 @@ public:
    * @param[in] ei the element index
    * @param[in] stack the stack variables
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
+  inline
   void setup( localIndex const ei,
               StackVariables & stack ) const
   {
@@ -409,7 +412,8 @@ public:
    * @param[in] ei the element index
    * @param[inout] stack the stack variables
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
+  inline
   void computeAccumulation( localIndex const ei,
                             StackVariables & stack ) const
   {
@@ -452,8 +456,9 @@ public:
    * @param[in] ei the element index
    * @param[inout] stack the stack variables
    */
-  GEOSX_HOST_DEVICE
-  void complete( localIndex const GEOSX_UNUSED_PARAM( ei ),
+  GEOS_HOST_DEVICE
+  inline
+  void complete( localIndex const GEOS_UNUSED_PARAM( ei ),
                  StackVariables & stack ) const
   {
     // add contribution to residual and jacobian into component mass balance equations
@@ -481,9 +486,9 @@ public:
   launch( localIndex const numElems,
           KERNEL_TYPE const & kernelComponent )
   {
-    GEOSX_MARK_FUNCTION;
+    GEOS_MARK_FUNCTION;
 
-    forAll< POLICY >( numElems, [=] GEOSX_HOST_DEVICE ( localIndex const ei )
+    forAll< POLICY >( numElems, [=] GEOS_HOST_DEVICE ( localIndex const ei )
     {
       if( kernelComponent.elemGhostRank( ei ) >= 0 )
       {
@@ -628,18 +633,18 @@ public:
   using DofNumberAccessor = ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > >;
 
   using CompFlowAccessors =
-    StencilAccessors< extrinsicMeshData::ghostRank,
-                      extrinsicMeshData::flow::gravityCoefficient,
-                      extrinsicMeshData::flow::pressure,
-                      extrinsicMeshData::flow::referencePorosity,
-                      extrinsicMeshData::flow::rockThermalConductivity,
-                      extrinsicMeshData::flow::OBLOperatorValues,
-                      extrinsicMeshData::flow::OBLOperatorDerivatives >;
+    StencilAccessors< fields::ghostRank,
+                      fields::flow::gravityCoefficient,
+                      fields::flow::pressure,
+                      fields::flow::referencePorosity,
+                      fields::flow::rockThermalConductivity,
+                      fields::flow::OBLOperatorValues,
+                      fields::flow::OBLOperatorDerivatives >;
 
   using PermeabilityAccessors =
     StencilMaterialAccessors< PermeabilityBase,
-                              extrinsicMeshData::permeability::permeability,
-                              extrinsicMeshData::permeability::dPerm_dPressure >;
+                              fields::permeability::permeability,
+                              fields::permeability::dPerm_dPressure >;
 
   /**
    * @brief Constructor for the kernel interface
@@ -664,15 +669,15 @@ public:
     m_dt( dt * secondsToDaysMult ),
     m_transMultExp ( transMultExp ),
     m_dofNumber( dofNumberAccessor.toNestedViewConst() ),
-    m_permeability( permeabilityAccessors.get( extrinsicMeshData::permeability::permeability {} ) ),
-    m_dPerm_dPres( permeabilityAccessors.get( extrinsicMeshData::permeability::dPerm_dPressure {} ) ),
-    m_referencePorosity( compFlowAccessors.get( extrinsicMeshData::flow::referencePorosity {} ) ),
-    m_rockThermalConductivity( compFlowAccessors.get( extrinsicMeshData::flow::rockThermalConductivity {} ) ),
-    m_ghostRank( compFlowAccessors.get( extrinsicMeshData::ghostRank {} ) ),
-    m_gravCoef( compFlowAccessors.get( extrinsicMeshData::flow::gravityCoefficient {} ) ),
-    m_pres( compFlowAccessors.get( extrinsicMeshData::flow::pressure {} ) ),
-    m_OBLOperatorValues ( compFlowAccessors.get( extrinsicMeshData::flow::OBLOperatorValues {} ) ),
-    m_OBLOperatorDerivatives ( compFlowAccessors.get( extrinsicMeshData::flow::OBLOperatorDerivatives {} ) ),
+    m_permeability( permeabilityAccessors.get( fields::permeability::permeability {} ) ),
+    m_dPerm_dPres( permeabilityAccessors.get( fields::permeability::dPerm_dPressure {} ) ),
+    m_referencePorosity( compFlowAccessors.get( fields::flow::referencePorosity {} ) ),
+    m_rockThermalConductivity( compFlowAccessors.get( fields::flow::rockThermalConductivity {} ) ),
+    m_ghostRank( compFlowAccessors.get( fields::ghostRank {} ) ),
+    m_gravCoef( compFlowAccessors.get( fields::flow::gravityCoefficient {} ) ),
+    m_pres( compFlowAccessors.get( fields::flow::pressure {} ) ),
+    m_OBLOperatorValues ( compFlowAccessors.get( fields::flow::OBLOperatorValues {} ) ),
+    m_OBLOperatorDerivatives ( compFlowAccessors.get( fields::flow::OBLOperatorDerivatives {} ) ),
     m_localMatrix( localMatrix ),
     m_localRhs( localRhs )
   {}
@@ -819,7 +824,7 @@ public:
     /**
      * @brief Constructor for the stack variables
      */
-    GEOSX_HOST_DEVICE
+    GEOS_HOST_DEVICE
     StackVariables()
       : dofColIndices( maxNumElems * numDofs ),
       localFlux( numEqns ),
@@ -852,14 +857,15 @@ public:
    * @param[in] iconn the connection index
    * @param[in] stack the stack variables
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
+  inline
   void setup( localIndex const iconn,
               StackVariables & stack ) const
   {
     // The kernel is only designed for TPFA
-    GEOSX_ASSERT_EQ( maxNumElems, 2 );
-    GEOSX_ASSERT_EQ( maxNumConns, 1 );
-    GEOSX_ASSERT_EQ( maxStencilSize, 2 );
+    GEOS_ASSERT_EQ( maxNumElems, 2 );
+    GEOS_ASSERT_EQ( maxNumConns, 1 );
+    GEOS_ASSERT_EQ( maxStencilSize, 2 );
 
     // set degrees of freedom indices for this face
     for( integer i = 0; i < maxStencilSize; ++i )
@@ -878,7 +884,8 @@ public:
    * @param[in] iconn the connection index
    * @param[inout] stack the stack variables
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
+  inline
   void computeFlux( localIndex const iconn,
                     StackVariables & stack ) const
   {
@@ -1069,7 +1076,8 @@ public:
    * @param[in] iconn the connection index
    * @param[inout] stack the stack variables
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
+  inline
   void complete( localIndex const iconn,
                  StackVariables & stack ) const
   {
@@ -1104,8 +1112,8 @@ public:
       {
         globalIndex const globalRow = m_dofNumber[m_seri( iconn, i )][m_sesri( iconn, i )][m_sei( iconn, i )];
         localIndex const localRow = LvArray::integerConversion< localIndex >( globalRow - m_rankOffset );
-        GEOSX_ASSERT_GE( localRow, 0 );
-        GEOSX_ASSERT_GE( m_localMatrix.numRows(), localRow + numEqns );
+        GEOS_ASSERT_GE( localRow, 0 );
+        GEOS_ASSERT_GE( m_localMatrix.numRows(), localRow + numEqns );
 
         for( integer id = 0; id < numDofs; ++id )
         {
@@ -1132,11 +1140,11 @@ public:
   launch( localIndex const numConnections,
           KERNEL_TYPE const & kernelComponent )
   {
-    GEOSX_MARK_FUNCTION;
+    GEOS_MARK_FUNCTION;
 
     if( numConnections )
     {
-      forAll< POLICY >( numConnections, [=] GEOSX_HOST_DEVICE ( localIndex const iconn )
+      forAll< POLICY >( numConnections, [=] GEOS_HOST_DEVICE ( localIndex const iconn )
       {
         typename KERNEL_TYPE::StackVariables stack;
 
@@ -1238,7 +1246,7 @@ struct ResidualNormKernel
   {
     RAJA::ReduceSum< ReducePolicy< POLICY >, real64 > localSum( 0.0 );
 
-    forAll< POLICY >( dofNumber.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
+    forAll< POLICY >( dofNumber.size(), [=] GEOS_HOST_DEVICE ( localIndex const ei )
     {
       if( ghostRank[ei] < 0 )
       {
@@ -1274,7 +1282,7 @@ struct ResidualDARTSL2NormKernel
     {
       RAJA::ReduceSum< ReducePolicy< POLICY >, real64 > localResSum( 0.0 ), localNormSum( 0.0 );
 
-      forAll< POLICY >( dofNumber.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
+      forAll< POLICY >( dofNumber.size(), [=] GEOS_HOST_DEVICE ( localIndex const ei )
       {
         if( ghostRank[ei] < 0 )
         {
@@ -1318,7 +1326,7 @@ struct SolutionCheckKernel
 
     RAJA::ReduceMin< ReducePolicy< POLICY >, integer > check( 1 );
 
-    forAll< POLICY >( dofNumber.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
+    forAll< POLICY >( dofNumber.size(), [=] GEOS_HOST_DEVICE ( localIndex const ei )
     {
       if( ghostRank[ei] < 0 )
       {
@@ -1364,7 +1372,7 @@ struct SolutionCheckKernel
 
 } // namespace ReactiveCompositionalMultiphaseOBLKernels
 
-} // namespace geosx
+} // namespace geos
 
 
-#endif //GEOSX_PHYSICSSOLVERS_FLUIDFLOW_REACTIVECOMPOSITIONALMULTIPHASEOBLKERNELS_HPP
+#endif //GEOS_PHYSICSSOLVERS_FLUIDFLOW_REACTIVECOMPOSITIONALMULTIPHASEOBLKERNELS_HPP

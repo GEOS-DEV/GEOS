@@ -19,7 +19,7 @@
 #include "mesh/DomainPartition.hpp"
 
 
-namespace geosx
+namespace geos
 {
 using namespace dataRepository;
 
@@ -97,7 +97,15 @@ FieldSpecificationBase::getCatalog()
 
 void FieldSpecificationBase::setMeshObjectPath( Group const & meshBodies )
 {
-  m_meshObjectPaths = std::make_unique< MeshObjectPath >( m_objectPath, meshBodies );
+  try
+  {
+    m_meshObjectPaths = std::make_unique< MeshObjectPath >( m_objectPath, meshBodies );
+  }
+  catch( std::exception const & e )
+  {
+    throw InputError( e, getWrapperDataContext( viewKeyStruct::objectPathString() ).toString() +
+                      " is a wrong objectPath: " + m_objectPath + "\n" );
+  }
 }
 
 

@@ -17,13 +17,13 @@
  * @file CompressibleSolid.hpp
  */
 
-#ifndef GEOSX_CONSTITUTIVE_SOLID_COMPRESSIBLESOLILD_HPP_
-#define GEOSX_CONSTITUTIVE_SOLID_COMPRESSIBLESOLILD_HPP_
+#ifndef GEOS_CONSTITUTIVE_SOLID_COMPRESSIBLESOLILD_HPP_
+#define GEOS_CONSTITUTIVE_SOLID_COMPRESSIBLESOLILD_HPP_
 
 #include "constitutive/solid/CoupledSolid.hpp"
 #include "constitutive/NullModel.hpp"
 
-namespace geosx
+namespace geos
 {
 namespace constitutive
 {
@@ -50,37 +50,52 @@ public:
     CoupledSolidUpdates< NullModel, PORO_TYPE, PERM_TYPE >( solidModel, porosityModel, permModel )
   {}
 
-  GEOSX_HOST_DEVICE
-  virtual void updateStateFromPressure( localIndex const k,
-                                        localIndex const q,
-                                        real64 const & pressure ) const override final
+  GEOS_HOST_DEVICE
+  virtual void updateStateFromPressureAndTemperature( localIndex const k,
+                                                      localIndex const q,
+                                                      real64 const & pressure,
+                                                      real64 const & pressure_n,
+                                                      real64 const & pressure_k,
+                                                      real64 const & temperature,
+                                                      real64 const & temperature_k,
+                                                      real64 const & temperature_n ) const override final
   {
-    m_porosityUpdate.updateFromPressure( k, q, pressure );
+    m_porosityUpdate.updateFromPressureAndTemperature( k, q,
+                                                       pressure, pressure_k, pressure_n,
+                                                       temperature, temperature_k, temperature_n );
     real64 const porosity = m_porosityUpdate.getPorosity( k, q );
     m_permUpdate.updateFromPorosity( k, q, porosity );
   }
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void updateStateFromPressureAndAperture( localIndex const k,
                                            localIndex const q,
                                            real64 const & pressure,
                                            real64 const & oldHydraulicAperture,
                                            real64 const & newHydraulicAperture ) const
   {
-    m_porosityUpdate.updateFromPressure( k, q, pressure );
+    real64 const pressure_k = 0;
+    real64 const pressure_n = 0;
+    real64 const temperature = 0;
+    real64 const temperature_k = 0;
+    real64 const temperature_n = 0;
+    m_porosityUpdate.updateFromPressureAndTemperature( k, q,
+                                                       pressure, pressure_k, pressure_n,
+                                                       temperature, temperature_k, temperature_n );
     m_permUpdate.updateFromAperture( k, q, oldHydraulicAperture, newHydraulicAperture );
   }
 
-  GEOSX_HOST_DEVICE
-  void updateStateFromPressureApertureAndJump( localIndex const k,
-                                               localIndex const q,
-                                               real64 const & pressure,
-                                               real64 const & oldHydraulicAperture,
-                                               real64 const & newHydraulicAperture,
-                                               real64 const ( &dispJump )[3] ) const
+  GEOS_HOST_DEVICE
+  void updateStateFromPressureApertureJumpAndTraction( localIndex const k,
+                                                       localIndex const q,
+                                                       real64 const & pressure,
+                                                       real64 const & oldHydraulicAperture,
+                                                       real64 const & newHydraulicAperture,
+                                                       real64 const ( &dispJump )[3],
+                                                       real64 const ( &traction )[3] ) const
   {
-    m_porosityUpdate.updateFromPressure( k, q, pressure );
-    m_permUpdate.updateFromApertureAndShearDisplacement( k, q, oldHydraulicAperture, newHydraulicAperture, dispJump );
+    m_porosityUpdate.updateFromPressureAndTemperature( k, q, pressure, 0.0, 0.0, 0.0, 0.0, 0.0 );
+    m_permUpdate.updateFromApertureAndShearDisplacement( k, q, oldHydraulicAperture, newHydraulicAperture, pressure, dispJump, traction );
   }
 
 private:
@@ -160,6 +175,6 @@ private:
 };
 
 }
-} /* namespace geosx */
+} /* namespace geos */
 
-#endif /* GEOSX_CONSTITUTIVE_SOLID_POROELASTIC_HPP_ */
+#endif /* GEOS_CONSTITUTIVE_SOLID_POROELASTIC_HPP_ */

@@ -8,8 +8,12 @@ Permeability models
 
    ConstantPermeability
 
+   ExponentialDecayPermeability
+
    KozenyCarmanPermeability
 
    ParallelPlatesPermeability
 
    SlipDependentPermeability
+
+   WillisRichardsPermeability
