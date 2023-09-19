@@ -26,9 +26,9 @@ namespace geos
   HealMPMEvent::HealMPMEvent( const string & name,
                               Group * const parent ) :
                               MPMEventBase(  name, parent ),
-                              m_source( "mat1" )
+                              m_targetRegion( "mat1" )
   {
-    registerWrapper( viewKeyStruct::sourceString(), &m_source ).
+    registerWrapper( viewKeyStruct::targetRegionString(), &m_targetRegion ).
         setInputFlag( InputFlags::REQUIRED ).
         setDescription( "Particle region to perform heal on" );
   }
@@ -41,7 +41,7 @@ namespace geos
     GEOS_LOG_RANK_0( "HealEvent: " << 
                      "Time=" << m_time << ", " << 
                      "Interval=" << m_interval << ", " << 
-                     "Source=" << m_source );
+                     "targetRegion=" << m_targetRegion );
   }
 
   REGISTER_CATALOG_ENTRY( MPMEventBase, HealMPMEvent, string const &, Group * const )

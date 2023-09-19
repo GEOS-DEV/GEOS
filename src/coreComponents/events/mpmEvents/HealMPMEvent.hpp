@@ -48,9 +48,9 @@ public:
  /// @cond DO_NOT_DOCUMENT
   struct viewKeyStruct
   {
-    static constexpr char const * sourceString() { return "source"; }
+    static constexpr char const * targetRegionString() { return "targetRegion"; }
 
-    dataRepository::ViewKey source = { sourceString() };
+    dataRepository::ViewKey targetRegion = { targetRegionString() };
 
   } HealMPMEventViewKeys;
   /// @endcond
@@ -59,7 +59,7 @@ protected:
   virtual void postProcessInput() override final;
 
   // Event variables
-  string m_source;
+  string m_targetRegion;
 };
 
 } /* namespace geos */

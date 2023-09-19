@@ -35,6 +35,7 @@
 #include "solid/ElasticTransverseIsotropic.hpp"
 #include "solid/ElasticTransverseIsotropicPressureDependent.hpp"
 #include "solid/ElasticOrthotropic.hpp"
+#include "solid/Hyperelastic.hpp"
 #include "solid/HyperelasticMMS.hpp"
 #include "solid/PorousSolid.hpp"
 #include "solid/CompressibleSolid.hpp"
@@ -85,7 +86,21 @@ struct ConstitutivePassThru< ElasticIsotropic >
   }
 };
 
-//  CC: May not be needed
+/**
+ * Specialization for models that derive from Hyperelastic.
+ */
+template<>
+struct ConstitutivePassThru< Hyperelastic >
+{
+  template< typename LAMBDA >
+  static
+  void execute( ConstitutiveBase & constitutiveRelation, LAMBDA && lambda )
+  {
+    ConstitutivePassThruHandler< HyperelasticMMS >::execute( constitutiveRelation,
+                                                              std::forward< LAMBDA >( lambda ) );
+  }
+};
+
 /**
  * Specialization for models that derive from HyperelasticMMS.
  */
@@ -115,7 +130,6 @@ struct ConstitutivePassThru< SolidBase >
   //       For example, DruckerPrager before ElasticIsotropic, DamageVolDev before
   //       Damage, etc.
 
-// CC: do I need to add hyperelasticMMS to this?
   template< typename LAMBDA >
   static
   void execute( ConstitutiveBase & constitutiveRelation, LAMBDA && lambda )
@@ -127,7 +141,6 @@ struct ConstitutivePassThru< SolidBase >
                                  ModifiedCamClay,
                                  DelftEgg,
                                  DruckerPrager,
-                                //  HyperelasticMMS,
                                  ElasticIsotropic,
                                  ElasticTransverseIsotropic,
                                  ElasticIsotropicPressureDependent,
@@ -156,7 +169,6 @@ struct ConstitutivePassThruMPM< SolidBase >
   //       For example, DruckerPrager before ElasticIsotropic, DamageVolDev before
   //       Damage, etc.
 
-// CC: do I need to add hyperelasticMMS to this?
   template< typename LAMBDA >
   static
   void execute( ConstitutiveBase & constitutiveRelation, LAMBDA && lambda )
@@ -168,6 +180,7 @@ struct ConstitutivePassThruMPM< SolidBase >
                                  ElasticTransverseIsotropicPressureDependent,
                                  ElasticTransverseIsotropic,
                                  ElasticIsotropic,
+                                 Hyperelastic,
                                  HyperelasticMMS >::execute( constitutiveRelation,
                                                              std::forward< LAMBDA >( lambda ) );
   }

@@ -42,21 +42,21 @@ class HyperelasticUpdates : public SolidBaseUpdates
 public:
   /**
    * @brief Constructor
-   * @param[in] lambda  The ArrayView holding the first Lame constant data for each element.
+   * @param[in] bulkModulus  The ArrayView holding the first Lame constant data for each element.
    * @param[in] shearModulus The ArrayView holding the second Lame constant data for each element.
    * @param[in] thermalExpansionCoefficient The ArrayView holding the thermalExpansionCoefficient.
    * @param[in] newStress    The ArrayView holding the new stress data for each quadrature point.
    * @param[in] oldStress    The ArrayView holding the old stress data for each quadrature point.
    * @param[in] disableInelasticity Flag to disable plasticity for inelastic models
    */
-  HyperelasticUpdates( arrayView1d< real64 const > const & lambda,
+  HyperelasticUpdates( arrayView1d< real64 const > const & bulkModulus,
                            arrayView1d< real64 const > const & shearModulus,
                            arrayView1d< real64 const > const & thermalExpansionCoefficient,
                            arrayView3d< real64, solid::STRESS_USD > const & newStress,
                            arrayView3d< real64, solid::STRESS_USD > const & oldStress,
                            const bool & disableInelasticity ):
     SolidBaseUpdates( newStress, oldStress, thermalExpansionCoefficient, disableInelasticity ),
-    m_lambda( lambda ),
+    m_bulkModulus( bulkModulus ),
     m_shearModulus( shearModulus )
   {}
 
@@ -144,9 +144,9 @@ public:
                                  real64 ( &elasticStrain )[6] ) const override final;
 
   GEOS_HOST_DEVICE
-  virtual real64 getLambda( localIndex const k ) const final
+  virtual real64 getBulkModulus( localIndex const k ) const final
   {
-    return m_lambda[k];
+    return m_bulkModulus[k];
   }
 
   GEOS_HOST_DEVICE
@@ -175,8 +175,8 @@ public:
 
 protected:
 
-  /// A reference to the ArrayView holding the first Lame constant for each element.
-  arrayView1d< real64 const > const m_lambda;
+  /// A reference to the ArrayView holding the bulk modulus for each element.
+  arrayView1d< real64 const > const m_bulkModulus;
 
   /// A reference to the ArrayView holding the shear modulus for each element.
   arrayView1d< real64 const > const m_shearModulus;
@@ -192,7 +192,7 @@ void HyperelasticUpdates::getElasticStiffness( localIndex const k,
 {
   GEOS_UNUSED_VAR( q );
   real64 const G = m_shearModulus[k];
-  real64 const lambda = m_lambda[k];
+  real64 const lambda = conversions::bulkModAndShearMod::toFirstLame( m_bulkModulus[k], G );
 
   LvArray::tensorOps::fill< 6, 6 >( stiffness, 0 );
 
@@ -219,8 +219,8 @@ void HyperelasticUpdates::getElasticStrain( localIndex const k,
                                                localIndex const q,
                                                real64 ( & elasticStrain)[6] ) const
 {
-  real64 const E = conversions::lameConstants::toYoungMod( m_lambda[k], m_shearModulus[k] );
-  real64 const nu = conversions::lameConstants::toPoissonRatio( m_lambda[k], m_shearModulus[k] );
+  real64 const E = conversions::bulkModAndShearMod::toYoungMod( m_bulkModulus[k], m_shearModulus[k] );
+  real64 const nu = conversions::bulkModAndShearMod::toPoissonRatio( m_bulkModulus[k], m_shearModulus[k] );
 
   elasticStrain[0] = (    m_newStress[k][q][0] - nu*m_newStress[k][q][1] - nu*m_newStress[k][q][2])/E;
   elasticStrain[1] = (-nu*m_newStress[k][q][0] +    m_newStress[k][q][1] - nu*m_newStress[k][q][2])/E;
@@ -269,7 +269,7 @@ void HyperelasticUpdates::smallStrainNoStateUpdate( localIndex const k,
 {
   smallStrainNoStateUpdate_StressOnly( k, q, totalStrain, stress );
 
-  stiffness.m_bulkModulus = conversions::lameConstants::toBulkMod(m_lambda[k], m_shearModulus[k]);
+  stiffness.m_bulkModulus = m_bulkModulus[k];
   stiffness.m_shearModulus = m_shearModulus[k];
 }
 
@@ -333,7 +333,7 @@ void HyperelasticUpdates::smallStrainUpdate( localIndex const k,
                                                  DiscretizationOps & stiffness ) const
 {
   smallStrainUpdate_StressOnly( k, q, timeIncrement, strainIncrement, stress );
-  stiffness.m_bulkModulus = conversions::lameConstants::toBulkMod(m_lambda[k], m_shearModulus[k]);
+  stiffness.m_bulkModulus = m_bulkModulus[k];
   stiffness.m_shearModulus = m_shearModulus[k];
 }
 
@@ -352,22 +352,26 @@ void HyperelasticUpdates::viscousStateUpdate( localIndex const k,
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
 void HyperelasticUpdates::hyperUpdate( localIndex const k,
-                                          localIndex const q,
-                                          real64 const ( & FminusI )[3][3],
-                                          real64 ( & stress )[6] ) const
+                                       localIndex const q,
+                                       real64 const ( & FminusI )[3][3],
+                                       real64 ( & stress )[6] ) const
 {
   GEOS_UNUSED_VAR( q );
 
-  real64 lambda = m_lambda[k];
+  real64 K = m_bulkModulus[k];
   real64 G = m_shearModulus[k];
 
   real64 F [3][3];
-  real64 C[3][3] = {{0}};
+  LvArray::tensorOps::copy< 3, 3 >( F, FminusI );
+  F[0][0] += 1;
+  F[1][1] += 1;
+  F[2][2] += 1;
+
+  real64 C[3][3] = { { 0 } };
   for(int i = 0; i < 3; i++)
   {
     for(int j = 0; j < 3; j++)
     {
-      F[i][j] = FminusI[i][j] + (i == j); // I think I need to get F back, not sure why they need FminusI for other hyperelastic models
       for(int kk = 0; kk < 3; kk++)
       {
         C[i][j] += F[i][kk] * F[j][kk];
@@ -375,20 +379,22 @@ void HyperelasticUpdates::hyperUpdate( localIndex const k,
     }
   }
 
+  real64 trFtF = LvArray::tensorOps::trace< 3 >( C ); // C[0][0] * C[0][0] + C[1][1] * C[1][1] + C[2][2] * C[2][2];
+
   real64 J = F[0][0] * ( F[1][1] * F[2][2] - F[1][2] * F[2][1] ) -
              F[0][1] * ( F[1][0] * F[2][2] - F[1][2] * F[2][0] ) +
              F[0][2] * ( F[1][0] * F[2][1] - F[1][1] * F[2][0] );
 
-  real64 const x1 = lambda * std::log(J) / J;
-  real64 const x2 = G / J;
+  real64 const x1 = G / std::pow(J, 5/3);
+  real64 const x2 = K * ( J-1 ) - G / std::pow(J, 5/3) * trFtF / 3.0;
 
-  stress[0] = x1 +  x2 * ( C[0][0] - 1 );
-  stress[1] = x1 +  x2 * ( C[1][1] - 1 );
-  stress[2] = x1 +  x2 * ( C[2][2] - 1 );
+  stress[0] = x1 * C[0][0] + x2;
+  stress[1] = x1 * C[1][1] + x2;
+  stress[2] = x1 * C[2][2] + x2;
 
-  stress[3] = x2 * C[1][2];
-  stress[4] = x2 * C[0][2];
-  stress[5] = x2 * C[0][1];
+  stress[3] = x1 * C[1][2];
+  stress[4] = x1 * C[0][2];
+  stress[5] = x1 * C[0][1];
 }
 
 // CC: hyperelastic update for model
@@ -466,11 +472,11 @@ public:
     /// string/key for default Young's modulus
     static constexpr char const * defaultYoungModulusString() { return "defaultYoungModulus"; }
 
-    /// string/key for default Young's modulus
+    /// string/key for default first Lame constant
     static constexpr char const * defaultLambdaString() { return "defaultLambda"; }
 
-    /// string/key for first Lame constant
-    static constexpr char const * lambdaString() { return "lambda"; }
+    /// string/key for bulk modulus
+    static constexpr char const * bulkModulusString() { return "bulkModulus"; }
 
     /// string/key for shear modulus
     static constexpr char const * shearModulusString() { return "shearModulus"; }
@@ -482,14 +488,14 @@ public:
    * @return A const reference to arrayView1d<real64> containing the first Lame constant
    *         (at every element).
    */
-  arrayView1d< real64 > const lambda() { return m_lambda; }
+  arrayView1d< real64 > const bulkModulus() { return m_bulkModulus; }
 
   /**
    * @brief Const accessor for first Lame constant
    * @return A const reference to arrayView1d<real64 const> containing the first Lame constant
    *         (at every element).
    */
-  arrayView1d< real64 const > const lambda() const { return m_lambda; }
+  arrayView1d< real64 const > const bulkModulus() const { return m_bulkModulus; }
 
   /**
    * @brief Accessor for shear modulus
@@ -505,9 +511,9 @@ public:
   arrayView1d< real64 const > const shearModulus() const { return m_shearModulus; }
 
   GEOS_HOST_DEVICE
-  virtual arrayView1d< real64 const > getLambda() const final
+  virtual arrayView1d< real64 const > getBulkModulus() const final
   {
-    return m_lambda;
+    return m_bulkModulus;
   }
   GEOS_HOST_DEVICE
   virtual arrayView1d< real64 const > getShearModulus() const override final
@@ -525,7 +531,7 @@ public:
   {
     if( includeState )
     {
-      return HyperelasticUpdates( m_lambda,
+      return HyperelasticUpdates( m_bulkModulus,
                                   m_shearModulus,
                                   m_thermalExpansionCoefficient,
                                   m_newStress,
@@ -534,7 +540,7 @@ public:
     }
     else // for "no state" updates, pass empty views to avoid transfer of stress data to device
     {
-      return HyperelasticUpdates( m_lambda,
+      return HyperelasticUpdates( m_bulkModulus,
                                   m_shearModulus,
                                   m_thermalExpansionCoefficient,
                                   arrayView3d< real64, solid::STRESS_USD >(),
@@ -555,7 +561,7 @@ public:
   UPDATE_KERNEL createDerivedKernelUpdates( PARAMS && ... constructorParams ) const
   {
     return UPDATE_KERNEL( std::forward< PARAMS >( constructorParams )...,
-                          m_lambda,
+                          m_bulkModulus,
                           m_shearModulus,
                           m_newStress,
                           m_oldStress,
@@ -568,13 +574,13 @@ protected:
   virtual void postProcessInput() override;
 
   /// The default value of the first Lame constant for any new allocations.
-  real64 m_defaultLambda;
+  real64 m_defaultBulkModulus;
 
   /// The default value of the second Lame constant for any new allocations.
   real64 m_defaultShearModulus;
 
   /// The first lame constant for each upper level dimension (i.e. cell) of *this
-  array1d< real64 > m_lambda;
+  array1d< real64 > m_bulkModulus;
 
   /// The shearModulus for each upper level dimension (i.e. cell) of *this
   array1d< real64 > m_shearModulus;

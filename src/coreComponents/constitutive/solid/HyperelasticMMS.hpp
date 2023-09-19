@@ -362,12 +362,16 @@ void HyperelasticMMSUpdates::hyperUpdate( localIndex const k,
   real64 G = m_shearModulus[k];
 
   real64 F [3][3];
+  LvArray::tensorOps::copy< 3, 3 >( F, FminusI );
+  F[0][0] += 1;
+  F[1][1] += 1;
+  F[2][2] += 1;
+
   real64 C[3][3] = {{0}};
   for(int i = 0; i < 3; i++)
   {
     for(int j = 0; j < 3; j++)
     {
-      F[i][j] = FminusI[i][j] + (i == j); // I think I need to get F back, not sure why they need FminusI for other hyperelastic models
       for(int kk = 0; kk < 3; kk++)
       {
         C[i][j] += F[i][kk] * F[j][kk];
@@ -466,7 +470,7 @@ public:
     /// string/key for default Young's modulus
     static constexpr char const * defaultYoungModulusString() { return "defaultYoungModulus"; }
 
-    /// string/key for default Young's modulus
+    /// string/key for default first Lame constant
     static constexpr char const * defaultLambdaString() { return "defaultLambda"; }
 
     /// string/key for first Lame constant

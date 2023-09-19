@@ -141,6 +141,10 @@ public:
     return m_gridMax;
   }
 
+  arrayView1d< int const > const getPeriodic() const {
+    return m_Periodic;
+  }
+
   void setPartitions( unsigned int xPartitions,
                       unsigned int yPartitions,
                       unsigned int zPartitions ) override;

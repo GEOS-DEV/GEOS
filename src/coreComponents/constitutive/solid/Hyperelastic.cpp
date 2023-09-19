@@ -26,15 +26,15 @@ namespace constitutive
 
 Hyperelastic::Hyperelastic( string const & name, Group * const parent ):
   SolidBase( name, parent ),
-  m_defaultLambda(),
+  m_defaultBulkModulus(),
   m_defaultShearModulus(),
-  m_lambda(),
+  m_bulkModulus(),
   m_shearModulus()
 {
-  registerWrapper< real64 >( viewKeyStruct::defaultBulkModulusString() ).
+  registerWrapper< real64 >( viewKeyStruct::defaultLambdaString() ).
     setApplyDefaultValue( -1 ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Default Bulk Modulus Parameter" );
+    setDescription( "Default First Lame Parameter" );
 
   registerWrapper< real64 >( viewKeyStruct::defaultYoungModulusString() ).
     setApplyDefaultValue( -1 ).
@@ -46,17 +46,17 @@ Hyperelastic::Hyperelastic( string const & name, Group * const parent ):
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Default Poisson's Ratio" );
 
-  registerWrapper( viewKeyStruct::defaultLambdaString(), &m_defaultLambda ).
+  registerWrapper( viewKeyStruct::defaultBulkModulusString(), &m_defaultBulkModulus).
     setApplyDefaultValue( -1 ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Default Poisson's Ratio" );
+    setDescription( "Default bulk modulus" );
 
   registerWrapper( viewKeyStruct::defaultShearModulusString(), &m_defaultShearModulus).
     setApplyDefaultValue( -1 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Default shear modulus" );
 
-  registerWrapper( viewKeyStruct::lambdaString(), &m_lambda ).
+  registerWrapper( viewKeyStruct::bulkModulusString(), &m_bulkModulus ).
     setApplyDefaultValue( -1 ).
     setDescription( "Elastic Bulk Modulus Field" );
 
@@ -76,8 +76,8 @@ void Hyperelastic::postProcessInput()
 
   real64 & nu = getReference< real64 >( viewKeyStruct::defaultPoissonRatioString() );
   real64 & E  = getReference< real64 >( viewKeyStruct::defaultYoungModulusString() );
-  real64 & K  = getReference< real64 >( viewKeyStruct::defaultBulkModulusString() );
-  real64 & lambda = m_defaultLambda;
+  real64 & lambda = getReference< real64 >( viewKeyStruct::defaultLambdaString() );
+  real64 & K  = m_defaultBulkModulus;
   real64 & G  = m_defaultShearModulus;
 
   // Poisson ratio range is: -0.5 < nu < 0.5
@@ -181,8 +181,8 @@ void Hyperelastic::postProcessInput()
   }
 
   // set results as array default values
-  this->getWrapper< array1d< real64 > >( viewKeyStruct::lambdaString() ).
-    setApplyDefaultValue( m_defaultLambda );
+  this->getWrapper< array1d< real64 > >( viewKeyStruct::bulkModulusString() ).
+    setApplyDefaultValue( m_defaultBulkModulus );
 
   this->getWrapper< array1d< real64 > >( viewKeyStruct::shearModulusString() ).
     setApplyDefaultValue( m_defaultShearModulus );
