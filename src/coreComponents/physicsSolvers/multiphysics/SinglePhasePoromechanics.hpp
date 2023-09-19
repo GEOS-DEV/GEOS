@@ -20,32 +20,21 @@
 #define GEOS_PHYSICSSOLVERS_MULTIPHYSICS_SINGLEPHASEPOROMECHANICS_HPP_
 
 #include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
-#include "physicsSolvers/multiphysics/CoupledSolver.hpp"
-#include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
+#include "physicsSolvers/multiphysics/PoromechanicsSolver.hpp"
 
 namespace geos
 {
 
-class SinglePhasePoromechanics : public CoupledSolver< SinglePhaseBase,
-                                                       SolidMechanicsLagrangianFEM >
+class SinglePhasePoromechanics : public PoromechanicsSolver< SinglePhaseBase >
 {
 public:
 
-  using Base = CoupledSolver< SinglePhaseBase, SolidMechanicsLagrangianFEM >;
+  using Base = PoromechanicsSolver< SinglePhaseBase >;
   using Base::m_solvers;
   using Base::m_dofManager;
   using Base::m_localMatrix;
   using Base::m_rhs;
   using Base::m_solution;
-
-  enum class SolverType : integer
-  {
-    Flow = 0,
-    SolidMechanics = 1
-  };
-
-  /// String used to form the solverName used to register solvers in CoupledSolver
-  static string coupledSolverAttributePrefix() { return "poromechanics"; }
 
   /**
    * @brief main constructor for SinglePhasePoromechanics objects

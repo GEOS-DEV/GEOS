@@ -21,7 +21,6 @@
 #define GEOS_PHYSICSSOLVERS_MULTIPHYSICS_COUPLEDSOLVER_HPP_
 
 #include "physicsSolvers/SolverBase.hpp"
-#include "constitutive/solid/PorousSolid.hpp"
 
 #include <tuple>
 
@@ -51,11 +50,6 @@ public:
         setInputFlag( dataRepository::InputFlags::REQUIRED ).
         setDescription( "Name of the " + SolverType::coupledSolverAttributePrefix() + " solver used by the coupled solver" );
     } );
-
-    this->registerWrapper( viewKeyStruct::useNAString(), &m_useNA ).
-      setApplyDefaultValue( 0 ).
-      setInputFlag( dataRepository::InputFlags::OPTIONAL ).
-      setDescription( "Flag to indicate that the solver is going to use nonlinear acceleration" );
 
     this->getWrapper< string >( SolverBase::viewKeyStruct::discretizationString() ).
       setInputFlag( dataRepository::InputFlags::FALSE );
@@ -333,12 +327,6 @@ public:
 
   /**@}*/
 
-  struct viewKeyStruct : SolverBase::viewKeyStruct
-  {
-    /// Flag to indicate that the solver is going to use nonlinear acceleration
-    constexpr static char const * useNAString() { return "useNA"; }
-  };
-
 protected:
 
   /**
@@ -407,29 +395,22 @@ protected:
     iter = 0;
     bool isConverged = false;
 
+    // Reset the states of all solvers if any of them had to restart
+    forEachArgInTuple( m_solvers, [&]( auto & solver, auto )
+    {
+      solver->resetStateToBeginningOfStep( domain );
+      solver->getSolverStatistics().initializeTimeStepStatistics();     // initialize counters for subsolvers
+    } );
+    resetStateToBeginningOfStep( domain );
+
     /// Sequential coupling loop
     while( iter < solverParams.m_maxIterNewton )
     {
-      if( iter == 0 )
-      {
-        // Reset the states of all solvers if any of them had to restart
-        forEachArgInTuple( m_solvers, [&]( auto & solver, auto )
-        {
-          solver->resetStateToBeginningOfStep( domain );
-          solver->getSolverStatistics().initializeTimeStepStatistics(); // initialize counters for subsolvers
-        } );
-        resetStateToBeginningOfStep( domain );
-      }
-
       // Increment the solver statistics for reporting purposes
       // Pass a "0" as argument (0 linear iteration) to skip the output of linear iteration stats at the end
       m_solverStatistics.logNonlinearIteration( 0 );
 
-      if( m_useNA )
-      {
-        // Nonlinear Acceleration (Aitken)
-        beforeOuterIter( iter, domain );
-      }
+      startSequentialIteration( iter, domain );
 
       // Solve the subproblems nonlinearly
       forEachArgInTuple( m_solvers, [&]( auto & solver, auto idx )
@@ -441,15 +422,6 @@ protected:
                                                            domain );
 
         mapSolutionBetweenSolvers( domain, idx() );
-
-        if( m_useNA )
-        {
-          if( idx() == 1 )
-          {
-            // Nonlinear Acceleration (Aitken): record unaccelerated averageMeanTotalStressIncrement
-            afterGeomechanicsInnerLoop( domain );
-          }
-        }
 
         if( dtReturnTemporary < dtReturn )
         {
@@ -474,11 +446,7 @@ protected:
       }
       else
       {
-        if( m_useNA )
-        {
-          // Nonlinear Acceleration (Aitken)
-          afterOuterIter( iter, domain );
-        }
+        finishSequentialIteration( iter, domain );
       }
       // Add convergence check:
       ++iter;
@@ -612,165 +580,16 @@ protected:
     } );
   }
 
-  /* Implementation of Nonlinear Acceleration (Aitken) of averageMeanTotalStressIncrement */
-
-  void recordAverageMeanTotalStressIncrement( DomainPartition & domain,
-                                              array1d< real64 > & s )
+  virtual void startSequentialIteration( integer const & iter,
+                                         DomainPartition & domain )
   {
-    // s denotes averageMeanTotalStressIncrement
-    s.resize( 0 );
-    forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
-                                                                 MeshLevel & mesh,
-                                                                 arrayView1d< string const > const & regionNames )
-    {
-      mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
-                                                                                            auto & subRegion )
-      {
-        // get the solid model (to access stress increment)
-        string const solidName = subRegion.template getReference< string >( "porousMaterialNames" );
-        geos::constitutive::CoupledSolidBase & solid = getConstitutiveModel< geos::constitutive::CoupledSolidBase >( subRegion, solidName );
-
-        arrayView1d< const real64 > const & averageMeanTotalStressIncrement_k = solid.getAverageMeanTotalStressIncrement_k();
-        for( localIndex k = 0; k < localIndex( averageMeanTotalStressIncrement_k.size() ); k++ )
-        {
-          s.emplace_back( averageMeanTotalStressIncrement_k[ k ] );
-        }
-      } );
-    } );
+    GEOS_UNUSED_VAR( iter, domain );
   }
 
-  void applyAcceleratedAverageMeanTotalStressIncrement( DomainPartition & domain,
-                                                        array1d< real64 > & s )
+  virtual void finishSequentialIteration( integer const & iter,
+                                          DomainPartition & domain )
   {
-    // s denotes averageMeanTotalStressIncrement
-    integer i = 0;
-    forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
-                                                                 MeshLevel & mesh,
-                                                                 arrayView1d< string const > const & regionNames )
-    {
-      mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
-                                                                                            auto & subRegion )
-      {
-        // get the solid model (to access stress increment)
-        string const solidName = subRegion.template getReference< string >( "porousMaterialNames" );
-        geos::constitutive::CoupledSolidBase & solid = getConstitutiveModel< geos::constitutive::CoupledSolidBase >( subRegion, solidName );
-        auto & porosityModel = dynamic_cast< geos::constitutive::BiotPorosity const & >( solid.getBasePorosityModel() );
-        arrayView1d< real64 > const & averageMeanTotalStressIncrement_k = solid.getAverageMeanTotalStressIncrement_k();
-        for( localIndex k = 0; k < localIndex( averageMeanTotalStressIncrement_k.size() ); k++ )
-        {
-          porosityModel.updateAverageMeanTotalStressIncrement( k, s[ i ] );
-          i++;
-        }
-      } );
-    } );
-  }
-
-  array1d< real64 > addTwoVecs( const array1d< real64 > & vec1,
-                                const array1d< real64 > & vec2,
-                                const real64 sign )
-  {
-    GEOS_ASSERT( vec1.size() == vec2.size() );
-    array1d< real64 > result;
-    const localIndex N = vec1.size();
-    for( localIndex i = 0; i < N; i++ )
-    {
-      result.emplace_back( vec1[ i ] + sign * vec2[ i ] );
-    }
-    return result;
-  }
-
-  array1d< real64 > scalarMultiplyAVec( const array1d< real64 > & vec,
-                                        const real64 scalarMult )
-  {
-    array1d< real64 > result;
-    const localIndex N = vec.size();
-    for( localIndex i = 0; i < N; i++ )
-    {
-      result.emplace_back( scalarMult * vec[ i ] );
-    }
-    return result;
-  }
-
-  real64 dotTwoVecs( const array1d< real64 > & vec1,
-                     const array1d< real64 > & vec2 )
-  {
-    GEOS_ASSERT( vec1.size() == vec2.size() );
-    real64 result = 0;
-    const localIndex N = vec1.size();
-    for( localIndex i = 0; i < N; i++ )
-    {
-      result += vec1[ i ] * vec2[ i ];
-    }
-    return result;
-  }
-
-  real64 computeAitkenRelaxationFactor( const array1d< real64 > & s0,
-                                        const array1d< real64 > & s1,
-                                        const array1d< real64 > & s1_tilde,
-                                        const array1d< real64 > & s2_tilde,
-                                        const real64 omega0 )
-  {
-    array1d< real64 > r1 = addTwoVecs( s1_tilde, s0, -1.0 );
-    array1d< real64 > r2 = addTwoVecs( s2_tilde, s1, -1.0 );
-
-    // diff = r2 - r1
-    array1d< real64 > diff = addTwoVecs( r2, r1, -1.0 );
-
-    const real64 denom = dotTwoVecs( diff, diff );
-    const real64 numer = dotTwoVecs( r1, diff );
-
-    real64 omega1 = 1.0;
-    if( !isZero( denom ) )
-    {
-      omega1 = -1.0 * omega0 * numer / denom;
-    }
-    return omega1;
-  }
-
-  array1d< real64 > computeUpdate( const array1d< real64 > & s1,
-                                   const array1d< real64 > & s2_tilde,
-                                   const real64 omega1 )
-  {
-    return addTwoVecs( scalarMultiplyAVec( s1, 1.0 - omega1 ),
-                       scalarMultiplyAVec( s2_tilde, omega1 ),
-                       1.0 );
-  }
-
-  void beforeOuterIter( integer const & iter,
-                        DomainPartition & domain )
-  {
-    if( iter == 0 )
-    {
-      recordAverageMeanTotalStressIncrement( domain, m_s1 );
-    }
-    else
-    {
-      m_s0 = m_s1;
-      m_s1 = m_s2;
-      m_s1_tilde = m_s2_tilde;
-      m_omega0 = m_omega1;
-    }
-  }
-
-  void afterGeomechanicsInnerLoop( DomainPartition & domain )
-  {
-    recordAverageMeanTotalStressIncrement( domain, m_s2_tilde );
-  }
-
-  void afterOuterIter( integer const & iter,
-                       DomainPartition & domain )
-  {
-    if( iter == 0 )
-    {
-      m_s2 = m_s2_tilde;
-      m_omega1 = 1.0;
-    }
-    else
-    {
-      m_omega1 = computeAitkenRelaxationFactor( m_s0, m_s1, m_s1_tilde, m_s2_tilde, m_omega0 );
-      m_s2 = computeUpdate( m_s1, m_s2_tilde, m_omega1 );
-      applyAcceleratedAverageMeanTotalStressIncrement( domain, m_s2 );
-    }
+    GEOS_UNUSED_VAR( iter, domain );
   }
 
 protected:
@@ -781,15 +600,6 @@ protected:
   /// Names of the single-physics solvers
   std::array< string, sizeof...( SOLVERS ) > m_names;
 
-  /// member variables needed for Nonlinear Acceleration (Aitken)
-  integer m_useNA;
-  array1d< real64 > m_s0;
-  array1d< real64 > m_s1;
-  array1d< real64 > m_s1_tilde;
-  array1d< real64 > m_s2;
-  array1d< real64 > m_s2_tilde;
-  real64 m_omega0;
-  real64 m_omega1;
 };
 
 } /* namespace geos */

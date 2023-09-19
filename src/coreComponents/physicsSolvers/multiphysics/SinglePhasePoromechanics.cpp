@@ -431,6 +431,8 @@ void SinglePhasePoromechanics::mapSolutionBetweenSolvers( DomainPartition & doma
       } );
     } );
   }
+
+  Base::mapSolutionBetweenSolvers( domain, solverType );
 }
 
 void SinglePhasePoromechanics::updateBulkDensity( ElementSubRegionBase & subRegion )
