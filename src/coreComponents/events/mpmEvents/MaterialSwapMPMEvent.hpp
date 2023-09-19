@@ -48,24 +48,24 @@ public:
  /// @cond DO_NOT_DOCUMENT
   struct viewKeyStruct
   {
-    static constexpr char const * sourceString() { return "source"; }
-    static constexpr char const * destinationString() { return "destination"; }
+    static constexpr char const * sourceRegionString() { return "sourceRegion"; }
+    static constexpr char const * destinationRegionString() { return "destinationRegion"; }
 
-    dataRepository::ViewKey source = { sourceString() };
-    dataRepository::ViewKey destination = { destinationString() };
+    dataRepository::ViewKey sourceRegion = { sourceRegionString() };
+    dataRepository::ViewKey destinationRegion = { destinationRegionString() };
 
   } materialSwapMPMEventViewKeys;
   /// @endcond
 
-  string getSource() const { return m_source; }
-  string getDestination() const { return m_destination; }
+  string getSourceRegion() const { return m_sourceRegion; }
+  string getDestinationRegion() const { return m_destinationRegion; }
 
 protected:
   virtual void postProcessInput() override final;
 
   // Event variables
-  string m_source;
-  string m_destination;
+  string m_sourceRegion;
+  string m_destinationRegion;
 };
 
 } /* namespace geos */

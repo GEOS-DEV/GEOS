@@ -276,6 +276,8 @@ void ElasticTransverseIsotropicUpdates::smallStrainUpdate_StressOnly( localIndex
                                                          real64 const ( & strainIncrement )[6],
                                                          real64 ( & stress )[6] ) const
 {
+  GEOS_UNUSED_VAR( beginningRotation );
+  GEOS_UNUSED_VAR( endRotation );
   smallStrainUpdate_StressOnly( k,
                                 q,
                                 timeIncrement,
@@ -562,16 +564,47 @@ public:
   arrayView1d< real64 > getC66() { return m_c66; }
 
   /**
+   * @brief Accessor for effective bulk modulus
+   * @return A const reference to arrayView1d<real64> containing the effective bulk
+   *         modulus (at every element).
+   */
+  arrayView1d< real64 > const effectiveBulkModulus() { return m_effectiveBulkModulus; }
+
+  /**
+   * @brief Const accessor for effective bulk modulus
+   * @return A const reference to arrayView1d<real64 const> containing the
+   *         effective bulk modulus (at every element).
+   */
+  arrayView1d< real64 const > const effectiveBulkModulus() const { return m_effectiveBulkModulus; }
+
+ /**
+   * @brief Accessor for effective bulk modulus
+   * @return A const reference to arrayView1d<real64> containing the effective bulk
+   *         modulus (at every element).
+   */
+  arrayView1d< real64 > const effectiveShearModulus() { return m_effectiveShearModulus; }
+
+  /**
+   * @brief Const accessor for effective shear modulus
+   * @return A const reference to arrayView1d<real64 const> containing the
+   *         effective shear modulus (at every element).
+   */
+  arrayView1d< real64 const > const effectiveShearModulus() const { return m_effectiveShearModulus; }
+
+  /**
    * @brief Getter for effective bulk modulus.
    * @return reference to mutable effective bulk modulus.
    */
-  arrayView1d< real64 > getEffectiveBulkModulus() { return m_effectiveBulkModulus; }
+  GEOS_HOST_DEVICE
+  arrayView1d< real64 const > getEffectiveBulkModulus() const { return m_effectiveBulkModulus; }
 
-    /**
-   * @brief Getter for effective shear modulus.
-   * @return reference to mutable effective shear modulus.
-   */
-  arrayView1d< real64 > getEffectiveShearModulus() { return m_effectiveShearModulus; }
+  /**
+  * @brief Getter for effective shear modulus.
+  * @return reference to mutable effective shear modulus.
+  */
+  GEOS_HOST_DEVICE
+  arrayView1d< real64 const > getEffectiveShearModulus() const { return m_effectiveShearModulus; }
+
 
   /**
    * @brief Create a instantiation of the

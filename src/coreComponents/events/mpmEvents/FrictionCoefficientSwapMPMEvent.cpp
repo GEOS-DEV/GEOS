@@ -27,18 +27,12 @@ namespace geos
                               Group * const parent ) :
                               MPMEventBase(  name, parent ),
                               m_frictionCoefficient( -1.0 ),
-                              m_frictionCoefficientRuleOfMixtures("arithmetic"),
                               m_frictionCoefficientTable()
   {
     registerWrapper( "frictionCoefficient", &m_frictionCoefficient ).
         setApplyDefaultValue( -1 ).
         setInputFlag( InputFlags::OPTIONAL ).
         setDescription( "Coefficient of friction, currently assumed to be the same everywhere" );
-
-    registerWrapper( "frictionCoefficientRuleOfMixtures", &m_frictionCoefficientRuleOfMixtures ).
-        setApplyDefaultValue( m_frictionCoefficientRuleOfMixtures ).
-        setInputFlag( InputFlags::OPTIONAL ).
-        setDescription( "Rule for mixing coefficient of friction betweeen undefined pairs of contact groups" );
 
     registerWrapper( "frictionCoefficientTable", &m_frictionCoefficientTable ).
         setInputFlag( InputFlags::OPTIONAL ).

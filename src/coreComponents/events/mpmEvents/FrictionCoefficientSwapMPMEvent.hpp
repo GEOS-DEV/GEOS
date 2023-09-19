@@ -49,14 +49,12 @@ public:
   struct viewKeyStruct
   {
     static constexpr char const * frictionCoefficientString() { return "frictionCoefficient"; }
-    static constexpr char const * frictionCoefficientRuleOfMixturesString() { return "frictionCoefficientRuleOfMixtures"; }
     static constexpr char const * frictionCoefficientTableString() { return "frictionCoefficientTable"; }
 
   } FrictionCoefficientSwapMPMEventViewKeys;
   /// @endcond
 
     real64 getFrictionCoefficient() const { return m_frictionCoefficient; }
-    string getRuleOfMixtures() const { return m_frictionCoefficientRuleOfMixtures; }
     array2d< real64 > getFrictionCoefficientTable() const { return m_frictionCoefficientTable; }
 
 protected:
@@ -64,7 +62,6 @@ protected:
 
   // Event variables
   real64 m_frictionCoefficient;
-  string m_frictionCoefficientRuleOfMixtures;
   array2d< real64 > m_frictionCoefficientTable; 
 };
 

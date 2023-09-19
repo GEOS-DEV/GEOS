@@ -440,7 +440,6 @@ void StrainHardeningPolymerUpdates::smallStrainUpdateHelper( localIndex const k,
       // m_yieldStrength[k] *= thermalStrengthReduction;
 
       // check yield function
-      real64 yield = trialQ / yieldStrength;
       if( trialQ > yieldStrength || iter > 0 ){
 
         // re-construct stress = P*eye + sqrt(2/3)*Q*nhat
@@ -507,6 +506,8 @@ void StrainHardeningPolymerUpdates::computePlasticStrainIncrement ( localIndex c
                                                                     real64 ( & plasticStrainIncrement )[6] ) const
 { 
   GEOS_UNUSED_VAR( q );
+  GEOS_UNUSED_VAR( timeIncrement );
+  
   // For hypo-elastic models we compute the increment in plastic strain assuming
   // for some increment in total strain and stress and elastic properties.
 
