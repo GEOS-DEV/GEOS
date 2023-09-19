@@ -463,7 +463,7 @@ void MultiphasePoromechanics::mapSolutionBetweenSolvers( DomainPartition & domai
       } );
     } );
   }
-
+  // call base method (needed to perform nonlinear acceleration)
   Base::mapSolutionBetweenSolvers( domain, solverType );
 }
 
@@ -526,6 +526,7 @@ void MultiphasePoromechanics::averageMeanTotalStressIncrement( DomainPartition &
     } );
   } );
 }
+
 
 REGISTER_CATALOG_ENTRY( SolverBase, MultiphasePoromechanics, string const &, Group * const )
 

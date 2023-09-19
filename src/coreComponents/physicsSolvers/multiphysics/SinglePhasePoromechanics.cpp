@@ -431,7 +431,7 @@ void SinglePhasePoromechanics::mapSolutionBetweenSolvers( DomainPartition & doma
       } );
     } );
   }
-
+  // call base method (needed to perform nonlinear acceleration)
   Base::mapSolutionBetweenSolvers( domain, solverType );
 }
 

@@ -197,6 +197,7 @@ public:
     return getBasePorosityModel().getAverageMeanTotalStressIncrement_k();
   }
 
+
   /**
    * @brief initialize the constitutive models fields.
    */

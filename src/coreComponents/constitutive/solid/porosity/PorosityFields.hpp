@@ -110,6 +110,8 @@ DECLARE_FIELD( averageMeanTotalStressIncrement_k,
                NO_WRITE,
                "Mean total stress increment averaged over quadrature points at the previous sequential iteration" );
 
+
+
 }
 
 }

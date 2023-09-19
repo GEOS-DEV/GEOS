@@ -53,7 +53,7 @@ public:
                        arrayView1d< real64 > const & biotCoefficient,
                        arrayView1d< real64 > const & thermalExpansionCoefficient,
                        arrayView2d< real64 > const & meanTotalStressIncrement_k,
-                       arrayView1d< real64 > const & averageMeanTotalStressIncrement_k,
+                       arrayView1d< real64 const > const & averageMeanTotalStressIncrement_k,
                        arrayView1d< real64 > const & bulkModulus,
                        real64 const & grainBulkModulus ): PorosityBaseUpdates( newPorosity,
                                                                                porosity_n,
@@ -119,7 +119,7 @@ public:
   {
     real64 const biotSkeletonModulusInverse = (biotCoefficient - referencePorosity) / m_grainBulkModulus;
     real64 const porosityThermalExpansion = 3 * thermalExpansionCoefficient * ( biotCoefficient - referencePorosity );
-    real64 fixedStressPressureCoefficient = biotCoefficient * biotCoefficient / bulkModulus;
+    real64 const fixedStressPressureCoefficient = biotCoefficient * biotCoefficient / bulkModulus;
     real64 const fixedStressTemperatureCoefficient = 3 * biotCoefficient * thermalExpansionCoefficient;
 
     // total stress formulation for porosity update

@@ -119,7 +119,6 @@ void SolverStatistics::outputStatistics() const
   bool const printIterations = !(m_numSuccessfulNonlinearIterations == 0 && m_numDiscardedNonlinearIterations == 0);
   bool const printLinearIterations = !(m_numSuccessfulLinearIterations == 0 && m_numDiscardedLinearIterations == 0);
 
-
   auto const logStat = [&]( auto const name, auto const value )
   {
     GEOS_LOG_RANK_0( GEOS_FMT( "{}, number of {}: {}",

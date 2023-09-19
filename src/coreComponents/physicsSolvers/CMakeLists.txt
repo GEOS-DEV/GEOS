@@ -68,7 +68,7 @@ set( physicsSolvers_headers
      multiphysics/CompositionalMultiphaseReservoirAndWells.hpp
      multiphysics/CoupledReservoirAndWellsBase.hpp
      multiphysics/CoupledSolver.hpp
-        multiphysics/PoromechanicsSolver.hpp
+     multiphysics/PoromechanicsSolver.hpp
      multiphysics/FlowProppantTransportSolver.hpp
      multiphysics/HydrofractureSolver.hpp
      multiphysics/HydrofractureSolverKernels.hpp

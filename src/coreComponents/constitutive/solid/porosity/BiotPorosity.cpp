@@ -59,6 +59,7 @@ void BiotPorosity::allocateConstitutiveData( dataRepository::Group & parent,
                                              localIndex const numConstitutivePointsPerParentIndex )
 {
   PorosityBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
+
   m_meanTotalStressIncrement_k.resize( 0, numConstitutivePointsPerParentIndex );
 }
 

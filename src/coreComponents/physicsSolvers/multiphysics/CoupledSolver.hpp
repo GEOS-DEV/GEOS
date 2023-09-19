@@ -435,6 +435,7 @@ protected:
                                                 time_n,
                                                 dtReturn,
                                                 domain );
+
       if( isConverged )
       {
         // Save Time step statistics for the subsolvers
@@ -525,7 +526,6 @@ protected:
         // finally, we perform the convergence check on the multiphysics residual
         residualNorm = sqrt( residualNorm );
         GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "    ( R ) = ( {:4.2e} ) ; ", residualNorm ) );
-
         isConverged = ( residualNorm < params.m_newtonTol );
 
       }
@@ -599,7 +599,6 @@ protected:
 
   /// Names of the single-physics solvers
   std::array< string, sizeof...( SOLVERS ) > m_names;
-
 };
 
 } /* namespace geos */
