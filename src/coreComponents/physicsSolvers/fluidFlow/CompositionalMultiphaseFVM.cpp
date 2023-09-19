@@ -52,7 +52,37 @@ CompositionalMultiphaseFVM::CompositionalMultiphaseFVM( const string & name,
                                                         Group * const parent )
   :
   CompositionalMultiphaseBase( name, parent )
-{}
+{
+  registerWrapper( viewKeyStruct::useDBCString(), &m_useDBC ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( 0 ).
+    setDescription( "Enable Dissipation-based continuation flux" );
+
+  registerWrapper( viewKeyStruct::omegaDBCString(), &m_omegaDBC ).
+    setApplyDefaultValue( 1 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Factor by which DBC flux is multiplied" );
+
+  registerWrapper( viewKeyStruct::continuationDBCString(), &m_continuationDBC ).
+    setApplyDefaultValue( 1 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Flag for enabling continuation parameter" );
+
+  registerWrapper( viewKeyStruct::miscibleDBCString(), &m_miscibleDBC ).
+    setApplyDefaultValue( 0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Flag for enabling DBC formulation with/without miscibility" );
+
+  registerWrapper( viewKeyStruct::kappaminDBCString(), &m_kappaminDBC ).
+    setApplyDefaultValue( 1e-20 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Factor that controls how much dissipation is kept in the system when continuation is used" );
+
+  registerWrapper( viewKeyStruct::contMultiplierDBCString(), &m_contMultiplierDBC ).
+    setApplyDefaultValue( 0.5 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Factor by which continuation parameter is changed every newton when DBC is used" );
+}
 
 void CompositionalMultiphaseFVM::initializePreSubGroups()
 {
@@ -139,7 +169,7 @@ void CompositionalMultiphaseFVM::assembleFluxTerms( real64 const dt,
       }
       else
       {
-        if( getNonlinearSolverParameters().useDBC())
+        if( m_useDBC )
         {
           dissipationCompositionalMultiphaseFVMKernels::
             FaceBasedAssemblyKernelFactory::
@@ -154,12 +184,12 @@ void CompositionalMultiphaseFVM::assembleFluxTerms( real64 const dt,
                                                        dt,
                                                        localMatrix.toViewConstSizes(),
                                                        localRhs.toView(),
-                                                       getNonlinearSolverParameters().omegaDBC(),
+                                                       m_omegaDBC,
                                                        getNonlinearSolverParameters().m_numNewtonIterations,
-                                                       getNonlinearSolverParameters().continuationDBC(),
-                                                       getNonlinearSolverParameters().miscibleDBC(),
-                                                       getNonlinearSolverParameters().kappaminDBC(),
-                                                       getNonlinearSolverParameters().contMultiplierDBC()  );
+                                                       m_continuationDBC,
+                                                       m_miscibleDBC,
+                                                       m_kappaminDBC,
+                                                       m_contMultiplierDBC );
         }
         else
         {

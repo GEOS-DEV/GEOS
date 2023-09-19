@@ -144,6 +144,17 @@ public:
                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
                   arrayView1d< real64 > const & localRhs ) const override;
 
+  struct viewKeyStruct : CompositionalMultiphaseBase::viewKeyStruct
+  {
+    static constexpr char const * useDBCString()                  { return "useDBC"; }
+    static constexpr char const * omegaDBCString()                { return "omegaDBC"; }
+    static constexpr char const * continuationDBCString()         { return "continuationDBC"; }
+
+    static constexpr char const * miscibleDBCString()             { return "miscibleDBC"; }
+    static constexpr char const * kappaminDBCString()             { return "kappaminDBC"; }
+    static constexpr char const * contMultiplierDBCString()       { return "contMultiplierDBC"; }
+  };
+
 protected:
 
   virtual void
@@ -156,6 +167,27 @@ protected:
    */
   void
   computeCFLNumbers( real64 const & dt, DomainPartition & domain );
+
+  /// Flag to enable Dissipation Based Continuation Method
+  integer m_useDBC;
+
+  /// Factor by which the DBC flux is multiplied
+  real64 m_omegaDBC;
+
+  /// Factor by which the DBC flux is diminished every Newton
+  real64 m_kappaDBC;
+
+  /// Flag to enable continuation for DBC Method
+  integer m_continuationDBC;
+
+  /// Flag to enable DBC formulation
+  integer m_miscibleDBC;
+
+  /// Factor that controls how much dissipation is kept in the system when continuation is used
+  real64 m_kappaminDBC;
+
+  /// Factor by which continuation parameter is changed every newton when DBC is used
+  real64 m_contMultiplierDBC;
 
 private:
 

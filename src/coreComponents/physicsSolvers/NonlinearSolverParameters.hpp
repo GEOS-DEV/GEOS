@@ -63,7 +63,6 @@ public:
   static string catalogName() { return "NonlinearSolverParameters"; }
 
   virtual void postProcessInput() override;
-  void updateKappaDBCNewton();
 
   struct viewKeysStruct
   {
@@ -97,14 +96,6 @@ public:
     static constexpr char const * couplingTypeString()                   { return "couplingType"; }
     static constexpr char const * sequentialConvergenceCriterionString() { return "sequentialConvergenceCriterion"; }
     static constexpr char const * subcyclingOptionString()               { return "subcycling"; }
-
-    static constexpr char const * useDBCString()                  { return "useDBC"; }
-    static constexpr char const * omegaDBCString()                { return "omegaDBC"; }
-    static constexpr char const * continuationDBCString()         { return "continuationDBC"; }
-
-    static constexpr char const * miscibleDBCString()             { return "miscibleDBC"; }
-    static constexpr char const * kappaminDBCString()             { return "kappaminDBC"; }
-    static constexpr char const * contMultiplierDBCString()       { return "contMultiplierDBC"; }
   } viewKeys;
 
   /**
@@ -210,71 +201,6 @@ public:
     return m_sequentialConvergenceCriterion;
   }
 
-  /**
-   * @brief Getter for the DBC flag
-   * @return 1 or 0 depending if DBC is enabled
-   */
-  integer useDBC() const
-  {
-    return m_useDBC;
-  }
-
-
-  /**
-   * @brief Getter for the omega multiplier for DBC flux
-   * @return the coefficient the omega multiplier for DBC flux
-   */
-  real64 omegaDBC() const
-  {
-    return m_omegaDBC;
-  }
-
-  /**
-   * @brief Getter for the coefficient kappa controls DBC flux
-   * @return the coefficient that controls the amount of DBC flux
-   */
-  real64 kappaDBC() const
-  {
-    return m_kappaDBC;
-  }
-
-  /**
-   * @brief Getter for the flag to enable continuation
-   * @return 1 or 0 depending if continuation for DBC is enabled
-   */
-  real64 continuationDBC() const
-  {
-    return m_continuationDBC;
-  }
-
-  /**
-   * @brief Getter for the flag to enable DBC formulation
-   * @return 1 or 0 depending if compositional or immsicible
-   */
-  real64 miscibleDBC() const
-  {
-    return m_miscibleDBC;
-  }
-
-  /**
-   * @brief Getter for factor that controls how much dissipation is kept in the system when continuation is used
-   * @return target minimum continuation flux (range from 0 to 1)
-   */
-  real64 kappaminDBC() const
-  {
-    return m_kappaminDBC;
-  }
-
-  /**
-   * @brief Factor by which continuation parameter is changed every newton when DBC is used
-   * @return continuation parameter multiplier (range from 0 to 1)
-   */
-  real64 contMultiplierDBC() const
-  {
-    return m_contMultiplierDBC;
-  }
-
-
   /// Flag to apply a line search.
   LineSearchAction m_lineSearchAction;
 
@@ -346,27 +272,6 @@ public:
 
   /// Flag to specify whether subcycling is allowed or not in sequential schemes
   integer m_subcyclingOption;
-
-  /// Flag to enable Dissipation Based Continuation Method
-  integer m_useDBC;
-
-  /// Factor by which the DBC flux is multiplied
-  real64 m_omegaDBC;
-
-  /// Factor by which the DBC flux is diminished every Newton
-  real64 m_kappaDBC;
-
-  /// Flag to enable continuation for DBC Method
-  integer m_continuationDBC;
-
-  /// Flag to enable DBC formulation
-  integer m_miscibleDBC;
-
-  /// Factor that controls how much dissipation is kept in the system when continuation is used
-  real64 m_kappaminDBC;
-
-  /// Factor by which continuation parameter is changed every newton when DBC is used
-  real64 m_contMultiplierDBC;
 };
 
 ENUM_STRINGS( NonlinearSolverParameters::LineSearchAction,
