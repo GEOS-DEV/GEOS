@@ -79,11 +79,6 @@ public:
                       fields::flow::globalCompFraction,
                       fields::elementVolume >;
 
-  using DissMultiFluidAccessors =
-    StencilMaterialAccessors< MultiFluidBase,
-                              fields::multifluid::phaseDensity_n,
-                              fields::multifluid::phaseCompFraction_n >;
-
   using PorosityAccessors =
     StencilMaterialAccessors< PorosityBase, fields::porosity::porosity_n >;
 
@@ -99,7 +94,6 @@ public:
    * @param[in] compFlowAccessor accessor for wrappers registered by the solver
    * @param[in] dissCompFlowAccessor accessor for wrappers registered by the solver needed for dissipation
    * @param[in] multiFluidAccessor accessor for wrappers registered by the multifluid model
-   * @param[in] dissMultiFluidAccessor accessor for wrappers registered by the multifluid model needed for dissipation
    * @param[in] capPressureAccessors accessor for wrappers registered by the cap pressure model
    * @param[in] permeabilityAccessors accessor for wrappers registered by the permeability model
    * @param[in] porosityAccessors accessor for wrappers registered by the porosity model
@@ -115,7 +109,6 @@ public:
                            CompFlowAccessors const & compFlowAccessors,
                            DissCompFlowAccessors const & dissCompFlowAccessors,
                            MultiFluidAccessors const & multiFluidAccessors,
-                           DissMultiFluidAccessors const & dissMultiFluidAccessors,
                            CapPressureAccessors const & capPressureAccessors,
                            PermeabilityAccessors const & permeabilityAccessors,
                            PorosityAccessors const & porosityAccessors,
@@ -373,10 +366,9 @@ public:
       typename KERNEL_TYPE::PermeabilityAccessors permeabilityAccessors( elemManager, solverName );
       typename KERNEL_TYPE::PorosityAccessors porosityAccessors( elemManager, solverName );
       typename KERNEL_TYPE::DissCompFlowAccessors dissCompFlowAccessors( elemManager, solverName );
-      typename KERNEL_TYPE::DissMultiFluidAccessors dissMultiFluidAccessors( elemManager, solverName );
 
       KERNEL_TYPE kernel( numPhases, rankOffset, hasCapPressure, stencilWrapper, dofNumberAccessor,
-                          compFlowAccessors, dissCompFlowAccessors, multiFluidAccessors, dissMultiFluidAccessors,
+                          compFlowAccessors, dissCompFlowAccessors, multiFluidAccessors,
                           capPressureAccessors, permeabilityAccessors, porosityAccessors,
                           dt, localMatrix, localRhs, omega, curNewton, continuation, miscible, kappamin, contMultiplier );
       KERNEL_TYPE::template launch< POLICY >( stencilWrapper.size(), kernel );
