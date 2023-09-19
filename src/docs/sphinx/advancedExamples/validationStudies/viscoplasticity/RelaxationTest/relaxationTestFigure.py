@@ -24,6 +24,7 @@ def getMechanicalParametersFromXML( xmlFilePath ):
 
 	return mechanicalParameters
 
+
 def getLoadingFromXML(xmlFilePath):
 	tree = ElementTree.parse(xmlFilePath)
 
@@ -186,12 +187,12 @@ def main():
 	# Read HDF5
 	# Global Coordinate of Nodal Point
 	hf = h5py.File(hdf5File1Path, 'r')
-	xl_node = hf.get('totalDisplacement ReferencePosition')        
+	xl_node = hf.get('totalDisplacement ReferencePosition topPoint')        
 	xcord_node = xl_node[0,:,0]
 	ycord_node = xl_node[0,:,1]
 	zcord_node = xl_node[0,:,2]
 	# Load Displacement Components
-	disp = hf.get('totalDisplacement')    
+	disp = hf.get('totalDisplacement topPoint')    
 
 	# Global Coordinate of Element Center
 	hf = h5py.File(hdf5File2Path, 'r')

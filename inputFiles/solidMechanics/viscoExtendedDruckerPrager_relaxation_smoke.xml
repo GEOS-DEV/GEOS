@@ -9,13 +9,13 @@
     <InternalMesh
       name="mesh"
       elementTypes="{ C3D8 }"
-      xCoords="{ 0, 1.0 }"
-      yCoords="{ 0, 1.0 }"
-      zCoords="{ 0, 1.0 }"
-      nx="{ 1 }"
-      ny="{ 1 }"
-      nz="{ 1 }"
-      cellBlockNames="{ cb1 }"/>
+      xCoords="{ 0, 0.9, 1.0 }"
+      yCoords="{ 0, 0.9, 1.0 }"
+      zCoords="{ 0, 0.9, 1.0 }"
+      nx="{ 1, 1 }"
+      ny="{ 1, 1 }"
+      nz="{ 1, 1 }"
+      cellBlockNames="{ cb1, cb2, cb3, cb4, cb5, cb6, cb7, cb8 }"/>
   </Mesh>
 
   <Events
@@ -25,6 +25,24 @@
       timeFrequency="1000.0"
       targetExactTimestep="1"
       target="/Outputs/vtkOutput" />
+
+    <PeriodicEvent
+      name="stressCollection"
+      target="/Tasks/stressCollection" />
+
+    <PeriodicEvent
+      name="stressOutput"
+      targetExactTimestep="0"
+      target="/Outputs/stressOutput"/>
+
+    <PeriodicEvent
+      name="displacementCollection" 
+      target="/Tasks/displacementCollection" />
+
+    <PeriodicEvent
+      name="displacementOutput"
+      targetExactTimestep="0" 
+      target="/Outputs/displacementOutput" /> 
 
     <PeriodicEvent
       name="solverApplications"

@@ -27,11 +27,18 @@
     </FiniteElements>
   </NumericalMethods>
 
+  <Geometry>
+    <Box
+      name="topPoint"
+      xMin="{0.89, 0.89, 0.99}"
+      xMax="{1.01, 1.01, 1.01}"/>
+  </Geometry>
+
 <!-- SPHINX_ELEMENTREGIONS -->
   <ElementRegions>
     <CellElementRegion
       name="Domain"
-      cellBlocks="{ cb1 }"
+      cellBlocks="{ cb1, cb2, cb3, cb4, cb5, cb6, cb7, cb8 }"
       materialList="{ rock }"/>
   </ElementRegions>
 <!-- SPHINX_ELEMENTREGIONS_END -->
@@ -83,7 +90,7 @@
       name="stressXX"
       initialCondition="1"
       setNames="{all}"
-      objectPath="ElementRegions/Domain/cb1"
+      objectPath="ElementRegions/Domain"
       fieldName="rock_stress"
       component="0"
       scale="-10.0e6"
@@ -93,7 +100,7 @@
       name="stressYY"
       initialCondition="1"
       setNames="{all}"
-      objectPath="ElementRegions/Domain/cb1"
+      objectPath="ElementRegions/Domain"
       fieldName="rock_stress"
       component="1"
       scale="-10.0e6"
@@ -103,7 +110,7 @@
       name="stressZZ"
       initialCondition="1"
       setNames="{all}"
-      objectPath="ElementRegions/Domain/cb1"
+      objectPath="ElementRegions/Domain"
       fieldName="rock_stress"
       component="2"
       scale="-10.0e6"
@@ -148,13 +155,14 @@
   <Tasks>
     <PackCollection
       name="stressCollection"
-      objectPath="ElementRegions/Domain/cb1"
+      objectPath="ElementRegions/Domain/cb8"
       fieldName="rock_stress"/> 
 
     <PackCollection
       name="displacementCollection"
-      objectPath="nodeManager" 
-      fieldName="totalDisplacement"/> 
+      objectPath="nodeManager"
+      fieldName="totalDisplacement"
+      setNames="{ topPoint }"/> 
   </Tasks>
 <!-- SPHINX_TASKS_END -->
 

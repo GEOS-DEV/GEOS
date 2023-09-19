@@ -10,13 +10,13 @@
     <InternalMesh
       name="mesh"
       elementTypes="{ C3D8 }"
-      xCoords="{ 0, 1.0 }"
-      yCoords="{ 0, 1.0 }"
-      zCoords="{ 0, 1.0 }"
-      nx="{ 10 }"
-      ny="{ 10 }"
-      nz="{ 10 }"
-      cellBlockNames="{ cb1 }"/>
+      xCoords="{ 0, 0.9, 1.0 }"
+      yCoords="{ 0, 0.9, 1.0 }"
+      zCoords="{ 0, 0.9, 1.0 }"
+      nx="{ 9, 1 }"
+      ny="{ 9, 1 }"
+      nz="{ 9, 1 }"
+      cellBlockNames="{ cb1, cb2, cb3, cb4, cb5, cb6, cb7, cb8 }"/>
   </Mesh>
 <!-- SPHINX_MESH_END -->
 
