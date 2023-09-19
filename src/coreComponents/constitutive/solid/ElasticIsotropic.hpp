@@ -310,6 +310,9 @@ void ElasticIsotropicUpdates::smallStrainUpdate_StressOnly( localIndex const k,
                                             real64 const ( & strainIncrement )[6],
                                             real64 ( & stress )[6] ) const
 {
+  GEOS_UNUSED_VAR( beginningRotation );
+  GEOS_UNUSED_VAR( endRotation );
+
   smallStrainUpdate_StressOnly( k,
                                 q,
                                 timeIncrement,

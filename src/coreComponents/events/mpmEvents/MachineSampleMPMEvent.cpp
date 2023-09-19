@@ -74,6 +74,11 @@ namespace geos
     {
         GEOS_ERROR_IF( m_diskRadius < 0.0, "Disk radius must be specified for brazil disk sample type and positive" ); 
     }
+
+    if( m_sampleType == "cylinder" )
+    {
+        GEOS_ERROR_IF( m_gaugeRadius < 0.0, "Gauge radius must be specified for cylinder sample type and positive" );
+    }
   }
 
   REGISTER_CATALOG_ENTRY( MPMEventBase, MachineSampleMPMEvent, string const &, Group * const )

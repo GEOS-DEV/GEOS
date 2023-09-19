@@ -335,7 +335,6 @@ public:
                                   ParticleManager & particleManager );
 
   void stressControl( const real64 dt,
-                      const real64 time_n,
                       ParticleManager & particleManager );
 
   void updateConstitutiveModelDependencies( ParticleManager & particleManager );
@@ -349,9 +348,7 @@ public:
                                   const real64 time_n,
                                   ParticleManager & particleManager );
 
-  void computeBoxStress(  const real64 dt,
-                          const real64 time_n,
-		                      ParticleManager & particleManager,
+  void computeBoxStress(  ParticleManager & particleManager,
                           arrayView1d< real64 > boxStress );
 
   void initializeGridFields( NodeManager & nodeManager );
@@ -363,8 +360,7 @@ public:
   //                  NodeManager & nodeManager);
 
   void particleToGrid( ParticleManager & particleManager,
-                       NodeManager & nodeManager,
-                       real64 const time_n );
+                       NodeManager & nodeManager );
 
   void gridTrialUpdate( real64 dt,
                         NodeManager & nodeManager );
@@ -431,8 +427,7 @@ public:
   void populateMappingArrays( ParticleManager & particleManager,
                               NodeManager & nodeManager );
 
-  void computeBodyForce( real64 const time_n,
-                         ParticleManager & particleManager );
+  void computeBodyForce( ParticleManager & particleManager );
   
   void computeGeneralizedVortexMMSBodyForce( real64 const time_n,
                                              ParticleManager & particleManager );
@@ -506,6 +501,8 @@ protected:
   int m_boxAverageHistory;
   real64 m_boxAverageWriteInterval;
   real64 m_nextBoxAverageWriteTime;
+  array1d< real64 > m_boxAverageMin;
+  array1d< real64 > m_boxAverageMax;
 
   int m_reactionHistory;
   real64 m_reactionWriteInterval;
@@ -530,11 +527,7 @@ protected:
   // int m_directionalOverlapCorrection;
 
   real64 m_frictionCoefficient;
-  string m_frictionCoefficientRuleOfMixtures;
   array2d< real64 > m_frictionCoefficientTable; 
-  array1d< int > m_frictionCoefficientGroup1;
-  array1d< int > m_frictionCoefficientGroup2;
-  array1d< real64 > m_frictionCoefficients;
 
   int m_planeStrain;
   int m_numDims;

@@ -197,7 +197,7 @@ void ElasticTransverseIsotropicPressureDependentUpdates::getElasticStiffness( lo
                                                                               localIndex const q,
                                                                               real64 ( & stiffness )[6][6] ) const
 {
-  // GEOS_UNUSED_VAR( q );
+  GEOS_UNUSED_VAR( q );
   LvArray::tensorOps::fill< 6, 6 >( stiffness, 0 );
 
   real64 c11 = m_c11[k];
@@ -300,13 +300,13 @@ void ElasticTransverseIsotropicPressureDependentUpdates::smallStrainUpdate_Stres
   real64 c11 = m_c11[k];
   real64 c13 = m_c13[k];
   real64 c33 = m_c33[k];
-  real64 c44 = m_c44[k];
+  // real64 c44 = m_c44[k];
   real64 c66 = m_c66[k];
 
   // CC: this should be replaced by conversions like in elastic isotropci and hyperelastic model
   real64 Et = 4 * c66 * (c11 * c33 - c66 * c33 - c13 * c13) / ( c11 * c33 * c13 * c13 );
   real64 Ea = c33 - c13 * c13 / ( c11 - c66 );
-  real64 Gat = c66;
+  // real64 Gat = c66;
   real64 Nut = 4 * (c11 * c33 - c66 * c33 - c13 * c13 ) / ( c11 * c33 - c13 * c13 ) - 1;
   real64 Nuat = c13 / ( 2 * ( c11 - c66 ) );
 
@@ -328,6 +328,8 @@ void ElasticTransverseIsotropicPressureDependentUpdates::smallStrainUpdate_Stres
                                                          real64 const ( & strainIncrement )[6],
                                                          real64 ( & stress )[6] ) const
 {
+  GEOS_UNUSED_VAR( beginningRotation );
+  GEOS_UNUSED_VAR( endRotation );
   smallStrainUpdate_StressOnly( k,
                                 q,
                                 timeIncrement,

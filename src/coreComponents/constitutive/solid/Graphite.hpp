@@ -477,7 +477,8 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
                                                real64 const ( & endRotation )[3][3],
                                                real64 ( & stress )[6] ) const
 {
-    // CC: TODO: MUST PASS DEFORMATION AND VELOCITY GRADIENTS
+    GEOS_UNUSED_VAR( endRotation );
+
     real64 oldStress[6];
     LvArray::tensorOps::copy< 6 >(oldStress, stress);
 
@@ -505,13 +506,13 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
     LvArray::tensorOps::normalize< 3 >( materialDirection );
 
     // Use beginning of step normal stress to compute stress dependence of Ez
-    real64 temp[3];
+    // real64 temp[3];
     int voigtMap[3][3] = { {0, 5, 4}, {5, 1, 3}, {4, 3, 2} };
-    LvArray::tensorOps::Ri_eq_symAijBj< 3 >( temp, oldStress, materialDirection );
-    real64 oldPlaneNormalStress = LvArray::tensorOps::AiBi< 3 >( materialDirection, temp );
+    // LvArray::tensorOps::Ri_eq_symAijBj< 3 >( temp, oldStress, materialDirection );
+    // real64 oldPlaneNormalStress = LvArray::tensorOps::AiBi< 3 >( materialDirection, temp );  // CC: Unused?
 
     // Beginning of step pressure to compute pressure-dependence of elastic moduli
-    real64 oldPressure = (-1.0/3.0)*( oldStress[0] + oldStress[1] + oldStress[2] );
+    // real64 oldPressure = (-1.0/3.0)*( oldStress[0] + oldStress[1] + oldStress[2] ); // CC: Unused?
 
     // This is a transversely isotropic material for graphite-like crystals having
     // some weak plane with plane-normal-stress- and pressure-dependent elastic properties:
@@ -522,14 +523,8 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
     real64 c11 = m_c11[k];
     real64 c13 = m_c13[k];
     real64 c33 = m_c33[k];
-    real64 c44 = m_c44[k];
+    // real64 c44 = m_c44[k];
     real64 c66 = m_c66[k];
-
-    real64 dc11dp = m_dc11dp;
-    real64 dc13dp = m_dc13dp;
-    real64 dc33dp = m_dc33dp;
-    real64 dc44dp = m_dc44dp;
-    real64 dc66dp = m_dc66dp;
 
     real64 Ez = c33 - c13 * c13 / ( c11 - c66 );
     real64 Ep = 4 * c66 * ( c11 * c33 - c66 * c33 - c13 * c13 ) / ( c11 * c33 - c13 * c13 );
@@ -575,7 +570,7 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
     real64 pressure = (-1.0/3.0)*( stress[0] + stress[1] + stress[2] );
 
     // Check for tensile failure in preferred direction
-    // real64 temp[3];
+    real64 temp[3];
     LvArray::tensorOps::Ri_eq_symAijBj< 3 >( temp, stress, materialDirection );
     real64 planeNormalStress = LvArray::tensorOps::AiBi< 3 >( materialDirection, temp );
 

@@ -26,14 +26,14 @@ namespace geos
   MaterialSwapMPMEvent::MaterialSwapMPMEvent( const string & name,
                                               Group * const parent ) :
                                               MPMEventBase(  name, parent ),
-                                              m_source( "mat1" ),
-                                              m_destination( "mat2" )
+                                              m_sourceRegion( "mat1" ),
+                                              m_destinationRegion( "mat2" )
   {
-    registerWrapper( viewKeyStruct::sourceString(), &m_source ).
+    registerWrapper( viewKeyStruct::sourceRegionString(), &m_sourceRegion ).
         setInputFlag( InputFlags::REQUIRED ).
         setDescription( "Particle region to transfer particles from" );
 
-    registerWrapper( viewKeyStruct::destinationString(), &m_destination ).
+    registerWrapper( viewKeyStruct::destinationRegionString(), &m_destinationRegion ).
         setInputFlag( InputFlags::REQUIRED ).
         setDescription( "Particle region to transfer particles to" );
   }
@@ -46,8 +46,8 @@ namespace geos
     GEOS_LOG_RANK_0( "MaterialSwapEvent: " << 
                      "Time=" << m_time << ", " << 
                      "Interval=" << m_interval << ", " << 
-                     "Source=" << m_source << ", " << 
-                     "Destination=" << m_destination );
+                     "Source region=" << m_sourceRegion << ", " << 
+                     "Destination region=" << m_destinationRegion );
   }
 
   REGISTER_CATALOG_ENTRY( MPMEventBase, MaterialSwapMPMEvent, string const &, Group * const )
