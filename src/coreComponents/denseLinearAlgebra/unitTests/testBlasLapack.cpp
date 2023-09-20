@@ -1160,10 +1160,6 @@ void matrix_linear_system_least_square_solve_test()
   // A( 1, 2 ) = 1.0;
   A( 2, 0 ) = 2.0;
   A( 2, 1 ) = 1.0;
-  // A( 2, 2 ) = 1.0;
-  // A( 3, 0 ) = 0.0;
-  // A( 3, 1 ) = -1.0;
-  // A( 3, 2 ) = 1.0;
 
   // Assign component values to B
   B( 0 ) = 6.0;
