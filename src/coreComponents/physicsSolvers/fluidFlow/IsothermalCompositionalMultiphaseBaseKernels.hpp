@@ -32,6 +32,7 @@
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseBaseFields.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseUtilities.hpp"
 #include "physicsSolvers/SolverBaseKernels.hpp"
+#include "physicsSolvers/NonlinearSolverParameters.hpp"
 
 namespace geos
 {
@@ -1415,7 +1416,7 @@ public:
    * @param[in] compDens the component density vector
    */
   SolutionCheckKernel( integer const allowCompDensChopping,
-                       integer const localScaling,
+                       NonlinearSolverParameters::ScalingType const scalingType,
                        real64 const scalingFactor,
                        globalIndex const rankOffset,
                        integer const numComp,
@@ -1437,7 +1438,7 @@ public:
             compDensScalingFactor ),
     m_allowCompDensChopping( allowCompDensChopping ),
     m_scalingFactor( scalingFactor ),
-    m_localScaling( localScaling )
+    m_scalingType( scalingType )
   {}
 
   /**
@@ -1465,7 +1466,9 @@ public:
                              StackVariables & stack,
                              FUNC && kernelOp = NoOpFunc{} ) const
   {
-    real64 const newPres = m_pressure[ei] + m_localScaling > 0 ? m_pressureScalingFactor[ei] : m_scalingFactor * m_localSolution[stack.localRow];
+    bool const localScaling = m_scalingType == NonlinearSolverParameters::ScalingType::Local;
+
+    real64 const newPres = m_pressure[ei] + (localScaling ? m_pressureScalingFactor[ei] : m_scalingFactor * m_localSolution[stack.localRow]);
     if( newPres < 0 )
     {
       stack.localMinVal = 0;
@@ -1478,7 +1481,7 @@ public:
     {
       for( integer ic = 0; ic < m_numComp; ++ic )
       {
-        real64 const newDens = m_compDens[ei][ic] + m_localScaling > 0 ? m_compDensScalingFactor[ei] : m_scalingFactor * m_localSolution[stack.localRow + ic + 1];
+        real64 const newDens = m_compDens[ei][ic] + (localScaling ? m_compDensScalingFactor[ei] : m_scalingFactor * m_localSolution[stack.localRow + ic + 1]);
         if( newDens < 0 )
         {
           stack.localMinVal = 0;
@@ -1490,7 +1493,7 @@ public:
       real64 totalDens = 0.0;
       for( integer ic = 0; ic < m_numComp; ++ic )
       {
-        real64 const newDens = m_compDens[ei][ic] + m_localScaling > 0 ? m_compDensScalingFactor[ei] : m_scalingFactor * m_localSolution[stack.localRow + ic + 1];
+        real64 const newDens = m_compDens[ei][ic] + (localScaling ? m_compDensScalingFactor[ei] : m_scalingFactor * m_localSolution[stack.localRow + ic + 1]);
         totalDens += ( newDens > 0.0 ) ? newDens : 0.0;
       }
       if( totalDens < 0 )
@@ -1510,8 +1513,8 @@ protected:
   /// scaling factor
   real64 const m_scalingFactor;
 
-  /// flag for local scaling
-  integer const m_localScaling = 0;
+  /// scaling type (global or local)
+  NonlinearSolverParameters::ScalingType const m_scalingType;
 
 };
 
@@ -1536,7 +1539,7 @@ public:
   template< typename POLICY >
   static integer
   createAndLaunch( integer const allowCompDensChopping,
-                   integer const localScaling,
+                   NonlinearSolverParameters::ScalingType const scalingType,
                    real64 const scalingFactor,
                    globalIndex const rankOffset,
                    integer const numComp,
@@ -1552,7 +1555,7 @@ public:
       subRegion.getField< fields::flow::pressureScalingFactor >();
     arrayView1d< real64 > compDensScalingFactor =
       subRegion.getField< fields::flow::globalCompDensityScalingFactor >();
-    SolutionCheckKernel kernel( allowCompDensChopping, localScaling, scalingFactor, rankOffset,
+    SolutionCheckKernel kernel( allowCompDensChopping, scalingType, scalingFactor, rankOffset,
                                 numComp, dofKey, subRegion, localSolution, pressure, compDens, pressureScalingFactor, compDensScalingFactor );
     return SolutionCheckKernel::launch< POLICY >( subRegion.size(), kernel );
   }

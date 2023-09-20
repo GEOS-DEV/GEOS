@@ -528,7 +528,7 @@ bool CompositionalMultiphaseHybridFVM::checkSystemSolution( DomainPartition & do
         isothermalCompositionalMultiphaseBaseKernels::
           SolutionCheckKernelFactory::
           createAndLaunch< parallelDevicePolicy<> >( m_allowCompDensChopping,
-                                                     m_nonlinearSolverParameters.scalingType() == NonlinearSolverParameters::ScalingType::Local,
+                                                     m_nonlinearSolverParameters.scalingType(),
                                                      scalingFactor,
                                                      dofManager.rankOffset(),
                                                      m_numComponents,

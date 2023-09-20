@@ -698,7 +698,7 @@ public:
    * @param[in] compDens the component density vector
    */
   SolutionCheckKernel( integer const allowCompDensChopping,
-                       integer const localScaling,
+                       NonlinearSolverParameters::ScalingType const scalingType,
                        real64 const scalingFactor,
                        globalIndex const rankOffset,
                        integer const numComp,
@@ -712,7 +712,7 @@ public:
                        arrayView1d< real64 > compDensScalingFactor,
                        arrayView1d< real64 > temperatureScalingFactor )
     : Base( allowCompDensChopping,
-            localScaling,
+            scalingType,
             scalingFactor,
             rankOffset,
             numComp,
@@ -738,8 +738,9 @@ public:
   {
     Base::computeSolutionCheck( ei, stack, [&] ()
     {
+        bool const localScaling = m_scalingType == NonlinearSolverParameters::ScalingType::Local;
       // compute the change in temperature
-      real64 const newTemp = m_temperature[ei] + m_localScaling > 0 ? m_temperatureScalingFactor[ei] : m_scalingFactor * m_localSolution[stack.localRow + m_numComp + 1];
+      real64 const newTemp = m_temperature[ei] + (localScaling ? m_temperatureScalingFactor[ei] : m_scalingFactor * m_localSolution[stack.localRow + m_numComp + 1]);
       if( newTemp < minTemperature )
       {
         stack.localMinVal = 0;
@@ -779,7 +780,7 @@ public:
   template< typename POLICY >
   static integer
   createAndLaunch( integer const allowCompDensChopping,
-                   integer const localScaling,
+                   NonlinearSolverParameters::ScalingType const scalingType,
                    real64 const scalingFactor,
                    globalIndex const rankOffset,
                    integer const numComp,
@@ -796,7 +797,7 @@ public:
     arrayView1d< real64 > pressureScalingFactor = subRegion.getField< fields::flow::pressureScalingFactor >();
     arrayView1d< real64 > temperatureScalingFactor = subRegion.getField< fields::flow::temperatureScalingFactor >();
     arrayView1d< real64 > compDensScalingFactor = subRegion.getField< fields::flow::globalCompDensityScalingFactor >();
-    SolutionCheckKernel kernel( allowCompDensChopping, localScaling, scalingFactor,
+    SolutionCheckKernel kernel( allowCompDensChopping, scalingType, scalingFactor,
                                 rankOffset, numComp, dofKey, subRegion, localSolution,
                                 pressure, temperature, compDens, pressureScalingFactor, temperatureScalingFactor, compDensScalingFactor );
     return SolutionCheckKernel::launch< POLICY >( subRegion.size(), kernel );
