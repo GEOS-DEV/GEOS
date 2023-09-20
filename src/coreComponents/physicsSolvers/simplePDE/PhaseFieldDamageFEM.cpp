@@ -116,7 +116,8 @@ void PhaseFieldDamageFEM::registerDataOnMesh( Group & meshBodies )
 
       string & solidMaterialName = subRegion.getReference< string >( viewKeyStruct::solidModelNamesString() );
       solidMaterialName = SolverBase::getConstitutiveName< SolidBase >( subRegion );
-      GEOS_ERROR_IF( solidMaterialName.empty(), GEOS_FMT( "SolidBase model not found on subregion {}", subRegion.getName() ) );
+      GEOS_ERROR_IF( solidMaterialName.empty(), GEOS_FMT( "{}: SolidBase model not found on subregion {}",
+                                                          getDataContext(), subRegion.getName() ) );
 
     } );
   } );
@@ -143,12 +144,12 @@ void PhaseFieldDamageFEM::postProcessInput()
   }
   else
   {
-    GEOS_ERROR( "invalid time integration option" );
+    GEOS_ERROR( getDataContext() << ": invalid time integration option" );
   }
 
   if( m_localDissipationOption != "Linear" && m_localDissipationOption != "Quadratic" )
   {
-    GEOS_ERROR( "invalid local dissipation option - must be Linear or Quadratic" );
+    GEOS_ERROR( getDataContext() << ": invalid local dissipation option - must be Linear or Quadratic" );
   }
 
   // Set basic parameters for solver
