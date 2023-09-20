@@ -158,7 +158,7 @@ struct PressureGradientKernel
       // get the elements to faces map
       arrayView2d< localIndex const > const & elemsToFaces = subRegion.faceList();
 
-      forAll< POLICY >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const ei )
+      forAll< POLICY >( subRegion.size(), [=] ( localIndex const ei )
       {
         compute< NUM_FACES >( ei,
                               faceCenter,
