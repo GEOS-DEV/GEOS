@@ -513,9 +513,9 @@ writeField( WrapperBase const & wrapper,
             localIndex const offset,
             vtkDataArray * data )
 {
-  types::dispatch( types::StandardArrays{}, wrapper.getTypeId(), true, [&]( auto array )
+  types::dispatch( types::ListofTypeList< types::StandardArrays >{}, [&]( auto tupleOfTypes )
   {
-    using ArrayType = decltype( array );
+    using ArrayType = camp::first< decltype( tupleOfTypes ) >;
     using T = typename ArrayType::ValueType;
     vtkAOSDataArrayTemplate< T > * typedData = vtkAOSDataArrayTemplate< T >::FastDownCast( data );
     auto const sourceArray = Wrapper< ArrayType >::cast( wrapper ).reference().toViewConst();
@@ -527,7 +527,7 @@ writeField( WrapperBase const & wrapper,
         typedData->SetTypedComponent( offset + i, compIndex++, value );
       } );
     } );
-  } );
+  }, wrapper );
 }
 
 /**
@@ -543,9 +543,9 @@ writeField( WrapperBase const & wrapper,
             localIndex const offset,
             vtkDataArray * data )
 {
-  types::dispatch( types::StandardArrays{}, wrapper.getTypeId(), true, [&]( auto array )
+  types::dispatch( types::ListofTypeList< types::StandardArrays >{}, [&]( auto tupleOfTypes )
   {
-    using ArrayType = decltype( array );
+    using ArrayType = camp::first< decltype( tupleOfTypes ) >;
     using T = typename ArrayType::ValueType;
     vtkAOSDataArrayTemplate< T > * typedData = vtkAOSDataArrayTemplate< T >::FastDownCast( data );
     auto const sourceArray = Wrapper< ArrayType >::cast( wrapper ).reference().toViewConst();
@@ -557,7 +557,7 @@ writeField( WrapperBase const & wrapper,
         typedData->SetTypedComponent( offset + i, compIndex++, value );
       } );
     } );
-  } );
+  }, wrapper );
 }
 
 /**
@@ -731,14 +731,14 @@ writeElementField( Group const & subRegions,
     WrapperBase const & wrapper = subRegion.getWrapperBase( field );
     if( first )
     {
-      types::dispatch( types::StandardArrays{}, wrapper.getTypeId(), true, [&]( auto array )
+      types::dispatch( types::ListofTypeList< types::StandardArrays >{}, [&]( auto tupleOfTypes )
       {
-        using ArrayType = decltype( array );
+        using ArrayType = camp::first< decltype( tupleOfTypes ) >;
         using T = typename ArrayType::ValueType;
         auto typedData = vtkAOSDataArrayTemplate< T >::New();
         data.TakeReference( typedData );
         setComponentMetadata( Wrapper< ArrayType >::cast( wrapper ), typedData );
-      } );
+      }, wrapper );
       first = false;
       numDims = wrapper.numArrayDims();
     }
@@ -776,14 +776,14 @@ void VTKPolyDataWriterInterface::writeNodeFields( NodeManager const & nodeManage
     if( isFieldPlotEnabled( wrapper ) )
     {
       vtkSmartPointer< vtkDataArray > data;
-      types::dispatch( types::StandardArrays{}, wrapper.getTypeId(), true, [&]( auto array )
+      types::dispatch( types::ListofTypeList< types::StandardArrays >{}, [&]( auto tupleOfTypes )
       {
-        using ArrayType = decltype( array );
+        using ArrayType = camp::first< decltype( tupleOfTypes ) >;
         using T = typename ArrayType::ValueType;
         auto typedData = vtkAOSDataArrayTemplate< T >::New();
         data.TakeReference( typedData );
         setComponentMetadata( Wrapper< ArrayType >::cast( wrapper ), typedData );
-      } );
+      }, wrapper );
 
       data->SetNumberOfTuples( nodeIndices.size() );
       data->SetName( wrapper.getName().c_str() );
@@ -942,7 +942,7 @@ static string getCycleSubFolder( integer const cycle )
 static string getRankFileName( integer const rank )
 {
   int const width = static_cast< int >( std::log10( MpiWrapper::commSize() ) ) + 1;
-  return GEOS_FMT( "rank_{:>0{}}", rank, width );
+  return GEOS_FMT( "rank_{0:0>{1}}", rank, width );
 }
 
 void VTKPolyDataWriterInterface::writeVtmFile( integer const cycle,

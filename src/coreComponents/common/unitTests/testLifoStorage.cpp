@@ -1,5 +1,6 @@
 #include "mainInterface/initialization.hpp"
-#include "common/lifoStorage.hpp"
+#define LIFO_DISABLE_CALIPER
+#include "common/LifoStorage.hpp"
 #include "LvArray/src/Array.hpp"
 #include "LvArray/src/MallocBuffer.hpp"
 #if defined(LVARRAY_USE_CHAI)
@@ -75,7 +76,7 @@ void testLifoStorage( int elemCnt, int numberOfElementsOnDevice, int numberOfEle
 
   array1d< float > array( elemCnt );
   array.move( local::RAJAHelper< POLICY >::space );
-  lifoStorage< float > lifo( "lifo", array, numberOfElementsOnDevice, numberOfElementsOnHost, totalNumberOfBuffers );
+  LifoStorage< float, localIndex > lifo( "lifo", array, numberOfElementsOnDevice, numberOfElementsOnHost, totalNumberOfBuffers );
 
   for( int j = 0; j < totalNumberOfBuffers; j++ )
   {
@@ -97,11 +98,38 @@ void testLifoStorage( int elemCnt, int numberOfElementsOnDevice, int numberOfEle
 }
 
 template< typename POLICY >
+void testLifoStorageBig( int elemCnt, int numberOfElementsOnDevice, int numberOfElementsOnHost, int totalNumberOfBuffers )
+{
+
+  array1d< float > array( elemCnt );
+  array.move( local::RAJAHelper< POLICY >::space );
+  LifoStorage< float, localIndex > lifo( "lifo", array, numberOfElementsOnDevice, numberOfElementsOnHost, totalNumberOfBuffers );
+
+  for( int j = 0; j < 10; j++ )
+  {
+
+    float * dataPointer = array.data();
+    forAll< POLICY >( elemCnt, [dataPointer, j, elemCnt] GEOS_HOST_DEVICE ( int i ) { dataPointer[ i ] = j*elemCnt+i; } );
+    lifo.push( array );
+  }
+
+  for( int j = 0; j < 10; j++ )
+  {
+    lifo.pop( array );
+    float * dataPointer = array.data();
+    forAll< POLICY >( elemCnt, [dataPointer, j, elemCnt] GEOS_HOST_DEVICE ( int i )
+    {
+      PORTABLE_EXPECT_EQ( dataPointer[ i ], (float)(10-j-1)*elemCnt+i );
+    } );
+  }
+}
+
+template< typename POLICY >
 void testLifoStorageAsync( int elemCnt, int numberOfElementsOnDevice, int numberOfElementsOnHost, int totalNumberOfBuffers )
 {
   array1d< float > array( elemCnt );
   array.move( local::RAJAHelper< POLICY >::space );
-  lifoStorage< float > lifo( "lifo", array, numberOfElementsOnDevice, numberOfElementsOnHost, totalNumberOfBuffers );
+  LifoStorage< float, localIndex > lifo( "lifo", array, numberOfElementsOnDevice, numberOfElementsOnHost, totalNumberOfBuffers );
 
   for( int j = 0; j < totalNumberOfBuffers; j++ )
   {
@@ -146,6 +174,27 @@ TEST( LifoStorageTest, LifoStorageBufferOnCUDA )
 {
   testLifoStorage< local::devicePolicy< 32 > >( 10, 2, 3, 10 );
 }
+
+TEST( LifoStorageTest, LifoStorageBufferOnCUDAlarge )
+{
+  testLifoStorageBig< parallelDevicePolicy< > >( 1000000, 2, 3, 10000 );
+}
+
+TEST( LifoStorageTest, LifoStorageBufferOnCUDAlargeAutoSizeHost )
+{
+  testLifoStorageBig< parallelDevicePolicy< > >( 1000000, 2, -80, 10000 );
+}
+
+TEST( LifoStorageTest, LifoStorageBufferOnCUDAlargeAutoSizeDevice )
+{
+  testLifoStorageBig< parallelDevicePolicy< > >( 1000000, -80, 3, 10000 );
+}
+
+TEST( LifoStorageTest, LifoStorageBufferOnCUDAlargeAutoSizeBoth )
+{
+  testLifoStorageBig< parallelDevicePolicy< > >( 1000000, -80, -80, 10000 );
+}
+
 
 TEST( LifoStorageTest, LifoStorageBufferOnCUDANoDeviceBuffer )
 {

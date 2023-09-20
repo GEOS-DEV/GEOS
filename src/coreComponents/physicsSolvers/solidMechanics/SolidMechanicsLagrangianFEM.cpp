@@ -216,7 +216,8 @@ void SolidMechanicsLagrangianFEM::setConstitutiveNamesCallSuper( ElementSubRegio
 
   string & solidMaterialName = subRegion.getReference< string >( viewKeyStruct::solidMaterialNamesString() );
   solidMaterialName = SolverBase::getConstitutiveName< SolidBase >( subRegion );
-  GEOS_ERROR_IF( solidMaterialName.empty(), GEOS_FMT( "SolidBase model not found on subregion {}", subRegion.getName() ) );
+  GEOS_ERROR_IF( solidMaterialName.empty(), GEOS_FMT( "{}: SolidBase model not found on subregion {}",
+                                                      getDataContext(), subRegion.getDataContext() ) );
 
 }
 
@@ -294,7 +295,8 @@ real64 SolidMechanicsLagrangianFEM::explicitKernelDispatch( MeshLevel & mesh,
   }
   else
   {
-    GEOS_ERROR( "Invalid option for strain theory (0 = infinitesimal strain, 1 = finite strain" );
+    GEOS_ERROR( getWrapperDataContext( viewKeyStruct::strainTheoryString() ) <<
+                ": Invalid option for strain theory (0 = infinitesimal strain, 1 = finite strain" );
   }
 
   return rval;
@@ -576,7 +578,7 @@ real64 SolidMechanicsLagrangianFEM::explicitStep( real64 const & time_n,
                                     SortedArrayView< localIndex const > const & targetSet )
     {
       integer const component = bc.getComponent();
-      GEOS_ERROR_IF_LT_MSG( component, 0, "Component index required for displacement BC " << bc.getName() );
+      GEOS_ERROR_IF_LT_MSG( component, 0, getDataContext() << ": Component index required for displacement BC " << bc.getDataContext() );
 
       forAll< parallelDevicePolicy< 1024 > >( targetSet.size(),
                                               [=] GEOS_DEVICE ( localIndex const i )
@@ -589,7 +591,7 @@ real64 SolidMechanicsLagrangianFEM::explicitStep( real64 const & time_n,
                                     SortedArrayView< localIndex const > const & targetSet )
     {
       integer const component = bc.getComponent();
-      GEOS_ERROR_IF_LT_MSG( component, 0, "Component index required for displacement BC " << bc.getName() );
+      GEOS_ERROR_IF_LT_MSG( component, 0, getDataContext() << ": Component index required for displacement BC " << bc.getDataContext() );
 
       forAll< parallelDevicePolicy< 1024 > >( targetSet.size(),
                                               [=] GEOS_DEVICE ( localIndex const i )
@@ -710,13 +712,13 @@ void SolidMechanicsLagrangianFEM::applyDisplacementBCImplicit( real64 const time
       "\nWarning!"
       "\n{} `{}`: There is no displacement boundary condition applied to this problem in the {} direction. \n"
       "The problem may be ill-posed.\n";
-    GEOS_LOG_RANK_0_IF( isDisplacementBCApplied[0] == 0, // target set is empty
+    GEOS_LOG_RANK_0_IF( isDisplacementBCAppliedGlobal[0] == 0, // target set is empty
                         GEOS_FMT( bcLogMessage,
                                   catalogName(), getName(), 'x' ) );
-    GEOS_LOG_RANK_0_IF( isDisplacementBCApplied[1] == 0, // target set is empty
+    GEOS_LOG_RANK_0_IF( isDisplacementBCAppliedGlobal[1] == 0, // target set is empty
                         GEOS_FMT( bcLogMessage,
                                   catalogName(), getName(), 'y' ) );
-    GEOS_LOG_RANK_0_IF( isDisplacementBCApplied[2] == 0, // target set is empty
+    GEOS_LOG_RANK_0_IF( isDisplacementBCAppliedGlobal[2] == 0, // target set is empty
                         GEOS_FMT( bcLogMessage,
                                   catalogName(), getName(), 'z' ) );
   }
@@ -1014,23 +1016,25 @@ void SolidMechanicsLagrangianFEM::assembleSystem( real64 const GEOS_UNUSED_PARAM
 
   if( m_isFixedStressPoromechanicsUpdate )
   {
-    GEOS_UNUSED_VAR( dt );
+    //GEOS_UNUSED_VAR( dt );
     assemblyLaunch< constitutive::PorousSolid< ElasticIsotropic >, // TODO: change once there is a cmake solution
                     solidMechanicsLagrangianFEMKernels::FixedStressThermoPoromechanicsFactory >( domain,
                                                                                                  dofManager,
                                                                                                  localMatrix,
-                                                                                                 localRhs );
+                                                                                                 localRhs,
+                                                                                                 dt );
   }
   else
   {
     if( m_timeIntegrationOption == TimeIntegrationOption::QuasiStatic )
     {
-      GEOS_UNUSED_VAR( dt );
+      //GEOS_UNUSED_VAR( dt );
       assemblyLaunch< constitutive::SolidBase,
                       solidMechanicsLagrangianFEMKernels::QuasiStaticFactory >( domain,
                                                                                 dofManager,
                                                                                 localMatrix,
-                                                                                localRhs );
+                                                                                localRhs,
+                                                                                dt );
     }
     else if( m_timeIntegrationOption == TimeIntegrationOption::ImplicitDynamic )
     {
@@ -1039,11 +1043,11 @@ void SolidMechanicsLagrangianFEM::assembleSystem( real64 const GEOS_UNUSED_PARAM
                                                                                     dofManager,
                                                                                     localMatrix,
                                                                                     localRhs,
+                                                                                    dt,
                                                                                     m_newmarkGamma,
                                                                                     m_newmarkBeta,
                                                                                     m_massDamping,
-                                                                                    m_stiffnessDamping,
-                                                                                    dt );
+                                                                                    m_stiffnessDamping );
     }
   }
 }
@@ -1195,8 +1199,10 @@ void
 SolidMechanicsLagrangianFEM::applySystemSolution( DofManager const & dofManager,
                                                   arrayView1d< real64 const > const & localSolution,
                                                   real64 const scalingFactor,
+                                                  real64 const dt,
                                                   DomainPartition & domain )
 {
+  GEOS_UNUSED_VAR( dt );
   GEOS_MARK_FUNCTION;
   dofManager.addVectorToField( localSolution,
                                solidMechanics::totalDisplacement::key(),

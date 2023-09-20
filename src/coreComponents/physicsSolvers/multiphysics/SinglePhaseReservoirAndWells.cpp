@@ -250,7 +250,7 @@ assembleCouplingTerms( real64 const time_n,
 
   GEOS_THROW_IF( !Base::m_isWellTransmissibilityComputed,
                  GEOS_FMT( "{} `{}`: The well transmissibility has not been computed yet",
-                           catalogName(), this->template getName() ),
+                           catalogName(), this->getName() ),
                  std::runtime_error );
 
   this->template forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
