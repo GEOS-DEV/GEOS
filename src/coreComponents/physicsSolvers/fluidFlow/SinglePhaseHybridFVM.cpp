@@ -646,7 +646,7 @@ void SinglePhaseHybridFVM::updatePressureGradient( DomainPartition & domain )
                                                                                           auto & subRegion )
     {
       PressureGradientKernel::launch< parallelHostPolicy >( subRegion,
-                                                                faceManager );
+                                                            faceManager );
     } );
   } );
 }
