@@ -153,10 +153,9 @@ NonlinearSolverParameters::NonlinearSolverParameters( string const & name,
 
 void NonlinearSolverParameters::postProcessInput()
 {
-  if( m_timeStepDecreaseIterLimit <= m_timeStepIncreaseIterLimit )
-  {
-    GEOS_ERROR( " timeStepIncreaseIterLimit should be smaller than timeStepDecreaseIterLimit!!" );
-  }
+  GEOS_ERROR_IF_LE_MSG( m_timeStepDecreaseIterLimit, m_timeStepIncreaseIterLimit,
+                        getWrapperDataContext( viewKeysStruct::timeStepIncreaseIterLimString() ) <<
+                        ": should be smaller than " << viewKeysStruct::timeStepDecreaseIterLimString() );
 }
 
 

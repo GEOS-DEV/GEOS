@@ -138,7 +138,8 @@ void SinglePhasePoromechanics::initializePreSubGroups()
       string & porousName = subRegion.getReference< string >( viewKeyStruct::porousMaterialNamesString() );
       porousName = getConstitutiveName< CoupledSolidBase >( subRegion );
       GEOS_THROW_IF( porousName.empty(),
-                     GEOS_FMT( "{} {} : Solid model not found on subregion {}", catalogName(), getName(), subRegion.getName() ),
+                     GEOS_FMT( "{} {} : Solid model not found on subregion {}",
+                               catalogName(), getDataContext().toString(), subRegion.getName() ),
                      InputError );
 
       if( subRegion.hasField< fields::poromechanics::bulkDensity >() )
@@ -202,7 +203,8 @@ void SinglePhasePoromechanics::initializePostInitialConditionsPreSubGroups()
   integer & isFlowThermal = flowSolver()->getReference< integer >( FlowSolverBase::viewKeyStruct::isThermalString() );
   GEOS_LOG_RANK_0_IF( m_isThermal && !isFlowThermal,
                       GEOS_FMT( "{} {}: The attribute `{}` of the flow solver `{}` is set to 1 since the poromechanics solver is thermal",
-                                catalogName(), getName(), FlowSolverBase::viewKeyStruct::isThermalString(), flowSolver()->getName() ) );
+                                catalogName(), getDataContext().toString(),
+                                FlowSolverBase::viewKeyStruct::isThermalString(), flowSolver()->getName() ) );
   isFlowThermal = m_isThermal;
 
   if( m_isThermal )
@@ -280,6 +282,7 @@ void SinglePhasePoromechanics::assembleElementBasedTerms( real64 const time_n,
                                                                                                      viewKeyStruct::porousMaterialNamesString(),
                                                                                                      localMatrix,
                                                                                                      localRhs,
+                                                                                                     dt,
                                                                                                      flowDofKey,
                                                                                                      FlowSolverBase::viewKeyStruct::fluidNamesString() );
     }
@@ -293,6 +296,7 @@ void SinglePhasePoromechanics::assembleElementBasedTerms( real64 const time_n,
                                                                                        viewKeyStruct::porousMaterialNamesString(),
                                                                                        localMatrix,
                                                                                        localRhs,
+                                                                                       dt,
                                                                                        flowDofKey,
                                                                                        FlowSolverBase::viewKeyStruct::fluidNamesString() );
     }
@@ -329,7 +333,8 @@ void SinglePhasePoromechanics::assembleElementBasedTerms( real64 const time_n,
                                                                                 filteredRegionNames.toViewConst(),
                                                                                 SolidMechanicsLagrangianFEM::viewKeyStruct::solidMaterialNamesString(),
                                                                                 localMatrix,
-                                                                                localRhs );
+                                                                                localRhs,
+                                                                                dt );
   } );
 
   solidMechanicsSolver()->getMaxForce() = LvArray::math::max( mechanicsMaxForce, poromechanicsMaxForce );
