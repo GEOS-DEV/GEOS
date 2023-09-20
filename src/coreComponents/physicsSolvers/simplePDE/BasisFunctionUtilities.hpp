@@ -48,7 +48,7 @@ struct Helper
 {};
 
 template<>
-struct Helper< CellUtilities::ReferenceCell::Cube,//HexahedronCell,
+struct Helper< CellUtilities::ReferenceCell::Cube,
                BasisFunction::Lagrange,
                8 >
 {
@@ -71,7 +71,7 @@ struct Helper< CellUtilities::ReferenceCell::Cube,//HexahedronCell,
 
   GEOS_HOST_DEVICE
   static void getGradient( real64 const (&Xiq)[3],
-                           typename HexahedronCell::JacobianType const & Jinv,
+                           typename CuboidCell::JacobianType const & Jinv,
                            real64 (& dNdX)[8][3] )
   {
     for( int i = 0; i < 8; ++i )
@@ -86,7 +86,7 @@ struct Helper< CellUtilities::ReferenceCell::Cube,//HexahedronCell,
 
   GEOS_HOST_DEVICE
   static void getGradient( real64 const (&Xiq)[3],
-                           typename HexahedronIJKCell::JacobianType const & Jinv,
+                           typename CubeCell::JacobianType const & Jinv,
                            real64 (& dNdX)[8][3] )
   {
     for( int i = 0; i < 8; ++i )
@@ -237,7 +237,7 @@ static void getGradient( real64 const (&Xiq)[3],
   //   // ... ... Physical space
   //   Jinv.leftMultiplyTranspose( dNdXi.data, dNdX[i] );
   // }
-  Helper< CELL_TYPE::getReferenceCellType(), BASIS_FUNCTION, NUM_SUPPORT_POINTS >::getGradient( Xiq, Jinv, dNdX );
+  Helper< CellUtilities::ParentCell< CELL_TYPE >::value, BASIS_FUNCTION, NUM_SUPPORT_POINTS >::getGradient( Xiq, Jinv, dNdX );
 }
 
 

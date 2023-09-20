@@ -118,53 +118,17 @@ struct Dense3x3Tensor
     data[2][2] += X[2] * Y[2];
   };
 
-
 };
 
-namespace CellUtilities
-{
-
-/**
- * @brief Reference cell type
- */
-enum class ReferenceCell : integer
-{
-  Tetrahedron,
-  Pyramid,
-  Wedge,
-  Cube
-};
-
-
-template< typename CELL_TYPE >
-GEOS_HOST_DEVICE
-static camp::tuple< real64, typename CELL_TYPE::JacobianType >
-getJacobianDeterminantAndJacobianInverse( CELL_TYPE cell,
-                                          real64 const refPointCoords[3] )
-{
-  // Compute Jacobian
-  typename CELL_TYPE::JacobianType J = cell.getJacobian( refPointCoords );
-
-  // Compute determinant and invert Jacobian in place
-  real64 const detJ = J.inPlaceInvert();
-
-  return camp::make_tuple( detJ, J );
-}
-
-} // namespace CellUtilities
-
-
-
-class HexahedronCell
+class CuboidCell
 {
 public:
   constexpr static int numVertex = 8;
-  constexpr static CellUtilities::ReferenceCell referenceCell = CellUtilities::ReferenceCell::Cube;
 
   using JacobianType = Dense3x3Tensor;
 
   GEOS_HOST_DEVICE
-  HexahedronCell( real64 const nodeCoords[numVertex][3] )
+  CuboidCell( real64 const nodeCoords[numVertex][3] )
   {
     for( int i = 0; i < numVertex; ++i )
     {
@@ -173,13 +137,6 @@ public:
         m_nodeCoords[i][j] = nodeCoords[i][j];
       }
     }
-  }
-
-  GEOS_HOST_DEVICE
-  inline
-  constexpr static CellUtilities::ReferenceCell getReferenceCellType()
-  {
-    return CellUtilities::ReferenceCell::Cube;
   }
 
   GEOS_HOST_DEVICE
@@ -210,28 +167,12 @@ public:
     return J;
   }
 
-  // GEOS_HOST_DEVICE real64[3] mapping( real64 refPointCoords[3] ) const
-  // {
-
-  // }
-
-  GEOS_HOST_DEVICE
-  void getLocalCoordinates( real64 (& xLocal)[numVertex][3] ) const
-  {
-    for( int i = 0; i < numVertex; ++i )
-    {
-      xLocal[i][0] = m_nodeCoords[i][0];
-      xLocal[i][1] = m_nodeCoords[i][1];
-      xLocal[i][2] = m_nodeCoords[i][2];
-    }
-  }
-
 private:
   real64 m_nodeCoords[numVertex][3];
 };
 
 
-class HexahedronIJKCell
+class CubeCell
 {
 public:
   constexpr static int numLength = 1;
@@ -239,19 +180,13 @@ public:
   using JacobianType = Scalar3x3Tensor;
 
   GEOS_HOST_DEVICE
-  HexahedronIJKCell( real64 const h )
+  CubeCell( real64 const h )
   {
     m_h = h;
   }
 
   GEOS_HOST_DEVICE
-  inline
-  constexpr static CellUtilities::ReferenceCell getReferenceCellType()
-  {
-    return CellUtilities::ReferenceCell::Cube;
-  }
-
-  GEOS_HOST_DEVICE JacobianType getJacobian( real64 const refPointCoords[3] ) const
+  JacobianType getJacobian( real64 const refPointCoords[3] ) const
   {
     GEOS_UNUSED_VAR( refPointCoords );
     JacobianType J;
@@ -269,7 +204,6 @@ class WedgeCell
 {
 public:
   constexpr static int numVertex = 6;
-  constexpr static CellUtilities::ReferenceCell referenceCell = CellUtilities::ReferenceCell::Wedge;
 
   using JacobianType = Dense3x3Tensor;
 
@@ -285,13 +219,6 @@ public:
         m_nodeCoords[i][j] = nodeCoords[i][j];
       }
     }
-  }
-
-  GEOS_HOST_DEVICE
-  inline
-  constexpr static CellUtilities::ReferenceCell getReferenceCellType()
-  {
-    return CellUtilities::ReferenceCell::Wedge;
   }
 
   GEOS_HOST_DEVICE
@@ -331,22 +258,6 @@ public:
     return J;
   }
 
-  // GEOS_HOST_DEVICE real64[3] mapping( real64 refPointCoords[3] ) const
-  // {
-
-  // }
-
-  GEOS_HOST_DEVICE
-  void getLocalCoordinates( real64 (& xLocal)[numVertex][3] ) const
-  {
-    for( int i = 0; i < numVertex; ++i )
-    {
-      xLocal[i][0] = m_nodeCoords[i][0];
-      xLocal[i][1] = m_nodeCoords[i][1];
-      xLocal[i][2] = m_nodeCoords[i][2];
-    }
-  }
-
 private:
   real64 m_nodeCoords[numVertex][3];
 };
@@ -357,7 +268,6 @@ class TetrahedronCell
 {
 public:
   constexpr static int numVertex = 4;
-  constexpr static CellUtilities::ReferenceCell referenceCell = CellUtilities::ReferenceCell::Tetrahedron;
 
   using JacobianType = Dense3x3Tensor;
 
@@ -371,13 +281,6 @@ public:
         m_nodeCoords[i][j] = nodeCoords[i][j];
       }
     }
-  }
-
-  GEOS_HOST_DEVICE
-  inline
-  constexpr static CellUtilities::ReferenceCell getReferenceCellType()
-  {
-    return CellUtilities::ReferenceCell::Tetrahedron;
   }
 
   GEOS_HOST_DEVICE
@@ -398,22 +301,6 @@ public:
     J.data[2][2] = -m_nodeCoords[0][2] + m_nodeCoords[3][2];
 
     return J;
-  }
-
-  // GEOS_HOST_DEVICE real64[3] mapping( real64 refPointCoords[3] ) const
-  // {
-
-  // }
-
-  GEOS_HOST_DEVICE
-  void getLocalCoordinates( real64 (& xLocal)[numVertex][3] ) const
-  {
-    for( int i = 0; i < numVertex; ++i )
-    {
-      xLocal[i][0] = m_nodeCoords[i][0];
-      xLocal[i][1] = m_nodeCoords[i][1];
-      xLocal[i][2] = m_nodeCoords[i][2];
-    }
   }
 
 private:
@@ -441,13 +328,6 @@ public:
         m_nodeCoords[i][j] = nodeCoords[i][j];
       }
     }
-  }
-
-  GEOS_HOST_DEVICE
-  inline
-  constexpr static CellUtilities::ReferenceCell getReferenceCellType()
-  {
-    return CellUtilities::ReferenceCell::Pyramid;
   }
 
   GEOS_HOST_DEVICE
@@ -487,25 +367,75 @@ public:
     return J;
   }
 
-  // GEOS_HOST_DEVICE real64[3] mapping( real64 refPointCoords[3] ) const
-  // {
-
-  // }
-
-  GEOS_HOST_DEVICE
-  void getLocalCoordinates( real64 (& xLocal)[numVertex][3] ) const
-  {
-    for( int i = 0; i < numVertex; ++i )
-    {
-      xLocal[i][0] = m_nodeCoords[i][0];
-      xLocal[i][1] = m_nodeCoords[i][1];
-      xLocal[i][2] = m_nodeCoords[i][2];
-    }
-  }
-
 private:
   real64 m_nodeCoords[numVertex][3];
 };
+
+namespace CellUtilities
+{
+
+/**
+ * @brief Reference cell type
+ */
+enum class ReferenceCell : integer
+{
+  Tetrahedron,
+  Pyramid,
+  Wedge,
+  Cube
+};
+
+template< class T >
+struct ParentCell
+{};
+
+template<>
+struct ParentCell< TetrahedronCell >
+{
+  static constexpr ReferenceCell value = ReferenceCell::Tetrahedron;
+};
+
+template<>
+struct ParentCell< PyramidCell >
+{
+  static constexpr ReferenceCell value = ReferenceCell::Pyramid;
+};
+
+template<>
+struct ParentCell< WedgeCell >
+{
+  static constexpr ReferenceCell value = ReferenceCell::Wedge;
+};
+
+template<>
+struct ParentCell< CuboidCell >
+{
+  static constexpr ReferenceCell value = ReferenceCell::Cube;
+};
+
+template<>
+struct ParentCell< CubeCell >
+{
+  static constexpr ReferenceCell value = ReferenceCell::Cube;
+};
+
+
+template< typename CELL_TYPE >
+GEOS_HOST_DEVICE
+static camp::tuple< real64, typename CELL_TYPE::JacobianType >
+getJacobianDeterminantAndJacobianInverse( CELL_TYPE cell,
+                                          real64 const refPointCoords[3] )
+{
+  // Compute Jacobian
+  typename CELL_TYPE::JacobianType J = cell.getJacobian( refPointCoords );
+
+  // Compute determinant and invert Jacobian in place
+  real64 const detJ = J.inPlaceInvert();
+
+  return camp::make_tuple( detJ, J );
+}
+
+} // namespace CellUtilities
 
 } // namespace geos
 

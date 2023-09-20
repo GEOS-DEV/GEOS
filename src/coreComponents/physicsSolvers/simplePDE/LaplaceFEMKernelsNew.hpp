@@ -24,7 +24,7 @@
 
 #include "finiteElement/kernelInterface/ImplicitKernelBase.hpp"
 #include "BasisFunctionUtilities.hpp"
-#include "IsoparametricMeshUtilities.hpp"
+#include "SubRegionMeshUtilities.hpp"
 #include "QuadratureUtilities.hpp"
 #include "finiteElement/BilinearFormUtilities.hpp"
 

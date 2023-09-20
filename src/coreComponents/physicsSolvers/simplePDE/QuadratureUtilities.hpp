@@ -204,7 +204,7 @@ template< typename CELL_TYPE,
 GEOS_HOST_DEVICE
 static Data getData( int quadraturePointIndex )
 {
-  return Helper< CELL_TYPE::getReferenceCellType(), RULE_TYPE, N_INTEGRATION_POINTS >::getData( quadraturePointIndex );
+  return Helper< CellUtilities::ParentCell< CELL_TYPE >::value, RULE_TYPE, N_INTEGRATION_POINTS >::getData( quadraturePointIndex );
 }
 
 /// Declare strings associated with enumeration values.
