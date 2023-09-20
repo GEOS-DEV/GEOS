@@ -215,6 +215,7 @@ void SinglePhasePoromechanicsConformingFractures::assembleCellBasedContributions
                                                                                                    SinglePhasePoromechanics::viewKeyStruct::porousMaterialNamesString(),
                                                                                                    localMatrix,
                                                                                                    localRhs,
+                                                                                                   dt,
                                                                                                    flowDofKey,
                                                                                                    FlowSolverBase::viewKeyStruct::fluidNamesString() );
     }
@@ -227,6 +228,7 @@ void SinglePhasePoromechanicsConformingFractures::assembleCellBasedContributions
                                                                                      SinglePhasePoromechanics::viewKeyStruct::porousMaterialNamesString(),
                                                                                      localMatrix,
                                                                                      localRhs,
+                                                                                     dt,
                                                                                      flowDofKey,
                                                                                      FlowSolverBase::viewKeyStruct::fluidNamesString() );
     }
@@ -418,7 +420,8 @@ void SinglePhasePoromechanicsConformingFractures::
     FaceElementSubRegion const & fractureSubRegion =
       fractureRegion.getUniqueSubRegion< FaceElementSubRegion >();
 
-    GEOS_ERROR_IF( !fractureSubRegion.hasWrapper( flow::pressure::key() ), "The fracture subregion must contain pressure field." );
+    GEOS_ERROR_IF( !fractureSubRegion.hasWrapper( flow::pressure::key() ),
+                   getDataContext() << ": The fracture subregion must contain pressure field." );
 
     ArrayOfArraysView< localIndex const > const elem2dToFaces = fractureSubRegion.faceList().toViewConst();
 

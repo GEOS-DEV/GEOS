@@ -424,7 +424,8 @@ void SinglePhasePoromechanicsEmbeddedFractures::assembleSystem( real64 const tim
                                                                                                             regionNames,
                                                                                                             SinglePhasePoromechanics::viewKeyStruct::porousMaterialNamesString(),
                                                                                                             localMatrix,
-                                                                                                            localRhs );
+                                                                                                            localRhs,
+                                                                                                            dt );
     }
     else
     {
@@ -436,7 +437,8 @@ void SinglePhasePoromechanicsEmbeddedFractures::assembleSystem( real64 const tim
                                                                               regionNames,
                                                                               SinglePhasePoromechanics::viewKeyStruct::porousMaterialNamesString(),
                                                                               localMatrix,
-                                                                              localRhs );
+                                                                              localRhs,
+                                                                              dt );
     }
 
     // 3. Assemble poroelastic fluxes and all derivatives
@@ -515,12 +517,13 @@ real64 SinglePhasePoromechanicsEmbeddedFractures::calculateResidualNorm( real64 
 void SinglePhasePoromechanicsEmbeddedFractures::applySystemSolution( DofManager const & dofManager,
                                                                      arrayView1d< real64 const > const & localSolution,
                                                                      real64 const scalingFactor,
+                                                                     real64 const dt,
                                                                      DomainPartition & domain )
 {
   // update displacement and jump
-  m_fracturesSolver->applySystemSolution( dofManager, localSolution, scalingFactor, domain );
+  m_fracturesSolver->applySystemSolution( dofManager, localSolution, scalingFactor, dt, domain );
   // update pressure field
-  flowSolver()->applySystemSolution( dofManager, localSolution, scalingFactor, domain );
+  flowSolver()->applySystemSolution( dofManager, localSolution, scalingFactor, dt, domain );
 }
 
 void SinglePhasePoromechanicsEmbeddedFractures::updateState( DomainPartition & domain )

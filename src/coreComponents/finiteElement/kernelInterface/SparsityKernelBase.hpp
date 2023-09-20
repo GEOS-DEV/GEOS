@@ -62,6 +62,7 @@ public:
 
   using typename Base::StackVariables;
   using Base::m_dofRankOffset;
+  using Base::m_dt;
 
   using Base::setup;
 
@@ -74,6 +75,7 @@ public:
    * @param inputDofNumber The dof number for the primary field.
    * @param rankOffset dof index offset of current rank
    * @param inputSparsity The sparsity pattern to fill.
+   * @param inputDt The timestep for the physics update.
    * @copydoc geos::finiteElement::KernelBase::KernelBase
    */
   SparsityKernelBase( NodeManager const & nodeManager,
@@ -85,6 +87,7 @@ public:
                       CONSTITUTIVE_TYPE & inputConstitutiveType,
                       arrayView1d< globalIndex const > const & inputDofNumber,
                       globalIndex const rankOffset,
+                      real64 const inputDt,
                       SparsityPattern< globalIndex > & inputSparsity ):
     Base( nodeManager,
           edgeManager,
@@ -96,7 +99,8 @@ public:
           inputDofNumber,
           rankOffset,
           CRSMatrixView< real64, globalIndex const >(),
-          arrayView1d< real64 >() ),
+          arrayView1d< real64 >(),
+          inputDt ),
     m_sparsity( inputSparsity )
   {}
 
@@ -236,6 +240,7 @@ public:
                                                                      inputConstitutiveType,
                                                                      m_inputDofNumber,
                                                                      m_rankOffset,
+                                                                     0.0, //dt but not needed
                                                                      m_inputSparsityPattern );
   }
 

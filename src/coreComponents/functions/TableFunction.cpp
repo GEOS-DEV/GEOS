@@ -66,7 +66,7 @@ void TableFunction::readFile( string const & filename, array1d< real64 > & targe
   }
   catch( std::runtime_error const & e )
   {
-    GEOS_THROW( GEOS_FMT( "{} {}: {}", catalogName(), getName(), e.what() ), InputError );
+    GEOS_THROW( GEOS_FMT( "{} {}: {}", catalogName(), getDataContext(), e.what() ), InputError );
   }
 }
 
@@ -85,7 +85,7 @@ void TableFunction::setTableCoordinates( array1d< real64_array > const & coordin
     {
       GEOS_THROW_IF( coordinates[i][j] - coordinates[i][j-1] <= 0,
                      GEOS_FMT( "{} {}: coordinates must be strictly increasing, but axis {} is not",
-                               catalogName(), getName(), i ),
+                               catalogName(), getDataContext(), i ),
                      InputError );
     }
     m_coordinates.appendArray( coordinates[i].begin(), coordinates[i].end() );
@@ -113,7 +113,7 @@ void TableFunction::initializeFunction()
     m_coordinates.appendArray( m_tableCoordinates1D.begin(), m_tableCoordinates1D.end() );
     GEOS_THROW_IF_NE_MSG( m_tableCoordinates1D.size(), m_values.size(),
                           GEOS_FMT( "{} {}: 1D table function coordinates and values must have the same length",
-                                    catalogName(), getName() ),
+                                    catalogName(), getDataContext() ),
                           InputError );
   }
   else
@@ -146,7 +146,7 @@ void TableFunction::reInitializeFunction()
     {
       GEOS_THROW_IF( m_coordinates[ii][j] - m_coordinates[ii][j-1] <= 0,
                      GEOS_FMT( "{} {}: coordinates must be strictly increasing, but axis {} is not",
-                               catalogName(), getName(), ii ),
+                               catalogName(), getDataContext(), ii ),
                      InputError );
     }
   }
@@ -154,7 +154,7 @@ void TableFunction::reInitializeFunction()
   {
     GEOS_THROW_IF_NE_MSG( increment, m_values.size(),
                           GEOS_FMT( "{} {}: number of values does not match total number of table coordinates",
-                                    catalogName(), getName() ),
+                                    catalogName(), getDataContext() ),
                           InputError );
   }
 
