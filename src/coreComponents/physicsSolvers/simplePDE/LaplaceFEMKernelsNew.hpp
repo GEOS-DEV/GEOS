@@ -102,6 +102,7 @@ public:
                        globalIndex const rankOffset,
                        CRSMatrixView< real64, globalIndex const > const inputMatrix,
                        arrayView1d< real64 > const inputRhs,
+                       real64 const inputDt,
                        string const fieldName ):
     Base( nodeManager,
           edgeManager,
@@ -113,7 +114,8 @@ public:
           inputDofNumber,
           rankOffset,
           inputMatrix,
-          inputRhs ),
+          inputRhs,
+          inputDt ),
     // m_X( nodeManager.referencePosition() ),
     m_primaryField( nodeManager.template getReference< array1d< real64 > >( fieldName )),
     // m_subregionMesh( selectIsoparametricMesh< traits::ViewTypeConst< typename SUBREGION_TYPE::NodeMapType::base_type > >(
@@ -290,6 +292,7 @@ using LaplaceFEMKernelNewFactory = finiteElement::KernelFactory< LaplaceFEMKerne
                                                                  globalIndex const,
                                                                  CRSMatrixView< real64, globalIndex const > const,
                                                                  arrayView1d< real64 > const,
+                                                                 real64 const,
                                                                  string const >;
 
 } // namespace geos
