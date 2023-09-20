@@ -321,7 +321,8 @@ void MultiphasePoromechanics::initializePreSubGroups()
   SolverBase::initializePreSubGroups();
 
   GEOS_THROW_IF( m_stabilizationType == StabilizationType::Local,
-                 catalogName() << " " << getName() << ": Local stabilization has been disabled temporarily",
+                 getWrapperDataContext( viewKeyStruct::stabilizationTypeString() ) <<
+                 ": Local stabilization has been disabled temporarily",
                  InputError );
 
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
@@ -337,7 +338,8 @@ void MultiphasePoromechanics::initializePreSubGroups()
     {
       string & porousName = subRegion.getReference< string >( viewKeyStruct::porousMaterialNamesString() );
       porousName = getConstitutiveName< CoupledSolidBase >( subRegion );
-      GEOS_ERROR_IF( porousName.empty(), GEOS_FMT( "Solid model not found on subregion {}", subRegion.getName() ) );
+      GEOS_ERROR_IF( porousName.empty(), GEOS_FMT( "{}: Solid model not found on subregion {}",
+                                                   getDataContext(), subRegion.getName() ) );
 
       if( subRegion.hasField< fields::poromechanics::bulkDensity >() )
       {

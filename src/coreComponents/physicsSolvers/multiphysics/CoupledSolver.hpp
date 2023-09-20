@@ -80,7 +80,8 @@ public:
       using SolverType = TYPEOFPTR( SolverPtr {} );
       solver = this->getParent().template getGroupPointer< SolverType >( m_names[idx()] );
       GEOS_THROW_IF( solver == nullptr,
-                     GEOS_FMT( "Could not find solver '{}' of type {}",
+                     GEOS_FMT( "{}: Could not find solver '{}' of type {}",
+                               getDataContext(),
                                m_names[idx()], LvArray::system::demangleType< SolverType >() ),
                      InputError );
     } );
@@ -232,7 +233,7 @@ public:
     }
     else
     {
-      GEOS_ERROR( "Invalid coupling type option." );
+      GEOS_ERROR( getDataContext() << ": Invalid coupling type option." );
       return 0;
     }
 
@@ -432,7 +433,7 @@ protected:
       ++iter;
     }
 
-    GEOS_ERROR_IF( !isConverged, getName() << "::sequentiallyCoupledSolverStep did not converge!" );
+    GEOS_ERROR_IF( !isConverged, getDataContext() << ": sequentiallyCoupledSolverStep did not converge!" );
 
     implicitStepComplete( time_n, dt, domain );
 
@@ -521,7 +522,7 @@ protected:
       }
       else
       {
-        GEOS_ERROR( "Invalid sequential convergence criterion." );
+        GEOS_ERROR( getDataContext() << ": Invalid sequential convergence criterion." );
       }
 
       if( isConverged )
@@ -540,8 +541,8 @@ protected:
     bool const isSequential = getNonlinearSolverParameters().couplingType() == NonlinearSolverParameters::CouplingType::Sequential;
     bool const usesLineSearch = getNonlinearSolverParameters().m_lineSearchAction != NonlinearSolverParameters::LineSearchAction::None;
     GEOS_THROW_IF( isSequential && usesLineSearch,
-                   GEOS_FMT( "`{}`: line search is not supported by the coupled solver when {} is set to `{}`. Please set {} to `{}` to remove this error",
-                             getName(),
+                   GEOS_FMT( "{}: line search is not supported by the coupled solver when {} is set to `{}`. Please set {} to `{}` to remove this error",
+                             getWrapperDataContext( NonlinearSolverParameters::viewKeysStruct::couplingTypeString() ),
                              NonlinearSolverParameters::viewKeysStruct::couplingTypeString(),
                              EnumStrings< NonlinearSolverParameters::CouplingType >::toString( NonlinearSolverParameters::CouplingType::Sequential ),
                              NonlinearSolverParameters::viewKeysStruct::lineSearchActionString(),

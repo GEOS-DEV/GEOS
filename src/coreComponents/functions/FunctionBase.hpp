@@ -195,10 +195,12 @@ void FunctionBase::evaluateT( dataRepository::Group const & group,
   }
 
   // Make sure the inputs do not exceed the maximum length
-  GEOS_ERROR_IF_GT_MSG( totalVarSize, MAX_VARS, "Function input size exceeded" );
+  GEOS_ERROR_IF_GT_MSG( totalVarSize, MAX_VARS,
+                        getDataContext() << ": Function input size exceeded" );
 
   // Make sure the result / set size match
-  GEOS_ERROR_IF_NE_MSG( result.size(), set.size(), "To apply a function to a set, the size of the result and set must match" );
+  GEOS_ERROR_IF_NE_MSG( result.size(), set.size(),
+                        getDataContext() << ": To apply a function to a set, the size of the result and set must match" );
 
   forAll< POLICY >( set.size(), [=]( localIndex const i )
   {
