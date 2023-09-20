@@ -1038,6 +1038,18 @@ computeKKFluxMatrix(int q,
                                                                   B[1]*GL_BASIS::gradient( qb, GL_BASIS::parentSupportCoord( qb ) )+
                                                                   B[2]*GL_BASIS::gradient( qb, GL_BASIS::parentSupportCoord( qb ) )));
     }   
+
+    for (localIndex j1 = 0; j1 < num1dNodes; ++j1)
+    {
+      real64 valGrad = GL_BASIS::gradient( j1, GL_BASIS::parentSupportCoord( 0 ) );
+
+      func(GL_BASIS::TensorProduct3D::linearIndex( 0, qa, qb ),
+           GL_BASIS::TensorProduct3D::linearIndex( j1, qa, qb ),
+           GL_BASIS::weight( qa )*GL_BASIS::weight( qb )*valGrad*(B[0]*GL_BASIS::gradient( qa, GL_BASIS::parentSupportCoord( qa ) )+
+                                                                  B[1]*GL_BASIS::gradient( qa, GL_BASIS::parentSupportCoord( qa ) )+
+                                                                  B[1]*GL_BASIS::gradient( qb, GL_BASIS::parentSupportCoord( qb ) )+
+                                                                  B[2]*GL_BASIS::gradient( qb, GL_BASIS::parentSupportCoord( qb ) )));
+    } 
   }
   //Right face
   else if (face==1)
@@ -1048,6 +1060,18 @@ computeKKFluxMatrix(int q,
 
       func(GL_BASIS::TensorProduct3D::linearIndex( i1, qa, qb ),
            GL_BASIS::TensorProduct3D::linearIndex( num1dNodes, qa, qb ),
+           GL_BASIS::weight( qa )*GL_BASIS::weight( qb )*valGrad*(B[0]*GL_BASIS::gradient( qa, GL_BASIS::parentSupportCoord( qa ) )+
+                                                                  B[1]*GL_BASIS::gradient( qa, GL_BASIS::parentSupportCoord( qa ) )+
+                                                                  B[1]*GL_BASIS::gradient( qb, GL_BASIS::parentSupportCoord( qb ) )+
+                                                                  B[2]*GL_BASIS::gradient( qb, GL_BASIS::parentSupportCoord( qb ) )));
+   } 
+
+   for (localIndex j1 = 0; j1 < num1dNodes; ++j1)
+   {
+      real64 valGrad = GL_BASIS::gradient( j1, GL_BASIS::parentSupportCoord( num1dNodes ) );
+
+      func(GL_BASIS::TensorProduct3D::linearIndex( num1dNodes, qa, qb ),
+           GL_BASIS::TensorProduct3D::linearIndex( j1, qa, qb ),
            GL_BASIS::weight( qa )*GL_BASIS::weight( qb )*valGrad*(B[0]*GL_BASIS::gradient( qa, GL_BASIS::parentSupportCoord( qa ) )+
                                                                   B[1]*GL_BASIS::gradient( qa, GL_BASIS::parentSupportCoord( qa ) )+
                                                                   B[1]*GL_BASIS::gradient( qb, GL_BASIS::parentSupportCoord( qb ) )+
@@ -1069,13 +1093,25 @@ computeKKFluxMatrix(int q,
                                                                   B[1]*GL_BASIS::gradient( qb, GL_BASIS::parentSupportCoord( qb ) )+
                                                                   B[2]*GL_BASIS::gradient( qb, GL_BASIS::parentSupportCoord( qb ) )));
    } 
+
+   for (localIndex j2 = 0; j2 < num1dNodes; ++j2)
+   {
+      real64 valGrad = GL_BASIS::gradient( j2, GL_BASIS::parentSupportCoord( 0 ) );
+
+      func(GL_BASIS::TensorProduct3D::linearIndex( qa, 0, qb ),
+           GL_BASIS::TensorProduct3D::linearIndex( qa, j2, qb ),
+           GL_BASIS::weight( qa )*GL_BASIS::weight( qb )*valGrad*(B[0]*GL_BASIS::gradient( qa, GL_BASIS::parentSupportCoord( qa ) )+
+                                                                  B[1]*GL_BASIS::gradient( qa, GL_BASIS::parentSupportCoord( qa ) )+
+                                                                  B[1]*GL_BASIS::gradient( qb, GL_BASIS::parentSupportCoord( qb ) )+
+                                                                  B[2]*GL_BASIS::gradient( qb, GL_BASIS::parentSupportCoord( qb ) )));
+   }
   
   }
   //Top face
   else if (face==3)
   {
   
-for (localIndex i2 = 0; i2 < num1dNodes; ++i2)
+   for (localIndex i2 = 0; i2 < num1dNodes; ++i2)
    {
       real64 valGrad = GL_BASIS::gradient( i2, GL_BASIS::parentSupportCoord( num1dNodes ) );
 
@@ -1086,6 +1122,18 @@ for (localIndex i2 = 0; i2 < num1dNodes; ++i2)
                                                                   B[1]*GL_BASIS::gradient( qb, GL_BASIS::parentSupportCoord( qb ) )+
                                                                   B[2]*GL_BASIS::gradient( qb, GL_BASIS::parentSupportCoord( qb ) )));
    }   
+
+   for (localIndex j2 = 0; j2 < num1dNodes; ++j2)
+   {
+      real64 valGrad = GL_BASIS::gradient( j2, GL_BASIS::parentSupportCoord( num1dNodes ) );
+
+      func(GL_BASIS::TensorProduct3D::linearIndex( qa, num1dNodes, qb ),
+           GL_BASIS::TensorProduct3D::linearIndex( qa, j2, qb ),
+           GL_BASIS::weight( qa )*GL_BASIS::weight( qb )*valGrad*(B[0]*GL_BASIS::gradient( qa, GL_BASIS::parentSupportCoord( qa ) )+
+                                                                  B[1]*GL_BASIS::gradient( qa, GL_BASIS::parentSupportCoord( qa ) )+
+                                                                  B[1]*GL_BASIS::gradient( qb, GL_BASIS::parentSupportCoord( qb ) )+
+                                                                  B[2]*GL_BASIS::gradient( qb, GL_BASIS::parentSupportCoord( qb ) )));
+   }
   }
   //Back face
   else if (face==4)
@@ -1103,6 +1151,18 @@ for (localIndex i2 = 0; i2 < num1dNodes; ++i2)
                                                                   B[2]*GL_BASIS::gradient( qb, GL_BASIS::parentSupportCoord( qb ) )));
    }   
 
+   for (localIndex j3 = 0; j3 < num1dNodes; ++j3)
+   {
+      real64 valGrad = GL_BASIS::gradient( j3, GL_BASIS::parentSupportCoord( 0 ) );
+
+      func(GL_BASIS::TensorProduct3D::linearIndex( qa, qb, 0 ),
+           GL_BASIS::TensorProduct3D::linearIndex( qa, qb, j3 ),
+           GL_BASIS::weight( qa )*GL_BASIS::weight( qb )*valGrad*(B[0]*GL_BASIS::gradient( qa, GL_BASIS::parentSupportCoord( qa ) )+
+                                                                  B[1]*GL_BASIS::gradient( qa, GL_BASIS::parentSupportCoord( qa ) )+
+                                                                  B[1]*GL_BASIS::gradient( qb, GL_BASIS::parentSupportCoord( qb ) )+
+                                                                  B[2]*GL_BASIS::gradient( qb, GL_BASIS::parentSupportCoord( qb ) )));
+   } 
+
   }
   //Front face
   else if (face==5)
@@ -1114,6 +1174,18 @@ for (localIndex i2 = 0; i2 < num1dNodes; ++i2)
 
       func(GL_BASIS::TensorProduct3D::linearIndex( qa, qb, i3 ),
            GL_BASIS::TensorProduct3D::linearIndex( qa, qb, num1dNodes ),
+           GL_BASIS::weight( qa )*GL_BASIS::weight( qb )*valGrad*(B[0]*GL_BASIS::gradient( qa, GL_BASIS::parentSupportCoord( qa ) )+
+                                                                  B[1]*GL_BASIS::gradient( qa, GL_BASIS::parentSupportCoord( qa ) )+
+                                                                  B[1]*GL_BASIS::gradient( qb, GL_BASIS::parentSupportCoord( qb ) )+
+                                                                  B[2]*GL_BASIS::gradient( qb, GL_BASIS::parentSupportCoord( qb ) )));
+   } 
+
+   for (localIndex j3 = 0; j3 < num1dNodes; ++j3)
+   {
+      real64 valGrad = GL_BASIS::gradient( j3, GL_BASIS::parentSupportCoord( num1dNodes ) );
+
+      func(GL_BASIS::TensorProduct3D::linearIndex( qa, qb, num1dNodes ),
+           GL_BASIS::TensorProduct3D::linearIndex( qa, qb, j3 ),
            GL_BASIS::weight( qa )*GL_BASIS::weight( qb )*valGrad*(B[0]*GL_BASIS::gradient( qa, GL_BASIS::parentSupportCoord( qa ) )+
                                                                   B[1]*GL_BASIS::gradient( qa, GL_BASIS::parentSupportCoord( qa ) )+
                                                                   B[1]*GL_BASIS::gradient( qb, GL_BASIS::parentSupportCoord( qb ) )+
