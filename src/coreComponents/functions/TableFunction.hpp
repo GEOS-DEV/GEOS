@@ -294,8 +294,9 @@ private:
   /**
    * @brief Set the table values
    * @param values An array of table values in fortran order
+   * @param unit The unit of the given values
    */
-  void setTableValues( real64_array values );
+  void setTableValues( real64_array values, units::Unit unit = units::Unknown );
 
   /**
    * @brief Create an instance of the kernel wrapper
@@ -346,8 +347,11 @@ private:
   /// Table values (in fortran order)
   array1d< real64 > m_values;
 
-  /// List of table coordinate file names
+  /// The units of each table coordinate axes
   std::vector< units::Unit > m_dimUnits;
+
+  /// The unit of the table values
+  units::Unit m_valueUnit;
 
   /// Kernel wrapper object used in evaluate() interface
   KernelWrapper m_kernelWrapper;

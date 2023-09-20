@@ -31,7 +31,8 @@ TableFunction::TableFunction( const string & name,
                               Group * const parent ):
   FunctionBase( name, parent ),
   m_interpolationMethod( InterpolationType::Linear ),
-  m_kernelWrapper( createKernelWrapper() )
+  m_kernelWrapper( createKernelWrapper() ),
+  m_valueUnit( units::Unknown )
 {
   registerWrapper( viewKeyStruct::coordinatesString(), &m_tableCoordinates1D ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -95,9 +96,10 @@ void TableFunction::setTableCoordinates( array1d< real64_array > const & coordin
   reInitializeFunction();
 }
 
-void TableFunction::setTableValues( real64_array values )
+void TableFunction::setTableValues( real64_array values, units::Unit unit )
 {
   m_values = std::move( values );
+  m_valueUnit = unit;
   reInitializeFunction();
 }
 
