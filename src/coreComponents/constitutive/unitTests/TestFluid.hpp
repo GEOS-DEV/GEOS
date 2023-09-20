@@ -47,8 +47,9 @@ struct Fluid
   static constexpr integer Tc = 1;
   static constexpr integer Ac = 2;
   static constexpr integer Mw = 3;
+  static constexpr integer Vs = 4;
 
-  static std::array< real64, 44 > data;
+  static std::array< real64, 55 > data;
 };
 
 template< int NC >
@@ -67,6 +68,7 @@ public:
     createArray( testFluid->criticalTemperature, components, Fluid::Tc, Fluid::data );
     createArray( testFluid->acentricFactor, components, Fluid::Ac, Fluid::data );
     createArray( testFluid->molecularWeight, components, Fluid::Mw, Fluid::data );
+    createArray( testFluid->volumeShift, components, Fluid::Vs, Fluid::data );
     return testFluid;
   }
 
@@ -107,7 +109,7 @@ public:
   }
 };
 
-std::array< real64, 44 > Fluid::data = {
+std::array< real64, 55 > Fluid::data = {
   // -- Pc
   2.2050e+07, 7.3750e+06, 3.4000e+06, 8.9630e+06, 1.2960e+06, 4.8721e+06,
   4.2481e+06, 3.6400e+06, 4.5990e+06, 2.5300e+06, 1.4600e+06,
@@ -120,6 +122,9 @@ std::array< real64, 44 > Fluid::data = {
   // -- Mw
   1.8015e+01, 4.4010e+01, 2.8013e+01, 3.4100e+01, 1.6043e+01, 3.0070e+01,
   4.4097e+01, 5.8124e+01, 7.2151e+01, 1.1423e+02, 1.4228e+02,
+  // -- Vs
+  0.0000e+00, 0.0000e+00, 0.0000e+00, 0.0000e+00, 0.0000e+00, 0.0000e+00,
+  0.0000e+00, 0.0000e+00, 0.0000e+00, 0.0000e+00, 0.0000e+00,
 };
 
 }// testing
