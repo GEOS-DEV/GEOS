@@ -1165,7 +1165,6 @@ void matrix_linear_system_least_square_solve_test()
   B( 0 ) = 6.0;
   B( 1 ) = 0.0;
   B( 2 ) = 0.0;
-  // B( 3 ) = 4.0;
 
   // Compute X
   LAI::matrixLeastSquaresSolutionSolve( A, B, X );
