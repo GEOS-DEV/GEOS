@@ -640,35 +640,11 @@ void SinglePhaseHybridFVM::updatePressureGradient( DomainPartition & domain )
   {
     FaceManager & faceManager = mesh.getFaceManager();
 
-    // get the face-centered pressures
-    arrayView1d< real64 const > const facePres =
-      faceManager.getField< fields::flow::facePressure >();
-
-    // get the face center coordinates
-    arrayView2d< real64 const > const faceCenter = faceManager.faceCenter();
-
     mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                           auto & subRegion )
     {
-      arrayView2d< real64 > const presGradient = subRegion.template getField< fields::flow::pressureGradient >();
-
-      // get the cell-centered pressures
-      arrayView1d< real64 const > const pres = subRegion.template getField< fields::flow::pressure >();
-
-      // get the cell center coordinates
-      arrayView2d< real64 const > const elemCenter = subRegion.getElementCenter();
-
-      // get the elements to faces map
-      arrayView2d< localIndex const > const & elemsToFaces = subRegion.faceList();
-
-      PressureGradientKernel::launch< parallelDevicePolicy<> >( subRegion.numFacesPerElement(),
-                                                                subRegion.size(),
-                                                                faceCenter,
-                                                                elemCenter,
-                                                                elemsToFaces,
-                                                                facePres,
-                                                                pres,
-                                                                presGradient );
+      PressureGradientKernel::launch< parallelDevicePolicy<> >( subRegion,
+                                                                faceManager );
     } );
   } );
 }

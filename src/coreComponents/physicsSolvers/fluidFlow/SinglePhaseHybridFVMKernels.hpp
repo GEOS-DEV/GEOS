@@ -45,81 +45,6 @@ namespace geos
 namespace singlePhaseHybridFVMKernels
 {
 
-/******************************** PressureGradientKernel ********************************/
-
-struct PressureGradientKernel
-{
-  GEOS_FORCE_INLINE
-  static void
-  compute( localIndex elemIndex,
-           localIndex numFacesInElem,
-           arrayView2d< real64 const > const faceCenter,
-           real64 const elemCenter[3],
-           arraySlice1d< localIndex const > const & elemToFaces,
-           arrayView1d< real64 const > const facePressure,
-           real64 const pres,
-           arrayView2d< real64 > const & presGradient )
-  {
-    array2d< real64 > coordinates( numFacesInElem+1, 4 );
-    array1d< real64 > pressures( numFacesInElem + 1 );
-    array1d< real64 > presGradientLocal( 4 );
-
-    for( integer dim=0; dim<3; ++dim )
-    {
-      coordinates( 0, dim ) = elemCenter[dim];
-    }
-    coordinates( 0, 3 ) = 1.0;
-    pressures( 0 ) = pres;
-
-    for( integer fi=0; fi<numFacesInElem; ++fi )
-    {
-      localIndex const localFaceIndex = elemToFaces[fi];
-
-      real64 const facePresLocal = facePressure[localFaceIndex];
-
-      pressures( fi+1 ) = facePresLocal;
-
-      for( integer dim=0; dim<3; ++dim )
-      {
-        real64 const faceCenterXiLocal = faceCenter[localFaceIndex][dim];
-
-        coordinates( fi+1, dim ) = faceCenterXiLocal;
-      }
-      coordinates( fi+1, 3 ) = 1.0;
-    }
-
-    BlasLapackLA::matrixLeastSquaresSolutionSolve( coordinates, pressures, presGradientLocal );
-
-    for( integer dim=0; dim<3; ++dim )
-    {
-      presGradient( elemIndex, dim ) = presGradientLocal( dim );
-    }
-  }
-
-  template< typename POLICY >
-  static void launch( localIndex numFacesInElem,
-                      localIndex const subRegionSize,
-                      arrayView2d< real64 const > const faceCenter,
-                      arrayView2d< real64 const > const elemCenter,
-                      arrayView2d< localIndex const > const elemsToFaces,
-                      arrayView1d< real64 const > const facePressure,
-                      arrayView1d< real64 const > const pres,
-                      arrayView2d< real64 > const & presGradient )
-  {
-    forAll< POLICY >( subRegionSize, [=] GEOS_HOST_DEVICE ( localIndex const ei )
-    {
-      compute( ei,
-               numFacesInElem,
-               faceCenter,
-               elemCenter[ei],
-               elemsToFaces[ei],
-               facePressure,
-               pres[ei],
-               presGradient );
-    } );
-  }
-};
-
 /******************************** AssemblerKernelHelper ********************************/
 /******************************** Kernel switches ********************************/
 
@@ -158,6 +83,96 @@ void kernelLaunchSelectorFaceSwitch( T value, LAMBDA && lambda )
 }
 
 } // namespace internal
+
+/******************************** PressureGradientKernel ********************************/
+
+struct PressureGradientKernel
+{
+  template< integer NUM_FACES >
+  static void
+  compute( localIndex elemIndex,
+           arrayView2d< real64 const > const faceCenter,
+           real64 const elemCenter[3],
+           arraySlice1d< localIndex const > const & elemToFaces,
+           arrayView1d< real64 const > const facePressure,
+           real64 const pres,
+           arrayView2d< real64 > const & presGradient )
+  {
+    stackArray2d< real64, (NUM_FACES + 1) * 4 > coordinates( NUM_FACES+1, 4 );
+    stackArray1d< real64, NUM_FACES + 1 > pressures( NUM_FACES+1 );
+    stackArray1d< real64, 4 > presGradientLocal( 4 );
+
+    for( integer dim=0; dim<3; ++dim )
+    {
+      coordinates( 0, dim ) = elemCenter[dim];
+    }
+    coordinates( 0, 3 ) = 1.0;
+    pressures[0] = pres;
+
+    for( integer fi=0; fi<NUM_FACES; ++fi )
+    {
+      localIndex const localFaceIndex = elemToFaces[fi];
+
+      real64 const facePresLocal = facePressure[localFaceIndex];
+
+      pressures[fi+1] = facePresLocal;
+
+      for( integer dim=0; dim<3; ++dim )
+      {
+        real64 const faceCenterXiLocal = faceCenter[localFaceIndex][dim];
+
+        coordinates( fi+1, dim ) = faceCenterXiLocal;
+      }
+      coordinates( fi+1, 3 ) = 1.0;
+    }
+
+    BlasLapackLA::matrixLeastSquaresSolutionSolve( coordinates, pressures, presGradientLocal );
+
+    for( integer dim=0; dim<3; ++dim )
+    {
+      presGradient( elemIndex, dim ) = presGradientLocal[dim];
+    }
+  }
+
+  template< typename POLICY >
+  static void launch( CellElementSubRegion & subRegion,
+                      FaceManager const & faceManager )
+  {
+    internal::kernelLaunchSelectorFaceSwitch( subRegion.numFacesPerElement(), [&] ( auto NUM_FACES )
+    {
+      // get the face-centered pressures
+      arrayView1d< real64 const > const facePres =
+        faceManager.getField< fields::flow::facePressure >();
+
+      // get the face center coordinates
+      arrayView2d< real64 const > const faceCenter = faceManager.faceCenter();
+
+      arrayView2d< real64 > const presGradient = subRegion.template getField< fields::flow::pressureGradient >();
+
+      // get the cell-centered pressures
+      arrayView1d< real64 const > const pres = subRegion.template getField< fields::flow::pressure >();
+
+      // get the cell center coordinates
+      arrayView2d< real64 const > const elemCenter = subRegion.getElementCenter();
+
+      // get the elements to faces map
+      arrayView2d< localIndex const > const & elemsToFaces = subRegion.faceList();
+
+      forAll< POLICY >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const ei )
+      {
+        compute< NUM_FACES >( ei,
+                              faceCenter,
+                              elemCenter[ei],
+                              elemsToFaces[ei],
+                              facePres,
+                              pres[ei],
+                              presGradient );
+      } );
+    } );
+
+
+  }
+};
 
 /******************************** ElementBasedAssemblyKernel ********************************/
 
