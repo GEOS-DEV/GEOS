@@ -261,7 +261,7 @@ void ElasticFirstOrderWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLeve
   {
 
     GEOS_THROW_IF( elementSubRegion.getElementType() != ElementType::Hexahedron,
-                   "Invalid type of element, the elastic solver is designed for hexahedral meshes only (C3D8) ",
+                   getDataContext() << ": Invalid type of element, the elastic solver is designed for hexahedral meshes only (C3D8) ",
                    InputError );
 
     arrayView2d< localIndex const > const elemsToFaces = elementSubRegion.faceList();
@@ -320,7 +320,9 @@ void ElasticFirstOrderWaveEquationSEM::addSourceToRightHandSide( integer const &
   arrayView1d< localIndex const > const sourceIsAccessible = m_sourceIsAccessible.toViewConst();
   arrayView2d< real32 const > const sourceValue   = m_sourceValue.toViewConst();
 
-  GEOS_THROW_IF( cycleNumber > sourceValue.size( 0 ), "Too many steps compared to array size", std::runtime_error );
+  GEOS_THROW_IF( cycleNumber > sourceValue.size( 0 ),
+                 getDataContext() << ": Too many steps compared to array size",
+                 std::runtime_error );
 
   forAll< serialPolicy >( m_sourceConstants.size( 0 ), [=] ( localIndex const isrc )
   {
@@ -504,7 +506,7 @@ real64 ElasticFirstOrderWaveEquationSEM::explicitStepBackward( real64 const & ti
                                                                DomainPartition & domain,
                                                                bool GEOS_UNUSED_PARAM( computeGradient ) )
 {
-  GEOS_ERROR( "Backward propagation for the first order elastic wave propagator not yet implemented" );
+  GEOS_ERROR( getDataContext() << ": Backward propagation for the first order elastic wave propagator not yet implemented" );
   real64 dtOut = explicitStepInternal( time_n, dt, cycleNumber, domain );
   return dtOut;
 }
@@ -777,12 +779,12 @@ void ElasticFirstOrderWaveEquationSEM::compute2dVariableAllSeismoTraces( localIn
 
 void ElasticFirstOrderWaveEquationSEM::initializePML()
 {
-  GEOS_ERROR( "PML for the first order elastic wave propagator not yet implemented" );
+  GEOS_ERROR( getDataContext() << ": PML for the first order elastic wave propagator not yet implemented" );
 }
 
 void ElasticFirstOrderWaveEquationSEM::applyPML( real64 const, DomainPartition & )
 {
-  GEOS_ERROR( "PML for the first order elastic wave propagator not yet implemented" );
+  GEOS_ERROR( getDataContext() << ": PML for the first order elastic wave propagator not yet implemented" );
 }
 
 REGISTER_CATALOG_ENTRY( SolverBase, ElasticFirstOrderWaveEquationSEM, string const &, dataRepository::Group * const )
