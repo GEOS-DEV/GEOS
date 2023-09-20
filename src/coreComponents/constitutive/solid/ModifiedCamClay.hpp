@@ -227,6 +227,7 @@ void ModifiedCamClayUpdates::smallStrainUpdate( localIndex const k,
 {
 
   // Rename variables for easier implementation
+
   GEOS_UNUSED_VAR( timeIncrement );
   real64 const oldPc  = m_oldPreConsolidationPressure[k][q];   //pre-consolidation pressure
   real64 const mu     = m_shearModulus[k];
@@ -271,7 +272,6 @@ void ModifiedCamClayUpdates::smallStrainUpdate( localIndex const k,
   }
 
   // else, plasticity (trial stress point lies outside yield surface)
-
   eps_v_trial = std::log( trialP/p0 ) * Cr * (-1.0) + eps_v0;
   eps_s_trial = trialQ/3.0/mu;
 

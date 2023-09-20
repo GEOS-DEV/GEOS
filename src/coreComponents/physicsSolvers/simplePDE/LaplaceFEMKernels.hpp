@@ -79,6 +79,7 @@ public:
   using Base::m_elemsToNodes;
   using Base::m_finiteElementSpace;
   using Base::m_meshData;
+  using Base::m_dt;
 
   /**
    * @brief Constructor
@@ -97,6 +98,7 @@ public:
                     globalIndex const rankOffset,
                     CRSMatrixView< real64, globalIndex const > const inputMatrix,
                     arrayView1d< real64 > const inputRhs,
+                    real64 const inputDt,
                     string const fieldName ):
     Base( nodeManager,
           edgeManager,
@@ -108,7 +110,8 @@ public:
           inputDofNumber,
           rankOffset,
           inputMatrix,
-          inputRhs ),
+          inputRhs,
+          inputDt ),
     m_X( nodeManager.referencePosition() ),
     m_primaryField( nodeManager.template getReference< array1d< real64 > >( fieldName ))
   {}
@@ -258,6 +261,7 @@ using LaplaceFEMKernelFactory = finiteElement::KernelFactory< LaplaceFEMKernel,
                                                               globalIndex const,
                                                               CRSMatrixView< real64, globalIndex const > const,
                                                               arrayView1d< real64 > const,
+                                                              real64 const,
                                                               string const >;
 
 } // namespace geos
