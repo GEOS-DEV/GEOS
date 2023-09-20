@@ -70,7 +70,7 @@ void ContactBase::postProcessInput()
 {
 
   GEOS_THROW_IF( m_apertureTableName.empty(),
-                 getCatalogName() << " " << getName() << ": the aperture table name " << m_apertureTableName << " is empty", InputError );
+                 getFullName() << ": the aperture table name " << m_apertureTableName << " is empty", InputError );
 
 }
 
@@ -86,7 +86,7 @@ void ContactBase::allocateConstitutiveData( Group & parent,
   FunctionManager & functionManager = FunctionManager::getInstance();
 
   GEOS_THROW_IF( !functionManager.hasGroup( m_apertureTableName ),
-                 getCatalogName() << " " << getName() << ": the aperture table named " << m_apertureTableName << " could not be found",
+                 getFullName() << ": the aperture table named " << m_apertureTableName << " could not be found",
                  InputError );
 
   TableFunction & apertureTable = functionManager.getGroup< TableFunction >( m_apertureTableName );
@@ -126,25 +126,25 @@ void ContactBase::validateApertureTable( TableFunction const & apertureTable ) c
   arrayView1d< real64 const > const & hydraulicApertureValues = apertureTable.getValues();
 
   GEOS_THROW_IF( coords.size() > 1,
-                 getCatalogName() << " " << getName() << ": Aperture limiter table cannot be greater than a 1D table.",
+                 getFullName() << ": Aperture limiter table cannot be greater than a 1D table.",
                  InputError );
 
   arraySlice1d< real64 const > apertureValues = coords[0];
   localIndex const size = apertureValues.size();
 
   GEOS_THROW_IF( coords( 0, size-1 ) > 0.0 || coords( 0, size-1 ) < 0.0,
-                 getCatalogName() << " " << getName() << ": Invalid aperture limiter table. Last coordinate must be zero!",
+                 getFullName() << ": Invalid aperture limiter table. Last coordinate must be zero!",
                  InputError );
 
   GEOS_THROW_IF( apertureValues.size() < 2,
-                 getCatalogName() << " " << getName() << ": Invalid aperture limiter table. Must have more than two points specified",
+                 getFullName() << ": Invalid aperture limiter table. Must have more than two points specified",
                  InputError );
 
   localIndex const n = apertureValues.size()-1;
   real64 const slope = ( hydraulicApertureValues[n] - hydraulicApertureValues[n-1] ) / ( apertureValues[n] - apertureValues[n-1] );
 
   GEOS_THROW_IF( slope >= 1.0,
-                 getCatalogName() << " " << getName() << ": Invalid aperture table. The slope of the last two points >= 1 is invalid.",
+                 getFullName() << ": Invalid aperture table. The slope of the last two points >= 1 is invalid.",
                  InputError );
 }
 

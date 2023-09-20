@@ -187,6 +187,7 @@ private:
                          string const & materialNamesString,
                          CRSMatrixView< real64, globalIndex const > const & localMatrix,
                          arrayView1d< real64 > const & localRhs,
+                         real64 const dt,
                          PARAMS && ... params );
 
   /// Type of stabilization used in the simulation
@@ -219,6 +220,7 @@ real64 MultiphasePoromechanics::assemblyLaunch( MeshLevel & mesh,
                                                 string const & materialNamesString,
                                                 CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                 arrayView1d< real64 > const & localRhs,
+                                                real64 const dt,
                                                 PARAMS && ... params )
 {
   GEOS_MARK_FUNCTION;
@@ -234,6 +236,7 @@ real64 MultiphasePoromechanics::assemblyLaunch( MeshLevel & mesh,
                                 dofManager.rankOffset(),
                                 localMatrix,
                                 localRhs,
+                                dt,
                                 gravityVectorData,
                                 std::forward< PARAMS >( params )... );
 

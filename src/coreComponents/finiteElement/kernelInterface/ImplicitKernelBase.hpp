@@ -79,6 +79,7 @@ public:
    * @param rankOffset dof index offset of current rank
    * @param inputMatrix Reference to the Jacobian matrix.
    * @param inputRhs Reference to the RHS vector.
+   * @param inputDt The timestep for the physics update.
    * @copydoc geos::finiteElement::KernelBase::KernelBase
    */
   ImplicitKernelBase( NodeManager const & nodeManager,
@@ -91,14 +92,16 @@ public:
                       arrayView1d< globalIndex const > const & inputDofNumber,
                       globalIndex const rankOffset,
                       CRSMatrixView< real64, globalIndex const > const & inputMatrix,
-                      arrayView1d< real64 > const & inputRhs ):
+                      arrayView1d< real64 > const & inputRhs,
+                      real64 const inputDt ):
     Base( elementSubRegion,
           finiteElementSpace,
           inputConstitutiveType ),
     m_dofNumber( inputDofNumber ),
     m_dofRankOffset( rankOffset ),
     m_matrix( inputMatrix ),
-    m_rhs( inputRhs )
+    m_rhs( inputRhs ),
+    m_dt( inputDt )
   {
     FiniteElementBase::initialize< FE_TYPE >( nodeManager,
                                               edgeManager,
@@ -219,6 +222,9 @@ protected:
 
   /// Data structure containing mesh data used to setup the finite element
   typename FE_TYPE::template MeshData< SUBREGION_TYPE > m_meshData;
+
+  /// time increment
+  real64 const m_dt; ///TODO: Consider moving to finite element kernel base?
 
 };
 
