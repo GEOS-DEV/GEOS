@@ -38,7 +38,7 @@ We model the mechanical response of a viscoplastic slab subjected to a displacem
 .. _problemSketch1RelaxationTest:
 .. figure:: sketch.png
    :align: center
-   :width: 500
+   :width: 300
    :figclass: align-center
 
    Sketch of the problem 

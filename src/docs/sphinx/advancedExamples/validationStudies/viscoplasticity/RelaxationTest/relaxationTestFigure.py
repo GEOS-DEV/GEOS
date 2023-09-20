@@ -227,12 +227,12 @@ def main():
 
 
 	#Visualization parameters
-	fsize = 30
+	fsize = 20
 	msize = 12
 	lw = 6
 	malpha = 0.5
 	N1 = 3
-	fig, ax = plt.subplots(3,1,figsize=(15, 27))
+	fig, ax = plt.subplots(3,1,figsize=(10, 18))
 	cmap = plt.get_cmap("tab10")
 
 
