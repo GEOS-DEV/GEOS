@@ -1171,7 +1171,6 @@ void matrix_linear_system_least_square_solve_test()
   // Assign component values to the reference solution
   vecResult( 0 ) = -3.0;
   vecResult( 1 ) = 5.0;
-  // vecResult( 2 ) = 2.0;
 
   // Check
   for( INDEX_TYPE i = 0; i < N; ++i )
