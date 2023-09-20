@@ -738,7 +738,7 @@ public:
   {
     Base::computeSolutionCheck( ei, stack, [&] ()
     {
-        bool const localScaling = m_scalingType == NonlinearSolverParameters::ScalingType::Local;
+      bool const localScaling = m_scalingType == NonlinearSolverParameters::ScalingType::Local;
       // compute the change in temperature
       real64 const newTemp = m_temperature[ei] + (localScaling ? m_temperatureScalingFactor[ei] : m_scalingFactor * m_localSolution[stack.localRow + m_numComp + 1]);
       if( newTemp < minTemperature )
