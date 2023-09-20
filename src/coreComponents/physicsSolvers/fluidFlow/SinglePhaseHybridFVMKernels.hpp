@@ -96,7 +96,7 @@ struct PressureGradientKernel
            arraySlice1d< localIndex const > const & elemToFaces,
            arrayView1d< real64 const > const facePressure,
            real64 const pres,
-           arrayView2d< real64 > const & presGradient )
+           arrayView2d< real64 > const & presGradient ) const
   {
     stackArray2d< real64, (NUM_FACES + 1) * 4 > coordinates( NUM_FACES+1, 4 );
     stackArray1d< real64, NUM_FACES + 1 > pressures( NUM_FACES+1 );
