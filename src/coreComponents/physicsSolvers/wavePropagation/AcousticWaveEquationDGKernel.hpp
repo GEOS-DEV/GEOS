@@ -261,7 +261,7 @@ struct PressureComputation
         m_finiteElement.template computeStiffnessTerm( q, xLocal, [&] ( int i, int j, real64 val )
         {
           //Maybe reverse j and i
-          //Add stiffness to flow: flow[i] += val * p_n[k][j]
+          flow[i] += val * p_n[k][j];
         } );
 
         //Fluxes
@@ -269,15 +269,15 @@ struct PressureComputation
         {
           //Possible way:
           //Get the global number of face using elemeToFaces :
-          // localIndex face_glob = elemToFaces[k][f]
+          localIndex face_glob = elemToFaces[k][f];
           //Use faceToElemIndex map to know which element shared this global face: faceToElemIndex is a 2d array which knowing a face and a
           // index between 0 and 1 can give you the two
           // element which share the face and if you get -1 it means that the element will be in the boundary.
-          // Initialize the storage value for contributions: real32 fp = 0.0;
+          // Initialize the storage value for contributions: 
+          real32 fp = 0.0;
           for( localIndex m = 0; m < 2; ++m )
           {
-            //fix the value only for compilation
-            localIndex elem = 1;//faceToElemIndex[face_glob][m]
+            localIndex elem = faceToElemIndex[face_glob][m];
             //We start by the test on the boundaries to skip it directly:
             if( elem == -1 )
             {
@@ -287,16 +287,18 @@ struct PressureComputation
             {
               //Here we compute the fluxes part corresponding to the element itself (the (K,K) part seen in the latex document). We can both
               // compute the "classical" flux part + the penalization one:
-              //m_finiteElement.template computeFluxLocalTerm(q,xLocal,f [&] (int i, int j, real32 val)
               //PS: Not sure about how to include the normals so I'll just put "normals" (surely missing something with the gradient inside
               // the flux matrix)
               // Inside the matrix computation: we need the volumic Jacobian (its inverse) and the surface determinant. Due to the
               // fact that we take the inverse of the jacobian
               // we will have the ratio surface/volume.
-              //{
-              //fp += 0.5* val *  p_n[k][i] + gamma[k]* val * p_n[k][i];
-              //flow[j] += fp*normals
-              //} );
+
+              m_finiteElement.template computeKKFluxMatrix(q,xLocal,f [&] (int i, int j, real64 val)
+              {
+                fp += 0.5* val *  p_n[k][i] + gamma[k]* val * p_n[k][i];
+              //Needs normals at some point 
+              //flow[j] += fp*faceNormal
+              } );
             }
             else
             {
@@ -304,11 +306,12 @@ struct PressureComputation
               //It will be transparent here, but inside the mathematical computation we need to be careful on which degrees of freedom we
               // send back for the pressure as we get the contribution
               //of the neighbour so we need to get the correct dof (can be taken in account inside the math stuff)
-              //m_finiteElement.template computeFluxNeighTerm(q, xLocal,f [&] (int i, real32 val)
-              //{
-              //fp += 0.5* val * p_n[k][i] - gamma[k]* val * p_n[k][i];
-              //flow[j] += fp*normals
-              //} );
+              m_finiteElement.template computeKLFluxMatrix(q, xLocal,f [&] (int i, int j, real32 val)
+              {
+                fp += 0.5* val * p_n[k][i] - gamma[k]* val * p_n[elem][j];
+                //Again, needs normals at some point
+                //flow[j] += fp*normals
+              } );
             }
           }
 
