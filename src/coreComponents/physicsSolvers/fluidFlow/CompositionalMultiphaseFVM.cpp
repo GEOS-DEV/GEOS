@@ -450,6 +450,7 @@ bool CompositionalMultiphaseFVM::checkSystemSolution( DomainPartition const & do
 void CompositionalMultiphaseFVM::applySystemSolution( DofManager const & dofManager,
                                                       arrayView1d< real64 const > const & localSolution,
                                                       real64 const scalingFactor,
+                                                      real64 const GEOS_UNUSED_PARAM( dt ),
                                                       DomainPartition & domain )
 {
   GEOS_MARK_FUNCTION;

@@ -85,6 +85,7 @@ public:
   using Base::m_fluidPhaseCompFrac;
   using Base::m_dFluidPhaseCompFrac;
   using Base::m_dGlobalCompFraction_dGlobalCompDensity;
+  using Base::m_dt;
 
   /**
    * @brief Constructor
@@ -102,6 +103,7 @@ public:
                                   globalIndex const rankOffset,
                                   CRSMatrixView< real64, globalIndex const > const inputMatrix,
                                   arrayView1d< real64 > const inputRhs,
+                                  real64 const inputDt,
                                   real64 const (&gravityVector)[3],
                                   string const inputFlowDofKey,
                                   localIndex const numComponents,
@@ -331,6 +333,7 @@ using ThermalMultiphasePoromechanicsKernelFactory =
                                 globalIndex const,
                                 CRSMatrixView< real64, globalIndex const > const,
                                 arrayView1d< real64 > const,
+                                real64 const,
                                 real64 const (&)[3],
                                 string const,
                                 localIndex const,

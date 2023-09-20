@@ -215,6 +215,7 @@ void SinglePhasePoromechanicsConformingFractures::assembleCellBasedContributions
                                                                                                    SinglePhasePoromechanics::viewKeyStruct::porousMaterialNamesString(),
                                                                                                    localMatrix,
                                                                                                    localRhs,
+                                                                                                   dt,
                                                                                                    flowDofKey,
                                                                                                    FlowSolverBase::viewKeyStruct::fluidNamesString() );
     }
@@ -227,6 +228,7 @@ void SinglePhasePoromechanicsConformingFractures::assembleCellBasedContributions
                                                                                      SinglePhasePoromechanics::viewKeyStruct::porousMaterialNamesString(),
                                                                                      localMatrix,
                                                                                      localRhs,
+                                                                                     dt,
                                                                                      flowDofKey,
                                                                                      FlowSolverBase::viewKeyStruct::fluidNamesString() );
     }

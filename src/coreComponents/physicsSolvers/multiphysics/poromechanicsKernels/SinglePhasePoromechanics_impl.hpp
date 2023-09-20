@@ -47,6 +47,7 @@ SinglePhasePoromechanics( NodeManager const & nodeManager,
                           globalIndex const rankOffset,
                           CRSMatrixView< real64, globalIndex const > const inputMatrix,
                           arrayView1d< real64 > const inputRhs,
+                          real64 const inputDt,
                           real64 const (&gravityVector)[3],
                           string const inputFlowDofKey,
                           string const fluidModelKey ):
@@ -61,6 +62,7 @@ SinglePhasePoromechanics( NodeManager const & nodeManager,
         rankOffset,
         inputMatrix,
         inputRhs,
+        inputDt,
         gravityVector,
         inputFlowDofKey,
         fluidModelKey ),
@@ -85,13 +87,12 @@ smallStrainUpdate( localIndex const k,
   real64 dPorosity_dPressure = 0.0;
   real64 dPorosity_dTemperature = 0.0;
   real64 dSolidDensity_dPressure = 0.0;
-  real64 timeIncrement = 0.0;
 
   // Step 1: call the constitutive model to evaluate the total stress and compute porosity
   m_constitutiveUpdate.smallStrainUpdatePoromechanics( k, q,
                                                        m_pressure_n[k],
                                                        m_pressure[k],
-                                                       timeIncrement,
+                                                       m_dt,
                                                        stack.temperature,
                                                        stack.deltaTemperatureFromLastStep,
                                                        stack.strainIncrement,
