@@ -33,7 +33,7 @@ namespace isothermalCompositionalMultiphaseFVMKernelUtilities
 {
 
 // TODO make input parameter
-static constexpr real64 epsC1PPU = 1e-8;
+static constexpr real64 epsC1PPU = 5000;
 
 template< typename VIEWTYPE >
 using ElementViewConst = ElementRegionManager::ElementViewConst< VIEWTYPE >;
@@ -353,21 +353,39 @@ struct C1PPUPhaseFlux
                                                        phaseCapPressure, dPhaseCapPressure_dPhaseVolFrac, potGrad, dPresGrad_dP,
                                                        dPresGrad_dC, dGravHead_dP, dGravHead_dC );
 
+    // gravity head
+    real64 gravHead = 0.0;
+    for( integer i = 0; i < numFluxSupportPoints; i++ )
+    {
+      localIndex const er  = seri[i];
+      localIndex const esr = sesri[i];
+      localIndex const ei  = sei[i];
+
+      real64 const gravD = trans[i] * gravCoef[er][esr][ei];
+
+      gravHead += gravD;
+    }
+
     // *** upwinding ***
 
     // phase flux and derivatives
 
     // assuming TPFA in the code below
 
+    real64 Ttrans = fabs( trans[0] );
+    potGrad = potGrad / Ttrans;
+
     real64 const mobility_i = phaseMob[seri[0]][sesri[0]][sei[0]][ip];
     real64 const mobility_j = phaseMob[seri[1]][sesri[1]][sei[1]][ip];
 
     // compute phase flux, see Eqs. (66) and (69) from the reference above
-    real64 const smoEps = epsC1PPU;
+    real64 smoEps = epsC1PPU;
+    if( fabs( gravHead ) <= 1e-20 )
+      smoEps = 1000;
     real64 const tmpSqrt = sqrt( potGrad * potGrad + smoEps * smoEps );
     real64 const smoMax = 0.5 * (-potGrad + tmpSqrt);
 
-    phaseFlux = potGrad * mobility_i - smoMax * (mobility_j - mobility_i);
+    phaseFlux = Ttrans * ( potGrad * mobility_i - smoMax * (mobility_j - mobility_i) );
 
     // derivativess
 
@@ -376,7 +394,7 @@ struct C1PPUPhaseFlux
     // dP
     {
       real64 const dMob_dP = dPhaseMob[seri[0]][sesri[0]][sei[0]][ip][Deriv::dP];
-      dPhaseFlux_dP[0] += potGrad * dMob_dP;
+      dPhaseFlux_dP[0] += Ttrans * potGrad * dMob_dP;
     }
 
     // dC
@@ -385,7 +403,7 @@ struct C1PPUPhaseFlux
       dPhaseMobSub = dPhaseMob[seri[0]][sesri[0]][sei[0]][ip];
       for( integer jc = 0; jc < numComp; ++jc )
       {
-        dPhaseFlux_dC[0][jc] += potGrad * dPhaseMobSub[Deriv::dC + jc];
+        dPhaseFlux_dC[0][jc] += Ttrans * potGrad * dPhaseMobSub[Deriv::dC + jc];
       }
     }
 
@@ -408,7 +426,7 @@ struct C1PPUPhaseFlux
       dPhaseFlux_dP[ke] += -dSmoMax_dP * (mobility_j - mobility_i);
 
       real64 const dMob_dP = dPhaseMob[seri[ke]][sesri[ke]][sei[ke]][ip][Deriv::dP];
-      dPhaseFlux_dP[ke] += -smoMax * dMobDiff_sign[ke] * dMob_dP;
+      dPhaseFlux_dP[ke] += -Ttrans * smoMax * dMobDiff_sign[ke] * dMob_dP;
 
       // dC
 
@@ -425,9 +443,11 @@ struct C1PPUPhaseFlux
         // second part
         real64 const dSmoMax_dC = -dPotGrad_dC * dSmoMax_x;
         dPhaseFlux_dC[ke][jc] += -dSmoMax_dC * (mobility_j - mobility_i);
-        dPhaseFlux_dC[ke][jc] += -smoMax * dMobDiff_sign[ke] * dPhaseMobSub[Deriv::dC + jc];
+        dPhaseFlux_dC[ke][jc] += -Ttrans * smoMax * dMobDiff_sign[ke] * dPhaseMobSub[Deriv::dC + jc];
       }
     }
+
+    potGrad = potGrad * Ttrans;
 
     // choose upstream cell for composition upwinding
     k_up = (phaseFlux >= 0) ? 0 : 1;
