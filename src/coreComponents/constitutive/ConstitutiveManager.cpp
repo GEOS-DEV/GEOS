@@ -75,7 +75,7 @@ ConstitutiveManager::hangConstitutiveRelation( string const & constitutiveRelati
                  GEOS_FMT( "Error! The constitutive relation {} has already been registered on the subRegion {}. "
                            "Make sure that the same constitutive model is not listed as a material on a"
                            " region both as a stand-alone one and as part of a compound constitutive model.",
-                           constitutiveRelationInstanceName, parent->getName() ) );
+                           constitutiveRelationInstanceName, parent->getDataContext().toString() ) );
 
   ConstitutiveBase const & constitutiveRelation = getConstitutiveRelation( constitutiveRelationInstanceName );
 
@@ -98,7 +98,7 @@ ConstitutiveManager::hangConstitutiveRelation( string const & constitutiveRelati
                    GEOS_FMT( "Error! The constitutive relation {} has already been registered on the subRegion {}. "
                              "Make sure that the same constitutive model is not listed as a material on a"
                              " region both as a stand-alone one and as part of a compound constitutive model.",
-                             subRelationName, parent->getName() ) );
+                             subRelationName, parent->getDataContext().toString() ) );
 
     ConstitutiveBase const & subRelation = getConstitutiveRelation( subRelationName );
 

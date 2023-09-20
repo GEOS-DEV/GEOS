@@ -203,7 +203,7 @@ protected:
   arrayView2d< real64, nodes::ACCELERATION_USD > const m_acc;
 
   /// The time increment for this time integration step.
-  real64 const m_dt;
+  real64 const m_dt; ///TODO: Consider moving to finite element kernel base?
 
   /// The list of elements to process for the kernel launch.
   SortedArrayView< localIndex const > const m_elementList;
