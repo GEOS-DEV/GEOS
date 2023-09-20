@@ -418,7 +418,7 @@ real64 SolverBase::linearImplicitStep( real64 const & time_n,
   debugOutputSolution( 0.0, 0, 0, m_solution );
 
   // apply the system solution to the fields/variables
-  applySystemSolution( m_dofManager, m_solution.values(), 1.0, domain );
+  applySystemSolution( m_dofManager, m_solution.values(), 1.0, dt, domain );
 
   // update non-primary variables (constitutive models)
   updateState( domain );
@@ -470,7 +470,7 @@ bool SolverBase::lineSearch( real64 const & time_n,
       continue;
     }
 
-    applySystemSolution( dofManager, solution.values(), localScaleFactor, domain );
+    applySystemSolution( dofManager, solution.values(), localScaleFactor, dt, domain );
 
     // update non-primary variables (constitutive models)
     updateState( domain );
@@ -566,7 +566,7 @@ bool SolverBase::lineSearchWithParabolicInterpolation( real64 const & time_n,
       continue;
     }
 
-    applySystemSolution( dofManager, solution.values(), deltaLocalScaleFactor, domain );
+    applySystemSolution( dofManager, solution.values(), deltaLocalScaleFactor, dt, domain );
 
     updateState( domain );
 
@@ -950,7 +950,7 @@ bool SolverBase::solveNonlinearSystem( real64 const & time_n,
     }
 
     // apply the system solution to the fields/variables
-    applySystemSolution( m_dofManager, m_solution.values(), scaleFactor, domain );
+    applySystemSolution( m_dofManager, m_solution.values(), scaleFactor, stepDt, domain );
 
     // update non-primary variables (constitutive models)
     updateState( domain );
@@ -1180,6 +1180,7 @@ real64 SolverBase::scalingForSystemSolution( DomainPartition const & GEOS_UNUSED
 void SolverBase::applySystemSolution( DofManager const & GEOS_UNUSED_PARAM( dofManager ),
                                       arrayView1d< real64 const > const & GEOS_UNUSED_PARAM( localSolution ),
                                       real64 const GEOS_UNUSED_PARAM( scalingFactor ),
+                                      real64 const GEOS_UNUSED_PARAM( dt ),
                                       DomainPartition & GEOS_UNUSED_PARAM( domain ) )
 {
   GEOS_ERROR( "SolverBase::applySystemSolution called!. Should be overridden." );

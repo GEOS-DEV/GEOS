@@ -24,6 +24,7 @@
 #include "DelftEgg.hpp"
 #include "DruckerPrager.hpp"
 #include "DruckerPragerExtended.hpp"
+#include "DuvautLionsSolid.hpp"
 #include "Damage.hpp"
 #include "DamageSpectral.hpp"
 #include "DamageVolDev.hpp"
