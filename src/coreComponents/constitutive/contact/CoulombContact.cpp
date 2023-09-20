@@ -54,7 +54,7 @@ CoulombContact::~CoulombContact()
 void CoulombContact::postProcessInput()
 {
   GEOS_THROW_IF( m_frictionCoefficient < 0.0,
-                 getCatalogName() << " " << getName() << ": The provided friction coefficient is less than zero. Value: " << m_frictionCoefficient,
+                 getFullName() << ": The provided friction coefficient is less than zero. Value: " << m_frictionCoefficient,
                  InputError );
 
 }

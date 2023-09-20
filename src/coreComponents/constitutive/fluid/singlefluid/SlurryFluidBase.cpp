@@ -88,13 +88,13 @@ void SlurryFluidBase::postProcessInput()
   localIndex const NC = numFluidComponents();
 
   GEOS_ERROR_IF( m_defaultComponentDensity.size() != NC,
-                 "The number of default density values is not the same as the component number" );
+                 getFullName() << ": The number of default density values is not the same as the component number" );
 
   GEOS_ERROR_IF( m_defaultComponentCompressibility.size() != NC,
-                 "The number of default compressibility values is not the same as the component number" );
+                 getFullName() << ": The number of default compressibility values is not the same as the component number" );
 
   GEOS_ERROR_IF( m_defaultComponentViscosity.size() != NC,
-                 "The number of default viscosity values is not the same as the component number" );
+                 getFullName() << ": The number of default viscosity values is not the same as the component number" );
 
 }
 
