@@ -235,7 +235,7 @@ void WaveSolverBase::postProcessInput()
     counter++;
   } );
   GEOS_THROW_IF( counter > 1,
-                 "One single PML field specification is allowed",
+                 getDataContext() << ": One single PML field specification is allowed",
                  InputError );
 
   m_usePML = counter;
@@ -257,21 +257,25 @@ void WaveSolverBase::postProcessInput()
     GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "Linear DAS formulation: {}", m_useDAS == 1 ? "strain integration" : "displacement difference" ) );
 
     GEOS_ERROR_IF( m_linearDASGeometry.size( 1 ) != 3,
-                   "Invalid number of geometry parameters for the linear DAS fiber. Three parameters are required: dip, azimuth, gauge length" );
+                   getWrapperDataContext( viewKeyStruct::linearDASGeometryString() ) <<
+                   ": Invalid number of geometry parameters for the linear DAS fiber. Three parameters are required: dip, azimuth, gauge length" );
 
     GEOS_ERROR_IF( m_linearDASGeometry.size( 0 ) != m_receiverCoordinates.size( 0 ),
-                   "Invalid number of geometry parameters instances for the linear DAS fiber. It should match the number of receivers." );
+                   getWrapperDataContext( viewKeyStruct::linearDASGeometryString() ) <<
+                   ": Invalid number of geometry parameters instances for the linear DAS fiber. It should match the number of receivers." );
 
     /// initialize DAS geometry by adding receiver locations along the DAS, as needed
     initializeDAS();
   }
 
   GEOS_THROW_IF( m_sourceCoordinates.size( 1 ) != 3,
-                 "Invalid number of physical coordinates for the sources",
+                 getWrapperDataContext( viewKeyStruct::sourceCoordinatesString() ) <<
+                 ": Invalid number of physical coordinates for the sources",
                  InputError );
 
   GEOS_THROW_IF( m_receiverCoordinates.size( 1 ) != 3,
-                 "Invalid number of physical coordinates for the receivers",
+                 getWrapperDataContext( viewKeyStruct::receiverCoordinatesString() ) <<
+                 ": Invalid number of physical coordinates for the receivers",
                  InputError );
 
   EventManager const & event = this->getGroupByPath< EventManager >( "/Problem/Events" );
@@ -287,7 +291,7 @@ void WaveSolverBase::postProcessInput()
     }
   }
 
-  GEOS_THROW_IF( dt < epsilonLoc*maxTime, "Value for dt: " << dt <<" is smaller than local threshold: " << epsilonLoc, std::runtime_error );
+  GEOS_THROW_IF( dt < epsilonLoc*maxTime, getDataContext() << ": Value for dt: " << dt <<" is smaller than local threshold: " << epsilonLoc, std::runtime_error );
 
   if( m_dtSeismoTrace > 0 )
   {
@@ -377,7 +381,7 @@ localIndex WaveSolverBase::getNumNodesPerElem()
   FiniteElementDiscretization const * const
   feDiscretization = feDiscretizationManager.getGroupPointer< FiniteElementDiscretization >( m_discretizationName );
   GEOS_THROW_IF( feDiscretization == nullptr,
-                 getName() << ": FE discretization not found: " << m_discretizationName,
+                 getDataContext() << ": FE discretization not found: " << m_discretizationName,
                  InputError );
 
   localIndex numNodesPerElem = 0;

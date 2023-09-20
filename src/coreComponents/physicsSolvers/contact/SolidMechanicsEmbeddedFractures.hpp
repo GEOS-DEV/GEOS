@@ -84,6 +84,7 @@ public:
   applySystemSolution( DofManager const & dofManager,
                        arrayView1d< real64 const > const & localSolution,
                        real64 const scalingFactor,
+                       real64 const dt,
                        DomainPartition & domain ) override;
 
   virtual void resetStateToBeginningOfStep( DomainPartition & domain ) override final;
@@ -120,6 +121,7 @@ protected:
 private:
 
   void updateJump( DofManager const & dofManager,
+                   real64 const dt,
                    DomainPartition & domain );
 
   /// decide whether to use static condensation or not

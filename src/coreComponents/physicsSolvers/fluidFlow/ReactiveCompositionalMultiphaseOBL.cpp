@@ -189,10 +189,12 @@ void ReactiveCompositionalMultiphaseOBL::postProcessInput()
   SolverBase::postProcessInput();
 
   GEOS_THROW_IF_GT_MSG( m_maxCompFracChange, 1.0,
-                        GEOS_FMT( "The maximum absolute change in component fraction is set to {}, while it must not be greater than 1.0", m_maxCompFracChange ),
+                        GEOS_FMT( "{}: The maximum absolute change in component fraction is set to {}, while it must not be greater than 1.0",
+                                  getWrapperDataContext( viewKeyStruct::maxCompFracChangeString() ), m_maxCompFracChange ),
                         InputError );
   GEOS_THROW_IF_LT_MSG( m_maxCompFracChange, 0.0,
-                        GEOS_FMT( "The maximum absolute change in component fraction is set to {}, while it must not be lesser than 0.0", m_maxCompFracChange ),
+                        GEOS_FMT( "{}: The maximum absolute change in component fraction is set to {}, while it must not be lesser than 0.0",
+                                  getWrapperDataContext( viewKeyStruct::maxCompFracChangeString() ), m_maxCompFracChange ),
                         InputError );
 
   m_OBLOperatorsTable = makeOBLOperatorsTable( m_OBLOperatorsTableFile, FunctionManager::getInstance());
@@ -204,11 +206,19 @@ void ReactiveCompositionalMultiphaseOBL::postProcessInput()
   m_numOBLOperators = COMPUTE_NUM_OPS( m_numPhases, m_numComponents, m_enableEnergyBalance );
 
   GEOS_THROW_IF_NE_MSG( m_numDofPerCell, m_OBLOperatorsTable->numDims(),
-                        GEOS_FMT( "The number of degrees of freedom per element used in solver - {} - and in operator table - {} - should match", m_numDofPerCell, m_OBLOperatorsTable->numDims()),
+                        GEOS_FMT( "The number of degrees of freedom per cell used in the solver (at {}) has a value of {}, "
+                                  "whereas it as a value of {} in the operator table (at {}).",
+                                  getWrapperDataContext( viewKeyStruct::elemDofFieldString() ),
+                                  m_numDofPerCell, m_OBLOperatorsTable->numDims(),
+                                  m_OBLOperatorsTableFile ),
                         InputError );
 
   GEOS_THROW_IF_NE_MSG( m_numOBLOperators, m_OBLOperatorsTable->numOps(),
-                        GEOS_FMT( "The number of operators per element used in solver - {} - and in operator table - {} - should match", m_numOBLOperators, m_OBLOperatorsTable->numOps()),
+                        GEOS_FMT( "The number of operators per cell used in the solver (at {}) has a value of {}, "
+                                  "whereas it as a value of {} in the operator table (at {}).",
+                                  getWrapperDataContext( viewKeyStruct::elemDofFieldString() ),
+                                  m_numDofPerCell, m_OBLOperatorsTable->numDims(),
+                                  m_OBLOperatorsTableFile ),
                         InputError );
 
 }
@@ -484,8 +494,10 @@ bool ReactiveCompositionalMultiphaseOBL::checkSystemSolution( DomainPartition co
 void ReactiveCompositionalMultiphaseOBL::applySystemSolution( DofManager const & dofManager,
                                                               arrayView1d< real64 const > const & localSolution,
                                                               real64 const scalingFactor,
+                                                              real64 const dt,
                                                               DomainPartition & domain )
 {
+  GEOS_UNUSED_VAR( dt );
   GEOS_MARK_FUNCTION;
 
   DofManager::CompMask pressureMask( m_numDofPerCell, 0, 1 );
@@ -1042,7 +1054,7 @@ void ReactiveCompositionalMultiphaseOBL::applyDirichletBC( real64 const time,
   if( m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
   {
     bool const bcConsistent = validateDirichletBC( domain, time + dt );
-    GEOS_ERROR_IF( !bcConsistent, GEOS_FMT( "CompositionalMultiphaseBase {}: inconsistent boundary conditions", getName() ) );
+    GEOS_ERROR_IF( !bcConsistent, GEOS_FMT( "CompositionalMultiphaseBase {}: inconsistent boundary conditions", getDataContext() ) );
   }
 
   FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
