@@ -226,7 +226,6 @@ private:
                                   bMixtureCoefficient,
                                   compressibilityFactor );
 
-
     constitutive::CompositionalProperties::computeMolarDensity( numComps,
                                                                 pressure,
                                                                 temperature,
@@ -350,6 +349,7 @@ private:
                            dMolarDensity_dt,
                            dMolarDensity_dz );
   }
+
   real64 computeMassDensity( real64 const pressure, real64 const temperature,
                              arrayView1d< real64 const > const & composition ) const
   {
