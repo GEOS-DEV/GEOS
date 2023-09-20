@@ -204,7 +204,7 @@ public:
     // inputs
     static constexpr char const * inputTemperatureString() { return "temperature"; }
     static constexpr char const * thermalConductivityNamesString() { return "thermalConductivityNames"; }
-    
+
   };
 
   /**
