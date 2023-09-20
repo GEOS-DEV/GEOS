@@ -143,7 +143,7 @@ void LaplaceFEM::setupSystem( DomainPartition & domain,
  */
 //START_SPHINX_INCLUDE_ASSEMBLY
 void LaplaceFEM::assembleSystem( real64 const GEOS_UNUSED_PARAM( time_n ),
-                                 real64 const GEOS_UNUSED_PARAM( dt ),
+                                 real64 const dt,
                                  DomainPartition & domain,
                                  DofManager const & dofManager,
                                  CRSMatrixView< real64, globalIndex const > const & localMatrix,
@@ -158,7 +158,7 @@ void LaplaceFEM::assembleSystem( real64 const GEOS_UNUSED_PARAM( time_n ),
     arrayView1d< globalIndex const > const &
     dofIndex =  nodeManager.getReference< array1d< globalIndex > >( dofKey );
 
-    LaplaceFEMKernelFactory kernelFactory( dofIndex, dofManager.rankOffset(), localMatrix, localRhs, m_fieldName );
+    LaplaceFEMKernelFactory kernelFactory( dofIndex, dofManager.rankOffset(), localMatrix, localRhs, dt, m_fieldName );
 
     string const dummyString = "dummy";
     finiteElement::
