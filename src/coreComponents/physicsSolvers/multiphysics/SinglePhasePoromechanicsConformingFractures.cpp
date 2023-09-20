@@ -215,6 +215,7 @@ void SinglePhasePoromechanicsConformingFractures::assembleCellBasedContributions
                                                                                                    SinglePhasePoromechanics::viewKeyStruct::porousMaterialNamesString(),
                                                                                                    localMatrix,
                                                                                                    localRhs,
+                                                                                                   dt,
                                                                                                    flowDofKey,
                                                                                                    FlowSolverBase::viewKeyStruct::fluidNamesString() );
     }
@@ -227,6 +228,7 @@ void SinglePhasePoromechanicsConformingFractures::assembleCellBasedContributions
                                                                                      SinglePhasePoromechanics::viewKeyStruct::porousMaterialNamesString(),
                                                                                      localMatrix,
                                                                                      localRhs,
+                                                                                     dt,
                                                                                      flowDofKey,
                                                                                      FlowSolverBase::viewKeyStruct::fluidNamesString() );
     }
@@ -418,10 +420,12 @@ void SinglePhasePoromechanicsConformingFractures::
     FaceElementSubRegion const & fractureSubRegion =
       fractureRegion.getUniqueSubRegion< FaceElementSubRegion >();
 
-    GEOS_ERROR_IF( !fractureSubRegion.hasWrapper( flow::pressure::key() ), "The fracture subregion must contain pressure field." );
+    GEOS_ERROR_IF( !fractureSubRegion.hasWrapper( flow::pressure::key() ),
+                   getDataContext() << ": The fracture subregion must contain pressure field." );
 
     arrayView2d< localIndex const > const faceMap = fractureSubRegion.faceList();
-    GEOS_ERROR_IF( faceMap.size( 1 ) != 2, "A fracture face has to be shared by two cells." );
+    GEOS_ERROR_IF( faceMap.size( 1 ) != 2,
+                   getDataContext() << ": A fracture face has to be shared by two cells." );
 
     arrayView1d< globalIndex const > const &
     presDofNumber = fractureSubRegion.getReference< globalIndex_array >( presDofKey );

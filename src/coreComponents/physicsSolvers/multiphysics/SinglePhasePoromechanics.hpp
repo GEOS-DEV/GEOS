@@ -169,6 +169,7 @@ private:
                          string const & materialNamesString,
                          CRSMatrixView< real64, globalIndex const > const & localMatrix,
                          arrayView1d< real64 > const & localRhs,
+                         real64 const dt,
                          PARAMS && ... params );
 
   /// Flag to indicate that the solver is going to perform stress initialization
@@ -184,6 +185,7 @@ real64 SinglePhasePoromechanics::assemblyLaunch( MeshLevel & mesh,
                                                  string const & materialNamesString,
                                                  CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                  arrayView1d< real64 > const & localRhs,
+                                                 real64 const dt,
                                                  PARAMS && ... params )
 {
   GEOS_MARK_FUNCTION;
@@ -199,6 +201,7 @@ real64 SinglePhasePoromechanics::assemblyLaunch( MeshLevel & mesh,
                                 dofManager.rankOffset(),
                                 localMatrix,
                                 localRhs,
+                                dt,
                                 gravityVectorData,
                                 std::forward< PARAMS >( params )... );
 
