@@ -643,7 +643,7 @@ void SinglePhaseHybridFVM::updatePressureGradient( DomainPartition & domain )
     mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                           auto & subRegion )
     {
-      PressureGradientKernel::launch< parallelDevicePolicy<> >( subRegion,
+      PressureGradientKernel::launch< parallelHostPolicy >( subRegion,
                                                                 faceManager );
     } );
   } );
