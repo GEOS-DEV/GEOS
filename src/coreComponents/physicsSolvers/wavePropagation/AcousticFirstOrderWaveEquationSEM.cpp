@@ -191,8 +191,6 @@ void AcousticFirstOrderWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLev
   receiverConstants.setValues< EXEC_POLICY >( -1 );
   receiverIsLocal.zero();
 
-  real32 const timeSourceFrequency = this->m_timeSourceFrequency;
-  localIndex const rickerOrder = this->m_rickerOrder;
   arrayView2d< real32 > const sourceValue = m_sourceValue.toView();
   real64 dt = 0;
   EventManager const & event = this->getGroupByPath< EventManager >( "/Problem/Events" );
@@ -254,8 +252,9 @@ void AcousticFirstOrderWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLev
         receiverRegion,
         sourceValue,
         dt,
-        timeSourceFrequency,
-        rickerOrder );
+        this->m_timeSourceFrequency,
+        this->m_timeSourceDelay,
+        this->m_rickerOrder );
     } );
   } );
 
@@ -559,7 +558,7 @@ real64 AcousticFirstOrderWaveEquationSEM::explicitStepInternal( real64 const & t
   return dt;
 }
 
-void AcousticFirstOrderWaveEquationSEM::cleanup( real64 const time_n, integer const cycleNumber, integer const, real64 const, DomainPartition & domain )
+void AcousticFirstOrderWaveEquationSEM::cleanup( real64 const time_n, integer const, integer const, real64 const, DomainPartition & domain )
 {
   // compute the remaining seismic traces, if needed
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,

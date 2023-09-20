@@ -241,8 +241,6 @@ void ElasticFirstOrderWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLeve
   receiverConstants.setValues< serialPolicy >( -1 );
   receiverIsLocal.zero();
 
-  real32 const timeSourceFrequency = this->m_timeSourceFrequency;
-  localIndex const rickerOrder = this->m_rickerOrder;
   arrayView2d< real32 > const sourceValue = m_sourceValue.toView();
   real64 dt = 0;
   EventManager const & event = this->getGroupByPath< EventManager >( "/Problem/Events" );
@@ -306,8 +304,9 @@ void ElasticFirstOrderWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLeve
         receiverRegion,
         sourceValue,
         dt,
-        timeSourceFrequency,
-        rickerOrder );
+        this->m_timeSourceFrequency,
+        this->m_timeSourceDelay,
+        this->m_rickerOrder );
     } );
   } );
 }

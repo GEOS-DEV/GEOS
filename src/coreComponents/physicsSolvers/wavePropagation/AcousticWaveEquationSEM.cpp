@@ -145,8 +145,6 @@ void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh,
   receiverConstants.setValues< EXEC_POLICY >( -1 );
   receiverIsLocal.zero();
 
-  real32 const timeSourceFrequency = this->m_timeSourceFrequency;
-  localIndex const rickerOrder = this->m_rickerOrder;
   arrayView2d< real32 > const sourceValue = m_sourceValue.toView();
   real64 dt = 0;
   EventManager const & event = this->getGroupByPath< EventManager >( "/Problem/Events" );
@@ -205,8 +203,9 @@ void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh,
           receiverConstants,
           sourceValue,
           dt,
-          timeSourceFrequency,
-          rickerOrder );
+          this->m_timeSourceFrequency,
+          this->m_timeSourceDelay,
+          this->m_rickerOrder );
       }
     } );
   } );
@@ -1067,7 +1066,7 @@ void AcousticWaveEquationSEM::computeUnknowns( real64 const & time_n,
 
 void AcousticWaveEquationSEM::synchronizeUnknowns( real64 const & time_n,
                                                    real64 const & dt,
-                                                   integer const cycleNumber,
+                                                   integer const,
                                                    DomainPartition & domain,
                                                    MeshLevel & mesh,
                                                    arrayView1d< string const > const & )

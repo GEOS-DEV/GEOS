@@ -85,6 +85,7 @@ public:
     static constexpr char const * sourceValueString() { return "sourceValue"; }
 
     static constexpr char const * timeSourceFrequencyString() { return "timeSourceFrequency"; }
+    static constexpr char const * timeSourceDelayString() { return "timeSourceDelay"; }
 
     static constexpr char const * receiverCoordinatesString() { return "receiverCoordinates"; }
 
@@ -212,6 +213,9 @@ protected:
 
   /// Central frequency for the Ricker time source
   real32 m_timeSourceFrequency;
+
+  /// Source time delay (1 / f0 by default)
+  real32 m_timeSourceDelay;
 
   /// Coordinates of the receivers in the mesh
   array2d< real64 > m_receiverCoordinates;
