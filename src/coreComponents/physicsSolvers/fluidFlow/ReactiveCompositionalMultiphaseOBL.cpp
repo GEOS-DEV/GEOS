@@ -494,8 +494,10 @@ bool ReactiveCompositionalMultiphaseOBL::checkSystemSolution( DomainPartition co
 void ReactiveCompositionalMultiphaseOBL::applySystemSolution( DofManager const & dofManager,
                                                               arrayView1d< real64 const > const & localSolution,
                                                               real64 const scalingFactor,
+                                                              real64 const dt,
                                                               DomainPartition & domain )
 {
+  GEOS_UNUSED_VAR( dt );
   GEOS_MARK_FUNCTION;
 
   DofManager::CompMask pressureMask( m_numDofPerCell, 0, 1 );

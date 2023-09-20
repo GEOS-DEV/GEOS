@@ -570,8 +570,10 @@ real64 SinglePhaseHybridFVM::calculateResidualNorm( real64 const & GEOS_UNUSED_P
 void SinglePhaseHybridFVM::applySystemSolution( DofManager const & dofManager,
                                                 arrayView1d< real64 const > const & localSolution,
                                                 real64 const scalingFactor,
+                                                real64 const dt,
                                                 DomainPartition & domain )
 {
+  GEOS_UNUSED_VAR( dt );
   // here we apply the cell-centered update in the derived class
   // to avoid duplicating a synchronization point
 

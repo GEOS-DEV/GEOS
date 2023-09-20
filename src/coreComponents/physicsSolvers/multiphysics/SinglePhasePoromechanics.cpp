@@ -282,6 +282,7 @@ void SinglePhasePoromechanics::assembleElementBasedTerms( real64 const time_n,
                                                                                                      viewKeyStruct::porousMaterialNamesString(),
                                                                                                      localMatrix,
                                                                                                      localRhs,
+                                                                                                     dt,
                                                                                                      flowDofKey,
                                                                                                      FlowSolverBase::viewKeyStruct::fluidNamesString() );
     }
@@ -295,6 +296,7 @@ void SinglePhasePoromechanics::assembleElementBasedTerms( real64 const time_n,
                                                                                        viewKeyStruct::porousMaterialNamesString(),
                                                                                        localMatrix,
                                                                                        localRhs,
+                                                                                       dt,
                                                                                        flowDofKey,
                                                                                        FlowSolverBase::viewKeyStruct::fluidNamesString() );
     }
@@ -331,7 +333,8 @@ void SinglePhasePoromechanics::assembleElementBasedTerms( real64 const time_n,
                                                                                 filteredRegionNames.toViewConst(),
                                                                                 SolidMechanicsLagrangianFEM::viewKeyStruct::solidMaterialNamesString(),
                                                                                 localMatrix,
-                                                                                localRhs );
+                                                                                localRhs,
+                                                                                dt );
   } );
 
   solidMechanicsSolver()->getMaxForce() = LvArray::math::max( mechanicsMaxForce, poromechanicsMaxForce );

@@ -1016,23 +1016,25 @@ void SolidMechanicsLagrangianFEM::assembleSystem( real64 const GEOS_UNUSED_PARAM
 
   if( m_isFixedStressPoromechanicsUpdate )
   {
-    GEOS_UNUSED_VAR( dt );
+    //GEOS_UNUSED_VAR( dt );
     assemblyLaunch< constitutive::PorousSolid< ElasticIsotropic >, // TODO: change once there is a cmake solution
                     solidMechanicsLagrangianFEMKernels::FixedStressThermoPoromechanicsFactory >( domain,
                                                                                                  dofManager,
                                                                                                  localMatrix,
-                                                                                                 localRhs );
+                                                                                                 localRhs,
+                                                                                                 dt );
   }
   else
   {
     if( m_timeIntegrationOption == TimeIntegrationOption::QuasiStatic )
     {
-      GEOS_UNUSED_VAR( dt );
+      //GEOS_UNUSED_VAR( dt );
       assemblyLaunch< constitutive::SolidBase,
                       solidMechanicsLagrangianFEMKernels::QuasiStaticFactory >( domain,
                                                                                 dofManager,
                                                                                 localMatrix,
-                                                                                localRhs );
+                                                                                localRhs,
+                                                                                dt );
     }
     else if( m_timeIntegrationOption == TimeIntegrationOption::ImplicitDynamic )
     {
@@ -1041,11 +1043,11 @@ void SolidMechanicsLagrangianFEM::assembleSystem( real64 const GEOS_UNUSED_PARAM
                                                                                     dofManager,
                                                                                     localMatrix,
                                                                                     localRhs,
+                                                                                    dt,
                                                                                     m_newmarkGamma,
                                                                                     m_newmarkBeta,
                                                                                     m_massDamping,
-                                                                                    m_stiffnessDamping,
-                                                                                    dt );
+                                                                                    m_stiffnessDamping );
     }
   }
 }
@@ -1197,8 +1199,10 @@ void
 SolidMechanicsLagrangianFEM::applySystemSolution( DofManager const & dofManager,
                                                   arrayView1d< real64 const > const & localSolution,
                                                   real64 const scalingFactor,
+                                                  real64 const dt,
                                                   DomainPartition & domain )
 {
+  GEOS_UNUSED_VAR( dt );
   GEOS_MARK_FUNCTION;
   dofManager.addVectorToField( localSolution,
                                solidMechanics::totalDisplacement::key(),

@@ -1678,13 +1678,14 @@ void LagrangianContactSolver::assembleStabilization( MeshLevel const & mesh,
 void LagrangianContactSolver::applySystemSolution( DofManager const & dofManager,
                                                    arrayView1d< real64 const > const & localSolution,
                                                    real64 const scalingFactor,
+                                                   real64 const dt,
                                                    DomainPartition & domain )
 {
   GEOS_MARK_FUNCTION;
 
   if( m_setupSolidSolverDofs )
   {
-    m_solidSolver->applySystemSolution( dofManager, localSolution, scalingFactor, domain );
+    m_solidSolver->applySystemSolution( dofManager, localSolution, scalingFactor, dt, domain );
   }
 
   dofManager.addVectorToField( localSolution,
