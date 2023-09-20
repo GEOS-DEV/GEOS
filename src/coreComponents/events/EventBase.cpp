@@ -144,7 +144,15 @@ void EventBase::getTargetReferences()
 {
   if( !m_eventTarget.empty())
   {
-    m_target = &this->getGroupByPath< ExecutableGroup >( m_eventTarget );
+    try
+    {
+      m_target = &this->getGroupByPath< ExecutableGroup >( m_eventTarget );
+    }
+    catch( std::exception const & e )
+    {
+      throw InputError( e, GEOS_FMT( "Error while reading {}:\n",
+                                     getWrapperDataContext( viewKeyStruct::eventTargetString() ) ) );
+    }
   }
 
   this->forSubGroups< EventBase >( []( EventBase & subEvent )

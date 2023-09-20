@@ -172,8 +172,10 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
       {
         missingSetNames.emplace_back( mapEntry.first );
       }
-      GEOS_THROW( GEOS_FMT( "\n{}: there is/are no set(s) named `{}` under the {} `{}`, check the XML input\n",
-                            fs.getName(), fmt::join( missingSetNames, ", " ), FieldSpecificationBase::viewKeyStruct::objectPathString(), fs.getObjectPath() ),
+      GEOS_THROW( GEOS_FMT( "\n{}: there is/are no set(s) named `{}` under the {} `{}`.\n",
+                            fs.getWrapperDataContext( FieldSpecificationBase::viewKeyStruct::objectPathString() ),
+                            fmt::join( missingSetNames, ", " ),
+                            FieldSpecificationBase::viewKeyStruct::objectPathString(), fs.getObjectPath() ),
                   InputError );
     }
 
@@ -182,20 +184,20 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
     for( auto const & mapEntry : isTargetSetEmpty )
     {
       GEOS_LOG_RANK_0_IF( ( mapEntry.second == 1 ), // target set is empty
-                          GEOS_FMT( "\nWarning!"
-                                    "\n{}: this FieldSpecification targets (an) empty set(s)"
+                          GEOS_FMT( "\nWarning!\n{}: this FieldSpecification targets (an) empty set(s)"
                                     "\nIf the simulation does not involve the SurfaceGenerator, check the content of the set `{}` in `{}`. \n",
-                                    fs.getName(), mapEntry.first, fs.getObjectPath() ) );
+                                    fs.getDataContext(), mapEntry.first, fs.getObjectPath() ) );
     }
 
     if( isFieldNameFound == 0 )
     {
       char const fieldNameNotFoundMessage[] =
-        "\n{}: there is no {} named `{}` under the {} `{}`, check the XML input\n";
+        "\n{}: there is no {} named `{}` under the {} `{}`.\n";
       string const errorMsg =
         GEOS_FMT( fieldNameNotFoundMessage,
-                  fs.getName(), FieldSpecificationBase::viewKeyStruct::fieldNameString(), fs.getFieldName(),
-                  FieldSpecificationBase::viewKeyStruct::objectPathString(), fs.getObjectPath() );
+                  fs.getWrapperDataContext( FieldSpecificationBase::viewKeyStruct::fieldNameString() ),
+                  FieldSpecificationBase::viewKeyStruct::fieldNameString(),
+                  fs.getFieldName(), FieldSpecificationBase::viewKeyStruct::objectPathString(), fs.getObjectPath() );
       if( areAllSetsEmpty )
       {
         GEOS_LOG_RANK_0( errorMsg );
