@@ -96,7 +96,7 @@ struct PressureGradientKernel
            arraySlice1d< localIndex const > const & elemToFaces,
            arrayView1d< real64 const > const facePressure,
            real64 const pres,
-           arrayView2d< real64 > const & presGradient ) const
+           arrayView2d< real64 > const & presGradient )
   {
     stackArray2d< real64, (NUM_FACES + 1) * 4 > coordinates( NUM_FACES+1, 4 );
     stackArray1d< real64, NUM_FACES + 1 > pressures( NUM_FACES+1 );
@@ -160,13 +160,13 @@ struct PressureGradientKernel
 
       forAll< POLICY >( subRegion.size(), [=] ( localIndex const ei )
       {
-        compute< NUM_FACES >( ei,
-                              faceCenter,
-                              elemCenter[ei],
-                              elemsToFaces[ei],
-                              facePres,
-                              pres[ei],
-                              presGradient );
+        PressureGradientKernel::compute< NUM_FACES >( ei,
+                                                      faceCenter,
+                                                      elemCenter[ei],
+                                                      elemsToFaces[ei],
+                                                      facePres,
+                                                      pres[ei],
+                                                      presGradient );
       } );
     } );
 
