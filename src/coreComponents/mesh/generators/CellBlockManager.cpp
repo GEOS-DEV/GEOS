@@ -267,7 +267,7 @@ struct FaceBuilder
 
 /**
  * @brief Fills the face to nodes map and face to element maps
- * @param [in] lowestNodeToFaces and array of size numNodes of arrays of NodesAndElementOfFace associated with each node.
+ * @param [in] lowestNodeToFaces an array of size numNodes of arrays of NodesAndElementOfFace associated with each node.
  * @param [in] uniqueFaceOffsets an array containing the unique ID of the first face associated with each node.
  * @param [inout] faceToCells the face to element map.
  * @param [inout] faceToNodes the face to node map.
@@ -338,7 +338,7 @@ void populateFaceMaps( Group const & cellBlocks,
 
 /**
  * @brief Resize the face maps
- * @param [in] lowestNodeToFaces and array of size numNodes of arrays of NodesAndElementOfFace associated with each node.
+ * @param [in] lowestNodeToFaces an array of size numNodes of arrays of NodesAndElementOfFace associated with each node.
  * @param [in] uniqueFaceOffsets an containing the unique face IDs for each node in lowestNodeToFaces.
  * @param [out] faceToNodeMap the map from faces to nodes. This function resizes the array appropriately.
  * @param [out] faceToCellMap the map from faces to elements. This function resizes the array appropriately.
