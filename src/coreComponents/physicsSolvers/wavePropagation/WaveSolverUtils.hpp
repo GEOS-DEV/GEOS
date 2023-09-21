@@ -69,12 +69,9 @@ struct WaveSolverUtils
     return pulse;
   }
 
-  static void writeSeismoTrace( string const & name,
-                                localIndex const nReceivers,
-                                arrayView1d< localIndex const > const receiverIsLocal,
-                                localIndex const nsamplesSeismoTrace,
-                                arrayView2d< real32 const > const varAtReceivers,
-                                std::ios_base::openmode mode )
+  static void initSeismoTrace( string const & name,
+                               localIndex const nReceivers,
+                               arrayView1d< localIndex const > const receiverIsLocal )
   {
     string const outputDir = OutputBase::getOutputDirectory();
     forAll< serialPolicy >( nReceivers, [=] ( localIndex const ircv )
@@ -82,18 +79,37 @@ struct WaveSolverUtils
       if( receiverIsLocal[ircv] == 1 )
       {
         string const fn = joinPath( outputDir, GEOS_FMT( "seismoTraceReceiver_{}_{:03}.txt", name, ircv ) );
-        std::ofstream f( fn, mode );
-        if( !f )
+        std::ofstream f( fn, std::ios::out );
+      }
+    } );
+  }
+
+  static void writeSeismoTrace( string const & name,
+                                localIndex const nReceivers,
+                                arrayView1d< localIndex const > const receiverIsLocal,
+                                localIndex const nsamplesSeismoTrace,
+                                arrayView2d< real32 const > const varAtReceivers )
+  {
+    string const outputDir = OutputBase::getOutputDirectory();
+    forAll< serialPolicy >( nReceivers, [=] ( localIndex const ircv )
+    {
+      if( receiverIsLocal[ircv] == 1 )
+      {
+        string const fn = joinPath( outputDir, GEOS_FMT( "seismoTraceReceiver_{}_{:03}.txt", name, ircv ) );
+        std::ofstream f( fn, std::ios::app );
+        if( f )
+        {
+          for( localIndex iSample = 0; iSample < nsamplesSeismoTrace; ++iSample )
+          {
+            // index - time - value
+            f << iSample << " " << varAtReceivers[iSample][nReceivers] << " " << varAtReceivers[iSample][ircv] << std::endl;
+          }
+          f.close();
+        }
+        else
         {
           GEOS_WARNING( GEOS_FMT( "Failed to open output file {}", fn ) );
-          return;
         }
-        for( localIndex iSample = 0; iSample < nsamplesSeismoTrace; ++iSample )
-        {
-          // index - time - value
-          f << iSample << " " << varAtReceivers[iSample][nReceivers] << " " << varAtReceivers[iSample][ircv] << std::endl;
-        }
-        f.close();
       }
     } );
   }
@@ -110,8 +126,7 @@ struct WaveSolverUtils
                                   localIndex const outputSeismoTrace,
                                   arrayView1d< real32 const > const var_np1,
                                   arrayView1d< real32 const > const var_n,
-                                  arrayView2d< real32 > varAtReceivers,
-                                  std::ios_base::openmode mode )
+                                  arrayView2d< real32 > varAtReceivers )
   {
     real64 const time_np1 = time_n + dt;
 
@@ -142,7 +157,7 @@ struct WaveSolverUtils
     }
 
     if( iSeismo == nsamplesSeismoTrace - 1 && outputSeismoTrace )
-      writeSeismoTrace( name, nReceivers, receiverIsLocal, nsamplesSeismoTrace, varAtReceivers, mode );
+      writeSeismoTrace( name, nReceivers, receiverIsLocal, nsamplesSeismoTrace, varAtReceivers );
   }
 
   static void compute2dVariableSeismoTrace( string const & name,
@@ -159,8 +174,7 @@ struct WaveSolverUtils
                                             localIndex const outputSeismoTrace,
                                             arrayView2d< real32 const > const var_np1,
                                             arrayView2d< real32 const > const var_n,
-                                            arrayView2d< real32 > varAtReceivers,
-                                            std::ios_base::openmode mode )
+                                            arrayView2d< real32 > varAtReceivers )
   {
     real64 const time_np1 = time_n+dt;
 
@@ -194,7 +208,7 @@ struct WaveSolverUtils
     }
 
     if( iSeismo == nsamplesSeismoTrace - 1 && outputSeismoTrace )
-      writeSeismoTrace( name, nReceivers, receiverIsLocal, nsamplesSeismoTrace, varAtReceivers, mode );
+      writeSeismoTrace( name, nReceivers, receiverIsLocal, nsamplesSeismoTrace, varAtReceivers );
   }
 
   /**

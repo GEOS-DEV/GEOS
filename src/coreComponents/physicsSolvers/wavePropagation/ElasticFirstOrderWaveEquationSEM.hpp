@@ -90,8 +90,7 @@ public:
                                        real64 const dt,
                                        arrayView1d< real32 const > const var_np1,
                                        arrayView1d< real32 const > const var_n,
-                                       arrayView2d< real32 > varAtReceivers,
-                                       std::ios_base::openmode mode = std::ios::app );
+                                       arrayView2d< real32 > varAtReceivers );
 
   /**
    * TODO: move implementation into WaveSolverBase
@@ -107,8 +106,7 @@ public:
                                                  real64 const dt,
                                                  arrayView2d< real32 const > const var_np1,
                                                  arrayView2d< real32 const > const var_n,
-                                                 arrayView2d< real32 > varAtReceivers,
-                                                 std::ios_base::openmode mode = std::ios::app );
+                                                 arrayView2d< real32 > varAtReceivers );
 
   /**
    * @brief Initialize Perfectly Matched Layer (PML) information

@@ -295,6 +295,10 @@ void WaveSolverBase::postProcessInput()
   localIndex const numSourcesGlobal = m_sourceCoordinates.size( 0 );
   m_sourceValue.resize( nsamples, numSourcesGlobal );
 
+  forAll< serialPolicy >( m_nsamplesSeismoTrace, [=] ( localIndex const ircv )
+  {
+
+  } );
 }
 
 void WaveSolverBase::initializeDAS()

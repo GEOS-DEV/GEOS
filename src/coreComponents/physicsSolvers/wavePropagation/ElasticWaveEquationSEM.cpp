@@ -206,18 +206,18 @@ void ElasticWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
                                fields::StiffnessVectorx,
                                fields::StiffnessVectory,
                                fields::StiffnessVectorz,
-                               fields::FreeSurfaceNodeIndicatorE >( this->getName() );
+                               fields::FreeSurfaceNodeIndicatorE >( getName() );
 
     FaceManager & faceManager = mesh.getFaceManager();
-    faceManager.registerField< fields::FreeSurfaceFaceIndicatorE >( this->getName() );
+    faceManager.registerField< fields::FreeSurfaceFaceIndicatorE >( getName() );
 
     ElementRegionManager & elemManager = mesh.getElemManager();
 
     elemManager.forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion & subRegion )
     {
-      subRegion.registerField< fields::MediumVelocityVp >( this->getName() );
-      subRegion.registerField< fields::MediumVelocityVs >( this->getName() );
-      subRegion.registerField< fields::MediumDensityE >( this->getName() );
+      subRegion.registerField< fields::MediumVelocityVp >( getName() );
+      subRegion.registerField< fields::MediumVelocityVs >( getName() );
+      subRegion.registerField< fields::MediumDensityE >( getName() );
     } );
 
   } );
@@ -242,7 +242,7 @@ void ElasticWaveEquationSEM::postProcessInput()
   for( localIndex numSubEvent = 0; numSubEvent < event.numSubGroups(); ++numSubEvent )
   {
     EventBase const * subEvent = static_cast< EventBase const * >( event.getSubGroups()[numSubEvent] );
-    if( subEvent->getEventName() == "/Solvers/" + this->getName() )
+    if( subEvent->getEventName() == "/Solvers/" + getName() )
     {
       dt = subEvent->getReference< real64 >( EventBase::viewKeyStruct::forceDtString() );
     }
@@ -317,7 +317,7 @@ void ElasticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh, 
   for( localIndex numSubEvent = 0; numSubEvent < event.numSubGroups(); ++numSubEvent )
   {
     EventBase const * subEvent = static_cast< EventBase const * >( event.getSubGroups()[numSubEvent] );
-    if( subEvent->getEventName() == "/Solvers/" + this->getName() )
+    if( subEvent->getEventName() == "/Solvers/" + getName() )
     {
       dt = subEvent->getReference< real64 >( EventBase::viewKeyStruct::forceDtString() );
     }
@@ -586,6 +586,8 @@ void ElasticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
       } );
     } );
   } );
+
+  WaveSolverUtils::initSeismoTrace( getName(), m_receiverConstants.size( 0 ), m_receiverIsLocal );
 }
 
 void ElasticWaveEquationSEM::applyFreeSurfaceBC( real64 const time, DomainPartition & domain )
@@ -800,7 +802,7 @@ void ElasticWaveEquationSEM::synchronizeUnknowns( real64 const & time_n,
   arrayView2d< real32 > const uYReceivers = m_displacementYNp1AtReceivers.toView();
   arrayView2d< real32 > const uZReceivers = m_displacementZNp1AtReceivers.toView();
 
-  computeAllSeismoTraces( time_n, dt, ux_np1, ux_n, uXReceivers, std::ios::out );
+  computeAllSeismoTraces( time_n, dt, ux_np1, ux_n, uXReceivers );
   computeAllSeismoTraces( time_n, dt, uy_np1, uy_n, uYReceivers );
   computeAllSeismoTraces( time_n, dt, uz_np1, uz_n, uZReceivers );
 
@@ -898,7 +900,7 @@ void ElasticWaveEquationSEM::cleanup( real64 const time_n,
     arrayView2d< real32 > const uYReceivers  = m_displacementYNp1AtReceivers.toView();
     arrayView2d< real32 > const uZReceivers  = m_displacementZNp1AtReceivers.toView();
 
-    computeAllSeismoTraces( time_n, 0.0, ux_np1, ux_n, uXReceivers, std::ios::out );
+    computeAllSeismoTraces( time_n, 0.0, ux_np1, ux_n, uXReceivers );
     computeAllSeismoTraces( time_n, 0.0, uy_np1, uy_n, uYReceivers );
     computeAllSeismoTraces( time_n, 0.0, uz_np1, uz_n, uZReceivers );
 
@@ -921,8 +923,7 @@ void ElasticWaveEquationSEM::computeAllSeismoTraces( real64 const time_n,
                                                      real64 const dt,
                                                      arrayView1d< real32 const > const var_np1,
                                                      arrayView1d< real32 const > const var_n,
-                                                     arrayView2d< real32 > varAtReceivers,
-                                                     std::ios_base::openmode mode )
+                                                     arrayView2d< real32 > varAtReceivers )
 {
   localIndex indexSeismoTrace = m_indexSeismoTrace;
 
@@ -932,7 +933,7 @@ void ElasticWaveEquationSEM::computeAllSeismoTraces( real64 const time_n,
   {
     WaveSolverUtils::computeSeismoTrace( getName(), time_n, dt, timeSeismo, indexSeismoTrace, m_receiverNodeIds,
                                          m_receiverConstants, m_receiverIsLocal, m_nsamplesSeismoTrace,
-                                         m_outputSeismoTrace, var_np1, var_n, varAtReceivers, mode );
+                                         m_outputSeismoTrace, var_np1, var_n, varAtReceivers );
   }
 }
 
