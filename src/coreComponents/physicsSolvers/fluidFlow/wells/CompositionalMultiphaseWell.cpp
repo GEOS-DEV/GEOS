@@ -640,8 +640,7 @@ void CompositionalMultiphaseWell::updateVolRatesForConstraint( WellElementSubReg
       castedFluid.checkTablesParameters( surfacePres, surfaceTemp );
     } catch( SimulationError const & ex )
     {
-      // TODO: replace getName() by getDataContext() from incoming PR 2404
-      string const errorMsg = GEOS_FMT( "{}: wrong surface pressure / temperature.\n", getName() );
+      string const errorMsg = GEOS_FMT( "{}: wrong surface pressure / temperature.\n", getDataContext() );
       throw SimulationError( ex, errorMsg );
     }
 

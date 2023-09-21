@@ -19,7 +19,7 @@
 
 #include "constitutive/fluid/multifluid/MultiFluidFields.hpp"
 #include "constitutive/fluid/multifluid/CO2Brine/functions/PVTFunctionHelpers.hpp"
-#include "common/PhysicsConstants.hpp"
+#include "common/Units.hpp"
 
 namespace geos
 {
@@ -155,8 +155,7 @@ void CO2BrineFluid< PHASE1, PHASE2, FLASH >::checkTablesParameters( real64 const
     m_phase1->enthalpy.checkTablesParameters( pressure, temperatureInCelsius );
   } catch( SimulationError const & ex )
   {
-    // TODO: replace getName() by getDataContext() from incoming PR 2404
-    string const errorMsg = GEOS_FMT( "{}: Table input error for phase no. 1.\n", getName() );
+    string const errorMsg = GEOS_FMT( "{}: Table input error for phase no. 1.\n", getDataContext() );
     throw SimulationError( ex, errorMsg );
   }
 
@@ -167,8 +166,7 @@ void CO2BrineFluid< PHASE1, PHASE2, FLASH >::checkTablesParameters( real64 const
     m_phase2->enthalpy.checkTablesParameters( pressure, temperatureInCelsius );
   } catch( SimulationError const & ex )
   {
-    // TODO: replace getName() by getDataContext() from incoming PR 2404
-    string const errorMsg = GEOS_FMT( "{}: Table input error for phase no. 2.\n", getName() );
+    string const errorMsg = GEOS_FMT( "{}: Table input error for phase no. 2.\n", getDataContext() );
     throw SimulationError( ex, errorMsg );
   }
   
@@ -177,8 +175,7 @@ void CO2BrineFluid< PHASE1, PHASE2, FLASH >::checkTablesParameters( real64 const
     m_flash->checkTablesParameters( pressure, temperatureInCelsius );
   } catch( SimulationError const & ex )
   {
-    // TODO: replace getName() by getDataContext() from incoming PR 2404
-    string const errorMsg = GEOS_FMT( "{}: Table input error for flash phase.\n", getName() );
+    string const errorMsg = GEOS_FMT( "{}: Table input error for flash phase.\n", getDataContext() );
     throw SimulationError( ex, errorMsg );
   }
 }

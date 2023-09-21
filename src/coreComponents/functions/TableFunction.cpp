@@ -168,16 +168,15 @@ void TableFunction::reInitializeFunction()
 
 void TableFunction::checkCoord( real64 const coord, localIndex const dim ) const
 {
-  // TODO: replace getName() by getDataContext().toString() from incoming PR 2404
   GEOS_THROW_IF( dim >= m_coordinates.size() || dim < 0,
                  GEOS_FMT( "{}: The {} dimension ( no. {} ) doesn't exist in the table.",
-                           getName(), units::getDescription( getDimUnit( dim ) ), dim ),
+                           getDataContext(), units::getDescription( getDimUnit( dim ) ), dim ),
                  SimulationError );
   real64 const lowerBound = m_coordinates[dim][0];
   real64 const upperBound = m_coordinates[dim][m_coordinates.sizeOfArray( dim ) - 1];
   GEOS_THROW_IF( coord > upperBound || coord < lowerBound,
                  GEOS_FMT( "{}: Requested {} is out of the table bounds ( lower bound: {} -> upper bound: {} ).",
-                           getName(), units::formatValue( coord, getDimUnit( dim ) ), lowerBound, upperBound ),
+                           getDataContext(), units::formatValue( coord, getDimUnit( dim ) ), lowerBound, upperBound ),
                  SimulationError );
 }
 

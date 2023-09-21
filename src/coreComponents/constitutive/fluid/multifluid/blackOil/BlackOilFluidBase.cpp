@@ -245,8 +245,7 @@ void BlackOilFluidBase::checkTablesParameters( real64 const pressure,
       m_formationVolFactorTables[iph]->checkCoord( pressure, 0 );
     } catch( SimulationError const & ex )
     {
-      //TODO : use data context
-      throw SimulationError( ex, GEOS_FMT( errorMsg, getCatalogName(), getName(),
+      throw SimulationError( ex, GEOS_FMT( errorMsg, getCatalogName(), getDataContext(),
                                            "formation volume factor", iph ) );
     }
 
@@ -255,8 +254,7 @@ void BlackOilFluidBase::checkTablesParameters( real64 const pressure,
       m_viscosityTables[iph]->checkCoord( pressure, 0 );
     } catch( SimulationError const & ex )
     {
-      //TODO : use data context
-      throw SimulationError( ex, GEOS_FMT( errorMsg, getCatalogName(), getName(),
+      throw SimulationError( ex, GEOS_FMT( errorMsg, getCatalogName(), getDataContext(),
                                            "viscosity", iph ) );
     }
   }

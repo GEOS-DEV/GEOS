@@ -213,8 +213,7 @@ void ReactiveBrineFluid< PHASE >::checkTablesParameters( real64 const pressure,
     m_phase->enthalpy.checkTablesParameters( pressure, temperatureInCelsius );
   } catch( SimulationError const & ex )
   {
-    // TODO: replace getName() by getDataContext().toString() from incoming PR 2404
-    string const errorMsg = GEOS_FMT( "{}: Table input error.\n", getName() );
+    string const errorMsg = GEOS_FMT( "{}: Table input error.\n", getDataContext() );
     throw SimulationError( ex, errorMsg );
   }
 }
