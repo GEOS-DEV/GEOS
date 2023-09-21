@@ -1687,10 +1687,10 @@ void importMaterialField( std::vector< vtkIdType > const & cellIds,
                           WrapperBase & wrapper )
 {
   // Scalar material fields are stored as 2D arrays, vector/tensor are 3D
-  using ImportTypes = types::ArrayTypes< types::RealTypes, types::DimsRange< 2, 3 > >;
-  types::dispatch( ImportTypes{}, wrapper.getTypeId(), true, [&]( auto array )
+  using ImportTypes = types::ListofTypeList< types::ArrayTypes< types::RealTypes, types::DimsRange< 2, 3 > > >;
+  types::dispatch( ImportTypes{}, [&]( auto tupleOfTypes )
   {
-    using ArrayType = decltype( array );
+    using ArrayType = camp::first< decltype( tupleOfTypes ) >;
     Wrapper< ArrayType > & wrapperT = Wrapper< ArrayType >::cast( wrapper );
     auto const view = wrapperT.reference().toView();
 
@@ -1716,17 +1716,17 @@ void importMaterialField( std::vector< vtkIdType > const & cellIds,
         ++cellCount;
       }
     } );
-  } );
+  }, wrapper );
 }
 
 void importRegularField( std::vector< vtkIdType > const & cellIds,
                          vtkDataArray * vtkArray,
                          WrapperBase & wrapper )
 {
-  using ImportTypes = types::ArrayTypes< types::RealTypes, types::DimsRange< 1, 2 > >;
-  types::dispatch( ImportTypes{}, wrapper.getTypeId(), true, [&]( auto dstArray )
+  using ImportTypes = types::ListofTypeList< types::ArrayTypes< types::RealTypes, types::DimsRange< 1, 2 > > >;
+  types::dispatch( ImportTypes{}, [&]( auto tupleOfTypes )
   {
-    using ArrayType = decltype( dstArray );
+    using ArrayType = camp::first< decltype( tupleOfTypes ) >;
     Wrapper< ArrayType > & wrapperT = Wrapper< ArrayType >::cast( wrapper );
     auto const view = wrapperT.reference().toView();
 
@@ -1748,7 +1748,7 @@ void importRegularField( std::vector< vtkIdType > const & cellIds,
         ++cellCount;
       }
     } );
-  } );
+  }, wrapper );
 }
 
 

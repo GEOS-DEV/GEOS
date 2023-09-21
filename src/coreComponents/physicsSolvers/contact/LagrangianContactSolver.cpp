@@ -138,7 +138,9 @@ void LagrangianContactSolver::setConstitutiveNames( ElementSubRegionBase & subRe
 
   string & contactRelationName = subRegion.getReference< string >( viewKeyStruct::contactRelationNameString() );
   contactRelationName = this->m_contactRelationName;
-  GEOS_ERROR_IF( contactRelationName.empty(), GEOS_FMT( "Solid model not found on subregion {}", subRegion.getName() ) );
+  GEOS_ERROR_IF( contactRelationName.empty(),
+                 GEOS_FMT( "{}: Solid model not found on subregion {}",
+                           getDataContext(), subRegion.getName() ) );
 }
 
 
@@ -882,7 +884,8 @@ void LagrangianContactSolver::computeFaceNodalArea( arrayView2d< real64 const, n
   }
   else
   {
-    GEOS_ERROR( "LagrangianContactSolver: face with " << numNodesPerFace << " nodes. Only triangles and quadrilaterals are supported." );
+    GEOS_ERROR( "LagrangianContactSolver " << getDataContext() << ": face with " << numNodesPerFace <<
+                " nodes. Only triangles and quadrilaterals are supported." );
   }
 }
 
@@ -1287,9 +1290,11 @@ void LagrangianContactSolver::assembleStabilization( MeshLevel const & mesh,
   SurfaceElementRegion const & fractureRegion = elemManager.getRegion< SurfaceElementRegion >( getFractureRegionName() );
   FaceElementSubRegion const & fractureSubRegion = fractureRegion.getUniqueSubRegion< FaceElementSubRegion >();
 
-  GEOS_ERROR_IF( !fractureSubRegion.hasField< contact::traction >(), "The fracture subregion must contain traction field." );
+  GEOS_ERROR_IF( !fractureSubRegion.hasField< contact::traction >(),
+                 getDataContext() << ": The fracture subregion must contain traction field." );
   arrayView2d< localIndex const > const faceMap = fractureSubRegion.faceList();
-  GEOS_ERROR_IF( faceMap.size( 1 ) != 2, "A fracture face has to be shared by two cells." );
+  GEOS_ERROR_IF( faceMap.size( 1 ) != 2,
+                 getDataContext() << ": A fracture face has to be shared by two cells." );
 
   // Get the state of fracture elements
   arrayView1d< integer const > const & fractureState =
@@ -1375,7 +1380,8 @@ void LagrangianContactSolver::assembleStabilization( MeshLevel const & mesh,
             realNodes++;
           }
         }
-        GEOS_ERROR_IF( realNodes != 2, "An edge shared by two fracture elements must have 2 nodes." );
+        GEOS_ERROR_IF( realNodes != 2,
+                       getDataContext() << ": An edge shared by two fracture elements must have 2 nodes." );
         edge.resize( realNodes );
 
         // Compute nodal area factor
@@ -1672,13 +1678,14 @@ void LagrangianContactSolver::assembleStabilization( MeshLevel const & mesh,
 void LagrangianContactSolver::applySystemSolution( DofManager const & dofManager,
                                                    arrayView1d< real64 const > const & localSolution,
                                                    real64 const scalingFactor,
+                                                   real64 const dt,
                                                    DomainPartition & domain )
 {
   GEOS_MARK_FUNCTION;
 
   if( m_setupSolidSolverDofs )
   {
-    m_solidSolver->applySystemSolution( dofManager, localSolution, scalingFactor, domain );
+    m_solidSolver->applySystemSolution( dofManager, localSolution, scalingFactor, dt, domain );
   }
 
   dofManager.addVectorToField( localSolution,
