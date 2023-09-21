@@ -46,20 +46,223 @@ namespace geos
  */
 namespace xmlWrapper
 {
-/// Alias for the type of xml document.
-using xmlDocument = pugi::xml_document;
 
 /// Alias for the type of the result from an xml parse attempt.
 using xmlResult = pugi::xml_parse_result;
 
 /// Alias for the type of an xml node.
+/// An xmlNode behave as a pointer object: passing it by value to a function which modify it
+/// will modify the original xmlNode object.
 using xmlNode = pugi::xml_node;
 
 /// Alias for the type of an xml attribute.
+/// An xmlAttribute behave as a pointer object: passing it by value to a function which modify it
+/// will modify the original xmlAttribute object.
 using xmlAttribute = pugi::xml_attribute;
 
 /// Alias for the type variant of an xml node.
-using xmlTypes = pugi::xml_node_type;
+using xmlNodeType = pugi::xml_node_type;
+
+class xmlDocument;
+
+/**
+ * @struct xmlAttributePos
+ *
+ * Stores the source file path, and position in the file of a xml attribute.
+ */
+struct xmlAttributePos
+{
+  /// Path of the file containing this element
+  string filePath;
+  /// Line where the element is defined. Start at 1.
+  /// Default value is xmlDocument::npos
+  size_t const line;
+  /// Character offset of this element in the line that contains it (starting from 1)
+  /// Equals to xmlDocument::npos if it couldn't be determined.
+  size_t const offsetInLine;
+  /// Character offset of this element in the file that contains it (starting from 0)
+  /// Equals to xmlDocument::npos if it couldn't be determined.
+  size_t const offset;
+
+  /**
+   * @brief Constructor of this struct.
+   * @param filePath the path of the original xml file containing this attribute
+   * @param line Line where the element is defined. Start at 1.
+   * @param offsetInLine Character offset of this element in the line that contains it (starting from 1)
+   * @param offset Character offset of this element in the file that contains it (starting from 0)
+   */
+  xmlAttributePos( string const & filePath, size_t line, size_t offsetInLine, size_t offset );
+  /**
+   * @return false if the position is undefined.
+   */
+  bool isFound() const;
+  /**
+   * @return a string containing the file name and position in the file.
+   */
+  string toString() const;
+};
+
+/**
+ * @struct xmlNodePos
+ *
+ * Used to retrieve the position of dataRepository::Wrapper in XML
+ */
+struct xmlNodePos : xmlAttributePos
+{
+  /// Reference of the main xmlDocument that contains all original file buffers.
+  xmlDocument const & document;
+
+  /**
+   * @brief Constructor of this struct.
+   * @param document an xml document containing this node, or including a file which includes it
+   * @param filePath the path of the original xml file containing this node
+   * @param line Line where the node is defined. Start at 1.
+   * @param offsetInLine Character offset of this node in the line that contains it (starting from 1)
+   * @param offset Character offset of this node in the file that contains it (starting from 0)
+   */
+  xmlNodePos( xmlDocument const & document, string const & filePath, size_t line, size_t offsetInLine, size_t offset );
+  /**
+   * @return false if the position is undefined.
+   */
+  bool isFound() const;
+  /**
+   * @brief Compute the xmlAttributePos of an xml attribute
+   * @param attName the name of the attribute to locate
+   * @return an xmlAttributePos object that represents the position of the target node.
+   */
+  xmlAttributePos getAttributeLine( string const & attName ) const;
+};
+
+/**
+ * @class xmlDocument
+ *
+ * Wrapper class for the type of xml document.
+ * This class exists to intercept file / string loading methods, and to keep the loaded buffers,
+ * in order to retrieve the source file and line of nodes and attributes.
+ */
+class xmlDocument
+{
+public:
+  /// Error value for when an offset / line position is undefined.
+  static constexpr size_t npos = string::npos;
+
+  /**
+   * @brief Construct an empty xmlDocument that waits to load something.
+   */
+  xmlDocument();
+  /**
+   * @brief non-copyable
+   */
+  xmlDocument( const xmlDocument & ) = delete;
+  /**
+   * @brief move constructor
+   */
+  xmlDocument( xmlDocument && ) = default;
+
+  /**
+   * @return the first child of this document (typically in GEOS, the Problem node)
+   */
+  xmlNode getFirstChild() const;
+  /**
+   * @return a child with the specified name
+   * @param name the tag name of the node to find
+   */
+  xmlNode getChild( string const & name ) const;
+  /**
+   * @return the original file buffer loaded during the last load_X() call on this object.
+   */
+  string const & getOriginalBuffer() const;
+  /**
+   * @return If the specified file at the "filePath" is the loaded document of the instance,
+   * or one of its includes, returns its original buffer as a string.
+   * Returns nullptr if filePath is not a loaded and available document.
+   * @param filePath the path of the file which buffer must be returned.
+   */
+  string const * getOriginalBuffer( string const & filePath ) const;
+  /**
+   * @return a map containing the original buffers of the document and its includes, indexed by file path.
+   */
+  map< string, string > const & getOriginalBuffers() const;
+  /**
+   * @return If loadFile() has been loaded, returns the path of the source file.
+   * If another load method has been called, it returns a generated unique value.
+   */
+  string const & getFilePath() const;
+  /**
+   * @brief If the node file information are loaded, compute the position of a node.
+   * @param node the node to locate
+   * @return an xmlNodePos object that represents the position of the target node.
+   * @throws an InputError if the node position is not found and source file is loaded.
+   */
+  xmlNodePos getNodePosition( xmlWrapper::xmlNode const & node ) const;
+
+  /**
+   * @brief Load document from zero-terminated string. No encoding conversions are applied.
+   * Free any previously loaded xml tree.
+   * Wrapper of pugi::xml_document::loadBuffer() method.
+   * @param content the string containing the document content
+   * @param loadNodeFileInfo Load the node source file info, allowing getNodePosition() to work.
+   * @return an xmlResult object representing the parsing resulting status.
+   */
+  xmlResult loadString( string_view content, bool loadNodeFileInfo = false );
+
+  /**
+   * @brief Load document from file. Free any previously loaded xml tree.
+   * Wrapper of pugi::xml_document::loadBuffer() method.
+   * @param path the path of an xml file to load.
+   * @param loadNodeFileInfo Load the node source file info, allowing getNodePosition() to work.
+   * @return an xmlResult object representing the parsing resulting status.
+   */
+  xmlResult loadFile( string const & path, bool loadNodeFileInfo = false );
+
+  /**
+   * @brief Add a root element to the document
+   * @param name the tag name of the node to add
+   * @return the added node
+   */
+  xmlNode appendChild( string const & name );
+  /**
+   * @brief Add a root element to the document
+   * @param type the type of the node to add to the root of the document.
+   * As an exemple, node_declaration is useful to add the "<?xml ?>" node.
+   * @return the added node
+   */
+  xmlNode appendChild( xmlNodeType type = xmlNodeType::node_element );
+
+  /**
+   * @brief Save the XML to a file
+   * @param path the file path
+   * @return true if the file has successfuly been saved
+   * @return false otherwise
+   */
+  bool saveFile( string const & path ) const;
+
+  /**
+   * @brief Function to add xml nodes from included files.
+   * @param targetNode the node for which to look for included children specifications
+   * @param level include tree level used to detect circular includes
+   *
+   * This function looks for a "Included" node under the targetNode, loops over all subnodes under the "Included"
+   * node, and then parses the file specified in those subnodes taking all the nodes in the file and adding them to
+   * the targetNode.
+   * Each found includes are added to xmlDocument::m_originalBuffers.
+   */
+  void addIncludedXML( xmlNode & targetNode, int level = 0 );
+
+  /**
+   * @return True if loadNodeFileInfo was true during the last load_X call.
+   */
+  bool hasNodeFileInfo() const;
+
+private:
+  /// original xml_document object that this class aims to wrap
+  pugi::xml_document pugiDocument;
+
+  /// Used to retrieve node positions as pugixml buffer is private and processed.
+  map< string, string > m_originalBuffers;
+  /// @see getFilePath()
+  string m_rootFilePath;
+};
 
 /**
  * @brief constexpr variable to hold name for inserting the file path into the xml file.
@@ -69,6 +272,14 @@ using xmlTypes = pugi::xml_node_type;
  */
 constexpr char const filePathString[] = "__filePath__";
 
+/**
+ * @brief constexpr variable to hold node character offset from the start of the xml file.
+ *
+ * This is used because we would like the option to hold the offset in the xml structure.
+ * The name is uglified with underscores to avoid collisions with real attribute names.
+ */
+constexpr char const charOffsetString[] = "__charOffset__";
+
 /// XML tag name for included sections
 constexpr char const includedListTag[] = "Included";
 
@@ -76,27 +287,22 @@ constexpr char const includedListTag[] = "Included";
 constexpr char const includedFileTag[] = "File";
 
 /**
- * @brief Function to add xml nodes from included files.
- * @param targetNode the node for which to look for included children specifications
- * @param level include tree level used to detect circular includes
- *
- * This function looks for a "Included" node under the targetNode, loops over all subnodes under the "Included"
- * node, and then parses the file specified in those subnodes taking all the nodes in the file and adding them to
- * the targetNode.
- */
-void addIncludedXML( xmlNode & targetNode, int level = 0 );
-
-/**
  * @brief Function to handle multiple input xml files.
  * @param inputFileList the list of input xml files
  * @param outputDir the output directory to place the composite input file in
- * @return inputFileName the input xml file name
+ * @return inputFilePath the input xml file name
  *
  * This function checks for multiple xml files, and will build
  * a new input xml file with an included block if neccesary
  */
 string buildMultipleInputXML( string_array const & inputFileList,
                               string const & outputDir = {} );
+
+/**
+ * @return true if the attribute with the specified name declares metadata relative to the xml
+ * @param name the name of an attribute
+ */
+bool isFileMetadataAttribute( string const & name );
 
 /**
  * @name String to variable parsing.

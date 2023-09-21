@@ -479,10 +479,9 @@ struct InputError : public std::runtime_error
   {}
 
   /**
-   * @brief Construct an InputError from an underlying exception.
-   * @param subException An exception to base this new one on.
-   * @param msgToInsert The error message.
-   * It will be inserted before the error message inside of subException
+   * @brief Constructs an InputError from an underlying exception.
+   * @param subException The exception on which the created one is based.
+   * @param msgToInsert The error message that will be inserted in the subException error message.
    */
   InputError( std::exception const & subException, std::string const & msgToInsert );
 };

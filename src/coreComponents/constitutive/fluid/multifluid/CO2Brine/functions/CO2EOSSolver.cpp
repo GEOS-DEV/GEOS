@@ -63,14 +63,7 @@ CO2EOSSolver::solve( string const & name,
     if( var < allowedMinValue )
     {
       var = allowedMinValue;
-      (*f)( temp, pres, var );
-    }
-
-    // check convergence (based on the magnitude of the Newton update for historical reasons)
-    if( LvArray::math::abs( update ) < tolerance )
-    {
-      newtonHasConverged = true;
-      break;
+      res = (*f)( temp, pres, var );
     }
 
     // compute finite-difference derivative
@@ -106,6 +99,14 @@ CO2EOSSolver::solve( string const & name,
     // recompute the residual
     real64 const newVar = var + update;
     real64 const newRes = (*f)( temp, pres, newVar );
+
+    // check convergence based on the magnitude of the residual
+    if( LvArray::math::abs( newRes ) < tolerance )
+    {
+      var = newVar;
+      newtonHasConverged = true;
+      break;
+    }
 
     // if the new residual is larger than the previous one, do some backtracking steps
     bool backtrackingIsSuccessful = false;
