@@ -48,14 +48,28 @@ inline constexpr double convertCToK( double celsius )
  */
 enum Unit : integer
 {
+  /// Default label when a unit is not known for a value
   Unknown,
+
+  /// Label to use when a value has not physical dimension (ratio values, propotions...)
   Dimensionless,
+
+  /// Pressure in Pascal
   Pressure,
+
+  /// Temperature in Kelvin
   Temperature,
+
+  /// Temperature in Celcius
   TemperatureInC,
+
+  /// Distance in meter
   Distance,
+
+  /// Time in seconds
   Time,
 };
+
 
 /**
  * @param unit The unit we want the information.

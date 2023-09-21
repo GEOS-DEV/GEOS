@@ -272,7 +272,8 @@ private:
   InterpolationType getInterpolationMethod() const { return m_interpolationMethod; }
 
   /**
-   * @return The unit of a coordinate dimension
+   * @param dim The coordinate dimension (= axe) we want the Unit.
+   * @return The unit of a coordinate dimension, or units::Unknown if no units has been specified.
    */
   units::Unit getDimUnit( localIndex const dim ) const
   { return size_t(dim) < m_dimUnits.size() ? m_dimUnits[dim] : units::Unknown; }
