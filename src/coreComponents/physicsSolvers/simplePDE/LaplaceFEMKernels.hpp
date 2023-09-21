@@ -90,18 +90,18 @@ public:
    *                  (i.e. Temperature, Pressure, etc.)
    */
   LaplaceFEMKernel( NodeManager const & nodeManager,
-                       EdgeManager const & edgeManager,
-                       FaceManager const & faceManager,
-                       localIndex const targetRegionIndex,
-                       SUBREGION_TYPE const & elementSubRegion,
-                       FE_TYPE const & finiteElementSpace,
-                       CONSTITUTIVE_TYPE & inputConstitutiveType,
-                       arrayView1d< globalIndex const > const inputDofNumber,
-                       globalIndex const rankOffset,
-                       CRSMatrixView< real64, globalIndex const > const inputMatrix,
-                       arrayView1d< real64 > const inputRhs,
-                       real64 const inputDt,
-                       string const fieldName ):
+                    EdgeManager const & edgeManager,
+                    FaceManager const & faceManager,
+                    localIndex const targetRegionIndex,
+                    SUBREGION_TYPE const & elementSubRegion,
+                    FE_TYPE const & finiteElementSpace,
+                    CONSTITUTIVE_TYPE & inputConstitutiveType,
+                    arrayView1d< globalIndex const > const inputDofNumber,
+                    globalIndex const rankOffset,
+                    CRSMatrixView< real64, globalIndex const > const inputMatrix,
+                    arrayView1d< real64 > const inputRhs,
+                    real64 const inputDt,
+                    string const fieldName ):
     Base( nodeManager,
           edgeManager,
           faceManager,
@@ -286,12 +286,12 @@ protected:
 
 /// The factory used to construct a LaplaceFEMKernel.
 using LaplaceFEMKernelFactory = finiteElement::KernelFactory< LaplaceFEMKernel,
-                                                                 arrayView1d< globalIndex const > const,
-                                                                 globalIndex const,
-                                                                 CRSMatrixView< real64, globalIndex const > const,
-                                                                 arrayView1d< real64 > const,
-                                                                 real64 const,
-                                                                 string const >;
+                                                              arrayView1d< globalIndex const > const,
+                                                              globalIndex const,
+                                                              CRSMatrixView< real64, globalIndex const > const,
+                                                              arrayView1d< real64 > const,
+                                                              real64 const,
+                                                              string const >;
 
 } // namespace geos
 
