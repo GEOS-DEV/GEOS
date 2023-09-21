@@ -129,8 +129,7 @@
     <PeriodicEvent
       name="outputs"
       timeFrequency="1e6"
-      target="/Outputs/vtkOutput"/>
-
+      target="/Outputs/vtkOutput_seq"/>
     <SoloEvent
       name="singlePhasePoroelasticityPreEquilibrationStep"
       targetTime="-1e11"
@@ -147,7 +146,7 @@
       beginTime="-1e11"
       endTime="0"
       maxEventDt="1e11"
-      target="/Solvers/linearElasticity"/>
+      target="/Solvers/reservoirPoromechanics"/>
 
     <SoloEvent
       name="singlePhasePoroelasticityPostEquilibrationStep"
@@ -157,7 +156,6 @@
       name="solidMechanicsPostEquilibrationStep"
       targetTime="0"
       target="/Tasks/solidMechanicsPostEquilibrationStep"/>
-
     <PeriodicEvent
       name="linearElasticityStatistics"
       timeFrequency="1e6"
@@ -176,6 +174,7 @@
       name="restarts"
       timeFrequency="5e6"
       target="/Outputs/restartOutput"/>
+
   </Events>
 
   <NumericalMethods>
@@ -331,11 +330,12 @@
       logLevel="2"      
       name="solidMechanicsPostEquilibrationStep"
       solidSolverName="linearElasticity"/>
+
   </Tasks>
   
   <Outputs>
     <VTK
-      name="vtkOutput"
+      name="vtkOutput_seq"
       fieldNames="{ initialPressure, skeletonChannel_density }"/>
     <Restart
       name="restartOutput"/>
