@@ -31,8 +31,8 @@ TableFunction::TableFunction( const string & name,
                               Group * const parent ):
   FunctionBase( name, parent ),
   m_interpolationMethod( InterpolationType::Linear ),
-  m_kernelWrapper( createKernelWrapper() ),
-  m_valueUnit( units::Unknown )
+  m_valueUnit( units::Unknown ),
+  m_kernelWrapper( createKernelWrapper() )
 {
   registerWrapper( viewKeyStruct::coordinatesString(), &m_tableCoordinates1D ).
     setInputFlag( InputFlags::OPTIONAL ).
