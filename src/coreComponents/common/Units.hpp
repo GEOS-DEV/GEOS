@@ -14,8 +14,7 @@
 
 /**
  * @file Units.hpp
- * @brief Regroups useful constants and functions relative to Units Of Measures
- * that are globally used for math and physics computations.
+ * @brief Enumerates the Units that are in use in GEOS and regroups useful conversion and formatting functions.
  */
 #ifndef GEOS_MATH_UNITS_HPP_
 #define GEOS_MATH_UNITS_HPP_
@@ -44,7 +43,9 @@ inline constexpr double convertCToK( double celsius )
 { return celsius + constants::zeroDegreesCelsiusInKelvin; }
 
 
-/// Enumerator of available unit types. Units are in SI by default.
+/**
+ * @brief Enumerator of available unit types. Units are in SI by default.
+ */
 enum Unit : integer
 {
   Unknown,
@@ -56,6 +57,10 @@ enum Unit : integer
   Time,
 };
 
+/**
+ * @param unit The unit we want the information.
+ * @return The name of the specified unit followed by its symbol in brackets.
+ */
 constexpr inline std::string_view getDescription( Unit unit )
 {
   switch( unit )
@@ -70,6 +75,10 @@ constexpr inline std::string_view getDescription( Unit unit )
   }
 }
 
+/**
+ * @param unit The unit we want the information.
+ * @return The symbol of the specified unit.
+ */
 constexpr inline std::string_view getSymbol( Unit unit )
 {
   switch( unit )
@@ -84,9 +93,16 @@ constexpr inline std::string_view getSymbol( Unit unit )
   }
 }
 
-inline string formatValue( real64 value, Unit dim )
+/**
+ * @brief Format the specified value coherently with the specified unit.
+ * @param value The value to format.
+ * @param unit The unit of the specified value.
+ * @return A string that can be easily be integrated in a sentence and takes the form 
+ * "nature" of "value" ["unit symbol"]
+ */
+inline string formatValue( real64 value, Unit unit )
 {
-  switch( dim )
+  switch( unit )
   {
     default:              return GEOS_FMT( "value of {} [?]", value );
     case Dimensionless:   return GEOS_FMT( "value of {} [1]", value );

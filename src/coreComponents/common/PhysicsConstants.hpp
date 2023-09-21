@@ -14,8 +14,7 @@
 
 /**
  * @file PhysicsConstants.hpp
- * @brief Regroups useful constants and functions relative to Units Of Measures
- * that are globally used for math and physics computations.
+ * @brief Regroups useful constants that are globally used for math and physics computations.
  */
 #ifndef GEOS_MATH_PHYSICSCONSTANTS_HPP_
 #define GEOS_MATH_PHYSICSCONSTANTS_HPP_
@@ -27,7 +26,9 @@ namespace constants
 {
 
 
-/// @brief Zero degree Celsius in Kelvin
+/**
+ * @brief Zero degree Celsius in Kelvin
+ */
 constexpr double zeroDegreesCelsiusInKelvin = 273.15;
 
 
