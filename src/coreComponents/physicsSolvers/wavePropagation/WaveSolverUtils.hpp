@@ -79,7 +79,7 @@ struct WaveSolverUtils
       if( receiverIsLocal[ircv] == 1 )
       {
         string const fn = joinPath( outputDir, GEOS_FMT( "seismoTraceReceiver_{}_{:03}.txt", name, ircv ) );
-        std::ofstream f( fn, std::ios::out );
+        std::ofstream f( fn, std::ios::out | std::ios::trunc );
       }
     } );
   }
