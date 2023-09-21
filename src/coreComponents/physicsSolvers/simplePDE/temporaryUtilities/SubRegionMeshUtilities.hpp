@@ -285,7 +285,7 @@ struct NumVertexToSubregionMesh< ARRAY_VIEW_TYPE, 6 >
 };
 // };
 
-#define USE_IJK_MESH
+// #define USE_IJK_MESH
 
 #ifdef USE_IJK_MESH
 template< typename ARRAY_VIEW_TYPE >

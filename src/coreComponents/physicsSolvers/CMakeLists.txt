@@ -103,10 +103,10 @@ set( physicsSolvers_headers
      simplePDE/LaplaceVEM.hpp
      simplePDE/LaplaceFEMKernels.hpp
      simplePDE/LaplaceVEMKernels.hpp
-     simplePDE/BasisFunctionUtilities.hpp
-     simplePDE/CellUtilities.hpp
-     simplePDE/SubRegionMeshUtilities.hpp
-     simplePDE/QuadratureUtilities.hpp
+     simplePDE/temporaryUtilities/BasisFunctionUtilities.hpp
+     simplePDE/temporaryUtilities/CellUtilities.hpp
+     simplePDE/temporaryUtilities/SubRegionMeshUtilities.hpp
+     simplePDE/temporaryUtilities/QuadratureUtilities.hpp
      simplePDE/PhaseFieldDamageFEM.hpp
      simplePDE/PhaseFieldDamageFEMKernels.hpp
      solidMechanics/SolidMechanicsFields.hpp

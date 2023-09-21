@@ -21,10 +21,10 @@
 #define GEOS_PHYSICSSOLVERS_SIMPLEPDE_LAPLACEFEMKERNELSNEW_HPP_
 
 #include "finiteElement/kernelInterface/ImplicitKernelBase.hpp"
-#include "BasisFunctionUtilities.hpp"
-#include "SubRegionMeshUtilities.hpp"
-#include "QuadratureUtilities.hpp"
 #include "finiteElement/BilinearFormUtilities.hpp"
+#include "temporaryUtilities/BasisFunctionUtilities.hpp"
+#include "temporaryUtilities/SubRegionMeshUtilities.hpp"
+#include "temporaryUtilities/QuadratureUtilities.hpp"
 
 namespace geos
 {
