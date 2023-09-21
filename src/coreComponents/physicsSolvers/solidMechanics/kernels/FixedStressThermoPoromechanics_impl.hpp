@@ -46,6 +46,7 @@ FixedStressThermoPoromechanics( NodeManager const & nodeManager,
                                 globalIndex const rankOffset,
                                 CRSMatrixView< real64, globalIndex const > const inputMatrix,
                                 arrayView1d< real64 > const inputRhs,
+                                real64 const inputDt,
                                 real64 const (&inputGravityVector)[3] ):
   Base( nodeManager,
         edgeManager,
@@ -57,7 +58,8 @@ FixedStressThermoPoromechanics( NodeManager const & nodeManager,
         inputDofNumber,
         rankOffset,
         inputMatrix,
-        inputRhs ),
+        inputRhs,
+        inputDt ),
   m_X( nodeManager.referencePosition()),
   m_disp( nodeManager.getField< fields::solidMechanics::totalDisplacement >() ),
   m_uhat( nodeManager.getField< fields::solidMechanics::incrementalDisplacement >() ),
@@ -126,7 +128,6 @@ quadraturePointKernel( localIndex const k,
 
   real64 strainInc[6] = {0};
   real64 totalStress[6] = {0};
-  real64 timeIncrement = 0.0;
 
   typename CONSTITUTIVE_TYPE::KernelWrapper::DiscretizationOps stiffness;
 
@@ -139,7 +140,7 @@ quadraturePointKernel( localIndex const k,
                                                                   q,
                                                                   m_pressure_n[k],
                                                                   m_pressure[k],
-                                                                  timeIncrement,
+                                                                  m_dt,
                                                                   m_temperature_n[k],
                                                                   m_temperature[k],
                                                                   strainInc,

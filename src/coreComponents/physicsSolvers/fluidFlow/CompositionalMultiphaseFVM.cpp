@@ -485,6 +485,7 @@ bool CompositionalMultiphaseFVM::checkSystemSolution( DomainPartition & domain,
 void CompositionalMultiphaseFVM::applySystemSolution( DofManager const & dofManager,
                                                       arrayView1d< real64 const > const & localSolution,
                                                       real64 const scalingFactor,
+                                                      real64 const GEOS_UNUSED_PARAM( dt ),
                                                       DomainPartition & domain )
 {
   GEOS_MARK_FUNCTION;
@@ -764,7 +765,7 @@ void CompositionalMultiphaseFVM::applyFaceDirichletBC( real64 const time_n,
   if( m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
   {
     bool const bcConsistent = validateFaceDirichletBC( domain, time_n + dt );
-    GEOS_ERROR_IF( !bcConsistent, GEOS_FMT( "CompositionalMultiphaseBase {}: inconsistent boundary conditions", getName() ) );
+    GEOS_ERROR_IF( !bcConsistent, GEOS_FMT( "CompositionalMultiphaseBase {}: inconsistent boundary conditions", getDataContext() ) );
   }
 
   FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();

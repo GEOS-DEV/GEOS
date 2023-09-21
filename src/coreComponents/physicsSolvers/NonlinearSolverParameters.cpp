@@ -158,10 +158,10 @@ NonlinearSolverParameters::NonlinearSolverParameters( string const & name,
 
 void NonlinearSolverParameters::postProcessInput()
 {
-  if( m_timeStepDecreaseIterLimit <= m_timeStepIncreaseIterLimit )
-  {
-    GEOS_ERROR( "timeStepIncreaseIterLimit should be smaller than timeStepDecreaseIterLimit!" );
-  }
+  GEOS_ERROR_IF_LE_MSG( m_timeStepDecreaseIterLimit, m_timeStepIncreaseIterLimit,
+                        getWrapperDataContext( viewKeysStruct::timeStepIncreaseIterLimString() ) <<
+                        ": should be smaller than " << viewKeysStruct::timeStepDecreaseIterLimString() );
+
   if( m_scalingType == ScalingType::Local && m_lineSearchAction != LineSearchAction::None )
   {
     GEOS_ERROR( GEOS_FMT( "Line search is not supported for {} = {}", viewKeysStruct::scalingTypeString(), EnumStrings< ScalingType >::toString( ScalingType::Local )) );

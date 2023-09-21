@@ -84,6 +84,7 @@ public:
   using Base::m_constitutiveUpdate;
   using Base::m_finiteElementSpace;
   using Base::m_meshData;
+  using Base::m_dt;
 
   /**
    * @brief Constructor
@@ -101,6 +102,7 @@ public:
                                   globalIndex const rankOffset,
                                   CRSMatrixView< real64, globalIndex const > const inputMatrix,
                                   arrayView1d< real64 > const inputRhs,
+                                  real64 const inputDt,
                                   real64 const (&inputGravityVector)[3] );
 
   //*****************************************************************************
@@ -260,6 +262,7 @@ using QuasiStaticFactory = finiteElement::KernelFactory< ImplicitSmallStrainQuas
                                                          globalIndex,
                                                          CRSMatrixView< real64, globalIndex const > const,
                                                          arrayView1d< real64 > const,
+                                                         real64 const,
                                                          real64 const (&)[3] >;
 
 } // namespace solidMechanicsLagrangianFEMKernels
