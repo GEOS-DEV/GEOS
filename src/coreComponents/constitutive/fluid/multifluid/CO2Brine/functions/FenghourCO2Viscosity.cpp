@@ -126,7 +126,7 @@ TableFunction const * makeViscosityTable( string_array const & inputParams,
     TableFunction * const viscosityTable = dynamicCast< TableFunction * >( functionManager.createChild( "TableFunction", tableName ) );
     viscosityTable->setTableCoordinates( tableCoords.getCoords(),
                                          { units::Pressure, units::TemperatureInC } );
-    viscosityTable->setTableValues( viscosity );
+    viscosityTable->setTableValues( viscosity, units::Viscosity );
     viscosityTable->setInterpolationMethod( TableFunction::InterpolationType::Linear );
     return viscosityTable;
   }

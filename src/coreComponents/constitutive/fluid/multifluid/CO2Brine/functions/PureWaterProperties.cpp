@@ -103,7 +103,7 @@ PureWaterProperties::makeSaturationViscosityTable( string const & functionName,
   {
     TableFunction * const viscosityTable = dynamicCast< TableFunction * >( functionManager.createChild( TableFunction::catalogName(), tableName ) );
     viscosityTable->setTableCoordinates( temperatures, { units::TemperatureInC } );
-    viscosityTable->setTableValues( viscosities );
+    viscosityTable->setTableValues( viscosities, units::Viscosity );
     viscosityTable->setInterpolationMethod( TableFunction::InterpolationType::Linear );
     return viscosityTable;
   }
@@ -183,7 +183,7 @@ PureWaterProperties::makeSaturationDensityTable( string const & functionName,
   {
     TableFunction * const densityTable = dynamicCast< TableFunction * >( functionManager.createChild( TableFunction::catalogName(), tableName ) );
     densityTable->setTableCoordinates( temperatures, { units::TemperatureInC } );
-    densityTable->setTableValues( densities );
+    densityTable->setTableValues( densities, units::Density );
     densityTable->setInterpolationMethod( TableFunction::InterpolationType::Linear );
     return densityTable;
   }
@@ -263,7 +263,7 @@ PureWaterProperties::makeSaturationPressureTable( string const & functionName,
   {
     TableFunction * const pressureTable = dynamicCast< TableFunction * >( functionManager.createChild( TableFunction::catalogName(), tableName ) );
     pressureTable->setTableCoordinates( temperatures, { units::TemperatureInC } );
-    pressureTable->setTableValues( pressures );
+    pressureTable->setTableValues( pressures, units::Pressure );
     pressureTable->setInterpolationMethod( TableFunction::InterpolationType::Linear );
     return pressureTable;
   }

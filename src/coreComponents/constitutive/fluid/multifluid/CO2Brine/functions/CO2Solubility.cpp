@@ -254,7 +254,7 @@ TableFunction const * makeSolubilityTable( string_array const & inputParams,
     TableFunction * const solubilityTable = dynamicCast< TableFunction * >( functionManager.createChild( "TableFunction", tableName ) );
     solubilityTable->setTableCoordinates( tableCoords.getCoords(),
                                           { units::Pressure, units::TemperatureInC } );
-    solubilityTable->setTableValues( values );
+    solubilityTable->setTableValues( values, units::Solubility );
     solubilityTable->setInterpolationMethod( TableFunction::InterpolationType::Linear );
     return solubilityTable;
   }

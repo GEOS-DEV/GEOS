@@ -239,7 +239,7 @@ TableFunction const * makeDensityTable( string_array const & inputParams,
   {
     TableFunction * const densityTable = dynamicCast< TableFunction * >( functionManager.createChild( "TableFunction", tableName ) );
     densityTable->setTableCoordinates( tableCoords.getCoords(), tableCoords.coordsUnits );
-    densityTable->setTableValues( densities );
+    densityTable->setTableValues( densities, units::Density );
     densityTable->setInterpolationMethod( TableFunction::InterpolationType::Linear );
     return densityTable;
   }

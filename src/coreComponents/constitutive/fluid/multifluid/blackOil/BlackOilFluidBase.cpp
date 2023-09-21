@@ -148,7 +148,7 @@ void BlackOilFluidBase::fillHydrocarbonData( integer const ip,
   TableFunction & tablePVDX_visc =
     dynamicCast< TableFunction & >( *functionManager.createChild( "TableFunction", viscosityTableName ) );
   tablePVDX_visc.setTableCoordinates( pressureCoords, { units::Pressure } );
-  tablePVDX_visc.setTableValues( viscosity );
+  tablePVDX_visc.setTableValues( viscosity, units::Viscosity );
   tablePVDX_visc.setInterpolationMethod( TableFunction::InterpolationType::Linear );
 }
 

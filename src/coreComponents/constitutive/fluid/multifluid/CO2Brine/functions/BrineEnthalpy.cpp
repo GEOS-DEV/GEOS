@@ -130,7 +130,7 @@ TableFunction const * makeCO2EnthalpyTable( string_array const & inputParams,
 
     TableFunction * const enthalpyTable = dynamicCast< TableFunction * >( functionManager.createChild( TableFunction::catalogName(), tableName ) );
     enthalpyTable->setTableCoordinates( tableCoords.getCoords(), tableCoords.coordsUnits );
-    enthalpyTable->setTableValues( enthalpies );
+    enthalpyTable->setTableValues( enthalpies, units::Enthalpy );
     enthalpyTable->setInterpolationMethod( TableFunction::InterpolationType::Linear );
     return enthalpyTable;
   }
@@ -177,7 +177,7 @@ TableFunction const * makeBrineEnthalpyTable( string_array const & inputParams,
 
     TableFunction * const enthalpyTable = dynamicCast< TableFunction * >( functionManager.createChild( TableFunction::catalogName(), tableName ) );
     enthalpyTable->setTableCoordinates( temperatures, { tableCoords.coordsUnits[1] } );
-    enthalpyTable->setTableValues( enthalpies );
+    enthalpyTable->setTableValues( enthalpies, units::Enthalpy );
     enthalpyTable->setInterpolationMethod( TableFunction::InterpolationType::Linear );
     return enthalpyTable;
   }
