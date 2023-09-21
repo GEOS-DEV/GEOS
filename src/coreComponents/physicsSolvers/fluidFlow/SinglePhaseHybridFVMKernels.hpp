@@ -89,6 +89,7 @@ void kernelLaunchSelectorFaceSwitch( T value, LAMBDA && lambda )
 struct PressureGradientKernel
 {
   template< integer NUM_FACES >
+  inline
   static void
   compute( localIndex elemIndex,
            arrayView2d< real64 const > const faceCenter,
