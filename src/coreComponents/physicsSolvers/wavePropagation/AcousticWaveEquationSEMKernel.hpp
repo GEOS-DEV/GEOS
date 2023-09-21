@@ -453,7 +453,7 @@ struct ComputeTimeStep
 
       forAll< EXEC_POLICY >( sizeNode, [=] GEOS_HOST_DEVICE ( localIndex const a )
       {
-        pView[a]/= sqrt( normPaux );
+        pView[a] = pAuxView[a]/( normPaux );
       } );
 
       if( abs( lambdaNew-lambdaOld )/abs( lambdaNew )<= epsilon )
@@ -473,9 +473,7 @@ struct ComputeTimeStep
 
     GEOS_THROW_IF( numberIter> nIterMax, "Power Iteration algorithm does not converge", std::runtime_error );
 
-    real64 const coeff = sqrt( 2 )/2.0;
-
-    real64 dt = coeff/sqrt( abs( lambdaNew ));
+    real64 dt = 1.99/sqrt( abs( lambdaNew ));
 
     return dt;
 
