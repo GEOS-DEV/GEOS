@@ -158,7 +158,41 @@ void SeismicityRateBase::updateFaultTraction( ElementSubRegionBase & subRegion )
     sig[k] = LvArray::tensorOps::AiBi< 6 >( meanStress, faultNormalProjectionTensor);
     tau[k] = LvArray::tensorOps::AiBi< 6 >( meanStress, faultShearProjectionTensor);
   } );
-}
+
+  // For poroelastic models, we must calculate the total stress before computing the effective stresses 
+  // on the fault. This requires retrieving both the pressure field and the Biot coefficient. We first check
+  // to see if a flow solver exists, retrive the pressure field, then pass the porous model through the lambda
+  // cast to access the Biot coefficient. Finally, effective stresses on the fault are calculated.
+  if ( subRegion.hasWrapper( FlowSolverBase::viewKeyStruct::fluidNamesString() ) )    
+  {
+      arrayView1d< real64 > const pres = subRegion.getField< flow::pressure >();
+
+      string const & porousSolidModelName = subRegion.getReference< string >( FlowSolverBase::viewKeyStruct::solidNamesString() );
+      CoupledSolidBase & porousSolid = getConstitutiveModel< CoupledSolidBase >( subRegion, porousSolidModelName );
+      constitutive::ConstitutivePassThru< CoupledSolidBase >::execute( porousSolid, [=, &subRegion] ( auto & castedPorousSolid )
+      {
+        // Initialize biotCoefficient as const arrayView before passing it through the lambda cast
+        arrayView1d< real64 const > biotCoefficient = castedPorousSolid.getBiotCoefficient(); 
+
+        // To calculate the action of the total stress on the fault from our previous calculations, 
+        // we need to project the action of the pore pressure on the stress tensor onto the fault
+        forAll< parallelDevicePolicy<> >(  sig.size(), [=] GEOS_HOST_DEVICE ( localIndex const k )
+        {
+          // Form pressure as tensor
+          array1d< real64 > pressureTensor( 6 );
+          LvArray::tensorOps::symAddIdentity< 3 >( pressureTensor, -biotCoefficient[k]*pres[k] );
+
+          // Project pressure tensor onto fault orientations
+          const real64 pressureOnFaultNormal = LvArray::tensorOps::AiBi< 6 >( pressureTensor, faultNormalProjectionTensor);
+          const real64 pressureOnFaultShear = LvArray::tensorOps::AiBi< 6 >( pressureTensor, faultShearProjectionTensor);
+
+          // Calculate total stress on the faults
+          sig[k] += pressureOnFaultNormal;
+          tau[k] += pressureOnFaultShear;
+        } );
+      } );
+    }
+  }
 
 void SeismicityRateBase::initializeFaultTraction(real64 const time_n, integer const cycleNumber, DomainPartition & domain)
 {
