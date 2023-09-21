@@ -20,7 +20,7 @@
 
 #include "functions/FunctionManager.hpp"
 #include "constitutive/fluid/multifluid/CO2Brine/functions/SpanWagnerCO2Density.hpp"
-#include "common/PhysicsConstants.hpp"
+#include "common/Units.hpp"
 
 namespace geos
 {

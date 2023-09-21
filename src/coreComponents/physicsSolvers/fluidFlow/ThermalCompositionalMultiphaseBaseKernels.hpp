@@ -21,7 +21,7 @@
 
 #include "physicsSolvers/fluidFlow/IsothermalCompositionalMultiphaseBaseKernels.hpp"
 
-#include "common/PhysicsConstants.hpp"
+#include "common/Units.hpp"
 
 namespace geos
 {

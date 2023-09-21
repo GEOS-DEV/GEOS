@@ -18,7 +18,7 @@
 
 #include "common/DataTypes.hpp"
 
-#include "common/PhysicsConstants.hpp"
+#include "common/Units.hpp"
 
 #ifndef GEOS_CONSTITUTIVE_FLUID_MULTIFLUID_CO2BRINE_FUNCTIONS_PVTFUNCTIONHELPERS_HPP_
 #define GEOS_CONSTITUTIVE_FLUID_MULTIFLUID_CO2BRINE_FUNCTIONS_PVTFUNCTIONHELPERS_HPP_

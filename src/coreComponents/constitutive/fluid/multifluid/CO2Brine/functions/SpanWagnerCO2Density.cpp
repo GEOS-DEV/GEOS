@@ -20,7 +20,7 @@
 
 #include "constitutive/fluid/multifluid/CO2Brine/functions/CO2EOSSolver.hpp"
 #include "functions/FunctionManager.hpp"
-#include "common/PhysicsConstants.hpp"
+#include "common/Units.hpp"
 
 namespace geos
 {
