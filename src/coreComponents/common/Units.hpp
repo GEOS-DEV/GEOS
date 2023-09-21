@@ -68,6 +68,18 @@ enum Unit : integer
 
   /// Time in seconds
   Time,
+
+  /// Viscosity in Pa*s
+  Viscosity,
+
+  /// Density in kg/m³
+  Density,
+
+  /// Enthalpy in J/kg
+  Enthalpy,
+
+  /// Solubility in g/L
+  Solubility,
 };
 
 
