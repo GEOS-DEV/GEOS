@@ -17,7 +17,6 @@
  */
 
 #include "common/DataTypes.hpp"
-
 #include "common/Units.hpp"
 
 #ifndef GEOS_CONSTITUTIVE_FLUID_MULTIFLUID_CO2BRINE_FUNCTIONS_PVTFUNCTIONHELPERS_HPP_
@@ -200,15 +199,15 @@ initializePropertyTable( string_array const & inputParameters,
     GEOS_THROW_IF( PStart >= PEnd, "PStart must be strictly smaller than PEnd",
                    InputError );
 
-    constexpr real64 T_K = constants::zeroDegreesCelsiusInKelvin;
-
-    real64 const TStart = stod( inputParameters[5] ) - T_K;
-    real64 const TEnd = stod( inputParameters[6] )- T_K;
+    real64 const TStart = units::convertKToC( stod( inputParameters[5] ) );
+    real64 const TEnd = units::convertKToC( stod( inputParameters[6] ) );
     real64 const dT = stod( inputParameters[7] );
 
-    GEOS_THROW_IF( TStart < 10, "Temperature must be in Kelvin and must be larger than 283.15 K",
+    real64 const minT = 10;
+    real64 const maxT = 350;
+    GEOS_THROW_IF( TStart < minT, "Temperature must be in Kelvin and must be larger than " << minT << " K",
                    InputError );
-    GEOS_THROW_IF( TEnd > 350, "Temperature must be in Kelvin and must be smaller than 623.15 K",
+    GEOS_THROW_IF( TEnd > maxT, "Temperature must be in Kelvin and must be smaller than " << maxT << " K",
                    InputError );
     GEOS_THROW_IF( TStart >= TEnd, "TStart must be strictly smaller than TEnd",
                    InputError );
