@@ -58,7 +58,6 @@
       discretization="FE1"
       targetRegions="{ Solid }"
       sourceCoordinates="{ }"
-      timeSourceFrequency="0"
       outputSeismoTrace="1"
       dtSeismoTrace="1e-3"
       receiverCoordinates="{ { 2500.0000, 1200, 1866.6667 },

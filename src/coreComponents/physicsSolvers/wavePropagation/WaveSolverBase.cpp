@@ -51,15 +51,15 @@ WaveSolverBase::WaveSolverBase( const std::string & name,
     setSizedFromParent( 0 ).
     setDescription( "Source Value of the sources" );
 
-  registerWrapper( viewKeyStruct::timeSourceFrequencyString(), &m_timeSourceFrequency ).
-    setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "Central frequency for the time source" );
-
-
   registerWrapper( viewKeyStruct::receiverCoordinatesString(), &m_receiverCoordinates ).
     setInputFlag( InputFlags::REQUIRED ).
     setSizedFromParent( 0 ).
     setDescription( "Coordinates (x,y,z) of the receivers" );
+
+  registerWrapper( viewKeyStruct::timeSourceFrequencyString(), &m_timeSourceFrequency ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( 0 ).
+    setDescription( "Central frequency for the time source" );
 
   registerWrapper( viewKeyStruct::timeSourceDelayString(), &m_timeSourceDelay ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -190,7 +190,7 @@ void WaveSolverBase::registerDataOnMesh( Group & meshBodies )
   {
     NodeManager & nodeManager = mesh.getNodeManager();
 
-    nodeManager.registerField< fields::referencePosition32 >( this->getName() );
+    nodeManager.registerField< fields::referencePosition32 >( getName() );
     arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X = nodeManager.referencePosition().toViewConst();
 
     nodeManager.getField< fields::referencePosition32 >().resizeDimension< 1 >( X.size( 1 ) );
@@ -267,14 +267,14 @@ void WaveSolverBase::postProcessInput()
                  "Invalid number of physical coordinates for the receivers",
                  InputError );
 
-  EventManager const & event = this->getGroupByPath< EventManager >( "/Problem/Events" );
+  EventManager const & event = getGroupByPath< EventManager >( "/Problem/Events" );
   real64 const & maxTime = event.getReference< real64 >( EventManager::viewKeyStruct::maxTimeString() );
   real64 const & minTime = event.getReference< real64 >( EventManager::viewKeyStruct::minTimeString() );
   real64 dt = 0;
   for( localIndex numSubEvent = 0; numSubEvent < event.numSubGroups(); ++numSubEvent )
   {
     EventBase const * subEvent = static_cast< EventBase const * >( event.getSubGroups()[numSubEvent] );
-    if( subEvent->getEventName() == "/Solvers/" + this->getName() )
+    if( subEvent->getEventName() == "/Solvers/" + getName() )
     {
       dt = subEvent->getReference< real64 >( EventBase::viewKeyStruct::forceDtString() );
     }
@@ -295,10 +295,6 @@ void WaveSolverBase::postProcessInput()
   localIndex const numSourcesGlobal = m_sourceCoordinates.size( 0 );
   m_sourceValue.resize( nsamples, numSourcesGlobal );
 
-  forAll< serialPolicy >( m_nsamplesSeismoTrace, [=] ( localIndex const ircv )
-  {
-
-  } );
 }
 
 void WaveSolverBase::initializeDAS()
@@ -356,7 +352,7 @@ real64 WaveSolverBase::explicitStep( real64 const & time_n,
 
 localIndex WaveSolverBase::getNumNodesPerElem()
 {
-  DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
+  DomainPartition & domain = getGroupByPath< DomainPartition >( "/Problem/domain" );
 
   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
 

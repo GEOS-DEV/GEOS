@@ -116,7 +116,7 @@ ElasticWaveEquationSEM::~ElasticWaveEquationSEM()
 
 localIndex ElasticWaveEquationSEM::getNumNodesPerElem()
 {
-  DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
+  DomainPartition & domain = getGroupByPath< DomainPartition >( "/Problem/domain" );
 
   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
 
@@ -236,7 +236,7 @@ void ElasticWaveEquationSEM::postProcessInput()
   GEOS_ERROR_IF( m_receiverCoordinates.size( 0 ) > 0 && m_receiverCoordinates.size( 1 ) != 3,
                  "Invalid number of physical coordinates for the receivers" );
 
-  EventManager const & event = this->getGroupByPath< EventManager >( "/Problem/Events" );
+  EventManager const & event = getGroupByPath< EventManager >( "/Problem/Events" );
   real64 const & maxTime = event.getReference< real64 >( EventManager::viewKeyStruct::maxTimeString() );
   real64 dt = 0;
   for( localIndex numSubEvent = 0; numSubEvent < event.numSubGroups(); ++numSubEvent )
@@ -313,7 +313,7 @@ void ElasticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh, 
   arrayView2d< real32 > const sourceValue = m_sourceValue.toView();
 
   real64 dt = 0;
-  EventManager const & event = this->getGroupByPath< EventManager >( "/Problem/Events" );
+  EventManager const & event = getGroupByPath< EventManager >( "/Problem/Events" );
   for( localIndex numSubEvent = 0; numSubEvent < event.numSubGroups(); ++numSubEvent )
   {
     EventBase const * subEvent = static_cast< EventBase const * >( event.getSubGroups()[numSubEvent] );
@@ -368,9 +368,9 @@ void ElasticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh, 
         receiverConstants,
         sourceValue,
         dt,
-        this->m_timeSourceFrequency,
-        this->m_timeSourceDelay,
-        this->m_rickerOrder,
+        m_timeSourceFrequency,
+        m_timeSourceDelay,
+        m_rickerOrder,
         m_sourceForce,
         m_sourceMoment );
     } );
@@ -434,7 +434,7 @@ void ElasticWaveEquationSEM::computeDAS ( arrayView2d< real32 > const xCompRcv,
   }
 
   /// temporary output to txt
-  if( this->m_outputSeismoTrace == 1 )
+  if( m_outputSeismoTrace == 1 )
   {
     forAll< serialPolicy >( numReceiversGlobal, [=] ( localIndex const ircv )
     {
@@ -508,10 +508,9 @@ void ElasticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
 {
   WaveSolverBase::initializePostInitialConditionsPreSubGroups();
 
-  DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
+  DomainPartition & domain = getGroupByPath< DomainPartition >( "/Problem/domain" );
 
-  real64 const time = 0.0;
-  applyFreeSurfaceBC( time, domain );
+  applyFreeSurfaceBC( 0.0, domain );
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,

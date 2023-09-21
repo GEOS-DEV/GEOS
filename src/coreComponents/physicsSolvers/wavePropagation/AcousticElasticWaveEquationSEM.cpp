@@ -35,9 +35,9 @@ void AcousticElasticWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
                                                     arrayView1d< string const > const & )
   {
     NodeManager & nodeManager = mesh.getNodeManager();
-    nodeManager.registerField< fields::CouplingVectorx >( this->getName() );
-    nodeManager.registerField< fields::CouplingVectory >( this->getName() );
-    nodeManager.registerField< fields::CouplingVectorz >( this->getName() );
+    nodeManager.registerField< fields::CouplingVectorx >( getName() );
+    nodeManager.registerField< fields::CouplingVectory >( getName() );
+    nodeManager.registerField< fields::CouplingVectorz >( getName() );
   } );
 }
 
@@ -62,7 +62,7 @@ void AcousticElasticWaveEquationSEM::initializePostInitialConditionsPreSubGroups
   m_acousRegions = acousSolver->getReference< array1d< string > >( SolverBase::viewKeyStruct::targetRegionsString() );
   m_elasRegions = elasSolver->getReference< array1d< string > >( SolverBase::viewKeyStruct::targetRegionsString() );
 
-  DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
+  DomainPartition & domain = getGroupByPath< DomainPartition >( "/Problem/domain" );
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,

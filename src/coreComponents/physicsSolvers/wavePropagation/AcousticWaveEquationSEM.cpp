@@ -147,7 +147,7 @@ void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh,
 
   arrayView2d< real32 > const sourceValue = m_sourceValue.toView();
   real64 dt = 0;
-  EventManager const & event = this->getGroupByPath< EventManager >( "/Problem/Events" );
+  EventManager const & event = getGroupByPath< EventManager >( "/Problem/Events" );
   for( localIndex numSubEvent = 0; numSubEvent < event.numSubGroups(); ++numSubEvent )
   {
     EventBase const * subEvent = static_cast< EventBase const * >( event.getSubGroups()[numSubEvent] );
@@ -203,9 +203,9 @@ void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh,
           receiverConstants,
           sourceValue,
           dt,
-          this->m_timeSourceFrequency,
-          this->m_timeSourceDelay,
-          this->m_rickerOrder );
+          m_timeSourceFrequency,
+          m_timeSourceDelay,
+          m_rickerOrder );
       }
     } );
   } );
@@ -242,10 +242,9 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
   if( m_usePML )
     AcousticWaveEquationSEM::initializePML();
 
-  DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
+  DomainPartition & domain = getGroupByPath< DomainPartition >( "/Problem/domain" );
 
-  real64 const time = 0.0;
-  applyFreeSurfaceBC( time, domain );
+  applyFreeSurfaceBC( 0.0, domain );
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
@@ -423,7 +422,7 @@ void AcousticWaveEquationSEM::initializePML()
   } );
 
   /// Now compute the PML parameters above internally
-  DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
+  DomainPartition & domain = getGroupByPath< DomainPartition >( "/Problem/domain" );
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
                                                                 arrayView1d< string const > const & )
@@ -856,7 +855,7 @@ real64 AcousticWaveEquationSEM::explicitStepBackward( real64 const & time_n,
     arrayView1d< real32 > const p_n = nodeManager.getField< fields::Pressure_n >();
     arrayView1d< real32 > const p_np1 = nodeManager.getField< fields::Pressure_np1 >();
 
-    EventManager const & event = this->getGroupByPath< EventManager >( "/Problem/Events" );
+    EventManager const & event = getGroupByPath< EventManager >( "/Problem/Events" );
     real64 const & maxTime = event.getReference< real64 >( EventManager::viewKeyStruct::maxTimeString() );
     int const maxCycle = int(round( maxTime/dt ));
 
@@ -976,7 +975,7 @@ void AcousticWaveEquationSEM::computeUnknowns( real64 const & time_n,
                                                           "",
                                                           kernelFactory );
 
-  EventManager const & event = this->getGroupByPath< EventManager >( "/Problem/Events" );
+  EventManager const & event = getGroupByPath< EventManager >( "/Problem/Events" );
   real64 const & minTime = event.getReference< real64 >( EventManager::viewKeyStruct::minTimeString() );
   integer const cycleForSource = int(round( -minTime/dt + cycleNumber ));
   addSourceToRightHandSide( cycleForSource, rhs );

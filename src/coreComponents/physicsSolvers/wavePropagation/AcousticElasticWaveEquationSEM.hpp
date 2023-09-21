@@ -74,7 +74,7 @@ public:
     {
       using SolverPtr = TYPEOFREF( solver );
       using SolverType = TYPEOFPTR( SolverPtr {} );
-      solver = this->getParent().template getGroupPointer< SolverType >( m_names[idx()] );
+      solver = getParent().template getGroupPointer< SolverType >( m_names[idx()] );
       GEOS_THROW_IF( solver == nullptr,
                      GEOS_FMT( "Could not find solver '{}' of type {}",
                                m_names[idx()], LvArray::system::demangleType< SolverType >() ),
