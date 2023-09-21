@@ -53,7 +53,7 @@ public:
                        arrayView1d< real64 > const & biotCoefficient,
                        arrayView1d< real64 > const & thermalExpansionCoefficient,
                        arrayView2d< real64 > const & meanTotalStressIncrement_k,
-                       arrayView1d< real64 const > const & averageMeanTotalStressIncrement_k,
+                       arrayView1d< real64 > const & averageMeanTotalStressIncrement_k,
                        arrayView1d< real64 > const & bulkModulus,
                        real64 const & grainBulkModulus ): PorosityBaseUpdates( newPorosity,
                                                                                porosity_n,
