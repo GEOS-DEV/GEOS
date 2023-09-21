@@ -36,7 +36,7 @@ namespace geos
  * @tparam UNUSED An unused parameter since we are assuming that the test and
  *                trial space have the same number of support points.
  *
- * ### LaplaceFEMKernel Description
+ * ### LaplaceVEMKernel Description
  * Implements the KernelBase interface functions required for solving Laplace's
  * equation using on of the finite element kernel application functions such as
  * geos::finiteElement::RegionBasedKernelApplication.
@@ -154,7 +154,7 @@ public:
    * @brief Copy global values from primary field to a local stack array.
    * @copydoc geos::finiteElement::ImplicitKernelBase::setup
    *
-   * For the LaplaceFEMKernel implementation, global values from the
+   * For the LaplaceVEMKernel implementation, global values from the
    * primaryField, and degree of freedom numbers are placed into element local
    * stack storage.
    */
@@ -255,7 +255,7 @@ protected:
 
 };
 
-/// The factory used to construct a LaplaceFEMKernel.
+/// The factory used to construct a LaplaceVEMKernel.
 using LaplaceVEMKernelFactory = finiteElement::KernelFactory< LaplaceVEMKernel,
                                                               arrayView1d< globalIndex const > const,
                                                               globalIndex const,

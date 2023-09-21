@@ -192,7 +192,7 @@ public:
    */
   GEOS_HOST_DEVICE
   inline
-  void quadraturePointKernel( localIndex const k, //CellIndexType const k,
+  void quadraturePointKernel( localIndex const k,
                               localIndex const q,
                               StackVariables & stack ) const
   {
@@ -275,12 +275,14 @@ protected:
   /// The global primary field array.
   arrayView1d< real64 const > const m_primaryField;
 
-  // using subregionMeshType = isoparametricMesh< traits::ViewTypeConst< typename SUBREGION_TYPE::NodeMapType::base_type > >;
+  /// The type of mesh describing the subregion (e.g., unstructured, IJK)
   using SubregionMeshType = typename NumVertexToSubregionMesh< traits::ViewTypeConst< typename SUBREGION_TYPE::NodeMapType::base_type >,
                                                                FE_TYPE::numNodes >::type;
+
+  /// The subregion mesh iterable object 
   SubregionMeshType m_subregionMesh;
 
-  using CellIndexType = typename SubregionMeshType::CellIndexType;
+  /// The cell type in the subregion collection
   using CellType = typename SubregionMeshType::CellType;
 };
 
