@@ -279,7 +279,7 @@ protected:
   using SubregionMeshType = typename NumVertexToSubregionMesh< traits::ViewTypeConst< typename SUBREGION_TYPE::NodeMapType::base_type >,
                                                                FE_TYPE::numNodes >::type;
 
-  /// The subregion mesh iterable object 
+  /// The subregion mesh iterable object
   SubregionMeshType m_subregionMesh;
 
   /// The cell type in the subregion collection
