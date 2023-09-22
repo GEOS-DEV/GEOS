@@ -14,6 +14,7 @@ set( events_headers
      mpmEvents/MaterialSwapMPMEvent.hpp
      mpmEvents/AnnealMPMEvent.hpp
      mpmEvents/HealMPMEvent.hpp
+     mpmEvents/CrystalHealMPMEvent.hpp
      mpmEvents/InsertPeriodicContactSurfacesMPMEvent.hpp
      mpmEvents/MachineSampleMPMEvent.hpp
      mpmEvents/FrictionCoefficientSwapMPMEvent.hpp
@@ -35,6 +36,7 @@ set( events_sources
      mpmEvents/MaterialSwapMPMEvent.cpp
      mpmEvents/AnnealMPMEvent.cpp
      mpmEvents/HealMPMEvent.cpp
+     mpmEvents/CrystalHealMPMEvent.cpp
      mpmEvents/InsertPeriodicContactSurfacesMPMEvent.cpp
      mpmEvents/MachineSampleMPMEvent.cpp
      mpmEvents/FrictionCoefficientSwapMPMEvent.cpp

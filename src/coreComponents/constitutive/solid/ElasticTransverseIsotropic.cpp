@@ -38,7 +38,8 @@ ElasticTransverseIsotropic::ElasticTransverseIsotropic( string const & name, Gro
   m_c44(),
   m_c66(),
   m_effectiveBulkModulus(),
-  m_effectiveShearModulus()
+  m_effectiveShearModulus(),
+  m_materialDirection()
 {
   registerWrapper( viewKeyStruct::defaultYoungModulusTransverseString(), &m_defaultYoungModulusTransverse ).
     setApplyDefaultValue( -1 ).
@@ -117,10 +118,22 @@ ElasticTransverseIsotropic::ElasticTransverseIsotropic( string const & name, Gro
   registerWrapper( viewKeyStruct::effectiveShearModulusString(), &m_effectiveShearModulus ).
     setInputFlag( InputFlags::FALSE).
     setDescription( "Effective shear modulus for stress control and wavespeed calculations");
+
+  registerWrapper( viewKeyStruct::materialDirectionString(), &m_materialDirection ).
+    setPlotLevel( PlotLevel::NOPLOT ).
+    setDescription( "Material direction" );
 }
 
 ElasticTransverseIsotropic::~ElasticTransverseIsotropic()
 {}
+
+void ElasticTransverseIsotropic::allocateConstitutiveData( dataRepository::Group & parent, 
+                                                           localIndex const numConstitutivePointsPerParentIndex )
+{
+  SolidBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
+
+  m_materialDirection.resize( 0, 3 );
+}
 
 void ElasticTransverseIsotropic::postProcessInput()
 {
@@ -149,15 +162,15 @@ void ElasticTransverseIsotropic::postProcessInput()
       c11 = ( 1.0 - Nuta * Nuat ) * Et / delta;
       c13 = Nuat * ( 1.0 + Nut ) * Et / delta;
       c33 = ( 1.0 - Nut * Nut ) * Ea / delta;
-      c44 = Gat;
-      c66 = 0.5 * Et / ( 1.0 + Nut );
+      c44 = 2.0 * Gat;
+      c66 = Et / ( 1.0 + Nut );
     }
   } 
   else 
   {
-    Et = 4 * c66 * (c11 * c33 - c66 * c33 - c13 * c13) / ( c11 * c33 * c13 * c13 );
+    Et = 4 * c66 * (c11 * c33 - c66 * c33 - c13 * c13) / ( c11 * c33 - c13 * c13 );
     Ea = c33 - c13 * c13 / ( c11 - c66 );
-    Gat = c66;
+    Gat = c44 / 2.0;
     Nut = 4 * (c11 * c33 - c66 * c33 - c13 * c13 ) / ( c11 * c33 - c13 * c13 ) - 1;
     Nuat = c13 / ( 2 * ( c11 - c66 ) );
   }

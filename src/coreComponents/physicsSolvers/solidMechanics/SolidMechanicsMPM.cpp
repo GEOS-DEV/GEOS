@@ -49,6 +49,7 @@
 #include "events/mpmEvents/MaterialSwapMPMEvent.hpp"
 #include "events/mpmEvents/AnnealMPMEvent.hpp"
 #include "events/mpmEvents/HealMPMEvent.hpp"
+#include "events/mpmEvents/CrystalHealMPMEvent.hpp"
 #include "events/mpmEvents/InsertPeriodicContactSurfacesMPMEvent.hpp"
 #include "events/mpmEvents/MachineSampleMPMEvent.hpp"
 #include "events/mpmEvents/FrictionCoefficientSwapMPMEvent.hpp"
@@ -909,8 +910,8 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
     arrayView2d< real64 const > const particlePosition = subRegion.getParticleCenter();
     arrayView1d< real64 const > const particleVolume = subRegion.getParticleVolume();
     arrayView3d< real64 const > const particleRVectors = subRegion.getParticleRVectors();
-    arrayView2d< real64 > const particleDisplacement = subRegion.getParticleDisplacement();
 
+    arrayView2d< real64 > const particleDisplacement = subRegion.getParticleDisplacement();
     arrayView2d< real64 > const particleBodyForce = subRegion.getField< fields::mpm::particleBodyForce >();
     arrayView2d< real64 > const particlePlasticStrain = subRegion.getField< fields::mpm::particlePlasticStrain >(); 
     arrayView1d< real64 > const particleDensity = subRegion.getField< fields::mpm::particleDensity >();
@@ -1651,6 +1652,66 @@ void SolidMechanicsMPM::triggerEvents( const real64 dt,
           event.setIsComplete( 1 );
       }
 
+      // if( event.getName() == "CrystalHeal" ){
+      //   CrystalHealMPMEvent & crystalHeal = dynamicCast< CrystalHealMPMEvent & >( event );
+
+      //   int healType = crystalHeal.getHealType();
+      //   ParticleRegion & targetParticleRegion = particleManager.getRegion< ParticleRegion >( crystalHeal.getTargetRegion() );
+        
+      //   // Copy particle data from source sub region to destination sub region
+      //   auto & targetSubRegions = targetParticleRegion.getSubRegions();
+      //   for( int r=0; r < targetSubRegions.size(); ++r)
+      //   {
+      //     ParticleSubRegion & targetSubRegion = dynamicCast< ParticleSubRegion & >( *targetSubRegions[r] );
+    
+      //     arrayView2d< real64 > const particleStress = targetSubRegion.getField< fields::mpm::particleStress >();
+      //     arrayView1d< real64 > const particleDamage = subRegion.getParticleDamage();
+      //     arrayView3d< real64 > const particleRVectors = subRegion.getParticleRVectors();
+      //     arrayView2d< real64 const > const particleDamageGradient = targetSubRegion.getField< fields::mpm::particleDamageGradient >();
+      //     arrayView3d< real64 const > const particleDeformationGradient = targetSubRegion.getField< fields::mpm::particleDeformationGradient >();
+      //     arrayView1d< real64 > const sourceParticleInitialVolume = sourceSubRegion.getField< fields::mpm::particleInitialVolume >();
+
+      //     // CC: TODO Need to add this for Mike
+      //     // arrayView1d< real64 const > const particleReferencePorosity = targetSubRegion.getField< fields::mpm::particleReferencePorosity >();
+
+      //     SortedArrayView< localIndex const > const activeParticleIndices = targetSubRegion.activeParticleIndices();
+      //     forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST ( localIndex const pp )
+      //     {
+      //       localIndex const p = activeParticleIndices[pp];
+
+      //       real64 temp[3];
+      //       LvArray::tensorOps::Ri_eq_symAijBj< 3 >( temp, stress, particleDamageGradient[p] );
+      //       real64 normalStress = LvArray::tensorOps::AiBi< 3 >( particleDamageGradient[p], temp );
+
+      //       real64 detF = LvArray::tensorOps::determinant< 3 >( particleDeformationGradient[p] );
+      //       if( ( healType == 1 || ( healType == 0 && ( normalStress || detF < 1.0 ) ) ) && particleDamage[p] > 0.0 )
+      //       {
+      //         if( detF > 1.0 )
+      //         {
+      //         // particleReferencePorosity[p] = 1.0 - 1.0 / detF;
+                
+      //           real64 power = m_planeStrain ? 0.5 : 1.0 / 3.0;
+      //           real64 scaling = std::powd( detF, power );
+      //           LvArray::tensorOps::scale< 3, 3 >( particleDeformationGradient[p], scaling );
+
+      //           LvArray::tensorOps::scale< 3 >( particleRVectors[p][0], scaling );
+      //           LvArray::tensorOps::scale< 3 >( particleRVectors[p][1], scaling );
+
+      //           if( !m_planeStrain )
+      //           {
+      //             LvArray::tensorOps::scale< 3 >( particleRVectors[p][2], scaling );
+      //           }
+
+      //           particleInitialVolume[p] *= detF;
+      //         }
+
+      //       }
+      //     } );
+
+      //   }
+
+      // }
+
       if( event.getName() == "MachineSample" )
       {
           MachineSampleMPMEvent & machineSample = dynamicCast< MachineSampleMPMEvent & >( event );
@@ -1969,9 +2030,10 @@ void SolidMechanicsMPM::performMaterialSwap( ParticleManager & particleManager,
     sourceSubRegion.setActiveParticleIndices();
     destinationSubRegion.setActiveParticleIndices();
   }
-  // Need to resize regions too
-  destinationParticleRegion.resize(sourceParticleRegion.size());
-  sourceParticleRegion.resize(0);
+  // CC: may not need this now
+  // // Need to resize regions too
+  // destinationParticleRegion.resize(sourceParticleRegion.size());
+  // sourceParticleRegion.resize(0);
   
   // // CC: debugging
   // GEOS_LOG_RANK_0("Source region has " << sourceSubRegions.size() << " subregions and " << sourceParticleRegion.getNumberOfParticles() << " particles.");
@@ -3858,7 +3920,7 @@ void SolidMechanicsMPM::stressControl( real64 dt,
       bulkModulus = elasticIsotropic.bulkModulus();
     }
 
-    if( constitutiveModelName == "Graphite" || constitutiveModelName == "ElasticTransverseIsotropic" ){
+    if( constitutiveModelName == "Graphite" || constitutiveModelName == "ElasticTransverseIsotropic" || constitutiveModelName == "ElasticTransverseIsotropicPressureDependent" ){
       const ElasticTransverseIsotropic & elasticTransverseIsotropic = dynamic_cast< const ElasticTransverseIsotropic & >( solidModel );
       bulkModulus = elasticTransverseIsotropic.effectiveBulkModulus();
     }
@@ -4954,7 +5016,7 @@ real64 SolidMechanicsMPM::getStableTimeStep( ParticleManager & particleManager )
       shearModulus = elasticIsotropic.shearModulus();
     }
 
-    if( constitutiveModelName == "Graphite" || constitutiveModelName == "ElasticTransverseIsotropic" ){
+    if( constitutiveModelName == "Graphite" || constitutiveModelName == "ElasticTransverseIsotropic" || constitutiveModelName == "ElasticTransverseIsotropicPressureDependent" ){
       const ElasticTransverseIsotropic & elasticTransverseIsotropic = dynamic_cast< const ElasticTransverseIsotropic & >( constitutiveRelation );
       bulkModulus = elasticTransverseIsotropic.effectiveBulkModulus();
       shearModulus = elasticTransverseIsotropic.effectiveShearModulus();
@@ -5925,7 +5987,7 @@ inline void GEOS_DEVICE SolidMechanicsMPM::computeGeneralizedVortexMMSBodyForce(
       shearModulus = elasticIsotropic.shearModulus();
     }
 
-    if( constitutiveModelName == "Graphite" || constitutiveModelName == "ElasticTransverseIsotropic" ){
+    if( constitutiveModelName == "Graphite" || constitutiveModelName == "ElasticTransverseIsotropic" || constitutiveModelName == "ElasticTransverseIsotropicPressureDependent" ){
       ElasticTransverseIsotropic & elasticTransverseIsotropic = dynamic_cast< ElasticTransverseIsotropic & >( constitutiveRelation );
       shearModulus = elasticTransverseIsotropic.effectiveShearModulus();
     }

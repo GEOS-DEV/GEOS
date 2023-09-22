@@ -58,7 +58,12 @@ public:
    * @param[in] oldStress The ArrayView holding the old stress data for each point.
    * @param[in] disableInelasticity Flag to disable plastic response for inelastic models.
    */
-  ElasticTransverseIsotropicPressureDependentUpdates( real64 const & dc11dp,
+  ElasticTransverseIsotropicPressureDependentUpdates( real64 const & refC11,
+                                                      real64 const & refC13,
+                                                      real64 const & refC33,
+                                                      real64 const & refC44,
+                                                      real64 const & refC66,
+                                                      real64 const & dc11dp,
                                                       real64 const & dc13dp,
                                                       real64 const & dc33dp,
                                                       real64 const & dc44dp,
@@ -70,6 +75,7 @@ public:
                                                       arrayView1d< real64 > const & c66,
                                                       arrayView1d< real64 > const & effectiveBulkModulus,
                                                       arrayView1d< real64 > const & effectiveShearModulus,
+                                                      arrayView2d< real64 > const & materialDirection,
                                                       arrayView1d< real64 > const & thermalExpansionCoefficient,
                                                       arrayView3d< real64, solid::STRESS_USD > const & newStress,
                                                       arrayView3d< real64, solid::STRESS_USD > const & oldStress,
@@ -80,11 +86,17 @@ public:
                                        c44, 
                                        c66, 
                                        effectiveBulkModulus,
-                                       effectiveShearModulus, 
+                                       effectiveShearModulus,
+                                       materialDirection, 
                                        thermalExpansionCoefficient, 
                                        newStress, 
                                        oldStress, 
                                        disableInelasticity ),
+    m_refC11( refC11 ),
+    m_refC13( refC13 ),
+    m_refC33( refC33 ),
+    m_refC44( refC44 ),
+    m_refC66( refC66 ),
     m_dc11dp( dc11dp ),
     m_dc13dp( dc13dp ),
     m_dc33dp( dc33dp ),
@@ -173,6 +185,20 @@ public:
   virtual void getElasticStiffness( localIndex const k, localIndex const q, real64 ( &stiffness )[6][6] ) const override;
 
 protected:
+  /// The reference 11 component of the Voigt stiffness tensor at 0 pressure
+  real64 const m_refC11;
+
+  /// The reference 13 component of the Voigt stiffness tensor at 0 pressure
+  real64 const m_refC13;
+
+  /// The reference 33 component of the Voigt stiffness tensor at 0 pressure
+  real64 const m_refC33;
+
+  /// The reference 44 component of the Voigt stiffness tensor at 0 pressure
+  real64 const m_refC44;
+
+  /// The reference 66 component of the Voigt stiffness tensor at 0 pressure
+  real64 const m_refC66;
 
   /// The pressure derivative of 11 component of the Voigt stiffness tensor.
   real64 const m_dc11dp;
@@ -285,37 +311,15 @@ void ElasticTransverseIsotropicPressureDependentUpdates::smallStrainUpdate_Stres
                                                                                         real64 const ( &strainIncrement )[6],
                                                                                         real64 ( & stress )[6] ) const
 {
+  GEOS_UNUSED_VAR( k );
+  GEOS_UNUSED_VAR( q );
   GEOS_UNUSED_VAR( timeIncrement );
+  GEOS_UNUSED_VAR( strainIncrement );
+  GEOS_UNUSED_VAR( stress );
 
-  // CC: Update elastic constants according to stress state (e.g. either effective or actual bulk, shear, and wavespeeds for MPM solver)
-  // CC: TODO Check for negative elastic constants might be needed
-  real64 pressure = (-1.0/3.0)*(stress[0] + stress[1] + stress[2]);
-
-  m_c11[k] += m_dc11dp * pressure;
-  m_c13[k] += m_dc13dp * pressure;
-  m_c33[k] += m_dc33dp * pressure;
-  m_c44[k] += m_dc44dp * pressure;
-  m_c66[k] += m_dc66dp * pressure;
-
-  real64 c11 = m_c11[k];
-  real64 c13 = m_c13[k];
-  real64 c33 = m_c33[k];
-  // real64 c44 = m_c44[k];
-  real64 c66 = m_c66[k];
-
-  // CC: this should be replaced by conversions like in elastic isotropci and hyperelastic model
-  real64 Et = 4 * c66 * (c11 * c33 - c66 * c33 - c13 * c13) / ( c11 * c33 * c13 * c13 );
-  real64 Ea = c33 - c13 * c13 / ( c11 - c66 );
-  // real64 Gat = c66;
-  real64 Nut = 4 * (c11 * c33 - c66 * c33 - c13 * c13 ) / ( c11 * c33 - c13 * c13 ) - 1;
-  real64 Nuat = c13 / ( 2 * ( c11 - c66 ) );
-
-  m_effectiveBulkModulus[k] = -Et*Ea/(2*Ea*(Nut+Nuat-1) + Et*(2*Nuat-1));
-  m_effectiveShearModulus[k] = 0.6*m_effectiveBulkModulus[k];
-
-  smallStrainNoStateUpdate_StressOnly( k, q, strainIncrement, stress ); // stress = incrementalStress
-  LvArray::tensorOps::add< 6 >( stress, m_oldStress[k][q] );            // stress += m_oldStress
-  saveStress( k, q, stress );                                           // m_newStress = stress
+  // smallStrainNoStateUpdate_StressOnly( k, q, strainIncrement, stress ); // stress = incrementalStress
+  // LvArray::tensorOps::add< 6 >( stress, m_oldStress[k][q] );            // stress += m_oldStress
+  // saveStress( k, q, stress );                                           // m_newStress = stress
 }
 
 GEOS_HOST_DEVICE
@@ -328,13 +332,39 @@ void ElasticTransverseIsotropicPressureDependentUpdates::smallStrainUpdate_Stres
                                                          real64 const ( & strainIncrement )[6],
                                                          real64 ( & stress )[6] ) const
 {
-  GEOS_UNUSED_VAR( beginningRotation );
-  GEOS_UNUSED_VAR( endRotation );
-  smallStrainUpdate_StressOnly( k,
-                                q,
-                                timeIncrement,
-                                strainIncrement,
-                                stress );
+  // CC: Update elastic constants according to stress state (e.g. either effective or actual bulk, shear, and wavespeeds for MPM solver)
+  // CC: TODO Check for negative elastic constants might be needed
+  real64 pressure = (-1.0/3.0)*(stress[0] + stress[1] + stress[2]);
+
+  m_c11[k] = m_refC11 + m_dc11dp * pressure;
+  m_c13[k] = m_refC13 + m_dc13dp * pressure;
+  m_c33[k] = m_refC33 + m_dc33dp * pressure;
+  m_c44[k] = m_refC44 + m_dc44dp * pressure;
+  m_c66[k] = m_refC66 + m_dc66dp * pressure;
+
+  real64 c11 = m_c11[k];
+  real64 c13 = m_c13[k];
+  real64 c33 = m_c33[k];
+  // real64 c44 = m_c44[k];
+  real64 c66 = m_c66[k];
+
+  // CC: this should be replaced by conversions like in elastic isotropci and hyperelastic model
+  real64 Et = 4 * c66 * (c11 * c33 - c66 * c33 - c13 * c13) / ( c11 * c33 - c13 * c13 );
+  real64 Ea = c33 - c13 * c13 / ( c11 - c66 );
+  // real64 Gat = c44 / 2.0;
+  real64 Nut = 4 * (c11 * c33 - c66 * c33 - c13 * c13 ) / ( c11 * c33 - c13 * c13 ) - 1;
+  real64 Nuat = c13 / ( 2 * ( c11 - c66 ) );
+
+  m_effectiveBulkModulus[k] = -Et*Ea/(2*Ea*(Nut+Nuat-1) + Et*(2*Nuat-1));
+  m_effectiveShearModulus[k] = 0.6*m_effectiveBulkModulus[k];
+
+  ElasticTransverseIsotropicUpdates::smallStrainUpdate_StressOnly( k,
+                                                                   q,
+                                                                   timeIncrement,
+                                                                   beginningRotation,
+                                                                   endRotation,
+                                                                   strainIncrement,
+                                                                   stress );
 }
 
 inline
@@ -392,6 +422,9 @@ public:
    */
   virtual ~ElasticTransverseIsotropicPressureDependent() override;
 
+  virtual void allocateConstitutiveData( dataRepository::Group & parent,
+                                         localIndex const numConstitutivePointsPerParentIndex ) override;
+
   /**
    * @name Static Factory Catalog members and functions
    */
@@ -436,6 +469,21 @@ public:
 
     /// string/key for default pressure derivative of c66 component of Voigt stiffness tensor
     static constexpr char const * defaultdC66dpString() { return "defaultdC66dp"; }
+
+    /// string/key for reference c11 component of Voigt stiffness tensor at 0 pressure
+    static constexpr char const * refC11String() { return "refC11"; }
+
+    /// string/key for reference c13 component of Voigt stiffness tensor at 0 pressure
+    static constexpr char const * refC13String() { return "refC13"; }
+
+    /// string/key for reference c33 component of Voigt stiffness tensor at 0 pressure
+    static constexpr char const * refC33String() { return "refC33"; }
+
+    /// string/key for reference c44 component of Voigt stiffness tensor at 0 pressure
+    static constexpr char const * refC44String() { return "refC44"; }
+
+    /// string/key for reference c66 component of Voigt stiffness tensor at 0 pressure
+    static constexpr char const * refC66String() { return "refC66"; }
 
     /// string/key for c11 component of Voigt stiffness tensor
     static constexpr char const * dc11dpString() { return "dc11dp"; }
@@ -521,7 +569,12 @@ public:
    */
   ElasticTransverseIsotropicPressureDependentUpdates createKernelUpdates() const
   {
-    return ElasticTransverseIsotropicPressureDependentUpdates( m_dc11dp,
+    return ElasticTransverseIsotropicPressureDependentUpdates( m_refC11,
+                                                               m_refC13,
+                                                               m_refC33,
+                                                               m_refC44,
+                                                               m_refC66,
+                                                               m_dc11dp,
                                                                m_dc13dp,
                                                                m_dc33dp,
                                                                m_dc44dp,
@@ -533,6 +586,7 @@ public:
                                                                m_c66,
                                                                m_effectiveBulkModulus,
                                                                m_effectiveShearModulus,
+                                                               m_materialDirection,
                                                                m_thermalExpansionCoefficient,
                                                                m_newStress,
                                                                m_oldStress,
@@ -551,6 +605,11 @@ public:
   UPDATE_KERNEL createDerivedKernelUpdates( PARAMS && ... constructorParams )
   {
     return UPDATE_KERNEL( std::forward< PARAMS >( constructorParams )...,
+                          m_refC11,
+                          m_refC13,
+                          m_refC33,
+                          m_refC44,
+                          m_refC66,
                           m_dc11dp,
                           m_dc13dp,
                           m_dc33dp,
@@ -563,6 +622,7 @@ public:
                           m_c66,
                           m_effectiveBulkModulus,
                           m_effectiveShearModulus,
+                          m_materialDirection,
                           m_thermalExpansionCoefficient,
                           m_newStress,
                           m_oldStress,
@@ -579,6 +639,21 @@ protected:
 
   /// The default value of the axial transverse Shear modulus pressure derivative for new allocations.
   real64 m_defaultShearModulusAxialTransversePressureDerivative;
+
+  /// The reference 11 component of the Voigt stiffness tensor at 0 pressure.
+  real64 m_refC11;
+
+  /// The reference 13 component of the Voigt stiffness tensor at 0 pressure
+  real64 m_refC13;
+
+  /// The reference 33 component of the Voigt stiffness tensor at 0 pressure
+  real64 m_refC33;
+
+  /// The reference 44 component of the Voigt stiffness tensor at 0 pressure
+  real64 m_refC44;
+
+  /// The reference 66 component of the Voigt stiffness tensor at 0 pressure
+  real64 m_refC66;
 
   /// The pressure derivative of the 11 component of the Voigt stiffness tensor.
   real64 m_dc11dp;
