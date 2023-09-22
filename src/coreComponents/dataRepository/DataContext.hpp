@@ -223,8 +223,8 @@ struct GEOS_FMT_NS::formatter< geos::dataRepository::DataContext > : GEOS_FMT_NS
   }
 };
 
-// The following workaround is needed to fix compilation on PowerPC machines for certains compilers.
-// The standard definition of the has_const_formatter check of fmt fails due to compiler bug, see the issue below: 
+// The following workaround is needed to fix compilation with NVCC on some machines.
+// The standard definition of the has_const_formatter check of fmt fails due to a compiler bug, see the issue below: 
 // https://github.com/fmtlib/fmt/issues/2746
 // The workaround was originally implemented in fmt:
 // https://github.com/fmtlib/fmt/commit/70de324aa801eaf52e94c402d526a3849797c620
