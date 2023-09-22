@@ -18,18 +18,26 @@
     name="bottomBoundary"
     xMin="{ -0.01, -0.01, -0.01 }"
     xMax="{ 200, 200, 0.75 }"/>
-    <Cylinder
+    <!-- <Cylinder
     name="Drift"
     firstFaceCenter="{ 80.0, -0.1, 61 }"
     secondFaceCenter="{ 80.0, 75.1, 61 }"
-    outerRadius="2"/>
+    outerRadius="2"/> -->
+    <Box
+    name="Drift"
+    xMin="{ 77.9, -0.1, 58.9 }"
+    xMax="{ 82.1, 75.1, 63.1 }"/>
+    <Box
+    name="Battery"
+    xMin="{ 81.9, 55.9, 58.9 }"
+    xMax="{ 92.1, 60.1, 63.1 }"/>
     <!-- <Rectangle
     name="FracturePlane"
     normal="{ 0.3569123763, 0.9123044601, 0.2007837838 }"
     origin="{ 100.0000000000, 37.5000000000, 30.0000000000 }"
     lengthVector="{ -0.4902994003, 0.0000000000, 0.8715540706 }"
     widthVector="{ 0.7951226658, -0.4095126032, 0.4473023297 }"
-    dimensions="{ 100, 80 }"/> -->
+    dimensions="{ 100, 80 }"/>  -->
     <CustomPolarObject
     name="FracturePlane"
     normal="{ 0.3569123763, 0.9123044601, 0.2007837838 }"
@@ -73,7 +81,7 @@
       
     <SinglePhaseConstantThermalConductivity
        name="thermalCondFrac"
-       thermalConductivityComponents="{ 1e-3, 1e-3, 1e-3 }"/>  
+       thermalConductivityComponents="{ 3.81, 3.81, 3.81 }"/>  
 
      <!-- <CompressibleSolidParallelPlatesPermeability
        name="fractureFilling"
@@ -125,7 +133,7 @@
        name="fracturePerm"/> -->
      <ConstantPermeability
        name="fracturePerm"
-       permeabilityComponents="{ 1.0e-14, 1.0e-14, 1.0e-14 }"/>
+       permeabilityComponents="{ 1.0e-15, 1.0e-15, 1.0e-15 }"/>
 
    </Constitutive>
 </Problem>
