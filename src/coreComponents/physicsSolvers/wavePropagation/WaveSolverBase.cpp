@@ -299,7 +299,7 @@ void WaveSolverBase::postProcessInput()
   {
     m_nsamplesSeismoTrace = 0;
   }
-  localIndex const nsamples = int( (maxTime-minTime) /dt) + 1;
+  localIndex const nsamples = int( (maxTime-minTime) / dt) + 1;
 
   localIndex const numSourcesGlobal = m_sourceCoordinates.size( 0 );
   m_sourceValue.resize( nsamples, numSourcesGlobal );
@@ -455,9 +455,9 @@ void WaveSolverBase::compute2dVariableAllSeismoTraces( localIndex const regionIn
     real64 const timeSeismo = m_dtSeismoTrace * (m_forward ? iSeismo : (m_nsamplesSeismoTrace - 1) - iSeismo);
     if( dir * timeSeismo > dir * (time_n + epsilonLoc))
       break;
-    WaveSolverUtils::compute2dVariableSeismoTrace( getName(), time_n, dir * dt, regionIndex, m_receiverRegion,
-                                                   timeSeismo, iSeismo, m_rcvElem, m_receiverConstants, m_receiverIsLocal,
-                                                   m_nsamplesSeismoTrace, m_outputSeismoTrace, var_np1, var_n, varAtReceivers );
+    WaveSolverUtils::compute2dVariableSeismoTrace( getName(), time_n, dir * dt, regionIndex, m_receiverRegion, timeSeismo, iSeismo, m_rcvElem,
+                                                   m_receiverConstants, m_receiverIsLocal, m_nsamplesSeismoTrace,
+                                                   m_outputSeismoTrace, var_np1, var_n, varAtReceivers );
   }
 }
 

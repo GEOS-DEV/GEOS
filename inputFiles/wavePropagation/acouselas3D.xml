@@ -73,9 +73,9 @@
       xCoords="{ 0, 6400 }"
       yCoords="{ 0, 2400 }"
       zCoords="{ 0, 2400, 4800 }"
-      nx="{ 320 }"
-      ny="{ 120 }"
-      nz="{ 120, 120 }"
+      nx="{ 80 }"
+      ny="{ 30 }"
+      nz="{ 30, 30 }"
       cellBlockNames="{ solid, fluid }"/>
   </Mesh>
 
@@ -83,7 +83,7 @@
     <FiniteElements>
       <FiniteElementSpace
         name="FE1"
-        order="5"
+        order="2"
         formulation="SEM"/>
     </FiniteElements>
   </NumericalMethods>
@@ -203,6 +203,7 @@
   <Outputs>
     <VTK
       name="vtkOutput"
+      levelNames="{ FE1 }"
       plotLevel="0"/>
     <TimeHistory
       name="timeHistoryOutput"

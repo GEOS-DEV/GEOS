@@ -36,6 +36,7 @@ VTKOutput::VTKOutput( string const & name,
   m_plotLevel(),
   m_onlyPlotSpecifiedFieldNames(),
   m_fieldNames(),
+  m_levelNames(),
   m_writer( getOutputDirectory() + '/' + m_plotFileRoot )
 {
   registerWrapper( viewKeysStruct::plotFileRoot, &m_plotFileRoot ).
@@ -67,6 +68,10 @@ VTKOutput::VTKOutput( string const & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Names of the fields to output. If this attribute is specified, GEOSX outputs all the fields specified by the user, regardless of their `plotLevel`" );
 
+  registerWrapper( viewKeysStruct::levelNames, &m_levelNames ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Names of mesh levels to output." );
+
   registerWrapper( viewKeysStruct::binaryString, &m_writeBinaryData ).
     setApplyDefaultValue( m_writeBinaryData ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -85,6 +90,7 @@ void VTKOutput::postProcessInput()
 {
   m_writer.setOutputLocation( getOutputDirectory(), m_plotFileRoot );
   m_writer.setFieldNames( m_fieldNames.toViewConst() );
+  m_writer.setLevelNames( m_levelNames.toViewConst() );
   m_writer.setOnlyPlotSpecifiedFieldNamesFlag( m_onlyPlotSpecifiedFieldNames );
 
   string const fieldNamesString = viewKeysStruct::fieldNames;

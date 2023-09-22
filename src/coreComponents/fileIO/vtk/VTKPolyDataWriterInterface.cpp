@@ -982,19 +982,25 @@ void VTKPolyDataWriterInterface::writeVtmFile( integer const cycle,
   {
     meshBody.forMeshLevels( [&]( MeshLevel const & meshLevel )
     {
-
       if( meshLevel.isShallowCopy() )
-      {
         return;
+
+      string const & meshLevelName = meshLevel.getName();
+      string const & meshBodyName = meshBody.getName();
+
+      if( !m_levelNames.empty())
+      {
+        if( m_levelNames.find( meshLevelName ) == m_levelNames.end())
+          return;
       }
 
       ElementRegionManager const & elemManager = meshLevel.getElemManager();
-      string const meshPath = joinPath( getCycleSubFolder( cycle ), meshBody.getName(), meshLevel.getName() );
+      string const meshPath = joinPath( getCycleSubFolder( cycle ), meshBodyName, meshLevelName );
       int const mpiSize = MpiWrapper::commSize();
 
       auto addRegion = [&]( ElementRegionBase const & region )
       {
-        std::vector< string > const blockPath{ meshBody.getName(), meshLevel.getName(), region.getCatalogName(), region.getName() };
+        std::vector< string > const blockPath{ meshBodyName, meshLevelName, region.getCatalogName(), region.getName() };
         string const regionPath = joinPath( meshPath, region.getName() );
         for( int i = 0; i < mpiSize; i++ )
         {
@@ -1099,17 +1105,20 @@ void VTKPolyDataWriterInterface::write( real64 const time,
   {
     meshBody.forMeshLevels( [&]( MeshLevel const & meshLevel )
     {
-
       if( meshLevel.isShallowCopy() )
-      {
         return;
-      }
 
       ElementRegionManager const & elemManager = meshLevel.getElemManager();
       NodeManager const & nodeManager = meshLevel.getNodeManager();
       EmbeddedSurfaceNodeManager const & embSurfNodeManager = meshLevel.getEmbSurfNodeManager();
       string const & meshLevelName = meshLevel.getName();
       string const & meshBodyName = meshBody.getName();
+
+      if( !m_levelNames.empty())
+      {
+        if( m_levelNames.find( meshLevelName ) == m_levelNames.end())
+          return;
+      }
 
       if( m_requireFieldRegistrationCheck && !m_fieldNames.empty() )
       {
