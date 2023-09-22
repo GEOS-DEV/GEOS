@@ -18,6 +18,7 @@
 
 #include "common/DataTypes.hpp"
 #include "common/TimingMacros.hpp"
+#include "constitutive/solid/CoupledSolidBase.hpp"
 #include "constitutive/solid/SolidBase.hpp"
 
 #include "constitutive/ConstitutiveManager.hpp"
@@ -58,7 +59,7 @@ public:
   } );
   }
 
-  inline void
+  virtual void
   calculateSingleNodalForce( localIndex const er,
                              localIndex const esr, 
                              localIndex const ei,
@@ -99,6 +100,7 @@ protected:
 
 class PoroElasticNodalForceKernel : public NodalForceKernel
 {
+
 public:  
   PoroElasticNodalForceKernel( ElementRegionManager const & elemManager,
                                constitutive::ConstitutiveManager const & constitutiveManager,
@@ -119,12 +121,12 @@ public:
 
   }
 
-  inline void
+  void
   calculateSingleNodalForce( localIndex const er,
                              localIndex const esr, 
                              localIndex const ei,
                              localIndex const targetNode,
-                             real64 ( & force )[ 3 ] ) const
+                             real64 ( & force )[ 3 ] ) const override
 
   {
     GEOS_MARK_FUNCTION;
@@ -156,20 +158,40 @@ array1d< integer > m_porosityMaterialFullIndex;
 
 };
 
-
-auto createKernel( ElementRegionManager const & elemManager,
-                   constitutive::ConstitutiveManager const & constitutiveManager, 
-                   bool const isPoroelastic )
+template< typename LAMBDA >
+void kernelSelector( ElementRegionManager const & elemManager,
+                     constitutive::ConstitutiveManager const & constitutiveManager,
+                     string const solidMaterialKey,  
+                     bool const isPoroelastic, 
+                     LAMBDA && lambda )
 {
   if( isPoroelastic )
-  {
-    return NodalForceKernel( elemManager, constitutiveManager, solidMaterialKey );
+  { 
+    lambda( NodalForceKernel( elemManager, constitutiveManager, solidMaterialKey ) ); 
   }
   else
-  {
-    return PoroElasticNodalForceKernel( elemManager, constitutiveManager, solidMaterialKey, porosityModelKey  );
-  }
+  {     
+    string const porosityModelKey = constitutive::CoupledSolidBase::viewKeyStruct::porosityModelNameString();
+    lambda( PoroElasticNodalForceKernel( elemManager, constitutiveManager, solidMaterialKey, porosityModelKey )  ); 
+  }   
+
 }
+
+// auto createKernel( ElementRegionManager const & elemManager,
+//                           constitutive::ConstitutiveManager const & constitutiveManager,
+//                           string const solidMaterialKey, 
+//                           bool const isPoroelastic ) -> std::unique_ptr<surfaceGenerationKernels::NodalForceKernel>
+// {
+//   if( isPoroelastic )
+//   {
+//     return std::make_unique< NodalForceKernel >( elemManager, constitutiveManager, solidMaterialKey );
+//   }
+//   else
+//   {
+//     string const porosityModelKey = constitutive::CoupledSolidBase::viewKeyStruct::porosityModelNameString();
+//     return std::make_unique< PoroElasticNodalForceKernel >( elemManager, constitutiveManager, solidMaterialKey, porosityModelKey  );
+//   }
+// }
 
 } // namespace solidMechanicsLagrangianFEMKernels
 
