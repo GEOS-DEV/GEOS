@@ -159,69 +159,6 @@ jobs:
       OS: ${{ matrix.OS }}
     secrets: inherit
 
-  # Note: cuda_builds_merge_not_ready and cuda_builds_merge_ready jobs
-  # should have identical matrix.include entries.
-  # If "flag: ready to be merged" PR label not found, cuda jobs waits for
-  # linux jobs to pass before running.
-  cuda_builds_merge_not_ready:
-    name: ${{ matrix.name }}
-    needs: [check_pull_request_is_not_a_draft, linux_builds]
-    if: ${{ !(contains( github.event.pull_request.labels.*.name, format('flag{0} ready to be merged', ':'))) }}
-    strategy:
-
-      # In-progress jobs will not be cancelled if there is a failure
-      fail-fast : false
-      matrix:
-        include:
-          - name: Ubuntu CUDA debug (20.04, clang 10.0.0 + gcc 9.4.0, open-mpi 4.0.3, cuda-11.8.89)
-            DOCKER_REPOSITORY: geosx/ubuntu20.04-clang10.0.0-cuda11.8.89
-            OS: Runner_4core_16GB
-            CMAKE_BUILD_TYPE: Debug
-            BUILD_AND_TEST_ARGS: "--disable-unit-tests --build-exe-only --disable-schema-deployment"
-            ENABLE_HYPRE: ON
-            ENABLE_HYPRE_DEVICE: CUDA
-            ENABLE_TRILINOS: OFF
-
-          - name: Ubuntu CUDA (20.04, clang 10.0.0 + gcc 9.4.0, open-mpi 4.0.3, cuda-11.8.89)
-            DOCKER_REPOSITORY: geosx/ubuntu20.04-clang10.0.0-cuda11.8.89
-            OS: Runner_4core_16GB
-            CMAKE_BUILD_TYPE: Release
-            BUILD_AND_TEST_ARGS: "--disable-unit-tests --disable-schema-deployment"
-            ENABLE_HYPRE: ON
-            ENABLE_HYPRE_DEVICE: CUDA
-            ENABLE_TRILINOS: OFF
-
-          - name: Centos (7.7, gcc 8.3.1, open-mpi 1.10.7, cuda 11.8.89)
-            DOCKER_REPOSITORY: geosx/centos7.7-gcc8.3.1-cuda11.8.89
-            OS: Runner_4core_16GB
-            CMAKE_BUILD_TYPE: Release
-            BUILD_AND_TEST_ARGS: "--disable-unit-tests --disable-schema-deployment"
-
-          # Matrix job that deploys to Google Cloud
-          - name: Pecan GPU (centos 7.7, gcc 8.2.0, open-mpi 4.0.1, mkl 2019.5, cuda 11.5.119)
-            DOCKER_REPOSITORY: geosx/pecan-gpu-gcc8.2.0-openmpi4.0.1-mkl2019.5-cuda11.5.119
-            OS: Runner_4core_16GB
-            CMAKE_BUILD_TYPE: Release
-            BUILD_AND_TEST_ARGS: "--build-exe-only --disable-unit-tests --disable-schema-deployment"
-            HOST_CONFIG: host-configs/TOTAL/pecan-GPU.cmake
-            GCP_BUCKET: geosx/Pecan-GPU
-    uses: ./.github/workflows/build_and_test.yml
-    with:
-      GEOSX_TPL_TAG: ${{ needs.check_pull_request_is_not_a_draft.outputs.GEOSX_TPL_TAG }}
-      DOCKER_REPOSITORY: ${{ matrix.DOCKER_REPOSITORY }}
-      CMAKE_BUILD_TYPE: ${{ matrix.CMAKE_BUILD_TYPE }}
-      BUILD_AND_TEST_ARGS: ${{ matrix.BUILD_AND_TEST_ARGS }}
-      HOST_CONFIG: ${{ matrix.HOST_CONFIG }}
-      ENABLE_HYPRE: ${{ matrix.ENABLE_HYPRE }}
-      ENABLE_HYPRE_DEVICE: ${{ matrix.ENABLE_HYPRE_DEVICE }}
-      ENABLE_TRILINOS: ${{ matrix.ENABLE_TRILINOS }}
-      GCP_BUCKET: ${{ matrix.GCP_BUCKET }}
-      COMMIT: ${{ github.event.pull_request.head.sha }}
-      OS: ${{ matrix.OS }}
-    secrets: inherit
-
-  # Note: cuda_builds_merge_not_ready and cuda_builds_merge_ready jobs
-  # should have identical matrix.include entries.
   # If "flag: ready to be merged" PR label found, cuda jobs run
   # immediately along side linux jobs.
   cuda_builds_merge_ready:
@@ -245,7 +182,7 @@ jobs:
 
           - name: Ubuntu CUDA (20.04, clang 10.0.0 + gcc 9.4.0, open-mpi 4.0.3, cuda-11.8.89)
             DOCKER_REPOSITORY: geosx/ubuntu20.04-clang10.0.0-cuda11.8.89
-            OS: Runner_4core_16GB
+            OS: ubuntu-22.04
             CMAKE_BUILD_TYPE: Release
             BUILD_AND_TEST_ARGS: "--disable-unit-tests --disable-schema-deployment"
             ENABLE_HYPRE: ON
@@ -254,14 +191,14 @@ jobs:
 
           - name: Centos (7.7, gcc 8.3.1, open-mpi 1.10.7, cuda 11.8.89)
             DOCKER_REPOSITORY: geosx/centos7.7-gcc8.3.1-cuda11.8.89
-            OS: Runner_4core_16GB
+            OS: ubuntu-22.04
             CMAKE_BUILD_TYPE: Release
             BUILD_AND_TEST_ARGS: "--disable-unit-tests --disable-schema-deployment"
 
           # Matrix job that deploys to Google Cloud
           - name: Pecan GPU (centos 7.7, gcc 8.2.0, open-mpi 4.0.1, mkl 2019.5, cuda 11.5.119)
             DOCKER_REPOSITORY: geosx/pecan-gpu-gcc8.2.0-openmpi4.0.1-mkl2019.5-cuda11.5.119
-            OS: Runner_4core_16GB
+            OS: ubuntu-22.04
             CMAKE_BUILD_TYPE: Release
             BUILD_AND_TEST_ARGS: "--build-exe-only --disable-unit-tests --disable-schema-deployment"
             HOST_CONFIG: host-configs/TOTAL/pecan-GPU.cmake
@@ -293,7 +230,6 @@ jobs:
     - documentation
     - linux_builds
     - cuda_builds_merge_ready
-    - cuda_builds_merge_not_ready
     if: ${{ always() }}
     env:
       RETURN_VAL: |
@@ -304,8 +240,7 @@ jobs:
         needs.code_style.result == 'success' &&
         needs.documentation.result == 'success' &&
         needs.linux_builds.result == 'success' &&
-        (needs.cuda_builds_merge_ready.result == 'success' ||
-        needs.cuda_builds_merge_not_ready.result == 'success')
+        needs.cuda_builds_merge_ready.result == 'success'
         }}
     steps:
     - name: PR Success
