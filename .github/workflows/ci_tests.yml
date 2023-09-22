@@ -161,6 +161,7 @@ jobs:
 
   # If "flag: ready to be merged" PR label found, cuda jobs run
   # immediately along side linux jobs.
+  # CUDA jobs should only be run if PR is ready to merge.
   cuda_builds_merge_ready:
     name: ${{ matrix.name }}
     needs: [check_pull_request_is_not_a_draft]
@@ -219,7 +220,7 @@ jobs:
     secrets: inherit
 
   # Convenience job - passes when all other jobs have passed
-  # (must pass one of the CUDA jobs)
+  # (must pass the CUDA jobs)
   check_that_all_jobs_succeeded:
     runs-on: ubuntu-22.04
     needs:
