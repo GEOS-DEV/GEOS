@@ -371,14 +371,17 @@ void fixNeighborMappingsInconsistency( string const & fractureName,
 {
   {
     localIndex const num2dElems = elem2dToFaces.size();
+    GEOS_ASSERT_EQ( elem2dToElems3d[e2d].size(), num2dElems );
     for( int e2d = 0; e2d < num2dElems; ++e2d )
     {
-      auto const s = elem2dToFaces[e2d].size();
-      GEOS_ASSERT_EQ( elem2dToElems3d.m_toElementRegion[e2d].size(), s );
-      GEOS_ASSERT_EQ( elem2dToElems3d.m_toElementSubRegion[e2d].size(), s );
-      GEOS_ASSERT_EQ( elem2dToElems3d.m_toElementIndex[e2d].size(), s );
+      std::set< localIndex > const sizes{
+        elem2dToFaces[e2d].size(),
+        elem2dToElems3d.m_toElementRegion[e2d].size(),
+        elem2dToElems3d.m_toElementSubRegion[e2d].size(),
+        elem2dToElems3d.m_toElementIndex[e2d].size()
+      };
 
-      if( s != 2 )
+      if( sizes.size() != 1 || sizes.find( 2 ) == sizes.cend() )
       {
         continue;
       }
