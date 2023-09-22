@@ -169,7 +169,7 @@ void CO2BrineFluid< PHASE1, PHASE2, FLASH >::checkTablesParameters( real64 const
     string const errorMsg = GEOS_FMT( "{}: Table input error for phase no. 2.\n", getDataContext() );
     throw SimulationError( ex, errorMsg );
   }
-  
+
   try
   {
     m_flash->checkTablesParameters( pressure, temperatureInCelsius );

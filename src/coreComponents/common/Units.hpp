@@ -123,8 +123,8 @@ constexpr inline std::string_view getSymbol( Unit unit )
  * @brief Format the specified value coherently with the specified unit.
  * @param value The value to format.
  * @param unit The unit of the specified value.
- * @return A string that can be easily be integrated in a sentence and takes the form 
- * "nature" of "value" ["unit symbol"]
+ * @return A string that can be easily be integrated in a sentence and takes the form
+ * "characteristic" of "value" ["unit symbol"]
  */
 inline string formatValue( real64 value, Unit unit )
 {
