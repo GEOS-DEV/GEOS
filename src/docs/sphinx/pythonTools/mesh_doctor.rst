@@ -27,7 +27,7 @@ If you see a message like
 
     [1970-04-14 03:07:15,625][WARNING] Could not load module "collocated_nodes": No module named 'vtkmodules'
 
-then most likely ``mesh_doctor`` could not load the ``collocated_nodes`` modules because the ``vtk`` modules was not found.
+then most likely ``mesh_doctor`` could not load the ``collocated_nodes`` module, because the ``vtk`` python package was not found.
 Thereafter, the documentation for module ``collocated_nodes`` will not be displayed.
 You can solve this issue by installing the dependencies of ``mesh_doctor`` defined in its ``requirements.txt`` file (``python -m pip install -r requirements.txt``).
 
@@ -36,7 +36,7 @@ Here is a list and brief description of all the modules available.
 ``collocated_nodes``
 """"""""""""""""""""
 
-Displays the nodes that are closer than a prescribed threshold.
+Displays the neighboring nodes that are closer to each other than a prescribed threshold.
 It is not uncommon to define multiple nodes for the exact same position, which will typically be an issue for ``geos`` and should be fixed.
 
 .. command-output:: python mesh_doctor.py collocated_nodes --help
@@ -54,7 +54,7 @@ Cells with negative volumes will typically be an issue for ``geos`` and should b
 ``fix_elements_orderings``
 """"""""""""""""""""""""""
 
-It can happen that an exported mesh does not abide by the ``vtk`` orderings.
+It sometimes happens that an exported mesh does not abide by the ``vtk`` orderings.
 The ``fix_elements_orderings`` module can rearrange the nodes of given types of elements.
 This can be convenient if you cannot regenerate the mesh.
 
@@ -93,6 +93,8 @@ The ``generate_global_ids`` can generate `global ids` for the imported ``vtk`` m
 """""""""""""""""
 
 This module will detect elements which are close enough (there's a user defined threshold) but which are not in front of each other (another threshold can be defined).
+`Close enough` can be defined in terms or proximity of the nodes and faces of the elements.
+The angle between two faces can also be precribed.
 This module can be a bit time consuming.
 
 .. command-output:: python mesh_doctor.py non_conformal --help
@@ -115,7 +117,7 @@ Let's cite the standard elements like `tetrahedra`, `wedges`, `pyramids` or `hex
 But also prismes up to 11 faces.
 ``geos`` also supports the generic ``VTK_POLYHEDRON``/``42`` elements, which are converted on the fly into one of the elements just described.
 
-The ``supported_elements`` check will validate that no unsupported element is defined in the input mesh.
+The ``supported_elements`` check will validate that no unsupported element is included in the input mesh.
 It will also verify that the ``VTK_POLYHEDRON`` cells can effectively get converted into a supported type of element.
 
 .. command-output:: python mesh_doctor.py supported_elements --help
