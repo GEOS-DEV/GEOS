@@ -73,7 +73,7 @@ public:
    * @brief Get the catalog name.
    * @return the name of this class in the catalog
    */
-  static string catalogName() { return "WellElementSubRegion"; }
+  static string catalogName() { return "wellElementSubRegion"; }
 
   /**
    * @copydoc catalogName()
@@ -321,7 +321,7 @@ public:
   struct groupKeyStruct : public ElementSubRegionBase::groupKeyStruct
   {
     /// @return String key for the PerforationData object
-    static constexpr char const * perforationDataString() { return "WellElementSubRegion"; }
+    static constexpr char const * perforationDataString() { return "wellElementSubRegion"; }
 
     /// GroupKey for the PerforationData object
     dataRepository::GroupKey perforationData = { perforationDataString() };
