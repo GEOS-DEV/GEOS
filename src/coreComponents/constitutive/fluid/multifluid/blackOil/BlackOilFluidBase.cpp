@@ -142,7 +142,7 @@ void BlackOilFluidBase::fillHydrocarbonData( integer const ip,
   TableFunction & tablePVDX_B =
     dynamicCast< TableFunction & >( *functionManager.createChild( "TableFunction", formationVolFactorTableName ) );
   tablePVDX_B.setTableCoordinates( pressureCoords, { units::Pressure } );
-  tablePVDX_B.setTableValues( formationVolFactor );
+  tablePVDX_B.setTableValues( formationVolFactor, units::Dimensionless );
   tablePVDX_B.setInterpolationMethod( TableFunction::InterpolationType::Linear );
 
   TableFunction & tablePVDX_visc =

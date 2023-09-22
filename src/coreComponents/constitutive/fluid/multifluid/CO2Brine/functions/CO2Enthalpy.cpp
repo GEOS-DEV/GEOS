@@ -240,7 +240,7 @@ TableFunction const * makeCO2EnthalpyTable( string_array const & inputParams,
     TableFunction * const enthalpyTable = dynamicCast< TableFunction * >( functionManager.createChild( TableFunction::catalogName(), tableName ) );
     enthalpyTable->setTableCoordinates( tableCoords.getCoords(),
                                         { units::Pressure, units::TemperatureInC } );
-    enthalpyTable->setTableValues( enthalpies );
+    enthalpyTable->setTableValues( enthalpies, units::Enthalpy );
     enthalpyTable->setInterpolationMethod( TableFunction::InterpolationType::Linear );
     return enthalpyTable;
   }
