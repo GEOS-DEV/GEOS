@@ -235,7 +235,7 @@ struct GEOS_FMT_NS::formatter< geos::dataRepository::DataContext > : GEOS_FMT_NS
 // This workaround provides a specialization of the const formatter check for the DataContext object.
 // The formatter is defined within this file, and therefore the check is not needed.
 // The scope of the check override is as small as possible to solve the current issue.
-#ifdef FMT_CONST_FORMATTER_WORKAROUND
+#ifdef GEOS_USE_FMT_CONST_FORMATTER_WORKAROUND
 template<>
 constexpr auto GEOS_FMT_NS::detail::has_const_formatter< geos::dataRepository::DataContext, GEOS_FMT_NS::format_context >() -> bool
 {
