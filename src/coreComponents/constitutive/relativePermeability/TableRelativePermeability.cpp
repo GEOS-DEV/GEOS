@@ -67,6 +67,7 @@ TableRelativePermeability::TableRelativePermeability( std::string const & name,
 
   registerWrapper( viewKeyStruct::waterOilMaxRelPermString(), &m_waterOilMaxRelPerm ).
     setInputFlag( InputFlags::FALSE ). // will be deduced from tables
+    setApplyDefaultValue( 0.0 ).
     setSizedFromParent( 0 );
 
   registerWrapper( viewKeyStruct::relPermKernelWrappersString(), &m_relPermKernelWrappers ).

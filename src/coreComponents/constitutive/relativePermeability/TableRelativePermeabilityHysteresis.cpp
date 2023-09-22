@@ -145,6 +145,7 @@ TableRelativePermeabilityHysteresis::TableRelativePermeabilityHysteresis( std::s
 
   registerWrapper( viewKeyStruct::waterOilMaxRelPermString(), &m_waterOilMaxRelPerm ).
     setInputFlag( InputFlags::FALSE ). // will be deduced from tables
+    setApplyDefaultValue( 0.0 ).
     setSizedFromParent( 0 );
 
 
