@@ -34,15 +34,6 @@ namespace constitutive
 struct NegativeTwoPhaseFlash
 {
 public:
-  /// Max number of components alloweeed in the class for now
-  static constexpr integer maxNumComps = MultiFluidConstants::MAX_NUM_COMPONENTS;
-  /// Max number of iterations
-  static constexpr integer maxIterations = MultiFluidConstants::maxSSIIterations;
-  /// Epsilon used in the calculations
-  static constexpr real64 epsilon = MultiFluidConstants::epsilon;
-  /// Tolerance for checking fugacity ratio convergence
-  static constexpr real64 fugacityTolerance = MultiFluidConstants::fugacityTolerance;
-
   /**
    * @brief Perform negative two-phase EOS flash
    * @param[in] numComps number of components
@@ -72,6 +63,7 @@ public:
                        arrayView1d< real64 > const liquidComposition,
                        arrayView1d< real64 > const vapourComposition )
   {
+    constexpr integer maxNumComps = MultiFluidConstants::MAX_NUM_COMPONENTS;
     stackArray1d< real64, maxNumComps > logLiquidFugacity( numComps );
     stackArray1d< real64, maxNumComps > logVapourFugacity( numComps );
     stackArray1d< real64, maxNumComps > kVapourLiquid( numComps );
@@ -89,7 +81,7 @@ public:
     integer presentCount = 0;
     for( integer ic = 0; ic < numComps; ++ic )
     {
-      if( epsilon < composition[ic] )
+      if( MultiFluidConstants::epsilon < composition[ic] )
       {
         presentComponentIds[presentCount++] = ic;
       }
@@ -105,7 +97,7 @@ public:
                                                         kVapourLiquid );
 
     bool converged = false;
-    for( localIndex iterationCount = 0; iterationCount < maxIterations; ++iterationCount )
+    for( localIndex iterationCount = 0; iterationCount < MultiFluidConstants::maxSSIIterations; ++iterationCount )
     {
       // Solve Rachford-Rice Equation
       vapourPhaseMoleFraction = RachfordRice::solve( kVapourLiquid, composition, presentComponentIds );
@@ -146,7 +138,7 @@ public:
       for( integer const ic : presentComponentIds )
       {
         fugacityRatios[ic] = exp( logLiquidFugacity[ic] - logVapourFugacity[ic] ) * liquidComposition[ic] / vapourComposition[ic];
-        if( fugacityTolerance < fabs( fugacityRatios[ic] - 1.0 ) )
+        if( MultiFluidConstants::fugacityTolerance < fabs( fugacityRatios[ic] - 1.0 ) )
         {
           converged = false;
         }
@@ -202,7 +194,7 @@ private:
     {
       totalMoles += composition[ic];
     }
-    real64 const oneOverTotalMoles = 1.0 / (totalMoles + epsilon);
+    real64 const oneOverTotalMoles = 1.0 / (totalMoles + MultiFluidConstants::epsilon);
     for( integer ic = 0; ic < numComps; ++ic )
     {
       composition[ic] *= oneOverTotalMoles;
