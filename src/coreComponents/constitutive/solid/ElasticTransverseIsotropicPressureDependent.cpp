@@ -30,6 +30,11 @@ ElasticTransverseIsotropicPressureDependent::ElasticTransverseIsotropicPressureD
   m_defaultYoungModulusTransversePressureDerivative(),
   m_defaultYoungModulusAxialPressureDerivative(),
   m_defaultShearModulusAxialTransversePressureDerivative(),
+  m_refC11(),
+  m_refC13(),
+  m_refC33(),
+  m_refC44(),
+  m_refC66(),
   m_dc11dp(),
   m_dc13dp(),
   m_dc33dp(),
@@ -66,15 +71,35 @@ ElasticTransverseIsotropicPressureDependent::ElasticTransverseIsotropicPressureD
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Default Elastic Stiffness Field C33 pressure derivative" );
 
- registerWrapper< real64 >( viewKeyStruct::defaultdC44dpString()).
+  registerWrapper< real64 >( viewKeyStruct::defaultdC44dpString()).
     setApplyDefaultValue( -1 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Default Elastic Stiffness Field C44 pressure derivative" );
 
-registerWrapper< real64 >( viewKeyStruct::defaultdC66dpString()).
+  registerWrapper< real64 >( viewKeyStruct::defaultdC66dpString()).
     setApplyDefaultValue( -1 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Default Elastic Stiffness Field C66 pressure derivative" );
+
+  registerWrapper( viewKeyStruct::refC11String(), &m_refC11 ).
+    setInputFlag( InputFlags::FALSE ).
+    setDescription( "Reference elastic Stiffness Field C11 at 0 pressure" );
+
+  registerWrapper( viewKeyStruct::refC13String(), &m_refC13 ).
+    setInputFlag( InputFlags::FALSE ).
+    setDescription( "Reference elastic Stiffness Field C13 at 0 pressure" );
+
+  registerWrapper( viewKeyStruct::refC33String(), &m_refC33 ).
+    setInputFlag( InputFlags::FALSE ).
+    setDescription( "Reference elastic Stiffness Field C33 at 0 pressure" );
+
+  registerWrapper( viewKeyStruct::refC44String(), &m_refC44 ).
+    setInputFlag( InputFlags::FALSE ).
+    setDescription( "Reference elastic Stiffness Field C44 at 0 pressure" );
+
+  registerWrapper( viewKeyStruct::refC66String(), &m_refC66 ).
+    setInputFlag( InputFlags::FALSE ).
+    setDescription( "Reference elastic Stiffness Field C66 at 0 pressure" );
 
   registerWrapper( viewKeyStruct::dc11dpString(), &m_dc11dp ).
     setApplyDefaultValue( -1 ).
@@ -100,10 +125,28 @@ registerWrapper< real64 >( viewKeyStruct::defaultdC66dpString()).
 ElasticTransverseIsotropicPressureDependent::~ElasticTransverseIsotropicPressureDependent()
 {}
 
+void ElasticTransverseIsotropicPressureDependent::allocateConstitutiveData( dataRepository::Group & parent,
+                                                                            localIndex const numConstitutivePointsPerParentIndex) 
+{
+  ElasticTransverseIsotropic::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );  
+}
+
 void ElasticTransverseIsotropicPressureDependent::postProcessInput()
 {
   ElasticTransverseIsotropic::postProcessInput();
   
+  real64 & refC11 = getReference< real64 >( viewKeyStruct::refC11String() );
+  real64 & refC13 = getReference< real64 >( viewKeyStruct::refC13String() );
+  real64 & refC33 = getReference< real64 >( viewKeyStruct::refC33String() );
+  real64 & refC44 = getReference< real64 >( viewKeyStruct::refC44String() );
+  real64 & refC66 = getReference< real64 >( viewKeyStruct::refC66String() );
+
+  refC11 = getReference< real64 >( ElasticTransverseIsotropic::viewKeyStruct::defaultC11String() );
+  refC13 = getReference< real64 >( ElasticTransverseIsotropic::viewKeyStruct::defaultC13String() );
+  refC33 = getReference< real64 >( ElasticTransverseIsotropic::viewKeyStruct::defaultC33String() );
+  refC44 = getReference< real64 >( ElasticTransverseIsotropic::viewKeyStruct::defaultC44String() );
+  refC66 = getReference< real64 >( ElasticTransverseIsotropic::viewKeyStruct::defaultC66String() );
+
   real64 & dc11dp  = getReference< real64 >( viewKeyStruct::defaultdC11dpString() );
   real64 & dc13dp  = getReference< real64 >( viewKeyStruct::defaultdC13dpString() );
   real64 & dc33dp  = getReference< real64 >( viewKeyStruct::defaultdC33dpString() );

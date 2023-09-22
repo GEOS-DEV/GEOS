@@ -48,6 +48,9 @@ public:
    * @param[in] c33 The 33 component of the Voigt stiffness tensor.
    * @param[in] c44 The 44 component of the Voigt stiffness tensor.
    * @param[in] c66 The 66 component of the Voigt stiffness tensor.
+   * @param[in] effectiveBulkModulus The effective bulk modulus for wavespeed calculations
+   * @param[in] effectiveShearModulus The effective shear modulus for wavespeed calculations
+   * @param[in] materailDirection The material direction for each point
    * @param[in] thermalExpansionCoefficient The ArrayView holding the thermal expansion coefficient data for each element.
    * @param[in] newStress The ArrayView holding the new stress data for each point.
    * @param[in] oldStress The ArrayView holding the old stress data for each point.
@@ -60,6 +63,7 @@ public:
                                      arrayView1d< real64 > const & c66,
                                      arrayView1d< real64 > const & effectiveBulkModulus,
                                      arrayView1d< real64 > const & effectiveShearModulus,
+                                     arrayView2d< real64 > const & materialDirection,
                                      arrayView1d< real64 const > const & thermalExpansionCoefficient,
                                      arrayView3d< real64, solid::STRESS_USD > const & newStress,
                                      arrayView3d< real64, solid::STRESS_USD > const & oldStress,
@@ -71,7 +75,8 @@ public:
     m_c44( c44 ),
     m_c66( c66 ),
     m_effectiveBulkModulus( effectiveBulkModulus ),
-    m_effectiveShearModulus( effectiveShearModulus )
+    m_effectiveShearModulus( effectiveShearModulus ),
+    m_materialDirection( materialDirection )
   {}
 
   /// Deleted default constructor
@@ -178,6 +183,9 @@ protected:
 
   /// A reference to the ArrayView holding the effectiveBulkModulus for each element
   arrayView1d< real64 > const m_effectiveShearModulus;
+
+  // A reference to the ArrayView holding the material direction for each element/particle.
+  arrayView2d< real64 > const m_materialDirection;
 };
 
 inline
@@ -276,13 +284,136 @@ void ElasticTransverseIsotropicUpdates::smallStrainUpdate_StressOnly( localIndex
                                                          real64 const ( & strainIncrement )[6],
                                                          real64 ( & stress )[6] ) const
 {
-  GEOS_UNUSED_VAR( beginningRotation );
+  GEOS_UNUSED_VAR( timeIncrement );
   GEOS_UNUSED_VAR( endRotation );
-  smallStrainUpdate_StressOnly( k,
-                                q,
-                                timeIncrement,
-                                strainIncrement,
-                                stress );
+
+  // Unrotate the material direction first so transforming the stiffness matrix only occurs once
+
+  // Get inverse of rotation matrix using transpose
+  real64 beginningRotationTranspose[3][3] = { { 0 } };
+  LvArray::tensorOps::transpose< 3, 3 >( beginningRotationTranspose, beginningRotation );
+  
+  // Normalize the material direction for safety
+  real64 materialDirection[3] ={ 0 };
+  LvArray::tensorOps::copy< 3 >( materialDirection, m_materialDirection[k] );
+  LvArray::tensorOps::normalize< 3 >( materialDirection );
+
+  // Use beginning rotation to unrotate material direction
+  real64 unrotatedMaterialDirection[3] = { 0 };
+  LvArray::tensorOps::Ri_eq_AijBj< 3, 3 >( unrotatedMaterialDirection, beginningRotationTranspose, materialDirection );
+
+  // Compute the rotational axis between the z direction of the stiffness tensor and the material direction
+  real64 axis[3] = {0};
+  axis[2] = 1;
+  real64 rotationAxis[3] = { 0 };
+  LvArray::tensorOps::crossProduct( rotationAxis, axis, unrotatedMaterialDirection );
+
+  // Compute the rotation matrix to transform the stiffness tensor
+  real64 v[3][3] = { { 0 } };
+  v[0][1] = -rotationAxis[2];
+  v[0][2] = rotationAxis[1];
+  v[1][2] = -rotationAxis[0];
+  v[1][0] = rotationAxis[2];
+  v[2][0] = -rotationAxis[1];
+  v[2][1] = rotationAxis[0];
+
+  real64 c = LvArray::tensorOps::AiBi< 3 >( axis, unrotatedMaterialDirection );
+  real64 s = LvArray::tensorOps::l2Norm< 3 >( rotationAxis );
+
+  real64 R[3][3] = { { 0 } };
+  LvArray::tensorOps::addIdentity< 3 >( R, 1);
+  LvArray::tensorOps::add< 3, 3 >( R, v);
+
+  real64 temp[3][3] = { {0} };
+  LvArray::tensorOps::Rij_eq_AikBkj< 3, 3, 3 >( temp, v, v );
+  LvArray::tensorOps::scale< 3, 3 >( temp, ( 1 - c ) / ( s * s ));
+  LvArray::tensorOps::add< 3, 3 >( R, temp );
+
+  // Get M to transform stiffness matrix in Voigt notation
+  real64 M[6][6] = { {0} };
+  M[0][0] = R[0][0] * R[0][0];
+  M[0][1] = R[0][1] * R[0][1];
+  M[0][2] = R[0][2] * R[0][2];
+  M[0][3] = 2 * R[0][1] * R[0][2];
+  M[0][4] = 2 * R[0][0] * R[0][2];
+  M[0][5] = 2 * R[0][0] * R[0][1]; 
+
+  M[1][0] = R[1][0] * R[1][0];
+  M[1][1] = R[1][1] * R[1][1];
+  M[1][2] = R[1][2] * R[1][2];
+  M[1][3] = 2 * R[1][1] * R[1][2];
+  M[1][4] = 2 * R[1][0] * R[1][2];
+  M[1][5] = 2 * R[1][0] * R[1][1];
+
+  M[2][0] = R[2][0] * R[2][0];
+  M[2][1] = R[2][1] * R[2][1];
+  M[2][2] = R[2][2] * R[2][2];
+  M[2][3] = 2 * R[2][1] * R[2][2];
+  M[2][4] = 2 * R[2][0] * R[2][2];
+  M[2][5] = 2 * R[2][0] * R[2][1];
+
+  M[3][0] = R[1][0] * R[2][0];
+  M[3][1] = R[1][1] * R[2][1];
+  M[3][2] = R[1][2] * R[2][2];
+  M[3][3] = R[1][1] * R[2][2] + R[1][2] * R[2][1];
+  M[3][4] = R[1][0] * R[2][2] + R[1][2] * R[2][0];
+  M[3][5] = R[1][0] * R[2][1] + R[2][2] * R[2][0];
+
+  M[4][0] = R[0][0] * R[2][0];
+  M[4][1] = R[0][1] * R[2][1];
+  M[4][2] = R[0][2] * R[2][2];
+  M[4][3] = R[0][1] * R[2][2] + R[0][2] * R[2][1];
+  M[4][4] = R[0][0] * R[2][2] + R[0][2] * R[2][0];
+  M[4][5] = R[0][0] * R[2][1] + R[0][1] * R[2][0];
+
+  M[5][0] = R[0][0] * R[1][0];
+  M[5][1] = R[0][1] * R[1][1];
+  M[5][2] = R[0][2] * R[1][2];
+  M[5][3] = R[0][1] * R[1][2] + R[0][2] * R[1][1];
+  M[5][4] = R[0][0] * R[1][2] + R[0][2] * R[1][0];
+  M[5][5] = R[0][0] * R[1][1] + R[0][1] * R[1][0];
+
+  // Build Voigt stiffness matrix
+  real64 const c11 = m_c11[k];
+  real64 const c13 = m_c13[k];
+  real64 const c33 = m_c33[k];
+  real64 const c44 = m_c44[k];
+  real64 const c66 = m_c66[k];
+  real64 const c12 = ( c11 - 2.0 * c66 );
+
+  real64 stiffnessMatrix[6][6] = { { 0 } };
+  stiffnessMatrix[0][0] = c11;
+  stiffnessMatrix[0][1] = c12;
+  stiffnessMatrix[0][2] = c13;
+
+  stiffnessMatrix[1][0] = c12;
+  stiffnessMatrix[1][1] = c11;
+  stiffnessMatrix[1][2] = c13;
+
+  stiffnessMatrix[2][0] = c13;
+  stiffnessMatrix[2][1] = c13;
+  stiffnessMatrix[2][2] = c33;
+
+  stiffnessMatrix[3][3] = c44;
+  stiffnessMatrix[4][4] = c44;
+  stiffnessMatrix[5][5] = c66;
+
+  real64 temp2[6][6] = { { 0 } };
+  LvArray::tensorOps::Rij_eq_AikBkj< 6, 6, 6 >( temp2, M, stiffnessMatrix ); // M * S
+  real64 rotatedStiffnessMatrix[6][6] = { { 0 } };
+  LvArray::tensorOps::Rij_eq_AikBjk< 6, 6, 6 >( rotatedStiffnessMatrix, temp2, M ); // ( M * S ) * M^T
+
+  LvArray::tensorOps::Ri_eq_AijBj< 6, 6 >( stress, rotatedStiffnessMatrix, strainIncrement );
+  LvArray::tensorOps::add< 6 >( stress, m_oldStress[k][q] );
+  saveStress( k, q, stress );  
+
+  // GEOS_UNUSED_VAR( beginningRotation );
+  // GEOS_UNUSED_VAR( endRotation );
+  // smallStrainUpdate_StressOnly( k,
+  //                               q,
+  //                               timeIncrement,
+  //                               strainIncrement,
+  //                               stress );
 }
 
 inline
@@ -338,6 +469,9 @@ public:
    * Destructor
    */
   virtual ~ElasticTransverseIsotropic() override;
+
+  virtual void allocateConstitutiveData( dataRepository::Group & parent,
+                                         localIndex const numConstitutivePointsPerParentIndex ) override;
 
   /**
    * @name Static Factory Catalog members and functions
@@ -410,6 +544,9 @@ public:
 
     /// string/key for effective shear modulus 
     static constexpr char const * effectiveShearModulusString() { return "effectiveShearModulus"; }
+
+    /// string/key for material direction value
+    static constexpr char const * materialDirectionString() { return "materialDirection"; }
   };
 
   /**
@@ -621,6 +758,7 @@ public:
                                               m_c66,
                                               m_effectiveBulkModulus,
                                               m_effectiveShearModulus,
+                                              m_materialDirection,
                                               m_thermalExpansionCoefficient,
                                               m_newStress,
                                               m_oldStress,
@@ -646,6 +784,7 @@ public:
                           m_c66,
                           m_effectiveBulkModulus,
                           m_effectiveShearModulus,
+                          m_materialDirection,
                           m_thermalExpansionCoefficient,
                           m_newStress,
                           m_oldStress,
@@ -695,6 +834,9 @@ protected:
 
   /// The effective shear modulus
   array1d< real64 > m_effectiveShearModulus;
+  
+  /// State variable: The material direction for each element/particle
+  array2d< real64 > m_materialDirection;
 };
 
 } /* namespace constitutive */
