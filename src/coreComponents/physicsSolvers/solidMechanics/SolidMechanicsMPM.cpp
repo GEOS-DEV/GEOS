@@ -923,11 +923,13 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
     arrayView3d< real64 > const particleInitialRVectors = subRegion.getField< fields::mpm::particleInitialRVectors >();
     arrayView3d< real64 > const particleSphF = subRegion.getField< fields::mpm::particleSphF >();
     arrayView2d< real64 > const particleReferencePosition = subRegion.getField< fields::mpm::particleReferencePosition >();
+    arrayView1d< int > const particleCrystalHealFlag = subRegion.getField< fields::mpm::particleCrystalHealFlag >();
 
     // Set reference position, volume and R-vectors
     for( int p=0; p<subRegion.size(); p++ )
     {
       particleInitialVolume[p] = particleVolume[p];
+      particleCrystalHealFlag[p] = 0;
       for( int i=0; i<3; i++ )
       {
         particleBodyForce[p][i] = 0;
@@ -1665,6 +1667,7 @@ void SolidMechanicsMPM::triggerEvents( const real64 dt,
       //     ParticleSubRegion & targetSubRegion = dynamicCast< ParticleSubRegion & >( *targetSubRegions[r] );
     
       //     arrayView2d< real64 > const particleStress = targetSubRegion.getField< fields::mpm::particleStress >();
+      //     arrayView1d< real64 > const particleCrystalHealFlag = targetSubRegion.getField< fields::mpm::particleStress >();
       //     arrayView1d< real64 > const particleDamage = subRegion.getParticleDamage();
       //     arrayView3d< real64 > const particleRVectors = subRegion.getParticleRVectors();
       //     arrayView2d< real64 const > const particleDamageGradient = targetSubRegion.getField< fields::mpm::particleDamageGradient >();
@@ -1679,20 +1682,22 @@ void SolidMechanicsMPM::triggerEvents( const real64 dt,
       //     {
       //       localIndex const p = activeParticleIndices[pp];
 
-      //       real64 temp[3];
+      //       real64 temp[3] = { 0 };
       //       LvArray::tensorOps::Ri_eq_symAijBj< 3 >( temp, stress, particleDamageGradient[p] );
       //       real64 normalStress = LvArray::tensorOps::AiBi< 3 >( particleDamageGradient[p], temp );
 
       //       real64 detF = LvArray::tensorOps::determinant< 3 >( particleDeformationGradient[p] );
       //       if( ( healType == 1 || ( healType == 0 && ( normalStress || detF < 1.0 ) ) ) && particleDamage[p] > 0.0 )
       //       {
+      //         particleCrystalHealFlag[p] = 1;
+
       //         if( detF > 1.0 )
       //         {
       //         // particleReferencePorosity[p] = 1.0 - 1.0 / detF;
                 
       //           real64 power = m_planeStrain ? 0.5 : 1.0 / 3.0;
       //           real64 scaling = std::powd( detF, power );
-      //           LvArray::tensorOps::scale< 3, 3 >( particleDeformationGradient[p], scaling );
+      //           LvArray::tensorOps::scale< 3, 3 >( particleDeformationGradient[p], 1/scaling );
 
       //           LvArray::tensorOps::scale< 3 >( particleRVectors[p][0], scaling );
       //           LvArray::tensorOps::scale< 3 >( particleRVectors[p][1], scaling );
@@ -3915,7 +3920,7 @@ void SolidMechanicsMPM::stressControl( real64 dt,
       } );
     }
 
-    if( constitutiveModelName == "ElasticIsotropic" || constitutiveModelName == "CeramicDamage"){
+    if( constitutiveModelName == "ElasticIsotropic" || constitutiveModelName == "CeramicDamage" || "StrainHardeningPolymer" ){
       const ElasticIsotropic & elasticIsotropic = dynamic_cast< const ElasticIsotropic & >( solidModel );
       bulkModulus = elasticIsotropic.bulkModulus();
     }
@@ -5010,7 +5015,7 @@ real64 SolidMechanicsMPM::getStableTimeStep( ParticleManager & particleManager )
       } );
     }
 
-    if( constitutiveModelName == "ElasticIsotropic" || constitutiveModelName == "CeramicDamage"){
+    if( constitutiveModelName == "ElasticIsotropic" || constitutiveModelName == "CeramicDamage" || "StrainHardeningPolymer" ){
       const ElasticIsotropic & elasticIsotropic = dynamic_cast< const ElasticIsotropic & >( constitutiveRelation );
       bulkModulus = elasticIsotropic.bulkModulus();
       shearModulus = elasticIsotropic.shearModulus();
@@ -5982,7 +5987,7 @@ inline void GEOS_DEVICE SolidMechanicsMPM::computeGeneralizedVortexMMSBodyForce(
       shearModulus = hyperelasticMMS.shearModulus();
     }
 
-    if( constitutiveModelName == "ElasticIsotropic" || constitutiveModelName == "CeramicDamage"){
+    if( constitutiveModelName == "ElasticIsotropic" || constitutiveModelName == "CeramicDamage" || "StrainHardeningPolymer" ){
       ElasticIsotropic & elasticIsotropic = dynamic_cast< ElasticIsotropic & >( constitutiveRelation );
       shearModulus = elasticIsotropic.shearModulus();
     }
