@@ -20,21 +20,25 @@
 #ifndef GEOS_PHYSICSSOLVERS_WAVEPROPAGATION_WAVESOLVERUTILS_HPP_
 #define GEOS_PHYSICSSOLVERS_WAVEPROPAGATION_WAVESOLVERUTILS_HPP_
 
+#include "mesh/utilities/ComputationalGeometry.hpp"
 #include "fileIO/Outputs/OutputBase.hpp"
-#include "WaveSolverBase.hpp"
+#include "LvArray/src/tensorOps.hpp"
 
 namespace geos
 {
 
 struct WaveSolverUtils
 {
+  static constexpr real64 epsilonLoc = 1e-8;
+  using EXEC_POLICY = parallelDevicePolicy< >;
+  using wsCoordType = real32;
 
   GEOS_HOST_DEVICE
   static real32 evaluateRicker( real64 const & time_n, real32 const & f0, real32 const & t0, localIndex order )
   {
     real32 const delay = t0 > 0 ? t0 : 1 / f0;
     real32 pulse = 0.0;
-    if(time_n <= -0.9 * delay || time_n >= 2.9 * delay)
+    if( time_n <= -0.9 * delay || time_n >= 2.9 * delay )
     {
       return pulse;
     }
@@ -69,22 +73,24 @@ struct WaveSolverUtils
     return pulse;
   }
 
-  static void initSeismoTrace( string const & name,
-                               localIndex const nReceivers,
-                               arrayView1d< localIndex const > const receiverIsLocal )
+  static void initTrace( string const & prefix,
+                         string const & name,
+                         localIndex const nReceivers,
+                         arrayView1d< localIndex const > const receiverIsLocal )
   {
     string const outputDir = OutputBase::getOutputDirectory();
     forAll< serialPolicy >( nReceivers, [=] ( localIndex const ircv )
     {
       if( receiverIsLocal[ircv] == 1 )
       {
-        string const fn = joinPath( outputDir, GEOS_FMT( "seismoTraceReceiver_{}_{:03}.txt", name, ircv ) );
+        string const fn = joinPath( outputDir, GEOS_FMT( "{}_{}_{:03}.txt", prefix, name, ircv ) );
         std::ofstream f( fn, std::ios::out | std::ios::trunc );
       }
     } );
   }
 
-  static void writeSeismoTrace( string const & name,
+  static void writeSeismoTrace( string const & prefix,
+                                string const & name,
                                 localIndex const nReceivers,
                                 arrayView1d< localIndex const > const receiverIsLocal,
                                 localIndex const nsamplesSeismoTrace,
@@ -95,7 +101,7 @@ struct WaveSolverUtils
     {
       if( receiverIsLocal[ircv] == 1 )
       {
-        string const fn = joinPath( outputDir, GEOS_FMT( "seismoTraceReceiver_{}_{:03}.txt", name, ircv ) );
+        string const fn = joinPath( outputDir, GEOS_FMT( "{}_{}_{:03}.txt", prefix, name, ircv ) );
         std::ofstream f( fn, std::ios::app );
         if( f )
         {
@@ -130,14 +136,14 @@ struct WaveSolverUtils
   {
     real64 const time_np1 = time_n + dt;
 
-    real32 const a1 = abs( dt ) < WaveSolverBase::epsilonLoc ? 1.0 : (time_np1 - timeSeismo) / dt;
+    real32 const a1 = abs( dt ) < epsilonLoc ? 1.0 : (time_np1 - timeSeismo) / dt;
     real32 const a2 = 1.0 - a1;
 
     localIndex const nReceivers = receiverConstants.size( 0 );
 
     if( nsamplesSeismoTrace > 0 )
     {
-      forAll< WaveSolverBase::EXEC_POLICY >( nReceivers, [=] GEOS_HOST_DEVICE ( localIndex const ircv )
+      forAll< EXEC_POLICY >( nReceivers, [=] GEOS_HOST_DEVICE ( localIndex const ircv )
       {
         if( receiverIsLocal[ircv] == 1 )
         {
@@ -157,7 +163,7 @@ struct WaveSolverUtils
     }
 
     if( iSeismo == nsamplesSeismoTrace - 1 && outputSeismoTrace )
-      writeSeismoTrace( name, nReceivers, receiverIsLocal, nsamplesSeismoTrace, varAtReceivers );
+      writeSeismoTrace( "seismoTraceReceiver", name, nReceivers, receiverIsLocal, nsamplesSeismoTrace, varAtReceivers );
   }
 
   static void compute2dVariableSeismoTrace( string const & name,
@@ -178,14 +184,14 @@ struct WaveSolverUtils
   {
     real64 const time_np1 = time_n+dt;
 
-    real32 const a1 = dt < WaveSolverBase::epsilonLoc ? 1.0 : (time_np1 - timeSeismo) / dt;
+    real32 const a1 = dt < epsilonLoc ? 1.0 : (time_np1 - timeSeismo) / dt;
     real32 const a2 = 1.0 - a1;
 
     localIndex const nReceivers = receiverConstants.size( 0 );
 
     if( nsamplesSeismoTrace > 0 )
     {
-      forAll< WaveSolverBase::EXEC_POLICY >( nReceivers, [=] GEOS_HOST_DEVICE ( localIndex const ircv )
+      forAll< EXEC_POLICY >( nReceivers, [=] GEOS_HOST_DEVICE ( localIndex const ircv )
       {
         if( receiverIsLocal[ircv] == 1 )
         {
@@ -207,8 +213,8 @@ struct WaveSolverUtils
       } );
     }
 
-    if( iSeismo == nsamplesSeismoTrace - 1 && outputSeismoTrace )
-      writeSeismoTrace( name, nReceivers, receiverIsLocal, nsamplesSeismoTrace, varAtReceivers );
+    if( iSeismo == nsamplesSeismoTrace - 1 && outputSeismoTrace == 1 )
+      writeSeismoTrace( "seismoTraceReceiver", name, nReceivers, receiverIsLocal, nsamplesSeismoTrace, varAtReceivers );
   }
 
   /**
@@ -283,7 +289,7 @@ struct WaveSolverUtils
   static void
   computeCoordinatesOnReferenceElement( real64 const (&coords)[3],
                                         arraySlice1d< localIndex const, cells::NODE_MAP_USD - 1 > const elemsToNodes,
-                                        arrayView2d< WaveSolverBase::wsCoordType const, nodes::REFERENCE_POSITION_USD > const X,
+                                        arrayView2d< wsCoordType const, nodes::REFERENCE_POSITION_USD > const X,
                                         real64 (& coordsOnRefElem)[3] )
   {
     real64 xLocal[FE_TYPE::numNodes][3]{};

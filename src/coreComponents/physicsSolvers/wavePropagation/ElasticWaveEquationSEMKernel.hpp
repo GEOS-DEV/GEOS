@@ -314,9 +314,9 @@ struct DampingMatrixKernel
 
     forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const e )
     {
-      for ( localIndex i = 0; i < elemsToFaces.size(1); ++i )
+      for( localIndex i = 0; i < elemsToFaces.size( 1 ); ++i )
       {
-        localIndex const f = elemsToFaces(e, i);
+        localIndex const f = elemsToFaces( e, i );
         // face on the domain boundary and not on free surface
         if( facesDomainBoundaryIndicator[f] == 1 && freeSurfaceFaceIndicator[f] != 1 )
         {

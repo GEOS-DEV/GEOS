@@ -377,9 +377,9 @@ void ElasticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh, 
   } );
 }
 
-void ElasticWaveEquationSEM::computeDAS ( arrayView2d< real32 > const xCompRcv,
-                                          arrayView2d< real32 > const yCompRcv,
-                                          arrayView2d< real32 > const zCompRcv )
+void ElasticWaveEquationSEM::computeDAS( arrayView2d< real32 > const xCompRcv,
+                                         arrayView2d< real32 > const yCompRcv,
+                                         arrayView2d< real32 > const zCompRcv )
 {
 
   arrayView2d< real64 const > const linearDASGeometry = m_linearDASGeometry.toViewConst();
@@ -435,20 +435,7 @@ void ElasticWaveEquationSEM::computeDAS ( arrayView2d< real32 > const xCompRcv,
 
   /// temporary output to txt
   if( m_outputSeismoTrace == 1 )
-  {
-    forAll< serialPolicy >( numReceiversGlobal, [=] ( localIndex const ircv )
-    {
-      if( receiverIsLocal[ircv] == 1 )
-      {
-        std::ofstream f( GEOS_FMT( "dasTraceReceiver{:03}.txt", ircv ), std::ios::app );
-        for( localIndex iSample = 0; iSample < nsamplesSeismoTrace; ++iSample )
-        {
-          f<< iSample << " " << zCompRcv[iSample][ircv] << std::endl;
-        }
-        f.close();
-      }
-    } );
-  }
+    WaveSolverUtils::writeSeismoTrace( "dasTraceReceiver", getName(), numReceiversGlobal, receiverIsLocal, nsamplesSeismoTrace, zCompRcv );
 
   /// resize the receiver arrays by dropping the extra pair to avoid confusion
   /// the remaining x-component contains DAS data, the other components are set to zero
@@ -586,7 +573,8 @@ void ElasticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
     } );
   } );
 
-  WaveSolverUtils::initSeismoTrace( getName(), m_receiverConstants.size( 0 ), m_receiverIsLocal );
+  WaveSolverUtils::initTrace( "dasTraceReceiver", getName(), m_linearDASGeometry.size( 0 ), m_receiverIsLocal );
+  WaveSolverUtils::initTrace( "seismoTraceReceiver", getName(), m_receiverConstants.size( 0 ), m_receiverIsLocal );
 }
 
 void ElasticWaveEquationSEM::applyFreeSurfaceBC( real64 const time, DomainPartition & domain )
@@ -805,12 +793,7 @@ void ElasticWaveEquationSEM::synchronizeUnknowns( real64 const & time_n,
   computeAllSeismoTraces( time_n, dt, uy_np1, uy_n, uYReceivers );
   computeAllSeismoTraces( time_n, dt, uz_np1, uz_n, uZReceivers );
 
-  // increment m_indexSeismoTrace
-  while( (m_dtSeismoTrace*m_indexSeismoTrace) <= (time_n + epsilonLoc) && m_indexSeismoTrace < m_nsamplesSeismoTrace )
-  {
-    m_indexSeismoTrace++;
-  }
-
+  incrementIndexSeismoTrace( time_n );
 }
 
 void ElasticWaveEquationSEM::prepareNextTimestep( MeshLevel & mesh )
@@ -906,34 +889,10 @@ void ElasticWaveEquationSEM::cleanup( real64 const time_n,
     /// Compute DAS data if requested
     /// Pairs of receivers are assumed to be modeled ( see WaveSolverBase::initializeDAS() )
     if( m_useDAS )
-    {
       computeDAS( uXReceivers, uYReceivers, uZReceivers );
-    }
   } );
 
-  // increment m_indexSeismoTrace
-  while( (m_dtSeismoTrace*m_indexSeismoTrace) <= (time_n + epsilonLoc) && m_indexSeismoTrace < m_nsamplesSeismoTrace )
-  {
-    m_indexSeismoTrace++;
-  }
-}
-
-void ElasticWaveEquationSEM::computeAllSeismoTraces( real64 const time_n,
-                                                     real64 const dt,
-                                                     arrayView1d< real32 const > const var_np1,
-                                                     arrayView1d< real32 const > const var_n,
-                                                     arrayView2d< real32 > varAtReceivers )
-{
-  localIndex indexSeismoTrace = m_indexSeismoTrace;
-
-  for( real64 timeSeismo;
-       (timeSeismo = m_dtSeismoTrace*indexSeismoTrace) <= (time_n + epsilonLoc) && indexSeismoTrace < m_nsamplesSeismoTrace;
-       indexSeismoTrace++ )
-  {
-    WaveSolverUtils::computeSeismoTrace( getName(), time_n, dt, timeSeismo, indexSeismoTrace, m_receiverNodeIds,
-                                         m_receiverConstants, m_receiverIsLocal, m_nsamplesSeismoTrace,
-                                         m_outputSeismoTrace, var_np1, var_n, varAtReceivers );
-  }
+  // incrementIndexSeismoTrace(time_n);
 }
 
 void ElasticWaveEquationSEM::initializePML()

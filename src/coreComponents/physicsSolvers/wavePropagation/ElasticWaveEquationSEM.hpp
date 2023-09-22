@@ -92,21 +92,6 @@ public:
 
   /**
    * TODO: move implementation into WaveSolverBase
-   * @brief Computes the traces on all receivers (see @computeSeismoTraces) up to time_n+dt
-   * @param time_n the time corresponding to the field values at iteration n
-   * @param dt the simulation timestep
-   * @param var_np1 the field values at time_n + dt
-   * @param var_n the field values at time_n
-   * @param varAtreceivers the array holding the trace values, where the output is written
-   */
-  virtual void computeAllSeismoTraces( real64 const time_n,
-                                       real64 const dt,
-                                       arrayView1d< real32 const > const var_np1,
-                                       arrayView1d< real32 const > const var_n,
-                                       arrayView2d< real32 > varAtReceivers );
-
-  /**
-   * TODO: move implementation into WaveSolverBase once 'm_receiverIsLocal' is also moved
    * @brief Compute DAS data from the appropriate three-component receiver pairs
    * @param xCompRcv the array holding the x-component of pairs of receivers
    * @param yCompRcv the array holding the y-component of pairs of receivers
@@ -226,15 +211,6 @@ private:
 
   /// Flag that indicates whether the source is accessible or not to the MPI rank
   array1d< localIndex > m_sourceIsAccessible;
-
-  /// Indices of the element nodes (in the right order) for each receiver point
-  array2d< localIndex > m_receiverNodeIds;
-
-  /// Basis function evaluated at the receiver for the nodes listed in m_receiverNodeIds
-  array2d< real64 > m_receiverConstants;
-
-  /// Flag that indicates whether the receiver is local or not to the MPI rank
-  array1d< localIndex > m_receiverIsLocal;
 
   /// Displacement_np1 at the receiver location for each time step for each receiver (x-component)
   array2d< real32 > m_displacementXNp1AtReceivers;

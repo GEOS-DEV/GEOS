@@ -167,6 +167,15 @@ WaveSolverBase::WaveSolverBase( const std::string & name,
     setSizedFromParent( 0 ).
     setDescription( "Flag that indicates whether the receiver is local to this MPI rank" );
 
+  registerWrapper( viewKeyStruct::receiverRegionString(), &m_receiverRegion ).
+    setInputFlag( InputFlags::FALSE ).
+    setSizedFromParent( 0 ).
+    setDescription( "Region containing the receivers" );
+
+  registerWrapper( viewKeyStruct::receiverElemString(), &m_rcvElem ).
+    setInputFlag( InputFlags::FALSE ).
+    setSizedFromParent( 0 ).
+    setDescription( "Element containing the receivers" );
 
 }
 
@@ -392,6 +401,66 @@ localIndex WaveSolverBase::getNumNodesPerElem()
   } );
   return numNodesPerElem;
 }
+
+void WaveSolverBase::incrementIndexSeismoTrace( real64 const time_n )
+{
+  while( (m_dtSeismoTrace * m_indexSeismoTrace) <= (time_n + epsilonLoc) && m_indexSeismoTrace < m_nsamplesSeismoTrace )
+  {
+    m_indexSeismoTrace++;
+  }
+}
+
+void WaveSolverBase::computeAllSeismoTraces( real64 const time_n,
+                                             real64 const dt,
+                                             arrayView1d< real32 const > const var_np1,
+                                             arrayView1d< real32 const > const var_n,
+                                             arrayView2d< real32 > varAtReceivers )
+{
+  /*
+   * In forward case we compute seismo if time_n + dt is the first time
+   * step after the timeSeismo to write.
+   *
+   *  time_n        timeSeismo    time_n + dt
+   *   ---|--------------|-------------|
+   *
+   * In backward (time_n goes decreasing) case we compute seismo if
+   * time_n is the last time step before the timeSeismo to write.
+   *
+   *  time_n - dt    timeSeismo    time_n
+   *   ---|--------------|-------------|
+   */
+
+  integer const dir = m_forward ? +1 : -1;
+  for( localIndex iSeismo = m_indexSeismoTrace; iSeismo < m_nsamplesSeismoTrace; iSeismo++ )
+  {
+    real64 const timeSeismo = m_dtSeismoTrace * (m_forward ? iSeismo : (m_nsamplesSeismoTrace - 1) - iSeismo);
+    if( dir * timeSeismo > dir * (time_n + epsilonLoc))
+      break;
+    WaveSolverUtils::computeSeismoTrace( getName(), time_n, dir * dt, timeSeismo, iSeismo, m_receiverNodeIds,
+                                         m_receiverConstants, m_receiverIsLocal, m_nsamplesSeismoTrace,
+                                         m_outputSeismoTrace, var_np1, var_n, varAtReceivers );
+  }
+}
+
+void WaveSolverBase::compute2dVariableAllSeismoTraces( localIndex const regionIndex,
+                                                       real64 const time_n,
+                                                       real64 const dt,
+                                                       arrayView2d< real32 const > const var_np1,
+                                                       arrayView2d< real32 const > const var_n,
+                                                       arrayView2d< real32 > varAtReceivers )
+{
+  integer const dir = m_forward ? +1 : -1;
+  for( localIndex iSeismo = m_indexSeismoTrace; iSeismo < m_nsamplesSeismoTrace; iSeismo++ )
+  {
+    real64 const timeSeismo = m_dtSeismoTrace * (m_forward ? iSeismo : (m_nsamplesSeismoTrace - 1) - iSeismo);
+    if( dir * timeSeismo > dir * (time_n + epsilonLoc))
+      break;
+    WaveSolverUtils::compute2dVariableSeismoTrace( getName(), time_n, dir * dt, regionIndex, m_receiverRegion,
+                                                   timeSeismo, iSeismo, m_rcvElem, m_receiverConstants, m_receiverIsLocal,
+                                                   m_nsamplesSeismoTrace, m_outputSeismoTrace, var_np1, var_n, varAtReceivers );
+  }
+}
+
 
 void WaveSolverBase::computeTargetNodeSet( arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes,
                                            localIndex const subRegionSize,

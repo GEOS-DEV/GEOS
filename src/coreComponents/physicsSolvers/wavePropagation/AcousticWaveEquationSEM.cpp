@@ -106,13 +106,8 @@ void AcousticWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
 
 void AcousticWaveEquationSEM::postProcessInput()
 {
-
   WaveSolverBase::postProcessInput();
-
-  localIndex const numReceiversGlobal = m_receiverCoordinates.size( 0 );
-
-  m_pressureNp1AtReceivers.resize( m_nsamplesSeismoTrace, numReceiversGlobal + 1);
-
+  m_pressureNp1AtReceivers.resize( m_nsamplesSeismoTrace, m_receiverCoordinates.size( 0 ) + 1 );
 }
 
 void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh,
@@ -293,7 +288,7 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
       /// Partial gradient if gradient as to be computed
       arrayView1d< real32 > grad = elementSubRegion.getField< fields::PartialGradient >();
       grad.zero();
-    
+
       finiteElement::FiniteElementDispatchHandler< SEM_FE_TYPES >::dispatch3D( fe, [&] ( auto const finiteElement )
       {
         using FE_TYPE = TYPEOFREF( finiteElement );
@@ -322,7 +317,7 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
     } );
   } );
 
-  WaveSolverUtils::initSeismoTrace( getName(), m_receiverConstants.size( 0 ), m_receiverIsLocal );
+  WaveSolverUtils::initTrace( "seismoTraceReceiver", getName(), m_receiverConstants.size( 0 ), m_receiverIsLocal );
 }
 
 
@@ -1098,10 +1093,9 @@ void AcousticWaveEquationSEM::synchronizeUnknowns( real64 const & time_n,
                                 true );
   /// compute the seismic traces since last step.
   arrayView2d< real32 > const pReceivers = m_pressureNp1AtReceivers.toView();
-  if( time_n >= 0 )
-  {
-    computeAllSeismoTraces( time_n, dt, p_np1, p_n, pReceivers );
-  }
+
+  computeAllSeismoTraces( time_n, dt, p_np1, p_n, pReceivers );
+  incrementIndexSeismoTrace( time_n );
 
   if( m_usePML )
   {
@@ -1152,37 +1146,8 @@ void AcousticWaveEquationSEM::cleanup( real64 const time_n,
     arrayView2d< real32 > const pReceivers  = m_pressureNp1AtReceivers.toView();
     computeAllSeismoTraces( time_n, 0.0, p_np1, p_n, pReceivers );
   } );
-}
 
-void AcousticWaveEquationSEM::computeAllSeismoTraces( real64 const time_n,
-                                                      real64 const dt,
-                                                      arrayView1d< real32 const > const var_np1,
-                                                      arrayView1d< real32 const > const var_n,
-                                                      arrayView2d< real32 > varAtReceivers )
-{
-  /*
-   * In forward case we compute seismo if time_n + dt is the first time
-   * step after the timeSeismo to write.
-   *
-   *  time_n        timeSeismo    time_n + dt
-   *   ---|--------------|-------------|
-   *
-   * In backward (time_n goes decreasing) case we compute seismo if
-   * time_n is the last time step before the timeSeismo to write.
-   *
-   *  time_n - dt    timeSeismo    time_n
-   *   ---|--------------|-------------|
-   */
-
-  for( real64 timeSeismo;
-       m_forward ? (timeSeismo = m_dtSeismoTrace * m_indexSeismoTrace) <= (time_n + dt + epsilonLoc) && m_indexSeismoTrace < m_nsamplesSeismoTrace :
-       timeSeismo = m_dtSeismoTrace * (m_nsamplesSeismoTrace-m_indexSeismoTrace-1) >= (time_n - dt -  epsilonLoc) && m_indexSeismoTrace < m_nsamplesSeismoTrace ;
-       m_indexSeismoTrace++ )
-  {
-    WaveSolverUtils::computeSeismoTrace( getName(), time_n, m_forward? dt : -dt, timeSeismo,
-                                         m_forward ? m_indexSeismoTrace : m_nsamplesSeismoTrace-m_indexSeismoTrace-1, m_receiverNodeIds, m_receiverConstants,
-                                         m_receiverIsLocal, m_nsamplesSeismoTrace, m_outputSeismoTrace, var_np1, var_n, varAtReceivers );
-  }
+  // incrementIndexSeismoTrace(time_n);
 }
 
 REGISTER_CATALOG_ENTRY( SolverBase, AcousticWaveEquationSEM, string const &, dataRepository::Group * const )
