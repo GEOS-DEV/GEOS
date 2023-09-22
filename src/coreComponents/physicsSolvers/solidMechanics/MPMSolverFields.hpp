@@ -40,6 +40,14 @@ DECLARE_FIELD( isBad,
                WRITE_AND_READ,
                "An array that remembers particles that should be deleted at the end of the time step." );
 
+DECLARE_FIELD( particleCrystalHealFlag,
+               "particleCrystalHealFlag",
+               array1d< int >,
+               0,
+               LEVEL_1,
+               WRITE_AND_READ,
+               "An array that remembers particles that are undergoing crystal healing for the mpm event." );
+
 DECLARE_FIELD( particleMass,
                "particleMass",
                array1d< real64 >,
