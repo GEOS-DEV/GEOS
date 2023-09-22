@@ -3225,12 +3225,12 @@ void SurfaceGenerator::calculateNodeAndFaceSif( DomainPartition const & domain,
   for( localIndex const nodeIndex : m_tipNodes )
   {
     if( isNodeGhost[nodeIndex] < 0 )
-    {      
+    {
       if( SIFNode_All[nodeIndex].size() >= 1 )
       {
         SIFNode[nodeIndex] = *min_element( SIFNode_All[nodeIndex].begin(), SIFNode_All[nodeIndex].end());
       }
-      
+
       for( localIndex const edgeIndex: m_tipEdges )
       {
         if( edgeToNodeMap[edgeIndex][0] == nodeIndex || edgeToNodeMap[edgeIndex][1] == nodeIndex )
