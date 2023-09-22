@@ -20,7 +20,7 @@
   </ElementRegions>
 
   <Events
-     maxTime="1.577102400e10"
+     maxTime="7.884302400e10"
      timeOutputFormat="full">
      <SoloEvent
      name="preFracture"
@@ -36,49 +36,49 @@
     <PeriodicEvent
        name="solverApplications2"
        beginTime="1e6"
-       endTime="1.5768e10"
-       maxEventDt="5e8"
+       endTime="7.8840e10"
+       maxEventDt="2e9"
        target="/Solvers/singleFlow"/>
 
     <PeriodicEvent
        name="solverApplications3"
        forceDt="1"
-       beginTime="1.5768e10"
-       endTime="1.5768000001e10"
+       beginTime="7.8840e10"
+       endTime="7.8840000001e10"
        target="/Solvers/singleFlow"/>
 
     <PeriodicEvent
        name="solverApplications4"
-       beginTime="1.5768000001e10"
-       endTime="1.57680001e10"
+       beginTime="7.8840000001e10"
+       endTime="7.88400001e10"
        maxEventDt="1"
        target="/Solvers/singleFlow"/>   
 
     <PeriodicEvent
        name="solverApplications5"
-       beginTime="1.57680001e10"
-       endTime="1.5768001e10"
+       beginTime="7.88400001e10"
+       endTime="7.8840001e10"
        maxEventDt="5"
        target="/Solvers/singleFlow"/>  
 
     <PeriodicEvent
        name="solverApplications6"
-       beginTime="1.5768001e10"
-       endTime="1.57681e10"
+       beginTime="7.8840001e10"
+       endTime="7.88401e10"
        maxEventDt="50"
        target="/Solvers/singleFlow"/>   
 
     <PeriodicEvent
        name="solverApplications7"
-       beginTime="1.57681e10"
-       endTime="1.57689e10"
+       beginTime="7.88401e10"
+       endTime="7.88409e10"
        maxEventDt="100"
        target="/Solvers/singleFlow"/> 
 
     <PeriodicEvent
        name="solverApplications8"
-       beginTime="1.57689e10"
-       endTime="1.577102400e10"
+       beginTime="7.88409e10"
+       endTime="7.884302400e10"
        maxEventDt="400"
        target="/Solvers/singleFlow"/>   
 
@@ -152,6 +152,13 @@
       fieldName="temperature"
       scale="291.65"
       setNames="{ Drift }"/>   
+
+    <FieldSpecification
+      name="BatteryTemperature"
+      objectPath="ElementRegions/matrix"
+      fieldName="temperature"
+      scale="293.637"
+      setNames="{ Battery }"/>   
     <!-- Injection -->
     <SourceFlux                                                                                                                                                                          
       name="TU_massFlux"                                                                                                                                                                  
@@ -166,7 +173,7 @@
       objectPath="ElementRegions/fracture"                                                                                                                                              
       fieldName="temperature"                                                                                                                                                            
       functionName="injectionSchedule_temperature"
-      beginTime="1.5768e10"
+      beginTime="7.8840e10"
       scale="1"                                                                                                                                                                          
       setNames="{ TU_injector }"/>
 
@@ -235,6 +242,6 @@
   <Outputs>
     <VTK
       name="vtkOutput"
-      plotFileRoot="thermalFlowFrac_collab_circulation_cond=1e-3"/>
+      plotFileRoot="thermalFlowFrac_collab_circulation_fracPerm=1e-15"/>
   </Outputs>
 </Problem>
