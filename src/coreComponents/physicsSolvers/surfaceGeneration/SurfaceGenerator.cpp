@@ -19,7 +19,6 @@
 #include "SurfaceGenerator.hpp"
 #include "ParallelTopologyChange.hpp"
 
-
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "mesh/mpiCommunications/NeighborCommunicator.hpp"
 #include "mesh/mpiCommunications/SpatialPartition.hpp"
@@ -33,6 +32,7 @@
 #include "physicsSolvers/solidMechanics/kernels/SolidMechanicsLagrangianFEMKernels.hpp"
 #include "physicsSolvers/surfaceGeneration/SurfaceGeneratorFields.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
+#include "kernels/surfaceGenerationKernels.hpp"
 
 
 #include <algorithm>
@@ -176,7 +176,7 @@ SurfaceGenerator::SurfaceGenerator( const string & name,
   SolverBase( name, parent ),
   m_failCriterion( 1 ),
 //  m_maxTurnAngle(91.0),
-  m_nodeBasedSIF( 0 ),
+  m_nodeBasedSIF( 1 ),
   m_rockToughness( 1.0e99 ),
   m_mpiCommOrder( 0 )
 {
@@ -2867,14 +2867,6 @@ void SurfaceGenerator::calculateNodeAndFaceSif( DomainPartition const & domain,
     elementManager.constructFullMaterialViewAccessor< array3d< real64, solid::STRESS_PERMUTATION >,
                                                       arrayView3d< real64 const, solid::STRESS_USD > >( SolidBase::viewKeyStruct::stressString(),
                                                                                                         constitutiveManager );
-
-
-  ElementRegionManager::ElementViewAccessor< arrayView4d< real64 const > > const
-  dNdX = elementManager.constructViewAccessor< array4d< real64 >, arrayView4d< real64 const > >( keys::dNdX );
-
-  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > const
-  detJ = elementManager.constructViewAccessor< array2d< real64 >, arrayView2d< real64 const > >( keys::detJ );
-
   nodeManager.getField< fields::solidMechanics::totalDisplacement >().move( hostMemorySpace, false );
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
@@ -2894,14 +2886,15 @@ void SurfaceGenerator::calculateNodeAndFaceSif( DomainPartition const & domain,
     displacement.move( hostMemorySpace, false );
   } );
 
-  for( localIndex const trailingFaceIndex : m_trailingFaces )
-//  RAJA::forall< parallelHostPolicy >( RAJA::TypedRangeSegment< localIndex >( 0, m_trailingFaces.size() ),
-//                                      [=] GEOS_HOST_DEVICE ( localIndex const trailingFacesCounter )
+  auto nodalForceKernel = surfaceGenerationKernels::createKernel( elementManager, constitutiveManager, false );
+
+  for( localIndex const trailingFaceIndex : m_trailingFaces )                                    
   {
-//    localIndex const trailingFaceIndex = m_trailingFaces[ trailingFacesCounter ];
+    //  RAJA::forall< parallelHostPolicy >( RAJA::TypedRangeSegment< localIndex >( 0, m_trailingFaces.size() ), [=] GEOS_HOST_DEVICE ( localIndex const trailingFacesCounter )
+    //    localIndex const trailingFaceIndex = m_trailingFaces[ trailingFacesCounter ];
+    /// TODO: check if a ghost face still has the correct attributes such as normal vector, face center, face index.
 
     real64 const faceNormalVector[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( faceNormal[trailingFaceIndex] );
-    //TODO: check if a ghost face still has the correct attributes such as normal vector, face center, face index.
     localIndex_array unpinchedNodeID;
     localIndex_array pinchedNodeID;
     localIndex_array tipEdgesID;
@@ -2949,43 +2942,26 @@ void SurfaceGenerator::calculateNodeAndFaceSif( DomainPartition const & domain,
 
             arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elementsToNodes = elementSubRegion.nodeList();
             arrayView2d< real64 const > const & elementCenter = elementSubRegion.getElementCenter().toViewConst();
-            real64 K = bulkModulus[er][esr][m_solidMaterialFullIndex[er]][ei];
-            real64 G = shearModulus[er][esr][m_solidMaterialFullIndex[er]][ei];
-            real64 YoungModulus = 9 * K * G / ( 3 * K + G );
-            real64 poissonRatio = ( 3 * K - 2 * G ) / ( 2 * ( 3 * K + G ) );
-
-            localIndex const numQuadraturePoints = detJ[er][esr].size( 1 );
 
             for( localIndex n=0; n<elementsToNodes.size( 1 ); ++n )
             {
               if( elementsToNodes( ei, n ) == nodeIndex )
               {
-                real64 temp[ 3 ] = {0};
+                real64 nodalForce[ 3 ] = {0};
                 real64 xEle[ 3 ]  = LVARRAY_TENSOROPS_INIT_LOCAL_3 ( elementCenter[ei] );
 
-                solidMechanicsLagrangianFEMKernels::ExplicitKernel::
-                  calculateSingleNodalForce( ei,
-                                             n,
-                                             numQuadraturePoints,
-                                             dNdX[er][esr],
-                                             detJ[er][esr],
-                                             stress[er][esr][m_solidMaterialFullIndex[er]],
-                                             temp );
-
-                //wu40: the nodal force need to be weighted by Young's modulus and possion's ratio.
-                LvArray::tensorOps::scale< 3 >( temp, YoungModulus );
-                LvArray::tensorOps::scale< 3 >( temp, 1.0 / (1 - poissonRatio * poissonRatio) );
+                nodalForceKernel.calculateSingleNodalForce(er, esr, ei, n, nodalForce);
 
                 LvArray::tensorOps::subtract< 3 >( xEle, nodePosition );
                 if( LvArray::tensorOps::AiBi< 3 >( xEle, faceNormalVector ) > 0 ) //TODO: check the sign.
                 {
                   nElemEachSide[0] += 1;
-                  LvArray::tensorOps::add< 3 >( nodeDisconnectForce, temp );
+                  LvArray::tensorOps::add< 3 >( nodeDisconnectForce, nodalForce );
                 }
                 else
                 {
                   nElemEachSide[1] +=1;
-                  LvArray::tensorOps::subtract< 3 >( nodeDisconnectForce, temp );
+                  LvArray::tensorOps::subtract< 3 >( nodeDisconnectForce, nodalForce );
                 }
               }
             }
@@ -3091,8 +3067,7 @@ void SurfaceGenerator::calculateNodeAndFaceSif( DomainPartition const & domain,
 //          tipNodeForce[1] = nodeDisconnectForce[1];
 //          tipNodeForce[2] = nodeDisconnectForce[2];
 
-          real64 tipArea;
-          tipArea = faceArea( trailingFaceIndex );
+          real64 tipArea = faceArea( trailingFaceIndex );
           if( faceToNodeMap.sizeOfArray( trailingFaceIndex ) == 3 )
           {
             tipArea *= 2.0;
@@ -3773,10 +3748,10 @@ int SurfaceGenerator::calculateElementForcesOnEdge( DomainPartition const & doma
 
       if(( udist <= edgeLength && udist > 0.0 ) || threeNodesPinched )
       {
-        real64 K = bulkModulus[er][esr][m_solidMaterialFullIndex[er]][ei];
-        real64 G = shearModulus[er][esr][m_solidMaterialFullIndex[er]][ei];
-        real64 YoungModulus = 9 * K * G / ( 3 * K + G );
-        real64 poissonRatio = ( 3 * K - 2 * G ) / ( 2 * ( 3 * K + G ) );
+        real64 const K  = bulkModulus[er][esr][m_solidMaterialFullIndex[er]][ei];
+        real64 const  G = shearModulus[er][esr][m_solidMaterialFullIndex[er]][ei];
+        real64 const YoungModulus = 9 * K * G / ( 3 * K + G );
+        real64 const poissonRatio = ( 3 * K - 2 * G ) / ( 2 * ( 3 * K + G ) );
 
         arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elementsToNodes = elementSubRegion.nodeList();
         for( localIndex n=0; n<elementsToNodes.size( 1 ); ++n )
