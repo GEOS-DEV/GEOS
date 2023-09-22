@@ -250,7 +250,7 @@ protected:
   localIndex m_rickerOrder;
 
   /// Flag that indicates if we write the seismo trace in a file .txt, 0 no output, 1 otherwise
-  localIndex m_outputSeismoTrace;
+  integer m_outputSeismoTrace;
 
   /// Time step for seismoTrace output
   real64 m_dtSeismoTrace;

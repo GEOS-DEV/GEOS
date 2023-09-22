@@ -73,6 +73,9 @@ struct WaveSolverUtils
     return pulse;
   }
 
+  /**
+   * @brief Initialize the trace file (touch)
+   */
   static void initTrace( string const & prefix,
                          string const & name,
                          localIndex const nReceivers,
@@ -84,24 +87,45 @@ struct WaveSolverUtils
       if( receiverIsLocal[ircv] == 1 )
       {
         string const fn = joinPath( outputDir, GEOS_FMT( "{}_{}_{:03}.txt", prefix, name, ircv ) );
+        std::cout << "touch " << fn << std::endl;
         std::ofstream f( fn, std::ios::out | std::ios::trunc );
+        f.close();
       }
     } );
   }
 
+  static void writeSeismoTraceVector( string const & prefix,
+                                      string const & name,
+                                      bool const outputSeismoTrace,
+                                      localIndex const nReceivers,
+                                      arrayView1d< localIndex const > const receiverIsLocal,
+                                      localIndex const nsamplesSeismoTrace,
+                                      arrayView2d< real32 const > const varAtReceiversx,
+                                      arrayView2d< real32 const > const varAtReceiversy,
+                                      arrayView2d< real32 const > const varAtReceiversz )
+  {
+    writeSeismoTrace( prefix, name, outputSeismoTrace, nReceivers, receiverIsLocal, nsamplesSeismoTrace, varAtReceiversx );
+    writeSeismoTrace( prefix, name, outputSeismoTrace, nReceivers, receiverIsLocal, nsamplesSeismoTrace, varAtReceiversy );
+    writeSeismoTrace( prefix, name, outputSeismoTrace, nReceivers, receiverIsLocal, nsamplesSeismoTrace, varAtReceiversz );
+  }
+
   static void writeSeismoTrace( string const & prefix,
                                 string const & name,
+                                bool const outputSeismoTrace,
                                 localIndex const nReceivers,
                                 arrayView1d< localIndex const > const receiverIsLocal,
                                 localIndex const nsamplesSeismoTrace,
                                 arrayView2d< real32 const > const varAtReceivers )
   {
+    if( !outputSeismoTrace ) return;
+
     string const outputDir = OutputBase::getOutputDirectory();
     forAll< serialPolicy >( nReceivers, [=] ( localIndex const ircv )
     {
       if( receiverIsLocal[ircv] == 1 )
       {
         string const fn = joinPath( outputDir, GEOS_FMT( "{}_{}_{:03}.txt", prefix, name, ircv ) );
+        std::cout << "writing " << fn << " nsamplesSeismoTrace=" << nsamplesSeismoTrace << std::endl;
         std::ofstream f( fn, std::ios::app );
         if( f )
         {
@@ -120,16 +144,13 @@ struct WaveSolverUtils
     } );
   }
 
-  static void computeSeismoTrace( string const & name,
-                                  real64 const time_n,
+  static void computeSeismoTrace( real64 const time_n,
                                   real64 const dt,
                                   real64 const timeSeismo,
                                   localIndex const iSeismo,
                                   arrayView2d< localIndex const > const receiverNodeIds,
                                   arrayView2d< real64 const > const receiverConstants,
                                   arrayView1d< localIndex const > const receiverIsLocal,
-                                  localIndex const nsamplesSeismoTrace,
-                                  localIndex const outputSeismoTrace,
                                   arrayView1d< real32 const > const var_np1,
                                   arrayView1d< real32 const > const var_n,
                                   arrayView2d< real32 > varAtReceivers )
@@ -141,33 +162,26 @@ struct WaveSolverUtils
 
     localIndex const nReceivers = receiverConstants.size( 0 );
 
-    if( nsamplesSeismoTrace > 0 )
+    forAll< EXEC_POLICY >( nReceivers, [=] GEOS_HOST_DEVICE ( localIndex const ircv )
     {
-      forAll< EXEC_POLICY >( nReceivers, [=] GEOS_HOST_DEVICE ( localIndex const ircv )
+      if( receiverIsLocal[ircv] == 1 )
       {
-        if( receiverIsLocal[ircv] == 1 )
+        real32 vtmp_np1 = 0.0, vtmp_n = 0.0;
+        for( localIndex inode = 0; inode < receiverConstants.size( 1 ); ++inode )
         {
-          real32 vtmp_np1 = 0.0, vtmp_n = 0.0;
-          for( localIndex inode = 0; inode < receiverConstants.size( 1 ); ++inode )
-          {
-            vtmp_np1 += var_np1[receiverNodeIds[ircv][inode]] * receiverConstants[ircv][inode];
-            vtmp_n += var_n[receiverNodeIds[ircv][inode]] * receiverConstants[ircv][inode];
-          }
-          // linear interpolation between the pressure value at time_n and time_{n+1}
-          varAtReceivers[iSeismo][ircv] = a1 * vtmp_n + a2 * vtmp_np1;
-          // NOTE: varAtReceivers has size(1) = numReceiversGlobal + 1, this does not OOB
-          // left in the forAll loop for sync issues
-          varAtReceivers[iSeismo][nReceivers] = a1 * time_n + a2 * time_np1;
+          vtmp_np1 += var_np1[receiverNodeIds[ircv][inode]] * receiverConstants[ircv][inode];
+          vtmp_n += var_n[receiverNodeIds[ircv][inode]] * receiverConstants[ircv][inode];
         }
-      } );
-    }
-
-    if( iSeismo == nsamplesSeismoTrace - 1 && outputSeismoTrace )
-      writeSeismoTrace( "seismoTraceReceiver", name, nReceivers, receiverIsLocal, nsamplesSeismoTrace, varAtReceivers );
+        // linear interpolation between the pressure value at time_n and time_{n+1}
+        varAtReceivers[iSeismo][ircv] = a1 * vtmp_n + a2 * vtmp_np1;
+        // NOTE: varAtReceivers has size(1) = numReceiversGlobal + 1, this does not OOB
+        // left in the forAll loop for sync issues
+        varAtReceivers[iSeismo][nReceivers] = a1 * time_n + a2 * time_np1;
+      }
+    } );
   }
 
-  static void compute2dVariableSeismoTrace( string const & name,
-                                            real64 const time_n,
+  static void compute2dVariableSeismoTrace( real64 const time_n,
                                             real64 const dt,
                                             localIndex const regionIndex,
                                             arrayView1d< localIndex const > const receiverRegion,
@@ -176,8 +190,6 @@ struct WaveSolverUtils
                                             arrayView1d< localIndex const > const rcvElem,
                                             arrayView2d< real64 const > const receiverConstants,
                                             arrayView1d< localIndex const > const receiverIsLocal,
-                                            localIndex const nsamplesSeismoTrace,
-                                            localIndex const outputSeismoTrace,
                                             arrayView2d< real32 const > const var_np1,
                                             arrayView2d< real32 const > const var_n,
                                             arrayView2d< real32 > varAtReceivers )
@@ -189,32 +201,26 @@ struct WaveSolverUtils
 
     localIndex const nReceivers = receiverConstants.size( 0 );
 
-    if( nsamplesSeismoTrace > 0 )
+    forAll< EXEC_POLICY >( nReceivers, [=] GEOS_HOST_DEVICE ( localIndex const ircv )
     {
-      forAll< EXEC_POLICY >( nReceivers, [=] GEOS_HOST_DEVICE ( localIndex const ircv )
+      if( receiverIsLocal[ircv] == 1 )
       {
-        if( receiverIsLocal[ircv] == 1 )
+        if( receiverRegion[ircv] == regionIndex )
         {
-          if( receiverRegion[ircv] == regionIndex )
+          real32 vtmp_np1 = 0.0, vtmp_n = 0.0;
+          for( localIndex inode = 0; inode < receiverConstants.size( 1 ); ++inode )
           {
-            real32 vtmp_np1 = 0.0, vtmp_n = 0.0;
-            for( localIndex inode = 0; inode < receiverConstants.size( 1 ); ++inode )
-            {
-              vtmp_np1 += var_np1[rcvElem[ircv]][inode] * receiverConstants[ircv][inode];
-              vtmp_n += var_n[rcvElem[ircv]][inode] * receiverConstants[ircv][inode];
-            }
-            // linear interpolation between the pressure value at time_n and time_{n+1}
-            varAtReceivers[iSeismo][ircv] = a1 * vtmp_n + a2 * vtmp_np1;
-            // NOTE: varAtReceivers has size(1) = numReceiversGlobal + 1, this does not OOB
-            // left in the forAll loop for sync issues
-            varAtReceivers[iSeismo][nReceivers] = a1 * time_n + a2 * time_np1;
+            vtmp_np1 += var_np1[rcvElem[ircv]][inode] * receiverConstants[ircv][inode];
+            vtmp_n += var_n[rcvElem[ircv]][inode] * receiverConstants[ircv][inode];
           }
+          // linear interpolation between the pressure value at time_n and time_{n+1}
+          varAtReceivers[iSeismo][ircv] = a1 * vtmp_n + a2 * vtmp_np1;
+          // NOTE: varAtReceivers has size(1) = numReceiversGlobal + 1, this does not OOB
+          // left in the forAll loop for sync issues
+          varAtReceivers[iSeismo][nReceivers] = a1 * time_n + a2 * time_np1;
         }
-      } );
-    }
-
-    if( iSeismo == nsamplesSeismoTrace - 1 && outputSeismoTrace == 1 )
-      writeSeismoTrace( "seismoTraceReceiver", name, nReceivers, receiverIsLocal, nsamplesSeismoTrace, varAtReceivers );
+      }
+    } );
   }
 
   /**

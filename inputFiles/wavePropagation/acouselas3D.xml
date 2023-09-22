@@ -73,9 +73,9 @@
       xCoords="{ 0, 6400 }"
       yCoords="{ 0, 2400 }"
       zCoords="{ 0, 2400, 4800 }"
-      nx="{ 80 }"
-      ny="{ 30 }"
-      nz="{ 30, 30 }"
+      nx="{ 320 }"
+      ny="{ 120 }"
+      nz="{ 120, 120 }"
       cellBlockNames="{ solid, fluid }"/>
   </Mesh>
 
@@ -83,7 +83,7 @@
     <FiniteElements>
       <FiniteElementSpace
         name="FE1"
-        order="2"
+        order="3"
         formulation="SEM"/>
     </FiniteElements>
   </NumericalMethods>

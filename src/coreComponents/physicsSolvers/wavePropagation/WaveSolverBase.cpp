@@ -121,7 +121,6 @@ WaveSolverBase::WaveSolverBase( const std::string & name,
     setApplyDefaultValue( -80 ).
     setDescription( "Set the capacity of the lifo host storage (if negative, opposite of percentage of remaining memory)" );
 
-
   registerWrapper( viewKeyStruct::usePMLString(), &m_usePML ).
     setInputFlag( InputFlags::FALSE ).
     setApplyDefaultValue( 0 ).
@@ -157,7 +156,7 @@ WaveSolverBase::WaveSolverBase( const std::string & name,
     setSizedFromParent( 0 ).
     setDescription( "Indices of the nodes (in the right order) for each receiver point" );
 
-  registerWrapper( viewKeyStruct::sourceConstantsString(), &m_sourceConstants ).
+  registerWrapper( viewKeyStruct::receiverConstantsString(), &m_receiverConstants ).
     setInputFlag( InputFlags::FALSE ).
     setSizedFromParent( 0 ).
     setDescription( "Constant part of the receiver for the nodes listed in m_receiverNodeIds" );
@@ -176,7 +175,6 @@ WaveSolverBase::WaveSolverBase( const std::string & name,
     setInputFlag( InputFlags::FALSE ).
     setSizedFromParent( 0 ).
     setDescription( "Element containing the receivers" );
-
 }
 
 WaveSolverBase::~WaveSolverBase()
@@ -430,15 +428,16 @@ void WaveSolverBase::computeAllSeismoTraces( real64 const time_n,
    *   ---|--------------|-------------|
    */
 
+  if( m_nsamplesSeismoTrace == 0 )
+    return;
   integer const dir = m_forward ? +1 : -1;
   for( localIndex iSeismo = m_indexSeismoTrace; iSeismo < m_nsamplesSeismoTrace; iSeismo++ )
   {
     real64 const timeSeismo = m_dtSeismoTrace * (m_forward ? iSeismo : (m_nsamplesSeismoTrace - 1) - iSeismo);
     if( dir * timeSeismo > dir * (time_n + epsilonLoc))
       break;
-    WaveSolverUtils::computeSeismoTrace( getName(), time_n, dir * dt, timeSeismo, iSeismo, m_receiverNodeIds,
-                                         m_receiverConstants, m_receiverIsLocal, m_nsamplesSeismoTrace,
-                                         m_outputSeismoTrace, var_np1, var_n, varAtReceivers );
+    WaveSolverUtils::computeSeismoTrace( time_n, dir * dt, timeSeismo, iSeismo, m_receiverNodeIds,
+                                         m_receiverConstants, m_receiverIsLocal, var_np1, var_n, varAtReceivers );
   }
 }
 
@@ -449,15 +448,16 @@ void WaveSolverBase::compute2dVariableAllSeismoTraces( localIndex const regionIn
                                                        arrayView2d< real32 const > const var_n,
                                                        arrayView2d< real32 > varAtReceivers )
 {
+  if( m_nsamplesSeismoTrace == 0 )
+    return;
   integer const dir = m_forward ? +1 : -1;
   for( localIndex iSeismo = m_indexSeismoTrace; iSeismo < m_nsamplesSeismoTrace; iSeismo++ )
   {
     real64 const timeSeismo = m_dtSeismoTrace * (m_forward ? iSeismo : (m_nsamplesSeismoTrace - 1) - iSeismo);
     if( dir * timeSeismo > dir * (time_n + epsilonLoc))
       break;
-    WaveSolverUtils::compute2dVariableSeismoTrace( getName(), time_n, dir * dt, regionIndex, m_receiverRegion, timeSeismo, iSeismo, m_rcvElem,
-                                                   m_receiverConstants, m_receiverIsLocal, m_nsamplesSeismoTrace,
-                                                   m_outputSeismoTrace, var_np1, var_n, varAtReceivers );
+    WaveSolverUtils::compute2dVariableSeismoTrace( time_n, dir * dt, regionIndex, m_receiverRegion, timeSeismo, iSeismo, m_rcvElem,
+                                                   m_receiverConstants, m_receiverIsLocal, var_np1, var_n, varAtReceivers );
   }
 }
 

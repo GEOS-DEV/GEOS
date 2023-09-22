@@ -206,6 +206,16 @@ real64 AcousticElasticWaveEquationSEM::solverStep( real64 const & time_n,
   return dt;
 }
 
+void AcousticElasticWaveEquationSEM::cleanup( real64 const time_n,
+                                              integer const cycleNumber,
+                                              integer const eventCounter,
+                                              real64 const eventProgress,
+                                              DomainPartition & domain )
+{
+  elasticSolver()->cleanup( time_n, cycleNumber, eventCounter, eventProgress, domain );
+  acousticSolver()->cleanup( time_n, cycleNumber, eventCounter, eventProgress, domain );
+}
+
 REGISTER_CATALOG_ENTRY( SolverBase, AcousticElasticWaveEquationSEM, string const &, Group * const )
 
 } /* namespace geos */

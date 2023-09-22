@@ -64,16 +64,6 @@ ElasticWaveEquationSEM::ElasticWaveEquationSEM( const std::string & name,
     setSizedFromParent( 0 ).
     setDescription( "Flag that indicates whether the source is accessible to this MPI rank" );
 
-  registerWrapper( viewKeyStruct::receiverNodeIdsString(), &m_receiverNodeIds ).
-    setInputFlag( InputFlags::FALSE ).
-    setSizedFromParent( 0 ).
-    setDescription( "Indices of the nodes (in the right order) for each receiver point" );
-
-  registerWrapper( viewKeyStruct::sourceConstantsString(), &m_receiverConstants ).
-    setInputFlag( InputFlags::FALSE ).
-    setSizedFromParent( 0 ).
-    setDescription( "Constant part of the receiver for the nodes listed in m_receiverNodeIds" );
-
   registerWrapper( viewKeyStruct::receiverIsLocalString(), &m_receiverIsLocal ).
     setInputFlag( InputFlags::FALSE ).
     setSizedFromParent( 0 ).
@@ -432,10 +422,6 @@ void ElasticWaveEquationSEM::computeDAS( arrayView2d< real32 > const xCompRcv,
       }
     } );
   }
-
-  /// temporary output to txt
-  if( m_outputSeismoTrace == 1 )
-    WaveSolverUtils::writeSeismoTrace( "dasTraceReceiver", getName(), numReceiversGlobal, receiverIsLocal, nsamplesSeismoTrace, zCompRcv );
 
   /// resize the receiver arrays by dropping the extra pair to avoid confusion
   /// the remaining x-component contains DAS data, the other components are set to zero
@@ -886,13 +872,18 @@ void ElasticWaveEquationSEM::cleanup( real64 const time_n,
     computeAllSeismoTraces( time_n, 0.0, uy_np1, uy_n, uYReceivers );
     computeAllSeismoTraces( time_n, 0.0, uz_np1, uz_n, uZReceivers );
 
+    WaveSolverUtils::writeSeismoTraceVector( "seismoTraceReceiver", getName(), m_outputSeismoTrace, m_receiverConstants.size( 0 ),
+                                             m_receiverIsLocal, m_nsamplesSeismoTrace, uXReceivers, uYReceivers, uZReceivers );
+
     /// Compute DAS data if requested
     /// Pairs of receivers are assumed to be modeled ( see WaveSolverBase::initializeDAS() )
     if( m_useDAS )
+    {
       computeDAS( uXReceivers, uYReceivers, uZReceivers );
+      WaveSolverUtils::writeSeismoTrace( "dasTraceReceiver", getName(), m_outputSeismoTrace, m_linearDASGeometry.size( 0 ),
+                                         m_receiverIsLocal, m_nsamplesSeismoTrace, uZReceivers );
+    }
   } );
-
-  // incrementIndexSeismoTrace(time_n);
 }
 
 void ElasticWaveEquationSEM::initializePML()
