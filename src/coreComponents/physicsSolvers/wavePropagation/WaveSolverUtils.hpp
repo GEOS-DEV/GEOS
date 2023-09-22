@@ -87,9 +87,7 @@ struct WaveSolverUtils
       if( receiverIsLocal[ircv] == 1 )
       {
         string const fn = joinPath( outputDir, GEOS_FMT( "{}_{}_{:03}.txt", prefix, name, ircv ) );
-        std::cout << "touch " << fn << std::endl;
         std::ofstream f( fn, std::ios::out | std::ios::trunc );
-        f.close();
       }
     } );
   }
@@ -104,11 +102,11 @@ struct WaveSolverUtils
                                       arrayView2d< real32 const > const varAtReceiversy,
                                       arrayView2d< real32 const > const varAtReceiversz )
   {
-    writeSeismoTrace( prefix, name, outputSeismoTrace, nReceivers, receiverIsLocal, nsamplesSeismoTrace, varAtReceiversx );
-    writeSeismoTrace( prefix, name, outputSeismoTrace, nReceivers, receiverIsLocal, nsamplesSeismoTrace, varAtReceiversy );
-    writeSeismoTrace( prefix, name, outputSeismoTrace, nReceivers, receiverIsLocal, nsamplesSeismoTrace, varAtReceiversz );
+    writeSeismoTrace(prefix, name, outputSeismoTrace, nReceivers, receiverIsLocal, nsamplesSeismoTrace, varAtReceiversx );
+    writeSeismoTrace(prefix, name, outputSeismoTrace, nReceivers, receiverIsLocal, nsamplesSeismoTrace, varAtReceiversy );
+    writeSeismoTrace(prefix, name, outputSeismoTrace, nReceivers, receiverIsLocal, nsamplesSeismoTrace, varAtReceiversz );
   }
-
+  
   static void writeSeismoTrace( string const & prefix,
                                 string const & name,
                                 bool const outputSeismoTrace,
@@ -117,7 +115,7 @@ struct WaveSolverUtils
                                 localIndex const nsamplesSeismoTrace,
                                 arrayView2d< real32 const > const varAtReceivers )
   {
-    if( !outputSeismoTrace ) return;
+    if ( !outputSeismoTrace ) return;
 
     string const outputDir = OutputBase::getOutputDirectory();
     forAll< serialPolicy >( nReceivers, [=] ( localIndex const ircv )
@@ -125,7 +123,6 @@ struct WaveSolverUtils
       if( receiverIsLocal[ircv] == 1 )
       {
         string const fn = joinPath( outputDir, GEOS_FMT( "{}_{}_{:03}.txt", prefix, name, ircv ) );
-        std::cout << "writing " << fn << " nsamplesSeismoTrace=" << nsamplesSeismoTrace << std::endl;
         std::ofstream f( fn, std::ios::app );
         if( f )
         {
@@ -134,7 +131,6 @@ struct WaveSolverUtils
             // index - time - value
             f << iSample << " " << varAtReceivers[iSample][nReceivers] << " " << varAtReceivers[iSample][ircv] << std::endl;
           }
-          f.close();
         }
         else
         {
