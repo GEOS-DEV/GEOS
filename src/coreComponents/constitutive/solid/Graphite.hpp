@@ -79,7 +79,6 @@ public:
                    arrayView2d< real64 > const & relaxation,
                    arrayView2d< real64 > const & damage,
                    arrayView2d< real64 > const & jacobian,
-                   arrayView2d< real64 > const & materialDirection,
                    arrayView1d< real64 > const & lengthScale,
                    real64 const & failureStrength,
                    real64 const & crackSpeed,
@@ -97,6 +96,11 @@ public:
                    real64 const & coupledShearResponseY2,
                    real64 const & coupledShearResponseM1,
                    real64 const & maximumPlasticStrain,
+                   real64 const & refC11,
+                   real64 const & refC13,
+                   real64 const & refC33,
+                   real64 const & refC44,
+                   real64 const & refC66,
                    real64 const & dc11dp,
                    real64 const & dc13dp,
                    real64 const & dc33dp,
@@ -109,11 +113,17 @@ public:
                    arrayView1d< real64 > const & c66,
                    arrayView1d< real64 > const & effectiveBulkModulus,
                    arrayView1d< real64 > const & effectiveShearModulus,
+                   arrayView2d< real64 > const & materialDirection,
                    arrayView1d< real64 > const & thermalExpansionCoefficient,
                    arrayView3d< real64, solid::STRESS_USD > const & newStress,
                    arrayView3d< real64, solid::STRESS_USD > const & oldStress,
                    bool const & disableInelasticity ):
-    ElasticTransverseIsotropicPressureDependentUpdates( dc11dp,
+    ElasticTransverseIsotropicPressureDependentUpdates( refC11,
+                                                        refC13,
+                                                        refC33,
+                                                        refC44,
+                                                        refC66,
+                                                        dc11dp,
                                                         dc13dp,
                                                         dc33dp,
                                                         dc44dp,
@@ -125,6 +135,7 @@ public:
                                                         c66, 
                                                         effectiveBulkModulus,
                                                         effectiveShearModulus,
+                                                        materialDirection,
                                                         thermalExpansionCoefficient, 
                                                         newStress, 
                                                         oldStress, 
@@ -134,7 +145,6 @@ public:
     m_relaxation( relaxation ),
     m_damage( damage ),
     m_jacobian( jacobian ),
-    m_materialDirection( materialDirection ),
     m_lengthScale( lengthScale ),
     m_failureStrength( failureStrength ),
     m_crackSpeed( crackSpeed ),
@@ -173,7 +183,7 @@ public:
   using DiscretizationOps = SolidModelDiscretizationOpsFullyAnisotroipic; // TODO: typo in anistropic (fix in DiscOps PR)
 
   // Bring in base implementations to prevent hiding warnings
-  using ElasticTransverseIsotropicUpdates::smallStrainUpdate;
+  using ElasticTransverseIsotropicPressureDependentUpdates::smallStrainUpdate;
 
   GEOS_HOST_DEVICE
   void smallStrainUpdate( localIndex const k,
@@ -296,7 +306,7 @@ public:
   virtual void saveConvergedState( localIndex const k,
                                    localIndex const q ) const override final
   {
-    ElasticTransverseIsotropicUpdates::saveConvergedState( k, q );
+    ElasticTransverseIsotropicPressureDependentUpdates::saveConvergedState( k, q );
   }
 
 private:
@@ -314,9 +324,6 @@ private:
 
   /// A reference to the ArrayView holding the jacobian for each quadrature point.
   arrayView2d< real64 > const m_jacobian;
-
-  // A reference to the ArrayView holding the material direction for each element/particle.
-  arrayView2d< real64 > const m_materialDirection;
 
   /// A reference to the ArrayView holding the length scale for each element/particle.
   arrayView1d< real64 > const m_lengthScale;
@@ -360,8 +367,6 @@ void GraphiteUpdates::smallStrainUpdate( localIndex const k,
                                          real64 ( & stress )[6],
                                          real64 ( & stiffness )[6][6] ) const
 {
-  // CC: we don't call this for the MPM solver but other solvers may want to use this
-  // Need to resolve if rotation matrix is always passed and update accordingly
   GEOS_UNUSED_VAR( k );
   GEOS_UNUSED_VAR( q );
   GEOS_UNUSED_VAR( timeIncrement );
@@ -369,32 +374,6 @@ void GraphiteUpdates::smallStrainUpdate( localIndex const k,
   GEOS_UNUSED_VAR( stress );
   GEOS_UNUSED_VAR( stiffness );
   GEOS_ERROR( "smallStrainUpdate not implemented for Graphite model" );
-
-  // // elastic predictor (assume strainIncrement is all elastic)
-  // ElasticTransverseIsotropicUpdates::smallStrainUpdate( k, 
-  //                                                       q, 
-  //                                                       timeIncrement,
-  //                                                       strainIncrement, 
-  //                                                       stress, 
-  //                                                       stiffness );
-  // m_jacobian[k][q] *= exp( strainIncrement[0] + strainIncrement[1] + strainIncrement[2] );
-
-  // if( m_disableInelasticity )
-  // {
-  //   return;
-  // }
-
-  // // call the constitutive model
-  // GraphiteUpdates::smallStrainUpdateHelper( k, 
-  //                                           q, 
-  //                                           timeIncrement,
-  //                                           stress );
-
-  // // It doesn't make sense to modify stiffness with this model
-
-  // // save new stress and return
-  // saveStress( k, q, stress );
-  // return;
 }
 
 GEOS_HOST_DEVICE
@@ -441,11 +420,13 @@ void GraphiteUpdates::smallStrainUpdate_StressOnly( localIndex const k,
                                                     real64 ( & stress )[6] ) const
 {
   // elastic predictor (assume strainIncrement is all elastic)
-  ElasticTransverseIsotropicUpdates::smallStrainUpdate_StressOnly( k, 
-                                                                   q, 
-                                                                   timeIncrement,
-                                                                   strainIncrement, 
-                                                                   stress );
+  ElasticTransverseIsotropicPressureDependentUpdates::smallStrainUpdate_StressOnly( k,
+                                                                                    q,
+                                                                                    timeIncrement,
+                                                                                    beginningRotation,
+                                                                                    endRotation,
+                                                                                    strainIncrement,
+                                                                                    stress );
 
   m_jacobian[k][q] *= exp( strainIncrement[0] + strainIncrement[1] + strainIncrement[2] );
 
@@ -516,6 +497,7 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
 
     // This is a transversely isotropic material for graphite-like crystals having
     // some weak plane with plane-normal-stress- and pressure-dependent elastic properties:
+
     // CC: in old geos the elastic on two different lines of the same code, Mike used planeNormalStress in one but not the other
     // need to ask him about that
 
@@ -523,26 +505,27 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
     real64 c11 = m_c11[k];
     real64 c13 = m_c13[k];
     real64 c33 = m_c33[k];
-    // real64 c44 = m_c44[k];
+    real64 c44 = m_c44[k];
     real64 c66 = m_c66[k];
 
     real64 Ez = c33 - c13 * c13 / ( c11 - c66 );
     real64 Ep = 4 * c66 * ( c11 * c33 - c66 * c33 - c13 * c13 ) / ( c11 * c33 - c13 * c13 );
-    real64 Gzp = c66;
+    real64 Gzp = c44 / 2.0;
     real64 nuzp = c13 / ( 2 * ( c11 - c66 ) );
-    real64 nup = 4 * ( c11 * c33 - c66 * c33 - c13 * c13 ) / ( c11 * c33 - c13 * c13 ) - 1;
+    real64 nup = Ep / c66 - 1; //4 * ( c11 * c33 - c66 * c33 - c13 * c13 ) / ( c11 * c33 - c13 * c13 ) - 1;
 
-    // hypoelastic trial stress update.
-    computeTransverselyIsotropicTrialStress( timeIncrement,             // time step
-                                             Ez,             // Elastic modulus preferred direction
-                                             Ep,             // Elastic modulus transverse plane
-                                             nuzp,           // Poisson ratio coupled
-                                             nup,            // Poisson ratio transverse plane
-                                             Gzp,            // Shear modulus coupled plane
-                                             materialDirection,		        // preferred direction
-                                             oldStress,     // stress at start of step
-                                             D,              // D=sym(L)
-                                             stress );        // stress at end of step
+    // Hypoelastic trial stress update.
+    // CC: this should already be done by ElasticTransverseIsotropicPressureDependent
+    // computeTransverselyIsotropicTrialStress( timeIncrement,      // time step
+    //                                          Ez,                 // Elastic modulus preferred direction
+    //                                          Ep,                 // Elastic modulus transverse plane
+    //                                          nuzp,               // Poisson ratio coupled
+    //                                          nup,                // Poisson ratio transverse plane
+    //                                          Gzp,                // Shear modulus coupled plane
+    //                                          materialDirection,	 // preferred direction
+    //                                          oldStress,          // stress at start of step
+    //                                          D,                  // D=sym(L)
+    //                                          stress );           // stress at end of step
 
     // Decompose stress tensor into pieces.
     real64 sigma1[6] = {0}; // axial
@@ -570,7 +553,7 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
     real64 pressure = (-1.0/3.0)*( stress[0] + stress[1] + stress[2] );
 
     // Check for tensile failure in preferred direction
-    real64 temp[3];
+    real64 temp[3] = { 0 };
     LvArray::tensorOps::Ri_eq_symAijBj< 3 >( temp, stress, materialDirection );
     real64 planeNormalStress = LvArray::tensorOps::AiBi< 3 >( materialDirection, temp );
 
@@ -733,8 +716,6 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
     LvArray::tensorOps::add< 6 >(newStress, inPlaneDev);
     LvArray::tensorOps::add< 6 >(newStress, sigma5);
 
-    // GEOS_LOG_RANK_0(k << ": Plastic " << plastic);
-
     //////////////////////////////////////////////////////
     // Evolve state variables.
     //
@@ -780,7 +761,7 @@ void GraphiteUpdates::computeTransverselyIsotropicTrialStress(const real64 timeI
                                                               real64 (& newStress) [6]         // stress at end of step
 ) const
 {
-    // These are the TI elastic stiffness coefficients using Brannon's TI basis tensors:
+  // These are the TI elastic stiffness coefficients using Brannon's TI basis tensors:
 	real64 h1 = ( Ez*Ez*(-1 + nup) ) / ( Ez*(-1 + nup) + 2*Ep*nuzp*nuzp );
 	real64 h2 = -( ( Ep*(Ez*nup + Ep*nuzp*nuzp) ) / ( (1 + nup)*(Ez*(-1 + nup) + 2*Ep*nuzp*nuzp ) ) );
 	real64 h3 = ( Ep*Ez*nuzp ) / ( Ez - Ez*nup - 2*Ep*nuzp*nuzp );
@@ -1045,9 +1026,6 @@ public:
     /// string/key for quadrature point jacobian value
     static constexpr char const * jacobianString() { return "jacobian"; }
 
-    /// string/key for material direction value
-    static constexpr char const * materialDirectionString() { return "materialDirection"; }
-
     /// string/key for element/particle length scale
     static constexpr char const * lengthScaleString() { return "lengthScale"; }
 
@@ -1111,7 +1089,6 @@ public:
                             m_relaxation,
                             m_damage,
                             m_jacobian,
-                            m_materialDirection,
                             m_lengthScale,
                             m_failureStrength,
                             m_crackSpeed,
@@ -1129,6 +1106,11 @@ public:
                             m_coupledShearResponseY2,
                             m_coupledShearResponseM1,
                             m_maximumPlasticStrain,
+                            m_refC11,
+                            m_refC13,
+                            m_refC33,
+                            m_refC44,
+                            m_refC66,
                             m_dc11dp,
                             m_dc13dp,
                             m_dc33dp,
@@ -1141,6 +1123,7 @@ public:
                             m_c66,
                             m_effectiveBulkModulus,
                             m_effectiveShearModulus,
+                            m_materialDirection,
                             m_thermalExpansionCoefficient,
                             m_newStress,
                             m_oldStress,
@@ -1163,7 +1146,6 @@ public:
                           m_relaxation,
                           m_damage,
                           m_jacobian,
-                          m_materialDirection,
                           m_lengthScale,
                           m_failureStrength,
                           m_crackSpeed,
@@ -1181,6 +1163,11 @@ public:
                           m_coupledShearResponseY2,
                           m_coupledShearResponseM1,
                           m_maximumPlasticStrain,
+                          m_refC11,
+                          m_refC13,
+                          m_refC33,
+                          m_refC44,
+                          m_refC66,
                           m_dc11dp,
                           m_dc13dp,
                           m_dc33dp,
@@ -1193,6 +1180,7 @@ public:
                           m_c66,
                           m_effectiveBulkModulus,
                           m_effectiveShearModulus,
+                          m_materialDirection,
                           m_thermalExpansionCoefficient,
                           m_newStress,
                           m_oldStress,
@@ -1216,9 +1204,6 @@ protected:
 
   /// State variable: The jacobian of the deformation
   array2d< real64 > m_jacobian;
-
-  /// State variable: The material direction for each element/particle
-  array2d< real64 > m_materialDirection;
 
   /// Discretization-sized variable: The length scale for each element/particle
   array1d< real64 > m_lengthScale;

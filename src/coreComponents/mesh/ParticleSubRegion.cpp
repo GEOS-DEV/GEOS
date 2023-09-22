@@ -84,7 +84,7 @@ void ParticleSubRegion::copyFromParticleSubRegion( ParticleSubRegion & particleS
 {
   // Defines the (unique) particle type of this cell particle region,
   // and its associated number of nodes, edges, faces.
-  m_particleRank.resize( particleSubRegion.size() );
+  m_particleRank = particleSubRegion.getParticleRank();
   m_particleType = particleSubRegion.getParticleType();
   m_particleID = particleSubRegion.getParticleID();
   m_particleGroup = particleSubRegion.getParticleGroup();

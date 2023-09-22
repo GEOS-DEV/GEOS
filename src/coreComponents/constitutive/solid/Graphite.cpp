@@ -31,7 +31,6 @@ Graphite::Graphite( string const & name, Group * const parent ):
   m_relaxation(),
   m_damage(),
   m_jacobian(),
-  m_materialDirection(),
   m_lengthScale(),
   m_failureStrength(),
   m_crackSpeed(),
@@ -141,10 +140,6 @@ registerWrapper( viewKeyStruct::jacobianString(), &m_jacobian ).
     setPlotLevel( PlotLevel::NOPLOT ).
     setDescription( "Array of quadrature point jacobian values" );
 
-  registerWrapper( viewKeyStruct::materialDirectionString(), &m_materialDirection ).
-    setPlotLevel( PlotLevel::NOPLOT ).
-    setDescription( "Strength scale" );
-  
   registerWrapper( viewKeyStruct::lengthScaleString(), &m_lengthScale ).
     setApplyDefaultValue( DBL_MIN ).
     setPlotLevel( PlotLevel::NOPLOT ).
@@ -167,7 +162,6 @@ void Graphite::allocateConstitutiveData( dataRepository::Group & parent,
   m_damage.resize( 0, numConstitutivePointsPerParentIndex );
   m_jacobian.resize( 0, numConstitutivePointsPerParentIndex );
   m_lengthScale.resize( 0 );
-  m_materialDirection.resize( 0, 3 );
 }
 
 
