@@ -53,6 +53,7 @@
 #include "events/mpmEvents/InsertPeriodicContactSurfacesMPMEvent.hpp"
 #include "events/mpmEvents/MachineSampleMPMEvent.hpp"
 #include "events/mpmEvents/FrictionCoefficientSwapMPMEvent.hpp"
+#include "events/mpmEvents/BodyForceUpdateMPMEvent.hpp"
 
 namespace geos
 {
@@ -1828,6 +1829,15 @@ void SolidMechanicsMPM::triggerEvents( const real64 dt,
         
         event.setIsComplete( 1 );
       }
+
+      if( event.getName() == "BodyForceUpdate" )
+      {
+        BodyForceUpdateMPMEvent & bodyForceUpdate = dynamicCast< BodyForceUpdateMPMEvent & >( event );
+
+        LvArray::tensorOps::copy< 3 >( m_bodyForce, bodyForceUpdate.getBodyForce() );
+
+        event.setIsComplete( 1 );
+      }
     }
   } );
 
@@ -1863,6 +1873,7 @@ void SolidMechanicsMPM::performMaterialSwap( ParticleManager & particleManager,
     arrayView1d< real64 > sourceParticleOverlap = sourceSubRegion.getField< fields::mpm::particleOverlap >();
     arrayView1d< int > sourceParticleSurfaceFlag = sourceSubRegion.getField< fields::mpm::particleSurfaceFlag >();
     arrayView1d< int > sourceIsBad = sourceSubRegion.getField< fields::mpm::isBad >();
+    arrayView1d< int > sourceParticleCrystalHealFlag = sourceSubRegion.getField< fields::mpm::particleCrystalHealFlag >();
 
     arrayView2d< real64 > const sourceParticleReferencePosition = sourceSubRegion.getField< fields::mpm::particleReferencePosition >();
     arrayView2d< real64 > const sourceParticleInitialMaterialDirection = sourceSubRegion.getParticleInitialMaterialDirection();
@@ -1882,6 +1893,7 @@ void SolidMechanicsMPM::performMaterialSwap( ParticleManager & particleManager,
     arrayView1d< real64 > destinationParticleOverlap = destinationSubRegion.getField< fields::mpm::particleOverlap >();
     arrayView1d< int > destinationParticleSurfaceFlag = destinationSubRegion.getField< fields::mpm::particleSurfaceFlag >();
     arrayView1d< int > destinationIsBad = destinationSubRegion.getField< fields::mpm::isBad >();
+    arrayView1d< int > destinationParticleCrystalHealFlag = destinationSubRegion.getField< fields::mpm::particleCrystalHealFlag >();
 
     arrayView2d< real64 > const destinationParticleReferencePosition = destinationSubRegion.getField< fields::mpm::particleReferencePosition >();
     arrayView2d< real64 > const destinationParticleInitialMaterialDirection = destinationSubRegion.getParticleInitialMaterialDirection();
@@ -1915,6 +1927,7 @@ void SolidMechanicsMPM::performMaterialSwap( ParticleManager & particleManager,
       destinationParticleOverlap[p] = sourceParticleOverlap[p];
       destinationParticleSurfaceFlag[p] = sourceParticleSurfaceFlag[p];
       destinationIsBad[p] = sourceIsBad[p];
+      destinationParticleCrystalHealFlag[p] = sourceParticleCrystalHealFlag[p];
 
       LvArray::tensorOps::copy< 3 >( destinationParticleReferencePosition[p], sourceParticleReferencePosition[p]);
       LvArray::tensorOps::copy< 3 >( destinationParticleInitialMaterialDirection[p], sourceParticleInitialMaterialDirection[p] );
@@ -3769,20 +3782,6 @@ void SolidMechanicsMPM::computeAndWriteBoxAverage( const real64 dt,
   {
     // Calculate the box volume
     real64 boxVolume = m_domainExtent[0] * m_domainExtent[1] * m_domainExtent[2];
-
-    //CC: Old GEOS logic for computing box sums 
-    // May not need this if an extra cell is not already added as was the case when periodicity was specificed in the xml in old GEOS
-    // Now we normalize stress, which is stored as a volume-weighted value:
-    // realT boxVolume;
-    // if( m_prescribed_boundary_f_table || m_prescribed_f_table )
-    // {
-    // boxVolume = ( m_xmax_global - m_xmin_global - (!periodic[0])*2.0*m_dx) * ( m_ymax_global - m_ymin_global - (!periodic[1])*2.0*m_dy) * ( m_zmax_global - m_zmin_global - (!periodic[2])*2.0*m_dz);
-    //   //boxVolume = ( m_xmax_global - m_xmin_global - 2.0*m_dx) * ( m_ymax_global - m_ymin_global - 2.0*m_dy) * ( m_zmax_global - m_zmin_global - 2.0*m_dz);
-    // }
-    // else
-    // {
-    //   boxVolume = ( m_particle_box_xmax - m_particle_box_xmin ) * ( m_particle_box_ymax - m_particle_box_ymin ) * ( m_particle_box_zmax - m_particle_box_zmin ); //Does this need to account for periodic boundaries
-    // }
 
      // Write to file
     std::ofstream file;
