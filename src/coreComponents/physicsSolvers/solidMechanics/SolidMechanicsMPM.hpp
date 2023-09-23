@@ -532,7 +532,6 @@ protected:
   int m_planeStrain;
   int m_numDims;
 
-  int m_uniformBodyForce;
   int m_generalizedVortexMMS;
 
   real64 m_hEl[3];                // Grid spacing in x-y-z
