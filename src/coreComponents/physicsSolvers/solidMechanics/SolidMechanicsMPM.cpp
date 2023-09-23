@@ -264,11 +264,6 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
     setDefaultValue( 0 ).
     setDescription( "Option for CPDI domain scaling" );
 
-  registerWrapper( "uniformBodyForce", &m_uniformBodyForce ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setDefaultValue( 0 ).
-    setDescription( "Option for CPDI domain scaling" );
-
   registerWrapper( "generalizedVortexMMS", &m_generalizedVortexMMS ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDefaultValue( 0 ).
@@ -391,7 +386,7 @@ void SolidMechanicsMPM::postProcessInput()
   if(m_bodyForce.size() == 0)
   {
     m_bodyForce.resize(3);
-    LvArray::tensorOps::fill< 3 >(m_bodyForce, 0);
+    LvArray::tensorOps::fill< 3 >(m_bodyForce, 0.0 );
   }
 }
 
@@ -4190,13 +4185,14 @@ void SolidMechanicsMPM::particleToGrid( ParticleManager & particleManager,
         for( int i=0; i<numDims; i++ )
         {
           gridMomentum[mappedNode][fieldIndex][i] += particleMass[p] * particleVelocity[p][i] * shapeFunctionValues[pp][g];
+          gridExternalForce[mappedNode][fieldIndex][i] += particleBodyForce[p][i] * particleMass[p] * shapeFunctionValues[pp][g];
+          
           // TODO: Switch to volume weighting?
           gridMaterialPosition[mappedNode][fieldIndex][i] += particleMass[p] * (particlePosition[p][i] - gridPosition[mappedNode][i]) * shapeFunctionValues[pp][g];
           for( int k=0; k<numDims; k++ )
           {
             int voigt = voigtMap[k][i];
             gridInternalForce[mappedNode][fieldIndex][i] -= particleStress[p][voigt] * shapeFunctionGradientValues[pp][g][k] * particleVolume[p];
-            gridExternalForce[mappedNode][fieldIndex][i] += particleBodyForce[p][k] / particleMass[p] * shapeFunctionGradientValues[pp][g][k];
           }
         }
       }
@@ -6087,17 +6083,10 @@ inline void GEOS_DEVICE SolidMechanicsMPM::computeBodyForce( ParticleManager & p
     {                                                                                         
       localIndex const p = activeParticleIndices[pp];
 
-      particleBodyForce[p][0] = 0;
-      particleBodyForce[p][1] = 0;
-      particleBodyForce[p][2] = 0;  
+      particleBodyForce[p][0] = m_bodyForce[0];
+      particleBodyForce[p][1] = m_bodyForce[1];
+      particleBodyForce[p][2] = m_bodyForce[2];  
 
-
-      if(m_uniformBodyForce)
-      {
-        particleBodyForce[p][0] += m_bodyForce[0];
-        particleBodyForce[p][1] += m_bodyForce[1];
-        particleBodyForce[p][2] += m_bodyForce[2];  
-      }
     } ); // particle loop
     subRegionIndex++;
   } ); // subregion loop
