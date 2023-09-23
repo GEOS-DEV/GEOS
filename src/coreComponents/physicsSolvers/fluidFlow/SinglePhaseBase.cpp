@@ -768,7 +768,7 @@ void SinglePhaseBase::implicitStepComplete( real64 const & time,
 }
 
 
-void SinglePhaseBase::assembleSystem( real64 const time_n,
+void SinglePhaseBase::assembleSystem( real64 const GEOS_UNUSED_PARAM( time_n ),
                                       real64 const dt,
                                       DomainPartition & domain,
                                       DofManager const & dofManager,
@@ -782,8 +782,7 @@ void SinglePhaseBase::assembleSystem( real64 const time_n,
                              localMatrix,
                              localRhs );
 
-  assembleFluxTerms( time_n,
-                     dt,
+  assembleFluxTerms( dt,
                      domain,
                      dofManager,
                      localMatrix,

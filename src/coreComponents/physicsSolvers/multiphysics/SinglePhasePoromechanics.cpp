@@ -172,7 +172,7 @@ void SinglePhasePoromechanics< FLOW_SOLVER >::initializePreSubGroups()
                                                                             ElementSubRegionBase & subRegion )
     {
       // skip the wells
-      if( subRegion.getCatalogName() == "WellElementSubRegion" )
+      if( subRegion.getCatalogName() == "wellElementSubRegion" )
         return;
 
       string & porousName = subRegion.getReference< string >( viewKeyStruct::porousMaterialNamesString() );
@@ -271,7 +271,6 @@ void SinglePhasePoromechanics< FLOW_SOLVER >::assembleSystem( real64 const time_
                                                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                               arrayView1d< real64 > const & localRhs )
 {
-
   GEOS_MARK_FUNCTION;
 
   // Steps 1 and 2: compute element-based terms (mechanics and local flow terms)
@@ -283,7 +282,7 @@ void SinglePhasePoromechanics< FLOW_SOLVER >::assembleSystem( real64 const time_
                              localRhs );
 
   // Step 3: compute the fluxes (face-based contributions)
-  flowSolver()->assembleFluxTerms( time_n, dt,
+  flowSolver()->assembleFluxTerms( dt,
                                    domain,
                                    dofManager,
                                    localMatrix,

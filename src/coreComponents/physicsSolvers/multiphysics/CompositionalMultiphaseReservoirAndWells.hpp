@@ -68,6 +68,40 @@ public:
                                       CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                       arrayView1d< real64 > const & localRhs ) override;
 
+  void
+  assembleFluxTerms( real64 const dt,
+                     DomainPartition const & domain,
+                     DofManager const & dofManager,
+                     CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                     arrayView1d< real64 > const & localRhs ) const
+  { flowSolver()->assembleFluxTerms( dt, domain, dofManager, localMatrix, localRhs );  }
+  void
+  assembleStabilizedFluxTerms( real64 const dt,
+                               DomainPartition const & domain,
+                               DofManager const & dofManager,
+                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                               arrayView1d< real64 > const & localRhs ) const
+  { flowSolver()->assembleStabilizedFluxTerms( dt, domain, dofManager, localMatrix, localRhs );  }
+
+  void keepFlowVariablesConstantDuringInitStep( bool const keepFlowVariablesConstantDuringInitStep )
+  { flowSolver()->keepFlowVariablesConstantDuringInitStep( keepFlowVariablesConstantDuringInitStep ); }
+
+  void updateFluidState( ObjectManagerBase & subRegion ) const
+  { flowSolver()->updateFluidState( subRegion ); }
+  void updatePorosityAndPermeability( CellElementSubRegion & subRegion ) const
+  { flowSolver()->updatePorosityAndPermeability( subRegion ); }
+  void updateSolidInternalEnergyModel( ObjectManagerBase & dataGroup ) const
+  { flowSolver()->updateSolidInternalEnergyModel( dataGroup ); }
+
+  integer & isThermal() { return flowSolver()->isThermal(); }
+  integer numFluidPhases() { return flowSolver()->numFluidPhases(); }
+  integer numFluidComponents() { return flowSolver()->numFluidComponents(); }
+
+  void enableFixedStressPoromechanicsUpdate()
+  { flowSolver()->enableFixedStressPoromechanicsUpdate();  }
+
+  void saveIterationState( DomainPartition & domain ) const { flowSolver()->saveIterationState( domain ); }
+
 protected:
 
   virtual void initializePreSubGroups() override;
@@ -76,7 +110,7 @@ protected:
 
 private:
 
-  CompositionalMultiphaseBase const * flowSolver() const;
+  CompositionalMultiphaseBase * flowSolver() const;
 
   void setMGRStrategy();
 

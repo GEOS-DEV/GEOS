@@ -62,7 +62,7 @@ public:
    * @brief name of the node manager in the object catalog
    * @return string that contains the catalog name to generate a new SinglePhasePoromechanics object through the object catalog.
    */
-  static string catalogName();// { return "SinglePhasePoromechanics"; }
+  static string catalogName();
 
   /**
    * @brief accessor for the pointer to the solid mechanics solver
