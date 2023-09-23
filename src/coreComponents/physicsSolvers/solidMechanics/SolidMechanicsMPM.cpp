@@ -450,6 +450,7 @@ void SolidMechanicsMPM::registerDataOnMesh( Group & meshBodies )
 
         // Single-indexed fields (scalars)
         subRegion.registerField< isBad >( getName() );
+        subRegion.registerField< particleCrystalHealFlag >( getName() );
         subRegion.registerField< particleMass >( getName() );
         subRegion.registerField< particleInitialVolume >( getName() );
         subRegion.registerField< particleDensity >( getName() );
@@ -3920,7 +3921,7 @@ void SolidMechanicsMPM::stressControl( real64 dt,
       } );
     }
 
-    if( constitutiveModelName == "ElasticIsotropic" || constitutiveModelName == "CeramicDamage" || "StrainHardeningPolymer" ){
+    if( constitutiveModelName == "ElasticIsotropic" || constitutiveModelName == "CeramicDamage" || constitutiveModelName == "StrainHardeningPolymer" ){
       const ElasticIsotropic & elasticIsotropic = dynamic_cast< const ElasticIsotropic & >( solidModel );
       bulkModulus = elasticIsotropic.bulkModulus();
     }
@@ -5015,7 +5016,7 @@ real64 SolidMechanicsMPM::getStableTimeStep( ParticleManager & particleManager )
       } );
     }
 
-    if( constitutiveModelName == "ElasticIsotropic" || constitutiveModelName == "CeramicDamage" || "StrainHardeningPolymer" ){
+    if( constitutiveModelName == "ElasticIsotropic" || constitutiveModelName == "CeramicDamage" || constitutiveModelName == "StrainHardeningPolymer" ){
       const ElasticIsotropic & elasticIsotropic = dynamic_cast< const ElasticIsotropic & >( constitutiveRelation );
       bulkModulus = elasticIsotropic.bulkModulus();
       shearModulus = elasticIsotropic.shearModulus();
@@ -5987,7 +5988,7 @@ inline void GEOS_DEVICE SolidMechanicsMPM::computeGeneralizedVortexMMSBodyForce(
       shearModulus = hyperelasticMMS.shearModulus();
     }
 
-    if( constitutiveModelName == "ElasticIsotropic" || constitutiveModelName == "CeramicDamage" || "StrainHardeningPolymer" ){
+    if( constitutiveModelName == "ElasticIsotropic" || constitutiveModelName == "CeramicDamage" || constitutiveModelName == "StrainHardeningPolymer" ){
       ElasticIsotropic & elasticIsotropic = dynamic_cast< ElasticIsotropic & >( constitutiveRelation );
       shearModulus = elasticIsotropic.shearModulus();
     }
