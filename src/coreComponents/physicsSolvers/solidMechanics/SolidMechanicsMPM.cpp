@@ -76,6 +76,7 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
   m_fTable(),
   m_domainF(),
   m_domainL(),
+  m_globalFaceReactions(),
   m_bodyForce(),
   m_stressControl(),
   m_stressTableInterpType( 0 ),
@@ -702,6 +703,10 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
       }
     }
   }
+
+  // Initialze reactions for each face of box to 0
+  m_globalFaceReactions.resize( 6 );
+  LvArray::tensorOps::fill< 6 >( m_globalFaceReactions, 0.0 );
 
   // Check stress control
   if( m_stressControl.size() == 0 ){
@@ -1451,7 +1456,8 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
   if( m_stressControl[0] == 1 || m_stressControl[1] == 1 || m_stressControl[2] == 1 )
   {
     stressControl( dt,
-                   particleManager );
+                   particleManager,
+                   partition );
   }
 
 
@@ -2286,6 +2292,7 @@ void SolidMechanicsMPM::applyEssentialBCs( const real64 dt,
                    MPI_SUM,
                    MPI_COMM_GEOSX );
   }
+  LvArray::tensorOps::copy< 6 >( m_globalFaceReactions, globalFaceReactions );
 
   // Get end-of-step domain dimensions - note that m_domainExtent is updated later
   real64 length, width, height;
@@ -3878,16 +3885,41 @@ void SolidMechanicsMPM::computeBoxStress( ParticleManager & particleManager,
 }
 
 void SolidMechanicsMPM::stressControl( real64 dt,
-                                       ParticleManager & particleManager )
+                                       ParticleManager & particleManager,
+                                       SpatialPartition & partition )
 {
-  
+  arrayView1d< int const > const periodic = partition.getPeriodic();
+
   real64 targetStress[3] = {0};
   LvArray::tensorOps::copy< 3 >(targetStress, m_domainStress);
 
   array1d< real64 > currentStress;
   currentStress.resize( 3 );
-	computeBoxStress( particleManager,
-                    currentStress );
+  LvArray::tensorOps::fill< 3 >( currentStress, 0.0 );
+  if( periodic[0] == 1 || periodic[1] == 1 || periodic[2] == 1 )
+  {
+    computeBoxStress( particleManager,
+                      currentStress );
+  }
+
+  // Non periodic directions should use boundary reactions instead of box stresses
+  for( int i=0; i<m_numDims; i++)
+  {
+    if( !periodic[i] )
+    {
+      real64 area = 1;
+      for( int j=0; j< m_numDims; j++)
+      {
+        if( j == i )
+        {
+          continue;
+        }
+        area *= m_domainExtent[j];
+      }
+      // x-, x+, y-, y+, z-, z+
+      currentStress[i] = ( m_globalFaceReactions[2*i + 1] * m_xGlobalMax[i] + m_globalFaceReactions[ 2*i ] * m_xGlobalMin[i] ) / ( area * m_domainExtent[i] );
+    }
+  }
 
   // Uses maximum bulk modulus ( lowest effective PID gains ) of all materials
   real64 maximumBulkModulus = 0.0;

@@ -335,7 +335,8 @@ public:
                                   ParticleManager & particleManager );
 
   void stressControl( const real64 dt,
-                      ParticleManager & particleManager );
+                      ParticleManager & particleManager,
+                      SpatialPartition & partition );
 
   void updateConstitutiveModelDependencies( ParticleManager & particleManager );
 
@@ -485,6 +486,8 @@ protected:
   array2d< real64 > m_fTable;
   array1d< real64 > m_domainF;
   array1d< real64 > m_domainL;
+
+  array1d< real64 > m_globalFaceReactions;
 
   array1d< real64 > m_bodyForce;
 
