@@ -111,16 +111,8 @@ public:
                         real64 const eventProgress,
                         DomainPartition & domain ) override;
 
-  struct viewKeyStruct : SolverBase::viewKeyStruct
+  struct viewKeyStruct : WaveSolverBase::viewKeyStruct
   {
-    static constexpr char const * sourceNodeIdsString() { return "sourceNodeIds"; }
-    static constexpr char const * sourceConstantsString() { return "sourceConstants"; }
-    static constexpr char const * sourceIsAccessibleString() { return "sourceIsAccessible"; }
-
-    static constexpr char const * receiverNodeIdsString() { return "receiverNodeIds"; }
-    static constexpr char const * receiverConstantsString() {return "receiverConstants"; }
-    static constexpr char const * receiverIsLocalString() { return "receiverIsLocal"; }
-
     static constexpr char const * displacementXNp1AtReceiversString() { return "displacementXNp1AtReceivers"; }
     static constexpr char const * displacementYNp1AtReceiversString() { return "displacementYNp1AtReceivers"; }
     static constexpr char const * displacementZNp1AtReceiversString() { return "displacementZNp1AtReceivers"; }

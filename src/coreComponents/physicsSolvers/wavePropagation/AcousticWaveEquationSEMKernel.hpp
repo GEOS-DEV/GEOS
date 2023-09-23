@@ -40,7 +40,6 @@ struct PrecomputeSourceAndReceiverKernel
    * @tparam EXEC_POLICY execution policy
    * @tparam FE_TYPE finite element type
    * @param[in] size the number of cells in the subRegion
-   * @param[in] numNodesPerElem number of nodes per element
    * @param[in] X coordinates of the nodes
    * @param[in] elemsToNodes map from element to nodes
    * @param[in] elemsToFaces map from element to faces
@@ -58,7 +57,6 @@ struct PrecomputeSourceAndReceiverKernel
   template< typename EXEC_POLICY, typename FE_TYPE >
   static void
   launch( localIndex const size,
-          localIndex const numNodesPerElem,
           localIndex const numFacesPerElem,
           arrayView2d< WaveSolverBase::wsCoordType const, nodes::REFERENCE_POSITION_USD > const X,
           arrayView1d< integer const > const elemGhostRank,
@@ -81,9 +79,9 @@ struct PrecomputeSourceAndReceiverKernel
           real32 const timeSourceDelay,
           localIndex const rickerOrder )
   {
-
     forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const k )
     {
+      constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
       real64 const center[3] = { elemCenter[k][0],
                                  elemCenter[k][1],
                                  elemCenter[k][2] };
@@ -95,9 +93,9 @@ struct PrecomputeSourceAndReceiverKernel
       {
         if( sourceIsAccessible[isrc] == 0 )
         {
-          real64 const coords[3] = { sourceCoordinates[isrc][0],
-                                     sourceCoordinates[isrc][1],
-                                     sourceCoordinates[isrc][2] };
+          real64 const coords[3] = { sourceCoordinates[isrc][0] + WaveSolverUtils::eps32,
+                                     sourceCoordinates[isrc][1] + WaveSolverUtils::eps32,
+                                     sourceCoordinates[isrc][2] + WaveSolverUtils::eps32 };
 
           bool const sourceFound =
             WaveSolverUtils::locateSourceElement( numFacesPerElem,
@@ -128,8 +126,7 @@ struct PrecomputeSourceAndReceiverKernel
 
             for( localIndex cycle = 0; cycle < sourceValue.size( 0 ); ++cycle )
             {
-              real64 const time = cycle*dt;
-              sourceValue[cycle][isrc] = WaveSolverUtils::evaluateRicker( time, timeSourceFrequency, timeSourceDelay, rickerOrder );
+              sourceValue[cycle][isrc] = WaveSolverUtils::evaluateRicker( cycle * dt, timeSourceFrequency, timeSourceDelay, rickerOrder );
             }
           }
         }
@@ -143,9 +140,9 @@ struct PrecomputeSourceAndReceiverKernel
       {
         if( receiverIsLocal[ircv] == 0 )
         {
-          real64 const coords[3] = { receiverCoordinates[ircv][0],
-                                     receiverCoordinates[ircv][1],
-                                     receiverCoordinates[ircv][2] };
+          real64 const coords[3] = { receiverCoordinates[ircv][0] + WaveSolverUtils::eps32,
+                                     receiverCoordinates[ircv][1] + WaveSolverUtils::eps32,
+                                     receiverCoordinates[ircv][2] + WaveSolverUtils::eps32 };
 
           real64 coordsOnRefElem[3]{};
           bool const receiverFound =
@@ -165,12 +162,12 @@ struct PrecomputeSourceAndReceiverKernel
 
             receiverIsLocal[ircv] = 1;
 
-            real64 Ntest[FE_TYPE::numNodes];
+            real64 Ntest[numNodesPerElem];
             FE_TYPE::calcN( coordsOnRefElem, Ntest );
 
             for( localIndex a = 0; a < numNodesPerElem; ++a )
             {
-              receiverNodeIds[ircv][a] = elemsToNodes[k][a];
+              receiverNodeIds[ircv][a] = elemsToNodes( k, a );
               receiverConstants[ircv][a] = Ntest[a];
             }
           }

@@ -170,16 +170,13 @@ void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh,
     {
       using FE_TYPE = TYPEOFREF( finiteElement );
 
-      constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
       localIndex const numFacesPerElem = elementSubRegion.numFacesPerElement();
-
       {
         GEOS_MARK_SCOPE( acousticWaveEquationSEMKernels::PrecomputeSourceAndReceiverKernel );
         acousticWaveEquationSEMKernels::
           PrecomputeSourceAndReceiverKernel::
           launch< EXEC_POLICY, FE_TYPE >
           ( elementSubRegion.size(),
-          numNodesPerElem,
           numFacesPerElem,
           X32,
           elemGhostRank,

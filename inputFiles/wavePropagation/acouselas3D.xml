@@ -59,12 +59,17 @@
     nx="{ 320 }"
     ny="{ 120 }"
     nz="{ 120, 120 }
-    => local threshold for local builds in 3D Q1 (9e6 elems, 5Gb GPU)
+    => local threshold for local builds 3D Q1 Δt=1e-4 (9e6 elems, 5Gb per 1 GPU)
     or
     nx="{ 160 }"
     ny="{ 60 }"
     nz="{ 60, 60 }
-    => local threshold for local builds in 3D Q2 (1e6 elems, 2Gb GPU)
+    => local threshold for local builds 3D Q2 Δt=1e-4 (1e6 elems, 2Gb per 1 GPU)
+    or
+    nx="{ 80 }"
+    ny="{ 30 }"
+    nz="{ 30, 30 }
+    => coarse 10 min frontal run 3D Q5 Δt=1e-3 (144e3 elems, 4Gb per 6 GPU)
   -->
   <Mesh>
     <InternalMesh
@@ -83,7 +88,7 @@
     <FiniteElements>
       <FiniteElementSpace
         name="FE1"
-        order="3"
+        order="5"
         formulation="SEM"/>
     </FiniteElements>
   </NumericalMethods>

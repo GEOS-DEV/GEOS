@@ -558,9 +558,10 @@ void ElasticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
       } );
     } );
   } );
-
-  WaveSolverUtils::initTrace( "dasTraceReceiver", getName(), m_linearDASGeometry.size( 0 ), m_receiverIsLocal );
+  
+  std::cout << "\t[ElasticWaveEquationSEM::initializePostInitialConditionsPreSubGroups] " << getName() << std::endl;
   WaveSolverUtils::initTrace( "seismoTraceReceiver", getName(), m_receiverConstants.size( 0 ), m_receiverIsLocal );
+  WaveSolverUtils::initTrace( "dasTraceReceiver", getName(), m_linearDASGeometry.size( 0 ), m_receiverIsLocal );
 }
 
 void ElasticWaveEquationSEM::applyFreeSurfaceBC( real64 const time, DomainPartition & domain )

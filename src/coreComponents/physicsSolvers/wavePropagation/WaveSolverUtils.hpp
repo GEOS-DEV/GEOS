@@ -30,11 +30,13 @@ namespace geos
 struct WaveSolverUtils
 {
   static constexpr real64 epsilonLoc = 1e-8;
+  static constexpr real64 eps64 = std::numeric_limits<real64>::epsilon();
+  static constexpr real32 eps32 = std::numeric_limits<real32>::epsilon();
   using EXEC_POLICY = parallelDevicePolicy< >;
   using wsCoordType = real32;
 
   GEOS_HOST_DEVICE
-  static real32 evaluateRicker( real64 const & time_n, real32 const & f0, real32 const & t0, localIndex order )
+  static real32 evaluateRicker( real64 const time_n, real32 const f0, real32 const t0, localIndex order )
   {
     real32 const delay = t0 > 0 ? t0 : 1 / f0;
     real32 pulse = 0.0;
@@ -43,8 +45,7 @@ struct WaveSolverUtils
       return pulse;
     }
 
-    constexpr real32 pi = M_PI;
-    real32 const alpha = -pow( f0 * pi, 2 );
+    real32 const alpha = -pow( f0 * M_PI, 2 );
     real32 const time_d = time_n - delay;
     real32 const gaussian = exp( alpha * pow( time_d, 2 ));
     localIndex const sgn = pow( -1, order + 1 );
@@ -76,7 +77,7 @@ struct WaveSolverUtils
   /**
    * @brief Initialize the trace file (touch)
    */
-  static void initTrace( string const & prefix,
+  static void initTrace( char const * prefix,
                          string const & name,
                          localIndex const nReceivers,
                          arrayView1d< localIndex const > const receiverIsLocal )
@@ -87,12 +88,14 @@ struct WaveSolverUtils
       if( receiverIsLocal[ircv] == 1 )
       {
         string const fn = joinPath( outputDir, GEOS_FMT( "{}_{}_{:03}.txt", prefix, name, ircv ) );
+        std::cout << "touch " << fn << std::endl;
         std::ofstream f( fn, std::ios::out | std::ios::trunc );
+        f.close();
       }
     } );
   }
 
-  static void writeSeismoTraceVector( string const & prefix,
+  static void writeSeismoTraceVector( char const * prefix,
                                       string const & name,
                                       bool const outputSeismoTrace,
                                       localIndex const nReceivers,
@@ -107,7 +110,7 @@ struct WaveSolverUtils
     writeSeismoTrace(prefix, name, outputSeismoTrace, nReceivers, receiverIsLocal, nsamplesSeismoTrace, varAtReceiversz );
   }
   
-  static void writeSeismoTrace( string const & prefix,
+  static void writeSeismoTrace( char const * prefix,
                                 string const & name,
                                 bool const outputSeismoTrace,
                                 localIndex const nReceivers,
@@ -123,6 +126,7 @@ struct WaveSolverUtils
       if( receiverIsLocal[ircv] == 1 )
       {
         string const fn = joinPath( outputDir, GEOS_FMT( "{}_{}_{:03}.txt", prefix, name, ircv ) );
+        std::cout << "writing " << fn << std::endl;
         std::ofstream f( fn, std::ios::app );
         if( f )
         {
@@ -131,6 +135,7 @@ struct WaveSolverUtils
             // index - time - value
             f << iSample << " " << varAtReceivers[iSample][nReceivers] << " " << varAtReceivers[iSample][ircv] << std::endl;
           }
+          f.close();
         }
         else
         {
@@ -270,9 +275,7 @@ struct WaveSolverUtils
 
       // all dot products should be non-negative (we enforce outward normals)
       if( s < 0 )
-      {
         return false;
-      }
 
     }
     return true;

@@ -90,10 +90,8 @@ struct PrecomputeSourceAndReceiverKernel
           R1Tensor const sourceForce,
           R2SymTensor const sourceMoment )
   {
-
     forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const k )
     {
-
       constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
 
       real64 const center[3] = { elemCenter[k][0],
@@ -107,9 +105,9 @@ struct PrecomputeSourceAndReceiverKernel
       {
         if( sourceIsAccessible[isrc] == 0 )
         {
-          real64 const coords[3] = { sourceCoordinates[isrc][0],
-                                     sourceCoordinates[isrc][1],
-                                     sourceCoordinates[isrc][2] };
+          real64 const coords[3] = { sourceCoordinates[isrc][0] + WaveSolverUtils::eps32,
+                                     sourceCoordinates[isrc][1] + WaveSolverUtils::eps32,
+                                     sourceCoordinates[isrc][2] + WaveSolverUtils::eps32 };
 
           real64 xLocal[numNodesPerElem][3];
 
@@ -162,8 +160,7 @@ struct PrecomputeSourceAndReceiverKernel
 
             for( localIndex cycle = 0; cycle < sourceValue.size( 0 ); ++cycle )
             {
-              real64 const time = cycle*dt;
-              sourceValue[cycle][isrc] = WaveSolverUtils::evaluateRicker( time, timeSourceFrequency, timeSourceDelay, rickerOrder );
+              sourceValue[cycle][isrc] = WaveSolverUtils::evaluateRicker( cycle * dt, timeSourceFrequency, timeSourceDelay, rickerOrder );
             }
 
           }
@@ -178,9 +175,9 @@ struct PrecomputeSourceAndReceiverKernel
       {
         if( receiverIsLocal[ircv] == 0 )
         {
-          real64 const coords[3] = { receiverCoordinates[ircv][0],
-                                     receiverCoordinates[ircv][1],
-                                     receiverCoordinates[ircv][2] };
+          real64 const coords[3] = { receiverCoordinates[ircv][0] + WaveSolverUtils::eps32,
+                                     receiverCoordinates[ircv][1] + WaveSolverUtils::eps32,
+                                     receiverCoordinates[ircv][2] + WaveSolverUtils::eps32 };
 
           real64 coordsOnRefElem[3]{};
           bool const receiverFound =
@@ -201,7 +198,6 @@ struct PrecomputeSourceAndReceiverKernel
             receiverIsLocal[ircv] = 1;
 
             real64 Ntest[numNodesPerElem];
-
             FE_TYPE::calcN( coordsOnRefElem, Ntest );
 
             for( localIndex a = 0; a < numNodesPerElem; ++a )
