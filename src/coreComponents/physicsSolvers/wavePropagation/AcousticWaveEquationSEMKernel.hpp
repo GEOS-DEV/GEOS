@@ -93,9 +93,9 @@ struct PrecomputeSourceAndReceiverKernel
       {
         if( sourceIsAccessible[isrc] == 0 )
         {
-          real64 const coords[3] = { sourceCoordinates[isrc][0] + WaveSolverUtils::eps32,
-                                     sourceCoordinates[isrc][1] + WaveSolverUtils::eps32,
-                                     sourceCoordinates[isrc][2] + WaveSolverUtils::eps32 };
+          real64 const coords[3] = { sourceCoordinates[isrc][0],
+                                     sourceCoordinates[isrc][1],
+                                     sourceCoordinates[isrc][2] };
 
           bool const sourceFound =
             WaveSolverUtils::locateSourceElement( numFacesPerElem,
@@ -140,9 +140,9 @@ struct PrecomputeSourceAndReceiverKernel
       {
         if( receiverIsLocal[ircv] == 0 )
         {
-          real64 const coords[3] = { receiverCoordinates[ircv][0] + WaveSolverUtils::eps32,
-                                     receiverCoordinates[ircv][1] + WaveSolverUtils::eps32,
-                                     receiverCoordinates[ircv][2] + WaveSolverUtils::eps32 };
+          real64 const coords[3] = { receiverCoordinates[ircv][0],
+                                     receiverCoordinates[ircv][1],
+                                     receiverCoordinates[ircv][2] };
 
           real64 coordsOnRefElem[3]{};
           bool const receiverFound =

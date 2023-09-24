@@ -76,7 +76,7 @@
       name="mesh"
       elementTypes="{ C3D8 }"
       xCoords="{ 0, 6400 }"
-      yCoords="{ 0, 2400 }"
+      yCoords="{ 0, 2400.001 }"
       zCoords="{ 0, 2400, 4800 }"
       nx="{ 320 }"
       ny="{ 120 }"
@@ -88,7 +88,7 @@
     <FiniteElements>
       <FiniteElementSpace
         name="FE1"
-        order="5"
+        order="3"
         formulation="SEM"/>
     </FiniteElements>
   </NumericalMethods>

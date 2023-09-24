@@ -83,16 +83,21 @@ struct WaveSolverUtils
                          arrayView1d< localIndex const > const receiverIsLocal )
   {
     string const outputDir = OutputBase::getOutputDirectory();
+    RAJA::ReduceSum< ReducePolicy< serialPolicy >, localIndex > count(0);
+
     forAll< serialPolicy >( nReceivers, [=] ( localIndex const ircv )
     {
       if( receiverIsLocal[ircv] == 1 )
       {
+        count += 1;
         string const fn = joinPath( outputDir, GEOS_FMT( "{}_{}_{:03}.txt", prefix, name, ircv ) );
         std::cout << "touch " << fn << std::endl;
         std::ofstream f( fn, std::ios::out | std::ios::trunc );
-        f.close();
       }
     } );
+
+    localIndex const total = MpiWrapper::sum( count.get() );
+    GEOS_ERROR_IF( nReceivers != total, GEOS_FMT( "Invalid distribution of receivers: nReceivers={} != MPI::sum={}.", nReceivers, total ) );
   }
 
   static void writeSeismoTraceVector( char const * prefix,

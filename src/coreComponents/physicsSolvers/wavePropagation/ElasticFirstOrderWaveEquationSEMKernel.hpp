@@ -50,12 +50,11 @@ struct PrecomputeSourceAndReceiverKernel
    * @param[in] receiverCoordinates coordinates of the receiver terms
    * @param[in] dt time-step
    * @param[in] timeSourceFrequency Peak frequency of the source
+   * @param[in] timeSourceDelay the time delay of the source
    * @param[in] rickerOrder Order of the Ricker wavelet
    * @param[out] sourceIsLocal flag indicating whether the source is local or not
    * @param[out] sourceNodeIds indices of the nodes of the element where the source is located
-   * @param[out] sourceConstantsx constant part of the source terms in x-direction
-   * @param[out] sourceConstantsy constant part of the source terms in y-direction
-   * @param[out] sourceConstantsz constant part of the source terms in z-direction
+   * @param[out] sourceConstants constant part of the source terms in x-direction
    * @param[out] receiverIsLocal flag indicating whether the receiver is local or not
    * @param[out] receiverNodeIds indices of the nodes of the element where the receiver is located
    * @param[out] receiverNodeConstants constant part of the receiver term
@@ -106,9 +105,9 @@ struct PrecomputeSourceAndReceiverKernel
       {
         if( sourceIsAccessible[isrc] == 0 )
         {
-          real64 const coords[3] = { sourceCoordinates[isrc][0] + WaveSolverUtils::eps32,
-                                     sourceCoordinates[isrc][1] + WaveSolverUtils::eps32,
-                                     sourceCoordinates[isrc][2] + WaveSolverUtils::eps32 };
+          real64 const coords[3] = { sourceCoordinates[isrc][0],
+                                     sourceCoordinates[isrc][1],
+                                     sourceCoordinates[isrc][2] };
 
           bool const sourceFound =
             WaveSolverUtils::locateSourceElement( numFacesPerElem,
@@ -155,9 +154,9 @@ struct PrecomputeSourceAndReceiverKernel
       {
         if( receiverIsLocal[ircv] == 0 )
         {
-          real64 const coords[3] = { receiverCoordinates[ircv][0] + WaveSolverUtils::eps32,
-                                     receiverCoordinates[ircv][1] + WaveSolverUtils::eps32,
-                                     receiverCoordinates[ircv][2] + WaveSolverUtils::eps32 };
+          real64 const coords[3] = { receiverCoordinates[ircv][0],
+                                     receiverCoordinates[ircv][1],
+                                     receiverCoordinates[ircv][2] };
 
           real64 coordsOnRefElem[3]{};
           bool const receiverFound =
