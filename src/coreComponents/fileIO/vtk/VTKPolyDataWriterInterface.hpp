@@ -97,6 +97,15 @@ public:
   }
 
   /**
+   * @brief Defines if the vtk outputs should the vtk files contain the high order solution.
+   * @param highOrder The boolean flag.
+   */
+  void setHighOrder( bool highOrder )
+  {
+    m_highOrder = highOrder;
+  }
+
+  /**
    * @brief Set the binary mode
    * @param[in] mode output mode to be set
    */
@@ -305,6 +314,9 @@ private:
 
   /// Maximum plot level to be written.
   dataRepository::PlotLevel m_plotLevel;
+
+  /// Should the vtk files contain the high order solution or not.
+  bool m_highOrder;
 
   /// Flag to decide whether we only plot the fields specified by fieldNames, or if we also plot fields based on plotLevel
   integer m_onlyPlotSpecifiedFieldNames;

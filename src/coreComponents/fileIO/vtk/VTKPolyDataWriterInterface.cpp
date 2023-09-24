@@ -50,6 +50,7 @@ VTKPolyDataWriterInterface::VTKPolyDataWriterInterface( string name ):
   m_pvd( m_outputName + ".pvd" ),
   m_writeGhostCells( false ),
   m_plotLevel( PlotLevel::LEVEL_1 ),
+  m_highOrder( true ),
   m_requireFieldRegistrationCheck( true ),
   m_previousCycle( -1 ),
   m_outputMode( VTKOutputMode::BINARY ),
@@ -1084,11 +1085,9 @@ void VTKPolyDataWriterInterface::write( real64 const time,
                                         integer const cycle,
                                         DomainPartition const & domain )
 {
-  // This guard prevents crashes observed on MacOS due to a floating point exception
+  // This guard prevents crashes observed due to a floating point exception
   // triggered inside VTK by a progress indicator
-#if defined(__APPLE__) && defined(__MACH__)
   LvArray::system::FloatingPointExceptionGuard guard;
-#endif
 
   string const stepSubDir = joinPath( m_outputName, getCycleSubFolder( cycle ) );
   string const stepSubDirFull = joinPath( m_outputDir, stepSubDir );

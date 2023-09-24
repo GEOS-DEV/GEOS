@@ -95,6 +95,7 @@ public:
     static constexpr auto onlyPlotSpecifiedFieldNames = "onlyPlotSpecifiedFieldNames";
     static constexpr auto fieldNames = "fieldNames";
     static constexpr auto levelNames = "levelNames";
+    static constexpr auto highOrder = "highOrder";
   } vtkOutputViewKeys;
   /// @endcond
 
@@ -111,6 +112,7 @@ private:
   string m_plotFileRoot;
   integer m_writeFaceMesh;
   integer m_plotLevel;
+  integer m_highOrder;
 
   /// Should the vtk files contain the ghost cells or not.
   integer m_writeGhostCells;

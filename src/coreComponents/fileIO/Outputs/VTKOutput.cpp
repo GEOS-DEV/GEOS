@@ -34,6 +34,7 @@ VTKOutput::VTKOutput( string const & name,
   m_plotFileRoot( name ),
   m_writeFaceMesh(),
   m_plotLevel(),
+  m_highOrder(),
   m_onlyPlotSpecifiedFieldNames(),
   m_fieldNames(),
   m_levelNames(),
@@ -63,6 +64,11 @@ VTKOutput::VTKOutput( string const & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription(
     "If this flag is equal to 1, then we only plot the fields listed in `fieldNames`. Otherwise, we plot all the fields with the required `plotLevel`, plus the fields listed in `fieldNames`" );
+
+  registerWrapper( viewKeysStruct::highOrder, &m_highOrder ).
+    setApplyDefaultValue( 1 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Should the vtk files contain the high order solution or not." );
 
   registerWrapper( viewKeysStruct::fieldNames, &m_fieldNames ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -135,6 +141,7 @@ bool VTKOutput::execute( real64 const time_n,
   m_writer.setOutputMode( m_writeBinaryData );
   m_writer.setOutputRegionType( m_outputRegionType );
   m_writer.setPlotLevel( m_plotLevel );
+  m_writer.setHighOrder( m_highOrder );
   m_writer.write( time_n, cycleNumber, domain );
 
   return false;
