@@ -120,7 +120,7 @@ struct PrecomputeSourceAndReceiverKernel
 
             for( localIndex a = 0; a < numNodesPerElem; ++a )
             {
-              sourceNodeIds[isrc][a] = elemsToNodes[k][a];
+              sourceNodeIds[isrc][a] = elemsToNodes( k, a );
               sourceConstants[isrc][a] = Ntest[a];
             }
 
@@ -809,8 +809,8 @@ public:
     m_finiteElementSpace.template computeStiffnessTerm( q, stack.xLocal, [&] ( int i, int j, real64 val )
     {
       real32 invDensity = 1./m_density[k];
-      real32 const localIncrement = invDensity*val*m_p_n[m_elemsToNodes[k][j]];
-      RAJA::atomicAdd< parallelDeviceAtomic >( &m_stiffnessVector[m_elemsToNodes[k][i]], localIncrement );
+      real32 const localIncrement = invDensity*val*m_p_n[m_elemsToNodes( k, j )];
+      RAJA::atomicAdd< parallelDeviceAtomic >( &m_stiffnessVector[m_elemsToNodes( k, i )], localIncrement );
     } );
   }
 

@@ -30,8 +30,8 @@ namespace geos
 struct WaveSolverUtils
 {
   static constexpr real64 epsilonLoc = 1e-8;
-  static constexpr real64 eps64 = std::numeric_limits<real64>::epsilon();
-  static constexpr real32 eps32 = std::numeric_limits<real32>::epsilon();
+  static constexpr real64 eps64 = std::numeric_limits< real64 >::epsilon();
+  static constexpr real32 eps32 = std::numeric_limits< real32 >::epsilon();
   using EXEC_POLICY = parallelDevicePolicy< >;
   using wsCoordType = real32;
 
@@ -83,7 +83,7 @@ struct WaveSolverUtils
                          arrayView1d< localIndex const > const receiverIsLocal )
   {
     string const outputDir = OutputBase::getOutputDirectory();
-    RAJA::ReduceSum< ReducePolicy< serialPolicy >, localIndex > count(0);
+    RAJA::ReduceSum< ReducePolicy< serialPolicy >, localIndex > count( 0 );
 
     forAll< serialPolicy >( nReceivers, [=] ( localIndex const ircv )
     {
@@ -110,11 +110,11 @@ struct WaveSolverUtils
                                       arrayView2d< real32 const > const varAtReceiversy,
                                       arrayView2d< real32 const > const varAtReceiversz )
   {
-    writeSeismoTrace(prefix, name, outputSeismoTrace, nReceivers, receiverIsLocal, nsamplesSeismoTrace, varAtReceiversx );
-    writeSeismoTrace(prefix, name, outputSeismoTrace, nReceivers, receiverIsLocal, nsamplesSeismoTrace, varAtReceiversy );
-    writeSeismoTrace(prefix, name, outputSeismoTrace, nReceivers, receiverIsLocal, nsamplesSeismoTrace, varAtReceiversz );
+    writeSeismoTrace( prefix, name, outputSeismoTrace, nReceivers, receiverIsLocal, nsamplesSeismoTrace, varAtReceiversx );
+    writeSeismoTrace( prefix, name, outputSeismoTrace, nReceivers, receiverIsLocal, nsamplesSeismoTrace, varAtReceiversy );
+    writeSeismoTrace( prefix, name, outputSeismoTrace, nReceivers, receiverIsLocal, nsamplesSeismoTrace, varAtReceiversz );
   }
-  
+
   static void writeSeismoTrace( char const * prefix,
                                 string const & name,
                                 bool const outputSeismoTrace,
@@ -123,7 +123,7 @@ struct WaveSolverUtils
                                 localIndex const nsamplesSeismoTrace,
                                 arrayView2d< real32 const > const varAtReceivers )
   {
-    if ( !outputSeismoTrace ) return;
+    if( !outputSeismoTrace ) return;
 
     string const outputDir = OutputBase::getOutputDirectory();
     forAll< serialPolicy >( nReceivers, [=] ( localIndex const ircv )

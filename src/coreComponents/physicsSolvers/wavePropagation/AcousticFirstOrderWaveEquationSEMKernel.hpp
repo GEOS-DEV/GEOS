@@ -138,7 +138,7 @@ struct PrecomputeSourceAndReceiverKernel
 
             for( localIndex a = 0; a < numNodesPerElem; ++a )
             {
-              sourceNodeIds[isrc][a] = elemsToNodes[k][a];
+              sourceNodeIds[isrc][a] = elemsToNodes( k, a );
               sourceConstants[isrc][a] = Ntest[a];
             }
 
@@ -186,7 +186,7 @@ struct PrecomputeSourceAndReceiverKernel
 
             for( localIndex a = 0; a < numNodesPerElem; ++a )
             {
-              receiverNodeIds[ircv][a] = elemsToNodes[k][a];
+              receiverNodeIds[ircv][a] = elemsToNodes( k, a );
               receiverConstants[ircv][a] = Ntest[a];
             }
           }
@@ -246,7 +246,7 @@ struct MassMatrixKernel
       for( localIndex q = 0; q < numQuadraturePointsPerElem; ++q )
       {
         real32 const localIncrement = invC2 * m_finiteElement.computeMassTerm( q, xLocal );
-        RAJA::atomicAdd< ATOMIC_POLICY >( &mass[elemsToNodes[k][q]], localIncrement );
+        RAJA::atomicAdd< ATOMIC_POLICY >( &mass[elemsToNodes( k, q )], localIncrement );
       }
     } ); // end loop over element
   }
@@ -397,23 +397,23 @@ struct VelocityComputation
 
         m_finiteElement.template computeFirstOrderStiffnessTermX( q, xLocal, [&] ( int i, int j, real32 dfx1, real32 dfx2, real32 dfx3 )
         {
-          flowx[j] += dfx1*p_np1[elemsToNodes[k][i]];
-          flowy[j] += dfx2*p_np1[elemsToNodes[k][i]];
-          flowz[j] += dfx3*p_np1[elemsToNodes[k][i]];
+          flowx[j] += dfx1*p_np1[elemsToNodes( k, i )];
+          flowy[j] += dfx2*p_np1[elemsToNodes( k, i )];
+          flowz[j] += dfx3*p_np1[elemsToNodes( k, i )];
         } );
 
         m_finiteElement.template computeFirstOrderStiffnessTermY( q, xLocal, [&] ( int i, int j, real32 dfy1, real32 dfy2, real32 dfy3 )
         {
-          flowx[j] += dfy1*p_np1[elemsToNodes[k][i]];
-          flowy[j] += dfy2*p_np1[elemsToNodes[k][i]];
-          flowz[j] += dfy3*p_np1[elemsToNodes[k][i]];
+          flowx[j] += dfy1*p_np1[elemsToNodes( k, i )];
+          flowy[j] += dfy2*p_np1[elemsToNodes( k, i )];
+          flowz[j] += dfy3*p_np1[elemsToNodes( k, i )];
         } );
 
         m_finiteElement.template computeFirstOrderStiffnessTermZ( q, xLocal, [&] ( int i, int j, real32 dfz1, real32 dfz2, real32 dfz3 )
         {
-          flowx[j] += dfz1*p_np1[elemsToNodes[k][i]];
-          flowy[j] += dfz2*p_np1[elemsToNodes[k][i]];
-          flowz[j] += dfz3*p_np1[elemsToNodes[k][i]];
+          flowx[j] += dfz1*p_np1[elemsToNodes( k, i )];
+          flowy[j] += dfz2*p_np1[elemsToNodes( k, i )];
+          flowz[j] += dfz3*p_np1[elemsToNodes( k, i )];
 
         } );
 
@@ -552,8 +552,8 @@ struct PressureComputation
         real32 diag=(auxx[i]+auyy[i]+auzz[i]);
         uelemx[i]+=dt*diag;
 
-        real32 const localIncrement = uelemx[i]/mass[elemsToNodes[k][i]];
-        RAJA::atomicAdd< ATOMIC_POLICY >( &p_np1[elemsToNodes[k][i]], localIncrement );
+        real32 const localIncrement = uelemx[i]/mass[elemsToNodes( k, i )];
+        RAJA::atomicAdd< ATOMIC_POLICY >( &p_np1[elemsToNodes( k, i )], localIncrement );
       }
 
       //Source Injection
@@ -565,8 +565,8 @@ struct PressureComputation
           {
             for( localIndex i = 0; i < numNodesPerElem; ++i )
             {
-              real32 const localIncrement2 = dt*(sourceConstants[isrc][i]*sourceValue[cycleNumber][isrc])/(mass[elemsToNodes[k][i]]);
-              RAJA::atomicAdd< ATOMIC_POLICY >( &p_np1[elemsToNodes[k][i]], localIncrement2 );
+              real32 const localIncrement2 = dt*(sourceConstants[isrc][i]*sourceValue[cycleNumber][isrc])/(mass[elemsToNodes( k, i )]);
+              RAJA::atomicAdd< ATOMIC_POLICY >( &p_np1[elemsToNodes( k, i )], localIncrement2 );
             }
           }
         }

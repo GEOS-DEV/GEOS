@@ -504,13 +504,13 @@ public:
       real32 const Ryz_ij = val*(stack.lambda*J[p][1]*J[r][2]+stack.mu*J[p][2]*J[r][1]);
       real32 const Rzy_ij = val*(stack.mu*J[p][1]*J[r][2]+stack.lambda*J[p][2]*J[r][1]);
 
-      real32 const localIncrementx = (Rxx_ij * m_ux_n[m_elemsToNodes[k][j]] + Rxy_ij*m_uy_n[m_elemsToNodes[k][j]] + Rxz_ij*m_uz_n[m_elemsToNodes[k][j]]);
-      real32 const localIncrementy = (Ryx_ij * m_ux_n[m_elemsToNodes[k][j]] + Ryy_ij*m_uy_n[m_elemsToNodes[k][j]] + Ryz_ij*m_uz_n[m_elemsToNodes[k][j]]);
-      real32 const localIncrementz = (Rzx_ij * m_ux_n[m_elemsToNodes[k][j]] + Rzy_ij*m_uy_n[m_elemsToNodes[k][j]] + Rzz_ij*m_uz_n[m_elemsToNodes[k][j]]);
+      real32 const localIncrementx = (Rxx_ij * m_ux_n[m_elemsToNodes( k, j )] + Rxy_ij*m_uy_n[m_elemsToNodes( k, j )] + Rxz_ij*m_uz_n[m_elemsToNodes( k, j )]);
+      real32 const localIncrementy = (Ryx_ij * m_ux_n[m_elemsToNodes( k, j )] + Ryy_ij*m_uy_n[m_elemsToNodes( k, j )] + Ryz_ij*m_uz_n[m_elemsToNodes( k, j )]);
+      real32 const localIncrementz = (Rzx_ij * m_ux_n[m_elemsToNodes( k, j )] + Rzy_ij*m_uy_n[m_elemsToNodes( k, j )] + Rzz_ij*m_uz_n[m_elemsToNodes( k, j )]);
 
-      RAJA::atomicAdd< parallelDeviceAtomic >( &m_stiffnessVectorx[m_elemsToNodes[k][i]], localIncrementx );
-      RAJA::atomicAdd< parallelDeviceAtomic >( &m_stiffnessVectory[m_elemsToNodes[k][i]], localIncrementy );
-      RAJA::atomicAdd< parallelDeviceAtomic >( &m_stiffnessVectorz[m_elemsToNodes[k][i]], localIncrementz );
+      RAJA::atomicAdd< parallelDeviceAtomic >( &m_stiffnessVectorx[m_elemsToNodes( k, i )], localIncrementx );
+      RAJA::atomicAdd< parallelDeviceAtomic >( &m_stiffnessVectory[m_elemsToNodes( k, i )], localIncrementy );
+      RAJA::atomicAdd< parallelDeviceAtomic >( &m_stiffnessVectorz[m_elemsToNodes( k, i )], localIncrementz );
     } );
   }
 
