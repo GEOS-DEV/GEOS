@@ -59,7 +59,14 @@ public:
   { return !m_ghostsToSend.empty() || !m_ghostsToReceive.empty(); }
 
   /**
-   * @brief @return An array containing the indices of the objects on the domain boundary with the neighbor.
+   * @brief The local indices to the boundary objects that need to be exchanged with the neighbor.
+   * @return A mutable array.
+   * @details This does not strictly only include the objects at the exact boundary.
+   * Mainly for the case of conformal fractures, objects that are collocated but different,
+   * still at the boundary, can be included.
+   * For example, if the mesh is split along a fracture, the nodes on the two sides of the fracture
+   * do not share the same index, but they still need to be exchanged
+   * for the fracture to have its two neighboring elements.
    */
   array1d< localIndex > & matchedPartitionBoundary()
   { return m_matchedPartitionBoundary; }
