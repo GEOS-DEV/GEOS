@@ -162,10 +162,10 @@ template< typename LAMBDA >
 void kernelSelector( ElementRegionManager const & elemManager,
                      constitutive::ConstitutiveManager const & constitutiveManager,
                      string const solidMaterialKey,  
-                     bool const isPoroelastic, 
+                     integer const isPoroelastic, 
                      LAMBDA && lambda )
 {
-  if( isPoroelastic )
+  if( isPoroelastic == 0 )
   { 
     lambda( NodalForceKernel( elemManager, constitutiveManager, solidMaterialKey ) ); 
   }

@@ -177,6 +177,7 @@ SurfaceGenerator::SurfaceGenerator( const string & name,
   m_failCriterion( 1 ),
 //  m_maxTurnAngle(91.0),
   m_nodeBasedSIF( 1 ),
+  m_isPoroelastic( 0 ),
   m_rockToughness( 1.0e99 ),
   m_mpiCommOrder( 0 )
 {
@@ -190,6 +191,10 @@ SurfaceGenerator::SurfaceGenerator( const string & name,
   registerWrapper( viewKeyStruct::nodeBasedSIFString(), &m_nodeBasedSIF ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Flag for choosing between node or edge based criteria: 1 for node based criterion" );
+
+  registerWrapper( viewKeyStruct::isPoroelasticString(), &m_isPoroelastic ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Flag that defines whether the material is poroelastic or not." );  
 
   registerWrapper( viewKeyStruct::mpiCommOrderString(), &m_mpiCommOrder ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -213,6 +218,23 @@ SurfaceGenerator::SurfaceGenerator( const string & name,
 
   this->getWrapper< string >( viewKeyStruct::discretizationString() ).
     setInputFlag( InputFlags::FALSE );
+}
+
+void SurfaceGenerator::postProcessInput()
+{
+  static const std::set< integer > binaryOptions = { 0, 1 };
+
+  GEOS_ERROR_IF( binaryOptions.count( m_isPoroelastic ) == 0,
+                 getWrapperDataContext( viewKeyStruct::isPoroelasticString() ) <<
+                 ": option can be either 0 (false) or 1 (true)" );
+
+  GEOS_ERROR_IF( binaryOptions.count( m_nodeBasedSIF ) == 0,
+                 getWrapperDataContext( viewKeyStruct::nodeBasedSIFString() ) <<
+                 ": option can be either 0 (false) or 1 (true)" );
+
+  GEOS_ERROR_IF( binaryOptions.count( m_mpiCommOrder ) == 0,
+                 getWrapperDataContext( viewKeyStruct::mpiCommOrderString() ) <<
+                 ": option can be either 0 (false) or 1 (true)" );                                  
 }
 
 SurfaceGenerator::~SurfaceGenerator()
@@ -2892,7 +2914,7 @@ void SurfaceGenerator::calculateNodeAndFaceSif( DomainPartition const & domain,
   surfaceGenerationKernels::kernelSelector( elementManager,
                                             constitutiveManager,
                                             viewKeyStruct::solidMaterialNameString(),
-                                            false, [&] ( auto nodalForceKernel )
+                                            m_isPoroelastic, [&] ( auto nodalForceKernel )
   {
     for( localIndex const trailingFaceIndex : m_trailingFaces )
     {
