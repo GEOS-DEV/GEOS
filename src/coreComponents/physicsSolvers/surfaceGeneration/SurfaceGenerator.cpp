@@ -415,9 +415,9 @@ void SurfaceGenerator::postRestartInitialization()
     SurfaceElementRegion & fractureRegion = elemManager.getRegion< SurfaceElementRegion >( this->m_fractureRegionName );
     FaceElementSubRegion & fractureSubRegion = fractureRegion.getSubRegion< FaceElementSubRegion >( 0 );
 
-    for( localIndex fce = 0; fce < fractureSubRegion.m_fractureConnectorEdgesToFaceElements.size(); ++fce )
+    for( localIndex fce = 0; fce < fractureSubRegion.m_2dFaceTo2dElems.size(); ++fce )
     {
-      fractureSubRegion.m_recalculateFractureConnectorEdges.insert( fce );
+      fractureSubRegion.m_recalculateConnectionsFor2dFaces.insert( fce );
     }
 
     for( localIndex fe = 0; fe < fractureSubRegion.size(); ++fe )
@@ -434,7 +434,7 @@ void SurfaceGenerator::postRestartInitialization()
       }
     }
 
-    fractureSubRegion.m_recalculateFractureConnectorEdges.clear();
+    fractureSubRegion.m_recalculateConnectionsFor2dFaces.clear();
     fractureSubRegion.m_newFaceElements.clear();
   } );
 }
@@ -490,7 +490,7 @@ real64 SurfaceGenerator::solverStep( real64 const & time_n,
     }
 
     FaceElementSubRegion & fractureSubRegion = fractureRegion.getUniqueSubRegion< FaceElementSubRegion >();
-    fractureSubRegion.m_recalculateFractureConnectorEdges.clear();
+    fractureSubRegion.m_recalculateConnectionsFor2dFaces.clear();
     fractureSubRegion.m_newFaceElements.clear();
 
     // Recreate geometric sets
@@ -522,6 +522,14 @@ real64 SurfaceGenerator::solverStep( real64 const & time_n,
       {
         gravityCoef[ ei ] = LvArray::tensorOps::AiBi< 3 >( elemCenter[ ei ], gravVector );
       } );
+    }
+
+    string const permModelName = getConstitutiveName< PermeabilityBase >( fractureSubRegion );
+    if( !permModelName.empty() )
+    {
+      // if a permeability model exists we need to set the intial value to something meaningful
+      PermeabilityBase & permModel = getConstitutiveModel< PermeabilityBase >( fractureSubRegion, permModelName );
+      permModel.initializeState();
     }
 
   } );
@@ -687,7 +695,7 @@ int SurfaceGenerator::separationDriver( DomainPartition & domain,
     elementManager.forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
     {
       FaceElementSubRegion::NodeMapType & nodeMap = subRegion.nodeList();
-      FaceElementSubRegion::FaceMapType & faceMap = subRegion.faceList();
+      ArrayOfArraysView< localIndex const > const faceMap = subRegion.faceList().toViewConst();
 
       for( localIndex kfe=0; kfe<subRegion.size(); ++kfe )
       {
@@ -762,7 +770,7 @@ void SurfaceGenerator::synchronizeTipSets ( FaceManager & faceManager,
   {
     localIndex const parentNodeIndex = parentNodeIndices[nodeIndex];
 
-    GEOS_ERROR_IF( parentNodeIndex == -1, "parentNodeIndex should not be -1" );
+    GEOS_ERROR_IF( parentNodeIndex == -1, getDataContext() << ": parentNodeIndex should not be -1" );
 
     m_tipNodes.remove( parentNodeIndex );
   }
@@ -787,7 +795,7 @@ void SurfaceGenerator::synchronizeTipSets ( FaceManager & faceManager,
   {
     localIndex const parentEdgeIndex = parentEdgeIndices[edgeIndex];
 
-    GEOS_ERROR_IF( parentEdgeIndex == -1, "parentEdgeIndex should not be -1" );
+    GEOS_ERROR_IF( parentEdgeIndex == -1, getDataContext() << ": parentEdgeIndex should not be -1" );
 
     m_tipEdges.remove( parentEdgeIndex );
     for( localIndex const faceIndex : edgeToFaceMap[ parentEdgeIndex ] )
@@ -820,7 +828,7 @@ void SurfaceGenerator::synchronizeTipSets ( FaceManager & faceManager,
   for( localIndex const faceIndex : receivedObjects.newFaces )
   {
     localIndex const parentFaceIndex = parentFaceIndices[faceIndex];
-    GEOS_ERROR_IF( parentFaceIndex == -1, "parentFaceIndex should not be -1" );
+    GEOS_ERROR_IF( parentFaceIndex == -1, getDataContext() << ": parentFaceIndex should not be -1" );
 
     m_trailingFaces.insert( parentFaceIndex );
     m_tipFaces.remove( parentFaceIndex );
@@ -1070,7 +1078,7 @@ bool SurfaceGenerator::findFracturePlanes( localIndex const nodeID,
 
     if( edge[0] == INT_MAX || edge[1] == INT_MAX )
     {
-      GEOS_ERROR( "SurfaceGenerator::FindFracturePlanes: invalid edge." );
+      GEOS_ERROR( getDataContext() << ": invalid edge (SurfaceGenerator::findFracturePlanes)." );
     }
 
 
@@ -1215,15 +1223,11 @@ bool SurfaceGenerator::findFracturePlanes( localIndex const nodeID,
         // NOT be included in the path!!!
         if( nextEdge!=startingEdge && !(isEdgeExternal[nextEdge]==1 && startingEdgeExternal ) )
         {
-          std::cout<<std::endl;
-
-
-          std::cout<<"  NodeID, ParentID = "<<nodeID<<", "<<parentNodeIndex<<std::endl;
-          std::cout<<"  Starting Edge/Face = "<<startingEdge<<", "<<startingFace<<std::endl;
-          std::cout<<"  Face Separation Path = " << facePath << std::endl;
-          std::cout<<"  Edge Separation Path = " << facePath << std::endl;
-
-          GEOS_ERROR( "crap" );
+          GEOS_ERROR( getDataContext() << ": Crap !" <<
+                      "  NodeID, ParentID = " << nodeID << ", " << parentNodeIndex << '\n' <<
+                      "  Starting Edge/Face = " << startingEdge << ", " << startingFace << '\n' <<
+                      "  Face Separation Path = " << facePath << '\n' <<
+                      "  Edge Separation Path = " << edgePath << '\n' );
         }
 
         // add faces in the path to separationPathFaces
@@ -1335,7 +1339,7 @@ bool SurfaceGenerator::findFracturePlanes( localIndex const nodeID,
             }
             if( pathFound == false )
             {
-              GEOS_ERROR( "SurfaceGenerator::FindFracturePlanes: couldn't find the next face in the rupture path" );
+              GEOS_ERROR( getDataContext() << ": couldn't find the next face in the rupture path (SurfaceGenerator::findFracturePlanes" );
             }
           }
 
@@ -1354,7 +1358,7 @@ bool SurfaceGenerator::findFracturePlanes( localIndex const nodeID,
         }
         else
         {
-          GEOS_ERROR( "SurfaceGenerator::next edge in separation path is apparently  connected to less than 2 ruptured face" );
+          GEOS_ERROR( getDataContext() << ": next edge in separation path is apparently  connected to less than 2 ruptured face (SurfaceGenerator::findFracturePlanes" );
         }
 
       }
@@ -1382,7 +1386,7 @@ bool SurfaceGenerator::findFracturePlanes( localIndex const nodeID,
 
     if( edge[0] == INT_MAX || edge[1] == INT_MAX )
     {
-      GEOS_ERROR( "SurfaceGenerator::FindFracturePlanes: invalid edge." );
+      GEOS_ERROR( getDataContext() << ": invalid edge. (SurfaceGenerator::findFracturePlanes" );
     }
 
 
@@ -3015,7 +3019,7 @@ void SurfaceGenerator::calculateNodeAndFaceSif( DomainPartition const & domain,
 
             if( tralingNodeID == std::numeric_limits< localIndex >::max())
             {
-              GEOS_ERROR( "Error. The triangular trailing face has three tip nodes but cannot find the other trailing face containing the trailing node." );
+              GEOS_ERROR( getDataContext() << ": The triangular trailing face has three tip nodes but cannot find the other trailing face containing the trailing node." );
             }
           }
           else if( unpinchedNodeID.size() == 1 )
@@ -3297,7 +3301,8 @@ real64 SurfaceGenerator::calculateEdgeSif( DomainPartition const & domain,
   }
   else
   {
-    GEOS_ERROR( GEOS_FMT( "Error! Edge {} has two external faces, but the parent-child relationship is wrong.", edgeID ) );
+    GEOS_ERROR( GEOS_FMT( "{}: Edge {} has two external faces, but the parent-child relationship is wrong.",
+                          getDataContext(), edgeID ) );
   }
 
   trailFaceID = faceParentIndex[faceInvolved[0]]==-1 ? faceInvolved[0] : faceParentIndex[faceInvolved[0]];
@@ -3374,7 +3379,7 @@ real64 SurfaceGenerator::calculateEdgeSif( DomainPartition const & domain,
 
     if( numSharedNodes == 4 )
     {
-      GEOS_ERROR( "Error.  The fracture face has four shared nodes with its child.  This should not happen." );
+      GEOS_ERROR( getDataContext() << ": The fracture face has four shared nodes with its child. This should not happen." );
     }
     else if( numSharedNodes == 3 )
     {
@@ -3383,7 +3388,7 @@ real64 SurfaceGenerator::calculateEdgeSif( DomainPartition const & domain,
       //wu40: I think the following check is not necessary.
       if( lNodeFaceA.size() != 1 || lNodeFaceAp.size() != 1 )
       {
-        GEOS_ERROR( "Error. These two faces share three nodes but the number of remaining nodes is not one.  Something is wrong" );
+        GEOS_ERROR( getDataContext() << ": these two faces share three nodes but the number of remaining nodes is not one." );
       }
       else
       {
@@ -3422,7 +3427,7 @@ real64 SurfaceGenerator::calculateEdgeSif( DomainPartition const & domain,
     }
 
     if( convexCorner == std::numeric_limits< localIndex >::max())
-      GEOS_ERROR( "Error.  This is a three-node-pinched edge but I cannot find the convex corner" );
+      GEOS_ERROR( getDataContext() << ": This is a three-node-pinched edge but I cannot find the convex corner" );
 
   }
 
@@ -3492,7 +3497,7 @@ real64 SurfaceGenerator::calculateEdgeSif( DomainPartition const & domain,
 
       if( trailingNodes.size() > 2 || trailingNodes.size() == 0 )
       {
-        GEOS_ERROR( "Fatal error in finding nodes behind tip edge." );
+        GEOS_ERROR( getDataContext() << ": Fatal error in finding nodes behind tip edge." );
       }
       else if( trailingNodes.size() == 1 )  // Need some work to find the other node
       {
@@ -4507,7 +4512,7 @@ SurfaceGenerator::calculateRuptureRate( SurfaceElementRegion & faceElementRegion
   FaceElementSubRegion & subRegion = faceElementRegion.getSubRegion< FaceElementSubRegion >( 0 );
 
   ArrayOfArraysView< localIndex const > const &
-  fractureConnectorEdgesToFaceElements = subRegion.m_fractureConnectorEdgesToFaceElements.toViewConst();
+  fractureConnectorEdgesToFaceElements = subRegion.m_2dFaceTo2dElems.toViewConst();
 
   arrayView1d< real64 > const & ruptureTime = subRegion.getField< fields::ruptureTime >();
   arrayView1d< real64 > const & ruptureRate = subRegion.getField< surfaceGeneration::ruptureRate >();

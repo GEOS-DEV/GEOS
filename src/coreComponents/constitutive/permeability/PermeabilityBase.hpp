@@ -46,7 +46,6 @@ public:
   GEOS_HOST_DEVICE
   localIndex numGauss() const { return m_permeability.size( 1 ); }
 
-
   GEOS_HOST_DEVICE
   virtual void updateFromPorosity( localIndex const k,
                                    localIndex const q,
@@ -94,7 +93,6 @@ public:
   {
     GEOS_UNUSED_VAR( k, q, oldHydraulicAperture, newHydraulicAperture, proppantPackVolumeFraction );
   }
-
 
 protected:
 

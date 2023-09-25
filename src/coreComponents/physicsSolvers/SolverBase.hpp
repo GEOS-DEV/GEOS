@@ -481,6 +481,7 @@ public:
   applySystemSolution( DofManager const & dofManager,
                        arrayView1d< real64 const > const & localSolution,
                        real64 const scalingFactor,
+                       real64 const dt,
                        DomainPartition & domain );
 
   /**
@@ -711,6 +712,8 @@ public:
   string getDiscretizationName() const {return m_discretizationName;}
 
   virtual bool registerCallback( void * func, const std::type_info & funcType ) final override;
+
+  SolverStatistics & getSolverStatistics() { return m_solverStatistics; }
 
   /**
    * @brief Return PySolver type.

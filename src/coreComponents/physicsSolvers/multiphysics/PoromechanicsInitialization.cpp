@@ -97,8 +97,9 @@ postProcessInput()
   PhysicsSolverManager & physicsSolverManager = problemManager.getPhysicsSolverManager();
 
   GEOS_THROW_IF( !physicsSolverManager.hasGroup( m_poromechanicsSolverName ),
-                 GEOS_FMT( "Task {}: physics solver named {} not found",
-                           getName(), m_poromechanicsSolverName ),
+                 GEOS_FMT( "{}: physics solver named {} not found",
+                           getWrapperDataContext( viewKeyStruct::poromechanicsSolverNameString() ),
+                           m_poromechanicsSolverName ),
                  InputError );
 
   m_poromechanicsSolver = &physicsSolverManager.getGroup< POROMECHANICS_SOLVER >( m_poromechanicsSolverName );
