@@ -437,9 +437,9 @@ void SurfaceGenerator::postRestartInitialization()
     SurfaceElementRegion & fractureRegion = elemManager.getRegion< SurfaceElementRegion >( this->m_fractureRegionName );
     FaceElementSubRegion & fractureSubRegion = fractureRegion.getSubRegion< FaceElementSubRegion >( 0 );
 
-    for( localIndex fce = 0; fce < fractureSubRegion.m_fractureConnectorEdgesToFaceElements.size(); ++fce )
+    for( localIndex fce = 0; fce < fractureSubRegion.m_2dFaceTo2dElems.size(); ++fce )
     {
-      fractureSubRegion.m_recalculateFractureConnectorEdges.insert( fce );
+      fractureSubRegion.m_recalculateConnectionsFor2dFaces.insert( fce );
     }
 
     for( localIndex fe = 0; fe < fractureSubRegion.size(); ++fe )
@@ -456,7 +456,7 @@ void SurfaceGenerator::postRestartInitialization()
       }
     }
 
-    fractureSubRegion.m_recalculateFractureConnectorEdges.clear();
+    fractureSubRegion.m_recalculateConnectionsFor2dFaces.clear();
     fractureSubRegion.m_newFaceElements.clear();
   } );
 }
@@ -512,7 +512,7 @@ real64 SurfaceGenerator::solverStep( real64 const & time_n,
     }
 
     FaceElementSubRegion & fractureSubRegion = fractureRegion.getUniqueSubRegion< FaceElementSubRegion >();
-    fractureSubRegion.m_recalculateFractureConnectorEdges.clear();
+    fractureSubRegion.m_recalculateConnectionsFor2dFaces.clear();
     fractureSubRegion.m_newFaceElements.clear();
 
     // Recreate geometric sets
@@ -717,7 +717,7 @@ int SurfaceGenerator::separationDriver( DomainPartition & domain,
     elementManager.forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
     {
       FaceElementSubRegion::NodeMapType & nodeMap = subRegion.nodeList();
-      FaceElementSubRegion::FaceMapType & faceMap = subRegion.faceList();
+      ArrayOfArraysView< localIndex const > const faceMap = subRegion.faceList().toViewConst();
 
       for( localIndex kfe=0; kfe<subRegion.size(); ++kfe )
       {
@@ -4517,7 +4517,7 @@ SurfaceGenerator::calculateRuptureRate( SurfaceElementRegion & faceElementRegion
   FaceElementSubRegion & subRegion = faceElementRegion.getSubRegion< FaceElementSubRegion >( 0 );
 
   ArrayOfArraysView< localIndex const > const &
-  fractureConnectorEdgesToFaceElements = subRegion.m_fractureConnectorEdgesToFaceElements.toViewConst();
+  fractureConnectorEdgesToFaceElements = subRegion.m_2dFaceTo2dElems.toViewConst();
 
   arrayView1d< real64 > const & ruptureTime = subRegion.getField< fields::ruptureTime >();
   arrayView1d< real64 > const & ruptureRate = subRegion.getField< surfaceGeneration::ruptureRate >();
