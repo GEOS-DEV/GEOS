@@ -21,22 +21,20 @@
 #include <vtkDataSet.h>
 #include <vtkSmartPointer.h>
 
-namespace geos
+namespace geos::vtk
 {
 
 /**
- * @brief Import face block @p faceBlockName from @p vtkMesh into the @p cellBlockManager.
- * @param[in] filePath Path to the multi-block vtk file.
- * @param[in] faceBlockName The face block name to include. (It's the name of the block in the multi-block file.)
- * @param[in] mesh The 3d vtk mesh.
- * @param[inout] cellBlockManager The face block instance (with name @p faceBlockName) will be attached to the @p cellBlockManager
- * @return The vtk mesh instance for the considered face block.
+ * @brief Attach the face block information to the cell block manager.
+ * @param faceBlockName[in] The name of the face block.
+ * @param faceMesh[in] The vtk mesh for the face block.
+ * @param mesh[in] The vtk volumic mesh.
+ * @param cellBlockManager[inout] The cell block manager that will receive the face block information.
  */
-vtkSmartPointer< vtkDataSet > importFractureNetwork( Path const & filePath,
-                                                     string const & faceBlockName,
-                                                     vtkSmartPointer< vtkDataSet > mesh,
-                                                     CellBlockManager & cellBlockManager );
-
+void importFractureNetwork( string const & faceBlockName,
+                            vtkSmartPointer< vtkDataSet > faceMesh,
+                            vtkSmartPointer< vtkDataSet > mesh,
+                            CellBlockManager & cellBlockManager );
 }
 
 #endif // include guard
