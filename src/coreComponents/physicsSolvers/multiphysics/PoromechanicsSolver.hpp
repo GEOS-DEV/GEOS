@@ -216,7 +216,7 @@ protected:
   }
 
   void finishSequentialIteration( integer const & iter,
-                                  DomainPartition & domain )
+                                  DomainPartition & domain ) override
   {
     if( m_useNA )
     {
@@ -234,7 +234,7 @@ protected:
     }
   }
 
-  virtual void mapSolutionBetweenSolvers( DomainPartition & domain, integer const solverType )
+  virtual void mapSolutionBetweenSolvers( DomainPartition & domain, integer const solverType ) override
   {
     if( m_useNA && solverType == static_cast< integer >( SolverType::SolidMechanics ) )
     {
