@@ -131,6 +131,7 @@ public:
                    arrayView1d< integer const > const & phaseTypes,
                    arrayView1d< integer const > const & phaseOrder,
                    ThreePhaseInterpolator const & threePhaseInterpolator,
+                   real64 const & waterOilRelPermMaxValue,
                    arrayView2d< real64 const, compflow::USD_PHASE > const & phaseMinHistoricalVolFraction,
                    arrayView2d< real64 const, compflow::USD_PHASE > const & phaseMaxHistoricalVolFraction,
                    arrayView3d< real64, relperm::USD_RELPERM > const & phaseTrappedVolFrac,
@@ -365,7 +366,7 @@ private:
     /// Maximum historical phase volume fraction for each phase
     arrayView2d< real64 const, compflow::USD_PHASE > m_phaseMaxHistoricalVolFraction;
 
-    array1d< real64 > const m_waterOilRelPermMaxValue;
+    real64 const m_waterOilRelPermMaxValue;
 
     ThreePhaseInterpolator const m_threePhaseInterpolator;
 
@@ -563,10 +564,11 @@ private:
   /// Maximum historical phase volume fraction for each phase
   array2d< real64, compflow::LAYOUT_PHASE > m_phaseMaxHistoricalVolFraction;
 
+  /// Max krwo value (unique as krwo and krgo are considred non hysteretical in our implementation)
+  real64  m_waterOilMaxRelPerm;
 
-  array1d< real64 > m_waterOilMaxRelPerm;
-
-  ThreePhaseInterpolator m_threePhaseInterpolator;
+  /// enum class to dispatch interpolator (Baker/Eclipse,StoneII)
+    ThreePhaseInterpolator m_threePhaseInterpolator;
 
 };
 
@@ -989,7 +991,7 @@ TableRelativePermeabilityHysteresis::KernelWrapper::
     relpermInterpolators::Stone2::compute( shiftedWettingVolFrac,
                                            phaseVolFraction[ipNonWetting],
                                            m_phaseOrder,
-                                           m_waterOilRelPermMaxValue[ipNonWetting],
+                                           m_waterOilRelPermMaxValue,
                                            interRelPerm_wi,
                                            dInterRelPerm_wi_dInterVolFrac,
                                            interRelPerm_nwi,

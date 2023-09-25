@@ -145,7 +145,6 @@ TableRelativePermeabilityHysteresis::TableRelativePermeabilityHysteresis( std::s
 
   registerWrapper( viewKeyStruct::waterOilMaxRelPermString(), &m_waterOilMaxRelPerm ).
     setInputFlag( InputFlags::FALSE ). // will be deduced from tables
-    setApplyDefaultValue( 0.0 ).
     setSizedFromParent( 0 );
 
 
@@ -171,7 +170,11 @@ void TableRelativePermeabilityHysteresis::postProcessInput()
 
   m_phaseHasHysteresis.resize( 2 );
 
-  if( numPhases == 2 )
+    //initialize STONE-II only used var to avoid discrepancies in baselines
+    m_waterOilMaxRelPerm = 1.;
+
+
+    if( numPhases == 2 )
   {
     GEOS_THROW_IF( m_drainageWettingNonWettingRelPermTableNames.empty(),
                    GEOS_FMT( "{}: for a two-phase flow simulation, we must use {} to specify the relative permeability tables "
@@ -327,6 +330,9 @@ void TableRelativePermeabilityHysteresis::checkExistenceAndValidateDrainageRelPe
                                                m_drainagePhaseMinVolFraction[m_phaseOrder[PhaseType::OIL]], // output
                                                m_drainagePhaseMaxVolFraction[m_phaseOrder[PhaseType::OIL]],
                                                m_drainagePhaseRelPermEndPoint[m_phaseOrder[PhaseType::OIL]] );
+
+        //store the two extemum values
+        m_waterOilMaxRelPerm = m_drainagePhaseRelPermEndPoint[m_phaseOrder[PhaseType::OIL]];
       }
     }
 
@@ -599,6 +605,7 @@ TableRelativePermeabilityHysteresis::createKernelWrapper()
                         m_phaseTypes,
                         m_phaseOrder,
                         m_threePhaseInterpolator,
+                        m_waterOilMaxRelPerm,
                         m_phaseMinHistoricalVolFraction,
                         m_phaseMaxHistoricalVolFraction,
                         m_phaseTrappedVolFrac,
@@ -656,6 +663,7 @@ TableRelativePermeabilityHysteresis::KernelWrapper::
                  arrayView1d< integer const > const & phaseTypes,
                  arrayView1d< integer const > const & phaseOrder,
                  ThreePhaseInterpolator const & threePhaseInterpolator,
+                 real64 const & waterOilRelPermMaxValue,
                  arrayView2d< real64 const, compflow::USD_PHASE > const & phaseMinHistoricalVolFraction,
                  arrayView2d< real64 const, compflow::USD_PHASE > const & phaseMaxHistoricalVolFraction,
                  arrayView3d< real64, relperm::USD_RELPERM > const & phaseTrappedVolFrac,
@@ -681,6 +689,7 @@ TableRelativePermeabilityHysteresis::KernelWrapper::
   m_imbibitionPhaseRelPermEndPoint( imbibitionPhaseRelPermEndPoint ),
   m_phaseMinHistoricalVolFraction( phaseMinHistoricalVolFraction ),
   m_phaseMaxHistoricalVolFraction( phaseMaxHistoricalVolFraction ),
+  m_waterOilRelPermMaxValue( waterOilRelPermMaxValue ),
   m_threePhaseInterpolator( threePhaseInterpolator )
 {}
 
