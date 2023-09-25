@@ -89,6 +89,9 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
   m_needsNeighborList( 0 ),
   m_neighborRadius( -1.0 ),
   m_binSizeMultiplier( 1 ),
+  m_maxParticleVelocity( DBL_MAX ),
+  m_minParticleJacobian( 0 ),
+  m_maxParticleJacobian( DBL_MAX ),
   m_cpdiDomainScaling( 0 ),
   m_smallMass( DBL_MAX ),
   m_numContactGroups(),
@@ -121,31 +124,37 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
 
   registerWrapper( "solverProfiling", &m_solverProfiling ).
     setInputFlag( InputFlags::OPTIONAL ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "Flag for timing subroutines in the solver" );
 
   registerWrapper( viewKeyStruct::timeIntegrationOptionString(), &m_timeIntegrationOption ).
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( m_timeIntegrationOption ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "Time integration method. Options are:\n* " + EnumStrings< TimeIntegrationOption >::concat( "\n* " ) );
 
   registerWrapper( "updateMethod", &m_updateMethod ).
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( m_updateMethod ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "Update method. Options are:\n* " + EnumStrings< UpdateMethodOption >::concat( "\n* ") );
 
   registerWrapper( "updateOrder", &m_updateOrder ).
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( 2 ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription("Order for update method, only applies to XPIC and FMPM");
 
   registerWrapper( "prescribedBcTable", &m_prescribedBcTable ).
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( 0 ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "Flag for whether to have time-dependent boundary condition types" );
 
   registerWrapper( "boxAverageHistory", &m_boxAverageHistory ).
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( 0 ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "Flag for whether to output box average history" );
 
   registerWrapper( "boxAverageWriteInterval", &m_boxAverageWriteInterval ).
@@ -173,6 +182,7 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
   registerWrapper( "reactionHistory", &m_reactionHistory ).
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( 0 ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "Flag for whether to output face reaction history" );
 
   registerWrapper( "reactionWriteInterval", &m_reactionWriteInterval ).
@@ -194,6 +204,7 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
 
   registerWrapper( "bodyForce", &m_bodyForce ).
     setInputFlag(InputFlags::OPTIONAL).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "Array that stores uniform body force" );
 
   registerWrapper( "bcTable", &m_bcTable ).
@@ -203,152 +214,203 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
 
   registerWrapper( "prescribedFTable", &m_prescribedFTable ).
     setInputFlag( InputFlags::OPTIONAL ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "Flag for whether to have time-dependent superimposed velocity gradient for triply periodic simulations" );
 
   registerWrapper( "prescribedBoundaryFTable", &m_prescribedBoundaryFTable ).
     setInputFlag( InputFlags::OPTIONAL ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "Flag for whether to have time-dependent boundary conditions described by a global background grid F" );
 
   registerWrapper( "fTableInterpType", &m_fTableInterpType ).
     setInputFlag( InputFlags::OPTIONAL ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "The type of F table interpolation. Options are 0 (linear), 1 (cosine), 2 (quintic polynomial)." );
 
   registerWrapper( "fTable", &m_fTable ).
     setInputFlag( InputFlags::OPTIONAL ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "Array that stores time-dependent grid-aligned stretches interpreted as a gloabl background grid F read from the XML file." );
 
   registerWrapper( "stressControl" , &m_stressControl).
     setInputFlag( InputFlags::OPTIONAL ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "Flag for whether stress control using box averages is enabled" );
 
   registerWrapper( "stressTableInterpType", &m_stressTableInterpType ).
     setInputFlag( InputFlags::OPTIONAL ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "The type of stress table interpolation. Options are 0 (linear), 1 (cosine), 2 (quintic polynomial)." );
 
   registerWrapper( "stressTable", &m_stressTable ).
     setInputFlag( InputFlags::OPTIONAL ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "Array that stores the time-depended grid aligned stresses" );
 
   registerWrapper( "stressControlKp", &m_stressControlKp ).
     setInputFlag( InputFlags::OPTIONAL ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "Proportional gain of stress PID controller" );
 
   registerWrapper( "stressControlKi", &m_stressControlKi ).
     setInputFlag( InputFlags::OPTIONAL ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "Integral gain of stress PID controller" );
 
    registerWrapper( "stressControlKd", &m_stressControlKd ).
     setInputFlag( InputFlags::OPTIONAL ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "Derivative gain of stress PID controller" );
 
   registerWrapper( "needsNeighborList", &m_needsNeighborList ).
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( 0 ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "Flag for whether to construct neighbor list" );
 
   registerWrapper( "neighborRadius", &m_neighborRadius ).
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( -1.0 ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "Neighbor radius for SPH-type calculations" );
 
   registerWrapper( "binSizeMultiplier", &m_binSizeMultiplier ).
     setInputFlag( InputFlags::FALSE ).
     setApplyDefaultValue( 1 ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "Multiplier for setting bin size, used to speed up particle neighbor sorting" );
 
   registerWrapper( "useDamageAsSurfaceFlag", &m_useDamageAsSurfaceFlag ).
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( 0 ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "Indicates whether particle damage at the beginning of the simulation should be interpreted as a surface flag" );
+
+  registerWrapper( "maxParticleVelocity", &m_maxParticleVelocity ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDefaultValue( DBL_MAX ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
+    setDescription( "Velocity above which particles are deleted" );
+
+  registerWrapper( "minParticleJacobian", &m_minParticleJacobian ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDefaultValue( 0 ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
+    setDescription( "Jacobian value below which particles are deleted" );
+
+  registerWrapper( "maxParticleJacobian", &m_maxParticleJacobian ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDefaultValue( DBL_MAX ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
+    setDescription( "Jacobian value above which particles are deleted" );
 
   registerWrapper( "cpdiDomainScaling", &m_cpdiDomainScaling ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDefaultValue( 0 ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "Option for CPDI domain scaling" );
 
   registerWrapper( "generalizedVortexMMS", &m_generalizedVortexMMS ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDefaultValue( 0 ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "Option for CPDI domain scaling" );
 
   registerWrapper( "smallMass", &m_smallMass ).
     setInputFlag( InputFlags::FALSE ).
     setApplyDefaultValue( DBL_MAX ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "The small mass threshold for ignoring extremely low-mass nodes." );
 
   registerWrapper( "numContactGroups", &m_numContactGroups ).
     setInputFlag( InputFlags::FALSE ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "Number of prescribed contact groups" );
 
   registerWrapper( "numContactFlags", &m_numContactFlags ).
     setInputFlag( InputFlags::FALSE ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "Number of contact flags that can appear due to damage" );
 
   registerWrapper( "numVelocityFields", &m_numVelocityFields ).
     setInputFlag( InputFlags::FALSE ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "Number of velocity fields" );
 
   registerWrapper( "separabilityMinDamage", &m_separabilityMinDamage ).
     setApplyDefaultValue( 0.5 ).
     setInputFlag( InputFlags::OPTIONAL ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "Damage threshold for field separability" );
 
   registerWrapper( "treatFullyDamagedAsSingleField", &m_treatFullyDamagedAsSingleField ).
     setApplyDefaultValue( 1 ).
     setInputFlag( InputFlags::OPTIONAL ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "Whether to consolidate fully damaged fields into a single field. Nice for modeling damaged mush." );
 
   registerWrapper( "surfaceDetection", &m_surfaceDetection ).
     setApplyDefaultValue( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "Flag for automatic surface detection on the 1st cycle" );
 
   registerWrapper( "damageFieldPartitioning", &m_damageFieldPartitioning ).
     setApplyDefaultValue( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "Flag for using the gradient of the particle damage field to partition material into separate velocity fields" );
 
   registerWrapper( "contactGapCorrection", &m_contactGapCorrection ).
     setApplyDefaultValue( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "Flag for mitigating contact gaps" );
 
   // registerWrapper( "directionalOverlapCorrection", &m_directionalOverlapCorrection ).
   //   setApplyDefaultValue( 0 ).
   //   setInputFlag( InputFlags::OPTIONAL ).
+  //   setRestartFlags( RestartFlags::WRITE_AND_READ ).
   //   setDescription( "Flag for mitigating pile-up of particles at contact interfaces" );
 
   registerWrapper( "frictionCoefficient", &m_frictionCoefficient ).
     setApplyDefaultValue( -1 ).
     setInputFlag( InputFlags::OPTIONAL ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "Coefficient of friction, currently assumed to be the same everywhere" );
 
   registerWrapper( "frictionCoefficientTable", &m_frictionCoefficientTable ).
     setInputFlag( InputFlags::OPTIONAL ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "Friction coefficient table for different groups" );
 
   registerWrapper( "planeStrain", &m_planeStrain ).
     setApplyDefaultValue( false ).
     setInputFlag( InputFlags::OPTIONAL ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "Flag for performing plane strain calculations" );
 
   registerWrapper( "numDims", &m_numDims ).
     setApplyDefaultValue( 3 ).
     setInputFlag( InputFlags::FALSE ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "The number of active spatial dimensions, 2 for plane strain, 3 otherwise" );
 
   registerWrapper( "m_ijkMap", &m_ijkMap ).
     setInputFlag( InputFlags::FALSE ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "Map from indices in each spatial dimension to local node ID" );
 
   registerWrapper("useEvents", &m_useEvents).
     setInputFlag( InputFlags::OPTIONAL ).
     setDefaultValue( 0 ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "Enable events" );
 
   registerWrapper( "debugFlag", &m_debugFlag ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDefaultValue( 0 ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "Enables debugging of MPM explicit timestep" );
 
   m_mpmEventManager = &registerGroup< MPMEventManager >( groupKeys.mpmEventManager );
@@ -3620,12 +3682,15 @@ void SolidMechanicsMPM::updateStress( real64 dt,
 
 void SolidMechanicsMPM::particleKinematicUpdate( ParticleManager & particleManager )
 {
+  real64 maxParticleVelocitySquared = m_maxParticleVelocity * m_maxParticleVelocity; //Might be better just to set this up on initialization so it isn't recomputed every timestep
+
   // Update particle volume and density
   particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
   {
     // Get particle fields
     arrayView1d< globalIndex const > const particleID = subRegion.getParticleID();
     arrayView1d< real64 > const particleVolume = subRegion.getParticleVolume();
+    arrayView2d< real64 const > const particleVelocity = subRegion.getParticleVelocity();
     arrayView1d< int > const isBad = subRegion.getField< fields::mpm::isBad >();
     arrayView1d< real64 const > const particleInitialVolume = subRegion.getField< fields::mpm::particleInitialVolume >();
     arrayView1d< real64 > const particleDensity = subRegion.getField< fields::mpm::particleDensity >();
@@ -3648,16 +3713,21 @@ void SolidMechanicsMPM::particleKinematicUpdate( ParticleManager & particleManag
       localIndex const p = activeParticleIndices[pp];
       real64 detF = LvArray::tensorOps::determinant< 3 >( particleDeformationGradient[p] );
 
-      if( detF <= 0.1 || detF >= 10.0 )
+      bool flaggedForDeletion = false; 
+      if( detF <= m_minParticleJacobian || detF >= m_maxParticleJacobian )
       {
-        printf( "Flagging particle with unreasonable Jacobian (J<0.1 or J>10) for deletion! Global particle ID: %lld", particleID[p] );
-        isBad[p] = 1; // TODO: Switch to a 'markBad' function which changes isBad and removes this particle from activeParticleIndices. Also
-                      // change isBad to deletionFlag.
-        particleVolume[p] = particleInitialVolume[p];
-        particleDensity[p] = particleMass[p] / particleInitialVolume[p];
-        LvArray::tensorOps::copy< 3, 3 >( particleRVectors[p], particleInitialRVectors[p] );
+        printf( "Flagging particle with unreasonable Jacobian (J<%.2f or J>%.2f) for deletion! Global particle ID: %lld", m_minParticleJacobian, m_maxParticleJacobian, particleID[p] );
+        flaggedForDeletion = true;
       }
-      else
+
+      real64 particleSpeedSquared = LvArray::tensorOps::l2NormSquared< 3 >( particleVelocity[p] );
+      if(particleSpeedSquared > maxParticleVelocitySquared )
+      {
+        printf( "Flagging particle with unreasonable velocity (v > %.2f) for deletion! Global particle ID: %lld", m_maxParticleVelocity, particleID[p] );
+        flaggedForDeletion = true;
+      }
+
+      if( !flaggedForDeletion )
       {
         particleVolume[p] = particleInitialVolume[p] * detF;
         particleDensity[p] = particleMass[p] / particleVolume[p];
@@ -3679,6 +3749,14 @@ void SolidMechanicsMPM::particleKinematicUpdate( ParticleManager & particleManag
           LvArray::tensorOps::Ri_eq_AijBj< 3, 3 >( materialDirection, deformationGradientCofactor, particleInitialMaterialDirection[p] );
           LvArray::tensorOps::copy< 3 >(particleMaterialDirection[p], materialDirection);
         } 
+      } 
+      else
+      {
+        isBad[p] = 1; // TODO: Switch to a 'markBad' function which changes isBad and removes this particle from activeParticleIndices. Also
+              // change isBad to deletionFlag.
+        particleVolume[p] = particleInitialVolume[p];
+        particleDensity[p] = particleMass[p] / particleInitialVolume[p];
+        LvArray::tensorOps::copy< 3, 3 >( particleRVectors[p], particleInitialRVectors[p] );
       }
     } );
   } );
