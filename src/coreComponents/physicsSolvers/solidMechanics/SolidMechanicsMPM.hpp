@@ -518,6 +518,7 @@ protected:
   int m_useDamageAsSurfaceFlag;
 
   real64 m_maxParticleVelocity;
+  real64 m_maxParticleVelocitySquared;
   real64 m_minParticleJacobian;
   real64 m_maxParticleJacobian;
 
