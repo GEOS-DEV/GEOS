@@ -80,11 +80,16 @@ if [[ "$*" == *--test-documentation* ]]; then
 fi
 
 # "Make" target check (builds geosx executable target only if true)
-# Use one process to prevent out-of-memory error
-if [[ "$*" == *--build-exe-only* ]]; then
-  or_die ninja -j $(nproc) geosx
+# Reduce n° of processes to prevent out-of-memory error
+if [ ${CMAKE_BUILD_TYPE} == 'Debug' ]; then
+  np=2
 else
-  or_die ninja -j $(nproc)
+  np=$(nproc)
+fi
+if [[ "$*" == *--build-exe-only* ]]; then
+  or_die ninja -j $np geosx
+else
+  or_die ninja -j $np
   or_die ninja install
 fi
 
