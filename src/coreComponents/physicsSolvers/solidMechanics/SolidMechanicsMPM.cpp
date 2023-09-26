@@ -45,15 +45,7 @@
 #include "common/GEOS_RAJA_Interface.hpp"
 #include "constitutive/ConstitutivePassThruHandler.hpp"
 
-#include "events/mpmEvents/MPMEventBase.hpp"
-#include "events/mpmEvents/MaterialSwapMPMEvent.hpp"
-#include "events/mpmEvents/AnnealMPMEvent.hpp"
-#include "events/mpmEvents/HealMPMEvent.hpp"
-#include "events/mpmEvents/CrystalHealMPMEvent.hpp"
-#include "events/mpmEvents/InsertPeriodicContactSurfacesMPMEvent.hpp"
-#include "events/mpmEvents/MachineSampleMPMEvent.hpp"
-#include "events/mpmEvents/FrictionCoefficientSwapMPMEvent.hpp"
-#include "events/mpmEvents/BodyForceUpdateMPMEvent.hpp"
+#include "events/mpmEvents/MPMEvents.hpp"
 
 namespace geos
 {
@@ -89,7 +81,8 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
   m_needsNeighborList( 0 ),
   m_neighborRadius( -1.0 ),
   m_binSizeMultiplier( 1 ),
-  m_maxParticleVelocity( DBL_MAX ),
+  m_maxParticleVelocity( 1e6 ), // Floating point exception if this is set to DBL_MAX when squared
+  m_maxParticleVelocitySquared( DBL_MAX ),
   m_minParticleJacobian( 0 ),
   m_maxParticleJacobian( DBL_MAX ),
   m_cpdiDomainScaling( 0 ),
@@ -288,9 +281,14 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
 
   registerWrapper( "maxParticleVelocity", &m_maxParticleVelocity ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDefaultValue( DBL_MAX ).
+    setDefaultValue( 1e6 ).
     setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "Velocity above which particles are deleted" );
+
+  registerWrapper( "maxParticleVelocitySquared", &m_maxParticleVelocitySquared).
+    setInputFlag( InputFlags::FALSE ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
+    setDescription( "Square of the max particle velocity" );
 
   registerWrapper( "minParticleJacobian", &m_minParticleJacobian ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -1067,7 +1065,7 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
         throw std::ios_base::failure( std::strerror( errno ) );
       }
       file.exceptions( file.exceptions() | std::ios::failbit | std::ifstream::badbit );
-      file << "Time, Sxx, Syy, Szz, Syz, Sxz, Sxy, Density, Damage, epxx, epyy, epzz, epyz, epxz, epxy" << std::endl;
+      file << "Time, Sxx, Syy, Szz, Syz, Sxz, Sxy, Density, Damage, epxx, epyy, epzz, epyz, epxz, epxy, Volume" << std::endl;
     }
     MpiWrapper::barrier( MPI_COMM_GEOSX ); // wait for the header to be written
 
@@ -1162,6 +1160,8 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
 
   // Initialize friction coefficient table
   initializeFrictionCoefficients();
+
+  m_maxParticleVelocitySquared = m_maxParticleVelocity * m_maxParticleVelocity;
 }
 
 real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
@@ -1620,47 +1620,53 @@ void SolidMechanicsMPM::triggerEvents( const real64 dt,
         GEOS_LOG_RANK_0( "Processing anneal event");
         AnnealMPMEvent & anneal = dynamicCast< AnnealMPMEvent & >( event );
 
-        particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
+        particleManager.forParticleRegions< ParticleRegion >( [&]( ParticleRegion & region )
         {
-          if( subRegion.getName() == anneal.getTargetRegion() || anneal.getTargetRegion() == "all" )
+          if( region.getName() == anneal.getTargetRegion() || anneal.getTargetRegion() == "all" )
           {
-            // Get constitutive model reference
-            string const & solidMaterialName = subRegion.template getReference< string >( viewKeyStruct::solidMaterialNamesString() );
-            SolidBase & solidModel = getConstitutiveModel< SolidBase >( subRegion, solidMaterialName );
-
-            GEOS_ERROR_IF( !solidModel.hasWrapper( "oldStress" ), "Cannot anneal constitutive model that does not have oldStress wrapper!");
-            arrayView3d< real64 > const constitutiveOldStress = solidModel.getReference< array3d< real64 > >( "oldStress" );
-          
-            // SortedArrayView< localIndex const > const activeParticleIndices = subRegion.activeParticleIndices();
-            forAll< serialPolicy >( constitutiveOldStress.size(0), [=] GEOS_HOST ( localIndex const p )
+            subGroupMap & targetSubRegions = region.getSubRegions();
+            for( int r=0; r < targetSubRegions.size(); ++r)
             {
+              ParticleSubRegion & targetSubRegion = dynamicCast< ParticleSubRegion & >( *targetSubRegions[r] );
 
-                real64 knockdown = 0.0; // At the end of the annealing process, strongly enforce zero deviatoric stress.
-                if( !( time_n - dt / 2 <= eventTime + eventInterval && time_n + dt / 2 > eventTime + eventInterval ) )
-                {
-                  // Otherwise, scale it down by a number that gradually goes from 1 to 0
-                  knockdown = fmax( 0.0, 1.0 - dt * 20.0 * ( time_n - eventTime ) / ( eventInterval * eventInterval ) ); // Gaussian decay
-                }
+              // Get constitutive model reference
+              string const & solidMaterialName = targetSubRegion.template getReference< string >( viewKeyStruct::solidMaterialNamesString() );
+              SolidBase & solidModel = getConstitutiveModel< SolidBase >( targetSubRegion, solidMaterialName );
 
-                // Smoothly knock down the deviatoric stress to simulate annealing
-                real64 stress[6] = {0};
-                LvArray::tensorOps::copy< 6 >( stress, constitutiveOldStress[p][0]);
+              GEOS_ERROR_IF( !solidModel.hasWrapper( "oldStress" ), "Cannot anneal constitutive model that does not have oldStress wrapper!");
+              arrayView3d< real64 > const constitutiveOldStress = solidModel.getReference< array3d< real64 > >( "oldStress" );
+            
+              // SortedArrayView< localIndex const > const activeParticleIndices = subRegion.activeParticleIndices();
+              forAll< serialPolicy >( constitutiveOldStress.size(0), [=] GEOS_HOST ( localIndex const p )
+              {
 
-                real64 trialP;
-                real64 trialQ;
-                real64 deviator[6];
-                twoInvariant::stressDecomposition( stress,
-                                                   trialP,
-                                                   trialQ,
-                                                   deviator );
+                  real64 knockdown = 0.0; // At the end of the annealing process, strongly enforce zero deviatoric stress.
+                  if( !( time_n - dt / 2 <= eventTime + eventInterval && time_n + dt / 2 > eventTime + eventInterval ) )
+                  {
+                    // Otherwise, scale it down by a number that gradually goes from 1 to 0
+                    knockdown = fmax( 0.0, 1.0 - dt * 20.0 * ( time_n - eventTime ) / ( eventInterval * eventInterval ) ); // Gaussian decay
+                  }
 
-                LvArray::tensorOps::copy< 6 >( constitutiveOldStress[p][0], stress );
-                twoInvariant::stressRecomposition( trialP,
-                                                   knockdown * trialQ,
-                                                   deviator,
-                                                   stress );
-                LvArray::tensorOps::copy< 6 >( constitutiveOldStress[p][0], stress );
-            });
+                  // Smoothly knock down the deviatoric stress to simulate annealing
+                  real64 stress[6] = {0};
+                  LvArray::tensorOps::copy< 6 >( stress, constitutiveOldStress[p][0]);
+
+                  real64 trialP;
+                  real64 trialQ;
+                  real64 deviator[6];
+                  twoInvariant::stressDecomposition( stress,
+                                                    trialP,
+                                                    trialQ,
+                                                    deviator );
+
+                  LvArray::tensorOps::copy< 6 >( constitutiveOldStress[p][0], stress );
+                  twoInvariant::stressRecomposition( trialP,
+                                                    knockdown * trialQ,
+                                                    deviator,
+                                                    stress );
+                  LvArray::tensorOps::copy< 6 >( constitutiveOldStress[p][0], stress );
+              } );
+            }
           }
         });
       }
@@ -1720,68 +1726,125 @@ void SolidMechanicsMPM::triggerEvents( const real64 dt,
           event.setIsComplete( 1 );
       }
 
-      // if( event.getName() == "CrystalHeal" ){
-      //   CrystalHealMPMEvent & crystalHeal = dynamicCast< CrystalHealMPMEvent & >( event );
+      if( event.getName() == "CrystalHeal" ){
+        CrystalHealMPMEvent & crystalHeal = dynamicCast< CrystalHealMPMEvent & >( event );
 
-      //   int healType = crystalHeal.getHealType();
-      //   ParticleRegion & targetParticleRegion = particleManager.getRegion< ParticleRegion >( crystalHeal.getTargetRegion() );
+        int healType = crystalHeal.getHealType();
+        // ParticleRegion & targetParticleRegion = particleManager.getRegion< ParticleRegion >( crystalHeal.getTargetRegion() );
+        particleManager.forParticleRegions< ParticleRegion >( [&]( ParticleRegion & region )
+        {
+          if( region.getName() == crystalHeal.getTargetRegion() || crystalHeal.getTargetRegion() == "all" )
+          {
+            // Copy particle data from source sub region to destination sub region
+            subGroupMap & targetSubRegions = region.getSubRegions();
+            for( int r=0; r < targetSubRegions.size(); ++r)
+            {
+              ParticleSubRegion & targetSubRegion = dynamicCast< ParticleSubRegion & >( *targetSubRegions[r] );
+              
+              arrayView1d< real64 > const particleDamage = targetSubRegion.getParticleDamage();
+              arrayView1d< int > const particleCrystalHealFlag = targetSubRegion.getField< fields::mpm::particleCrystalHealFlag >();
         
-      //   // Copy particle data from source sub region to destination sub region
-      //   auto & targetSubRegions = targetParticleRegion.getSubRegions();
-      //   for( int r=0; r < targetSubRegions.size(); ++r)
-      //   {
-      //     ParticleSubRegion & targetSubRegion = dynamicCast< ParticleSubRegion & >( *targetSubRegions[r] );
-    
-      //     arrayView2d< real64 > const particleStress = targetSubRegion.getField< fields::mpm::particleStress >();
-      //     arrayView1d< real64 > const particleCrystalHealFlag = targetSubRegion.getField< fields::mpm::particleStress >();
-      //     arrayView1d< real64 > const particleDamage = subRegion.getParticleDamage();
-      //     arrayView3d< real64 > const particleRVectors = subRegion.getParticleRVectors();
-      //     arrayView2d< real64 const > const particleDamageGradient = targetSubRegion.getField< fields::mpm::particleDamageGradient >();
-      //     arrayView3d< real64 const > const particleDeformationGradient = targetSubRegion.getField< fields::mpm::particleDeformationGradient >();
-      //     arrayView1d< real64 > const sourceParticleInitialVolume = sourceSubRegion.getField< fields::mpm::particleInitialVolume >();
+              SortedArrayView< localIndex const > const activeParticleIndices = targetSubRegion.activeParticleIndices();
+              string const & solidMaterialName = targetSubRegion.template getReference< string >( viewKeyStruct::solidMaterialNamesString() );
+              SolidBase & solidModel = getConstitutiveModel< SolidBase >( targetSubRegion, solidMaterialName );
+              if( crystalHeal.getMarkedParticlesToHeal() )
+              {
+                arrayView2d< real64 > const particleStress = targetSubRegion.getField< fields::mpm::particleStress >();
+                arrayView3d< real64 > const particleRVectors = targetSubRegion.getParticleRVectors();
+                arrayView3d< real64 > const particleDeformationGradient = targetSubRegion.getField< fields::mpm::particleDeformationGradient >();
+                arrayView1d< real64 > const particleInitialVolume = targetSubRegion.getField< fields::mpm::particleInitialVolume >();
 
-      //     // CC: TODO Need to add this for Mike
-      //     // arrayView1d< real64 const > const particleReferencePorosity = targetSubRegion.getField< fields::mpm::particleReferencePorosity >();
-
-      //     SortedArrayView< localIndex const > const activeParticleIndices = targetSubRegion.activeParticleIndices();
-      //     forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST ( localIndex const pp )
-      //     {
-      //       localIndex const p = activeParticleIndices[pp];
-
-      //       real64 temp[3] = { 0 };
-      //       LvArray::tensorOps::Ri_eq_symAijBj< 3 >( temp, stress, particleDamageGradient[p] );
-      //       real64 normalStress = LvArray::tensorOps::AiBi< 3 >( particleDamageGradient[p], temp );
-
-      //       real64 detF = LvArray::tensorOps::determinant< 3 >( particleDeformationGradient[p] );
-      //       if( ( healType == 1 || ( healType == 0 && ( normalStress || detF < 1.0 ) ) ) && particleDamage[p] > 0.0 )
-      //       {
-      //         particleCrystalHealFlag[p] = 1;
-
-      //         if( detF > 1.0 )
-      //         {
-      //         // particleReferencePorosity[p] = 1.0 - 1.0 / detF;
+                arrayView2d< real64 const > const particleDamageGradient = targetSubRegion.getField< fields::mpm::particleDamageGradient >();
+                // CC: TODO Need to add this for Mike
+                // arrayView1d< real64 const > const particleReferencePorosity = targetSubRegion.getField< fields::mpm::particleReferencePorosity >();
                 
-      //           real64 power = m_planeStrain ? 0.5 : 1.0 / 3.0;
-      //           real64 scaling = std::powd( detF, power );
-      //           LvArray::tensorOps::scale< 3, 3 >( particleDeformationGradient[p], 1/scaling );
+                // Scale constitutive model crackspeed so damage does not evolve while healing
+                if( solidModel.hasWrapper( "crackSpeed" ) )
+                {
+                  arrayView1d< real64 > const crackSpeed = solidModel.getReference< arrayView1d< real64 > >( "crackSpeed" );
+                  forAll< serialPolicy >( crackSpeed.size(), [=] GEOS_HOST ( localIndex const p )
+                  {
+                    crackSpeed[p] *= 1e-100;
+                  } );
+                }
 
-      //           LvArray::tensorOps::scale< 3 >( particleRVectors[p][0], scaling );
-      //           LvArray::tensorOps::scale< 3 >( particleRVectors[p][1], scaling );
+                forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST ( localIndex const pp )
+                {
+                  localIndex const p = activeParticleIndices[pp];
 
-      //           if( !m_planeStrain )
-      //           {
-      //             LvArray::tensorOps::scale< 3 >( particleRVectors[p][2], scaling );
-      //           }
+                  real64 temp[3] = { 0 };
+                  LvArray::tensorOps::Ri_eq_symAijBj< 3 >( temp, particleStress[p], particleDamageGradient[p] );
+                  real64 normalStress = LvArray::tensorOps::AiBi< 3 >( particleDamageGradient[p], temp );
 
-      //           particleInitialVolume[p] *= detF;
-      //         }
+                  real64 detF = LvArray::tensorOps::determinant< 3 >( particleDeformationGradient[p] );
+                  if( ( healType == 1 || ( healType == 0 && ( normalStress || detF < 1.0 ) ) ) && particleDamage[p] > 0.0 )
+                  {
+                    particleCrystalHealFlag[p] = 1;
 
-      //       }
-      //     } );
+                    if( detF > 1.0 )
+                    {
+                    // particleReferencePorosity[p] = 1.0 - 1.0 / detF;
+                      
+                      real64 power = m_planeStrain ? 0.5 : 1.0 / 3.0;
+                      real64 scaling = std::pow( detF, power );
+                      LvArray::tensorOps::scale< 3, 3 >( particleDeformationGradient[p], 1 / scaling );
 
-      //   }
+                      LvArray::tensorOps::scale< 3 >( particleRVectors[p][0], scaling );
+                      LvArray::tensorOps::scale< 3 >( particleRVectors[p][1], scaling );
 
-      // }
+                      if( !m_planeStrain )
+                      {
+                        LvArray::tensorOps::scale< 3 >( particleRVectors[p][2], scaling );
+                      }
+
+                      particleInitialVolume[p] *= detF;
+                    }
+
+                  }
+                } );
+                crystalHeal.setMarkedParticlesToHeal( 1 );
+              }
+              else
+              {
+                // Heal particles by gradually reducing their damage over a user-specified interval.
+                // Explicitly force exactly zero damage at the end.
+                if( time_n - dt/2 <= eventTime + eventInterval && eventTime + eventInterval < time_n + dt / 2 )
+                {
+                  forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST ( localIndex const pp )
+                  {
+                    localIndex const p = activeParticleIndices[pp];
+                    if( particleCrystalHealFlag[p] == 1 )
+                    {
+                      particleDamage[p] = 0.0;
+                    }
+                  } );
+                  event.setIsComplete( 1 );
+                }
+                else
+                {
+                  forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST ( localIndex const pp )
+                  {
+                    localIndex const p = activeParticleIndices[pp];
+                    particleDamage[p] *= fmax( 0.0, 1.0 - dt * 20.0 * ( time_n - eventTime ) / ( eventInterval * eventInterval ) ); // Recursive form
+                  } );
+                }
+              }
+            
+              if( event.isComplete() )
+              {
+                if( solidModel.hasWrapper( "crackSpeed" ) )
+                {
+                  arrayView1d< real64 > const crackSpeed = solidModel.getReference< arrayView1d< real64 > >( "crackSpeed" );
+                  forAll< serialPolicy >( crackSpeed.size(), [=] GEOS_HOST ( localIndex const p )
+                  {
+                    crackSpeed[p] *= 1e100;
+                  } );
+                }
+              }
+            }
+          }
+        } );
+      }
 
       if( event.getName() == "MachineSample" )
       {
@@ -1899,6 +1962,15 @@ void SolidMechanicsMPM::triggerEvents( const real64 dt,
         LvArray::tensorOps::copy< 3 >( m_bodyForce, bodyForceUpdate.getBodyForce() );
 
         event.setIsComplete( 1 );
+      }
+
+      if( event.getName() == "DeformationUpdate" )
+      {
+        DeformationUpdateMPMEvent & deformationUpdate = dynamicCast< DeformationUpdateMPMEvent & >( event );
+        // CC: TODO need to add special handling for turning off and on stress control because the F values will not be known
+        m_prescribedFTable = deformationUpdate.getPrescribedFTable();
+        m_prescribedBoundaryFTable = deformationUpdate.getPrescribedBoundaryFTable();
+        m_stressControl = deformationUpdate.getStressControl();
       }
     }
   } );
@@ -3682,8 +3754,6 @@ void SolidMechanicsMPM::updateStress( real64 dt,
 
 void SolidMechanicsMPM::particleKinematicUpdate( ParticleManager & particleManager )
 {
-  real64 maxParticleVelocitySquared = m_maxParticleVelocity * m_maxParticleVelocity; //Might be better just to set this up on initialization so it isn't recomputed every timestep
-
   // Update particle volume and density
   particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
   {
@@ -3721,7 +3791,7 @@ void SolidMechanicsMPM::particleKinematicUpdate( ParticleManager & particleManag
       }
 
       real64 particleSpeedSquared = LvArray::tensorOps::l2NormSquared< 3 >( particleVelocity[p] );
-      if(particleSpeedSquared > maxParticleVelocitySquared )
+      if(particleSpeedSquared > m_maxParticleVelocitySquared )
       {
         printf( "Flagging particle with unreasonable velocity (v > %.2f) for deletion! Global particle ID: %lld", m_maxParticleVelocity, particleID[p] );
         flaggedForDeletion = true;
@@ -3774,6 +3844,7 @@ void SolidMechanicsMPM::computeAndWriteBoxAverage( const real64 dt,
   real64 boxMass = 0.0; // we sum particle mass, additive sync, then divide by box volume
   real64 boxParticleInitialVolume = 0.0;
   real64 boxDamage = 0.0; // we sum damage * initial volume, additive sync, then divide by total initial volume in box
+  real64 boxMatVolume = 0.0; // Sum volume of all particles
 
   real64 boxAverageMin[3];
   LvArray::tensorOps::copy< 3 >( boxAverageMin, m_boxAverageMin );
@@ -3793,7 +3864,7 @@ void SolidMechanicsMPM::computeAndWriteBoxAverage( const real64 dt,
 
     // Accumulate values
     SortedArrayView< localIndex const > const activeParticleIndices = subRegion.activeParticleIndices();
-    forAll< serialPolicy >( activeParticleIndices.size(), [=, &boxMass, &boxParticleInitialVolume, &boxStress, &boxPlasticStrain, &boxDamage] GEOS_HOST ( localIndex const pp ) // This
+    forAll< serialPolicy >( activeParticleIndices.size(), [=, &boxMass, &boxParticleInitialVolume, &boxStress, &boxPlasticStrain, &boxDamage, &boxMatVolume] GEOS_HOST ( localIndex const pp ) // This
                                                                                                                                                                                 // can
                                                                                                                                                                                 // be
                                                                                                                                                                                 // parallelized
@@ -3809,6 +3880,7 @@ void SolidMechanicsMPM::computeAndWriteBoxAverage( const real64 dt,
           z > boxAverageMin[2] && z < boxAverageMax[2] )
       {
         boxMass += particleMass[p];
+        boxMatVolume += particleVolume[p];
         boxParticleInitialVolume += particleInitialVolume[p];
         for( int i=0; i<6; i++ )
         {
@@ -3822,7 +3894,7 @@ void SolidMechanicsMPM::computeAndWriteBoxAverage( const real64 dt,
 
   // Additive sync: sxx, syy, szz, sxy, syz, sxz, mass, particle volume, damage
   // Check the voigt indexing of stress
-  real64 boxSums[15];
+  real64 boxSums[16];
   boxSums[0] = boxStress[0];       // sig_xx * volume
   boxSums[1] = boxStress[1];       // sig_yy * volume
   boxSums[2] = boxStress[2];       // sig_zz * volume
@@ -3838,10 +3910,11 @@ void SolidMechanicsMPM::computeAndWriteBoxAverage( const real64 dt,
   boxSums[12] = boxPlasticStrain[3]; // plasticStrain_yz
   boxSums[13] = boxPlasticStrain[4]; // plasticStrain_xz
   boxSums[14] = boxPlasticStrain[5]; // plasticStrain_xy
+  boxSums[15] = boxMatVolume;
       
   // Do an MPI sync to total these values and write from proc0 to a file.  Also compute global F
   // so file is directly plottable in excel as CSV or something.
-  for( localIndex i = 0; i < 15; i++ )
+  for( localIndex i = 0; i < 16; i++ )
   {
     real64 localSum = boxSums[i];
     real64 globalSum;
@@ -3901,6 +3974,8 @@ void SolidMechanicsMPM::computeAndWriteBoxAverage( const real64 dt,
          << boxSums[13] / boxVolume
          << ", "
          << boxSums[14] / boxVolume
+         <<", "
+         << boxSums[15]
          << std::endl;
     file.close();
   }
@@ -3978,6 +4053,8 @@ void SolidMechanicsMPM::stressControl( real64 dt,
     computeBoxStress( particleManager,
                       currentStress );
   }
+
+  // CC: TODO Still use box stress but enfore Lmax for each direction
 
   // Non periodic directions should use boundary reactions instead of box stresses
   for( int i=0; i<m_numDims; i++)
@@ -4057,6 +4134,7 @@ void SolidMechanicsMPM::stressControl( real64 dt,
 
 	// This will drive the response towards the desired stress but may be
 	// unstable.
+  // CC: TODO Use 1- domain porosity to make uncompacted region more stable
 	real64 stressControlKp = m_stressControlKp / ( maximumBulkModulus * dt );
 	real64 stressControlKd = m_stressControlKd / ( maximumBulkModulus );
 	real64 stressControlKi = m_stressControlKi / ( maximumBulkModulus * dt * dt );
