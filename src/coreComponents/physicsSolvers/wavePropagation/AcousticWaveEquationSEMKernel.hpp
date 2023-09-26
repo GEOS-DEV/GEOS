@@ -405,7 +405,7 @@ struct ComputeTimeStep
     WaveSolverUtils::dotProduct( sizeNode, pAuxView, pAuxView, normPaux );
     forAll< EXEC_POLICY >( sizeNode, [=] GEOS_HOST_DEVICE ( localIndex const a )
     {
-      pView[a]/= sqrt( normPaux );
+      pView[a] = pAuxView[a]/( normPaux );
     } );
 
     //Step 3: Do previous algorithm until we found the max eigenvalues
