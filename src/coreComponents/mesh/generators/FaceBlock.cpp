@@ -37,12 +37,12 @@ ArrayOfArrays< localIndex > FaceBlock::get2dElemToEdges() const
   return m_2dElemToEdges;
 }
 
-array2d< localIndex > FaceBlock::get2dElemToFaces() const
+ArrayOfArrays< localIndex > FaceBlock::get2dElemToFaces() const
 {
   return m_2dElemToFaces;
 }
 
-ToCellRelation< array2d< localIndex > > FaceBlock::get2dElemToElems() const
+ToCellRelation< ArrayOfArrays< localIndex > > FaceBlock::get2dElemToElems() const
 {
   return m_2dElemToElems;
 }
@@ -57,12 +57,22 @@ ArrayOfArrays< localIndex > FaceBlock::get2dFaceTo2dElems() const
   return m_2dFaceTo2dElems;
 }
 
-void FaceBlock::setNum2DElements( localIndex num2DElements )
+ArrayOfArrays< array1d< globalIndex > > FaceBlock::get2dElemsToCollocatedNodesBuckets() const
+{
+  return m_2dElemsToCollocatedNodesBuckets;
+}
+
+array1d< globalIndex > FaceBlock::localToGlobalMap() const
+{
+  return m_localToGlobalMap;
+}
+
+void FaceBlock::setNum2dElements( localIndex num2DElements )
 {
   m_num2dElements = num2DElements;
 }
 
-void FaceBlock::setNum2DFaces( localIndex num2DFaces )
+void FaceBlock::setNum2dFaces( localIndex num2DFaces )
 {
   m_num2dFaces = num2DFaces;
 }
@@ -77,7 +87,7 @@ void FaceBlock::set2dElemToEdges( ArrayOfArrays< localIndex > && _2dElemToEdges 
   m_2dElemToEdges = _2dElemToEdges;
 }
 
-void FaceBlock::set2dElemToFaces( array2d< localIndex > && _2dElemToFaces )
+void FaceBlock::set2dElemToFaces( ArrayOfArrays< localIndex > && _2dElemToFaces )
 {
   m_2dElemToFaces = _2dElemToFaces;
 }
@@ -92,9 +102,19 @@ void FaceBlock::set2dFaceToEdge( array1d< localIndex > && _2dFaceToEdge )
   m_2dFaceToEdge = _2dFaceToEdge;
 }
 
-void FaceBlock::set2dElemToElems( ToCellRelation< array2d< localIndex > > && _2dElemToElems )
+void FaceBlock::set2dElemToElems( ToCellRelation< ArrayOfArrays< localIndex > > && _2dElemToElems )
 {
   m_2dElemToElems = _2dElemToElems;
+}
+
+void FaceBlock::setLocalToGlobalMap( array1d< globalIndex > && l2g )
+{
+  m_localToGlobalMap = l2g;
+}
+
+void FaceBlock::set2dElemsToCollocatedNodesBuckets( ArrayOfArrays< array1d< globalIndex > > && collocatedNodesBuckets )
+{
+  m_2dElemsToCollocatedNodesBuckets = collocatedNodesBuckets;
 }
 
 }
