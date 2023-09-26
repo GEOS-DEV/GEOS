@@ -13,11 +13,11 @@
  */
 
 /**
- * @file CrystalHealMPMEvent.hpp
+ * @file DeformationUpdateMPMEvent.hpp
  */
 
-#ifndef GEOSX_CRYSTALHEAL_MPMEVENT_HPP_
-#define GEOSX_CRYSTALHEAL_MPMEVENT_HPP_
+#ifndef GEOSX_DEFORMATIONUPDATE_MPMEVENT_HPP_
+#define GEOSX_DEFORMATIONUPDATE_MPMEVENT_HPP_
 
 #include "MPMEventBase.hpp"
 
@@ -25,52 +25,48 @@ namespace geos
 {
 
 /**
- * @class CrystalHealMPMEvent
+ * @class DeformationUpdateMPMEvent
  *
  * This class implements the material swap mpm event for the solid mechanics material point method solver
  */
-class CrystalHealMPMEvent : public MPMEventBase
+class DeformationUpdateMPMEvent : public MPMEventBase
 {
 public:
   /// @copydoc geos::dataRepository::Group::Group( string const & name, Group * const parent )
-  CrystalHealMPMEvent( const string & name,
-                       Group * const parent );
+  DeformationUpdateMPMEvent( const string & name,
+                  Group * const parent );
 
   /// Destructor
-  virtual ~CrystalHealMPMEvent() override;
+  virtual ~DeformationUpdateMPMEvent() override;
 
   /**
    * @brief Catalog name interface.
    * @return This type's catalog name.
    **/
-  static string catalogName() { return "CrystalHeal"; }
+  static string catalogName() { return "DeformationUpdate"; }
 
  /// @cond DO_NOT_DOCUMENT
   struct viewKeyStruct
   {
-    static constexpr char const * targetRegionString() { return "targetRegion"; }
-    static constexpr char const * healTypeString() { return "healType"; }
-    static constexpr char const * markedParticlesToHealString() { return "markedParticlesToHeal"; }
-
-    dataRepository::ViewKey targetRegion = { targetRegionString() };
-  } CrystalHealMPMEventViewKeys;
+    static constexpr char const * prescribedFTableString() { return "prescribedFTable"; }
+    static constexpr char const * prescribedBoundaryFTableString() { return "prescribedFTable"; }
+    static constexpr char const * stressControlString() { return "stressControl"; }
+  } DeformationUpdateMPMEventViewKeys;
   /// @endcond
 
-  string getTargetRegion() const { return m_targetRegion; }
-  int getHealType() const { return m_healType; }
-  int getMarkedParticlesToHeal() const { return m_markedParticlesToHeal; }
-
-  void setMarkedParticlesToHeal(int markedParticlesToHeal ) { m_markedParticlesToHeal = markedParticlesToHeal; }
+  int getPrescribedBoundaryFTable() const { return m_prescribedBoundaryFTable; } 
+  int getPrescribedFTable() const { return m_prescribedFTable; } 
+  array1d< int > getStressControl() const { return m_stressControl; } 
 
 protected:
   virtual void postProcessInput() override final;
 
   // Event variables
-  string m_targetRegion;
-  int m_healType;
-  int m_markedParticlesToHeal;
+  int m_prescribedFTable;
+  int m_prescribedBoundaryFTable;
+  array1d< int > m_stressControl;
 };
 
 } /* namespace geos */
 
-#endif /* GEOSX_CRYSTALHEAL_MPMEVENT_HPP_ */
+#endif /* GEOSX_DEFORMATIONUPDATE_MPMEVENT_HPP_ */

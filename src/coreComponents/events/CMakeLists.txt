@@ -19,6 +19,7 @@ set( events_headers
      mpmEvents/MachineSampleMPMEvent.hpp
      mpmEvents/FrictionCoefficientSwapMPMEvent.hpp
      mpmEvents/BodyForceUpdateMPMEvent.hpp
+     mpmEvents/DeformationUpdateMPMEvent.hpp
    )
 
 #
@@ -42,6 +43,7 @@ set( events_sources
      mpmEvents/MachineSampleMPMEvent.cpp
      mpmEvents/FrictionCoefficientSwapMPMEvent.cpp
      mpmEvents/BodyForceUpdateMPMEvent.cpp
+     mpmEvents/DeformationUpdateMPMEvent.cpp
    )
 
 set( dependencyList ${parallelDeps} common fileIO dataRepository )

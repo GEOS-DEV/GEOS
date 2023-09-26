@@ -27,7 +27,8 @@ namespace geos
                                             Group * const parent ) :
                                             MPMEventBase(  name, parent ),
                                             m_targetRegion( "mat1" ),
-                                            m_healType( 0 )
+                                            m_healType( 0 ),
+                                            m_markedParticlesToHeal( 0 )
   {
     registerWrapper( viewKeyStruct::targetRegionString(), &m_targetRegion ).
         setInputFlag( InputFlags::REQUIRED ).
@@ -36,6 +37,11 @@ namespace geos
     registerWrapper( viewKeyStruct::healTypeString(), &m_healType ).
         setInputFlag( InputFlags::REQUIRED ).
         setDescription( "Type of heal algorithm to perform" );
+      
+    registerWrapper( viewKeyStruct::markedParticlesToHealString(), &m_markedParticlesToHeal).
+        setInputFlag( InputFlags::FALSE ).
+        setApplyDefaultValue( m_markedParticlesToHeal ).
+        setDescription( "Flag whether identification of particles to heal has been performed" );
   }
 
   CrystalHealMPMEvent::~CrystalHealMPMEvent() 
