@@ -7,13 +7,13 @@
       name="acousticSolver"
       discretization="FE1"
       targetRegions="{ Fluid }"
-      sourceCoordinates="{ { 1575, 1200, 2900 } }"
+      sourceCoordinates="{ { 1575, 2400, 2900 } }"
       timeSourceFrequency="10"
       timeSourceDelay="0.115"
       rickerOrder="3"
       outputSeismoTrace="1"
       dtSeismoTrace="1e-3"
-      receiverCoordinates="{ { 3752.2936, 1200, 2933.3333 } }"/>
+      receiverCoordinates="{ { 3752.2936, 2400, 2933.3333 } }"/>
     <ElasticSEM
       name="elasticSolver"
       discretization="FE1"
@@ -21,7 +21,7 @@
       sourceCoordinates="{ }"
       outputSeismoTrace="1"
       dtSeismoTrace="1e-3"
-      receiverCoordinates="{ { 3752.2936, 1200, 1866.6667 } }"/>
+      receiverCoordinates="{ { 3752.2936, 2400, 1866.6667 } }"/>
     <!-- NOTES:
       - coupled solver must be declared at the end (for interface computations)
       - discretization is also needed for the correct mesh to be passed through from the coupled solver to the elastic / acoustic solvers
@@ -57,29 +57,29 @@
   nz="{ 300, 300 }"
   NOTES:
     nx="{ 320 }"
-    ny="{ 120 }"
+    ny="{ 240 }"
     nz="{ 120, 120 }
-    => local threshold for local builds 3D Q1 Δt=1e-4 (9e6 elems, 5Gb per 1 GPU)
-    or
+    => local threshold for local builds 3D Q1 Δt=1e-4 (18e6 elems, 10Gb per 1 GPU)
+    => Q4 180 procs / GPU 16h
+    => Q1 180 procs / GPU 1e40min
     nx="{ 160 }"
-    ny="{ 60 }"
+    ny="{ 120 }"
     nz="{ 60, 60 }
-    => local threshold for local builds 3D Q2 Δt=1e-4 (1e6 elems, 2Gb per 1 GPU)
-    or
+    => local threshold for local builds 3D Q2 Δt=1e-4 (2e6 elems, 4Gb per 1 GPU)
     nx="{ 80 }"
-    ny="{ 30 }"
+    ny="{ 60 }"
     nz="{ 30, 30 }
-    => coarse 10 min frontal run 3D Q5 Δt=1e-3 (144e3 elems, 4Gb per 6 GPU)
+    => coarse 10 min frontal run 3D Q5 Δt=1e-3 (288e3 elems, 8Gb per 6 GPU)
   -->
   <Mesh>
     <InternalMesh
       name="mesh"
       elementTypes="{ C3D8 }"
       xCoords="{ 0, 6400 }"
-      yCoords="{ 0, 2400.001 }"
+      yCoords="{ 0, 4800.0001 }"
       zCoords="{ 0, 2400, 4800 }"
       nx="{ 320 }"
-      ny="{ 120 }"
+      ny="{ 240 }"
       nz="{ 120, 120 }"
       cellBlockNames="{ solid, fluid }"/>
   </Mesh>
@@ -97,7 +97,7 @@
     maxTime="3">
     <PeriodicEvent
       name="outputs"
-      timeFrequency="3.1"
+      timeFrequency="5e-2"
       targetExactTimestep="0">
       <PeriodicEvent name="outputs_vtk" target="/Outputs/vtkOutput"/>
       <!--
