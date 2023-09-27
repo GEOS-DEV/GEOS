@@ -71,21 +71,21 @@ void ConstantPermeability::allocateConstitutiveData( dataRepository::Group & par
 
   PermeabilityBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 
-  integer const numQuad = 1; // NOTE: enforcing 1 quadrature point
+  // integer const numQuad = 1; // NOTE: enforcing 1 quadrature point
 
-  for( localIndex ei = 0; ei < parent.size(); ++ei )
-  {
-    for( localIndex q = 0; q < numQuad; ++q )
-    {
-      m_permeability[ei][q][0] =  m_permeabilityComponents[0];
-      m_permeability[ei][q][1] =  m_permeabilityComponents[1];
-      m_permeability[ei][q][2] =  m_permeabilityComponents[2];
+  // for( localIndex ei = 0; ei < parent.size(); ++ei )
+  // {
+  //   for( localIndex q = 0; q < numQuad; ++q )
+  //   {
+  //     m_permeability[ei][q][0] =  m_permeabilityComponents[0];
+  //     m_permeability[ei][q][1] =  m_permeabilityComponents[1];
+  //     m_permeability[ei][q][2] =  m_permeabilityComponents[2];
 
-      m_initialPermeability[ei][q][0] =  m_permeabilityComponents[0];
-      m_initialPermeability[ei][q][1] =  m_permeabilityComponents[1];
-      m_initialPermeability[ei][q][2] =  m_permeabilityComponents[2];
-    }
-  }
+  //     m_initialPermeability[ei][q][0] =  m_permeabilityComponents[0];
+  //     m_initialPermeability[ei][q][1] =  m_permeabilityComponents[1];
+  //     m_initialPermeability[ei][q][2] =  m_permeabilityComponents[2];
+  //   }
+  // }
 }
 
 void ConstantPermeability::initializeState() const
@@ -94,6 +94,7 @@ void ConstantPermeability::initializeState() const
   integer constexpr numQuad = 1; // NOTE: enforcing 1 quadrature point
 
   auto permView = m_permeability.toView();
+  auto initialPerm = m_initialPermeability.toView();
   real64 const permComponents[3] = { m_permeabilityComponents[0],
                                      m_permeabilityComponents[1],
                                      m_permeabilityComponents[2] };

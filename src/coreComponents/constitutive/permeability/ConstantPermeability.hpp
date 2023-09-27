@@ -127,8 +127,6 @@ public:
     static constexpr char const * initialPermeabilityString() { return "initialPermeability"; }
   } viewKeys;
 
-  virtual void initializeState() const override final;
-
 protected:
 
   virtual void postProcessInput() override;
