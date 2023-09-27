@@ -71,7 +71,7 @@ public:
 
 private:
  
-    localIndex m_numEmbeddedSurfElem;
+    localIndex m_numEmbeddedSurfaces;
     ArrayOfArrays< localIndex > m_embeddedSurfElemToNodes;
     ArrayOfArrays< localIndex > m_embeddedSurfElemTo3dElem;
     ArrayOfArrays< real64 > m_embeddedSurfElemNodes;

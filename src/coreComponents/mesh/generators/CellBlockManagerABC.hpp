@@ -210,7 +210,7 @@ public:
   /**
    * @brief Returns the embedded surface to elements mapping.
    * @return A 1 to many relationship. The result is jagged array mapping each embedded element
-   * To the elements it intersect.
+   * To the 3d cell elements it intersects.
    *
    */
   virtual ToCellRelation<ArrayOfArrays< localIndex >> getEmbeddedSurfaceToElements() const = 0;

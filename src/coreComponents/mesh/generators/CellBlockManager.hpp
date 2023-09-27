@@ -295,7 +295,7 @@ private:
   localIndex m_numNodes;
   localIndex m_numFaces;
   localIndex m_numEdges;
-  localIndex m_numEmbeddedSurfElem;
+  localIndex m_numEmbeddedSurfaces;
 };
 
 }
