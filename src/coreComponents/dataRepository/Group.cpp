@@ -608,7 +608,7 @@ void Group::enableLogLevelInput()
 {
   string const logLevelString = "logLevel";
 
-  registerWrapper( logLevelString, &m_logLevel ).
+  registerWrapper( logLevelString, &m_logger.m_logLevel ).
     setApplyDefaultValue( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Log level" );

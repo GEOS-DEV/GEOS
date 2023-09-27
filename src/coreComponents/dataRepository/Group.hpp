@@ -154,6 +154,9 @@ public:
    */
   ///@{
 
+  inline LogSource const & getLogger()
+  { return m_logger; }
+
   /**
    * @brief Prints the data hierarchy recursively.
    * @param[in] indent The level of indentation to add to this level of output.
@@ -1548,7 +1551,7 @@ private:
   string m_name;
 
   /// group logSource for message local filtering
-  LogSource m_log;
+  LogSource m_logger;
   //END_SPHINX_INCLUDE_02
 
   /// Restart flag for this group... and subsequently all wrappers in this group.

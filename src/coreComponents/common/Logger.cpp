@@ -67,7 +67,7 @@ Logger::Logger():
 }
 void Logger::reset()
 {
-  globalLogLevel = defaultGlobalLogLevel;// TODO Logger: mettre ça à Important ? Detailed ?
+  globalLogLevel = defaultProblemLogLevel;
   minLogLevel = defaultMinLogLevel;
   maxLogLevel = defaultMaxLogLevel;
 
@@ -79,7 +79,18 @@ void Logger::initMpi( MPI_Comm mpiComm )
   comm = mpiComm;
   MPI_Comm_rank( mpiComm, &rank );
   MPI_Comm_size( mpiComm, &ranksCount );
-  rankMsgPrefix = ranksCount > 0  ? GEOS_FMT( "Rank {}: ", rank ) : "";// TODO Logger: choisir si l'on garde cette ternaire
+
+  if( ranksCount > 0 )
+  {
+    // we want the message prefix to be as long as it is on the highest rank by aligning the rank number at the right.
+    int const rankMaxNumberCount = (int)log10( m_ranksCount - 1 );
+    string const rankMsgPrefixFmt = GEOS_FMT( "Rank \\{: >{}\\}: ", rankMaxNumberCount ) : "";
+    rankMsgPrefix = GEOS_FMT( "Rank {: <}: ", rank ) : "";
+  }
+  else
+  {
+    rankMsgPrefix = "";
+  }
 #else
   GEOS_ERROR( "Trying to initialize MPI in serial build." );
 #endif

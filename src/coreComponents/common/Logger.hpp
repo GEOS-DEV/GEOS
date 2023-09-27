@@ -501,9 +501,9 @@ public:
   /// @brief The default message log level when logging directly with the Logger
   static constexpr LogLevel defaultMsgLogLevel = LogLevel::Debug;
   // TODO :
-  static constexpr LogLevel defaultProblemLogLevel = LogLevel::Progress;// TODO Logger: mettre ça à  Progress? Detailed? faire en f° du tri des message
+  static constexpr LogLevel defaultProblemLogLevel = LogLevel::Detailed;// TODO Logger: mettre ça à  Progress? Detailed? faire en f° du tri des messages
   // TODO :
-  static constexpr LogLevel defaultGroupLogLevel = LogLevel::Important;
+  static constexpr LogLevel defaultGroupLogLevel = LogLevel::Detailed;// TODO Logger: mettre ça à  Progress? Detailed? faire en f° du tri des messages
 
   /**
    * @brief Construct the logger. Default output is the standard one.
@@ -601,6 +601,7 @@ public:
 
 
 public://todo: private
+
   /// @see setProblemLogLevel( LogLevel param )
   LogLevel m_problemLogLevel;
   /// @see enableLogLevelOverride( LogLevel param ) and disableLogLevelOverride()
@@ -638,33 +639,31 @@ struct LogSource
 
 
   LogSource():
-    m_logLevel( Logger::defaultLogLevel )
+    m_logLevel( Logger::defaultGroupLogLevel )
   {}
   LogSource( LogLevel logLevel ):
     m_logLevel( logLevel )
   {}
 
-  
+
   //TODO implementations
-  template< LogLevel MSG_LEVEL = Logger::defaultLogLevel, Logger& TARGET = logger, typename ... INPUTS >
-  void stdLog( INPUTS ... inputs );
+  template< LogLevel MSG_LEVEL = defaultMsgLogLevel, typename ... INPUTS >
+  void log( INPUTS ... inputs );
 
-  template< LogLevel MSG_LEVEL = Logger::defaultLogLevel, Logger& TARGET = logger, typename ... INPUTS >
-  void stdLogIf( bool cond, INPUTS ... inputs );
+  template< LogLevel MSG_LEVEL = defaultMsgLogLevel, typename ... INPUTS >
+  void logIf( bool cond, INPUTS ... inputs );
 
-  template< LogLevel MSG_LEVEL = Logger::defaultLogLevel, Logger& TARGET = logger, typename ... INPUTS >
+  template< LogLevel MSG_LEVEL = defaultMsgLogLevel, typename ... INPUTS >
+  void mergedLog( INPUTS ... inputs );
+
+  template< LogLevel MSG_LEVEL = defaultMsgLogLevel, typename ... INPUTS >
+  void mergedLogIf( bool cond, INPUTS ... inputs );
+
+  template< LogLevel MSG_LEVEL = defaultMsgLogLevel, typename ... INPUTS >
   void rank0Log( INPUTS ... inputs );
 
-  template< LogLevel MSG_LEVEL = Logger::defaultLogLevel, Logger& TARGET = logger, typename ... INPUTS >
+  template< LogLevel MSG_LEVEL = defaultMsgLogLevel, typename ... INPUTS >
   void rank0LogIf( bool cond, INPUTS ... inputs );
-
-  template< LogLevel MSG_LEVEL = Logger::defaultLogLevel, Logger& TARGET = logger, typename ... INPUTS >
-  void rankLog( INPUTS ... input );
-
-  template< LogLevel MSG_LEVEL = Logger::defaultLogLevel, Logger& TARGET = logger, typename ... INPUTS >
-  void rankLogIf( bool cond, INPUTS ... input );
-
-  //TODO? deviceLog( INPUTS ... inputs )
 
 };
 
@@ -719,25 +718,41 @@ void Logger::streamLog( std::ostream & stream, INPUT input, MORE_INPUTS ... more
 }
 
 
+//WIP section...
 template< LogLevel MSG_LEVEL, typename ... INPUTS >
-void Logger::stdLog( INPUTS ... inputs )
+void Logger::rankLog( INPUTS ... inputs )
 {
-  if( MSG_LEVEL <= globalLogLevel )
-    streamLog( std::cout, inputs ... );
+  if( MSG_LEVEL <= m_problemLogLevel )
+  {
+    streamLog( *m_outStream, m_rankMsgPrefix, inputs ... );
+  }
+}
+
+template< LogLevel MSG_LEVEL, typename ... INPUTS >
+void Logger::log( INPUTS ... inputs )
+{
+  if( MSG_LEVEL <= m_problemLogLevel )
+  {
+    if( m_outStream != &std::cout )
+    {
+      streamLog( *m_outStream, m_rankMsgPrefix, inputs ... );
+    }
+    else
+    {
+      std::ostringstream oss;
+      streamLog( *m_outStream, m_rankMsgPrefix, inputs ... );
+
+    }
+  }
 }
 
 template< LogLevel MSG_LEVEL, typename ... INPUTS >
 void Logger::rank0Log( INPUTS ... inputs )
 {
-  if( rank == 0 && MSG_LEVEL <= globalLogLevel )
-    streamLog( std::cout, inputs ... ); // TODO Logger: choisir si rankMsgPrefix doit être utilisé ici
-}
-
-template< LogLevel MSG_LEVEL, typename ... INPUTS >
-void Logger::rankLog( INPUTS ... inputs )
-{
-  if( MSG_LEVEL <= globalLogLevel )
-    streamLog( *outStream, rankMsgPrefix, inputs ... );
+  if( m_rank == 0 && MSG_LEVEL <= m_problemLogLevel )
+  {
+    streamLog( *m_outStream, m_rankMsgPrefix, inputs ... );
+  }
 }
 
 
@@ -745,21 +760,27 @@ template< LogLevel MSG_LEVEL, typename ... INPUTS >
 void Logger::stdLogIf( bool condition, INPUTS ... inputs )
 {
   if( condition )
+  {
     stdLog< MSG_LEVEL >( inputs ... );
+  }
+}
+
+template< LogLevel MSG_LEVEL, typename ... INPUTS >
+void Logger::mergedLogIf( bool condition, INPUTS ... inputs )
+{
+  if( condition )
+  {
+    rankLog< MSG_LEVEL >( inputs ... );
+  }
 }
 
 template< LogLevel MSG_LEVEL, typename ... INPUTS >
 void Logger::rank0LogIf( bool condition, INPUTS ... inputs )
 {
   if( condition )
+  {
     rank0Log< MSG_LEVEL >( inputs ... );
-}
-
-template< LogLevel MSG_LEVEL, typename ... INPUTS >
-void Logger::rankLogIf( bool condition, INPUTS ... inputs )
-{
-  if( condition )
-    rankLog< MSG_LEVEL >( inputs ... );
+  }
 }
 
 // TODO Logger: decide to use this version or not (streams on std output + rank 0 file stream)
