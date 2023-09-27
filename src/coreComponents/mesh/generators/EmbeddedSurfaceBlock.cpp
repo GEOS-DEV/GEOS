@@ -23,7 +23,7 @@ namespace geos
 
 
 localIndex EmbeddedSurfaceBlock::numEmbeddedSurfElem() const{
-    return m_numEmbeddedSurfElem;
+    return m_numEmbeddedSurfaces;
 }
 
 ArrayOfArrays<localIndex> EmbeddedSurfaceBLock::getEmbeddedSurfElemToNodes() const {
@@ -39,9 +39,9 @@ ArrayOfArrays<real64> EmbeddedSurfaceBlock::getEmbeddedSurfElemNodes() const {
 }
 
 
-void EmbeddedSurfaceBlock::setNumEmbeddedSurfElem(localIndex _numEmbeddedSurfElem){
+void EmbeddedSurfaceBlock::setNumEmbeddedSurfElem(localIndex _numEmbeddedSurfaces){
     
-    m_numEmbeddedSurfElem = _numEmbeddedSurfElem;
+    m_numEmbeddedSurfaces = _numEmbeddedSurfaces;
 }
 
 void EmbeddedSurfaceBlock::setEmbeddedSurfElemToNodes(ArrayOfArrays<localIndex> && _embeddedSurfElemToNodes){
