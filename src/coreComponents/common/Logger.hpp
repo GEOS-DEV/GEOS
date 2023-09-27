@@ -549,55 +549,60 @@ public:
   void disableLogLevelOverride();
 
 
-  // TODO Logger: nouvelle collection de methodes, mergedLog sera conservé si l'on utilise pas une
-  // stratégie de postprocess (et donc on doit les fusionner en temps reel).
-  // Si l'on utilise une stratégie de postprocess, on peut imaginer lancer geos avec un paramètre de ligne de commande 
-  // sur un dossier de log pour merger les infos, lire un rank en particulier, etc...
-  /**
-   * @brief log one or more inputs to the rank file stream if used, -> or <- to the standard output.
-   * A partir de ProblemLogLevel = Trace (ou Detailed?), un prefix est ajouté pour savoir quel rank a sorti le message,
-   * par exemple "Rank 54: Hello World"
-   * @param MSG_LEVEL the level of the message to log: The message will be ignored if the MSG_LEVEL
-   * is strictly higher than the current globalLogLevel value.
-   * @param input the inputs to log.
-   * @tparam INPUTS types of the inputs.
-   */
-  template< LogLevel MSG_LEVEL = defaultLogLevel, typename ... INPUTS >
-  void log( INPUTS ... inputs );
-
-  template< LogLevel MSG_LEVEL = defaultLogLevel, typename ... INPUTS >
-  void logIf( bool cond, INPUTS ... inputs );
-
-  /**
-   * @brief Log le message de manière mergée. 
-   * A partir de ProblemLogLevel = Trace (ou Detailed?), un prefix est ajouté pour savoir quel rank a sorti le message,
-   * par exemple "Rank 0->54, 55, 57, 67->127: Hello World"
-   * @param MSG_LEVEL the level of the message to log: The message will be ignored if the MSG_LEVEL
-   * is strictly higher than the current globalLogLevel value.
-   * @param input the inputs to log.
-   * @tparam INPUTS types of the inputs.
-   */
-  template< LogLevel MSG_LEVEL = defaultLogLevel, typename ... INPUTS >
-  void mergedLog( INPUTS ... inputs );
-
-  template< LogLevel MSG_LEVEL = defaultLogLevel, typename ... INPUTS >
-  void mergedLogIf( bool cond, INPUTS ... inputs );
-
   /**
    * @brief log one or more inputs, only from the rank 0, to the standard output (and to
    * the rank 0 file stream if used).
+   * If ProblemLogLevel is at least set to Detailed, a prefix est added to know which rank is streaming
+   * the message. As an exemple: "Rank 0: Hello World!"
    * @param MSG_LEVEL the level of the message to log: The message will be ignored if the MSG_LEVEL
    * is strictly higher than the current globalLogLevel value.
    * @param inputs the inputs to log.
    * @tparam INPUTS types of the inputs.
    */
-  template< LogLevel MSG_LEVEL = defaultLogLevel, typename ... INPUTS >
-  void rank0Log( INPUTS ... inputs );
+  template< LogLevel MSG_LEVEL = defaultMsgLogLevel, typename ... INPUTS >
+  void logRank0( INPUTS ... inputs );
 
-  template< LogLevel MSG_LEVEL = defaultLogLevel, typename ... INPUTS >
-  void rank0LogIf( bool cond, INPUTS ... inputs );
+  template< LogLevel MSG_LEVEL = defaultMsgLogLevel, typename ... INPUTS >
+  void logRank0If( bool cond, INPUTS ... inputs );
 
-  //TODO? deviceLog( INPUTS ... inputs )
+
+  /**
+   * @brief log one or more inputs to the rank file stream if used, or to the standard
+   * output (the message is streamed repeatedly if it comes from multiple ranks).
+   * If ProblemLogLevel is at least set to Detailed, a prefix est added to know which rank is streaming
+   * the message. As an exemple: "Rank 54: Hello World!"
+   * @param MSG_LEVEL the level of the message to log: The message will be ignored if the MSG_LEVEL
+   * is strictly higher than the current globalLogLevel value.
+   * @param input the inputs to log.
+   * @tparam INPUTS types of the inputs.
+   */
+  template< LogLevel MSG_LEVEL = defaultMsgLogLevel, typename ... INPUTS >
+  void log( INPUTS ... inputs );
+
+  template< LogLevel MSG_LEVEL = defaultMsgLogLevel, typename ... INPUTS >
+  void logIf( bool cond, INPUTS ... inputs );
+
+
+  // /**
+  //  * @brief Log a message to the rank file stream if used, or log it to the std::cout only once per
+  //  * form (and therefore does a MPI barrier).
+  //  * If ProblemLogLevel is at least set to Detailed, a prefix est added to know which rank is streaming
+  //  * the message. As an exemple, for a message that can be "Hello World!" or "Hello Folks!":
+  //  * Rank 0->54, 56, 60, 67->127: Hello World!
+  //  * Rank 55, 57->59, 61->66: Hello Folks!
+  //  * @param MSG_LEVEL the level of the message to log: The message will be ignored if the MSG_LEVEL
+  //  * is strictly higher than the current globalLogLevel value.
+  //  * @param input the inputs to log.
+  //  * @tparam INPUTS types of the inputs.
+  //  */
+  // template< LogLevel MSG_LEVEL = defaultMsgLogLevel, typename ... INPUTS >
+  // void mergedLog( INPUTS ... inputs );
+  //
+  // template< LogLevel MSG_LEVEL = defaultMsgLogLevel, typename ... INPUTS >
+  // void mergedLogIf( bool cond, INPUTS ... inputs );
+
+
+  //TODO logDevice()
 
 
 public://todo: private
