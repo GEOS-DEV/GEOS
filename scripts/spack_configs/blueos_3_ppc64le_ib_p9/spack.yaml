@@ -140,7 +140,7 @@ spack:
       buildable: False
       externals:
       - spec: python@3.8.2
-        prefix: /usr/tce/packages/python/python-3.8.2
+        prefix: /usr/gapps/GEOSX/thirdPartyLibs/python/lassen-gcc-python/python/
     autoconf:
       buildable: False
       externals:
