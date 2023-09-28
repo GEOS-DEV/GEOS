@@ -480,9 +480,9 @@ getVtkCells( CellElementRegion const & region,
   region.forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion const & subRegion )
   {
     auto const nodeList = subRegion.nodeList().toViewConst();
-    auto numNodes = nodeList.size( 1 );
-    cellTypes.insert( cellTypes.end(), subRegion.size(), toVTKCellType( subRegion.getElementType(), numNodes ) );
-    std::vector< int > const vtkOrdering = getVtkConnectivity( subRegion.getElementType(), numNodes );
+    auto subRegionNumNodes = nodeList.size( 1 );
+    cellTypes.insert( cellTypes.end(), subRegion.size(), toVTKCellType( subRegion.getElementType(), subRegionNumNodes ) );
+    std::vector< int > const vtkOrdering = getVtkConnectivity( subRegion.getElementType(), subRegionNumNodes );
     localIndex const numVtkData = vtkOrdering.size();
 
     // For all geosx element, the corresponding VTK data are copied in "connectivity".
