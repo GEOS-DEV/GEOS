@@ -1062,7 +1062,7 @@ void VTKPolyDataWriterInterface::write( real64 const time,
                                         integer const cycle,
                                         DomainPartition const & domain )
 {
-  // This guard prevents crashes due to a floating point exception
+  // This guard prevents crashes due to a floating point exception (SIGFPE)
   // triggered inside VTK by a progress indicator
   LvArray::system::FloatingPointExceptionGuard guard;
 
