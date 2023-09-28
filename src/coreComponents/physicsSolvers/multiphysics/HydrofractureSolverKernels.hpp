@@ -35,6 +35,7 @@ struct DeformationUpdateKernel
   static void
   launch( localIndex const size,
           CONTACT_WRAPPER const & contactWrapper,
+          real64 const contactStiffness, 
           arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const & u,
           arrayView2d< real64 const > const & faceNormal,
           ArrayOfArraysView< localIndex const > const & faceToNodeMap,
@@ -69,10 +70,25 @@ struct DeformationUpdateKernel
       }
 
       // TODO this needs a proper contact based strategy for aperture
-      aperture[kfe] = -LvArray::tensorOps::AiBi< 3 >( temp, faceNormal[ kf0 ] ) / numNodesPerFace;
+      real64 const mechanicalAperture = -LvArray::tensorOps::AiBi< 3 >( temp, faceNormal[ kf0 ] ) / numNodesPerFace;
+      aperture[kfe] = mechanicalAperture; 
 
-      real64 dHydraulicAperture_dAperture = 0;
-      hydraulicAperture[kfe] = contactWrapper.computeHydraulicAperture( aperture[kfe], dHydraulicAperture_dAperture );
+      real64 const initialAperture = 1e-5;
+      real64 const refNormalStress = 5e7;  
+
+      // real64 dHydraulicAperture_dAperture = 0.0;
+      // hydraulicAperture[kfe] = contactWrapper.computeHydraulicAperture( aperture[kfe], dHydraulicAperture_dAperture );
+
+      GEOS_UNUSED_VAR( contactWrapper );
+
+      real64 const penaltyNormalStress = - contactStiffness * mechanicalAperture; 
+
+      hydraulicAperture[kfe] = (mechanicalAperture >= 0.0)? (mechanicalAperture + initialAperture) : initialAperture / ( 1 + 9*penaltyNormalStress/refNormalStress );
+      real64 const dHydraulicAperture_dNormalStress = - hydraulicAperture[kfe] / ( 1 + 9*penaltyNormalStress/refNormalStress ) * 9/refNormalStress;
+
+      real64 dHydraulicAperture_dAperture = (mechanicalAperture >= 0.0)? 1.0:dHydraulicAperture_dNormalStress * -contactStiffness;
+
+      GEOS_UNUSED_VAR( dHydraulicAperture_dAperture );
 
 #ifdef GEOSX_USE_SEPARATION_COEFFICIENT
       real64 const s = aperture[kfe] / apertureAtFailure[kfe];
