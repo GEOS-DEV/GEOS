@@ -563,6 +563,14 @@ public:
                                           real64 const ( &invJ )[3][3],
                                           real64 ( &gradN )[numNodes][3] );
 
+   /**
+   * @brief Compute a map which knowing a face and the local number of a degree of freedom on the face 
+   *        its local number on the element 
+  */
+  GEOS_HOST_DEVICE
+  void localDegreeOnFaceToLocalDegreeOnElement( localIndex face,
+                                                localIndex (&faceMap)[numNodesPerFace][6]);
+
 
 private:
   /// The length of one dimension of the parent element.
@@ -620,7 +628,80 @@ private:
                              int const qb,
                              FUNC && func,
                              PARAMS &&... params );
+
+
 };
+
+template< typename GL_BASIS >
+GEOS_HOST_DEVICE
+void 
+Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::localDegreeOnFaceToLocalDegreeOnElement( localIndex face,
+                                                                                          localIndex (&faceMap)[numNodesPerFace][6])
+{
+  localIndex counter=0;
+
+  //Face 0 (left)
+  for (localIndex j = 0; j < num1dNodes; ++j)
+  {
+    for (localIndex i = 0; i < num1dNodes; ++i)
+    {
+      faceMap[counter][0] = i*(num1dNodes) + j*(numNodesPerFace);
+      counter++;
+    }
+  }
+
+  //Face 1 (right)
+  for (localIndex j = 0; j < num1dNodes; ++j)
+  {
+    for (localIndex i = 0; i < num1dNodes; ++i)
+    {
+      faceMap[counter][1] = (num1dNodes-1) + i*(num1dNodes) + j*(numNodesPerFace);
+      counter++;
+    }
+  }
+
+  //Face 2 (front)
+  for (localIndex j = 0; j < num1dNodes; ++j)
+  {
+    for (localIndex i = 0; i < num1dNodes; ++i)
+    {
+      faceMap[counter][2] = i + j*(numNodesPerFace);
+      counter++;
+    }
+  }
+
+  //Face 3 (back)
+  for (localIndex j = 0; j < num1dNodes; ++j)
+  {
+    for (localIndex i = 0; i < num1dNodes; ++i)
+    {
+      faceMap[counter][3] = (num1dNodes-1)*(num1dNodes) +  i + j*(numNodesPerFace);
+      counter++;
+    }
+  }
+
+  //Face 4 (bottom)
+  for (localIndex j = 0; j < num1dNodes; ++j)
+  {
+    for (localIndex i = 0; i < num1dNodes; ++i)
+    {
+      faceMap[counter][4] = i + j*(num1dNodes);
+      counter++;
+    }
+  }
+
+  //Face 0 (left)
+  for (localIndex j = 0; j < num1dNodes; ++j)
+  {
+    for (localIndex i = 0; i < num1dNodes; ++i)
+    {
+      faceMap[counter][5] = (num1dNodes-1)*(numNodesPerFace) + i + j*(numNodesPerFace);
+      counter++;
+    }
+  }
+
+};
+
 
 /// @cond Doxygen_Suppress
 
