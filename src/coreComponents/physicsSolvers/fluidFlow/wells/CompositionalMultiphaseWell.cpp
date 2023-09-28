@@ -1283,7 +1283,7 @@ CompositionalMultiphaseWell::checkSystemSolution( DomainPartition & domain,
         compositionalMultiphaseWellKernels::
           SolutionCheckKernelFactory::
           createAndLaunch< parallelDevicePolicy<> >( m_allowCompDensChopping,
-                                                     m_nonlinearSolverParameters.scalingType(),
+                                                     CompositionalMultiphaseFVM::ScalingType::Global,
                                                      scalingFactor,
                                                      dofManager.rankOffset(),
                                                      m_numComponents,

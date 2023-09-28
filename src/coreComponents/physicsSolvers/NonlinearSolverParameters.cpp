@@ -148,12 +148,6 @@ NonlinearSolverParameters::NonlinearSolverParameters( string const & name,
     setInputFlag( dataRepository::InputFlags::OPTIONAL ).
     setApplyDefaultValue( 0 ).
     setDescription( "Flag to decide whether to iterate between sequentially coupled solvers or not." );
-
-  registerWrapper( viewKeysStruct::scalingTypeString(), &m_scalingType ).
-    setInputFlag( dataRepository::InputFlags::OPTIONAL ).
-    setApplyDefaultValue( ScalingType::Global ).
-    setDescription( "Solution scaling type."
-                    "Valid options:\n* " + EnumStrings< ScalingType >::concat( "\n* " ) );
 }
 
 void NonlinearSolverParameters::postProcessInput()
@@ -161,11 +155,6 @@ void NonlinearSolverParameters::postProcessInput()
   GEOS_ERROR_IF_LE_MSG( m_timeStepDecreaseIterLimit, m_timeStepIncreaseIterLimit,
                         getWrapperDataContext( viewKeysStruct::timeStepIncreaseIterLimString() ) <<
                         ": should be smaller than " << viewKeysStruct::timeStepDecreaseIterLimString() );
-
-  if( m_scalingType == ScalingType::Local && m_lineSearchAction != LineSearchAction::None )
-  {
-    GEOS_ERROR( GEOS_FMT( "Line search is not supported for {} = {}", viewKeysStruct::scalingTypeString(), EnumStrings< ScalingType >::toString( ScalingType::Local )) );
-  }
 }
 
 

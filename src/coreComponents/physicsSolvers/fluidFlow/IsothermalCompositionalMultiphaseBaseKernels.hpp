@@ -32,7 +32,7 @@
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseBaseFields.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseUtilities.hpp"
 #include "physicsSolvers/SolverBaseKernels.hpp"
-#include "physicsSolvers/NonlinearSolverParameters.hpp"
+#include "physicsSolvers/fluidFlow/CompositionalMultiphaseFVM.hpp"
 
 namespace geos
 {
@@ -1416,7 +1416,7 @@ public:
    * @param[in] compDens the component density vector
    */
   SolutionCheckKernel( integer const allowCompDensChopping,
-                       NonlinearSolverParameters::ScalingType const scalingType,
+                       CompositionalMultiphaseFVM::ScalingType const scalingType,
                        real64 const scalingFactor,
                        globalIndex const rankOffset,
                        integer const numComp,
@@ -1466,7 +1466,7 @@ public:
                              StackVariables & stack,
                              FUNC && kernelOp = NoOpFunc{} ) const
   {
-    bool const localScaling = m_scalingType == NonlinearSolverParameters::ScalingType::Local;
+    bool const localScaling = m_scalingType == CompositionalMultiphaseFVM::ScalingType::Local;
 
     real64 const newPres = m_pressure[ei] + (localScaling ? m_pressureScalingFactor[ei] : m_scalingFactor * m_localSolution[stack.localRow]);
     if( newPres < 0 )
@@ -1514,7 +1514,7 @@ protected:
   real64 const m_scalingFactor;
 
   /// scaling type (global or local)
-  NonlinearSolverParameters::ScalingType const m_scalingType;
+  CompositionalMultiphaseFVM::ScalingType const m_scalingType;
 
 };
 
@@ -1539,7 +1539,7 @@ public:
   template< typename POLICY >
   static integer
   createAndLaunch( integer const allowCompDensChopping,
-                   NonlinearSolverParameters::ScalingType const scalingType,
+                   CompositionalMultiphaseFVM::ScalingType const scalingType,
                    real64 const scalingFactor,
                    globalIndex const rankOffset,
                    integer const numComp,

@@ -698,7 +698,7 @@ public:
    * @param[in] compDens the component density vector
    */
   SolutionCheckKernel( integer const allowCompDensChopping,
-                       NonlinearSolverParameters::ScalingType const scalingType,
+                       CompositionalMultiphaseFVM::ScalingType const scalingType,
                        real64 const scalingFactor,
                        globalIndex const rankOffset,
                        integer const numComp,
@@ -738,7 +738,7 @@ public:
   {
     Base::computeSolutionCheck( ei, stack, [&] ()
     {
-      bool const localScaling = m_scalingType == NonlinearSolverParameters::ScalingType::Local;
+      bool const localScaling = m_scalingType == CompositionalMultiphaseFVM::ScalingType::Local;
       // compute the change in temperature
       real64 const newTemp = m_temperature[ei] + (localScaling ? m_temperatureScalingFactor[ei] : m_scalingFactor * m_localSolution[stack.localRow + m_numComp + 1]);
       if( newTemp < minTemperature )
@@ -780,7 +780,7 @@ public:
   template< typename POLICY >
   static integer
   createAndLaunch( integer const allowCompDensChopping,
-                   NonlinearSolverParameters::ScalingType const scalingType,
+                   CompositionalMultiphaseFVM::ScalingType const scalingType,
                    real64 const scalingFactor,
                    globalIndex const rankOffset,
                    integer const numComp,

@@ -942,9 +942,9 @@ bool SolverBase::solveNonlinearSystem( real64 const & time_n,
     // Compute the scaling factor for the Newton update
     scaleFactor = scalingForSystemSolution( domain, m_dofManager, m_solution.values() );
 
-    if( getLogLevel() >= 1 && m_nonlinearSolverParameters.scalingType() == NonlinearSolverParameters::ScalingType::Global )
+    if( getLogLevel() >= 1 )
     {
-      GEOS_LOG_RANK_0( getName() + ": Solution scaling factor = " << scaleFactor );
+      GEOS_LOG_RANK_0( getName() + ": Global solution scaling factor = " << scaleFactor );
     }
 
     if( !checkSystemSolution( domain, m_dofManager, m_solution.values(), scaleFactor ) )

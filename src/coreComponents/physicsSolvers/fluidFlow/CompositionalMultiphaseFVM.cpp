@@ -51,7 +51,23 @@ CompositionalMultiphaseFVM::CompositionalMultiphaseFVM( const string & name,
                                                         Group * const parent )
   :
   CompositionalMultiphaseBase( name, parent )
-{}
+{
+  registerWrapper( viewKeyStruct::scalingTypeString(), &m_scalingType ).
+    setInputFlag( dataRepository::InputFlags::OPTIONAL ).
+    setApplyDefaultValue( ScalingType::Global ).
+    setDescription( "Solution scaling type."
+                    "Valid options:\n* " + EnumStrings< ScalingType >::concat( "\n* " ) );
+}
+
+void CompositionalMultiphaseFVM::postProcessInput()
+{
+  CompositionalMultiphaseBase::postProcessInput();
+
+  if( m_scalingType == ScalingType::Local && m_nonlinearSolverParameters.m_lineSearchAction != NonlinearSolverParameters::LineSearchAction::None )
+  {
+    GEOS_ERROR( GEOS_FMT( "{}: line search is not supported for {} = {}", getName(), viewKeyStruct::scalingTypeString(), EnumStrings< ScalingType >::toString( ScalingType::Local )) );
+  }
+}
 
 void CompositionalMultiphaseFVM::initializePreSubGroups()
 {
@@ -394,7 +410,7 @@ real64 CompositionalMultiphaseFVM::scalingForSystemSolution( DomainPartition & d
                                                      subRegion,
                                                      localSolution );
 
-      if( m_nonlinearSolverParameters.scalingType() == NonlinearSolverParameters::ScalingType::Global )
+      if( m_scalingType == ScalingType::Global )
         scalingFactor = std::min( scalingFactor, subRegionData.localMinVal );
       maxDeltaPres  = std::max( maxDeltaPres, subRegionData.localMaxDeltaPres );
       maxDeltaCompDens = std::max( maxDeltaCompDens, subRegionData.localMaxDeltaCompDens );
@@ -421,7 +437,7 @@ real64 CompositionalMultiphaseFVM::scalingForSystemSolution( DomainPartition & d
   {
     GEOS_LOG_LEVEL_RANK_0( 1, getName() + ": Max deltaPres  = " << maxDeltaPres  << ", Max deltaCompDens = " << maxDeltaCompDens << " (before scaling)" );
   }
-  if( m_nonlinearSolverParameters.scalingType() == NonlinearSolverParameters::ScalingType::Local )
+  if( m_scalingType == ScalingType::Local )
   {
     GEOS_LOG_LEVEL_RANK_0( 1, getName() + ": Min pressure scaling factor = " << minPresScalingFactor );
     GEOS_LOG_LEVEL_RANK_0( 1, getName() + ": Min comp dens scaling factor = " << minCompDensScalingFactor );
@@ -457,7 +473,7 @@ bool CompositionalMultiphaseFVM::checkSystemSolution( DomainPartition & domain,
   ? thermalCompositionalMultiphaseBaseKernels::
           SolutionCheckKernelFactory::
           createAndLaunch< parallelDevicePolicy<> >( m_allowCompDensChopping,
-                                                     m_nonlinearSolverParameters.scalingType(),
+                                                     m_scalingType,
                                                      scalingFactor,
                                                      dofManager.rankOffset(),
                                                      m_numComponents,
@@ -467,7 +483,7 @@ bool CompositionalMultiphaseFVM::checkSystemSolution( DomainPartition & domain,
   : isothermalCompositionalMultiphaseBaseKernels::
           SolutionCheckKernelFactory::
           createAndLaunch< parallelDevicePolicy<> >( m_allowCompDensChopping,
-                                                     m_nonlinearSolverParameters.scalingType(),
+                                                     m_scalingType,
                                                      scalingFactor,
                                                      dofManager.rankOffset(),
                                                      m_numComponents,
@@ -490,7 +506,7 @@ void CompositionalMultiphaseFVM::applySystemSolution( DofManager const & dofMana
 {
   GEOS_MARK_FUNCTION;
 
-  bool const localScaling = m_nonlinearSolverParameters.scalingType() == NonlinearSolverParameters::ScalingType::Local;
+  bool const localScaling = m_scalingType == ScalingType::Local;
 
   DofManager::CompMask pressureMask( m_numDofPerCell, 0, 1 );
   DofManager::CompMask componentMask( m_numDofPerCell, 1, m_numComponents+1 );
