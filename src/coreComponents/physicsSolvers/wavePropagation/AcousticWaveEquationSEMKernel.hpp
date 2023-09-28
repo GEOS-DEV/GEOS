@@ -78,6 +78,7 @@ struct PrecomputeSourceAndReceiverKernel
           arrayView2d< real32 > const sourceValue,
           real64 const dt,
           real32 const timeSourceFrequency,
+          real32 const timeSourceDelay,
           localIndex const rickerOrder )
   {
 

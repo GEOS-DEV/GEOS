@@ -61,6 +61,7 @@ struct PrecomputeSourceAndReceiverKernel
    * @param[out] sourceValue value of the temporal source (eg. Ricker)
    * @param[in] dt time-step
    * @param[in] timeSourceFrequency the central frequency of the source
+   * @param[in] timeSourceDelay the time delay of the source
    * @param[in] rickerOrder order of the Ricker wavelet
    */
   template< typename EXEC_POLICY, typename FE_TYPE >
@@ -91,6 +92,7 @@ struct PrecomputeSourceAndReceiverKernel
           arrayView2d< real32 > const sourceValue,
           real64 const dt,
           real32 const timeSourceFrequency,
+          real32 const timeSourceDelay,
           localIndex const rickerOrder )
   {
 
