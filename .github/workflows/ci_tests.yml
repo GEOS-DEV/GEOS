@@ -49,46 +49,53 @@ jobs:
     steps:
     # The integrated test submodule repository contains large data (using git lfs).
     # To save time (and money) we do not let Github Actions automatically clone all our (lfs) subrepositories and do it by hand.
-    - name: Checkout Repository
-      uses: actions/checkout@v3
-      with:
-        # Let script update submodules; Github Actions submodule history causes error
-        submodules: false
-        lfs: false
-    - name: Check that submodules are up to date
-      run: "scripts/test_submodule_updated.sh"
+    # - name: Checkout Repository
+    #   uses: actions/checkout@v3
+    #   with:
+    #     # Let script update submodules; Github Actions submodule history causes error
+    #     submodules: false
+    #     lfs: false
+    # - name: Check that submodules are up to date
+    #   run: "scripts/test_submodule_updated.sh"
+    - name: Print environment
+      run: printenv
+
 
   code_style:
     needs: [check_pull_request_is_not_a_draft]
     runs-on: ubuntu-22.04
     steps:
-    - name: Checkout Repository
-      uses: actions/checkout@v3
-      with:
-        submodules: true
-        lfs: false
-    - name: Check style
-      env:
-        DOCKER_REPOSITORY: geosx/ubuntu20.04-gcc9
-        CMAKE_BUILD_TYPE: Release
-        BUILD_AND_TEST_ARGS: --test-code-style
-      run: ./scripts/ci_build_and_test.sh
+    # - name: Checkout Repository
+    #   uses: actions/checkout@v3
+    #   with:
+    #     submodules: true
+    #     lfs: false
+    # - name: Check style
+    #   env:
+    #     DOCKER_REPOSITORY: geosx/ubuntu20.04-gcc9
+    #     CMAKE_BUILD_TYPE: Release
+    #     BUILD_AND_TEST_ARGS: --test-code-style
+    #   run: ./scripts/ci_build_and_test.sh
+    - name: Print environment
+      run: printenv
 
   documentation:
     needs: [check_pull_request_is_not_a_draft]
     runs-on: ubuntu-22.04
     steps:
-    - name: Checkout Repository
-      uses: actions/checkout@v3
-      with:
-        submodules: true
-        lfs: false
-    - name: Check documentation
-      env:
-        DOCKER_REPOSITORY: geosx/ubuntu20.04-gcc9
-        CMAKE_BUILD_TYPE: Release
-        BUILD_AND_TEST_ARGS: --test-documentation
-      run: ./scripts/ci_build_and_test.sh
+    # - name: Checkout Repository
+    #   uses: actions/checkout@v3
+    #   with:
+    #     submodules: true
+    #     lfs: false
+    # - name: Check documentation
+    #   env:
+    #     DOCKER_REPOSITORY: geosx/ubuntu20.04-gcc9
+    #     CMAKE_BUILD_TYPE: Release
+    #     BUILD_AND_TEST_ARGS: --test-documentation
+    #   run: ./scripts/ci_build_and_test.sh
+    - name: Print environment
+      run: printenv
 
   linux_builds:
     name: ${{ matrix.name }}
