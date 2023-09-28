@@ -23,7 +23,6 @@ set(CMAKE_CXX_COMPILER g++ CACHE PATH "")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG -mcpu=power9 -mtune=power9" CACHE STRING "")
 set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-g ${CMAKE_CXX_FLAGS_RELEASE}" CACHE STRING "")
 set(CMAKE_CXX_FLAGS_DEBUG "-O0 -g" CACHE STRING "")
-set(CMAKE_CXX_STANDARD 14 CACHE STRING "")
 
 # Fortran options
 set(CMAKE_Fortran_COMPILER gfortran CACHE PATH "")
@@ -57,9 +56,7 @@ if (DEFINED ENV{CUDA_ROOT})
   set(CMAKE_CUDA_COMPILER ${CUDA_TOOLKIT_ROOT_DIR}/bin/nvcc CACHE STRING "")
   set(CUDA_ARCH sm_70 CACHE STRING "")
   set(CMAKE_CUDA_ARCHITECTURES 70 CACHE STRING "")
-  set(CMAKE_CUDA_STANDARD 14 CACHE STRING "")
-  ### The inclusion of -std=c++14 is a workaround for a cuda10/gcc8 bug ###
-  set(CMAKE_CUDA_FLAGS "-restrict -arch ${CUDA_ARCH} --expt-extended-lambda -Werror cross-execution-space-call,reorder,deprecated-declarations -Xcompiler -std=c++14" CACHE STRING "")
+  set(CMAKE_CUDA_FLAGS "-restrict -arch ${CUDA_ARCH} --expt-extended-lambda -Werror cross-execution-space-call,reorder,deprecated-declarations" CACHE STRING "")
   set(CMAKE_CUDA_FLAGS_RELEASE "-O3 -DNDEBUG -Xcompiler -DNDEBUG -Xcompiler -O3 -Xcompiler -mcpu=powerpc64le -Xcompiler -mtune=powerpc64le" CACHE STRING "")
   set(CMAKE_CUDA_FLAGS_RELWITHDEBINFO "-g -lineinfo ${CMAKE_CUDA_FLAGS_RELEASE}" CACHE STRING "")
   set(CMAKE_CUDA_FLAGS_DEBUG "-g -G -O0 -Xcompiler -O0" CACHE STRING "")

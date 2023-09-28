@@ -32,6 +32,36 @@ namespace geos
 {
 
 /**
+ * @brief Upwinding scheme.
+ */
+enum class UpwindingScheme : integer
+{
+  PPU,    ///< PPU upwinding
+  C1PPU,  ///< C1-PPU upwinding from https://doi.org/10.1016/j.advwatres.2017.07.028
+};
+
+/**
+ * @brief Strings for upwinding scheme.
+ */
+ENUM_STRINGS( UpwindingScheme,
+              "PPU",
+              "C1PPU" );
+
+/**
+ * @struct UpwindingParameters
+ *
+ * Structure to store upwinding parameters, such as upwinding scheme and related tolerances etc.
+ */
+struct UpwindingParameters
+{
+  /// PPU or C1-PPU
+  UpwindingScheme upwindingScheme;
+
+  /// C1-PPU smoothing tolerance
+  //real64 epsC1PPU;
+};
+
+/**
  * @class FluxApproximationBase
  *
  * Base class for various flux approximation classes.
@@ -142,6 +172,13 @@ public:
 
     /// @return The key for fractureStencil
     static constexpr char const * fractureStencilString() { return "fractureStencil"; }
+
+    /// @return The key for upwindingScheme
+    static constexpr char const * upwindingSchemeString() { return "upwindingScheme"; }
+
+    /// @return The key for epsC1PPU
+    //static constexpr char const * epsC1PPUString() { return "epsC1PPU"; }
+
   };
 
   /**
@@ -171,6 +208,12 @@ public:
    * @param name name of the coefficient.
    */
   void setCoeffName( string const & name );
+
+  /**
+   * @brief get the upwinding parameters.
+   * @return upwinding parameters structure.
+   */
+  UpwindingParameters const & upwindingParams() const { return m_upwindingParams; }
 
 protected:
 
@@ -254,6 +297,9 @@ protected:
 
   /// length scale of the mesh body
   real64 m_lengthScale;
+
+  /// upwinding parameters
+  UpwindingParameters m_upwindingParams;
 
 };
 

@@ -80,6 +80,10 @@ void CompositionalMultiphaseFVM::setupDofs( DomainPartition const & domain,
                        m_numDofPerCell,
                        getMeshTargets() );
 
+  // this call with instruct GEOS to reorder the dof numbers
+  //dofManager.setLocalReorderingType( viewKeyStruct::elemDofFieldString(),
+  //                                   DofManager::LocalReorderingType::ReverseCutHillMcKee );
+
   // for the volume balance equation, disable global coupling
   // this equation is purely local (not coupled to neighbors or other physics)
   dofManager.disableGlobalCouplingForEquation( viewKeyStruct::elemDofFieldString(),
@@ -141,6 +145,7 @@ void CompositionalMultiphaseFVM::assembleFluxTerms( real64 const dt,
                                                      dofManager.rankOffset(),
                                                      elemDofKey,
                                                      m_hasCapPressure,
+                                                     fluxApprox.upwindingParams(),
                                                      getName(),
                                                      mesh.getElemManager(),
                                                      stencilWrapper,
@@ -445,6 +450,7 @@ bool CompositionalMultiphaseFVM::checkSystemSolution( DomainPartition const & do
 void CompositionalMultiphaseFVM::applySystemSolution( DofManager const & dofManager,
                                                       arrayView1d< real64 const > const & localSolution,
                                                       real64 const scalingFactor,
+                                                      real64 const GEOS_UNUSED_PARAM( dt ),
                                                       DomainPartition & domain )
 {
   GEOS_MARK_FUNCTION;
@@ -689,7 +695,7 @@ void CompositionalMultiphaseFVM::applyFaceDirichletBC( real64 const time_n,
   if( m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
   {
     bool const bcConsistent = validateFaceDirichletBC( domain, time_n + dt );
-    GEOS_ERROR_IF( !bcConsistent, GEOS_FMT( "CompositionalMultiphaseBase {}: inconsistent boundary conditions", getName() ) );
+    GEOS_ERROR_IF( !bcConsistent, GEOS_FMT( "CompositionalMultiphaseBase {}: inconsistent boundary conditions", getDataContext() ) );
   }
 
   FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();

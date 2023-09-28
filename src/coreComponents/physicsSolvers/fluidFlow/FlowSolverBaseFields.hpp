@@ -48,6 +48,14 @@ DECLARE_FIELD( pressure_n,
                WRITE_AND_READ,
                "Pressure at the previous converged time step" );
 
+DECLARE_FIELD( pressure_k,
+               "pressure_k",
+               array1d< real64 >,
+               0,
+               NOPLOT,
+               NO_WRITE,
+               "Pressure at the previous sequential iteration" );
+
 DECLARE_FIELD( initialPressure,
                "initialPressure",
                array1d< real64 >,
@@ -103,6 +111,14 @@ DECLARE_FIELD( temperature_n,
                NOPLOT,
                WRITE_AND_READ,
                "Temperature at the previous converged time step" );
+
+DECLARE_FIELD( temperature_k,
+               "temperature_k",
+               array1d< real64 >,
+               0,
+               LEVEL_0,
+               NO_WRITE,
+               "Temperature at the previous sequential iteration" );
 
 DECLARE_FIELD( initialTemperature,
                "initialTemperature",

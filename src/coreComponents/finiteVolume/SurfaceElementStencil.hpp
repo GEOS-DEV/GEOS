@@ -214,6 +214,24 @@ public:
   ArrayOfArraysView< R1Tensor const > getCellCenterToEdgeCenters() const
   { return m_cellCenterToEdgeCenters.toViewConst(); }
 
+  /**
+   * @brief Remove the contribution of the aperture from the weight in the stencil (done before aperture update)
+   *
+   * @param iconn connection index
+   * @param hydraulicAperture hydraulic apertures of the fractures
+   */
+  GEOS_HOST_DEVICE
+  void removeHydraulicApertureContribution( localIndex const iconn, ElementRegionManager::ElementViewConst< arrayView1d< real64 const > > hydraulicAperture ) const;
+
+  /**
+   * @brief Add the contribution of the aperture to the weight in the stencil (done after aperture update)
+   *
+   * @param iconn connection index
+   * @param hydraulicAperture hydraulic apertures of the fractures
+   */
+  GEOS_HOST_DEVICE
+  void addHydraulicApertureContribution( localIndex const iconn, ElementRegionManager::ElementViewConst< arrayView1d< real64 const > > hydraulicAperture ) const;
+
 private:
 
   /// Cell center to Edge center vector
@@ -597,6 +615,35 @@ SurfaceElementStencilWrapper::
   }
 }
 
+GEOS_HOST_DEVICE
+inline void
+SurfaceElementStencilWrapper::
+  removeHydraulicApertureContribution( localIndex const iconn, ElementRegionManager::ElementViewConst< arrayView1d< real64 const > > hydraulicAperture ) const
+{
+  for( localIndex k = 0; k < stencilSize( iconn ); ++k )
+  {
+    localIndex const er  =  m_elementRegionIndices[iconn][k];
+    localIndex const esr =  m_elementSubRegionIndices[iconn][k];
+    localIndex const ei  =  m_elementIndices[iconn][k];
+
+    m_weights[iconn][k] = m_weights[iconn][k] / hydraulicAperture[er][esr][ei];
+  }
+}
+
+GEOS_HOST_DEVICE
+inline void
+SurfaceElementStencilWrapper::
+  addHydraulicApertureContribution( localIndex const iconn, ElementRegionManager::ElementViewConst< arrayView1d< real64 const > > hydraulicAperture ) const
+{
+  for( localIndex k = 0; k < stencilSize( iconn ); ++k )
+  {
+    localIndex const er  =  m_elementRegionIndices[iconn][k];
+    localIndex const esr =  m_elementSubRegionIndices[iconn][k];
+    localIndex const ei  =  m_elementIndices[iconn][k];
+
+    m_weights[iconn][k] = m_weights[iconn][k] * hydraulicAperture[er][esr][ei];
+  }
+}
 
 } /* namespace geos */
 

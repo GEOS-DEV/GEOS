@@ -43,6 +43,10 @@ set(SPHINX_EXECUTABLE /usr/gapps/GEOSX/thirdPartyLibs/python/quartz-gcc-python/p
 
 set(ENABLE_FESAPI OFF CACHE BOOL "" FORCE)
 
+# caliper 
+set(ENABLE_CALIPER ON CACHE BOOL "" FORCE)
+set(ENABLE_CALIPER_HYPRE ON CACHE BOOL "" FORCE)
+
 # MKL
 set(ENABLE_MKL ON CACHE BOOL "")
 set(MKL_ROOT /usr/tce/packages/mkl/mkl-2022.1.0)

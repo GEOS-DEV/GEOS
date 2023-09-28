@@ -306,11 +306,11 @@ void InternalWellboreGenerator::reduceNumNodesForPeriodicBoundary( SpatialPartit
 {
   if( m_isFullAnnulus )
   {
-    if( partition.m_Partitions[1] == 1 )
+    if( partition.getPartitions()[1] == 1 )
     {
       numNodesInDir[1] -= 1;
     }
-    else if( partition.m_Partitions[1] > 1 )
+    else if( partition.getPartitions()[1] > 1 )
     {
       partition.m_Periodic[1] = 1;
     }

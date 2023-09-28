@@ -98,15 +98,25 @@ void MultiPhaseVolumeWeightedThermalConductivity::initializeRockFluidState( arra
 void MultiPhaseVolumeWeightedThermalConductivity::saveConvergedRockFluidState( arrayView2d< real64 const > const & convergedPorosity,
                                                                                arrayView2d< real64 const, compflow::USD_PHASE > const & convergedPhaseVolumeFraction ) const
 {
+
   // note that the update function is called here, and not in the solver, because porosity and phase volume fraction are treated explicitly
 
   KernelWrapper conductivityWrapper = createKernelWrapper();
 
   forAll< parallelDevicePolicy<> >( conductivityWrapper.numElems(), [=] GEOS_HOST_DEVICE ( localIndex const k )
   {
+    // here we compute an average of the porosity over quadrature points
+    // this average is exact for tets, regular pyramids/wedges/hexes, or for VEM
+    real64 porosityAveragedOverQuadraturePoints = 0;
+    for( integer i = 0; i < convergedPorosity.size( 1 ); ++i )
+    {
+      porosityAveragedOverQuadraturePoints += convergedPorosity[k][i];
+    }
+    porosityAveragedOverQuadraturePoints /= convergedPorosity.size( 1 );
+
     for( localIndex q = 0; q < conductivityWrapper.numGauss(); ++q )
     {
-      conductivityWrapper.update( k, q, convergedPorosity[k][q], convergedPhaseVolumeFraction[k] );
+      conductivityWrapper.update( k, q, porosityAveragedOverQuadraturePoints, convergedPhaseVolumeFraction[k] );
     }
   } );
 }

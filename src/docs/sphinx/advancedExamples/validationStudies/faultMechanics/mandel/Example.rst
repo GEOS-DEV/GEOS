@@ -21,7 +21,7 @@ This example uses no external input files and everything required is contained w
 
 .. code-block:: console
 
-  inputFiles/poromechanics/PoroElastic_Mandel_benchmark.xml
+  inputFiles/poromechanics/PoroElastic_Mandel_benchmark_fim.xml
 
 
 ------------------------------------------------------------------
@@ -93,7 +93,7 @@ Such eight-node hexahedral elements are defined as ``C3D8`` elementTypes, and th
 with one group of cell blocks named here ``cb1``. 
 
 
-.. literalinclude:: ../../../../../../../inputFiles/poromechanics/PoroElastic_Mandel_benchmark.xml
+.. literalinclude:: ../../../../../../../inputFiles/poromechanics/PoroElastic_Mandel_benchmark_fim.xml
     :language: xml
     :start-after: <!-- SPHINX_MESH -->
     :end-before: <!-- SPHINX_MESH_END -->

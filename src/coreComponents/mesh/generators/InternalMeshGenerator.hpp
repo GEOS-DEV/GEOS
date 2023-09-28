@@ -21,11 +21,12 @@
 
 #include "codingUtilities/EnumStrings.hpp"
 #include "mesh/generators/MeshGeneratorBase.hpp"
+#include "mesh/generators/CellBlockManager.hpp"
+#include "mesh/mpiCommunications/SpatialPartition.hpp"
 
 namespace geos
 {
 
-class SpatialPartition;
 
 /**
  * @class InternalMeshGenerator
@@ -50,7 +51,6 @@ public:
    */
   static string catalogName() { return "InternalMesh"; }
 
-  virtual void generateMesh( DomainPartition & domain ) override;
 
   void importFieldOnArray( Block block,
                            string const & blockName,
@@ -262,6 +262,8 @@ private:
   real64 m_skewCenter[3] = { 0, 0, 0 };
 
 
+
+  virtual void fillCellBlockManager( CellBlockManager & cellBlockManager, array1d< int > const & partition ) override;
 
   /**
    * @brief Convert ndim node spatialized index to node global index.

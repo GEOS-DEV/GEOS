@@ -115,7 +115,8 @@ void SolverBase::generateMeshTargetsFromTargetRegions( Group const & meshBodies 
     if( targetTokens.size()==1 ) // no MeshBody or MeshLevel specified
     {
       GEOS_ERROR_IF( meshBodies.numSubGroups() != 1,
-                     "No MeshBody information is specified in SolverBase::meshTargets, but there are multiple MeshBody objects" );
+                     getDataContext() << ": No MeshBody information is specified in" <<
+                     " SolverBase::meshTargets, but there are multiple MeshBody objects" );
       MeshBody const & meshBody = meshBodies.getGroup< MeshBody >( 0 );
       string const meshBodyName = meshBody.getName();
 
@@ -129,7 +130,8 @@ void SolverBase::generateMeshTargetsFromTargetRegions( Group const & meshBodies 
     {
       string const meshBodyName = targetTokens[0];
       GEOS_ERROR_IF( !meshBodies.hasGroup( meshBodyName ),
-                     "MeshBody ("<<meshBodyName<<") is specified in targetRegions, but does not exist." );
+                     getWrapperDataContext( viewKeyStruct::targetRegionsString() ) << ": MeshBody (" <<
+                     meshBodyName << ") is specified in targetRegions, but does not exist." );
 
       string const meshLevelName = m_discretizationName;
 
@@ -141,7 +143,7 @@ void SolverBase::generateMeshTargetsFromTargetRegions( Group const & meshBodies 
     }
     else
     {
-      GEOS_ERROR( "Invalid specification of targetRegions" );
+      GEOS_ERROR( getDataContext() << ": Invalid specification of targetRegions" );
     }
   }
 }
@@ -184,7 +186,9 @@ SolverBase::CatalogInterface::CatalogType & SolverBase::getCatalog()
 localIndex SolverBase::targetRegionIndex( string const & regionName ) const
 {
   auto const pos = std::find( m_targetRegionNames.begin(), m_targetRegionNames.end(), regionName );
-  GEOS_ERROR_IF( pos == m_targetRegionNames.end(), GEOS_FMT( "Region {} is not a target of solver {}", regionName, getName() ) );
+  GEOS_ERROR_IF( pos == m_targetRegionNames.end(),
+                 GEOS_FMT( "{}: Region {} is not a target of the solver.",
+                           getDataContext(), regionName ) );
   return std::distance( m_targetRegionNames.begin(), pos );
 }
 
@@ -271,7 +275,8 @@ bool SolverBase::execute( real64 const time_n,
     }
   }
 
-  GEOS_ERROR_IF( dtRemaining > 0.0, "Maximum allowed number of sub-steps reached. Consider increasing maxSubSteps." );
+  GEOS_ERROR_IF( dtRemaining > 0.0, getDataContext() << ": Maximum allowed number of sub-steps"
+                                                        " reached. Consider increasing maxSubSteps." );
 
   // Decide what to do with the next Dt for the event running the solver.
   m_nextDt = setNextDt( nextDt, domain );
@@ -413,7 +418,7 @@ real64 SolverBase::linearImplicitStep( real64 const & time_n,
   debugOutputSolution( 0.0, 0, 0, m_solution );
 
   // apply the system solution to the fields/variables
-  applySystemSolution( m_dofManager, m_solution.values(), 1.0, domain );
+  applySystemSolution( m_dofManager, m_solution.values(), 1.0, dt, domain );
 
   // update non-primary variables (constitutive models)
   updateState( domain );
@@ -465,7 +470,7 @@ bool SolverBase::lineSearch( real64 const & time_n,
       continue;
     }
 
-    applySystemSolution( dofManager, solution.values(), localScaleFactor, domain );
+    applySystemSolution( dofManager, solution.values(), localScaleFactor, dt, domain );
 
     // update non-primary variables (constitutive models)
     updateState( domain );
@@ -561,7 +566,7 @@ bool SolverBase::lineSearchWithParabolicInterpolation( real64 const & time_n,
       continue;
     }
 
-    applySystemSolution( dofManager, solution.values(), deltaLocalScaleFactor, domain );
+    applySystemSolution( dofManager, solution.values(), deltaLocalScaleFactor, dt, domain );
 
     updateState( domain );
 
@@ -760,7 +765,7 @@ real64 SolverBase::nonlinearImplicitStep( real64 const & time_n,
     }
     else
     {
-      GEOS_ERROR( "Nonconverged solutions not allowed. Terminating..." );
+      GEOS_ERROR( getDataContext() << ": Nonconverged solutions not allowed. Terminating..." );
     }
   }
 
@@ -948,7 +953,7 @@ bool SolverBase::solveNonlinearSystem( real64 const & time_n,
     // apply the system solution to the fields/variables
     std::ofstream strm("update.txt");
     m_solution.print(strm);
-    applySystemSolution( m_dofManager, m_solution.values(), scaleFactor, domain );
+    applySystemSolution( m_dofManager, m_solution.values(), scaleFactor, stepDt, domain );
 
     // update non-primary variables (constitutive models)
     updateState( domain );
@@ -1152,11 +1157,11 @@ void SolverBase::solveLinearSystem( DofManager const & dofManager,
 
   if( params.stopIfError )
   {
-    GEOS_ERROR_IF( m_linearSolverResult.breakdown(), "Linear solution breakdown -> simulation STOP" );
+    GEOS_ERROR_IF( m_linearSolverResult.breakdown(), getDataContext() << ": Linear solution breakdown -> simulation STOP" );
   }
   else
   {
-    GEOS_WARNING_IF( !m_linearSolverResult.success(), "Linear solution failed" );
+    GEOS_WARNING_IF( !m_linearSolverResult.success(), getDataContext() << ": Linear solution failed" );
   }
 }
 
@@ -1178,6 +1183,7 @@ real64 SolverBase::scalingForSystemSolution( DomainPartition const & GEOS_UNUSED
 void SolverBase::applySystemSolution( DofManager const & GEOS_UNUSED_PARAM( dofManager ),
                                       arrayView1d< real64 const > const & GEOS_UNUSED_PARAM( localSolution ),
                                       real64 const GEOS_UNUSED_PARAM( scalingFactor ),
+                                      real64 const GEOS_UNUSED_PARAM( dt ),
                                       DomainPartition & GEOS_UNUSED_PARAM( domain ) )
 {
   GEOS_ERROR( "SolverBase::applySystemSolution called!. Should be overridden." );

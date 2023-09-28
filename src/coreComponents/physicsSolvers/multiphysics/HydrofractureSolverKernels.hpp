@@ -38,7 +38,7 @@ struct DeformationUpdateKernel
           arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const & u,
           arrayView2d< real64 const > const & faceNormal,
           ArrayOfArraysView< localIndex const > const & faceToNodeMap,
-          arrayView2d< localIndex const > const & elemsToFaces,
+          ArrayOfArraysView< localIndex const > const & elemsToFaces,
           arrayView1d< real64 const > const & area,
           arrayView1d< real64 const > const & volume,
           arrayView1d< real64 > const & deltaVolume,
@@ -55,6 +55,9 @@ struct DeformationUpdateKernel
   {
     forAll< POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const kfe )
     {
+      if( elemsToFaces.sizeOfArray( kfe ) != 2 )
+      { return; }
+
       localIndex const kf0 = elemsToFaces[kfe][0];
       localIndex const kf1 = elemsToFaces[kfe][1];
       localIndex const numNodesPerFace = faceToNodeMap.sizeOfArray( kf0 );
@@ -142,7 +145,7 @@ struct FluidMassResidualDerivativeAssemblyKernel
                          localIndex const numNodesPerFace,
                          arraySlice1d< localIndex const > const & columns,
                          arraySlice1d< real64 const > const & values,
-                         arrayView2d< localIndex const > const elemsToFaces,
+                         ArrayOfArraysView< localIndex const > const elemsToFaces,
                          ArrayOfArraysView< localIndex const > const faceToNodeMap,
                          arrayView1d< globalIndex const > const dispDofNumber,
                          real64 const (&Nbar)[ 3 ],
@@ -180,7 +183,7 @@ struct FluidMassResidualDerivativeAssemblyKernel
   launch( localIndex const size,
           globalIndex const rankOffset,
           CONTACT_WRAPPER const & contactWrapper,
-          arrayView2d< localIndex const > const elemsToFaces,
+          ArrayOfArraysView< localIndex const > const elemsToFaces,
           ArrayOfArraysView< localIndex const > const faceToNodeMap,
           arrayView2d< real64 const > const faceNormal,
           arrayView1d< real64 const > const area,
