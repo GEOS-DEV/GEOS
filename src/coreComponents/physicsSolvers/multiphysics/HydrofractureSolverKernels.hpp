@@ -72,7 +72,7 @@ struct DeformationUpdateKernel
       aperture[kfe] = -LvArray::tensorOps::AiBi< 3 >( temp, faceNormal[ kf0 ] ) / numNodesPerFace;
 
       real64 dHydraulicAperture_dAperture = 0;
-      std::cout << kfe << " " << aperture[kfe]  << " " << volume[kfe]<< std::endl;
+      //std::cout << kfe << " " << aperture[kfe]  << " " << volume[kfe]<< std::endl;
       hydraulicAperture[kfe] = contactWrapper.computeHydraulicAperture( aperture[kfe], dHydraulicAperture_dAperture );
 
 #ifdef GEOSX_USE_SEPARATION_COEFFICIENT

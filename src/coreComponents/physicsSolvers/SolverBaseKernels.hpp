@@ -260,7 +260,7 @@ public:
         }
       }
     }
-    std::cout << std::endl << "number of Norm " << NUM_NORM << " " << minF << " " << min;
+    //std::cout << std::endl << "number of Norm " << NUM_NORM << " " << minF << " " << min;
   }
 
   static void computeGlobalNorm( real64 const & localResidualNorm,
