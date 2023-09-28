@@ -159,6 +159,28 @@
       fieldName="temperature"
       scale="293.637"
       setNames="{ Battery }"/>   
+
+    <FieldSpecification
+      name="DriftPressure"
+      objectPath="ElementRegions/matrix"
+      fieldName="pressure"
+      scale="1e5"
+      setNames="{ Drift }"/>   
+
+    <FieldSpecification
+      name="BatteryPressure"
+      objectPath="ElementRegions/matrix"
+      fieldName="pressure"
+      scale="1e5"
+      setNames="{ Battery }"/> 
+
+    <FieldSpecification
+      name="DriftFracturePressure"
+      objectPath="ElementRegions/fracture"  
+      fieldName="pressure"
+      scale="1e5"
+      setNames="{ Drift }"/>   
+  
     <!-- Injection -->
     <SourceFlux                                                                                                                                                                          
       name="TU_massFlux"                                                                                                                                                                  
