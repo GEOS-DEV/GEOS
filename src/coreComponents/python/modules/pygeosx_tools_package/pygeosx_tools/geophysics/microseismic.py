@@ -145,7 +145,7 @@ class JointSet():
         ghost_rank = wrapper.get_wrapper(problem, ghost_key_node)
         x = wrapper.get_wrapper(problem, node_position_key)
         xb = x[ghost_rank < 0, :]
-        xmin = np.amin(xb, axis=0)
+        xmin = np.amin(x, axis=0)
         xmax = np.amax(xb, axis=0)
 
         # Choose the inital number of elements to test connectivity
