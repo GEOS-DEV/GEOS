@@ -30,7 +30,7 @@ struct WaveSolverUtils
 {
 
   GEOS_HOST_DEVICE
-  static real32 evaluateRicker( real64 const time_n, real32 const f0, localIndex const order )
+  static real32 evaluateRicker( real64 const time_n, real32 const f0, real32 const t0, localIndex const order )
   {
     real32 const delay = t0 > 0 ? t0 : 1 / f0;
     real32 pulse = 0.0;

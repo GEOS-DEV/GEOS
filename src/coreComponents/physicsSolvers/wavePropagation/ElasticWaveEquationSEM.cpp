@@ -372,7 +372,9 @@ void ElasticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh, 
         dt,
         m_timeSourceFrequency,
         m_timeSourceDelay,
-        m_rickerOrder );
+        m_rickerOrder,
+        m_sourceForce,
+        m_sourceMoment );
     } );
   } );
 }
