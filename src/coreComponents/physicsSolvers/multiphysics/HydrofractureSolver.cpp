@@ -312,9 +312,12 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::updateDeformationForCoupling( 
       using ContactType = TYPEOFREF( castedContact );
       typename ContactType::KernelWrapper contactWrapper = castedContact.createKernelWrapper();
 
+      real64 const penaltyStiffness = castedContact.stiffness();
+
       hydrofractureSolverKernels::DeformationUpdateKernel
         ::launch< parallelDevicePolicy<> >( subRegion.size(),
                                             contactWrapper,
+                                            penaltyStiffness,
                                             u,
                                             faceNormal,
                                             faceToNodeMap,
