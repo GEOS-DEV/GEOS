@@ -96,6 +96,7 @@ void AcousticWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
     elemManager.forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion & subRegion )
     {
       subRegion.registerField< fields::MediumVelocity >( this->getName() );
+      subRegion.registerField< fields::MediumDensity >( this->getName() );
       subRegion.registerField< fields::PartialGradient >( this->getName() );
     } );
 
@@ -162,7 +163,7 @@ void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh,
                                                                                         CellElementSubRegion & elementSubRegion )
   {
     GEOS_THROW_IF( elementSubRegion.getElementType() != ElementType::Hexahedron,
-                   "Invalid type of element, the acoustic solver is designed for hexahedral meshes only (C3D8), using the SEM formulation",
+                   getDataContext() << ": Invalid type of element, the acoustic solver is designed for hexahedral meshes only (C3D8), using the SEM formulation",
                    InputError );
 
     arrayView2d< localIndex const > const elemsToFaces = elementSubRegion.faceList();
@@ -218,7 +219,9 @@ void AcousticWaveEquationSEM::addSourceToRightHandSide( integer const & cycleNum
   arrayView1d< localIndex const > const sourceIsAccessible = m_sourceIsAccessible.toViewConst();
   arrayView2d< real32 const > const sourceValue   = m_sourceValue.toViewConst();
 
-  GEOS_THROW_IF( cycleNumber > sourceValue.size( 0 ), "Too many steps compared to array size", std::runtime_error );
+  GEOS_THROW_IF( cycleNumber > sourceValue.size( 0 ),
+                 getDataContext() << ": Too many steps compared to array size",
+                 std::runtime_error );
   forAll< EXEC_POLICY >( sourceConstants.size( 0 ), [=] GEOS_HOST_DEVICE ( localIndex const isrc )
   {
     if( sourceIsAccessible[isrc] == 1 )
@@ -259,7 +262,7 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
     FaceManager & faceManager = mesh.getFaceManager();
 
     /// get the array of indicators: 1 if the face is on the boundary; 0 otherwise
-    arrayView1d< integer > const & facesDomainBoundaryIndicator = faceManager.getDomainBoundaryIndicator();
+    arrayView1d< integer const > const & facesDomainBoundaryIndicator = faceManager.getDomainBoundaryIndicator();
     arrayView2d< wsCoordType const, nodes::REFERENCE_POSITION_USD > const X32 = nodeManager.getField< fields::referencePosition32 >().toViewConst();
 
     /// get face to node map
@@ -286,6 +289,7 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
       arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemsToNodes = elementSubRegion.nodeList();
       arrayView2d< localIndex const > const facesToElements = faceManager.elementList();
       arrayView1d< real32 const > const velocity = elementSubRegion.getField< fields::MediumVelocity >();
+      arrayView1d< real32 const > const density = elementSubRegion.getField< fields::MediumDensity >();
 
       /// Partial gradient if gradient as to be computed
       arrayView1d< real32 > grad = elementSubRegion.getField< fields::PartialGradient >();
@@ -297,16 +301,14 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
       finiteElement::FiniteElementDispatchHandler< SEM_FE_TYPES >::dispatch3D( fe, [&] ( auto const finiteElement )
       {
         using FE_TYPE = TYPEOFREF( finiteElement );
-        {
-          GEOS_MARK_SCOPE( MassMatrixKernel );
-          acousticWaveEquationSEMKernels::MassMatrixKernel< FE_TYPE > kernelM( finiteElement );
 
-          kernelM.template launch< EXEC_POLICY, ATOMIC_POLICY >( elementSubRegion.size(),
-                                                                 X32,
-                                                                 elemsToNodes,
-                                                                 velocity,
-                                                                 mass );
-        }
+        acousticWaveEquationSEMKernels::MassMatrixKernel< FE_TYPE > kernelM( finiteElement );
+        kernelM.template launch< EXEC_POLICY, ATOMIC_POLICY >( elementSubRegion.size(),
+                                                               X32,
+                                                               elemsToNodes,
+                                                               velocity,
+                                                               density,
+                                                               mass );
         {
           GEOS_MARK_SCOPE( DampingMatrixKernel );
           acousticWaveEquationSEMKernels::DampingMatrixKernel< FE_TYPE > kernelD( finiteElement );
@@ -318,6 +320,7 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
                                                                  facesDomainBoundaryIndicator,
                                                                  freeSurfaceFaceIndicator,
                                                                  velocity,
+                                                                 density,
                                                                  damping );
         }
       } );
@@ -819,12 +822,12 @@ real64 AcousticWaveEquationSEM::explicitStepForward( real64 const & time_n,
 
         std::ofstream wf( fileName, std::ios::out | std::ios::binary );
         GEOS_THROW_IF( !wf,
-                       "Could not open file "<< fileName << " for writting",
+                       getDataContext() << ": Could not open file "<< fileName << " for writing",
                        InputError );
         wf.write( (char *)&p_dt2[0], p_dt2.size()*sizeof( real32 ) );
         wf.close( );
         GEOS_THROW_IF( !wf.good(),
-                       "An error occured while writting "<< fileName,
+                       getDataContext() << ": An error occured while writing "<< fileName,
                        InputError );
       }
 
@@ -885,7 +888,7 @@ real64 AcousticWaveEquationSEM::explicitStepBackward( real64 const & time_n,
         std::string fileName = GEOS_FMT( "lifo/rank_{:05}/pressuredt2_{:06}_{:08}.dat", rank, m_shotIndex, cycleNumber );
         std::ifstream wf( fileName, std::ios::in | std::ios::binary );
         GEOS_THROW_IF( !wf,
-                       "Could not open file "<< fileName << " for reading",
+                       getDataContext() << ": Could not open file "<< fileName << " for reading",
                        InputError );
         //std::string fileName = GEOS_FMT( "pressuredt2_{:06}_{:08}_{:04}.dat", m_shotIndex, cycleNumber, rank );
         //const int fileDesc = open( fileName.c_str(), O_RDONLY | O_DIRECT );
