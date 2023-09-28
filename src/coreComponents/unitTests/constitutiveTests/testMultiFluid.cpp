@@ -601,25 +601,25 @@ MultiFluidBase & makeDeadOilFluidFromTable( string const & name, Group * parent 
   coordinatesPVDG[0][12] = 53000000; valuesPVDG_Bg[12] = 0.003868; valuesPVDG_visc[12] = 0.00002935;
 
   TableFunction & tablePVDO_Bo = dynamicCast< TableFunction & >( *functionManager.createChild( "TableFunction", "PVDO_Bo" ) );
-  tablePVDO_Bo.setTableCoordinates( coordinatesPVDO, { units::Presssure } );
+  tablePVDO_Bo.setTableCoordinates( coordinatesPVDO, { units::Pressure } );
   tablePVDO_Bo.setTableValues( valuesPVDO_Bo, units::Dimensionless );
   tablePVDO_Bo.reInitializeFunction();
   tablePVDO_Bo.setInterpolationMethod( TableFunction::InterpolationType::Linear );
 
   TableFunction & tablePVDO_visc = dynamicCast< TableFunction & >( *functionManager.createChild( "TableFunction", "PVDO_visc" ) );
-  tablePVDO_visc.setTableCoordinates( coordinatesPVDO, { units::Presssure } );
+  tablePVDO_visc.setTableCoordinates( coordinatesPVDO, { units::Pressure } );
   tablePVDO_visc.setTableValues( valuesPVDO_visc, units::Viscosity );
   tablePVDO_visc.reInitializeFunction();
   tablePVDO_visc.setInterpolationMethod( TableFunction::InterpolationType::Linear );
 
   TableFunction & tablePVDG_Bg = dynamicCast< TableFunction & >( *functionManager.createChild( "TableFunction", "PVDG_Bg" ) );
-  tablePVDG_Bg.setTableCoordinates( coordinatesPVDG, { units::Presssure } );
+  tablePVDG_Bg.setTableCoordinates( coordinatesPVDG, { units::Pressure } );
   tablePVDG_Bg.setTableValues( valuesPVDG_Bg, units::Dimensionless );
   tablePVDG_Bg.reInitializeFunction();
   tablePVDG_Bg.setInterpolationMethod( TableFunction::InterpolationType::Linear );
 
   TableFunction & tablePVDG_visc = dynamicCast< TableFunction & >( *functionManager.createChild( "TableFunction", "PVDG_visc" ) );
-  tablePVDG_visc.setTableCoordinates( coordinatesPVDG, { units::Presssure } );
+  tablePVDG_visc.setTableCoordinates( coordinatesPVDG, { units::Pressure } );
   tablePVDG_visc.setTableValues( valuesPVDG_visc, units::Viscosity );
   tablePVDG_visc.reInitializeFunction();
   tablePVDG_visc.setInterpolationMethod( TableFunction::InterpolationType::Linear );
