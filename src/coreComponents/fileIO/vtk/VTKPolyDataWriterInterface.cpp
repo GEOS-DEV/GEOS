@@ -968,18 +968,27 @@ void VTKPolyDataWriterInterface::writeVtmFile( integer const cycle,
     {
 
       if( meshLevel.isShallowCopy() )
-      {
         return;
+
+      string const & meshLevelName = meshLevel.getName();
+
+      if( !m_levelNames.empty())
+      {
+        if( m_levelNames.find( meshLevelName ) == m_levelNames.end())
+          return;
       }
 
+      string const & meshBodyName = meshBody.getName();
+
       ElementRegionManager const & elemManager = meshLevel.getElemManager();
-      string const meshPath = joinPath( getCycleSubFolder( cycle ), meshBody.getName(), meshLevel.getName() );
+      string const meshPath = joinPath( getCycleSubFolder( cycle ), meshBodyName, meshLevelName );
       int const mpiSize = MpiWrapper::commSize();
 
       auto addRegion = [&]( ElementRegionBase const & region )
       {
-        std::vector< string > const blockPath{ meshBody.getName(), meshLevel.getName(), region.getCatalogName(), region.getName() };
-        string const regionPath = joinPath( meshPath, region.getName() );
+        string const & regionName = region.getName();
+        std::vector< string > const blockPath{ meshBodyName, meshLevelName, region.getCatalogName(), regionName };
+        string const regionPath = joinPath( meshPath, regionName );
         for( int i = 0; i < mpiSize; i++ )
         {
           string const dataSetName = getRankFileName( i );
@@ -1085,14 +1094,19 @@ void VTKPolyDataWriterInterface::write( real64 const time,
     {
 
       if( meshLevel.isShallowCopy() )
-      {
         return;
+
+      string const & meshLevelName = meshLevel.getName();
+
+      if( !m_levelNames.empty())
+      {
+        if( m_levelNames.find( meshLevelName ) == m_levelNames.end())
+          return;
       }
 
       ElementRegionManager const & elemManager = meshLevel.getElemManager();
       NodeManager const & nodeManager = meshLevel.getNodeManager();
       EmbeddedSurfaceNodeManager const & embSurfNodeManager = meshLevel.getEmbSurfNodeManager();
-      string const & meshLevelName = meshLevel.getName();
       string const & meshBodyName = meshBody.getName();
 
       if( m_requireFieldRegistrationCheck && !m_fieldNames.empty() )

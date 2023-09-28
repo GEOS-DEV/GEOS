@@ -94,6 +94,7 @@ public:
     static constexpr auto outputRegionTypeString = "outputRegionType";
     static constexpr auto onlyPlotSpecifiedFieldNames = "onlyPlotSpecifiedFieldNames";
     static constexpr auto fieldNames = "fieldNames";
+    static constexpr auto levelNames = "levelNames";
   } vtkOutputViewKeys;
   /// @endcond
 
@@ -119,6 +120,9 @@ private:
 
   /// array of names of the fields to output
   array1d< string > m_fieldNames;
+
+  /// array of names of the mesh levels to output
+  array1d< string > m_levelNames;
 
   /// VTK output mode
   vtk::VTKOutputMode m_writeBinaryData = vtk::VTKOutputMode::BINARY;
