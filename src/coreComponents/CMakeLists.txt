@@ -123,3 +123,30 @@ if( GEOS_ENABLE_TESTS )
   add_subdirectory( unitTests )
 endif( )
 
+########################################################################
+# the following commmand adds `unittests` Cmake target such that running `$ make unittests test`
+# builds the unit tests before running them
+function(get_all_test_targets var)
+    set(targets)
+    get_all_test_targets_recursive(targets ${CMAKE_CURRENT_SOURCE_DIR})
+    set(${var} ${targets} PARENT_SCOPE)
+endfunction()
+
+macro(get_all_test_targets_recursive targets dir)
+    get_property(subdirectories DIRECTORY ${dir} PROPERTY SUBDIRECTORIES)
+    foreach(subdir ${subdirectories})
+        get_all_test_targets_recursive(${targets} ${subdir})
+    endforeach()
+
+    get_property(current_targets DIRECTORY ${dir} PROPERTY BUILDSYSTEM_TARGETS)
+    foreach(target ${current_targets})
+      if(${target} MATCHES "(test|example).+")
+        list(APPEND ${targets} ${target})
+      endif()
+    endforeach()
+endmacro()
+
+get_all_test_targets(unittests_targets)
+# message(STATUS "UnitTests: ${unittests_targets}")
+add_custom_target(unittests COMMAND ${CMAKE_CTEST_COMMAND} DEPENDS ${unittests_targets})
+########################################################################

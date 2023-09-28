@@ -3,7 +3,7 @@
 #
 
 set( gtest_geosx_tests
-     testDebug.cpp )
+     testNDEBUG.cpp )
 
 set( dependencyList ${parallelDeps} gtest )
 
