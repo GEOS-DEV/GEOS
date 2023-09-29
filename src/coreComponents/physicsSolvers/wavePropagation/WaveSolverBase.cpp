@@ -51,14 +51,15 @@ WaveSolverBase::WaveSolverBase( const std::string & name,
     setSizedFromParent( 0 ).
     setDescription( "Source Value of the sources" );
 
-  registerWrapper( viewKeyStruct::timeSourceFrequencyString(), &m_timeSourceFrequency ).
-    setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "Central frequency for the time source" );
-
   registerWrapper( viewKeyStruct::receiverCoordinatesString(), &m_receiverCoordinates ).
     setInputFlag( InputFlags::REQUIRED ).
     setSizedFromParent( 0 ).
     setDescription( "Coordinates (x,y,z) of the receivers" );
+
+  registerWrapper( viewKeyStruct::timeSourceFrequencyString(), &m_timeSourceFrequency ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( 0 ).
+    setDescription( "Central frequency for the time source" );
 
   registerWrapper( viewKeyStruct::rickerOrderString(), &m_rickerOrder ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -115,7 +116,6 @@ WaveSolverBase::WaveSolverBase( const std::string & name,
     setApplyDefaultValue( -80 ).
     setDescription( "Set the capacity of the lifo host storage (if negative, opposite of percentage of remaining memory)" );
 
-
   registerWrapper( viewKeyStruct::usePMLString(), &m_usePML ).
     setInputFlag( InputFlags::FALSE ).
     setApplyDefaultValue( 0 ).
@@ -151,7 +151,7 @@ WaveSolverBase::WaveSolverBase( const std::string & name,
     setSizedFromParent( 0 ).
     setDescription( "Indices of the nodes (in the right order) for each receiver point" );
 
-  registerWrapper( viewKeyStruct::sourceConstantsString(), &m_sourceConstants ).
+  registerWrapper( viewKeyStruct::receiverConstantsString(), &m_receiverConstants ).
     setInputFlag( InputFlags::FALSE ).
     setSizedFromParent( 0 ).
     setDescription( "Constant part of the receiver for the nodes listed in m_receiverNodeIds" );
@@ -161,7 +161,15 @@ WaveSolverBase::WaveSolverBase( const std::string & name,
     setSizedFromParent( 0 ).
     setDescription( "Flag that indicates whether the receiver is local to this MPI rank" );
 
+  registerWrapper( viewKeyStruct::receiverRegionString(), &m_receiverRegion ).
+    setInputFlag( InputFlags::FALSE ).
+    setSizedFromParent( 0 ).
+    setDescription( "Region containing the receivers" );
 
+  registerWrapper( viewKeyStruct::receiverElemString(), &m_rcvElem ).
+    setInputFlag( InputFlags::FALSE ).
+    setSizedFromParent( 0 ).
+    setDescription( "Element containing the receivers" );
 }
 
 WaveSolverBase::~WaveSolverBase()
@@ -230,44 +238,38 @@ void WaveSolverBase::postProcessInput()
     counter++;
   } );
   GEOS_THROW_IF( counter > 1,
-                 getDataContext() << ": One single PML field specification is allowed",
+                 "One single PML field specification is allowed",
                  InputError );
 
   m_usePML = counter;
 
   if( m_linearDASGeometry.size( 1 ) > 0 )
-  {
     m_useDAS = 1;
-  }
 
   if( m_useDAS )
   {
     GEOS_LOG_LEVEL_RANK_0( 1, "Modeling linear DAS data is activated" );
 
     GEOS_ERROR_IF( m_linearDASGeometry.size( 1 ) != 3,
-                   getWrapperDataContext( viewKeyStruct::linearDASGeometryString() ) <<
-                   ": Invalid number of geometry parameters for the linear DAS fiber. Three parameters are required: dip, azimuth, gauge length" );
+                   "Invalid number of geometry parameters for the linear DAS fiber. Three parameters are required: dip, azimuth, gauge length" );
 
     GEOS_ERROR_IF( m_linearDASGeometry.size( 0 ) != m_receiverCoordinates.size( 0 ),
-                   getWrapperDataContext( viewKeyStruct::linearDASGeometryString() ) <<
-                   ": Invalid number of geometry parameters instances for the linear DAS fiber. It should match the number of receivers." );
+                   "Invalid number of geometry parameters instances for the linear DAS fiber. It should match the number of receivers." );
 
     /// initialize DAS geometry
     initializeDAS();
 
   }
 
-  GEOS_THROW_IF( m_sourceCoordinates.size( 1 ) != 3,
-                 getWrapperDataContext( viewKeyStruct::sourceCoordinatesString() ) <<
-                 ": Invalid number of physical coordinates for the sources",
+  GEOS_THROW_IF( m_sourceCoordinates.size( 0 ) > 0 && m_sourceCoordinates.size( 1 ) != 3,
+                 "Invalid number of physical coordinates for the sources",
                  InputError );
 
-  GEOS_THROW_IF( m_receiverCoordinates.size( 1 ) != 3,
-                 getWrapperDataContext( viewKeyStruct::receiverCoordinatesString() ) <<
-                 ": Invalid number of physical coordinates for the receivers",
+  GEOS_THROW_IF( m_receiverCoordinates.size( 0 ) > 0 && m_receiverCoordinates.size( 1 ) != 3,
+                 "Invalid number of physical coordinates for the receivers",
                  InputError );
 
-  EventManager const & event = this->getGroupByPath< EventManager >( "/Problem/Events" );
+  EventManager const & event = getGroupByPath< EventManager >( "/Problem/Events" );
   real64 const & maxTime = event.getReference< real64 >( EventManager::viewKeyStruct::maxTimeString() );
   real64 const & minTime = event.getReference< real64 >( EventManager::viewKeyStruct::minTimeString() );
   real64 dt = 0;
@@ -280,7 +282,7 @@ void WaveSolverBase::postProcessInput()
     }
   }
 
-  GEOS_THROW_IF( dt < epsilonLoc*maxTime, getDataContext() << ": Value for dt: " << dt <<" is smaller than local threshold: " << epsilonLoc, std::runtime_error );
+  GEOS_THROW_IF( dt < epsilonLoc * maxTime, "Value for dt: " << dt <<" is smaller than local threshold: " << epsilonLoc, std::runtime_error );
 
   if( m_dtSeismoTrace > 0 )
   {
@@ -290,7 +292,7 @@ void WaveSolverBase::postProcessInput()
   {
     m_nsamplesSeismoTrace = 0;
   }
-  localIndex const nsamples = int( (maxTime-minTime) /dt) + 1;
+  localIndex const nsamples = int( (maxTime - minTime) / dt) + 1;
 
   localIndex const numSourcesGlobal = m_sourceCoordinates.size( 0 );
   m_sourceValue.resize( nsamples, numSourcesGlobal );
@@ -362,7 +364,7 @@ localIndex WaveSolverBase::getNumNodesPerElem()
   FiniteElementDiscretization const * const
   feDiscretization = feDiscretizationManager.getGroupPointer< FiniteElementDiscretization >( m_discretizationName );
   GEOS_THROW_IF( feDiscretization == nullptr,
-                 getDataContext() << ": FE discretization not found: " << m_discretizationName,
+                 this->getName() << ": FE discretization not found: " << m_discretizationName,
                  InputError );
 
   localIndex numNodesPerElem = 0;
@@ -391,7 +393,67 @@ localIndex WaveSolverBase::getNumNodesPerElem()
 
   } );
   return numNodesPerElem;
+}
 
+void WaveSolverBase::incrementIndexSeismoTrace( real64 const time_n )
+{
+  while( (m_dtSeismoTrace * m_indexSeismoTrace) <= (time_n + epsilonLoc) && m_indexSeismoTrace < m_nsamplesSeismoTrace )
+  {
+    m_indexSeismoTrace++;
+  }
+}
+
+void WaveSolverBase::computeAllSeismoTraces( real64 const time_n,
+                                             real64 const dt,
+                                             arrayView1d< real32 const > const var_np1,
+                                             arrayView1d< real32 const > const var_n,
+                                             arrayView2d< real32 > varAtReceivers )
+{
+  /*
+   * In forward case we compute seismo if time_n + dt is the first time
+   * step after the timeSeismo to write.
+   *
+   *  time_n        timeSeismo    time_n + dt
+   *   ---|--------------|-------------|
+   *
+   * In backward (time_n goes decreasing) case we compute seismo if
+   * time_n is the last time step before the timeSeismo to write.
+   *
+   *  time_n - dt    timeSeismo    time_n
+   *   ---|--------------|-------------|
+   */
+
+  if( m_nsamplesSeismoTrace == 0 )
+    return;
+  integer const dir = m_forward ? +1 : -1;
+  for( localIndex iSeismo = m_indexSeismoTrace; iSeismo < m_nsamplesSeismoTrace; iSeismo++ )
+  {
+    real64 const timeSeismo = m_dtSeismoTrace * (m_forward ? iSeismo : (m_nsamplesSeismoTrace - 1) - iSeismo);
+    if( dir * timeSeismo > dir * (time_n + epsilonLoc))
+      break;
+    WaveSolverUtils::computeSeismoTrace( time_n, dir * dt, timeSeismo, iSeismo, m_receiverNodeIds,
+                                         m_receiverConstants, m_receiverIsLocal, var_np1, var_n, varAtReceivers );
+  }
+}
+
+void WaveSolverBase::compute2dVariableAllSeismoTraces( localIndex const regionIndex,
+                                                       real64 const time_n,
+                                                       real64 const dt,
+                                                       arrayView2d< real32 const > const var_np1,
+                                                       arrayView2d< real32 const > const var_n,
+                                                       arrayView2d< real32 > varAtReceivers )
+{
+  if( m_nsamplesSeismoTrace == 0 )
+    return;
+  integer const dir = m_forward ? +1 : -1;
+  for( localIndex iSeismo = m_indexSeismoTrace; iSeismo < m_nsamplesSeismoTrace; iSeismo++ )
+  {
+    real64 const timeSeismo = m_dtSeismoTrace * (m_forward ? iSeismo : (m_nsamplesSeismoTrace - 1) - iSeismo);
+    if( dir * timeSeismo > dir * (time_n + epsilonLoc))
+      break;
+    WaveSolverUtils::compute2dVariableSeismoTrace( time_n, dir * dt, regionIndex, m_receiverRegion, timeSeismo, iSeismo, m_rcvElem,
+                                                   m_receiverConstants, m_receiverIsLocal, var_np1, var_n, varAtReceivers );
+  }
 }
 
 } /* namespace geos */
