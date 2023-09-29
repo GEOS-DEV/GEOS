@@ -555,7 +555,7 @@ void ElasticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
       arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemsToNodes = elementSubRegion.nodeList();
       arrayView2d< localIndex const > const elemsToFaces = elementSubRegion.faceList();
 
-      arrayView1d< real32 const > const density = elementSubRegion.getField< fields::MediumDensityE >();
+      arrayView1d< real32 const > const density = elementSubRegion.getField< fields::MediumDensity >();
       arrayView1d< real32 const > const velocityVp = elementSubRegion.getField< fields::MediumVelocityVp >();
       arrayView1d< real32 const > const velocityVs = elementSubRegion.getField< fields::MediumVelocityVs >();
 

@@ -294,7 +294,7 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
       arrayView2d< localIndex const > const elemsToFaces = elementSubRegion.faceList();
 
       arrayView1d< real32 const > const velocity = elementSubRegion.getField< fields::MediumVelocity >();
-      arrayView1d< real32 const > const density = elementSubRegion.getField< fields::MediumDensityA >();
+      arrayView1d< real32 const > const density = elementSubRegion.getField< fields::MediumDensity >();
 
       /// Partial gradient if gradient as to be computed
       arrayView1d< real32 > grad = elementSubRegion.getField< fields::PartialGradient >();
