@@ -299,7 +299,7 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
       /// Partial gradient if gradient as to be computed
       arrayView1d< real32 > grad = elementSubRegion.getField< fields::PartialGradient >();
       grad.zero();
-    
+
       finiteElement::FiniteElementDispatchHandler< SEM_FE_TYPES >::dispatch3D( fe, [&] ( auto const finiteElement )
       {
         using FE_TYPE = TYPEOFREF( finiteElement );

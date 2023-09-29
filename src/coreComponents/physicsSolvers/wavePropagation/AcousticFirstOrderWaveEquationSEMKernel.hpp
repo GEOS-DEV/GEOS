@@ -295,10 +295,7 @@ struct DampingMatrixKernel
         // face on the domain boundary and not on free surface
         if( facesDomainBoundaryIndicator[f] == 1 && freeSurfaceFaceIndicator[f] != 1 )
         {
-          real32 const alpha = 1.0 / velocity[e];
-
           constexpr localIndex numNodesPerFace = FE_TYPE::numNodesPerFace;
-
           real64 xLocal[ numNodesPerFace ][ 3 ];
           for( localIndex a = 0; a < numNodesPerFace; ++a )
           {
@@ -308,6 +305,7 @@ struct DampingMatrixKernel
             }
           }
 
+          real32 const alpha = 1.0 / velocity[e];
           for( localIndex q = 0; q < numNodesPerFace; ++q )
           {
             real32 const localIncrement = alpha * m_finiteElement.computeDampingTerm( q, xLocal );
@@ -315,7 +313,7 @@ struct DampingMatrixKernel
           }
         }
       }
-    } ); // end loop over element
+    } );
   }
 
   /// The finite element space/discretization object for the element type in the subRegion
