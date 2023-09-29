@@ -100,12 +100,12 @@ public:
                          arrayView1d< real64 const > const & localRhs ) override;
 
   virtual real64
-  scalingForSystemSolution( DomainPartition const & domain,
+  scalingForSystemSolution( DomainPartition & domain,
                             DofManager const & dofManager,
                             arrayView1d< real64 const > const & localSolution ) override;
 
   virtual bool
-  checkSystemSolution( DomainPartition const & domain,
+  checkSystemSolution( DomainPartition & domain,
                        DofManager const & dofManager,
                        arrayView1d< real64 const > const & localSolution,
                        real64 const scalingFactor ) override;
@@ -145,7 +145,24 @@ public:
                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
                   arrayView1d< real64 > const & localRhs ) const override;
 
+  struct viewKeyStruct : CompositionalMultiphaseBase::viewKeyStruct
+  {
+    // nonlinear solver parameters
+    static constexpr char const * scalingTypeString()               { return "scalingType"; }
+  };
+
+  /**
+   * @brief Solution scaling type
+   */
+  enum class ScalingType : integer
+  {
+    Global,         ///< Scale the Newton update with a unique scaling factor
+    Local            ///< Scale the Newton update locally (modifies the Newton direction)
+  };
+
 protected:
+
+  virtual void postProcessInput() override;
 
   virtual void
   initializePreSubGroups() override;
@@ -157,6 +174,9 @@ protected:
    */
   void
   computeCFLNumbers( real64 const & dt, DomainPartition & domain );
+
+  /// Solution scaling type
+  ScalingType m_scalingType;
 
 private:
 
@@ -188,6 +208,9 @@ private:
 
 };
 
+ENUM_STRINGS( CompositionalMultiphaseFVM::ScalingType,
+              "Global",
+              "Local" );
 
 } // namespace geos
 

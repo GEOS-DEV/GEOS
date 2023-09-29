@@ -254,6 +254,10 @@ void CompositionalMultiphaseBase::registerDataOnMesh( Group & meshBodies )
         subRegion.registerField< temperature_k >( getName() ); // needed for the fixed-stress porosity update
       }
 
+      subRegion.registerField< pressureScalingFactor >( getName() );
+      subRegion.registerField< temperatureScalingFactor >( getName() );
+      subRegion.registerField< globalCompDensityScalingFactor >( getName() );
+
       // The resizing of the arrays needs to happen here, before the call to initializePreSubGroups,
       // to make sure that the dimensions are properly set before the timeHistoryOutput starts its initialization.
 
@@ -528,31 +532,31 @@ void CompositionalMultiphaseBase::updateComponentFraction( ObjectManagerBase & d
 
 }
 
-void CompositionalMultiphaseBase::updatePhaseVolumeFraction( ObjectManagerBase & dataGroup ) const
+real64 CompositionalMultiphaseBase::updatePhaseVolumeFraction( ObjectManagerBase & dataGroup ) const
 {
   GEOS_MARK_FUNCTION;
 
   string const & fluidName = dataGroup.getReference< string >( viewKeyStruct::fluidNamesString() );
   MultiFluidBase const & fluid = getConstitutiveModel< MultiFluidBase >( dataGroup, fluidName );
 
-  if( m_isThermal )
-  {
+  real64 maxDeltaPhaseVolFrac  =
+    m_isThermal ?
     thermalCompositionalMultiphaseBaseKernels::
       PhaseVolumeFractionKernelFactory::
       createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
                                                  m_numPhases,
                                                  dataGroup,
-                                                 fluid );
-  }
-  else
-  {
-    isothermalCompositionalMultiphaseBaseKernels::
+                                                 fluid )
+:    isothermalCompositionalMultiphaseBaseKernels::
       PhaseVolumeFractionKernelFactory::
       createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
                                                  m_numPhases,
                                                  dataGroup,
                                                  fluid );
-  }
+
+  maxDeltaPhaseVolFrac = MpiWrapper::max( maxDeltaPhaseVolFrac );
+
+  return maxDeltaPhaseVolFrac;
 }
 
 void CompositionalMultiphaseBase::updateFluidModel( ObjectManagerBase & dataGroup ) const
@@ -648,17 +652,19 @@ void CompositionalMultiphaseBase::updateSolidInternalEnergyModel( ObjectManagerB
                                       temp );
 }
 
-void CompositionalMultiphaseBase::updateFluidState( ObjectManagerBase & subRegion ) const
+real64 CompositionalMultiphaseBase::updateFluidState( ObjectManagerBase & subRegion ) const
 {
   GEOS_MARK_FUNCTION;
 
   updateComponentFraction( subRegion );
   updateFluidModel( subRegion );
-  updatePhaseVolumeFraction( subRegion );
+  real64 const maxDeltaPhaseVolFrac = updatePhaseVolumeFraction( subRegion );
   updateRelPermModel( subRegion );
   updatePhaseMobility( subRegion );
   updateCapPressureModel( subRegion );
   // note: for now, thermal conductivity is treated explicitly, so no update here
+
+  return maxDeltaPhaseVolFrac;
 }
 
 void CompositionalMultiphaseBase::initializeFluidState( MeshLevel & mesh,

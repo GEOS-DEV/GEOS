@@ -161,6 +161,14 @@ DECLARE_FIELD( dCompPerforationRate_dComp,
                NO_WRITE,
                "Derivative of component perforation rate with respect to global component density" );
 
+DECLARE_FIELD( globalCompDensityScalingFactor,
+               "globalCompDensityScalingFactor",
+               array1d< real64 >,
+               1,
+               NOPLOT,
+               NO_WRITE,
+               "Scaling factors for global component densities" );
+
 }
 
 }

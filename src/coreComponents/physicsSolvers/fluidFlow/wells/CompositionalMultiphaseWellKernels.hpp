@@ -894,22 +894,26 @@ public:
    * @param[in] localSolution the Newton update
    */
   template< typename POLICY >
-  static real64
+  static isothermalCompositionalMultiphaseBaseKernels::ScalingForSystemSolutionKernel::StackVariables
   createAndLaunch( real64 const maxRelativePresChange,
                    real64 const maxCompFracChange,
                    globalIndex const rankOffset,
                    integer const numComp,
                    string const dofKey,
-                   ElementSubRegionBase const & subRegion,
+                   ElementSubRegionBase & subRegion,
                    arrayView1d< real64 const > const localSolution )
   {
     arrayView1d< real64 const > const pressure =
       subRegion.getField< fields::well::pressure >();
     arrayView2d< real64 const, compflow::USD_COMP > const compDens =
       subRegion.getField< fields::well::globalCompDensity >();
+    arrayView1d< real64 > pressureScalingFactor =
+      subRegion.getField< fields::well::pressureScalingFactor >();
+    arrayView1d< real64 > compDensScalingFactor =
+      subRegion.getField< fields::well::globalCompDensityScalingFactor >();
     isothermalCompositionalMultiphaseBaseKernels::
       ScalingForSystemSolutionKernel kernel( maxRelativePresChange, maxCompFracChange, rankOffset,
-                                             numComp, dofKey, subRegion, localSolution, pressure, compDens );
+                                             numComp, dofKey, subRegion, localSolution, pressure, compDens, pressureScalingFactor, compDensScalingFactor );
     return isothermalCompositionalMultiphaseBaseKernels::
              ScalingForSystemSolutionKernel::
              launch< POLICY >( subRegion.size(), kernel );
@@ -940,18 +944,21 @@ public:
   template< typename POLICY >
   static integer
   createAndLaunch( integer const allowCompDensChopping,
+                   CompositionalMultiphaseFVM::ScalingType const scalingType,
                    real64 const scalingFactor,
                    globalIndex const rankOffset,
                    integer const numComp,
                    string const dofKey,
-                   ElementSubRegionBase const & subRegion,
+                   ElementSubRegionBase & subRegion,
                    arrayView1d< real64 const > const localSolution )
   {
     arrayView1d< real64 const > const pressure = subRegion.getField< fields::well::pressure >();
     arrayView2d< real64 const, compflow::USD_COMP > const compDens = subRegion.getField< fields::well::globalCompDensity >();
+    arrayView1d< real64 > pressureScalingFactor = subRegion.getField< fields::well::pressureScalingFactor >();
+    arrayView1d< real64 > compDensScalingFactor = subRegion.getField< fields::well::globalCompDensityScalingFactor >();
     isothermalCompositionalMultiphaseBaseKernels::
-      SolutionCheckKernel kernel( allowCompDensChopping, scalingFactor, rankOffset,
-                                  numComp, dofKey, subRegion, localSolution, pressure, compDens );
+      SolutionCheckKernel kernel( allowCompDensChopping, scalingType, scalingFactor, rankOffset,
+                                  numComp, dofKey, subRegion, localSolution, pressure, compDens, pressureScalingFactor, compDensScalingFactor );
     return isothermalCompositionalMultiphaseBaseKernels::
              SolutionCheckKernel::
              launch< POLICY >( subRegion.size(), kernel );
