@@ -143,9 +143,9 @@ void ElementRegionManager::generateMesh( CellBlockManagerABC const & cellBlockMa
     // that will be transformed into element subregion information.
     // This is why we copy the information into a temporary,
     // which frees space for the final information (of same size).
-    FixedToManyElementRelation & relation = subRegion.getToCellRelation();
-    ToCellRelation< array2d< localIndex > > const tmp( relation.m_toElementSubRegion,
-                                                       relation.m_toElementIndex );
+    OrderedVariableToManyElementRelation & relation = subRegion.getToCellRelation();
+    ToCellRelation< ArrayOfArrays< localIndex > > const tmp( relation.m_toElementSubRegion,
+                                                             relation.m_toElementIndex );
     meshMapUtilities::transformCellBlockToRegionMap< parallelHostPolicy >( blockToSubRegion.toViewConst(),
                                                                            tmp,
                                                                            relation );
