@@ -942,6 +942,11 @@ bool SolverBase::solveNonlinearSystem( real64 const & time_n,
     // Compute the scaling factor for the Newton update
     scaleFactor = scalingForSystemSolution( domain, m_dofManager, m_solution.values() );
 
+    if( getLogLevel() >= 1 )
+    {
+      GEOS_LOG_RANK_0( getName() + ": Global solution scaling factor = " << scaleFactor );
+    }
+
     if( !checkSystemSolution( domain, m_dofManager, m_solution.values(), scaleFactor ) )
     {
       // TODO try chopping (similar to line search)
@@ -1162,7 +1167,7 @@ void SolverBase::solveLinearSystem( DofManager const & dofManager,
   }
 }
 
-bool SolverBase::checkSystemSolution( DomainPartition const & GEOS_UNUSED_PARAM( domain ),
+bool SolverBase::checkSystemSolution( DomainPartition & GEOS_UNUSED_PARAM( domain ),
                                       DofManager const & GEOS_UNUSED_PARAM( dofManager ),
                                       arrayView1d< real64 const > const & GEOS_UNUSED_PARAM( localSolution ),
                                       real64 const GEOS_UNUSED_PARAM( scalingFactor ) )
@@ -1170,7 +1175,7 @@ bool SolverBase::checkSystemSolution( DomainPartition const & GEOS_UNUSED_PARAM(
   return true;
 }
 
-real64 SolverBase::scalingForSystemSolution( DomainPartition const & GEOS_UNUSED_PARAM( domain ),
+real64 SolverBase::scalingForSystemSolution( DomainPartition & GEOS_UNUSED_PARAM( domain ),
                                              DofManager const & GEOS_UNUSED_PARAM( dofManager ),
                                              arrayView1d< real64 const > const & GEOS_UNUSED_PARAM( localSolution ) )
 {

@@ -370,7 +370,7 @@ real64 ReactiveCompositionalMultiphaseOBL::calculateResidualNorm( real64 const &
 }
 
 
-real64 ReactiveCompositionalMultiphaseOBL::scalingForSystemSolution( DomainPartition const & domain,
+real64 ReactiveCompositionalMultiphaseOBL::scalingForSystemSolution( DomainPartition & domain,
                                                                      DofManager const & dofManager,
                                                                      arrayView1d< real64 const > const & localSolution )
 {
@@ -443,7 +443,7 @@ real64 ReactiveCompositionalMultiphaseOBL::scalingForSystemSolution( DomainParti
   return LvArray::math::max( MpiWrapper::min( scalingFactor, MPI_COMM_GEOSX ), m_minScalingFactor );
 }
 
-bool ReactiveCompositionalMultiphaseOBL::checkSystemSolution( DomainPartition const & domain,
+bool ReactiveCompositionalMultiphaseOBL::checkSystemSolution( DomainPartition & domain,
                                                               DofManager const & dofManager,
                                                               arrayView1d< real64 const > const & localSolution,
                                                               real64 const scalingFactor )
@@ -454,12 +454,12 @@ bool ReactiveCompositionalMultiphaseOBL::checkSystemSolution( DomainPartition co
   localIndex localCheck = 1;
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
-                                                               MeshLevel const & mesh,
+                                                               MeshLevel & mesh,
                                                                arrayView1d< string const > const & regionNames )
   {
     mesh.getElemManager().forElementSubRegions( regionNames,
                                                 [&]( localIndex const,
-                                                     ElementSubRegionBase const & subRegion )
+                                                     ElementSubRegionBase & subRegion )
     {
       arrayView1d< globalIndex const > const & dofNumber = subRegion.getReference< array1d< globalIndex > >( dofKey );
       arrayView1d< integer const > const & elemGhostRank = subRegion.ghostRank();
