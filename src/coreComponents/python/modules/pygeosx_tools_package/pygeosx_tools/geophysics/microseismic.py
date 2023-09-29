@@ -297,11 +297,12 @@ class JointSet():
 
                 # Check failure criteria
                 fail_criteria = self.tau[ii] - (self.cohesion[ii] + self.mu[ii] * (self.sigma_n[ii]))
-
+            # If the failure criteria are met, then set the sdn_offset
+            # to match a state between 0 and 1 events to the next failure
                 if (fail_criteria > 0):
                     self.fail_count[ii] += 1
                     rake = np.arctan2(s_sdn[1, 2], s_sdn[0, 2])
-                    dT = 0.001 * self.shear_modulus
+                    dT = np.random.uniform()*0.001 * self.shear_modulus
                     self.sigma_sdn_offset[ii, 0, 2] += dT * np.cos(rake)
                     self.sigma_sdn_offset[ii, 1, 2] += dT * np.sin(rake)
                     events.append([self.location[ii, ...],
