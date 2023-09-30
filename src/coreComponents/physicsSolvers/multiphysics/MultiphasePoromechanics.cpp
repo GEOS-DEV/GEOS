@@ -299,6 +299,7 @@ void MultiphasePoromechanics< FLOW_SOLVER >::assembleSystem( real64 const GEOS_U
 template< typename FLOW_SOLVER >
 void MultiphasePoromechanics< FLOW_SOLVER >::updateState( DomainPartition & domain )
 {
+  real64 maxDeltaPhaseVolFrac = 0.0;
   this->template forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                                MeshLevel & mesh,
                                                                                arrayView1d< string const > const & regionNames )
@@ -308,13 +309,16 @@ void MultiphasePoromechanics< FLOW_SOLVER >::updateState( DomainPartition & doma
                                                               [&]( localIndex const,
                                                                    CellElementSubRegion & subRegion )
     {
-      flowSolver()->updateFluidState( subRegion );
+      real64 const deltaPhaseVolFrac = flowSolver()->updateFluidState( subRegion );
+      maxDeltaPhaseVolFrac = LvArray::math::max( maxDeltaPhaseVolFrac, deltaPhaseVolFrac );
       if( m_isThermal )
       {
         flowSolver()->updateSolidInternalEnergyModel( subRegion );
       }
     } );
   } );
+
+  GEOS_LOG_LEVEL_RANK_0( 1, this->getName() << ": Max deltaPhaseVolFrac = " << maxDeltaPhaseVolFrac );
 }
 
 template< typename FLOW_SOLVER >
