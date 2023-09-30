@@ -100,12 +100,12 @@ public:
                          arrayView1d< real64 const > const & localRhs ) override;
 
   virtual real64
-  scalingForSystemSolution( DomainPartition const & domain,
+  scalingForSystemSolution( DomainPartition & domain,
                             DofManager const & dofManager,
                             arrayView1d< real64 const > const & localSolution ) override;
 
   virtual bool
-  checkSystemSolution( DomainPartition const & domain,
+  checkSystemSolution( DomainPartition & domain,
                        DofManager const & dofManager,
                        arrayView1d< real64 const > const & localSolution,
                        real64 const scalingFactor ) override;
@@ -147,6 +147,7 @@ public:
 
   struct viewKeyStruct : CompositionalMultiphaseBase::viewKeyStruct
   {
+    // DBC parameters
     static constexpr char const * useDBCString()                  { return "useDBC"; }
     static constexpr char const * omegaDBCString()                { return "omegaDBC"; }
     static constexpr char const * continuationDBCString()         { return "continuationDBC"; }
@@ -154,9 +155,23 @@ public:
     static constexpr char const * miscibleDBCString()             { return "miscibleDBC"; }
     static constexpr char const * kappaminDBCString()             { return "kappaminDBC"; }
     static constexpr char const * contMultiplierDBCString()       { return "contMultiplierDBC"; }
+
+    // nonlinear solver parameters
+    static constexpr char const * scalingTypeString()               { return "scalingType"; }
+  };
+
+  /**
+   * @brief Solution scaling type
+   */
+  enum class ScalingType : integer
+  {
+    Global,         ///< Scale the Newton update with a unique scaling factor
+    Local            ///< Scale the Newton update locally (modifies the Newton direction)
   };
 
 protected:
+
+  virtual void postProcessInput() override;
 
   virtual void
   initializePreSubGroups() override;
@@ -186,6 +201,9 @@ protected:
     /// Factor by which continuation parameter is changed every newton when DBC is used
     real64 contMultiplier;
   } m_dbcParams;
+
+  /// Solution scaling type
+  ScalingType m_scalingType;
 
 private:
 
@@ -217,6 +235,9 @@ private:
 
 };
 
+ENUM_STRINGS( CompositionalMultiphaseFVM::ScalingType,
+              "Global",
+              "Local" );
 
 } // namespace geos
 
