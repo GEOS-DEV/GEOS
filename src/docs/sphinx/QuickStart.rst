@@ -344,7 +344,7 @@ An alternative is to set the path ``GEOSX_TPL_DIR`` via a cmake command line opt
    python scripts/config-build.py -hc host-configs/your-platform.cmake -bt Release -D GEOSX_TPL_DIR=/full/path/to/thirdPartyLibs
 
 We highly recommend using full paths, rather than relative paths, whenever possible.
-The parallel ``make -j 4`` will use four processes for compilation, which can substantially speed up the build if you have a multi-processor machine.
+The parallel ``make -j 4`` will use four processors for compilation, which can substantially speed up the build if you have a multi-processor machine.
 You can adjust this value to match the number of processors available on your machine.
 The ``make install`` command then installs GEOS to a default location unless otherwise specified.
 
