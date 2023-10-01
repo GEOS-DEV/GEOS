@@ -292,6 +292,7 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::updateDeformationForCoupling( 
     arrayView1d< real64 const > const volume = subRegion.getElementVolume();
     arrayView1d< real64 > const deltaVolume = subRegion.getField< flow::deltaVolume >();
     arrayView1d< real64 const > const area = subRegion.getElementArea();
+    arrayView1d< real64 const > const refAperture = subRegion.getField< flow::minimumHydraulicAperture >();
     ArrayOfArraysView< localIndex const > const elemsToFaces = subRegion.faceList().toViewConst();
 
 #ifdef GEOSX_USE_SEPARATION_COEFFICIENT
@@ -326,6 +327,7 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::updateDeformationForCoupling( 
                                             volume,
                                             deltaVolume,
                                             aperture,
+                                            refAperture,
                                             hydraulicAperture
 #ifdef GEOSX_USE_SEPARATION_COEFFICIENT
                                             ,
@@ -795,6 +797,7 @@ assembleFluidMassResidualDerivativeWrtDisplacement( DomainPartition const & doma
 
       arrayView1d< real64 const > const aperture = subRegion.getElementAperture();
       arrayView1d< real64 const > const area = subRegion.getElementArea();
+      arrayView1d< real64 const > const refAperture = subRegion.getField< flow::minimumHydraulicAperture >();
 
       ArrayOfArraysView< localIndex const > const elemsToFaces = subRegion.faceList().toViewConst();
       ArrayOfArraysView< localIndex const > const faceToNodeMap = faceManager.nodeList().toViewConst();
@@ -806,15 +809,19 @@ assembleFluidMassResidualDerivativeWrtDisplacement( DomainPartition const & doma
         using ContactType = TYPEOFREF( castedContact );
         typename ContactType::KernelWrapper contactWrapper = castedContact.createKernelWrapper();
 
+        real64 const penaltyStiffness = castedContact.stiffness();
+
         hydrofractureSolverKernels::FluidMassResidualDerivativeAssemblyKernel::
           launch< parallelDevicePolicy<> >( subRegion.size(),
                                             rankOffset,
                                             contactWrapper,
+                                            penaltyStiffness,
                                             elemsToFaces,
                                             faceToNodeMap,
                                             faceNormal,
                                             area,
                                             aperture,
+                                            refAperture,
                                             presDofNumber,
                                             dispDofNumber,
                                             dens,
