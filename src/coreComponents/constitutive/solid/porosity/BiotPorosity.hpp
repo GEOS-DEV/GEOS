@@ -119,11 +119,11 @@ public:
                         real64 & bulkModulus ) const
   {
 
-    bulkModulus = 5.0e9;
+    //bulkModulus = 5.0e9;
 
     real64 const biotSkeletonModulusInverse = (biotCoefficient - referencePorosity) / m_grainBulkModulus;
     real64 const porosityThermalExpansion = 3 * thermalExpansionCoefficient * ( biotCoefficient - referencePorosity );
-    real64 const fixedStressPressureCoefficient = biotCoefficient * biotCoefficient / bulkModulus;
+    real64 const fixedStressPressureCoefficient = biotCoefficient * biotCoefficient / (bulkModulus);
     real64 const fixedStressTemperatureCoefficient = 3 * biotCoefficient * thermalExpansionCoefficient;
 
     porosity = porosity_n
@@ -134,13 +134,13 @@ public:
     dPorosity_dPressure = biotSkeletonModulusInverse;
     dPorosity_dTemperature = -porosityThermalExpansion;
 
-    //if( !isZero( meanEffectiveStressIncrement_k ) ) // TODO: find a better way to disable this at the first flow iteration
-    //{
+    if( !isZero( meanEffectiveStressIncrement_k ) ) // TODO: find a better way to disable this at the first flow iteration
+    {
       porosity += fixedStressPressureCoefficient * deltaPressureFromLastIteration // fixed-stress pressure term
                   + fixedStressTemperatureCoefficient * deltaTemperatureFromLastIteration; // fixed-stress temperature term
       dPorosity_dPressure += fixedStressPressureCoefficient;
       dPorosity_dTemperature += fixedStressTemperatureCoefficient;
-    //}
+    }
     //
     //GEOS_UNUSED_VAR(fixedStressPressureCoefficient, deltaPressureFromLastIteration, fixedStressTemperatureCoefficient, deltaTemperatureFromLastIteration);
   }
