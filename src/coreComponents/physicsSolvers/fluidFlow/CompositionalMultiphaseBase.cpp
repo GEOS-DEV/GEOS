@@ -2147,6 +2147,7 @@ void CompositionalMultiphaseBase::saveIterationState( ElementSubRegionBase & sub
 
 void CompositionalMultiphaseBase::updateState( DomainPartition & domain )
 {
+  real64 maxDeltaPhaseVolFrac = 0.0;
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel & mesh,
                                                                arrayView1d< string const > const & regionNames )
@@ -2158,7 +2159,8 @@ void CompositionalMultiphaseBase::updateState( DomainPartition & domain )
       // update porosity, permeability, and solid internal energy
       updatePorosityAndPermeability( subRegion );
       // update all fluid properties
-      updateFluidState( subRegion );
+      real64 const deltaPhaseVolFrac = updateFluidState( subRegion );
+      maxDeltaPhaseVolFrac = LvArray::math::max( maxDeltaPhaseVolFrac, deltaPhaseVolFrac );
       // for thermal, update solid internal energy
       if( m_isThermal )
       {
@@ -2166,6 +2168,8 @@ void CompositionalMultiphaseBase::updateState( DomainPartition & domain )
       }
     } );
   } );
+
+  GEOS_LOG_LEVEL_RANK_0( 1, getName() << ": Max deltaPhaseVolFrac = " << maxDeltaPhaseVolFrac );
 }
 
 } // namespace geos
