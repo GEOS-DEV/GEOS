@@ -808,7 +808,7 @@ ensureNoEmptyRank( vtkSmartPointer< vtkDataSet > mesh,
   integer const myRank = MpiWrapper::commRank();
   auto const myPosition =
     LvArray::sortedArrayManipulation::find( donorRanks.begin(), donorRanks.size(), myRank );
-  bool const isDonor = myPosition != donorRanks.size();
+  bool const isDonor = ( myPosition != donorRanks.size() ) && ( donorRanks[myPosition] == myRank );
 
   // step 3: my rank was selected to donate cells, let's proceed
   // we need to make a distinction between two configurations
