@@ -7,7 +7,7 @@ import time
 # on perlmutter this may be required to disable default counters...then reenable them.
 #  subprocess.Popen("srun --ntasks-per-node 1 dcgmi profile --pause", shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 #  subprocess.Popen("srun --ntasks-per-node 1 dcgmi profile --resume", shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-  
+
 
 def getLaunchCommands():
   nerscSystemName = os.environ.get('NERSC_HOST')
@@ -20,7 +20,7 @@ def getLaunchCommands():
   else:
     if nerscSystemName != noEnvResult:
       systemName = nerscSystemName
-    
+
     if lcSystemName != noEnvResult:
       systemName = lcSystemName
 
@@ -48,7 +48,7 @@ def cgThroughput( executable, inputFile, numRuns ):
 #    time.sleep(5.0)
     out, _ = proc2.communicate()
     throughput.append( float( out.decode('utf-8').split(' ')[1] ) )
-    
+
   #print( throughput )
   return max(throughput)
 
@@ -124,7 +124,7 @@ def femRoofline_ncu( executable, inputFile, numRuns ):
   kernelTime = []
   for _ in range(numRuns):
     report_fname = "/tmp/" + os.path.basename(inputFile) + ".nsys-rep" # TODO make robust
-    profile_cmd = launchCommand + ['ncu', 
+    profile_cmd = launchCommand + ['ncu',
                                    '--kernel-name-base', 'demangled',
                                    '--kernel-id', '::regex:SmallStrainResidual:',
                                    '--target-processes', 'all',
@@ -169,11 +169,30 @@ def femRoofline_ncu( executable, inputFile, numRuns ):
 
   return min(kernelTime)
 
+def femRoofline_rocprof( executable, inputFile, numRuns ):
+  import pandas as pd
+  launchCommand = getLaunchCommands()
+  rocprof_infile =  os.path.join(os.path.dirname(os.path.realpath(__file__)),'rocprof-input.txt')
+  rocprof_outfile = os.path.join(os.path.dirname(os.path.realpath(__file__)),'rocprof-output.csv')
+
+  profile_cmd = launchCommand + ['rocprof',
+                                  '-i', rocprof_infile,
+                                  '-o', rocprof_outfile,
+                                  '--timestamp', 'on',
+                                  executable, '-i', inputFile]
+  subprocess.check_output(profile_cmd)
+  df = pd.read_csv(rocprof_outfile)
+  hmb_memory = 32 * ( df['TCC_EA_RDREQ_32B_sum'] + df['TCC_EA_WRREQ_sum'] - df['TCC_EA_WRREQ_64B_sum'] ) + \
+               64 * ( df['TCC_EA_RDREQ_sum'] - df['TCC_EA_RDREQ_32B_sum'] + df['TCC_EA_WRREQ_64B_sum'] )
+
+  # total_f32_flop = 64 * ( df['SQ_INSTS_VALU_ADD_F32'] + df['SQ_INSTS_VALU_MUL_F32'] + df['SQ_INSTS_VALU_TRANS_F32'] +  2 * df['SQ_INSTS_VALU_FMA_F32'] ) + 512 * ( df['SQ_INSTS_VALU_MFMA_MOPS_F32'] )
+  total_f64_flop = 64 * ( df['SQ_INSTS_VALU_ADD_F64'] + df['SQ_INSTS_VALU_MUL_F64'] + df['SQ_INSTS_VALU_TRANS_F64'] +  2 * df['SQ_INSTS_VALU_FMA_F64'] ) + 512 * ( df['SQ_INSTS_VALU_MFMA_MOPS_F64'] )
+
+  return hmb_memory.mean(), total_f64_flop.mean(), femKernelTime_rocprof( executable, inputFile, numRuns )
 
 def femKernelTime_rocprof( executable, inputFile, numRuns ):
   kernelTime = []
   for _ in range(numRuns):
-    # report_fname = "/tmp/" + os.path.basename(inputFile) + ".rocprof-rep" # TODO make robust
     profile_cmd = ['rocprof', '--hip-trace', executable, '-i', inputFile ]
 
     subprocess.run(profile_cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL).check_returncode()
@@ -187,10 +206,8 @@ def femKernelTime_rocprof( executable, inputFile, numRuns ):
         if 'SmallStrainResidual' in result['name']:
           rtimes.append( int( result['args']['DurationNs'] ) )
 
-    kernelTime_ns = min( rtimes )
-    value = kernelTime_ns * 1.0e-9
-    kernelTime.append( value )
-    
+    kernelTime.append( min( rtimes ) )
+
   return min(kernelTime)
 
 def femKernelTime_caliper( executable, inputFile, numRuns ):
@@ -215,7 +232,7 @@ def femKernelTime_caliper( executable, inputFile, numRuns ):
 benchmark_dir = os.path.dirname(os.path.realpath(__file__))
 
 runList = [
-             ( 'bin/geosx', 'cube_111.xml',     2, 11*11*11*3 ),
+            #  ( 'bin/geosx', 'cube_111.xml',     2, 11*11*11*3 ), // can't use this for rocm, we "converge" in ~840 steps +=3 and rocprof can't merge metrics from runs with different number of kernel launches
              ( 'bin/geosx', 'cube_211.xml',     2, 101*11*11*3 ),
              ( 'bin/geosx', 'cube_221.xml',     2, 101*101*11*3 ),
              ( 'bin/geosx', 'cube_222.xml',     2, 101*101*101*3 ),
@@ -245,7 +262,7 @@ if 'rocprof' in sys.argv:
   print( "Kernel Throughput (rocprof)")
   print( "   #Dofs     MDof/s")
   for executable, inputFile, numRuns, numDofs in runList:
-    kernelTime = femKernelTime_rocprof( executable, os.path.join(benchmark_dir, inputFile), numRuns )
+    kernelTime = femKernelTime_rocprof( executable, os.path.join(benchmark_dir, inputFile), numRuns ) / 1e9
     print( "{0:10d} {1:>8.2f}".format( numDofs, numDofs/kernelTime/1.0e6 ) )
 
 if 'nsys' in sys.argv:
@@ -261,4 +278,12 @@ if 'ncu' in sys.argv:
 
   for executable, inputFile, numRuns, numDofs in runList:
     memory, dflop, duration = femRoofline_ncu( executable, os.path.join(benchmark_dir, inputFile), 1 )
+    print( "{0:10d} {1:>8.4e} {2:>8.4e} {3:>8.4e} {4:>8.4e} {5:>8.4e}".format( numDofs, memory, dflop, duration/1e9, dflop/memory, dflop/(duration/1e9)/1e12 ) )
+
+if 'rocprof-roofline' in sys.argv:
+  print( "Roofline")
+  print( "     #Dofs HBM(bytes)       FLOP     dur(s)         AI    TFLOP/s")
+
+  for executable, inputFile, numRuns, numDofs in runList:
+    memory, dflop, duration = femRoofline_rocprof( executable, os.path.join(benchmark_dir, inputFile), 1 )
     print( "{0:10d} {1:>8.4e} {2:>8.4e} {3:>8.4e} {4:>8.4e} {5:>8.4e}".format( numDofs, memory, dflop, duration/1e9, dflop/memory, dflop/(duration/1e9)/1e12 ) )
