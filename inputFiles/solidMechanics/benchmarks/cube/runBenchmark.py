@@ -289,4 +289,3 @@ if 'rocprof-roofline' in sys.argv:
   for executable, inputFile, numRuns, numDofs in runList:
     memory, dflop, duration = femRoofline_rocprof( executable, os.path.join(benchmark_dir, inputFile), 1 )
     print( "{0:10d} {1:>8.4e} {2:>8.4e} {3:>8.4e} {4:>8.4e} {5:>8.4e}".format( numDofs, memory, dflop, duration/1e9, dflop/memory, dflop/(duration/1e9)/1e12 ) )
-    exit(0)
