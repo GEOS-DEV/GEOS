@@ -188,6 +188,8 @@ def femRoofline_rocprof( executable, inputFile, numRuns ):
   # total_f32_flop = 64 * ( df['SQ_INSTS_VALU_ADD_F32'] + df['SQ_INSTS_VALU_MUL_F32'] + df['SQ_INSTS_VALU_TRANS_F32'] +  2 * df['SQ_INSTS_VALU_FMA_F32'] ) + 512 * ( df['SQ_INSTS_VALU_MFMA_MOPS_F32'] )
   total_f64_flop = 64 * ( df['SQ_INSTS_VALU_ADD_F64'] + df['SQ_INSTS_VALU_MUL_F64'] + df['SQ_INSTS_VALU_TRANS_F64'] +  2 * df['SQ_INSTS_VALU_FMA_F64'] ) + 512 * ( df['SQ_INSTS_VALU_MFMA_MOPS_F64'] )
 
+  # duration = df['EndNs'] - df['BeginNs']
+
   return hmb_memory.mean(), total_f64_flop.mean(), femKernelTime_rocprof( executable, inputFile, numRuns )
 
 def femKernelTime_rocprof( executable, inputFile, numRuns ):
@@ -287,3 +289,4 @@ if 'rocprof-roofline' in sys.argv:
   for executable, inputFile, numRuns, numDofs in runList:
     memory, dflop, duration = femRoofline_rocprof( executable, os.path.join(benchmark_dir, inputFile), 1 )
     print( "{0:10d} {1:>8.4e} {2:>8.4e} {3:>8.4e} {4:>8.4e} {5:>8.4e}".format( numDofs, memory, dflop, duration/1e9, dflop/memory, dflop/(duration/1e9)/1e12 ) )
+    exit(0)
