@@ -167,6 +167,14 @@ DECLARE_FIELD( componentCFLNumber,
                NO_WRITE,
                "Component CFL number" );
 
+DECLARE_FIELD( globalCompDensityScalingFactor,
+               "globalCompDensityScalingFactor",
+               array1d< real64 >,
+               1,
+               NOPLOT,
+               NO_WRITE,
+               "Scaling factors for global component densities" );
+
 }
 
 }
