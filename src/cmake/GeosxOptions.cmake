@@ -4,10 +4,9 @@ message( "CMAKE_SYSTEM_NAME = ${CMAKE_SYSTEM_NAME}" )
 message( "CMAKE_HOST_APPLE = ${CMAKE_HOST_APPLE}" )
 
 ### OPTIONS ###
-option( GEOSX_ENABLE_FPE "" ON )
 option( GEOS_ENABLE_TESTS "" ON )
-
-option( ENABLE_CALIPER "" OFF )
+option( ENABLE_COV "Enables code coverage" OFF )  # NOTE: ENABLE_COVERAGE is a blt option
+option( ENABLE_CALIPER "Enables Caliper instrumentation" OFF )
 
 option( ENABLE_MATHPRESSO "" ON )
 
@@ -137,6 +136,11 @@ blt_append_custom_compiler_flag( FLAGS_VAR GEOSX_NINJA_FLAGS
                                  CLANG   "-fcolor-diagnostics"
                                )
 
+blt_append_custom_compiler_flag( FLAGS_VAR COVERAGE_FLAGS
+                                 GNU   "-fprofile-arcs -ftest-coverage"
+                                 CLANG "-fprofile-instr-generate -fcoverage-mapping"
+                               )
+
 # clang-13 and gcc complains about unused-but-set variable.
 include(CheckCXXCompilerFlag)
 CHECK_CXX_COMPILER_FLAG("-Wunused-but-set-variable" CXX_UNUSED_BUT_SET_VAR)
@@ -148,6 +152,10 @@ endif()
 
 if( ${CMAKE_MAKE_PROGRAM} STREQUAL "ninja" OR ${CMAKE_MAKE_PROGRAM} MATCHES ".*/ninja$" )
   set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${GEOSX_NINJA_FLAGS}" )
+endif()
+
+if( ENABLE_COV )
+  set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${COVERAGE_FLAGS}" )
 endif()
 
 

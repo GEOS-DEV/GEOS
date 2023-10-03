@@ -9,7 +9,7 @@ free -m
 
 # The or_die function run the passed command line and
 # exits the program in case of non zero error code
-function or_die () {
+or_die () {
     "$@"
     local status=$?
 
@@ -37,11 +37,6 @@ if [[ -z "${GEOSX_DIR}" ]]; then
   exit 1
 fi
 
-GEOSX_INSTALL_SCHEMA=1
-if [[ "$*" == *--disable-schema-deployment* ]]; then
-  GEOSX_INSTALL_SCHEMA=0
-fi  
-
 # The -DBLT_MPI_COMMAND_APPEND="--allow-run-as-root;--oversubscribe" option is added for OpenMPI.
 #
 # OpenMPI prevents from running as `root` user by default.
@@ -63,7 +58,8 @@ or_die python3 scripts/config-build.py \
                -ip ${GEOSX_DIR} \
                --ninja \
                -DBLT_MPI_COMMAND_APPEND='"--allow-run-as-root;--oversubscribe"' \
-               -DGEOSX_INSTALL_SCHEMA=${GEOSX_INSTALL_SCHEMA}
+               -DGEOSX_INSTALL_SCHEMA=$([[ "$*" == *--disable-schema-deployment* ]] && echo 0 || echo 1) \
+               -DENABLE_COV=$([[ "$*" == *--test-coverage* ]] && echo 1 || echo 0)
 
 or_die cd ${GEOSX_BUILD_DIR}
 

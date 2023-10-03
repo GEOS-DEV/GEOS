@@ -119,25 +119,25 @@ include( cmake/GeosxConfig.cmake )
 set( extraComponentsLinkList "" )
 
 if( ENABLE_OPENMP )
-  set( extraComponentsLinkList ${extraComponentsLinkList} openmp )
+  list( APPEND extraComponentsLinkList openmp )
 endif()
 
 if( ENABLE_CUDA )
-  set( extraComponentsLinkList ${extraComponentsLinkList} cuda )
+  list( APPEND extraComponentsLinkList cuda )
 endif()
 
 if( ENABLE_CUDA_NVTOOLSEXT )
-  set( extraComponentsLinkList ${extraComponentsLinkList} CUDA::nvToolsExt )
+  list( APPEND extraComponentsLinkList CUDA::nvToolsExt )
 endif()
 
 if( ENABLE_HIP )
-  set( extraComponentsLinkList ${extraComponentsLinkList} blt::hip )
+  list( APPEND extraComponentsLinkList blt::hip )
 endif()
 
 if ( GEOSX_BUILD_SHARED_LIBS )
-  set( extraComponentsLinkList ${extraComponentsLinkList} geosx_core )
+  list( APPEND extraComponentsLinkList geosx_core )
 else()
-  set( extraComponentsLinkList ${extraComponentsLinkList} ${geosx_core_libs} )
+  list( APPEND extraComponentsLinkList ${geosx_core_libs} )
 endif()
 
 blt_add_executable( NAME geosx

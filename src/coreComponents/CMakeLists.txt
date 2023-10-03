@@ -23,23 +23,23 @@ set( subdirs
 set( parallelDeps "" )
 
 if ( ENABLE_OPENMP )
-  set( parallelDeps ${parallelDeps} openmp )
+  list( APPEND parallelDeps openmp )
 endif()
 
 if ( ENABLE_CUDA )
-  set( parallelDeps ${parallelDeps} cuda )
+  list( APPEND parallelDeps cuda )
 endif()
 
 if( ENABLE_CUDA_NVTOOLSEXT )
-  set( parallelDeps ${parallelDeps} CUDA::nvToolsExt )
+  list( APPEND parallelDeps CUDA::nvToolsExt )
 endif()
 
 if( ENABLE_HIP )
-  set( parallelDeps ${parallelDeps} blt::hip )
+  list( APPEND parallelDeps blt::hip )
 endif()
 
 if( ENABLE_MPI )
-  set( parallelDeps ${parallelDeps} mpi )
+  list( APPEND parallelDeps mpi )
 endif()
 
 if ( GEOSX_BUILD_OBJ_LIBS )
