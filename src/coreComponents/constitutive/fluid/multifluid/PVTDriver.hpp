@@ -20,7 +20,6 @@
 #define GEOS_CONSTITUTIVE_FLUID_MULTIFLUID_PVTDRIVER_HPP_
 
 #include "events/tasks/TaskBase.hpp"
-#include "constitutive/fluid/multifluid/MultiFluidConstants.hpp"
 
 namespace geos
 {
@@ -100,8 +99,6 @@ private:
 
   enum columnKeys { TIME, PRES, TEMP }; ///< Enumeration of "input" column keys for readability
 
-  static constexpr real64 m_baselineTol = constitutive::MultiFluidConstants::baselineTolerance; ///< Comparison tolerance for baseline
-                                                                                                ///< results
 };
 
 } /* namespace geos */

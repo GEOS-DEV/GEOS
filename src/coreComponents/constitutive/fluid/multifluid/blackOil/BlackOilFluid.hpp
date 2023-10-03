@@ -33,9 +33,6 @@ namespace constitutive
 class BlackOilFluid : public BlackOilFluidBase
 {
 public:
-
-  static constexpr real64 minForPhasePresence = MultiFluidConstants::minForSpeciesPresence;
-
   /// Number of components supported by the model
   static constexpr integer NC_BO = 3;
   /// Number of hydrocarbon components supported by the model
@@ -581,7 +578,7 @@ BlackOilFluid::KernelWrapper::
 
   // 2. Check feed first, and if only water is present (e.g., water inj), then skip
 
-  if( zw >= 1.0 - minForPhasePresence )
+  if( zw >= 1.0 - MultiFluidConstants::minForSpeciesPresence )
   {
     phaseFraction.value[ipWater] = zw;
     if( needDerivs )
@@ -599,9 +596,9 @@ BlackOilFluid::KernelWrapper::
   real64 RsSat = 0.0;
   real64 dRsSat_dP = 0.0;
   computeRs( pressure, RsSat, dRsSat_dP );
-  if( RsSat < minForPhasePresence )
+  if( RsSat < MultiFluidConstants::minForSpeciesPresence )
   {
-    RsSat = minForPhasePresence;
+    RsSat = MultiFluidConstants::minForSpeciesPresence;
   }
 
   // gas
