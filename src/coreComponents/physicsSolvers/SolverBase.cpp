@@ -1326,7 +1326,9 @@ void SolverBase::cleanup( real64 const GEOS_UNUSED_PARAM( time_n ),
       real64 const minTime = MpiWrapper::min( time );
       real64 const maxTime = MpiWrapper::max( time );
       if( maxTime > 0 )
-        GEOS_LOG_RANK_0( GEOS_FMT( getName() + ": {} time = {} s (min), {} s (max)", timer.first, minTime, maxTime ) );
+      {
+        GEOS_LOG_RANK_0( GEOS_FMT( "{}: {} time = {} s (min), {} s (max)", getName(), timer.first, minTime, maxTime ) );
+      }
     }
   }
 }
