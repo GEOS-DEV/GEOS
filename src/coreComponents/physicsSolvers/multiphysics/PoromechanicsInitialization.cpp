@@ -64,7 +64,8 @@ PoromechanicsInitialization< POROMECHANICS_SOLVER >::
 PoromechanicsInitialization( const string & name,
                              Group * const parent ):
   TaskBase( name, parent ),
-  m_poromechanicsSolverName(), m_solidMechanicsStateResetTask( name, parent )
+  m_poromechanicsSolverName(),
+  m_solidMechanicsStateResetTask( name, parent )
 {
   enableLogLevelInput();
 
