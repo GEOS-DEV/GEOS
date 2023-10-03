@@ -1299,20 +1299,18 @@ void SolidMechanicsLagrangianFEM::applyContactConstraint( DofManager const & dof
         real64 const contactStiffness = contact.stiffness();
 
         arrayView1d< real64 > const area = subRegion.getElementArea();
-        arrayView2d< localIndex const > const elemsToFaces = subRegion.faceList();
+        ArrayOfArraysView< localIndex const > const elemsToFaces = subRegion.faceList().toViewConst();
 
         // TODO: use parallel policy?
         forAll< serialPolicy >( subRegion.size(), [=] ( localIndex const kfe )
         {
-          real64 Nbar[ 3 ] = { faceNormal[elemsToFaces[kfe][0]][0] - faceNormal[elemsToFaces[kfe][1]][0],
-                               faceNormal[elemsToFaces[kfe][0]][1] - faceNormal[elemsToFaces[kfe][1]][1],
-                               faceNormal[elemsToFaces[kfe][0]][2] - faceNormal[elemsToFaces[kfe][1]][2] };
+          localIndex const kf0 = elemsToFaces[kfe][0], kf1 = elemsToFaces[kfe][1];
+          real64 Nbar[ 3 ] = { faceNormal[kf0][0] - faceNormal[kf1][0],
+                               faceNormal[kf0][1] - faceNormal[kf1][1],
+                               faceNormal[kf0][2] - faceNormal[kf1][2] };
 
           LvArray::tensorOps::normalize< 3 >( Nbar );
 
-
-          localIndex const kf0 = elemsToFaces[kfe][0];
-          localIndex const kf1 = elemsToFaces[kfe][1];
           localIndex const numNodesPerFace=facesToNodes.sizeOfArray( kf0 );
           real64 const Ja = area[kfe] / numNodesPerFace;
 
@@ -1373,7 +1371,7 @@ void SolidMechanicsLagrangianFEM::applyContactConstraint( DofManager const & dof
 }
 
 real64
-SolidMechanicsLagrangianFEM::scalingForSystemSolution( DomainPartition const & domain,
+SolidMechanicsLagrangianFEM::scalingForSystemSolution( DomainPartition & domain,
                                                        DofManager const & dofManager,
                                                        arrayView1d< real64 const > const & localSolution )
 {
