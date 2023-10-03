@@ -2169,7 +2169,7 @@ void CompositionalMultiphaseBase::updateState( DomainPartition & domain )
     } );
   } );
 
-  GEOS_LOG_LEVEL_RANK_0( 1, getName() << ": Max deltaPhaseVolFrac = " << maxDeltaPhaseVolFrac );
+  GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "{}: Max deltaPhaseVolFrac = {}", getName(), maxDeltaPhaseVolFrac ) );
 }
 
 } // namespace geos
