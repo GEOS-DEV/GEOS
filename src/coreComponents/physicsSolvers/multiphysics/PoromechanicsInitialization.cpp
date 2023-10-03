@@ -64,7 +64,7 @@ PoromechanicsInitialization< POROMECHANICS_SOLVER >::
 PoromechanicsInitialization( const string & name,
                              Group * const parent ):
   TaskBase( name, parent ),
-  m_poromechanicsSolverName(), m_resetTask( name, parent )
+  m_poromechanicsSolverName()
 {
   enableLogLevelInput();
 
@@ -76,10 +76,6 @@ PoromechanicsInitialization( const string & name,
     setApplyDefaultValue( true ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Flag to indicate that the solver is going to perform stress initialization" );
-
-  registerWrapper( SolidMechanicsStateReset::viewKeyStruct::solidSolverNameString(), &m_resetTask.m_solidSolverName ).
-    setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "Name of the solid mechanics solver" );
 }
 
 template< typename POROMECHANICS_SOLVER >
@@ -100,20 +96,17 @@ postProcessInput()
                  InputError );
 
   m_poromechanicsSolver = &physicsSolverManager.getGroup< POROMECHANICS_SOLVER >( m_poromechanicsSolverName );
-
-  m_resetTask.setLogLevel( getLogLevel());
-  m_resetTask.postProcessInput();
 }
 
 template< typename POROMECHANICS_SOLVER >
 bool
 PoromechanicsInitialization< POROMECHANICS_SOLVER >::
 execute( real64 const time_n,
-         real64 const dt,
-         integer const cycleNumber,
-         integer const eventCounter,
-         real64 const eventProgress,
-         DomainPartition & domain )
+         real64 const GEOS_UNUSED_PARAM( dt ),
+         integer const GEOS_UNUSED_PARAM( cycleNumber ),
+         integer const GEOS_UNUSED_PARAM( eventCounter ),
+         real64 const GEOS_UNUSED_PARAM( eventProgress ),
+         DomainPartition & GEOS_UNUSED_PARAM( domain ) )
 {
   if( m_performStressInitialization )
   {
@@ -127,8 +120,6 @@ execute( real64 const time_n,
                                         getName(), time_n, m_poromechanicsSolverName ) );
     m_poromechanicsSolver->setStressInitialization( false );
   }
-
-  m_resetTask.execute( time_n, dt, cycleNumber, eventCounter, eventProgress, domain );
 
   // always returns false because we don't want early return (see EventManager.cpp)
   return false;

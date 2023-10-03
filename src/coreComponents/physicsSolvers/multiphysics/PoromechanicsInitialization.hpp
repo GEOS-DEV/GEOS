@@ -20,7 +20,6 @@
 #define SRC_CORECOMPONENTS_PHYSICSSOLVERS_MULTIPHYSICS_POROMECHANICSINITIALIZATION_HPP_
 
 #include "events/tasks/TaskBase.hpp"
-#include "physicsSolvers/solidMechanics/SolidMechanicsStateReset.hpp"
 
 namespace geos
 {
@@ -95,8 +94,6 @@ private:
 
   /// Flag to indicate that the solver is going to perform stress initialization
   integer m_performStressInitialization;
-
-  SolidMechanicsStateReset m_resetTask;
 
 };
 
