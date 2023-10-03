@@ -231,6 +231,21 @@ DECLARE_FIELD( wellBoreVolume,
                LEVEL_0,
                NO_WRITE,
                "Extra volume to mimic wellbore volume when using dirichlet or neumann b.c." );                 
+DECLARE_FIELD( pressureScalingFactor,
+               "pressureScalingFactor",
+               array1d< real64 >,
+               1,
+               NOPLOT,
+               NO_WRITE,
+               "Scaling factors for pressure" );
+
+DECLARE_FIELD( temperatureScalingFactor,
+               "temperatureScalingFactor",
+               array1d< real64 >,
+               1,
+               NOPLOT,
+               NO_WRITE,
+               "Scaling factors for temperature" );
 
 }
 
