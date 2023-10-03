@@ -687,7 +687,7 @@ public:
                             StackVariables & stack,
                             FUNC && phaseAmountKernelOp = NoOpFunc{} ) const
   {
-    if( m_kernelFlags.hasFlag( ElementBasedAssemblyKernelFlags::SimpleAccumulation ) )
+    if( m_kernelFlags.isSet( ElementBasedAssemblyKernelFlags::SimpleAccumulation ) )
     {
       computeAccumulationSimple( ei, stack );
       return;
@@ -856,7 +856,7 @@ public:
   {
     using namespace compositionalMultiphaseUtilities;
 
-    if( m_kernelFlags.hasFlag( ElementBasedAssemblyKernelFlags::TotalMassEquation ) )
+    if( m_kernelFlags.isSet( ElementBasedAssemblyKernelFlags::TotalMassEquation ) )
     {
       // apply equation/variable change transformation to the component mass balance equations
       real64 work[numDof]{};
@@ -1002,9 +1002,9 @@ public:
 
       BitFlags< ElementBasedAssemblyKernelFlags > kernelFlags;
       if( useTotalMassEquation )
-        kernelFlags.setFlag( ElementBasedAssemblyKernelFlags::TotalMassEquation );
+        kernelFlags.set( ElementBasedAssemblyKernelFlags::TotalMassEquation );
       if( useSimpleAccumulation )
-        kernelFlags.setFlag( ElementBasedAssemblyKernelFlags::SimpleAccumulation );
+        kernelFlags.set( ElementBasedAssemblyKernelFlags::SimpleAccumulation );
 
       ElementBasedAssemblyKernel< NUM_COMP, NUM_DOF >
       kernel( numPhases, rankOffset, dofKey, subRegion, fluid, solid, localMatrix, localRhs, kernelFlags );

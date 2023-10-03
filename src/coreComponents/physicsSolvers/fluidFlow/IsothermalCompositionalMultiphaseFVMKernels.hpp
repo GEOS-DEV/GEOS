@@ -628,12 +628,12 @@ public:
 
           localIndex k_up = -1;
 
-          if( m_kernelFlags.hasFlag( FaceBasedAssemblyKernelFlags::C1PPU ))
+          if( m_kernelFlags.isSet( FaceBasedAssemblyKernelFlags::C1PPU ))
           {
             isothermalCompositionalMultiphaseFVMKernelUtilities::C1PPUPhaseFlux::compute< numComp, numFluxSupportPoints >
               ( m_numPhases,
               ip,
-              m_kernelFlags.hasFlag( FaceBasedAssemblyKernelFlags::CapPressure ),
+              m_kernelFlags.isSet( FaceBasedAssemblyKernelFlags::CapPressure ),
               //m_epsC1PPU,
               seri, sesri, sei,
               trans,
@@ -656,7 +656,7 @@ public:
             isothermalCompositionalMultiphaseFVMKernelUtilities::PPUPhaseFlux::compute< numComp, numFluxSupportPoints >
               ( m_numPhases,
               ip,
-              m_kernelFlags.hasFlag( FaceBasedAssemblyKernelFlags::CapPressure ),
+              m_kernelFlags.isSet( FaceBasedAssemblyKernelFlags::CapPressure ),
               seri, sesri, sei,
               trans,
               dTrans_dPres,
@@ -735,7 +735,7 @@ public:
   {
     using namespace compositionalMultiphaseUtilities;
 
-    if( m_kernelFlags.hasFlag( FaceBasedAssemblyKernelFlags::TotalMassEquation ) )
+    if( m_kernelFlags.isSet( FaceBasedAssemblyKernelFlags::TotalMassEquation ) )
     {
       // Apply equation/variable change transformation(s)
       stackArray1d< real64, maxStencilSize * numDof > work( stack.stencilSize * numDof );
@@ -863,12 +863,12 @@ public:
 
       BitFlags< FaceBasedAssemblyKernelFlags > kernelFlags;
       if( hasCapPressure )
-        kernelFlags.setFlag( FaceBasedAssemblyKernelFlags::CapPressure );
+        kernelFlags.set( FaceBasedAssemblyKernelFlags::CapPressure );
       if( useTotalMassEquation )
-        kernelFlags.setFlag( FaceBasedAssemblyKernelFlags::TotalMassEquation );
+        kernelFlags.set( FaceBasedAssemblyKernelFlags::TotalMassEquation );
       if( upwindingParams.upwindingScheme == UpwindingScheme::C1PPU && //upwindingParams.epsC1PPU > 0 )
           isothermalCompositionalMultiphaseFVMKernelUtilities::epsC1PPU > 0 )
-        kernelFlags.setFlag( FaceBasedAssemblyKernelFlags::C1PPU );
+        kernelFlags.set( FaceBasedAssemblyKernelFlags::C1PPU );
 
       using kernelType = FaceBasedAssemblyKernel< NUM_COMP, NUM_DOF, STENCILWRAPPER >;
       typename kernelType::CompFlowAccessors compFlowAccessors( elemManager, solverName );
@@ -1276,7 +1276,7 @@ public:
     using namespace compositionalMultiphaseUtilities;
     using Order = BoundaryStencil::Order;
 
-    if( AbstractBase::m_kernelFlags.hasFlag( FaceBasedAssemblyKernelFlags::TotalMassEquation ) )
+    if( AbstractBase::m_kernelFlags.isSet( FaceBasedAssemblyKernelFlags::TotalMassEquation ) )
     {
       // Apply equation/variable change transformation(s)
       real64 work[numDof]{};
@@ -1381,7 +1381,7 @@ public:
         // for now, we neglect capillary pressure in the kernel
         BitFlags< FaceBasedAssemblyKernelFlags > kernelFlags;
         if( useTotalMassEquation )
-          kernelFlags.setFlag( FaceBasedAssemblyKernelFlags::TotalMassEquation );
+          kernelFlags.set( FaceBasedAssemblyKernelFlags::TotalMassEquation );
 
         using kernelType = DirichletFaceBasedAssemblyKernel< NUM_COMP, NUM_DOF, typename FluidType::KernelWrapper >;
         typename kernelType::CompFlowAccessors compFlowAccessors( elemManager, solverName );
