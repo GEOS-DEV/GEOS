@@ -31,6 +31,25 @@ using namespace dataRepository;
 namespace xmlWrapper
 {
 
+/**
+ * @throw An InputError if the string value could not be validated with the provided regular expression.
+ * @param value The string to validate
+ * @param regexStr The regular expression used for validation.
+ * @param typeName The typename, used to qualify the string in the potencial error message.
+ */
+void validateString( string const & value, string const & regexStr, string const & typeName )
+{
+  std::smatch m;
+  bool inputValidated = std::regex_search( value, m, std::regex( regexStr ) );
+  if( !inputValidated || m.length() != ptrdiff_t( value.length() ) )
+  {
+    ptrdiff_t errorId = ( m.size()>0 && m.position( 0 )==0 ) ? m.length() : 0;
+    GEOS_THROW( '\"' << typeName << "\" input string validation failed at:\n" <<
+                "  \"" << value << "\"\n   " << string( errorId, ' ' ) << '^',
+                InputError );
+  }
+}
+
 template< typename T, int SIZE >
 void stringToInputVariable( Tensor< T, SIZE > & target, string const & inputValue )
 {

@@ -314,16 +314,26 @@ bool isFileMetadataAttribute( string const & name );
 ///@{
 
 /**
+ * @throw An InputError if the string value could not be validated with the provided regular expression.
+ * @param value The string to validate
+ * @param regexStr The regular expression used for validation.
+ * @param typeName The typename, used to qualify the string in the potencial error message.
+ */
+void validateString( string const & value, string const & regexStr, string const & typeName );
+
+/**
  * @brief Parse a string and fill a variable with the value(s) in the string.
  * @tparam T the type of variable fill with string value
  * @param[out] target the object to read values into
  * @param[in]  value  the string that contains the data to be parsed into target
- * @return void.
+ * @throw An InputError if the string value could not be validated by the type regex or parsed to the destination type.
  */
 template< typename T >
 std::enable_if_t< traits::CanStreamInto< std::istringstream, T > >
 stringToInputVariable( T & target, string const & value )
 {
+  validateString( value, rtTypes::getTypeRegex< T >(), rtTypes::getTypeName( typeid(T) ) );
+
   std::istringstream ss( value );
   ss >> target;
   GEOS_THROW_IF( ss.fail() || !ss.eof(),
@@ -335,6 +345,7 @@ stringToInputVariable( T & target, string const & value )
  * @brief Parse a string and fill a R1Tensor with the value(s) in the string.
  * @param[out] target the object to read values into
  * @param[in]  value  the string that contains the data to be parsed into target
+ * @throw An InputError if the string value could not be validated by the type regex or parsed to the destination type.
  */
 template< typename T, int SIZE >
 void
@@ -347,7 +358,7 @@ stringToInputVariable( Tensor< T, SIZE > & target, string const & value );
  * @tparam PERMUTATION the permutation of the array
  * @param[out] array the array to read values into
  * @param[in]  value the string that contains the data to be parsed into target
- * @return void.
+ * @throw An std::invalid_argument if the string value could not be validated by the type regex or parsed to the destination type.
  */
 template< typename T, int NDIM, typename PERMUTATION >
 std::enable_if_t< traits::CanStreamInto< std::istringstream, T > >
