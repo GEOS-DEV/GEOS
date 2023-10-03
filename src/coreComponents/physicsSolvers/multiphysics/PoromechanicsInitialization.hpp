@@ -96,7 +96,7 @@ private:
   /// Flag to indicate that the solver is going to perform stress initialization
   integer m_performStressInitialization;
 
-  SolidMechanicsStateReset m_resetTask;
+  SolidMechanicsStateReset m_solidMechanicsStateResetTask;
 
 };
 
