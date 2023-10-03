@@ -459,8 +459,8 @@ public:
   { return wrapperHelpers::move( *m_data, space, touch ); }
 
   ///////////////////////////////////////////////////////////////////////////////////////////////////
-  virtual string typeRegex() const override
-  { return TypeRegex< T >::get(); }
+  virtual string getTypeRegex() const override
+  { return rtTypes::getTypeRegex< T >(); }
 
   ///@}
 

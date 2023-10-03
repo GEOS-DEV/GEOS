@@ -506,18 +506,40 @@ constexpr static localIndex unmappedLocalIndexValue = -1;
 void printTypeSummary();
 
 /**
- * @brief Class to manage the type selection of types at runtime.
+ * @brief Extension point for custom types to provide a validation regexp to schema.
+ * Do not use directly to obtain a type regex, rtTypes::getTypeRegex< T >() should be used instead.
+ * @tparam T the type for which the regex is defined
+ * @tparam ENABLE used to conditionally enable partial specializations
+ *
+ * Specializations should define the following method:
+ * \code{cpp}
+ *   static string get();
+ * \endcode
+ */
+template< typename T, typename ENABLE = void >
+struct TypeRegex
+{
+  /**
+   * @brief Get the type's regex (default implementation).
+   * @return empty string, indicating no custom regex
+   */
+  static string get() { return {}; }
+};
+
+/**
+ * @brief Static class to manage the type selection of types at runtime.
  */
 class rtTypes
 {
 public:
+  using RegexMapType = std::map< string, string >;
 
   /**
    * @brief Convert a @p std::type_index to a string.
    * @param key the std::type_index of the type
    * @return a hard coded string that is related to the std::type_index
    */
-  static string typeNames( std::type_index const key )
+  static string getTypeName( std::type_index const key )
   {
     static const std::unordered_map< std::type_index, string > type_names =
     {
@@ -564,81 +586,37 @@ public:
   }
 
   /**
-   * @brief Matching regex for data types in xml.
+   * @tparam T type we want the regex
+   * @return a regex string validating the type T.
    */
-  class typeRegex
+  template< typename T >
+  static string getTypeRegex()
   {
-public:
-
-    /// The type of map used to store the map of type parsing regular expressions
-    using regexMapType = std::map< string, string >;
-
-    /**
-     * @brief Get an iterator to the beginning of regex map.
-     * @return
-     */
-    regexMapType::iterator begin(){return regexMap.begin();}
-
-    /**
-     * @brief Get an iterator to the end of regex map.
-     * @return
-     */
-    regexMapType::iterator end(){return regexMap.end();}
-
-    /**
-     * @brief Get a const iterator to the beginning of regex map.
-     * @return
-     */
-    regexMapType::const_iterator begin() const {return regexMap.begin();}
-
-    /**
-     * @brief Get a const iterator to the end of regex map.
-     * @return
-     */
-    regexMapType::const_iterator end() const {return regexMap.end();}
-
-private:
-
-    /**
-     * @brief Build Array regexes.
-     * @param subPattern
-     * @param dimension
-     * @return
-     *
-     * @note The sub pattern is the base object you are targeting.  It can either
-     *       be a simple type or a lower-dimensional array. Sub-elements and
-     *       axes are given as a comma-separated list enclosed in a curly brace.
-     *       For example, a 2D string array would look like: {{"a", "b"}, {"c", "d"}}
-     */
-    string constructArrayRegex( string subPattern, integer dimension )
+    RegexMapType & map = getTypeRegexMap();
+    string const typeName = getTypeName( typeid( T ) );
+    auto const it = map.find( typeName );
+    if( it != map.end() )
     {
-      if( dimension > 1 )
-      {
-        subPattern = constructArrayRegex( subPattern, dimension-1 );
-      }
-
-      string arrayPattern;
-      if( dimension == 1 )
-      {
-        // Allow the bottom-level to be empty
-        arrayPattern = "\\{\\s*((" + subPattern + ",\\s*)*" + subPattern + ")?\\s*\\}";
-      }
-      else
-      {
-        arrayPattern = "\\{\\s*(" + subPattern + ",\\s*)*" + subPattern + "\\s*\\}";
-      }
-
-      return arrayPattern;
+      return it->second;
     }
+    else
+    {
+      return map.emplace( typeName, TypeRegex< T >::get() ).first->second;
+    }
+  }
 
+  /**
+   * @brief Construct the regexMap for all basic types (EnumString types are not included)
+   * @return RegexMapType
+   */
+  static RegexMapType getBasicTypesRegexMap()
+  {
     // Define the component regexes:
     // Regex to match an unsigned int (123, etc.)
-    // TODO c++17: Move to static constexpr std::string_view
-    string ru = "[\\d]+";
+    // string_view const ru = "[\\d]+";// unused
 
     // Regex to match an signed int (-123, 455, +789, etc.)
-    // TODO c++17: Move to static constexpr std::string_view
-    string ri = "[+-]?[\\d]+";
+    string_view const ri = "[+-]?[\\d]+";
 
     // Regex to match a float (1, +2.3, -.4, 5.6e7, 8E-9, etc.)
     // Explanation of parts:
@@ -647,44 +625,37 @@ private:
     // [\\d]*  matches any number of numbers following the decimal
     // ([eE][-+]?[\\d]+|\\s*)  matches an optional scientific notation number
     // Note: the xsd regex implementation does not allow an empty branch, so use allow whitespace at the end
-    // TODO c++17: Move to static constexpr std::string_view
-    string rr = "[+-]?[\\d]*([\\d]\\.?|\\.[\\d])[\\d]*([eE][-+]?[\\d]+|\\s*)";
+    string_view const rr = "[+-]?[\\d]*([\\d]\\.?|\\.[\\d])[\\d]*([eE][-+]?[\\d]+|\\s*)";
 
     // Regex to match a string that can't be empty and does not contain any whitespaces nor the characters ,{}
-    // TODO c++17: Move to static constexpr std::string_view
-    string rs = "[^,\\{\\}\\s]+\\s*";
+    string_view const rs = "[^,\\{\\}\\s]+\\s*";
 
     // Regex to match a string that does not contain any whitespaces nor the characters ,{}
-    // TODO c++17: Move to static constexpr std::string_view
-    string rse = "[^,\\{\\}\\s]*\\s*";
+    string_view const rse = "[^,\\{\\}\\s]*\\s*";
 
     // Regex to match a path: a string that can't be empty and does not contain any space nor the characters *?<>|:",
-    // TODO c++17: Move to static constexpr std::string_view
-    string rp = "[^*?<>\\|:\";,\\s]+\\s*";
+    string_view const rp = "[^*?<>\\|:\";,\\s]+\\s*";
 
     // Regex to match a path: a string that does not contain any space nor the characters *?<>|:",
-    // TODO c++17: Move to static constexpr std::string_view
-    string rpe = "[^*?<>\\|:\";,\\s]*\\s*";
+    string_view const rpe = "[^*?<>\\|:\";,\\s]*\\s*";
 
     // Regex to match a R1Tensor
-    // TODO c++17: Move to static constexpr std::string_view
-    string r1 = "\\s*\\{\\s*(" + rr + ",\\s*){2}" + rr + "\\s*\\}";
+    string_view const r1 = "\\s*\\{\\s*(" + string( rr ) + ",\\s*){2}" + string( rr ) + "\\s*\\}";
 
     // Regex to match a R2SymTensor
-    // TODO c++17: Move to static constexpr std::string_view
-    string r2s = "\\s*\\{\\s*(" + rr + ",\\s*){5}" + rr + "\\s*\\}";
+    string_view const r2s = "\\s*\\{\\s*(" + string( rr ) + ",\\s*){5}" + string( rr ) + "\\s*\\}";
 
     // Build master list of regexes
-    regexMapType regexMap =
+    RegexMapType regexMap =
     {
-      {"integer", ri},
-      {"localIndex", ri},
-      {"globalIndex", ri},
-      {"real32", rr},
-      {"real64", rr},
-      {"R1Tensor", r1},
-      {"R1Tensor32", r1},
-      {"R2SymTensor", r2s},
+      {"integer", string( ri )},
+      {"localIndex", string( ri )},
+      {"globalIndex", string( ri )},
+      {"real32", string( rr )},
+      {"real64", string( rr )},
+      {"R1Tensor", string( r1 )},
+      {"R1Tensor32", string( r1 )},
+      {"R2SymTensor", string( r2s )},
       {"integer_array", constructArrayRegex( ri, 1 )},
       {"localIndex_array", constructArrayRegex( ri, 1 )},
       {"globalIndex_array", constructArrayRegex( ri, 1 )},
@@ -701,34 +672,58 @@ private:
       {"real32_array3d", constructArrayRegex( rr, 3 )},
       {"real64_array3d", constructArrayRegex( rr, 3 )},
       {"real64_array4d", constructArrayRegex( rr, 4 )},
-      {"string", rse},
-      {"path", rpe},
+      {"string", string( rse )},
+      {"path", string( rpe )},
       {"string_array", constructArrayRegex( rs, 1 )},
       {"path_array", constructArrayRegex( rp, 1 )},
-      {"mapPair", rse},
-      {"geos_dataRepository_PlotLevel", ri}
+      {"mapPair", string( rse )},
+      {"geos_dataRepository_PlotLevel", string( ri )}
     };
-  };
-};
+    return regexMap;
+  }
 
-/**
- * @brief Extension point for custom types to provide a validation regexp to schema.
- * @tparam T the type for which the regex is defined
- * @tparam ENABLE used to conditionally enable partial specializations
- *
- * Specializations should define the following method:
- * \code{cpp}
- *   static string get();
- * \endcode
- */
-template< typename T, typename ENABLE = void >
-struct TypeRegex
-{
+private:
+
   /**
-   * @brief Get the type's regex (default implementation).
-   * @return empty string, indicating no custom regex
+   * @brief Build Array regexes.
+   * @param subPattern
+   * @param dimension
+   * @return
+   *
+   * @note The sub pattern is the base object you are targeting.  It can either
+   *       be a simple type or a lower-dimensional array. Sub-elements and
+   *       axes are given as a comma-separated list enclosed in a curly brace.
+   *       For example, a 2D string array would look like: {{"a", "b"}, {"c", "d"}}
    */
-  static string get() { return {}; }
+  static string constructArrayRegex( string_view subPattern, integer dimension )
+  {
+    if( dimension > 1 )
+    {
+      string const subPatternStr = string( constructArrayRegex( subPattern, dimension-1 ) );
+      return "\\{\\s*(" + subPatternStr + ",\\s*)*" + subPatternStr + "\\s*\\}";
+    }
+    else
+    {
+      string const subPatternStr( subPattern );
+      // Allow the bottom-level to be empty
+      return "\\{\\s*((" + subPatternStr + ",\\s*)*" + subPatternStr + ")?\\s*\\}";
+    }
+  }
+
+  /**
+   * @return A reference to the types regexes map
+   */
+  static RegexMapType & getTypeRegexMap()
+  {
+    static RegexMapType m = getBasicTypesRegexMap();
+    return m;
+  }
+
+  /**
+   * @brief Private constructor because of static class
+   */
+  rtTypes();
+
 };
 
 /**

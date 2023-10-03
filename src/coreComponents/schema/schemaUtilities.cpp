@@ -97,10 +97,10 @@ void AppendSimpleType( xmlWrapper::xmlNode & schemaRoot,
 
 void BuildSimpleSchemaTypes( xmlWrapper::xmlNode schemaRoot )
 {
-  rtTypes::typeRegex typeRegex;
-  for( auto const & regex : typeRegex )
+  auto const regexes = rtTypes::getBasicTypesRegexMap();
+  for( auto const & [typeName, regex] : regexes )
   {
-    AppendSimpleType( schemaRoot, regex.first, regex.second );
+    AppendSimpleType( schemaRoot, typeName, regex );
   }
 }
 
@@ -242,7 +242,7 @@ void SchemaConstruction( Group & group,
             xmlWrapper::xmlNode attributeNode = targetTypeDefNode.append_child( "xsd:attribute" );
             attributeNode.append_attribute( "name" ) = attributeName.c_str();
 
-            string const wrappedTypeName = rtTypes::typeNames( wrapper.getTypeId() );
+            string const wrappedTypeName = rtTypes::getTypeName( wrapper.getTypeId() );
             string const sanitizedName = std::regex_replace( wrappedTypeName, std::regex( "::" ), "_" );
 
             // Note: Some type names involving strings can vary on compiler and be ugly.  Convert these to "string"
@@ -254,7 +254,7 @@ void SchemaConstruction( Group & group,
             // Check if the attribute has a previously unseen non-simple type with a custom validation regex
             if( schemaRoot.find_child_by_attribute( "xsd:simpleType", "name", xmlSafeName.c_str() ).empty() )
             {
-              string const regex = wrapper.typeRegex();
+              string const regex = wrapper.getTypeRegex();
               if( !regex.empty() )
               {
                 // Append a new simpleType with a custom regex

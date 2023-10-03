@@ -158,10 +158,9 @@ public:
   virtual void move( LvArray::MemorySpace const space, bool const touch ) const = 0;
 
   /**
-   * @brief Calls TypeRegex< T >::get().
    * @return regex used to validate inputs of wrapped type
    */
-  virtual string typeRegex() const = 0;
+  virtual string getTypeRegex() const = 0;
 
   ///@}
 
