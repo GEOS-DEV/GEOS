@@ -56,6 +56,62 @@ DECLARE_FIELD( particleMass,
                WRITE_AND_READ,
                "An array that stores particle masses." );
 
+DECLARE_FIELD( particleWavespeed,
+               "particleWavespeed",
+               array1d< real64 >,
+               0,
+               LEVEL_1,
+               WRITE_AND_READ,
+               "An array that stores particle wavespeeds." );
+
+DECLARE_FIELD( particleHeatCapacity,
+               "particleHeatCapacity",
+               array1d< real64 >,
+               0,
+               LEVEL_1,
+               WRITE_AND_READ,
+               "An array that stores particle temperature." );
+
+DECLARE_FIELD( particleTemperature,
+               "particleTemperature",
+               array1d< real64 >,
+               0,
+               LEVEL_1,
+               WRITE_AND_READ,
+               "An array that stores particle temperature." );
+
+DECLARE_FIELD( particleInternalEnergy,
+               "particleInternalEnergy",
+               array1d< real64 >,
+               0,
+               LEVEL_1,
+               WRITE_AND_READ,
+               "An array that stores particle internal energy." );
+
+DECLARE_FIELD( particleKineticEnergy,
+               "particleKineticEnergy",
+               array1d< real64 >,
+               0,
+               LEVEL_1,
+               WRITE_AND_READ,
+               "An array that stores particle kinetic energy." );
+
+DECLARE_FIELD( particleArtificialViscosity,
+               "particleArtificialViscosity",
+               array1d< real64 >,
+               0,
+               LEVEL_1,
+               WRITE_AND_READ,
+               "An array that stores particle internal energy." );
+
+DECLARE_FIELD( particleSPHJacobian,
+               "particleSPHJacobian",
+               array1d< real64 >,
+               0,
+               LEVEL_1,
+               WRITE_AND_READ,
+               "An array that stores particle SPH computed jacobian." );
+
 DECLARE_FIELD( particleInitialVolume,
                "particleInitialVolume",
                array1d< real64 >,

@@ -43,6 +43,7 @@
 #include "solid/StrainHardeningPolymer.hpp"
 #include "solid/CeramicDamage.hpp"
 #include "solid/Graphite.hpp"
+#include "solid/VonMisesJ.hpp"
 #include "solid/porosity/PressurePorosity.hpp"
 #include "solid/porosity/ProppantPorosity.hpp"
 #include "permeability/ConstantPermeability.hpp"
@@ -179,6 +180,7 @@ struct ConstitutivePassThruMPM< SolidBase >
                                  PerfectlyPlastic,
                                  ElasticTransverseIsotropicPressureDependent,
                                  ElasticTransverseIsotropic,
+                                 VonMisesJ,
                                  ElasticIsotropic,
                                  Hyperelastic,
                                  HyperelasticMMS >::execute( constitutiveRelation,
