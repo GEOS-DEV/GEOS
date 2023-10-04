@@ -23,9 +23,12 @@ jobs:
     steps:
     - name: Check that the PR is not a draft (cancel rest of jobs otherwise)
       run: |
-        echo "Is PR a draft?"
-        echo ${{ toJSON(github.event.pull_request.draft) }}
-        if [[ ${{ toJSON(github.event.pull_request.draft) }} == true ]]; then "false" ; else "true"; fi
+        draft_status=$(curl -H "Accept: application/vnd.github+json" \
+           https://api.github.com/repos/${{ github.repository }}/pulls/${{ github.event.number }} \
+           | jq '.draft')
+        echo "Is PR a draft? (Check PR's draft status )"
+        echo $draft_status
+        if [[ $draft_status == false ]]; then "true" ; else "false"; fi
 
   # PR must be assigned to be merged.
   # This job will fail if this is not the case.
