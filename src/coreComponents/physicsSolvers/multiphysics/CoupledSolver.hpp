@@ -272,7 +272,7 @@ public:
   }
 
   virtual bool
-  checkSystemSolution( DomainPartition const & domain,
+  checkSystemSolution( DomainPartition & domain,
                        DofManager const & dofManager,
                        arrayView1d< real64 const > const & localSolution,
                        real64 const scalingFactor ) override
@@ -287,7 +287,7 @@ public:
   }
 
   virtual real64
-  scalingForSystemSolution( DomainPartition const & domain,
+  scalingForSystemSolution( DomainPartition & domain,
                             DofManager const & dofManager,
                             arrayView1d< real64 const > const & localSolution ) override
   {
@@ -314,6 +314,18 @@ public:
     return nextDt;
   }
 
+  virtual void cleanup( real64 const time_n,
+                        integer const cycleNumber,
+                        integer const eventCounter,
+                        real64 const eventProgress,
+                        DomainPartition & domain ) override
+  {
+    forEachArgInTuple( m_solvers, [&]( auto & solver, auto )
+    {
+      solver->cleanup( time_n, cycleNumber, eventCounter, eventProgress, domain );
+    } );
+    SolverBase::cleanup( time_n, cycleNumber, eventCounter, eventProgress, domain );
+  }
 
   /**@}*/
 
@@ -393,6 +405,7 @@ protected:
         forEachArgInTuple( m_solvers, [&]( auto & solver, auto )
         {
           solver->resetStateToBeginningOfStep( domain );
+          solver->getSolverStatistics().initializeTimeStepStatistics(); // initialize counters for subsolvers
         } );
         resetStateToBeginningOfStep( domain );
       }
@@ -427,6 +440,11 @@ protected:
 
       if( isConverged )
       {
+        // Save Time step statistics for the subsolvers
+        forEachArgInTuple( m_solvers, [&]( auto & solver, auto )
+        {
+          solver->getSolverStatistics().saveTimeStepStatistics();
+        } );
         break;
       }
       // Add convergence check:
