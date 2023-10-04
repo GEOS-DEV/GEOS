@@ -186,6 +186,7 @@ public:
     static constexpr char const * forceExternalString() { return "externalForce"; }
     static constexpr char const * forceInternalString() { return "internalForce"; }
     static constexpr char const * massString() { return "mass"; }
+    static constexpr char const * materialVolumeString() { return "materialVolume"; }
     static constexpr char const * velocityString() { return "velocity"; }
     static constexpr char const * momentumString() { return "momentum"; }
     static constexpr char const * accelerationString() { return "acceleration"; }
@@ -195,6 +196,8 @@ public:
     static constexpr char const * maxDamageString() { return "maxDamage"; }
     static constexpr char const * surfaceNormalString() { return "surfaceNormal"; }
     static constexpr char const * materialPositionString() { return "materialPosition"; }
+    static constexpr char const * normalStressString() { return "normalStress"; }
+    static constexpr char const * massWeightedDamageString() { return "massWeightedDamage"; }
 
     static constexpr char const * boundaryNodesString() { return "boundaryNodes"; }
     static constexpr char const * bufferNodesString() { return "bufferNodes"; }
@@ -256,6 +259,7 @@ public:
 
   void computeContactForces( real64 const dt,
                              arrayView2d< real64 const > const & gridMass,
+                             arrayView2d< real64 const > const & gridMaterialVolume,
                              arrayView2d< real64 const > const & gridDamage,
                              arrayView2d< real64 const > const & gridMaxDamage,
                              arrayView3d< real64 const > const & gridVelocity,
@@ -275,6 +279,8 @@ public:
                                          real64 const & frictionCoefficient,
                                          real64 const & mA,
                                          real64 const & mB,
+                                         real64 const & VA,
+                                         real64 const & VB,
                                          arraySlice1d< real64 const > const vA,
                                          arraySlice1d< real64 const > const GEOS_UNUSED_PARAM( vB ),
                                          arraySlice1d< real64 const > const qA,
@@ -349,18 +355,17 @@ public:
                                   const real64 time_n,
                                   ParticleManager & particleManager );
 
-  void computeBoxStress(  ParticleManager & particleManager,
-                          arrayView1d< real64 > boxStress );
+  void computeBoxMetrics( ParticleManager & particleManager,
+                          arrayView1d< real64 > boxStress,
+                          real64 & boxMaterialVolume );
 
   void initializeGridFields( NodeManager & nodeManager );
 
   void boundaryConditionUpdate( real64 dt, real64 time_n );
 
-  // void computeXPIC(real64 dt,
-  //                  ParticleManager & particleManager,
-  //                  NodeManager & nodeManager);
-
-  void particleToGrid( ParticleManager & particleManager,
+  void particleToGrid( real64 const time_n,
+                       integer const cycleNumber,
+                       ParticleManager & particleManager,
                        NodeManager & nodeManager );
 
   void gridTrialUpdate( real64 dt,
@@ -430,18 +435,36 @@ public:
 
   void computeBodyForce( ParticleManager & particleManager );
   
+  void computeWavespeed( ParticleManager & particleManager );
+
+  void computeArtificialViscosity( ParticleManager & particleManager );
+
+  void computeSPHJacobian( ParticleManager & particleManager );
+
+  void overlapCorrection( real64 const dt ,
+                          ParticleManager & particleManager );
+
+  void computeInternalEnergyAndTemperature( const real64 dt,
+                                            ParticleManager & particleManager );
+
   void computeGeneralizedVortexMMSBodyForce( real64 const time_n,
                                              ParticleManager & particleManager );
-                                            //  real64 const & shearModulus,
-                                            //  real64 const & density,
-                                            //  arraySlice1d< real64 const > const particlePosition,
-                                            //  real64 * particleBodyForce );
  
   void correctGhostParticleCentersAcrossPeriodicBoundaries( ParticleManager & particleManager,
                                                             SpatialPartition & partition );
 
   void correctParticleCentersAcrossPeriodicBoundaries( ParticleManager & particleManager,
                                                        SpatialPartition & partition );
+
+  void unscaleCPDIVectors( ParticleManager & particleManager );
+
+  void computeKineticEnergy( ParticleManager & particleManager );
+
+  void computeXProfile( int const cycleNumber,
+                        real64 const time,
+                        real64 const dt,
+                        NodeManager & nodeManager,
+                        SpatialPartition & partition );
 
   void cofactor( real64 const (& F)[3][3],
                  real64 (& Fc)[3][3] );
@@ -517,10 +540,27 @@ protected:
 
   int m_useDamageAsSurfaceFlag;
 
+  int m_FSubcycles;
+  int m_LBar;
+  real64 m_LBarScale;
+  int m_exactJIntegration;
   real64 m_maxParticleVelocity;
   real64 m_maxParticleVelocitySquared;
   real64 m_minParticleJacobian;
   real64 m_maxParticleJacobian;
+  
+  int m_overlapCorrection;
+  real64 m_overlapThreshold1;
+  real64 m_overlapThreshold2;
+  int m_computeSPHJacobian;
+
+  // Currently initializes all particles to this temperature
+  // TODO: read in from particle file
+  real64 m_initialTemperature;
+  int m_shockHeating;
+  int m_useArtificialViscosity;
+  real64 m_artificialViscosityQ0;
+  real64 m_artificialViscosityQ1;
 
   int m_cpdiDomainScaling;
 
@@ -531,8 +571,11 @@ protected:
   int m_treatFullyDamagedAsSingleField;
   int m_surfaceDetection;
   int m_damageFieldPartitioning;
+  int m_contactNormalType;
   int m_contactGapCorrection;
   // int m_directionalOverlapCorrection;
+
+  int m_plotUnscaledParticles;
 
   real64 m_frictionCoefficient;
   array2d< real64 > m_frictionCoefficientTable; 
@@ -560,6 +603,11 @@ protected:
   int m_surfaceHealing;
 
   int m_debugFlag;
+
+  int m_computeXProfile;
+  real64 m_xProfileWriteInterval;
+  real64 m_nextXProfileWriteTime;
+  real64 m_xProfileVx0;
 
 private:
   struct BinKey

@@ -126,6 +126,7 @@ set( constitutive_headers
      solid/SolidModelDiscretizationOpsOrthotropic.hpp
      solid/Graphite.hpp
      solid/StrainHardeningPolymer.hpp
+     solid/VonMisesJ.hpp
      solid/CeramicDamage.hpp
      solid/TriaxialDriver.hpp
      solid/porosity/PorosityFields.hpp
@@ -244,6 +245,7 @@ set( constitutive_sources
      solid/SolidInternalEnergy.cpp
      solid/Graphite.cpp
      solid/StrainHardeningPolymer.cpp
+     solid/VonMisesJ.cpp
      solid/CeramicDamage.cpp
      solid/TriaxialDriver.cpp
      solid/porosity/BiotPorosity.cpp

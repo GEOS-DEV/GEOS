@@ -85,21 +85,21 @@ public:
   virtual void smallStrainNoStateUpdate_StressOnly( localIndex const k,
                                                     localIndex const q,
                                                     real64 const ( &totalStrain )[6],
-                                                    real64 ( &stress )[6] ) const override final;
+                                                    real64 ( &stress )[6] ) const override;
 
   GEOS_HOST_DEVICE
   virtual void smallStrainNoStateUpdate( localIndex const k,
                                          localIndex const q,
                                          real64 const ( &totalStrain )[6],
                                          real64 ( &stress )[6],
-                                         real64 ( &stiffness )[6][6] ) const override final;
+                                         real64 ( &stiffness )[6][6] ) const override;
 
   GEOS_HOST_DEVICE
   virtual void smallStrainNoStateUpdate( localIndex const k,
                                          localIndex const q,
                                          real64 const ( &totalStrain )[6],
                                          real64 ( &stress )[6],
-                                         DiscretizationOps & stiffness ) const final;
+                                         DiscretizationOps & stiffness ) const;
 
   GEOS_HOST_DEVICE
   virtual void smallStrainUpdate_StressOnly( localIndex const k,
@@ -141,7 +141,7 @@ public:
   GEOS_HOST_DEVICE
   virtual void getElasticStrain( localIndex const k,
                                  localIndex const q,
-                                 real64 ( &elasticStrain )[6] ) const override final;
+                                 real64 ( &elasticStrain )[6] ) const override;
 
   GEOS_HOST_DEVICE
   virtual real64 getBulkModulus( localIndex const k ) const override final
