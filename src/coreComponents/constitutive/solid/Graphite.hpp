@@ -445,7 +445,6 @@ void GraphiteUpdates::smallStrainUpdate_StressOnly( localIndex const k,
 
   // save new stress and return
   saveStress( k, q, stress );
-  return;
 }
 
 
@@ -461,16 +460,16 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
     GEOS_UNUSED_VAR( endRotation );
 
     real64 oldStress[6];
-    LvArray::tensorOps::copy< 6 >(oldStress, stress);
+    LvArray::tensorOps::copy< 6 >( oldStress, stress );
 
     real64 rotationTranspose[3][3];
-    LvArray::tensorOps::transpose< 3, 3 >(rotationTranspose, beginningRotation); 
+    LvArray::tensorOps::transpose< 3, 3 >( rotationTranspose, beginningRotation ); 
 
     real64 unrotatedVelocityGradient[3][3];
-    LvArray::tensorOps::Rij_eq_AikBkj< 3, 3, 3 >(unrotatedVelocityGradient, rotationTranspose, m_velocityGradient[k]);
+    LvArray::tensorOps::Rij_eq_AikBkj< 3, 3, 3 >( unrotatedVelocityGradient, rotationTranspose, m_velocityGradient[k] );
     
     real64 unrotatedVelocityGradientTranspose[3][3];
-    LvArray::tensorOps::transpose< 3, 3 >(unrotatedVelocityGradientTranspose, unrotatedVelocityGradient);
+    LvArray::tensorOps::transpose< 3, 3 >( unrotatedVelocityGradientTranspose, unrotatedVelocityGradient );
 
     // CC: Is there an LvArray operation to get the symmetric part of a matrix?
     real64 denseD[3][3];
@@ -479,7 +478,7 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
     LvArray::tensorOps::scale< 3, 3 >( denseD, 0.5 );
 
     real64 D[6];
-    LvArray::tensorOps::denseToSymmetric<3>(D, denseD);
+    LvArray::tensorOps::denseToSymmetric<3>( D, denseD );
 
     // make sure material direction is normalized.
     real64 materialDirection[3];
