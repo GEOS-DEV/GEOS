@@ -388,6 +388,8 @@ public:
     constexpr static char const * functionNameString() { return "functionName"; }
     /// @return The key for initialCondition
     constexpr static char const * initialConditionString() { return "initialCondition"; }
+    /// @return The key for propertyUpdate
+    constexpr static char const * propertyUpdateString() { return "propertyUpdate"; };
     /// @return The key for beginTime
     constexpr static char const * beginTimeString() { return "beginTime"; }
     /// @return The key for endTime
@@ -474,6 +476,15 @@ public:
   int initialCondition() const
   {
     return m_initialCondition;
+  }
+
+  /**
+   * Accessor
+   * @return const m_initialCondition
+   */
+  int isPropertyUpdate() const
+  {
+    return m_isPropertyUpdate;
   }
 
   /**
@@ -575,6 +586,9 @@ private:
 
   /// Whether or not the boundary condition is an initial condition.
   int m_initialCondition;
+
+  /// Whether or not the field specification is a runtime property udpate
+  int m_isPropertyUpdate;
 
   /// The name of the function used to generate values for application.
   string m_functionName;

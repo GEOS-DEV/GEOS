@@ -83,13 +83,6 @@
        name="thermalCondFrac"
        thermalConductivityComponents="{ 3.81, 3.81, 3.81 }"/>  
 
-     <!-- <CompressibleSolidParallelPlatesPermeability
-       name="fractureFilling"
-       solidModelName="nullSolid"
-       porosityModelName="fracturePorosity"
-       permeabilityModelName="fracturePerm"
-       solidInternalEnergyModelName="rockInternalEnergy"/> -->
-
      <CompressibleSolidConstantPermeability
        name="fractureFilling"
        solidModelName="nullSolid"
@@ -129,11 +122,9 @@
        referencePressure="0.0"
        compressibility="0.0"/>
 
-     <!-- <ParallelPlatesPermeability
-       name="fracturePerm"/> -->
      <ConstantPermeability
        name="fracturePerm"
-       permeabilityComponents="{ 1.0e-15, 1.0e-15, 1.0e-15 }"/>
+       permeabilityComponents="{ 1.0e-20, 1.0e-20, 1.0e-20 }"/>
 
    </Constitutive>
 </Problem>

@@ -69,6 +69,11 @@ FieldSpecificationBase::FieldSpecificationBase( string const & name, Group * par
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Boundary condition is applied as an initial condition." );
 
+  registerWrapper( viewKeyStruct::propertyUpdateString(), &m_isPropertyUpdate ).
+    setApplyDefaultValue( 0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "This field specification consists in a property update throughout the simulation." );  
+
   registerWrapper( viewKeyStruct::beginTimeString(), &m_beginTime ).
     setApplyDefaultValue( -1.0e99 ).
     setInputFlag( InputFlags::OPTIONAL ).

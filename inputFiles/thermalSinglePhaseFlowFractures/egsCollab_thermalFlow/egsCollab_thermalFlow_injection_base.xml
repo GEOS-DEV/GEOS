@@ -19,12 +19,26 @@
       defaultAperture="1e-3"/>  
   </ElementRegions>
 
+  <!-- maxTime="1.5798240000E+09 7.884302400e10" -->
   <Events
-     maxTime="7.884302400e10"
+     maxTime="1.5798240000e9"
      timeOutputFormat="full">
      <SoloEvent
      name="preFracture"
      target="/Solvers/SurfaceGenerator"/>
+
+    <PeriodicEvent
+     name="outputs_initialization"
+     cycleFrequency="1"
+     beginTime="0.0"
+     endTime="1.576800000e9"
+     target="/Outputs/vtkOutput"/>   
+
+   <PeriodicEvent
+     name="outputs"
+     cycleFrequency="10"
+     beginTime="1.576800001e9"
+     target="/Outputs/vtkOutput"/> 
 
     <PeriodicEvent
        name="solverApplications1"
@@ -36,56 +50,30 @@
     <PeriodicEvent
        name="solverApplications2"
        beginTime="1e6"
-       endTime="7.8840e10"
-       maxEventDt="2e9"
+       endTime="1.576800000e9"
+       targetExactStartStop="1"
+       maxEventDt="1e8"
        target="/Solvers/singleFlow"/>
+
+    <SoloEvent
+       name="modifyFracPermeability"
+       target="/Tasks/fracPermUpdate"
+       targetTime="1.576800000e9"
+       targetExactTimestep="1"
+       logLevel="1"/>
 
     <PeriodicEvent
        name="solverApplications3"
        forceDt="1"
-       beginTime="7.8840e10"
-       endTime="7.8840000001e10"
+       beginTime="1.576800000e9"
+       endTime="1.576800010e9"
        target="/Solvers/singleFlow"/>
 
     <PeriodicEvent
        name="solverApplications4"
-       beginTime="7.8840000001e10"
-       endTime="7.88400001e10"
-       maxEventDt="1"
-       target="/Solvers/singleFlow"/>   
-
-    <PeriodicEvent
-       name="solverApplications5"
-       beginTime="7.88400001e10"
-       endTime="7.8840001e10"
-       maxEventDt="5"
-       target="/Solvers/singleFlow"/>  
-
-    <PeriodicEvent
-       name="solverApplications6"
-       beginTime="7.8840001e10"
-       endTime="7.88401e10"
-       maxEventDt="50"
-       target="/Solvers/singleFlow"/>   
-
-    <PeriodicEvent
-       name="solverApplications7"
-       beginTime="7.88401e10"
-       endTime="7.88409e10"
+       beginTime="1.576800010e9"
        maxEventDt="100"
-       target="/Solvers/singleFlow"/> 
-
-    <PeriodicEvent
-       name="solverApplications8"
-       beginTime="7.88409e10"
-       endTime="7.884302400e10"
-       maxEventDt="400"
        target="/Solvers/singleFlow"/>   
-
-     <PeriodicEvent
-       name="outputs"
-       cycleFrequency="10"
-       target="/Outputs/vtkOutput"/>
    </Events>
 
   <FieldSpecifications>
@@ -103,7 +91,18 @@
        setNames="{ all }"
        objectPath="ElementRegions/fracture"
        fieldName="fracturePorosity_referencePorosity"
-       scale="1.0"/>   
+       scale="1.0"/>
+       
+    <FieldSpecification
+       name="fracPermeability"
+       setNames="{ all }"
+       component="0"
+       logLevel="1"
+       propertyUpdate="1"
+       objectPath="ElementRegions/fracture"
+       fieldName="fracturePerm_permeability"
+       beginTime="1.576800000e9"
+       scale="1.0e-9"/>      
 
     <FieldSpecification
       name="initialPressure"
@@ -148,7 +147,7 @@
       
     <FieldSpecification
       name="DriftTemperature"
-      objectPath="ElementRegions/matrix"
+      objectPath="ElementRegions"
       fieldName="temperature"
       scale="291.65"
       setNames="{ Drift }"/>   
@@ -161,24 +160,11 @@
       setNames="{ Battery }"/>   
 
     <FieldSpecification
-      name="DriftPressure"
-      objectPath="ElementRegions/matrix"
-      fieldName="pressure"
-      scale="1e5"
-      setNames="{ Drift }"/>   
-
-    <FieldSpecification
-      name="BatteryPressure"
-      objectPath="ElementRegions/matrix"
-      fieldName="pressure"
-      scale="1e5"
-      setNames="{ Battery }"/> 
-
-    <FieldSpecification
       name="DriftFracturePressure"
-      objectPath="ElementRegions/fracture"  
+      objectPath="ElementRegions"  
       fieldName="pressure"
-      scale="1e5"
+      scale="2.4e6"
+      beginTime="1.576800000e9"
       setNames="{ Drift }"/>   
   
     <!-- Injection -->
@@ -195,7 +181,7 @@
       objectPath="ElementRegions/fracture"                                                                                                                                              
       fieldName="temperature"                                                                                                                                                            
       functionName="injectionSchedule_temperature"
-      beginTime="7.8840e10"
+      beginTime="1.576800000e9"
       scale="1"                                                                                                                                                                          
       setNames="{ TU_injector }"/>
 
@@ -235,35 +221,40 @@
     <TableFunction
       name="injectionSchedule_massFlux"
       inputVarNames="{ time }"
-      coordinateFiles="{ injectionSchedule_time.csv }"
+      coordinateFiles="{ injectionSchedule_time_50y_init.csv }"
       voxelFile="TU_flowRate.csv"
       interpolation="linear"/> 
 
     <TableFunction
       name="injectionSchedule_temperature"
       inputVarNames="{ time }"
-      coordinateFiles="{ injectionSchedule_time.csv }"
+      coordinateFiles="{ injectionSchedule_time_50y_init.csv }"
       voxelFile="TU_temperature.csv"
       interpolation="linear"/>
 
     <TableFunction
       name="TN_massFlux"
       inputVarNames="{ time }"
-      coordinateFiles="{ productionSchedule_time.csv }"
+      coordinateFiles="{ productionSchedule_time_50y_init.csv }"
       voxelFile="TN_flowRate.csv"
       interpolation="linear"/>
 
     <TableFunction
       name="TC_massFlux"
       inputVarNames="{ time }"
-      coordinateFiles="{ productionSchedule_time.csv }"
+      coordinateFiles="{ productionSchedule_time_50y_init.csv }"
       voxelFile="TC_flowRate.csv"
       interpolation="linear"/>   
   </Functions>
 
+  <Tasks>
+    <MaterialPropertiesUpdate
+      name="fracPermUpdate"/>
+  </Tasks>
+  
   <Outputs>
     <VTK
       name="vtkOutput"
-      plotFileRoot="thermalFlowFrac_collab_circulation_fracPerm=1e-15"/>
+      plotFileRoot="thermalFlowFrac_collab_circulation_fracPerm=1e-9"/>
   </Outputs>
 </Problem>
