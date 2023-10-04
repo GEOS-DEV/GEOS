@@ -144,8 +144,10 @@ void BrineEnthalpyUpdate::compute( real64 const & pressure,
                                    bool useMass ) const
 {
   real64 const input[2] = { pressure, temperature };
+
+  real64 const referenceEnthalpy = 5.0584e5;
   real64 const brineEnthalpy = m_brineEnthalpyTable.compute( &temperature );
-  real64 const CO2Enthalpy = m_CO2EnthalpyTable.compute( input );
+  real64 const CO2Enthalpy = m_CO2EnthalpyTable.compute( input ) + referenceEnthalpy;
 
 
   //assume there are only CO2 and brine here.
@@ -181,9 +183,9 @@ void BrineEnthalpyUpdate::compute( real64 const & pressure,
   real64 brineEnthalpy_dTemperature = 0.0;
   real64 dvalue_dC = 0.0;
   real64 CO2EnthalpyDeriv[2]{};
-
+  real64 const referenceEnthalpy = 5.0584e5;
   real64 const brineEnthalpy = m_brineEnthalpyTable.compute( &temperature, &brineEnthalpy_dTemperature );
-  real64 const CO2Enthalpy = m_CO2EnthalpyTable.compute( input, CO2EnthalpyDeriv );
+  real64 const CO2Enthalpy = m_CO2EnthalpyTable.compute( input, CO2EnthalpyDeriv ) + referenceEnthalpy;
 
   //assume there are only CO2 and brine here.
 
