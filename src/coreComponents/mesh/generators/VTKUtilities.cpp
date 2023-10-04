@@ -838,7 +838,7 @@ ensureNoEmptyRank( vtkSmartPointer< vtkDataSet > mesh,
     localIndex firstRecipientPosition = 0;
     for( integer iRank = 0; iRank < myPosition; ++iRank )
     {
-      firstRecipientPosition += elemCounts[iRank] - 1;
+      firstRecipientPosition += elemCounts[donorRanks[iRank]] - 1;
     }
     if( firstRecipientPosition < recipientRanks.size() )
     {
