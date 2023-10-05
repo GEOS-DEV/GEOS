@@ -27,7 +27,7 @@ def fill_subparser(subparsers) -> None:
                    required=False,
                    metavar=__TOLERANCE_DEFAULT,
                    default=__TOLERANCE_DEFAULT,
-                   help=f"[float]: The tolerance in the computation. Defaults to machine precision {__TOLERANCE_DEFAULT}")
+                   help=f"[float]: The tolerance in the computation. Defaults to your machine precision {__TOLERANCE_DEFAULT}.")
 
 
 def display_results(options: Options, result: Result):
