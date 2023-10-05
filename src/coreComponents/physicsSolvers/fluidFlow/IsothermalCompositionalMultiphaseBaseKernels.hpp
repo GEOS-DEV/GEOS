@@ -743,9 +743,6 @@ public:
         real64 const dPhaseCompAmount_dP = dPhaseAmount_dP * phaseCompFrac[ip][ic]
                                            + phaseAmount * dPhaseCompFrac[ip][ic][Deriv::dP];
 
-        GEOS_ASSERT_MSG( ic == 0 && LvArray::math::abs( dPhaseCompAmount_dP ) < minDensForDivision,
-                         "Zero diagonal in Jacobian" );
-
         stack.localResidual[ic] += phaseCompAmount - phaseCompAmount_n;
         stack.localJacobian[ic][0] += dPhaseCompAmount_dP;
 
@@ -759,9 +756,6 @@ public:
           real64 const dPhaseCompAmount_dC = dPhaseCompFrac_dC[jc] * phaseAmount
                                              + phaseCompFrac[ip][ic] * dPhaseAmount_dC[jc];
 
-          GEOS_ASSERT_MSG( ic == jc + 1 && LvArray::math::abs( dPhaseCompAmount_dC ) < minDensForDivision,
-                           "Zero diagonal in Jacobian" );
-
           stack.localJacobian[ic][jc + 1] += dPhaseCompAmount_dC;
         }
       }
@@ -770,6 +764,13 @@ public:
       // possible use: assemble the derivatives wrt temperature, and the accumulation term of the energy equation for this phase
       phaseAmountKernelOp( ip, phaseAmount, phaseAmount_n, dPhaseAmount_dP, dPhaseAmount_dC );
 
+    }
+
+    // check zero diagonal (works only in debug)
+    for( integer ic = 0; ic < numComp; ++ic )
+    {
+      GEOS_ASSERT_MSG ( LvArray::math::abs( stack.localJacobian[ic][ic] ) > minDensForDivision,
+                        GEOS_FMT( "Zero diagonal in Jacobian: equation {}, value = {}", ic, stack.localJacobian[ic][ic] ) );
     }
   }
 
@@ -787,15 +788,16 @@ public:
 
       stack.localResidual[ic] += compAmount - compAmount_n;
 
+      // Pavel: commented below is some experiment, needs to be re-tested
       //real64 const compDens = (ic == 0 && m_compDens[ei][ic] < 1e-6) ? 1e-3 : m_compDens[ei][ic];
       real64 const dCompAmount_dP = stack.dPoreVolume_dPres * m_compDens[ei][ic];
-      GEOS_ASSERT_MSG( ic == 0 && LvArray::math::abs( dCompAmount_dP ) < minDensForDivision,
-                       "Zero diagonal in Jacobian" );
+      GEOS_ASSERT_MSG( !(ic == 0 && LvArray::math::abs( dCompAmount_dP ) < minDensForDivision),
+                       GEOS_FMT( "Zero diagonal in Jacobian: equation {}, value = {}", ic, dCompAmount_dP ) );
       stack.localJacobian[ic][0] += dCompAmount_dP;
 
       real64 const dCompAmount_dC = stack.poreVolume;
-      GEOS_ASSERT_MSG( ic == ic + 1 && LvArray::math::abs( dCompAmount_dC ) < minDensForDivision,
-                       "Zero diagonal in Jacobian" );
+      GEOS_ASSERT_MSG( !(ic == ic + 1 && LvArray::math::abs( dCompAmount_dC ) < minDensForDivision),
+                       GEOS_FMT( "Zero diagonal in Jacobian: equation {}, value = {}", ic, dCompAmount_dC ) );
       stack.localJacobian[ic][ic + 1] += dCompAmount_dC;
     }
   }
