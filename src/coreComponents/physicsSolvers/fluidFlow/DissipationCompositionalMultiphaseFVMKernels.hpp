@@ -211,8 +211,9 @@ public:
       for( integer ke = 0; ke < numFluxSupportPoints; ++ke )
       {
         trans = std::max( stack.transmissibility[connectionIndex][ke], trans );
-        poreVolume_n += 0.5 *  m_volume[seri[ke]][sesri[ke]][sei[ke]] * m_porosity_n[seri[ke]][sesri[ke]][sei[ke]][0];
+        poreVolume_n += m_volume[seri[ke]][sesri[ke]][sei[ke]] * m_porosity_n[seri[ke]][sesri[ke]][sei[ke]][0];
       }
+      poreVolume_n /= numFluxSupportPoints;
 
       // potential gradient contribution
       // pressure
