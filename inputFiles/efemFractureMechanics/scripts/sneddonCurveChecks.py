@@ -5,6 +5,7 @@ import xml.etree.ElementTree as ElementTree
 import matplotlib
 import matplotlib.pyplot as plt
 
+
 class Sneddon:
 
     def __init__(self, mechanicalParameters, length, pressure):
@@ -19,6 +20,7 @@ class Sneddon:
     def computeAperture(self, x):
         return self.scaling * (self.halfLength**2 - x**2)**0.5
 
+
 def getMechanicalParametersFromXML(xmlFilePath):
     tree = ElementTree.parse(xmlFilePath)
 
@@ -28,6 +30,7 @@ def getMechanicalParametersFromXML(xmlFilePath):
     mechanicalParameters["bulkModulus"] = float(param.get("defaultBulkModulus"))
     mechanicalParameters["shearModulus"] = float(param.get("defaultShearModulus"))
     return mechanicalParameters
+
 
 def getFracturePressureFromXML(xmlFilePath):
     tree = ElementTree.parse(xmlFilePath)
@@ -56,6 +59,7 @@ def getFractureLengthFromXML(xmlFilePath):
 
     return length, origin[1]
 
+
 def sneddon_curve_check_solution(**kwargs):
     # Read HDF5
     localX = np.squeeze(kwargs['displacementJump elementCenter'])[:, 0]
@@ -72,15 +76,15 @@ def sneddon_curve_check_solution(**kwargs):
 
     localX = localX - originShift
 
-    analyticalSolution = Sneddon( mechanicalParameters, length, appliedPressure )
+    analyticalSolution = Sneddon(mechanicalParameters, length, appliedPressure)
     aperture_analytical = np.empty(len(localX))
     i = 0
     for xCell in localX:
-        aperture_analytical[i] = analyticalSolution.computeAperture( xCell )
+        aperture_analytical[i] = analyticalSolution.computeAperture(xCell)
         i += 1
-    
+
     dispJumpAnalytical = np.zeros(np.shape(kwargs['displacementJump']))
-    dispJump  = kwargs['displacementJump']
+    dispJump = kwargs['displacementJump']
 
     dispJumpAnalytical[:, :, 0] = aperture_analytical
 
@@ -140,7 +144,7 @@ def debug():
             label='Embedded Fracture',
             markersize=msize * 0.6,
             alpha=0.8)
-    
+
     ax.grid()
     ax.set_xlabel('Fracture Length [m]', size=fsize, weight="bold")
     ax.set_ylabel('Fracture Aperture [mm]', size=fsize, weight="bold")
@@ -150,8 +154,6 @@ def debug():
 
     plt.savefig("sneddon.png")
 
+
 if __name__ == "__main__":
     debug()
-
-
-
