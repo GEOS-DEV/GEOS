@@ -8,7 +8,6 @@ pandas
 # using plantuml for diagrams
 sphinxcontrib-plantuml
 sphinx-argparse
-pydata-sphinx-theme
 # Running CLI programs and capture outputs
 sphinxcontrib-programoutput==0.17
 # Installing the mesh_doctor requirements to be able to load all the modules and run the help.
