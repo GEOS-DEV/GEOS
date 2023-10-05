@@ -237,7 +237,8 @@ void CompositionalMultiphaseWell::registerDataOnMesh( Group & meshBodies )
         setRestartFlags( RestartFlags::NO_WRITE );
 
       // write rates output header
-      if( getLogLevel() > 0 )
+      // the rank that owns the reference well element is responsible
+      if( getLogLevel() > 0 && subRegion.isLocallyOwned() )
       {
         string const wellControlsName = wellControls.getName();
         string const massUnit = m_useMass ? "kg" : "mol";
@@ -247,10 +248,11 @@ void CompositionalMultiphaseWell::registerDataOnMesh( Group & meshBodies )
         integer const numPhase = m_numPhases;
         // format: time,bhp,total_rate,total_vol_rate,phase0_vol_rate,phase1_vol_rate,...
         std::ofstream outputFile( m_ratesOutputDir + "/" + wellControlsName + ".csv" );
-        outputFile << "time [s],bhp [Pa],total rate ["<<massUnit<<"/s],total " << conditionKey << " volumetric rate ["<<unitKey<<"m3/s]";
+        outputFile << "time [s],bhp [Pa],total rate [" << massUnit << "/s],total " << conditionKey << " volumetric rate [" << unitKey << "m3/s]";
         for( integer ip = 0; ip < numPhase; ++ip )
-          outputFile << ",phase" << ip << " " << conditionKey << " volumetric rate ["<<unitKey<<"m3/s]";
-        outputFile<<std::endl;
+          outputFile << ",phase" << ip << " " << conditionKey << " volumetric rate [" << unitKey << "m3/s]";
+        outputFile << std::endl;
+        outputFile.close();
       }
     } );
   } );
