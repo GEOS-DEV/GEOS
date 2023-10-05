@@ -1,4 +1,3 @@
-
 import numpy as np
 
 
@@ -20,13 +19,13 @@ def curve(**kwargs):
     artificial_stiffness = 1.043
 
     # Calculate max deflection
-    beam_I = beam_size[1] * (beam_size[2] ** 3) / 3
+    beam_I = beam_size[1] * (beam_size[2]**3) / 3
     youngs_modulus = convert_bulk_shear(bulk_modulus, shear_modulus)
     f = traction * beam_size[1] * beam_size[2]
 
     # In the example, the traction is scaled by time
     dy = np.zeros(np.shape(kwargs['totalDisplacement trace']))
     for ii, tb in enumerate(t):
-        dy[ii, :, 1] = max_bending(x, youngs_modulus*artificial_stiffness, beam_I, beam_size[0], f * (tb + 1.0))
+        dy[ii, :, 1] = max_bending(x, youngs_modulus * artificial_stiffness, beam_I, beam_size[0], f * (tb + 1.0))
 
     return dy
