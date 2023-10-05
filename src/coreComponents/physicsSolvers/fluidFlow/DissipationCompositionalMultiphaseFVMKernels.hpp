@@ -230,6 +230,10 @@ public:
       }
 
       // bias towards x and y direction for miscible
+      /* The point of this "directional coefficient" was to add less dissipation flux in the direction of gravity and 
+      more in all other directions.  These hard-coded values of 1000 and 100 were picked by some tuning and as 
+      expected are not robust. Further research/testing is needed to generalize this idea.
+      */
       real64 directional_coef = 1.0;
       if( m_miscibleDBC )
       {
