@@ -628,7 +628,7 @@ void SolidMechanicsConformingFracturesVEM::assembleSystem( real64 const time,
     }
     else
     {
-      GEOSX_LOG_RANK_0( "No stabilization is used!");
+      GEOS_LOG_RANK_0( "No stabilization is used!");
     }
   } );
 }
@@ -2031,13 +2031,14 @@ void SolidMechanicsConformingFracturesVEM::assembleStabilization( MeshLevel cons
 void SolidMechanicsConformingFracturesVEM::applySystemSolution( DofManager const & dofManager,
                                                    arrayView1d< real64 const > const & localSolution,
                                                    real64 const scalingFactor,
+                                                   real64 const dt,
                                                    DomainPartition & domain )
 {
   GEOS_MARK_FUNCTION;
 
   if( m_setupSolidSolverDofs )
   {
-    m_solidSolver->applySystemSolution( dofManager, localSolution, scalingFactor, domain );
+    m_solidSolver->applySystemSolution( dofManager, localSolution, scalingFactor, dt, domain );
   }
 
   dofManager.addVectorToField( localSolution,
