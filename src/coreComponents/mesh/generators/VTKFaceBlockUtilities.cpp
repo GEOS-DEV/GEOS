@@ -115,7 +115,7 @@ private:
 
 
 /**
- * @brief Organize the duplicated nodes information as an @p LvArray::ArrayOfArrays.
+ * @brief Organize the collocated nodes information as an @p LvArray::ArrayOfArrays.
  * @param cns The collocated nodes information.
  * @return An iterable of arrays. Each array containing the global indices of the nodes which are collocated of each others.
  */
@@ -177,7 +177,7 @@ ArrayOfArrays< array1d< globalIndex > > buildCollocatedNodesBucketsOf2dElemsMap(
                                                                                  ArrayOfArrays< globalIndex > const & nodes2dToCollocatedNodes )
 {
   ArrayOfArrays< array1d< globalIndex > > result;
-  // Allocation
+  // Allocation...
   result.resize( elem2dTo2dNodes.size() );
   for( localIndex e2d = 0; e2d < elem2dTo2dNodes.size(); ++e2d )
   {
@@ -190,13 +190,11 @@ ArrayOfArrays< array1d< globalIndex > > buildCollocatedNodesBucketsOf2dElemsMap(
       auto & dest = result( e2d, ni );
       localIndex const node = elem2dTo2dNodes[e2d][ni];
       auto const src = nodes2dToCollocatedNodes[node];
-      dest.reserve( src.size() );
-      // Definition
+      // ...Definition
       for( globalIndex const s: src )
       {
         dest.emplace_back( s );
       }
-//      result( e2d, node ) = nodes2dToCollocatedNodes[node];
     }
   }
 
@@ -269,7 +267,7 @@ ArrayOfArrays< localIndex > buildFace2dToElems2d( vtkPolyData * edges,
  * @param globalPtIds[in] The global point ids.
  * @param edges[in] The edges as computed by vtk.
  * @param collocatedNodes[in] The collocated nodes information.
- * @param nodeToEdgesbin] The node to edges mapping.
+ * @param nodeToEdges[in] The node to edges mapping.
  * @return The 2d face to 3d edge mapping.
  */
 array1d< localIndex > buildFace2dToEdge( vtkIdTypeArray const * globalPtIds,
@@ -586,7 +584,7 @@ array1d< globalIndex > buildLocalToGlobal( vtkIdTypeArray const * faceMeshCellGl
   for( auto i = 0; i < l2g.size(); ++i )
   {
     // Note that `l2g.size()` is zero if `faceMeshGlobalIds` is 0 too.
-    // This prevents from call a member on a null instance.
+    // This prevents from calling a member on a null instance.
     l2g[i] = faceMeshCellGlobalIds->GetValue( i ) + cellGlobalOffset;
   }
 

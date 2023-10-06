@@ -331,12 +331,13 @@ CommunicationTools::assignNewGlobalIndices( ElementRegionManager & elementManage
 
 /**
  * @brief Exchange some @p data with all the @p neighbors. The data received from the @p neighbors is the returned by the function.
- * @tparam DATA_PROVIDER Callable that takes neighbor index @p i and returns an <tt>array1d\< globalIndex \></tt>.
+ * @tparam DATA_PROVIDER Callable that takes neighbor index @p i and returns an <tt>array1d\< globalIndex \></tt> which will be sent.
  * Note that the index @p i is the index of the @p neighbor in the @p neighbors list, not its MPI rank.
  * @param commId MPI communicator Id.
  * @param neighbors List of all the concerned neighbor communicators.
  * @param data Provides the data to be sent to each neighbor.
- * @return The data sent by all the @p neighbors. Data at index @p i coming from neighbor at index @p i in the list of @p neighbors.
+ * @return The data received from all the @p neighbors. Data at index @p i coming from neighbor at index @p i in the list of @p neighbors.
+>>>>>>> develop
  */
 template< class DATA_PROVIDER >
 array1d< array1d< globalIndex > > exchange( int commId,
@@ -384,7 +385,7 @@ CommunicationTools::buildNeighborPartitionBoundaryObjects( ObjectManagerBase & m
   array1d< globalIndex > const globalPartitionBoundaryObjectsIndices = manager.constructGlobalListOfBoundaryObjects();
 
   // The data functor will return the same information, whatever the rank `i` is.
-  // This is because the `exchange` function is able to send different data depending on the rank.
+  // This is because the `exchange` function is able to send different data to different neighbors.
   // Since in our precise case, we want to send the same information, we adapt the functor that way.
   auto const data = [&]( auto GEOS_UNUSED_PARAM( i ) ) -> array1d< globalIndex > const &
   {
@@ -439,7 +440,7 @@ CommunicationTools::
 }
 
 /**
- * @brief During the ghosting process, some nodes may be on multiple ranks in the same time.
+ * @brief During the ghosting process, some nodes may already be on multiple ranks in the same time.
  * But if we want to send those nodes, the rank with the lowest MPI rank really owns the node,
  * and therefore should be responsible for sending the node to the others.
  * @param mpiRankToNodes For each involved mpi rank, all the nodes that need to be sent.

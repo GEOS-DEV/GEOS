@@ -95,9 +95,11 @@ redistribute( vtkPartitionedDataSet & localParts,
     }
   } );
 
-  // At this point of the process, it is legitimate to have ranks with no cells for the case of fractures.
-  // But this leaves us with a technical problem since `vtkAppendFilter` that will be using to merge the different pieces of the meshes
-  // discards the empty the data sets it merges. The definition of "empty" in this context is having no points nor cells...
+  // At this point of the process, it is legitimate to have ranks with no cells for the cases with fractures.
+  // But this leaves us with a technical problem since `vtkAppendFilter`
+  // (that will be used to merge the different pieces of the meshes)
+  // discards the empty the data sets it merges.
+  // The definition of "empty" in its context is having no points nor cells...
   //
   // However, some other information which was defined in the discarded data sets gets lost too!
   // In particular, the cell, points and field data were _defined_, but _legitimately_ _empty_.
@@ -108,7 +110,7 @@ redistribute( vtkPartitionedDataSet & localParts,
   // To circumvent this issue, we gather the point, cell and field data by hand,
   // before registering them by hand again into the final `vtkUnstructuredGrid`.
 
-  // This little structure stores the information we'll need to register back
+  // This little structure stores the information we'll need to register back into
   // the cell, points and field data into the final vtkUnstructuredGrid.
   // We should not need it outside of this function, but if we needed, make it a little more solid.
   struct FieldMetaInfo
