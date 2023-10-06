@@ -1371,7 +1371,7 @@ void SolidMechanicsLagrangianFEM::applyContactConstraint( DofManager const & dof
 }
 
 real64
-SolidMechanicsLagrangianFEM::scalingForSystemSolution( DomainPartition const & domain,
+SolidMechanicsLagrangianFEM::scalingForSystemSolution( DomainPartition & domain,
                                                        DofManager const & dofManager,
                                                        arrayView1d< real64 const > const & localSolution )
 {
