@@ -190,6 +190,7 @@ ArrayOfArrays< array1d< globalIndex > > buildCollocatedNodesBucketsOf2dElemsMap(
       auto & dest = result( e2d, ni );
       localIndex const node = elem2dTo2dNodes[e2d][ni];
       auto const src = nodes2dToCollocatedNodes[node];
+      dest.reserve( src.size() );
       // ...Definition
       for( globalIndex const s: src )
       {
