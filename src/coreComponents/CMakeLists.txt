@@ -124,7 +124,7 @@ if( GEOS_ENABLE_TESTS )
 endif( )
 
 ########################################################################
-# the following commmand adds `unittests` Cmake target such that running `$ make unittests test`
+# the following adds a `unittests` CMake target such that running `$ make unittests test`
 # builds the unit tests before running them
 function(get_all_test_targets var)
     set(targets)
@@ -147,6 +147,5 @@ macro(get_all_test_targets_recursive targets dir)
 endmacro()
 
 get_all_test_targets(unittests_targets)
-# message(STATUS "UnitTests: ${unittests_targets}")
 add_custom_target(unittests COMMAND ${CMAKE_CTEST_COMMAND} DEPENDS ${unittests_targets})
 ########################################################################
