@@ -11,12 +11,11 @@ build:
   - texlive
   tools:
     nodejs: "16"
-    python: "3.7"
+    python: "3.10"
   jobs:
     post_install:
     - npm install -g npm@9.8.1
     - npm install -g @mermaid-js/mermaid-cli@10.3.1
-    - pip install --upgrade pip
 
 # Set requirements to build the docs
 python:
