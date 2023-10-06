@@ -337,7 +337,6 @@ CommunicationTools::assignNewGlobalIndices( ElementRegionManager & elementManage
  * @param neighbors List of all the concerned neighbor communicators.
  * @param data Provides the data to be sent to each neighbor.
  * @return The data received from all the @p neighbors. Data at index @p i coming from neighbor at index @p i in the list of @p neighbors.
->>>>>>> develop
  */
 template< class DATA_PROVIDER >
 array1d< array1d< globalIndex > > exchange( int commId,
