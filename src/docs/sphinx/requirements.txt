@@ -6,7 +6,8 @@ mpmath
 docutils<0.18
 pandas
 # using plantuml for diagrams
-sphinx-rtd-theme
+sphinx>7.0.0
+sphinx-pydata-theme>0.13
 sphinxcontrib-plantuml
 sphinx-argparse
 # Running CLI programs and capture outputs
