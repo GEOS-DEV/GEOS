@@ -1,5 +1,6 @@
+########################
 GEOS Documentation
-=================================
+########################
 
 Welcome to our documentation pages!
 
@@ -25,6 +26,11 @@ comprehensive resource, but probably not the place to start.
 High quality documentation is a critical component of a successful code.  If
 you have suggestions for improving the guides below, please post an issue on our
 `issue tracker <https://github.com/GEOS-DEV/GEOS/issues>`_.
+
+
+********************
+Table of Contents
+********************
 
 .. toctree::
    :maxdepth: 2
@@ -55,8 +61,9 @@ you have suggestions for improving the guides below, please post an issue on our
 
    docs/sphinx/Acknowledgements
 
+*********************
 Indices and tables
-==================
+*********************
 
 * :ref:`genindex`
 * :ref:`modindex`

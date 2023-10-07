@@ -80,7 +80,7 @@ if read_the_docs_build:
 # -- Project information -----------------------------------------------------
 
 project = u'GEOSX'
-copyright = u'2018-2021 Lawrence Livermore National Security, The Board of Trustees of the Leland Stanford Junior University, TotalEnergies, and GEOSX Contributors.'
+copyright = u'2018-2021 Lawrence Livermore National Security, \nThe Board of Trustees of the Leland Stanford Junior University, \nTotalEnergies, and GEOSX Contributors.'
 author = u'GEOSX Contributors'
 
 # The short X.Y version
