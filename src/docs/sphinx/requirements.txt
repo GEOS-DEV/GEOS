@@ -6,7 +6,6 @@ mpmath
 docutils<0.18
 pandas
 # using plantuml for diagrams
-Sphinx>=7.0.0
 sphinx-pydata-theme
 sphinxcontrib-plantuml
 sphinx-argparse
