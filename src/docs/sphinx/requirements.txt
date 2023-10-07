@@ -6,11 +6,11 @@ mpmath
 docutils<0.18
 pandas
 # using plantuml for diagrams
-sphinx>7.0.0
-sphinx-pydata-theme>0.13
+Sphinx>=7.0.0
+sphinx-pydata-theme>=0.13
 sphinxcontrib-plantuml
 sphinx-argparse
 # Running CLI programs and capture outputs
-sphinxcontrib-programoutput==0.17
+sphinxcontrib-programoutput>=0.17
 # Installing the mesh_doctor requirements to be able to load all the modules and run the help.
 -r ../../coreComponents/python/modules/geosx_mesh_doctor/requirements.txt
