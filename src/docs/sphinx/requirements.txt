@@ -3,7 +3,7 @@ matplotlib
 numpy
 h5py
 mpmath
-docutils<0.18
+docutils>=0.18
 pandas
 # using plantuml for diagrams
 Sphinx>=7.0.0
