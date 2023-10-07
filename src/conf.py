@@ -80,7 +80,7 @@ if read_the_docs_build:
 # -- Project information -----------------------------------------------------
 
 project = u'GEOSX'
-copyright = u'2018-2021 Lawrence Livermore National Security, \nThe Board of Trustees of the Leland Stanford Junior University, \nTotalEnergies, and GEOSX Contributors.'
+copyright = u'2018-2021 Lawrence Livermore National Security, The Board of Trustees of the Leland Stanford Junior University, TotalEnergies, and GEOSX Contributors.'
 author = u'GEOSX Contributors'
 
 # The short X.Y version
@@ -99,7 +99,7 @@ release = u''
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-    # 'sphinx.ext.imgmath',
+    'sphinx_design',
     'sphinx.ext.todo',
     'sphinx.ext.autodoc',
     'sphinx.ext.doctest',
@@ -151,7 +151,10 @@ pygments_style = 'sphinx'
 
 # -- Options for HTML output -------------------------------------------------
 html_theme = "pydata_sphinx_theme"
-html_theme_options = {'navigation_depth': -1, 'collapse_navigation': False}
+html_theme_options = {
+    'navigation_depth': -1,
+    'collapse_navigation': False
+}
 
 
 # The name for this set of Sphinx documents.  If None, it defaults to

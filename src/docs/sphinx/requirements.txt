@@ -10,6 +10,7 @@ Sphinx>=7.0.0
 pydata-sphinx-theme
 sphinxcontrib-plantuml
 sphinx-argparse
+sphinx-design
 # Running CLI programs and capture outputs
 sphinxcontrib-programoutput>=0.17
 # Installing the mesh_doctor requirements to be able to load all the modules and run the help.
