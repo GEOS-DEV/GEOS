@@ -313,12 +313,10 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::updateDeformationForCoupling( 
       using ContactType = TYPEOFREF( castedContact );
       typename ContactType::KernelWrapper contactWrapper = castedContact.createKernelWrapper();
 
-      real64 const penaltyStiffness = castedContact.stiffness();
 
       hydrofractureSolverKernels::DeformationUpdateKernel
         ::launch< parallelDevicePolicy<> >( subRegion.size(),
                                             contactWrapper,
-                                            penaltyStiffness,
                                             u,
                                             faceNormal,
                                             faceToNodeMap,
@@ -809,13 +807,10 @@ assembleFluidMassResidualDerivativeWrtDisplacement( DomainPartition const & doma
         using ContactType = TYPEOFREF( castedContact );
         typename ContactType::KernelWrapper contactWrapper = castedContact.createKernelWrapper();
 
-        real64 const penaltyStiffness = castedContact.stiffness();
-
         hydrofractureSolverKernels::FluidMassResidualDerivativeAssemblyKernel::
           launch< parallelDevicePolicy<> >( subRegion.size(),
                                             rankOffset,
                                             contactWrapper,
-                                            penaltyStiffness,
                                             elemsToFaces,
                                             faceToNodeMap,
                                             faceNormal,
