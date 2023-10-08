@@ -35,7 +35,6 @@ struct DeformationUpdateKernel
   static void
   launch( localIndex const size,
           CONTACT_WRAPPER const & contactWrapper,
-          real64 const contactStiffness,
           arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const & u,
           arrayView2d< real64 const > const & faceNormal,
           ArrayOfArraysView< localIndex const > const & faceToNodeMap,
@@ -71,19 +70,10 @@ struct DeformationUpdateKernel
       }
 
       // TODO this needs a proper contact based strategy for aperture
-      real64 const mechanicalAperture = -LvArray::tensorOps::AiBi< 3 >( temp, faceNormal[ kf0 ] ) / numNodesPerFace;
-      aperture[kfe] = mechanicalAperture;
-
-      real64 const refNormalStress = 5e7;
+      aperture[kfe] = -LvArray::tensorOps::AiBi< 3 >( temp, faceNormal[ kf0 ] ) / numNodesPerFace;
 
       real64 dHydraulicAperture_dAperture = 0.0;
-      // hydraulicAperture[kfe] = contactWrapper.computeHydraulicAperture( aperture[kfe], dHydraulicAperture_dAperture );
-
-      GEOS_UNUSED_VAR( contactWrapper );
-
-      real64 const penaltyNormalStress = -contactStiffness * mechanicalAperture;
-
-      hydraulicAperture[kfe] = (mechanicalAperture >= 0.0)? (mechanicalAperture + refAperture[kfe]) : refAperture[kfe] / ( 1 + 9*penaltyNormalStress/refNormalStress );
+      hydraulicAperture[kfe] = contactWrapper.computeHydraulicAperture( aperture[kfe], refAperture[kfe], dHydraulicAperture_dAperture );
 
       GEOS_UNUSED_VAR( dHydraulicAperture_dAperture );
 
@@ -115,7 +105,6 @@ struct FluidMassResidualDerivativeAssemblyKernel
   inline
   static void
   computeAccumulationDerivative( CONTACT_WRAPPER const & contactWrapper,
-                                 real64 const contactStiffness,
                                  localIndex const numNodesPerFace,
                                  arraySlice1d< localIndex const > const elemsToFaces,
                                  ArrayOfArraysView< localIndex const > const faceToNodeMap,
@@ -140,17 +129,9 @@ struct FluidMassResidualDerivativeAssemblyKernel
           real64 const dGap_dU = kfSign[kf] * Nbar[i] / numNodesPerFace;
 
           real64 dHydraulicAperture_dAperture = 0;
-          // real64 const hydraulicAperture = contactWrapper.computeHydraulicAperture( aperture, dHydraulicAperture_dAperture );
-          GEOS_UNUSED_VAR( contactWrapper );
+          real64 const hydraulicAperture = contactWrapper.computeHydraulicAperture( aperture, refAperture, dHydraulicAperture_dAperture );
 
-          real64 const refNormalStress = 5e7;
-
-          real64 const penaltyNormalStress = -contactStiffness * aperture;
-
-          real64 const hydraulicAperture = (aperture >= 0.0)? (aperture + refAperture) : refAperture / ( 1 + 9*penaltyNormalStress/refNormalStress );
-          real64 const dHydraulicAperture_dNormalStress = -hydraulicAperture / ( 1 + 9*penaltyNormalStress/refNormalStress ) * 9/refNormalStress;
-
-          dHydraulicAperture_dAperture = (aperture >= 0.0)? 1.0:dHydraulicAperture_dNormalStress * -contactStiffness;
+          GEOS_UNUSED_VAR( hydraulicAperture );
 
           real64 const dAper_dU = dHydraulicAperture_dAperture * dGap_dU;
 
@@ -165,7 +146,6 @@ struct FluidMassResidualDerivativeAssemblyKernel
   inline
   static void
   computeFluxDerivative( CONTACT_WRAPPER const & contactWrapper,
-                         real64 const contactStiffness,
                          localIndex const kfe2,
                          localIndex const numNodesPerFace,
                          arraySlice1d< localIndex const > const & columns,
@@ -194,17 +174,9 @@ struct FluidMassResidualDerivativeAssemblyKernel
           real64 const dGap_dU = kfSign[kf] * Nbar[i] / numNodesPerFace;
 
           real64 dHydraulicAperture_dAperture = 0.0;
-          // real64 const hydraulicAperture = contactWrapper.computeHydraulicAperture( aperture[ei2], dHydraulicAperture_dAperture );
-          GEOS_UNUSED_VAR( contactWrapper );
+          real64 const hydraulicAperture = contactWrapper.computeHydraulicAperture( aperture[ei2], refAperture[ei2], dHydraulicAperture_dAperture );
 
-          real64 const refNormalStress = 5e7;
-
-          real64 const penaltyNormalStress = -contactStiffness * aperture[ei2];
-
-          real64 const hydraulicAperture = (aperture[ei2] >= 0.0)? (aperture[ei2] + refAperture[ei2]) : refAperture[ei2] / ( 1 + 9*penaltyNormalStress/refNormalStress );
-          real64 const dHydraulicAperture_dNormalStress = -hydraulicAperture / ( 1 + 9*penaltyNormalStress/refNormalStress ) * 9/refNormalStress;
-
-          dHydraulicAperture_dAperture = (aperture[ei2] >= 0.0)? 1.0:dHydraulicAperture_dNormalStress * -contactStiffness;
+          GEOS_UNUSED_VAR( hydraulicAperture );
 
           real64 const dAper_dU = dHydraulicAperture_dAperture * dGap_dU;
 
@@ -219,7 +191,6 @@ struct FluidMassResidualDerivativeAssemblyKernel
   launch( localIndex const size,
           globalIndex const rankOffset,
           CONTACT_WRAPPER const & contactWrapper,
-          real64 const contactStiffness,
           ArrayOfArraysView< localIndex const > const elemsToFaces,
           ArrayOfArraysView< localIndex const > const faceToNodeMap,
           arrayView2d< real64 const > const faceNormal,
@@ -245,7 +216,6 @@ struct FluidMassResidualDerivativeAssemblyKernel
       stackArray1d< real64, 24 > dRdU( 2 * numNodesPerFace * 3 );
 //
       computeAccumulationDerivative( contactWrapper,
-                                     contactStiffness,
                                      numNodesPerFace,
                                      elemsToFaces[ei],
                                      faceToNodeMap,
@@ -273,7 +243,6 @@ struct FluidMassResidualDerivativeAssemblyKernel
       for( localIndex kfe2 = 0; kfe2 < numColumns; ++kfe2 )
       {
         computeFluxDerivative( contactWrapper,
-                               contactStiffness,
                                kfe2,
                                numNodesPerFace,
                                columns,
