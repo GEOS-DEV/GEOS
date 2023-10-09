@@ -108,4 +108,7 @@ set(ENABLE_PETSC OFF CACHE BOOL "")
 set(ENABLE_HYPRE ON CACHE BOOL "")
 set(ENABLE_HYPRE_DEVICE "CUDA" CACHE BOOL "")
 
+# activate workaround for fmt formatter
+set(ENABLE_FMT_CONST_FORMATTER_WORKAROUND ON CACHE BOOL "")
+
 include( ${CMAKE_CURRENT_LIST_DIR}/../tpls.cmake )
