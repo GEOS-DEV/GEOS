@@ -248,7 +248,7 @@ real64 ContactBaseUpdates::computeHydraulicAperture( real64 const aperture,
                                                      real64 & dHydraulicAperture_dAperture ) const
 {
   dHydraulicAperture_dAperture = 1;
-  return aperture; 
+  return aperture;
 }
 
 GEOS_HOST_DEVICE
