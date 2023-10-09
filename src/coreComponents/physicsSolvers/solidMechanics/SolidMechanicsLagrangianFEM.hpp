@@ -136,6 +136,7 @@ public:
   applySystemSolution( DofManager const & dofManager,
                        arrayView1d< real64 const > const & localSolution,
                        real64 const scalingFactor,
+                       real64 const dt,
                        DomainPartition & domain ) override;
 
   virtual void updateState( DomainPartition & domain ) override final
@@ -174,6 +175,7 @@ public:
                        DofManager const & dofManager,
                        CRSMatrixView< real64, globalIndex const > const & localMatrix,
                        arrayView1d< real64 > const & localRhs,
+                       real64 const dt,
                        PARAMS && ... params );
 
 
@@ -215,7 +217,7 @@ public:
                                arrayView1d< real64 > const & localRhs );
 
   virtual real64
-  scalingForSystemSolution( DomainPartition const & domain,
+  scalingForSystemSolution( DomainPartition & domain,
                             DofManager const & dofManager,
                             arrayView1d< real64 const > const & localSolution ) override;
 
@@ -290,7 +292,7 @@ protected:
   integer m_strainTheory;
   string m_contactRelationName;
   MPI_iCommData m_iComm;
-  integer m_pressurizedDamageFlag; 
+  integer m_pressurizedDamageFlag;
   bool m_isFixedStressPoromechanicsUpdate;
 
   /// Rigid body modes
@@ -318,6 +320,7 @@ void SolidMechanicsLagrangianFEM::assemblyLaunch( DomainPartition & domain,
                                                   DofManager const & dofManager,
                                                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                   arrayView1d< real64 > const & localRhs,
+                                                  real64 const dt,
                                                   PARAMS && ... params )
 {
   GEOS_MARK_FUNCTION;
@@ -337,6 +340,7 @@ void SolidMechanicsLagrangianFEM::assemblyLaunch( DomainPartition & domain,
                                   dofManager.rankOffset(),
                                   localMatrix,
                                   localRhs,
+                                  dt,
                                   gravityVectorData,
                                   std::forward< PARAMS >( params )... );
 

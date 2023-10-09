@@ -50,7 +50,7 @@ void PhaseFieldPoromechanicsSolver::postProcessInput()
 {
   Base::postProcessInput();
   GEOS_WARNING_IF( getNonlinearSolverParameters().m_couplingType == NonlinearSolverParameters::CouplingType::FullyImplicit,
-                    "FullyImplicit coupling not implemented for this solver. A sequential coupling approach will be used." );
+                   "FullyImplicit coupling not implemented for this solver. A sequential coupling approach will be used." );
   getNonlinearSolverParameters().m_couplingType = NonlinearSolverParameters::CouplingType::Sequential;
 }
 

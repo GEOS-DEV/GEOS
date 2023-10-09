@@ -77,6 +77,7 @@ public:
   using Base::m_elemsToNodes;
   using Base::m_constitutiveUpdate;
   using Base::m_finiteElementSpace;
+  using Base::m_dt;
 
   /// Maximum number of nodes per element, which is equal to the maxNumTestSupportPointPerElem and
   /// maxNumTrialSupportPointPerElem by definition. When the FE_TYPE is not a Virtual Element, this
@@ -100,6 +101,7 @@ public:
                                      globalIndex const rankOffset,
                                      CRSMatrixView< real64, globalIndex const > const inputMatrix,
                                      arrayView1d< real64 > const inputRhs,
+                                     real64 const inputDt,
                                      string const fieldName,
                                      int const localDissipationOption ):
     Base( nodeManager,
@@ -112,7 +114,8 @@ public:
           inputDofNumber,
           rankOffset,
           inputMatrix,
-          inputRhs ),
+          inputRhs,
+          inputDt ),
     m_X( nodeManager.referencePosition()),
     m_disp( nodeManager.getField< fields::solidMechanics::totalDisplacement >() ),
     m_nodalDamage( nodeManager.template getReference< array1d< real64 > >( fieldName )),
@@ -337,6 +340,7 @@ using PhaseFieldPressurizedDamageKernelFactory = finiteElement::KernelFactory< P
                                                                                globalIndex,
                                                                                CRSMatrixView< real64, globalIndex const > const,
                                                                                arrayView1d< real64 > const,
+                                                                               real64 const,
                                                                                string const,
                                                                                int >;
 

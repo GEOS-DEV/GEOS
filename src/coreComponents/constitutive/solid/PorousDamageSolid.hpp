@@ -222,7 +222,7 @@ private:
                            DiscretizationOps & stiffness ) const
   {
     GEOS_UNUSED_VAR( pressure_n );
-    
+
     // Compute total stress increment and its derivative w.r.t. pressure
     m_solidUpdate.smallStrainUpdate( k,
                                      q,
@@ -244,9 +244,9 @@ private:
 
     LvArray::tensorOps::symAddIdentity< 3 >( totalStress, pressureDamage * pressure_n - damagedBiotCoefficient * pressure - 3 * thermalExpansionCoefficientTimesBulkModulus * deltaTemperature );
 
-    dTotalStress_dPressure[0] = - damagedBiotCoefficient;
-    dTotalStress_dPressure[1] = - damagedBiotCoefficient;
-    dTotalStress_dPressure[2] = - damagedBiotCoefficient;
+    dTotalStress_dPressure[0] = -damagedBiotCoefficient;
+    dTotalStress_dPressure[1] = -damagedBiotCoefficient;
+    dTotalStress_dPressure[2] = -damagedBiotCoefficient;
     dTotalStress_dPressure[3] = 0;
     dTotalStress_dPressure[4] = 0;
     dTotalStress_dPressure[5] = 0;

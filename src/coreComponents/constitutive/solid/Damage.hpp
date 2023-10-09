@@ -83,7 +83,7 @@ public:
                  real64 const & inputTensileStrength,
                  real64 const & inputCompressStrength,
                  real64 const & inputDeltaCoefficient,
-                 real64 const & inputDamagePressure, 
+                 real64 const & inputDamagePressure,
                  arrayView1d< real64 > const & inputBiotCoefficient,
                  PARAMS && ... baseParams ):
     UPDATE_BASE( std::forward< PARAMS >( baseParams )... ),
@@ -376,7 +376,7 @@ public:
   real64 const m_tensileStrength;
   real64 const m_compressStrength;
   real64 const m_deltaCoefficient;
-  real64 const m_damagePressure; 
+  real64 const m_damagePressure;
 
   arrayView1d< real64 > const m_biotCoefficient;
 };
@@ -459,7 +459,7 @@ public:
     static constexpr char const * deltaCoefficientString() { return "deltaCoefficient"; }
     /// string/key for the Biot coefficient
     static constexpr char const * biotCoefficientString() { return "biotCoefficient"; }
-    /// string/key for the uniform pressure inside the crack 
+    /// string/key for the uniform pressure inside the crack
     static constexpr char const * damagePressureString() { return "damagePressure"; }
   };
 
@@ -479,7 +479,7 @@ protected:
   real64 m_tensileStrength;
   real64 m_compressStrength;
   real64 m_deltaCoefficient;
-  real64 m_damagePressure; 
+  real64 m_damagePressure;
   array1d< real64 > m_biotCoefficient;
 };
 

@@ -25,6 +25,7 @@
 #include "DruckerPrager.hpp"
 #include "DruckerPragerExtended.hpp"
 #include "ModifiedCamClay.hpp"
+#include "DuvautLionsSolid.hpp"
 
 namespace geos
 {
@@ -49,7 +50,11 @@ typedef PorousSolid< ElasticOrthotropic > PorousElasticOrthotropic;
 typedef PorousSolid< DelftEgg > PorousDelftEgg;
 typedef PorousSolid< DruckerPrager > PorousDruckerPrager;
 typedef PorousSolid< DruckerPragerExtended > PorousDruckerPragerExtended;
+//typedef PorousSolid< DuvautLionsSolid< DruckerPrager > > PorousViscoDruckerPrager;
+//typedef PorousSolid< DuvautLionsSolid< DruckerPragerExtended > > PorousViscoDruckerPragerExtended;
+//typedef PorousSolid< DuvautLionsSolid< ModifiedCamClay > > PorousViscoModifiedCamClay;
 typedef PorousSolid< ModifiedCamClay > PorousModifiedCamClay;
+
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, PorousElasticIsotropic, string const &, Group * const )
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, PorousElasticTransverseIsotropic, string const &, Group * const )
@@ -58,6 +63,10 @@ REGISTER_CATALOG_ENTRY( ConstitutiveBase, PorousDelftEgg, string const &, Group 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, PorousDruckerPrager, string const &, Group * const )
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, PorousDruckerPragerExtended, string const &, Group * const )
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, PorousModifiedCamClay, string const &, Group * const )
+//REGISTER_CATALOG_ENTRY( ConstitutiveBase, PorousViscoDruckerPrager, string const &, Group * const )
+//REGISTER_CATALOG_ENTRY( ConstitutiveBase, PorousViscoDruckerPragerExtended, string const &, Group * const )
+//REGISTER_CATALOG_ENTRY( ConstitutiveBase, PorousViscoModifiedCamClay, string const &, Group * const )
+
 
 }
 } /* namespace geos */

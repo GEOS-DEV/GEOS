@@ -84,6 +84,7 @@ public:
   using Base::m_constitutiveUpdate;
   using Base::m_finiteElementSpace;
   using Base::m_meshData;
+  using Base::m_dt;
 
 
   /**
@@ -102,7 +103,8 @@ public:
                                                    globalIndex const rankOffset,
                                                    CRSMatrixView< real64, globalIndex const > const inputMatrix,
                                                    arrayView1d< real64 > const inputRhs,
-                                                   real64 const (&inputGravityVector)[3], 
+                                                   real64 const inputDt,
+                                                   real64 const (&inputGravityVector)[3],
                                                    real64 const currentTime );
 
   //*****************************************************************************
@@ -265,6 +267,7 @@ using QuasiStaticPressurizedDamageFactory = finiteElement::KernelFactory< Implic
                                                                           globalIndex,
                                                                           CRSMatrixView< real64, globalIndex const > const,
                                                                           arrayView1d< real64 > const,
+                                                                          real64 const,
                                                                           real64 const (&)[3],
                                                                           real64 >;
 

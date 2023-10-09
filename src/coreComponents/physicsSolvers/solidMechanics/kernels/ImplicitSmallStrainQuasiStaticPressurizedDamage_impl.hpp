@@ -43,6 +43,7 @@ ImplicitSmallStrainQuasiStaticPressurizedDamage( NodeManager const & nodeManager
                                                  globalIndex const rankOffset,
                                                  CRSMatrixView< real64, globalIndex const > const inputMatrix,
                                                  arrayView1d< real64 > const inputRhs,
+                                                 real64 const dt,
                                                  real64 const (&inputGravityVector)[3],
                                                  real64 const currentTime ):
   Base( nodeManager,
@@ -55,7 +56,8 @@ ImplicitSmallStrainQuasiStaticPressurizedDamage( NodeManager const & nodeManager
         inputDofNumber,
         rankOffset,
         inputMatrix,
-        inputRhs ),
+        inputRhs,
+        dt ),
   m_X( nodeManager.referencePosition()),
   m_disp( nodeManager.getField< fields::solidMechanics::totalDisplacement >() ),
   m_uhat( nodeManager.getField< fields::solidMechanics::incrementalDisplacement >() ),
@@ -110,9 +112,9 @@ template< typename STRESS_MODIFIER >
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
 void ImplicitSmallStrainQuasiStaticPressurizedDamage< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::quadraturePointKernel( localIndex const k,
-                                                                                                          localIndex const q,
-                                                                                                          StackVariables & stack,
-                                                                                                          STRESS_MODIFIER && stressModifier ) const
+                                                                                                                           localIndex const q,
+                                                                                                                           StackVariables & stack,
+                                                                                                                           STRESS_MODIFIER && stressModifier ) const
 {
   real64 dNdX[ numNodesPerElem ][ 3 ];
   real64 const detJxW = m_finiteElementSpace.template getGradN< FE_TYPE >( k, q, stack.xLocal,
@@ -170,7 +172,7 @@ template< typename SUBREGION_TYPE,
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
 real64 ImplicitSmallStrainQuasiStaticPressurizedDamage< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::complete( localIndex const k,
-                                                                                               StackVariables & stack ) const
+                                                                                                                StackVariables & stack ) const
 {
   GEOS_UNUSED_VAR( k );
   real64 maxForce = 0;
@@ -208,7 +210,7 @@ template< typename POLICY,
           typename KERNEL_TYPE >
 real64
 ImplicitSmallStrainQuasiStaticPressurizedDamage< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::kernelLaunch( localIndex const numElems,
-                                                                                            KERNEL_TYPE const & kernelComponent )
+                                                                                                             KERNEL_TYPE const & kernelComponent )
 {
   return Base::template kernelLaunch< POLICY, KERNEL_TYPE >( numElems, kernelComponent );
 }

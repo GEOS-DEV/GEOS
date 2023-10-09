@@ -48,7 +48,7 @@ public:
                        real64 const & inputTensileStrength,
                        real64 const & inputCompressStrength,
                        real64 const & inputDeltaCoefficient,
-                       real64 const & inputDamagePressure, 
+                       real64 const & inputDamagePressure,
                        arrayView1d< real64 > const & inputBiotCoefficient,
                        PARAMS && ... baseParams ):
     DamageUpdates< UPDATE_BASE >( inputNewDamage, inputOldDamage, inputDamageGrad, inputStrainEnergyDensity, inputVolumetricStrain, inputExtDrivingForce, inputLengthScale,

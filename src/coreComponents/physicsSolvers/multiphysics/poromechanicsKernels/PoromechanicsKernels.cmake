@@ -26,9 +26,6 @@ set( porousSolidDispatch PorousSolid<DruckerPragerExtended>
                          PorousSolid<DamageSpectral<ElasticIsotropic>>
                          PorousSolid<DamageVolDev<ElasticIsotropic>>
                          PorousSolid<Damage<ElasticIsotropic>> )
-##                         PorousSolid<DuvautLionsSolid<DruckerPrager>>
-##                         PorousSolid<DuvautLionsSolid<DruckerPragerExtended>>
-##                         PorousSolid<DuvautLionsSolid<ModifiedCamClay>> )
 
 set( porousDamageSolidDispatch PorousDamageSolid<Damage<ElasticIsotropic>>
                                PorousDamageSolid<DamageSpectral<ElasticIsotropic>>

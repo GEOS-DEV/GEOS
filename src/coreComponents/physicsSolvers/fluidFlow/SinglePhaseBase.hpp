@@ -313,7 +313,7 @@ public:
   {
     GEOS_UNUSED_VAR( domain );
   }
-  
+
   /**
    * @brief Utility function to keep the flow variables during a time step (used in poromechanics simulations)
    * @param[in] keepFlowVariablesConstantDuringInitStep flag to tell the solver to freeze its primary variables during a time step

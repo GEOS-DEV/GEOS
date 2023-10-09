@@ -76,6 +76,7 @@ public:
   using Base::m_elemsToNodes;
   using Base::m_constitutiveUpdate;
   using Base::m_finiteElementSpace;
+  using Base::m_dt;
 
   /// Maximum number of nodes per element, which is equal to the maxNumTestSupportPointPerElem and
   /// maxNumTrialSupportPointPerElem by definition. When the FE_TYPE is not a Virtual Element, this
@@ -99,6 +100,7 @@ public:
                           globalIndex const rankOffset,
                           CRSMatrixView< real64, globalIndex const > const inputMatrix,
                           arrayView1d< real64 > const inputRhs,
+                          real64 const inputDt,
                           string const fieldName,
                           int const localDissipationOption,
                           real64 const inputCurrentTime ):
@@ -112,12 +114,13 @@ public:
           inputDofNumber,
           rankOffset,
           inputMatrix,
-          inputRhs ),
+          inputRhs,
+          inputDt ),
     m_X( nodeManager.referencePosition()),
     m_nodalDamage( nodeManager.template getReference< array1d< real64 > >( fieldName )),
     m_quadDamage( inputConstitutiveType.getNewDamage() ),
     m_quadExtDrivingForce( inputConstitutiveType.getExtDrivingForce() ),
-    m_localDissipationOption( localDissipationOption ), 
+    m_localDissipationOption( localDissipationOption ),
     m_currentTime( inputCurrentTime )
   {}
 
@@ -197,7 +200,7 @@ public:
     real64 const Gc = m_constitutiveUpdate.getCriticalFractureEnergy();
     real64 const threshold = m_constitutiveUpdate.getEnergyThreshold( k, q );
     real64 const volStrain = m_constitutiveUpdate.getVolStrain( k, q );
-    real64 const currentDamagePressure = m_currentTime * m_constitutiveUpdate.getDamagePressure(); 
+    real64 const currentDamagePressure = m_currentTime * m_constitutiveUpdate.getDamagePressure();
 
     //Interpolate d and grad_d
     real64 N[ numNodesPerElem ];
@@ -233,8 +236,8 @@ public:
 
       }
 
-      /// Add the pressure term 
-      stack.localResidual[ a ] -= detJ * 0.5 * ell/Gc * ( volStrain * currentDamagePressure * m_constitutiveUpdate.pressureDamageFunctionDerivative( qp_damage ) * N[a] ); 
+      /// Add the pressure term
+      stack.localResidual[ a ] -= detJ * 0.5 * ell/Gc * ( volStrain * currentDamagePressure * m_constitutiveUpdate.pressureDamageFunctionDerivative( qp_damage ) * N[a] );
 
       for( localIndex b = 0; b < numNodesPerElem; ++b )
       {
@@ -250,7 +253,7 @@ public:
                                                     + N[a] * N[b] * (1 + m_constitutiveUpdate.getDegradationSecondDerivative( qp_damage ) * ell * strainEnergyDensity/Gc ) );
         }
 
-        stack.localJacobian[ a ][ b ] -= detJ * 0.5 * ell/Gc * 
+        stack.localJacobian[ a ][ b ] -= detJ * 0.5 * ell/Gc *
                                          ( volStrain * currentDamagePressure * m_constitutiveUpdate.pressureDamageFunctionSecondDerivative( qp_damage ) * N[a] * N[b] );
       }
     }
@@ -306,7 +309,7 @@ protected:
 
   int const m_localDissipationOption;
 
-  real64 const m_currentTime; 
+  real64 const m_currentTime;
 
 };
 
@@ -315,6 +318,7 @@ using PhaseFieldDamageKernelFactory = finiteElement::KernelFactory< PhaseFieldDa
                                                                     globalIndex,
                                                                     CRSMatrixView< real64, globalIndex const > const,
                                                                     arrayView1d< real64 > const,
+                                                                    real64 const,
                                                                     string const,
                                                                     int,
                                                                     real64 >;
