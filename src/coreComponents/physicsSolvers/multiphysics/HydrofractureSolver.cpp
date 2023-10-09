@@ -304,7 +304,6 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::updateDeformationForCoupling( 
       hydrofractureSolverKernels::DeformationUpdateKernel
         ::launch< parallelDevicePolicy<> >( subRegion.size(),
                                             contactWrapper,
-                                            m_useQN,
                                             u,
                                             faceNormal,
                                             faceToNodeMap,

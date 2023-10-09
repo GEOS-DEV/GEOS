@@ -35,7 +35,6 @@ struct DeformationUpdateKernel
   static void
   launch( localIndex const size,
           CONTACT_WRAPPER const & contactWrapper,
-          integer const useQN,
           arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const & u,
           arrayView2d< real64 const > const & faceNormal,
           ArrayOfArraysView< localIndex const > const & faceToNodeMap,
@@ -73,15 +72,7 @@ struct DeformationUpdateKernel
       aperture[kfe] = -LvArray::tensorOps::AiBi< 3 >( temp, faceNormal[ kf0 ] ) / numNodesPerFace;
 
       real64 dHydraulicAperture_dAperture = 0;
-      if( useQN == 0 )
-      {
-        hydraulicAperture[kfe] = contactWrapper.computeHydraulicAperture( aperture[kfe], dHydraulicAperture_dAperture );
-      }
-      else
-      {
-        hydraulicAperture[kfe] = aperture[kfe];
-        dHydraulicAperture_dAperture = 1;
-      }
+      hydraulicAperture[kfe] = contactWrapper.computeHydraulicAperture( aperture[kfe], dHydraulicAperture_dAperture );
 
 #ifdef GEOSX_USE_SEPARATION_COEFFICIENT
       real64 const s = aperture[kfe] / apertureAtFailure[kfe];
@@ -149,7 +140,6 @@ struct FluidMassResidualDerivativeAssemblyKernel
   inline
   static void
   computeFluxDerivative( CONTACT_WRAPPER const & contactWrapper,
-                         integer const useQN,
                          localIndex const kfe2,
                          localIndex const numNodesPerFace,
                          arraySlice1d< localIndex const > const & columns,
@@ -173,23 +163,16 @@ struct FluidMassResidualDerivativeAssemblyKernel
       {
         for( localIndex i = 0; i < 3; ++i )
         {
-          if( useQN == 0 )
-          {
-            nodeDOF[kf * 3 * numNodesPerFace + 3 * a + i] = dispDofNumber[faceToNodeMap( elemsToFaces[ei2][kf], a )] + i;
-            real64 const dGap_dU = kfSign[kf] * Nbar[i] / numNodesPerFace;
+          nodeDOF[kf * 3 * numNodesPerFace + 3 * a + i] = dispDofNumber[faceToNodeMap( elemsToFaces[ei2][kf], a )] + i;
+          real64 const dGap_dU = kfSign[kf] * Nbar[i] / numNodesPerFace;
 
-            real64 dHydraulicAperture_dAperture = 0.0;
-            real64 const hydraulicAperture = contactWrapper.computeHydraulicAperture( aperture[ei2],
-                                                                                      dHydraulicAperture_dAperture );
-            GEOS_UNUSED_VAR( hydraulicAperture );
-            real64 const dAper_dU = dHydraulicAperture_dAperture * dGap_dU;
+          real64 dHydraulicAperture_dAperture = 0.0;
+          real64 const hydraulicAperture = contactWrapper.computeHydraulicAperture( aperture[ei2],
+                                                                                    dHydraulicAperture_dAperture );
+          GEOS_UNUSED_VAR( hydraulicAperture );
+          real64 const dAper_dU = dHydraulicAperture_dAperture * dGap_dU;
 
-            dRdU( kf * 3 * numNodesPerFace + 3 * a + i ) = dRdAper * dAper_dU;
-          }
-          else
-          {
-            dRdU( kf * 3 * numNodesPerFace + 3 * a + i ) = 0.0;
-          }
+          dRdU( kf * 3 * numNodesPerFace + 3 * a + i ) = dRdAper * dAper_dU;
         }
       }
     }
@@ -244,32 +227,34 @@ struct FluidMassResidualDerivativeAssemblyKernel
                                                                           2 * numNodesPerFace * 3 );
       }
 //
-      localIndex const numColumns = dFluxResidual_dAperture.numNonZeros( ei );
-      arraySlice1d< localIndex const > const & columns = dFluxResidual_dAperture.getColumns( ei );
-      arraySlice1d< real64 const > const & values = dFluxResidual_dAperture.getEntries( ei );
-
-      for( localIndex kfe2 = 0; kfe2 < numColumns; ++kfe2 )
+      if( useQN == 0 )
       {
-        computeFluxDerivative( contactWrapper,
-                               useQN,
-                               kfe2,
-                               numNodesPerFace,
-                               columns,
-                               values,
-                               elemsToFaces,
-                               faceToNodeMap,
-                               dispDofNumber,
-                               Nbar,
-                               aperture,
-                               nodeDOF,
-                               dRdU );
+        localIndex const numColumns = dFluxResidual_dAperture.numNonZeros( ei );
+        arraySlice1d< localIndex const > const & columns = dFluxResidual_dAperture.getColumns( ei );
+        arraySlice1d< real64 const > const & values = dFluxResidual_dAperture.getEntries( ei );
 
-        if( rowNumber >= 0 && rowNumber < localMatrix.numRows() )
+        for( localIndex kfe2 = 0; kfe2 < numColumns; ++kfe2 )
         {
-          localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( rowNumber,
-                                                                            nodeDOF,
-                                                                            dRdU.data(),
-                                                                            2 * numNodesPerFace * 3 );
+          computeFluxDerivative( contactWrapper,
+                                 kfe2,
+                                 numNodesPerFace,
+                                 columns,
+                                 values,
+                                 elemsToFaces,
+                                 faceToNodeMap,
+                                 dispDofNumber,
+                                 Nbar,
+                                 aperture,
+                                 nodeDOF,
+                                 dRdU );
+
+          if( rowNumber >= 0 && rowNumber < localMatrix.numRows() )
+          {
+            localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( rowNumber,
+                                                                              nodeDOF,
+                                                                              dRdU.data(),
+                                                                              2 * numNodesPerFace * 3 );
+          }
         }
       }
     } );
