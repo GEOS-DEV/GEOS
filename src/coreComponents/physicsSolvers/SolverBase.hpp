@@ -795,6 +795,7 @@ protected:
 
   std::function< void( CRSMatrix< real64, globalIndex >, array1d< real64 > ) > m_assemblyCallback;
 
+  std::map< std::string, std::chrono::system_clock::duration > m_timers;
 
 private:
   /// List of names of regions the solver will be applied to
