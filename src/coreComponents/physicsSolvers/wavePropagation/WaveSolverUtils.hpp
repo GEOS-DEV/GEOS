@@ -20,6 +20,7 @@
 #ifndef GEOS_PHYSICSSOLVERS_WAVEPROPAGATION_WAVESOLVERUTILS_HPP_
 #define GEOS_PHYSICSSOLVERS_WAVEPROPAGATION_WAVESOLVERUTILS_HPP_
 
+#include "fileIO/Outputs/OutputBase.hpp"
 #include "WaveSolverBase.hpp"
 
 namespace geos
@@ -65,6 +66,40 @@ struct WaveSolverUtils
     return pulse;
   }
 
+  static void writeSeismoTrace( localIndex iSeismo,
+                                arrayView2d< real64 const > const receiverConstants,
+                                arrayView1d< localIndex const > const receiverIsLocal,
+                                localIndex const nsamplesSeismoTrace,
+                                localIndex const outputSeismoTrace,
+                                arrayView2d< real32 > varAtReceivers )
+  {
+    if( iSeismo == nsamplesSeismoTrace - 1 )
+    {
+      string const outputDir = OutputBase::getOutputDirectory();
+      forAll< serialPolicy >( receiverConstants.size( 0 ), [=] ( localIndex const ircv )
+      {
+        if( outputSeismoTrace == 1 )
+        {
+          if( receiverIsLocal[ircv] == 1 )
+          {
+            string const fn = joinPath( outputDir, GEOS_FMT( "seismoTraceReceiver{:03}.txt", ircv ) );
+            std::ofstream f( fn, std::ios::app );
+            if( !f )
+            {
+              GEOS_WARNING( GEOS_FMT( "Failed to open output file {}", fn ) );
+              return;
+            }
+            for( localIndex iSample = 0; iSample < nsamplesSeismoTrace; ++iSample )
+            {
+              f << iSample << " " << varAtReceivers[iSample][ircv] << std::endl;
+            }
+            f.close();
+          }
+        }
+      } );
+    }
+  }
+
   static void computeSeismoTrace( real64 const time_n,
                                   real64 const dt,
                                   real64 const timeSeismo,
@@ -90,8 +125,7 @@ struct WaveSolverUtils
         if( receiverIsLocal[ircv] == 1 )
         {
           varAtReceivers[iSeismo][ircv] = 0.0;
-          real32 vtmp_np1 = 0.0;
-          real32 vtmp_n = 0.0;
+          real32 vtmp_np1 = 0.0, vtmp_n = 0.0;
           for( localIndex inode = 0; inode < receiverConstants.size( 1 ); ++inode )
           {
             vtmp_np1 += var_np1[receiverNodeIds[ircv][inode]] * receiverConstants[ircv][inode];
@@ -103,33 +137,13 @@ struct WaveSolverUtils
       } );
     }
 
-    // TODO DEBUG: the following output is only temporary until our wave propagation kernels are finalized.
-    // Output will then only be done via the previous code.
-    if( iSeismo == nsamplesSeismoTrace - 1 )
-    {
-      forAll< serialPolicy >( receiverConstants.size( 0 ), [=] ( localIndex const ircv )
-      {
-        if( outputSeismoTrace == 1 )
-        {
-          if( receiverIsLocal[ircv] == 1 )
-          {
-            // Note: this "manual" output to file is temporary
-            //       It should be removed as soon as we can use TimeHistory to output data not registered on the mesh
-            // TODO: remove saveSeismo and replace with TimeHistory
-            std::ofstream f( GEOS_FMT( "seismoTraceReceiver{:03}.txt", ircv ), std::ios::app );
-            for( localIndex iSample = 0; iSample < nsamplesSeismoTrace; ++iSample )
-            {
-              f << iSample << " " << varAtReceivers[iSample][ircv] << std::endl;
-            }
-            f.close();
-          }
-        }
-      } );
-    }
+    writeSeismoTrace( iSeismo, receiverConstants, receiverIsLocal, nsamplesSeismoTrace, outputSeismoTrace, varAtReceivers );
   }
 
   static void compute2dVariableSeismoTrace( real64 const time_n,
                                             real64 const dt,
+                                            localIndex const regionIndex,
+                                            arrayView1d< localIndex const > const receiverRegion,
                                             real64 const timeSeismo,
                                             localIndex iSeismo,
                                             arrayView1d< localIndex const > const rcvElem,
@@ -152,46 +166,24 @@ struct WaveSolverUtils
       {
         if( receiverIsLocal[ircv] == 1 )
         {
-          varAtReceivers[iSeismo][ircv] = 0.0;
-          real32 vtmp_np1 = 0.0;
-          real32 vtmp_n = 0.0;
-          for( localIndex inode = 0; inode < receiverConstants.size( 1 ); ++inode )
+          if( receiverRegion[ircv] == regionIndex )
           {
-            vtmp_np1 += var_np1[rcvElem[ircv]][inode] * receiverConstants[ircv][inode];
-            vtmp_n += var_n[rcvElem[ircv]][inode] * receiverConstants[ircv][inode];
-          }
-          // linear interpolation between the pressure value at time_n and time_(n+1)
-          varAtReceivers[iSeismo][ircv] = a1*vtmp_n + a2*vtmp_np1;
-        }
-      } );
-    }
-
-    // TODO DEBUG: the following output is only temporary until our wave propagation kernels are finalized.
-    // Output will then only be done via the previous code.
-    if( iSeismo == nsamplesSeismoTrace - 1 )
-    {
-      forAll< serialPolicy >( receiverConstants.size( 0 ), [=] ( localIndex const ircv )
-      {
-        if( outputSeismoTrace == 1 )
-        {
-          if( receiverIsLocal[ircv] == 1 )
-          {
-            // Note: this "manual" output to file is temporary
-            //       It should be removed as soon as we can use TimeHistory to output data not registered on the mesh
-            // TODO: remove saveSeismo and replace with TimeHistory
-            std::ofstream f( GEOS_FMT( "seismoTraceReceiver{:03}.txt", ircv ), std::ios::app );
-            for( localIndex iSample = 0; iSample < nsamplesSeismoTrace; ++iSample )
+            varAtReceivers[iSeismo][ircv] = 0.0;
+            real32 vtmp_np1 = 0.0, vtmp_n = 0.0;
+            for( localIndex inode = 0; inode < receiverConstants.size( 1 ); ++inode )
             {
-              f << iSample << " " << varAtReceivers[iSample][ircv] << std::endl;
+              vtmp_np1 += var_np1[rcvElem[ircv]][inode] * receiverConstants[ircv][inode];
+              vtmp_n += var_n[rcvElem[ircv]][inode] * receiverConstants[ircv][inode];
             }
-            f.close();
+            // linear interpolation between the pressure value at time_n and time_(n+1)
+            varAtReceivers[iSeismo][ircv] = a1*vtmp_n + a2*vtmp_np1;
           }
         }
       } );
     }
 
+    writeSeismoTrace( iSeismo, receiverConstants, receiverIsLocal, nsamplesSeismoTrace, outputSeismoTrace, varAtReceivers );
   }
-
 
   /**
    * @brief Check if the source point is inside an element or not
@@ -265,7 +257,7 @@ struct WaveSolverUtils
   static void
   computeCoordinatesOnReferenceElement( real64 const (&coords)[3],
                                         arraySlice1d< localIndex const, cells::NODE_MAP_USD - 1 > const elemsToNodes,
-                                        arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X,
+                                        arrayView2d< WaveSolverBase::wsCoordType const, nodes::REFERENCE_POSITION_USD > const X,
                                         real64 (& coordsOnRefElem)[3] )
   {
     real64 xLocal[FE_TYPE::numNodes][3]{};
@@ -286,8 +278,6 @@ struct WaveSolverUtils
       }
     }
   }
-
-
 
 };
 

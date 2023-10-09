@@ -64,9 +64,10 @@ struct PrecomputeSourceAndReceiverKernel
   template< typename EXEC_POLICY, typename FE_TYPE >
   static void
   launch( localIndex const size,
+          localIndex const regionIndex,
           localIndex const numNodesPerElem,
           localIndex const numFacesPerElem,
-          arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X,
+          arrayView2d< WaveSolverBase::wsCoordType const, nodes::REFERENCE_POSITION_USD > const X,
           arrayView1d< integer const > const elemGhostRank,
           arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes,
           arrayView2d< localIndex const > const elemsToFaces,
@@ -78,11 +79,13 @@ struct PrecomputeSourceAndReceiverKernel
           arrayView1d< localIndex > const sourceElem,
           arrayView2d< localIndex > const sourceNodeIds,
           arrayView2d< real64 > const sourceConstants,
+          arrayView1d< localIndex > const sourceRegion,
           arrayView2d< real64 const > const receiverCoordinates,
           arrayView1d< localIndex > const receiverIsLocal,
           arrayView1d< localIndex > const rcvElem,
           arrayView2d< localIndex > const receiverNodeIds,
           arrayView2d< real64 > const receiverConstants,
+          arrayView1d< localIndex > const receiverRegion,
           arrayView2d< real32 > const sourceValue,
           real64 const dt,
           real32 const timeSourceFrequency,
@@ -124,6 +127,7 @@ struct PrecomputeSourceAndReceiverKernel
                                                                               coordsOnRefElem );
             sourceIsAccessible[isrc] = 1;
             sourceElem[isrc] = k;
+            sourceRegion[isrc] = regionIndex;
             real64 Ntest[FE_TYPE::numNodes];
             FE_TYPE::calcN( coordsOnRefElem, Ntest );
 
@@ -171,6 +175,7 @@ struct PrecomputeSourceAndReceiverKernel
                                                                               coordsOnRefElem );
             receiverIsLocal[ircv] = 1;
             rcvElem[ircv] = k;
+            receiverRegion[ircv] = regionIndex;
 
             real64 Ntest[FE_TYPE::numNodes];
             FE_TYPE::calcN( coordsOnRefElem, Ntest );
@@ -210,7 +215,7 @@ struct MassMatrixKernel
   template< typename EXEC_POLICY, typename ATOMIC_POLICY >
   void
   launch( localIndex const size,
-          arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X,
+          arrayView2d< WaveSolverBase::wsCoordType const, nodes::REFERENCE_POSITION_USD > const X,
           arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemsToNodes,
           arrayView1d< real32 const > const density,
           arrayView1d< real32 > const mass )
@@ -268,7 +273,7 @@ struct DampingMatrixKernel
   template< typename EXEC_POLICY, typename ATOMIC_POLICY >
   void
   launch( localIndex const size,
-          arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X,
+          arrayView2d< WaveSolverBase::wsCoordType const, nodes::REFERENCE_POSITION_USD > const X,
           arrayView2d< localIndex const > const facesToElems,
           ArrayOfArraysView< localIndex const > const facesToNodes,
           arrayView1d< integer const > const facesDomainBoundaryIndicator,
@@ -346,7 +351,8 @@ struct StressComputation
   template< typename EXEC_POLICY, typename ATOMIC_POLICY >
   void
   launch( localIndex const size,
-          arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X,
+          localIndex const regionIndex,
+          arrayView2d< WaveSolverBase::wsCoordType const, nodes::REFERENCE_POSITION_USD > const X,
           arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemsToNodes,
           arrayView1d< real32 const > const ux_np1,
           arrayView1d< real32 const > const uy_np1,
@@ -359,6 +365,7 @@ struct StressComputation
           arrayView2d< real64 const > const sourceConstants,
           arrayView1d< localIndex const > const sourceIsLocal,
           arrayView1d< localIndex const > const sourceElem,
+          arrayView1d< localIndex const > const sourceRegion,
           arrayView2d< real32 const > const sourceValue,
           real64 const dt,
           integer const cycleNumber,
@@ -480,7 +487,7 @@ struct StressComputation
       {
         if( sourceIsLocal[isrc] == 1 )
         {
-          if( sourceElem[isrc]==k )
+          if( sourceElem[isrc]==k && sourceRegion[isrc] == regionIndex )
           {
             for( localIndex i = 0; i < numNodesPerElem; ++i )
             {
@@ -520,7 +527,7 @@ struct VelocityComputation
   void
   launch( localIndex const size,
           localIndex const size_node,
-          arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X,
+          arrayView2d< WaveSolverBase::wsCoordType const, nodes::REFERENCE_POSITION_USD > const X,
           arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemsToNodes,
           arrayView2d< real32 const > const stressxx,
           arrayView2d< real32 const > const stressyy,

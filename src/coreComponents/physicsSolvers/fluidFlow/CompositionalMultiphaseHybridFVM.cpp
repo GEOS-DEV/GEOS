@@ -85,12 +85,12 @@ void CompositionalMultiphaseHybridFVM::initializePreSubGroups()
   FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
 
   GEOS_THROW_IF( !fvManager.hasGroup< HybridMimeticDiscretization >( m_discretizationName ),
-                 catalogName() << " " << getName() <<
+                 catalogName() << " " << getDataContext() <<
                  ": the HybridMimeticDiscretization must be selected with CompositionalMultiphaseHybridFVM",
                  InputError );
 
   GEOS_THROW_IF( m_hasCapPressure,
-                 catalogName() << " " << getName() <<
+                 catalogName() << " " << getDataContext() <<
                  ": capillary pressure is not yet supported by CompositionalMultiphaseHybridFVM",
                  InputError );
 }
@@ -110,7 +110,8 @@ void CompositionalMultiphaseHybridFVM::initializePostInitialConditionsPreSubGrou
       dynamicCast< QuasiTPFAInnerProduct const * >( &mimeticInnerProductBase )  ||
       dynamicCast< SimpleInnerProduct const * >( &mimeticInnerProductBase ) )
   {
-    GEOS_ERROR( "The QuasiRT, QuasiTPFA, and Simple inner products are only available in SinglePhaseHybridFVM" );
+    GEOS_ERROR( catalogName() << " " << getDataContext() <<
+                "The QuasiRT, QuasiTPFA, and Simple inner products are only available in SinglePhaseHybridFVM" );
   }
 
   m_lengthTolerance = domain.getMeshBody( 0 ).getGlobalLengthScale() * 1e-8;
@@ -142,16 +143,16 @@ void CompositionalMultiphaseHybridFVM::initializePostInitialConditionsPreSubGrou
     } );
 
     GEOS_THROW_IF( minVal.get() <= 0.0,
-                   catalogName() << " " << getName()
-                                 << ": the transmissibility multipliers used in SinglePhaseHybridFVM must strictly larger than 0.0",
+                   catalogName() << " " << getDataContext() <<
+                   ": the transmissibility multipliers used in SinglePhaseHybridFVM must strictly larger than 0.0",
                    std::runtime_error );
 
     FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
     fsManager.forSubGroups< AquiferBoundaryCondition >( [&] ( AquiferBoundaryCondition const & bc )
     {
-      GEOS_LOG_RANK_0( catalogName() << " " << getName() <<
-                       "An aquifer boundary condition named " << bc.getName() << " was requested in the XML file. \n"
-                                                                                 "This type of boundary condition is not yet supported by CompositionalMultiphaseHybridFVM and will be ignored" );
+      GEOS_LOG_RANK_0( catalogName() << " " << getDataContext() << ": An aquifer boundary condition named " <<
+                       bc.getName() << " was requested in the XML file. \n" <<
+                       "This type of boundary condition is not yet supported by CompositionalMultiphaseHybridFVM and will be ignored" );
     } );
   } );
 
@@ -266,6 +267,10 @@ void CompositionalMultiphaseHybridFVM::setupDofs( DomainPartition const & GEOS_U
   dofManager.addCoupling( viewKeyStruct::elemDofFieldString(),
                           viewKeyStruct::elemDofFieldString(),
                           DofManager::Connector::Face );
+
+  // this call with instruct GEOS to reorder the dof numbers
+  //dofManager.setLocalReorderingType( viewKeyStruct::elemDofFieldString(),
+  //                                   DofManager::LocalReorderingType::ReverseCutHillMcKee );
 
   // for the volume balance equation, disable global coupling
   // this equation is purely local (not coupled to neighbors or other physics)
@@ -421,7 +426,7 @@ void CompositionalMultiphaseHybridFVM::assembleStabilizedFluxTerms( real64 const
   assembleFluxTerms( dt, domain, dofManager, localMatrix, localRhs );
 }
 
-real64 CompositionalMultiphaseHybridFVM::scalingForSystemSolution( DomainPartition const & domain,
+real64 CompositionalMultiphaseHybridFVM::scalingForSystemSolution( DomainPartition & domain,
                                                                    DofManager const & dofManager,
                                                                    arrayView1d< real64 const > const & localSolution )
 {
@@ -442,13 +447,13 @@ real64 CompositionalMultiphaseHybridFVM::scalingForSystemSolution( DomainPartiti
   real64 scalingFactor = 1.0;
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                                MeshLevel const & mesh,
+                                                                MeshLevel & mesh,
                                                                 arrayView1d< string const > const & regionNames )
   {
     mesh.getElemManager().forElementSubRegions< ElementSubRegionBase >( regionNames, [&]( localIndex const,
-                                                                                          ElementSubRegionBase const & subRegion )
+                                                                                          ElementSubRegionBase & subRegion )
     {
-      real64 const subRegionScalingFactor =
+      auto const subRegionData =
         isothermalCompositionalMultiphaseBaseKernels::
           ScalingForSystemSolutionKernelFactory::
           createAndLaunch< parallelDevicePolicy<> >( m_maxRelativePresChange,
@@ -459,7 +464,7 @@ real64 CompositionalMultiphaseHybridFVM::scalingForSystemSolution( DomainPartiti
                                                      subRegion,
                                                      localSolution );
 
-      scalingFactor = std::min( scalingFactor, subRegionScalingFactor );
+      scalingFactor = std::min( scalingFactor, subRegionData.localMinVal );
     } );
 
     FaceManager const & faceManager = mesh.getFaceManager();
@@ -501,7 +506,7 @@ real64 CompositionalMultiphaseHybridFVM::scalingForSystemSolution( DomainPartiti
 }
 
 
-bool CompositionalMultiphaseHybridFVM::checkSystemSolution( DomainPartition const & domain,
+bool CompositionalMultiphaseHybridFVM::checkSystemSolution( DomainPartition & domain,
                                                             DofManager const & dofManager,
                                                             arrayView1d< real64 const > const & localSolution,
                                                             real64 const scalingFactor )
@@ -512,18 +517,19 @@ bool CompositionalMultiphaseHybridFVM::checkSystemSolution( DomainPartition cons
   integer localCheck = 1;
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                                MeshLevel const & mesh,
+                                                                MeshLevel & mesh,
                                                                 arrayView1d< string const > const & regionNames )
   {
     // check cell-centered variables for each region
     mesh.getElemManager().forElementSubRegions< ElementSubRegionBase >( regionNames, [&]( localIndex const,
-                                                                                          ElementSubRegionBase const & subRegion )
+                                                                                          ElementSubRegionBase & subRegion )
     {
       // check that pressure and component densities are non-negative
       integer const subRegionSolutionCheck =
         isothermalCompositionalMultiphaseBaseKernels::
           SolutionCheckKernelFactory::
           createAndLaunch< parallelDevicePolicy<> >( m_allowCompDensChopping,
+                                                     CompositionalMultiphaseFVM::ScalingType::Global,
                                                      scalingFactor,
                                                      dofManager.rankOffset(),
                                                      m_numComponents,
@@ -709,6 +715,7 @@ real64 CompositionalMultiphaseHybridFVM::calculateResidualNorm( real64 const & G
 void CompositionalMultiphaseHybridFVM::applySystemSolution( DofManager const & dofManager,
                                                             arrayView1d< real64 const > const & localSolution,
                                                             real64 const scalingFactor,
+                                                            real64 const GEOS_UNUSED_PARAM( dt ),
                                                             DomainPartition & domain )
 {
   GEOS_MARK_FUNCTION;

@@ -257,8 +257,10 @@ template< typename BASE >
 void SinglePhaseFVM< BASE >::applySystemSolution( DofManager const & dofManager,
                                                   arrayView1d< real64 const > const & localSolution,
                                                   real64 const scalingFactor,
+                                                  real64 const dt,
                                                   DomainPartition & domain )
 {
+  GEOS_UNUSED_VAR( dt );
   if( m_isThermal )
   {
     DofManager::CompMask pressureMask( m_numDofPerCell, 0, 1 );
@@ -618,8 +620,8 @@ char const faceBcLogMessage[] =
   "\nThe total number of target faces (including ghost faces) is {}. "
   "\nNote that if this number is equal to zero, the boundary condition will not be applied on this face set.";
 
-char const incompleteBCLogmessage[] = "SinglePhaseFVM {}: at time {}, one or more Face boundary conditions are not complete. "
-                                      "Both pressure and temperature must be specified, one is missing.";
+GEOS_MAYBE_UNUSED char const incompleteBCLogmessage[] = "SinglePhaseFVM {}: at time {}, one or more Face boundary conditions are not complete. "
+                                                        "Both pressure and temperature must be specified, one is missing.";
 
 }
 

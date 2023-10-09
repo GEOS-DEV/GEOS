@@ -50,6 +50,17 @@ FluxApproximationBase::FluxApproximationBase( string const & name, Group * const
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( 1.0e-8 ).
     setDescription( "Relative tolerance for area calculations." );
+
+  registerWrapper( viewKeyStruct::upwindingSchemeString(), &m_upwindingParams.upwindingScheme ).
+    setInputFlag( dataRepository::InputFlags::OPTIONAL ).
+    setApplyDefaultValue( UpwindingScheme::PPU ).
+    setDescription( "Type of upwinding scheme. "
+                    "Valid options:\n* " + EnumStrings< UpwindingScheme >::concat( "\n* " ) );
+
+//  registerWrapper( viewKeyStruct::epsC1PPUString(), &m_upwindingParams.epsC1PPU ).
+//    setApplyDefaultValue( 1e-10 ).
+//    setInputFlag( InputFlags::OPTIONAL ).
+//    setDescription( "Tolerance for C1-PPU smoothing" );
 }
 
 FluxApproximationBase::CatalogInterface::CatalogType &

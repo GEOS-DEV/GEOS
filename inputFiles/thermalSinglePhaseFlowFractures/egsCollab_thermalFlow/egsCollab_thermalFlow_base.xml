@@ -23,7 +23,7 @@
     firstFaceCenter="{ 80.0, -0.1, 61 }"
     secondFaceCenter="{ 80.0, 75.1, 61 }"
     outerRadius="2"/>
-    <BoundedPlane
+    <Rectangle
     name="FracturePlane"
     normal="{ 0.3569123763, 0.9123044601, 0.2007837838 }"
     origin="{ 100.0000000000, 37.5000000000, 30.0000000000 }"
