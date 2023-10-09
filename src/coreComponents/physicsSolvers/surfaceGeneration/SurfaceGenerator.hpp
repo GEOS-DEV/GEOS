@@ -95,6 +95,8 @@ public:
 
   inline string const getFractureRegionName() const { return m_fractureRegionName; }
 
+  void postProcessInput() override final;
+
 protected:
 
   virtual void initializePostInitialConditionsPreSubGroups() override final;
@@ -510,6 +512,7 @@ private:
     constexpr static char const * trailingFacesString() { return "trailingFaces"; }
     constexpr static char const * fractureRegionNameString() { return "fractureRegion"; }
     constexpr static char const * mpiCommOrderString() { return "mpiCommOrder"; }
+    constexpr static char const * isPoroelasticString() {return "isPoroelastic";}
 
     //TODO: rock toughness should be a material parameter, and we need to make rock toughness to KIC a constitutive
     // relation.
@@ -517,7 +520,6 @@ private:
 
 //    //TODO: Once the node-based SIF criterion becomes mature and robust, remove the edge-based criterion.
     constexpr static char const * nodeBasedSIFString() { return "nodeBasedSIF"; }
-
   };
 
 
@@ -531,6 +533,8 @@ private:
   array1d< localIndex > m_solidMaterialFullIndex;
 
   int m_nodeBasedSIF;
+
+  int m_isPoroelastic;
 
   real64 m_rockToughness;
 
