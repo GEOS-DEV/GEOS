@@ -83,9 +83,9 @@ fi
 # "Make" target check (builds geosx executable target only if true)
 # Use one process to prevent out-of-memory error
 if [[ "$*" == *--build-exe-only* ]]; then
-  or_die ninja -j $(nproc) geosx
+  or_die ninja -v -j $(nproc) geosx
 else
-  or_die ninja -j $(nproc)
+  or_die ninja -v -j $(nproc)
   or_die ninja install
 fi
 
