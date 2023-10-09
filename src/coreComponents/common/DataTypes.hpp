@@ -606,7 +606,7 @@ public:
   }
 
   /**
-   * @brief Construct the regexMap for all basic types (EnumString types are not included)
+   * @brief Construct the regexMap for all basic types (TypeRegex< T > extented types are not mentionned)
    * @return RegexMapType
    */
   static RegexMapType getBasicTypesRegexMap()
@@ -616,7 +616,7 @@ public:
     // string_view const ru = "[\\d]+";// unused
 
     // Regex to match an signed int (-123, 455, +789, etc.)
-    string_view const ri = "[+-]?[\\d]+";
+    string_view const intRegex = "[+-]?[\\d]+";
 
     // Regex to match a float (1, +2.3, -.4, 5.6e7, 8E-9, etc.)
     // Explanation of parts:
@@ -625,59 +625,57 @@ public:
     // [\\d]*  matches any number of numbers following the decimal
     // ([eE][-+]?[\\d]+|\\s*)  matches an optional scientific notation number
     // Note: the xsd regex implementation does not allow an empty branch, so use allow whitespace at the end
-    string_view const rr = "[+-]?[\\d]*([\\d]\\.?|\\.[\\d])[\\d]*([eE][-+]?[\\d]+|\\s*)";
+    string_view const realRegex = "[+-]?[\\d]*([\\d]\\.?|\\.[\\d])[\\d]*([eE][-+]?[\\d]+|\\s*)";
 
     // Regex to match a string that can't be empty and does not contain any whitespaces nor the characters ,{}
-    string_view const rs = "[^,\\{\\}\\s]+\\s*";
-
+    string_view const strRegex = "[^,\\{\\}\\s]+\\s*";
     // Regex to match a string that does not contain any whitespaces nor the characters ,{}
-    string_view const rse = "[^,\\{\\}\\s]*\\s*";
+    string_view const strRegexE = "[^,\\{\\}\\s]*\\s*";
+
 
     // Regex to match a path: a string that can't be empty and does not contain any space nor the characters *?<>|:",
-    string_view const rp = "[^*?<>\\|:\";,\\s]+\\s*";
-
+    string_view const pathRegex = "[^*?<>\\|:\";,\\s]+\\s*";
     // Regex to match a path: a string that does not contain any space nor the characters *?<>|:",
-    string_view const rpe = "[^*?<>\\|:\";,\\s]*\\s*";
+    string_view const pathRegexE = "[^*?<>\\|:\";,\\s]*\\s*";
 
     // Regex to match a R1Tensor
-    string_view const r1 = "\\s*\\{\\s*(" + string( rr ) + ",\\s*){2}" + string( rr ) + "\\s*\\}";
-
+    string_view const R1Regex = "\\s*\\{\\s*(" + string( realRegex ) + ",\\s*){2}" + string( realRegex ) + "\\s*\\}";
     // Regex to match a R2SymTensor
-    string_view const r2s = "\\s*\\{\\s*(" + string( rr ) + ",\\s*){5}" + string( rr ) + "\\s*\\}";
+    string_view const R2Regex = "\\s*\\{\\s*(" + string( realRegex ) + ",\\s*){5}" + string( realRegex ) + "\\s*\\}";
 
     // Build master list of regexes
     RegexMapType regexMap =
     {
-      {"integer", string( ri )},
-      {"localIndex", string( ri )},
-      {"globalIndex", string( ri )},
-      {"real32", string( rr )},
-      {"real64", string( rr )},
-      {"R1Tensor", string( r1 )},
-      {"R1Tensor32", string( r1 )},
-      {"R2SymTensor", string( r2s )},
-      {"integer_array", constructArrayRegex( ri, 1 )},
-      {"localIndex_array", constructArrayRegex( ri, 1 )},
-      {"globalIndex_array", constructArrayRegex( ri, 1 )},
-      {"real32_array", constructArrayRegex( rr, 1 )},
-      {"real64_array", constructArrayRegex( rr, 1 )},
-      {"integer_array2d", constructArrayRegex( ri, 2 )},
-      {"localIndex_array2d", constructArrayRegex( ri, 2 )},
-      {"globalIndex_array2d", constructArrayRegex( ri, 2 )},
-      {"real32_array2d", constructArrayRegex( rr, 2 )},
-      {"real64_array2d", constructArrayRegex( rr, 2 )},
-      {"integer_array3d", constructArrayRegex( ri, 3 )},
-      {"localIndex_array3d", constructArrayRegex( ri, 3 )},
-      {"globalIndex_array3d", constructArrayRegex( ri, 3 )},
-      {"real32_array3d", constructArrayRegex( rr, 3 )},
-      {"real64_array3d", constructArrayRegex( rr, 3 )},
-      {"real64_array4d", constructArrayRegex( rr, 4 )},
-      {"string", string( rse )},
-      {"path", string( rpe )},
-      {"string_array", constructArrayRegex( rs, 1 )},
-      {"path_array", constructArrayRegex( rp, 1 )},
-      {"mapPair", string( rse )},
-      {"geos_dataRepository_PlotLevel", string( ri )}
+      {"integer", string( intRegex )},
+      {"localIndex", string( intRegex )},
+      {"globalIndex", string( intRegex )},
+      {"real32", string( realRegex )},
+      {"real64", string( realRegex )},
+      {"R1Tensor", string( R1Regex )},
+      {"R1Tensor32", string( R1Regex )},
+      {"R2SymTensor", string( R2Regex )},
+      {"integer_array", constructArrayRegex( intRegex, 1 )},
+      {"localIndex_array", constructArrayRegex( intRegex, 1 )},
+      {"globalIndex_array", constructArrayRegex( intRegex, 1 )},
+      {"real32_array", constructArrayRegex( realRegex, 1 )},
+      {"real64_array", constructArrayRegex( realRegex, 1 )},
+      {"integer_array2d", constructArrayRegex( intRegex, 2 )},
+      {"localIndex_array2d", constructArrayRegex( intRegex, 2 )},
+      {"globalIndex_array2d", constructArrayRegex( intRegex, 2 )},
+      {"real32_array2d", constructArrayRegex( realRegex, 2 )},
+      {"real64_array2d", constructArrayRegex( realRegex, 2 )},
+      {"integer_array3d", constructArrayRegex( intRegex, 3 )},
+      {"localIndex_array3d", constructArrayRegex( intRegex, 3 )},
+      {"globalIndex_array3d", constructArrayRegex( intRegex, 3 )},
+      {"real32_array3d", constructArrayRegex( realRegex, 3 )},
+      {"real64_array3d", constructArrayRegex( realRegex, 3 )},
+      {"real64_array4d", constructArrayRegex( realRegex, 4 )},
+      {"string", string( strRegexE )},
+      {"path", string( pathRegexE )},
+      {"string_array", constructArrayRegex( strRegex, 1 )},
+      {"path_array", constructArrayRegex( pathRegex, 1 )},
+      {"mapPair", string( strRegexE )},
+      {"geos_dataRepository_PlotLevel", string( intRegex )}
     };
     return regexMap;
   }
