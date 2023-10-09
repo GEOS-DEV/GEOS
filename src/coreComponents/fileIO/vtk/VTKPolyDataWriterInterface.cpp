@@ -296,7 +296,6 @@ getSurface( FaceElementSubRegion const & subRegion,
 {
   // Get unique node set composing the surface
   auto & elemToNodes = subRegion.nodeList();
-  auto numNodes = elemToNodes.size( );
 
   auto cellArray = vtkSmartPointer< vtkCellArray >::New();
   cellArray->SetNumberOfCells( subRegion.size() );
@@ -313,6 +312,7 @@ getSurface( FaceElementSubRegion const & subRegion,
   for( localIndex ei = 0; ei < subRegion.size(); ei++ )
   {
     auto const & nodes = elemToNodes[ei];
+    auto const numNodes = nodes.size();
 
     ElementType const elementType = subRegion.getElementType( ei );
     std::vector< int > vtkOrdering;
