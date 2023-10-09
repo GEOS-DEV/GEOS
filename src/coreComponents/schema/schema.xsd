@@ -2122,6 +2122,10 @@ the relative residual norm satisfies:
 		<xsd:attribute name="maxRelativePressureChange" type="real64" default="0.5" />
 		<!--maxRelativeTemperatureChange => Maximum (relative) change in temperature in a Newton iteration (expected value between 0 and 1)-->
 		<xsd:attribute name="maxRelativeTemperatureChange" type="real64" default="0.5" />
+		<!--scalingType => Solution scaling type.Valid options:
+* Global
+* Local-->
+		<xsd:attribute name="scalingType" type="geos_CompositionalMultiphaseFVM_ScalingType" default="Global" />
 		<!--solutionChangeScalingFactor => Damping factor for solution change targets-->
 		<xsd:attribute name="solutionChangeScalingFactor" type="real64" default="0.5" />
 		<!--targetPhaseVolFractionChangeInTimeStep => Target (absolute) change in phase volume fraction in a time step-->
@@ -2142,6 +2146,11 @@ the relative residual norm satisfies:
 	<xsd:simpleType name="geos_solverBaseKernels_NormType">
 		<xsd:restriction base="xsd:string">
 			<xsd:pattern value=".*[\[\]`$].*|Linfinity|L2" />
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="geos_CompositionalMultiphaseFVM_ScalingType">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value=".*[\[\]`$].*|Global|Local" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:complexType name="CompositionalMultiphaseHybridFVMType">
