@@ -143,6 +143,7 @@ public:
 
     constexpr static char const * isMatrixPoroelasticString() { return "isMatrixPoroelastic"; }
 
+    constexpr static char const * useQNString() { return "useQN"; }
 
 #ifdef GEOSX_USE_SEPARATION_COEFFICIENT
     constexpr static char const * separationCoeff0String() { return "separationCoeff0"; }
@@ -204,6 +205,8 @@ private:
   integer m_numResolves[2];
 
   integer m_isMatrixPoroelastic;
+
+  integer m_useQN;   // use Quasi-Newton (see https://arxiv.org/abs/2111.00264)
 
 };
 

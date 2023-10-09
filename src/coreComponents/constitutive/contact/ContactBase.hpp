@@ -247,8 +247,7 @@ GEOS_FORCE_INLINE
 real64 ContactBaseUpdates::computeHydraulicAperture( real64 const aperture,
                                                      real64 & dHydraulicAperture_dAperture ) const
 {
-  dHydraulicAperture_dAperture = 1;
-  return aperture;
+  return m_apertureTable.compute( &aperture, &dHydraulicAperture_dAperture );
 }
 
 GEOS_HOST_DEVICE

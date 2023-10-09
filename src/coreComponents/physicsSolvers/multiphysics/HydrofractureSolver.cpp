@@ -94,6 +94,10 @@ HydrofractureSolver< POROMECHANICS_SOLVER >::HydrofractureSolver( const string &
     setApplyDefaultValue( 0 ).
     setInputFlag( InputFlags::OPTIONAL );
 
+  registerWrapper( viewKeyStruct::useQNString(), &m_useQN ).
+    setApplyDefaultValue( 0 ).
+    setInputFlag( InputFlags::OPTIONAL );
+
   m_numResolves[0] = 0;
 
   // This may need to be different depending on whether poroelasticity is on or not.
@@ -300,6 +304,7 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::updateDeformationForCoupling( 
       hydrofractureSolverKernels::DeformationUpdateKernel
         ::launch< parallelDevicePolicy<> >( subRegion.size(),
                                             contactWrapper,
+                                            m_useQN,
                                             u,
                                             faceNormal,
                                             faceToNodeMap,
@@ -789,6 +794,7 @@ assembleFluidMassResidualDerivativeWrtDisplacement( DomainPartition const & doma
           launch< parallelDevicePolicy<> >( subRegion.size(),
                                             rankOffset,
                                             contactWrapper,
+                                            m_useQN,
                                             elemsToFaces,
                                             faceToNodeMap,
                                             faceNormal,
