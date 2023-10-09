@@ -62,6 +62,7 @@ or_die python3 scripts/config-build.py \
                -bp ${GEOSX_BUILD_DIR} \
                -ip ${GEOSX_DIR} \
                --ninja \
+               -DCMAKE_VERBOSE_MAKEFILE=1 \
                -DBLT_MPI_COMMAND_APPEND='"--allow-run-as-root;--oversubscribe"' \
                -DGEOSX_INSTALL_SCHEMA=${GEOSX_INSTALL_SCHEMA}
 
