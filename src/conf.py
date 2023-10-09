@@ -149,8 +149,14 @@ todo_include_todos = True
 pygments_style = 'sphinx'
 
 
-# -- Options for HTML output -------------------------------------------------
-html_theme = "pydata_sphinx_theme"
+# -- Theme options ----------------------------------------------
+extensions += [
+    'sphinx_rtd_theme',
+]
+
+html_theme = "sphinx_rtd_theme"
+# html_theme = "pydata_sphinx_theme"
+
 html_theme_options = {
     'navigation_depth': -1,
     'collapse_navigation': False
@@ -184,10 +190,7 @@ html_css_files = [
 ]
 
 
-
-
 # -- Options for HTMLHelp output ---------------------------------------------
-
 # Output file base name for HTML help builder.
 htmlhelp_basename = 'GEOSXdoc'
 
@@ -250,8 +253,7 @@ numfig = True
 
 # Additional stuff for the LaTeX preamble.
 latex_elements['preamble'] = '\\usepackage{amsmath}\n\\usepackage{amssymb}\n\\usepackage[retainorgcmds]{IEEEtrantools}\n'
-imgmath_image_format='png'
-imgmath_font_size=14
+
 
 #####################################################
 # add LaTeX macros
