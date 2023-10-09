@@ -60,7 +60,7 @@ struct PrecomputeSourceAndReceiverKernel
   launch( localIndex const size,
           localIndex const numNodesPerElem,
           localIndex const numFacesPerElem,
-          arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X,
+          arrayView2d< WaveSolverBase::wsCoordType const, nodes::REFERENCE_POSITION_USD > const X,
           arrayView1d< integer const > const elemGhostRank,
           arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes,
           arrayView2d< localIndex const > const elemsToFaces,
@@ -198,14 +198,16 @@ struct MassMatrixKernel
    * @param[in] X coordinates of the nodes
    * @param[in] elemsToNodes map from element to nodes
    * @param[in] velocity cell-wise velocity
+   * @param[in] density cell-wise density
    * @param[out] mass diagonal of the mass matrix
    */
   template< typename EXEC_POLICY, typename ATOMIC_POLICY >
   void
   launch( localIndex const size,
-          arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X,
+          arrayView2d< WaveSolverBase::wsCoordType const, nodes::REFERENCE_POSITION_USD > const X,
           arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemsToNodes,
           arrayView1d< real32 const > const velocity,
+          arrayView1d< real32 const > const density,
           arrayView1d< real32 > const mass )
 
   {
@@ -214,7 +216,7 @@ struct MassMatrixKernel
       constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
       constexpr localIndex numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
 
-      real32 const invC2 = 1.0 / ( velocity[k] * velocity[k] );
+      real32 const invC2 = 1.0 / ( density[k] * velocity[k] * velocity[k] );
       real64 xLocal[ numNodesPerElem ][ 3 ];
       for( localIndex a = 0; a < numNodesPerElem; ++a )
       {
@@ -256,17 +258,19 @@ struct DampingMatrixKernel
    * @param[in] facesDomainBoundaryIndicator flag equal to 1 if the face is on the boundary, and to 0 otherwise
    * @param[in] freeSurfaceFaceIndicator flag equal to 1 if the face is on the free surface, and to 0 otherwise
    * @param[in] velocity cell-wise velocity
+   * @param[in] density cell-wise density
    * @param[out] damping diagonal of the damping matrix
    */
   template< typename EXEC_POLICY, typename ATOMIC_POLICY >
   void
   launch( localIndex const size,
-          arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X,
+          arrayView2d< WaveSolverBase::wsCoordType const, nodes::REFERENCE_POSITION_USD > const X,
           arrayView2d< localIndex const > const facesToElems,
           ArrayOfArraysView< localIndex const > const facesToNodes,
           arrayView1d< integer const > const facesDomainBoundaryIndicator,
           arrayView1d< localIndex const > const freeSurfaceFaceIndicator,
           arrayView1d< real32 const > const velocity,
+          arrayView1d< real32 const > const density,
           arrayView1d< real32 > const damping )
   {
     forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const f )
@@ -280,7 +284,7 @@ struct DampingMatrixKernel
           k = facesToElems( f, 1 );
         }
 
-        real32 const alpha = 1.0 / velocity[k];
+        real32 const alpha = 1.0 / (density[k] * velocity[k]);
 
         constexpr localIndex numNodesPerFace = FE_TYPE::numNodesPerFace;
 
@@ -323,7 +327,7 @@ struct PMLKernelHelper
    */
   GEOS_HOST_DEVICE
   inline
-  static void computeDampingProfilePML( real64 const (&xLocal)[3],
+  static void computeDampingProfilePML( real32 const (&xLocal)[3],
                                         real32 const (&xMin)[3],
                                         real32 const (&xMax)[3],
                                         real32 const (&dMin)[3],
@@ -403,7 +407,7 @@ struct PMLKernel
   template< typename EXEC_POLICY, typename ATOMIC_POLICY >
   void
   launch( SortedArrayView< localIndex const > const targetSet,
-          arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X,
+          arrayView2d< WaveSolverBase::wsCoordType const, nodes::REFERENCE_POSITION_USD > const X,
           traits::ViewTypeConst< CellElementSubRegion::NodeMapType > const elemToNodesViewConst,
           arrayView1d< real32 const > const velocity,
           arrayView1d< real32 const > const p_n,
@@ -432,6 +436,7 @@ struct PMLKernel
 
       /// coordinates of the element nodes
       real64 xLocal[ numNodesPerElem ][ 3 ];
+      real32 xLocal32[ numNodesPerElem ][ 3 ];
 
       /// local arrays to store the pressure at all nodes and its gradient at a given node
       real64 pressure[ numNodesPerElem ];
@@ -456,6 +461,7 @@ struct PMLKernel
         for( int j=0; j<3; ++j )
         {
           xLocal[i][j] =  X[elemToNodesViewConst[k][i]][j];
+          xLocal32[i][j] =  X[elemToNodesViewConst[k][i]][j];
           auxV[j][i] = v_n[elemToNodesViewConst[k][i]][j];
         }
       }
@@ -483,7 +489,7 @@ struct PMLKernel
 
         /// compute the PML damping profile
         PMLKernelHelper::computeDampingProfilePML(
-          xLocal[i],
+          xLocal32[i],
           xMin,
           xMax,
           dMin,
@@ -549,7 +555,7 @@ struct waveSpeedPMLKernel
   template< typename EXEC_POLICY, typename ATOMIC_POLICY >
   void
   launch( SortedArrayView< localIndex const > const targetSet,
-          arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X,
+          arrayView2d< WaveSolverBase::wsCoordType const, nodes::REFERENCE_POSITION_USD > const X,
           traits::ViewTypeConst< CellElementSubRegion::NodeMapType > const elemToNodesViewConst,
           arrayView1d< real32 const > const velocity,
           real32 const (&xMin)[3],
@@ -733,9 +739,10 @@ public:
     Base( elementSubRegion,
           finiteElementSpace,
           inputConstitutiveType ),
-    m_X( nodeManager.referencePosition() ),
+    m_X( nodeManager.getField< fields::referencePosition32 >() ),
     m_p_n( nodeManager.getField< fields::Pressure_n >() ),
     m_stiffnessVector( nodeManager.getField< fields::StiffnessVector >() ),
+    m_density( elementSubRegion.template getField< fields::MediumDensity >() ),
     m_dt( dt )
   {
     GEOS_UNUSED_VAR( edgeManager );
@@ -800,20 +807,24 @@ public:
   {
     m_finiteElementSpace.template computeStiffnessTerm( q, stack.xLocal, [&] ( int i, int j, real64 val )
     {
-      real32 const localIncrement = val*m_p_n[m_elemsToNodes[k][j]];
+      real32 invDensity = 1./m_density[k];
+      real32 const localIncrement = invDensity*val*m_p_n[m_elemsToNodes[k][j]];
       RAJA::atomicAdd< parallelDeviceAtomic >( &m_stiffnessVector[m_elemsToNodes[k][i]], localIncrement );
     } );
   }
 
 protected:
   /// The array containing the nodal position array.
-  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const m_X;
+  arrayView2d< WaveSolverBase::wsCoordType const, nodes::REFERENCE_POSITION_USD > const m_X;
 
   /// The array containing the nodal pressure array.
   arrayView1d< real32 const > const m_p_n;
 
   /// The array containing the product of the stiffness matrix and the nodal pressure.
   arrayView1d< real32 > const m_stiffnessVector;
+
+  /// The array containing the cell-wise density
+  arrayView1d< real32 const > const m_density;
 
   /// The time increment for this time integration step.
   real64 const m_dt;

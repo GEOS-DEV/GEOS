@@ -117,7 +117,7 @@ public:
    * @brief Recompute phase volume fractions (saturations) from constitutive and primary variables
    * @param dataGroup the group storing the required fields
    */
-  void updatePhaseVolumeFraction( ObjectManagerBase & dataGroup ) const;
+  real64 updatePhaseVolumeFraction( ObjectManagerBase & dataGroup ) const;
 
   /**
    * @brief Update all relevant fluid models using current values of pressure and composition
@@ -149,9 +149,13 @@ public:
    */
   virtual void updatePhaseMobility( ObjectManagerBase & dataGroup ) const = 0;
 
-  void updateFluidState( ObjectManagerBase & dataGroup ) const;
+  real64 updateFluidState( ObjectManagerBase & dataGroup ) const;
 
   virtual void saveConvergedState( ElementSubRegionBase & subRegion ) const override final;
+
+  virtual void saveIterationState( DomainPartition & domain ) const override final;
+
+  virtual void saveIterationState( ElementSubRegionBase & subRegion ) const override final;
 
   virtual void updateState( DomainPartition & domain ) override final;
 

@@ -218,7 +218,7 @@ void PeriodicEvent::cleanup( real64 const time_n,
                              DomainPartition & domain )
 {
   // Only call the cleanup method of the target/children if it is within its application time
-  if( isActive( time_n ) )
+  if( isReadyForCleanup( time_n ) )
   {
     ExecutableGroup * target = getEventTarget();
     if( target != nullptr )
@@ -245,15 +245,19 @@ void PeriodicEvent::validate() const
 
   GEOS_THROW_IF( m_timeFrequency > 0 &&
                  target->getTimesteppingBehavior() == ExecutableGroup::TimesteppingBehavior::DeterminesTimeStepSize,
-                 GEOS_FMT(
-                   "`{}`: This event targets an object that automatically selects the time step size. Therefore, `{}` cannot be used here. However, forcing a constant time step size can still be achived with `{}`.",
-                   getName(), viewKeyStruct::timeFrequencyString(), EventBase::viewKeyStruct::forceDtString() ),
+                 GEOS_FMT( "`{}`: This event targets an object that automatically selects the time "
+                           "step size. Therefore, `{}` cannot be used here. However, forcing a "
+                           "constant time step size can still be achived with `{}`.",
+                           getDataContext(), viewKeyStruct::timeFrequencyString(),
+                           EventBase::viewKeyStruct::forceDtString() ),
                  InputError );
   GEOS_THROW_IF( m_cycleFrequency != 1 &&
                  target->getTimesteppingBehavior() == ExecutableGroup::TimesteppingBehavior::DeterminesTimeStepSize,
-                 GEOS_FMT(
-                   "`{}`: This event targets an object that automatically selects the time step size. Therefore, `{}` cannot be used here. However, forcing a constant time step size can still be achived with `{}`.",
-                   getName(), viewKeyStruct::cycleFrequencyString(), EventBase::viewKeyStruct::forceDtString() ),
+                 GEOS_FMT( "`{}`: This event targets an object that automatically selects the time "
+                           "step size. Therefore, `{}` cannot be used here. However, forcing a "
+                           "constant time step size can still be achived with `{}`.",
+                           getDataContext(), viewKeyStruct::cycleFrequencyString(),
+                           EventBase::viewKeyStruct::forceDtString() ),
                  InputError );
 }
 

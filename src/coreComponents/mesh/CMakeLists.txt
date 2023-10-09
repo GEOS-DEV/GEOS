@@ -65,6 +65,7 @@ set( mesh_headers
      simpleGeometricObjects/SimpleGeometricObjectBase.hpp
      simpleGeometricObjects/PlanarGeometricObject.hpp
      simpleGeometricObjects/ThickPlane.hpp
+     utilities/AverageOverQuadraturePointsKernel.hpp     
      utilities/CIcomputationKernel.hpp
      utilities/ComputationalGeometry.hpp
      utilities/MeshMapUtilities.hpp
@@ -133,12 +134,14 @@ set( dependencyList ${parallelDeps} schema dataRepository constitutive finiteEle
 if( ENABLE_VTK )
     message(STATUS "Adding VTKMeshGenerator sources and headers")
     set( mesh_headers ${mesh_headers}
+         generators/CollocatedNodes.hpp
          generators/VTKFaceBlockUtilities.hpp
          generators/VTKMeshGenerator.hpp
          generators/VTKMeshGeneratorTools.hpp
          generators/VTKUtilities.hpp
          )
     set( mesh_sources ${mesh_sources}
+         generators/CollocatedNodes.cpp
          generators/VTKFaceBlockUtilities.cpp
          generators/VTKMeshGenerator.cpp
          generators/VTKMeshGeneratorTools.cpp

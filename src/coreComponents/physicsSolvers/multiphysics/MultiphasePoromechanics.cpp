@@ -22,6 +22,7 @@
 
 #include "constitutive/fluid/multifluid/MultiFluidBase.hpp"
 #include "constitutive/solid/PorousSolid.hpp"
+#include "mesh/utilities/AverageOverQuadraturePointsKernel.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseBase.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
 #include "physicsSolvers/multiphysics/poromechanicsKernels/MultiphasePoromechanics.hpp"
@@ -78,6 +79,14 @@ void MultiphasePoromechanics::registerDataOnMesh( Group & meshBodies )
 {
   SolverBase::registerDataOnMesh( meshBodies );
 
+  if( getNonlinearSolverParameters().m_couplingType == NonlinearSolverParameters::CouplingType::Sequential )
+  {
+    // to let the solid mechanics solver that there is a pressure and temperature RHS in the mechanics solve
+    solidMechanicsSolver()->enableFixedStressPoromechanicsUpdate();
+    // to let the flow solver that saving pressure_k and temperature_k is necessary (for the fixed-stress porosity terms)
+    flowSolver()->enableFixedStressPoromechanicsUpdate();
+  }
+
   forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
                                                     MeshLevel & mesh,
                                                     arrayView1d< string const > const & regionNames )
@@ -118,6 +127,19 @@ void MultiphasePoromechanics::setupCoupling( DomainPartition const & GEOS_UNUSED
                           DofManager::Connector::Elem );
 }
 
+void MultiphasePoromechanics::setupDofs( DomainPartition const & domain,
+                                         DofManager & dofManager ) const
+{
+  // note that the order of operations matters a lot here (for instance for the MGR labels)
+  // we must set up dofs for solid mechanics first, and then for flow
+  // that's the reason why this function is here and not in CoupledSolvers.hpp
+  solidMechanicsSolver()->setupDofs( domain, dofManager );
+  flowSolver()->setupDofs( domain, dofManager );
+
+  setupCoupling( domain, dofManager );
+}
+
+
 void MultiphasePoromechanics::assembleSystem( real64 const GEOS_UNUSED_PARAM( time ),
                                               real64 const dt,
                                               DomainPartition & domain,
@@ -152,6 +174,7 @@ void MultiphasePoromechanics::assembleSystem( real64 const GEOS_UNUSED_PARAM( ti
                                                                                                     viewKeyStruct::porousMaterialNamesString(),
                                                                                                     localMatrix,
                                                                                                     localRhs,
+                                                                                                    dt,
                                                                                                     flowDofKey,
                                                                                                     flowSolver()->numFluidComponents(),
                                                                                                     flowSolver()->numFluidPhases(),
@@ -167,6 +190,7 @@ void MultiphasePoromechanics::assembleSystem( real64 const GEOS_UNUSED_PARAM( ti
                                                                                       viewKeyStruct::porousMaterialNamesString(),
                                                                                       localMatrix,
                                                                                       localRhs,
+                                                                                      dt,
                                                                                       flowDofKey,
                                                                                       flowSolver()->numFluidComponents(),
                                                                                       flowSolver()->numFluidPhases(),
@@ -206,15 +230,13 @@ void MultiphasePoromechanics::assembleSystem( real64 const GEOS_UNUSED_PARAM( ti
                                                                                 filteredRegionNames.toViewConst(),
                                                                                 SolidMechanicsLagrangianFEM::viewKeyStruct::solidMaterialNamesString(),
                                                                                 localMatrix,
-                                                                                localRhs );
+                                                                                localRhs,
+                                                                                dt );
 
   } );
 
 
   solidMechanicsSolver()->getMaxForce() = LvArray::math::max( mechanicsMaxForce, poromechanicsMaxForce );
-
-  // tell the flow solver that this is a stress initialization step
-  flowSolver()->keepFlowVariablesConstantDuringInitStep( m_performStressInitialization );
 
   // step 3: compute the fluxes (face-based contributions)
 
@@ -240,6 +262,7 @@ void MultiphasePoromechanics::assembleSystem( real64 const GEOS_UNUSED_PARAM( ti
 
 void MultiphasePoromechanics::updateState( DomainPartition & domain )
 {
+  real64 maxDeltaPhaseVolFrac = 0.0;
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
                                                                 arrayView1d< string const > const & regionNames )
@@ -249,18 +272,41 @@ void MultiphasePoromechanics::updateState( DomainPartition & domain )
                                                               [&]( localIndex const,
                                                                    CellElementSubRegion & subRegion )
     {
-      flowSolver()->updateFluidState( subRegion );
+      real64 const deltaPhaseVolFrac = flowSolver()->updateFluidState( subRegion );
+      maxDeltaPhaseVolFrac = LvArray::math::max( maxDeltaPhaseVolFrac, deltaPhaseVolFrac );
       if( m_isThermal )
       {
         flowSolver()->updateSolidInternalEnergyModel( subRegion );
       }
     } );
   } );
+
+  GEOS_LOG_LEVEL_RANK_0( 1, getName() << ": Max deltaPhaseVolFrac = " << maxDeltaPhaseVolFrac );
 }
 
 void MultiphasePoromechanics::initializePostInitialConditionsPreSubGroups()
 {
   SolverBase::initializePostInitialConditionsPreSubGroups();
+
+  arrayView1d< string const > const & poromechanicsTargetRegionNames =
+    this->getReference< array1d< string > >( SolverBase::viewKeyStruct::targetRegionsString() );
+  arrayView1d< string const > const & solidMechanicsTargetRegionNames =
+    solidMechanicsSolver()->getReference< array1d< string > >( SolverBase::viewKeyStruct::targetRegionsString() );
+  arrayView1d< string const > const & flowTargetRegionNames =
+    flowSolver()->getReference< array1d< string > >( SolverBase::viewKeyStruct::targetRegionsString() );
+  for( integer i = 0; i < poromechanicsTargetRegionNames.size(); ++i )
+  {
+    GEOS_THROW_IF( std::find( solidMechanicsTargetRegionNames.begin(), solidMechanicsTargetRegionNames.end(), poromechanicsTargetRegionNames[i] )
+                   == solidMechanicsTargetRegionNames.end(),
+                   GEOS_FMT( "{} {}: region `{}` must be a target region of `{}`",
+                             catalogName(), getName(), poromechanicsTargetRegionNames[i], solidMechanicsSolver()->getName() ),
+                   InputError );
+    GEOS_THROW_IF( std::find( flowTargetRegionNames.begin(), flowTargetRegionNames.end(), poromechanicsTargetRegionNames[i] )
+                   == flowTargetRegionNames.end(),
+                   GEOS_FMT( "{} {}: region `{}` must be a target region of `{}`",
+                             catalogName(), getName(), poromechanicsTargetRegionNames[i], flowSolver()->getName() ),
+                   InputError );
+  }
 
   integer & isFlowThermal = flowSolver()->getReference< integer >( FlowSolverBase::viewKeyStruct::isThermalString() );
   GEOS_LOG_RANK_0_IF( m_isThermal && !isFlowThermal,
@@ -278,13 +324,9 @@ void MultiphasePoromechanics::initializePreSubGroups()
 {
   SolverBase::initializePreSubGroups();
 
-  if( getNonlinearSolverParameters().m_couplingType == NonlinearSolverParameters::CouplingType::Sequential )
-  {
-    solidMechanicsSolver()->turnOnFixedStressThermoPoromechanicsFlag();
-  }
-
   GEOS_THROW_IF( m_stabilizationType == StabilizationType::Local,
-                 catalogName() << " " << getName() << ": Local stabilization has been disabled temporarily",
+                 getWrapperDataContext( viewKeyStruct::stabilizationTypeString() ) <<
+                 ": Local stabilization has been disabled temporarily",
                  InputError );
 
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
@@ -300,7 +342,8 @@ void MultiphasePoromechanics::initializePreSubGroups()
     {
       string & porousName = subRegion.getReference< string >( viewKeyStruct::porousMaterialNamesString() );
       porousName = getConstitutiveName< CoupledSolidBase >( subRegion );
-      GEOS_ERROR_IF( porousName.empty(), GEOS_FMT( "Solid model not found on subregion {}", subRegion.getName() ) );
+      GEOS_ERROR_IF( porousName.empty(), GEOS_FMT( "{}: Solid model not found on subregion {}",
+                                                   getDataContext(), subRegion.getName() ) );
 
       if( subRegion.hasField< fields::poromechanics::bulkDensity >() )
       {
@@ -310,6 +353,14 @@ void MultiphasePoromechanics::initializePreSubGroups()
       }
     } );
   } );
+}
+
+void MultiphasePoromechanics::implicitStepSetup( real64 const & time_n,
+                                                 real64 const & dt,
+                                                 DomainPartition & domain )
+{
+  flowSolver()->keepFlowVariablesConstantDuringInitStep( m_performStressInitialization );
+  Base::implicitStepSetup( time_n, dt, domain );
 }
 
 void MultiphasePoromechanics::updateStabilizationParameters( DomainPartition & domain ) const
@@ -378,24 +429,46 @@ void MultiphasePoromechanics::updateStabilizationParameters( DomainPartition & d
 void MultiphasePoromechanics::mapSolutionBetweenSolvers( DomainPartition & domain, integer const solverType )
 {
   GEOS_MARK_FUNCTION;
-  if( solverType == static_cast< integer >( SolverType::SolidMechanics ) )
+
+  /// After the flow solver
+  if( solverType == static_cast< integer >( SolverType::Flow ) )
   {
+    // save pressure and temperature at the end of this iteration
+    flowSolver()->FlowSolverBase::saveIterationState( domain );
+
     forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                  MeshLevel & mesh,
                                                                  arrayView1d< string const > const & regionNames )
     {
+
+      mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
+                                                                                            auto & subRegion )
+      {
+        // update the bulk density
+        // TODO: ideally, we would not recompute the bulk density, but a more general "rhs" containing the body force and the
+        // pressure/temperature terms
+        updateBulkDensity( subRegion );
+      } );
+    } );
+  }
+
+  /// After the solid mechanics solver
+  if( solverType == static_cast< integer >( SolverType::SolidMechanics ) )
+  {
+    // compute the average of the mean stress increment over quadrature points
+    averageMeanStressIncrement( domain );
+
+    forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
+                                                                 MeshLevel & mesh,
+                                                                 arrayView1d< string const > const & regionNames )
+    {
+
       mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                             auto & subRegion )
       {
         // update the porosity after a change in displacement (after mechanics solve)
         // or a change in pressure/temperature (after a flow solve)
         flowSolver()->updatePorosityAndPermeability( subRegion );
-
-        // update the bulk density
-        // in fact, this is only needed after a flow solve, but we don't have a mechanism to know where we are in the outer loop
-        // TODO: ideally, we would not recompute the bulk density, but a more general "rhs" containing the body force and the
-        // pressure/temperature terms
-        updateBulkDensity( subRegion );
       } );
     } );
   }
@@ -418,6 +491,47 @@ void MultiphasePoromechanics::updateBulkDensity( ElementSubRegionBase & subRegio
                                                fluid,
                                                solid,
                                                subRegion );
+}
+
+void MultiphasePoromechanics::averageMeanStressIncrement( DomainPartition & domain )
+{
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
+                                                               MeshLevel & mesh,
+                                                               arrayView1d< string const > const & regionNames )
+  {
+    mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
+                                                                                          auto & subRegion )
+    {
+      // get the solid model (to access stress increment)
+      string const solidName = subRegion.template getReference< string >( viewKeyStruct::porousMaterialNamesString() );
+      CoupledSolidBase & solid = getConstitutiveModel< CoupledSolidBase >( subRegion, solidName );
+
+      arrayView2d< real64 const > const meanStressIncrement_k = solid.getMeanEffectiveStressIncrement_k();
+      arrayView1d< real64 > const averageMeanStressIncrement_k = solid.getAverageMeanEffectiveStressIncrement_k();
+
+      finiteElement::FiniteElementBase & subRegionFE =
+        subRegion.template getReference< finiteElement::FiniteElementBase >( solidMechanicsSolver()->getDiscretizationName() );
+
+      // determine the finite element type
+      finiteElement::FiniteElementDispatchHandler< BASE_FE_TYPES >::
+      dispatch3D( subRegionFE, [&] ( auto const finiteElement )
+      {
+        using FE_TYPE = decltype( finiteElement );
+
+        // call the factory and launch the kernel
+        AverageOverQuadraturePoints1DKernelFactory::
+          createAndLaunch< CellElementSubRegion,
+                           FE_TYPE,
+                           parallelDevicePolicy<> >( mesh.getNodeManager(),
+                                                     mesh.getEdgeManager(),
+                                                     mesh.getFaceManager(),
+                                                     subRegion,
+                                                     finiteElement,
+                                                     meanStressIncrement_k,
+                                                     averageMeanStressIncrement_k );
+      } );
+    } );
+  } );
 }
 
 

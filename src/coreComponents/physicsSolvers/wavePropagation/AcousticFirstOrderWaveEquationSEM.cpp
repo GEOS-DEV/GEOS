@@ -97,6 +97,7 @@ void AcousticFirstOrderWaveEquationSEM::initializePreSubGroups()
 
 void AcousticFirstOrderWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
 {
+  WaveSolverBase::registerDataOnMesh( meshBodies );
 
   forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
                                                     MeshLevel & mesh,
@@ -165,8 +166,8 @@ void AcousticFirstOrderWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLev
   NodeManager const & nodeManager = mesh.getNodeManager();
   FaceManager const & faceManager = mesh.getFaceManager();
 
-  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const
-  X = nodeManager.referencePosition().toViewConst();
+  arrayView2d< wsCoordType const, nodes::REFERENCE_POSITION_USD > const
+  X = nodeManager.getField< fields::referencePosition32 >().toViewConst();
   arrayView2d< real64 const > const faceNormal  = faceManager.faceNormal();
   arrayView2d< real64 const > const faceCenter  = faceManager.faceCenter();
 
@@ -208,7 +209,7 @@ void AcousticFirstOrderWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLev
                                                                                         CellElementSubRegion & elementSubRegion )
   {
     GEOS_THROW_IF( elementSubRegion.getElementType() != ElementType::Hexahedron,
-                   "Invalid type of element, the acoustic solver is designed for hexahedral meshes only (C3D8) ",
+                   getDataContext() << ": Invalid type of element, the acoustic solver is designed for hexahedral meshes only (C3D8) ",
                    InputError );
 
     arrayView2d< localIndex const > const elemsToFaces = elementSubRegion.faceList();
@@ -268,7 +269,7 @@ void AcousticFirstOrderWaveEquationSEM::addSourceToRightHandSide( integer const 
   arrayView1d< localIndex const > const sourceIsAccessible = m_sourceIsAccessible.toViewConst();
   arrayView2d< real32 const > const sourceValue   = m_sourceValue.toViewConst();
 
-  GEOS_THROW_IF( cycleNumber > sourceValue.size( 0 ), "Too many steps compared to array size", std::runtime_error );
+  GEOS_THROW_IF( cycleNumber > sourceValue.size( 0 ), getDataContext() << ": Too many steps compared to array size", std::runtime_error );
   forAll< EXEC_POLICY >( sourceConstants.size( 0 ), [=] GEOS_HOST_DEVICE ( localIndex const isrc )
   {
     if( sourceIsAccessible[isrc] == 1 )
@@ -301,8 +302,8 @@ void AcousticFirstOrderWaveEquationSEM::initializePostInitialConditionsPreSubGro
     FaceManager & faceManager = mesh.getFaceManager();
 
     /// get the array of indicators: 1 if the face is on the boundary; 0 otherwise
-    arrayView1d< integer > const & facesDomainBoundaryIndicator = faceManager.getDomainBoundaryIndicator();
-    arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X = nodeManager.referencePosition().toViewConst();
+    arrayView1d< integer const > const & facesDomainBoundaryIndicator = faceManager.getDomainBoundaryIndicator();
+    arrayView2d< wsCoordType const, nodes::REFERENCE_POSITION_USD > const X = nodeManager.getField< fields::referencePosition32 >().toViewConst();
 
     /// get table containing face to nodes map
     ArrayOfArraysView< localIndex const > const facesToNodes = faceManager.nodeList().toViewConst();
@@ -435,7 +436,7 @@ real64 AcousticFirstOrderWaveEquationSEM::explicitStepBackward( real64 const & t
                                                                 DomainPartition & domain,
                                                                 bool GEOS_UNUSED_PARAM( computeGradient ) )
 {
-  GEOS_ERROR( "Backward propagation for the first-order wave propagator not yet implemented" );
+  GEOS_ERROR( getDataContext() << ": Backward propagation for the first-order wave propagator not yet implemented" );
   real64 dtOut = explicitStepInternal( time_n, dt, cycleNumber, domain );
   return dtOut;
 }
@@ -465,7 +466,7 @@ real64 AcousticFirstOrderWaveEquationSEM::explicitStepInternal( real64 const & t
   {
     NodeManager & nodeManager = mesh.getNodeManager();
 
-    arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X = nodeManager.referencePosition().toViewConst();
+    arrayView2d< wsCoordType const, nodes::REFERENCE_POSITION_USD > const X = nodeManager.getField< fields::referencePosition32 >().toViewConst();
 
     arrayView1d< real32 const > const mass = nodeManager.getField< wavesolverfields::MassVector >();
     arrayView1d< real32 const > const damping = nodeManager.getField< wavesolverfields::DampingVector >();
@@ -632,12 +633,12 @@ void AcousticFirstOrderWaveEquationSEM::compute2dVariableAllSeismoTraces( localI
 
 void AcousticFirstOrderWaveEquationSEM::initializePML()
 {
-  GEOS_ERROR( "PML for the first order acoustic wave propagator not yet implemented" );
+  GEOS_ERROR( getDataContext() << ": PML for the first order acoustic wave propagator not yet implemented" );
 }
 
 void AcousticFirstOrderWaveEquationSEM::applyPML( real64 const, DomainPartition & )
 {
-  GEOS_ERROR( "PML for the first order acoustic wave propagator not yet implemented" );
+  GEOS_ERROR( getDataContext() << ": PML for the first order acoustic wave propagator not yet implemented" );
 }
 
 REGISTER_CATALOG_ENTRY( SolverBase, AcousticFirstOrderWaveEquationSEM, string const &, dataRepository::Group * const )

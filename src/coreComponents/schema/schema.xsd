@@ -90,12 +90,12 @@
 	</xsd:simpleType>
 	<xsd:simpleType name="path">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value=".*[\[\]`$].*|[^*?&lt;&gt;\|:&quot;;,\s]*\s*" />
+			<xsd:pattern value=".*[\[\]`$].*|[^*?&lt;>\|:&quot;;,\s]*\s*" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="path_array">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value=".*[\[\]`$].*|\{\s*(([^*?&lt;&gt;\|:&quot;;,\s]+\s*,\s*)*[^*?&lt;&gt;\|:&quot;;,\s]+\s*)?\s*\}" />
+			<xsd:pattern value=".*[\[\]`$].*|\{\s*(([^*?&lt;>\|:&quot;;,\s]+\s*,\s*)*[^*?&lt;>\|:&quot;;,\s]+\s*)?\s*\}" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="real32">
@@ -1969,16 +1969,18 @@ the relative residual norm satisfies:
 		<xsd:attribute name="discretization" type="string" use="required" />
 		<!--dtSeismoTrace => Time step for output pressure at receivers-->
 		<xsd:attribute name="dtSeismoTrace" type="real64" default="0" />
+		<!--enableLifo => Set to 1 to enable LIFO storage feature-->
+		<xsd:attribute name="enableLifo" type="integer" default="0" />
 		<!--forward => Set to 1 to compute forward propagation-->
 		<xsd:attribute name="forward" type="integer" default="1" />
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
-		<!--lifoOnDevice => Set the capacity of the lifo device storage-->
-		<xsd:attribute name="lifoOnDevice" type="integer" default="0" />
-		<!--lifoOnHost => Set the capacity of the lifo host storage-->
-		<xsd:attribute name="lifoOnHost" type="integer" default="0" />
-		<!--lifoSize => Set the capacity of the lifo storage-->
-		<xsd:attribute name="lifoSize" type="integer" default="0" />
+		<!--lifoOnDevice => Set the capacity of the lifo device storage (if negative, opposite of percentage of remaining memory)-->
+		<xsd:attribute name="lifoOnDevice" type="integer" default="-80" />
+		<!--lifoOnHost => Set the capacity of the lifo host storage (if negative, opposite of percentage of remaining memory)-->
+		<xsd:attribute name="lifoOnHost" type="integer" default="-80" />
+		<!--lifoSize => Set the capacity of the lifo storage (should be the total number of buffers to store in the LIFO)-->
+		<xsd:attribute name="lifoSize" type="integer" default="2147483647" />
 		<!--linearDASGeometry => Geometry parameters for a linear DAS fiber (dip, azimuth, gauge length)-->
 		<xsd:attribute name="linearDASGeometry" type="real64_array2d" default="{{0}}" />
 		<!--logLevel => Log level-->
@@ -2013,16 +2015,18 @@ the relative residual norm satisfies:
 		<xsd:attribute name="discretization" type="string" use="required" />
 		<!--dtSeismoTrace => Time step for output pressure at receivers-->
 		<xsd:attribute name="dtSeismoTrace" type="real64" default="0" />
+		<!--enableLifo => Set to 1 to enable LIFO storage feature-->
+		<xsd:attribute name="enableLifo" type="integer" default="0" />
 		<!--forward => Set to 1 to compute forward propagation-->
 		<xsd:attribute name="forward" type="integer" default="1" />
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
-		<!--lifoOnDevice => Set the capacity of the lifo device storage-->
-		<xsd:attribute name="lifoOnDevice" type="integer" default="0" />
-		<!--lifoOnHost => Set the capacity of the lifo host storage-->
-		<xsd:attribute name="lifoOnHost" type="integer" default="0" />
-		<!--lifoSize => Set the capacity of the lifo storage-->
-		<xsd:attribute name="lifoSize" type="integer" default="0" />
+		<!--lifoOnDevice => Set the capacity of the lifo device storage (if negative, opposite of percentage of remaining memory)-->
+		<xsd:attribute name="lifoOnDevice" type="integer" default="-80" />
+		<!--lifoOnHost => Set the capacity of the lifo host storage (if negative, opposite of percentage of remaining memory)-->
+		<xsd:attribute name="lifoOnHost" type="integer" default="-80" />
+		<!--lifoSize => Set the capacity of the lifo storage (should be the total number of buffers to store in the LIFO)-->
+		<xsd:attribute name="lifoSize" type="integer" default="2147483647" />
 		<!--linearDASGeometry => Geometry parameters for a linear DAS fiber (dip, azimuth, gauge length)-->
 		<xsd:attribute name="linearDASGeometry" type="real64_array2d" default="{{0}}" />
 		<!--logLevel => Log level-->
@@ -2069,6 +2073,10 @@ the relative residual norm satisfies:
 		<xsd:attribute name="maxRelativePressureChange" type="real64" default="0.5" />
 		<!--maxRelativeTemperatureChange => Maximum (relative) change in temperature in a Newton iteration (expected value between 0 and 1)-->
 		<xsd:attribute name="maxRelativeTemperatureChange" type="real64" default="0.5" />
+		<!--scalingType => Solution scaling type.Valid options:
+* Global
+* Local-->
+		<xsd:attribute name="scalingType" type="geos_CompositionalMultiphaseFVM_ScalingType" default="Global" />
 		<!--solutionChangeScalingFactor => Damping factor for solution change targets-->
 		<xsd:attribute name="solutionChangeScalingFactor" type="real64" default="0.5" />
 		<!--targetPhaseVolFractionChangeInTimeStep => Target (absolute) change in phase volume fraction in a time step-->
@@ -2089,6 +2097,11 @@ the relative residual norm satisfies:
 	<xsd:simpleType name="geos_solverBaseKernels_NormType">
 		<xsd:restriction base="xsd:string">
 			<xsd:pattern value=".*[\[\]`$].*|Linfinity|L2" />
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="geos_CompositionalMultiphaseFVM_ScalingType">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value=".*[\[\]`$].*|Global|Local" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:complexType name="CompositionalMultiphaseHybridFVMType">
@@ -2251,16 +2264,18 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		<xsd:attribute name="discretization" type="string" use="required" />
 		<!--dtSeismoTrace => Time step for output pressure at receivers-->
 		<xsd:attribute name="dtSeismoTrace" type="real64" default="0" />
+		<!--enableLifo => Set to 1 to enable LIFO storage feature-->
+		<xsd:attribute name="enableLifo" type="integer" default="0" />
 		<!--forward => Set to 1 to compute forward propagation-->
 		<xsd:attribute name="forward" type="integer" default="1" />
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
-		<!--lifoOnDevice => Set the capacity of the lifo device storage-->
-		<xsd:attribute name="lifoOnDevice" type="integer" default="0" />
-		<!--lifoOnHost => Set the capacity of the lifo host storage-->
-		<xsd:attribute name="lifoOnHost" type="integer" default="0" />
-		<!--lifoSize => Set the capacity of the lifo storage-->
-		<xsd:attribute name="lifoSize" type="integer" default="0" />
+		<!--lifoOnDevice => Set the capacity of the lifo device storage (if negative, opposite of percentage of remaining memory)-->
+		<xsd:attribute name="lifoOnDevice" type="integer" default="-80" />
+		<!--lifoOnHost => Set the capacity of the lifo host storage (if negative, opposite of percentage of remaining memory)-->
+		<xsd:attribute name="lifoOnHost" type="integer" default="-80" />
+		<!--lifoSize => Set the capacity of the lifo storage (should be the total number of buffers to store in the LIFO)-->
+		<xsd:attribute name="lifoSize" type="integer" default="2147483647" />
 		<!--linearDASGeometry => Geometry parameters for a linear DAS fiber (dip, azimuth, gauge length)-->
 		<xsd:attribute name="linearDASGeometry" type="real64_array2d" default="{{0}}" />
 		<!--logLevel => Log level-->
@@ -2295,16 +2310,18 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		<xsd:attribute name="discretization" type="string" use="required" />
 		<!--dtSeismoTrace => Time step for output pressure at receivers-->
 		<xsd:attribute name="dtSeismoTrace" type="real64" default="0" />
+		<!--enableLifo => Set to 1 to enable LIFO storage feature-->
+		<xsd:attribute name="enableLifo" type="integer" default="0" />
 		<!--forward => Set to 1 to compute forward propagation-->
 		<xsd:attribute name="forward" type="integer" default="1" />
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
-		<!--lifoOnDevice => Set the capacity of the lifo device storage-->
-		<xsd:attribute name="lifoOnDevice" type="integer" default="0" />
-		<!--lifoOnHost => Set the capacity of the lifo host storage-->
-		<xsd:attribute name="lifoOnHost" type="integer" default="0" />
-		<!--lifoSize => Set the capacity of the lifo storage-->
-		<xsd:attribute name="lifoSize" type="integer" default="0" />
+		<!--lifoOnDevice => Set the capacity of the lifo device storage (if negative, opposite of percentage of remaining memory)-->
+		<xsd:attribute name="lifoOnDevice" type="integer" default="-80" />
+		<!--lifoOnHost => Set the capacity of the lifo host storage (if negative, opposite of percentage of remaining memory)-->
+		<xsd:attribute name="lifoOnHost" type="integer" default="-80" />
+		<!--lifoSize => Set the capacity of the lifo storage (should be the total number of buffers to store in the LIFO)-->
+		<xsd:attribute name="lifoSize" type="integer" default="2147483647" />
 		<!--linearDASGeometry => Geometry parameters for a linear DAS fiber (dip, azimuth, gauge length)-->
 		<xsd:attribute name="linearDASGeometry" type="real64_array2d" default="{{0}}" />
 		<!--logLevel => Log level-->
