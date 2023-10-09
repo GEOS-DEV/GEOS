@@ -832,7 +832,7 @@ SinglePhaseWell::calculateResidualNorm( real64 const & time_n,
   return residualNorm;
 }
 
-bool SinglePhaseWell::checkSystemSolution( DomainPartition const & domain,
+bool SinglePhaseWell::checkSystemSolution( DomainPartition & domain,
                                            DofManager const & dofManager,
                                            arrayView1d< real64 const > const & localSolution,
                                            real64 const scalingFactor )
