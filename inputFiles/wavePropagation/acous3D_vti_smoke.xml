@@ -176,36 +176,37 @@
   </FieldSpecifications>
 
   <Events
-    maxTime="0.208">
+    maxTime="0.20">
     <!-- trigger the application of the solver -->
     <!-- control the timestepping here with forceDt -->
     <PeriodicEvent
       name="solverApplications"
-      forceDt="0.0013"
+      forceDt="0.001"
       target="/Solvers/acousticSolver"/>
 
     <!-- generate an output that can be read from VTK -->
     <PeriodicEvent
       name="vtk"
-      timeFrequency="0.0013"
+      timeFrequency="0.001"
       targetExactTimestep="0"
       target="/Outputs/vtkOutput"/>
 
     <!-- two events to output pressure in an hdf5 file -->
     <PeriodicEvent
       name="timeHistoryCollection"
-      timeFrequency="0.0013"
+      timeFrequency="0.001"
       target="/Tasks/pressureCollection"/>
 
     <PeriodicEvent
       name="timeHistoryOutput"
-      timeFrequency="0.0013"
+      timeFrequency="0.001"
       targetExactTimestep="0"
       target="/Outputs/timeHistoryOutput"/>
 
     <PeriodicEvent
       name="restarts"
-      timeFrequency="0.104"
+      timeFrequency="0.10"
+      targetExactTimestep="0"
       target="/Outputs/restartOutput"/>
   </Events>
 

@@ -165,7 +165,7 @@
 #define VTK_VERSION 9.2.6
 
 /// Version information for fmt
-#define fmt_VERSION 8.0.1
+#define fmt_VERSION 10.0.0
 
 /// Version information for python
 #define Python3_VERSION 3.10.8
