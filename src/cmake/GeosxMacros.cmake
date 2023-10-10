@@ -224,7 +224,7 @@ endmacro()
 ##------------------------------------------------------------------------------
 function(generateKernels)
   set(options)
-  set(oneValueArgs TEMPLATE KEY RESULT SPLIT JSON )
+  set(oneValueArgs TEMPLATE KEY HEADERS SOURCES SPLIT JSON)
   set(multiValueArgs)
 
   cmake_parse_arguments(ARG "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
@@ -237,7 +237,14 @@ function(generateKernels)
   get_filename_component(localRelDir ${ARG_TEMPLATE} DIRECTORY)
   string(REPLACE ${CMAKE_SOURCE_DIR} "" relativeSourceDir ${CMAKE_CURRENT_SOURCE_DIR})
 
-  string( JSON kernelSpec GET ${${ARG_JSON}} ${ARG_KEY} )
+  string( JSON kernelSpec ERROR_VARIABLE jsonError GET ${${ARG_JSON}} ${ARG_KEY} )
+
+  # Skip generation if key not found in kernel spec
+  if(jsonError)
+    message(STATUS "${jsonError}, skipping kernel generation")
+    return()
+  endif()
+
   string( JSON symbolsJSON GET ${kernelSpec} "vars" )
   string( JSON constantsJSON GET ${kernelSpec} "constants" )
   string( JSON combinationsJSON GET ${kernelSpec} "combinations" )
@@ -263,7 +270,10 @@ function(generateKernels)
   list( APPEND combinatoricSymbolList ${explicitComboList} )
   list( REMOVE_DUPLICATES combinatoricSymbolList )
 
-  set(generatedFilesList "")
+  set(typeCombinationList "")
+  set(generatedHeadersList "")
+  set(generatedSourcesList "")
+
   list(LENGTH symbolList symbolCount)
   foreach(instantiation IN LISTS combinatoricSymbolList)
     string(REGEX REPLACE "[${ARG_SPLIT}\<\>\: ,.]" "_" suffix ${instantiation})
@@ -275,10 +285,28 @@ function(generateKernels)
       set_vars_from_lists( constantSymbols constantValues )
       message(STATUS "Generating file: ${generatedFileName}")
       configure_file(${ARG_TEMPLATE} ${generatedFileName} @ONLY)
-      list(APPEND generatedFilesList ${generatedFileName})
+      list(APPEND generatedSourcesList ${generatedFileName})
+
+      string(REPLACE "${ARG_SPLIT}" ", " typeCombination ${instantiation})
+      set(typeCombinationList "${typeCombinationList},
+  types::TypeList< ${typeCombination} >")
     endif()
   endforeach()
+  string(SUBSTRING "${typeCombinationList}" 4 -1 typeCombinationList)
+
+  # Generate the dispatch type list header
+  set(KERNEL_GROUP_NAME ${ARG_KEY})
+  set(generatedFileName "${CMAKE_BINARY_DIR}/include/${relativeSourceDir}/${localRelDir}/${KERNEL_GROUP_NAME}DispatchTypeList.hpp")
+  string(REPLACE "coreComponents/" "" generatedFileName "${generatedFileName}")
+  message(STATUS "Generating file: ${generatedFileName}")
+  configure_file(KernelDispatchTypeList.hpp.template "${generatedFileName}" @ONLY)
+  list(APPEND generatedHeadersList ${generatedFileName})
 
   # The list of generated files is returned by setting the variable in the parent scope
-  set(${ARG_RESULT} ${generatedFilesList} PARENT_SCOPE)
+  if(DEFINED ARG_HEADERS)
+    set(${ARG_HEADERS} ${generatedHeadersList} PARENT_SCOPE)
+  endif()
+  if(DEFINED ARG_SOURCES)
+    set(${ARG_SOURCES} ${generatedSourcesList} PARENT_SCOPE)
+  endif()
 endfunction()

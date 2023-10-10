@@ -6,8 +6,8 @@ namespace geos
 {
 namespace thermalCompositionalMultiphaseFVMKernels
 {
-  template class @NAME@ < @NCOMP@, @NDOF@, @KERNEL_TYPE@ >;
-  // these kernels don't implment their own launch, they rely on the isothermal launch which is
+  template class @NAME@ < @NCOMP_NDOF@, @KERNEL_TYPE@::KernelWrapper >;
+  // these kernels don't implement their own launch, they rely on the isothermal launch which is
   // instantiated as a byproduct of the above explicit instantiation
 }
 

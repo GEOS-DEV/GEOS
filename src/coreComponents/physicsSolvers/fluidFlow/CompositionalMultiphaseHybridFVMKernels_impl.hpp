@@ -13,7 +13,7 @@
  */
 
 /**
- * @file CompositionalMultiphaseHybridFVMKernels.cpp
+ * @file CompositionalMultiphaseHybridFVMKernels_impl.hpp
  */
 
 #include "CompositionalMultiphaseHybridFVMKernels.hpp"

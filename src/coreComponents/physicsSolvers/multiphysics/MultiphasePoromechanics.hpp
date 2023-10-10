@@ -178,7 +178,7 @@ private:
    */
   void averageMeanStressIncrement( DomainPartition & domain );
 
-  template< typename CONSTITUTIVE_BASE,
+  template< typename TYPE_LIST,
             typename KERNEL_WRAPPER,
             typename ... PARAMS >
   real64 assemblyLaunch( MeshLevel & mesh,
@@ -211,7 +211,7 @@ ENUM_STRINGS( MultiphasePoromechanics::StabilizationType,
               "Global",
               "Local" );
 
-template< typename CONSTITUTIVE_BASE,
+template< typename TYPE_LIST,
           typename KERNEL_WRAPPER,
           typename ... PARAMS >
 real64 MultiphasePoromechanics::assemblyLaunch( MeshLevel & mesh,
@@ -242,12 +242,11 @@ real64 MultiphasePoromechanics::assemblyLaunch( MeshLevel & mesh,
 
   return finiteElement::
            regionBasedKernelApplication< parallelDevicePolicy< >,
-                                         CONSTITUTIVE_BASE,
-                                         CellElementSubRegion >( mesh,
-                                                                 regionNames,
-                                                                 solidMechanicsSolver()->getDiscretizationName(),
-                                                                 materialNamesString,
-                                                                 kernelWrapper );
+                                         TYPE_LIST >( mesh,
+                                                      regionNames,
+                                                      solidMechanicsSolver()->getDiscretizationName(),
+                                                      materialNamesString,
+                                                      kernelWrapper );
 }
 
 
