@@ -258,13 +258,14 @@ touched_files = []
 # Build documentation tables
 with open('%s.rst' % (complete_output), 'w') as output_handle:
     # Write the file header
-    output_handle.write('======================\n')
+    output_handle.write('######################\n')
     output_handle.write('Datastructure Index\n')
-    output_handle.write('======================\n\n')
+    output_handle.write('######################\n\n')
 
     # Parse the input schema definitions
+    output_handle.write('**************************\n\n')
     output_handle.write('Input Schema Definitions\n')
-    output_handle.write('========================\n\n')
+    output_handle.write('**************************\n\n')
 
     output_handle.write(':download:`XML Schema <%s/../schema.xsd>`\n\n' % (sphinx_path))
 

@@ -1,9 +1,10 @@
-======================
+#########################
 Datastructure Index
-======================
+#########################
 
+*************************
 Input Schema Definitions
-========================
+*************************
 
 :download:`XML Schema <../../coreComponents/schema/docs/../schema.xsd>`
 
