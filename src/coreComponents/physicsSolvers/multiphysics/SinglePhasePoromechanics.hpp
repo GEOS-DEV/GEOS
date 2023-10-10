@@ -171,7 +171,7 @@ private:
 
   void createPreconditioner();
 
-  template< typename CONSTITUTIVE_BASE,
+  template< typename TYPE_LIST,
             typename KERNEL_WRAPPER,
             typename ... PARAMS >
   real64 assemblyLaunch( MeshLevel & mesh,
@@ -187,7 +187,7 @@ private:
   integer m_performStressInitialization;
 };
 
-template< typename CONSTITUTIVE_BASE,
+template< typename TYPE_LIST,
           typename KERNEL_WRAPPER,
           typename ... PARAMS >
 real64 SinglePhasePoromechanics::assemblyLaunch( MeshLevel & mesh,
@@ -218,12 +218,11 @@ real64 SinglePhasePoromechanics::assemblyLaunch( MeshLevel & mesh,
 
   return finiteElement::
            regionBasedKernelApplication< parallelDevicePolicy< >,
-                                         CONSTITUTIVE_BASE,
-                                         CellElementSubRegion >( mesh,
-                                                                 regionNames,
-                                                                 solidMechanicsSolver()->getDiscretizationName(),
-                                                                 materialNamesString,
-                                                                 kernelWrapper );
+                                         TYPE_LIST >( mesh,
+                                                      regionNames,
+                                                      solidMechanicsSolver()->getDiscretizationName(),
+                                                      materialNamesString,
+                                                      kernelWrapper );
 }
 
 

@@ -168,7 +168,7 @@ public:
   /**@}*/
 
 
-  template< typename CONSTITUTIVE_BASE,
+  template< typename TYPE_LIST,
             typename KERNEL_WRAPPER,
             typename ... PARAMS >
   void assemblyLaunch( DomainPartition & domain,
@@ -311,7 +311,7 @@ ENUM_STRINGS( SolidMechanicsLagrangianFEM::TimeIntegrationOption,
 //**********************************************************************************************************************
 
 
-template< typename CONSTITUTIVE_BASE,
+template< typename TYPE_LIST,
           typename KERNEL_WRAPPER,
           typename ... PARAMS >
 void SolidMechanicsLagrangianFEM::assemblyLaunch( DomainPartition & domain,
@@ -342,28 +342,17 @@ void SolidMechanicsLagrangianFEM::assemblyLaunch( DomainPartition & domain,
                                   gravityVectorData,
                                   std::forward< PARAMS >( params )... );
 
-    if( m_isFixedStressPoromechanicsUpdate )
-    {
-      m_maxForce = finiteElement::
-                     regionBasedKernelApplication< parallelDevicePolicy< >,
-                                                   CONSTITUTIVE_BASE,
-                                                   CellElementSubRegion >( mesh,
-                                                                           regionNames,
-                                                                           this->getDiscretizationName(),
-                                                                           FlowSolverBase::viewKeyStruct::solidNamesString(),
-                                                                           kernelWrapper );
-    }
-    else
-    {
-      m_maxForce = finiteElement::
-                     regionBasedKernelApplication< parallelDevicePolicy< >,
-                                                   CONSTITUTIVE_BASE,
-                                                   CellElementSubRegion >( mesh,
-                                                                           regionNames,
-                                                                           this->getDiscretizationName(),
-                                                                           viewKeyStruct::solidMaterialNamesString(),
-                                                                           kernelWrapper );
-    }
+    string const solidKey = m_isFixedStressPoromechanicsUpdate
+                          ? FlowSolverBase::viewKeyStruct::solidNamesString()
+                          : viewKeyStruct::solidMaterialNamesString();
+
+    m_maxForce = finiteElement::
+                   regionBasedKernelApplication< parallelDevicePolicy< >,
+                                                 TYPE_LIST >( mesh,
+                                                              regionNames,
+                                                              this->getDiscretizationName(),
+                                                              solidKey,
+                                                              kernelWrapper );
   } );
 
   applyContactConstraint( dofManager, domain, localMatrix, localRhs );

@@ -29,6 +29,10 @@
 #include "physicsSolvers/solidMechanics/SolidMechanicsFields.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
 
+#include "physicsSolvers/multiphysics/poromechanicsKernels/PoromechanicsKernelsDispatchTypeList.hpp"
+#include "physicsSolvers/multiphysics/poromechanicsKernels/ThermoPoromechanicsKernelsDispatchTypeList.hpp"
+#include "physicsSolvers/solidMechanics/kernels/SolidMechanicsKernelsDispatchTypeList.hpp"
+
 namespace geos
 {
 
@@ -208,7 +212,7 @@ void SinglePhasePoromechanicsConformingFractures::assembleCellBasedContributions
     string const flowDofKey = dofManager.getKey( SinglePhaseBase::viewKeyStruct::elemDofFieldString() );
     if( m_isThermal )
     {
-      assemblyLaunch< constitutive::PorousSolid< ElasticIsotropic >, // TODO: change once there is a cmake solution
+      assemblyLaunch< ThermoPoromechanicsKernelsDispatchTypeList,
                       thermalPoromechanicsKernels::ThermalSinglePhasePoromechanicsKernelFactory >( mesh,
                                                                                                    dofManager,
                                                                                                    regionNames,
@@ -221,7 +225,7 @@ void SinglePhasePoromechanicsConformingFractures::assembleCellBasedContributions
     }
     else
     {
-      assemblyLaunch< constitutive::PorousSolid< ElasticIsotropic >,
+      assemblyLaunch< PoromechanicsKernelsDispatchTypeList,
                       poromechanicsKernels::SinglePhasePoromechanicsKernelFactory >( mesh,
                                                                                      dofManager,
                                                                                      regionNames,

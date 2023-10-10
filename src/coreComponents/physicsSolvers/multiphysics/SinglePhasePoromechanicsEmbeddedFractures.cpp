@@ -417,8 +417,7 @@ void SinglePhasePoromechanicsEmbeddedFractures::assembleSystem( real64 const tim
     if( m_isThermal )
     {
       solidMechanicsSolver()->getMaxForce() =
-        assemblyLaunch< constitutive::PorousSolid< ElasticIsotropic >, // TODO: change once there is a cmake solution
-                        thermalPoromechanicsKernels::ThermalSinglePhasePoromechanicsKernelFactory,
+        assemblyLaunch< thermalPoromechanicsKernels::ThermalSinglePhasePoromechanicsKernelFactory,
                         thermoPoromechanicsEFEMKernels::ThermalSinglePhasePoromechanicsEFEMKernelFactory >( mesh,
                                                                                                             dofManager,
                                                                                                             regionNames,
@@ -430,8 +429,7 @@ void SinglePhasePoromechanicsEmbeddedFractures::assembleSystem( real64 const tim
     else
     {
       solidMechanicsSolver()->getMaxForce() =
-        assemblyLaunch< constitutive::PorousSolid< ElasticIsotropic >,
-                        poromechanicsKernels::SinglePhasePoromechanicsKernelFactory,
+        assemblyLaunch< poromechanicsKernels::SinglePhasePoromechanicsKernelFactory,
                         poromechanicsEFEMKernels::SinglePhaseKernelFactory >( mesh,
                                                                               dofManager,
                                                                               regionNames,

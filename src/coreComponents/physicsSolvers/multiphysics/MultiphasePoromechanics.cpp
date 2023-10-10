@@ -31,6 +31,11 @@
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
 #include "physicsSolvers/solidMechanics/kernels/ImplicitSmallStrainQuasiStatic.hpp"
 
+#include "physicsSolvers/multiphysics/poromechanicsKernels/PoromechanicsKernelsDispatchTypeList.hpp"
+#include "physicsSolvers/multiphysics/poromechanicsKernels/ThermoPoromechanicsKernelsDispatchTypeList.hpp"
+#include "physicsSolvers/solidMechanics/kernels/SolidMechanicsKernelsDispatchTypeList.hpp"
+
+
 namespace geos
 {
 
@@ -167,7 +172,7 @@ void MultiphasePoromechanics::assembleSystem( real64 const GEOS_UNUSED_PARAM( ti
     if( m_isThermal )
     {
       poromechanicsMaxForce =
-        assemblyLaunch< constitutive::PorousSolid< ElasticIsotropic >, // TODO: change once there is a cmake solution
+        assemblyLaunch< ThermoPoromechanicsKernelsDispatchTypeList,
                         thermalPoromechanicsKernels::ThermalMultiphasePoromechanicsKernelFactory >( mesh,
                                                                                                     dofManager,
                                                                                                     regionNames,
@@ -183,7 +188,7 @@ void MultiphasePoromechanics::assembleSystem( real64 const GEOS_UNUSED_PARAM( ti
     else
     {
       poromechanicsMaxForce =
-        assemblyLaunch< constitutive::PorousSolidBase,
+        assemblyLaunch< PoromechanicsKernelsDispatchTypeList,
                         poromechanicsKernels::MultiphasePoromechanicsKernelFactory >( mesh,
                                                                                       dofManager,
                                                                                       regionNames,
@@ -224,7 +229,7 @@ void MultiphasePoromechanics::assembleSystem( real64 const GEOS_UNUSED_PARAM( ti
     }
 
     mechanicsMaxForce =
-      assemblyLaunch< constitutive::SolidBase,
+      assemblyLaunch< SolidMechanicsKernelsDispatchTypeList,
                       solidMechanicsLagrangianFEMKernels::QuasiStaticFactory >( mesh,
                                                                                 dofManager,
                                                                                 filteredRegionNames.toViewConst(),
