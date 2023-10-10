@@ -1883,6 +1883,8 @@ the relative residual norm satisfies:
 		<xsd:attribute name="fieldNames" type="string_array" default="{}" />
 		<!--format => Output data format.  Valid options: ``binary``, ``ascii``-->
 		<xsd:attribute name="format" type="geos_vtk_VTKOutputMode" default="binary" />
+		<!--levelNames => Names of mesh levels to output.-->
+		<xsd:attribute name="levelNames" type="string_array" default="{}" />
 		<!--onlyPlotSpecifiedFieldNames => If this flag is equal to 1, then we only plot the fields listed in `fieldNames`. Otherwise, we plot all the fields with the required `plotLevel`, plus the fields listed in `fieldNames`-->
 		<xsd:attribute name="onlyPlotSpecifiedFieldNames" type="integer" default="0" />
 		<!--outputRegionType => Output region types.  Valid options: ``cell``, ``well``, ``surface``, ``all``-->
