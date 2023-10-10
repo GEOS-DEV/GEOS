@@ -78,12 +78,15 @@ public:
     {
       using SolverPtr = TYPEOFREF( solver );
       using SolverType = TYPEOFPTR( SolverPtr {} );
-      solver = this->getParent().template getGroupPointer< SolverType >( m_names[idx()] );
+      auto const & solverName = m_names[idx()];
+      auto const & solverType = LvArray::system::demangleType< SolverType >();
+      solver = this->getParent().template getGroupPointer< SolverType >( solverName );
       GEOS_THROW_IF( solver == nullptr,
                      GEOS_FMT( "{}: Could not find solver '{}' of type {}",
                                getDataContext(),
-                               m_names[idx()], LvArray::system::demangleType< SolverType >() ),
+                               solverName, solverType ),
                      InputError );
+      GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "{}: found {} solver named {}", getName(), solver->catalogName(), solverName ) );
     } );
   }
 
@@ -523,7 +526,7 @@ protected:
 
         // finally, we perform the convergence check on the multiphysics residual
         residualNorm = sqrt( residualNorm );
-        GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "    ( R ) = ( {:4.2e} ) ; ", residualNorm ) );
+        GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "        ( R ) = ( {:4.2e} )", residualNorm ) );
         isConverged = ( residualNorm < params.m_newtonTol );
 
       }

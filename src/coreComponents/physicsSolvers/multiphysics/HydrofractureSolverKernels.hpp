@@ -90,7 +90,8 @@ struct DeformationUpdateKernel
         }
       }
 #endif
-      deltaVolume[kfe] = hydraulicAperture[kfe] * area[kfe] - volume[kfe];
+//      deltaVolume[kfe] = hydraulicAperture[kfe] * area[kfe] - volume[kfe];
+          deltaVolume[kfe] = aperture[kfe] * area[kfe] - volume[kfe];
     } );
   }
 };
@@ -124,12 +125,13 @@ struct FluidMassResidualDerivativeAssemblyKernel
 
           real64 const dGap_dU = kfSign[kf] * Nbar[i] / numNodesPerFace;
 
-          real64 dHydraulicAperture_dAperture = 0;
-          real64 const hydraulicAperture = contactWrapper.computeHydraulicAperture( aperture, dHydraulicAperture_dAperture );
-          GEOS_UNUSED_VAR( hydraulicAperture );
-          real64 const dAper_dU = dHydraulicAperture_dAperture * dGap_dU;
-
-          dRdU( kf * 3 * numNodesPerFace + 3 * a + i ) = dens * area * dAper_dU;
+//          real64 dHydraulicAperture_dAperture = 0;
+//          real64 const hydraulicAperture = contactWrapper.computeHydraulicAperture( aperture, dHydraulicAperture_dAperture );
+//          GEOS_UNUSED_VAR( hydraulicAperture );
+//          real64 const dAper_dU = dHydraulicAperture_dAperture * dGap_dU;
+//
+//          dRdU( kf * 3 * numNodesPerFace + 3 * a + i ) = dens * area * dAper_dU;
+            dRdU( kf * 3 * numNodesPerFace + 3 * a + i ) = dens * area * dGap_dU;
         }
       }
     }

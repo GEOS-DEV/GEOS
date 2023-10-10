@@ -895,7 +895,7 @@ ProppantTransport::calculateResidualNorm( real64 const & GEOS_UNUSED_PARAM( time
 
   if( getLogLevel() >= 1 && logger::internal::rank == 0 )
   {
-    std::cout << GEOS_FMT( "    ( R{} ) = ( {:4.2e} ) ; ", ProppantTransport::coupledSolverAttributePrefix(), residualNorm );
+    std::cout << GEOS_FMT( "        ( R{} ) = ( {:4.2e} )", ProppantTransport::coupledSolverAttributePrefix(), residualNorm );
   }
 
   return residualNorm;
