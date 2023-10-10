@@ -88,6 +88,12 @@ void SinglePhasePoromechanics::registerDataOnMesh( Group & meshBodies )
         setRestartFlags( RestartFlags::NO_WRITE ).
         setSizedFromParent( 0 );
 
+      // This is need by the way the surface generator currently does things.  
+      subRegion.registerWrapper< string >( CoupledSolidBase::viewKeyStruct::porosityModelNameString() ).
+        setPlotLevel( PlotLevel::NOPLOT ).
+        setRestartFlags( RestartFlags::NO_WRITE ).
+        setSizedFromParent( 0 );
+
       if( getNonlinearSolverParameters().m_couplingType == NonlinearSolverParameters::CouplingType::Sequential )
       {
         // register the bulk density for use in the solid mechanics solver
@@ -141,6 +147,13 @@ void SinglePhasePoromechanics::initializePreSubGroups()
                      GEOS_FMT( "{} {} : Solid model not found on subregion {}",
                                catalogName(), getDataContext().toString(), subRegion.getName() ),
                      InputError );
+      string & porosityModelName = subRegion.getReference< string >( CoupledSolidBase::viewKeyStruct::porosityModelNameString() );
+      porosityModelName = getConstitutiveName< PorosityBase >( subRegion );
+      GEOS_THROW_IF( porosityModelName.empty(),
+                     GEOS_FMT( "{} {} : Porosity model not found on subregion {}",
+                               catalogName(), getDataContext().toString(), subRegion.getName() ),
+                     InputError );
+
 
       if( subRegion.hasField< fields::poromechanics::bulkDensity >() )
       {
