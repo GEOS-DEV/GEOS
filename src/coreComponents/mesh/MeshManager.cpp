@@ -64,14 +64,12 @@ void MeshManager::generateMeshes( DomainPartition & domain )
   {
     MeshBody & meshBody = domain.getMeshBodies().registerGroup< MeshBody >( meshGen.getName() );
     meshBody.createMeshLevel( 0 );
-    SpatialPartition & partition = dynamic_cast< SpatialPartition & >(domain.getReference< PartitionBase >( keys::partitionManager ) );
+    SpatialPartition const & partition = dynamic_cast< SpatialPartition const & >(domain.getReference< PartitionBase >( keys::partitionManager ) );
 
-    meshGen.generateMesh( meshBody, partition.getPartitions() );
+    meshGen.generateMesh( meshBody, partition );
     CellBlockManagerABC const & cellBlockManager = meshBody.getCellBlockManager();
 
     meshBody.setGlobalLengthScale( cellBlockManager.getGlobalLength() );
-
-    partition = meshGen.getSpatialPartition();
   } );
 }
 

@@ -86,7 +86,7 @@ public:
    * @param[in] partition Number of domaoins in each dimesion (X,Y,Z)
    * @return The generated CellBlockManagerABC
    */
-  CellBlockManagerABC & generateMesh( Group & parent, array1d< int > const & partition );
+  CellBlockManagerABC & generateMesh( Group & parent, SpatialPartition const & partition );
 
   /**
    * @brief Describe which kind of block must be considered.
@@ -154,7 +154,7 @@ private:
    * @param[inout] cellBlockManager the CellBlockManager that will receive the meshing information
    * @param[in] partition The number of domains in each dimesion (X,Y,Z)
    */
-  virtual void fillCellBlockManager( CellBlockManager & cellBlockManager, array1d< int > const & partition ) = 0;
+  virtual void fillCellBlockManager( CellBlockManager & cellBlockManager, SpatialPartition const & partition ) = 0;
 
   void attachWellInfo( CellBlockManager & cellBlockManager );
 

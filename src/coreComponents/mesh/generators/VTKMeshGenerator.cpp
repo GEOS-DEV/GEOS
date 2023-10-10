@@ -74,7 +74,7 @@ VTKMeshGenerator::VTKMeshGenerator( string const & name,
                     " If set to a positive value, the GlobalId arrays in the input mesh are used and required, and the simulation aborts if they are not available" );
 }
 
-void VTKMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockManager, array1d< int > const & )
+void VTKMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockManager, SpatialPartition const & )
 {
   // TODO refactor void MeshGeneratorBase::generateMesh( DomainPartition & domain )
   GEOS_MARK_FUNCTION;

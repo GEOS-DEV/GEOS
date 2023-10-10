@@ -531,11 +531,12 @@ static void getElemToNodesRelationInBox( ElementType const elementType,
   }
 }
 
-void InternalMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockManager, array1d< int > const & partition )
+void InternalMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockManager, SpatialPartition const & partition )
 {
   GEOS_MARK_FUNCTION;
 
-  m_spatialPartition.setPartitions( partition[0], partition[1], partition[2] );
+  m_spatialPartition = partition;
+
   // Partition based on even spacing to get load balance
   // Partition geometrical boundaries will be corrected in the end.
   {
@@ -584,7 +585,8 @@ void InternalMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockMa
     {
       m_numElemsTotal[i] += m_nElems[i][block];
     }
-    GEOS_ERROR_IF( partition[i] > m_numElemsTotal[i], "Number of partitions in a direction should not exceed the number of elements in that direction" );
+    array1d< int > const & parts = m_spatialPartition.getPartitions();
+    GEOS_ERROR_IF( parts[i] > m_numElemsTotal[i], "Number of partitions in a direction should not exceed the number of elements in that direction" );
 
     elemCenterCoords[i].resize( m_numElemsTotal[i] );
     array1d< real64 > elemCenterCoordsLocal( m_numElemsTotal[i] );

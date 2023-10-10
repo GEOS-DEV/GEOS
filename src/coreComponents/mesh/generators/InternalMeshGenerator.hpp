@@ -263,7 +263,7 @@ private:
 
 
 
-  virtual void fillCellBlockManager( CellBlockManager & cellBlockManager, array1d< int > const & partition ) override;
+  virtual void fillCellBlockManager( CellBlockManager & cellBlockManager, SpatialPartition const & partition ) override;
 
   /**
    * @brief Convert ndim node spatialized index to node global index.
