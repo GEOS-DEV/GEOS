@@ -194,7 +194,7 @@ SurfaceGenerator::SurfaceGenerator( const string & name,
 
   registerWrapper( viewKeyStruct::isPoroelasticString(), &m_isPoroelastic ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Flag that defines whether the material is poroelastic or not." );  
+    setDescription( "Flag that defines whether the material is poroelastic or not." );
 
   registerWrapper( viewKeyStruct::mpiCommOrderString(), &m_mpiCommOrder ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -234,7 +234,7 @@ void SurfaceGenerator::postProcessInput()
 
   GEOS_ERROR_IF( binaryOptions.count( m_mpiCommOrder ) == 0,
                  getWrapperDataContext( viewKeyStruct::mpiCommOrderString() ) <<
-                 ": option can be either 0 (false) or 1 (true)" );                                  
+                 ": option can be either 0 (false) or 1 (true)" );
 }
 
 SurfaceGenerator::~SurfaceGenerator()

@@ -328,7 +328,7 @@ SurfaceElementStencilWrapper::
                   real64 ( & dWeight_dVar )[maxNumConnections][2] ) const
 {
 
-  real64 sumOfTrans = 0.0;
+  real64 sumOfTrans = 1e-15;
   for( localIndex k=0; k<numPointsInFlux( iconn ); ++k )
   {
     localIndex const er  =  m_elementRegionIndices[iconn][k];
@@ -626,7 +626,8 @@ SurfaceElementStencilWrapper::
     localIndex const esr =  m_elementSubRegionIndices[iconn][k];
     localIndex const ei  =  m_elementIndices[iconn][k];
 
-    m_weights[iconn][k] = m_weights[iconn][k] / (hydraulicAperture[er][esr][ei]);
+    real64 const apperture = std::max( hydraulicAperture[er][esr][ei], 1e-15 );
+    m_weights[iconn][k] = m_weights[iconn][k] / apperture;
   }
 }
 

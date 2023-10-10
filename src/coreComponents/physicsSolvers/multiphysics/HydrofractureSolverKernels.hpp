@@ -168,11 +168,12 @@ struct FluidMassResidualDerivativeAssemblyKernel
           real64 const dGap_dU = kfSign[kf] * Nbar[i] / numNodesPerFace;
 
           real64 dHydraulicAperture_dAperture = 0.0;
-          real64 const hydraulicAperture = contactWrapper.computeHydraulicAperture( aperture[ei2], dHydraulicAperture_dAperture );
+          real64 const hydraulicAperture = contactWrapper.computeHydraulicAperture( aperture[ei2],
+                                                                                    dHydraulicAperture_dAperture );
           GEOS_UNUSED_VAR( hydraulicAperture );
           real64 const dAper_dU = dHydraulicAperture_dAperture * dGap_dU;
 
-          dRdU( kf * 3 * numNodesPerFace + 3 * a + i ) =  0 * dRdAper * dAper_dU;
+          dRdU( kf * 3 * numNodesPerFace + 3 * a + i ) = dRdAper * dAper_dU;
         }
       }
     }
@@ -183,6 +184,7 @@ struct FluidMassResidualDerivativeAssemblyKernel
   launch( localIndex const size,
           globalIndex const rankOffset,
           CONTACT_WRAPPER const & contactWrapper,
+          integer const useQN,
           ArrayOfArraysView< localIndex const > const elemsToFaces,
           ArrayOfArraysView< localIndex const > const faceToNodeMap,
           arrayView2d< real64 const > const faceNormal,
@@ -226,31 +228,34 @@ struct FluidMassResidualDerivativeAssemblyKernel
                                                                           2 * numNodesPerFace * 3 );
       }
 //
-      localIndex const numColumns = dFluxResidual_dAperture.numNonZeros( ei );
-      arraySlice1d< localIndex const > const & columns = dFluxResidual_dAperture.getColumns( ei );
-      arraySlice1d< real64 const > const & values = dFluxResidual_dAperture.getEntries( ei );
-
-      for( localIndex kfe2 = 0; kfe2 < numColumns; ++kfe2 )
+      if( useQN == 0 )
       {
-        computeFluxDerivative( contactWrapper,
-                               kfe2,
-                               numNodesPerFace,
-                               columns,
-                               values,
-                               elemsToFaces,
-                               faceToNodeMap,
-                               dispDofNumber,
-                               Nbar,
-                               aperture,
-                               nodeDOF,
-                               dRdU );
+        localIndex const numColumns = dFluxResidual_dAperture.numNonZeros( ei );
+        arraySlice1d< localIndex const > const & columns = dFluxResidual_dAperture.getColumns( ei );
+        arraySlice1d< real64 const > const & values = dFluxResidual_dAperture.getEntries( ei );
 
-        if( rowNumber >= 0 && rowNumber < localMatrix.numRows() )
+        for( localIndex kfe2 = 0; kfe2 < numColumns; ++kfe2 )
         {
-          localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( rowNumber,
-                                                                            nodeDOF,
-                                                                            dRdU.data(),
-                                                                            2 * numNodesPerFace * 3 );
+          computeFluxDerivative( contactWrapper,
+                                 kfe2,
+                                 numNodesPerFace,
+                                 columns,
+                                 values,
+                                 elemsToFaces,
+                                 faceToNodeMap,
+                                 dispDofNumber,
+                                 Nbar,
+                                 aperture,
+                                 nodeDOF,
+                                 dRdU );
+
+          if( rowNumber >= 0 && rowNumber < localMatrix.numRows() )
+          {
+            localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( rowNumber,
+                                                                              nodeDOF,
+                                                                              dRdU.data(),
+                                                                              2 * numNodesPerFace * 3 );
+          }
         }
       }
     } );

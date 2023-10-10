@@ -27,27 +27,27 @@ namespace surfaceGenerationKernelsHelpers
 {
 
 GEOS_HOST_DEVICE
-inline void computeNodalForce( real64 const ( & stress) [ 6 ],
-                               real64 const ( & dNdX) [ 3 ],
+inline void computeNodalForce( real64 const ( &stress) [ 6 ],
+                               real64 const ( &dNdX) [ 3 ],
                                real64 const detJ,
                                real64 ( & force ) [ 3 ] )
 {
 
-    force[ 0 ] -= ( stress[ 0 ] * dNdX[ 0 ] +
-                    stress[ 5 ] * dNdX[ 1 ] +
-                    stress[ 4 ] * dNdX[ 2 ] ) * detJ;
-    force[ 1 ] -= ( stress[ 5 ] * dNdX[ 0 ] +
-                    stress[ 1 ] * dNdX[ 1 ] +
-                    stress[ 3 ] * dNdX[ 2 ] ) * detJ;
-    force[ 2 ] -= ( stress[ 4 ] * dNdX[ 0 ] +
-                    stress[ 3 ] * dNdX[ 1 ] +
-                    stress[ 2 ] * dNdX[ 2 ] ) * detJ;                
+  force[ 0 ] -= ( stress[ 0 ] * dNdX[ 0 ] +
+                  stress[ 5 ] * dNdX[ 1 ] +
+                  stress[ 4 ] * dNdX[ 2 ] ) * detJ;
+  force[ 1 ] -= ( stress[ 5 ] * dNdX[ 0 ] +
+                  stress[ 1 ] * dNdX[ 1 ] +
+                  stress[ 3 ] * dNdX[ 2 ] ) * detJ;
+  force[ 2 ] -= ( stress[ 4 ] * dNdX[ 0 ] +
+                  stress[ 3 ] * dNdX[ 1 ] +
+                  stress[ 2 ] * dNdX[ 2 ] ) * detJ;
 }
 
 GEOS_HOST_DEVICE
 inline void scaleNodalForce( real64 const bulkModulus,
-                             real64 const shearModulus, 
-                             real64 ( & force ) [ 3 ] ) 
+                             real64 const shearModulus,
+                             real64 ( & force ) [ 3 ] )
 {
   real64 const YoungModulus = 9 * bulkModulus * shearModulus / ( 3 * bulkModulus + shearModulus );
   real64 const poissonRatio = ( 3 * bulkModulus - 2 * shearModulus ) / ( 2 * ( 3 * bulkModulus + shearModulus ) );
