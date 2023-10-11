@@ -37,9 +37,9 @@ public:
                                     bool const updateTransversalComponent )
     : PermeabilityBaseUpdate( permeability, dPerm_dPressure ),
     m_dPerm_dDispJump( dPerm_dDispJump ),
-    m_numDimensionsToUpdate(3)
+    m_numDimensionsToUpdate( 3 )
   {
-    m_numDimensionsToUpdate = updateTransversalComponent ? 3 : 2; 
+    m_numDimensionsToUpdate = updateTransversalComponent ? 3 : 2;
   }
 
   GEOS_HOST_DEVICE
@@ -148,7 +148,7 @@ private:
   array4d< real64 > m_dPerm_dDispJump;
 
   real64 m_transversalPermeability;
-  
+
   bool m_updateTransversalComponent;
 
 };

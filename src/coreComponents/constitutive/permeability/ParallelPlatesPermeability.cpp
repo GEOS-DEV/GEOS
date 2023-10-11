@@ -55,7 +55,7 @@ void ParallelPlatesPermeability::allocateConstitutiveData( dataRepository::Group
   // NOTE: enforcing 1 quadrature point
   m_dPerm_dDispJump.resize( 0, 1, 3, 3 );
 
-  if ( m_transversalPermeability > -1 )
+  if( m_transversalPermeability > -1 )
   {
     m_updateTransversalComponent = false;
   }

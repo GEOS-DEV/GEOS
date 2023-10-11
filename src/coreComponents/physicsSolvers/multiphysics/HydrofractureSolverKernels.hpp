@@ -127,7 +127,7 @@ struct FluidMassResidualDerivativeAssemblyKernel
           real64 dHydraulicAperture_NormalJump = 0;
           real64 const hydraulicAperture = contactWrapper.computeHydraulicAperture( aperture, dHydraulicAperture_NormalJump );
           GEOS_UNUSED_VAR( hydraulicAperture );
-          
+
           real64 const dHydraulicAperture_dDisplacement = dHydraulicAperture_NormalJump * dNormalJump_dDisplacement;
           real64 const dVolume_dDisplacement = area * dHydraulicAperture_dDisplacement;
 
