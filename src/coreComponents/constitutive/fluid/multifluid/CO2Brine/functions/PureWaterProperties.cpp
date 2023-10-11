@@ -152,7 +152,7 @@ PureWaterProperties::makeSaturationDensityTable( string const & functionName,
   densities[2] = 998.21;
   densities[3] = 997.05;
   densities[4] = 995.65;
-  densities[5] = 995.65;
+  densities[5] = 992.25;
   densities[6] = 988.04;
   densities[7] = 983.2;
   densities[8] = 977.76;
