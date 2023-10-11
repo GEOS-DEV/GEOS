@@ -116,7 +116,7 @@ public:
     {
       string const & porosityModelName = region.getSubRegion( 0 ).getReference< string >( porosityModelKey );
       constitutive::ConstitutiveBase const & porosityModel = constitutiveManager.getConstitutiveRelation< constitutive::ConstitutiveBase >( porosityModelName );
-      m_solidMaterialFullIndex[regionIndex] = porosityModel.getIndexInParent();
+      m_porosityMaterialFullIndex[regionIndex] = porosityModel.getIndexInParent();
     } );
 
   }
