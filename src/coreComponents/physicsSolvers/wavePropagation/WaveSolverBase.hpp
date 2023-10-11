@@ -113,6 +113,7 @@ public:
     static constexpr char const * usePMLString() { return "usePML"; }
     static constexpr char const * parametersPMLString() { return "parametersPML"; }
 
+    static constexpr char const * freeSurfaceString() { return "FreeSurface"; }
   };
 
   /**
@@ -128,6 +129,13 @@ public:
 protected:
 
   virtual void postProcessInput() override;
+
+  /**
+   * @brief Utility function to check if a directory exists
+   * @param directoryName the name of the directory
+   * @return true if the directory exists, false otherwise
+   */
+  bool directoryExists( std::string const & directoryName );
 
   /**
    * @brief Apply free surface condition to the face defined in the geometry box of the xml
