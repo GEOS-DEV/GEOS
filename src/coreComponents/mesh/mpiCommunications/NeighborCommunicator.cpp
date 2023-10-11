@@ -501,7 +501,7 @@ int NeighborCommunicator::packCommSizeForSync( FieldIdentifiers const & fieldsTo
 
   for( auto const & iter : fieldsToBeSync.getFields() )
   {
-    FieldLocation location;
+    FieldLocation location{};
     fieldsToBeSync.getLocation( iter.first, location );
     switch( location )
     {
@@ -559,7 +559,7 @@ void NeighborCommunicator::packCommBufferForSync( FieldIdentifiers const & field
 
   for( auto const & iter : fieldsToBeSync.getFields() )
   {
-    FieldLocation location;
+    FieldLocation location{};
     fieldsToBeSync.getLocation( iter.first, location );
     switch( location )
     {
