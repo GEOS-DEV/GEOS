@@ -761,9 +761,7 @@ real64 SolverBase::nonlinearImplicitStep( real64 const & time_n,
           // increment the solver statistics for reporting purposes
           m_solverStatistics.logOuterLoopIteration();
 
-          GEOS_LOG_LEVEL_RANK_0( 1, "   " );
           GEOS_LOG_LEVEL_RANK_0( 1, "---------- Configuration did not converge. Testing new configuration. ----------" );
-          GEOS_LOG_LEVEL_RANK_0( 1, "   " );
         }
       }
       else if( !attemptedSimplestConfiguration )
@@ -886,7 +884,7 @@ bool SolverBase::solveNonlinearSystem( real64 const & time_n,
 
     if( newtonIter > 0 )
     {
-      GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "        Last LinSolve(iter,res) = ( {:3}, {:4.2e} ) ; ",
+      GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "        Last LinSolve(iter,res) = ( {:3}, {:4.2e} )",
                                           m_linearSolverResult.numIterations,
                                           m_linearSolverResult.residualReduction ) );
     }

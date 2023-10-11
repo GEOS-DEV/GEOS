@@ -482,7 +482,7 @@ protected:
 
     if( params.m_subcyclingOption == 0 )
     {
-      GEOS_LOG_LEVEL_RANK_0( 1, "***** Single Pass solver, no subcycling *****\n" );
+      GEOS_LOG_LEVEL_RANK_0( 1, "***** Single Pass solver, no subcycling *****" );
     }
     else
     {
