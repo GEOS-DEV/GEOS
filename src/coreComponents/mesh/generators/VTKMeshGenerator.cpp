@@ -25,6 +25,8 @@
 #include "common/DataLayouts.hpp"
 #include "common/MpiWrapper.hpp"
 
+#include <vtkXMLUnstructuredGridWriter.h>
+
 namespace geos
 {
 using namespace dataRepository;
@@ -84,9 +86,11 @@ void VTKMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockManager
   GEOS_LOG_RANK_0( GEOS_FMT( "{} '{}': reading mesh from {}", catalogName(), getName(), m_filePath ) );
   {
     GEOS_LOG_LEVEL_RANK_0( 2, "  reading the dataset..." );
-    vtkSmartPointer< vtkDataSet > loadedMesh = vtk::loadMesh( m_filePath, m_mainBlockName );
+    vtk::AllMeshes allMeshes = vtk::loadAllMeshes( m_filePath, m_mainBlockName, m_faceBlockNames );
     GEOS_LOG_LEVEL_RANK_0( 2, "  redistributing mesh..." );
-    m_vtkMesh = vtk::redistributeMesh( loadedMesh, comm, m_partitionMethod, m_partitionRefinement, m_useGlobalIds );
+    vtk::AllMeshes redistributedMeshes = vtk::redistributeMeshes( allMeshes.getMainMesh(), allMeshes.getFaceBlocks(), comm, m_partitionMethod, m_partitionRefinement, m_useGlobalIds );
+    m_vtkMesh = redistributedMeshes.getMainMesh();
+    m_faceBlockMeshes = redistributedMeshes.getFaceBlocks();
     GEOS_LOG_LEVEL_RANK_0( 2, "  finding neighbor ranks..." );
     std::vector< vtkBoundingBox > boxes = vtk::exchangeBoundingBoxes( *m_vtkMesh, comm );
     std::vector< int > const neighbors = vtk::findNeighborRanks( std::move( boxes ) );
@@ -111,9 +115,9 @@ void VTKMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockManager
   GEOS_LOG_LEVEL_RANK_0( 2, "  building connectivity maps..." );
   cellBlockManager.buildMaps();
 
-  for( string const & faceBlockName: m_faceBlockNames )
+  for( auto const & [name, mesh]: m_faceBlockMeshes )
   {
-    m_faceBlockMeshes[faceBlockName] = importFractureNetwork( m_filePath, faceBlockName, m_vtkMesh, cellBlockManager );
+    vtk::importFractureNetwork( name, mesh, m_vtkMesh, cellBlockManager );
   }
 
   GEOS_LOG_LEVEL_RANK_0( 2, "  done!" );
@@ -125,7 +129,7 @@ void VTKMeshGenerator::importVolumicFieldOnArray( string const & cellBlockName,
                                                   bool isMaterialField,
                                                   dataRepository::WrapperBase & wrapper ) const
 {
-  for( auto const & typeRegions : m_cellMap )
+  for( auto const & typeRegions: m_cellMap )
   {
     // Restrict data import to 3D cells
     if( getElementDim( typeRegions.first ) == 3 )
@@ -135,7 +139,9 @@ void VTKMeshGenerator::importVolumicFieldOnArray( string const & cellBlockName,
         string const currentCellBlockName = vtk::buildCellBlockName( typeRegions.first, regionCells.first );
         // We don't know how the user mapped cell blocks to regions, so we must check all of them
         if( cellBlockName != currentCellBlockName )
+        {
           continue;
+        }
 
         vtkDataArray * vtkArray = vtk::findArrayForImport( *m_vtkMesh, meshFieldName );
         if( isMaterialField )
@@ -158,19 +164,22 @@ void VTKMeshGenerator::importSurfacicFieldOnArray( string const & faceBlockName,
                                                    string const & meshFieldName,
                                                    dataRepository::WrapperBase & wrapper ) const
 {
-  // If the field was not imported from cell blocks, we now look for it in the face blocks.
-  // This surely can be improved by clearly stating which field should be on which block.
   // Note that there is no additional work w.r.t. the cells on which we want to import the fields,
   // because the face blocks are heterogeneous.
   // We always take the whole data, we do not select cell type by cell type.
-  for( auto const & p: m_faceBlockMeshes )
+  vtkSmartPointer< vtkDataSet > faceMesh = m_faceBlockMeshes.at( faceBlockName );
+
+  // I've noticed that there may be some issues when reading empty arrays (empty, not nulls).
+  // It looks like we may be reading above the limits of the array; ghosting is surely at stake here.
+  if( faceMesh->GetNumberOfCells() == 0 )
   {
-    vtkSmartPointer< vtkDataSet > faceMesh = p.second;
-    if( vtk::hasArray( *faceMesh, meshFieldName ) )
-    {
-      vtkDataArray * vtkArray = vtk::findArrayForImport( *faceMesh, meshFieldName );
-      return vtk::importRegularField( vtkArray, wrapper );
-    }
+    return;
+  }
+
+  if( vtk::hasArray( *faceMesh, meshFieldName ) )
+  {
+    vtkDataArray * vtkArray = vtk::findArrayForImport( *faceMesh, meshFieldName );
+    return vtk::importRegularField( vtkArray, wrapper );
   }
 
   GEOS_ERROR( "Could not import field \"" << meshFieldName << "\" from face block \"" << faceBlockName << "\"." );

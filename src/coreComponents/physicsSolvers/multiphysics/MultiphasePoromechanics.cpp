@@ -174,6 +174,7 @@ void MultiphasePoromechanics::assembleSystem( real64 const GEOS_UNUSED_PARAM( ti
                                                                                                     viewKeyStruct::porousMaterialNamesString(),
                                                                                                     localMatrix,
                                                                                                     localRhs,
+                                                                                                    dt,
                                                                                                     flowDofKey,
                                                                                                     flowSolver()->numFluidComponents(),
                                                                                                     flowSolver()->numFluidPhases(),
@@ -189,6 +190,7 @@ void MultiphasePoromechanics::assembleSystem( real64 const GEOS_UNUSED_PARAM( ti
                                                                                       viewKeyStruct::porousMaterialNamesString(),
                                                                                       localMatrix,
                                                                                       localRhs,
+                                                                                      dt,
                                                                                       flowDofKey,
                                                                                       flowSolver()->numFluidComponents(),
                                                                                       flowSolver()->numFluidPhases(),
@@ -228,7 +230,8 @@ void MultiphasePoromechanics::assembleSystem( real64 const GEOS_UNUSED_PARAM( ti
                                                                                 filteredRegionNames.toViewConst(),
                                                                                 SolidMechanicsLagrangianFEM::viewKeyStruct::solidMaterialNamesString(),
                                                                                 localMatrix,
-                                                                                localRhs );
+                                                                                localRhs,
+                                                                                dt );
 
   } );
 
@@ -259,6 +262,7 @@ void MultiphasePoromechanics::assembleSystem( real64 const GEOS_UNUSED_PARAM( ti
 
 void MultiphasePoromechanics::updateState( DomainPartition & domain )
 {
+  real64 maxDeltaPhaseVolFrac = 0.0;
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
                                                                 arrayView1d< string const > const & regionNames )
@@ -268,13 +272,16 @@ void MultiphasePoromechanics::updateState( DomainPartition & domain )
                                                               [&]( localIndex const,
                                                                    CellElementSubRegion & subRegion )
     {
-      flowSolver()->updateFluidState( subRegion );
+      real64 const deltaPhaseVolFrac = flowSolver()->updateFluidState( subRegion );
+      maxDeltaPhaseVolFrac = LvArray::math::max( maxDeltaPhaseVolFrac, deltaPhaseVolFrac );
       if( m_isThermal )
       {
         flowSolver()->updateSolidInternalEnergyModel( subRegion );
       }
     } );
   } );
+
+  GEOS_LOG_LEVEL_RANK_0( 1, getName() << ": Max deltaPhaseVolFrac = " << maxDeltaPhaseVolFrac );
 }
 
 void MultiphasePoromechanics::initializePostInitialConditionsPreSubGroups()
@@ -318,7 +325,8 @@ void MultiphasePoromechanics::initializePreSubGroups()
   SolverBase::initializePreSubGroups();
 
   GEOS_THROW_IF( m_stabilizationType == StabilizationType::Local,
-                 catalogName() << " " << getName() << ": Local stabilization has been disabled temporarily",
+                 getWrapperDataContext( viewKeyStruct::stabilizationTypeString() ) <<
+                 ": Local stabilization has been disabled temporarily",
                  InputError );
 
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
@@ -334,7 +342,8 @@ void MultiphasePoromechanics::initializePreSubGroups()
     {
       string & porousName = subRegion.getReference< string >( viewKeyStruct::porousMaterialNamesString() );
       porousName = getConstitutiveName< CoupledSolidBase >( subRegion );
-      GEOS_ERROR_IF( porousName.empty(), GEOS_FMT( "Solid model not found on subregion {}", subRegion.getName() ) );
+      GEOS_ERROR_IF( porousName.empty(), GEOS_FMT( "{}: Solid model not found on subregion {}",
+                                                   getDataContext(), subRegion.getName() ) );
 
       if( subRegion.hasField< fields::poromechanics::bulkDensity >() )
       {
