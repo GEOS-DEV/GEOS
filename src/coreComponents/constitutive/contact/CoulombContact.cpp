@@ -74,6 +74,7 @@ CoulombContactUpdates CoulombContact::createKernelWrapper() const
                                 m_shearStiffness,
                                 m_displacementJumpThreshold,
                                 *m_apertureTable,
+                                m_useApertureModel,
                                 m_cohesion,
                                 m_frictionCoefficient,
                                 m_elasticSlip );

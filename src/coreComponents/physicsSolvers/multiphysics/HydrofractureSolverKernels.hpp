@@ -43,6 +43,7 @@ struct DeformationUpdateKernel
           arrayView1d< real64 const > const & volume,
           arrayView1d< real64 > const & deltaVolume,
           arrayView1d< real64 > const & aperture,
+          arrayView1d< real64 const > const & refAperture,
           arrayView1d< real64 > const & hydraulicAperture
 #ifdef GEOSX_USE_SEPARATION_COEFFICIENT
           ,
@@ -71,8 +72,10 @@ struct DeformationUpdateKernel
       // TODO this needs a proper contact based strategy for aperture
       aperture[kfe] = -LvArray::tensorOps::AiBi< 3 >( temp, faceNormal[ kf0 ] ) / numNodesPerFace;
 
-      real64 dHydraulicAperture_dAperture = 0;
-      hydraulicAperture[kfe] = contactWrapper.computeHydraulicAperture( aperture[kfe], dHydraulicAperture_dAperture );
+      real64 dHydraulicAperture_dAperture = 0.0;
+      hydraulicAperture[kfe] = contactWrapper.computeHydraulicAperture( aperture[kfe], refAperture[kfe], dHydraulicAperture_dAperture );
+
+      GEOS_UNUSED_VAR( dHydraulicAperture_dAperture );
 
 #ifdef GEOSX_USE_SEPARATION_COEFFICIENT
       real64 const s = aperture[kfe] / apertureAtFailure[kfe];
@@ -109,6 +112,7 @@ struct FluidMassResidualDerivativeAssemblyKernel
                                  real64 const (&Nbar)[ 3 ],
                                  real64 const & area,
                                  real64 const & aperture,
+                                 real64 const & refAperture,
                                  real64 const & dens,
                                  globalIndex (& nodeDOF)[8 * 3],
                                  arraySlice1d< real64 > const dRdU )
@@ -125,8 +129,10 @@ struct FluidMassResidualDerivativeAssemblyKernel
           real64 const dGap_dU = kfSign[kf] * Nbar[i] / numNodesPerFace;
 
           real64 dHydraulicAperture_dAperture = 0;
-          real64 const hydraulicAperture = contactWrapper.computeHydraulicAperture( aperture, dHydraulicAperture_dAperture );
+          real64 const hydraulicAperture = contactWrapper.computeHydraulicAperture( aperture, refAperture, dHydraulicAperture_dAperture );
+
           GEOS_UNUSED_VAR( hydraulicAperture );
+
           real64 const dAper_dU = dHydraulicAperture_dAperture * dGap_dU;
 
           dRdU( kf * 3 * numNodesPerFace + 3 * a + i ) = dens * area * dAper_dU;
@@ -149,6 +155,7 @@ struct FluidMassResidualDerivativeAssemblyKernel
                          arrayView1d< globalIndex const > const dispDofNumber,
                          real64 const (&Nbar)[ 3 ],
                          arrayView1d< real64 const > const aperture,
+                         arrayView1d< real64 const > const refAperture,
                          globalIndex (& nodeDOF)[8 * 3],
                          arraySlice1d< real64 > const dRdU )
   {
@@ -167,8 +174,10 @@ struct FluidMassResidualDerivativeAssemblyKernel
           real64 const dGap_dU = kfSign[kf] * Nbar[i] / numNodesPerFace;
 
           real64 dHydraulicAperture_dAperture = 0.0;
-          real64 const hydraulicAperture = contactWrapper.computeHydraulicAperture( aperture[ei2], dHydraulicAperture_dAperture );
+          real64 const hydraulicAperture = contactWrapper.computeHydraulicAperture( aperture[ei2], refAperture[ei2], dHydraulicAperture_dAperture );
+
           GEOS_UNUSED_VAR( hydraulicAperture );
+
           real64 const dAper_dU = dHydraulicAperture_dAperture * dGap_dU;
 
           dRdU( kf * 3 * numNodesPerFace + 3 * a + i ) = dRdAper * dAper_dU;
@@ -187,6 +196,7 @@ struct FluidMassResidualDerivativeAssemblyKernel
           arrayView2d< real64 const > const faceNormal,
           arrayView1d< real64 const > const area,
           arrayView1d< real64 const > const aperture,
+          arrayView1d< real64 const > const & refAperture,
           arrayView1d< globalIndex const > const presDofNumber,
           arrayView1d< globalIndex const > const dispDofNumber,
           arrayView2d< real64 const > const dens,
@@ -213,6 +223,7 @@ struct FluidMassResidualDerivativeAssemblyKernel
                                      Nbar,
                                      area[ei],
                                      aperture[ei],
+                                     refAperture[ei],
                                      dens[ei][0],
                                      nodeDOF,
                                      dRdU );
@@ -241,6 +252,7 @@ struct FluidMassResidualDerivativeAssemblyKernel
                                dispDofNumber,
                                Nbar,
                                aperture,
+                               refAperture,
                                nodeDOF,
                                dRdU );
 

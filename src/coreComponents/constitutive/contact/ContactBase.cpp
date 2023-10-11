@@ -58,8 +58,12 @@ ContactBase::ContactBase( string const & name,
 
 
   registerWrapper( viewKeyStruct::apertureTableNameString(), &m_apertureTableName ).
-    setInputFlag( InputFlags::REQUIRED ).
+    setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Name of the aperture table" );
+
+  registerWrapper( viewKeyStruct::useApertureModelString(), &m_useApertureModel ).
+    setApplyDefaultValue( 0 ).
+    setInputFlag( InputFlags::OPTIONAL );
 }
 
 ContactBase::~ContactBase()
@@ -69,7 +73,7 @@ ContactBase::~ContactBase()
 void ContactBase::postProcessInput()
 {
 
-  GEOS_THROW_IF( m_apertureTableName.empty(),
+  GEOS_THROW_IF( m_apertureTableName.empty() && m_useApertureModel == 0,
                  getFullName() << ": the aperture table name " << m_apertureTableName << " is empty", InputError );
 
 }
@@ -83,40 +87,43 @@ void ContactBase::allocateConstitutiveData( Group & parent,
 {
   ConstitutiveBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 
-  FunctionManager & functionManager = FunctionManager::getInstance();
-
-  GEOS_THROW_IF( !functionManager.hasGroup( m_apertureTableName ),
-                 getFullName() << ": the aperture table named " << m_apertureTableName << " could not be found",
-                 InputError );
-
-  TableFunction & apertureTable = functionManager.getGroup< TableFunction >( m_apertureTableName );
-  validateApertureTable( apertureTable );
-
-  ArrayOfArraysView< real64 > coords = apertureTable.getCoordinates();
-  arraySlice1d< real64 const > apertureValues = coords[0];
-  array1d< real64 > & hydraulicApertureValues = apertureTable.getValues();
-
-  localIndex const n = apertureValues.size()-1;
-  real64 const slope = ( hydraulicApertureValues[n] - hydraulicApertureValues[n-1] ) / ( apertureValues[n] - apertureValues[n-1] );
-  real64 const apertureTransition = ( hydraulicApertureValues[n] - slope * apertureValues[n] ) / ( 1.0 - slope );
-
-  // if the aperture transition is larger than the last coordinates, we enlarge the table
-  // this check is necessary to ensure that the coordinates are strictly increasing
-  if( apertureTransition > apertureValues[apertureValues.size()-1] )
+  if( m_useApertureModel == 0 )
   {
-    coords.emplaceBack( 0, apertureTransition );
-    hydraulicApertureValues.emplace_back( apertureTransition );
-    // if the aperture transition is larger than 0, we keep enlarging the table
-    // this check is necessary to ensure that the coordinates are strictly increasing
-    if( apertureTransition > 0 )
-    {
-      coords.emplaceBack( 0, apertureTransition*10e9 );
-      hydraulicApertureValues.emplace_back( apertureTransition*10e9 );
-      apertureTable.reInitializeFunction();
-    }
-  }
+    FunctionManager & functionManager = FunctionManager::getInstance();
 
-  m_apertureTable = &apertureTable;
+    GEOS_THROW_IF( !functionManager.hasGroup( m_apertureTableName ),
+                  getFullName() << ": the aperture table named " << m_apertureTableName << " could not be found",
+                  InputError );
+
+    TableFunction & apertureTable = functionManager.getGroup< TableFunction >( m_apertureTableName );
+    validateApertureTable( apertureTable );
+
+    ArrayOfArraysView< real64 > coords = apertureTable.getCoordinates();
+    arraySlice1d< real64 const > apertureValues = coords[0];
+    array1d< real64 > & hydraulicApertureValues = apertureTable.getValues();
+
+    localIndex const n = apertureValues.size()-1;
+    real64 const slope = ( hydraulicApertureValues[n] - hydraulicApertureValues[n-1] ) / ( apertureValues[n] - apertureValues[n-1] );
+    real64 const apertureTransition = ( hydraulicApertureValues[n] - slope * apertureValues[n] ) / ( 1.0 - slope );
+
+    // if the aperture transition is larger than the last coordinates, we enlarge the table
+    // this check is necessary to ensure that the coordinates are strictly increasing
+    if( apertureTransition > apertureValues[apertureValues.size()-1] )
+    {
+      coords.emplaceBack( 0, apertureTransition );
+      hydraulicApertureValues.emplace_back( apertureTransition );
+      // if the aperture transition is larger than 0, we keep enlarging the table
+      // this check is necessary to ensure that the coordinates are strictly increasing
+      if( apertureTransition > 0 )
+      {
+        coords.emplaceBack( 0, apertureTransition*10e9 );
+        hydraulicApertureValues.emplace_back( apertureTransition*10e9 );
+        apertureTable.reInitializeFunction();
+      }
+    }
+
+    m_apertureTable = &apertureTable;
+  }
 }
 
 
@@ -155,7 +162,8 @@ ContactBaseUpdates ContactBase::createKernelWrapper() const
   return ContactBaseUpdates( m_penaltyStiffness,
                              m_shearStiffness,
                              m_displacementJumpThreshold,
-                             *m_apertureTable );
+                             *m_apertureTable,
+                             m_useApertureModel );
 }
 
 } /* end namespace constitutive */

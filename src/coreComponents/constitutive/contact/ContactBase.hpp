@@ -42,12 +42,19 @@ public:
   ContactBaseUpdates( real64 const & penaltyStiffness,
                       real64 const & shearStiffness,
                       real64 const & displacementJumpThreshold,
-                      TableFunction const & apertureTable )
+                      TableFunction const & apertureTable,
+                      integer const useApertureModel )
     : m_penaltyStiffness( penaltyStiffness ),
     m_shearStiffness( shearStiffness ),
     m_displacementJumpThreshold( displacementJumpThreshold ),
-    m_apertureTable( apertureTable.createKernelWrapper() )
-  {}
+    m_apertureTable(), 
+    m_useApertureModel( useApertureModel )
+  {
+    if( !m_useApertureModel )
+    {
+      m_apertureTable = apertureTable.createKernelWrapper();
+    }
+  }
 
   /// Default copy constructor
   ContactBaseUpdates( ContactBaseUpdates const & ) = default;
@@ -67,11 +74,13 @@ public:
   /**
    * @brief Evaluate the effective aperture, and its derivative wrt aperture
    * @param[in] aperture the model aperture/gap
+   * @param[in] refAperture the reference aperture
    * @param[out] dHydraulicAperture_dAperture the derivative of the effective aperture wrt aperture
    * @return The hydraulic aperture that is always > 0
    */
   GEOS_HOST_DEVICE
   virtual real64 computeHydraulicAperture( real64 const aperture,
+                                           real64 const refAperture, 
                                            real64 & dHydraulicAperture_dAperture ) const;
 
 
@@ -144,6 +153,9 @@ protected:
 
   /// The aperture table function wrapper
   TableFunction::KernelWrapper m_apertureTable;
+
+  /// The flag for using nonlinear aperture model instead of the aperture table 
+  integer m_useApertureModel;
 };
 
 
@@ -209,6 +221,9 @@ public:
 
     /// string/key for aperture table name
     static constexpr char const * apertureTableNameString() { return "apertureTableName"; }
+
+    /// string/key for the flag to use nonlinear aperture model 
+    constexpr static char const * useApertureModelString() { return "useApertureModel"; }
   };
 
 protected:
@@ -240,14 +255,34 @@ protected:
 
   /// Pointer to the function that limits the model aperture to a physically admissible value.
   TableFunction const * m_apertureTable;
+
+  /// The flag for using nonlinear aperture model instead of the aperture table 
+  integer m_useApertureModel;
 };
 
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
 real64 ContactBaseUpdates::computeHydraulicAperture( real64 const aperture,
+                                                     real64 const refAperture,
                                                      real64 & dHydraulicAperture_dAperture ) const
 {
-  return m_apertureTable.compute( &aperture, &dHydraulicAperture_dAperture );
+  if( m_useApertureModel )
+  {
+    real64 const refNormalStress = 5e7;
+
+    real64 const penaltyNormalStress = -m_penaltyStiffness * aperture;
+
+    real64 const hydraulicAperture = (aperture >= 0.0)? (aperture + refAperture) : refAperture / ( 1 + 9*penaltyNormalStress/refNormalStress );
+    real64 const dHydraulicAperture_dNormalStress = -hydraulicAperture / ( 1 + 9*penaltyNormalStress/refNormalStress ) * 9/refNormalStress;
+
+    dHydraulicAperture_dAperture = (aperture >= 0.0)? 1.0:dHydraulicAperture_dNormalStress * -m_penaltyStiffness;
+
+    return hydraulicAperture;
+  }
+  else
+  {
+    return m_apertureTable.compute( &aperture, &dHydraulicAperture_dAperture );
+  }
 }
 
 GEOS_HOST_DEVICE
