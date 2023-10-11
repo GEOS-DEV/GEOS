@@ -260,24 +260,24 @@ The simulation can be launched with 4 cores using MPI-parallelism:
 
 .. code-block:: console
 
-  mpirun -np 4 geosx -i SimpleCo2InjTutorial.xml -x 1 -y 1 -z 4
+  mpirun -np 4 geosx -i simpleCo2InjTutorial.xml -x 1 -y 1 -z 4
 
-A restart from a checkpoint file `SimpleCo2InjTutorial_restart_000000024.root` is always available thanks to the following command line :
+A restart from a checkpoint file `simpleCo2InjTutorial_restart_000000024.root` is always available thanks to the following command line :
 
 .. code-block:: console
 
-  mpirun -np 4 geosx -i SimpleCo2InjTutorial.xml -r SimpleCo2InjTutorial_restart_000000024 -x 1 -y 1 -z 4
+  mpirun -np 4 geosx -i simpleCo2InjTutorial.xml -r simpleCo2InjTutorial_restart_000000024 -x 1 -y 1 -z 4
 
 The output then shows the loading of HDF5 restart files by each core. 
 
 .. code-block:: console
 
-        Loading restart file SimpleCo2InjTutorial_restart_000000024
-        Rank 0: rankFilePattern = SimpleCo2InjTutorial_restart_000000024/rank_%07d.hdf5
-        Rank 0: Reading in restart file at SimpleCo2InjTutorial_restart_000000024/rank_0000000.hdf5
-        Rank 1: Reading in restart file at SimpleCo2InjTutorial_restart_000000024/rank_0000001.hdf5
-        Rank 3: Reading in restart file at SimpleCo2InjTutorial_restart_000000024/rank_0000003.hdf5
-        Rank 2: Reading in restart file at SimpleCo2InjTutorial_restart_000000024/rank_0000002.hdf5
+        Loading restart file simpleCo2InjTutorial_restart_000000024
+        Rank 0: rankFilePattern = simpleCo2InjTutorial_restart_000000024/rank_%07d.hdf5
+        Rank 0: Reading in restart file at simpleCo2InjTutorial_restart_000000024/rank_0000000.hdf5
+        Rank 1: Reading in restart file at simpleCo2InjTutorial_restart_000000024/rank_0000001.hdf5
+        Rank 3: Reading in restart file at simpleCo2InjTutorial_restart_000000024/rank_0000003.hdf5
+        Rank 2: Reading in restart file at simpleCo2InjTutorial_restart_000000024/rank_0000002.hdf5
 
 and the simulation restarts from this point in time. 	
 
