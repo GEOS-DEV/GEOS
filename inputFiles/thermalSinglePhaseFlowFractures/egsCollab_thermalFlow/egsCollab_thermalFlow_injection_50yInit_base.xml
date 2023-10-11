@@ -29,15 +29,17 @@
 
     <PeriodicEvent
      name="outputs_initialization"
-     cycleFrequency="1"
+     timeFrequency="1.576800000e9"
      beginTime="0.0"
      endTime="1.576800000e9"
+     targetExactStartStop="1"
      target="/Outputs/vtkOutput"/>   
 
    <PeriodicEvent
      name="outputs"
-     cycleFrequency="10"
+     timeFrequency="21600"
      beginTime="1.576800001e9"
+     targetExactTimestep="1"
      target="/Outputs/vtkOutput"/> 
 
     <PeriodicEvent
@@ -65,15 +67,30 @@
     <PeriodicEvent
        name="solverApplications3"
        forceDt="1"
-       beginTime="1.576800000e9"
+       beginTime="1.576800001e9"
        endTime="1.576800010e9"
        target="/Solvers/singleFlow"/>
 
     <PeriodicEvent
        name="solverApplications4"
        beginTime="1.576800010e9"
-       maxEventDt="100"
-       target="/Solvers/singleFlow"/>   
+       endTime="1.5783552000E+09"
+       maxEventDt="3600"
+       target="/Solvers/singleFlow"/>
+    
+    <!-- Shut-down period -->
+    <PeriodicEvent
+       name="solverApplications5"
+       beginTime="1.5783552001E+09"
+       endTime="1.5791436500E+09"
+       maxEventDt="7200"
+       target="/Solvers/singleFlow"/>
+       
+    <PeriodicEvent
+       name="solverApplications6"
+       beginTime="1.5791436500E+09"
+       maxEventDt="3600"
+       target="/Solvers/singleFlow"/>     
    </Events>
 
   <FieldSpecifications>
@@ -102,7 +119,18 @@
        objectPath="ElementRegions/fracture"
        fieldName="fracturePerm_permeability"
        beginTime="1.576800000e9"
-       scale="1.0e-9"/>      
+       scale="1.0e-9"/>
+       
+    <FieldSpecification
+       name="fracPressureAtInjection"
+       setNames="{ all }"
+       logLevel="1"
+       propertyUpdate="1"
+       objectPath="ElementRegions/fracture"
+       fieldName="pressure"
+       beginTime="1.576800000e9"
+       endTime="1.576800000e9"
+       scale="13.3e6"/>      
 
     <FieldSpecification
       name="initialPressure"
@@ -161,10 +189,10 @@
 
     <FieldSpecification
       name="DriftFracturePressure"
-      objectPath="ElementRegions"  
+      objectPath="ElementRegions/fracture"  
       fieldName="pressure"
-      scale="2.4e6"
-      beginTime="1.576800000e9"
+      scale="13.3e6"
+      beginTime="1.576800001e9"
       setNames="{ Drift }"/>   
   
     <!-- Injection -->
@@ -181,7 +209,7 @@
       objectPath="ElementRegions/fracture"                                                                                                                                              
       fieldName="temperature"                                                                                                                                                            
       functionName="injectionSchedule_temperature"
-      beginTime="1.576800000e9"
+      beginTime="1.576800001e9"
       scale="1"                                                                                                                                                                          
       setNames="{ TU_injector }"/>
 
@@ -255,6 +283,8 @@
   <Outputs>
     <VTK
       name="vtkOutput"
-      plotFileRoot="thermalFlowFrac_collab_circulation_fracPerm=1e-9"/>
+      plotFileRoot="thermalFlowFrac_collab_circulation"
+      onlyPlotSpecifiedFieldNames="1"
+      fieldNames="{temperature, pressure, elementCenter}"/>
   </Outputs>
 </Problem>

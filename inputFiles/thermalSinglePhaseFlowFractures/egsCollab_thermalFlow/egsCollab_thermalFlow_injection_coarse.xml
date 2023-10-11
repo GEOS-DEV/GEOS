@@ -3,7 +3,7 @@
 <Problem>
 
 <Included>
-<File name="./egsCollab_thermalFlow_injection_base.xml"/>
+<File name="./egsCollab_thermalFlow_injection_200yInit_base.xml"/>
 </Included>
 
   <Solvers

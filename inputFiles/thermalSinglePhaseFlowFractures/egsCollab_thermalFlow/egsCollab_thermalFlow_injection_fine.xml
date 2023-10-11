@@ -18,7 +18,7 @@
         newtonMaxIter="10"
         maxAllowedResidualNorm="1e25"
         maxTimeStepCuts="5"
-        lineSearchMaxCuts="10"
+        lineSearchMaxCuts="3"
         timeStepDecreaseIterLimit="0.7"
         timeStepIncreaseIterLimit="0.3"/>
       <LinearSolverParameters
