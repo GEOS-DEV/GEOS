@@ -33,26 +33,41 @@ public:
 
   ParallelPlatesPermeabilityUpdate( arrayView3d< real64 > const & permeability,
                                     arrayView3d< real64 > const & dPerm_dPressure,
-                                    arrayView4d< real64 > const & dPerm_dDispJump )
+                                    arrayView4d< real64 > const & dPerm_dDispJump,
+                                    integer const timeLagFlag )
     : PermeabilityBaseUpdate( permeability, dPerm_dPressure ),
-    m_dPerm_dDispJump( dPerm_dDispJump )
+    m_dPerm_dDispJump( dPerm_dDispJump ),
+    m_timeLagFlag( timeLagFlag )
   {}
 
   GEOS_HOST_DEVICE
   void compute( real64 const & oldHydraulicAperture,
                 real64 const & newHydraulicAperture,
                 arraySlice1d< real64 > const & permeability,
-                arraySlice2d< real64 > const & dPerm_dDispJump ) const
+                arraySlice2d< real64 > const & dPerm_dDispJump,
+                integer const timeLagFlag ) const
   {
-    GEOS_UNUSED_VAR( oldHydraulicAperture );
+    real64 perm = 0.0; 
+    real64 dPerm = 0.0; 
+    
+    if( timeLagFlag )
+    {
+      GEOS_UNUSED_VAR( newHydraulicAperture, dPerm );
 
-    real64 const perm  = newHydraulicAperture*newHydraulicAperture / 12.0;
-    real64 const dPerm = newHydraulicAperture / 6.0;
+      perm  = oldHydraulicAperture*oldHydraulicAperture / 12.0;
+    }
+    else
+    {
+      GEOS_UNUSED_VAR( oldHydraulicAperture );
+
+      perm  = newHydraulicAperture*newHydraulicAperture / 12.0;
+      dPerm = newHydraulicAperture / 6.0;
+    }
 
     for( int dim=0; dim < 3; dim++ )
     {
       permeability[dim]     = perm;
-      dPerm_dDispJump[dim][0]  = dPerm;
+      dPerm_dDispJump[dim][0]  = 0.0;
       dPerm_dDispJump[dim][1]  = 0.0;
       dPerm_dDispJump[dim][2]  = 0.0;
     }
@@ -69,7 +84,8 @@ public:
     compute( oldHydraulicAperture,
              newHydraulicAperture,
              m_permeability[k][0],
-             m_dPerm_dDispJump[k][0] );
+             m_dPerm_dDispJump[k][0],
+             m_timeLagFlag );
   }
 
   GEOS_HOST_DEVICE
@@ -89,6 +105,8 @@ public:
 private:
 
   arrayView4d< real64 > m_dPerm_dDispJump;
+
+  integer m_timeLagFlag; 
 
 };
 
@@ -120,12 +138,16 @@ public:
   {
     return KernelWrapper( m_permeability,
                           m_dPerm_dPressure,
-                          m_dPerm_dDispJump );
+                          m_dPerm_dDispJump,
+                          m_timeLagFlag );
   }
 
 
   struct viewKeyStruct : public PermeabilityBase::viewKeyStruct
-  {} viewKeys;
+  {
+    /// string/key for the flag to use time lagging computation of permeability 
+    constexpr static char const * timeLagFlagString() { return "timeLagFlag"; }
+  };
 
 private:
 
@@ -133,6 +155,9 @@ private:
 
   /// Derivative of fracture permeability w.r.t. displacement jump
   array4d< real64 > m_dPerm_dDispJump;
+
+  /// Flag to turn on time lagging computation of permeability  
+  integer m_timeLagFlag; 
 
 };
 

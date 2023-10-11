@@ -148,7 +148,7 @@ DECLARE_FIELD( aperture0,
                "aperture_n",
                array1d< real64 >,
                0,
-               NOPLOT,
+               LEVEL_0,
                WRITE_AND_READ,
                "Initial aperture" );
 

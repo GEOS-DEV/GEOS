@@ -33,6 +33,10 @@ ParallelPlatesPermeability::ParallelPlatesPermeability( string const & name, Gro
   PermeabilityBase( name, parent )
 {
   registerField( fields::permeability::dPerm_dDispJump{}, &m_dPerm_dDispJump );
+
+  registerWrapper( viewKeyStruct::timeLagFlagString(), &m_timeLagFlag ).
+    setApplyDefaultValue( 0 ).
+    setInputFlag( InputFlags::OPTIONAL );
 }
 
 std::unique_ptr< ConstitutiveBase >
