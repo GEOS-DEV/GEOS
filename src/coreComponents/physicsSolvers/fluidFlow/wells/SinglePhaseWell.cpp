@@ -299,7 +299,7 @@ void SinglePhaseWell::updateVolRateForConstraint( WellElementSubRegion & subRegi
         GEOS_LOG_RANK( GEOS_FMT( "{}: The total fluid density at surface conditions is {} kg/sm3. \n"
                                  "The total rate is {} kg/s, which corresponds to a total surface volumetric rate of {} sm3/s",
                                  wellControlsName, dens[iwelemRef][0],
-                                 currentVolRate, currentVolRate ) );
+                                 connRate[iwelemRef], currentVolRate ) );
       }
     } );
   } );
@@ -832,7 +832,7 @@ SinglePhaseWell::calculateResidualNorm( real64 const & time_n,
   return residualNorm;
 }
 
-bool SinglePhaseWell::checkSystemSolution( DomainPartition const & domain,
+bool SinglePhaseWell::checkSystemSolution( DomainPartition & domain,
                                            DofManager const & dofManager,
                                            arrayView1d< real64 const > const & localSolution,
                                            real64 const scalingFactor )
