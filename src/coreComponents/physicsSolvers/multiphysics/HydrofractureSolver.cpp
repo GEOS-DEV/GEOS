@@ -618,7 +618,7 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::assembleSystem( real64 const t
                                             dofManager,
                                             localMatrix,
                                             localRhs,
-                                            getDerivativeFluxResidual_dAperture() );
+                                            getDerivativeFluxResidual_dNormalJump() );
 
   assembleForceResidualDerivativeWrtPressure( domain, localMatrix, localRhs );
 
@@ -748,7 +748,7 @@ assembleFluidMassResidualDerivativeWrtDisplacement( DomainPartition const & doma
   globalIndex const rankOffset = m_dofManager.rankOffset();
 
   CRSMatrixView< real64 const, localIndex const > const
-  dFluxResidual_dAperture = getDerivativeFluxResidual_dAperture().toViewConst();
+  dFluxResidual_dNormalJumpture = getDerivativeFluxResidual_dNormalJump().toViewConst();
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel const & mesh,
@@ -797,7 +797,7 @@ assembleFluidMassResidualDerivativeWrtDisplacement( DomainPartition const & doma
                                             presDofNumber,
                                             dispDofNumber,
                                             dens,
-                                            dFluxResidual_dAperture,
+                                            dFluxResidual_dNormalJumpture,
                                             localMatrix );
 
       } );
