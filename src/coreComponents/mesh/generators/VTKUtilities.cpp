@@ -802,7 +802,7 @@ ensureNoEmptyRank( vtkSmartPointer< vtkDataSet > mesh,
   // First we sort the donor in order of the number of elems they contain
   std::stable_sort( donorRanks.begin(), donorRanks.end(),
                     [&elemCounts] ( auto i1, auto i2 )
-  { return elemCounts[i1] < elemCounts[i2]; } );
+  { return elemCounts[i1] > elemCounts[i2]; } );
 
   // Then, if my position is "i" in the donorRanks array, I will send half of my elems to the i-th recipient
   integer const myRank = MpiWrapper::commRank();
