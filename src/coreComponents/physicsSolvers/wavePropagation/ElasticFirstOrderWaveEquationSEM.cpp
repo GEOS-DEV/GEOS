@@ -451,7 +451,7 @@ void ElasticFirstOrderWaveEquationSEM::applyFreeSurfaceBC( real64 const time, Do
 
   fsManager.apply( time,
                    domain.getMeshBody( 0 ).getMeshLevel( m_discretizationName ),
-                   string( "FreeSurface" ),
+                   WaveSolverBase::viewKeyStruct::freeSurfaceString(),
                    [&]( FieldSpecificationBase const & bc,
                         string const &,
                         SortedArrayView< localIndex const > const & targetSet,
