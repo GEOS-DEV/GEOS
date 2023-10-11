@@ -143,6 +143,17 @@ public:
   GEOS_HOST_DEVICE
   virtual void getElasticStiffness( localIndex const k, localIndex const q, real64 ( &stiffness )[6][6] ) const override final;
 
+  /**
+   * @brief Getter for apparent shear modulus.
+   * @return reference to shear modulus that will be used for computing stabilization scalling parameter.
+   */
+  GEOS_HOST_DEVICE
+  virtual real64 getShearModulus( localIndex const k ) const override final
+  {
+    return (m_c44[k] + 2*m_c66[k]) / 3.0;
+  }
+
+
 private:
 
   /// A reference to the ArrayView holding c11 for each element.
