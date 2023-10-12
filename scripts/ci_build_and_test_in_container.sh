@@ -42,6 +42,9 @@ if [[ "$*" == *--disable-schema-deployment* ]]; then
   GEOSX_INSTALL_SCHEMA=0
 fi  
 
+/opt/sccache/bin/sccache --show-stats
+ls /opt/sccache/conf
+
 # The -DBLT_MPI_COMMAND_APPEND="--allow-run-as-root;--oversubscribe" option is added for OpenMPI.
 #
 # OpenMPI prevents from running as `root` user by default.

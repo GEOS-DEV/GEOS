@@ -25,7 +25,6 @@ cred_path = "/opt/sccache/conf/credentials.json"
 bucket = "geos-dev"
 key_prefix = "sccache"
 EOT
-/opt/sccache/bin/sccache --show-stats
 
 
 # We need to keep track of the building container (hence the `CONTAINER_NAME`)
