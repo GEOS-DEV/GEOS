@@ -177,7 +177,7 @@ jobs:
       GCP_BUCKET: ${{ matrix.GCP_BUCKET }}
       COMMIT: ${{ github.event.pull_request.head.sha }}
       OS: ${{ matrix.OS }}
-      USE_SCCACHE: "true"
+      USE_SCCACHE: true
     secrets: inherit
 
   # If "flag: ready to be merged" PR label found, cuda jobs run
