@@ -456,4 +456,11 @@ void WaveSolverBase::compute2dVariableAllSeismoTraces( localIndex const regionIn
   }
 }
 
+bool WaveSolverBase::directoryExists( std::string const & directoryName )
+{
+  struct stat buffer;
+  return stat( directoryName.c_str(), &buffer ) == 0;
+}
+
+
 } /* namespace geos */
