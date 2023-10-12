@@ -524,11 +524,7 @@ bool SolverBase::lineSearch( real64 const & time_n,
 
       // get residual norm
       residualNorm = calculateResidualNorm( time_n, dt, domain, dofManager, rhs.values() );
-    }
-
-    if( getLogLevel() >= 1 && logger::internal::rank==0 )
-    {
-      std::cout << std::endl;
+      GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "        ( R ) = ( {:4.2e} )", residualNorm ) );
     }
 
     // if the residual norm is less than the last residual, we can proceed to the
@@ -639,6 +635,7 @@ bool SolverBase::lineSearchWithParabolicInterpolation( real64 const & time_n,
 
       // get residual norm
       residualNormT = calculateResidualNorm( time_n, dt, domain, dofManager, rhs.values() );
+      GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "        ( R ) = ( {:4.2e} )", residualNormT ) );
     }
     ffm = ffT;
     ffT = residualNormT*residualNormT;
@@ -764,9 +761,7 @@ real64 SolverBase::nonlinearImplicitStep( real64 const & time_n,
           // increment the solver statistics for reporting purposes
           m_solverStatistics.logOuterLoopIteration();
 
-          GEOS_LOG_LEVEL_RANK_0( 1, "   " );
           GEOS_LOG_LEVEL_RANK_0( 1, "---------- Configuration did not converge. Testing new configuration. ----------" );
-          GEOS_LOG_LEVEL_RANK_0( 1, "   " );
         }
       }
       else if( !attemptedSimplestConfiguration )
@@ -884,12 +879,12 @@ bool SolverBase::solveNonlinearSystem( real64 const & time_n,
 
       // get residual norm
       residualNorm = calculateResidualNorm( time_n, stepDt, domain, m_dofManager, m_rhs.values() );
-      GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "    ( R ) = ( {:4.2e} ) ; ", residualNorm ) );
+      GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "        ( R ) = ( {:4.2e} )", residualNorm ) );
     }
 
     if( newtonIter > 0 )
     {
-      GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "    Last LinSolve(iter,res) = ( {:3}, {:4.2e} ) ; ",
+      GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "        Last LinSolve(iter,res) = ( {:3}, {:4.2e} )",
                                           m_linearSolverResult.numIterations,
                                           m_linearSolverResult.residualReduction ) );
     }
@@ -1008,7 +1003,7 @@ bool SolverBase::solveNonlinearSystem( real64 const & time_n,
 
       if( getLogLevel() >= 1 )
       {
-        GEOS_LOG_RANK_0( getName() + ": Global solution scaling factor = " << scaleFactor );
+        GEOS_LOG_RANK_0( GEOS_FMT( "        {}: Global solution scaling factor = {}", getName(), scaleFactor ) );
       }
 
       if( !checkSystemSolution( domain, m_dofManager, m_solution.values(), scaleFactor ) )

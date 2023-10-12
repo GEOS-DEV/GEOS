@@ -27,14 +27,14 @@ This example is based on the XML file located at
 
 .. code-block:: console
 
-  ../../../../../inputFiles/compositionalMultiphaseWell/benchmarks/Egg/deadOilEgg_base_iterative.xml
+  ../../../../../inputFiles/compositionalMultiphaseWell/benchmarks/Egg/deadOilEgg_benchmark.xml
 
 The mesh file corresponding to the Egg model is stored in the GEOSXDATA repository.
 Therefore, you must first download the GEOSXDATA repository in the same folder
 as the GEOS repository to run this test case.
 
 .. note::
-        GEOSXDATA is a separate repository in which we store large mesh files in order to keep the main GEOS repository lightweight.
+        `GEOSXDATA <https://github.com/GEOS-DEV/GEOSXDATA>`_ is a separate repository in which we store large mesh files in order to keep the main GEOS repository lightweight.
    
 The XML file considered here follows the typical structure of the GEOS input files:
 

@@ -191,6 +191,8 @@ real64 HydrofractureSolver< POROMECHANICS_SOLVER >::fullyCoupledSolverStep( real
   int solveIter;
   for( solveIter=0; solveIter<maxIter; ++solveIter )
   {
+    GEOS_LOG_RANK_0( GEOS_FMT( "  Fracture propagation iteration {}", solveIter ) );
+
     int locallyFractured = 0;
     int globallyFractured = 0;
 
