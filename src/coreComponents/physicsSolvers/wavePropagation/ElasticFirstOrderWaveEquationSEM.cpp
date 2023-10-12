@@ -711,16 +711,16 @@ void ElasticFirstOrderWaveEquationSEM::cleanup( real64 const time_n,
     arrayView1d< real32 > const uz_np1 = nodeManager.getField< wavesolverfields::Displacementz_np1 >();
 
     // compute the seismic traces since last step.
-    arrayView2d< real32 > const uxReceivers   = m_displacementxNp1AtReceivers.toView();
-    arrayView2d< real32 > const uyReceivers   = m_displacementyNp1AtReceivers.toView();
-    arrayView2d< real32 > const uzReceivers   = m_displacementzNp1AtReceivers.toView();
+    arrayView2d< real32 > const uxReceivers = m_displacementxNp1AtReceivers.toView();
+    arrayView2d< real32 > const uyReceivers = m_displacementyNp1AtReceivers.toView();
+    arrayView2d< real32 > const uzReceivers = m_displacementzNp1AtReceivers.toView();
 
     computeAllSeismoTraces( time_n, 0.0, ux_np1, ux_np1, uxReceivers );
     computeAllSeismoTraces( time_n, 0.0, uy_np1, uy_np1, uyReceivers );
     computeAllSeismoTraces( time_n, 0.0, uz_np1, uz_np1, uzReceivers );
 
     WaveSolverUtils::writeSeismoTraceVector( "seismoTraceReceiver", getName(), m_outputSeismoTrace, m_receiverConstants.size( 0 ),
-                                             m_receiverIsLocal, m_nsamplesSeismoTrace, uXReceivers, uYReceivers, uZReceivers );
+                                             m_receiverIsLocal, m_nsamplesSeismoTrace, uxReceivers, uyReceivers, uzReceivers );
   } );
 }
 
