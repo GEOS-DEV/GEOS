@@ -228,7 +228,7 @@ real64 SinglePhaseFVM< BASE >::calculateResidualNorm( real64 const & GEOS_UNUSED
 
     if( getLogLevel() >= 1 && logger::internal::rank == 0 )
     {
-      std::cout << GEOS_FMT( "    ( R{} ) = ( {:4.2e} ) ; ( Renergy ) = ( {:4.2e} ) ; ",
+      std::cout << GEOS_FMT( "        ( R{} ) = ( {:4.2e} )        ( Renergy ) = ( {:4.2e} )",
                              FlowSolverBase::coupledSolverAttributePrefix(), globalResidualNorm[0], globalResidualNorm[1] );
     }
   }
@@ -246,7 +246,7 @@ real64 SinglePhaseFVM< BASE >::calculateResidualNorm( real64 const & GEOS_UNUSED
 
     if( getLogLevel() >= 1 && logger::internal::rank == 0 )
     {
-      std::cout << GEOS_FMT( "    ( R{} ) = ( {:4.2e} ) ; ", FlowSolverBase::coupledSolverAttributePrefix(), residualNorm );
+      std::cout << GEOS_FMT( "        ( R{} ) = ( {:4.2e} )", FlowSolverBase::coupledSolverAttributePrefix(), residualNorm );
     }
   }
   return residualNorm;
@@ -257,8 +257,10 @@ template< typename BASE >
 void SinglePhaseFVM< BASE >::applySystemSolution( DofManager const & dofManager,
                                                   arrayView1d< real64 const > const & localSolution,
                                                   real64 const scalingFactor,
+                                                  real64 const dt,
                                                   DomainPartition & domain )
 {
+  GEOS_UNUSED_VAR( dt );
   if( m_isThermal )
   {
     DofManager::CompMask pressureMask( m_numDofPerCell, 0, 1 );

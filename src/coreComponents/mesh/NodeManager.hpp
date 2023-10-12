@@ -148,30 +148,32 @@ public:
 
   /**
    * @brief Builds the node-on-domain-boundary indicator.
-   * @param[in] faceIndex The computation is based on the face-on-domain-boundary indicator.
+   * @param[in] faceManager The computation is based on the face-on-domain-boundary indicator.
+   * @param[in] edgeManager The edge manager.
    * @see ObjectManagerBase::getDomainBoundaryIndicator()
    */
-  void setDomainBoundaryObjects( FaceManager const & faceIndex );
+  void setDomainBoundaryObjects( FaceManager const & faceManager,
+                                 EdgeManager const & edgeManager );
 
   /**
    * @brief Copies the nodes positions and the nodes to (edges|faces|elements) mappings from @p cellBlockManager.
    * @param[in] cellBlockManager Will provide the mappings.
    * @param[in] elemRegionManager element region manager, needed to map blocks to subregion
-   * @param[in] baseMeshLevel flag that indicates if we are operating on the base mesh level or on another mesh level
+   * @param[in] isBaseMeshLevel flag that indicates if we are operating on the base mesh level or on another mesh level
    */
   void setGeometricalRelations( CellBlockManagerABC const & cellBlockManager,
                                 ElementRegionManager const & elemRegionManager,
-                                bool baseMeshLevel );
+                                bool isBaseMeshLevel );
 
   /**
    * @brief Link the current manager to other managers.
    * @param edgeManager The edge manager instance.
    * @param faceManager The face manager instance.
-   * @param elementRegionManager The element region manager instance.
+   * @param elemRegionManager The element region manager instance.
    */
   void setupRelatedObjectsInRelations( EdgeManager const & edgeManager,
                                        FaceManager const & faceManager,
-                                       ElementRegionManager const & elementRegionManager );
+                                       ElementRegionManager const & elemRegionManager );
 
   /**
    * @brief Compress all NodeManager member arrays so that the values of each array are contiguous with no extra capacity inbetween.

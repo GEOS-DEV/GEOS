@@ -34,6 +34,7 @@
 #include <vtkXMLUnstructuredGridWriter.h>
 
 // System includes
+#include <numeric>
 #include <unordered_set>
 
 namespace geos
@@ -57,7 +58,7 @@ VTKPolyDataWriterInterface::VTKPolyDataWriterInterface( string name ):
 {}
 
 static int
-toVTKCellType( ElementType const elementType )
+toVTKCellType( ElementType const elementType, localIndex const numNodes )
 {
   switch( elementType )
   {
@@ -69,7 +70,16 @@ toVTKCellType( ElementType const elementType )
     case ElementType::Tetrahedron:   return VTK_TETRA;
     case ElementType::Pyramid:       return VTK_PYRAMID;
     case ElementType::Wedge:         return VTK_WEDGE;
-    case ElementType::Hexahedron:    return VTK_HEXAHEDRON;
+    case ElementType::Hexahedron:
+      switch( numNodes )
+      {
+        case 8:
+          return VTK_HEXAHEDRON;
+        case 27:
+          return VTK_QUADRATIC_HEXAHEDRON;
+        default:
+          return VTK_HEXAHEDRON;
+      }
     case ElementType::Prism5:        return VTK_PENTAGONAL_PRISM;
     case ElementType::Prism6:        return VTK_HEXAGONAL_PRISM;
     case ElementType::Prism7:        return VTK_POLYHEDRON;
@@ -100,25 +110,40 @@ toVTKCellType( ElementType const elementType )
  * nodes for mapping purpose while keeping a face streams data structure. The negative values are
  * converted to positives when generating the VTK_POLYHEDRON. Check getVtkCells() for more details.
  */
-static std::vector< int > getVtkConnectivity( ElementType const elementType )
+static std::vector< int > getVtkConnectivity( ElementType const elementType, localIndex const numNodes )
 {
   switch( elementType )
   {
     case ElementType::Vertex:        return { 0 };
     case ElementType::Line:          return { 0, 1 };
     case ElementType::Triangle:      return { 0, 1, 2 };
-    case ElementType::Quadrilateral: return { 0, 1, 2, 3 };  // TODO check
+    case ElementType::Quadrilateral: return { 0, 1, 3, 2 };
     case ElementType::Polygon:       return { };  // TODO
     case ElementType::Tetrahedron:   return { 0, 1, 2, 3 };
     case ElementType::Pyramid:       return { 0, 1, 3, 2, 4 };
     case ElementType::Wedge:         return { 0, 4, 2, 1, 5, 3 };
-    case ElementType::Hexahedron:    return { 0, 1, 3, 2, 4, 5, 7, 6 };
+    case ElementType::Hexahedron:
+      switch( numNodes )
+      {
+        case 8:
+          return { 0, 1, 3, 2, 4, 5, 7, 6 };
+          break;
+        case 27:
+          // Numbering convention changed between VTK writer 1.0 and 2.2, see
+          // https://discourse.julialang.org/t/writevtk-node-numbering-for-27-node-lagrange-hexahedron/93698/8
+          // GEOS uses 1.0 API
+          return { 0, 2, 8, 6, 18, 20, 26, 24, 1, 5, 7, 3, 19, 23, 25, 21, 9, 11, 17, 15, 12, 14, 10, 16, 4, 22, 17 };
+          break;
+        default:
+          return { }; // TODO
+      }
     case ElementType::Prism5:        return { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
     case ElementType::Prism6:        return { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 };
     case ElementType::Prism7:        return {-9,
                                              -7, 0, 1, 2, 3, 4, 5, 6,
                                              -7, 7, 8, 9, 10, 11, 12, 13,
-                                             -4, 0, 1, 8, 7, -4, 1, 2, 9, 8,
+                                             -4, 0, 1, 8, 7,
+                                             -4, 1, 2, 9, 8,
                                              -4, 2, 3, 10, 9,
                                              -4, 3, 4, 11, 10,
                                              -4, 4, 5, 12, 11,
@@ -202,7 +227,7 @@ getVtkPoints( NodeManager const & nodeManager,
 
 struct ElementData
 {
-  VTKCellType type;
+  std::vector< int > cellTypes;
   vtkSmartPointer< vtkCellArray > cells;
   vtkSmartPointer< vtkPoints > points;
 };
@@ -254,7 +279,8 @@ getWell( WellElementSubRegion const & subRegion,
     points->SetPoint( subRegion.size(), point[0], point[1], point[2] );
   }
 
-  return { VTK_LINE, cellsArray, points };
+  std::vector< int > cellTypes( subRegion.size(), VTK_LINE );
+  return { cellTypes, cellsArray, points };
 }
 
 /**
@@ -269,31 +295,53 @@ getSurface( FaceElementSubRegion const & subRegion,
             NodeManager const & nodeManager )
 {
   // Get unique node set composing the surface
-  auto & nodeListPerElement = subRegion.nodeList();
-  auto cellsArray = vtkSmartPointer< vtkCellArray >::New();
-  cellsArray->SetNumberOfCells( subRegion.size() );
+  auto & elemToNodes = subRegion.nodeList();
+
+  auto cellArray = vtkSmartPointer< vtkCellArray >::New();
+  cellArray->SetNumberOfCells( subRegion.size() );
+  std::vector< int > cellTypes;
+  cellTypes.reserve( subRegion.size() );
+
   std::unordered_map< localIndex, localIndex > geosx2VTKIndexing;
   geosx2VTKIndexing.reserve( subRegion.size() * subRegion.numNodesPerElement() );
   localIndex nodeIndexInVTK = 0;
-  std::vector< vtkIdType > connectivity( subRegion.numNodesPerElement() );
-  std::vector< int > const vtkOrdering = getVtkConnectivity( subRegion.getElementType() );
+  // FaceElementSubRegion being heterogeneous, the size of the connectivity vector may vary for each element.
+  // In order not to allocate a new vector every time, we combine the usage of `clear` and `push_back`.
+  std::vector< vtkIdType > connectivity;
 
   for( localIndex ei = 0; ei < subRegion.size(); ei++ )
   {
-    auto const & elem = nodeListPerElement[ei];
-    for( localIndex i = 0; i < elem.size(); ++i )
+    auto const & nodes = elemToNodes[ei];
+    auto const numNodes = nodes.size();
+
+    ElementType const elementType = subRegion.getElementType( ei );
+    std::vector< int > vtkOrdering;
+    if( elementType == ElementType::Polygon )
     {
-      auto const & VTKIndexPos = geosx2VTKIndexing.find( elem[vtkOrdering[i]] );
+      vtkOrdering.resize( nodes.size() );
+      std::iota( vtkOrdering.begin(), vtkOrdering.end(), 0 );
+    }
+    else
+    {
+      vtkOrdering = getVtkConnectivity( elementType, numNodes );
+    }
+
+    connectivity.clear();
+    for( int const & ordering: vtkOrdering )
+    {
+      auto const & VTKIndexPos = geosx2VTKIndexing.find( nodes[ordering] );
       if( VTKIndexPos == geosx2VTKIndexing.end() )
       {
-        connectivity[i] = geosx2VTKIndexing[elem[vtkOrdering[i]]] = nodeIndexInVTK++;
+        connectivity.push_back( geosx2VTKIndexing[nodes[ordering]] = nodeIndexInVTK++ );
       }
       else
       {
-        connectivity[i] = VTKIndexPos->second;
+        connectivity.push_back( VTKIndexPos->second );
       }
     }
-    cellsArray->InsertNextCell( elem.size(), connectivity.data() );
+
+    cellArray->InsertNextCell( vtkOrdering.size(), connectivity.data() );
+    cellTypes.emplace_back( toVTKCellType( elementType, numNodes ) );
   }
 
   auto points = vtkSmartPointer< vtkPoints >::New();
@@ -306,22 +354,7 @@ getSurface( FaceElementSubRegion const & subRegion,
     points->SetPoint( nodeIndex.second, point[0], point[1], point[2] );
   }
 
-  VTKCellType const type = [&]()
-  {
-    switch( subRegion.numNodesPerElement() )
-    {
-      case 6: return VTK_WEDGE;
-      case 8: return VTK_HEXAHEDRON;
-      default:
-      {
-        GEOS_ERROR( GEOS_FMT( "Elements with {} nodes can't be output in the subregion {}",
-                              subRegion.numNodesPerElement(), subRegion.getName() ) );
-        return VTK_POLYGON;
-      }
-    }
-  }();
-
-  return { type, cellsArray, points };
+  return { cellTypes, cellArray, points };
 }
 
 /**
@@ -362,7 +395,8 @@ getEmbeddedSurface( EmbeddedSurfaceSubRegion const & subRegion,
     cellsArray->InsertNextCell( nodes.size(), connectivity.data() );
   }
 
-  return { VTK_POLYGON, cellsArray, points };
+  std::vector< int > cellTypes( subRegion.size(), VTK_POLYGON );
+  return { cellTypes, cellsArray, points };
 }
 
 struct CellData
@@ -426,7 +460,7 @@ getVtkCells( CellElementRegion const & region,
     localIndex numConn = 0;
     region.forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion const & subRegion )
     {
-      numConn += subRegion.size() * getVtkConnectivity( subRegion.getElementType() ).size();
+      numConn += subRegion.size() * getVtkConnectivity( subRegion.getElementType(), subRegion.nodeList().size( 1 ) ).size();
     } );
     return numConn;
   }();
@@ -445,18 +479,19 @@ getVtkCells( CellElementRegion const & region,
   localIndex connOffset = 0;
   region.forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion const & subRegion )
   {
-    cellTypes.insert( cellTypes.end(), subRegion.size(), toVTKCellType( subRegion.getElementType() ) );
-    std::vector< int > const vtkOrdering = getVtkConnectivity( subRegion.getElementType() );
-    localIndex const numVtkData = vtkOrdering.size();
     auto const nodeList = subRegion.nodeList().toViewConst();
+    auto subRegionNumNodes = nodeList.size( 1 );
+    cellTypes.insert( cellTypes.end(), subRegion.size(), toVTKCellType( subRegion.getElementType(), subRegionNumNodes ) );
+    std::vector< int > const vtkOrdering = getVtkConnectivity( subRegion.getElementType(), subRegionNumNodes );
+    localIndex const numVtkData = vtkOrdering.size();
 
-// For all geosx element, the corresponding VTK data are copied in "connectivity".
-// Local nodes are mapped to global indices. Any negative value in "vtkOrdering"
-// corresponds to the number of faces or the number of nodes per faces, and they
-// are copied as positive values.
-// Here we privilege code simplicity. This can be more efficient (less tests) if the code is
-// specialized for each type of subregion.
-// This is not a time sensitive part of the code. Can be optimized later if needed.
+    // For all geosx element, the corresponding VTK data are copied in "connectivity".
+    // Local nodes are mapped to global indices. Any negative value in "vtkOrdering"
+    // corresponds to the number of faces or the number of nodes per faces, and they
+    // are copied as positive values.
+    // Here we privilege code simplicity. This can be more efficient (less tests) if the code is
+    // specialized for each type of subregion.
+    // This is not a time sensitive part of the code. Can be optimized later if needed.
     forAll< parallelHostPolicy >( subRegion.size(), [&]( localIndex const c )
     {
       localIndex const elemConnOffset = connOffset + c * numVtkData;
@@ -879,11 +914,11 @@ void VTKPolyDataWriterInterface::writeWellElementRegions( real64 const time,
   elemManager.forElementRegions< WellElementRegion >( [&]( WellElementRegion const & region )
   {
     auto const & subRegion = region.getSubRegion< WellElementSubRegion >( 0 );
-    ElementData const well = getWell( subRegion, nodeManager );
+    ElementData well = getWell( subRegion, nodeManager );
 
     auto const ug = vtkSmartPointer< vtkUnstructuredGrid >::New();
     ug->SetPoints( well.points );
-    ug->SetCells( well.type, well.cells );
+    ug->SetCells( well.cellTypes.data(), well.cells );
 
     writeTimestamp( ug.GetPointer(), time );
     writeElementFields( region, ug->GetCellData() );
@@ -902,7 +937,7 @@ void VTKPolyDataWriterInterface::writeSurfaceElementRegions( real64 const time,
   elemManager.forElementRegions< SurfaceElementRegion >( [&]( SurfaceElementRegion const & region )
   {
     auto const ug = vtkSmartPointer< vtkUnstructuredGrid >::New();
-    ElementData const surface = [&]()
+    ElementData surface = [&]()
     {
       switch( region.subRegionType() )
       {
@@ -924,7 +959,7 @@ void VTKPolyDataWriterInterface::writeSurfaceElementRegions( real64 const time,
     }();
 
     ug->SetPoints( surface.points );
-    ug->SetCells( surface.type, surface.cells );
+    ug->SetCells( surface.cellTypes.data(), surface.cells );
 
     writeTimestamp( ug.GetPointer(), time );
     writeElementFields( region, ug->GetCellData() );
@@ -942,7 +977,7 @@ static string getCycleSubFolder( integer const cycle )
 static string getRankFileName( integer const rank )
 {
   int const width = static_cast< int >( std::log10( MpiWrapper::commSize() ) ) + 1;
-  return GEOS_FMT( "rank_{:>0{}}", rank, width );
+  return GEOS_FMT( "rank_{0:0>{1}}", rank, width );
 }
 
 void VTKPolyDataWriterInterface::writeVtmFile( integer const cycle,
