@@ -213,26 +213,26 @@ struct MassMatrixKernel
           arrayView1d< real32 > const mass )
 
   {
-    forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const k )
+    forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const e )
     {
 
       constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
       constexpr localIndex numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
 
-      real32 const invC2 = 1.0 / ( velocity[k] * velocity[k] );
+      real32 const invC2 = 1.0 / ( velocity[e] * velocity[e] );
       real64 xLocal[ numNodesPerElem ][ 3 ];
       for( localIndex a = 0; a < numNodesPerElem; ++a )
       {
         for( localIndex i = 0; i < 3; ++i )
         {
-          xLocal[a][i] = nodeCoords( elemsToNodes( k, a ), i );
+          xLocal[a][i] = nodeCoords( elemsToNodes( e, a ), i );
         }
       }
 
       for( localIndex q = 0; q < numQuadraturePointsPerElem; ++q )
       {
         real32 const localIncrement = invC2 * m_finiteElement.computeMassTerm( q, xLocal );
-        RAJA::atomicAdd< ATOMIC_POLICY >( &mass[elemsToNodes[k][q]], localIncrement );
+        RAJA::atomicAdd< ATOMIC_POLICY >( &mass[elemsToNodes( e, q )], localIncrement );
       }
     } ); // end loop over element
   }
@@ -256,7 +256,7 @@ struct DampingMatrixKernel
    * @tparam ATOMIC_POLICY the atomic policy
    * @param[in] size the number of cells in the subRegion
    * @param[in] nodeCoords coordinates of the nodes
-   * @param[in] facesToElems map from faces to elements
+   * @param[in] elemsToFaces map from faces to elements
    * @param[in] facesToNodes map from face to nodes
    * @param[in] facesDomainBoundaryIndicator flag equal to 1 if the face is on the boundary, and to 0 otherwise
    * @param[in] freeSurfaceFaceIndicator flag equal to 1 if the face is on the free surface, and to 0 otherwise
@@ -275,7 +275,7 @@ struct DampingMatrixKernel
   void
   launch( localIndex const size,
           arrayView2d< WaveSolverBase::wsCoordType const, nodes::REFERENCE_POSITION_USD > const nodeCoords,
-          arrayView2d< localIndex const > const facesToElems,
+          arrayView2d< localIndex const > const elemsToFaces,
           ArrayOfArraysView< localIndex const > const facesToNodes,
           arrayView1d< integer const > const facesDomainBoundaryIndicator,
           arrayView1d< localIndex const > const freeSurfaceFaceIndicator,
@@ -290,67 +290,65 @@ struct DampingMatrixKernel
           arrayView1d< real32 > const damping_pq,
           arrayView1d< real32 > const damping_qp )
   {
-    forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const f )
+    forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const e )
     {
-      // face on the domain boundary and not on free surface
-      if( facesDomainBoundaryIndicator[f] == 1 && freeSurfaceFaceIndicator[f] != 1 )
+      for( localIndex i = 0; i < elemsToFaces.size( 1 ); ++i )
       {
-        localIndex k = facesToElems( f, 0 );
-        if( k < 0 )
+        localIndex const f = elemsToFaces( e, i );
+        // face on the domain boundary and not on free surface
+        if( facesDomainBoundaryIndicator[f] == 1 && freeSurfaceFaceIndicator[f] != 1 )
         {
-          k = facesToElems( f, 1 );
-        }
-
-        // ABC coefficients
-        real32 alpha = 1.0 / velocity[k];
-        // VTI coefficients
-        real32 vti_p_xy= 0, vti_p_z = 0, vti_pq_z = 0;
-        real32 vti_q_xy= 0, vti_q_z = 0, vti_qp_xy= 0;
-        if( lateralSurfaceFaceIndicator[f] == 1 )
-        {
-          // ABC coefficients updated to fit horizontal velocity
-          alpha /= sqrt( 1+2*epsilon[k] );
-
-          vti_p_xy  = (1+2*epsilon[k]);
-          vti_q_xy  = -(vti_f[k]-1);
-          vti_qp_xy = (vti_f[k]+2*delta[k]);
-        }
-        if( bottomSurfaceFaceIndicator[f] == 1 )
-        {
-          // ABC coefficients updated to fit horizontal velocity
-          alpha /= sqrt( 1+2*delta[k] );
-          vti_p_z  = -(vti_f[k]-1);
-          vti_pq_z = vti_f[k];
-          vti_q_z  = 1;
-        }
-
-        constexpr localIndex numNodesPerFace = FE_TYPE::numNodesPerFace;
-
-        real64 xLocal[ numNodesPerFace ][ 3 ];
-        for( localIndex a = 0; a < numNodesPerFace; ++a )
-        {
-          for( localIndex i = 0; i < 3; ++i )
+          // ABC coefficients
+          real32 alpha = 1.0 / velocity[e];
+          // VTI coefficients
+          real32 vti_p_xy= 0, vti_p_z = 0, vti_pq_z = 0;
+          real32 vti_q_xy= 0, vti_q_z = 0, vti_qp_xy= 0;
+          if( lateralSurfaceFaceIndicator[f] == 1 )
           {
-            xLocal[a][i] = nodeCoords( facesToNodes( k, a ), i );
+            // ABC coefficients updated to fit horizontal velocity
+            alpha /= sqrt( 1+2*epsilon[e] );
+
+            vti_p_xy  = (1+2*epsilon[e]);
+            vti_q_xy  = -(vti_f[e]-1);
+            vti_qp_xy = (vti_f[e]+2*delta[e]);
+          }
+          if( bottomSurfaceFaceIndicator[f] == 1 )
+          {
+            // ABC coefficients updated to fit horizontal velocity
+            alpha /= sqrt( 1+2*delta[e] );
+            vti_p_z  = -(vti_f[e]-1);
+            vti_pq_z = vti_f[e];
+            vti_q_z  = 1;
+          }
+
+          constexpr localIndex numNodesPerFace = FE_TYPE::numNodesPerFace;
+          real64 xLocal[ numNodesPerFace ][ 3 ];
+          for( localIndex a = 0; a < numNodesPerFace; ++a )
+          {
+            for( localIndex d = 0; d < 3; ++d )
+            {
+              xLocal[a][d] = nodeCoords( facesToNodes( f, a ), d );
+            }
+          }
+
+          for( localIndex q = 0; q < numNodesPerFace; ++q )
+          {
+            real32 const aux = m_finiteElement.computeDampingTerm( q, xLocal );
+            real32 const localIncrement_p = alpha*(vti_p_xy + vti_p_z) * aux;
+            RAJA::atomicAdd< ATOMIC_POLICY >( &damping_p[facesToNodes( f, q )], localIncrement_p );
+
+            real32 const localIncrement_pq = alpha*vti_pq_z * aux;
+            RAJA::atomicAdd< ATOMIC_POLICY >( &damping_pq[facesToNodes( f, q )], localIncrement_pq );
+
+            real32 const localIncrement_q = alpha*(vti_q_xy + vti_q_z) * aux;
+            RAJA::atomicAdd< ATOMIC_POLICY >( &damping_q[facesToNodes( f, q )], localIncrement_q );
+
+            real32 const localIncrement_qp = alpha*vti_qp_xy * aux;
+            RAJA::atomicAdd< ATOMIC_POLICY >( &damping_qp[facesToNodes( f, q )], localIncrement_qp );
           }
         }
-
-        for( localIndex q = 0; q < numNodesPerFace; ++q )
-        {
-          real32 const localIncrement_p = alpha*(vti_p_xy + vti_p_z) * m_finiteElement.computeDampingTerm( q, xLocal );
-          RAJA::atomicAdd< ATOMIC_POLICY >( &damping_p[facesToNodes[f][q]], localIncrement_p );
-
-          real32 const localIncrement_pq = alpha*vti_pq_z * m_finiteElement.computeDampingTerm( q, xLocal );
-          RAJA::atomicAdd< ATOMIC_POLICY >( &damping_pq[facesToNodes[f][q]], localIncrement_pq );
-
-          real32 const localIncrement_q = alpha*(vti_q_xy + vti_q_z) * m_finiteElement.computeDampingTerm( q, xLocal );
-          RAJA::atomicAdd< ATOMIC_POLICY >( &damping_q[facesToNodes[f][q]], localIncrement_q );
-
-          real32 const localIncrement_qp = alpha*vti_qp_xy * m_finiteElement.computeDampingTerm( q, xLocal );
-          RAJA::atomicAdd< ATOMIC_POLICY >( &damping_qp[facesToNodes[f][q]], localIncrement_qp );
-        }
       }
-    } ); // end loop over element
+    } );
   }
 
   /// The finite element space/discretization object for the element type in the subRegion
