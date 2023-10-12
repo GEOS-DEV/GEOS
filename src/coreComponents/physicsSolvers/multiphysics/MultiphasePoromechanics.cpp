@@ -283,7 +283,7 @@ void MultiphasePoromechanics::updateState( DomainPartition & domain )
     } );
   } );
 
-  GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "{}: Max deltaPhaseVolFrac = {}", getName(), maxDeltaPhaseVolFrac ) );
+  GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "        {}: Max deltaPhaseVolFrac = {}", getName(), maxDeltaPhaseVolFrac ) );
 }
 
 void MultiphasePoromechanics::initializePostInitialConditionsPreSubGroups()

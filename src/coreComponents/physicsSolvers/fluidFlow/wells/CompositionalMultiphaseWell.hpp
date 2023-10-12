@@ -314,8 +314,6 @@ public:
 
 protected:
 
-
-
   virtual void postProcessInput() override;
 
   virtual void initializePostSubGroups() override;
@@ -347,6 +345,10 @@ protected:
   void validateWellConstraints( real64 const & time_n,
                                 real64 const & dt,
                                 WellElementSubRegion const & subRegion );
+
+  void printRates( real64 const & time_n,
+                   real64 const & dt,
+                   DomainPartition & domain ) override;
 
 private:
 
