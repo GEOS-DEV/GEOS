@@ -1,9 +1,11 @@
-======================
+######################
 Datastructure Index
-======================
+######################
+
+**************************
 
 Input Schema Definitions
-========================
+**************************
 
 :download:`XML Schema <../../coreComponents/schema/docs/../schema.xsd>`
 
@@ -20,6 +22,13 @@ Element: AcousticFirstOrderSEM
 Element: AcousticSEM
 ====================
 .. include:: ../../coreComponents/schema/docs/AcousticSEM.rst
+
+
+.. _XML_AcousticVTISEM:
+
+Element: AcousticVTISEM
+=======================
+.. include:: ../../coreComponents/schema/docs/AcousticVTISEM.rst
 
 
 .. _XML_Aquifer:
@@ -1249,6 +1258,13 @@ Datastructure: AcousticFirstOrderSEM
 Datastructure: AcousticSEM
 ==========================
 .. include:: ../../coreComponents/schema/docs/AcousticSEM_other.rst
+
+
+.. _DATASTRUCTURE_AcousticVTISEM:
+
+Datastructure: AcousticVTISEM
+=============================
+.. include:: ../../coreComponents/schema/docs/AcousticVTISEM_other.rst
 
 
 .. _DATASTRUCTURE_Aquifer:
