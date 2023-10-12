@@ -334,7 +334,7 @@ real64 CompositionalMultiphaseFVM::calculateResidualNorm( real64 const & GEOS_UN
 
     if( getLogLevel() >= 1 && logger::internal::rank == 0 )
     {
-      std::cout << GEOS_FMT( "    ( R{} ) = ( {:4.2e} ) ; ( Renergy ) = ( {:4.2e} ) ; ",
+      std::cout << GEOS_FMT( "        ( R{} ) = ( {:4.2e} )        ( Renergy ) = ( {:4.2e} )",
                              coupledSolverAttributePrefix(), globalResidualNorm[0], globalResidualNorm[1] );
     }
   }
@@ -352,7 +352,7 @@ real64 CompositionalMultiphaseFVM::calculateResidualNorm( real64 const & GEOS_UN
 
     if( getLogLevel() >= 1 && logger::internal::rank == 0 )
     {
-      std::cout << GEOS_FMT( "    ( R{} ) = ( {:4.2e} ) ; ", coupledSolverAttributePrefix(), residualNorm );
+      std::cout << GEOS_FMT( "        ( R{} ) = ( {:4.2e} )", coupledSolverAttributePrefix(), residualNorm );
     }
   }
   return residualNorm;
@@ -431,18 +431,18 @@ real64 CompositionalMultiphaseFVM::scalingForSystemSolution( DomainPartition & d
 
   if( m_isThermal )
   {
-    GEOS_LOG_LEVEL_RANK_0( 1, getName() + ": Max deltaPres  = " << maxDeltaPres  << ", Max deltaCompDens = " << maxDeltaCompDens << ", Max deltaTemp = " << maxDeltaTemp << " (before scaling)" );
+    GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "        {}: Max deltaPres  = {}, Max deltaCompDens = {}, Max deltaTemp = {} (before scaling)", getName(), maxDeltaPres, maxDeltaCompDens, maxDeltaTemp ) );
   }
   else
   {
-    GEOS_LOG_LEVEL_RANK_0( 1, getName() + ": Max deltaPres  = " << maxDeltaPres  << ", Max deltaCompDens = " << maxDeltaCompDens << " (before scaling)" );
+    GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "        {}: Max deltaPres  = {}, Max deltaCompDens = {} (before scaling)", getName(), maxDeltaPres, maxDeltaCompDens ) );
   }
   if( m_scalingType == ScalingType::Local )
   {
-    GEOS_LOG_LEVEL_RANK_0( 1, getName() + ": Min pressure scaling factor = " << minPresScalingFactor );
-    GEOS_LOG_LEVEL_RANK_0( 1, getName() + ": Min comp dens scaling factor = " << minCompDensScalingFactor );
+    GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "        {}: Min pressure scaling factor = {}", getName(), minPresScalingFactor ) );
+    GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "        {}: Min comp dens scaling factor = {}", getName(), minCompDensScalingFactor ) );
     if( m_isThermal )
-      GEOS_LOG_LEVEL_RANK_0( 1, getName() + ": Min temperature scaling factor = " << minTempScalingFactor );
+      GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "        {}: Min temperature scaling factor = {}", getName(), minTempScalingFactor ) );
   }
 
   return LvArray::math::max( scalingFactor, m_minScalingFactor );
