@@ -83,4 +83,31 @@ struct fmt::formatter< T, std::enable_if_t< std::is_enum< T >::value > >
  */
 #define GEOS_FMT_TO( iter, size, msg, ... ) *GEOS_FMT_NS::format_to_n( iter, size - 1, msg, __VA_ARGS__ ).out = '\0'
 
+
+// The following workaround is needed to fix compilation with NVCC on some PowerPC machines.
+// The issue causes the following assertion error message:
+// "Cannot format an argument. To make type T formattable provide a formatter<T> specialization"
+// The standard definition of the has_const_formatter check of fmt fails due to a compiler bug, see the issue below:
+// https://github.com/fmtlib/fmt/issues/2746
+// The workaround was originally implemented in fmt:
+// https://github.com/fmtlib/fmt/commit/70de324aa801eaf52e94c402d526a3849797c620
+// but later removed:
+// https://github.com/fmtlib/fmt/commit/466e0650ec2d153d255a40ec230eb77d7f1c3334
+// This workaround provides a specialization of the const formatter check for the DataContext object.
+// The formatter is defined within this file, and therefore the check is not needed.
+// The scope of the check override is as small as possible to solve the current issue.
+#ifdef GEOS_USE_FMT_CONST_FORMATTER_WORKAROUND
+template<>
+constexpr auto GEOS_FMT_NS::detail::has_const_formatter< geos::dataRepository::DataContext, GEOS_FMT_NS::format_context >() -> bool
+{
+  return true;
+}
+template<>
+constexpr auto GEOS_FMT_NS::detail::has_const_formatter< geos::array1d<geos::integer>, GEOS_FMT_NS::format_context >() -> bool
+{
+  return true;
+}
+#endif
+// End of the workaround for fmt compilation issues
+
 #endif //GEOS_COMMON_FORMAT_HPP_
