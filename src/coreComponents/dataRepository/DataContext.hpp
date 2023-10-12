@@ -241,6 +241,11 @@ constexpr auto GEOS_FMT_NS::detail::has_const_formatter< geos::dataRepository::D
 {
   return true;
 }
+template<>
+constexpr auto GEOS_FMT_NS::detail::has_const_formatter< geos::array1d<geos::integer>, GEOS_FMT_NS::format_context >() -> bool
+{
+  return true;
+}
 #endif
 // End of the workaround for fmt compilation issues
 
