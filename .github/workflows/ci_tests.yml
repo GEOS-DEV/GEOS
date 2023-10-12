@@ -7,7 +7,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  GEOSX_TPL_TAG: 238-63
+  GEOSX_TPL_TAG: 228-73
 
 jobs:
 
@@ -23,9 +23,12 @@ jobs:
     steps:
     - name: Check that the PR is not a draft (cancel rest of jobs otherwise)
       run: |
-        echo "Is PR a draft?"
-        echo ${{ toJSON(github.event.pull_request.draft) }}
-        if [[ ${{ toJSON(github.event.pull_request.draft) }} == true ]]; then "false" ; else "true"; fi
+        draft_status=$(curl -H "Accept: application/vnd.github+json" \
+           https://api.github.com/repos/${{ github.repository }}/pulls/${{ github.event.number }} \
+           | jq '.draft')
+        echo "Is PR a draft? (Check PR's draft status )"
+        echo $draft_status
+        if [[ $draft_status == false ]]; then "true" ; else "false"; fi
 
   # PR must be assigned to be merged.
   # This job will fail if this is not the case.
@@ -42,6 +45,23 @@ jobs:
         echo "Is PR Assigned? (Check for Assignee ID)"
         echo $id
         if [[ $id != null ]]; then "true" ; else "false"; fi
+
+  # PR must be labeled "ready to be merged" to run CUDA jobs.
+  # This job will fail if this is not the case.
+  # Note: Label should only be added if PR is in merge queue.
+  check_ready_to_be_merged:
+    needs: [check_pull_request_is_not_a_draft]
+    runs-on: ubuntu-22.04
+    steps:
+    - name: Check that the PR is ready to be merged
+      run: |
+        labels=$(curl -H "Accept: application/vnd.github+json" \
+           https://api.github.com/repos/${{ github.repository }}/pulls/${{ github.event.number }} \
+           | jq '.labels')
+        ready_label="ready to be merged"
+        echo "Is PR Ready to be Merged? (Check for $ready_label label)"
+        echo "Labels found are: $labels"
+        if [[ $labels == *"$ready_label"* ]]; then "true" ; else "false"; fi
 
   check_submodules:
     needs: [check_pull_request_is_not_a_draft]
@@ -164,8 +184,9 @@ jobs:
   # CUDA jobs should only be run if PR is ready to merge.
   cuda_builds_merge_ready:
     name: ${{ matrix.name }}
-    needs: [check_pull_request_is_not_a_draft]
-    if: contains( github.event.pull_request.labels.*.name, format('flag{0} ready to be merged', ':'))
+    needs:
+    - check_pull_request_is_not_a_draft
+    - check_ready_to_be_merged
     strategy:
 
       # In-progress jobs will not be cancelled if there is a failure
@@ -226,6 +247,7 @@ jobs:
     needs:
     - check_pull_request_is_not_a_draft
     - check_pull_request_is_assigned
+    - check_ready_to_be_merged
     - check_submodules
     - code_style
     - documentation
