@@ -73,21 +73,6 @@ public:
   virtual void addSourceToRightHandSide( integer const & cycleNumber, arrayView1d< real32 > const rhs );
 
   /**
-   * TODO: move implementation into WaveSolverBase
-   * @brief Computes the traces on all receivers (see @computeSeismoTraces) up to time_n+dt
-   * @param time_n the time corresponding to the field values pressure_n
-   * @param dt the simulation timestep
-   * @param var_np1 the field values at time_n + dt
-   * @param var_n the field values at time_n
-   * @param varAtReceivers the array holding the trace values, where the output is written
-   */
-  virtual void computeAllSeismoTraces( real64 const time_n,
-                                       real64 const dt,
-                                       arrayView1d< real32 const > const var_np1,
-                                       arrayView1d< real32 const > const var_n,
-                                       arrayView2d< real32 > varAtReceivers );
-
-  /**
    * @brief Overridden from ExecutableGroup. Used to write last seismogram if needed.
    */
   virtual void cleanup( real64 const time_n, integer const cycleNumber, integer const eventCounter, real64 const eventProgress, DomainPartition & domain ) override;

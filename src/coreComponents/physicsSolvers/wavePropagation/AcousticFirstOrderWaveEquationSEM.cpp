@@ -538,9 +538,9 @@ real64 AcousticFirstOrderWaveEquationSEM::explicitStepInternal( real64 const & t
     // compute the seismic traces since last step.
     arrayView2d< real32 > const pReceivers = m_pressureNp1AtReceivers.toView();
     computeAllSeismoTraces( time_n, dt, p_np1, p_np1, pReceivers );
-  } );
 
-  incrementIndexSeismoTrace( time_n );
+    incrementIndexSeismoTrace( time_n );
+  } );
 
   return dt;
 }

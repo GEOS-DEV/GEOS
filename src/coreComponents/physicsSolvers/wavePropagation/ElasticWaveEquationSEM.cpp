@@ -38,12 +38,6 @@ ElasticWaveEquationSEM::ElasticWaveEquationSEM( const std::string & name,
   WaveSolverBase( name,
                   parent )
 {
-
-  registerWrapper( viewKeyStruct::sourceNodeIdsString(), &m_sourceNodeIds ).
-    setInputFlag( InputFlags::FALSE ).
-    setSizedFromParent( 0 ).
-    setDescription( "Indices of the nodes (in the right order) for each source point" );
-
   registerWrapper( viewKeyStruct::sourceConstantsString(), &m_sourceConstantsx ).
     setInputFlag( InputFlags::FALSE ).
     setSizedFromParent( 0 ).
@@ -58,26 +52,6 @@ ElasticWaveEquationSEM::ElasticWaveEquationSEM( const std::string & name,
     setInputFlag( InputFlags::FALSE ).
     setSizedFromParent( 0 ).
     setDescription( "Constant part of the source for the nodes listed in m_sourceNodeIds in z-direction" );
-
-  registerWrapper( viewKeyStruct::sourceIsAccessibleString(), &m_sourceIsAccessible ).
-    setInputFlag( InputFlags::FALSE ).
-    setSizedFromParent( 0 ).
-    setDescription( "Flag that indicates whether the source is accessible to this MPI rank" );
-
-  registerWrapper( viewKeyStruct::receiverNodeIdsString(), &m_receiverNodeIds ).
-    setInputFlag( InputFlags::FALSE ).
-    setSizedFromParent( 0 ).
-    setDescription( "Indices of the nodes (in the right order) for each receiver point" );
-
-  registerWrapper( viewKeyStruct::sourceConstantsString(), &m_receiverConstants ).
-    setInputFlag( InputFlags::FALSE ).
-    setSizedFromParent( 0 ).
-    setDescription( "Constant part of the receiver for the nodes listed in m_receiverNodeIds" );
-
-  registerWrapper( viewKeyStruct::receiverIsLocalString(), &m_receiverIsLocal ).
-    setInputFlag( InputFlags::FALSE ).
-    setSizedFromParent( 0 ).
-    setDescription( "Flag that indicates whether the receiver is local to this MPI rank" );
 
   registerWrapper( viewKeyStruct::displacementXNp1AtReceiversString(), &m_displacementXNp1AtReceivers ).
     setInputFlag( InputFlags::FALSE ).
@@ -772,6 +746,8 @@ real64 ElasticWaveEquationSEM::explicitStepInternal( real64 const & time_n,
     computeAllSeismoTraces( time_n, dt, uy_np1, uy_n, uYReceivers );
     computeAllSeismoTraces( time_n, dt, uz_np1, uz_n, uZReceivers );
 
+    incrementIndexSeismoTrace( time_n );
+
     forAll< EXEC_POLICY >( nodeManager.size(), [=] GEOS_HOST_DEVICE ( localIndex const a )
     {
       ux_nm1[a] = ux_n[a];
@@ -790,7 +766,6 @@ real64 ElasticWaveEquationSEM::explicitStepInternal( real64 const & time_n,
     } );
   } );
 
-  incrementIndexSeismoTrace( time_n );
   return dt;
 
 }

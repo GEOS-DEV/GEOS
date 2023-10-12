@@ -90,15 +90,17 @@ struct WaveSolverUtils
       {
         count += 1;
         string const fn = joinPath( outputDir, GEOS_FMT( "{}_{}_{:03}.txt", prefix, name, ircv ) );
-        // std::cout << "touch " << fn << std::endl;
         std::ofstream f( fn, std::ios::out | std::ios::trunc );
       }
     } );
 
     localIndex const total = MpiWrapper::sum( count.get() );
-    GEOS_ERROR_IF( nReceivers != total, GEOS_FMT( "Invalid distribution of receivers: nReceivers={} != MPI::sum={}.", nReceivers, total ) );
+    GEOS_ERROR_IF( nReceivers != total, GEOS_FMT( ": Invalid distribution of receivers: nReceivers={} != MPI::sum={}.", nReceivers, total ) );
   }
 
+  /**
+   * @brief Convenient helper for 3D vectors calling 3 times the scalar version.
+   */
   static void writeSeismoTraceVector( char const * prefix,
                                       string const & name,
                                       bool const outputSeismoTrace,
@@ -133,7 +135,6 @@ struct WaveSolverUtils
       if( receiverIsLocal[ircv] == 1 )
       {
         string const fn = joinPath( outputDir, GEOS_FMT( "{}_{}_{:03}.txt", prefix, name, ircv ) );
-        // std::cout << "writing " << fn << std::endl;
         std::ofstream f( fn, std::ios::app );
         if( f )
         {
@@ -186,7 +187,7 @@ struct WaveSolverUtils
         // linear interpolation between the pressure value at time_n and time_{n+1}
         varAtReceivers( iSeismo, ircv ) = a1 * vtmp_n + a2 * vtmp_np1;
         // NOTE: varAtReceivers has size(1) = numReceiversGlobal + 1, this does not OOB
-        // left in the forAll loop for sync issues
+        // left in the forAll loop for sync issues since the following does not depend on `ircv`
         varAtReceivers( iSeismo, nReceivers ) = a1 * time_n + a2 * time_np1;
       }
     } );
@@ -227,7 +228,7 @@ struct WaveSolverUtils
           // linear interpolation between the pressure value at time_n and time_{n+1}
           varAtReceivers( iSeismo, ircv ) = a1 * vtmp_n + a2 * vtmp_np1;
           // NOTE: varAtReceivers has size(1) = numReceiversGlobal + 1, this does not OOB
-          // left in the forAll loop for sync issues
+          // left in the forAll loop for sync issues since the following does not depend on `ircv`
           varAtReceivers( iSeismo, nReceivers ) = a1 * time_n + a2 * time_np1;
         }
       }
@@ -279,10 +280,7 @@ struct WaveSolverUtils
       localIndex const s = computationalGeometry::sign( LvArray::tensorOps::AiBi< 3 >( faceNormalOnFace, faceCenterOnFace ));
 
       // all dot products should be non-negative (we enforce outward normals)
-      if( s < 0 )
-      {
-        return false;
-      }
+      if( s < 0 ) return false;
 
     }
     return true;
@@ -293,7 +291,7 @@ struct WaveSolverUtils
    * @tparam FE_TYPE finite element type
    * @param[in] coords coordinate of the point
    * @param[in] elemsToNodes map to obtaint global nodes from element index
-   * @param[in] X array of mesh nodes coordinates
+   * @param[in] nodeCoords array of mesh nodes coordinates
    * @param[out] coordsOnRefElem to contain the coordinate computed in the reference element
    */
   template< typename FE_TYPE >
@@ -301,13 +299,13 @@ struct WaveSolverUtils
   static void
   computeCoordinatesOnReferenceElement( real64 const (&coords)[3],
                                         arraySlice1d< localIndex const, cells::NODE_MAP_USD - 1 > const elemsToNodes,
-                                        arrayView2d< wsCoordType const, nodes::REFERENCE_POSITION_USD > const X,
+                                        arrayView2d< wsCoordType const, nodes::REFERENCE_POSITION_USD > const nodeCoords,
                                         real64 (& coordsOnRefElem)[3] )
   {
     real64 xLocal[FE_TYPE::numNodes][3]{};
     for( localIndex a = 0; a < FE_TYPE::numNodes; ++a )
     {
-      LvArray::tensorOps::copy< 3 >( xLocal[a], X[ elemsToNodes[a] ] );
+      LvArray::tensorOps::copy< 3 >( xLocal[a], nodeCoords[ elemsToNodes[a] ] );
     }
     // coordsOnRefElem = invJ*(coords-coordsNode_0)
     real64 invJ[3][3]{};
