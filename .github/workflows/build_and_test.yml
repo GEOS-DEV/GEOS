@@ -35,6 +35,9 @@ on:
       OS:
         required: true
         type: string
+      USE_SCCACHE:
+        required: true
+        type: boolean
     secrets:
       GOOGLE_CLOUD_GCP:
         required: false
@@ -52,6 +55,7 @@ jobs:
       HOST_CONFIG: ${{ inputs.HOST_CONFIG }}
       COMMIT: ${{ inputs.COMMIT }}
       GEOSX_TPL_TAG: ${{ inputs.GEOSX_TPL_TAG }}
+      USE_SCCACHE: ${{ inputs.USE_SCCACHE }}
     steps:
     - name: Checkout Repository
       uses: actions/checkout@v3
@@ -60,12 +64,13 @@ jobs:
         lfs: false
 
     - id: 'auth'
-      if: env.GCP_BUCKET
+      # if: env.GCP_BUCKET
       uses: 'google-github-actions/auth@v1'
       with:
         credentials_json: '${{ secrets.GOOGLE_CLOUD_GCP }}'
+        create_credentials_file: true
     - name: 'Set up Cloud SDK'
-      if: env.GCP_BUCKET
+      # if: env.GCP_BUCKET
       uses: 'google-github-actions/setup-gcloud@v1'
       with:
         version: '>= 363.0.0'
