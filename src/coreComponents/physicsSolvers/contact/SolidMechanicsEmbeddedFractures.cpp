@@ -632,7 +632,7 @@ real64 SolidMechanicsEmbeddedFractures::calculateResidualNorm( real64 const & ti
 
     if( getLogLevel() >= 1 && logger::internal::rank==0 )
     {
-      std::cout << GEOS_FMT( "( RFracture ) = ( {:4.2e} ) ; ", fractureResidualNorm );
+      std::cout << GEOS_FMT( "        ( RFracture ) = ( {:4.2e} )", fractureResidualNorm );
     }
 
     return sqrt( solidResidualNorm * solidResidualNorm + fractureResidualNorm * fractureResidualNorm );

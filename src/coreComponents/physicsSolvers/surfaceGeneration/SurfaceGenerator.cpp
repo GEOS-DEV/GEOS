@@ -1704,15 +1704,14 @@ void SurfaceGenerator::performFracture( const localIndex nodeID,
 
   // Split the node into two, using the original index, and a new one.
   localIndex newNodeIndex;
-  if( getLogLevel() )
+  if( getLogLevel() > 0 )
   {
-    GEOS_LOG_RANK( "" );
-    std::cout<<"Splitting node "<<nodeID<<" along separation plane faces: ";
+    std::ostringstream s;
     for( std::set< localIndex >::const_iterator i=separationPathFaces.begin(); i!=separationPathFaces.end(); ++i )
     {
-      std::cout<<*i<<", ";
+      s << *i << " ";
     }
-    std::cout<<std::endl;
+    GEOS_LOG_RANK( GEOS_FMT( "Splitting node {} along separation plane faces: {}", nodeID, s.str() ) );
   }
 
 
@@ -1752,8 +1751,10 @@ void SurfaceGenerator::performFracture( const localIndex nodeID,
 //  usedFacesNew = usedFaces[nodeID];
 
 
-  if( getLogLevel() )
-    std::cout<<"Done splitting node "<<nodeID<<" into nodes "<<nodeID<<" and "<<newNodeIndex<<std::endl;
+  if( getLogLevel() > 0 )
+  {
+    GEOS_LOG_RANK( GEOS_FMT( "Done splitting node {} into nodes {} and {}", nodeID, nodeID, newNodeIndex ) );
+  }
 
   // split edges
   map< localIndex, localIndex > splitEdges;
@@ -1774,10 +1775,9 @@ void SurfaceGenerator::performFracture( const localIndex nodeID,
 
       edgeToFaceMap.clearSet( newEdgeIndex );
 
-      if( getLogLevel() )
+      if( getLogLevel() > 0 )
       {
-        GEOS_LOG_RANK( "" );
-        std::cout<<"  Split edge "<<parentEdgeIndex<<" into edges "<<parentEdgeIndex<<" and "<<newEdgeIndex<<std::endl;
+        GEOS_LOG_RANK( GEOS_FMT ( "Split edge {} into edges {} and {}", parentEdgeIndex, parentEdgeIndex, newEdgeIndex ) );
       }
 
       splitEdges[parentEdgeIndex] = newEdgeIndex;
@@ -1835,10 +1835,9 @@ void SurfaceGenerator::performFracture( const localIndex nodeID,
       if( faceManager.splitObject( faceIndex, rank, newFaceIndex ) )
       {
 
-        if( getLogLevel() )
+        if( getLogLevel() > 0 )
         {
-          GEOS_LOG_RANK( "" );
-          std::cout<<"  Split face "<<faceIndex<<" into faces "<<faceIndex<<" and "<<newFaceIndex<<std::endl;
+          GEOS_LOG_RANK( GEOS_FMT ( "Split face {} into faces {} and {}", faceIndex, faceIndex, newFaceIndex ) );
         }
 
         splitFaces[faceIndex] = newFaceIndex;
