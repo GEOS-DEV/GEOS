@@ -203,6 +203,7 @@ private:
                          string const & materialNamesString,
                          CRSMatrixView< real64, globalIndex const > const & localMatrix,
                          arrayView1d< real64 > const & localRhs,
+                         real64 const dt,
                          PARAMS && ... params );
 
   /**
@@ -245,6 +246,7 @@ real64 SinglePhasePoromechanicsConformingFractures::assemblyLaunch( MeshLevel & 
                                                                     string const & materialNamesString,
                                                                     CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                                     arrayView1d< real64 > const & localRhs,
+                                                                    real64 const dt,
                                                                     PARAMS && ... params )
 {
   GEOS_MARK_FUNCTION;
@@ -260,11 +262,12 @@ real64 SinglePhasePoromechanicsConformingFractures::assemblyLaunch( MeshLevel & 
                                 dofManager.rankOffset(),
                                 localMatrix,
                                 localRhs,
+                                dt,
                                 gravityVectorData,
                                 std::forward< PARAMS >( params )... );
 
   return finiteElement::
-           regionBasedKernelApplication< parallelDevicePolicy< 32 >,
+           regionBasedKernelApplication< parallelDevicePolicy< >,
                                          CONSTITUTIVE_BASE,
                                          CellElementSubRegion >( mesh,
                                                                  regionNames,
