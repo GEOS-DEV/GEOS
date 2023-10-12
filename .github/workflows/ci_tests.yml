@@ -239,7 +239,7 @@ jobs:
       GCP_BUCKET: ${{ matrix.GCP_BUCKET }}
       COMMIT: ${{ github.event.pull_request.head.sha }}
       OS: ${{ matrix.OS }}
-      USE_SCCACHE: "true"
+      USE_SCCACHE: true
     secrets: inherit
 
   # Convenience job - passes when all other jobs have passed
