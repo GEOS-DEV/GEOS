@@ -802,13 +802,12 @@ ensureNoEmptyRank( vtkSmartPointer< vtkDataSet > mesh,
   // First we sort the donor in order of the number of elems they contain
   std::stable_sort( donorRanks.begin(), donorRanks.end(),
                     [&elemCounts] ( auto i1, auto i2 )
-  { return elemCounts[i1] < elemCounts[i2]; } );
+  { return elemCounts[i1] > elemCounts[i2]; } );
 
   // Then, if my position is "i" in the donorRanks array, I will send half of my elems to the i-th recipient
   integer const myRank = MpiWrapper::commRank();
-  auto const myPosition =
-    LvArray::sortedArrayManipulation::find( donorRanks.begin(), donorRanks.size(), myRank );
-  bool const isDonor = myPosition != donorRanks.size();
+  auto const pos = std::find( donorRanks.begin(), donorRanks.end(), myRank );
+  bool const isDonor = ( pos != donorRanks.end() );
 
   // step 3: my rank was selected to donate cells, let's proceed
   // we need to make a distinction between two configurations
@@ -820,6 +819,7 @@ ensureNoEmptyRank( vtkSmartPointer< vtkDataSet > mesh,
   // we use a strategy that preserves load balancing
   if( isDonor && donorRanks.size() >= recipientRanks.size() )
   {
+    auto const myPosition = std::distance( donorRanks.begin(), pos );
     if( myPosition < recipientRanks.size() )
     {
       integer const recipientRank = recipientRanks[myPosition];
@@ -834,10 +834,11 @@ ensureNoEmptyRank( vtkSmartPointer< vtkDataSet > mesh,
   // we just want the simulation to run and count on ParMetis/PTScotch to restore load balancing
   else if( isDonor && donorRanks.size() < recipientRanks.size() )
   {
+    auto const myPosition = std::distance( donorRanks.begin(), pos );
     localIndex firstRecipientPosition = 0;
     for( integer iRank = 0; iRank < myPosition; ++iRank )
     {
-      firstRecipientPosition += elemCounts[iRank] - 1;
+      firstRecipientPosition += elemCounts[donorRanks[iRank]] - 1;
     }
     if( firstRecipientPosition < recipientRanks.size() )
     {
