@@ -42,8 +42,8 @@ if [[ "$*" == *--disable-schema-deployment* ]]; then
   GEOSX_INSTALL_SCHEMA=0
 fi  
 
+export SCCACHE_CONF=/opt/sccache/conf/sccache.conf
 /opt/sccache/bin/sccache --show-stats
-ls /opt/sccache/conf
 
 # The -DBLT_MPI_COMMAND_APPEND="--allow-run-as-root;--oversubscribe" option is added for OpenMPI.
 #
@@ -96,5 +96,7 @@ fi
 if [[ "$*" != *--disable-unit-tests* ]]; then
   or_die ctest --output-on-failure -E "testUncrustifyCheck|testDoxygenCheck"
 fi
+
+/opt/sccache/bin/sccache --show-stats
 
 exit 0
