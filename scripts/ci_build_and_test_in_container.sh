@@ -42,6 +42,7 @@ if [[ "$*" == *--disable-schema-deployment* ]]; then
   GEOSX_INSTALL_SCHEMA=0
 fi  
 
+apt-get install -y --no-install-recommends curl ca-certificates
 export SCCACHE_CONF=/opt/sccache/conf/sccache.conf
 /opt/sccache/bin/sccache --show-stats
 
