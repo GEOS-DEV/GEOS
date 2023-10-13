@@ -1243,15 +1243,15 @@ void SiloFile::writeElementRegionSilo( ElementRegionBase const & elemRegion,
         string const & fieldName = wrapper.getName();
         viewPointers[esr][fieldName] = &wrapper;
 
-        types::dispatch( types::StandardArrays{}, wrapper.getTypeId(), true, [&]( auto array )
+        types::dispatch( types::ListofTypeList< types::StandardArrays >{}, [&]( auto tupleOfTypes )
         {
-          using ArrayType = decltype( array );
+          using ArrayType = camp::first< decltype( tupleOfTypes ) >;
           Wrapper< ArrayType > const & sourceWrapper = Wrapper< ArrayType >::cast( wrapper );
           Wrapper< ArrayType > & newWrapper = fakeGroup.registerWrapper< ArrayType >( fieldName );
 
           newWrapper.setPlotLevel( PlotLevel::LEVEL_0 );
           newWrapper.reference().resize( ArrayType::NDIM, sourceWrapper.reference().dims() );
-        } );
+        }, wrapper );
       }
     }
   } );
@@ -1263,9 +1263,9 @@ void SiloFile::writeElementRegionSilo( ElementRegionBase const & elemRegion,
     WrapperBase & wrapper = *wrapperIter.second;
     string const & fieldName = wrapper.getName();
 
-    types::dispatch( types::StandardArrays{}, wrapper.getTypeId(), true, [&]( auto array )
+    types::dispatch( types::ListofTypeList< types::StandardArrays >{}, [&]( auto tupleOfTypes )
     {
-      using ArrayType = decltype( array );
+      using ArrayType = camp::first< decltype( tupleOfTypes ) >;
       Wrapper< ArrayType > & wrapperT = Wrapper< ArrayType >::cast( wrapper );
       ArrayType & targetArray = wrapperT.reference();
 
@@ -1294,7 +1294,7 @@ void SiloFile::writeElementRegionSilo( ElementRegionBase const & elemRegion,
           counter += subRegion.size();
         }
       } );
-    } );
+    }, wrapper );
   }
 
   writeGroupSilo( fakeGroup,

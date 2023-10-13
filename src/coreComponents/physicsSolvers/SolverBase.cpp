@@ -20,6 +20,7 @@
 #include "linearAlgebra/solvers/KrylovSolver.hpp"
 #include "mesh/DomainPartition.hpp"
 #include "math/interpolation/Interpolation.hpp"
+#include "common/Timer.hpp"
 
 #if defined(GEOSX_USE_PYGEOSX)
 #include "python/PySolverType.hpp"
@@ -97,7 +98,6 @@ SolverBase::SolverBase( string const & name,
 
 SolverBase::~SolverBase() = default;
 
-
 void SolverBase::initialize_postMeshGeneration()
 {
   ExecutableGroup::initialize_postMeshGeneration();
@@ -115,7 +115,8 @@ void SolverBase::generateMeshTargetsFromTargetRegions( Group const & meshBodies 
     if( targetTokens.size()==1 ) // no MeshBody or MeshLevel specified
     {
       GEOS_ERROR_IF( meshBodies.numSubGroups() != 1,
-                     "No MeshBody information is specified in SolverBase::meshTargets, but there are multiple MeshBody objects" );
+                     getDataContext() << ": No MeshBody information is specified in" <<
+                     " SolverBase::meshTargets, but there are multiple MeshBody objects" );
       MeshBody const & meshBody = meshBodies.getGroup< MeshBody >( 0 );
       string const meshBodyName = meshBody.getName();
 
@@ -129,7 +130,8 @@ void SolverBase::generateMeshTargetsFromTargetRegions( Group const & meshBodies 
     {
       string const meshBodyName = targetTokens[0];
       GEOS_ERROR_IF( !meshBodies.hasGroup( meshBodyName ),
-                     "MeshBody ("<<meshBodyName<<") is specified in targetRegions, but does not exist." );
+                     getWrapperDataContext( viewKeyStruct::targetRegionsString() ) << ": MeshBody (" <<
+                     meshBodyName << ") is specified in targetRegions, but does not exist." );
 
       string const meshLevelName = m_discretizationName;
 
@@ -141,7 +143,7 @@ void SolverBase::generateMeshTargetsFromTargetRegions( Group const & meshBodies 
     }
     else
     {
-      GEOS_ERROR( "Invalid specification of targetRegions" );
+      GEOS_ERROR( getDataContext() << ": Invalid specification of targetRegions" );
     }
   }
 }
@@ -184,7 +186,9 @@ SolverBase::CatalogInterface::CatalogType & SolverBase::getCatalog()
 localIndex SolverBase::targetRegionIndex( string const & regionName ) const
 {
   auto const pos = std::find( m_targetRegionNames.begin(), m_targetRegionNames.end(), regionName );
-  GEOS_ERROR_IF( pos == m_targetRegionNames.end(), GEOS_FMT( "Region {} is not a target of solver {}", regionName, getName() ) );
+  GEOS_ERROR_IF( pos == m_targetRegionNames.end(),
+                 GEOS_FMT( "{}: Region {} is not a target of the solver.",
+                           getDataContext(), regionName ) );
   return std::distance( m_targetRegionNames.begin(), pos );
 }
 
@@ -271,7 +275,8 @@ bool SolverBase::execute( real64 const time_n,
     }
   }
 
-  GEOS_ERROR_IF( dtRemaining > 0.0, "Maximum allowed number of sub-steps reached. Consider increasing maxSubSteps." );
+  GEOS_ERROR_IF( dtRemaining > 0.0, getDataContext() << ": Maximum allowed number of sub-steps"
+                                                        " reached. Consider increasing maxSubSteps." );
 
   // Decide what to do with the next Dt for the event running the solver.
   m_nextDt = setNextDt( nextDt, domain );
@@ -378,11 +383,13 @@ real64 SolverBase::linearImplicitStep( real64 const & time_n,
   // TODO: Nonlinear step does not call its own setup, need to decide on consistent behavior
   implicitStepSetup( time_n, dt, domain );
 
-  // zero out matrix/rhs before assembly
-  m_localMatrix.zero();
-  m_rhs.zero();
-
   {
+    Timer timer( m_timers["assemble"] );
+
+    // zero out matrix/rhs before assembly
+    m_localMatrix.zero();
+    m_rhs.zero();
+
     arrayView1d< real64 > const localRhs = m_rhs.open();
 
     // call assemble to fill the matrix and the rhs
@@ -402,30 +409,38 @@ real64 SolverBase::linearImplicitStep( real64 const & time_n,
                              localRhs );
 
     m_rhs.close();
+
+    if( m_assemblyCallback )
+    {
+      // Make a copy of LA objects and ship off to the callback
+      array1d< real64 > localRhsCopy( m_rhs.localSize() );
+      localRhsCopy.setValues< parallelDevicePolicy<> >( m_rhs.values() );
+      m_assemblyCallback( m_localMatrix, std::move( localRhsCopy ) );
+    }
   }
 
-  if( m_assemblyCallback )
   {
-    // Make a copy of LA objects and ship off to the callback
-    array1d< real64 > localRhsCopy( m_rhs.localSize() );
-    localRhsCopy.setValues< parallelDevicePolicy<> >( m_rhs.values() );
-    m_assemblyCallback( m_localMatrix, std::move( localRhsCopy ) );
+    Timer timer( m_timers["linear solver total"] );
+
+    // TODO: Trilinos currently requires this, re-evaluate after moving to Tpetra-based solvers
+    if( m_precond )
+    {
+      m_precond->clear();
+    }
+
+    {
+      Timer timer_create( m_timers["linear solver create"] );
+
+      // Compose parallel LA matrix out of local matrix
+      m_matrix.create( m_localMatrix.toViewConst(), m_dofManager.numLocalDofs(), MPI_COMM_GEOSX );
+    }
+
+    // Output the linear system matrix/rhs for debugging purposes
+    debugOutputSystem( 0.0, 0, 0, m_matrix, m_rhs );
+
+    // Solve the linear system
+    solveLinearSystem( m_dofManager, m_matrix, m_rhs, m_solution );
   }
-
-  // TODO: Trilinos currently requires this, re-evaluate after moving to Tpetra-based solvers
-  if( m_precond )
-  {
-    m_precond->clear();
-  }
-
-  // Compose parallel LA matrix out of local matrix
-  m_matrix.create( m_localMatrix.toViewConst(), m_dofManager.numLocalDofs(), MPI_COMM_GEOSX );
-
-  // Output the linear system matrix/rhs for debugging purposes
-  debugOutputSystem( 0.0, 0, 0, m_matrix, m_rhs );
-
-  // Solve the linear system
-  solveLinearSystem( m_dofManager, m_matrix, m_rhs, m_solution );
 
   // Increment the solver statistics for reporting purposes
   m_solverStatistics.logNonlinearIteration( m_linearSolverResult.numIterations );
@@ -433,11 +448,19 @@ real64 SolverBase::linearImplicitStep( real64 const & time_n,
   // Output the linear system solution for debugging purposes
   debugOutputSolution( 0.0, 0, 0, m_solution );
 
-  // apply the system solution to the fields/variables
-  applySystemSolution( m_dofManager, m_solution.values(), 1.0, domain );
+  {
+    Timer timer( m_timers["apply solution"] );
 
-  // update non-primary variables (constitutive models)
-  updateState( domain );
+    // apply the system solution to the fields/variables
+    applySystemSolution( m_dofManager, m_solution.values(), 1.0, dt, domain );
+  }
+
+  {
+    Timer timer( m_timers["update state"] );
+
+    // update non-primary variables (constitutive models)
+    updateState( domain );
+  }
 
   // final step for completion of timestep. typically secondary variable updates and cleanup.
   implicitStepComplete( time_n, dt, domain );
@@ -475,27 +498,37 @@ bool SolverBase::lineSearch( real64 const & time_n,
   // main loop for the line search.
   for( integer lineSearchIteration = 0; lineSearchIteration < maxNumberLineSearchCuts; ++lineSearchIteration )
   {
-    // cut the scale factor by half. This means that the scale factors will
-    // have values of -0.5, -0.25, -0.125, ...
-    localScaleFactor *= lineSearchCutFactor;
-    cumulativeScale += localScaleFactor;
-
-    if( !checkSystemSolution( domain, dofManager, solution.values(), localScaleFactor ) )
     {
-      GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "        Line search {}, solution check failed", lineSearchIteration ) );
-      continue;
+      Timer timer( m_timers["apply solution"] );
+
+      // cut the scale factor by half. This means that the scale factors will
+      // have values of -0.5, -0.25, -0.125, ...
+      localScaleFactor *= lineSearchCutFactor;
+      cumulativeScale += localScaleFactor;
+
+      if( !checkSystemSolution( domain, dofManager, solution.values(), localScaleFactor ) )
+      {
+        GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "        Line search {}, solution check failed", lineSearchIteration ) );
+        continue;
+      }
+
+      applySystemSolution( dofManager, solution.values(), localScaleFactor, dt, domain );
     }
 
-    applySystemSolution( dofManager, solution.values(), localScaleFactor, domain );
+    {
+      Timer timer( m_timers["update state"] );
 
-    // update non-primary variables (constitutive models)
-    updateState( domain );
-
-    // re-assemble system
-    localMatrix.zero();
-    rhs.zero();
+      // update non-primary variables (constitutive models)
+      updateState( domain );
+    }
 
     {
+      Timer timer( m_timers["assemble"] );
+
+      // re-assemble system
+      localMatrix.zero();
+      rhs.zero();
+
       arrayView1d< real64 > const localRhs = rhs.open();
       assembleSystem( time_n, dt, domain, dofManager, localMatrix, localRhs );
       applyBoundaryConditions( time_n, dt, domain, dofManager, localMatrix, localRhs );
@@ -507,12 +540,12 @@ bool SolverBase::lineSearch( real64 const & time_n,
       std::cout << GEOS_FMT( "        Line search @ {:0.3f}:      ", cumulativeScale );
     }
 
-    // get residual norm
-    residualNorm = calculateResidualNorm( time_n, dt, domain, dofManager, rhs.values() );
-
-    if( getLogLevel() >= 1 && logger::internal::rank==0 )
     {
-      std::cout << std::endl;
+      Timer timer( m_timers["convergence check"] );
+
+      // get residual norm
+      residualNorm = calculateResidualNorm( time_n, dt, domain, dofManager, rhs.values() );
+      GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "        ( R ) = ( {:4.2e} )", residualNorm ) );
     }
 
     // if the residual norm is less than the last residual, we can proceed to the
@@ -561,41 +594,52 @@ bool SolverBase::lineSearchWithParabolicInterpolation( real64 const & time_n,
 
   while( residualNormT >= (1.0 - alpha*localScaleFactor)*residualNorm0 )
   {
-    real64 const previousLocalScaleFactor = localScaleFactor;
-    // Apply the three point parabolic model
-    if( lineSearchIteration == 0 )
     {
-      localScaleFactor *= sigma1;
+      Timer timer( m_timers["apply solution"] );
+
+      real64 const previousLocalScaleFactor = localScaleFactor;
+      // Apply the three point parabolic model
+      if( lineSearchIteration == 0 )
+      {
+        localScaleFactor *= sigma1;
+      }
+      else
+      {
+        localScaleFactor = interpolation::parabolicInterpolationThreePoints( lamc, lamm, ff0, ffT, ffm );
+      }
+
+      // Update x; keep the books on lambda
+      real64 const deltaLocalScaleFactor = ( localScaleFactor - previousLocalScaleFactor );
+      cumulativeScale += deltaLocalScaleFactor;
+
+      if( !checkSystemSolution( domain, dofManager, solution.values(), deltaLocalScaleFactor ) )
+      {
+        GEOS_LOG_LEVEL_RANK_0( 1, "        Line search " << lineSearchIteration << ", solution check failed" );
+        continue;
+      }
+
+      applySystemSolution( dofManager, solution.values(), deltaLocalScaleFactor, dt, domain );
     }
-    else
+
     {
-      localScaleFactor = interpolation::parabolicInterpolationThreePoints( lamc, lamm, ff0, ffT, ffm );
+      Timer timer( m_timers["update state"] );
+
+      updateState( domain );
     }
-
-    // Update x; keep the books on lambda
-    real64 const deltaLocalScaleFactor = ( localScaleFactor - previousLocalScaleFactor );
-    cumulativeScale += deltaLocalScaleFactor;
-
-    if( !checkSystemSolution( domain, dofManager, solution.values(), deltaLocalScaleFactor ) )
-    {
-      GEOS_LOG_LEVEL_RANK_0( 1, "        Line search " << lineSearchIteration << ", solution check failed" );
-      continue;
-    }
-
-    applySystemSolution( dofManager, solution.values(), deltaLocalScaleFactor, domain );
-
-    updateState( domain );
 
     lamm = lamc;
     lamc = localScaleFactor;
 
     // Keep the books on the function norms
-    // re-assemble system
-    // TODO: add a flag to avoid a completely useless Jacobian computation: rhs is enough
-    localMatrix.zero();
-    rhs.zero();
 
     {
+      Timer timer( m_timers["assemble"] );
+
+      // re-assemble system
+      // TODO: add a flag to avoid a completely useless Jacobian computation: rhs is enough
+      localMatrix.zero();
+      rhs.zero();
+
       arrayView1d< real64 > const localRhs = rhs.open();
       assembleSystem( time_n, dt, domain, dofManager, localMatrix, localRhs );
       applyBoundaryConditions( time_n, dt, domain, dofManager, localMatrix, localRhs );
@@ -607,8 +651,13 @@ bool SolverBase::lineSearchWithParabolicInterpolation( real64 const & time_n,
       std::cout << GEOS_FMT( "        Line search @ {:0.3f}:      ", cumulativeScale );
     }
 
-    // get residual norm
-    residualNormT = calculateResidualNorm( time_n, dt, domain, dofManager, rhs.values() );
+    {
+      Timer timer( m_timers["convergence check"] );
+
+      // get residual norm
+      residualNormT = calculateResidualNorm( time_n, dt, domain, dofManager, rhs.values() );
+      GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "        ( R ) = ( {:4.2e} )", residualNormT ) );
+    }
     ffm = ffT;
     ffT = residualNormT*residualNormT;
     lineSearchIteration += 1;
@@ -733,9 +782,7 @@ real64 SolverBase::nonlinearImplicitStep( real64 const & time_n,
           // increment the solver statistics for reporting purposes
           m_solverStatistics.logOuterLoopIteration();
 
-          GEOS_LOG_LEVEL_RANK_0( 1, "   " );
           GEOS_LOG_LEVEL_RANK_0( 1, "---------- Configuration did not converge. Testing new configuration. ----------" );
-          GEOS_LOG_LEVEL_RANK_0( 1, "   " );
         }
       }
       else if( !attemptedSimplestConfiguration )
@@ -781,7 +828,7 @@ real64 SolverBase::nonlinearImplicitStep( real64 const & time_n,
     }
     else
     {
-      GEOS_ERROR( "Nonconverged solutions not allowed. Terminating..." );
+      GEOS_ERROR( getDataContext() << ": Nonconverged solutions not allowed. Terminating..." );
     }
   }
 
@@ -811,11 +858,13 @@ bool SolverBase::solveNonlinearSystem( real64 const & time_n,
   {
     GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "    Attempt: {:2}, ConfigurationIter: {:2}, NewtonIter: {:2}", dtAttempt, configurationLoopIter, newtonIter ) );
 
-    // zero out matrix/rhs before assembly
-    m_localMatrix.zero();
-    m_rhs.zero();
-
     {
+      Timer timer( m_timers["assemble"] );
+
+      // zero out matrix/rhs before assembly
+      m_localMatrix.zero();
+      m_rhs.zero();
+
       arrayView1d< real64 > const localRhs = m_rhs.open();
 
       // call assemble to fill the matrix and the rhs
@@ -836,23 +885,27 @@ bool SolverBase::solveNonlinearSystem( real64 const & time_n,
 
       m_rhs.close();
 
+      if( m_assemblyCallback )
+      {
+        // Make a copy of LA objects and ship off to the callback
+        array1d< real64 > localRhsCopy( m_rhs.localSize() );
+        localRhsCopy.setValues< parallelDevicePolicy<> >( m_rhs.values() );
+        m_assemblyCallback( m_localMatrix, std::move( localRhsCopy ) );
+      }
     }
-    if( m_assemblyCallback )
+
+    real64 residualNorm = 0;
     {
-      // Make a copy of LA objects and ship off to the callback
-      array1d< real64 > localRhsCopy( m_rhs.localSize() );
-      localRhsCopy.setValues< parallelDevicePolicy<> >( m_rhs.values() );
-      m_assemblyCallback( m_localMatrix, std::move( localRhsCopy ) );
+      Timer timer( m_timers["convergence check"] );
+
+      // get residual norm
+      residualNorm = calculateResidualNorm( time_n, stepDt, domain, m_dofManager, m_rhs.values() );
+      GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "        ( R ) = ( {:4.2e} )", residualNorm ) );
     }
 
-    // get residual norm
-    real64 residualNorm = calculateResidualNorm( time_n, stepDt, domain, m_dofManager, m_rhs.values() );
-
-
-    GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "    ( R ) = ( {:4.2e} ) ; ", residualNorm ) );
     if( newtonIter > 0 )
     {
-      GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "    Last LinSolve(iter,res) = ( {:3}, {:4.2e} ) ; ",
+      GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "        Last LinSolve(iter,res) = ( {:3}, {:4.2e} )",
                                           m_linearSolverResult.numIterations,
                                           m_linearSolverResult.residualReduction ) );
     }
@@ -933,21 +986,29 @@ bool SolverBase::solveNonlinearSystem( real64 const & time_n,
       krylovParams.relTolerance = eisenstatWalker( residualNorm, lastResidual, krylovParams.weakestTol );
     }
 
-    // TODO: Trilinos currently requires this, re-evaluate after moving to Tpetra-based solvers
-    if( m_precond )
     {
-      m_precond->clear();
+      Timer timer( m_timers["linear solver total"] );
+
+      // TODO: Trilinos currently requires this, re-evaluate after moving to Tpetra-based solvers
+      if( m_precond )
+      {
+        m_precond->clear();
+      }
+
+      {
+        Timer timer_setup( m_timers["linear solver create"] );
+
+        // Compose parallel LA matrix/rhs out of local LA matrix/rhs
+        //
+        m_matrix.create( m_localMatrix.toViewConst(), m_dofManager.numLocalDofs(), MPI_COMM_GEOSX );
+      }
+
+      // Output the linear system matrix/rhs for debugging purposes
+      debugOutputSystem( time_n, cycleNumber, newtonIter, m_matrix, m_rhs );
+
+      // Solve the linear system
+      solveLinearSystem( m_dofManager, m_matrix, m_rhs, m_solution );
     }
-
-    // Compose parallel LA matrix/rhs out of local LA matrix/rhs
-    //
-    m_matrix.create( m_localMatrix.toViewConst(), m_dofManager.numLocalDofs(), MPI_COMM_GEOSX );
-
-    // Output the linear system matrix/rhs for debugging purposes
-    debugOutputSystem( time_n, cycleNumber, newtonIter, m_matrix, m_rhs );
-
-    // Solve the linear system
-    solveLinearSystem( m_dofManager, m_matrix, m_rhs, m_solution );
 
     // Increment the solver statistics for reporting purposes
     m_solverStatistics.logNonlinearIteration( m_linearSolverResult.numIterations );
@@ -955,21 +1016,34 @@ bool SolverBase::solveNonlinearSystem( real64 const & time_n,
     // Output the linear system solution for debugging purposes
     debugOutputSolution( time_n, cycleNumber, newtonIter, m_solution );
 
-    // Compute the scaling factor for the Newton update
-    scaleFactor = scalingForSystemSolution( domain, m_dofManager, m_solution.values() );
-
-    if( !checkSystemSolution( domain, m_dofManager, m_solution.values(), scaleFactor ) )
     {
-      // TODO try chopping (similar to line search)
-      GEOS_LOG_RANK_0( "    Solution check failed. Newton loop terminated." );
-      break;
+      Timer timer( m_timers["apply solution"] );
+
+      // Compute the scaling factor for the Newton update
+      scaleFactor = scalingForSystemSolution( domain, m_dofManager, m_solution.values() );
+
+      if( getLogLevel() >= 1 )
+      {
+        GEOS_LOG_RANK_0( GEOS_FMT( "        {}: Global solution scaling factor = {}", getName(), scaleFactor ) );
+      }
+
+      if( !checkSystemSolution( domain, m_dofManager, m_solution.values(), scaleFactor ) )
+      {
+        // TODO try chopping (similar to line search)
+        GEOS_LOG_RANK_0( "    Solution check failed. Newton loop terminated." );
+        break;
+      }
+
+      // apply the system solution to the fields/variables
+      applySystemSolution( m_dofManager, m_solution.values(), scaleFactor, stepDt, domain );
     }
 
-    // apply the system solution to the fields/variables
-    applySystemSolution( m_dofManager, m_solution.values(), scaleFactor, domain );
+    {
+      Timer timer( m_timers["update state"] );
 
-    // update non-primary variables (constitutive models)
-    updateState( domain );
+      // update non-primary variables (constitutive models)
+      updateState( domain );
+    }
 
     lastResidual = residualNorm;
   }
@@ -1156,29 +1230,41 @@ void SolverBase::solveLinearSystem( DofManager const & dofManager,
   if( params.solverType == LinearSolverParameters::SolverType::direct || !m_precond )
   {
     std::unique_ptr< LinearSolverBase< LAInterface > > solver = LAInterface::createSolver( params );
-    solver->setup( matrix );
-    solver->solve( rhs, solution );
+    {
+      Timer timer_setup( m_timers["linear solver setup"] );
+      solver->setup( matrix );
+    }
+    {
+      Timer timer_setup( m_timers["linear solver solve"] );
+      solver->solve( rhs, solution );
+    }
     m_linearSolverResult = solver->result();
   }
   else
   {
-    m_precond->setup( matrix );
+    {
+      Timer timer_setup( m_timers["linear solver setup"] );
+      m_precond->setup( matrix );
+    }
     std::unique_ptr< KrylovSolver< ParallelVector > > solver = KrylovSolver< ParallelVector >::create( params, matrix, *m_precond );
-    solver->solve( rhs, solution );
+    {
+      Timer timer_setup( m_timers["linear solver solve"] );
+      solver->solve( rhs, solution );
+    }
     m_linearSolverResult = solver->result();
   }
 
   if( params.stopIfError )
   {
-    GEOS_ERROR_IF( m_linearSolverResult.breakdown(), "Linear solution breakdown -> simulation STOP" );
+    GEOS_ERROR_IF( m_linearSolverResult.breakdown(), getDataContext() << ": Linear solution breakdown -> simulation STOP" );
   }
   else
   {
-    GEOS_WARNING_IF( !m_linearSolverResult.success(), "Linear solution failed" );
+    GEOS_WARNING_IF( !m_linearSolverResult.success(), getDataContext() << ": Linear solution failed" );
   }
 }
 
-bool SolverBase::checkSystemSolution( DomainPartition const & GEOS_UNUSED_PARAM( domain ),
+bool SolverBase::checkSystemSolution( DomainPartition & GEOS_UNUSED_PARAM( domain ),
                                       DofManager const & GEOS_UNUSED_PARAM( dofManager ),
                                       arrayView1d< real64 const > const & GEOS_UNUSED_PARAM( localSolution ),
                                       real64 const GEOS_UNUSED_PARAM( scalingFactor ) )
@@ -1186,7 +1272,7 @@ bool SolverBase::checkSystemSolution( DomainPartition const & GEOS_UNUSED_PARAM(
   return true;
 }
 
-real64 SolverBase::scalingForSystemSolution( DomainPartition const & GEOS_UNUSED_PARAM( domain ),
+real64 SolverBase::scalingForSystemSolution( DomainPartition & GEOS_UNUSED_PARAM( domain ),
                                              DofManager const & GEOS_UNUSED_PARAM( dofManager ),
                                              arrayView1d< real64 const > const & GEOS_UNUSED_PARAM( localSolution ) )
 {
@@ -1196,6 +1282,7 @@ real64 SolverBase::scalingForSystemSolution( DomainPartition const & GEOS_UNUSED
 void SolverBase::applySystemSolution( DofManager const & GEOS_UNUSED_PARAM( dofManager ),
                                       arrayView1d< real64 const > const & GEOS_UNUSED_PARAM( localSolution ),
                                       real64 const GEOS_UNUSED_PARAM( scalingFactor ),
+                                      real64 const GEOS_UNUSED_PARAM( dt ),
                                       DomainPartition & GEOS_UNUSED_PARAM( domain ) )
 {
   GEOS_ERROR( "SolverBase::applySystemSolution called!. Should be overridden." );
@@ -1246,6 +1333,20 @@ void SolverBase::cleanup( real64 const GEOS_UNUSED_PARAM( time_n ),
                           DomainPartition & GEOS_UNUSED_PARAM( domain ) )
 {
   m_solverStatistics.outputStatistics();
+
+  if( getLogLevel() > 0 )
+  {
+    for( auto & timer : m_timers )
+    {
+      real64 const time = std::chrono::duration< double >( timer.second ).count();
+      real64 const minTime = MpiWrapper::min( time );
+      real64 const maxTime = MpiWrapper::max( time );
+      if( maxTime > 0 )
+      {
+        GEOS_LOG_RANK_0( GEOS_FMT( "{}: {} time = {} s (min), {} s (max)", getName(), timer.first, minTime, maxTime ) );
+      }
+    }
+  }
 }
 
 Timestamp SolverBase::getMeshModificationTimestamp( DomainPartition & domain ) const

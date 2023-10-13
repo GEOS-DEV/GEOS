@@ -34,7 +34,7 @@ def fill_subparser(subparsers) -> None:
                    required=False,
                    metavar=__NUM_PROC_DEFAULT,
                    default=__NUM_PROC_DEFAULT,
-                   help=f"[int]: Number of threads used for parallel processing. Defaults to {__NUM_PROC_DEFAULT}")
+                   help=f"[int]: Number of threads used for parallel processing. Defaults to your CPU count {__NUM_PROC_DEFAULT}.")
 
 
 def display_results(options: Options, result: Result):

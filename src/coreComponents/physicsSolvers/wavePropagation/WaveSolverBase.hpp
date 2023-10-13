@@ -49,7 +49,8 @@ class WaveSolverBase : public SolverBase
 {
 public:
 
-  using EXEC_POLICY = parallelDevicePolicy< 32 >;
+  using EXEC_POLICY = parallelDevicePolicy< >;
+  using wsCoordType = real32;
 
   WaveSolverBase( const std::string & name,
                   Group * const parent );
@@ -111,6 +112,7 @@ public:
     static constexpr char const * usePMLString() { return "usePML"; }
     static constexpr char const * parametersPMLString() { return "parametersPML"; }
 
+    static constexpr char const * freeSurfaceString() { return "FreeSurface"; }
   };
 
   /**
@@ -126,6 +128,13 @@ public:
 protected:
 
   virtual void postProcessInput() override;
+
+  /**
+   * @brief Utility function to check if a directory exists
+   * @param directoryName the name of the directory
+   * @return true if the directory exists, false otherwise
+   */
+  bool directoryExists( std::string const & directoryName );
 
   /**
    * @brief Apply free surface condition to the face defined in the geometry box of the xml
@@ -188,6 +197,10 @@ protected:
                                        integer const cycleNumber,
                                        DomainPartition & domain,
                                        bool const computeGradient ) = 0;
+
+
+  virtual void registerDataOnMesh( Group & meshBodies ) override;
+
 
   localIndex getNumNodesPerElem();
 
@@ -291,6 +304,17 @@ protected:
 
 };
 
+namespace fields
+{
+using reference32Type = array2d< WaveSolverBase::wsCoordType, nodes::REFERENCE_POSITION_PERM >;
+DECLARE_FIELD( referencePosition32,
+               "referencePosition32",
+               reference32Type,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Copy of the referencePosition from NodeManager in 32 bits integer" );
+}
 } /* namespace geos */
 
 #endif /* GEOS_PHYSICSSOLVERS_WAVEPROPAGATION_WAVESOLVERBASE_HPP_ */

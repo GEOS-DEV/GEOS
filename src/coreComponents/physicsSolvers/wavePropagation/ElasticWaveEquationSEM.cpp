@@ -126,7 +126,7 @@ localIndex ElasticWaveEquationSEM::getNumNodesPerElem()
   FiniteElementDiscretization const * const
   feDiscretization = feDiscretizationManager.getGroupPointer< FiniteElementDiscretization >( m_discretizationName );
   GEOS_THROW_IF( feDiscretization == nullptr,
-                 getName() << ": FE discretization not found: " << m_discretizationName,
+                 getDataContext() << ": FE discretization not found: " << m_discretizationName,
                  InputError );
 
   localIndex numNodesPerElem = 0;
@@ -179,6 +179,7 @@ void ElasticWaveEquationSEM::initializePreSubGroups()
 
 void ElasticWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
 {
+  WaveSolverBase::registerDataOnMesh( meshBodies );
 
   forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
                                                     MeshLevel & mesh,
@@ -230,10 +231,12 @@ void ElasticWaveEquationSEM::postProcessInput()
   WaveSolverBase::postProcessInput();
 
   GEOS_ERROR_IF( m_sourceCoordinates.size( 1 ) != 3,
-                 "Invalid number of physical coordinates for the sources" );
+                 getWrapperDataContext( WaveSolverBase::viewKeyStruct::sourceCoordinatesString() ) <<
+                 ": Invalid number of physical coordinates for the sources" );
 
   GEOS_ERROR_IF( m_receiverCoordinates.size( 1 ) != 3,
-                 "Invalid number of physical coordinates for the receivers" );
+                 getWrapperDataContext( WaveSolverBase::viewKeyStruct::receiverCoordinatesString() ) <<
+                 ": Invalid number of physical coordinates for the receivers" );
 
   EventManager const & event = this->getGroupByPath< EventManager >( "/Problem/Events" );
   real64 const & maxTime = event.getReference< real64 >( EventManager::viewKeyStruct::maxTimeString() );
@@ -247,7 +250,7 @@ void ElasticWaveEquationSEM::postProcessInput()
     }
   }
 
-  GEOS_THROW_IF( dt < epsilonLoc*maxTime, "Value for dt: " << dt <<" is smaller than local threshold: " << epsilonLoc, std::runtime_error );
+  GEOS_THROW_IF( dt < epsilonLoc*maxTime, getDataContext() << ": Value for dt: " << dt <<" is smaller than local threshold: " << epsilonLoc, std::runtime_error );
 
   if( m_dtSeismoTrace > 0 )
   {
@@ -283,8 +286,8 @@ void ElasticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh, 
   NodeManager const & nodeManager = mesh.getNodeManager();
   FaceManager const & faceManager = mesh.getFaceManager();
 
-  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X =
-    nodeManager.referencePosition().toViewConst();
+  arrayView2d< wsCoordType const, nodes::REFERENCE_POSITION_USD > const X =
+    nodeManager.getField< fields::referencePosition32 >().toViewConst();
   arrayView2d< real64 const > const faceNormal  = faceManager.faceNormal();
   arrayView2d< real64 const > const faceCenter  = faceManager.faceCenter();
 
@@ -329,7 +332,7 @@ void ElasticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh, 
   {
 
     GEOS_THROW_IF( elementSubRegion.getElementType() != ElementType::Hexahedron,
-                   "Invalid type of element, the elastic solver is designed for hexahedral meshes only (C3D8) ",
+                   getDataContext() << ": Invalid type of element, the elastic solver is designed for hexahedral meshes only (C3D8) ",
                    InputError );
 
     arrayView2d< localIndex const > const elemsToFaces = elementSubRegion.faceList();
@@ -486,7 +489,7 @@ void ElasticWaveEquationSEM::addSourceToRightHandSide( integer const & cycleNumb
   arrayView1d< localIndex const > const sourceIsAccessible = m_sourceIsAccessible.toViewConst();
   arrayView2d< real32 const > const sourceValue   = m_sourceValue.toViewConst();
 
-  GEOS_THROW_IF( cycleNumber > sourceValue.size( 0 ), "Too many steps compared to array size", std::runtime_error );
+  GEOS_THROW_IF( cycleNumber > sourceValue.size( 0 ), getDataContext() << ": Too many steps compared to array size", std::runtime_error );
   forAll< EXEC_POLICY >( m_sourceConstantsx.size( 0 ), [=] GEOS_HOST_DEVICE ( localIndex const isrc )
   {
     if( sourceIsAccessible[isrc] == 1 )
@@ -522,14 +525,9 @@ void ElasticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
 
     NodeManager & nodeManager = mesh.getNodeManager();
     FaceManager & faceManager = mesh.getFaceManager();
+    ElementRegionManager & elemManager = mesh.getElemManager();
 
-    /// get the array of indicators: 1 if the face is on the boundary; 0 otherwise
-    arrayView1d< integer const > const & facesDomainBoundaryIndicator = faceManager.getDomainBoundaryIndicator();
-    arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X = nodeManager.referencePosition().toViewConst();
-    arrayView2d< real64 const > const faceNormal  = faceManager.faceNormal();
-
-    /// get face to node map
-    ArrayOfArraysView< localIndex const > const facesToNodes = faceManager.nodeList().toViewConst();
+    arrayView2d< wsCoordType const, nodes::REFERENCE_POSITION_USD > const nodeCoords = nodeManager.getField< fields::referencePosition32 >().toViewConst();
 
     // mass matrix to be computed in this function
     arrayView1d< real32 > const mass = nodeManager.getField< fields::MassVector >();
@@ -543,40 +541,39 @@ void ElasticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
     dampingz.zero();
 
     /// get array of indicators: 1 if face is on the free surface; 0 otherwise
-    arrayView1d< localIndex const > const freeSurfaceFaceIndicator = faceManager.getField< fields::FreeSurfaceFaceIndicator >();
+    arrayView1d< localIndex const > const freeSurfaceFaceIndicator    = faceManager.getField< fields::FreeSurfaceFaceIndicator >();
+    arrayView1d< integer const > const & facesDomainBoundaryIndicator = faceManager.getDomainBoundaryIndicator();
+    ArrayOfArraysView< localIndex const > const facesToNodes          = faceManager.nodeList().toViewConst();
+    arrayView2d< real64 const > const faceNormal                      = faceManager.faceNormal();
 
-    mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
-                                                                                          CellElementSubRegion & elementSubRegion )
+    elemManager.forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
+                                                                                CellElementSubRegion & elementSubRegion )
     {
-
-      arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemsToNodes = elementSubRegion.nodeList();
-      arrayView2d< localIndex const > const facesToElements = faceManager.elementList();
-      arrayView1d< real32 > const density = elementSubRegion.getField< fields::MediumDensity >();
-      arrayView1d< real32 > const velocityVp = elementSubRegion.getField< fields::MediumVelocityVp >();
-      arrayView1d< real32 > const velocityVs = elementSubRegion.getField< fields::MediumVelocityVs >();
-
       finiteElement::FiniteElementBase const &
       fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
 
-      finiteElement::FiniteElementDispatchHandler< SEM_FE_TYPES >::dispatch3D( fe,
-                                                                               [&]
-                                                                                 ( auto const finiteElement )
+      arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemsToNodes = elementSubRegion.nodeList();
+      arrayView2d< localIndex const > const elemsToFaces = elementSubRegion.faceList();
+
+      arrayView1d< real32 const > const density = elementSubRegion.getField< fields::MediumDensity >();
+      arrayView1d< real32 const > const velocityVp = elementSubRegion.getField< fields::MediumVelocityVp >();
+      arrayView1d< real32 const > const velocityVs = elementSubRegion.getField< fields::MediumVelocityVs >();
+
+      finiteElement::FiniteElementDispatchHandler< SEM_FE_TYPES >::dispatch3D( fe, [&] ( auto const finiteElement )
       {
         using FE_TYPE = TYPEOFREF( finiteElement );
 
         elasticWaveEquationSEMKernels::MassMatrixKernel< FE_TYPE > kernelM( finiteElement );
-
         kernelM.template launch< EXEC_POLICY, ATOMIC_POLICY >( elementSubRegion.size(),
-                                                               X,
+                                                               nodeCoords,
                                                                elemsToNodes,
                                                                density,
                                                                mass );
 
         elasticWaveEquationSEMKernels::DampingMatrixKernel< FE_TYPE > kernelD( finiteElement );
-
-        kernelD.template launch< EXEC_POLICY, ATOMIC_POLICY >( faceManager.size(),
-                                                               X,
-                                                               facesToElements,
+        kernelD.template launch< EXEC_POLICY, ATOMIC_POLICY >( elementSubRegion.size(),
+                                                               nodeCoords,
+                                                               elemsToFaces,
                                                                facesToNodes,
                                                                facesDomainBoundaryIndicator,
                                                                freeSurfaceFaceIndicator,
@@ -605,9 +602,9 @@ void ElasticWaveEquationSEM::applyFreeSurfaceBC( real64 const time, DomainPartit
   arrayView1d< real32 > const ux_np1 = nodeManager.getField< fields::Displacementx_np1 >();
   arrayView1d< real32 > const uy_np1 = nodeManager.getField< fields::Displacementy_np1 >();
   arrayView1d< real32 > const uz_np1 = nodeManager.getField< fields::Displacementz_np1 >();
-  arrayView1d< real32 > const ux_n = nodeManager.getField< fields::Displacementx_n >();
-  arrayView1d< real32 > const uy_n = nodeManager.getField< fields::Displacementy_n >();
-  arrayView1d< real32 > const uz_n = nodeManager.getField< fields::Displacementz_n >();
+  arrayView1d< real32 > const ux_n   = nodeManager.getField< fields::Displacementx_n >();
+  arrayView1d< real32 > const uy_n   = nodeManager.getField< fields::Displacementy_n >();
+  arrayView1d< real32 > const uz_n   = nodeManager.getField< fields::Displacementz_n >();
   arrayView1d< real32 > const ux_nm1 = nodeManager.getField< fields::Displacementx_nm1 >();
   arrayView1d< real32 > const uy_nm1 = nodeManager.getField< fields::Displacementy_nm1 >();
   arrayView1d< real32 > const uz_nm1 = nodeManager.getField< fields::Displacementz_nm1 >();
@@ -621,12 +618,9 @@ void ElasticWaveEquationSEM::applyFreeSurfaceBC( real64 const time, DomainPartit
   arrayView1d< localIndex > const freeSurfaceNodeIndicator = nodeManager.getField< fields::FreeSurfaceNodeIndicator >();
 
 
-  freeSurfaceFaceIndicator.zero();
-  freeSurfaceNodeIndicator.zero();
-
   fsManager.apply( time,
                    domain.getMeshBody( 0 ).getMeshLevel( m_discretizationName ),
-                   string( "FreeSurface" ),
+                   WaveSolverBase::viewKeyStruct::freeSurfaceString(),
                    [&]( FieldSpecificationBase const & bc,
                         string const &,
                         SortedArrayView< localIndex const > const & targetSet,
@@ -664,7 +658,7 @@ void ElasticWaveEquationSEM::applyFreeSurfaceBC( real64 const time, DomainPartit
     }
     else
     {
-      GEOS_ERROR( "This option is not supported yet" );
+      GEOS_ERROR( getDataContext() << ": This option is not supported yet" );
     }
   } );
 }
@@ -689,7 +683,7 @@ real64 ElasticWaveEquationSEM::explicitStepBackward( real64 const & time_n,
                                                      DomainPartition & domain,
                                                      bool GEOS_UNUSED_PARAM( computeGradient ) )
 {
-  GEOS_ERROR( "Backward propagation for the elastic wave propagator not yet implemented" );
+  GEOS_ERROR( getDataContext() << ": Backward propagation for the elastic wave propagator not yet implemented" );
   real64 dtOut = explicitStepInternal( time_n, dt, cycleNumber, domain );
   return dtOut;
 }
@@ -886,12 +880,12 @@ void ElasticWaveEquationSEM::computeAllSeismoTraces( real64 const time_n,
 
 void ElasticWaveEquationSEM::initializePML()
 {
-  GEOS_ERROR( "PML for the elastic wave propagator not yet implemented" );
+  GEOS_ERROR( getDataContext() << ": PML for the elastic wave propagator not yet implemented" );
 }
 
 void ElasticWaveEquationSEM::applyPML( real64 const, DomainPartition & )
 {
-  GEOS_ERROR( "PML for the elastic wave propagator not yet implemented" );
+  GEOS_ERROR( getDataContext() << ": PML for the elastic wave propagator not yet implemented" );
 }
 
 REGISTER_CATALOG_ENTRY( SolverBase, ElasticWaveEquationSEM, string const &, dataRepository::Group * const )

@@ -31,7 +31,7 @@ class AcousticFirstOrderWaveEquationSEM : public WaveSolverBase
 {
 public:
 
-  using EXEC_POLICY = parallelDevicePolicy< 32 >;
+  using EXEC_POLICY = parallelDevicePolicy< >;
   using ATOMIC_POLICY = parallelDeviceAtomic;
 
 
