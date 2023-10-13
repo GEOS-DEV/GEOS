@@ -84,9 +84,10 @@ string rtTypes::getTypeName( std::type_index const key )
 }
 
 /**
- * @brief Build Array regexes.
- * @param subPattern
- * @param dimension
+ * @brief Recursive function to build Array regexes.
+ * @param subPattern pattern of the element to surround with braces and separate with commas
+ * @param dimension 1 = bottom-level, 2 = array1d-level, 3 = array2d-level...
+ * @param highestDimension The target final dimension.
  * @return
  *
  * @note The sub pattern is the base object you are targeting.  It can either
@@ -94,18 +95,22 @@ string rtTypes::getTypeName( std::type_index const key )
  *       axes are given as a comma-separated list enclosed in a curly brace.
  *       For example, a 2D string array would look like: {{"a", "b"}, {"c", "d"}}
  */
-string constructArrayRegex( string_view subPattern, integer dimension )
+string constructArrayRegex( string_view subPattern, integer dimension, bool topLevelCall = true )
 {
   string subPatternStr = dimension > 1 ?
-                         constructArrayRegex( subPattern, dimension-1 ) :
+                         constructArrayRegex( subPattern, dimension-1, false ) :
                          string( subPattern );
   // Add trailing space if is not already done
   if( !stringutilities::endsWith( subPatternStr, "\\s*" ) )
     subPatternStr+="\\s*";
   // Allow the bottom-level to be empty
-  return dimension > 1 ?
-    "\\{\\s*(" + subPatternStr + ",\\s*)*" + subPatternStr + "\\}" :
-    "\\s*\\{\\s*((" + subPatternStr + "\\s*,\\s*)*" + subPatternStr + ")?\\}\\s*";
+  string const arrayRegex = dimension == 1 ?
+                            "\\{\\s*((" + subPatternStr + ",\\s*)*" + subPatternStr + ")?\\}":
+                            "\\{\\s*(" + subPatternStr + ",\\s*)*" + subPatternStr + "\\}";
+  // accept spaces around surrounding braces at the top-level
+  return topLevelCall ?
+         "\\s*" + arrayRegex + "\\s*" :
+         arrayRegex;
 }
 
 rtTypes::RegexMapType rtTypes::createBasicTypesRegexMap()
@@ -127,9 +132,9 @@ rtTypes::RegexMapType rtTypes::createBasicTypesRegexMap()
   string_view const realRegex = "[+-]?[\\d]*([\\d]\\.?|\\.[\\d])[\\d]*([eE][-+]?[\\d]+|\\s*)";
 
   // Regex to match a R1Tensor
-  string const R1Regex = "\\s*\\{\\s*(" + string( realRegex ) + ",\\s*){2}" + string( realRegex ) + "\\s*\\}";
+  string const R1Regex = "\\s*\\{\\s*(" + string( realRegex ) + "\\s*,\\s*){2}" + string( realRegex ) + "\\s*\\}\\s*";
   // Regex to match a R2SymTensor
-  string const R2Regex = "\\s*\\{\\s*(" + string( realRegex ) + ",\\s*){5}" + string( realRegex ) + "\\s*\\}";
+  string const R2Regex = "\\s*\\{\\s*(" + string( realRegex ) + "\\s*,\\s*){5}" + string( realRegex ) + "\\s*\\}\\s*";
 
   // Regex to match a string that can't be empty and does not contain any whitespaces nor the characters ,{}
   string_view const strRegex = "[^,\\{\\}\\s]+\\s*";
@@ -145,7 +150,7 @@ rtTypes::RegexMapType rtTypes::createBasicTypesRegexMap()
   string_view const groupNameRegex = "[a-zA-Z0-9.\\-_]+";
   // Regex to match an optionnal group name reference: it can be empty, contains only upper/lower letters, digits, the .-_ characters, and
   // the / character for paths.
-  string_view const groupNameRefRegexE = "[a-zA-Z0-9.\\-_\\/]*";
+  string_view const groupNameRefRegexE = "[a-zA-Z0-9.\\-_/]*";
 
 
   // Build master list of regexes
