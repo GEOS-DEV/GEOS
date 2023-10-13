@@ -36,10 +36,10 @@ public:
 
   ~SpatialPartition() override;
 
-  bool isCoordInPartition( const real64 & coord, const int dir ) override;
+  bool isCoordInPartition( const real64 & coord, const int dir ) const override;
 
   bool isCoordInPartitionBoundingBox( const R1Tensor & elemCenter,
-                                      const real64 & boundaryRadius );
+                                      const real64 & boundaryRadius ) const;
 
   void updateSizes( arrayView1d< real64 > const domainL,
                     real64 const dt );
@@ -102,9 +102,34 @@ public:
                                 MPI_iCommData & commData,
                                 std::vector< array1d< localIndex > > const & particleLocalIndicesToSendToEachNeighbor );
 
+  /**
+   * @brief Get the metis neighbors indices, const version. @see DomainPartition#m_metisNeighborList
+   * @return Container of global indices.
+   */
+  std::set< int > const & getMetisNeighborList() const
+  {
+    return m_metisNeighborList;
+  }
 
-  /// number of partitions
-  array1d< int > m_Partitions;
+  /**
+   * @brief Sets the list of metis neighbor list.
+   * @param metisNeighborList A reference to the Metis neighbor list.
+   */
+  void setMetisNeighborList( std::vector< int > const & metisNeighborList )
+  {
+    m_metisNeighborList.clear();
+    m_metisNeighborList.insert( metisNeighborList.cbegin(), metisNeighborList.cend() );
+  }
+
+  /**
+   * @brief Get the number of domains in each dimension for a regular partition with InternalMesh.
+   * @return An array containing number of partition in X, Y and Z directions.
+   */
+  array1d< int > const & getPartitions() const
+  {
+    return m_Partitions;
+  }
+
   /**
    * @brief Boolean like array of length 3 (space dimensions).
    *
@@ -161,6 +186,15 @@ private:
    * @brief Ghost position (max).
    */
   real64 m_contactGhostMax[3];
+
+  /// number of partitions
+  array1d< int > m_Partitions;
+
+  /**
+   * @brief Contains the global indices of the metis neighbors in case `metis` is used. Empty otherwise.
+   */
+  std::set< int > m_metisNeighborList;
+
 };
 
 }

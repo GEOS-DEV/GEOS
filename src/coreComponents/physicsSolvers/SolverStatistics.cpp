@@ -127,7 +127,11 @@ void SolverStatistics::outputStatistics() const
 
   // TODO: the print logic is really convoluted to accomodate the needs of the different solvers, needs simplification
 
-  logStat( "time steps", m_numTimeSteps );
+  if( m_numTimeSteps > 0 )
+  {
+    logStat( "time steps", m_numTimeSteps );
+  }
+
   if( printIterations )
   {
     if( printOuterLoopIterations )

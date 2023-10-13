@@ -57,13 +57,6 @@ Element: Blueprint
 .. include:: ../../coreComponents/schema/docs/Blueprint.rst
 
 
-.. _XML_BoundedPlane:
-
-Element: BoundedPlane
-=====================
-.. include:: ../../coreComponents/schema/docs/BoundedPlane.rst
-
-
 .. _XML_Box:
 
 Element: Box
@@ -267,6 +260,13 @@ Element: Coulomb
 .. include:: ../../coreComponents/schema/docs/Coulomb.rst
 
 
+.. _XML_CustomPolarObject:
+
+Element: CustomPolarObject
+==========================
+.. include:: ../../coreComponents/schema/docs/CustomPolarObject.rst
+
+
 .. _XML_Cylinder:
 
 Element: Cylinder
@@ -314,6 +314,13 @@ Element: DelftEgg
 Element: Dirichlet
 ==================
 .. include:: ../../coreComponents/schema/docs/Dirichlet.rst
+
+
+.. _XML_Disc:
+
+Element: Disc
+=============
+.. include:: ../../coreComponents/schema/docs/Disc.rst
 
 
 .. _XML_DruckerPrager:
@@ -883,6 +890,13 @@ Element: ReactiveFluidDriver
 .. include:: ../../coreComponents/schema/docs/ReactiveFluidDriver.rst
 
 
+.. _XML_Rectangle:
+
+Element: Rectangle
+==================
+.. include:: ../../coreComponents/schema/docs/Rectangle.rst
+
+
 .. _XML_RelpermDriver:
 
 Element: RelpermDriver
@@ -1314,13 +1328,6 @@ Datastructure: Blueprint
 .. include:: ../../coreComponents/schema/docs/Blueprint_other.rst
 
 
-.. _DATASTRUCTURE_BoundedPlane:
-
-Datastructure: BoundedPlane
-===========================
-.. include:: ../../coreComponents/schema/docs/BoundedPlane_other.rst
-
-
 .. _DATASTRUCTURE_Box:
 
 Datastructure: Box
@@ -1531,6 +1538,13 @@ Datastructure: Coulomb
 .. include:: ../../coreComponents/schema/docs/Coulomb_other.rst
 
 
+.. _DATASTRUCTURE_CustomPolarObject:
+
+Datastructure: CustomPolarObject
+================================
+.. include:: ../../coreComponents/schema/docs/CustomPolarObject_other.rst
+
+
 .. _DATASTRUCTURE_Cylinder:
 
 Datastructure: Cylinder
@@ -1578,6 +1592,13 @@ Datastructure: DelftEgg
 Datastructure: Dirichlet
 ========================
 .. include:: ../../coreComponents/schema/docs/Dirichlet_other.rst
+
+
+.. _DATASTRUCTURE_Disc:
+
+Datastructure: Disc
+===================
+.. include:: ../../coreComponents/schema/docs/Disc_other.rst
 
 
 .. _DATASTRUCTURE_DruckerPrager:
@@ -2159,6 +2180,13 @@ Datastructure: ReactiveCompositionalMultiphaseOBL
 Datastructure: ReactiveFluidDriver
 ==================================
 .. include:: ../../coreComponents/schema/docs/ReactiveFluidDriver_other.rst
+
+
+.. _DATASTRUCTURE_Rectangle:
+
+Datastructure: Rectangle
+========================
+.. include:: ../../coreComponents/schema/docs/Rectangle_other.rst
 
 
 .. _DATASTRUCTURE_RelpermDriver:

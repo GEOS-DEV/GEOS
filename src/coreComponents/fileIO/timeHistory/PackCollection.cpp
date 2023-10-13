@@ -10,7 +10,6 @@ PackCollection::PackCollection ( string const & name, Group * parent )
   , m_setNames( )
   , m_setChanged( true )
   , m_onlyOnSetChange( 0 )
-  , m_disableCoordCollection( false )
   , m_initialized( false )
 {
   registerWrapper( PackCollection::viewKeysStruct::objectPathString(), &m_objectPath ).
@@ -29,6 +28,11 @@ PackCollection::PackCollection ( string const & name, Group * parent )
     setInputFlag( InputFlags::OPTIONAL ).
     setDefaultValue( 0 ).
     setDescription( "Whether or not to only collect when the collected sets of indices change in any way." );
+
+  registerWrapper( PackCollection::viewKeysStruct::disableCoordCollectionString(), &m_disableCoordCollection ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDefaultValue( 0 ).
+    setDescription( "Whether or not to create coordinate meta-collectors if collected objects are mesh objects." );
 }
 
 void PackCollection::initializePostSubGroups( )
@@ -120,8 +124,16 @@ void PackCollection::updateSetsIndices( DomainPartition const & domain )
   };
 
   Group const * targetGrp = this->getTargetObject( domain, m_objectPath );
-  WrapperBase const & targetField = targetGrp->getWrapperBase( m_fieldName );
-  GEOS_ERROR_IF( !targetField.isPackable( false ), "The object targeted for collection must be packable!" );
+  try
+  {
+    WrapperBase const & targetField = targetGrp->getWrapperBase( m_fieldName );
+    GEOS_ERROR_IF( !targetField.isPackable( false ), "The object targeted for collection must be packable!" );
+  }
+  catch( std::exception const & e )
+  {
+    throw InputError( e, getWrapperDataContext( viewKeysStruct::fieldNameString() ).toString() +
+                      ": Target not found !\n" );
+  }
 
   // If no set or "all" is specified we retrieve the entire field.
   // If sets are specified we retrieve the field only from those sets.

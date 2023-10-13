@@ -35,6 +35,7 @@ set( linearAlgebra_headers
      utilities/LinearSolverParameters.hpp
      utilities/LinearSolverResult.hpp
      utilities/NormalOperator.hpp
+     utilities/ReverseCutHillMcKeeOrdering.hpp
      utilities/TransposeOperator.hpp
    )
 
@@ -49,6 +50,7 @@ set( linearAlgebra_sources
      solvers/GmresSolver.cpp
      solvers/KrylovSolver.cpp
      solvers/SeparateComponentPreconditioner.cpp
+     utilities/ReverseCutHillMcKeeOrdering.cpp       
    )
 
 set( dependencyList ${parallelDeps} mesh denseLinearAlgebra )
@@ -110,6 +112,7 @@ if( ENABLE_HYPRE )
           interfaces/hypre/mgrStrategies/SinglePhasePoromechanicsReservoirFVM.hpp
           interfaces/hypre/mgrStrategies/SinglePhaseReservoirFVM.hpp
           interfaces/hypre/mgrStrategies/SinglePhaseReservoirHybridFVM.hpp
+          interfaces/hypre/mgrStrategies/SolidMechanicsEmbeddedFractures.hpp
           interfaces/hypre/mgrStrategies/ThermalCompositionalMultiphaseFVM.hpp
           interfaces/hypre/mgrStrategies/ThermalMultiphasePoromechanics.hpp
           interfaces/hypre/mgrStrategies/ThermalSinglePhasePoromechanics.hpp
@@ -165,7 +168,7 @@ blt_add_library( NAME       linearAlgebra
 target_include_directories( linearAlgebra PUBLIC ${CMAKE_CURRENT_LIST_DIR} )
 
 
-if( GEOSX_ENABLE_TESTS )
+if( GEOS_ENABLE_TESTS )
   add_subdirectory( unitTests )
 endif( )
 

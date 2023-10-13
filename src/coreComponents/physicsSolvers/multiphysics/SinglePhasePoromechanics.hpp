@@ -26,14 +26,12 @@
 namespace geos
 {
 
-// Note that in the current implementation, the order of the templates in CoupledSolver< ... > matters a lot
-// Changing the order of these templates can break a lot of things (labels in MGR for instance) and must be done carefully
-class SinglePhasePoromechanics : public CoupledSolver< SolidMechanicsLagrangianFEM,
-                                                       SinglePhaseBase >
+class SinglePhasePoromechanics : public CoupledSolver< SinglePhaseBase,
+                                                       SolidMechanicsLagrangianFEM >
 {
 public:
 
-  using Base = CoupledSolver< SolidMechanicsLagrangianFEM, SinglePhaseBase >;
+  using Base = CoupledSolver< SinglePhaseBase, SolidMechanicsLagrangianFEM >;
   using Base::m_solvers;
   using Base::m_dofManager;
   using Base::m_localMatrix;
@@ -42,8 +40,8 @@ public:
 
   enum class SolverType : integer
   {
-    SolidMechanics = 0,
-    Flow = 1
+    Flow = 0,
+    SolidMechanics = 1
   };
 
   /// String used to form the solverName used to register solvers in CoupledSolver
@@ -96,6 +94,13 @@ public:
   virtual void setupCoupling( DomainPartition const & domain,
                               DofManager & dofManager ) const override;
 
+  virtual void setupDofs( DomainPartition const & domain,
+                          DofManager & dofManager ) const override;
+
+  virtual void implicitStepSetup( real64 const & time_n,
+                                  real64 const & dt,
+                                  DomainPartition & domain ) override;
+
   virtual void setupSystem( DomainPartition & domain,
                             DofManager & dofManager,
                             CRSMatrix< real64, globalIndex > & localMatrix,
@@ -141,6 +146,15 @@ protected:
 
   virtual void initializePreSubGroups() override;
 
+  void assembleElementBasedTerms( real64 const time_n,
+                                  real64 const dt,
+                                  DomainPartition & domain,
+                                  DofManager const & dofManager,
+                                  CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                  arrayView1d< real64 > const & localRhs );
+  /// flag to determine whether or not this is a thermal simulation
+  integer m_isThermal;
+
 private:
 
   /**
@@ -148,6 +162,12 @@ private:
    * @param[in] subRegion the element subRegion
    */
   void updateBulkDensity( ElementSubRegionBase & subRegion );
+
+  /**
+   * @brief Helper function to average the mean stress increment
+   * @param[in] domain the domain partition
+   */
+  void averageMeanStressIncrement( DomainPartition & domain );
 
   void createPreconditioner();
 
@@ -160,10 +180,8 @@ private:
                          string const & materialNamesString,
                          CRSMatrixView< real64, globalIndex const > const & localMatrix,
                          arrayView1d< real64 > const & localRhs,
+                         real64 const dt,
                          PARAMS && ... params );
-
-  /// flag to determine whether or not this is a thermal simulation
-  integer m_isThermal;
 
   /// Flag to indicate that the solver is going to perform stress initialization
   integer m_performStressInitialization;
@@ -178,6 +196,7 @@ real64 SinglePhasePoromechanics::assemblyLaunch( MeshLevel & mesh,
                                                  string const & materialNamesString,
                                                  CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                  arrayView1d< real64 > const & localRhs,
+                                                 real64 const dt,
                                                  PARAMS && ... params )
 {
   GEOS_MARK_FUNCTION;
@@ -193,6 +212,7 @@ real64 SinglePhasePoromechanics::assemblyLaunch( MeshLevel & mesh,
                                 dofManager.rankOffset(),
                                 localMatrix,
                                 localRhs,
+                                dt,
                                 gravityVectorData,
                                 std::forward< PARAMS >( params )... );
 

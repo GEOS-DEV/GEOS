@@ -936,7 +936,6 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
     subRegion.setActiveParticleIndices();
   } );
 
-
   //#######################################################################################
   solverProfilingIf( "Construct neighbor list", m_needsNeighborList == 1 );
   //#######################################################################################
@@ -1011,12 +1010,9 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
   //#######################################################################################
   if( m_damageFieldPartitioning == 1 )
   {
-    //GEOS_LOG_RANK("1");
     projectDamageFieldGradientToGrid( particleManager, nodeManager );
     std::vector< std::string > fieldNames = { viewKeyStruct::damageGradientString() };
-    //GEOS_LOG_RANK("2");
     syncGridFields( fieldNames, domain, nodeManager, mesh, MPI_MAX );
-    //GEOS_LOG_RANK("3");
   }
 
 
@@ -1124,24 +1120,20 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
     computeAndWriteBoxAverage( time_n, dt, particleManager );
   }
 
-
   //#######################################################################################
   solverProfiling( "Calculate stable time step" );
   //#######################################################################################
   real64 dtReturn = getStableTimeStep( particleManager );
-
 
   //#######################################################################################
   solverProfiling( "Flag out-of-range particles" );
   //#######################################################################################
   flagOutOfRangeParticles( particleManager );
 
-
   //#######################################################################################
   solverProfiling( "Delete bad particles" );
   //#######################################################################################
   deleteBadParticles( particleManager );
-
 
   //#######################################################################################
   solverProfilingIf( "Particle repartitioning", MpiWrapper::commSize( MPI_COMM_GEOSX ) > 1 );
@@ -1157,7 +1149,6 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
       partition.repartitionMasterParticles( subRegion, m_iComm );
     } );
   }
-
 
   //#######################################################################################
   solverProfilingIf( "Resize grid based on F-table", m_prescribedBoundaryFTable == 1 );
@@ -3583,7 +3574,7 @@ int SolidMechanicsMPM::evaluateSeparabilityCriterion( localIndex const & A,
 }
 
 void SolidMechanicsMPM::flagOutOfRangeParticles( ParticleManager & particleManager )
-{
+{  
   particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
   {
     // Identify global domain bounds

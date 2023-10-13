@@ -33,7 +33,7 @@ class ElasticFirstOrderWaveEquationSEM : public WaveSolverBase
 {
 public:
 
-  using EXEC_POLICY = parallelDevicePolicy< 32 >;
+  using EXEC_POLICY = parallelDevicePolicy< >;
   using ATOMIC_POLICY = parallelDeviceAtomic;
 
   static constexpr real64 epsilonLoc = 1e-8;
@@ -101,7 +101,8 @@ public:
    * @param var_n the field values at time_n
    * @param varAtreceivers the array holding the trace values, where the output is written
    */
-  virtual void compute2dVariableAllSeismoTraces( real64 const time_n,
+  virtual void compute2dVariableAllSeismoTraces( localIndex const regionIndex,
+                                                 real64 const time_n,
                                                  real64 const dt,
                                                  arrayView2d< real32 const > const var_np1,
                                                  arrayView2d< real32 const > const var_n,
@@ -133,7 +134,9 @@ public:
     static constexpr char const * sigmayzNp1AtReceiversString() { return "sigmayzNp1AtReceivers"; }
 
     static constexpr char const * sourceElemString() { return "sourceElem"; }
+    static constexpr char const * sourceRegionString() { return "sourceRegion"; }
     static constexpr char const * receiverElemString() { return "rcvElem"; }
+    static constexpr char const * receiverRegionString() { return "receiverRegion"; }
 
   } waveEquationViewKeys;
 
@@ -210,8 +213,14 @@ private:
   /// Array containing the elements which contain a source
   array1d< localIndex > m_sourceElem;
 
+  /// Array containing the elements which contain the region which the source belongs
+  array1d< localIndex > m_sourceRegion;
+
   /// Array containing the elements which contain a receiver
   array1d< localIndex > m_rcvElem;
+
+  /// Array containing the elements which contain the region which the receiver belongs
+  array1d< localIndex > m_receiverRegion;
 
 };
 

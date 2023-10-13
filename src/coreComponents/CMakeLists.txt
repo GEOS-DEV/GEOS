@@ -64,6 +64,7 @@ if( NOT GEOSX_BUILD_SHARED_LIBS )
   foreach( lib ${coreLibs} )
     list( APPEND geosx_core_list ${GEOSX_LINK_PREPEND_FLAG} ${lib} ${GEOSX_LINK_POSTPEND_FLAG} )
   endforeach()
+  set ( geosx_core_libs "${geosx_core_list}" CACHE INTERNAL "" )
 endif( )
 
 foreach( lib ${subdirs} )
@@ -118,7 +119,7 @@ if( ENABLE_UNCRUSTIFY )
             WORKING_DIRECTORY ${CMAKE_BINARY_DIR} )
 endif()
 
-if(GEOSX_ENABLE_TESTS)
+if( GEOS_ENABLE_TESTS )
   add_subdirectory( unitTests )
 endif( )
 

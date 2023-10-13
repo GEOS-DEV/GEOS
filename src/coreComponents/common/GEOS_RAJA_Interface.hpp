@@ -68,13 +68,12 @@ void RAJA_INLINE parallelHostSync() { }
 #endif
 
 #if defined( GEOS_USE_CUDA )
-
 auto const parallelDeviceMemorySpace = LvArray::MemorySpace::cuda;
 
-template< unsigned long BLOCK_SIZE = GEOSX_BLOCK_SIZE >
+template< size_t BLOCK_SIZE = GEOSX_BLOCK_SIZE >
 using parallelDevicePolicy = RAJA::cuda_exec< BLOCK_SIZE >;
 
-template< unsigned long BLOCK_SIZE = GEOSX_BLOCK_SIZE >
+template< size_t BLOCK_SIZE = GEOSX_BLOCK_SIZE >
 using parallelDeviceAsyncPolicy = RAJA::cuda_exec_async< BLOCK_SIZE >;
 
 using parallelDeviceStream = RAJA::resources::Cuda;
@@ -97,7 +96,7 @@ RAJA_INLINE parallelDeviceEvent forAll( RESOURCE && stream, const localIndex end
 
 auto const parallelDeviceMemorySpace = LvArray::MemorySpace::hip;
 
-template< unsigned long BLOCK_SIZE = GEOSX_BLOCK_SIZE >
+template< size_t BLOCK_SIZE = GEOSX_BLOCK_SIZE >
 using parallelDevicePolicy = RAJA::hip_exec< BLOCK_SIZE >;
 
 
@@ -110,8 +109,8 @@ using parallelDeviceAtomic = RAJA::hip_atomic;
 void RAJA_INLINE parallelDeviceSync() { RAJA::synchronize< RAJA::hip_synchronize >( ); }
 
 // the async dispatch policy caused runtime issues as of rocm@4.5.2, hasn't been checked in rocm@5:
-template< unsigned long BLOCK_SIZE = GEOSX_BLOCK_SIZE >
-using parallelDeviceAsyncPolicy = parallelDevicePolicy< BLOCK_SIZE >;// RAJA::hip_exec_async< BLOCK_SIZE >;
+template< size_t BLOCK_SIZE = GEOSX_BLOCK_SIZE >
+using parallelDeviceAsyncPolicy = parallelDevicePolicy< BLOCK_SIZE >; // RAJA::hip_exec_async< BLOCK_SIZE >;
 
 template< typename POLICY, typename RESOURCE, typename LAMBDA >
 RAJA_INLINE parallelDeviceEvent forAll( RESOURCE && GEOS_UNUSED_PARAM( stream ), const localIndex end, LAMBDA && body )
@@ -123,10 +122,10 @@ RAJA_INLINE parallelDeviceEvent forAll( RESOURCE && GEOS_UNUSED_PARAM( stream ),
 
 auto const parallelDeviceMemorySpace = parallelHostMemorySpace;
 
-template< unsigned long BLOCK_SIZE = 0 >
+template< size_t BLOCK_SIZE = 0 >
 using parallelDevicePolicy = parallelHostPolicy;
 
-template< unsigned long BLOCK_SIZE = 0 >
+template< size_t BLOCK_SIZE = 0 >
 using parallelDeviceAsyncPolicy = parallelHostPolicy;
 
 using parallelDeviceStream = parallelHostStream;
@@ -151,7 +150,8 @@ using parallelDeviceEvents = std::vector< parallelDeviceEvent >;
 namespace internalRajaInterface
 {
 template< typename >
-struct PolicyMap;
+struct PolicyMap
+{};
 
 template<>
 struct PolicyMap< serialPolicy >
@@ -170,8 +170,8 @@ struct PolicyMap< RAJA::omp_parallel_for_exec >
 #endif
 
 #if defined(GEOS_USE_CUDA)
-template< unsigned long BLOCK_SIZE >
-struct PolicyMap< RAJA::cuda_exec< BLOCK_SIZE > >
+template< typename X, typename Y, size_t BLOCK_SIZE, bool ASYNC >
+struct PolicyMap< RAJA::policy::cuda::cuda_exec_explicit< X, Y, BLOCK_SIZE, ASYNC > >
 {
   using atomic = RAJA::cuda_atomic;
   using reduce = RAJA::cuda_reduce;
@@ -179,8 +179,8 @@ struct PolicyMap< RAJA::cuda_exec< BLOCK_SIZE > >
 #endif
 
 #if defined(GEOS_USE_HIP)
-template< unsigned long BLOCK_SIZE >
-struct PolicyMap< RAJA::hip_exec< BLOCK_SIZE > >
+template< size_t BLOCK_SIZE, bool ASYNC >
+struct PolicyMap< RAJA::hip_exec< BLOCK_SIZE, ASYNC > >
 {
   using atomic = RAJA::hip_atomic;
   using reduce = RAJA::hip_reduce;

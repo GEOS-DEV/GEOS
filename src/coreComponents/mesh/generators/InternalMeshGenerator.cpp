@@ -17,14 +17,6 @@
  */
 
 #include "InternalMeshGenerator.hpp"
-
-#include "common/DataTypes.hpp"
-#include "common/TimingMacros.hpp"
-#include "mesh/DomainPartition.hpp"
-#include "mesh/MeshBody.hpp"
-#include "mesh/mpiCommunications/PartitionBase.hpp"
-#include "mesh/mpiCommunications/SpatialPartition.hpp"
-#include "mesh/MeshBody.hpp"
 #include "CellBlockManager.hpp"
 
 #include "common/DataTypes.hpp"
@@ -539,22 +531,30 @@ static void getElemToNodesRelationInBox( ElementType const elementType,
   }
 }
 
-/**
- * @param partition
- * @param domain
- */
-void InternalMeshGenerator::generateMesh( DomainPartition & domain )
+void InternalMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockManager, SpatialPartition & partition )
 {
   GEOS_MARK_FUNCTION;
 
-  MeshBody & meshBody = domain.getMeshBodies().registerGroup< MeshBody >( this->getName() );
+  // Partition based on even spacing to get load balance
+  // Partition geometrical boundaries will be corrected in the end.
+  {
+    m_min[0] = m_vertices[0].front();
+    m_min[1] = m_vertices[1].front();
+    m_min[2] = m_vertices[2].front();
+
+    m_max[0] = m_vertices[0].back();
+    m_max[1] = m_vertices[1].back();
+    m_max[2] = m_vertices[2].back();
+
+    partition.setSizes( m_min, m_max );
+  }
 
   // Make sure that the node manager fields are initialized
-
-  CellBlockManager & cellBlockManager = meshBody.registerGroup< CellBlockManager >( keys::cellManager );
   auto & nodeSets = cellBlockManager.getNodeSets();
 
-  SpatialPartition & partition = dynamic_cast< SpatialPartition & >(domain.getReference< PartitionBase >( keys::partitionManager ) );
+  real64 size[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( m_max );
+  LvArray::tensorOps::subtract< 3 >( size, m_min );
+  cellBlockManager.setGlobalLength( LvArray::tensorOps::l2Norm< 3 >( size ) );
 
 //  bool isRadialWithOneThetaPartition = false;
 
@@ -574,24 +574,6 @@ void InternalMeshGenerator::generateMesh( DomainPartition & domain )
   SortedArray< localIndex > & zposNodes = nodeSets["zpos"];
   SortedArray< localIndex > & allNodes = nodeSets["all"];
 
-  // Partition based on even spacing to get load balance
-  // Partition geometrical boundaries will be corrected in the end.
-  {
-    m_min[0] = m_vertices[0].front();
-    m_min[1] = m_vertices[1].front();
-    m_min[2] = m_vertices[2].front();
-
-    m_max[0] = m_vertices[0].back();
-    m_max[1] = m_vertices[1].back();
-    m_max[2] = m_vertices[2].back();
-
-    partition.setSizes( m_min, m_max );
-
-    real64 size[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( m_max );
-    LvArray::tensorOps::subtract< 3 >( size, m_min );
-    meshBody.setGlobalLengthScale( LvArray::tensorOps::l2Norm< 3 >( size ) );
-  }
-
   // Find elemCenters for even uniform element sizes
   array1d< array1d< real64 > > elemCenterCoords( 3 );
   for( int i = 0; i < 3; ++i )
@@ -601,6 +583,8 @@ void InternalMeshGenerator::generateMesh( DomainPartition & domain )
     {
       m_numElemsTotal[i] += m_nElems[i][block];
     }
+    array1d< int > const & parts = partition.getPartitions();
+    GEOS_ERROR_IF( parts[i] > m_numElemsTotal[i], "Number of partitions in a direction should not exceed the number of elements in that direction" );
 
     elemCenterCoords[i].resize( m_numElemsTotal[i] );
     array1d< real64 > elemCenterCoordsLocal( m_numElemsTotal[i] );

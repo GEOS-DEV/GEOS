@@ -24,6 +24,7 @@
 #include "constitutive/fluid/singlefluid/SingleFluidBase.hpp"
 #include "linearAlgebra/solvers/BlockPreconditioner.hpp"
 #include "linearAlgebra/solvers/SeparateComponentPreconditioner.hpp"
+#include "mesh/utilities/AverageOverQuadraturePointsKernel.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
 #include "physicsSolvers/multiphysics/poromechanicsKernels/SinglePhasePoromechanics.hpp"
 #include "physicsSolvers/multiphysics/poromechanicsKernels/ThermalSinglePhasePoromechanics.hpp"
@@ -63,6 +64,14 @@ void SinglePhasePoromechanics::registerDataOnMesh( Group & meshBodies )
 {
   SolverBase::registerDataOnMesh( meshBodies );
 
+  if( getNonlinearSolverParameters().m_couplingType == NonlinearSolverParameters::CouplingType::Sequential )
+  {
+    // to let the solid mechanics solver that there is a pressure and temperature RHS in the mechanics solve
+    solidMechanicsSolver()->enableFixedStressPoromechanicsUpdate();
+    // to let the flow solver that saving pressure_k and temperature_k is necessary (for the fixed-stress porosity terms)
+    flowSolver()->enableFixedStressPoromechanicsUpdate();
+  }
+
   forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
                                                     MeshLevel & mesh,
                                                     arrayView1d< string const > const & regionNames )
@@ -98,14 +107,22 @@ void SinglePhasePoromechanics::setupCoupling( DomainPartition const & GEOS_UNUSE
                           DofManager::Connector::Elem );
 }
 
+void SinglePhasePoromechanics::setupDofs( DomainPartition const & domain,
+                                          DofManager & dofManager ) const
+{
+  // note that the order of operations matters a lot here (for instance for the MGR labels)
+  // we must set up dofs for solid mechanics first, and then for flow
+  // that's the reason why this function is here and not in CoupledSolvers.hpp
+  solidMechanicsSolver()->setupDofs( domain, dofManager );
+  flowSolver()->setupDofs( domain, dofManager );
+
+  setupCoupling( domain, dofManager );
+}
+
+
 void SinglePhasePoromechanics::initializePreSubGroups()
 {
   SolverBase::initializePreSubGroups();
-
-  if( getNonlinearSolverParameters().m_couplingType == NonlinearSolverParameters::CouplingType::Sequential )
-  {
-    solidMechanicsSolver()->turnOnFixedStressThermoPoromechanicsFlag();
-  }
 
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
 
@@ -121,7 +138,8 @@ void SinglePhasePoromechanics::initializePreSubGroups()
       string & porousName = subRegion.getReference< string >( viewKeyStruct::porousMaterialNamesString() );
       porousName = getConstitutiveName< CoupledSolidBase >( subRegion );
       GEOS_THROW_IF( porousName.empty(),
-                     GEOS_FMT( "{} {} : Solid model not found on subregion {}", catalogName(), getName(), subRegion.getName() ),
+                     GEOS_FMT( "{} {} : Solid model not found on subregion {}",
+                               catalogName(), getDataContext().toString(), subRegion.getName() ),
                      InputError );
 
       if( subRegion.hasField< fields::poromechanics::bulkDensity >() )
@@ -134,6 +152,14 @@ void SinglePhasePoromechanics::initializePreSubGroups()
     } );
   } );
 
+}
+
+void SinglePhasePoromechanics::implicitStepSetup( real64 const & time_n,
+                                                  real64 const & dt,
+                                                  DomainPartition & domain )
+{
+  flowSolver()->keepFlowVariablesConstantDuringInitStep( m_performStressInitialization );
+  Base::implicitStepSetup( time_n, dt, domain );
 }
 
 void SinglePhasePoromechanics::setupSystem( DomainPartition & domain,
@@ -161,10 +187,24 @@ void SinglePhasePoromechanics::initializePostInitialConditionsPreSubGroups()
 {
   SolverBase::initializePostInitialConditionsPreSubGroups();
 
+  arrayView1d< string const > const & poromechanicsTargetRegionNames =
+    this->getReference< array1d< string > >( SolverBase::viewKeyStruct::targetRegionsString() );
+  arrayView1d< string const > const & flowTargetRegionNames =
+    flowSolver()->getReference< array1d< string > >( SolverBase::viewKeyStruct::targetRegionsString() );
+  for( integer i = 0; i < poromechanicsTargetRegionNames.size(); ++i )
+  {
+    GEOS_THROW_IF( std::find( flowTargetRegionNames.begin(), flowTargetRegionNames.end(), poromechanicsTargetRegionNames[i] )
+                   == flowTargetRegionNames.end(),
+                   GEOS_FMT( "{} {}: region `{}` must be a target region of `{}`",
+                             catalogName(), getName(), poromechanicsTargetRegionNames[i], flowSolver()->getName() ),
+                   InputError );
+  }
+
   integer & isFlowThermal = flowSolver()->getReference< integer >( FlowSolverBase::viewKeyStruct::isThermalString() );
   GEOS_LOG_RANK_0_IF( m_isThermal && !isFlowThermal,
                       GEOS_FMT( "{} {}: The attribute `{}` of the flow solver `{}` is set to 1 since the poromechanics solver is thermal",
-                                catalogName(), getName(), FlowSolverBase::viewKeyStruct::isThermalString(), flowSolver()->getName() ) );
+                                catalogName(), getDataContext().toString(),
+                                FlowSolverBase::viewKeyStruct::isThermalString(), flowSolver()->getName() ) );
   isFlowThermal = m_isThermal;
 
   if( m_isThermal )
@@ -189,6 +229,33 @@ void SinglePhasePoromechanics::assembleSystem( real64 const time_n,
 {
 
   GEOS_MARK_FUNCTION;
+
+  // Steps 1 and 2: compute element-based terms (mechanics and local flow terms)
+  assembleElementBasedTerms( time_n,
+                             dt,
+                             domain,
+                             dofManager,
+                             localMatrix,
+                             localRhs );
+
+  // Step 3: compute the fluxes (face-based contributions)
+  flowSolver()->assembleFluxTerms( time_n, dt,
+                                   domain,
+                                   dofManager,
+                                   localMatrix,
+                                   localRhs );
+
+}
+
+void SinglePhasePoromechanics::assembleElementBasedTerms( real64 const time_n,
+                                                          real64 const dt,
+                                                          DomainPartition & domain,
+                                                          DofManager const & dofManager,
+                                                          CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                          arrayView1d< real64 > const & localRhs )
+{
+  GEOS_UNUSED_VAR( time_n );
+  GEOS_UNUSED_VAR( dt );
 
   real64 poromechanicsMaxForce = 0.0;
   real64 mechanicsMaxForce = 0.0;
@@ -215,6 +282,7 @@ void SinglePhasePoromechanics::assembleSystem( real64 const time_n,
                                                                                                      viewKeyStruct::porousMaterialNamesString(),
                                                                                                      localMatrix,
                                                                                                      localRhs,
+                                                                                                     dt,
                                                                                                      flowDofKey,
                                                                                                      FlowSolverBase::viewKeyStruct::fluidNamesString() );
     }
@@ -228,6 +296,7 @@ void SinglePhasePoromechanics::assembleSystem( real64 const time_n,
                                                                                        viewKeyStruct::porousMaterialNamesString(),
                                                                                        localMatrix,
                                                                                        localRhs,
+                                                                                       dt,
                                                                                        flowDofKey,
                                                                                        FlowSolverBase::viewKeyStruct::fluidNamesString() );
     }
@@ -264,35 +333,11 @@ void SinglePhasePoromechanics::assembleSystem( real64 const time_n,
                                                                                 filteredRegionNames.toViewConst(),
                                                                                 SolidMechanicsLagrangianFEM::viewKeyStruct::solidMaterialNamesString(),
                                                                                 localMatrix,
-                                                                                localRhs );
+                                                                                localRhs,
+                                                                                dt );
   } );
 
   solidMechanicsSolver()->getMaxForce() = LvArray::math::max( mechanicsMaxForce, poromechanicsMaxForce );
-
-
-  // tell the flow solver that this is a stress initialization step
-  flowSolver()->keepFlowVariablesConstantDuringInitStep( m_performStressInitialization );
-
-  // step 3: compute the fluxes (face-based contributions)
-
-  if( m_isThermal )
-  {
-    flowSolver()->assembleFluxTerms( time_n, dt,
-                                     domain,
-                                     dofManager,
-                                     localMatrix,
-                                     localRhs );
-  }
-  else
-  {
-    flowSolver()->assemblePoroelasticFluxTerms( time_n, dt,
-                                                domain,
-                                                dofManager,
-                                                localMatrix,
-                                                localRhs,
-                                                " " );
-  }
-
 }
 
 void SinglePhasePoromechanics::createPreconditioner()
@@ -347,24 +392,47 @@ void SinglePhasePoromechanics::updateState( DomainPartition & domain )
 void SinglePhasePoromechanics::mapSolutionBetweenSolvers( DomainPartition & domain, integer const solverType )
 {
   GEOS_MARK_FUNCTION;
-  if( solverType == static_cast< integer >( SolverType::SolidMechanics ) )
+
+  /// After the flow solver
+  if( solverType == static_cast< integer >( SolverType::Flow ) )
   {
+    // save pressure and temperature at the end of this iteration
+    flowSolver()->saveIterationState( domain );
+
     forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                  MeshLevel & mesh,
                                                                  arrayView1d< string const > const & regionNames )
     {
+
+      mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
+                                                                                            auto & subRegion )
+      {
+        // update the bulk density
+        // TODO: ideally, we would not recompute the bulk density, but a more general "rhs" containing the body force and the
+        // pressure/temperature terms
+        updateBulkDensity( subRegion );
+
+      } );
+    } );
+  }
+
+  /// After the solid mechanics solver
+  if( solverType == static_cast< integer >( SolverType::SolidMechanics ) )
+  {
+    // compute the average of the mean stress increment over quadrature points
+    averageMeanStressIncrement( domain );
+
+    forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
+                                                                 MeshLevel & mesh,
+                                                                 arrayView1d< string const > const & regionNames )
+    {
+
       mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                             auto & subRegion )
       {
         // update the porosity after a change in displacement (after mechanics solve)
         // or a change in pressure/temperature (after a flow solve)
         flowSolver()->updatePorosityAndPermeability( subRegion );
-
-        // update the bulk density
-        // in fact, this is only needed after a flow solve, but we don't have a mechanism to know where we are in the outer loop
-        // TODO: ideally, we would not recompute the bulk density, but a more general "rhs" containing the body force and the
-        // pressure/temperature terms
-        updateBulkDensity( subRegion );
       } );
     } );
   }
@@ -386,6 +454,47 @@ void SinglePhasePoromechanics::updateBulkDensity( ElementSubRegionBase & subRegi
     createAndLaunch< parallelDevicePolicy<> >( fluid,
                                                solid,
                                                subRegion );
+}
+
+void SinglePhasePoromechanics::averageMeanStressIncrement( DomainPartition & domain )
+{
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
+                                                               MeshLevel & mesh,
+                                                               arrayView1d< string const > const & regionNames )
+  {
+    mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
+                                                                                          auto & subRegion )
+    {
+      // get the solid model (to access stress increment)
+      string const solidName = subRegion.template getReference< string >( viewKeyStruct::porousMaterialNamesString() );
+      CoupledSolidBase & solid = getConstitutiveModel< CoupledSolidBase >( subRegion, solidName );
+
+      arrayView2d< real64 const > const meanStressIncrement_k = solid.getMeanEffectiveStressIncrement_k();
+      arrayView1d< real64 > const averageMeanStressIncrement_k = solid.getAverageMeanEffectiveStressIncrement_k();
+
+      finiteElement::FiniteElementBase & subRegionFE =
+        subRegion.template getReference< finiteElement::FiniteElementBase >( solidMechanicsSolver()->getDiscretizationName() );
+
+      // determine the finite element type
+      finiteElement::FiniteElementDispatchHandler< BASE_FE_TYPES >::
+      dispatch3D( subRegionFE, [&] ( auto const finiteElement )
+      {
+        using FE_TYPE = decltype( finiteElement );
+
+        // call the factory and launch the kernel
+        AverageOverQuadraturePoints1DKernelFactory::
+          createAndLaunch< CellElementSubRegion,
+                           FE_TYPE,
+                           parallelDevicePolicy<> >( mesh.getNodeManager(),
+                                                     mesh.getEdgeManager(),
+                                                     mesh.getFaceManager(),
+                                                     subRegion,
+                                                     finiteElement,
+                                                     meanStressIncrement_k,
+                                                     averageMeanStressIncrement_k );
+      } );
+    } );
+  } );
 }
 
 REGISTER_CATALOG_ENTRY( SolverBase, SinglePhasePoromechanics, string const &, Group * const )

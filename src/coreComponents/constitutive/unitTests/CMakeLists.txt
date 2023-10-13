@@ -3,12 +3,17 @@
 #
 
 set( gtest_geosx_tests
+     testCompositionalProperties.cpp
      testDamageUtilities.cpp
      testDruckerPrager.cpp
      testElasticIsotropic.cpp
+     testKValueInitialization.cpp
      testModifiedCamClay.cpp
+     testNegativeTwoPhaseFlash.cpp
      testParticleFluidEnums.cpp
      testPropertyConversions.cpp
+     testCubicEOS.cpp
+     testRachfordRice.cpp
    )
 
 set( dependencyList gtest constitutive ${parallelDeps} )

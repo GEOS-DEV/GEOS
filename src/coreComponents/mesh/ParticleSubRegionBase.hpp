@@ -415,7 +415,7 @@ public:
    * @brief Returns the local indices of all non-ghost particles
    * @return the local indices of all non-ghost particles
    */
-  SortedArrayView< localIndex const > const activeParticleIndices()
+  SortedArrayView< localIndex const > const activeParticleIndices() const
   {
     return m_activeParticleIndices.toView();
   }

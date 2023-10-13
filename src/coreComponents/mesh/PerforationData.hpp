@@ -22,7 +22,7 @@
 #include "dataRepository/Group.hpp"
 #include "mesh/ObjectManagerBase.hpp"
 #include "mesh/ToElementRelation.hpp"
-#include "mesh/generators/InternalWellGenerator.hpp"
+#include "mesh/generators/LineBlockABC.hpp"
 
 namespace geos
 {
@@ -110,7 +110,7 @@ public:
 
   /**
    * @brief Set the global number of perforations used for well initialization.
-   * @param[in] nPerfs global number of perforations (obtained from InternalWellGenerator)
+   * @param[in] nPerfs global number of perforations (obtained from LineBlockABC)
    */
   void setNumPerforationsGlobal( globalIndex nPerfs ) { m_numPerforationsGlobal = nPerfs; }
 
@@ -203,11 +203,11 @@ public:
 
   /**
    * @brief Connect each perforation to a local wellbore element.
-   * @param[in] wellGeometry InternalWellGenerator containing the global well topology
+   * @param[in] lineBlock LineBlockABC containing the global well topology
    * @param[in] globalToLocalWellElementMap  global-to-local map of wellbore elements
    * @param[in] elemOffsetGlobal the offset of the first global well element ( = offset of last global mesh elem + 1 )
    */
-  void connectToWellElements( InternalWellGenerator const & wellGeometry,
+  void connectToWellElements( LineBlockABC const & lineBlock,
                               unordered_map< globalIndex, localIndex > const & globalToLocalWellElementMap,
                               globalIndex elemOffsetGlobal );
 

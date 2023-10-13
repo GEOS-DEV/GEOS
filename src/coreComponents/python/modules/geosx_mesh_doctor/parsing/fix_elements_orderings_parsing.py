@@ -44,8 +44,8 @@ def fill_subparser(subparsers) -> None:
         tmp = list(range(__CELL_TYPE_SUPPORT_SIZE[vtk_key]))
         random.Random(4).shuffle(tmp)
         p.add_argument('--' + key,
-                       type=int,
-                       metavar=", ".join(map(str, tmp)),
+                       type=str,
+                       metavar=",".join(map(str, tmp)),
                        default=None,
                        required=False,
                        help=f"[list of integers]: node permutation for \"{key}\".")

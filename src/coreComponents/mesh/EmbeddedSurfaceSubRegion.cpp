@@ -76,7 +76,7 @@ EmbeddedSurfaceSubRegion::EmbeddedSurfaceSubRegion( string const & name,
   m_normalVector.resizeDimension< 1 >( 3 );
   m_tangentVector1.resizeDimension< 1 >( 3 );
   m_tangentVector2.resizeDimension< 1 >( 3 );
-  m_surfaceElementsToCells.resize( 0, 1 );
+  m_2dElemToElems.resize( 0, 1 );
 }
 
 void EmbeddedSurfaceSubRegion::calculateElementGeometricQuantities( NodeManager const & GEOS_UNUSED_PARAM( nodeManager ),
@@ -113,18 +113,18 @@ bool EmbeddedSurfaceSubRegion::addNewEmbeddedSurface( localIndex const cellIndex
                                                       EmbeddedSurfaceNodeManager & embSurfNodeManager,
                                                       EdgeManager const & edgeManager,
                                                       FixedOneToManyRelation const & cellToEdges,
-                                                      BoundedPlane const * fracture )
+                                                      PlanarGeometricObject const * fracture )
 {
-  /* The goal is to add an embeddedSurfaceElem if it is contained within the BoundedPlane
+  /* The goal is to add an embeddedSurfaceElem if it is contained within the PlanarGeometricObject
    *
-   * A. Identify whether the cell falls within the bounded plane or not
+   * A. Identify whether the cell falls within the bounded planar object or not
    *
    * we loop over each edge:
    *
-   *   1. check if it is cut by the plane using the Dot product between the distance of each node
+   *   1. check if it is cut by the planar object using the Dot product between the distance of each node
    *   from the origin and the normal vector.
-   *   2. If an edge is cut by the plane we look for the intersection between a line and a plane.
-   *   3. Once we have the intersection we check if it falls inside the bounded plane.
+   *   2. If an edge is cut by the planar object we look for the intersection between a line and a plane.
+   *   3. Once we have the intersection we check if it falls inside the bounded planar object.
    *
    * Only elements for which all intersection points fall within the fracture plane limits will be added.
    * If the fracture does not cut through the entire element we will just chop it (it's a discretization error).
@@ -249,9 +249,20 @@ bool EmbeddedSurfaceSubRegion::addNewEmbeddedSurface( localIndex const cellIndex
       m_toNodesRelation( surfaceIndex, inode ) = elemNodes[ inode ];
     }
 
-    m_surfaceElementsToCells.m_toElementIndex[ surfaceIndex ][0]     = cellIndex;
-    m_surfaceElementsToCells.m_toElementSubRegion[ surfaceIndex ][0] =  subRegionIndex;
-    m_surfaceElementsToCells.m_toElementRegion[ surfaceIndex ][0]    =  regionIndex;
+    // For now 2d elements are always only connected to a single 3d element.
+    if( m_2dElemToElems.m_toElementIndex[surfaceIndex].size() > 0 )
+    {
+      m_2dElemToElems.m_toElementIndex[surfaceIndex][0] = cellIndex;
+      m_2dElemToElems.m_toElementSubRegion[surfaceIndex][0] = subRegionIndex;
+      m_2dElemToElems.m_toElementRegion[surfaceIndex][0] = regionIndex;
+    }
+    else
+    {
+      m_2dElemToElems.m_toElementIndex.emplaceBack( surfaceIndex, cellIndex );
+      m_2dElemToElems.m_toElementSubRegion.emplaceBack( surfaceIndex, subRegionIndex );
+      m_2dElemToElems.m_toElementRegion.emplaceBack( surfaceIndex, regionIndex );
+    }
+
     m_parentPlaneName[ surfaceIndex ] = fracture->getName();
     LvArray::tensorOps::copy< 3 >( m_normalVector[ surfaceIndex ], normalVector );
     LvArray::tensorOps::copy< 3 >( m_tangentVector1[ surfaceIndex ], fracture->getWidthVector());
@@ -266,9 +277,9 @@ void EmbeddedSurfaceSubRegion::inheritGhostRank( array1d< array1d< arrayView1d< 
   arrayView1d< integer > const & ghostRank = this->ghostRank();
   for( localIndex k=0; k < size(); ++k )
   {
-    localIndex regionIndex    = m_surfaceElementsToCells.m_toElementRegion[k][0];
-    localIndex subRegionIndex = m_surfaceElementsToCells.m_toElementSubRegion[k][0];
-    localIndex cellIndex      = m_surfaceElementsToCells.m_toElementIndex[k][0];
+    localIndex regionIndex    = m_2dElemToElems.m_toElementRegion[k][0];
+    localIndex subRegionIndex = m_2dElemToElems.m_toElementSubRegion[k][0];
+    localIndex cellIndex      = m_2dElemToElems.m_toElementIndex[k][0];
 
     ghostRank[k] = cellGhostRank[regionIndex][subRegionIndex][cellIndex];
   }
@@ -310,9 +321,9 @@ localIndex EmbeddedSurfaceSubRegion::packUpDownMapsImpl( buffer_unit_type * & bu
 
   packedSize += bufferOps::Pack< DO_PACKING >( buffer, string( viewKeyStruct::surfaceElementsToCellRegionsString() ) );
   packedSize += bufferOps::Pack< DO_PACKING >( buffer,
-                                               this->m_surfaceElementsToCells,
+                                               this->m_2dElemToElems,
                                                packList,
-                                               m_surfaceElementsToCells.getElementRegionManager() );
+                                               m_2dElemToElems.getElementRegionManager() );
 
   return packedSize;
 }
@@ -340,9 +351,9 @@ localIndex EmbeddedSurfaceSubRegion::unpackUpDownMaps( buffer_unit_type const * 
   GEOS_ERROR_IF_NE( elementListString, viewKeyStruct::surfaceElementsToCellRegionsString() );
 
   unPackedSize += bufferOps::Unpack( buffer,
-                                     m_surfaceElementsToCells,
+                                     m_2dElemToElems,
                                      packList.toViewConst(),
-                                     m_surfaceElementsToCells.getElementRegionManager(),
+                                     m_2dElemToElems.getElementRegionManager(),
                                      overwriteUpMaps );
 
   return unPackedSize;

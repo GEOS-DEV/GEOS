@@ -59,7 +59,7 @@ public:
    */
   virtual Group * createChild( string const & childKey, string const & childName ) override;
 
-  virtual void generateMesh( DomainPartition & domain ) override;
+  virtual void fillParticleBlockManager( ParticleBlockManager & particleBlockManager, ParticleManager & particleManager, SpatialPartition const & partition ) override;
 
   void importFieldOnArray( Block block,
                            string const & blockName,

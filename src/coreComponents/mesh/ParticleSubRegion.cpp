@@ -68,14 +68,14 @@ void ParticleSubRegion::copyFromParticleBlock( ParticleBlockABC & particleBlock 
   this->resize( particleBlock.numParticles() );
   this->m_localToGlobalMap = particleBlock.localToGlobalMap();
   this->constructGlobalToLocalMap();
-  particleBlock.forExternalProperties( [&]( WrapperBase & wrapper )
+  particleBlock.forExternalProperties( [&]( WrapperBase const & wrapper )
   {
-    types::dispatch( types::StandardArrays{}, wrapper.getTypeId(), true, [&]( auto array )
+    types::dispatch( types::ListofTypeList< types::StandardArrays >{}, [&]( auto tupleOfTypes )
     {
-      using ArrayType = decltype( array );
-      Wrapper< ArrayType > & wrapperT = Wrapper< ArrayType >::cast( wrapper );
-      this->registerWrapper( wrapper.getName(), &wrapperT.reference() );
-    } );
+      using ArrayType = camp::first< decltype( tupleOfTypes ) >;
+      auto const src = Wrapper< ArrayType >::cast( wrapper ).reference().toViewConst();
+      this->registerWrapper( wrapper.getName(), std::make_unique< ArrayType >( &src ) );
+    }, wrapper );
   } );
 }
 

@@ -81,31 +81,30 @@ char const * xmlInput =
                     nx="{3}"
                     ny="{1}"
                     nz="{1}"
-                    cellBlockNames="{cb1}"/>
-      <InternalWell name="well_producer1"
-                    wellRegionName="wellRegion1"
-                    wellControlsName="wellControls1"
-                    meshName="mesh1"
-                    polylineNodeCoords="{ {4.5, 0,  2  },
-                                           {4.5, 0,  0.5} }"
-                    polylineSegmentConn="{ {0, 1} }"
-                    radius="0.1"
-                    numElementsPerSegment="1">
-          <Perforation name="producer1_perf1"
-                       distanceFromHead="1.45"/>
-      </InternalWell>
-      <InternalWell name="well_injector1"
-                    wellRegionName="wellRegion2"
-                    wellControlsName="wellControls2"
-                    meshName="mesh1"
-                    polylineNodeCoords="{ {0.5, 0, 2  },
-                                           {0.5, 0, 0.5} }"
-                    polylineSegmentConn="{ {0, 1} }"
-                    radius="0.1"
-                    numElementsPerSegment="1">
-          <Perforation name="injector1_perf1"
-                       distanceFromHead="1.45"/>
-      </InternalWell>
+                    cellBlockNames="{cb1}">
+        <InternalWell name="well_producer1"
+                      wellRegionName="wellRegion1"
+                      wellControlsName="wellControls1"
+                      polylineNodeCoords="{ {4.5, 0,  2  },
+                                             {4.5, 0,  0.5} }"
+                      polylineSegmentConn="{ {0, 1} }"
+                      radius="0.1"
+                      numElementsPerSegment="1">
+            <Perforation name="producer1_perf1"
+                         distanceFromHead="1.45"/>
+        </InternalWell>
+        <InternalWell name="well_injector1"
+                      wellRegionName="wellRegion2"
+                      wellControlsName="wellControls2"
+                      polylineNodeCoords="{ {0.5, 0, 2  },
+                                             {0.5, 0, 0.5} }"
+                      polylineSegmentConn="{ {0, 1} }"
+                      radius="0.1"
+                      numElementsPerSegment="1">
+            <Perforation name="injector1_perf1"
+                         distanceFromHead="1.45"/>
+        </InternalWell>
+      </InternalMesh>
     </Mesh>
     <NumericalMethods>
       <FiniteVolume>

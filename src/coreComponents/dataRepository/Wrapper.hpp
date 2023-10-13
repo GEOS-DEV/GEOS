@@ -710,31 +710,43 @@ public:
     return ss.str();
   }
 
-  virtual bool processInputFile( xmlWrapper::xmlNode const & targetNode ) override
+  virtual bool processInputFile( xmlWrapper::xmlNode const & targetNode,
+                                 xmlWrapper::xmlNodePos const & nodePos ) override
   {
     InputFlags const inputFlag = getInputFlag();
     if( inputFlag >= InputFlags::OPTIONAL )
     {
-      if( inputFlag == InputFlags::REQUIRED || !hasDefaultValue() )
+      try
       {
-        m_successfulReadFromInput = xmlWrapper::readAttributeAsType( reference(),
-                                                                     getName(),
-                                                                     targetNode,
-                                                                     inputFlag == InputFlags::REQUIRED );
-        GEOS_THROW_IF( !m_successfulReadFromInput,
-                       GEOS_FMT( "XML Node '{}' with name='{}' is missing required attribute '{}'."
-                                 "Available options are:\n{}\nFor more details, please refer to documentation at:\n"
-                                 "http://geosx-geosx.readthedocs-hosted.com/en/latest/docs/sphinx/userGuide/Index.html",
-                                 targetNode.path(), targetNode.attribute( "name" ).value(), getName(), dumpInputOptions( true ) ),
-                       InputError );
+        if( inputFlag == InputFlags::REQUIRED || !hasDefaultValue() )
+        {
+          m_successfulReadFromInput = xmlWrapper::readAttributeAsType( reference(),
+                                                                       getName(),
+                                                                       targetNode,
+                                                                       inputFlag == InputFlags::REQUIRED );
+          GEOS_THROW_IF( !m_successfulReadFromInput,
+                         GEOS_FMT( "XML Node {} ({}) with name={} is missing required attribute '{}'."
+                                   "Available options are:\n {}\n For more details, please refer to documentation at:\n"
+                                   "http://geosx-geosx.readthedocs-hosted.com/en/latest/docs/sphinx/userGuide/Index.html",
+                                   targetNode.name(), nodePos.toString(), targetNode.attribute( "name" ).value(),
+                                   getName(), dumpInputOptions( true ) ),
+                         InputError );
+        }
+        else
+        {
+          m_successfulReadFromInput = xmlWrapper::readAttributeAsType( reference(),
+                                                                       getName(),
+                                                                       targetNode,
+                                                                       getDefaultValueStruct() );
+        }
       }
-      else
+      catch( std::exception const & ex )
       {
-        m_successfulReadFromInput = xmlWrapper::readAttributeAsType( reference(),
-                                                                     getName(),
-                                                                     targetNode,
-                                                                     getDefaultValueStruct() );
+        processInputException( ex, targetNode, nodePos );
       }
+
+      if( m_successfulReadFromInput )
+        createDataContext( targetNode, nodePos );
 
       return true;
     }

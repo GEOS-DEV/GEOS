@@ -4,8 +4,9 @@
 
 set(gtest_geosx_tests
     testDataTypes.cpp
-    testTypeDispatch.cpp
     testFixedSizeDeque.cpp
+    testTypeDispatch.cpp
+    testLifoStorage.cpp
    )
 
 if ( ENABLE_CALIPER )
@@ -13,9 +14,7 @@ if ( ENABLE_CALIPER )
         testCaliperSmoke.cpp )
 endif()
 
-set( dependencyList common hdf5 gtest )
-
-list( APPEND gtest_geosx_tests testLifoStorage.cpp )
+set( dependencyList ${parallelDeps} common hdf5 gtest )
 #
 # Add gtest C++ based tests
 #

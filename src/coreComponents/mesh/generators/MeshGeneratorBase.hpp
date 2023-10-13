@@ -19,18 +19,23 @@
 #ifndef GEOS_MESH_GENERATORS_MESHGENERATORBASE_HPP
 #define GEOS_MESH_GENERATORS_MESHGENERATORBASE_HPP
 
+#include "mesh/mpiCommunications/SpatialPartition.hpp"
+#include "mesh/generators/CellBlockManagerABC.hpp"
+
 #include "dataRepository/Group.hpp"
 #include "dataRepository/WrapperBase.hpp"
 #include "codingUtilities/Utilities.hpp"
 #include "common/DataTypes.hpp"
 
+
 namespace geos
 {
 
-namespace dataRepository
-{}
-
-class DomainPartition;
+// This forward declaration prevents from exposing the internals of the module,
+// which are only accessed through some private functions signatures.
+// In order to avoid this forward declaration, we could expose an ABC
+// instead of exposing the MeshGeneratorBase implementation.
+class CellBlockManager;
 
 /**
  *  @class MeshGeneratorBase
@@ -55,6 +60,9 @@ public:
    */
   static string catalogName() { return "MeshGeneratorBase"; }
 
+  /// This function is used to expand any catalogs in the data structure
+  virtual void expandObjectCatalogs() override;
+
   /// using alias for templated Catalog meshGenerator type
   using CatalogInterface = dataRepository::CatalogInterface< MeshGeneratorBase, string const &, Group * const >;
 
@@ -74,9 +82,10 @@ public:
 
   /**
    * @brief Generate the mesh object the input mesh object.
-   * @param[in] domain the domain partition from which to construct the mesh object
+   * @param parent The parent group of the CellBlockManager.
+   * @param[in] partition The reference to spatial partition
    */
-  virtual void generateMesh( DomainPartition & domain ) = 0;
+  void generateMesh( Group & parent, SpatialPartition & partition );
 
   /**
    * @brief Describe which kind of block must be considered.
@@ -128,6 +137,35 @@ protected:
 
   /// Mapping from surfacic field source to GEOSX field.
   std::map< string, string > m_surfacicFields;
+
+private:
+  /**
+   * @brief Fill the cellBlockManager object .
+   * @param[inout] cellBlockManager the CellBlockManager that will receive the meshing information
+   * @param[in] partition The reference to spatial partition
+   */
+  virtual void fillCellBlockManager( CellBlockManager & cellBlockManager, SpatialPartition & partition ) 
+  {
+    GEOS_UNUSED_VAR(cellBlockManager);
+    GEOS_UNUSED_VAR(partition);
+    GEOS_ERROR( "Cell mesh generation not implemented for generator of this type" );
+  }
+  
+  void attachWellInfo( CellBlockManager & cellBlockManager );
+
+  /**
+   * @brief Fill the particleBlockManager object .
+   * @param[inout] particleBlockManager the particleBlockManager that will receive the meshing information
+   * @param[in] partition The reference to spatial partition
+   */
+  virtual void fillParticleBlockManager( ParticleBlockManager & particleBlockManager, ParticleManager & particleManager, SpatialPartition const & partition )
+  {
+    GEOS_UNUSED_VAR(particleBlockManager);
+    GEOS_UNUSED_VAR(particleManager);
+    GEOS_UNUSED_VAR(partition);
+    GEOS_ERROR( "Particle mesh generation not implemented for generator of this type" );
+  }
+
 };
 }
 

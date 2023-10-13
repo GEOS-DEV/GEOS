@@ -28,12 +28,12 @@ set( constitutive_headers
      fluid/multifluid/MultiFluidFields.hpp
      fluid/multifluid/PVTDriver.hpp
      fluid/multifluid/PVTDriverRunTest.hpp
-     fluid/multifluid/blackOil/BlackOilFluidBase.hpp	
+     fluid/multifluid/blackOil/BlackOilFluidBase.hpp
      fluid/multifluid/blackOil/BlackOilFluid.hpp
      fluid/multifluid/blackOil/DeadOilFluid.hpp
-     fluid/multifluid/blackOil/PVTOData.hpp     
-     fluid/multifluid/CO2Brine/CO2BrineFluid.hpp               
-     fluid/multifluid/CO2Brine/PhaseModel.hpp     
+     fluid/multifluid/blackOil/PVTOData.hpp
+     fluid/multifluid/CO2Brine/CO2BrineFluid.hpp
+     fluid/multifluid/CO2Brine/PhaseModel.hpp
      fluid/multifluid/CO2Brine/functions/PhillipsBrineDensity.hpp
      fluid/multifluid/CO2Brine/functions/PhillipsBrineViscosity.hpp
      fluid/multifluid/CO2Brine/functions/EzrokhiBrineDensity.hpp
@@ -41,15 +41,20 @@ set( constitutive_headers
      fluid/multifluid/CO2Brine/functions/CO2Solubility.hpp
      fluid/multifluid/CO2Brine/functions/FenghourCO2Viscosity.hpp
      fluid/multifluid/CO2Brine/functions/FlashModelBase.hpp
-     fluid/multifluid/CO2Brine/functions/PVTFunctionBase.hpp 
-     fluid/multifluid/CO2Brine/functions/NoOpPVTFunction.hpp    
+     fluid/multifluid/CO2Brine/functions/PVTFunctionBase.hpp
+     fluid/multifluid/CO2Brine/functions/NoOpPVTFunction.hpp
      fluid/multifluid/CO2Brine/functions/PVTFunctionHelpers.hpp
      fluid/multifluid/CO2Brine/functions/SpanWagnerCO2Density.hpp
      fluid/multifluid/CO2Brine/functions/BrineEnthalpy.hpp
      fluid/multifluid/CO2Brine/functions/CO2Enthalpy.hpp
      fluid/multifluid/CO2Brine/functions/CO2EOSSolver.hpp
      fluid/multifluid/CO2Brine/functions/PureWaterProperties.hpp
-     fluid/multifluid/CO2Brine/functions/WaterDensity.hpp     
+     fluid/multifluid/CO2Brine/functions/WaterDensity.hpp
+     fluid/multifluid/compositional/functions/CompositionalProperties.hpp     
+     fluid/multifluid/compositional/functions/CubicEOSPhaseModel.hpp     
+     fluid/multifluid/compositional/functions/KValueInitialization.hpp
+     fluid/multifluid/compositional/functions/NegativeTwoPhaseFlash.hpp
+     fluid/multifluid/compositional/functions/RachfordRice.hpp     
      fluid/multifluid/reactive/ReactiveBrineFluid.hpp
      fluid/multifluid/reactive/ReactiveMultiFluid.hpp
      fluid/multifluid/reactive/ReactiveMultiFluidFields.hpp
@@ -58,10 +63,10 @@ set( constitutive_headers
      fluid/multifluid/reactive/chemicalReactions/EquilibriumReactions.hpp
      fluid/multifluid/reactive/chemicalReactions/KineticReactions.hpp
      fluid/multifluid/reactive/chemicalReactions/ReactionsBase.hpp
-     fluid/singlefluid/CompressibleSinglePhaseFluid.hpp     
+     fluid/singlefluid/CompressibleSinglePhaseFluid.hpp
      fluid/singlefluid/ParticleFluid.hpp
      fluid/singlefluid/ParticleFluidBase.hpp
-     fluid/singlefluid/ParticleFluidSelector.hpp     
+     fluid/singlefluid/ParticleFluidSelector.hpp
      fluid/singlefluid/ProppantSlurryFluid.hpp
      fluid/singlefluid/SingleFluidBase.hpp
      fluid/singlefluid/SingleFluidFields.hpp
@@ -69,7 +74,7 @@ set( constitutive_headers
      fluid/singlefluid/SlurryFluidFields.hpp
      fluid/singlefluid/SingleFluidSelector.hpp
      fluid/singlefluid/SlurryFluidSelector.hpp
-     fluid/singlefluid/ThermalCompressibleSinglePhaseFluid.hpp     
+     fluid/singlefluid/ThermalCompressibleSinglePhaseFluid.hpp
      permeability/CarmanKozenyPermeability.hpp
      permeability/ConstantPermeability.hpp
      permeability/ExponentialDecayPermeability.hpp
@@ -163,7 +168,7 @@ set( constitutive_sources
      fluid/multifluid/blackOil/DeadOilFluid.cpp
      fluid/multifluid/blackOil/PVTDriverRunTestDeadOilFluid.cpp
      fluid/multifluid/blackOil/PVTOData.cpp
-     fluid/multifluid/CO2Brine/CO2BrineFluid.cpp          
+     fluid/multifluid/CO2Brine/CO2BrineFluid.cpp
      fluid/multifluid/CO2Brine/PVTDriverRunTestCO2BrinePhillipsFluid.cpp
      fluid/multifluid/CO2Brine/PVTDriverRunTestCO2BrinePhillipsThermalFluid.cpp
      fluid/multifluid/CO2Brine/PVTDriverRunTestCO2BrineEzrokhiFluid.cpp
@@ -181,14 +186,15 @@ set( constitutive_sources
      fluid/multifluid/CO2Brine/functions/CO2EOSSolver.cpp
      fluid/multifluid/CO2Brine/functions/PureWaterProperties.cpp
      fluid/multifluid/CO2Brine/functions/WaterDensity.cpp
+     fluid/multifluid/compositional/functions/CompositionalProperties.cpp
      fluid/multifluid/reactive/ReactiveBrineFluid.cpp
      fluid/multifluid/reactive/ReactiveMultiFluid.cpp
      fluid/multifluid/reactive/ReactiveFluidDriver.cpp
      fluid/multifluid/reactive/chemicalReactions/EquilibriumReactions.cpp
      fluid/multifluid/reactive/chemicalReactions/KineticReactions.cpp
      fluid/multifluid/reactive/chemicalReactions/ReactionsBase.cpp
-     fluid/singlefluid/CompressibleSinglePhaseFluid.cpp     
-     fluid/singlefluid/ParticleFluid.cpp              
+     fluid/singlefluid/CompressibleSinglePhaseFluid.cpp
+     fluid/singlefluid/ParticleFluid.cpp
      fluid/singlefluid/ParticleFluidBase.cpp
      fluid/singlefluid/ProppantSlurryFluid.cpp
      fluid/singlefluid/SingleFluidBase.cpp
@@ -258,7 +264,7 @@ if( ENABLE_PVTPackage )
     set( constitutive_sources
          ${constitutive_sources}
          fluid/multifluid/compositional/CompositionalMultiphaseFluid.cpp
-	 fluid/multifluid/compositional/PVTDriverRunTestCompositionalMultiphaseFluid.cpp	 
+	 fluid/multifluid/compositional/PVTDriverRunTestCompositionalMultiphaseFluid.cpp
          )
 
     add_subdirectory( PVTPackage )
@@ -275,7 +281,7 @@ blt_add_library( NAME       constitutive
 
 target_include_directories( constitutive PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents )
 
-if( GEOSX_ENABLE_TESTS )
+if( GEOS_ENABLE_TESTS )
   add_subdirectory( unitTests )
 endif( )
 

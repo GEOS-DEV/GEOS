@@ -41,6 +41,9 @@
 /// Enables use of HIP (CMake option ENABLE_HIP)
 /* #undef GEOS_USE_HIP */
 
+/// Workaround for FMT compilation issue on some NVCC/PowerPC machines (CMake option ENABLE_FMT_CONST_FORMATTER_WORKAROUND)
+/* #undef GEOS_USE_FMT_CONST_FORMATTER_WORKAROUND */
+
 /// Enables use of PVTPackage (CMake option ENABLE_PVTPackage)
 #define GEOSX_USE_PVTPackage
 
@@ -69,7 +72,7 @@
   /// Parsed hypre version information
   #define HYPRE_VERSION_MAJOR 2
   /// Parsed hypre version information
-  #define HYPRE_VERSION_MINOR 28
+  #define HYPRE_VERSION_MINOR 29
   /// Parsed hypre version information
   #define HYPRE_VERSION_PATCH 0
 #endif
@@ -132,10 +135,10 @@
 #define Conduit_VERSION 0.8.2
 
 /// Version information for RAJA
-#define RAJA_VERSION 2022.3.0
+#define RAJA_VERSION 2023.6.1
 
 /// Version information for umpire
-#define umpire_VERSION 2022.3.0
+#define umpire_VERSION 2023.6.0
 
 /// Version information for chai
 /* #undef chai_VERSION */
@@ -144,7 +147,7 @@
 #define adiak_VERSION ..
 
 /// Version information for caliper
-#define caliper_VERSION 2.8.0
+#define caliper_VERSION 2.10.0
 
 /// Version information for Metis
 #define METIS_VERSION 5.1.0
@@ -153,7 +156,7 @@
 #define PARAMETIS_VERSION 4.0.3
 
 /// Version information for scotch
-#define scotch_VERSION 6.0.9
+#define scotch_VERSION 7.0.3
 
 /// Version information for superlu_dist
 #define superlu_dist_VERSION 6.3.0
@@ -162,10 +165,10 @@
 #define suitesparse_VERSION 5.7.9
 
 /// Version information for VTK
-#define VTK_VERSION 9.1.0
+#define VTK_VERSION 9.2.6
 
 /// Version information for fmt
-#define fmt_VERSION 8.0.1
+#define fmt_VERSION 10.0.0
 
 /// Version information for python
 #define Python3_VERSION 3.10.8

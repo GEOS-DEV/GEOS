@@ -95,10 +95,10 @@ void CompositionalMultiphaseWell::postProcessInput()
   WellSolverBase::postProcessInput();
 
   GEOS_ERROR_IF_GT_MSG( m_maxCompFracChange, 1.0,
-                        "CompositionalMultiphaseWell named " << getName() <<
+                        getWrapperDataContext( viewKeyStruct::maxCompFracChangeString() ) <<
                         ": The maximum absolute change in component fraction must smaller or equal to 1.0" );
   GEOS_ERROR_IF_LT_MSG( m_maxCompFracChange, 0.0,
-                        "CompositionalMultiphaseWell named " << getName() <<
+                        getWrapperDataContext( viewKeyStruct::maxCompFracChangeString() ) <<
                         ": The maximum absolute change in component fraction must larger or equal to 0.0" );
 
 }
@@ -189,6 +189,10 @@ void CompositionalMultiphaseWell::registerDataOnMesh( Group & meshBodies )
       subRegion.registerField< fields::well::phaseVolumeFraction_n >( getName() ).
         reference().resizeDimension< 1 >( m_numPhases );
 
+      subRegion.registerField< fields::well::pressureScalingFactor >( getName() );
+      subRegion.registerField< fields::well::temperatureScalingFactor >( getName() );
+      subRegion.registerField< fields::well::globalCompDensityScalingFactor >( getName() );
+
       PerforationData & perforationData = *subRegion.getPerforationData();
       perforationData.registerField< fields::well::compPerforationRate >( getName() ).
         reference().resizeDimension< 1 >( m_numComponents );
@@ -242,7 +246,8 @@ void CompositionalMultiphaseWell::setConstitutiveNames( ElementSubRegionBase & s
   string & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
   fluidName = getConstitutiveName< MultiFluidBase >( subRegion );
   GEOS_THROW_IF( fluidName.empty(),
-                 GEOS_FMT( "Fluid model not found on subregion {}", subRegion.getName() ),
+                 GEOS_FMT( "{}: Fluid model not found on subregion {}",
+                           getDataContext(), subRegion.getName() ),
                  InputError );
 
   string & relPermName = subRegion.registerWrapper< string >( viewKeyStruct::relPermNamesString() ).
@@ -255,7 +260,8 @@ void CompositionalMultiphaseWell::setConstitutiveNames( ElementSubRegionBase & s
   relPermName = getConstitutiveName< RelativePermeabilityBase >( subRegion );
 
   GEOS_THROW_IF( relPermName.empty(),
-                 GEOS_FMT( "Relative permeability model not found on subregion {}", subRegion.getName() ),
+                 GEOS_FMT( "{}: Relative permeability model not found on subregion {}",
+                           getDataContext(), subRegion.getName() ),
                  InputError );
 
 }
@@ -266,13 +272,15 @@ template< typename MODEL1_TYPE, typename MODEL2_TYPE >
 void compareMultiphaseModels( MODEL1_TYPE const & lhs, MODEL2_TYPE const & rhs )
 {
   GEOS_THROW_IF_NE_MSG( lhs.numFluidPhases(), rhs.numFluidPhases(),
-                        GEOS_FMT( "Mismatch in number of phases between constitutive models {} and {}", lhs.getName(), rhs.getName() ),
+                        GEOS_FMT( "Mismatch in number of phases between constitutive models {} and {}",
+                                  lhs.getDataContext(), rhs.getDataContext() ),
                         InputError );
 
   for( integer ip = 0; ip < lhs.numFluidPhases(); ++ip )
   {
     GEOS_THROW_IF_NE_MSG( lhs.phaseNames()[ip], rhs.phaseNames()[ip],
-                          GEOS_FMT( "Mismatch in phase names between constitutive models {} and {}", lhs.getName(), rhs.getName() ),
+                          GEOS_FMT( "Mismatch in phase names between constitutive models {} and {}",
+                                    lhs.getDataContext(), rhs.getDataContext() ),
                           InputError );
   }
 }
@@ -281,13 +289,15 @@ template< typename MODEL1_TYPE, typename MODEL2_TYPE >
 void compareMulticomponentModels( MODEL1_TYPE const & lhs, MODEL2_TYPE const & rhs )
 {
   GEOS_THROW_IF_NE_MSG( lhs.numFluidComponents(), rhs.numFluidComponents(),
-                        GEOS_FMT( "Mismatch in number of components between constitutive models {} and {}", lhs.getName(), rhs.getName() ),
+                        GEOS_FMT( "Mismatch in number of components between constitutive models {} and {}",
+                                  lhs.getDataContext(), rhs.getDataContext() ),
                         InputError );
 
   for( integer ic = 0; ic < lhs.numFluidComponents(); ++ic )
   {
     GEOS_THROW_IF_NE_MSG( lhs.componentNames()[ic], rhs.componentNames()[ic],
-                          GEOS_FMT( "Mismatch in component names between constitutive models {} and {}", lhs.getName(), rhs.getName() ),
+                          GEOS_FMT( "Mismatch in component names between constitutive models {} and {}",
+                                    lhs.getDataContext(), rhs.getDataContext() ),
                           InputError );
   }
 }
@@ -329,22 +339,34 @@ void CompositionalMultiphaseWell::validateInjectionStreams( WellElementSubRegion
   WellControls const & wellControls = getWellControls( subRegion );
 
   // check well injection stream for injectors
-  if( wellControls.isInjector() )
+  if( wellControls.isInjector())
   {
-    arrayView1d< real64 const > const & injection = wellControls.getInjectionStream();
+    arrayView1d< real64 const > const & injectionStream = wellControls.getInjectionStream();
+
+    integer const streamSize = injectionStream.size();
+    GEOS_THROW_IF( ( streamSize == 0 ),
+                   "WellControls '" << wellControls.getName() << "'" <<
+                   ": Injection stream not specified for well " << subRegion.getName(),
+                   InputError );
+    GEOS_THROW_IF( ( streamSize != m_numComponents ),
+                   "WellControls '" << wellControls.getName() << "'" <<
+                   ": Injection stream for well " << subRegion.getName() << " should have " <<
+                   m_numComponents << " components.",
+                   InputError );
+
     real64 compFracSum = 0;
     for( integer ic = 0; ic < m_numComponents; ++ic )
     {
-      real64 const compFrac = injection[ic];
+      real64 const compFrac = injectionStream[ic];
       GEOS_THROW_IF( ( compFrac < 0.0 ) || ( compFrac > 1.0 ),
-                     "WellControls '" << wellControls.getName() << "'" <<
+                     "WellControls " << wellControls.getDataContext() <<
                      ": Invalid injection stream for well " << subRegion.getName(),
                      InputError );
       compFracSum += compFrac;
     }
     GEOS_THROW_IF( ( compFracSum < 1.0 - std::numeric_limits< real64 >::epsilon() ) ||
                    ( compFracSum > 1.0 + std::numeric_limits< real64 >::epsilon() ),
-                   "WellControls '" << wellControls.getName() << "'" <<
+                   "WellControls " << wellControls.getDataContext() <<
                    ": Invalid injection stream for well " << subRegion.getName(),
                    InputError );
   }
@@ -366,35 +388,35 @@ void CompositionalMultiphaseWell::validateWellConstraints( real64 const & time_n
   real64 const & surfaceTemp = wellControls.getSurfaceTemperature();
 
   GEOS_THROW_IF( wellControls.isInjector() && currentControl == WellControls::Control::PHASEVOLRATE,
-                 "WellControls named " << wellControls.getName() <<
+                 "WellControls " << wellControls.getDataContext() <<
                  ": Phase rate control is not available for injectors",
                  InputError );
   GEOS_THROW_IF( wellControls.isProducer() && currentControl == WellControls::Control::TOTALVOLRATE,
-                 "WellControls named " << wellControls.getName() <<
-                 ": Phase rate control is not available for producers",
+                 "WellControls " << wellControls.getDataContext() <<
+                 ": Total rate control is not available for producers",
                  InputError );
 
   GEOS_THROW_IF( wellControls.isInjector() && targetTotalRate < 0.0,
-                 "WellControls named " << wellControls.getName() <<
+                 "WellControls " << wellControls.getDataContext() <<
                  ": Target total rate cannot be negative for injectors",
                  InputError );
   GEOS_THROW_IF( wellControls.isInjector() && !isZero( targetPhaseRate ),
-                 "WellControls named " << wellControls.getName() <<
+                 "WellControls " << wellControls.getDataContext() <<
                  ": Target phase rate cannot be used for injectors",
                  InputError );
 
   // The user always provides positive rates, but these rates are later multiplied by -1 internally for producers
   GEOS_THROW_IF( wellControls.isProducer() && targetPhaseRate > 0.0,
-                 "WellControls named " << wellControls.getName() <<
+                 "WellControls " << wellControls.getDataContext() <<
                  ": Target phase rate cannot be negative for producers",
                  InputError );
   GEOS_THROW_IF( wellControls.isProducer() && !isZero( targetTotalRate ),
-                 "WellControls named " << wellControls.getName() <<
+                 "WellControls " << wellControls.getDataContext() <<
                  ": Target total rate cannot be used for producers",
                  InputError );
 
   GEOS_THROW_IF( useSurfaceConditions && surfaceTemp <= 0,
-                 "WellControls named " << wellControls.getName() <<
+                 "WellControls " << wellControls.getDataContext() <<
                  ": Surface temperature must be set to a strictly positive value",
                  InputError );
 
@@ -407,8 +429,8 @@ void CompositionalMultiphaseWell::validateWellConstraints( real64 const & time_n
     }
   }
   GEOS_THROW_IF( wellControls.isProducer() && m_targetPhaseIndex == -1,
-                 "WellControls '" << wellControls.getName() <<
-                 "': Phase " << wellControls.getTargetPhaseName() << " not found for well control " << wellControls.getName(),
+                 "WellControls " << wellControls.getDataContext() <<
+                 ": Phase " << wellControls.getTargetPhaseName() << " not found for well control " << wellControls.getName(),
                  InputError );
 }
 
@@ -431,13 +453,15 @@ void CompositionalMultiphaseWell::initializePostSubGroups()
       string & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
       fluidName = getConstitutiveName< MultiFluidBase >( subRegion );
       GEOS_THROW_IF( fluidName.empty(),
-                     GEOS_FMT( "Fluid model not found on subregion {}", subRegion.getName() ),
+                     GEOS_FMT( "{}: Fluid model not found on subregion {}",
+                               getDataContext(), subRegion.getName() ),
                      InputError );
 
       string & relPermName = subRegion.getReference< string >( viewKeyStruct::relPermNamesString() );
       relPermName = getConstitutiveName< RelativePermeabilityBase >( subRegion );
       GEOS_THROW_IF( relPermName.empty(),
-                     GEOS_FMT( "Fluid model not found on subregion {}", subRegion.getName() ),
+                     GEOS_FMT( "{}: Fluid model not found on subregion {}",
+                               getDataContext(), subRegion.getName() ),
                      InputError );
 
       validateInjectionStreams( subRegion );
@@ -1190,7 +1214,7 @@ CompositionalMultiphaseWell::calculateResidualNorm( real64 const & time_n,
 }
 
 real64
-CompositionalMultiphaseWell::scalingForSystemSolution( DomainPartition const & domain,
+CompositionalMultiphaseWell::scalingForSystemSolution( DomainPartition & domain,
                                                        DofManager const & dofManager,
                                                        arrayView1d< real64 const > const & localSolution )
 {
@@ -1210,15 +1234,15 @@ CompositionalMultiphaseWell::scalingForSystemSolution( DomainPartition const & d
 
   real64 scalingFactor = 1.0;
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                                MeshLevel const & mesh,
+                                                                MeshLevel & mesh,
                                                                 arrayView1d< string const > const & regionNames )
   {
     mesh.getElemManager().forElementSubRegions< ElementSubRegionBase >( regionNames,
                                                                         [&]( localIndex const,
-                                                                             ElementSubRegionBase const & subRegion )
+                                                                             ElementSubRegionBase & subRegion )
     {
       // check that pressure and component densities are non-negative
-      real64 const subRegionScalingFactor =
+      auto const subRegionData =
         compositionalMultiphaseWellKernels::
           ScalingForSystemSolutionKernelFactory::
           createAndLaunch< parallelDevicePolicy<> >( m_maxRelativePresChange,
@@ -1229,7 +1253,7 @@ CompositionalMultiphaseWell::scalingForSystemSolution( DomainPartition const & d
                                                      subRegion,
                                                      localSolution );
 
-      scalingFactor = std::min( subRegionScalingFactor, scalingFactor );
+      scalingFactor = std::min( subRegionData.localMinVal, scalingFactor );
     } );
 
   } );
@@ -1238,7 +1262,7 @@ CompositionalMultiphaseWell::scalingForSystemSolution( DomainPartition const & d
 }
 
 bool
-CompositionalMultiphaseWell::checkSystemSolution( DomainPartition const & domain,
+CompositionalMultiphaseWell::checkSystemSolution( DomainPartition & domain,
                                                   DofManager const & dofManager,
                                                   arrayView1d< real64 const > const & localSolution,
                                                   real64 const scalingFactor )
@@ -1248,17 +1272,18 @@ CompositionalMultiphaseWell::checkSystemSolution( DomainPartition const & domain
   string const wellDofKey = dofManager.getKey( wellElementDofName() );
   integer localCheck = 1;
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                                MeshLevel const & mesh,
+                                                                MeshLevel & mesh,
                                                                 arrayView1d< string const > const & regionNames )
   {
     mesh.getElemManager().forElementSubRegions< WellElementSubRegion >( regionNames,
                                                                         [&]( localIndex const,
-                                                                             WellElementSubRegion const & subRegion )
+                                                                             WellElementSubRegion & subRegion )
     {
       integer const subRegionSolutionCheck =
         compositionalMultiphaseWellKernels::
           SolutionCheckKernelFactory::
           createAndLaunch< parallelDevicePolicy<> >( m_allowCompDensChopping,
+                                                     CompositionalMultiphaseFVM::ScalingType::Global,
                                                      scalingFactor,
                                                      dofManager.rankOffset(),
                                                      m_numComponents,
@@ -1392,8 +1417,10 @@ void
 CompositionalMultiphaseWell::applySystemSolution( DofManager const & dofManager,
                                                   arrayView1d< real64 const > const & localSolution,
                                                   real64 const scalingFactor,
+                                                  real64 const dt,
                                                   DomainPartition & domain )
 {
+  GEOS_UNUSED_VAR( dt );
   // update all the fields using the global damping coefficients
   dofManager.addVectorToField( localSolution,
                                wellElementDofName(),

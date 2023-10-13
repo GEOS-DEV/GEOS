@@ -22,6 +22,9 @@
 #include "physicsSolvers/fluidFlow/FlowSolverBase.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBaseKernels.hpp"
 #include "physicsSolvers/fluidFlow/ThermalSinglePhaseBaseKernels.hpp"
+#include "constitutive/fluid/singlefluid/SingleFluidBase.hpp"
+#include "constitutive/solid/CoupledSolidBase.hpp"
+
 
 namespace geos
 {
@@ -167,13 +170,13 @@ public:
    * @param jumpDofKey dofKey of the displacement jump
    */
   virtual void
-  assemblePoroelasticFluxTerms( real64 const time_n,
-                                real64 const dt,
-                                DomainPartition const & domain,
-                                DofManager const & dofManager,
-                                CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                arrayView1d< real64 > const & localRhs,
-                                string const & jumpDofKey ) = 0;
+  assembleEDFMFluxTerms( real64 const time_n,
+                         real64 const dt,
+                         DomainPartition const & domain,
+                         DofManager const & dofManager,
+                         CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                         arrayView1d< real64 > const & localRhs,
+                         string const & jumpDofKey ) = 0;
 
   /**
    * @brief assembles the flux terms for all cells for the hydrofracture case
@@ -277,6 +280,12 @@ public:
    * @param dataGroup the group storing the required fields
    */
   void updateSolidInternalEnergyModel( ObjectManagerBase & dataGroup ) const;
+
+  /**
+   * @brief Update thermal conductivity
+   * @param subRegion the group storing the required fields
+   */
+  void updateThermalConductivity( ElementSubRegionBase & subRegion ) const;
 
   /**
    * @brief Function to update fluid mobility
