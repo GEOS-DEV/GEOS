@@ -302,3 +302,38 @@ TEST( testStringUtilities, toMetricPrefixString )
     EXPECT_STRCASEEQ( negResult.c_str(), negAnswer.c_str() );
   }
 }
+
+TEST( testStringUtilities, testStartsAndEndsWith )
+{
+  // classic use cases
+  EXPECT_TRUE( stringutilities::startsWith( "Hello World", "Hello" ) );
+  EXPECT_TRUE( stringutilities::endsWith( "Hello World", "World" ) );
+
+  // inverted prefix & suffix
+  EXPECT_FALSE( stringutilities::endsWith( "Hello World", "Hello" ) );
+  EXPECT_FALSE( stringutilities::startsWith( "Hello World", "World" ) );
+  EXPECT_FALSE( stringutilities::endsWith( "Hello World", "H" ) );
+  EXPECT_FALSE( stringutilities::startsWith( "Hello World", "d" ) );
+
+  // If prefix / suffix equals input string, then it must return true
+  EXPECT_TRUE( stringutilities::startsWith( "Hello World", "Hello World" ) );
+  EXPECT_TRUE( stringutilities::endsWith( "Hello World", "Hello World" ) );
+  EXPECT_TRUE( stringutilities::startsWith( "H", "H" ) );
+  EXPECT_TRUE( stringutilities::endsWith( "d", "d" ) );
+  EXPECT_TRUE( stringutilities::startsWith( "", "" ) );
+  EXPECT_TRUE( stringutilities::endsWith( "", "" ) );
+  
+  // Empty prefix / suffix are expected to work
+  EXPECT_TRUE( stringutilities::startsWith( "Hello World", "" ) );
+  EXPECT_TRUE( stringutilities::endsWith( "Hello World", "" ) );
+  
+  // the prefix / suffix is longer than the input string: return false (inverted parameters mistake?)
+  EXPECT_FALSE( stringutilities::startsWith( "Hello", "Hello World" ) );
+  EXPECT_FALSE( stringutilities::endsWith( "World", "Hello World" ) );
+  
+  // the prefix / suffix is longer than the input string: return false (inverted parameters mistake?)
+  EXPECT_FALSE( stringutilities::startsWith( "Hello", "Hello World" ) );
+  EXPECT_FALSE( stringutilities::endsWith( "World", "Hello World" ) );
+  EXPECT_FALSE( stringutilities::startsWith( "", "Hello World" ) );
+  EXPECT_FALSE( stringutilities::endsWith( "", "Hello World" ) );
+}
