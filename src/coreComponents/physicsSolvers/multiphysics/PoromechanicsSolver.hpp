@@ -23,7 +23,6 @@
 #include "physicsSolvers/multiphysics/CoupledSolver.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
 #include "constitutive/solid/PorousSolid.hpp"
-//#include "dataRepository/Group.hpp"
 
 namespace geos
 {
