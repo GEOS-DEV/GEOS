@@ -66,13 +66,13 @@
     <PeriodicEvent
       name="outputs"
       timeFrequency="1.0"
-      target="/Outputs/siloOutput"/>
+      target="/Outputs/vtkOutput"/>
 
-    <!--PeriodicEvent
+    <PeriodicEvent
       name="restarts"
-      timeFrequency="1e99"
+      timeFrequency="2.0"
       targetExactTimestep="0"
-      target="/Outputs/restartOutput"/-->
+      target="/Outputs/restartOutput"/>
   </Events>
 
   <!-- SPHINX_FEDiscretization -->
@@ -175,12 +175,11 @@
 
   <!-- SPHINX_TableFunctionEnd -->
   <Outputs>
-    <Silo
-      name="siloOutput"
-      parallelThreads="32"
-      childDirectory="sub"/>
+    <VTK 
+      name="vtkOutput"    
+    />
 
-    <!--Restart
-      name="restartOutput"/-->
+    <Restart
+      name="restartOutput"/>
   </Outputs>
 </Problem>
