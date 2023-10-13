@@ -226,6 +226,28 @@ constexpr size_t cstrlen( char const * const str )
   }
 }
 
+/**
+ * @return true if the string starts with the suffix.
+ * @param str The string to compare
+ * @param suffix A suffix we want to know if the string starts with.
+ */
+constexpr bool startsWith( std::string_view str, std::string_view prefix )
+{
+  return str.size() >= prefix.size() &&
+         str.compare( 0, prefix.size(), prefix ) == 0;
+}
+
+/**
+ * @return true if the string ends with the suffix.
+ * @param str The string to compare
+ * @param suffix A suffix we want to know if the string ends with.
+ */
+constexpr bool endsWith( std::string_view str, std::string_view suffix )
+{
+  return str.size() >= suffix.size() &&
+         str.compare( str.size()-suffix.size(), suffix.size(), suffix ) == 0;
+}
+
 } // namespace stringutilities
 } // namespace geos
 
