@@ -168,6 +168,13 @@ string trim( string const & str,
              string const & charsToRemove );
 
 /**
+ * @brief Trim the string so it does not starts nor ends with any whitespaces
+ * @param[in] str the string to trim
+ * @return the trimmed string
+ */
+string trimSpaces( string const & str );
+
+/**
  * @brief Search for a string in the line, and return the line truncated before the string
  * @param[in] str the line to truncate
  * @param[in] strToRemove the string to search for in the line

@@ -20,6 +20,7 @@
 #include "DataTypes.hpp"
 #include "Logger.hpp"
 #include "LvArray/src/system.hpp"
+#include "codingUtilities/StringUtilities.hpp"
 
 namespace geos
 {
@@ -95,17 +96,16 @@ string rtTypes::getTypeName( std::type_index const key )
  */
 string constructArrayRegex( string_view subPattern, integer dimension )
 {
-  if( dimension > 1 )
-  {
-    string const subPatternStr = string( constructArrayRegex( subPattern, dimension-1 ) );
-    return "\\{\\s*(" + subPatternStr + ",\\s*)*" + subPatternStr + "\\s*\\}";
-  }
-  else
-  {
-    string const subPatternStr( subPattern );
-    // Allow the bottom-level to be empty
-    return "\\{\\s*((" + subPatternStr + ",\\s*)*" + subPatternStr + ")?\\s*\\}";
-  }
+  string subPatternStr = dimension > 1 ?
+                         constructArrayRegex( subPattern, dimension-1 ) :
+                         string( subPattern );
+  // Add trailing space if is not already done
+  if( !stringutilities::endsWith( subPatternStr, "\\s*" ) )
+    subPatternStr+="\\s*";
+  // Allow the bottom-level to be empty
+  return dimension > 1 ?
+    "\\{\\s*(" + subPatternStr + ",\\s*)*" + subPatternStr + "\\}" :
+    "\\s*\\{\\s*((" + subPatternStr + "\\s*,\\s*)*" + subPatternStr + ")?\\}\\s*";
 }
 
 rtTypes::RegexMapType rtTypes::createBasicTypesRegexMap()
@@ -188,7 +188,6 @@ rtTypes::RegexMapType rtTypes::createBasicTypesRegexMap()
   };
   return regexMap;
 }
-
 
 
 

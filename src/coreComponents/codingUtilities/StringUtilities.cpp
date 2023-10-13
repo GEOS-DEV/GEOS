@@ -49,6 +49,10 @@ string trim( string const & str,
   }
   return {};
 }
+string trimSpaces( string const & str )
+{
+  return trim( str, " \f\n\r\t\v" );
+}
 
 
 string removeStringAndFollowingContent( string const & str,

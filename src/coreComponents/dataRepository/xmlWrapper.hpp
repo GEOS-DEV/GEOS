@@ -25,6 +25,7 @@
 #include "common/GEOS_RAJA_Interface.hpp"
 #include "LvArray/src/output.hpp"
 #include "LvArray/src/input.hpp"
+#include "codingUtilities/StringUtilities.hpp"
 
 // TPL includes
 #include <pugixml.hpp>
@@ -369,7 +370,7 @@ stringToInputVariable( Array< T, NDIM, PERMUTATION > & array, string const & val
 {
   validateString( value, regexStr );
 
-  LvArray::input::stringToArray( array, value );
+  LvArray::input::stringToArray( array, stringutilities::trimSpaces( value ) );
 }
 
 ///@}
