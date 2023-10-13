@@ -24,6 +24,10 @@ set( constitutive_headers
      diffusion/ConstantDiffusion.hpp
      diffusion/DiffusionBase.hpp
      diffusion/DiffusionFields.hpp
+        dispersion/ConstantDispersion.hpp
+        dispersion/DispersionBase.hpp
+        dispersion/DispersionFields.hpp
+        dispersion/DispersionSelector.hpp
      fluid/multifluid/Layouts.hpp
      fluid/multifluid/MultiFluidSelector.hpp
      fluid/multifluid/MultiFluidBase.hpp
@@ -163,6 +167,8 @@ set( constitutive_sources
      contact/FrictionlessContact.cpp
      diffusion/ConstantDiffusion.cpp
      diffusion/DiffusionBase.cpp
+        dispersion/ConstantDispersion.cpp
+        dispersion/DispersionBase.cpp
      fluid/multifluid/MultiFluidBase.cpp
      fluid/multifluid/PVTDriver.cpp
      fluid/multifluid/blackOil/BlackOilFluidBase.cpp
