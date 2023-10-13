@@ -15,16 +15,8 @@ BUILD_DIR=${GITHUB_WORKSPACE}
 # Since this information is repeated twice, we use a variable.
 BUILD_DIR_MOUNT_POINT=/tmp/GEOSX
 
-mkdir -p /opt/sccache/conf
-cp -rp ${GOOGLE_GHA_CREDS_PATH} /opt/sccache/conf/credentials.json
-echo ${GOOGLE_GHA_CREDS_PATH}
-cat <<EOT >> /opt/sccache/conf/sccache.conf
-[cache.gcs]
-rw_mode = "READ_WRITE"
-cred_path = "/opt/sccache/conf/credentials.json"
-bucket = "geos-dev"
-key_prefix = "sccache"
-EOT
+mkdir -p /opt/gcs
+cp -rp ${GOOGLE_GHA_CREDS_PATH} /opt/gcs/credentials.json
 
 
 # We need to keep track of the building container (hence the `CONTAINER_NAME`)
@@ -35,7 +27,7 @@ CONTAINER_NAME=geosx_build
 docker run \
   --name=${CONTAINER_NAME} \
   --volume=${BUILD_DIR}:${BUILD_DIR_MOUNT_POINT} \
-  --volume=/opt/sccache/conf:/opt/sccache/conf \
+  --volume=/opt/gcs:/opt/gcs \
   --cap-add=ALL \
   -e HOST_CONFIG=${HOST_CONFIG:-host-configs/environment.cmake} \
   -e CMAKE_BUILD_TYPE \

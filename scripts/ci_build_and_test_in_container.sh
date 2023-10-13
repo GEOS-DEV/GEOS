@@ -44,7 +44,16 @@ fi
 
 apt-get -y update
 apt-get install -y --no-install-recommends curl ca-certificates
-export SCCACHE_CONF=/opt/sccache/conf/sccache.conf
+
+cat <<EOT >> ${HOME}/.config/sccache/config
+[cache.gcs]
+rw_mode = "READ_WRITE"
+cred_path = "/opt/gcs/credentials.json"
+bucket = "geos-dev"
+key_prefix = "sccache"
+EOT
+
+echo "sccache initial state"
 /opt/sccache/bin/sccache --show-stats
 
 # The -DBLT_MPI_COMMAND_APPEND="--allow-run-as-root;--oversubscribe" option is added for OpenMPI.
@@ -99,6 +108,7 @@ if [[ "$*" != *--disable-unit-tests* ]]; then
   or_die ctest --output-on-failure -E "testUncrustifyCheck|testDoxygenCheck"
 fi
 
+echo "sccache final state"
 /opt/sccache/bin/sccache --show-stats
 
 exit 0
