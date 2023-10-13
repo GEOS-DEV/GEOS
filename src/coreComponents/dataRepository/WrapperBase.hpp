@@ -66,7 +66,8 @@ public:
    * @param[in] parent pointer to Group that holds this WrapperBase
    */
   explicit WrapperBase( string const & name,
-                        Group & parent );
+                        Group & parent,
+                        string const & rtTypeName );
 
   /// @cond DO_NOT_DOCUMENT
   WrapperBase() = delete;
@@ -161,6 +162,12 @@ public:
    * @return regex used to validate inputs of wrapped type
    */
   virtual string getTypeRegex() const = 0;
+
+  string const & getRTTypeName() const
+  { return m_rtTypeName; }
+
+  void setRTTypeName( string_view rtTypeName )
+  { m_rtTypeName = rtTypeName; }
 
   ///@}
 
@@ -675,6 +682,9 @@ protected:
 
   /// A string description of the wrapped object
   string m_description;
+
+  /// A string regex to validate the input values string to parse for the wrapped object
+  string m_rtTypeName;
 
   /// A vector of the names of the objects that created this Wrapper.
   std::set< string > m_registeringObjects;

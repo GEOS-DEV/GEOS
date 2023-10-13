@@ -527,74 +527,50 @@ struct TypeRegex
 };
 
 /**
- * @brief Static class to manage the type selection of types at runtime.
+ * @brief Static class to manage the type selection of types at runtime and obtain the
+ * regexes of these types. Typically, these types are 'xsd:simpleType' in the XSD.
  */
 class rtTypes
 {
 public:
   using RegexMapType = std::map< string, string >;
 
+  struct CustomTypes
+  {
+    //custom rtTypes
+    static constexpr string_view mapPair             = "mapPair";
+    static constexpr string_view plotLevel           = "geos_dataRepository_PlotLevel";
+    static constexpr string_view groupName           = "groupName";
+    static constexpr string_view groupNameRef        = "groupNameRef";
+    static constexpr string_view groupNameRefArray   = "groupNameRef_array";
+  };
+
   /**
    * @brief Convert a @p std::type_index to a string.
    * @param key the std::type_index of the type
    * @return a hard coded string that is related to the std::type_index
    */
-  static string getTypeName( std::type_index const key )
-  {
-    static const std::unordered_map< std::type_index, string > type_names =
-    {
-      {std::type_index( typeid(integer)), "integer"},
-      {std::type_index( typeid(real32)), "real32"},
-      {std::type_index( typeid(real64)), "real64"},
-      {std::type_index( typeid(localIndex)), "localIndex"},
-      {std::type_index( typeid(globalIndex)), "globalIndex"},
-      {std::type_index( typeid(R1Tensor)), "R1Tensor"},
-      {std::type_index( typeid(R1Tensor32)), "R1Tensor32"},
-      {std::type_index( typeid(R2SymTensor)), "R2SymTensor"},
-      {std::type_index( typeid(integer_array)), "integer_array"},
-      {std::type_index( typeid(real32_array)), "real32_array"},
-      {std::type_index( typeid(real64_array)), "real64_array"},
-      {std::type_index( typeid(localIndex_array)), "localIndex_array"},
-      {std::type_index( typeid(globalIndex_array)), "globalIndex_array"},
-      {std::type_index( typeid(integer_array2d)), "integer_array2d"},
-      {std::type_index( typeid(real32_array2d)), "real32_array2d"},
-      {std::type_index( typeid(real64_array2d)), "real64_array2d"},
-      {std::type_index( typeid(localIndex_array2d)), "localIndex_array2d"},
-      {std::type_index( typeid(globalIndex_array2d)), "globalIndex_array2d"},
-      {std::type_index( typeid(integer_array3d)), "integer_array3d"},
-      {std::type_index( typeid(real32_array3d)), "real32_array3d"},
-      {std::type_index( typeid(real64_array3d)), "real64_array3d"},
-      {std::type_index( typeid(localIndex_array3d)), "localIndex_array3d"},
-      {std::type_index( typeid(globalIndex_array3d)), "globalIndex_array3d"},
-      {std::type_index( typeid(real64_array4d)), "real64_array4d"},
-      {std::type_index( typeid(string)), "string"},
-      {std::type_index( typeid(Path)), "path"},
-      {std::type_index( typeid(string_array)), "string_array"},
-      {std::type_index( typeid(path_array)), "path_array"},
-    };
-
-    // If the data type is not defined here, return type_info.name()
-    auto const iter = type_names.find( key );
-    if( iter != type_names.end() )
-    {
-      return iter->second;
-    }
-    else
-    {
-      return LvArray::system::demangle( key.name());
-    }
-  }
+  static string getTypeName( std::type_index const key );
 
   /**
    * @tparam T type we want the regex
-   * @return a regex string validating the type T.
+   * @return the regex string for the default rtType of T to validate input values to this type.
    */
   template< typename T >
   static string getTypeRegex()
+  { return getTypeRegex< T >( getTypeName( typeid( T ) ) ); }
+
+  /**
+   * @param typeName The rtType name of the type we want the regex (can be a CustomTypes).
+   * @tparam T the type we want the regex. If none are available in createBasicTypesRegexMap(), one is
+   * generated from TypeRegex< T >::get().
+   * @return a regex string validating the type T.
+   */
+  template< typename T >
+  static string getTypeRegex( string_view typeName )
   {
     RegexMapType & map = getTypeRegexMap();
-    string const typeName = getTypeName( typeid( T ) );
-    auto const it = map.find( typeName );
+    auto const it = map.find( string( typeName ) );
     if( it != map.end() )
     {
       return it->second;
@@ -609,118 +585,23 @@ public:
    * @brief Construct the regexMap for all basic types (TypeRegex< T > extented types are not mentionned)
    * @return RegexMapType
    */
-  static RegexMapType getBasicTypesRegexMap()
-  {
-    // Define the component regexes:
-    // Regex to match an unsigned int (123, etc.)
-    // string_view const ru = "[\\d]+";// unused
-
-    // Regex to match an signed int (-123, 455, +789, etc.)
-    string_view const intRegex = "[+-]?[\\d]+";
-
-    // Regex to match a float (1, +2.3, -.4, 5.6e7, 8E-9, etc.)
-    // Explanation of parts:
-    // [+-]?[\\d]*  matches an optional +/- at the beginning, any numbers preceding the decimal
-    // ([\\d]\\.?|\\.[\\d]) matches the decimal region of the number (0, 1., 2.3, .4)
-    // [\\d]*  matches any number of numbers following the decimal
-    // ([eE][-+]?[\\d]+|\\s*)  matches an optional scientific notation number
-    // Note: the xsd regex implementation does not allow an empty branch, so use allow whitespace at the end
-    string_view const realRegex = "[+-]?[\\d]*([\\d]\\.?|\\.[\\d])[\\d]*([eE][-+]?[\\d]+|\\s*)";
-
-    // Regex to match a string that can't be empty and does not contain any whitespaces nor the characters ,{}
-    string_view const strRegex = "[^,\\{\\}\\s]+\\s*";
-    // Regex to match a string that does not contain any whitespaces nor the characters ,{}
-    string_view const strRegexE = "[^,\\{\\}\\s]*\\s*";
-
-
-    // Regex to match a path: a string that can't be empty and does not contain any space nor the characters *?<>|:",
-    string_view const pathRegex = "[^*?<>\\|:\";,\\s]+\\s*";
-    // Regex to match a path: a string that does not contain any space nor the characters *?<>|:",
-    string_view const pathRegexE = "[^*?<>\\|:\";,\\s]*\\s*";
-
-    // Regex to match a R1Tensor
-    string_view const R1Regex = "\\s*\\{\\s*(" + string( realRegex ) + ",\\s*){2}" + string( realRegex ) + "\\s*\\}";
-    // Regex to match a R2SymTensor
-    string_view const R2Regex = "\\s*\\{\\s*(" + string( realRegex ) + ",\\s*){5}" + string( realRegex ) + "\\s*\\}";
-
-    // Build master list of regexes
-    RegexMapType regexMap =
-    {
-      {"integer", string( intRegex )},
-      {"localIndex", string( intRegex )},
-      {"globalIndex", string( intRegex )},
-      {"real32", string( realRegex )},
-      {"real64", string( realRegex )},
-      {"R1Tensor", string( R1Regex )},
-      {"R1Tensor32", string( R1Regex )},
-      {"R2SymTensor", string( R2Regex )},
-      {"integer_array", constructArrayRegex( intRegex, 1 )},
-      {"localIndex_array", constructArrayRegex( intRegex, 1 )},
-      {"globalIndex_array", constructArrayRegex( intRegex, 1 )},
-      {"real32_array", constructArrayRegex( realRegex, 1 )},
-      {"real64_array", constructArrayRegex( realRegex, 1 )},
-      {"integer_array2d", constructArrayRegex( intRegex, 2 )},
-      {"localIndex_array2d", constructArrayRegex( intRegex, 2 )},
-      {"globalIndex_array2d", constructArrayRegex( intRegex, 2 )},
-      {"real32_array2d", constructArrayRegex( realRegex, 2 )},
-      {"real64_array2d", constructArrayRegex( realRegex, 2 )},
-      {"integer_array3d", constructArrayRegex( intRegex, 3 )},
-      {"localIndex_array3d", constructArrayRegex( intRegex, 3 )},
-      {"globalIndex_array3d", constructArrayRegex( intRegex, 3 )},
-      {"real32_array3d", constructArrayRegex( realRegex, 3 )},
-      {"real64_array3d", constructArrayRegex( realRegex, 3 )},
-      {"real64_array4d", constructArrayRegex( realRegex, 4 )},
-      {"string", string( strRegexE )},
-      {"path", string( pathRegexE )},
-      {"string_array", constructArrayRegex( strRegex, 1 )},
-      {"path_array", constructArrayRegex( pathRegex, 1 )},
-      {"mapPair", string( strRegexE )},
-      {"geos_dataRepository_PlotLevel", string( intRegex )}
-    };
-    return regexMap;
-  }
+  static RegexMapType createBasicTypesRegexMap();
 
 private:
-
-  /**
-   * @brief Build Array regexes.
-   * @param subPattern
-   * @param dimension
-   * @return
-   *
-   * @note The sub pattern is the base object you are targeting.  It can either
-   *       be a simple type or a lower-dimensional array. Sub-elements and
-   *       axes are given as a comma-separated list enclosed in a curly brace.
-   *       For example, a 2D string array would look like: {{"a", "b"}, {"c", "d"}}
-   */
-  static string constructArrayRegex( string_view subPattern, integer dimension )
-  {
-    if( dimension > 1 )
-    {
-      string const subPatternStr = string( constructArrayRegex( subPattern, dimension-1 ) );
-      return "\\{\\s*(" + subPatternStr + ",\\s*)*" + subPatternStr + "\\s*\\}";
-    }
-    else
-    {
-      string const subPatternStr( subPattern );
-      // Allow the bottom-level to be empty
-      return "\\{\\s*((" + subPatternStr + ",\\s*)*" + subPatternStr + ")?\\s*\\}";
-    }
-  }
 
   /**
    * @return A reference to the types regexes map
    */
   static RegexMapType & getTypeRegexMap()
   {
-    static RegexMapType m = getBasicTypesRegexMap();
+    static RegexMapType m = createBasicTypesRegexMap();
     return m;
   }
 
   /**
    * @brief Private constructor because of static class
    */
-  rtTypes();
+  rtTypes() {}
 
 };
 

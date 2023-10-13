@@ -316,28 +316,29 @@ bool isFileMetadataAttribute( string const & name );
 /**
  * @throw An InputError if the string value could not be validated with the provided regular expression.
  * @param value The string to validate
- * @param regexStr The regular expression used for validation.
- * @param typeName The typename, used to qualify the string in the potencial error message.
+ * @param regexStr The regular expression used for validating the string value.
  */
-void validateString( string const & value, string const & regexStr, string const & typeName );
+void validateString( string const & value, string const & regexStr );
 
 /**
  * @brief Parse a string and fill a variable with the value(s) in the string.
  * @tparam T the type of variable fill with string value
  * @param[out] target the object to read values into
  * @param[in]  value  the string that contains the data to be parsed into target
+ * @param[in]  regexStr The regular expression used for validating the string value.
  * @throw An InputError if the string value could not be validated by the type regex or parsed to the destination type.
  */
 template< typename T >
 std::enable_if_t< traits::CanStreamInto< std::istringstream, T > >
-stringToInputVariable( T & target, string const & value )
+stringToInputVariable( T & target, string const & value, string const & regexStr )
 {
-  validateString( value, rtTypes::getTypeRegex< T >(), rtTypes::getTypeName( typeid(T) ) );
+  validateString( value, regexStr );
 
   std::istringstream ss( value );
   ss >> target;
   GEOS_THROW_IF( ss.fail() || !ss.eof(),
-                 "Error detected while parsing string: \"" << value << "\"",
+                 "Error detected while parsing string \"" << value << 
+                 "\" to type " << LvArray::system::demangleType< T >(),
                  InputError );
 }
 
@@ -345,11 +346,12 @@ stringToInputVariable( T & target, string const & value )
  * @brief Parse a string and fill a R1Tensor with the value(s) in the string.
  * @param[out] target the object to read values into
  * @param[in]  value  the string that contains the data to be parsed into target
+ * @param[in]  regexStr The regular expression used for validating the string value.
  * @throw An InputError if the string value could not be validated by the type regex or parsed to the destination type.
  */
 template< typename T, int SIZE >
 void
-stringToInputVariable( Tensor< T, SIZE > & target, string const & value );
+stringToInputVariable( Tensor< T, SIZE > & target, string const & value, string const & regexStr );
 
 /**
  * @brief Parse a string and fill an Array with the value(s) in the string.
@@ -358,12 +360,15 @@ stringToInputVariable( Tensor< T, SIZE > & target, string const & value );
  * @tparam PERMUTATION the permutation of the array
  * @param[out] array the array to read values into
  * @param[in]  value the string that contains the data to be parsed into target
+ * @param[in]  regexStr The regular expression used for validating the string value.
  * @throw An std::invalid_argument if the string value could not be validated by the type regex or parsed to the destination type.
  */
 template< typename T, int NDIM, typename PERMUTATION >
 std::enable_if_t< traits::CanStreamInto< std::istringstream, T > >
-stringToInputVariable( Array< T, NDIM, PERMUTATION > & array, string const & value )
+stringToInputVariable( Array< T, NDIM, PERMUTATION > & array, string const & value, string const & regexStr )
 {
+  validateString( value, regexStr );
+
   LvArray::input::stringToArray( array, value );
 }
 
@@ -374,7 +379,7 @@ namespace internal
 
 /// Defines a static constexpr bool canParseVariable that is true iff the template parameter T
 /// is a valid argument to StringToInputVariable.
-IS_VALID_EXPRESSION( canParseVariable, T, stringToInputVariable( std::declval< T & >(), string() ) );
+IS_VALID_EXPRESSION( canParseVariable, T, stringToInputVariable( std::declval< T & >(), string(), string() ) );
 
 /**
  * @brief Set @p lhs equal to @p rhs.
@@ -415,7 +420,7 @@ static void equate( Array< T, NDIM, PERM > const & lhs, T const & rhs )
  */
 template< typename T, typename U >
 std::enable_if_t< !internal::canParseVariable< T >, bool >
-readAttributeAsType( T &, string const & name, xmlNode const &, U const & )
+readAttributeAsType( T &, string const & name, string const &, xmlNode const &, U const & )
 {
   GEOS_THROW( "Cannot parse key with name ("<<name<<") with the given type " << LvArray::system::demangleType< T >(), InputError );
 }
@@ -426,6 +431,7 @@ readAttributeAsType( T &, string const & name, xmlNode const &, U const & )
  * @tparam T_DEF         type of the default value for @p rval
  * @param[out] rval      the variable to fill with value
  * @param[in] name       the name of the xml attribute to process
+ * @param[in] regexStr The regular expression used for validating the string value.
  * @param[in] targetNode the xml node that should contain the attribute
  * @param[in] defVal     default value of @p rval (or entries of @p rval, if it is an array)
  * @return true
@@ -434,6 +440,7 @@ template< typename T, typename T_DEF = T >
 std::enable_if_t< internal::canParseVariable< T >, bool >
 readAttributeAsType( T & rval,
                      string const & name,
+                     string const & regexStr,
                      xmlNode const & targetNode,
                      T_DEF const & defVal )
 {
@@ -441,7 +448,7 @@ readAttributeAsType( T & rval,
   if( !xmlatt.empty() )
   {
     // parse the string/attribute into a value
-    stringToInputVariable( rval, xmlatt.value() );
+    stringToInputVariable( rval, xmlatt.value(), regexStr );
     return true;
   }
   else
@@ -457,6 +464,7 @@ readAttributeAsType( T & rval,
  * @tparam T             the type of variable fill with xml attribute.
  * @param[out] rval      the variable to fill with value
  * @param[in] name       the name of the xml attribute to process
+ * @param[in] regexStr The regular expression used for validating the string value.
  * @param[in] targetNode the xml node that should contain the attribute
  * @param[in] required   whether or not the value is required
  * @return boolean value indicating whether the value was successfully read from XML.
@@ -465,6 +473,7 @@ template< typename T >
 std::enable_if_t< internal::canParseVariable< T >, bool >
 readAttributeAsType( T & rval,
                      string const & name,
+                     string const & regexStr,
                      xmlNode const & targetNode,
                      bool const required )
 {
@@ -475,7 +484,7 @@ readAttributeAsType( T & rval,
   if( success )
   {
     // parse the string/attribute into a value
-    stringToInputVariable( rval, xmlatt.value() );
+    stringToInputVariable( rval, xmlatt.value(), regexStr );
   }
   return success;
 }
@@ -485,6 +494,7 @@ readAttributeAsType( T & rval,
  * @tparam T             the type of variable fill with xml attribute.
  * @param[out] rval      the variable to fill with value
  * @param[in] name       the name of the xml attribute to process
+ * @param[in] regexStr The regular expression used for validating the string value.
  * @param[in] targetNode the xml node that should contain the attribute
  * @return boolean value indicating whether the value was successfully read from XML.
  */
@@ -492,10 +502,11 @@ template< typename T >
 std::enable_if_t< !dataRepository::DefaultValue< T >::has_default_value, bool >
 readAttributeAsType( T & rval,
                      string const & name,
+                     string const & regexStr,
                      xmlNode const & targetNode,
                      dataRepository::DefaultValue< T > const & )
 {
-  return readAttributeAsType( rval, name, targetNode, false );
+  return readAttributeAsType( rval, name, regexStr, targetNode, false );
 }
 
 /**
@@ -503,6 +514,7 @@ readAttributeAsType( T & rval,
  * @tparam T             the type of variable fill with xml attribute.
  * @param[out] rval      the variable to fill with value
  * @param[in] name       the name of the xml attribute to process
+ * @param[in] regexStr The regular expression used for validating the string value.
  * @param[in] targetNode the xml node that should contain the attribute
  * @param[in] defVal     default value of @p rval (or entries of @p rval, if it is an array)
  * @return boolean value indicating whether the value was successfully read from XML.
@@ -511,10 +523,11 @@ template< typename T >
 typename std::enable_if_t< dataRepository::DefaultValue< T >::has_default_value, bool >
 readAttributeAsType( T & rval,
                      string const & name,
+                     string const & regexStr,
                      xmlNode const & targetNode,
                      dataRepository::DefaultValue< T > const & defVal )
 {
-  return readAttributeAsType( rval, name, targetNode, defVal.value );
+  return readAttributeAsType( rval, name, regexStr, targetNode, defVal.value );
 }
 
 ///@}

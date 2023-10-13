@@ -31,32 +31,29 @@ using namespace dataRepository;
 namespace xmlWrapper
 {
 
-/**
- * @throw An InputError if the string value could not be validated with the provided regular expression.
- * @param value The string to validate
- * @param regexStr The regular expression used for validation.
- * @param typeName The typename, used to qualify the string in the potencial error message.
- */
-void validateString( string const & value, string const & regexStr, string const & typeName )
+void validateString( string const & value, string const & regexStr )
 {
   std::smatch m;
   bool inputValidated = std::regex_search( value, m, std::regex( regexStr ) );
   if( !inputValidated || m.length() != ptrdiff_t( value.length() ) )
   {
     ptrdiff_t errorId = ( m.size()>0 && m.position( 0 )==0 ) ? m.length() : 0;
-    GEOS_THROW( '\"' << typeName << "\" input string validation failed at:\n" <<
-                "  \"" << value << "\"\n   " << string( errorId, ' ' ) << '^',
+    GEOS_THROW( "Input string validation failed at:\n" <<
+                "  \"" << value << "\"\n   " << string( errorId, ' ' ) << "^\n" <<
+                "  With regex: \"" << regexStr << "\"",
                 InputError );
   }
 }
 
 template< typename T, int SIZE >
-void stringToInputVariable( Tensor< T, SIZE > & target, string const & inputValue )
+void stringToInputVariable( Tensor< T, SIZE > & target, string const & inputValue, string const & regexStr )
 {
+  validateString( inputValue, regexStr );
+
   std::istringstream ss( inputValue );
   auto const errorMsg = [&]( auto const & msg )
   {
-    return GEOS_FMT( "{} for Tensor<{}> at position {} in input: {}", msg, SIZE, static_cast< int >( ss.tellg() ), inputValue );
+    return GEOS_FMT( "{} for Tensor<{}> at position {} in input: \"{}\"", msg, SIZE, static_cast< int >( ss.tellg() ), inputValue );
   };
 
   // Read the head
@@ -88,9 +85,9 @@ void stringToInputVariable( Tensor< T, SIZE > & target, string const & inputValu
   GEOS_THROW_IF( ss.peek() != std::char_traits< char >::eof(), errorMsg( "Unparsed characters" ), InputError );
 }
 
-template void stringToInputVariable( Tensor< real32, 3 > & target, string const & inputValue );
-template void stringToInputVariable( Tensor< real64, 3 > & target, string const & inputValue );
-template void stringToInputVariable( Tensor< real64, 6 > & target, string const & inputValue );
+template void stringToInputVariable( Tensor< real32, 3 > & target, string const & inputValue, string const & rtTypeName );
+template void stringToInputVariable( Tensor< real64, 3 > & target, string const & inputValue, string const & rtTypeName );
+template void stringToInputVariable( Tensor< real64, 6 > & target, string const & inputValue, string const & rtTypeName );
 
 /**
  * @brief Adds the filePath and character offset info on the node in filePathString

@@ -28,7 +28,8 @@ namespace dataRepository
 
 
 WrapperBase::WrapperBase( string const & name,
-                          Group & parent ):
+                          Group & parent,
+                          string const & rtTypeName ):
   m_name( name ),
   m_parent( &parent ),
   m_sizedFromParent( 1 ),
@@ -37,6 +38,7 @@ WrapperBase::WrapperBase( string const & name,
   m_inputFlag( InputFlags::INVALID ),
   m_successfulReadFromInput( false ),
   m_description(),
+  m_rtTypeName( rtTypeName ),
   m_registeringObjects(),
   m_conduitNode( parent.getConduitNode()[ name ] ),
   m_dataContext( std::make_unique< WrapperContext >( *this ) )
@@ -58,6 +60,7 @@ void WrapperBase::copyWrapperAttributes( WrapperBase const & source )
   m_plotLevel  = source.m_plotLevel;
   m_inputFlag = source.m_inputFlag;
   m_description = source.m_description;
+  m_rtTypeName = source.m_rtTypeName;
 }
 
 string WrapperBase::getPath() const
