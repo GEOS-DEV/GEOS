@@ -45,6 +45,11 @@ WaveSolverBase::WaveSolverBase( const std::string & name,
     setSizedFromParent( 0 ).
     setDescription( "Coordinates (x,y,z) of the sources" );
 
+  registerWrapper( viewKeyStruct::receiverCoordinatesString(), &m_receiverCoordinates ).
+    setInputFlag( InputFlags::REQUIRED ).
+    setSizedFromParent( 0 ).
+    setDescription( "Coordinates (x,y,z) of the receivers" );
+
   registerWrapper( viewKeyStruct::sourceValueString(), &m_sourceValue ).
     setInputFlag( InputFlags::FALSE ).
     setRestartFlags( RestartFlags::NO_WRITE ).
@@ -55,10 +60,10 @@ WaveSolverBase::WaveSolverBase( const std::string & name,
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Central frequency for the time source" );
 
-  registerWrapper( viewKeyStruct::receiverCoordinatesString(), &m_receiverCoordinates ).
-    setInputFlag( InputFlags::REQUIRED ).
-    setSizedFromParent( 0 ).
-    setDescription( "Coordinates (x,y,z) of the receivers" );
+  registerWrapper( viewKeyStruct::timeSourceDelayString(), &m_timeSourceDelay ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( -1 ).
+    setDescription( "Source time delay (1 / f0 by default)" );
 
   registerWrapper( viewKeyStruct::rickerOrderString(), &m_rickerOrder ).
     setInputFlag( InputFlags::OPTIONAL ).

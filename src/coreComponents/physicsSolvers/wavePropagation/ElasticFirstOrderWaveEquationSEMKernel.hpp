@@ -50,15 +50,12 @@ struct PrecomputeSourceAndReceiverKernel
    * @param[in] receiverCoordinates coordinates of the receiver terms
    * @param[in] dt time-step
    * @param[in] timeSourceFrequency Peak frequency of the source
+   * @param[in] timeSourceDelay the time delay of the source
    * @param[in] rickerOrder Order of the Ricker wavelet
-   * @param[out] sourceIsLocal flag indicating whether the source is local or not
    * @param[out] sourceNodeIds indices of the nodes of the element where the source is located
-   * @param[out] sourceConstantsx constant part of the source terms in x-direction
-   * @param[out] sourceConstantsy constant part of the source terms in y-direction
-   * @param[out] sourceConstantsz constant part of the source terms in z-direction
+   * @param[out] sourceConstants constant part of the source terms
    * @param[out] receiverIsLocal flag indicating whether the receiver is local or not
    * @param[out] receiverNodeIds indices of the nodes of the element where the receiver is located
-   * @param[out] receiverNodeConstants constant part of the receiver term
    * @param[out] sourceValue array containing the value of the time dependent source (Ricker for e.g)
    */
   template< typename EXEC_POLICY, typename FE_TYPE >
@@ -89,6 +86,7 @@ struct PrecomputeSourceAndReceiverKernel
           arrayView2d< real32 > const sourceValue,
           real64 const dt,
           real32 const timeSourceFrequency,
+          real32 const timeSourceDelay,
           localIndex const rickerOrder )
   {
 
@@ -139,8 +137,7 @@ struct PrecomputeSourceAndReceiverKernel
 
             for( localIndex cycle = 0; cycle < sourceValue.size( 0 ); ++cycle )
             {
-              real64 const time = cycle*dt;
-              sourceValue[cycle][isrc] = WaveSolverUtils::evaluateRicker( time, timeSourceFrequency, rickerOrder );
+              sourceValue[cycle][isrc] = WaveSolverUtils::evaluateRicker( cycle * dt, timeSourceFrequency, timeSourceDelay, rickerOrder );
             }
 
           }

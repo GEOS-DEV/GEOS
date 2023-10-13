@@ -30,37 +30,39 @@ struct WaveSolverUtils
 {
 
   GEOS_HOST_DEVICE
-  static real32 evaluateRicker( real64 const & time_n, real32 const & f0, localIndex order )
+  static real32 evaluateRicker( real64 const time_n, real32 const f0, real32 const t0, localIndex const order )
   {
-    real32 const o_tpeak = 1.0/f0;
+    real32 const delay = t0 > 0 ? t0 : 1 / f0;
     real32 pulse = 0.0;
-    if((time_n <= -0.9*o_tpeak) || (time_n >= 2.9*o_tpeak))
+    if( time_n <= -0.9 * delay || time_n >= 2.9 * delay )
     {
       return pulse;
     }
 
-    constexpr real32 pi = M_PI;
-    real32 const lam = (f0*pi)*(f0*pi);
+    real32 const alpha = -pow( f0 * M_PI, 2 );
+    real32 const time_d = time_n - delay;
+    real32 const gaussian = exp( alpha * pow( time_d, 2 ));
+    localIndex const sgn = pow( -1, order + 1 );
 
     switch( order )
     {
-      case 2:
-      {
-        pulse = 2.0*lam*(2.0*lam*(time_n-o_tpeak)*(time_n-o_tpeak)-1.0)*exp( -lam*(time_n-o_tpeak)*(time_n-o_tpeak));
-      }
-      break;
-      case 1:
-      {
-        pulse = -2.0*lam*(time_n-o_tpeak)*exp( -lam*(time_n-o_tpeak)*(time_n-o_tpeak));
-      }
-      break;
       case 0:
-      {
-        pulse = -(time_n-o_tpeak)*exp( -2*lam*(time_n-o_tpeak)*(time_n-o_tpeak) );
-      }
-      break;
+        pulse = sgn * gaussian;
+        break;
+      case 1:
+        pulse = sgn * (2 * alpha * time_d) * gaussian;
+        break;
+      case 2:
+        pulse = sgn * (2 * alpha + 4 * pow( alpha, 2 ) * pow( time_d, 2 )) * gaussian;
+        break;
+      case 3:
+        pulse = sgn * (12 * pow( alpha, 2 ) * time_d + 8 * pow( alpha, 3 ) * pow( time_d, 3 )) * gaussian;
+        break;
+      case 4:
+        pulse = sgn * (12 * pow( alpha, 2 ) + 48 * pow( alpha, 3 ) * pow( time_d, 2 ) + 16 * pow( alpha, 4 ) * pow( time_d, 4 )) * gaussian;
+        break;
       default:
-        GEOS_ERROR( "This option is not supported yet, rickerOrder must be 0, 1 or 2" );
+        GEOS_ERROR( "This option is not supported yet, rickerOrder must be in range {0:4}" );
     }
 
     return pulse;
