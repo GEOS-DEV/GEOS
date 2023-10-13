@@ -66,11 +66,6 @@ Group * ParticleMeshGenerator::createChild( string const & GEOS_UNUSED_PARAM( ch
   return nullptr;
 }
 
-// /**
-//  * @param partition
-//  * @param domain
-//  */
-// void ParticleMeshGenerator::generateMesh( DomainPartition & domain )
 void ParticleMeshGenerator::fillParticleBlockManager( ParticleBlockManager & particleBlockManager, ParticleManager & particleManager, SpatialPartition const & partition )
 {
   GEOS_MARK_FUNCTION;
