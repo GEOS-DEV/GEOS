@@ -45,6 +45,7 @@ fi
 apt-get -y update
 apt-get install -y --no-install-recommends curl ca-certificates
 
+mkdir -p ${HOME}/.config/sccache
 cat <<EOT >> ${HOME}/.config/sccache/config
 [cache.gcs]
 rw_mode = "READ_WRITE"
