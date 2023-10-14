@@ -9,13 +9,13 @@
       flowSolverName="singlePhaseFlow"
       logLevel="1"
       targetRegions="{ reservoir, extendedRegion }"
-	  useNA="1">
+      useNonlinearAcceleration="1">
       <NonlinearSolverParameters
         newtonMaxIter="200"
         newtonTol="1.0e-6"
-	    couplingType="Sequential"
+        couplingType="Sequential"
         lineSearchAction="None"
-	    subcycling="1"/>
+        subcycling="1"/>
       <LinearSolverParameters
         solverType="gmres"
         preconditionerType="mgr"

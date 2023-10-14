@@ -68,7 +68,7 @@ public:
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
     /// Flag to indicate that the solver is going to use nonlinear acceleration
-    constexpr static char const * useNAString() { return "useNA"; }
+    constexpr static char const * useNAString() { return "useNonlinearAcceleration"; }
   };
 
 protected:
@@ -76,10 +76,9 @@ protected:
   /* Implementation of Nonlinear Acceleration (Aitken) of averageMeanTotalStressIncrement */
 
   void recordAverageMeanTotalStressIncrement( DomainPartition & domain,
-                                              array1d< real64 > & s )
+                                              array1d< real64 > & averageMeanTotalStressIncrement )
   {
-    // s denotes averageMeanTotalStressIncrement
-    s.resize( 0 );
+    averageMeanTotalStressIncrement.resize( 0 );
     SolverBase::forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                              MeshLevel & mesh,
                                                                              arrayView1d< string const > const & regionNames ) {
@@ -93,7 +92,7 @@ protected:
         arrayView1d< const real64 > const & averageMeanTotalStressIncrement_k = solid.getAverageMeanTotalStressIncrement_k();
         for( localIndex k = 0; k < localIndex( averageMeanTotalStressIncrement_k.size()); k++ )
         {
-          s.emplace_back( averageMeanTotalStressIncrement_k[k] );
+          averageMeanTotalStressIncrement.emplace_back( averageMeanTotalStressIncrement_k[k] );
         }
       } );
     } );
@@ -124,9 +123,9 @@ protected:
     } );
   }
 
-  array1d< real64 > addTwoVecs( const array1d< real64 > & vec1,
-                                const array1d< real64 > & vec2,
-                                const real64 sign )
+  array1d< real64 > addTwoVecs( array1d< real64 > const & vec1,
+                                array1d< real64 > const & vec2,
+                                real64 const sign )
   {
     GEOS_ASSERT( vec1.size() == vec2.size());
     array1d< real64 > result;
@@ -138,8 +137,8 @@ protected:
     return result;
   }
 
-  array1d< real64 > scalarMultiplyAVec( const array1d< real64 > & vec,
-                                        const real64 scalarMult )
+  array1d< real64 > scalarMultiplyAVec( array1d< real64 > const & vec,
+                                        real64 const scalarMult )
   {
     array1d< real64 > result;
     const localIndex N = vec.size();
@@ -150,8 +149,8 @@ protected:
     return result;
   }
 
-  real64 dotTwoVecs( const array1d< real64 > & vec1,
-                     const array1d< real64 > & vec2 )
+  real64 dotTwoVecs( array1d< real64 > const & vec1,
+                     array1d< real64 > const & vec2 )
   {
     GEOS_ASSERT( vec1.size() == vec2.size());
     real64 result = 0;
@@ -163,11 +162,11 @@ protected:
     return result;
   }
 
-  real64 computeAitkenRelaxationFactor( const array1d< real64 > & s0,
-                                        const array1d< real64 > & s1,
-                                        const array1d< real64 > & s1_tilde,
-                                        const array1d< real64 > & s2_tilde,
-                                        const real64 omega0 )
+  real64 computeAitkenRelaxationFactor( array1d< real64 > const & s0,
+                                        array1d< real64 > const & s1,
+                                        array1d< real64 > const & s1_tilde,
+                                        array1d< real64 > const & s2_tilde,
+                                        real64 const omega0 )
   {
     array1d< real64 > r1 = addTwoVecs( s1_tilde, s0, -1.0 );
     array1d< real64 > r2 = addTwoVecs( s2_tilde, s1, -1.0 );
@@ -186,9 +185,9 @@ protected:
     return omega1;
   }
 
-  array1d< real64 > computeUpdate( const array1d< real64 > & s1,
-                                   const array1d< real64 > & s2_tilde,
-                                   const real64 omega1 )
+  array1d< real64 > computeUpdate( array1d< real64 > const & s1,
+                                   array1d< real64 > const & s2_tilde,
+                                   real64 const omega1 )
   {
     return addTwoVecs( scalarMultiplyAVec( s1, 1.0 - omega1 ),
                        scalarMultiplyAVec( s2_tilde, omega1 ),

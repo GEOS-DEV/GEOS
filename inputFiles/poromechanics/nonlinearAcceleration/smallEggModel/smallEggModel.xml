@@ -9,14 +9,14 @@
       flowSolverName="flowSolver"
       solidSolverName="matrixMechSolver"
       logLevel="1"
-	  useNA="1">
+      useNonlinearAcceleration="1">
       <NonlinearSolverParameters
         maxTimeStepCuts="1"
         newtonTol="3e-06"
         newtonMaxIter="200"
-	    couplingType="Sequential"
+        couplingType="Sequential"
         lineSearchAction="None"
-	    subcycling="1"/>
+        subcycling="1"/>
       <LinearSolverParameters
         solverType="fgmres"
         preconditionerType="mgr"
