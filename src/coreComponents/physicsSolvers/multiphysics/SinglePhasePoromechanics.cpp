@@ -88,7 +88,7 @@ void SinglePhasePoromechanics::registerDataOnMesh( Group & meshBodies )
         setRestartFlags( RestartFlags::NO_WRITE ).
         setSizedFromParent( 0 );
 
-      // This is need by the way the surface generator currently does things.  
+      // This is need by the way the surface generator currently does things.
       subRegion.registerWrapper< string >( CoupledSolidBase::viewKeyStruct::porosityModelNameString() ).
         setPlotLevel( PlotLevel::NOPLOT ).
         setRestartFlags( RestartFlags::NO_WRITE ).

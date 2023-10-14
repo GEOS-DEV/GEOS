@@ -445,7 +445,7 @@ SurfaceElementStencilWrapper::
                   real64 (& dWeight_dVar1 )[maxNumConnections][2],
                   real64 (& dWeight_dVar2 )[maxNumConnections][2][3] ) const
 {
-  real64 sumOfTrans = 0.0; 
+  real64 sumOfTrans = 0.0;
   for( localIndex k=0; k<numPointsInFlux( iconn ); ++k )
   {
     localIndex const er  =  m_elementRegionIndices[iconn][k];

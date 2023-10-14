@@ -254,7 +254,8 @@ public:
       if( subRegionResidualNorm[i] > localResidualNorm[i] )
       {
         localResidualNorm[i] = subRegionResidualNorm[i];
-        if (localResidualNorm[i] > min) {
+        if( localResidualNorm[i] > min )
+        {
           min = localResidualNorm[i];
           minF = i;
         }

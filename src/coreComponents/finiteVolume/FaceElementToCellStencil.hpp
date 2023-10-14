@@ -269,7 +269,8 @@ inline void FaceElementToCellStencilWrapper::
 
   // Will change when implementing collocation points.
   LvArray::tensorOps::hadamardProduct< 3 >( faceConormal, coefficient[er0][esr0][ei0][0], m_faceNormal[iconn] );
-  if (coefficient[er1][esr1][ei1][0][0] * m_weights[iconn][1] < 0) faceConormal[0] = 0, faceConormal[1] = 0, faceConormal[2] = 0;
+  if( coefficient[er1][esr1][ei1][0][0] * m_weights[iconn][1] < 0 )
+    faceConormal[0] = 0, faceConormal[1] = 0, faceConormal[2] = 0;
   real64 const t0 = m_weights[iconn][0] * LvArray::tensorOps::AiBi< 3 >( m_cellToFaceVec[iconn], faceConormal );
   // Only the first component of the permeability is used, we may need to change that
   real64 const t1 = m_weights[iconn][1] * coefficient[er1][esr1][ei1][0][0];

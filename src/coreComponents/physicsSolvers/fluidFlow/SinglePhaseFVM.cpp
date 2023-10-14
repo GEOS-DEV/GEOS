@@ -286,7 +286,7 @@ void SinglePhaseFVM< BASE >::applySystemSolution( DofManager const & dofManager,
           if(std::fabs(maxDP) < std::fabs(localSolution[i]))
           maxDP = localSolution[i];
       }
-      std::cout << "Max DP = " << maxDP*1e-5 << std::endl;
+      GEOS_LOG_RANK_0( "Max DP = " << maxDP*1e-5 );
 
     dofManager.addVectorToField( localSolution,
                                  BASE::viewKeyStruct::elemDofFieldString(),

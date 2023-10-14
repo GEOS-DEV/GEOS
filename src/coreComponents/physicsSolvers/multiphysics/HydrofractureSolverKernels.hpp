@@ -53,46 +53,74 @@ struct DeformationUpdateKernel
 #endif
           )
   {
-    forAll< POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const kfe )
-    {
-      if( elemsToFaces.sizeOfArray( kfe ) != 2 )
-      { return; }
-
-      localIndex const kf0 = elemsToFaces[kfe][0];
-      localIndex const kf1 = elemsToFaces[kfe][1];
-      localIndex const numNodesPerFace = faceToNodeMap.sizeOfArray( kf0 );
-      real64 temp[ 3 ] = { 0 };
-      for( localIndex a=0; a<numNodesPerFace; ++a )
+      real64 minAperture=1e10;
+      real64 maxAperture=-1e10;
+      real64 minHAperture=1e10;
+      real64 maxHAperture=-1e10;
+      real64 maxAppertureChange = 0, new_ap = 0, old_ap = 0;
+      real64 maxHydraulicApertureChange = 0, new_hap = 0, old_hap = 0;
+      for (localIndex kfe = 0; kfe < size; kfe++)
+//    forAll< POLICY >( size,
+//                      [=] GEOS_HOST_DEVICE ( localIndex const kfe )
+//      contactWrapper, &maxAppertureChange, &maxHydraulicApertureChange, elemsToFaces, faceToNodeMap,
+//              u, faceNormal, aperture, hydraulicAperture, deltaVolume, area, volume
       {
-        LvArray::tensorOps::add< 3 >( temp, u[ faceToNodeMap( kf0, a ) ] );
-        LvArray::tensorOps::subtract< 3 >( temp, u[ faceToNodeMap( kf1, a ) ] );
-      }
+          if (elemsToFaces.sizeOfArray(kfe) != 2) { return; }
 
-      // TODO this needs a proper contact based strategy for aperture
-      aperture[kfe] = -LvArray::tensorOps::AiBi< 3 >( temp, faceNormal[ kf0 ] ) / numNodesPerFace;
+          localIndex const kf0 = elemsToFaces[kfe][0];
+          localIndex const kf1 = elemsToFaces[kfe][1];
+          localIndex const numNodesPerFace = faceToNodeMap.sizeOfArray(kf0);
+          real64 temp[3] = {0};
+          for (localIndex a = 0; a < numNodesPerFace; ++a) {
+              LvArray::tensorOps::add<3>(temp, u[faceToNodeMap(kf0, a)]);
+              LvArray::tensorOps::subtract<3>(temp, u[faceToNodeMap(kf1, a)]);
+          }
 
-      real64 dHydraulicAperture_dAperture = 0;
-      //std::cout << kfe << " " << aperture[kfe]  << " " << volume[kfe]<< std::endl;
-      hydraulicAperture[kfe] = contactWrapper.computeHydraulicAperture( aperture[kfe], dHydraulicAperture_dAperture );
+          // TODO this needs a proper contact based strategy for aperture
+          real64 newAp = -LvArray::tensorOps::AiBi<3>(temp, faceNormal[kf0]) / numNodesPerFace;
+          if (std::fabs(maxAppertureChange) < std::fabs(newAp - aperture[kfe])) {
+              maxAppertureChange = newAp - aperture[kfe];
+              new_ap = newAp;
+              old_ap = aperture[kfe];
+          }
+          aperture[kfe] = newAp;
+          if(aperture[kfe]>maxAperture)maxAperture=aperture[kfe];
+          if(aperture[kfe]<minAperture)minAperture=aperture[kfe];
+
+          real64 dHydraulicAperture_dAperture = 0;
+          //std::cout << kfe << " " << aperture[kfe]  << " " << volume[kfe]<< std::endl;
+          real64 newHydrAp = contactWrapper.computeHydraulicAperture(aperture[kfe], dHydraulicAperture_dAperture);
+          if (std::fabs(maxHydraulicApertureChange) < std::fabs(newHydrAp - hydraulicAperture[kfe])) {
+              maxHydraulicApertureChange = newHydrAp - hydraulicAperture[kfe];
+              new_hap = newHydrAp;
+              old_hap = hydraulicAperture[kfe];
+          }
+          hydraulicAperture[kfe] = newHydrAp;
+          if(hydraulicAperture[kfe]>maxHAperture)maxHAperture=hydraulicAperture[kfe];
+          if(hydraulicAperture[kfe]<minHAperture)minHAperture=hydraulicAperture[kfe];
 
 #ifdef GEOSX_USE_SEPARATION_COEFFICIENT
-      real64 const s = aperture[kfe] / apertureAtFailure[kfe];
-      if( separationCoeff0[kfe]<1.0 && s>separationCoeff0[kfe] )
-      {
-        if( s >= 1.0 )
-        {
-          separationCoeff[kfe] = 1.0;
-          dSeparationCoeff_dAper[kfe] = 0.0;
-        }
-        else
-        {
-          separationCoeff[kfe] = s;
-          dSeparationCoeff_dAper[kfe] = 1.0/apertureAtFailure[kfe];
-        }
-      }
+          real64 const s = aperture[kfe] / apertureAtFailure[kfe];
+          if( separationCoeff0[kfe]<1.0 && s>separationCoeff0[kfe] )
+          {
+            if( s >= 1.0 )
+            {
+              separationCoeff[kfe] = 1.0;
+              dSeparationCoeff_dAper[kfe] = 0.0;
+            }
+            else
+            {
+              separationCoeff[kfe] = s;
+              dSeparationCoeff_dAper[kfe] = 1.0/apertureAtFailure[kfe];
+            }
+          }
 #endif
-      deltaVolume[kfe] = hydraulicAperture[kfe] * area[kfe] - volume[kfe];
-    } );
+          deltaVolume[kfe] = hydraulicAperture[kfe] * area[kfe] - volume[kfe];
+//    } );
+      }
+    GEOS_LOG_RANK_0("maxAppertureChange = " << maxAppertureChange << " new = " << new_ap << " old = " << old_ap);
+      GEOS_LOG_RANK_0("maxHydraulicApertureChange = " << maxHydraulicApertureChange << " new = " << new_hap << " old = " << old_hap);
+      GEOS_LOG_RANK_0("maxAperture="<<maxAperture<<" minAperture="<<minAperture<<" maxHAperture="<<maxHAperture<<" minHAperture="<<minHAperture);
   }
 };
 

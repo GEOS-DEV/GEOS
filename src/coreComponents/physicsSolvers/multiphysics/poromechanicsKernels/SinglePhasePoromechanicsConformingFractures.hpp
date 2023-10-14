@@ -192,7 +192,8 @@ public:
         localIndex const subRegionIndex[2] = {m_sesri[iconn][k[0]], m_sesri[iconn][k[1]]};
         localIndex const elementIndex[2]   = {m_sei[iconn][k[0]], m_sei[iconn][k[1]]};
 
-        //std::cout << "fracture pressure: " << m_pres[regionIndex[0]][subRegionIndex[0]][elementIndex[0]] << " " << m_pres[regionIndex[1]][subRegionIndex[1]][elementIndex[1]]<< std::endl;
+        //std::cout << "fracture pressure: " << m_pres[regionIndex[0]][subRegionIndex[0]][elementIndex[0]] << " " <<
+        // m_pres[regionIndex[1]][subRegionIndex[1]][elementIndex[1]]<< std::endl;
         computeSinglePhaseFlux( regionIndex, subRegionIndex, elementIndex,
                                 trans,
                                 dTrans,
