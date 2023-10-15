@@ -99,9 +99,8 @@ protected:
   }
 
   void applyAcceleratedAverageMeanTotalStressIncrement( DomainPartition & domain,
-                                                        array1d< real64 > & s )
+                                                        array1d< real64 > & averageMeanTotalStressIncrement )
   {
-    // s denotes averageMeanTotalStressIncrement
     integer i = 0;
     SolverBase::forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                              MeshLevel & mesh,
@@ -116,7 +115,7 @@ protected:
         arrayView1d< real64 > const & averageMeanTotalStressIncrement_k = solid.getAverageMeanTotalStressIncrement_k();
         for( localIndex k = 0; k < localIndex( averageMeanTotalStressIncrement_k.size()); k++ )
         {
-          porosityModel.updateAverageMeanTotalStressIncrement( k, s[i] );
+          porosityModel.updateAverageMeanTotalStressIncrement( k, averageMeanTotalStressIncrement[i] );
           i++;
         }
       } );
@@ -251,15 +250,15 @@ protected:
     }
   }
 
-  /// member variables needed for Nonlinear Acceleration (Aitken)
+  /// member variables needed for Nonlinear Acceleration ( Aitken ). Naming convention follows ( Jiang & Tchelepi, 2019 )
   integer m_useNA;
-  array1d< real64 > m_s0;
-  array1d< real64 > m_s1;
-  array1d< real64 > m_s1_tilde;
-  array1d< real64 > m_s2;
-  array1d< real64 > m_s2_tilde;
-  real64 m_omega0;
-  real64 m_omega1;
+  array1d< real64 > m_s0; // accelerated averageMeanTotalStresIncrement @ outer iteration v ( two iterations ago )
+  array1d< real64 > m_s1; // accelerated averageMeanTotalStresIncrement @ outer iteration v + 1 ( previous iteration )
+  array1d< real64 > m_s1_tilde; // unaccelerated averageMeanTotalStresIncrement @ outer iteration v + 1 ( previous iteration )
+  array1d< real64 > m_s2; // accelerated averageMeanTotalStresIncrement @ outer iteration v + 2 ( current iteration )
+  array1d< real64 > m_s2_tilde; // unaccelerated averageMeanTotalStresIncrement @ outer iteration v + 1 ( current iteration )
+  real64 m_omega0; // Old Aitken relaxation factor
+  real64 m_omega1; // New Aitken relaxation factor
 
 };
 
