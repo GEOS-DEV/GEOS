@@ -253,6 +253,10 @@ protected:
 
   virtual void initializePostSubGroups() override;
 
+  void printRates( real64 const & time_n,
+                   real64 const & dt,
+                   DomainPartition & domain ) override;
+
 private:
 
   /**
