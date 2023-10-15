@@ -250,13 +250,13 @@ protected:
     }
   }
 
-  /// member variables needed for Nonlinear Acceleration ( Aitken ). Naming convention follows ( Jiang & Tchelepi, 2019 )
+  /// Member variables needed for Nonlinear Acceleration ( Aitken ). Naming convention follows ( Jiang & Tchelepi, 2019 )
   integer m_useNA;
-  array1d< real64 > m_s0; // accelerated averageMeanTotalStresIncrement @ outer iteration v ( two iterations ago )
-  array1d< real64 > m_s1; // accelerated averageMeanTotalStresIncrement @ outer iteration v + 1 ( previous iteration )
-  array1d< real64 > m_s1_tilde; // unaccelerated averageMeanTotalStresIncrement @ outer iteration v + 1 ( previous iteration )
-  array1d< real64 > m_s2; // accelerated averageMeanTotalStresIncrement @ outer iteration v + 2 ( current iteration )
-  array1d< real64 > m_s2_tilde; // unaccelerated averageMeanTotalStresIncrement @ outer iteration v + 1 ( current iteration )
+  array1d< real64 > m_s0; // Accelerated averageMeanTotalStresIncrement @ outer iteration v ( two iterations ago )
+  array1d< real64 > m_s1; // Accelerated averageMeanTotalStresIncrement @ outer iteration v + 1 ( previous iteration )
+  array1d< real64 > m_s1_tilde; // Unaccelerated averageMeanTotalStresIncrement @ outer iteration v + 1 ( previous iteration )
+  array1d< real64 > m_s2; // Accelerated averageMeanTotalStresIncrement @ outer iteration v + 2 ( current iteration )
+  array1d< real64 > m_s2_tilde; // Unaccelerated averageMeanTotalStresIncrement @ outer iteration v + 1 ( current iteration )
   real64 m_omega0; // Old Aitken relaxation factor
   real64 m_omega1; // New Aitken relaxation factor
 
