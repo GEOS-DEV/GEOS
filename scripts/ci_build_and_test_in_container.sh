@@ -42,9 +42,6 @@ if [[ "$*" == *--disable-schema-deployment* ]]; then
   GEOSX_INSTALL_SCHEMA=0
 fi  
 
-apt-get -y update
-apt-get install -y --no-install-recommends curl ca-certificates
-
 mkdir -p ${HOME}/.config/sccache
 cat <<EOT >> ${HOME}/.config/sccache/config
 [cache.gcs]
@@ -55,7 +52,7 @@ key_prefix = "sccache"
 EOT
 
 echo "sccache initial state"
-/opt/sccache/bin/sccache --show-stats
+${SCCACHE} --show-stats
 
 # The -DBLT_MPI_COMMAND_APPEND="--allow-run-as-root;--oversubscribe" option is added for OpenMPI.
 #
@@ -78,7 +75,7 @@ or_die python3 scripts/config-build.py \
                -ip ${GEOSX_DIR} \
                --ninja \
                -DBLT_MPI_COMMAND_APPEND='"--allow-run-as-root;--oversubscribe"' \
-               -DCMAKE_CXX_COMPILER_LAUNCHER=/opt/sccache/bin/sccache \
+               -DCMAKE_CXX_COMPILER_LAUNCHER=${SCCACHE} \
                -DGEOSX_INSTALL_SCHEMA=${GEOSX_INSTALL_SCHEMA}
 
 or_die cd ${GEOSX_BUILD_DIR}
@@ -110,6 +107,6 @@ if [[ "$*" != *--disable-unit-tests* ]]; then
 fi
 
 echo "sccache final state"
-/opt/sccache/bin/sccache --show-stats
+${SCCACHE} --show-stats
 
 exit 0
