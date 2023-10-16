@@ -76,6 +76,7 @@ or_die python3 scripts/config-build.py \
                --ninja \
                -DBLT_MPI_COMMAND_APPEND='"--allow-run-as-root;--oversubscribe"' \
                -DCMAKE_CXX_COMPILER_LAUNCHER=${SCCACHE} \
+               -DCMAKE_CUDA_COMPILER_LAUNCHER=${SCCACHE} \
                -DGEOSX_INSTALL_SCHEMA=${GEOSX_INSTALL_SCHEMA}
 
 or_die cd ${GEOSX_BUILD_DIR}
