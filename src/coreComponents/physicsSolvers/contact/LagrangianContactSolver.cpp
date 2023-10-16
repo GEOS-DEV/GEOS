@@ -138,7 +138,9 @@ void LagrangianContactSolver::setConstitutiveNames( ElementSubRegionBase & subRe
 
   string & contactRelationName = subRegion.getReference< string >( viewKeyStruct::contactRelationNameString() );
   contactRelationName = this->m_contactRelationName;
-  GEOS_ERROR_IF( contactRelationName.empty(), GEOS_FMT( "Solid model not found on subregion {}", subRegion.getName() ) );
+  GEOS_ERROR_IF( contactRelationName.empty(),
+                 GEOS_FMT( "{}: Solid model not found on subregion {}",
+                           getDataContext(), subRegion.getName() ) );
 }
 
 
@@ -256,8 +258,6 @@ void LagrangianContactSolver::implicitStepComplete( real64 const & time_n,
                                                          true );
 
   } );
-
-  GEOS_LOG_LEVEL_RANK_0( 1, " ***** ImplicitStepComplete *****" );
 }
 
 void LagrangianContactSolver::postProcessInput()
@@ -314,9 +314,8 @@ void LagrangianContactSolver::computeTolerances( DomainPartition & domain ) cons
       {
         arrayView1d< integer const > const & ghostRank = subRegion.ghostRank();
         arrayView1d< real64 const > const & faceArea = subRegion.getElementArea().toViewConst();
-        arrayView3d< real64 const > const &
-        faceRotationMatrix = subRegion.getReference< array3d< real64 > >( viewKeyStruct::rotationMatrixString() );
-        arrayView2d< localIndex const > const & elemsToFaces = subRegion.faceList();
+        arrayView3d< real64 const > const & faceRotationMatrix = subRegion.getReference< array3d< real64 > >( viewKeyStruct::rotationMatrixString() );
+        ArrayOfArraysView< localIndex const > const & elemsToFaces = subRegion.faceList().toViewConst();
 
         arrayView1d< real64 > const & normalTractionTolerance =
           subRegion.getReference< array1d< real64 > >( viewKeyStruct::normalTractionToleranceString() );
@@ -339,7 +338,7 @@ void LagrangianContactSolver::computeTolerances( DomainPartition & domain ) cons
             real64 averageConstrainedModulus = 0.0;
             real64 averageBoxSize0 = 0.0;
 
-            for( localIndex i = 0; i < 2; ++i )
+            for( localIndex i = 0; i < elemsToFaces.sizeOfArray( kfe ); ++i )
             {
               localIndex const faceIndex = elemsToFaces[kfe][i];
               localIndex const er = faceToElemRegion[faceIndex][0];
@@ -480,12 +479,17 @@ void LagrangianContactSolver::computeFaceDisplacementJump( DomainPartition & dom
       {
         arrayView3d< real64 > const &
         rotationMatrix = subRegion.getReference< array3d< real64 > >( viewKeyStruct::rotationMatrixString() );
-        arrayView2d< localIndex const > const & elemsToFaces = subRegion.faceList();
+        ArrayOfArraysView< localIndex const > const & elemsToFaces = subRegion.faceList().toViewConst();
         arrayView2d< real64 > const & dispJump = subRegion.getField< contact::dispJump >();
         arrayView1d< real64 const > const & area = subRegion.getElementArea().toViewConst();
 
         forAll< parallelHostPolicy >( subRegion.size(), [=] ( localIndex const kfe )
         {
+          if( elemsToFaces.sizeOfArray( kfe ) != 2 )
+          {
+            return;
+          }
+
           // Contact constraints
           localIndex const numNodesPerFace = faceToNodeMap.sizeOfArray( elemsToFaces[kfe][0] );
 
@@ -511,7 +515,6 @@ void LagrangianContactSolver::computeFaceDisplacementJump( DomainPartition & dom
       }
     } );
   } );
-  return;
 }
 
 void LagrangianContactSolver::setupDofs( DomainPartition const & domain,
@@ -703,10 +706,14 @@ real64 LagrangianContactSolver::calculateResidualNorm( real64 const & GEOS_UNUSE
     // Add 0 just to match Matlab code results
     globalResidualNorm[2] /= (m_initialResidual[2]+1.0);
   }
-  GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "    ( Rdisplacement, Rtraction, Rtotal ) = ( {:15.6e}, {:15.6e}, {:15.6e} );",
-                                      globalResidualNorm[0],
-                                      globalResidualNorm[1],
-                                      globalResidualNorm[2] ) );
+  if( getLogLevel() >= 1 && logger::internal::rank == 0 )
+  {
+    std::cout<< GEOS_FMT(
+      "        ( Rdisplacement, Rtraction, Rtotal ) = ( {:15.6e}, {:15.6e}, {:15.6e} )",
+      globalResidualNorm[0],
+      globalResidualNorm[1],
+      globalResidualNorm[2] );
+  }
   return globalResidualNorm[2];
 }
 
@@ -797,17 +804,23 @@ void LagrangianContactSolver::computeRotationMatrices( DomainPartition & domain 
                                                               [&]( localIndex const,
                                                                    FaceElementSubRegion & subRegion )
     {
-      arrayView2d< localIndex const > const & elemsToFaces = subRegion.faceList();
+      ArrayOfArraysView< localIndex const > const & elemsToFaces = subRegion.faceList().toViewConst();
 
       arrayView3d< real64 > const &
       rotationMatrix = subRegion.getReference< array3d< real64 > >( viewKeyStruct::rotationMatrixString() );
 
       forAll< parallelHostPolicy >( subRegion.size(), [=]( localIndex const kfe )
       {
+        if( elemsToFaces.sizeOfArray( kfe ) != 2 )
+        {
+          return;
+        }
+
         stackArray1d< real64, 3 > Nbar( 3 );
-        Nbar[ 0 ] = faceNormal[elemsToFaces[kfe][0]][0] - faceNormal[elemsToFaces[kfe][1]][0];
-        Nbar[ 1 ] = faceNormal[elemsToFaces[kfe][0]][1] - faceNormal[elemsToFaces[kfe][1]][1];
-        Nbar[ 2 ] = faceNormal[elemsToFaces[kfe][0]][2] - faceNormal[elemsToFaces[kfe][1]][2];
+        localIndex const & f0 = elemsToFaces[kfe][0], f1 = elemsToFaces[kfe][1];
+        Nbar[ 0 ] = faceNormal[f0][0] - faceNormal[f1][0];
+        Nbar[ 1 ] = faceNormal[f0][1] - faceNormal[f1][1];
+        Nbar[ 2 ] = faceNormal[f0][2] - faceNormal[f1][2];
         LvArray::tensorOps::normalize< 3 >( Nbar );
 
         computationalGeometry::RotationMatrix_3D( Nbar.toSliceConst(), rotationMatrix[kfe] );
@@ -882,7 +895,8 @@ void LagrangianContactSolver::computeFaceNodalArea( arrayView2d< real64 const, n
   }
   else
   {
-    GEOS_ERROR( "LagrangianContactSolver: face with " << numNodesPerFace << " nodes. Only triangles and quadrilaterals are supported." );
+    GEOS_ERROR( "LagrangianContactSolver " << getDataContext() << ": face with " << numNodesPerFace <<
+                " nodes. Only triangles and quadrilaterals are supported." );
   }
 }
 
@@ -917,13 +931,18 @@ void LagrangianContactSolver::
     arrayView1d< globalIndex const > const & tracDofNumber = subRegion.getReference< globalIndex_array >( tracDofKey );
     arrayView2d< real64 const > const & traction = subRegion.getReference< array2d< real64 > >( contact::traction::key() );
     arrayView3d< real64 const > const & rotationMatrix = subRegion.getReference< array3d< real64 > >( viewKeyStruct::rotationMatrixString() );
-    arrayView2d< localIndex const > const & elemsToFaces = subRegion.faceList();
+    ArrayOfArraysView< localIndex const > const & elemsToFaces = subRegion.faceList().toViewConst();
 
     constexpr localIndex TriangularPermutation[3] = { 0, 1, 2 };
     constexpr localIndex QuadrilateralPermutation[4] = { 0, 1, 3, 2 };
 
     forAll< parallelHostPolicy >( subRegion.size(), [=] ( localIndex const kfe )
     {
+      if( elemsToFaces.sizeOfArray( kfe ) != 2 )
+      {
+        return;
+      }
+
       localIndex const numNodesPerFace = faceToNodeMap.sizeOfArray( elemsToFaces[kfe][0] );
       localIndex const numQuadraturePointsPerElem = numNodesPerFace==3 ? 1 : 4;
 
@@ -1053,7 +1072,7 @@ void LagrangianContactSolver::
     arrayView1d< real64 const > const & area = subRegion.getElementArea();
     arrayView3d< real64 const > const &
     rotationMatrix = subRegion.getReference< array3d< real64 > >( viewKeyStruct::rotationMatrixString() );
-    arrayView2d< localIndex const > const & elemsToFaces = subRegion.faceList();
+    ArrayOfArraysView< localIndex const > const & elemsToFaces = subRegion.faceList().toViewConst();
     arrayView2d< real64 const > const & traction = subRegion.getField< contact::traction >();
     arrayView1d< integer const > const & fractureState = subRegion.getField< contact::fractureState >();
     arrayView2d< real64 const > const & dispJump = subRegion.getField< contact::dispJump >();
@@ -1067,6 +1086,11 @@ void LagrangianContactSolver::
 
       forAll< parallelHostPolicy >( subRegion.size(), [=] ( localIndex const kfe )
       {
+        if( elemsToFaces.sizeOfArray( kfe ) != 2 )
+        {
+          return;
+        }
+
         if( ghostRank[kfe] < 0 )
         {
           localIndex const numNodesPerFace = faceToNodeMap.sizeOfArray( elemsToFaces[kfe][0] );
@@ -1287,9 +1311,9 @@ void LagrangianContactSolver::assembleStabilization( MeshLevel const & mesh,
   SurfaceElementRegion const & fractureRegion = elemManager.getRegion< SurfaceElementRegion >( getFractureRegionName() );
   FaceElementSubRegion const & fractureSubRegion = fractureRegion.getUniqueSubRegion< FaceElementSubRegion >();
 
-  GEOS_ERROR_IF( !fractureSubRegion.hasField< contact::traction >(), "The fracture subregion must contain traction field." );
-  arrayView2d< localIndex const > const faceMap = fractureSubRegion.faceList();
-  GEOS_ERROR_IF( faceMap.size( 1 ) != 2, "A fracture face has to be shared by two cells." );
+  GEOS_ERROR_IF( !fractureSubRegion.hasField< contact::traction >(),
+                 getDataContext() << ": The fracture subregion must contain traction field." );
+  ArrayOfArraysView< localIndex const > const elem2dToFaces = fractureSubRegion.faceList().toViewConst();
 
   // Get the state of fracture elements
   arrayView1d< integer const > const & fractureState =
@@ -1350,17 +1374,17 @@ void LagrangianContactSolver::assembleStabilization( MeshLevel const & mesh,
 
         localIndex const id1 = ( normalProduct > 0.0 ) ? 0 : 1;
 
-        localIndex const numNodesPerFace0 = faceToNodeMap.sizeOfArray( faceMap[sei[iconn][0]][0] );
+        localIndex const numNodesPerFace0 = faceToNodeMap.sizeOfArray( elem2dToFaces[sei[iconn][0]][0] );
         array1d< localIndex > nodes0( numNodesPerFace0 );
         for( localIndex i = 0; i < numNodesPerFace0; ++i )
         {
-          nodes0[i] = faceToNodeMap( faceMap[sei[iconn][0]][0], i );
+          nodes0[i] = faceToNodeMap( elem2dToFaces[sei[iconn][0]][0], i );
         }
-        localIndex const numNodesPerFace1 = faceToNodeMap.sizeOfArray( faceMap[sei[iconn][1]][0] );
+        localIndex const numNodesPerFace1 = faceToNodeMap.sizeOfArray( elem2dToFaces[sei[iconn][1]][0] );
         array1d< localIndex > nodes1( numNodesPerFace1 );
         for( localIndex i = 0; i < numNodesPerFace1; ++i )
         {
-          nodes1[i] = faceToNodeMap( faceMap[sei[iconn][1]][id1], i );
+          nodes1[i] = faceToNodeMap( elem2dToFaces[sei[iconn][1]][id1], i );
         }
         std::sort( nodes0.begin(), nodes0.end() );
         std::sort( nodes1.begin(), nodes1.end() );
@@ -1375,7 +1399,8 @@ void LagrangianContactSolver::assembleStabilization( MeshLevel const & mesh,
             realNodes++;
           }
         }
-        GEOS_ERROR_IF( realNodes != 2, "An edge shared by two fracture elements must have 2 nodes." );
+        GEOS_ERROR_IF( realNodes != 2,
+                       getDataContext() << ": An edge shared by two fracture elements must have 2 nodes." );
         edge.resize( realNodes );
 
         // Compute nodal area factor
@@ -1383,11 +1408,11 @@ void LagrangianContactSolver::assembleStabilization( MeshLevel const & mesh,
         localIndex node1index0 = -1;
         for( localIndex i = 0; i < numNodesPerFace0; ++i )
         {
-          if( edge[0] == faceToNodeMap( faceMap[sei[iconn][0]][0], i ) )
+          if( edge[0] == faceToNodeMap( elem2dToFaces[sei[iconn][0]][0], i ) )
           {
             node0index0 = i;
           }
-          if( edge[1] == faceToNodeMap( faceMap[sei[iconn][0]][0], i ) )
+          if( edge[1] == faceToNodeMap( elem2dToFaces[sei[iconn][0]][0], i ) )
           {
             node1index0 = i;
           }
@@ -1396,18 +1421,18 @@ void LagrangianContactSolver::assembleStabilization( MeshLevel const & mesh,
         localIndex node1index1 = -1;
         for( localIndex i = 0; i < numNodesPerFace1; ++i )
         {
-          if( edge[0] == faceToNodeMap( faceMap[sei[iconn][1]][id1], i ) )
+          if( edge[0] == faceToNodeMap( elem2dToFaces[sei[iconn][1]][id1], i ) )
           {
             node0index1 = i;
           }
-          if( edge[1] == faceToNodeMap( faceMap[sei[iconn][1]][id1], i ) )
+          if( edge[1] == faceToNodeMap( elem2dToFaces[sei[iconn][1]][id1], i ) )
           {
             node1index1 = i;
           }
         }
         array1d< real64 > nodalArea0, nodalArea1;
-        computeFaceNodalArea( nodePosition, faceToNodeMap, faceMap[sei[iconn][0]][0], nodalArea0 );
-        computeFaceNodalArea( nodePosition, faceToNodeMap, faceMap[sei[iconn][1]][id1], nodalArea1 );
+        computeFaceNodalArea( nodePosition, faceToNodeMap, elem2dToFaces[sei[iconn][0]][0], nodalArea0 );
+        computeFaceNodalArea( nodePosition, faceToNodeMap, elem2dToFaces[sei[iconn][1]][id1], nodalArea1 );
         real64 const areafac = nodalArea0[node0index0] * nodalArea1[node0index1] + nodalArea0[node1index0] * nodalArea1[node1index1];
 
         // first index: face, second index: element (T/B), third index: dof (x, y, z)
@@ -1419,7 +1444,7 @@ void LagrangianContactSolver::assembleStabilization( MeshLevel const & mesh,
 
           for( localIndex i = 0; i < 2; ++i )
           {
-            localIndex const faceIndex = ( kf == 0 || id1 == 0 ) ? faceMap[fractureIndex][i] : faceMap[fractureIndex][1-i];
+            localIndex const faceIndex = ( kf == 0 || id1 == 0 ) ? elem2dToFaces[fractureIndex][i] : elem2dToFaces[fractureIndex][1 - i];
             localIndex const ke = faceToElemIndex[faceIndex][0] >= 0 ? 0 : 1;
 
             localIndex const er  = faceToElemRegion[faceIndex][ke];
@@ -1495,9 +1520,9 @@ void LagrangianContactSolver::assembleStabilization( MeshLevel const & mesh,
         else
         {
           array1d< real64 > avgNbar( 3 );
-          avgNbar[ 0 ] = faceArea[faceMap[ sei[iconn][0] ][0]] * Nbar0[0] + faceArea[faceMap[ sei[iconn][1] ][0]] * Nbar1[0];
-          avgNbar[ 1 ] = faceArea[faceMap[ sei[iconn][0] ][0]] * Nbar0[1] + faceArea[faceMap[ sei[iconn][1] ][0]] * Nbar1[1];
-          avgNbar[ 2 ] = faceArea[faceMap[ sei[iconn][0] ][0]] * Nbar0[2] + faceArea[faceMap[ sei[iconn][1] ][0]] * Nbar1[2];
+          avgNbar[ 0 ] = faceArea[elem2dToFaces[ sei[iconn][0] ][0]] * Nbar0[0] + faceArea[elem2dToFaces[ sei[iconn][1] ][0]] * Nbar1[0];
+          avgNbar[ 1 ] = faceArea[elem2dToFaces[ sei[iconn][0] ][0]] * Nbar0[1] + faceArea[elem2dToFaces[ sei[iconn][1] ][0]] * Nbar1[1];
+          avgNbar[ 2 ] = faceArea[elem2dToFaces[ sei[iconn][0] ][0]] * Nbar0[2] + faceArea[elem2dToFaces[ sei[iconn][1] ][0]] * Nbar1[2];
           LvArray::tensorOps::normalize< 3 >( avgNbar );
 
           computationalGeometry::RotationMatrix_3D( avgNbar.toSliceConst(), avgRotationMatrix );
@@ -1672,13 +1697,14 @@ void LagrangianContactSolver::assembleStabilization( MeshLevel const & mesh,
 void LagrangianContactSolver::applySystemSolution( DofManager const & dofManager,
                                                    arrayView1d< real64 const > const & localSolution,
                                                    real64 const scalingFactor,
+                                                   real64 const dt,
                                                    DomainPartition & domain )
 {
   GEOS_MARK_FUNCTION;
 
   if( m_setupSolidSolverDofs )
   {
-    m_solidSolver->applySystemSolution( dofManager, localSolution, scalingFactor, domain );
+    m_solidSolver->applySystemSolution( dofManager, localSolution, scalingFactor, dt, domain );
   }
 
   dofManager.addVectorToField( localSolution,
