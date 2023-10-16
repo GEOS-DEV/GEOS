@@ -167,7 +167,7 @@ public:
   { return m_rtTypeName; }
 
   WrapperBase & setRTTypeName( string_view rtTypeName )
-  { 
+  {
     m_rtTypeName = rtTypeName;
     return *this;
   }

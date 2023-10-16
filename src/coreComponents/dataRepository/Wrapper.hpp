@@ -802,7 +802,7 @@ public:
    * @copydoc WrapperBase::setRTTypeName(string const &)
    */
   Wrapper< T > & setRTTypeName( string_view rtTypeName )
-  { 
+  {
     WrapperBase::setRTTypeName( rtTypeName );
     return *this;
   }
