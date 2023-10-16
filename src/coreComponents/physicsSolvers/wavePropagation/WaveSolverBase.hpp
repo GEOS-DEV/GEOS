@@ -83,6 +83,8 @@ public:
     static constexpr char const * sourceValueString() { return "sourceValue"; }
 
     static constexpr char const * timeSourceFrequencyString() { return "timeSourceFrequency"; }
+    static constexpr char const * timeSourceDelayString() { return "timeSourceDelay"; }
+    static constexpr char const * rickerOrderString() { return "rickerOrder"; }
 
     static constexpr char const * receiverCoordinatesString() { return "receiverCoordinates"; }
 
@@ -94,7 +96,6 @@ public:
     static constexpr char const * receiverConstantsString() {return "receiverConstants"; }
     static constexpr char const * receiverIsLocalString() { return "receiverIsLocal"; }
 
-    static constexpr char const * rickerOrderString() { return "rickerOrder"; }
     static constexpr char const * outputSeismoTraceString() { return "outputSeismoTrace"; }
     static constexpr char const * dtSeismoTraceString() { return "dtSeismoTrace"; }
     static constexpr char const * indexSeismoTraceString() { return "indexSeismoTrace"; }
@@ -113,6 +114,7 @@ public:
     static constexpr char const * usePMLString() { return "usePML"; }
     static constexpr char const * parametersPMLString() { return "parametersPML"; }
 
+    static constexpr char const * freeSurfaceString() { return "FreeSurface"; }
   };
 
   /**
@@ -128,6 +130,13 @@ public:
 protected:
 
   virtual void postProcessInput() override;
+
+  /**
+   * @brief Utility function to check if a directory exists
+   * @param directoryName the name of the directory
+   * @return true if the directory exists, false otherwise
+   */
+  bool directoryExists( std::string const & directoryName );
 
   /**
    * @brief Apply free surface condition to the face defined in the geometry box of the xml
@@ -205,6 +214,9 @@ protected:
 
   /// Central frequency for the Ricker time source
   real32 m_timeSourceFrequency;
+
+  /// Source time delay (1 / f0 by default)
+  real32 m_timeSourceDelay;
 
   /// Coordinates of the receivers in the mesh
   array2d< real64 > m_receiverCoordinates;
