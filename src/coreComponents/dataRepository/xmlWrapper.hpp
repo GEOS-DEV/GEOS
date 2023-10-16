@@ -338,7 +338,7 @@ stringToInputVariable( T & target, string const & value, string const & regexStr
   std::istringstream ss( value );
   ss >> target;
   GEOS_THROW_IF( ss.fail() || !ss.eof(),
-                 "Error detected while parsing string \"" << value << 
+                 "Error detected while parsing string \"" << value <<
                  "\" to type " << LvArray::system::demangleType< T >(),
                  InputError );
 }

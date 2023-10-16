@@ -322,15 +322,15 @@ TEST( testStringUtilities, testStartsAndEndsWith )
   EXPECT_TRUE( stringutilities::endsWith( "d", "d" ) );
   EXPECT_TRUE( stringutilities::startsWith( "", "" ) );
   EXPECT_TRUE( stringutilities::endsWith( "", "" ) );
-  
+
   // Empty prefix / suffix are expected to work
   EXPECT_TRUE( stringutilities::startsWith( "Hello World", "" ) );
   EXPECT_TRUE( stringutilities::endsWith( "Hello World", "" ) );
-  
+
   // the prefix / suffix is longer than the input string: return false (inverted parameters mistake?)
   EXPECT_FALSE( stringutilities::startsWith( "Hello", "Hello World" ) );
   EXPECT_FALSE( stringutilities::endsWith( "World", "Hello World" ) );
-  
+
   // the prefix / suffix is longer than the input string: return false (inverted parameters mistake?)
   EXPECT_FALSE( stringutilities::startsWith( "Hello", "Hello World" ) );
   EXPECT_FALSE( stringutilities::endsWith( "World", "Hello World" ) );
