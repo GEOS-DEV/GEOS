@@ -77,10 +77,6 @@ TriaxialDriver::~TriaxialDriver()
 void TriaxialDriver::postProcessInput()
 {
 
-  GEOS_THROW_IF( m_mode != "stressControl" && m_mode != "strainControl" && m_mode != "mixedControl",
-                 getDataContext() << ": Test mode \'" << m_mode << "\' not recognized.",
-                 InputError );
-
   // initialize table functions
 
   FunctionManager & functionManager = FunctionManager::getInstance();
@@ -126,23 +122,25 @@ void TriaxialDriver::postProcessInput()
     real64 axi = axialFunction.evaluate( &m_table( n, TIME ) );
     real64 rad = radialFunction.evaluate( &m_table( n, TIME ) );
 
-    if( m_mode == "mixedControl" )
+    switch( m_mode )
     {
-      m_table( n, EPS0 ) = axi;
-      m_table( n, SIG1 ) = rad;
-      m_table( n, SIG2 ) = rad;
-    }
-    else if( m_mode == "strainControl" )
-    {
-      m_table( n, EPS0 ) = axi;
-      m_table( n, EPS1 ) = rad;
-      m_table( n, EPS2 ) = rad;
-    }
-    else if( m_mode == "stressControl" )
-    {
-      m_table( n, SIG0 ) = axi;
-      m_table( n, SIG1 ) = rad;
-      m_table( n, SIG2 ) = rad;
+      case Mode::MixedControl:
+        m_table( n, EPS0 ) = axi;
+        m_table( n, SIG1 ) = rad;
+        m_table( n, SIG2 ) = rad;
+        break;
+
+      case Mode::StrainControl:
+        m_table( n, EPS0 ) = axi;
+        m_table( n, EPS1 ) = rad;
+        m_table( n, EPS2 ) = rad;
+        break;
+
+      case Mode::StressControl:
+        m_table( n, SIG0 ) = axi;
+        m_table( n, SIG1 ) = rad;
+        m_table( n, SIG2 ) = rad;
+        break;
     }
   }
 
@@ -446,17 +444,19 @@ bool TriaxialDriver::execute( real64 const GEOS_UNUSED_PARAM( time_n ),
   {
     using SOLID_TYPE = TYPEOFREF( selectedSolid );
 
-    if( m_mode == "mixedControl" )
+    switch( m_mode )
     {
-      runMixedControlTest< SOLID_TYPE >( selectedSolid, m_table );
-    }
-    else if( m_mode == "strainControl" )
-    {
-      runStrainControlTest< SOLID_TYPE >( selectedSolid, m_table );
-    }
-    else if( m_mode == "stressControl" )
-    {
-      runStressControlTest< SOLID_TYPE >( selectedSolid, m_table );
+      case Mode::MixedControl:
+        runMixedControlTest< SOLID_TYPE >( selectedSolid, m_table );
+        break;
+
+      case Mode::StrainControl:
+        runStrainControlTest< SOLID_TYPE >( selectedSolid, m_table );
+        break;
+
+      case Mode::StressControl:
+        runStressControlTest< SOLID_TYPE >( selectedSolid, m_table );
+        break;
     }
   } );
 
