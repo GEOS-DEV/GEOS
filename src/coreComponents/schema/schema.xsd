@@ -5,17 +5,17 @@
 	</xsd:annotation>
 	<xsd:simpleType name="R1Tensor">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value=".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}" />
+			<xsd:pattern value=".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="R1Tensor32">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value=".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}" />
+			<xsd:pattern value=".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="R2SymTensor">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value=".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*){5}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}" />
+			<xsd:pattern value=".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){5}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="geos_dataRepository_PlotLevel">
@@ -30,17 +30,32 @@
 	</xsd:simpleType>
 	<xsd:simpleType name="globalIndex_array">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value=".*[\[\]`$].*|\{\s*(([+-]?[\d]+,\s*)*[+-]?[\d]+)?\s*\}" />
+			<xsd:pattern value=".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]+\s*,\s*)*[+-]?[\d]+\s*)?\}\s*" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="globalIndex_array2d">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value=".*[\[\]`$].*|\{\s*(\{\s*(([+-]?[\d]+,\s*)*[+-]?[\d]+)?\s*\},\s*)*\{\s*(([+-]?[\d]+,\s*)*[+-]?[\d]+)?\s*\}\s*\}" />
+			<xsd:pattern value=".*[\[\]`$].*|\s*\{\s*(\{\s*(([+-]?[\d]+\s*,\s*)*[+-]?[\d]+\s*)?\}\s*,\s*)*\{\s*(([+-]?[\d]+\s*,\s*)*[+-]?[\d]+\s*)?\}\s*\}\s*" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="globalIndex_array3d">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value=".*[\[\]`$].*|\{\s*(\{\s*(\{\s*(([+-]?[\d]+,\s*)*[+-]?[\d]+)?\s*\},\s*)*\{\s*(([+-]?[\d]+,\s*)*[+-]?[\d]+)?\s*\}\s*\},\s*)*\{\s*(\{\s*(([+-]?[\d]+,\s*)*[+-]?[\d]+)?\s*\},\s*)*\{\s*(([+-]?[\d]+,\s*)*[+-]?[\d]+)?\s*\}\s*\}\s*\}" />
+			<xsd:pattern value=".*[\[\]`$].*|\s*\{\s*(\{\s*(\{\s*(([+-]?[\d]+\s*,\s*)*[+-]?[\d]+\s*)?\}\s*,\s*)*\{\s*(([+-]?[\d]+\s*,\s*)*[+-]?[\d]+\s*)?\}\s*\}\s*,\s*)*\{\s*(\{\s*(([+-]?[\d]+\s*,\s*)*[+-]?[\d]+\s*)?\}\s*,\s*)*\{\s*(([+-]?[\d]+\s*,\s*)*[+-]?[\d]+\s*)?\}\s*\}\s*\}\s*" />
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="groupName">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value=".*[\[\]`$].*|[a-zA-Z0-9.\-_]+" />
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="groupNameRef">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value=".*[\[\]`$].*|[a-zA-Z0-9.\-_/]*" />
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="groupNameRef_array">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value=".*[\[\]`$].*|\s*\{\s*(([a-zA-Z0-9.\-_/]*\s*,\s*)*[a-zA-Z0-9.\-_/]*\s*)?\}\s*" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="integer">
@@ -50,17 +65,17 @@
 	</xsd:simpleType>
 	<xsd:simpleType name="integer_array">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value=".*[\[\]`$].*|\{\s*(([+-]?[\d]+,\s*)*[+-]?[\d]+)?\s*\}" />
+			<xsd:pattern value=".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]+\s*,\s*)*[+-]?[\d]+\s*)?\}\s*" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="integer_array2d">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value=".*[\[\]`$].*|\{\s*(\{\s*(([+-]?[\d]+,\s*)*[+-]?[\d]+)?\s*\},\s*)*\{\s*(([+-]?[\d]+,\s*)*[+-]?[\d]+)?\s*\}\s*\}" />
+			<xsd:pattern value=".*[\[\]`$].*|\s*\{\s*(\{\s*(([+-]?[\d]+\s*,\s*)*[+-]?[\d]+\s*)?\}\s*,\s*)*\{\s*(([+-]?[\d]+\s*,\s*)*[+-]?[\d]+\s*)?\}\s*\}\s*" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="integer_array3d">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value=".*[\[\]`$].*|\{\s*(\{\s*(\{\s*(([+-]?[\d]+,\s*)*[+-]?[\d]+)?\s*\},\s*)*\{\s*(([+-]?[\d]+,\s*)*[+-]?[\d]+)?\s*\}\s*\},\s*)*\{\s*(\{\s*(([+-]?[\d]+,\s*)*[+-]?[\d]+)?\s*\},\s*)*\{\s*(([+-]?[\d]+,\s*)*[+-]?[\d]+)?\s*\}\s*\}\s*\}" />
+			<xsd:pattern value=".*[\[\]`$].*|\s*\{\s*(\{\s*(\{\s*(([+-]?[\d]+\s*,\s*)*[+-]?[\d]+\s*)?\}\s*,\s*)*\{\s*(([+-]?[\d]+\s*,\s*)*[+-]?[\d]+\s*)?\}\s*\}\s*,\s*)*\{\s*(\{\s*(([+-]?[\d]+\s*,\s*)*[+-]?[\d]+\s*)?\}\s*,\s*)*\{\s*(([+-]?[\d]+\s*,\s*)*[+-]?[\d]+\s*)?\}\s*\}\s*\}\s*" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="localIndex">
@@ -70,17 +85,17 @@
 	</xsd:simpleType>
 	<xsd:simpleType name="localIndex_array">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value=".*[\[\]`$].*|\{\s*(([+-]?[\d]+,\s*)*[+-]?[\d]+)?\s*\}" />
+			<xsd:pattern value=".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]+\s*,\s*)*[+-]?[\d]+\s*)?\}\s*" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="localIndex_array2d">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value=".*[\[\]`$].*|\{\s*(\{\s*(([+-]?[\d]+,\s*)*[+-]?[\d]+)?\s*\},\s*)*\{\s*(([+-]?[\d]+,\s*)*[+-]?[\d]+)?\s*\}\s*\}" />
+			<xsd:pattern value=".*[\[\]`$].*|\s*\{\s*(\{\s*(([+-]?[\d]+\s*,\s*)*[+-]?[\d]+\s*)?\}\s*,\s*)*\{\s*(([+-]?[\d]+\s*,\s*)*[+-]?[\d]+\s*)?\}\s*\}\s*" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="localIndex_array3d">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value=".*[\[\]`$].*|\{\s*(\{\s*(\{\s*(([+-]?[\d]+,\s*)*[+-]?[\d]+)?\s*\},\s*)*\{\s*(([+-]?[\d]+,\s*)*[+-]?[\d]+)?\s*\}\s*\},\s*)*\{\s*(\{\s*(([+-]?[\d]+,\s*)*[+-]?[\d]+)?\s*\},\s*)*\{\s*(([+-]?[\d]+,\s*)*[+-]?[\d]+)?\s*\}\s*\}\s*\}" />
+			<xsd:pattern value=".*[\[\]`$].*|\s*\{\s*(\{\s*(\{\s*(([+-]?[\d]+\s*,\s*)*[+-]?[\d]+\s*)?\}\s*,\s*)*\{\s*(([+-]?[\d]+\s*,\s*)*[+-]?[\d]+\s*)?\}\s*\}\s*,\s*)*\{\s*(\{\s*(([+-]?[\d]+\s*,\s*)*[+-]?[\d]+\s*)?\}\s*,\s*)*\{\s*(([+-]?[\d]+\s*,\s*)*[+-]?[\d]+\s*)?\}\s*\}\s*\}\s*" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="mapPair">
@@ -95,7 +110,7 @@
 	</xsd:simpleType>
 	<xsd:simpleType name="path_array">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value=".*[\[\]`$].*|\{\s*(([^*?&lt;>\|:&quot;;,\s]+\s*,\s*)*[^*?&lt;>\|:&quot;;,\s]+\s*)?\s*\}" />
+			<xsd:pattern value=".*[\[\]`$].*|\s*\{\s*(([^*?&lt;>\|:&quot;;,\s]+\s*,\s*)*[^*?&lt;>\|:&quot;;,\s]+\s*)?\}\s*" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="real32">
@@ -105,17 +120,17 @@
 	</xsd:simpleType>
 	<xsd:simpleType name="real32_array">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value=".*[\[\]`$].*|\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*))?\s*\}" />
+			<xsd:pattern value=".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="real32_array2d">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value=".*[\[\]`$].*|\{\s*(\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*))?\s*\},\s*)*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*))?\s*\}\s*\}" />
+			<xsd:pattern value=".*[\[\]`$].*|\s*\{\s*(\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*,\s*)*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*\}\s*" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="real32_array3d">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value=".*[\[\]`$].*|\{\s*(\{\s*(\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*))?\s*\},\s*)*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*))?\s*\}\s*\},\s*)*\{\s*(\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*))?\s*\},\s*)*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*))?\s*\}\s*\}\s*\}" />
+			<xsd:pattern value=".*[\[\]`$].*|\s*\{\s*(\{\s*(\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*,\s*)*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*\}\s*,\s*)*\{\s*(\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*,\s*)*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*\}\s*\}\s*" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="real64">
@@ -125,22 +140,22 @@
 	</xsd:simpleType>
 	<xsd:simpleType name="real64_array">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value=".*[\[\]`$].*|\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*))?\s*\}" />
+			<xsd:pattern value=".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="real64_array2d">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value=".*[\[\]`$].*|\{\s*(\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*))?\s*\},\s*)*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*))?\s*\}\s*\}" />
+			<xsd:pattern value=".*[\[\]`$].*|\s*\{\s*(\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*,\s*)*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*\}\s*" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="real64_array3d">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value=".*[\[\]`$].*|\{\s*(\{\s*(\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*))?\s*\},\s*)*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*))?\s*\}\s*\},\s*)*\{\s*(\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*))?\s*\},\s*)*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*))?\s*\}\s*\}\s*\}" />
+			<xsd:pattern value=".*[\[\]`$].*|\s*\{\s*(\{\s*(\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*,\s*)*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*\}\s*,\s*)*\{\s*(\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*,\s*)*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*\}\s*\}\s*" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="real64_array4d">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value=".*[\[\]`$].*|\{\s*(\{\s*(\{\s*(\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*))?\s*\},\s*)*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*))?\s*\}\s*\},\s*)*\{\s*(\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*))?\s*\},\s*)*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*))?\s*\}\s*\}\s*\},\s*)*\{\s*(\{\s*(\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*))?\s*\},\s*)*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*))?\s*\}\s*\},\s*)*\{\s*(\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*))?\s*\},\s*)*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*))?\s*\}\s*\}\s*\}\s*\}" />
+			<xsd:pattern value=".*[\[\]`$].*|\s*\{\s*(\{\s*(\{\s*(\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*,\s*)*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*\}\s*,\s*)*\{\s*(\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*,\s*)*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*\}\s*\}\s*,\s*)*\{\s*(\{\s*(\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*,\s*)*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*\}\s*,\s*)*\{\s*(\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*,\s*)*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*\}\s*\}\s*\}\s*" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="string">
@@ -150,7 +165,7 @@
 	</xsd:simpleType>
 	<xsd:simpleType name="string_array">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value=".*[\[\]`$].*|\{\s*(([^,\{\}\s]+\s*,\s*)*[^,\{\}\s]+\s*)?\s*\}" />
+			<xsd:pattern value=".*[\[\]`$].*|\s*\{\s*(([^,\{\}\s]+\s*,\s*)*[^,\{\}\s]+\s*)?\}\s*" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:element name="Problem" type="ProblemType" />
@@ -832,11 +847,11 @@
 		<!--maxRuntime => The maximum allowable runtime for the job.-->
 		<xsd:attribute name="maxRuntime" type="real64" use="required" />
 		<!--target => Name of the object to be executed when the event criteria are met.-->
-		<xsd:attribute name="target" type="string" default="" />
+		<xsd:attribute name="target" type="groupNameRef" default="" />
 		<!--targetExactStartStop => If this option is set, the event will reduce its timestep requests to match any specified beginTime/endTimes exactly.-->
 		<xsd:attribute name="targetExactStartStop" type="integer" default="1" />
 		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
+		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="PeriodicEventType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -855,19 +870,19 @@
 		<!--forceDt => While active, this event will request this timestep value (ignoring any children/targets requests).-->
 		<xsd:attribute name="forceDt" type="real64" default="-1" />
 		<!--function => Name of an optional function to evaluate when the time/cycle criteria are met.If the result is greater than the specified eventThreshold, the function will continue to execute.-->
-		<xsd:attribute name="function" type="string" default="" />
+		<xsd:attribute name="function" type="groupNameRef" default="" />
 		<!--logLevel => Log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--maxEventDt => While active, this event will request a timestep <= this value (depending upon any child/target requests).-->
 		<xsd:attribute name="maxEventDt" type="real64" default="-1" />
 		<!--object => If the optional function requires an object as an input, specify its path here.-->
-		<xsd:attribute name="object" type="string" default="" />
+		<xsd:attribute name="object" type="groupNameRef" default="" />
 		<!--set => If the optional function is applied to an object, specify the setname to evaluate (default = everything).-->
-		<xsd:attribute name="set" type="string" default="" />
+		<xsd:attribute name="set" type="groupNameRef" default="" />
 		<!--stat => If the optional function is applied to an object, specify the statistic to compare to the eventThreshold.The current options include: min, avg, and max.-->
 		<xsd:attribute name="stat" type="integer" default="0" />
 		<!--target => Name of the object to be executed when the event criteria are met.-->
-		<xsd:attribute name="target" type="string" default="" />
+		<xsd:attribute name="target" type="groupNameRef" default="" />
 		<!--targetExactStartStop => If this option is set, the event will reduce its timestep requests to match any specified beginTime/endTimes exactly.-->
 		<xsd:attribute name="targetExactStartStop" type="integer" default="1" />
 		<!--targetExactTimestep => If this option is set, the event will reduce its timestep requests to match the specified timeFrequency perfectly: dt_request = min(dt_request, t_last + time_frequency - time)).-->
@@ -877,7 +892,7 @@
 		<!--timeFrequency => Event application frequency (time).  Note: if this value is specified, it will override any cycle-based behavior.-->
 		<xsd:attribute name="timeFrequency" type="real64" default="-1" />
 		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
+		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="SoloEventType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -898,7 +913,7 @@
 		<!--maxEventDt => While active, this event will request a timestep <= this value (depending upon any child/target requests).-->
 		<xsd:attribute name="maxEventDt" type="real64" default="-1" />
 		<!--target => Name of the object to be executed when the event criteria are met.-->
-		<xsd:attribute name="target" type="string" default="" />
+		<xsd:attribute name="target" type="groupNameRef" default="" />
 		<!--targetCycle => Targeted cycle to execute the event.-->
 		<xsd:attribute name="targetCycle" type="integer" default="-1" />
 		<!--targetExactStartStop => If this option is set, the event will reduce its timestep requests to match any specified beginTime/endTimes exactly.-->
@@ -908,7 +923,7 @@
 		<!--targetTime => Targeted time to execute the event.-->
 		<xsd:attribute name="targetTime" type="real64" default="-1" />
 		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
+		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:simpleType name="geos_EventManager_TimeOutputFormat">
 		<xsd:restriction base="xsd:string">
@@ -959,7 +974,7 @@ This keyword is ignored for single-phase flow simulations-->
 		<!--aquiferWaterViscosity => Aquifer water viscosity [Pa.s]-->
 		<xsd:attribute name="aquiferWaterViscosity" type="real64" use="required" />
 		<!--bcApplicationTableName => Name of table that specifies the on/off application of the boundary condition.-->
-		<xsd:attribute name="bcApplicationTableName" type="string" default="" />
+		<xsd:attribute name="bcApplicationTableName" type="groupNameRef" default="" />
 		<!--beginTime => Time at which the boundary condition will start being applied.-->
 		<xsd:attribute name="beginTime" type="real64" default="-1e+99" />
 		<!--direction => Direction to apply boundary condition to.-->
@@ -967,24 +982,24 @@ This keyword is ignored for single-phase flow simulations-->
 		<!--endTime => Time at which the boundary condition will stop being applied.-->
 		<xsd:attribute name="endTime" type="real64" default="1e+99" />
 		<!--functionName => Name of function that specifies variation of the boundary condition.-->
-		<xsd:attribute name="functionName" type="string" default="" />
+		<xsd:attribute name="functionName" type="groupNameRef" default="" />
 		<!--initialCondition => Boundary condition is applied as an initial condition.-->
 		<xsd:attribute name="initialCondition" type="integer" default="0" />
 		<!--logLevel => Log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--pressureInfluenceFunctionName => Name of the table describing the pressure influence function
 . If not provided, we use a default pressure influence function-->
-		<xsd:attribute name="pressureInfluenceFunctionName" type="string" default="" />
+		<xsd:attribute name="pressureInfluenceFunctionName" type="groupNameRef" default="" />
 		<!--scale => Scale factor for value of the boundary condition.-->
 		<xsd:attribute name="scale" type="real64" default="0" />
 		<!--setNames => Name of sets that boundary condition is applied to.-->
 		<xsd:attribute name="setNames" type="string_array" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
+		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="DirichletType">
 		<!--bcApplicationTableName => Name of table that specifies the on/off application of the boundary condition.-->
-		<xsd:attribute name="bcApplicationTableName" type="string" default="" />
+		<xsd:attribute name="bcApplicationTableName" type="groupNameRef" default="" />
 		<!--beginTime => Time at which the boundary condition will start being applied.-->
 		<xsd:attribute name="beginTime" type="real64" default="-1e+99" />
 		<!--component => Component of field (if tensor) to apply boundary condition to.-->
@@ -994,25 +1009,25 @@ This keyword is ignored for single-phase flow simulations-->
 		<!--endTime => Time at which the boundary condition will stop being applied.-->
 		<xsd:attribute name="endTime" type="real64" default="1e+99" />
 		<!--fieldName => Name of field that boundary condition is applied to.-->
-		<xsd:attribute name="fieldName" type="string" default="" />
+		<xsd:attribute name="fieldName" type="groupNameRef" default="" />
 		<!--functionName => Name of function that specifies variation of the boundary condition.-->
-		<xsd:attribute name="functionName" type="string" default="" />
+		<xsd:attribute name="functionName" type="groupNameRef" default="" />
 		<!--initialCondition => Boundary condition is applied as an initial condition.-->
 		<xsd:attribute name="initialCondition" type="integer" default="0" />
 		<!--logLevel => Log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--objectPath => Path to the target field-->
-		<xsd:attribute name="objectPath" type="string" default="" />
+		<xsd:attribute name="objectPath" type="groupNameRef" default="" />
 		<!--scale => Scale factor for value of the boundary condition.-->
 		<xsd:attribute name="scale" type="real64" default="0" />
 		<!--setNames => Name of sets that boundary condition is applied to.-->
 		<xsd:attribute name="setNames" type="string_array" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
+		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="FieldSpecificationType">
 		<!--bcApplicationTableName => Name of table that specifies the on/off application of the boundary condition.-->
-		<xsd:attribute name="bcApplicationTableName" type="string" default="" />
+		<xsd:attribute name="bcApplicationTableName" type="groupNameRef" default="" />
 		<!--beginTime => Time at which the boundary condition will start being applied.-->
 		<xsd:attribute name="beginTime" type="real64" default="-1e+99" />
 		<!--component => Component of field (if tensor) to apply boundary condition to.-->
@@ -1022,25 +1037,25 @@ This keyword is ignored for single-phase flow simulations-->
 		<!--endTime => Time at which the boundary condition will stop being applied.-->
 		<xsd:attribute name="endTime" type="real64" default="1e+99" />
 		<!--fieldName => Name of field that boundary condition is applied to.-->
-		<xsd:attribute name="fieldName" type="string" default="" />
+		<xsd:attribute name="fieldName" type="groupNameRef" default="" />
 		<!--functionName => Name of function that specifies variation of the boundary condition.-->
-		<xsd:attribute name="functionName" type="string" default="" />
+		<xsd:attribute name="functionName" type="groupNameRef" default="" />
 		<!--initialCondition => Boundary condition is applied as an initial condition.-->
 		<xsd:attribute name="initialCondition" type="integer" default="0" />
 		<!--logLevel => Log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--objectPath => Path to the target field-->
-		<xsd:attribute name="objectPath" type="string" default="" />
+		<xsd:attribute name="objectPath" type="groupNameRef" default="" />
 		<!--scale => Scale factor for value of the boundary condition.-->
 		<xsd:attribute name="scale" type="real64" default="0" />
 		<!--setNames => Name of sets that boundary condition is applied to.-->
 		<xsd:attribute name="setNames" type="string_array" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
+		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="HydrostaticEquilibriumType">
 		<!--bcApplicationTableName => Name of table that specifies the on/off application of the boundary condition.-->
-		<xsd:attribute name="bcApplicationTableName" type="string" default="" />
+		<xsd:attribute name="bcApplicationTableName" type="groupNameRef" default="" />
 		<!--beginTime => Time at which the boundary condition will start being applied.-->
 		<xsd:attribute name="beginTime" type="real64" default="-1e+99" />
 		<!--componentFractionVsElevationTableNames => Names of the tables specifying the (component fraction vs elevation) relationship for each component-->
@@ -1060,25 +1075,25 @@ This keyword is ignored for single-phase flow simulations-->
 		<!--equilibrationTolerance => Tolerance in the fixed-point iteration scheme used for hydrostatic initialization-->
 		<xsd:attribute name="equilibrationTolerance" type="real64" default="0.001" />
 		<!--functionName => Name of function that specifies variation of the boundary condition.-->
-		<xsd:attribute name="functionName" type="string" default="" />
+		<xsd:attribute name="functionName" type="groupNameRef" default="" />
 		<!--initialPhaseName => Name of the phase initially saturating the reservoir-->
-		<xsd:attribute name="initialPhaseName" type="string" default="" />
+		<xsd:attribute name="initialPhaseName" type="groupNameRef" default="" />
 		<!--logLevel => Log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--maxNumberOfEquilibrationIterations => Maximum number of equilibration iterations-->
 		<xsd:attribute name="maxNumberOfEquilibrationIterations" type="integer" default="5" />
 		<!--objectPath => Path to the target field-->
-		<xsd:attribute name="objectPath" type="string" default="" />
+		<xsd:attribute name="objectPath" type="groupNameRef" default="" />
 		<!--scale => Scale factor for value of the boundary condition.-->
 		<xsd:attribute name="scale" type="real64" default="0" />
 		<!--temperatureVsElevationTableName => Name of the table specifying the (temperature [K] vs elevation) relationship-->
-		<xsd:attribute name="temperatureVsElevationTableName" type="string" default="" />
+		<xsd:attribute name="temperatureVsElevationTableName" type="groupNameRef" default="" />
 		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
+		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="PMLType">
 		<!--bcApplicationTableName => Name of table that specifies the on/off application of the boundary condition.-->
-		<xsd:attribute name="bcApplicationTableName" type="string" default="" />
+		<xsd:attribute name="bcApplicationTableName" type="groupNameRef" default="" />
 		<!--beginTime => Time at which the boundary condition will start being applied.-->
 		<xsd:attribute name="beginTime" type="real64" default="-1e+99" />
 		<!--component => Component of field (if tensor) to apply boundary condition to.-->
@@ -1088,11 +1103,11 @@ This keyword is ignored for single-phase flow simulations-->
 		<!--endTime => Time at which the boundary condition will stop being applied.-->
 		<xsd:attribute name="endTime" type="real64" default="1e+99" />
 		<!--functionName => Name of function that specifies variation of the boundary condition.-->
-		<xsd:attribute name="functionName" type="string" default="" />
+		<xsd:attribute name="functionName" type="groupNameRef" default="" />
 		<!--logLevel => Log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--objectPath => Path to the target field-->
-		<xsd:attribute name="objectPath" type="string" default="" />
+		<xsd:attribute name="objectPath" type="groupNameRef" default="" />
 		<!--reflectivity => Desired reflectivity of the PML region, used to compute the damping profile-->
 		<xsd:attribute name="reflectivity" type="real32" default="0.001" />
 		<!--scale => Scale factor for value of the boundary condition.-->
@@ -1112,11 +1127,11 @@ This keyword is ignored for single-phase flow simulations-->
 		<!--xMin => Minimum (x,y,z) coordinates of the inner PML boundaries-->
 		<xsd:attribute name="xMin" type="R1Tensor32" default="{-3.40282e+38,-3.40282e+38,-3.40282e+38}" />
 		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
+		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="SourceFluxType">
 		<!--bcApplicationTableName => Name of table that specifies the on/off application of the boundary condition.-->
-		<xsd:attribute name="bcApplicationTableName" type="string" default="" />
+		<xsd:attribute name="bcApplicationTableName" type="groupNameRef" default="" />
 		<!--beginTime => Time at which the boundary condition will start being applied.-->
 		<xsd:attribute name="beginTime" type="real64" default="-1e+99" />
 		<!--component => Component of field (if tensor) to apply boundary condition to.-->
@@ -1126,23 +1141,23 @@ This keyword is ignored for single-phase flow simulations-->
 		<!--endTime => Time at which the boundary condition will stop being applied.-->
 		<xsd:attribute name="endTime" type="real64" default="1e+99" />
 		<!--functionName => Name of function that specifies variation of the boundary condition.-->
-		<xsd:attribute name="functionName" type="string" default="" />
+		<xsd:attribute name="functionName" type="groupNameRef" default="" />
 		<!--initialCondition => Boundary condition is applied as an initial condition.-->
 		<xsd:attribute name="initialCondition" type="integer" default="0" />
 		<!--logLevel => Log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--objectPath => Path to the target field-->
-		<xsd:attribute name="objectPath" type="string" default="" />
+		<xsd:attribute name="objectPath" type="groupNameRef" default="" />
 		<!--scale => Scale factor for value of the boundary condition.-->
 		<xsd:attribute name="scale" type="real64" default="0" />
 		<!--setNames => Name of sets that boundary condition is applied to.-->
 		<xsd:attribute name="setNames" type="string_array" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
+		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="TractionType">
 		<!--bcApplicationTableName => Name of table that specifies the on/off application of the boundary condition.-->
-		<xsd:attribute name="bcApplicationTableName" type="string" default="" />
+		<xsd:attribute name="bcApplicationTableName" type="groupNameRef" default="" />
 		<!--beginTime => Time at which the boundary condition will start being applied.-->
 		<xsd:attribute name="beginTime" type="real64" default="-1e+99" />
 		<!--direction => Direction to apply boundary condition to.-->
@@ -1150,7 +1165,7 @@ This keyword is ignored for single-phase flow simulations-->
 		<!--endTime => Time at which the boundary condition will stop being applied.-->
 		<xsd:attribute name="endTime" type="real64" default="1e+99" />
 		<!--functionName => Name of function that specifies variation of the boundary condition.-->
-		<xsd:attribute name="functionName" type="string" default="" />
+		<xsd:attribute name="functionName" type="groupNameRef" default="" />
 		<!--initialCondition => Boundary condition is applied as an initial condition.-->
 		<xsd:attribute name="initialCondition" type="integer" default="0" />
 		<!--inputStress => Input stress for tractionType = stress-->
@@ -1158,7 +1173,7 @@ This keyword is ignored for single-phase flow simulations-->
 		<!--logLevel => Log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--objectPath => Path to the target field-->
-		<xsd:attribute name="objectPath" type="string" default="" />
+		<xsd:attribute name="objectPath" type="groupNameRef" default="" />
 		<!--scale => Scale factor for value of the boundary condition.-->
 		<xsd:attribute name="scale" type="real64" default="0" />
 		<!--setNames => Name of sets that boundary condition is applied to.-->
@@ -1169,7 +1184,7 @@ normal - traction is applied to the faces as a pressure specified from the produ
 stress - traction is applied to the faces as specified by the inner product of input stress and face normal.-->
 		<xsd:attribute name="tractionType" type="geos_TractionBoundaryCondition_TractionType" default="vector" />
 		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
+		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:simpleType name="geos_TractionBoundaryCondition_TractionType">
 		<xsd:restriction base="xsd:string">
@@ -1194,13 +1209,13 @@ stress - traction is applied to the faces as specified by the inner product of i
 		<!--variableNames => List of variables in expression-->
 		<xsd:attribute name="variableNames" type="string_array" default="{}" />
 		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
+		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="MultivariableTableFunctionType">
 		<!--inputVarNames => Name of fields are input to function.-->
 		<xsd:attribute name="inputVarNames" type="string_array" default="{}" />
 		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
+		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="SymbolicFunctionType">
 		<!--expression => Symbolic math expression-->
@@ -1210,7 +1225,7 @@ stress - traction is applied to the faces as specified by the inner product of i
 		<!--variableNames => List of variables in expression.  The order must match the evaluate argument-->
 		<xsd:attribute name="variableNames" type="string_array" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
+		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="TableFunctionType">
 		<!--coordinateFiles => List of coordinate file names for ND Table-->
@@ -1230,7 +1245,7 @@ stress - traction is applied to the faces as specified by the inner product of i
 		<!--voxelFile => Voxel file name for ND Table-->
 		<xsd:attribute name="voxelFile" type="path" default="" />
 		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
+		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:simpleType name="geos_TableFunction_InterpolationType">
 		<xsd:restriction base="xsd:string">
@@ -1255,7 +1270,7 @@ stress - traction is applied to the faces as specified by the inner product of i
 		<!--xMin => Minimum (x,y,z) coordinates of the box-->
 		<xsd:attribute name="xMin" type="R1Tensor" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
+		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="CustomPolarObjectType">
 		<!--center => (x,y,z) coordinates of the center of the CustomPolarObject-->
@@ -1271,7 +1286,7 @@ stress - traction is applied to the faces as specified by the inner product of i
 		<!--widthVector => Tangent vector defining the orthonormal basis along with the normal.-->
 		<xsd:attribute name="widthVector" type="R1Tensor" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
+		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="CylinderType">
 		<!--firstFaceCenter => Center point of the first face of the cylinder-->
@@ -1283,7 +1298,7 @@ stress - traction is applied to the faces as specified by the inner product of i
 		<!--secondFaceCenter => Center point of the second face of the cylinder-->
 		<xsd:attribute name="secondFaceCenter" type="R1Tensor" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
+		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="DiscType">
 		<!--center => (x,y,z) coordinates of the center of the disc-->
@@ -1299,7 +1314,7 @@ stress - traction is applied to the faces as specified by the inner product of i
 		<!--widthVector => Tangent vector defining the orthonormal basis along with the normal.-->
 		<xsd:attribute name="widthVector" type="R1Tensor" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
+		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="RectangleType">
 		<!--dimensions => Length and width of the bounded plane-->
@@ -1315,7 +1330,7 @@ stress - traction is applied to the faces as specified by the inner product of i
 		<!--widthVector => Tangent vector defining the orthonormal basis along with the normal.-->
 		<xsd:attribute name="widthVector" type="R1Tensor" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
+		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="ThickPlaneType">
 		<!--normal => Normal (n_x,n_y,n_z) to the plane (will be normalized automatically)-->
@@ -1325,7 +1340,7 @@ stress - traction is applied to the faces as specified by the inner product of i
 		<!--thickness => The total thickness of the plane (with half to each side)-->
 		<xsd:attribute name="thickness" type="real64" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
+		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="MeshType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -1385,7 +1400,7 @@ stress - traction is applied to the faces as specified by the inner product of i
 		<!--zCoords => z-coordinates of each mesh block vertex-->
 		<xsd:attribute name="zCoords" type="real64_array" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
+		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="InternalWellType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -1406,11 +1421,11 @@ stress - traction is applied to the faces as specified by the inner product of i
 		<!--radius => Radius of the well [m]-->
 		<xsd:attribute name="radius" type="real64" use="required" />
 		<!--wellControlsName => Name of the set of constraints associated with this well-->
-		<xsd:attribute name="wellControlsName" type="string" use="required" />
+		<xsd:attribute name="wellControlsName" type="groupNameRef" use="required" />
 		<!--wellRegionName => Name of the well element region-->
-		<xsd:attribute name="wellRegionName" type="string" use="required" />
+		<xsd:attribute name="wellRegionName" type="groupNameRef" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
+		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="PerforationType">
 		<!--distanceFromHead => Linear distance from well head to the perforation-->
@@ -1418,7 +1433,7 @@ stress - traction is applied to the faces as specified by the inner product of i
 		<!--transmissibility => Perforation transmissibility-->
 		<xsd:attribute name="transmissibility" type="real64" default="-1" />
 		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
+		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="InternalWellboreType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -1468,7 +1483,7 @@ stress - traction is applied to the faces as specified by the inner product of i
 		<!--zCoords => z-coordinates of each mesh block vertex-->
 		<xsd:attribute name="zCoords" type="real64_array" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
+		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="VTKMeshType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -1490,7 +1505,7 @@ stress - traction is applied to the faces as specified by the inner product of i
 		<!--logLevel => Log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--mainBlockName => For multi-block files, name of the 3d mesh block.-->
-		<xsd:attribute name="mainBlockName" type="string" default="main" />
+		<xsd:attribute name="mainBlockName" type="groupNameRef" default="main" />
 		<!--nodesetNames => Names of the VTK nodesets to import-->
 		<xsd:attribute name="nodesetNames" type="string_array" default="{}" />
 		<!--partitionMethod => Method (library) used to partition the mesh-->
@@ -1498,7 +1513,7 @@ stress - traction is applied to the faces as specified by the inner product of i
 		<!--partitionRefinement => Number of partitioning refinement iterations (defaults to 1, recommended value).A value of 0 disables graph partitioning and keeps simple kd-tree partitions (not recommended). Values higher than 1 may lead to slightly improved partitioning, but yield diminishing returns.-->
 		<xsd:attribute name="partitionRefinement" type="integer" default="1" />
 		<!--regionAttribute => Name of the VTK cell attribute to use as region marker-->
-		<xsd:attribute name="regionAttribute" type="string" default="attribute" />
+		<xsd:attribute name="regionAttribute" type="groupNameRef" default="attribute" />
 		<!--scale => Scale the coordinates of the vertices by given scale factors (after translation)-->
 		<xsd:attribute name="scale" type="R1Tensor" default="{1,1,1}" />
 		<!--surfacicFieldsInGEOSX => Names of the surfacic fields in GEOSX to import into-->
@@ -1510,7 +1525,7 @@ stress - traction is applied to the faces as specified by the inner product of i
 		<!--useGlobalIds => Controls the use of global IDs in the input file for cells and points. If set to 0 (default value), the GlobalId arrays in the input mesh are used if available, and generated otherwise. If set to a negative value, the GlobalId arrays in the input mesh are not used, and generated global Ids are automatically generated. If set to a positive value, the GlobalId arrays in the input mesh are used and required, and the simulation aborts if they are not available-->
 		<xsd:attribute name="useGlobalIds" type="integer" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
+		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:simpleType name="geos_vtk_PartitionMethod">
 		<xsd:restriction base="xsd:string">
@@ -1546,14 +1561,19 @@ stress - traction is applied to the faces as specified by the inner product of i
 	</xsd:complexType>
 	<xsd:complexType name="FiniteElementSpaceType">
 		<!--formulation => Specifier to indicate any specialized formuations. For instance, one of the many enhanced assumed strain methods of the Hexahedron parent shape would be indicated here-->
-		<xsd:attribute name="formulation" type="string" default="default" />
+		<xsd:attribute name="formulation" type="geos_FiniteElementDiscretization_Formulation" default="default" />
 		<!--order => The order of the finite element basis.-->
 		<xsd:attribute name="order" type="integer" use="required" />
 		<!--useVirtualElements => Specifier to indicate whether to force the use of VEM-->
 		<xsd:attribute name="useVirtualElements" type="integer" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
+		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
+	<xsd:simpleType name="geos_FiniteElementDiscretization_Formulation">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value=".*[\[\]`$].*|default|SEM" />
+		</xsd:restriction>
+	</xsd:simpleType>
 	<xsd:complexType name="LinearSolverParametersType">
 		<!--amgAggressiveCoarseningLevels => AMG number of levels for aggressive coarsening-->
 		<xsd:attribute name="amgAggressiveCoarseningLevels" type="integer" default="0" />
@@ -1760,7 +1780,7 @@ the relative residual norm satisfies:
 		<!--innerProductType => Type of inner product used in the hybrid FVM solver-->
 		<xsd:attribute name="innerProductType" type="string" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
+		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="TwoPointFluxApproximationType">
 		<!--areaRelTol => Relative tolerance for area calculations.-->
@@ -1774,7 +1794,7 @@ the relative residual norm satisfies:
 		<!--usePEDFM => (no description available)-->
 		<xsd:attribute name="usePEDFM" type="integer" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
+		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:simpleType name="geos_UpwindingScheme">
 		<xsd:restriction base="xsd:string">
@@ -1802,7 +1822,7 @@ the relative residual norm satisfies:
 		<!--plotLevel => Determines which fields to write.-->
 		<xsd:attribute name="plotLevel" type="geos_dataRepository_PlotLevel" default="1" />
 		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
+		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="ChomboIOType">
 		<!--beginCycle => Cycle at which the coupling will commence.-->
@@ -1820,7 +1840,7 @@ the relative residual norm satisfies:
 		<!--waitForInput => True iff geosx should wait for chombo to write out a file. When true the inputPath must be set.-->
 		<xsd:attribute name="waitForInput" type="integer" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
+		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="PythonType">
 		<!--childDirectory => Child directory path-->
@@ -1828,7 +1848,7 @@ the relative residual norm satisfies:
 		<!--parallelThreads => Number of plot files.-->
 		<xsd:attribute name="parallelThreads" type="integer" default="1" />
 		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
+		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="RestartType">
 		<!--childDirectory => Child directory path-->
@@ -1836,13 +1856,13 @@ the relative residual norm satisfies:
 		<!--parallelThreads => Number of plot files.-->
 		<xsd:attribute name="parallelThreads" type="integer" default="1" />
 		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
+		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="SiloType">
 		<!--childDirectory => Child directory path-->
 		<xsd:attribute name="childDirectory" type="string" default="" />
 		<!--fieldNames => Names of the fields to output. If this attribute is specified, GEOSX outputs all (and only) the fields specified by the user, regardless of their plotLevel-->
-		<xsd:attribute name="fieldNames" type="string_array" default="{}" />
+		<xsd:attribute name="fieldNames" type="groupNameRef" default="{}" />
 		<!--onlyPlotSpecifiedFieldNames => If this flag is equal to 1, then we only plot the fields listed in `fieldNames`. Otherwise, we plot all the fields with the required `plotLevel`, plus the fields listed in `fieldNames`-->
 		<xsd:attribute name="onlyPlotSpecifiedFieldNames" type="integer" default="0" />
 		<!--parallelThreads => Number of plot files.-->
@@ -1860,7 +1880,7 @@ the relative residual norm satisfies:
 		<!--writeFaceElementMesh => (no description available)-->
 		<xsd:attribute name="writeFaceElementMesh" type="integer" default="1" />
 		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
+		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="TimeHistoryType">
 		<!--childDirectory => Child directory path-->
@@ -1874,13 +1894,13 @@ the relative residual norm satisfies:
 		<!--sources => A list of collectors from which to collect and output time history information.-->
 		<xsd:attribute name="sources" type="string_array" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
+		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="VTKType">
 		<!--childDirectory => Child directory path-->
 		<xsd:attribute name="childDirectory" type="string" default="" />
 		<!--fieldNames => Names of the fields to output. If this attribute is specified, GEOSX outputs all the fields specified by the user, regardless of their `plotLevel`-->
-		<xsd:attribute name="fieldNames" type="string_array" default="{}" />
+		<xsd:attribute name="fieldNames" type="groupNameRef" default="{}" />
 		<!--format => Output data format.  Valid options: ``binary``, ``ascii``-->
 		<xsd:attribute name="format" type="geos_vtk_VTKOutputMode" default="binary" />
 		<!--onlyPlotSpecifiedFieldNames => If this flag is equal to 1, then we only plot the fields listed in `fieldNames`. Otherwise, we plot all the fields with the required `plotLevel`, plus the fields listed in `fieldNames`-->
@@ -1898,7 +1918,7 @@ the relative residual norm satisfies:
 		<!--writeGhostCells => Should the vtk files contain the ghost cells or not.-->
 		<xsd:attribute name="writeGhostCells" type="integer" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
+		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:simpleType name="geos_vtk_VTKOutputMode">
 		<xsd:restriction base="xsd:string">
@@ -1966,7 +1986,7 @@ the relative residual norm satisfies:
 		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
 		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
 		<!--discretization => Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` discretization should be specified.-->
-		<xsd:attribute name="discretization" type="string" use="required" />
+		<xsd:attribute name="discretization" type="groupNameRef" use="required" />
 		<!--dtSeismoTrace => Time step for output pressure at receivers-->
 		<xsd:attribute name="dtSeismoTrace" type="real64" default="0" />
 		<!--enableLifo => Set to 1 to enable LIFO storage feature-->
@@ -2002,7 +2022,7 @@ the relative residual norm satisfies:
 		<!--timeSourceFrequency => Central frequency for the time source-->
 		<xsd:attribute name="timeSourceFrequency" type="real32" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
+		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="AcousticSEMType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -2012,7 +2032,7 @@ the relative residual norm satisfies:
 		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
 		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
 		<!--discretization => Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` discretization should be specified.-->
-		<xsd:attribute name="discretization" type="string" use="required" />
+		<xsd:attribute name="discretization" type="groupNameRef" use="required" />
 		<!--dtSeismoTrace => Time step for output pressure at receivers-->
 		<xsd:attribute name="dtSeismoTrace" type="real64" default="0" />
 		<!--enableLifo => Set to 1 to enable LIFO storage feature-->
@@ -2048,7 +2068,7 @@ the relative residual norm satisfies:
 		<!--timeSourceFrequency => Central frequency for the time source-->
 		<xsd:attribute name="timeSourceFrequency" type="real32" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
+		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="CompositionalMultiphaseFVMType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -2060,7 +2080,7 @@ the relative residual norm satisfies:
 		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
 		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
 		<!--discretization => Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` discretization should be specified.-->
-		<xsd:attribute name="discretization" type="string" use="required" />
+		<xsd:attribute name="discretization" type="groupNameRef" use="required" />
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
 		<!--isThermal => Flag indicating whether the problem is thermal or not.-->
@@ -2088,7 +2108,7 @@ the relative residual norm satisfies:
 		<!--useMass => Use mass formulation instead of molar-->
 		<xsd:attribute name="useMass" type="integer" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
+		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:simpleType name="geos_solverBaseKernels_NormType">
 		<xsd:restriction base="xsd:string">
@@ -2105,7 +2125,7 @@ the relative residual norm satisfies:
 		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
 		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
 		<!--discretization => Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` discretization should be specified.-->
-		<xsd:attribute name="discretization" type="string" use="required" />
+		<xsd:attribute name="discretization" type="groupNameRef" use="required" />
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
 		<!--isThermal => Flag indicating whether the problem is thermal or not.-->
@@ -2133,7 +2153,7 @@ the relative residual norm satisfies:
 		<!--useMass => Use mass formulation instead of molar-->
 		<xsd:attribute name="useMass" type="integer" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
+		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="CompositionalMultiphaseReservoirType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -2143,7 +2163,7 @@ the relative residual norm satisfies:
 		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
 		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
 		<!--flowSolverName => Name of the flow solver used by the coupled solver-->
-		<xsd:attribute name="flowSolverName" type="string" use="required" />
+		<xsd:attribute name="flowSolverName" type="groupNameRef" use="required" />
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
 		<!--logLevel => Log level-->
@@ -2151,9 +2171,9 @@ the relative residual norm satisfies:
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="string_array" use="required" />
 		<!--wellSolverName => Name of the well solver used by the coupled solver-->
-		<xsd:attribute name="wellSolverName" type="string" use="required" />
+		<xsd:attribute name="wellSolverName" type="groupNameRef" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
+		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="CompositionalMultiphaseWellType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -2178,7 +2198,7 @@ the relative residual norm satisfies:
 		<!--useMass => Use mass formulation instead of molar-->
 		<xsd:attribute name="useMass" type="integer" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
+		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="WellControlsType">
 		<!--control => Well control. Valid options:
@@ -2205,7 +2225,7 @@ the relative residual norm satisfies:
 		<xsd:attribute name="referenceElevation" type="real64" use="required" />
 		<!--statusTableName => Name of the well status table when the status of the well is a time dependent function. 
 If the status function evaluates to a positive value at the current time, the well will be open otherwise the well will be shut.-->
-		<xsd:attribute name="statusTableName" type="string" default="" />
+		<xsd:attribute name="statusTableName" type="groupNameRef" default="" />
 		<!--surfacePressure => Surface pressure used to compute volumetric rates when surface conditions are used [Pa]-->
 		<xsd:attribute name="surfacePressure" type="real64" default="0" />
 		<!--surfaceTemperature => Surface temperature used to compute volumetric rates when surface conditions are used [K]-->
@@ -2213,17 +2233,17 @@ If the status function evaluates to a positive value at the current time, the we
 		<!--targetBHP => Target bottom-hole pressure [Pa]-->
 		<xsd:attribute name="targetBHP" type="real64" default="0" />
 		<!--targetBHPTableName => Name of the BHP table when the rate is a time dependent function-->
-		<xsd:attribute name="targetBHPTableName" type="string" default="" />
+		<xsd:attribute name="targetBHPTableName" type="groupNameRef" default="" />
 		<!--targetPhaseName => Name of the target phase-->
-		<xsd:attribute name="targetPhaseName" type="string" default="" />
+		<xsd:attribute name="targetPhaseName" type="groupNameRef" default="" />
 		<!--targetPhaseRate => Target phase volumetric rate (if useSurfaceConditions: [surface m^3/s]; else [reservoir m^3/s])-->
 		<xsd:attribute name="targetPhaseRate" type="real64" default="0" />
 		<!--targetPhaseRateTableName => Name of the phase rate table when the rate is a time dependent function-->
-		<xsd:attribute name="targetPhaseRateTableName" type="string" default="" />
+		<xsd:attribute name="targetPhaseRateTableName" type="groupNameRef" default="" />
 		<!--targetTotalRate => Target total volumetric rate (if useSurfaceConditions: [surface m^3/s]; else [reservoir m^3/s])-->
 		<xsd:attribute name="targetTotalRate" type="real64" default="0" />
 		<!--targetTotalRateTableName => Name of the total rate table when the rate is a time dependent function-->
-		<xsd:attribute name="targetTotalRateTableName" type="string" default="" />
+		<xsd:attribute name="targetTotalRateTableName" type="groupNameRef" default="" />
 		<!--type => Well type. Valid options:
 * producer
 * injector-->
@@ -2232,7 +2252,7 @@ If the status function evaluates to a positive value at the current time, the we
 Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		<xsd:attribute name="useSurfaceConditions" type="integer" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
+		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:simpleType name="geos_WellControls_Control">
 		<xsd:restriction base="xsd:string">
@@ -2252,7 +2272,7 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
 		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
 		<!--discretization => Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` discretization should be specified.-->
-		<xsd:attribute name="discretization" type="string" use="required" />
+		<xsd:attribute name="discretization" type="groupNameRef" use="required" />
 		<!--dtSeismoTrace => Time step for output pressure at receivers-->
 		<xsd:attribute name="dtSeismoTrace" type="real64" default="0" />
 		<!--enableLifo => Set to 1 to enable LIFO storage feature-->
@@ -2288,7 +2308,7 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		<!--timeSourceFrequency => Central frequency for the time source-->
 		<xsd:attribute name="timeSourceFrequency" type="real32" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
+		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="ElasticSEMType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -2298,7 +2318,7 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
 		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
 		<!--discretization => Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` discretization should be specified.-->
-		<xsd:attribute name="discretization" type="string" use="required" />
+		<xsd:attribute name="discretization" type="groupNameRef" use="required" />
 		<!--dtSeismoTrace => Time step for output pressure at receivers-->
 		<xsd:attribute name="dtSeismoTrace" type="real64" default="0" />
 		<!--enableLifo => Set to 1 to enable LIFO storage feature-->
@@ -2338,7 +2358,7 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		<!--timeSourceFrequency => Central frequency for the time source-->
 		<xsd:attribute name="timeSourceFrequency" type="real32" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
+		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="EmbeddedSurfaceGeneratorType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -2348,9 +2368,9 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
 		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
 		<!--discretization => Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` discretization should be specified.-->
-		<xsd:attribute name="discretization" type="string" use="required" />
+		<xsd:attribute name="discretization" type="groupNameRef" use="required" />
 		<!--fractureRegion => (no description available)-->
-		<xsd:attribute name="fractureRegion" type="string" default="FractureRegion" />
+		<xsd:attribute name="fractureRegion" type="groupNameRef" default="FractureRegion" />
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
 		<!--logLevel => Log level-->
@@ -2362,7 +2382,7 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="string_array" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
+		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="FlowProppantTransportType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -2372,17 +2392,17 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
 		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
 		<!--flowSolverName => Name of the flow solver used by the coupled solver-->
-		<xsd:attribute name="flowSolverName" type="string" use="required" />
+		<xsd:attribute name="flowSolverName" type="groupNameRef" use="required" />
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
 		<!--logLevel => Log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--proppantSolverName => Name of the proppant solver used by the coupled solver-->
-		<xsd:attribute name="proppantSolverName" type="string" use="required" />
+		<xsd:attribute name="proppantSolverName" type="groupNameRef" use="required" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="string_array" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
+		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="HydrofractureType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -2392,9 +2412,9 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
 		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
 		<!--contactRelationName => Name of contact relation to enforce constraints on fracture boundary.-->
-		<xsd:attribute name="contactRelationName" type="string" use="required" />
+		<xsd:attribute name="contactRelationName" type="groupNameRef" use="required" />
 		<!--flowSolverName => Name of the flow solver used by the coupled solver-->
-		<xsd:attribute name="flowSolverName" type="string" use="required" />
+		<xsd:attribute name="flowSolverName" type="groupNameRef" use="required" />
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
 		<!--isMatrixPoroelastic => (no description available)-->
@@ -2406,13 +2426,13 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		<!--maxNumResolves => Value to indicate how many resolves may be executed to perform surface generation after the execution of flow and mechanics solver. -->
 		<xsd:attribute name="maxNumResolves" type="integer" default="10" />
 		<!--solidSolverName => Name of the solid solver used by the coupled solver-->
-		<xsd:attribute name="solidSolverName" type="string" use="required" />
+		<xsd:attribute name="solidSolverName" type="groupNameRef" use="required" />
 		<!--surfaceGeneratorName => Name of the surface generator to use in the hydrofracture solver-->
-		<xsd:attribute name="surfaceGeneratorName" type="string" use="required" />
+		<xsd:attribute name="surfaceGeneratorName" type="groupNameRef" use="required" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="string_array" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
+		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="LagrangianContactType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -2422,23 +2442,23 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
 		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
 		<!--contactRelationName => Name of contact relation to enforce constraints on fracture boundary.-->
-		<xsd:attribute name="contactRelationName" type="string" use="required" />
+		<xsd:attribute name="contactRelationName" type="groupNameRef" use="required" />
 		<!--discretization => Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` discretization should be specified.-->
-		<xsd:attribute name="discretization" type="string" use="required" />
+		<xsd:attribute name="discretization" type="groupNameRef" use="required" />
 		<!--fractureRegionName => Name of the fracture region.-->
-		<xsd:attribute name="fractureRegionName" type="string" use="required" />
+		<xsd:attribute name="fractureRegionName" type="groupNameRef" use="required" />
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
 		<!--logLevel => Log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--solidSolverName => Name of the solid mechanics solver in the rock matrix-->
-		<xsd:attribute name="solidSolverName" type="string" use="required" />
+		<xsd:attribute name="solidSolverName" type="groupNameRef" use="required" />
 		<!--stabilizationName => Name of the stabilization to use in the lagrangian contact solver-->
-		<xsd:attribute name="stabilizationName" type="string" use="required" />
+		<xsd:attribute name="stabilizationName" type="groupNameRef" use="required" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="string_array" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
+		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="LaplaceFEMType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -2448,9 +2468,9 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
 		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
 		<!--discretization => Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` discretization should be specified.-->
-		<xsd:attribute name="discretization" type="string" use="required" />
+		<xsd:attribute name="discretization" type="groupNameRef" use="required" />
 		<!--fieldName => Name of field variable-->
-		<xsd:attribute name="fieldName" type="string" use="required" />
+		<xsd:attribute name="fieldName" type="groupNameRef" use="required" />
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
 		<!--logLevel => Log level-->
@@ -2462,7 +2482,7 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 * ImplicitTransient-->
 		<xsd:attribute name="timeIntegrationOption" type="geos_LaplaceBaseH1_TimeIntegrationOption" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
+		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:simpleType name="geos_LaplaceBaseH1_TimeIntegrationOption">
 		<xsd:restriction base="xsd:string">
@@ -2477,7 +2497,7 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
 		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
 		<!--flowSolverName => Name of the flow solver used by the coupled solver-->
-		<xsd:attribute name="flowSolverName" type="string" use="required" />
+		<xsd:attribute name="flowSolverName" type="groupNameRef" use="required" />
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
 		<!--isThermal => Flag indicating whether the problem is thermal or not. Set isThermal="1" to enable the thermal coupling-->
@@ -2485,7 +2505,7 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		<!--logLevel => Log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--solidSolverName => Name of the solid solver used by the coupled solver-->
-		<xsd:attribute name="solidSolverName" type="string" use="required" />
+		<xsd:attribute name="solidSolverName" type="groupNameRef" use="required" />
 		<!--stabilizationMultiplier => Constant multiplier of stabilization strength.-->
 		<xsd:attribute name="stabilizationMultiplier" type="real64" default="1" />
 		<!--stabilizationRegionNames => Regions where stabilization is applied.-->
@@ -2498,7 +2518,7 @@ Local - Add stabilization only to interiors of macro elements.-->
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="string_array" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
+		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:simpleType name="geos_MultiphasePoromechanics_StabilizationType">
 		<xsd:restriction base="xsd:string">
@@ -2517,13 +2537,13 @@ Local - Add stabilization only to interiors of macro elements.-->
 		<!--logLevel => Log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--poromechanicsSolverName => Name of the poromechanics solver used by the coupled solver-->
-		<xsd:attribute name="poromechanicsSolverName" type="string" use="required" />
+		<xsd:attribute name="poromechanicsSolverName" type="groupNameRef" use="required" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="string_array" use="required" />
 		<!--wellSolverName => Name of the well solver used by the coupled solver-->
-		<xsd:attribute name="wellSolverName" type="string" use="required" />
+		<xsd:attribute name="wellSolverName" type="groupNameRef" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
+		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="PhaseFieldDamageFEMType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -2535,24 +2555,34 @@ Local - Add stabilization only to interiors of macro elements.-->
 		<!--damageUpperBound => The upper bound of the damage-->
 		<xsd:attribute name="damageUpperBound" type="real64" default="1.5" />
 		<!--discretization => Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` discretization should be specified.-->
-		<xsd:attribute name="discretization" type="string" use="required" />
+		<xsd:attribute name="discretization" type="groupNameRef" use="required" />
 		<!--fieldName => name of field variable-->
-		<xsd:attribute name="fieldName" type="string" use="required" />
+		<xsd:attribute name="fieldName" type="groupNameRef" use="required" />
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
 		<!--irreversibilityFlag => The flag to indicate whether to apply the irreversibility constraint-->
 		<xsd:attribute name="irreversibilityFlag" type="integer" default="0" />
 		<!--localDissipation => Type of local dissipation function. Can be Linear or Quadratic-->
-		<xsd:attribute name="localDissipation" type="string" use="required" />
+		<xsd:attribute name="localDissipation" type="geos_PhaseFieldDamageFEM_LocalDissipation" use="required" />
 		<!--logLevel => Log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="string_array" use="required" />
 		<!--timeIntegrationOption => option for default time integration method-->
-		<xsd:attribute name="timeIntegrationOption" type="string" use="required" />
+		<xsd:attribute name="timeIntegrationOption" type="geos_PhaseFieldDamageFEM_TimeIntegrationOption" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
+		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
+	<xsd:simpleType name="geos_PhaseFieldDamageFEM_LocalDissipation">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value=".*[\[\]`$].*|Linear|Quadratic" />
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="geos_PhaseFieldDamageFEM_TimeIntegrationOption">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value=".*[\[\]`$].*|SteadyState|ImplicitTransient|ExplicitTransient" />
+		</xsd:restriction>
+	</xsd:simpleType>
 	<xsd:complexType name="PhaseFieldFractureType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
@@ -2561,17 +2591,17 @@ Local - Add stabilization only to interiors of macro elements.-->
 		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
 		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
 		<!--damageSolverName => Name of the damage solver used by the coupled solver-->
-		<xsd:attribute name="damageSolverName" type="string" use="required" />
+		<xsd:attribute name="damageSolverName" type="groupNameRef" use="required" />
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
 		<!--logLevel => Log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--solidSolverName => Name of the solid solver used by the coupled solver-->
-		<xsd:attribute name="solidSolverName" type="string" use="required" />
+		<xsd:attribute name="solidSolverName" type="groupNameRef" use="required" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="string_array" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
+		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="ProppantTransportType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -2585,7 +2615,7 @@ Local - Add stabilization only to interiors of macro elements.-->
 		<!--criticalShieldsNumber => Critical Shields number-->
 		<xsd:attribute name="criticalShieldsNumber" type="real64" default="0" />
 		<!--discretization => Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` discretization should be specified.-->
-		<xsd:attribute name="discretization" type="string" use="required" />
+		<xsd:attribute name="discretization" type="groupNameRef" use="required" />
 		<!--frictionCoefficient => Friction coefficient-->
 		<xsd:attribute name="frictionCoefficient" type="real64" default="0.03" />
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
@@ -2605,7 +2635,7 @@ Local - Add stabilization only to interiors of macro elements.-->
 		<!--updateProppantPacking => Flag that enables/disables proppant-packing update-->
 		<xsd:attribute name="updateProppantPacking" type="integer" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
+		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="ReactiveCompositionalMultiphaseOBLType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -2621,7 +2651,7 @@ Local - Add stabilization only to interiors of macro elements.-->
 		<!--componentNames => List of component names-->
 		<xsd:attribute name="componentNames" type="string_array" default="{}" />
 		<!--discretization => Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` discretization should be specified.-->
-		<xsd:attribute name="discretization" type="string" use="required" />
+		<xsd:attribute name="discretization" type="groupNameRef" use="required" />
 		<!--enableEnergyBalance => Enable energy balance calculation and temperature degree of freedom-->
 		<xsd:attribute name="enableEnergyBalance" type="integer" use="required" />
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
@@ -2645,7 +2675,7 @@ Local - Add stabilization only to interiors of macro elements.-->
 		<!--useDARTSL2Norm => Use L2 norm calculation similar to one used DARTS-->
 		<xsd:attribute name="useDARTSL2Norm" type="integer" default="1" />
 		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
+		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="SinglePhaseFVMType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -2655,7 +2685,7 @@ Local - Add stabilization only to interiors of macro elements.-->
 		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
 		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
 		<!--discretization => Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` discretization should be specified.-->
-		<xsd:attribute name="discretization" type="string" use="required" />
+		<xsd:attribute name="discretization" type="groupNameRef" use="required" />
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
 		<!--isThermal => Flag indicating whether the problem is thermal or not.-->
@@ -2667,7 +2697,7 @@ Local - Add stabilization only to interiors of macro elements.-->
 		<!--temperature => Temperature-->
 		<xsd:attribute name="temperature" type="real64" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
+		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="SinglePhaseHybridFVMType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -2677,7 +2707,7 @@ Local - Add stabilization only to interiors of macro elements.-->
 		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
 		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
 		<!--discretization => Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` discretization should be specified.-->
-		<xsd:attribute name="discretization" type="string" use="required" />
+		<xsd:attribute name="discretization" type="groupNameRef" use="required" />
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
 		<!--isThermal => Flag indicating whether the problem is thermal or not.-->
@@ -2689,7 +2719,7 @@ Local - Add stabilization only to interiors of macro elements.-->
 		<!--temperature => Temperature-->
 		<xsd:attribute name="temperature" type="real64" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
+		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="SinglePhasePoromechanicsType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -2699,7 +2729,7 @@ Local - Add stabilization only to interiors of macro elements.-->
 		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
 		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
 		<!--flowSolverName => Name of the flow solver used by the coupled solver-->
-		<xsd:attribute name="flowSolverName" type="string" use="required" />
+		<xsd:attribute name="flowSolverName" type="groupNameRef" use="required" />
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
 		<!--isThermal => Flag indicating whether the problem is thermal or not. Set isThermal="1" to enable the thermal coupling-->
@@ -2707,11 +2737,11 @@ Local - Add stabilization only to interiors of macro elements.-->
 		<!--logLevel => Log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--solidSolverName => Name of the solid solver used by the coupled solver-->
-		<xsd:attribute name="solidSolverName" type="string" use="required" />
+		<xsd:attribute name="solidSolverName" type="groupNameRef" use="required" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="string_array" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
+		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="SinglePhasePoromechanicsConformingFracturesType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -2719,7 +2749,7 @@ Local - Add stabilization only to interiors of macro elements.-->
 			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />
 		</xsd:choice>
 		<!--LagrangianContactSolverName => Name of the LagrangianContact solver used by the coupled solver-->
-		<xsd:attribute name="LagrangianContactSolverName" type="string" use="required" />
+		<xsd:attribute name="LagrangianContactSolverName" type="groupNameRef" use="required" />
 		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
 		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
@@ -2729,11 +2759,11 @@ Local - Add stabilization only to interiors of macro elements.-->
 		<!--logLevel => Log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--poromechanicsSolverName => Name of the poromechanics solver used by the coupled solver-->
-		<xsd:attribute name="poromechanicsSolverName" type="string" use="required" />
+		<xsd:attribute name="poromechanicsSolverName" type="groupNameRef" use="required" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="string_array" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
+		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="SinglePhasePoromechanicsEmbeddedFracturesType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -2743,9 +2773,9 @@ Local - Add stabilization only to interiors of macro elements.-->
 		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
 		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
 		<!--flowSolverName => Name of the flow solver used by the coupled solver-->
-		<xsd:attribute name="flowSolverName" type="string" use="required" />
+		<xsd:attribute name="flowSolverName" type="groupNameRef" use="required" />
 		<!--fracturesSolverName => Name of the fractures solver to use in the fractured poroelastic solver-->
-		<xsd:attribute name="fracturesSolverName" type="string" use="required" />
+		<xsd:attribute name="fracturesSolverName" type="groupNameRef" use="required" />
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
 		<!--isThermal => Flag indicating whether the problem is thermal or not. Set isThermal="1" to enable the thermal coupling-->
@@ -2753,11 +2783,11 @@ Local - Add stabilization only to interiors of macro elements.-->
 		<!--logLevel => Log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--solidSolverName => Name of the solid solver used by the coupled solver-->
-		<xsd:attribute name="solidSolverName" type="string" use="required" />
+		<xsd:attribute name="solidSolverName" type="groupNameRef" use="required" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="string_array" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
+		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="SinglePhasePoromechanicsReservoirType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -2771,13 +2801,13 @@ Local - Add stabilization only to interiors of macro elements.-->
 		<!--logLevel => Log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--poromechanicsSolverName => Name of the poromechanics solver used by the coupled solver-->
-		<xsd:attribute name="poromechanicsSolverName" type="string" use="required" />
+		<xsd:attribute name="poromechanicsSolverName" type="groupNameRef" use="required" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="string_array" use="required" />
 		<!--wellSolverName => Name of the well solver used by the coupled solver-->
-		<xsd:attribute name="wellSolverName" type="string" use="required" />
+		<xsd:attribute name="wellSolverName" type="groupNameRef" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
+		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="SinglePhaseProppantFVMType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -2787,7 +2817,7 @@ Local - Add stabilization only to interiors of macro elements.-->
 		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
 		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
 		<!--discretization => Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` discretization should be specified.-->
-		<xsd:attribute name="discretization" type="string" use="required" />
+		<xsd:attribute name="discretization" type="groupNameRef" use="required" />
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
 		<!--isThermal => Flag indicating whether the problem is thermal or not.-->
@@ -2799,7 +2829,7 @@ Local - Add stabilization only to interiors of macro elements.-->
 		<!--temperature => Temperature-->
 		<xsd:attribute name="temperature" type="real64" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
+		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="SinglePhaseReservoirType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -2809,7 +2839,7 @@ Local - Add stabilization only to interiors of macro elements.-->
 		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
 		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
 		<!--flowSolverName => Name of the flow solver used by the coupled solver-->
-		<xsd:attribute name="flowSolverName" type="string" use="required" />
+		<xsd:attribute name="flowSolverName" type="groupNameRef" use="required" />
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
 		<!--logLevel => Log level-->
@@ -2817,9 +2847,9 @@ Local - Add stabilization only to interiors of macro elements.-->
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="string_array" use="required" />
 		<!--wellSolverName => Name of the well solver used by the coupled solver-->
-		<xsd:attribute name="wellSolverName" type="string" use="required" />
+		<xsd:attribute name="wellSolverName" type="groupNameRef" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
+		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="SinglePhaseWellType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -2836,7 +2866,7 @@ Local - Add stabilization only to interiors of macro elements.-->
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="string_array" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
+		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="SolidMechanicsEmbeddedFracturesType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -2846,21 +2876,21 @@ Local - Add stabilization only to interiors of macro elements.-->
 		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
 		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
 		<!--contactRelationName => Name of contact relation to enforce constraints on fracture boundary.-->
-		<xsd:attribute name="contactRelationName" type="string" use="required" />
+		<xsd:attribute name="contactRelationName" type="groupNameRef" use="required" />
 		<!--fractureRegionName => Name of the fracture region.-->
-		<xsd:attribute name="fractureRegionName" type="string" use="required" />
+		<xsd:attribute name="fractureRegionName" type="groupNameRef" use="required" />
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
 		<!--logLevel => Log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--solidSolverName => Name of the solid mechanics solver in the rock matrix-->
-		<xsd:attribute name="solidSolverName" type="string" use="required" />
+		<xsd:attribute name="solidSolverName" type="groupNameRef" use="required" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="string_array" use="required" />
 		<!--useStaticCondensation => Defines whether to use static condensation or not.-->
 		<xsd:attribute name="useStaticCondensation" type="integer" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
+		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="SolidMechanicsLagrangianSSLEType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -2870,9 +2900,9 @@ Local - Add stabilization only to interiors of macro elements.-->
 		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
 		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
 		<!--contactRelationName => Name of contact relation to enforce constraints on fracture boundary.-->
-		<xsd:attribute name="contactRelationName" type="string" default="NOCONTACT" />
+		<xsd:attribute name="contactRelationName" type="groupNameRef" default="NOCONTACT" />
 		<!--discretization => Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` discretization should be specified.-->
-		<xsd:attribute name="discretization" type="string" use="required" />
+		<xsd:attribute name="discretization" type="groupNameRef" use="required" />
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
 		<!--logLevel => Log level-->
@@ -2899,7 +2929,7 @@ Local - Add stabilization only to interiors of macro elements.-->
 * ExplicitDynamic-->
 		<xsd:attribute name="timeIntegrationOption" type="geos_SolidMechanicsLagrangianFEM_TimeIntegrationOption" default="ExplicitDynamic" />
 		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
+		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:simpleType name="geos_SolidMechanicsLagrangianFEM_TimeIntegrationOption">
 		<xsd:restriction base="xsd:string">
@@ -2914,9 +2944,9 @@ Local - Add stabilization only to interiors of macro elements.-->
 		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
 		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
 		<!--contactRelationName => Name of contact relation to enforce constraints on fracture boundary.-->
-		<xsd:attribute name="contactRelationName" type="string" default="NOCONTACT" />
+		<xsd:attribute name="contactRelationName" type="groupNameRef" default="NOCONTACT" />
 		<!--discretization => Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` discretization should be specified.-->
-		<xsd:attribute name="discretization" type="string" use="required" />
+		<xsd:attribute name="discretization" type="groupNameRef" use="required" />
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
 		<!--logLevel => Log level-->
@@ -2943,7 +2973,7 @@ Local - Add stabilization only to interiors of macro elements.-->
 * ExplicitDynamic-->
 		<xsd:attribute name="timeIntegrationOption" type="geos_SolidMechanicsLagrangianFEM_TimeIntegrationOption" default="ExplicitDynamic" />
 		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
+		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="SurfaceGeneratorType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -2953,7 +2983,7 @@ Local - Add stabilization only to interiors of macro elements.-->
 		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
 		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
 		<!--fractureRegion => (no description available)-->
-		<xsd:attribute name="fractureRegion" type="string" default="Fracture" />
+		<xsd:attribute name="fractureRegion" type="groupNameRef" default="Fracture" />
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
 		<!--logLevel => Log level-->
@@ -2967,7 +2997,7 @@ Local - Add stabilization only to interiors of macro elements.-->
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="string_array" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
+		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="TasksType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -2990,13 +3020,13 @@ Local - Add stabilization only to interiors of macro elements.-->
 		<!--computeRegionStatistics => Flag to decide whether region statistics are computed or not-->
 		<xsd:attribute name="computeRegionStatistics" type="integer" default="1" />
 		<!--flowSolverName => Name of the flow solver-->
-		<xsd:attribute name="flowSolverName" type="string" use="required" />
+		<xsd:attribute name="flowSolverName" type="groupNameRef" use="required" />
 		<!--logLevel => Log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--relpermThreshold => Flag to decide whether a phase is considered mobile (when the relperm is above the threshold) or immobile (when the relperm is below the threshold) in metric 2-->
 		<xsd:attribute name="relpermThreshold" type="real64" default="1e-06" />
 		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
+		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="MultiphasePoromechanicsInitializationType">
 		<!--logLevel => Log level-->
@@ -3004,9 +3034,9 @@ Local - Add stabilization only to interiors of macro elements.-->
 		<!--performStressInitialization => Flag to indicate that the solver is going to perform stress initialization-->
 		<xsd:attribute name="performStressInitialization" type="integer" use="required" />
 		<!--poromechanicsSolverName => Name of the poromechanics solver-->
-		<xsd:attribute name="poromechanicsSolverName" type="string" use="required" />
+		<xsd:attribute name="poromechanicsSolverName" type="groupNameRef" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
+		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="PVTDriverType">
 		<!--baseline => Baseline file-->
@@ -3014,33 +3044,33 @@ Local - Add stabilization only to interiors of macro elements.-->
 		<!--feedComposition => Feed composition array [mol fraction]-->
 		<xsd:attribute name="feedComposition" type="real64_array" use="required" />
 		<!--fluid => Fluid to test-->
-		<xsd:attribute name="fluid" type="string" use="required" />
+		<xsd:attribute name="fluid" type="groupNameRef" use="required" />
 		<!--logLevel => Log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--output => Output file-->
 		<xsd:attribute name="output" type="string" default="none" />
 		<!--pressureControl => Function controlling pressure time history-->
-		<xsd:attribute name="pressureControl" type="string" use="required" />
+		<xsd:attribute name="pressureControl" type="groupNameRef" use="required" />
 		<!--steps => Number of load steps to take-->
 		<xsd:attribute name="steps" type="integer" use="required" />
 		<!--temperatureControl => Function controlling temperature time history-->
-		<xsd:attribute name="temperatureControl" type="string" use="required" />
+		<xsd:attribute name="temperatureControl" type="groupNameRef" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
+		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="PackCollectionType">
 		<!--disableCoordCollection => Whether or not to create coordinate meta-collectors if collected objects are mesh objects.-->
 		<xsd:attribute name="disableCoordCollection" type="integer" default="0" />
 		<!--fieldName => The name of the (packable) field associated with the specified object to retrieve data from-->
-		<xsd:attribute name="fieldName" type="string" use="required" />
+		<xsd:attribute name="fieldName" type="groupNameRef" use="required" />
 		<!--objectPath => The name of the object from which to retrieve field values.-->
-		<xsd:attribute name="objectPath" type="string" use="required" />
+		<xsd:attribute name="objectPath" type="groupNameRef" use="required" />
 		<!--onlyOnSetChange => Whether or not to only collect when the collected sets of indices change in any way.-->
 		<xsd:attribute name="onlyOnSetChange" type="integer" default="0" />
 		<!--setNames => The set(s) for which to retrieve data.-->
 		<xsd:attribute name="setNames" type="string_array" default="{}" />
 		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
+		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="ReactiveFluidDriverType">
 		<!--baseline => Baseline file-->
@@ -3048,19 +3078,19 @@ Local - Add stabilization only to interiors of macro elements.-->
 		<!--feedComposition => Feed composition array: total concentration of the primary species -->
 		<xsd:attribute name="feedComposition" type="real64_array" use="required" />
 		<!--fluid => Fluid to test-->
-		<xsd:attribute name="fluid" type="string" use="required" />
+		<xsd:attribute name="fluid" type="groupNameRef" use="required" />
 		<!--logLevel => Log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--output => Output file-->
 		<xsd:attribute name="output" type="string" default="none" />
 		<!--pressureControl => Function controlling pressure time history-->
-		<xsd:attribute name="pressureControl" type="string" use="required" />
+		<xsd:attribute name="pressureControl" type="groupNameRef" use="required" />
 		<!--steps => Number of load steps to take-->
 		<xsd:attribute name="steps" type="integer" use="required" />
 		<!--temperatureControl => Function controlling temperature time history-->
-		<xsd:attribute name="temperatureControl" type="string" use="required" />
+		<xsd:attribute name="temperatureControl" type="groupNameRef" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
+		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="RelpermDriverType">
 		<!--baseline => Baseline file-->
@@ -3070,11 +3100,11 @@ Local - Add stabilization only to interiors of macro elements.-->
 		<!--output => Output file-->
 		<xsd:attribute name="output" type="string" default="none" />
 		<!--relperm => Relperm model to test-->
-		<xsd:attribute name="relperm" type="string" use="required" />
+		<xsd:attribute name="relperm" type="groupNameRef" use="required" />
 		<!--steps => Number of saturation steps to take-->
 		<xsd:attribute name="steps" type="integer" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
+		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="SinglePhasePoromechanicsInitializationType">
 		<!--logLevel => Log level-->
@@ -3082,17 +3112,17 @@ Local - Add stabilization only to interiors of macro elements.-->
 		<!--performStressInitialization => Flag to indicate that the solver is going to perform stress initialization-->
 		<xsd:attribute name="performStressInitialization" type="integer" use="required" />
 		<!--poromechanicsSolverName => Name of the poromechanics solver-->
-		<xsd:attribute name="poromechanicsSolverName" type="string" use="required" />
+		<xsd:attribute name="poromechanicsSolverName" type="groupNameRef" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
+		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="SinglePhaseStatisticsType">
 		<!--flowSolverName => Name of the flow solver-->
-		<xsd:attribute name="flowSolverName" type="string" use="required" />
+		<xsd:attribute name="flowSolverName" type="groupNameRef" use="required" />
 		<!--logLevel => Log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
+		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="SolidMechanicsStateResetType">
 		<!--disableInelasticity => Flag to enable/disable inelastic behavior-->
@@ -3102,21 +3132,21 @@ Local - Add stabilization only to interiors of macro elements.-->
 		<!--resetDisplacements => Flag to reset displacements (and velocities)-->
 		<xsd:attribute name="resetDisplacements" type="integer" default="1" />
 		<!--solidSolverName => Name of the solid mechanics solver-->
-		<xsd:attribute name="solidSolverName" type="string" use="required" />
+		<xsd:attribute name="solidSolverName" type="groupNameRef" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
+		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="SolidMechanicsStatisticsType">
 		<!--logLevel => Log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--solidSolverName => Name of the solid solver-->
-		<xsd:attribute name="solidSolverName" type="string" use="required" />
+		<xsd:attribute name="solidSolverName" type="groupNameRef" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
+		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="TriaxialDriverType">
 		<!--axialControl => Function controlling axial stress or strain (depending on test mode)-->
-		<xsd:attribute name="axialControl" type="string" use="required" />
+		<xsd:attribute name="axialControl" type="groupNameRef" use="required" />
 		<!--baseline => Baseline file-->
 		<xsd:attribute name="baseline" type="path" default="none" />
 		<!--initialStress => Initial stress (scalar used to set an isotropic stress state)-->
@@ -3124,18 +3154,23 @@ Local - Add stabilization only to interiors of macro elements.-->
 		<!--logLevel => Log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--material => Solid material to test-->
-		<xsd:attribute name="material" type="string" use="required" />
+		<xsd:attribute name="material" type="groupNameRef" use="required" />
 		<!--mode => Test mode [stressControl, strainControl, mixedControl]-->
-		<xsd:attribute name="mode" type="string" use="required" />
+		<xsd:attribute name="mode" type="geos_TriaxialDriver_Mode" use="required" />
 		<!--output => Output file-->
 		<xsd:attribute name="output" type="string" default="none" />
 		<!--radialControl => Function controlling radial stress or strain (depending on test mode)-->
-		<xsd:attribute name="radialControl" type="string" use="required" />
+		<xsd:attribute name="radialControl" type="groupNameRef" use="required" />
 		<!--steps => Number of load steps to take-->
 		<xsd:attribute name="steps" type="integer" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
+		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
+	<xsd:simpleType name="geos_TriaxialDriver_Mode">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value=".*[\[\]`$].*|mixedControl|strainControl|stressControl" />
+		</xsd:restriction>
+	</xsd:simpleType>
 	<xsd:complexType name="ConstitutiveType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="BiotPorosity" type="BiotPorosityType" />
@@ -3216,7 +3251,7 @@ Local - Add stabilization only to interiors of macro elements.-->
 		<!--grainBulkModulus => Grain bulk modulus-->
 		<xsd:attribute name="grainBulkModulus" type="real64" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
+		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="BlackOilFluidType">
 		<!--componentMolarWeight => Component molar weights-->
@@ -3246,7 +3281,7 @@ For instance, if "oil" is before "gas" in "phaseNames", the table order should b
 		<!--waterViscosity => Water viscosity-->
 		<xsd:attribute name="waterViscosity" type="real64" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
+		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="BrooksCoreyBakerRelativePermeabilityType">
 		<!--gasOilRelPermExponent => Rel perm power law exponent for the pair (gas phase, oil phase) at residual water saturation
@@ -3266,7 +3301,7 @@ The expected format is "{ waterExp, oilExp }", in that order-->
 The expected format is "{ waterMax, oilMax }", in that order-->
 		<xsd:attribute name="waterOilRelPermMaxValue" type="real64_array" default="{0}" />
 		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
+		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="BrooksCoreyCapillaryPressureType">
 		<!--capPressureEpsilon => Wetting-phase saturation at which the max cap. pressure is attained; used to avoid infinite cap. pressure values for saturations close to zero-->
@@ -3280,7 +3315,7 @@ The expected format is "{ waterMax, oilMax }", in that order-->
 		<!--phaseNames => List of fluid phases-->
 		<xsd:attribute name="phaseNames" type="string_array" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
+		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="BrooksCoreyRelativePermeabilityType">
 		<!--phaseMinVolumeFraction => Minimum volume fraction value for each phase-->
@@ -3292,7 +3327,7 @@ The expected format is "{ waterMax, oilMax }", in that order-->
 		<!--phaseRelPermMaxValue => Maximum relative permeability value for each phase-->
 		<xsd:attribute name="phaseRelPermMaxValue" type="real64_array" default="{0}" />
 		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
+		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="CO2BrineEzrokhiFluidType">
 		<!--componentMolarWeight => Component molar weights-->
@@ -3306,7 +3341,7 @@ The expected format is "{ waterMax, oilMax }", in that order-->
 		<!--phasePVTParaFiles => Names of the files defining the parameters of the viscosity and density models-->
 		<xsd:attribute name="phasePVTParaFiles" type="path_array" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
+		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="CO2BrineEzrokhiThermalFluidType">
 		<!--componentMolarWeight => Component molar weights-->
@@ -3320,7 +3355,7 @@ The expected format is "{ waterMax, oilMax }", in that order-->
 		<!--phasePVTParaFiles => Names of the files defining the parameters of the viscosity and density models-->
 		<xsd:attribute name="phasePVTParaFiles" type="path_array" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
+		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="CO2BrinePhillipsFluidType">
 		<!--componentMolarWeight => Component molar weights-->
@@ -3334,7 +3369,7 @@ The expected format is "{ waterMax, oilMax }", in that order-->
 		<!--phasePVTParaFiles => Names of the files defining the parameters of the viscosity and density models-->
 		<xsd:attribute name="phasePVTParaFiles" type="path_array" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
+		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="CO2BrinePhillipsThermalFluidType">
 		<!--componentMolarWeight => Component molar weights-->
@@ -3348,7 +3383,7 @@ The expected format is "{ waterMax, oilMax }", in that order-->
 		<!--phasePVTParaFiles => Names of the files defining the parameters of the viscosity and density models-->
 		<xsd:attribute name="phasePVTParaFiles" type="path_array" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
+		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="CarmanKozenyPermeabilityType">
 		<!--anisotropy => Anisotropy factors for three permeability components.-->
@@ -3358,7 +3393,7 @@ The expected format is "{ waterMax, oilMax }", in that order-->
 		<!--sphericity => Sphericity of the particles.-->
 		<xsd:attribute name="sphericity" type="real64" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
+		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="CompositionalMultiphaseFluidType">
 		<!--componentAcentricFactor => Component acentric factors-->
@@ -3380,7 +3415,7 @@ The expected format is "{ waterMax, oilMax }", in that order-->
 		<!--phaseNames => List of fluid phases-->
 		<xsd:attribute name="phaseNames" type="string_array" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
+		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="CompressibleSinglePhaseFluidType">
 		<!--compressibility => Fluid compressibility-->
@@ -3408,7 +3443,7 @@ The expected format is "{ waterMax, oilMax }", in that order-->
 * quadratic-->
 		<xsd:attribute name="viscosityModelType" type="geos_constitutive_ExponentApproximationType" default="linear" />
 		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
+		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:simpleType name="geos_constitutive_ExponentApproximationType">
 		<xsd:restriction base="xsd:string">
@@ -3417,85 +3452,85 @@ The expected format is "{ waterMax, oilMax }", in that order-->
 	</xsd:simpleType>
 	<xsd:complexType name="CompressibleSolidCarmanKozenyPermeabilityType">
 		<!--permeabilityModelName => Name of the permeability model.-->
-		<xsd:attribute name="permeabilityModelName" type="string" use="required" />
+		<xsd:attribute name="permeabilityModelName" type="groupNameRef" use="required" />
 		<!--porosityModelName => Name of the porosity model.-->
-		<xsd:attribute name="porosityModelName" type="string" use="required" />
+		<xsd:attribute name="porosityModelName" type="groupNameRef" use="required" />
 		<!--solidInternalEnergyModelName => Name of the solid internal energy model.-->
-		<xsd:attribute name="solidInternalEnergyModelName" type="string" default="" />
+		<xsd:attribute name="solidInternalEnergyModelName" type="groupNameRef" default="" />
 		<!--solidModelName => Name of the solid model.-->
-		<xsd:attribute name="solidModelName" type="string" use="required" />
+		<xsd:attribute name="solidModelName" type="groupNameRef" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
+		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="CompressibleSolidConstantPermeabilityType">
 		<!--permeabilityModelName => Name of the permeability model.-->
-		<xsd:attribute name="permeabilityModelName" type="string" use="required" />
+		<xsd:attribute name="permeabilityModelName" type="groupNameRef" use="required" />
 		<!--porosityModelName => Name of the porosity model.-->
-		<xsd:attribute name="porosityModelName" type="string" use="required" />
+		<xsd:attribute name="porosityModelName" type="groupNameRef" use="required" />
 		<!--solidInternalEnergyModelName => Name of the solid internal energy model.-->
-		<xsd:attribute name="solidInternalEnergyModelName" type="string" default="" />
+		<xsd:attribute name="solidInternalEnergyModelName" type="groupNameRef" default="" />
 		<!--solidModelName => Name of the solid model.-->
-		<xsd:attribute name="solidModelName" type="string" use="required" />
+		<xsd:attribute name="solidModelName" type="groupNameRef" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
+		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="CompressibleSolidExponentialDecayPermeabilityType">
 		<!--permeabilityModelName => Name of the permeability model.-->
-		<xsd:attribute name="permeabilityModelName" type="string" use="required" />
+		<xsd:attribute name="permeabilityModelName" type="groupNameRef" use="required" />
 		<!--porosityModelName => Name of the porosity model.-->
-		<xsd:attribute name="porosityModelName" type="string" use="required" />
+		<xsd:attribute name="porosityModelName" type="groupNameRef" use="required" />
 		<!--solidInternalEnergyModelName => Name of the solid internal energy model.-->
-		<xsd:attribute name="solidInternalEnergyModelName" type="string" default="" />
+		<xsd:attribute name="solidInternalEnergyModelName" type="groupNameRef" default="" />
 		<!--solidModelName => Name of the solid model.-->
-		<xsd:attribute name="solidModelName" type="string" use="required" />
+		<xsd:attribute name="solidModelName" type="groupNameRef" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
+		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="CompressibleSolidParallelPlatesPermeabilityType">
 		<!--permeabilityModelName => Name of the permeability model.-->
-		<xsd:attribute name="permeabilityModelName" type="string" use="required" />
+		<xsd:attribute name="permeabilityModelName" type="groupNameRef" use="required" />
 		<!--porosityModelName => Name of the porosity model.-->
-		<xsd:attribute name="porosityModelName" type="string" use="required" />
+		<xsd:attribute name="porosityModelName" type="groupNameRef" use="required" />
 		<!--solidInternalEnergyModelName => Name of the solid internal energy model.-->
-		<xsd:attribute name="solidInternalEnergyModelName" type="string" default="" />
+		<xsd:attribute name="solidInternalEnergyModelName" type="groupNameRef" default="" />
 		<!--solidModelName => Name of the solid model.-->
-		<xsd:attribute name="solidModelName" type="string" use="required" />
+		<xsd:attribute name="solidModelName" type="groupNameRef" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
+		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="CompressibleSolidSlipDependentPermeabilityType">
 		<!--permeabilityModelName => Name of the permeability model.-->
-		<xsd:attribute name="permeabilityModelName" type="string" use="required" />
+		<xsd:attribute name="permeabilityModelName" type="groupNameRef" use="required" />
 		<!--porosityModelName => Name of the porosity model.-->
-		<xsd:attribute name="porosityModelName" type="string" use="required" />
+		<xsd:attribute name="porosityModelName" type="groupNameRef" use="required" />
 		<!--solidInternalEnergyModelName => Name of the solid internal energy model.-->
-		<xsd:attribute name="solidInternalEnergyModelName" type="string" default="" />
+		<xsd:attribute name="solidInternalEnergyModelName" type="groupNameRef" default="" />
 		<!--solidModelName => Name of the solid model.-->
-		<xsd:attribute name="solidModelName" type="string" use="required" />
+		<xsd:attribute name="solidModelName" type="groupNameRef" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
+		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="CompressibleSolidWillisRichardsPermeabilityType">
 		<!--permeabilityModelName => Name of the permeability model.-->
-		<xsd:attribute name="permeabilityModelName" type="string" use="required" />
+		<xsd:attribute name="permeabilityModelName" type="groupNameRef" use="required" />
 		<!--porosityModelName => Name of the porosity model.-->
-		<xsd:attribute name="porosityModelName" type="string" use="required" />
+		<xsd:attribute name="porosityModelName" type="groupNameRef" use="required" />
 		<!--solidInternalEnergyModelName => Name of the solid internal energy model.-->
-		<xsd:attribute name="solidInternalEnergyModelName" type="string" default="" />
+		<xsd:attribute name="solidInternalEnergyModelName" type="groupNameRef" default="" />
 		<!--solidModelName => Name of the solid model.-->
-		<xsd:attribute name="solidModelName" type="string" use="required" />
+		<xsd:attribute name="solidModelName" type="groupNameRef" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
+		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="ConstantPermeabilityType">
 		<!--permeabilityComponents => xx, yy and zz components of a diagonal permeability tensor.-->
 		<xsd:attribute name="permeabilityComponents" type="R1Tensor" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
+		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="CoulombType">
 		<!--apertureTableName => Name of the aperture table-->
-		<xsd:attribute name="apertureTableName" type="string" use="required" />
+		<xsd:attribute name="apertureTableName" type="groupNameRef" use="required" />
 		<!--apertureTolerance => Value to be used to avoid floating point errors in expressions involving aperture. For example in the case of dividing by the actual aperture (not the effective aperture that results from the aperture function) this value may be used to avoid the 1/0 error. Note that this value may have some physical significance in its usage, as it may be used to smooth out highly nonlinear behavior associated with 1/0 in addition to avoiding the 1/0 error.-->
 		<xsd:attribute name="apertureTolerance" type="real64" default="1e-09" />
 		<!--cohesion => Cohesion-->
@@ -3509,7 +3544,7 @@ The expected format is "{ waterMax, oilMax }", in that order-->
 		<!--shearStiffness => Value of the shear elastic stiffness. Units of Pressure/length-->
 		<xsd:attribute name="shearStiffness" type="real64" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
+		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="DamageElasticIsotropicType">
 		<!--compressiveStrength => Compressive strength from the uniaxial compression test-->
@@ -3541,7 +3576,7 @@ The expected format is "{ waterMax, oilMax }", in that order-->
 		<!--tensileStrength => Tensile strength from the uniaxial tension test-->
 		<xsd:attribute name="tensileStrength" type="real64" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
+		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="DamageSpectralElasticIsotropicType">
 		<!--compressiveStrength => Compressive strength from the uniaxial compression test-->
@@ -3573,7 +3608,7 @@ The expected format is "{ waterMax, oilMax }", in that order-->
 		<!--tensileStrength => Tensile strength from the uniaxial tension test-->
 		<xsd:attribute name="tensileStrength" type="real64" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
+		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="DamageVolDevElasticIsotropicType">
 		<!--compressiveStrength => Compressive strength from the uniaxial compression test-->
@@ -3605,7 +3640,7 @@ The expected format is "{ waterMax, oilMax }", in that order-->
 		<!--tensileStrength => Tensile strength from the uniaxial tension test-->
 		<xsd:attribute name="tensileStrength" type="real64" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
+		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="DeadOilFluidType">
 		<!--componentMolarWeight => Component molar weights-->
@@ -3635,7 +3670,7 @@ For instance, if "oil" is before "gas" in "phaseNames", the table order should b
 		<!--waterViscosity => Water viscosity-->
 		<xsd:attribute name="waterViscosity" type="real64" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
+		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="DelftEggType">
 		<!--defaultBulkModulus => Default Bulk Modulus Parameter-->
@@ -3661,7 +3696,7 @@ For instance, if "oil" is before "gas" in "phaseNames", the table order should b
 		<!--defaultYoungModulus => Default Young's Modulus-->
 		<xsd:attribute name="defaultYoungModulus" type="real64" default="-1" />
 		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
+		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="DruckerPragerType">
 		<!--defaultBulkModulus => Default Bulk Modulus Parameter-->
@@ -3685,7 +3720,7 @@ For instance, if "oil" is before "gas" in "phaseNames", the table order should b
 		<!--defaultYoungModulus => Default Young's Modulus-->
 		<xsd:attribute name="defaultYoungModulus" type="real64" default="-1" />
 		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
+		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="ElasticIsotropicType">
 		<!--defaultBulkModulus => Default Bulk Modulus Parameter-->
@@ -3701,7 +3736,7 @@ For instance, if "oil" is before "gas" in "phaseNames", the table order should b
 		<!--defaultYoungModulus => Default Young's Modulus-->
 		<xsd:attribute name="defaultYoungModulus" type="real64" default="-1" />
 		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
+		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="ElasticIsotropicPressureDependentType">
 		<!--defaultDensity => Default Material Density-->
@@ -3717,7 +3752,7 @@ For instance, if "oil" is before "gas" in "phaseNames", the table order should b
 		<!--defaultThermalExpansionCoefficient => Default Linear Thermal Expansion Coefficient of the Solid Rock Frame-->
 		<xsd:attribute name="defaultThermalExpansionCoefficient" type="real64" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
+		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="ElasticOrthotropicType">
 		<!--defaultC11 => Default C11 Component of Voigt Stiffness Tensor-->
@@ -3761,7 +3796,7 @@ For instance, if "oil" is before "gas" in "phaseNames", the table order should b
 		<!--defaultThermalExpansionCoefficient => Default Linear Thermal Expansion Coefficient of the Solid Rock Frame-->
 		<xsd:attribute name="defaultThermalExpansionCoefficient" type="real64" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
+		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="ElasticTransverseIsotropicType">
 		<!--defaultC11 => Default Stiffness Parameter C11-->
@@ -3789,7 +3824,7 @@ For instance, if "oil" is before "gas" in "phaseNames", the table order should b
 		<!--defaultYoungModulusTransverse => Default Transverse Young's Modulus-->
 		<xsd:attribute name="defaultYoungModulusTransverse" type="real64" default="-1" />
 		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
+		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="ExponentialDecayPermeabilityType">
 		<!--empiricalConstant => an empirical constant.-->
@@ -3797,7 +3832,7 @@ For instance, if "oil" is before "gas" in "phaseNames", the table order should b
 		<!--initialPermeability =>  initial permeability of the fracture.-->
 		<xsd:attribute name="initialPermeability" type="R1Tensor" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
+		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="ExtendedDruckerPragerType">
 		<!--defaultBulkModulus => Default Bulk Modulus Parameter-->
@@ -3823,11 +3858,11 @@ For instance, if "oil" is before "gas" in "phaseNames", the table order should b
 		<!--defaultYoungModulus => Default Young's Modulus-->
 		<xsd:attribute name="defaultYoungModulus" type="real64" default="-1" />
 		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
+		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="FrictionlessContactType">
 		<!--apertureTableName => Name of the aperture table-->
-		<xsd:attribute name="apertureTableName" type="string" use="required" />
+		<xsd:attribute name="apertureTableName" type="groupNameRef" use="required" />
 		<!--apertureTolerance => Value to be used to avoid floating point errors in expressions involving aperture. For example in the case of dividing by the actual aperture (not the effective aperture that results from the aperture function) this value may be used to avoid the 1/0 error. Note that this value may have some physical significance in its usage, as it may be used to smooth out highly nonlinear behavior associated with 1/0 in addition to avoiding the 1/0 error.-->
 		<xsd:attribute name="apertureTolerance" type="real64" default="1e-09" />
 		<!--displacementJumpThreshold => A threshold valued to determine whether a fracture is open or not.-->
@@ -3837,13 +3872,13 @@ For instance, if "oil" is before "gas" in "phaseNames", the table order should b
 		<!--shearStiffness => Value of the shear elastic stiffness. Units of Pressure/length-->
 		<xsd:attribute name="shearStiffness" type="real64" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
+		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="JFunctionCapillaryPressureType">
 		<!--nonWettingIntermediateJFunctionTableName => J-function table (dimensionless) for the pair (non-wetting phase, intermediate phase)
 Note that this input is only used for three-phase flow.
 If you want to do a two-phase simulation, please use instead wettingNonWettingJFunctionTableName to specify the table names.-->
-		<xsd:attribute name="nonWettingIntermediateJFunctionTableName" type="string" default="" />
+		<xsd:attribute name="nonWettingIntermediateJFunctionTableName" type="groupNameRef" default="" />
 		<!--nonWettingIntermediateSurfaceTension => Surface tension [N/m] for the pair (non-wetting phase, intermediate phase)
 If you have a value in [dyne/cm], divide it by 1000 to obtain the value in [N/m]
 Note that this input is only used for three-phase flow.
@@ -3864,7 +3899,7 @@ Z - only use the permeability in the z direction.-->
 		<!--wettingIntermediateJFunctionTableName => J-function table (dimensionless) for the pair (wetting phase, intermediate phase)
 Note that this input is only used for three-phase flow.
 If you want to do a two-phase simulation, please use instead wettingNonWettingJFunctionTableName to specify the table names.-->
-		<xsd:attribute name="wettingIntermediateJFunctionTableName" type="string" default="" />
+		<xsd:attribute name="wettingIntermediateJFunctionTableName" type="groupNameRef" default="" />
 		<!--wettingIntermediateSurfaceTension => Surface tension [N/m] for the pair (wetting phase, intermediate phase)
 If you have a value in [dyne/cm], divide it by 1000 to obtain the value in [N/m]
 Note that this input is only used for three-phase flow.
@@ -3873,14 +3908,14 @@ If you want to do a two-phase simulation, please use instead wettingNonWettingSu
 		<!--wettingNonWettingJFunctionTableName => J-function table (dimensionless) for the pair (wetting phase, non-wetting phase)
 Note that this input is only used for two-phase flow.
 If you want to do a three-phase simulation, please use instead wettingIntermediateJFunctionTableName and nonWettingIntermediateJFunctionTableName to specify the table names.-->
-		<xsd:attribute name="wettingNonWettingJFunctionTableName" type="string" default="" />
+		<xsd:attribute name="wettingNonWettingJFunctionTableName" type="groupNameRef" default="" />
 		<!--wettingNonWettingSurfaceTension => Surface tension [N/m] for the pair (wetting phase, non-wetting phase)
 If you have a value in [dyne/cm], divide it by 1000 to obtain the value in [N/m]
 Note that this input is only used for two-phase flow.
 If you want to do a three-phase simulation, please use instead wettingIntermediateSurfaceTension and nonWettingIntermediateSurfaceTension to specify the surface tensions.-->
 		<xsd:attribute name="wettingNonWettingSurfaceTension" type="real64" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
+		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:simpleType name="geos_constitutive_JFunctionCapillaryPressure_PermeabilityDirection">
 		<xsd:restriction base="xsd:string">
@@ -3907,7 +3942,7 @@ If you want to do a three-phase simulation, please use instead wettingIntermedia
 		<!--defaultVirginCompressionIndex => Virgin compression index-->
 		<xsd:attribute name="defaultVirginCompressionIndex" type="real64" default="0.005" />
 		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
+		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="MultiPhaseConstantThermalConductivityType">
 		<!--phaseNames => List of fluid phases-->
@@ -3915,7 +3950,7 @@ If you want to do a three-phase simulation, please use instead wettingIntermedia
 		<!--thermalConductivityComponents => xx, yy, and zz components of a diagonal thermal conductivity tensor [J/(s.m.K)]-->
 		<xsd:attribute name="thermalConductivityComponents" type="R1Tensor" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
+		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="MultiPhaseVolumeWeightedThermalConductivityType">
 		<!--phaseNames => List of fluid phases-->
@@ -3925,15 +3960,15 @@ If you want to do a three-phase simulation, please use instead wettingIntermedia
 		<!--rockThermalConductivityComponents => xx, yy, and zz components of a diagonal rock thermal conductivity tensor [W/(m.K)]-->
 		<xsd:attribute name="rockThermalConductivityComponents" type="R1Tensor" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
+		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="NullModelType">
 		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
+		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="ParallelPlatesPermeabilityType">
 		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
+		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="ParticleFluidType">
 		<!--collisionAlpha => Collision alpha coefficient-->
@@ -3962,7 +3997,7 @@ If you want to do a three-phase simulation, please use instead wettingIntermedia
 		<!--sphericity => Sphericity-->
 		<xsd:attribute name="sphericity" type="real64" default="1" />
 		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
+		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:simpleType name="geos_constitutive_ParticleSettlingModel">
 		<xsd:restriction base="xsd:string">
@@ -3971,91 +4006,91 @@ If you want to do a three-phase simulation, please use instead wettingIntermedia
 	</xsd:simpleType>
 	<xsd:complexType name="PermeabilityBaseType">
 		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
+		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="PorousDelftEggType">
 		<!--permeabilityModelName => Name of the permeability model.-->
-		<xsd:attribute name="permeabilityModelName" type="string" use="required" />
+		<xsd:attribute name="permeabilityModelName" type="groupNameRef" use="required" />
 		<!--porosityModelName => Name of the porosity model.-->
-		<xsd:attribute name="porosityModelName" type="string" use="required" />
+		<xsd:attribute name="porosityModelName" type="groupNameRef" use="required" />
 		<!--solidInternalEnergyModelName => Name of the solid internal energy model.-->
-		<xsd:attribute name="solidInternalEnergyModelName" type="string" default="" />
+		<xsd:attribute name="solidInternalEnergyModelName" type="groupNameRef" default="" />
 		<!--solidModelName => Name of the solid model.-->
-		<xsd:attribute name="solidModelName" type="string" use="required" />
+		<xsd:attribute name="solidModelName" type="groupNameRef" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
+		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="PorousDruckerPragerType">
 		<!--permeabilityModelName => Name of the permeability model.-->
-		<xsd:attribute name="permeabilityModelName" type="string" use="required" />
+		<xsd:attribute name="permeabilityModelName" type="groupNameRef" use="required" />
 		<!--porosityModelName => Name of the porosity model.-->
-		<xsd:attribute name="porosityModelName" type="string" use="required" />
+		<xsd:attribute name="porosityModelName" type="groupNameRef" use="required" />
 		<!--solidInternalEnergyModelName => Name of the solid internal energy model.-->
-		<xsd:attribute name="solidInternalEnergyModelName" type="string" default="" />
+		<xsd:attribute name="solidInternalEnergyModelName" type="groupNameRef" default="" />
 		<!--solidModelName => Name of the solid model.-->
-		<xsd:attribute name="solidModelName" type="string" use="required" />
+		<xsd:attribute name="solidModelName" type="groupNameRef" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
+		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="PorousElasticIsotropicType">
 		<!--permeabilityModelName => Name of the permeability model.-->
-		<xsd:attribute name="permeabilityModelName" type="string" use="required" />
+		<xsd:attribute name="permeabilityModelName" type="groupNameRef" use="required" />
 		<!--porosityModelName => Name of the porosity model.-->
-		<xsd:attribute name="porosityModelName" type="string" use="required" />
+		<xsd:attribute name="porosityModelName" type="groupNameRef" use="required" />
 		<!--solidInternalEnergyModelName => Name of the solid internal energy model.-->
-		<xsd:attribute name="solidInternalEnergyModelName" type="string" default="" />
+		<xsd:attribute name="solidInternalEnergyModelName" type="groupNameRef" default="" />
 		<!--solidModelName => Name of the solid model.-->
-		<xsd:attribute name="solidModelName" type="string" use="required" />
+		<xsd:attribute name="solidModelName" type="groupNameRef" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
+		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="PorousElasticOrthotropicType">
 		<!--permeabilityModelName => Name of the permeability model.-->
-		<xsd:attribute name="permeabilityModelName" type="string" use="required" />
+		<xsd:attribute name="permeabilityModelName" type="groupNameRef" use="required" />
 		<!--porosityModelName => Name of the porosity model.-->
-		<xsd:attribute name="porosityModelName" type="string" use="required" />
+		<xsd:attribute name="porosityModelName" type="groupNameRef" use="required" />
 		<!--solidInternalEnergyModelName => Name of the solid internal energy model.-->
-		<xsd:attribute name="solidInternalEnergyModelName" type="string" default="" />
+		<xsd:attribute name="solidInternalEnergyModelName" type="groupNameRef" default="" />
 		<!--solidModelName => Name of the solid model.-->
-		<xsd:attribute name="solidModelName" type="string" use="required" />
+		<xsd:attribute name="solidModelName" type="groupNameRef" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
+		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="PorousElasticTransverseIsotropicType">
 		<!--permeabilityModelName => Name of the permeability model.-->
-		<xsd:attribute name="permeabilityModelName" type="string" use="required" />
+		<xsd:attribute name="permeabilityModelName" type="groupNameRef" use="required" />
 		<!--porosityModelName => Name of the porosity model.-->
-		<xsd:attribute name="porosityModelName" type="string" use="required" />
+		<xsd:attribute name="porosityModelName" type="groupNameRef" use="required" />
 		<!--solidInternalEnergyModelName => Name of the solid internal energy model.-->
-		<xsd:attribute name="solidInternalEnergyModelName" type="string" default="" />
+		<xsd:attribute name="solidInternalEnergyModelName" type="groupNameRef" default="" />
 		<!--solidModelName => Name of the solid model.-->
-		<xsd:attribute name="solidModelName" type="string" use="required" />
+		<xsd:attribute name="solidModelName" type="groupNameRef" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
+		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="PorousExtendedDruckerPragerType">
 		<!--permeabilityModelName => Name of the permeability model.-->
-		<xsd:attribute name="permeabilityModelName" type="string" use="required" />
+		<xsd:attribute name="permeabilityModelName" type="groupNameRef" use="required" />
 		<!--porosityModelName => Name of the porosity model.-->
-		<xsd:attribute name="porosityModelName" type="string" use="required" />
+		<xsd:attribute name="porosityModelName" type="groupNameRef" use="required" />
 		<!--solidInternalEnergyModelName => Name of the solid internal energy model.-->
-		<xsd:attribute name="solidInternalEnergyModelName" type="string" default="" />
+		<xsd:attribute name="solidInternalEnergyModelName" type="groupNameRef" default="" />
 		<!--solidModelName => Name of the solid model.-->
-		<xsd:attribute name="solidModelName" type="string" use="required" />
+		<xsd:attribute name="solidModelName" type="groupNameRef" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
+		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="PorousModifiedCamClayType">
 		<!--permeabilityModelName => Name of the permeability model.-->
-		<xsd:attribute name="permeabilityModelName" type="string" use="required" />
+		<xsd:attribute name="permeabilityModelName" type="groupNameRef" use="required" />
 		<!--porosityModelName => Name of the porosity model.-->
-		<xsd:attribute name="porosityModelName" type="string" use="required" />
+		<xsd:attribute name="porosityModelName" type="groupNameRef" use="required" />
 		<!--solidInternalEnergyModelName => Name of the solid internal energy model.-->
-		<xsd:attribute name="solidInternalEnergyModelName" type="string" default="" />
+		<xsd:attribute name="solidInternalEnergyModelName" type="groupNameRef" default="" />
 		<!--solidModelName => Name of the solid model.-->
-		<xsd:attribute name="solidModelName" type="string" use="required" />
+		<xsd:attribute name="solidModelName" type="groupNameRef" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
+		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="PressurePorosityType">
 		<!--compressibility => Solid compressibility-->
@@ -4065,7 +4100,7 @@ If you want to do a three-phase simulation, please use instead wettingIntermedia
 		<!--referencePressure => Reference pressure for solid compressibility-->
 		<xsd:attribute name="referencePressure" type="real64" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
+		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="ProppantPermeabilityType">
 		<!--maxProppantConcentration => Maximum proppant concentration.-->
@@ -4073,7 +4108,7 @@ If you want to do a three-phase simulation, please use instead wettingIntermedia
 		<!--proppantDiameter => Proppant diameter.-->
 		<xsd:attribute name="proppantDiameter" type="real64" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
+		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="ProppantPorosityType">
 		<!--defaultReferencePorosity => Default value of the reference porosity-->
@@ -4081,7 +4116,7 @@ If you want to do a three-phase simulation, please use instead wettingIntermedia
 		<!--maxProppantConcentration => Maximum proppant concentration -->
 		<xsd:attribute name="maxProppantConcentration" type="real64" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
+		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="ProppantSlurryFluidType">
 		<!--componentNames => List of fluid component names-->
@@ -4109,19 +4144,19 @@ If you want to do a three-phase simulation, please use instead wettingIntermedia
 		<!--referenceViscosity => Reference fluid viscosity-->
 		<xsd:attribute name="referenceViscosity" type="real64" default="0.001" />
 		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
+		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="ProppantSolidProppantPermeabilityType">
 		<!--permeabilityModelName => Name of the permeability model.-->
-		<xsd:attribute name="permeabilityModelName" type="string" use="required" />
+		<xsd:attribute name="permeabilityModelName" type="groupNameRef" use="required" />
 		<!--porosityModelName => Name of the porosity model.-->
-		<xsd:attribute name="porosityModelName" type="string" use="required" />
+		<xsd:attribute name="porosityModelName" type="groupNameRef" use="required" />
 		<!--solidInternalEnergyModelName => Name of the solid internal energy model.-->
-		<xsd:attribute name="solidInternalEnergyModelName" type="string" default="" />
+		<xsd:attribute name="solidInternalEnergyModelName" type="groupNameRef" default="" />
 		<!--solidModelName => Name of the solid model.-->
-		<xsd:attribute name="solidModelName" type="string" use="required" />
+		<xsd:attribute name="solidModelName" type="groupNameRef" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
+		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="ReactiveBrineType">
 		<!--componentMolarWeight => Component molar weights-->
@@ -4133,7 +4168,7 @@ If you want to do a three-phase simulation, please use instead wettingIntermedia
 		<!--phasePVTParaFiles => Names of the files defining the parameters of the viscosity and density models-->
 		<xsd:attribute name="phasePVTParaFiles" type="path_array" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
+		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="ReactiveBrineThermalType">
 		<!--componentMolarWeight => Component molar weights-->
@@ -4145,13 +4180,13 @@ If you want to do a three-phase simulation, please use instead wettingIntermedia
 		<!--phasePVTParaFiles => Names of the files defining the parameters of the viscosity and density models-->
 		<xsd:attribute name="phasePVTParaFiles" type="path_array" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
+		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="SinglePhaseConstantThermalConductivityType">
 		<!--thermalConductivityComponents => xx, yy, and zz components of a diagonal thermal conductivity tensor [J/(s.m.K)]-->
 		<xsd:attribute name="thermalConductivityComponents" type="R1Tensor" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
+		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="SlipDependentPermeabilityType">
 		<!--initialPermeability =>  initial permeability of the fracture.-->
@@ -4161,7 +4196,7 @@ If you want to do a three-phase simulation, please use instead wettingIntermedia
 		<!--shearDispThreshold => Threshold of shear displacement.-->
 		<xsd:attribute name="shearDispThreshold" type="real64" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
+		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="SolidInternalEnergyType">
 		<!--referenceInternalEnergy => Internal energy at the reference temperature [J/kg]-->
@@ -4171,25 +4206,25 @@ If you want to do a three-phase simulation, please use instead wettingIntermedia
 		<!--volumetricHeatCapacity => Solid volumetric heat capacity [J/(kg.K)]-->
 		<xsd:attribute name="volumetricHeatCapacity" type="real64" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
+		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="TableCapillaryPressureType">
 		<!--nonWettingIntermediateCapPressureTableName => Capillary pressure table [Pa] for the pair (non-wetting phase, intermediate phase)
 Note that this input is only used for three-phase flow.
 If you want to do a two-phase simulation, please use instead wettingNonWettingCapPressureTableName to specify the table names-->
-		<xsd:attribute name="nonWettingIntermediateCapPressureTableName" type="string" default="" />
+		<xsd:attribute name="nonWettingIntermediateCapPressureTableName" type="groupNameRef" default="" />
 		<!--phaseNames => List of fluid phases-->
 		<xsd:attribute name="phaseNames" type="string_array" use="required" />
 		<!--wettingIntermediateCapPressureTableName => Capillary pressure table [Pa] for the pair (wetting phase, intermediate phase)
 Note that this input is only used for three-phase flow.
 If you want to do a two-phase simulation, please use instead wettingNonWettingCapPressureTableName to specify the table names-->
-		<xsd:attribute name="wettingIntermediateCapPressureTableName" type="string" default="" />
+		<xsd:attribute name="wettingIntermediateCapPressureTableName" type="groupNameRef" default="" />
 		<!--wettingNonWettingCapPressureTableName => Capillary pressure table [Pa] for the pair (wetting phase, non-wetting phase)
 Note that this input is only used for two-phase flow.
 If you want to do a three-phase simulation, please use instead wettingIntermediateCapPressureTableName and nonWettingIntermediateCapPressureTableName to specify the table names-->
-		<xsd:attribute name="wettingNonWettingCapPressureTableName" type="string" default="" />
+		<xsd:attribute name="wettingNonWettingCapPressureTableName" type="groupNameRef" default="" />
 		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
+		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="TableRelativePermeabilityType">
 		<!--nonWettingIntermediateRelPermTableNames => List of relative permeability tables for the pair (non-wetting phase, intermediate phase)
@@ -4210,7 +4245,7 @@ Note that this input is only used for two-phase flow.
 If you want to do a three-phase simulation, please use instead wettingIntermediateRelPermTableNames and nonWettingIntermediateRelPermTableNames to specify the table names-->
 		<xsd:attribute name="wettingNonWettingRelPermTableNames" type="string_array" default="{}" />
 		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
+		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="TableRelativePermeabilityHysteresisType">
 		<!--drainageNonWettingIntermediateRelPermTableNames => List of drainage relative permeability tables for the pair (non-wetting phase, intermediate phase)
@@ -4230,10 +4265,10 @@ If you want to do a three-phase simulation, please use instead drainageWettingIn
 		<xsd:attribute name="drainageWettingNonWettingRelPermTableNames" type="string_array" default="{}" />
 		<!--imbibitionNonWettingRelPermTableName => Imbibition relative permeability table name for the non-wetting phase.
 To neglect hysteresis on this phase, just use the same table name for the drainage and imbibition curves-->
-		<xsd:attribute name="imbibitionNonWettingRelPermTableName" type="string" default="" />
+		<xsd:attribute name="imbibitionNonWettingRelPermTableName" type="groupNameRef" default="" />
 		<!--imbibitionWettingRelPermTableName => Imbibition relative permeability table name for the wetting phase.
 To neglect hysteresis on this phase, just use the same table name for the drainage and imbibition curves-->
-		<xsd:attribute name="imbibitionWettingRelPermTableName" type="string" default="" />
+		<xsd:attribute name="imbibitionWettingRelPermTableName" type="groupNameRef" default="" />
 		<!--jerauldParameterA => First parameter (modification parameter) introduced by Jerauld in the Land trapping model (see RTD documentation).-->
 		<xsd:attribute name="jerauldParameterA" type="real64" default="0.1" />
 		<!--jerauldParameterB => Second parameter introduced by Jerauld in the Land trapping model (see RTD documentation).-->
@@ -4243,7 +4278,7 @@ To neglect hysteresis on this phase, just use the same table name for the draina
 		<!--phaseNames => List of fluid phases-->
 		<xsd:attribute name="phaseNames" type="string_array" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
+		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="ThermalCompressibleSinglePhaseFluidType">
 		<!--compressibility => Fluid compressibility-->
@@ -4284,7 +4319,7 @@ To neglect hysteresis on this phase, just use the same table name for the draina
 		<!--volumetricHeatCapacity => Fluid volumetric heat capacity. Unit: J/kg/K-->
 		<xsd:attribute name="volumetricHeatCapacity" type="real64" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
+		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="VanGenuchtenBakerRelativePermeabilityType">
 		<!--gasOilRelPermExponentInv => Rel perm power law exponent inverse for the pair (gas phase, oil phase) at residual water saturation
@@ -4304,7 +4339,7 @@ The expected format is "{ waterExp, oilExp }", in that order-->
 The expected format is "{ waterMax, oilMax }", in that order-->
 		<xsd:attribute name="waterOilRelPermMaxValue" type="real64_array" default="{0}" />
 		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
+		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="VanGenuchtenCapillaryPressureType">
 		<!--capPressureEpsilon => Saturation at which the extremum capillary pressure is attained; used to avoid infinite capillary pressure values for saturations close to 0 and 1-->
@@ -4318,7 +4353,7 @@ The expected format is "{ waterMax, oilMax }", in that order-->
 		<!--phaseNames => List of fluid phases-->
 		<xsd:attribute name="phaseNames" type="string_array" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
+		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="ViscoDruckerPragerType">
 		<!--defaultBulkModulus => Default Bulk Modulus Parameter-->
@@ -4344,7 +4379,7 @@ The expected format is "{ waterMax, oilMax }", in that order-->
 		<!--relaxationTime => Relaxation time-->
 		<xsd:attribute name="relaxationTime" type="real64" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
+		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="ViscoExtendedDruckerPragerType">
 		<!--defaultBulkModulus => Default Bulk Modulus Parameter-->
@@ -4372,7 +4407,7 @@ The expected format is "{ waterMax, oilMax }", in that order-->
 		<!--relaxationTime => Relaxation time-->
 		<xsd:attribute name="relaxationTime" type="real64" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
+		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="ViscoModifiedCamClayType">
 		<!--defaultCslSlope => Slope of the critical state line-->
@@ -4396,7 +4431,7 @@ The expected format is "{ waterMax, oilMax }", in that order-->
 		<!--relaxationTime => Relaxation time-->
 		<xsd:attribute name="relaxationTime" type="real64" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
+		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="WillisRichardsPermeabilityType">
 		<!--dilationCoefficient => Dilation coefficient (tan of dilation angle).-->
@@ -4406,7 +4441,7 @@ The expected format is "{ waterMax, oilMax }", in that order-->
 		<!--refClosureStress => Effective normal stress causes 90% reduction in aperture.-->
 		<xsd:attribute name="refClosureStress" type="real64" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
+		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="ElementRegionsType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -4424,24 +4459,24 @@ The expected format is "{ waterMax, oilMax }", in that order-->
 		<!--materialList => List of materials present in this region-->
 		<xsd:attribute name="materialList" type="string_array" use="required" />
 		<!--meshBody => Mesh body that contains this region-->
-		<xsd:attribute name="meshBody" type="string" default="" />
+		<xsd:attribute name="meshBody" type="groupNameRef" default="" />
 		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
+		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="SurfaceElementRegionType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded" />
 		<!--defaultAperture => The default aperture of newly formed surface elements.-->
 		<xsd:attribute name="defaultAperture" type="real64" use="required" />
 		<!--faceBlock => The name of the face block in the mesh, or the embedded surface.-->
-		<xsd:attribute name="faceBlock" type="string" default="FractureSubRegion" />
+		<xsd:attribute name="faceBlock" type="groupNameRef" default="FractureSubRegion" />
 		<!--materialList => List of materials present in this region-->
 		<xsd:attribute name="materialList" type="string_array" use="required" />
 		<!--meshBody => Mesh body that contains this region-->
-		<xsd:attribute name="meshBody" type="string" default="" />
+		<xsd:attribute name="meshBody" type="groupNameRef" default="" />
 		<!--subRegionType => Type of surface element subregion. Valid options: {faceElement, embeddedElement}.-->
 		<xsd:attribute name="subRegionType" type="geos_SurfaceElementRegion_SurfaceSubRegionType" default="faceElement" />
 		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
+		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:simpleType name="geos_SurfaceElementRegion_SurfaceSubRegionType">
 		<xsd:restriction base="xsd:string">
@@ -4453,9 +4488,9 @@ The expected format is "{ waterMax, oilMax }", in that order-->
 		<!--materialList => List of materials present in this region-->
 		<xsd:attribute name="materialList" type="string_array" use="required" />
 		<!--meshBody => Mesh body that contains this region-->
-		<xsd:attribute name="meshBody" type="string" default="" />
+		<xsd:attribute name="meshBody" type="groupNameRef" default="" />
 		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
+		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="IncludedType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -4464,7 +4499,7 @@ The expected format is "{ waterMax, oilMax }", in that order-->
 	</xsd:complexType>
 	<xsd:complexType name="FileType">
 		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
+		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="ParametersType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -4475,7 +4510,7 @@ The expected format is "{ waterMax, oilMax }", in that order-->
 		<!--value => Input parameter definition for the preprocessor-->
 		<xsd:attribute name="value" type="string" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
+		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="BenchmarksType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
