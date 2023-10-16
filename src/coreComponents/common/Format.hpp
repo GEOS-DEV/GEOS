@@ -83,7 +83,6 @@ struct fmt::formatter< T, std::enable_if_t< std::is_enum< T >::value > >
  */
 #define GEOS_FMT_TO( iter, size, msg, ... ) *GEOS_FMT_NS::format_to_n( iter, size - 1, msg, __VA_ARGS__ ).out = '\0'
 
-
 // The following workaround is needed to fix compilation with NVCC on some PowerPC machines.
 // The issue causes the following assertion error message:
 // "Cannot format an argument. To make type T formattable provide a formatter<T> specialization"
@@ -93,9 +92,10 @@ struct fmt::formatter< T, std::enable_if_t< std::is_enum< T >::value > >
 // https://github.com/fmtlib/fmt/commit/70de324aa801eaf52e94c402d526a3849797c620
 // but later removed:
 // https://github.com/fmtlib/fmt/commit/466e0650ec2d153d255a40ec230eb77d7f1c3334
+// This workaround bypasse the check for a const formatter whenever the foramt context GEOS_FMT_NS::format_context is used
 #ifdef GEOS_USE_FMT_CONST_FORMATTER_WORKAROUND
-template< typename T >
-constexpr auto GEOS_FMT_NS::detail::has_const_formatter< T, GEOS_FMT_NS::format_context >() -> bool
+template< >
+constexpr auto GEOS_FMT_NS::detail::has_const_formatter_impl< GEOS_FMT_NS::format_context >( ... ) -> bool
 {
   return true;
 }
