@@ -1257,4 +1257,76 @@ void SinglePhaseBase::resetStateToBeginningOfStep( DomainPartition & domain )
   } );
 }
 
+//real64 SinglePhaseBase::scalingForSystemSolution( DomainPartition & domain,
+//                                                  DofManager const & dofManager,
+//                                                  arrayView1d< real64 const > const & localSolution )
+//{
+//  GEOS_MARK_FUNCTION;
+//
+//  return 1.0;
+//
+//  string const dofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
+//  real64 localScalingFactor = 1.0;
+//
+//  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
+//                                                               MeshLevel & mesh,
+//                                                               arrayView1d< string const > const & regionNames )
+//  {
+//    mesh.getElemManager().forElementSubRegions( regionNames,
+//                                                [&]( localIndex const,
+//                                                     ElementSubRegionBase & subRegion )
+//    {
+//      globalIndex const rankOffset = dofManager.rankOffset();
+//      arrayView1d< globalIndex const > const dofNumber = subRegion.getReference< array1d< globalIndex > >( dofKey );
+//      arrayView1d< integer const > const ghostRank = subRegion.ghostRank();
+//      arrayView1d< real64 const > const pres = subRegion.getField< fields::flow::pressure >();
+//
+//      real64 const subRegionScalingFactor =
+//        singlePhaseBaseKernels::ScalingForSystemSolutionKernel::
+//          launch< parallelDevicePolicy<> >( localSolution, rankOffset, dofNumber, ghostRank, pres );
+//
+//      localScalingFactor = std::min( localScalingFactor, subRegionScalingFactor );
+//    } );
+//  } );
+//
+//  return MpiWrapper::min( localScalingFactor );
+//}
+//
+//bool SinglePhaseBase::checkSystemSolution( DomainPartition & domain,
+//                                           DofManager const & dofManager,
+//                                           arrayView1d< real64 const > const & localSolution,
+//                                           real64 const scalingFactor )
+//{
+//  GEOS_MARK_FUNCTION;
+//
+//  return 1;
+//
+//  string const dofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
+//  integer localCheck = 1;
+//
+//  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
+//                                                               MeshLevel & mesh,
+//                                                               arrayView1d< string const > const & regionNames )
+//  {
+//    mesh.getElemManager().forElementSubRegions( regionNames,
+//                                                [&]( localIndex const,
+//                                                     ElementSubRegionBase & subRegion )
+//    {
+//      globalIndex const rankOffset = dofManager.rankOffset();
+//      arrayView1d< globalIndex const > const dofNumber = subRegion.getReference< array1d< globalIndex > >( dofKey );
+//      arrayView1d< integer const > const ghostRank = subRegion.ghostRank();
+//      arrayView1d< real64 const > const pres = subRegion.getField< fields::flow::pressure >();
+//        arrayView1d< real64 const > const mob = subRegion.getField< fields::flow::mobility >();
+//
+//      integer const subRegionSolutionCheck =
+//        singlePhaseBaseKernels::SolutionCheckKernel::
+//          launch< parallelDevicePolicy<> >( localSolution, rankOffset, dofNumber, ghostRank, pres, mob, scalingFactor );
+//
+//      localCheck = std::min( localCheck, subRegionSolutionCheck );
+//    } );
+//  } );
+//
+//  return MpiWrapper::min( localCheck );
+//}
+
 } /* namespace geos */

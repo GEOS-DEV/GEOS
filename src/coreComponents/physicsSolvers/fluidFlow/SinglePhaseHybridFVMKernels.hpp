@@ -621,7 +621,7 @@ class ResidualNormKernel : public solverBaseKernels::ResidualNormKernelBase< 1 >
 public:
 
   using Base = solverBaseKernels::ResidualNormKernelBase< 1 >;
-  using Base::minNormalizer;
+  using Base::m_minNormalizer;
   using Base::m_rankOffset;
   using Base::m_localResidual;
   using Base::m_dofNumber;
@@ -657,11 +657,13 @@ public:
                       SinglePhaseFluidAccessors const & singlePhaseFluidAccessors,
                       PorosityAccessors const & porosityAccessors,
                       real64 const & defaultViscosity,
-                      real64 const & dt )
+                      real64 const dt,
+                      real64 const minNormalizer )
     : Base( rankOffset,
             localResidual,
             dofNumber,
-            ghostRank ),
+            ghostRank,
+            minNormalizer),
     m_dt( dt ),
     m_regionFilter( regionFilter ),
     m_defaultViscosity( defaultViscosity ),
@@ -711,7 +713,7 @@ public:
       computeMassNormalizer( kf, massNormalizer, multiplier );
 
       // scaled residual to be in mass units (needed because element and face residuals are blended in a single norm)
-      stack.localValue[0] += LvArray::math::abs( m_localResidual[stack.localRow] * multiplier ) / LvArray::math::max( minNormalizer, massNormalizer );
+      stack.localValue[0] += LvArray::math::abs( m_localResidual[stack.localRow] * multiplier ) / LvArray::math::max( m_minNormalizer, massNormalizer );
     }
   }
 
@@ -787,14 +789,15 @@ public:
   static void
   createAndLaunch( solverBaseKernels::NormType const normType,
                    globalIndex const rankOffset,
-                   string const dofKey,
+                   string const & dofKey,
                    arrayView1d< real64 const > const & localResidual,
                    SortedArrayView< localIndex const > const & regionFilter,
                    string const & solverName,
                    ElementRegionManager const & elemManager,
                    FaceManager const & faceManager,
-                   real64 const & defaultViscosity,
-                   real64 const & dt,
+                   real64 const defaultViscosity,
+                   real64 const dt,
+                   real64 const minNormalizer,
                    real64 (& residualNorm)[1],
                    real64 (& residualNormalizer)[1] )
   {
@@ -807,7 +810,7 @@ public:
     typename kernelType::PorosityAccessors poroAccessors( elemManager, solverName );
 
     ResidualNormKernel kernel( rankOffset, localResidual, dofNumber, ghostRank,
-                               regionFilter, faceManager, flowAccessors, fluidAccessors, poroAccessors, defaultViscosity, dt );
+                               regionFilter, faceManager, flowAccessors, fluidAccessors, poroAccessors, defaultViscosity, dt, minNormalizer );
     if( normType == solverBaseKernels::NormType::Linf )
     {
       ResidualNormKernel::launchLinf< POLICY >( faceManager.size(), kernel, residualNorm );

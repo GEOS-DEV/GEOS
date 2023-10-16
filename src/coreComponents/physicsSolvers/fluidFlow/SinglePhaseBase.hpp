@@ -103,6 +103,18 @@ public:
                            CRSMatrixView< real64, globalIndex const > const & localMatrix,
                            arrayView1d< real64 > const & localRhs ) override;
 
+//  virtual real64
+//  scalingForSystemSolution( DomainPartition & domain,
+//                            DofManager const & dofManager,
+//                            arrayView1d< real64 const > const & localSolution ) override;
+//
+//  virtual bool
+//  checkSystemSolution( DomainPartition & domain,
+//                       DofManager const & dofManager,
+//                       arrayView1d< real64 const > const & localSolution,
+//                       real64 const scalingFactor ) override;
+
+
   virtual void
   resetStateToBeginningOfStep( DomainPartition & domain ) override;
 
