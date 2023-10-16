@@ -21,7 +21,6 @@
 #include "BufferOps.hpp"
 #include "NodeManager.hpp"
 #include "FaceManager.hpp"
-#include "codingUtilities/Utilities.hpp"
 #include "common/TimingMacros.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
 
@@ -93,10 +92,10 @@ void EdgeManager::buildEdges( localIndex const numNodes,
   resize( numEdges );
 }
 
-void EdgeManager::setGeometricalRelations( CellBlockManagerABC const & cellBlockManager, bool baseMeshLevel )
+void EdgeManager::setGeometricalRelations( CellBlockManagerABC const & cellBlockManager, bool isBaseMeshLevel )
 {
   GEOS_MARK_FUNCTION;
-  if( baseMeshLevel )
+  if( isBaseMeshLevel )
   {
     resize( cellBlockManager.numEdges() );
   }
@@ -122,13 +121,13 @@ void EdgeManager::setDomainBoundaryObjects( FaceManager const & faceManager )
   arrayView1d< integer > const isEdgeOnDomainBoundary = this->getDomainBoundaryIndicator();
   isEdgeOnDomainBoundary.zero();
 
-  ArrayOfArraysView< localIndex const > const faceToEdgeMap = faceManager.edgeList().toViewConst();
+  ArrayOfArraysView< localIndex const > const faceToEdges = faceManager.edgeList().toViewConst();
 
   forAll< parallelHostPolicy >( faceManager.size(), [=]( localIndex const faceIndex )
   {
     if( isFaceOnDomainBoundary[faceIndex] == 1 )
     {
-      for( localIndex const edgeIndex : faceToEdgeMap[faceIndex] )
+      for( localIndex const edgeIndex : faceToEdges[faceIndex] )
       {
         isEdgeOnDomainBoundary[edgeIndex] = 1;
       }

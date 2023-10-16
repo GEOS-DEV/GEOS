@@ -438,7 +438,7 @@ public:
    *
    */
   virtual bool
-  checkSystemSolution( DomainPartition const & domain,
+  checkSystemSolution( DomainPartition & domain,
                        DofManager const & dofManager,
                        arrayView1d< real64 const > const & localSolution,
                        real64 const scalingFactor );
@@ -451,7 +451,7 @@ public:
    * @return The factor that should be used to scale the solution vector values when they are being applied.
    */
   virtual real64
-  scalingForSystemSolution( DomainPartition const & domain,
+  scalingForSystemSolution( DomainPartition & domain,
                             DofManager const & dofManager,
                             arrayView1d< real64 const > const & localSolution );
 
@@ -481,6 +481,7 @@ public:
   applySystemSolution( DofManager const & dofManager,
                        arrayView1d< real64 const > const & localSolution,
                        real64 const scalingFactor,
+                       real64 const dt,
                        DomainPartition & domain );
 
   /**
@@ -712,6 +713,8 @@ public:
 
   virtual bool registerCallback( void * func, const std::type_info & funcType ) final override;
 
+  SolverStatistics & getSolverStatistics() { return m_solverStatistics; }
+
   /**
    * @brief Return PySolver type.
    * @return Return PySolver type.
@@ -792,6 +795,7 @@ protected:
 
   std::function< void( CRSMatrix< real64, globalIndex >, array1d< real64 > ) > m_assemblyCallback;
 
+  std::map< std::string, std::chrono::system_clock::duration > m_timers;
 
 private:
   /// List of names of regions the solver will be applied to

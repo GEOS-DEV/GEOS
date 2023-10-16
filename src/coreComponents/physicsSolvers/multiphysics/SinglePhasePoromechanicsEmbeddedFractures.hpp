@@ -84,6 +84,7 @@ public:
   applySystemSolution( DofManager const & dofManager,
                        arrayView1d< real64 const > const & localSolution,
                        real64 const scalingFactor,
+                       real64 const dt,
                        DomainPartition & domain ) override;
 
   virtual void
@@ -142,7 +143,8 @@ private:
                          arrayView1d< string const > const & regionNames,
                          string const & materialNamesString,
                          CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                         arrayView1d< real64 > const & localRhs );
+                         arrayView1d< real64 > const & localRhs,
+                         real64 const & dt );
 
   string m_fracturesSolverName;
 
@@ -159,7 +161,8 @@ real64 SinglePhasePoromechanicsEmbeddedFractures::assemblyLaunch( MeshLevel & me
                                                                   arrayView1d< string const > const & regionNames,
                                                                   string const & materialNamesString,
                                                                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                                                  arrayView1d< real64 > const & localRhs )
+                                                                  arrayView1d< real64 > const & localRhs,
+                                                                  real64 const & dt )
 {
   GEOS_MARK_FUNCTION;
 
@@ -182,6 +185,7 @@ real64 SinglePhasePoromechanicsEmbeddedFractures::assemblyLaunch( MeshLevel & me
                                 dofManager.rankOffset(),
                                 localMatrix,
                                 localRhs,
+                                dt,
                                 gravityVectorData,
                                 flowDofKey,
                                 FlowSolverBase::viewKeyStruct::fluidNamesString() );
@@ -203,6 +207,7 @@ real64 SinglePhasePoromechanicsEmbeddedFractures::assemblyLaunch( MeshLevel & me
                                          dofManager.rankOffset(),
                                          localMatrix,
                                          localRhs,
+                                         dt,
                                          gravityVectorData,
                                          FlowSolverBase::viewKeyStruct::fluidNamesString() );
 
