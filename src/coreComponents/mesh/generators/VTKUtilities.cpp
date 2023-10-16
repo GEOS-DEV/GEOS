@@ -928,9 +928,9 @@ redistributeMeshes( integer const logLevel,
 
   // Logging some information about the redistribution.
   {
-    string const pattern = "{} = {}";
+    string const pattern = "{}: {}";
     std::vector< string > messages;
-    messages.push_back( GEOS_FMT( pattern, "Local mesh size: ", result.getMainMesh()->GetNumberOfCells() ) );
+    messages.push_back( GEOS_FMT( pattern, "Local mesh size", result.getMainMesh()->GetNumberOfCells() ) );
     for( auto const & [faceName, faceMesh]: result.getFaceBlocks() )
     {
       messages.push_back( GEOS_FMT( pattern, faceName, faceMesh->GetNumberOfCells() ) );
