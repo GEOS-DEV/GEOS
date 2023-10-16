@@ -52,6 +52,7 @@ EquilibriumInitialCondition::EquilibriumInitialCondition( string const & name, G
     setDescription( "Elevation increment [m] in the hydrostatic pressure table constructed internally" );
 
   registerWrapper( viewKeyStruct::initPhaseNameString(), &m_initPhaseName ).
+    setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Name of the phase initially saturating the reservoir" );
 
@@ -66,6 +67,7 @@ EquilibriumInitialCondition::EquilibriumInitialCondition( string const & name, G
     setDescription( "Names of the tables specifying the (component fraction vs elevation) relationship for each component" );
 
   registerWrapper( viewKeyStruct::temperatureVsElevationTableNameString(), &m_temperatureVsElevationTableName ).
+    setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Name of the table specifying the (temperature [K] vs elevation) relationship" );
 

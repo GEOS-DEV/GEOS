@@ -80,6 +80,7 @@ WellControls::WellControls( string const & name, Group * const parent )
     setDescription( "Target phase volumetric rate (if useSurfaceConditions: [surface m^3/s]; else [reservoir m^3/s])" );
 
   registerWrapper( viewKeyStruct::targetPhaseNameString(), &m_targetPhaseName ).
+    setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
     setDefaultValue( "" ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Name of the target phase" );
@@ -131,18 +132,22 @@ WellControls::WellControls( string const & name, Group * const parent )
                     " - Producer pressure at reference depth initialized as: (1-initialPressureCoefficient)*reservoirPressureAtClosestPerforation + density*g*( zRef - zPerf ) " );
 
   registerWrapper( viewKeyStruct::targetBHPTableNameString(), &m_targetBHPTableName ).
+    setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Name of the BHP table when the rate is a time dependent function" );
 
   registerWrapper( viewKeyStruct::targetTotalRateTableNameString(), &m_targetTotalRateTableName ).
+    setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Name of the total rate table when the rate is a time dependent function" );
 
   registerWrapper( viewKeyStruct::targetPhaseRateTableNameString(), &m_targetPhaseRateTableName ).
+    setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Name of the phase rate table when the rate is a time dependent function" );
 
   registerWrapper( viewKeyStruct::statusTableNameString(), &m_statusTableName ).
+    setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Name of the well status table when the status of the well is a time dependent function. \n"
                     "If the status function evaluates to a positive value at the current time, the well will be open otherwise the well will be shut." );

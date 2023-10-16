@@ -37,6 +37,7 @@ VTKMeshGenerator::VTKMeshGenerator( string const & name,
   : ExternalMeshGeneratorBase( name, parent )
 {
   registerWrapper( viewKeyStruct::regionAttributeString(), &m_attributeName ).
+    setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( "attribute" ).
     setDescription( "Name of the VTK cell attribute to use as region marker" );
@@ -46,6 +47,7 @@ VTKMeshGenerator::VTKMeshGenerator( string const & name,
     setDescription( "Names of the VTK nodesets to import" );
 
   registerWrapper( viewKeyStruct::mainBlockNameString(), &m_mainBlockName ).
+    setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDefaultValue( "main" ).
     setDescription( "For multi-block files, name of the 3d mesh block." );

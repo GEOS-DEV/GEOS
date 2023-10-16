@@ -31,8 +31,11 @@ WellElementRegion::WellElementRegion( string const & name, Group * const parent 
   m_wellControlsName( "" ),
   m_wellGeneratorName( "" )
 {
-  registerWrapper( viewKeyStruct::wellControlsString(), &m_wellControlsName );
-  registerWrapper( viewKeyStruct::wellGeneratorString(), &m_wellGeneratorName );
+  registerWrapper( viewKeyStruct::wellControlsString(), &m_wellControlsName ).
+    setRTTypeName( rtTypes::CustomTypes::groupNameRef );
+
+  registerWrapper( viewKeyStruct::wellGeneratorString(), &m_wellGeneratorName ).
+    setRTTypeName( rtTypes::CustomTypes::groupNameRef );
 
   this->getGroup( viewKeyStruct::elementSubRegions() ).registerGroup< WellElementSubRegion >( m_subRegionName );
 

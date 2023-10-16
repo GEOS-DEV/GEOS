@@ -37,6 +37,7 @@ ElementRegionBase::ElementRegionBase( string const & name, Group * const parent 
     setDescription( "List of materials present in this region" );
 
   registerWrapper( viewKeyStruct::meshBodyString(), &m_meshBody ).
+    setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( "" ).
     setDescription( "Mesh body that contains this region" );

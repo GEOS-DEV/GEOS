@@ -32,6 +32,7 @@ TriaxialDriver::TriaxialDriver( const string & name,
   enableLogLevelInput();
 
   registerWrapper( viewKeyStruct::solidMaterialNameString(), &m_solidMaterialName ).
+    setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Solid material to test" );
 
@@ -40,10 +41,12 @@ TriaxialDriver::TriaxialDriver( const string & name,
     setDescription( "Test mode [stressControl, strainControl, mixedControl]" );
 
   registerWrapper( viewKeyStruct::axialFunctionString(), &m_axialFunctionName ).
+    setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Function controlling axial stress or strain (depending on test mode)" );
 
   registerWrapper( viewKeyStruct::radialFunctionString(), &m_radialFunctionName ).
+    setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Function controlling radial stress or strain (depending on test mode)" );
 

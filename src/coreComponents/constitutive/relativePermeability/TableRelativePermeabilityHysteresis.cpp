@@ -70,12 +70,14 @@ TableRelativePermeabilityHysteresis::TableRelativePermeabilityHysteresis( std::s
   // imbibition table names
 
   registerWrapper( viewKeyStruct::imbibitionWettingRelPermTableNameString(), &m_imbibitionWettingRelPermTableName ).
+    setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( "" ).
     setDescription( "Imbibition relative permeability table name for the wetting phase.\n"
                     "To neglect hysteresis on this phase, just use the same table name for the drainage and imbibition curves" );
 
   registerWrapper( viewKeyStruct::imbibitionNonWettingRelPermTableNameString(), &m_imbibitionNonWettingRelPermTableName ).
+    setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( "" ).
     setDescription( "Imbibition relative permeability table name for the non-wetting phase.\n"

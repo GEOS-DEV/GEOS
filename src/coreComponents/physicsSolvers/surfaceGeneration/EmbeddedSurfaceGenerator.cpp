@@ -68,6 +68,7 @@ EmbeddedSurfaceGenerator::EmbeddedSurfaceGenerator( const string & name,
   m_mpiCommOrder( 0 )
 {
   registerWrapper( viewKeyStruct::fractureRegionNameString(), &m_fractureRegionName ).
+    setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
     setInputFlag( dataRepository::InputFlags::OPTIONAL ).
     setApplyDefaultValue( "FractureRegion" );
 

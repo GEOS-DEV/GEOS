@@ -41,6 +41,7 @@ PVTDriver::PVTDriver( const string & name,
   enableLogLevelInput();
 
   registerWrapper( viewKeyStruct::fluidNameString(), &m_fluidName ).
+    setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Fluid to test" );
 
@@ -49,10 +50,12 @@ PVTDriver::PVTDriver( const string & name,
     setDescription( "Feed composition array [mol fraction]" );
 
   registerWrapper( viewKeyStruct::pressureFunctionString(), &m_pressureFunctionName ).
+    setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Function controlling pressure time history" );
 
   registerWrapper( viewKeyStruct::temperatureFunctionString(), &m_temperatureFunctionName ).
+    setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Function controlling temperature time history" );
 

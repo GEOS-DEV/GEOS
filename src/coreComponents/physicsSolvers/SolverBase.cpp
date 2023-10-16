@@ -63,6 +63,7 @@ SolverBase::SolverBase( string const & name,
     setDescription( "Value of the Maximum Stable Timestep for this solver." );
 
   this->registerWrapper( viewKeyStruct::discretizationString(), &m_discretizationName ).
+    setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this "
                     "solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` "

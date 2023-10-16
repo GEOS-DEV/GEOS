@@ -63,6 +63,7 @@ PhaseFieldDamageFEM::PhaseFieldDamageFEM( const string & name,
     setDescription( "option for default time integration method" );
 
   registerWrapper< string >( PhaseFieldDamageFEMViewKeys.fieldVarName.key(), &m_fieldName ).
+    setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "name of field variable" );
 
