@@ -121,12 +121,12 @@ public:
     if( m_wrapper.isPackable() )
     {
       parallelDeviceEvents events;
-      EXPECT_EQ( m_wrapper.pack< false >( null, false, events ), value );
+      EXPECT_EQ( m_wrapper.template pack< false >( null, false, events ), value );
     }
     if( m_wrapperBase.isPackable() )
     {
       parallelDeviceEvents events;
-      EXPECT_EQ( m_wrapperBase.pack< false >( null, false, events ), value );
+      EXPECT_EQ( m_wrapperBase.template pack< false >( null, false, events ), value );
     }
   }
 
@@ -141,12 +141,12 @@ public:
     if( m_wrapper.isPackable() )
     {
       parallelDeviceEvents events;
-      EXPECT_EQ( m_wrapper.packByIndex< false >( null, indices.toView(), false, events ), value );
+      EXPECT_EQ( m_wrapper.template packByIndex< false >( null, indices.toView(), false, events ), value );
     }
     if( m_wrapperBase.isPackable() )
     {
       parallelDeviceEvents events;
-      EXPECT_EQ( m_wrapperBase.packByIndex< false >( null, indices.toView(), false, events ), value );
+      EXPECT_EQ( m_wrapperBase.template packByIndex< false >( null, indices.toView(), false, events ), value );
     }
   }
 
@@ -155,12 +155,12 @@ public:
     if( m_wrapper.isPackable() )
     {
       parallelDeviceEvents events;
-      EXPECT_EQ( m_wrapper.pack< false >( value, false, events ), size );
+      EXPECT_EQ( m_wrapper.template pack< false >( value, false, events ), size );
     }
     if( m_wrapperBase.isPackable() )
     {
       parallelDeviceEvents events;
-      EXPECT_EQ( m_wrapperBase.pack< false >( value, false, events ), size );
+      EXPECT_EQ( m_wrapperBase.template pack< false >( value, false, events ), size );
     }
   }
 

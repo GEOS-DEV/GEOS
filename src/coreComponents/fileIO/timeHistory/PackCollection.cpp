@@ -126,11 +126,17 @@ void PackCollection::updateSetsIndices( DomainPartition const & domain )
   // If no set or "all" is specified we retrieve the entire field.
   // If sets are specified we retrieve the field only from those sets.
   bool const collectAll = this->collectAll();
+  Group const * targetGrp = nullptr;
   try
   {
-    Group const * targetGrp = this->getTargetObject( domain, m_objectPath );
+    targetGrp = this->getTargetObject( domain, m_objectPath );
     WrapperBase const & targetField = targetGrp->getWrapperBase( m_fieldName );
-    GEOS_ERROR_IF( !( (!m_targetIsMeshObject && collectAll) ? targetField.isPackable( ) : targetField.isPackableByIndex()),
+    // If we're collecting everything from a mesh target or just collecting an entire non-mesh object
+    // throw if the object isn't packable. Otherwise is the target is a mesh object and we're not collecting
+    // all of it (using sets for indices), throw if we can't pack the object by index.
+    GEOS_ERROR_IF( !( ( !m_targetIsMeshObject && collectAll ) ?
+                        targetField.isPackable( ) :
+                        targetField.isPackableByIndex() ),
                    GEOS_FMT( "The object targeted for collection ({}: {}, {}: {}) must be packable in its last modified memory space!",
                              viewKeysStruct::objectPathString(),
                              m_objectPath,
