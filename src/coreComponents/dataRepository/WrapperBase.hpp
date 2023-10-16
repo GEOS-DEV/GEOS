@@ -166,8 +166,11 @@ public:
   string const & getRTTypeName() const
   { return m_rtTypeName; }
 
-  void setRTTypeName( string_view rtTypeName )
-  { m_rtTypeName = rtTypeName; }
+  WrapperBase & setRTTypeName( string_view rtTypeName )
+  { 
+    m_rtTypeName = rtTypeName;
+    return *this;
+  }
 
   ///@}
 

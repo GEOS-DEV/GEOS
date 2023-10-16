@@ -798,6 +798,15 @@ public:
     return *this;
   }
 
+  /**
+   * @copydoc WrapperBase::setRTTypeName(string const &)
+   */
+  Wrapper< T > & setRTTypeName( string_view rtTypeName )
+  { 
+    WrapperBase::setRTTypeName( rtTypeName );
+    return *this;
+  }
+
   ///@}
 
 #if defined(USE_TOTALVIEW_OUTPUT)
