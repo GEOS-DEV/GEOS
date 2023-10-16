@@ -24,6 +24,7 @@
 #include "xmlWrapper.hpp"
 #include "RestartFlags.hpp"
 #include "HistoryDataSpec.hpp"
+#include "DataContext.hpp"
 
 #if defined(GEOSX_USE_PYGEOSX)
 #include "LvArray/src/python/python.hpp"
@@ -179,9 +180,11 @@ public:
   /**
    * @brief Initialize the wrapper from the input xml node.
    * @param targetNode the xml node to initialize from.
-   * @return True iff the wrapper initialized itself from the file.
+   * @param nodePos the target node position, typically obtained with xmlDocument::getNodePosition().
+   * @return True if the wrapper initialized itself from the file.
    */
-  virtual bool processInputFile( xmlWrapper::xmlNode const & targetNode ) = 0;
+  virtual bool processInputFile( xmlWrapper::xmlNode const & targetNode,
+                                 xmlWrapper::xmlNodePos const & nodePos ) = 0;
 
   /**
    * @brief Push the data in the wrapper into a Conduit blueprint field.
@@ -406,6 +409,25 @@ public:
   string getPath() const;
 
   /**
+   * @return DataContext object that that stores contextual information on this group that can be
+   * used in output messages.
+   */
+  DataContext const & getDataContext() const
+  { return *m_dataContext; }
+
+  /**
+   * @return the group that contains this Wrapper.
+   */
+  Group & getParent()
+  { return *m_parent; }
+
+  /**
+   * @copydoc getParent()
+   */
+  Group const & getParent() const
+  { return *m_parent; }
+
+  /**
    * @brief Set the InputFlag of the wrapper.
    * @param input the new InputFlags value
    * @return a pointer to this wrapper
@@ -606,11 +628,21 @@ protected:
   /// @endcond
 
   /**
+   * @brief Sets the m_dataContext to a DataFileContext by retrieving the attribute file line.
+   * @param targetNode the node containing this wrapper source attribute.
+   * @param nodePos the xml node position of the node
+   */
+  void createDataContext( xmlWrapper::xmlNode const & targetNode,
+                          xmlWrapper::xmlNodePos const & nodePos );
+
+  /**
    * @brief Helper method to process an exception that has been thrown during xml parsing.
    * @param ex The caught exception.
    * @param targetNode The node from which this Group is interpreted.
+   * @param nodePos the target node position.
    */
-  void processInputException( std::exception const & ex, xmlWrapper::xmlNode const & targetNode ) const;
+  void processInputException( std::exception const & ex, xmlWrapper::xmlNode const & targetNode,
+                              xmlWrapper::xmlNodePos const & nodePos ) const;
 
 protected:
 
@@ -643,6 +675,9 @@ protected:
 
   /// A reference to the corresponding conduit::Node.
   conduit::Node & m_conduitNode;
+
+  /// A DataContext object that can helps to contextualize this Group.
+  std::unique_ptr< DataContext > m_dataContext;
 
 private:
 

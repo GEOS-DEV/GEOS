@@ -400,6 +400,13 @@ localIndex Unpack( buffer_unit_type const * & buffer,
                    ArrayOfArrays< T > & var );
 
 //------------------------------------------------------------------------------
+inline
+localIndex
+Unpack( buffer_unit_type const * & buffer,
+        ArrayOfArrays< array1d< globalIndex > > & var,
+        localIndex const subArrayIndex );
+
+//------------------------------------------------------------------------------
 template< typename T >
 localIndex Unpack( buffer_unit_type const * & buffer,
                    ArrayOfSets< T > & var );
@@ -576,6 +583,14 @@ Pack( buffer_unit_type * & buffer,
       arrayView1d< globalIndex const > const & relatedObjectLocalToGlobalMap );
 
 //------------------------------------------------------------------------------
+template< bool DO_PACKING >
+localIndex
+Pack( buffer_unit_type * & buffer,
+      ArrayOfArraysView< array1d< globalIndex > const > const & var,
+      arrayView1d< localIndex const > const & indices,
+      arrayView1d< globalIndex const > const & localToGlobalMap );
+
+//------------------------------------------------------------------------------
 template< typename SORTED0, typename SORTED1 >
 inline
 localIndex
@@ -606,6 +621,15 @@ Unpack( buffer_unit_type const * & buffer,
         mapBase< localIndex, array1d< globalIndex >, SORTED0 > & unmappedGlobalIndices,
         mapBase< globalIndex, localIndex, SORTED1 > const & globalToLocalMap,
         mapBase< globalIndex, localIndex, SORTED2 > const & relatedObjectGlobalToLocalMap );
+
+//------------------------------------------------------------------------------
+template< typename SORTED0 >
+inline
+localIndex
+Unpack( buffer_unit_type const * & buffer,
+        ArrayOfArrays< array1d< globalIndex > > & var,
+        array1d< localIndex > & indices,
+        mapBase< globalIndex, localIndex, SORTED0 > const & globalToLocalMap );
 
 //------------------------------------------------------------------------------
 template< bool DO_PACKING, typename SORTED >

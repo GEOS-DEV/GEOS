@@ -106,7 +106,7 @@
 
     <BiotPorosity
       name="rockPorosity"
-      grainBulkModulus="2.2222e10"
+      grainBulkModulus="1e27"
       defaultReferencePorosity="0.2"/>
 
     <CompressibleSolidParallelPlatesPermeability

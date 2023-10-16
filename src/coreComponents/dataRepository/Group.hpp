@@ -334,7 +334,7 @@ public:
   {
     Group * const child = m_subGroups[ key ];
     GEOS_THROW_IF( child == nullptr,
-                   "Group " << getPath() << " has no child named " << key << std::endl
+                   "Group " << getDataContext() << " has no child named " << key << std::endl
                             << dumpSubGroupsNames(),
                    std::domain_error );
 
@@ -349,7 +349,7 @@ public:
   {
     Group const * const child = m_subGroups[ key ];
     GEOS_THROW_IF( child == nullptr,
-                   "Group " << getPath() << " has no child named " << key << std::endl
+                   "Group " << getDataContext() << " has no child named " << key << std::endl
                             << dumpSubGroupsNames(),
                    std::domain_error );
 
@@ -760,10 +760,13 @@ public:
 
   /**
    * @brief Recursively read values using ProcessInputFile() from the input
-   *        file and put them into the wrapped values for this group.
+   * file and put them into the wrapped values for this group.
+   * Also add the includes content to the xmlDocument when `Include` nodes are encountered.
+   * @param[in] xmlDocument the XML document that contains the targetNode
    * @param[in] targetNode the XML node that to extract input values from.
    */
-  void processInputFileRecursive( xmlWrapper::xmlNode & targetNode );
+  void processInputFileRecursive( xmlWrapper::xmlDocument & xmlDocument,
+                                  xmlWrapper::xmlNode & targetNode );
 
   /**
    * @brief Recursively call postProcessInput() to apply post processing after
@@ -1065,7 +1068,7 @@ public:
   {
     WrapperBase const * const wrapper = m_wrappers[ key ];
     GEOS_THROW_IF( wrapper == nullptr,
-                   "Group " << getPath() << " has no wrapper named " << key << std::endl
+                   "Group " << getDataContext() << " has no wrapper named " << key << std::endl
                             << dumpWrappersNames(),
                    std::domain_error );
 
@@ -1080,7 +1083,7 @@ public:
   {
     WrapperBase * const wrapper = m_wrappers[ key ];
     GEOS_THROW_IF( wrapper == nullptr,
-                   "Group " << getPath() << " has no wrapper named " << key << std::endl
+                   "Group " << getDataContext() << " has no wrapper named " << key << std::endl
                             << dumpWrappersNames(),
                    std::domain_error );
 
@@ -1280,13 +1283,31 @@ public:
   string getPath() const;
 
   /**
+   * @return DataContext object that that stores contextual information on this group that can be
+   * used in output messages.
+   */
+  DataContext const & getDataContext() const
+  { return *m_dataContext; }
+
+  /**
+   * @return DataContext object that that stores contextual information on a wrapper contained by
+   * this group that can be used in output messages.
+   * @tparam KEY The lookup type.
+   * @param key The value used to lookup the wrapper.
+   * @throw std::domain_error if the wrapper doesn't exist.
+   */
+  template< typename KEY >
+  DataContext const & getWrapperDataContext( KEY key ) const
+  { return getWrapperBase< KEY >( key ).getDataContext(); }
+
+  /**
    * @brief Access the group's parent.
    * @return reference to parent Group
    * @throw std::domain_error if the Group doesn't have a parent.
    */
   Group & getParent()
   {
-    GEOS_THROW_IF( m_parent == nullptr, "Group at " << getPath() << " does not have a parent.", std::domain_error );
+    GEOS_THROW_IF( m_parent == nullptr, "Group at " << getDataContext() << " does not have a parent.", std::domain_error );
     return *m_parent;
   }
 
@@ -1295,9 +1316,15 @@ public:
    */
   Group const & getParent() const
   {
-    GEOS_THROW_IF( m_parent == nullptr, "Group at " << getPath() << " does not have a parent.", std::domain_error );
+    GEOS_THROW_IF( m_parent == nullptr, "Group at " << getDataContext() << " does not have a parent.", std::domain_error );
     return *m_parent;
   }
+
+  /**
+   * @return true if this group has a parent.
+   */
+  bool hasParent() const
+  { return m_parent != nullptr; }
 
   /**
    * @brief Get the group's index within its parent group
@@ -1476,7 +1503,8 @@ private:
    *   wrapped values for this group.
    * @param[in] targetNode the XML node that to extract input values from.
    */
-  virtual void processInputFile( xmlWrapper::xmlNode const & targetNode );
+  virtual void processInputFile( xmlWrapper::xmlDocument const & xmlDocument,
+                                 xmlWrapper::xmlNode const & targetNode );
 
   Group const & getBaseGroupByPath( string const & path ) const;
 
@@ -1535,6 +1563,10 @@ private:
 
   /// Reference to the conduit::Node that mirrors this group
   conduit::Node & m_conduitNode;
+
+  /// A DataContext object used to provide contextual information on this Group,
+  /// if it is created from an input XML file, the line or offset in that file.
+  std::unique_ptr< DataContext > m_dataContext;
 
 };
 

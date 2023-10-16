@@ -143,9 +143,9 @@ void ElementRegionManager::generateMesh( CellBlockManagerABC const & cellBlockMa
     // that will be transformed into element subregion information.
     // This is why we copy the information into a temporary,
     // which frees space for the final information (of same size).
-    FixedToManyElementRelation & relation = subRegion.getToCellRelation();
-    ToCellRelation< array2d< localIndex > > const tmp( relation.m_toElementSubRegion,
-                                                       relation.m_toElementIndex );
+    OrderedVariableToManyElementRelation & relation = subRegion.getToCellRelation();
+    ToCellRelation< ArrayOfArrays< localIndex > > const tmp( relation.m_toElementSubRegion,
+                                                             relation.m_toElementIndex );
     meshMapUtilities::transformCellBlockToRegionMap< parallelHostPolicy >( blockToSubRegion.toViewConst(),
                                                                            tmp,
                                                                            relation );
@@ -192,7 +192,8 @@ void ElementRegionManager::generateWells( CellBlockManagerABC const & cellBlockM
     globalIndex const numWellElemsGlobal = MpiWrapper::sum( subRegion.size() );
 
     GEOS_ERROR_IF( numWellElemsGlobal != lineBlock.numElements(),
-                   "Invalid partitioning in well " << subRegionName );
+                   "Invalid partitioning in well " << lineBlock.getDataContext() <<
+                   ", subregion " << subRegion.getDataContext() );
 
   } );
 
@@ -665,11 +666,14 @@ ElementRegionManager::getCellBlockToSubRegionMap( CellBlockManagerABC const & ce
                                                                        ElementRegionBase const & region,
                                                                        CellElementSubRegion const & subRegion )
   {
+    GEOS_UNUSED_VAR( region ); // unused if geos_error_if is nulld
     localIndex const blockIndex = cellBlocks.getIndex( subRegion.getName() );
     GEOS_ERROR_IF( blockIndex == Group::subGroupMap::KeyIndex::invalid_index,
-                   GEOS_FMT( "Cell block not found for subregion {}/{}", region.getName(), subRegion.getName() ) );
+                   GEOS_FMT( "{}, subregion {}: Cell block not found at index {}.",
+                             region.getDataContext().toString(), subRegion.getName(), blockIndex ) );
     GEOS_ERROR_IF( blockMap( blockIndex, 1 ) != -1,
-                   GEOS_FMT( "Cell block {} mapped to more than one subregion", subRegion.getName() ) );
+                   GEOS_FMT( "{}, subregion {}: Cell block at index {} is mapped to more than one subregion.",
+                             region.getDataContext().toString(), subRegion.getName(), blockIndex ) );
 
     blockMap( blockIndex, 0 ) = er;
     blockMap( blockIndex, 1 ) = esr;
