@@ -74,7 +74,7 @@ void AcousticWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
                                fields::MassVector,
                                fields::DampingVector,
                                fields::StiffnessVector,
-                               fields::FreeSurfaceNodeIndicator >( this->getName() );
+                               fields::FreeSurfaceNodeIndicator >( getName() );
 
     /// register  PML auxiliary variables only when a PML is specified in the xml
     if( m_usePML )
@@ -82,22 +82,22 @@ void AcousticWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
       nodeManager.registerField< fields::AuxiliaryVar1PML,
                                  fields::AuxiliaryVar2PML,
                                  fields::AuxiliaryVar3PML,
-                                 fields::AuxiliaryVar4PML >( this->getName() );
+                                 fields::AuxiliaryVar4PML >( getName() );
 
       nodeManager.getField< fields::AuxiliaryVar1PML >().resizeDimension< 1 >( 3 );
       nodeManager.getField< fields::AuxiliaryVar2PML >().resizeDimension< 1 >( 3 );
     }
 
     FaceManager & faceManager = mesh.getFaceManager();
-    faceManager.registerField< fields::FreeSurfaceFaceIndicator >( this->getName() );
+    faceManager.registerField< fields::FreeSurfaceFaceIndicator >( getName() );
 
     ElementRegionManager & elemManager = mesh.getElemManager();
 
     elemManager.forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion & subRegion )
     {
-      subRegion.registerField< fields::MediumVelocity >( this->getName() );
-      subRegion.registerField< fields::MediumDensity >( this->getName() );
-      subRegion.registerField< fields::PartialGradient >( this->getName() );
+      subRegion.registerField< fields::MediumVelocity >( getName() );
+      subRegion.registerField< fields::MediumDensity >( getName() );
+      subRegion.registerField< fields::PartialGradient >( getName() );
     } );
 
   } );
@@ -142,15 +142,13 @@ void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh,
   receiverConstants.setValues< EXEC_POLICY >( -1 );
   receiverIsLocal.zero();
 
-  real32 const timeSourceFrequency = this->m_timeSourceFrequency;
-  localIndex const rickerOrder = this->m_rickerOrder;
   arrayView2d< real32 > const sourceValue = m_sourceValue.toView();
   real64 dt = 0;
-  EventManager const & event = this->getGroupByPath< EventManager >( "/Problem/Events" );
+  EventManager const & event = getGroupByPath< EventManager >( "/Problem/Events" );
   for( localIndex numSubEvent = 0; numSubEvent < event.numSubGroups(); ++numSubEvent )
   {
     EventBase const * subEvent = static_cast< EventBase const * >( event.getSubGroups()[numSubEvent] );
-    if( subEvent->getEventName() == "/Solvers/" + this->getName() )
+    if( subEvent->getEventName() == "/Solvers/" + getName() )
     {
       dt = subEvent->getReference< real64 >( EventBase::viewKeyStruct::forceDtString() );
     }
@@ -202,8 +200,9 @@ void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh,
           receiverConstants,
           sourceValue,
           dt,
-          timeSourceFrequency,
-          rickerOrder );
+          m_timeSourceFrequency,
+          m_timeSourceDelay,
+          m_rickerOrder );
       }
     } );
   } );
@@ -244,7 +243,7 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
     AcousticWaveEquationSEM::initializePML();
   }
 
-  DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
+  DomainPartition & domain = getGroupByPath< DomainPartition >( "/Problem/domain" );
 
   applyFreeSurfaceBC( 0.0, domain );
 
@@ -424,7 +423,7 @@ void AcousticWaveEquationSEM::initializePML()
   } );
 
   /// Now compute the PML parameters above internally
-  DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
+  DomainPartition & domain = getGroupByPath< DomainPartition >( "/Problem/domain" );
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
                                                                 arrayView1d< string const > const & )
@@ -852,7 +851,7 @@ real64 AcousticWaveEquationSEM::explicitStepBackward( real64 const & time_n,
     arrayView1d< real32 > const p_n = nodeManager.getField< fields::Pressure_n >();
     arrayView1d< real32 > const p_np1 = nodeManager.getField< fields::Pressure_np1 >();
 
-    EventManager const & event = this->getGroupByPath< EventManager >( "/Problem/Events" );
+    EventManager const & event = getGroupByPath< EventManager >( "/Problem/Events" );
     real64 const & maxTime = event.getReference< real64 >( EventManager::viewKeyStruct::maxTimeString() );
     int const maxCycle = int(round( maxTime/dt ));
 
@@ -961,7 +960,7 @@ real64 AcousticWaveEquationSEM::explicitStepInternal( real64 const & time_n,
                                                             "",
                                                             kernelFactory );
 
-    EventManager const & event = this->getGroupByPath< EventManager >( "/Problem/Events" );
+    EventManager const & event = getGroupByPath< EventManager >( "/Problem/Events" );
     real64 const & minTime = event.getReference< real64 >( EventManager::viewKeyStruct::minTimeString() );
     integer const cycleForSource = int(round( -minTime/dt + cycleNumber ));
     //std::cout<<"cycle GEOSX = "<<cycleForSource<<std::endl;

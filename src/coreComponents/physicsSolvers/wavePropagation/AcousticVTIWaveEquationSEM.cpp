@@ -78,22 +78,22 @@ void AcousticVTIWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
                                fields::wavesolverfields::StiffnessVector_q,
                                fields::wavesolverfields::FreeSurfaceNodeIndicator,
                                fields::wavesolverfields::LateralSurfaceNodeIndicator,
-                               fields::wavesolverfields::BottomSurfaceNodeIndicator >( this->getName() );
+                               fields::wavesolverfields::BottomSurfaceNodeIndicator >( getName() );
 
 
     FaceManager & faceManager = mesh.getFaceManager();
-    faceManager.registerField< fields::wavesolverfields::FreeSurfaceFaceIndicator >( this->getName() );
-    faceManager.registerField< fields::wavesolverfields::LateralSurfaceFaceIndicator >( this->getName() );
-    faceManager.registerField< fields::wavesolverfields::BottomSurfaceFaceIndicator >( this->getName() );
+    faceManager.registerField< fields::wavesolverfields::FreeSurfaceFaceIndicator >( getName() );
+    faceManager.registerField< fields::wavesolverfields::LateralSurfaceFaceIndicator >( getName() );
+    faceManager.registerField< fields::wavesolverfields::BottomSurfaceFaceIndicator >( getName() );
 
     ElementRegionManager & elemManager = mesh.getElemManager();
 
     elemManager.forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion & subRegion )
     {
-      subRegion.registerField< fields::wavesolverfields::Delta >( this->getName() );
-      subRegion.registerField< fields::wavesolverfields::Epsilon >( this->getName() );
-      subRegion.registerField< fields::wavesolverfields::F >( this->getName() );
-      subRegion.registerField< fields::wavesolverfields::MediumVelocity >( this->getName() );
+      subRegion.registerField< fields::wavesolverfields::Delta >( getName() );
+      subRegion.registerField< fields::wavesolverfields::Epsilon >( getName() );
+      subRegion.registerField< fields::wavesolverfields::F >( getName() );
+      subRegion.registerField< fields::wavesolverfields::MediumVelocity >( getName() );
     } );
   } );
 }
@@ -138,15 +138,13 @@ void AcousticVTIWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & me
   receiverConstants.setValues< EXEC_POLICY >( -1 );
   receiverIsLocal.zero();
 
-  real32 const timeSourceFrequency = this->m_timeSourceFrequency;
-  localIndex const rickerOrder = this->m_rickerOrder;
   arrayView2d< real32 > const sourceValue = m_sourceValue.toView();
   real64 dt = 0;
-  EventManager const & event = this->getGroupByPath< EventManager >( "/Problem/Events" );
+  EventManager const & event = getGroupByPath< EventManager >( "/Problem/Events" );
   for( localIndex numSubEvent = 0; numSubEvent < event.numSubGroups(); ++numSubEvent )
   {
     EventBase const * subEvent = static_cast< EventBase const * >( event.getSubGroups()[numSubEvent] );
-    if( subEvent->getEventName() == "/Solvers/" + this->getName() )
+    if( subEvent->getEventName() == "/Solvers/" + getName() )
     {
       dt = subEvent->getReference< real64 >( EventBase::viewKeyStruct::forceDtString() );
     }
@@ -196,8 +194,9 @@ void AcousticVTIWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & me
         receiverConstants,
         sourceValue,
         dt,
-        timeSourceFrequency,
-        rickerOrder );
+        m_timeSourceFrequency,
+        m_timeSourceDelay,
+        m_rickerOrder );
     } );
   } );
 }
@@ -228,7 +227,7 @@ void AcousticVTIWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
 
   WaveSolverBase::initializePostInitialConditionsPreSubGroups();
 
-  DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
+  DomainPartition & domain = getGroupByPath< DomainPartition >( "/Problem/domain" );
 
   applyFreeSurfaceBC( 0.0, domain );
   precomputeSurfaceFieldIndicator( domain );
