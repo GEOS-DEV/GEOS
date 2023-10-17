@@ -207,8 +207,8 @@ void calculateCO2Solubility( string const & functionName,
 
       if( values[j*nPressures+i] < 0 )
       {
-        GEOS_WARNING( GEOS_FMT( "CO2Solubility: negative solubility value = {}, y_CO2 = {}, P = {}, PWater(T) = {}; corrected to 0",
-                                values[j * nPressures + i], y_CO2, P, Pw ) );
+        GEOS_LOG_RANK_0( GEOS_FMT( "CO2Solubility: negative solubility value = {}, y_CO2 = {}, P = {}, PWater(T) = {}; corrected to 0",
+                                   values[j * nPressures + i], y_CO2, P, Pw ) );
         values[j*nPressures+i] = 0.0;
       }
     }
