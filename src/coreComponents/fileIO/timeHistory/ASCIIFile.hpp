@@ -53,7 +53,6 @@ public:
       {
         GEOS_ERROR("Failed to create file: " + m_filename);
       }
-      m_filestream.close();
     }
   }
 
