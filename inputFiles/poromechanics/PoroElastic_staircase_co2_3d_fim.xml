@@ -8,32 +8,9 @@
 
   <Solvers>
 
-    <CompositionalMultiphaseReservoirPoromechanics
+    <MultiphasePoromechanicsReservoir
       name="reservoirSystem"
-      solidSolverName="linearElasticity"
-      reservoirAndWellsSolverName="reservoirAndWells"
-      logLevel="1"
-      targetRegions="{ channel, barrier, wellRegion1, wellRegion2 }">
-      <NonlinearSolverParameters
-        couplingType="Sequential"
-        subcycling="1"
-        newtonTol="1.0e-8"
-        lineSearchAction="None"
-        newtonMaxIter="100"/>
-      <LinearSolverParameters
-        directParallel="0"/>
-    </CompositionalMultiphaseReservoirPoromechanics>
-    
-    <SolidMechanicsLagrangianSSLE
-      name="linearElasticity"
-      timeIntegrationOption="QuasiStatic"
-      logLevel="1"
-      discretization="FE1"
-      targetRegions="{ channel, barrier  }"/>
-
-    <CompositionalMultiphaseReservoir
-      name="reservoirAndWells"
-      flowSolverName="twoPhaseFlow"
+      poromechanicsSolverName="multiphasePoroelasticity"
       wellSolverName="compositionalMultiphaseWell"
       logLevel="1"
       targetRegions="{ channel, barrier, wellRegion1, wellRegion2 }">
@@ -43,7 +20,23 @@
         newtonMaxIter="40"/>
       <LinearSolverParameters
         directParallel="0"/>
-    </CompositionalMultiphaseReservoir>
+    </MultiphasePoromechanicsReservoir>
+    
+    <MultiphasePoromechanics
+      name="multiphasePoroelasticity"
+      solidSolverName="linearElasticity"
+      flowSolverName="twoPhaseFlow"
+      stabilizationType="Global"
+      stabilizationRegionNames="{ channel, barrier }"
+      logLevel="1"
+      targetRegions="{ channel, barrier }"/>
+
+    <SolidMechanicsLagrangianSSLE
+      name="linearElasticity"
+      timeIntegrationOption="QuasiStatic"
+      logLevel="1"
+      discretization="FE1"
+      targetRegions="{ channel, barrier  }"/>
 
     <CompositionalMultiphaseFVM
       name="twoPhaseFlow"
@@ -94,7 +87,7 @@
     <PeriodicEvent
       name="outputs"
       timeFrequency="1e6"
-      target="/Outputs/vtkOutput_seq"/>
+      target="/Outputs/vtkOutput"/>
 
     <SoloEvent
       name="multiphasePoroelasticityPreEquilibrationStep"
@@ -151,7 +144,7 @@
 
   <Outputs>
     <VTK
-      name="vtkOutput_seq"
+      name="vtkOutput"
       fieldNames="{ initialPressure, skeletonChannel_density }"/>
     <Restart
       name="restartOutput"/>
@@ -170,21 +163,21 @@
       computeCFLNumbers="1"
       computeRegionStatistics="1"/>
 
-    <CompositionalMultiphaseReservoirPoromechanicsInitialization
+    <MultiphasePoromechanicsInitialization 
       logLevel="1"      
       name="multiphasePoroelasticityPreEquilibrationStep"
       performStressInitialization="1"
-      poromechanicsSolverName="reservoirSystem"/>
+      poromechanicsSolverName="multiphasePoroelasticity"/>
     <SolidMechanicsStateReset 
       logLevel="2"      
       name="solidMechanicsPreEquilibrationStep"
       solidSolverName="linearElasticity"/>
     
-    <CompositionalMultiphaseReservoirPoromechanicsInitialization
+    <MultiphasePoromechanicsInitialization 
       logLevel="1"      
       name="multiphasePoroelasticityPostEquilibrationStep"
       performStressInitialization="0"
-      poromechanicsSolverName="reservoirSystem"/>
+      poromechanicsSolverName="multiphasePoroelasticity"/>
     <SolidMechanicsStateReset 
       logLevel="2"      
       name="solidMechanicsPostEquilibrationStep"
