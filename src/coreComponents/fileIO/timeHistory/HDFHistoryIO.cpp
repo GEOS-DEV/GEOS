@@ -7,6 +7,9 @@
 namespace geos
 {
 
+namespace detail
+{
+
 /**
  * @brief Get the HDF data type for the specified type
  * @tparam T the type to get info for
@@ -81,45 +84,27 @@ inline hid_t GetHDFArrayDataType( std::type_index const & type, hsize_t const ra
   return H5Tarray_create( GetHDFDataType( type ), rank, dims );
 }
 
+}
+
 HDFHistoryIO::HDFHistoryIO( string const & filename,
                             localIndex rank,
                             std::vector< localIndex > const & dims,
                             string const & name,
-                            std::type_index typeId,
+                            std::type_index typeIdx,
                             localIndex writeHead,
-                            localIndex initAlloc,
-                            localIndex overallocMultiple,
                             MPI_Comm comm ):
-  m_bufferedCount( 0 ),
-  m_bufferHead( nullptr ),
-  m_dataBuffer( 0 ),
+  BufferedHistoryIO( typeIdx, rank, dims ),
   m_filename( filename ),
-  m_overallocMultiple( overallocMultiple ),
   m_globalIdxOffset( 0 ),
   m_globalIdxCount( 0 ),
   m_globalIdxHighwater( 0 ),
   m_chunkSize( 0 ),
-  m_writeLimit( initAlloc ),
   m_writeHead( writeHead ),
-  m_hdfType( GetHDFDataType( typeId )),
-  m_typeSize( H5Tget_size( m_hdfType )),
-  m_typeCount( 1 ),
-  m_rank( LvArray::integerConversion< hsize_t >( rank )),
-  m_dims( rank ),
-  m_localIdxCounts_buffered( ),
+  m_hdfType( detail::GetHDFDataType( typeIdx ) ),
   m_name( name ),
   m_comm( comm ),
-  m_subcomm( MPI_COMM_NULL ),
-  m_sizeChanged( true )
-{
-  for( hsize_t dd = 0; dd < m_rank; ++dd )
-  {
-    m_dims[dd] = LvArray::integerConversion< hsize_t >( dims[dd] );
-    m_typeCount *= m_dims[dd];
-  }
-  m_dataBuffer.resize( initAlloc * m_typeSize * m_typeCount );
-  m_bufferHead = &m_dataBuffer[0];
-}
+  m_subcomm( MPI_COMM_NULL )
+{ }
 
 void HDFHistoryIO::setupPartition( globalIndex localIdxCount )
 {
@@ -174,15 +159,6 @@ void HDFHistoryIO::setupPartition( globalIndex localIdxCount )
     MpiWrapper::commFree( m_subcomm );
   }
   m_subcomm = MpiWrapper::commSplit( m_comm, color, key );
-}
-
-buffer_unit_type * HDFHistoryIO::getBufferHead()
-{
-  resizeBuffer();
-  m_bufferedCount++;
-  buffer_unit_type * const currentBufferHead = m_bufferHead;
-  m_bufferHead += getRowBytes();
-  return currentBufferHead;
 }
 
 void HDFHistoryIO::init( bool existsOkay )
@@ -260,7 +236,7 @@ void HDFHistoryIO::write()
       if( m_sizeChanged )
       {
         // since the highwater might change (the max # of indices / 2nd dimension) when updating the partitioning
-        setupPartition( m_localIdxCounts_buffered[ row ] );
+        setupPartition( m_bufferedLocalIdxCounts[ row ] );
         // keep the write limit the same (will only change in resizeFileIfNeeded call above)
         updateDatasetExtent( m_writeLimit );
       }
@@ -279,7 +255,7 @@ void HDFHistoryIO::write()
 
         std::vector< hsize_t > bufferedCounts( m_rank+1 );
         bufferedCounts[0] = LvArray::integerConversion< hsize_t >( 1 );
-        bufferedCounts[1] = LvArray::integerConversion< hsize_t >( m_localIdxCounts_buffered[ row ] );
+        bufferedCounts[1] = LvArray::integerConversion< hsize_t >( m_bufferedLocalIdxCounts[ row ] );
         for( hsize_t dd = 2; dd < m_rank+1; ++dd )
         {
           bufferedCounts[dd] = m_dims[dd-1];
@@ -294,7 +270,7 @@ void HDFHistoryIO::write()
         // forward the data buffer pointer to the start of the next row
         if( dataBuffer )
         {
-          hsize_t rowsize = m_localIdxCounts_buffered[ row ] * m_typeSize;
+          hsize_t rowsize = m_bufferedLocalIdxCounts[ row ] * m_typeSize;
           for( hsize_t ii = 1; ii < m_rank; ++ii )
           {
             rowsize *= m_dims[ii];
@@ -311,12 +287,10 @@ void HDFHistoryIO::write()
       m_writeHead++;
     }
   }
-  m_sizeChanged = false;
-  m_localIdxCounts_buffered.clear( );
   emptyBuffer( );
 }
 
-void HDFHistoryIO::compressInFile()
+void HDFHistoryIO::finalize()
 {
   // set the write limit in the file to the current write head
   updateDatasetExtent( m_writeHead );
@@ -350,50 +324,6 @@ void HDFHistoryIO::updateDatasetExtent( hsize_t rowLimit )
     hid_t dataset = H5Dopen( target, m_name.c_str(), H5P_DEFAULT );
     H5Dset_extent( dataset, &maxFileDims[0] );
     H5Dclose( dataset );
-  }
-}
-
-size_t HDFHistoryIO::getRowBytes()
-{
-  return m_typeCount * m_typeSize;
-}
-
-void HDFHistoryIO::emptyBuffer()
-{
-  m_bufferedCount = 0;
-  m_bufferHead = &m_dataBuffer[0];
-}
-
-void HDFHistoryIO::resizeBuffer()
-{
-  // need to store the count every time we collect (which calls this)
-  //  regardless of whether the size changes
-  m_localIdxCounts_buffered.emplace_back( m_dims[0] );
-
-  size_t const capacity = m_dataBuffer.size();
-  size_t const inUse = m_bufferHead - &m_dataBuffer[0];
-  size_t const nextRow = getRowBytes( );
-  // if needed, resize the buffer
-  if( inUse + nextRow > capacity )
-  {
-    // resize based on the ammount currently in use rather than on the capacity ( less aggressive w/ changing sizes )
-    m_dataBuffer.resize( inUse + ( nextRow * m_overallocMultiple ) );
-  }
-  // reset the buffer head and advance based on count in case the underlying data buffer moves during a resize
-  m_bufferHead = &m_dataBuffer[0] + inUse;
-}
-
-void HDFHistoryIO::updateCollectingCount( localIndex count )
-{
-  if( LvArray::integerConversion< hsize_t >( count ) != m_dims[0] )
-  {
-    m_sizeChanged = true;
-    m_dims[0] = count;
-    m_typeCount = count;
-    for( hsize_t dd = 1; dd < m_rank; ++dd )
-    {
-      m_typeCount *= m_dims[dd];
-    }
   }
 }
 

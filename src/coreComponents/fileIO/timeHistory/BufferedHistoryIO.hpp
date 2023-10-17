@@ -27,7 +27,6 @@ namespace geos
 class BufferedHistoryIO
 {
 public:
-
   /// Destructor
   virtual ~BufferedHistoryIO() {}
 
@@ -35,7 +34,23 @@ public:
    * @brief Get the head of the internal history storage buffer.
    * @return The head of the internal history storage buffer to be written to.
    */
-  virtual buffer_unit_type * getBufferHead() = 0;
+  buffer_unit_type * getBufferHead();
+
+  /**
+   * @brief Update the number of items being stored for IO in this object.
+   * @param count [in] The new number of items being collected
+   */
+  void updateCollectingCount( localIndex count );
+
+  /**
+   * @brief Query the number of history states currently stored in the internal buffer.
+   * @return The number of discrete time history records buffered to be written.
+   * @note Since the size of each discrete time history can change, this should not be used
+   *       to calculate size, but is useful to check for consistency between collectors
+   *       that should be operating at the same cadence (ie the time collector and the data collector).
+   */
+  localIndex getBufferedCount()
+  { return m_bufferedCount; }
 
   /**
    * @brief Perform and intialization needed for time-history output.
@@ -50,28 +65,60 @@ public:
   virtual void write() = 0;
 
   /**
-   * @brief Ensure the repressentation of the data in the output target is dense and terse.
-   * @note Typically the file will be oversized to receive data writes without constant resizing.
+   * @brief Do any final cleanup necessary to complete the TimeHistory output.
    */
-  virtual void compressInFile() = 0;
+  virtual void finalize() = 0;
 
   /**
-   * @brief Update the number of items being stored for IO in this object.
-   * @param count [in] The new number of items being collected
+   * @brief Whether the underlying file being written to can support multiple
+   *       TimeHistories being written to it, or only accomodate a single history output.
    */
-  virtual void updateCollectingCount( localIndex count ) = 0;
+  virtual bool shareable() const = 0;
+
+protected:
+  BufferedHistoryIO( std::type_index typeIdx,
+                     localIndex rank,
+                     std::vector< localIndex > const & dims );
 
   /**
-   * @brief Query the number of history states currently stored in the internal buffer.
-   * @return The number of discrete time history records buffered to be written.
-   * @note Since the size of each discrete time history can change, this should not be used
-   *       to calculate size, but is useful to check for consistency between collectors
-   *       that should be operating at the same cadence (ie the time collector and the data collector).
-   * @deprecated Also, note that this member function is related to restarting HDF5 files.
-   *             Which means that getting this information popping through the abstract interface
-   *             is a shortcut that should eventually be fixed by keeping this information in the HDF5 buffer.
+   * @brief Get the size in bytes the buffer is currently set to hold per collection operation.
+   * @return The size in bytes.
    */
-  virtual localIndex getBufferedCount() = 0;
+  size_t getRowBytes();
+
+  /// @brief Empty the history collection buffer
+  void emptyBuffer();
+
+  /// @brief Resize the buffer to accomodate additional history collection.
+  void resizeBuffer();
+
+  /// How much to scale the internal and file allocations by when room runs out
+  static inline constexpr localIndex m_overallocMultiple = 2;
+
+  /// The current number of records in the buffer
+  localIndex m_bufferedCount;
+  /// The write head of the buffer
+  buffer_unit_type * m_bufferHead;
+  /// The data buffer containing the history info
+  buffer_type m_dataBuffer;
+  ///
+  std::vector< size_t > m_bufferedLocalIdxCounts;
+
+
+  // history metadata
+  /// The underlying data type for this history data set
+  std::type_index m_typeIdx;
+  /// The size in byte of the data type
+  size_t m_typeSize;
+  /// The number of variables / atoms of the underlying data type in each element to be collected
+  size_t m_typeCount;   // prod(dims[0:n])
+  /// Whether the size of the collected data has changed between writes to file
+  int m_sizeChanged;
+
+    /// The rank of the data set
+  size_t m_rank;
+  /// The dimensions of the data set
+  std::vector< size_t > m_dims;
 };
 
 }

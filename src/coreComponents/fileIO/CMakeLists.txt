@@ -9,10 +9,12 @@ set( fileIO_headers
      Outputs/PythonOutput.hpp
      Outputs/RestartOutput.hpp
      Outputs/TimeHistoryOutput.hpp
+     timeHistory/ASCIIFile.hpp
      timeHistory/HDFFile.hpp
      timeHistory/HistoryCollectionBase.hpp
      timeHistory/BufferedHistoryIO.hpp
      timeHistory/PackCollection.hpp
+     timeHistory/CSVHistoryIO.hpp
      timeHistory/HDFHistoryIO.hpp
      timeHistory/HistoryCollection.hpp
    )
@@ -30,7 +32,9 @@ set( fileIO_sources
      Outputs/TimeHistoryOutput.cpp
      timeHistory/HDFFile.cpp
      timeHistory/HistoryCollectionBase.cpp
+     timeHistory/BufferedHistoryIO.cpp
      timeHistory/PackCollection.cpp
+     timeHistory/CSVHistoryIO.cpp
      timeHistory/HDFHistoryIO.cpp
    )
 
@@ -59,10 +63,10 @@ endif()
 
 if( ENABLE_SILO )
   set( dependencyList ${dependencyList} silo )
-  list( APPEND fileIO_headers 
-               silo/SiloFile.hpp 
+  list( APPEND fileIO_headers
+               silo/SiloFile.hpp
                Outputs/SiloOutput.hpp )
-  list( APPEND fileIO_sources 
+  list( APPEND fileIO_sources
                silo/SiloFile.cpp
                Outputs/SiloOutput.cpp )
 endif( )

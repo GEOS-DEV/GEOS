@@ -22,6 +22,31 @@
 
 namespace geos
 {
+
+namespace detail
+{
+  std::unique_ptr< BufferedHistoryIO > makeBufferHistoryIO( std::string const & outputFormat,
+                                                               std::string const & outputFile,
+                                                               HistoryMetadata const & metadata,
+                                                               localIndex writeHead,
+                                                               MPI_Comm comm )
+  {
+    if ( outputFormat == "hdf ")
+    {
+      return std::make_unique< HDFHistoryIO >( outputFile, metadata, writeHead, comm );
+    }
+    else if ( outputFormat == "csv" )
+    {
+      return std::make_unique< CSVHistoryIO >( outputFile, metadata, writeHead, comm );
+    }
+    else
+    {
+      GEOS_ERROR("Unsupported output format: " + outputFormat);
+      return nullptr; // avoid compiler warnings
+    }
+  }
+}
+
 TimeHistoryOutput::TimeHistoryOutput( string const & name,
                                       Group * const parent ):
   OutputBase( name, parent ),
@@ -73,7 +98,7 @@ void TimeHistoryOutput::initCollectorParallel( DomainPartition const & domain, H
         metadata.setName( prefix + metadata.getName() );
       }
 
-      m_io.emplace_back( std::make_unique< HDFHistoryIO >( outputFile, metadata, m_recordCount ) );
+      m_io.emplace_back( detail::makeBufferHistoryIO( m_format, outputFile, metadata, m_recordCount, MPI_COMM_GEOSX ) );
       hc.registerBufferProvider( collectorIdx, [this, idx = m_io.size() - 1]( localIndex count )
       {
         m_io[idx]->updateCollectingCount( count );
@@ -83,7 +108,6 @@ void TimeHistoryOutput::initCollectorParallel( DomainPartition const & domain, H
     }
   };
 
-  // FIXME Why stop (pseudo) recursion at one single level?
   registerBufferCalls( collector );
 
   for( localIndex metaIdx = 0; metaIdx < collector.numMetaDataCollectors(); ++metaIdx )
@@ -98,7 +122,7 @@ void TimeHistoryOutput::initCollectorParallel( DomainPartition const & domain, H
   if( MpiWrapper::commRank() == 0 )
   {
     HistoryMetadata timeMetadata = collector.getTimeMetaData();
-    m_io.emplace_back( std::make_unique< HDFHistoryIO >( outputFile, timeMetadata, m_recordCount, 1, 2, MPI_COMM_SELF ) );
+    m_io.emplace_back( detail::makeBufferHistoryIO( m_format, outputFile, timeMetadata, m_recordCount, MPI_COMM_SELF ) );
     // We copy the back `idx` not to rely on possible future appends to `m_io`.
     collector.registerTimeBufferProvider( [this, idx = m_io.size() - 1]() { return m_io[idx]->getBufferHead(); } );
     m_io.back()->init( !freshInit );
@@ -118,7 +142,10 @@ void TimeHistoryOutput::initializePostInitialConditionsPostSubGroups()
     }
     MpiWrapper::barrier( MPI_COMM_GEOSX );
     string const outputFile = joinPath( outputDirectory, m_filename );
-    HDFFile( outputFile, (m_recordCount == 0), true, MPI_COMM_GEOSX );
+    if( m_format == "hdf" )
+    {
+      HDFFile( outputFile, (m_recordCount == 0), true, MPI_COMM_GEOSX );
+    }
   }
 
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
@@ -162,6 +189,7 @@ bool TimeHistoryOutput::execute( real64 const GEOS_UNUSED_PARAM( time_n ),
   for( auto & th_io : m_io )
   {
     th_io->write( );
+    // GEOS_ASSERT( newBuffered == th_io.getBufferedCount() );
   }
   m_recordCount += newBuffered;
   return false;
@@ -177,7 +205,7 @@ void TimeHistoryOutput::cleanup( real64 const time_n,
   // remove any unused trailing space reserved to write additional histories
   for( auto & th_io : m_io )
   {
-    th_io->compressInFile();
+    th_io->finalize();
   }
 }
 
