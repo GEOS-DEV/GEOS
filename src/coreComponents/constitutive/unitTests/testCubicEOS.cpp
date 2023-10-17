@@ -473,14 +473,14 @@ public:
     } );
 
     // -- Temperature derivative
-    real64 const dt = 1.0e-6 * temperature;
+    real64 const dT = 1.0e-6 * temperature;
     geos::testing::internal::testNumericalDerivative(
-      temperature, dt, daMixtureCoefficient_dt,
+      temperature, dT, daMixtureCoefficient_dt,
       [&]( real64 const t ) -> real64 {
       return computeCoefficients( pressure, t, composition ).first;
     } );
     geos::testing::internal::testNumericalDerivative(
-      temperature, dt, dbMixtureCoefficient_dt,
+      temperature, dT, dbMixtureCoefficient_dt,
       [&]( real64 const t ) -> real64 {
       return computeCoefficients( pressure, t, composition ).second;
     } );
@@ -662,9 +662,9 @@ public:
     } );
 
     // -- Temperature derivative
-    real64 const dt = 1.0e-6 * temperature;
+    real64 const dT = 1.0e-6 * temperature;
     geos::testing::internal::testNumericalDerivative(
-      temperature, dt, dCompressibilityFactor_dt,
+      temperature, dT, dCompressibilityFactor_dt,
       [&]( real64 const t ) -> real64 {
       return computeCompressibilityFactor( pressure, t, composition );
     } );

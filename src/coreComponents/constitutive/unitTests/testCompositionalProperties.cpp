@@ -96,9 +96,9 @@ public:
     } );
 
     // -- Temperature derivative
-    real64 const dt = 1.0e-6 * temperature;
+    real64 const dT = 1.0e-6 * temperature;
     internal::testNumericalDerivative(
-      temperature, dt, dMolarDensity_dt,
+      temperature, dT, dMolarDensity_dt,
       [this, & p=pressure, & zmf=composition]( real64 const t ) -> real64 {
       return computeMolarDensity( p, t, zmf );
     } );
@@ -159,9 +159,9 @@ public:
     } );
 
     // -- Temperature derivative
-    real64 const dt = 1.0e-6 * temperature;
+    real64 const dT = 1.0e-6 * temperature;
     internal::testNumericalDerivative(
-      temperature, dt, dMassDensity_dt,
+      temperature, dT, dMassDensity_dt,
       [this, & p=pressure, & zmf=composition]( real64 const t ) -> real64 {
       return computeMassDensity( p, t, zmf );
     } );
