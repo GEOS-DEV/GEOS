@@ -2004,6 +2004,8 @@ the relative residual norm satisfies:
 		<xsd:attribute name="sourceCoordinates" type="real64_array2d" use="required" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="string_array" use="required" />
+		<!--timeSourceDelay => Source time delay (1 / f0 by default)-->
+		<xsd:attribute name="timeSourceDelay" type="real32" default="-1" />
 		<!--timeSourceFrequency => Central frequency for the time source-->
 		<xsd:attribute name="timeSourceFrequency" type="real32" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
@@ -2050,6 +2052,8 @@ the relative residual norm satisfies:
 		<xsd:attribute name="sourceCoordinates" type="real64_array2d" use="required" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="string_array" use="required" />
+		<!--timeSourceDelay => Source time delay (1 / f0 by default)-->
+		<xsd:attribute name="timeSourceDelay" type="real32" default="-1" />
 		<!--timeSourceFrequency => Central frequency for the time source-->
 		<xsd:attribute name="timeSourceFrequency" type="real32" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
@@ -2066,16 +2070,18 @@ the relative residual norm satisfies:
 		<xsd:attribute name="discretization" type="string" use="required" />
 		<!--dtSeismoTrace => Time step for output pressure at receivers-->
 		<xsd:attribute name="dtSeismoTrace" type="real64" default="0" />
+		<!--enableLifo => Set to 1 to enable LIFO storage feature-->
+		<xsd:attribute name="enableLifo" type="integer" default="0" />
 		<!--forward => Set to 1 to compute forward propagation-->
 		<xsd:attribute name="forward" type="integer" default="1" />
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
-		<!--lifoOnDevice => Set the capacity of the lifo device storage-->
-		<xsd:attribute name="lifoOnDevice" type="integer" default="0" />
-		<!--lifoOnHost => Set the capacity of the lifo host storage-->
-		<xsd:attribute name="lifoOnHost" type="integer" default="0" />
-		<!--lifoSize => Set the capacity of the lifo storage-->
-		<xsd:attribute name="lifoSize" type="integer" default="0" />
+		<!--lifoOnDevice => Set the capacity of the lifo device storage (if negative, opposite of percentage of remaining memory)-->
+		<xsd:attribute name="lifoOnDevice" type="integer" default="-80" />
+		<!--lifoOnHost => Set the capacity of the lifo host storage (if negative, opposite of percentage of remaining memory)-->
+		<xsd:attribute name="lifoOnHost" type="integer" default="-80" />
+		<!--lifoSize => Set the capacity of the lifo storage (should be the total number of buffers to store in the LIFO)-->
+		<xsd:attribute name="lifoSize" type="integer" default="2147483647" />
 		<!--linearDASGeometry => Geometry parameters for a linear DAS fiber (dip, azimuth, gauge length)-->
 		<xsd:attribute name="linearDASGeometry" type="real64_array2d" default="{{0}}" />
 		<!--logLevel => Log level-->
@@ -2343,6 +2349,8 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		<xsd:attribute name="sourceCoordinates" type="real64_array2d" use="required" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="string_array" use="required" />
+		<!--timeSourceDelay => Source time delay (1 / f0 by default)-->
+		<xsd:attribute name="timeSourceDelay" type="real32" default="-1" />
 		<!--timeSourceFrequency => Central frequency for the time source-->
 		<xsd:attribute name="timeSourceFrequency" type="real32" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
@@ -2393,6 +2401,8 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		<xsd:attribute name="sourceMoment" type="R2SymTensor" default="{1,1,1,0,0,0}" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="string_array" use="required" />
+		<!--timeSourceDelay => Source time delay (1 / f0 by default)-->
+		<xsd:attribute name="timeSourceDelay" type="real32" default="-1" />
 		<!--timeSourceFrequency => Central frequency for the time source-->
 		<xsd:attribute name="timeSourceFrequency" type="real32" use="required" />
 		<!--name => A name is required for any non-unique nodes-->

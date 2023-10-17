@@ -136,27 +136,27 @@ void ElasticFirstOrderWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
                                wavesolverfields::DampingVectorx,
                                wavesolverfields::DampingVectory,
                                wavesolverfields::DampingVectorz,
-                               wavesolverfields::FreeSurfaceNodeIndicator >( this->getName() );
+                               wavesolverfields::FreeSurfaceNodeIndicator >( getName() );
 
     FaceManager & faceManager = mesh.getFaceManager();
-    faceManager.registerField< wavesolverfields::FreeSurfaceFaceIndicator >( this->getName() );
+    faceManager.registerField< wavesolverfields::FreeSurfaceFaceIndicator >( getName() );
 
     ElementRegionManager & elemManager = mesh.getElemManager();
 
     elemManager.forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion & subRegion )
     {
-      subRegion.registerField< wavesolverfields::MediumVelocityVp >( this->getName() );
-      subRegion.registerField< wavesolverfields::MediumVelocityVs >( this->getName() );
-      subRegion.registerField< wavesolverfields::MediumDensity >( this->getName() );
-      subRegion.registerField< wavesolverfields::Lambda >( this->getName() );
-      subRegion.registerField< wavesolverfields::Mu >( this->getName() );
+      subRegion.registerField< wavesolverfields::MediumVelocityVp >( getName() );
+      subRegion.registerField< wavesolverfields::MediumVelocityVs >( getName() );
+      subRegion.registerField< wavesolverfields::MediumDensity >( getName() );
+      subRegion.registerField< wavesolverfields::Lambda >( getName() );
+      subRegion.registerField< wavesolverfields::Mu >( getName() );
 
-      subRegion.registerField< wavesolverfields::Stresstensorxx >( this->getName());
-      subRegion.registerField< wavesolverfields::Stresstensoryy >( this->getName());
-      subRegion.registerField< wavesolverfields::Stresstensorzz >( this->getName());
-      subRegion.registerField< wavesolverfields::Stresstensorxy >( this->getName());
-      subRegion.registerField< wavesolverfields::Stresstensorxz >( this->getName());
-      subRegion.registerField< wavesolverfields::Stresstensoryz >( this->getName());
+      subRegion.registerField< wavesolverfields::Stresstensorxx >( getName());
+      subRegion.registerField< wavesolverfields::Stresstensoryy >( getName());
+      subRegion.registerField< wavesolverfields::Stresstensorzz >( getName());
+      subRegion.registerField< wavesolverfields::Stresstensorxy >( getName());
+      subRegion.registerField< wavesolverfields::Stresstensorxz >( getName());
+      subRegion.registerField< wavesolverfields::Stresstensoryz >( getName());
 
       finiteElement::FiniteElementBase const & fe = subRegion.getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
 
@@ -241,16 +241,14 @@ void ElasticFirstOrderWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLeve
   receiverConstants.setValues< serialPolicy >( -1 );
   receiverIsLocal.zero();
 
-  real32 const timeSourceFrequency = this->m_timeSourceFrequency;
-  localIndex const rickerOrder = this->m_rickerOrder;
   arrayView2d< real32 > const sourceValue = m_sourceValue.toView();
   real64 dt = 0;
-  EventManager const & event = this->getGroupByPath< EventManager >( "/Problem/Events" );
+  EventManager const & event = getGroupByPath< EventManager >( "/Problem/Events" );
 
   for( localIndex numSubEvent = 0; numSubEvent < event.numSubGroups(); ++numSubEvent )
   {
     EventBase const * subEvent = static_cast< EventBase const * >( event.getSubGroups()[numSubEvent] );
-    if( subEvent->getEventName() == "/Solvers/" + this->getName() )
+    if( subEvent->getEventName() == "/Solvers/" + getName() )
     {
       dt = subEvent->getReference< real64 >( EventBase::viewKeyStruct::forceDtString() );
     }
@@ -306,8 +304,9 @@ void ElasticFirstOrderWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLeve
         receiverRegion,
         sourceValue,
         dt,
-        timeSourceFrequency,
-        rickerOrder );
+        m_timeSourceFrequency,
+        m_timeSourceDelay,
+        m_rickerOrder );
     } );
   } );
 }
@@ -342,7 +341,7 @@ void ElasticFirstOrderWaveEquationSEM::initializePostInitialConditionsPreSubGrou
 
   WaveSolverBase::initializePostInitialConditionsPreSubGroups();
 
-  DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
+  DomainPartition & domain = getGroupByPath< DomainPartition >( "/Problem/domain" );
 
   real64 const time = 0.0;
   applyFreeSurfaceBC( time, domain );

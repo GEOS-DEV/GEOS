@@ -37,7 +37,8 @@ WellSolverBase::WellSolverBase( string const & name,
                                 Group * const parent )
   : SolverBase( name, parent ),
   m_numDofPerWellElement( 0 ),
-  m_numDofPerResElement( 0 )
+  m_numDofPerResElement( 0 ),
+  m_ratesOutputDir( name + "_rates" )
 {
   this->getWrapper< string >( viewKeyStruct::discretizationString() ).
     setInputFlag( InputFlags::FALSE );
@@ -69,6 +70,17 @@ WellSolverBase::~WellSolverBase() = default;
 void WellSolverBase::postProcessInput()
 {
   SolverBase::postProcessInput();
+
+  // create dir for rates output
+  if( getLogLevel() > 0 )
+  {
+    if( MpiWrapper::commRank() == 0 )
+    {
+      makeDirsForPath( m_ratesOutputDir );
+    }
+    // wait till the dir is created by rank 0
+    MPI_Barrier( MPI_COMM_WORLD );
+  }
 }
 
 void WellSolverBase::registerDataOnMesh( Group & meshBodies )
