@@ -318,7 +318,7 @@ void MultiphasePoromechanics< FLOW_SOLVER >::updateState( DomainPartition & doma
     } );
   } );
 
-  GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "        {}: Max deltaPhaseVolFrac = {}", this->getName(), maxDeltaPhaseVolFrac ) );
+  GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "        {}: Max phase volume fraction change: {}", this->getName(), fmt::format( "{:.{}f}", maxDeltaPhaseVolFrac, 2 ) ) );
 }
 
 template< typename FLOW_SOLVER >
