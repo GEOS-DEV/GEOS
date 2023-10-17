@@ -69,13 +69,13 @@ def __build_test_case(xs: Tuple[numpy.ndarray, numpy.ndarray, numpy.ndarray],
     return mesh, options
 
 
-class Inc:
+class Incrementor:
     def __init__(self, start):
-        self.__val = start - 1
+        self.__val = start
 
-    def inc(self):
-        self.__val += 1
-        return self.__val
+    def next(self, num: int) -> Iterable[int]:
+        self.__val += num
+        return range(self.__val - num, self.__val)
 
 
 def __generate_test_data() -> Iterator[Tuple[vtkUnstructuredGrid, Options]]:
@@ -88,47 +88,47 @@ def __generate_test_data() -> Iterator[Tuple[vtkUnstructuredGrid, Options]]:
                    result=(9 * 4, 8, 9, 4))
 
     # Split in 3
-    inc = Inc(27)
+    inc = Incrementor(27)
     collocated_nodes = (
-        (1, inc.inc()),
-        (3, inc.inc()),
-        (4, inc.inc(), inc.inc()),
-        (7, inc.inc()),
-        (1 + 9, inc.inc()),
-        (3 + 9, inc.inc()),
-        (4 + 9, inc.inc(), inc.inc()),
-        (7 + 9, inc.inc()),
-        (1 + 18, inc.inc()),
-        (3 + 18, inc.inc()),
-        (4 + 18, inc.inc(), inc.inc()),
-        (7 + 18, inc.inc()),
+        (1, *inc.next(1)),
+        (3, *inc.next(1)),
+        (4, *inc.next(2)),
+        (7, *inc.next(1)),
+        (1 + 9, *inc.next(1)),
+        (3 + 9, *inc.next(1)),
+        (4 + 9, *inc.next(2)),
+        (7 + 9, *inc.next(1)),
+        (1 + 18, *inc.next(1)),
+        (3 + 18, *inc.next(1)),
+        (4 + 18, *inc.next(2)),
+        (7 + 18, *inc.next(1)),
     )
     mesh, options = __build_test_case((tmp0, tmp0, tmp0), (0, 1, 2, 1, 0, 1, 2, 1))
     yield TestCase(input_mesh=mesh, options=options, collocated_nodes=collocated_nodes,
                    result=(9 * 4 + 6, 8, 12, 6))
 
     # Split in 8
-    inc = Inc(27)
+    inc = Incrementor(27)
     collocated_nodes = (
-        (1, inc.inc()),
-        (3, inc.inc()),
-        (4, inc.inc(), inc.inc(), inc.inc()),
-        (5, inc.inc()),
-        (7, inc.inc()),
-        (0 + 9, inc.inc()),
-        (1 + 9, inc.inc(), inc.inc(), inc.inc()),
-        (2 + 9, inc.inc()),
-        (3 + 9, inc.inc(), inc.inc(), inc.inc()),
-        (4 + 9, inc.inc(), inc.inc(), inc.inc(), inc.inc(), inc.inc(), inc.inc(), inc.inc()),
-        (5 + 9, inc.inc(), inc.inc(), inc.inc()),
-        (6 + 9, inc.inc()),
-        (7 + 9, inc.inc(), inc.inc(), inc.inc()),
-        (8 + 9, inc.inc()),
-        (1 + 18, inc.inc()),
-        (3 + 18, inc.inc()),
-        (4 + 18, inc.inc(), inc.inc(), inc.inc()),
-        (5 + 18, inc.inc()),
-        (7 + 18, inc.inc()),
+        (1, *inc.next(1)),
+        (3, *inc.next(1)),
+        (4, *inc.next(3)),
+        (5, *inc.next(1)),
+        (7, *inc.next(1)),
+        (0 + 9, *inc.next(1)),
+        (1 + 9, *inc.next(3)),
+        (2 + 9, *inc.next(1)),
+        (3 + 9, *inc.next(3)),
+        (4 + 9, *inc.next(7)),
+        (5 + 9, *inc.next(3)),
+        (6 + 9, *inc.next(1)),
+        (7 + 9, *inc.next(3)),
+        (8 + 9, *inc.next(1)),
+        (1 + 18, *inc.next(1)),
+        (3 + 18, *inc.next(1)),
+        (4 + 18, *inc.next(3)),
+        (5 + 18, *inc.next(1)),
+        (7 + 18, *inc.next(1)),
     )
     mesh, options = __build_test_case((tmp0, tmp0, tmp0), range(8))
     yield TestCase(input_mesh=mesh, options=options, collocated_nodes=collocated_nodes,
