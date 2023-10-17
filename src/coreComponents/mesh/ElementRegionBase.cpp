@@ -55,6 +55,9 @@ string ElementRegionBase::verifyMeshBodyName( Group const & meshBodies,
   string meshBodyName = meshBodyBlockName;
   localIndex const numberOfMeshBodies = meshBodies.numSubGroups();
 
+  GEOS_THROW_IF( numberOfMeshBodies == 0,
+                 "No MeshBodies found in this problem, please check if correct input file is provided", InputError );
+
   if( numberOfMeshBodies == 1 )
   {
     string const & onlyMeshBodyName = meshBodies.getGroup( 0 ).getName();
