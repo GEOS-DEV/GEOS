@@ -1896,7 +1896,7 @@ the relative residual norm satisfies:
 		<!--parallelThreads => Number of plot files.-->
 		<xsd:attribute name="parallelThreads" type="integer" default="1" />
 		<!--sources => A list of collectors from which to collect and output time history information.-->
-		<xsd:attribute name="sources" type="groupNameRef" use="required" />
+		<xsd:attribute name="sources" type="groupNameRef_array" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -2737,7 +2737,7 @@ Local - Add stabilization only to interiors of macro elements.-->
 		<!--numPhases => Number of phases-->
 		<xsd:attribute name="numPhases" type="integer" use="required" />
 		<!--phaseNames => List of fluid phases-->
-		<xsd:attribute name="phaseNames" type="string_array" default="{}" />
+		<xsd:attribute name="phaseNames" type="groupNameRef_array" default="{}" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="groupNameRef_array" use="required" />
 		<!--transMultExp => Exponent of dynamic transmissibility multiplier-->
@@ -3337,7 +3337,7 @@ The user must provide one TableFunction per hydrocarbon phase, in the order prov
 For instance, if "oil" is before "gas" in "phaseNames", the table order should be: oilTableName, gasTableName-->
 		<xsd:attribute name="hydrocarbonViscosityTableNames" type="groupNameRef_array" default="{}" />
 		<!--phaseNames => List of fluid phases-->
-		<xsd:attribute name="phaseNames" type="string_array" use="required" />
+		<xsd:attribute name="phaseNames" type="groupNameRef_array" use="required" />
 		<!--surfaceDensities => List of surface mass densities for each phase-->
 		<xsd:attribute name="surfaceDensities" type="real64_array" use="required" />
 		<!--tableFiles => List of filenames with input PVT tables (one per phase)-->
@@ -3363,7 +3363,7 @@ The expected format is "{ gasMax, oilMax }", in that order-->
 		<!--phaseMinVolumeFraction => Minimum volume fraction value for each phase-->
 		<xsd:attribute name="phaseMinVolumeFraction" type="real64_array" default="{0}" />
 		<!--phaseNames => List of fluid phases-->
-		<xsd:attribute name="phaseNames" type="string_array" use="required" />
+		<xsd:attribute name="phaseNames" type="groupNameRef_array" use="required" />
 		<!--waterOilRelPermExponent => Rel perm power law exponent for the pair (water phase, oil phase) at residual gas saturation
 The expected format is "{ waterExp, oilExp }", in that order-->
 		<xsd:attribute name="waterOilRelPermExponent" type="real64_array" default="{1}" />
@@ -3383,7 +3383,7 @@ The expected format is "{ waterMax, oilMax }", in that order-->
 		<!--phaseMinVolumeFraction => Minimum volume fraction value for each phase-->
 		<xsd:attribute name="phaseMinVolumeFraction" type="real64_array" default="{0}" />
 		<!--phaseNames => List of fluid phases-->
-		<xsd:attribute name="phaseNames" type="string_array" use="required" />
+		<xsd:attribute name="phaseNames" type="groupNameRef_array" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -3391,7 +3391,7 @@ The expected format is "{ waterMax, oilMax }", in that order-->
 		<!--phaseMinVolumeFraction => Minimum volume fraction value for each phase-->
 		<xsd:attribute name="phaseMinVolumeFraction" type="real64_array" default="{0}" />
 		<!--phaseNames => List of fluid phases-->
-		<xsd:attribute name="phaseNames" type="string_array" use="required" />
+		<xsd:attribute name="phaseNames" type="groupNameRef_array" use="required" />
 		<!--phaseRelPermExponent => Minimum relative permeability power law exponent for each phase-->
 		<xsd:attribute name="phaseRelPermExponent" type="real64_array" default="{1}" />
 		<!--phaseRelPermMaxValue => Maximum relative permeability value for each phase-->
@@ -3407,7 +3407,7 @@ The expected format is "{ waterMax, oilMax }", in that order-->
 		<!--flashModelParaFile => Name of the file defining the parameters of the flash model-->
 		<xsd:attribute name="flashModelParaFile" type="path" use="required" />
 		<!--phaseNames => List of fluid phases-->
-		<xsd:attribute name="phaseNames" type="string_array" default="{}" />
+		<xsd:attribute name="phaseNames" type="groupNameRef_array" default="{}" />
 		<!--phasePVTParaFiles => Names of the files defining the parameters of the viscosity and density models-->
 		<xsd:attribute name="phasePVTParaFiles" type="path_array" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
@@ -3421,7 +3421,7 @@ The expected format is "{ waterMax, oilMax }", in that order-->
 		<!--flashModelParaFile => Name of the file defining the parameters of the flash model-->
 		<xsd:attribute name="flashModelParaFile" type="path" use="required" />
 		<!--phaseNames => List of fluid phases-->
-		<xsd:attribute name="phaseNames" type="string_array" default="{}" />
+		<xsd:attribute name="phaseNames" type="groupNameRef_array" default="{}" />
 		<!--phasePVTParaFiles => Names of the files defining the parameters of the viscosity and density models-->
 		<xsd:attribute name="phasePVTParaFiles" type="path_array" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
@@ -3435,7 +3435,7 @@ The expected format is "{ waterMax, oilMax }", in that order-->
 		<!--flashModelParaFile => Name of the file defining the parameters of the flash model-->
 		<xsd:attribute name="flashModelParaFile" type="path" use="required" />
 		<!--phaseNames => List of fluid phases-->
-		<xsd:attribute name="phaseNames" type="string_array" default="{}" />
+		<xsd:attribute name="phaseNames" type="groupNameRef_array" default="{}" />
 		<!--phasePVTParaFiles => Names of the files defining the parameters of the viscosity and density models-->
 		<xsd:attribute name="phasePVTParaFiles" type="path_array" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
@@ -3449,7 +3449,7 @@ The expected format is "{ waterMax, oilMax }", in that order-->
 		<!--flashModelParaFile => Name of the file defining the parameters of the flash model-->
 		<xsd:attribute name="flashModelParaFile" type="path" use="required" />
 		<!--phaseNames => List of fluid phases-->
-		<xsd:attribute name="phaseNames" type="string_array" default="{}" />
+		<xsd:attribute name="phaseNames" type="groupNameRef_array" default="{}" />
 		<!--phasePVTParaFiles => Names of the files defining the parameters of the viscosity and density models-->
 		<xsd:attribute name="phasePVTParaFiles" type="path_array" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
@@ -3483,7 +3483,7 @@ The expected format is "{ waterMax, oilMax }", in that order-->
 		<!--equationsOfState => List of equation of state types for each phase. Can be PR (= PENG_ROBINSON) or SRK (= REDLICH_KWONG_SOAVE).-->
 		<xsd:attribute name="equationsOfState" type="string_array" use="required" />
 		<!--phaseNames => List of fluid phases-->
-		<xsd:attribute name="phaseNames" type="string_array" use="required" />
+		<xsd:attribute name="phaseNames" type="groupNameRef_array" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -3726,7 +3726,7 @@ The user must provide one TableFunction per hydrocarbon phase, in the order prov
 For instance, if "oil" is before "gas" in "phaseNames", the table order should be: oilTableName, gasTableName-->
 		<xsd:attribute name="hydrocarbonViscosityTableNames" type="groupNameRef_array" default="{}" />
 		<!--phaseNames => List of fluid phases-->
-		<xsd:attribute name="phaseNames" type="string_array" use="required" />
+		<xsd:attribute name="phaseNames" type="groupNameRef_array" use="required" />
 		<!--surfaceDensities => List of surface mass densities for each phase-->
 		<xsd:attribute name="surfaceDensities" type="real64_array" use="required" />
 		<!--tableFiles => List of filenames with input PVT tables (one per phase)-->
@@ -3963,7 +3963,7 @@ Z - only use the permeability in the z direction.-->
 		<!--permeabilityExponent => Permeability exponent-->
 		<xsd:attribute name="permeabilityExponent" type="real64" default="0.5" />
 		<!--phaseNames => List of fluid phases-->
-		<xsd:attribute name="phaseNames" type="string_array" use="required" />
+		<xsd:attribute name="phaseNames" type="groupNameRef_array" use="required" />
 		<!--porosityExponent => Porosity exponent-->
 		<xsd:attribute name="porosityExponent" type="real64" default="0.5" />
 		<!--wettingIntermediateJFunctionTableName => J-function table (dimensionless) for the pair (wetting phase, intermediate phase)
@@ -4016,7 +4016,7 @@ If you want to do a three-phase simulation, please use instead wettingIntermedia
 	</xsd:complexType>
 	<xsd:complexType name="MultiPhaseConstantThermalConductivityType">
 		<!--phaseNames => List of fluid phases-->
-		<xsd:attribute name="phaseNames" type="string_array" use="required" />
+		<xsd:attribute name="phaseNames" type="groupNameRef_array" use="required" />
 		<!--thermalConductivityComponents => xx, yy, and zz components of a diagonal thermal conductivity tensor [J/(s.m.K)]-->
 		<xsd:attribute name="thermalConductivityComponents" type="R1Tensor" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
@@ -4024,7 +4024,7 @@ If you want to do a three-phase simulation, please use instead wettingIntermedia
 	</xsd:complexType>
 	<xsd:complexType name="MultiPhaseVolumeWeightedThermalConductivityType">
 		<!--phaseNames => List of fluid phases-->
-		<xsd:attribute name="phaseNames" type="string_array" use="required" />
+		<xsd:attribute name="phaseNames" type="groupNameRef_array" use="required" />
 		<!--phaseThermalConductivity => Phase thermal conductivity [W/(m.K)]-->
 		<xsd:attribute name="phaseThermalConductivity" type="real64_array" use="required" />
 		<!--rockThermalConductivityComponents => xx, yy, and zz components of a diagonal rock thermal conductivity tensor [W/(m.K)]-->
@@ -4234,7 +4234,7 @@ If you want to do a three-phase simulation, please use instead wettingIntermedia
 		<!--componentNames => List of component names-->
 		<xsd:attribute name="componentNames" type="string_array" default="{}" />
 		<!--phaseNames => List of fluid phases-->
-		<xsd:attribute name="phaseNames" type="string_array" default="{}" />
+		<xsd:attribute name="phaseNames" type="groupNameRef_array" default="{}" />
 		<!--phasePVTParaFiles => Names of the files defining the parameters of the viscosity and density models-->
 		<xsd:attribute name="phasePVTParaFiles" type="path_array" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
@@ -4246,7 +4246,7 @@ If you want to do a three-phase simulation, please use instead wettingIntermedia
 		<!--componentNames => List of component names-->
 		<xsd:attribute name="componentNames" type="string_array" default="{}" />
 		<!--phaseNames => List of fluid phases-->
-		<xsd:attribute name="phaseNames" type="string_array" default="{}" />
+		<xsd:attribute name="phaseNames" type="groupNameRef_array" default="{}" />
 		<!--phasePVTParaFiles => Names of the files defining the parameters of the viscosity and density models-->
 		<xsd:attribute name="phasePVTParaFiles" type="path_array" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
@@ -4284,7 +4284,7 @@ Note that this input is only used for three-phase flow.
 If you want to do a two-phase simulation, please use instead wettingNonWettingCapPressureTableName to specify the table names-->
 		<xsd:attribute name="nonWettingIntermediateCapPressureTableName" type="groupNameRef" default="" />
 		<!--phaseNames => List of fluid phases-->
-		<xsd:attribute name="phaseNames" type="string_array" use="required" />
+		<xsd:attribute name="phaseNames" type="groupNameRef_array" use="required" />
 		<!--wettingIntermediateCapPressureTableName => Capillary pressure table [Pa] for the pair (wetting phase, intermediate phase)
 Note that this input is only used for three-phase flow.
 If you want to do a two-phase simulation, please use instead wettingNonWettingCapPressureTableName to specify the table names-->
@@ -4303,7 +4303,7 @@ Note that this input is only used for three-phase flow.
 If you want to do a two-phase simulation, please use instead wettingNonWettingRelPermTableNames to specify the table names-->
 		<xsd:attribute name="nonWettingIntermediateRelPermTableNames" type="groupNameRef_array" default="{}" />
 		<!--phaseNames => List of fluid phases-->
-		<xsd:attribute name="phaseNames" type="string_array" use="required" />
+		<xsd:attribute name="phaseNames" type="groupNameRef_array" use="required" />
 		<!--wettingIntermediateRelPermTableNames => List of relative permeability tables for the pair (wetting phase, intermediate phase)
 The expected format is "{ wettingPhaseRelPermTableName, intermediatePhaseRelPermTableName }", in that order
 Note that this input is only used for three-phase flow.
@@ -4346,7 +4346,7 @@ To neglect hysteresis on this phase, just use the same table name for the draina
 		<!--killoughCurvatureParameter => Curvature parameter introduced by Killough for wetting-phase hysteresis (see RTD documentation).-->
 		<xsd:attribute name="killoughCurvatureParameter" type="real64" default="1" />
 		<!--phaseNames => List of fluid phases-->
-		<xsd:attribute name="phaseNames" type="string_array" use="required" />
+		<xsd:attribute name="phaseNames" type="groupNameRef_array" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -4401,7 +4401,7 @@ The expected format is "{ gasMax, oilMax }", in that order-->
 		<!--phaseMinVolumeFraction => Minimum volume fraction value for each phase-->
 		<xsd:attribute name="phaseMinVolumeFraction" type="real64_array" default="{0}" />
 		<!--phaseNames => List of fluid phases-->
-		<xsd:attribute name="phaseNames" type="string_array" use="required" />
+		<xsd:attribute name="phaseNames" type="groupNameRef_array" use="required" />
 		<!--waterOilRelPermExponentInv => Rel perm power law exponent inverse for the pair (water phase, oil phase) at residual gas saturation
 The expected format is "{ waterExp, oilExp }", in that order-->
 		<xsd:attribute name="waterOilRelPermExponentInv" type="real64_array" default="{0.5}" />
@@ -4421,7 +4421,7 @@ The expected format is "{ waterMax, oilMax }", in that order-->
 		<!--phaseMinVolumeFraction => Minimum volume fraction value for each phase-->
 		<xsd:attribute name="phaseMinVolumeFraction" type="real64_array" default="{0}" />
 		<!--phaseNames => List of fluid phases-->
-		<xsd:attribute name="phaseNames" type="string_array" use="required" />
+		<xsd:attribute name="phaseNames" type="groupNameRef_array" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
