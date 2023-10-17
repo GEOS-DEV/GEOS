@@ -85,8 +85,6 @@ def build_fracture_info(mesh: vtkUnstructuredGrid,
         for i in range(cell.GetNumberOfFaces()):
             neighbor_cell_ids = vtkIdList()
             mesh.GetCellNeighbors(cell_id, cell.GetFace(i).GetPointIds(), neighbor_cell_ids)
-            # face = cell.GetFace(i)
-            # mesh.GetCellNeighbors(cell_id, face.GetPointIds(), neighbor_cell_ids)
             assert neighbor_cell_ids.GetNumberOfIds() < 2
             for j in range(neighbor_cell_ids.GetNumberOfIds()):    # It's 0 or 1...
                 neighbor_cell_id = neighbor_cell_ids.GetId(j)
@@ -99,8 +97,6 @@ def build_fracture_info(mesh: vtkUnstructuredGrid,
         cell: vtkCell = mesh.GetCell(cell_id)
         for face_id in faces_ids:
             fn: Tuple[int, ...] = tuple(vtk_iter(cell.GetFace(face_id).GetPointIds()))
-            # face: vtkCell = cell.GetFace(face_id)
-            # fn: Tuple[int, ...] = tuple(vtk_iter(face.GetPointIds()))
             fnh = frozenset(fn)
             if fnh not in face_nodes_hashes:
                 face_nodes_hashes.add(fnh)
@@ -115,8 +111,6 @@ def build_fracture_info(mesh: vtkUnstructuredGrid,
             fracture_nodes.add(n)
 
     for cell_id in range(mesh.GetNumberOfCells()):
-        # cell: vtkCell = mesh.GetCell(cell_id)
-        # cell_points: Set[int] = set(vtk_iter(cell.GetPointIds()))
         cell_points: FrozenSet[int] = frozenset(vtk_iter(mesh.GetCell(cell_id).GetPointIds()))
         intersection: Iterable[int] = cell_points & fracture_nodes
         for node in intersection:
@@ -225,18 +219,6 @@ def __perform_split(mesh: vtkUnstructuredGrid,
             new_point_id: int = node_mapping.get(current_point_id, current_point_id)
             cell_point_ids.SetId(i, new_point_id)
         new_cells.ReplaceCellAtId(c, cell_point_ids)
-    # for c in range(mesh.GetNumberOfCells()):
-    #     node_mapping: Dict[int, int] = cell_node_split.get(c)
-    #     if not node_mapping:
-    #         continue
-    #     new_cell_point_ids = vtkIdList()
-    #     new_cells.GetCellAtId(c, new_cell_point_ids)
-    #     for i in range(new_cell_point_ids.GetNumberOfIds()):
-    #         new_cell_point_id = new_cell_point_ids.GetId(i)
-    #         new_i: int = node_mapping.get(new_cell_point_id)
-    #         if new_i is not None:
-    #             new_cell_point_ids.SetId(i, new_i)
-    #     new_cells.ReplaceCellAtId(c, new_cell_point_ids)
 
     output = mesh.NewInstance()  # keeping the same instance type.
     output.SetPoints(new_points)
@@ -266,17 +248,12 @@ def __generate_fracture_mesh(mesh: vtkUnstructuredGrid,
             polygon.GetPointIds().SetId(i, tmp[n])
         polygons.InsertNextCell(polygon)
 
+    # # TODO use an extended version of the `tmp` up there? Or vice versa?
     buckets: Dict[int, Set[int]] = defaultdict(set)
     for node_mapping in cell_to_node_mapping.values():
         for i, o in node_mapping.items():
             k: int = tmp[min(i, o)]
             buckets[k].update((i, o))
-    # # TODO use an extended version of the `tmp` up there? Or vice versa?
-    # buckets: Dict[int, List[int]] = defaultdict(list)  # Bucket of collocated nodes (maps 2d fracture nodes to the 3d mesh nodes).
-    # for node_mapping in cell_to_node_mapping.values():
-    #     for i, o in node_mapping.items():
-    #         if i != o:
-    #             buckets[tmp[i]].append(o)
 
     assert set(buckets.keys()) == set(range(num_points))
     max_duplicated_nodes: int = max(map(len, buckets.values()))
@@ -284,9 +261,6 @@ def __generate_fracture_mesh(mesh: vtkUnstructuredGrid,
     for i, bucket in buckets.items():
         for j, val in enumerate(bucket):
             collocated_nodes[i, j] = val
-    # for i, n in enumerate(fracture_nodes):
-    #     for j, m in enumerate(buckets.get(n, ())):  # TODO confirm usage of `.get(n, ())`?
-    #         collocated_nodes[i, j] = m
     array = numpy_to_vtk(collocated_nodes, array_type=VTK_ID_TYPE)
     array.SetName("collocated_nodes")
 
