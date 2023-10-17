@@ -799,7 +799,11 @@ computeFractionalFlowViscous( localIndex const numPhase,
                               localIndex const (&sei)[numFluxSupportPoints],
                               real64 const (&transmissibility)[2],
                               real64 const (&dTrans_dPres)[2],
-                              real64 const totFlux,          //in fine should be a ElemnetViewConst once seq form are in place
+                              localIndex const & k_up_ppu,
+                              real64 const totFlux,
+                              real64 const totMob,
+                              real64 const (&dTotMob_dP)[numFluxSupportPoints],
+                              real64 const (&dTotMob_dC)[numFluxSupportPoints][numComp],
                               ElementViewConst< arrayView1d< real64 const > > const & pres,
                               ElementViewConst< arrayView1d< real64 const > > const & gravCoef,
                               ElementViewConst< arrayView3d< real64 const, compflow::USD_COMP_DC > > const & dCompFrac_dCompDens,
@@ -821,9 +825,9 @@ computeFractionalFlowViscous( localIndex const numPhase,
   real64 dMMob_dP{};
   real64 dMMob_dC[numComp]{};
 
-  real64 totMob{};
-  real64 dTotMob_dP[numFluxSupportPoints]{};
-  real64 dTotMob_dC[numFluxSupportPoints][numComp]{};
+//  real64 totMob{};
+//  real64 dTotMob_dP[numFluxSupportPoints]{};
+//  real64 dTotMob_dC[numFluxSupportPoints][numComp]{};
 
   //reinit
   //fractional flow too low to let the upstream phase flow
@@ -839,7 +843,7 @@ computeFractionalFlowViscous( localIndex const numPhase,
   }
 
   //Form totMob
-  for( localIndex jp = 0; jp < numPhase; ++jp )
+//  for( localIndex jp = 0; jp < numPhase; ++jp )
   {
 
     localIndex k_up;
@@ -848,7 +852,7 @@ computeFractionalFlowViscous( localIndex const numPhase,
     real64 dMob_dC[numComp]{};
 
     upwindMobilityViscous< numComp, numFluxSupportPoints, UPWIND >( numPhase,
-                                                                    jp,
+                                                                    ip,
                                                                     seri,
                                                                     sesri,
                                                                     sei,
@@ -872,14 +876,14 @@ computeFractionalFlowViscous( localIndex const numPhase,
                                                                     dMob_dC );
 
 
-    totMob += mob;
-    dTotMob_dP[k_up] += dMob_dP;
-    for( localIndex ic = 0; ic < numComp; ++ic )
-    {
-      dTotMob_dC[k_up][ic] += dMob_dC[ic];
-    }
+//    totMob += mob;
+//    dTotMob_dP[k_up] += dMob_dP;
+//    for( localIndex ic = 0; ic < numComp; ++ic )
+//    {
+//      dTotMob_dC[k_up][ic] += dMob_dC[ic];
+//    }
 
-    if( jp == ip )
+//    if( jp == ip )
     {
       k_up_main = k_up;
       mainMob = mob;
@@ -891,28 +895,27 @@ computeFractionalFlowViscous( localIndex const numPhase,
     }
   }
 
-  //guard against no flow region
-  if( std::fabs( mainMob ) > 1e-20 )
-  {
-    totMob = LvArray::math::max( totMob, minTotMob );
-    fractionalFlow = mainMob / totMob;
-    dFractionalFlow_dP[k_up_main] = dMMob_dP / totMob;
-    for( localIndex jc = 0; jc < numComp; ++jc )
+    //guard against no flow region
+    if( std::fabs( mainMob ) > 1e-20 )
     {
-      dFractionalFlow_dC[k_up_main][jc] = dMMob_dC[jc] / totMob;
+        fractionalFlow = mainMob / LvArray::math::max( totMob, minTotMob );
+        dFractionalFlow_dP[k_up_main] = dMMob_dP / LvArray::math::max( totMob, minTotMob );
+        for( localIndex jc = 0; jc < numComp; ++jc )
+        {
+            dFractionalFlow_dC[k_up_main][jc] = dMMob_dC[jc] / totMob;
 
+        }
+
+        for( localIndex ke = 0; ke < numFluxSupportPoints; ++ke )
+        {
+            dFractionalFlow_dP[ke] -= fractionalFlow * dTotMob_dP[k_up_ppu] / LvArray::math::max( totMob, minTotMob );
+
+            for( localIndex jc = 0; jc < numComp; ++jc )
+            {
+                dFractionalFlow_dC[ke][jc] -= fractionalFlow * dTotMob_dC[k_up_ppu][jc] / LvArray::math::max( totMob, minTotMob );
+            }
+        }
     }
-
-    for( localIndex ke = 0; ke < numFluxSupportPoints; ++ke )
-    {
-      dFractionalFlow_dP[ke] -= fractionalFlow * dTotMob_dP[ke] / totMob;
-
-      for( localIndex jc = 0; jc < numComp; ++jc )
-      {
-        dFractionalFlow_dC[ke][jc] -= fractionalFlow * dTotMob_dC[ke][jc] / totMob;
-      }
-    }
-  }
 }
 
 
@@ -926,7 +929,11 @@ computeFractionalFlowGravity( localIndex const numPhase,
                               localIndex const (&sei)[numFluxSupportPoints],
                               real64 const (&transmissibility)[2],
                               real64 const (&dTrans_dPres)[2],
-                              real64 const totFlux,                   //in fine should be a ElemnetViewConst once seq form are in place
+                              localIndex const & k_up_ppu,
+                              real64 const totFlux,
+                              real64 const totMob,
+                              real64 const (&dTotMob_dP)[numFluxSupportPoints],
+                              real64 const (&dTotMob_dC)[numFluxSupportPoints][numComp],
                               ElementViewConst< arrayView1d< real64 const > > const & pres,
                               ElementViewConst< arrayView1d< real64 const > > const & gravCoef,
                               ElementViewConst< arrayView3d< real64 const, compflow::USD_COMP_DC > > const & dCompFrac_dCompDens,
@@ -949,9 +956,9 @@ computeFractionalFlowGravity( localIndex const numPhase,
   real64 dMMob_dP{};
   real64 dMMob_dC[numComp]{};
 
-  real64 totMob{};
-  real64 dTotMob_dP[numFluxSupportPoints]{};
-  real64 dTotMob_dC[numFluxSupportPoints][numComp]{};
+//  real64 totMob{};
+//  real64 dTotMob_dP[numFluxSupportPoints]{};
+//  real64 dTotMob_dC[numFluxSupportPoints][numComp]{};
 
   //reinit
   //fractional flow too low to let the upstream phase flow
@@ -967,7 +974,7 @@ computeFractionalFlowGravity( localIndex const numPhase,
   }
 
   //Form totMob
-  for( localIndex jp = 0; jp < numPhase; ++jp )
+//  for( localIndex jp = 0; jp < numPhase; ++jp )
   {
 
     localIndex k_up;
@@ -976,7 +983,7 @@ computeFractionalFlowGravity( localIndex const numPhase,
     real64 dMob_dC[numComp]{};
 
     upwindMobilityGravity< numComp, numFluxSupportPoints, UPWIND >( numPhase,
-                                                                    jp,
+                                                                    ip,
                                                                     seri,
                                                                     sesri,
                                                                     sei,
@@ -1000,14 +1007,14 @@ computeFractionalFlowGravity( localIndex const numPhase,
                                                                     dMob_dC );
 
 
-    totMob += mob;
-    dTotMob_dP[k_up] += dMob_dP;
-    for( localIndex ic = 0; ic < numComp; ++ic )
-    {
-      dTotMob_dC[k_up][ic] += dMob_dC[ic];
-    }
-
-    if( jp == ip )
+//    totMob += mob;
+//    dTotMob_dP[k_up] += dMob_dP;
+//    for( localIndex ic = 0; ic < numComp; ++ic )
+//    {
+//      dTotMob_dC[k_up][ic] += dMob_dC[ic];
+//    }
+//
+//    if( jp == ip )
     {
       k_up_main = k_up;
       mainMob = mob;
@@ -1022,24 +1029,23 @@ computeFractionalFlowGravity( localIndex const numPhase,
   //guard against no flow region
   if( std::fabs( mainMob ) > 1e-20 )
   {
-    totMob = LvArray::math::max( totMob, minTotMob );
-    fractionalFlow = mainMob / totMob;
-    dFractionalFlow_dP[k_up_main] = dMMob_dP / totMob;
-    for( localIndex jc = 0; jc < numComp; ++jc )
-    {
-      dFractionalFlow_dC[k_up_main][jc] = dMMob_dC[jc] / totMob;
-
-    }
-
-    for( localIndex ke = 0; ke < numFluxSupportPoints; ++ke )
-    {
-      dFractionalFlow_dP[ke] -= fractionalFlow * dTotMob_dP[ke] / totMob;
-
+      fractionalFlow = mainMob / LvArray::math::max( totMob, minTotMob );
+      dFractionalFlow_dP[k_up_main] = dMMob_dP / LvArray::math::max( totMob, minTotMob );
       for( localIndex jc = 0; jc < numComp; ++jc )
       {
-        dFractionalFlow_dC[ke][jc] -= fractionalFlow * dTotMob_dC[ke][jc] / totMob;
+          dFractionalFlow_dC[k_up_main][jc] = dMMob_dC[jc] / totMob;
+
       }
-    }
+
+      for( localIndex ke = 0; ke < numFluxSupportPoints; ++ke )
+      {
+          dFractionalFlow_dP[ke] -= fractionalFlow * dTotMob_dP[k_up_ppu] / LvArray::math::max( totMob, minTotMob );
+
+          for( localIndex jc = 0; jc < numComp; ++jc )
+          {
+              dFractionalFlow_dC[ke][jc] -= fractionalFlow * dTotMob_dC[k_up_ppu][jc] / LvArray::math::max( totMob, minTotMob );
+          }
+      }
   }
 }
 
@@ -1054,7 +1060,11 @@ computeFractionalFlowCapillary( localIndex const numPhase,
                                 localIndex const (&sei)[numFluxSupportPoints],
                                 real64 const (&transmissibility)[2],
                                 real64 const (&dTrans_dPres)[2],
-                                real64 const totFlux,                 //in fine should be a ElemnetViewConst once seq form are in place
+                                localIndex const & k_up_ppu,
+                                real64 const totFlux,
+                                real64 const totMob,
+                                real64 const (&dTotMob_dP)[numFluxSupportPoints],
+                                real64 const (&dTotMob_dC)[numFluxSupportPoints][numComp],
                                 ElementViewConst< arrayView1d< real64 const > > const & pres,
                                 ElementViewConst< arrayView1d< real64 const > > const & gravCoef,
                                 ElementViewConst< arrayView3d< real64 const, compflow::USD_COMP_DC > > const & dCompFrac_dCompDens,
@@ -1077,9 +1087,9 @@ computeFractionalFlowCapillary( localIndex const numPhase,
   real64 dMMob_dP{};
   real64 dMMob_dC[numComp]{};
 
-  real64 totMob{};
-  real64 dTotMob_dP[numFluxSupportPoints]{};
-  real64 dTotMob_dC[numFluxSupportPoints][numComp]{};
+//  real64 totMob{};
+//  real64 dTotMob_dP[numFluxSupportPoints]{};
+//  real64 dTotMob_dC[numFluxSupportPoints][numComp]{};
 
   //reinit
   //fractional flow too low to let the upstream phase flow
@@ -1095,7 +1105,7 @@ computeFractionalFlowCapillary( localIndex const numPhase,
   }
 
   //Form totMob
-  for( localIndex jp = 0; jp < numPhase; ++jp )
+//  for( localIndex jp = 0; jp < numPhase; ++jp )
   {
 
     localIndex k_up;
@@ -1104,7 +1114,7 @@ computeFractionalFlowCapillary( localIndex const numPhase,
     real64 dMob_dC[numComp]{};
 
     upwindMobilityCapillary< numComp, numFluxSupportPoints, UPWIND >( numPhase,
-                                                                      jp,
+                                                                      ip,
                                                                       seri,
                                                                       sesri,
                                                                       sei,
@@ -1128,14 +1138,14 @@ computeFractionalFlowCapillary( localIndex const numPhase,
                                                                       dMob_dC );
 
 
-    totMob += mob;
-    dTotMob_dP[k_up] += dMob_dP;
-    for( localIndex ic = 0; ic < numComp; ++ic )
-    {
-      dTotMob_dC[k_up][ic] += dMob_dC[ic];
-    }
+//    totMob += mob;
+//    dTotMob_dP[k_up] += dMob_dP;
+//    for( localIndex ic = 0; ic < numComp; ++ic )
+//    {
+//      dTotMob_dC[k_up][ic] += dMob_dC[ic];
+//    }
 
-    if( jp == ip )
+//    if( jp == ip )
     {
       k_up_main = k_up;
       mainMob = mob;
@@ -1150,24 +1160,23 @@ computeFractionalFlowCapillary( localIndex const numPhase,
   //guard against no flow region
   if( std::fabs( mainMob ) > 1e-20 )
   {
-    totMob = LvArray::math::max( totMob, minTotMob );
-    fractionalFlow = mainMob / totMob;
-    dFractionalFlow_dP[k_up_main] = dMMob_dP / totMob;
-    for( localIndex jc = 0; jc < numComp; ++jc )
-    {
-      dFractionalFlow_dC[k_up_main][jc] = dMMob_dC[jc] / totMob;
-
-    }
-
-    for( localIndex ke = 0; ke < numFluxSupportPoints; ++ke )
-    {
-      dFractionalFlow_dP[ke] -= fractionalFlow * dTotMob_dP[ke] / totMob;
-
+      fractionalFlow = mainMob / LvArray::math::max( totMob, minTotMob );
+      dFractionalFlow_dP[k_up_main] = dMMob_dP / LvArray::math::max( totMob, minTotMob );
       for( localIndex jc = 0; jc < numComp; ++jc )
       {
-        dFractionalFlow_dC[ke][jc] -= fractionalFlow * dTotMob_dC[ke][jc] / totMob;
+          dFractionalFlow_dC[k_up_main][jc] = dMMob_dC[jc] / LvArray::math::max( totMob, minTotMob );
+
       }
-    }
+
+      for( localIndex ke = 0; ke < numFluxSupportPoints; ++ke )
+      {
+          dFractionalFlow_dP[ke] -= fractionalFlow * dTotMob_dP[k_up_ppu] / LvArray::math::max( totMob, minTotMob );
+
+          for( localIndex jc = 0; jc < numComp; ++jc )
+          {
+              dFractionalFlow_dC[ke][jc] -= fractionalFlow * dTotMob_dC[k_up_ppu][jc] / LvArray::math::max( totMob, minTotMob );
+          }
+      }
   }
 }
 
@@ -1392,7 +1401,11 @@ static void computePotentialFluxesGravity( localIndex const numPhase,
                                            localIndex const (&sei)[numFluxSupportPoints],
                                            real64 const (&transmissibility)[2],
                                            real64 const (&dTrans_dPres)[2],
+                                           localIndex const & k_up_ppu,
                                            real64 const totFlux,
+                                           real64 const totMob,
+                                           real64 const (&dTotMob_dP)[numFluxSupportPoints],
+                                           real64 const (&dTotMob_dC)[numFluxSupportPoints][numComp],
                                            ElementViewConst< arrayView1d< real64 const > > const & pres,
                                            ElementViewConst< arrayView1d< real64 const > > const & gravCoef,
                                            ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & phaseMob,
@@ -1450,7 +1463,11 @@ static void computePotentialFluxesGravity( localIndex const numPhase,
                                                                                         sei,
                                                                                         transmissibility,
                                                                                         dTrans_dPres,
+                                                                                        k_up_ppu,
                                                                                         totFlux,
+                                                                                        totMob,
+                                                                                        dTotMob_dP,
+                                                                                        dTotMob_dC,
                                                                                         pres,
                                                                                         gravCoef,
                                                                                         dCompFrac_dCompDens,
@@ -1573,7 +1590,11 @@ static void computePotentialFluxesCapillary( localIndex const numPhase,
                                              localIndex const (&sei)[numFluxSupportPoints],
                                              real64 const (&transmissibility)[2],
                                              real64 const (&dTrans_dPres)[2],
+                                             localIndex const & k_up_ppu,
                                              real64 const totFlux,
+                                             real64 const totMob,
+                                             real64 const (&dTotMob_dP)[numFluxSupportPoints],
+                                             real64 const (&dTotMob_dC)[numFluxSupportPoints][numComp],
                                              ElementViewConst< arrayView1d< real64 const > > const & pres,
                                              ElementViewConst< arrayView1d< real64 const > > const & gravCoef,
                                              ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & phaseMob,
@@ -1630,7 +1651,11 @@ static void computePotentialFluxesCapillary( localIndex const numPhase,
                                                                                           sei,
                                                                                           transmissibility,
                                                                                           dTrans_dPres,
+                                                                                          k_up_ppu,
                                                                                           totFlux,
+                                                                                          totMob,
+                                                                                          dTotMob_dP,
+                                                                                          dTotMob_dC,
                                                                                           pres,
                                                                                           gravCoef,
                                                                                           dCompFrac_dCompDens,
@@ -2215,7 +2240,6 @@ struct IHUPhaseFlux
   compute( integer const numPhase,
            integer const ip,
            integer const hasCapPressure,
-           //real64 const GEOS_UNUSED_PARAM( epsC1PPU ),
            localIndex const ( &seri )[numFluxSupportPoints],
            localIndex const ( &sesri )[numFluxSupportPoints],
            localIndex const ( &sei )[numFluxSupportPoints],
@@ -2248,6 +2272,12 @@ struct IHUPhaseFlux
     real64 dTotFlux_dP[numFluxSupportPoints]{};
     real64 dTotFlux_dC[numFluxSupportPoints][numComp]{};
 
+    //store totMob upwinded by PPU for later schemes
+    real64 totMob{};
+    real64 dTotMob_dP[numFluxSupportPoints]{};
+    real64 dTotMob_dC[numFluxSupportPoints][numComp]{};
+    localIndex  k_up_ppu = -1;
+
     //unelegant but need dummy when forming PPU total velocity
     real64 dummy[numComp];
     real64 dDummy_dP[numFluxSupportPoints][numComp];
@@ -2266,21 +2296,25 @@ struct IHUPhaseFlux
                              dCompFrac_dCompDens,
                              phaseMassDens, dPhaseMassDens,
                              phaseCapPressure, dPhaseCapPressure_dPhaseVolFrac,
-                             k_up, potGrad,
+                             k_up_ppu, potGrad,
                              phaseFlux, dPhaseFlux_dP, dPhaseFlux_dC,
                              dummy, dDummy_dP, dDummy_dC );
 
       totFlux += phaseFlux;
-      phaseFlux = 0.;
+
+        phaseFlux = 0.;
       for( localIndex ke = 0; ke < numFluxSupportPoints; ++ke )
       {
         dTotFlux_dP[ke] += dPhaseFlux_dP[ke];
-        dPhaseFlux_dP[ke] = 0.;
+          totMob += phaseMob[seri[ke]][sesri[ke]][sei[ke]][jp];
+          dTotMob_dP[ke] += dPhaseMob[seri[ke]][sesri[ke]][sei[ke]][jp][Deriv::dP];
+          dPhaseFlux_dP[ke] = 0.;
 
         for( localIndex jc = 0; jc < numComp; ++jc )
         {
           dTotFlux_dC[ke][jc] += dPhaseFlux_dC[ke][jc];
-          dPhaseFlux_dC[ke][jc] = 0.;
+            dTotMob_dC[ke][jc] += dPhaseMob[seri[ke]][sesri[ke]][sei[ke]][jp][Deriv::dC + jc];
+            dPhaseFlux_dC[ke][jc] = 0.;
         }
       }
 
@@ -2310,7 +2344,11 @@ struct IHUPhaseFlux
                                                                   sei,
                                                                   trans,
                                                                   dTrans_dPres,
+                                                                  k_up_ppu,
                                                                   totFlux,
+                                                                  totMob,
+                                                                  dTotMob_dP,
+                                                                  dTotMob_dC,
                                                                   pres,
                                                                   gravCoef,
                                                                   dCompFrac_dCompDens,
@@ -2387,7 +2425,12 @@ struct IHUPhaseFlux
       sei,
       trans,
       dTrans_dPres,
+//      totFlux,
+      k_up_ppu,
       totFlux,
+      totMob,
+      dTotMob_dP,
+      dTotMob_dC,
       pres,
       gravCoef,
       phaseMob,
@@ -2445,7 +2488,11 @@ struct IHUPhaseFlux
         sei,
         trans,
         dTrans_dPres,
+        k_up_ppu,
         totFlux,
+        totMob,
+        dTotMob_dP,
+        dTotMob_dC,
         pres,
         gravCoef,
         phaseMob,

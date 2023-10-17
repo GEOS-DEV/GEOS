@@ -505,6 +505,9 @@ void testCompositionalUpwindHU( CompositionalMultiphaseFVM & solver,
         real64 totFlux{};
         real64 dTotFlux_dP[numFluxSupportPoints]{};
         real64 dTotFlux_dC[numFluxSupportPoints][numComp]{};
+                                                        real64 totMob{};
+                                                        real64 dTotMob_dP[numFluxSupportPoints]{};
+                                                        real64 dTotMob_dC[numFluxSupportPoints][numComp]{};
 
         real64 compFlux[numComp];
         real64 dCompFlux_dP[numFluxSupportPoints][numComp]{};
@@ -574,10 +577,12 @@ void testCompositionalUpwindHU( CompositionalMultiphaseFVM & solver,
             for( localIndex ke = 0; ke < numFluxSupportPoints; ++ke )
             {
               dTotFlux_dP[ke] += dPhaseFlux_dP[ip][ke];
-
+                totMob += phaseMobView[seri[iconn][ke]][sesri[iconn][ke]][sei[iconn][ke]][ip];
+                dTotMob_dP[ke] += dPhaseMobView[seri[iconn][ke]][sesri[iconn][ke]][sei[iconn][ke]][ip][Deriv::dP];
               for( localIndex jc = 0; jc < numComp; ++jc )
               {
                 dTotFlux_dC[ke][jc] += dPhaseFlux_dC[ip][ke][jc];
+                dTotMob_dC[ke][jc] += dPhaseMobView[seri[iconn][ke]][sesri[iconn][ke]][sei[iconn][ke]][ip][Deriv::dC + jc];
               }
             }
 
@@ -624,7 +629,11 @@ void testCompositionalUpwindHU( CompositionalMultiphaseFVM & solver,
               {sei[iconn][0], sei[iconn][1]},
               {trans[iconn][0], trans[iconn][1]},
               {dTrans_dP[iconn][0], dTrans_dP[iconn][1]},
+              k_up_ppu[ip],
               totFlux,
+              totMob,
+              dTotMob_dP,
+              dTotMob_dC,
               presView.toNestedViewConst(),
               gravCoefView.toNestedViewConst(),
               dCompFrac_dCompDensView.toNestedViewConst(),
@@ -677,7 +686,11 @@ void testCompositionalUpwindHU( CompositionalMultiphaseFVM & solver,
               {sei[iconn][0], sei[iconn][1]},
               {trans[iconn][0], trans[iconn][1]},
               {dTrans_dP[iconn][0], dTrans_dP[iconn][1]},
+              k_up_ppu[ip],
               totFlux,
+              totMob,
+              dTotMob_dP,
+              dTotMob_dC,
               presView.toNestedViewConst(),
               gravCoefView.toNestedViewConst(),
               phaseMobView.toNestedViewConst(),
@@ -710,7 +723,11 @@ void testCompositionalUpwindHU( CompositionalMultiphaseFVM & solver,
                 {sei[iconn][0], sei[iconn][1]},
                 {trans[iconn][0], trans[iconn][1]},
                 {dTrans_dP[iconn][0], dTrans_dP[iconn][1]},
+                k_up_ppu[ip],
                 totFlux,
+                totMob,
+                dTotMob_dP,
+                dTotMob_dC,
                 presView.toNestedViewConst(),
                 gravCoefView.toNestedViewConst(),
                 phaseMobView.toNestedViewConst(),

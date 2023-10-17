@@ -38,7 +38,7 @@ enum class UpwindingScheme : integer
 {
   PPU,    ///< PPU upwinding
   C1PPU,  ///< C1-PPU upwinding from https://doi.org/10.1016/j.advwatres.2017.07.028
-  IHU, ///< IHU as in https://link.springer.com/content/pdf/10.1007/s10596-019-09835-6.pdf
+  IHU ///< IHU as in https://link.springer.com/content/pdf/10.1007/s10596-019-09835-6.pdf
 };
 
 /**
