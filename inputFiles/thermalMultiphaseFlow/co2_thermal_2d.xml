@@ -84,7 +84,7 @@
     <CellElementRegion
       name="region"
       cellBlocks="{ cb }"
-      materialList="{ fluid, rock, relperm, thermalCond }"/>
+      materialList="{ fluid, rock, relperm, thermalCond, diffusion }"/>
   </ElementRegions>
 
   <Constitutive>
@@ -130,6 +130,12 @@
       name="thermalCond"
       phaseNames="{ gas, water }"
       thermalConductivityComponents="{ 0.6, 0.6, 0.6 }"/>
+
+    <ConstantDiffusion
+      name="diffusion"
+      phaseNames="{ gas, water }"
+      defaultPhaseDiffusivityMultipliers="{ 20, 1 }"
+      diffusivityComponents="{ 1e-9, 1e-9, 1e-9 }"/>
     
   </Constitutive>
 
