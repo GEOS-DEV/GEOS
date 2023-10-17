@@ -14,16 +14,18 @@
       contactRelationName="fractureContact"
       maxNumResolves="2">
       <NonlinearSolverParameters
-        newtonTol="1.0e-6"
-        newtonMaxIter="40"
+        newtonTol="1.0e-5"
+        newtonMaxIter="20"
         lineSearchMaxCuts="3"/>
       <LinearSolverParameters
+        logLevel="1"
         solverType="gmres"
-        preconditionerType="amg"/>
+        preconditionerType="mgr"/>
     </Hydrofracture>
 
     <SolidMechanicsLagrangianSSLE
       name="lagsolve"
+      logLevel="1"
       timeIntegrationOption="QuasiStatic"
       discretization="FE1"
       targetRegions="{ Domain, Fracture }"
@@ -37,6 +39,7 @@
 
     <SinglePhaseFVM
       name="SinglePhaseFlow"
+      logLevel="1"
       discretization="singlePhaseTPFA"
       targetRegions="{ Fracture }">
       <NonlinearSolverParameters
@@ -172,7 +175,7 @@
     <FiniteVolume>
       <TwoPointFluxApproximation
         name="singlePhaseTPFA"
-        meanPermCoefficient="1.0"/>
+        meanPermCoefficient="0.0"/>
     </FiniteVolume>
   </NumericalMethods>
 
