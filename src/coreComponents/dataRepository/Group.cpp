@@ -153,7 +153,10 @@ void Group::processInputFileRecursive( xmlWrapper::xmlDocument & xmlDocument,
   for( xmlWrapper::xmlNode childNode : targetNode.children() )
   {
     // Get the child tag and name
-    string childName = childNode.attribute( "name" ).value();
+    string childName;
+    xmlWrapper::readAttributeAsType( childName, "name",
+                                     rtTypes::getTypeRegex< string >( rtTypes::CustomTypes::groupName ),
+                                     childNode, string( "" ) );
     if( childName.empty() )
     {
       childName = childNode.name();
