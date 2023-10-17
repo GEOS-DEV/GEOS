@@ -135,7 +135,7 @@ void CompositionalMultiphaseFVM::assembleFluxTerms( real64 const dt,
     {
       typename TYPEOFREF( stencil ) ::KernelWrapper stencilWrapper = stencil.createKernelWrapper();
 
-
+      // Convective flux
       if( m_isThermal )
       {
         thermalCompositionalMultiphaseFVMKernels::
@@ -168,6 +168,46 @@ void CompositionalMultiphaseFVM::assembleFluxTerms( real64 const dt,
                                                      dt,
                                                      localMatrix.toViewConstSizes(),
                                                      localRhs.toView() );
+      }
+
+      // Diffusive and dispersive flux
+      if( m_hasDiffusion || m_hasDispersion )
+      {
+
+        if( m_isThermal )
+        {
+          thermalCompositionalMultiphaseFVMKernels::
+            DiffusionDispersionFaceBasedAssemblyKernelFactory::
+            createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
+                                                       m_numPhases,
+                                                       dofManager.rankOffset(),
+                                                       elemDofKey,
+                                                       m_hasDiffusion,
+                                                       m_hasDispersion,
+                                                       getName(),
+                                                       mesh.getElemManager(),
+                                                       stencilWrapper,
+                                                       dt,
+                                                       localMatrix.toViewConstSizes(),
+                                                       localRhs.toView() );
+        }
+        else
+        {
+          isothermalCompositionalMultiphaseFVMKernels::
+            DiffusionDispersionFaceBasedAssemblyKernelFactory::
+            createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
+                                                       m_numPhases,
+                                                       dofManager.rankOffset(),
+                                                       elemDofKey,
+                                                       m_hasDiffusion,
+                                                       m_hasDispersion,
+                                                       getName(),
+                                                       mesh.getElemManager(),
+                                                       stencilWrapper,
+                                                       dt,
+                                                       localMatrix.toViewConstSizes(),
+                                                       localRhs.toView() );
+        }
       }
 
     } );
@@ -411,38 +451,46 @@ real64 CompositionalMultiphaseFVM::scalingForSystemSolution( DomainPartition & d
                                                      localSolution );
 
       if( m_scalingType == ScalingType::Global )
+      {
         scalingFactor = std::min( scalingFactor, subRegionData.localMinVal );
+      }
       maxDeltaPres  = std::max( maxDeltaPres, subRegionData.localMaxDeltaPres );
       maxDeltaCompDens = std::max( maxDeltaCompDens, subRegionData.localMaxDeltaCompDens );
       maxDeltaTemp = std::max( maxDeltaTemp, subRegionData.localMaxDeltaTemp );
-      minPresScalingFactor = std::min( minPresScalingFactor, subRegionData.localMinPresScalFac );
-      minCompDensScalingFactor = std::min( minCompDensScalingFactor, subRegionData.localMinCompDensScalFac );
-      minTempScalingFactor = std::min( minTempScalingFactor, subRegionData.localMinTempScalFac );
+      minPresScalingFactor = std::min( minPresScalingFactor, subRegionData.localMinPresScalingFactor );
+      minCompDensScalingFactor = std::min( minCompDensScalingFactor, subRegionData.localMinCompDensScalingFactor );
+      minTempScalingFactor = std::min( minTempScalingFactor, subRegionData.localMinTempScalingFactor );
     } );
   } );
 
   scalingFactor = MpiWrapper::min( scalingFactor );
   maxDeltaPres  = MpiWrapper::max( maxDeltaPres );
   maxDeltaCompDens = MpiWrapper::max( maxDeltaCompDens );
-  maxDeltaTemp = MpiWrapper::max( maxDeltaTemp );
   minPresScalingFactor = MpiWrapper::min( minPresScalingFactor );
   minCompDensScalingFactor = MpiWrapper::min( minCompDensScalingFactor );
-  minTempScalingFactor = MpiWrapper::min( minTempScalingFactor );
+
+  string const massUnit = m_useMass ? "kg/m3" : "mol/m3";
+  GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "        {}: Max pressure change: {} Pa (before scaling)",
+                                      getName(), fmt::format( "{:.{}f}", maxDeltaPres, 3 ) ) );
+  GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "        {}: Max component density change: {} {} (before scaling)",
+                                      getName(), fmt::format( "{:.{}f}", maxDeltaCompDens, 3 ), massUnit ) );
 
   if( m_isThermal )
   {
-    GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "        {}: Max deltaPres  = {}, Max deltaCompDens = {}, Max deltaTemp = {} (before scaling)", getName(), maxDeltaPres, maxDeltaCompDens, maxDeltaTemp ) );
+    maxDeltaTemp = MpiWrapper::max( maxDeltaTemp );
+    minTempScalingFactor = MpiWrapper::min( minTempScalingFactor );
+    GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "        {}: Max temperature change: {} K (before scaling)",
+                                        getName(), fmt::format( "{:.{}f}", maxDeltaTemp, 3 ) ) );
   }
-  else
-  {
-    GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "        {}: Max deltaPres  = {}, Max deltaCompDens = {} (before scaling)", getName(), maxDeltaPres, maxDeltaCompDens ) );
-  }
+
   if( m_scalingType == ScalingType::Local )
   {
-    GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "        {}: Min pressure scaling factor = {}", getName(), minPresScalingFactor ) );
-    GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "        {}: Min comp dens scaling factor = {}", getName(), minCompDensScalingFactor ) );
+    GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "        {}: Min pressure scaling factor: {}", getName(), minPresScalingFactor ) );
+    GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "        {}: Min component density scaling factor: {}", getName(), minCompDensScalingFactor ) );
     if( m_isThermal )
-      GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "        {}: Min temperature scaling factor = {}", getName(), minTempScalingFactor ) );
+    {
+      GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "        {}: Min temperature scaling factor: {}", getName(), minTempScalingFactor ) );
+    }
   }
 
   return LvArray::math::max( scalingFactor, m_minScalingFactor );
