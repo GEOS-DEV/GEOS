@@ -78,12 +78,15 @@ public:
     {
       using SolverPtr = TYPEOFREF( solver );
       using SolverType = TYPEOFPTR( SolverPtr {} );
-      solver = this->getParent().template getGroupPointer< SolverType >( m_names[idx()] );
+      auto const & solverName = m_names[idx()];
+      auto const & solverType = LvArray::system::demangleType< SolverType >();
+      solver = this->getParent().template getGroupPointer< SolverType >( solverName );
       GEOS_THROW_IF( solver == nullptr,
                      GEOS_FMT( "{}: Could not find solver '{}' of type {}",
                                getDataContext(),
-                               m_names[idx()], LvArray::system::demangleType< SolverType >() ),
+                               solverName, solverType ),
                      InputError );
+      GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "{}: found {} solver named {}", getName(), solver->catalogName(), solverName ) );
     } );
   }
 
@@ -272,7 +275,7 @@ public:
   }
 
   virtual bool
-  checkSystemSolution( DomainPartition const & domain,
+  checkSystemSolution( DomainPartition & domain,
                        DofManager const & dofManager,
                        arrayView1d< real64 const > const & localSolution,
                        real64 const scalingFactor ) override
@@ -287,7 +290,7 @@ public:
   }
 
   virtual real64
-  scalingForSystemSolution( DomainPartition const & domain,
+  scalingForSystemSolution( DomainPartition & domain,
                             DofManager const & dofManager,
                             arrayView1d< real64 const > const & localSolution ) override
   {
@@ -314,6 +317,18 @@ public:
     return nextDt;
   }
 
+  virtual void cleanup( real64 const time_n,
+                        integer const cycleNumber,
+                        integer const eventCounter,
+                        real64 const eventProgress,
+                        DomainPartition & domain ) override
+  {
+    forEachArgInTuple( m_solvers, [&]( auto & solver, auto )
+    {
+      solver->cleanup( time_n, cycleNumber, eventCounter, eventProgress, domain );
+    } );
+    SolverBase::cleanup( time_n, cycleNumber, eventCounter, eventProgress, domain );
+  }
 
   /**@}*/
 
@@ -393,6 +408,7 @@ protected:
         forEachArgInTuple( m_solvers, [&]( auto & solver, auto )
         {
           solver->resetStateToBeginningOfStep( domain );
+          solver->getSolverStatistics().initializeTimeStepStatistics(); // initialize counters for subsolvers
         } );
         resetStateToBeginningOfStep( domain );
       }
@@ -427,6 +443,11 @@ protected:
 
       if( isConverged )
       {
+        // Save Time step statistics for the subsolvers
+        forEachArgInTuple( m_solvers, [&]( auto & solver, auto )
+        {
+          solver->getSolverStatistics().saveTimeStepStatistics();
+        } );
         break;
       }
       // Add convergence check:
@@ -461,7 +482,7 @@ protected:
 
     if( params.m_subcyclingOption == 0 )
     {
-      GEOS_LOG_LEVEL_RANK_0( 1, "***** Single Pass solver, no subcycling *****\n" );
+      GEOS_LOG_LEVEL_RANK_0( 1, "***** Single Pass solver, no subcycling *****" );
     }
     else
     {
@@ -505,7 +526,7 @@ protected:
 
         // finally, we perform the convergence check on the multiphysics residual
         residualNorm = sqrt( residualNorm );
-        GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "    ( R ) = ( {:4.2e} ) ; ", residualNorm ) );
+        GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "        ( R ) = ( {:4.2e} )", residualNorm ) );
         isConverged = ( residualNorm < params.m_newtonTol );
 
       }
@@ -527,7 +548,7 @@ protected:
 
       if( isConverged )
       {
-        GEOS_LOG_LEVEL_RANK_0( 1, "***** The iterative coupling has converged in " << iter + 1 << " iteration(s)! *****\n" );
+        GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "***** The iterative coupling has converged in {} iteration(s) *****", iter + 1 ) );
       }
     }
     return isConverged;

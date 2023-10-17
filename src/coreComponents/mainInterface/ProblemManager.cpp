@@ -609,13 +609,21 @@ void ProblemManager::generateMesh()
 
   domain.forMeshBodies( [&]( MeshBody & meshBody )
   {
-
     meshBody.deregisterCellBlockManager();
 
     meshBody.forMeshLevels( [&]( MeshLevel & meshLevel )
     {
       FaceManager & faceManager = meshLevel.getFaceManager();
       EdgeManager & edgeManager = meshLevel.getEdgeManager();
+      NodeManager const & nodeManager = meshLevel.getNodeManager();
+
+      // The computation of geometric quantities is now possible for `FaceElementSubRegion`,
+      // because the ghosting ensures that the neighbor cells of the fracture elements are available.
+      // These neighbor cells are providing the node information to the fracture elements.
+      meshLevel.getElemManager().forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
+      {
+        subRegion.calculateElementGeometricQuantities( nodeManager, faceManager );
+      } );
 
       faceManager.setIsExternal();
       edgeManager.setIsExternal( faceManager );
@@ -724,46 +732,48 @@ void ProblemManager::generateMeshLevel( MeshLevel & meshLevel,
   NodeManager & nodeManager = meshLevel.getNodeManager();
   EdgeManager & edgeManager = meshLevel.getEdgeManager();
   FaceManager & faceManager = meshLevel.getFaceManager();
-  ElementRegionManager & elemManager = meshLevel.getElemManager();
+  ElementRegionManager & elemRegionManager = meshLevel.getElemManager();
 
-  bool isbaseMeshLevel =  meshLevel.getName() == MeshBody::groupStructKeys::baseDiscretizationString();
+  bool const isBaseMeshLevel = meshLevel.getName() == MeshBody::groupStructKeys::baseDiscretizationString();
 
-  elemManager.generateMesh( cellBlockManager );
-  nodeManager.setGeometricalRelations( cellBlockManager, elemManager, isbaseMeshLevel );
-  edgeManager.setGeometricalRelations( cellBlockManager, isbaseMeshLevel );
-  faceManager.setGeometricalRelations( cellBlockManager,
-                                       elemManager,
-                                       nodeManager, isbaseMeshLevel );
+  elemRegionManager.generateMesh( cellBlockManager );
+  nodeManager.setGeometricalRelations( cellBlockManager, elemRegionManager, isBaseMeshLevel );
+  edgeManager.setGeometricalRelations( cellBlockManager, isBaseMeshLevel );
+  faceManager.setGeometricalRelations( cellBlockManager, elemRegionManager, nodeManager, isBaseMeshLevel );
   nodeManager.constructGlobalToLocalMap( cellBlockManager );
   // Edge, face and element region managers rely on the sets provided by the node manager.
   // This is why `nodeManager.buildSets` is called first.
   nodeManager.buildSets( cellBlockManager, this->getGroup< GeometricObjectManager >( groupKeys.geometricObjectManager ) );
   edgeManager.buildSets( nodeManager );
   faceManager.buildSets( nodeManager );
-  elemManager.buildSets( nodeManager );
+  elemRegionManager.buildSets( nodeManager );
   // The edge manager do not hold any information related to the regions nor the elements.
   // This is why the element region manager is not provided.
-  nodeManager.setupRelatedObjectsInRelations( edgeManager, faceManager, elemManager );
+  nodeManager.setupRelatedObjectsInRelations( edgeManager, faceManager, elemRegionManager );
   edgeManager.setupRelatedObjectsInRelations( nodeManager, faceManager );
-  faceManager.setupRelatedObjectsInRelations( nodeManager, edgeManager, elemManager );
+  faceManager.setupRelatedObjectsInRelations( nodeManager, edgeManager, elemRegionManager );
   // Node and edge managers rely on the boundary information provided by the face manager.
   // This is why `faceManager.setDomainBoundaryObjects` is called first.
-  faceManager.setDomainBoundaryObjects();
-  nodeManager.setDomainBoundaryObjects( faceManager );
+  faceManager.setDomainBoundaryObjects( elemRegionManager );
   edgeManager.setDomainBoundaryObjects( faceManager );
+  nodeManager.setDomainBoundaryObjects( faceManager, edgeManager );
+
   meshLevel.generateSets();
 
-
-  elemManager.forElementSubRegions< ElementSubRegionBase >( [&]( ElementSubRegionBase & subRegion )
+  elemRegionManager.forElementSubRegions< ElementSubRegionBase >( [&]( ElementSubRegionBase & subRegion )
   {
     subRegion.setupRelatedObjectsInRelations( meshLevel );
-    if( isbaseMeshLevel )
+    // `FaceElementSubRegion` has no node and therefore needs the nodes positions from the neighbor elements
+    // in order to compute the geometric quantities.
+    // And this point of the process, the ghosting has not been done and some elements of the `FaceElementSubRegion`
+    // can have no neighbor. Making impossible the computation, which is therfore postponed to after the ghosting.
+    if( isBaseMeshLevel && !dynamicCast< FaceElementSubRegion * >( &subRegion ) )
     {
       subRegion.calculateElementGeometricQuantities( nodeManager, faceManager );
     }
     subRegion.setMaxGlobalIndex();
   } );
-  elemManager.setMaxGlobalIndex();
+  elemRegionManager.setMaxGlobalIndex();
 }
 
 
