@@ -35,6 +35,7 @@ FluxApproximationBase::FluxApproximationBase( string const & name, Group * const
   setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
 
   registerWrapper( viewKeyStruct::fieldNameString(), &m_fieldNames ).
+    setRTTypeName( rtTypes::CustomTypes::groupNameRefArray ).
     setInputFlag( InputFlags::FALSE ).
     setDescription( "Name of primary solution field" ).setSizedFromParent( 0 );
 

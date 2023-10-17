@@ -29,6 +29,7 @@ FieldSpecificationBase::FieldSpecificationBase( string const & name, Group * par
   setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
 
   registerWrapper( viewKeyStruct::setNamesString(), &m_setNames ).
+    setRTTypeName( rtTypes::CustomTypes::groupNameRefArray ).
     setInputFlag( InputFlags::REQUIRED ).
     setSizedFromParent( 0 ).
     setDescription( "Name of sets that boundary condition is applied to." );

@@ -50,11 +50,13 @@ BlackOilFluidBase::BlackOilFluidBase( string const & name,
   //                   and then specify water reference pressure, water Bw, water compressibility and water viscosity
 
   registerWrapper( viewKeyStruct::formationVolumeFactorTableNamesString(), &m_formationVolFactorTableNames ).
+    setRTTypeName( rtTypes::CustomTypes::groupNameRefArray ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "List of formation volume factor TableFunction names from the Functions block. \n"
                     "The user must provide one TableFunction per hydrocarbon phase, in the order provided in \"phaseNames\". \n"
                     "For instance, if \"oil\" is before \"gas\" in \"phaseNames\", the table order should be: oilTableName, gasTableName" );
   registerWrapper( viewKeyStruct::viscosityTableNamesString(), &m_viscosityTableNames ).
+    setRTTypeName( rtTypes::CustomTypes::groupNameRefArray ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "List of viscosity TableFunction names from the Functions block. \n"
                     "The user must provide one TableFunction per hydrocarbon phase, in the order provided in \"phaseNames\". \n"

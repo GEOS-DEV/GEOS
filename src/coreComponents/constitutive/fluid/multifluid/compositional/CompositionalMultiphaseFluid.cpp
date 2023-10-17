@@ -43,7 +43,7 @@ CompositionalMultiphaseFluid::CompositionalMultiphaseFluid( string const & name,
 
   registerWrapper( viewKeyStruct::equationsOfStateString(), &m_equationsOfState ).
     setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "List of equation of state types for each phase" );
+    setDescription( "List of equation of state types for each phase. Can be PR (= PENG_ROBINSON) or SRK (= REDLICH_KWONG_SOAVE)." );
 
   registerWrapper( viewKeyStruct::componentCriticalPressureString(), &m_componentCriticalPressure ).
     setInputFlag( InputFlags::REQUIRED ).

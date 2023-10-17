@@ -23,6 +23,7 @@ PackCollection::PackCollection ( string const & name, Group * parent )
     setDescription( "The name of the (packable) field associated with the specified object to retrieve data from" );
 
   registerWrapper( PackCollection::viewKeysStruct::setNamesString(), &m_setNames ).
+    setRTTypeName( rtTypes::CustomTypes::groupNameRefArray ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "The set(s) for which to retrieve data." );
 

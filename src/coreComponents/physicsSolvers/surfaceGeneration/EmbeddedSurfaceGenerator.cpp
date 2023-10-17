@@ -73,6 +73,7 @@ EmbeddedSurfaceGenerator::EmbeddedSurfaceGenerator( const string & name,
     setApplyDefaultValue( "FractureRegion" );
 
   registerWrapper( viewKeyStruct::targetObjectsNameString(), &m_targetObjectsName ).
+    setRTTypeName( rtTypes::CustomTypes::groupNameRefArray ).
     setInputFlag( dataRepository::InputFlags::REQUIRED ).
     setDescription( "List of geometric objects that will be used to initialized the embedded surfaces/fractures." );
 

@@ -51,6 +51,7 @@ MultiphasePoromechanics::MultiphasePoromechanics( const string & name,
                     toString( StabilizationType::Local ) + " - Add stabilization only to interiors of macro elements." );
 
   registerWrapper( viewKeyStruct::stabilizationRegionNamesString(), &m_stabilizationRegionNames ).
+    setRTTypeName( rtTypes::CustomTypes::groupNameRefArray ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Regions where stabilization is applied." );
 
