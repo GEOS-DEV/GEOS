@@ -52,8 +52,8 @@ void ConvertDocumentationToSchema( string const & fname,
   </xsd:schema>";
 
   xmlWrapper::xmlDocument schemaTree;
-  schemaTree.load_string( schemaBase.c_str());
-  xmlWrapper::xmlNode schemaRoot = schemaTree.child( "xsd:schema" );
+  schemaTree.loadString( schemaBase );
+  xmlWrapper::xmlNode schemaRoot = schemaTree.getChild( "xsd:schema" );
 
   // Build the simple schema types
   GEOS_LOG_RANK_0( "  Basic datatypes" );
@@ -65,7 +65,7 @@ void ConvertDocumentationToSchema( string const & fname,
 
   // Write the schema to file
   GEOS_LOG_RANK_0( "  Saving file" );
-  schemaTree.save_file( fname.c_str());
+  schemaTree.saveFile( fname );
 
   GEOS_LOG_RANK_0( "  Done!" );
 }
@@ -233,7 +233,7 @@ void SchemaConstruction( Group & group,
               commentString += " => " + stringutilities::join( registrars.begin(), registrars.end(), ", " );
             }
 
-            xmlWrapper::xmlNode commentNode = targetTypeDefNode.append_child( xmlWrapper::xmlTypes::node_comment );
+            xmlWrapper::xmlNode commentNode = targetTypeDefNode.append_child( xmlWrapper::xmlNodeType::node_comment );
             commentNode.set_value( commentString.c_str());
 
 
@@ -289,7 +289,7 @@ void SchemaConstruction( Group & group,
         // Only add this attribute if not present
         if( targetTypeDefNode.find_child_by_attribute( "xsd:attribute", "name", "name" ).empty())
         {
-          xmlWrapper::xmlNode commentNode = targetTypeDefNode.append_child( xmlWrapper::xmlTypes::node_comment );
+          xmlWrapper::xmlNode commentNode = targetTypeDefNode.append_child( xmlWrapper::xmlNodeType::node_comment );
           commentNode.set_value( "name => A name is required for any non-unique nodes" );
 
           xmlWrapper::xmlNode attributeNode = targetTypeDefNode.append_child( "xsd:attribute" );

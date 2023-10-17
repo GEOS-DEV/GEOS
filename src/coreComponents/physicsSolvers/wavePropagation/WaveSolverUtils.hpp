@@ -20,6 +20,7 @@
 #ifndef GEOS_PHYSICSSOLVERS_WAVEPROPAGATION_WAVESOLVERUTILS_HPP_
 #define GEOS_PHYSICSSOLVERS_WAVEPROPAGATION_WAVESOLVERUTILS_HPP_
 
+#include "fileIO/Outputs/OutputBase.hpp"
 #include "WaveSolverBase.hpp"
 
 namespace geos
@@ -29,40 +30,76 @@ struct WaveSolverUtils
 {
 
   GEOS_HOST_DEVICE
-  static real32 evaluateRicker( real64 const & time_n, real32 const & f0, localIndex order )
+  static real32 evaluateRicker( real64 const time_n, real32 const f0, real32 const t0, localIndex const order )
   {
-    real32 const o_tpeak = 1.0/f0;
+    real32 const delay = t0 > 0 ? t0 : 1 / f0;
     real32 pulse = 0.0;
-    if((time_n <= -0.9*o_tpeak) || (time_n >= 2.9*o_tpeak))
+    if( time_n <= -0.9 * delay || time_n >= 2.9 * delay )
     {
       return pulse;
     }
 
-    constexpr real32 pi = M_PI;
-    real32 const lam = (f0*pi)*(f0*pi);
+    real32 const alpha = -pow( f0 * M_PI, 2 );
+    real32 const time_d = time_n - delay;
+    real32 const gaussian = exp( alpha * pow( time_d, 2 ));
+    localIndex const sgn = pow( -1, order + 1 );
 
     switch( order )
     {
-      case 2:
-      {
-        pulse = 2.0*lam*(2.0*lam*(time_n-o_tpeak)*(time_n-o_tpeak)-1.0)*exp( -lam*(time_n-o_tpeak)*(time_n-o_tpeak));
-      }
-      break;
-      case 1:
-      {
-        pulse = -2.0*lam*(time_n-o_tpeak)*exp( -lam*(time_n-o_tpeak)*(time_n-o_tpeak));
-      }
-      break;
       case 0:
-      {
-        pulse = -(time_n-o_tpeak)*exp( -2*lam*(time_n-o_tpeak)*(time_n-o_tpeak) );
-      }
-      break;
+        pulse = sgn * gaussian;
+        break;
+      case 1:
+        pulse = sgn * (2 * alpha * time_d) * gaussian;
+        break;
+      case 2:
+        pulse = sgn * (2 * alpha + 4 * pow( alpha, 2 ) * pow( time_d, 2 )) * gaussian;
+        break;
+      case 3:
+        pulse = sgn * (12 * pow( alpha, 2 ) * time_d + 8 * pow( alpha, 3 ) * pow( time_d, 3 )) * gaussian;
+        break;
+      case 4:
+        pulse = sgn * (12 * pow( alpha, 2 ) + 48 * pow( alpha, 3 ) * pow( time_d, 2 ) + 16 * pow( alpha, 4 ) * pow( time_d, 4 )) * gaussian;
+        break;
       default:
-        GEOS_ERROR( "This option is not supported yet, rickerOrder must be 0, 1 or 2" );
+        GEOS_ERROR( "This option is not supported yet, rickerOrder must be in range {0:4}" );
     }
 
     return pulse;
+  }
+
+  static void writeSeismoTrace( localIndex iSeismo,
+                                arrayView2d< real64 const > const receiverConstants,
+                                arrayView1d< localIndex const > const receiverIsLocal,
+                                localIndex const nsamplesSeismoTrace,
+                                localIndex const outputSeismoTrace,
+                                arrayView2d< real32 > varAtReceivers )
+  {
+    if( iSeismo == nsamplesSeismoTrace - 1 )
+    {
+      string const outputDir = OutputBase::getOutputDirectory();
+      forAll< serialPolicy >( receiverConstants.size( 0 ), [=] ( localIndex const ircv )
+      {
+        if( outputSeismoTrace == 1 )
+        {
+          if( receiverIsLocal[ircv] == 1 )
+          {
+            string const fn = joinPath( outputDir, GEOS_FMT( "seismoTraceReceiver{:03}.txt", ircv ) );
+            std::ofstream f( fn, std::ios::app );
+            if( !f )
+            {
+              GEOS_WARNING( GEOS_FMT( "Failed to open output file {}", fn ) );
+              return;
+            }
+            for( localIndex iSample = 0; iSample < nsamplesSeismoTrace; ++iSample )
+            {
+              f << iSample << " " << varAtReceivers[iSample][ircv] << std::endl;
+            }
+            f.close();
+          }
+        }
+      } );
+    }
   }
 
   static void computeSeismoTrace( real64 const time_n,
@@ -90,8 +127,7 @@ struct WaveSolverUtils
         if( receiverIsLocal[ircv] == 1 )
         {
           varAtReceivers[iSeismo][ircv] = 0.0;
-          real32 vtmp_np1 = 0.0;
-          real32 vtmp_n = 0.0;
+          real32 vtmp_np1 = 0.0, vtmp_n = 0.0;
           for( localIndex inode = 0; inode < receiverConstants.size( 1 ); ++inode )
           {
             vtmp_np1 += var_np1[receiverNodeIds[ircv][inode]] * receiverConstants[ircv][inode];
@@ -103,29 +139,7 @@ struct WaveSolverUtils
       } );
     }
 
-    // TODO DEBUG: the following output is only temporary until our wave propagation kernels are finalized.
-    // Output will then only be done via the previous code.
-    if( iSeismo == nsamplesSeismoTrace - 1 )
-    {
-      forAll< serialPolicy >( receiverConstants.size( 0 ), [=] ( localIndex const ircv )
-      {
-        if( outputSeismoTrace == 1 )
-        {
-          if( receiverIsLocal[ircv] == 1 )
-          {
-            // Note: this "manual" output to file is temporary
-            //       It should be removed as soon as we can use TimeHistory to output data not registered on the mesh
-            // TODO: remove saveSeismo and replace with TimeHistory
-            std::ofstream f( GEOS_FMT( "seismoTraceReceiver{:03}.txt", ircv ), std::ios::app );
-            for( localIndex iSample = 0; iSample < nsamplesSeismoTrace; ++iSample )
-            {
-              f << iSample << " " << varAtReceivers[iSample][ircv] << std::endl;
-            }
-            f.close();
-          }
-        }
-      } );
-    }
+    writeSeismoTrace( iSeismo, receiverConstants, receiverIsLocal, nsamplesSeismoTrace, outputSeismoTrace, varAtReceivers );
   }
 
   static void compute2dVariableSeismoTrace( real64 const time_n,
@@ -157,8 +171,7 @@ struct WaveSolverUtils
           if( receiverRegion[ircv] == regionIndex )
           {
             varAtReceivers[iSeismo][ircv] = 0.0;
-            real32 vtmp_np1 = 0.0;
-            real32 vtmp_n = 0.0;
+            real32 vtmp_np1 = 0.0, vtmp_n = 0.0;
             for( localIndex inode = 0; inode < receiverConstants.size( 1 ); ++inode )
             {
               vtmp_np1 += var_np1[rcvElem[ircv]][inode] * receiverConstants[ircv][inode];
@@ -171,32 +184,7 @@ struct WaveSolverUtils
       } );
     }
 
-    // TODO DEBUG: the following output is only temporary until our wave propagation kernels are finalized.
-    // Output will then only be done via the previous code.
-    if( iSeismo == nsamplesSeismoTrace - 1 )
-    {
-      if( outputSeismoTrace == 1 )
-      {
-        forAll< serialPolicy >( receiverConstants.size( 0 ), [=] ( localIndex const ircv )
-        {
-          if( receiverIsLocal[ircv] == 1 )
-          {
-            // Note: this "manual" output to file is temporary
-            //       It should be removed as soon as we can use TimeHistory to output data not registered on the mesh
-            // TODO: remove saveSeismo and replace with TimeHistory
-            if( receiverRegion[ircv] == regionIndex )
-            {
-              std::ofstream f( GEOS_FMT( "seismoTraceReceiver{:03}.txt", ircv ), std::ios::app );
-              for( localIndex iSample = 0; iSample < nsamplesSeismoTrace; ++iSample )
-              {
-                f << iSample << " " << varAtReceivers[iSample][ircv] << std::endl;
-              }
-              f.close();
-            }
-          }
-        } );
-      }
-    }
+    writeSeismoTrace( iSeismo, receiverConstants, receiverIsLocal, nsamplesSeismoTrace, outputSeismoTrace, varAtReceivers );
   }
 
   /**
@@ -271,7 +259,7 @@ struct WaveSolverUtils
   static void
   computeCoordinatesOnReferenceElement( real64 const (&coords)[3],
                                         arraySlice1d< localIndex const, cells::NODE_MAP_USD - 1 > const elemsToNodes,
-                                        arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X,
+                                        arrayView2d< WaveSolverBase::wsCoordType const, nodes::REFERENCE_POSITION_USD > const X,
                                         real64 (& coordsOnRefElem)[3] )
   {
     real64 xLocal[FE_TYPE::numNodes][3]{};
@@ -292,8 +280,6 @@ struct WaveSolverUtils
       }
     }
   }
-
-
 
 };
 

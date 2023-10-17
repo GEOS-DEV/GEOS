@@ -78,11 +78,15 @@ public:
     {
       using SolverPtr = TYPEOFREF( solver );
       using SolverType = TYPEOFPTR( SolverPtr {} );
-      solver = this->getParent().template getGroupPointer< SolverType >( m_names[idx()] );
+      auto const & solverName = m_names[idx()];
+      auto const & solverType = LvArray::system::demangleType< SolverType >();
+      solver = this->getParent().template getGroupPointer< SolverType >( solverName );
       GEOS_THROW_IF( solver == nullptr,
-                     GEOS_FMT( "Could not find solver '{}' of type {}",
-                               m_names[idx()], LvArray::system::demangleType< SolverType >() ),
+                     GEOS_FMT( "{}: Could not find solver '{}' of type {}",
+                               getDataContext(),
+                               solverName, solverType ),
                      InputError );
+      GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "{}: found {} solver named {}", getName(), solver->catalogName(), solverName ) );
     } );
   }
 
@@ -185,11 +189,12 @@ public:
   applySystemSolution( DofManager const & dofManager,
                        arrayView1d< real64 const > const & localSolution,
                        real64 const scalingFactor,
+                       real64 const dt,
                        DomainPartition & domain ) override
   {
     forEachArgInTuple( m_solvers, [&]( auto & solver, auto )
     {
-      solver->applySystemSolution( dofManager, localSolution, scalingFactor, domain );
+      solver->applySystemSolution( dofManager, localSolution, scalingFactor, dt, domain );
     } );
   }
 
@@ -231,7 +236,7 @@ public:
     }
     else
     {
-      GEOS_ERROR( "Invalid coupling type option." );
+      GEOS_ERROR( getDataContext() << ": Invalid coupling type option." );
       return 0;
     }
 
@@ -270,7 +275,7 @@ public:
   }
 
   virtual bool
-  checkSystemSolution( DomainPartition const & domain,
+  checkSystemSolution( DomainPartition & domain,
                        DofManager const & dofManager,
                        arrayView1d< real64 const > const & localSolution,
                        real64 const scalingFactor ) override
@@ -285,7 +290,7 @@ public:
   }
 
   virtual real64
-  scalingForSystemSolution( DomainPartition const & domain,
+  scalingForSystemSolution( DomainPartition & domain,
                             DofManager const & dofManager,
                             arrayView1d< real64 const > const & localSolution ) override
   {
@@ -312,6 +317,18 @@ public:
     return nextDt;
   }
 
+  virtual void cleanup( real64 const time_n,
+                        integer const cycleNumber,
+                        integer const eventCounter,
+                        real64 const eventProgress,
+                        DomainPartition & domain ) override
+  {
+    forEachArgInTuple( m_solvers, [&]( auto & solver, auto )
+    {
+      solver->cleanup( time_n, cycleNumber, eventCounter, eventProgress, domain );
+    } );
+    SolverBase::cleanup( time_n, cycleNumber, eventCounter, eventProgress, domain );
+  }
 
   /**@}*/
 
@@ -357,7 +374,8 @@ protected:
 
     Timestamp const meshModificationTimestamp = getMeshModificationTimestamp( domain );
 
-    implicitStepSetup(time_n, dt, domain);
+    // First call Coupled Solver setup  (important for poromechanics initialization for sequentially coupled)
+    implicitStepSetup( time_n, dt, domain );
 
     forEachArgInTuple( m_solvers, [&]( auto & solver, auto )
     {
@@ -389,7 +407,8 @@ protected:
         // Reset the states of all solvers if any of them had to restart
         //forEachArgInTuple( m_solvers, [&]( auto & solver, auto )
         //{
-          //solver->resetStateToBeginningOfStep( domain );
+        //  solver->resetStateToBeginningOfStep( domain );
+        //  solver->getSolverStatistics().initializeTimeStepStatistics(); // initialize counters for subsolvers
         //} );
         //resetStateToBeginningOfStep( domain );
       }
@@ -424,13 +443,18 @@ protected:
 
       if( isConverged )
       {
+        // Save Time step statistics for the subsolvers
+        forEachArgInTuple( m_solvers, [&]( auto & solver, auto )
+        {
+          solver->getSolverStatistics().saveTimeStepStatistics();
+        } );
         break;
       }
       // Add convergence check:
       ++iter;
     }
 
-    GEOS_ERROR_IF( !isConverged, getName() << "::sequentiallyCoupledSolverStep did not converge!" );
+    GEOS_ERROR_IF( !isConverged, getDataContext() << ": sequentiallyCoupledSolverStep did not converge!" );
 
     implicitStepComplete( time_n, dt, domain );
 
@@ -458,7 +482,7 @@ protected:
 
     if( params.m_subcyclingOption == 0 )
     {
-      GEOS_LOG_LEVEL_RANK_0( 1, "***** Single Pass solver, no subcycling *****\n" );
+      GEOS_LOG_LEVEL_RANK_0( 1, "***** Single Pass solver, no subcycling *****" );
     }
     else
     {
@@ -502,7 +526,7 @@ protected:
 
         // finally, we perform the convergence check on the multiphysics residual
         residualNorm = sqrt( residualNorm );
-        GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "    ( R ) = ( {:4.2e} ) ; ", residualNorm ) );
+        GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "        ( R ) = ( {:4.2e} )", residualNorm ) );
         isConverged = ( residualNorm < params.m_newtonTol );
 
       }
@@ -519,12 +543,12 @@ protected:
       }
       else
       {
-        GEOS_ERROR( "Invalid sequential convergence criterion." );
+        GEOS_ERROR( getDataContext() << ": Invalid sequential convergence criterion." );
       }
 
       if( isConverged )
       {
-        GEOS_LOG_LEVEL_RANK_0( 1, "***** The iterative coupling has converged in " << iter + 1 << " iteration(s)! *****\n" );
+        GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "***** The iterative coupling has converged in {} iteration(s) *****", iter + 1 ) );
       }
     }
     return isConverged;
@@ -538,8 +562,8 @@ protected:
     bool const isSequential = getNonlinearSolverParameters().couplingType() == NonlinearSolverParameters::CouplingType::Sequential;
     bool const usesLineSearch = getNonlinearSolverParameters().m_lineSearchAction != NonlinearSolverParameters::LineSearchAction::None;
     GEOS_THROW_IF( isSequential && usesLineSearch,
-                   GEOS_FMT( "`{}`: line search is not supported by the coupled solver when {} is set to `{}`. Please set {} to `{}` to remove this error",
-                             getName(),
+                   GEOS_FMT( "{}: line search is not supported by the coupled solver when {} is set to `{}`. Please set {} to `{}` to remove this error",
+                             getWrapperDataContext( NonlinearSolverParameters::viewKeysStruct::couplingTypeString() ),
                              NonlinearSolverParameters::viewKeysStruct::couplingTypeString(),
                              EnumStrings< NonlinearSolverParameters::CouplingType >::toString( NonlinearSolverParameters::CouplingType::Sequential ),
                              NonlinearSolverParameters::viewKeysStruct::lineSearchActionString(),
