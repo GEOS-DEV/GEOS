@@ -344,10 +344,10 @@ struct C1PPUPhaseFlux
            real64 ( & dPhaseFlux_dP )[numFluxSupportPoints],
            real64 ( & dPhaseFlux_dC )[numFluxSupportPoints][numComp] )
   {
-    real64 dPresGrad_dP[numFluxSupportPoints];
-    real64 dPresGrad_dC[numFluxSupportPoints][numComp];
-    real64 dGravHead_dP[numFluxSupportPoints];
-    real64 dGravHead_dC[numFluxSupportPoints][numComp];
+    real64 dPresGrad_dP[numFluxSupportPoints]{};
+    real64 dPresGrad_dC[numFluxSupportPoints][numComp]{};
+    real64 dGravHead_dP[numFluxSupportPoints]{};
+    real64 dGravHead_dC[numFluxSupportPoints][numComp]{};
     PotGrad::compute< numComp, numFluxSupportPoints >( numPhase, ip, hasCapPressure, seri, sesri, sei, trans, dTrans_dPres, pres,
                                                        gravCoef, dPhaseVolFrac, dCompFrac_dCompDens, phaseMassDens, dPhaseMassDens,
                                                        phaseCapPressure, dPhaseCapPressure_dPhaseVolFrac, potGrad, dPresGrad_dP,
