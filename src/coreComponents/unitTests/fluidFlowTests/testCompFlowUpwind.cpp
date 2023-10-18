@@ -505,9 +505,9 @@ void testCompositionalUpwindHU( CompositionalMultiphaseFVM & solver,
         real64 totFlux{};
         real64 dTotFlux_dP[numFluxSupportPoints]{};
         real64 dTotFlux_dC[numFluxSupportPoints][numComp]{};
-                                                        real64 totMob{};
-                                                        real64 dTotMob_dP[numFluxSupportPoints]{};
-                                                        real64 dTotMob_dC[numFluxSupportPoints][numComp]{};
+        real64 totMob{};
+        real64 dTotMob_dP[numFluxSupportPoints]{};
+        real64 dTotMob_dC[numFluxSupportPoints][numComp]{};
 
         real64 compFlux[numComp];
         real64 dCompFlux_dP[numFluxSupportPoints][numComp]{};
@@ -577,8 +577,8 @@ void testCompositionalUpwindHU( CompositionalMultiphaseFVM & solver,
             for( localIndex ke = 0; ke < numFluxSupportPoints; ++ke )
             {
               dTotFlux_dP[ke] += dPhaseFlux_dP[ip][ke];
-                totMob += phaseMobView[seri[iconn][ke]][sesri[iconn][ke]][sei[iconn][ke]][ip];
-                dTotMob_dP[ke] += dPhaseMobView[seri[iconn][ke]][sesri[iconn][ke]][sei[iconn][ke]][ip][Deriv::dP];
+              totMob += phaseMobView[seri[iconn][ke]][sesri[iconn][ke]][sei[iconn][ke]][ip];
+              dTotMob_dP[ke] += dPhaseMobView[seri[iconn][ke]][sesri[iconn][ke]][sei[iconn][ke]][ip][Deriv::dP];
               for( localIndex jc = 0; jc < numComp; ++jc )
               {
                 dTotFlux_dC[ke][jc] += dPhaseFlux_dC[ip][ke][jc];

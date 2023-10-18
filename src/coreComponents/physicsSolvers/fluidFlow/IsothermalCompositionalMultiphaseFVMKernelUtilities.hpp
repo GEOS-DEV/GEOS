@@ -895,27 +895,27 @@ computeFractionalFlowViscous( localIndex const numPhase,
     }
   }
 
-    //guard against no flow region
-    if( std::fabs( mainMob ) > 1e-20 )
+  //guard against no flow region
+  if( std::fabs( mainMob ) > 1e-20 )
+  {
+    fractionalFlow = mainMob / LvArray::math::max( totMob, minTotMob );
+    dFractionalFlow_dP[k_up_main] = dMMob_dP / LvArray::math::max( totMob, minTotMob );
+    for( localIndex jc = 0; jc < numComp; ++jc )
     {
-        fractionalFlow = mainMob / LvArray::math::max( totMob, minTotMob );
-        dFractionalFlow_dP[k_up_main] = dMMob_dP / LvArray::math::max( totMob, minTotMob );
-        for( localIndex jc = 0; jc < numComp; ++jc )
-        {
-            dFractionalFlow_dC[k_up_main][jc] = dMMob_dC[jc] / totMob;
+      dFractionalFlow_dC[k_up_main][jc] = dMMob_dC[jc] / totMob;
 
-        }
-
-        for( localIndex ke = 0; ke < numFluxSupportPoints; ++ke )
-        {
-            dFractionalFlow_dP[ke] -= fractionalFlow * dTotMob_dP[k_up_ppu] / LvArray::math::max( totMob, minTotMob );
-
-            for( localIndex jc = 0; jc < numComp; ++jc )
-            {
-                dFractionalFlow_dC[ke][jc] -= fractionalFlow * dTotMob_dC[k_up_ppu][jc] / LvArray::math::max( totMob, minTotMob );
-            }
-        }
     }
+
+    for( localIndex ke = 0; ke < numFluxSupportPoints; ++ke )
+    {
+      dFractionalFlow_dP[ke] -= fractionalFlow * dTotMob_dP[k_up_ppu] / LvArray::math::max( totMob, minTotMob );
+
+      for( localIndex jc = 0; jc < numComp; ++jc )
+      {
+        dFractionalFlow_dC[ke][jc] -= fractionalFlow * dTotMob_dC[k_up_ppu][jc] / LvArray::math::max( totMob, minTotMob );
+      }
+    }
+  }
 }
 
 
@@ -1029,23 +1029,23 @@ computeFractionalFlowGravity( localIndex const numPhase,
   //guard against no flow region
   if( std::fabs( mainMob ) > 1e-20 )
   {
-      fractionalFlow = mainMob / LvArray::math::max( totMob, minTotMob );
-      dFractionalFlow_dP[k_up_main] = dMMob_dP / LvArray::math::max( totMob, minTotMob );
+    fractionalFlow = mainMob / LvArray::math::max( totMob, minTotMob );
+    dFractionalFlow_dP[k_up_main] = dMMob_dP / LvArray::math::max( totMob, minTotMob );
+    for( localIndex jc = 0; jc < numComp; ++jc )
+    {
+      dFractionalFlow_dC[k_up_main][jc] = dMMob_dC[jc] / totMob;
+
+    }
+
+    for( localIndex ke = 0; ke < numFluxSupportPoints; ++ke )
+    {
+      dFractionalFlow_dP[ke] -= fractionalFlow * dTotMob_dP[k_up_ppu] / LvArray::math::max( totMob, minTotMob );
+
       for( localIndex jc = 0; jc < numComp; ++jc )
       {
-          dFractionalFlow_dC[k_up_main][jc] = dMMob_dC[jc] / totMob;
-
+        dFractionalFlow_dC[ke][jc] -= fractionalFlow * dTotMob_dC[k_up_ppu][jc] / LvArray::math::max( totMob, minTotMob );
       }
-
-      for( localIndex ke = 0; ke < numFluxSupportPoints; ++ke )
-      {
-          dFractionalFlow_dP[ke] -= fractionalFlow * dTotMob_dP[k_up_ppu] / LvArray::math::max( totMob, minTotMob );
-
-          for( localIndex jc = 0; jc < numComp; ++jc )
-          {
-              dFractionalFlow_dC[ke][jc] -= fractionalFlow * dTotMob_dC[k_up_ppu][jc] / LvArray::math::max( totMob, minTotMob );
-          }
-      }
+    }
   }
 }
 
@@ -1160,23 +1160,23 @@ computeFractionalFlowCapillary( localIndex const numPhase,
   //guard against no flow region
   if( std::fabs( mainMob ) > 1e-20 )
   {
-      fractionalFlow = mainMob / LvArray::math::max( totMob, minTotMob );
-      dFractionalFlow_dP[k_up_main] = dMMob_dP / LvArray::math::max( totMob, minTotMob );
+    fractionalFlow = mainMob / LvArray::math::max( totMob, minTotMob );
+    dFractionalFlow_dP[k_up_main] = dMMob_dP / LvArray::math::max( totMob, minTotMob );
+    for( localIndex jc = 0; jc < numComp; ++jc )
+    {
+      dFractionalFlow_dC[k_up_main][jc] = dMMob_dC[jc] / LvArray::math::max( totMob, minTotMob );
+
+    }
+
+    for( localIndex ke = 0; ke < numFluxSupportPoints; ++ke )
+    {
+      dFractionalFlow_dP[ke] -= fractionalFlow * dTotMob_dP[k_up_ppu] / LvArray::math::max( totMob, minTotMob );
+
       for( localIndex jc = 0; jc < numComp; ++jc )
       {
-          dFractionalFlow_dC[k_up_main][jc] = dMMob_dC[jc] / LvArray::math::max( totMob, minTotMob );
-
+        dFractionalFlow_dC[ke][jc] -= fractionalFlow * dTotMob_dC[k_up_ppu][jc] / LvArray::math::max( totMob, minTotMob );
       }
-
-      for( localIndex ke = 0; ke < numFluxSupportPoints; ++ke )
-      {
-          dFractionalFlow_dP[ke] -= fractionalFlow * dTotMob_dP[k_up_ppu] / LvArray::math::max( totMob, minTotMob );
-
-          for( localIndex jc = 0; jc < numComp; ++jc )
-          {
-              dFractionalFlow_dC[ke][jc] -= fractionalFlow * dTotMob_dC[k_up_ppu][jc] / LvArray::math::max( totMob, minTotMob );
-          }
-      }
+    }
   }
 }
 
@@ -2276,7 +2276,7 @@ struct IHUPhaseFlux
     real64 totMob{};
     real64 dTotMob_dP[numFluxSupportPoints]{};
     real64 dTotMob_dC[numFluxSupportPoints][numComp]{};
-    localIndex  k_up_ppu = -1;
+    localIndex k_up_ppu = -1;
 
     //unelegant but need dummy when forming PPU total velocity
     real64 dummy[numComp];
@@ -2302,19 +2302,19 @@ struct IHUPhaseFlux
 
       totFlux += phaseFlux;
 
-        phaseFlux = 0.;
+      phaseFlux = 0.;
       for( localIndex ke = 0; ke < numFluxSupportPoints; ++ke )
       {
         dTotFlux_dP[ke] += dPhaseFlux_dP[ke];
-          totMob += phaseMob[seri[ke]][sesri[ke]][sei[ke]][jp];
-          dTotMob_dP[ke] += dPhaseMob[seri[ke]][sesri[ke]][sei[ke]][jp][Deriv::dP];
-          dPhaseFlux_dP[ke] = 0.;
+        totMob += phaseMob[seri[ke]][sesri[ke]][sei[ke]][jp];
+        dTotMob_dP[ke] += dPhaseMob[seri[ke]][sesri[ke]][sei[ke]][jp][Deriv::dP];
+        dPhaseFlux_dP[ke] = 0.;
 
         for( localIndex jc = 0; jc < numComp; ++jc )
         {
           dTotFlux_dC[ke][jc] += dPhaseFlux_dC[ke][jc];
-            dTotMob_dC[ke][jc] += dPhaseMob[seri[ke]][sesri[ke]][sei[ke]][jp][Deriv::dC + jc];
-            dPhaseFlux_dC[ke][jc] = 0.;
+          dTotMob_dC[ke][jc] += dPhaseMob[seri[ke]][sesri[ke]][sei[ke]][jp][Deriv::dC + jc];
+          dPhaseFlux_dC[ke][jc] = 0.;
         }
       }
 
