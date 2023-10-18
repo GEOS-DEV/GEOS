@@ -116,7 +116,7 @@ public:
 
   /**
    * @brief Set the list of material directions in this subregion.
-   * @param particleVelocity The input list of directions
+   * @param particleMaterialDirection The input list of directions
    */
   void setParticleMaterialDirection( array2d< real64 > const particleMaterialDirection )
   { m_particleMaterialDirection = particleMaterialDirection; }
@@ -134,6 +134,10 @@ public:
   array1d< int > getParticleSurfaceFlag() const override
   { return m_particleSurfaceFlag; }
 
+  /**
+   * @brief Set the list of particle surface flags in this subregion.
+   * @param particleSurfaceFlag The input list of surface flags.
+   */
   void setParticleSurfaceFlag( array1d< int > const particleSurfaceFlag )
   { m_particleSurfaceFlag = particleSurfaceFlag; }
 
@@ -152,7 +156,7 @@ public:
 
   /**
    * @brief Set the list of particle strength scale values in this subregion.
-   * @param particleDamage The input list of strength scale values
+   * @param particleStrengthScale The input list of strength scale values
    */
   void setParticleStrengthScale( array1d< real64 > const particleStrengthScale )
   { m_particleStrengthScale = particleStrengthScale; }

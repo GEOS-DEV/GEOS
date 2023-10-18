@@ -156,6 +156,7 @@ private:
   /**
    * @brief Fill the particleBlockManager object .
    * @param[inout] particleBlockManager the particleBlockManager that will receive the meshing information
+   * @param[in] particleManager The reference to the particle manager
    * @param[in] partition The reference to spatial partition
    */
   virtual void fillParticleBlockManager( ParticleBlockManager & particleBlockManager, ParticleManager & particleManager, SpatialPartition const & partition )
