@@ -44,8 +44,7 @@
       targetRegions="{ Domain }"
       nodeBasedSIF="1"      
       rockToughness="0.1e6"
-      mpiCommOrder="1"
-      isPoroelastic="1"/>
+      mpiCommOrder="1"/>
   </Solvers>
 
   <Mesh>
