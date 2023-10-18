@@ -69,8 +69,6 @@ ContactBase::~ContactBase()
 void ContactBase::postProcessInput()
 {
 
-  std::cout << " penalty stiffness = " << m_penaltyStiffness << std::endl;
-
   GEOS_THROW_IF( m_apertureTableName.empty(),
                  getFullName() << ": the aperture table name " << m_apertureTableName << " is empty", InputError );
 

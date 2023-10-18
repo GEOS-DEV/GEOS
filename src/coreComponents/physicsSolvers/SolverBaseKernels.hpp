@@ -54,7 +54,7 @@ public:
     m_localResidual( localResidual ),
     m_dofNumber( dofNumber ),
     m_ghostRank( ghostRank ),
-    m_minNormalizer(minNormalizer)
+    m_minNormalizer( minNormalizer )
   {}
 
   /**
@@ -231,7 +231,8 @@ protected:
   /// View on the ghost ranks
   arrayView1d< integer const > const m_ghostRank;
 
-    real64 const m_minNormalizer;
+  /// Value used to make sure that normalizers are never zero
+  real64 const m_minNormalizer;
 
 };
 
@@ -247,21 +248,13 @@ public:
   static void updateLocalNorm( real64 const (&subRegionResidualNorm)[NUM_NORM],
                                array1d< real64 > & localResidualNorm )
   {
-    double min = -1e20;
-    int minF = -100;
     for( integer i = 0; i < NUM_NORM; ++i )
     {
       if( subRegionResidualNorm[i] > localResidualNorm[i] )
       {
         localResidualNorm[i] = subRegionResidualNorm[i];
-        if( localResidualNorm[i] > min )
-        {
-          min = localResidualNorm[i];
-          minF = i;
-        }
       }
     }
-    //std::cout << std::endl << "number of Norm " << NUM_NORM << " " << minF << " " << min;
   }
 
   static void computeGlobalNorm( real64 const & localResidualNorm,

@@ -1014,8 +1014,6 @@ bool SolverBase::solveNonlinearSystem( real64 const & time_n,
       }
 
       // apply the system solution to the fields/variables
-      //std::ofstream strm("update.txt");
-      //m_solution.print(strm);
       applySystemSolution( m_dofManager, m_solution.values(), scaleFactor, stepDt, domain );
     }
 

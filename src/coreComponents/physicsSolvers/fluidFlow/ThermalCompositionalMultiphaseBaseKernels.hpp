@@ -851,7 +851,7 @@ public:
             localResidual,
             dofNumber,
             ghostRank,
-            minNormalizer),
+            minNormalizer ),
     m_numComponents( numComponents ),
     m_numPhases( numPhases ),
     m_volume( subRegion.getElementVolume() ),

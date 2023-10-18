@@ -261,6 +261,7 @@ inline void FaceElementToCellStencilWrapper::
   localIndex const er0  =  m_elementRegionIndices[iconn][0];
   localIndex const esr0 =  m_elementSubRegionIndices[iconn][0];
   localIndex const ei0  =  m_elementIndices[iconn][0];
+
   localIndex const er1  =  m_elementRegionIndices[iconn][1];
   localIndex const esr1 =  m_elementSubRegionIndices[iconn][1];
   localIndex const ei1  =  m_elementIndices[iconn][1];
@@ -269,8 +270,6 @@ inline void FaceElementToCellStencilWrapper::
 
   // Will change when implementing collocation points.
   LvArray::tensorOps::hadamardProduct< 3 >( faceConormal, coefficient[er0][esr0][ei0][0], m_faceNormal[iconn] );
-  if( coefficient[er1][esr1][ei1][0][0] * m_weights[iconn][1] < 0 )
-    faceConormal[0] = 0, faceConormal[1] = 0, faceConormal[2] = 0;
   real64 const t0 = m_weights[iconn][0] * LvArray::tensorOps::AiBi< 3 >( m_cellToFaceVec[iconn], faceConormal );
   // Only the first component of the permeability is used, we may need to change that
   real64 const t1 = m_weights[iconn][1] * coefficient[er1][esr1][ei1][0][0];
@@ -278,7 +277,6 @@ inline void FaceElementToCellStencilWrapper::
   real64 const sumOfTrans = t0+t1;
   real64 const value = m_transMultiplier[iconn]*t0*t1/sumOfTrans;
 
-  //std::cout << "fm trans " << halfWeight << std::endl;
   weight[0][0] = value;
   weight[0][1] = -value;
 

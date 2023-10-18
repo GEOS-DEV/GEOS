@@ -282,16 +282,6 @@ void SinglePhaseFVM< BASE >::applySystemSolution( DofManager const & dofManager,
   }
   else
   {
-    real64 maxDP = 0;
-    for( int i = 0; i < localSolution.size(); i++ )
-    {
-      if( std::fabs( maxDP ) < std::fabs( localSolution[i] ))
-        maxDP = localSolution[i];
-    }
-    if(std::fabs(maxDP) > 1e-8) {
-        GEOS_LOG_RANK("Max DP = " << maxDP * 1e-5);
-    }
-
     dofManager.addVectorToField( localSolution,
                                  BASE::viewKeyStruct::elemDofFieldString(),
                                  fields::flow::pressure::key(),

@@ -663,7 +663,7 @@ public:
             localResidual,
             dofNumber,
             ghostRank,
-            minNormalizer),
+            minNormalizer ),
     m_dt( dt ),
     m_regionFilter( regionFilter ),
     m_defaultViscosity( defaultViscosity ),

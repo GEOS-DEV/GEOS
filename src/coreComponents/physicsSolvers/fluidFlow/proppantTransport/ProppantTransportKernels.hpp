@@ -476,12 +476,12 @@ public:
                       arrayView1d< localIndex const > const & ghostRank,
                       integer const numComp,
                       ElementSubRegionBase const & subRegion,
-                      real64 const minNormalizer)
+                      real64 const minNormalizer )
     : Base( rankOffset,
             localResidual,
             dofNumber,
             ghostRank,
-            minNormalizer),
+            minNormalizer ),
     m_numComp( numComp ),
     m_volume( subRegion.getElementVolume() )
   {}

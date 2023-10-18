@@ -238,7 +238,7 @@ private:
   ArrayOfArraysView< R1Tensor > m_cellCenterToEdgeCenters;
 
   /// Mean permeability coefficient
-  mutable real64 m_meanPermCoefficient;
+  real64 m_meanPermCoefficient;
 };
 
 /**
@@ -328,7 +328,7 @@ SurfaceElementStencilWrapper::
                   real64 ( & dWeight_dVar )[maxNumConnections][2] ) const
 {
 
-  real64 sumOfTrans = 1e-15;
+  real64 sumOfTrans = 0.0;
   for( localIndex k=0; k<numPointsInFlux( iconn ); ++k )
   {
     localIndex const er  =  m_elementRegionIndices[iconn][k];
@@ -475,9 +475,7 @@ SurfaceElementStencilWrapper::
       real64 const harmonicWeight   = t0*t1 / sumOfTrans;
       real64 const arithmeticWeight = 0.25 * (t0+t1);
 
-      m_meanPermCoefficient = 0;
       real64 const value = m_meanPermCoefficient * harmonicWeight + (1 - m_meanPermCoefficient) * arithmeticWeight;
-      //std::cout << "ff trans " << value << std::endl;
 
       weight[connectionIndex][0] = value;
       weight[connectionIndex][1] = -value;
@@ -626,8 +624,7 @@ SurfaceElementStencilWrapper::
     localIndex const esr =  m_elementSubRegionIndices[iconn][k];
     localIndex const ei  =  m_elementIndices[iconn][k];
 
-    real64 const apperture = std::max( hydraulicAperture[er][esr][ei], 1e-15 );
-    m_weights[iconn][k] = m_weights[iconn][k] / apperture;
+    m_weights[iconn][k] = m_weights[iconn][k] / hydraulicAperture[er][esr][ei];
   }
 }
 
