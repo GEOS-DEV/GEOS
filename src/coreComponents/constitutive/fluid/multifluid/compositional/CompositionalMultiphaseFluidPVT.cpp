@@ -13,10 +13,10 @@
  */
 
 /**
- * @file CompositionalMultiphaseFluid.cpp
+ * @file CompositionalMultiphaseFluidPVT.cpp
  */
 
-#include "CompositionalMultiphaseFluid.hpp"
+#include "CompositionalMultiphaseFluidPVT.hpp"
 
 #include "codingUtilities/Utilities.hpp"
 #include "constitutive/fluid/multifluid/CO2Brine/functions/PVTFunctionHelpers.hpp"
@@ -34,7 +34,7 @@ using namespace dataRepository;
 namespace constitutive
 {
 
-CompositionalMultiphaseFluid::CompositionalMultiphaseFluid( string const & name, Group * const parent )
+CompositionalMultiphaseFluidPVT::CompositionalMultiphaseFluidPVT( string const & name, Group * const parent )
   : MultiFluidBase( name, parent )
 {
   getWrapperBase( viewKeyStruct::componentNamesString() ).setInputFlag( InputFlags::REQUIRED );
@@ -66,13 +66,13 @@ CompositionalMultiphaseFluid::CompositionalMultiphaseFluid( string const & name,
     setDescription( "Table of binary interaction coefficients" );
 }
 
-integer CompositionalMultiphaseFluid::getWaterPhaseIndex() const
+integer CompositionalMultiphaseFluidPVT::getWaterPhaseIndex() const
 {
   string const expectedWaterPhaseNames[] = { "water" };
   return PVTProps::PVTFunctionHelpers::findName( m_phaseNames, expectedWaterPhaseNames, viewKeyStruct::phaseNamesString() );
 }
 
-void CompositionalMultiphaseFluid::postProcessInput()
+void CompositionalMultiphaseFluidPVT::postProcessInput()
 {
   MultiFluidBase::postProcessInput();
 
@@ -121,13 +121,13 @@ void CompositionalMultiphaseFluid::postProcessInput()
   checkInputSize( m_componentBinaryCoeff, NC * NC, viewKeyStruct::componentBinaryCoeffString() );
 }
 
-void CompositionalMultiphaseFluid::initializePostSubGroups()
+void CompositionalMultiphaseFluidPVT::initializePostSubGroups()
 {
   MultiFluidBase::initializePostSubGroups();
   createFluid();
 }
 
-void CompositionalMultiphaseFluid::createFluid()
+void CompositionalMultiphaseFluidPVT::createFluid()
 {
   auto const getCompositionalEosType = [&]( string const & name )
   {
@@ -136,7 +136,7 @@ void CompositionalMultiphaseFluid::createFluid()
       { "PR", pvt::EOS_TYPE::PENG_ROBINSON },
       { "SRK", pvt::EOS_TYPE::REDLICH_KWONG_SOAVE }
     };
-    return findOption( eosTypes, name, viewKeyStruct::phaseNamesString(), getFullName() );
+    return findOption( eosTypes, name, viewKeyStruct::equationsOfStateString(), getFullName() );
   };
 
   std::vector< pvt::EOS_TYPE > eos( numFluidPhases() );
@@ -154,17 +154,17 @@ void CompositionalMultiphaseFluid::createFluid()
 }
 
 std::unique_ptr< ConstitutiveBase >
-CompositionalMultiphaseFluid::deliverClone( string const & name,
-                                            Group * const parent ) const
+CompositionalMultiphaseFluidPVT::deliverClone( string const & name,
+                                               Group * const parent ) const
 {
   std::unique_ptr< ConstitutiveBase > clone = MultiFluidBase::deliverClone( name, parent );
-  CompositionalMultiphaseFluid & fluid = dynamicCast< CompositionalMultiphaseFluid & >( *clone );
+  CompositionalMultiphaseFluidPVT & fluid = dynamicCast< CompositionalMultiphaseFluidPVT & >( *clone );
   fluid.m_phaseTypes = m_phaseTypes;
   fluid.createFluid();
   return clone;
 }
 
-CompositionalMultiphaseFluid::KernelWrapper::
+CompositionalMultiphaseFluidPVT::KernelWrapper::
   KernelWrapper( pvt::MultiphaseSystem & fluid,
                  arrayView1d< pvt::PHASE_TYPE > const & phaseTypes,
                  arrayView1d< geos::real64 const > const & componentMolarWeight,
@@ -191,8 +191,8 @@ CompositionalMultiphaseFluid::KernelWrapper::
   m_phaseTypes( phaseTypes )
 {}
 
-CompositionalMultiphaseFluid::KernelWrapper
-CompositionalMultiphaseFluid::createKernelWrapper()
+CompositionalMultiphaseFluidPVT::KernelWrapper
+CompositionalMultiphaseFluidPVT::createKernelWrapper()
 {
   return KernelWrapper( *m_fluid,
                         m_phaseTypes,
@@ -208,7 +208,7 @@ CompositionalMultiphaseFluid::createKernelWrapper()
                         m_totalDensity.toView() );
 }
 
-REGISTER_CATALOG_ENTRY( ConstitutiveBase, CompositionalMultiphaseFluid, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, CompositionalMultiphaseFluidPVT, string const &, Group * const )
 
 } // namespace constitutive
 

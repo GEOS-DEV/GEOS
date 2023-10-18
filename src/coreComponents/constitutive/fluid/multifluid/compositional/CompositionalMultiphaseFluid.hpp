@@ -19,10 +19,10 @@
 #ifndef GEOS_CONSTITUTIVE_FLUID_MULTIFLUID_COMPOSITIONAL_COMPOSITIONALMULTIPHASEFLUID_HPP_
 #define GEOS_CONSTITUTIVE_FLUID_MULTIFLUID_COMPOSITIONAL_COMPOSITIONALMULTIPHASEFLUID_HPP_
 
+#include "constitutive/fluid/multifluid/compositional/CompositionalMultiphaseFluidParameters.hpp"
+
 #include "constitutive/fluid/multifluid/MultiFluidBase.hpp"
 #include "constitutive/fluid/multifluid/MultiFluidUtils.hpp"
-
-#include "constitutive/PVTPackage/PVTPackage/source/pvt/pvt.hpp"
 
 namespace geos
 {
@@ -56,6 +56,15 @@ public:
     static constexpr char const * componentVolumeShiftString() { return "componentVolumeShift"; }
     static constexpr char const * componentBinaryCoeffString() { return "componentBinaryCoeff"; }
   };
+
+private:
+  class IFluid
+  {
+public:
+    virtual ~IFluid() = default;
+  };
+
+public:
 
   /**
    * @brief Kernel wrapper class for CompositionalMultiphaseFluid.
@@ -101,8 +110,8 @@ private:
 
     friend class CompositionalMultiphaseFluid;
 
-    KernelWrapper( pvt::MultiphaseSystem & fluid,
-                   arrayView1d< pvt::PHASE_TYPE > const & phaseTypes,
+    KernelWrapper( CompositionalMultiphaseFluid::IFluid & fluid,
+                   arrayView1d< PhaseType > const & phaseTypes,
                    arrayView1d< real64 const > const & componentMolarWeight,
                    bool const useMass,
                    PhaseProp::ViewType phaseFraction,
@@ -114,9 +123,8 @@ private:
                    PhaseComp::ViewType phaseCompFraction,
                    FluidProp::ViewType totalDensity );
 
-    pvt::MultiphaseSystem & m_fluid;
-
-    arrayView1d< pvt::PHASE_TYPE > m_phaseTypes;
+    CompositionalMultiphaseFluid::IFluid & m_fluid;
+    arrayView1d< PhaseType > m_phaseTypes;
   };
 
   /**
@@ -132,17 +140,18 @@ protected:
   virtual void initializePostSubGroups() override;
 
 private:
-
   void createFluid();
 
-  /// PVTPackage fluid object
-  std::unique_ptr< pvt::MultiphaseSystem > m_fluid{};
+  PhaseType getPhaseType( string const & name ) const;
 
-  /// PVTPackage phase labels
-  array1d< pvt::PHASE_TYPE > m_phaseTypes;
+  /// Fluid object
+  std::unique_ptr< IFluid > m_fluid{};
 
-  // names of equations of state to use for each phase
-  string_array m_equationsOfState;
+  /// Phase labels
+  array1d< PhaseType > m_phaseTypes;
+
+  /// Equation of state labels
+  array1d< EquationOfStateType > m_equationsOfState;
 
   // standard EOS component input
   array1d< real64 > m_componentCriticalPressure;
@@ -151,6 +160,10 @@ private:
   array1d< real64 > m_componentVolumeShift;
   array2d< real64 > m_componentBinaryCoeff;
 
+  // Currently not implemented so uses constant values
+  static constexpr real64 MOLECULAR_WEIGHT[] = { 22.0, 33.0 };
+  static constexpr real64 DENSITY[] = { 1.0, 1.0 };
+  static constexpr real64 VISCOSITY[] = { 1.0, 1.0  };
 };
 
 GEOS_HOST_DEVICE
@@ -170,18 +183,8 @@ CompositionalMultiphaseFluid::KernelWrapper::
            real64 & totalDens ) const
 {
   GEOS_UNUSED_VAR( phaseEnthalpy, phaseInternalEnergy );
-#if defined(GEOS_DEVICE_COMPILE)
-  GEOS_ERROR( "This function cannot be used on GPU" );
-  GEOS_UNUSED_VAR( pressure );
-  GEOS_UNUSED_VAR( temperature );
-  GEOS_UNUSED_VAR( composition );
-  GEOS_UNUSED_VAR( phaseFrac );
-  GEOS_UNUSED_VAR( phaseDens );
-  GEOS_UNUSED_VAR( phaseMassDens );
-  GEOS_UNUSED_VAR( phaseVisc );
-  GEOS_UNUSED_VAR( phaseCompFrac );
-  GEOS_UNUSED_VAR( totalDens );
-#else
+  GEOS_UNUSED_VAR( pressure, temperature );
+
   integer constexpr maxNumComp = MultiFluidBase::MAX_NUM_COMPONENTS;
   integer constexpr maxNumPhase = MultiFluidBase::MAX_NUM_PHASES;
   integer const numComp = numComponents();
@@ -189,11 +192,10 @@ CompositionalMultiphaseFluid::KernelWrapper::
 
   // 1. Convert input mass fractions to mole fractions and keep derivatives
 
-  std::vector< double > compMoleFrac( numComp );
+  stackArray1d< real64, maxNumComp > compMoleFrac( numComp );
   if( m_useMass )
   {
-    convertToMoleFractions< maxNumComp >( composition,
-                                          compMoleFrac );
+    convertToMoleFractions< maxNumComp >( composition, compMoleFrac );
   }
   else
   {
@@ -203,32 +205,17 @@ CompositionalMultiphaseFluid::KernelWrapper::
     }
   }
 
-  // 2. Trigger PVTPackage compute and get back phase split
-  m_fluid.Update( pressure, temperature, compMoleFrac );
-
-  GEOS_WARNING_IF( !m_fluid.hasSucceeded(),
-                   "Phase equilibrium calculations not converged" );
-
-  pvt::MultiphaseSystemProperties const & props = m_fluid.getMultiphaseSystemProperties();
-
-  // 3. Extract phase split and phase properties from PVTPackage
+  // 2. Calculate values
 
   for( integer ip = 0; ip < numPhase; ++ip )
   {
-    pvt::PHASE_TYPE const & phaseType = m_phaseTypes[ip];
-
-    auto const & frac = props.getPhaseMoleFraction( phaseType );
-    auto const & comp = props.getMoleComposition( phaseType );
-    auto const & dens = m_useMass ? props.getMassDensity( phaseType ) : props.getMoleDensity( phaseType );
-    auto const & massDens = props.getMassDensity( phaseType );
-
-    phaseFrac[ip] = frac.value;
-    phaseDens[ip] = dens.value;
-    phaseMassDens[ip] = massDens.value;
-    phaseVisc[ip] = 0.001;   // TODO
+    phaseFrac[ip] = 0.0;        // TODO
+    phaseDens[ip] = 0.0;        // TODO
+    phaseMassDens[ip] = 0.0;    // TODO
+    phaseVisc[ip] = 0.0;        // TODO
     for( integer jc = 0; jc < numComp; ++jc )
     {
-      phaseCompFrac[ip][jc] = comp.value[jc];
+      phaseCompFrac[ip][jc] = composition[jc];  // TODO
     }
   }
 
@@ -241,7 +228,7 @@ CompositionalMultiphaseFluid::KernelWrapper::
     real64 phaseMolecularWeight[maxNumPhase]{};
     for( integer ip = 0; ip < numPhase; ++ip )
     {
-      phaseMolecularWeight[ip] = props.getMolecularWeight( m_phaseTypes[ip] ).value;
+      phaseMolecularWeight[ip] = 0.0;
     }
 
     // convert mole fractions to mass fractions
@@ -256,8 +243,6 @@ CompositionalMultiphaseFluid::KernelWrapper::
   computeTotalDensity< maxNumComp, maxNumPhase >( phaseFrac,
                                                   phaseDens,
                                                   totalDens );
-
-#endif
 }
 
 GEOS_HOST_DEVICE
@@ -277,19 +262,7 @@ CompositionalMultiphaseFluid::KernelWrapper::
            FluidProp::SliceType const totalDensity ) const
 {
   GEOS_UNUSED_VAR( phaseEnthalpy, phaseInternalEnergy );
-#if defined(GEOS_DEVICE_COMPILE)
-  GEOS_ERROR( "This function cannot be used on GPU" );
-  GEOS_UNUSED_VAR( m_fluid );
-  GEOS_UNUSED_VAR( pressure );
-  GEOS_UNUSED_VAR( temperature );
-  GEOS_UNUSED_VAR( composition );
-  GEOS_UNUSED_VAR( phaseFraction );
-  GEOS_UNUSED_VAR( phaseDensity );
-  GEOS_UNUSED_VAR( phaseMassDensity );
-  GEOS_UNUSED_VAR( phaseViscosity );
-  GEOS_UNUSED_VAR( phaseCompFraction );
-  GEOS_UNUSED_VAR( totalDensity );
-#else
+  GEOS_UNUSED_VAR( pressure, temperature );
 
   using Deriv = multifluid::DerivativeOffset;
 
@@ -300,7 +273,7 @@ CompositionalMultiphaseFluid::KernelWrapper::
 
   // 1. Convert input mass fractions to mole fractions and keep derivatives
 
-  std::vector< double > compMoleFrac( numComp );
+  stackArray1d< real64, maxNumComp > compMoleFrac( numComp );
   real64 dCompMoleFrac_dCompMassFrac[maxNumComp][maxNumComp]{};
 
   if( m_useMass )
@@ -318,57 +291,43 @@ CompositionalMultiphaseFluid::KernelWrapper::
     }
   }
 
-  // 2. Trigger PVTPackage compute and get back phase split
+  // 2. Calculate values
 
-  m_fluid.Update( pressure, temperature, compMoleFrac );
 
-  GEOS_WARNING_IF( !m_fluid.hasSucceeded(),
-                   "Phase equilibrium calculations not converged" );
-
-  pvt::MultiphaseSystemProperties const & props = m_fluid.getMultiphaseSystemProperties();
-
-  // 3. Extract phase split, phase properties and derivatives from PVTPackage
+  // 3. Extract phase split, phase properties and derivatives from result
 
   for( integer ip = 0; ip < numPhase; ++ip )
   {
-    pvt::PHASE_TYPE const & phaseType = m_phaseTypes[ip];
+    phaseFraction.value[ip] = 0.0;
+    phaseFraction.derivs[ip][Deriv::dP] = 0.0;
+    phaseFraction.derivs[ip][Deriv::dT] = 0.0;
 
-    auto const & frac = props.getPhaseMoleFraction( phaseType );
-    auto const & comp = props.getMoleComposition( phaseType );
-    auto const & dens = m_useMass ? props.getMassDensity( phaseType ) : props.getMoleDensity( phaseType );
-    auto const & massDens = props.getMassDensity( phaseType );
+    phaseDensity.value[ip] = 0.0;
+    phaseDensity.derivs[ip][Deriv::dP] = 0.0;
+    phaseDensity.derivs[ip][Deriv::dT] = 0.0;
 
-    phaseFraction.value[ip] = frac.value;
-    phaseFraction.derivs[ip][Deriv::dP] = frac.dP;
-    phaseFraction.derivs[ip][Deriv::dT] = frac.dT;
+    phaseMassDensity.value[ip] = 0.0;
+    phaseMassDensity.derivs[ip][Deriv::dP] = 0.0;
+    phaseMassDensity.derivs[ip][Deriv::dT] = 0.0;
 
-    phaseDensity.value[ip] = dens.value;
-    phaseDensity.derivs[ip][Deriv::dP] = dens.dP;
-    phaseDensity.derivs[ip][Deriv::dT] = dens.dT;
-
-    phaseMassDensity.value[ip] = massDens.value;
-    phaseMassDensity.derivs[ip][Deriv::dP] = massDens.dP;
-    phaseMassDensity.derivs[ip][Deriv::dT] = massDens.dT;
-
-    // TODO
-    phaseViscosity.value[ip] = 0.001;
+    phaseViscosity.value[ip] = 0.0;
     phaseViscosity.derivs[ip][Deriv::dP] = 0.0;
     phaseViscosity.derivs[ip][Deriv::dT] = 0.0;
 
     for( integer jc = 0; jc < numComp; ++jc )
     {
-      phaseFraction.derivs[ip][Deriv::dC+jc] = frac.dz[jc];
-      phaseDensity.derivs[ip][Deriv::dC+jc] = dens.dz[jc];
-      phaseMassDensity.derivs[ip][Deriv::dC+jc] = massDens.dz[jc];
-      phaseViscosity.derivs[ip][Deriv::dC+jc] = 0.0; // TODO
+      phaseFraction.derivs[ip][Deriv::dC+jc] = 0.0;
+      phaseDensity.derivs[ip][Deriv::dC+jc] = 0.0;
+      phaseMassDensity.derivs[ip][Deriv::dC+jc] = 0.0;
+      phaseViscosity.derivs[ip][Deriv::dC+jc] = 0.0;
 
-      phaseCompFraction.value[ip][jc] = comp.value[jc];
-      phaseCompFraction.derivs[ip][jc][Deriv::dP] = comp.dP[jc];
-      phaseCompFraction.derivs[ip][jc][Deriv::dT] = comp.dT[jc];
+      phaseCompFraction.value[ip][jc] = 0.0;
+      phaseCompFraction.derivs[ip][jc][Deriv::dP] = 0.0;
+      phaseCompFraction.derivs[ip][jc][Deriv::dT] = 0.0;
 
       for( integer ic = 0; ic < numComp; ++ic )
       {
-        phaseCompFraction.derivs[ip][ic][Deriv::dC+jc] = comp.dz[ic][jc];
+        phaseCompFraction.derivs[ip][ic][Deriv::dC+jc] = 0.0;
       }
     }
   }
@@ -383,12 +342,12 @@ CompositionalMultiphaseFluid::KernelWrapper::
 
     for( integer ip = 0; ip < numPhase; ++ip )
     {
-      phaseMolecularWeight[ip] = props.getMolecularWeight( m_phaseTypes[ip] ).value;
-      dPhaseMolecularWeight[ip][Deriv::dP] = props.getMolecularWeight( m_phaseTypes[ip] ).dP;
-      dPhaseMolecularWeight[ip][Deriv::dT] = props.getMolecularWeight( m_phaseTypes[ip] ).dT;
+      phaseMolecularWeight[ip] = 1.0;
+      dPhaseMolecularWeight[ip][Deriv::dP] = 0.0;
+      dPhaseMolecularWeight[ip][Deriv::dT] = 0.0;
       for( integer ic = 0; ic < numComp; ++ic )
       {
-        dPhaseMolecularWeight[ip][Deriv::dC+ic] = props.getMolecularWeight( m_phaseTypes[ip] ).dz[ic];
+        dPhaseMolecularWeight[ip][Deriv::dC+ic] = 0.0;
       }
     }
 
@@ -408,8 +367,6 @@ CompositionalMultiphaseFluid::KernelWrapper::
   computeTotalDensity( phaseFraction,
                        phaseDensity,
                        totalDensity );
-
-#endif
 }
 
 GEOS_HOST_DEVICE
