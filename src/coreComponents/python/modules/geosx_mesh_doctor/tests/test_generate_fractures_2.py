@@ -189,16 +189,32 @@ def __generate_test_data() -> Iterator[Tuple[vtkUnstructuredGrid, Options]]:
                    result=(6 * 4, 3, 2 * 4, 2))
 
     # No duplication one quad fracture
-    inc = Incrementor(3 * 4 * 4)
     collocated_nodes = (
         (4 + 12,),
         (7 + 12,),
         (4 + 12 * 2,),
         (7 + 12 * 2,),
     )
-    mesh, options = __build_test_case((three_nodes, four_nodes, four_nodes), [0,] * 8 + [1, 2] + [0,] * 8, field_values=(1, 2))
+    mesh, options = __build_test_case((three_nodes, four_nodes, four_nodes), [0, ] * 8 + [1, 2] + [0, ] * 8, field_values=(1, 2))
     yield TestCase(input_mesh=mesh, options=options, collocated_nodes=collocated_nodes,
                    result=(3 * 4 * 4, 2 * 3 * 3, 4, 1))
+
+    # Fracture on a corner
+    inc = Incrementor(3 * 4 * 4)
+    collocated_nodes = (
+        (1 + 12,),
+        (4 + 12,),
+        (7 + 12,),
+        (1 + 12 * 2, *inc.next(1)),
+        (4 + 12 * 2, *inc.next(1)),
+        (7 + 12 * 2,),
+        (1 + 12 * 3, *inc.next(1)),
+        (4 + 12 * 3, *inc.next(1)),
+        (7 + 12 * 3,),
+    )
+    mesh, options = __build_test_case((three_nodes, four_nodes, four_nodes), [0, ] * 6 + [1, 2, 1, 2, 0, 0, 1, 2, 1, 2, 0, 0], field_values=(1, 2))
+    yield TestCase(input_mesh=mesh, options=options, collocated_nodes=collocated_nodes,
+                   result=(3 * 4 * 4 + 4, 2 * 3 * 3, 9, 4))
 
 
 def __format_collocated_nodes(fracture_mesh: vtkUnstructuredGrid):
