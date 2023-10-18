@@ -232,9 +232,9 @@ struct ComputeTimeStep
   launch( localIndex const sizeElem,
           localIndex const sizeNode,
           arrayView2d< WaveSolverBase::wsCoordType const, nodes::REFERENCE_POSITION_USD > const X,
-          arrayView1d< real32 > const density,
-          arrayView1d< real32 > const Vp,
-          arrayView1d< real32 > const Vs,
+          arrayView1d< real32 const > const density,
+          arrayView1d< real32 const > const Vp,
+          arrayView1d< real32 const > const Vs,
           arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes,
           arrayView1d< real32 > const mass )
   {
@@ -357,8 +357,8 @@ struct ComputeTimeStep
     normUz = 0.0;
 
     WaveSolverUtils::dotProduct( sizeNode, uxView, uxView, normUx );
-    WaveSolverUtils::dotProduct( sizeNode, uxView, uxView, normUx );
-    WaveSolverUtils::dotProduct( sizeNode, uxView, uxView, normUx );
+    WaveSolverUtils::dotProduct( sizeNode, uyView, uyView, normUy );
+    WaveSolverUtils::dotProduct( sizeNode, uzView, uzView, normUz );
     normUtot = normUx+normUy+normUz;
 
 
@@ -453,8 +453,8 @@ struct ComputeTimeStep
       normUz = 0.0;
 
       WaveSolverUtils::dotProduct( sizeNode, uxView, uxView, normUx );
-      WaveSolverUtils::dotProduct( sizeNode, uxView, uxView, normUx );
-      WaveSolverUtils::dotProduct( sizeNode, uxView, uxView, normUx );
+      WaveSolverUtils::dotProduct( sizeNode, uyView, uyView, normUy );
+      WaveSolverUtils::dotProduct( sizeNode, uzView, uzView, normUz );
       normUtot = normUx+normUy+normUz;
 
 
