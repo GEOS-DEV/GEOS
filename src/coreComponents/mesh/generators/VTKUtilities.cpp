@@ -802,7 +802,7 @@ ensureNoEmptyRank( vtkSmartPointer< vtkDataSet > mesh,
   // First we sort the donor in order of the number of elems they contain
   std::stable_sort( donorRanks.begin(), donorRanks.end(),
                     [&elemCounts] ( auto i1, auto i2 )
-  { return elemCounts[i1] < elemCounts[i2]; } );
+  { return elemCounts[i1] > elemCounts[i2]; } );
 
   // Then, if my position is "i" in the donorRanks array, I will send half of my elems to the i-th recipient
   integer const myRank = MpiWrapper::commRank();
@@ -870,7 +870,8 @@ ensureNoEmptyRank( vtkSmartPointer< vtkDataSet > mesh,
 
 
 AllMeshes
-redistributeMeshes( vtkSmartPointer< vtkDataSet > loadedMesh,
+redistributeMeshes( integer const logLevel,
+                    vtkSmartPointer< vtkDataSet > loadedMesh,
                     std::map< string, vtkSmartPointer< vtkDataSet > > & namesToFractures,
                     MPI_Comm const comm,
                     PartitionMethod const method,
@@ -927,14 +928,17 @@ redistributeMeshes( vtkSmartPointer< vtkDataSet > loadedMesh,
 
   // Logging some information about the redistribution.
   {
-    string const pattern = "{} = {}";
+    string const pattern = "{}: {}";
     std::vector< string > messages;
-    messages.push_back( GEOS_FMT( pattern, "Mesh sizes are: main", result.getMainMesh()->GetNumberOfCells() ) );
+    messages.push_back( GEOS_FMT( pattern, "Local mesh size", result.getMainMesh()->GetNumberOfCells() ) );
     for( auto const & [faceName, faceMesh]: result.getFaceBlocks() )
     {
       messages.push_back( GEOS_FMT( pattern, faceName, faceMesh->GetNumberOfCells() ) );
     }
-    GEOS_LOG_RANK( stringutilities::join( messages, ", " ) );
+    if( logLevel >= 5 )
+    {
+      GEOS_LOG_RANK( stringutilities::join( messages, ", " ) );
+    }
   }
 
   return result;
