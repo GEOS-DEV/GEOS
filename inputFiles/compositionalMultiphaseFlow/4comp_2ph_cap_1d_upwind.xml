@@ -109,7 +109,7 @@
         phaseNames="{ gas, oil }"
         phaseMinVolumeFraction="{ 0.0, 0.0 }"
         phaseCapPressureExponentInv="{ 4 , 0 }"
-        phaseEntryPressure="{ 0.75e6 , 0 }"
+        phaseEntryPressure="{ 0.75e6, 0 }"
         capPressureEpsilon="1e-8"/>
 
     <ConstantPermeability
