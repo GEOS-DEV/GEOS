@@ -59,8 +59,8 @@ void MeshGeneratorBase::generateMesh( Group & parent, SpatialPartition & partiti
     ParticleManager & particleManager = meshLevel0.getParticleManager();
 
     fillParticleBlockManager( particleBlockManager, particleManager, partition );
-  } 
-  else 
+  }
+  else
   {
     CellBlockManager & cellBlockManager = parent.registerGroup< CellBlockManager >( keys::cellManager );
 
