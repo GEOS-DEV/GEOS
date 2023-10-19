@@ -76,7 +76,7 @@ spack:
 
     intel-oneapi-mkl:
       externals:
-        - spec: "intel-oneapi-mkl@2023.0.0"
+        - spec: "intel-oneapi-mkl@2023.2.0"
           prefix: /opt/intel/oneapi
       buildable: False
 
