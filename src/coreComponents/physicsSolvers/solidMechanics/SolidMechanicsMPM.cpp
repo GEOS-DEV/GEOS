@@ -1303,6 +1303,9 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
   nodeManager.getReference< array3d< real64 > >( viewKeyStruct::surfaceNormalString() ).resize( numNodes, m_numVelocityFields, 3 );
   nodeManager.getReference< array3d< real64 > >( viewKeyStruct::materialPositionString() ).resize( numNodes, m_numVelocityFields, 3 );
 
+  nodeManager.getReference< array3d< real64 > >( viewKeyStruct::normalStressString() ).resize( numNodes, m_numVelocityFields, 3 );
+  nodeManager.getReference< array2d< real64 > >( viewKeyStruct::massWeightedDamageString() ).resize( numNodes, m_numVelocityFields );
+
   // Load strength scale into constitutive model (for ceramic)
   particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
   {
@@ -6031,8 +6034,9 @@ int SolidMechanicsMPM::evaluateSeparabilityCriterion( localIndex const & A,
   int separable = 0;
   // At least one field is fully damaged and both fields have the minimum separable level of damage.
   // The "a%b" is the "mod(a,b)" command, and indicates whether materials are from same contact group.
-  if( ( ( maxDamageA >= 0.9999 || maxDamageB >= 0.9999 ) && ( damageA >= m_separabilityMinDamage && damageB >= m_separabilityMinDamage ) )
-      || ( A % m_numContactGroups != B % m_numContactGroups ) )
+  if( ( ( maxDamageA >= 0.9999 || maxDamageB >= 0.9999 ) && 
+        ( damageA >= m_separabilityMinDamage && damageB >= m_separabilityMinDamage ) ) || 
+      ( A % m_numContactGroups != B % m_numContactGroups ) )
   {
     if( m_treatFullyDamagedAsSingleField == 1 )
     {
