@@ -325,6 +325,7 @@ void validateString( string const & value, Regex const & regex );
 /**
  * @brief Helper method to process an exception that has been thrown during xml parsing.
  * @param ex The caught exception.
+ * @param targetAttributeName The name of the attribute in which an input exception occured.
  * @param targetNode The node from which this Group is interpreted.
  * @param nodePos the target node position.
  * @throw An InputError with the node & attribut info, including the nearest xml line possible.
@@ -341,6 +342,7 @@ void processInputException( std::exception const & ex, string const & targetAttr
  * @param[in]  regex  the regular expression used for validating the string value.
  * @throw An InputError if the string value could not be validated by the type regex or parsed to the destination type.
  * In the context of xml parsing, use processInputException to format this error with the proper xml line.
+ * @return
  */
 template< typename T >
 std::enable_if_t< traits::CanStreamInto< std::istringstream, T > >
@@ -378,6 +380,7 @@ stringToInputVariable( Tensor< T, SIZE > & target, string const & value, Regex c
  * @param[in]  regex the regular expression used for validating the string value.
  * @throw An InputError if the string value could not be validated by the type regex or parsed to the destination type.
  * In the context of xml parsing, use processInputException to format this error with the proper xml line.
+ * @return
  */
 template< typename T, int NDIM, typename PERMUTATION >
 std::enable_if_t< traits::CanStreamInto< std::istringstream, T > >

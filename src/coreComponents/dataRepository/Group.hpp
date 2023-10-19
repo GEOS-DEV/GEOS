@@ -762,7 +762,7 @@ public:
    * @brief Recursively read values using ProcessInputFile() from the input
    * file and put them into the wrapped values for this group.
    * Also add the includes content to the xmlDocument when `Include` nodes are encountered.
-   * @param[in] xmlDocument the XML document that contains the targetNode
+   * @param[in] xmlDocument the XML document that contains the targetNode.
    * @param[in] targetNode the XML node that to extract input values from.
    */
   void processInputFileRecursive( xmlWrapper::xmlDocument & xmlDocument,
@@ -770,6 +770,8 @@ public:
   /**
    * @brief Same as processInputFileRecursive(xmlWrapper::xmlDocument &, xmlWrapper::xmlNode &)
    * but allow to reuse an existing xmlNodePos.
+   * @param[in] xmlDocument the XML document that contains the targetNode.
+   * @param[in] targetNode the XML node that to extract input values from.
    * @param[in] nodePos the target node position, typically obtained with xmlDocument::getNodePosition().
    */
   void processInputFileRecursive( xmlWrapper::xmlDocument & xmlDocument,

@@ -799,7 +799,7 @@ public:
   }
 
   /**
-   * @copydoc WrapperBase::setRTTypeName(string const &)
+   * @copydoc WrapperBase::setRTTypeName(string_view)
    */
   Wrapper< T > & setRTTypeName( string_view rtTypeName )
   {

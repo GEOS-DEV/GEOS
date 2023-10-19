@@ -511,7 +511,13 @@ void printTypeSummary();
  */
 struct Regex
 {
+  /**
+   * @brief the regular expression string.
+   */
   string m_regexStr;
+  /**
+   * @brief the description of the expected format of the regular expression.
+   */
   string m_formatDescription;
   /**
    * @brief Default constructor
@@ -553,17 +559,24 @@ class rtTypes
 {
 public:
 
-  // regex by rtType name
+  /**
+   * @brief the regex map type to store and find the regexes by the associated rtTypeName.
+   */
   using RegexMapType = std::map< string, Regex >;
 
+  /**
+   * @brief Custom types are useful to customize the regexes of an existing type. The type name
+   * can be one of the existing ones, or a totally new one (which can then be used in Wrapper::setRTTypename).
+   */
   struct CustomTypes
   {
-    //custom rtTypes
+    /// @cond DO_NOT_DOCUMENT
     static constexpr string_view mapPair             = "mapPair";
     static constexpr string_view plotLevel           = "geos_dataRepository_PlotLevel";
     static constexpr string_view groupName           = "groupName";
     static constexpr string_view groupNameRef        = "groupNameRef";
     static constexpr string_view groupNameRefArray   = "groupNameRef_array";
+    /// @endcond
   };
 
   /**

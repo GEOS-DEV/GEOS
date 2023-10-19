@@ -64,6 +64,7 @@ public:
    * @brief Constructor.
    * @param[in] name name of the object
    * @param[in] parent pointer to Group that holds this WrapperBase
+   * @param[in] rtTypeName the name of the rtType to use (given by rtType::CustomTypes or rtType::getTypeName())
    */
   explicit WrapperBase( string const & name,
                         Group & parent,
@@ -163,9 +164,18 @@ public:
    */
   virtual Regex const & getTypeRegex() const = 0;
 
+  /**
+   * @return the rtTypeName used when parsing an input value to the wrapped object.
+   */
   string const & getRTTypeName() const
   { return m_rtTypeName; }
 
+  /**
+   * @brief override the rtType to use when parsing an input value to the wrapped object. It can be
+   * useful to change the used regex to validate the input value.
+   * @param rtTypeName the name of the rtType to use (given by rtType::CustomTypes or rtType::getTypeName())
+   * @return the reference to this Wrapper
+   */
   WrapperBase & setRTTypeName( string_view rtTypeName )
   {
     m_rtTypeName = rtTypeName;
