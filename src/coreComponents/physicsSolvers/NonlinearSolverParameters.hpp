@@ -72,7 +72,7 @@ public:
     static constexpr char const * lineSearchInterpolationTypeString() { return "lineSearchInterpolationType"; }
 
     static constexpr char const * normTypeString()                { return "normType"; }
-    static constexpr char const * minNormalizerString()               { return "minNormalizer"; }
+    static constexpr char const * minNormalizerString()           { return "minNormalizer"; }
     static constexpr char const * newtonTolString()               { return "newtonTol"; }
     static constexpr char const * newtonMaxIterString()           { return "newtonMaxIter"; }
     static constexpr char const * newtonMinIterString()           { return "newtonMinIter"; }
