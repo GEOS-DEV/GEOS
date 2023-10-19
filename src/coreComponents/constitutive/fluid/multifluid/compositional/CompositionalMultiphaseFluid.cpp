@@ -63,7 +63,7 @@ CompositionalMultiphaseFluid::CompositionalMultiphaseFluid( string const & name,
 
 integer CompositionalMultiphaseFluid::getWaterPhaseIndex() const
 {
-  return 2;
+  return m_aqueousPhaseIndex;
 }
 
 void CompositionalMultiphaseFluid::postProcessInput()
@@ -114,6 +114,10 @@ void CompositionalMultiphaseFluid::postProcessInput()
   {
     m_phaseTypes[ip] = phase;
     m_equationsOfState[ip] = eos;
+    if( phase == PhaseType::aqueous )
+    {
+      m_aqueousPhaseIndex = ip;
+    }
     ++ip;
   }
 }

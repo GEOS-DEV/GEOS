@@ -41,7 +41,7 @@ public:
   deliverClone( string const & name,
                 Group * const parent ) const override;
 
-  static string catalogName() { return "CompositionalMultiphaseFluidPVT"; }
+  static string catalogName() { return "CompositionalMultiphaseFluid"; }
 
   virtual string getCatalogName() const override { return catalogName(); }
 

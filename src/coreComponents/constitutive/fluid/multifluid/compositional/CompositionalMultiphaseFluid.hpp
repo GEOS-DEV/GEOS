@@ -41,7 +41,7 @@ public:
   deliverClone( string const & name,
                 Group * const parent ) const override;
 
-  static string catalogName() { return "CompositionalMultiphaseFluid"; }
+  static string catalogName() { return "CompositionalMultiphaseFluidGeos"; }
 
   virtual string getCatalogName() const override { return catalogName(); }
 
@@ -149,6 +149,9 @@ private:
 
   /// Phase labels
   array1d< PhaseType > m_phaseTypes;
+
+  /// Index of the water phase
+  integer m_aqueousPhaseIndex{-1};
 
   /// Equation of state labels
   array1d< EquationOfStateType > m_equationsOfState;
