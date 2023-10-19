@@ -842,57 +842,41 @@ computeFractionalFlowViscous( localIndex const numPhase,
     }
   }
 
-  //Form totMob
-//  for( localIndex jp = 0; jp < numPhase; ++jp )
+  localIndex k_up;
+  real64 mob{};
+  real64 dMob_dP{};
+  real64 dMob_dC[numComp]{};
+
+  upwindMobilityViscous< numComp, numFluxSupportPoints, UPWIND >( numPhase,
+                                                                  ip,
+                                                                  seri,
+                                                                  sesri,
+                                                                  sei,
+                                                                  transmissibility,
+                                                                  dTrans_dPres,
+                                                                  totFlux,
+                                                                  pres,
+                                                                  gravCoef,
+                                                                  dCompFrac_dCompDens,
+                                                                  phaseMassDens,
+                                                                  dPhaseMassDens,
+                                                                  phaseMob,
+                                                                  dPhaseMob,
+                                                                  dPhaseVolFrac,
+                                                                  phaseCapPressure,
+                                                                  dPhaseCapPressure_dPhaseVolFrac,
+                                                                  capPressureFlag,
+                                                                  k_up,
+                                                                  mob,
+                                                                  dMob_dP,
+                                                                  dMob_dC );
+
+  k_up_main = k_up;
+  mainMob = mob;
+  dMMob_dP = dMob_dP;
+  for( localIndex ic = 0; ic < numComp; ++ic )
   {
-
-    localIndex k_up;
-    real64 mob{};
-    real64 dMob_dP{};
-    real64 dMob_dC[numComp]{};
-
-    upwindMobilityViscous< numComp, numFluxSupportPoints, UPWIND >( numPhase,
-                                                                    ip,
-                                                                    seri,
-                                                                    sesri,
-                                                                    sei,
-                                                                    transmissibility,
-                                                                    dTrans_dPres,
-                                                                    totFlux,
-                                                                    pres,
-                                                                    gravCoef,
-                                                                    dCompFrac_dCompDens,
-                                                                    phaseMassDens,
-                                                                    dPhaseMassDens,
-                                                                    phaseMob,
-                                                                    dPhaseMob,
-                                                                    dPhaseVolFrac,
-                                                                    phaseCapPressure,
-                                                                    dPhaseCapPressure_dPhaseVolFrac,
-                                                                    capPressureFlag,
-                                                                    k_up,
-                                                                    mob,
-                                                                    dMob_dP,
-                                                                    dMob_dC );
-
-
-//    totMob += mob;
-//    dTotMob_dP[k_up] += dMob_dP;
-//    for( localIndex ic = 0; ic < numComp; ++ic )
-//    {
-//      dTotMob_dC[k_up][ic] += dMob_dC[ic];
-//    }
-
-//    if( jp == ip )
-    {
-      k_up_main = k_up;
-      mainMob = mob;
-      dMMob_dP = dMob_dP;
-      for( localIndex ic = 0; ic < numComp; ++ic )
-      {
-        dMMob_dC[ic] = dMob_dC[ic];
-      }
-    }
+    dMMob_dC[ic] = dMob_dC[ic];
   }
 
   //guard against no flow region
@@ -956,10 +940,6 @@ computeFractionalFlowGravity( localIndex const numPhase,
   real64 dMMob_dP{};
   real64 dMMob_dC[numComp]{};
 
-//  real64 totMob{};
-//  real64 dTotMob_dP[numFluxSupportPoints]{};
-//  real64 dTotMob_dC[numFluxSupportPoints][numComp]{};
-
   //reinit
   //fractional flow too low to let the upstream phase flow
   k_up_main = -1;                           //to throw error if unmodified
@@ -973,57 +953,42 @@ computeFractionalFlowGravity( localIndex const numPhase,
     }
   }
 
-  //Form totMob
-//  for( localIndex jp = 0; jp < numPhase; ++jp )
+
+  localIndex k_up;
+  real64 mob{};
+  real64 dMob_dP{};
+  real64 dMob_dC[numComp]{};
+
+  upwindMobilityGravity< numComp, numFluxSupportPoints, UPWIND >( numPhase,
+                                                                  ip,
+                                                                  seri,
+                                                                  sesri,
+                                                                  sei,
+                                                                  transmissibility,
+                                                                  dTrans_dPres,
+                                                                  totFlux,
+                                                                  pres,
+                                                                  gravCoef,
+                                                                  dCompFrac_dCompDens,
+                                                                  phaseMassDens,
+                                                                  dPhaseMassDens,
+                                                                  phaseMob,
+                                                                  dPhaseMob,
+                                                                  dPhaseVolFrac,
+                                                                  phaseCapPressure,
+                                                                  dPhaseCapPressure_dPhaseVolFrac,
+                                                                  capPressureFlag,
+                                                                  k_up,
+                                                                  mob,
+                                                                  dMob_dP,
+                                                                  dMob_dC );
+
+  k_up_main = k_up;
+  mainMob = mob;
+  dMMob_dP = dMob_dP;
+  for( localIndex ic = 0; ic < numComp; ++ic )
   {
-
-    localIndex k_up;
-    real64 mob{};
-    real64 dMob_dP{};
-    real64 dMob_dC[numComp]{};
-
-    upwindMobilityGravity< numComp, numFluxSupportPoints, UPWIND >( numPhase,
-                                                                    ip,
-                                                                    seri,
-                                                                    sesri,
-                                                                    sei,
-                                                                    transmissibility,
-                                                                    dTrans_dPres,
-                                                                    totFlux,
-                                                                    pres,
-                                                                    gravCoef,
-                                                                    dCompFrac_dCompDens,
-                                                                    phaseMassDens,
-                                                                    dPhaseMassDens,
-                                                                    phaseMob,
-                                                                    dPhaseMob,
-                                                                    dPhaseVolFrac,
-                                                                    phaseCapPressure,
-                                                                    dPhaseCapPressure_dPhaseVolFrac,
-                                                                    capPressureFlag,
-                                                                    k_up,
-                                                                    mob,
-                                                                    dMob_dP,
-                                                                    dMob_dC );
-
-
-//    totMob += mob;
-//    dTotMob_dP[k_up] += dMob_dP;
-//    for( localIndex ic = 0; ic < numComp; ++ic )
-//    {
-//      dTotMob_dC[k_up][ic] += dMob_dC[ic];
-//    }
-//
-//    if( jp == ip )
-    {
-      k_up_main = k_up;
-      mainMob = mob;
-      dMMob_dP = dMob_dP;
-      for( localIndex ic = 0; ic < numComp; ++ic )
-      {
-        dMMob_dC[ic] = dMob_dC[ic];
-      }
-    }
+    dMMob_dC[ic] = dMob_dC[ic];
   }
 
   //guard against no flow region
@@ -1087,10 +1052,6 @@ computeFractionalFlowCapillary( localIndex const numPhase,
   real64 dMMob_dP{};
   real64 dMMob_dC[numComp]{};
 
-//  real64 totMob{};
-//  real64 dTotMob_dP[numFluxSupportPoints]{};
-//  real64 dTotMob_dC[numFluxSupportPoints][numComp]{};
-
   //reinit
   //fractional flow too low to let the upstream phase flow
   k_up_main = -1;                           //to throw error if unmodified
@@ -1104,57 +1065,43 @@ computeFractionalFlowCapillary( localIndex const numPhase,
     }
   }
 
-  //Form totMob
-//  for( localIndex jp = 0; jp < numPhase; ++jp )
+
+  localIndex k_up;
+  real64 mob{};
+  real64 dMob_dP{};
+  real64 dMob_dC[numComp]{};
+
+  upwindMobilityCapillary< numComp, numFluxSupportPoints, UPWIND >( numPhase,
+                                                                    ip,
+                                                                    seri,
+                                                                    sesri,
+                                                                    sei,
+                                                                    transmissibility,
+                                                                    dTrans_dPres,
+                                                                    totFlux,
+                                                                    pres,
+                                                                    gravCoef,
+                                                                    dCompFrac_dCompDens,
+                                                                    phaseMassDens,
+                                                                    dPhaseMassDens,
+                                                                    phaseMob,
+                                                                    dPhaseMob,
+                                                                    dPhaseVolFrac,
+                                                                    phaseCapPressure,
+                                                                    dPhaseCapPressure_dPhaseVolFrac,
+                                                                    capPressureFlag,
+                                                                    k_up,
+                                                                    mob,
+                                                                    dMob_dP,
+                                                                    dMob_dC );
+
+
+  k_up_main = k_up;
+  mainMob = mob;
+  dMMob_dP = dMob_dP;
+  for( localIndex ic = 0; ic < numComp; ++ic )
   {
-
-    localIndex k_up;
-    real64 mob{};
-    real64 dMob_dP{};
-    real64 dMob_dC[numComp]{};
-
-    upwindMobilityCapillary< numComp, numFluxSupportPoints, UPWIND >( numPhase,
-                                                                      ip,
-                                                                      seri,
-                                                                      sesri,
-                                                                      sei,
-                                                                      transmissibility,
-                                                                      dTrans_dPres,
-                                                                      totFlux,
-                                                                      pres,
-                                                                      gravCoef,
-                                                                      dCompFrac_dCompDens,
-                                                                      phaseMassDens,
-                                                                      dPhaseMassDens,
-                                                                      phaseMob,
-                                                                      dPhaseMob,
-                                                                      dPhaseVolFrac,
-                                                                      phaseCapPressure,
-                                                                      dPhaseCapPressure_dPhaseVolFrac,
-                                                                      capPressureFlag,
-                                                                      k_up,
-                                                                      mob,
-                                                                      dMob_dP,
-                                                                      dMob_dC );
-
-
-//    totMob += mob;
-//    dTotMob_dP[k_up] += dMob_dP;
-//    for( localIndex ic = 0; ic < numComp; ++ic )
-//    {
-//      dTotMob_dC[k_up][ic] += dMob_dC[ic];
-//    }
-
-//    if( jp == ip )
-    {
-      k_up_main = k_up;
-      mainMob = mob;
-      dMMob_dP = dMob_dP;
-      for( localIndex ic = 0; ic < numComp; ++ic )
-      {
-        dMMob_dC[ic] = dMob_dC[ic];
-      }
-    }
+    dMMob_dC[ic] = dMob_dC[ic];
   }
 
   //guard against no flow region
@@ -1770,7 +1717,7 @@ static void computePotentialFluxesCapillary( localIndex const numPhase,
 }
 
 
-}            //end of struct UpwindHelpers
+}//end of struct UpwindHelpers
 
 /************************* UPWIND ******************/
 
@@ -1931,8 +1878,8 @@ public:
   {
     real64 pot{};
 
-    /// each derived concrete class has to define a computePotential method that is calling UpwindScheme::potential method with a specific
-    /// lamda defining how to get these potentials
+    // each derived concrete class has to define a computePotential method that is calling UpwindScheme::potential method with a specific
+    // lamda defining how to get these potentials
     UPWIND::template computePotentialCapillary< numComp, numFluxSupportPoints >( numPhase,
                                                                                  ip,
                                                                                  seri,
@@ -1959,8 +1906,8 @@ public:
 
 
 
-  /// templated way of evaluating the potential (to the exception of viscous one) which relies on
-  /// up-or-downwinded mobility terms pre-multiplying potential differences
+  // templated way of evaluating the potential (to the exception of viscous one) which relies on
+  // up-or-downwinded mobility terms pre-multiplying potential differences
   template< localIndex numComp, localIndex numFluxSupportPoints, typename LAMBDA >
   GEOS_HOST_DEVICE
   static void potential( localIndex numPhase,
@@ -2425,7 +2372,6 @@ struct IHUPhaseFlux
       sei,
       trans,
       dTrans_dPres,
-//      totFlux,
       k_up_ppu,
       totFlux,
       totMob,
