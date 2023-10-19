@@ -9,7 +9,6 @@ from typing import (
     FrozenSet,
     List,
     Set,
-    Sequence,
     Collection,
 )
 
@@ -19,7 +18,6 @@ import numpy
 
 from vtkmodules.vtkCommonCore import (
     vtkIdList,
-    vtkIntArray,
     vtkPoints,
 )
 from vtkmodules.vtkCommonDataModel import (
@@ -202,7 +200,7 @@ def __identify_split(num_points: int,
     build_new_index = NewIndex(num_points)
     result: Dict[int, Dict[int, int]] = defaultdict(dict)
     for node, cells in tqdm(sorted(node_to_cells.items()),  # Iteration over `sorted` nodes to have a predictable result for tests.
-                            desc="Identifying the node duplications"):
+                            desc="Identifying the node splits"):
         for connected_cells in networkx.connected_components(cell_to_cell.subgraph(cells)):
             # Each group of connect cells need around `node` must consider the same `node`.
             # Separate groups must have different (duplicated) nodes.
@@ -212,11 +210,51 @@ def __identify_split(num_points: int,
     return result
 
 
-def __perform_split(mesh: vtkUnstructuredGrid,
+def __copy_fields(old_mesh: vtkUnstructuredGrid,
+                  new_mesh: vtkUnstructuredGrid,
+                  collocated_nodes: Collection[int]) -> None:
+    """
+    Copies the fields from the old mesh to the new one.
+    Point data will be duplicated for collocated nodes.
+    :param old_mesh: The mesh before the split.
+    :param new_mesh: The mesh after the split. Will receive the fields in place.
+    :param collocated_nodes: New index to old index.
+    :return: None
+    """
+    # Copying the cell data.
+    # The cells are the same, just their nodes support have changed.
+    input_cell_data = old_mesh.GetCellData()
+    for i in range(input_cell_data.GetNumberOfArrays()):
+        input_array = input_cell_data.GetArray(i)
+        logging.info(f"Copying cell field \"{input_array.GetName()}\".")
+        new_mesh.GetCellData().AddArray(input_array)
+
+    # Copying field data. This data is a priori not related to geometry.
+    input_field_data = old_mesh.GetFieldData()
+    for i in range(input_field_data.GetNumberOfArrays()):
+        input_array = input_field_data.GetArray(i)
+        logging.info(f"Copying field data \"{input_array.GetName()}\".")
+        new_mesh.GetFieldData().AddArray(input_array)
+
+    # Copying the point data.
+    input_point_data = old_mesh.GetPointData()
+    for i in range(input_point_data.GetNumberOfArrays()):
+        input_array = input_point_data.GetArray(i)
+        logging.info(f"Copying point field \"{input_array.GetName()}\"")
+        tmp = input_array.NewInstance()
+        tmp.SetName(input_array.GetName())
+        tmp.SetNumberOfComponents(input_array.GetNumberOfComponents())
+        tmp.SetNumberOfTuples(new_mesh.GetNumberOfPoints())
+        for p in range(tmp.GetNumberOfTuples()):
+            tmp.SetTuple(p, input_array.GetTuple(collocated_nodes[p]))
+        new_mesh.GetPointData().AddArray(tmp)
+
+
+def __perform_split(old_mesh: vtkUnstructuredGrid,
                     cell_to_node_mapping: Mapping[int, Mapping[int, int]]) -> vtkUnstructuredGrid:
     """
     Split the main 3d mesh based on the node duplication information contained in @p cell_to_node_mapping
-    :param mesh: The main 3d mesh.
+    :param old_mesh: The main 3d mesh.
     :param cell_to_node_mapping: For each cell, gives the nodes that must be duplicated and their new index.
     :return: The main 3d mesh split at the fracture location.
     """
@@ -225,28 +263,31 @@ def __perform_split(mesh: vtkUnstructuredGrid,
         for i, o in node_mapping.items():
             if i != o:
                 added_points.add(o)
-    num_new_points: int = mesh.GetNumberOfPoints() + len(added_points)
+    num_new_points: int = old_mesh.GetNumberOfPoints() + len(added_points)
 
     # Creating the new points for the new mesh.
-    old_points: vtkPoints = mesh.GetPoints()
+    old_points: vtkPoints = old_mesh.GetPoints()
     new_points = vtkPoints()
     new_points.SetNumberOfPoints(num_new_points)
+    collocated_nodes = numpy.ones(num_new_points, dtype=int) * -1
     # Copying old points into the new container.
     for p in range(old_points.GetNumberOfPoints()):
         new_points.SetPoint(p, old_points.GetPoint(p))
+        collocated_nodes[p] = p
     # Creating the new collocated/duplicated points based on the old points positions.
     for node_mapping in cell_to_node_mapping.values():
         for i, o in node_mapping.items():
             if i != o:
                 new_points.SetPoint(o, old_points.GetPoint(i))
+                collocated_nodes[o] = i
 
     # We are creating a new mesh.
     # The cells will be the same, except that their nodes may be duplicated or renumbered nodes.
     # The `new_cells` array will be modified in place.
     new_cells = vtkCellArray()
-    new_cells.DeepCopy(mesh.GetCells())
+    new_cells.DeepCopy(old_mesh.GetCells())
 
-    for c in tqdm(range(mesh.GetNumberOfCells()), desc="Performing the mesh split"):
+    for c in tqdm(range(old_mesh.GetNumberOfCells()), desc="Performing the mesh split"):
         node_mapping: Mapping[int, int] = cell_to_node_mapping.get(c, {})
         # Extracting the point ids of the cell.
         # The values will be (potentially) overwritten in place, before being sent back into the cell.
@@ -258,13 +299,15 @@ def __perform_split(mesh: vtkUnstructuredGrid,
             cell_point_ids.SetId(i, new_point_id)
         new_cells.ReplaceCellAtId(c, cell_point_ids)
 
-    output = mesh.NewInstance()
-    output.SetPoints(new_points)
-    output.SetCells(mesh.GetCellTypesArray(), new_cells)  # The cell types are unchanged; we reuse the old cell types!
-    return output
+    new_mesh = old_mesh.NewInstance()
+    new_mesh.SetPoints(new_points)
+    new_mesh.SetCells(old_mesh.GetCellTypesArray(), new_cells)  # The cell types are unchanged; we reuse the old cell types!
+
+    __copy_fields(old_mesh, new_mesh, collocated_nodes)
+
+    return new_mesh
 
 
-# def __generate_fracture_mesh(mesh: vtkUnstructuredGrid,
 def __generate_fracture_mesh(mesh_points: vtkPoints,
                              fracture_info: FractureInfo,
                              cell_to_node_mapping: Mapping[int, Mapping[int, int]]) -> vtkUnstructuredGrid:
@@ -281,25 +324,24 @@ def __generate_fracture_mesh(mesh_points: vtkPoints,
 
     points = vtkPoints()
     points.SetNumberOfPoints(num_points)
-    tmp: Dict[int, int] = {}  # Building the node mapping, from 3d mesh nodes to 2d fracture nodes.
+    node_3d_to_node_2d: Dict[int, int] = {}  # Building the node mapping, from 3d mesh nodes to 2d fracture nodes.
     for i, n in enumerate(fracture_nodes):
         coords: Tuple[float, float, float] = mesh_points.GetPoint(n)
         points.SetPoint(i, coords)
-        tmp[n] = i
+        node_3d_to_node_2d[n] = i
 
     polygons = vtkCellArray()
     for ns in fracture_info.face_nodes:
         polygon = vtkPolygon()
         polygon.GetPointIds().SetNumberOfIds(len(ns))
         for i, n in enumerate(ns):
-            polygon.GetPointIds().SetId(i, tmp[n])
+            polygon.GetPointIds().SetId(i, node_3d_to_node_2d[n])
         polygons.InsertNextCell(polygon)
 
-    # # TODO use an extended version of the `tmp` up there? Or vice versa?
     buckets: Dict[int, Set[int]] = defaultdict(set)
     for node_mapping in cell_to_node_mapping.values():
         for i, o in node_mapping.items():
-            k: int = tmp[min(i, o)]
+            k: int = node_3d_to_node_2d[min(i, o)]
             buckets[k].update((i, o))
 
     assert set(buckets.keys()) == set(range(num_points))
