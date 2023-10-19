@@ -40,7 +40,7 @@ void validateString( string const & value, Regex const & regex )
     ptrdiff_t errorId = ( m.size()>0 && m.position( 0 )==0 ) ? m.length() : 0;
     GEOS_THROW( "Input string validation failed at:\n" <<
                 "  \"" << value << "\"\n   " << string( errorId, ' ' ) << "^\n" <<
-                "  Expected format: \"" << regex.m_formatDescription << "\"",
+                "  Expected format: " << regex.m_formatDescription,
                 InputError );
   }
 }
