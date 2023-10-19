@@ -30,6 +30,12 @@ MPI_Comm MPI_COMM_GEOSX;
 int MPI_COMM_GEOSX = 0;
 #endif
 
+
+Regex::Regex( string_view regexStr, string_view formatDescription ):
+  m_regexStr( regexStr ),
+  m_formatDescription( formatDescription )
+{}
+
 void printTypeSummary()
 {
   GEOS_LOG_RANK_0( "real64 is alias of " <<LvArray::system::demangle( typeid(real64).name() ) );
@@ -84,10 +90,10 @@ string rtTypes::getTypeName( std::type_index const key )
 }
 
 /**
- * @brief Recursive function to build Array regexes.
+ * @brief Recursive function to build array regexes.
  * @param subPattern pattern of the element to surround with braces and separate with commas
  * @param dimension 1 = bottom-level, 2 = array1d-level, 3 = array2d-level...
- * @param highestDimension The target final dimension.
+ * @param topLevelCall True if this is the first recursive call.
  * @return
  *
  * @note The sub pattern is the base object you are targeting.  It can either
@@ -112,84 +118,114 @@ string constructArrayRegex( string_view subPattern, integer dimension, bool topL
          "\\s*" + arrayRegex + "\\s*" :
          arrayRegex;
 }
+/**
+ * @brief function to build array regexes.
+ * @param subPattern pattern of the element to surround with braces and separate with commas
+ * @param description description of the subPattern that starts by "Input value must "
+ * @param dimension 1 = array1d, 2 = array2d...
+ * @return
+ */
+Regex constructArrayRegex( string_view subPattern, string_view description, integer dimension )
+{
+  std::ostringstream arrayDesc;
+
+  // Adapt the description so the form "Input value must be an int" is transformed to "Input value must be a 1d array. Each value must be an
+  // int"
+  {
+    arrayDesc << "Input value must be a " << dimension << "d array (surrounded by ";
+    if( dimension > 1 )
+    {
+      arrayDesc << dimension << " levels of ";
+    }
+    arrayDesc << "braces and separated by commas). Each value must ";
+
+    // finish by the original description
+    GEOS_ERROR_IF( !stringutilities::startsWith( description, "Input value must " ),
+                   "Description \"" << description << "\" must start by \"Input value must \" to call constructArrayRegex() on it." );
+    arrayDesc << description.substr( description.find( " must " ) );
+  }
+
+  return Regex( constructArrayRegex( subPattern, dimension ),
+                arrayDesc.str() );
+}
 
 rtTypes::RegexMapType rtTypes::createBasicTypesRegexMap()
 {
   // Define the component regexes:
+
   // Regex to match an unsigned int (123, etc.)
   // string_view const ru = "[\\d]+";// unused
 
-  // Regex to match an signed int (-123, 455, +789, etc.)
+  string_view const intDesc = "Input value must be a signed int (eg. -123, 455, +789, etc.)";
   string_view const intRegex = "[+-]?[\\d]+";
 
-  // Regex to match a float (1, +2.3, -.4, 5.6e7, 8E-9, etc.)
   // Explanation of parts:
   // [+-]?[\\d]*  matches an optional +/- at the beginning, any numbers preceding the decimal
   // ([\\d]\\.?|\\.[\\d]) matches the decimal region of the number (0, 1., 2.3, .4)
   // [\\d]*  matches any number of numbers following the decimal
   // ([eE][-+]?[\\d]+|\\s*)  matches an optional scientific notation number
   // Note: the xsd regex implementation does not allow an empty branch, so use allow whitespace at the end
+  string_view const realDesc = "Input value must be a real number (eg. 1, .25, +2.3, -.4, 5.6e7, -8E-9, etc.)";
   string_view const realRegex = "[+-]?[\\d]*([\\d]\\.?|\\.[\\d])[\\d]*([eE][-+]?[\\d]+|\\s*)";
 
-  // Regex to match a R1Tensor
+  string_view const R1Desc = "Input value must be a R1Tensor, an array of 3 real numbers surrounded by braces and separated by commas (eg.  \"{ 1, .25, +2.3}\", \"{ -.4, 5.6e7, -8E-9\", etc.) .";
   string const R1Regex = "\\s*\\{\\s*(" + string( realRegex ) + "\\s*,\\s*){2}" + string( realRegex ) + "\\s*\\}\\s*";
-  // Regex to match a R2SymTensor
+  string_view const R2Desc = "Input value must be a R2SymTensor, an array of 6 real numbers surrounded by braces and separated by commas (eg.  \"{ 1, .25, +2.3, -.4, 5.6e7, -8E-9\", etc.) .";
   string const R2Regex = "\\s*\\{\\s*(" + string( realRegex ) + "\\s*,\\s*){5}" + string( realRegex ) + "\\s*\\}\\s*";
 
-  // Regex to match a string that can't be empty and does not contain any whitespaces nor the characters ,{}
+  string_view const strDesc = "Input value must be a string that cannot be empty, contain any whitespaces nor the characters  , { }";
   string_view const strRegex = "[^,\\{\\}\\s]+\\s*";
-  // Regex to match a string that does not contain any whitespaces nor the characters ,{}
-  string_view const strRegexE = "[^,\\{\\}\\s]*\\s*";
+  string_view const strEDesc = "Input value must be a string that cannot contain any whitespaces nor the characters  , { }";
+  string_view const strERegex = "[^,\\{\\}\\s]*\\s*";
 
-  // Regex to match a path: a string that can't be empty and does not contain any space nor the characters *?<>|:",
+  string_view const pathDesc = "Input value must be a string that cannot be empty, contain any whitespaces nor the characters  * ? < > | : \" ";
   string_view const pathRegex = "[^*?<>\\|:\";,\\s]+\\s*";
-  // Regex to match a path: a string that does not contain any space nor the characters *?<>|:",
-  string_view const pathRegexE = "[^*?<>\\|:\";,\\s]*\\s*";
+  string_view const pathEDesc = "Input value must be a string that cannot contain any whitespaces nor the characters  * ? < > | : \" ";
+  string_view const pathERegex = "[^*?<>\\|:\";,\\s]*\\s*";
 
-  // Regex to match a group name: it can't be empty and contains only upper/lower letters, digits, and the .-_ characters.
+  string_view const groupNameDesc = "Input value must be a string that cannot be empty and contains only upper/lower letters, digits, and the characters  . - _";
   string_view const groupNameRegex = "[a-zA-Z0-9.\\-_]+";
-  // Regex to match an optionnal group name reference: it can be empty, contains only upper/lower letters, digits, the .-_ characters, and
-  // the / character for paths.
-  string_view const groupNameRefRegexE = "[a-zA-Z0-9.\\-_/]*";
+  string_view const groupNameRefDesc = "Input value must be a string that can contain only upper/lower letters, digits, and the characters  . - _ /";
+  string_view const groupNameRefRegex = "[a-zA-Z0-9.\\-_/]*";
 
 
   // Build master list of regexes
   RegexMapType regexMap =
   {
-    {"integer", string( intRegex )},
-    {"localIndex", string( intRegex )},
-    {"globalIndex", string( intRegex )},
-    {"real32", string( realRegex )},
-    {"real64", string( realRegex )},
-    {"R1Tensor", string( R1Regex )},
-    {"R1Tensor32", string( R1Regex )},
-    {"R2SymTensor", string( R2Regex )},
-    {"integer_array", constructArrayRegex( intRegex, 1 )},
-    {"localIndex_array", constructArrayRegex( intRegex, 1 )},
-    {"globalIndex_array", constructArrayRegex( intRegex, 1 )},
-    {"real32_array", constructArrayRegex( realRegex, 1 )},
-    {"real64_array", constructArrayRegex( realRegex, 1 )},
-    {"integer_array2d", constructArrayRegex( intRegex, 2 )},
-    {"localIndex_array2d", constructArrayRegex( intRegex, 2 )},
-    {"globalIndex_array2d", constructArrayRegex( intRegex, 2 )},
-    {"real32_array2d", constructArrayRegex( realRegex, 2 )},
-    {"real64_array2d", constructArrayRegex( realRegex, 2 )},
-    {"integer_array3d", constructArrayRegex( intRegex, 3 )},
-    {"localIndex_array3d", constructArrayRegex( intRegex, 3 )},
-    {"globalIndex_array3d", constructArrayRegex( intRegex, 3 )},
-    {"real32_array3d", constructArrayRegex( realRegex, 3 )},
-    {"real64_array3d", constructArrayRegex( realRegex, 3 )},
-    {"real64_array4d", constructArrayRegex( realRegex, 4 )},
-    {"string", string( strRegexE )},
-    {"path", string( pathRegexE )},
-    {"string_array", constructArrayRegex( strRegex, 1 )},
-    {"path_array", constructArrayRegex( pathRegex, 1 )},
+    { "integer", Regex( intRegex, intDesc ) },
+    { "localIndex", Regex( intRegex, intDesc ) },
+    { "globalIndex", Regex( intRegex, intDesc ) },
+    { "real32", Regex( realRegex, realDesc ) },
+    { "real64", Regex( realRegex, realDesc ) },
+    { "R1Tensor", Regex( R1Regex, R1Desc ) },
+    { "R1Tensor32", Regex( R1Regex, R1Desc ) },
+    { "R2SymTensor", Regex( R2Regex, R2Desc ) },
+    { "integer_array", constructArrayRegex( intRegex, intDesc, 1 ) },
+    { "localIndex_array", constructArrayRegex( intRegex, intDesc, 1 ) },
+    { "globalIndex_array", constructArrayRegex( intRegex, intDesc, 1 ) },
+    { "real32_array", constructArrayRegex( realRegex, realDesc, 1 ) },
+    { "real64_array", constructArrayRegex( realRegex, realDesc, 1 ) },
+    { "integer_array2d", constructArrayRegex( intRegex, intDesc, 2 ) },
+    { "localIndex_array2d", constructArrayRegex( intRegex, intDesc, 2 ) },
+    { "globalIndex_array2d", constructArrayRegex( intRegex, intDesc, 2 ) },
+    { "real32_array2d", constructArrayRegex( realRegex, realDesc, 2 ) },
+    { "real64_array2d", constructArrayRegex( realRegex, realDesc, 2 ) },
+    { "integer_array3d", constructArrayRegex( intRegex, intDesc, 3 ) },
+    { "localIndex_array3d", constructArrayRegex( intRegex, intDesc, 3 ) },
+    { "globalIndex_array3d", constructArrayRegex( intRegex, intDesc, 3 ) },
+    { "real32_array3d", constructArrayRegex( realRegex, realDesc, 3 ) },
+    { "real64_array3d", constructArrayRegex( realRegex, realDesc, 3 ) },
+    { "real64_array4d", constructArrayRegex( realRegex, realDesc, 4 ) },
+    { "string", Regex( strERegex, strEDesc ) },
+    { "path", Regex( pathERegex, pathEDesc ) },
+    { "string_array", constructArrayRegex( strRegex, strDesc, 1 ) },
+    { "path_array", constructArrayRegex( pathRegex, pathDesc, 1 ) },
 
-    {string( CustomTypes::mapPair ), string( strRegexE )},
-    {string( CustomTypes::plotLevel ), string( intRegex )},
-    {string( CustomTypes::groupName ), string( groupNameRegex )},
-    {string( CustomTypes::groupNameRef ), string( groupNameRefRegexE )},
-    {string( CustomTypes::groupNameRefArray ), constructArrayRegex( groupNameRefRegexE, 1 )},
+    { string( CustomTypes::mapPair ), Regex( strERegex, strEDesc ) },
+    { string( CustomTypes::plotLevel ), Regex( intRegex, intDesc ) },
+    { string( CustomTypes::groupName ), Regex( groupNameRegex, groupNameDesc ) },
+    { string( CustomTypes::groupNameRef ), Regex( groupNameRefRegex, groupNameRefDesc ) },
+    { string( CustomTypes::groupNameRefArray ), constructArrayRegex( groupNameRefRegex, groupNameRefDesc, 1 ) }
   };
   return regexMap;
 }

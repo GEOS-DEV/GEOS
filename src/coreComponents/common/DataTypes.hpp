@@ -506,6 +506,25 @@ constexpr static localIndex unmappedLocalIndexValue = -1;
 void printTypeSummary();
 
 /**
+ * @brief The regular expression data for validating inputs. Use rtTypes to get the regex of a
+ * type, and TypeRegex< T > to define a type regex.
+ */
+struct Regex
+{
+  string m_regexStr;
+  string m_formatDescription;
+  /**
+   * @brief Default constructor
+   */
+  Regex() {}
+  /**
+   * @param regexStr the regex string for validation (eg. "[\\d]+")
+   * @param formatDescription the description of the expected format to be validated (eg. "Input value must be an integer.").
+   */
+  Regex( string_view regexStr, string_view formatDescription );
+};
+
+/**
  * @brief Extension point for custom types to provide a validation regexp to schema.
  * Do not use directly to obtain a type regex, rtTypes::getTypeRegex< T >() should be used instead.
  * @tparam T the type for which the regex is defined
@@ -520,10 +539,10 @@ template< typename T, typename ENABLE = void >
 struct TypeRegex
 {
   /**
-   * @brief Get the type's regex (default implementation).
-   * @return empty string, indicating no custom regex
+   * @brief Get the type's regex (default implementation returns nothing).
+   * @return The Regex associated with T.
    */
-  static string get() { return {}; }
+  static Regex get() { return {}; }
 };
 
 /**
@@ -533,7 +552,9 @@ struct TypeRegex
 class rtTypes
 {
 public:
-  using RegexMapType = std::map< string, string >;
+
+  // regex by rtType name
+  using RegexMapType = std::map< string, Regex >;
 
   struct CustomTypes
   {
@@ -557,7 +578,7 @@ public:
    * @return the regex string for the default rtType of T to validate input values to this type.
    */
   template< typename T >
-  static string getTypeRegex()
+  static Regex const & getTypeRegex()
   { return getTypeRegex< T >( getTypeName( typeid( T ) ) ); }
 
   /**
@@ -567,7 +588,7 @@ public:
    * @return a regex string validating the type T.
    */
   template< typename T >
-  static string getTypeRegex( string_view typeName )
+  static Regex const & getTypeRegex( string_view typeName )
   {
     RegexMapType & map = getTypeRegexMap();
     auto const it = map.find( string( typeName ) );

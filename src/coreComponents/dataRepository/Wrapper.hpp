@@ -459,7 +459,7 @@ public:
   { return wrapperHelpers::move( *m_data, space, touch ); }
 
   ///////////////////////////////////////////////////////////////////////////////////////////////////
-  virtual string getTypeRegex() const override
+  virtual Regex const & getTypeRegex() const override
   { return rtTypes::getTypeRegex< T >( m_rtTypeName ); }
 
   ///@}

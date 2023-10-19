@@ -161,7 +161,7 @@ public:
   /**
    * @return regex used to validate inputs of wrapped type
    */
-  virtual string getTypeRegex() const = 0;
+  virtual Regex const & getTypeRegex() const = 0;
 
   string const & getRTTypeName() const
   { return m_rtTypeName; }

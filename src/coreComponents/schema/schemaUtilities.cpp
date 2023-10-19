@@ -113,7 +113,7 @@ void BuildSimpleSchemaTypes( xmlWrapper::xmlNode schemaRoot )
   auto const regexes = rtTypes::createBasicTypesRegexMap();
   for( auto const & [typeName, regex] : regexes )
   {
-    AppendSimpleType( schemaRoot, getSchemaTypeName( typeName ), regex );
+    AppendSimpleType( schemaRoot, getSchemaTypeName( typeName ), regex.m_regexStr );
   }
 }
 
@@ -262,7 +262,7 @@ void SchemaConstruction( Group & group,
             // Check if the attribute has a previously unseen non-simple type with a custom validation regex
             if( schemaRoot.find_child_by_attribute( "xsd:simpleType", "name", schemaTypeName.c_str() ).empty() )
             {
-              string const & regex = wrapper.getTypeRegex();
+              string const & regex = wrapper.getTypeRegex().m_regexStr;
               if( !regex.empty() )
               {
                 // Append a new simpleType with a custom regex

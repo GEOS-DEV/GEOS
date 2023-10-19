@@ -20,7 +20,7 @@ using namespace geos;
 
 TEST( testXmlWrapper, array3d_errors )
 {
-  string const array3DIntRegex = rtTypes::getTypeRegex< array3d< int > >();
+  Regex const & array3DIntRegex = rtTypes::getTypeRegex< array3d< int > >();
   array3d< int > array;
 
   {
@@ -331,15 +331,13 @@ TEST( testXmlWrapper, testGroupNamesFormats )
 {
   struct GroupNameTest
   {
-    string m_regex;
+    Regex const & m_regex;
     string m_valueToTest;
-    GroupNameTest( string_view regex, string_view valueToTest ):
+    GroupNameTest( Regex const & regex, string_view valueToTest ):
       m_regex( regex ), m_valueToTest( valueToTest ) {}
   };
 
-  string const groupNameRegex = rtTypes::getTypeRegex< string >( rtTypes::CustomTypes::groupName );
-  string const groupNameRefRegex = rtTypes::getTypeRegex< string >( rtTypes::CustomTypes::groupNameRef );
-  string const groupNameRefArrayRegex = rtTypes::getTypeRegex< string >( rtTypes::CustomTypes::groupNameRefArray );
+  Regex const & groupNameRegex = rtTypes::getTypeRegex< string >( rtTypes::CustomTypes::groupName );
   string groupName;
 
   {
@@ -377,7 +375,7 @@ TEST( testXmlWrapper, testGroupNamesFormats )
     {
       EXPECT_THROW( xmlWrapper::stringToInputVariable( groupName, input.m_valueToTest, input.m_regex ),
                     InputError ) << "Parsing input '"<< input.m_valueToTest
-                                 << "' with regex '" << input.m_regex << "' didn't throw an InputError as expected.";
+                                 << "' with regex '" << input.m_regex.m_regexStr << "' didn't throw an InputError as expected.";
     }
   }
 }

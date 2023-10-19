@@ -31,24 +31,24 @@ using namespace dataRepository;
 namespace xmlWrapper
 {
 
-void validateString( string const & value, string const & regexStr )
+void validateString( string const & value, Regex const & regex )
 {
   std::smatch m;
-  bool inputValidated = std::regex_search( value, m, std::regex( regexStr ) );
+  bool inputValidated = std::regex_search( value, m, std::regex( regex.m_regexStr ) );
   if( !inputValidated || m.length() != ptrdiff_t( value.length() ) )
   {
     ptrdiff_t errorId = ( m.size()>0 && m.position( 0 )==0 ) ? m.length() : 0;
     GEOS_THROW( "Input string validation failed at:\n" <<
                 "  \"" << value << "\"\n   " << string( errorId, ' ' ) << "^\n" <<
-                "  With regex: \"" << regexStr << "\"",
+                "  Expected format: \"" << regex.m_formatDescription << "\"",
                 InputError );
   }
 }
 
 template< typename T, int SIZE >
-void stringToInputVariable( Tensor< T, SIZE > & target, string const & inputValue, string const & regexStr )
+void stringToInputVariable( Tensor< T, SIZE > & target, string const & inputValue, Regex const & regex )
 {
-  validateString( inputValue, regexStr );
+  validateString( inputValue, regex );
 
   std::istringstream ss( inputValue );
   auto const errorMsg = [&]( auto const & msg )
@@ -85,9 +85,9 @@ void stringToInputVariable( Tensor< T, SIZE > & target, string const & inputValu
   GEOS_THROW_IF( ss.peek() != std::char_traits< char >::eof(), errorMsg( "Unparsed characters" ), InputError );
 }
 
-template void stringToInputVariable( Tensor< real32, 3 > & target, string const & inputValue, string const & rtTypeName );
-template void stringToInputVariable( Tensor< real64, 3 > & target, string const & inputValue, string const & rtTypeName );
-template void stringToInputVariable( Tensor< real64, 6 > & target, string const & inputValue, string const & rtTypeName );
+template void stringToInputVariable( Tensor< real32, 3 > & target, string const & inputValue, Regex const & regex );
+template void stringToInputVariable( Tensor< real64, 3 > & target, string const & inputValue, Regex const & regex );
+template void stringToInputVariable( Tensor< real64, 6 > & target, string const & inputValue, Regex const & regex );
 
 /**
  * @brief Adds the filePath and character offset info on the node in filePathString
