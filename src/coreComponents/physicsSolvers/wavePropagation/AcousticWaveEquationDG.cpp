@@ -84,6 +84,8 @@ void AcousticWaveEquationDG::registerDataOnMesh( Group & meshBodies )
 
     nodeManager.registerField< wavesolverfields::FreeSurfaceNodeIndicator >( this->getName() );
 
+    nodeManager.registerField<wavesolverfields::MassVector>( getName() );
+
     FaceManager & faceManager = mesh.getFaceManager();
     faceManager.registerField< wavesolverfields::FreeSurfaceFaceIndicator >( this->getName() );
 
@@ -337,27 +339,73 @@ real64 AcousticWaveEquationDG::explicitStepInternal( real64 const & time_n,
 
     //arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X = nodeManager.referencePosition().toViewConst();
 
+    NodeManager & nodeManager = mesh.getNodeManager();
+
+
+    //Huum diagonal yes but... diagonal per element and not globally probably?..
+    arrayView1d< real32 const > const mass = nodeManager.getField< wavesolverfields::MassVector >();
+
     mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const regionIndex,
                                                                                           CellElementSubRegion & elementSubRegion )
     {
+
+      arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes = elementSubRegion.nodeList();
+
       arrayView1d< real32 const > const velocity = elementSubRegion.getField< wavesolverfields::MediumVelocity >();
       arrayView2d< real32 > const p_np1 = elementSubRegion.getField< wavesolverfields::PressureDG_np1 >();
       arrayView2d< real32 > const p_n = elementSubRegion.getField< wavesolverfields::PressureDG_n >();
       arrayView2d< real32 > const p_nm1 = elementSubRegion.getField< wavesolverfields::PressureDG_nm1 >();
+      arrayView2d< real32 > const stiffnessVector = elementSubRegion.getField< wavesolverfields::StiffnessVectorDG >();
       finiteElement::FiniteElementBase const &
       fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
       finiteElement::FiniteElementDispatchHandler< SEM_FE_TYPES >::dispatch3D( fe, [&] ( auto const finiteElement )
       {
         using FE_TYPE = TYPEOFREF( finiteElement );
+        constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
+
+
+        real64 const dt2 = dt*dt;
         //TODO: Add the launch calling for flux + volumic computation
+        forAll< EXEC_POLICY >( elementSubRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const k )
+        {
+          for (localIndex i = 0; i < numNodesPerElem; ++i)
+          {
+            p_np1[k][i] = p_n[k][i];
+            p_np1[k][i] *= 2.0*mass[elemsToNodes[k][i]];
+            p_np1[k][i] -= (mass[elemsToNodes[k][i]])*p_nm1[k][i];
+            //How do we inject the rhs efficiently? Not possible with a global array because we will inject too much 
+            p_np1[k][i] += dt2*(stiffnessVector[k][i]);
+            p_np1[k][i] /= mass[elemsToNodes[k][i]];
+
+          }
+          
+        } );
+
+        // compute the seismic traces since last step.
+        arrayView2d< real32 > const pReceivers   = m_pressureNp1AtReceivers.toView();
+        compute2dVariableAllSeismoTraces( time_n, regionIndex, dt, p_np1, p_n, pReceivers );
+
+
+        forAll< EXEC_POLICY >( elementSubRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const k )
+        {
+          for (localIndex i = 0; i < numNodesPerElem; ++i)
+          {
+            p_nm1[k][i] = p_n[k][i];
+            p_n[k][i] = p_np1[k][i];
+          }
+          
+        } );
+    
+
       } );
 
-      // compute the seismic traces since last step.
-      arrayView2d< real32 > const pReceivers   = m_pressureNp1AtReceivers.toView();
-      compute2dVariableAllSeismoTraces( time_n, regionIndex, dt, p_np1, p_n, pReceivers );
-
+    
+      
+      
 
     } );
+
+
 
     FieldIdentifiers fieldsToBeSync;
     fieldsToBeSync.addElementFields( {wavesolverfields::PressureDG_nm1::key(), wavesolverfields::PressureDG_n::key(), wavesolverfields::Pressure_np1::key()}, regionNames );
