@@ -582,14 +582,15 @@ public:
 struct SolutionCheckKernel
 {
   template< typename POLICY >
-  static localIndex launch( arrayView1d< real64 const > const & localSolution,
-                            globalIndex const rankOffset,
-                            arrayView1d< globalIndex const > const & dofNumber,
-                            arrayView1d< integer const > const & ghostRank,
-                            arrayView1d< real64 const > const & pres,
-                            real64 const scalingFactor )
+  static std::pair< integer, real64 > launch( arrayView1d< real64 const > const & localSolution,
+                                              globalIndex const rankOffset,
+                                              arrayView1d< globalIndex const > const & dofNumber,
+                                              arrayView1d< integer const > const & ghostRank,
+                                              arrayView1d< real64 const > const & pres,
+                                              real64 const scalingFactor )
   {
-    RAJA::ReduceMin< ReducePolicy< POLICY >, localIndex > minVal( 1 );
+    RAJA::ReduceSum< ReducePolicy< POLICY >, integer > numNegativePressures( 0 );
+    RAJA::ReduceMin< ReducePolicy< POLICY >, integer > minValue( 0 );
 
     forAll< POLICY >( dofNumber.size(), [=] GEOS_HOST_DEVICE ( localIndex const ei )
     {
@@ -600,13 +601,14 @@ struct SolutionCheckKernel
 
         if( newPres < 0.0 )
         {
-          minVal.min( 0 );
+          numNegativePressures += 1;
+          minValue.min( newPres );
         }
       }
 
     } );
 
-    return minVal.get();
+    return { numNegativePressures.get(), minValue.get() };
   }
 
 };
@@ -620,11 +622,8 @@ struct ScalingForSystemSolutionKernel
                                              globalIndex const rankOffset,
                                              arrayView1d< globalIndex const > const & dofNumber,
                                              arrayView1d< integer const > const & ghostRank,
-                                             arrayView1d< real64 const > const & pres )
+                                             real64 const maxAllowedPressureChange )
   {
-    real64 constexpr eps = 1e-10;
-    real64 const maxRelativePresChange = 0.1;
-
     RAJA::ReduceMin< ReducePolicy< POLICY >, real64 > scalingFactor( 1.0 );
     RAJA::ReduceMax< ReducePolicy< POLICY >, real64 > maxDeltaPres( 0.0 );
 
@@ -638,16 +637,17 @@ struct ScalingForSystemSolutionKernel
         real64 const absPresChange = LvArray::math::abs( localSolution[lid] );
         maxDeltaPres.max( absPresChange );
 
-        if( absPresChange > 1e8 )
+        // maxAllowedPressureChange <= 0.0 means that scaling is disabled, and we are only collecting maxDeltaPres in this kernel
+        if( maxAllowedPressureChange > 0.0 && absPresChange > maxAllowedPressureChange )
         {
-          real64 const presScalingFactor = absPresChange / 1e10;
+          real64 const presScalingFactor = maxAllowedPressureChange / absPresChange;
           scalingFactor.min( presScalingFactor );
         }
       }
 
     } );
 
-    return {scalingFactor.get(), maxDeltaPres.get()};
+    return { scalingFactor.get(), maxDeltaPres.get() };
   }
 
 };

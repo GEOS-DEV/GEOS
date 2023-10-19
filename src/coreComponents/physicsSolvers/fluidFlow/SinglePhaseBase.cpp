@@ -58,6 +58,17 @@ SinglePhaseBase::SinglePhaseBase( const string & name,
     setApplyDefaultValue( 0.0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Temperature" );
+
+  this->registerWrapper( viewKeyStruct::maxPressureChangeString(), &m_maxPressureChange ).
+    setSizedFromParent( 0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( -1.0 ).   // disabled by default
+    setDescription( "Maximum (absolute) pressure change in a Newton iteration" );
+
+  this->registerWrapper( viewKeyStruct::allowNegativePressureString(), &m_allowNegativePressure ).
+    setApplyDefaultValue( 0 ). // by default not allowed
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Flag indicating if negative pressure is allowed" );
 }
 
 
@@ -1278,11 +1289,10 @@ real64 SinglePhaseBase::scalingForSystemSolution( DomainPartition & domain,
       globalIndex const rankOffset = dofManager.rankOffset();
       arrayView1d< globalIndex const > const dofNumber = subRegion.getReference< array1d< globalIndex > >( dofKey );
       arrayView1d< integer const > const ghostRank = subRegion.ghostRank();
-      arrayView1d< real64 const > const pres = subRegion.getField< fields::flow::pressure >();
 
       auto const subRegionData =
         singlePhaseBaseKernels::ScalingForSystemSolutionKernel::
-          launch< parallelDevicePolicy<> >( localSolution, rankOffset, dofNumber, ghostRank, pres );
+          launch< parallelDevicePolicy<> >( localSolution, rankOffset, dofNumber, ghostRank, m_maxPressureChange );
 
       scalingFactor = std::min( scalingFactor, subRegionData.first );
       maxDeltaPres  = std::max( maxDeltaPres, subRegionData.second );
@@ -1305,10 +1315,9 @@ bool SinglePhaseBase::checkSystemSolution( DomainPartition & domain,
 {
   GEOS_MARK_FUNCTION;
 
-  return 1;
-
   string const dofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
-  integer localCheck = 1;
+  integer numNegativePressures = 0;
+  real64 minPressure = 0.0;
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel & mesh,
@@ -1324,15 +1333,22 @@ bool SinglePhaseBase::checkSystemSolution( DomainPartition & domain,
       arrayView1d< real64 const > const pres = subRegion.getField< fields::flow::pressure >();
       arrayView1d< real64 const > const mob = subRegion.getField< fields::flow::mobility >();
 
-      integer const subRegionSolutionCheck =
+      auto const statistics =
         singlePhaseBaseKernels::SolutionCheckKernel::
           launch< parallelDevicePolicy<> >( localSolution, rankOffset, dofNumber, ghostRank, pres, scalingFactor );
 
-      localCheck = std::min( localCheck, subRegionSolutionCheck );
+      numNegativePressures += statistics.first;
+      minPressure = std::min( minPressure, statistics.second );
     } );
   } );
 
-  return MpiWrapper::min( localCheck );
+  numNegativePressures = MpiWrapper::sum( numNegativePressures );
+
+  if( numNegativePressures > 0 )
+    GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "        {}: Number of negative pressure values: {}, minimum value: {} Pa",
+                                        getName(), numNegativePressures, fmt::format( "{:.{}f}", minPressure, 3 ) ) );
+
+  return (m_allowNegativePressure || numNegativePressures == 0) ?  1 : 0;
 }
 
 } /* namespace geos */
