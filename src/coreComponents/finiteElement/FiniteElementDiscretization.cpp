@@ -56,9 +56,6 @@ FiniteElementDiscretization::~FiniteElementDiscretization()
 
 void FiniteElementDiscretization::postProcessInput()
 {
-//  GEOS_ERROR_IF_NE_MSG( m_order, 1, "Higher order finite element spaces are currently not supported." );
-  // GEOS_ERROR_IF( m_formulation != "default" && m_formulation != "SEM",
-  //                getDataContext() << ": Only standard element formulations and spectral element formulations are currently supported." );
   GEOS_ERROR_IF( m_useVem < 0 || m_useVem > 1,
                  getDataContext() << ": The flag useVirtualElements can be either 0 or 1" );
 }
