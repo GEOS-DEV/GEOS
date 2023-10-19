@@ -35,17 +35,21 @@ std::string InsertExMsg( std::string const & originalMsg, std::string const & ms
 
   size_t insertPos = 0;
   // for readability purposes, we try to insert the message after the "***** Rank N: " or after "***** " instead of at the top.
-  static auto constexpr rankLogStart =  "***** Rank ";
-  static auto constexpr rankLogEnd =  ": ";
-  static auto constexpr simpleLogStart =  "***** ";
+  static string_view constexpr rankLogStart =  "***** Rank ";
+  static string_view constexpr rankLogEnd =  ": ";
+  static string_view constexpr simpleLogStart =  "***** ";
   if( ( insertPos = newMsg.find( rankLogStart ) ) != std::string::npos )
   {
-    insertPos = newMsg.find( rankLogEnd, insertPos + stringutilities::cstrlen( rankLogStart ) )
-                + stringutilities::cstrlen( rankLogEnd );
+    insertPos = newMsg.find( rankLogEnd, insertPos + rankLogStart.size() )
+                + rankLogEnd.size();
   }
-  else if( ( insertPos = newMsg.find_last_of( simpleLogStart ) ) != std::string::npos )
+  else if( ( insertPos = newMsg.rfind( simpleLogStart ) ) != std::string::npos )
   {
-    insertPos += stringutilities::cstrlen( simpleLogStart );
+    insertPos += simpleLogStart.size();
+  }
+  else
+  {
+    insertPos = 0;
   }
   newMsg.insert( insertPos, msgToInsert );
   return newMsg;
