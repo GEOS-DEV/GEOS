@@ -385,7 +385,7 @@ namespace internal
 
 /// Defines a static constexpr bool canParseVariable that is true iff the template parameter T
 /// is a valid argument to StringToInputVariable.
-IS_VALID_EXPRESSION( canParseVariable, T, stringToInputVariable( std::declval< T & >(), string(), string() ) );
+IS_VALID_EXPRESSION( canParseVariable, T, stringToInputVariable( std::declval< T & >(), string(), Regex() ) );
 
 /**
  * @brief Set @p lhs equal to @p rhs.
