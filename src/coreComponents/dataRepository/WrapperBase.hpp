@@ -651,15 +651,6 @@ protected:
   void createDataContext( xmlWrapper::xmlNode const & targetNode,
                           xmlWrapper::xmlNodePos const & nodePos );
 
-  /**
-   * @brief Helper method to process an exception that has been thrown during xml parsing.
-   * @param ex The caught exception.
-   * @param targetNode The node from which this Group is interpreted.
-   * @param nodePos the target node position.
-   */
-  void processInputException( std::exception const & ex, xmlWrapper::xmlNode const & targetNode,
-                              xmlWrapper::xmlNodePos const & nodePos ) const;
-
 protected:
 
   /// Name of the object that is being wrapped

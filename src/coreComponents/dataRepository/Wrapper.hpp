@@ -640,7 +640,7 @@ public:
       }
       catch( std::exception const & ex )
       {
-        processInputException( ex, targetNode, nodePos );
+        xmlWrapper::processInputException( ex, getName(), targetNode, nodePos );
       }
 
       if( m_successfulReadFromInput )

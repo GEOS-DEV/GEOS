@@ -45,6 +45,75 @@ void validateString( string const & value, Regex const & regex )
   }
 }
 
+void processInputException( std::exception const & ex, string const & targetAttributeName,
+                            xmlNode const & targetNode,
+                            xmlNodePos const & nodePos )
+{
+  xmlAttribute const attribute = targetNode.attribute( targetAttributeName.c_str() );
+  string const inputStr = string( attribute.value() );
+  std::ostringstream oss;
+  string const exStr = ex.what();
+
+  oss << "***** XML parsing error at node ";
+  if( nodePos.isFound() )
+  {
+    xmlAttributePos const attPos = nodePos.getAttributeLine( targetAttributeName );
+    string const & filePath = attPos.isFound() ? attPos.filePath : nodePos.filePath;
+    int const line = attPos.isFound() ? attPos.line : nodePos.line;
+    oss << "named " << targetNode.name() << ", attribute " << targetAttributeName
+        << " (" << splitPath( filePath ).second << ", l." << line << ").";
+  }
+  else
+  {
+    oss << targetNode.path() << " (name='" << targetNode.attribute( "name" ).value() << "')/"
+        << targetAttributeName;
+  }
+  oss << "\n***** Input value: '" << inputStr << '\'';
+  oss << ( exStr[0]=='\n' ? exStr : "\n" + exStr );
+
+  throw InputError( oss.str() );
+}
+// void processInputException( std::exception const & ex, string const & targetAttributeName,
+//                             xmlNode const & targetNode,
+//                             xmlNodePos const & nodePos )
+// {
+//   xmlAttribute const attribute = targetNode.attribute( targetAttributeName.c_str() );
+//   string const inputStr = string( attribute.value() );
+//   std::ostringstream oss;
+//   string const exStr = ex.what();
+
+//   oss << "***** XML parsing error at node ";
+//   if( nodePos.isFound() )
+//   {
+//     std::cout<<"A"<<std::endl;
+//     xmlAttributePos const attPos = nodePos.getAttributeLine( targetAttributeName );
+//     std::cout<<"B"<<std::endl;
+//     string const & filePath = attPos.isFound() ? attPos.filePath : nodePos.filePath;
+//     int const line = attPos.isFound() ? attPos.line : nodePos.line;
+//     std::cout<<"C"<<std::endl;
+//     oss << "named " << targetNode.name() << ", attribute " << targetAttributeName
+//         << " (" << splitPath( filePath ).second << ", l." << line << ").";
+//     std::cout<<"D"<<std::endl;
+//   }
+//   else
+//   {
+//     std::cout<<"E"<<std::endl;
+//     oss << targetNode.path() << " (name='" << targetNode.attribute( "name" ).value() << "')/"
+//         << targetAttributeName;
+//     std::cout<<"F"<<std::endl;
+//   }
+//   oss << "\n***** Input value: '" << inputStr << '\'';
+//   oss << ( exStr[0]=='\n' ? exStr : "\n" + exStr );
+
+//     std::cout<<"Z"<<std::endl;
+//     std::cout<<std::endl;
+//     std::cout<<"error {"<<std::endl;
+//     std::cout<<oss.str()<<std::endl;
+//     std::cout<<"}"<<std::endl;
+//     std::cout<<std::endl;
+//   throw InputError( oss.str() );
+// }
+
 template< typename T, int SIZE >
 void stringToInputVariable( Tensor< T, SIZE > & target, string const & inputValue, Regex const & regex )
 {

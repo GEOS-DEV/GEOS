@@ -767,6 +767,14 @@ public:
    */
   void processInputFileRecursive( xmlWrapper::xmlDocument & xmlDocument,
                                   xmlWrapper::xmlNode & targetNode );
+  /**
+   * @brief Same as processInputFileRecursive(xmlWrapper::xmlDocument &, xmlWrapper::xmlNode &)
+   * but allow to reuse an existing xmlNodePos.
+   * @param[in] nodePos the target node position, typically obtained with xmlDocument::getNodePosition().
+   */
+  void processInputFileRecursive( xmlWrapper::xmlDocument & xmlDocument,
+                                  xmlWrapper::xmlNode & targetNode,
+                                  xmlWrapper::xmlNodePos const & nodePos );
 
   /**
    * @brief Recursively call postProcessInput() to apply post processing after
@@ -1522,10 +1530,12 @@ private:
   /**
    * @brief Read values from the input file and put them into the
    *   wrapped values for this group.
-   * @param[in] targetNode the XML node that to extract input values from.
+   * @param[in] xmlDocument the XML document that contains the targetNode
+   * @param[in] targetNode the XML node that to extract input values from
+   * @param[in] nodePos the target node position, typically obtained with xmlDocument::getNodePosition()
    */
-  virtual void processInputFile( xmlWrapper::xmlDocument const & xmlDocument,
-                                 xmlWrapper::xmlNode const & targetNode );
+  virtual void processInputFile( xmlWrapper::xmlNode const & targetNode,
+                                 xmlWrapper::xmlNodePos const & nodePos );
 
   Group const & getBaseGroupByPath( string const & path ) const;
 

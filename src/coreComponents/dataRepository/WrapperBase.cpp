@@ -120,34 +120,6 @@ void WrapperBase::createDataContext( xmlWrapper::xmlNode const & targetNode,
   }
 }
 
-void WrapperBase::processInputException( std::exception const & ex,
-                                         xmlWrapper::xmlNode const & targetNode,
-                                         xmlWrapper::xmlNodePos const & nodePos ) const
-{
-  xmlWrapper::xmlAttribute const & attribute = targetNode.attribute( getName().c_str() );
-  string const inputStr = string( attribute.value() );
-  xmlWrapper::xmlAttributePos const attPos = nodePos.getAttributeLine( getName() );
-  std::ostringstream oss;
-  string const exStr = ex.what();
-
-  oss << "***** XML parsing error at node ";
-  if( nodePos.isFound() )
-  {
-    string const & filePath = attPos.isFound() ? attPos.filePath : nodePos.filePath;
-    int const line = attPos.isFound() ? attPos.line : nodePos.line;
-    oss << "named " << m_parent->getName() << ", attribute " << getName()
-        << " (" << splitPath( filePath ).second << ", l." << line << ").";
-  }
-  else
-  {
-    oss << targetNode.path() << " (name=" << targetNode.attribute( "name" ).value() << ")/" << getName();
-  }
-  oss << "\n***** Input value: '" << inputStr << '\'';
-  oss << ( exStr[0]=='\n' ? exStr : "'\n" + exStr );
-
-  throw InputError( oss.str() );
-}
-
 
 }
 } /* namespace geos */

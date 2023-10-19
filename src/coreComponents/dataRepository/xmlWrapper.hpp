@@ -322,6 +322,16 @@ bool isFileMetadataAttribute( string const & name );
  */
 void validateString( string const & value, Regex const & regex );
 
+/**
+ * @brief Helper method to process an exception that has been thrown during xml parsing.
+ * @param ex The caught exception.
+ * @param targetNode The node from which this Group is interpreted.
+ * @param nodePos the target node position.
+ * @throw An InputError with the node & attribut info, including the nearest xml line possible.
+ */
+void processInputException( std::exception const & ex, string const & targetAttributeName,
+                            xmlWrapper::xmlNode const & targetNode,
+                            xmlWrapper::xmlNodePos const & nodePos );
 
 /**
  * @brief Parse a string and fill a variable with the value(s) in the string.
