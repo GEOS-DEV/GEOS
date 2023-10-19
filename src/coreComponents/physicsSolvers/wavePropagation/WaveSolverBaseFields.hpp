@@ -426,6 +426,16 @@ DECLARE_FIELD( PressureDG_nm1,
                "Scalar pressure at time n-1 for discontinuous galerkin solver." );
 
 
+//Stiffness array for DG
+DECLARE_FIELD( StiffnessVectorDG,                                                  
+               "stiffnessVector for DG",                                                  
+               array2d< real32 >,                                               
+               0,                                                               
+               LEVEL_0,                                                         
+               WRITE_AND_READ,                                                  
+               "2D array containing the stiffness+fluxes contribution for DG." );
+
+
 }
 
 }

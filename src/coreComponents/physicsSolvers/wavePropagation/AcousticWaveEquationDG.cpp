@@ -96,6 +96,7 @@ void AcousticWaveEquationDG::registerDataOnMesh( Group & meshBodies )
       subRegion.registerField< wavesolverfields::PressureDG_nm1 >( this->getName() );
       subRegion.registerField< wavesolverfields::PressureDG_n >( this->getName() );
       subRegion.registerField< wavesolverfields::PressureDG_np1 >( this->getName() );
+      subRegion.registerField< wavesolverfields::StiffnessVectorDG >( this->getName() );
 
       finiteElement::FiniteElementBase const & fe = subRegion.getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
 
@@ -109,6 +110,7 @@ void AcousticWaveEquationDG::registerDataOnMesh( Group & meshBodies )
         subRegion.getField< wavesolverfields::PressureDG_nm1 >().resizeDimension< 1 >( numNodesPerElem );
         subRegion.getField< wavesolverfields::PressureDG_n >().resizeDimension< 1 >( numNodesPerElem );
         subRegion.getField< wavesolverfields::PressureDG_np1 >().resizeDimension< 1 >( numNodesPerElem );
+        subRegion.getField< wavesolverfields::StiffnessVectorDG >().resizeDimension< 1 >( numNodesPerElem );
 
       } );
 
