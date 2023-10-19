@@ -66,7 +66,7 @@ SinglePhaseBase::SinglePhaseBase( const string & name,
     setDescription( "Maximum (absolute) pressure change in a Newton iteration" );
 
   this->registerWrapper( viewKeyStruct::allowNegativePressureString(), &m_allowNegativePressure ).
-    setApplyDefaultValue( 0 ). // by default not allowed
+    setApplyDefaultValue( 0 ). // by default not allowed, except fot HydrofractureSolver
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Flag indicating if negative pressure is allowed" );
 }
