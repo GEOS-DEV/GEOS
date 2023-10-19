@@ -17,8 +17,8 @@
  * @file Group.hpp
  */
 
-#ifndef GEOSX_DATAREPOSITORY_GROUP_HPP_
-#define GEOSX_DATAREPOSITORY_GROUP_HPP_
+#ifndef GEOS_DATAREPOSITORY_GROUP_HPP_
+#define GEOS_DATAREPOSITORY_GROUP_HPP_
 
 #include "InputFlags.hpp"
 #include "ObjectCatalog.hpp"
@@ -38,7 +38,7 @@
 /**
  * namespace to encapsulate GEOSX
  */
-namespace geosx
+namespace geos
 {
 
 /**
@@ -164,6 +164,16 @@ public:
    * @brief @return a table formatted string containing all input options.
    */
   string dumpInputOptions() const;
+
+  /**
+   * @brief @return a comma separated string containing all sub groups name.
+   */
+  string dumpSubGroupsNames() const;
+
+  /**
+   * @brief @return a comma separated string containing all wrappers name.
+   */
+  string dumpWrappersNames() const;
 
   ///@}
 
@@ -323,7 +333,11 @@ public:
   T & getGroup( KEY const & key )
   {
     Group * const child = m_subGroups[ key ];
-    GEOSX_THROW_IF( child == nullptr, "Group " << getPath() << " doesn't have a child " << key, std::domain_error );
+    GEOS_THROW_IF( child == nullptr,
+                   "Group " << getDataContext() << " has no child named " << key << std::endl
+                            << dumpSubGroupsNames(),
+                   std::domain_error );
+
     return dynamicCast< T & >( *child );
   }
 
@@ -334,7 +348,11 @@ public:
   T const & getGroup( KEY const & key ) const
   {
     Group const * const child = m_subGroups[ key ];
-    GEOSX_THROW_IF( child == nullptr, "Group " << getPath() << " doesn't have a child " << key, std::domain_error );
+    GEOS_THROW_IF( child == nullptr,
+                   "Group " << getDataContext() << " has no child named " << key << std::endl
+                            << dumpSubGroupsNames(),
+                   std::domain_error );
+
     return dynamicCast< T const & >( *child );
   }
 
@@ -381,6 +399,11 @@ public:
   localIndex numSubGroups() const { return m_subGroups.size(); }
 
   /**
+   * @return An array containing all sub groups keys
+   */
+  std::vector< string > getSubGroupsNames() const;
+
+  /**
    * @brief Check whether a sub-group exists.
    * @param name the name of sub-group to search for
    * @return @p true if sub-group exists, @p false otherwise
@@ -388,6 +411,21 @@ public:
   template< typename T = Group >
   bool hasGroup( string const & name ) const
   { return dynamicCast< T const * >( m_subGroups[ name ] ) != nullptr; }
+
+  /**
+   * @brief Check whether a sub-group exists by type.
+   * @tparam T The type of sub-group to search for
+   * @return @p true if sub-group of type T exists, @p false otherwise
+   */
+  template< typename T >
+  bool hasSubGroupOfType( ) const
+  {
+    bool hasSubGroup = false;
+    // since forSubGroups only applies the lambda to groups matching the type,
+    //   any calls to the lambda indicates that we have a subgroup of the correct type.
+    forSubGroups< T >( [&]( T const & ){ hasSubGroup = true; } );
+    return hasSubGroup;
+  }
 
   ///@}
 
@@ -722,10 +760,13 @@ public:
 
   /**
    * @brief Recursively read values using ProcessInputFile() from the input
-   *        file and put them into the wrapped values for this group.
+   * file and put them into the wrapped values for this group.
+   * Also add the includes content to the xmlDocument when `Include` nodes are encountered.
+   * @param[in] xmlDocument the XML document that contains the targetNode
    * @param[in] targetNode the XML node that to extract input values from.
    */
-  void processInputFileRecursive( xmlWrapper::xmlNode & targetNode );
+  void processInputFileRecursive( xmlWrapper::xmlDocument & xmlDocument,
+                                  xmlWrapper::xmlNode & targetNode );
 
   /**
    * @brief Recursively call postProcessInput() to apply post processing after
@@ -839,9 +880,9 @@ public:
                                     xmlWrapper::xmlNode schemaParent,
                                     integer documentationType )
   {
-    GEOSX_UNUSED_VAR( schemaRoot );
-    GEOSX_UNUSED_VAR( schemaParent );
-    GEOSX_UNUSED_VAR( documentationType );
+    GEOS_UNUSED_VAR( schemaRoot );
+    GEOS_UNUSED_VAR( schemaParent );
+    GEOS_UNUSED_VAR( documentationType );
   }
 
   ///@}
@@ -866,7 +907,7 @@ public:
    */
   virtual void registerDataOnMesh( Group & meshBodies )
   {
-    GEOSX_UNUSED_VAR( meshBodies );
+    GEOS_UNUSED_VAR( meshBodies );
   }
 
   ///@}
@@ -1047,7 +1088,11 @@ public:
   WrapperBase const & getWrapperBase( KEY const & key ) const
   {
     WrapperBase const * const wrapper = m_wrappers[ key ];
-    GEOSX_THROW_IF( wrapper == nullptr, "Group " << getPath() << " doesn't have a child " << key, std::domain_error );
+    GEOS_THROW_IF( wrapper == nullptr,
+                   "Group " << getDataContext() << " has no wrapper named " << key << std::endl
+                            << dumpWrappersNames(),
+                   std::domain_error );
+
     return *wrapper;
   }
 
@@ -1058,7 +1103,11 @@ public:
   WrapperBase & getWrapperBase( KEY const & key )
   {
     WrapperBase * const wrapper = m_wrappers[ key ];
-    GEOSX_THROW_IF( wrapper == nullptr, "Group " << getPath() << " doesn't have a child " << key, std::domain_error );
+    GEOS_THROW_IF( wrapper == nullptr,
+                   "Group " << getDataContext() << " has no wrapper named " << key << std::endl
+                            << dumpWrappersNames(),
+                   std::domain_error );
+
     return *wrapper;
   }
 
@@ -1089,6 +1138,11 @@ public:
    */
   indexType numWrappers() const
   { return m_wrappers.size(); }
+
+  /**
+   * @return An array containing all wrappers keys
+   */
+  std::vector< string > getWrappersNames() const;
 
   ///@}
 
@@ -1182,7 +1236,7 @@ public:
    * @throw A std::domain_error if the Wrapper does not exist.
    */
   template< typename T, typename LOOKUP_TYPE >
-  GEOSX_DECLTYPE_AUTO_RETURN
+  GEOS_DECLTYPE_AUTO_RETURN
   getReference( LOOKUP_TYPE const & lookup ) const
   { return getWrapper< T >( lookup ).reference(); }
 
@@ -1244,9 +1298,28 @@ public:
 
   /**
    * @brief Return the path of this Group in the data repository.
+   * Starts with '/' followed by the hierarchy of the children of the "Problem" in which the Group is.
    * @return The path of this group in the data repository.
    */
   string getPath() const;
+
+  /**
+   * @return DataContext object that that stores contextual information on this group that can be
+   * used in output messages.
+   */
+  DataContext const & getDataContext() const
+  { return *m_dataContext; }
+
+  /**
+   * @return DataContext object that that stores contextual information on a wrapper contained by
+   * this group that can be used in output messages.
+   * @tparam KEY The lookup type.
+   * @param key The value used to lookup the wrapper.
+   * @throw std::domain_error if the wrapper doesn't exist.
+   */
+  template< typename KEY >
+  DataContext const & getWrapperDataContext( KEY key ) const
+  { return getWrapperBase< KEY >( key ).getDataContext(); }
 
   /**
    * @brief Access the group's parent.
@@ -1255,7 +1328,7 @@ public:
    */
   Group & getParent()
   {
-    GEOSX_THROW_IF( m_parent == nullptr, "Group at " << getPath() << " does not have a parent.", std::domain_error );
+    GEOS_THROW_IF( m_parent == nullptr, "Group at " << getDataContext() << " does not have a parent.", std::domain_error );
     return *m_parent;
   }
 
@@ -1264,9 +1337,15 @@ public:
    */
   Group const & getParent() const
   {
-    GEOSX_THROW_IF( m_parent == nullptr, "Group at " << getPath() << " does not have a parent.", std::domain_error );
+    GEOS_THROW_IF( m_parent == nullptr, "Group at " << getDataContext() << " does not have a parent.", std::domain_error );
     return *m_parent;
   }
+
+  /**
+   * @return true if this group has a parent.
+   */
+  bool hasParent() const
+  { return m_parent != nullptr; }
 
   /**
    * @brief Get the group's index within its parent group
@@ -1286,7 +1365,7 @@ public:
    * @brief Check whether this Group is resized when its parent is resized.
    * @return @p true if Group is resized with parent group, @p false otherwise
    */
-  integer sizedFromParent() const
+  int sizedFromParent() const
   { return m_sizedFromParent; }
 
   /**
@@ -1333,8 +1412,8 @@ public:
    */
   virtual bool registerCallback( void * func, const std::type_info & funcType )
   {
-    GEOSX_UNUSED_VAR( func );
-    GEOSX_UNUSED_VAR( funcType );
+    GEOS_UNUSED_VAR( func );
+    GEOS_UNUSED_VAR( funcType );
     return false;
   }
 
@@ -1445,7 +1524,8 @@ private:
    *   wrapped values for this group.
    * @param[in] targetNode the XML node that to extract input values from.
    */
-  virtual void processInputFile( xmlWrapper::xmlNode const & targetNode );
+  virtual void processInputFile( xmlWrapper::xmlDocument const & xmlDocument,
+                                 xmlWrapper::xmlNode const & targetNode );
 
   Group const & getBaseGroupByPath( string const & path ) const;
 
@@ -1507,6 +1587,10 @@ private:
 
   /// Reference to the conduit::Node that mirrors this group
   conduit::Node & m_conduitNode;
+
+  /// A DataContext object used to provide contextual information on this Group,
+  /// if it is created from an input XML file, the line or offset in that file.
+  std::unique_ptr< DataContext > m_dataContext;
 
 };
 
@@ -1591,6 +1675,6 @@ Wrapper< T > & Group::registerWrapper( string const & name,
 }
 
 } /* end namespace dataRepository */
-} /* end namespace geosx */
+} /* end namespace geos */
 
-#endif /* GEOSX_DATAREPOSITORY_GROUP_HPP_ */
+#endif /* GEOS_DATAREPOSITORY_GROUP_HPP_ */

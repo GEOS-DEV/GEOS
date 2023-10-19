@@ -28,7 +28,7 @@
 /// System includes
 #include <regex>
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -41,7 +41,7 @@ void ConvertDocumentationToSchema( string const & fname,
                                    Group * const group,
                                    integer documentationType )
 {
-  GEOSX_LOG_RANK_0( "Generating XML Schema..." );
+  GEOS_LOG_RANK_0( "Generating XML Schema..." );
 
   string schemaBase=
     "<?xml version=\"1.1\" encoding=\"ISO-8859-1\" ?>\
@@ -52,22 +52,22 @@ void ConvertDocumentationToSchema( string const & fname,
   </xsd:schema>";
 
   xmlWrapper::xmlDocument schemaTree;
-  schemaTree.load_string( schemaBase.c_str());
-  xmlWrapper::xmlNode schemaRoot = schemaTree.child( "xsd:schema" );
+  schemaTree.loadString( schemaBase );
+  xmlWrapper::xmlNode schemaRoot = schemaTree.getChild( "xsd:schema" );
 
   // Build the simple schema types
-  GEOSX_LOG_RANK_0( "  Basic datatypes" );
+  GEOS_LOG_RANK_0( "  Basic datatypes" );
   BuildSimpleSchemaTypes( schemaRoot );
 
   // Recursively build the schema from the data structure skeleton
-  GEOSX_LOG_RANK_0( "  Data structure layout" );
+  GEOS_LOG_RANK_0( "  Data structure layout" );
   SchemaConstruction( *group, schemaRoot, schemaRoot, documentationType );
 
   // Write the schema to file
-  GEOSX_LOG_RANK_0( "  Saving file" );
-  schemaTree.save_file( fname.c_str());
+  GEOS_LOG_RANK_0( "  Saving file" );
+  schemaTree.saveFile( fname );
 
-  GEOSX_LOG_RANK_0( "  Done!" );
+  GEOS_LOG_RANK_0( "  Done!" );
 }
 
 void AppendSimpleType( xmlWrapper::xmlNode & schemaRoot,
@@ -85,7 +85,7 @@ void AppendSimpleType( xmlWrapper::xmlNode & schemaRoot,
   // Handle the default regex
   if( regex.empty() )
   {
-    GEOSX_WARNING( "schema regex not defined for " << name );
+    GEOS_WARNING( "schema regex not defined for " << name );
     patternNode.append_attribute( "value" ) = "(?s).*";
   }
   else
@@ -176,7 +176,8 @@ void SchemaConstruction( Group & group,
             // Enforce uniqueness of element names
             // Note: this must be done at the parent element level
             xmlWrapper::xmlNode uniqueNameNode = targetIncludeNode.append_child( "xsd:unique" );
-            string uniqueNameNodeStr = targetName + subName + "UniqueName";
+            string path = std::regex_replace( group.getPath(), std::regex( "/" ), "" );
+            string uniqueNameNodeStr =  path + subName + "UniqueName";
             uniqueNameNode.append_attribute( "name" ) = uniqueNameNodeStr.c_str();
             xmlWrapper::xmlNode uniqueNameSelector = uniqueNameNode.append_child( "xsd:selector" );
             uniqueNameSelector.append_attribute( "xpath" ) = subName.c_str();
@@ -232,7 +233,7 @@ void SchemaConstruction( Group & group,
               commentString += " => " + stringutilities::join( registrars.begin(), registrars.end(), ", " );
             }
 
-            xmlWrapper::xmlNode commentNode = targetTypeDefNode.append_child( xmlWrapper::xmlTypes::node_comment );
+            xmlWrapper::xmlNode commentNode = targetTypeDefNode.append_child( xmlWrapper::xmlNodeType::node_comment );
             commentNode.set_value( commentString.c_str());
 
 
@@ -246,8 +247,8 @@ void SchemaConstruction( Group & group,
 
             // Note: Some type names involving strings can vary on compiler and be ugly.  Convert these to "string"
             string const xmlSafeName = std::regex_replace( sanitizedName, std::regex( "std_(__cxx11_basic_)?string(<\\s*char,\\s*std_char_traits<char>,\\s*std_allocator<char>\\s*>)?" ), "string" );
-            GEOSX_LOG_VAR( wrappedTypeName );
-            GEOSX_LOG_VAR( xmlSafeName );
+            GEOS_LOG_VAR( wrappedTypeName );
+            GEOS_LOG_VAR( xmlSafeName );
             attributeNode.append_attribute( "type" ) = xmlSafeName.c_str();
 
             // Check if the attribute has a previously unseen non-simple type with a custom validation regex
@@ -264,8 +265,8 @@ void SchemaConstruction( Group & group,
             // (Optional) Default Value
             if( (flag == InputFlags::OPTIONAL_NONUNIQUE) || (flag == InputFlags::REQUIRED_NONUNIQUE))
             {
-              GEOSX_LOG_RANK_0( attributeName << " has an invalid input flag" );
-              GEOSX_ERROR( "SchemaConstruction: duplicate xml attributes are not allowed" );
+              GEOS_LOG_RANK_0( attributeName << " has an invalid input flag" );
+              GEOS_ERROR( "SchemaConstruction: duplicate xml attributes are not allowed" );
             }
             else if( flag == InputFlags::OPTIONAL )
             {
@@ -288,7 +289,7 @@ void SchemaConstruction( Group & group,
         // Only add this attribute if not present
         if( targetTypeDefNode.find_child_by_attribute( "xsd:attribute", "name", "name" ).empty())
         {
-          xmlWrapper::xmlNode commentNode = targetTypeDefNode.append_child( xmlWrapper::xmlTypes::node_comment );
+          xmlWrapper::xmlNode commentNode = targetTypeDefNode.append_child( xmlWrapper::xmlNodeType::node_comment );
           commentNode.set_value( "name => A name is required for any non-unique nodes" );
 
           xmlWrapper::xmlNode attributeNode = targetTypeDefNode.append_child( "xsd:attribute" );
@@ -302,4 +303,4 @@ void SchemaConstruction( Group & group,
 }
 
 } /// namespace schemaUtilities
-} /// namespace geosx
+} /// namespace geos

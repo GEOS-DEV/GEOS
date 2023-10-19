@@ -24,8 +24,9 @@
 #include "DruckerPrager.hpp"
 #include "DruckerPragerExtended.hpp"
 #include "ModifiedCamClay.hpp"
+#include "DuvautLionsSolid.hpp"
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -106,15 +107,15 @@ void PoroElastic< BASE >::stateUpdateBatchPressure( arrayView1d< real64 const > 
   localIndex const numElems = m_poreVolumeMultiplier.size( 0 );
   localIndex const numQuad  = m_poreVolumeMultiplier.size( 1 );
 
-  GEOSX_ASSERT_EQ( pres.size(), numElems );
-  GEOSX_ASSERT_EQ( dPres.size(), numElems );
+  GEOS_ASSERT_EQ( pres.size(), numElems );
+  GEOS_ASSERT_EQ( dPres.size(), numElems );
 
   ExponentialRelation< real64, ExponentApproximationType::Linear > const relation = m_poreVolumeRelation;
 
   arrayView2d< real64 > const & pvmult = m_poreVolumeMultiplier;
   arrayView2d< real64 > const & dPVMult_dPres = m_dPVMult_dPressure;
 
-  forAll< parallelDevicePolicy<> >( numElems, [=] GEOSX_HOST_DEVICE ( localIndex const k )
+  forAll< parallelDevicePolicy<> >( numElems, [=] GEOS_HOST_DEVICE ( localIndex const k )
   {
     for( localIndex q = 0; q < numQuad; ++q )
     {
@@ -137,4 +138,4 @@ REGISTER_CATALOG_ENTRY( ConstitutiveBase, PoroModifiedCamClay, string const &, G
 
 
 }
-} /* namespace geosx */
+} /* namespace geos */

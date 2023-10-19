@@ -16,8 +16,8 @@
  * @file FieldSpecificationBase.hpp
  */
 
-#ifndef GEOSX_FIELDSPECIFICATION_FIELDSPECIFICATIONBASE_HPP
-#define GEOSX_FIELDSPECIFICATION_FIELDSPECIFICATIONBASE_HPP
+#ifndef GEOS_FIELDSPECIFICATION_FIELDSPECIFICATIONBASE_HPP
+#define GEOS_FIELDSPECIFICATION_FIELDSPECIFICATIONBASE_HPP
 
 #include "common/DataTypes.hpp"
 #include "common/TypeDispatch.hpp"
@@ -32,7 +32,7 @@
 #include "functions/FunctionManager.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
 
-namespace geosx
+namespace geos
 {
 class Function;
 
@@ -436,7 +436,7 @@ public:
    */
   virtual R1Tensor const & getDirection() const
   {
-    GEOSX_UNUSED_VAR( time );
+    GEOS_UNUSED_VAR( time );
     return m_direction;
   }
 
@@ -606,7 +606,7 @@ void FieldSpecificationBase::applyFieldValueKernel( ArrayView< T, N, USD > const
   if( m_functionName.empty() )
   {
     real64 const value = m_scale;
-    forAll< POLICY >( targetSet.size(), [=] GEOSX_HOST_DEVICE ( localIndex const i )
+    forAll< POLICY >( targetSet.size(), [=] GEOS_HOST_DEVICE ( localIndex const i )
     {
       localIndex const a = targetSet[ i ];
       FIELD_OP::SpecifyFieldValue( field, a, component, value );
@@ -614,12 +614,23 @@ void FieldSpecificationBase::applyFieldValueKernel( ArrayView< T, N, USD > const
   }
   else
   {
-    FunctionBase const & function = functionManager.getGroup< FunctionBase >( m_functionName );
+    FunctionBase const & function = [&]() -> FunctionBase const &
+    {
+      try
+      {
+        return functionManager.getGroup< FunctionBase >( m_functionName );
+      }
+      catch( std::exception const & e )
+      {
+        throw InputError( e, GEOS_FMT( "Error while reading {}:\n",
+                                       getWrapperDataContext( viewKeyStruct::functionNameString() ) ) );
+      }
+    }();
 
     if( function.isFunctionOfTime()==2 )
     {
       real64 const value = m_scale * function.evaluate( &time );
-      forAll< POLICY >( targetSet.size(), [=] GEOSX_HOST_DEVICE ( localIndex const i )
+      forAll< POLICY >( targetSet.size(), [=] GEOS_HOST_DEVICE ( localIndex const i )
       {
         localIndex const a = targetSet[ i ];
         FIELD_OP::SpecifyFieldValue( field, a, component, value );
@@ -631,7 +642,7 @@ void FieldSpecificationBase::applyFieldValueKernel( ArrayView< T, N, USD > const
       function.evaluate( dataGroup, time, targetSet, result );
       arrayView1d< real64 const > const & resultView = result.toViewConst();
       real64 const scale = m_scale;
-      forAll< POLICY >( targetSet.size(), [=] GEOSX_HOST_DEVICE ( localIndex const i )
+      forAll< POLICY >( targetSet.size(), [=] GEOS_HOST_DEVICE ( localIndex const i )
       {
         localIndex const a = targetSet[ i ];
         FIELD_OP::SpecifyFieldValue( field, a, component, scale * resultView[i] );
@@ -649,16 +660,18 @@ void FieldSpecificationBase::applyFieldValue( SortedArrayView< localIndex const 
 {
   dataRepository::WrapperBase & wrapper = dataGroup.getWrapperBase( fieldName );
 
-  // This function is used in setting boundary/initial conditions on simulation fields.
-  // This is meaningful for 1/2/3D real arrays and sometimes 1D integer (indicator) arrays.
-  using FieldTypes = types::Join< types::ArrayTypes< types::RealTypes, types::DimsUpTo< 3 > >,
-                                  types::ArrayTypes< types::TypeList< integer >, types::DimsSingle< 1 > > >;
-  types::dispatch( FieldTypes{}, wrapper.getTypeId(), true, [&]( auto array )
+  // // This function is used in setting boundary/initial conditions on simulation fields.
+  // // This is meaningful for 1/2/3D real arrays and sometimes 1D integer (indicator) arrays.
+  using FieldTypes = types::ListofTypeList< types::Join< types::ArrayTypes< types::RealTypes, types::DimsUpTo< 3 > >,
+                                                         types::ArrayTypes< types::TypeList< integer >, types::DimsSingle< 1 > > > >;
+
+
+  types::dispatch( FieldTypes{}, [&]( auto tupleOfTypes )
   {
-    using ArrayType = decltype( array );
+    using ArrayType = camp::first< decltype( tupleOfTypes ) >;
     auto & wrapperT = dataRepository::Wrapper< ArrayType >::cast( wrapper );
     applyFieldValueKernel< FIELD_OP, POLICY >( wrapperT.reference().toView(), targetSet, time, dataGroup );
-  } );
+  }, wrapper );
 }
 
 template< typename FIELD_OP, typename POLICY, typename T, int NDIM, int USD >
@@ -673,7 +686,7 @@ void FieldSpecificationBase::applyBoundaryConditionToSystemKernel( SortedArrayVi
 {
   integer const component = getComponent();
   this->applyBoundaryConditionToSystem< FIELD_OP, POLICY >( targetSet, time, dataGroup, dofMap, dofRankOffset, matrix, rhs,
-                                                            [fieldView, component] GEOSX_HOST_DEVICE ( localIndex const a )
+                                                            [fieldView, component] GEOS_HOST_DEVICE ( localIndex const a )
   {
     real64 value = 0.0;
     FieldSpecificationEqual::readFieldValue( fieldView, a, component, value );
@@ -695,10 +708,10 @@ void FieldSpecificationBase::applyBoundaryConditionToSystem( SortedArrayView< lo
   arrayView1d< globalIndex const > const & dofMap = dataGroup.getReference< array1d< globalIndex > >( dofMapName );
 
   // We're reading values from a field, which is only well-defined for dims 1 and 2
-  using FieldTypes = types::ArrayTypes< types::RealTypes, types::DimsUpTo< 2 > >;
-  types::dispatch( FieldTypes{}, wrapper.getTypeId(), true, [&]( auto array )
+  using FieldTypes = types::ListofTypeList< types::ArrayTypes< types::RealTypes, types::DimsUpTo< 2 > > >;
+  types::dispatch( FieldTypes{}, [&]( auto tupleOfTypes )
   {
-    using ArrayType = decltype( array );
+    using ArrayType = camp::first< decltype( tupleOfTypes ) >;
     auto const & wrapperT = dataRepository::Wrapper< ArrayType >::cast( wrapper );
     applyBoundaryConditionToSystemKernel< FIELD_OP, POLICY >( targetSet,
                                                               time,
@@ -708,7 +721,7 @@ void FieldSpecificationBase::applyBoundaryConditionToSystem( SortedArrayView< lo
                                                               matrix,
                                                               rhs,
                                                               wrapperT.reference() );
-  } );
+  }, wrapper );
 }
 
 template< typename FIELD_OP, typename POLICY, typename LAMBDA >
@@ -798,7 +811,7 @@ FieldSpecificationBase::
     }
 
     forAll< POLICY >( targetSet.size(),
-                      [targetSet, dof, dofMap, dofRankOffset, component, matrix, rhsContribution, value, lambda] GEOSX_HOST_DEVICE ( localIndex const i )
+                      [targetSet, dof, dofMap, dofRankOffset, component, matrix, rhsContribution, value, lambda] GEOS_HOST_DEVICE ( localIndex const i )
     {
       localIndex const a = targetSet[ i ];
       dof[ i ] = dofMap[ a ] + component;
@@ -820,7 +833,7 @@ FieldSpecificationBase::
     real64 const value = m_scale * dt;
 
     forAll< POLICY >( targetSet.size(),
-                      [targetSet, dof, dofMap, dofRankOffset, component, matrix, rhsContribution, results, value, lambda] GEOSX_HOST_DEVICE (
+                      [targetSet, dof, dofMap, dofRankOffset, component, matrix, rhsContribution, results, value, lambda] GEOS_HOST_DEVICE (
                         localIndex const i )
     {
       localIndex const a = targetSet[ i ];
@@ -843,7 +856,7 @@ void FieldSpecificationBase::zeroSystemRowsForBoundaryCondition( SortedArrayView
 
 {
   integer const component = ( getComponent() >=0 ) ? getComponent() : 0;
-  forAll< POLICY >( targetSet.size(), [targetSet, dofMap, matrix, component] GEOSX_HOST_DEVICE ( localIndex const i )
+  forAll< POLICY >( targetSet.size(), [targetSet, dofMap, matrix, component] GEOS_HOST_DEVICE ( localIndex const i )
   {
     localIndex const a = targetSet[ i ];
     globalIndex const dof = dofMap[ a ] + component;
@@ -860,4 +873,4 @@ void FieldSpecificationBase::zeroSystemRowsForBoundaryCondition( SortedArrayView
 
 }
 
-#endif //GEOSX_FIELDSPECIFICATION_FIELDSPECIFICATIONBASE_HPP
+#endif //GEOS_FIELDSPECIFICATION_FIELDSPECIFICATIONBASE_HPP

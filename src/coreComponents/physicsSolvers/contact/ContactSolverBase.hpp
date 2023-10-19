@@ -17,13 +17,13 @@
  *
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_CONTACT_CONTACTSOLVERBASE_HPP_
-#define GEOSX_PHYSICSSOLVERS_CONTACT_CONTACTSOLVERBASE_HPP_
+#ifndef GEOS_PHYSICSSOLVERS_CONTACT_CONTACTSOLVERBASE_HPP_
+#define GEOS_PHYSICSSOLVERS_CONTACT_CONTACTSOLVERBASE_HPP_
 
 #include "physicsSolvers/SolverBase.hpp"
 #include "physicsSolvers/contact/ContactFields.hpp"
 
-namespace geosx
+namespace geos
 {
 class SolidMechanicsLagrangianFEM;
 
@@ -72,8 +72,8 @@ protected:
                                        globalIndex & numSlip,
                                        globalIndex & numOpen ) const;
 
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  GEOS_HOST_DEVICE
+  inline
   static bool compareFractureStates( integer const state0,
                                      integer const state1 )
   {
@@ -113,6 +113,6 @@ protected:
   };
 };
 
-} /* namespace geosx */
+} /* namespace geos */
 
-#endif /* GEOSX_PHYSICSSOLVERS_CONTACT_CONTACTSOLVERBASE_HPP_ */
+#endif /* GEOS_PHYSICSSOLVERS_CONTACT_CONTACTSOLVERBASE_HPP_ */

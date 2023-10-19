@@ -16,12 +16,12 @@
  * @file CellElementStencilTPFA.hpp
  */
 
-#ifndef GEOSX_FINITEVOLUME_CELLELEMENTSTENCILTPFA_HPP_
-#define GEOSX_FINITEVOLUME_CELLELEMENTSTENCILTPFA_HPP_
+#ifndef GEOS_FINITEVOLUME_CELLELEMENTSTENCILTPFA_HPP_
+#define GEOS_FINITEVOLUME_CELLELEMENTSTENCILTPFA_HPP_
 
 #include "StencilBase.hpp"
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -63,7 +63,7 @@ public:
    * @param[out] weight view weights
    * @param[out] dWeight_dVar derivative of the weights w.r.t to the variable
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void computeWeights( localIndex const iconn,
                        CoefficientAccessor< arrayView3d< real64 const > > const & coefficient,
                        CoefficientAccessor< arrayView3d< real64 const > > const & dCoeff_dVar,
@@ -78,7 +78,7 @@ public:
    * @param[out] weight view weights
    * @param[out] dWeight_dVar derivative of the weights w.r.t to the variable
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void computeWeights( localIndex iconn,
                        real64 ( &weight )[1][2],
                        real64 ( &dWeight_dVar )[1][2] ) const;
@@ -88,7 +88,7 @@ public:
    * @param[in] iconn connection index
    * @param[out] stabilizationWeight view weights
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void computeStabilizationWeights( localIndex iconn,
                                     real64 ( &stabilizationWeight )[1][2] ) const;
 
@@ -106,11 +106,11 @@ public:
    * @param[in] index of the stencil entry for which to query the size
    * @return the size of a stencil entry
    */
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
   localIndex stencilSize( localIndex const index ) const
   {
-    GEOSX_UNUSED_VAR( index );
+    GEOS_UNUSED_VAR( index );
     return maxStencilSize;
   }
 
@@ -119,11 +119,11 @@ public:
    * @param[in] index of the stencil entry for which to query the size
    * @return the number of points.
    */
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
   localIndex numPointsInFlux( localIndex const index ) const
   {
-    GEOSX_UNUSED_VAR( index );
+    GEOS_UNUSED_VAR( index );
     return maxNumPointsInFlux;
   }
 
@@ -189,7 +189,7 @@ public:
    */
   constexpr localIndex stencilSize( localIndex index ) const
   {
-    GEOSX_UNUSED_VAR( index );
+    GEOS_UNUSED_VAR( index );
     return maxStencilSize;
   }
 
@@ -210,7 +210,7 @@ private:
   array1d< real64 > m_geometricStabilizationCoef;
 };
 
-GEOSX_HOST_DEVICE
+GEOS_HOST_DEVICE
 inline void
 CellElementStencilTPFAWrapper::
   computeWeights( localIndex const iconn,
@@ -219,7 +219,7 @@ CellElementStencilTPFAWrapper::
                   real64 (& weight)[1][2],
                   real64 (& dWeight_dVar )[1][2] ) const
 {
-  GEOSX_UNUSED_VAR( dCoeff_dVar );
+  GEOS_UNUSED_VAR( dCoeff_dVar );
 
   real64 halfWeight[2];
 
@@ -275,7 +275,7 @@ CellElementStencilTPFAWrapper::
   dWeight_dVar[0][1] = 0.0;
 }
 
-GEOSX_HOST_DEVICE
+GEOS_HOST_DEVICE
 inline void
 CellElementStencilTPFAWrapper::
   computeWeights( localIndex iconn,
@@ -329,7 +329,7 @@ CellElementStencilTPFAWrapper::
   dWeight_dVar[0][1] = 0.0;
 }
 
-GEOSX_HOST_DEVICE
+GEOS_HOST_DEVICE
 inline void
 CellElementStencilTPFAWrapper::
   computeStabilizationWeights( localIndex iconn,
@@ -340,6 +340,6 @@ CellElementStencilTPFAWrapper::
 }
 
 
-} /* namespace geosx */
+} /* namespace geos */
 
-#endif /* GEOSX_FINITEVOLUME_CELLELEMENTSTENCILTPFA_HPP_ */
+#endif /* GEOS_FINITEVOLUME_CELLELEMENTSTENCILTPFA_HPP_ */

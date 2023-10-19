@@ -16,13 +16,13 @@
  * @file OutputManager.hpp
  */
 
-#ifndef GEOSX_FILEIO_OUTPUTS_OUTPUTMANAGER_HPP_
-#define GEOSX_FILEIO_OUTPUTS_OUTPUTMANAGER_HPP_
+#ifndef GEOS_FILEIO_OUTPUTS_OUTPUTMANAGER_HPP_
+#define GEOS_FILEIO_OUTPUTS_OUTPUTMANAGER_HPP_
 
 #include "dataRepository/Group.hpp"
 
 
-namespace geosx
+namespace geos
 {
 namespace dataRepository
 {
@@ -38,14 +38,14 @@ namespace keys
 class OutputManager : public dataRepository::Group
 {
 public:
-  /// @copydoc geosx::dataRepository::Group::Group( string const & name, Group * const parent )
+  /// @copydoc geos::dataRepository::Group::Group( string const & name, Group * const parent )
   OutputManager( string const & name,
                  Group * const parent );
 
   /// Destructor
   virtual ~OutputManager() override;
 
-  /// @copydoc geosx::dataRepository::Group::createChild( string const & childKey, string const & childName )
+  /// @copydoc geos::dataRepository::Group::createChild( string const & childKey, string const & childName )
   virtual Group * createChild( string const & childKey, string const & childName ) override;
 
   /// This function is used to expand any catalogs in the data structure
@@ -60,6 +60,6 @@ public:
 };
 
 
-} /* namespace geosx */
+} /* namespace geos */
 
-#endif /* GEOSX_FILEIO_OUTPUTS_OUTPUTMANAGER_HPP_ */
+#endif /* GEOS_FILEIO_OUTPUTS_OUTPUTMANAGER_HPP_ */

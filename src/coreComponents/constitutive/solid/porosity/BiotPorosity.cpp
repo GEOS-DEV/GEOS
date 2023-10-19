@@ -19,7 +19,7 @@
 #include "BiotPorosity.hpp"
 #include "PorosityFields.hpp"
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -35,15 +35,20 @@ BiotPorosity::BiotPorosity( string const & name, Group * const parent ):
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Grain bulk modulus" );
 
-  registerField( fields::porosity::biotCoefficient{}, &m_biotCoefficient );
-
-  registerWrapper( viewKeyStruct::thermalExpansionCoefficientString(), &m_thermalExpansionCoefficient ).
+  registerWrapper( viewKeyStruct::defaultThermalExpansionCoefficientString(), &m_defaultThermalExpansionCoefficient ).
     setApplyDefaultValue( 0.0 ).
-    setDescription( "Thermal expansion coefficient" );
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Default thermal expansion coefficient" );
 
-  registerWrapper( viewKeyStruct::meanStressIncrementString(), &m_meanStressIncrement ).
-    setApplyDefaultValue( 0.0 ).
-    setDescription( "Volumetric stress increment" );
+  registerField( fields::porosity::biotCoefficient{}, &m_biotCoefficient ).
+    setApplyDefaultValue( 1.0 ); // this is useful for sequential simulations, for the first flow solve
+  // ultimately, we want to be able to load the biotCoefficient from input directly, and this won't be necessary anymore
+
+  registerField( fields::porosity::thermalExpansionCoefficient{}, &m_thermalExpansionCoefficient );
+
+  registerField( fields::porosity::meanEffectiveStressIncrement_k{}, &m_meanEffectiveStressIncrement_k );
+
+  registerField( fields::porosity::averageMeanEffectiveStressIncrement_k{}, &m_averageMeanEffectiveStressIncrement_k );
 
   registerWrapper( viewKeyStruct::solidBulkModulusString(), &m_bulkModulus ).
     setApplyDefaultValue( 1e-6 ).
@@ -55,13 +60,15 @@ void BiotPorosity::allocateConstitutiveData( dataRepository::Group & parent,
 {
   PorosityBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 
-  m_meanStressIncrement.resize( 0, numConstitutivePointsPerParentIndex );
+  m_meanEffectiveStressIncrement_k.resize( 0, numConstitutivePointsPerParentIndex );
 }
 
 void BiotPorosity::postProcessInput()
 {
   PorosityBase::postProcessInput();
-  // TODO valdate input
+
+  getWrapper< array1d< real64 > >( fields::porosity::thermalExpansionCoefficient::key() ).
+    setApplyDefaultValue( m_defaultThermalExpansionCoefficient );
 }
 
 void BiotPorosity::initializeState() const
@@ -74,7 +81,7 @@ void BiotPorosity::initializeState() const
   arrayView2d< real64 >             porosity_n  = m_porosity_n;
   arrayView2d< real64 >         initialPorosity = m_initialPorosity;
 
-  forAll< parallelDevicePolicy<> >( numE, [=] GEOSX_HOST_DEVICE ( localIndex const k )
+  forAll< parallelDevicePolicy<> >( numE, [=] GEOS_HOST_DEVICE ( localIndex const k )
   {
     for( localIndex q = 0; q < numQ; ++q )
     {
@@ -85,7 +92,21 @@ void BiotPorosity::initializeState() const
   } );
 }
 
+void BiotPorosity::saveConvergedState() const
+{
+  PorosityBase::saveConvergedState();
+  m_meanEffectiveStressIncrement_k.zero();
+  m_averageMeanEffectiveStressIncrement_k.zero();
+}
+
+void BiotPorosity::ignoreConvergedState() const
+{
+  PorosityBase::ignoreConvergedState();
+  m_meanEffectiveStressIncrement_k.zero();
+  m_averageMeanEffectiveStressIncrement_k.zero();
+}
+
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, BiotPorosity, string const &, Group * const )
 } /* namespace constitutive */
-} /* namespace geosx */
+} /* namespace geos */

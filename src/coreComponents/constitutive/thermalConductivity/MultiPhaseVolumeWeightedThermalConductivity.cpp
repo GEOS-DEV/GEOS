@@ -21,7 +21,7 @@
 #include "ThermalConductivityFields.hpp"
 #include "MultiPhaseThermalConductivityFields.hpp"
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -73,19 +73,19 @@ void MultiPhaseVolumeWeightedThermalConductivity::allocateConstitutiveData( data
 
 void MultiPhaseVolumeWeightedThermalConductivity::postProcessInput()
 {
-  GEOSX_THROW_IF( m_rockThermalConductivityComponents[0] <= 0 ||
-                  m_rockThermalConductivityComponents[1] <= 0 ||
-                  m_rockThermalConductivityComponents[2] <= 0,
-                  GEOSX_FMT( "{}: the components of the rock thermal conductivity tensor must be strictly positive",
-                             getFullName() ),
-                  InputError );
+  GEOS_THROW_IF( m_rockThermalConductivityComponents[0] <= 0 ||
+                 m_rockThermalConductivityComponents[1] <= 0 ||
+                 m_rockThermalConductivityComponents[2] <= 0,
+                 GEOS_FMT( "{}: the components of the rock thermal conductivity tensor must be strictly positive",
+                           getFullName() ),
+                 InputError );
 
   for( integer ip = 0; ip < numFluidPhases(); ++ip )
   {
-    GEOSX_THROW_IF( m_phaseThermalConductivity[ip] <= 0,
-                    GEOSX_FMT( "{}: the phase thermal conductivity for phase {} must be strictly positive",
-                               getFullName(), ip ),
-                    InputError );
+    GEOS_THROW_IF( m_phaseThermalConductivity[ip] <= 0,
+                   GEOS_FMT( "{}: the phase thermal conductivity for phase {} must be strictly positive",
+                             getFullName(), ip ),
+                   InputError );
   }
 }
 
@@ -98,15 +98,25 @@ void MultiPhaseVolumeWeightedThermalConductivity::initializeRockFluidState( arra
 void MultiPhaseVolumeWeightedThermalConductivity::saveConvergedRockFluidState( arrayView2d< real64 const > const & convergedPorosity,
                                                                                arrayView2d< real64 const, compflow::USD_PHASE > const & convergedPhaseVolumeFraction ) const
 {
+
   // note that the update function is called here, and not in the solver, because porosity and phase volume fraction are treated explicitly
 
   KernelWrapper conductivityWrapper = createKernelWrapper();
 
-  forAll< parallelDevicePolicy<> >( conductivityWrapper.numElems(), [=] GEOSX_HOST_DEVICE ( localIndex const k )
+  forAll< parallelDevicePolicy<> >( conductivityWrapper.numElems(), [=] GEOS_HOST_DEVICE ( localIndex const k )
   {
+    // here we compute an average of the porosity over quadrature points
+    // this average is exact for tets, regular pyramids/wedges/hexes, or for VEM
+    real64 porosityAveragedOverQuadraturePoints = 0;
+    for( integer i = 0; i < convergedPorosity.size( 1 ); ++i )
+    {
+      porosityAveragedOverQuadraturePoints += convergedPorosity[k][i];
+    }
+    porosityAveragedOverQuadraturePoints /= convergedPorosity.size( 1 );
+
     for( localIndex q = 0; q < conductivityWrapper.numGauss(); ++q )
     {
-      conductivityWrapper.update( k, q, convergedPorosity[k][q], convergedPhaseVolumeFraction[k] );
+      conductivityWrapper.update( k, q, porosityAveragedOverQuadraturePoints, convergedPhaseVolumeFraction[k] );
     }
   } );
 }
@@ -116,4 +126,4 @@ REGISTER_CATALOG_ENTRY( ConstitutiveBase, MultiPhaseVolumeWeightedThermalConduct
 
 } // namespace constitutive
 
-} // namespace geosx
+} // namespace geos

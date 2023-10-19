@@ -16,12 +16,12 @@
  * @file BrooksCoreyRelativePermeability.hpp
  */
 
-#ifndef GEOSX_CONSTITUTIVE_BROOKSCOREYRELATIVEPERMEABILITY_HPP
-#define GEOSX_CONSTITUTIVE_BROOKSCOREYRELATIVEPERMEABILITY_HPP
+#ifndef GEOS_CONSTITUTIVE_BROOKSCOREYRELATIVEPERMEABILITY_HPP
+#define GEOS_CONSTITUTIVE_BROOKSCOREYRELATIVEPERMEABILITY_HPP
 
 #include "constitutive/relativePermeability/RelativePermeabilityBase.hpp"
 
-namespace geosx
+namespace geos
 {
 namespace constitutive
 {
@@ -50,13 +50,13 @@ public:
     m_volFracScale( volFracScale )
   {}
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void compute( arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseVolFraction,
                 arraySlice1d< real64, relperm::USD_RELPERM - 2 > const & phaseTrappedVolFrac,
                 arraySlice1d< real64, relperm::USD_RELPERM - 2 > const & phaseRelPerm,
                 arraySlice2d< real64, relperm::USD_RELPERM_DS - 2 > const & dPhaseRelPerm_dPhaseVolFrac ) const;
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   virtual void update( localIndex const k,
                        localIndex const q,
                        arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseVolFraction ) const override
@@ -120,7 +120,7 @@ protected:
 //END_SPHINX_INCLUDE_02
 };
 
-GEOSX_HOST_DEVICE
+GEOS_HOST_DEVICE
 inline void
 BrooksCoreyRelativePermeabilityUpdate::
   compute( arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseVolFraction,
@@ -158,6 +158,6 @@ BrooksCoreyRelativePermeabilityUpdate::
 
 } // namespace constitutive
 
-} // namespace geosx
+} // namespace geos
 
-#endif //GEOSX_CONSTITUTIVE_BROOKSCOREYRELATIVEPERMEABILITY_HPP
+#endif //GEOS_CONSTITUTIVE_BROOKSCOREYRELATIVEPERMEABILITY_HPP

@@ -13,25 +13,26 @@
  */
 
 // Source includes
+#include "common/DataTypes.hpp"
+#include "common/Format.hpp"
+#include "common/TimingMacros.hpp"
 #include "mainInterface/initialization.hpp"
 #include "mainInterface/ProblemManager.hpp"
 #include "mainInterface/GeosxState.hpp"
-#include "common/DataTypes.hpp"
-#include "common/TimingMacros.hpp"
 
-// System includes
-#include <chrono>
 
-using namespace geosx;
+using namespace geos;
 
 
 int main( int argc, char *argv[] )
 {
   try
   {
-    std::chrono::system_clock::time_point const startTime = std::chrono::system_clock::now();
+    std::chrono::system_clock::time_point startTime = std::chrono::system_clock::now();
 
     std::unique_ptr< CommandLineOptions > commandLineOptions = basicSetup( argc, argv, true );
+
+    GEOS_LOG_RANK_0( GEOS_FMT( "Started at {:%Y-%m-%d %H:%M:%S}", startTime ) );
 
     std::chrono::system_clock::duration initTime;
     std::chrono::system_clock::duration runTime;
@@ -52,11 +53,13 @@ int main( int argc, char *argv[] )
 
     basicCleanup();
 
-    std::chrono::system_clock::duration const totalTime = std::chrono::system_clock::now() - startTime;
+    std::chrono::system_clock::time_point endTime = std::chrono::system_clock::now();
+    std::chrono::system_clock::duration totalTime = endTime - startTime;
 
-    GEOSX_LOG_RANK_0( "total time          " << durationToString( totalTime ) );
-    GEOSX_LOG_RANK_0( "initialization time " << durationToString( initTime ) );
-    GEOSX_LOG_RANK_0( "run time            " << durationToString( runTime ) );
+    GEOS_LOG_RANK_0( GEOS_FMT( "Finished at {:%Y-%m-%d %H:%M:%S}", endTime ) );
+    GEOS_LOG_RANK_0( GEOS_FMT( "total time            {:%H:%M:%S}", totalTime ) );
+    GEOS_LOG_RANK_0( GEOS_FMT( "initialization time   {:%H:%M:%S}", initTime ) );
+    GEOS_LOG_RANK_0( GEOS_FMT( "run time              {:%H:%M:%S}", runTime ) );
 
     return 0;
   }
@@ -67,8 +70,9 @@ int main( int argc, char *argv[] )
   }
   catch( std::exception const & e )
   {
-    GEOSX_LOG( e.what() );
+    GEOS_LOG( e.what() );
     LvArray::system::callErrorHandler();
     std::abort();
   }
+  return 0;
 }

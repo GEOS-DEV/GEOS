@@ -19,7 +19,7 @@
  * @file HaltEvent.cpp
  */
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -48,10 +48,10 @@ HaltEvent::~HaltEvent()
 {}
 
 
-void HaltEvent::estimateEventTiming( real64 const GEOSX_UNUSED_PARAM( time ),
-                                     real64 const GEOSX_UNUSED_PARAM( dt ),
-                                     integer const GEOSX_UNUSED_PARAM( cycle ),
-                                     DomainPartition & GEOSX_UNUSED_PARAM( domain ))
+void HaltEvent::estimateEventTiming( real64 const GEOS_UNUSED_PARAM( time ),
+                                     real64 const GEOS_UNUSED_PARAM( dt ),
+                                     integer const GEOS_UNUSED_PARAM( cycle ),
+                                     DomainPartition & GEOS_UNUSED_PARAM( domain ))
 {
   // Check run time
   timeval tim;
@@ -81,4 +81,4 @@ void HaltEvent::estimateEventTiming( real64 const GEOSX_UNUSED_PARAM( time ),
 
 
 REGISTER_CATALOG_ENTRY( EventBase, HaltEvent, string const &, Group * const )
-} /* namespace geosx */
+} /* namespace geos */

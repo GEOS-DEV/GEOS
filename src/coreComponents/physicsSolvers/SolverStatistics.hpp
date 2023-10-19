@@ -17,12 +17,12 @@
  */
 
 
-#ifndef GEOSX_PHYSICSSOLVERS_SOLVERSTATISTICS_HPP
-#define GEOSX_PHYSICSSOLVERS_SOLVERSTATISTICS_HPP
+#ifndef GEOS_PHYSICSSOLVERS_SOLVERSTATISTICS_HPP
+#define GEOS_PHYSICSSOLVERS_SOLVERSTATISTICS_HPP
 
 #include "dataRepository/Group.hpp"
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -145,6 +145,6 @@ private:
 
 };
 
-} //namespace geosx
+} //namespace geos
 
-#endif // GEOSX_PHYSICSSOLVERS_SOLVERSTATISTICS_HPP
+#endif // GEOS_PHYSICSSOLVERS_SOLVERSTATISTICS_HPP

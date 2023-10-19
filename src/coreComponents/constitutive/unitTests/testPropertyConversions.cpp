@@ -17,8 +17,8 @@
 #include "constitutive/ConstitutiveManager.hpp"
 #include "constitutive/solid/PropertyConversions.hpp"
 
-using namespace geosx;
-using namespace ::geosx::constitutive;
+using namespace geos;
+using namespace ::geos::constitutive;
 
 TEST( PropertyConversionTests, testElasticConversions )
 {

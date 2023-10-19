@@ -19,7 +19,7 @@
 #include "constitutive/solid/porosity/ProppantPorosity.hpp"
 #include "constitutive/solid/porosity/PorosityFields.hpp"
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -59,4 +59,4 @@ void ProppantPorosity::postProcessInput()
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, ProppantPorosity, string const &, Group * const )
 }
-} /* namespace geosx */
+} /* namespace geos */

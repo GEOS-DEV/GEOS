@@ -18,8 +18,8 @@
 // TPL includes
 #include <gtest/gtest.h>
 
-using namespace geosx;
-using namespace geosx::traits;
+using namespace geos;
+using namespace geos::traits;
 
 
 
@@ -90,7 +90,7 @@ TEST( testGeosxTraits, Pointer )
   static_assert( std::is_same< Pointer< int >, int * >::value, "Should be true." );
   static_assert( std::is_same< Pointer< R1Tensor >, R1Tensor * >::value, "Should be true." );
   static_assert( std::is_same< Pointer< std::vector< double > >, double * >::value, "Should be true." );
-  static_assert( std::is_same< Pointer< string >, char const * >::value, "Should be true." );
+  static_assert( std::is_same< Pointer< string >, char * >::value, "Should be true." );
   static_assert( std::is_same< Pointer< array3d< string > >, string * >::value, "Should be true." );
   static_assert( std::is_same< Pointer< SortedArray< float > >, float const * >::value, "Should be true." );
 

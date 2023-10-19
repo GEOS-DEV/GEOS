@@ -1,9 +1,11 @@
-======================
+######################
 Datastructure Index
-======================
+######################
+
+**************************
 
 Input Schema Definitions
-========================
+**************************
 
 :download:`XML Schema <../../coreComponents/schema/docs/../schema.xsd>`
 
@@ -20,6 +22,13 @@ Element: AcousticFirstOrderSEM
 Element: AcousticSEM
 ====================
 .. include:: ../../coreComponents/schema/docs/AcousticSEM.rst
+
+
+.. _XML_AcousticVTISEM:
+
+Element: AcousticVTISEM
+=======================
+.. include:: ../../coreComponents/schema/docs/AcousticVTISEM.rst
 
 
 .. _XML_Aquifer:
@@ -55,13 +64,6 @@ Element: BlackOilFluid
 Element: Blueprint
 ==================
 .. include:: ../../coreComponents/schema/docs/Blueprint.rst
-
-
-.. _XML_BoundedPlane:
-
-Element: BoundedPlane
-=====================
-.. include:: ../../coreComponents/schema/docs/BoundedPlane.rst
 
 
 .. _XML_Box:
@@ -211,6 +213,13 @@ Element: CompressibleSolidConstantPermeability
 .. include:: ../../coreComponents/schema/docs/CompressibleSolidConstantPermeability.rst
 
 
+.. _XML_CompressibleSolidExponentialDecayPermeability:
+
+Element: CompressibleSolidExponentialDecayPermeability
+======================================================
+.. include:: ../../coreComponents/schema/docs/CompressibleSolidExponentialDecayPermeability.rst
+
+
 .. _XML_CompressibleSolidParallelPlatesPermeability:
 
 Element: CompressibleSolidParallelPlatesPermeability
@@ -232,6 +241,13 @@ Element: CompressibleSolidWillisRichardsPermeability
 .. include:: ../../coreComponents/schema/docs/CompressibleSolidWillisRichardsPermeability.rst
 
 
+.. _XML_ConstantDiffusion:
+
+Element: ConstantDiffusion
+==========================
+.. include:: ../../coreComponents/schema/docs/ConstantDiffusion.rst
+
+
 .. _XML_ConstantPermeability:
 
 Element: ConstantPermeability
@@ -251,6 +267,13 @@ Element: Constitutive
 Element: Coulomb
 ================
 .. include:: ../../coreComponents/schema/docs/Coulomb.rst
+
+
+.. _XML_CustomPolarObject:
+
+Element: CustomPolarObject
+==========================
+.. include:: ../../coreComponents/schema/docs/CustomPolarObject.rst
 
 
 .. _XML_Cylinder:
@@ -302,11 +325,25 @@ Element: Dirichlet
 .. include:: ../../coreComponents/schema/docs/Dirichlet.rst
 
 
+.. _XML_Disc:
+
+Element: Disc
+=============
+.. include:: ../../coreComponents/schema/docs/Disc.rst
+
+
 .. _XML_DruckerPrager:
 
 Element: DruckerPrager
 ======================
 .. include:: ../../coreComponents/schema/docs/DruckerPrager.rst
+
+
+.. _XML_ElasticFirstOrderSEM:
+
+Element: ElasticFirstOrderSEM
+=============================
+.. include:: ../../coreComponents/schema/docs/ElasticFirstOrderSEM.rst
 
 
 .. _XML_ElasticIsotropic:
@@ -363,6 +400,13 @@ Element: EmbeddedSurfaceGenerator
 Element: Events
 ===============
 .. include:: ../../coreComponents/schema/docs/Events.rst
+
+
+.. _XML_ExponentialDecayPermeability:
+
+Element: ExponentialDecayPermeability
+=====================================
+.. include:: ../../coreComponents/schema/docs/ExponentialDecayPermeability.rst
 
 
 .. _XML_ExtendedDruckerPrager:
@@ -517,6 +561,13 @@ Element: LagrangianContact
 Element: LaplaceFEM
 ===================
 .. include:: ../../coreComponents/schema/docs/LaplaceFEM.rst
+
+
+.. _XML_LinearIsotropicDispersion:
+
+Element: LinearIsotropicDispersion
+==================================
+.. include:: ../../coreComponents/schema/docs/LinearIsotropicDispersion.rst
 
 
 .. _XML_LinearSolverParameters:
@@ -827,6 +878,13 @@ Element: ReactiveFluidDriver
 .. include:: ../../coreComponents/schema/docs/ReactiveFluidDriver.rst
 
 
+.. _XML_Rectangle:
+
+Element: Rectangle
+==================
+.. include:: ../../coreComponents/schema/docs/Rectangle.rst
+
+
 .. _XML_RelpermDriver:
 
 Element: RelpermDriver
@@ -1135,6 +1193,27 @@ Element: VanGenuchtenCapillaryPressure
 .. include:: ../../coreComponents/schema/docs/VanGenuchtenCapillaryPressure.rst
 
 
+.. _XML_ViscoDruckerPrager:
+
+Element: ViscoDruckerPrager
+===========================
+.. include:: ../../coreComponents/schema/docs/ViscoDruckerPrager.rst
+
+
+.. _XML_ViscoExtendedDruckerPrager:
+
+Element: ViscoExtendedDruckerPrager
+===================================
+.. include:: ../../coreComponents/schema/docs/ViscoExtendedDruckerPrager.rst
+
+
+.. _XML_ViscoModifiedCamClay:
+
+Element: ViscoModifiedCamClay
+=============================
+.. include:: ../../coreComponents/schema/docs/ViscoModifiedCamClay.rst
+
+
 .. _XML_WellControls:
 
 Element: WellControls
@@ -1154,6 +1233,13 @@ Element: WellElementRegion
 Element: WillisRichardsPermeability
 ===================================
 .. include:: ../../coreComponents/schema/docs/WillisRichardsPermeability.rst
+
+
+.. _XML_crusher:
+
+Element: crusher
+================
+.. include:: ../../coreComponents/schema/docs/crusher.rst
 
 
 .. _XML_lassen:
@@ -1186,6 +1272,13 @@ Datastructure: AcousticFirstOrderSEM
 Datastructure: AcousticSEM
 ==========================
 .. include:: ../../coreComponents/schema/docs/AcousticSEM_other.rst
+
+
+.. _DATASTRUCTURE_AcousticVTISEM:
+
+Datastructure: AcousticVTISEM
+=============================
+.. include:: ../../coreComponents/schema/docs/AcousticVTISEM_other.rst
 
 
 .. _DATASTRUCTURE_Aquifer:
@@ -1221,13 +1314,6 @@ Datastructure: BlackOilFluid
 Datastructure: Blueprint
 ========================
 .. include:: ../../coreComponents/schema/docs/Blueprint_other.rst
-
-
-.. _DATASTRUCTURE_BoundedPlane:
-
-Datastructure: BoundedPlane
-===========================
-.. include:: ../../coreComponents/schema/docs/BoundedPlane_other.rst
 
 
 .. _DATASTRUCTURE_Box:
@@ -1377,6 +1463,13 @@ Datastructure: CompressibleSolidConstantPermeability
 .. include:: ../../coreComponents/schema/docs/CompressibleSolidConstantPermeability_other.rst
 
 
+.. _DATASTRUCTURE_CompressibleSolidExponentialDecayPermeability:
+
+Datastructure: CompressibleSolidExponentialDecayPermeability
+============================================================
+.. include:: ../../coreComponents/schema/docs/CompressibleSolidExponentialDecayPermeability_other.rst
+
+
 .. _DATASTRUCTURE_CompressibleSolidParallelPlatesPermeability:
 
 Datastructure: CompressibleSolidParallelPlatesPermeability
@@ -1396,6 +1489,13 @@ Datastructure: CompressibleSolidSlipDependentPermeability
 Datastructure: CompressibleSolidWillisRichardsPermeability
 ==========================================================
 .. include:: ../../coreComponents/schema/docs/CompressibleSolidWillisRichardsPermeability_other.rst
+
+
+.. _DATASTRUCTURE_ConstantDiffusion:
+
+Datastructure: ConstantDiffusion
+================================
+.. include:: ../../coreComponents/schema/docs/ConstantDiffusion_other.rst
 
 
 .. _DATASTRUCTURE_ConstantPermeability:
@@ -1424,6 +1524,13 @@ Datastructure: ConstitutiveModels
 Datastructure: Coulomb
 ======================
 .. include:: ../../coreComponents/schema/docs/Coulomb_other.rst
+
+
+.. _DATASTRUCTURE_CustomPolarObject:
+
+Datastructure: CustomPolarObject
+================================
+.. include:: ../../coreComponents/schema/docs/CustomPolarObject_other.rst
 
 
 .. _DATASTRUCTURE_Cylinder:
@@ -1475,11 +1582,25 @@ Datastructure: Dirichlet
 .. include:: ../../coreComponents/schema/docs/Dirichlet_other.rst
 
 
+.. _DATASTRUCTURE_Disc:
+
+Datastructure: Disc
+===================
+.. include:: ../../coreComponents/schema/docs/Disc_other.rst
+
+
 .. _DATASTRUCTURE_DruckerPrager:
 
 Datastructure: DruckerPrager
 ============================
 .. include:: ../../coreComponents/schema/docs/DruckerPrager_other.rst
+
+
+.. _DATASTRUCTURE_ElasticFirstOrderSEM:
+
+Datastructure: ElasticFirstOrderSEM
+===================================
+.. include:: ../../coreComponents/schema/docs/ElasticFirstOrderSEM_other.rst
 
 
 .. _DATASTRUCTURE_ElasticIsotropic:
@@ -1536,6 +1657,13 @@ Datastructure: EmbeddedSurfaceGenerator
 Datastructure: Events
 =====================
 .. include:: ../../coreComponents/schema/docs/Events_other.rst
+
+
+.. _DATASTRUCTURE_ExponentialDecayPermeability:
+
+Datastructure: ExponentialDecayPermeability
+===========================================
+.. include:: ../../coreComponents/schema/docs/ExponentialDecayPermeability_other.rst
 
 
 .. _DATASTRUCTURE_ExtendedDruckerPrager:
@@ -1697,6 +1825,13 @@ Datastructure: LaplaceFEM
 Datastructure: Level0
 =====================
 .. include:: ../../coreComponents/schema/docs/Level0_other.rst
+
+
+.. _DATASTRUCTURE_LinearIsotropicDispersion:
+
+Datastructure: LinearIsotropicDispersion
+========================================
+.. include:: ../../coreComponents/schema/docs/LinearIsotropicDispersion_other.rst
 
 
 .. _DATASTRUCTURE_LinearSolverParameters:
@@ -2014,6 +2149,13 @@ Datastructure: ReactiveFluidDriver
 .. include:: ../../coreComponents/schema/docs/ReactiveFluidDriver_other.rst
 
 
+.. _DATASTRUCTURE_Rectangle:
+
+Datastructure: Rectangle
+========================
+.. include:: ../../coreComponents/schema/docs/Rectangle_other.rst
+
+
 .. _DATASTRUCTURE_RelpermDriver:
 
 Datastructure: RelpermDriver
@@ -2329,6 +2471,27 @@ Datastructure: VanGenuchtenCapillaryPressure
 .. include:: ../../coreComponents/schema/docs/VanGenuchtenCapillaryPressure_other.rst
 
 
+.. _DATASTRUCTURE_ViscoDruckerPrager:
+
+Datastructure: ViscoDruckerPrager
+=================================
+.. include:: ../../coreComponents/schema/docs/ViscoDruckerPrager_other.rst
+
+
+.. _DATASTRUCTURE_ViscoExtendedDruckerPrager:
+
+Datastructure: ViscoExtendedDruckerPrager
+=========================================
+.. include:: ../../coreComponents/schema/docs/ViscoExtendedDruckerPrager_other.rst
+
+
+.. _DATASTRUCTURE_ViscoModifiedCamClay:
+
+Datastructure: ViscoModifiedCamClay
+===================================
+.. include:: ../../coreComponents/schema/docs/ViscoModifiedCamClay_other.rst
+
+
 .. _DATASTRUCTURE_WellControls:
 
 Datastructure: WellControls
@@ -2362,6 +2525,13 @@ Datastructure: WillisRichardsPermeability
 Datastructure: commandLine
 ==========================
 .. include:: ../../coreComponents/schema/docs/commandLine_other.rst
+
+
+.. _DATASTRUCTURE_crusher:
+
+Datastructure: crusher
+======================
+.. include:: ../../coreComponents/schema/docs/crusher_other.rst
 
 
 .. _DATASTRUCTURE_domain:

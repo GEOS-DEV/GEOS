@@ -16,14 +16,14 @@
  * @file CellElementStencilTPFA.hpp
  */
 
-#ifndef GEOSX_FINITEVOLUME_STENCILBASE_HPP_
-#define GEOSX_FINITEVOLUME_STENCILBASE_HPP_
+#ifndef GEOS_FINITEVOLUME_STENCILBASE_HPP_
+#define GEOS_FINITEVOLUME_STENCILBASE_HPP_
 
 #include "common/DataTypes.hpp"
 #include "codingUtilities/Utilities.hpp"
 #include "mesh/ElementRegionManager.hpp"
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -50,6 +50,9 @@ struct StencilTraits
 
   /// The array view to const type for the stencil weights
   using WeightContainerViewConstType = LvArray::typeManipulation::NestedViewTypeConst< WeightContainerType >;
+
+  /// The array view to type for the stencil weights
+  using WeightContainerViewType = LvArray::typeManipulation::NestedViewType< WeightContainerType >;
 
   /// Maximum number of points the flux
   static constexpr localIndex maxNumPointsInFlux = MAX_NUM_POINTS_IN_FLUX;
@@ -91,7 +94,7 @@ public:
     m_elementRegionIndices( elementRegionIndices.toViewConst() ),
     m_elementSubRegionIndices( elementSubRegionIndices.toViewConst() ),
     m_elementIndices( elementIndices.toViewConst() ),
-    m_weights( weights.toViewConst() )
+    m_weights( weights.toView() )
   {};
 
   /**
@@ -134,7 +137,7 @@ protected:
   typename TRAITS::IndexContainerViewConstType m_elementIndices;
 
   /// The container for the weights for each point in each stencil
-  typename TRAITS::WeightContainerViewConstType m_weights;
+  typename TRAITS::WeightContainerViewType m_weights;
 };
 
 
@@ -295,6 +298,6 @@ void StencilBase< LEAFCLASSTRAITS, LEAFCLASS >::move( LvArray::MemorySpace const
   m_weights.move( space, true );
 }
 
-} /* namespace geosx */
+} /* namespace geos */
 
-#endif /* GEOSX_FINITEVOLUME_STENCILBASE_HPP_ */
+#endif /* GEOS_FINITEVOLUME_STENCILBASE_HPP_ */

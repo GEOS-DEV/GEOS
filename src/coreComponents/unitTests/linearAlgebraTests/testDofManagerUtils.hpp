@@ -16,15 +16,15 @@
  * @file testDofManagerUtils.hpp
  */
 
-#ifndef GEOSX_LINEARALGEBRA_UNITTESTS_TESTDOFMANAGERUTILS_HPP_
-#define GEOSX_LINEARALGEBRA_UNITTESTS_TESTDOFMANAGERUTILS_HPP_
+#ifndef GEOS_LINEARALGEBRA_UNITTESTS_TESTDOFMANAGERUTILS_HPP_
+#define GEOS_LINEARALGEBRA_UNITTESTS_TESTDOFMANAGERUTILS_HPP_
 
 #include "common/DataTypes.hpp"
 #include "mesh/MeshLevel.hpp"
 
 #include <gtest/gtest.h>
 
-namespace geosx
+namespace geos
 {
 
 namespace testing
@@ -38,12 +38,12 @@ namespace testing
 void setupProblemFromXML( ProblemManager * const problemManager, char const * const xmlInput )
 {
   xmlWrapper::xmlDocument xmlDocument;
-  xmlWrapper::xmlResult xmlResult = xmlDocument.load_buffer( xmlInput, strlen( xmlInput ) );
+  xmlWrapper::xmlResult xmlResult = xmlDocument.loadString( xmlInput );
   if( !xmlResult )
   {
-    GEOSX_LOG_RANK_0( "XML parsed with errors!" );
-    GEOSX_LOG_RANK_0( "Error description: " << xmlResult.description());
-    GEOSX_LOG_RANK_0( "Error offset: " << xmlResult.offset );
+    GEOS_LOG_RANK_0( "XML parsed with errors!" );
+    GEOS_LOG_RANK_0( "Error description: " << xmlResult.description());
+    GEOS_LOG_RANK_0( "Error offset: " << xmlResult.offset );
   }
 
   int mpiSize = MpiWrapper::commSize( MPI_COMM_GEOSX );
@@ -52,8 +52,8 @@ void setupProblemFromXML( ProblemManager * const problemManager, char const * co
   commandLine.registerWrapper< integer >( problemManager->viewKeys.xPartitionsOverride.key() ).
     setApplyDefaultValue( mpiSize );
 
-  xmlWrapper::xmlNode xmlProblemNode = xmlDocument.child( dataRepository::keys::ProblemManager );
-  problemManager->processInputFileRecursive( xmlProblemNode );
+  xmlWrapper::xmlNode xmlProblemNode = xmlDocument.getChild( dataRepository::keys::ProblemManager );
+  problemManager->processInputFileRecursive( xmlDocument, xmlProblemNode );
 
   // Open mesh levels
   DomainPartition & domain = problemManager->getDomainPartition();
@@ -62,7 +62,7 @@ void setupProblemFromXML( ProblemManager * const problemManager, char const * co
 
   ElementRegionManager & elementManager = domain.getMeshBody( 0 ).getBaseDiscretization().getElemManager();
   xmlWrapper::xmlNode topLevelNode = xmlProblemNode.child( elementManager.getName().c_str() );
-  elementManager.processInputFileRecursive( topLevelNode );
+  elementManager.processInputFileRecursive( xmlDocument, topLevelNode );
   elementManager.postProcessInputRecursive();
 
   problemManager->problemSetup();
@@ -127,7 +127,7 @@ struct testMeshHelper< FieldLocation::Face >
 
 template< int USD >
 localIndex size1( arrayView2d< localIndex const, USD > const & map,
-                  localIndex const GEOSX_UNUSED_PARAM( i0 ) )
+                  localIndex const GEOS_UNUSED_PARAM( i0 ) )
 {
   return map.size( 1 );
 }
@@ -604,6 +604,6 @@ void makeSparsityFlux( DomainPartition const & domain,
 }
 
 } // namespace testing
-} // namespace geosx
+} // namespace geos
 
-#endif //GEOSX_LINEARALGEBRA_UNITTESTS_TESTDOFMANAGERUTILS_HPP_
+#endif //GEOS_LINEARALGEBRA_UNITTESTS_TESTDOFMANAGERUTILS_HPP_

@@ -16,12 +16,12 @@
  * @file PerforationFields.hpp
  */
 
-#ifndef GEOSX_MESH_PERFORATIONFIELDS_HPP_
-#define GEOSX_MESH_PERFORATIONFIELDS_HPP_
+#ifndef GEOS_MESH_PERFORATIONFIELDS_HPP_
+#define GEOS_MESH_PERFORATIONFIELDS_HPP_
 
 #include "mesh/MeshFields.hpp"
 
-namespace geosx
+namespace geos
 {
 /**
  * A scope for field traits.
@@ -88,4 +88,4 @@ DECLARE_FIELD( location,
 
 }
 
-#endif // GEOSX_MESH_PERFORATIONFIELDS_HPP_
+#endif // GEOS_MESH_PERFORATIONFIELDS_HPP_

@@ -22,7 +22,7 @@
 
 #include <algorithm>
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -66,7 +66,7 @@ void TableFunction::readFile( string const & filename, array1d< real64 > & targe
   }
   catch( std::runtime_error const & e )
   {
-    GEOSX_THROW( GEOSX_FMT( "{} {}: {}", catalogName(), getName(), e.what() ), InputError );
+    GEOS_THROW( GEOS_FMT( "{} {}: {}", catalogName(), getDataContext(), e.what() ), InputError );
   }
 }
 
@@ -83,10 +83,10 @@ void TableFunction::setTableCoordinates( array1d< real64_array > const & coordin
   {
     for( localIndex j = 1; j < coordinates[i].size(); ++j )
     {
-      GEOSX_THROW_IF( coordinates[i][j] - coordinates[i][j-1] <= 0,
-                      GEOSX_FMT( "{} {}: coordinates must be strictly increasing, but axis {} is not",
-                                 catalogName(), getName(), i ),
-                      InputError );
+      GEOS_THROW_IF( coordinates[i][j] - coordinates[i][j-1] <= 0,
+                     GEOS_FMT( "{} {}: coordinates must be strictly increasing, but axis {} is not",
+                               catalogName(), getDataContext(), i ),
+                     InputError );
     }
     m_coordinates.appendArray( coordinates[i].begin(), coordinates[i].end() );
   }
@@ -111,10 +111,10 @@ void TableFunction::initializeFunction()
   {
     // 1D Table
     m_coordinates.appendArray( m_tableCoordinates1D.begin(), m_tableCoordinates1D.end() );
-    GEOSX_THROW_IF_NE_MSG( m_tableCoordinates1D.size(), m_values.size(),
-                           GEOSX_FMT( "{} {}: 1D table function coordinates and values must have the same length",
-                                      catalogName(), getName() ),
-                           InputError );
+    GEOS_THROW_IF_NE_MSG( m_tableCoordinates1D.size(), m_values.size(),
+                          GEOS_FMT( "{} {}: 1D table function coordinates and values must have the same length",
+                                    catalogName(), getDataContext() ),
+                          InputError );
   }
   else
   {
@@ -144,18 +144,18 @@ void TableFunction::reInitializeFunction()
     increment *= m_coordinates.sizeOfArray( ii );
     for( localIndex j = 1; j < m_coordinates[ii].size(); ++j )
     {
-      GEOSX_THROW_IF( m_coordinates[ii][j] - m_coordinates[ii][j-1] <= 0,
-                      GEOSX_FMT( "{} {}: coordinates must be strictly increasing, but axis {} is not",
-                                 catalogName(), getName(), ii ),
-                      InputError );
+      GEOS_THROW_IF( m_coordinates[ii][j] - m_coordinates[ii][j-1] <= 0,
+                     GEOS_FMT( "{} {}: coordinates must be strictly increasing, but axis {} is not",
+                               catalogName(), getDataContext(), ii ),
+                     InputError );
     }
   }
   if( m_coordinates.size() > 0 && !m_values.empty() ) // coordinates and values have been set
   {
-    GEOSX_THROW_IF_NE_MSG( increment, m_values.size(),
-                           GEOSX_FMT( "{} {}: number of values does not match total number of table coordinates",
-                                      catalogName(), getName() ),
-                           InputError );
+    GEOS_THROW_IF_NE_MSG( increment, m_values.size(),
+                          GEOS_FMT( "{} {}: number of values does not match total number of table coordinates",
+                                    catalogName(), getDataContext() ),
+                          InputError );
   }
 
   // Create the kernel wrapper
@@ -185,4 +185,4 @@ TableFunction::KernelWrapper::KernelWrapper( InterpolationType const interpolati
 
 REGISTER_CATALOG_ENTRY( FunctionBase, TableFunction, string const &, Group * const )
 
-} // end of namespace geosx
+} // end of namespace geos

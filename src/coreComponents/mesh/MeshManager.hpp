@@ -16,13 +16,13 @@
  * @file MeshManager.hpp
  */
 
-#ifndef GEOSX_MESH_MESHMANAGER_HPP_
-#define GEOSX_MESH_MESHMANAGER_HPP_
+#ifndef GEOS_MESH_MESHMANAGER_HPP_
+#define GEOS_MESH_MESHMANAGER_HPP_
 
 #include "dataRepository/Group.hpp"
 #include "mesh/DomainPartition.hpp"
 
-namespace geosx
+namespace geos
 {
 class SolverBase;
 
@@ -83,6 +83,6 @@ private:
 
 };
 
-} /* namespace geosx */
+} /* namespace geos */
 
-#endif /* GEOSX_MESH_MESHMANAGER_HPP_ */
+#endif /* GEOS_MESH_MESHMANAGER_HPP_ */

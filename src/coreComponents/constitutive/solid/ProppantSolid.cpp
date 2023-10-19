@@ -21,7 +21,7 @@
 #include "porosity/ProppantPorosity.hpp"
 #include "constitutive/permeability/ProppantPermeability.hpp"
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -45,4 +45,4 @@ REGISTER_CATALOG_ENTRY( ConstitutiveBase, ProppantSolidModel, string const &, Gr
 
 } /* namespace constitutive */
 
-} /* namespace geosx */
+} /* namespace geos */

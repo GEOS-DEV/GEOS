@@ -13,8 +13,9 @@
  */
 
 #include "MeshGeneratorBase.hpp"
+#include "mesh/generators/CellBlockManager.hpp"
 
-namespace geosx
+namespace geos
 {
 using namespace dataRepository;
 
@@ -26,9 +27,18 @@ MeshGeneratorBase::MeshGeneratorBase( string const & name, Group * const parent 
 
 Group * MeshGeneratorBase::createChild( string const & childKey, string const & childName )
 {
-  // Mesh generators generally don't have child XML nodes, must override this method to enable
-  GEOSX_THROW( GEOSX_FMT( "Mesh '{}': invalid child XML node '{}' of type {}", getName(), childName, childKey ),
-               InputError );
+  GEOS_LOG_RANK_0( "Adding Mesh attribute: " << childKey << ", " << childName );
+  std::unique_ptr< WellGeneratorBase > wellGen = WellGeneratorBase::CatalogInterface::factory( childKey, childName, this );
+  return &this->registerGroup< WellGeneratorBase >( childName, std::move( wellGen ) );
+}
+
+void MeshGeneratorBase::expandObjectCatalogs()
+{
+  // During schema generation, register one of each type derived from WellGeneratorBase here
+  for( auto & catalogIter: WellGeneratorBase::getCatalog())
+  {
+    createChild( catalogIter.first, catalogIter.first );
+  }
 }
 
 MeshGeneratorBase::CatalogInterface::CatalogType & MeshGeneratorBase::getCatalog()
@@ -37,4 +47,38 @@ MeshGeneratorBase::CatalogInterface::CatalogType & MeshGeneratorBase::getCatalog
   return catalog;
 }
 
+CellBlockManagerABC & MeshGeneratorBase::generateMesh( Group & parent, array1d< int > const & partition )
+{
+  CellBlockManager & cellBlockManager = parent.registerGroup< CellBlockManager >( keys::cellManager );
+
+  fillCellBlockManager( cellBlockManager, partition );
+
+  this->attachWellInfo( cellBlockManager );
+
+  return cellBlockManager;
+}
+
+void MeshGeneratorBase::attachWellInfo( CellBlockManager & cellBlockManager )
+{
+  forSubGroups< WellGeneratorBase >( [&]( WellGeneratorBase & wellGen ) {
+    wellGen.generateWellGeometry( );
+    LineBlock & lb = cellBlockManager.registerLineBlock( wellGen.getWellRegionName() );
+    lb.setNumElements( wellGen.numElements() );
+    lb.setElemCoords( wellGen.getElemCoords() );
+    lb.setNextElemIndex( wellGen.getNextElemIndex() );
+    lb.setPrevElemIndices( wellGen.getPrevElemIndices() );
+    lb.setElemToNodesMap( wellGen.getElemToNodesMap() );
+    lb.setElemVolume( wellGen.getElemVolume() );
+    lb.setElementRadius( wellGen.getElementRadius() );
+    lb.setNumNodes( wellGen.numNodes() );
+    lb.setNodeCoords( wellGen.getNodeCoords() );
+    lb.setNumPerforations( wellGen.numPerforations() );
+    lb.setPerfCoords( wellGen.getPerfCoords() );
+    lb.setPerfTransmissibility( wellGen.getPerfTransmissibility() );
+    lb.setPerfElemIndex( wellGen.getPerfElemIndex() );
+    lb.setWellControlsName( wellGen.getWellControlsName() );
+    lb.setWellGeneratorName( wellGen.getName() );
+
+  } );
+}
 }

@@ -16,14 +16,14 @@
  * @file InternalWellboreGenerator.hpp
  */
 
-#ifndef GEOSX_MESHUTILITIES_INTERNALWELLBOREGENERATOR_HPP
-#define GEOSX_MESHUTILITIES_INTERNALWELLBOREGENERATOR_HPP
+#ifndef GEOS_MESHUTILITIES_INTERNALWELLBOREGENERATOR_HPP
+#define GEOS_MESHUTILITIES_INTERNALWELLBOREGENERATOR_HPP
 
 #include "codingUtilities/EnumStrings.hpp"
 #include "dataRepository/Group.hpp"
 #include "InternalMeshGenerator.hpp"
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -111,6 +111,6 @@ private:
 
 };
 
-} /* namespace geosx */
+} /* namespace geos */
 
-#endif /* GEOSX_MESHUTILITIES_INTERNALWELLBOREGENERATOR_HPP */
+#endif /* GEOS_MESHUTILITIES_INTERNALWELLBOREGENERATOR_HPP */

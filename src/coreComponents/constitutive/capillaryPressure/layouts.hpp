@@ -16,22 +16,22 @@
  * @file layouts.hpp
  */
 
-#ifndef GEOSX_CONSTITUTIVE_CAPILLARYPRESSURE_LAYOUTS_HPP
-#define GEOSX_CONSTITUTIVE_CAPILLARYPRESSURE_LAYOUTS_HPP
+#ifndef GEOS_CONSTITUTIVE_CAPILLARYPRESSURE_LAYOUTS_HPP
+#define GEOS_CONSTITUTIVE_CAPILLARYPRESSURE_LAYOUTS_HPP
 
 #include "common/GeosxConfig.hpp"
 
 #include "LvArray/src/typeManipulation.hpp"
 #include "RAJA/RAJA.hpp"
 
-namespace geosx
+namespace geos
 {
 namespace constitutive
 {
 namespace cappres
 {
 
-#if defined( GEOSX_USE_CUDA )
+#if defined( GEOS_USE_DEVICE )
 
 /// Constitutive model phase capillary pressure array layout
 using LAYOUT_CAPPRES = RAJA::PERM_JKI;
@@ -54,6 +54,6 @@ static constexpr int USD_CAPPRES_DS = LvArray::typeManipulation::getStrideOneDim
 
 } // namespace relperm
 } // namespace constitutive
-} // namespace geosx
+} // namespace geos
 
-#endif //GEOSX_CONSTITUTIVE_CAPILLARYPRESSURE_LAYOUTS_HPP
+#endif //GEOS_CONSTITUTIVE_CAPILLARYPRESSURE_LAYOUTS_HPP

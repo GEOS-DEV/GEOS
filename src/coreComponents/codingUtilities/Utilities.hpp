@@ -16,14 +16,14 @@
  * @file Utilities.hpp
  */
 
-#ifndef GEOSX_CODINGUTILITIES_UTILITIES_H_
-#define GEOSX_CODINGUTILITIES_UTILITIES_H_
+#ifndef GEOS_CODINGUTILITIES_UTILITIES_H_
+#define GEOS_CODINGUTILITIES_UTILITIES_H_
 
 #include "codingUtilities/StringUtilities.hpp"
 #include "common/DataTypes.hpp"
 #include "LvArray/src/limits.hpp"
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -35,7 +35,7 @@ namespace geosx
  * @return @p true if @p val1 and @p val2 are within tolerance of each other
  */
 template< typename T >
-GEOSX_FORCE_INLINE GEOSX_HOST_DEVICE constexpr
+GEOS_FORCE_INLINE GEOS_HOST_DEVICE constexpr
 bool isEqual( T const val1, T const val2, T const relTol = 0.0 )
 {
   T const absTol = ( relTol > 10 * LvArray::NumericLimits< T >::epsilon ) ? relTol * ( fabs( val1 ) + fabs( val2 ) ) * 0.5 : 0.0;
@@ -50,14 +50,14 @@ bool isEqual( T const val1, T const val2, T const relTol = 0.0 )
  * @return @p true if @p val is within @p tol of zero
  */
 template< typename T >
-GEOSX_FORCE_INLINE GEOSX_HOST_DEVICE constexpr
+GEOS_FORCE_INLINE GEOS_HOST_DEVICE constexpr
 bool isZero( T const val, T const tol = LvArray::NumericLimits< T >::epsilon )
 {
   return -tol <= val && val <= tol;
 }
 
 template< typename T >
-GEOSX_FORCE_INLINE GEOSX_HOST_DEVICE constexpr
+GEOS_FORCE_INLINE GEOS_HOST_DEVICE constexpr
 bool isOdd( T x )
 {
   static_assert( std::is_integral< T >::value, "Not meaningful for non-integral types" );
@@ -65,7 +65,7 @@ bool isOdd( T x )
 }
 
 template< typename T >
-GEOSX_FORCE_INLINE GEOSX_HOST_DEVICE constexpr
+GEOS_FORCE_INLINE GEOS_HOST_DEVICE constexpr
 bool isEven( T x )
 {
   return !isOdd( x );
@@ -75,7 +75,7 @@ template< typename T1, typename T2, typename SORTED >
 T2 & stlMapLookup( mapBase< T1, T2, SORTED > & Map, const T1 & key )
 {
   typename mapBase< T1, T2, SORTED >::iterator MapIter = Map.find( key );
-  GEOSX_ERROR_IF( MapIter==Map.end(), "Key not found: " << key );
+  GEOS_ERROR_IF( MapIter==Map.end(), "Key not found: " << key );
   return MapIter->second;
 }
 
@@ -198,10 +198,13 @@ VAL findOption( mapBase< KEY, VAL, SORTED > const & map,
                 string const & contextName )
 {
   auto const iter = map.find( option );
-  GEOSX_THROW_IF( iter == map.end(),
-                  GEOSX_FMT( "{}: unsupported option '{}' for {}.\nSupported options are: {}",
-                             contextName, option, optionName, stringutilities::join( mapKeys( map ), ", " ) ),
-                  InputError );
+  GEOS_THROW_IF( iter == map.end(),
+                 GEOS_FMT( "{}: unsupported option '{}' for {}.\nSupported options are: {}",
+                           contextName,
+                           const_cast< typename std::remove_const< KEY & >::type >( option ),
+                           optionName,
+                           stringutilities::join( mapKeys( map ), ", " ) ),
+                 InputError );
   return iter->second;
 }
 
@@ -308,7 +311,8 @@ std::underlying_type_t< ENUMERATION > * toUnderlyingPtr( ENUMERATION * const enu
  * @param[in] offset the first index of v2 at which we start copying values
  */
 template< typename VEC1, typename VEC2 >
-GEOSX_HOST_DEVICE
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 void copy( integer const N,
            VEC1 const & v1,
            VEC2 const & v2,
@@ -332,7 +336,8 @@ void copy( integer const N,
  * @param[in] firstDerivativeOffset the first derivative offset in df_dy
  */
 template< typename MATRIX, typename VEC1, typename VEC2 >
-GEOSX_HOST_DEVICE
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 void applyChainRule( integer const N,
                      MATRIX const & dy_dx,
                      VEC1 const & df_dy,
@@ -362,7 +367,8 @@ void applyChainRule( integer const N,
  * @param[in] offset the first derivative offset in df_dy
  */
 template< typename MATRIX, typename VEC1, typename VEC2 >
-GEOSX_HOST_DEVICE
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 void applyChainRuleInPlace( integer const N,
                             MATRIX const & dy_dx,
                             VEC1 && df_dxy,
@@ -381,12 +387,12 @@ void applyChainRuleInPlace( integer const N,
 struct NoOpFunc
 {
   template< typename ... Ts >
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   constexpr void
   operator()( Ts && ... ) const {}
 };
 
 
-} // namespace geosx
+} // namespace geos
 
-#endif /* GEOSX_CODINGUTILITIES_UTILITIES_H_ */
+#endif /* GEOS_CODINGUTILITIES_UTILITIES_H_ */

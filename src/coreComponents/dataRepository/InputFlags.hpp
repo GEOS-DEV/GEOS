@@ -16,13 +16,13 @@
  * @file InputFlags.hpp
  */
 
-#ifndef GEOSX_DATAREPOSITORY_INPUTFLAGS_HPP_
-#define GEOSX_DATAREPOSITORY_INPUTFLAGS_HPP_
+#ifndef GEOS_DATAREPOSITORY_INPUTFLAGS_HPP_
+#define GEOS_DATAREPOSITORY_INPUTFLAGS_HPP_
 
 #include "common/DataTypes.hpp"
 #include "common/Logger.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace dataRepository
@@ -71,7 +71,7 @@ inline InputFlags IntToInputFlag( int const val )
     }
     default:
     {
-      GEOSX_ERROR( "Invalid integer conversion to InputFlag" );
+      GEOS_ERROR( "Invalid integer conversion to InputFlag" );
     }
   }
   return rval;
@@ -190,8 +190,8 @@ inline bool operator>=( InputFlags const left, InputFlags const right )
 }
 
 
-} /* namespace geosx */
+} /* namespace geos */
 
 
 
-#endif /* GEOSX_DATAREPOSITORY_INPUTFLAGS_HPP_ */
+#endif /* GEOS_DATAREPOSITORY_INPUTFLAGS_HPP_ */

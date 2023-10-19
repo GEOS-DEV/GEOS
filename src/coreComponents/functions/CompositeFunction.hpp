@@ -16,14 +16,14 @@
  * @file CompositeFunction.hpp
  */
 
-#ifndef GEOSX_FUNCTIONS_COMPOSITEFUNCTION_HPP_
-#define GEOSX_FUNCTIONS_COMPOSITEFUNCTION_HPP_
+#ifndef GEOS_FUNCTIONS_COMPOSITEFUNCTION_HPP_
+#define GEOS_FUNCTIONS_COMPOSITEFUNCTION_HPP_
 
 #include "FunctionBase.hpp"
 
 #include <mathpresso/mathpresso.h>
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -34,7 +34,7 @@ namespace geosx
 class CompositeFunction : public FunctionBase
 {
 public:
-  /// @copydoc geosx::dataRepository::Group::Group( string const & name, Group * const parent )
+  /// @copydoc geos::dataRepository::Group::Group( string const & name, Group * const parent )
   CompositeFunction( const string & name,
                      dataRepository::Group * const parent );
 
@@ -88,6 +88,6 @@ private:
 
 };
 
-} /* namespace geosx */
+} /* namespace geos */
 
-#endif /* GEOSX_FUNCTIONS_COMPOSITEFUNCTION_HPP_ */
+#endif /* GEOS_FUNCTIONS_COMPOSITEFUNCTION_HPP_ */

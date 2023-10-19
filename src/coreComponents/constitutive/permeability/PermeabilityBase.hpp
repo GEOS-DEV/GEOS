@@ -16,14 +16,14 @@
  * @file PermeabilityBase.hpp
  */
 
-#ifndef GEOSX_CONSTITUTIVE_PERMEABILITY_PERMEABILITYBASE_HPP_
-#define GEOSX_CONSTITUTIVE_PERMEABILITY_PERMEABILITYBASE_HPP_
+#ifndef GEOS_CONSTITUTIVE_PERMEABILITY_PERMEABILITYBASE_HPP_
+#define GEOS_CONSTITUTIVE_PERMEABILITY_PERMEABILITYBASE_HPP_
 
 #include "constitutive/ConstitutiveBase.hpp"
 
 #include "constitutive/ExponentialRelation.hpp"
 
-namespace geosx
+namespace geos
 {
 namespace constitutive
 {
@@ -36,35 +36,34 @@ public:
    * @brief Get number of elements in this wrapper.
    * @return number of elements
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   localIndex numElems() const { return m_permeability.size( 0 ); }
 
   /**
    * @brief Get number of gauss points per element.
    * @return number of gauss points per element
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   localIndex numGauss() const { return m_permeability.size( 1 ); }
 
-
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   virtual void updateFromPorosity( localIndex const k,
                                    localIndex const q,
                                    real64 const & porosity ) const
   {
-    GEOSX_UNUSED_VAR( k, q, porosity );
+    GEOS_UNUSED_VAR( k, q, porosity );
   }
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   virtual void updateFromAperture( localIndex const k,
                                    localIndex const q,
                                    real64 const & oldHydraulicAperture,
                                    real64 const & newHydraulicAperture ) const
   {
-    GEOSX_UNUSED_VAR( k, q, oldHydraulicAperture, newHydraulicAperture );
+    GEOS_UNUSED_VAR( k, q, oldHydraulicAperture, newHydraulicAperture );
   }
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   virtual void updateFromApertureAndShearDisplacement( localIndex const k,
                                                        localIndex const q,
                                                        real64 const & oldHydraulicAperture,
@@ -73,19 +72,18 @@ public:
                                                        real64 const ( &dispJump )[3],
                                                        real64 const ( &traction )[3] ) const
   {
-    GEOSX_UNUSED_VAR( k, q, oldHydraulicAperture, newHydraulicAperture, dispJump, traction, pressure );
+    GEOS_UNUSED_VAR( k, q, oldHydraulicAperture, newHydraulicAperture, dispJump, traction, pressure );
   }
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   virtual void updateFromApertureAndProppantVolumeFraction ( localIndex const k,
                                                              localIndex const q,
                                                              real64 const & oldHydraulicAperture,
                                                              real64 const & newHydraulicAperture,
                                                              real64 const & proppantPackVolumeFraction ) const
   {
-    GEOSX_UNUSED_VAR( k, q, oldHydraulicAperture, newHydraulicAperture, proppantPackVolumeFraction );
+    GEOS_UNUSED_VAR( k, q, oldHydraulicAperture, newHydraulicAperture, proppantPackVolumeFraction );
   }
-
 
 protected:
 
@@ -151,7 +149,7 @@ protected:
 
 }/* namespace constitutive */
 
-} /* namespace geosx */
+} /* namespace geos */
 
 
-#endif //GEOSX_CONSTITUTIVE_PERMEABILITY_PERMEABILITYBASE_HPP_
+#endif //GEOS_CONSTITUTIVE_PERMEABILITY_PERMEABILITYBASE_HPP_

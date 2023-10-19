@@ -16,15 +16,14 @@
  * @file GeosxState.hpp
  */
 
-#ifndef GEOSX_MAININTERFACE_GEOSXSTATE_HPP_
-#define GEOSX_MAININTERFACE_GEOSXSTATE_HPP_
+#ifndef GEOS_MAININTERFACE_GEOSXSTATE_HPP_
+#define GEOS_MAININTERFACE_GEOSXSTATE_HPP_
 
 // Source includes
 #include "common/DataTypes.hpp"
 
 // System includes
 #include <functional>
-#include <chrono>
 #include <memory>
 
 // Forward declaration of conduit::Node.
@@ -42,7 +41,7 @@ class ConfigManager;
 #endif
 
 
-namespace geosx
+namespace geos
 {
 
 // Forward declarations.
@@ -150,7 +149,7 @@ public:
    */
   CommandLineOptions const & getCommandLineOptions()
   {
-    GEOSX_ERROR_IF( m_commandLineOptions == nullptr, "Not initialized." );
+    GEOS_ERROR_IF( m_commandLineOptions == nullptr, "Not initialized." );
     return *m_commandLineOptions;
   }
 
@@ -160,7 +159,7 @@ public:
    */
   conduit::Node & getRootConduitNode()
   {
-    GEOSX_ERROR_IF( m_rootNode == nullptr, "Not initialized." );
+    GEOS_ERROR_IF( m_rootNode == nullptr, "Not initialized." );
     return *m_rootNode;
   }
 
@@ -170,7 +169,7 @@ public:
    */
   ProblemManager & getProblemManager()
   {
-    GEOSX_ERROR_IF( m_problemManager == nullptr, "Not initialized." );
+    GEOS_ERROR_IF( m_problemManager == nullptr, "Not initialized." );
     return *m_problemManager;
   }
 
@@ -200,7 +199,7 @@ public:
    */
   CommunicationTools & getCommunicationTools()
   {
-    GEOSX_ERROR_IF( m_commTools == nullptr, "Not initialized." );
+    GEOS_ERROR_IF( m_commTools == nullptr, "Not initialized." );
     return *m_commTools;
   }
 
@@ -253,6 +252,6 @@ private:
  */
 GeosxState & getGlobalState();
 
-} // namespace geosx
+} // namespace geos
 
-#endif /* GEOSX_MAININTERFACE_GEOSXSTATE_HPP_ */
+#endif /* GEOS_MAININTERFACE_GEOSXSTATE_HPP_ */

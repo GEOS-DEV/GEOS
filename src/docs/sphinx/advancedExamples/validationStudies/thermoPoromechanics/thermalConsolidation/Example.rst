@@ -8,11 +8,11 @@ Thermoporoelastic Consolidation
 **Context**
 
 Thermoporoelastic consolidation is a typical fully coupled problem which involves solid deformation, fluid flow and heat transfer in saturated porous media.
-In this example, we use the GEOSX coupled solvers to solve a one-dimensional thermoporoelastic consolidation problem with a non-isothermal boundary condition, and we verify the accuracy of the results using the analytical solution provided in `(Bai, 2005) <http://gclx.xml-journal.net/en/article/id/3369>`__ 
+In this example, we use the GEOS coupled solvers to solve a one-dimensional thermoporoelastic consolidation problem with a non-isothermal boundary condition, and we verify the accuracy of the results using the analytical solution provided in `(Bai, 2005) <http://gclx.xml-journal.net/en/article/id/3369>`__ 
 
 **InputFile**
 
-This example uses no external input files and everything required is contained within two GEOSX input files located at:
+This example uses no external input files and everything required is contained within two GEOS input files located at:
 
 .. code-block:: console
 
@@ -20,7 +20,7 @@ This example uses no external input files and everything required is contained w
 
 .. code-block:: console
 
-  inputFiles/thermoPoromechanics/ThermoPoroElastic_consolidation_benchmark.xml
+  inputFiles/thermoPoromechanics/ThermoPoroElastic_consolidation_benchmark_fim.xml
 
 ---------------------------------------------------
 Description of the case
@@ -45,7 +45,7 @@ Initially, the settlement caused by the drainage of the fluid (effective stress 
 As the temperature diffuses further into the domain, it gradually rebounds (expansion) and reaches a final status.
 
 For this example, we focus on the ``Solvers``,
-the ``Constitutive``, and the ``FieldSpecifications`` tags of the GEOSX input file.
+the ``Constitutive``, and the ``FieldSpecifications`` tags of the GEOS input file.
 
 ------------------------------------------------------------------
 Solvers
@@ -187,9 +187,9 @@ On the top surface, we impose the traction boundary condition and the non-isothe
 Inspecting results
 ---------------------------------
 
-We request an output of the displacements, pressure, and temperature using the **TimeHistory** feature of GEOSX. 
-The figures below compare the results from GEOSX (dashed line) and the corresponding analytical solution (solid line) as a function of time at different locations of the slab.
-We obtain a very good match, confirming that GEOSX can accurately capture the thermo-poromechanical coupling on this example. The first figure illustrates this good agreement for the pressure evolution. 
+We request an output of the displacements, pressure, and temperature using the **TimeHistory** feature of GEOS. 
+The figures below compare the results from GEOS (dashed line) and the corresponding analytical solution (solid line) as a function of time at different locations of the slab.
+We obtain a very good match, confirming that GEOS can accurately capture the thermo-poromechanical coupling on this example. The first figure illustrates this good agreement for the pressure evolution. 
 
 .. plot:: docs/sphinx/advancedExamples/validationStudies/thermoPoromechanics/thermalConsolidation/thermalConsolidationPressureFigure.py
 
@@ -197,7 +197,7 @@ The second figure confirms the good match with the analytical solution for the t
 	  
 .. plot:: docs/sphinx/advancedExamples/validationStudies/thermoPoromechanics/thermalConsolidation/thermalConsolidationTemperatureFigure.py
 
-The third figure shows that GEOSX is also able to match the vertical displacement (settlement) analytical solution.  
+The third figure shows that GEOS is also able to match the vertical displacement (settlement) analytical solution.  
 	  
 .. plot:: docs/sphinx/advancedExamples/validationStudies/thermoPoromechanics/thermalConsolidation/thermalConsolidationDisplacementFigure.py
 
@@ -208,5 +208,5 @@ To go further
 
 **Feedback on this example**
 
-For any feedback on this example, please submit a `GitHub issue on the project's GitHub page <https://github.com/GEOSX/GEOSX/issues>`_.
+For any feedback on this example, please submit a `GitHub issue on the project's GitHub page <https://github.com/GEOS-DEV/GEOS/issues>`_.
 

@@ -1,60 +1,22 @@
 import numpy
 
-from vtkmodules.vtkCommonCore import (
-    vtkPoints, )
-from vtkmodules.vtkCommonDataModel import (
-    VTK_HEXAHEDRON,
-    vtkCellArray,
-    vtkHexahedron,
-    vtkRectilinearGrid,
-    vtkUnstructuredGrid,
-)
-from vtk.util.numpy_support import (
+from vtkmodules.util.numpy_support import (
     numpy_to_vtk,
     vtk_to_numpy,
 )
 
-from checks.generate_fractures import Options, __split_mesh_on_fracture, __find_involved_cells, __color_fracture_sides
-
-
-def __build_mesh() -> vtkUnstructuredGrid:
-    # creation of a 3 x 3 x 1 grid
-    rg = vtkRectilinearGrid()
-    rg.SetDimensions(4, 4, 2)
-    rg.SetXCoordinates(numpy_to_vtk(numpy.arange(4, dtype=float)))
-    rg.SetYCoordinates(numpy_to_vtk(numpy.arange(4, dtype=float)))
-    rg.SetZCoordinates(numpy_to_vtk(numpy.arange(2, dtype=float)))
-
-    num_points = rg.GetNumberOfPoints()
-    num_cells = rg.GetNumberOfCells()
-
-    points = vtkPoints()
-    points.Allocate(num_points)
-    for i in range(num_points):
-        points.InsertNextPoint(rg.GetPoint(i))
-
-    cell_types = [VTK_HEXAHEDRON] * num_cells
-    cells = vtkCellArray()
-    cells.AllocateExact(num_cells, num_cells * 8)
-
-    m = (0, 1, 3, 2, 4, 5, 7, 6)    # VTK_VOXEL and VTK_HEXAHEDRON do not share the same ordering.
-
-    for i in range(rg.GetNumberOfCells()):
-        c = rg.GetCell(i)
-        new_cell = vtkHexahedron()
-        for j in range(8):
-            new_cell.GetPointIds().SetId(j, c.GetPointId(m[j]))
-        cells.InsertNextCell(new_cell)
-
-    mesh = vtkUnstructuredGrid()
-    mesh.SetPoints(points)
-    mesh.SetCells(cell_types, cells)
-
-    return mesh
+from checks.generate_fractures import Options, __split_mesh_on_fracture, __color_fracture_sides, vtk_utils, FractureInfo
+from checks.generate_cube import (
+    build_rectilinear_blocks_mesh,
+    XYZ,
+)
 
 
 def test_generate_fracture():
-    mesh = __build_mesh()
+    tmp0 = numpy.arange(4, dtype=float)
+    tmp1 = numpy.arange(2, dtype=float)
+    xyz = XYZ(tmp0, tmp0, tmp1)
+    mesh = build_rectilinear_blocks_mesh((xyz, ))
 
     ref = numpy.array((0, 1, 2, 1, 1, 2, 1, 1, 2), dtype=int)
     attribute = numpy_to_vtk(ref)
@@ -64,21 +26,28 @@ def test_generate_fracture():
     options = Options(policy="field",
                       field="attribute",
                       field_values={0, 1, 2},
-                      output="",
+                      vtk_output=None,
+                      vtk_fracture_output=None,
                       split_on_domain_boundary=True)
-    cell_frac_info, node_frac_info = __find_involved_cells(mesh, options)
-    assert set(cell_frac_info.cell_to_faces.keys()) == {0, 1, 2, 3, 4, 5, 7, 8}
-    assert len(cell_frac_info.field_data) == 5
-    assert numpy.array_equal(node_frac_info.is_internal_fracture_node,
+    frac = FractureInfo(mesh, options)
+    assert set(frac.cell_to_faces.keys()) == {0, 1, 2, 3, 4, 5, 7, 8}
+    assert numpy.array_equal(frac.is_internal_fracture_node,
                              numpy.array(([0, 1, 1, 0, 1, 1, 1, 0] + [0, 0, 1, 0] * 2) * 2, dtype=bool))
 
-    connected_cells = __color_fracture_sides(mesh, cell_frac_info, node_frac_info)
+    connected_cells = __color_fracture_sides(mesh,
+                                             frac.cell_to_faces,
+                                             frac.is_fracture_node)
     cc = set(map(frozenset, connected_cells))
     assert cc == {frozenset({0}), frozenset({1, 3, 4, 7}), frozenset({2, 5, 8})}
 
-    output_mesh = __split_mesh_on_fracture(mesh, options)
+    output_mesh, fracture_mesh = __split_mesh_on_fracture(mesh, options)
     assert mesh.GetNumberOfCells() == output_mesh.GetNumberOfCells()
     assert mesh.GetNumberOfPoints() + 6 + 8 == output_mesh.GetNumberOfPoints()
+    assert fracture_mesh.GetNumberOfCells() == 5
+    assert fracture_mesh.GetNumberOfPoints() == 6 + 8
+    dup = fracture_mesh.GetPointData().GetArray("duplicated_nodes")
+    assert dup.GetNumberOfComponents() == 2
+    assert dup.GetNumberOfTuples() == fracture_mesh.GetNumberOfPoints()
 
     cell_data = output_mesh.GetCellData()
     assert cell_data.HasArray("attribute")

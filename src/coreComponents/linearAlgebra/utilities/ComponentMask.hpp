@@ -16,15 +16,15 @@
  * @file ComponentMask.hpp
  */
 
-#ifndef GEOSX_LINEARALGEBRA_UTILITIES_COMPONENTMASK_HPP_
-#define GEOSX_LINEARALGEBRA_UTILITIES_COMPONENTMASK_HPP_
+#ifndef GEOS_LINEARALGEBRA_UTILITIES_COMPONENTMASK_HPP_
+#define GEOS_LINEARALGEBRA_UTILITIES_COMPONENTMASK_HPP_
 
 #include "common/GeosxMacros.hpp"
 #include "common/Logger.hpp"
 
 #include <cstdint>
 
-namespace geosx
+namespace geos
 {
 
 namespace internal
@@ -46,19 +46,19 @@ struct ComponentMaskType
 /**
  * @brief Macro for declaring a specialization of ComponentMaskTypeImpl template.
  */
-#define GEOSX_LAI_COMPONENTMASK_DECL( N ) \
+#define GEOS_LAI_COMPONENTMASK_DECL( N ) \
   template<> \
   struct ComponentMaskType< N > \
   { \
     using type = std::uint ## N ## _t; \
   }
 
-GEOSX_LAI_COMPONENTMASK_DECL( 8 );
-GEOSX_LAI_COMPONENTMASK_DECL( 16 );
-GEOSX_LAI_COMPONENTMASK_DECL( 32 );
-GEOSX_LAI_COMPONENTMASK_DECL( 64 );
+GEOS_LAI_COMPONENTMASK_DECL( 8 );
+GEOS_LAI_COMPONENTMASK_DECL( 16 );
+GEOS_LAI_COMPONENTMASK_DECL( 32 );
+GEOS_LAI_COMPONENTMASK_DECL( 64 );
 
-#undef GEOSX_LAI_COMPONENTMASK_DECL
+#undef GEOS_LAI_COMPONENTMASK_DECL
 
 constexpr std::uint32_t roundToNextPowerOfTwo( std::uint32_t v )
 {
@@ -108,7 +108,7 @@ public:
    * @param numComp total number of components
    * @param includeAll if @p true, initializes the mask to include rather than exclude all components
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   ComponentMask( int const numComp, bool const includeAll )
     : m_mask( includeAll ? -1 : 0 )
   {
@@ -119,7 +119,7 @@ public:
    * @brief Constructor.
    * @param numComp total number of components
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   explicit ComponentMask( int const numComp = 0 )
     : ComponentMask( numComp, false )
   {}
@@ -131,7 +131,7 @@ public:
    * @param hi one-past last component number to include
    * @note [lo,hi) form a half-open range, indexing is zero-based.
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   ComponentMask( int const numComp, int const lo, int const hi )
     : ComponentMask( numComp )
   {
@@ -147,7 +147,7 @@ public:
    * @param other source mask
    */
   template< int N, typename = std::enable_if_t< ( N < MAX_COMP ) > >
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   ComponentMask( ComponentMask< N > const & other )
     : m_numComp( other.numComp() )
   {
@@ -182,8 +182,8 @@ public:
      * @brief Dereference operator.
      * @return index of currently pointed-to component
      */
-    GEOSX_HOST_DEVICE
-    GEOSX_FORCE_INLINE
+    GEOS_HOST_DEVICE
+    GEOS_FORCE_INLINE
     reference operator*() const
     {
       return m_index;
@@ -193,11 +193,11 @@ public:
      * @brief Prefix increment operator.
      * @return reference to @p this
      */
-    GEOSX_HOST_DEVICE
-    GEOSX_FORCE_INLINE
+    GEOS_HOST_DEVICE
+    GEOS_FORCE_INLINE
     Iterator & operator++()
     {
-      GEOSX_ASSERT_NE( m_mask, 0 );
+      GEOS_ASSERT_NE( m_mask, 0 );
       skipOne();
       findNextBit();
       return *this;
@@ -207,8 +207,8 @@ public:
      * @brief Postfix increment operator.
      * @return copy of @p this prior to increment
      */
-    GEOSX_HOST_DEVICE
-    GEOSX_FORCE_INLINE
+    GEOS_HOST_DEVICE
+    GEOS_FORCE_INLINE
     Iterator operator++( int ) &
     {
       Iterator old = *this;
@@ -221,8 +221,8 @@ public:
      * @param other the iterator to compare to
      * @return @p true if iterators are equal (as determined by remaining mask)
      */
-    GEOSX_HOST_DEVICE
-    GEOSX_FORCE_INLINE
+    GEOS_HOST_DEVICE
+    GEOS_FORCE_INLINE
     bool operator==( Iterator const & other ) const
     {
       return m_mask == other.m_mask;
@@ -233,8 +233,8 @@ public:
      * @param other the iterator to compare to
      * @return @p true if iterators are not equal
      */
-    GEOSX_HOST_DEVICE
-    GEOSX_FORCE_INLINE
+    GEOS_HOST_DEVICE
+    GEOS_FORCE_INLINE
     bool operator!=( Iterator const & other ) const
     {
       return !(*this == other);
@@ -242,16 +242,16 @@ public:
 
 private:
 
-    GEOSX_HOST_DEVICE
-    GEOSX_FORCE_INLINE
+    GEOS_HOST_DEVICE
+    inline
     void skipOne()
     {
       m_mask >>= 1;
       ++m_index;
     }
 
-    GEOSX_HOST_DEVICE
-    GEOSX_FORCE_INLINE
+    GEOS_HOST_DEVICE
+    GEOS_FORCE_INLINE
     void findNextBit()
     {
       if( m_mask )
@@ -264,7 +264,7 @@ private:
       }
     }
 
-    GEOSX_HOST_DEVICE
+    GEOS_HOST_DEVICE
     Iterator( mask_t const mask, int const index )
       : m_mask( mask ),
       m_index( index )
@@ -281,7 +281,7 @@ private:
   /**
    * @brief @return iterator to the start of the component index range
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   Iterator begin() const
   {
     return Iterator( m_mask, 0 );
@@ -290,7 +290,7 @@ private:
   /**
    * @brief @return iterator past the end of the component index range
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   Iterator end() const
   {
     return Iterator( 0, -1 );
@@ -299,7 +299,7 @@ private:
   /**
    * @brief @return the number of set components.
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   int size() const
   {
     mask_t mask = m_mask;
@@ -314,7 +314,7 @@ private:
   /**
    * @brief @return number of components
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   int numComp() const
   {
     return m_numComp;
@@ -323,7 +323,7 @@ private:
   /**
    * @brief @return @p true if mask is empty (no components selected), @p false otherwise.
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   bool empty() const
   {
     return m_mask == 0;
@@ -334,10 +334,10 @@ private:
    * @param i component index
    * @return @p true if i-th component is selected, @p false otherwise
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   bool operator[]( int const i ) const
   {
-    GEOSX_ASSERT_GT( m_numComp, i );
+    GEOS_ASSERT_GT( m_numComp, i );
     return m_mask & (mask_t( 1 ) << i);
   }
 
@@ -351,7 +351,7 @@ private:
   /**
    * @brief Clear the mask, removing selected components.
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void clear()
   {
     m_mask = 0;
@@ -361,11 +361,11 @@ private:
    * @brief Set new component limit and truncate all components above.
    * @param numComp new max components value
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void setNumComp( int const numComp )
   {
-    GEOSX_ASSERT_GE( numComp, 0 );
-    GEOSX_ASSERT_GE( MAX_COMP, numComp );
+    GEOS_ASSERT_GE( numComp, 0 );
+    GEOS_ASSERT_GE( MAX_COMP, numComp );
     m_numComp = numComp;
     if( numComp < NUM_BITS )
     {
@@ -377,11 +377,11 @@ private:
    * @brief Add a component.
    * @param i component index
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void set( int const i )
   {
-    GEOSX_ASSERT_GE( i, 0 );
-    GEOSX_ASSERT_GT( m_numComp, i );
+    GEOS_ASSERT_GE( i, 0 );
+    GEOS_ASSERT_GT( m_numComp, i );
     m_mask |= mask_t( 1 ) << i;
   }
 
@@ -389,18 +389,18 @@ private:
    * @brief Remove a component.
    * @param i component index
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void unset( int const i )
   {
-    GEOSX_ASSERT_GE( i, 0 );
-    GEOSX_ASSERT_GT( m_numComp, i );
+    GEOS_ASSERT_GE( i, 0 );
+    GEOS_ASSERT_GT( m_numComp, i );
     m_mask &= ~(mask_t( 1 ) << i);
   }
 
   /**
    * @brief Invert component selection.
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void invert()
   {
     m_mask = ~m_mask;
@@ -412,7 +412,7 @@ private:
    * @param i component index
    * @return reference to this object
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   ComponentMask & operator+=( int const i )
   {
     set( i );
@@ -424,7 +424,7 @@ private:
    * @param i component index
    * @return reference to this object
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   ComponentMask & operator-=( int const i )
   {
     unset( i );
@@ -435,7 +435,7 @@ private:
    * @brief Negation operator (inverts component selection).
    * @return new mask that is the inversion of this object
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   ComponentMask operator~() const
   {
     ComponentMask mask( *this );
@@ -449,7 +449,7 @@ private:
    * @param i component index
    * @return new component mask
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   friend ComponentMask operator+( ComponentMask const & mask, int const i )
   {
     ComponentMask new_mask = mask;
@@ -463,7 +463,7 @@ private:
    * @param mask the mask to append to
    * @return new component mask
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   friend ComponentMask operator+( int const i, ComponentMask const & mask )
   {
     return mask + i;
@@ -475,7 +475,7 @@ private:
    * @param i component index
    * @return new component mask
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   friend ComponentMask operator-( ComponentMask const & mask, int const i )
   {
     ComponentMask new_mask = mask;
@@ -489,7 +489,7 @@ private:
    * @param mask the mask to remove from
    * @return new component mask
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   friend ComponentMask operator-( int const i, ComponentMask const & mask )
   {
     return mask - i;
@@ -508,4 +508,4 @@ private:
 
 }
 
-#endif //GEOSX_LINEARALGEBRA_UTILITIES_COMPONENTMASK_HPP_
+#endif //GEOS_LINEARALGEBRA_UTILITIES_COMPONENTMASK_HPP_

@@ -12,8 +12,8 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#ifndef GEOSX_COMMON_INITIALIZEENVIRONMENT_HPP_
-#define GEOSX_COMMON_INITIALIZEENVIRONMENT_HPP_
+#ifndef GEOS_COMMON_INITIALIZEENVIRONMENT_HPP_
+#define GEOS_COMMON_INITIALIZEENVIRONMENT_HPP_
 
 // Source includes
 #include "DataTypes.hpp"
@@ -21,7 +21,10 @@
 
 // TPL includes
 #ifdef GEOSX_USE_CALIPER
+
+#ifdef GEOSX_USE_ADIAK
 #include <adiak.hpp>
+#endif
 
 //Forward declaration of cali::ConfigManager.
 namespace cali
@@ -30,7 +33,7 @@ class ConfigManager;
 }
 #endif
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -166,7 +169,7 @@ void setupCaliper( cali::ConfigManager & caliperManager,
 template< typename T >
 void pushStatsIntoAdiak( string const & name, T const value )
 {
-#if defined( GEOSX_USE_CALIPER ) && !defined(__APPLE__)
+#if defined( GEOSX_USE_CALIPER ) && defined( GEOSX_USE_ADIAK ) && !defined(__APPLE__)
   // Apple clang doesn't like adiak.
   T const total = MpiWrapper::sum( value );
   adiak::value( name + " sum", total );
@@ -174,11 +177,11 @@ void pushStatsIntoAdiak( string const & name, T const value )
   adiak::value( name + " min", MpiWrapper::min( value ) );
   adiak::value( name + " max", MpiWrapper::max( value ) );
 #else
-  GEOSX_UNUSED_VAR( name );
-  GEOSX_UNUSED_VAR( value );
+  GEOS_UNUSED_VAR( name );
+  GEOS_UNUSED_VAR( value );
 #endif
 }
 
-} // namespace geosx
+} // namespace geos
 
-#endif // GEOSX_COMMON_INITIALIZEENVIRONMENT_HPP_
+#endif // GEOS_COMMON_INITIALIZEENVIRONMENT_HPP_

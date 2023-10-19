@@ -18,7 +18,7 @@
 
 #include "FunctionBase.hpp"
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -71,4 +71,4 @@ real64_array FunctionBase::evaluateStats( dataRepository::Group const & group,
 }
 
 
-} // end of namespace geosx
+} // end of namespace geos

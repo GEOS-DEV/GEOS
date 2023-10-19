@@ -18,6 +18,7 @@
 #include "mainInterface/ProblemManager.hpp"
 #include "mainInterface/initialization.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
+#include "common/Timer.hpp"
 
 // TPL includes
 #include <conduit.hpp>
@@ -29,7 +30,7 @@
 // System includes
 #include <ostream>
 
-namespace geosx
+namespace geos
 {
 
 GeosxState * currentGlobalState = nullptr;
@@ -37,48 +38,19 @@ GeosxState * currentGlobalState = nullptr;
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 GeosxState & getGlobalState()
 {
-  GEOSX_ERROR_IF( currentGlobalState == nullptr,
-                  "The state has not been created." );
+  GEOS_ERROR_IF( currentGlobalState == nullptr,
+                 "The state has not been created." );
 
   return *currentGlobalState;
 }
-
-
-/**
- * @class Timer
- * @brief Object that times the duration of its existence.
- */
-class Timer
-{
-public:
-
-  /**
-   * @brief Constructor. The time the object is alive is added to @p duration.
-   * @param duration A reference to the duration to add to.
-   */
-  Timer( std::chrono::system_clock::duration & duration ):
-    m_start( std::chrono::system_clock::now() ),
-    m_duration( duration )
-  {}
-
-  /// Destructor. Adds to the referenced duration.
-  ~Timer()
-  { m_duration += std::chrono::system_clock::now() - m_start; }
-
-private:
-  /// The time at which this object was constructed.
-  std::chrono::system_clock::time_point const m_start;
-  /// A reference to the duration to add to.
-  std::chrono::system_clock::duration & m_duration;
-};
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 string durationToString( std::chrono::system_clock::duration const duration )
 {
   // If we want to print HH::MM::SS (maybe in addition to seconds-only):
-  // return GEOSX_FMT( "{:%T}", duration );
+  // return GEOS_FMT( "{:%T}", duration );
   double const seconds = std::chrono::duration_cast< std::chrono::milliseconds >( duration ).count() / 1000.0;
-  return GEOSX_FMT( "{:>20.3f}s", seconds );
+  return GEOS_FMT( "{:>20.3f}s", seconds );
 }
 
 std::ostream & operator<<( std::ostream & os, State const state )
@@ -100,7 +72,7 @@ std::ostream & operator<<( std::ostream & os, State const state )
     return os << "State::COMPLETED";
   }
 
-  GEOSX_ERROR( "Unrecognized state. The integral value is: " << static_cast< int >( state ) );
+  GEOS_ERROR( "Unrecognized state. The integral value is: " << static_cast< int >( state ) );
   return os;
 }
 
@@ -126,13 +98,13 @@ GeosxState::GeosxState( std::unique_ptr< CommandLineOptions > && commandLineOpti
   string restartFileName;
   if( ProblemManager::parseRestart( restartFileName, getCommandLineOptions() ) )
   {
-    GEOSX_LOG_RANK_0( "Loading restart file " << restartFileName );
+    GEOS_LOG_RANK_0( "Loading restart file " << restartFileName );
     dataRepository::loadTree( restartFileName, getRootConduitNode() );
   }
 
   m_problemManager = std::make_unique< ProblemManager >( getRootConduitNode() );
 
-  GEOSX_ERROR_IF( currentGlobalState != nullptr, "Only one state can exist at a time." );
+  GEOS_ERROR_IF( currentGlobalState != nullptr, "Only one state can exist at a time." );
   currentGlobalState = this;
 }
 
@@ -143,17 +115,17 @@ GeosxState::~GeosxState()
   m_caliperManager->flush();
 #endif
 
-  GEOSX_ERROR_IF( currentGlobalState != this, "This shouldn't be possible." );
+  GEOS_ERROR_IF( currentGlobalState != this, "This shouldn't be possible." );
   currentGlobalState = nullptr;
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 bool GeosxState::initializeDataRepository()
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
   Timer timer( m_initTime );
 
-  GEOSX_THROW_IF_NE( m_state, State::UNINITIALIZED, std::logic_error );
+  GEOS_THROW_IF_NE( m_state, State::UNINITIALIZED, std::logic_error );
 
   getProblemManager().parseCommandLineInput();
 
@@ -180,10 +152,10 @@ bool GeosxState::initializeDataRepository()
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void GeosxState::applyInitialConditions()
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
   Timer timer( m_initTime );
 
-  GEOSX_THROW_IF_NE( m_state, State::INITIALIZED, std::logic_error );
+  GEOS_THROW_IF_NE( m_state, State::INITIALIZED, std::logic_error );
 
   getProblemManager().applyInitialConditions();
 
@@ -199,10 +171,10 @@ void GeosxState::applyInitialConditions()
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void GeosxState::run()
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
   Timer timer( m_runTime );
 
-  GEOSX_THROW_IF_NE( m_state, State::READY_TO_RUN, std::logic_error );
+  GEOS_THROW_IF_NE( m_state, State::READY_TO_RUN, std::logic_error );
 
   if( !getProblemManager().runSimulation() )
   {
@@ -222,4 +194,4 @@ FieldSpecificationManager & GeosxState::getFieldSpecificationManager()
 FunctionManager & GeosxState::getFunctionManager()
 { return getProblemManager().getFunctionManager(); }
 
-} // namespace geosx
+} // namespace geos

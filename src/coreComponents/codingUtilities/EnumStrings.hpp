@@ -21,18 +21,19 @@
  * of these strings, like stream insertion/extraction operators.
  */
 
-#ifndef GEOSX_CODINGUTILITIES_ENUMSTRINGS_HPP
-#define GEOSX_CODINGUTILITIES_ENUMSTRINGS_HPP
+#ifndef GEOS_CODINGUTILITIES_ENUMSTRINGS_HPP
+#define GEOS_CODINGUTILITIES_ENUMSTRINGS_HPP
 
-#include "StringUtilities.hpp"
+#include "codingUtilities/StringUtilities.hpp"
 #include "common/DataTypes.hpp"
 #include "common/Logger.hpp"
+#include "common/Format.hpp"
 
 #include <iostream>
 #include <type_traits>
 #include <algorithm>
 
-namespace geosx
+namespace geos
 {
 
 namespace internal
@@ -135,9 +136,9 @@ struct EnumStrings
     auto const & strings = get();
     std::size_t size = std::distance( std::begin( strings ), std::end( strings ) );
     base_type const index = static_cast< base_type >( e );
-    GEOSX_THROW_IF( index >= LvArray::integerConversion< base_type >( size ),
-                    "Invalid value " << index << " of type " << TypeName< ENUM >::brief() << ". Valid range is 0.." << size - 1,
-                    InputError );
+    GEOS_THROW_IF( index >= LvArray::integerConversion< base_type >( size ),
+                   "Invalid value " << index << " of type " << TypeName< ENUM >::brief() << ". Valid range is 0.." << size - 1,
+                   InputError );
     return strings[ index ];
   }
 
@@ -150,9 +151,9 @@ struct EnumStrings
   {
     auto const & strings = get();
     auto const it = std::find( std::begin( strings ), std::end( strings ), s );
-    GEOSX_THROW_IF( it == std::end( strings ),
-                    "Invalid value '" << s << "' of type " << TypeName< enum_type >::brief() << ". Valid options are: " << concat( ", " ),
-                    InputError );
+    GEOS_THROW_IF( it == std::end( strings ),
+                   "Invalid value '" << s << "' of type " << TypeName< enum_type >::brief() << ". Valid options are: " << concat( ", " ),
+                   InputError );
     enum_type const e = static_cast< enum_type >( LvArray::integerConversion< base_type >( std::distance( std::begin( strings ), it ) ) );
     return e;
   }
@@ -179,6 +180,30 @@ struct TypeRegex< ENUM, std::enable_if_t< internal::HasEnumStrings< ENUM > > >
   }
 };
 
-} // namespace geosx
+} // namespace geos
 
-#endif //GEOSX_CODINGUTILITIES_ENUMSTRINGS_HPP
+// Formatter specialization for enums
+template< typename Enum >
+struct GEOS_FMT_NS::formatter< Enum, std::enable_if_t< std::is_enum< Enum >::value && geos::internal::HasEnumStrings< Enum >, char > >
+  : GEOS_FMT_NS::formatter< std::string >
+{
+  template< typename FormatContext >
+  auto format( Enum e, FormatContext & ctx ) const
+  {
+    return formatter< std::string >::format( toString( e ), ctx );
+  }
+};
+
+// Formatter specialization for enums
+template< typename Enum >
+struct GEOS_FMT_NS::formatter< Enum, std::enable_if_t< std::is_enum< Enum >::value && !geos::internal::HasEnumStrings< Enum >, char > >
+  : GEOS_FMT_NS::formatter< std::underlying_type_t< Enum > >
+{
+  template< typename FormatContext >
+  auto format( Enum e, FormatContext & ctx ) const
+  {
+    return GEOS_FMT_NS::formatter< std::underlying_type_t< Enum > >::format( toUnderlying( e ), ctx );
+  }
+};
+
+#endif //GEOS_CODINGUTILITIES_ENUMSTRINGS_HPP

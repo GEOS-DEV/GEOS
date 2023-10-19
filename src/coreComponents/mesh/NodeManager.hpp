@@ -16,15 +16,15 @@
  * @file NodeManager.hpp
  */
 
-#ifndef GEOSX_MESH_NODEMANAGER_HPP_
-#define GEOSX_MESH_NODEMANAGER_HPP_
+#ifndef GEOS_MESH_NODEMANAGER_HPP_
+#define GEOS_MESH_NODEMANAGER_HPP_
 
 #include "mesh/generators/CellBlockManagerABC.hpp"
 #include "mesh/ObjectManagerBase.hpp"
 #include "mesh/simpleGeometricObjects/GeometricObjectManager.hpp"
 #include "ToElementRelation.hpp"
 
-namespace geosx
+namespace geos
 {
 
 class FaceManager;
@@ -148,28 +148,32 @@ public:
 
   /**
    * @brief Builds the node-on-domain-boundary indicator.
-   * @param[in] faceIndex The computation is based on the face-on-domain-boundary indicator.
+   * @param[in] faceManager The computation is based on the face-on-domain-boundary indicator.
+   * @param[in] edgeManager The edge manager.
    * @see ObjectManagerBase::getDomainBoundaryIndicator()
    */
-  void setDomainBoundaryObjects( FaceManager const & faceIndex );
+  void setDomainBoundaryObjects( FaceManager const & faceManager,
+                                 EdgeManager const & edgeManager );
 
   /**
    * @brief Copies the nodes positions and the nodes to (edges|faces|elements) mappings from @p cellBlockManager.
    * @param[in] cellBlockManager Will provide the mappings.
    * @param[in] elemRegionManager element region manager, needed to map blocks to subregion
+   * @param[in] isBaseMeshLevel flag that indicates if we are operating on the base mesh level or on another mesh level
    */
   void setGeometricalRelations( CellBlockManagerABC const & cellBlockManager,
-                                ElementRegionManager const & elemRegionManager );
+                                ElementRegionManager const & elemRegionManager,
+                                bool isBaseMeshLevel );
 
   /**
    * @brief Link the current manager to other managers.
    * @param edgeManager The edge manager instance.
    * @param faceManager The face manager instance.
-   * @param elementRegionManager The element region manager instance.
+   * @param elemRegionManager The element region manager instance.
    */
   void setupRelatedObjectsInRelations( EdgeManager const & edgeManager,
                                        FaceManager const & faceManager,
-                                       ElementRegionManager const & elementRegionManager );
+                                       ElementRegionManager const & elemRegionManager );
 
   /**
    * @brief Compress all NodeManager member arrays so that the values of each array are contiguous with no extra capacity inbetween.
@@ -380,7 +384,7 @@ public:
    * In particular, any mismatch like @a (e.g.) <tt>n -> (e0, e1, ...)</tt> and
    * <tt>n -> (er1, er0, ...)</tt> will probably result in a bug.
    * @warning @p e, @p er or @p esr will equal -1 if undefined.
-   * @see geosx::FaceManager::elementList that shares the same kind of pattern.
+   * @see geos::FaceManager::elementList that shares the same kind of pattern.
    */
   ArrayOfArrays< localIndex > & elementList() { return m_toElements.m_toElementIndex; }
 

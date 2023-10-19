@@ -18,7 +18,7 @@
 
 #include "SurfaceElementStencil.hpp"
 
-namespace geosx
+namespace geos
 {
 
 void SurfaceElementStencil::move( LvArray::MemorySpace const space )
@@ -34,7 +34,7 @@ void SurfaceElementStencil::add( localIndex const numPts,
                                  real64 const * const weights,
                                  localIndex const connectorIndex )
 {
-  GEOSX_ERROR_IF( numPts >= maxStencilSize, "Maximum stencil size exceeded" );
+  GEOS_ERROR_IF( numPts >= maxStencilSize, "Maximum stencil size exceeded" );
 
   auto const iter = m_connectorIndices.find( connectorIndex );
   if( iter == m_connectorIndices.end() )
@@ -65,12 +65,12 @@ void SurfaceElementStencil::add( localIndex const numPts,
                                  R1Tensor const * const cellCenterToEdgeCenter,
                                  localIndex const connectorIndex )
 {
-  GEOSX_ERROR_IF( numPts >= maxStencilSize, "Maximum stencil size exceeded" );
+  GEOS_ERROR_IF( numPts >= maxStencilSize, "Maximum stencil size exceeded" );
 
   auto const iter = m_connectorIndices.find( connectorIndex );
   if( iter == m_connectorIndices.end() )
   {
-    GEOSX_ERROR( "Wrong connectorIndex" );
+    GEOS_ERROR( "Wrong connectorIndex" );
   }
   else
   {
@@ -114,4 +114,4 @@ SurfaceElementStencilWrapper::
   m_meanPermCoefficient( meanPermCoefficient )
 {}
 
-} /* namespace geosx */
+} /* namespace geos */

@@ -27,7 +27,7 @@
 #include "physicsSolvers/fluidFlow/wells/WellControls.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellSolverBaseFields.hpp"
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -37,7 +37,8 @@ WellSolverBase::WellSolverBase( string const & name,
                                 Group * const parent )
   : SolverBase( name, parent ),
   m_numDofPerWellElement( 0 ),
-  m_numDofPerResElement( 0 )
+  m_numDofPerResElement( 0 ),
+  m_ratesOutputDir( name + "_rates" )
 {
   this->getWrapper< string >( viewKeyStruct::discretizationString() ).
     setInputFlag( InputFlags::FALSE );
@@ -69,6 +70,17 @@ WellSolverBase::~WellSolverBase() = default;
 void WellSolverBase::postProcessInput()
 {
   SolverBase::postProcessInput();
+
+  // create dir for rates output
+  if( getLogLevel() > 0 )
+  {
+    if( MpiWrapper::commRank() == 0 )
+    {
+      makeDirsForPath( m_ratesOutputDir );
+    }
+    // wait till the dir is created by rank 0
+    MPI_Barrier( MPI_COMM_WORLD );
+  }
 }
 
 void WellSolverBase::registerDataOnMesh( Group & meshBodies )
@@ -140,7 +152,7 @@ void WellSolverBase::setupDofs( DomainPartition const & domain,
 }
 
 void WellSolverBase::implicitStepSetup( real64 const & time_n,
-                                        real64 const & GEOSX_UNUSED_PARAM( dt ),
+                                        real64 const & GEOS_UNUSED_PARAM( dt ),
                                         DomainPartition & domain )
 {
   // Initialize the primary and secondary variables for the first time step
@@ -258,4 +270,4 @@ WellControls & WellSolverBase::getWellControls( WellElementSubRegion const & sub
 WellControls const & WellSolverBase::getWellControls( WellElementSubRegion const & subRegion ) const
 { return this->getGroup< WellControls >( subRegion.getWellControlsName() ); }
 
-} // namespace geosx
+} // namespace geos

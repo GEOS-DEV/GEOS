@@ -20,9 +20,27 @@ set( subdirs
      python
    )
 
-set( coreLibLinkLine "" PARENT_SCOPE )
-set( geosx_core_include_dirs "" )
-set( geosx_core_defines "" )
+set( parallelDeps "" )
+
+if ( ENABLE_OPENMP )
+  set( parallelDeps ${parallelDeps} openmp )
+endif()
+
+if ( ENABLE_CUDA )
+  set( parallelDeps ${parallelDeps} cuda )
+endif()
+
+if( ENABLE_CUDA_NVTOOLSEXT )
+  set( parallelDeps ${parallelDeps} CUDA::nvToolsExt )
+endif()
+
+if( ENABLE_HIP )
+  set( parallelDeps ${parallelDeps} blt::hip )
+endif()
+
+if( ENABLE_MPI )
+  set( parallelDeps ${parallelDeps} mpi )
+endif()
 
 if ( GEOSX_BUILD_OBJ_LIBS )
   set( LVARRAY_BUILD_OBJ_LIBS TRUE CACHE BOOL "" FORCE )
@@ -40,35 +58,18 @@ foreach( lib ${subdirs} )
   endif()
 endforeach()
 
+# if we're building full static libs and not obj_libs
 if( NOT GEOSX_BUILD_SHARED_LIBS )
   set( geosx_core_list "" )
   foreach( lib ${coreLibs} )
     list( APPEND geosx_core_list ${GEOSX_LINK_PREPEND_FLAG} ${lib} ${GEOSX_LINK_POSTPEND_FLAG} )
   endforeach()
   set ( geosx_core_libs "${geosx_core_list}" CACHE INTERNAL "" )
-endif()
+endif( )
 
 foreach( lib ${subdirs} )
-    add_subdirectory( ${lib} )
+  add_subdirectory( ${lib} )
 endforeach()
-
-set( extraComponentsLinkList "" )
-
-if ( ENABLE_OPENMP )
-  set( extraComponentsLinkList ${extraComponentsLinkList} openmp )
-endif()
-
-if ( ENABLE_CUDA )
-  set( extraComponentsLinkList ${extraComponentsLinkList} cuda )
-endif()
-
-if( ENABLE_CUDA_NVTOOLSEXT )
-  set( extraComponentsLinkList ${extraComponentsLinkList} CUDA::nvToolsExt )
-endif()
-
-if( ENABLE_MPI )
-  set( extraComponentsLinkList ${extraComponentsLinkList} mpi )
-endif()
 
 if( GEOSX_BUILD_SHARED_LIBS AND GEOSX_BUILD_OBJ_LIBS )
   message( "Building shared geosx_core library with object coreComponents, executables link to geosx_core" )
@@ -93,9 +94,9 @@ else()
   message( "Building static coreComponents, executables link to coreComponents" )
 endif()
 
-if ( TARGET geosx_core)
+if ( TARGET geosx_core )
   # Seems to be required on some CMake versions (e.g. 3.16) to get enforce device linking
-  if( ENABLE_HYPRE_CUDA )
+  if( ${ENABLE_HYPRE_DEVICE} STREQUAL "CUDA" )
     set_target_properties( geosx_core PROPERTIES CUDA_RESOLVE_DEVICE_SYMBOLS TRUE )
   endif()
 
@@ -118,4 +119,7 @@ if( ENABLE_UNCRUSTIFY )
             WORKING_DIRECTORY ${CMAKE_BINARY_DIR} )
 endif()
 
-add_subdirectory( unitTests )
+if( GEOS_ENABLE_TESTS )
+  add_subdirectory( unitTests )
+endif( )
+

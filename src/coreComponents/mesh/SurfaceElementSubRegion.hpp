@@ -16,8 +16,8 @@
  * @file SurfaceElementSubRegion.hpp
  */
 
-#ifndef GEOSX_MESH_SURFACEELEMENTSUBREGION_HPP_
-#define GEOSX_MESH_SURFACEELEMENTSUBREGION_HPP_
+#ifndef GEOS_MESH_SURFACEELEMENTSUBREGION_HPP_
+#define GEOS_MESH_SURFACEELEMENTSUBREGION_HPP_
 
 #include "ElementSubRegionBase.hpp"
 #include "InterObjectRelation.hpp"
@@ -25,7 +25,7 @@
 #include "EdgeManager.hpp"
 #include "CellElementSubRegion.hpp"
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -148,21 +148,26 @@ public:
     return m_toEdgesRelation;
   }
 
+  using ElementSubRegionBase::numNodesPerElement;
+
+  localIndex numNodesPerElement( localIndex const k ) const final
+  { return m_toNodesRelation[k].size(); }
+
   /**
    * @brief Get the surface element to cells map.
    * @return The surface element to cells map
    */
-  FixedToManyElementRelation & getToCellRelation()
+  OrderedVariableToManyElementRelation & getToCellRelation()
   {
-    return m_surfaceElementsToCells;
+    return m_2dElemToElems;
   }
 
   /**
    * @copydoc getToCellRelation()
    */
-  FixedToManyElementRelation const & getToCellRelation() const
+  OrderedVariableToManyElementRelation const & getToCellRelation() const
   {
-    return m_surfaceElementsToCells;
+    return m_2dElemToElems;
   }
 
   ///@}
@@ -230,7 +235,7 @@ public:
 protected:
 
   /// Map between the surface elements and the cells
-  FixedToManyElementRelation m_surfaceElementsToCells;
+  OrderedVariableToManyElementRelation m_2dElemToElems;
 
   /// Unmapped surface elements to nodes map
   map< localIndex, array1d< globalIndex > > m_unmappedGlobalIndicesInToNodes;
@@ -249,6 +254,6 @@ protected:
 
 };
 
-} /* namespace geosx */
+} /* namespace geos */
 
 #endif /* SRC_CORECOMPONENTS_MESH_SURFACEELEMENTSUBREGION_HPP_ */

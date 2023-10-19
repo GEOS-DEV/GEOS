@@ -23,7 +23,7 @@
 #include "linearAlgebra/interfaces/trilinos/TrilinosPreconditioner.hpp"
 #include "linearAlgebra/interfaces/trilinos/TrilinosSolver.hpp"
 
-namespace geosx
+namespace geos
 {
 
 void TrilinosInterface::initialize()

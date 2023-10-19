@@ -16,12 +16,12 @@
  * @file PressurePorosity.hpp
  */
 
-#ifndef GEOSX_CONSTITUTIVE_POROSITY_PROPPANTPOROSITY_HPP_
-#define GEOSX_CONSTITUTIVE_POROSITY_PROPPANTPOROSITY_HPP_
+#ifndef GEOS_CONSTITUTIVE_POROSITY_PROPPANTPOROSITY_HPP_
+#define GEOS_CONSTITUTIVE_POROSITY_PROPPANTPOROSITY_HPP_
 
 #include "PorosityBase.hpp"
 
-namespace geosx
+namespace geos
 {
 namespace constitutive
 {
@@ -31,11 +31,11 @@ class ProppantPorosityUpdates : public PorosityBaseUpdates
 public:
 
   ProppantPorosityUpdates( arrayView2d< real64 > const & newPorosity,
-                           arrayView2d< real64 > const & porosity_n,
+                           arrayView2d< real64 const > const & porosity_n,
                            arrayView2d< real64 > const & dPorosity_dPressure,
                            arrayView2d< real64 > const & dPorosity_dTemperature,
-                           arrayView2d< real64 > const & initialPorosity,
-                           arrayView1d< real64 > const & referencePorosity,
+                           arrayView2d< real64 const > const & initialPorosity,
+                           arrayView1d< real64 const > const & referencePorosity,
                            real64 const & maxProppantConcentration ):
     PorosityBaseUpdates( newPorosity,
                          porosity_n,
@@ -46,14 +46,14 @@ public:
     m_maxProppantConcentration( maxProppantConcentration )
   {}
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void computePorosity( real64 const & proppantPackVolumeFraction,
                         real64 & porosity ) const
   {
     porosity = 1.0 - m_maxProppantConcentration * proppantPackVolumeFraction;
   }
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void updateFromProppantVolumeFraction( localIndex const k,
                                          localIndex const q,
                                          real64 const & proppantPackVolumeFraction ) const
@@ -64,7 +64,7 @@ public:
 
 private:
 
-  real64 m_maxProppantConcentration;
+  real64 const m_maxProppantConcentration;
 
 };
 
@@ -120,7 +120,7 @@ private:
 
 }/* namespace constitutive */
 
-} /* namespace geosx */
+} /* namespace geos */
 
 
-#endif //GEOSX_CONSTITUTIVE_POROSITY_PROPPANTPOROSITY_HPP_
+#endif //GEOS_CONSTITUTIVE_POROSITY_PROPPANTPOROSITY_HPP_

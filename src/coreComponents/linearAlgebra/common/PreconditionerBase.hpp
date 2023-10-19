@@ -12,13 +12,13 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#ifndef GEOSX_LINEARALGEBRA_SOLVERS_PRECONDITIONERBASE_HPP_
-#define GEOSX_LINEARALGEBRA_SOLVERS_PRECONDITIONERBASE_HPP_
+#ifndef GEOS_LINEARALGEBRA_SOLVERS_PRECONDITIONERBASE_HPP_
+#define GEOS_LINEARALGEBRA_SOLVERS_PRECONDITIONERBASE_HPP_
 
 #include "linearAlgebra/common/common.hpp"
 #include "linearAlgebra/common/LinearOperator.hpp"
 
-namespace geosx
+namespace geos
 {
 
 class DofManager;
@@ -51,8 +51,8 @@ public:
    */
   virtual void setup( Matrix const & mat )
   {
-    GEOSX_LAI_ASSERT( mat.ready() );
-    GEOSX_LAI_ASSERT_MSG( mat.numLocalRows() == mat.numLocalCols(), "Matrix must be square" );
+    GEOS_LAI_ASSERT( mat.ready() );
+    GEOS_LAI_ASSERT_MSG( mat.numLocalRows() == mat.numLocalCols(), "Matrix must be square" );
     m_mat = &mat;
   }
 
@@ -135,7 +135,7 @@ public:
    */
   Matrix const & matrix() const
   {
-    GEOSX_LAI_ASSERT( ready() );
+    GEOS_LAI_ASSERT( ready() );
     return *m_mat;
   }
 
@@ -155,8 +155,8 @@ public:
    */
   virtual Matrix const & preconditionerMatrix() const
   {
-    GEOSX_ERROR( "PreconditionerBase::preconditionerMatrix called. This is not supposed to happen."
-                 "Check the value of hasPreconditionerMatrix() before accessing this function." );
+    GEOS_ERROR( "PreconditionerBase::preconditionerMatrix called. This is not supposed to happen."
+                "Check the value of hasPreconditionerMatrix() before accessing this function." );
     // This is here just to be able to compile ...
     return *m_mat;
   }
@@ -169,4 +169,4 @@ private:
 
 }
 
-#endif //GEOSX_LINEARALGEBRA_SOLVERS_PRECONDITIONERBASE_HPP_
+#endif //GEOS_LINEARALGEBRA_SOLVERS_PRECONDITIONERBASE_HPP_

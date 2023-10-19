@@ -16,12 +16,12 @@
  * @file FlowSolverBase.hpp
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_FINITEVOLUME_FLOWSOLVERBASE_HPP_
-#define GEOSX_PHYSICSSOLVERS_FINITEVOLUME_FLOWSOLVERBASE_HPP_
+#ifndef GEOS_PHYSICSSOLVERS_FINITEVOLUME_FLOWSOLVERBASE_HPP_
+#define GEOS_PHYSICSSOLVERS_FINITEVOLUME_FLOWSOLVERBASE_HPP_
 
 #include "physicsSolvers/SolverBase.hpp"
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -75,10 +75,31 @@ public:
     static constexpr char const * solidInternalEnergyNamesString() { return "solidInternalEnergyNames"; }
   };
 
+  /**
+   * @brief Prepare the stencil weights by removing the contribution of the hydraulic aperture before
+   * the aperture is updated
+   * @param[in] domain the domain partition
+   */
+  void prepareStencilWeights( DomainPartition & domain ) const;
+
+  /**
+   * @brief Update the stencil weights by adding the contribution of the hydraulic aperture after
+   * the aperture is updated
+   * @param[in] domain the domain partition
+   */
+  void updateStencilWeights( DomainPartition & domain ) const;
+
+  void enableFixedStressPoromechanicsUpdate();
+
   void updatePorosityAndPermeability( CellElementSubRegion & subRegion ) const;
 
   virtual void updatePorosityAndPermeability( SurfaceElementSubRegion & subRegion ) const;
 
+  /**
+   * @brief Utility function to save the iteration state (useful for sequential simulations)
+   * @param[in] domain the domain partition
+   */
+  virtual void saveIterationState( DomainPartition & domain ) const;
 
   /**
    * @brief For each equilibrium initial condition, loop over all the target cells and compute the min/max elevation
@@ -122,6 +143,24 @@ protected:
                                           real64 const & dt,
                                           DomainPartition & domain );
 
+  /**
+   * @brief Utility function to save the converged state
+   * @param[in] subRegion the element subRegion
+   */
+  virtual void saveConvergedState( ElementSubRegionBase & subRegion ) const;
+
+  /**
+   * @brief Utility function to save the state at the end of a sequential iteration
+   * @param[in] subRegion the element subRegion
+   */
+  virtual void saveIterationState( ElementSubRegionBase & subRegion ) const;
+
+  /**
+   * @brief Helper function to compute/report the elements with small pore volumes
+   * @param[in] domain the domain partition
+   */
+  virtual void validatePoreVolumes( DomainPartition const & domain ) const;
+
   virtual void precomputeData( MeshLevel & mesh,
                                arrayView1d< string const > const & regionNames );
 
@@ -137,6 +176,9 @@ protected:
   /// flag to determine whether or not this is a thermal simulation
   integer m_isThermal;
 
+  /// enable the fixed stress poromechanics update of porosity
+  bool m_isFixedStressPoromechanicsUpdate;
+
 private:
   virtual void setConstitutiveNames( ElementSubRegionBase & subRegion ) const override;
 
@@ -146,4 +188,4 @@ private:
 
 }
 
-#endif //GEOSX_PHYSICSSOLVERS_FINITEVOLUME_FLOWSOLVERBASE_HPP_
+#endif //GEOS_PHYSICSSOLVERS_FINITEVOLUME_FLOWSOLVERBASE_HPP_

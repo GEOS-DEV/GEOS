@@ -16,10 +16,10 @@
  * @file InvariantDecompositions.hpp
  */
 
-#ifndef GEOSX_CONSTITUTIVE_SOLID_INVARIANTDECOMPOSITIONS_HPP
-#define GEOSX_CONSTITUTIVE_SOLID_INVARIANTDECOMPOSITIONS_HPP
+#ifndef GEOS_CONSTITUTIVE_SOLID_INVARIANTDECOMPOSITIONS_HPP
+#define GEOS_CONSTITUTIVE_SOLID_INVARIANTDECOMPOSITIONS_HPP
 
-namespace geosx
+namespace geos
 {
 
 namespace constitutive
@@ -58,8 +58,8 @@ namespace twoInvariant
  * @param[out] devStrain Deviatoric strain invariant
  * @param[out] deviator Unit orientation (tensor) for deviatoric part in "stress" Voight notation
  */
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+GEOS_HOST_DEVICE
+inline
 void strainDecomposition( real64 const ( &strain )[6],
                           real64 & volStrain,
                           real64 & devStrain,
@@ -108,8 +108,8 @@ void strainDecomposition( real64 const ( &strain )[6],
  * @param[out] devStress Deviatoric stress invariant (= von Mises stress)
  * @param[out] deviator Unit orientation (tensor) for deviatoric part in "stress" Voight notation
  */
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+GEOS_HOST_DEVICE
+inline
 void stressDecomposition( real64 const ( &stress )[6],
                           real64 & volStress,
                           real64 & devStress,
@@ -159,8 +159,8 @@ void stressDecomposition( real64 const ( &stress )[6],
  * @param[in] deviator Unit orientation (tensor) for deviatoric part in "stress" Voight notation
  * @param[out] strain Strain tensor in Voight notation
  */
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+GEOS_HOST_DEVICE
+inline
 void strainRecomposition( real64 const & volStrain,
                           real64 const & devStrain,
                           real64 const ( &deviator )[6],
@@ -186,8 +186,8 @@ void strainRecomposition( real64 const & volStrain,
  * @param[in] deviator Unit orientation (tensor) for deviatoric part in "stress" Voight notation
  * @param[out] stress Stress tensor in Voight notation
  */
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+GEOS_HOST_DEVICE
+inline
 void stressRecomposition( real64 const & volStress,
                           real64 const & devStress,
                           real64 const ( &deviator )[6],
@@ -208,6 +208,6 @@ void stressRecomposition( real64 const & volStress,
 
 } /* namespace constitutive */
 
-} /* namespace geosx */
+} /* namespace geos */
 
-#endif /* GEOSX_CONSTITUTIVE_SOLID_INVARIANTDECOMPOSITIONS_HPP */
+#endif /* GEOS_CONSTITUTIVE_SOLID_INVARIANTDECOMPOSITIONS_HPP */

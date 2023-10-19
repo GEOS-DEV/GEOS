@@ -21,7 +21,7 @@
 #include "functions/FunctionManager.hpp"
 #include "functions/TableFunction.hpp"
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -57,13 +57,13 @@ void ApertureTableContact::postProcessInput()
 {
   FunctionManager const & functionManager = FunctionManager::getInstance();
 
-  GEOSX_THROW_IF( m_apertureTableName.empty(),
-                  getCatalogName() << " " << getName() << ": the aperture table name " << m_apertureTableName << " is empty",
-                  InputError );
+  GEOS_THROW_IF( m_apertureTableName.empty(),
+                 getFullName() << ": the aperture table name " << m_apertureTableName << " is empty",
+                 InputError );
 
-  GEOSX_THROW_IF( !functionManager.hasGroup( m_apertureTableName ),
-                  getCatalogName() << " " << getName() << ": the aperture table named " << m_apertureTableName << " could not be found",
-                  InputError );
+  GEOS_THROW_IF( !functionManager.hasGroup( m_apertureTableName ),
+                 getFullName() << ": the aperture table named " << m_apertureTableName << " could not be found",
+                 InputError );
 }
 
 void ApertureTableContact::initializePreSubGroups()
@@ -94,27 +94,27 @@ void ApertureTableContact::validateApertureTable( TableFunction const & aperture
   ArrayOfArraysView< real64 const > const coords = apertureTable.getCoordinates();
   arrayView1d< real64 const > const & effectiveApertureValues = apertureTable.getValues();
 
-  GEOSX_THROW_IF( coords.size() > 1,
-                  getCatalogName() << " " << getName() << ": Aperture limiter table cannot be greater than a 1D table.",
-                  InputError );
+  GEOS_THROW_IF( coords.size() > 1,
+                 getFullName() << ": Aperture limiter table cannot be greater than a 1D table.",
+                 InputError );
 
   arraySlice1d< real64 const > apertureValues = coords[0];
   localIndex const size = apertureValues.size();
 
-  GEOSX_THROW_IF( coords( 0, size-1 ) > 0.0 || coords( 0, size-1 ) < 0.0,
-                  getCatalogName() << " " << getName() << ": Invalid aperture limiter table. Last coordinate must be zero!",
-                  InputError );
+  GEOS_THROW_IF( coords( 0, size-1 ) > 0.0 || coords( 0, size-1 ) < 0.0,
+                 getFullName() << ": Invalid aperture limiter table. Last coordinate must be zero!",
+                 InputError );
 
-  GEOSX_THROW_IF( apertureValues.size() < 2,
-                  getCatalogName() << " " << getName() << ": Invalid aperture limiter table. Must have more than two points specified",
-                  InputError );
+  GEOS_THROW_IF( apertureValues.size() < 2,
+                 getFullName() << ": Invalid aperture limiter table. Must have more than two points specified",
+                 InputError );
 
   localIndex const n = apertureValues.size()-1;
   real64 const slope = ( effectiveApertureValues[n] - effectiveApertureValues[n-1] ) / ( apertureValues[n] - apertureValues[n-1] );
 
-  GEOSX_THROW_IF( slope >= 1.0,
-                  getCatalogName() << " " << getName() << ": Invalid aperture table. The slope of the last two points >= 1 is invalid.",
-                  InputError );
+  GEOS_THROW_IF( slope >= 1.0,
+                 getFullName() << ": Invalid aperture table. The slope of the last two points >= 1 is invalid.",
+                 InputError );
 }
 
 ApertureTableContactUpdates ApertureTableContact::createKernelWrapper() const
@@ -127,4 +127,4 @@ REGISTER_CATALOG_ENTRY( ConstitutiveBase, ApertureTableContact, string const &, 
 
 } /* namespace constitutive */
 
-} /* namespace geosx */
+} /* namespace geos */

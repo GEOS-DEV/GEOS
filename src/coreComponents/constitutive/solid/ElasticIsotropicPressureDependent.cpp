@@ -18,7 +18,7 @@
 
 #include "ElasticIsotropicPressureDependent.hpp"
 
-namespace geosx
+namespace geos
 {
 using namespace dataRepository;
 namespace constitutive
@@ -101,12 +101,13 @@ void ElasticIsotropicPressureDependent::postProcessInput()
   }
   errorCheck += ")";
 
-  GEOSX_ERROR_IF( numConstantsSpecified != 2,
-                  "A specific pair of elastic constants is required: (Cr, G). " );
-  GEOSX_THROW_IF( m_defaultRecompressionIndex <= 0, "Non-positive recompression index detected " << m_defaultRecompressionIndex, InputError );
+  GEOS_ERROR_IF( numConstantsSpecified != 2,
+                 getFullName() << ": A specific pair of elastic constants is required: (Cr, G). " );
+  GEOS_THROW_IF( m_defaultRecompressionIndex <= 0,
+                 getFullName() << ": Non-positive recompression index detected " << m_defaultRecompressionIndex, InputError );
   real64 poisson = conversions::bulkModAndShearMod::toPoissonRatio( -1 * m_defaultRefPressure / m_defaultRecompressionIndex, m_defaultShearModulus );
-  GEOSX_THROW_IF( poisson < 0,
-                  "Elastic parameters lead to negative Poisson ratio at reference pressure ", InputError );
+  GEOS_THROW_IF( poisson < 0,
+                 getFullName() << ": Elastic parameters lead to negative Poisson ratio at reference pressure ", InputError );
 
 
   // set results as array default values
@@ -126,4 +127,4 @@ void ElasticIsotropicPressureDependent::postProcessInput()
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, ElasticIsotropicPressureDependent, string const &, Group * const )
 }
-} /* namespace geosx */
+} /* namespace geos */

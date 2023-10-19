@@ -15,7 +15,7 @@ template real64 NAME < @SUBREGION_TYPE@, @CONSTITUTIVE_TYPE@, @FE_TYPE@ >::kerne
                                                                                         NAME < @SUBREGION_TYPE@, @CONSTITUTIVE_TYPE@, @FE_TYPE@ > const & ); \
 
 
-namespace geosx
+namespace geos
 {
 using namespace constitutive;
 using namespace finiteElement;

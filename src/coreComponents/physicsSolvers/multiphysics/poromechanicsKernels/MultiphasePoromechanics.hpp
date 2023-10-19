@@ -16,13 +16,15 @@
  * @file MultiphasePoromechanics.hpp
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_POROMECHANICSKERNELS_MULTIPHASEPOROMECHANICS_HPP_
-#define GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_POROMECHANICSKERNELS_MULTIPHASEPOROMECHANICS_HPP_
+#ifndef GEOS_PHYSICSSOLVERS_MULTIPHYSICS_POROMECHANICSKERNELS_MULTIPHASEPOROMECHANICS_HPP_
+#define GEOS_PHYSICSSOLVERS_MULTIPHYSICS_POROMECHANICSKERNELS_MULTIPHASEPOROMECHANICS_HPP_
 
 #include "codingUtilities/Utilities.hpp"
+#include "physicsSolvers/fluidFlow/CompositionalMultiphaseBaseFields.hpp"
+#include "physicsSolvers/multiphysics/PoromechanicsFields.hpp"
 #include "physicsSolvers/multiphysics/poromechanicsKernels/PoromechanicsBase.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace poromechanicsKernels
@@ -30,17 +32,13 @@ namespace poromechanicsKernels
 
 /**
  * @brief Implements kernels for solving quasi-static multiphase poromechanics.
- * @copydoc geosx::finiteElement::ImplicitKernelBase
- * @tparam NUM_NODES_PER_ELEM The number of nodes per element for the
- *                            @p SUBREGION_TYPE.
- * @tparam UNUSED An unused parameter since we are assuming that the test and
- *                trial space have the same number of support points.
+ * @copydoc geos::finiteElement::ImplicitKernelBase
  *
  * ### MultiphasePoroelastic Description
  * Implements the KernelBase interface functions required for solving the
  * quasi-static multiphase poromechanics problem using one of the
  * "finite element kernel application" functions such as
- * geosx::finiteElement::RegionBasedKernelApplication.
+ * geos::finiteElement::RegionBasedKernelApplication.
  *
  */
 template< typename SUBREGION_TYPE,
@@ -79,10 +77,11 @@ public:
   using Base::m_pressure;
   using Base::m_flowDofNumber;
   using Base::m_meshData;
+  using Base::m_dt;
 
   /**
    * @brief Constructor
-   * @copydoc geosx::finiteElement::ImplicitKernelBase::ImplicitKernelBase
+   * @copydoc geos::finiteElement::ImplicitKernelBase::ImplicitKernelBase
    * @param gravityVector The gravity vector.
    */
   MultiphasePoromechanics( NodeManager const & nodeManager,
@@ -96,6 +95,7 @@ public:
                            globalIndex const rankOffset,
                            CRSMatrixView< real64, globalIndex const > const inputMatrix,
                            arrayView1d< real64 > const inputRhs,
+                           real64 const inputDt,
                            real64 const (&gravityVector)[3],
                            string const inputFlowDofKey,
                            localIndex const numComponents,
@@ -105,7 +105,7 @@ public:
   //*****************************************************************************
   /**
    * @class StackVariables
-   * @copydoc geosx::finiteElement::ImplicitKernelBase::StackVariables
+   * @copydoc geos::finiteElement::ImplicitKernelBase::StackVariables
    *
    * Adds a stack array for the displacement, incremental displacement, and the
    * constitutive stiffness.
@@ -115,7 +115,7 @@ public:
 public:
 
     /// Constructor.
-    GEOSX_HOST_DEVICE
+    GEOS_HOST_DEVICE
     StackVariables():
       Base::StackVariables()
     {}
@@ -168,13 +168,13 @@ public:
 
   /**
    * @brief Copy global values from primary field to a local stack array.
-   * @copydoc ::geosx::finiteElement::ImplicitKernelBase::setup
+   * @copydoc ::geos::finiteElement::ImplicitKernelBase::setup
    *
    * For the MultiphasePoromechanics implementation, global values from the displacement,
    * incremental displacement, and degree of freedom numbers are placed into
    * element local stack storage.
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void setup( localIndex const k,
               StackVariables & stack ) const;
 
@@ -187,7 +187,7 @@ public:
    * @param[in] q the quadrature point index
    * @param[inout] stack the stack variables
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void smallStrainUpdate( localIndex const k,
                           localIndex const q,
                           StackVariables & stack ) const;
@@ -206,7 +206,7 @@ public:
    * @param[inout] bodyForceKernelOp the lambda function to customize the kernel
    */
   template< typename FUNC = NoOpFunc >
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void computeBodyForce( localIndex const k,
                          localIndex const q,
                          real64 const & porosity,
@@ -231,7 +231,7 @@ public:
    * @param[inout] fluidIncrementKernelOp the lambda function to customize the kernel
    */
   template< typename FUNC = NoOpFunc >
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void computeFluidIncrement( localIndex const k,
                               localIndex const q,
                               real64 const & porosity,
@@ -245,18 +245,12 @@ public:
   /**
    * @brief Helper function to compute the pore-volume constraint and its derivatives wrt primary variables
    * @param[in] k the element index
-   * @param[in] porosity the element porosity
-   * @param[in] dPorosity_dVolStrain the derivative of porosity wrt volumetric strain increment
-   * @param[in] dPorosity_dPressure the derivative of porosity wrt pressure
-   * @param[in] dPorosity_dTemperature the derivative of porosity wrt temperature
+   * @param[in] porosity_n the element porosity at the previous converged time step
    * @param[inout] stack the stack variables
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void computePoreVolumeConstraint( localIndex const k,
-                                    real64 const & porosity,
-                                    real64 const & dPorosity_dVolStrain,
-                                    real64 const & dPorosity_dPressure,
-                                    real64 const & dPorosity_dTemperature,
+                                    real64 const & porosity_n,
                                     StackVariables & stack ) const;
 
   /**
@@ -271,7 +265,7 @@ public:
    *   totalStress = totalStress( strainIncrement, pressure)
    *   bodyForce   = bodyForce( strainIncrement, pressure)
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void assembleMomentumBalanceTerms( real64 const ( &N )[numNodesPerElem],
                                      real64 const ( &dNdX )[numNodesPerElem][3],
                                      real64 const & detJxW,
@@ -288,25 +282,25 @@ public:
    *   fluidMass = fluidMass( strainIncrement, pressure)
    *   fluidMassFlux = fluidMassFlux( pressure)
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void assembleElementBasedFlowTerms( real64 const ( &dNdX )[numNodesPerElem][3],
                                       real64 const & detJxW,
                                       StackVariables & stack ) const;
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void quadraturePointKernel( localIndex const k,
                               localIndex const q,
                               StackVariables & stack ) const;
 
   /**
-   * @copydoc geosx::finiteElement::ImplicitKernelBase::complete
+   * @copydoc geos::finiteElement::ImplicitKernelBase::complete
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   real64 complete( localIndex const k,
                    StackVariables & stack ) const;
 
   /**
-   * @copydoc geosx::finiteElement::KernelBase::kernelLaunch
+   * @copydoc geos::finiteElement::KernelBase::kernelLaunch
    *
    * ### MultiphasePoromechanics Description
    * Copy of the KernelBase::keranelLaunch function
@@ -357,14 +351,135 @@ using MultiphasePoromechanicsKernelFactory =
                                 globalIndex const,
                                 CRSMatrixView< real64, globalIndex const > const,
                                 arrayView1d< real64 > const,
+                                real64 const,
                                 real64 const (&)[3],
                                 string const,
                                 localIndex const,
                                 localIndex const,
                                 string const >;
 
+/**
+ * @class MultiphaseBulkDensityKernel
+ * @brief Kernel to update the bulk density before a mechanics solve in sequential schemes
+ */
+class MultiphaseBulkDensityKernel
+{
+public:
+
+  /**
+   * @brief Constructor
+   * @param[in] numPhases the number of fluid phases
+   * @param[in] fluid the fluid model
+   * @param[in] solid the porous solid model
+   * @param[in] subRegion the element subregion
+   */
+  MultiphaseBulkDensityKernel( integer const numPhases,
+                               constitutive::MultiFluidBase const & fluid,
+                               constitutive::CoupledSolidBase const & solid,
+                               ElementSubRegionBase & subRegion )
+    : m_numPhases( numPhases ),
+    m_bulkDensity( subRegion.getField< fields::poromechanics::bulkDensity >() ),
+    m_fluidPhaseVolFrac( subRegion.getField< fields::flow::phaseVolumeFraction >() ),
+    m_rockDensity( solid.getDensity() ),
+    m_fluidPhaseDensity( fluid.phaseMassDensity() ),
+    m_porosity( solid.getPorosity() )
+  {}
+
+  /**
+   * @brief Compute the bulk density in an element
+   * @param[in] ei the element index
+   * @param[in] q the quadrature point index
+   */
+  GEOS_HOST_DEVICE
+  void compute( localIndex const ei,
+                localIndex const q ) const
+  {
+    m_bulkDensity[ei][q] = 0.0;
+    for( integer ip = 0; ip < m_numPhases; ++ip )
+    {
+      m_bulkDensity[ei][q] += m_fluidPhaseVolFrac[ei][ip] * m_fluidPhaseDensity[ei][q][ip];
+    }
+    m_bulkDensity[ei][q] *= m_porosity[ei][q];
+    m_bulkDensity[ei][q] += ( 1 - m_porosity[ei][q] ) * m_rockDensity[ei][q];
+  }
+
+  /**
+   * @brief Performs the kernel launch
+   * @tparam POLICY the policy used in the RAJA kernels
+   * @tparam KERNEL_TYPE the kernel type
+   * @param[in] numElems the number of elements
+   * @param[in] numQuad the number of quadrature points
+   * @param[inout] kernelComponent the kernel component providing access to the compute function
+   */
+  template< typename POLICY, typename KERNEL_TYPE >
+  static void
+  launch( localIndex const numElems,
+          localIndex const numQuad,
+          KERNEL_TYPE const & kernelComponent )
+  {
+    forAll< POLICY >( numElems, [=] GEOS_HOST_DEVICE ( localIndex const ei )
+    {
+      for( localIndex q = 0; q < numQuad; ++q )
+      {
+        kernelComponent.compute( ei, q );
+      }
+    } );
+  }
+
+protected:
+
+  // number of fluid phases
+  integer const m_numPhases;
+
+  // the bulk density
+  arrayView2d< real64 > const m_bulkDensity;
+
+  // the fluid phase saturation
+  arrayView2d< real64 const, compflow::USD_PHASE > const m_fluidPhaseVolFrac;
+
+  // the rock density
+  arrayView2d< real64 const > const m_rockDensity;
+
+  // the fluid density
+  arrayView3d< real64 const, constitutive::multifluid::USD_PHASE > const m_fluidPhaseDensity;
+
+  // the porosity
+  arrayView2d< real64 const > const m_porosity;
+
+};
+
+/**
+ * @class MultiphaseBulkDensityKernelFactory
+ */
+class MultiphaseBulkDensityKernelFactory
+{
+public:
+
+  /**
+   * @brief Create a new kernel and launch
+   * @tparam POLICY the policy used in the RAJA kernel
+   * @param[in] numPhases number of phases
+   * @param[in] fluid the fluid model
+   * @param[in] solid the porous solid model
+   * @param[in] subRegion the element subregion
+   */
+  template< typename POLICY >
+  static void
+  createAndLaunch( integer const numPhases,
+                   constitutive::MultiFluidBase const & fluid,
+                   constitutive::CoupledSolidBase const & solid,
+                   ElementSubRegionBase & subRegion )
+  {
+    MultiphaseBulkDensityKernel kernel( numPhases, fluid, solid, subRegion );
+    MultiphaseBulkDensityKernel::launch< POLICY >( subRegion.size(),
+                                                   subRegion.getField< fields::poromechanics::bulkDensity >().size( 1 ),
+                                                   kernel );
+  }
+};
+
+
 } // namespace poromechanicsKernels
 
-} // namespace geosx
+} // namespace geos
 
-#endif // GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_POROMECHANICSKERNELS_MULTIPHASEPOROMECHANICS_HPP_
+#endif // GEOS_PHYSICSSOLVERS_MULTIPHYSICS_POROMECHANICSKERNELS_MULTIPHASEPOROMECHANICS_HPP_

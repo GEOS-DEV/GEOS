@@ -20,7 +20,7 @@
 
 #include <cstdlib>
 
-namespace geosx
+namespace geos
 {
 
 namespace
@@ -83,4 +83,4 @@ INST_PARSEVALUE( long long );
 
 #undef INST_PARSEVALUE
 
-} // namespace geosx
+} // namespace geos

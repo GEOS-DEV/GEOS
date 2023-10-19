@@ -18,14 +18,14 @@
 
 #include <set>
 
-namespace geosx
+namespace geos
 {
 
 CommID::CommID( std::set< int > & freeIDs ):
   m_freeIDs( freeIDs ),
   m_id( -1 )
 {
-  GEOSX_ERROR_IF_EQ( freeIDs.size(), 0 );
+  GEOS_ERROR_IF_EQ( freeIDs.size(), 0 );
   m_id = *freeIDs.begin();
   freeIDs.erase( freeIDs.begin() );
 }
@@ -39,10 +39,10 @@ CommID::CommID( CommID && src ):
 
 CommID::~CommID()
 {
-  GEOSX_ERROR_IF( m_freeIDs.count( m_id ) > 0, "Attempting to release commID that is already free: " << m_id );
+  GEOS_ERROR_IF( m_freeIDs.count( m_id ) > 0, "Attempting to release commID that is already free: " << m_id );
 
   m_freeIDs.insert( m_id );
   m_id = -1;
 }
 
-} /* namespace geosx */
+} /* namespace geos */

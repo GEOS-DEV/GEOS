@@ -27,9 +27,9 @@ set( gtest_pvt_xmls
    )
 
 set( gtest_reactivefluid_xmls
-     testReactiveFluid.xml )   
+     testReactiveFluid.xml )
 
-set( dependencyList gtest )
+set( dependencyList ${parallelDeps} gtest )
 
 if ( GEOSX_BUILD_SHARED_LIBS )
   set (dependencyList ${dependencyList} geosx_core )
@@ -43,18 +43,6 @@ if( ENABLE_PVTPackage )
           testCO2BrinePVTModels.cpp )
 
     set( dependencyList ${dependencyList} PVTPackage )
-endif()
-
-if( ENABLE_CUDA )
-  set( dependencyList ${dependencyList} cuda )
-endif()
-
-if( ENABLE_CUDA_NVTOOLSEXT )
-  set( dependencyList ${dependencyList} CUDA::nvToolsExt )
-endif()
-
-if( ENABLE_OPENMP )
-  set( dependencyList ${dependencyList} openmp )
 endif()
 
 #

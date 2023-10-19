@@ -17,21 +17,21 @@
  * @file AcousticFirstOrderWaveEquationSEM.hpp
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_WAVEPROPAGATION_ACOUSTICFIRSTORDERWAVEEQUATIONSEM_HPP_
-#define GEOSX_PHYSICSSOLVERS_WAVEPROPAGATION_ACOUSTICFIRSTORDERWAVEEQUATIONSEM_HPP_
+#ifndef GEOS_PHYSICSSOLVERS_WAVEPROPAGATION_ACOUSTICFIRSTORDERWAVEEQUATIONSEM_HPP_
+#define GEOS_PHYSICSSOLVERS_WAVEPROPAGATION_ACOUSTICFIRSTORDERWAVEEQUATIONSEM_HPP_
 
 #include "mesh/MeshFields.hpp"
 #include "WaveSolverUtils.hpp"
 #include "WaveSolverBaseFields.hpp"
 
-namespace geosx
+namespace geos
 {
 
 class AcousticFirstOrderWaveEquationSEM : public WaveSolverBase
 {
 public:
 
-  using EXEC_POLICY = parallelDevicePolicy< 32 >;
+  using EXEC_POLICY = parallelDevicePolicy< >;
   using ATOMIC_POLICY = parallelDeviceAtomic;
 
 
@@ -102,7 +102,8 @@ public:
    * @param var_n the field values at time_n
    * @param var_receivers the array holding the trace values, where the output is written
    */
-  virtual void compute2dVariableAllSeismoTraces( real64 const time_n,
+  virtual void compute2dVariableAllSeismoTraces( localIndex const regionIndex,
+                                                 real64 const time_n,
                                                  real64 const dt,
                                                  arrayView2d< real32 const > const var_np1,
                                                  arrayView2d< real32 const > const var_n,
@@ -131,12 +132,14 @@ public:
     static constexpr char const * uzNp1AtReceiversString() { return "uzNp1AtReceivers"; }
 
     static constexpr char const * sourceElemString() { return "sourceElem"; }
+    static constexpr char const * sourceRegionString() { return "sourceRegion"; }
     static constexpr char const * receiverElemString() { return "rcvElem"; }
+    static constexpr char const * receiverRegionString() { return "receiverRegion"; }
 
   } waveEquationViewKeys;
 
   /** internal function to the class to compute explicitStep either for backward or forward.
-   * (requires not to be private because it is called from GEOSX_HOST_DEVICE method)
+   * (requires not to be private because it is called from GEOS_HOST_DEVICE method)
    * @param time_n time at the beginning of the step
    * @param dt the perscribed timestep
    * @param cycleNumber the current cycle number
@@ -192,12 +195,18 @@ private:
   /// Array containing the elements which contain a source
   array1d< localIndex > m_sourceElem;
 
+  /// Array containing the elements which contain the region which the source belongs
+  array1d< localIndex > m_sourceRegion;
+
+  /// Array containing the elements which contain the region which the receiver belongs
+  array1d< localIndex > m_receiverRegion;
+
   /// Array containing the elements which contain a receiver
   array1d< localIndex > m_rcvElem;
 
 };
 
 
-} /* namespace geosx */
+} /* namespace geos */
 
-#endif /* GEOSX_PHYSICSSOLVERS_WAVEPROPAGATION_AcousticFirstOrderWaveEquationSEM_HPP_ */
+#endif /* GEOS_PHYSICSSOLVERS_WAVEPROPAGATION_ACOUSTICFIRSTORDERWAVEEQUATIONSEM_HPP_ */

@@ -16,12 +16,12 @@
  * @file Stopwatch.hpp
  */
 
-#ifndef GEOSX_COMMON_STOPWATCH_HPP
-#define GEOSX_COMMON_STOPWATCH_HPP
+#ifndef GEOS_COMMON_STOPWATCH_HPP
+#define GEOS_COMMON_STOPWATCH_HPP
 
 #include <chrono>
 
-namespace geosx
+namespace geos
 {
 
 /**

@@ -16,12 +16,12 @@
  * @file CompositionalMultiphaseUtilities.hpp
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONALMULTIPHASEUTILITIES_H_
-#define GEOSX_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONALMULTIPHASEUTILITIES_H_
+#ifndef GEOS_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONALMULTIPHASEUTILITIES_H_
+#define GEOS_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONALMULTIPHASEUTILITIES_H_
 
 #include "common/DataTypes.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace compositionalMultiphaseUtilities
@@ -58,7 +58,7 @@ namespace compositionalMultiphaseUtilities
  *      - numBlocks = 2
  */
 template< typename VEC >
-GEOSX_HOST_DEVICE
+GEOS_HOST_DEVICE
 void shiftBlockElementsAheadByOneAndReplaceFirstElementWithSum( integer const numRowsToShift,
                                                                 integer const numRowsInBlock,
                                                                 integer const numBlocks,
@@ -86,7 +86,7 @@ void shiftBlockElementsAheadByOneAndReplaceFirstElementWithSum( integer const nu
  * @param v one-dimensional array of values
  */
 template< typename VEC >
-GEOSX_HOST_DEVICE
+GEOS_HOST_DEVICE
 void shiftElementsAheadByOneAndReplaceFirstElementWithSum( integer const numRows,
                                                            VEC && v )
 {
@@ -131,7 +131,7 @@ void shiftElementsAheadByOneAndReplaceFirstElementWithSum( integer const numRows
  *
  */
 template< typename MATRIX, typename VEC >
-GEOSX_HOST_DEVICE
+GEOS_HOST_DEVICE
 void shiftBlockRowsAheadByOneAndReplaceFirstRowWithColumnSum( integer const numRowsToShift,
                                                               integer const numRowsInBlock,
                                                               integer const numColsInBlock,
@@ -174,7 +174,7 @@ void shiftBlockRowsAheadByOneAndReplaceFirstRowWithColumnSum( integer const numR
  * @param work one-dimensional working array of values of size numColsInBlock
  */
 template< typename MATRIX, typename VEC >
-GEOSX_HOST_DEVICE
+GEOS_HOST_DEVICE
 void shiftRowsAheadByOneAndReplaceFirstRowWithColumnSum( integer const numRowsInBlock,
                                                          integer const numColsInBlock,
                                                          MATRIX && mat,
@@ -185,6 +185,6 @@ void shiftRowsAheadByOneAndReplaceFirstRowWithColumnSum( integer const numRowsIn
 
 } // namespace compositionalMultiphaseUtilities
 
-} // namespace geosx
+} // namespace geos
 
-#endif //GEOSX_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONALMULTIPHASEUTILITIES_HPP_
+#endif //GEOS_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONALMULTIPHASEUTILITIES_HPP_

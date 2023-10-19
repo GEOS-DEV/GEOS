@@ -12,14 +12,14 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_SIMPLEPDE_LAPLACE_BASE_HPP
-#define GEOSX_PHYSICSSOLVERS_SIMPLEPDE_LAPLACE_BASE_HPP
+#ifndef GEOS_PHYSICSSOLVERS_SIMPLEPDE_LAPLACE_BASE_HPP
+#define GEOS_PHYSICSSOLVERS_SIMPLEPDE_LAPLACE_BASE_HPP
 
 #include "codingUtilities/EnumStrings.hpp"   // facilities for enum-string conversion (for reading enum values from XML input)
 #include "physicsSolvers/SolverBase.hpp"  // an abstraction class shared by all physics solvers
 #include "fieldSpecification/FieldSpecificationManager.hpp" // a manager that can access and set values on the discretized domain
 
-namespace geosx
+namespace geos
 {
 
 // Like most physics solvers, the Laplace solver derives from a generic SolverBase class.
@@ -73,12 +73,13 @@ public:
   applySystemSolution( DofManager const & dofManager,
                        arrayView1d< real64 const > const & localSolution,
                        real64 const scalingFactor,
+                       real64 const dt,
                        DomainPartition & domain ) override;
 
   virtual void updateState( DomainPartition & domain ) override final;
 
   virtual void
-    resetStateToBeginningOfStep( DomainPartition & GEOSX_UNUSED_PARAM( domain ) ) override;
+    resetStateToBeginningOfStep( DomainPartition & GEOS_UNUSED_PARAM( domain ) ) override;
 
   virtual void
   implicitStepComplete( real64 const & time,
@@ -140,6 +141,6 @@ ENUM_STRINGS( LaplaceBaseH1::TimeIntegrationOption,
               "ImplicitTransient" );
 //END_SPHINX_INCLUDE_REGENUM
 
-} /* namespace geosx */
+} /* namespace geos */
 
-#endif /* GEOSX_PHYSICSSOLVERS_SIMPLEPDE_LAPLACE_BASE_HPP */
+#endif /* GEOS_PHYSICSSOLVERS_SIMPLEPDE_LAPLACE_BASE_HPP */

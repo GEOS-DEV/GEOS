@@ -6,7 +6,7 @@
 
 #include <limits>  // numeric_limits
 
-namespace geosx
+namespace geos
 {
 
 ProjectionEDFMHelper::ProjectionEDFMHelper( MeshLevel const & mesh,
@@ -33,7 +33,7 @@ void ProjectionEDFMHelper::addNonNeighboringConnections() const
   EmbeddedSurfaceSubRegion const & fractureSubRegion = fractureRegion.getUniqueSubRegion< EmbeddedSurfaceSubRegion >();
 
   arrayView1d< integer const > const ghostRank = fractureSubRegion.ghostRank();
-  FixedToManyElementRelation const & surfaceElementsToCells = fractureSubRegion.getToCellRelation();
+  OrderedVariableToManyElementRelation const & surfaceElementsToCells = fractureSubRegion.getToCellRelation();
 
   for( localIndex fracElement = 0; fracElement < fractureSubRegion.size(); fracElement++ )
   {
@@ -198,7 +198,7 @@ bool ProjectionEDFMHelper::neighborOnSameSide( localIndex const faceIdx,
   {
     return false;
   }
-  GEOSX_ERROR_IF( efracElements.size() > 1, "pEDFM with fracture intersections is not supported yet." );
+  GEOS_ERROR_IF( efracElements.size() > 1, "pEDFM with fracture intersections is not supported yet." );
 
   localIndex const fracElement = efracElements[0];
   arraySlice1d< real64 const > const n = fractureSubRegion.getNormalVector( fracElement );
@@ -292,4 +292,4 @@ void ProjectionEDFMHelper::
   weights[1] = faceArea * LvArray::tensorOps::l2Norm< 3 >( projectionPointToFracCenter );
 }
 
-}  // end namespace geosx
+}  // end namespace geos

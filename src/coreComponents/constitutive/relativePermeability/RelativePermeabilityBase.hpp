@@ -16,15 +16,15 @@
  * @file RelativePermeabilityBase.hpp
  */
 
-#ifndef GEOSX_CONSTITUTIVE_RELATIVEPERMEABILITYBASE_HPP
-#define GEOSX_CONSTITUTIVE_RELATIVEPERMEABILITYBASE_HPP
+#ifndef GEOS_CONSTITUTIVE_RELATIVEPERMEABILITYBASE_HPP
+#define GEOS_CONSTITUTIVE_RELATIVEPERMEABILITYBASE_HPP
 
 #include "common/DataLayouts.hpp"
 #include "constitutive/ConstitutiveBase.hpp"
 #include "constitutive/relativePermeability/layouts.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace constitutive
@@ -39,7 +39,7 @@ public:
    * @return arrayView for the [elt][gauss][phase] relperm container
    */
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   arrayView3d< real64 const, relperm::USD_RELPERM > relperm() const
   { return m_phaseRelPerm; }
 
@@ -47,21 +47,21 @@ public:
    * @brief Get number of elements in this wrapper.
    * @return number of elements
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   localIndex numElems() const { return m_phaseRelPerm.size( 0 ); }
 
   /**
    * @brief Get number of gauss points per element.
    * @return number of gauss points per element
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   localIndex numGauss() const { return m_phaseRelPerm.size( 1 ); }
 
   /**
    * @brief Get number of fluid phases.
    * @return number of phases
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   integer numPhases() const { return LvArray::integerConversion< integer >( m_phaseTypes.size() ); }
 
 
@@ -87,7 +87,7 @@ protected:
   arrayView3d< real64, relperm::USD_RELPERM > m_phaseTrappedVolFrac;
 
 private:
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   virtual void update( localIndex const k,
                        localIndex const q,
                        arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseVolFraction ) const = 0;
@@ -152,7 +152,7 @@ public:
    * @param[in] phaseVolFraction an array containing the phase volume fractions at the end of a converged time step
    */
   virtual void saveConvergedPhaseVolFractionState( arrayView2d< real64 const, compflow::USD_PHASE > const & phaseVolFraction ) const
-  { GEOSX_UNUSED_VAR( phaseVolFraction ); }
+  { GEOS_UNUSED_VAR( phaseVolFraction ); }
 
   /**
    * @brief Save converged state after the relperm update
@@ -203,7 +203,7 @@ protected:
 
 } // namespace constitutive
 
-} // namespace geosx
+} // namespace geos
 
 
-#endif //GEOSX_CONSTITUTIVE_RELATIVEPERMEABILITYBASE_HPP
+#endif //GEOS_CONSTITUTIVE_RELATIVEPERMEABILITYBASE_HPP

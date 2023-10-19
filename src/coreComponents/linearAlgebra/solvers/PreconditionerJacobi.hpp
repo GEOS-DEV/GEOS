@@ -12,13 +12,13 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#ifndef GEOSX_LINEARALGEBRA_SOLVERS_PRECONDITIONERJACOBI_HPP_
-#define GEOSX_LINEARALGEBRA_SOLVERS_PRECONDITIONERJACOBI_HPP_
+#ifndef GEOS_LINEARALGEBRA_SOLVERS_PRECONDITIONERJACOBI_HPP_
+#define GEOS_LINEARALGEBRA_SOLVERS_PRECONDITIONERJACOBI_HPP_
 
 #include "linearAlgebra/common/LinearOperator.hpp"
 #include "linearAlgebra/common/PreconditionerBase.hpp"
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -45,7 +45,7 @@ public:
    */
   virtual void setup( Matrix const & mat ) override
   {
-    GEOSX_LAI_ASSERT( mat.ready() );
+    GEOS_LAI_ASSERT( mat.ready() );
     m_diagInv.createWithLocalSize( mat.numLocalRows(), mat.comm() );
     mat.extractDiagonal( m_diagInv );
     m_diagInv.reciprocal();
@@ -73,7 +73,7 @@ public:
    */
   virtual globalIndex numGlobalRows() const override final
   {
-    GEOSX_LAI_ASSERT( m_diagInv.ready() );
+    GEOS_LAI_ASSERT( m_diagInv.ready() );
     return m_diagInv.globalSize();
   }
 
@@ -83,7 +83,7 @@ public:
    */
   virtual globalIndex numGlobalCols() const override final
   {
-    GEOSX_LAI_ASSERT( m_diagInv.ready() );
+    GEOS_LAI_ASSERT( m_diagInv.ready() );
     return m_diagInv.globalSize();
   }
 
@@ -96,9 +96,9 @@ public:
   virtual void apply( Vector const & src,
                       Vector & dst ) const override
   {
-    GEOSX_LAI_ASSERT( m_diagInv.ready() );
-    GEOSX_LAI_ASSERT_EQ( this->numGlobalRows(), dst.globalSize() );
-    GEOSX_LAI_ASSERT_EQ( this->numGlobalCols(), src.globalSize() );
+    GEOS_LAI_ASSERT( m_diagInv.ready() );
+    GEOS_LAI_ASSERT_EQ( this->numGlobalRows(), dst.globalSize() );
+    GEOS_LAI_ASSERT_EQ( this->numGlobalCols(), src.globalSize() );
 
     m_diagInv.pointwiseProduct( src, dst );
   }
@@ -111,4 +111,4 @@ private:
 
 }
 
-#endif //GEOSX_LINEARALGEBRA_SOLVERS_PRECONDITIONERJACOBI_HPP_
+#endif //GEOS_LINEARALGEBRA_SOLVERS_PRECONDITIONERJACOBI_HPP_

@@ -22,7 +22,7 @@
 #include "mainInterface/GeosxState.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -103,11 +103,11 @@ real64 LaplaceBaseH1::solverStep( real64 const & time_n,
 /*
    IMPLICIT STEP SETUP
    This method uses the system setup from SolverBase (see below).
-   The current system of this class does not use the time variable. The macro GEOSX_UNUSED_PARAM is
+   The current system of this class does not use the time variable. The macro GEOS_UNUSED_PARAM is
    therefore used here to avoid a compilation error.
  */
-void LaplaceBaseH1::implicitStepSetup( real64 const & GEOSX_UNUSED_PARAM( time_n ),
-                                       real64 const & GEOSX_UNUSED_PARAM( dt ),
+void LaplaceBaseH1::implicitStepSetup( real64 const & GEOS_UNUSED_PARAM( time_n ),
+                                       real64 const & GEOS_UNUSED_PARAM( dt ),
                                        DomainPartition & domain )
 {
   Timestamp const meshModificationTimestamp = getMeshModificationTimestamp( domain );
@@ -120,12 +120,12 @@ void LaplaceBaseH1::implicitStepSetup( real64 const & GEOSX_UNUSED_PARAM( time_n
   }
 }
 
-void LaplaceBaseH1::implicitStepComplete( real64 const & GEOSX_UNUSED_PARAM( time_n ),
-                                          real64 const & GEOSX_UNUSED_PARAM( dt ),
-                                          DomainPartition & GEOSX_UNUSED_PARAM( domain ) )
+void LaplaceBaseH1::implicitStepComplete( real64 const & GEOS_UNUSED_PARAM( time_n ),
+                                          real64 const & GEOS_UNUSED_PARAM( dt ),
+                                          DomainPartition & GEOS_UNUSED_PARAM( domain ) )
 {}
 
-void LaplaceBaseH1::setupDofs( DomainPartition const & GEOSX_UNUSED_PARAM( domain ),
+void LaplaceBaseH1::setupDofs( DomainPartition const & GEOS_UNUSED_PARAM( domain ),
                                DofManager & dofManager ) const
 {
   dofManager.addField( m_fieldName,
@@ -141,8 +141,10 @@ void LaplaceBaseH1::setupDofs( DomainPartition const & GEOSX_UNUSED_PARAM( domai
 void LaplaceBaseH1::applySystemSolution( DofManager const & dofManager,
                                          arrayView1d< real64 const > const & localSolution,
                                          real64 const scalingFactor,
+                                         real64 const dt,
                                          DomainPartition & domain )
 {
+  GEOS_UNUSED_VAR( dt );
   dofManager.addVectorToField( localSolution,
                                m_fieldName,
                                m_fieldName,
@@ -165,7 +167,7 @@ void LaplaceBaseH1::applySystemSolution( DofManager const & dofManager,
 
 void LaplaceBaseH1::updateState( DomainPartition & domain )
 {
-  GEOSX_UNUSED_VAR( domain );
+  GEOS_UNUSED_VAR( domain );
 }
 
 /*
@@ -209,22 +211,22 @@ void LaplaceBaseH1::
                                          string const &,
                                          SortedArrayView< localIndex const > const & targetSet,
                                          NodeManager & targetGroup,
-                                         string const & GEOSX_UNUSED_PARAM( fieldName ) )
+                                         string const & GEOS_UNUSED_PARAM( fieldName ) )
     {
       bc.applyBoundaryConditionToSystem< FieldSpecificationEqual,
-                                         parallelDevicePolicy< 32 > >( targetSet,
-                                                                       time,
-                                                                       targetGroup,
-                                                                       m_fieldName,
-                                                                       dofManager.getKey( m_fieldName ),
-                                                                       dofManager.rankOffset(),
-                                                                       localMatrix,
-                                                                       localRhs );
+                                         parallelDevicePolicy< > >( targetSet,
+                                                                    time,
+                                                                    targetGroup,
+                                                                    m_fieldName,
+                                                                    dofManager.getKey( m_fieldName ),
+                                                                    dofManager.rankOffset(),
+                                                                    localMatrix,
+                                                                    localRhs );
     } );
   } );
 }
 
-void LaplaceBaseH1::resetStateToBeginningOfStep( DomainPartition & GEOSX_UNUSED_PARAM( domain ) )
+void LaplaceBaseH1::resetStateToBeginningOfStep( DomainPartition & GEOS_UNUSED_PARAM( domain ) )
 {}
 
-} // namespace geosx
+} // namespace geos

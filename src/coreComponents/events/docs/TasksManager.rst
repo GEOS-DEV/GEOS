@@ -3,7 +3,7 @@
 Tasks Manager
 =============
 
-The GEOSX tasks manager allows a user to specify tasks to be executed. These tasks are compatible targets for the :ref:`EventManager`.
+The GEOS tasks manager allows a user to specify tasks to be executed. These tasks are compatible targets for the :ref:`EventManager`.
 
 The tasks manager is configured via the ``Tasks`` block in an input .xml file, i.e.:
 

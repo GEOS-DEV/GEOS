@@ -16,14 +16,14 @@
  * @file MeshObjectPath.hpp
  */
 
-#ifndef GEOSX_MESH_MESHOBJECTPATH_HPP_
-#define GEOSX_MESH_MESHOBJECTPATH_HPP_
+#ifndef GEOS_MESH_MESHOBJECTPATH_HPP_
+#define GEOS_MESH_MESHOBJECTPATH_HPP_
 
 
 #include "codingUtilities/EnumStrings.hpp"
 #include "MeshLevel.hpp"
 
-namespace geosx
+namespace geos
 {
 class MeshBody;
 class MeshLevel;
@@ -62,6 +62,7 @@ public:
    *
    * @param path The path string
    * @param meshBodies  The Group that contains all MeshBody objects
+   * @throw InputError when the input path is wrong.
    */
   MeshObjectPath( string const path,
                   dataRepository::Group const & meshBodies );
@@ -94,6 +95,13 @@ public:
     return m_pathPermutations;
   }
 
+  /**
+   * @brief Helper function to decide whether a given meshLevel is in the objectPath
+   * @param[in] meshLevel the mesh level that we want to search for in the objectPath
+   * @return true if the meshLevel is in the objectPath, false otherwise
+   * @details An example use case is in the validation of boundary conditions
+   */
+  bool containsMeshLevel( MeshLevel const & meshLevel ) const;
 
   /**
    * @brief LLoop over objects in the path and execute a callback function.
@@ -172,6 +180,12 @@ private:
                          MeshLevel & meshLevel,
                          FUNC && func ) const;
 
+  template< typename OBJECT_TYPE,
+            typename FUNC >
+  void forObjectsInPath( std::pair< string const, std::map< string, std::vector< string > > > const & levelPair,
+                         MeshLevel const & meshLevel,
+                         FUNC && func ) const;
+
   /**
    * @brief A logical check for whether or not the m_objecType is consistent
    *  with a specific OBJECT_TYPE
@@ -215,11 +229,11 @@ private:
 
 };
 
-} /* namespace geosx */
+} /* namespace geos */
 
 #include "MeshBody.hpp"
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -262,41 +276,53 @@ void MeshObjectPath::forObjectsInPath( std::pair< string const, std::map< string
                                        MeshLevel & meshLevel,
                                        FUNC && func ) const
 {
+  forObjectsInPath< OBJECT_TYPE >( levelPair, const_cast< MeshLevel const & >( meshLevel ), [&]( OBJECT_TYPE const & object )
+  {
+    func( const_cast< OBJECT_TYPE & >(object) );
+  } );
+}
+
+template< typename OBJECT_TYPE,
+          typename FUNC >
+void MeshObjectPath::forObjectsInPath( std::pair< string const, std::map< string, std::vector< string > > > const & levelPair,
+                                       MeshLevel const & meshLevel,
+                                       FUNC && func ) const
+{
   if( m_objectType == ObjectTypes::nodes )
   {
-    func( dynamic_cast< OBJECT_TYPE & >(meshLevel.getNodeManager() ) );
+    func( dynamic_cast< OBJECT_TYPE const & >(meshLevel.getNodeManager() ) );
   }
   else if( m_objectType == ObjectTypes::edges )
   {
-    func( dynamic_cast< OBJECT_TYPE & >(meshLevel.getEdgeManager()) );
+    func( dynamic_cast< OBJECT_TYPE const & >(meshLevel.getEdgeManager()) );
   }
   else if( m_objectType == ObjectTypes::faces )
   {
-    func( dynamic_cast< OBJECT_TYPE & >(meshLevel.getFaceManager()) );
+    func( dynamic_cast< OBJECT_TYPE const & >(meshLevel.getFaceManager()) );
   }
   else if( m_objectType == ObjectTypes::elems )
   {
-    ElementRegionManager & elemRegionMan = meshLevel.getElemManager();
+    ElementRegionManager const & elemRegionMan = meshLevel.getElemManager();
     for( auto & elemRegionPair : levelPair.second )
     {
-      ElementRegionBase & elemRegion = elemRegionMan.getRegion( elemRegionPair.first );
+      ElementRegionBase const & elemRegion = elemRegionMan.getRegion( elemRegionPair.first );
       if( std::is_base_of< ElementRegionBase, OBJECT_TYPE >::value )
       {
-        func( dynamic_cast< OBJECT_TYPE & >(elemRegion) );
+        func( dynamic_cast< OBJECT_TYPE const & >(elemRegion) );
       }
       else
       {
         for( auto & elemSubRegionName : elemRegionPair.second )
         {
-          ElementSubRegionBase & subRegion = elemRegion.getSubRegion( elemSubRegionName );
+          ElementSubRegionBase const & subRegion = elemRegion.getSubRegion( elemSubRegionName );
           if( std::is_base_of< ElementSubRegionBase, OBJECT_TYPE >::value ||
               std::is_same< dataRepository::Group, OBJECT_TYPE >::value )
           {
-            func( dynamic_cast< OBJECT_TYPE & >(subRegion) );
+            func( dynamic_cast< OBJECT_TYPE const & >(subRegion) );
           }
           else
           {
-            GEOSX_ERROR( "You shouldn't be here" );
+            GEOS_ERROR( "You shouldn't be here" );
           }
         }
       }
@@ -327,13 +353,10 @@ void MeshObjectPath::forObjectsInPath( dataRepository::Group const & meshBodies,
     for( auto const & meshLevelPair : meshBodyPair.second )
     {
       MeshLevel const & meshLevel = meshBody.getMeshLevel( meshLevelPair.first );
-
       forObjectsInPath< OBJECT_TYPE, FUNC >( meshLevelPair, meshLevel, std::forward< FUNC >( func ));
     }
   }
 }
-
-
 
 template< typename OBJECT_TYPE,
           typename FUNC >
@@ -364,6 +387,6 @@ void MeshObjectPath::forObjectsInPath( MeshLevel & meshLevel,
 
 
 
-} /* namespace geosx */
+} /* namespace geos */
 
-#endif /* GEOSX_MESH_MESHOBJECTPATH_HPP_ */
+#endif /* GEOS_MESH_MESHOBJECTPATH_HPP_ */

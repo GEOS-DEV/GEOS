@@ -16,14 +16,14 @@
  * @file Parsing.hpp
  */
 
-#ifndef GEOSX_CODINGUTILITIES_PARSING_HPP_
-#define GEOSX_CODINGUTILITIES_PARSING_HPP_
+#ifndef GEOS_CODINGUTILITIES_PARSING_HPP_
+#define GEOS_CODINGUTILITIES_PARSING_HPP_
 
 #include "common/DataTypes.hpp"
 
 #include <fstream>
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -129,18 +129,18 @@ void parseFile( string const & filename,
     if( ptr != end )
     {
       std::ptrdiff_t const left = std::distance( ptr, end );
-      GEOSX_THROW( GEOSX_FMT( "Unable to parse value in file {} at position {}: {}...",
-                              filename, static_cast< std::streamoff >( inputStream.tellg() ) - left,
-                              string( ptr, std::min( left, std::ptrdiff_t{32} ) ) ),
-                   std::runtime_error );
+      GEOS_THROW( GEOS_FMT( "Unable to parse value in file {} at position {}: {}...",
+                            filename, static_cast< std::streamoff >( inputStream.tellg() ) - left,
+                            string( ptr, std::min( left, std::ptrdiff_t{32} ) ) ),
+                  std::runtime_error );
     }
   }
 
-  GEOSX_THROW_IF( inputStream.fail() && !inputStream.eof(),
-                  GEOSX_FMT( "Error while reading file {}: {}", filename, std::strerror( errno ) ),
-                  std::runtime_error );
+  GEOS_THROW_IF( inputStream.fail() && !inputStream.eof(),
+                 GEOS_FMT( "Error while reading file {}: {}", filename, std::strerror( errno ) ),
+                 std::runtime_error );
 }
 
-} // namespace geosx
+} // namespace geos
 
-#endif //GEOSX_CODINGUTILITIES_PARSING_HPP_
+#endif //GEOS_CODINGUTILITIES_PARSING_HPP_

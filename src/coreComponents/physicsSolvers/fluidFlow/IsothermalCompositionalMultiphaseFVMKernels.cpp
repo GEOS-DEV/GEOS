@@ -25,7 +25,7 @@
 #include "finiteVolume/FaceElementToCellStencil.hpp"
 #include "mesh/utilities/MeshMapUtilities.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace isothermalCompositionalMultiphaseFVMKernels
@@ -35,35 +35,23 @@ namespace isothermalCompositionalMultiphaseFVMKernels
 
 FaceBasedAssemblyKernelBase::FaceBasedAssemblyKernelBase( integer const numPhases,
                                                           globalIndex const rankOffset,
-                                                          integer const hasCapPressure,
                                                           DofNumberAccessor const & dofNumberAccessor,
                                                           CompFlowAccessors const & compFlowAccessors,
                                                           MultiFluidAccessors const & multiFluidAccessors,
-                                                          CapPressureAccessors const & capPressureAccessors,
-                                                          PermeabilityAccessors const & permeabilityAccessors,
                                                           real64 const & dt,
                                                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                           arrayView1d< real64 > const & localRhs )
   : m_numPhases( numPhases ),
   m_rankOffset( rankOffset ),
-  m_hasCapPressure( hasCapPressure ),
   m_dt( dt ),
   m_dofNumber( dofNumberAccessor.toNestedViewConst() ),
-  m_permeability( permeabilityAccessors.get( fields::permeability::permeability {} ) ),
-  m_dPerm_dPres( permeabilityAccessors.get( fields::permeability::dPerm_dPressure {} ) ),
   m_ghostRank( compFlowAccessors.get( fields::ghostRank {} ) ),
   m_gravCoef( compFlowAccessors.get( fields::flow::gravityCoefficient {} ) ),
   m_pres( compFlowAccessors.get( fields::flow::pressure {} ) ),
   m_dCompFrac_dCompDens( compFlowAccessors.get( fields::flow::dGlobalCompFraction_dGlobalCompDensity {} ) ),
   m_dPhaseVolFrac( compFlowAccessors.get( fields::flow::dPhaseVolumeFraction {} ) ),
-  m_phaseMob( compFlowAccessors.get( fields::flow::phaseMobility {} ) ),
-  m_dPhaseMob( compFlowAccessors.get( fields::flow::dPhaseMobility {} ) ),
-  m_phaseMassDens( multiFluidAccessors.get( fields::multifluid::phaseMassDensity {} ) ),
-  m_dPhaseMassDens( multiFluidAccessors.get( fields::multifluid::dPhaseMassDensity {} ) ),
   m_phaseCompFrac( multiFluidAccessors.get( fields::multifluid::phaseCompFraction {} ) ),
   m_dPhaseCompFrac( multiFluidAccessors.get( fields::multifluid::dPhaseCompFraction {} ) ),
-  m_phaseCapPressure( capPressureAccessors.get( fields::cappres::phaseCapPressure {} ) ),
-  m_dPhaseCapPressure_dPhaseVolFrac( capPressureAccessors.get( fields::cappres::dPhaseCapPressure_dPhaseVolFraction {} ) ),
   m_localMatrix( localMatrix ),
   m_localRhs( localRhs )
 {}
@@ -71,7 +59,8 @@ FaceBasedAssemblyKernelBase::FaceBasedAssemblyKernelBase( integer const numPhase
 /******************************** CFLFluxKernel ********************************/
 
 template< integer NC, localIndex NUM_ELEMS, localIndex maxStencilSize >
-GEOSX_HOST_DEVICE
+GEOS_HOST_DEVICE
+inline
 void
 CFLFluxKernel::
   compute( integer const numPhases,
@@ -189,7 +178,7 @@ CFLFluxKernel::
   localIndex constexpr numElems = STENCILWRAPPER_TYPE::maxNumPointsInFlux;
   localIndex constexpr maxStencilSize = STENCILWRAPPER_TYPE::maxStencilSize;
 
-  forAll< parallelDevicePolicy<> >( stencilWrapper.size(), [=] GEOSX_HOST_DEVICE ( localIndex const iconn )
+  forAll< parallelDevicePolicy<> >( stencilWrapper.size(), [=] GEOS_HOST_DEVICE ( localIndex const iconn )
   {
     // compute transmissibility
     real64 transmissibility[STENCILWRAPPER_TYPE::maxNumConnections][2];
@@ -269,7 +258,7 @@ INST_CFLFluxKernel( 5, FaceElementToCellStencilWrapper );
 /******************************** CFLKernel ********************************/
 
 template< integer NP >
-GEOSX_HOST_DEVICE
+GEOS_HOST_DEVICE
 void
 CFLKernel::
   computePhaseCFL( real64 const & poreVol,
@@ -353,7 +342,7 @@ CFLKernel::
 
 
 template< integer NC >
-GEOSX_HOST_DEVICE
+GEOS_HOST_DEVICE
 void
 CFLKernel::
   computeCompCFL( real64 const & poreVol,
@@ -401,7 +390,7 @@ CFLKernel::
   RAJA::ReduceMax< parallelDeviceReduce, real64 > subRegionPhaseCFLNumber( 0.0 );
   RAJA::ReduceMax< parallelDeviceReduce, real64 > subRegionCompCFLNumber( 0.0 );
 
-  forAll< parallelDevicePolicy<> >( size, [=] GEOSX_HOST_DEVICE ( localIndex const ei )
+  forAll< parallelDevicePolicy<> >( size, [=] GEOS_HOST_DEVICE ( localIndex const ei )
   {
     real64 const poreVol = volume[ei] * porosity[ei][0];
 
@@ -467,7 +456,7 @@ INST_CFLKernel( 5, 3 );
 /******************************** AquiferBCKernel ********************************/
 
 template< integer NC >
-GEOSX_HOST_DEVICE
+GEOS_HOST_DEVICE
 void
 AquiferBCKernel::
   compute( integer const numPhases,
@@ -583,7 +572,7 @@ AquiferBCKernel::
   BoundaryStencil::IndexContainerViewConstType const & sefi = stencil.getElementIndices();
   BoundaryStencil::WeightContainerViewConstType const & weight = stencil.getWeights();
 
-  forAll< parallelDevicePolicy<> >( stencil.size(), [=] GEOSX_HOST_DEVICE ( localIndex const iconn )
+  forAll< parallelDevicePolicy<> >( stencil.size(), [=] GEOS_HOST_DEVICE ( localIndex const iconn )
   {
     constexpr integer NDOF = NC + 1;
 
@@ -644,8 +633,8 @@ AquiferBCKernel::
     {
       globalIndex const globalRow = dofNumber[er][esr][ei];
       localIndex const localRow = LvArray::integerConversion< localIndex >( globalRow - rankOffset );
-      GEOSX_ASSERT_GE( localRow, 0 );
-      GEOSX_ASSERT_GT( localMatrix.numRows(), localRow + NC );
+      GEOS_ASSERT_GE( localRow, 0 );
+      GEOS_ASSERT_GT( localMatrix.numRows(), localRow + NC );
 
       for( integer ic = 0; ic < NC; ++ic )
       {
@@ -697,4 +686,4 @@ INST_AquiferBCKernel( 5 );
 
 } // namespace isothermalCompositionalMultiphaseFVMKernels
 
-} // namespace geosx
+} // namespace geos

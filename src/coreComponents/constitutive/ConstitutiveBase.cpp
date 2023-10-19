@@ -20,7 +20,7 @@
 
 #include "ConstitutiveBase.hpp"
 
-namespace geosx
+namespace geos
 {
 using namespace dataRepository;
 namespace constitutive
@@ -88,4 +88,4 @@ ConstitutiveBase::deliverClone( string const & name,
 
 
 }
-} /* namespace geosx */
+} /* namespace geos */

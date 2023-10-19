@@ -26,9 +26,9 @@
 #include "physicsSolvers/fluidFlow/wells/SinglePhaseWellFields.hpp"
 #include "physicsSolvers/fluidFlow/wells/SinglePhaseWellKernels.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellControls.hpp"
-#include "physicsSolvers/multiphysics/SinglePhasePoromechanicsSolver.hpp"
+#include "physicsSolvers/multiphysics/SinglePhasePoromechanics.hpp"
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -49,10 +49,10 @@ public:
   static string name() { return "SinglePhaseReservoir"; }
 };
 // Class specialization for a RESERVOIR_SOLVER set to SinglePhasePoromechanics
-template<> class SinglePhaseCatalogNames< SinglePhasePoromechanicsSolver >
+template<> class SinglePhaseCatalogNames< SinglePhasePoromechanics >
 {
 public:
-  static string name() { return SinglePhasePoromechanicsSolver::catalogName()+"Reservoir"; }
+  static string name() { return SinglePhasePoromechanics::catalogName()+"Reservoir"; }
 };
 }
 
@@ -87,7 +87,7 @@ flowSolver() const
 
 template<>
 SinglePhaseBase const *
-SinglePhaseReservoirAndWells< SinglePhasePoromechanicsSolver >::
+SinglePhaseReservoirAndWells< SinglePhasePoromechanics >::
 flowSolver() const
 {
   return this->reservoirSolver()->flowSolver();
@@ -110,12 +110,12 @@ setMGRStrategy()
 
 template<>
 void
-SinglePhaseReservoirAndWells< SinglePhasePoromechanicsSolver >::
+SinglePhaseReservoirAndWells< SinglePhasePoromechanics >::
 setMGRStrategy()
 {
   if( flowSolver()->getLinearSolverParameters().mgr.strategy == LinearSolverParameters::MGR::StrategyType::singlePhaseReservoirHybridFVM )
   {
-    GEOSX_LOG_RANK_0( "The MGR strategy for hybrid FVM is not implemented" );
+    GEOS_LOG_RANK_0( "The MGR strategy for hybrid FVM is not implemented" );
   }
   else
   {
@@ -149,7 +149,7 @@ addCouplingSparsityPattern( DomainPartition const & domain,
                             DofManager const & dofManager,
                             SparsityPatternView< globalIndex > const & pattern ) const
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   this->template forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                                MeshLevel const & mesh,
@@ -249,6 +249,11 @@ assembleCouplingTerms( real64 const time_n,
   using ROFFSET = singlePhaseWellKernels::RowOffset;
   using COFFSET = singlePhaseWellKernels::ColOffset;
 
+  GEOS_THROW_IF( !Base::m_isWellTransmissibilityComputed,
+                 GEOS_FMT( "{} `{}`: The well transmissibility has not been computed yet",
+                           catalogName(), this->getName() ),
+                 std::runtime_error );
+
   this->template forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                                MeshLevel const & mesh,
                                                                                arrayView1d< string const > const & regionNames )
@@ -301,7 +306,7 @@ assembleCouplingTerms( real64 const time_n,
         perforationData->getField< fields::perforation::reservoirElementIndex >();
 
       // loop over the perforations and add the rates to the residual and jacobian
-      forAll< parallelDevicePolicy<> >( perforationData->size(), [=] GEOSX_HOST_DEVICE ( localIndex const iperf )
+      forAll< parallelDevicePolicy<> >( perforationData->size(), [=] GEOS_HOST_DEVICE ( localIndex const iperf )
       {
         // local working variables and arrays
         localIndex eqnRowIndices[ 2 ] = { -1 };
@@ -366,9 +371,9 @@ assembleCouplingTerms( real64 const time_n,
 namespace
 {
 typedef SinglePhaseReservoirAndWells< SinglePhaseBase > SinglePhaseFlowAndWells;
-typedef SinglePhaseReservoirAndWells< SinglePhasePoromechanicsSolver > SinglePhasePoromechanicsAndWells;
+typedef SinglePhaseReservoirAndWells< SinglePhasePoromechanics > SinglePhasePoromechanicsAndWells;
 REGISTER_CATALOG_ENTRY( SolverBase, SinglePhaseFlowAndWells, string const &, Group * const )
 REGISTER_CATALOG_ENTRY( SolverBase, SinglePhasePoromechanicsAndWells, string const &, Group * const )
 }
 
-} /* namespace geosx */
+} /* namespace geos */

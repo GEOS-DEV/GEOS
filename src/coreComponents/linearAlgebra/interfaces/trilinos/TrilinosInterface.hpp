@@ -16,8 +16,8 @@
  * @file TrilinosInterface.hpp
  */
 
-#ifndef GEOSX_LINEARALGEBRA_INTERFACES_TRILINOSINTERFACE_HPP_
-#define GEOSX_LINEARALGEBRA_INTERFACES_TRILINOSINTERFACE_HPP_
+#ifndef GEOS_LINEARALGEBRA_INTERFACES_TRILINOSINTERFACE_HPP_
+#define GEOS_LINEARALGEBRA_INTERFACES_TRILINOSINTERFACE_HPP_
 
 #include "linearAlgebra/interfaces/trilinos/EpetraVector.hpp"
 #include "linearAlgebra/interfaces/trilinos/EpetraMatrix.hpp"
@@ -26,7 +26,7 @@
 
 #include <memory>
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -77,6 +77,6 @@ struct TrilinosInterface
   using ParallelVector = EpetraVector;
 };
 
-} /* namespace geosx */
+} /* namespace geos */
 
-#endif /* GEOSX_LINEARALGEBRA_INTERFACES_TRILINOSINTERFACE_HPP_ */
+#endif /* GEOS_LINEARALGEBRA_INTERFACES_TRILINOSINTERFACE_HPP_ */

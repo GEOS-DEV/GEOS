@@ -16,7 +16,7 @@
 
 #include "mesh/generators/CellBlockUtilities.hpp"
 
-namespace geosx
+namespace geos
 {
 using namespace dataRepository;
 
@@ -120,7 +120,7 @@ void CellBlock::setElementType( ElementType elementType )
     }
     default:
     {
-      GEOSX_ERROR( "Invalid element type " << m_elementType << " for CellBlock " << getName() );
+      GEOS_ERROR( "Invalid element type " << m_elementType << " for CellBlock " << getName() );
     }
   }
 
@@ -129,6 +129,11 @@ void CellBlock::setElementType( ElementType elementType )
   m_elementsToNodes.resize( this->numElements(), m_numNodesPerElement );
   m_elementsToEdges.resize( this->numElements(), m_numEdgesPerElement );
   m_elementsToFaces.resize( this->numElements(), m_numFacesPerElement );
+}
+
+void CellBlock::resizeNumNodes ( dataRepository::indexType const numNodes )
+{
+  m_elementsToNodes.resize( this->numElements(), numNodes );
 }
 
 void CellBlock::resize( dataRepository::indexType const numElements )
@@ -147,11 +152,11 @@ localIndex CellBlock::getFaceNodes( localIndex const cellIndex,
                                     localIndex const faceNum,
                                     Span< localIndex > const nodesInFaces ) const
 {
-  return geosx::getFaceNodes( m_elementType,
-                              cellIndex,
-                              faceNum,
-                              m_elementsToNodes,
-                              nodesInFaces );
+  return geos::getFaceNodes( m_elementType,
+                             cellIndex,
+                             faceNum,
+                             m_elementsToNodes,
+                             nodesInFaces );
 }
 
 }

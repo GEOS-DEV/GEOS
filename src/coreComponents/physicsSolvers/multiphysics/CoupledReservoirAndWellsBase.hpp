@@ -17,8 +17,8 @@
  *
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_COUPLEDRESERVOIRANDWELLSBASE_HPP_
-#define GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_COUPLEDRESERVOIRANDWELLSBASE_HPP_
+#ifndef GEOS_PHYSICSSOLVERS_MULTIPHYSICS_COUPLEDRESERVOIRANDWELLSBASE_HPP_
+#define GEOS_PHYSICSSOLVERS_MULTIPHYSICS_COUPLEDRESERVOIRANDWELLSBASE_HPP_
 
 #include "physicsSolvers/multiphysics/CoupledSolver.hpp"
 
@@ -29,7 +29,7 @@
 #include "physicsSolvers/fluidFlow/wells/WellControls.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellSolverBase.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace coupledReservoirAndWellsInternal
@@ -94,7 +94,8 @@ public:
    */
   CoupledReservoirAndWellsBase ( const string & name,
                                  dataRepository::Group * const parent )
-    : Base( name, parent )
+    : Base( name, parent ),
+    m_isWellTransmissibilityComputed( false )
   {
     this->template getWrapper< string >( Base::viewKeyStruct::discretizationString() ).
       setInputFlag( dataRepository::InputFlags::FALSE );
@@ -120,9 +121,9 @@ public:
                ParallelVector & solution,
                bool const setSparsity = true ) override
   {
-    GEOSX_MARK_FUNCTION;
+    GEOS_MARK_FUNCTION;
 
-    GEOSX_UNUSED_VAR( setSparsity );
+    GEOS_UNUSED_VAR( setSparsity );
 
     dofManager.setDomain( domain );
 
@@ -191,12 +192,87 @@ public:
 
     DomainPartition & domain = this->template getGroupByPath< DomainPartition >( "/Problem/domain" );
 
-    // Validate well perforations: Ensure that each perforation is in a region targetted by the solver
+    // Validate well perforations: Ensure that each perforation is in a region targeted by the solver
     if( !validateWellPerforations( domain ))
     {
       return;
     }
+  }
 
+  virtual void
+  implicitStepSetup( real64 const & time_n,
+                     real64 const & dt,
+                     DomainPartition & domain ) override
+  {
+    Base::implicitStepSetup( time_n, dt, domain );
+
+    // we delay the computation of the transmissibility until the last minute
+    // because we want to make sure that the permeability has been updated (in the flow solver)
+    // this is necessary for some permeability models (like Karman-Kozeny) that do not use the imported permeability
+    // ultimately, we may want to use this mechanism to update the well transmissibility at each time step (if needed)
+    if( !m_isWellTransmissibilityComputed )
+    {
+      computeWellTransmissibility( domain );
+      m_isWellTransmissibilityComputed = true;
+    }
+  }
+
+protected:
+
+  /**
+   * @Brief loop over perforations and increase Jacobian matrix row lengths for reservoir and well elements accordingly
+   * @param domain the physical domain object
+   * @param dofManager degree-of-freedom manager associated with the linear system
+   * @param rowLengths the row-by-row length
+   */
+  void
+  addCouplingNumNonzeros( DomainPartition & domain,
+                          DofManager & dofManager,
+                          arrayView1d< localIndex > const & rowLengths ) const
+  {
+    coupledReservoirAndWellsInternal::
+      addCouplingNumNonzeros( this,
+                              domain,
+                              dofManager,
+                              rowLengths,
+                              wellSolver()->numDofPerResElement(),
+                              wellSolver()->numDofPerWellElement(),
+                              wellSolver()->resElementDofName(),
+                              wellSolver()->wellElementDofName() );
+  }
+
+  /**
+   * @Brief add the sparsity pattern induced by the perforations
+   * @param domain the physical domain object
+   * @param dofManager degree-of-freedom manager associated with the linear system
+   * @param pattern the sparsity pattern
+   */
+  virtual void
+  addCouplingSparsityPattern( DomainPartition const & domain,
+                              DofManager const & dofManager,
+                              SparsityPatternView< globalIndex > const & pattern ) const = 0;
+
+  /// Flag to determine whether the well transmissibility needs to be computed
+  bool m_isWellTransmissibilityComputed;
+
+private:
+
+  /**
+   * @brief Validate the well perforations ensuring that each perforation is located in a reservoir region that is also
+   * targeted by the solver
+   * @param domain the physical domain object
+   */
+  bool validateWellPerforations( DomainPartition const & domain ) const
+  {
+    return coupledReservoirAndWellsInternal::validateWellPerforations( reservoirSolver(), wellSolver(), domain );
+  }
+
+  /**
+   * @brief Compute the transmissibility at all the perforations
+   * @param domain the physical domain object
+   */
+  void computeWellTransmissibility( DomainPartition & domain ) const
+  {
     this->template forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                                  MeshLevel & meshLevel,
                                                                                  arrayView1d< string const > const & regionNames )
@@ -236,69 +312,30 @@ public:
           arrayView1d< localIndex const > const resElemIndex =
             perforationData.getField< fields::perforation::reservoirElementIndex >();
 
-          forAll< serialPolicy >( perforationData.size(), [=] GEOSX_HOST_DEVICE ( localIndex const iperf )
+          GEOS_UNUSED_VAR( perfLocation ); // unused if geos_error_if is nulld
+          GEOS_UNUSED_VAR( perfTrans ); // unused if geos_error_if is nulld
+          GEOS_UNUSED_VAR( resElemRegion ); // unused if geos_error_if is nulld
+          GEOS_UNUSED_VAR( resElemSubRegion ); // unused if geos_error_if is nulld
+          GEOS_UNUSED_VAR( resElemIndex ); // unused if geos_error_if is nulld
+
+          forAll< serialPolicy >( perforationData.size(), [=] ( localIndex const iperf )
           {
-            GEOSX_LOG_RANK( GEOSX_FMT( "Perforation at ({},{},{}); perforated element center: ({},{},{}); transmissibility: {} Pa.s.rm^3/s/Pa",
-                                       perfLocation[iperf][0], perfLocation[iperf][1], perfLocation[iperf][2],
-                                       elemCenter[resElemRegion[iperf]][resElemSubRegion[iperf]][resElemIndex[iperf]][0],
-                                       elemCenter[resElemRegion[iperf]][resElemSubRegion[iperf]][resElemIndex[iperf]][1],
-                                       elemCenter[resElemRegion[iperf]][resElemSubRegion[iperf]][resElemIndex[iperf]][2],
-                                       perfTrans[iperf] ) );
+            GEOS_UNUSED_VAR( iperf ); // unused if geos_error_if is nulld
+            GEOS_LOG_RANK( GEOS_FMT( "Perforation at ({},{},{}); perforated element center: ({},{},{}); transmissibility: {} Pa.s.rm^3/s/Pa",
+                                     perfLocation[iperf][0], perfLocation[iperf][1], perfLocation[iperf][2],
+                                     elemCenter[resElemRegion[iperf]][resElemSubRegion[iperf]][resElemIndex[iperf]][0],
+                                     elemCenter[resElemRegion[iperf]][resElemSubRegion[iperf]][resElemIndex[iperf]][1],
+                                     elemCenter[resElemRegion[iperf]][resElemSubRegion[iperf]][resElemIndex[iperf]][2],
+                                     perfTrans[iperf] ) );
           } );
         }
       } );
     } );
   }
 
-protected:
-
-  /**
-   * @Brief loop over perforations and increase Jacobian matrix row lengths for reservoir and well elements accordingly
-   * @param domain the physical domain object
-   * @param dofManager degree-of-freedom manager associated with the linear system
-   * @param rowLengths the row-by-row length
-   */
-  void
-  addCouplingNumNonzeros( DomainPartition & domain,
-                          DofManager & dofManager,
-                          arrayView1d< localIndex > const & rowLengths ) const
-  {
-    coupledReservoirAndWellsInternal::
-      addCouplingNumNonzeros( this,
-                              domain,
-                              dofManager,
-                              rowLengths,
-                              wellSolver()->numDofPerResElement(),
-                              wellSolver()->numDofPerWellElement(),
-                              wellSolver()->resElementDofName(),
-                              wellSolver()->wellElementDofName() );
-  }
-
-  /**
-   * @Brief add the sparsity pattern induced by the perforations
-   * @param domain the physical domain object
-   * @param dofManager degree-of-freedom manager associated with the linear system
-   * @param pattern the sparsity pattern
-   */
-  virtual void
-  addCouplingSparsityPattern( DomainPartition const & domain,
-                              DofManager const & dofManager,
-                              SparsityPatternView< globalIndex > const & pattern ) const = 0;
-
-private:
-  /**
-   * @brief Validate the well perforations ensuring that each perforation is located in a reservoir region that is also
-   * targetted by the solver
-   * @param domain the physical domain object
-   */
-  bool validateWellPerforations( DomainPartition const & domain ) const
-  {
-    return coupledReservoirAndWellsInternal::validateWellPerforations( reservoirSolver(), wellSolver(), domain );
-  }
-
 };
 
 
-} /* namespace geosx */
+} /* namespace geos */
 
-#endif /* GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_COUPLEDRESERVOIRANDWELLSBASE_HPP_ */
+#endif /* GEOS_PHYSICSSOLVERS_MULTIPHYSICS_COUPLEDRESERVOIRANDWELLSBASE_HPP_ */

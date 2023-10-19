@@ -15,8 +15,8 @@
 /**
  * @file EpetraUtils.hpp
  */
-#ifndef GEOSX_LINEARALGEBRA_INTERFACES_EPETRAUTILS_HPP_
-#define GEOSX_LINEARALGEBRA_INTERFACES_EPETRAUTILS_HPP_
+#ifndef GEOS_LINEARALGEBRA_INTERFACES_EPETRAUTILS_HPP_
+#define GEOS_LINEARALGEBRA_INTERFACES_EPETRAUTILS_HPP_
 
 #include "common/DataTypes.hpp"
 
@@ -26,7 +26,7 @@
 #include <Epetra_SerialComm.h>
 #endif
 
-namespace geosx
+namespace geos
 {
 
 namespace trilinos
@@ -34,14 +34,14 @@ namespace trilinos
 
 // Check matching requirements on index/value types between GEOSX and PETSc
 
-static_assert( sizeof( long long ) == sizeof( geosx::globalIndex ),
-               "long long and geosx::globalIndex must have the same size" );
+static_assert( sizeof( long long ) == sizeof( geos::globalIndex ),
+               "long long and geos::globalIndex must have the same size" );
 
-static_assert( std::is_signed< long long >::value == std::is_signed< geosx::globalIndex >::value,
-               "long long and geosx::globalIndex must both be signed or unsigned" );
+static_assert( std::is_signed< long long >::value == std::is_signed< geos::globalIndex >::value,
+               "long long and geos::globalIndex must both be signed or unsigned" );
 
-static_assert( std::is_same< double, geosx::real64 >::value,
-               "double and geosx::real64 must be the same type" );
+static_assert( std::is_same< double, geos::real64 >::value,
+               "double and geos::real64 must be the same type" );
 
 #ifdef GEOSX_USE_MPI
 /// Alias for Epetra communicator
@@ -73,6 +73,6 @@ inline long long const * toEpetraLongLong( globalIndex const * const index )
 
 } // namespace trilinos
 
-} // namespace geosx
+} // namespace geos
 
-#endif //GEOSX_LINEARALGEBRA_INTERFACES_EPETRAUTILS_HPP_
+#endif //GEOS_LINEARALGEBRA_INTERFACES_EPETRAUTILS_HPP_

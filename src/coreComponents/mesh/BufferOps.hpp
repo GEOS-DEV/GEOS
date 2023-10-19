@@ -13,8 +13,8 @@
  */
 
 
-#ifndef GEOSX_MESH_BUFFEROPS_HPP_
-#define GEOSX_MESH_BUFFEROPS_HPP_
+#ifndef GEOS_MESH_BUFFEROPS_HPP_
+#define GEOS_MESH_BUFFEROPS_HPP_
 
 #include "common/DataTypes.hpp"
 
@@ -22,7 +22,7 @@ class OrderedVariableToManyElementRelation;
 class FixedToManyElementRelation;
 class ElementRegionManager;
 
-namespace geosx
+namespace geos
 {
 namespace bufferOps
 {

@@ -11,6 +11,7 @@
       targetRegions="{ Region1 }">
       <NonlinearSolverParameters
         couplingType="Sequential"
+	lineSearchAction="None"  	  
         newtonMaxIter="50"/>
       <LinearSolverParameters
         directParallel="0"/>

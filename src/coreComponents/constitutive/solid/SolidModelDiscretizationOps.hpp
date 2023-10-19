@@ -17,12 +17,12 @@
  */
 
 
-#ifndef GEOSX_CONSTITUTIVE_SOLID_SOLIDMODELDISCRETIZATIONOPS_HPP_
-#define GEOSX_CONSTITUTIVE_SOLID_SOLIDMODELDISCRETIZATIONOPS_HPP_
+#ifndef GEOS_CONSTITUTIVE_SOLID_SOLIDMODELDISCRETIZATIONOPS_HPP_
+#define GEOS_CONSTITUTIVE_SOLID_SOLIDMODELDISCRETIZATIONOPS_HPP_
 
 #include "common/DataTypes.hpp"
 
-namespace geosx
+namespace geos
 {
 namespace constitutive
 {
@@ -47,7 +47,7 @@ struct SolidModelDiscretizationOps
   template< int NUM_SUPPORT_POINTS,
             typename BASIS_GRADIENT,
             typename CBF >
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void BTDB( BASIS_GRADIENT const & gradN,
              real64 ( &elementStiffness )[NUM_SUPPORT_POINTS*3][NUM_SUPPORT_POINTS*3],
              CBF && callbackFunction );
@@ -64,7 +64,7 @@ struct SolidModelDiscretizationOps
   template< int NUM_SUPPORT_POINTS,
             typename BASIS_GRADIENT,
             typename CBF >
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void upperBTDB( BASIS_GRADIENT const & gradN,
                   real64 ( &elementStiffness )[NUM_SUPPORT_POINTS*3][NUM_SUPPORT_POINTS*3],
                   CBF && callbackFunction );
@@ -75,7 +75,7 @@ struct SolidModelDiscretizationOps
    * @param elementStiffness Local stiffness matrix
    */
   template< int NUM_SUPPORT_POINTS >
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   static
   void fillLowerBTDB( real64 ( &elementStiffness )[NUM_SUPPORT_POINTS*3][NUM_SUPPORT_POINTS*3] );
 
@@ -91,7 +91,7 @@ struct SolidModelDiscretizationOps
   template< int NUM_SUPPORT_POINTS,
             typename BASIS_GRADIENT,
             typename CBF >
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void diagBTDB( BASIS_GRADIENT const & gradN,
                  real64 ( &diagElementStiffness )[NUM_SUPPORT_POINTS*3],
                  CBF && callbackFunction );
@@ -108,7 +108,7 @@ struct SolidModelDiscretizationOps
   template< int NUM_SUPPORT_POINTS,
             typename BASIS_GRADIENT,
             typename CBF >
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void diagRowSumBTDB( BASIS_GRADIENT const & gradN,
                        real64 ( &diagSumElementStiffness )[NUM_SUPPORT_POINTS*3],
                        CBF && callbackFunction );
@@ -120,8 +120,8 @@ struct SolidModelDiscretizationOps
 template< int NUM_SUPPORT_POINTS,
           typename BASIS_GRADIENT,
           typename CBF >
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+GEOS_HOST_DEVICE
+inline
 void SolidModelDiscretizationOps::BTDB( BASIS_GRADIENT const & gradN,
                                         real64 (& elementStiffness)[NUM_SUPPORT_POINTS*3][NUM_SUPPORT_POINTS*3],
                                         CBF && callbackFunction )
@@ -144,8 +144,8 @@ void SolidModelDiscretizationOps::BTDB( BASIS_GRADIENT const & gradN,
 template< int NUM_SUPPORT_POINTS,
           typename BASIS_GRADIENT,
           typename CBF >
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+GEOS_HOST_DEVICE
+inline
 void SolidModelDiscretizationOps::upperBTDB( BASIS_GRADIENT const & gradN,
                                              real64 (& elementStiffness)[NUM_SUPPORT_POINTS*3][NUM_SUPPORT_POINTS*3],
                                              CBF && callbackFunction )
@@ -166,8 +166,8 @@ void SolidModelDiscretizationOps::upperBTDB( BASIS_GRADIENT const & gradN,
 
 /// @copydoc SolidModelDiscretizationOps::fillLowerBTDB
 template< int NUM_SUPPORT_POINTS >
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+GEOS_HOST_DEVICE
+inline
 void SolidModelDiscretizationOps::fillLowerBTDB( real64 ( & elementStiffness )[NUM_SUPPORT_POINTS*3][NUM_SUPPORT_POINTS*3] )
 {
   for( int row=1; row<NUM_SUPPORT_POINTS*3; ++row )
@@ -184,8 +184,8 @@ void SolidModelDiscretizationOps::fillLowerBTDB( real64 ( & elementStiffness )[N
 template< int NUM_SUPPORT_POINTS,
           typename BASIS_GRADIENT,
           typename CBF >
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+GEOS_HOST_DEVICE
+inline
 void SolidModelDiscretizationOps::diagBTDB( BASIS_GRADIENT const & gradN,
                                             real64 (& diagElementStiffness)[NUM_SUPPORT_POINTS*3],
                                             CBF && callbackFunction )
@@ -203,8 +203,8 @@ void SolidModelDiscretizationOps::diagBTDB( BASIS_GRADIENT const & gradN,
 template< int NUM_SUPPORT_POINTS,
           typename BASIS_GRADIENT,
           typename CBF >
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+GEOS_HOST_DEVICE
+inline
 void SolidModelDiscretizationOps::diagRowSumBTDB( BASIS_GRADIENT const & gradN,
                                                   real64 ( & diagSumElementStiffness )[NUM_SUPPORT_POINTS*3],
                                                   CBF && callbackFunction )
@@ -226,4 +226,4 @@ void SolidModelDiscretizationOps::diagRowSumBTDB( BASIS_GRADIENT const & gradN,
 }
 
 
-#endif /* GEOSX_CONSTITUTIVE_SOLID_SOLIDMODELDISCRETIZATIONOPS_HPP_ */
+#endif /* GEOS_CONSTITUTIVE_SOLID_SOLIDMODELDISCRETIZATIONOPS_HPP_ */

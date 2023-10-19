@@ -19,7 +19,7 @@
 #include "TasksManager.hpp"
 #include "TaskBase.hpp"
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -50,4 +50,4 @@ void TasksManager::expandObjectCatalogs()
   }
 }
 
-} /* namespace geosx */
+} /* namespace geos */

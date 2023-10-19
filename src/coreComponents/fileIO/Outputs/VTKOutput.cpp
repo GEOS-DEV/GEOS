@@ -23,7 +23,7 @@
 #include "fileIO/python/PyVTKOutputType.hpp"
 #endif
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -90,20 +90,23 @@ void VTKOutput::postProcessInput()
   string const fieldNamesString = viewKeysStruct::fieldNames;
   string const onlyPlotSpecifiedFieldNamesString = viewKeysStruct::onlyPlotSpecifiedFieldNames;
 
-  GEOSX_THROW_IF( ( m_onlyPlotSpecifiedFieldNames != 0 ) && m_fieldNames.empty(),
-                  GEOSX_FMT( "{} `{}`: the flag `{}` is different from zero, but `{}` is empty, which is inconsistent",
-                             catalogName(), getName(), onlyPlotSpecifiedFieldNamesString, fieldNamesString ),
-                  InputError );
+  GEOS_THROW_IF( ( m_onlyPlotSpecifiedFieldNames != 0 ) && m_fieldNames.empty(),
+                 GEOS_FMT( "{} `{}`: the flag `{}` is different from zero, but `{}` is empty, which is inconsistent",
+                           catalogName(), getDataContext(),
+                           onlyPlotSpecifiedFieldNamesString, fieldNamesString ),
+                 InputError );
 
-  GEOSX_LOG_RANK_0_IF( !m_fieldNames.empty() && ( m_onlyPlotSpecifiedFieldNames != 0 ),
-                       GEOSX_FMT(
-                         "{} `{}`: found {} fields to plot in `{}`. These fields will be output regardless of the `plotLevel` specified by the user. No other field will be output.",
-                         catalogName(), getName(), std::to_string( m_fieldNames.size() ), fieldNamesString ) );
+  GEOS_LOG_RANK_0_IF( !m_fieldNames.empty() && ( m_onlyPlotSpecifiedFieldNames != 0 ),
+                      GEOS_FMT(
+                        "{} `{}`: found {} fields to plot in `{}`. These fields will be output regardless of the `plotLevel` specified by the user. No other field will be output.",
+                        catalogName(), getDataContext(),
+                        std::to_string( m_fieldNames.size() ), fieldNamesString ) );
 
-  GEOSX_LOG_RANK_0_IF( !m_fieldNames.empty() && ( m_onlyPlotSpecifiedFieldNames == 0 ),
-                       GEOSX_FMT(
-                         "{} `{}`: found {} fields to plot in `{}`, in addition to all fields with `plotLevel` smaller or equal to {}.",
-                         catalogName(), getName(), std::to_string( m_fieldNames.size() ), fieldNamesString, m_plotLevel ) );
+  GEOS_LOG_RANK_0_IF( !m_fieldNames.empty() && ( m_onlyPlotSpecifiedFieldNames == 0 ),
+                      GEOS_FMT(
+                        "{} `{}`: found {} fields to plot in `{}`, in addition to all fields with `plotLevel` smaller or equal to {}.",
+                        catalogName(), getDataContext(),
+                        std::to_string( m_fieldNames.size() ), fieldNamesString, m_plotLevel ) );
 }
 
 
@@ -119,10 +122,10 @@ void VTKOutput::reinit()
 }
 
 bool VTKOutput::execute( real64 const time_n,
-                         real64 const GEOSX_UNUSED_PARAM( dt ),
+                         real64 const GEOS_UNUSED_PARAM( dt ),
                          integer const cycleNumber,
-                         integer const GEOSX_UNUSED_PARAM( eventCounter ),
-                         real64 const GEOSX_UNUSED_PARAM ( eventProgress ),
+                         integer const GEOS_UNUSED_PARAM( eventCounter ),
+                         real64 const GEOS_UNUSED_PARAM ( eventProgress ),
                          DomainPartition & domain )
 {
   m_writer.setWriteGhostCells( m_writeGhostCells );
@@ -142,4 +145,4 @@ PyTypeObject * VTKOutput::getPythonType() const
 #endif
 
 REGISTER_CATALOG_ENTRY( OutputBase, VTKOutput, string const &, Group * const )
-} /* namespace geosx */
+} /* namespace geos */

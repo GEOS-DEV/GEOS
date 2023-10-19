@@ -16,15 +16,15 @@
  * @file TaskBase.hpp
  */
 
-#ifndef GEOSX_EVENTS_TASKS_TASKBASE_HPP_
-#define GEOSX_EVENTS_TASKS_TASKBASE_HPP_
+#ifndef GEOS_EVENTS_TASKS_TASKBASE_HPP_
+#define GEOS_EVENTS_TASKS_TASKBASE_HPP_
 
 
 #include <limits>
 
 #include "dataRepository/ExecutableGroup.hpp"
 #include "common/DataTypes.hpp"
-namespace geosx
+namespace geos
 {
 
 /**
@@ -34,7 +34,7 @@ namespace geosx
 class TaskBase : public ExecutableGroup
 {
 public:
-  /// @copydoc geosx::dataRepository::Group::Group(string const & name, Group * const parent)
+  /// @copydoc geos::dataRepository::Group::Group(string const & name, Group * const parent)
   explicit TaskBase( string const & name,
                      Group * const parent );
   virtual ~TaskBase( ) override;
@@ -53,7 +53,7 @@ public:
    */
   static CatalogInterface::CatalogType & getCatalog();
 
-  /// @copydoc geosx::ExecutableGroup::execute
+  /// @copydoc geos::ExecutableGroup::execute
   virtual bool execute( real64 const time_n,
                         real64 const dt,
                         integer const cycleNumber,
@@ -61,20 +61,20 @@ public:
                         real64 const eventProgress,
                         DomainPartition & domain ) override
   {
-    GEOSX_UNUSED_VAR( time_n );
-    GEOSX_UNUSED_VAR( dt );
-    GEOSX_UNUSED_VAR( cycleNumber );
-    GEOSX_UNUSED_VAR( eventCounter );
-    GEOSX_UNUSED_VAR( eventProgress );
-    GEOSX_UNUSED_VAR( domain );
-    GEOSX_ERROR( "NOT IMPLEMENTED" );
+    GEOS_UNUSED_VAR( time_n );
+    GEOS_UNUSED_VAR( dt );
+    GEOS_UNUSED_VAR( cycleNumber );
+    GEOS_UNUSED_VAR( eventCounter );
+    GEOS_UNUSED_VAR( eventProgress );
+    GEOS_UNUSED_VAR( domain );
+    GEOS_ERROR( "NOT IMPLEMENTED" );
     return false;
   }
 
-  /// @copydoc geosx::dataRepository::Group::postProcessInput( )
+  /// @copydoc geos::dataRepository::Group::postProcessInput( )
   void postProcessInput() override;
 };
 
 } /* namespace */
 
-#endif /* GEOSX_EVENTS_TASKS_TASKBASE_HPP_ */
+#endif /* GEOS_EVENTS_TASKS_TASKBASE_HPP_ */

@@ -17,13 +17,13 @@
  * @file PoroElastic.hpp
  */
 
-#ifndef GEOSX_CONSTITUTIVE_SOLID_POROELASTIC_HPP_
-#define GEOSX_CONSTITUTIVE_SOLID_POROELASTIC_HPP_
+#ifndef GEOS_CONSTITUTIVE_SOLID_POROELASTIC_HPP_
+#define GEOS_CONSTITUTIVE_SOLID_POROELASTIC_HPP_
 
 #include "SolidBase.hpp"
 #include "constitutive/ExponentialRelation.hpp"
 
-namespace geosx
+namespace geos
 {
 namespace constitutive
 {
@@ -68,7 +68,7 @@ public:
    * @brief Get Biot coefficient
    * @return Biot coefficient
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   real64 getBiotCoefficient() const
   {
     return m_biotCoefficient;
@@ -203,6 +203,6 @@ protected:
 };
 
 }
-} /* namespace geosx */
+} /* namespace geos */
 
-#endif /* GEOSX_CONSTITUTIVE_SOLID_POROELASTIC_HPP_ */
+#endif /* GEOS_CONSTITUTIVE_SOLID_POROELASTIC_HPP_ */

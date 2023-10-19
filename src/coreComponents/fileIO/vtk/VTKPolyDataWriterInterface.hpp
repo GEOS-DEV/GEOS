@@ -12,8 +12,8 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#ifndef GEOSX_FILEIO_VTK_VTKPOLYDATAWRITERINTERFACE_HPP_
-#define GEOSX_FILEIO_VTK_VTKPOLYDATAWRITERINTERFACE_HPP_
+#ifndef GEOS_FILEIO_VTK_VTKPOLYDATAWRITERINTERFACE_HPP_
+#define GEOS_FILEIO_VTK_VTKPOLYDATAWRITERINTERFACE_HPP_
 
 #include "common/DataTypes.hpp"
 #include "dataRepository/WrapperBase.hpp"
@@ -26,7 +26,7 @@ class vtkUnstructuredGrid;
 class vtkPointData;
 class vtkCellData;
 
-namespace geosx
+namespace geos
 {
 
 class DomainPartition;
@@ -318,6 +318,6 @@ private:
 };
 
 } // namespace vtk
-} // namespace geosx
+} // namespace geos
 
 #endif

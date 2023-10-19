@@ -16,8 +16,8 @@
  * @file EpetraMatrix.hpp
  */
 
-#ifndef GEOSX_LINEARALGEBRA_INTERFACES_EPETRAMATRIX_HPP_
-#define GEOSX_LINEARALGEBRA_INTERFACES_EPETRAMATRIX_HPP_
+#ifndef GEOS_LINEARALGEBRA_INTERFACES_EPETRAMATRIX_HPP_
+#define GEOS_LINEARALGEBRA_INTERFACES_EPETRAMATRIX_HPP_
 
 #include "common/DataTypes.hpp"
 #include "linearAlgebra/interfaces/trilinos/EpetraVector.hpp"
@@ -29,7 +29,7 @@ class Epetra_Map;
 class Epetra_CrsMatrix;
 class Epetra_FECrsMatrix;
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -410,6 +410,6 @@ private:
   std::unique_ptr< Epetra_Map > m_dst_map;
 };
 
-} // namespace geosx
+} // namespace geos
 
-#endif /*GEOSX_LINEARALGEBRA_INTERFACES_EPETRAMATRIX_HPP_*/
+#endif /*GEOS_LINEARALGEBRA_INTERFACES_EPETRAMATRIX_HPP_*/

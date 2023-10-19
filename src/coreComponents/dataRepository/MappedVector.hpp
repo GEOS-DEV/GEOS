@@ -16,8 +16,8 @@
  * @file MappedVector.hpp
  */
 
-#ifndef GEOSX_DATAREPOSITORY_MAPPEDVECTOR_HPP_
-#define GEOSX_DATAREPOSITORY_MAPPEDVECTOR_HPP_
+#ifndef GEOS_DATAREPOSITORY_MAPPEDVECTOR_HPP_
+#define GEOS_DATAREPOSITORY_MAPPEDVECTOR_HPP_
 
 // Source includes
 #include "KeyIndexT.hpp"
@@ -28,7 +28,7 @@
 // System includes
 #include <vector>
 
-namespace geosx
+namespace geos
 {
 /**
  * @class MappedVector
@@ -328,8 +328,8 @@ public:
     m_constValues.resize( index );
     for( typename valueContainer::size_type i = index; i < m_values.size(); ++i )
     {
-      m_constKeyValues.emplace_back( m_values[i].first, rawPtr( index ) );
-      m_constValues.emplace_back( m_values[i].first, rawPtr( index ) );
+      m_constKeyValues.emplace_back( m_values[i].first, rawPtr( i ) );
+      m_constValues.emplace_back( m_values[i].first, rawPtr( i ) );
     }
 
     // adjust lookup map indices
@@ -441,7 +441,7 @@ private:
 
   template< typename U = T_PTR >
   typename std::enable_if< !std::is_same< U, T * >::value, void >::type
-  deleteValue( INDEX_TYPE GEOSX_UNUSED_PARAM( index ) )
+  deleteValue( INDEX_TYPE GEOS_UNUSED_PARAM( index ) )
   {}
 
   /// random access container that holds the values
@@ -516,9 +516,9 @@ T * MappedVector< T, T_PTR, KEY_TYPE, INDEX_TYPE >::insert( KEY_TYPE const & key
       }
       else if( typeid( source ) != typeid( m_values[index].second ) )
       {
-        GEOSX_ERROR( "MappedVector::insert(): Tried to insert existing key (" << keyName <<
-                     ") with a different type without overwrite flag\n " << " " << LvArray::system::demangleType( source ) <<
-                     " != " << LvArray::system::demangleType( m_values[ index ].second ) );
+        GEOS_ERROR( "MappedVector::insert(): Tried to insert existing key (" << keyName <<
+                    ") with a different type without overwrite flag\n " << " " << LvArray::system::demangleType( source ) <<
+                    " != " << LvArray::system::demangleType( m_values[ index ].second ) );
       }
       else
       {
@@ -531,4 +531,4 @@ T * MappedVector< T, T_PTR, KEY_TYPE, INDEX_TYPE >::insert( KEY_TYPE const & key
 }
 }
 
-#endif /* GEOSX_DATAREPOSITORY_MAPPEDVECTOR_HPP_ */
+#endif /* GEOS_DATAREPOSITORY_MAPPEDVECTOR_HPP_ */

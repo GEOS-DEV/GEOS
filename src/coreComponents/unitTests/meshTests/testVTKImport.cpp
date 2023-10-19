@@ -26,26 +26,48 @@
 #include "tests/meshDirName.hpp"
 
 // TPL includes
+#include <vtkCellData.h>
+#include <vtkInformation.h>
+#include <vtkMultiBlockDataSet.h>
+#include <vtkPointData.h>
+#include <vtkPoints.h>
+#include <vtkUnstructuredGrid.h>
+#include <vtkXMLMultiBlockDataWriter.h>
+
 #include <gtest/gtest.h>
 #include <conduit.hpp>
 
-using namespace geosx;
-using namespace geosx::testing;
-using namespace geosx::dataRepository;
+#include <filesystem>
+
+
+using namespace geos;
+using namespace geos::testing;
+using namespace geos::dataRepository;
+
 
 template< class V >
-void TestMeshImport( string const & meshFilePath, V const & validate )
+void TestMeshImport( string const & meshFilePath, V const & validate, string const fractureName="" )
 {
-  string const meshNode = GEOSX_FMT( R"(<Mesh><VTKMesh name="mesh" file="{}" partitionRefinement="0"/></Mesh>)", meshFilePath );
+  string const pattern = R"xml(
+    <Mesh>
+      <VTKMesh
+        name="mesh"
+        file="{}"
+        partitionRefinement="0"
+        useGlobalIds="0"
+        {} />
+    </Mesh>
+  )xml";
+  string const meshNode = GEOS_FMT( pattern, meshFilePath, fractureName.empty() ? "" : "faceBlocks=\"{" + fractureName + "}\"" );
   xmlWrapper::xmlDocument xmlDocument;
-  xmlDocument.load_buffer( meshNode.c_str(), meshNode.size() );
-  xmlWrapper::xmlNode xmlMeshNode = xmlDocument.child( "Mesh" );
+  xmlDocument.loadString( meshNode );
+  xmlWrapper::xmlNode xmlMeshNode = xmlDocument.getChild( "Mesh" );
 
   conduit::Node node;
   Group root( "root", node );
 
   MeshManager meshManager( "mesh", &root );
-  meshManager.processInputFileRecursive( xmlMeshNode );
+  meshManager.processInputFileRecursive( xmlDocument, xmlMeshNode );
   meshManager.postProcessInputRecursive();
   DomainPartition domain( "domain", &root );
   meshManager.generateMeshes( domain );
@@ -54,6 +76,231 @@ void TestMeshImport( string const & meshFilePath, V const & validate )
 
   validate( domain.getMeshBody( "mesh" ).getGroup< CellBlockManagerABC >( keys::cellManager ) );
 }
+
+
+class TestFractureImport : public ::testing::Test
+{
+protected:
+
+  TestFractureImport() = default;
+
+  inline static string const MULTI_BLOCK_NAME = "multi";
+
+  std::filesystem::path m_vtkFile;
+
+private:
+
+  /// Folder where the vtk files will be written.
+  std::filesystem::path m_vtkFolder;
+
+  void SetUp() override
+  {
+    if( MpiWrapper::commRank() == 0 )
+    {
+      namespace fs = std::filesystem;
+
+      fs::path const folder = fs::temp_directory_path();
+      srand( (unsigned) time( nullptr ) );
+      string const subFolder = "tmp-geos-vtk-" + std::to_string( rand() );
+      m_vtkFolder = folder / subFolder;
+      ASSERT_TRUE( fs::create_directory( m_vtkFolder ) );
+
+      m_vtkFile = createFractureMesh( m_vtkFolder );
+    }
+
+    string vtkFile( m_vtkFile );
+    MpiWrapper::broadcast( vtkFile );
+    if( MpiWrapper::commRank() != 0 )
+    {
+      m_vtkFile = vtkFile;
+    }
+  }
+
+  void TearDown() override
+  {
+    if( MpiWrapper::commRank() == 0 )
+    {
+      namespace fs = std::filesystem;
+
+      // Carefully removing the files one by one and waiting the folders to be empty before removing them as well.
+      // We do not want to remove important files!
+      ASSERT_TRUE( fs::remove( m_vtkFolder / MULTI_BLOCK_NAME / ( MULTI_BLOCK_NAME + "_0.vtu" ) ) );
+      ASSERT_TRUE( fs::remove( m_vtkFolder / MULTI_BLOCK_NAME / ( MULTI_BLOCK_NAME + "_1.vtu" ) ) );
+      if( fs::is_empty( m_vtkFolder / MULTI_BLOCK_NAME ) )
+      {
+        ASSERT_TRUE( fs::remove( m_vtkFolder / MULTI_BLOCK_NAME ) );
+      }
+      ASSERT_TRUE( fs::remove( m_vtkFolder / ( MULTI_BLOCK_NAME + ".vtm" ) ) );
+      if( fs::is_empty( m_vtkFolder ) )
+      {
+        ASSERT_TRUE( fs::remove( m_vtkFolder ) );
+      }
+    }
+  }
+
+  static std::filesystem::path createFractureMesh( std::filesystem::path const & folder )
+  {
+    // The main mesh
+    vtkNew< vtkUnstructuredGrid > main;
+    {
+      int constexpr numPoints = 16;
+      double const pointsCoords[numPoints][3] = {
+        { -1, 0, 0 },
+        { -1, 1, 0 },
+        { -1, 1, 1 },
+        { -1, 0, 1 },
+        { 0, 0, 0 },
+        { 0, 1, 0 },
+        { 0, 1, 1 },
+        { 0, 0, 1 },
+        { 0, 0, 0 },
+        { 0, 1, 0 },
+        { 0, 1, 1 },
+        { 0, 0, 1 },
+        { 1, 0, 0 },
+        { 1, 1, 0 },
+        { 1, 1, 1 },
+        { 1, 0, 1 } };
+      vtkNew< vtkPoints > points;
+      points->Allocate( numPoints );
+      for( double const * pointsCoord: pointsCoords )
+      {
+        points->InsertNextPoint( pointsCoord );
+      }
+      main->SetPoints( points );
+
+      int constexpr numHexs = 2;
+      vtkIdType const cubes[numHexs][8] = {
+        { 0, 1, 2, 3, 4, 5, 6, 7 },
+        { 8, 9, 10, 11, 12, 13, 14, 15 }
+      };
+      main->Allocate( numHexs );
+      for( vtkIdType const * cube: cubes )
+      {
+        main->InsertNextCell( VTK_HEXAHEDRON, 8, cube );
+      }
+
+      vtkNew< vtkIdTypeArray > cellGlobalIds;
+      cellGlobalIds->SetNumberOfComponents( 1 );
+      cellGlobalIds->SetNumberOfTuples( numHexs );
+      for( auto i = 0; i < numHexs; ++i )
+      {
+        cellGlobalIds->SetValue( i, i );
+      }
+      main->GetCellData()->SetGlobalIds( cellGlobalIds );
+
+      vtkNew< vtkIdTypeArray > pointGlobalIds;
+      pointGlobalIds->SetNumberOfComponents( 1 );
+      pointGlobalIds->SetNumberOfTuples( numPoints );
+      for( auto i = 0; i < numPoints; ++i )
+      {
+        pointGlobalIds->SetValue( i, i );
+      }
+      main->GetPointData()->SetGlobalIds( pointGlobalIds );
+    }
+
+    // The fracture mesh
+    vtkNew< vtkUnstructuredGrid > fracture;
+    {
+      int constexpr numPoints = 4;
+      double const pointsCoords[numPoints][3] = {
+        { 0, 0, 0 },
+        { 0, 1, 0 },
+        { 0, 1, 1 },
+        { 0, 0, 1 } };
+      vtkNew< vtkPoints > points;
+      points->Allocate( numPoints );
+      for( double const * pointsCoord: pointsCoords )
+      {
+        points->InsertNextPoint( pointsCoord );
+      }
+      fracture->SetPoints( points );
+
+      int constexpr numQuads = 1;
+      vtkIdType const quad[numQuads][4] = { { 0, 1, 2, 3 } };
+      fracture->Allocate( numQuads );
+      for( vtkIdType const * q: quad )
+      {
+        fracture->InsertNextCell( VTK_QUAD, numPoints, q );
+      }
+
+      // Do not forget the collocated_nodes fields
+      vtkNew< vtkIdTypeArray > collocatedNodes;
+      collocatedNodes->SetName( "collocated_nodes" );
+      collocatedNodes->SetNumberOfComponents( 2 );
+      collocatedNodes->SetNumberOfTuples( numPoints );
+      collocatedNodes->SetTuple2( 0, 4, 8 );
+      collocatedNodes->SetTuple2( 1, 5, 9 );
+      collocatedNodes->SetTuple2( 2, 6, 10 );
+      collocatedNodes->SetTuple2( 3, 7, 11 );
+
+      fracture->GetPointData()->AddArray( collocatedNodes );
+    }
+
+    vtkNew< vtkMultiBlockDataSet > multiBlock;
+    multiBlock->SetNumberOfBlocks( 2 );
+    multiBlock->SetBlock( 0, main );
+    multiBlock->SetBlock( 1, fracture );
+    multiBlock->GetMetaData( static_cast< unsigned int >( 0 ) )->Set( multiBlock->NAME(), "main" );
+    multiBlock->GetMetaData( static_cast< unsigned int >( 1 ) )->Set( multiBlock->NAME(), "fracture" );
+
+    vtkNew< vtkXMLMultiBlockDataWriter > writer;
+    std::filesystem::path const vtkFile = folder / ( MULTI_BLOCK_NAME + ".vtm" );
+    writer->SetFileName( vtkFile.c_str() );
+    writer->SetInputData( multiBlock );
+    writer->SetDataModeToAscii();
+    writer->Write();
+
+    return vtkFile;
+  }
+};
+
+
+TEST_F( TestFractureImport, fracture )
+{
+  auto validate = []( CellBlockManagerABC const & cellBlockManager ) -> void
+  {
+    // Instead of checking each rank on its own,
+    // we check that all the data is present across the ranks.
+    auto const sum = []( auto i )  // Alias
+    {
+      return MpiWrapper::sum( i );
+    };
+
+    // Volumic mesh validations
+    ASSERT_EQ( sum( cellBlockManager.numNodes() ), 16 );
+    ASSERT_EQ( sum( cellBlockManager.numEdges() ), 24 );
+    ASSERT_EQ( sum( cellBlockManager.numFaces() ), 12 );
+
+    // Fracture mesh validations
+    ASSERT_EQ( sum( cellBlockManager.getFaceBlocks().numSubGroups() ), MpiWrapper::commSize() );
+    FaceBlockABC const & faceBlock = cellBlockManager.getFaceBlocks().getGroup< FaceBlockABC >( 0 );
+    ASSERT_EQ( sum( faceBlock.num2dElements() ), 1 );
+    ASSERT_EQ( sum( faceBlock.num2dFaces() ), 4 );
+    auto ecn = faceBlock.get2dElemsToCollocatedNodesBuckets();
+    auto const num2dElems = ecn.size();
+    ASSERT_EQ( sum( num2dElems ), 1 );
+    auto numNodesInFrac = 0;
+    for( int ei = 0; ei < num2dElems; ++ei )
+    {
+      numNodesInFrac += ecn[ei].size();
+    }
+    ASSERT_EQ( sum( numNodesInFrac ), 4 );
+    for( int ei = 0; ei < num2dElems; ++ei )
+    {
+      for( int ni = 0; ni < numNodesInFrac; ++ni )
+      {
+        auto bucket = ecn( ei, ni );
+        ASSERT_EQ( bucket.size(), 2 );
+        std::set< globalIndex > result( bucket.begin(), bucket.end() );
+        ASSERT_EQ( result, std::set< globalIndex >( { 4 + ni, 8 + ni } ) );
+      }
+    }
+  };
+
+  TestMeshImport( m_vtkFile, validate, "fracture" );
+}
+
 
 TEST( VTKImport, cube )
 {
@@ -402,11 +649,11 @@ int main( int argc, char * * argv )
 {
   ::testing::InitGoogleTest( &argc, argv );
 
-  geosx::GeosxState state( geosx::basicSetup( argc, argv ) );
+  geos::GeosxState state( geos::basicSetup( argc, argv ) );
 
   int const result = RUN_ALL_TESTS();
 
-  geosx::basicCleanup();
+  geos::basicCleanup();
 
   return result;
 }

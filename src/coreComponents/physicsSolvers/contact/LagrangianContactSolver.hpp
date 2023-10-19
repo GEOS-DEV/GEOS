@@ -17,12 +17,12 @@
  *
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_CONTACT_LAGRANGIANCONTACTSOLVER_HPP_
-#define GEOSX_PHYSICSSOLVERS_CONTACT_LAGRANGIANCONTACTSOLVER_HPP_
+#ifndef GEOS_PHYSICSSOLVERS_CONTACT_LAGRANGIANCONTACTSOLVER_HPP_
+#define GEOS_PHYSICSSOLVERS_CONTACT_LAGRANGIANCONTACTSOLVER_HPP_
 
 #include "physicsSolvers/contact/ContactSolverBase.hpp"
 
-namespace geosx
+namespace geos
 {
 
 class SolidMechanicsLagrangianFEM;
@@ -93,6 +93,7 @@ public:
   applySystemSolution( DofManager const & dofManager,
                        arrayView1d< real64 const > const & localSolution,
                        real64 const scalingFactor,
+                       real64 const dt,
                        DomainPartition & domain ) override;
 
   virtual void
@@ -181,6 +182,6 @@ private:
 
 };
 
-} /* namespace geosx */
+} /* namespace geos */
 
-#endif /* GEOSX_PHYSICSSOLVERS_CONTACT_LAGRANGIANCONTACTSOLVER_HPP_ */
+#endif /* GEOS_PHYSICSSOLVERS_CONTACT_LAGRANGIANCONTACTSOLVER_HPP_ */

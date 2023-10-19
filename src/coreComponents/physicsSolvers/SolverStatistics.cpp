@@ -18,7 +18,7 @@
 
 #include "SolverStatistics.hpp"
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -121,13 +121,17 @@ void SolverStatistics::outputStatistics() const
 
   auto const logStat = [&]( auto const name, auto const value )
   {
-    GEOSX_LOG_RANK_0( GEOSX_FMT( "{}, number of {}: {}",
-                                 getParent().getName(), name, value ) );
+    GEOS_LOG_RANK_0( GEOS_FMT( "{}, number of {}: {}",
+                               getParent().getName(), name, value ) );
   };
 
   // TODO: the print logic is really convoluted to accomodate the needs of the different solvers, needs simplification
 
-  logStat( "time steps", m_numTimeSteps );
+  if( m_numTimeSteps > 0 )
+  {
+    logStat( "time steps", m_numTimeSteps );
+  }
+
   if( printIterations )
   {
     if( printOuterLoopIterations )
@@ -152,4 +156,4 @@ void SolverStatistics::outputStatistics() const
     }
   }
 }
-} // namespace geosx
+} // namespace geos

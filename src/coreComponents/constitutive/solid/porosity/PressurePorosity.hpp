@@ -16,12 +16,12 @@
  * @file PressurePorosity.hpp
  */
 
-#ifndef GEOSX_CONSTITUTIVE_POROSITY_PRESSUREPOROSITY_HPP_
-#define GEOSX_CONSTITUTIVE_POROSITY_PRESSUREPOROSITY_HPP_
+#ifndef GEOS_CONSTITUTIVE_POROSITY_PRESSUREPOROSITY_HPP_
+#define GEOS_CONSTITUTIVE_POROSITY_PRESSUREPOROSITY_HPP_
 
 #include "PorosityBase.hpp"
 
-namespace geosx
+namespace geos
 {
 namespace constitutive
 {
@@ -31,11 +31,11 @@ class PressurePorosityUpdates : public PorosityBaseUpdates
 public:
 
   PressurePorosityUpdates( arrayView2d< real64 > const & newPorosity,
-                           arrayView2d< real64 > const & porosity_n,
+                           arrayView2d< real64 const > const & porosity_n,
                            arrayView2d< real64 > const & dPorosity_dPressure,
                            arrayView2d< real64 > const & dPorosity_dTemperature,
-                           arrayView2d< real64 > const & initialPorosity,
-                           arrayView1d< real64 > const & referencePorosity,
+                           arrayView2d< real64 const > const & initialPorosity,
+                           arrayView1d< real64 const > const & referencePorosity,
                            real64 const & referencePressure,
                            real64 const & compressibility ):
     PorosityBaseUpdates( newPorosity,
@@ -48,7 +48,7 @@ public:
     m_compressibility( compressibility )
   {}
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void computePorosity( real64 const & pressure,
                         real64 const & temperature,
                         real64 & porosity,
@@ -56,7 +56,7 @@ public:
                         real64 & dPorosity_dTemperature,
                         real64 const & referencePorosity ) const
   {
-    GEOSX_UNUSED_VAR( temperature );
+    GEOS_UNUSED_VAR( temperature );
 
     // TODO use full exponential.
 //    porosity            =  referencePorosity * exp( m_compressibility * (pressure - m_referencePressure) );
@@ -66,13 +66,15 @@ public:
     dPorosity_dTemperature = 0.0;
   }
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   virtual void updateFromPressureAndTemperature( localIndex const k,
                                                  localIndex const q,
                                                  real64 const & pressure,
-                                                 real64 const & GEOSX_UNUSED_PARAM( pressure_n ),
+                                                 real64 const & GEOS_UNUSED_PARAM( pressure_k ),
+                                                 real64 const & GEOS_UNUSED_PARAM( pressure_n ),
                                                  real64 const & temperature,
-                                                 real64 const & GEOSX_UNUSED_PARAM( temperature_n ) ) const override final
+                                                 real64 const & GEOS_UNUSED_PARAM( temperature_k ),
+                                                 real64 const & GEOS_UNUSED_PARAM( temperature_n ) ) const override final
   {
     computePorosity( pressure,
                      temperature,
@@ -84,9 +86,11 @@ public:
 
 private:
 
-  real64 m_referencePressure;
+  /// Reference pressure used in the porosity model
+  real64 const m_referencePressure;
 
-  real64 m_compressibility;
+  /// Compressibility used in the porosity model
+  real64 const m_compressibility;
 };
 
 
@@ -139,7 +143,7 @@ private:
 
 }/* namespace constitutive */
 
-} /* namespace geosx */
+} /* namespace geos */
 
 
-#endif //GEOSX_CONSTITUTIVE_POROSITY_PRESSUREPOROSITY_HPP_
+#endif //GEOS_CONSTITUTIVE_POROSITY_PRESSUREPOROSITY_HPP_

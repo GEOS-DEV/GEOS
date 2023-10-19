@@ -3,20 +3,20 @@ set( PREPROCESSOR_DEFINES ARRAY_BOUNDS_CHECK
                           CHAI
                           CUDA
                           CUDA_NVTOOLSEXT
+                          HIP
+			  FMT_CONST_FORMATTER_WORKAROUND
                           FORTRAN_MANGLE_NO_UNDERSCORE
                           FPE
                           HYPRE
-                          HYPRE_CUDA
                           MATHPRESSO
                           METIS
                           MKL
                           MPI
-                          OPENMP
                           PARMETIS
                           PETSC
                           PVTPackage
                           PYGEOSX
-                          RAJA 
+                          RAJA
                           SCOTCH
                           SEPARATION_COEFFICIENT
                           SUITESPARSE
@@ -31,9 +31,25 @@ foreach( DEP in ${PREPROCESSOR_DEFINES} )
     if( ${DEP}_FOUND OR ENABLE_${DEP} OR GEOSX_ENABLE_${DEP} )
         set( USE_${DEP} TRUE )
         set( GEOSX_USE_${DEP} TRUE )
+        set( GEOS_USE_${DEP} TRUE )
+	message(STATUS "GEOSX_USE_${DEP} = ${GEOSX_USE_${DEP}}")
     endif()
 endforeach()
 
+set( STRICT_PPD OPENMP )
+
+# only activate these options if they are ENABLED AND FOUND, not if either
+foreach( DEP in ${STRICT_PPD} )
+    if( ${DEP}_FOUND AND ( ENABLE_${DEP} OR GEOSX_ENABLE_${DEP} ) )
+        set( USE_${DEP} TRUE )
+        set( GEOSX_USE_${DEP} TRUE )
+        set( GEOS_USE_${DEP} TRUE )
+	message(STATUS "GEOSX_USE_${DEP} = ${GEOSX_USE_${DEP}}")
+    endif()
+endforeach( )
+
+set( GEOS_USE_HYPRE_DEVICE "GEOS_USE_HYPRE_${ENABLE_HYPRE_DEVICE}" )
+message( STATUS "GEOS_USE_HYPRE_DEVICE = ${GEOS_USE_HYPRE_DEVICE}")
 
 set( GEOSX_CMAKE_BUILD_TYPE "\"${CMAKE_BUILD_TYPE}\"" )
 
@@ -44,7 +60,7 @@ install( FILES ${CMAKE_BINARY_DIR}/include/common/GeosxConfig.hpp
          DESTINATION ${CMAKE_INSTALL_PREFIX}/include/common )
 
 
-function( make_full_config_file 
+function( make_full_config_file
           PREPROCESSOR_VARS )
     foreach( DEP in ${PREPROCESSOR_VARS} )
         set( USE_${DEP} TRUE )

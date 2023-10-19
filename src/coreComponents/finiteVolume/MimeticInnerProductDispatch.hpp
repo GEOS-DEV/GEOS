@@ -16,8 +16,8 @@
  * @file MimeticInnerProductDispatch.hpp
  */
 
-#ifndef GEOSX_FINITEVOLUME_MIMETICINNERPRODUCTS_MIMETICINNERPRODUCTDISPATCH_HPP_
-#define GEOSX_FINITEVOLUME_MIMETICINNERPRODUCTS_MIMETICINNERPRODUCTDISPATCH_HPP_
+#ifndef GEOS_FINITEVOLUME_MIMETICINNERPRODUCTS_MIMETICINNERPRODUCTDISPATCH_HPP_
+#define GEOS_FINITEVOLUME_MIMETICINNERPRODUCTS_MIMETICINNERPRODUCTDISPATCH_HPP_
 
 #include "finiteVolume/mimeticInnerProducts/MimeticInnerProductBase.hpp"
 #include "finiteVolume/mimeticInnerProducts/QuasiTPFAInnerProduct.hpp"
@@ -27,7 +27,7 @@
 #include "finiteVolume/mimeticInnerProducts/BdVLMInnerProduct.hpp"
 #include "LvArray/src/system.hpp"
 
-namespace geosx
+namespace geos
 {
 namespace mimeticInnerProduct
 {
@@ -83,7 +83,7 @@ mimeticInnerProductDispatch( MimeticInnerProductBase const & input,
   }
   else
   {
-    GEOSX_ERROR( "mimeticInnerProductDispatch() is not implemented for input of " << LvArray::system::demangleType( input ) );
+    GEOS_ERROR( "mimeticInnerProductDispatch() is not implemented for input of " << LvArray::system::demangleType( input ) );
   }
 }
 
@@ -120,7 +120,7 @@ mimeticInnerProductDispatch( MimeticInnerProductBase & input,
   }
   else
   {
-    GEOSX_ERROR( "mimeticInnerProductDispatch() is not implemented for input of " << LvArray::system::demangleType( input ) );
+    GEOS_ERROR( "mimeticInnerProductDispatch() is not implemented for input of " << LvArray::system::demangleType( input ) );
   }
 }
 
@@ -143,7 +143,7 @@ mimeticInnerProductReducedDispatch( MimeticInnerProductBase const & input,
   }
   else
   {
-    GEOSX_ERROR( "mimeticInnerProductReducedDispatch() is not implemented for input of " << LvArray::system::demangleType( input ) );
+    GEOS_ERROR( "mimeticInnerProductReducedDispatch() is not implemented for input of " << LvArray::system::demangleType( input ) );
   }
 }
 
@@ -166,13 +166,13 @@ mimeticInnerProductReducedDispatch( MimeticInnerProductBase & input,
   }
   else
   {
-    GEOSX_ERROR( "mimeticInnerProductReducedDispatch() is not supported for input of " << LvArray::system::demangleType( input ) );
+    GEOS_ERROR( "mimeticInnerProductReducedDispatch() is not supported for input of " << LvArray::system::demangleType( input ) );
   }
 }
 
 
 } // end namespace mimeticInnerProduct
 
-} // end namespace geosx
+} // end namespace geos
 
-#endif /* GEOSX_FINITEVOLUME_MIMETICINNERPRODUCTS_MIMETICINNERPRODUCTDISPATCH_HPP_ */
+#endif /* GEOS_FINITEVOLUME_MIMETICINNERPRODUCTS_MIMETICINNERPRODUCTDISPATCH_HPP_ */

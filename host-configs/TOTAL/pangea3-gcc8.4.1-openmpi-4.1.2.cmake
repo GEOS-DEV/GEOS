@@ -3,12 +3,14 @@
 # export MODULEPATH=/workrd/SCR/NUM/geosx_num/module_files:$MODULEPATH
 # module load cmake/3.21.4 gcc/8.4.1 cuda/11.0.3 ompi/4.1.2 openblas/0.3.18 python4geosx/p3/gcc8.4.1-ompi4.1.2
 #
-set(CONFIG_NAME "pangea3-gcc8.4.1-ompi-4.1.2" CACHE PATH "") 
+set(CONFIG_NAME "pangea3-gcc8.4.1-ompi-4.1.2" CACHE PATH "")
 
 # Set up the tpls
+set(GEOSX_TPL_DIR "$ENV{GEOSX_TPL_DIR}" CACHE PATH "" FORCE)
 if (NOT DEFINED GEOSX_TPL_DIR)
   message(FATAL_ERROR "You must set GEOSX_TPL_DIR with -D GEOSX_TPL_DIR=")
 endif ()
+
 
 # C options
 set(CMAKE_C_COMPILER gcc CACHE PATH "")
@@ -21,7 +23,6 @@ set(CMAKE_CXX_COMPILER g++ CACHE PATH "")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG -mcpu=power9 -mtune=power9" CACHE STRING "")
 set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-g ${CMAKE_CXX_FLAGS_RELEASE}" CACHE STRING "")
 set(CMAKE_CXX_FLAGS_DEBUG "-O0 -g" CACHE STRING "")
-set(CMAKE_CXX_STANDARD 14 CACHE STRING "")
 
 # Fortran options
 set(CMAKE_Fortran_COMPILER gfortran CACHE PATH "")
@@ -55,9 +56,7 @@ if (DEFINED ENV{CUDA_ROOT})
   set(CMAKE_CUDA_COMPILER ${CUDA_TOOLKIT_ROOT_DIR}/bin/nvcc CACHE STRING "")
   set(CUDA_ARCH sm_70 CACHE STRING "")
   set(CMAKE_CUDA_ARCHITECTURES 70 CACHE STRING "")
-  set(CMAKE_CUDA_STANDARD 14 CACHE STRING "")
-  ### The inclusion of -std=c++14 is a workaround for a cuda10/gcc8 bug ###
-  set(CMAKE_CUDA_FLAGS "-restrict -arch ${CUDA_ARCH} --expt-extended-lambda -Werror cross-execution-space-call,reorder,deprecated-declarations -Xcompiler -std=c++14" CACHE STRING "")
+  set(CMAKE_CUDA_FLAGS "-restrict -arch ${CUDA_ARCH} --expt-extended-lambda -Werror cross-execution-space-call,reorder,deprecated-declarations" CACHE STRING "")
   set(CMAKE_CUDA_FLAGS_RELEASE "-O3 -DNDEBUG -Xcompiler -DNDEBUG -Xcompiler -O3 -Xcompiler -mcpu=powerpc64le -Xcompiler -mtune=powerpc64le" CACHE STRING "")
   set(CMAKE_CUDA_FLAGS_RELWITHDEBINFO "-g -lineinfo ${CMAKE_CUDA_FLAGS_RELEASE}" CACHE STRING "")
   set(CMAKE_CUDA_FLAGS_DEBUG "-g -G -O0 -Xcompiler -O0" CACHE STRING "")
@@ -107,6 +106,9 @@ set(PETSC_OMP_DIR ${GEOSX_TPL_ROOT_DIR}/omp-links-for-petsc CACHE STRING "")
 set(ENABLE_PETSC OFF CACHE BOOL "")
 
 set(ENABLE_HYPRE ON CACHE BOOL "")
-set(ENABLE_HYPRE_CUDA ON CACHE BOOL "")
+set(ENABLE_HYPRE_DEVICE "CUDA" CACHE BOOL "")
+
+# activate workaround for fmt formatter
+set(ENABLE_FMT_CONST_FORMATTER_WORKAROUND ON CACHE BOOL "")
 
 include( ${CMAKE_CURRENT_LIST_DIR}/../tpls.cmake )

@@ -20,7 +20,7 @@
 #include "fileIO/python/PyHistoryOutputType.hpp"
 #endif
 
-namespace geosx
+namespace geos
 {
 TimeHistoryOutput::TimeHistoryOutput( string const & name,
                                       Group * const parent ):
@@ -55,7 +55,7 @@ TimeHistoryOutput::TimeHistoryOutput( string const & name,
 
 void TimeHistoryOutput::initCollectorParallel( DomainPartition const & domain, HistoryCollection & collector )
 {
-  GEOSX_ASSERT( m_io.empty() );
+  GEOS_ASSERT( m_io.empty() );
 
   bool const freshInit = ( m_recordCount == 0 );
 
@@ -124,9 +124,17 @@ void TimeHistoryOutput::initializePostInitialConditionsPostSubGroups()
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
   for( auto collectorPath : m_collectorPaths )
   {
-    HistoryCollection & collector = this->getGroupByPath< HistoryCollection >( collectorPath );
-    collector.initializePostSubGroups();
-    initCollectorParallel( domain, collector );
+    try
+    {
+      HistoryCollection & collector = this->getGroupByPath< HistoryCollection >( collectorPath );
+      collector.initializePostSubGroups();
+      initCollectorParallel( domain, collector );
+    }
+    catch( std::exception const & e )
+    {
+      throw InputError( e, GEOS_FMT( "Error while reading {}:\n",
+                                     getWrapperDataContext( viewKeys::timeHistoryOutputTargetString() ) ) );
+    }
   }
 }
 
@@ -142,14 +150,14 @@ void TimeHistoryOutput::reinit()
   initializePostInitialConditionsPostSubGroups();
 }
 
-bool TimeHistoryOutput::execute( real64 const GEOSX_UNUSED_PARAM( time_n ),
-                                 real64 const GEOSX_UNUSED_PARAM( dt ),
-                                 integer const GEOSX_UNUSED_PARAM( cycleNumber ),
-                                 integer const GEOSX_UNUSED_PARAM( eventCounter ),
-                                 real64 const GEOSX_UNUSED_PARAM( eventProgress ),
-                                 DomainPartition & GEOSX_UNUSED_PARAM( domain ) )
+bool TimeHistoryOutput::execute( real64 const GEOS_UNUSED_PARAM( time_n ),
+                                 real64 const GEOS_UNUSED_PARAM( dt ),
+                                 integer const GEOS_UNUSED_PARAM( cycleNumber ),
+                                 integer const GEOS_UNUSED_PARAM( eventCounter ),
+                                 real64 const GEOS_UNUSED_PARAM( eventProgress ),
+                                 DomainPartition & GEOS_UNUSED_PARAM( domain ) )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
   localIndex newBuffered = m_io.front()->getBufferedCount( );
   for( auto & th_io : m_io )
   {

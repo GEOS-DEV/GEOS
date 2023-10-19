@@ -12,8 +12,8 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_PHYSICSSOLVERMANAGER_HPP_
-#define GEOSX_PHYSICSSOLVERS_PHYSICSSOLVERMANAGER_HPP_
+#ifndef GEOS_PHYSICSSOLVERS_PHYSICSSOLVERMANAGER_HPP_
+#define GEOS_PHYSICSSOLVERS_PHYSICSSOLVERMANAGER_HPP_
 
 #include "dataRepository/Group.hpp"
 
@@ -22,7 +22,7 @@ namespace pugi
 class xml_node;
 }
 
-namespace geosx
+namespace geos
 {
 class SolverBase;
 
@@ -53,6 +53,6 @@ private:
   R1Tensor m_gravityVector;
 };
 
-} /* namespace geosx */
+} /* namespace geos */
 
-#endif /* GEOSX_PHYSICSSOLVERS_PHYSICSSOLVERMANAGER_HPP_ */
+#endif /* GEOS_PHYSICSSOLVERS_PHYSICSSOLVERMANAGER_HPP_ */

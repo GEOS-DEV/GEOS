@@ -17,32 +17,40 @@
  * @file WaveSolverBase.hpp
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_WAVEPROPAGATION_WAVESOLVERBASE_HPP_
-#define GEOSX_PHYSICSSOLVERS_WAVEPROPAGATION_WAVESOLVERBASE_HPP_
+#ifndef GEOS_PHYSICSSOLVERS_WAVEPROPAGATION_WAVESOLVERBASE_HPP_
+#define GEOS_PHYSICSSOLVERS_WAVEPROPAGATION_WAVESOLVERBASE_HPP_
 
 
 #include "mesh/MeshFields.hpp"
 #include "physicsSolvers/SolverBase.hpp"
-#include "common/lifoStorage.hpp"
+#include "common/LifoStorage.hpp"
+#if !defined( GEOS_USE_HIP )
 #include "finiteElement/elementFormulations/Qk_Hexahedron_Lagrange_GaussLobatto.hpp"
+#endif
 
+
+#if !defined( GEOS_USE_HIP )
 #define SEM_FE_TYPES \
   finiteElement::Q1_Hexahedron_Lagrange_GaussLobatto, \
   finiteElement::Q2_Hexahedron_Lagrange_GaussLobatto, \
   finiteElement::Q3_Hexahedron_Lagrange_GaussLobatto, \
   finiteElement::Q4_Hexahedron_Lagrange_GaussLobatto, \
   finiteElement::Q5_Hexahedron_Lagrange_GaussLobatto
+#else
+#define SEM_FE_TYPES
+#endif
 
 #define SELECTED_FE_TYPES SEM_FE_TYPES
 
-namespace geosx
+namespace geos
 {
 
 class WaveSolverBase : public SolverBase
 {
 public:
 
-  using EXEC_POLICY = parallelDevicePolicy< 32 >;
+  using EXEC_POLICY = parallelDevicePolicy< >;
+  using wsCoordType = real32;
 
   WaveSolverBase( const std::string & name,
                   Group * const parent );
@@ -75,6 +83,8 @@ public:
     static constexpr char const * sourceValueString() { return "sourceValue"; }
 
     static constexpr char const * timeSourceFrequencyString() { return "timeSourceFrequency"; }
+    static constexpr char const * timeSourceDelayString() { return "timeSourceDelay"; }
+    static constexpr char const * rickerOrderString() { return "rickerOrder"; }
 
     static constexpr char const * receiverCoordinatesString() { return "receiverCoordinates"; }
 
@@ -86,13 +96,13 @@ public:
     static constexpr char const * receiverConstantsString() {return "receiverConstants"; }
     static constexpr char const * receiverIsLocalString() { return "receiverIsLocal"; }
 
-    static constexpr char const * rickerOrderString() { return "rickerOrder"; }
     static constexpr char const * outputSeismoTraceString() { return "outputSeismoTrace"; }
     static constexpr char const * dtSeismoTraceString() { return "dtSeismoTrace"; }
     static constexpr char const * indexSeismoTraceString() { return "indexSeismoTrace"; }
     static constexpr char const * forwardString() { return "forward"; }
     static constexpr char const * saveFieldsString() { return "saveFields"; }
     static constexpr char const * shotIndexString() { return "shotIndex"; }
+    static constexpr char const * enableLifoString() { return "enableLifo"; }
     static constexpr char const * lifoSizeString() { return "lifoSize"; }
     static constexpr char const * lifoOnDeviceString() { return "lifoOnDevice"; }
     static constexpr char const * lifoOnHostString() { return "lifoOnHost"; }
@@ -103,6 +113,7 @@ public:
     static constexpr char const * usePMLString() { return "usePML"; }
     static constexpr char const * parametersPMLString() { return "parametersPML"; }
 
+    static constexpr char const * freeSurfaceString() { return "FreeSurface"; }
   };
 
   /**
@@ -118,6 +129,13 @@ public:
 protected:
 
   virtual void postProcessInput() override;
+
+  /**
+   * @brief Utility function to check if a directory exists
+   * @param directoryName the name of the directory
+   * @return true if the directory exists, false otherwise
+   */
+  bool directoryExists( std::string const & directoryName );
 
   /**
    * @brief Apply free surface condition to the face defined in the geometry box of the xml
@@ -181,6 +199,10 @@ protected:
                                        DomainPartition & domain,
                                        bool const computeGradient ) = 0;
 
+
+  virtual void registerDataOnMesh( Group & meshBodies ) override;
+
+
   localIndex getNumNodesPerElem();
 
   /// Coordinates of the sources in the mesh
@@ -191,6 +213,9 @@ protected:
 
   /// Central frequency for the Ricker time source
   real32 m_timeSourceFrequency;
+
+  /// Source time delay (1 / f0 by default)
+  real32 m_timeSourceDelay;
 
   /// Coordinates of the receivers in the mesh
   array2d< real64 > m_receiverCoordinates;
@@ -246,17 +271,20 @@ protected:
   /// Flag that indicates whether the receiver is local or not to the MPI rank
   array1d< localIndex > m_receiverIsLocal;
 
-  /// lifo size
+  /// Flag to enable LIFO
+  localIndex m_enableLifo;
+
+  /// lifo size (should be the total number of buffer to save in LIFO)
   localIndex m_lifoSize;
 
-  /// Number of buffers to store on device by LIFO
+  /// Number of buffers to store on device by LIFO  (if negative, opposite of percentage of remaining memory)
   localIndex m_lifoOnDevice;
 
-  /// Number of buffers to store on host by LIFO
+  /// Number of buffers to store on host by LIFO  (if negative, opposite of percentage of remaining memory)
   localIndex m_lifoOnHost;
 
   /// LIFO to store p_dt2
-  std::unique_ptr< lifoStorage< real32 > > m_lifo;
+  std::unique_ptr< LifoStorage< real32, localIndex > > m_lifo;
 
   struct parametersPML
   {
@@ -280,6 +308,17 @@ protected:
 
 };
 
-} /* namespace geosx */
+namespace fields
+{
+using reference32Type = array2d< WaveSolverBase::wsCoordType, nodes::REFERENCE_POSITION_PERM >;
+DECLARE_FIELD( referencePosition32,
+               "referencePosition32",
+               reference32Type,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Copy of the referencePosition from NodeManager in 32 bits integer" );
+}
+} /* namespace geos */
 
-#endif /* GEOSX_PHYSICSSOLVERS_WAVEPROPAGATION_WAVESOLVERBASE_HPP_ */
+#endif /* GEOS_PHYSICSSOLVERS_WAVEPROPAGATION_WAVESOLVERBASE_HPP_ */

@@ -21,11 +21,11 @@
 #include "common/DataTypes.hpp"
 #include "common/TimingMacros.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
-#include "constitutive/fluid/SingleFluidFields.hpp"
-#include "constitutive/fluid/slurryFluidSelector.hpp"
-#include "constitutive/fluid/SlurryFluidFields.hpp"
-#include "constitutive/fluid/particleFluidSelector.hpp"
-#include "constitutive/fluid/ParticleFluidFields.hpp"
+#include "constitutive/fluid/singlefluid/SingleFluidFields.hpp"
+#include "constitutive/fluid/singlefluid/SlurryFluidSelector.hpp"
+#include "constitutive/fluid/singlefluid/SlurryFluidFields.hpp"
+#include "constitutive/fluid/singlefluid/ParticleFluidSelector.hpp"
+#include "constitutive/fluid/singlefluid/ParticleFluidFields.hpp"
 #include "constitutive/permeability/PermeabilityFields.hpp"
 #include "constitutive/permeability/ProppantPermeability.hpp"
 #include "discretizationMethods/NumericalMethodsManager.hpp"
@@ -39,7 +39,7 @@
 /**
  * @namespace the geosx namespace that encapsulates the majority of the code
  */
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -141,16 +141,18 @@ void ProppantTransport::setConstitutiveNames( ElementSubRegionBase & subRegion )
 {
   string & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
   fluidName = getConstitutiveName< SlurryFluidBase >( subRegion );
-  GEOSX_THROW_IF( fluidName.empty(),
-                  GEOSX_FMT( "Fluid model not found on subregion {}", subRegion.getName() ),
-                  InputError );
+  GEOS_THROW_IF( fluidName.empty(),
+                 GEOS_FMT( "{}: Fluid model not found on subregion {}",
+                           getDataContext(), subRegion.getName() ),
+                 InputError );
 
   subRegion.registerWrapper< string >( viewKeyStruct::proppantNamesString() );
   string & proppantName = subRegion.getReference< string >( viewKeyStruct::proppantNamesString() );
   proppantName = getConstitutiveName< ParticleFluidBase >( subRegion );
-  GEOSX_THROW_IF( proppantName.empty(),
-                  GEOSX_FMT( "Proppant model not found on subregion {}", subRegion.getName() ),
-                  InputError );
+  GEOS_THROW_IF( proppantName.empty(),
+                 GEOS_FMT( "{}: Proppant model not found on subregion {}",
+                           getDataContext(), subRegion.getName() ),
+                 InputError );
 
 }
 
@@ -211,7 +213,7 @@ void ProppantTransport::resizeFractureFields( MeshLevel & mesh, arrayView1d< str
 
 void ProppantTransport::updateFluidModel( ObjectManagerBase & dataGroup )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   arrayView1d< real64 const > const pres  = dataGroup.getField< fields::flow::pressure >();
 
@@ -230,7 +232,7 @@ void ProppantTransport::updateFluidModel( ObjectManagerBase & dataGroup )
 
 void ProppantTransport::updateComponentDensity( ObjectManagerBase & dataGroup )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   arrayView1d< real64 const > const pres  = dataGroup.getField< fields::flow::pressure >();
 
@@ -250,7 +252,7 @@ void ProppantTransport::updateComponentDensity( ObjectManagerBase & dataGroup )
 
 void ProppantTransport::updateProppantModel( ObjectManagerBase & dataGroup )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   arrayView1d< real64 const > const proppantConc  = dataGroup.getField< fields::proppant::proppantConcentration >();
 
@@ -281,7 +283,7 @@ void ProppantTransport::updateProppantModel( ObjectManagerBase & dataGroup )
 
 void ProppantTransport::updateProppantMobility( ObjectManagerBase & dataGroup )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   arrayView1d< real64 const > const conc = dataGroup.getField< fields::proppant::proppantConcentration >();
   arrayView1d< real64 const > const aperture = dataGroup.getReference< array1d< real64 > >( FaceElementSubRegion::viewKeyStruct::elementApertureString() );
@@ -290,7 +292,7 @@ void ProppantTransport::updateProppantMobility( ObjectManagerBase & dataGroup )
   real64 const minAperture = m_minAperture;
   real64 const maxProppantConcentration = m_maxProppantConcentration;
 
-  forAll< parallelDevicePolicy<> >( dataGroup.size(), [=] GEOSX_HOST_DEVICE ( localIndex const a )
+  forAll< parallelDevicePolicy<> >( dataGroup.size(), [=] GEOS_HOST_DEVICE ( localIndex const a )
   {
     isProppantMobile[a] = aperture[a] > minAperture && conc[a] < maxProppantConcentration;
   } );
@@ -299,7 +301,7 @@ void ProppantTransport::updateProppantMobility( ObjectManagerBase & dataGroup )
 
 void ProppantTransport::updateState( ObjectManagerBase & dataGroup )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   updateFluidModel( dataGroup );
   updateProppantModel( dataGroup );
@@ -307,7 +309,7 @@ void ProppantTransport::updateState( ObjectManagerBase & dataGroup )
 
 void ProppantTransport::initializePostInitialConditionsPreSubGroups()
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   FlowSolverBase::initializePostInitialConditionsPreSubGroups();
 
@@ -339,7 +341,7 @@ void ProppantTransport::initializePostInitialConditionsPreSubGroups()
         getConstitutiveModel< SlurryFluidBase >( subRegion, subRegion.getReference< string >( viewKeyStruct::fluidNamesString() ) );
       arrayView3d< real64 const > const componentDens = fluid.componentDensity();
       arrayView2d< real64 > const componentDens_n = subRegion.getField< fields::proppant::componentDensity_n >();
-      forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
+      forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const ei )
       {
         for( localIndex c = 0; c < numComponents; ++c )
         {
@@ -352,10 +354,10 @@ void ProppantTransport::initializePostInitialConditionsPreSubGroups()
 }
 
 void ProppantTransport::preStepUpdate( real64 const & time,
-                                       real64 const & GEOSX_UNUSED_PARAM( dt ),
+                                       real64 const & GEOS_UNUSED_PARAM( dt ),
                                        DomainPartition & domain )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel & mesh,
@@ -384,7 +386,7 @@ void ProppantTransport::preStepUpdate( real64 const & time,
       arrayView1d< real64 > const excessPackVolume = subRegion.getField< fields::proppant::proppantExcessPackVolume >();
       arrayView2d< real64 > const cellBasedFlux = subRegion.getField< fields::proppant::cellBasedFlux >();
 
-      forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
+      forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const ei )
       {
         for( localIndex c = 0; c < m_numComponents; ++c )
         {
@@ -404,7 +406,7 @@ void ProppantTransport::postStepUpdate( real64 const & time_n,
                                         real64 const & dt_return,
                                         DomainPartition & domain )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel & mesh,
@@ -424,7 +426,7 @@ void ProppantTransport::postStepUpdate( real64 const & time_n,
       arrayView1d< real64 > const & packVolFrac = subRegion.getField< fields::proppant::proppantPackVolumeFraction >();
       arrayView1d< real64 > const & proppantConc = subRegion.getField< fields::proppant::proppantConcentration >();
 
-      forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
+      forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const ei )
       {
         if( proppantConc[ei] >= maxProppantConcentration || packVolFrac[ei] >= 1.0 )
         {
@@ -440,11 +442,11 @@ void ProppantTransport::postStepUpdate( real64 const & time_n,
   }
 }
 
-void ProppantTransport::implicitStepSetup( real64 const & GEOSX_UNUSED_PARAM( time_n ),
-                                           real64 const & GEOSX_UNUSED_PARAM( dt ),
+void ProppantTransport::implicitStepSetup( real64 const & GEOS_UNUSED_PARAM( time_n ),
+                                           real64 const & GEOS_UNUSED_PARAM( dt ),
                                            DomainPartition & domain )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel & mesh,
@@ -464,11 +466,11 @@ void ProppantTransport::implicitStepSetup( real64 const & GEOSX_UNUSED_PARAM( ti
   } );
 }
 
-void ProppantTransport::implicitStepComplete( real64 const & GEOSX_UNUSED_PARAM( time_n ),
-                                              real64 const & GEOSX_UNUSED_PARAM( dt ),
+void ProppantTransport::implicitStepComplete( real64 const & GEOS_UNUSED_PARAM( time_n ),
+                                              real64 const & GEOS_UNUSED_PARAM( dt ),
                                               DomainPartition & domain )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel & mesh,
@@ -484,14 +486,13 @@ void ProppantTransport::implicitStepComplete( real64 const & GEOSX_UNUSED_PARAM(
   } );
 }
 
-void ProppantTransport::setupDofs( DomainPartition const & GEOSX_UNUSED_PARAM( domain ),
+void ProppantTransport::setupDofs( DomainPartition const & GEOS_UNUSED_PARAM( domain ),
                                    DofManager & dofManager ) const
 {
-
-  for( auto const & meshTarget : getMeshTargets() )
+  for( auto const & meshTarget: getMeshTargets())
   {
-    printf( "(%s,%s):", meshTarget.first.first.c_str(), meshTarget.first.second.c_str() );
-    std::cout<<meshTarget.second<<std::endl;
+    GEOS_LOG_RANK_0( GEOS_FMT( "{}: MeshBody = ({},{}) - target region = {}",
+                               getName(), meshTarget.first.first.c_str(), meshTarget.first.second.c_str(), meshTarget.second ));
   }
 
   dofManager.addField( fields::proppant::proppantConcentration::key(),
@@ -512,7 +513,7 @@ void ProppantTransport::assembleSystem( real64 const time,
                                         CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                         arrayView1d< real64 > const & localRhs )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   assembleAccumulationTerms( dt,
                              domain,
@@ -534,7 +535,7 @@ void ProppantTransport::assembleAccumulationTerms( real64 const dt,
                                                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                    arrayView1d< real64 > const & localRhs )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   string const dofKey = dofManager.getKey( fields::proppant::proppantConcentration::key() );
 
@@ -587,14 +588,14 @@ void ProppantTransport::assembleAccumulationTerms( real64 const dt,
 }
 
 
-void ProppantTransport::assembleFluxTerms( real64 const GEOSX_UNUSED_PARAM( time_n ),
+void ProppantTransport::assembleFluxTerms( real64 const GEOS_UNUSED_PARAM( time_n ),
                                            real64 const dt,
                                            DomainPartition const & domain,
                                            DofManager const & dofManager,
                                            CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                            arrayView1d< real64 > const & localRhs )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   R1Tensor downVector = gravityVector();
   LvArray::tensorOps::normalize< 3 >( downVector );
@@ -672,7 +673,7 @@ void ProppantTransport::applyBoundaryConditions( real64 const time_n,
                                                  CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                  arrayView1d< real64 > const & localRhs )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
   string const dofKey = dofManager.getKey( fields::proppant::proppantConcentration::key() );
@@ -726,7 +727,8 @@ void ProppantTransport::applyBoundaryConditions( real64 const time_n,
       {
 
         string const & subRegionName = subRegion.getName();
-        GEOSX_ERROR_IF( bcStatusMap[subRegionName].count( setName ) > 0, "Conflicting proppant boundary conditions on set " << setName );
+        GEOS_ERROR_IF( bcStatusMap[subRegionName].count( setName ) > 0,
+                       getDataContext() << ": Conflicting proppant boundary conditions on set " << setName );
         bcStatusMap[subRegionName][setName].resize( m_numComponents );
         bcStatusMap[subRegionName][setName].setValues< serialPolicy >( false );
 
@@ -745,8 +747,10 @@ void ProppantTransport::applyBoundaryConditions( real64 const time_n,
         string const & subRegionName = subRegion.getName();
         localIndex const comp = fs.getComponent();
 
-        GEOSX_ERROR_IF( bcStatusMap[subRegionName].count( setName ) == 0, "Proppant boundary condition not prescribed on set '" << setName << "'" );
-        GEOSX_ERROR_IF( bcStatusMap[subRegionName][setName][comp], "Conflicting composition[" << comp << "] boundary conditions on set '" << setName << "'" );
+        GEOS_ERROR_IF( bcStatusMap[subRegionName].count( setName ) == 0,
+                       getDataContext() << ": Proppant boundary condition not prescribed on set '" << setName << "'" );
+        GEOS_ERROR_IF( bcStatusMap[subRegionName][setName][comp],
+                       getDataContext() << ": Conflicting composition[" << comp << "] boundary conditions on set '" << setName << "'" );
         bcStatusMap[subRegionName][setName][comp] = true;
 
         fs.applyFieldValue< FieldSpecificationEqual >( targetSet,
@@ -764,14 +768,15 @@ void ProppantTransport::applyBoundaryConditions( real64 const time_n,
           for( localIndex ic = 0; ic < m_numComponents; ++ic )
           {
             bcConsistent &= bcStatusEntryInner.second[ic];
-            GEOSX_WARNING_IF( !bcConsistent, "Composition boundary condition not applied to component " << ic
-                                                                                                        << " on region '" << bcStatusEntryOuter.first << "',"
-                                                                                                        << " set '" << bcStatusEntryInner.first << "'" );
+            GEOS_WARNING_IF( !bcConsistent,
+                             getDataContext() << ": Composition boundary condition not applied to component " <<
+                             ic << " on region '" << bcStatusEntryOuter.first << "'," <<
+                             " set '" << bcStatusEntryInner.first << "'" );
           }
         }
       }
 
-      GEOSX_ERROR_IF( !bcConsistent, "Inconsistent composition boundary conditions" );
+      GEOS_ERROR_IF( !bcConsistent, "Inconsistent composition boundary conditions" );
 
       fsManager.apply< ElementSubRegionBase >( time_n + dt,
                                                mesh,
@@ -791,7 +796,7 @@ void ProppantTransport::applyBoundaryConditions( real64 const time_n,
         arrayView2d< real64 const > const bcCompConc =
           subRegion.getReference< array2d< real64 > >( fields::proppant::bcComponentConcentration::key() );
 
-        forAll< parallelDevicePolicy<> >( targetSet.size(), [=] GEOSX_HOST_DEVICE ( localIndex const a )
+        forAll< parallelDevicePolicy<> >( targetSet.size(), [=] GEOS_HOST_DEVICE ( localIndex const a )
         {
           localIndex const ei = targetSet[a];
           if( ghostRank[ei] >= 0 )
@@ -818,13 +823,13 @@ void ProppantTransport::applyBoundaryConditions( real64 const time_n,
 }
 
 real64
-ProppantTransport::calculateResidualNorm( real64 const & GEOSX_UNUSED_PARAM( time_n ),
-                                          real64 const & GEOSX_UNUSED_PARAM( dt ),
+ProppantTransport::calculateResidualNorm( real64 const & GEOS_UNUSED_PARAM( time_n ),
+                                          real64 const & GEOS_UNUSED_PARAM( dt ),
                                           DomainPartition const & domain,
                                           DofManager const & dofManager,
                                           arrayView1d< real64 const > const & localRhs )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   real64 localResidualNorm = 0.0;
   real64 localResidualNormalizer = 0.0;
@@ -889,7 +894,7 @@ ProppantTransport::calculateResidualNorm( real64 const & GEOSX_UNUSED_PARAM( tim
 
   if( getLogLevel() >= 1 && logger::internal::rank == 0 )
   {
-    std::cout << GEOSX_FMT( "    ( R{} ) = ( {:4.2e} ) ; ", ProppantTransport::coupledSolverAttributePrefix(), residualNorm );
+    std::cout << GEOS_FMT( "        ( R{} ) = ( {:4.2e} )", ProppantTransport::coupledSolverAttributePrefix(), residualNorm );
   }
 
   return residualNorm;
@@ -898,8 +903,10 @@ ProppantTransport::calculateResidualNorm( real64 const & GEOSX_UNUSED_PARAM( tim
 void ProppantTransport::applySystemSolution( DofManager const & dofManager,
                                              arrayView1d< real64 const > const & localSolution,
                                              real64 const scalingFactor,
+                                             real64 const dt,
                                              DomainPartition & domain )
 {
+  GEOS_UNUSED_VAR( dt );
   dofManager.addVectorToField( localSolution,
                                fields::proppant::proppantConcentration::key(),
                                fields::proppant::proppantConcentration::key(),
@@ -965,10 +972,10 @@ void ProppantTransport::resetStateToBeginningOfStep( DomainPartition & domain )
 
 
 
-void ProppantTransport::updateCellBasedFlux( real64 const GEOSX_UNUSED_PARAM( time_n ),
+void ProppantTransport::updateCellBasedFlux( real64 const GEOS_UNUSED_PARAM( time_n ),
                                              DomainPartition & domain )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   R1Tensor downVector = gravityVector();
   LvArray::tensorOps::normalize< 3 >( downVector );
@@ -1016,11 +1023,11 @@ void ProppantTransport::updateCellBasedFlux( real64 const GEOSX_UNUSED_PARAM( ti
   } );
 }
 
-void ProppantTransport::updateProppantPackVolume( real64 const GEOSX_UNUSED_PARAM( time_n ),
+void ProppantTransport::updateProppantPackVolume( real64 const GEOS_UNUSED_PARAM( time_n ),
                                                   real64 const dt,
                                                   DomainPartition & domain )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   R1Tensor downVector = gravityVector();
   LvArray::tensorOps::normalize< 3 >( downVector );
@@ -1133,4 +1140,4 @@ void ProppantTransport::updateProppantPackVolume( real64 const GEOSX_UNUSED_PARA
 
 
 REGISTER_CATALOG_ENTRY( SolverBase, ProppantTransport, string const &, Group * const )
-} /* namespace geosx */
+} /* namespace geos */

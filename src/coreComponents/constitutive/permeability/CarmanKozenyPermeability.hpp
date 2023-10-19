@@ -16,13 +16,13 @@
  * @file CarmanKozenyPermeability.hpp
  */
 
-#ifndef GEOSX_CONSTITUTIVE_PERMEABILITY_CARMANKOZENYPERMEABILITY_HPP_
-#define GEOSX_CONSTITUTIVE_PERMEABILITY_CARMANKOZENYPERMEABILITY_HPP_
+#ifndef GEOS_CONSTITUTIVE_PERMEABILITY_CARMANKOZENYPERMEABILITY_HPP_
+#define GEOS_CONSTITUTIVE_PERMEABILITY_CARMANKOZENYPERMEABILITY_HPP_
 
 #include "constitutive/permeability/PermeabilityBase.hpp"
 
 
-namespace geosx
+namespace geos
 {
 namespace constitutive
 {
@@ -35,19 +35,21 @@ public:
                                   arrayView3d< real64 > const & dPerm_dPressure,
                                   arrayView3d< real64 > const & dPerm_dPorosity,
                                   real64 const particleDiameter,
-                                  real64 const sphericity )
+                                  real64 const sphericity,
+                                  R1Tensor const anisotropy )
     : PermeabilityBaseUpdate( permeability, dPerm_dPressure ),
     m_dPerm_dPorosity( dPerm_dPorosity ),
     m_particleDiameter( particleDiameter ),
-    m_sphericity( sphericity )
+    m_sphericity( sphericity ),
+    m_anisotropy( anisotropy )
   {}
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void compute( real64 const & porosity,
                 arraySlice1d< real64 > const & permeability,
                 arraySlice1d< real64 > const & dPerm_dPorosity ) const;
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   virtual void updateFromPorosity( localIndex const k,
                                    localIndex const q,
                                    real64 const & porosity ) const override
@@ -68,6 +70,8 @@ private:
   /// Sphericity of the particles
   real64 m_sphericity;
 
+  /// Anisotropy factors for three dimensions
+  R1Tensor m_anisotropy;
 };
 
 
@@ -100,7 +104,8 @@ public:
                           m_dPerm_dPressure,
                           m_dPerm_dPorosity,
                           m_particleDiameter,
-                          m_sphericity );
+                          m_sphericity,
+                          m_anisotropy );
   }
 
 
@@ -109,6 +114,7 @@ public:
     static constexpr char const * dPerm_dPorosityString() { return "dPerm_dPorosity"; }
     static constexpr char const * particleDiameterString() { return "particleDiameter"; }
     static constexpr char const * sphericityString() { return "sphericity"; }
+    static constexpr char const * anisotropyString() { return "anisotropy"; }
   } viewKeys;
 
 private:
@@ -121,25 +127,28 @@ private:
 
   /// Sphericity of the particles
   real64 m_sphericity;
+
+  /// Anisotropy factors for three dimensions
+  R1Tensor m_anisotropy;
 };
 
 
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+GEOS_HOST_DEVICE
+inline
 void CarmanKozenyPermeabilityUpdate::compute( real64 const & porosity,
                                               arraySlice1d< real64 > const & permeability,
                                               arraySlice1d< real64 > const & dPerm_dPorosity ) const
 {
-  real64 const constant = pow( m_sphericity*m_particleDiameter, 2 ) / 150;
+  real64 const constant = pow( m_sphericity*m_particleDiameter, 2 ) / 180;
 
   real64 const permValue = constant * pow( porosity, 3 )/ pow( (1 - porosity), 2 );
 
   real64 const dPerm_dPorValue = -constant * ( (porosity - 3) *  pow( porosity, 2 ) / pow( (1-porosity), 3 )  );
 
-  for( localIndex i=0; i < permeability.size(); i++ )
+  for( localIndex i = 0; i < permeability.size(); ++i )
   {
-    permeability[i] = permValue;
-    dPerm_dPorosity[i] = dPerm_dPorValue;
+    permeability[i] = permValue * m_anisotropy[i];
+    dPerm_dPorosity[i] = dPerm_dPorValue * m_anisotropy[i];
   }
 }
 
@@ -147,7 +156,7 @@ void CarmanKozenyPermeabilityUpdate::compute( real64 const & porosity,
 
 }/* namespace constitutive */
 
-} /* namespace geosx */
+} /* namespace geos */
 
 
-#endif //GEOSX_CONSTITUTIVE_PERMEABILITY_CARMANKOZENYPERMEABILITY_HPP_
+#endif //GEOS_CONSTITUTIVE_PERMEABILITY_CARMANKOZENYPERMEABILITY_HPP_

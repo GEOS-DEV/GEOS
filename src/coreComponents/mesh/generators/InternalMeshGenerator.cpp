@@ -17,14 +17,6 @@
  */
 
 #include "InternalMeshGenerator.hpp"
-
-#include "common/DataTypes.hpp"
-#include "common/TimingMacros.hpp"
-#include "mesh/DomainPartition.hpp"
-#include "mesh/MeshBody.hpp"
-#include "mesh/mpiCommunications/PartitionBase.hpp"
-#include "mesh/mpiCommunications/SpatialPartition.hpp"
-#include "mesh/MeshBody.hpp"
 #include "CellBlockManager.hpp"
 
 #include "common/DataTypes.hpp"
@@ -32,7 +24,7 @@
 
 #include <cmath>
 
-namespace geosx
+namespace geos
 {
 using namespace dataRepository;
 
@@ -129,7 +121,7 @@ static int getNumElemPerBox( ElementType const elementType )
     case ElementType::Hexahedron:    return 1;
     default:
     {
-      GEOSX_ERROR( "InternalMeshGenerator: unsupported element type " << elementType );
+      GEOS_ERROR( "InternalMeshGenerator: unsupported element type " << elementType );
       return 0;
     }
   }
@@ -148,7 +140,7 @@ void InternalMeshGenerator::postProcessInput()
     }
     if( failFlag )
     {
-      GEOSX_ERROR( "vertex/element mismatch InternalMeshGenerator::ReadXMLPost()" );
+      GEOS_ERROR( "vertex/element mismatch InternalMeshGenerator::ReadXMLPost()" );
     }
 
     // If specified, check to make sure bias values have the correct length
@@ -161,7 +153,7 @@ void InternalMeshGenerator::postProcessInput()
     }
     if( failFlag )
     {
-      GEOSX_ERROR( "element/bias mismatch InternalMeshGenerator::ReadXMLPost()" );
+      GEOS_ERROR( "element/bias mismatch InternalMeshGenerator::ReadXMLPost()" );
     }
   }
 
@@ -176,7 +168,7 @@ void InternalMeshGenerator::postProcessInput()
     }
     else
     {
-      GEOSX_ERROR( "InternalMeshGenerator: The number of element types is inconsistent with the number of total block." );
+      GEOS_ERROR( "InternalMeshGenerator: The number of element types is inconsistent with the number of total block." );
     }
   }
 
@@ -200,7 +192,7 @@ void InternalMeshGenerator::postProcessInput()
       }
       else
       {
-        GEOSX_ERROR( "Incorrect number of regionLayout entries specified in InternalMeshGenerator::ReadXML()" );
+        GEOS_ERROR( "Incorrect number of regionLayout entries specified in InternalMeshGenerator::ReadXML()" );
       }
     }
   }
@@ -534,27 +526,36 @@ static void getElemToNodesRelationInBox( ElementType const elementType,
     }
     default:
     {
-      GEOSX_ERROR( "InternalMeshGenerator: unsupported element type " << elementType );
+      GEOS_ERROR( "InternalMeshGenerator: unsupported element type " << elementType );
     }
   }
 }
 
-/**
- * @param partition
- * @param domain
- */
-void InternalMeshGenerator::generateMesh( DomainPartition & domain )
+void InternalMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockManager, array1d< int > const & partition )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
-  MeshBody & meshBody = domain.getMeshBodies().registerGroup< MeshBody >( this->getName() );
+  m_spatialPartition.setPartitions( partition[0], partition[1], partition[2] );
+  // Partition based on even spacing to get load balance
+  // Partition geometrical boundaries will be corrected in the end.
+  {
+    m_min[0] = m_vertices[0].front();
+    m_min[1] = m_vertices[1].front();
+    m_min[2] = m_vertices[2].front();
+
+    m_max[0] = m_vertices[0].back();
+    m_max[1] = m_vertices[1].back();
+    m_max[2] = m_vertices[2].back();
+
+    m_spatialPartition.setSizes( m_min, m_max );
+  }
 
   // Make sure that the node manager fields are initialized
-
-  CellBlockManager & cellBlockManager = meshBody.registerGroup< CellBlockManager >( keys::cellManager );
   auto & nodeSets = cellBlockManager.getNodeSets();
 
-  SpatialPartition & partition = dynamic_cast< SpatialPartition & >(domain.getReference< PartitionBase >( keys::partitionManager ) );
+  real64 size[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( m_max );
+  LvArray::tensorOps::subtract< 3 >( size, m_min );
+  cellBlockManager.setGlobalLength( LvArray::tensorOps::l2Norm< 3 >( size ) );
 
 //  bool isRadialWithOneThetaPartition = false;
 
@@ -574,24 +575,6 @@ void InternalMeshGenerator::generateMesh( DomainPartition & domain )
   SortedArray< localIndex > & zposNodes = nodeSets["zpos"];
   SortedArray< localIndex > & allNodes = nodeSets["all"];
 
-  // Partition based on even spacing to get load balance
-  // Partition geometrical boundaries will be corrected in the end.
-  {
-    m_min[0] = m_vertices[0].front();
-    m_min[1] = m_vertices[1].front();
-    m_min[2] = m_vertices[2].front();
-
-    m_max[0] = m_vertices[0].back();
-    m_max[1] = m_vertices[1].back();
-    m_max[2] = m_vertices[2].back();
-
-    partition.setSizes( m_min, m_max );
-
-    real64 size[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( m_max );
-    LvArray::tensorOps::subtract< 3 >( size, m_min );
-    meshBody.setGlobalLengthScale( LvArray::tensorOps::l2Norm< 3 >( size ) );
-  }
-
   // Find elemCenters for even uniform element sizes
   array1d< array1d< real64 > > elemCenterCoords( 3 );
   for( int i = 0; i < 3; ++i )
@@ -601,6 +584,7 @@ void InternalMeshGenerator::generateMesh( DomainPartition & domain )
     {
       m_numElemsTotal[i] += m_nElems[i][block];
     }
+    GEOS_ERROR_IF( partition[i] > m_numElemsTotal[i], "Number of partitions in a direction should not exceed the number of elements in that direction" );
 
     elemCenterCoords[i].resize( m_numElemsTotal[i] );
     array1d< real64 > elemCenterCoordsLocal( m_numElemsTotal[i] );
@@ -626,7 +610,7 @@ void InternalMeshGenerator::generateMesh( DomainPartition & domain )
     //    lastElemIndexInPartition[i] = -2;
     for( int k = 0; k < m_numElemsTotal[i]; ++k )
     {
-      if( partition.isCoordInPartition( elemCenterCoords[i][k], i ) )
+      if( m_spatialPartition.isCoordInPartition( elemCenterCoords[i][k], i ) )
       {
         firstElemIndexInPartition[i] = k;
         break;
@@ -637,7 +621,7 @@ void InternalMeshGenerator::generateMesh( DomainPartition & domain )
     {
       for( int k = firstElemIndexInPartition[i]; k < m_numElemsTotal[i]; ++k )
       {
-        if( partition.isCoordInPartition( elemCenterCoords[i][k], i ) )
+        if( m_spatialPartition.isCoordInPartition( elemCenterCoords[i][k], i ) )
         {
           lastElemIndexInPartition[i] = k;
         }
@@ -731,7 +715,7 @@ void InternalMeshGenerator::generateMesh( DomainPartition & domain )
   {
     numNodesInDir[i] = lastElemIndexInPartition[i] - firstElemIndexInPartition[i] + 2;
   }
-  reduceNumNodesForPeriodicBoundary( partition, numNodesInDir );
+  reduceNumNodesForPeriodicBoundary( m_spatialPartition, numNodesInDir );
   numNodes = numNodesInDir[0] * numNodesInDir[1] * numNodesInDir[2];
 
   cellBlockManager.setNumNodes( numNodes );
@@ -758,7 +742,7 @@ void InternalMeshGenerator::generateMesh( DomainPartition & domain )
           getNodePosition( globalIJK, m_trianglePattern, X[localNodeIndex] );
 
           // Alter global node map for radial mesh
-          setNodeGlobalIndicesOnPeriodicBoundary( partition, globalIJK );
+          setNodeGlobalIndicesOnPeriodicBoundary( m_spatialPartition, globalIJK );
 
           nodeLocalToGlobal[localNodeIndex] = nodeGlobalIndex( globalIJK );
 
@@ -822,7 +806,7 @@ void InternalMeshGenerator::generateMesh( DomainPartition & domain )
     // Reset the number of nodes in each dimension in case of periodic BCs so the element firstNodeIndex
     //  calculation is correct? Not actually needed in parallel since we still have ghost nodes in that case and
     //  the count has not been altered due to periodicity.
-    if( std::any_of( partition.m_Periodic.begin(), partition.m_Periodic.end(), []( int & dimPeriodic ) { return dimPeriodic == 1; } ) )
+    if( std::any_of( m_spatialPartition.m_Periodic.begin(), m_spatialPartition.m_Periodic.end(), []( int & dimPeriodic ) { return dimPeriodic == 1; } ) )
     {
       for( int i = 0; i < m_dim; ++i )
       {
@@ -970,10 +954,10 @@ void InternalMeshGenerator::generateMesh( DomainPartition & domain )
 
   cellBlockManager.buildMaps();
 
-  GEOSX_LOG_RANK_0( GEOSX_FMT( "{}: total number of nodes = {}", getName(),
-                               ( m_numElemsTotal[0] + 1 ) * ( m_numElemsTotal[1] + 1 ) * ( m_numElemsTotal[2] + 1 ) ) );
-  GEOSX_LOG_RANK_0( GEOSX_FMT( "{}: total number of elems = {}", getName(),
-                               m_numElemsTotal[0] * m_numElemsTotal[1] * m_numElemsTotal[2] ) );
+  GEOS_LOG_RANK_0( GEOS_FMT( "{}: total number of nodes = {}", getName(),
+                             ( m_numElemsTotal[0] + 1 ) * ( m_numElemsTotal[1] + 1 ) * ( m_numElemsTotal[2] + 1 ) ) );
+  GEOS_LOG_RANK_0( GEOS_FMT( "{}: total number of elems = {}", getName(),
+                             m_numElemsTotal[0] * m_numElemsTotal[1] * m_numElemsTotal[2] ) );
 }
 
 void
@@ -1005,4 +989,4 @@ InternalMeshGenerator::
 }
 
 REGISTER_CATALOG_ENTRY( MeshGeneratorBase, InternalMeshGenerator, string const &, Group * const )
-} /* namespace geosx */
+} /* namespace geos */

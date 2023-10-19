@@ -1,10 +1,10 @@
-#ifndef GEOSX_FINITEVOLUME_PROJECTIONEDFMHELPER_HPP_
-#define GEOSX_FINITEVOLUME_PROJECTIONEDFMHELPER_HPP_
+#ifndef GEOS_FINITEVOLUME_PROJECTIONEDFMHELPER_HPP_
+#define GEOS_FINITEVOLUME_PROJECTIONEDFMHELPER_HPP_
 
 #include "common/DataTypes.hpp"
 #include "mesh/ElementRegionManager.hpp"
 
-namespace geosx
+namespace geos
 {
 
 class MeshLevel;
@@ -207,7 +207,7 @@ private:
 
 };
 
-}  // end namespace geosx
+}  // end namespace geos
 
 
 #endif // __PROJECTIONEDFMHELPER_H_

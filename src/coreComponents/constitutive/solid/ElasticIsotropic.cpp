@@ -18,7 +18,7 @@
 
 #include "ElasticIsotropic.hpp"
 
-namespace geosx
+namespace geos
 {
 using namespace dataRepository;
 namespace constitutive
@@ -101,9 +101,10 @@ void ElasticIsotropic::postProcessInput()
   }
   errorCheck += ")";
 
-  GEOSX_ERROR_IF( numConstantsSpecified != 2,
-                  "A specific pair of elastic constants is required. Either (K,G), (K,E), (G,E), (K,nu), (G,nu) or (E,nu). "<<
-                  "You have specified "<<errorCheck );
+  GEOS_ERROR_IF( numConstantsSpecified != 2,
+                 getFullName() << ": A specific pair of elastic constants is required. " <<
+                 "Either (K,G), (K,E), (G,E), (K,nu), (G,nu) or (E,nu). " <<
+                 "You have specified " << errorCheck );
 
   if( nu > -0.5 && nu < 0.5 && E > 0.0 )
   {
@@ -137,7 +138,8 @@ void ElasticIsotropic::postProcessInput()
   }
   else
   {
-    GEOSX_ERROR( "Invalid specification for default elastic constants. "<<errorCheck<<" has been specified." );
+    GEOS_ERROR( getFullName() << ": Invalid specification for default elastic constants. " <<
+                errorCheck << " has been specified." );
   }
 
   // set results as array default values
@@ -150,4 +152,4 @@ void ElasticIsotropic::postProcessInput()
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, ElasticIsotropic, string const &, Group * const )
 }
-} /* namespace geosx */
+} /* namespace geos */

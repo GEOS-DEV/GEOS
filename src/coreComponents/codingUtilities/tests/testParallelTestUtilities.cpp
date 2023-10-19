@@ -21,7 +21,7 @@ TEST( UnitTestUtilities, skipInSerial )
 {
   SKIP_TEST_IN_SERIAL( "This test should not be run in serial." );
 
-  if( geosx::MpiWrapper::commSize() == 1 )
+  if( geos::MpiWrapper::commSize() == 1 )
   {
     GTEST_FAIL();
   }
@@ -35,7 +35,7 @@ TEST( UnitTestUtilities, skipInParallel )
 {
   SKIP_TEST_IN_PARALLEL( "This test should not be run in parallel." );
 
-  if( geosx::MpiWrapper::commSize() != 1 )
+  if( geos::MpiWrapper::commSize() != 1 )
   {
     GTEST_FAIL();
   }
@@ -47,8 +47,8 @@ TEST( UnitTestUtilities, skipInParallel )
 
 TEST( UnitTestUtilities, expected )
 {
-  using namespace geosx;
-  using namespace geosx::testing;
+  using namespace geos;
+  using namespace geos::testing;
 
   if( MpiWrapper::commSize() == 1 )
   {
@@ -65,8 +65,8 @@ TEST( UnitTestUtilities, expected )
 int main( int ac, char * av[] )
 {
   ::testing::InitGoogleTest( &ac, av );
-  geosx::basicSetup( ac, av );
+  geos::basicSetup( ac, av );
   int const result = RUN_ALL_TESTS();
-  geosx::basicCleanup();
+  geos::basicCleanup();
   return result;
 }

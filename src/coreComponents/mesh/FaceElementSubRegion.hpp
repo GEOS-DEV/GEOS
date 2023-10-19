@@ -16,13 +16,13 @@
  * @file FaceElementSubRegion.hpp
  */
 
-#ifndef GEOSX_MESH_FACEELEMENTSUBREGION_HPP_
-#define GEOSX_MESH_FACEELEMENTSUBREGION_HPP_
+#ifndef GEOS_MESH_FACEELEMENTSUBREGION_HPP_
+#define GEOS_MESH_FACEELEMENTSUBREGION_HPP_
 
 #include "SurfaceElementSubRegion.hpp"
 #include "mesh/generators/FaceBlockABC.hpp"
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -38,7 +38,7 @@ class FaceElementSubRegion : public SurfaceElementSubRegion
 public:
 
   /// Face element to faces map type
-  using FaceMapType = InterObjectRelation< array2d< localIndex > >;
+  using FaceMapType = InterObjectRelation< ArrayOfArrays< localIndex > >;
 
   /**
    * @name Static factory catalog functions
@@ -111,6 +111,18 @@ public:
 
   virtual void fixUpDownMaps( bool const clearIfUnmapped ) override;
 
+  /**
+   * @brief Fixes the mappings between the @p FaceElementSubRegion and regions next to it (e.g., matrix regions).
+   * @param nodeManager The node manager
+   * @param edgeManager The edge manager
+   * @param faceManager The face manager
+   * @param elemManager The element manager
+   */
+  void fixSecondaryMappings( NodeManager const & nodeManager,
+                             EdgeManager const & edgeManager,
+                             FaceManager const & faceManager,
+                             ElementRegionManager const & elemManager );
+
   ///@}
 
   /**
@@ -137,6 +149,8 @@ public:
     static constexpr char const * fractureConnectorEdgesToEdgesString() { return "fractureConnectorsToEdges"; }
     /// @return String key to the map of fracture connector local indices face element local indices.
     static constexpr char const * fractureConnectorsEdgesToFaceElementsIndexString() { return "fractureConnectorsToElementIndex"; }
+    /// @return String key to collocated nodes buckets.
+    static constexpr char const * elem2dToCollocatedNodesBucketsString() { return "elem2dToCollocatedNodesBuckets"; }
 
 #if GEOSX_USE_SEPARATION_COEFFICIENT
     /// Separation coefficient string.
@@ -210,16 +224,22 @@ public:
   SortedArray< localIndex > m_newFaceElements;
 
   /// map from the edges to the fracture connectors index (edges that are fracture connectors)
-  SortedArray< localIndex > m_recalculateFractureConnectorEdges;
+  SortedArray< localIndex > m_recalculateConnectionsFor2dFaces;
 
   /// A map of edge local indices to the fracture connector local indices.
-  map< localIndex, localIndex > m_edgesToFractureConnectorsEdges;
+  map< localIndex, localIndex > m_edgesTo2dFaces;
 
   /// A map of fracture connector local indices to edge local indices.
-  array1d< localIndex > m_fractureConnectorsEdgesToEdges;
+  array1d< localIndex > m_2dFaceToEdge;
 
   /// A map of fracture connector local indices face element local indices.
-  ArrayOfArrays< localIndex > m_fractureConnectorEdgesToFaceElements;
+  ArrayOfArrays< localIndex > m_2dFaceTo2dElems;
+
+  /**
+   * @brief Computes and returns all the buckets of collocated nodes.
+   * @return The buckets are returned in no particular order.
+   */
+  std::set< std::set< globalIndex > > getCollocatedNodes() const;
 
   /**
    * @brief @return The array of shape function derivatives.
@@ -245,6 +265,27 @@ public:
   arrayView2d< real64 const > detJ() const
   { return m_detJ; }
 
+  using ElementSubRegionBase::getElementType;
+
+  /**
+   * @brief Returns the type of element @p ei.
+   * @param ei The local index of the element.
+   * @return The type.
+   * This is a first attempt to reflect this in the interface. Use with great care.
+   */
+  ElementType getElementType( localIndex ei ) const;
+
+  /**
+   * @brief Returns the 2d element to node to collocated nodes bucket mapping.
+   * @return A const view to the data.
+   * @note The 2d element is local to the @p FaceElementSubRegion,
+   * the node is local to the 2d element and the collocated nodes are global.
+   */
+  ArrayOfArraysView< array1d< globalIndex > const > get2dElemToCollocatedNodesBuckets() const
+  {
+    return m_2dElemToCollocatedNodesBuckets.toViewConst();
+  }
+
 private:
 
   /**
@@ -267,6 +308,12 @@ private:
   /// Element-to-face relation
   FaceMapType m_toFacesRelation;
 
+  /**
+   * @brief The collocated nodes buckets.
+   * @see FaceElementSubRegion::get2dElemToCollocatedNodesBuckets
+   */
+  ArrayOfArrays< array1d< globalIndex > > m_2dElemToCollocatedNodesBuckets;
+
 #ifdef GEOSX_USE_SEPARATION_COEFFICIENT
   /// Separation coefficient
   array1d< real64 > m_separationCoefficient;
@@ -274,6 +321,6 @@ private:
 
 };
 
-} /* namespace geosx */
+} /* namespace geos */
 
-#endif /* GEOSX_MESH_FACEELEMENTSUBREGION_HPP_ */
+#endif /* GEOS_MESH_FACEELEMENTSUBREGION_HPP_ */

@@ -16,13 +16,13 @@
  * @file ImplicitSmallStrainNewmark_impl.hpp
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_KERNELS_IMPLCITSMALLSTRAINNEWMARK_IMPL_HPP_
-#define GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_KERNELS_IMPLCITSMALLSTRAINNEWMARK_IMPL_HPP_
+#ifndef GEOS_PHYSICSSOLVERS_SOLIDMECHANICS_KERNELS_IMPLCITSMALLSTRAINNEWMARK_IMPL_HPP_
+#define GEOS_PHYSICSSOLVERS_SOLIDMECHANICS_KERNELS_IMPLCITSMALLSTRAINNEWMARK_IMPL_HPP_
 
 #include "ImplicitSmallStrainNewmark.hpp"
 #include "ImplicitSmallStrainQuasiStatic_impl.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace solidMechanicsLagrangianFEMKernels
@@ -43,12 +43,13 @@ ImplicitSmallStrainNewmark( NodeManager const & nodeManager,
                             globalIndex const rankOffset,
                             CRSMatrixView< real64, globalIndex const > const inputMatrix,
                             arrayView1d< real64 > const inputRhs,
+                            real64 const inputDt,
                             real64 const (&inputGravityVector)[3],
                             real64 const inputNewmarkGamma,
                             real64 const inputNewmarkBeta,
                             real64 const inputMassDamping,
-                            real64 const inputStiffnessDamping,
-                            real64 const inputDt ):
+                            real64 const inputStiffnessDamping ):
+  // real64 const inputDt ):
   Base( nodeManager,
         edgeManager,
         faceManager,
@@ -60,22 +61,23 @@ ImplicitSmallStrainNewmark( NodeManager const & nodeManager,
         rankOffset,
         inputMatrix,
         inputRhs,
+        inputDt,
         inputGravityVector ),
   m_vtilde( nodeManager.getField< fields::solidMechanics::totalDisplacement >() ),
   m_uhattilde( nodeManager.getField< fields::solidMechanics::totalDisplacement >() ),
   m_newmarkGamma( inputNewmarkGamma ),
   m_newmarkBeta( inputNewmarkBeta ),
   m_massDamping( inputMassDamping ),
-  m_stiffnessDamping( inputStiffnessDamping ),
-  m_dt( inputDt )
+  m_stiffnessDamping( inputStiffnessDamping )
+  //m_dt( inputDt )
 {}
 
 
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
           typename FE_TYPE >
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+GEOS_HOST_DEVICE
+inline
 void ImplicitSmallStrainNewmark< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::
 setup( localIndex const k,
        StackVariables & stack ) const
@@ -95,8 +97,8 @@ setup( localIndex const k,
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
           typename FE_TYPE >
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+GEOS_HOST_DEVICE
+inline
 void ImplicitSmallStrainNewmark< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::
 quadraturePointKernel( localIndex const k,
                        localIndex const q,
@@ -135,8 +137,8 @@ quadraturePointKernel( localIndex const k,
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
           typename FE_TYPE >
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+GEOS_HOST_DEVICE
+inline
 real64 ImplicitSmallStrainNewmark< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::
 complete( localIndex const k,
           StackVariables & stack ) const
@@ -191,6 +193,6 @@ ImplicitSmallStrainNewmark< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::kernel
 
 } // namespace solidMechanicsLagrangianFEMKernels
 
-} // namespace geosx
+} // namespace geos
 
-#endif //GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_KERNELS_IMPLCITSMALLSTRAINNEWMARK_IMPL_HPP_
+#endif //GEOS_PHYSICSSOLVERS_SOLIDMECHANICS_KERNELS_IMPLCITSMALLSTRAINNEWMARK_IMPL_HPP_

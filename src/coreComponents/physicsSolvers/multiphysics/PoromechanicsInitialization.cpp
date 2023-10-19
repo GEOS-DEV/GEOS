@@ -19,11 +19,11 @@
 #include "PoromechanicsInitialization.hpp"
 
 #include "physicsSolvers/PhysicsSolverManager.hpp"
-#include "physicsSolvers/multiphysics/MultiphasePoromechanicsSolver.hpp"
-#include "physicsSolvers/multiphysics/SinglePhasePoromechanicsSolver.hpp"
+#include "physicsSolvers/multiphysics/MultiphasePoromechanics.hpp"
+#include "physicsSolvers/multiphysics/SinglePhasePoromechanics.hpp"
 #include "mainInterface/ProblemManager.hpp"
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -35,14 +35,14 @@ namespace
 template< typename POROMECHANICS_SOLVER > class
   PoromechanicsCatalogNames {};
 
-// Class specialization for a POROMECHANICS_SOLVER set to SinglePhasePoromechanicsSolver
-template<> class PoromechanicsCatalogNames< SinglePhasePoromechanicsSolver >
+// Class specialization for a POROMECHANICS_SOLVER set to SinglePhasePoromechanics
+template<> class PoromechanicsCatalogNames< SinglePhasePoromechanics >
 {
 public:
   static string name() { return "SinglePhasePoromechanicsInitialization"; }
 };
 // Class specialization for a POROMECHANICS_SOLVER set to MultiphasePoromechanics
-template<> class PoromechanicsCatalogNames< MultiphasePoromechanicsSolver >
+template<> class PoromechanicsCatalogNames< MultiphasePoromechanics >
 {
 public:
   static string name() { return "MultiphasePoromechanicsInitialization"; }
@@ -89,10 +89,11 @@ postProcessInput()
   ProblemManager & problemManager = this->getGroupByPath< ProblemManager >( "/Problem" );
   PhysicsSolverManager & physicsSolverManager = problemManager.getPhysicsSolverManager();
 
-  GEOSX_THROW_IF( !physicsSolverManager.hasGroup( m_poromechanicsSolverName ),
-                  GEOSX_FMT( "Task {}: physics solver named {} not found",
-                             getName(), m_poromechanicsSolverName ),
-                  InputError );
+  GEOS_THROW_IF( !physicsSolverManager.hasGroup( m_poromechanicsSolverName ),
+                 GEOS_FMT( "{}: physics solver named {} not found",
+                           getWrapperDataContext( viewKeyStruct::poromechanicsSolverNameString() ),
+                           m_poromechanicsSolverName ),
+                 InputError );
 
   m_poromechanicsSolver = &physicsSolverManager.getGroup< POROMECHANICS_SOLVER >( m_poromechanicsSolverName );
 }
@@ -101,22 +102,22 @@ template< typename POROMECHANICS_SOLVER >
 bool
 PoromechanicsInitialization< POROMECHANICS_SOLVER >::
 execute( real64 const time_n,
-         real64 const GEOSX_UNUSED_PARAM( dt ),
-         integer const GEOSX_UNUSED_PARAM( cycleNumber ),
-         integer const GEOSX_UNUSED_PARAM( eventCounter ),
-         real64 const GEOSX_UNUSED_PARAM( eventProgress ),
-         DomainPartition & GEOSX_UNUSED_PARAM( domain ) )
+         real64 const GEOS_UNUSED_PARAM( dt ),
+         integer const GEOS_UNUSED_PARAM( cycleNumber ),
+         integer const GEOS_UNUSED_PARAM( eventCounter ),
+         real64 const GEOS_UNUSED_PARAM( eventProgress ),
+         DomainPartition & GEOS_UNUSED_PARAM( domain ) )
 {
   if( m_performStressInitialization )
   {
-    GEOSX_LOG_LEVEL_RANK_0( 1, GEOSX_FMT( "Task `{}`: at time {}s, physics solver `{}` is set to perform stress initialization during the next time step(s)",
-                                          getName(), time_n, m_poromechanicsSolverName ) );
+    GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "Task `{}`: at time {}s, physics solver `{}` is set to perform stress initialization during the next time step(s)",
+                                        getName(), time_n, m_poromechanicsSolverName ) );
     m_poromechanicsSolver->setStressInitialization( true );
   }
   else
   {
-    GEOSX_LOG_LEVEL_RANK_0( 1, GEOSX_FMT( "Task `{}`: at time {}s, physics solver `{}` has completed stress initialization",
-                                          getName(), time_n, m_poromechanicsSolverName ) );
+    GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "Task `{}`: at time {}s, physics solver `{}` has completed stress initialization",
+                                        getName(), time_n, m_poromechanicsSolverName ) );
     m_poromechanicsSolver->setStressInitialization( false );
   }
 
@@ -126,10 +127,10 @@ execute( real64 const time_n,
 
 namespace
 {
-typedef PoromechanicsInitialization< MultiphasePoromechanicsSolver > MultiphasePoromechanicsInitialization;
-typedef PoromechanicsInitialization< SinglePhasePoromechanicsSolver > SinglePhasePoromechanicsInitialization;
+typedef PoromechanicsInitialization< MultiphasePoromechanics > MultiphasePoromechanicsInitialization;
+typedef PoromechanicsInitialization< SinglePhasePoromechanics > SinglePhasePoromechanicsInitialization;
 REGISTER_CATALOG_ENTRY( TaskBase, MultiphasePoromechanicsInitialization, string const &, Group * const )
 REGISTER_CATALOG_ENTRY( TaskBase, SinglePhasePoromechanicsInitialization, string const &, Group * const )
 }
 
-} /* namespace geosx */
+} /* namespace geos */

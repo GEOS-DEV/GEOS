@@ -12,8 +12,8 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#ifndef GEOSX_VTKFACEBLOCKUTILITIES_HPP
-#define GEOSX_VTKFACEBLOCKUTILITIES_HPP
+#ifndef GEOS_VTKFACEBLOCKUTILITIES_HPP
+#define GEOS_VTKFACEBLOCKUTILITIES_HPP
 
 #include "common/DataTypes.hpp"
 #include "CellBlockManager.hpp"
@@ -21,19 +21,20 @@
 #include <vtkDataSet.h>
 #include <vtkSmartPointer.h>
 
-namespace geosx
+namespace geos::vtk
 {
 
 /**
- * @brief Import face block @p faceBlockName from @p vtkMesh into the @p cellBlockManager.
- * @param[in] faceBlockName The face block name to include. It's both the name in the vtk file, and it will be the face block name.
- * @param[in] vtkMesh The vtk mesh.
- * @param[inout] cellBlockManager The face block instance will be attached to the @p cellBlockManager
+ * @brief Attach the face block information to the cell block manager.
+ * @param faceBlockName[in] The name of the face block.
+ * @param faceMesh[in] The vtk mesh for the face block.
+ * @param mesh[in] The vtk volumic mesh.
+ * @param cellBlockManager[inout] The cell block manager that will receive the face block information.
  */
 void importFractureNetwork( string const & faceBlockName,
-                            vtkSmartPointer< vtkDataSet > vtkMesh,
+                            vtkSmartPointer< vtkDataSet > faceMesh,
+                            vtkSmartPointer< vtkDataSet > mesh,
                             CellBlockManager & cellBlockManager );
-
 }
 
 #endif // include guard

@@ -23,7 +23,7 @@
 #include "physicsSolvers/PhysicsSolverManager.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
 
-namespace geosx
+namespace geos
 {
 
 using namespace constitutive;
@@ -61,11 +61,11 @@ void SolidMechanicsStatistics::registerDataOnMesh( Group & meshBodies )
   } );
 }
 
-bool SolidMechanicsStatistics::execute( real64 const GEOSX_UNUSED_PARAM( time_n ),
-                                        real64 const GEOSX_UNUSED_PARAM( dt ),
-                                        integer const GEOSX_UNUSED_PARAM( cycleNumber ),
-                                        integer const GEOSX_UNUSED_PARAM( eventCounter ),
-                                        real64 const GEOSX_UNUSED_PARAM( eventProgress ),
+bool SolidMechanicsStatistics::execute( real64 const GEOS_UNUSED_PARAM( time_n ),
+                                        real64 const GEOS_UNUSED_PARAM( dt ),
+                                        integer const GEOS_UNUSED_PARAM( cycleNumber ),
+                                        integer const GEOS_UNUSED_PARAM( eventCounter ),
+                                        real64 const GEOS_UNUSED_PARAM( eventProgress ),
                                         DomainPartition & domain )
 {
   m_solver->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
@@ -79,7 +79,7 @@ bool SolidMechanicsStatistics::execute( real64 const GEOSX_UNUSED_PARAM( time_n 
 
 void SolidMechanicsStatistics::computeNodeStatistics( MeshLevel & mesh ) const
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   // Step 1: increment the min/max quantities
 
@@ -102,7 +102,7 @@ void SolidMechanicsStatistics::computeNodeStatistics( MeshLevel & mesh ) const
                                                          maxDispZ,
                                                          minDispX,
                                                          minDispY,
-                                                         minDispZ] GEOSX_HOST_DEVICE ( localIndex const a )
+                                                         minDispZ] GEOS_HOST_DEVICE ( localIndex const a )
   {
     if( ghostRank[a] < 0 )
     {
@@ -138,18 +138,18 @@ void SolidMechanicsStatistics::computeNodeStatistics( MeshLevel & mesh ) const
                          MpiWrapper::getMpiOp( MpiWrapper::Reduction::Min ),
                          MPI_COMM_GEOSX );
 
-  GEOSX_LOG_LEVEL_RANK_0( 1, getName() << ": Min displacement (X, Y, Z): "
-                                       << nodeStatistics.minDisplacement[0] << ", "
-                                       << nodeStatistics.minDisplacement[1] << ", "
-                                       << nodeStatistics.minDisplacement[2] << " m" );
-  GEOSX_LOG_LEVEL_RANK_0( 1, getName() << ": Max displacement (X, Y, Z): "
-                                       << nodeStatistics.maxDisplacement[0] << ", "
-                                       << nodeStatistics.maxDisplacement[1] << ", "
-                                       << nodeStatistics.maxDisplacement[2] << " m" );
+  GEOS_LOG_LEVEL_RANK_0( 1, getName() << ": Min displacement (X, Y, Z): "
+                                      << nodeStatistics.minDisplacement[0] << ", "
+                                      << nodeStatistics.minDisplacement[1] << ", "
+                                      << nodeStatistics.minDisplacement[2] << " m" );
+  GEOS_LOG_LEVEL_RANK_0( 1, getName() << ": Max displacement (X, Y, Z): "
+                                      << nodeStatistics.maxDisplacement[0] << ", "
+                                      << nodeStatistics.maxDisplacement[1] << ", "
+                                      << nodeStatistics.maxDisplacement[2] << " m" );
 }
 
 REGISTER_CATALOG_ENTRY( TaskBase,
                         SolidMechanicsStatistics,
                         string const &, dataRepository::Group * const )
 
-} /* namespace geosx */
+} /* namespace geos */

@@ -16,13 +16,13 @@
  * @file IsothermalCompositionalMultiphaseHybridFVMKernels.hpp
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_FLUIDFLOW_ISOTHERMALCOMPOSITIONALMULTIPHASEHYBRIDFVMKERNELS_HPP
-#define GEOSX_PHYSICSSOLVERS_FLUIDFLOW_ISOTHERMALCOMPOSITIONALMULTIPHASEHYBRIDFVMKERNELS_HPP
+#ifndef GEOS_PHYSICSSOLVERS_FLUIDFLOW_ISOTHERMALCOMPOSITIONALMULTIPHASEHYBRIDFVMKERNELS_HPP
+#define GEOS_PHYSICSSOLVERS_FLUIDFLOW_ISOTHERMALCOMPOSITIONALMULTIPHASEHYBRIDFVMKERNELS_HPP
 
 #include "codingUtilities/Utilities.hpp"
 #include "common/DataTypes.hpp"
-#include "constitutive/fluid/MultiFluidBase.hpp"
-#include "constitutive/fluid/MultiFluidFields.hpp"
+#include "constitutive/fluid/multifluid/MultiFluidBase.hpp"
+#include "constitutive/fluid/multifluid/MultiFluidFields.hpp"
 #include "constitutive/permeability/PermeabilityBase.hpp"
 #include "constitutive/relativePermeability/RelativePermeabilityBase.hpp"
 #include "constitutive/solid/porosity/PorosityBase.hpp"
@@ -36,7 +36,7 @@
 #include "physicsSolvers/fluidFlow/StencilAccessors.hpp"
 
 
-namespace geosx
+namespace geos
 {
 
 namespace isothermalCompositionalMultiphaseHybridFVMKernels
@@ -181,7 +181,7 @@ public:
    */
   struct StackVariables
   {
-    GEOSX_HOST_DEVICE
+    GEOS_HOST_DEVICE
     StackVariables()
       : transMatrix( numFace, numFace ),
       transMatrixGrav( numFace, numFace )
@@ -233,7 +233,7 @@ public:
    * @param[in] ei the element index
    * @param[in] stack the stack variables
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void setup( localIndex const ei,
               StackVariables & stack ) const
   {
@@ -255,7 +255,7 @@ public:
    * @param[in] ei the element index
    * @param[in] stack the stack variables
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void computeGradient( localIndex const ei,
                         StackVariables & stack ) const
   {
@@ -346,7 +346,7 @@ public:
    * @param[in] iFaceLoc the index of the face
    * @param[in] stack the stack variables
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void upwindViscousCoefficient( localIndex const (&local)[3],
                                  localIndex const (&neighbor)[3],
                                  localIndex const iFaceLoc,
@@ -437,7 +437,7 @@ public:
    * @param[in] iFaceLoc the index of the face
    * @param[in] stack the stack variables
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void assembleViscousFlux( localIndex const (&local)[3],
                             localIndex const (&neighbor)[3],
                             localIndex const iFaceLoc,
@@ -502,7 +502,7 @@ public:
    * @param[in] iFaceLoc the index of the face
    * @param[in] stack the stack variables
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void upwindBuoyancyCoefficient( localIndex const (&local)[3],
                                   localIndex const (&neighbor)[3],
                                   localIndex const iFaceLoc,
@@ -624,7 +624,7 @@ public:
    * @param[in] iFaceLoc the index of the face
    * @param[in] stack the stack variables
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void computePhaseGravTerm( localIndex const (&local)[ 3 ],
                              localIndex const (&neighbor)[ 3 ],
                              real64 const & transGravCoef,
@@ -712,7 +712,7 @@ public:
    * @param[out] dTotalMob_dCompDens the upwinded total mobility derivative wrt component density
    * @param[in] stack the stack variables
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void computeUpwindedTotalMobility( localIndex const (&local)[3],
                                      localIndex const (&neighbor)[3],
                                      real64 & totalMob,
@@ -769,7 +769,7 @@ public:
    * @param[in] eid the downwind element index
    * @param[in] posd the position of the downwind element (local or neighbor)x
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void setIndicesForMobilityProductUpwinding( localIndex const (&local)[3],
                                               localIndex const (&neighbor)[3],
                                               real64 const & gravTerm,
@@ -800,7 +800,7 @@ public:
    * @param[in] totalMobPos the position of the elements in the upwinded total mobility (local or neighbor)
    * @param[in] stack the stack variables
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void setIndicesForTotalMobilityUpwinding( localIndex const (&local)[3],
                                             localIndex const (&neighbor)[3],
                                             localIndex ( & totalMobIds )[numPhase][3],
@@ -853,13 +853,13 @@ public:
    * @param[in] iFaceLoc the face index
    * @param[in] stack the stack variables
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void assembleBuoyancyFlux( localIndex const (&local)[3],
                              localIndex const (&neighbor)[3],
                              localIndex const iFaceLoc,
                              StackVariables & stack ) const
   {
-    GEOSX_UNUSED_VAR( local, neighbor );
+    GEOS_UNUSED_VAR( local, neighbor );
 
     localIndex const elemVarsOffset = numDof*(iFaceLoc+1);
 
@@ -903,7 +903,7 @@ public:
    * @param[in] ei the element index
    * @param[in] stack the stack variables
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void computeFluxDivergence( localIndex const ei,
                               StackVariables & stack ) const
   {
@@ -952,12 +952,12 @@ public:
    * @param[in] kernelOp the function used to customize the kernel
    */
   template< typename FUNC = NoOpFunc >
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void compute( localIndex const ei,
                 StackVariables & stack,
                 FUNC && kernelOp = NoOpFunc{} ) const
   {
-    GEOSX_UNUSED_VAR( ei, stack, kernelOp );
+    GEOS_UNUSED_VAR( ei, stack, kernelOp );
 
     real64 const perm[ 3 ] = { m_elemPerm[ei][0][0], m_elemPerm[ei][0][1], m_elemPerm[ei][0][2] };
 
@@ -1020,7 +1020,7 @@ public:
    * @param[in] ei the element index
    * @param[inout] stack the stack variables
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void complete( localIndex const ei,
                  StackVariables & stack ) const
   {
@@ -1048,8 +1048,8 @@ public:
         localIndex const eqnRowLocalIndex =
           LvArray::integerConversion< localIndex >( stack.cellCenteredEqnRowIndex + ic );
 
-        GEOSX_ASSERT_GE( eqnRowLocalIndex, 0 );
-        GEOSX_ASSERT_GT( m_localMatrix.numRows(), eqnRowLocalIndex );
+        GEOS_ASSERT_GE( eqnRowLocalIndex, 0 );
+        GEOS_ASSERT_GT( m_localMatrix.numRows(), eqnRowLocalIndex );
 
         // residual
         m_localRhs[eqnRowLocalIndex] += stack.divMassFluxes[ic];
@@ -1078,8 +1078,8 @@ public:
     {
       if( m_faceGhostRank[m_elemToFaces[ei][iFaceLoc]] < 0 )
       {
-        GEOSX_ASSERT_GE( stack.faceCenteredEqnRowIndex[iFaceLoc], 0 );
-        GEOSX_ASSERT_GT( m_localMatrix.numRows(), stack.faceCenteredEqnRowIndex[iFaceLoc] );
+        GEOS_ASSERT_GE( stack.faceCenteredEqnRowIndex[iFaceLoc], 0 );
+        GEOS_ASSERT_GT( m_localMatrix.numRows(), stack.faceCenteredEqnRowIndex[iFaceLoc] );
 
         // residual
         RAJA::atomicAdd( parallelDeviceAtomic{}, &m_localRhs[stack.faceCenteredEqnRowIndex[iFaceLoc]], stack.oneSidedVolFlux[iFaceLoc] );
@@ -1118,9 +1118,9 @@ public:
   launch( localIndex const numElems,
           KERNEL_TYPE const & kernelComponent )
   {
-    GEOSX_MARK_FUNCTION;
+    GEOS_MARK_FUNCTION;
 
-    forAll< POLICY >( numElems, [=] GEOSX_HOST_DEVICE ( localIndex const ei )
+    forAll< POLICY >( numElems, [=] GEOS_HOST_DEVICE ( localIndex const ei )
     {
       typename KERNEL_TYPE::StackVariables stack;
 
@@ -1300,7 +1300,7 @@ public:
         }
         else
         {
-          GEOSX_ERROR( "Unsupported number of components: " << numComps );
+          GEOS_ERROR( "Unsupported number of components: " << numComps );
         }
       }
       else if( numPhases == 3 )
@@ -1335,12 +1335,12 @@ public:
         }
         else
         {
-          GEOSX_ERROR( "Unsupported number of components: " << numComps );
+          GEOS_ERROR( "Unsupported number of components: " << numComps );
         }
       }
       else
       {
-        GEOSX_ERROR( "Unsupported number of phases: " << numPhases );
+        GEOS_ERROR( "Unsupported number of phases: " << numPhases );
       }
     } );
   }
@@ -1394,7 +1394,7 @@ public:
    * @param[in] phaseMobilityKernelOp the function used to customize the kernel
    */
   template< typename FUNC = NoOpFunc >
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void compute( localIndex const ei,
                 FUNC && phaseMobilityKernelOp = NoOpFunc{} ) const
   {
@@ -1598,7 +1598,7 @@ public:
     m_totalDens_n( multiFluidAccessors.get( fields::multifluid::totalDensity_n {} ) )
   {}
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void computeMassNormalizer( localIndex const kf,
                               real64 & massNormalizer ) const
   {
@@ -1622,7 +1622,7 @@ public:
     massNormalizer /= elemCounter; // average mass in the adjacent cells at the previous converged time step
   }
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   virtual void computeLinf( localIndex const kf,
                             LinfStackVariables & stack ) const override
   {
@@ -1637,7 +1637,7 @@ public:
     }
   }
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   virtual void computeL2( localIndex const kf,
                           L2StackVariables & stack ) const override
   {
@@ -1753,7 +1753,7 @@ struct SolutionCheckKernel
   {
     RAJA::ReduceMin< ReducePolicy< POLICY >, integer > check( 1 );
 
-    forAll< POLICY >( dofNumber.size(), [=] GEOSX_HOST_DEVICE ( localIndex const iface )
+    forAll< POLICY >( dofNumber.size(), [=] GEOS_HOST_DEVICE ( localIndex const iface )
     {
       if( ghostRank[iface] < 0 && dofNumber[iface] >= 0 )
       {
@@ -1828,4 +1828,4 @@ struct PrecomputeKernel
 
 } // namespace geosx
 
-#endif //GEOSX_PHYSICSSOLVERS_FLUIDFLOW_ISOTHERMALCOMPOSITIONALMULTIPHASEHYBRIDFVMKERNELS_HPP
+#endif // GEOS_PHYSICSSOLVERS_FLUIDFLOW_ISOTHERMALCOMPOSITIONALMULTIPHASEHYBRIDFVMKERNELS_HPP

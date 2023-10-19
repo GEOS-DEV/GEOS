@@ -18,7 +18,7 @@
 
 #include "CarmanKozenyPermeability.hpp"
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -28,7 +28,8 @@ namespace constitutive
 
 
 CarmanKozenyPermeability::CarmanKozenyPermeability( string const & name, Group * const parent ):
-  PermeabilityBase( name, parent )
+  PermeabilityBase( name, parent ),
+  m_anisotropy{ 1.0, 1.0, 1.0 }
 {
   registerWrapper( viewKeyStruct::particleDiameterString(), &m_particleDiameter ).
     setInputFlag( InputFlags::REQUIRED ).
@@ -37,6 +38,11 @@ CarmanKozenyPermeability::CarmanKozenyPermeability( string const & name, Group *
   registerWrapper( viewKeyStruct::sphericityString(), &m_sphericity ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Sphericity of the particles." );
+
+  registerWrapper( viewKeyStruct::anisotropyString(), &m_anisotropy ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDefaultValue( m_anisotropy ).
+    setDescription( "Anisotropy factors for three permeability components." );
 
   registerWrapper( viewKeyStruct::dPerm_dPorosityString(), &m_dPerm_dPorosity );
 }
@@ -59,4 +65,4 @@ void CarmanKozenyPermeability::allocateConstitutiveData( dataRepository::Group &
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, CarmanKozenyPermeability, string const &, Group * const )
 
 }
-} /* namespace geosx */
+} /* namespace geos */

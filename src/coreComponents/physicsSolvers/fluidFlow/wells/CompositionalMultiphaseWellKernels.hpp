@@ -16,14 +16,14 @@
  * @file CompositionalMultiphaseWellKernels.hpp
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_FLUIDFLOW_WELLS_COMPOSITIONALMULTIPHASEWELLKERNELS_HPP
-#define GEOSX_PHYSICSSOLVERS_FLUIDFLOW_WELLS_COMPOSITIONALMULTIPHASEWELLKERNELS_HPP
+#ifndef GEOS_PHYSICSSOLVERS_FLUIDFLOW_WELLS_COMPOSITIONALMULTIPHASEWELLKERNELS_HPP
+#define GEOS_PHYSICSSOLVERS_FLUIDFLOW_WELLS_COMPOSITIONALMULTIPHASEWELLKERNELS_HPP
 
 #include "codingUtilities/Utilities.hpp"
 #include "common/DataTypes.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
-#include "constitutive/fluid/MultiFluidBase.hpp"
-#include "constitutive/fluid/MultiFluidFields.hpp"
+#include "constitutive/fluid/multifluid/MultiFluidBase.hpp"
+#include "constitutive/fluid/multifluid/MultiFluidFields.hpp"
 #include "constitutive/relativePermeability/RelativePermeabilityBase.hpp"
 #include "constitutive/relativePermeability/RelativePermeabilityFields.hpp"
 #include "mesh/ElementRegionManager.hpp"
@@ -36,7 +36,7 @@
 #include "physicsSolvers/fluidFlow/wells/WellControls.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellSolverBaseFields.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace compositionalMultiphaseWellKernels
@@ -82,8 +82,10 @@ struct ControlEquationHelper
   using ROFFSET = compositionalMultiphaseWellKernels::RowOffset;
   using COFFSET = compositionalMultiphaseWellKernels::ColOffset;
 
-  GEOSX_HOST_DEVICE
-  static void
+  GEOS_HOST_DEVICE
+  inline
+  static
+  void
   switchControl( bool const isProducer,
                  WellControls::Control const & currentControl,
                  integer const phasePhaseIndex,
@@ -96,7 +98,8 @@ struct ControlEquationHelper
                  WellControls::Control & newControl );
 
   template< integer NC >
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
+  inline
   static void
   compute( globalIndex const rankOffset,
            WellControls::Control const currentControl,
@@ -131,7 +134,8 @@ struct FluxKernel
   using COFFSET = compositionalMultiphaseWellKernels::ColOffset;
 
   template< integer NC >
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
+  inline
   static void
     computeExit( real64 const & dt,
                  real64 const ( &compFlux )[NC],
@@ -143,7 +147,8 @@ struct FluxKernel
                  real64 ( &oneSidedFluxJacobian_dPresCompUp )[NC][NC + 1] );
 
   template< integer NC >
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
+  inline
   static void
     compute( real64 const & dt,
              real64 const ( &compFlux )[NC],
@@ -180,7 +185,8 @@ struct PressureRelationKernel
   using COFFSET = compositionalMultiphaseWellKernels::ColOffset;
 
   template< integer NC >
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
+  inline
   static void
     compute( real64 const & gravCoef,
              real64 const & gravCoefNext,
@@ -257,7 +263,8 @@ struct PerforationKernel
 
 
   template< integer NC, integer NP >
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
+  inline
   static void
   compute( bool const & disableReservoirToWellFlow,
            real64 const & resPres,
@@ -331,7 +338,8 @@ struct AccumulationKernel
   using COFFSET = compositionalMultiphaseWellKernels::ColOffset;
 
   template< integer NC >
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
+  inline
   static void
     compute( integer const numPhases,
              real64 const & volume,
@@ -380,7 +388,8 @@ struct VolumeBalanceKernel
   using COFFSET = compositionalMultiphaseWellKernels::ColOffset;
 
   template< integer NC >
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
+  inline
   static void
     compute( integer const numPhases,
              real64 const & volume,
@@ -529,7 +538,8 @@ public:
    * @param[in] totalMassDensityKernelOp the function used to customize the kernel
    */
   template< typename FUNC = NoOpFunc >
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
+  inline
   void compute( localIndex const ei,
                 FUNC && totalMassDensityKernelOp = NoOpFunc{} ) const
   {
@@ -567,6 +577,7 @@ public:
 
       totalMassDensityKernelOp( ip, totalMassDens, dTotalMassDens_dPres, dTotalMassDens_dCompDens );
     }
+
   }
 
 protected:
@@ -682,7 +693,7 @@ public:
     m_totalDens_n( fluid.totalDensity_n() )
   {}
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   virtual void computeLinf( localIndex const iwelem,
                             LinfStackVariables & stack ) const override
   {
@@ -767,12 +778,12 @@ public:
     }
   }
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   virtual void computeL2( localIndex const iwelem,
                           L2StackVariables & stack ) const override
   {
-    GEOSX_UNUSED_VAR( iwelem, stack );
-    GEOSX_ERROR( "The L2 norm is not implemented for CompositionalMultiphaseWell" );
+    GEOS_UNUSED_VAR( iwelem, stack );
+    GEOS_ERROR( "The L2 norm is not implemented for CompositionalMultiphaseWell" );
   }
 
 
@@ -883,22 +894,26 @@ public:
    * @param[in] localSolution the Newton update
    */
   template< typename POLICY >
-  static real64
+  static isothermalCompositionalMultiphaseBaseKernels::ScalingForSystemSolutionKernel::StackVariables
   createAndLaunch( real64 const maxRelativePresChange,
                    real64 const maxCompFracChange,
                    globalIndex const rankOffset,
                    integer const numComp,
                    string const dofKey,
-                   ElementSubRegionBase const & subRegion,
+                   ElementSubRegionBase & subRegion,
                    arrayView1d< real64 const > const localSolution )
   {
     arrayView1d< real64 const > const pressure =
       subRegion.getField< fields::well::pressure >();
     arrayView2d< real64 const, compflow::USD_COMP > const compDens =
       subRegion.getField< fields::well::globalCompDensity >();
+    arrayView1d< real64 > pressureScalingFactor =
+      subRegion.getField< fields::well::pressureScalingFactor >();
+    arrayView1d< real64 > compDensScalingFactor =
+      subRegion.getField< fields::well::globalCompDensityScalingFactor >();
     isothermalCompositionalMultiphaseBaseKernels::
       ScalingForSystemSolutionKernel kernel( maxRelativePresChange, maxCompFracChange, rankOffset,
-                                             numComp, dofKey, subRegion, localSolution, pressure, compDens );
+                                             numComp, dofKey, subRegion, localSolution, pressure, compDens, pressureScalingFactor, compDensScalingFactor );
     return isothermalCompositionalMultiphaseBaseKernels::
              ScalingForSystemSolutionKernel::
              launch< POLICY >( subRegion.size(), kernel );
@@ -929,18 +944,21 @@ public:
   template< typename POLICY >
   static integer
   createAndLaunch( integer const allowCompDensChopping,
+                   CompositionalMultiphaseFVM::ScalingType const scalingType,
                    real64 const scalingFactor,
                    globalIndex const rankOffset,
                    integer const numComp,
                    string const dofKey,
-                   ElementSubRegionBase const & subRegion,
+                   ElementSubRegionBase & subRegion,
                    arrayView1d< real64 const > const localSolution )
   {
     arrayView1d< real64 const > const pressure = subRegion.getField< fields::well::pressure >();
     arrayView2d< real64 const, compflow::USD_COMP > const compDens = subRegion.getField< fields::well::globalCompDensity >();
+    arrayView1d< real64 > pressureScalingFactor = subRegion.getField< fields::well::pressureScalingFactor >();
+    arrayView1d< real64 > compDensScalingFactor = subRegion.getField< fields::well::globalCompDensityScalingFactor >();
     isothermalCompositionalMultiphaseBaseKernels::
-      SolutionCheckKernel kernel( allowCompDensChopping, scalingFactor, rankOffset,
-                                  numComp, dofKey, subRegion, localSolution, pressure, compDens );
+      SolutionCheckKernel kernel( allowCompDensChopping, scalingType, scalingFactor, rankOffset,
+                                  numComp, dofKey, subRegion, localSolution, pressure, compDens, pressureScalingFactor, compDensScalingFactor );
     return isothermalCompositionalMultiphaseBaseKernels::
              SolutionCheckKernel::
              launch< POLICY >( subRegion.size(), kernel );
@@ -951,6 +969,6 @@ public:
 
 } // end namespace compositionalMultiphaseWellKernels
 
-} // end namespace geosx
+} // end namespace geos
 
-#endif //GEOSX_PHYSICSSOLVERS_FLUIDFLOW_WELLS_COMPOSITIONALMULTIPHASEWELLKERNELS_HPP
+#endif //GEOS_PHYSICSSOLVERS_FLUIDFLOW_WELLS_COMPOSITIONALMULTIPHASEWELLKERNELS_HPP

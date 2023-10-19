@@ -16,12 +16,12 @@
  * @file ThermalSinglePhasePoromechanics.hpp
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_POROMECHANICSKERNELS_THERMALSINGLEPHASEPOROMECHANICS_HPP_
-#define GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_POROMECHANICSKERNELS_THERMALSINGLEPHASEPOROMECHANICS_HPP_
+#ifndef GEOS_PHYSICSSOLVERS_MULTIPHYSICS_POROMECHANICSKERNELS_THERMALSINGLEPHASEPOROMECHANICS_HPP_
+#define GEOS_PHYSICSSOLVERS_MULTIPHYSICS_POROMECHANICSKERNELS_THERMALSINGLEPHASEPOROMECHANICS_HPP_
 
 #include "physicsSolvers/multiphysics/poromechanicsKernels/SinglePhasePoromechanics.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace thermalPoromechanicsKernels
@@ -29,11 +29,7 @@ namespace thermalPoromechanicsKernels
 
 /**
  * @brief Implements kernels for solving quasi-static thermal single-phase poromechanics.
- * @copydoc geosx::finiteElement::ImplicitKernelBase
- * @tparam NUM_NODES_PER_ELEM The number of nodes per element for the
- *                            @p SUBREGION_TYPE.
- * @tparam UNUSED An unused parameter since we are assuming that the test and
- *                trial space have the same number of support points.
+ * @copydoc geos::finiteElement::ImplicitKernelBase
  *
  */
 template< typename SUBREGION_TYPE,
@@ -73,10 +69,11 @@ public:
   using Base::m_dFluidDensity_dPressure;
   using Base::m_solidDensity;
   using Base::m_flowDofNumber;
+  using Base::m_dt;
 
   /**
    * @brief Constructor
-   * @copydoc geosx::finiteElement::ImplicitKernelBase::ImplicitKernelBase
+   * @copydoc geos::finiteElement::ImplicitKernelBase::ImplicitKernelBase
    * @param gravityVector The gravity vector.
    */
   ThermalSinglePhasePoromechanics( NodeManager const & nodeManager,
@@ -90,6 +87,7 @@ public:
                                    globalIndex const rankOffset,
                                    CRSMatrixView< real64, globalIndex const > const inputMatrix,
                                    arrayView1d< real64 > const inputRhs,
+                                   real64 const inputDt,
                                    real64 const (&gravityVector)[3],
                                    string const inputFlowDofKey,
                                    string const fluidModelKey );
@@ -97,7 +95,7 @@ public:
   //*****************************************************************************
   /**
    * @class StackVariables
-   * @copydoc geosx::finiteElement::ImplicitKernelBase::StackVariables
+   * @copydoc geos::finiteElement::ImplicitKernelBase::StackVariables
    *
    * Adds a stack array for the displacement, incremental displacement, and the
    * constitutive stiffness.
@@ -109,7 +107,7 @@ public:
     static constexpr int numDispDofPerElem =  Base::StackVariables::maxNumRows;
 
     /// Constructor.
-    GEOSX_HOST_DEVICE
+    GEOS_HOST_DEVICE
     StackVariables():
       Base::StackVariables(),
             dLocalResidualMomentum_dTemperature{ {0.0} },
@@ -157,9 +155,9 @@ public:
 
   /**
    * @brief Copy global values from primary field to a local stack array.
-   * @copydoc ::geosx::finiteElement::ImplicitKernelBase::setup
+   * @copydoc ::geos::finiteElement::ImplicitKernelBase::setup
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void setup( localIndex const k,
               StackVariables & stack ) const;
 
@@ -171,7 +169,7 @@ public:
    * @param[in] q the quadrature point index
    * @param[inout] stack the stack variables
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void smallStrainUpdate( localIndex const k,
                           localIndex const q,
                           StackVariables & stack ) const;
@@ -187,7 +185,7 @@ public:
    * @param[in] dSolidDensity_dPressure the derivative of solid density wrt pressure
    * @param[inout] stack the stack variables
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void computeBodyForce( localIndex const k,
                          localIndex const q,
                          real64 const & porosity,
@@ -208,7 +206,7 @@ public:
    * @param[in] dPorosity_dTemperature the derivative of porosity wrt temperature
    * @param[inout] stack the stack variables
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void computeFluidIncrement( localIndex const k,
                               localIndex const q,
                               real64 const & porosity,
@@ -230,7 +228,7 @@ public:
    *   totalStress = totalStress( strainIncrement, pressure, temperature )
    *   bodyForce   = bodyForce( strainIncrement, pressure, temperature )
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void assembleMomentumBalanceTerms( real64 const ( &N )[numNodesPerElem],
                                      real64 const ( &dNdX )[numNodesPerElem][3],
                                      real64 const & detJxW,
@@ -247,25 +245,25 @@ public:
    *   fluidMass = fluidMass( strainIncrement, pressure, temperature )
    *   fluidMassFlux = fluidMassFlux( pressure, temperature )
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void assembleElementBasedFlowTerms( real64 const ( &dNdX )[numNodesPerElem][3],
                                       real64 const & detJxW,
                                       StackVariables & stack ) const;
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void quadraturePointKernel( localIndex const k,
                               localIndex const q,
                               StackVariables & stack ) const;
 
   /**
-   * @copydoc geosx::finiteElement::ImplicitKernelBase::complete
+   * @copydoc geos::finiteElement::ImplicitKernelBase::complete
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   real64 complete( localIndex const k,
                    StackVariables & stack ) const;
 
   /**
-   * @copydoc geosx::finiteElement::KernelBase::kernelLaunch
+   * @copydoc geos::finiteElement::KernelBase::kernelLaunch
    *
    * ### SinglePhasePoromechancis Description
    * Copy of the KernelBase::kernelLaunch function
@@ -304,12 +302,13 @@ using ThermalSinglePhasePoromechanicsKernelFactory =
                                 globalIndex const,
                                 CRSMatrixView< real64, globalIndex const > const,
                                 arrayView1d< real64 > const,
+                                real64 const,
                                 real64 const (&)[3],
                                 string const,
                                 string const >;
 
 } // namespace thermalPoromechanicsKernels
 
-} // namespace geosx
+} // namespace geos
 
-#endif // GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_POROMECHANICSKERNELS_THERMALSINGLEPHASEPOROMECHANICS_HPP_
+#endif // GEOS_PHYSICSSOLVERS_MULTIPHYSICS_POROMECHANICSKERNELS_THERMALSINGLEPHASEPOROMECHANICS_HPP_

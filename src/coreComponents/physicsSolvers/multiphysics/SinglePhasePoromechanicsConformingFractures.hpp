@@ -16,21 +16,21 @@
  * @file SinglePhasePoromechanicsConformingFractures.hpp
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_SINGLEPHASEPOROMECHANICSCONFORMINGFRACTURES_HPP_
-#define GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_SINGLEPHASEPOROMECHANICSCONFORMINGFRACTURES_HPP_
+#ifndef GEOS_PHYSICSSOLVERS_MULTIPHYSICS_SINGLEPHASEPOROMECHANICSCONFORMINGFRACTURES_HPP_
+#define GEOS_PHYSICSSOLVERS_MULTIPHYSICS_SINGLEPHASEPOROMECHANICSCONFORMINGFRACTURES_HPP_
 
-#include "physicsSolvers/multiphysics/SinglePhasePoromechanicsSolver.hpp"
+#include "physicsSolvers/multiphysics/SinglePhasePoromechanics.hpp"
 #include "physicsSolvers/multiphysics/CoupledSolver.hpp"
 #include "physicsSolvers/contact/LagrangianContactSolver.hpp"
 
-namespace geosx
+namespace geos
 {
 
-class SinglePhasePoromechanicsConformingFractures : public CoupledSolver< SinglePhasePoromechanicsSolver, LagrangianContactSolver >
+class SinglePhasePoromechanicsConformingFractures : public CoupledSolver< SinglePhasePoromechanics, LagrangianContactSolver >
 {
 public:
 
-  using Base = CoupledSolver< SinglePhasePoromechanicsSolver, LagrangianContactSolver >;
+  using Base = CoupledSolver< SinglePhasePoromechanics, LagrangianContactSolver >;
   using Base::m_solvers;
   using Base::m_dofManager;
   using Base::m_localMatrix;
@@ -77,7 +77,7 @@ public:
    * @brief accessor for the pointer to the poromechanics solver
    * @return a pointer to the flow solver
    */
-  SinglePhasePoromechanicsSolver * poromechanicsSolver() const
+  SinglePhasePoromechanics * poromechanicsSolver() const
   {
     return std::get< toUnderlying( SolverType::Poromechanics ) >( m_solvers );
   }
@@ -122,6 +122,12 @@ public:
   void outputConfigurationStatistics( DomainPartition const & domain ) const override final;
 
   /**@}*/
+
+  struct viewKeyStruct : Base::viewKeyStruct
+  {
+    /// Flag to indicate that the simulation is thermal
+    constexpr static char const * isThermalString() { return "isThermal"; }
+  };
 
 private:
 
@@ -187,6 +193,19 @@ private:
                                    DofManager const & dofManager,
                                    CRSMatrix< real64, globalIndex > & localMatrix );
 
+
+  template< typename CONSTITUTIVE_BASE,
+            typename KERNEL_WRAPPER,
+            typename ... PARAMS >
+  real64 assemblyLaunch( MeshLevel & mesh,
+                         DofManager const & dofManager,
+                         arrayView1d< string const > const & regionNames,
+                         string const & materialNamesString,
+                         CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                         arrayView1d< real64 > const & localRhs,
+                         real64 const dt,
+                         PARAMS && ... params );
+
   /**
    * @brief
    *
@@ -213,8 +232,51 @@ private:
   std::unique_ptr< CRSMatrix< real64, localIndex > > m_derivativeFluxResidual_dAperture;
 
   string const m_pressureKey = SinglePhaseBase::viewKeyStruct::elemDofFieldString();
+
+  /// flag to determine whether or not this is a thermal simulation
+  integer m_isThermal;
 };
 
-} /* namespace geosx */
+template< typename CONSTITUTIVE_BASE,
+          typename KERNEL_WRAPPER,
+          typename ... PARAMS >
+real64 SinglePhasePoromechanicsConformingFractures::assemblyLaunch( MeshLevel & mesh,
+                                                                    DofManager const & dofManager,
+                                                                    arrayView1d< string const > const & regionNames,
+                                                                    string const & materialNamesString,
+                                                                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                                    arrayView1d< real64 > const & localRhs,
+                                                                    real64 const dt,
+                                                                    PARAMS && ... params )
+{
+  GEOS_MARK_FUNCTION;
 
-#endif /* GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_SINGLEPHASEPOROMECHANICSCONFORMINGFRACTURES_HPP_ */
+  NodeManager const & nodeManager = mesh.getNodeManager();
+
+  string const dofKey = dofManager.getKey( fields::solidMechanics::totalDisplacement::key() );
+  arrayView1d< globalIndex const > const & dispDofNumber = nodeManager.getReference< globalIndex_array >( dofKey );
+
+  real64 const gravityVectorData[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( gravityVector() );
+
+  KERNEL_WRAPPER kernelWrapper( dispDofNumber,
+                                dofManager.rankOffset(),
+                                localMatrix,
+                                localRhs,
+                                dt,
+                                gravityVectorData,
+                                std::forward< PARAMS >( params )... );
+
+  return finiteElement::
+           regionBasedKernelApplication< parallelDevicePolicy< >,
+                                         CONSTITUTIVE_BASE,
+                                         CellElementSubRegion >( mesh,
+                                                                 regionNames,
+                                                                 contactSolver()->getSolidSolver()->getDiscretizationName(),
+                                                                 materialNamesString,
+                                                                 kernelWrapper );
+}
+
+
+} /* namespace geos */
+
+#endif /* GEOS_PHYSICSSOLVERS_MULTIPHYSICS_SINGLEPHASEPOROMECHANICSCONFORMINGFRACTURES_HPP_ */

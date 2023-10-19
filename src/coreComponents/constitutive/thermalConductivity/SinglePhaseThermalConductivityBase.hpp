@@ -16,14 +16,14 @@
  * @file SinglePhaseThermalConductivityBase.hpp
  */
 
-#ifndef GEOSX_CONSTITUTIVE_SINGLEPHASE_THERMALCONDUCTIVITY_THERMALCONDUCTIVITYBASE_HPP
-#define GEOSX_CONSTITUTIVE_SINGLEPHASE_THERMALCONDUCTIVITY_THERMALCONDUCTIVITYBASE_HPP
+#ifndef GEOS_CONSTITUTIVE_SINGLEPHASE_THERMALCONDUCTIVITY_THERMALCONDUCTIVITYBASE_HPP
+#define GEOS_CONSTITUTIVE_SINGLEPHASE_THERMALCONDUCTIVITY_THERMALCONDUCTIVITYBASE_HPP
 
 #include "common/DataLayouts.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
 #include "constitutive/ConstitutiveBase.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace constitutive
@@ -40,14 +40,14 @@ public:
    * @brief Get number of elements in this wrapper.
    * @return number of elements
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   localIndex numElems() const { return m_effectiveConductivity.size( 0 ); }
 
   /**
    * @brief Get number of gauss points per element.
    * @return number of gauss points per element
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   localIndex numGauss() const { return m_effectiveConductivity.size( 1 ); }
 
 protected:
@@ -73,7 +73,7 @@ private:
    * @param[in] q constitutive index (equal to one in this class)
    * @param[in] laggedPorosity lagged porosity in the cell (for fractures, this will be unused)
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   virtual void update( localIndex const k,
                        localIndex const q,
                        real64 const & laggedPorosity ) const = 0;
@@ -103,7 +103,7 @@ public:
    * Note: this is needed because for now, the porosity and phase volume fraction are treated **explictly**
    */
   virtual void initializeRockFluidState( arrayView2d< real64 const > const & initialPorosity ) const
-  { GEOSX_UNUSED_VAR( initialPorosity ); }
+  { GEOS_UNUSED_VAR( initialPorosity ); }
 
   /**
    * @brief Save the thermal conductivity state (needed when thermal conductivity depends on porosity and phase volume fraction)
@@ -113,7 +113,16 @@ public:
    * Note: this is needed because for now, the porosity and phase volume fraction are treated **explictly**
    */
   virtual void saveConvergedRockFluidState( arrayView2d< real64 const > const & convergedPorosity ) const
-  { GEOSX_UNUSED_VAR( convergedPorosity ); }
+  { GEOS_UNUSED_VAR( convergedPorosity ); }
+
+  /**
+   * @brief Update the thermal conductivity state
+   * @param[in] porosity the  porosity field after reservoir initialization
+   *
+   * Note: this is needed because of the fracture subregions which do not exist at initialization
+   */
+  virtual void update( arrayView2d< real64 const > const & porosity ) const
+  { GEOS_UNUSED_VAR( porosity ); }
 
   /**
    * @brief Getter for the effective conductivities in the subRegion
@@ -141,7 +150,7 @@ protected:
 
 } // namespace constitutive
 
-} // namespace geosx
+} // namespace geos
 
 
-#endif //GEOSX_CONSTITUTIVE_THERMALCONDUCTIVITY_THERMALCONDUCTIVITYBASE_HPP
+#endif //GEOS_CONSTITUTIVE_THERMALCONDUCTIVITY_THERMALCONDUCTIVITYBASE_HPP

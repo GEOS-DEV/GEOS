@@ -12,12 +12,12 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#ifndef GEOSX_HDFFILE_HPP
-#define GEOSX_HDFFILE_HPP
+#ifndef GEOS_HDFFILE_HPP
+#define GEOS_HDFFILE_HPP
 
 #include "common/DataTypes.hpp"
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -68,4 +68,4 @@ private:
 
 }
 
-#endif //GEOSX_HDFFILE_HPP
+#endif //GEOS_HDFFILE_HPP

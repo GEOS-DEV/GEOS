@@ -24,7 +24,7 @@
 #include "mainInterface/ProblemManager.hpp"
 #include "mesh/MeshLevel.hpp"
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -79,10 +79,11 @@ protected:
     PhysicsSolverManager & physicsSolverManager = problemManager.getPhysicsSolverManager();
 
     m_solver = physicsSolverManager.getGroupPointer< SOLVER >( m_solverName );
-    GEOSX_THROW_IF( m_solver == nullptr,
-                    GEOSX_FMT( "Could not find solver '{}' of type {}",
-                               m_solverName, LvArray::system::demangleType< SOLVER >() ),
-                    InputError );
+    GEOS_THROW_IF( m_solver == nullptr,
+                   GEOS_FMT( "{}: Could not find solver '{}' of type {}",
+                             getDataContext(),
+                             m_solverName, LvArray::system::demangleType< SOLVER >() ),
+                   InputError );
   }
 
   /// Pointer to the physics solver
@@ -96,6 +97,6 @@ private:
 };
 
 
-} /* namespace geosx */
+} /* namespace geos */
 
 #endif /* SRC_CORECOMPONENTS_PHYSICSSOLVERS_FIELDSTATISTICSBASE_HPP_ */

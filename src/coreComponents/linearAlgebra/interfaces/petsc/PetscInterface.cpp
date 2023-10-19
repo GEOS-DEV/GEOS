@@ -25,7 +25,7 @@
 
 #include <petscsys.h>
 
-namespace geosx
+namespace geos
 {
 
 void PetscInterface::initialize()
@@ -74,4 +74,4 @@ PetscInterface::createPreconditioner( LinearSolverParameters params,
   return std::make_unique< PetscPreconditioner >( params, nearNullKernel );
 }
 
-} //namespace geosx
+} //namespace geos

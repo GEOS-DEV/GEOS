@@ -1,5 +1,5 @@
-build-*
-install-*
+/build*/
+/install*/
 .cproject
 .project
 .pydevproject
@@ -9,12 +9,11 @@ install-*
 *.swo
 *.swn
 *.nfs*
-*.vscode*
-*.devcontainer*
+*.vscode/*.json
+*.vscode-codespaces*
 *.out
 *.core
 *.DS_Store
-/build/
 /Default/
 /debugTests/
 /Debug/

@@ -18,7 +18,7 @@
 
 #include <hdf5.h>
 
-namespace geosx
+namespace geos
 {
 
 

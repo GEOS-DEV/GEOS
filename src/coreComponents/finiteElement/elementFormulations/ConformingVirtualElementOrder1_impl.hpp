@@ -17,7 +17,7 @@
 
 #include "mesh/utilities/ComputationalGeometry.hpp"
 
-namespace geosx
+namespace geos
 {
 namespace finiteElement
 {
@@ -26,12 +26,12 @@ namespace finiteElement
  */
 template< localIndex MCN, localIndex MFN >
 template< typename SUBREGION_TYPE >
-GEOSX_HOST_DEVICE
+GEOS_HOST_DEVICE
 void ConformingVirtualElementOrder1< MCN, MFN >::
 computeProjectors( localIndex const & cellIndex,
                    InputNodeCoords const & nodesCoords,
                    InputCellToNodeMap< SUBREGION_TYPE > const & cellToNodeMap,
-                   InputCellToFaceMap const & elementToFaceMap,
+                   InputCellToFaceMap< SUBREGION_TYPE > const & elementToFaceMap,
                    InputFaceToNodeMap const & faceToNodeMap,
                    InputFaceToEdgeMap const & faceToEdgeMap,
                    InputEdgeToNodeMap const & edgeToNodeMap,
@@ -277,7 +277,7 @@ computeProjectors( localIndex const & cellIndex,
 }
 
 template< localIndex MCN, localIndex MFN >
-GEOSX_HOST_DEVICE
+GEOS_HOST_DEVICE
 void ConformingVirtualElementOrder1< MCN, MFN >::
 computeFaceIntegrals( InputNodeCoords const & nodesCoords,
                       localIndex const (&faceToNodes)[MFN],

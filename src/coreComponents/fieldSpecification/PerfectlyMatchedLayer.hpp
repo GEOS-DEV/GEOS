@@ -17,13 +17,13 @@
  *
  */
 
-#ifndef GEOSX_FIELDSPECIFICATION_PERFECTLYMATCHEDLAYER_HPP_
-#define GEOSX_FIELDSPECIFICATION_PERFECTLYMATCHEDLAYER_HPP_
+#ifndef GEOS_FIELDSPECIFICATION_PERFECTLYMATCHEDLAYER_HPP_
+#define GEOS_FIELDSPECIFICATION_PERFECTLYMATCHEDLAYER_HPP_
 
 #include "FieldSpecificationBase.hpp"
 #include "mesh/DomainPartition.hpp"
 
-namespace geosx
+namespace geos
 {
 
 class DomainPartition;
@@ -168,6 +168,6 @@ private:
 
 };
 
-} /* namespace geosx */
+} /* namespace geos */
 
-#endif /* GEOSX_FIELDSPECIFICATION_PERFECTLYMATCHEDLAYER_HPP_ */
+#endif /* GEOS_FIELDSPECIFICATION_PERFECTLYMATCHEDLAYER_HPP_ */

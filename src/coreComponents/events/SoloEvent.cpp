@@ -18,7 +18,7 @@
 
 #include "SoloEvent.hpp"
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -56,7 +56,7 @@ SoloEvent::~SoloEvent()
 void SoloEvent::estimateEventTiming( real64 const time,
                                      real64 const dt,
                                      integer const cycle,
-                                     DomainPartition & GEOSX_UNUSED_PARAM( domain ))
+                                     DomainPartition & GEOS_UNUSED_PARAM( domain ))
 {
   // Check event status
   if( m_lastCycle < 0 )
@@ -108,4 +108,4 @@ real64 SoloEvent::getEventTypeDtRequest( real64 const time )
 
 
 REGISTER_CATALOG_ENTRY( EventBase, SoloEvent, string const &, Group * const )
-} /* namespace geosx */
+} /* namespace geos */

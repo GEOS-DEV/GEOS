@@ -2,7 +2,7 @@
 Mesh Hierarchy
 ################################################################################
 
-In GEOSX, the mesh structure consists of a hierarchy of classes intended to encapsulate data and
+In GEOS, the mesh structure consists of a hierarchy of classes intended to encapsulate data and
 functionality for each topological type.
 Each class in the mesh hierarchy represents a distinct topological object, such as a nodes, edges,
 faces, elements, etc.
@@ -37,7 +37,7 @@ At this time there is a unique ``DomainPartition`` for every MPI rank.
 .. note::
    Hypothetically,
    there may be more than one ``DomainPartition`` in cases where the ranks are overloaded.
-   Currently GEOSX does not support overloading multiple ``DomainPartition``'s onto a rank, although
+   Currently GEOS does not support overloading multiple ``DomainPartition``'s onto a rank, although
    this may be a future option if its use is properly motivated.
 
 For instance, the model presented as example can be split into two different domains
@@ -59,7 +59,7 @@ both spheres as part of a single mesh body, while another option would be to hav
 a individual body.
 
 .. note::
-  While not currently utilized in GEOSX, the intent is to have the ability to handle the bodies
+  While not currently utilized in GEOS, the intent is to have the ability to handle the bodies
   in a multi-body mesh on an individual basis.
   For instance, when conducting high resolution crush simulations of granular materials (i.e. sand),
   it may be advantagous to represent each particle as a ``MeshBody``.
@@ -71,7 +71,7 @@ The ``MeshLevel`` is intended to facilitate the representation of a multi-level 
 .. note::
   In current practice, the code utilizes a single ``MeshLevel`` until such time as we
   implement a proper multi-level mesh capability.
-  The ``MeshLevel`` contains the main components that compose a discretized mesh in GEOSX.
+  The ``MeshLevel`` contains the main components that compose a discretized mesh in GEOS.
 
 Topological Mesh Objects
 ========================

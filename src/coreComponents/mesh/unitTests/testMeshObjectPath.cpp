@@ -23,7 +23,7 @@
 
 #include <gtest/gtest.h>
 
-namespace geosx
+namespace geos
 {
 using namespace dataRepository;
 
@@ -280,7 +280,7 @@ TEST( testMeshObjectPath, invalidMeshBody )
   Group const & meshBodies = testMesh.meshBodies();
   {
     string const path = "*/level2/ElementRegions";
-    EXPECT_DEATH_IF_SUPPORTED( MeshObjectPath meshObjectPath( path, meshBodies ), ".*" );
+    ASSERT_THROW( MeshObjectPath meshObjectPath( path, meshBodies ), InputError );
   }
 }
 
@@ -291,7 +291,7 @@ TEST( testMeshObjectPath, invalidMeshLevel )
   Group const & meshBodies = testMesh.meshBodies();
   {
     string const path = "*/*/ElementRegions/{region2}";
-    EXPECT_DEATH_IF_SUPPORTED( MeshObjectPath meshObjectPath( path, meshBodies ), ".*" );
+    ASSERT_THROW( MeshObjectPath meshObjectPath( path, meshBodies ), InputError );
   }
 }
 
@@ -301,7 +301,7 @@ TEST( testMeshObjectPath, invalidMeshRegion )
   Group const & meshBodies = testMesh.meshBodies();
   {
     string const path = "*/*/ElementRegions/*/subreg2";
-    EXPECT_DEATH_IF_SUPPORTED( MeshObjectPath meshObjectPath( path, meshBodies ), ".*" );
+    ASSERT_THROW( MeshObjectPath meshObjectPath( path, meshBodies ), InputError );
   }
 }
 
@@ -353,44 +353,44 @@ void checkRegionNames( std::vector< string > const & names )
   EXPECT_TRUE( names[12] == "region1" );
 }
 
-// TEST( testMeshObjectPath, forObjectsInPath )
-// {
-//   TestMesh & testMesh = TestMesh::getTestMesh();
-//   Group & meshBodies = testMesh.meshBodies();
-//   Group const & meshBodiesConst = meshBodies;
-//   string const path = "*/*/ElementRegions";
-//   MeshObjectPath meshObjectPath( path, meshBodiesConst );
+TEST( testMeshObjectPath, forObjectsInPathFromMeshBodies )
+{
+  TestMesh & testMesh = TestMesh::getTestMesh();
+  Group & meshBodies = testMesh.meshBodies();
+  Group const & meshBodiesConst = meshBodies;
+  string const path = "*/*/ElementRegions";
+  MeshObjectPath meshObjectPath( path, meshBodiesConst );
 
-//   {
-//     std::vector< string > names;
-//     meshObjectPath.forObjectsInPath< CellElementSubRegion >( meshBodiesConst,
-//                                                              [&]( ElementSubRegionBase const & elemSubRegionBase )
-//     {
-//       names.push_back( elemSubRegionBase.getName() );
-//     } );
-//     checkSubRegionNames( names );
-//   }
+  {
+    std::vector< string > names;
+    meshObjectPath.forObjectsInPath< CellElementSubRegion >( meshBodiesConst,
+                                                             [&]( ElementSubRegionBase const & elemSubRegionBase )
+    {
+      names.push_back( elemSubRegionBase.getName() );
+    } );
+    checkSubRegionNames( names );
+  }
 
-//   {
-//     std::vector< string > names;
-//     meshObjectPath.forObjectsInPath< CellElementSubRegion >( meshBodies,
-//                                                              [&]( ElementSubRegionBase & elemSubRegionBase )
-//     {
-//       names.push_back( elemSubRegionBase.getName() );
-//     } );
-//     checkSubRegionNames( names );
-//   }
+  {
+    std::vector< string > names;
+    meshObjectPath.forObjectsInPath< CellElementSubRegion >( meshBodies,
+                                                             [&]( ElementSubRegionBase & elemSubRegionBase )
+    {
+      names.push_back( elemSubRegionBase.getName() );
+    } );
+    checkSubRegionNames( names );
+  }
 
-//   {
-//     std::vector< string > names;
-//     meshObjectPath.forObjectsInPath< CellElementRegion >( meshBodiesConst,
-//                                                           [&]( CellElementRegion const & elemRegionBase )
-//     {
-//       names.push_back( elemRegionBase.getName() );
-//     } );
-//     checkRegionNames( names );
-//   }
-// }
+  {
+    std::vector< string > names;
+    meshObjectPath.forObjectsInPath< CellElementRegion >( meshBodiesConst,
+                                                          [&]( CellElementRegion const & elemRegionBase )
+    {
+      names.push_back( elemRegionBase.getName() );
+    } );
+    checkRegionNames( names );
+  }
+}
 
 template< typename OBJECT_TYPE, typename CHECK_FUNC >
 void testForObjectInPathsMeshLevel( Group & meshBodies,
@@ -462,4 +462,4 @@ TEST( testMeshObjectPath, forObjectsInPath )
 
 }
 
-} /* namespace geosx */
+} /* namespace geos */

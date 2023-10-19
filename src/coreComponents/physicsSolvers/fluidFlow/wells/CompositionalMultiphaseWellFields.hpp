@@ -16,13 +16,13 @@
  * @file CompositionalMultiphaseWellFields.hpp
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_FLUIDFLOW_WELLS_COMPOSITIONALMULTIPHASEWELLFIELDS_HPP_
-#define GEOSX_PHYSICSSOLVERS_FLUIDFLOW_WELLS_COMPOSITIONALMULTIPHASEWELLFIELDS_HPP_
+#ifndef GEOS_PHYSICSSOLVERS_FLUIDFLOW_WELLS_COMPOSITIONALMULTIPHASEWELLFIELDS_HPP_
+#define GEOS_PHYSICSSOLVERS_FLUIDFLOW_WELLS_COMPOSITIONALMULTIPHASEWELLFIELDS_HPP_
 
 #include "common/DataLayouts.hpp"
 #include "mesh/MeshFields.hpp"
 
-namespace geosx
+namespace geos
 {
 /**
  * A scope for field traits.
@@ -161,10 +161,18 @@ DECLARE_FIELD( dCompPerforationRate_dComp,
                NO_WRITE,
                "Derivative of component perforation rate with respect to global component density" );
 
-}
+DECLARE_FIELD( globalCompDensityScalingFactor,
+               "globalCompDensityScalingFactor",
+               array1d< real64 >,
+               1,
+               NOPLOT,
+               NO_WRITE,
+               "Scaling factors for global component densities" );
 
 }
 
 }
 
-#endif // GEOSX_PHYSICSSOLVERS_FLUIDFLOW_WELLS_COMPOSITIONALMULTIPHASEWELLFIELDS_HPP_
+}
+
+#endif // GEOS_PHYSICSSOLVERS_FLUIDFLOW_WELLS_COMPOSITIONALMULTIPHASEWELLFIELDS_HPP_

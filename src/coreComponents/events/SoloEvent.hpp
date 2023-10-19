@@ -16,12 +16,12 @@
  * @file SoloEvent.hpp
  */
 
-#ifndef GEOSX_EVENTS_SOLOEVENT_HPP_
-#define GEOSX_EVENTS_SOLOEVENT_HPP_
+#ifndef GEOS_EVENTS_SOLOEVENT_HPP_
+#define GEOS_EVENTS_SOLOEVENT_HPP_
 
 #include "events/EventBase.hpp"
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -33,7 +33,7 @@ class SoloEvent : public EventBase
 {
 public:
 
-  /// @copydoc geosx::dataRepository::Group::Group( string const & name, Group * const parent )
+  /// @copydoc geos::dataRepository::Group::Group( string const & name, Group * const parent )
   SoloEvent( const string & name,
              Group * const parent );
 
@@ -81,6 +81,6 @@ public:
 
 };
 
-} /* namespace geosx */
+} /* namespace geos */
 
-#endif /* GEOSX_EVENTS_SOLOEVENT_HPP_ */
+#endif /* GEOS_EVENTS_SOLOEVENT_HPP_ */

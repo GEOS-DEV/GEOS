@@ -17,13 +17,13 @@
  */
 
 
-#ifndef GEOSX_FIELDSPECIFICATION_AQUIFERBOUNDARYCONDITION_HPP
-#define GEOSX_FIELDSPECIFICATION_AQUIFERBOUNDARYCONDITION_HPP
+#ifndef GEOS_FIELDSPECIFICATION_AQUIFERBOUNDARYCONDITION_HPP
+#define GEOS_FIELDSPECIFICATION_AQUIFERBOUNDARYCONDITION_HPP
 
 #include "FieldSpecificationBase.hpp"
 #include "functions/TableFunction.hpp"
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -80,7 +80,7 @@ public:
      * @param[out] dAquiferVolFlux_dPres the derivative of the aquifer-reservoir volumetric flux
      * @return the aquifer-reservoir volumetric flux
      */
-    GEOSX_HOST_DEVICE
+    GEOS_HOST_DEVICE
     inline real64
     compute( real64 const & timeAtBeginningOfStep,
              real64 const & dt,
@@ -345,7 +345,7 @@ private:
 
 };
 
-GEOSX_HOST_DEVICE
+GEOS_HOST_DEVICE
 real64
 AquiferBoundaryCondition::KernelWrapper::
   compute( real64 const & timeAtBeginningOfStep,
@@ -383,6 +383,6 @@ AquiferBoundaryCondition::KernelWrapper::
 }
 
 
-} /* namespace geosx */
+} /* namespace geos */
 
-#endif /* GEOSX_FIELDSPECIFICATION_AQUIFERBOUNDARYCONDITION_HPP */
+#endif /* GEOS_FIELDSPECIFICATION_AQUIFERBOUNDARYCONDITION_HPP */

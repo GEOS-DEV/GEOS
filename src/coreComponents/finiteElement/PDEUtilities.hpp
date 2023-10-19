@@ -16,12 +16,12 @@
  * @file PDEUtilities.hpp
  */
 
-#ifndef GEOSX_FINITEELEMENT_PDEUTILITIES_HPP_
-#define GEOSX_FINITEELEMENT_PDEUTILITIES_HPP_
+#ifndef GEOS_FINITEELEMENT_PDEUTILITIES_HPP_
+#define GEOS_FINITEELEMENT_PDEUTILITIES_HPP_
 
 #include "codingUtilities/EnumStrings.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace PDEUtilities
@@ -58,6 +58,6 @@ ENUM_STRINGS( FunctionSpace,
 
 } // namespace PDEUtilities
 
-} // namespace geosx
+} // namespace geos
 
-#endif //GEOSX_FINITEELEMENT_PDEUTILITIES_HPP_
+#endif //GEOS_FINITEELEMENT_PDEUTILITIES_HPP_

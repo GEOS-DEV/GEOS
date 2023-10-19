@@ -18,7 +18,7 @@
 
 #include "EmbeddedSurfaceToCellStencil.hpp"
 
-namespace geosx
+namespace geos
 {
 
 void EmbeddedSurfaceToCellStencil::move( LvArray::MemorySpace const space )
@@ -33,7 +33,7 @@ void EmbeddedSurfaceToCellStencil::add( localIndex const numPts,
                                         real64 const * const weights,
                                         localIndex const connectorIndex )
 {
-  GEOSX_ERROR_IF_NE_MSG( numPts, 2, "Number of cells in TPFA stencil should be 2" );
+  GEOS_ERROR_IF_NE_MSG( numPts, 2, "Number of cells in TPFA stencil should be 2" );
 
   localIndex const oldSize = m_elementRegionIndices.size( 0 );
   localIndex const newSize = oldSize + 1;
@@ -72,4 +72,4 @@ EmbeddedSurfaceToCellStencilWrapper::
                         weights )
 {}
 
-} /* namespace geosx */
+} /* namespace geos */

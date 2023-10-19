@@ -16,15 +16,15 @@
  * @file BlockPreconditioner.hpp
  */
 
-#ifndef GEOSX_LINEARALGEBRA_SOLVERS_BLOCKPRECONDITIONER_HPP_
-#define GEOSX_LINEARALGEBRA_SOLVERS_BLOCKPRECONDITIONER_HPP_
+#ifndef GEOS_LINEARALGEBRA_SOLVERS_BLOCKPRECONDITIONER_HPP_
+#define GEOS_LINEARALGEBRA_SOLVERS_BLOCKPRECONDITIONER_HPP_
 
 #include "linearAlgebra/DofManager.hpp"
 #include "linearAlgebra/common/PreconditionerBase.hpp"
 #include "linearAlgebra/utilities/BlockOperator.hpp"
 #include "linearAlgebra/utilities/BlockVector.hpp"
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -220,6 +220,6 @@ private:
   mutable BlockVector< Vector > m_sol;
 };
 
-} //namespace geosx
+} //namespace geos
 
-#endif //GEOSX_LINEARALGEBRA_SOLVERS_BLOCKPRECONDITIONER_HPP_
+#endif //GEOS_LINEARALGEBRA_SOLVERS_BLOCKPRECONDITIONER_HPP_

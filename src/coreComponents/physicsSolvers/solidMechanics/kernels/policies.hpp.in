@@ -1,11 +1,11 @@
-#ifndef GEOSX_CORECOMPONENTS_PHYSICSSOLVERSE_SOLIDMECHANICS_KERNELS_CONFIG_HPP
-#define GEOSX_CORECOMPONENTS_PHYSICSSOLVERSE_SOLIDMECHANICS_KERNELS_CONFIG_HPP
+#ifndef GEOS_CORECOMPONENTS_PHYSICSSOLVERSE_SOLIDMECHANICS_KERNELS_CONFIG_HPP
+#define GEOS_CORECOMPONENTS_PHYSICSSOLVERSE_SOLIDMECHANICS_KERNELS_CONFIG_HPP
 
 using ExplicitSmallStrainPolicy = @ExplicitSmallStrainPolicy@;
 using ExplicitFiniteStrainPolicy = @ExplicitFiniteStrainPolicy@;
-using FixedStressThermoPoroElasticPolicy = @FixedStressThermoPoroElasticPolicy@;
+using FixedStressThermoPoromechanicsPolicy = @FixedStressThermoPoromechanicsPolicy@;
 using ImplicitSmallStrainNewmarkPolicy = @ImplicitSmallStrainNewmarkPolicy@;
 using ImplicitSmallStrainQuasiStaticPolicy = @ImplicitSmallStrainQuasiStaticPolicy@;
 
 
-#endif /* GEOSX_CORECOMPONENTS_PHYSICSSOLVERSE_SOLIDMECHANICS_KERNELS_CONFIG_HPP */
+#endif /* GEOS_CORECOMPONENTS_PHYSICSSOLVERSE_SOLIDMECHANICS_KERNELS_CONFIG_HPP */

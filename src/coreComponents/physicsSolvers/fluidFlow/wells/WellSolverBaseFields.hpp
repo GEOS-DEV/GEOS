@@ -16,12 +16,12 @@
  * @file WellSolverBaseFields.hpp
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_FLUIDFLOW_WELLS_WELLSOLVERBASEFIELDS_HPP_
-#define GEOSX_PHYSICSSOLVERS_FLUIDFLOW_WELLS_WELLSOLVERBASEFIELDS_HPP_
+#ifndef GEOS_PHYSICSSOLVERS_FLUIDFLOW_WELLS_WELLSOLVERBASEFIELDS_HPP_
+#define GEOS_PHYSICSSOLVERS_FLUIDFLOW_WELLS_WELLSOLVERBASEFIELDS_HPP_
 
 #include "mesh/MeshFields.hpp"
 
-namespace geosx
+namespace geos
 {
 /**
  * A scope for field traits.
@@ -72,10 +72,26 @@ DECLARE_FIELD( gravityCoefficient,
                WRITE_AND_READ,
                "Gravity coefficient (dot product of gravity acceleration by gravity vector)" );
 
-}
+DECLARE_FIELD( pressureScalingFactor,
+               "pressureScalingFactor",
+               array1d< real64 >,
+               1,
+               NOPLOT,
+               NO_WRITE,
+               "Scaling factors for pressure" );
+
+DECLARE_FIELD( temperatureScalingFactor,
+               "temperatureScalingFactor",
+               array1d< real64 >,
+               1,
+               NOPLOT,
+               NO_WRITE,
+               "Scaling factors for temperature" );
 
 }
 
 }
 
-#endif // GEOSX_PHYSICSSOLVERS_FLUIDFLOW_WELLS_WELLSOLVERBASEFIELDS_HPP_
+}
+
+#endif // GEOS_PHYSICSSOLVERS_FLUIDFLOW_WELLS_WELLSOLVERBASEFIELDS_HPP_

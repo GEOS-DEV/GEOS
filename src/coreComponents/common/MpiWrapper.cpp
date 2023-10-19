@@ -16,6 +16,7 @@
  */
 
 #include "MpiWrapper.hpp"
+#include <unistd.h>
 
 #if defined(__clang__)
   #pragma clang diagnostic push
@@ -26,7 +27,7 @@
 #endif
 
 
-namespace geosx
+namespace geos
 {
 
 void MpiWrapper::barrier( MPI_Comm const & MPI_PARAM( comm ) )
@@ -407,7 +408,30 @@ int MpiWrapper::activeWaitOrderedCompletePhase( const int participants,
   return MPI_SUCCESS;
 }
 
-} /* namespace geosx */
+int MpiWrapper::nodeCommSize()
+{
+  // if not initialized then we guess there is no MPI.
+  if( !initialized() )
+    return 1;
+
+  int len;
+  std::array< char, MPI_MAX_PROCESSOR_NAME + 1 > hostname;
+  MPI_Get_processor_name( hostname.data(), &len );
+  hostname[len] = '\0';
+  int color = (int)std::hash< string >{} (hostname.data());
+  if( color < 0 )
+    color *= -1;
+
+  /**
+   * Create intra-node communicator
+   */
+  MPI_Comm nodeComm;
+  int nodeCommSize;
+  MPI_Comm_split( MPI_COMM_WORLD, color, -1, &nodeComm );
+  MPI_Comm_size( nodeComm, &nodeCommSize );
+  return nodeCommSize;
+}
+} /* namespace geos */
 
 #if defined(__clang__)
   #pragma clang diagnostic pop

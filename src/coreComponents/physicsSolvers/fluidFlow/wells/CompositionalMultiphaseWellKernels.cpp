@@ -22,7 +22,7 @@
 // TODO: move keys to WellControls
 #include "physicsSolvers/fluidFlow/wells/CompositionalMultiphaseWell.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace compositionalMultiphaseWellKernels
@@ -30,7 +30,8 @@ namespace compositionalMultiphaseWellKernels
 
 /******************************** ControlEquationHelper ********************************/
 
-GEOSX_HOST_DEVICE
+GEOS_HOST_DEVICE
+inline
 void
 ControlEquationHelper::
   switchControl( bool const isProducer,
@@ -109,7 +110,8 @@ ControlEquationHelper::
 }
 
 template< integer NC >
-GEOSX_HOST_DEVICE
+GEOS_HOST_DEVICE
+inline
 void
 ControlEquationHelper::
   compute( globalIndex const rankOffset,
@@ -189,7 +191,7 @@ ControlEquationHelper::
   }
   else
   {
-    GEOSX_ERROR( "This constraint is not supported in CompositionalMultiphaseWell" );
+    GEOS_ERROR( "This constraint is not supported in CompositionalMultiphaseWell" );
   }
   localRhs[eqnRowIndex] += controlEqn;
   localMatrix.addToRow< serialAtomic >( eqnRowIndex,
@@ -209,7 +211,7 @@ ControlEquationHelper::
 /******************************** FluxKernel ********************************/
 
 template< integer NC >
-GEOSX_HOST_DEVICE
+GEOS_HOST_DEVICE
 void
 FluxKernel::
   computeExit( real64 const & dt,
@@ -240,7 +242,7 @@ FluxKernel::
 }
 
 template< integer NC >
-GEOSX_HOST_DEVICE
+GEOS_HOST_DEVICE
 void
 FluxKernel::
   compute( real64 const & dt,
@@ -290,16 +292,14 @@ FluxKernel::
           CRSMatrixView< real64, globalIndex const > const & localMatrix,
           arrayView1d< real64 > const & localRhs )
 {
-
   using namespace compositionalMultiphaseUtilities;
 
   bool const isProducer = wellControls.isProducer();
   arrayView1d< real64 const > const & injection = wellControls.getInjectionStream();
 
   // loop over the well elements to compute the fluxes between elements
-  forAll< parallelDevicePolicy<> >( size, [=] GEOSX_HOST_DEVICE ( localIndex const iwelem )
+  forAll< parallelDevicePolicy<> >( size, [=] GEOS_HOST_DEVICE ( localIndex const iwelem )
   {
-
     // create local work arrays
     real64 compFracUp[NC]{};
     real64 dCompFrac_dCompDensUp[NC][NC]{};
@@ -528,7 +528,7 @@ INST_FluxKernel( 5 );
 /******************************** PressureRelationKernel ********************************/
 
 template< integer NC >
-GEOSX_HOST_DEVICE
+GEOS_HOST_DEVICE
 void
 PressureRelationKernel::
   compute( real64 const & gravCoef,
@@ -632,7 +632,7 @@ PressureRelationKernel::
   RAJA::ReduceMax< parallelDeviceReduce, localIndex > switchControl( 0 );
 
   // loop over the well elements to compute the pressure relations between well elements
-  forAll< parallelDevicePolicy<> >( size, [=] GEOSX_HOST_DEVICE ( localIndex const iwelem )
+  forAll< parallelDevicePolicy<> >( size, [=] GEOS_HOST_DEVICE ( localIndex const iwelem )
   {
     localIndex const iwelemNext = nextWellElemIndex[iwelem];
 
@@ -755,7 +755,7 @@ INST_PressureRelationKernel( 5 );
 /******************************** PerforationKernel ********************************/
 
 template< integer NC, integer NP >
-GEOSX_HOST_DEVICE
+GEOS_HOST_DEVICE
 void
 PerforationKernel::
   compute( bool const & disableReservoirToWellFlow,
@@ -1106,7 +1106,7 @@ PerforationKernel::
 {
 
   // loop over the perforations to compute the perforation rates
-  forAll< parallelDevicePolicy<> >( size, [=] GEOSX_HOST_DEVICE ( localIndex const iperf )
+  forAll< parallelDevicePolicy<> >( size, [=] GEOS_HOST_DEVICE ( localIndex const iperf )
   {
 
     // get the index of the reservoir elem
@@ -1196,7 +1196,7 @@ INST_PerforationKernel( 5, 3 );
 /******************************** AccumulationKernel ********************************/
 
 template< integer NC >
-GEOSX_HOST_DEVICE
+GEOS_HOST_DEVICE
 void
 AccumulationKernel::
   compute( integer const numPhases,
@@ -1301,7 +1301,7 @@ AccumulationKernel::
 
   using namespace compositionalMultiphaseUtilities;
 
-  forAll< parallelDevicePolicy<> >( size, [=] GEOSX_HOST_DEVICE ( localIndex const iwelem )
+  forAll< parallelDevicePolicy<> >( size, [=] GEOS_HOST_DEVICE ( localIndex const iwelem )
   {
 
     if( wellElemGhostRank[iwelem] >= 0 )
@@ -1389,7 +1389,7 @@ INST_AccumulationKernel( 5 );
 /******************************** VolumeBalanceKernel ********************************/
 
 template< integer NC >
-GEOSX_HOST_DEVICE
+GEOS_HOST_DEVICE
 void
 VolumeBalanceKernel::
   compute( integer const numPhases,
@@ -1441,7 +1441,7 @@ VolumeBalanceKernel::
           CRSMatrixView< real64, globalIndex const > const & localMatrix,
           arrayView1d< real64 > const & localRhs )
 {
-  forAll< parallelDevicePolicy<> >( size, [=] GEOSX_HOST_DEVICE ( localIndex const iwelem )
+  forAll< parallelDevicePolicy<> >( size, [=] GEOS_HOST_DEVICE ( localIndex const iwelem )
   {
 
     if( wellElemGhostRank[iwelem] >= 0 )
@@ -1542,7 +1542,7 @@ PresTempCompFracInitializationKernel::
   RAJA::ReduceSum< parallelDeviceReduce, real64 > sumCompFrac[MAX_NUM_COMP]{};
   RAJA::ReduceMin< parallelDeviceReduce, real64 > localMinGravCoefDiff( 1e9 );
 
-  forAll< parallelDevicePolicy<> >( perforationSize, [=] GEOSX_HOST_DEVICE ( localIndex const iperf )
+  forAll< parallelDevicePolicy<> >( perforationSize, [=] GEOS_HOST_DEVICE ( localIndex const iperf )
   {
     // get the reservoir (sub)region and element indices
     localIndex const er = resElementRegion[iperf];
@@ -1628,7 +1628,7 @@ PresTempCompFracInitializationKernel::
     RAJA::ReduceMin< parallelDeviceReduce, real64 > localRefPres( 1e9 );
     real64 const alpha = ( isProducer ) ? 1 - initialPresCoef : 1 + initialPresCoef;
 
-    forAll< parallelDevicePolicy<> >( perforationSize, [=] GEOSX_HOST_DEVICE ( localIndex const iperf )
+    forAll< parallelDevicePolicy<> >( perforationSize, [=] GEOS_HOST_DEVICE ( localIndex const iperf )
     {
       // get the reservoir (sub)region and element indices
       localIndex const er = resElementRegion[iperf];
@@ -1657,7 +1657,7 @@ PresTempCompFracInitializationKernel::
   RAJA::ReduceMax< parallelDeviceReduce, integer > foundInconsistentCompFrac( 0 );
 
 
-  forAll< parallelDevicePolicy<> >( subRegionSize, [=] GEOSX_HOST_DEVICE ( localIndex const iwelem )
+  forAll< parallelDevicePolicy<> >( subRegionSize, [=] GEOS_HOST_DEVICE ( localIndex const iwelem )
   {
     wellElemPres[iwelem] = refPres + avgTotalMassDens * ( wellElemGravCoef[iwelem] - refWellElemGravCoef );
     wellElemTemp[iwelem] = avgTemp;
@@ -1685,15 +1685,15 @@ PresTempCompFracInitializationKernel::
   } );
 
 
-  GEOSX_THROW_IF( foundNegativePres.get() == 1,
-                  "Invalid well initialization: negative pressure was found, please check " << wellControls.getName(),
-                  InputError );
-  GEOSX_THROW_IF( foundNegativeTemp.get() == 1,
-                  "Invalid well initialization: negative temperature was found, please check " << wellControls.getName(),
-                  InputError );
-  GEOSX_THROW_IF( foundInconsistentCompFrac.get() == 1,
-                  "Invalid well initialization: inconsistent component fractions were found, please check " << wellControls.getName(),
-                  InputError );
+  GEOS_THROW_IF( foundNegativePres.get() == 1,
+                 wellControls.getDataContext() << "Invalid well initialization, negative pressure was found.",
+                 InputError );
+  GEOS_THROW_IF( foundNegativeTemp.get() == 1,
+                 wellControls.getDataContext() << "Invalid well initialization, negative temperature was found.",
+                 InputError );
+  GEOS_THROW_IF( foundInconsistentCompFrac.get() == 1,
+                 wellControls.getDataContext() << "Invalid well initialization, inconsistent component fractions were found.",
+                 InputError );
 
 
 }
@@ -1708,7 +1708,7 @@ CompDensInitializationKernel::
           arrayView2d< real64 const, multifluid::USD_FLUID > const & wellElemTotalDens,
           arrayView2d< real64, compflow::USD_COMP > const & wellElemCompDens )
 {
-  forAll< parallelDevicePolicy<> >( subRegionSize, [=] GEOSX_HOST_DEVICE ( localIndex const iwelem )
+  forAll< parallelDevicePolicy<> >( subRegionSize, [=] GEOS_HOST_DEVICE ( localIndex const iwelem )
   {
     for( integer ic = 0; ic < numComponents; ++ic )
     {
@@ -1735,7 +1735,7 @@ RateInitializationKernel::
   real64 const targetPhaseRate = wellControls.getTargetPhaseRate( currentTime );
 
   // Estimate the connection rates
-  forAll< parallelDevicePolicy<> >( subRegionSize, [=] GEOSX_HOST_DEVICE ( localIndex const iwelem )
+  forAll< parallelDevicePolicy<> >( subRegionSize, [=] GEOS_HOST_DEVICE ( localIndex const iwelem )
   {
     if( control == WellControls::Control::BHP )
     {
@@ -1767,4 +1767,4 @@ RateInitializationKernel::
 
 } // end namespace compositionalMultiphaseWellKernels
 
-} // end namespace geosx
+} // end namespace geos

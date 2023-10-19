@@ -16,12 +16,12 @@
  * @file PorosityFields.hpp
  */
 
-#ifndef GEOSX_CONSTITUTIVE_SOLID_POROSITY_POROSITYFIELDS_HPP
-#define GEOSX_CONSTITUTIVE_SOLID_POROSITY_POROSITYFIELDS_HPP
+#ifndef GEOS_CONSTITUTIVE_SOLID_POROSITY_POROSITYFIELDS_HPP
+#define GEOS_CONSTITUTIVE_SOLID_POROSITY_POROSITYFIELDS_HPP
 
 #include "mesh/MeshFields.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace fields
@@ -86,10 +86,36 @@ DECLARE_FIELD( biotCoefficient,
                WRITE_AND_READ,
                "Biot coefficient" );
 
-}
+DECLARE_FIELD( thermalExpansionCoefficient,
+               "thermalExpansionCoefficient",
+               array1d< real64 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Thermal expansion coefficient" );
+
+DECLARE_FIELD( meanEffectiveStressIncrement_k,
+               "meanEffectiveStressIncrement_k",
+               array2d< real64 >,
+               0,
+               NOPLOT,
+               NO_WRITE,
+               "Mean effective stress increment at quadrature points at the previous sequential iteration" );
+
+DECLARE_FIELD( averageMeanEffectiveStressIncrement_k,
+               "averageMeanEffectiveStressIncrement_k",
+               array1d< real64 >,
+               0,
+               NOPLOT,
+               NO_WRITE,
+               "Mean effective stress increment averaged over quadrature points at the previous sequential iteration" );
+
+
 
 }
 
 }
 
-#endif // GEOSX_CONSTITUTIVE_SOLID_POROSITY_POROSITYFIELDS_HPP_
+}
+
+#endif // GEOS_CONSTITUTIVE_SOLID_POROSITY_POROSITYFIELDS_HPP_

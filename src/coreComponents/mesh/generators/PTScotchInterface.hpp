@@ -16,13 +16,13 @@
  * @file PTScotchInterface.hpp
  */
 
-#ifndef GEOSX_MESH_GENERATORS_PTSCOTCHINTERFACE_HPP_
-#define GEOSX_MESH_GENERATORS_PTSCOTCHINTERFACE_HPP_
+#ifndef GEOS_MESH_GENERATORS_PTSCOTCHINTERFACE_HPP_
+#define GEOS_MESH_GENERATORS_PTSCOTCHINTERFACE_HPP_
 
 #include "common/DataTypes.hpp"
 #include "common/MpiWrapper.hpp"
 
-namespace geosx
+namespace geos
 {
 namespace ptscotch
 {
@@ -40,6 +40,6 @@ partition( ArrayOfArraysView< int64_t const, int64_t > const & graph,
            MPI_Comm comm );
 
 } // namespace ptscotch
-} // namespace geosx
+} // namespace geos
 
-#endif //GEOSX_MESH_GENERATORS_PTSCOTCHINTERFACE_HPP_
+#endif //GEOS_MESH_GENERATORS_PTSCOTCHINTERFACE_HPP_

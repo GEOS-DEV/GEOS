@@ -21,7 +21,7 @@
 
 #include "physicsSolvers/FieldStatisticsBase.hpp"
 
-namespace geosx
+namespace geos
 {
 
 class CompositionalMultiphaseBase;
@@ -153,6 +153,6 @@ private:
 };
 
 
-} /* namespace geosx */
+} /* namespace geos */
 
 #endif /* SRC_CORECOMPONENTS_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONALMULTIPHASESTATISTICS_HPP_ */

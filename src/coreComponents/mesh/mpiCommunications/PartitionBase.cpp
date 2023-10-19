@@ -14,7 +14,7 @@
 
 #include "PartitionBase.hpp"
 
-namespace geosx
+namespace geos
 {
 
 PartitionBase::PartitionBase( const unsigned int numPartitions,

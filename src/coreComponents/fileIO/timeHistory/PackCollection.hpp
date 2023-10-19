@@ -12,13 +12,13 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#ifndef GEOSX_FILEIO_TIMEHISTORY_PACKCOLLECTION_HPP_
-#define GEOSX_FILEIO_TIMEHISTORY_PACKCOLLECTION_HPP_
+#ifndef GEOS_FILEIO_TIMEHISTORY_PACKCOLLECTION_HPP_
+#define GEOS_FILEIO_TIMEHISTORY_PACKCOLLECTION_HPP_
 
 #include "mesh/DomainPartition.hpp"
 #include "HistoryCollectionBase.hpp"
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -43,10 +43,10 @@ public:
 
   virtual void initializePostSubGroups() override;
 
-  /// @copydoc geosx::HistoryCollection::getMetaData
+  /// @copydoc geos::HistoryCollection::getMetaData
   virtual HistoryMetadata getMetaData( DomainPartition const & domain, localIndex collectionIdx ) const override;
 
-  /// @copydoc geosx::HistoryCollection::getTargetName
+  /// @copydoc geos::HistoryCollection::getTargetName
   virtual const string & getTargetName() const override
   {
     return m_fieldName;
@@ -74,11 +74,13 @@ private:
     static constexpr char const * fieldNameString() { return "fieldName"; }
     static constexpr char const * setNamesString() { return "setNames"; }
     static constexpr char const * onlyOnSetChangeString() { return "onlyOnSetChange"; }
+    static constexpr char const * disableCoordCollectionString() { return "disableCoordCollection"; }
 
     dataRepository::ViewKey objectPath = { "objectPath" };
     dataRepository::ViewKey fieldName = { "fieldName" };
     dataRepository::ViewKey setNames = { "setNames" };
     dataRepository::ViewKey onlyOnSetChange = { "onlyOnSetChange" };
+    dataRepository::ViewKey disableCoordCollection = { "disableCoordCollection" };
   } viewKeys;
   /// @endcond
 
@@ -92,7 +94,7 @@ private:
     m_disableCoordCollection = true;
   }
 
-  /// @copydoc geosx::HistoryCollection::collect
+  /// @copydoc geos::HistoryCollection::collect
   void collect( DomainPartition const & domain,
                 localIndex const collectionIdx,
                 buffer_unit_type * & buffer ) override;
@@ -125,7 +127,7 @@ private:
   localIndex m_onlyOnSetChange;
   /// Whether to create coordinate meta-collectors if collected objects are mesh objects (set to true for coordinate meta-collectors to
   /// avoid init recursion)
-  bool m_disableCoordCollection;
+  integer m_disableCoordCollection;
   /// Whether initializePostSubGroups has been called, since we only wan't to execute it once
   ///  It is called explicitly by the output to ensure this is in a valid state to collect info from to perform setup
   ///  It is also called by the normal initialization process

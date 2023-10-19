@@ -7,7 +7,7 @@ Poromechanics Solver
 Introduction
 ===========================================
 
-This section describes the use of the poroelasticity models implemented in GEOSX.
+This section describes the use of the poroelasticity models implemented in GEOS.
 
 Theory
 =========================

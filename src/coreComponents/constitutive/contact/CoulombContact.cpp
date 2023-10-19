@@ -18,7 +18,7 @@
 
 #include "CoulombContact.hpp"
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -53,9 +53,9 @@ CoulombContact::~CoulombContact()
 
 void CoulombContact::postProcessInput()
 {
-  GEOSX_THROW_IF( m_frictionCoefficient < 0.0,
-                  getCatalogName() << " " << getName() << ": The provided friction coefficient is less than zero. Value: " << m_frictionCoefficient,
-                  InputError );
+  GEOS_THROW_IF( m_frictionCoefficient < 0.0,
+                 getFullName() << ": The provided friction coefficient is less than zero. Value: " << m_frictionCoefficient,
+                 InputError );
 
 }
 
@@ -83,4 +83,4 @@ REGISTER_CATALOG_ENTRY( ConstitutiveBase, CoulombContact, string const &, Group 
 
 } /* namespace constitutive */
 
-} /* namespace geosx */
+} /* namespace geos */

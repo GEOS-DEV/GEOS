@@ -18,7 +18,7 @@
 
 #include "ElasticOrthotropic.hpp"
 
-namespace geosx
+namespace geos
 {
 using namespace dataRepository;
 namespace constitutive
@@ -224,12 +224,12 @@ void ElasticOrthotropic::postProcessInput()
     }
     else
     {
-      GEOSX_ERROR( "Invalid specification for default elastic constants." );
+      GEOS_ERROR( getFullName() << ": Invalid specification for default elastic constants." );
     }
   }
   else if( c11 <= 0.0 || c22 <= 0.0 || c33 <= 0.0 || c44 <= 0.0 || c55 <= 0.0 || c66 <= 0.0 )
   {
-    GEOSX_ERROR( "Invalid specification for default elastic stiffnesses." );
+    GEOS_ERROR( getFullName() << ": Invalid specification for default elastic stiffnesses." );
   }
 
   this->getWrapper< array1d< real64 > >( viewKeyStruct::c11String() ).
@@ -264,4 +264,4 @@ REGISTER_CATALOG_ENTRY( ConstitutiveBase, ElasticOrthotropic, string const &, Gr
 
 } /* namespace constitutive */
 
-} /* namespace geosx */
+} /* namespace geos */

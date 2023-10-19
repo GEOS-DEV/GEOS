@@ -17,12 +17,12 @@
  * @file CoupledSolid.hpp
  */
 
-#ifndef GEOSX_CONSTITUTIVE_SOLID_COUPLEDSOLID_HPP_
-#define GEOSX_CONSTITUTIVE_SOLID_COUPLEDSOLID_HPP_
+#ifndef GEOS_CONSTITUTIVE_SOLID_COUPLEDSOLID_HPP_
+#define GEOS_CONSTITUTIVE_SOLID_COUPLEDSOLID_HPP_
 
 #include "constitutive/solid/CoupledSolidBase.hpp"
 
-namespace geosx
+namespace geos
 {
 namespace constitutive
 {
@@ -56,42 +56,46 @@ public:
    * @brief Get number of gauss points per element.
    * @return number of gauss points per element
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   localIndex numGauss() const { return m_porosityUpdate.numGauss(); }
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   real64 getOldPorosity( localIndex const k,
                          localIndex const q ) const
   {
     return m_porosityUpdate.getOldPorosity( k, q );
   }
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   real64 getPorosity( localIndex const k,
                       localIndex const q ) const
   {
     return m_porosityUpdate.getPorosity( k, q );
   }
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   real64 getInitialPorosity( localIndex const k,
                              localIndex const q ) const
   {
     return m_porosityUpdate.getInitialPorosity( k, q );
   }
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   virtual void updateStateFromPressureAndTemperature( localIndex const k,
                                                       localIndex const q,
                                                       real64 const & pressure,
+                                                      real64 const & pressure_k,
                                                       real64 const & pressure_n,
                                                       real64 const & temperature,
+                                                      real64 const & temperature_k,
                                                       real64 const & temperature_n ) const
   {
-    GEOSX_UNUSED_VAR( k, q, pressure, pressure_n, temperature, temperature_n );
+    GEOS_UNUSED_VAR( k, q,
+                     pressure, pressure_k, pressure_n,
+                     temperature, temperature_k, temperature_n );
   }
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   virtual real64 getShearModulus( localIndex const k ) const
   {
     return m_solidUpdate.getShearModulus( k );
@@ -184,28 +188,28 @@ void CoupledSolid< SOLID_TYPE, PORO_TYPE, PERM_TYPE >::initializePreSubGroups()
 {
   if( PORO_TYPE::catalogName() != getPorosityModel().getCatalogName() )
   {
-    GEOSX_ERROR( " The coupled solid "<< this->getName()<<
-                 " expects a porosity model of type "<<PORO_TYPE::catalogName()<<
-                 " but the specified porosity model \""<<m_porosityModelName<<
-                 "\" is of type " << getPorosityModel().getCatalogName() );
+    GEOS_ERROR( " The coupled solid " << getDataContext() <<
+                " expects a porosity model of type " << PORO_TYPE::catalogName() <<
+                " but the specified porosity model \"" << m_porosityModelName <<
+                "\" is of type " << getPorosityModel().getCatalogName() );
   }
   if( PERM_TYPE::catalogName() != getPermModel().getCatalogName() )
   {
-    GEOSX_ERROR( " The coupled solid "<<this->getName()<<
-                 " expects a permeability model of type "<<PERM_TYPE::catalogName()<<
-                 " but the specified permeability model \""<<m_permeabilityModelName<<
-                 "\" is of type " << getPermModel().getCatalogName() );
+    GEOS_ERROR( " The coupled solid " << getDataContext() <<
+                " expects a permeability model of type " << PERM_TYPE::catalogName() <<
+                " but the specified permeability model \"" << m_permeabilityModelName <<
+                "\" is of type " << getPermModel().getCatalogName() );
   }
   if( SOLID_TYPE::catalogName() != getSolidModel().getCatalogName() )
   {
-    GEOSX_ERROR( " The coupled solid "<<this->getName()<<
-                 " expects a solid model of type "<<SOLID_TYPE::catalogName()<<
-                 " but the specified solid model \""<<this->m_solidModelName<<
-                 "\" is of type" << getSolidModel().getCatalogName() );
+    GEOS_ERROR( " The coupled solid " << getDataContext() <<
+                " expects a solid model of type " << SOLID_TYPE::catalogName() <<
+                " but the specified solid model \"" << m_solidModelName <<
+                "\" is of type" << getSolidModel().getCatalogName() );
   }
 }
 
 }
-} /* namespace geosx */
+} /* namespace geos */
 
-#endif /* GEOSX_CONSTITUTIVE_SOLID_COUPLEDSOLID_HPP_ */
+#endif /* GEOS_CONSTITUTIVE_SOLID_COUPLEDSOLID_HPP_ */

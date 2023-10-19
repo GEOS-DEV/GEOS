@@ -36,6 +36,8 @@ set( mesh_headers
      generators/CellBlockManager.hpp
      generators/CellBlockManagerABC.hpp
      generators/CellBlockUtilities.hpp
+     generators/LineBlock.hpp
+     generators/LineBlockABC.hpp
      generators/ExternalMeshGeneratorBase.hpp
      generators/FaceBlock.hpp
      generators/FaceBlockABC.hpp
@@ -44,7 +46,9 @@ set( mesh_headers
      generators/InternalWellboreGenerator.hpp
      generators/MeshGeneratorBase.hpp
      generators/ParMETISInterface.hpp
+     generators/PartitionDescriptor.hpp
      generators/PrismUtilities.hpp
+     generators/WellGeneratorBase.hpp
      mpiCommunications/CommID.hpp
      mpiCommunications/CommunicationTools.hpp
      mpiCommunications/MPI_iCommData.hpp
@@ -52,12 +56,16 @@ set( mesh_headers
      mpiCommunications/NeighborData.hpp
      mpiCommunications/PartitionBase.hpp
      mpiCommunications/SpatialPartition.hpp
-     simpleGeometricObjects/BoundedPlane.hpp
+     simpleGeometricObjects/Rectangle.hpp
+     simpleGeometricObjects/Disc.hpp
+     simpleGeometricObjects/CustomPolarObject.hpp
      simpleGeometricObjects/Box.hpp
      simpleGeometricObjects/Cylinder.hpp
      simpleGeometricObjects/GeometricObjectManager.hpp
      simpleGeometricObjects/SimpleGeometricObjectBase.hpp
+     simpleGeometricObjects/PlanarGeometricObject.hpp
      simpleGeometricObjects/ThickPlane.hpp
+     utilities/AverageOverQuadraturePointsKernel.hpp     
      utilities/CIcomputationKernel.hpp
      utilities/ComputationalGeometry.hpp
      utilities/MeshMapUtilities.hpp
@@ -94,6 +102,7 @@ set( mesh_sources
      generators/CellBlock.cpp
      generators/CellBlockManager.cpp
      generators/CellBlockUtilities.cpp
+     generators/LineBlock.cpp
      generators/ExternalMeshGeneratorBase.cpp
      generators/FaceBlock.cpp
      generators/InternalMeshGenerator.cpp
@@ -101,40 +110,38 @@ set( mesh_sources
      generators/InternalWellboreGenerator.cpp
      generators/MeshGeneratorBase.cpp
      generators/ParMETISInterface.cpp
+     generators/WellGeneratorBase.cpp
      mpiCommunications/CommID.cpp
      mpiCommunications/CommunicationTools.cpp
      mpiCommunications/MPI_iCommData.cpp
      mpiCommunications/NeighborCommunicator.cpp
      mpiCommunications/PartitionBase.cpp
      mpiCommunications/SpatialPartition.cpp
-     simpleGeometricObjects/BoundedPlane.cpp
+     simpleGeometricObjects/Rectangle.cpp
+     simpleGeometricObjects/Disc.cpp
+     simpleGeometricObjects/CustomPolarObject.cpp
      simpleGeometricObjects/Box.cpp
      simpleGeometricObjects/Cylinder.cpp
      simpleGeometricObjects/GeometricObjectManager.cpp
      simpleGeometricObjects/SimpleGeometricObjectBase.cpp
+     simpleGeometricObjects/PlanarGeometricObject.cpp
      simpleGeometricObjects/ThickPlane.cpp
      utilities/ComputationalGeometry.cpp
      )
 
-set( dependencyList schema dataRepository constitutive finiteElement parmetis metis )
-
-if ( ENABLE_CUDA )
-  set( dependencyList ${dependencyList} cuda )
-endif()
-
-if( ENABLE_CUDA_NVTOOLSEXT )
-  set( dependencyList ${dependencyList} CUDA::nvToolsExt )
-endif()
+set( dependencyList ${parallelDeps} schema dataRepository constitutive finiteElement parmetis metis )
 
 if( ENABLE_VTK )
     message(STATUS "Adding VTKMeshGenerator sources and headers")
     set( mesh_headers ${mesh_headers}
+         generators/CollocatedNodes.hpp
          generators/VTKFaceBlockUtilities.hpp
          generators/VTKMeshGenerator.hpp
          generators/VTKMeshGeneratorTools.hpp
          generators/VTKUtilities.hpp
          )
     set( mesh_sources ${mesh_sources}
+         generators/CollocatedNodes.cpp
          generators/VTKFaceBlockUtilities.cpp
          generators/VTKMeshGenerator.cpp
          generators/VTKMeshGeneratorTools.cpp
@@ -158,7 +165,7 @@ blt_add_library( NAME       mesh
                  DEPENDS_ON ${dependencyList}
                  OBJECT     ${GEOSX_BUILD_OBJ_LIBS}
                )
-               
+
 target_include_directories( mesh PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents )
 
 if( ENABLE_VTK )
@@ -166,6 +173,8 @@ if( ENABLE_VTK )
     set_source_files_properties( generators/VTKMeshGeneratorTools.cpp PROPERTIES LANGUAGE CXX )
 endif()
 
-add_subdirectory( unitTests )
+if( GEOS_ENABLE_TESTS )
+    add_subdirectory( unitTests )
+endif( )
 
 geosx_add_code_checks( PREFIX mesh )

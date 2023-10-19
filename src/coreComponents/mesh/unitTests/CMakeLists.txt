@@ -4,14 +4,11 @@
 
 set( mesh_tests
      testMeshObjectPath.cpp
+     testComputationalGeometry.cpp
      testGeometricObjects.cpp
    )
 
-set( dependencyList gtest mesh )
-
-if ( ENABLE_CUDA )
-  set( dependencyList ${dependencyList} cuda )
-endif()
+set( dependencyList gtest mesh ${parallelDeps} )
 
 #
 # Add gtest C++ based tests

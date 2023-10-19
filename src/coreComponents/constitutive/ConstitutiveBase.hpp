@@ -16,14 +16,14 @@
  * @file ConstitutiveBase.hpp
  */
 
-#ifndef GEOSX_CONSTITUTIVE_CONSTITUTIVEBASE_HPP_
-#define GEOSX_CONSTITUTIVE_CONSTITUTIVEBASE_HPP_
+#ifndef GEOS_CONSTITUTIVE_CONSTITUTIVEBASE_HPP_
+#define GEOS_CONSTITUTIVE_CONSTITUTIVEBASE_HPP_
 
 #include "dataRepository/ObjectCatalog.hpp"
 #include "common/DataTypes.hpp"
 #include "dataRepository/Group.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace constitutive
@@ -85,9 +85,13 @@ public:
 
   /**
    * @brief Get full name of the model.
-   * @return full name, consisting of XML (catalog) name and actual model name
+   * @return full name, consisting of XML (catalog) name and actual model name, and if possible
+   * followed by the xml file and line.
    */
-  string getFullName() const { return getCatalogName() + " " + getName(); }
+  string getFullName() const
+  {
+    return getCatalogName() + " " + getDataContext().toString();
+  }
 
   ///@}
 

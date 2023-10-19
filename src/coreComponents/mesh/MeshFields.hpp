@@ -16,8 +16,8 @@
  * @file MeshFields.hpp
  */
 
-#ifndef GEOSX_MESH_FIELDS_HPP_
-#define GEOSX_MESH_FIELDS_HPP_
+#ifndef GEOS_MESH_FIELDS_HPP_
+#define GEOS_MESH_FIELDS_HPP_
 
 #include "codingUtilities/traits.hpp"
 #include "dataRepository/RestartFlags.hpp"
@@ -64,7 +64,7 @@
     static constexpr char const * description = DESCRIPTION; \
   }
 
-namespace geosx
+namespace geos
 {
 /**
  * A scope for field traits.
@@ -148,6 +148,6 @@ DECLARE_FIELD( ruptureTime,
 
 
 } // namespace fields
-} // namespace geosx
+} // namespace geos
 
-#endif /* GEOSX_MESH_FIELDS_HPP_ */
+#endif /* GEOS_MESH_FIELDS_HPP_ */

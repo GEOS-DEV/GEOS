@@ -27,24 +27,12 @@ if( ENABLE_VTK )
   configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/meshDirName.hpp.in ${CMAKE_BINARY_DIR}/include/tests/meshDirName.hpp )
 endif()
 
-set( dependencyList gtest )
+set( dependencyList ${parallelDeps} gtest )
 
 if( GEOSX_BUILD_SHARED_LIBS )
   set( dependencyList ${dependencyList} geosx_core )
 else()
   set( dependencyList ${dependencyList} ${geosx_core_libs} )
-endif()
-
-if( ENABLE_CUDA )
-  set( dependencyList ${dependencyList} cuda )
-endif()
-
-if( ENABLE_CUDA_NVTOOLSEXT )
-  set( dependencyList ${dependencyList} CUDA::nvToolsExt )
-endif()
-
-if( ENABLE_OPENMP )
-  set( dependencyList ${dependencyList} openmp )
 endif()
 
 #
@@ -61,6 +49,16 @@ foreach( test ${gtest_geosx_tests} )
   blt_add_test( NAME ${test_name}
                 COMMAND ${test_name} ${CMAKE_CURRENT_LIST_DIR}
                 )
+
+  # Older g++ version need a hint to use std::filesystem
+  if( CMAKE_CXX_COMPILER_ID STREQUAL "GNU" )
+      if( CMAKE_CXX_COMPILER_VERSION VERSION_LESS 9 )
+          target_link_libraries( ${test_name} PRIVATE "stdc++fs" )
+      endif ()
+  endif ()
+  if ( ENABLE_CUDA )
+    target_link_libraries( ${test_name} PRIVATE "stdc++fs" )
+  endif ()
 endforeach()
 
 if( ENABLE_MPI )
@@ -80,5 +78,14 @@ if( ENABLE_MPI )
                   COMMAND ${test_name} -x ${nranks}
                   NUM_MPI_TASKS ${nranks}
                   )
+    # Older g++ version need a hint to use std::filesystem
+    if( CMAKE_CXX_COMPILER_ID STREQUAL "GNU" )
+        if( CMAKE_CXX_COMPILER_VERSION VERSION_LESS 9 )
+            target_link_libraries( ${test_name} PRIVATE "stdc++fs" )
+        endif ()
+    endif ()
+    if ( ENABLE_CUDA )
+      target_link_libraries( ${test_name} PRIVATE "stdc++fs" )
+    endif ()
   endforeach()
 endif()

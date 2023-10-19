@@ -24,12 +24,13 @@
 #include "DelftEgg.hpp"
 #include "DruckerPrager.hpp"
 #include "DruckerPragerExtended.hpp"
+#include "DuvautLionsSolid.hpp"
 #include "Damage.hpp"
 #include "DamageSpectral.hpp"
 #include "DamageVolDev.hpp"
 #include "ModifiedCamClay.hpp"
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -64,4 +65,4 @@ CoupledSolidBase::CoupledSolidBase( string const & name, Group * const parent ):
 CoupledSolidBase::~CoupledSolidBase() = default;
 
 }
-} /* namespace geosx */
+} /* namespace geos */

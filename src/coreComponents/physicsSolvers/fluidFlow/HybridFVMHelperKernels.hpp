@@ -16,14 +16,14 @@
  * @file CompositionalMultiphaseHybridFVMHelperKernels.hpp
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_FLUIDFLOW_HYBRIDFVMUPWINDINGHELPERKERNELS_HPP
-#define GEOSX_PHYSICSSOLVERS_FLUIDFLOW_HYBRIDFVMUPWINDINGHELPERKERNELS_HPP
+#ifndef GEOS_PHYSICSSOLVERS_FLUIDFLOW_HYBRIDFVMUPWINDINGHELPERKERNELS_HPP
+#define GEOS_PHYSICSSOLVERS_FLUIDFLOW_HYBRIDFVMUPWINDINGHELPERKERNELS_HPP
 
 #include "common/DataTypes.hpp"
 #include "linearAlgebra/interfaces/InterfaceTypes.hpp"
 #include "mesh/MeshLevel.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace hybridFVMKernels
@@ -61,7 +61,7 @@ void kernelLaunchSelectorFaceSwitch( T value, LAMBDA && lambda )
        case 13:
        { lambda( std::integral_constant< T, 13 >() ); return;}
      */
-    default: GEOSX_ERROR( "Unknown numFacesInElem value: " << value );
+    default: GEOS_ERROR( "Unknown numFacesInElem value: " << value );
   }
 }
 
@@ -79,7 +79,7 @@ void simpleKernelLaunchSelector( localIndex numFacesInElem, ARGS && ... args )
 struct CellConnectivity
 {
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   static bool
   isNeighborFound( localIndex const (&localIds)[3],
                    localIndex const ifaceLoc,
@@ -132,6 +132,6 @@ struct CellConnectivity
 
 } // namespace hybridFVMUpwindingKernels
 
-} // namespace geosx
+} // namespace geos
 
-#endif //GEOSX_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONALMULTIPHASEHYBRIDFVMUPWINDINGHELPERKERNELS_HPP
+#endif //GEOS_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONALMULTIPHASEHYBRIDFVMUPWINDINGHELPERKERNELS_HPP

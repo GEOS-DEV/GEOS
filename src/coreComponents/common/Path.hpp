@@ -12,15 +12,15 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#ifndef GEOSX_COMMON_PATH_HPP
-#define GEOSX_COMMON_PATH_HPP
+#ifndef GEOS_COMMON_PATH_HPP
+#define GEOS_COMMON_PATH_HPP
 
 // System includes
 #include <string>
 #include <sstream>
 #include <vector>
 
-namespace geosx
+namespace geos
 {
 /*!
  * @brief Class describing a file Path
@@ -205,7 +205,7 @@ void makeDirectory( std::string const & path );
  */
 void makeDirsForPath( std::string const & path );
 
-} /* end namespace geosx */
+} /* end namespace geos */
 
 
 #endif

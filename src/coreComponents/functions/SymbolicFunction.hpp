@@ -11,14 +11,14 @@
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
  */
-#ifndef GEOSX_FUNCTIONS_SYMBOLICFUNCTION_HPP_
-#define GEOSX_FUNCTIONS_SYMBOLICFUNCTION_HPP_
+#ifndef GEOS_FUNCTIONS_SYMBOLICFUNCTION_HPP_
+#define GEOS_FUNCTIONS_SYMBOLICFUNCTION_HPP_
 
 #include "FunctionBase.hpp"
 
 #include <mathpresso/mathpresso.h>
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -29,7 +29,7 @@ namespace geosx
 class SymbolicFunction : public FunctionBase
 {
 public:
-  /// @copydoc geosx::dataRepository::Group::Group( string const & name, Group * const parent )
+  /// @copydoc geos::dataRepository::Group::Group( string const & name, Group * const parent )
   SymbolicFunction( const string & name,
                     dataRepository::Group * const parent );
 
@@ -102,6 +102,6 @@ private:
 };
 
 
-} /* namespace geosx */
+} /* namespace geos */
 
-#endif /* GEOSX_FUNCTIONS_SYMBOLICFUNCTION_HPP_ */
+#endif /* GEOS_FUNCTIONS_SYMBOLICFUNCTION_HPP_ */

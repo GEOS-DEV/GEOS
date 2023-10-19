@@ -15,13 +15,13 @@
 /**
  * @file ConstitutivePassThruHandler.hpp
  */
-#ifndef GEOSX_CONSTITUTIVEPASSTHRUHANDLER_HPP
-#define GEOSX_CONSTITUTIVEPASSTHRUHANDLER_HPP
+#ifndef GEOS_CONSTITUTIVEPASSTHRUHANDLER_HPP
+#define GEOS_CONSTITUTIVEPASSTHRUHANDLER_HPP
 
 #include "codingUtilities/traits.hpp"
 #include "common/DataTypes.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace constitutive
@@ -43,9 +43,9 @@ struct ConstitutivePassThruHandler<>
   template< typename BASE, typename LAMBDA >
   static void execute( BASE & relation, LAMBDA lambda )
   {
-    GEOSX_UNUSED_VAR( relation, lambda );
-    GEOSX_ERROR( "The constitutive model " << relation.getName() << " was not dispatched." <<
-                 "The model type does not match the list of supported types." );
+    GEOS_UNUSED_VAR( relation, lambda );
+    GEOS_ERROR( "The constitutive model " << relation.getDataContext() << " was not dispatched. " <<
+                "The model type does not match the list of supported types." );
   }
 };
 
@@ -75,6 +75,6 @@ struct ConstitutivePassThruHandler< TYPE, TYPES... >
 
 }//namespace constitutive
 
-} //namespace geosx
+} //namespace geos
 
-#endif //GEOSX_CONSTITUTIVEPASSTHRUHANDLER_HPP
+#endif //GEOS_CONSTITUTIVEPASSTHRUHANDLER_HPP

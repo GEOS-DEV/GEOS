@@ -20,7 +20,7 @@
 
 #include "common/TimingMacros.hpp"
 #include "constitutive/ConstitutivePassThru.hpp"
-#include "constitutive/fluid/SingleFluidBase.hpp"
+#include "constitutive/fluid/singlefluid/SingleFluidBase.hpp"
 #include "fieldSpecification/AquiferBoundaryCondition.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
 #include "finiteVolume/HybridMimeticDiscretization.hpp"
@@ -33,7 +33,7 @@
 /**
  * @namespace the geosx namespace that encapsulates the majority of the code
  */
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -75,24 +75,24 @@ void SinglePhaseHybridFVM::initializePreSubGroups()
 {
   SinglePhaseBase::initializePreSubGroups();
 
-  GEOSX_THROW_IF( m_isThermal,
-                  GEOSX_FMT( "{} {}: The thermal option is not supported by SinglePhaseHybridFVM",
-                             catalogName(), getName() ),
-                  InputError );
+  GEOS_THROW_IF( m_isThermal,
+                 GEOS_FMT( "{} {}: The thermal option is not supported by SinglePhaseHybridFVM",
+                           catalogName(), getDataContext().toString() ),
+                 InputError );
 
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
   FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
 
-  GEOSX_THROW_IF( !fvManager.hasGroup< HybridMimeticDiscretization >( m_discretizationName ),
-                  catalogName() << " " << getName() <<
-                  ": the HybridMimeticDiscretization must be selected with SinglePhaseHybridFVM",
-                  InputError );
+  GEOS_THROW_IF( !fvManager.hasGroup< HybridMimeticDiscretization >( m_discretizationName ),
+                 catalogName() << " " << getDataContext() <<
+                 ": the HybridMimeticDiscretization must be selected with SinglePhaseHybridFVM",
+                 InputError );
 }
 
 void SinglePhaseHybridFVM::initializePostInitialConditionsPreSubGroups()
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   SinglePhaseBase::initializePostInitialConditionsPreSubGroups();
 
@@ -117,22 +117,22 @@ void SinglePhaseHybridFVM::initializePostInitialConditionsPreSubGroups()
     arrayView1d< real64 const > const transMultiplier = faceManager.getField< fields::flow::transMultiplier >();
 
     RAJA::ReduceMin< parallelDeviceReduce, real64 > minVal( 1.0 );
-    forAll< parallelDevicePolicy<> >( faceManager.size(), [=] GEOSX_HOST_DEVICE ( localIndex const iface )
+    forAll< parallelDevicePolicy<> >( faceManager.size(), [=] GEOS_HOST_DEVICE ( localIndex const iface )
     {
       minVal.min( transMultiplier[iface] );
     } );
 
-    GEOSX_THROW_IF_LE_MSG( minVal.get(), 0.0,
-                           catalogName() << " " << getName() <<
-                           "The transmissibility multipliers used in SinglePhaseHybridFVM must strictly larger than 0.0",
-                           std::runtime_error );
+    GEOS_THROW_IF_LE_MSG( minVal.get(), 0.0,
+                          catalogName() << " " << getDataContext() <<
+                          "The transmissibility multipliers used in SinglePhaseHybridFVM must strictly larger than 0.0",
+                          std::runtime_error );
 
     FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
     fsManager.forSubGroups< AquiferBoundaryCondition >( [&] ( AquiferBoundaryCondition const & bc )
     {
-      GEOSX_LOG_RANK_0( catalogName() << " " << getName() <<
-                        "An aquifer boundary condition named " << bc.getName() << " was requested in the XML file. \n"
-                                                                                  "This type of boundary condition is not yet supported by SinglePhaseHybridFVM and will be ignored" );
+      GEOS_LOG_RANK_0( catalogName() << " " << getDataContext() <<
+                       "The aquifer boundary condition " << bc.getDataContext() << " was requested in the XML file. \n" <<
+                       "This type of boundary condition is not yet supported by SinglePhaseHybridFVM and will be ignored" );
     } );
   } );
 }
@@ -141,7 +141,7 @@ void SinglePhaseHybridFVM::implicitStepSetup( real64 const & time_n,
                                               real64 const & dt,
                                               DomainPartition & domain )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   // setup the cell-centered fields
   SinglePhaseBase::implicitStepSetup( time_n, dt, domain );
@@ -162,7 +162,7 @@ void SinglePhaseHybridFVM::implicitStepSetup( real64 const & time_n,
   } );
 }
 
-void SinglePhaseHybridFVM::setupDofs( DomainPartition const & GEOSX_UNUSED_PARAM( domain ),
+void SinglePhaseHybridFVM::setupDofs( DomainPartition const & GEOS_UNUSED_PARAM( domain ),
                                       DofManager & dofManager ) const
 {
 
@@ -194,14 +194,14 @@ void SinglePhaseHybridFVM::setupDofs( DomainPartition const & GEOSX_UNUSED_PARAM
                           DofManager::Connector::Elem );
 }
 
-void SinglePhaseHybridFVM::assembleFluxTerms( real64 const GEOSX_UNUSED_PARAM( time_n ),
+void SinglePhaseHybridFVM::assembleFluxTerms( real64 const GEOS_UNUSED_PARAM( time_n ),
                                               real64 const dt,
                                               DomainPartition const & domain,
                                               DofManager const & dofManager,
                                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                               arrayView1d< real64 > const & localRhs )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
   FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
@@ -261,15 +261,15 @@ void SinglePhaseHybridFVM::assembleFluxTerms( real64 const GEOSX_UNUSED_PARAM( t
 
 }
 
-void SinglePhaseHybridFVM::assemblePoroelasticFluxTerms( real64 const time_n,
-                                                         real64 const dt,
-                                                         DomainPartition const & domain,
-                                                         DofManager const & dofManager,
-                                                         CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                                         arrayView1d< real64 > const & localRhs,
-                                                         string const & jumpDofKey )
+void SinglePhaseHybridFVM::assembleEDFMFluxTerms( real64 const time_n,
+                                                  real64 const dt,
+                                                  DomainPartition const & domain,
+                                                  DofManager const & dofManager,
+                                                  CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                  arrayView1d< real64 > const & localRhs,
+                                                  string const & jumpDofKey )
 {
-  GEOSX_UNUSED_VAR ( jumpDofKey );
+  GEOS_UNUSED_VAR ( jumpDofKey );
 
   assembleFluxTerms( time_n,
                      dt,
@@ -287,15 +287,15 @@ void SinglePhaseHybridFVM::assembleHydrofracFluxTerms( real64 const time_n,
                                                        arrayView1d< real64 > const & localRhs,
                                                        CRSMatrixView< real64, localIndex const > const & dR_dAper )
 {
-  GEOSX_UNUSED_VAR ( time_n );
-  GEOSX_UNUSED_VAR ( dt );
-  GEOSX_UNUSED_VAR ( domain );
-  GEOSX_UNUSED_VAR ( dofManager );
-  GEOSX_UNUSED_VAR ( localMatrix );
-  GEOSX_UNUSED_VAR ( localRhs );
-  GEOSX_UNUSED_VAR ( dR_dAper );
+  GEOS_UNUSED_VAR ( time_n );
+  GEOS_UNUSED_VAR ( dt );
+  GEOS_UNUSED_VAR ( domain );
+  GEOS_UNUSED_VAR ( dofManager );
+  GEOS_UNUSED_VAR ( localMatrix );
+  GEOS_UNUSED_VAR ( localRhs );
+  GEOS_UNUSED_VAR ( dR_dAper );
 
-  GEOSX_ERROR( "Poroelastic fluxes with conforming fractures not yet implemented." );
+  GEOS_ERROR( "Poroelastic fluxes with conforming fractures not yet implemented." );
 }
 
 void SinglePhaseHybridFVM::applyBoundaryConditions( real64 const time_n,
@@ -305,7 +305,7 @@ void SinglePhaseHybridFVM::applyBoundaryConditions( real64 const time_n,
                                                     CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                     arrayView1d< real64 > const & localRhs )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   SinglePhaseBase::applyBoundaryConditions( time_n, dt, domain, dofManager, localMatrix, localRhs );
   if( !m_keepFlowVariablesConstantDuringInitStep )
@@ -330,7 +330,7 @@ void SinglePhaseHybridFVM::applyFaceDirichletBC( real64 const time_n,
                                                  CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                  arrayView1d< real64 > const & localRhs )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
 
@@ -366,9 +366,9 @@ void SinglePhaseHybridFVM::applyFaceDirichletBC( real64 const time_n,
       if( fs.getLogLevel() >= 1 && m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
       {
         globalIndex const numTargetFaces = MpiWrapper::sum< globalIndex >( targetSet.size() );
-        GEOSX_LOG_RANK_0( GEOSX_FMT( faceBcLogMessage,
-                                     this->getName(), time_n+dt, FieldSpecificationBase::catalogName(),
-                                     fs.getName(), setName, targetGroup.getName(), numTargetFaces ) );
+        GEOS_LOG_RANK_0( GEOS_FMT( faceBcLogMessage,
+                                   this->getName(), time_n+dt, FieldSpecificationBase::catalogName(),
+                                   fs.getName(), setName, targetGroup.getName(), numTargetFaces ) );
       }
 
       // next, we use the field specification functions to apply the boundary conditions to the system
@@ -381,7 +381,7 @@ void SinglePhaseHybridFVM::applyFaceDirichletBC( real64 const time_n,
                                                     fields::flow::facePressure::key() );
 
       // 2. second, modify the residual/jacobian matrix as needed to impose the boundary conditions
-      forAll< parallelDevicePolicy<> >( targetSet.size(), [=] GEOSX_HOST_DEVICE ( localIndex const a )
+      forAll< parallelDevicePolicy<> >( targetSet.size(), [=] GEOS_HOST_DEVICE ( localIndex const a )
       {
 
         localIndex const kf = targetSet[a];
@@ -418,28 +418,28 @@ void SinglePhaseHybridFVM::applyAquiferBC( real64 const time,
                                            CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                            arrayView1d< real64 > const & localRhs ) const
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
-  GEOSX_UNUSED_VAR( time, dt, dofManager, domain, localMatrix, localRhs );
+  GEOS_UNUSED_VAR( time, dt, dofManager, domain, localMatrix, localRhs );
 }
 
 void SinglePhaseHybridFVM::saveAquiferConvergedState( real64 const & time,
                                                       real64 const & dt,
                                                       DomainPartition & domain )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
-  GEOSX_UNUSED_VAR( time, dt, domain );
+  GEOS_UNUSED_VAR( time, dt, domain );
 }
 
 
-real64 SinglePhaseHybridFVM::calculateResidualNorm( real64 const & GEOSX_UNUSED_PARAM( time_n ),
+real64 SinglePhaseHybridFVM::calculateResidualNorm( real64 const & GEOS_UNUSED_PARAM( time_n ),
                                                     real64 const & dt,
                                                     DomainPartition const & domain,
                                                     DofManager const & dofManager,
                                                     arrayView1d< real64 const > const & localRhs )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   real64 localResidualNorm = 0.0;
   real64 localResidualNormalizer = 0.0;
@@ -561,7 +561,7 @@ real64 SinglePhaseHybridFVM::calculateResidualNorm( real64 const & GEOSX_UNUSED_
 
   if( getLogLevel() >= 1 && logger::internal::rank == 0 )
   {
-    std::cout << GEOSX_FMT( "    ( R{} ) = ( {:4.2e} ) ; ", coupledSolverAttributePrefix(), residualNorm );
+    std::cout << GEOS_FMT( "        ( R{} ) = ( {:4.2e} )", coupledSolverAttributePrefix(), residualNorm );
   }
 
   return residualNorm;
@@ -570,8 +570,10 @@ real64 SinglePhaseHybridFVM::calculateResidualNorm( real64 const & GEOSX_UNUSED_
 void SinglePhaseHybridFVM::applySystemSolution( DofManager const & dofManager,
                                                 arrayView1d< real64 const > const & localSolution,
                                                 real64 const scalingFactor,
+                                                real64 const dt,
                                                 DomainPartition & domain )
 {
+  GEOS_UNUSED_VAR( dt );
   // here we apply the cell-centered update in the derived class
   // to avoid duplicating a synchronization point
 
@@ -626,4 +628,4 @@ void SinglePhaseHybridFVM::resetStateToBeginningOfStep( DomainPartition & domain
 }
 
 REGISTER_CATALOG_ENTRY( SolverBase, SinglePhaseHybridFVM, string const &, Group * const )
-} /* namespace geosx */
+} /* namespace geos */

@@ -26,7 +26,7 @@
 #define VERIFY_INITIALIZED( self ) \
   PYTHON_ERROR_IF( self->wrapper == nullptr, PyExc_RuntimeError, "The PyWrapper is not initialized.", nullptr )
 
-namespace geosx
+namespace geos
 {
 namespace python
 {
@@ -36,7 +36,7 @@ struct PyWrapper
   PyObject_HEAD
 
   static constexpr char const * docString =
-    "A Python interface to geosx::dataRepository::WrapperBase.";
+    "A Python interface to geos::dataRepository::WrapperBase.";
 
   dataRepository::WrapperBase * wrapper;
 };
@@ -141,4 +141,4 @@ PyTypeObject * getPyWrapperType()
 { return &PyWrapperType; }
 
 } // namespace python
-} // namespace geosx
+} // namespace geos

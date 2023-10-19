@@ -29,7 +29,7 @@
 #include <conduit_blueprint.hpp>
 #include <conduit_relay.hpp>
 
-namespace geosx
+namespace geos
 {
 namespace internal
 {
@@ -46,7 +46,7 @@ string toBlueprintShape( ElementType const elementType )
     case ElementType::Hexahedron: return "hex";
     default:
     {
-      GEOSX_ERROR( "No Blueprint type for element type: " << elementType );
+      GEOS_ERROR( "No Blueprint type for element type: " << elementType );
       return {};
     }
   }
@@ -85,14 +85,14 @@ static std::vector< int > getBlueprintNodeOrdering( ElementType const elementTyp
  */
 void reorderElementToNodeMap( CellElementSubRegion const & subRegion, conduit::Node & connectivity )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemToNodeMap = subRegion.nodeList();
   localIndex const numElems = elemToNodeMap.size( 0 );
   localIndex const numNodesPerElem = elemToNodeMap.size( 1 );
 
   std::vector< int > const vtkOrdering = getBlueprintNodeOrdering( subRegion.getElementType() );
-  GEOSX_ERROR_IF_NE( localIndex( vtkOrdering.size() ), numNodesPerElem );
+  GEOS_ERROR_IF_NE( localIndex( vtkOrdering.size() ), numNodesPerElem );
 
   constexpr int conduitTypeID = dataRepository::conduitTypeInfo< localIndex >::id;
   conduit::DataType const dtype( conduitTypeID, elemToNodeMap.size() );
@@ -134,7 +134,7 @@ bool BlueprintOutput::execute( real64 const time,
                                real64 const,
                                DomainPartition & domain )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   MeshLevel const & meshLevel = domain.getMeshBody( 0 ).getBaseDiscretization();
 
@@ -159,7 +159,7 @@ bool BlueprintOutput::execute( real64 const time,
 
   /// Verify that the mesh conforms to the Blueprint.
   conduit::Node info;
-  GEOSX_ASSERT_MSG( conduit::blueprint::verify( "mesh", meshRoot, info ), info.to_json() );
+  GEOS_ASSERT_MSG( conduit::blueprint::verify( "mesh", meshRoot, info ), info.to_json() );
 
   /// Generate the Blueprint index.
   conduit::Node fileRoot;
@@ -168,10 +168,10 @@ bool BlueprintOutput::execute( real64 const time,
 
   /// Verify that the index conforms to the Blueprint.
   info.reset();
-  GEOSX_ASSERT_MSG( conduit::blueprint::mesh::index::verify( index, info ), info.to_json() );
+  GEOS_ASSERT_MSG( conduit::blueprint::mesh::index::verify( index, info ), info.to_json() );
 
   /// Write out the root index file, then write out the mesh.
-  string const completePath = GEOSX_FMT( "{}/blueprintFiles/cycle_{:07}", OutputBase::getOutputDirectory(), cycle );
+  string const completePath = GEOS_FMT( "{}/blueprintFiles/cycle_{:07}", OutputBase::getOutputDirectory(), cycle );
   string const filePathForRank = dataRepository::writeRootFile( fileRoot, completePath );
   conduit::relay::io::save( meshRoot, filePathForRank, "hdf5" );
 
@@ -184,7 +184,7 @@ void BlueprintOutput::addNodalData( NodeManager const & nodeManager,
                                     conduit::Node & topologies,
                                     conduit::Node & fields )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   /// Populate the coordset group
   coordset[ "type" ] = "explicit";
@@ -227,7 +227,7 @@ void BlueprintOutput::addElementData( ElementRegionManager const & elemRegionMan
                                       conduit::Node & fields,
                                       dataRepository::Group & averagedElementData )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   elemRegionManager.forElementSubRegionsComplete< CellElementSubRegion >(
     [&] ( localIndex, localIndex, ElementRegionBase const & region, CellElementSubRegion const & subRegion )
@@ -264,7 +264,7 @@ void BlueprintOutput::writeOutWrappersAsFields( Group const & group,
                                                 string const & topology,
                                                 string const & prefix )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   group.forWrappers( [&] ( dataRepository::WrapperBase const & wrapper )
   {
@@ -290,7 +290,7 @@ void BlueprintOutput::writeOutConstitutiveData( dataRepository::Group const & co
                                                 string const & topology,
                                                 dataRepository::Group & averagedSubRegionData )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   Group & averagedConstitutiveData = averagedSubRegionData.registerGroup( constitutiveModel.getName() );
 
@@ -309,4 +309,4 @@ void BlueprintOutput::writeOutConstitutiveData( dataRepository::Group const & co
 
 REGISTER_CATALOG_ENTRY( OutputBase, BlueprintOutput, string const &, dataRepository::Group * const )
 
-} /* namespace geosx */
+} /* namespace geos */

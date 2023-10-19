@@ -20,7 +20,7 @@
 
 #include "constitutive/permeability/PermeabilityFields.hpp"
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -55,4 +55,4 @@ void ParallelPlatesPermeability::allocateConstitutiveData( dataRepository::Group
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, ParallelPlatesPermeability, string const &, Group * const )
 
 }
-} /* namespace geosx */
+} /* namespace geos */

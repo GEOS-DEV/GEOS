@@ -12,14 +12,14 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#ifndef GEOSX_DATAREPOSITORY_RESTARTFLAGS_HPP_
-#define GEOSX_DATAREPOSITORY_RESTARTFLAGS_HPP_
+#ifndef GEOS_DATAREPOSITORY_RESTARTFLAGS_HPP_
+#define GEOS_DATAREPOSITORY_RESTARTFLAGS_HPP_
 
 /**
  * @file RestartFlags.hpp
  */
 
-namespace geosx
+namespace geos
 {
 namespace dataRepository
 {
@@ -81,7 +81,7 @@ inline PlotLevel toPlotLevel( int const val )
     }
     default:
     {
-      GEOSX_ERROR( "Could not parse " << val << " into a PlotLevel." );
+      GEOS_ERROR( "Could not parse " << val << " into a PlotLevel." );
       return PlotLevel::NOPLOT;
     }
   }
@@ -113,6 +113,6 @@ std::ostream & operator<<( std::ostream & os, PlotLevel const & plotLevel )
 { return os << static_cast< int >( plotLevel ); }
 
 } /// namespace dataRepository
-} /// namespace geosx
+} /// namespace geos
 
-#endif  /* GEOSX_DATAREPOSITORY_RESTARTFLAGS_HPP_ */
+#endif  /* GEOS_DATAREPOSITORY_RESTARTFLAGS_HPP_ */

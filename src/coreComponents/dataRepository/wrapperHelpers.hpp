@@ -16,8 +16,8 @@
  * @file wrapperHelpers.hpp
  */
 
-#ifndef GEOSX_DATAREPOSITORY_WRAPPERHELPERS_HPP_
-#define GEOSX_DATAREPOSITORY_WRAPPERHELPERS_HPP_
+#ifndef GEOS_DATAREPOSITORY_WRAPPERHELPERS_HPP_
+#define GEOS_DATAREPOSITORY_WRAPPERHELPERS_HPP_
 
 
 /// Enables verbose logging of restart output
@@ -47,7 +47,7 @@
 #include <unordered_set>
 #endif
 
-namespace geosx
+namespace geos
 {
 namespace dataRepository
 {
@@ -64,18 +64,18 @@ inline void logOutputType( string const & typeString, string const & msg )
   if( !m_types.count( typeString ) )
   {
     m_types.insert( typeString );
-    GEOSX_LOG( msg << typeString );
+    GEOS_LOG( msg << typeString );
   }
 #else
-  GEOSX_DEBUG_VAR( typeString );
-  GEOSX_DEBUG_VAR( msg );
+  GEOS_DEBUG_VAR( typeString );
+  GEOS_DEBUG_VAR( msg );
 #endif
 }
 
 template< typename T, typename ... INDICES >
 string getIndicesToComponent( T const &, int const component, INDICES const ... existingIndices )
 {
-  GEOSX_ERROR_IF_NE( component, 0 );
+  GEOS_ERROR_IF_NE( component, 0 );
   return LvArray::indexing::getIndexString( existingIndices ... );
 }
 
@@ -86,14 +86,14 @@ string getIndicesToComponent( R1Tensor const &, int const component, INDICES con
 template< typename T >
 T const * getPointerToComponent( T const & var, int const component )
 {
-  GEOSX_ERROR_IF_NE( component, 0 );
+  GEOS_ERROR_IF_NE( component, 0 );
   return &var;
 }
 
 inline
 real64 const * getPointerToComponent( R1Tensor const & var, int const component )
 {
-  GEOSX_ERROR_IF_GE( component, 3 );
+  GEOS_ERROR_IF_GE( component, 3 );
   return &var[ component ];
 }
 
@@ -106,12 +106,12 @@ public:
 
   void set( integer const, Span< string const > )
   {
-    GEOSX_ERROR( "Dimension labels are only available in Array wrappers" );
+    GEOS_ERROR( "Dimension labels are only available in Array wrappers" );
   }
 
   Span< string const > get( integer const ) const
   {
-    GEOSX_ERROR( "Dimension labels are only available in Array wrappers" );
+    GEOS_ERROR( "Dimension labels are only available in Array wrappers" );
     return {};
   }
 };
@@ -123,16 +123,16 @@ public:
 
   void set( integer const dim, Span< string const > labels )
   {
-    GEOSX_ERROR_IF_LT( dim, 0 );
-    GEOSX_ERROR_IF_GE( dim, NDIM );
+    GEOS_ERROR_IF_LT( dim, 0 );
+    GEOS_ERROR_IF_GE( dim, NDIM );
     m_values[dim].resize( labels.size() );
     std::copy( labels.begin(), labels.end(), m_values[dim].begin() );
   }
 
   Span< string const > get( integer const dim ) const
   {
-    GEOSX_ERROR_IF_LT( dim, 0 );
-    GEOSX_ERROR_IF_GE( dim, NDIM );
+    GEOS_ERROR_IF_LT( dim, 0 );
+    GEOS_ERROR_IF_GE( dim, NDIM );
     return { m_values[dim].begin(), m_values[dim].end() };
   }
 
@@ -148,7 +148,7 @@ size( T const & value )
 
 template< typename T >
 inline std::enable_if_t< !traits::HasMemberFunction_size< T >, size_t >
-size( T const & GEOSX_UNUSED_PARAM( value ) )
+size( T const & GEOS_UNUSED_PARAM( value ) )
 { return 1; }
 
 
@@ -183,8 +183,8 @@ resize( T & value, localIndex const newSize )
 
 template< typename T >
 inline std::enable_if_t< !traits::HasMemberFunction_resize< T > >
-resize( T & GEOSX_UNUSED_PARAM( value ),
-        localIndex const GEOSX_UNUSED_PARAM( newSize ) )
+resize( T & GEOS_UNUSED_PARAM( value ),
+        localIndex const GEOS_UNUSED_PARAM( newSize ) )
 {}
 
 
@@ -197,7 +197,7 @@ resizeDefault( Array< T, NDIM, PERMUTATION > & value,
 
 template< typename T >
 inline void
-resizeDefault( T & value, localIndex const newSize, DefaultValue< T > const & GEOSX_UNUSED_PARAM( defaultValue ) )
+resizeDefault( T & value, localIndex const newSize, DefaultValue< T > const & GEOS_UNUSED_PARAM( defaultValue ) )
 { resize( value, newSize ); }
 
 
@@ -212,7 +212,7 @@ resizeDimensions( T & value, int num_dims, localIndex const * const dims )
 {
   if( num_dims != 1 )
   {
-    GEOSX_ERROR( "Data is not multidimensional" );
+    GEOS_ERROR( "Data is not multidimensional" );
     return;
   }
   resize( value, dims[ 0 ] );
@@ -228,14 +228,14 @@ byteSizeOfElement()
 template< typename T >
 inline size_t
 byteSize( T const & value )
-{ return size( value ) * byteSizeOfElement< T >(); }
+{ return wrapperHelpers::size( value ) * byteSizeOfElement< T >(); }
 
 
 template< typename T >
 inline localIndex
 numElementsFromByteSize( localIndex const byteSize )
 {
-  GEOSX_ERROR_IF_NE( byteSize % byteSizeOfElement< T >(), 0 );
+  GEOS_ERROR_IF_NE( byteSize % byteSizeOfElement< T >(), 0 );
   return byteSize / byteSizeOfElement< T >();
 }
 
@@ -247,7 +247,7 @@ reserve( T & value, localIndex const newCapacity )
 
 template< typename T >
 std::enable_if_t< !traits::HasMemberFunction_reserve< T > >
-reserve( T & GEOSX_UNUSED_PARAM( value ), localIndex const GEOSX_UNUSED_PARAM( newCapacity ) )
+reserve( T & GEOS_UNUSED_PARAM( value ), localIndex const GEOS_UNUSED_PARAM( newCapacity ) )
 {}
 
 
@@ -259,7 +259,7 @@ capacity( T const & value )
 template< typename T >
 std::enable_if_t< !traits::HasMemberFunction_capacity< T const >, localIndex >
 capacity( T const & value )
-{ return size( value ); }
+{ return wrapperHelpers::size( value ); }
 
 
 
@@ -270,7 +270,7 @@ setName( T & value, string const & name )
 
 template< typename T >
 std::enable_if_t< !traits::HasMemberFunction_setName< T > >
-setName( T & GEOSX_UNUSED_PARAM( value ), string const & GEOSX_UNUSED_PARAM( name ) )
+setName( T & GEOS_UNUSED_PARAM( value ), string const & GEOS_UNUSED_PARAM( name ) )
 {}
 
 template< typename T >
@@ -280,9 +280,9 @@ move( T & value, LvArray::MemorySpace const space, bool const touch )
 
 template< typename T >
 std::enable_if_t< !traits::HasMemberFunction_move< T > >
-move( T & GEOSX_UNUSED_PARAM( value ),
-      LvArray::MemorySpace const GEOSX_UNUSED_PARAM( space ),
-      bool const GEOSX_UNUSED_PARAM( touch ) )
+move( T & GEOS_UNUSED_PARAM( value ),
+      LvArray::MemorySpace const GEOS_UNUSED_PARAM( space ),
+      bool const GEOS_UNUSED_PARAM( touch ) )
 {}
 
 // This is for an object that needs to be packed.
@@ -312,7 +312,7 @@ template< typename T >
 std::enable_if_t< !bufferOps::can_memcpy< typename traits::Pointer< T > > >
 pullDataFromConduitNode( T & var, conduit::Node const & node )
 {
-  conduit::Node const & valuesNode = node.child( "__values__" );
+  conduit::Node const & valuesNode = node.fetch_existing( "__values__" );
 
   // Get the number of bytes in the array and a pointer to the array.
   localIndex const byteSize = valuesNode.dtype().number_of_elements();
@@ -320,7 +320,7 @@ pullDataFromConduitNode( T & var, conduit::Node const & node )
 
   // Unpack the object from the array.
   localIndex const bytesRead = bufferOps::Unpack( buffer, var );
-  GEOSX_ERROR_IF_NE( bytesRead, byteSize );
+  GEOS_ERROR_IF_NE( bytesRead, byteSize );
 }
 
 // This is for an string since the type of char is different on different platforms :(.
@@ -366,7 +366,7 @@ template< typename T >
 std::enable_if_t< bufferOps::can_memcpy< typename traits::Pointer< T > > >
 pullDataFromConduitNode( T & var, conduit::Node const & node )
 {
-  conduit::Node const & valuesNode = node.child( "__values__" );
+  conduit::Node const & valuesNode = node.fetch_existing( "__values__" );
 
   localIndex const byteSize = LvArray::integerConversion< localIndex >( valuesNode.dtype().strided_bytes() );
   localIndex const numElements = numElementsFromByteSize< T >( byteSize );
@@ -381,7 +381,7 @@ template< typename T >
 std::enable_if_t< bufferOps::can_memcpy< T > >
 pullDataFromConduitNode( SortedArray< T > & var, conduit::Node const & node )
 {
-  conduit::Node const & valuesNode = node.child( "__values__" );
+  conduit::Node const & valuesNode = node.fetch_existing( "__values__" );
 
   localIndex const byteSize = LvArray::integerConversion< localIndex >( valuesNode.dtype().strided_bytes() );
   localIndex const numElements = numElementsFromByteSize< T >( byteSize );
@@ -453,39 +453,39 @@ pullDataFromConduitNode( Array< T, NDIM, PERMUTATION > & var,
   constexpr int totalNumDimensions = NDIM + hasImplicitDimension;
 
   // Check that the permutations match.
-  conduit::Node const & permutationNode = node.child( "__permutation__" );
-  GEOSX_ERROR_IF_NE( permutationNode.dtype().number_of_elements(), totalNumDimensions );
+  conduit::Node const & permutationNode = node.fetch_existing( "__permutation__" );
+  GEOS_ERROR_IF_NE( permutationNode.dtype().number_of_elements(), totalNumDimensions );
 
   constexpr std::array< camp::idx_t, NDIM > const perm = RAJA::as_array< PERMUTATION >::get();
   camp::idx_t const * const permFromConduit = permutationNode.value();
   for( int i = 0; i < NDIM; ++i )
   {
-    GEOSX_ERROR_IF_NE_MSG( permFromConduit[ i ], perm[ i ],
-                           "The permutation of the data in conduit and the provided Array don't match." );
+    GEOS_ERROR_IF_NE_MSG( permFromConduit[ i ], perm[ i ],
+                          "The permutation of the data in conduit and the provided Array don't match." );
   }
 
   if( hasImplicitDimension )
   {
-    GEOSX_ERROR_IF_NE_MSG( permFromConduit[ NDIM ], NDIM,
-                           "The permutation of the data in conduit and the provided Array don't match." );
+    GEOS_ERROR_IF_NE_MSG( permFromConduit[ NDIM ], NDIM,
+                          "The permutation of the data in conduit and the provided Array don't match." );
   }
 
   // Now pull out the dimensions and resize the array.
-  conduit::Node const & dimensionNode = node.child( "__dimensions__" );
-  GEOSX_ERROR_IF_NE( dimensionNode.dtype().number_of_elements(), totalNumDimensions );
+  conduit::Node const & dimensionNode = node.fetch_existing( "__dimensions__" );
+  GEOS_ERROR_IF_NE( dimensionNode.dtype().number_of_elements(), totalNumDimensions );
   camp::idx_t const * const dims = dimensionNode.value();
 
   if( hasImplicitDimension )
   {
-    GEOSX_ERROR_IF_NE( dims[ NDIM ], implicitDimensionLength );
+    GEOS_ERROR_IF_NE( dims[ NDIM ], implicitDimensionLength );
   }
 
   var.resize( NDIM, dims );
 
   // Finally memcpy
-  conduit::Node const & valuesNode = node.child( "__values__" );
+  conduit::Node const & valuesNode = node.fetch_existing( "__values__" );
   localIndex numBytesFromArray =  var.size() * sizeof( T );
-  GEOSX_ERROR_IF_NE( numBytesFromArray, valuesNode.dtype().strided_bytes() );
+  GEOS_ERROR_IF_NE( numBytesFromArray, valuesNode.dtype().strided_bytes() );
   std::memcpy( var.data(), valuesNode.data_ptr(), numBytesFromArray );
 }
 
@@ -509,7 +509,7 @@ addBlueprintField( ArrayView< T const, NDIM, USD > const & var,
                    string const & topology,
                    std::vector< string > const & componentNames )
 {
-  GEOSX_ERROR_IF_LE( var.size(), 0 );
+  GEOS_ERROR_IF_LE( var.size(), 0 );
 
   using ConduitType = typename conduitTypeInfo< T >::type;
   constexpr int conduitTypeID = conduitTypeInfo< T >::id;
@@ -518,10 +518,10 @@ addBlueprintField( ArrayView< T const, NDIM, USD > const & var,
   localIndex const totalNumberOfComponents = numComponentsPerValue * var.size() / var.size( 0 );
   if( !componentNames.empty() )
   {
-    GEOSX_ERROR_IF_NE( localIndex( componentNames.size() ), totalNumberOfComponents );
+    GEOS_ERROR_IF_NE( localIndex( componentNames.size() ), totalNumberOfComponents );
   }
 
-  var.move( LvArray::MemorySpace::host, false );
+  var.move( hostMemorySpace, false );
 
   conduit::DataType dtype( conduitTypeID, var.size( 0 ) );
   dtype.set_stride( sizeof( ConduitType ) * numComponentsPerValue * var.strides()[ 0 ] );
@@ -568,8 +568,9 @@ void addBlueprintField( T const &,
                         string const &,
                         std::vector< string > const & )
 {
-  GEOSX_ERROR( "Cannot create a mcarray out of " << LvArray::system::demangleType< T >() <<
-               "\nWas trying to write it to " << fields.path() );
+  GEOS_ERROR( "Cannot create a mcarray out of " << LvArray::system::demangleType< T >() <<
+              "\nWas trying to write it to " << fields.path() );
+  GEOS_UNUSED_VAR( fields );
 }
 
 template< typename T, int NDIM, int USD >
@@ -578,7 +579,7 @@ populateMCArray( ArrayView< T const, NDIM, USD > const & var,
                  conduit::Node & node,
                  std::vector< string > const & componentNames )
 {
-  GEOSX_ERROR_IF_LE( var.size(), 0 );
+  GEOS_ERROR_IF_LE( var.size(), 0 );
 
   using ConduitType = typename conduitTypeInfo< T >::type;
   constexpr int conduitTypeID = conduitTypeInfo< T >::id;
@@ -586,10 +587,10 @@ populateMCArray( ArrayView< T const, NDIM, USD > const & var,
 
   if( !componentNames.empty() )
   {
-    GEOSX_ERROR_IF_NE( localIndex( componentNames.size() ), numComponentsPerValue * var.size() / var.size( 0 ) );
+    GEOS_ERROR_IF_NE( localIndex( componentNames.size() ), numComponentsPerValue * var.size() / var.size( 0 ) );
   }
 
-  var.move( LvArray::MemorySpace::host, false );
+  var.move( hostMemorySpace, false );
 
   conduit::DataType dtype( conduitTypeID, var.size( 0 ) );
   dtype.set_stride( sizeof( ConduitType ) * numComponentsPerValue * var.strides()[ 0 ] );
@@ -614,8 +615,9 @@ void populateMCArray( T const &,
                       conduit::Node & node,
                       std::vector< string > const & )
 {
-  GEOSX_ERROR( "Cannot create a mcarray out of " << LvArray::system::demangleType< T >() <<
-               "\nWas trying to write it to " << node.path() );
+  GEOS_ERROR( "Cannot create a mcarray out of " << LvArray::system::demangleType< T >() <<
+              "\nWas trying to write it to " << node.path() );
+  GEOS_UNUSED_VAR( node );
 }
 
 template< typename T >
@@ -664,18 +666,18 @@ averageOverSecondDim( ArrayView< T const, NDIM, USD > const & var )
 template< typename T >
 std::unique_ptr< int > averageOverSecondDim( T const & )
 {
-  GEOSX_ERROR( "Cannot average over the second dimension of " << LvArray::system::demangleType< T >() );
+  GEOS_ERROR( "Cannot average over the second dimension of " << LvArray::system::demangleType< T >() );
   return std::unique_ptr< int >( nullptr );
 }
 
 template< typename T, int NDIM, int USD >
-int numArrayDims( ArrayView< T const, NDIM, USD > const & GEOSX_UNUSED_PARAM( var ) )
+int numArrayDims( ArrayView< T const, NDIM, USD > const & GEOS_UNUSED_PARAM( var ) )
 {
   return NDIM;
 }
 
 template< typename T >
-int numArrayDims( T const & GEOSX_UNUSED_PARAM( var ) )
+int numArrayDims( T const & GEOS_UNUSED_PARAM( var ) )
 {
   return 0;
 }
@@ -687,13 +689,13 @@ localIndex numArrayComp( ArrayView< T const, NDIM, USD > const & var )
 }
 
 template< typename T >
-localIndex numArrayComp( ArrayView< T const, 1, 0 > const & GEOSX_UNUSED_PARAM( var ) )
+localIndex numArrayComp( ArrayView< T const, 1, 0 > const & GEOS_UNUSED_PARAM( var ) )
 {
   return 1;
 }
 
 template< typename T >
-localIndex numArrayComp( T const & GEOSX_UNUSED_PARAM( var ) )
+localIndex numArrayComp( T const & GEOS_UNUSED_PARAM( var ) )
 {
   return 0;
 }
@@ -707,7 +709,7 @@ template< bool DO_PACKING, typename T, typename IDX >
 inline std::enable_if_t< !bufferOps::is_packable_by_index< T >, localIndex >
 PackByIndex( buffer_unit_type * &, T &, IDX & )
 {
-  GEOSX_ERROR( "Trying to pack data type (" << LvArray::system::demangleType< T >() << ") by index. Operation not supported." );
+  GEOS_ERROR( "Trying to pack data type (" << LvArray::system::demangleType< T >() << ") by index. Operation not supported." );
   return 0;
 }
 
@@ -720,7 +722,7 @@ template< typename T, typename IDX >
 inline std::enable_if_t< !bufferOps::is_packable_by_index< T >, localIndex >
 UnpackByIndex( buffer_unit_type const * &, T &, IDX & )
 {
-  GEOSX_ERROR( "Trying to unpack data type (" << LvArray::system::demangleType< T >() << ") by index. Operation not supported." );
+  GEOS_ERROR( "Trying to unpack data type (" << LvArray::system::demangleType< T >() << ") by index. Operation not supported." );
   return 0;
 }
 
@@ -735,7 +737,7 @@ template< bool DO_PACKING, typename T >
 inline std::enable_if_t< !bufferOps::is_container< T > && !bufferOps::can_memcpy< T >, localIndex >
 PackDevice( buffer_unit_type * &, T const &, parallelDeviceEvents & )
 {
-  GEOSX_ERROR( "Trying to pack data type (" << LvArray::system::demangleType< T >() << ") on device. Operation not supported." );
+  GEOS_ERROR( "Trying to pack data type (" << LvArray::system::demangleType< T >() << ") on device. Operation not supported." );
   return 0;
 }
 
@@ -748,7 +750,7 @@ template< bool DO_PACKING, typename T, typename IDX >
 inline std::enable_if_t< !bufferOps::is_container< T >, localIndex >
 PackByIndexDevice( buffer_unit_type * &, T const &, IDX &, parallelDeviceEvents & )
 {
-  GEOSX_ERROR( "Trying to pack data type (" << LvArray::system::demangleType< T >() << ") by index on device. Operation not supported." );
+  GEOS_ERROR( "Trying to pack data type (" << LvArray::system::demangleType< T >() << ") by index on device. Operation not supported." );
   return 0;
 }
 
@@ -761,7 +763,7 @@ template< typename T >
 inline std::enable_if_t< !bufferOps::is_container< T >, localIndex >
 UnpackDevice( buffer_unit_type const * &, T const &, parallelDeviceEvents & )
 {
-  GEOSX_ERROR( "Trying to unpack data type (" << LvArray::system::demangleType< T >() << ") on device. Operation not supported." );
+  GEOS_ERROR( "Trying to unpack data type (" << LvArray::system::demangleType< T >() << ") on device. Operation not supported." );
   return 0;
 }
 
@@ -774,7 +776,7 @@ template< typename T, typename IDX >
 inline std::enable_if_t< !bufferOps::is_container< T >, localIndex >
 UnpackByIndexDevice( buffer_unit_type const * &, T &, IDX &, parallelDeviceEvents & )
 {
-  GEOSX_ERROR( "Trying to unpack data type (" << LvArray::system::demangleType< T >() << ") by index on device. Operation not supported." );
+  GEOS_ERROR( "Trying to unpack data type (" << LvArray::system::demangleType< T >() << ") by index on device. Operation not supported." );
   return 0;
 }
 
@@ -793,7 +795,7 @@ template< bool DO_PACKING, typename T, typename IDX >
 inline std::enable_if_t< !bufferOps::is_container< T >, localIndex >
 PackDataByIndexDevice( buffer_unit_type * &, T const &, IDX &, parallelDeviceEvents & )
 {
-  GEOSX_ERROR( "Trying to pack data type (" << LvArray::system::demangleType< T >() << ") by index on device. Operation not supported." );
+  GEOS_ERROR( "Trying to pack data type (" << LvArray::system::demangleType< T >() << ") by index on device. Operation not supported." );
   return 0;
 }
 
@@ -806,7 +808,7 @@ template< typename T >
 inline std::enable_if_t< !bufferOps::is_container< T >, localIndex >
 UnpackDataDevice( buffer_unit_type const * &, T const &, parallelDeviceEvents & )
 {
-  GEOSX_ERROR( "Trying to unpack data type (" << LvArray::system::demangleType< T >() << ") on device. Operation not supported." );
+  GEOS_ERROR( "Trying to unpack data type (" << LvArray::system::demangleType< T >() << ") on device. Operation not supported." );
   return 0;
 }
 
@@ -819,7 +821,7 @@ template< typename T, typename IDX >
 inline std::enable_if_t< !bufferOps::is_container< T >, localIndex >
 UnpackDataByIndexDevice( buffer_unit_type const * &, T const &, IDX &, parallelDeviceEvents & )
 {
-  GEOSX_ERROR( "Trying to unpack data type (" << LvArray::system::demangleType< T >() << ") by index on device. Operation not supported." );
+  GEOS_ERROR( "Trying to unpack data type (" << LvArray::system::demangleType< T >() << ") by index on device. Operation not supported." );
   return 0;
 }
 
@@ -839,8 +841,8 @@ createPythonObject( T & )
 
 } // namespace wrapperHelpers
 } // namespace dataRepository
-} // namespace geosx
+} // namespace geos
 
 #undef RESTART_TYPE_LOGGING
 
-#endif // GEOSX_DATAREPOSITORY_WRAPPERHELPERS_HPP_
+#endif // GEOS_DATAREPOSITORY_WRAPPERHELPERS_HPP_

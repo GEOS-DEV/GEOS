@@ -23,7 +23,7 @@
 #include <chrono>
 #include "finiteElement/elementFormulations/H1_TriangleFace_Lagrange1_Gauss1.hpp"
 
-using namespace geosx;
+using namespace geos;
 using namespace finiteElement;
 
 template< typename POLICY >
@@ -46,7 +46,7 @@ void testKernelDriver()
   };
 
   forAll< POLICY >( 1,
-                    [=] GEOSX_HOST_DEVICE ( localIndex const )
+                    [=] GEOS_HOST_DEVICE ( localIndex const )
   {
 
     for( localIndex q=0; q<numQuadraturePoints; ++q )
@@ -61,7 +61,7 @@ void testKernelDriver()
   } );
 
   forAll< POLICY >( 1,
-                    [=] GEOSX_HOST_DEVICE ( localIndex const )
+                    [=] GEOS_HOST_DEVICE ( localIndex const )
   {
 
     for( localIndex q=0; q<numQuadraturePoints; ++q )
@@ -117,10 +117,10 @@ void testKernelDriver()
   } );
 }
 
-#ifdef USE_CUDA
+#ifdef GEOS_USE_DEVICE
 TEST( FiniteElementShapeFunctions, testKernelCuda )
 {
-  testKernelDriver< geosx::parallelDevicePolicy< 32 > >();
+  testKernelDriver< geos::parallelDevicePolicy< > >();
 }
 #endif
 TEST( FiniteElementShapeFunctions, testKernelHost )
@@ -128,7 +128,7 @@ TEST( FiniteElementShapeFunctions, testKernelHost )
   testKernelDriver< serialPolicy >();
 }
 
-using namespace geosx;
+using namespace geos;
 int main( int argc, char * argv[] )
 {
   ::testing::InitGoogleTest( &argc, argv );

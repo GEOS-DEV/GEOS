@@ -1,0 +1,31 @@
+{
+    "build": {
+        "dockerfile": "Dockerfile",
+        "args": {
+            "GEOS_TPL_TAG": "238-63"
+        }
+    },
+    "runArgs": [
+        "--cap-add=SYS_PTRACE",
+        "--security-opt",
+        "seccomp=unconfined"
+    ],
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "eamodio.gitlens",
+                "fredericbonnet.cmake-test-adapter",
+                "github.vscode-github-actions",
+                "GitHub.vscode-pull-request-github",
+                "ms-vscode.cpptools-extension-pack",
+                "redhat.vscode-xml"
+            ]
+        }
+    },
+    "features": {
+        "ghcr.io/devcontainers/features/sshd:1": {
+            "version": "latest"
+        }
+    },
+    "postCreateCommand": "bash .devcontainer/postCreateCommand.sh"
+}

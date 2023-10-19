@@ -27,7 +27,7 @@
 
 #include <numeric>
 
-using namespace geosx;
+using namespace geos;
 
 using INDEX_TYPE = std::ptrdiff_t;
 
@@ -1267,11 +1267,11 @@ TEST( DenseLAInterface, matrixSVD )
 int main( int argc, char * * argv )
 {
   ::testing::InitGoogleTest( &argc, argv );
-  geosx::setupEnvironment( argc, argv );
+  geos::setupEnvironment( argc, argv );
 
   int const result = RUN_ALL_TESTS();
 
-  geosx::cleanupEnvironment();
+  geos::cleanupEnvironment();
 
   return result;
 }

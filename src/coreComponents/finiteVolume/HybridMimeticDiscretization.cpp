@@ -27,7 +27,7 @@
 #include "finiteVolume/mimeticInnerProducts/BdVLMInnerProduct.hpp"
 #include "mesh/DomainPartition.hpp"
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -89,7 +89,7 @@ HybridMimeticDiscretization::factory( string const & mimeticInnerProductType ) c
   }
   else
   {
-    GEOSX_ERROR( "Key value of "<< mimeticInnerProductType <<" does not have an associated mimetic inner product." );
+    GEOS_ERROR( getDataContext() << ": Key value of "<< mimeticInnerProductType <<" does not have an associated mimetic inner product." );
   }
   return rval;
 }

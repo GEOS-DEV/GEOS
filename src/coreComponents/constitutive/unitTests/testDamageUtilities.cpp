@@ -8,7 +8,7 @@
 #include "LvArray/src/output.hpp"
 
 #include <gtest/gtest.h>
-using namespace geosx;
+using namespace geos;
 
 TEST( DamageUtilities, PositivePartOfTensor )
 {
@@ -74,7 +74,7 @@ TEST( DamageUtilities, QTensor )
   real64 Q[6][6] = {};
   QTensor( vector, Q );
   std::cout << "For vector [1,2,3], Q is: "<< std::endl;
-  GEOSX_LOG( Q );
+  GEOS_LOG( Q );
 }
 
 TEST( DamageUtilities, GTensor )
@@ -85,7 +85,7 @@ TEST( DamageUtilities, GTensor )
   real64 G[6][6] = {};
   GTensor( vector1, vector2, G );
   std::cout << "For vector1 = [1,2,3] and vector2 = [-1,-2,-3], G is: "<< std::endl;
-  GEOSX_LOG( G );
+  GEOS_LOG( G );
 }
 
 TEST( DamageUtilities, PositiveProjectorTensor )
@@ -97,28 +97,28 @@ TEST( DamageUtilities, PositiveProjectorTensor )
   real64 PositiveProjector[6][6] = {{0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0}};
   PositiveProjectorTensor( eigs, eigvecs, PositiveProjector );
   std::cout << "P+ is: "<< std::endl;
-  GEOSX_LOG( PositiveProjector );
+  GEOS_LOG( PositiveProjector );
   //repeated eigenvalues
   real64 eigs2[3] = {1.0, 1.0, -1.0};
   real64 eigvecs2[3][3] = {{1, 1, 0}, {-2, 1, 0}, {-1, 0, 1}};
   real64 PositiveProjector2[6][6] = {{0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0}};
   PositiveProjectorTensor( eigs2, eigvecs2, PositiveProjector2 );
   std::cout << "P+ is: "<< std::endl;
-  GEOSX_LOG( PositiveProjector2 );
+  GEOS_LOG( PositiveProjector2 );
   //all eigenvalues are equal
   real64 eigs3[3] = {1.0, 1.0, 1.0};
   real64 eigvecs3[3][3] = {{1, 1, 0}, {-2, 1, 0}, {-1, 0, 1}};
   real64 PositiveProjector3[6][6] = {{0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0}};
   PositiveProjectorTensor( eigs3, eigvecs3, PositiveProjector3 );
   std::cout << "P+ is: "<< std::endl;
-  GEOSX_LOG( PositiveProjector3 );
+  GEOS_LOG( PositiveProjector3 );
   //some eigenvalues are zero
   real64 eigs4[3] = {1.0, 1.0, 0.0};
   real64 eigvecs4[3][3] = {{1, 1, 0}, {-2, 1, 0}, {-1, 0, 1}};
   real64 PositiveProjector4[6][6] = {{0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0}};
   PositiveProjectorTensor( eigs4, eigvecs4, PositiveProjector4 );
   std::cout << "P+ is: "<< std::endl;
-  GEOSX_LOG( PositiveProjector4 );
+  GEOS_LOG( PositiveProjector4 );
 }
 
 TEST( DamageUtilities, NegativeProjectorTensor )
@@ -129,7 +129,7 @@ TEST( DamageUtilities, NegativeProjectorTensor )
   real64 NegativeProjector[6][6] = {{0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0}};
   NegativeProjectorTensor( eigs, eigvecs, NegativeProjector );
   std::cout << "P- is: "<< std::endl;
-  GEOSX_LOG( NegativeProjector );
+  GEOS_LOG( NegativeProjector );
 }
 
 TEST( DamageUtilities, GetStiffness )
@@ -140,7 +140,7 @@ TEST( DamageUtilities, GetStiffness )
   real64 c[6][6] = {{0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0}};
   getStiffnessTest( c, strain, d );
   std::cout << "The Stiffness is: " << std::endl;
-  GEOSX_LOG( c );
+  GEOS_LOG( c );
 }
 
 TEST( DamageUtilities, GetStress )
@@ -150,5 +150,5 @@ TEST( DamageUtilities, GetStress )
   real64 stress[6] = {0, 0, 0, 0, 0, 0};
   getTestStress( strain, stress );
   std::cout << "The stress tensor is: " << std::endl;
-  GEOSX_LOG( stress );
+  GEOS_LOG( stress );
 }

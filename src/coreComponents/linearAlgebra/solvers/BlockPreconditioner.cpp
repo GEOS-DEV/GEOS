@@ -23,7 +23,7 @@
 
 #include <numeric>
 
-namespace geosx
+namespace geos
 {
 
 template< typename LAI >
@@ -69,10 +69,10 @@ void BlockPreconditioner< LAI >::setupBlock( localIndex const blockIndex,
                                              std::unique_ptr< PreconditionerBase< LAI > > solver,
                                              real64 const scaling )
 {
-  GEOSX_LAI_ASSERT_GT( 2, blockIndex );
-  GEOSX_LAI_ASSERT( solver );
-  GEOSX_LAI_ASSERT( !blockDofs.empty() );
-  GEOSX_LAI_ASSERT_GT( scaling, 0.0 );
+  GEOS_LAI_ASSERT_GT( 2, blockIndex );
+  GEOS_LAI_ASSERT( solver );
+  GEOS_LAI_ASSERT( !blockDofs.empty() );
+  GEOS_LAI_ASSERT_GT( scaling, 0.0 );
 
   m_blockDofs[blockIndex] = std::move( blockDofs );
   m_solvers[blockIndex] = std::move( solver );
@@ -143,7 +143,7 @@ void BlockPreconditioner< LAI >::computeSchurComplement()
     }
     default:
     {
-      GEOSX_ERROR( "BlockPreconditioner: unsupported Schur complement option" );
+      GEOS_ERROR( "BlockPreconditioner: unsupported Schur complement option" );
     }
   }
 }
@@ -152,11 +152,11 @@ template< typename LAI >
 void BlockPreconditioner< LAI >::setup( Matrix const & mat )
 {
   // Check that DofManager is available
-  GEOSX_LAI_ASSERT_MSG( mat.dofManager() != nullptr, "BlockPreconditioner requires a DofManager" );
+  GEOS_LAI_ASSERT_MSG( mat.dofManager() != nullptr, "BlockPreconditioner requires a DofManager" );
 
   // Check that user has set block solvers
-  GEOSX_LAI_ASSERT( m_solvers[0] != nullptr );
-  GEOSX_LAI_ASSERT( m_solvers[1] != nullptr );
+  GEOS_LAI_ASSERT( m_solvers[0] != nullptr );
+  GEOS_LAI_ASSERT( m_solvers[1] != nullptr );
 
   // Compare old sizes vs new matris sizes.
   // A change in size indicates a new matrix structure.

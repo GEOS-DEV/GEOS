@@ -48,7 +48,7 @@ This mesh contains three continuous regions:
 The mesh is defined using the VTK file format (see :ref:`Meshes` for more information on
 the supported mesh file format). Each tetrahedron is associated to a unique tag.
 
-The XML file considered here follows the typical structure of the GEOSX input files:
+The XML file considered here follows the typical structure of the GEOS input files:
 
  #. :ref:`Solver <Solver_tag_field_case>`
  #. :ref:`Mesh <Mesh_tag_field_case>`
@@ -96,7 +96,7 @@ Mesh
 
 Here, we use the ``VTKMesh`` to load the mesh (see :ref:`ImportingExternalMesh`).
 The syntax to import external meshes is simple : in the XML file,
-the mesh ``file`` is included with its relative or absolute path to the location of the GEOSX XML file and a user-specified ``name`` label for the mesh object.
+the mesh ``file`` is included with its relative or absolute path to the location of the GEOS XML file and a user-specified ``name`` label for the mesh object.
 
 .. literalinclude:: ../../../../../inputFiles/singlePhaseFlow/FieldCaseTutorial3_smoke.xml
   :language: xml
@@ -142,8 +142,8 @@ The **Events** tag is associated with the ``maxTime`` keyword defining the maxim
 If this time is ever reached or exceeded, the simulation ends.
 
 Two ``PeriodicEvent`` are defined.
-- The first one, ``solverApplications``, is associated with the solver. The  ``forceDt`` keyword means that there will always be time-steps of 23 days (2 000 000 seconds).
-- The second, ``outputs``, is associated with the output. The ``timeFrequency`` keyword means that it will be executed every 116 days (10 000 000 seconds).
+- The first one, ``solverApplications``, is associated with the solver. The  ``forceDt`` keyword means that there will always be time-steps of 10e6 seconds.
+- The second, ``outputs``, is associated with the output. The ``timeFrequency`` keyword means that it will be executed every 10e6 seconds.
 
 
 .. _NumericalMethods_tag_field_case:
@@ -214,7 +214,7 @@ The constitutive parameters such as the density, the viscosity, and the compress
   To consider an incompressible fluid, the user has to set the compressibility to 0.
 
 .. note::
-  GEOSX handles permeability as a diagonal matrix, so the three values of the permeability tensor are set individually using the ``component`` field.
+  GEOS handles permeability as a diagonal matrix, so the three values of the permeability tensor are set individually using the ``component`` field.
 
 
 .. _FieldSpecifications_tag_field_case:
@@ -239,7 +239,7 @@ You may note :
  - All static parameters and initial value fields must have ``initialCondition`` field set to ``1``.
  - The ``objectPath`` refers to the ``ElementRegion`` in which the field has its value,
  - The ``setName`` field points to the box previously defined to apply the fields,
- - ``name`` and ``fieldName`` have a different meaning: ``name`` is used to give a name to the XML block. This ``name`` must be unique. ``fieldName`` is the name of the field registered in GEOSX. This value has to be set according to the expected input fields of each solver.
+ - ``name`` and ``fieldName`` have a different meaning: ``name`` is used to give a name to the XML block. This ``name`` must be unique. ``fieldName`` is the name of the field registered in GEOS. This value has to be set according to the expected input fields of each solver.
 
 .. _Outputs_tag_field_case:
 
@@ -287,7 +287,7 @@ We proceed in a similar manner as for *pressure.geos* to map a heterogeneous per
   The varying values imposed in *values* or passed through *voxelFile* are premultiplied by the *scale* attribute from **FieldSpecifications**.
 
 ------------------------------------
-Running GEOSX
+Running GEOS
 ------------------------------------
 
 The simulation can be launched with:
@@ -338,7 +338,7 @@ To go further
 **Feedback on this tutorial**
 
 This concludes this tutorial. For any feedback, please submit a `GitHub issue on
-the project's GitHub page <https://github.com/GEOSX/GEOSX/issues>`_.
+the project's GitHub page <https://github.com/GEOS-DEV/GEOS/issues>`_.
 
 **For more details**
 

@@ -16,12 +16,12 @@
  * @file ThermalCompositionalMultiphaseBaseKernels.hpp
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_FLUIDFLOW_THERMALCOMPOSITIONALMULTIPHASEBASEKERNELS_HPP
-#define GEOSX_PHYSICSSOLVERS_FLUIDFLOW_THERMALCOMPOSITIONALMULTIPHASEBASEKERNELS_HPP
+#ifndef GEOS_PHYSICSSOLVERS_FLUIDFLOW_THERMALCOMPOSITIONALMULTIPHASEBASEKERNELS_HPP
+#define GEOS_PHYSICSSOLVERS_FLUIDFLOW_THERMALCOMPOSITIONALMULTIPHASEBASEKERNELS_HPP
 
 #include "physicsSolvers/fluidFlow/IsothermalCompositionalMultiphaseBaseKernels.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace thermalCompositionalMultiphaseBaseKernels
@@ -62,8 +62,8 @@ public:
    * @brief Compute the phase volume fractions in an element
    * @param[in] ei the element index
    */
-  GEOSX_HOST_DEVICE
-  void compute( localIndex const ei ) const
+  GEOS_HOST_DEVICE
+  real64 compute( localIndex const ei ) const
   {
     using Deriv = multifluid::DerivativeOffset;
 
@@ -73,10 +73,10 @@ public:
     arraySlice2d< real64, compflow::USD_PHASE_DC - 1 > const dPhaseVolFrac = m_dPhaseVolFrac[ei];
 
     // Call the base compute the compute the phase volume fraction
-    Base::compute( ei, [&] ( localIndex const ip,
-                             real64 const & phaseVolFrac,
-                             real64 const & phaseDensInv,
-                             real64 const & totalDensity )
+    return Base::compute( ei, [&] ( localIndex const ip,
+                                    real64 const & phaseVolFrac,
+                                    real64 const & phaseDensInv,
+                                    real64 const & totalDensity )
     {
       // when this lambda is called, we are in the phase loop
       // for each phase ip, compute the derivative of phase volume fraction wrt temperature
@@ -103,12 +103,13 @@ public:
    * @param[in] fluid the fluid model
    */
   template< typename POLICY >
-  static void
+  static real64
   createAndLaunch( integer const numComp,
                    integer const numPhase,
                    ObjectManagerBase & subRegion,
                    MultiFluidBase const & fluid )
   {
+    real64 maxDeltaPhaseVolFrac = 0.0;
     if( numPhase == 2 )
     {
       isothermalCompositionalMultiphaseBaseKernels::
@@ -116,7 +117,7 @@ public:
       {
         integer constexpr NUM_COMP = NC();
         PhaseVolumeFractionKernel< NUM_COMP, 2 > kernel( subRegion, fluid );
-        PhaseVolumeFractionKernel< NUM_COMP, 2 >::template launch< POLICY >( subRegion.size(), kernel );
+        maxDeltaPhaseVolFrac = PhaseVolumeFractionKernel< NUM_COMP, 2 >::template launch< POLICY >( subRegion.size(), kernel );
       } );
     }
     else if( numPhase == 3 )
@@ -126,9 +127,10 @@ public:
       {
         integer constexpr NUM_COMP = NC();
         PhaseVolumeFractionKernel< NUM_COMP, 3 > kernel( subRegion, fluid );
-        PhaseVolumeFractionKernel< NUM_COMP, 3 >::template launch< POLICY >( subRegion.size(), kernel );
+        maxDeltaPhaseVolFrac = PhaseVolumeFractionKernel< NUM_COMP, 3 >::template launch< POLICY >( subRegion.size(), kernel );
       } );
     }
+    return maxDeltaPhaseVolFrac;
   }
 };
 
@@ -191,6 +193,7 @@ public:
                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
                               arrayView1d< real64 > const & localRhs )
     : Base( numPhases, rankOffset, dofKey, subRegion, fluid, solid, localMatrix, localRhs ),
+    m_dPoro_dTemp( solid.getDporosity_dTemperature() ),
     m_phaseInternalEnergy_n( fluid.phaseInternalEnergy_n() ),
     m_phaseInternalEnergy( fluid.phaseInternalEnergy() ),
     m_dPhaseInternalEnergy( fluid.dPhaseInternalEnergy() ),
@@ -203,7 +206,7 @@ public:
   {
 public:
 
-    GEOSX_HOST_DEVICE
+    GEOS_HOST_DEVICE
     StackVariables()
       : Base::StackVariables()
     {}
@@ -215,6 +218,9 @@ public:
     using Base::StackVariables::dofIndices;
     using Base::StackVariables::localResidual;
     using Base::StackVariables::localJacobian;
+
+    // derivative of pore volume wrt temperature
+    real64 dPoreVolume_dTemp = 0.0;
 
     // Solid energy
 
@@ -237,22 +243,27 @@ public:
    * @param[in] ei the element index
    * @param[in] stack the stack variables
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void setup( localIndex const ei,
               StackVariables & stack ) const
   {
     Base::setup( ei, stack );
 
+    // derivative of pore volume wrt temperature
+    stack.dPoreVolume_dTemp = m_volume[ei] * m_dPoro_dTemp[ei][0];
+
     // initialize the solid volume
     real64 const solidVolume = m_volume[ei] * ( 1.0 - m_porosity[ei][0] );
     real64 const solidVolume_n = m_volume[ei] * ( 1.0 - m_porosity_n[ei][0] );
     real64 const dSolidVolume_dPres = -m_volume[ei] * m_dPoro_dPres[ei][0];
+    real64 const dSolidVolume_dTemp = -stack.dPoreVolume_dTemp;
 
     // initialize the solid internal energy
     stack.solidEnergy = solidVolume * m_rockInternalEnergy[ei][0];
     stack.solidEnergy_n = solidVolume_n * m_rockInternalEnergy_n[ei][0];
     stack.dSolidEnergy_dPres = dSolidVolume_dPres * m_rockInternalEnergy[ei][0];
-    stack.dSolidEnergy_dTemp = solidVolume * m_dRockInternalEnergy_dTemp[ei][0];
+    stack.dSolidEnergy_dTemp = solidVolume * m_dRockInternalEnergy_dTemp[ei][0]
+                               + dSolidVolume_dTemp * m_rockInternalEnergy[ei][0];
   }
 
   /**
@@ -261,7 +272,7 @@ public:
    * @param[in] ei the element index
    * @param[inout] stack the stack variables
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void computeAccumulation( localIndex const ei,
                             StackVariables & stack ) const
   {
@@ -294,8 +305,8 @@ public:
 
       // Step 1: assemble the derivatives of the component mass balance equations with respect to temperature
 
-      real64 const dPhaseAmount_dT = stack.poreVolume
-                                     * (dPhaseVolFrac[ip][Deriv::dT] * phaseDens[ip] + phaseVolFrac[ip] * dPhaseDens[ip][Deriv::dT] );
+      real64 const dPhaseAmount_dT = stack.dPoreVolume_dTemp * phaseVolFrac[ip] * phaseDens[ip]
+                                     + stack.poreVolume * (dPhaseVolFrac[ip][Deriv::dT] * phaseDens[ip] + phaseVolFrac[ip] * dPhaseDens[ip][Deriv::dT] );
       for( integer ic = 0; ic < numComp; ++ic )
       {
         stack.localJacobian[ic][numDof-1] += dPhaseAmount_dT * phaseCompFrac[ip][ic]
@@ -342,7 +353,7 @@ public:
    * @param[in] ei the element index
    * @param[inout] stack the stack variables
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void computeVolumeBalance( localIndex const ei,
                              StackVariables & stack ) const
   {
@@ -350,7 +361,7 @@ public:
 
     Base::computeVolumeBalance( ei, stack, [&] ( real64 const & oneMinusPhaseVolFraction )
     {
-      GEOSX_UNUSED_VAR( oneMinusPhaseVolFraction );
+      GEOS_UNUSED_VAR( oneMinusPhaseVolFraction );
 
       arraySlice2d< real64 const, compflow::USD_PHASE_DC - 1 > dPhaseVolFrac = m_dPhaseVolFrac[ei];
 
@@ -361,7 +372,7 @@ public:
     } );
   }
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void complete( localIndex const ei,
                  StackVariables & stack ) const
   {
@@ -377,6 +388,9 @@ public:
   }
 
 protected:
+
+  /// View on derivative of porosity w.r.t temperature
+  arrayView2d< real64 const > const m_dPoro_dTemp;
 
   /// Views on phase internal energy
   arrayView3d< real64 const, multifluid::USD_PHASE > m_phaseInternalEnergy_n;
@@ -448,7 +462,7 @@ struct FluidUpdateKernel
           arrayView1d< real64 const > const & temp,
           arrayView2d< real64 const, compflow::USD_COMP > const & compFrac )
   {
-    forAll< POLICY >( size, [=] GEOSX_HOST_DEVICE ( localIndex const k )
+    forAll< POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const k )
     {
       for( localIndex q = 0; q < fluidWrapper.numGauss(); ++q )
       {
@@ -465,7 +479,7 @@ struct FluidUpdateKernel
           arrayView1d< real64 const > const & temp,
           arrayView2d< real64 const, compflow::USD_COMP > const & compFrac )
   {
-    forAll< POLICY >( targetSet.size(), [=] GEOSX_HOST_DEVICE ( localIndex const a )
+    forAll< POLICY >( targetSet.size(), [=] GEOS_HOST_DEVICE ( localIndex const a )
     {
       localIndex const k = targetSet[a];
       for( localIndex q = 0; q < fluidWrapper.numGauss(); ++q )
@@ -487,7 +501,7 @@ struct SolidInternalEnergyUpdateKernel
           SOLID_INTERNAL_ENERGY_WRAPPER const & solidInternalEnergyWrapper,
           arrayView1d< real64 const > const & temp )
   {
-    forAll< POLICY >( size, [=] GEOSX_HOST_DEVICE ( localIndex const k )
+    forAll< POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const k )
     {
       solidInternalEnergyWrapper.update( k, temp[k] );
     } );
@@ -521,6 +535,9 @@ public:
    * @param[in] pressure the pressure vector
    * @param[in] temperature the temperature vector
    * @param[in] compDens the component density vector
+   * @param[in] pressureScalingFactor the pressure local scaling factor
+   * @param[in] compDensScalingFactor the component density local scaling factor
+   * @param[in] temperatureFactor the temperature local scaling factor
    */
   ScalingForSystemSolutionKernel( real64 const maxRelativePresChange,
                                   real64 const maxRelativeTempChange,
@@ -532,7 +549,10 @@ public:
                                   arrayView1d< real64 const > const localSolution,
                                   arrayView1d< real64 const > const pressure,
                                   arrayView1d< real64 const > const temperature,
-                                  arrayView2d< real64 const, compflow::USD_COMP > const compDens )
+                                  arrayView2d< real64 const, compflow::USD_COMP > const compDens,
+                                  arrayView1d< real64 > pressureScalingFactor,
+                                  arrayView1d< real64 > compDensScalingFactor,
+                                  arrayView1d< real64 > temperatureScalingFactor )
     : Base( maxRelativePresChange,
             maxCompFracChange,
             rankOffset,
@@ -541,36 +561,62 @@ public:
             subRegion,
             localSolution,
             pressure,
-            compDens ),
+            compDens,
+            pressureScalingFactor,
+            compDensScalingFactor ),
     m_maxRelativeTempChange( maxRelativeTempChange ),
-    m_temperature( temperature )
+    m_temperature( temperature ),
+    m_temperatureScalingFactor( temperatureScalingFactor )
   {}
+
+  /**
+   * @brief Compute the local value
+   * @param[in] ei the element index
+   * @param[inout] stack the stack variables
+   */
+  GEOS_HOST_DEVICE
+  void compute( localIndex const ei,
+                StackVariables & stack ) const
+  {
+    computeScalingFactor( ei, stack );
+  }
 
   /**
    * @brief Compute the local value of the scaling factor
    * @param[in] ei the element index
    * @param[inout] stack the stack variables
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void computeScalingFactor( localIndex const ei,
                              StackVariables & stack ) const
   {
     real64 constexpr eps = isothermalCompositionalMultiphaseBaseKernels::minDensForDivision;
-
     Base::computeScalingFactor( ei, stack, [&] ()
     {
       // compute the change in temperature
       real64 const temp = m_temperature[ei];
+      real64 const absTempChange = LvArray::math::abs( m_localSolution[stack.localRow + m_numComp + 1] );
+      if( stack.localMaxDeltaTemp < absTempChange )
+      {
+        stack.localMaxDeltaTemp = absTempChange;
+      }
+
+      m_temperatureScalingFactor[ei] = 1.0;
+
       if( temp > eps )
       {
-        real64 const absTempChange = LvArray::math::abs( m_localSolution[stack.localRow + m_numComp + 1] );
         real64 const relativeTempChange = absTempChange / temp;
         if( relativeTempChange > m_maxRelativeTempChange )
         {
           real64 const tempScalingFactor = m_maxRelativeTempChange / relativeTempChange;
+          m_temperatureScalingFactor[ei] = tempScalingFactor;
           if( stack.localMinVal > tempScalingFactor )
           {
             stack.localMinVal = tempScalingFactor;
+          }
+          if( stack.localMinTempScalingFactor > tempScalingFactor )
+          {
+            stack.localMinTempScalingFactor = tempScalingFactor;
           }
         }
       }
@@ -584,6 +630,9 @@ protected:
 
   /// View on the primary variables
   arrayView1d< real64 const > const m_temperature;
+
+  /// View on the scaling factor
+  arrayView1d< real64 > const m_temperatureScalingFactor;
 
 };
 
@@ -607,23 +656,28 @@ public:
    * @param[in] localSolution the Newton update
    */
   template< typename POLICY >
-  static real64
+  static ScalingForSystemSolutionKernel::StackVariables
   createAndLaunch( real64 const maxRelativePresChange,
                    real64 const maxRelativeTempChange,
                    real64 const maxCompFracChange,
                    globalIndex const rankOffset,
                    integer const numComp,
                    string const dofKey,
-                   ElementSubRegionBase const & subRegion,
+                   ElementSubRegionBase & subRegion,
                    arrayView1d< real64 const > const localSolution )
   {
     arrayView1d< real64 const > const pressure = subRegion.getField< fields::flow::pressure >();
     arrayView1d< real64 const > const temperature = subRegion.getField< fields::flow::temperature >();
     arrayView2d< real64 const, compflow::USD_COMP > const compDens = subRegion.getField< fields::flow::globalCompDensity >();
+    arrayView1d< real64 > pressureScalingFactor = subRegion.getField< fields::flow::pressureScalingFactor >();
+    arrayView1d< real64 > temperatureScalingFactor = subRegion.getField< fields::flow::temperatureScalingFactor >();
+    arrayView1d< real64 > compDensScalingFactor = subRegion.getField< fields::flow::globalCompDensityScalingFactor >();
     ScalingForSystemSolutionKernel kernel( maxRelativePresChange, maxRelativeTempChange, maxCompFracChange,
                                            rankOffset, numComp, dofKey, subRegion, localSolution,
-                                           pressure, temperature, compDens );
-    return ScalingForSystemSolutionKernel::launch< POLICY >( subRegion.size(), kernel );
+                                           pressure, temperature, compDens, pressureScalingFactor,
+                                           temperatureScalingFactor, compDensScalingFactor );
+    return thermalCompositionalMultiphaseBaseKernels::
+             ScalingForSystemSolutionKernel::launch< POLICY >( subRegion.size(), kernel );
   }
 
 };
@@ -659,6 +713,7 @@ public:
    * @param[in] compDens the component density vector
    */
   SolutionCheckKernel( integer const allowCompDensChopping,
+                       CompositionalMultiphaseFVM::ScalingType const scalingType,
                        real64 const scalingFactor,
                        globalIndex const rankOffset,
                        integer const numComp,
@@ -667,8 +722,12 @@ public:
                        arrayView1d< real64 const > const localSolution,
                        arrayView1d< real64 const > const pressure,
                        arrayView1d< real64 const > const temperature,
-                       arrayView2d< real64 const, compflow::USD_COMP > const compDens )
+                       arrayView2d< real64 const, compflow::USD_COMP > const compDens,
+                       arrayView1d< real64 > pressureScalingFactor,
+                       arrayView1d< real64 > compDensScalingFactor,
+                       arrayView1d< real64 > temperatureScalingFactor )
     : Base( allowCompDensChopping,
+            scalingType,
             scalingFactor,
             rankOffset,
             numComp,
@@ -676,8 +735,11 @@ public:
             subRegion,
             localSolution,
             pressure,
-            compDens ),
-    m_temperature( temperature )
+            compDens,
+            pressureScalingFactor,
+            compDensScalingFactor ),
+    m_temperature( temperature ),
+    m_temperatureScalingFactor( temperatureScalingFactor )
   {}
 
   /**
@@ -685,14 +747,15 @@ public:
    * @param[in] ei the element index
    * @param[inout] stack the stack variables
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void computeSolutionCheck( localIndex const ei,
                              StackVariables & stack ) const
   {
     Base::computeSolutionCheck( ei, stack, [&] ()
     {
+      bool const localScaling = m_scalingType == CompositionalMultiphaseFVM::ScalingType::Local;
       // compute the change in temperature
-      real64 const newTemp = m_temperature[ei] + m_scalingFactor * m_localSolution[stack.localRow + m_numComp + 1];
+      real64 const newTemp = m_temperature[ei] + (localScaling ? m_temperatureScalingFactor[ei] : m_scalingFactor * m_localSolution[stack.localRow + m_numComp + 1]);
       if( newTemp < minTemperature )
       {
         stack.localMinVal = 0;
@@ -704,6 +767,9 @@ protected:
 
   /// View on the primary variables
   arrayView1d< real64 const > const m_temperature;
+
+  /// View on the scaling factor
+  arrayView1d< real64 const > const m_temperatureScalingFactor;
 
 };
 
@@ -729,11 +795,12 @@ public:
   template< typename POLICY >
   static integer
   createAndLaunch( integer const allowCompDensChopping,
+                   CompositionalMultiphaseFVM::ScalingType const scalingType,
                    real64 const scalingFactor,
                    globalIndex const rankOffset,
                    integer const numComp,
                    string const dofKey,
-                   ElementSubRegionBase const & subRegion,
+                   ElementSubRegionBase & subRegion,
                    arrayView1d< real64 const > const localSolution )
   {
     arrayView1d< real64 const > const pressure =
@@ -742,9 +809,12 @@ public:
       subRegion.getField< fields::flow::temperature >();
     arrayView2d< real64 const, compflow::USD_COMP > const compDens =
       subRegion.getField< fields::flow::globalCompDensity >();
-    SolutionCheckKernel kernel( allowCompDensChopping, scalingFactor,
+    arrayView1d< real64 > pressureScalingFactor = subRegion.getField< fields::flow::pressureScalingFactor >();
+    arrayView1d< real64 > temperatureScalingFactor = subRegion.getField< fields::flow::temperatureScalingFactor >();
+    arrayView1d< real64 > compDensScalingFactor = subRegion.getField< fields::flow::globalCompDensityScalingFactor >();
+    SolutionCheckKernel kernel( allowCompDensChopping, scalingType, scalingFactor,
                                 rankOffset, numComp, dofKey, subRegion, localSolution,
-                                pressure, temperature, compDens );
+                                pressure, temperature, compDens, pressureScalingFactor, temperatureScalingFactor, compDensScalingFactor );
     return SolutionCheckKernel::launch< POLICY >( subRegion.size(), kernel );
   }
 
@@ -791,7 +861,7 @@ public:
     m_solidInternalEnergy_n( solidInternalEnergy.getInternalEnergy_n() )
   {}
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void computeMassEnergyNormalizers( localIndex const ei,
                                      real64 & massNormalizer,
                                      real64 & energyNormalizer ) const
@@ -807,7 +877,7 @@ public:
     energyNormalizer = LvArray::math::max( minNormalizer, LvArray::math::abs( energyNormalizer ) );
   }
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   virtual void computeLinf( localIndex const ei,
                             LinfStackVariables & stack ) const override
   {
@@ -843,7 +913,7 @@ public:
     }
   }
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   virtual void computeL2( localIndex const ei,
                           L2StackVariables & stack ) const override
   {
@@ -955,7 +1025,7 @@ public:
 
 } // namespace thermalCompositionalMultiphaseBaseKernels
 
-} // namespace geosx
+} // namespace geos
 
 
-#endif //GEOSX_PHYSICSSOLVERS_FLUIDFLOW_THERMALCOMPOSITIONALMULTIPHASEBASEKERNELS_HPP
+#endif //GEOS_PHYSICSSOLVERS_FLUIDFLOW_THERMALCOMPOSITIONALMULTIPHASEBASEKERNELS_HPP

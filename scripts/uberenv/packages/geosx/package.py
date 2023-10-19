@@ -52,8 +52,8 @@ def cmake_cache_option(name, boolean_value, comment=""):
 class Geosx(CMakePackage, CudaPackage):
     """GEOSX simulation framework."""
 
-    homepage = "https://github.com/GEOSX/GEOSX"
-    git = "https://github.com/GEOSX/GEOSX.git"
+    homepage = "https://github.com/GEOS-DEV/GEOS"
+    git = "https://github.com/GEOS-DEV/GEOS.git"
 
     version('develop', branch='develop', submodules='True')
 
@@ -422,7 +422,9 @@ class Geosx(CMakePackage, CudaPackage):
                 if enable:
                     cfg.write(cmake_cache_entry('{}_DIR'.format(cmake_name), spec[tpl].prefix))
                     if tpl == 'hypre' and '+hypre-cuda' in spec:
-                        cfg.write(cmake_cache_option('ENABLE_HYPRE_CUDA'.format(cmake_name), True))
+                        cfg.write(cmake_cache_string('ENABLE_HYPRE_DEVICE', "CUDA"))
+                    elif tpl == 'hypre' and '+hypre-hip' in spec:
+                        cfg.write(cmake_cache_string('ENABLE_HYPRE_DEVICE', "HIP"))
                 else:
                     cfg.write(cmake_cache_option('ENABLE_{}'.format(cmake_name), False))
 
@@ -486,9 +488,9 @@ class Geosx(CMakePackage, CudaPackage):
         # options.append(self.define_from_variant('BUILD_SHARED_LIBS', 'shared'))
 
         # if '~tests~examples~benchmarks' in spec:
-        #     options.append('-DENABLE_TESTS=OFF')
+        #     options.append('-DGEOS_ENABLE_TESTS=OFF')
         # else:
-        #     options.append('-DENABLE_TESTS=ON')
+        #     options.append('-DGEOS_ENABLE_TESTS=ON')
 
         # if '~test' in spec:
         #     options.append('-DDISABLE_UNIT_TESTS=ON')

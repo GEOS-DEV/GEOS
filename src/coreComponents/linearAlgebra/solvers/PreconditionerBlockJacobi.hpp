@@ -12,14 +12,14 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#ifndef GEOSX_LINEARALGEBRA_SOLVERS_PRECONDITIONERBLOCKJACOBI_HPP_
-#define GEOSX_LINEARALGEBRA_SOLVERS_PRECONDITIONERBLOCKJACOBI_HPP_
+#ifndef GEOS_LINEARALGEBRA_SOLVERS_PRECONDITIONERBLOCKJACOBI_HPP_
+#define GEOS_LINEARALGEBRA_SOLVERS_PRECONDITIONERBLOCKJACOBI_HPP_
 
 #include "linearAlgebra/common/LinearOperator.hpp"
 #include "linearAlgebra/common/PreconditionerBase.hpp"
 #include "denseLinearAlgebra/interfaces/blaslapack/BlasLapackLA.hpp"
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -56,10 +56,10 @@ public:
    */
   virtual void setup( Matrix const & mat ) override
   {
-    GEOSX_LAI_ASSERT( mat.ready() );
-    GEOSX_LAI_ASSERT_GT( m_blockSize, 0 );
-    GEOSX_LAI_ASSERT_EQ( mat.numLocalRows() % m_blockSize, 0 );
-    GEOSX_LAI_ASSERT_EQ( mat.numLocalCols() % m_blockSize, 0 );
+    GEOS_LAI_ASSERT( mat.ready() );
+    GEOS_LAI_ASSERT_GT( m_blockSize, 0 );
+    GEOS_LAI_ASSERT_EQ( mat.numLocalRows() % m_blockSize, 0 );
+    GEOS_LAI_ASSERT_EQ( mat.numLocalCols() % m_blockSize, 0 );
 
     PreconditionerBase< LAI >::setup( mat );
 
@@ -122,9 +122,9 @@ public:
   virtual void apply( Vector const & src,
                       Vector & dst ) const override
   {
-    GEOSX_LAI_ASSERT( m_blockDiag.ready() );
-    GEOSX_LAI_ASSERT_EQ( this->numGlobalRows(), dst.globalSize() );
-    GEOSX_LAI_ASSERT_EQ( this->numGlobalCols(), src.globalSize() );
+    GEOS_LAI_ASSERT( m_blockDiag.ready() );
+    GEOS_LAI_ASSERT_EQ( this->numGlobalRows(), dst.globalSize() );
+    GEOS_LAI_ASSERT_EQ( this->numGlobalCols(), src.globalSize() );
 
     m_blockDiag.apply( src, dst );
   }
@@ -135,7 +135,7 @@ public:
    */
   virtual bool hasPreconditionerMatrix() const override
   {
-    GEOSX_LAI_ASSERT( m_blockDiag.ready() );
+    GEOS_LAI_ASSERT( m_blockDiag.ready() );
     return true;
   }
 
@@ -145,7 +145,7 @@ public:
    */
   virtual Matrix const & preconditionerMatrix() const override
   {
-    GEOSX_LAI_ASSERT( m_blockDiag.ready() );
+    GEOS_LAI_ASSERT( m_blockDiag.ready() );
     return m_blockDiag;
   }
 
@@ -160,4 +160,4 @@ private:
 
 }
 
-#endif //GEOSX_LINEARALGEBRA_SOLVERS_PRECONDITIONERBLOCKJACOBI_HPP_
+#endif //GEOS_LINEARALGEBRA_SOLVERS_PRECONDITIONERBLOCKJACOBI_HPP_

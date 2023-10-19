@@ -50,7 +50,7 @@
 
 #include <umfpack.h>
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -59,7 +59,7 @@ namespace geosx
 using SSlong = SuiteSparse_long;
 
 static_assert( std::is_same< double, real64 >::value,
-               "SuiteSparse real and geosx::real64 must be the same type" );
+               "SuiteSparse real and geos::real64 must be the same type" );
 
 struct SuiteSparseData
 {
@@ -116,9 +116,9 @@ void factorize( SuiteSparseData & data, LinearSolverParameters const & params )
   SSlong status;
   SSlong const numRows = data.rowPtr.size() - 1;
 
-  data.rowPtr.move( LvArray::MemorySpace::host, false );
-  data.colIndices.move( LvArray::MemorySpace::host, false );
-  data.values.move( LvArray::MemorySpace::host, false );
+  data.rowPtr.move( hostMemorySpace, false );
+  data.colIndices.move( hostMemorySpace, false );
+  data.values.move( hostMemorySpace, false );
 
   // symbolic factorization
   status = umfpack_dl_symbolic( numRows,
@@ -133,7 +133,7 @@ void factorize( SuiteSparseData & data, LinearSolverParameters const & params )
   {
     umfpack_dl_report_info( data.control, data.info );
     umfpack_dl_report_status( data.control, status );
-    GEOSX_ERROR( "SuiteSparse: umfpack_dl_symbolic failed." );
+    GEOS_ERROR( "SuiteSparse: umfpack_dl_symbolic failed." );
   }
 
   // print the symbolic factorization
@@ -155,7 +155,7 @@ void factorize( SuiteSparseData & data, LinearSolverParameters const & params )
   {
     umfpack_dl_report_info( data.control, data.info );
     umfpack_dl_report_status( data.control, status );
-    GEOSX_ERROR( "SuiteSparse: umfpack_dl_numeric failed." );
+    GEOS_ERROR( "SuiteSparse: umfpack_dl_numeric failed." );
   }
 
   // print the numeric factorization
@@ -273,8 +273,8 @@ void SuiteSparse< LAI >::solve( Vector const & rhs,
       {
         if( m_params.logLevel > 0 )
         {
-          GEOSX_WARNING( "SuiteSparse: failed to reduce residual below tolerance.\n"
-                         "Condition number estimate: " << condEst );
+          GEOS_WARNING( "SuiteSparse: failed to reduce residual below tolerance.\n"
+                        "Condition number estimate: " << condEst );
         }
         m_result.status = LinearSolverResult::Status::Breakdown;
       }
@@ -283,29 +283,29 @@ void SuiteSparse< LAI >::solve( Vector const & rhs,
 
   if( m_params.logLevel >= 1 )
   {
-    GEOSX_LOG_RANK_0( "\t\tLinear Solver | " << m_result.status <<
-                      " | Iterations: " << m_result.numIterations <<
-                      " | Final Rel Res: " << m_result.residualReduction <<
-                      " | Setup Time: " << m_result.setupTime << " s" <<
-                      " | Solve Time: " << m_result.solveTime << " s" );
+    GEOS_LOG_RANK_0( "        Linear Solver | " << m_result.status <<
+                     " | Iterations: " << m_result.numIterations <<
+                     " | Final Rel Res: " << m_result.residualReduction <<
+                     " | Setup Time: " << m_result.setupTime << " s" <<
+                     " | Solve Time: " << m_result.solveTime << " s" );
   }
 }
 
 template< typename LAI >
 void SuiteSparse< LAI >::doSolve( Vector const & b, Vector & x, bool transpose ) const
 {
-  GEOSX_LAI_ASSERT( ready() );
-  GEOSX_LAI_ASSERT( b.ready() );
-  GEOSX_LAI_ASSERT( x.ready() );
-  GEOSX_LAI_ASSERT_EQ( b.localSize(), x.localSize() );
-  GEOSX_LAI_ASSERT_EQ( b.localSize(), matrix().numLocalRows() );
+  GEOS_LAI_ASSERT( ready() );
+  GEOS_LAI_ASSERT( b.ready() );
+  GEOS_LAI_ASSERT( x.ready() );
+  GEOS_LAI_ASSERT_EQ( b.localSize(), x.localSize() );
+  GEOS_LAI_ASSERT_EQ( b.localSize(), matrix().numLocalRows() );
 
   m_export->exportVector( b, m_data->rhs );
 
   if( MpiWrapper::commRank( b.comm() ) == m_workingRank )
   {
-    m_data->rhs.move( LvArray::MemorySpace::host, false );
-    m_data->sol.move( LvArray::MemorySpace::host, true );
+    m_data->rhs.move( hostMemorySpace, false );
+    m_data->sol.move( hostMemorySpace, true );
 
     // To be able to use UMFPACK direct solver we need to disable floating point exceptions
     LvArray::system::FloatingPointExceptionGuard guard;
@@ -325,7 +325,7 @@ void SuiteSparse< LAI >::doSolve( Vector const & b, Vector & x, bool transpose )
     {
       umfpack_dl_report_info( m_data->control, m_data->info );
       umfpack_dl_report_status( m_data->control, status );
-      GEOSX_ERROR( "SuiteSparse interface: umfpack_dl_solve failed." );
+      GEOS_ERROR( "SuiteSparse interface: umfpack_dl_solve failed." );
     }
   }
 
@@ -335,7 +335,7 @@ void SuiteSparse< LAI >::doSolve( Vector const & b, Vector & x, bool transpose )
 template< typename LAI >
 real64 SuiteSparse< LAI >::estimateConditionNumberBasic() const
 {
-  GEOSX_LAI_ASSERT( ready() );
+  GEOS_LAI_ASSERT( ready() );
   if( m_condEst >= 0.0 )
   {
     return m_condEst; // used cached result, possibly more accurate
@@ -354,7 +354,7 @@ real64 SuiteSparse< LAI >::estimateConditionNumberBasic() const
 template< typename LAI >
 real64 SuiteSparse< LAI >::estimateConditionNumberAdvanced() const
 {
-  GEOSX_LAI_ASSERT( ready() );
+  GEOS_LAI_ASSERT( ready() );
   localIndex constexpr numIterations = 4;
 
   NormalOperator< LAI > const normalOperator( matrix() );

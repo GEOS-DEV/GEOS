@@ -16,15 +16,15 @@
  * @file PoromechanicsBase.hpp
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_POROMECHANICSKERNELS_POROMECHANICSBASE_HPP_
-#define GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_POROMECHANICSKERNELS_POROMECHANICSBASE_HPP_
+#ifndef GEOS_PHYSICSSOLVERS_MULTIPHYSICS_POROMECHANICSKERNELS_POROMECHANICSBASE_HPP_
+#define GEOS_PHYSICSSOLVERS_MULTIPHYSICS_POROMECHANICSKERNELS_POROMECHANICSBASE_HPP_
 
 #include "finiteElement/BilinearFormUtilities.hpp"
 #include "finiteElement/LinearFormUtilities.hpp"
 #include "finiteElement/kernelInterface/ImplicitKernelBase.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsFields.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace poromechanicsKernels
@@ -32,7 +32,7 @@ namespace poromechanicsKernels
 
 /**
  * @brief Defines the kernel structure for solving quasi-static poromechanics.
- * @copydoc geosx::finiteElement::ImplicitKernelBase
+ * @copydoc geos::finiteElement::ImplicitKernelBase
  * @tparam NUM_NODES_PER_ELEM The number of nodes per element for the
  *                            @p SUBREGION_TYPE.
  * @tparam UNUSED An unused parameter since we are assuming that the test and
@@ -42,7 +42,7 @@ namespace poromechanicsKernels
  * Defines the KernelBase interface functions required for solving the
  * quasi-static poromechanics problem using one of the
  * "finite element kernel application" functions such as
- * geosx::finiteElement::RegionBasedKernelApplication.
+ * geos::finiteElement::RegionBasedKernelApplication.
  *
  */
 template< typename SUBREGION_TYPE,
@@ -78,7 +78,7 @@ public:
 
   /**
    * @brief Constructor
-   * @copydoc geosx::finiteElement::ImplicitKernelBase::ImplicitKernelBase
+   * @copydoc geos::finiteElement::ImplicitKernelBase::ImplicitKernelBase
    * @param gravityVector The gravity vector.
    */
   PoromechanicsBase( NodeManager const & nodeManager,
@@ -92,6 +92,7 @@ public:
                      globalIndex const rankOffset,
                      CRSMatrixView< real64, globalIndex const > const inputMatrix,
                      arrayView1d< real64 > const inputRhs,
+                     real64 const inputDt,
                      real64 const (&gravityVector)[3],
                      string const inputFlowDofKey,
                      string const fluidModelKey ):
@@ -105,7 +106,8 @@ public:
           inputDispDofNumber,
           rankOffset,
           inputMatrix,
-          inputRhs ),
+          inputRhs,
+          inputDt ),
     m_X( nodeManager.referencePosition() ),
     m_disp( nodeManager.getField< fields::solidMechanics::totalDisplacement >() ),
     m_uhat( nodeManager.getField< fields::solidMechanics::incrementalDisplacement >() ),
@@ -116,13 +118,13 @@ public:
     m_pressure_n( elementSubRegion.template getField< fields::flow::pressure_n >() ),
     m_pressure( elementSubRegion.template getField< fields::flow::pressure >() )
   {
-    GEOSX_UNUSED_VAR( fluidModelKey );
+    GEOS_UNUSED_VAR( fluidModelKey );
   }
 
   //*****************************************************************************
   /**
    * @class StackVariables
-   * @copydoc geosx::finiteElement::ImplicitKernelBase::StackVariables
+   * @copydoc geos::finiteElement::ImplicitKernelBase::StackVariables
    *
    * Adds a stack array for the displacement, incremental displacement, and the
    * constitutive stiffness.
@@ -134,7 +136,7 @@ public:
     static constexpr int numDispDofPerElem =  Base::StackVariables::maxNumRows;
 
     /// Constructor.
-    GEOSX_HOST_DEVICE
+    GEOS_HOST_DEVICE
     StackVariables():
       Base::StackVariables(),
             xLocal(),
@@ -205,14 +207,14 @@ public:
 
   /**
    * @brief Copy global values from primary field to a local stack array.
-   * @copydoc ::geosx::finiteElement::ImplicitKernelBase::setup
+   * @copydoc ::geos::finiteElement::ImplicitKernelBase::setup
    *
    * For the PoromechanicsBase implementation, global values from the displacement,
    * incremental displacement, and degree of freedom numbers are placed into
    * element local stack storage.
    */
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
   void setup( localIndex const k,
               StackVariables & stack ) const
   {
@@ -262,8 +264,8 @@ public:
    * @param[in] k Element index.
    * @return A parameter representative of the stiffness matrix dstress/dstrain
    */
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
   real64 computeStabilizationScaling( localIndex const k ) const
   {
     // TODO: generalize this to other constitutive models (currently we assume linear elasticity).
@@ -299,8 +301,9 @@ protected:
 
 };
 
+
 } // namespace poromechanicsKernels
 
-} // namespace geosx
+} // namespace geos
 
-#endif // GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_POROMECHANICSKERNELS_POROMECHANICSBASE_HPP_
+#endif // GEOS_PHYSICSSOLVERS_MULTIPHYSICS_POROMECHANICSKERNELS_POROMECHANICSBASE_HPP_

@@ -3,19 +3,20 @@
 #
 
 set( gtest_geosx_tests
+     testCompositionalProperties.cpp
      testDamageUtilities.cpp
      testDruckerPrager.cpp
      testElasticIsotropic.cpp
+     testKValueInitialization.cpp
      testModifiedCamClay.cpp
+     testNegativeTwoPhaseFlash.cpp
      testParticleFluidEnums.cpp
      testPropertyConversions.cpp
+     testCubicEOS.cpp
+     testRachfordRice.cpp
    )
 
-set( dependencyList gtest constitutive )
-
-if( ENABLE_CUDA )
-  set( dependencyList ${dependencyList} cuda )
-endif()
+set( dependencyList gtest constitutive ${parallelDeps} )
 
 if( ENABLE_CUDA_NVTOOLSEXT )
   set( dependencyList ${dependencyList} CUDA::nvToolsExt )

@@ -16,8 +16,8 @@
  * @file HypreMatrix.hpp
  */
 
-#ifndef GEOSX_LINEARALGEBRA_INTERFACES_HYPREMATRIX_HPP_
-#define GEOSX_LINEARALGEBRA_INTERFACES_HYPREMATRIX_HPP_
+#ifndef GEOS_LINEARALGEBRA_INTERFACES_HYPREMATRIX_HPP_
+#define GEOS_LINEARALGEBRA_INTERFACES_HYPREMATRIX_HPP_
 
 #include "common/DataTypes.hpp"
 #include "linearAlgebra/interfaces/hypre/HypreVector.hpp"
@@ -41,7 +41,7 @@ extern "C" struct hypre_ParCSRMatrix_struct;
 
 ///@}
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -428,6 +428,6 @@ private:
 
 };
 
-} // namespace geosx
+} // namespace geos
 
-#endif /*GEOSX_LINEARALGEBRA_INTERFACES_HYPREMATRIX_HPP_*/
+#endif /*GEOS_LINEARALGEBRA_INTERFACES_HYPREMATRIX_HPP_*/

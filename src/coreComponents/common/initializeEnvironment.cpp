@@ -23,7 +23,9 @@
 
 #if defined( GEOSX_USE_CALIPER )
 #include <caliper/cali-manager.h>
+#if defined( GEOSX_USE_ADIAK )
 #include <adiak.hpp>
+#endif
 #endif
 
 // System includes
@@ -37,13 +39,17 @@
 #include <omp.h>
 #endif
 
-#if defined( GEOSX_USE_CUDA )
+#if defined( GEOS_USE_CUDA )
 #include <cuda.h>
+#endif
+
+#if defined( GEOS_USE_HIP )
+#include <hip/hip_runtime.h>
 #endif
 
 #include <cfenv>
 
-namespace geosx
+namespace geos
 {
 
 
@@ -92,7 +98,7 @@ void setupLvArray()
 void setupMKL()
 {
 #ifdef GEOSX_USE_MKL
-  GEOSX_LOG_RANK_0( "MKL max threads: " << mkl_get_max_threads() );
+  GEOS_LOG_RANK_0( "MKL max threads: " << mkl_get_max_threads() );
 #endif
 }
 
@@ -100,7 +106,7 @@ void setupMKL()
 void setupOpenMP()
 {
 #ifdef GEOSX_USE_OPENMP
-  GEOSX_LOG_RANK_0( "Max threads: " << omp_get_max_threads() );
+  GEOS_LOG_RANK_0( "Max threads: " << omp_get_max_threads() );
 #endif
 }
 
@@ -113,6 +119,12 @@ void setupMPI( int argc, char * argv[] )
   }
 
   MPI_COMM_GEOSX = MpiWrapper::commDup( MPI_COMM_WORLD );
+
+  if( MpiWrapper::commRank( MPI_COMM_GEOSX ) == 0 )
+  {
+    // Can't use logging macros prior to logger init
+    std::cout << "Num ranks: " << MpiWrapper::commSize( MPI_COMM_GEOSX ) << std::endl;
+  }
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -129,22 +141,23 @@ void setupCaliper( cali::ConfigManager & caliperManager,
                    CommandLineOptions const & commandLineOptions )
 {
   caliperManager.add( commandLineOptions.timerOutput.c_str() );
-  GEOSX_ERROR_IF( caliperManager.error(), "Caliper config error: " << caliperManager.error_msg() );
+  GEOS_ERROR_IF( caliperManager.error(), "Caliper config error: " << caliperManager.error_msg() );
   caliperManager.start();
 
+#if defined( GEOSX_USE_ADIAK )
 #if defined( GEOSX_USE_MPI )
   adiak::init( &MPI_COMM_GEOSX );
 #else
   adiak::init( nullptr );
 #endif
 
-  GEOSX_WARNING_IF( !adiak::uid(), "Error getting the user info." );
-  GEOSX_WARNING_IF( !adiak::launchdate(), "Error getting the launch date info." );
-  GEOSX_WARNING_IF( !adiak::cmdline(), "Error getting the command line args." );
-  GEOSX_WARNING_IF( !adiak::clustername(), "Error getting the clustername." );
-  GEOSX_WARNING_IF( !adiak::walltime(), "Error getting the walltime." );
-  GEOSX_WARNING_IF( !adiak::systime(), "Error getting the systime." );
-  GEOSX_WARNING_IF( !adiak::cputime(), "Error getting the cputime." );
+  GEOS_WARNING_IF( !adiak::uid(), "Error getting the user info." );
+  GEOS_WARNING_IF( !adiak::launchdate(), "Error getting the launch date info." );
+  GEOS_WARNING_IF( !adiak::cmdline(), "Error getting the command line args." );
+  GEOS_WARNING_IF( !adiak::clustername(), "Error getting the clustername." );
+  GEOS_WARNING_IF( !adiak::walltime(), "Error getting the walltime." );
+  GEOS_WARNING_IF( !adiak::systime(), "Error getting the systime." );
+  GEOS_WARNING_IF( !adiak::cputime(), "Error getting the cputime." );
 
   for( auto & fileName: commandLineOptions.inputFileNames )
   {
@@ -192,23 +205,36 @@ void setupCaliper( cali::ConfigManager & caliperManager,
   // CUDA info
   int cudaRuntimeVersion = 0;
   int cudaDriverVersion = 0;
-#if defined( GEOSX_USE_CUDA )
+#if defined( GEOS_USE_CUDA )
   adiak::value( "CUDA", "On" );
-  GEOSX_ERROR_IF_NE( cudaSuccess, cudaRuntimeGetVersion( &cudaRuntimeVersion ) );
-  GEOSX_ERROR_IF_NE( cudaSuccess, cudaDriverGetVersion( &cudaDriverVersion ) );
+  GEOS_ERROR_IF_NE( cudaSuccess, cudaRuntimeGetVersion( &cudaRuntimeVersion ) );
+  GEOS_ERROR_IF_NE( cudaSuccess, cudaDriverGetVersion( &cudaDriverVersion ) );
 #else
   adiak::value( "CUDA", "Off" );
 #endif
   adiak::value( "CUDA runtime version", cudaRuntimeVersion );
   adiak::value( "CUDA driver version", cudaDriverVersion );
 
+  // HIP info
+  int hipRuntimeVersion = 0;
+  int hipDriverVersion = 0;
+#if defined( GESOX_USE_HIP )
+  adiak::value( "HIP", "On" )
+  GEOSX_ERROR_IF_NE( hipSuccess, hipRuntimeGetVersion( &hipRuntimeVersion ) );
+  GEOSX_ERROR_IF_NE( hipSuccess, hipDriverGetVersion( &hipDriverVersion ) );
+#else
+  adiak::value( "HIP", "Off" );
+#endif
+  adiak::value( "HIP runtime version", hipRuntimeVersion );
+  adiak::value( "HIP driver version", hipDriverVersion );
+#endif // defined( GEOSX_USE ADIAK )
 }
 #endif // defined( GEOSX_USE_CALIPER )
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void finalizeCaliper()
 {
-#if defined( GEOSX_USE_CALIPER )
+#if defined( GEOSX_USE_CALIPER )and defined( GEOSX_USE_ADIAK )
   adiak::fini();
 #endif
 }
@@ -233,7 +259,7 @@ static void addUmpireHighWaterMarks()
 
   if( numAllocators != minNumAllocators )
   {
-    GEOSX_WARNING( "Not all ranks have created the same number of umpire allocators, cannot compute high water marks." );
+    GEOS_WARNING( "Not all ranks have created the same number of umpire allocators, cannot compute high water marks." );
     return;
   }
 
@@ -247,7 +273,7 @@ static void addUmpireHighWaterMarks()
     if( allocatorName.rfind( "__umpire_internal", 0 ) == 0 )
       continue;
 
-    GEOSX_ERROR_IF_GT( allocatorName.size(), MAX_NAME_LENGTH );
+    GEOS_ERROR_IF_GT( allocatorName.size(), MAX_NAME_LENGTH );
 
     memset( allocatorNameBuffer, '\0', sizeof( allocatorNameBuffer ) );
     memcpy( allocatorNameBuffer, allocatorName.data(), allocatorName.size() );
@@ -258,7 +284,7 @@ static void addUmpireHighWaterMarks()
     MpiWrapper::allReduce( allocatorNameBuffer, allocatorNameMinCharsBuffer, MAX_NAME_LENGTH, MPI_MIN, MPI_COMM_GEOSX );
     if( strcmp( allocatorNameBuffer, allocatorNameMinCharsBuffer ) != 0 )
     {
-      GEOSX_WARNING( "Not all ranks have an allocator named " << allocatorNameBuffer << ", cannot compute high water mark." );
+      GEOS_WARNING( "Not all ranks have an allocator named " << allocatorNameBuffer << ", cannot compute high water mark." );
       continue;
     }
 
@@ -267,10 +293,10 @@ static void addUmpireHighWaterMarks()
     std::size_t const mark = rm.getAllocator( allocatorName ).getHighWatermark();
     std::size_t const totalMark = MpiWrapper::sum( mark );
     std::size_t const maxMark = MpiWrapper::max( mark );
-    GEOSX_LOG_RANK_0( "Umpire " << std::setw( 15 ) << allocatorName << " sum across ranks: " <<
-                      std::setw( 9 ) << LvArray::system::calculateSize( totalMark ) );
-    GEOSX_LOG_RANK_0( "Umpire " << std::setw( 15 ) << allocatorName << "         rank max: " <<
-                      std::setw( 9 ) << LvArray::system::calculateSize( maxMark ) );
+    GEOS_LOG_RANK_0( "Umpire " << std::setw( 15 ) << allocatorName << " sum across ranks: " <<
+                     std::setw( 9 ) << LvArray::system::calculateSize( totalMark ) );
+    GEOS_LOG_RANK_0( "Umpire " << std::setw( 15 ) << allocatorName << "         rank max: " <<
+                     std::setw( 9 ) << LvArray::system::calculateSize( maxMark ) );
 
     pushStatsIntoAdiak( allocatorName + " sum across ranks", mark );
     pushStatsIntoAdiak( allocatorName + " rank max", mark );
@@ -299,4 +325,4 @@ void cleanupEnvironment()
 }
 
 
-} // namespace geosx
+} // namespace geos

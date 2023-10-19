@@ -24,7 +24,7 @@
 #include "common/LinearOperator.hpp"
 #include "linearAlgebra/solvers/KrylovUtils.hpp"
 
-namespace geosx
+namespace geos
 {
 
 
@@ -162,4 +162,4 @@ template class BicgstabSolver< PetscInterface::ParallelVector >;
 template class BicgstabSolver< BlockVectorView< PetscInterface::ParallelVector > >;
 #endif
 
-} //namespace geosx
+} //namespace geos

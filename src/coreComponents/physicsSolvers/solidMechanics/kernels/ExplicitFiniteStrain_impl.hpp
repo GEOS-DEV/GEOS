@@ -16,14 +16,15 @@
  * @file ExplicitFiniteStrain_impl.hpp
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_KERNELS_EXPLICITFINITESTRAIN_IMPL_HPP_
-#define GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_KERNELS_EXPLICITFINITESTRAIN_IMPL_HPP_
+#ifndef GEOS_PHYSICSSOLVERS_SOLIDMECHANICS_KERNELS_EXPLICITFINITESTRAIN_IMPL_HPP_
+#define GEOS_PHYSICSSOLVERS_SOLIDMECHANICS_KERNELS_EXPLICITFINITESTRAIN_IMPL_HPP_
 
+#include "constitutive/solid/SolidUtilities.hpp"
 #include "ExplicitFiniteStrain.hpp"
 #include "ExplicitSmallStrain_impl.hpp"
 #include "finiteElement/Kinematics.h"
 
-namespace geosx
+namespace geos
 {
 
 namespace solidMechanicsLagrangianFEMKernels
@@ -55,8 +56,8 @@ ExplicitFiniteStrain< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::ExplicitFini
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
           typename FE_TYPE >
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+GEOS_HOST_DEVICE
+inline
 void ExplicitFiniteStrain< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::setup( localIndex const k,
                                                                                 StackVariables & stack ) const
 {
@@ -77,8 +78,8 @@ void ExplicitFiniteStrain< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::setup( 
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
           typename FE_TYPE >
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+GEOS_HOST_DEVICE
+inline
 void ExplicitFiniteStrain< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::quadraturePointKernel( localIndex const k,
                                                                                                 localIndex const q,
                                                                                                 StackVariables & stack ) const
@@ -112,14 +113,16 @@ void ExplicitFiniteStrain< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::quadrat
   LvArray::tensorOps::addIdentity< 3 >( F, 1.0 );
   real64 const detF = LvArray::tensorOps::invert< 3 >( fInv, F );
 
-  real64 Rot[ 3 ][ 3 ];
-  real64 Dadt[ 6 ];
+  real64 Rot[ 3 ][ 3 ]{};
+  real64 Dadt[ 6 ]{};
   HughesWinget( Rot, Dadt, Ldt );
 
-  real64 stress[ 6 ] = { };
-  m_constitutiveUpdate.hypoUpdate_StressOnly( k, q, Dadt, Rot, stress );
+  real64 stress[ 6 ]{};
+  constitutive::SolidUtilities::
+    hypoUpdate_StressOnly( m_constitutiveUpdate,
+                           k, q, m_dt, Dadt, Rot, stress );
 
-  real64 P[ 3 ][ 3 ];
+  real64 P[ 3 ][ 3 ]{};
   LvArray::tensorOps::Rij_eq_symAikBjk< 3 >( P, stress, fInv );
   LvArray::tensorOps::scale< 3, 3 >( P, -detJ * detF );
 
@@ -144,6 +147,6 @@ ExplicitFiniteStrain< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::kernelLaunch
 
 } // namespace solidMechanicsLagrangianFEMKernels
 
-} // namespace geosx
+} // namespace geos
 
-#endif //GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_KERNELS_EXPLICITFINITESTRAIN_IMPL_HPP_
+#endif //GEOS_PHYSICSSOLVERS_SOLIDMECHANICS_KERNELS_EXPLICITFINITESTRAIN_IMPL_HPP_

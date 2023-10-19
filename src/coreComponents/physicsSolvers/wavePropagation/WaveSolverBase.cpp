@@ -27,7 +27,9 @@
 #include "mainInterface/ProblemManager.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 
-namespace geosx
+#include <limits>
+
+namespace geos
 {
 
 using namespace dataRepository;
@@ -43,6 +45,11 @@ WaveSolverBase::WaveSolverBase( const std::string & name,
     setSizedFromParent( 0 ).
     setDescription( "Coordinates (x,y,z) of the sources" );
 
+  registerWrapper( viewKeyStruct::receiverCoordinatesString(), &m_receiverCoordinates ).
+    setInputFlag( InputFlags::REQUIRED ).
+    setSizedFromParent( 0 ).
+    setDescription( "Coordinates (x,y,z) of the receivers" );
+
   registerWrapper( viewKeyStruct::sourceValueString(), &m_sourceValue ).
     setInputFlag( InputFlags::FALSE ).
     setRestartFlags( RestartFlags::NO_WRITE ).
@@ -53,10 +60,10 @@ WaveSolverBase::WaveSolverBase( const std::string & name,
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Central frequency for the time source" );
 
-  registerWrapper( viewKeyStruct::receiverCoordinatesString(), &m_receiverCoordinates ).
-    setInputFlag( InputFlags::REQUIRED ).
-    setSizedFromParent( 0 ).
-    setDescription( "Coordinates (x,y,z) of the receivers" );
+  registerWrapper( viewKeyStruct::timeSourceDelayString(), &m_timeSourceDelay ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( -1 ).
+    setDescription( "Source time delay (1 / f0 by default)" );
 
   registerWrapper( viewKeyStruct::rickerOrderString(), &m_rickerOrder ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -93,20 +100,25 @@ WaveSolverBase::WaveSolverBase( const std::string & name,
     setApplyDefaultValue( 0 ).
     setDescription( "Set the current shot for temporary files" );
 
-  registerWrapper( viewKeyStruct::lifoSizeString(), &m_lifoSize ).
+  registerWrapper( viewKeyStruct::enableLifoString(), &m_enableLifo ).
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( 0 ).
-    setDescription( "Set the capacity of the lifo storage" );
+    setDescription( "Set to 1 to enable LIFO storage feature" );
+
+  registerWrapper( viewKeyStruct::lifoSizeString(), &m_lifoSize ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( std::numeric_limits< int >::max() ).
+    setDescription( "Set the capacity of the lifo storage (should be the total number of buffers to store in the LIFO)" );
 
   registerWrapper( viewKeyStruct::lifoOnDeviceString(), &m_lifoOnDevice ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setApplyDefaultValue( 0 ).
-    setDescription( "Set the capacity of the lifo device storage" );
+    setApplyDefaultValue( -80 ).
+    setDescription( "Set the capacity of the lifo device storage (if negative, opposite of percentage of remaining memory)" );
 
   registerWrapper( viewKeyStruct::lifoOnHostString(), &m_lifoOnHost ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setApplyDefaultValue( 0 ).
-    setDescription( "Set the capacity of the lifo host storage" );
+    setApplyDefaultValue( -80 ).
+    setDescription( "Set the capacity of the lifo host storage (if negative, opposite of percentage of remaining memory)" );
 
 
   registerWrapper( viewKeyStruct::usePMLString(), &m_usePML ).
@@ -169,6 +181,29 @@ void WaveSolverBase::reinit()
   initializePostInitialConditionsPreSubGroups();
 }
 
+void WaveSolverBase::registerDataOnMesh( Group & meshBodies )
+{
+  forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
+                                                    MeshLevel & mesh,
+                                                    arrayView1d< string const > const & )
+  {
+    NodeManager & nodeManager = mesh.getNodeManager();
+
+    nodeManager.registerField< fields::referencePosition32 >( this->getName() );
+    arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X = nodeManager.referencePosition().toViewConst();
+
+    nodeManager.getField< fields::referencePosition32 >().resizeDimension< 1 >( X.size( 1 ) );
+    arrayView2d< wsCoordType, nodes::REFERENCE_POSITION_USD > const X32  = nodeManager.getField< fields::referencePosition32 >();
+    for( int i = 0; i < X.size( 0 ); i++ )
+    {
+      for( int j = 0; j < X.size( 1 ); j++ )
+      {
+        X32[i][j] = X[i][j];
+      }
+    }
+  } );
+}
+
 void WaveSolverBase::initializePreSubGroups()
 {
   SolverBase::initializePreSubGroups();
@@ -199,9 +234,9 @@ void WaveSolverBase::postProcessInput()
   {
     counter++;
   } );
-  GEOSX_THROW_IF( counter > 1,
-                  "One single PML field specification is allowed",
-                  InputError );
+  GEOS_THROW_IF( counter > 1,
+                 getDataContext() << ": One single PML field specification is allowed",
+                 InputError );
 
   m_usePML = counter;
 
@@ -212,29 +247,34 @@ void WaveSolverBase::postProcessInput()
 
   if( m_useDAS )
   {
-    GEOSX_LOG_LEVEL_RANK_0( 1, "Modeling linear DAS data is activated" );
+    GEOS_LOG_LEVEL_RANK_0( 1, "Modeling linear DAS data is activated" );
 
-    GEOSX_ERROR_IF( m_linearDASGeometry.size( 1 ) != 3,
-                    "Invalid number of geometry parameters for the linear DAS fiber. Three parameters are required: dip, azimuth, gauge length" );
+    GEOS_ERROR_IF( m_linearDASGeometry.size( 1 ) != 3,
+                   getWrapperDataContext( viewKeyStruct::linearDASGeometryString() ) <<
+                   ": Invalid number of geometry parameters for the linear DAS fiber. Three parameters are required: dip, azimuth, gauge length" );
 
-    GEOSX_ERROR_IF( m_linearDASGeometry.size( 0 ) != m_receiverCoordinates.size( 0 ),
-                    "Invalid number of geometry parameters instances for the linear DAS fiber. It should match the number of receivers." );
+    GEOS_ERROR_IF( m_linearDASGeometry.size( 0 ) != m_receiverCoordinates.size( 0 ),
+                   getWrapperDataContext( viewKeyStruct::linearDASGeometryString() ) <<
+                   ": Invalid number of geometry parameters instances for the linear DAS fiber. It should match the number of receivers." );
 
     /// initialize DAS geometry
     initializeDAS();
 
   }
 
-  GEOSX_THROW_IF( m_sourceCoordinates.size( 1 ) != 3,
-                  "Invalid number of physical coordinates for the sources",
-                  InputError );
+  GEOS_THROW_IF( m_sourceCoordinates.size( 1 ) != 3,
+                 getWrapperDataContext( viewKeyStruct::sourceCoordinatesString() ) <<
+                 ": Invalid number of physical coordinates for the sources",
+                 InputError );
 
-  GEOSX_THROW_IF( m_receiverCoordinates.size( 1 ) != 3,
-                  "Invalid number of physical coordinates for the receivers",
-                  InputError );
+  GEOS_THROW_IF( m_receiverCoordinates.size( 1 ) != 3,
+                 getWrapperDataContext( viewKeyStruct::receiverCoordinatesString() ) <<
+                 ": Invalid number of physical coordinates for the receivers",
+                 InputError );
 
   EventManager const & event = this->getGroupByPath< EventManager >( "/Problem/Events" );
   real64 const & maxTime = event.getReference< real64 >( EventManager::viewKeyStruct::maxTimeString() );
+  real64 const & minTime = event.getReference< real64 >( EventManager::viewKeyStruct::minTimeString() );
   real64 dt = 0;
   for( localIndex numSubEvent = 0; numSubEvent < event.numSubGroups(); ++numSubEvent )
   {
@@ -245,7 +285,7 @@ void WaveSolverBase::postProcessInput()
     }
   }
 
-  GEOSX_THROW_IF( dt < epsilonLoc*maxTime, "Value for dt: " << dt <<" is smaller than local threshold: " << epsilonLoc, std::runtime_error );
+  GEOS_THROW_IF( dt < epsilonLoc*maxTime, getDataContext() << ": Value for dt: " << dt <<" is smaller than local threshold: " << epsilonLoc, std::runtime_error );
 
   if( m_dtSeismoTrace > 0 )
   {
@@ -255,7 +295,7 @@ void WaveSolverBase::postProcessInput()
   {
     m_nsamplesSeismoTrace = 0;
   }
-  localIndex const nsamples = int(maxTime/dt) + 1;
+  localIndex const nsamples = int( (maxTime-minTime) /dt) + 1;
 
   localIndex const numSourcesGlobal = m_sourceCoordinates.size( 0 );
   m_sourceValue.resize( nsamples, numSourcesGlobal );
@@ -326,9 +366,9 @@ localIndex WaveSolverBase::getNumNodesPerElem()
 
   FiniteElementDiscretization const * const
   feDiscretization = feDiscretizationManager.getGroupPointer< FiniteElementDiscretization >( m_discretizationName );
-  GEOSX_THROW_IF( feDiscretization == nullptr,
-                  getName() << ": FE discretization not found: " << m_discretizationName,
-                  InputError );
+  GEOS_THROW_IF( feDiscretization == nullptr,
+                 getDataContext() << ": FE discretization not found: " << m_discretizationName,
+                 InputError );
 
   localIndex numNodesPerElem = 0;
   forDiscretizationOnMeshTargets( domain.getMeshBodies(),
@@ -359,4 +399,11 @@ localIndex WaveSolverBase::getNumNodesPerElem()
 
 }
 
-} /* namespace geosx */
+bool WaveSolverBase::directoryExists( std::string const & directoryName )
+{
+  struct stat buffer;
+  return stat( directoryName.c_str(), &buffer ) == 0;
+}
+
+
+} /* namespace geos */

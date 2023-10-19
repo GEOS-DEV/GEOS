@@ -18,7 +18,7 @@
 
 #include "LinearSolverParameters.hpp"
 
-namespace geosx
+namespace geos
 {
 using namespace dataRepository;
 
@@ -124,6 +124,11 @@ LinearSolverParametersInput::LinearSolverParametersInput( string const & name,
     setDescription( "AMG smoother type. Available options are: "
                     "``" + EnumStrings< LinearSolverParameters::AMG::SmootherType >::concat( "|" ) + "``" );
 
+  registerWrapper( viewKeyStruct::amgRelaxWeight(), &m_parameters.amg.relaxWeight ).
+    setApplyDefaultValue( m_parameters.amg.relaxWeight ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "AMG relaxation factor for the smoother" );
+
   registerWrapper( viewKeyStruct::amgCoarseString(), &m_parameters.amg.coarseType ).
     setApplyDefaultValue( m_parameters.amg.coarseType ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -131,33 +136,52 @@ LinearSolverParametersInput::LinearSolverParametersInput( string const & name,
                     "``" + EnumStrings< LinearSolverParameters::AMG::CoarseType >::concat( "|" ) + "``" );
 
   registerWrapper( viewKeyStruct::amgCoarseningString(), &m_parameters.amg.coarseningType ).
-    setApplyDefaultValue( "HMIS" ).
+    setApplyDefaultValue( m_parameters.amg.coarseningType ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "AMG coarsening algorithm\n"
-                    "Available options are: TODO" );
+    setDescription( "AMG coarsening algorithm. Available options are: "
+                    "``" + EnumStrings< LinearSolverParameters::AMG::CoarseningType >::concat( "|" ) + "``" );
 
   registerWrapper( viewKeyStruct::amgInterpolationString(), &m_parameters.amg.interpolationType ).
-    setApplyDefaultValue( 6 ).
+    setApplyDefaultValue( m_parameters.amg.interpolationType ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "AMG interpolation algorithm\n"
-                    "Available options are: TODO" );
+    setDescription( "AMG interpolation algorithm. Available options are: "
+                    "``" + EnumStrings< LinearSolverParameters::AMG::InterpType >::concat( "|" ) + "``" );
+
+  registerWrapper( viewKeyStruct::amgInterpMaxNonZerosString(), &m_parameters.amg.interpolationMaxNonZeros ).
+    setApplyDefaultValue( m_parameters.amg.interpolationMaxNonZeros ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "AMG interpolation maximum number of nonzeros per row" );
 
   registerWrapper( viewKeyStruct::amgNumFunctionsString(), &m_parameters.amg.numFunctions ).
-    setApplyDefaultValue( 1 ).
+    setApplyDefaultValue( m_parameters.amg.numFunctions ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "AMG number of functions\n"
-                    "Available options are: TODO" );
+    setDescription( "AMG number of functions" );
 
-  registerWrapper( viewKeyStruct::amgAggresiveNumLevelsString(), &m_parameters.amg.aggresiveNumLevels ).
-    setApplyDefaultValue( 0 ).
+  registerWrapper( viewKeyStruct::amgAggressiveNumPathsString(), &m_parameters.amg.aggressiveNumPaths ).
+    setApplyDefaultValue( m_parameters.amg.aggressiveNumPaths ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "AMG number levels for aggressive coarsening \n"
-                    "Available options are: TODO" );
+    setDescription( "AMG number of paths for aggressive coarsening" );
+
+  registerWrapper( viewKeyStruct::amgAggressiveNumLevelsString(), &m_parameters.amg.aggressiveNumLevels ).
+    setApplyDefaultValue( m_parameters.amg.aggressiveNumLevels ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "AMG number of levels for aggressive coarsening" );
+
+  registerWrapper( viewKeyStruct::amgAggressiveInterpTypeString(), &m_parameters.amg.aggressiveInterpType ).
+    setApplyDefaultValue( m_parameters.amg.aggressiveInterpType ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "AMG aggressive interpolation algorithm. Available options are: "
+                    "``" + EnumStrings< LinearSolverParameters::AMG::AggInterpType >::concat( "|" ) + "``" );
 
   registerWrapper( viewKeyStruct::amgThresholdString(), &m_parameters.amg.threshold ).
     setApplyDefaultValue( m_parameters.amg.threshold ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "AMG strength-of-connection threshold" );
+
+  registerWrapper( viewKeyStruct::amgSeparateComponentsString(), &m_parameters.amg.separateComponents ).
+    setApplyDefaultValue( m_parameters.amg.separateComponents ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "AMG apply separate component filter for multi-variable problems" );
 
   registerWrapper( viewKeyStruct::amgNullSpaceTypeString(), &m_parameters.amg.nullSpaceType ).
     setApplyDefaultValue( m_parameters.amg.nullSpaceType ).
@@ -182,29 +206,59 @@ void LinearSolverParametersInput::postProcessInput()
 
   static const std::set< integer > binaryOptions = { 0, 1 };
 
-  GEOSX_ERROR_IF( binaryOptions.count( m_parameters.stopIfError ) == 0, viewKeyStruct::stopIfErrorString() << " option can be either 0 (false) or 1 (true)" );
-  GEOSX_ERROR_IF( binaryOptions.count( m_parameters.direct.checkResidual ) == 0, viewKeyStruct::directCheckResidualString() << " option can be either 0 (false) or 1 (true)" );
-  GEOSX_ERROR_IF( binaryOptions.count( m_parameters.direct.equilibrate ) == 0, viewKeyStruct::directEquilString() << " option can be either 0 (false) or 1 (true)" );
-  GEOSX_ERROR_IF( binaryOptions.count( m_parameters.direct.replaceTinyPivot ) == 0, viewKeyStruct::directReplTinyPivotString() << " option can be either 0 (false) or 1 (true)" );
-  GEOSX_ERROR_IF( binaryOptions.count( m_parameters.direct.iterativeRefine ) == 0, viewKeyStruct::directIterRefString() << " option can be either 0 (false) or 1 (true)" );
-  GEOSX_ERROR_IF( binaryOptions.count( m_parameters.direct.parallel ) == 0, viewKeyStruct::directParallelString() << " option can be either 0 (false) or 1 (true)" );
+  GEOS_ERROR_IF( binaryOptions.count( m_parameters.stopIfError ) == 0,
+                 getWrapperDataContext( viewKeyStruct::stopIfErrorString() ) <<
+                 ": option can be either 0 (false) or 1 (true)" );
+  GEOS_ERROR_IF( binaryOptions.count( m_parameters.direct.checkResidual ) == 0,
+                 getWrapperDataContext( viewKeyStruct::directCheckResidualString() ) <<
+                 ": option can be either 0 (false) or 1 (true)" );
+  GEOS_ERROR_IF( binaryOptions.count( m_parameters.direct.equilibrate ) == 0,
+                 getWrapperDataContext( viewKeyStruct::directEquilString() ) <<
+                 ": option can be either 0 (false) or 1 (true)" );
+  GEOS_ERROR_IF( binaryOptions.count( m_parameters.direct.replaceTinyPivot ) == 0,
+                 getWrapperDataContext( viewKeyStruct::directReplTinyPivotString() ) <<
+                 ": option can be either 0 (false) or 1 (true)" );
+  GEOS_ERROR_IF( binaryOptions.count( m_parameters.direct.iterativeRefine ) == 0,
+                 getWrapperDataContext( viewKeyStruct::directIterRefString() ) <<
+                 ": option can be either 0 (false) or 1 (true)" );
+  GEOS_ERROR_IF( binaryOptions.count( m_parameters.direct.parallel ) == 0,
+                 getWrapperDataContext( viewKeyStruct::directParallelString() ) <<
+                 ": option can be either 0 (false) or 1 (true)" );
 
-  GEOSX_ERROR_IF_LT_MSG( m_parameters.krylov.maxIterations, 0, "Invalid value of " << viewKeyStruct::krylovMaxIterString() );
-  GEOSX_ERROR_IF_LT_MSG( m_parameters.krylov.maxRestart, 0, "Invalid value of " << viewKeyStruct::krylovMaxRestartString() );
+  GEOS_ERROR_IF_LT_MSG( m_parameters.krylov.maxIterations, 0,
+                        getWrapperDataContext( viewKeyStruct::krylovMaxIterString() ) <<
+                        ": Invalid value." );
+  GEOS_ERROR_IF_LT_MSG( m_parameters.krylov.maxRestart, 0,
+                        getWrapperDataContext( viewKeyStruct::krylovMaxRestartString() ) <<
+                        ": Invalid value." );
 
-  GEOSX_ERROR_IF_LT_MSG( m_parameters.krylov.relTolerance, 0.0, "Invalid value of " << viewKeyStruct::krylovTolString() );
-  GEOSX_ERROR_IF_GT_MSG( m_parameters.krylov.relTolerance, 1.0, "Invalid value of " << viewKeyStruct::krylovTolString() );
+  GEOS_ERROR_IF_LT_MSG( m_parameters.krylov.relTolerance, 0.0,
+                        getWrapperDataContext( viewKeyStruct::krylovTolString() ) <<
+                        ": Invalid value." );
+  GEOS_ERROR_IF_GT_MSG( m_parameters.krylov.relTolerance, 1.0,
+                        getWrapperDataContext( viewKeyStruct::krylovTolString() ) <<
+                        ": Invalid value." );
 
-  GEOSX_ERROR_IF_LT_MSG( m_parameters.ifact.fill, 0, "Invalid value of " << viewKeyStruct::iluFillString() );
-  GEOSX_ERROR_IF_LT_MSG( m_parameters.ifact.threshold, 0.0, "Invalid value of " << viewKeyStruct::iluThresholdString() );
+  GEOS_ERROR_IF_LT_MSG( m_parameters.ifact.fill, 0,
+                        getWrapperDataContext( viewKeyStruct::iluFillString() ) <<
+                        ": Invalid value." );
+  GEOS_ERROR_IF_LT_MSG( m_parameters.ifact.threshold, 0.0,
+                        getWrapperDataContext( viewKeyStruct::iluThresholdString() ) <<
+                        ": Invalid value." );
 
-  GEOSX_ERROR_IF_LT_MSG( m_parameters.amg.numSweeps, 0, "Invalid value of " << viewKeyStruct::amgNumSweepsString() );
-  GEOSX_ERROR_IF_LT_MSG( m_parameters.amg.threshold, 0.0, "Invalid value of " << viewKeyStruct::amgThresholdString() );
-  GEOSX_ERROR_IF_GT_MSG( m_parameters.amg.threshold, 1.0, "Invalid value of " << viewKeyStruct::amgThresholdString() );
+  GEOS_ERROR_IF_LT_MSG( m_parameters.amg.numSweeps, 0,
+                        getWrapperDataContext( viewKeyStruct::amgNumSweepsString() ) <<
+                        ": Invalid value." );
+  GEOS_ERROR_IF_LT_MSG( m_parameters.amg.threshold, 0.0,
+                        getWrapperDataContext( viewKeyStruct::amgThresholdString() ) <<
+                        ": Invalid value." );
+  GEOS_ERROR_IF_GT_MSG( m_parameters.amg.threshold, 1.0,
+                        getWrapperDataContext( viewKeyStruct::amgThresholdString() ) <<
+                        ": Invalid value." );
 
   // TODO input validation for other AMG parameters ?
 }
 
 REGISTER_CATALOG_ENTRY( Group, LinearSolverParametersInput, string const &, Group * const )
 
-} // namespace geosx
+} // namespace geos

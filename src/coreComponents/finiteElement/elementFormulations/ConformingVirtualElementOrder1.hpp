@@ -16,13 +16,13 @@
  * @file ConformingVirtualElementOrder1.hpp
  */
 
-#ifndef GEOSX_VIRTUALELEMENT_CONFORMINGVIRTUALELEMENTORDER1_HPP_
-#define GEOSX_VIRTUALELEMENT_CONFORMINGVIRTUALELEMENTORDER1_HPP_
+#ifndef GEOS_VIRTUALELEMENT_CONFORMINGVIRTUALELEMENTORDER1_HPP_
+#define GEOS_VIRTUALELEMENT_CONFORMINGVIRTUALELEMENTORDER1_HPP_
 
 #include "FiniteElementBase.hpp"
 #include "codingUtilities/traits.hpp"
 
-namespace geosx
+namespace geos
 {
 namespace finiteElement
 {
@@ -44,7 +44,8 @@ public:
   template< typename SUBREGION_TYPE >
   using InputCellToNodeMap = traits::ViewTypeConst< typename SUBREGION_TYPE::NodeMapType >;
   /// Type of MeshData::cellToFaceMap.
-  using InputCellToFaceMap = arrayView2d< localIndex const >;
+  template< typename SUBREGION_TYPE >
+  using InputCellToFaceMap = traits::ViewTypeConst< typename SUBREGION_TYPE::FaceMapType >;
   /// Type of MeshData::faceToNodeMap.
   using InputFaceToNodeMap = ArrayOfArraysView< localIndex const >;
   /// Type of MeshData::faceToEdgeMap.
@@ -76,7 +77,7 @@ public:
     /**
      * Default constructor
      */
-    GEOSX_HOST_DEVICE
+    GEOS_HOST_DEVICE
     StackVariables()
     {}
 
@@ -114,7 +115,7 @@ public:
     /// View to the cell-to-node map in the sub-region.
     InputCellToNodeMap< SUBREGION_TYPE > cellToNodeMap;
     /// View to the cell-to-face map in the sub-region.
-    InputCellToFaceMap cellToFaceMap;
+    InputCellToFaceMap< SUBREGION_TYPE > cellToFaceMap;
     /// View to the face-to-node map in the sub-region.
     InputFaceToNodeMap faceToNodeMap;
     /// View to the face-to-edge map in the sub-region.
@@ -133,15 +134,15 @@ public:
     arrayView1d< real64 const > cellVolumes;
   };
 
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  GEOS_HOST_DEVICE
+  inline
   localIndex getNumQuadraturePoints() const override
   {
     return numQuadraturePoints;
   }
 
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  GEOS_HOST_DEVICE
+  inline
   virtual localIndex getMaxSupportPoints() const override
   {
     return maxSupportPoints;
@@ -152,8 +153,8 @@ public:
    * @param stack Object that holds stack variables.
    * @return The number of support points.
    */
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  GEOS_HOST_DEVICE
+  inline
   static localIndex getNumSupportPoints( StackVariables const & stack )
   {
     return stack.numSupportPoints;
@@ -169,8 +170,8 @@ public:
    *   support points at the coordinates of the quadrature point @p q.
    * @return The determinant of the parent/physical transformation matrix.
    */
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  GEOS_HOST_DEVICE
+  inline
   static real64 calcGradN( localIndex const q,
                            real64 const (&X)[maxSupportPoints][3],
                            StackVariables const & stack,
@@ -193,13 +194,13 @@ public:
    * @param N An array to pass back the shape function values for each support
    *   point.
    */
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  GEOS_HOST_DEVICE
+  inline
   static void calcN( localIndex const q,
                      StackVariables const & stack,
                      real64 ( & N )[maxSupportPoints] )
   {
-    GEOSX_UNUSED_VAR( q );
+    GEOS_UNUSED_VAR( q );
     for( localIndex i = 0; i < stack.numSupportPoints; ++i )
     {
       N[i] = stack.basisFunctionsIntegralMean[i];
@@ -216,8 +217,8 @@ public:
    * @param scaleFactor Scaling of the stabilization matrix.
    */
   template< localIndex NUMDOFSPERTRIALSUPPORTPOINT, localIndex MAXSUPPORTPOINTS, bool UPPER >
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  GEOS_HOST_DEVICE
+  inline
   static void addGradGradStabilization( StackVariables const & stack,
                                         real64 ( & matrix )
                                         [MAXSUPPORTPOINTS * NUMDOFSPERTRIALSUPPORTPOINT]
@@ -251,8 +252,8 @@ public:
    * @param scaleFactor Scaling of the stabilization matrix.
    */
   template< localIndex NUMDOFSPERTRIALSUPPORTPOINT, localIndex MAXSUPPORTPOINTS >
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  GEOS_HOST_DEVICE
+  inline
   static void addEvaluatedGradGradStabilization( StackVariables const & stack,
                                                  real64 const ( &dofs )[MAXSUPPORTPOINTS][NUMDOFSPERTRIALSUPPORTPOINT],
                                                  real64 ( & targetVector )[MAXSUPPORTPOINTS][NUMDOFSPERTRIALSUPPORTPOINT],
@@ -278,13 +279,13 @@ public:
    * @return The product of the quadrature rule weight and the determinate of
    *   the parent/physical transformation matrix.
    */
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  GEOS_HOST_DEVICE
+  inline
   static real64 transformedQuadratureWeight( localIndex const q,
                                              real64 const ( &X )[maxSupportPoints][3],
                                              StackVariables const & stack )
   {
-    GEOSX_UNUSED_VAR( q, X );
+    GEOS_UNUSED_VAR( q, X );
     return stack.quadratureWeight;
   }
 
@@ -297,7 +298,7 @@ public:
    * @param meshData MeshData struct to be filled.
    */
   template< typename SUBREGION_TYPE >
-  GEOSX_FORCE_INLINE
+  inline
   static void fillMeshData( NodeManager const & nodeManager,
                             EdgeManager const & edgeManager,
                             FaceManager const & faceManager,
@@ -326,8 +327,8 @@ public:
    * @param stack Object that holds stack variables.
    */
   template< typename SUBREGION_TYPE >
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  GEOS_HOST_DEVICE
+  inline
   static void setupStack( localIndex const & cellIndex,
                           MeshData< SUBREGION_TYPE > const & meshData,
                           StackVariables & stack )
@@ -370,11 +371,11 @@ public:
    * have to use the StackVariables version of this function.
    * @return Zero.
    */
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  GEOS_HOST_DEVICE
+  inline
   localIndex getNumSupportPoints() const override
   {
-    GEOSX_ERROR( "VEM functions have to be called with the StackVariables syntax" );
+    GEOS_ERROR( "VEM functions have to be called with the StackVariables syntax" );
     return 0;
   }
 
@@ -385,13 +386,13 @@ public:
    * @param linearIndex linear index of the sampling point
    * @param samplingPointCoord coordinates of the sampling point
    */
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
   static void getSamplingPointCoordInParentSpace( int const & linearIndex,
                                                   real64 (& samplingPointCoord)[3] )
   {
-    GEOSX_UNUSED_VAR( linearIndex, samplingPointCoord );
-    GEOSX_ERROR( "Element type not supported." );
+    GEOS_UNUSED_VAR( linearIndex, samplingPointCoord );
+    GEOS_ERROR( "Element type not supported." );
   }
 
   /**
@@ -400,13 +401,13 @@ public:
    * @param q The quadrature point index in 3d space.
    * @param N Array to store the values of shape functions, that is actually set to zero.
    */
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  GEOS_HOST_DEVICE
+  inline
   static void calcN( localIndex const q,
                      real64 ( & N )[maxSupportPoints] )
   {
-    GEOSX_ERROR( "VEM functions have to be called with the StackVariables syntax" );
-    GEOSX_UNUSED_VAR( q );
+    GEOS_ERROR( "VEM functions have to be called with the StackVariables syntax" );
+    GEOS_UNUSED_VAR( q );
     for( localIndex i = 0; i < maxSupportPoints; ++i )
     {
       N[i] = 0.0;
@@ -419,13 +420,13 @@ public:
    * @param[in] coords The parent coordinates at which to evaluate the shape function value
    * @param[out] N The shape function values. It is set to zero.
    */
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  GEOS_HOST_DEVICE
+  inline
   static void calcN( real64 const (&coords)[3],
                      real64 (& N)[maxSupportPoints] )
   {
-    GEOSX_ERROR( "VEM functions have to be called with the StackVariables syntax" );
-    GEOSX_UNUSED_VAR( coords );
+    GEOS_ERROR( "VEM functions have to be called with the StackVariables syntax" );
+    GEOS_UNUSED_VAR( coords );
     for( localIndex i = 0; i < maxSupportPoints; ++i )
     {
       N[i] = 0.0;
@@ -440,14 +441,14 @@ public:
    * @param J Array to store the Jacobian transformation.
    * @return A zero matrix.
    */
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  GEOS_HOST_DEVICE
+  inline
   static real64 invJacobianTransformation( int const q,
                                            real64 const ( &X )[numNodes][3],
                                            real64 ( & J )[3][3] )
   {
-    GEOSX_ERROR( "No reference element map is defined for VEM classes" );
-    GEOSX_UNUSED_VAR( q, X );
+    GEOS_ERROR( "No reference element map is defined for VEM classes" );
+    GEOS_UNUSED_VAR( q, X );
     for( localIndex i = 0; i < 3; ++i )
     {
       for( localIndex j = 0; j < 3; ++j )
@@ -466,14 +467,14 @@ public:
    * @param gradN Array to store the gradients of shape functions. It is set to zero.
    * @return Zero.
    */
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  GEOS_HOST_DEVICE
+  inline
   static real64 calcGradN( localIndex const q,
                            real64 const ( &X )[maxSupportPoints][3],
                            real64 ( & gradN )[maxSupportPoints][3] )
   {
-    GEOSX_ERROR( "VEM functions have to be called with the StackVariables syntax" );
-    GEOSX_UNUSED_VAR( q, X );
+    GEOS_ERROR( "VEM functions have to be called with the StackVariables syntax" );
+    GEOS_UNUSED_VAR( q, X );
     for( localIndex i = 0; i < maxSupportPoints; ++i )
     {
       for( localIndex j = 0; j < 3; ++j )
@@ -491,12 +492,12 @@ public:
    * @param X Array containing the coordinates of the support points.
    * @return Zero.
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   real64 transformedQuadratureWeight( localIndex const q,
                                       real64 const ( &X )[maxSupportPoints][3] ) const
   {
-    GEOSX_ERROR( "VEM functions have to be called with the StackVariables syntax" );
-    GEOSX_UNUSED_VAR( q, X );
+    GEOS_ERROR( "VEM functions have to be called with the StackVariables syntax" );
+    GEOS_UNUSED_VAR( q, X );
     return 0.0;
   }
 
@@ -504,7 +505,7 @@ public:
 
 private:
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   static void
     computeFaceIntegrals( InputNodeCoords const & nodesCoords,
                           localIndex const (&faceToNodes)[MAXFACENODES],
@@ -529,12 +530,13 @@ private:
    * @param cellIndex The index of the cell to be processed
    */
   template< typename SUBREGION_TYPE >
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
+  inline
   static void
     computeProjectors( localIndex const & cellIndex,
                        InputNodeCoords const & nodesCoords,
                        InputCellToNodeMap< SUBREGION_TYPE > const & cellToNodeMap,
-                       InputCellToFaceMap const & elementToFaceMap,
+                       InputCellToFaceMap< SUBREGION_TYPE > const & elementToFaceMap,
                        InputFaceToNodeMap const & faceToNodeMap,
                        InputFaceToEdgeMap const & faceToEdgeMap,
                        InputEdgeToNodeMap const & edgeToNodeMap,
@@ -551,7 +553,8 @@ private:
                        );
 
   template< localIndex DIMENSION, typename POINT_COORDS_TYPE >
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
+  inline
   static real64 computeDiameter( POINT_COORDS_TYPE points,
                                  localIndex const & numPoints )
   {
@@ -576,7 +579,8 @@ private:
   }
 
   template< localIndex DIMENSION, typename POINT_COORDS_TYPE, typename POINT_SELECTION_TYPE >
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
+  inline
   static real64 computeDiameter( POINT_COORDS_TYPE points,
                                  POINT_SELECTION_TYPE selectedPoints,
                                  localIndex const & numSelectedPoints )
@@ -605,12 +609,16 @@ private:
 
 /// Convenience typedef for VEM on tetrahedra.
 using H1_Tetrahedron_VEM_Gauss1 = ConformingVirtualElementOrder1< 4, 3 >;
+#if !defined( GEOS_USE_HIP )
 /// Convenience typedef for VEM on hexahedra.
 using H1_Hexahedron_VEM_Gauss1 = ConformingVirtualElementOrder1< 8, 4 >;
+#endif
 /// Convenience typedef for VEM on pyramids.
 using H1_Pyramid_VEM_Gauss1 = ConformingVirtualElementOrder1< 5, 4 >;
+#if !defined( GEOS_USE_HIP )
 /// Convenience typedef for VEM on wedges.
 using H1_Wedge_VEM_Gauss1 = ConformingVirtualElementOrder1< 6, 4 >;
+#endif
 /// Convenience typedef for VEM on prism5.
 using H1_Prism5_VEM_Gauss1 = ConformingVirtualElementOrder1< 10, 5 >;
 /// Convenience typedef for VEM on prism6.
@@ -624,10 +632,12 @@ using H1_Prism9_VEM_Gauss1 = ConformingVirtualElementOrder1< 18, 9 >;
 /// Convenience typedef for VEM on prism10.
 using H1_Prism10_VEM_Gauss1 = ConformingVirtualElementOrder1< 20, 10 >;
 /// Convenience typedef for VEM on prism11.
+#if !defined( GEOS_USE_HIP )
 using H1_Prism11_VEM_Gauss1 = ConformingVirtualElementOrder1< 22, 11 >;
+#endif
 }
 }
 
 #include "ConformingVirtualElementOrder1_impl.hpp"
 
-#endif // GEOSX_VIRTUALELEMENT_CONFORMINGVIRTUALELEMENTORDER1_HPP_
+#endif // GEOS_VIRTUALELEMENT_CONFORMINGVIRTUALELEMENTORDER1_HPP_

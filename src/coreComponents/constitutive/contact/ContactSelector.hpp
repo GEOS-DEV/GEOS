@@ -16,14 +16,14 @@
  * @file ContactSelector.hpp
  */
 
-#ifndef GEOSX_CONSTITUTIVE_CONTACT_CONTACTSELECTOR_HPP_
-#define GEOSX_CONSTITUTIVE_CONTACT_CONTACTSELECTOR_HPP_
+#ifndef GEOS_CONSTITUTIVE_CONTACT_CONTACTSELECTOR_HPP_
+#define GEOS_CONSTITUTIVE_CONTACT_CONTACTSELECTOR_HPP_
 
 #include "constitutive/ConstitutivePassThruHandler.hpp"
 #include "constitutive/contact/CoulombContact.hpp"
 #include "constitutive/contact/FrictionlessContact.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace constitutive
@@ -47,6 +47,6 @@ void constitutiveUpdatePassThru( ContactBase & contact,
 
 } /* namespace constitutive */
 
-} /* namespace geosx */
+} /* namespace geos */
 
-#endif // GEOSX_CONSTITUTIVE_CONTACT_CONTACTSELECTOR_HPP_
+#endif // GEOS_CONSTITUTIVE_CONTACT_CONTACTSELECTOR_HPP_

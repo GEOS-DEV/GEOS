@@ -17,13 +17,13 @@
  * @file ProppantSolid.hpp
  */
 
-#ifndef GEOSX_CONSTITUTIVE_SOLID_PROPPANTSOLID_HPP_
-#define GEOSX_CONSTITUTIVE_SOLID_PROPPANTSOLID_HPP_
+#ifndef GEOS_CONSTITUTIVE_SOLID_PROPPANTSOLID_HPP_
+#define GEOS_CONSTITUTIVE_SOLID_PROPPANTSOLID_HPP_
 
 #include "constitutive/solid/CoupledSolid.hpp"
 #include "constitutive/NullModel.hpp"
 
-namespace geosx
+namespace geos
 {
 namespace constitutive
 {
@@ -50,7 +50,7 @@ public:
     CoupledSolidUpdates< NullModel, PORO_TYPE, PERM_TYPE >( solidModel, porosityModel, permModel )
   {}
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void updateStateFromApertureAndProppantVolumeFraction( localIndex const k,
                                                          localIndex const q,
                                                          real64 const & oldHydraulicAperture,
@@ -139,6 +139,6 @@ private:
 
 } /* namespace constitutive */
 
-} /* namespace geosx */
+} /* namespace geos */
 
-#endif /* GEOSX_CONSTITUTIVE_SOLID_PROPPANTSOLID_HPP_ */
+#endif /* GEOS_CONSTITUTIVE_SOLID_PROPPANTSOLID_HPP_ */

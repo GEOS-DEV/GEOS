@@ -16,13 +16,13 @@
  * @file CompositionalMultiphaseBaseFields.hpp
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONALMULTIPHASEBASEFIELDS_HPP_
-#define GEOSX_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONALMULTIPHASEBASEFIELDS_HPP_
+#ifndef GEOS_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONALMULTIPHASEBASEFIELDS_HPP_
+#define GEOS_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONALMULTIPHASEBASEFIELDS_HPP_
 
 #include "common/DataLayouts.hpp"
 #include "mesh/MeshFields.hpp"
 
-namespace geosx
+namespace geos
 {
 /**
  * A scope for field traits.
@@ -53,7 +53,15 @@ DECLARE_FIELD( globalCompDensity_n,
                0,
                NOPLOT,
                NO_WRITE,
-               "Global component density updates at the previous converged time step " );
+               "Global component density updates at the previous converged time step" );
+
+DECLARE_FIELD( globalCompDensity_k,
+               "globalCompDensity_k",
+               array2dLayoutComp,
+               0,
+               NOPLOT,
+               NO_WRITE,
+               "Global component density updates at the previous sequential iteration" );
 
 DECLARE_FIELD( globalCompFraction,
                "globalCompFraction",
@@ -159,10 +167,18 @@ DECLARE_FIELD( componentCFLNumber,
                NO_WRITE,
                "Component CFL number" );
 
-}
+DECLARE_FIELD( globalCompDensityScalingFactor,
+               "globalCompDensityScalingFactor",
+               array1d< real64 >,
+               1,
+               NOPLOT,
+               NO_WRITE,
+               "Scaling factors for global component densities" );
 
 }
 
 }
 
-#endif // GEOSX_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONALMULTIPHASEBASEFIELDS_HPP_
+}
+
+#endif // GEOS_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONALMULTIPHASEBASEFIELDS_HPP_

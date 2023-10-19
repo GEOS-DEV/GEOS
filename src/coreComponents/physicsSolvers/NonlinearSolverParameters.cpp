@@ -14,7 +14,7 @@
 
 #include "NonlinearSolverParameters.hpp"
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -135,7 +135,14 @@ NonlinearSolverParameters::NonlinearSolverParameters( string const & name,
   registerWrapper( viewKeysStruct::couplingTypeString(), &m_couplingType ).
     setInputFlag( dataRepository::InputFlags::OPTIONAL ).
     setApplyDefaultValue( CouplingType::FullyImplicit ).
-    setDescription( "Type of coupling. Options are: Sequential and FullyImplicit" );
+    setDescription( "Type of coupling. "
+                    "Valid options:\n* " + EnumStrings< CouplingType >::concat( "\n* " ) );
+
+  registerWrapper( viewKeysStruct::sequentialConvergenceCriterionString(), &m_sequentialConvergenceCriterion ).
+    setInputFlag( dataRepository::InputFlags::OPTIONAL ).
+    setApplyDefaultValue( SequentialConvergenceCriterion::ResidualNorm ).
+    setDescription( "Criterion used to check outer-loop convergence in sequential schemes. "
+                    "Valid options:\n* " + EnumStrings< SequentialConvergenceCriterion >::concat( "\n* " ) );
 
   registerWrapper( viewKeysStruct::subcyclingOptionString(), &m_subcyclingOption ).
     setInputFlag( dataRepository::InputFlags::OPTIONAL ).
@@ -146,14 +153,13 @@ NonlinearSolverParameters::NonlinearSolverParameters( string const & name,
 
 void NonlinearSolverParameters::postProcessInput()
 {
-  if( m_timeStepDecreaseIterLimit <= m_timeStepIncreaseIterLimit )
-  {
-    GEOSX_ERROR( " timeStepIncreaseIterLimit should be smaller than timeStepDecreaseIterLimit!!" );
-  }
+  GEOS_ERROR_IF_LE_MSG( m_timeStepDecreaseIterLimit, m_timeStepIncreaseIterLimit,
+                        getWrapperDataContext( viewKeysStruct::timeStepIncreaseIterLimString() ) <<
+                        ": should be smaller than " << viewKeysStruct::timeStepDecreaseIterLimString() );
 }
 
 
 
 REGISTER_CATALOG_ENTRY( Group, NonlinearSolverParameters, string const &, Group * const )
 
-} /* namespace geosx */
+} /* namespace geos */

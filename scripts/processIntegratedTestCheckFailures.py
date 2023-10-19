@@ -33,6 +33,13 @@ parser.add_argument('-tl',
                     default=5,
                     help='number of lines to include in block after match is found.')
 
+parser.add_argument('-e',
+                    '--exclusionStrings',
+                    type=str,
+                    nargs="*",
+                    default=[],
+                    help='What stings to look for in order to exclude a block')
+
 args, unknown_args = parser.parse_known_args()
 if unknown_args:
     print("unknown arguments %s" % unknown_args)
@@ -44,6 +51,7 @@ matchStrings = ['Error:']
 #exclusionStrings = [ 'sizedFromParent', 'different shapes' ]
 #exclusionStrings = [ 'sizedFromParent', 'different shapes', 'but not the' ]
 exclusionStrings = ['logLevel', 'NonlinearSolverParameters', 'has a child', 'different shapes', 'different types', 'differing types']
+exclusionStrings += args.exclusionStrings
 
 directory = args.directory
 extension = args.extension

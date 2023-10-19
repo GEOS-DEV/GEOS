@@ -16,8 +16,8 @@
  * @file PhaseFieldDamageFEM.hpp
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_SIMPLEPDE_PHASEFIELDDAMAGE_HPP_
-#define GEOSX_PHYSICSSOLVERS_SIMPLEPDE_PHASEFIELDDAMAGE_HPP_
+#ifndef GEOS_PHYSICSSOLVERS_SIMPLEPDE_PHASEFIELDDAMAGE_HPP_
+#define GEOS_PHYSICSSOLVERS_SIMPLEPDE_PHASEFIELDDAMAGE_HPP_
 
 #include "linearAlgebra/DofManager.hpp"
 #include "linearAlgebra/interfaces/InterfaceTypes.hpp"
@@ -29,7 +29,7 @@ struct stabledt
   double m_maxdt;
 };
 
-namespace geosx
+namespace geos
 {
 namespace dataRepository
 {
@@ -97,6 +97,7 @@ public:
   virtual void applySystemSolution( DofManager const & dofManager,
                                     arrayView1d< real64 const > const & localSolution,
                                     real64 const scalingFactor,
+                                    real64 const dt,
                                     DomainPartition & domain ) override;
 
   virtual void updateState( DomainPartition & domain ) override final;
@@ -176,6 +177,6 @@ private:
   PhaseFieldDamageFEM();
 };
 
-} /* namespace geosx */
+} /* namespace geos */
 
-#endif /* GEOSX_PHYSICSSOLVERS_SIMPLEPDE_PHASEFIELDDAMAGE_HPP_ */
+#endif /* GEOS_PHYSICSSOLVERS_SIMPLEPDE_PHASEFIELDDAMAGE_HPP_ */

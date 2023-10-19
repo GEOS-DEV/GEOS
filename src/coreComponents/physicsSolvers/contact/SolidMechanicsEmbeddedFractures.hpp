@@ -17,12 +17,12 @@
  *
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_CONTACT_SOLIDMECHANICSEMBEDDEDFRACTURES_HPP_
-#define GEOSX_PHYSICSSOLVERS_CONTACT_SOLIDMECHANICSEMBEDDEDFRACTURES_HPP_
+#ifndef GEOS_PHYSICSSOLVERS_CONTACT_SOLIDMECHANICSEMBEDDEDFRACTURES_HPP_
+#define GEOS_PHYSICSSOLVERS_CONTACT_SOLIDMECHANICSEMBEDDEDFRACTURES_HPP_
 
 #include "physicsSolvers/contact/ContactSolverBase.hpp"
 
-namespace geosx
+namespace geos
 {
 using namespace constitutive;
 
@@ -84,6 +84,7 @@ public:
   applySystemSolution( DofManager const & dofManager,
                        arrayView1d< real64 const > const & localSolution,
                        real64 const scalingFactor,
+                       real64 const dt,
                        DomainPartition & domain ) override;
 
   virtual void resetStateToBeginningOfStep( DomainPartition & domain ) override final;
@@ -120,6 +121,7 @@ protected:
 private:
 
   void updateJump( DofManager const & dofManager,
+                   real64 const dt,
                    DomainPartition & domain );
 
   /// decide whether to use static condensation or not
@@ -132,6 +134,6 @@ private:
 };
 
 
-} /* namespace geosx */
+} /* namespace geos */
 
-#endif /* GEOSX_PHYSICSSOLVERS_CONTACT_SOLIDMECHANICSEMBEDDEDFRACTURES_HPP_ */
+#endif /* GEOS_PHYSICSSOLVERS_CONTACT_SOLIDMECHANICSEMBEDDEDFRACTURES_HPP_ */

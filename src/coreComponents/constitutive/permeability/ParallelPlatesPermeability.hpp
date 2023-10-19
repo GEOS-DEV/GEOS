@@ -16,13 +16,13 @@
  * @file ParallelPlatesPermeability.hpp
  */
 
-#ifndef GEOSX_CONSTITUTIVE_PERMEABILITY_PARALLELPLATESPERMEABILITY_HPP_
-#define GEOSX_CONSTITUTIVE_PERMEABILITY_PARALLELPLATESPERMEABILITY_HPP_
+#ifndef GEOS_CONSTITUTIVE_PERMEABILITY_PARALLELPLATESPERMEABILITY_HPP_
+#define GEOS_CONSTITUTIVE_PERMEABILITY_PARALLELPLATESPERMEABILITY_HPP_
 
 #include "constitutive/permeability/PermeabilityBase.hpp"
 
 
-namespace geosx
+namespace geos
 {
 namespace constitutive
 {
@@ -38,25 +38,16 @@ public:
     m_dPerm_dDispJump( dPerm_dDispJump )
   {}
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void compute( real64 const & oldHydraulicAperture,
                 real64 const & newHydraulicAperture,
                 arraySlice1d< real64 > const & permeability,
                 arraySlice2d< real64 > const & dPerm_dDispJump ) const
   {
-    // TODO: maybe move to this computation or have the possibility of choosing.
-//    real64 const perm  = newHydraulicAperture*newHydraulicAperture*newHydraulicAperture / 12.0;
-//    real64 const dPerm = newHydraulicAperture*newHydraulicAperture / 4.0;
+    GEOS_UNUSED_VAR( oldHydraulicAperture );
 
-    real64 const perm = 0.25 * ( oldHydraulicAperture*oldHydraulicAperture*oldHydraulicAperture +
-                                 oldHydraulicAperture*oldHydraulicAperture*newHydraulicAperture +
-                                 oldHydraulicAperture*newHydraulicAperture*newHydraulicAperture +
-                                 newHydraulicAperture*newHydraulicAperture*newHydraulicAperture ) / 12;
-
-    real64 const dPerm  = 0.25 * ( oldHydraulicAperture*oldHydraulicAperture +
-                                   2*oldHydraulicAperture*newHydraulicAperture +
-                                   3*newHydraulicAperture*newHydraulicAperture ) / 12;
-
+    real64 const perm  = newHydraulicAperture*newHydraulicAperture / 12.0;
+    real64 const dPerm = newHydraulicAperture / 6.0;
 
     for( int dim=0; dim < 3; dim++ )
     {
@@ -67,13 +58,13 @@ public:
     }
   }
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   virtual void updateFromAperture( localIndex const k,
                                    localIndex const q,
                                    real64 const & oldHydraulicAperture,
                                    real64 const & newHydraulicAperture ) const override final
   {
-    GEOSX_UNUSED_VAR( q );
+    GEOS_UNUSED_VAR( q );
 
     compute( oldHydraulicAperture,
              newHydraulicAperture,
@@ -81,7 +72,7 @@ public:
              m_dPerm_dDispJump[k][0] );
   }
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   virtual void updateFromApertureAndShearDisplacement( localIndex const k,
                                                        localIndex const q,
                                                        real64 const & oldHydraulicAperture,
@@ -90,7 +81,7 @@ public:
                                                        real64 const ( &dispJump )[3],
                                                        real64 const ( &traction )[3] ) const override final
   {
-    GEOSX_UNUSED_VAR( dispJump, traction, pressure );
+    GEOS_UNUSED_VAR( dispJump, traction, pressure );
 
     updateFromAperture( k, q, oldHydraulicAperture, newHydraulicAperture );
   }
@@ -147,7 +138,7 @@ private:
 
 }/* namespace constitutive */
 
-} /* namespace geosx */
+} /* namespace geos */
 
 
-#endif //GEOSX_CONSTITUTIVE_PERMEABILITY_PARALLELPLATESPERMEABILITY_HPP_
+#endif //GEOS_CONSTITUTIVE_PERMEABILITY_PARALLELPLATESPERMEABILITY_HPP_

@@ -22,11 +22,14 @@ set( finiteElement_headers
      elementFormulations/LagrangeBasis2.hpp
      elementFormulations/LagrangeBasis3GL.hpp
      elementFormulations/LagrangeBasis5GL.hpp
-     elementFormulations/Qk_Hexahedron_Lagrange_GaussLobatto.hpp
      kernelInterface/ImplicitKernelBase.hpp
      kernelInterface/KernelBase.hpp
      kernelInterface/SparsityKernelBase.hpp
    )
+
+if( NOT ${ENABLE_HIP} )
+  list(APPEND finiteElement_headers elementFormulations/Qk_Hexahedron_Lagrange_GaussLobatto.hpp )
+endif()
 
 #
 # Specify all sources
@@ -36,15 +39,7 @@ set( finiteElement_sources
      FiniteElementDiscretizationManager.cpp
    )
 
-set( dependencyList dataRepository )
-
-if ( ENABLE_CUDA )
-  set( dependencyList ${dependencyList} cuda )
-endif()
-
-if( ENABLE_CUDA_NVTOOLSEXT )
-  set( dependencyList ${dependencyList} CUDA::nvToolsExt )
-endif()
+set( dependencyList ${parallelDeps} dataRepository )
 
 blt_add_library( NAME       finiteElement
                  SOURCES    ${finiteElement_sources}
@@ -53,9 +48,11 @@ blt_add_library( NAME       finiteElement
                  OBJECT     ${GEOSX_BUILD_OBJ_LIBS}
                )
 
-target_include_directories( finiteElement PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents)
+target_include_directories( finiteElement PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents )
 
 geosx_add_code_checks( PREFIX finiteElement )
 
-add_subdirectory( unitTests )
+if( GEOS_ENABLE_TESTS )
+  add_subdirectory( unitTests )
+endif( )
 

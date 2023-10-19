@@ -1,7 +1,7 @@
 variables:
   PROJECT_ALLOC_NAME: ${CI_PROJECT_NAME}_ci_${CI_PIPELINE_ID}
   BUILD_ROOT: ${CI_PROJECT_DIR}
-  # Should make it so we aren't doing fresh clones of GEOSX all the time
+  # Should make it so we aren't doing fresh clones of GEOS all the time
   GIT_STRATEGY: fetch
   # Manually update submodules
   GIT_SUBMODULE_STRATEGY: none
@@ -14,12 +14,12 @@ stages:
 # Template
 .build_script:
   script:
-    # Change submodule paths to absolute github paths (default is relative to GEOSX gitlab path)
-    - git submodule set-url src/coreComponents/LvArray https://github.com/GEOSX/LvArray.git
+    # Change submodule paths to absolute github paths (default is relative to GEOS gitlab path)
+    - git submodule set-url src/coreComponents/LvArray https://github.com/GEOS-DEV/LvArray.git
     - git submodule set-url src/cmake/blt https://github.com/LLNL/blt.git
-    - git submodule set-url src/coreComponents/constitutive/PVTPackage https://github.com/GEOSX/PVTPackage.git
-    - git submodule set-url integratedTests git@github.com:GEOSX/integratedTests.git
-    - git submodule set-url src/coreComponents/fileIO/coupling/hdf5_interface https://github.com/GEOSX/hdf5_interface.git
+    - git submodule set-url src/coreComponents/constitutive/PVTPackage https://github.com/GEOS-DEV/PVTPackage.git
+    - git submodule set-url integratedTests git@github.com:GEOS-DEV/integratedTests.git
+    - git submodule set-url src/coreComponents/fileIO/coupling/hdf5_interface https://github.com/GEOS-DEV/hdf5_interface.git
 
     # Update submodules
     - git submodule update --init --recursive src/cmake/blt
@@ -29,6 +29,12 @@ stages:
     - git submodule update --init --recursive src/coreComponents/fileIO/coupling/hdf5_interface
 
     - mkdir ${SYSTEM}
+
+    # newer geosxats needs python3 to run
+    - module load python/3
+
+    # GEOS requires CMake >=3.23
+    - module load cmake/3.23.1
 
     # CONFIGURE
     - echo "~~~~~~~~~~ START - configure ~~~~~~~~~~~"
@@ -55,19 +61,23 @@ stages:
 
     # INTEGRATED TEST
     - echo "~~~~~~~~~~ START - integrated tests ~~~~~~~~~~~"
-    - ./build/geosxats.sh -a veryclean
-    - integrated_code=0
-    - ${INTEGRATED_ALLOC_COMMAND} ./build/geosxats.sh --failIfTestsFail 2>&1 | tee ${SYSTEM}/${SYSTEM}_integrated_test.log || integrated_code=$?
+    - cd build
+    - make ats_clean
+    - make ats_environment
+    # Hard code integrated test failure status until optional fail flag fixed
+    - integrated_code=1
+    - ${INTEGRATED_ALLOC_COMMAND} ./integratedTests/geos_ats.sh --failIfTestsFail 2>&1 | tee ../${SYSTEM}/${SYSTEM}_integrated_test.log || integrated_code=1
+    #- ${INTEGRATED_ALLOC_COMMAND} ./integratedTests/geos_ats.sh --failIfTestsFail 2>&1 | tee ../${SYSTEM}/${SYSTEM}_integrated_test.log || integrated_code=$?
+    - cd ..
     - mv ${SYSTEM}/${SYSTEM}_integrated_test.log ${SYSTEM}/${SYSTEM}_integrated_test_$([ $integrated_code == 0 ] && echo "SUCCESS" || echo "FAILURE").log
-    - mkdir ${SYSTEM}/integratedTestsDebugFiles
-    - cp -rL build/integratedTests/TestLogs ${SYSTEM}/
-    - grep -r -l --include=*.data "Error" build/integratedTests/ | xargs cp -t ${SYSTEM}/integratedTestsDebugFiles || true
-    - grep -r -l --include=*.err --exclude-dir="TestLogs*" "error" build/integratedTests/ | xargs cp -t ${SYSTEM}/integratedTestsDebugFiles || true
+    - cp -rL build/integratedTests/TestResults ${SYSTEM}/
     - echo "~~~~~~~~~~ END - integrated tests ~~~~~~~~~~~~~"
 
     # CLEANUP + PRINT SUCCESS/FAILURES
     - echo "~~~~~~~~~~ START - cleanup ~~~~~~~~~~~"
-    - ./build/geosxats.sh -a veryclean
+    - cd build
+    - make ats_clean
+    - cd ..
     - rm -rf build
     - if [[ $config_code -ne 0 ]]; then echo "Configuration failed"; else echo "Configuration succeeded"; fi
     - if [[ $build_code -ne 0 ]]; then echo "Build failed"; else echo "Build succeeded"; fi
@@ -87,6 +97,7 @@ stages:
     paths:
       - quartz/
       - lassen/
+      - tioga/
   # Allow job to always fail, so nightly-job in next stage will run
   allow_failure: true
 
@@ -96,10 +107,28 @@ stages:
   stage: build
   variables:
     ALLOC_COMMAND: "salloc -N1 -ppdebug"
+    INTEGRATED_ALLOC_COMMAND: "salloc -N1 -n 36 -ppdebug"
     SYSTEM: "quartz"
   tags:
     - shell
     - quartz
+  extends: [.build_script]
+
+####
+# tioga template
+.build_on_tioga:
+  stage: build
+  variables:
+    ALLOC_COMMAND: "salloc -N1 -ppdebug"
+    INTEGRATED_ALLOC_COMMAND: "salloc -N 10 -p pbatch"
+    SYSTEM: "tioga"
+  before_script:
+    - module load rocm/5.4.3
+    - module load cce/15.0.0
+    - module load cmake/3.23.1
+  tags:
+    - shell
+    - tioga
   extends: [.build_script]
 
 ####
@@ -117,16 +146,23 @@ stages:
 
 ####
 # quartz job
-quartz_clang_10_0_0_build:
+quartz_clang_14_build:
   variables:
-    HOST_CONFIG: "quartz-clang@10.0.0.cmake"
+    HOST_CONFIG: "quartz-clang-14.cmake"
   extends: [.build_on_quartz]
 
 ####
-# lassen job
-lassen_clang_upstream_build:
+# tioga job
+tioga_cce_15_build:
   variables:
-    HOST_CONFIG: "lassen-clang@upstream.cmake"
+    HOST_CONFIG: "tioga-cce-15.cmake"
+  extends: [.build_on_tioga]
+
+####
+# lassen job
+lassen_clang_10_cuda_11_build:
+  variables:
+    HOST_CONFIG: "lassen-clang-10-cuda-11.cmake"
   extends: [.build_on_lassen]
 
 ####
@@ -135,7 +171,7 @@ nightly-job:
   stage: nightly
   script:
     - echo "~~~~~~~~~~ START - write to nightlyTests Repo ~~~~~~~~~~~~~"
-    - git clone git@github.com:GEOSX/nightlyTests.git
+    - git clone git@github.com:GEOS-DEV/nightlyTests.git
     - cd nightlyTests
     - ./update.sh
     - echo "~~~~~~~~~~ END - write to nightlyTests Repo ~~~~~~~~~~~~~"

@@ -18,7 +18,7 @@
 
 #include "BrooksCoreyCapillaryPressure.hpp"
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -62,9 +62,9 @@ void BrooksCoreyCapillaryPressure::postProcessInput()
 
   auto const checkInputSize = [&]( auto const & array, auto const & attribute )
   {
-    GEOSX_THROW_IF_NE_MSG( array.size(), m_phaseNames.size(),
-                           GEOSX_FMT( "{}: invalid number of values in attribute '{}'", getFullName(), attribute ),
-                           InputError );
+    GEOS_THROW_IF_NE_MSG( array.size(), m_phaseNames.size(),
+                          GEOS_FMT( "{}: invalid number of values in attribute '{}'", getFullName(), attribute ),
+                          InputError );
   };
   checkInputSize( m_phaseMinVolumeFraction, viewKeyStruct::phaseMinVolumeFractionString() );
   checkInputSize( m_phaseCapPressureExponentInv, viewKeyStruct::phaseCapPressureExponentInvString() );
@@ -75,37 +75,37 @@ void BrooksCoreyCapillaryPressure::postProcessInput()
   {
     auto const errorMsg = [&]( auto const & attribute )
     {
-      return GEOSX_FMT( "{}: invalid value at {}[{}]", getFullName(), attribute, ip );
+      return GEOS_FMT( "{}: invalid value at {}[{}]", getFullName(), attribute, ip );
     };
 
-    GEOSX_THROW_IF_LT_MSG( m_phaseMinVolumeFraction[ip], 0.0,
-                           errorMsg( viewKeyStruct::phaseMinVolumeFractionString() ),
-                           InputError );
-    GEOSX_THROW_IF_GT_MSG( m_phaseMinVolumeFraction[ip], 1.0,
-                           errorMsg( viewKeyStruct::phaseMinVolumeFractionString() ),
-                           InputError );
+    GEOS_THROW_IF_LT_MSG( m_phaseMinVolumeFraction[ip], 0.0,
+                          errorMsg( viewKeyStruct::phaseMinVolumeFractionString() ),
+                          InputError );
+    GEOS_THROW_IF_GT_MSG( m_phaseMinVolumeFraction[ip], 1.0,
+                          errorMsg( viewKeyStruct::phaseMinVolumeFractionString() ),
+                          InputError );
     m_volFracScale -= m_phaseMinVolumeFraction[ip];
 
     if( m_phaseTypes[ip] != CapillaryPressureBase::REFERENCE_PHASE )
     {
-      GEOSX_THROW_IF_LT_MSG( m_phaseCapPressureExponentInv[ip], 1.0,
-                             errorMsg( viewKeyStruct::phaseCapPressureExponentInvString() ),
-                             InputError );
-      GEOSX_THROW_IF_LT_MSG( m_phaseEntryPressure[ip], 0.0,
-                             errorMsg( viewKeyStruct::phaseEntryPressureString() ),
-                             InputError );
-      GEOSX_THROW_IF_LT_MSG( m_capPressureEpsilon, 0.0,
-                             errorMsg( viewKeyStruct::capPressureEpsilonString() ),
-                             InputError );
-      GEOSX_THROW_IF_GT_MSG( m_capPressureEpsilon, 0.2,
-                             errorMsg( viewKeyStruct::capPressureEpsilonString() ),
-                             InputError );
+      GEOS_THROW_IF_LT_MSG( m_phaseCapPressureExponentInv[ip], 1.0,
+                            errorMsg( viewKeyStruct::phaseCapPressureExponentInvString() ),
+                            InputError );
+      GEOS_THROW_IF_LT_MSG( m_phaseEntryPressure[ip], 0.0,
+                            errorMsg( viewKeyStruct::phaseEntryPressureString() ),
+                            InputError );
+      GEOS_THROW_IF_LT_MSG( m_capPressureEpsilon, 0.0,
+                            errorMsg( viewKeyStruct::capPressureEpsilonString() ),
+                            InputError );
+      GEOS_THROW_IF_GT_MSG( m_capPressureEpsilon, 0.2,
+                            errorMsg( viewKeyStruct::capPressureEpsilonString() ),
+                            InputError );
     }
   }
 
-  GEOSX_THROW_IF_LT_MSG( m_volFracScale, 0.0,
-                         GEOSX_FMT( "{}: sum of min volume fractions exceeds 1.0", getFullName() ),
-                         InputError );
+  GEOS_THROW_IF_LT_MSG( m_volFracScale, 0.0,
+                        GEOS_FMT( "{}: sum of min volume fractions exceeds 1.0", getFullName() ),
+                        InputError );
 }
 
 BrooksCoreyCapillaryPressure::KernelWrapper
@@ -125,4 +125,4 @@ BrooksCoreyCapillaryPressure::createKernelWrapper()
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, BrooksCoreyCapillaryPressure, string const &, Group * const )
 } // namespace constitutive
 
-} // namespace geosx
+} // namespace geos

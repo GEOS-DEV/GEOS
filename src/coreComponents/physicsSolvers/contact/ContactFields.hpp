@@ -16,12 +16,13 @@
  * @file ContactFields.hpp
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_CONTACT_CONTACTFIELDS_HPP_
-#define GEOSX_PHYSICSSOLVERS_CONTACT_CONTACTFIELDS_HPP_
+#ifndef GEOS_PHYSICSSOLVERS_CONTACT_CONTACTFIELDS_HPP_
+#define GEOS_PHYSICSSOLVERS_CONTACT_CONTACTFIELDS_HPP_
 
 #include "mesh/MeshFields.hpp"
+#include "codingUtilities/EnumStrings.hpp"
 
-namespace geosx
+namespace geos
 {
 /**
  * A scope for field traits.
@@ -130,4 +131,4 @@ ENUM_STRINGS( FractureState::State, "stick", "new_slip", "slip", "open" );
 
 }
 
-#endif // GEOSX_PHYSICSSOLVERS_CONTACT_CONTACTFIELDS_HPP_
+#endif // GEOS_PHYSICSSOLVERS_CONTACT_CONTACTFIELDS_HPP_

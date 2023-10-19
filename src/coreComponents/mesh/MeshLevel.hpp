@@ -16,8 +16,8 @@
  * @file MeshLevel.hpp
  */
 
-#ifndef GEOSX_MESH_MESHLEVEL_HPP_
-#define GEOSX_MESH_MESHLEVEL_HPP_
+#ifndef GEOS_MESH_MESHLEVEL_HPP_
+#define GEOS_MESH_MESHLEVEL_HPP_
 
 #include "NodeManager.hpp"
 #include "EmbeddedSurfaceNodeManager.hpp"
@@ -25,7 +25,7 @@
 #include "ElementRegionManager.hpp"
 #include "FaceManager.hpp"
 
-namespace geosx
+namespace geos
 {
 class ElementRegionManager;
 
@@ -88,6 +88,11 @@ public:
    * @param[out] faceAdjacencyList the faces adjacent to the input nodes of seedNodeList
    * @param[out] elementAdjacencyList the elements adjacent to the input nodes of seedNodeList
    * @param[in] depth the depth of the search for adjacent quantities (first-order neighbors, neighbors of neighbors, etc)
+   * @details All the additional information (nodes, edges, faces) connected to
+   * the edges, faces, elements that touch the @p seedNodeList is also collected.
+   * For instance, all the nodes, edges and faces that touch an element that relies on a node of the @p seedNodeList, will be considered.
+   * Even if these "second level" geometrical elements do touch @p seedNodeList themselves.
+   * The idea being obviously that any shared geometrical object needs to be fully defined.
    */
   void generateAdjacencyLists( arrayView1d< localIndex const > const & seedNodeList,
                                localIndex_array & nodeAdjacencyList,
@@ -285,6 +290,6 @@ private:
 
 };
 
-} /* namespace geosx */
+} /* namespace geos */
 
-#endif /* GEOSX_MESH_MESHLEVEL_HPP_ */
+#endif /* GEOS_MESH_MESHLEVEL_HPP_ */

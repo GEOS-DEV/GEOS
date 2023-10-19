@@ -16,12 +16,12 @@
  * @file FlowSolverBaseFields.hpp
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_FLUIDFLOW_FLOWSOLVERBASEFIELDS_HPP_
-#define GEOSX_PHYSICSSOLVERS_FLUIDFLOW_FLOWSOLVERBASEFIELDS_HPP_
+#ifndef GEOS_PHYSICSSOLVERS_FLUIDFLOW_FLOWSOLVERBASEFIELDS_HPP_
+#define GEOS_PHYSICSSOLVERS_FLUIDFLOW_FLOWSOLVERBASEFIELDS_HPP_
 
 #include "mesh/MeshFields.hpp"
 
-namespace geosx
+namespace geos
 {
 /**
  * A scope for field traits.
@@ -47,6 +47,14 @@ DECLARE_FIELD( pressure_n,
                NOPLOT,
                WRITE_AND_READ,
                "Pressure at the previous converged time step" );
+
+DECLARE_FIELD( pressure_k,
+               "pressure_k",
+               array1d< real64 >,
+               0,
+               NOPLOT,
+               NO_WRITE,
+               "Pressure at the previous sequential iteration" );
 
 DECLARE_FIELD( initialPressure,
                "initialPressure",
@@ -103,6 +111,14 @@ DECLARE_FIELD( temperature_n,
                NOPLOT,
                WRITE_AND_READ,
                "Temperature at the previous converged time step" );
+
+DECLARE_FIELD( temperature_k,
+               "temperature_k",
+               array1d< real64 >,
+               0,
+               LEVEL_0,
+               NO_WRITE,
+               "Temperature at the previous sequential iteration" );
 
 DECLARE_FIELD( initialTemperature,
                "initialTemperature",
@@ -208,10 +224,26 @@ DECLARE_FIELD( transMultiplier,
                WRITE_AND_READ,
                "Permeability transmissibility multipliers" );
 
-}
+DECLARE_FIELD( pressureScalingFactor,
+               "pressureScalingFactor",
+               array1d< real64 >,
+               1,
+               NOPLOT,
+               NO_WRITE,
+               "Scaling factors for pressure" );
+
+DECLARE_FIELD( temperatureScalingFactor,
+               "temperatureScalingFactor",
+               array1d< real64 >,
+               1,
+               NOPLOT,
+               NO_WRITE,
+               "Scaling factors for temperature" );
 
 }
 
 }
 
-#endif // GEOSX_PHYSICSSOLVERS_FLUIDFLOW_FLOWSOLVERBASEFIELDS_HPP_
+}
+
+#endif // GEOS_PHYSICSSOLVERS_FLUIDFLOW_FLOWSOLVERBASEFIELDS_HPP_

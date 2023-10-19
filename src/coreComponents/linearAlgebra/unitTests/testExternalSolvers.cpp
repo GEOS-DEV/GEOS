@@ -21,14 +21,14 @@
 
 #include <gtest/gtest.h>
 
-using namespace geosx;
+using namespace geos;
 
 ///////////////////////////////////////////////////////////////////////////////////////
 
 LinearSolverParameters params_DirectSerial()
 {
   LinearSolverParameters parameters;
-  parameters.solverType = geosx::LinearSolverParameters::SolverType::direct;
+  parameters.solverType = geos::LinearSolverParameters::SolverType::direct;
   parameters.direct.parallel = 0;
   return parameters;
 }
@@ -36,7 +36,7 @@ LinearSolverParameters params_DirectSerial()
 LinearSolverParameters params_DirectParallel()
 {
   LinearSolverParameters parameters;
-  parameters.solverType = geosx::LinearSolverParameters::SolverType::direct;
+  parameters.solverType = geos::LinearSolverParameters::SolverType::direct;
   parameters.direct.parallel = 1;
   return parameters;
 }
@@ -70,8 +70,8 @@ LinearSolverParameters params_GMRES_AMG()
   parameters.krylov.maxIterations = 300;
   parameters.solverType = LinearSolverParameters::SolverType::gmres;
   parameters.preconditionerType = LinearSolverParameters::PreconditionerType::amg;
-  parameters.amg.smootherType = geosx::LinearSolverParameters::AMG::SmootherType::fgs;
-  parameters.amg.coarseType = geosx::LinearSolverParameters::AMG::CoarseType::direct;
+  parameters.amg.smootherType = geos::LinearSolverParameters::AMG::SmootherType::fgs;
+  parameters.amg.coarseType = geos::LinearSolverParameters::AMG::CoarseType::direct;
   return parameters;
 }
 
@@ -83,8 +83,8 @@ LinearSolverParameters params_CG_AMG()
   parameters.isSymmetric = true;
   parameters.solverType = LinearSolverParameters::SolverType::cg;
   parameters.preconditionerType = LinearSolverParameters::PreconditionerType::amg;
-  parameters.amg.smootherType = geosx::LinearSolverParameters::AMG::SmootherType::fgs;
-  parameters.amg.coarseType = geosx::LinearSolverParameters::AMG::CoarseType::direct;
+  parameters.amg.smootherType = geos::LinearSolverParameters::AMG::SmootherType::sgs;
+  parameters.amg.coarseType = geos::LinearSolverParameters::AMG::CoarseType::direct;
   return parameters;
 }
 
@@ -150,7 +150,7 @@ protected:
   void SetUp() override
   {
     globalIndex constexpr n = 100;
-    geosx::testing::compute2DLaplaceOperator( MPI_COMM_GEOSX, n, this->matrix );
+    geos::testing::compute2DLaplaceOperator( MPI_COMM_GEOSX, n, this->matrix );
 
     // Condition number for the Laplacian matrix estimate: 4 * n^2 / pi^2
     this->cond_est = 4.0 * n * n / std::pow( M_PI, 2 );
@@ -221,7 +221,7 @@ protected:
   void SetUp() override
   {
     globalIndex constexpr n = 100;
-    geosx::testing::compute2DElasticityOperator( MPI_COMM_GEOSX, 1.0, 1.0, n, n, 10000., 0.2, this->matrix );
+    geos::testing::compute2DElasticityOperator( MPI_COMM_GEOSX, 1.0, 1.0, n, n, 10000., 0.2, this->matrix );
     this->cond_est = 1e4; // not a true condition number estimate, but enough to pass tests
   }
 };
@@ -265,6 +265,6 @@ INSTANTIATE_TYPED_TEST_SUITE_P( Petsc, SolverTestElasticity2D, PetscInterface, )
 
 int main( int argc, char * * argv )
 {
-  geosx::testing::LinearAlgebraTestScope scope( argc, argv );
+  geos::testing::LinearAlgebraTestScope scope( argc, argv );
   return RUN_ALL_TESTS();
 }

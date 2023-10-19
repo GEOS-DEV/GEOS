@@ -16,8 +16,8 @@
  * @file ComputationalGeometry.hpp
  */
 
-#ifndef GEOSX_MESH_UTILITIES_COMPUTATIONALGEOMETRY_HPP_
-#define GEOSX_MESH_UTILITIES_COMPUTATIONALGEOMETRY_HPP_
+#ifndef GEOS_MESH_UTILITIES_COMPUTATIONALGEOMETRY_HPP_
+#define GEOS_MESH_UTILITIES_COMPUTATIONALGEOMETRY_HPP_
 
 #include "common/DataTypes.hpp"
 #include "common/DataLayouts.hpp"
@@ -28,7 +28,7 @@
 #include "LvArray/src/output.hpp"
 #include "LvArray/src/tensorOps.hpp"
 
-namespace geosx
+namespace geos
 {
 namespace computationalGeometry
 {
@@ -194,8 +194,8 @@ real64 ComputeSurfaceArea( arrayView2d< real64 const > const & points,
  *          and if (- areaTolerance <= area <= areaTolerance), the area is set to zero
  */
 template< typename CENTER_TYPE, typename NORMAL_TYPE >
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 real64 centroid_3DPolygon( arraySlice1d< localIndex const > const pointsIndices,
                            arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & points,
                            CENTER_TYPE && center,
@@ -206,43 +206,40 @@ real64 centroid_3DPolygon( arraySlice1d< localIndex const > const pointsIndices,
   LvArray::tensorOps::fill< 3 >( center, 0 );
   LvArray::tensorOps::fill< 3 >( normal, 0 );
 
-  GEOSX_ERROR_IF_LT( pointsIndices.size(), 2 );
-  for( localIndex a=0; a<(pointsIndices.size()-2); ++a )
+  localIndex const numberOfPoints = pointsIndices.size();
+
+  GEOS_ERROR_IF_LT( numberOfPoints, 2 );
+
+  real64 current[ 3 ], next[ 3 ], crossProduct[ 3 ];
+
+  LvArray::tensorOps::copy< 3 >( next, points[ pointsIndices[ numberOfPoints - 1 ] ] );
+
+  for( localIndex a=0; a<numberOfPoints; ++a )
   {
-    real64 v1[ 3 ], v2[ 3 ], vc[ 3 ];
+    LvArray::tensorOps::copy< 3 >( current, next );
+    LvArray::tensorOps::copy< 3 >( next, points[ pointsIndices[ a ] ] );
 
-    LvArray::tensorOps::copy< 3 >( v1, points[ pointsIndices[ a + 1 ] ] );
-    LvArray::tensorOps::copy< 3 >( v2, points[ pointsIndices[ a + 2 ] ] );
+    LvArray::tensorOps::crossProduct( crossProduct, current, next );
 
-    LvArray::tensorOps::copy< 3 >( vc, points[ pointsIndices[ 0 ] ] );
-    LvArray::tensorOps::add< 3 >( vc, v1 );
-    LvArray::tensorOps::add< 3 >( vc, v2 );
-
-    LvArray::tensorOps::subtract< 3 >( v1, points[ pointsIndices[ 0 ] ] );
-    LvArray::tensorOps::subtract< 3 >( v2, points[ pointsIndices[ 0 ] ] );
-
-    real64 triangleNormal[ 3 ];
-    LvArray::tensorOps::crossProduct( triangleNormal, v1, v2 );
-    real64 const triangleArea = LvArray::tensorOps::l2Norm< 3 >( triangleNormal );
-
-    LvArray::tensorOps::add< 3 >( normal, triangleNormal );
-
-    area += triangleArea;
-    LvArray::tensorOps::scaledAdd< 3 >( center, vc, triangleArea );
+    LvArray::tensorOps::add< 3 >( normal, crossProduct );
+    LvArray::tensorOps::add< 3 >( center, next );
   }
+
+  area = LvArray::tensorOps::l2Norm< 3 >( normal );
+  LvArray::tensorOps::scale< 3 >( center, 1.0 / numberOfPoints );
+
   if( area > areaTolerance )
   {
-    LvArray::tensorOps::scale< 3 >( center, 1.0 / ( area * 3.0 ) );
     LvArray::tensorOps::normalize< 3 >( normal );
     area *= 0.5;
   }
   else if( area < -areaTolerance )
   {
-    for( localIndex a=0; a<pointsIndices.size(); ++a )
+    for( localIndex a=0; a<numberOfPoints; ++a )
     {
-      GEOSX_LOG_RANK( "Points: " << points[ pointsIndices[ a ] ] << " " << pointsIndices[ a ] );
+      GEOS_LOG_RANK( "Points: " << points[ pointsIndices[ a ] ] << " " << pointsIndices[ a ] );
     }
-    GEOSX_ERROR( "Negative area found : " << area );
+    GEOS_ERROR( "Negative area found : " << area );
   }
   else
   {
@@ -258,7 +255,7 @@ real64 centroid_3DPolygon( arraySlice1d< localIndex const > const pointsIndices,
  * @param[inout] normal normal to the face
  */
 template< typename NORMAL_TYPE >
-GEOSX_HOST_DEVICE
+GEOS_HOST_DEVICE
 void FixNormalOrientation_3D( NORMAL_TYPE && normal )
 {
   real64 const orientationTolerance = 10 * machinePrecision;
@@ -295,7 +292,7 @@ void FixNormalOrientation_3D( NORMAL_TYPE && normal )
  * @param[out] rotationMatrix rotation matrix for the face
  */
 template< typename NORMAL_TYPE, typename MATRIX_TYPE >
-GEOSX_HOST_DEVICE
+GEOS_HOST_DEVICE
 void RotationMatrix_3D( NORMAL_TYPE const & normal,
                         MATRIX_TYPE && rotationMatrix )
 {
@@ -331,8 +328,8 @@ void RotationMatrix_3D( NORMAL_TYPE const & normal,
   rotationMatrix[ 1 ][ 2 ] = m2[ 1 ];
   rotationMatrix[ 2 ][ 2 ] = m2[ 2 ];
 
-  GEOSX_ERROR_IF( fabs( LvArray::tensorOps::determinant< 3 >( rotationMatrix ) - 1.0 ) > 1.e+1 * machinePrecision,
-                  "Rotation matrix with determinant different from +1.0" );
+  GEOS_ERROR_IF( fabs( LvArray::tensorOps::determinant< 3 >( rotationMatrix ) - 1.0 ) > 1.e+1 * machinePrecision,
+                 "Rotation matrix with determinant different from +1.0" );
 }
 
 /**
@@ -342,8 +339,8 @@ void RotationMatrix_3D( NORMAL_TYPE const & normal,
  * @return -1, 0 or 1 depending on whether the value is negative, zero or positive
  */
 template< typename T >
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 int sign( T const val )
 {
   return (T( 0 ) < val) - (val < T( 0 ));
@@ -364,7 +361,7 @@ int sign( T const val )
  * @note For faces with n>3 nodes that are non-planar, average normal is used
  */
 template< typename POINT_TYPE >
-GEOSX_HOST_DEVICE
+GEOS_HOST_DEVICE
 bool isPointInsidePolyhedron( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodeCoordinates,
                               arraySlice1d< localIndex const > const & faceIndices,
                               ArrayOfArraysView< localIndex const > const & facesToNodes,
@@ -413,7 +410,7 @@ bool isPointInsidePolyhedron( arrayView2d< real64 const, nodes::REFERENCE_POSITI
  * @param[out] boxDims The dimensions of the bounding box.
  */
 template< typename VEC_TYPE >
-GEOSX_HOST_DEVICE
+GEOS_HOST_DEVICE
 void getBoundingBox( localIndex const elemIndex,
                      arrayView2d< localIndex const, cells::NODE_MAP_USD > const & pointIndices,
                      arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & pointCoordinates,
@@ -448,7 +445,7 @@ void getBoundingBox( localIndex const elemIndex,
  * @return the volume of the element
  */
 template< typename FE_TYPE >
-GEOSX_HOST_DEVICE inline
+GEOS_HOST_DEVICE inline
 real64 elementVolume( real64 const (&X)[FE_TYPE::numNodes][3] )
 {
   real64 result{};
@@ -464,7 +461,7 @@ real64 elementVolume( real64 const (&X)[FE_TYPE::numNodes][3] )
  * @param[in] X vertices of the hexahedron
  * @return the volume of the hexahedron
  */
-GEOSX_HOST_DEVICE
+GEOS_HOST_DEVICE
 inline
 real64 hexahedronVolume( real64 const (&X)[8][3] )
 {
@@ -476,7 +473,7 @@ real64 hexahedronVolume( real64 const (&X)[8][3] )
  * @param[in] X vertices of the tetrahedron
  * @return the volume of the tetrahedron
  */
-GEOSX_HOST_DEVICE
+GEOS_HOST_DEVICE
 inline
 real64 tetrahedronVolume( real64 const (&X)[4][3] )
 {
@@ -488,7 +485,7 @@ real64 tetrahedronVolume( real64 const (&X)[4][3] )
  * @param[in] X vertices of the wedge
  * @return the volume of the wedge
  */
-GEOSX_HOST_DEVICE
+GEOS_HOST_DEVICE
 inline
 real64 wedgeVolume( real64 const (&X)[6][3] )
 {
@@ -500,7 +497,7 @@ real64 wedgeVolume( real64 const (&X)[6][3] )
  * @param[in] X vertices of the pyramid
  * @return the volume of the pyramid
  */
-GEOSX_HOST_DEVICE
+GEOS_HOST_DEVICE
 inline
 real64 pyramidVolume( real64 const (&X)[5][3] )
 {
@@ -518,7 +515,7 @@ real64 pyramidVolume( real64 const (&X)[5][3] )
  *       should be used.
  */
 template< integer N >
-GEOSX_HOST_DEVICE
+GEOS_HOST_DEVICE
 inline
 real64 prismVolume( real64 const (&X)[2*N][3] )
 {
@@ -564,6 +561,6 @@ real64 prismVolume( real64 const (&X)[2*N][3] )
 }
 
 } /* namespace computationalGeometry */
-} /* namespace geosx */
+} /* namespace geos */
 
-#endif /* GEOSX_MESH_UTILITIES_COMPUTATIONALGEOMETRY_HPP_ */
+#endif /* GEOS_MESH_UTILITIES_COMPUTATIONALGEOMETRY_HPP_ */

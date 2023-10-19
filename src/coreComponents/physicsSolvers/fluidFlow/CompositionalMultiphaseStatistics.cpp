@@ -18,7 +18,7 @@
 
 #include "CompositionalMultiphaseStatistics.hpp"
 
-#include "constitutive/fluid/MultiFluidBase.hpp"
+#include "constitutive/fluid/multifluid/MultiFluidBase.hpp"
 #include "constitutive/relativePermeability/RelativePermeabilityBase.hpp"
 #include "constitutive/solid/CoupledSolidBase.hpp"
 #include "finiteVolume/FiniteVolumeManager.hpp"
@@ -33,7 +33,7 @@
 #include "physicsSolvers/fluidFlow/IsothermalCompositionalMultiphaseFVMKernels.hpp"
 
 
-namespace geosx
+namespace geos
 {
 
 using namespace constitutive;
@@ -67,9 +67,9 @@ void CompositionalMultiphaseStatistics::postProcessInput()
 
   if( dynamicCast< CompositionalMultiphaseHybridFVM * >( m_solver ) && m_computeCFLNumbers != 0 )
   {
-    GEOSX_THROW( GEOSX_FMT( "{} {}: the option to compute CFL numbers is incompatible with CompositionalMultiphaseHybridFVM",
-                            catalogName(), getName() ),
-                 InputError );
+    GEOS_THROW( GEOS_FMT( "{} {}: the option to compute CFL numbers is incompatible with CompositionalMultiphaseHybridFVM",
+                          catalogName(), getDataContext() ),
+                InputError );
   }
 }
 
@@ -130,11 +130,11 @@ void CompositionalMultiphaseStatistics::registerDataOnMesh( Group & meshBodies )
   } );
 }
 
-bool CompositionalMultiphaseStatistics::execute( real64 const GEOSX_UNUSED_PARAM( time_n ),
+bool CompositionalMultiphaseStatistics::execute( real64 const GEOS_UNUSED_PARAM( time_n ),
                                                  real64 const dt,
-                                                 integer const GEOSX_UNUSED_PARAM( cycleNumber ),
-                                                 integer const GEOSX_UNUSED_PARAM( eventCounter ),
-                                                 real64 const GEOSX_UNUSED_PARAM( eventProgress ),
+                                                 integer const GEOS_UNUSED_PARAM( cycleNumber ),
+                                                 integer const GEOS_UNUSED_PARAM( eventCounter ),
+                                                 real64 const GEOS_UNUSED_PARAM( eventProgress ),
                                                  DomainPartition & domain )
 {
   m_solver->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
@@ -158,7 +158,7 @@ bool CompositionalMultiphaseStatistics::execute( real64 const GEOSX_UNUSED_PARAM
 void CompositionalMultiphaseStatistics::computeRegionStatistics( MeshLevel & mesh,
                                                                  arrayView1d< string const > const & regionNames ) const
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   integer const numPhases = m_solver->numFluidPhases();
   integer const numComps = m_solver->numFluidComponents();
@@ -363,44 +363,44 @@ void CompositionalMultiphaseStatistics::computeRegionStatistics( MeshLevel & mes
     integer const useMass = m_solver->getReference< integer >( CompositionalMultiphaseBase::viewKeyStruct::useMassFlagString() );
     string const massUnit = useMass ? "kg" : "mol";
 
-    GEOSX_LOG_LEVEL_RANK_0( 1, getName() << ", " << regionNames[i]
-                                         << ": Pressure (min, average, max): "
-                                         << regionStatistics.minPressure << ", " << regionStatistics.averagePressure << ", " << regionStatistics.maxPressure << " Pa" );
-    GEOSX_LOG_LEVEL_RANK_0( 1, getName() << ", " << regionNames[i]
-                                         << ": Delta pressure (min, max): "
-                                         << regionStatistics.minDeltaPressure << ", " << regionStatistics.maxDeltaPressure << " Pa" );
-    GEOSX_LOG_LEVEL_RANK_0( 1, getName() << ", " << regionNames[i]
-                                         << ": Temperature (min, average, max): "
-                                         << regionStatistics.minTemperature << ", " << regionStatistics.averageTemperature << ", " << regionStatistics.maxTemperature << " K" );
-    GEOSX_LOG_LEVEL_RANK_0( 1, getName() << ", " << regionNames[i]
-                                         << ": Total dynamic pore volume: " << regionStatistics.totalPoreVolume << " rm^3" );
-    GEOSX_LOG_LEVEL_RANK_0( 1, getName() << ", " << regionNames[i]
-                                         << ": Phase dynamic pore volumes: " << regionStatistics.phasePoreVolume << " rm^3" );
-    GEOSX_LOG_LEVEL_RANK_0( 1, getName() << ", " << regionNames[i]
-                                         << ": Phase mass: " << regionStatistics.phaseMass << " " << massUnit );
+    GEOS_LOG_LEVEL_RANK_0( 1, getName() << ", " << regionNames[i]
+                                        << ": Pressure (min, average, max): "
+                                        << regionStatistics.minPressure << ", " << regionStatistics.averagePressure << ", " << regionStatistics.maxPressure << " Pa" );
+    GEOS_LOG_LEVEL_RANK_0( 1, getName() << ", " << regionNames[i]
+                                        << ": Delta pressure (min, max): "
+                                        << regionStatistics.minDeltaPressure << ", " << regionStatistics.maxDeltaPressure << " Pa" );
+    GEOS_LOG_LEVEL_RANK_0( 1, getName() << ", " << regionNames[i]
+                                        << ": Temperature (min, average, max): "
+                                        << regionStatistics.minTemperature << ", " << regionStatistics.averageTemperature << ", " << regionStatistics.maxTemperature << " K" );
+    GEOS_LOG_LEVEL_RANK_0( 1, getName() << ", " << regionNames[i]
+                                        << ": Total dynamic pore volume: " << regionStatistics.totalPoreVolume << " rm^3" );
+    GEOS_LOG_LEVEL_RANK_0( 1, getName() << ", " << regionNames[i]
+                                        << ": Phase dynamic pore volumes: " << regionStatistics.phasePoreVolume << " rm^3" );
+    GEOS_LOG_LEVEL_RANK_0( 1, getName() << ", " << regionNames[i]
+                                        << ": Phase mass: " << regionStatistics.phaseMass << " " << massUnit );
 
     // metric 1: trapping computed with the Land trapping coefficient (similar to Eclipse)
-    GEOSX_LOG_LEVEL_RANK_0( 1, getName() << ", " << regionNames[i]
-                                         << ": Trapped phase mass (metric 1): " << regionStatistics.trappedPhaseMass << " " << massUnit );
-    GEOSX_LOG_LEVEL_RANK_0( 1, getName() << ", " << regionNames[i]
-                                         << ": Non-trapped phase mass (metric 1): " << nonTrappedPhaseMass << " " << massUnit );
+    GEOS_LOG_LEVEL_RANK_0( 1, getName() << ", " << regionNames[i]
+                                        << ": Trapped phase mass (metric 1): " << regionStatistics.trappedPhaseMass << " " << massUnit );
+    GEOS_LOG_LEVEL_RANK_0( 1, getName() << ", " << regionNames[i]
+                                        << ": Non-trapped phase mass (metric 1): " << nonTrappedPhaseMass << " " << massUnit );
 
     // metric 2: immobile phase mass computed with a threshold on relative permeability
-    GEOSX_LOG_LEVEL_RANK_0( 1, getName() << ", " << regionNames[i]
-                                         << ": Immobile phase mass (metric 2): " << regionStatistics.immobilePhaseMass << " " << massUnit );
-    GEOSX_LOG_LEVEL_RANK_0( 1, getName() << ", " << regionNames[i]
-                                         << ": Mobile phase mass (metric 2): " << mobilePhaseMass << " " << massUnit );
+    GEOS_LOG_LEVEL_RANK_0( 1, getName() << ", " << regionNames[i]
+                                        << ": Immobile phase mass (metric 2): " << regionStatistics.immobilePhaseMass << " " << massUnit );
+    GEOS_LOG_LEVEL_RANK_0( 1, getName() << ", " << regionNames[i]
+                                        << ": Mobile phase mass (metric 2): " << mobilePhaseMass << " " << massUnit );
 
 
-    GEOSX_LOG_LEVEL_RANK_0( 1, getName() << ", " << regionNames[i]
-                                         << ": Dissolved component mass: " << regionStatistics.dissolvedComponentMass << " " << massUnit );
+    GEOS_LOG_LEVEL_RANK_0( 1, getName() << ", " << regionNames[i]
+                                        << ": Dissolved component mass: " << regionStatistics.dissolvedComponentMass << " " << massUnit );
   }
 }
 
 void CompositionalMultiphaseStatistics::computeCFLNumbers( real64 const & dt,
                                                            DomainPartition & domain ) const
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   integer const numPhases = m_solver->numFluidPhases();
   integer const numComps = m_solver->numFluidComponents();
@@ -546,8 +546,8 @@ void CompositionalMultiphaseStatistics::computeCFLNumbers( real64 const & dt,
   real64 const globalMaxPhaseCFLNumber = MpiWrapper::max( localMaxPhaseCFLNumber );
   real64 const globalMaxCompCFLNumber = MpiWrapper::max( localMaxCompCFLNumber );
 
-  GEOSX_LOG_LEVEL_RANK_0( 1, getName() << ": Max phase CFL number: " << globalMaxPhaseCFLNumber );
-  GEOSX_LOG_LEVEL_RANK_0( 1, getName() << ": Max component CFL number: " << globalMaxCompCFLNumber );
+  GEOS_LOG_LEVEL_RANK_0( 1, getName() << ": Max phase CFL number: " << globalMaxPhaseCFLNumber );
+  GEOS_LOG_LEVEL_RANK_0( 1, getName() << ": Max component CFL number: " << globalMaxCompCFLNumber );
 }
 
 
@@ -555,4 +555,4 @@ REGISTER_CATALOG_ENTRY( TaskBase,
                         CompositionalMultiphaseStatistics,
                         string const &, dataRepository::Group * const )
 
-} /* namespace geosx */
+} /* namespace geos */

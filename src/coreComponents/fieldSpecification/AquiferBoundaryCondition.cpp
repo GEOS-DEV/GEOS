@@ -20,7 +20,7 @@
 
 #include "mesh/DomainPartition.hpp"
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -114,9 +114,10 @@ AquiferBoundaryCondition::AquiferBoundaryCondition( string const & name, Group *
 
 void AquiferBoundaryCondition::postProcessInput()
 {
-  GEOSX_THROW_IF_LE_MSG( m_permeability, 0.0,
-                         getCatalogName() << " " << getName() << ": the aquifer permeability cannot be equal to zero or negative",
-                         InputError );
+  GEOS_THROW_IF_LE_MSG( m_permeability, 0.0,
+                        getCatalogName() << " " << getDataContext() <<
+                        ": the aquifer permeability cannot be equal to zero or negative",
+                        InputError );
 
   if( m_pressureInfluenceFunctionName.empty() )
   {
@@ -125,33 +126,38 @@ void AquiferBoundaryCondition::postProcessInput()
   else
   {
     FunctionManager const & functionManager = FunctionManager::getInstance();
-    GEOSX_THROW_IF( !functionManager.hasGroup( m_pressureInfluenceFunctionName ),
-                    getCatalogName() << " " << getName() << ": the pressure influence table " << m_pressureInfluenceFunctionName << " could not be found",
-                    InputError );
+    GEOS_THROW_IF( !functionManager.hasGroup( m_pressureInfluenceFunctionName ),
+                   getCatalogName() << " " << getDataContext() <<
+                   ": the pressure influence table " << m_pressureInfluenceFunctionName << " could not be found",
+                   InputError );
 
     TableFunction const & pressureInfluenceFunction = functionManager.getGroup< TableFunction >( m_pressureInfluenceFunctionName );
-    GEOSX_THROW_IF( pressureInfluenceFunction.getInterpolationMethod() != TableFunction::InterpolationType::Linear,
-                    getCatalogName() << " " << getName() << ": The interpolation method for the pressure influence function table "
-                                     << pressureInfluenceFunction.getName() << " should be TableFunction::InterpolationType::Linear",
-                    InputError );
+    GEOS_THROW_IF( pressureInfluenceFunction.getInterpolationMethod() != TableFunction::InterpolationType::Linear,
+                   getCatalogName() << " " << getDataContext() <<
+                   ": The interpolation method for the pressure influence function table " <<
+                   pressureInfluenceFunction.getDataContext() <<
+                   " should be TableFunction::InterpolationType::Linear",
+                   InputError );
   }
 
   computeTimeConstant();
   computeInfluxConstant();
 
-  GEOSX_THROW_IF_LE_MSG( m_timeConstant, 0.0,
-                         getCatalogName() << " " << getName() << ": the aquifer time constant is equal to zero or negative, the simulation cannot procede",
-                         InputError );
+  GEOS_THROW_IF_LE_MSG( m_timeConstant, 0.0,
+                        getCatalogName() << " " << getDataContext() <<
+                        ": the aquifer time constant is equal to zero or negative, the simulation cannot procede",
+                        InputError );
 
-  GEOSX_THROW_IF_LE_MSG( m_influxConstant, 0.0,
-                         getCatalogName() << " " << getName() << ": the aquifer influx constant is equal to zero or negative, the simulation cannot procede",
-                         InputError );
+  GEOS_THROW_IF_LE_MSG( m_influxConstant, 0.0,
+                        getCatalogName() << " " << getDataContext() <<
+                        ": the aquifer influx constant is equal to zero or negative, the simulation cannot procede",
+                        InputError );
 
-  GEOSX_THROW_IF_NE_MSG( m_phaseComponentFraction.size(), m_phaseComponentNames.size(),
-                         getCatalogName() << " " << getName() << ": the sizes of "
-                                          << viewKeyStruct::aquiferWaterPhaseComponentFractionString() << " and " << viewKeyStruct::aquiferWaterPhaseComponentNamesString()
-                                          << " are inconsistent",
-                         InputError );
+  GEOS_THROW_IF_NE_MSG( m_phaseComponentFraction.size(), m_phaseComponentNames.size(),
+                        getCatalogName() << " " << getDataContext() <<
+                        ": the sizes of " << viewKeyStruct::aquiferWaterPhaseComponentFractionString() <<
+                        " and " << viewKeyStruct::aquiferWaterPhaseComponentNamesString() << " are inconsistent",
+                        InputError );
 
 }
 
@@ -262,13 +268,13 @@ void AquiferBoundaryCondition::setupDefaultPressureInfluenceFunction()
 
 void AquiferBoundaryCondition::setGravityVector( R1Tensor const & gravityVector )
 {
-  GEOSX_LOG_RANK_0_IF( ( !isZero( gravityVector[0] ) || !isZero( gravityVector[1] ) ),
-                       catalogName() << " " << getName() <<
-                       "The gravity vector specified in this simulation (" << gravityVector[0] << " " << gravityVector[1] << " " << gravityVector[2] <<
-                       ") is not aligned with the z-axis. \n" <<
-                       "But, the pressure difference between reservoir and aquifer uses " << viewKeyStruct::aquiferElevationString() <<
-                       " and assumes that the gravity vector is aligned with the z-axis. \n" <<
-                       "As a result, aquifer calculations may be inacurrate." );
+  GEOS_LOG_RANK_0_IF( ( !isZero( gravityVector[0] ) || !isZero( gravityVector[1] ) ),
+                      catalogName() << " " << getDataContext() <<
+                      "The gravity vector specified in this simulation (" << gravityVector[0] << " " << gravityVector[1] << " " << gravityVector[2] <<
+                      ") is not aligned with the z-axis. \n" <<
+                      "But, the pressure difference between reservoir and aquifer uses " << viewKeyStruct::aquiferElevationString() <<
+                      " and assumes that the gravity vector is aligned with the z-axis. \n" <<
+                      "As a result, aquifer calculations may be inacurrate." );
 
   m_gravityVector = gravityVector;
 }
@@ -303,4 +309,4 @@ AquiferBoundaryCondition::KernelWrapper AquiferBoundaryCondition::createKernelWr
 REGISTER_CATALOG_ENTRY( FieldSpecificationBase, AquiferBoundaryCondition, string const &, Group * const )
 
 
-} /* namespace geosx */
+} /* namespace geos */

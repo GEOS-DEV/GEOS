@@ -19,7 +19,7 @@
 #include "Perforation.hpp"
 #include "dataRepository/InputFlags.hpp"
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -44,12 +44,12 @@ Perforation::Perforation( string const & name, Group * const parent )
 
 void Perforation::postProcessInput()
 {
-  GEOSX_ERROR_IF( m_distanceFromHead <= 0,
-                  "Invalid distance well head to perforation " << getName() );
+  GEOS_ERROR_IF( m_distanceFromHead <= 0,
+                 "Invalid distance well head to perforation " << getName() );
 }
 
 
 Perforation::~Perforation()
 {}
 
-} //namespace geosx
+} //namespace geos

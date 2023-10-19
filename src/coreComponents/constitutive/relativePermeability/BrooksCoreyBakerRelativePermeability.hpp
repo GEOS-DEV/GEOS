@@ -16,13 +16,13 @@
  * @file BrooksCoreyBakerRelativePermeability.hpp
  */
 
-#ifndef GEOSX_CONSTITUTIVE_RELPERM_BROOKSCOREYBAKERRELATIVEPERMEABILITY_HPP
-#define GEOSX_CONSTITUTIVE_RELPERM_BROOKSCOREYBAKERRELATIVEPERMEABILITY_HPP
+#ifndef GEOS_CONSTITUTIVE_RELPERM_BROOKSCOREYBAKERRELATIVEPERMEABILITY_HPP
+#define GEOS_CONSTITUTIVE_RELPERM_BROOKSCOREYBAKERRELATIVEPERMEABILITY_HPP
 
 #include "constitutive/relativePermeability/RelativePermeabilityBase.hpp"
 #include "constitutive/relativePermeability/RelativePermeabilityInterpolators.hpp"
 
-namespace geosx
+namespace geos
 {
 namespace constitutive
 {
@@ -55,13 +55,13 @@ public:
     m_volFracScale( volFracScale )
   {}
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   void compute( arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseVolFraction,
                 arraySlice1d< real64, relperm::USD_RELPERM - 2 > const & phaseTrappedVolFrac,
                 arraySlice1d< real64, relperm::USD_RELPERM - 2 > const & phaseRelPerm,
                 arraySlice2d< real64, relperm::USD_RELPERM_DS - 2 > const & dPhaseRelPerm_dPhaseVolFrac ) const;
 
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   virtual void update( localIndex const k,
                        localIndex const q,
                        arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseVolFraction ) const override
@@ -87,8 +87,8 @@ private:
    * This function evaluates the relperm function and its derivative at a given phase saturation
    * Reference: Eclipse technical description and Petrowiki
    */
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
   static void
   evaluateBrooksCoreyFunction( real64 const & scaledVolFrac,
                                real64 const & dScaledVolFrac_dVolFrac,
@@ -158,7 +158,7 @@ protected:
 };
 
 
-GEOSX_HOST_DEVICE
+GEOS_HOST_DEVICE
 inline void
 BrooksCoreyBakerRelativePermeabilityUpdate::
   compute( arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseVolFraction,
@@ -290,8 +290,8 @@ BrooksCoreyBakerRelativePermeabilityUpdate::
 
 }
 
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 void
 BrooksCoreyBakerRelativePermeabilityUpdate::
   evaluateBrooksCoreyFunction( real64 const & scaledVolFrac,
@@ -320,6 +320,6 @@ BrooksCoreyBakerRelativePermeabilityUpdate::
 
 } // namespace constitutive
 
-} // namespace geosx
+} // namespace geos
 
-#endif //GEOSX_CONSTITUTIVE_RELPERM_BROOKSCOREYBAKERRELATIVEPERMEABILITY_HPP
+#endif //GEOS_CONSTITUTIVE_RELPERM_BROOKSCOREYBAKERRELATIVEPERMEABILITY_HPP

@@ -12,15 +12,15 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#ifndef GEOSX_FINITEELEMENT_ELEMENTFORMULATIONS_ELEMENTFORMULATIONS_LAGRANGEBASIS2_HPP_
-#define GEOSX_FINITEELEMENT_ELEMENTFORMULATIONS_ELEMENTFORMULATIONS_LAGRANGEBASIS2_HPP_
+#ifndef GEOS_FINITEELEMENT_ELEMENTFORMULATIONS_ELEMENTFORMULATIONS_LAGRANGEBASIS2_HPP_
+#define GEOS_FINITEELEMENT_ELEMENTFORMULATIONS_ELEMENTFORMULATIONS_LAGRANGEBASIS2_HPP_
 /**
  * @file LagrangeBasis2.hpp
  */
 
 #include "common/DataTypes.hpp"
 
-namespace geosx
+namespace geos
 {
 namespace finiteElement
 {
@@ -45,8 +45,8 @@ public:
    * @param q The index of the support point
    * @return The value of the weight
    */
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  GEOS_HOST_DEVICE
+  inline
   constexpr static real64 weight( const int q )
   {
     switch( q )
@@ -65,8 +65,8 @@ public:
    * @param supportPointIndex The linear index of support point
    * @return parent coordinate in the xi0 direction.
    */
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  GEOS_HOST_DEVICE
+  inline
   constexpr static real64 parentSupportCoord( const localIndex supportPointIndex )
   {
     switch( supportPointIndex )
@@ -89,8 +89,8 @@ public:
    * @param xi The coordinate at which to evaluate the basis.
    * @return The value of basis function.
    */
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  GEOS_HOST_DEVICE
+  inline
   constexpr static real64 value( const int index,
                                  const real64 xi )
   {
@@ -112,8 +112,8 @@ public:
    * @param xi The coordinate at which to evaluate the basis.
    * @return The value of the basis.
    */
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  GEOS_HOST_DEVICE
+  inline
   constexpr static real64 value0( const real64 xi )
   {
     const real64 xi_div2 = 0.5 * xi;
@@ -125,8 +125,8 @@ public:
    * @param xi The coordinate at which to evaluate the basis.
    * @return The value of the basis.
    */
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  GEOS_HOST_DEVICE
+  inline
   constexpr static real64 value1( const real64 xi )
   {
     return 1.0 - xi * xi;
@@ -137,8 +137,8 @@ public:
    * @param xi The coordinate at which to evaluate the basis.
    * @return The value of the basis.
    */
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  GEOS_HOST_DEVICE
+  inline
   constexpr static real64 value2( const real64 xi )
   {
     const real64 xi_div2 = 0.5 * xi;
@@ -151,8 +151,8 @@ public:
    * @param xi The coordinate at which to evaluate the gradient.
    * @return The gradient of basis function
    */
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  GEOS_HOST_DEVICE
+  inline
   constexpr static real64 gradient0( const real64 xi )
   {
     return -0.5 + xi;
@@ -164,8 +164,8 @@ public:
    * @param xi The coordinate at which to evaluate the gradient.
    * @return The gradient of basis function
    */
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  GEOS_HOST_DEVICE
+  inline
   constexpr static real64 gradient1( const real64 xi )
   {
     return -2 * xi;
@@ -177,8 +177,8 @@ public:
    * @param xi The coordinate at which to evaluate the gradient.
    * @return The gradient of basis function
    */
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  GEOS_HOST_DEVICE
+  inline
   constexpr static real64 gradient2( const real64 xi )
   {
     return 0.5 + xi;
@@ -191,8 +191,8 @@ public:
    * @param xi The coordinate at which to evaluate the basis.
    * @return The value of basis function.
    */
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
+  GEOS_HOST_DEVICE
+  inline
   constexpr static real64 gradient( const int index,
                                     const real64 xi )
   {
@@ -246,8 +246,8 @@ public:
      * @param j The index in the xi1 direction (0,1)
      * @return The linear index of the support/quadrature point (0-8)
      */
-    GEOSX_HOST_DEVICE
-    GEOSX_FORCE_INLINE
+    GEOS_HOST_DEVICE
+    inline
     constexpr static int linearIndex( const int i,
                                       const int j )
     {
@@ -263,8 +263,8 @@ public:
      * @param i0 The Cartesian index of the support point in the xi0 direction.
      * @param i1 The Cartesian index of the support point in the xi1 direction.
      */
-    GEOSX_HOST_DEVICE
-    GEOSX_FORCE_INLINE
+    GEOS_HOST_DEVICE
+    inline
     constexpr static void multiIndex( const int linearIndex,
                                       int & i0,
                                       int & i1 )
@@ -283,8 +283,8 @@ public:
      * @param coords The coordinates (in the parent frame) at which to evaluate the basis
      * @param N Array to hold the value of the basis functions at each support point.
      */
-    GEOSX_HOST_DEVICE
-    GEOSX_FORCE_INLINE
+    GEOS_HOST_DEVICE
+    inline
     static void value( real64 const (&coords)[2],
                        real64 (& N)[numSupportPoints] )
     {
@@ -350,8 +350,8 @@ public:
      * @param k The index in the xi2 direction (0,1)
      * @return The linear index of the support/quadrature point (0-26)
      */
-    GEOSX_HOST_DEVICE
-    GEOSX_FORCE_INLINE
+    GEOS_HOST_DEVICE
+    inline
     constexpr static int linearIndex( const int i,
                                       const int j,
                                       const int k )
@@ -369,8 +369,8 @@ public:
      * @param i1 The Cartesian index of the support point in the xi1 direction.
      * @param i2 The Cartesian index of the support point in the xi2 direction.
      */
-    GEOSX_HOST_DEVICE
-    GEOSX_FORCE_INLINE
+    GEOS_HOST_DEVICE
+    inline
     constexpr static void multiIndex( const int linearIndex,
                                       int & i0,
                                       int & i1,
@@ -392,8 +392,8 @@ public:
      * @param coords The coordinates (in the parent frame) at which to evaluate the basis
      * @param N Array to hold the value of the basis functions at each support point.
      */
-    GEOSX_HOST_DEVICE
-    GEOSX_FORCE_INLINE
+    GEOS_HOST_DEVICE
+    inline
     static void value( const real64 (& coords)[3],
                        real64 (& N)[numSupportPoints] )
     {
@@ -417,4 +417,4 @@ public:
 }
 }
 
-#endif /* GEOSX_FINITEELEMENT_ELEMENTFORMULATIONS_ELEMENTFORMULATIONS_LAGRANGEBASIS2_HPP_ */
+#endif /* GEOS_FINITEELEMENT_ELEMENTFORMULATIONS_ELEMENTFORMULATIONS_LAGRANGEBASIS2_HPP_ */

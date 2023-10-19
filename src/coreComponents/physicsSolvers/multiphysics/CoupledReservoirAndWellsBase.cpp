@@ -19,7 +19,7 @@
 
 #include "CoupledReservoirAndWellsBase.hpp"
 
-namespace geosx
+namespace geos
 {
 
 namespace coupledReservoirAndWellsInternal
@@ -85,8 +85,8 @@ addCouplingNumNonzeros( SolverBase const * const solver,
         if( resElemGhostRank[er][esr][ei] < 0 )
         {
           localIndex const localRow = LvArray::integerConversion< localIndex >( resElemDofNumber[er][esr][ei] - rankOffset );
-          GEOSX_ASSERT_GE( localRow, 0 );
-          GEOSX_ASSERT_GE( rowLengths.size(), localRow + resNumDof );
+          GEOS_ASSERT_GE( localRow, 0 );
+          GEOS_ASSERT_GE( rowLengths.size(), localRow + resNumDof );
 
           for( integer idof = 0; idof < resNumDof; ++idof )
           {
@@ -97,8 +97,8 @@ addCouplingNumNonzeros( SolverBase const * const solver,
         if( wellElemGhostRank[iwelem] < 0 )
         {
           localIndex const localRow = LvArray::integerConversion< localIndex >( wellElemDofNumber[iwelem] - rankOffset );
-          GEOSX_ASSERT_GE( localRow, 0 );
-          GEOSX_ASSERT_GE( rowLengths.size(), localRow + wellNumDof );
+          GEOS_ASSERT_GE( localRow, 0 );
+          GEOS_ASSERT_GE( rowLengths.size(), localRow + wellNumDof );
 
           for( integer idof = 0; idof < wellNumDof; ++idof )
           {
@@ -149,12 +149,13 @@ bool validateWellPerforations( SolverBase const * const reservoirSolver,
 
   localIndex const hasBadPerforations = MpiWrapper::max( badPerforation.first.empty() ? 0 : 1 );
 
-  GEOSX_THROW_IF( !badPerforation.first.empty(),
-                  GEOSX_FMT( "The well {} has a connection to the region {} which is not targeted by the solver", badPerforation.first, badPerforation.second ),
-                  std::runtime_error );
+  GEOS_THROW_IF( !badPerforation.first.empty(),
+                 GEOS_FMT( "{}: The well {} has a connection to the region {} which is not targeted by the solver",
+                           wellSolver->getDataContext(), badPerforation.first, badPerforation.second ),
+                 std::runtime_error );
   return hasBadPerforations == 0;
 }
 
 }
 
-} /* namespace geosx */
+} /* namespace geos */

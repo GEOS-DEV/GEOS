@@ -18,7 +18,7 @@
 // TPL includes
 #include <gtest/gtest.h>
 
-using namespace geosx;
+using namespace geos;
 using namespace stringutilities;
 
 struct TokenizeTest

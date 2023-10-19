@@ -16,8 +16,8 @@
  * @file EdgeManager.hpp
  */
 
-#ifndef GEOSX_MESH_EDGEMANAGER_HPP_
-#define GEOSX_MESH_EDGEMANAGER_HPP_
+#ifndef GEOS_MESH_EDGEMANAGER_HPP_
+#define GEOS_MESH_EDGEMANAGER_HPP_
 
 #include "mesh/ObjectManagerBase.hpp"
 #include "mesh/generators/CellBlockManagerABC.hpp"
@@ -26,7 +26,7 @@
 #include "LvArray/src/tensorOps.hpp"
 
 
-namespace geosx
+namespace geos
 {
 class FaceManager;
 class NodeManager;
@@ -103,9 +103,9 @@ public:
 
   /**
    * @brief Set the node of the domain boundary object.
-   * @param[in] faceIndex The reference of the face manager.
+   * @param[in] faceManager The reference of the face manager.
    */
-  void setDomainBoundaryObjects( FaceManager const & faceIndex );
+  void setDomainBoundaryObjects( FaceManager const & faceManager );
 
   /**
    * @brief Set external edges.
@@ -123,8 +123,9 @@ public:
   /**
    * @brief Copies the edges to (nodes|faces) mappings from @p cellBlockManager.
    * @param[in] cellBlockManager Provides the mappings.
+   * @param[in] isBaseMeshLevel flag that indicates if we are operating on the base mesh level or on another mesh level
    */
-  void setGeometricalRelations( CellBlockManagerABC const & cellBlockManager );
+  void setGeometricalRelations( CellBlockManagerABC const & cellBlockManager, bool isBaseMeshLevel );
 
   /**
    * @brief Link the current manager to other managers.
@@ -367,4 +368,4 @@ inline void EdgeManager::calculateLength( localIndex const edgeIndex,
 }
 
 }
-#endif /* GEOSX_MESH_EDGEMANAGER_HPP_ */
+#endif /* GEOS_MESH_EDGEMANAGER_HPP_ */

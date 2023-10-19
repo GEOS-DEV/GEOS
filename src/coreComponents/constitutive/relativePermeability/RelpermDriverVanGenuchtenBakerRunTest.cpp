@@ -15,7 +15,7 @@
 #include "VanGenuchtenBakerRelativePermeability.hpp"
 
 
-namespace geosx
+namespace geos
 {
-template void RelpermDriver::runTest< geosx::constitutive::VanGenuchtenBakerRelativePermeability >( geosx::constitutive::VanGenuchtenBakerRelativePermeability &, arrayView2d< real64 > const & );
+template void RelpermDriver::runTest< geos::constitutive::VanGenuchtenBakerRelativePermeability >( geos::constitutive::VanGenuchtenBakerRelativePermeability &, arrayView2d< real64 > const & );
 }

@@ -16,12 +16,12 @@
  * @file ThickPlane.hpp
  */
 
-#ifndef GEOSX_MESH_SIMPLEGEOMETRICOBJECTS_THICKPLANE_HPP_
-#define GEOSX_MESH_SIMPLEGEOMETRICOBJECTS_THICKPLANE_HPP_
+#ifndef GEOS_MESH_SIMPLEGEOMETRICOBJECTS_THICKPLANE_HPP_
+#define GEOS_MESH_SIMPLEGEOMETRICOBJECTS_THICKPLANE_HPP_
 
 #include "SimpleGeometricObjectBase.hpp"
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -123,6 +123,6 @@ private:
   /// @endcond
 
 };
-} /* namespace geosx */
+} /* namespace geos */
 
-#endif /* GEOSX_MESH_SIMPLEGEOMETRICOBJECTS_THICKPLANE_HPP_*/
+#endif /* GEOS_MESH_SIMPLEGEOMETRICOBJECTS_THICKPLANE_HPP_*/

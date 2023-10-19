@@ -21,11 +21,12 @@
 #include "porosity/PressurePorosity.hpp"
 #include "constitutive/permeability/ConstantPermeability.hpp"
 #include "constitutive/permeability/CarmanKozenyPermeability.hpp"
+#include "constitutive/permeability/ExponentialDecayPermeability.hpp"
 #include "constitutive/permeability/ParallelPlatesPermeability.hpp"
 #include "constitutive/permeability/SlipDependentPermeability.hpp"
 #include "constitutive/permeability/WillisRichardsPermeability.hpp"
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -46,6 +47,7 @@ CompressibleSolid< PORO_TYPE, PERM_TYPE >::~CompressibleSolid() = default;
 // Register all CompressibleSolid model types.
 typedef CompressibleSolid< PressurePorosity, ConstantPermeability > CompressibleRockConstant;
 typedef CompressibleSolid< PressurePorosity, CarmanKozenyPermeability > CompressibleRockCK;
+typedef CompressibleSolid< PressurePorosity, ExponentialDecayPermeability > FaultED;
 typedef CompressibleSolid< PressurePorosity, ParallelPlatesPermeability > FractureRock;
 typedef CompressibleSolid< PressurePorosity, SlipDependentPermeability > Fault;
 typedef CompressibleSolid< PressurePorosity, WillisRichardsPermeability > FaultWR;
@@ -53,9 +55,10 @@ typedef CompressibleSolid< PressurePorosity, WillisRichardsPermeability > FaultW
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, CompressibleRockConstant, string const &, Group * const )
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, CompressibleRockCK, string const &, Group * const )
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, FractureRock, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, FaultED, string const &, Group * const )
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, Fault, string const &, Group * const )
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, FaultWR, string const &, Group * const )
 
 
 }
-} /* namespace geosx */
+} /* namespace geos */

@@ -16,8 +16,8 @@
  * @file SolidMechanicsLagrangianFEM.hpp
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_SOLIDMECHANICSLAGRANGIANFEM_HPP_
-#define GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_SOLIDMECHANICSLAGRANGIANFEM_HPP_
+#ifndef GEOS_PHYSICSSOLVERS_SOLIDMECHANICS_SOLIDMECHANICSLAGRANGIANFEM_HPP_
+#define GEOS_PHYSICSSOLVERS_SOLIDMECHANICS_SOLIDMECHANICSLAGRANGIANFEM_HPP_
 
 #include "codingUtilities/EnumStrings.hpp"
 #include "common/TimingMacros.hpp"
@@ -30,7 +30,7 @@
 
 #include "physicsSolvers/solidMechanics/SolidMechanicsFields.hpp"
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -136,12 +136,13 @@ public:
   applySystemSolution( DofManager const & dofManager,
                        arrayView1d< real64 const > const & localSolution,
                        real64 const scalingFactor,
+                       real64 const dt,
                        DomainPartition & domain ) override;
 
   virtual void updateState( DomainPartition & domain ) override final
   {
     // There should be nothing to update
-    GEOSX_UNUSED_VAR( domain );
+    GEOS_UNUSED_VAR( domain );
   };
 
   virtual void applyBoundaryConditions( real64 const time,
@@ -174,6 +175,7 @@ public:
                        DofManager const & dofManager,
                        CRSMatrixView< real64, globalIndex const > const & localMatrix,
                        arrayView1d< real64 > const & localRhs,
+                       real64 const dt,
                        PARAMS && ... params );
 
 
@@ -215,11 +217,11 @@ public:
                                arrayView1d< real64 > const & localRhs );
 
   virtual real64
-  scalingForSystemSolution( DomainPartition const & domain,
+  scalingForSystemSolution( DomainPartition & domain,
                             DofManager const & dofManager,
                             arrayView1d< real64 const > const & localSolution ) override;
 
-  void turnOnFixedStressThermoPoroElasticityFlag();
+  void enableFixedStressPoromechanicsUpdate();
 
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
@@ -289,7 +291,7 @@ protected:
   integer m_strainTheory;
   string m_contactRelationName;
   MPI_iCommData m_iComm;
-  integer m_fixedStressUpdateThermoPoroElasticityFlag;
+  bool m_isFixedStressPoromechanicsUpdate;
 
   /// Rigid body modes
   array1d< ParallelVector > m_rigidBodyModes;
@@ -316,9 +318,10 @@ void SolidMechanicsLagrangianFEM::assemblyLaunch( DomainPartition & domain,
                                                   DofManager const & dofManager,
                                                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                   arrayView1d< real64 > const & localRhs,
+                                                  real64 const dt,
                                                   PARAMS && ... params )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
@@ -335,13 +338,14 @@ void SolidMechanicsLagrangianFEM::assemblyLaunch( DomainPartition & domain,
                                   dofManager.rankOffset(),
                                   localMatrix,
                                   localRhs,
+                                  dt,
                                   gravityVectorData,
                                   std::forward< PARAMS >( params )... );
 
-    if( m_fixedStressUpdateThermoPoroElasticityFlag )
+    if( m_isFixedStressPoromechanicsUpdate )
     {
       m_maxForce = finiteElement::
-                     regionBasedKernelApplication< parallelDevicePolicy< 32 >,
+                     regionBasedKernelApplication< parallelDevicePolicy< >,
                                                    CONSTITUTIVE_BASE,
                                                    CellElementSubRegion >( mesh,
                                                                            regionNames,
@@ -352,7 +356,7 @@ void SolidMechanicsLagrangianFEM::assemblyLaunch( DomainPartition & domain,
     else
     {
       m_maxForce = finiteElement::
-                     regionBasedKernelApplication< parallelDevicePolicy< 32 >,
+                     regionBasedKernelApplication< parallelDevicePolicy< >,
                                                    CONSTITUTIVE_BASE,
                                                    CellElementSubRegion >( mesh,
                                                                            regionNames,
@@ -362,10 +366,9 @@ void SolidMechanicsLagrangianFEM::assemblyLaunch( DomainPartition & domain,
     }
   } );
 
-
   applyContactConstraint( dofManager, domain, localMatrix, localRhs );
 }
 
-} /* namespace geosx */
+} /* namespace geos */
 
-#endif /* GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_SOLIDMECHANICSLAGRANGIANFEM_HPP_ */
+#endif /* GEOS_PHYSICSSOLVERS_SOLIDMECHANICS_SOLIDMECHANICSLAGRANGIANFEM_HPP_ */

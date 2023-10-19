@@ -20,7 +20,7 @@
 #include <chrono>
 
 
-using namespace geosx;
+using namespace geos;
 using namespace finiteElement;
 
 
@@ -28,25 +28,25 @@ using namespace finiteElement;
 
 class TestFiniteElementBase final : public FiniteElementBase
 {
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   virtual localIndex getNumQuadraturePoints() const override {return 8;};
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   virtual localIndex getNumSupportPoints() const override {return 8;};
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   virtual localIndex getMaxSupportPoints() const override {return 8;};
   template< typename SUBREGION_TYPE >
-  static void fillMeshData( NodeManager const & GEOSX_UNUSED_PARAM( nodeManager ),
-                            EdgeManager const & GEOSX_UNUSED_PARAM( edgeManager ),
-                            FaceManager const & GEOSX_UNUSED_PARAM( faceManager ),
-                            CellElementSubRegion const & GEOSX_UNUSED_PARAM( cellSubRegion ),
-                            MeshData< SUBREGION_TYPE > & GEOSX_UNUSED_PARAM( meshData )
+  static void fillMeshData( NodeManager const & GEOS_UNUSED_PARAM( nodeManager ),
+                            EdgeManager const & GEOS_UNUSED_PARAM( edgeManager ),
+                            FaceManager const & GEOS_UNUSED_PARAM( faceManager ),
+                            CellElementSubRegion const & GEOS_UNUSED_PARAM( cellSubRegion ),
+                            MeshData< SUBREGION_TYPE > & GEOS_UNUSED_PARAM( meshData )
                             )
   {}
   template< typename SUBREGION_TYPE >
-  GEOSX_HOST_DEVICE
-  static void setupStack( localIndex const & GEOSX_UNUSED_PARAM( cellIndex ),
-                          MeshData< SUBREGION_TYPE > const & GEOSX_UNUSED_PARAM( meshData ),
-                          StackVariables & GEOSX_UNUSED_PARAM( stack ) )
+  GEOS_HOST_DEVICE
+  static void setupStack( localIndex const & GEOS_UNUSED_PARAM( cellIndex ),
+                          MeshData< SUBREGION_TYPE > const & GEOS_UNUSED_PARAM( meshData ),
+                          StackVariables & GEOS_UNUSED_PARAM( stack ) )
   {}
 };
 
@@ -457,8 +457,8 @@ static void plusGradNajAij( real64 const (&gradN)[NUM_SUPPORT_POINTS][3],
 
 
 template< int NUM_SUPPORT_POINTS >
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 void plusGradNajAij( real64 const (&gradN)[NUM_SUPPORT_POINTS][3],
                      real64 const (&var_detJxW)[3][3],
                      real64 (& R)[NUM_SUPPORT_POINTS][3] )

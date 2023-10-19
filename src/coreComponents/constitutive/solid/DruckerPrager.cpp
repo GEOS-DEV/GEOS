@@ -18,7 +18,7 @@
 
 #include "DruckerPrager.hpp"
 
-namespace geosx
+namespace geos
 {
 using namespace dataRepository;
 namespace constitutive
@@ -101,10 +101,14 @@ void DruckerPrager::postProcessInput()
 {
   ElasticIsotropic::postProcessInput();
 
-  GEOSX_THROW_IF( m_defaultCohesion < 0, "Negative cohesion value detected", InputError );
-  GEOSX_THROW_IF( m_defaultFrictionAngle < 0, "Negative friction angle detected", InputError );
-  GEOSX_THROW_IF( m_defaultDilationAngle < 0, "Negative dilation angle detected", InputError );
-  GEOSX_THROW_IF( m_defaultFrictionAngle < m_defaultDilationAngle, "Dilation angle should not exceed friction angle", InputError );
+  GEOS_THROW_IF( m_defaultCohesion < 0,
+                 getFullName() << ": Negative cohesion value detected", InputError );
+  GEOS_THROW_IF( m_defaultFrictionAngle < 0,
+                 getFullName() << ": Negative friction angle detected", InputError );
+  GEOS_THROW_IF( m_defaultDilationAngle < 0,
+                 getFullName() << ": Negative dilation angle detected", InputError );
+  GEOS_THROW_IF( m_defaultFrictionAngle < m_defaultDilationAngle,
+                 getFullName() << ": Dilation angle should not exceed friction angle", InputError );
 
   // convert from Mohr-Coulomb constants to Drucker-Prager constants, assuming DP
   // passes through the triaxial compression corners of the MC surface.
@@ -146,7 +150,7 @@ void DruckerPrager::saveConvergedState() const
   arrayView2d< real64 const > newCohesion = m_newCohesion;
   arrayView2d< real64 > oldCohesion = m_oldCohesion;
 
-  forAll< parallelDevicePolicy<> >( numE, [=] GEOSX_HOST_DEVICE ( localIndex const k )
+  forAll< parallelDevicePolicy<> >( numE, [=] GEOS_HOST_DEVICE ( localIndex const k )
   {
     for( localIndex q = 0; q < numQ; ++q )
     {
@@ -158,4 +162,4 @@ void DruckerPrager::saveConvergedState() const
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, DruckerPrager, std::string const &, Group * const )
 }
-} /* namespace geosx */
+} /* namespace geos */

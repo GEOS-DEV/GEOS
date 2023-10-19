@@ -16,13 +16,13 @@
  * @file LinearSolverParameters.hpp
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_LINEARSOLVERPARAMETERS_HPP_
-#define GEOSX_PHYSICSSOLVERS_LINEARSOLVERPARAMETERS_HPP_
+#ifndef GEOS_PHYSICSSOLVERS_LINEARSOLVERPARAMETERS_HPP_
+#define GEOS_PHYSICSSOLVERS_LINEARSOLVERPARAMETERS_HPP_
 
 #include "dataRepository/Group.hpp"
 #include "linearAlgebra/utilities/LinearSolverParameters.hpp"
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -105,17 +105,31 @@ public:
     static constexpr char const * amgNumSweepsString() { return "amgNumSweeps"; }
     /// AMG smoother type key
     static constexpr char const * amgSmootherString() { return "amgSmootherType"; }
+    /// AMG smoother relax factor key
+    static constexpr char const * amgRelaxWeight() { return "amgRelaxWeight"; }
     /// AMG coarse solver key
     static constexpr char const * amgCoarseString() { return "amgCoarseSolver"; }
     /// AMG threshold key
     static constexpr char const * amgThresholdString() { return "amgThreshold"; }
     /// AMG near null space type key
     static constexpr char const * amgNullSpaceTypeString() { return "amgNullSpaceType"; }
+    /// AMG coarsening key
+    static constexpr char const * amgCoarseningString() { return "amgCoarseningType"; }
+    /// AMG interpolation key
+    static constexpr char const * amgInterpolationString() { return "amgInterpolationType"; }
+    /// AMG max. nonzero entries per row
+    static constexpr char const * amgInterpMaxNonZerosString() { return "amgInterpolationMaxNonZeros"; }
+    /// AMG number of functions for unknown-based approach
+    static constexpr char const * amgNumFunctionsString() { return "amgNumFunctions"; }
+    /// AMG number of paths for aggressive coarsening
+    static constexpr char const * amgAggressiveNumPathsString() { return "amgAggressiveCoarseningPaths"; }
+    /// AMG number of levels for aggressive coarsening
+    static constexpr char const * amgAggressiveNumLevelsString() { return "amgAggressiveCoarseningLevels"; }
+    /// AMG interpolation type during aggressive coarsening
+    static constexpr char const * amgAggressiveInterpTypeString() { return "amgAggressiveInterpType"; }
+    /// AMG separate components flag
+    static constexpr char const * amgSeparateComponentsString() { return "amgSeparateComponents"; }
 
-    static constexpr char const * amgCoarseningString()         { return "amgCoarseningType";           } ///< AMG coarsening key
-    static constexpr char const * amgInterpolationString()      { return "amgInterpolationType";        }   ///< AMG interpolation key
-    static constexpr char const * amgNumFunctionsString()       { return "amgNumFunctions";             }   ///< AMG threshold key
-    static constexpr char const * amgAggresiveNumLevelsString() { return "amgAggresiveCoarseningLevels";}             ///< AMG threshold key
     /// ILU fill key
     static constexpr char const * iluFillString() { return "iluFill"; }
     /// ILU threshold key
@@ -128,6 +142,6 @@ private:
 
 };
 
-} // namespace geosx
+} // namespace geos
 
-#endif //GEOSX_PHYSICSSOLVERS_LINEARSOLVERPARAMETERS_HPP_
+#endif //GEOS_PHYSICSSOLVERS_LINEARSOLVERPARAMETERS_HPP_

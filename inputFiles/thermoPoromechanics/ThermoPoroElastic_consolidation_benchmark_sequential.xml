@@ -19,6 +19,8 @@
     <NonlinearSolverParameters
       couplingType="Sequential"
       newtonMaxIter="200"
+      lineSearchAction="None"
+      newtonTol="1e-9"
       subcycling="1"/>
     <LinearSolverParameters
       directParallel="0"/>
@@ -34,7 +36,7 @@
     <NonlinearSolverParameters
       newtonMaxIter="100"
       newtonMinIter="0"
-      newtonTol="1.0e-6"/>
+      newtonTol="1.0e-10"/>
     <LinearSolverParameters
       directParallel="0"/>
   </SolidMechanicsLagrangianSSLE>
@@ -50,7 +52,7 @@
     <NonlinearSolverParameters
       newtonMaxIter="100"
       newtonMinIter="0"
-      newtonTol="1.0e-6"/>
+      newtonTol="1.0e-10"/>
     <LinearSolverParameters
       directParallel="0"/>
   </SinglePhaseFVM>

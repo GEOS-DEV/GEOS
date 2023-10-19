@@ -13,23 +13,23 @@
  */
 
 /**
- * @file SinglePhasePoromechanicsSolverEmbeddedFractures.cpp
+ * @file SinglePhasePoromechanicsEmbeddedFractures.cpp
  */
 
 #include "SinglePhasePoromechanicsEmbeddedFractures.hpp"
-
 #include "constitutive/contact/ContactSelector.hpp"
-#include "constitutive/fluid/SingleFluidBase.hpp"
+#include "constitutive/fluid/singlefluid/SingleFluidBase.hpp"
 #include "physicsSolvers/contact/SolidMechanicsEFEMKernelsHelper.hpp"
-#include "physicsSolvers/contact/SolidMechanicsEmbeddedFractures.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
 #include "physicsSolvers/multiphysics/poromechanicsKernels/SinglePhasePoromechanicsEFEM.hpp"
 #include "physicsSolvers/multiphysics/poromechanicsKernels/SinglePhasePoromechanics.hpp"
+#include "physicsSolvers/multiphysics/poromechanicsKernels/ThermalSinglePhasePoromechanics.hpp"
+#include "physicsSolvers/multiphysics/poromechanicsKernels/ThermalSinglePhasePoromechanicsEFEM.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsFields.hpp"
 
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -38,7 +38,7 @@ using namespace fields;
 
 SinglePhasePoromechanicsEmbeddedFractures::SinglePhasePoromechanicsEmbeddedFractures( const std::string & name,
                                                                                       Group * const parent ):
-  SinglePhasePoromechanicsSolver( name, parent ),
+  SinglePhasePoromechanics( name, parent ),
   m_fracturesSolverName()
 {
   registerWrapper( viewKeyStruct::fracturesSolverNameString(), &m_fracturesSolverName ).
@@ -59,14 +59,14 @@ SinglePhasePoromechanicsEmbeddedFractures::~SinglePhasePoromechanicsEmbeddedFrac
 
 void SinglePhasePoromechanicsEmbeddedFractures::postProcessInput()
 {
-  SinglePhasePoromechanicsSolver::postProcessInput();
+  SinglePhasePoromechanics::postProcessInput();
 
   m_fracturesSolver  = &this->getParent().getGroup< SolidMechanicsEmbeddedFractures >( m_fracturesSolverName );
 }
 
 void SinglePhasePoromechanicsEmbeddedFractures::registerDataOnMesh( dataRepository::Group & meshBodies )
 {
-  SinglePhasePoromechanicsSolver::registerDataOnMesh( meshBodies );
+  SinglePhasePoromechanics::registerDataOnMesh( meshBodies );
 
   using namespace fields::contact;
 
@@ -85,13 +85,15 @@ void SinglePhasePoromechanicsEmbeddedFractures::registerDataOnMesh( dataReposito
 
 void SinglePhasePoromechanicsEmbeddedFractures::initializePostInitialConditionsPreSubGroups()
 {
+  SinglePhasePoromechanics::initializePostInitialConditionsPreSubGroups();
+
   updateState( this->getGroupByPath< DomainPartition >( "/Problem/domain" ) );
 }
 
 void SinglePhasePoromechanicsEmbeddedFractures::setupDofs( DomainPartition const & domain,
                                                            DofManager & dofManager ) const
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
   m_fracturesSolver->setupDofs( domain, dofManager );
   flowSolver()->setupDofs( domain, dofManager );
 
@@ -131,9 +133,9 @@ void SinglePhasePoromechanicsEmbeddedFractures::setupSystem( DomainPartition & d
 {
   // Add missing couplings ( matrix pressure with displacement jump and jump - displacement )
 
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
-  GEOSX_UNUSED_VAR( setSparsity );
+  GEOS_UNUSED_VAR( setSparsity );
 
   dofManager.setDomain( domain );
   setupDofs( domain, dofManager );
@@ -194,7 +196,7 @@ void SinglePhasePoromechanicsEmbeddedFractures::addCouplingNumNonzeros( DomainPa
     ElementRegionManager const & elemManager = mesh.getElemManager();
 
     string const jumpDofKey = dofManager.getKey( fields::contact::dispJump::key() );
-    string const pressureDofKey = dofManager.getKey( SinglePhaseBase::viewKeyStruct::elemDofFieldString() );
+    string const flowDofKey = dofManager.getKey( SinglePhaseBase::viewKeyStruct::elemDofFieldString() );
 
     globalIndex const rankOffset = dofManager.rankOffset();
 
@@ -202,7 +204,7 @@ void SinglePhasePoromechanicsEmbeddedFractures::addCouplingNumNonzeros( DomainPa
     {
       localIndex const numEmbeddedElems = embeddedSurfaceSubRegion.size();
 
-      FixedToManyElementRelation const & embeddedSurfacesToCells = embeddedSurfaceSubRegion.getToCellRelation();
+      OrderedVariableToManyElementRelation const & embeddedSurfacesToCells = embeddedSurfaceSubRegion.getToCellRelation();
 
       arrayView1d< globalIndex const > const &
       embeddedElementDofNumber = embeddedSurfaceSubRegion.getReference< array1d< globalIndex > >( jumpDofKey );
@@ -216,24 +218,24 @@ void SinglePhasePoromechanicsEmbeddedFractures::addCouplingNumNonzeros( DomainPa
             getSubRegion< CellElementSubRegion >( embeddedSurfacesToCells.m_toElementSubRegion[k][0] );
 
         arrayView1d< globalIndex const > const &
-        pressureDofNumber = subRegion.getReference< globalIndex_array >( pressureDofKey );
+        flowDofNumber = subRegion.getReference< globalIndex_array >( flowDofKey );
 
         localIndex cellElementIndex = embeddedSurfacesToCells.m_toElementIndex[k][0];
 
         if( ghostRank[k] < 0 )
         {
           localIndex const localRow = LvArray::integerConversion< localIndex >( embeddedElementDofNumber[k] - rankOffset );
-          GEOSX_ASSERT_GE( localRow, 0 );
-          GEOSX_ASSERT_GE( rowLengths.size(), localRow + embeddedSurfaceSubRegion.numOfJumpEnrichments()  );
+          GEOS_ASSERT_GE( localRow, 0 );
+          GEOS_ASSERT_GE( rowLengths.size(), localRow + embeddedSurfaceSubRegion.numOfJumpEnrichments()  );
 
           for( localIndex i=0; i<embeddedSurfaceSubRegion.numOfJumpEnrichments(); ++i )
           {
             rowLengths[localRow + i] += 1;
           }
 
-          localIndex const localPressureRow = LvArray::integerConversion< localIndex >( pressureDofNumber[cellElementIndex] - rankOffset );
-          GEOSX_ASSERT_GE( localPressureRow, 0 );
-          GEOSX_ASSERT_GE( rowLengths.size(), localPressureRow + embeddedSurfaceSubRegion.numOfJumpEnrichments() );
+          localIndex const localPressureRow = LvArray::integerConversion< localIndex >( flowDofNumber[cellElementIndex] - rankOffset );
+          GEOS_ASSERT_GE( localPressureRow, 0 );
+          GEOS_ASSERT_GE( rowLengths.size(), localPressureRow + embeddedSurfaceSubRegion.numOfJumpEnrichments() );
 
           rowLengths[ localPressureRow ] += embeddedSurfaceSubRegion.numOfJumpEnrichments();
         }
@@ -258,11 +260,11 @@ void SinglePhasePoromechanicsEmbeddedFractures::addCouplingNumNonzeros( DomainPa
           elemManager.getRegion( seri[iconn][0] ).getSubRegion< EmbeddedSurfaceSubRegion >( sesri[iconn][0] );
 
         arrayView1d< globalIndex const > const &
-        pressureDofNumber =  embeddedSurfaceSubRegion.getReference< globalIndex_array >( pressureDofKey );
+        flowDofNumber =  embeddedSurfaceSubRegion.getReference< globalIndex_array >( flowDofKey );
 
         for( localIndex k0=0; k0<numFluxElems; ++k0 )
         {
-          globalIndex const activeFlowDOF = pressureDofNumber[sei[iconn][k0]];
+          globalIndex const activeFlowDOF = flowDofNumber[sei[iconn][k0]];
           globalIndex const rowNumber = activeFlowDOF - rankOffset;
 
           if( rowNumber >= 0 && rowNumber < rowLengths.size() )
@@ -274,6 +276,11 @@ void SinglePhasePoromechanicsEmbeddedFractures::addCouplingNumNonzeros( DomainPa
               if( k1 != k0 )
               {
                 rowLengths[ rowNumber ] += embeddedSurfaceSubRegion.numOfJumpEnrichments(); // number of jump enrichments.
+                if( m_isThermal )
+                {
+                  // energy flux is also coupled to dispJump
+                  rowLengths[ rowNumber + 1 ] += embeddedSurfaceSubRegion.numOfJumpEnrichments();
+                }
               }
             }
           }
@@ -306,7 +313,7 @@ void SinglePhasePoromechanicsEmbeddedFractures::addCouplingSparsityPattern( Doma
     {
       localIndex const numEmbeddedElems = embeddedSurfaceSubRegion.size();
 
-      FixedToManyElementRelation const & embeddedSurfacesToCells = embeddedSurfaceSubRegion.getToCellRelation();
+      OrderedVariableToManyElementRelation const & embeddedSurfacesToCells = embeddedSurfaceSubRegion.getToCellRelation();
 
       arrayView1d< globalIndex const > const &
       jumpDofNumber = embeddedSurfaceSubRegion.getReference< array1d< globalIndex > >( jumpDofKey );
@@ -398,7 +405,7 @@ void SinglePhasePoromechanicsEmbeddedFractures::assembleSystem( real64 const tim
                                                                 arrayView1d< real64 > const & localRhs )
 {
 
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   //updateState( domain );
 
@@ -407,72 +414,41 @@ void SinglePhasePoromechanicsEmbeddedFractures::assembleSystem( real64 const tim
                                                                 arrayView1d< string const > const & regionNames )
 
   {
-    NodeManager const & nodeManager = mesh.getNodeManager();
-    ElementRegionManager const & elemManager = mesh.getElemManager();
-    SurfaceElementRegion const & region = elemManager.getRegion< SurfaceElementRegion >( m_fracturesSolver->getFractureRegionName() );
-    EmbeddedSurfaceSubRegion const & subRegion = region.getSubRegion< EmbeddedSurfaceSubRegion >( 0 );
-
-    string const dofKey = dofManager.getKey( fields::solidMechanics::totalDisplacement::key() );
-    string const jumpDofKey = dofManager.getKey( fields::contact::dispJump::key() );
-
-    arrayView1d< globalIndex const > const & dispDofNumber = nodeManager.getReference< globalIndex_array >( dofKey );
-    arrayView1d< globalIndex const > const & jumpDofNumber = subRegion.getReference< globalIndex_array >( jumpDofKey );
-
-    string const pDofKey = dofManager.getKey( SinglePhaseBase::viewKeyStruct::elemDofFieldString() );
-
-    real64 const gravityVectorData[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( gravityVector() );
-
-
-    // 1. Cell-based contributions of standard poroelasticity
-    poromechanicsKernels::SinglePhasePoromechanicsKernelFactory
-    kernelFactory( dispDofNumber,
-                   dofManager.rankOffset(),
-                   localMatrix,
-                   localRhs,
-                   gravityVectorData,
-                   pDofKey,
-                   FlowSolverBase::viewKeyStruct::fluidNamesString() );
-
-    solidMechanicsSolver()->getMaxForce() =
-      finiteElement::
-        regionBasedKernelApplication< parallelDevicePolicy< 32 >,
-                                      constitutive::PorousSolidBase,
-                                      CellElementSubRegion >( mesh,
-                                                              regionNames,
-                                                              solidMechanicsSolver()->getDiscretizationName(),
-                                                              viewKeyStruct::porousMaterialNamesString(),
-                                                              kernelFactory );
-
-    // 2.  Add EFEM poroelastic contribution
-    poromechanicsEFEMKernels::SinglePhaseKernelFactory EFEMkernelFactory( subRegion,
-                                                                          dispDofNumber,
-                                                                          jumpDofNumber,
-                                                                          pDofKey,
-                                                                          dofManager.rankOffset(),
-                                                                          localMatrix,
-                                                                          localRhs,
-                                                                          gravityVectorData,
-                                                                          FlowSolverBase::viewKeyStruct::fluidNamesString() );
-
-    real64 maxTraction =
-      finiteElement::
-        regionBasedKernelApplication< parallelDevicePolicy< 32 >,
-                                      constitutive::PorousSolidBase,
-                                      CellElementSubRegion >( mesh,
-                                                              regionNames,
-                                                              solidMechanicsSolver()->getDiscretizationName(),
-                                                              viewKeyStruct::porousMaterialNamesString(),
-                                                              EFEMkernelFactory );
-
-    GEOSX_UNUSED_VAR( maxTraction );
+    if( m_isThermal )
+    {
+      solidMechanicsSolver()->getMaxForce() =
+        assemblyLaunch< constitutive::PorousSolid< ElasticIsotropic >, // TODO: change once there is a cmake solution
+                        thermalPoromechanicsKernels::ThermalSinglePhasePoromechanicsKernelFactory,
+                        thermoPoromechanicsEFEMKernels::ThermalSinglePhasePoromechanicsEFEMKernelFactory >( mesh,
+                                                                                                            dofManager,
+                                                                                                            regionNames,
+                                                                                                            SinglePhasePoromechanics::viewKeyStruct::porousMaterialNamesString(),
+                                                                                                            localMatrix,
+                                                                                                            localRhs,
+                                                                                                            dt );
+    }
+    else
+    {
+      solidMechanicsSolver()->getMaxForce() =
+        assemblyLaunch< constitutive::PorousSolid< ElasticIsotropic >,
+                        poromechanicsKernels::SinglePhasePoromechanicsKernelFactory,
+                        poromechanicsEFEMKernels::SinglePhaseKernelFactory >( mesh,
+                                                                              dofManager,
+                                                                              regionNames,
+                                                                              SinglePhasePoromechanics::viewKeyStruct::porousMaterialNamesString(),
+                                                                              localMatrix,
+                                                                              localRhs,
+                                                                              dt );
+    }
 
     // 3. Assemble poroelastic fluxes and all derivatives
-    flowSolver()->assemblePoroelasticFluxTerms( time_n, dt,
-                                                domain,
-                                                dofManager,
-                                                localMatrix,
-                                                localRhs,
-                                                jumpDofKey );
+    string const jumpDofKey = dofManager.getKey( fields::contact::dispJump::key() );
+    flowSolver()->assembleEDFMFluxTerms( time_n, dt,
+                                         domain,
+                                         dofManager,
+                                         localMatrix,
+                                         localRhs,
+                                         jumpDofKey );
 
   } );
 
@@ -541,18 +517,22 @@ real64 SinglePhasePoromechanicsEmbeddedFractures::calculateResidualNorm( real64 
 void SinglePhasePoromechanicsEmbeddedFractures::applySystemSolution( DofManager const & dofManager,
                                                                      arrayView1d< real64 const > const & localSolution,
                                                                      real64 const scalingFactor,
+                                                                     real64 const dt,
                                                                      DomainPartition & domain )
 {
   // update displacement and jump
-  m_fracturesSolver->applySystemSolution( dofManager, localSolution, scalingFactor, domain );
+  m_fracturesSolver->applySystemSolution( dofManager, localSolution, scalingFactor, dt, domain );
   // update pressure field
-  flowSolver()->applySystemSolution( dofManager, localSolution, scalingFactor, domain );
+  flowSolver()->applySystemSolution( dofManager, localSolution, scalingFactor, dt, domain );
 }
 
 void SinglePhasePoromechanicsEmbeddedFractures::updateState( DomainPartition & domain )
 {
   /// 1. update the reservoir
-  SinglePhasePoromechanicsSolver::updateState( domain );
+  SinglePhasePoromechanics::updateState( domain );
+
+  // remove the contribution of the hydraulic aperture from the stencil weights
+  flowSolver()->prepareStencilWeights( domain );
 
   /// 2. update the fractures
   m_fracturesSolver->updateState( domain );
@@ -619,15 +599,22 @@ void SinglePhasePoromechanicsEmbeddedFractures::updateState( DomainPartition & d
 
       } );
 
+      // update the stencil weights using the updated hydraulic aperture
+      flowSolver()->updateStencilWeights( domain );
+
       // update fracture's permeability and porosity
       flowSolver()->updatePorosityAndPermeability( subRegion );
       // update fluid model
       flowSolver()->updateFluidState( subRegion );
-
+      if( m_isThermal )
+      {
+        // update solid internal energy
+        flowSolver()->updateSolidInternalEnergyModel( subRegion );
+      }
     } );
   } );
 }
 
 REGISTER_CATALOG_ENTRY( SolverBase, SinglePhasePoromechanicsEmbeddedFractures, std::string const &, Group * const )
 
-} /* namespace geosx */
+} /* namespace geos */

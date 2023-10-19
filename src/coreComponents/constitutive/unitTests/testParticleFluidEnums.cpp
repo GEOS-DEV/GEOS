@@ -12,13 +12,13 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#include "constitutive/fluid/ParticleFluid.hpp"
+#include "constitutive/fluid/singlefluid/ParticleFluid.hpp"
 #include "constitutive/ExponentialRelation.hpp"
 #include "constitutive/capillaryPressure/JFunctionCapillaryPressure.hpp"
 
 #include <gtest/gtest.h>
 
-using namespace geosx;
+using namespace geos;
 
 // The `ENUM_STRING` implementation relies on consistency between the order of the `enum`,
 // and the order of the `string` array provided. Since this consistency is not enforced, it can be corrupted anytime.

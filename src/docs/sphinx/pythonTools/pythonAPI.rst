@@ -12,14 +12,10 @@ The preferred method to setup the GEOSX python tools is to run the following com
 
 .. code-block:: bash
 
-    make geosx_xml_tools
+    make geosx_python_tools
 
 
-This will attempt to install the required packages into one of the following locations (in order of preference):
-
-1. The python distribution indicated via the `PYTHON_POST_EXECUTABLE` cmake variable
-2. The python distribution indicated via the `Python3_EXECUTABLE` cmake variable (also used by pygeosx)
-3. The python distribution that was used to configure GEOSX
+This will attempt to install the required packages into the python distribution indicated via the `Python3_EXECUTABLE` cmake variable (also used by pygeosx).
 
 If the user does not have write access for the target python distribution, the installation will attempt to create a new virtual python environment (Note: this requires that the virtualenv package be installed).
 If any package dependencies are missing, then the install script will attempt to fetch them from the internet using pip.
@@ -55,3 +51,4 @@ Packages
 
     timehistory
 
+    mesh_doctor

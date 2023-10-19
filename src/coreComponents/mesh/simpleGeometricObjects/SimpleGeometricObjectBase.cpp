@@ -18,7 +18,7 @@
 
 #include "SimpleGeometricObjectBase.hpp"
 
-namespace geosx
+namespace geos
 {
 
 SimpleGeometricObjectBase::SimpleGeometricObjectBase( string const & name,
@@ -39,4 +39,4 @@ SimpleGeometricObjectBase::CatalogInterface::CatalogType & SimpleGeometricObject
   return catalog;
 }
 
-} /// namespace geosx
+} /// namespace geos

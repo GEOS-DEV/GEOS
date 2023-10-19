@@ -9,7 +9,7 @@ from vtkmodules.vtkCommonCore import (
     vtkOutputWindow,
     vtkFileOutputWindow
 )
-from vtk.util.numpy_support import (
+from vtkmodules.util.numpy_support import (
     vtk_to_numpy,
 )
 
@@ -59,11 +59,9 @@ def __check(mesh, options: Options) -> Result:
     f.Update()
     output = f.GetOutput()
 
-    cd = output.GetCellData()
-    for i in range(cd.GetNumberOfArrays()):
-        if cd.GetArrayName(i) == "ValidityState":  # Could not change name using the vtk interface.
-            validity = vtk_to_numpy(cd.GetArray(i))
+    validity = output.GetCellData().GetArray("ValidityState")  # Could not change name using the vtk interface.
     assert validity is not None
+    validity = vtk_to_numpy(validity)
     for i, v in enumerate(validity):
         if not v & valid:
             if v & wrong_number_of_points:

@@ -16,8 +16,8 @@
  * @file schemaUtilities.hpp
  */
 
-#ifndef GEOSX_FILEIO_SCHEMA_SCHEMAUTILITIES_HPP_
-#define GEOSX_FILEIO_SCHEMA_SCHEMAUTILITIES_HPP_
+#ifndef GEOS_FILEIO_SCHEMA_SCHEMAUTILITIES_HPP_
+#define GEOS_FILEIO_SCHEMA_SCHEMAUTILITIES_HPP_
 
 #include "dataRepository/xmlWrapper.hpp"
 #include "common/DataTypes.hpp"
@@ -26,7 +26,7 @@
 #include <sstream>
 
 
-namespace geosx
+namespace geos
 {
 
 // Forward declarations
@@ -68,6 +68,6 @@ void SchemaConstruction( dataRepository::Group & group,
                          integer documentationType );
 
 } /// namespace schemaUtilities
-} /// namespace geosx
+} /// namespace geos
 
-#endif /* GEOSX_FILEIO_SCHEMA_SCHEMAUTILITIES_HPP_ */
+#endif /* GEOS_FILEIO_SCHEMA_SCHEMAUTILITIES_HPP_ */

@@ -16,10 +16,10 @@
  * @file MimeticInnerProductHelpers.hpp
  */
 
-#ifndef GEOSX_FINITEVOLUME_MIMETICINNERPRODUCTS_MIMETICINNERPRODUCTHELPERS_HPP
-#define GEOSX_FINITEVOLUME_MIMETICINNERPRODUCTS_MIMETICINNERPRODUCTHELPERS_HPP
+#ifndef GEOS_FINITEVOLUME_MIMETICINNERPRODUCTS_MIMETICINNERPRODUCTHELPERS_HPP
+#define GEOS_FINITEVOLUME_MIMETICINNERPRODUCTS_MIMETICINNERPRODUCTHELPERS_HPP
 
-namespace geosx
+namespace geos
 {
 namespace mimeticInnerProduct
 {
@@ -36,7 +36,7 @@ struct MimeticInnerProductHelpers
    * @param[in] values the input array
    * @param[out] result the full tensor
    */
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   static
   void makeFullTensor( real64 const (&values)[ 3 ],
                        real64 (& result)[ 3 ][ 3 ] )
@@ -56,7 +56,7 @@ struct MimeticInnerProductHelpers
    * @param[out] cellToFaceMat a copy of in/out vectors stacked into a matrix
    */
   template< localIndex NF >
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   static
   void orthonormalize( real64 (& q0)[ NF ],
                        real64 (& q1)[ NF ],
@@ -100,7 +100,7 @@ struct MimeticInnerProductHelpers
    * @param[out] tpTransInv the TPFA entry incorporating the multiplier
    */
   template< localIndex NF >
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   static void
   computeInvTPFATransWithMultiplier( real64 const (&elemPerm)[ 3 ],
                                      real64 const (&faceNormal)[ 3 ],
@@ -135,7 +135,7 @@ struct MimeticInnerProductHelpers
    * @param[in,out] transMatrix transmissibility matrix
    */
   template< localIndex NF >
-  GEOSX_HOST_DEVICE
+  GEOS_HOST_DEVICE
   static void
   computeTransMatrixWithMultipliers( real64 const (&tpTransInv)[ NF ],
                                      arraySlice2d< real64 > const & transMatrix )
@@ -165,6 +165,6 @@ struct MimeticInnerProductHelpers
 
 } // namespace mimeticInnerProduct
 
-} // namespace geosx
+} // namespace geos
 
-#endif //GEOSX_FINITEVOLUME_MIMETICINNERPRODUCTS_MIMETICINNERPRODUCTHELPERS_HPP
+#endif //GEOS_FINITEVOLUME_MIMETICINNERPRODUCTS_MIMETICINNERPRODUCTHELPERS_HPP

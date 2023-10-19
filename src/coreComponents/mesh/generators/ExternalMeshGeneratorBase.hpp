@@ -16,12 +16,12 @@
  * @file ExternalMeshGeneratorBase.hpp
  */
 
-#ifndef GEOSX_MESH_GENERATORS_EXTERNALMESHGENERATORBASE_HPP
-#define GEOSX_MESH_GENERATORS_EXTERNALMESHGENERATORBASE_HPP
+#ifndef GEOS_MESH_GENERATORS_EXTERNALMESHGENERATORBASE_HPP
+#define GEOS_MESH_GENERATORS_EXTERNALMESHGENERATORBASE_HPP
 
 #include "mesh/generators/MeshGeneratorBase.hpp"
 
-namespace geosx
+namespace geos
 {
 
 /**
@@ -47,8 +47,10 @@ protected:
     constexpr static char const * filePathString() { return "file"; }
     constexpr static char const * scaleString() { return "scale"; }
     constexpr static char const * translateString() { return "translate"; }
-    constexpr static char const * fieldsToImportString() { return "fieldsToImport"; }
-    constexpr static char const * fieldNamesInGEOSXString() { return "fieldNamesInGEOSX"; }
+    constexpr static char const * volumicFieldsToImportString() { return "fieldsToImport"; }
+    constexpr static char const * volumicFieldsInGEOSXString() { return "fieldNamesInGEOSX"; }
+    constexpr static char const * surfacicFieldsToImportString() { return "surfacicFieldsToImport"; }
+    constexpr static char const * surfacicFieldsInGEOSXString() { return "surfacicFieldsInGEOSX"; }
   };
   /// @endcond
 
@@ -64,13 +66,18 @@ protected:
   R1Tensor m_scale;
 
   /// Names of the fields to be copied from an external reader into GEOSX data structure
-  array1d< string > m_fieldsToImport;
+  array1d< string > m_volumicFieldsToImport;
 
-  /// String array of the GEOSX user declared fields
-  array1d< string > m_fieldNamesInGEOSX;
+  /// String array of the GEOSX user declared volumic fields
+  array1d< string > m_volumicFieldsInGEOSX;
 
+  /// Names of the surfacic fields to be copied from an external reader into GEOSX data structure
+  array1d< string > m_surfacicFieldsToImport;
+
+  /// String array of the GEOSX user declared surfacic fields
+  array1d< string > m_surfacicFieldsInGEOSX;
 };
 
-} // namespace geosx
+} // namespace geos
 
-#endif //GEOSX_MESH_GENERATORS_EXTERNALMESHGENERATORBASE_HPP
+#endif //GEOS_MESH_GENERATORS_EXTERNALMESHGENERATORBASE_HPP

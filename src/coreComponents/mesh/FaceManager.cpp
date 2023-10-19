@@ -29,7 +29,7 @@
 #include "mesh/utilities/MeshMapUtilities.hpp"
 #include "utilities/ComputationalGeometry.hpp"
 
-namespace geosx
+namespace geos
 {
 using namespace dataRepository;
 
@@ -76,7 +76,7 @@ void FaceManager::resize( localIndex const newSize )
 
 void FaceManager::buildSets( NodeManager const & nodeManager )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   // First create the sets
   auto const & nodeSets = nodeManager.sets().wrappers();
@@ -96,7 +96,7 @@ void FaceManager::buildSets( NodeManager const & nodeManager )
   } );
 }
 
-void FaceManager::setDomainBoundaryObjects()
+void FaceManager::setDomainBoundaryObjects( ElementRegionManager const & elemRegionManager )
 {
   arrayView1d< integer > const isFaceOnDomainBoundary = getDomainBoundaryIndicator();
   isFaceOnDomainBoundary.zero();
@@ -110,15 +110,45 @@ void FaceManager::setDomainBoundaryObjects()
       isFaceOnDomainBoundary( kf ) = 1;
     }
   } );
+
+  // We want to tag as boundary faces all the faces that touch a surface element (mainly a fracture),
+  // if this element only has one unique neighbor.
+  auto const f = [&]( SurfaceElementRegion const & region )
+  {
+    if( region.subRegionType() != SurfaceElementRegion::SurfaceSubRegionType::faceElement )
+    {
+      return;
+    }
+
+    FaceElementSubRegion const & subRegion = region.getUniqueSubRegion< FaceElementSubRegion >();
+    ArrayOfArraysView< localIndex const > const elem2dToFaces = subRegion.faceList().toViewConst();
+    for( int ei = 0; ei < elem2dToFaces.size(); ++ei )
+    {
+      if( elem2dToFaces.sizeOfArray( ei ) == 2 )
+      {
+        continue;
+      }
+
+      for( localIndex const & face: elem2dToFaces[ei] )
+      {
+        isFaceOnDomainBoundary[face] = 1;
+      }
+    }
+  };
+  elemRegionManager.forElementRegions< SurfaceElementRegion >( f );
 }
 
 void FaceManager::setGeometricalRelations( CellBlockManagerABC const & cellBlockManager,
                                            ElementRegionManager const & elemRegionManager,
-                                           NodeManager const & nodeManager )
+                                           NodeManager const & nodeManager,
+                                           bool isBaseMeshLevel )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
-  resize( cellBlockManager.numFaces() );
+  if( isBaseMeshLevel )
+  {
+    resize( cellBlockManager.numFaces() );
+  }
 
   m_toNodesRelation.base() = cellBlockManager.getFaceToNodes();
   m_toEdgesRelation.base() = cellBlockManager.getFaceToEdges();
@@ -129,17 +159,60 @@ void FaceManager::setGeometricalRelations( CellBlockManagerABC const & cellBlock
                                                                          toCellBlock,
                                                                          m_toElements );
 
-  computeGeometry( nodeManager );
+  // Since the mappings of the current FaceManager instance were only filled based on the {face -> elements} mapping,
+  // they do not take into account any connection between the 3d elements and the 2d elements of fracture meshes.
+  // The following function adds those connections between the 3d and 2d elements.
+  auto const connect2dElems = [&]( localIndex er,
+                                   SurfaceElementRegion const & region )
+  {
+    if( region.subRegionType() != SurfaceElementRegion::SurfaceSubRegionType::faceElement )
+    {
+      return;
+    }
+
+    constexpr char err[] = "Internal error when trying to connect matrix mapping and fracture mapping. Face {} seems wrongly connected.";
+
+    FaceElementSubRegion const & subRegion = region.getUniqueSubRegion< FaceElementSubRegion >();
+    int const esr = 0;  // Since there's only on unique subregion, the index is always 0.
+    // The fracture subregion knows the faces it's connected to.
+    // And since a 2d element is connected to a given face, and since a face can only have 2 neighbors,
+    // then the second neighbor of the face is bound to be undefined (i.e. -1).
+    ArrayOfArraysView< localIndex const > const & elem2dToFaces = subRegion.faceList().toViewConst();
+    for( localIndex ei = 0; ei < elem2dToFaces.size(); ++ei )
+    {
+      for( localIndex const & face: elem2dToFaces[ei] )
+      {
+        GEOS_ERROR_IF_EQ_MSG( m_toElements.m_toElementRegion( face, 0 ), -1, GEOS_FMT( err, face ) );
+        GEOS_ERROR_IF_EQ_MSG( m_toElements.m_toElementSubRegion( face, 0 ), -1, GEOS_FMT( err, face ) );
+        GEOS_ERROR_IF_EQ_MSG( m_toElements.m_toElementIndex( face, 0 ), -1, GEOS_FMT( err, face ) );
+
+        GEOS_ERROR_IF_NE_MSG( m_toElements.m_toElementRegion( face, 1 ), -1, GEOS_FMT( err, face ) );
+        GEOS_ERROR_IF_NE_MSG( m_toElements.m_toElementSubRegion( face, 1 ), -1, GEOS_FMT( err, face ) );
+        GEOS_ERROR_IF_NE_MSG( m_toElements.m_toElementIndex( face, 1 ), -1, GEOS_FMT( err, face ) );
+
+        m_toElements.m_toElementRegion( face, 1 ) = er;
+        m_toElements.m_toElementSubRegion( face, 1 ) = esr;
+        m_toElements.m_toElementIndex( face, 1 ) = ei;
+      }
+    }
+  };
+  // Connecting all the 3d elements (information is already in the m_toElements mappings) and all the 2d elements.
+  elemRegionManager.forElementRegionsComplete< SurfaceElementRegion >( connect2dElems );
+
+  if( isBaseMeshLevel )
+  {
+    computeGeometry( nodeManager );
+  }
 }
 
 void FaceManager::setupRelatedObjectsInRelations( NodeManager const & nodeManager,
                                                   EdgeManager const & edgeManager,
-                                                  ElementRegionManager const & elementRegionManager )
+                                                  ElementRegionManager const & elemRegionManager )
 {
   m_toNodesRelation.setRelatedObject( nodeManager );
   m_toEdgesRelation.setRelatedObject( edgeManager );
 
-  m_toElements.setElementRegionManager( elementRegionManager );
+  m_toElements.setElementRegionManager( elemRegionManager );
 }
 
 void FaceManager::computeGeometry( NodeManager const & nodeManager )
@@ -174,7 +247,7 @@ void FaceManager::setIsExternal()
 void FaceManager::sortAllFaceNodes( NodeManager const & nodeManager,
                                     ElementRegionManager const & elemManager )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   arrayView2d< localIndex const > const facesToElementRegions = elementRegionList();
   arrayView2d< localIndex const > const facesToElementSubRegions = elementSubRegionList();
@@ -196,7 +269,7 @@ void FaceManager::sortAllFaceNodes( NodeManager const & nodeManager,
     // The face should be connected to at least one element.
     if( facesToElements( faceIndex, 0 ) < 0 && facesToElements( faceIndex, 1 ) < 0 )
     {
-      GEOSX_ERROR( "Face " << faceIndex << " is not connected to an element." );
+      GEOS_ERROR( "Face " << faceIndex << " is not connected to an element." );
     }
 
     // Take the first defined face-to-(elt/region/sub region) to sorting direction.
@@ -208,7 +281,7 @@ void FaceManager::sortAllFaceNodes( NodeManager const & nodeManager,
 
     if( er < 0 || esr < 0 || ei < 0 )
     {
-      GEOSX_ERROR( GEOSX_FMT( "Face {} is connected to an invalid element ({}/{}/{}).", faceIndex, er, esr, ei ) );
+      GEOS_ERROR( GEOS_FMT( "Face {} is connected to an invalid element ({}/{}/{}).", faceIndex, er, esr, ei ) );
     }
 
     sortFaceNodes( X, elemCenter[er][esr][ei], facesToNodes[faceIndex] );
@@ -220,7 +293,7 @@ void FaceManager::sortFaceNodes( arrayView2d< real64 const, nodes::REFERENCE_POS
                                  Span< localIndex > const faceNodes )
 {
   localIndex const numFaceNodes = LvArray::integerConversion< localIndex >( faceNodes.size() );
-  GEOSX_ERROR_IF_GT_MSG( numFaceNodes, MAX_FACE_NODES, "Node per face limit exceeded" );
+  GEOS_ERROR_IF_GT_MSG( numFaceNodes, MAX_FACE_NODES, "Node per face limit exceeded" );
 
   localIndex const firstNodeIndex = faceNodes[0];
 
@@ -279,7 +352,6 @@ void FaceManager::sortFaceNodes( arrayView2d< real64 const, nodes::REFERENCE_POS
     }
 
     std::sort( thetaOrder, thetaOrder + numFaceNodes );
-
     // Reorder nodes on face
     for( localIndex n = 0; n < numFaceNodes; ++n )
     {
@@ -309,7 +381,7 @@ void FaceManager::sortFaceNodes( arrayView2d< real64 const, nodes::REFERENCE_POS
 ArrayOfSets< globalIndex >
 FaceManager::extractMapFromObjectForAssignGlobalIndexNumbers( ObjectManagerBase const & nodeManager )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   localIndex const numFaces = size();
 
@@ -393,15 +465,15 @@ localIndex FaceManager::packUpDownMapsImpl( buffer_unit_type * & buffer,
 localIndex FaceManager::unpackUpDownMaps( buffer_unit_type const * & buffer,
                                           localIndex_array & packList,
                                           bool const overwriteUpMaps,
-                                          bool const GEOSX_UNUSED_PARAM( overwriteDownMaps ) )
+                                          bool const GEOS_UNUSED_PARAM( overwriteDownMaps ) )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOS_MARK_FUNCTION;
 
   localIndex unPackedSize = 0;
 
   string nodeListString;
   unPackedSize += bufferOps::Unpack( buffer, nodeListString );
-  GEOSX_ERROR_IF_NE( nodeListString, viewKeyStruct::nodeListString() );
+  GEOS_ERROR_IF_NE( nodeListString, viewKeyStruct::nodeListString() );
 
   unPackedSize += bufferOps::Unpack( buffer,
                                      m_toNodesRelation,
@@ -412,7 +484,7 @@ localIndex FaceManager::unpackUpDownMaps( buffer_unit_type const * & buffer,
 
   string edgeListString;
   unPackedSize += bufferOps::Unpack( buffer, edgeListString );
-  GEOSX_ERROR_IF_NE( edgeListString, viewKeyStruct::edgeListString() );
+  GEOS_ERROR_IF_NE( edgeListString, viewKeyStruct::edgeListString() );
 
   unPackedSize += bufferOps::Unpack( buffer,
                                      m_toEdgesRelation,
@@ -423,7 +495,7 @@ localIndex FaceManager::unpackUpDownMaps( buffer_unit_type const * & buffer,
 
   string elementListString;
   unPackedSize += bufferOps::Unpack( buffer, elementListString );
-  GEOSX_ERROR_IF_NE( elementListString, viewKeyStruct::elementListString() );
+  GEOS_ERROR_IF_NE( elementListString, viewKeyStruct::elementListString() );
 
   unPackedSize += bufferOps::Unpack( buffer,
                                      m_toElements,

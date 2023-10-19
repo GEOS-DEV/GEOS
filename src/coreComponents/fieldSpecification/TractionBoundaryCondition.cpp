@@ -20,7 +20,7 @@
 
 #include "functions/TableFunction.hpp"
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -64,33 +64,33 @@ void TractionBoundaryCondition::postProcessInput()
 {
   if( m_tractionType == TractionType::vector )
   {
-    GEOSX_ERROR_IF( LvArray::tensorOps::l2Norm< 3 >( getDirection() ) < 1e-20,
-                    viewKeyStruct::directionString() << " is required for " <<
-                    viewKeyStruct::tractionTypeString() << " = " << TractionType::vector <<
-                    ", but appears to be unspecified" );
+    GEOS_ERROR_IF( LvArray::tensorOps::l2Norm< 3 >( getDirection() ) < 1e-20,
+                   getDataContext() << ": " << viewKeyStruct::directionString() << " is required for " <<
+                   viewKeyStruct::tractionTypeString() << " = " << TractionType::vector <<
+                   ", but appears to be unspecified" );
   }
   else
   {
-    GEOSX_LOG_RANK_0_IF( LvArray::tensorOps::l2Norm< 3 >( getDirection() ) > 1e-20,
-                         viewKeyStruct::directionString() << " is not required unless " <<
-                         viewKeyStruct::tractionTypeString() << " = " << TractionType::vector <<
-                         ", but appears to be specified" );
+    GEOS_LOG_RANK_0_IF( LvArray::tensorOps::l2Norm< 3 >( getDirection() ) > 1e-20,
+                        getDataContext() << ": " << viewKeyStruct::directionString() << " is not required unless " <<
+                        viewKeyStruct::tractionTypeString() << " = " << TractionType::vector <<
+                        ", but appears to be specified" );
   }
 
   bool const inputStressRead = getWrapper< R2SymTensor >( viewKeyStruct::inputStressString() ).getSuccessfulReadFromInput();
 
-  GEOSX_LOG_RANK_0_IF( inputStressRead && m_tractionType != TractionType::stress,
-                       viewKeyStruct::inputStressString() << " is specified, but " <<
-                       viewKeyStruct::tractionTypeString() << " != " << TractionType::stress <<
-                       ", so value of " << viewKeyStruct::inputStressString() << " is unused." );
+  GEOS_LOG_RANK_0_IF( inputStressRead && m_tractionType != TractionType::stress,
+                      getDataContext() << ": " << viewKeyStruct::inputStressString() << " is specified, but " <<
+                      viewKeyStruct::tractionTypeString() << " != " << TractionType::stress <<
+                      ", so value of " << viewKeyStruct::inputStressString() << " is unused." );
 
-  GEOSX_ERROR_IF( !inputStressRead && m_tractionType == TractionType::stress,
-                  viewKeyStruct::tractionTypeString() << " = " << TractionType::stress <<
-                  ", but " << viewKeyStruct::inputStressString() << " is not specified." );
+  GEOS_ERROR_IF( !inputStressRead && m_tractionType == TractionType::stress,
+                 getDataContext() << ": " << viewKeyStruct::tractionTypeString() << " = " << TractionType::stress <<
+                 ", but " << viewKeyStruct::inputStressString() << " is not specified." );
 
 
 //  localIndex const numStressFunctionsNames = m_stressFunctionNames.size();
-//  GEOSX_ERROR_IF( numStressFunctionsNames > 0 && numStressFunctionsNames<6,
+//  GEOS_ERROR_IF( numStressFunctionsNames > 0 && numStressFunctionsNames<6,
 //                  "Either 0 or 6 stress functions must be specified using stressFunctions" );
 //
 //  if( numStressFunctionsNames==6 )
@@ -164,7 +164,7 @@ void TractionBoundaryCondition::launch( real64 const time,
   arrayView1d< real64 const > const tractionMagnitudeArrayView = tractionMagnitudeArray;
 
   {
-    forAll< parallelDevicePolicy<> >( targetSet.size(), [=] GEOSX_HOST_DEVICE ( localIndex const i )
+    forAll< parallelDevicePolicy<> >( targetSet.size(), [=] GEOS_HOST_DEVICE ( localIndex const i )
     {
       localIndex const kf = targetSet[ i ];
       localIndex const numNodes = faceToNodeMap.sizeOfArray( kf );
@@ -222,4 +222,4 @@ void TractionBoundaryCondition::launch( real64 const time,
 REGISTER_CATALOG_ENTRY( FieldSpecificationBase, TractionBoundaryCondition, string const &, Group * const )
 
 
-} /* namespace geosx */
+} /* namespace geos */

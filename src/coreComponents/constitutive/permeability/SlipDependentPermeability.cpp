@@ -20,7 +20,7 @@
 #include "LvArray/src/tensorOps.hpp"
 #include "constitutive/permeability/PermeabilityFields.hpp"
 
-namespace geosx
+namespace geos
 {
 
 using namespace dataRepository;
@@ -66,4 +66,4 @@ void SlipDependentPermeability::allocateConstitutiveData( dataRepository::Group 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, SlipDependentPermeability, string const &, Group * const )
 
 } /* namespace constitutive */
-} /* namespace geosx */
+} /* namespace geos */

@@ -13,8 +13,8 @@
  */
 
 
-#ifndef GEOSX_MESH_CELLELEMENTSUBREGION_HPP_
-#define GEOSX_MESH_CELLELEMENTSUBREGION_HPP_
+#ifndef GEOS_MESH_CELLELEMENTSUBREGION_HPP_
+#define GEOS_MESH_CELLELEMENTSUBREGION_HPP_
 
 #include "mesh/generators/CellBlockABC.hpp"
 #include "mesh/NodeManager.hpp"
@@ -23,7 +23,7 @@
 #include "ElementSubRegionBase.hpp"
 
 
-namespace geosx
+namespace geos
 {
 
 class MeshLevel;
@@ -82,7 +82,7 @@ public:
    * @brief Fill the CellElementSubRegion by copying those of the source CellBlock
    * @param cellBlock the CellBlock which properties (connectivity info) will be copied.
    */
-  void copyFromCellBlock( CellBlockABC & cellBlock );
+  void copyFromCellBlock( CellBlockABC const & cellBlock );
 
   ///@}
 
@@ -404,6 +404,6 @@ private:
                                         arrayView1d< globalIndex const > const & embeddedSurfacesLocalToGlobal ) const;
 };
 
-} /* namespace geosx */
+} /* namespace geos */
 
-#endif /* GEOSX_MESH_CELLELEMENTSUBREGION_HPP_ */
+#endif /* GEOS_MESH_CELLELEMENTSUBREGION_HPP_ */
