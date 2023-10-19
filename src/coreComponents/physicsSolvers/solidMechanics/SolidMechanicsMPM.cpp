@@ -2523,7 +2523,7 @@ void SolidMechanicsMPM::projectDamageFieldGradientToGrid( ParticleManager & part
     // Map to grid
     SortedArrayView< localIndex const > const activeParticleIndices = subRegion.activeParticleIndices();
     int const numDims = m_numDims;
-    forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST ( localIndex const pp ) // Parallelize with atomics/reduction
+    forAll< parallelDevicePolicy<> >( activeParticleIndices.size(), [=] GEOS_DEVICE ( localIndex const pp ) // Parallelize with atomics/reduction
       {
         localIndex const p = activeParticleIndices[pp];
 
