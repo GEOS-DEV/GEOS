@@ -95,7 +95,7 @@
       phaseNames="{ oil, gas, water }"
       surfaceDensities="{ 800.0, 0.9907, 1022.0 }"
       componentMolarWeight="{ 114e-3, 16e-3, 18e-3 }"
-      tableFiles="{ testPVT_data/oilPVT.txt, testPVT_data/gasPVT.txt, testPVT_data/watPVT.txt }"/>
+      tableFiles="{ testPVT_data/deadOilPVDO.txt, testPVT_data/dryGasPVDG.txt, testPVT_data/watPVT.txt }"/>
 
     <BlackOilFluid
       name="liveBlackOil"
@@ -121,12 +121,12 @@
     <TableFunction
       name="deadOilBo"
       coordinates="{ 2.0e6, 5.0e6, 10.0e6, 20.0e6, 30.0e6, 40.0e6, 50.0e6 }"
-      values="{ 1.02, 1.03, 1.04, 1.05, 1.07, 1.08, 1.09 }"/>
+      values="{ 1.09, 1.08, 1.07, 1.05, 1.04, 1.03, 1.02 }"/>
 
     <TableFunction
       name="deadOilViscosity"
       coordinates="{ 2.0e6, 5.0e6, 10.0e6, 20.0e6, 30.0e6, 40.0e6, 50.0e6 }"
-      values="{  9.750e-04, 9.100e-04, 8.300e-04, 6.950e-04, 5.940e-04, 5.100e-04, 4.490e-04 }"/>
+      values="{  4.490e-04, 5.100e-04, 5.940e-04, 6.950e-04, 8.300e-04, 9.100e-04, 9.750e-04 }"/>
   </Functions>
 
   <!-- Mesh is not used, but GEOSX throws an error without one.  Will resolve soon-->

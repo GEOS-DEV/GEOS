@@ -94,7 +94,6 @@ private:
   };
 
   integer m_numSteps;      ///< Number of load steps
-  integer m_numColumns;    ///< Number of columns in data table (depends on number of fluid phases)
   integer m_numPhases;     ///< Number of fluid phases
   integer m_numComponents; ///< Number of fluid components
 

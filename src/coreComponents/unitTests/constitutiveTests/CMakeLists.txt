@@ -24,7 +24,7 @@ set( gtest_triaxial_xmls
 
 set( gtest_pvt_xmls
      testPVT.xml
-     testPVTPhaseComposition.xml
+     testPVT_PhaseComposition.xml
    )
 
 set( gtest_reactivefluid_xmls
