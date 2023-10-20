@@ -284,17 +284,17 @@ void CompositionalMultiphaseBase::registerDataOnMesh( Group & meshBodies )
         }
 
 
-          if( m_cflFactor > 0 )
-          {
+        if( m_cflFactor > 0 )
+        {
 
-                  subRegion.registerField< fields::flow::phaseOutflux >( getName() ).
-                          reference().resizeDimension< 1 >( m_numPhases );
+          subRegion.registerField< fields::flow::phaseOutflux >( getName() ).
+            reference().resizeDimension< 1 >( m_numPhases );
 
-                  subRegion.registerField< fields::flow::componentOutflux >( getName() ).
-                          reference().resizeDimension< 1 >( m_numComponents );
-                  subRegion.registerField< fields::flow::phaseCFLNumber >( getName() );
-                  subRegion.registerField< fields::flow::componentCFLNumber >( getName() );
-          }
+          subRegion.registerField< fields::flow::componentOutflux >( getName() ).
+            reference().resizeDimension< 1 >( m_numComponents );
+          subRegion.registerField< fields::flow::phaseCFLNumber >( getName() );
+          subRegion.registerField< fields::flow::componentCFLNumber >( getName() );
+        }
 
       }
 
@@ -2038,6 +2038,20 @@ real64 CompositionalMultiphaseBase::setNextDtBasedOnStateChange( real64 const & 
 real64 CompositionalMultiphaseBase::setNextDtBasedOnCFL( const geos::real64 & currentDt, geos::DomainPartition & domain )
 {
 
+  real64 maxPhaseCFL, maxCompCFL;
+
+  computeCFLNumbers( domain, currentDt, maxPhaseCFL, maxCompCFL );
+
+  GEOS_LOG_LEVEL_RANK_0( 1, getName() << ": Max phase CFL number: " << maxPhaseCFL );
+  GEOS_LOG_LEVEL_RANK_0( 1, getName() << ": Max component CFL number: " << maxCompCFL );
+
+  return std::min( m_cflFactor*currentDt/maxCompCFL, m_cflFactor*currentDt/maxPhaseCFL );
+
+}
+
+void CompositionalMultiphaseBase::computeCFLNumbers( geos::DomainPartition & domain, const geos::real64 & dt,
+                                                     geos::real64 & maxPhaseCFL, geos::real64 & maxCompCFL )
+{
   GEOS_MARK_FUNCTION;
 
   integer const numPhases = numFluidPhases();
@@ -2093,7 +2107,7 @@ real64 CompositionalMultiphaseBase::setNextDtBasedOnCFL( const geos::real64 & cu
       isothermalCompositionalMultiphaseBaseKernels::KernelLaunchSelector1
       < isothermalCompositionalMultiphaseFVMKernels::CFLFluxKernel >( numComps,
                                                                       numPhases,
-                                                                      currentDt,
+                                                                      dt,
                                                                       stencilWrapper,
                                                                       compFlowAccessors.get( fields::flow::pressure{} ),
                                                                       compFlowAccessors.get( fields::flow::gravityCoefficient{} ),
@@ -2181,13 +2195,8 @@ real64 CompositionalMultiphaseBase::setNextDtBasedOnCFL( const geos::real64 & cu
     } );
   } );
 
-  real64 const globalMaxPhaseCFLNumber = MpiWrapper::max( localMaxPhaseCFLNumber );
-  real64 const globalMaxCompCFLNumber = MpiWrapper::max( localMaxCompCFLNumber );
-
-    GEOS_LOG_LEVEL_RANK_0( 1, getName() << ": Max phase CFL number: " << globalMaxPhaseCFLNumber );
-  GEOS_LOG_LEVEL_RANK_0( 1, getName() << ": Max component CFL number: " << globalMaxCompCFLNumber );
-
-  return std::min( m_cflFactor*currentDt/globalMaxCompCFLNumber, m_cflFactor*currentDt/globalMaxPhaseCFLNumber );
+  maxPhaseCFL = MpiWrapper::max( localMaxPhaseCFLNumber );
+  maxCompCFL = MpiWrapper::max( localMaxCompCFLNumber );
 
 }
 

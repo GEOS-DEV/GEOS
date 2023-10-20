@@ -355,6 +355,8 @@ public:
   virtual real64 setNextDtBasedOnStateChange( real64 const & currentDt,
                                               DomainPartition & domain ) override;
 
+  void computeCFLNumbers( DomainPartition & domain, real64 const & dt, real64 & maxPhaseCFL, real64 & maxCompCFL );
+
   virtual real64 setNextDtBasedOnCFL( real64 const & currentDt,
                                       DomainPartition & domain ) override;
 
@@ -365,6 +367,7 @@ protected:
   virtual void postProcessInput() override;
 
   virtual void initializePreSubGroups() override;
+
 
   /**
    * @brief Utility function that checks the consistency of the constitutive models
