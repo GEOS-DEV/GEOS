@@ -2870,7 +2870,7 @@ Local - Add stabilization only to interiors of macro elements.-->
 		<!--logLevel => Log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--polyMeshInfSup => Name of a boolean indicator if a polyhedral mesh is used for testing inf-sup stability.-->
-		<xsd:attribute name="polyMeshInfSup" type="string" use="required" />
+		<xsd:attribute name="polyMeshInfSup" type="string" default="" />
 		<!--solidSolverName => Name of the solid mechanics solver in the rock matrix-->
 		<xsd:attribute name="solidSolverName" type="string" use="required" />
 		<!--stabilizationName => Name of the stabilization to use in the lagrangian contact solver-->

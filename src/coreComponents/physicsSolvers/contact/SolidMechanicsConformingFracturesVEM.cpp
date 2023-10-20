@@ -66,7 +66,7 @@ SolidMechanicsConformingFracturesVEM::SolidMechanicsConformingFracturesVEM( cons
     setDescription( "Name of the stabilization to use in the lagrangian contact solver" );
 
   registerWrapper( viewKeyStruct::usePolyMeshForInfSupName(), &m_polyMeshInfSupName ).
-    setInputFlag( InputFlags::REQUIRED ).
+    setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Name of a boolean indicator if a polyhedral mesh is used for testing inf-sup stability." );
 
   m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::lagrangianContactMechanics;
