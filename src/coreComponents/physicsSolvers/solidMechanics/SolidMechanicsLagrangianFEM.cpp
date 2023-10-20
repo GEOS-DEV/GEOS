@@ -1194,7 +1194,7 @@ SolidMechanicsLagrangianFEM::
 
   if( getLogLevel() >= 1 && logger::internal::rank==0 )
   {
-    std::cout << GEOS_FMT( "    ( R{} ) = ( {:4.2e} ) ; ", coupledSolverAttributePrefix(), totalResidualNorm );
+    std::cout << GEOS_FMT( "        ( R{} ) = ( {:4.2e} )", coupledSolverAttributePrefix(), totalResidualNorm );
   }
 
   return totalResidualNorm;
