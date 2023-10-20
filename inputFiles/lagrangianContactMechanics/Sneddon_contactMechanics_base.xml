@@ -8,6 +8,7 @@
       name="lagrangiancontact"
       solidSolverName="lagsolve"
       stabilizationName="TPFAstabilization"
+      surfaceGeneratorName="SurfaceGen"
       logLevel="1"
       discretization="FE1"
       targetRegions="{ Region, Fracture }"

@@ -89,6 +89,10 @@ SolidMechanicsLagrangianFEM::SolidMechanicsLagrangianFEM( const string & name,
     setApplyDefaultValue( m_timeIntegrationOption ).
     setDescription( "Time integration method. Options are:\n* " + EnumStrings< TimeIntegrationOption >::concat( "\n* " ) );
 
+  registerWrapper( viewKeyStruct::surfaceGeneratorNameString(), &m_surfaceGeneratorName ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Name of the surface generator to use" );
+
   registerWrapper( viewKeyStruct::maxNumResolvesString(), &m_maxNumResolves ).
     setApplyDefaultValue( 10 ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -125,6 +129,9 @@ void SolidMechanicsLagrangianFEM::postProcessInput()
   linParams.isSymmetric = true;
   linParams.dofsPerNode = 3;
   linParams.amg.separateComponents = true;
+
+  m_surfaceGenerator = this->getParent().getGroupPointer< SolverBase >( m_surfaceGeneratorName );
+  GEOS_ERROR_IF( m_surfaceGenerator == nullptr, GEOS_FMT( "{}: SurfaceGenerator {} not found", getName(), m_surfaceGeneratorName ) );
 }
 
 SolidMechanicsLagrangianFEM::~SolidMechanicsLagrangianFEM()
@@ -451,15 +458,13 @@ real64 SolidMechanicsLagrangianFEM::solverStep( real64 const & time_n,
   GEOS_MARK_FUNCTION;
   real64 dtReturn = dt;
 
-  SolverBase * const surfaceGenerator = this->getParent().getGroupPointer< SolverBase >( "SurfaceGen" );
-
   if( m_timeIntegrationOption == TimeIntegrationOption::ExplicitDynamic )
   {
     dtReturn = explicitStep( time_n, dt, cycleNumber, domain );
 
-    if( surfaceGenerator!=nullptr )
+    if( m_surfaceGenerator != nullptr )
     {
-      surfaceGenerator->solverStep( time_n, dt, cycleNumber, domain );
+      m_surfaceGenerator->solverStep( time_n, dt, cycleNumber, domain );
     }
   }
   else if( m_timeIntegrationOption == TimeIntegrationOption::ImplicitDynamic ||
@@ -486,11 +491,11 @@ real64 SolidMechanicsLagrangianFEM::solverStep( real64 const & time_n,
                                         cycleNumber,
                                         domain );
 
-      if( surfaceGenerator!=nullptr )
+      if( m_surfaceGenerator != nullptr )
       {
-       int  locallyFractured = 0;
-       globallyFractured = 0;
-        if( surfaceGenerator->solverStep( time_n, dt, cycleNumber, domain ) > 0 )
+        int locallyFractured = 0;
+        globallyFractured = 0;
+        if( m_surfaceGenerator->solverStep( time_n, dt, cycleNumber, domain ) > 0 )
         {
           locallyFractured = 1;
         }
