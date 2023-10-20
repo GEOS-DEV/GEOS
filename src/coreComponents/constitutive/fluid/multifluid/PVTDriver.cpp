@@ -56,6 +56,10 @@ PVTDriver::PVTDriver( const string & name,
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Function controlling temperature time history" );
 
+  registerWrapper( viewKeyStruct::outputPhaseCompositionString(), &m_outputPhaseComposition ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( 0 ).
+    setDescription( "Flag to indicate that phase compositions should be output" );
 
   //todo refactor in mother class
   registerWrapper( viewKeyStruct::numStepsString(), &m_numSteps ).
@@ -75,19 +79,31 @@ PVTDriver::PVTDriver( const string & name,
 
 void PVTDriver::postProcessInput()
 {
+  // Validate some inputs
+  GEOS_ERROR_IF( m_outputPhaseComposition != 0 && m_outputPhaseComposition != 1,
+                 getWrapperDataContext( viewKeyStruct::outputPhaseCompositionString() ) <<
+                 ": option can be either 0 (false) or 1 (true)" );
+
   // get number of phases and components
 
-  ConstitutiveManager & constitutiveManager = this->getGroupByPath< ConstitutiveManager >( "/Problem/domain/Constitutive" );
-  MultiFluidBase & baseFluid = constitutiveManager.getGroup< MultiFluidBase >( m_fluidName );
+  constitutive::MultiFluidBase & baseFluid = getFluid();
 
   m_numPhases = baseFluid.numFluidPhases();
   m_numComponents = baseFluid.numFluidComponents();
 
-  // resize data table to fit number of timesteps and fluid phases:
-  // (numRows,numCols) = (numSteps+1,4+3*numPhases)
-  // column order = time, pressure, temp, totalDensity, phaseFraction_{1:NP}, phaseDensity_{1:NP}, phaseViscosity_{1:NP}
+  // Number of rows in numSteps+1
+  integer const numRows = m_numSteps+1;
+  // Number of columns depends on options
+  // Default column order = time, pressure, temp, totalDensity, phaseFraction_{1:NP}, phaseDensity_{1:NP}, phaseViscosity_{1:NP}
+  integer numCols = 3*m_numPhases+4;
+  // If phase compositions are required we add {1:NP*NC} phase compositions
+  if( m_outputPhaseComposition != 0 )
+  {
+    numCols += m_numPhases * m_numComponents;
+  }
 
-  m_table.resize( m_numSteps+1, 3*m_numPhases+4 );
+  // resize data table to fit number of timesteps and fluid phases:
+  m_table.resize( numRows, numCols );
 
   // initialize functions
 
@@ -131,8 +147,7 @@ bool PVTDriver::execute( real64 const GEOS_UNUSED_PARAM( time_n ),
   // get the fluid out of the constitutive manager.
   // for the moment it is of type MultiFluidBase.
 
-  ConstitutiveManager & constitutiveManager = this->getGroupByPath< ConstitutiveManager >( "/Problem/domain/Constitutive" );
-  MultiFluidBase & baseFluid = constitutiveManager.getGroup< MultiFluidBase >( m_fluidName );
+  constitutive::MultiFluidBase & baseFluid = getFluid();
 
   // depending on logLevel, print some useful info
 
@@ -148,6 +163,7 @@ bool PVTDriver::execute( real64 const GEOS_UNUSED_PARAM( time_n ),
     GEOS_LOG_RANK_0( "  Steps .................. " << m_numSteps );
     GEOS_LOG_RANK_0( "  Output ................. " << m_outputFile );
     GEOS_LOG_RANK_0( "  Baseline ............... " << m_baselineFile );
+    GEOS_LOG_RANK_0( "  Output Phase Comp. ..... " << m_outputPhaseComposition );
   }
 
   // create a dummy discretization with one quadrature point for
@@ -160,7 +176,7 @@ bool PVTDriver::execute( real64 const GEOS_UNUSED_PARAM( time_n ),
   discretization.resize( 1 );   // one element
   baseFluid.allocateConstitutiveData( discretization, 1 );   // one quadrature point
 
-  // pass the solid through the ConstitutivePassThru to downcast from the
+  // pass the fluid through the ConstitutivePassThru to downcast from the
   // base type to a known model type.  the lambda here then executes the
   // appropriate test driver. note that these calls will move data to device if available.
 
@@ -171,7 +187,7 @@ bool PVTDriver::execute( real64 const GEOS_UNUSED_PARAM( time_n ),
   } );
 
   // move table back to host for output
-  m_table.move( hostMemorySpace );
+  //m_table.move( hostMemorySpace );
 
   if( m_outputFile != "none" )
   {
@@ -203,6 +219,16 @@ void PVTDriver::outputResults()
   fprintf( fp, "# columns %d-%d = phase densities\n", 5+m_numPhases, 4+2*m_numPhases );
   fprintf( fp, "# columns %d-%d = phase viscosities\n", 5+2*m_numPhases, 4+3*m_numPhases );
 
+  if( m_outputPhaseComposition != 0 )
+  {
+    auto const phaseNames = getFluid().phaseNames();
+    integer const startColumn = 5+3*m_numPhases;
+    for( integer ip = 0; ip < m_numPhases; ++ip )
+    {
+      fprintf( fp, "# columns %d-%d = %s phase fractions\n", startColumn+ip*m_numComponents,
+               startColumn+(ip+1)*m_numComponents, phaseNames[ip].c_str() );
+    }
+  }
   for( integer n=0; n<m_table.size( 0 ); ++n )
   {
     for( integer col=0; col<m_table.size( 1 ); ++col )
@@ -224,8 +250,13 @@ void PVTDriver::compareWithBaseline()
 
   // discard file header
 
+  integer headerRows = 7;
+  if( m_outputPhaseComposition )
+  {
+    headerRows += getFluid().numFluidPhases();
+  }
   string line;
-  for( integer row=0; row < 7; ++row )
+  for( integer row=0; row < headerRows; ++row )
   {
     getline( file, line );
   }
@@ -265,6 +296,13 @@ void PVTDriver::compareWithBaseline()
   file.close();
 }
 
+constitutive::MultiFluidBase &
+PVTDriver::getFluid()
+{
+  ConstitutiveManager & constitutiveManager = this->getGroupByPath< ConstitutiveManager >( "/Problem/domain/Constitutive" );
+  MultiFluidBase & baseFluid = constitutiveManager.getGroup< MultiFluidBase >( m_fluidName );
+  return baseFluid;
+}
 
 REGISTER_CATALOG_ENTRY( TaskBase,
                         PVTDriver,

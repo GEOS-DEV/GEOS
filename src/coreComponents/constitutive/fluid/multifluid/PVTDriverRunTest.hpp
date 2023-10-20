@@ -46,10 +46,17 @@ void PVTDriver::runTest( FLUID_TYPE & fluid, arrayView2d< real64 > const & table
   GEOS_ASSERT_EQ( numComponents, m_feed.size() );
   array2d< real64, compflow::LAYOUT_COMP > const compositionValues( 1, numComponents );
 
+  // extract the molecular weights
+  array1d< real64 > const componentMolarWeights( numComponents );
+  for( integer i = 0; i < numComponents; ++i )
+  {
+    componentMolarWeights[i] = fluid.componentMolarWeights()[i];
+  }
+
   real64 sum = 0.0;
   for( integer i = 0; i < numComponents; ++i )
   {
-    compositionValues[0][i] = m_feed[i] * fluid.componentMolarWeights()[i];
+    compositionValues[0][i] = m_feed[i] * componentMolarWeights[i];
     sum += compositionValues[0][i];
   }
   for( integer i = 0; i < numComponents; ++i )
@@ -65,8 +72,13 @@ void PVTDriver::runTest( FLUID_TYPE & fluid, arrayView2d< real64 > const & table
   integer const numSteps = m_numSteps;
   using ExecPolicy = typename FLUID_TYPE::exec_policy;
   forAll< ExecPolicy >( composition.size( 0 ),
-                        [numPhases, numSteps, kernelWrapper, table, composition] GEOS_HOST_DEVICE ( localIndex const i )
+                        [numPhases, numComponents, numSteps, kernelWrapper, table, composition,
+                         molarWeights=componentMolarWeights.toViewConst(),
+                         outputPhaseComposition=m_outputPhaseComposition]
+                        GEOS_HOST_DEVICE ( localIndex const i )
   {
+    constexpr real64 epsilon = LvArray::NumericLimits< real64 >::epsilon;
+
     for( integer n = 0; n <= numSteps; ++n )
     {
       kernelWrapper.update( i, 0, table( n, PRES ), table( n, TEMP ), composition[i] );
@@ -78,12 +90,34 @@ void PVTDriver::runTest( FLUID_TYPE & fluid, arrayView2d< real64 > const & table
         table( n, TEMP + 2 + p + numPhases ) = kernelWrapper.phaseDensity()( i, 0, p );
         table( n, TEMP + 2 + p + 2 * numPhases ) = kernelWrapper.phaseViscosity()( i, 0, p );
       }
+      if( outputPhaseComposition )
+      {
+        for( integer p = 0; p < numPhases; ++p )
+        {
+          integer const compStartIndex = TEMP + 2 + 3 * numPhases + p * numComponents;
+
+          // Convert mass fractions to molar fractions
+          real64 molarSum = 0.0;
+          for( integer ic = 0; ic < numComponents; ++ic )
+          {
+            real64 const massFraction = kernelWrapper.phaseCompFraction()( i, 0, p, ic );
+            table( n, compStartIndex + ic ) = massFraction / molarWeights[ic];
+            molarSum += table( n, compStartIndex + ic );
+          }
+
+          real64 const invMolarSum = epsilon < molarSum ? 1.0/molarSum : 0.0;
+
+          for( integer ic = 0; ic < numComponents; ++ic )
+          {
+            table( n, compStartIndex + ic ) *= invMolarSum;
+          }
+        }
+      }
     }
   } );
 
 }
 
 }
-
 
 #endif /* GEOS_CONSTITUTIVE_PVTDRIVERRUNTEST_HPP_ */
