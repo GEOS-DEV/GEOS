@@ -150,11 +150,14 @@ private:
   /// Phase labels
   array1d< PhaseType > m_phaseTypes;
 
+  /// Equation of state labels
+  array1d< EquationOfStateType > m_eosTypes;
+
   /// Index of the water phase
   integer m_aqueousPhaseIndex{-1};
 
-  /// Equation of state labels
-  array1d< EquationOfStateType > m_equationsOfState;
+  // names of equations of state to use for each phase
+  string_array m_equationsOfState;
 
   // standard EOS component input
   array1d< real64 > m_componentCriticalPressure;
@@ -162,11 +165,6 @@ private:
   array1d< real64 > m_componentAcentricFactor;
   array1d< real64 > m_componentVolumeShift;
   array2d< real64 > m_componentBinaryCoeff;
-
-  // Currently not implemented so uses constant values
-  static constexpr real64 MOLECULAR_WEIGHT[] = { 22.0, 33.0 };
-  static constexpr real64 DENSITY[] = { 1.0, 1.0 };
-  static constexpr real64 VISCOSITY[] = { 1.0, 1.0  };
 };
 
 GEOS_HOST_DEVICE
@@ -195,7 +193,7 @@ CompositionalMultiphaseFluid::KernelWrapper::
 
   // 1. Convert input mass fractions to mole fractions and keep derivatives
 
-  stackArray1d< real64, maxNumComp > compMoleFrac( numComp );
+  real64 compMoleFrac[maxNumComp]{};
   if( m_useMass )
   {
     convertToMoleFractions< maxNumComp >( composition, compMoleFrac );
@@ -212,13 +210,13 @@ CompositionalMultiphaseFluid::KernelWrapper::
 
   for( integer ip = 0; ip < numPhase; ++ip )
   {
-    phaseFrac[ip] = 0.0;        // TODO
-    phaseDens[ip] = 0.0;        // TODO
-    phaseMassDens[ip] = 0.0;    // TODO
-    phaseVisc[ip] = 0.0;        // TODO
+    phaseFrac[ip] = 1.0 / numPhase;     // TODO
+    phaseDens[ip] = 40.0;               // TODO
+    phaseMassDens[ip] = 1000.0;         // TODO
+    phaseVisc[ip] = 0.001;              // TODO
     for( integer jc = 0; jc < numComp; ++jc )
     {
-      phaseCompFrac[ip][jc] = composition[jc];  // TODO
+      phaseCompFrac[ip][jc] = compMoleFrac[jc];  // TODO
     }
   }
 
@@ -231,7 +229,7 @@ CompositionalMultiphaseFluid::KernelWrapper::
     real64 phaseMolecularWeight[maxNumPhase]{};
     for( integer ip = 0; ip < numPhase; ++ip )
     {
-      phaseMolecularWeight[ip] = 0.0;
+      phaseMolecularWeight[ip] = 1.0;
     }
 
     // convert mole fractions to mass fractions
@@ -276,7 +274,7 @@ CompositionalMultiphaseFluid::KernelWrapper::
 
   // 1. Convert input mass fractions to mole fractions and keep derivatives
 
-  stackArray1d< real64, maxNumComp > compMoleFrac( numComp );
+  real64 compMoleFrac[maxNumComp]{};
   real64 dCompMoleFrac_dCompMassFrac[maxNumComp][maxNumComp]{};
 
   if( m_useMass )
@@ -301,19 +299,19 @@ CompositionalMultiphaseFluid::KernelWrapper::
 
   for( integer ip = 0; ip < numPhase; ++ip )
   {
-    phaseFraction.value[ip] = 0.0;
+    phaseFraction.value[ip] = 1.0 / numPhase;
     phaseFraction.derivs[ip][Deriv::dP] = 0.0;
     phaseFraction.derivs[ip][Deriv::dT] = 0.0;
 
-    phaseDensity.value[ip] = 0.0;
+    phaseDensity.value[ip] = 40.0;
     phaseDensity.derivs[ip][Deriv::dP] = 0.0;
     phaseDensity.derivs[ip][Deriv::dT] = 0.0;
 
-    phaseMassDensity.value[ip] = 0.0;
+    phaseMassDensity.value[ip] = 1000.0;
     phaseMassDensity.derivs[ip][Deriv::dP] = 0.0;
     phaseMassDensity.derivs[ip][Deriv::dT] = 0.0;
 
-    phaseViscosity.value[ip] = 0.0;
+    phaseViscosity.value[ip] = 0.001;
     phaseViscosity.derivs[ip][Deriv::dP] = 0.0;
     phaseViscosity.derivs[ip][Deriv::dT] = 0.0;
 
@@ -324,7 +322,7 @@ CompositionalMultiphaseFluid::KernelWrapper::
       phaseMassDensity.derivs[ip][Deriv::dC+jc] = 0.0;
       phaseViscosity.derivs[ip][Deriv::dC+jc] = 0.0;
 
-      phaseCompFraction.value[ip][jc] = 0.0;
+      phaseCompFraction.value[ip][jc] = compMoleFrac[jc];
       phaseCompFraction.derivs[ip][jc][Deriv::dP] = 0.0;
       phaseCompFraction.derivs[ip][jc][Deriv::dT] = 0.0;
 

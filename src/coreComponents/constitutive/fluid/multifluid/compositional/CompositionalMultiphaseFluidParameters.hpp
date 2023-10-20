@@ -49,8 +49,8 @@ ENUM_STRINGS( PhaseType,
               "aqueous" );
 
 ENUM_STRINGS( EquationOfStateType,
-              "pr",
-              "srk" );
+              "PR",
+              "SRK" );
 
 } /* namespace constitutive */
 

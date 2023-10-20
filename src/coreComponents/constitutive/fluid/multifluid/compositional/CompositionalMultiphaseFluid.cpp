@@ -37,8 +37,8 @@ CompositionalMultiphaseFluid::CompositionalMultiphaseFluid( string const & name,
 
   registerWrapper( viewKeyStruct::equationsOfStateString(), &m_equationsOfState ).
     setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "List of equation of state types for each phase. Available options are: "
-                    "``" + EnumStrings< EquationOfStateType >::concat( "|" ) + "``" );
+    setDescription( "List of equation of state types for each phase. Available options are:\n"
+                     + EnumStrings< EquationOfStateType >::concat( "\n *" ) );
 
   registerWrapper( viewKeyStruct::componentCriticalPressureString(), &m_componentCriticalPressure ).
     setInputFlag( InputFlags::REQUIRED ).
@@ -73,9 +73,6 @@ void CompositionalMultiphaseFluid::postProcessInput()
   integer const NC = numFluidComponents();
   integer const NP = numFluidPhases();
 
-  m_phaseTypes.resize( NP );
-  std::transform( m_phaseNames.begin(), m_phaseNames.end(), m_phaseTypes.begin(), [this]( string const & name ){ return this->getPhaseType( name ); } );
-
   auto const checkInputSize = [&]( auto const & array, integer const expected, string const & attribute )
   {
     GEOS_THROW_IF_NE_MSG( array.size(), expected,
@@ -103,17 +100,23 @@ void CompositionalMultiphaseFluid::postProcessInput()
   }
   checkInputSize( m_componentBinaryCoeff, NC * NC, viewKeyStruct::componentBinaryCoeffString() );
 
+  m_phaseTypes.resize( NP );
+  std::transform( m_phaseNames.begin(), m_phaseNames.end(), m_phaseTypes.begin(), [this]( string const & name ){ return this->getPhaseType( name ); } );
+  m_eosTypes.resize( NP );
+  std::transform( m_equationsOfState.begin(), m_equationsOfState.end(), m_eosTypes.begin(),
+    []( string const & name ){ return EnumStrings<EquationOfStateType>::fromString(name); } );
+
   // Reorder phases: liquid, vapour, aqueous
   std::multimap< PhaseType, EquationOfStateType > ordering;
   for( integer ip = 0; ip < NP; ++ip )
   {
-    ordering.insert( {m_phaseTypes[ip], m_equationsOfState[ip]} );
+    ordering.insert( {m_phaseTypes[ip], m_eosTypes[ip]} );
   }
   integer ip = 0;
   for( const auto [phase, eos] : ordering )
   {
     m_phaseTypes[ip] = phase;
-    m_equationsOfState[ip] = eos;
+    m_eosTypes[ip] = eos;
     if( phase == PhaseType::aqueous )
     {
       m_aqueousPhaseIndex = ip;
@@ -129,7 +132,9 @@ void CompositionalMultiphaseFluid::initializePostSubGroups()
 }
 
 void CompositionalMultiphaseFluid::createFluid()
-{}
+{
+  m_fluid = std::make_unique< IFluid >();
+}
 
 std::unique_ptr< ConstitutiveBase >
 CompositionalMultiphaseFluid::deliverClone( string const & name,
@@ -138,6 +143,7 @@ CompositionalMultiphaseFluid::deliverClone( string const & name,
   std::unique_ptr< ConstitutiveBase > clone = MultiFluidBase::deliverClone( name, parent );
   CompositionalMultiphaseFluid & fluid = dynamicCast< CompositionalMultiphaseFluid & >( *clone );
   fluid.m_phaseTypes = m_phaseTypes;
+  fluid.m_eosTypes = m_eosTypes;
   fluid.createFluid();
   return clone;
 }
