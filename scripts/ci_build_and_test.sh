@@ -16,10 +16,9 @@ BUILD_DIR=${GITHUB_WORKSPACE}
 BUILD_DIR_MOUNT_POINT=/tmp/GEOSX
 
 if [ ${USE_SCCACHE} = true ]; then
-  echo "USE_SCCAHE is defined true"
+  echo "Creating the configuration file for sccache..."
   mkdir -p /opt/gcs
-  # cp -rp ${GOOGLE_GHA_CREDS_PATH} /opt/gcs/credentials.json
-  ln -s ${GOOGLE_GHA_CREDS_PATH} /opt/gcs/credentials.json
+  cp -rp ${GOOGLE_GHA_CREDS_PATH} /opt/gcs/credentials.json
   SCCACHE_VOLUME_MOUNT="--volume=/opt/gcs:/opt/gcs"
   SCCACHE_CLI="--use-sccache"
 fi
