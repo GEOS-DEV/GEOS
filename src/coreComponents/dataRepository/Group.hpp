@@ -1451,7 +1451,10 @@ public:
   /// Enable verbosity input for object
   void enableLogLevelInput();
 
-  /// @return The verbosity level
+  /**
+   * @brief Set verbosity level
+   * @param new verbosity level value
+   */
   void setLogLevel( integer const logLevel ) { m_logLevel = logLevel; }
 
   /// @return The verbosity level
