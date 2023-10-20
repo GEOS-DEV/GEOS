@@ -65,8 +65,6 @@ void SolidMechanicsStateReset::postProcessInput()
                  InputError );
 
   m_solidSolver = &physicsSolverManager.getGroup< SolidMechanicsLagrangianFEM >( m_solidSolverName );
-
-  std::cout <<" SolidMechanicsStateReset log level = " << getLogLevel() << std::endl;
 }
 
 bool SolidMechanicsStateReset::execute( real64 const time_n,
