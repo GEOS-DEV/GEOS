@@ -36,8 +36,9 @@ on:
         required: true
         type: string
       USE_SCCACHE:
-        required: true
+        required: false
         type: boolean
+        default: true
     secrets:
       GOOGLE_CLOUD_GCP:
         required: false
@@ -64,13 +65,13 @@ jobs:
         lfs: false
 
     - id: 'auth'
-      # if: env.GCP_BUCKET
+      if: ${{ env.GCP_BUCKET || env.USE_SCCACHE }}
       uses: 'google-github-actions/auth@v1'
       with:
         credentials_json: '${{ secrets.GOOGLE_CLOUD_GCP }}'
         create_credentials_file: true
     - name: 'Set up Cloud SDK'
-      # if: env.GCP_BUCKET
+      if: env.GCP_BUCKET
       uses: 'google-github-actions/setup-gcloud@v1'
       with:
         version: '>= 363.0.0'

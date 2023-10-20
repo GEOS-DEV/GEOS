@@ -40,10 +40,15 @@ fi
 GEOSX_INSTALL_SCHEMA=1
 if [[ "$*" == *--disable-schema-deployment* ]]; then
   GEOSX_INSTALL_SCHEMA=0
-fi  
+fi
 
-mkdir -p ${HOME}/.config/sccache
-cat <<EOT >> ${HOME}/.config/sccache/config
+if [[ "$*" == *--use-sccache* ]]; then
+  USE_SCCACHE=1
+fi
+
+if [[ ${USE_SCCACHE} ]]; then
+  mkdir -p ${HOME}/.config/sccache
+  cat <<EOT >> ${HOME}/.config/sccache/config
 [cache.gcs]
 rw_mode = "READ_WRITE"
 cred_path = "/opt/gcs/credentials.json"
@@ -51,8 +56,11 @@ bucket = "geos-dev"
 key_prefix = "sccache"
 EOT
 
-echo "sccache initial state"
-${SCCACHE} --show-stats
+  SCCACHE_CMAKE_PARAMETERS="-DCMAKE_CXX_COMPILER_LAUNCHER=${SCCACHE} -DCMAKE_CUDA_COMPILER_LAUNCHER=${SCCACHE}"
+
+  echo "sccache initial state"
+  ${SCCACHE} --show-stats
+fi
 
 # The -DBLT_MPI_COMMAND_APPEND="--allow-run-as-root;--oversubscribe" option is added for OpenMPI.
 #
@@ -75,9 +83,7 @@ or_die python3 scripts/config-build.py \
                -ip ${GEOSX_DIR} \
                --ninja \
                -DBLT_MPI_COMMAND_APPEND='"--allow-run-as-root;--oversubscribe"' \
-               -DCMAKE_CXX_COMPILER_LAUNCHER=${SCCACHE} \
-               -DCMAKE_CUDA_COMPILER_LAUNCHER=${SCCACHE} \
-               -DGEOSX_INSTALL_SCHEMA=${GEOSX_INSTALL_SCHEMA}
+               -DGEOSX_INSTALL_SCHEMA=${GEOSX_INSTALL_SCHEMA} ${SCCACHE_CMAKE_PARAMETERS}
 
 or_die cd ${GEOSX_BUILD_DIR}
 
@@ -107,7 +113,9 @@ if [[ "$*" != *--disable-unit-tests* ]]; then
   or_die ctest --output-on-failure -E "testUncrustifyCheck|testDoxygenCheck"
 fi
 
-echo "sccache final state"
-${SCCACHE} --show-stats
+if [[ ${USE_SCCACHE} ]]; then
+  echo "sccache final state"
+  ${SCCACHE} --show-stats
+fi
 
 exit 0

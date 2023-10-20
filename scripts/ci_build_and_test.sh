@@ -15,9 +15,14 @@ BUILD_DIR=${GITHUB_WORKSPACE}
 # Since this information is repeated twice, we use a variable.
 BUILD_DIR_MOUNT_POINT=/tmp/GEOSX
 
-mkdir -p /opt/gcs
-cp -rp ${GOOGLE_GHA_CREDS_PATH} /opt/gcs/credentials.json
-
+if [ ${USE_SCCACHE} = true ]; then
+  echo "USE_SCCAHE is defined true"
+  mkdir -p /opt/gcs
+  # cp -rp ${GOOGLE_GHA_CREDS_PATH} /opt/gcs/credentials.json
+  ln -s ${GOOGLE_GHA_CREDS_PATH} /opt/gcs/credentials.json
+  SCCACHE_VOLUME_MOUNT="--volume=/opt/gcs:/opt/gcs"
+  SCCACHE_CLI="--use-sccache"
+fi
 
 # We need to keep track of the building container (hence the `CONTAINER_NAME`)
 # so we can extract the data from it later (if needed). Another solution would have been to use a mount point,
@@ -26,8 +31,7 @@ CONTAINER_NAME=geosx_build
 # Now we can build GEOSX.
 docker run \
   --name=${CONTAINER_NAME} \
-  --volume=${BUILD_DIR}:${BUILD_DIR_MOUNT_POINT} \
-  --volume=/opt/gcs:/opt/gcs \
+  --volume=${BUILD_DIR}:${BUILD_DIR_MOUNT_POINT} ${SCCACHE_VOLUME_MOUNT} \
   --cap-add=ALL \
   -e HOST_CONFIG=${HOST_CONFIG:-host-configs/environment.cmake} \
   -e CMAKE_BUILD_TYPE \
@@ -36,5 +40,4 @@ docker run \
   -e ENABLE_HYPRE_DEVICE=${ENABLE_HYPRE_DEVICE:-CPU} \
   -e ENABLE_TRILINOS=${ENABLE_TRILINOS:-ON} \
   ${DOCKER_REPOSITORY}:${GEOSX_TPL_TAG} \
-  ${BUILD_DIR_MOUNT_POINT}/scripts/ci_build_and_test_in_container.sh ${BUILD_AND_TEST_ARGS};
-
+  ${BUILD_DIR_MOUNT_POINT}/scripts/ci_build_and_test_in_container.sh ${BUILD_AND_TEST_ARGS} ${SCCACHE_CLI};
