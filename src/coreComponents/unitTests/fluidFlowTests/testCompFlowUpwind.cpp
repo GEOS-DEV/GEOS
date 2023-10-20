@@ -336,7 +336,7 @@ using PermeabilityAccessors =
                             fields::permeability::permeability,
                             fields::permeability::dPerm_dPressure >;
 
-template< localIndex numComp, localIndex numPhase >
+template< localIndex numComp, localIndex numPhase, localIndex numFluxSupportPoints >
 void testCompositionalStandardUpwind( CompositionalMultiphaseFVM & solver,
                                       DomainPartition & domain )
 {
@@ -373,7 +373,7 @@ void testCompositionalStandardUpwind( CompositionalMultiphaseFVM & solver,
         auto const & seri = stencil.getElementRegionIndices();
         auto const & sesri = stencil.getElementSubRegionIndices();
         auto const & sei = stencil.getElementIndices();
-        localIndex constexpr numFluxSupportPoints = 2;
+//        localIndex constexpr numFluxSupportPoints = 2;
         localIndex constexpr maxNumConn = 1;
         real64 trans[maxNumConn][numFluxSupportPoints]{};
         real64 dTrans_dP[maxNumConn][numFluxSupportPoints]{};
@@ -452,7 +452,7 @@ void testCompositionalStandardUpwind( CompositionalMultiphaseFVM & solver,
 
 }//EOfunc
 
-template< localIndex numComp, localIndex numPhase >
+template< localIndex numComp, localIndex numPhase, localIndex numFluxSupportPoints >
 void testCompositionalUpwindHU( CompositionalMultiphaseFVM & solver,
                                 DomainPartition & domain )
 {
@@ -473,8 +473,8 @@ void testCompositionalUpwindHU( CompositionalMultiphaseFVM & solver,
       auto const & permeability = permeabilityAccessors.get( fields::permeability::permeability{} );
       auto const & dPerm_dPres = permeabilityAccessors.get( fields::permeability::dPerm_dPressure{} );
 
-      MultiFluidBase & fluid = subRegion.getConstitutiveModel< MultiFluidBase >( fluidName );
-      CapillaryPressureBase & cap = subRegion.getConstitutiveModel< CapillaryPressureBase >( capName );
+      auto & fluid = subRegion.getConstitutiveModel< MultiFluidBase >( fluidName );
+      auto & cap = subRegion.getConstitutiveModel< CapillaryPressureBase >( capName );
 
       // reset the solver state to zero out variable updates
       solver.resetStateToBeginningOfStep( domain );
@@ -487,7 +487,7 @@ void testCompositionalUpwindHU( CompositionalMultiphaseFVM & solver,
         auto const & seri = stencil.getElementRegionIndices();
         auto const & sesri = stencil.getElementSubRegionIndices();
         auto const & sei = stencil.getElementIndices();
-        localIndex constexpr numFluxSupportPoints = 2;
+//        localIndex constexpr numFluxSupportPoints = 2;
         localIndex constexpr maxNumConn = 1;
 
         real64 trans[maxNumConn][numFluxSupportPoints]{};
@@ -589,33 +589,13 @@ void testCompositionalUpwindHU( CompositionalMultiphaseFVM & solver,
           }
 
           //expected upwind directions
-          localIndex k_exp_hu_mu[numPhase] = {1, 1};                                                                                                   //as
-          // the
-          // total
-          // flux
-          // is
-          // negative
-          localIndex k_exp_hu_g[numPhase] = {0, 1};                                                                                                   //lighter
-          // phase
-          // going
-          // up
-          // (x
-          // positive
-          // here),
-          // heavier
-          // ...
-          localIndex k_exp_hu_pc[numPhase] = {1, 0};                                                                                                   // as
-          // pc(o/g)
-          // is
-          // increasing
-          // wrt
-          // sg
-          // then
-          // dir
-          // is
-          // opposite
-          // to
+          // the total flux is negative
+          // phase going up(x positive here), heavier...
+          // pc(o/g) is increasing wrt sg then dir is opposite to
           // grad(Sg)
+          localIndex k_exp_hu_mu[numPhase] = {1, 1};
+          localIndex k_exp_hu_g[numPhase] = {0, 1};
+          localIndex k_exp_hu_pc[numPhase] = {1, 0};
 
           for( localIndex ip = 0; ip < numPhase; ++ip )
           {
@@ -652,7 +632,6 @@ void testCompositionalUpwindHU( CompositionalMultiphaseFVM & solver,
 
             phaseFluxHU[Physics::Viscous][ip] = fflow * totFlux;
 
-/**** addendum ****/
             for( localIndex ke = 0; ke < numFluxSupportPoints; ++ke )
             {
               dPhaseFluxHU_dP[Physics::Viscous][ip][ke] += dFflow_dP[ke] * totFlux;
@@ -862,16 +841,18 @@ TEST_F( CompositionalMultiphaseFlowUpwindHelperKernelsTest, test_standardPPU )
 {
   localIndex constexpr NP = 2;
   localIndex constexpr NC = 4;
+  localIndex constexpr NS = 2;
   DomainPartition & domain = state.getProblemManager().getDomainPartition();
-  testCompositionalStandardUpwind< NC, NP >( *solver, domain );
+  testCompositionalStandardUpwind< NC, NP, NS >( *solver, domain );
 }
 
 TEST_F( CompositionalMultiphaseFlowUpwindHelperKernelsTest, test_HU )
 {
   localIndex constexpr NP = 2;
   localIndex constexpr NC = 4;
+  localIndex constexpr NS = 2;
   DomainPartition & domain = state.getProblemManager().getDomainPartition();
-  testCompositionalUpwindHU< NC, NP >( *solver, domain );
+  testCompositionalUpwindHU< NC, NP, NS >( *solver, domain );
 }
 
 
