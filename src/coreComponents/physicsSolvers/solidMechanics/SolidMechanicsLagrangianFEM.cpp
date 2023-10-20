@@ -489,7 +489,8 @@ real64 SolidMechanicsLagrangianFEM::solverStep( real64 const & time_n,
 
       if( surfaceGenerator!=nullptr )
       {
-        locallyFractured = 0;
+       int  locallyFractured = 0;
+       globallyFractured = 0;
         if( surfaceGenerator->solverStep( time_n, dt, cycleNumber, domain ) > 0 )
         {
           locallyFractured = 1;
