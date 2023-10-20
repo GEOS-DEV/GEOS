@@ -21,6 +21,14 @@ set( constitutive_headers
      contact/CoulombContact.hpp
      contact/ContactSelector.hpp
      contact/FrictionlessContact.hpp
+     diffusion/ConstantDiffusion.hpp
+     diffusion/DiffusionBase.hpp
+     diffusion/DiffusionFields.hpp
+     diffusion/DiffusionSelector.hpp
+     dispersion/DispersionBase.hpp
+     dispersion/DispersionFields.hpp
+     dispersion/DispersionSelector.hpp
+     dispersion/LinearIsotropicDispersion.hpp     
      fluid/multifluid/Layouts.hpp
      fluid/multifluid/MultiFluidSelector.hpp
      fluid/multifluid/MultiFluidBase.hpp
@@ -135,12 +143,12 @@ set( constitutive_headers
      thermalConductivity/MultiPhaseConstantThermalConductivity.hpp
      thermalConductivity/MultiPhaseThermalConductivityBase.hpp
      thermalConductivity/MultiPhaseThermalConductivityFields.hpp
-     thermalConductivity/multiPhaseThermalConductivitySelector.hpp
+     thermalConductivity/MultiPhaseThermalConductivitySelector.hpp
      thermalConductivity/MultiPhaseVolumeWeightedThermalConductivity.hpp
      thermalConductivity/SinglePhaseConstantThermalConductivity.hpp
      thermalConductivity/SinglePhaseThermalConductivityBase.hpp
      thermalConductivity/SinglePhaseThermalConductivityFields.hpp
-     thermalConductivity/singlePhaseThermalConductivitySelector.hpp
+     thermalConductivity/SinglePhaseThermalConductivitySelector.hpp
      thermalConductivity/ThermalConductivityFields.hpp
    )
 #
@@ -159,6 +167,10 @@ set( constitutive_sources
      contact/ContactBase.cpp
      contact/CoulombContact.cpp
      contact/FrictionlessContact.cpp
+     diffusion/ConstantDiffusion.cpp
+     diffusion/DiffusionBase.cpp
+     dispersion/DispersionBase.cpp
+     dispersion/LinearIsotropicDispersion.cpp
      fluid/multifluid/MultiFluidBase.cpp
      fluid/multifluid/PVTDriver.cpp
      fluid/multifluid/blackOil/BlackOilFluidBase.cpp
