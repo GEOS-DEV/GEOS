@@ -21,6 +21,8 @@
 
 #include "PVTDriver.hpp"
 
+#include "constitutive/fluid/multifluid/Layouts.hpp"
+
 namespace geos
 {
 
@@ -74,27 +76,41 @@ void PVTDriver::runTest( FLUID_TYPE & fluid, arrayView2d< real64 > const & table
   forAll< ExecPolicy >( composition.size( 0 ),
                         [numPhases, numComponents, numSteps, kernelWrapper, table, composition,
                          molarWeights=componentMolarWeights.toViewConst(),
+                         outputCompressibility=m_outputCompressibility,
                          outputPhaseComposition=m_outputPhaseComposition]
                         GEOS_HOST_DEVICE ( localIndex const i )
   {
     constexpr real64 epsilon = LvArray::NumericLimits< real64 >::epsilon;
 
+    // Pressure derivative index
+    constexpr integer dPIndex = constitutive::multifluid::DerivativeOffset::dP;
+
+    // Index for start of phase properties
+    integer const PHASE = outputCompressibility != 0 ? TEMP + 3 : TEMP + 2;
+
     for( integer n = 0; n <= numSteps; ++n )
     {
       kernelWrapper.update( i, 0, table( n, PRES ), table( n, TEMP ), composition[i] );
-      table( n, TEMP + 1 ) = kernelWrapper.totalDensity()( i, 0 );
+      real64 const totalDensity = kernelWrapper.totalDensity()( i, 0 );
+      table( n, TEMP + 1 ) = totalDensity;
+
+      if( outputCompressibility != 0 )
+      {
+        real64 compressibility = kernelWrapper.dTotalDensity()( i, 0, dPIndex ) / totalDensity;
+        table( n, TEMP + 2 ) =  LvArray::math::max( 0.0, compressibility );
+      }
 
       for( integer p = 0; p < numPhases; ++p )
       {
-        table( n, TEMP + 2 + p ) = kernelWrapper.phaseFraction()( i, 0, p );
-        table( n, TEMP + 2 + p + numPhases ) = kernelWrapper.phaseDensity()( i, 0, p );
-        table( n, TEMP + 2 + p + 2 * numPhases ) = kernelWrapper.phaseViscosity()( i, 0, p );
+        table( n, PHASE + p ) = kernelWrapper.phaseFraction()( i, 0, p );
+        table( n, PHASE + p + numPhases ) = kernelWrapper.phaseDensity()( i, 0, p );
+        table( n, PHASE + p + 2 * numPhases ) = kernelWrapper.phaseViscosity()( i, 0, p );
       }
-      if( outputPhaseComposition )
+      if( outputPhaseComposition != 0 )
       {
         for( integer p = 0; p < numPhases; ++p )
         {
-          integer const compStartIndex = TEMP + 2 + 3 * numPhases + p * numComponents;
+          integer const compStartIndex = PHASE + 3 * numPhases + p * numComponents;
 
           // Convert mass fractions to molar fractions
           real64 molarSum = 0.0;

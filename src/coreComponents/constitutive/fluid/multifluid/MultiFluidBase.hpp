@@ -262,6 +262,9 @@ public:
     GEOS_HOST_DEVICE arrayView2d< real64 const, multifluid::USD_FLUID > totalDensity() const
     { return m_totalDensity.value; }
 
+    GEOS_HOST_DEVICE arrayView3d< real64 const, multifluid::USD_FLUID_DC > dTotalDensity() const
+    { return m_totalDensity.derivs; }
+
     GEOS_HOST_DEVICE arrayView3d< real64 const, multifluid::USD_PHASE > phaseEnthalpy() const
     { return m_phaseEnthalpy.value; }
 

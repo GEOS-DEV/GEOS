@@ -9,6 +9,7 @@
       pressureControl="pressureFunction"
       temperatureControl="temperatureFunction"
       steps="49"
+      outputCompressibility="1"
       outputPhaseComposition="1"
       baseline="testPVT_hydrocarbonMixture.txt"
       logLevel="1"/>
@@ -31,6 +32,7 @@
       pressureControl="pressureFunction"
       temperatureControl="temperatureFunction"
       steps="49"
+      outputCompressibility="1"
       outputPhaseComposition="1"
       baseline="testPVT_deadOilB.txt"
       logLevel="1"/>      
@@ -42,6 +44,7 @@
       pressureControl="pressureFunction"
       temperatureControl="temperatureFunction"
       steps="49"
+      outputCompressibility="1"
       outputPhaseComposition="1"
       baseline="testPVT_liveBlackOil.txt"
       logLevel="1"/>      

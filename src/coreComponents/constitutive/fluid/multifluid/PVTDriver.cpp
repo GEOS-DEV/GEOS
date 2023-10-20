@@ -56,6 +56,11 @@ PVTDriver::PVTDriver( const string & name,
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Function controlling temperature time history" );
 
+  registerWrapper( viewKeyStruct::outputCompressibilityString(), &m_outputCompressibility ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( 0 ).
+    setDescription( "Flag to indicate that the total compressibility should be output" );
+
   registerWrapper( viewKeyStruct::outputPhaseCompositionString(), &m_outputPhaseComposition ).
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( 0 ).
@@ -80,6 +85,10 @@ PVTDriver::PVTDriver( const string & name,
 void PVTDriver::postProcessInput()
 {
   // Validate some inputs
+  GEOS_ERROR_IF( m_outputCompressibility != 0 && m_outputCompressibility != 1,
+                 getWrapperDataContext( viewKeyStruct::outputCompressibilityString() ) <<
+                 ": option can be either 0 (false) or 1 (true)" );
+
   GEOS_ERROR_IF( m_outputPhaseComposition != 0 && m_outputPhaseComposition != 1,
                  getWrapperDataContext( viewKeyStruct::outputPhaseCompositionString() ) <<
                  ": option can be either 0 (false) or 1 (true)" );
@@ -93,9 +102,17 @@ void PVTDriver::postProcessInput()
 
   // Number of rows in numSteps+1
   integer const numRows = m_numSteps+1;
+
   // Number of columns depends on options
   // Default column order = time, pressure, temp, totalDensity, phaseFraction_{1:NP}, phaseDensity_{1:NP}, phaseViscosity_{1:NP}
   integer numCols = 3*m_numPhases+4;
+
+  // If the total compressibility is requested then add a column
+  if( m_outputCompressibility != 0 )
+  {
+    numCols++;
+  }
+
   // If phase compositions are required we add {1:NP*NC} phase compositions
   if( m_outputPhaseComposition != 0 )
   {
@@ -163,6 +180,7 @@ bool PVTDriver::execute( real64 const GEOS_UNUSED_PARAM( time_n ),
     GEOS_LOG_RANK_0( "  Steps .................. " << m_numSteps );
     GEOS_LOG_RANK_0( "  Output ................. " << m_outputFile );
     GEOS_LOG_RANK_0( "  Baseline ............... " << m_baselineFile );
+    GEOS_LOG_RANK_0( "  Output Compressibility . " << m_outputCompressibility );
     GEOS_LOG_RANK_0( "  Output Phase Comp. ..... " << m_outputPhaseComposition );
   }
 
@@ -202,8 +220,6 @@ bool PVTDriver::execute( real64 const GEOS_UNUSED_PARAM( time_n ),
   return false;
 }
 
-
-
 void PVTDriver::outputResults()
 {
   // TODO: improve file path output to grab command line -o directory
@@ -211,24 +227,33 @@ void PVTDriver::outputResults()
 
   FILE * fp = fopen( m_outputFile.c_str(), "w" );
 
-  fprintf( fp, "# column 1 = time\n" );
-  fprintf( fp, "# column 2 = pressure\n" );
-  fprintf( fp, "# column 3 = temperature\n" );
-  fprintf( fp, "# column 4 = density\n" );
-  fprintf( fp, "# columns %d-%d = phase fractions\n", 5, 4+m_numPhases );
-  fprintf( fp, "# columns %d-%d = phase densities\n", 5+m_numPhases, 4+2*m_numPhases );
-  fprintf( fp, "# columns %d-%d = phase viscosities\n", 5+2*m_numPhases, 4+3*m_numPhases );
+  integer columnIndex = 0;
+  fprintf( fp, "# column %d = time\n", ++columnIndex );
+  fprintf( fp, "# column %d = pressure\n", ++columnIndex );
+  fprintf( fp, "# column %d = temperature\n", ++columnIndex );
+  fprintf( fp, "# column %d = density\n", ++columnIndex );
+  if( m_outputCompressibility != 0 )
+  {
+    fprintf( fp, "# column %d = total compressibility\n", ++columnIndex );
+  }
+  fprintf( fp, "# columns %d-%d = phase fractions\n", columnIndex+1, columnIndex + m_numPhases );
+  columnIndex += m_numPhases;
+  fprintf( fp, "# columns %d-%d = phase densities\n", columnIndex+1, columnIndex + m_numPhases );
+  columnIndex += m_numPhases;
+  fprintf( fp, "# columns %d-%d = phase viscosities\n", columnIndex+1, columnIndex + m_numPhases );
+  columnIndex += m_numPhases;
 
   if( m_outputPhaseComposition != 0 )
   {
     auto const phaseNames = getFluid().phaseNames();
-    integer const startColumn = 5+3*m_numPhases;
     for( integer ip = 0; ip < m_numPhases; ++ip )
     {
-      fprintf( fp, "# columns %d-%d = %s phase fractions\n", startColumn+ip*m_numComponents,
-               startColumn+(ip+1)*m_numComponents, phaseNames[ip].c_str() );
+      fprintf( fp, "# columns %d-%d = %s phase fractions\n", columnIndex+1, columnIndex + m_numComponents,
+               phaseNames[ip].c_str() );
+      columnIndex += m_numComponents;
     }
   }
+
   for( integer n=0; n<m_table.size( 0 ); ++n )
   {
     for( integer col=0; col<m_table.size( 1 ); ++col )
@@ -251,10 +276,15 @@ void PVTDriver::compareWithBaseline()
   // discard file header
 
   integer headerRows = 7;
+  if( m_outputCompressibility )
+  {
+    headerRows++;
+  }
   if( m_outputPhaseComposition )
   {
     headerRows += getFluid().numFluidPhases();
   }
+
   string line;
   for( integer row=0; row < headerRows; ++row )
   {
