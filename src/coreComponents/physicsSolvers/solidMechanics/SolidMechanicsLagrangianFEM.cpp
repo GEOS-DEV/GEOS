@@ -466,7 +466,6 @@ real64 SolidMechanicsLagrangianFEM::solverStep( real64 const & time_n,
            m_timeIntegrationOption == TimeIntegrationOption::QuasiStatic )
   {
     int const maxNumResolves = m_maxNumResolves;
-    int locallyFractured = 0;
     int globallyFractured = 0;
     implicitStepSetup( time_n, dt, domain );
     for( int solveIter=0; solveIter<maxNumResolves+1; ++solveIter )
