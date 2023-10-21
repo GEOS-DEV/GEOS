@@ -63,7 +63,16 @@ set( constitutive_headers
      fluid/multifluid/compositional/functions/KValueInitialization.hpp
      fluid/multifluid/compositional/functions/NegativeTwoPhaseFlash.hpp
      fluid/multifluid/compositional/functions/RachfordRice.hpp
+     fluid/multifluid/compositional/models/ComponentProperties.hpp
+     fluid/multifluid/compositional/models/ConstantViscosity.hpp
+     fluid/multifluid/compositional/models/CubicEOSDensity.hpp
+     fluid/multifluid/compositional/models/FunctionBase.hpp
+     fluid/multifluid/compositional/models/NegativeTwoPhaseFlashModel.hpp
+     fluid/multifluid/compositional/models/NegativeTwoPhaseFlashModelImpl.hpp
+     fluid/multifluid/compositional/models/NullModel.hpp
+     fluid/multifluid/compositional/models/PhaseModel.hpp
      fluid/multifluid/compositional/CompositionalMultiphaseFluid.hpp
+     fluid/multifluid/compositional/CompositionalMultiphaseFluidUpdates.hpp
      fluid/multifluid/compositional/CompositionalMultiphaseFluidParameters.hpp
      fluid/multifluid/reactive/ReactiveBrineFluid.hpp
      fluid/multifluid/reactive/ReactiveMultiFluid.hpp
@@ -199,7 +208,11 @@ set( constitutive_sources
      fluid/multifluid/CO2Brine/functions/PureWaterProperties.cpp
      fluid/multifluid/CO2Brine/functions/WaterDensity.cpp
      fluid/multifluid/compositional/functions/CompositionalProperties.cpp
+     fluid/multifluid/compositional/models/ConstantViscosity.cpp
+     fluid/multifluid/compositional/models/CubicEOSDensity.cpp
+     fluid/multifluid/compositional/models/NegativeTwoPhaseFlashModel.cpp
      fluid/multifluid/compositional/CompositionalMultiphaseFluid.cpp
+     fluid/multifluid/compositional/CompositionalMultiphaseFluidUpdates.cpp
      fluid/multifluid/compositional/PVTDriverRunTestCompositionalMultiphaseFluid.cpp
      fluid/multifluid/reactive/ReactiveBrineFluid.cpp
      fluid/multifluid/reactive/ReactiveMultiFluid.cpp
