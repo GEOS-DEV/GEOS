@@ -406,11 +406,11 @@ void testCompositionalStandardUpwind( CompositionalMultiphaseFVM & solver,
           real64 dCompFlux_dP[numFluxSupportPoints][numComp]{};
           real64 dCompFlux_dC[numFluxSupportPoints][numComp][numComp]{};
 
-            localIndex seri_[numFluxSupportPoints] = {seri[iconn][0], seri[iconn][1]};
-            localIndex sesri_[numFluxSupportPoints] = {sesri[iconn][0], sesri[iconn][1]};
-            localIndex sei_[numFluxSupportPoints] = {sei[iconn][0], sei[iconn][1]};
-            real64 trans_[2] = {trans[iconn][0], trans[iconn][1]};
-            real64 dTrans_[2] = {dTrans_dP[iconn][0], dTrans_dP[iconn][1]};
+          localIndex const seri_[numFluxSupportPoints] = {seri[iconn][0], seri[iconn][1]};
+          localIndex const sesri_[numFluxSupportPoints] = {sesri[iconn][0], sesri[iconn][1]};
+          localIndex const sei_[numFluxSupportPoints] = {sei[iconn][0], sei[iconn][1]};
+          real64 const trans_[2] = {trans[iconn][0], trans[iconn][1]};
+          real64 const dTrans_[2] = {dTrans_dP[iconn][0], dTrans_dP[iconn][1]};
 
           localIndex k_up_expected[numPhase]{0, 1};
           //classical mass balance equation way of computing potential and finding upwinding direction
@@ -543,11 +543,11 @@ void testCompositionalUpwindHU( CompositionalMultiphaseFVM & solver,
           //fluid fetched fields
           DEFINE_FLUID_FIELDS()
 
-          localIndex seri_[numFluxSupportPoints] = {seri[iconn][0], seri[iconn][1]};
-            localIndex sesri_[numFluxSupportPoints] = {sesri[iconn][0], sesri[iconn][1]};
-            localIndex sei_[numFluxSupportPoints] = {sei[iconn][0], sei[iconn][1]};
-            real64 trans_[2] = {trans[iconn][0], trans[iconn][1]};
-            real64 dTrans_[2] = {dTrans_dP[iconn][0], dTrans_dP[iconn][1]};
+          localIndex const seri_[numFluxSupportPoints] = {seri[iconn][0], seri[iconn][1]};
+          localIndex const sesri_[numFluxSupportPoints] = {sesri[iconn][0], sesri[iconn][1]};
+          localIndex const sei_[numFluxSupportPoints] = {sei[iconn][0], sei[iconn][1]};
+          real64 const trans_[2] = {trans[iconn][0], trans[iconn][1]};
+          real64 const dTrans_[2] = {dTrans_dP[iconn][0], dTrans_dP[iconn][1]};
 
           //classical mass balance equation way of computing potential and finding upwinding direction
           for( localIndex ip = 0; ip < numPhase; ++ip )
@@ -761,11 +761,11 @@ void testCompositionalUpwindHU( CompositionalMultiphaseFVM & solver,
           DEFINE_FLUID_FIELDS()
 
 
-            localIndex seri_[numFluxSupportPoints] = {seri[iconn][0], seri[iconn][1]};
-            localIndex sesri_[numFluxSupportPoints] = {sesri[iconn][0], sesri[iconn][1]};
-            localIndex sei_[numFluxSupportPoints] = {sei[iconn][0], sei[iconn][1]};
-            real64 trans_[2] = {trans[iconn][0], trans[iconn][1]};
-            real64 dTrans_[2] = {dTrans_dP[iconn][0], dTrans_dP[iconn][1]};
+          localIndex const seri_[numFluxSupportPoints] = {seri[iconn][0], seri[iconn][1]};
+          localIndex const sesri_[numFluxSupportPoints] = {sesri[iconn][0], sesri[iconn][1]};
+          localIndex const sei_[numFluxSupportPoints] = {sei[iconn][0], sei[iconn][1]};
+          real64 const trans_[2] = {trans[iconn][0], trans[iconn][1]};
+          real64 const dTrans_[2] = {dTrans_dP[iconn][0], dTrans_dP[iconn][1]};
 
           //classical mass balance equation way of computing potential and finding upwinding direction
           for( localIndex ip = 0; ip < numPhase; ++ip )
