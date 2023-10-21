@@ -71,53 +71,29 @@ public:
     setupLabels();
 
     // Level 0
-    //m_levelFRelaxType[0]       = MGRFRelaxationType::gsElimWPivoting; // gaussian elimination for the dispJump block
-    //m_levelInterpType[0]       = MGRInterpolationType::blockJacobi;
-    //m_levelRestrictType[0]     = MGRRestrictionType::injection;
-    //m_levelCoarseGridMethod[0] = MGRCoarseGridMethod::galerkin;
-
-    // Level 0
-    m_levelFRelaxMethod[0]     = MGRFRelaxationMethod::singleLevel; //default, i.e. Jacobi (to be confirmed)
+    //m_levelFRelaxMethod[0]     = MGRFRelaxationMethod::singleLevel; //default, i.e. Jacobi (to be confirmed)
     m_levelInterpType[0]       = MGRInterpolationType::jacobi;
+    //m_levelInterpType[0]       = MGRInterpolationType::blockJacobi;
+    m_levelInterpType[0]       = MGRInterpolationType::classicalModifiedInterpolation;
     m_levelRestrictType[0]     = MGRRestrictionType::injection;
     m_levelCoarseGridMethod[0] = MGRCoarseGridMethod::galerkin;
 
-    m_numRelaxSweeps = 0; // skip F-relaxation
-    m_globalSmoothType = MGRGlobalSmootherType::blockJacobi;
+    m_numRelaxSweeps = 1; // skip F-relaxation
+    //m_globalSmoothType = MGRGlobalSmootherType::blockJacobi;
+    m_globalSmoothType = MGRGlobalSmootherType::ilu0;
     m_numGlobalSmoothSweeps = 1;
 
     // Level 1
     m_levelFRelaxType[1]       = MGRFRelaxationType::amgVCycle;
     m_levelInterpType[1]       = MGRInterpolationType::jacobi;
     m_levelRestrictType[1]     = MGRRestrictionType::injection;
-    m_levelCoarseGridMethod[1] = MGRCoarseGridMethod::nonGalerkin;
+    m_levelCoarseGridMethod[1] = MGRCoarseGridMethod::galerkin;
+    //m_levelCoarseGridMethod[1] = MGRCoarseGridMethod::nonGalerkin;
 
 #else
-    // we keep t and p
-    m_labels[0].push_back( 3 );
-    m_labels[0].push_back( 4 );
-    m_labels[0].push_back( 5 );
-    m_labels[0].push_back( 6 );
-    // we keep p
-    m_labels[1].push_back( 3 );
-
-    setupLabels();
-
-    // Level 0
-    m_levelFRelaxMethod[0]     = MGRFRelaxationMethod::amgVCycle;
-    m_levelInterpType[0]       = MGRInterpolationType::jacobi;
-    m_levelRestrictType[0]     = MGRRestrictionType::injection;
-    m_levelCoarseGridMethod[0] = MGRCoarseGridMethod::nonGalerkin;
-
-    // Level 1
-    m_levelFRelaxMethod[1]     = MGRFRelaxationMethod::singleLevel;
-    m_levelFRelaxType[1]       = MGRFRelaxationType::gsElimWInverse; // gaussian elimination for the dispJump block
-    m_levelInterpType[1]       = MGRInterpolationType::blockJacobi;
-    m_levelRestrictType[1]     = MGRRestrictionType::injection;
-    m_levelCoarseGridMethod[1] = MGRCoarseGridMethod::galerkin;
+    GEOS_LAI_CHECK_ERROR(1);
 #endif
 
-    m_numGlobalSmoothSweeps = 0;
   }
 
   /**
@@ -136,7 +112,7 @@ public:
                                                                  mgrData.pointMarkers.data() ) );
 
 
-    GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetLevelFRelaxMethod( precond.ptr, toUnderlyingPtr( m_levelFRelaxMethod ) ) );
+    //GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetLevelFRelaxMethod( precond.ptr, toUnderlyingPtr( m_levelFRelaxMethod ) ) );
     GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetLevelFRelaxType( precond.ptr, toUnderlyingPtr( m_levelFRelaxType ) ));
     GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetLevelInterpType( precond.ptr, toUnderlyingPtr( m_levelInterpType ) ) );
     GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetLevelRestrictType( precond.ptr, toUnderlyingPtr( m_levelRestrictType ) ) );
@@ -178,8 +154,7 @@ public:
 
     HYPRE_MGRSetFSolverAtLevel(1, precond.ptr, mgrData.mechSolver.ptr);
 #else
-    // Configure the BoomerAMG solver used as F-relaxation for the first level
-    setMechanicsFSolver( precond, mgrData );
+    GEOS_LAI_CHECK_ERROR(1);
 #endif
   }
 };
