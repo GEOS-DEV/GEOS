@@ -1453,7 +1453,7 @@ public:
 
   /**
    * @brief Set verbosity level
-   * @param new verbosity level value
+   * @param logLevel new verbosity level value
    */
   void setLogLevel( integer const logLevel ) { m_logLevel = logLevel; }
 
