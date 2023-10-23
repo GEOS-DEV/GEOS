@@ -21,7 +21,7 @@
 #include "mesh/DomainPartition.hpp"
 #include "mesh/mpiCommunications/PartitionBase.hpp"
 #include "mesh/mpiCommunications/SpatialPartition.hpp"
-#include "mesh/MeshBody.hpp"
+
 #include "ParticleBlockManager.hpp"
 
 #include "common/DataTypes.hpp"
