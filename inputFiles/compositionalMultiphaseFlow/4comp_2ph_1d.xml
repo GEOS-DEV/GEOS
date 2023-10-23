@@ -8,7 +8,7 @@
       discretization="fluidTPFA"
       targetRegions="{ Region1 }"
       initialDt="1e5"
-      cflFactor="2"
+      targetFlowCFL="2"
       temperature="297.15">
       <NonlinearSolverParameters
         newtonTol="1.0e-6"
@@ -48,7 +48,7 @@
     <PeriodicEvent
       name="outputs"
       timeFrequency="5e6"
-      target="/Outputs/siloOutput"/>
+      target="/Outputs/vtkOutput"/>
 
     <PeriodicEvent
       name="solverApplications1"
@@ -250,8 +250,8 @@
   </FieldSpecifications>
 
   <Outputs>
-    <Silo
-      name="siloOutput"/>
+    <VTK
+      name="vtkOutput"/>
 
     <Restart
       name="restartOutput"/>

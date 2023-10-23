@@ -289,49 +289,39 @@ real64 SolverBase::setNextDt( real64 const & currentDt,
 {
   real64 const nextDtNewton = setNextDtBasedOnNewtonIter( currentDt );
   real64 const nextDtStateChange = setNextDtBasedOnStateChange( currentDt, domain );
-  real64 const nextDtCFL = setNextDtBasedOnCFL( currentDt, domain );
 
-  if( m_cflFactor<0.0 )      //default case
+  if( nextDtNewton < nextDtStateChange )      // time step size decided based on convergence
   {
-    if( nextDtNewton < nextDtStateChange )    // time step size decided based on convergence
+    integer const iterDecreaseLimit = m_nonlinearSolverParameters.timeStepDecreaseIterLimit();
+    integer const iterIncreaseLimit = m_nonlinearSolverParameters.timeStepIncreaseIterLimit();
+    if( nextDtNewton > currentDt )
     {
-      integer const iterDecreaseLimit = m_nonlinearSolverParameters.timeStepDecreaseIterLimit();
-      integer const iterIncreaseLimit = m_nonlinearSolverParameters.timeStepIncreaseIterLimit();
-      if( nextDtNewton > currentDt )
-      {
-        GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT(
-                                 "{}: Newton solver converged in less than {} iterations, time-step required will be increased.",
-                                 getName(), iterIncreaseLimit ));
-      }
-      else if( nextDtNewton < currentDt )
-      {
-        GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT(
-                                 "{}: Newton solver converged in more than {} iterations, time-step required will be decreased.",
-                                 getName(), iterDecreaseLimit ));
-      }
+      GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT(
+                               "{}: Newton solver converged in less than {} iterations, time-step required will be increased.",
+                               getName(), iterIncreaseLimit ));
     }
-    else       // time step size decided based on state change
+    else if( nextDtNewton < currentDt )
     {
-      if( nextDtStateChange > currentDt )
-      {
-        GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "{}: Time-step required will be increased based on state change.",
-                                            getName()));
-      }
-      else if( nextDtStateChange < currentDt )
-      {
-        GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "{}: Time-step required will be decreased based on state change.",
-                                            getName()));
-      }
+      GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT(
+                               "{}: Newton solver converged in more than {} iterations, time-step required will be decreased.",
+                               getName(), iterDecreaseLimit ));
     }
-
-    return std::min( nextDtNewton, nextDtStateChange );
   }
-  else
+  else         // time step size decided based on state change
   {
-    return nextDtCFL;
+    if( nextDtStateChange > currentDt )
+    {
+      GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "{}: Time-step required will be increased based on state change.",
+                                          getName()));
+    }
+    else if( nextDtStateChange < currentDt )
+    {
+      GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "{}: Time-step required will be decreased based on state change.",
+                                          getName()));
+    }
   }
 
-
+  return std::min( nextDtNewton, nextDtStateChange );
 }
 
 real64 SolverBase::setNextDtBasedOnStateChange( real64 const & currentDt,

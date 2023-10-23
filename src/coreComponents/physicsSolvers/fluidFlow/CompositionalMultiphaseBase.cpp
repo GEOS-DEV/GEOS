@@ -123,6 +123,13 @@ CompositionalMultiphaseBase::CompositionalMultiphaseBase( const string & name,
     setApplyDefaultValue( 1 ).
     setDescription( "Flag indicating whether local (cell-wise) chopping of negative compositions is allowed" );
 
+
+  this->registerWrapper( viewKeyStruct::targetFlowCFLString(), &m_targetFlowCFL ).
+    setApplyDefaultValue( -1. ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Target CFL condition `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_"
+                    "when computing the next timestep." );
+
 }
 
 void CompositionalMultiphaseBase::postProcessInput()
@@ -284,7 +291,7 @@ void CompositionalMultiphaseBase::registerDataOnMesh( Group & meshBodies )
         }
 
 
-        if( m_cflFactor > 0 )
+        if( m_targetFlowCFL > 0 )
         {
 
           subRegion.registerField< fields::flow::phaseOutflux >( getName() ).
@@ -2045,7 +2052,7 @@ real64 CompositionalMultiphaseBase::setNextDtBasedOnCFL( const geos::real64 & cu
   GEOS_LOG_LEVEL_RANK_0( 1, getName() << ": Max phase CFL number: " << maxPhaseCFL );
   GEOS_LOG_LEVEL_RANK_0( 1, getName() << ": Max component CFL number: " << maxCompCFL );
 
-  return std::min( m_cflFactor*currentDt/maxCompCFL, m_cflFactor*currentDt/maxPhaseCFL );
+  return std::min( m_targetFlowCFL*currentDt/maxCompCFL, m_targetFlowCFL*currentDt/maxPhaseCFL );
 
 }
 
@@ -2393,6 +2400,15 @@ void CompositionalMultiphaseBase::updateState( DomainPartition & domain )
       }
     } );
   } );
+}
+
+real64 CompositionalMultiphaseBase::setNextDt( const geos::real64 & currentDt, geos::DomainPartition & domain )
+{
+
+  if( m_targetFlowCFL<0 )
+    return SolverBase::setNextDt( currentDt, domain );
+  else
+    return setNextDtBasedOnCFL( currentDt, domain );
 }
 
 } // namespace geos
