@@ -750,7 +750,7 @@ assembleFluidMassResidualDerivativeWrtDisplacement( DomainPartition const & doma
   globalIndex const rankOffset = m_dofManager.rankOffset();
 
   CRSMatrixView< real64 const, localIndex const > const
-  dFluxResidual_dNormalJumpture = getDerivativeFluxResidual_dNormalJump().toViewConst();
+  dFluxResidual_dNormalJump = getDerivativeFluxResidual_dNormalJump().toViewConst();
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel const & mesh,
@@ -799,7 +799,7 @@ assembleFluidMassResidualDerivativeWrtDisplacement( DomainPartition const & doma
                                             presDofNumber,
                                             dispDofNumber,
                                             dens,
-                                            dFluxResidual_dNormalJumpture,
+                                            dFluxResidual_dNormalJump,
                                             localMatrix );
 
       } );

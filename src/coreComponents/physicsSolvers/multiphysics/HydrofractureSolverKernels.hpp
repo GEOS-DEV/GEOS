@@ -112,7 +112,11 @@ struct FluidMassResidualDerivativeAssemblyKernel
                                  real64 const & dens,
                                  globalIndex (& nodeDOF)[8 * 3],
                                  arraySlice1d< real64 > const dRdU )
-  {
+  {  
+    real64 dHydraulicAperture_dNormalJump = 0;
+    real64 const hydraulicAperture = contactWrapper.computeHydraulicAperture( aperture, dHydraulicAperture_dNormalJump );
+    GEOS_UNUSED_VAR( hydraulicAperture );
+
     constexpr integer kfSign[2] = { -1, 1 };
     for( localIndex kf = 0; kf < 2; ++kf )
     {
@@ -121,13 +125,8 @@ struct FluidMassResidualDerivativeAssemblyKernel
         for( int i = 0; i < 3; ++i )
         {
           nodeDOF[kf * 3 * numNodesPerFace + 3 * a + i] = dispDofNumber[faceToNodeMap( elemsToFaces[kf], a )] + i;
-
+          
           real64 const dNormalJump_dDisplacement = kfSign[kf] * Nbar[i] / numNodesPerFace;
-
-          real64 dHydraulicAperture_dNormalJump = 0;
-          real64 const hydraulicAperture = contactWrapper.computeHydraulicAperture( aperture, dHydraulicAperture_dNormalJump );
-          GEOS_UNUSED_VAR( hydraulicAperture );
-
           real64 const dHydraulicAperture_dDisplacement = dHydraulicAperture_dNormalJump * dNormalJump_dDisplacement;
           real64 const dVolume_dDisplacement = area * dHydraulicAperture_dDisplacement;
 
