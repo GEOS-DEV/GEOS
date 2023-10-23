@@ -38,20 +38,23 @@ namespace constitutive
 /**
  * @brief A general compositional fluid model.
  * @tparam FLASH Class describing the phase equilibrium model
- * @tparam PHASES Class describing the phase property models for each of the phases.
+ * @tparam PHASE1 Class describing the phase property models for the first phase.
+ * @tparam PHASE2 Class describing the phase property models for the second phase.
+ * @tparam PHASE3 Class describing the phase property models for the possible third phase.
  */
-template< typename FLASH, typename ... PHASES >
+template< typename FLASH, typename PHASE1, typename PHASE2, typename PHASE3 = compositional::NullPhaseModel >
 class CompositionalMultiphaseFluid : public MultiFluidBase
 {
 public:
   using FlashModel = FLASH;
+  using Phase1Model = PHASE1;
+  using Phase2Model = PHASE2;
+  using Phase3Model = PHASE3;
 
   // Get the number of phases
-  static constexpr integer NUM_PHASES = sizeof...(PHASES);
+  static constexpr integer NUM_PHASES = FlashModel::getNumberOfPhases();
   // Currently restrict to 2 or 3 phases
   static_assert( NUM_PHASES == 2 || NUM_PHASES == 3 );
-  // Make sure the flash model has the same number of phases
-  //static_assert( NUM_PHASES == FlashModel::numFluidPhases() );
 
   using exec_policy = parallelDevicePolicy<>;
 
@@ -79,7 +82,7 @@ public:
   };
 
 public:
-  using KernelWrapper = CompositionalMultiphaseFluidUpdates< FLASH, PHASES... >;
+  using KernelWrapper = CompositionalMultiphaseFluidUpdates< FLASH, PHASE1, PHASE2, PHASE3 >;
 
   /**
    * @brief Create an update kernel wrapper.
@@ -103,7 +106,9 @@ private:
   std::unique_ptr< FLASH > m_flash{};
 
   // Phase models
-  std::tuple< std::unique_ptr< PHASES >... > m_phases;
+  std::unique_ptr< PHASE1 > m_phase1;
+  std::unique_ptr< PHASE2 > m_phase2;
+  std::unique_ptr< PHASE3 > m_phase3;
 
   std::unique_ptr< compositional::ComponentProperties > m_componentProperties{};
 

@@ -32,14 +32,19 @@ namespace constitutive
 /**
  * @brief Kernel wrapper class for CompositionalMultiphaseFluid.
  * @tparam FLASH Class describing the phase equilibrium model
- * @tparam PHASES Class describing the phase property models for each of the phases.
+ * @tparam PHASE1 Class describing the phase property models for the first phase.
+ * @tparam PHASE2 Class describing the phase property models for the second phase.
+ * @tparam PHASE3 Class describing the phase property models for the possible third phase.
  */
-template< typename FLASH, typename ... PHASES >
+template< typename FLASH, typename PHASE1, typename PHASE2, typename PHASE3 >
 class CompositionalMultiphaseFluidUpdates final : public MultiFluidBase::KernelWrapper
 {
 public:
   CompositionalMultiphaseFluidUpdates( compositional::ComponentProperties const & componentProperties,
                                        FLASH const & flash,
+                                       PHASE1 const & phase1,
+                                       PHASE2 const & phase2,
+                                       PHASE3 const & phase3,
                                        arrayView1d< real64 const > const & componentMolarWeight,
                                        bool const useMass,
                                        MultiFluidBase::PhaseProp::ViewType phaseFraction,
@@ -90,12 +95,20 @@ private:
 
   // Flash kernel wrapper
   typename FLASH::KernelWrapper m_flash;
+
+  // Phase model kernel wrappers
+  typename PHASE1::KernelWrapper m_phase1;
+  typename PHASE2::KernelWrapper m_phase2;
+  typename PHASE3::KernelWrapper m_phase3;
 };
 
-template< typename FLASH, typename ... PHASES >
-CompositionalMultiphaseFluidUpdates< FLASH, PHASES... >::
+template< typename FLASH, typename PHASE1, typename PHASE2, typename PHASE3 >
+CompositionalMultiphaseFluidUpdates< FLASH, PHASE1, PHASE2, PHASE3 >::
 CompositionalMultiphaseFluidUpdates( compositional::ComponentProperties const & componentProperties,
                                      FLASH const & flash,
+                                     PHASE1 const & phase1,
+                                     PHASE2 const & phase2,
+                                     PHASE3 const & phase3,
                                      arrayView1d< real64 const > const & componentMolarWeight,
                                      bool const useMass,
                                      MultiFluidBase::PhaseProp::ViewType phaseFraction,
@@ -117,14 +130,17 @@ CompositionalMultiphaseFluidUpdates( compositional::ComponentProperties const & 
                                  std::move( phaseCompFraction ),
                                  std::move( totalDensity ) ),
   m_componentProperties( componentProperties.createKernelWrapper() ),
-  m_flash( flash.createKernelWrapper() )
+  m_flash( flash.createKernelWrapper() ),
+  m_phase1( phase1.createKernelWrapper()),
+  m_phase2( phase2.createKernelWrapper()),
+  m_phase3( phase3.createKernelWrapper())
 {}
 
-template< typename FLASH, typename ... PHASES >
+template< typename FLASH, typename PHASE1, typename PHASE2, typename PHASE3 >
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
 void
-CompositionalMultiphaseFluidUpdates< FLASH, PHASES... >::compute(
+CompositionalMultiphaseFluidUpdates< FLASH, PHASE1, PHASE2, PHASE3 >::compute(
   real64 const pressure,
   real64 const temperature,
   arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & composition,
@@ -200,11 +216,11 @@ CompositionalMultiphaseFluidUpdates< FLASH, PHASES... >::compute(
                                                   totalDens );
 }
 
-template< typename FLASH, typename ... PHASES >
+template< typename FLASH, typename PHASE1, typename PHASE2, typename PHASE3 >
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
 void
-CompositionalMultiphaseFluidUpdates< FLASH, PHASES... >::compute(
+CompositionalMultiphaseFluidUpdates< FLASH, PHASE1, PHASE2, PHASE3 >::compute(
   real64 const pressure,
   real64 const temperature,
   arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & composition,
@@ -325,11 +341,11 @@ CompositionalMultiphaseFluidUpdates< FLASH, PHASES... >::compute(
                        totalDensity );
 }
 
-template< typename FLASH, typename ... PHASES >
+template< typename FLASH, typename PHASE1, typename PHASE2, typename PHASE3 >
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
 void
-CompositionalMultiphaseFluidUpdates< FLASH, PHASES... >::
+CompositionalMultiphaseFluidUpdates< FLASH, PHASE1, PHASE2, PHASE3 >::
 update( localIndex const k,
         localIndex const q,
         real64 const pressure,

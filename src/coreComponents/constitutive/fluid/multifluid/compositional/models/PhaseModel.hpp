@@ -19,6 +19,8 @@
 #ifndef GEOS_CONSTITUTIVE_FLUID_MULTIFLUID_COMPOSITIONAL_MODELS_PHASEMODEL_HPP_
 #define GEOS_CONSTITUTIVE_FLUID_MULTIFLUID_COMPOSITIONAL_MODELS_PHASEMODEL_HPP_
 
+#include "NullModel.hpp"
+
 namespace geos
 {
 
@@ -129,6 +131,9 @@ struct PhaseModel
                           enthalpy );
   }
 };
+
+// A no-op phase model
+using NullPhaseModel = PhaseModel< NullModel, NullModel, NullModel >;
 
 } // namespace compositional
 

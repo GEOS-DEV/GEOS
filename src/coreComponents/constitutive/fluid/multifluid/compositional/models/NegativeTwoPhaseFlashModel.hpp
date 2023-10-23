@@ -77,7 +77,7 @@ public:
   FunctionType functionType() const override { return FunctionType::FLASH; }
 
   // Mark as a 2-phase flash
-  static constexpr integer numFluidPhases() { return 2; }
+  static constexpr integer getNumberOfPhases() { return 2; }
 
   /// Type of kernel wrapper for in-kernel update
   using KernelWrapper = NegativeTwoPhaseFlashModelUpdate< EOS_TYPE_LIQUID, EOS_TYPE_VAPOUR >;

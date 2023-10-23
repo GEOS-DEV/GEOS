@@ -86,11 +86,13 @@ public:
 
   static string catalogName() { return "NullCompositionalPVTModel"; }
 
+  static constexpr FunctionType function(){ return FunctionType::UNKNOWN; }
+
   virtual string getCatalogName() const override final { return catalogName(); }
 
   virtual FunctionType functionType() const override
   {
-    return FunctionType::UNKNOWN;
+    return function();
   }
 
   /// Type of kernel wrapper for in-kernel update

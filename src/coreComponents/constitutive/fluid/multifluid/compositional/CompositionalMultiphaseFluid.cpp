@@ -26,8 +26,8 @@ namespace geos
 namespace constitutive
 {
 
-template< typename FLASH, typename ... PHASES >
-CompositionalMultiphaseFluid< FLASH, PHASES... >::
+template< typename FLASH, typename PHASE1, typename PHASE2, typename PHASE3 >
+CompositionalMultiphaseFluid< FLASH, PHASE1, PHASE2, PHASE3 >::
 CompositionalMultiphaseFluid( string const & name, Group * const parent )
   : MultiFluidBase( name, parent )
 {
@@ -63,14 +63,14 @@ CompositionalMultiphaseFluid( string const & name, Group * const parent )
     setDescription( "Table of binary interaction coefficients" );
 }
 
-template< typename FLASH, typename ... PHASES >
-integer CompositionalMultiphaseFluid< FLASH, PHASES... >::getWaterPhaseIndex() const
+template< typename FLASH, typename PHASE1, typename PHASE2, typename PHASE3 >
+integer CompositionalMultiphaseFluid< FLASH, PHASE1, PHASE2, PHASE3 >::getWaterPhaseIndex() const
 {
   return -1;
 }
 
-template< typename FLASH, typename ... PHASES >
-void CompositionalMultiphaseFluid< FLASH, PHASES... >::postProcessInput()
+template< typename FLASH, typename PHASE1, typename PHASE2, typename PHASE3 >
+void CompositionalMultiphaseFluid< FLASH, PHASE1, PHASE2, PHASE3 >::postProcessInput()
 {
   MultiFluidBase::postProcessInput();
 
@@ -110,8 +110,8 @@ void CompositionalMultiphaseFluid< FLASH, PHASES... >::postProcessInput()
   checkInputSize( m_componentBinaryCoeff, NC * NC, viewKeyStruct::componentBinaryCoeffString() );
 }
 
-template< typename FLASH, typename ... PHASES >
-void CompositionalMultiphaseFluid< FLASH, PHASES... >::initializePostSubGroups()
+template< typename FLASH, typename PHASE1, typename PHASE2, typename PHASE3 >
+void CompositionalMultiphaseFluid< FLASH, PHASE1, PHASE2, PHASE3 >::initializePostSubGroups()
 {
   MultiFluidBase::initializePostSubGroups();
 
@@ -119,21 +119,25 @@ void CompositionalMultiphaseFluid< FLASH, PHASES... >::initializePostSubGroups()
   createModels();
 }
 
-template< typename FLASH, typename ... PHASES >
+template< typename FLASH, typename PHASE1, typename PHASE2, typename PHASE3 >
 std::unique_ptr< ConstitutiveBase >
-CompositionalMultiphaseFluid< FLASH, PHASES... >::deliverClone( string const & name,
-                                                                Group * const parent ) const
+CompositionalMultiphaseFluid< FLASH, PHASE1, PHASE2, PHASE3 >::deliverClone( string const & name,
+                                                                             Group * const parent ) const
 {
   std::unique_ptr< ConstitutiveBase > clone = MultiFluidBase::deliverClone( name, parent );
   return clone;
 }
 
-template< typename FLASH, typename ... PHASES >
-typename CompositionalMultiphaseFluid< FLASH, PHASES... >::KernelWrapper
-CompositionalMultiphaseFluid< FLASH, PHASES... >::createKernelWrapper()
+template< typename FLASH, typename PHASE1, typename PHASE2, typename PHASE3 >
+typename CompositionalMultiphaseFluid< FLASH, PHASE1, PHASE2, PHASE3 >::KernelWrapper
+CompositionalMultiphaseFluid< FLASH, PHASE1, PHASE2, PHASE3 >::createKernelWrapper()
 {
+  //auto phaseModels = std::make_tuple((m_phases)...);
   return KernelWrapper( *m_componentProperties,
                         *m_flash,
+                        *m_phase1,
+                        *m_phase2,
+                        *m_phase3,
                         m_componentMolarWeight,
                         m_useMass,
                         m_phaseFraction.toView(),
@@ -147,8 +151,8 @@ CompositionalMultiphaseFluid< FLASH, PHASES... >::createKernelWrapper()
 }
 
 // Create the fluid models
-template< typename FLASH, typename ... PHASES >
-void CompositionalMultiphaseFluid< FLASH, PHASES... >::createModels()
+template< typename FLASH, typename PHASE1, typename PHASE2, typename PHASE3 >
+void CompositionalMultiphaseFluid< FLASH, PHASE1, PHASE2, PHASE3 >::createModels()
 {
   m_componentProperties = std::make_unique< compositional::ComponentProperties >(
     m_componentCriticalPressure,
@@ -162,14 +166,20 @@ void CompositionalMultiphaseFluid< FLASH, PHASES... >::createModels()
                                        m_componentMolarWeight,
                                        *m_componentProperties );
 
-  std::apply( [&]( std::unique_ptr< PHASES > & ... phaseModel ) {
-    integer phaseIndex = 0;
-    (void(phaseModel = std::make_unique< PHASES >(
-            GEOS_FMT( "{}_PhaseModel{}", getName(), phaseIndex++ ),
-            m_componentNames,
-            m_componentMolarWeight,
-            *m_componentProperties )), ...);
-  }, m_phases );
+  m_phase1 = std::make_unique< PHASE1 >( GEOS_FMT( "{}_PhaseModel1", getName() ),
+                                         m_componentNames,
+                                         m_componentMolarWeight,
+                                         *m_componentProperties );
+
+  m_phase2 = std::make_unique< PHASE2 >( GEOS_FMT( "{}_PhaseModel2", getName() ),
+                                         m_componentNames,
+                                         m_componentMolarWeight,
+                                         *m_componentProperties );
+
+  m_phase3 = std::make_unique< PHASE3 >( GEOS_FMT( "{}_PhaseModel3", getName() ),
+                                         m_componentNames,
+                                         m_componentMolarWeight,
+                                         *m_componentProperties );
 }
 
 // Explicit instantiation of the model template.
