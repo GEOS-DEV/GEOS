@@ -593,7 +593,7 @@ void SinglePhasePoromechanicsConformingFractures::
   ArrayOfArraysView< localIndex const > const & faceToNodeMap = faceManager.nodeList().toViewConst();
 
   CRSMatrixView< real64 const, localIndex const > const &
-  dFluxResidual_dNormalJumpture = getDerivativeFluxResidual_dNormalJump().toViewConst();
+  dFluxResidual_dNormalJump = getDerivativeFluxResidual_dNormalJump().toViewConst();
 
   string const & dispDofKey = dofManager.getKey( solidMechanics::totalDisplacement::key() );
   string const & presDofKey = dofManager.getKey( m_pressureKey );
@@ -679,9 +679,9 @@ void SinglePhasePoromechanicsConformingFractures::
 
       // flux derivative
       bool skipAssembly = true;
-      localIndex const numColumns = dFluxResidual_dNormalJumpture.numNonZeros( kfe );
-      arraySlice1d< localIndex const > const & columns = dFluxResidual_dNormalJumpture.getColumns( kfe );
-      arraySlice1d< real64 const > const & values = dFluxResidual_dNormalJumpture.getEntries( kfe );
+      localIndex const numColumns = dFluxResidual_dNormalJump.numNonZeros( kfe );
+      arraySlice1d< localIndex const > const & columns = dFluxResidual_dNormalJump.getColumns( kfe );
+      arraySlice1d< real64 const > const & values = dFluxResidual_dNormalJump.getEntries( kfe );
 
       skipAssembly &= !isFractureOpen;
 
