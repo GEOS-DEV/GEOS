@@ -161,6 +161,15 @@ void CompositionalMultiphaseFluid< FLASH, PHASES... >::createModels()
                                        m_componentNames,
                                        m_componentMolarWeight,
                                        *m_componentProperties );
+
+  std::apply( [&]( std::unique_ptr< PHASES > & ... phaseModel ) {
+    integer phaseIndex = 0;
+    (void(phaseModel = std::make_unique< PHASES >(
+            GEOS_FMT( "{}_PhaseModel{}", getName(), phaseIndex++ ),
+            m_componentNames,
+            m_componentMolarWeight,
+            *m_componentProperties )), ...);
+  }, m_phases );
 }
 
 // Explicit instantiation of the model template.

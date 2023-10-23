@@ -46,19 +46,24 @@ struct PhaseModel
    * @param[in] phaseModelName name of the phase model, used only in the instantiation of the submodels
    * @param[in] componentNames names of the components
    * @param[in] componentMolarWeight molar weights of the components
+   * @param[in] componentProperties EOS parameters for components
    */
   PhaseModel( string const & phaseModelName,
               string_array const & componentNames,
-              array1d< real64 > const & componentMolarWeight ):
+              array1d< real64 > const & componentMolarWeight,
+              ComponentProperties const & componentProperties ):
     density( phaseModelName + "_" + Density::catalogName(),
              componentNames,
-             componentMolarWeight ),
+             componentMolarWeight,
+             componentProperties ),
     viscosity( phaseModelName + "_" + Viscosity::catalogName(),
                componentNames,
-               componentMolarWeight ),
+               componentMolarWeight,
+               componentProperties ),
     enthalpy( phaseModelName + "_" + Enthalpy::catalogName(),
               componentNames,
-              componentMolarWeight )
+              componentMolarWeight,
+              componentProperties )
   {}
 
   /// The phase density model

@@ -102,6 +102,9 @@ private:
   // Flash model
   std::unique_ptr< FLASH > m_flash{};
 
+  // Phase models
+  std::tuple< std::unique_ptr< PHASES >... > m_phases;
+
   std::unique_ptr< compositional::ComponentProperties > m_componentProperties{};
 
   // names of equations of state to use for each phase
