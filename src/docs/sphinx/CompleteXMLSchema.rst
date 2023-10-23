@@ -248,6 +248,13 @@ Element: CompressibleSolidWillisRichardsPermeability
 .. include:: ../../coreComponents/schema/docs/CompressibleSolidWillisRichardsPermeability.rst
 
 
+.. _XML_ConstantDiffusion:
+
+Element: ConstantDiffusion
+==========================
+.. include:: ../../coreComponents/schema/docs/ConstantDiffusion.rst
+
+
 .. _XML_ConstantPermeability:
 
 Element: ConstantPermeability
@@ -561,6 +568,13 @@ Element: LagrangianContact
 Element: LaplaceFEM
 ===================
 .. include:: ../../coreComponents/schema/docs/LaplaceFEM.rst
+
+
+.. _XML_LinearIsotropicDispersion:
+
+Element: LinearIsotropicDispersion
+==================================
+.. include:: ../../coreComponents/schema/docs/LinearIsotropicDispersion.rst
 
 
 .. _XML_LinearSolverParameters:
@@ -1526,6 +1540,13 @@ Datastructure: CompressibleSolidWillisRichardsPermeability
 .. include:: ../../coreComponents/schema/docs/CompressibleSolidWillisRichardsPermeability_other.rst
 
 
+.. _DATASTRUCTURE_ConstantDiffusion:
+
+Datastructure: ConstantDiffusion
+================================
+.. include:: ../../coreComponents/schema/docs/ConstantDiffusion_other.rst
+
+
 .. _DATASTRUCTURE_ConstantPermeability:
 
 Datastructure: ConstantPermeability
@@ -1853,6 +1874,13 @@ Datastructure: LaplaceFEM
 Datastructure: Level0
 =====================
 .. include:: ../../coreComponents/schema/docs/Level0_other.rst
+
+
+.. _DATASTRUCTURE_LinearIsotropicDispersion:
+
+Datastructure: LinearIsotropicDispersion
+========================================
+.. include:: ../../coreComponents/schema/docs/LinearIsotropicDispersion_other.rst
 
 
 .. _DATASTRUCTURE_LinearSolverParameters:

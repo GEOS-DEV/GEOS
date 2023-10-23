@@ -518,7 +518,7 @@
 					<xsd:selector xpath="CarmanKozenyPermeability" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
-				<xsd:unique name="ConstitutiveCeramicDamageUniqueName">
+				<xsd:unique name="domainConstitutiveCeramicDamageUniqueName">
 					<xsd:selector xpath="CeramicDamage" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
@@ -552,6 +552,10 @@
 				</xsd:unique>
 				<xsd:unique name="domainConstitutiveCompressibleSolidWillisRichardsPermeabilityUniqueName">
 					<xsd:selector xpath="CompressibleSolidWillisRichardsPermeability" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
+				<xsd:unique name="domainConstitutiveConstantDiffusionUniqueName">
+					<xsd:selector xpath="ConstantDiffusion" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
 				<xsd:unique name="domainConstitutiveConstantPermeabilityUniqueName">
@@ -618,6 +622,10 @@
 					<xsd:selector xpath="JFunctionCapillaryPressure" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
+				<xsd:unique name="domainConstitutiveLinearIsotropicDispersionUniqueName">
+					<xsd:selector xpath="LinearIsotropicDispersion" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
 				<xsd:unique name="domainConstitutiveModifiedCamClayUniqueName">
 					<xsd:selector xpath="ModifiedCamClay" />
 					<xsd:field xpath="@name" />
@@ -642,7 +650,7 @@
 					<xsd:selector xpath="ParticleFluid" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
-				<xsd:unique name="ConstitutivePerfectlyPlasticUniqueName">
+				<xsd:unique name="domainConstitutivePerfectlyPlasticUniqueName">
 					<xsd:selector xpath="PerfectlyPlastic" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
@@ -1362,15 +1370,13 @@ stress - traction is applied to the faces as specified by the inner product of i
 					<xsd:field xpath="@name" />
 				</xsd:unique>
 			</xsd:element>
+			<xsd:element name="ParticleMesh" type="ParticleMeshType" />
 			<xsd:element name="VTKMesh" type="VTKMeshType">
 				<xsd:unique name="MeshVTKMeshInternalWellUniqueName">
 					<xsd:selector xpath="InternalWell" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
 			</xsd:element>
-			<xsd:element name="InternalWellbore" type="InternalWellboreType" />
-			<xsd:element name="ParticleMesh" type="ParticleMeshType" />
-			<xsd:element name="VTKMesh" type="VTKMeshType" />
 		</xsd:choice>
 	</xsd:complexType>
 	<xsd:complexType name="InternalMeshType">
@@ -2133,6 +2139,8 @@ the relative residual norm satisfies:
 		<xsd:attribute name="sourceCoordinates" type="real64_array2d" use="required" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="string_array" use="required" />
+		<!--timeSourceDelay => Source time delay (1 / f0 by default)-->
+		<xsd:attribute name="timeSourceDelay" type="real32" default="-1" />
 		<!--timeSourceFrequency => Central frequency for the time source-->
 		<xsd:attribute name="timeSourceFrequency" type="real32" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
@@ -3326,6 +3334,7 @@ Local - Add stabilization only to interiors of macro elements.-->
 			<xsd:element name="CompressibleSolidParallelPlatesPermeability" type="CompressibleSolidParallelPlatesPermeabilityType" />
 			<xsd:element name="CompressibleSolidSlipDependentPermeability" type="CompressibleSolidSlipDependentPermeabilityType" />
 			<xsd:element name="CompressibleSolidWillisRichardsPermeability" type="CompressibleSolidWillisRichardsPermeabilityType" />
+			<xsd:element name="ConstantDiffusion" type="ConstantDiffusionType" />
 			<xsd:element name="ConstantPermeability" type="ConstantPermeabilityType" />
 			<xsd:element name="Coulomb" type="CoulombType" />
 			<xsd:element name="DamageElasticIsotropic" type="DamageElasticIsotropicType" />
@@ -3342,6 +3351,7 @@ Local - Add stabilization only to interiors of macro elements.-->
 			<xsd:element name="ExtendedDruckerPrager" type="ExtendedDruckerPragerType" />
 			<xsd:element name="FrictionlessContact" type="FrictionlessContactType" />
 			<xsd:element name="JFunctionCapillaryPressure" type="JFunctionCapillaryPressureType" />
+			<xsd:element name="LinearIsotropicDispersion" type="LinearIsotropicDispersionType" />
 			<xsd:element name="ModifiedCamClay" type="ModifiedCamClayType" />
 			<xsd:element name="MultiPhaseConstantThermalConductivity" type="MultiPhaseConstantThermalConductivityType" />
 			<xsd:element name="MultiPhaseVolumeWeightedThermalConductivity" type="MultiPhaseVolumeWeightedThermalConductivityType" />
@@ -3679,6 +3689,16 @@ The expected format is "{ waterMax, oilMax }", in that order-->
 		<xsd:attribute name="solidInternalEnergyModelName" type="string" default="" />
 		<!--solidModelName => Name of the solid model.-->
 		<xsd:attribute name="solidModelName" type="string" use="required" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="string" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="ConstantDiffusionType">
+		<!--defaultPhaseDiffusivityMultipliers => List of phase diffusivity multipliers-->
+		<xsd:attribute name="defaultPhaseDiffusivityMultipliers" type="real64_array" default="{1}" />
+		<!--diffusivityComponents => xx, yy, and zz components of a diffusivity tensor [m^2/s]-->
+		<xsd:attribute name="diffusivityComponents" type="real64_array" use="required" />
+		<!--phaseNames => List of fluid phases-->
+		<xsd:attribute name="phaseNames" type="string_array" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
@@ -4082,6 +4102,12 @@ If you want to do a three-phase simulation, please use instead wettingIntermedia
 			<xsd:pattern value=".*[\[\]`$].*|XY|X|Y|Z" />
 		</xsd:restriction>
 	</xsd:simpleType>
+	<xsd:complexType name="LinearIsotropicDispersionType">
+		<!--longitudinalDispersivity => Longitudinal dispersivity [m]-->
+		<xsd:attribute name="longitudinalDispersivity" type="real64" use="required" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="string" use="required" />
+	</xsd:complexType>
 	<xsd:complexType name="ModifiedCamClayType">
 		<!--defaultCslSlope => Slope of the critical state line-->
 		<xsd:attribute name="defaultCslSlope" type="real64" default="1" />

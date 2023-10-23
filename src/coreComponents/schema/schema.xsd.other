@@ -1083,7 +1083,7 @@
 		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
 		<xsd:attribute name="maxStableDt" type="real64" />
 		<!--meshTargets => MeshBody/Region combinations that the solver will be applied to.-->
-		<xsd:attribute name="meshTargets" type="geos_mapBase&lt;std_pair&lt;string, string &gt;, LvArray_Array&lt;string, 1, camp_int_seq&lt;long, 0l&gt;, int, LvArray_ChaiBuffer&gt;, std_integral_constant&lt;bool, true&gt; &gt;" />
+		<xsd:attribute name="meshTargets" type="geos_mapBase&lt;std_pair&lt;string, string >, LvArray_Array&lt;string, 1, camp_int_seq&lt;long, 0l>, int, LvArray_ChaiBuffer>, std_integral_constant&lt;bool, true> >" />
 		<!--numContactFlags => Number of contact flags that can appear due to damage-->
 		<xsd:attribute name="numContactFlags" type="integer" />
 		<!--numContactGroups => Number of prescribed contact groups-->
@@ -1201,6 +1201,7 @@
 			<xsd:element name="CompressibleSolidParallelPlatesPermeability" type="CompressibleSolidParallelPlatesPermeabilityType" />
 			<xsd:element name="CompressibleSolidSlipDependentPermeability" type="CompressibleSolidSlipDependentPermeabilityType" />
 			<xsd:element name="CompressibleSolidWillisRichardsPermeability" type="CompressibleSolidWillisRichardsPermeabilityType" />
+			<xsd:element name="ConstantDiffusion" type="ConstantDiffusionType" />
 			<xsd:element name="ConstantPermeability" type="ConstantPermeabilityType" />
 			<xsd:element name="Coulomb" type="CoulombType" />
 			<xsd:element name="DamageElasticIsotropic" type="DamageElasticIsotropicType" />
@@ -1217,6 +1218,7 @@
 			<xsd:element name="ExtendedDruckerPrager" type="ExtendedDruckerPragerType" />
 			<xsd:element name="FrictionlessContact" type="FrictionlessContactType" />
 			<xsd:element name="JFunctionCapillaryPressure" type="JFunctionCapillaryPressureType" />
+			<xsd:element name="LinearIsotropicDispersion" type="LinearIsotropicDispersionType" />
 			<xsd:element name="ModifiedCamClay" type="ModifiedCamClayType" />
 			<xsd:element name="MultiPhaseConstantThermalConductivity" type="MultiPhaseConstantThermalConductivityType" />
 			<xsd:element name="MultiPhaseVolumeWeightedThermalConductivity" type="MultiPhaseVolumeWeightedThermalConductivityType" />
@@ -1674,6 +1676,14 @@
 	<xsd:complexType name="CompressibleSolidParallelPlatesPermeabilityType" />
 	<xsd:complexType name="CompressibleSolidSlipDependentPermeabilityType" />
 	<xsd:complexType name="CompressibleSolidWillisRichardsPermeabilityType" />
+	<xsd:complexType name="ConstantDiffusionType">
+		<!--dDiffusivity_dTemperature => Derivatives of diffusivity with respect to temperature-->
+		<xsd:attribute name="dDiffusivity_dTemperature" type="real64_array3d" />
+		<!--diffusivity => Diffusivity-->
+		<xsd:attribute name="diffusivity" type="real64_array3d" />
+		<!--phaseDiffusivityMultiplier => Phase multipliers for the diffusivity coefficients-->
+		<xsd:attribute name="phaseDiffusivityMultiplier" type="real64_array3d" />
+	</xsd:complexType>
 	<xsd:complexType name="ConstantPermeabilityType">
 		<!--dPerm_dPressure => Derivative of rock permeability with respect to pressure-->
 		<xsd:attribute name="dPerm_dPressure" type="real64_array3d" />
@@ -1982,6 +1992,10 @@
 		<xsd:attribute name="phaseOrder" type="integer_array" />
 		<!--phaseTypes => (no description available)-->
 		<xsd:attribute name="phaseTypes" type="integer_array" />
+	</xsd:complexType>
+	<xsd:complexType name="LinearIsotropicDispersionType">
+		<!--dispersivity => Dispersivity-->
+		<xsd:attribute name="dispersivity" type="real64_array3d" />
 	</xsd:complexType>
 	<xsd:complexType name="ModifiedCamClayType">
 		<!--cslSlope => Slope of the critical state line-->
@@ -2580,7 +2594,7 @@
 		<!--ghostRank => (no description available)-->
 		<xsd:attribute name="ghostRank" type="integer_array" />
 		<!--globalToLocalMap => (no description available)-->
-		<xsd:attribute name="globalToLocalMap" type="geos_mapBase&lt;long long, int, std_integral_constant&lt;bool, false&gt; &gt;" />
+		<xsd:attribute name="globalToLocalMap" type="geos_mapBase&lt;long long, int, std_integral_constant&lt;bool, false> >" />
 		<!--isExternal => (no description available)-->
 		<xsd:attribute name="isExternal" type="integer_array" />
 		<!--localToGlobalMap => Array that contains a map from localIndex to globalIndex.-->
@@ -2867,7 +2881,7 @@
 		<!--ghostRank => (no description available)-->
 		<xsd:attribute name="ghostRank" type="integer_array" />
 		<!--globalToLocalMap => (no description available)-->
-		<xsd:attribute name="globalToLocalMap" type="geos_mapBase&lt;long long, int, std_integral_constant&lt;bool, false&gt; &gt;" />
+		<xsd:attribute name="globalToLocalMap" type="geos_mapBase&lt;long long, int, std_integral_constant&lt;bool, false> >" />
 		<!--isExternal => (no description available)-->
 		<xsd:attribute name="isExternal" type="integer_array" />
 		<!--localToGlobalMap => Array that contains a map from localIndex to globalIndex.-->

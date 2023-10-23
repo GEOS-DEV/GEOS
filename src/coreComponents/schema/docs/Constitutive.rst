@@ -22,6 +22,7 @@ CompressibleSolidExponentialDecayPermeability node         :ref:`XML_Compressibl
 CompressibleSolidParallelPlatesPermeability   node         :ref:`XML_CompressibleSolidParallelPlatesPermeability`   
 CompressibleSolidSlipDependentPermeability    node         :ref:`XML_CompressibleSolidSlipDependentPermeability`    
 CompressibleSolidWillisRichardsPermeability   node         :ref:`XML_CompressibleSolidWillisRichardsPermeability`   
+ConstantDiffusion                             node         :ref:`XML_ConstantDiffusion`                             
 ConstantPermeability                          node         :ref:`XML_ConstantPermeability`                          
 Coulomb                                       node         :ref:`XML_Coulomb`                                       
 DamageElasticIsotropic                        node         :ref:`XML_DamageElasticIsotropic`                        
@@ -38,6 +39,7 @@ ExponentialDecayPermeability                  node         :ref:`XML_Exponential
 ExtendedDruckerPrager                         node         :ref:`XML_ExtendedDruckerPrager`                         
 FrictionlessContact                           node         :ref:`XML_FrictionlessContact`                           
 JFunctionCapillaryPressure                    node         :ref:`XML_JFunctionCapillaryPressure`                    
+LinearIsotropicDispersion                     node         :ref:`XML_LinearIsotropicDispersion`                     
 ModifiedCamClay                               node         :ref:`XML_ModifiedCamClay`                               
 MultiPhaseConstantThermalConductivity         node         :ref:`XML_MultiPhaseConstantThermalConductivity`         
 MultiPhaseVolumeWeightedThermalConductivity   node         :ref:`XML_MultiPhaseVolumeWeightedThermalConductivity`   
