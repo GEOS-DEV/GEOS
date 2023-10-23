@@ -70,7 +70,7 @@
       
     <SinglePhaseConstantThermalConductivity
        name="thermalCondFrac"
-       thermalConductivityComponents="{ 3.81, 3.81, 3.81 }"/>  
+       thermalConductivityComponents="{ 3.81, 3.81, 1e3 }"/>  
 
      <CompressibleSolidConstantPermeability
        name="fractureFilling"
