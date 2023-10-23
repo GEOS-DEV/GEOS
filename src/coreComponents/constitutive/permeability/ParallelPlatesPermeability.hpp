@@ -52,12 +52,12 @@ public:
     GEOS_UNUSED_VAR( oldHydraulicAperture );
 
     real64 const perm  = newHydraulicAperture*newHydraulicAperture / 12.0;
-    real64 const dPerm = newHydraulicAperture / 6.0;
+    real64 const dPerm_dHydraulicAperture = newHydraulicAperture / 6.0;
 
     for( int dim=0; dim < m_numDimensionsToUpdate; dim++ )
     {
       permeability[dim]        = perm;
-      dPerm_dDispJump[dim][0]  = dPerm * dHydraulicAperture_dNormalJump;
+      dPerm_dDispJump[dim][0]  = dPerm_dHydraulicAperture * dHydraulicAperture_dNormalJump;
       dPerm_dDispJump[dim][1]  = 0.0;
       dPerm_dDispJump[dim][2]  = 0.0;
     }
