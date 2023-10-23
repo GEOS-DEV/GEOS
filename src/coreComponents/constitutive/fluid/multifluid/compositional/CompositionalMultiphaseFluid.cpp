@@ -26,6 +26,25 @@ namespace geos
 namespace constitutive
 {
 
+// Naming conventions
+namespace compositional
+{
+template< int NP > struct PhaseName {};
+template<> struct PhaseName< 2 > { static constexpr char const * catalogName() { return "TwoPhase"; } };
+template<> struct PhaseName< 3 > { static constexpr char const * catalogName() { return "ThreePhase"; } };
+}
+
+template< typename FLASH, typename PHASE1, typename PHASE2, typename PHASE3 >
+string CompositionalMultiphaseFluid< FLASH, PHASE1, PHASE2, PHASE3 >::catalogName()
+{
+  return GEOS_FMT(
+    "Compositonal{}Fluid{}{}",
+    compositional::PhaseName< FLASH::getNumberOfPhases() >::catalogName(),
+    FLASH::catalogName(),
+    PHASE1::Viscosity::catalogName()
+    );
+}
+
 template< typename FLASH, typename PHASE1, typename PHASE2, typename PHASE3 >
 CompositionalMultiphaseFluid< FLASH, PHASE1, PHASE2, PHASE3 >::
 CompositionalMultiphaseFluid( string const & name, Group * const parent )
@@ -187,8 +206,20 @@ template class CompositionalMultiphaseFluid<
     compositional::NegativeTwoPhaseFlashPRPR,
     compositional::PhaseModel< compositional::CubicEOSDensityPR, compositional::ConstantViscosity, compositional::NullModel >,
     compositional::PhaseModel< compositional::CubicEOSDensityPR, compositional::ConstantViscosity, compositional::NullModel > >;
+template class CompositionalMultiphaseFluid<
+    compositional::NegativeTwoPhaseFlashSRKSRK,
+    compositional::PhaseModel< compositional::CubicEOSDensitySRK, compositional::ConstantViscosity, compositional::NullModel >,
+    compositional::PhaseModel< compositional::CubicEOSDensitySRK, compositional::ConstantViscosity, compositional::NullModel > >;
 
-REGISTER_CATALOG_ENTRY( ConstitutiveBase, CompositionalTwoPhaseFluidPengRobinson, string const &, dataRepository::Group * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase,
+                        CompositionalTwoPhasePengRobinsonConstantViscosity,
+                        string const &,
+                        dataRepository::Group * const )
+
+REGISTER_CATALOG_ENTRY( ConstitutiveBase,
+                        CompositionalTwoPhaseSoaveRedlichKwongConstantViscosity,
+                        string const &,
+                        dataRepository::Group * const )
 
 } // namespace constitutive
 

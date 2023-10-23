@@ -27,5 +27,8 @@ namespace geos
 #ifdef GEOSX_USE_PVTPackage
 template void PVTDriver::runTest< constitutive::CompositionalMultiphaseFluidPVT >( constitutive::CompositionalMultiphaseFluidPVT &, arrayView2d< real64 > const & );
 #endif
-template void PVTDriver::runTest< constitutive::CompositionalTwoPhaseFluidPengRobinson >( constitutive::CompositionalTwoPhaseFluidPengRobinson &, arrayView2d< real64 > const & );
+template void PVTDriver::runTest< constitutive::CompositionalTwoPhasePengRobinsonConstantViscosity >(
+  constitutive::CompositionalTwoPhasePengRobinsonConstantViscosity &, arrayView2d< real64 > const & );
+template void PVTDriver::runTest< constitutive::CompositionalTwoPhaseSoaveRedlichKwongConstantViscosity >(
+  constitutive::CompositionalTwoPhaseSoaveRedlichKwongConstantViscosity &, arrayView2d< real64 > const & );
 }

@@ -65,7 +65,7 @@ public:
   deliverClone( string const & name,
                 Group * const parent ) const override;
 
-  static string catalogName() { return "CompositionalMultiphaseFluidGeos"; }
+  static string catalogName();
 
   virtual string getCatalogName() const override { return catalogName(); }
 
@@ -123,10 +123,14 @@ private:
   array2d< real64 > m_componentBinaryCoeff;
 };
 
-using CompositionalTwoPhaseFluidPengRobinson =  CompositionalMultiphaseFluid<
+using CompositionalTwoPhasePengRobinsonConstantViscosity =  CompositionalMultiphaseFluid<
   compositional::NegativeTwoPhaseFlashPRPR,
   compositional::PhaseModel< compositional::CubicEOSDensityPR, compositional::ConstantViscosity, compositional::NullModel >,
   compositional::PhaseModel< compositional::CubicEOSDensityPR, compositional::ConstantViscosity, compositional::NullModel > >;
+using CompositionalTwoPhaseSoaveRedlichKwongConstantViscosity =  CompositionalMultiphaseFluid<
+  compositional::NegativeTwoPhaseFlashSRKSRK,
+  compositional::PhaseModel< compositional::CubicEOSDensitySRK, compositional::ConstantViscosity, compositional::NullModel >,
+  compositional::PhaseModel< compositional::CubicEOSDensitySRK, compositional::ConstantViscosity, compositional::NullModel > >;
 
 } /* namespace constitutive */
 

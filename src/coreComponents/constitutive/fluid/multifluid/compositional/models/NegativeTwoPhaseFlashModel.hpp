@@ -70,7 +70,7 @@ public:
                               array1d< real64 > const & componentMolarWeight,
                               ComponentProperties const & componentProperties );
 
-  static string catalogName() { return "NegativeTwoPhaseFlash"; }
+  static string catalogName();
 
   virtual string getCatalogName() const final { return catalogName(); }
 
