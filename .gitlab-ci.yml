@@ -120,7 +120,7 @@ stages:
   stage: build
   variables:
     ALLOC_COMMAND: "salloc -N1 -ppdebug"
-    INTEGRATED_ALLOC_COMMAND: "salloc -N 10 -p pbatch"
+    INTEGRATED_ALLOC_COMMAND: "salloc -N 4 -p pbatch"
     SYSTEM: "tioga"
   before_script:
     - module load rocm/5.4.3
@@ -146,9 +146,14 @@ stages:
 
 ####
 # quartz job
-quartz_clang_14_build:
+# quartz_clang_14_build:
+#  variables:
+#    HOST_CONFIG: "quartz-clang-14.cmake"
+#  extends: [.build_on_quartz]
+
+quartz_gcc_12_build:
   variables:
-    HOST_CONFIG: "quartz-clang-14.cmake"
+    HOST_CONFIG: "quartz-gcc-12.cmake"
   extends: [.build_on_quartz]
 
 ####
@@ -164,6 +169,16 @@ lassen_clang_10_cuda_11_build:
   variables:
     HOST_CONFIG: "lassen-clang-10-cuda-11.cmake"
   extends: [.build_on_lassen]
+
+# lassen_clang_13_cuda_11_build:
+#   variables:
+#     HOST_CONFIG: "lassen-clang-13-cuda-11.cmake"
+#   extends: [.build_on_lassen]
+
+# lassen_gcc_8_cuda_11_build:
+#   variables:
+#     HOST_CONFIG: "lassen-gcc-8-cuda-11.cmake"
+#   extends: [.build_on_lassen]
 
 ####
 # Pull nightlyTests repo and update files
