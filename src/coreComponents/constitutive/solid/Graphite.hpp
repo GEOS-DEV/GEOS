@@ -497,10 +497,10 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
     LvArray::tensorOps::Ri_eq_AijBj< 3, 3 >( unrotatedMaterialDirection, rotationTranspose, materialDirection);
 
     // Use beginning of step normal stress to compute stress dependence of Ez
-    // real64 temp[3];
+    real64 temp[3] = { 0 };
     int voigtMap[3][3] = { {0, 5, 4}, {5, 1, 3}, {4, 3, 2} };
-    // LvArray::tensorOps::Ri_eq_symAijBj< 3 >( temp, oldStress, unrotatedMaterialDirection );
-    // real64 oldPlaneNormalStress = LvArray::tensorOps::AiBi< 3 >( unrotatedMaterialDirection, temp );  // CC: Unused?
+    LvArray::tensorOps::Ri_eq_symAijBj< 3 >( temp, oldStress, unrotatedMaterialDirection );
+    real64 oldPlaneNormalStress = LvArray::tensorOps::AiBi< 3 >( unrotatedMaterialDirection, temp );  // CC: Unused?
 
     // Beginning of step pressure to compute pressure-dependence of elastic moduli
     real64 oldPressure = (-1.0/3.0)*( oldStress[0] + oldStress[1] + oldStress[2] ); // CC: Unused?
@@ -510,8 +510,7 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
 
     // CC: in old geos the elastic on two different lines of the same code, Mike used planeNormalStress in one but not the other
     // need to ask him about that
-
-    real64 Ez = m_defaultYoungModulusAxial + m_defaultYoungModulusAxialPressureDerivative * std::max( 0.0, oldPressure);
+    real64 Ez = m_defaultYoungModulusAxial + m_defaultYoungModulusAxialPressureDerivative * std::max( 0.0, -0.5*oldPlaneNormalStress + 0.5*oldPressure);
     real64 Ep = m_defaultYoungModulusTransverse + m_defaultYoungModulusTransversePressureDerivative * std::max( 0.0, oldPressure);
     real64 Gzp  = m_defaultShearModulusAxialTransverse + m_defaultShearModulusAxialTransversePressureDerivative * std::max( 0.0, oldPressure );
     real64 nuzp = m_defaultPoissonRatioAxialTransverse;
@@ -549,10 +548,10 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
     saveStress( k, q, stress );
 
     // Decompose stress tensor into pieces.
-    real64 sigma1[6] = {0}; // axial
-    real64 sigma2[6] = {0}; // in-plane normal
-    real64 sigma4[6] = {0}; // in-plane total stress
-    real64 sigma5[6] = {0}; // weak plane - shear
+    real64 sigma1Dense [3][3] = { { 0 } };
+    real64 sigma2Dense [3][3] = { { 0 } };
+    real64 sigma4Dense [3][3] = { { 0 } };
+    real64 sigma5Dense [3][3] = { { 0 } };
     for(int i=0; i<3; i++)
     {
         for(int j=0; j<3; j++)
@@ -561,14 +560,23 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
             {
                 for(int w=0; w<3; w++)
                 {
-                    sigma1[voigtMap[i][j]] += transverselyIsotropicB1(unrotatedMaterialDirection,i,j,p,w)*stress[voigtMap[p][w]];
-                    sigma2[voigtMap[i][j]] += transverselyIsotropicB2(unrotatedMaterialDirection,i,j,p,w)*stress[voigtMap[p][w]];
-                    sigma4[voigtMap[i][j]] += transverselyIsotropicB4(unrotatedMaterialDirection,i,j,p,w)*stress[voigtMap[p][w]];
-                    sigma5[voigtMap[i][j]] += transverselyIsotropicB5(unrotatedMaterialDirection,i,j,p,w)*stress[voigtMap[p][w]];
+                    sigma1Dense[i][j] += transverselyIsotropicB1(unrotatedMaterialDirection,i,j,p,w)*stress[voigtMap[p][w]];
+                    sigma2Dense[i][j] += transverselyIsotropicB2(unrotatedMaterialDirection,i,j,p,w)*stress[voigtMap[p][w]];
+                    sigma4Dense[i][j] += transverselyIsotropicB4(unrotatedMaterialDirection,i,j,p,w)*stress[voigtMap[p][w]];
+                    sigma5Dense[i][j] += transverselyIsotropicB5(unrotatedMaterialDirection,i,j,p,w)*stress[voigtMap[p][w]];
                 }
             }
         }
     }
+
+    real64 sigma1[6] = {0}; // axial
+    real64 sigma2[6] = {0}; // in-plane normal
+    real64 sigma4[6] = {0}; // in-plane total stress
+    real64 sigma5[6] = {0}; // weak plane - shear
+    LvArray::tensorOps::denseToSymmetric< 3 >( sigma1, sigma1Dense );
+    LvArray::tensorOps::denseToSymmetric< 3 >( sigma2, sigma2Dense );
+    LvArray::tensorOps::denseToSymmetric< 3 >( sigma4, sigma4Dense );
+    LvArray::tensorOps::denseToSymmetric< 3 >( sigma5, sigma5Dense );
 
     // Trial pressure to compute pressure-dependence of strength
     real64 pressure = (-1.0/3.0)*( stress[0] + stress[1] + stress[2] );
@@ -580,7 +588,7 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
 
 
     // Check for tensile failure in preferred direction
-    real64 temp[3] = { 0 };
+    // real64 temp[3] = { 0 };
     LvArray::tensorOps::Ri_eq_symAijBj< 3 >( temp, stress, unrotatedMaterialDirection );
     real64 planeNormalStress = LvArray::tensorOps::AiBi< 3 >( unrotatedMaterialDirection, temp );
 
@@ -647,7 +655,7 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
     m1 = fac*m1 + (1.0 - fac)*std::max( m_damagedMaterialFrictionalSlope, (y2-y1)/(x2-x1) );
     if(pressure < x1)
     {
-        totalShearStrength=std::max(0.0,y1-(x2-pressure)*m1);
+        totalShearStrength=std::max(0.0,y1-(x1-pressure)*m1);
     }
     else if(pressure < x2)
     {
@@ -671,7 +679,7 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
     m1 = fac*m1 + (1. - fac)*std::max( m_damagedMaterialFrictionalSlope, (y2-y1)/(x2-x1) );
     if(pressure<x1)
     {
-        coupledYieldStrength=std::max(0.0,y1-(x2-pressure)*m1);
+        coupledYieldStrength=std::max(0.0,y1-(x1-pressure)*m1);
     }
     else if(pressure<x2)
     {
@@ -685,7 +693,7 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
     // -------------------------------
     // In-plane shear response
     x1 = 0;
-    x2 = m_inPlaneShearResponseX2;
+    x2 = m_inPlaneShearResponseX2; 
     y1 = m_inPlaneShearResponseY1;
     y2 = m_inPlaneShearResponseY2;
     m1 = m_inPlaneShearResponseM1;
@@ -695,7 +703,7 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
     m1 = fac*m1 + (1. - fac)*std::max( m_damagedMaterialFrictionalSlope, (y2-y1)/(x2-x1) );
     if( pressure < x1 )
     {
-        inPlaneShearStrength=std::max(0.0, y1  -( x2 - pressure ) * m1 );
+        inPlaneShearStrength=std::max(0.0, y1  -( x1 - pressure ) * m1 );
     }
     else if( pressure < x2 )
     {
@@ -877,10 +885,10 @@ void GraphiteUpdates::computeTransverselyIsotropicTrialStress(const real64 timeI
 				{
 					// newStress[voigtMap[i][j]] 
           stressIncrementDense[i][j] += (h1*transverselyIsotropicB1(materialDirection,i,j,p,w) +
-                                    h2*transverselyIsotropicB2(materialDirection,i,j,p,w) +
-                                    h3*transverselyIsotropicB3(materialDirection,i,j,p,w) +
-                                    h4*transverselyIsotropicB4(materialDirection,i,j,p,w) +
-                                    h5*transverselyIsotropicB5(materialDirection,i,j,p,w))*D[voigtMap[p][w]]*timeIncrement;
+                                          h2*transverselyIsotropicB2(materialDirection,i,j,p,w) +
+                                          h3*transverselyIsotropicB3(materialDirection,i,j,p,w) +
+                                          h4*transverselyIsotropicB4(materialDirection,i,j,p,w) +
+                                          h5*transverselyIsotropicB5(materialDirection,i,j,p,w))*D[voigtMap[p][w]]*timeIncrement;
 				}
 			}
 		}
