@@ -158,31 +158,73 @@ void DomainPartition::setupBaseLevelMeshGlobalInfo()
 
   forMeshBodies( [&]( MeshBody & meshBody )
   {
-    MeshLevel & meshLevel = meshBody.getBaseDiscretization();
-
-    NodeManager & nodeManager = meshLevel.getNodeManager();
-    FaceManager & faceManager = meshLevel.getFaceManager();
-    EdgeManager & edgeManager = meshLevel.getEdgeManager();
-
-    nodeManager.setMaxGlobalIndex();
-    for( NeighborCommunicator const & neighbor : m_neighbors )
+    if( !meshBody.hasParticles() ) // Currently, particle-based mesh bodies do not construct their
+                                   // own domain decomposition. MPM borrows that of the grid.
     {
-      neighbor.addNeighborGroupToMesh( meshLevel );
+      MeshLevel & meshLevel = meshBody.getBaseDiscretization();
+
+      NodeManager & nodeManager = meshLevel.getNodeManager();
+      FaceManager & faceManager = meshLevel.getFaceManager();
+      EdgeManager & edgeManager = meshLevel.getEdgeManager();
+
+      nodeManager.setMaxGlobalIndex();
+      for( NeighborCommunicator const & neighbor : m_neighbors )
+      {
+        neighbor.addNeighborGroupToMesh( meshLevel );
+      }
+
+      CommunicationTools::getInstance().assignGlobalIndices( faceManager,
+                                                             nodeManager,
+                                                             m_neighbors );
+
+      CommunicationTools::getInstance().assignGlobalIndices( edgeManager,
+                                                             nodeManager,
+                                                             m_neighbors );
+
+      CommunicationTools::getInstance().findMatchedPartitionBoundaryObjects( faceManager,
+                                                                             m_neighbors );
+
+      CommunicationTools::getInstance().findMatchedPartitionBoundaryObjects( edgeManager,
+                                                                             m_neighbors );
+
+      // w.r.t. edges and faces, finding the matching nodes between partitions is a bit trickier.
+      // Because for contact mechanics and fractures, some nodes can be collocated.
+      // And the fracture elements will point to those nodes.
+      // While they are not the _same_ nodes (which is the criterion for edges and faces),
+      // we still want those collocated nodes to be exchanged between the ranks.
+      // This is why we gather some additional information: what are those collocated nodes
+      // and also what are the nodes that we require but are not present on the current rank!
+      std::set< std::set< globalIndex > > collocatedNodesBuckets;
+      std::set< globalIndex > requestedNodes;
+      meshLevel.getElemManager().forElementSubRegions< FaceElementSubRegion >(
+        [&, g2l = &nodeManager.globalToLocalMap()]( FaceElementSubRegion const & subRegion )
+      {
+        ArrayOfArraysView< array1d< globalIndex > const > const buckets = subRegion.get2dElemToCollocatedNodesBuckets();
+        for( localIndex e2d = 0; e2d < buckets.size(); ++e2d )
+        {
+          for( integer ni = 0; ni < buckets.sizeOfArray( e2d ); ++ni )
+          {
+            array1d< globalIndex > const & bucket = buckets( e2d, ni );
+            std::set< globalIndex > tmp( bucket.begin(), bucket.end() );
+            collocatedNodesBuckets.insert( tmp );
+
+            for( globalIndex const gni: bucket )
+            {
+              auto const it = g2l->find( gni );
+              if( it == g2l->cend() )
+              {
+                requestedNodes.insert( gni );
+              }
+            }
+          }
+        }
+      } );
+
+      CommunicationTools::getInstance().findMatchedPartitionBoundaryNodes( nodeManager,
+                                                                           m_neighbors,
+                                                                           collocatedNodesBuckets,
+                                                                           requestedNodes );
     }
-
-    CommunicationTools::getInstance().assignGlobalIndices( faceManager,
-                                                           nodeManager,
-                                                           m_neighbors );
-
-    CommunicationTools::getInstance().assignGlobalIndices( edgeManager,
-                                                           nodeManager,
-                                                           m_neighbors );
-
-    CommunicationTools::getInstance().findMatchedPartitionBoundaryObjects( faceManager,
-                                                                           m_neighbors );
-
-    CommunicationTools::getInstance().findMatchedPartitionBoundaryObjects( nodeManager,
-                                                                           m_neighbors );
   } );
 }
 
@@ -193,31 +235,35 @@ void DomainPartition::setupCommunications( bool use_nonblocking )
   {
     meshBody.forMeshLevels( [&]( MeshLevel & meshLevel )
     {
-      if( meshLevel.getName() == MeshBody::groupStructKeys::baseDiscretizationString() )
+      if( !meshBody.hasParticles() ) // Currently, particle-based mesh bodies do not construct their
+                                     // own domain decomposition. MPM borrows that of the grid.
       {
-        NodeManager & nodeManager = meshLevel.getNodeManager();
-        FaceManager & faceManager = meshLevel.getFaceManager();
-
-        CommunicationTools::getInstance().setupGhosts( meshLevel, m_neighbors, use_nonblocking );
-        faceManager.sortAllFaceNodes( nodeManager, meshLevel.getElemManager() );
-        faceManager.computeGeometry( nodeManager );
-      }
-      else if( !meshLevel.isShallowCopyOf( meshBody.getMeshLevels().getGroup< MeshLevel >( 0 )) )
-      {
-        for( NeighborCommunicator const & neighbor : m_neighbors )
+        if( meshLevel.getName() == MeshBody::groupStructKeys::baseDiscretizationString() )
         {
-          neighbor.addNeighborGroupToMesh( meshLevel );
-        }
-        NodeManager & nodeManager = meshLevel.getNodeManager();
-        FaceManager & faceManager = meshLevel.getFaceManager();
+          NodeManager & nodeManager = meshLevel.getNodeManager();
+          FaceManager & faceManager = meshLevel.getFaceManager();
 
-        CommunicationTools::getInstance().findMatchedPartitionBoundaryObjects( faceManager, m_neighbors );
-        CommunicationTools::getInstance().findMatchedPartitionBoundaryObjects( nodeManager, m_neighbors );
-        CommunicationTools::getInstance().setupGhosts( meshLevel, m_neighbors, use_nonblocking );
-      }
-      else
-      {
-        GEOS_LOG_LEVEL_RANK_0( 3, "No communication setup is needed since it is a shallow copy of the base discretization." );
+          CommunicationTools::getInstance().setupGhosts( meshLevel, m_neighbors, use_nonblocking );
+          faceManager.sortAllFaceNodes( nodeManager, meshLevel.getElemManager() );
+          faceManager.computeGeometry( nodeManager );
+        }
+        else if( !meshLevel.isShallowCopyOf( meshBody.getMeshLevels().getGroup< MeshLevel >( 0 )) )
+        {
+          for( NeighborCommunicator const & neighbor : m_neighbors )
+          {
+            neighbor.addNeighborGroupToMesh( meshLevel );
+          }
+          NodeManager & nodeManager = meshLevel.getNodeManager();
+          FaceManager & faceManager = meshLevel.getFaceManager();
+
+          CommunicationTools::getInstance().findMatchedPartitionBoundaryObjects( faceManager, m_neighbors );
+          CommunicationTools::getInstance().findMatchedPartitionBoundaryObjects( nodeManager, m_neighbors );
+          CommunicationTools::getInstance().setupGhosts( meshLevel, m_neighbors, use_nonblocking );
+        }
+        else
+        {
+          GEOS_LOG_LEVEL_RANK_0( 3, "No communication setup is needed since it is a shallow copy of the base discretization." );
+        }
       }
     } );
   } );
