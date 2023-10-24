@@ -22,7 +22,7 @@
 #include "constitutive/fluid/multifluid/compositional/CompositionalMultiphaseFluidUpdates.hpp"
 #include "constitutive/fluid/multifluid/compositional/CompositionalMultiphaseFluidParameters.hpp"
 #include "constitutive/fluid/multifluid/compositional/models/ConstantViscosity.hpp"
-#include "constitutive/fluid/multifluid/compositional/models/CubicEOSDensity.hpp"
+#include "constitutive/fluid/multifluid/compositional/models/CompositionalDensity.hpp"
 #include "constitutive/fluid/multifluid/compositional/models/NegativeTwoPhaseFlashModel.hpp"
 #include "constitutive/fluid/multifluid/compositional/models/NullModel.hpp"
 #include "constitutive/fluid/multifluid/compositional/models/PhaseModel.hpp"
@@ -125,12 +125,12 @@ private:
 
 using CompositionalTwoPhasePengRobinsonConstantViscosity =  CompositionalMultiphaseFluid<
   compositional::NegativeTwoPhaseFlashPRPR,
-  compositional::PhaseModel< compositional::CubicEOSDensityPR, compositional::ConstantViscosity, compositional::NullModel >,
-  compositional::PhaseModel< compositional::CubicEOSDensityPR, compositional::ConstantViscosity, compositional::NullModel > >;
+  compositional::PhaseModel< compositional::CompositionalDensity, compositional::ConstantViscosity, compositional::NullModel >,
+  compositional::PhaseModel< compositional::CompositionalDensity, compositional::ConstantViscosity, compositional::NullModel > >;
 using CompositionalTwoPhaseSoaveRedlichKwongConstantViscosity =  CompositionalMultiphaseFluid<
   compositional::NegativeTwoPhaseFlashSRKSRK,
-  compositional::PhaseModel< compositional::CubicEOSDensitySRK, compositional::ConstantViscosity, compositional::NullModel >,
-  compositional::PhaseModel< compositional::CubicEOSDensitySRK, compositional::ConstantViscosity, compositional::NullModel > >;
+  compositional::PhaseModel< compositional::CompositionalDensity, compositional::ConstantViscosity, compositional::NullModel >,
+  compositional::PhaseModel< compositional::CompositionalDensity, compositional::ConstantViscosity, compositional::NullModel > >;
 
 } /* namespace constitutive */
 

@@ -13,10 +13,10 @@
  */
 
 /**
- * @file CubicEOSDensity.cpp
+ * @file CompositionalDensity.cpp
  */
 
-#include "CubicEOSDensity.hpp"
+#include "CompositionalDensity.hpp"
 
 namespace geos
 {
@@ -27,44 +27,31 @@ namespace constitutive
 namespace compositional
 {
 
-template< typename EOS_TYPE >
-CubicEOSDensityUpdate< EOS_TYPE >::CubicEOSDensityUpdate(
+CompositionalDensityUpdate::CompositionalDensityUpdate(
   arrayView1d< real64 const > const & componentMolarWeight,
   ComponentProperties const & componentProperties ):
   FunctionBaseUpdate( componentMolarWeight,
                       componentProperties )
 {}
 
-template< typename EOS_TYPE >
-CubicEOSDensity< EOS_TYPE >::CubicEOSDensity( string const & name,
-                                              array1d< string > const & componentNames,
-                                              array1d< real64 > const & componentMolarWeight,
-                                              ComponentProperties const & componentProperties ):
+CompositionalDensity::CompositionalDensity( string const & name,
+                                            array1d< string > const & componentNames,
+                                            array1d< real64 > const & componentMolarWeight,
+                                            ComponentProperties const & componentProperties ):
   FunctionBase( name,
                 componentNames,
                 componentMolarWeight,
                 componentProperties )
 {}
 
-template< typename EOS_TYPE >
-typename CubicEOSDensity< EOS_TYPE >::KernelWrapper
-CubicEOSDensity< EOS_TYPE >::createKernelWrapper() const
+typename CompositionalDensity::KernelWrapper
+CompositionalDensity::createKernelWrapper() const
 {
   return KernelWrapper( m_componentMolarWeight,
                         m_componentProperties );
 }
 
-// Explicit instantiation of the model template.
-template class CubicEOSDensity< PengRobinsonEOS >;
-template class CubicEOSDensity< SoaveRedlichKwongEOS >;
-
-REGISTER_CATALOG_ENTRY( FunctionBase, CubicEOSDensityPR,
-                        string const &,
-                        string_array const &,
-                        array1d< real64 > const &,
-                        ComponentProperties const & )
-
-REGISTER_CATALOG_ENTRY( FunctionBase, CubicEOSDensitySRK,
+REGISTER_CATALOG_ENTRY( FunctionBase, CompositionalDensity,
                         string const &,
                         string_array const &,
                         array1d< real64 > const &,
