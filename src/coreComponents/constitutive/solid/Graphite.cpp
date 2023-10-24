@@ -25,7 +25,15 @@ namespace constitutive
 {
 
 Graphite::Graphite( string const & name, Group * const parent ):
-  ElasticTransverseIsotropicPressureDependent( name, parent ),
+  SolidBase( name, parent ),
+  m_defaultYoungModulusTransverse(),
+  m_defaultYoungModulusAxial(),
+  m_defaultPoissonRatioTransverse(),
+  m_defaultPoissonRatioAxialTransverse(),
+  m_defaultShearModulusAxialTransverse(),
+  m_defaultYoungModulusTransversePressureDerivative(),
+  m_defaultYoungModulusAxialPressureDerivative(),
+  m_defaultShearModulusAxialTransversePressureDerivative(),
   m_velocityGradient(),
   m_plasticStrain(),
   m_relaxation(),
@@ -50,6 +58,46 @@ Graphite::Graphite( string const & name, Group * const parent ):
   m_maximumPlasticStrain()
 {
   // register default values
+  registerWrapper( viewKeyStruct::defaultYoungModulusTransverseString(), &m_defaultYoungModulusTransverse ).
+    setApplyDefaultValue( -1 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Default Transverse Young's Modulus" );
+
+  registerWrapper( viewKeyStruct::defaultYoungModulusAxialString(), &m_defaultYoungModulusAxial ).
+    setApplyDefaultValue( -1 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Default Axial Young's Modulus" );
+
+  registerWrapper( viewKeyStruct::defaultPoissonRatioTransverseString(), &m_defaultPoissonRatioTransverse ).
+    setApplyDefaultValue( -1 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Default Transverse Poisson's Ratio" );
+
+  registerWrapper( viewKeyStruct::defaultPoissonRatioAxialTransverseString(), &m_defaultPoissonRatioAxialTransverse ).
+    setApplyDefaultValue( -1 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Default Axial-Transverse Poisson's Ratio" );
+
+  registerWrapper( viewKeyStruct::defaultShearModulusAxialTransverseString(), &m_defaultShearModulusAxialTransverse ).
+    setApplyDefaultValue( -1 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Default Axial-Transverse Shear Modulus" );
+
+  registerWrapper( viewKeyStruct::defaultYoungModulusTransversePressureDerivativeString(), &m_defaultYoungModulusTransversePressureDerivative ).
+    setApplyDefaultValue( -1 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Transverse Young's modulus pressure derivative" );
+
+  registerWrapper( viewKeyStruct::defaultYoungModulusAxialPressureDerivativeString(), &m_defaultYoungModulusAxialPressureDerivative ).
+    setApplyDefaultValue( -1 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Axial Young's modulus pressure derivative" );
+
+  registerWrapper( viewKeyStruct::defaultShearModulusAxialTransversePressureDerivativeString(), &m_defaultShearModulusAxialTransversePressureDerivative ).
+    setApplyDefaultValue( -1 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Axial transverse shear modulus pressure derivative" );
+
   registerWrapper( viewKeyStruct::failureStrengthString(), &m_failureStrength ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Maximum theoretical strength" );
@@ -144,6 +192,18 @@ registerWrapper( viewKeyStruct::jacobianString(), &m_jacobian ).
     setApplyDefaultValue( DBL_MIN ).
     setPlotLevel( PlotLevel::NOPLOT ).
     setDescription( "Array of quadrature point damage values" );
+
+  registerWrapper( viewKeyStruct::effectiveBulkModulusString(), &m_effectiveBulkModulus ).
+    setInputFlag( InputFlags::FALSE ).
+    setDescription( "Effective bulk modulus for stress control and wavespeed calculations" );
+  
+  registerWrapper( viewKeyStruct::effectiveShearModulusString(), &m_effectiveShearModulus ).
+    setInputFlag( InputFlags::FALSE).
+    setDescription( "Effective shear modulus for stress control and wavespeed calculations");
+
+  registerWrapper( viewKeyStruct::materialDirectionString(), &m_materialDirection ).
+    setPlotLevel( PlotLevel::NOPLOT ).
+    setDescription( "Material direction" );
 }
 
 
@@ -154,8 +214,11 @@ Graphite::~Graphite()
 void Graphite::allocateConstitutiveData( dataRepository::Group & parent,
                                               localIndex const numConstitutivePointsPerParentIndex )
 {
-  ElasticTransverseIsotropicPressureDependent::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
+  SolidBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 
+  m_effectiveBulkModulus.resize( 0 );
+  m_effectiveShearModulus.resize( 0 );
+  m_materialDirection.resize( 0, 3 );
   m_velocityGradient.resize( 0, 3, 3 );
   m_plasticStrain.resize( 0, numConstitutivePointsPerParentIndex, 6 );
   m_relaxation.resize( 0, numConstitutivePointsPerParentIndex );
@@ -167,7 +230,9 @@ void Graphite::allocateConstitutiveData( dataRepository::Group & parent,
 
 void Graphite::postProcessInput()
 {
-  ElasticTransverseIsotropicPressureDependent::postProcessInput();
+  SolidBase::postProcessInput();
+
+  // Add elastic constants check
 
   GEOS_THROW_IF( m_failureStrength <= 0.0, "Maximum theoretical strength must be greater than 0", InputError );
   GEOS_THROW_IF( m_crackSpeed <= 0.0, "Crack speed must be a positive number.", InputError );
