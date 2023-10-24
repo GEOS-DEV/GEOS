@@ -4509,11 +4509,11 @@ void SolidMechanicsMPM::computeBoxMetrics( ParticleManager & particleManager,
 
 void SolidMechanicsMPM::stressControl( real64 dt,
                                        ParticleManager & particleManager,
-                                       SpatialPartition & partition )
+                                       SpatialPartition & GEOS_UNUSED_PARAM( partition ) )
 {
   GEOS_MARK_FUNCTION;
 
-  arrayView1d< int const > const periodic = partition.getPeriodic();
+  // arrayView1d< int const > const periodic = partition.getPeriodic();
 
   real64 targetStress[3] = {0};
   LvArray::tensorOps::copy< 3 >(targetStress, m_domainStress);
@@ -4531,24 +4531,24 @@ void SolidMechanicsMPM::stressControl( real64 dt,
 
   // CC: TODO Still use box stress but enfore Lmax for each direction
 
-  // Non periodic directions should use boundary reactions instead of box stresses
-  for( int i=0; i<m_numDims; i++)
-  {
-    if( !periodic[i] )
-    {
-      real64 area = 1;
-      for( int j=0; j< m_numDims; j++)
-      {
-        if( j == i )
-        {
-          continue;
-        }
-        area *= m_domainExtent[j];
-      }
-      // x-, x+, y-, y+, z-, z+
-      currentStress[i] = ( m_globalFaceReactions[2*i + 1] * m_xGlobalMax[i] + m_globalFaceReactions[ 2*i ] * m_xGlobalMin[i] ) / ( area * m_domainExtent[i] );
-    }
-  }
+  // // Non periodic directions should use boundary reactions instead of box stresses
+  // for( int i=0; i<m_numDims; i++)
+  // {
+  //   if( !periodic[i] )
+  //   {
+  //     real64 area = 1;
+  //     for( int j=0; j< m_numDims; j++)
+  //     {
+  //       if( j == i )
+  //       {
+  //         continue;
+  //       }
+  //       area *= m_domainExtent[j];
+  //     }
+  //     // x-, x+, y-, y+, z-, z+
+  //     currentStress[i] = ( m_globalFaceReactions[2*i + 1] * m_xGlobalMax[i] + m_globalFaceReactions[ 2*i ] * m_xGlobalMin[i] ) / ( area * m_domainExtent[i] );
+  //   }
+  // }
 
   // Uses maximum bulk modulus ( lowest effective PID gains ) of all materials
   real64 maximumBulkModulus = 0.0;
@@ -4613,7 +4613,8 @@ void SolidMechanicsMPM::stressControl( real64 dt,
 
   GEOS_ERROR_IF( maximumBulkModulus <= 0.0, "At least one material must have a positive bulk or effective bulk modulus for stress control!" );
 
-  real64 relativeDensity = fmin( 0.0, 1.0 - boxMaterialVolume / ( m_domainExtent[0] * m_domainExtent[1] * m_domainExtent[2] ) );
+  // Could some numerical artifact ever produce a negative relative density? Do I need a check for that or clip is to 0
+  real64 relativeDensity = fmin( 1.0, boxMaterialVolume / ( m_domainExtent[0] * m_domainExtent[1] * m_domainExtent[2] ) );
 
 	// This will drive the response towards the desired stress but may be
 	// unstable.
@@ -4681,13 +4682,23 @@ void SolidMechanicsMPM::stressControl( real64 dt,
 		}
 	}
 
-  // // CC: debug
-  // GEOS_LOG_RANK_0("error: " << error[0] << ", " << error[1] << ", " << error[2] << 
-  //                 ", dedt: " << dedt[0] << ", " << dedt[1] << ", " << dedt[2] <<  
-  //                 ", P: " << stressControlPTerm[0] << ", " << stressControlPTerm[1] << ", " << stressControlPTerm[2] << 
-  //                 ", I: " << stressControlITerm[0] << ", " << stressControlITerm[1] << ", " << stressControlITerm[2] <<  
-  //                 ", D: " << stressControlDTerm[0] << ", " << stressControlDTerm[1] << ", " << stressControlDTerm[2]);
-  // GEOS_LOG_RANK_0("Domain L: " << m_domainL << ", Domain F" << m_domainF);
+  // CC: debug
+  GEOS_LOG_RANK_0( "Current stress: " << currentStress << "\n" << 
+                   "Domain stress: " << m_domainStress << "\n" << 
+                   "Target stress: " << targetStress[0] << ", " << targetStress[1] << ", " << targetStress[2] << "\n" << 
+                   "Box Material Volume: " << boxMaterialVolume << "\n" <<
+                   "Relative density: " << relativeDensity << "\n" << 
+                   "Gains (kp, ki, kd): " << m_stressControlKp << ", " << m_stressControlKi << ", " << m_stressControlKd << "\n" << 
+                   "error: " << error[0] << ", " << error[1] << ", " << error[2] << "\n" <<
+                   "dedt: " << dedt[0] << ", " << dedt[1] << ", " << dedt[2] << "\n" <<  
+                   "P: " << stressControlPTerm[0] << ", " << stressControlPTerm[1] << ", " << stressControlPTerm[2] << "\n" << 
+                   "I: " << stressControlITerm[0] << ", " << stressControlITerm[1] << ", " << stressControlITerm[2] << "\n" << 
+                   "D: " << stressControlDTerm[0] << ", " << stressControlDTerm[1] << ", " << stressControlDTerm[2] << "\n" << 
+                   "Lnew (x,y,z): " << L_new[0] << ", " << L_new[1] << ", " << L_new[2] << "\n" << 
+                   "Lmin (x,y,z): " << Lxx_min << ", " << Lyy_min << ", " << Lzz_min << "\n" << 
+                   "Lmax (x,y,z): " << Lxx_max << ", " << Lyy_max << ", " << Lzz_max << "\n" << 
+                   "Domain L: " << m_domainL << "\n" << 
+                   "Domain F: " << m_domainF );
 }
 
 

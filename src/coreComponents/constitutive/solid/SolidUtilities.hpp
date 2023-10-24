@@ -349,12 +349,18 @@ struct SolidUtilities
     Ddt[5] *= 2;
 
     // Stress increment
-    solid.smallStrainUpdate_StressOnly( k, q, timeIncrement,  RotBeginning, RotEnd, Ddt, stress );
+    solid.smallStrainUpdate_StressOnly( k, q, timeIncrement, RotBeginning, RotEnd, Ddt, stress );
+
+    // CC: debug
+    // GEOS_LOG_RANK( "Particle " << k << ", m_newStress: {" << solid.m_newStress[ k ][ q ][0] << ", " << solid.m_newStress[ k ][ q ][1] << ", " << solid.m_newStress[ k ][ q ][2] << ", " << solid.m_newStress[ k ][ q ][3] << ", " << solid.m_newStress[ k ][ q ][4] << ", " << solid.m_newStress[ k ][ q ][5] << "}" );
 
     // Rotate final stress to end-of-step (current) configuration
     LvArray::tensorOps::Rij_eq_AikSymBklAjl< 3 >( temp, RotEnd, solid.m_newStress[ k ][ q ] );
     LvArray::tensorOps::copy< 6 >( stress, temp );
     solid.saveStress( k, q, stress );
+
+    // CC: debug
+    // GEOS_LOG_RANK( "Particle " << k << ", Rotated stress: {" << stress[0] << ", " << stress[1] << ", " << stress[2] << ", " << stress[3] << ", " << stress[4] << ", " << stress[5] << "}" );
   }
 
 

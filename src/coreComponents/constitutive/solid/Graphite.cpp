@@ -232,29 +232,29 @@ void Graphite::postProcessInput()
 {
   SolidBase::postProcessInput();
 
-  GEOS_LOG_RANK_0( "Ez: " << m_defaultYoungModulusAxial << "\n" << 
-                   "Ep: " << m_defaultYoungModulusTransverse << "\n" << 
-                   "Nup: " << m_defaultPoissonRatioTransverse << "\n" << 
-                   "Nuzp: " << m_defaultPoissonRatioAxialTransverse << "\n" << 
-                   "Gzp: " << m_defaultShearModulusAxialTransverse << "\n" << 
-                   "dEzdp: " << m_defaultYoungModulusAxialPressureDerivative << "\n" << 
-                   "dEpdp: " << m_defaultYoungModulusTransversePressureDerivative << "\n" << 
-                   "dGzpdp: " << m_defaultShearModulusAxialTransversePressureDerivative << "\n" << 
-                   "sigmaFail: " << m_failureStrength << "\n" << 
-                   "crackSpeed: " << m_crackSpeed << "\n" << 
-                   "ds X2: " << m_distortionShearResponseX2 << "\n" << 
-                   "ds Y1: " << m_distortionShearResponseY1 << "\n" << 
-                   "ds Y2: " << m_distortionShearResponseY2 << "\n" << 
-                   "ds M1: " << m_distortionShearResponseM1 << "\n" <<
-                   "ips X2: " << m_inPlaneShearResponseX2 << "\n" << 
-                   "ips Y1: " << m_inPlaneShearResponseY1 << "\n" << 
-                   "ips Y2: " << m_inPlaneShearResponseY2 << "\n" << 
-                   "ips M1: " << m_inPlaneShearResponseM1 << "\n" << 
-                   "cs X2: " << m_coupledShearResponseX2 << "\n" << 
-                   "cs Y1: " << m_coupledShearResponseY1 << "\n" << 
-                   "cs Y2: " << m_coupledShearResponseY2 << "\n" << 
-                   "cs M1: " << m_coupledShearResponseM1 << "\n" <<
-                   "max ep: " << m_maximumPlasticStrain );
+  // GEOS_LOG_RANK_0( "Ez: " << m_defaultYoungModulusAxial << "\n" << 
+  //                  "Ep: " << m_defaultYoungModulusTransverse << "\n" << 
+  //                  "Nup: " << m_defaultPoissonRatioTransverse << "\n" << 
+  //                  "Nuzp: " << m_defaultPoissonRatioAxialTransverse << "\n" << 
+  //                  "Gzp: " << m_defaultShearModulusAxialTransverse << "\n" << 
+  //                  "dEzdp: " << m_defaultYoungModulusAxialPressureDerivative << "\n" << 
+  //                  "dEpdp: " << m_defaultYoungModulusTransversePressureDerivative << "\n" << 
+  //                  "dGzpdp: " << m_defaultShearModulusAxialTransversePressureDerivative << "\n" << 
+  //                  "sigmaFail: " << m_failureStrength << "\n" << 
+  //                  "crackSpeed: " << m_crackSpeed << "\n" << 
+  //                  "ds X2: " << m_distortionShearResponseX2 << "\n" << 
+  //                  "ds Y1: " << m_distortionShearResponseY1 << "\n" << 
+  //                  "ds Y2: " << m_distortionShearResponseY2 << "\n" << 
+  //                  "ds M1: " << m_distortionShearResponseM1 << "\n" <<
+  //                  "ips X2: " << m_inPlaneShearResponseX2 << "\n" << 
+  //                  "ips Y1: " << m_inPlaneShearResponseY1 << "\n" << 
+  //                  "ips Y2: " << m_inPlaneShearResponseY2 << "\n" << 
+  //                  "ips M1: " << m_inPlaneShearResponseM1 << "\n" << 
+  //                  "cs X2: " << m_coupledShearResponseX2 << "\n" << 
+  //                  "cs Y1: " << m_coupledShearResponseY1 << "\n" << 
+  //                  "cs Y2: " << m_coupledShearResponseY2 << "\n" << 
+  //                  "cs M1: " << m_coupledShearResponseM1 << "\n" <<
+  //                  "max ep: " << m_maximumPlasticStrain );
 
   // Add elastic constants check
 
