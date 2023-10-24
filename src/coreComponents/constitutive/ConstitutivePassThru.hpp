@@ -34,6 +34,7 @@
 #include "solid/ElasticIsotropicPressureDependent.hpp"
 #include "solid/ElasticTransverseIsotropic.hpp"
 #include "solid/ElasticTransverseIsotropicPressureDependent.hpp"
+#include "solid/Graphite.hpp"
 #include "solid/ElasticOrthotropic.hpp"
 #include "solid/Hyperelastic.hpp"
 #include "solid/HyperelasticMMS.hpp"

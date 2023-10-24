@@ -32,7 +32,7 @@
 #ifndef GEOS_CONSTITUTIVE_SOLID_GRAPHITE_HPP_
 #define GEOS_CONSTITUTIVE_SOLID_GRAPHITE_HPP_
 
-#include "ElasticTransverseIsotropicPressureDependent.hpp"
+#include "SolidBase.hpp"
 #include "InvariantDecompositions.hpp"
 #include "PropertyConversions.hpp"
 #include "SolidModelDiscretizationOpsFullyAnisotroipic.hpp"
@@ -50,7 +50,7 @@ namespace constitutive
  * Class to provide material updates that may be
  * called from a kernel function.
  */
-class GraphiteUpdates : public ElasticTransverseIsotropicPressureDependentUpdates
+class GraphiteUpdates : public SolidBaseUpdates
 {
 public:
 
@@ -65,16 +65,22 @@ public:
    * @param[in] lengthScale The ArrayView holding the length scale for each element.
    * @param[in] failureStrength The failure strength.
    * @param[in] crackSpeed The crack speed velocity.
-   * @param[in] c11 The ArrayView holding the C11 data for each element.
-   * @param[in] c13 The ArrayView holding the C13 data for each element.
-   * @param[in] c33 The ArrayView holding the C33 data for each element.
-   * @param[in] c44 The ArrayView holding the C44 data for each element.
-   * @param[in] c66 The ArrayView holding the C66 data for each element.
    * @param[in] thermalExpansionCoefficient The ArrayView holding the thermal expansion coefficient data for each element.
    * @param[in] newStress The ArrayView holding the new stress data for each quadrature point.
    * @param[in] oldStress The ArrayView holding the old stress data for each quadrature point.
    */
-  GraphiteUpdates( arrayView3d< real64 > const & velocityGradient,
+  GraphiteUpdates( real64 const & defaultYoungModulusTransverse,
+                   real64 const & defaultYoungModulusAxial,
+                   real64 const & defaultPoissonRatioTransverse,
+                   real64 const & defaultPoissonRatioAxialTransverse,
+                   real64 const & defaultShearModulusAxialTransverse,
+                   arrayView1d< real64 > const & effectiveBulkModulus,
+                   arrayView1d< real64 > const & effectiveShearModulus,
+                   arrayView2d< real64 > const & materialDirection,
+                   real64 const defaultYoungModulusTransversePressureDerivative,
+                   real64 const defaultYoungModulusAxialPressureDerivative,
+                   real64 const defaultShearModulusAxialTransversePressureDerivative,
+                   arrayView3d< real64 > const & velocityGradient,
                    arrayView3d< real64 > const & plasticStrain,
                    arrayView2d< real64 > const & relaxation,
                    arrayView2d< real64 > const & damage,
@@ -96,50 +102,25 @@ public:
                    real64 const & coupledShearResponseY2,
                    real64 const & coupledShearResponseM1,
                    real64 const & maximumPlasticStrain,
-                   real64 const & refC11,
-                   real64 const & refC13,
-                   real64 const & refC33,
-                   real64 const & refC44,
-                   real64 const & refC66,
-                   real64 const & dc11dp,
-                   real64 const & dc13dp,
-                   real64 const & dc33dp,
-                   real64 const & dc44dp,
-                   real64 const & dc66dp,
-                   arrayView1d< real64 > const & c11,
-                   arrayView1d< real64 > const & c13,
-                   arrayView1d< real64 > const & c33,
-                   arrayView1d< real64 > const & c44,
-                   arrayView1d< real64 > const & c66,
-                   arrayView1d< real64 > const & effectiveBulkModulus,
-                   arrayView1d< real64 > const & effectiveShearModulus,
-                   arrayView2d< real64 > const & materialDirection,
                    arrayView1d< real64 > const & thermalExpansionCoefficient,
                    arrayView3d< real64, solid::STRESS_USD > const & newStress,
                    arrayView3d< real64, solid::STRESS_USD > const & oldStress,
                    bool const & disableInelasticity ):
-    ElasticTransverseIsotropicPressureDependentUpdates( refC11,
-                                                        refC13,
-                                                        refC33,
-                                                        refC44,
-                                                        refC66,
-                                                        dc11dp,
-                                                        dc13dp,
-                                                        dc33dp,
-                                                        dc44dp,
-                                                        dc66dp,
-                                                        c11, 
-                                                        c13, 
-                                                        c33, 
-                                                        c44, 
-                                                        c66, 
-                                                        effectiveBulkModulus,
-                                                        effectiveShearModulus,
-                                                        materialDirection,
-                                                        thermalExpansionCoefficient, 
-                                                        newStress, 
-                                                        oldStress, 
-                                                        disableInelasticity ),
+     SolidBaseUpdates( newStress, 
+                       oldStress, 
+                       thermalExpansionCoefficient, 
+                       disableInelasticity ),
+    m_defaultYoungModulusTransverse( defaultYoungModulusTransverse ),
+    m_defaultYoungModulusAxial( defaultYoungModulusAxial ),
+    m_defaultPoissonRatioTransverse( defaultPoissonRatioTransverse ),
+    m_defaultPoissonRatioAxialTransverse( defaultPoissonRatioAxialTransverse ),
+    m_defaultShearModulusAxialTransverse( defaultShearModulusAxialTransverse ),
+    m_effectiveBulkModulus( effectiveBulkModulus ),
+    m_effectiveShearModulus( effectiveShearModulus ),
+    m_materialDirection( materialDirection ),
+    m_defaultYoungModulusTransversePressureDerivative( defaultYoungModulusTransversePressureDerivative ),
+    m_defaultYoungModulusAxialPressureDerivative( defaultYoungModulusAxialPressureDerivative ),
+    m_defaultShearModulusAxialTransversePressureDerivative( defaultShearModulusAxialTransversePressureDerivative ),                   
     m_velocityGradient( velocityGradient ),
     m_plasticStrain( plasticStrain ),
     m_relaxation( relaxation ),
@@ -183,7 +164,7 @@ public:
   using DiscretizationOps = SolidModelDiscretizationOpsFullyAnisotroipic; // TODO: typo in anistropic (fix in DiscOps PR)
 
   // Bring in base implementations to prevent hiding warnings
-  using ElasticTransverseIsotropicPressureDependentUpdates::smallStrainUpdate;
+  using SolidBaseUpdates::smallStrainUpdate;
 
   GEOS_HOST_DEVICE
   void smallStrainUpdate( localIndex const k,
@@ -306,10 +287,32 @@ public:
   virtual void saveConvergedState( localIndex const k,
                                    localIndex const q ) const override final
   {
-    ElasticTransverseIsotropicPressureDependentUpdates::saveConvergedState( k, q );
+    SolidBaseUpdates::saveConvergedState( k, q );
   }
 
 private:
+  real64 const & m_defaultYoungModulusTransverse;
+  
+  real64 const & m_defaultYoungModulusAxial;
+  
+  real64 const & m_defaultPoissonRatioTransverse;
+
+  real64 const & m_defaultPoissonRatioAxialTransverse;
+  
+  real64 const & m_defaultShearModulusAxialTransverse;
+
+  arrayView1d< real64 > const m_effectiveBulkModulus;
+  
+  arrayView1d< real64 > const m_effectiveShearModulus;
+  
+  arrayView2d< real64 > const m_materialDirection;
+  
+  real64 const m_defaultYoungModulusTransversePressureDerivative;
+  
+  real64 const m_defaultYoungModulusAxialPressureDerivative; 
+  
+  real64 const m_defaultShearModulusAxialTransversePressureDerivative;
+
   /// A reference to the ArrayView holding the velocity gradient for each element/particle.
   arrayView3d< real64 > const m_velocityGradient;
 
@@ -420,20 +423,20 @@ void GraphiteUpdates::smallStrainUpdate_StressOnly( localIndex const k,
                                                     real64 ( & stress )[6] ) const
 {
   // elastic predictor (assume strainIncrement is all elastic)
-  ElasticTransverseIsotropicPressureDependentUpdates::smallStrainUpdate_StressOnly( k,
-                                                                                    q,
-                                                                                    timeIncrement,
-                                                                                    beginningRotation,
-                                                                                    endRotation,
-                                                                                    strainIncrement,
-                                                                                    stress );
+  // ElasticTransverseIsotropicPressureDependentUpdates::smallStrainUpdate_StressOnly( k,
+  //                                                                                   q,
+  //                                                                                   timeIncrement,
+  //                                                                                   beginningRotation,
+  //                                                                                   endRotation,
+  //                                                                                   strainIncrement,
+  //                                                                                   stress );
 
   m_jacobian[k][q] *= exp( strainIncrement[0] + strainIncrement[1] + strainIncrement[2] );
 
-  if( m_disableInelasticity )
-  {
-    return;
-  }
+  // if( m_disableInelasticity )
+  // {
+  //   return;
+  // }
 
   // call the constitutive model
   GraphiteUpdates::smallStrainUpdateHelper( k, 
@@ -459,40 +462,44 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
 {
     GEOS_UNUSED_VAR( endRotation );
 
-    real64 oldStress[6];
+    real64 oldStress[6] = { 0 };
     LvArray::tensorOps::copy< 6 >( oldStress, stress );
 
-    real64 rotationTranspose[3][3];
+    real64 rotationTranspose[3][3] = { { 0 } };
     LvArray::tensorOps::transpose< 3, 3 >( rotationTranspose, beginningRotation ); 
 
-    real64 unrotatedVelocityGradient[3][3];
+    real64 unrotatedVelocityGradient[3][3] = { { 0 } };
     LvArray::tensorOps::Rij_eq_AikBkj< 3, 3, 3 >( unrotatedVelocityGradient, rotationTranspose, m_velocityGradient[k] );
     
-    real64 unrotatedVelocityGradientTranspose[3][3];
+    real64 unrotatedVelocityGradientTranspose[3][3] = { { 0 } };
     LvArray::tensorOps::transpose< 3, 3 >( unrotatedVelocityGradientTranspose, unrotatedVelocityGradient );
 
     // CC: Is there an LvArray operation to get the symmetric part of a matrix?
-    real64 denseD[3][3];
+    real64 denseD[3][3] = { { 0 } };
     LvArray::tensorOps::copy< 3, 3 >( denseD, unrotatedVelocityGradient );
     LvArray::tensorOps::add< 3, 3 >( denseD, unrotatedVelocityGradientTranspose );
     LvArray::tensorOps::scale< 3, 3 >( denseD, 0.5 );
 
-    real64 D[6];
+    real64 D[6] = { 0 };
     LvArray::tensorOps::denseToSymmetric<3>( D, denseD );
 
     // make sure material direction is normalized.
-    real64 materialDirection[3];
+    real64 materialDirection[3] = { 0 };
     LvArray::tensorOps::copy< 3 >( materialDirection, m_materialDirection[k] );
     LvArray::tensorOps::normalize< 3 >( materialDirection );
+
+    // Unrotate material direction
+    real64 unrotatedMaterialDirection[3] = { 0 };
+    LvArray::tensorOps::Ri_eq_AijBj< 3, 3 >( unrotatedMaterialDirection, rotationTranspose, materialDirection);
 
     // Use beginning of step normal stress to compute stress dependence of Ez
     // real64 temp[3];
     int voigtMap[3][3] = { {0, 5, 4}, {5, 1, 3}, {4, 3, 2} };
-    // LvArray::tensorOps::Ri_eq_symAijBj< 3 >( temp, oldStress, materialDirection );
-    // real64 oldPlaneNormalStress = LvArray::tensorOps::AiBi< 3 >( materialDirection, temp );  // CC: Unused?
+    // LvArray::tensorOps::Ri_eq_symAijBj< 3 >( temp, oldStress, unrotatedMaterialDirection );
+    // real64 oldPlaneNormalStress = LvArray::tensorOps::AiBi< 3 >( unrotatedMaterialDirection, temp );  // CC: Unused?
 
     // Beginning of step pressure to compute pressure-dependence of elastic moduli
-    // real64 oldPressure = (-1.0/3.0)*( oldStress[0] + oldStress[1] + oldStress[2] ); // CC: Unused?
+    real64 oldPressure = (-1.0/3.0)*( oldStress[0] + oldStress[1] + oldStress[2] ); // CC: Unused?
 
     // This is a transversely isotropic material for graphite-like crystals having
     // some weak plane with plane-normal-stress- and pressure-dependent elastic properties:
@@ -500,31 +507,42 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
     // CC: in old geos the elastic on two different lines of the same code, Mike used planeNormalStress in one but not the other
     // need to ask him about that
 
-    // Elastic constants are updated based on pressure before in ElasticTransverseIsotropicPressureDependent update
-    real64 c11 = m_c11[k];
-    real64 c13 = m_c13[k];
-    real64 c33 = m_c33[k];
-    real64 c44 = m_c44[k];
-    real64 c66 = m_c66[k];
+    real64 Ez = m_defaultYoungModulusAxial + m_defaultYoungModulusAxialPressureDerivative * std::max( 0.0, oldPressure);
+    real64 Ep = m_defaultYoungModulusTransverse + m_defaultYoungModulusTransversePressureDerivative * std::max( 0.0, oldPressure);
+    real64 Gzp  = m_defaultShearModulusAxialTransverse + m_defaultShearModulusAxialTransversePressureDerivative * std::max( 0.0, oldPressure );
+    real64 nuzp = m_defaultPoissonRatioAxialTransverse;
+    real64 nup = m_defaultPoissonRatioTransverse;
 
-    real64 Ez = c33 - c13 * c13 / ( c11 - c66 );
-    real64 Ep = 4 * c66 * ( c11 * c33 - c66 * c33 - c13 * c13 ) / ( c11 * c33 - c13 * c13 );
-    real64 Gzp = c44 / 2.0;
-    real64 nuzp = c13 / ( 2 * ( c11 - c66 ) );
-    real64 nup = Ep / c66 - 1; //4 * ( c11 * c33 - c66 * c33 - c13 * c13 ) / ( c11 * c33 - c13 * c13 ) - 1;
+    // Update effective elastic properties
+    m_effectiveBulkModulus[k] = -Ep*Ez/(2*Ez*(nup+nuzp-1) + Ep*(2*nuzp-1));
+    m_effectiveShearModulus[k] = 0.6*m_effectiveBulkModulus[k];
+
+    // real64 Ez = c33 - c13 * c13 / ( c11 - c66 );
+    // real64 Ep = 4 * c66 * ( c11 * c33 - c66 * c33 - c13 * c13 ) / ( c11 * c33 - c13 * c13 );
+    // real64 Gzp = c44 / 2.0;
+    // real64 nuzp = c13 / ( 2 * ( c11 - c66 ) );
+    // real64 nup = Ep / c66 - 1; //4 * ( c11 * c33 - c66 * c33 - c13 * c13 ) / ( c11 * c33 - c13 * c13 ) - 1;
 
     // Hypoelastic trial stress update.
-    // CC: this should already be done by ElasticTransverseIsotropicPressureDependent
-    // computeTransverselyIsotropicTrialStress( timeIncrement,      // time step
-    //                                          Ez,                 // Elastic modulus preferred direction
-    //                                          Ep,                 // Elastic modulus transverse plane
-    //                                          nuzp,               // Poisson ratio coupled
-    //                                          nup,                // Poisson ratio transverse plane
-    //                                          Gzp,                // Shear modulus coupled plane
-    //                                          materialDirection,	 // preferred direction
-    //                                          oldStress,          // stress at start of step
-    //                                          D,                  // D=sym(L)
-    //                                          stress );           // stress at end of step
+    computeTransverselyIsotropicTrialStress( timeIncrement,      // time step
+                                             Ez,                 // Elastic modulus preferred direction
+                                             Ep,                 // Elastic modulus transverse plane
+                                             nuzp,               // Poisson ratio coupled
+                                             nup,                // Poisson ratio transverse plane
+                                             Gzp,                // Shear modulus coupled plane
+                                             unrotatedMaterialDirection,	 // preferred direction
+                                             oldStress,          // stress at start of step
+                                             D,                  // D=sym(L)
+                                             stress );           // stress at end of step
+
+    // m_jacobian[k][q] *= exp( strainIncrement[0] + strainIncrement[1] + strainIncrement[2] );
+
+    if( m_disableInelasticity )
+    {
+      return;
+    }
+
+    saveStress( k, q, stress );
 
     // Decompose stress tensor into pieces.
     real64 sigma1[6] = {0}; // axial
@@ -539,10 +557,10 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
             {
                 for(int w=0; w<3; w++)
                 {
-                    sigma1[voigtMap[i][j]] += transverselyIsotropicB1(materialDirection,i,j,p,w)*stress[voigtMap[p][w]];
-                    sigma2[voigtMap[i][j]] += transverselyIsotropicB2(materialDirection,i,j,p,w)*stress[voigtMap[p][w]];
-                    sigma4[voigtMap[i][j]] += transverselyIsotropicB4(materialDirection,i,j,p,w)*stress[voigtMap[p][w]];
-                    sigma5[voigtMap[i][j]] += transverselyIsotropicB5(materialDirection,i,j,p,w)*stress[voigtMap[p][w]];
+                    sigma1[voigtMap[i][j]] += transverselyIsotropicB1(unrotatedMaterialDirection,i,j,p,w)*stress[voigtMap[p][w]];
+                    sigma2[voigtMap[i][j]] += transverselyIsotropicB2(unrotatedMaterialDirection,i,j,p,w)*stress[voigtMap[p][w]];
+                    sigma4[voigtMap[i][j]] += transverselyIsotropicB4(unrotatedMaterialDirection,i,j,p,w)*stress[voigtMap[p][w]];
+                    sigma5[voigtMap[i][j]] += transverselyIsotropicB5(unrotatedMaterialDirection,i,j,p,w)*stress[voigtMap[p][w]];
                 }
             }
         }
@@ -553,13 +571,13 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
 
     // Check for tensile failure in preferred direction
     real64 temp[3] = { 0 };
-    LvArray::tensorOps::Ri_eq_symAijBj< 3 >( temp, stress, materialDirection );
-    real64 planeNormalStress = LvArray::tensorOps::AiBi< 3 >( materialDirection, temp );
+    LvArray::tensorOps::Ri_eq_symAijBj< 3 >( temp, stress, unrotatedMaterialDirection );
+    real64 planeNormalStress = LvArray::tensorOps::AiBi< 3 >( unrotatedMaterialDirection, temp );
 
     // increment damage, but enforce 0<=d<=1
     if (planeNormalStress > m_failureStrength)
     {
-        real64 timeToFailure = m_lengthScale[k]/m_crackSpeed;
+        real64 timeToFailure = m_lengthScale[k] / m_crackSpeed;
         m_damage[k][q] = std::min( m_damage[k][q] + timeIncrement / timeToFailure, 1.0 );
     }
 
@@ -567,7 +585,7 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
     real64 fac = (1.0 - m_damage[k][q])*(1.0 - m_relaxation[k][q]);
 
     // Enforce damage, no tensile stress on plane, and frictional response to shear.
-    if(m_damage[k][q] == 1.0)
+    if(m_damage[k][q] >= 1.0) // Floating point comparison issue with == ?
     {
         if ( planeNormalStress > 0 )
         {
@@ -577,26 +595,24 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
 
     // find in-plane isotropic and deviatoric stress
     real64 inPlaneIso[6], inPlaneDev[6];
-    LvArray::tensorOps::copy< 6 >(inPlaneIso, sigma2);
-    LvArray::tensorOps::scale< 6 >(inPlaneIso, 0.5);
-    LvArray::tensorOps::copy< 6 >(inPlaneDev, sigma4);
-    LvArray::tensorOps::subtract< 6 >(inPlaneDev, inPlaneIso);
+    LvArray::tensorOps::copy< 6 >( inPlaneIso, sigma2 );
+    LvArray::tensorOps::scale< 6 >( inPlaneIso, 0.5 );
+    LvArray::tensorOps::copy< 6 >( inPlaneDev, sigma4 );
+    LvArray::tensorOps::subtract< 6 >( inPlaneDev, inPlaneIso );
 
     // find distortion stress from in-plane isotropic and plane-normal stress
-    real64 distortion[6], distortion_iso[6] = {0}, distortion_dev[6];
+    real64 distortion[6] = { 0 };
     LvArray::tensorOps::copy< 6 >(distortion, inPlaneIso);
     LvArray::tensorOps::add< 6 >(distortion, sigma1);
 
-    real64 trialP;
-    real64 trialQ; //  Check that this isn't a redeclaration
-    twoInvariant::stressDecomposition( distortion,
-                                       trialP,
-                                       trialQ,
-                                       distortion_dev );
+    real64 distortion_iso[6] = {0};
+    distortion_iso[0] = -pressure;
+    distortion_iso[1] = -pressure;
+    distortion_iso[2] = -pressure;
 
-    distortion_iso[0] = trialP;
-    distortion_iso[1] = trialP;
-    distortion_iso[2] = trialP;
+    real64 distortion_dev[6] = { 0 };
+    LvArray::tensorOps::copy< 6 >( distortion_dev, distortion );
+    LvArray::tensorOps::subtract< 6 >( distortion_dev, distortion_iso );
 
     // Define 3 pressure-dependent shear strengths for different shear modes.
     real64 inPlaneShearStrength, coupledYieldStrength, totalShearStrength;
@@ -611,13 +627,13 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
     m1 = m_distortionShearResponseM1;
 
     // damage or softening reduces cohesion and reduces slope to failed value.
-    y1 = fac*y1;
-    m1 = fac*m1 + (1. - fac)*std::max( m_damagedMaterialFrictionalSlope, (y2-y1)/(x2-x1) );
-    if(pressure<x1)
+    y1 *= fac;
+    m1 = fac*m1 + (1.0 - fac)*std::max( m_damagedMaterialFrictionalSlope, (y2-y1)/(x2-x1) );
+    if(pressure < x1)
     {
         totalShearStrength=std::max(0.0,y1-(x2-pressure)*m1);
     }
-    else if(pressure<x2)
+    else if(pressure < x2)
     {
         totalShearStrength=slopePoint0(pressure,x1,x2,y1,y2,m1);
     }
@@ -635,7 +651,7 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
     m1 = m_coupledShearResponseM1;
 
     // damage or softening reduces cohesion and reduces slope to failed value.
-    y1 = fac*y1;
+    y1 *= fac;
     m1 = fac*m1 + (1. - fac)*std::max( m_damagedMaterialFrictionalSlope, (y2-y1)/(x2-x1) );
     if(pressure<x1)
     {
@@ -659,7 +675,7 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
     m1 = m_inPlaneShearResponseM1;
 
     // damage or softening reduces cohesion and reduces slope to failed value.
-    y1 = fac*y1;
+    y1 *= fac;
     m1 = fac*m1 + (1. - fac)*std::max( m_damagedMaterialFrictionalSlope, (y2-y1)/(x2-x1) );
     if( pressure < x1 )
     {
@@ -684,7 +700,6 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
     if ( totalShearStress > totalShearStrength )
     {
       LvArray::tensorOps::scale< 6 >( distortion_dev, totalShearStrength / totalShearStress );
-      // distortion_dev *= totalShearStrength / totalShearStress;
       plastic = true;
     }
 
@@ -694,7 +709,6 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
     if ( inPlaneShearStress > inPlaneShearStrength )
     {
       LvArray::tensorOps::scale< 6 >( inPlaneDev, inPlaneShearStrength / inPlaneShearStress );
-      // inPlaneDev *= inPlaneShearStrength / inPlaneShearStress;
       plastic = true;
     }
 
@@ -704,16 +718,18 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
     if ( coupledShearStress > coupledYieldStrength )
     {
       LvArray::tensorOps::scale< 6 >( sigma5, coupledYieldStrength / coupledShearStress );
-      // sigma5 *= coupledYieldStrength / coupledShearStress;
       plastic = true;
     }
 
-    // reassemble end-of-step stress
+    // reassemble end-of-step stress  
     real64 newStress[6] = {0};
     LvArray::tensorOps::add< 6 >(newStress, distortion_iso);
     LvArray::tensorOps::add< 6 >(newStress, distortion_dev);
     LvArray::tensorOps::add< 6 >(newStress, inPlaneDev);
     LvArray::tensorOps::add< 6 >(newStress, sigma5);
+
+    // Copy the new stress 
+    LvArray::tensorOps::copy< 6 >( stress, newStress );
 
     //////////////////////////////////////////////////////
     // Evolve state variables.
@@ -727,7 +743,7 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
     {
         // increment plastic strain
         real64 plasticStrainIncrement[6] = {0};
-        computeTransverselyIsotropicPlasticStrainIncrement( unrotatedVelocityGradient,          // Velocity gradient tensor
+        computeTransverselyIsotropicPlasticStrainIncrement( unrotatedVelocityGradient, // Velocity gradient tensor
                                                             oldStress,                 // Stress at start of step
                                                             stress,                    // Stress at end of step
                                                             Ez,                        // Elastic modulus preferred direction
@@ -735,10 +751,48 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
                                                             nuzp,                      // Poisson ratio coupled
                                                             nup,                       // Poisson ratio transverse plane
                                                             Gzp,                       // Shear modulus coupled plane
-                                                            materialDirection,		     // material direction (unit vector, plane normal)
+                                                            unrotatedMaterialDirection,		     // material direction (unit vector, plane normal)
                                                             timeIncrement,             // timeStep
                                                             plasticStrainIncrement );
-        LvArray::tensorOps::add< 6 >(m_plasticStrain[k][q], plasticStrainIncrement);
+
+        // Unrotate old plastic strain
+        real64 oldPlasticStrain[6] = { 0 };
+        LvArray::tensorOps::copy< 6 >( oldPlasticStrain, m_plasticStrain[k][q] );
+        oldPlasticStrain[3] *= 0.5;
+        oldPlasticStrain[4] *= 0.5;
+        oldPlasticStrain[5] *= 0.5;
+
+        real64 unrotatedOldPlasticStrain[6] = { 0 };
+        LvArray::tensorOps::Rij_eq_AikSymBklAjl< 3 >( unrotatedOldPlasticStrain, rotationTranspose, oldPlasticStrain );
+        unrotatedOldPlasticStrain[3] *= 2.0;
+        unrotatedOldPlasticStrain[4] *= 2.0;
+        unrotatedOldPlasticStrain[5] *= 2.0; 
+
+        // GEOS_LOG_RANK( "Particle: " << k << "\n " <<
+        //               "\tOld Stress: {" << oldStress[0] << ", " << oldStress[1] << ", "<< oldStress[2] << ", "<< oldStress[3] << ", "<< oldStress[4] << ", "<< oldStress[5] << "}\n " << 
+        //               "\tNew Stress: {" << stress[0] << ", " << stress[1] << ", "<< stress[2] << ", "<< stress[3] << ", "<< stress[4] << ", "<< stress[5] << "}\n " <<
+        //               "\tStress Incr: {" << stress[0] - oldStress[0] << ", " << stress[1] - oldStress[1] << ", "<< stress[2] - oldStress[2] << ", "<< stress[3] - oldStress[3] << ", "<< stress[4] - oldStress[4] << ", "<< stress[5] - oldStress[5] << "}\n " <<
+        //               "\tOld plastic strain: {" << unrotatedOldPlasticStrain[0] << ", " << unrotatedOldPlasticStrain[1] << ", "<< unrotatedOldPlasticStrain[2] << ", "<< unrotatedOldPlasticStrain[3] << ", "<< unrotatedOldPlasticStrain[4]<< ", "<< unrotatedOldPlasticStrain[5] << "}"
+        //               "\tPlastic strain increment: {" << plasticStrainIncrement[0] << ", " << plasticStrainIncrement[1] << ", " << plasticStrainIncrement[2] << ", " << plasticStrainIncrement[3] << ", "<< plasticStrainIncrement[4]<< ", " << plasticStrainIncrement[5] << "}" );
+
+        // Add plastic strain increment
+        real64 unrotatedNewPlasticStrain[6] = { 0 };
+        LvArray::tensorOps::copy< 6 >(unrotatedNewPlasticStrain, unrotatedOldPlasticStrain);
+        LvArray::tensorOps::add< 6 >(unrotatedNewPlasticStrain, plasticStrainIncrement);
+
+        // Rotate new plastic strain
+        unrotatedNewPlasticStrain[3] *= 0.5;
+        unrotatedNewPlasticStrain[4] *= 0.5;
+        unrotatedNewPlasticStrain[5] *= 0.5;
+        
+        real64 newPlasticStrain[ 6 ] = { 0 }; 
+        LvArray::tensorOps::Rij_eq_AikSymBklAjl< 3 >( newPlasticStrain, endRotation, unrotatedNewPlasticStrain );
+        newPlasticStrain[3] *= 2.0;
+        newPlasticStrain[4] *= 2.0;
+        newPlasticStrain[5] *= 2.0;
+
+        // Assign new plastic strain to state variable
+        LvArray::tensorOps::copy< 6 >(m_plasticStrain[k][q], newPlasticStrain);
 
         // increment relaxation
         m_relaxation[k][q] += LvArray::tensorOps::l2Norm< 6 >( plasticStrainIncrement ) / m_maximumPlasticStrain;
@@ -791,34 +845,33 @@ void GraphiteUpdates::computeTransverselyIsotropicTrialStress(const real64 timeI
 
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
-void GraphiteUpdates::computeTransverselyIsotropicPlasticStrainIncrement(real64 const ( & velocityGradient )[3][3],          // Velocity gradient tensor
-                                                                         real64 const ( & oldStress )[6], // Stress at start of step
-                                                                         real64 const ( & newStress )[6], // Stress at end of step
-                                                                         const real64 Ez,             // Elastic modulus preferred direction
-                                                                         const real64 Ep,             // Elastic modulus transverse plane
-                                                                         const real64 nuzp,           // Poisson ratio coupled
-                                                                         const real64 nup,            // Poisson ratio transverse plane
-                                                                         const real64 Gzp,            // Shear modulus coupled plane
-                                                                         real64 const ( & materialDirection )[3],			// material direction (unit vector)
-                                                                         const real64 timeIncrement,
-                                                                         real64 ( & plasticStrainIncrement )[6]
-) const
+void GraphiteUpdates::computeTransverselyIsotropicPlasticStrainIncrement( real64 const ( & velocityGradient )[3][3],          // Velocity gradient tensor
+                                                                          real64 const ( & oldStress )[6], // Stress at start of step
+                                                                          real64 const ( & newStress )[6], // Stress at end of step
+                                                                          const real64 Ez,             // Elastic modulus preferred direction
+                                                                          const real64 Ep,             // Elastic modulus transverse plane
+                                                                          const real64 nuzp,           // Poisson ratio coupled
+                                                                          const real64 nup,            // Poisson ratio transverse plane
+                                                                          const real64 Gzp,            // Shear modulus coupled plane
+                                                                          real64 const ( & materialDirection )[3],			// material direction (unit vector)
+                                                                          const real64 timeIncrement,
+                                                                          real64 ( & plasticStrainIncrement )[6] ) const
 {  // For hypo-elastic transversely isotropic models we compute the increment in plastic strain assuming
 	// for some increment in total strain and stress and elastic properties.
 
 	// New stress minus old stress
-    real64 stressIncrement[6];
-    LvArray::tensorOps::copy< 6 >( stressIncrement, newStress );
-    LvArray::tensorOps::subtract< 6 >( stressIncrement, oldStress );
+  real64 stressIncrement[6] = { 0 };
+  LvArray::tensorOps::copy< 6 >( stressIncrement, newStress );
+  LvArray::tensorOps::subtract< 6 >( stressIncrement, oldStress );
 
 	// These are the TI elastic compliance coefficients using Brannon's TI basis tensors:
 	real64 s1 = 1.0/Ez;
 	real64 s2 = -nup/Ep;
 	real64 s3 = -nuzp/Ez;
 	real64 s4 = (1+nup)/Ep;
-	real64 s5 = 1./(2.*Gzp);
+	real64 s5 = 1.0/(2.0*Gzp);
 
-	real64 elasticStrainIncrement[6];
+	real64 elasticStrainIncrement[6] = { 0 };
   int voigtMap[3][3] = { {0, 5, 4}, {5, 1, 3}, {4, 3, 2} };
 	for(int i=0; i<3; i++)
 	{
@@ -828,15 +881,17 @@ void GraphiteUpdates::computeTransverselyIsotropicPlasticStrainIncrement(real64 
 			{
 				for(int w=0; w<3; w++)
 				{
-					elasticStrainIncrement[voigtMap[i][j]] += ( s1*transverselyIsotropicB1(materialDirection,i,j,p,w) +
-                                                      s2*transverselyIsotropicB2(materialDirection,i,j,p,w) +
-                                                      s3*transverselyIsotropicB3(materialDirection,i,j,p,w) +
-                                                      s4*transverselyIsotropicB4(materialDirection,i,j,p,w) +
-                                                      s5*transverselyIsotropicB5(materialDirection,i,j,p,w) )*stressIncrement[voigtMap[p][w]];
+					elasticStrainIncrement[voigtMap[i][j]] += ( s1 * transverselyIsotropicB1(materialDirection,i,j,p,w) +
+                                                      s2 * transverselyIsotropicB2(materialDirection,i,j,p,w) +
+                                                      s3 * transverselyIsotropicB3(materialDirection,i,j,p,w) +
+                                                      s4 * transverselyIsotropicB4(materialDirection,i,j,p,w) +
+                                                      s5 * transverselyIsotropicB5(materialDirection,i,j,p,w) ) * stressIncrement[voigtMap[p][w]];
 				}
 			}
 		}
 	}
+
+  // GEOS_LOG_RANK( "Elastic Strain Incr: {" << elasticStrainIncrement[0] << ", " << elasticStrainIncrement[1] << ", " << elasticStrainIncrement[2] << ", " << elasticStrainIncrement[3] << ", " << elasticStrainIncrement[4] << ", " << elasticStrainIncrement[5] << "}" );
 
 	// plastic strain increment = Total strain increment - elastic strain increment
 	for( int i = 0; i < 3; ++i )
@@ -963,7 +1018,7 @@ real64 GraphiteUpdates::slopePoint0( const real64 x,
  *
  * Graphite material model.
  */
-class Graphite : public ElasticTransverseIsotropicPressureDependent
+class Graphite : public SolidBase
 {
 public:
 
@@ -1010,6 +1065,30 @@ public:
    */
   struct viewKeyStruct : public SolidBase::viewKeyStruct
   {
+    /// string/key for transverse Young's modulus
+    static constexpr char const * defaultYoungModulusTransverseString() { return "defaultYoungModulusTransverse"; }
+
+    /// string/key for axial Young's modulus
+    static constexpr char const * defaultYoungModulusAxialString() { return "defaultYoungModulusAxial"; }
+
+    /// string/key for transverse Poisson's Ratio
+    static constexpr char const * defaultPoissonRatioTransverseString() { return "defaultPoissonRatioTransverse"; }
+
+    /// string/key for axial Poisson's Ratio
+    static constexpr char const * defaultPoissonRatioAxialTransverseString() { return "defaultPoissonRatioAxialTransverse"; }
+
+    /// string/key for transverse shear modulus
+    static constexpr char const * defaultShearModulusAxialTransverseString() { return "defaultShearModulusAxialTransverse"; }
+
+        /// string/key for default transverse Young's modulus presssure derivative
+    static constexpr char const * defaultYoungModulusTransversePressureDerivativeString() { return "defaultYoungModulusTransversePressureDerivative"; }
+
+    /// string/key for default axial Young's modulus presssure derivative
+    static constexpr char const * defaultYoungModulusAxialPressureDerivativeString() { return "defaultYoungModulusAxialPressureDerivative"; }
+
+    /// string/key for default axial Young's modulus presssure derivative
+    static constexpr char const * defaultShearModulusAxialTransversePressureDerivativeString() { return "defaultShearModulusAxialTransversePressureDerivative"; }
+
     //string/key for element/particle velocityGradient value
     static constexpr char const * velocityGradientString() { return "velocityGradient"; }
 
@@ -1075,6 +1154,15 @@ public:
     
     // string/key for maximum plastic strain
     static constexpr char const * maximumPlasticStrainString() { return "maximumPlasticStrain"; }
+    
+    /// string/key for effective bulk modulus 
+    static constexpr char const * effectiveBulkModulusString() { return "effectiveBulkModulus"; }
+
+    /// string/key for effective shear modulus 
+    static constexpr char const * effectiveShearModulusString() { return "effectiveShearModulus"; }
+
+    /// string/key for material direction value
+    static constexpr char const * materialDirectionString() { return "materialDirection"; }
   };
 
   /**
@@ -1083,7 +1171,18 @@ public:
    */
   GraphiteUpdates createKernelUpdates() const
   {
-    return GraphiteUpdates( m_velocityGradient,
+    return GraphiteUpdates( m_defaultYoungModulusTransverse,
+                            m_defaultYoungModulusAxial,
+                            m_defaultPoissonRatioTransverse,
+                            m_defaultPoissonRatioAxialTransverse,
+                            m_defaultShearModulusAxialTransverse,
+                            m_effectiveBulkModulus,
+                            m_effectiveShearModulus,
+                            m_materialDirection,
+                            m_defaultYoungModulusTransversePressureDerivative,
+                            m_defaultYoungModulusAxialPressureDerivative,
+                            m_defaultShearModulusAxialTransversePressureDerivative,
+                            m_velocityGradient,
                             m_plasticStrain,
                             m_relaxation,
                             m_damage,
@@ -1105,24 +1204,6 @@ public:
                             m_coupledShearResponseY2,
                             m_coupledShearResponseM1,
                             m_maximumPlasticStrain,
-                            m_refC11,
-                            m_refC13,
-                            m_refC33,
-                            m_refC44,
-                            m_refC66,
-                            m_dc11dp,
-                            m_dc13dp,
-                            m_dc33dp,
-                            m_dc44dp,
-                            m_dc66dp,
-                            m_c11,
-                            m_c13,
-                            m_c33,
-                            m_c44,
-                            m_c66,
-                            m_effectiveBulkModulus,
-                            m_effectiveShearModulus,
-                            m_materialDirection,
                             m_thermalExpansionCoefficient,
                             m_newStress,
                             m_oldStress,
@@ -1140,6 +1221,17 @@ public:
   UPDATE_KERNEL createDerivedKernelUpdates( PARAMS && ... constructorParams )
   {
     return UPDATE_KERNEL( std::forward< PARAMS >( constructorParams )...,
+                          m_defaultYoungModulusTransverse,
+                          m_defaultYoungModulusAxial,
+                          m_defaultPoissonRatioTransverse,
+                          m_defaultPoissonRatioAxialTransverse,
+                          m_defaultShearModulusAxialTransverse,
+                          m_effectiveBulkModulus,
+                          m_effectiveShearModulus,
+                          m_materialDirection,
+                          m_defaultYoungModulusTransversePressureDerivative,
+                          m_defaultYoungModulusAxialPressureDerivative,
+                          m_defaultShearModulusAxialTransversePressureDerivative,
                           m_velocityGradient,
                           m_plasticStrain,
                           m_relaxation,
@@ -1162,24 +1254,6 @@ public:
                           m_coupledShearResponseY2,
                           m_coupledShearResponseM1,
                           m_maximumPlasticStrain,
-                          m_refC11,
-                          m_refC13,
-                          m_refC33,
-                          m_refC44,
-                          m_refC66,
-                          m_dc11dp,
-                          m_dc13dp,
-                          m_dc33dp,
-                          m_dc44dp,
-                          m_dc66dp,
-                          m_c11,
-                          m_c13,
-                          m_c33,
-                          m_c44,
-                          m_c66,
-                          m_effectiveBulkModulus,
-                          m_effectiveShearModulus,
-                          m_materialDirection,
                           m_thermalExpansionCoefficient,
                           m_newStress,
                           m_oldStress,
@@ -1187,8 +1261,183 @@ public:
   }
 
 
+
+  /**
+   * @brief Getter for default transverse Young's modulus
+   * @return The value of the default transverse Young's modulus.
+   */
+  real64 getDefaultYoungModulusTransverse() const
+  {
+    return m_defaultYoungModulusTransverse;
+  }
+
+  /**
+   * @brief Setter for the default transverse Young's modulus.
+   * @param[in] input New value for the default transverse Young's modulus
+   */
+  void setDefaultYoungModulusTransverse( real64 const input )
+  {
+    m_defaultYoungModulusTransverse = input;
+  }
+
+  /**
+   * @brief Getter for default axial Young's modulus
+   * @return The value of the default axial Young's modulus.
+   */
+  real64 getDefaultYoungModulusAxial() const
+  {
+    return m_defaultYoungModulusAxial;
+  }
+
+  /**
+   * @brief Setter for the default axial Young's modulus.
+   * @param[in] input New value for the default axial Young's modulus
+   */
+  void setDefaultYoungModulusAxial( real64 const input )
+  {
+    m_defaultYoungModulusAxial = input;
+  }
+
+  /**
+   * @brief Getter for default transverse Poisson's ratio
+   * @return The value of the default transverse Poisson's ratio.
+   */
+  real64 getDefaultPoissonRatioTransverse() const
+  {
+    return m_defaultPoissonRatioTransverse;
+  }
+
+  /**
+   * @brief Setter for the default transverse Poisson's ratio.
+   * @param[in] input New value for the default transverse Poisson's ratio
+   */
+  void setDefaultPoissonRatioTransverse( real64 const input )
+  {
+    m_defaultPoissonRatioTransverse = input;
+  }
+
+  /**
+   * @brief Getter for default axial Poisson's ratio
+   * @return The value of the default axial/transverse Poisson's modulus.
+   */
+  real64 getDefaultPoissonRatioAxialTransverse() const
+  {
+    return m_defaultPoissonRatioAxialTransverse;
+  }
+
+  /**
+   * @brief Setter for the default axial Poisson's modulus.
+   * @param[in] input New value for the default axial/transverse Poisson's
+   *             modulus
+   */
+  void setDefaultPoissonRatioAxialTransverse( real64 const input )
+  {
+    m_defaultPoissonRatioAxialTransverse = input;
+  }
+
+  /**
+   * @brief Getter for default axial/transverse Shear modulus
+   * @return The value of the default axial/transverse Shear modulus.
+   */
+  real64 getDefaultShearModulusAxialTransverse() const
+  {
+    return m_defaultShearModulusAxialTransverse;
+  }
+
+  /**
+   * @brief Setter for the default axial/transverse Shear modulus.
+   * @param[in] input New value for the default axial/transverse Shear modulus
+   */
+  void setDefaultShearModulusAxialTransverse( real64 const input )
+  {
+    m_defaultShearModulusAxialTransverse = input;
+  }
+
+  /**
+   * @brief Accessor for effective bulk modulus
+   * @return A const reference to arrayView1d<real64> containing the effective bulk
+   *         modulus (at every element).
+   */
+  arrayView1d< real64 > const effectiveBulkModulus() { return m_effectiveBulkModulus; }
+
+  /**
+   * @brief Const accessor for effective bulk modulus
+   * @return A const reference to arrayView1d<real64 const> containing the
+   *         effective bulk modulus (at every element).
+   */
+  arrayView1d< real64 const > const effectiveBulkModulus() const { return m_effectiveBulkModulus; }
+
+ /**
+   * @brief Accessor for effective bulk modulus
+   * @return A const reference to arrayView1d<real64> containing the effective bulk
+   *         modulus (at every element).
+   */
+  arrayView1d< real64 > const effectiveShearModulus() { return m_effectiveShearModulus; }
+
+  /**
+   * @brief Const accessor for effective shear modulus
+   * @return A const reference to arrayView1d<real64 const> containing the
+   *         effective shear modulus (at every element).
+   */
+  arrayView1d< real64 const > const effectiveShearModulus() const { return m_effectiveShearModulus; }
+
+  /**
+   * @brief Getter for effective bulk modulus.
+   * @return reference to mutable effective bulk modulus.
+   */
+  GEOS_HOST_DEVICE
+  arrayView1d< real64 const > getEffectiveBulkModulus() const { return m_effectiveBulkModulus; }
+
+  /**
+  * @brief Getter for effective shear modulus.
+  * @return reference to mutable effective shear modulus.
+  */
+  GEOS_HOST_DEVICE
+  arrayView1d< real64 const > getEffectiveShearModulus() const { return m_effectiveShearModulus; }
+
+
 protected:
   virtual void postProcessInput() override;
+
+
+  /// The default value of the transverse Young's modulus for any new
+  /// allocations.
+  real64 m_defaultYoungModulusTransverse;
+
+  /// The default value of the axial Young's modulus for any new
+  /// allocations.
+  real64 m_defaultYoungModulusAxial;
+
+  /// The default value of the transverse Poisson's ratio for any new
+  /// allocations.
+  real64 m_defaultPoissonRatioTransverse;
+
+  /// The default value of the axial/transverse Poisson's ratio for any new
+  /// allocations.
+  real64 m_defaultPoissonRatioAxialTransverse;
+
+  /// The default value of the axial/transverse Shear modulus for any new
+  /// allocations.
+  real64 m_defaultShearModulusAxialTransverse;
+
+  /// The effective bulk modulus.
+  array1d< real64 > m_effectiveBulkModulus;
+
+  /// The effective shear modulus
+  array1d< real64 > m_effectiveShearModulus;
+    
+  /// State variable: The material direction for each element/particle
+  array2d< real64 > m_materialDirection;
+
+  /// The default value of the transverse Young's modulus pressure derivative for new allocations.
+  real64 m_defaultYoungModulusTransversePressureDerivative;
+
+  /// The default value of the axial Young's modulus pressure derivative for new allocations.
+  real64 m_defaultYoungModulusAxialPressureDerivative;
+
+  /// The default value of the axial transverse Shear modulus pressure derivative for new allocations.
+  real64 m_defaultShearModulusAxialTransversePressureDerivative;
+
   ///State variable: The velocity gradient for each element/particle
   array3d< real64 > m_velocityGradient;
 

@@ -358,6 +358,51 @@ void ElasticTransverseIsotropicPressureDependentUpdates::smallStrainUpdate_Stres
   m_effectiveBulkModulus[k] = -Et*Ea/(2*Ea*(Nut+Nuat-1) + Et*(2*Nuat-1));
   m_effectiveShearModulus[k] = 0.6*m_effectiveBulkModulus[k];
 
+  // // CC: temporarily swap back to other elastic constants to enforce pressure dependence
+  // real64 pressure = (-1.0/3.0)*(stress[0] + stress[1] + stress[2]);
+
+  // real64 c11 = m_c11[k];
+  // real64 c13 = m_c13[k];
+  // real64 c33 = m_c33[k];
+  // real64 c44 = m_c44[k];
+  // real64 c66 = m_c66[k];
+
+  // real64 dc11dp = m_dc11dp[k];
+  // real64 dc13dp = m_dc13dp[k];
+  // real64 dc33dp = m_dc33dp[k];
+  // real64 dc44dp = m_dc44dp[k];
+  // real64 dc66dp = m_dc66dp[k];
+
+  // real64 Et = 4 * c66 * (c11 * c33 - c66 * c33 - c13 * c13) / ( c11 * c33 - c13 * c13 );
+  // real64 Ea = c33 - c13 * c13 / ( c11 - c66 );
+  // real64 Gat = c44 / 2.0;
+  // real64 Nut = 4 * (c11 * c33 - c66 * c33 - c13 * c13 ) / ( c11 * c33 - c13 * c13 ) - 1;
+  // real64 Nuat = c13 / ( 2 * ( c11 - c66 ) );
+
+  // real64 dEtdp = (4*(std::pow(c13,4)*dc66dp + std::pow(c11,2)*std::pow(c33,2)*dc66dp + std::pow(c33,2)*std::pow(c66,2)*dc11dp + std::pow(c13,2)*std::pow(c66,2)*dc33dp - 2*c11*std::pow(c13,2)*c33*dc66dp - 2*c13*c33*std::pow(c66,2)*dc13dp - 2*c11*std::pow(c33,2)*c66*dc66dp + 2*std::pow(c13,2)*c33*c66*dc66dp))/std::pow(c11*c33 - std::pow(c13,2),2);
+  // real64 dEadp = dc33dp + (std::pow(c13,2)*(dc11dp - dc66dp))/std::pow(c11 - c66,2) - (2*c13*dc13dp)/(c11 - c66);
+  // real64 dGatdp  = dc44dp / 2.0;
+  // real64 dNutdp = dc13dp/(2*(c11 - c66)) - (c13*(2*dc11dp - 2*dc66dp))/(4*std::pow(c11 - c66,2));
+  // real64 dNuatdp = dc13dp/(2*(c11 - c66)) - (c13*(2*dc11dp - 2*dc66dp))/(4*std::pow(c11 - c66,2));
+  
+  // Et += dEtdp*std::max( 0.0, pressure); // Different from in old geos
+  // Ea += dEadp*std::max( 0.0, pressure);
+  // Gat += dGatdp*std::max( 0.0, pressure);
+  // Nut += dNutdp*std::max( 0.0, pressure);
+  // Nuat += dNuatdp*std::max( 0.0, pressure);
+
+  // real64 const Nuta = Nuat * ( Et / Ea );
+  // real64 const delta = ( 1.0 + Nut ) * ( 1.0 - Nut - 2.0 * Nuta * Nuat );
+
+  // m_c11[k] = ( 1.0 - Nuta * Nuat ) * Et / delta;
+  // m_c13[k] = Nuat * ( 1.0 + Nut ) * Et / delta;
+  // m_c33[k] = ( 1.0 - Nut * Nut ) * Ea / delta;
+  // m_c44[k] = 2.0 * Gat;
+  // m_c66[k] = Et / ( 1.0 + Nut );
+  
+  // m_effectiveBulkModulus[k] = -Et*Ea/(2*Ea*(Nut+Nuat-1) + Et*(2*Nuat-1));
+  // m_effectiveShearModulus[k] = 0.6*m_effectiveBulkModulus[k];
+
   ElasticTransverseIsotropicUpdates::smallStrainUpdate_StressOnly( k,
                                                                    q,
                                                                    timeIncrement,

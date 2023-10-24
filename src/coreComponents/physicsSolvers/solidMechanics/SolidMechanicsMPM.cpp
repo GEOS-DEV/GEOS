@@ -1683,6 +1683,17 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
   }
 
   //#######################################################################################
+  GEOS_LOG_RANK_IF( m_debugFlag == 1 && m_overlapCorrection == 2, "Scale F based on SPH-J" );
+  solverProfilingIf( "Scale F based on SPH-J", m_overlapCorrection == 2 );
+  //#######################################################################################
+  // Scale Jacobian to prevent overdensification if overlap correction type 2 is used.
+  if( m_overlapCorrection == 2 )
+  {
+    overlapCorrection( dt,
+                       particleManager );
+  }
+
+  //#######################################################################################
   GEOS_LOG_RANK_IF( m_debugFlag == 1, "Update particle geometry (e.g. volume, r-vectors) and density" );
   solverProfiling( "Update particle geometry (e.g. volume, r-vectors) and density" );
   //#######################################################################################
@@ -1783,16 +1794,6 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
   //#######################################################################################
   deleteBadParticles( particleManager );
 
-  //#######################################################################################
-  GEOS_LOG_RANK_IF( m_debugFlag == 1 && m_overlapCorrection == 2, "Scale F based on SPH-J" );
-  solverProfilingIf( "Scale F based on SPH-J", m_overlapCorrection == 2 );
-  //#######################################################################################
-  // Scale Jacobian to prevent overdensification if overlap correction type 2 is used.
-  if( m_overlapCorrection == 2 )
-  {
-    overlapCorrection( dt,
-                       particleManager );
-  }
   
   //#######################################################################################
   GEOS_LOG_RANK_IF( m_debugFlag == 1 && MpiWrapper::commSize( MPI_COMM_GEOSX ) > 1, "Particle repartitioning" );
@@ -4582,9 +4583,15 @@ void SolidMechanicsMPM::stressControl( real64 dt,
       bulkModulus = elasticIsotropic.bulkModulus();
     }
 
-    if( constitutiveModelName == "Graphite" || constitutiveModelName == "ElasticTransverseIsotropic" || constitutiveModelName == "ElasticTransverseIsotropicPressureDependent" ){
+    if( constitutiveModelName == "ElasticTransverseIsotropic" || constitutiveModelName == "ElasticTransverseIsotropicPressureDependent" ){
       const ElasticTransverseIsotropic & elasticTransverseIsotropic = dynamic_cast< const ElasticTransverseIsotropic & >( solidModel );
       bulkModulus = elasticTransverseIsotropic.effectiveBulkModulus();
+    }
+
+    if( constitutiveModelName == "Graphite" )
+    {
+      const Graphite & graphite = dynamic_cast< const Graphite & >( solidModel );
+      bulkModulus = graphite.effectiveBulkModulus();
     }
 
     forAll< serialPolicy >( activeParticleIndices.size(), [=, &maximumBulkModulus] GEOS_HOST ( localIndex const pp ) // Could be reduction instead of a loop
@@ -5396,13 +5403,14 @@ void SolidMechanicsMPM::performXPICUpdate( real64 dt,
     int const numberOfVerticesPerParticle = subRegion.numberOfVerticesPerParticle();
     arrayView2d< localIndex const > const mappedNodes = m_mappedNodes[subRegionIndex];
     arrayView2d< real64 const > const shapeFunctionValues = m_shapeFunctionValues[subRegionIndex];
-    // arrayView3d< real64 const > const shapeFunctionGradientValues = m_shapeFunctionGradientValues[subRegionIndex];
+    arrayView3d< real64 const > const shapeFunctionGradientValues = m_shapeFunctionGradientValues[subRegionIndex];
 
     // Map to particles
     SortedArrayView< localIndex const > const activeParticleIndices = subRegion.activeParticleIndices();
     int const numDims = m_numDims;
     int const damageFieldPartitioning = m_damageFieldPartitioning;
     int const numContactGroups = m_numContactGroups;
+    int const numVelocityFields = m_numVelocityFields;
     int const updateOrder = m_updateOrder;
 
     // For iterative XPIC solve
@@ -5410,14 +5418,14 @@ void SolidMechanicsMPM::performXPICUpdate( real64 dt,
     array3d< real64 > vPlus;
     array3d< real64 > vMinus;
 
-    vStar.resize( numNodes, numContactGroups, numDims );
-    vPlus.resize( numNodes, numContactGroups, numDims );
-    vMinus.resize( numNodes, numContactGroups, numDims );
+    vStar.resize( numNodes, numVelocityFields, numDims );
+    vPlus.resize( numNodes, numVelocityFields, numDims );
+    vMinus.resize( numNodes, numVelocityFields, numDims );
 
     // Zero out vStar for each order iteration
     for( int n=0; n < numNodes; n++)
     {
-      for( int cg=0; cg < numContactGroups; cg++)
+      for( int cg=0; cg < numVelocityFields; cg++)
       {
         for( int i = 0; i < numDims; i++)
         {
@@ -5428,12 +5436,12 @@ void SolidMechanicsMPM::performXPICUpdate( real64 dt,
     }
 
     // Do XPIC iterations
-    for(int r=0; r < updateOrder; ++r)
+    for(int r=2; r <= updateOrder; ++r)
     {
       // Zero out vPlus for each order iteration
       for( int n=0; n < numNodes; n++)
       {
-        for( int cg=0; cg < numContactGroups; cg++)
+        for( int cg=0; cg < numVelocityFields; cg++)
         {
           for( int i = 0; i < numDims; i++)
           {
@@ -5458,9 +5466,12 @@ void SolidMechanicsMPM::performXPICUpdate( real64 dt,
             int const fieldIndexJ = nodeFlagJ * numContactGroups + particleGroup[p]; // This ranges from 0 to nMatFields-1
 
             for (int i = 0; i < numDims; i++){
-              vPlus[mappedNodeI][fieldIndexI][gi] += ( ( updateOrder - r + 1 ) / r ) * 
-                                                       ( gridMass[mappedNodeI][fieldIndexI] * shapeFunctionValues[pp][gi] * shapeFunctionValues[pp][gj] / particleMass[p] ) * 
-                                                         vMinus[mappedNodeJ][fieldIndexJ][gj];
+              if( gridMass[mappedNodeI][fieldIndexI] > m_smallMass )
+              {
+                vPlus[mappedNodeI][fieldIndexI][i] += ( ( updateOrder - r + 1 ) / r ) * 
+                                                        ( particleMass[p] * shapeFunctionValues[pp][gi] * shapeFunctionValues[pp][gj] / gridMass[mappedNodeI][fieldIndexI] ) * 
+                                                          vMinus[mappedNodeJ][fieldIndexJ][i];
+              }
             }
 
           }
@@ -5470,7 +5481,7 @@ void SolidMechanicsMPM::performXPICUpdate( real64 dt,
       // Update vStar
       for( int n=0; n < numNodes; n++)
       {
-        for( int cg=0; cg < numContactGroups; cg++)
+        for( int cg=0; cg < numVelocityFields; cg++)
         {
           for( int i = 0; i < numDims; i++)
           {
@@ -5486,6 +5497,15 @@ void SolidMechanicsMPM::performXPICUpdate( real64 dt,
     {
       localIndex const p = activeParticleIndices[pp];
     
+      // Zero velocity gradient
+      for( int i=0; i < numDims; i++ )
+      {
+        for( int j=0; j < numDims; j++ )
+        {
+          particleVelocityGradient[p][i][j] = 0.0;
+        }
+      }
+
       for( int g = 0; g < 8 * numberOfVerticesPerParticle; g++ )
       {
         localIndex const mappedNode = mappedNodes[pp][g];
@@ -5502,6 +5522,11 @@ void SolidMechanicsMPM::performXPICUpdate( real64 dt,
           particlePosition[p][i] += S * gVPlus * dt - ( S * gA + ( -m * S * ( gVPlus - gA * dt ) + pV + m * S * vStar[mappedNode][fieldIndex][i]) ) * dt * dt / 2;
           particleVelocity[p][i] += S * ( m * ( gVPlus - vStar[mappedNode][fieldIndex][i] ) + ( 1 - m ) * gA * dt );
           // CC: What about update to velocity gradient?
+          // Currently copy this from FLIP udpate with change from gridVelocity to vStar
+          for( int j=0; j < numDims; j++ )
+          {
+            particleVelocityGradient[p][i][j] += vStar[mappedNode][fieldIndex][i] * shapeFunctionGradientValues[pp][g][j];
+          }
         }
       }
     } );
@@ -5537,44 +5562,59 @@ void SolidMechanicsMPM::performFMPMUpdate(  real64 dt,
     int const numberOfVerticesPerParticle = subRegion.numberOfVerticesPerParticle();
     arrayView2d< localIndex const > const mappedNodes = m_mappedNodes[subRegionIndex];
     arrayView2d< real64 const > const shapeFunctionValues = m_shapeFunctionValues[subRegionIndex];
-    // arrayView3d< real64 const > const shapeFunctionGradientValues = m_shapeFunctionGradientValues[subRegionIndex];
+    arrayView3d< real64 const > const shapeFunctionGradientValues = m_shapeFunctionGradientValues[subRegionIndex];
 
     // Map to particles
     SortedArrayView< localIndex const > const activeParticleIndices = subRegion.activeParticleIndices();
     int const numDims = m_numDims;
     int const damageFieldPartitioning = m_damageFieldPartitioning;
     int const numContactGroups = m_numContactGroups;
+    int const numVelocityFields = m_numVelocityFields;
     int const updateOrder = m_updateOrder;
+
+    GEOS_LOG_RANK( "numNodes: " << numNodes << ", " <<
+                   "numDims: " << numDims << ", " << 
+                   "damageFieldPartitioning: " << damageFieldPartitioning << ", " << 
+                   "numContactGroups: " << numContactGroups << ", " << 
+                   "numVelocityFields: " << numVelocityFields << ", " << 
+                   "udpateOrder: " << updateOrder);
 
     // For iterative FMPM solve
     array3d< real64 > vStar;
     array3d< real64 > vPlus;
     array3d< real64 > vMinus;
 
-    vStar.resize( numNodes, numContactGroups, numDims );
-    vPlus.resize( numNodes, numContactGroups, numDims );
-    vMinus.resize( numNodes, numContactGroups, numDims );
+    vStar.resize( numNodes, numVelocityFields, numDims );
+    vPlus.resize( numNodes, numVelocityFields, numDims );
+    vMinus.resize( numNodes, numVelocityFields, numDims );
 
+    GEOS_LOG_RANK("Zeroing vStart and vMinus for each iteration...");
+    
     // Zero out vStar for each order iteration
     for( int n=0; n < numNodes; n++)
     {
-      for( int cg=0; cg < numContactGroups; cg++)
+      for( int cg=0; cg < numVelocityFields; cg++)
       {
         for( int i = 0; i < numDims; i++)
         {
           vStar[n][cg][i] = 0.0;
           vMinus[n][cg][i] = gridVelocity[n][cg][i];
+          // GEOS_LOG_RANK( "node: " << n << ", " << 
+          //                "field: " << cg << ", " << 
+          //                "gridVel: " << gridVelocity[n][cg] );
         }
       }
     }
 
-    // Do XPIC iterations
-    for(int r=0; r < updateOrder; ++r)
+    GEOS_LOG_RANK("Performing FMPM iterations...");
+
+    // Do FMPM iterations
+    for(int r=2; r <= updateOrder; ++r)
     {
       // Zero out vPlus for each order iteration
       for( int n=0; n < numNodes; n++)
       {
-        for( int cg=0; cg < numContactGroups; cg++)
+        for( int cg=0; cg < numVelocityFields; cg++)
         {
           for( int i = 0; i < numDims; i++)
           {
@@ -5582,16 +5622,19 @@ void SolidMechanicsMPM::performFMPMUpdate(  real64 dt,
           }
         }
       }
+      
+      GEOS_LOG_RANK( "Zeroed vPlus for iteration" );
 
       forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST_DEVICE ( localIndex const pp )
       {
         localIndex const p = activeParticleIndices[pp];
-      
+
         for( int gi = 0; gi < 8 * numberOfVerticesPerParticle; gi++ )
         {
           localIndex const mappedNodeI = mappedNodes[pp][gi];
           int const nodeFlagI = ( damageFieldPartitioning == 1 && LvArray::tensorOps::AiBi< 3 >( gridDamageGradient[mappedNodeI], particleDamageGradient[p] ) < 0.0 ) ? 1 : 0;
           int const fieldIndexI = nodeFlagI * numContactGroups + particleGroup[p]; // This ranges from 0 to nMatFields-1
+
           for(int gj = 0; gj < 8 * numberOfVerticesPerParticle; gj++ )
           {
             localIndex const mappedNodeJ = mappedNodes[pp][gj];
@@ -5599,20 +5642,28 @@ void SolidMechanicsMPM::performFMPMUpdate(  real64 dt,
             int const fieldIndexJ = nodeFlagJ * numContactGroups + particleGroup[p]; // This ranges from 0 to nMatFields-1
 
             for (int i = 0; i < numDims; i++){
-              vPlus[mappedNodeI][fieldIndexI][gi] += ( ( updateOrder - r + 1 ) / r ) * 
-                                                       ( gridMass[mappedNodeI][fieldIndexI] * shapeFunctionValues[pp][gi] * shapeFunctionValues[pp][gj] / particleMass[p] ) * 
-                                                         vMinus[mappedNodeJ][fieldIndexJ][gj];
+              if( gridMass[mappedNodeI][fieldIndexI] > m_smallMass )
+              {
+                vPlus[mappedNodeI][fieldIndexI][i] += ( ( updateOrder - r + 1 ) / r ) * 
+                                                        ( particleMass[p] * shapeFunctionValues[pp][gi] * shapeFunctionValues[pp][gj] / gridMass[mappedNodeI][fieldIndexI] ) * 
+                                                          vMinus[mappedNodeJ][fieldIndexJ][i];
+              }
             }
 
           }
         }
       } );
 
+      GEOS_LOG_RANK( "Updating vStar..." );
+
       // Update vStar
       for( int n=0; n < numNodes; n++)
       {
-        for( int cg=0; cg < numContactGroups; cg++)
+        for( int cg=0; cg < numVelocityFields; cg++)
         {
+          // GEOS_LOG_RANK( "node: " << n << ", " << 
+          //               "field: " << cg << ", " << 
+          //               "vPlus: " << vPlus[n][cg] );
           for( int i = 0; i < numDims; i++)
           {
             vStar[n][cg][i] += std::pow(-1, r) * vPlus[n][cg][i];
@@ -5622,21 +5673,37 @@ void SolidMechanicsMPM::performFMPMUpdate(  real64 dt,
       }
     } //End of updateOrder iterations
 
-    // Update particles position and velocities now
+    GEOS_LOG_RANK( "Updating particle posititons and velocities...");
+
+    // Update particles positions and velocities now
     forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST_DEVICE ( localIndex const pp )
     {
       localIndex const p = activeParticleIndices[pp];
     
+      // Zero velocity gradient
+      for( int i=0; i < numDims; i++ )
+      {
+        for( int j=0; j < numDims; j++ )
+        {
+          particleVelocityGradient[p][i][j] = 0.0;
+        }
+      }
+
       for( int g = 0; g < 8 * numberOfVerticesPerParticle; g++ )
       {
         localIndex const mappedNode = mappedNodes[pp][g];
         int const nodeFlag = ( damageFieldPartitioning == 1 && LvArray::tensorOps::AiBi< 3 >( gridDamageGradient[mappedNode], particleDamageGradient[p] ) < 0.0 ) ? 1 : 0;
         int const fieldIndex = nodeFlag * numContactGroups + particleGroup[p]; // This ranges from 0 to nMatFields-1
-        for( int i=0; i<numDims; i++ )
+        for( int i=0; i < numDims; i++ )
         {
-          particlePosition[p][i] += 0.5 * dt * ( particleVelocity[p][g]  + shapeFunctionValues[pp][g] * vStar[mappedNode][fieldIndex][i] );
+          particlePosition[p][i] += 0.5 * dt * ( particleVelocity[p][i] + shapeFunctionValues[pp][g] * vStar[mappedNode][fieldIndex][i] );
           particleVelocity[p][i] += shapeFunctionValues[pp][g] * vStar[mappedNode][fieldIndex][i];
           // CC: What about update to velocity gradient?
+          // Currently copy this from FLIP udpate with change from gridVelocity to vStar
+          for( int j=0; j < numDims; j++ )
+          {
+            particleVelocityGradient[p][i][j] += vStar[mappedNode][fieldIndex][i] * shapeFunctionGradientValues[pp][g][j];
+          }
         }
       }
     } );
@@ -6698,9 +6765,15 @@ inline void GEOS_DEVICE SolidMechanicsMPM::computeGeneralizedVortexMMSBodyForce(
       shearModulus = elasticIsotropic.shearModulus();
     }
 
-    if( constitutiveModelName == "Graphite" || constitutiveModelName == "ElasticTransverseIsotropic" || constitutiveModelName == "ElasticTransverseIsotropicPressureDependent" ){
+    if( constitutiveModelName == "ElasticTransverseIsotropic" || constitutiveModelName == "ElasticTransverseIsotropicPressureDependent" ){
       ElasticTransverseIsotropic & elasticTransverseIsotropic = dynamic_cast< ElasticTransverseIsotropic & >( constitutiveRelation );
       shearModulus = elasticTransverseIsotropic.effectiveShearModulus();
+    }
+
+    if( constitutiveModelName == "Graphite" )
+    {
+      Graphite & graphite = dynamic_cast< Graphite & >( constitutiveRelation );
+      shearModulus = graphite.effectiveShearModulus();
     }
 
     GEOS_ERROR_IF( !constitutiveRelation.hasWrapper( constitutive::SolidBase::viewKeyStruct:: defaultDensityString() ) , "Constitutive model must have particle density for the generalized vortex problem!");
@@ -6845,10 +6918,17 @@ void SolidMechanicsMPM::computeWavespeed( ParticleManager & particleManager )
       shearModulus = elasticIsotropic.shearModulus();
     }
 
-    if( constitutiveModelName == "Graphite" || constitutiveModelName == "ElasticTransverseIsotropic" || constitutiveModelName == "ElasticTransverseIsotropicPressureDependent" ){
+    if( constitutiveModelName == "ElasticTransverseIsotropic" || constitutiveModelName == "ElasticTransverseIsotropicPressureDependent" ){
       const ElasticTransverseIsotropic & elasticTransverseIsotropic = dynamic_cast< const ElasticTransverseIsotropic & >( constitutiveRelation );
       bulkModulus = elasticTransverseIsotropic.effectiveBulkModulus();
       shearModulus = elasticTransverseIsotropic.effectiveShearModulus();
+    }
+
+    if( constitutiveModelName == "Graphite" )
+    {
+      const Graphite & graphite = dynamic_cast< const Graphite & >( constitutiveRelation );
+      bulkModulus = graphite.effectiveBulkModulus();
+      shearModulus = graphite.effectiveShearModulus();
     }
 
     forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST ( localIndex const pp ) // would need reduction to parallelize
@@ -7201,7 +7281,7 @@ void SolidMechanicsMPM::overlapCorrection( real64 const dt,
         }
         // Modify p_L as well, consistent with the change to p_F in case a hypoelastic constitutive model
         // is used, and so the update to the internal energy is consistent with the change in F.
-        LvArray::tensorOps::Rij_eq_AikBjk< 3, 3, 3 >( particleVelocityGradient[p], particleFDot[p], particleDeformationGradient[p] );
+        LvArray::tensorOps::Rij_eq_AikBkj< 3, 3, 3 >( particleVelocityGradient[p], particleFDot[p], particleDeformationGradient[p] );
         // p_L[pp].AijBjk( p_Fdot[pp], p_F[pp] );
       }
     } );
