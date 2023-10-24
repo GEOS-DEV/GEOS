@@ -1,9 +1,11 @@
-======================
+######################
 Datastructure Index
-======================
+######################
+
+**************************
 
 Input Schema Definitions
-========================
+**************************
 
 :download:`XML Schema <../../coreComponents/schema/docs/../schema.xsd>`
 
@@ -20,6 +22,13 @@ Element: AcousticFirstOrderSEM
 Element: AcousticSEM
 ====================
 .. include:: ../../coreComponents/schema/docs/AcousticSEM.rst
+
+
+.. _XML_AcousticVTISEM:
+
+Element: AcousticVTISEM
+=======================
+.. include:: ../../coreComponents/schema/docs/AcousticVTISEM.rst
 
 
 .. _XML_Aquifer:
@@ -127,6 +136,13 @@ Element: CellElementRegion
 .. include:: ../../coreComponents/schema/docs/CellElementRegion.rst
 
 
+.. _XML_CeramicDamage:
+
+Element: CeramicDamage
+======================
+.. include:: ../../coreComponents/schema/docs/CeramicDamage.rst
+
+
 .. _XML_ChomboIO:
 
 Element: ChomboIO
@@ -230,6 +246,13 @@ Element: CompressibleSolidSlipDependentPermeability
 Element: CompressibleSolidWillisRichardsPermeability
 ====================================================
 .. include:: ../../coreComponents/schema/docs/CompressibleSolidWillisRichardsPermeability.rst
+
+
+.. _XML_ConstantDiffusion:
+
+Element: ConstantDiffusion
+==========================
+.. include:: ../../coreComponents/schema/docs/ConstantDiffusion.rst
 
 
 .. _XML_ConstantPermeability:
@@ -547,6 +570,13 @@ Element: LaplaceFEM
 .. include:: ../../coreComponents/schema/docs/LaplaceFEM.rst
 
 
+.. _XML_LinearIsotropicDispersion:
+
+Element: LinearIsotropicDispersion
+==================================
+.. include:: ../../coreComponents/schema/docs/LinearIsotropicDispersion.rst
+
+
 .. _XML_LinearSolverParameters:
 
 Element: LinearSolverParameters
@@ -685,6 +715,34 @@ Element: Parameters
 Element: ParticleFluid
 ======================
 .. include:: ../../coreComponents/schema/docs/ParticleFluid.rst
+
+
+.. _XML_ParticleMesh:
+
+Element: ParticleMesh
+=====================
+.. include:: ../../coreComponents/schema/docs/ParticleMesh.rst
+
+
+.. _XML_ParticleRegion:
+
+Element: ParticleRegion
+=======================
+.. include:: ../../coreComponents/schema/docs/ParticleRegion.rst
+
+
+.. _XML_ParticleRegions:
+
+Element: ParticleRegions
+========================
+.. include:: ../../coreComponents/schema/docs/ParticleRegions.rst
+
+
+.. _XML_PerfectlyPlastic:
+
+Element: PerfectlyPlastic
+=========================
+.. include:: ../../coreComponents/schema/docs/PerfectlyPlastic.rst
 
 
 .. _XML_Perforation:
@@ -1023,6 +1081,13 @@ Element: SolidMechanics_LagrangianFEM
 .. include:: ../../coreComponents/schema/docs/SolidMechanics_LagrangianFEM.rst
 
 
+.. _XML_SolidMechanics_MPM:
+
+Element: SolidMechanics_MPM
+===========================
+.. include:: ../../coreComponents/schema/docs/SolidMechanics_MPM.rst
+
+
 .. _XML_SoloEvent:
 
 Element: SoloEvent
@@ -1251,6 +1316,13 @@ Datastructure: AcousticSEM
 .. include:: ../../coreComponents/schema/docs/AcousticSEM_other.rst
 
 
+.. _DATASTRUCTURE_AcousticVTISEM:
+
+Datastructure: AcousticVTISEM
+=============================
+.. include:: ../../coreComponents/schema/docs/AcousticVTISEM_other.rst
+
+
 .. _DATASTRUCTURE_Aquifer:
 
 Datastructure: Aquifer
@@ -1356,6 +1428,13 @@ Datastructure: CellElementRegion
 .. include:: ../../coreComponents/schema/docs/CellElementRegion_other.rst
 
 
+.. _DATASTRUCTURE_CeramicDamage:
+
+Datastructure: CeramicDamage
+============================
+.. include:: ../../coreComponents/schema/docs/CeramicDamage_other.rst
+
+
 .. _DATASTRUCTURE_ChomboIO:
 
 Datastructure: ChomboIO
@@ -1459,6 +1538,13 @@ Datastructure: CompressibleSolidSlipDependentPermeability
 Datastructure: CompressibleSolidWillisRichardsPermeability
 ==========================================================
 .. include:: ../../coreComponents/schema/docs/CompressibleSolidWillisRichardsPermeability_other.rst
+
+
+.. _DATASTRUCTURE_ConstantDiffusion:
+
+Datastructure: ConstantDiffusion
+================================
+.. include:: ../../coreComponents/schema/docs/ConstantDiffusion_other.rst
 
 
 .. _DATASTRUCTURE_ConstantPermeability:
@@ -1790,6 +1876,13 @@ Datastructure: Level0
 .. include:: ../../coreComponents/schema/docs/Level0_other.rst
 
 
+.. _DATASTRUCTURE_LinearIsotropicDispersion:
+
+Datastructure: LinearIsotropicDispersion
+========================================
+.. include:: ../../coreComponents/schema/docs/LinearIsotropicDispersion_other.rst
+
+
 .. _DATASTRUCTURE_LinearSolverParameters:
 
 Datastructure: LinearSolverParameters
@@ -1935,6 +2028,34 @@ Datastructure: Parameters
 Datastructure: ParticleFluid
 ============================
 .. include:: ../../coreComponents/schema/docs/ParticleFluid_other.rst
+
+
+.. _DATASTRUCTURE_ParticleMesh:
+
+Datastructure: ParticleMesh
+===========================
+.. include:: ../../coreComponents/schema/docs/ParticleMesh_other.rst
+
+
+.. _DATASTRUCTURE_ParticleRegion:
+
+Datastructure: ParticleRegion
+=============================
+.. include:: ../../coreComponents/schema/docs/ParticleRegion_other.rst
+
+
+.. _DATASTRUCTURE_ParticleRegions:
+
+Datastructure: ParticleRegions
+==============================
+.. include:: ../../coreComponents/schema/docs/ParticleRegions_other.rst
+
+
+.. _DATASTRUCTURE_PerfectlyPlastic:
+
+Datastructure: PerfectlyPlastic
+===============================
+.. include:: ../../coreComponents/schema/docs/PerfectlyPlastic_other.rst
 
 
 .. _DATASTRUCTURE_Perforation:
@@ -2273,6 +2394,13 @@ Datastructure: SolidMechanics_LagrangianFEM
 .. include:: ../../coreComponents/schema/docs/SolidMechanics_LagrangianFEM_other.rst
 
 
+.. _DATASTRUCTURE_SolidMechanics_MPM:
+
+Datastructure: SolidMechanics_MPM
+=================================
+.. include:: ../../coreComponents/schema/docs/SolidMechanics_MPM_other.rst
+
+
 .. _DATASTRUCTURE_SoloEvent:
 
 Datastructure: SoloEvent
@@ -2565,6 +2693,20 @@ Datastructure: neighborData
 Datastructure: nodeManager
 ==========================
 .. include:: ../../coreComponents/schema/docs/nodeManager_other.rst
+
+
+.. _DATASTRUCTURE_particleRegionsGroup:
+
+Datastructure: particleRegionsGroup
+===================================
+.. include:: ../../coreComponents/schema/docs/particleRegionsGroup_other.rst
+
+
+.. _DATASTRUCTURE_particleSubRegions:
+
+Datastructure: particleSubRegions
+=================================
+.. include:: ../../coreComponents/schema/docs/particleSubRegions_other.rst
 
 
 .. _DATASTRUCTURE_quartz:

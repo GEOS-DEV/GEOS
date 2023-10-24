@@ -26,6 +26,7 @@
 #include "solid/DamageSpectral.hpp"
 #include "solid/DruckerPrager.hpp"
 #include "solid/DruckerPragerExtended.hpp"
+#include "solid/PerfectlyPlastic.hpp"
 #include "solid/ModifiedCamClay.hpp"
 #include "solid/DelftEgg.hpp"
 #include "solid/DuvautLionsSolid.hpp"
@@ -36,6 +37,7 @@
 #include "solid/PorousSolid.hpp"
 #include "solid/CompressibleSolid.hpp"
 #include "solid/ProppantSolid.hpp"
+#include "solid/CeramicDamage.hpp"
 #include "solid/porosity/PressurePorosity.hpp"
 #include "solid/porosity/ProppantPorosity.hpp"
 #include "permeability/ConstantPermeability.hpp"
@@ -112,6 +114,37 @@ struct ConstitutivePassThru< SolidBase >
                                  ElasticIsotropicPressureDependent,
                                  ElasticOrthotropic >::execute( constitutiveRelation,
                                                                 std::forward< LAMBDA >( lambda ) );
+  }
+};
+
+/**
+ * @struct ConstitutivePassThruMPM
+ */
+template< typename BASETYPE >
+struct ConstitutivePassThruMPM;
+
+/**
+ * Specialization for models that derive from SolidBase that are used by the MPM solver.
+ * NOTE: this is only a temporary dispatch to reduce the compilation time.
+ */
+template<>
+struct ConstitutivePassThruMPM< SolidBase >
+{
+
+  // NOTE: The switch order here can be fragile if a model derives from another
+  //       model, as the dynamic_cast will also cast to a base version.
+  //       Models should be ordered such that children come before parents.
+  //       For example, DruckerPrager before ElasticIsotropic, DamageVolDev before
+  //       Damage, etc.
+
+  template< typename LAMBDA >
+  static
+  void execute( ConstitutiveBase & constitutiveRelation, LAMBDA && lambda )
+  {
+    ConstitutivePassThruHandler< CeramicDamage,
+                                 PerfectlyPlastic,
+                                 ElasticIsotropic >::execute( constitutiveRelation,
+                                                              std::forward< LAMBDA >( lambda ) );
   }
 };
 

@@ -37,7 +37,7 @@ namespace PVTProps
 namespace
 {
 
-real64 MichaelidesBrineEnthalpy( real64 const & T,
+real64 michaelidesBrineEnthalpy( real64 const & T,
                                  real64 const & m )
 {
 
@@ -51,26 +51,21 @@ real64 MichaelidesBrineEnthalpy( real64 const & T,
   real64 x1, x2, h1, h2, dh;
 
   x1 = 1000.0 / (1000.0 + 58.44 * m);
-
   x2 = 58.44 * m  / (1000.0 + 58.44 * m);
-
-
 
   dh = 0.0;
 
   for( localIndex i = 0; i < 4; ++i )
+  {
     for( localIndex j = 0; j < 3; ++j )
     {
-
       dh += a[i][j] * pow( T, real64( i )) * pow( m, real64( j ));
-
     }
+  }
 
   dh *= 4.184 / (1000.0 + 58.44 * m);
 
-
   h1 = 0.12453e-4 * pow( T, 3.0 ) - 0.45137e-2 * pow( T, 2.0 ) + 4.81155 * T - 29.578;
-
   h2 = (-0.83624e-3 * pow( T, 3.0 ) + 0.16792 * pow( T, 2.0 ) - 25.9293 * T) * 4.184 / 58.44;
 
   return ( (x1 * h1 + x2 * h2 + m * dh) * 1000.0 );
@@ -86,7 +81,7 @@ void calculateBrineEnthalpy( PTTableCoordinates const & tableCoords,
   for( localIndex i = 0; i < nTemperatures; ++i )
   {
     real64 const TC = tableCoords.getTemperature( i );
-    enthalpies[i] = MichaelidesBrineEnthalpy( TC, m );
+    enthalpies[i] = michaelidesBrineEnthalpy( TC, m );
   }
 }
 
