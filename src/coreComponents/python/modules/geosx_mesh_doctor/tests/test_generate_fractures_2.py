@@ -221,7 +221,7 @@ def __format_collocated_nodes(fracture_mesh: vtkUnstructuredGrid):
     collocated_nodes: numpy.ndarray = vtk_to_numpy(fracture_mesh.GetPointData().GetArray("collocated_nodes"))
     if len(collocated_nodes.shape) == 1:
         collocated_nodes: numpy.ndarray = collocated_nodes.reshape((collocated_nodes.shape[0], 1))
-    return tuple(sorted(map(lambda bucket: tuple(sorted(filter(lambda i: i != -1, bucket))), collocated_nodes)))
+    return tuple(sorted(map(lambda bucket: tuple(sorted(filter(lambda i: i != -1, bucket))), collocated_nodes)))  # TODO why the wrapping sorted?
 
 
 @pytest.mark.parametrize("expected", __generate_test_data())
