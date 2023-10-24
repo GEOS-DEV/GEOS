@@ -58,8 +58,8 @@ CompositionalMultiphaseFluid( string const & name, Group * const parent )
 
   registerWrapper( viewKeyStruct::equationsOfStateString(), &m_equationsOfState ).
     setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "List of equation of state types for each phase. Available options are:\n"
-                    + EnumStrings< EquationOfStateType >::concat( "\n *" ) );
+    setDescription( "List of equation of state types for each phase. Available options are:\n* "
+                    + EnumStrings< EquationOfStateType >::concat( "\n* " ) );
 
   registerWrapper( viewKeyStruct::componentCriticalPressureString(), &m_componentCriticalPressure ).
     setInputFlag( InputFlags::REQUIRED ).

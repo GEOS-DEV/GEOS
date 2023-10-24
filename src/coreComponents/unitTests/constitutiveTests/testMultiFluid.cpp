@@ -393,7 +393,7 @@ void testValuesAgainstPreviousImplementation( CO2BrinePhillipsFluid::KernelWrapp
 
 MultiFluidBase & makeCompositionalFluid( string const & name, Group & parent )
 {
-  CompositionalMultiphaseFluid & fluid = parent.registerGroup< CompositionalMultiphaseFluid >( name );
+  CompositionalMultiphaseFluidPVT & fluid = parent.registerGroup< CompositionalMultiphaseFluidPVT >( name );
 
   // TODO we should actually create a fake XML node with data, but this seemed easier...
 
@@ -409,19 +409,19 @@ MultiFluidBase & makeCompositionalFluid( string const & name, Group & parent )
   phaseNames.resize( 2 );
   phaseNames[0] = "oil"; phaseNames[1] = "gas";
 
-  auto & eqnOfState = fluid.getReference< string_array >( CompositionalMultiphaseFluid::viewKeyStruct::equationsOfStateString() );
+  auto & eqnOfState = fluid.getReference< string_array >( CompositionalMultiphaseFluidPVT::viewKeyStruct::equationsOfStateString() );
   eqnOfState.resize( 2 );
   eqnOfState[0] = "PR"; eqnOfState[1] = "PR";
 
-  auto & critPres = fluid.getReference< array1d< real64 > >( CompositionalMultiphaseFluid::viewKeyStruct::componentCriticalPressureString() );
+  auto & critPres = fluid.getReference< array1d< real64 > >( CompositionalMultiphaseFluidPVT::viewKeyStruct::componentCriticalPressureString() );
   critPres.resize( 4 );
   critPres[0] = 34e5; critPres[1] = 25.3e5; critPres[2] = 14.6e5; critPres[3] = 220.5e5;
 
-  auto & critTemp = fluid.getReference< array1d< real64 > >( CompositionalMultiphaseFluid::viewKeyStruct::componentCriticalTemperatureString() );
+  auto & critTemp = fluid.getReference< array1d< real64 > >( CompositionalMultiphaseFluidPVT::viewKeyStruct::componentCriticalTemperatureString() );
   critTemp.resize( 4 );
   critTemp[0] = 126.2; critTemp[1] = 622.0; critTemp[2] = 782.0; critTemp[3] = 647.0;
 
-  auto & acFactor = fluid.getReference< array1d< real64 > >( CompositionalMultiphaseFluid::viewKeyStruct::componentAcentricFactorString() );
+  auto & acFactor = fluid.getReference< array1d< real64 > >( CompositionalMultiphaseFluidPVT::viewKeyStruct::componentAcentricFactorString() );
   acFactor.resize( 4 );
   acFactor[0] = 0.04; acFactor[1] = 0.443; acFactor[2] = 0.816; acFactor[3] = 0.344;
 
