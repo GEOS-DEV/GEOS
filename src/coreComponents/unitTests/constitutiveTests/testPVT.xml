@@ -2,25 +2,25 @@
 
 <Problem>
   <Tasks>
-    <PVTDriver
-      name="testHydrogenMixtureA"
-      fluid="hydrogenMixture"
-      feedComposition="{ 0.1, 0.9 }"
-      pressureControl="pressureFunction"
-      temperatureControl="temperatureFunction"
-      steps="49"
-      baseline="testPVT_hydrogenMixtureA.txt"
-      logLevel="1"/>
+    <!-- <PVTDriver -->
+    <!--   name="testHydrogenMixtureA" -->
+    <!--   fluid="hydrogenMixture" -->
+    <!--   feedComposition="{ 0.1, 0.9 }" -->
+    <!--   pressureControl="pressureFunction" -->
+    <!--   temperatureControl="temperatureFunction" -->
+    <!--   steps="49" -->
+    <!--   baseline="testPVT_hydrogenMixtureA.txt" -->
+    <!--   logLevel="1"/> -->
 
-    <PVTDriver
-      name="testHydrogenMixtureB"
-      fluid="hydrogenMixture"
-      feedComposition="{ 0.5, 0.5 }"
-      pressureControl="pressureFunction"
-      temperatureControl="temperatureFunction"
-      steps="49"
-      baseline="testPVT_hydrogenMixtureB.txt"
-      logLevel="1"/>
+    <!-- <PVTDriver -->
+    <!--   name="testHydrogenMixtureB" -->
+    <!--   fluid="hydrogenMixture" -->
+    <!--   feedComposition="{ 0.5, 0.5 }" -->
+    <!--   pressureControl="pressureFunction" -->
+    <!--   temperatureControl="temperatureFunction" -->
+    <!--   steps="49" -->
+    <!--   baseline="testPVT_hydrogenMixtureB.txt" -->
+    <!--   logLevel="1"/> -->
 
     <PVTDriver
       name="testCO2"
@@ -29,37 +29,25 @@
       pressureControl="pressureFunction"
       temperatureControl="temperatureFunction"
       steps="49"
-      baseline="testPVT_CO2.txt"
+      output="testPVT_CO2_philippe.txt"
       logLevel="1"/>
 
-    <PVTDriver
-      name="testBrine"
-      fluid="co2Mixture"
-      feedComposition="{ 0.0, 1.0 }"
-      pressureControl="pressureFunction"
-      temperatureControl="temperatureFunction"
-      steps="49"
-      baseline="testPVT_brine.txt"
-      logLevel="1"/>
+    <!-- <PVTDriver -->
+    <!--   name="testBrine" -->
+    <!--   fluid="co2Mixture" -->
+    <!--   feedComposition="{ 0.0, 1.0 }" -->
+    <!--   pressureControl="pressureFunction" -->
+    <!--   temperatureControl="temperatureFunction" -->
+    <!--   steps="49" -->
+    <!--   baseline="testPVT_brine.txt" -->
+    <!--   logLevel="1"/> -->
   </Tasks>
 
   <Events
     maxTime="1">
     <SoloEvent
-      name="eventA"
-      target="/Tasks/testHydrogenMixtureA"/>
-
-    <SoloEvent
-      name="eventB"
-      target="/Tasks/testHydrogenMixtureB"/>
-
-    <SoloEvent
       name="eventC"
       target="/Tasks/testCO2"/>
-
-    <SoloEvent
-      name="eventD"
-      target="/Tasks/testBrine"/>
   </Events>
 
   <Constitutive>
@@ -68,8 +56,9 @@
       phaseNames="{ gas, water }"
       componentNames="{ co2, water }"
       componentMolarWeight="{ 44e-3, 18e-3 }"
-      phasePVTParaFiles="{ testPVT_data/carbonDioxidePVT.txt, testPVT_data/brinePVT.txt }"
-      flashModelParaFile="testPVT_data/carbonDioxideFlash.txt"/>
+      flashModelParaFile="./co2flash.txt"
+      phasePVTParaFiles="{ ./pvtgas.txt, ./pvtwat.SIMSIMA.txt }" />
+
 
     <CompositionalMultiphaseFluid
       name="hydrogenMixture"
@@ -87,13 +76,13 @@
       name="pressureFunction"
       inputVarNames="{ time }"
       coordinates="{ 0.0, 1.0 }"
-      values="{ 1e6, 50e6 }"/>
+      values="{ 3.1798e6, 3.1799e6 }"/>
 
     <TableFunction
       name="temperatureFunction"
       inputVarNames="{ time }"
       coordinates="{ 0.0, 1.0 }"
-      values="{ 350, 350 }"/>
+      values="{ 366.483, 366.483 }"/>
   </Functions>
 
   <!-- Mesh is not used, but GEOSX throws an error without one.  Will resolve soon-->
