@@ -12,7 +12,9 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-int main( int, char * * )
+#include <gtest/gtest.h>
+
+TEST(Toolchain, NDEBUGfromTPls)
 {
   /*
    * This test guards against spurious propagation of -DNDEBUG preprocessor flag (HDF5 in our case),
@@ -21,9 +23,17 @@ int main( int, char * * )
    * pass in RelWithDebInfo or Release builds.
    */
 #ifdef NDEBUG
-  return 0;
+  SUCCEED();  // RelWithDebInfo or Release builds
 #else
-  return 1;
+  FAIL();  // Debug builds
 #endif
+}
 
+int main( int argc, char * * argv )
+{
+  ::testing::InitGoogleTest( &argc, argv );
+
+  int const result = RUN_ALL_TESTS();
+
+  return result;
 }
