@@ -36,6 +36,7 @@ SinglePhaseWell                             node                 :ref:`XML_Singl
 SolidMechanicsEmbeddedFractures             node                 :ref:`XML_SolidMechanicsEmbeddedFractures`             
 SolidMechanicsLagrangianSSLE                node                 :ref:`XML_SolidMechanicsLagrangianSSLE`                
 SolidMechanics_LagrangianFEM                node                 :ref:`XML_SolidMechanics_LagrangianFEM`                
+SolidMechanics_MPM                          node                 :ref:`XML_SolidMechanics_MPM`                          
 SurfaceGenerator                            node                 :ref:`XML_SurfaceGenerator`                            
 =========================================== ======== =========== ====================================================== 
 

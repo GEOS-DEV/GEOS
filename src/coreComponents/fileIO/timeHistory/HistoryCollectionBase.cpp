@@ -158,9 +158,6 @@ dataRepository::Group const * HistoryCollectionBase::getTargetObject( DomainPart
       }
       else if( !meshBody.getMeshLevels().hasGroup< MeshLevel >( targetTokens[1] ) )
       {
-        //GEOSX_LOG_RANK_0( "In TimeHistoryCollection.hpp, Mesh Level Discretization not specified, "
-        //                  "using baseDiscretizationString()." );
-
         string const baseMeshLevelName = MeshBody::groupStructKeys::baseDiscretizationString();
         ++targetTokenLength;
         targetTokens.insert( targetTokens.begin()+1, baseMeshLevelName );

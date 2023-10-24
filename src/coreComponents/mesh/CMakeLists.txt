@@ -23,12 +23,22 @@ set( mesh_headers
      MeshObjectPath.hpp
      NodeManager.hpp
      ObjectManagerBase.hpp
+     generators/ParticleBlock.hpp
+     generators/ParticleBlockManager.hpp
+     ParticleManager.hpp
+     ParticleRegion.hpp
+     ParticleRegionBase.hpp
+     ParticleSubRegion.hpp
+     ParticleSubRegionBase.hpp
+     generators/ParticleBlockABC.hpp
+     ParticleType.hpp
      Perforation.hpp
      PerforationData.hpp
      PerforationFields.hpp
      SurfaceElementRegion.hpp
      SurfaceElementSubRegion.hpp
      ToElementRelation.hpp
+     ToParticleRelation.hpp
      WellElementRegion.hpp
      WellElementSubRegion.hpp
      generators/CellBlock.hpp
@@ -46,6 +56,7 @@ set( mesh_headers
      generators/InternalWellboreGenerator.hpp
      generators/MeshGeneratorBase.hpp
      generators/ParMETISInterface.hpp
+     generators/ParticleMeshGenerator.hpp
      generators/PartitionDescriptor.hpp
      generators/PrismUtilities.hpp
      generators/WellGeneratorBase.hpp
@@ -92,11 +103,19 @@ set( mesh_sources
      MeshObjectPath.cpp
      NodeManager.cpp
      ObjectManagerBase.cpp
+     generators/ParticleBlock.cpp
+     generators/ParticleBlockManager.cpp
+     ParticleManager.cpp
+     ParticleRegion.cpp
+     ParticleRegionBase.cpp
+     ParticleSubRegion.cpp
+     ParticleSubRegionBase.cpp
      Perforation.cpp
      PerforationData.cpp
      SurfaceElementRegion.cpp
      SurfaceElementSubRegion.cpp
      ToElementRelation.cpp
+     ToParticleRelation.cpp
      WellElementRegion.cpp
      WellElementSubRegion.cpp
      generators/CellBlock.cpp
@@ -110,6 +129,7 @@ set( mesh_sources
      generators/InternalWellboreGenerator.cpp
      generators/MeshGeneratorBase.cpp
      generators/ParMETISInterface.cpp
+     generators/ParticleMeshGenerator.cpp
      generators/WellGeneratorBase.cpp
      mpiCommunications/CommID.cpp
      mpiCommunications/CommunicationTools.cpp

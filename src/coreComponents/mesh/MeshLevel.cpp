@@ -32,6 +32,7 @@ MeshLevel::MeshLevel( string const & name,
                       Group * const parent ):
   Group( name, parent ),
   m_nodeManager( new NodeManager( groupStructKeys::nodeManagerString(), this ) ),
+  m_particleManager( new ParticleManager( groupStructKeys::particleManagerString(), this ) ),
   m_edgeManager( new EdgeManager( groupStructKeys::edgeManagerString(), this ) ),
   m_faceManager( new FaceManager( groupStructKeys::faceManagerString(), this ) ),
   m_elementManager( new ElementRegionManager( groupStructKeys::elemManagerString(), this ) ),
@@ -43,6 +44,8 @@ MeshLevel::MeshLevel( string const & name,
 {
 
   registerGroup( groupStructKeys::nodeManagerString(), m_nodeManager );
+
+  registerGroup( groupStructKeys::particleManagerString(), m_particleManager );
 
   registerGroup( groupStructKeys::edgeManagerString(), m_edgeManager );
 
@@ -71,6 +74,7 @@ MeshLevel::MeshLevel( string const & name,
                       MeshLevel & source ):
   Group( name, parent ),
   m_nodeManager( source.m_nodeManager ),
+  m_particleManager( source.m_particleManager ),
   m_edgeManager( source.m_edgeManager ),
   m_faceManager( source.m_faceManager ),
   m_elementManager( source.m_elementManager ),

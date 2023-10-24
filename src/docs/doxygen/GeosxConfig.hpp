@@ -41,6 +41,9 @@
 /// Enables use of HIP (CMake option ENABLE_HIP)
 /* #undef GEOS_USE_HIP */
 
+/// Workaround for FMT compilation issue on some NVCC/PowerPC machines (CMake option ENABLE_FMT_CONST_FORMATTER_WORKAROUND)
+/* #undef GEOS_USE_FMT_CONST_FORMATTER_WORKAROUND */
+
 /// Enables use of PVTPackage (CMake option ENABLE_PVTPackage)
 #define GEOSX_USE_PVTPackage
 

@@ -314,7 +314,8 @@ localIndex ObjectManagerBase::unpack( buffer_unit_type const * & buffer,
                                       arrayView1d< localIndex > & packList,
                                       integer const recursive,
                                       bool onDevice,
-                                      parallelDeviceEvents & events )
+                                      parallelDeviceEvents & events,
+                                      MPI_Op op )
 {
   localIndex unpackedSize = 0;
   string groupName;
@@ -339,7 +340,7 @@ localIndex ObjectManagerBase::unpack( buffer_unit_type const * & buffer,
     {
       string wrapperName;
       unpackedSize += bufferOps::Unpack( buffer, wrapperName );
-      unpackedSize += this->getWrapperBase( wrapperName ).unpackByIndex( buffer, packList, true, onDevice, events );
+      unpackedSize += this->getWrapperBase( wrapperName ).unpackByIndex( buffer, packList, true, onDevice, events, op );
     }
   }
 
@@ -838,6 +839,18 @@ void ObjectManagerBase::copyObject( const localIndex source, const localIndex de
     if( targetSet.count( source ) > 0 )
     {
       targetSet.insert( destination );
+    }
+  }
+}
+
+void ObjectManagerBase::eraseObject( std::set< localIndex > const & indicesToErase )
+{
+  for( auto & nameToWrapper: wrappers() )
+  {
+    WrapperBase * wrapper = nameToWrapper.second;
+    if( wrapper->sizedFromParent() )
+    {
+      wrapper->erase( indicesToErase );
     }
   }
 }
