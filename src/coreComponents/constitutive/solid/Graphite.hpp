@@ -448,6 +448,9 @@ void GraphiteUpdates::smallStrainUpdate_StressOnly( localIndex const k,
 
   // save new stress and return
   saveStress( k, q, stress );
+
+  // CC: debug
+  // GEOS_LOG_RANK( "Particle " << k << ", Saved stress: {" << stress[0] << ", " << stress[1] << ", " << stress[2] << ", " << stress[3] << ", " << stress[4] << ", " << stress[5] << "}" );
 }
 
 
@@ -459,10 +462,14 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
                                                real64 const ( & beginningRotation )[3][3],
                                                real64 const ( & endRotation )[3][3],
                                                real64 ( & stress )[6] ) const
-{
+{   
+    // CC: debug
+    // GEOS_LOG_RANK( "Particle " << k << ", Stress in: {" << stress[0] << ", " << stress[1] << ", " << stress[2] << ", " << stress[3] << ", " << stress[4] << ", " << stress[5] << "}" );
     real64 oldStress[6] = { 0 };
-    LvArray::tensorOps::copy< 6 >( oldStress, stress );
-
+    LvArray::tensorOps::copy< 6 >( oldStress, m_oldStress[k][q]); //stress );
+    // CC: debug
+    // GEOS_LOG_RANK( "Particle " << k << ", Old stress copy: {" << oldStress[0] << ", " << oldStress[1] << ", " << oldStress[2] << ", " << oldStress[3] << ", " << oldStress[4] << ", " << oldStress[5] << "}" );
+    
     real64 rotationTranspose[3][3] = { { 0 } };
     LvArray::tensorOps::transpose< 3, 3 >( rotationTranspose, beginningRotation ); 
 
@@ -520,6 +527,17 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
     m_effectiveBulkModulus[k] = -Ep*Ez/(2*Ez*(nup+nuzp-1) + Ep*(2*nuzp-1));
     m_effectiveShearModulus[k] = 0.6*m_effectiveBulkModulus[k];
 
+    // CC: debug
+    // GEOS_LOG_RANK( "Particle " << k << ":\n"
+    //                 "Old pressure: " << oldPressure << "\n"
+    //                 "\tEz=" << Ez << "\n" << 
+    //                 "\tEp=" << Ep << "\n" << 
+    //                 "\tGzp=" << Gzp << "\n" << 
+    //                 "\tnuzp=" << nuzp << "\n" << 
+    //                 "\tnup=" << nup << "\n" << 
+    //                 "\teffK=" << m_effectiveBulkModulus[k] << "\n" << 
+    //                 "\teffG=" << m_effectiveShearModulus[k] << "\n");
+
     // real64 Ez = c33 - c13 * c13 / ( c11 - c66 );
     // real64 Ep = 4 * c66 * ( c11 * c33 - c66 * c33 - c13 * c13 ) / ( c11 * c33 - c13 * c13 );
     // real64 Gzp = c44 / 2.0;
@@ -538,14 +556,15 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
                                              D,                  // D=sym(L)
                                              stress );           // stress at end of step
 
+    // CC: debug
+    // GEOS_LOG_RANK( "Particle " << k << ", Trial stress: {" << stress[0] << ", " << stress[1] << ", " << stress[2] << ", " << stress[3] << ", " << stress[4] << ", " << stress[5] << "}" );
+
     // m_jacobian[k][q] *= exp( strainIncrement[0] + strainIncrement[1] + strainIncrement[2] );
 
     if( m_disableInelasticity )
     {
       return;
     }
-
-    saveStress( k, q, stress );
 
     // Decompose stress tensor into pieces.
     real64 sigma1Dense [3][3] = { { 0 } };
@@ -581,6 +600,7 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
     // Trial pressure to compute pressure-dependence of strength
     real64 pressure = (-1.0/3.0)*( stress[0] + stress[1] + stress[2] );
 
+    // CC: debug
     // GEOS_LOG_RANK( "Particle " << k << ":\n" <<
     //                 "\toldStress: {" << oldStress[0] << ", " << oldStress[1] << ", " << oldStress[2] << ", " << oldStress[3] << ", " << oldStress[4] << ", " << oldStress[5] << "}" << 
     //                 "\tnewStress: {" << stress[0] << ", " << stress[1] << ", " << stress[2] << ", " << stress[3] << ", " << stress[4] << ", " << stress[5] << "}" << 
@@ -602,6 +622,7 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
     // strength scale factor, combining plastic softening and damage
     real64 fac = (1.0 - m_damage[k][q])*(1.0 - m_relaxation[k][q]);
 
+    // CC: debug
     // GEOS_LOG_RANK( "Particle " << k << ": dmg: " << m_damage[k][q] << ", Fac: " << fac );
 
     // Enforce damage, no tensile stress on plane, and frictional response to shear.
@@ -630,9 +651,9 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
     real64 distortionMeanStress = ( distortion[0] + distortion[1] + distortion[2] ) / 3.0;
 
     real64 distortion_iso[6] = {0};
-    distortion_iso[0] =  distortionMeanStress;
-    distortion_iso[1] =  distortionMeanStress;
-    distortion_iso[2] =  distortionMeanStress;
+    distortion_iso[0] = distortionMeanStress;
+    distortion_iso[1] = distortionMeanStress;
+    distortion_iso[2] = distortionMeanStress;
 
     real64 distortion_dev[6] = { 0 };
     LvArray::tensorOps::copy< 6 >( distortion_dev, distortion );
@@ -715,6 +736,9 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
     }
 
     // Enforce strength ---------------------------------------------
+
+    // CC: add check to make sure strength is some small value to avoid floating point error for dmg = 1.0 initially in strength computations
+
     // flags indicating whether plastic strain needs to be updated.
     bool plastic = false;
 
@@ -783,6 +807,7 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
     // it may be useful for plotting regions of high-pressure yield.
     if( plastic )
     {
+      // CC: debug
         // GEOS_LOG_RANK( "Particle " << k << ": PlaneNormalStress: " << planeNormalStress << ", " << 
         //                                      "TotalShearStress: " << totalShearStress << " (" << totalShearStrength << ")" << ", " << 
         //                                      "inPlaneShearStress: " << inPlaneShearStress << " (" << inPlaneShearStrength << ")" << ", " << 
@@ -872,7 +897,6 @@ void GraphiteUpdates::computeTransverselyIsotropicTrialStress(const real64 timeI
 	real64 h4 = Ep/( 1 + nup );
 	real64 h5 = 2*Gzp;
 
-	LvArray::tensorOps::copy< 6 >(newStress, oldStress);
   real64 stressIncrementDense[3][3] = { { 0 } };
   int voigtMap[3][3] = { {0, 5, 4}, {5, 1, 3}, {4, 3, 2} };
 	for(int i=0; i<3; i++)
@@ -884,7 +908,7 @@ void GraphiteUpdates::computeTransverselyIsotropicTrialStress(const real64 timeI
 				for(int w=0; w<3; w++)
 				{
 					// newStress[voigtMap[i][j]] 
-          stressIncrementDense[i][j] += (h1*transverselyIsotropicB1(materialDirection,i,j,p,w) +
+          stressIncrementDense[i][j] += ( h1*transverselyIsotropicB1(materialDirection,i,j,p,w) +
                                           h2*transverselyIsotropicB2(materialDirection,i,j,p,w) +
                                           h3*transverselyIsotropicB3(materialDirection,i,j,p,w) +
                                           h4*transverselyIsotropicB4(materialDirection,i,j,p,w) +
@@ -896,8 +920,18 @@ void GraphiteUpdates::computeTransverselyIsotropicTrialStress(const real64 timeI
 
   real64 stressIncrement[6] = { 0 };
   LvArray::tensorOps::denseToSymmetric< 3 >( stressIncrement, stressIncrementDense );
+
+  LvArray::tensorOps::copy< 6 >(newStress, oldStress);
   LvArray::tensorOps::add< 6 >( newStress, stressIncrement );
 
+// CC: debug
+  // GEOS_LOG_RANK( "h constants: {" << h1 << ", " << h2 << ", " << h3 << ", " << h4 << ", " << h5 << "}\n" <<
+  //                "Mat dir: {" << materialDirection[0] << ", " << materialDirection[1] << ", " << materialDirection[2] << "}\n" << 
+  //                "D: {" << D[0] << ", " << D[1] << ", " << D[2] << ", " << D[3] << ", " << D[4] << ", " << D[5] << "}\n" <<
+  //                "Ddt: {" << D[0]*timeIncrement << ", " << D[1]*timeIncrement << ", " << D[2]*timeIncrement << ", " << D[3]*timeIncrement << ", " << D[4]*timeIncrement << ", " << D[5]*timeIncrement << "}\n" <<
+  //                "Old stress: {" << oldStress[0] << ", " << oldStress[1] << ", " << oldStress[2] << ", " << oldStress[3] << ", " << oldStress[4] << ", " << oldStress[5] << "}\n" <<
+  //                "Stress Incr: {" << stressIncrement[0] << ", " << stressIncrement[1] << ", " << stressIncrement[2] << ", " << stressIncrement[3] << ", " << stressIncrement[4] << ", " << stressIncrement[5] << "}\n" <<  
+  //                "New stress: {" << newStress[0] << ", " << newStress[1] << ", " << newStress[2] << ", " << newStress[3] << ", " << newStress[4] << ", " << newStress[5] << "}\n");
 }
 
 GEOS_HOST_DEVICE
@@ -1031,9 +1065,11 @@ real64 GraphiteUpdates::transverselyIsotropicB4( real64 const (& materialDirecti
   // described in Brannon's rotation/tensor book.
 
 	real64 B4 = 0.5*( delta(i,p)*delta(j,w) + delta(i,w)*delta(j,p) ) -
-              0.5*( delta(i,w)*materialDirection[j]*materialDirection[p] + materialDirection[i]*delta(j,p)*materialDirection[w] + 
-                    materialDirection[i]*delta(j,w)*materialDirection[p] + delta(i,p)*materialDirection[j]*materialDirection[w] ) + 
-                    materialDirection[i]*materialDirection[j]*materialDirection[p]*materialDirection[w];
+              0.5*( delta(i,w)*materialDirection[j]*materialDirection[p] + 
+                    materialDirection[i]*delta(j,p)*materialDirection[w] + 
+                    materialDirection[i]*delta(j,w)*materialDirection[p] + 
+                    delta(i,p)*materialDirection[j]*materialDirection[w] ) + 
+              materialDirection[i]*materialDirection[j]*materialDirection[p]*materialDirection[w];
 	return B4;
 }
 
@@ -1048,10 +1084,10 @@ real64 GraphiteUpdates::transverselyIsotropicB5( real64 const (& materialDirecti
   // described in Brannon's rotation/tensor book.
 
 	real64 B5 = 0.5*( delta(i,p)*materialDirection[j]*materialDirection[w] + 
-                      delta(i,w)*materialDirection[j]*materialDirection[p] + 
-                      materialDirection[i]*delta(j,w)*materialDirection[p] + 
-                      materialDirection[i]*delta(j,p)*materialDirection[w] ) - 
-                      2.0*materialDirection[i]*materialDirection[p]*materialDirection[j]*materialDirection[w];
+                    delta(i,w)*materialDirection[j]*materialDirection[p] + 
+                    materialDirection[i]*delta(j,w)*materialDirection[p] + 
+                    materialDirection[i]*delta(j,p)*materialDirection[w] ) - 
+              2.0*materialDirection[i]*materialDirection[p]*materialDirection[j]*materialDirection[w];
 	return B5;
 }
 
