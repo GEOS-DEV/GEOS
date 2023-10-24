@@ -244,7 +244,7 @@ void AcousticVTIWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
 
     /// get the array of indicators: 1 if the face is on the boundary; 0 otherwise
     arrayView1d< integer > const & facesDomainBoundaryIndicator = faceManager.getDomainBoundaryIndicator();
-    arrayView2d< wsCoordType const, nodes::REFERENCE_POSITION_USD > const X32 =
+    arrayView2d< wsCoordType const, nodes::REFERENCE_POSITION_USD > const nodeCoords =
       nodeManager.getField< fields::referencePosition32 >().toViewConst();
 
     /// get face to node map
@@ -273,7 +273,7 @@ void AcousticVTIWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
     {
 
       arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemsToNodes = elementSubRegion.nodeList();
-      arrayView2d< localIndex const > const facesToElements = faceManager.elementList();
+      arrayView2d< localIndex const > const elemsToFaces = elementSubRegion.faceList();
       arrayView1d< real32 const > const velocity = elementSubRegion.getField< fields::wavesolverfields::MediumVelocity >();
       arrayView1d< real32 const > const epsilon  = elementSubRegion.getField< fields::wavesolverfields::Epsilon >();
       arrayView1d< real32 const > const delta    = elementSubRegion.getField< fields::wavesolverfields::Delta >();
@@ -288,16 +288,16 @@ void AcousticVTIWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
         acousticVTIWaveEquationSEMKernels::MassMatrixKernel< FE_TYPE > kernelM( finiteElement );
 
         kernelM.template launch< EXEC_POLICY, ATOMIC_POLICY >( elementSubRegion.size(),
-                                                               X32,
+                                                               nodeCoords,
                                                                elemsToNodes,
                                                                velocity,
                                                                mass );
 
         acousticVTIWaveEquationSEMKernels::DampingMatrixKernel< FE_TYPE > kernelD( finiteElement );
 
-        kernelD.template launch< EXEC_POLICY, ATOMIC_POLICY >( faceManager.size(),
-                                                               X32,
-                                                               facesToElements,
+        kernelD.template launch< EXEC_POLICY, ATOMIC_POLICY >( elementSubRegion.size(),
+                                                               nodeCoords,
+                                                               elemsToFaces,
                                                                facesToNodes,
                                                                facesDomainBoundaryIndicator,
                                                                freeSurfaceFaceIndicator,
