@@ -232,6 +232,30 @@ void Graphite::postProcessInput()
 {
   SolidBase::postProcessInput();
 
+  GEOS_LOG_RANK_0( "Ez: " << m_defaultYoungModulusAxial << "\n" << 
+                   "Ep: " << m_defaultYoungModulusTransverse << "\n" << 
+                   "Nup: " << m_defaultPoissonRatioTransverse << "\n" << 
+                   "Nuzp: " << m_defaultPoissonRatioAxialTransverse << "\n" << 
+                   "Gzp: " << m_defaultShearModulusAxialTransverse << "\n" << 
+                   "dEzdp: " << m_defaultYoungModulusAxialPressureDerivative << "\n" << 
+                   "dEpdp: " << m_defaultYoungModulusTransversePressureDerivative << "\n" << 
+                   "dGzpdp: " << m_defaultShearModulusAxialTransversePressureDerivative << "\n" << 
+                   "sigmaFail: " << m_failureStrength << "\n" << 
+                   "crackSpeed: " << m_crackSpeed << "\n" << 
+                   "ds X2: " << m_distortionShearResponseX2 << "\n" << 
+                   "ds Y1: " << m_distortionShearResponseY1 << "\n" << 
+                   "ds Y2: " << m_distortionShearResponseY2 << "\n" << 
+                   "ds M1: " << m_distortionShearResponseM1 << "\n" <<
+                   "ips X2: " << m_inPlaneShearResponseX2 << "\n" << 
+                   "ips Y1: " << m_inPlaneShearResponseY1 << "\n" << 
+                   "ips Y2: " << m_inPlaneShearResponseY2 << "\n" << 
+                   "ips M1: " << m_inPlaneShearResponseM1 << "\n" << 
+                   "cs X2: " << m_coupledShearResponseX2 << "\n" << 
+                   "cs Y1: " << m_coupledShearResponseY1 << "\n" << 
+                   "cs Y2: " << m_coupledShearResponseY2 << "\n" << 
+                   "cs M1: " << m_coupledShearResponseM1 << "\n" <<
+                   "max ep: " << m_maximumPlasticStrain );
+
   // Add elastic constants check
 
   GEOS_THROW_IF( m_failureStrength <= 0.0, "Maximum theoretical strength must be greater than 0", InputError );
@@ -241,17 +265,17 @@ void Graphite::postProcessInput()
 
   GEOS_THROW_IF( m_distortionShearResponseX2 < 0.0, "Distortion shear response x2 must be a positive number.", InputError );
   GEOS_THROW_IF( m_distortionShearResponseY1 < 0.0, "Distortion shear response y1 must be a positive number.", InputError );
-  GEOS_THROW_IF( m_distortionShearResponseX2 < 0.0, "Distortion shear response y2 must be a positive number.", InputError );
+  GEOS_THROW_IF( m_distortionShearResponseY2 < 0.0, "Distortion shear response y2 must be a positive number.", InputError );
   GEOS_THROW_IF( m_distortionShearResponseM1 < 0.0, "Distortion shear response m1 must be a positive number.", InputError );
 
   GEOS_THROW_IF( m_inPlaneShearResponseX2 < 0.0, "In plane shear response x2 must be a positive number.", InputError );
   GEOS_THROW_IF( m_inPlaneShearResponseY1 < 0.0, "In plane shear response y1 must be a positive number.", InputError );
-  GEOS_THROW_IF( m_inPlaneShearResponseX2 < 0.0, "In plane shear response y2 must be a positive number.", InputError );
+  GEOS_THROW_IF( m_inPlaneShearResponseY2 < 0.0, "In plane shear response y2 must be a positive number.", InputError );
   GEOS_THROW_IF( m_inPlaneShearResponseM1 < 0.0, "In plane shear response m1 must be a positive number.", InputError );
 
   GEOS_THROW_IF( m_coupledShearResponseX2 < 0.0, "Coupled shear response x2 must be a positive number.", InputError );
   GEOS_THROW_IF( m_coupledShearResponseY1 < 0.0, "Coupled shear response y1 must be a positive number.", InputError );
-  GEOS_THROW_IF( m_coupledShearResponseX2 < 0.0, "Coupled shear response y2 must be a positive number.", InputError );
+  GEOS_THROW_IF( m_coupledShearResponseY2 < 0.0, "Coupled shear response y2 must be a positive number.", InputError );
   GEOS_THROW_IF( m_coupledShearResponseM1 < 0.0, "Coupled shear response m1 must be a positive number.", InputError );
 
   GEOS_THROW_IF( m_maximumPlasticStrain < 0.0, "Maximum plastic strain must be a positive number.", InputError);
