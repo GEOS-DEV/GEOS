@@ -110,11 +110,8 @@ public:
     m_levelRestrictType[3]     = MGRRestrictionType::injection;
     m_levelCoarseGridMethod[3] = MGRCoarseGridMethod::cprLikeBlockDiag;
 
-    // ILU smoothing for the system made of pressure and densities
-    m_levelSmoothType[2]  = 16;
-    m_levelSmoothIters[2] = 1;
-    // Block GS smoothing for the system made of pressure and densities (except the last one)
-    m_levelSmoothType[3]  = 1;
+    // ILU smoothing for the system made of pressure and densities (except the last one)
+    m_levelSmoothType[3]  = 16;
     m_levelSmoothIters[3] = 1;
   }
 

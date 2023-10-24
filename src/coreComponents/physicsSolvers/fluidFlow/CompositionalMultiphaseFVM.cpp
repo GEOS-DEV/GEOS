@@ -79,6 +79,9 @@ void CompositionalMultiphaseFVM::setupDofs( DomainPartition const & domain,
                        m_numDofPerCell,
                        getMeshTargets() );
 
+  dofManager.disableGlobalCouplingForEquation( viewKeyStruct::elemDofFieldString(),
+                                               m_numComponents );
+
   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
   FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
   FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( m_discretizationName );

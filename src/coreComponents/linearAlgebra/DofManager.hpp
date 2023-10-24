@@ -177,6 +177,14 @@ public:
                  map< std::pair< string, string >, array1d< string > > const & regions );
 
   /**
+   * @brief Disable the global coupling for a given equation
+   * @param [in] fieldName the name of the field
+   * @param [in] c the index of the equation
+   */
+  void disableGlobalCouplingForEquation( string const & fieldName,
+                                         integer const c );
+
+  /**
    * @brief Add coupling between two fields.
    *
    * The connectivity argument defines how the two fields couple. If the first field has support location A,
@@ -474,6 +482,8 @@ private:
     globalIndex blockOffset = 0;   ///< offset of this field's block in a block-wise ordered system
     globalIndex rankOffset = 0;    ///< field's first DoF on current processor (within its block, ignoring other fields)
     globalIndex globalOffset = 0;  ///< global offset of field's DOFs on current processor for multi-field problems
+    CompMask globallyCoupledComponents; ///< mask to distinguish globally coupled components from locally coupled components (the latter
+                                        ///< don't interact with neighbors)
   };
 
   /**
