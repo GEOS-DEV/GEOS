@@ -34,11 +34,15 @@ public:
   ParallelPlatesPermeabilityUpdate( arrayView3d< real64 > const & permeability,
                                     arrayView3d< real64 > const & dPerm_dPressure,
                                     arrayView4d< real64 > const & dPerm_dDispJump,
-                                    integer const timeLagFlag )
+                                    integer const timeLagFlag,
+                                    bool const updateTransversalComponent )
     : PermeabilityBaseUpdate( permeability, dPerm_dPressure ),
     m_dPerm_dDispJump( dPerm_dDispJump ),
-    m_timeLagFlag( timeLagFlag )
-  {}
+    m_timeLagFlag( timeLagFlag ),
+    m_numDimensionsToUpdate( 3 )
+  {
+    m_numDimensionsToUpdate = updateTransversalComponent ? 3 : 2;
+  }
 
   GEOS_HOST_DEVICE
   void compute( real64 const & oldHydraulicAperture,
@@ -46,7 +50,7 @@ public:
                 arraySlice1d< real64 > const & permeability,
                 arraySlice2d< real64 > const & dPerm_dDispJump,
                 integer const timeLagFlag ) const
-  {
+{
     real64 perm = 0.0; 
     real64 dPerm = 0.0; 
     
@@ -64,10 +68,10 @@ public:
       dPerm = newHydraulicAperture / 6.0;
     }
 
-    for( int dim=0; dim < 3; dim++ )
+    for( int dim=0; dim < m_numDimensionsToUpdate; dim++ )
     {
-      permeability[dim]     = perm;
-      dPerm_dDispJump[dim][0]  = 0.0;
+      permeability[dim]        = perm;
+      dPerm_dDispJump[dim][0]  = dPerm;
       dPerm_dDispJump[dim][1]  = 0.0;
       dPerm_dDispJump[dim][2]  = 0.0;
     }
@@ -105,9 +109,10 @@ public:
 private:
 
   arrayView4d< real64 > m_dPerm_dDispJump;
-
+  
   integer m_timeLagFlag; 
-
+  
+  int m_numDimensionsToUpdate;
 };
 
 
@@ -127,6 +132,8 @@ public:
 
   virtual string getCatalogName() const override { return catalogName(); }
 
+  virtual void initializeState() const override final;
+
   /// Type of kernel wrapper for in-kernel update
   using KernelWrapper = ParallelPlatesPermeabilityUpdate;
 
@@ -139,15 +146,18 @@ public:
     return KernelWrapper( m_permeability,
                           m_dPerm_dPressure,
                           m_dPerm_dDispJump,
-                          m_timeLagFlag );
+                          m_timeLagFlag,
+                          m_updateTransversalComponent );
   }
 
 
   struct viewKeyStruct : public PermeabilityBase::viewKeyStruct
   {
-    /// string/key for the flag to use time lagging computation of permeability 
+   /// string/key for the flag to use time lagging computation of permeability 
     constexpr static char const * timeLagFlagString() { return "timeLagFlag"; }
-  };
+   
+   static constexpr char const * transversalPermeabilityString() { return "transversalPermeability"; }
+  } viewKeys;
 
 private:
 
@@ -158,6 +168,10 @@ private:
 
   /// Flag to turn on time lagging computation of permeability  
   integer m_timeLagFlag; 
+  
+  real64 m_transversalPermeability;
+
+  bool m_updateTransversalComponent;
 
 };
 
