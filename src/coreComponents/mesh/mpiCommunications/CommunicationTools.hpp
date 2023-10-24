@@ -127,13 +127,15 @@ public:
                     std::vector< NeighborCommunicator > & neighbors,
                     MPI_iCommData & icomm,
                     bool onDevice,
-                    parallelDeviceEvents & events );
+                    parallelDeviceEvents & events,
+                    MPI_Op op=MPI_REPLACE );
 
   void finalizeUnpack( MeshLevel & mesh,
                        std::vector< NeighborCommunicator > & neighbors,
                        MPI_iCommData & icomm,
                        bool onDevice,
-                       parallelDeviceEvents & events );
+                       parallelDeviceEvents & events,
+                       MPI_Op op=MPI_REPLACE );
 
 private:
   std::set< int > m_freeCommIDs;

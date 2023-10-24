@@ -233,7 +233,8 @@ public:
                             MeshLevel & meshLevel,
                             int const commID,
                             bool onDevice,
-                            parallelDeviceEvents & events );
+                            parallelDeviceEvents & events,
+                            MPI_Op op=MPI_REPLACE );
 
   int neighborRank() const { return m_neighborRank; }
 

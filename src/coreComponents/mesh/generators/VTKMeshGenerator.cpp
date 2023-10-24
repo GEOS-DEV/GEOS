@@ -74,7 +74,7 @@ VTKMeshGenerator::VTKMeshGenerator( string const & name,
                     " If set to a positive value, the GlobalId arrays in the input mesh are used and required, and the simulation aborts if they are not available" );
 }
 
-void VTKMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockManager, array1d< int > const & )
+void VTKMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockManager, SpatialPartition & partition )
 {
   // TODO refactor void MeshGeneratorBase::generateMesh( DomainPartition & domain )
   GEOS_MARK_FUNCTION;
@@ -95,7 +95,7 @@ void VTKMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockManager
     GEOS_LOG_LEVEL_RANK_0( 2, "  finding neighbor ranks..." );
     std::vector< vtkBoundingBox > boxes = vtk::exchangeBoundingBoxes( *m_vtkMesh, comm );
     std::vector< int > const neighbors = vtk::findNeighborRanks( std::move( boxes ) );
-    m_spatialPartition.setMetisNeighborList( std::move( neighbors ) );
+    partition.setMetisNeighborList( std::move( neighbors ) );
     GEOS_LOG_LEVEL_RANK_0( 2, "  done!" );
   }
   GEOS_LOG_RANK_0( GEOS_FMT( "{} '{}': generating GEOSX mesh data structure", catalogName(), getName() ) );

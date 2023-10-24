@@ -32,6 +32,7 @@ namespace keys
 
 static constexpr auto ProblemManager = "Problem";
 static constexpr auto cellManager = "cellManager";
+static constexpr auto particleManager = "particleManager";
 
 /// @endcond
 
