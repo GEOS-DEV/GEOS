@@ -94,6 +94,7 @@ public:
     static constexpr auto outputRegionTypeString = "outputRegionType";
     static constexpr auto onlyPlotSpecifiedFieldNames = "onlyPlotSpecifiedFieldNames";
     static constexpr auto fieldNames = "fieldNames";
+    static constexpr auto numberOfTargetProcesses = "numberOfTargetProcesses";
   } vtkOutputViewKeys;
   /// @endcond
 
@@ -110,6 +111,9 @@ private:
   string m_plotFileRoot;
   integer m_writeFaceMesh;
   integer m_plotLevel;
+
+  /// Aggregate output data to be written
+  integer m_numberOfTargetProcesses;
 
   /// Should the vtk files contain the ghost cells or not.
   integer m_writeGhostCells;

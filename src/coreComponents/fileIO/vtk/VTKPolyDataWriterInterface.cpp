@@ -32,9 +32,12 @@
 #include <vtkThreshold.h>
 #include <vtkUnstructuredGrid.h>
 #include <vtkXMLUnstructuredGridWriter.h>
+#include <vtkAggregateDataSetFilter.h>
 
 // System includes
 #include <unordered_set>
+
+#include "mesh/generators/VTKUtilities.hpp"
 
 namespace geosx
 {
@@ -851,7 +854,7 @@ void VTKPolyDataWriterInterface::writeElementFields( ElementRegionBase const & r
 void VTKPolyDataWriterInterface::writeCellElementRegions( real64 const time,
                                                           ElementRegionManager const & elemManager,
                                                           NodeManager const & nodeManager,
-                                                          string const & path ) const
+                                                          string const & path )
 {
   elemManager.forElementRegions< CellElementRegion >( [&]( CellElementRegion const & region )
   {
@@ -865,16 +868,14 @@ void VTKPolyDataWriterInterface::writeCellElementRegions( real64 const time,
     writeTimestamp( ug.GetPointer(), time );
     writeElementFields( region, ug->GetCellData() );
     writeNodeFields( nodeManager, VTKCells.nodes, ug->GetPointData() );
-
-    string const regionDir = joinPath( path, region.getName() );
-    writeUnstructuredGrid( regionDir, ug.GetPointer() );
+    writeUnstructuredGrid( path, region, ug.GetPointer() );
   } );
 }
 
 void VTKPolyDataWriterInterface::writeWellElementRegions( real64 const time,
                                                           ElementRegionManager const & elemManager,
                                                           NodeManager const & nodeManager,
-                                                          string const & path ) const
+                                                          string const & path )
 {
   elemManager.forElementRegions< WellElementRegion >( [&]( WellElementRegion const & region )
   {
@@ -887,9 +888,7 @@ void VTKPolyDataWriterInterface::writeWellElementRegions( real64 const time,
 
     writeTimestamp( ug.GetPointer(), time );
     writeElementFields( region, ug->GetCellData() );
-
-    string const regionDir = joinPath( path, region.getName() );
-    writeUnstructuredGrid( regionDir, ug.GetPointer() );
+    writeUnstructuredGrid( path, region, ug.GetPointer() );
   } );
 }
 
@@ -897,7 +896,7 @@ void VTKPolyDataWriterInterface::writeSurfaceElementRegions( real64 const time,
                                                              ElementRegionManager const & elemManager,
                                                              NodeManager const & nodeManager,
                                                              EmbeddedSurfaceNodeManager const & embSurfNodeManager,
-                                                             string const & path ) const
+                                                             string const & path )
 {
   elemManager.forElementRegions< SurfaceElementRegion >( [&]( SurfaceElementRegion const & region )
   {
@@ -928,9 +927,7 @@ void VTKPolyDataWriterInterface::writeSurfaceElementRegions( real64 const time,
 
     writeTimestamp( ug.GetPointer(), time );
     writeElementFields( region, ug->GetCellData() );
-
-    string const regionDir = joinPath( path, region.getName() );
-    writeUnstructuredGrid( regionDir, ug.GetPointer() );
+    writeUnstructuredGrid( path, region, ug.GetPointer() );
   } );
 }
 
@@ -964,13 +961,13 @@ void VTKPolyDataWriterInterface::writeVtmFile( integer const cycle,
 
       ElementRegionManager const & elemManager = meshLevel.getElemManager();
       string const meshPath = joinPath( getCycleSubFolder( cycle ), meshBody.getName(), meshLevel.getName() );
-      int const mpiSize = MpiWrapper::commSize();
+      //int const mpiSize = MpiWrapper::commSize();
 
       auto addRegion = [&]( ElementRegionBase const & region )
       {
         std::vector< string > const blockPath{ meshBody.getName(), meshLevel.getName(), region.getCatalogName(), region.getName() };
         string const regionPath = joinPath( meshPath, region.getName() );
-        for( int i = 0; i < mpiSize; i++ )
+        for( const auto & i : m_targetProcessesId.at( region.getName()) )
         {
           string const dataSetName = getRankFileName( i );
           string const dataSetFile = joinPath( regionPath, dataSetName + ".vtu" );
@@ -1014,8 +1011,11 @@ int toVtkOutputMode( VTKOutputMode const mode )
 }
 
 void VTKPolyDataWriterInterface::writeUnstructuredGrid( string const & path,
-                                                        vtkUnstructuredGrid * ug ) const
+                                                        ElementRegionBase const & region,
+                                                        vtkUnstructuredGrid * ug )
 {
+  string const regionDir = joinPath( path, region.getName() );
+
   vtkSmartPointer< vtkAlgorithm > filter;
 
   // If we want to get rid of the ghost ranks, we use the appropriate `vtkThreshold` filter.
@@ -1037,15 +1037,60 @@ void VTKPolyDataWriterInterface::writeUnstructuredGrid( string const & path,
   }
 
   filter->SetInputDataObject( ug );
-  filter->Update();
+  //filter->Update();
 
-  makeDirectory( path );
-  string const vtuFilePath = joinPath( path, getRankFileName( MpiWrapper::commRank() ) + ".vtu" );
-  auto const vtuWriter = vtkSmartPointer< vtkXMLUnstructuredGridWriter >::New();
-  vtuWriter->SetInputData( filter->GetOutputDataObject( 0 ) );
-  vtuWriter->SetFileName( vtuFilePath.c_str() );
-  vtuWriter->SetDataMode( toVtkOutputMode( m_outputMode ) );
-  vtuWriter->Write();
+  //makeDirectory( path );
+  //string const vtuFilePath = joinPath( path, getRankFileName( MpiWrapper::commRank() ) + ".vtu" );
+  //auto const vtuWriter = vtkSmartPointer< vtkXMLUnstructuredGridWriter >::New();
+  //vtuWriter->SetInputData( filter->GetOutputDataObject( 0 ) );
+  //vtuWriter->SetFileName( vtuFilePath.c_str() );
+  //vtuWriter->SetDataMode( toVtkOutputMode( m_outputMode ) );
+  //vtuWriter->Write();
+
+  vtkSmartPointer< vtkMultiProcessController > controller = vtk::getController();
+  vtkMultiProcessController::SetGlobalController( controller );
+
+
+  vtkNew< vtkAggregateDataSetFilter > aggregate;
+  // aggregate->SetInputDataObject(ug);
+  aggregate->SetInputConnection( filter->GetOutputPort());
+  aggregate->SetNumberOfTargetProcesses( m_numberOfTargetProcesses );
+  aggregate->SetMergePoints( false );
+  aggregate->Update();
+
+  int localCommRank = -1;
+  if( vtkDataSet::SafeDownCast( aggregate->GetOutput())->GetNumberOfPoints() != 0 )
+    {
+      localCommRank = MpiWrapper::commRank();
+      makeDirectory( regionDir );
+      string const vtuFilePath = joinPath( regionDir, getRankFileName( localCommRank ) + ".vtu" );
+      auto const vtuWriter = vtkSmartPointer< vtkXMLUnstructuredGridWriter >::New();
+      vtuWriter->SetInputData( aggregate->GetOutput() );
+      vtuWriter->SetFileName( vtuFilePath.c_str() );
+      vtuWriter->SetDataMode( toVtkOutputMode( m_outputMode ) );
+      vtuWriter->Write();
+    }
+
+  const int size = MpiWrapper::commSize( MPI_COMM_GEOSX );
+  std::vector< int > globalValues( size );
+
+
+  // Everything is done on rank 0
+  MpiWrapper::gather( &localCommRank,
+                      1,
+                      globalValues.data(),
+                      1,
+                      0,
+                      MPI_COMM_GEOSX );
+
+  if( MpiWrapper::commRank() == 0 )
+    {
+      globalValues.erase( std::remove_if( globalValues.begin(),
+					  globalValues.end(),
+					  []( int x ) { return x == -1; } ),
+			  globalValues.end());
+      m_targetProcessesId[region.getName()] = globalValues;
+    }
 }
 
 void VTKPolyDataWriterInterface::write( real64 const time,

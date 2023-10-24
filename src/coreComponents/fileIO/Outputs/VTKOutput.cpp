@@ -17,7 +17,7 @@
  */
 
 #include "VTKOutput.hpp"
-
+#include "common/MpiWrapper.hpp"
 
 #if defined(GEOSX_USE_PYGEOSX)
 #include "fileIO/python/PyVTKOutputType.hpp"
@@ -51,6 +51,11 @@ VTKOutput::VTKOutput( string const & name,
     setApplyDefaultValue( 1 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Level detail plot. Only fields with lower of equal plot level will be output." );
+
+  registerWrapper( viewKeysStruct::numberOfTargetProcesses, &m_numberOfTargetProcesses ).
+    setApplyDefaultValue( MpiWrapper::commSize() ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Aggregate output data to be written." );
 
   registerWrapper( viewKeysStruct::writeGhostCells, &m_writeGhostCells ).
     setApplyDefaultValue( 0 ).
@@ -86,6 +91,7 @@ void VTKOutput::postProcessInput()
   m_writer.setOutputLocation( getOutputDirectory(), m_plotFileRoot );
   m_writer.setFieldNames( m_fieldNames.toViewConst() );
   m_writer.setOnlyPlotSpecifiedFieldNamesFlag( m_onlyPlotSpecifiedFieldNames );
+  m_writer.setNumberOfTargetProcesses( m_numberOfTargetProcesses );
 
   string const fieldNamesString = viewKeysStruct::fieldNames;
   string const onlyPlotSpecifiedFieldNamesString = viewKeysStruct::onlyPlotSpecifiedFieldNames;
