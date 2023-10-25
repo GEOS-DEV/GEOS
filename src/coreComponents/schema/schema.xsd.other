@@ -1095,6 +1095,35 @@
 		<!--smallMass => The small mass threshold for ignoring extremely low-mass nodes.-->
 		<xsd:attribute name="smallMass" type="real64" />
 	</xsd:complexType>
+	<xsd:complexType name="SolidMechanics_MPMType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
+			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />
+			<xsd:element name="SolverStatistics" type="SolverStatisticsType" />
+		</xsd:choice>
+		<!--bcTable => Array that stores time-dependent bc types on x-, x+, y-, y+, z- and z+ faces.-->
+		<xsd:attribute name="bcTable" type="real64_array2d" />
+		<!--binSizeMultiplier => Multiplier for setting bin size, used to speed up particle neighbor sorting-->
+		<xsd:attribute name="binSizeMultiplier" type="integer" />
+		<!--fTable => Array that stores time-dependent grid-aligned stretches interpreted as a global background grid F.-->
+		<xsd:attribute name="fTable" type="real64_array2d" />
+		<!--m_ijkMap => Map from indices in each spatial dimension to local node ID-->
+		<xsd:attribute name="m_ijkMap" type="integer_array3d" />
+		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
+		<xsd:attribute name="maxStableDt" type="real64" />
+		<!--meshTargets => MeshBody/Region combinations that the solver will be applied to.-->
+		<xsd:attribute name="meshTargets" type="geos_mapBase&lt;std_pair&lt;string, string &gt;, LvArray_Array&lt;string, 1, camp_int_seq&lt;long, 0l&gt;, int, LvArray_ChaiBuffer&gt;, std_integral_constant&lt;bool, true&gt; &gt;" />
+		<!--numContactFlags => Number of contact flags that can appear due to damage-->
+		<xsd:attribute name="numContactFlags" type="integer" />
+		<!--numContactGroups => Number of prescribed contact groups-->
+		<xsd:attribute name="numContactGroups" type="integer" />
+		<!--numDims => The number of active spatial dimensions, 2 for plane strain, 3 otherwise-->
+		<xsd:attribute name="numDims" type="integer" />
+		<!--numVelocityFields => Number of velocity fields-->
+		<xsd:attribute name="numVelocityFields" type="integer" />
+		<!--smallMass => The small mass threshold for ignoring extremely low-mass nodes.-->
+		<xsd:attribute name="smallMass" type="real64" />
+	</xsd:complexType>
 	<xsd:complexType name="SurfaceGeneratorType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />

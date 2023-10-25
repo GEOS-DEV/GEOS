@@ -568,7 +568,6 @@ void ProblemManager::generateMesh()
 
     if( meshBody.hasParticles() ) // mesh bodies with particles load their data into particle blocks, not cell blocks
     {
-      GEOS_LOG_RANK_0( "Generating particle mesh level" );
       ParticleBlockManagerABC & particleBlockManager = meshBody.getGroup< ParticleBlockManagerABC >( keys::particleManager );
 
       this->generateMeshLevel( baseMesh,
