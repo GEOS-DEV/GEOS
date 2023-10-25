@@ -2064,11 +2064,10 @@ real64 writeNodes( integer const logLevel,
     // TODO: remove this check once the input mesh is cleaned of duplicate points via a filter
     //       and make launch policy parallel again
     GEOS_ERROR_IF( nodeGlobalIds.count( pointGlobalID ) > 0,
-                   GEOS_FMT( "At least one duplicate point detected (globalID = {})\n" <<
-                             generalMeshErrorAdvice << "\n" <<
+                   GEOS_FMT( "At least one duplicate point detected (globalID = {}).{}\n"
                              "Potential fixes :\n- Consider cleaning the dataset in Paraview using 'Clean to grid' filter.\n"
                              "- Make sure partitionRefinement is set to 1 or higher.",
-                             pointGlobalID ) );
+                             pointGlobalID, generalMeshErrorAdvice ) );
     nodeGlobalIds.insert( pointGlobalID );
   } );
 
