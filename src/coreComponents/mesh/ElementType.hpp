@@ -109,6 +109,8 @@ ENUM_STRINGS( ElementType,
               "HendecagonalPrism",
               "Polyhedron" );
 
+inline auto constexpr generalMeshErrorAdvice = "\nPlease consider checking the validity of your mesh with the `mesh_doctor` GEOS python tools.";
+
 } // namespace geos
 
 #endif //GEOS_MESH_ELEMENTTYPE_HPP

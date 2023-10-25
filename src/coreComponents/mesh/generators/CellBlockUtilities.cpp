@@ -28,12 +28,12 @@ namespace geos
  * @brief error message to output when the number the number of node is insufficient for a given
  * face of a primitive.
  */
-constexpr std::string_view nodeCountError = "Not enough nodes for {} element (face index = {}).";
+static const string nodeCountError = "Not enough nodes for {} element (face index = {}).\n" + string( generalMeshErrorAdvice );
 /**
  * @brief error message to output when the number the number of node is insufficient for a given
  * face of a primitive.
  */
-constexpr std::string_view faceIndexError = "Local face index out of range for {} element: face index = {}.";
+static const string faceIndexError = "Local face index out of range for {} element: face index = {}.\n" + string( generalMeshErrorAdvice );
 
 
 static localIndex getFaceNodesHex( localIndex const faceNum,
@@ -308,7 +308,7 @@ localIndex getFaceNodes( ElementType const elementType,
     }
     default:
     {
-      GEOS_ERROR( "Invalid element type " << elementType << " at face index " << faceNumber );
+      GEOS_ERROR( "Invalid element type " << elementType << " at face index " << faceNumber << "." << generalMeshErrorAdvice );
     }
   }
   return 0;

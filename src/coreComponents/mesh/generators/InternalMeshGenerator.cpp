@@ -140,7 +140,7 @@ void InternalMeshGenerator::postProcessInput()
     }
     if( failFlag )
     {
-      GEOS_ERROR( getDataContext() << ": vertex/element mismatch InternalMeshGenerator::ReadXMLPost()" );
+      GEOS_ERROR( getDataContext() << ": vertex/element mismatch." << generalMeshErrorAdvice );
     }
 
     // If specified, check to make sure bias values have the correct length
@@ -153,7 +153,7 @@ void InternalMeshGenerator::postProcessInput()
     }
     if( failFlag )
     {
-      GEOS_ERROR( getDataContext() << ": element/bias mismatch InternalMeshGenerator::ReadXMLPost()" );
+      GEOS_ERROR( getDataContext() << ": element/bias mismatch." << generalMeshErrorAdvice );
     }
   }
 
@@ -168,8 +168,8 @@ void InternalMeshGenerator::postProcessInput()
     }
     else
     {
-      GEOS_ERROR( getDataContext() << ": InternalMeshGenerator: The number of element types is"
-                                      " inconsistent with the number of total cell blocks." );
+      GEOS_ERROR( getDataContext() << ": InternalMeshGenerator: The number of element types is inconsistent" <<
+                  " with the number of total cell blocks." << generalMeshErrorAdvice );
     }
   }
 
@@ -201,8 +201,7 @@ void InternalMeshGenerator::postProcessInput()
       }
       else
       {
-        GEOS_ERROR( getDataContext() << ": Incorrect number of regionLayout entries specified in"
-                                        " InternalMeshGenerator::ReadXML()" );
+        GEOS_ERROR( getDataContext() << ": Incorrect number of regionLayout entries specified." );
       }
     }
   }
@@ -536,7 +535,7 @@ static void getElemToNodesRelationInBox( ElementType const elementType,
     }
     default:
     {
-      GEOS_ERROR( "InternalMeshGenerator: unsupported element type " << elementType );
+      GEOS_ERROR( "InternalMeshGenerator: unsupported element type " << elementType << "." << generalMeshErrorAdvice );
     }
   }
 }
