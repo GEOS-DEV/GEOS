@@ -14,7 +14,7 @@
 
 #include <gtest/gtest.h>
 
-TEST(Toolchain, NDEBUGfromTPls)
+TEST( Toolchain, NDEBUGfromTPls )
 {
   /*
    * This test guards against spurious propagation of -DNDEBUG preprocessor flag (HDF5 in our case),
