@@ -5,6 +5,7 @@ Name                                        Type Description
 =========================================== ==== ================================================================ 
 AcousticFirstOrderSEM                       node :ref:`DATASTRUCTURE_AcousticFirstOrderSEM`                       
 AcousticSEM                                 node :ref:`DATASTRUCTURE_AcousticSEM`                                 
+AcousticVTISEM                              node :ref:`DATASTRUCTURE_AcousticVTISEM`                              
 CompositionalMultiphaseFVM                  node :ref:`DATASTRUCTURE_CompositionalMultiphaseFVM`                  
 CompositionalMultiphaseHybridFVM            node :ref:`DATASTRUCTURE_CompositionalMultiphaseHybridFVM`            
 CompositionalMultiphaseReservoir            node :ref:`DATASTRUCTURE_CompositionalMultiphaseReservoir`            
@@ -35,6 +36,7 @@ SolidMechanicsConformingFracturesVEM        node :ref:`DATASTRUCTURE_SolidMechan
 SolidMechanicsEmbeddedFractures             node :ref:`DATASTRUCTURE_SolidMechanicsEmbeddedFractures`             
 SolidMechanicsLagrangianSSLE                node :ref:`DATASTRUCTURE_SolidMechanicsLagrangianSSLE`                
 SolidMechanics_LagrangianFEM                node :ref:`DATASTRUCTURE_SolidMechanics_LagrangianFEM`                
+SolidMechanics_MPM                          node :ref:`DATASTRUCTURE_SolidMechanics_MPM`                          
 SurfaceGenerator                            node :ref:`DATASTRUCTURE_SurfaceGenerator`                            
 =========================================== ==== ================================================================ 
 

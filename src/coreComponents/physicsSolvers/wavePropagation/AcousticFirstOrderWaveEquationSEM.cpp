@@ -109,21 +109,21 @@ void AcousticFirstOrderWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
                                wavesolverfields::ForcingRHS,
                                wavesolverfields::MassVector,
                                wavesolverfields::DampingVector,
-                               wavesolverfields::FreeSurfaceNodeIndicator >( this->getName() );
+                               wavesolverfields::FreeSurfaceNodeIndicator >( getName() );
 
     FaceManager & faceManager = mesh.getFaceManager();
-    faceManager.registerField< wavesolverfields::FreeSurfaceFaceIndicator >( this->getName() );
+    faceManager.registerField< wavesolverfields::FreeSurfaceFaceIndicator >( getName() );
 
     ElementRegionManager & elemManager = mesh.getElemManager();
 
     elemManager.forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion & subRegion )
     {
-      subRegion.registerField< wavesolverfields::MediumVelocity >( this->getName() );
-      subRegion.registerField< wavesolverfields::MediumDensity >( this->getName() );
+      subRegion.registerField< wavesolverfields::MediumVelocity >( getName() );
+      subRegion.registerField< wavesolverfields::MediumDensity >( getName() );
 
-      subRegion.registerField< wavesolverfields::Velocity_x >( this->getName() );
-      subRegion.registerField< wavesolverfields::Velocity_y >( this->getName() );
-      subRegion.registerField< wavesolverfields::Velocity_z >( this->getName() );
+      subRegion.registerField< wavesolverfields::Velocity_x >( getName() );
+      subRegion.registerField< wavesolverfields::Velocity_y >( getName() );
+      subRegion.registerField< wavesolverfields::Velocity_z >( getName() );
 
       finiteElement::FiniteElementBase const & fe = subRegion.getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
 
@@ -191,15 +191,13 @@ void AcousticFirstOrderWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLev
   receiverConstants.setValues< EXEC_POLICY >( -1 );
   receiverIsLocal.zero();
 
-  real32 const timeSourceFrequency = this->m_timeSourceFrequency;
-  localIndex const rickerOrder = this->m_rickerOrder;
   arrayView2d< real32 > const sourceValue = m_sourceValue.toView();
   real64 dt = 0;
-  EventManager const & event = this->getGroupByPath< EventManager >( "/Problem/Events" );
+  EventManager const & event = getGroupByPath< EventManager >( "/Problem/Events" );
   for( localIndex numSubEvent = 0; numSubEvent < event.numSubGroups(); ++numSubEvent )
   {
     EventBase const * subEvent = static_cast< EventBase const * >( event.getSubGroups()[numSubEvent] );
-    if( subEvent->getEventName() == "/Solvers/" + this->getName() )
+    if( subEvent->getEventName() == "/Solvers/" + getName() )
     {
       dt = subEvent->getReference< real64 >( EventBase::viewKeyStruct::forceDtString() );
     }
@@ -254,8 +252,9 @@ void AcousticFirstOrderWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLev
         receiverRegion,
         sourceValue,
         dt,
-        timeSourceFrequency,
-        rickerOrder );
+        m_timeSourceFrequency,
+        m_timeSourceDelay,
+        m_rickerOrder );
     } );
   } );
 
@@ -287,7 +286,7 @@ void AcousticFirstOrderWaveEquationSEM::initializePostInitialConditionsPreSubGro
 {
   WaveSolverBase::initializePostInitialConditionsPreSubGroups();
 
-  DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
+  DomainPartition & domain = getGroupByPath< DomainPartition >( "/Problem/domain" );
 
   real64 const time = 0.0;
   applyFreeSurfaceBC( time, domain );
@@ -323,7 +322,7 @@ void AcousticFirstOrderWaveEquationSEM::initializePostInitialConditionsPreSubGro
                                                                                           CellElementSubRegion & elementSubRegion )
     {
       arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemsToNodes = elementSubRegion.nodeList();
-      arrayView2d< localIndex const > const facesToElements = faceManager.elementList();
+      arrayView2d< localIndex const > const elemsToFaces = elementSubRegion.faceList();
       arrayView1d< real32 const > const velocity = elementSubRegion.getField< wavesolverfields::MediumVelocity >();
       arrayView1d< real32 const > const density = elementSubRegion.getField< wavesolverfields::MediumDensity >();
 
@@ -344,9 +343,9 @@ void AcousticFirstOrderWaveEquationSEM::initializePostInitialConditionsPreSubGro
 
         acousticFirstOrderWaveEquationSEMKernels::DampingMatrixKernel< FE_TYPE > kernelD( finiteElement );
 
-        kernelD.template launch< EXEC_POLICY, ATOMIC_POLICY >( faceManager.size(),
+        kernelD.template launch< EXEC_POLICY, ATOMIC_POLICY >( elementSubRegion.size(),
                                                                X,
-                                                               facesToElements,
+                                                               elemsToFaces,
                                                                facesToNodes,
                                                                facesDomainBoundaryIndicator,
                                                                freeSurfaceFaceIndicator,
@@ -382,7 +381,7 @@ void AcousticFirstOrderWaveEquationSEM::applyFreeSurfaceBC( real64 const time, D
 
   fsManager.apply< FaceManager >( time,
                                   domain.getMeshBody( 0 ).getMeshLevel( m_discretizationName ),
-                                  string( "FreeSurface" ),
+                                  WaveSolverBase::viewKeyStruct::freeSurfaceString(),
                                   [&]( FieldSpecificationBase const & bc,
                                        string const &,
                                        SortedArrayView< localIndex const > const & targetSet,
