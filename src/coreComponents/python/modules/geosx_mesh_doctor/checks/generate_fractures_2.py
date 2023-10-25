@@ -383,6 +383,7 @@ def __check(mesh, options: Options) -> Result:
 def check(vtk_input_file: str, options: Options) -> Result:
     try:
         mesh = vtk_utils.read_mesh(vtk_input_file)
+        print("New version!")
         return __check(mesh, options)
     except BaseException as e:
         logging.error(e)

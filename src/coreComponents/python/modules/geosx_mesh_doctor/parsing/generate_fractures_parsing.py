@@ -1,6 +1,6 @@
 import logging
 
-from checks.generate_fractures import Options, Result
+from checks.generate_fractures_2 import Options, Result
 
 from . import vtk_output_parsing, GENERATE_FRACTURES
 
