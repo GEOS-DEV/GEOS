@@ -683,6 +683,11 @@ void SolidMechanicsMPM::registerDataOnMesh( Group & meshBodies )
         setRegisteringObjects( this->getName() ).
         setDescription( "An array that holds the current velocity on the nodes." );
 
+      nodes.registerWrapper< array3d< real64 > >( viewKeyStruct::dVelocityString() ).
+        setPlotLevel( PlotLevel::LEVEL_0 ).
+        setRegisteringObjects( this->getName() ).
+        setDescription( "An array that holds the change in velocity from enforcing contact." );
+
       nodes.registerWrapper< array3d< real64 > >( viewKeyStruct::momentumString() ).
         setPlotLevel( PlotLevel::LEVEL_1 ).
         setRegisteringObjects( this->getName() ).
@@ -1297,6 +1302,7 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
   nodeManager.getReference< array2d< real64 > >( viewKeyStruct::maxDamageString() ).resize( numNodes, m_numVelocityFields );
   nodeManager.getReference< array2d< real64 > >( viewKeyStruct::damageGradientString() ).resize( numNodes, 3 );
   nodeManager.getReference< array3d< real64 > >( viewKeyStruct::velocityString() ).resize( numNodes, m_numVelocityFields, 3 );
+  nodeManager.getReference< array3d< real64 > >( viewKeyStruct::dVelocityString() ).resize( numNodes, m_numVelocityFields, 3 );
   nodeManager.getReference< array3d< real64 > >( viewKeyStruct::momentumString() ).resize( numNodes, m_numVelocityFields, 3 );
   nodeManager.getReference< array3d< real64 > >( viewKeyStruct::accelerationString() ).resize( numNodes, m_numVelocityFields, 3 );
   nodeManager.getReference< array3d< real64 > >( viewKeyStruct::forceInternalString() ).resize( numNodes, m_numVelocityFields, 3 );
@@ -2563,6 +2569,7 @@ void SolidMechanicsMPM::syncGridFields( std::vector< std::string > const & field
 
 void SolidMechanicsMPM::singleFaceVectorFieldSymmetryBC( const int face,
                                                          arrayView3d< real64 > const & vectorMultiField,
+                                                         arrayView3d< real64 > const & dVectorMultiField, //Change in vectorMultiField
                                                          arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const gridPosition,
                                                          Group & nodeSets )
 {
@@ -2585,17 +2592,18 @@ void SolidMechanicsMPM::singleFaceVectorFieldSymmetryBC( const int face,
     // Enforce BCs on boundary nodes
     SortedArrayView< localIndex const > const boundaryNodes = m_boundaryNodes[face].toView();
     int const numBoundaryNodes = boundaryNodes.size();
-    forAll< serialPolicy >( numBoundaryNodes, [&, vectorMultiField] GEOS_HOST ( localIndex const gg ) // Probably not a big enough loop to
+    forAll< serialPolicy >( numBoundaryNodes, [&, vectorMultiField, dVectorMultiField] GEOS_HOST ( localIndex const gg ) // Probably not a big enough loop to
                                                                                                       // warrant parallelization
       {
         int const g = boundaryNodes[gg];
+        dVectorMultiField[g][fieldIndex][dir0] = -vectorMultiField[g][fieldIndex][dir0];
         vectorMultiField[g][fieldIndex][dir0] = 0.0;
       } );
 
     // Perform field reflection on buffer nodes
     SortedArrayView< localIndex const > const bufferNodes = m_bufferNodes[face].toView();
     int const numBufferNodes = bufferNodes.size();
-    forAll< serialPolicy >( numBufferNodes, [&, vectorMultiField, gridPosition] GEOS_HOST ( localIndex const gg ) // Probably not a big
+    forAll< serialPolicy >( numBufferNodes, [&, vectorMultiField, dVectorMultiField, gridPosition] GEOS_HOST ( localIndex const gg ) // Probably not a big
                                                                                                                   // enough loop to warrant
                                                                                                                   // parallelization
       {
@@ -2607,9 +2615,18 @@ void SolidMechanicsMPM::singleFaceVectorFieldSymmetryBC( const int face,
 
         localIndex gFrom = m_ijkMap[ijk[0]][ijk[1]][ijk[2]];
 
+        real64 previousVectorMultiField[3] = { 0 };
+        previousVectorMultiField[dir0] = vectorMultiField[g][fieldIndex][dir0];
+        previousVectorMultiField[dir1] = vectorMultiField[g][fieldIndex][dir1];
+        previousVectorMultiField[dir2] = vectorMultiField[g][fieldIndex][dir2];
+
         vectorMultiField[g][fieldIndex][dir0] = -vectorMultiField[gFrom][fieldIndex][dir0]; // Negate component aligned with surface normal
         vectorMultiField[g][fieldIndex][dir1] =  vectorMultiField[gFrom][fieldIndex][dir1];
         vectorMultiField[g][fieldIndex][dir2] =  vectorMultiField[gFrom][fieldIndex][dir2];
+
+        dVectorMultiField[g][fieldIndex][dir0] += vectorMultiField[g][fieldIndex][dir0] - previousVectorMultiField[dir0];
+        dVectorMultiField[g][fieldIndex][dir1] += vectorMultiField[g][fieldIndex][dir1] - previousVectorMultiField[dir1];
+        dVectorMultiField[g][fieldIndex][dir2] += vectorMultiField[g][fieldIndex][dir2] - previousVectorMultiField[dir2];
       } );
   }
 }
@@ -2622,7 +2639,8 @@ void SolidMechanicsMPM::enforceGridVectorFieldSymmetryBC( arrayView3d< real64 > 
   {
     if( m_boundaryConditionTypes[face] == 1 || m_boundaryConditionTypes[face] == 2 )
     {
-      singleFaceVectorFieldSymmetryBC( face, vectorMultiField, gridPosition, nodeSets );
+      array3d< real64 > dVectorMultiField( vectorMultiField.size(0), vectorMultiField.size(1), vectorMultiField.size(2) ); // dumby variable, CC TODO there must be a better solution
+      singleFaceVectorFieldSymmetryBC( face, vectorMultiField, dVectorMultiField, gridPosition, nodeSets );
     }
   }
 }
@@ -2638,6 +2656,7 @@ void SolidMechanicsMPM::applyEssentialBCs( const real64 dt,
   arrayView1d< int const > const gridGhostRank = nodeManager.ghostRank();
   arrayView2d< real64 > const gridMass = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::massString() );
   arrayView3d< real64 > const gridVelocity = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::velocityString() );
+  arrayView3d< real64 > const gridDVelocity = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::dVelocityString() );
   arrayView3d< real64 > const gridAcceleration = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::accelerationString() );
 
   // Get node sets
@@ -2651,8 +2670,12 @@ void SolidMechanicsMPM::applyEssentialBCs( const real64 dt,
   {
     if( m_boundaryConditionTypes[face] == 1 )
     {
-      singleFaceVectorFieldSymmetryBC( face, gridVelocity, gridPosition, nodeSets );
-      singleFaceVectorFieldSymmetryBC( face, gridAcceleration, gridPosition, nodeSets );
+      // CC: TODO add gridDVelocity update to theses for XPIC
+      singleFaceVectorFieldSymmetryBC( face, gridVelocity, gridDVelocity, gridPosition, nodeSets );
+
+      //Dumby paramter, we do not need the change in grid acceleration
+      array3d< real64 > gridDAcceleration( gridAcceleration.size(0), gridAcceleration.size(1), gridAcceleration.size(2)); //CC: TODO Probably want to avoid allocating a lot of memory just for the dummy variable
+      singleFaceVectorFieldSymmetryBC( face, gridAcceleration, gridDAcceleration, gridPosition, nodeSets );
     }
     else if( m_boundaryConditionTypes[face] == 2 && ( m_prescribedBoundaryFTable == 1 || m_stressControl[0] == 1 || m_stressControl[1] == 1 || m_stressControl[2] == 1) )
     {
@@ -2667,7 +2690,7 @@ void SolidMechanicsMPM::applyEssentialBCs( const real64 dt,
         // Enforce BCs on boundary nodes using F-table
         SortedArrayView< localIndex const > const boundaryNodes = m_boundaryNodes[face].toView();
         int const numBoundaryNodes = boundaryNodes.size();
-        forAll< serialPolicy >( numBoundaryNodes, [&, gridPosition, gridVelocity, gridMass] GEOS_HOST ( localIndex const gg ) // Probably
+        forAll< serialPolicy >( numBoundaryNodes, [&, gridPosition, gridVelocity, gridDVelocity, gridMass] GEOS_HOST ( localIndex const gg ) // Probably
                                                                                                                               // not a big
                                                                                                                               // enough loop
                                                                                                                               // to warrant
@@ -2675,7 +2698,8 @@ void SolidMechanicsMPM::applyEssentialBCs( const real64 dt,
           {
             int const g = boundaryNodes[gg];
             real64 prescribedVelocity = m_domainL[dir0] * gridPosition[g][dir0];
-            real64 accelerationForBC = (prescribedVelocity - gridVelocity[g][fieldIndex][dir0]) / dt; // acceleration needed to satisfy BC
+            gridDVelocity[g][fieldIndex][dir0] = prescribedVelocity - gridVelocity[g][fieldIndex][dir0]; // CC: TODO double check this, because it overrides the change in velocity that might have been written during enforceContact
+            real64 accelerationForBC = gridDVelocity[g][fieldIndex][dir0] / dt; // acceleration needed to satisfy BC
             gridVelocity[g][fieldIndex][dir0] = prescribedVelocity;
             gridAcceleration[g][fieldIndex][dir0] += accelerationForBC;
             if( gridGhostRank[g] <= -1 ) // so we don't double count reactions at partition boundaries
@@ -2688,7 +2712,7 @@ void SolidMechanicsMPM::applyEssentialBCs( const real64 dt,
         SortedArrayView< localIndex const > const bufferNodes = m_bufferNodes[face].toView();
         int const numBufferNodes = bufferNodes.size();
         // Possibly not a big enough loop to warrant parallelization
-        forAll< serialPolicy >( numBufferNodes, [&, gridPosition, gridVelocity, gridAcceleration] GEOS_HOST ( localIndex const gg )
+        forAll< serialPolicy >( numBufferNodes, [&, gridPosition, gridVelocity, gridDVelocity, gridAcceleration] GEOS_HOST ( localIndex const gg )
           {
             int const g = bufferNodes[gg];
 
@@ -2705,10 +2729,21 @@ void SolidMechanicsMPM::applyEssentialBCs( const real64 dt,
             ijk[dir0] = positiveNormal * (m_nEl[dir0] - 1) + (1 - positiveNormal) * (1);
             localIndex gBoundary = m_ijkMap[ijk[0]][ijk[1]][ijk[2]];
 
+            //Store previous velocity to compute change in velocity
+            real64 gridPreviousVelocity[3] = { 0 };
+            gridPreviousVelocity[dir0] = gridVelocity[g][fieldIndex][dir0];
+            gridPreviousVelocity[dir1] = gridVelocity[g][fieldIndex][dir1];
+            gridPreviousVelocity[dir2] = gridVelocity[g][fieldIndex][dir2];
+
             // Calculate velocity, Negate component aligned with surface normal and correct for moving boundary
             gridVelocity[g][fieldIndex][dir0] = -gridVelocity[gFrom][fieldIndex][dir0] + 2.0 * gridVelocity[gBoundary][fieldIndex][dir0];
             gridVelocity[g][fieldIndex][dir1] = gridVelocity[gFrom][fieldIndex][dir1];
             gridVelocity[g][fieldIndex][dir2] = gridVelocity[gFrom][fieldIndex][dir2];
+
+            // Compute change in velocity for XPIC calculations
+            gridDVelocity[g][fieldIndex][dir0] += gridVelocity[g][fieldIndex][dir0] - gridPreviousVelocity[dir0];
+            gridDVelocity[g][fieldIndex][dir1] += gridVelocity[g][fieldIndex][dir1] - gridPreviousVelocity[dir1];
+            gridDVelocity[g][fieldIndex][dir2] += gridVelocity[g][fieldIndex][dir2] - gridPreviousVelocity[dir2];
 
             // Calculate acceleration, Negate component aligned with surface normal and correct for moving boundary
             gridAcceleration[g][fieldIndex][dir0] = -gridAcceleration[gFrom][fieldIndex][dir0] + 2.0 * gridAcceleration[gBoundary][fieldIndex][dir0];
@@ -2718,6 +2753,9 @@ void SolidMechanicsMPM::applyEssentialBCs( const real64 dt,
       }
     }
   }
+
+  // Compute change in grid velocities for XPIC calculations
+
 
   // Reduce reaction forces from all partitions
   real64 globalFaceReactions[6];
@@ -4747,6 +4785,7 @@ void SolidMechanicsMPM::initializeGridFields( NodeManager & nodeManager )
   arrayView2d< real64 > const gridMaxDamage = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::maxDamageString() );
   arrayView2d< real64 > const gridDamageGradient = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::damageGradientString() );
   arrayView3d< real64 > const gridVelocity = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::velocityString() );
+  arrayView3d< real64 > const gridDVelocity = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::dVelocityString() );
   arrayView3d< real64 > const gridMomentum = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::momentumString() );
   arrayView3d< real64 > const gridAcceleration = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::accelerationString() );
   arrayView3d< real64 > const gridInternalForce = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::forceInternalString() );
@@ -4774,6 +4813,7 @@ void SolidMechanicsMPM::initializeGridFields( NodeManager & nodeManager )
         for( int i = 0; i < 3; i++ )
         {
           gridVelocity[g][fieldIndex][i] = 0.0;
+          gridDVelocity[g][fieldIndex][i] = 0.0;
           gridMomentum[g][fieldIndex][i] = 0.0;
           gridAcceleration[g][fieldIndex][i] = 0.0;
           gridInternalForce[g][fieldIndex][i] = 0.0;
@@ -4928,6 +4968,7 @@ void SolidMechanicsMPM::gridTrialUpdate( real64 dt,
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const gridPosition = nodeManager.referencePosition();
   arrayView2d< real64 const > const & gridMass = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::massString() );
   arrayView3d< real64 > const & gridVelocity = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::velocityString() );
+  arrayView3d< real64 > const & gridDVelocity = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::dVelocityString() );
   arrayView3d< real64 > const & gridMomentum = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::momentumString() );
   arrayView3d< real64 > const & gridAcceleration = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::accelerationString() );
   arrayView3d< real64 const > const & gridInternalForce = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::forceInternalString() );
@@ -4950,6 +4991,7 @@ void SolidMechanicsMPM::gridTrialUpdate( real64 dt,
         {
           real64 totalForce = gridInternalForce[g][fieldIndex][i] + gridExternalForce[g][fieldIndex][i];
           gridAcceleration[g][fieldIndex][i] = totalForce / gridMass[g][fieldIndex];
+          gridDVelocity[g][fieldIndex][i] = gridAcceleration[g][fieldIndex][i] * dt;
           gridMomentum[g][fieldIndex][i] += totalForce * dt;
           gridVelocity[g][fieldIndex][i] = gridMomentum[g][fieldIndex][i] / gridMass[g][fieldIndex];
           gridMaterialPosition[g][fieldIndex][i] /= gridMass[g][fieldIndex];
@@ -4961,6 +5003,7 @@ void SolidMechanicsMPM::gridTrialUpdate( real64 dt,
         for( int i=0; i<numDims; i++ )
         {
           gridAcceleration[g][fieldIndex][i] = 0.0;
+          gridDVelocity[g][fieldIndex][i] = 0.0;
           gridVelocity[g][fieldIndex][i] = 0.0;
           gridMomentum[g][fieldIndex][i] = 0.0;
           gridMaterialPosition[g][fieldIndex][i] = 0 * gridPosition[g][i]; // TODO: zero? since it's supposed to be relative position?
@@ -4985,6 +5028,7 @@ void SolidMechanicsMPM::enforceContact( real64 dt,
   arrayView2d< real64 const > const & gridDamage = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::damageString() );
   arrayView2d< real64 const > const & gridMaxDamage = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::maxDamageString() );
   arrayView3d< real64 > const & gridVelocity = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::velocityString() );
+  arrayView3d< real64 > const & gridDVelocity = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::dVelocityString() );
   arrayView3d< real64 > const & gridMomentum = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::momentumString() );
   arrayView3d< real64 > const & gridAcceleration = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::accelerationString() );
   arrayView3d< real64 > const & gridContactForce = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::forceContactString() );
@@ -4996,8 +5040,6 @@ void SolidMechanicsMPM::enforceContact( real64 dt,
 
   // Sync surface normals
   syncGridFields( { viewKeyStruct::surfaceNormalString() }, domain, nodeManager, mesh, MPI_SUM );
-
-  // CC: TODO correct material position across periodic boundaries
 
   // Apply symmetry boundary conditions to surface normals
   enforceGridVectorFieldSymmetryBC( gridSurfaceNormal, gridPosition, nodeManager.sets() );
@@ -5035,6 +5077,7 @@ void SolidMechanicsMPM::enforceContact( real64 dt,
           real64 contactForce = gridContactForce[g][fieldIndex][i];
           gridAcceleration[g][fieldIndex][i] += contactForce / gridMass[g][fieldIndex];
           gridMomentum[g][fieldIndex][i] += contactForce * dt;
+          gridDVelocity[g][fieldIndex][i] = contactForce / gridMass[g][fieldIndex] * dt; // Change in velocity from enforcing contact needed for XPIC update, CC: TODO clean up this code to avoid redundant operations
           gridVelocity[g][fieldIndex][i] = gridMomentum[g][fieldIndex][i] / gridMass[g][fieldIndex];
         }
       }
@@ -5334,17 +5377,14 @@ void SolidMechanicsMPM::performPICUpdate(  real64 dt,
     {
       localIndex const p = activeParticleIndices[pp];
 
-      // Initialize velocity gradient for this particle
-      // if( m_directionalOverlapCorrection == 0 )
-      // {
       for( int i=0; i<3; i++ )
       {
+        particleVelocity[p][i] = 0.0;
         for( int j=0; j<3; j++ )
         {
           particleVelocityGradient[p][i][j] = 0.0;
         }
       }
-      // }
     
       for( int g = 0; g < 8 * numberOfVerticesPerParticle; g++ )
       {
@@ -5365,18 +5405,7 @@ void SolidMechanicsMPM::performPICUpdate(  real64 dt,
           particleVelocity[p][i] += gridVelocity[mappedNode][fieldIndex][i] * shapeFunctionValues[pp][g];
           for( int j=0; j<numDims; j++ )
           {
-            // CC: what should the velocity gradient update be for PIC?
-            particleVelocityGradient[p][i][j] += gridVelocity[mappedNode][fieldIndex][i] * shapeFunctionGradientValues[pp][g][j]; // Technically
-                                                                                                                                  // wrong,
-                                                                                                                                  // the
-                                                                                                                                  // best
-                                                                                                                                  // kind of
-                                                                                                                                  // wrong
-                                                                                                                                  // (end-of-step
-                                                                                                                                  // velocity
-                                                                                                                                  // with
-                                                                                                                                  // beginning-of-step
-                                                                                                                                  // gradient)
+            particleVelocityGradient[p][i][j] += gridVelocity[mappedNode][fieldIndex][i] * shapeFunctionGradientValues[pp][g][j];
           }
         }
       }
@@ -5392,6 +5421,7 @@ void SolidMechanicsMPM::performXPICUpdate( real64 dt,
   // Grid fields
   arrayView2d< real64 const > const & gridMass = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::massString() );
   arrayView2d< real64 const > const & gridDamageGradient = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::damageGradientString() );
+  // arrayView3d< real64 const > const & gridDVelocity = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::dVelocityString() ); // for multifield contact corrections
   arrayView3d< real64 const > const & gridVelocity = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::velocityString() );
   arrayView3d< real64 const > const & gridAcceleration = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::accelerationString() );
 
@@ -5425,13 +5455,12 @@ void SolidMechanicsMPM::performXPICUpdate( real64 dt,
     int const updateOrder = m_updateOrder;
 
     // For iterative XPIC solve
-    array3d< real64 > vStar;
-    array3d< real64 > vPlus;
-    array3d< real64 > vMinus;
+    array3d< real64 > vStar( numNodes, numVelocityFields, numDims );
+    array3d< real64 > vPlus( numNodes, numVelocityFields, numDims );
+    array3d< real64 > vMinus( numNodes, numVelocityFields, numDims );
 
-    vStar.resize( numNodes, numVelocityFields, numDims );
-    vPlus.resize( numNodes, numVelocityFields, numDims );
-    vMinus.resize( numNodes, numVelocityFields, numDims );
+    array3d< real64 > dVPlus( numNodes, numVelocityFields, numDims );
+    array3d< real64 > dVMinus( numNodes, numVelocityFields, numDims );
 
     // Zero out vStar for each order iteration
     for( int n=0; n < numNodes; n++)
@@ -5442,6 +5471,9 @@ void SolidMechanicsMPM::performXPICUpdate( real64 dt,
         {
           vStar[n][cg][i] = 0.0;
           vMinus[n][cg][i] = gridVelocity[n][cg][i] - gridAcceleration[n][cg][i] * dt;
+
+          dVPlus[n][cg][i] = 0.0; // gridDVelocity[n][cg][i]; // CC: this isn't working, currently disabled by writing 0 to it
+          dVMinus[n][cg][i] = dVPlus[n][cg][i];
         }
       }
     }
@@ -5461,7 +5493,8 @@ void SolidMechanicsMPM::performXPICUpdate( real64 dt,
         }
       }
 
-      forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST_DEVICE ( localIndex const pp )
+      // Seems like LvArrays that aren't views need to be passed by reference to forAll loops (e.g. vPlus)
+      forAll< serialPolicy >( activeParticleIndices.size(), [=, &vPlus] GEOS_HOST_DEVICE ( localIndex const pp )
       {
         localIndex const p = activeParticleIndices[pp];
       
@@ -5470,16 +5503,18 @@ void SolidMechanicsMPM::performXPICUpdate( real64 dt,
           localIndex const mappedNodeI = mappedNodes[pp][gi];
           int const nodeFlagI = ( damageFieldPartitioning == 1 && LvArray::tensorOps::AiBi< 3 >( gridDamageGradient[mappedNodeI], particleDamageGradient[p] ) < 0.0 ) ? 1 : 0;
           int const fieldIndexI = nodeFlagI * numContactGroups + particleGroup[p]; // This ranges from 0 to nMatFields-1
-          for(int gj = 0; gj < 8 * numberOfVerticesPerParticle; gj++ )
+          
+          if( gridMass[mappedNodeI][fieldIndexI] > m_smallMass )
           {
-            localIndex const mappedNodeJ = mappedNodes[pp][gj];
-            int const nodeFlagJ = ( damageFieldPartitioning == 1 && LvArray::tensorOps::AiBi< 3 >( gridDamageGradient[mappedNodeJ], particleDamageGradient[p] ) < 0.0 ) ? 1 : 0;
-            int const fieldIndexJ = nodeFlagJ * numContactGroups + particleGroup[p]; // This ranges from 0 to nMatFields-1
+            for(int gj = 0; gj < 8 * numberOfVerticesPerParticle; gj++ )
+            {
+              localIndex const mappedNodeJ = mappedNodes[pp][gj];
+              int const nodeFlagJ = ( damageFieldPartitioning == 1 && LvArray::tensorOps::AiBi< 3 >( gridDamageGradient[mappedNodeJ], particleDamageGradient[p] ) < 0.0 ) ? 1 : 0;
+              int const fieldIndexJ = nodeFlagJ * numContactGroups + particleGroup[p]; // This ranges from 0 to nMatFields-1
 
-            for (int i = 0; i < numDims; i++){
-              if( gridMass[mappedNodeI][fieldIndexI] > m_smallMass )
+              for (int i = 0; i < numDims; i++)
               {
-                vPlus[mappedNodeI][fieldIndexI][i] += ( ( updateOrder - r + 1 ) / r ) * 
+                vPlus[mappedNodeI][fieldIndexI][i] += ( ( updateOrder - r + 1.0 ) / r ) * 
                                                         ( particleMass[p] * shapeFunctionValues[pp][gi] * shapeFunctionValues[pp][gj] / gridMass[mappedNodeI][fieldIndexI] ) * 
                                                           vMinus[mappedNodeJ][fieldIndexJ][i];
               }
@@ -5496,11 +5531,66 @@ void SolidMechanicsMPM::performXPICUpdate( real64 dt,
         {
           for( int i = 0; i < numDims; i++)
           {
-            vStar[n][cg][i] += std::pow(-1, r) * vPlus[n][cg][i];
+            vStar[n][cg][i] += std::pow(-1.0, r) * ( vPlus[n][cg][i] + ( updateOrder - 1.0 ) / updateOrder * dVPlus[n][cg][i] );
             vMinus[n][cg][i] = vPlus[n][cg][i];
           }
         }
       }
+
+      // Add if statement? because this doesn't need to be performed for the last updateOrder
+      // Zero out vPlus for each order iteration
+      for( int n=0; n < numNodes; n++)
+      {
+        for( int cg=0; cg < numVelocityFields; cg++)
+        {
+          for( int i = 0; i < numDims; i++)
+          {
+            dVPlus[n][cg][i] = 0.0;
+          }
+        }
+      }
+
+      // Update dVStar
+      forAll< serialPolicy >( activeParticleIndices.size(), [&] GEOS_HOST_DEVICE ( localIndex const pp )
+      {
+        localIndex const p = activeParticleIndices[pp];
+      
+        for( int gi = 0; gi < 8 * numberOfVerticesPerParticle; gi++ )
+        {
+          localIndex const mappedNodeI = mappedNodes[pp][gi];
+          int const nodeFlagI = ( damageFieldPartitioning == 1 && LvArray::tensorOps::AiBi< 3 >( gridDamageGradient[mappedNodeI], particleDamageGradient[p] ) < 0.0 ) ? 1 : 0;
+          int const fieldIndexI = nodeFlagI * numContactGroups + particleGroup[p]; // This ranges from 0 to nMatFields-1
+          
+          if( gridMass[mappedNodeI][fieldIndexI] > m_smallMass )
+          {
+            for(int gj = 0; gj < 8 * numberOfVerticesPerParticle; gj++ )
+            {
+              localIndex const mappedNodeJ = mappedNodes[pp][gj];
+              int const nodeFlagJ = ( damageFieldPartitioning == 1 && LvArray::tensorOps::AiBi< 3 >( gridDamageGradient[mappedNodeJ], particleDamageGradient[p] ) < 0.0 ) ? 1 : 0;
+              int const fieldIndexJ = nodeFlagJ * numContactGroups + particleGroup[p]; // This ranges from 0 to nMatFields-1
+
+              for (int i = 0; i < numDims; i++)
+              {
+                dVPlus[mappedNodeI][fieldIndexI][i] += ( ( updateOrder - r ) / r ) * 
+                                                        ( particleMass[p] * shapeFunctionValues[pp][gi] * shapeFunctionValues[pp][gj] / gridMass[mappedNodeI][fieldIndexI] ) * 
+                                                          dVMinus[mappedNodeJ][fieldIndexJ][i];
+              }
+            }
+          }
+        }
+      } );
+
+      for( int n=0; n < numNodes; n++)
+      {
+        for( int cg=0; cg < numVelocityFields; cg++)
+        {
+          for( int i = 0; i < numDims; i++)
+          {
+            dVMinus[n][cg][i] = dVPlus[n][cg][i];
+          }
+        }
+      }
+
     } //End of updateOrder iterations
 
     // Update particles position and velocities now
@@ -5511,6 +5601,8 @@ void SolidMechanicsMPM::performXPICUpdate( real64 dt,
       // Zero velocity gradient
       for( int i=0; i < numDims; i++ )
       {
+        particlePosition[p][i] -= particleVelocity[p][i] * dt / 2.0;
+        particleVelocity[p][i] = 0.0;
         for( int j=0; j < numDims; j++ )
         {
           particleVelocityGradient[p][i][j] = 0.0;
@@ -5528,15 +5620,16 @@ void SolidMechanicsMPM::performXPICUpdate( real64 dt,
           real64 S = shapeFunctionValues[pp][g];
           real64 gVPlus = gridVelocity[mappedNode][fieldIndex][i];
           real64 gA = gridAcceleration[mappedNode][fieldIndex][i];
-          real64 pV = particleVelocity[p][i];
 
-          particlePosition[p][i] += S * gVPlus * dt - ( S * gA + ( -m * S * ( gVPlus - gA * dt ) + pV + m * S * vStar[mappedNode][fieldIndex][i]) ) * dt * dt / 2;
+          particlePosition[p][i] += S * gVPlus * dt  - ( S * gA * dt - m * S *( gVPlus - gA * dt ) + m * S * vStar[mappedNode][fieldIndex][i] ) * dt / 2.0;
+          // particlePosition[p][i] += 0.5 * S * dt * ( (m + 2.0 ) * gVPlus - ( 1.0 + m ) * gA * dt - m * vStar[mappedNode][fieldIndex][i] );
+          // particlePosition[p][i] += S * gVPlus * dt - ( S * gA * dt + ( -m * S * ( gVPlus - gA * dt ) + m * S * vStar[mappedNode][fieldIndex][i]) ) * dt / 2.0;
           particleVelocity[p][i] += S * ( m * ( gVPlus - vStar[mappedNode][fieldIndex][i] ) + ( 1 - m ) * gA * dt );
           // CC: What about update to velocity gradient?
           // Currently copy this from FLIP udpate with change from gridVelocity to vStar
           for( int j=0; j < numDims; j++ )
           {
-            particleVelocityGradient[p][i][j] += vStar[mappedNode][fieldIndex][i] * shapeFunctionGradientValues[pp][g][j];
+            particleVelocityGradient[p][i][j] += gridVelocity[mappedNode][fieldIndex][i] * shapeFunctionGradientValues[pp][g][j];
           }
         }
       }
@@ -5583,43 +5676,25 @@ void SolidMechanicsMPM::performFMPMUpdate(  real64 dt,
     int const numVelocityFields = m_numVelocityFields;
     int const updateOrder = m_updateOrder;
 
-    GEOS_LOG_RANK( "numNodes: " << numNodes << ", " <<
-                   "numDims: " << numDims << ", " << 
-                   "damageFieldPartitioning: " << damageFieldPartitioning << ", " << 
-                   "numContactGroups: " << numContactGroups << ", " << 
-                   "numVelocityFields: " << numVelocityFields << ", " << 
-                   "udpateOrder: " << updateOrder);
-
     // For iterative FMPM solve
-    array3d< real64 > vStar;
-    array3d< real64 > vPlus;
-    array3d< real64 > vMinus;
-
-    vStar.resize( numNodes, numVelocityFields, numDims );
-    vPlus.resize( numNodes, numVelocityFields, numDims );
-    vMinus.resize( numNodes, numVelocityFields, numDims );
-
-    GEOS_LOG_RANK("Zeroing vStart and vMinus for each iteration...");
+    array3d< real64 > vStar( numNodes, numVelocityFields, numDims );
+    array3d< real64 > vPlus( numNodes, numVelocityFields, numDims );
+    array3d< real64 > vMinus( numNodes, numVelocityFields, numDims );
     
-    // Zero out vStar for each order iteration
+    // Initialize FMPM variables
     for( int n=0; n < numNodes; n++)
     {
       for( int cg=0; cg < numVelocityFields; cg++)
       {
         for( int i = 0; i < numDims; i++)
         {
-          vStar[n][cg][i] = 0.0;
-          vMinus[n][cg][i] = gridVelocity[n][cg][i];
-          // GEOS_LOG_RANK( "node: " << n << ", " << 
-          //                "field: " << cg << ", " << 
-          //                "gridVel: " << gridVelocity[n][cg] );
+          vStar[n][cg][i] = updateOrder * gridVelocity[n][cg][i];
+          vMinus[n][cg][i] = vStar[n][cg][i];
         }
       }
     }
 
-    GEOS_LOG_RANK("Performing FMPM iterations...");
-
-    // Do FMPM iterations
+    // Perform FMPM order iterations
     for(int r=2; r <= updateOrder; ++r)
     {
       // Zero out vPlus for each order iteration
@@ -5633,10 +5708,8 @@ void SolidMechanicsMPM::performFMPMUpdate(  real64 dt,
           }
         }
       }
-      
-      GEOS_LOG_RANK( "Zeroed vPlus for iteration" );
-
-      forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST_DEVICE ( localIndex const pp )
+    
+      forAll< serialPolicy >( activeParticleIndices.size(), [=, &vPlus] GEOS_HOST_DEVICE ( localIndex const pp )
       {
         localIndex const p = activeParticleIndices[pp];
 
@@ -5646,54 +5719,50 @@ void SolidMechanicsMPM::performFMPMUpdate(  real64 dt,
           int const nodeFlagI = ( damageFieldPartitioning == 1 && LvArray::tensorOps::AiBi< 3 >( gridDamageGradient[mappedNodeI], particleDamageGradient[p] ) < 0.0 ) ? 1 : 0;
           int const fieldIndexI = nodeFlagI * numContactGroups + particleGroup[p]; // This ranges from 0 to nMatFields-1
 
-          for(int gj = 0; gj < 8 * numberOfVerticesPerParticle; gj++ )
+          if( gridMass[mappedNodeI][fieldIndexI] > m_smallMass )
           {
-            localIndex const mappedNodeJ = mappedNodes[pp][gj];
-            int const nodeFlagJ = ( damageFieldPartitioning == 1 && LvArray::tensorOps::AiBi< 3 >( gridDamageGradient[mappedNodeJ], particleDamageGradient[p] ) < 0.0 ) ? 1 : 0;
-            int const fieldIndexJ = nodeFlagJ * numContactGroups + particleGroup[p]; // This ranges from 0 to nMatFields-1
+            real64 Splus = particleMass[p] * shapeFunctionValues[pp][gi] / gridMass[mappedNodeI][fieldIndexI];
 
-            for (int i = 0; i < numDims; i++){
-              if( gridMass[mappedNodeI][fieldIndexI] > m_smallMass )
+            for(int gj = 0; gj < 8 * numberOfVerticesPerParticle; gj++ )
+            {
+              localIndex const mappedNodeJ = mappedNodes[pp][gj];
+              int const nodeFlagJ = ( damageFieldPartitioning == 1 && LvArray::tensorOps::AiBi< 3 >( gridDamageGradient[mappedNodeJ], particleDamageGradient[p] ) < 0.0 ) ? 1 : 0;
+              int const fieldIndexJ = nodeFlagJ * numContactGroups + particleGroup[p]; // This ranges from 0 to nMatFields-1
+
+              for (int i = 0; i < numDims; i++)
               {
-                vPlus[mappedNodeI][fieldIndexI][i] += ( ( updateOrder - r + 1 ) / r ) * 
-                                                        ( particleMass[p] * shapeFunctionValues[pp][gi] * shapeFunctionValues[pp][gj] / gridMass[mappedNodeI][fieldIndexI] ) * 
-                                                          vMinus[mappedNodeJ][fieldIndexJ][i];
+                vPlus[mappedNodeI][fieldIndexI][i] += Splus * shapeFunctionValues[pp][gj] * vMinus[mappedNodeJ][fieldIndexJ][i];;
               }
             }
-
           }
         }
       } );
 
-      GEOS_LOG_RANK( "Updating vStar..." );
-
       // Update vStar
+      real64 orderCoefficient = std::pow(-1.0, 1.0+r) * ( updateOrder - r + 1.0 ) / r;
       for( int n=0; n < numNodes; n++)
       {
         for( int cg=0; cg < numVelocityFields; cg++)
         {
-          // GEOS_LOG_RANK( "node: " << n << ", " << 
-          //               "field: " << cg << ", " << 
-          //               "vPlus: " << vPlus[n][cg] );
           for( int i = 0; i < numDims; i++)
           {
-            vStar[n][cg][i] += std::pow(-1, r) * vPlus[n][cg][i];
+            vStar[n][cg][i] += orderCoefficient * vPlus[n][cg][i];
             vMinus[n][cg][i] = vPlus[n][cg][i];
           }
         }
       }
     } //End of updateOrder iterations
 
-    GEOS_LOG_RANK( "Updating particle posititons and velocities...");
-
     // Update particles positions and velocities now
     forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST_DEVICE ( localIndex const pp )
     {
       localIndex const p = activeParticleIndices[pp];
-    
-      // Zero velocity gradient
-      for( int i=0; i < numDims; i++ )
+
+      for(int i = 0; i < numDims; i++)
       {
+        particlePosition[p][i] += 0.5 * dt * particleVelocity[p][i];
+        particleVelocity[p][i] = 0.0;
+
         for( int j=0; j < numDims; j++ )
         {
           particleVelocityGradient[p][i][j] = 0.0;
@@ -5704,16 +5773,18 @@ void SolidMechanicsMPM::performFMPMUpdate(  real64 dt,
       {
         localIndex const mappedNode = mappedNodes[pp][g];
         int const nodeFlag = ( damageFieldPartitioning == 1 && LvArray::tensorOps::AiBi< 3 >( gridDamageGradient[mappedNode], particleDamageGradient[p] ) < 0.0 ) ? 1 : 0;
-        int const fieldIndex = nodeFlag * numContactGroups + particleGroup[p]; // This ranges from 0 to nMatFields-1
+        int const fieldIndex = nodeFlag * numContactGroups + particleGroup[p];
+
         for( int i=0; i < numDims; i++ )
         {
-          particlePosition[p][i] += 0.5 * dt * ( particleVelocity[p][i] + shapeFunctionValues[pp][g] * vStar[mappedNode][fieldIndex][i] );
+          particlePosition[p][i] += 0.5 * dt * shapeFunctionValues[pp][g] * vStar[mappedNode][fieldIndex][i];
           particleVelocity[p][i] += shapeFunctionValues[pp][g] * vStar[mappedNode][fieldIndex][i];
+
           // CC: What about update to velocity gradient?
-          // Currently copy this from FLIP udpate with change from gridVelocity to vStar
           for( int j=0; j < numDims; j++ )
           {
             particleVelocityGradient[p][i][j] += vStar[mappedNode][fieldIndex][i] * shapeFunctionGradientValues[pp][g][j];
+            // particleVelocityGradient[p][i][j] += gridVelocity[mappedNode][fieldIndex][i] * shapeFunctionGradientValues[pp][g][j];
           }
         }
       }
