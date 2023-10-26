@@ -53,41 +53,6 @@
 
   <!-- SPHINX_GEOMETRY -->
   <Geometry>
-    <Rectangle
-      name="fracture1"
-      normal="{1.0, 0.0, 0.0}"
-      origin="{0.0, 0.0, 0.0}"
-      lengthVector="{0.0, 1.0, 0.0}"
-      widthVector="{0.0, 0.0, 1.0}"
-      dimensions="{ 100, 10 }"/>
-
-    <Rectangle
-      name="core1"
-      normal="{1.0, 0.0, 0.0}"
-      origin="{0.0, 0.0, 0.0}"
-      lengthVector="{0.0, 1.0, 0.0}"
-      widthVector="{0.0, 0.0, 1.0}"
-      dimensions="{ 100, 10 }"/>
-
-    <Rectangle
-      name="fracture2"
-      normal="{0.0, 1.0, 0.0}"
-      origin="{0.0, 50.0, 0.0}"
-      lengthVector="{1.0, 0.0, 0.0}"
-      widthVector="{0.0, 0.0, 1.0}"
-      dimensions="{ 50, 10 }"/>
-
-    <Rectangle
-      name="core2"
-      normal="{0.0, 1.0, 0.0}"
-      origin="{0.0, 50.0, 0.0}"
-      lengthVector="{1.0, 0.0, 0.0}"
-      widthVector="{0.0, 0.0, 1.0}"
-      dimensions="{ 50, 10 }"/>    
-  </Geometry>
-
-
-  <Geometry>
     <Box
       name="left"
       xMin="{ -1000.1, -1000.1, -0.1 }"
@@ -119,9 +84,9 @@
       xMax="{ 1000.1, 1000.1, 1.1 }"/>
 
     <Box
-      name="source"
+      name="verticalFrac"
       xMin="{ -0.01, -0.01, -0.01 }"
-      xMax="{ 0.01, 1.01, 1.01 }"/>
+      xMax="{ 0.01, 100.01, 1.01 }"/>
   </Geometry>
   <!-- SPHINX_GEOMETRY_END -->
 
@@ -141,7 +106,7 @@
   <ElementRegions>
     <CellElementRegion
       name="Region"
-      cellBlocks="{ hexahedra, wedges }"
+      cellBlocks="{ 3_hexahedra, 2_hexahedra, 1_hexahedra, hexahedra }"
       materialList="{ rock }"/>
 
     <SurfaceElementRegion
@@ -199,7 +164,7 @@
       tractionType="normal"
       scale="-1.0e8"
       functionName="ForceTimeFunction"
-      setNames="{ core1 }"/>
+      setNames="{ verticalFrac }"/>
 
     <FieldSpecification 
       name="SigmaY"

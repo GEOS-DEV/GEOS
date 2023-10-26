@@ -14,6 +14,7 @@
       useGlobalIds="1"
       faceBlocks="{fracture}"
       file="tShapedFractured.vtm"/>
+  </Mesh>
   <!-- SPHINX_MESH_END -->
  
   <Events
