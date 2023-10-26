@@ -93,6 +93,11 @@ public:
 
   virtual string getCatalogName() const override final { return catalogName(); }
 
+  /**
+   * @copydoc PVTFunctionBase::checkTablesParameters( real64 pressure, real64 temperature )
+   */
+  void checkTablesParameters( real64 pressure, real64 temperature ) const override final;
+
   virtual PVTFunctionType functionType() const override
   {
     return PVTFunctionType::DENSITY;

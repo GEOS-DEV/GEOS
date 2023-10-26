@@ -487,6 +487,36 @@ struct InputError : public std::runtime_error
 };
 
 /**
+ * @brief Exception class used to report errors in user input.
+ */
+struct SimulationError : public std::runtime_error
+{
+  /**
+   * @brief Constructor
+   * @param what the error message
+   */
+  SimulationError( std::string const & what ):
+    std::runtime_error( what )
+  {}
+
+  /**
+   * @brief Constructor
+   * @param what the error message
+   */
+  SimulationError( char const * const what ):
+    std::runtime_error( what )
+  {}
+
+  /**
+   * @brief Construct a SimulationError from an underlying exception.
+   * @param subException An exception to base this new one on.
+   * @param msgToInsert The error message.
+   * It will be inserted before the error message inside of subException.
+   */
+  SimulationError( std::exception const & subException, std::string const & msgToInsert );
+};
+
+/**
  * @brief Exception class used for special control flow.
  */
 class NotAnError : public std::exception

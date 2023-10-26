@@ -155,8 +155,9 @@ TableFunction const * makeDensityTable( string_array const & inputParams,
   else
   {
     TableFunction * const densityTable = dynamicCast< TableFunction * >( functionManager.createChild( "TableFunction", tableName ) );
-    densityTable->setTableCoordinates( tableCoords.getCoords() );
-    densityTable->setTableValues( densities );
+    densityTable->setTableCoordinates( tableCoords.getCoords(),
+                                       { units::Pressure, units::TemperatureInC } );
+    densityTable->setTableValues( densities, units::Density );
     densityTable->setInterpolationMethod( TableFunction::InterpolationType::Linear );
     return densityTable;
   }
@@ -188,6 +189,13 @@ PhillipsBrineDensity::createKernelWrapper() const
                         *m_brineDensityTable,
                         m_CO2Index,
                         m_waterIndex );
+}
+
+void PhillipsBrineDensity::checkTablesParameters( real64 const pressure,
+                                                  real64 const temperature ) const
+{
+  m_brineDensityTable->checkCoord( pressure, 0 );
+  m_brineDensityTable->checkCoord( temperature, 1 );
 }
 
 REGISTER_CATALOG_ENTRY( PVTFunctionBase, PhillipsBrineDensity, string const &, string_array const &, string_array const &, array1d< real64 > const & )

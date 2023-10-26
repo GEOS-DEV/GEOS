@@ -113,6 +113,11 @@ public:
 
   virtual string getCatalogName() const final { return catalogName(); }
 
+  /**
+   * @copydoc FlashModelBase::checkTablesParameters( real64 pressure, real64 temperature )
+   */
+  void checkTablesParameters( real64 pressure, real64 temperature ) const override final;
+
   /// Type of kernel wrapper for in-kernel update
   using KernelWrapper = CO2SolubilityUpdate;
 

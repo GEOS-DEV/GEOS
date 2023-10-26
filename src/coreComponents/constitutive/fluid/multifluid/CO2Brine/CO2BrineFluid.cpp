@@ -19,6 +19,7 @@
 
 #include "constitutive/fluid/multifluid/MultiFluidFields.hpp"
 #include "constitutive/fluid/multifluid/CO2Brine/functions/PVTFunctionHelpers.hpp"
+#include "common/Units.hpp"
 
 namespace geos
 {
@@ -136,6 +137,49 @@ integer CO2BrineFluid< PHASE1, PHASE2, FLASH >::getWaterPhaseIndex() const
   string const expectedWaterPhaseNames[] =  { "Water", "water", "Liquid", "liquid" };
   return PVTFunctionHelpers::findName( m_phaseNames, expectedWaterPhaseNames, viewKeyStruct::phaseNamesString() );
 }
+
+template< typename PHASE1, typename PHASE2, typename FLASH >
+void CO2BrineFluid< PHASE1, PHASE2, FLASH >::checkTablesParameters( real64 const pressure,
+                                                                    real64 const temperature ) const
+{
+  if( !m_checkPVTTablesRanges )
+  {
+    return;
+  }
+
+  real64 const temperatureInCelsius = units::convertKToC( temperature );
+  try
+  {
+    m_phase1->density.checkTablesParameters( pressure, temperatureInCelsius );
+    m_phase1->viscosity.checkTablesParameters( pressure, temperatureInCelsius );
+    m_phase1->enthalpy.checkTablesParameters( pressure, temperatureInCelsius );
+  } catch( SimulationError const & ex )
+  {
+    string const errorMsg = GEOS_FMT( "{}: Table input error for phase no. 1.\n", getDataContext() );
+    throw SimulationError( ex, errorMsg );
+  }
+
+  try
+  {
+    m_phase2->density.checkTablesParameters( pressure, temperatureInCelsius );
+    m_phase2->viscosity.checkTablesParameters( pressure, temperatureInCelsius );
+    m_phase2->enthalpy.checkTablesParameters( pressure, temperatureInCelsius );
+  } catch( SimulationError const & ex )
+  {
+    string const errorMsg = GEOS_FMT( "{}: Table input error for phase no. 2.\n", getDataContext() );
+    throw SimulationError( ex, errorMsg );
+  }
+
+  try
+  {
+    m_flash->checkTablesParameters( pressure, temperatureInCelsius );
+  } catch( SimulationError const & ex )
+  {
+    string const errorMsg = GEOS_FMT( "{}: Table input error for flash phase.\n", getDataContext() );
+    throw SimulationError( ex, errorMsg );
+  }
+}
+
 
 template< typename PHASE1, typename PHASE2, typename FLASH >
 void CO2BrineFluid< PHASE1, PHASE2, FLASH >::initializePreSubGroups()

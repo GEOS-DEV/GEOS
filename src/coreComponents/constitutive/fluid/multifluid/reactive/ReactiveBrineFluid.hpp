@@ -28,6 +28,7 @@
 #include "constitutive/fluid/multifluid/CO2Brine/functions/WaterDensity.hpp"
 #include "constitutive/fluid/multifluid/CO2Brine/functions/PhillipsBrineViscosity.hpp"
 #include "constitutive/fluid/multifluid/CO2Brine/functions/PureWaterProperties.hpp"
+#include "common/Units.hpp"
 
 
 
@@ -58,6 +59,11 @@ public:
   virtual string getCatalogName() const override { return catalogName(); }
 
   virtual bool isThermal() const override final;
+
+  /**
+   * @copydoc MultiFluidBase::checkTablesParameters( real64 pressure, real64 temperature )
+   */
+  void checkTablesParameters( real64 pressure, real64 temperature ) const override final;
 
   /**
    * @brief Kernel wrapper class for ReactiveBrineFluid.
@@ -212,7 +218,7 @@ ReactiveBrineFluid< PHASE >::KernelWrapper::
   }
 
   // 2. Compute phase fractions and phase component fractions
-  real64 const temperatureInCelsius = temperature - 273.15;
+  real64 const temperatureInCelsius = units::convertKToC( temperature );
 
   // 3. Compute phase density and phase viscoisty
   m_phase.density.compute( pressure,
@@ -285,7 +291,7 @@ ReactiveBrineFluid< PHASE >::KernelWrapper::
     phaseCompFraction.value[0][ic] = composition[ic];
   }
 
-  real64 const temperatureInCelsius = temperature - 273.15;
+  real64 const temperatureInCelsius = units::convertKToC( temperature );
 
   // 2. Compute phase densities and phase viscosities
   m_phase.density.compute( pressure,
