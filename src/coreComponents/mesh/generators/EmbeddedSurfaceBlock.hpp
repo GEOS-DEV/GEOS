@@ -41,7 +41,7 @@ public:
 
     localIndex numEmbeddedSurfElem() const override;
     ArrayOfArrays<localIndex> getEmbeddedSurfElemToNodes() const override;
-    ArrayOfArrays<localIndex> getEmbeddedSurfElemTo3dElem() const override;
+    ToCellRelation<ArrayOfArrays<localIndex>> getEmbeddedSurfElemTo3dElem() const override;
     ArrayOfArrays<real64> getEmbeddedSurfElemNodes() const override;
     
 
@@ -61,7 +61,7 @@ public:
      * @brief Sets the embedded elements to 3d elements mapping
      * @param _embeddedSurfElemTo3dElem the input mapping.
     */
-    void setEmbeddedSurfElemTo3dElem(ArrayOfArrays<localIndex> && _embeddedSurfElemTo3dElem);
+    void setEmbeddedSurfElemTo3dElem(ToCellRelation<ArrayOfArrays<localIndex>> && _embeddedSurfElemTo3dElem);
 
     /**
      * @brief Sets the embedded elements nodes coordinates
@@ -73,7 +73,7 @@ private:
  
     localIndex m_numEmbeddedSurfaces;
     ArrayOfArrays< localIndex > m_embeddedSurfElemToNodes;
-    ArrayOfArrays< localIndex > m_embeddedSurfElemTo3dElem;
+    ToCellRelation<ArrayOfArrays< localIndex >> m_embeddedSurfElemTo3dElem;
     ArrayOfArrays< real64 > m_embeddedSurfElemNodes;
 };
 

@@ -78,7 +78,7 @@ public:
     * @details each embedded surface element intersects 1 or more 3d elements. Indices of these 3d elements
     * are returned for each embedded surface element
     */
-    virtual ArrayOfArrays<localIndex> getEmbeddedSurfElemTo3dElem() const = 0;
+    virtual ToCellRelation<ArrayOfArrays< localIndex >> getEmbeddedSurfElemTo3dElem() const = 0;
 
 
     /**

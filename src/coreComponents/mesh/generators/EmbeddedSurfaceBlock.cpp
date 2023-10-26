@@ -30,7 +30,7 @@ ArrayOfArrays<localIndex> EmbeddedSurfaceBLock::getEmbeddedSurfElemToNodes() con
     return m_embeddedSurfElemToNodes;
 }
 
-ArrayOfArrays<localIndex> EmbeddedSurfaceBlock::getEmbeddedSurfElemTo3dElem() const {
+ToCellRelation<ArrayOfArrays<localIndex>> EmbeddedSurfaceBlock::getEmbeddedSurfElemTo3dElem() const {
      return m_embeddedSurfElemTo3dElem;
 };
 
@@ -48,7 +48,7 @@ void EmbeddedSurfaceBlock::setEmbeddedSurfElemToNodes(ArrayOfArrays<localIndex> 
     m_embeddedSurfElemToNodes = _embeddedSurfElemToNodes;
 }
 
-void EmbeddedSurfaceBlock::setEmbeddedSurfElemTo3dElem(ArrayOfArrays<localIndex> && _embeddedSurfElemTo3dElem){
+void EmbeddedSurfaceBlock::setEmbeddedSurfElemTo3dElem(ToCellRelation<ArrayOfArrays<localIndex>> && _embeddedSurfElemTo3dElem){
     m_embeddedSurfElemTo3dElem = _embeddedSurfElemTo3dElem;
 }
 
