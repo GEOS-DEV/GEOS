@@ -17,10 +17,13 @@ def __load_module_check(module_name: str, check_fct="check"):
 
 
 def __load_module_check_helper(module_name: str, parsing_fct_suffix="_parsing"):
-    module = importlib.import_module("parsing." + module_name + parsing_fct_suffix)
+    if module_name == "generate_fractures_2":
+        module = importlib.import_module("parsing.generate_fractures_parsing")
+    else:
+        module = importlib.import_module("parsing." + module_name + parsing_fct_suffix)
     return CheckHelper(fill_subparser=module.fill_subparser,
-                       convert=module.convert,
-                       display_results=module.display_results)
+                    convert=module.convert,
+                    display_results=module.display_results)
 
 
 def __load_checks() -> Dict[str, Callable[[str, Any], Any]]:

@@ -249,6 +249,70 @@ def __copy_fields(old_mesh: vtkUnstructuredGrid,
             tmp.SetTuple(p, input_array.GetTuple(collocated_nodes[p]))
         new_mesh.GetPointData().AddArray(tmp)
 
+def __perform_polyhedron_split(old_mesh: vtkUnstructuredGrid,
+                    cell_to_node_mapping: Mapping[int, Mapping[int, int]]) -> vtkUnstructuredGrid:
+    """
+    Split the main 3d mesh based on the node duplication information contained in @p cell_to_node_mapping
+    :param old_mesh: The main 3d mesh.
+    :param cell_to_node_mapping: For each cell, gives the nodes that must be duplicated and their new index.
+    :return: The main 3d mesh split at the fracture location.
+    """
+    added_points: Set[int] = set()
+    for node_mapping in cell_to_node_mapping.values():
+        for i, o in node_mapping.items():
+            if i != o:
+                added_points.add(o)
+    num_new_points: int = old_mesh.GetNumberOfPoints() + len(added_points)
+
+    # Creating the new points for the new mesh.
+    old_points: vtkPoints = old_mesh.GetPoints()
+    new_points = vtkPoints()
+    new_points.SetNumberOfPoints(num_new_points)
+    collocated_nodes = numpy.ones(num_new_points, dtype=int) * -1
+    # Copying old points into the new container.
+    for p in range(old_points.GetNumberOfPoints()):
+        new_points.SetPoint(p, old_points.GetPoint(p))
+        collocated_nodes[p] = p
+    # Creating the new collocated/duplicated points based on the old points positions.
+    for node_mapping in cell_to_node_mapping.values():
+        for i, o in node_mapping.items():
+            if i != o:
+                new_points.SetPoint(o, old_points.GetPoint(i))
+                collocated_nodes[o] = i
+
+    # We are creating a new mesh.
+    # The cells will be the same, except that their nodes may be duplicated or renumbered nodes.
+    # The `new_cells` array will be modified in place.
+    new_mesh = old_mesh.NewInstance()
+    new_mesh.SetPoints(new_points)
+
+    for c in tqdm(range(old_mesh.GetNumberOfCells()), desc="Computing the cell to faces mapping"):
+        # looping through cells
+        node_mapping: Mapping[int, int] = cell_to_node_mapping.get(c, {}) # checked!
+        cell = old_mesh.GetCell(c)
+        cell_type = old_mesh.GetCellType(c)
+        faceId = vtkIdList()
+        faceId.InsertNextId(cell.GetNumberOfFaces())  # The number of faces in the polyhedron
+
+        for f in range(cell.GetNumberOfFaces()):
+            # looping through faces
+            neighbor_cell_ids = vtkIdList()
+            curr_face = cell.GetFace(f)
+            num_points_in_face = curr_face.GetNumberOfPoints()
+            faceId.InsertNextId(num_points_in_face)  # The number of points in the face.
+
+            for point_idx in range(num_points_in_face):
+                # looping through points of each face
+                current_point_id: int = curr_face.GetPointId(point_idx)
+                new_point_id: int = node_mapping.get(current_point_id, current_point_id)
+                faceId.InsertNextId(new_point_id) # replace nodes with new nodes
+
+        new_mesh.InsertNextCell(cell_type, faceId)
+
+    __iterate_through_polyhedron_cells(new_mesh)
+    __copy_fields(old_mesh, new_mesh, collocated_nodes)
+
+    return new_mesh
 
 def __perform_split(old_mesh: vtkUnstructuredGrid,
                     cell_to_node_mapping: Mapping[int, Mapping[int, int]]) -> vtkUnstructuredGrid:
@@ -287,12 +351,19 @@ def __perform_split(old_mesh: vtkUnstructuredGrid,
     new_cells = vtkCellArray()
     new_cells.DeepCopy(old_mesh.GetCells())
 
+    cell = old_mesh.GetCell(0)
+    #faces = vtkIdList()
+    cell.GetFaces()
+
+    __iterate_through_polyhedron_cells(old_mesh) # debugging purposes
     for c in tqdm(range(old_mesh.GetNumberOfCells()), desc="Performing the mesh split"):
-        node_mapping: Mapping[int, int] = cell_to_node_mapping.get(c, {})
+        node_mapping: Mapping[int, int] = cell_to_node_mapping.get(c, {}) # checked!
         # Extracting the point ids of the cell.
         # The values will be (potentially) overwritten in place, before being sent back into the cell.
         cell_point_ids = vtkIdList()
-        new_cells.GetCellAtId(c, cell_point_ids)
+        new_cells.GetCellAtId(c, cell_point_ids)   # This might cause troubles
+
+        # for cell 0, GetNumberOfIds returns 10, which is the compressed standard format from polyhedron type
         for i in range(cell_point_ids.GetNumberOfIds()):
             current_point_id: int = cell_point_ids.GetId(i)
             new_point_id: int = node_mapping.get(current_point_id, current_point_id)
@@ -301,12 +372,39 @@ def __perform_split(old_mesh: vtkUnstructuredGrid,
 
     new_mesh = old_mesh.NewInstance()
     new_mesh.SetPoints(new_points)
+    __iterate_through_polyhedron_cells(new_mesh)
     new_mesh.SetCells(old_mesh.GetCellTypesArray(), new_cells)  # The cell types are unchanged; we reuse the old cell types!
 
     __copy_fields(old_mesh, new_mesh, collocated_nodes)
 
     return new_mesh
 
+def __iterate_through_polyhedron_cells(old_mesh):
+
+    # Get the number of cells in the mesh
+    num_cells = old_mesh.GetNumberOfCells()
+
+    # Loop through each cell in the mesh
+    for cell_id in range(num_cells):
+        # Get the cell
+        cell = old_mesh.GetCell(cell_id)
+
+        # Check if the cell is a polyhedron
+        print("Cell ID:", cell_id)
+        # Loop through each face
+        num_faces = cell.GetNumberOfFaces()
+        for face_idx in range(num_faces):
+            # Get the number of points in the current face
+            curr_face = cell.GetFace(face_idx)
+            num_points_in_face = curr_face.GetNumberOfPoints()
+            # Print the point indices for the current face
+            print("  Face ID:", face_idx)
+            print("  Number of points:", num_points_in_face)
+            print("  Point IDs:", end=" ")
+
+            for point_idx in range(num_points_in_face):
+                print(curr_face.GetPointId(point_idx), end=" ")
+            print()
 
 def __generate_fracture_mesh(mesh_points: vtkPoints,
                              fracture_info: FractureInfo,
@@ -367,7 +465,8 @@ def __split_mesh_on_fracture(mesh: vtkUnstructuredGrid,
     cell_to_node_mapping: Mapping[int, Mapping[int, int]] = __identify_split(mesh.GetNumberOfPoints(),
                                                                              cell_to_cell,
                                                                              fracture.node_to_cells)
-    output_mesh: vtkUnstructuredGrid = __perform_split(mesh, cell_to_node_mapping)
+    #output_mesh: vtkUnstructuredGrid = __perform_split(mesh, cell_to_node_mapping)
+    output_mesh: vtkUnstructuredGrid = __perform_polyhedron_split(mesh, cell_to_node_mapping)
     fractured_mesh: vtkUnstructuredGrid = __generate_fracture_mesh(mesh.GetPoints(), fracture, cell_to_node_mapping)
     return output_mesh, fractured_mesh
 
