@@ -707,9 +707,11 @@ void FlowSolverBase::saveAquiferConvergedState( real64 const & time,
 
     if( bc.getLogLevel() >= 1 )
     {
-      GEOS_LOG_RANK_0( GEOS_FMT( string( "FlowSolverBase {}: at time {}s, " )
-                                 + string( "the <{}> boundary condition '{}' produces a flux of {} kg (or moles if useMass=0). " ),
-                                 getDataContext(), time+dt, AquiferBoundaryCondition::catalogName(), bc.getName(), dt * globalSumFluxes[aquiferIndex] ) );
+      //TODO: replace (this->)catalogName() to getCatalogName() in order to get the final class name.
+      GEOS_LOG_RANK_0( GEOS_FMT( "{} {}: at time {}s, the "
+                                 "boundary condition produces a flux of {} m3 through the {} {}.",
+                                 catalogName(), getName(), time + dt, dt * globalSumFluxes[aquiferIndex],
+                                 AquiferBoundaryCondition::catalogName(), bc.getDataContext() ) );
     }
     bc.saveConvergedState( dt * globalSumFluxes[aquiferIndex] );
   } );
