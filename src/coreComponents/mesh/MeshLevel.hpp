@@ -20,6 +20,7 @@
 #define GEOS_MESH_MESHLEVEL_HPP_
 
 #include "NodeManager.hpp"
+#include "ParticleManager.hpp"
 #include "EmbeddedSurfaceNodeManager.hpp"
 #include "EdgeManager.hpp"
 #include "ElementRegionManager.hpp"
@@ -125,11 +126,13 @@ public:
 
     // This key is defined in problem manager:
     static constexpr char const * elemManagerString() { return "ElementRegions"; }
+    static constexpr char const * particleManagerString() { return "ParticleRegions"; }
 
     static constexpr auto embSurfNodeManagerString = "embeddedSurfacesNodeManager";
     static constexpr auto embSurfEdgeManagerString = "embeddedSurfacesEdgeManager";
 
     dataRepository::GroupKey nodeManager = {nodeManagerString()};
+    dataRepository::GroupKey particleManager = {particleManagerString()};
     dataRepository::GroupKey edgeManager = {edgeManagerString()};
     dataRepository::GroupKey faceManager = {faceManagerString()};
     dataRepository::GroupKey elemManager = {elemManagerString()};
@@ -156,6 +159,19 @@ public:
    */
   NodeManager & getNodeManager()
   { return *m_nodeManager; }
+
+  /**
+   * @brief Get the particle manager.
+   * @return a reference to the particleManager object
+   */
+  ParticleManager const & getParticleManager() const
+  { return *m_particleManager; }
+
+  /**
+   * @copydoc getParticleManager() const
+   */
+  ParticleManager & getParticleManager()
+  { return *m_particleManager; }
 
   /**
    * @brief Get the edge manager.
@@ -269,6 +285,8 @@ private:
 
   /// Manager for node data
   NodeManager * const m_nodeManager;
+  /// Manager for particle data
+  ParticleManager * const m_particleManager;
   /// Manager for edge data
   EdgeManager * const m_edgeManager;
   /// Manager for face data
