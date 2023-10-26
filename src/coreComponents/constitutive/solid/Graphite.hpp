@@ -479,9 +479,6 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
     LvArray::tensorOps::Rij_eq_AkiBkj< 3, 3, 3 >( tempMat, beginningRotation, m_velocityGradient[k] );
     LvArray::tensorOps::Rij_eq_AikBkj< 3, 3, 3 >( unrotatedVelocityGradient, tempMat, beginningRotation );
 
-    // LvArray::tensorOps::Rij_eq_AikBkj< 3, 3, 3 >( tempMat, rotationTranspose, m_velocityGradient[k] );
-    // LvArray::tensorOps::Rij_eq_AikBjk< 3, 3, 3 >( unrotatedVelocityGradient, tempMat, rotationTranspose );
-
     real64 unrotatedVelocityGradientTranspose[3][3] = { { 0 } };
     LvArray::tensorOps::transpose< 3, 3 >( unrotatedVelocityGradientTranspose, unrotatedVelocityGradient );
 
@@ -677,6 +674,7 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
     if(pressure < x1)
     {
         totalShearStrength=std::max(0.0,y1-(x1-pressure)*m1);
+        // totalShearStrength=std::max(0.0,y1-(x2-pressure)*m1);
     }
     else if(pressure < x2)
     {
@@ -700,7 +698,8 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
     m1 = fac*m1 + (1. - fac)*std::max( m_damagedMaterialFrictionalSlope, (y2-y1)/(x2-x1) );
     if(pressure<x1)
     {
-        coupledYieldStrength=std::max(0.0,y1-(x1-pressure)*m1);
+      coupledYieldStrength=std::max(0.0,y1-(x1-pressure)*m1);
+      // coupledYieldStrength=std::max(0.0,y1-(x2-pressure)*m1);
     }
     else if(pressure<x2)
     {
@@ -724,7 +723,8 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
     m1 = fac*m1 + (1. - fac)*std::max( m_damagedMaterialFrictionalSlope, (y2-y1)/(x2-x1) );
     if( pressure < x1 )
     {
-        inPlaneShearStrength=std::max(0.0, y1  -( x1 - pressure ) * m1 );
+      inPlaneShearStrength=std::max(0.0, y1  -( x1 - pressure ) * m1 );
+      // inPlaneShearStrength=std::max(0.0, y1  -( x2 - pressure ) * m1 );
     }
     else if( pressure < x2 )
     {
@@ -976,10 +976,10 @@ void GraphiteUpdates::computeTransverselyIsotropicPlasticStrainIncrement( real64
 				{
 					// elasticStrainIncrement[voigtMap[i][j]] 
           elasticStrainIncrementDense[i][j] += ( s1 * transverselyIsotropicB1(materialDirection,i,j,p,w) +
-                                                s2 * transverselyIsotropicB2(materialDirection,i,j,p,w) +
-                                                s3 * transverselyIsotropicB3(materialDirection,i,j,p,w) +
-                                                s4 * transverselyIsotropicB4(materialDirection,i,j,p,w) +
-                                                s5 * transverselyIsotropicB5(materialDirection,i,j,p,w) ) * stressIncrement[voigtMap[p][w]];
+                                                 s2 * transverselyIsotropicB2(materialDirection,i,j,p,w) +
+                                                 s3 * transverselyIsotropicB3(materialDirection,i,j,p,w) +
+                                                 s4 * transverselyIsotropicB4(materialDirection,i,j,p,w) +
+                                                 s5 * transverselyIsotropicB5(materialDirection,i,j,p,w) ) * stressIncrement[voigtMap[p][w]];
 				}
 			}
 		}
