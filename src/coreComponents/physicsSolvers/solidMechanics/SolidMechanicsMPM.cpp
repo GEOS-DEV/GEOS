@@ -228,62 +228,62 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
     setDescription( "Map from indices in each spatial dimension to local node ID" );
 
   registerWrapper( "elementSize", &m_hEl ).
-    setInputFlag( InputFlags::FALSE).
+    setInputFlag( InputFlags::FALSE ).
     setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "Minimum element size in x, y and z" );
-  
+
   registerWrapper( "localMinimum", &m_xLocalMin ).
-    setInputFlag( InputFlags::FALSE).
+    setInputFlag( InputFlags::FALSE ).
     setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "local minimum" );
-  
+
   registerWrapper( "localMaximum", &m_xLocalMax ).
-    setInputFlag( InputFlags::FALSE).
+    setInputFlag( InputFlags::FALSE ).
     setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "local maximum" );
 
-    registerWrapper( "localMinimumNoGhost", &m_xLocalMinNoGhost ).
-    setInputFlag( InputFlags::FALSE).
+  registerWrapper( "localMinimumNoGhost", &m_xLocalMinNoGhost ).
+    setInputFlag( InputFlags::FALSE ).
     setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "local minimum without ghost cells" );
-  
+
   registerWrapper( "localMaximumNoGhost", &m_xLocalMaxNoGhost ).
-    setInputFlag( InputFlags::FALSE).
+    setInputFlag( InputFlags::FALSE ).
     setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "local maximum without ghost cells" );
 
   registerWrapper( "globalMinimum", &m_xGlobalMin ).
-    setInputFlag( InputFlags::FALSE).
+    setInputFlag( InputFlags::FALSE ).
     setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "global minimum" );
-  
+
   registerWrapper( "globalMaximum", &m_xGlobalMax ).
-    setInputFlag( InputFlags::FALSE).
+    setInputFlag( InputFlags::FALSE ).
     setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "global maximum" );
 
   registerWrapper( "partitionExtent", &m_partitionExtent ).
-    setInputFlag( InputFlags::FALSE).
+    setInputFlag( InputFlags::FALSE ).
     setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "parititon extent" );
 
   registerWrapper( "domainExtent", &m_domainExtent ).
-    setInputFlag( InputFlags::FALSE).
+    setInputFlag( InputFlags::FALSE ).
     setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "domain extent" );
 
   registerWrapper( "domainF", &m_domainF ).
-    setInputFlag( InputFlags::FALSE).
+    setInputFlag( InputFlags::FALSE ).
     setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "domain deformation gradient" );
 
-  registerWrapper( "domainL", &m_domainL).
-    setInputFlag( InputFlags::FALSE).
+  registerWrapper( "domainL", &m_domainL ).
+    setInputFlag( InputFlags::FALSE ).
     setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "domain L" );
 
-  registerWrapper( "numElements", &m_nEl).
-    setInputFlag( InputFlags::FALSE).
+  registerWrapper( "numElements", &m_nEl ).
+    setInputFlag( InputFlags::FALSE ).
     setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "number of elements along partition directions" );
 }
@@ -592,9 +592,9 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
 
   // Initialize domain F and L, then read and distribute F table
   m_domainF.resize( 3 );
-  LvArray::tensorOps::fill< 3 >(m_domainF, 1.0);
+  LvArray::tensorOps::fill< 3 >( m_domainF, 1.0 );
   m_domainL.resize( 3 );
-  LvArray::tensorOps::fill< 3 >(m_domainF, 0.0);
+  LvArray::tensorOps::fill< 3 >( m_domainF, 0.0 );
 
   if( m_prescribedBoundaryFTable == 1 )
   {
@@ -607,7 +607,7 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
       std::ifstream fp( m_fTablePath );
       // Throw error if FTable can't be read
       GEOS_ERROR_IF( fp.fail(), "MPMSolver Failed to read FTable.dat" );
-     
+
       double FTableEntry = 0;
       while( fp >> FTableEntry )
       {
@@ -636,13 +636,13 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const gridPosition = nodeManager.referencePosition();
 
   // Get local domain extent
-  m_xLocalMin.resize(3);
-  LvArray::tensorOps::fill< 3 >(m_xLocalMin, DBL_MAX);
-  m_xLocalMax.resize(3);
-  LvArray::tensorOps::fill< 3 >(m_xLocalMax, -DBL_MAX);
-  m_xLocalMinNoGhost.resize(3);
-  m_xLocalMaxNoGhost.resize(3);
-  m_partitionExtent.resize(3);
+  m_xLocalMin.resize( 3 );
+  LvArray::tensorOps::fill< 3 >( m_xLocalMin, DBL_MAX );
+  m_xLocalMax.resize( 3 );
+  LvArray::tensorOps::fill< 3 >( m_xLocalMax, -DBL_MAX );
+  m_xLocalMinNoGhost.resize( 3 );
+  m_xLocalMaxNoGhost.resize( 3 );
+  m_partitionExtent.resize( 3 );
   for( int g=0; g<numNodes; g++ )
   {
     for( int i=0; i<3; i++ )
@@ -659,8 +659,8 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
   }
 
   // Get element size
-  m_hEl.resize(3);
-  LvArray::tensorOps::fill< 3 >(m_hEl, DBL_MAX);
+  m_hEl.resize( 3 );
+  LvArray::tensorOps::fill< 3 >( m_hEl, DBL_MAX );
   for( int g=0; g<numNodes; g++ )
   {
     for( int i=0; i<3; i++ )
@@ -689,9 +689,9 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
   }
 
   // Get global domain extent excluding buffer nodes
-  m_xGlobalMin.resize(3);
-  m_xGlobalMax.resize(3);
-  m_domainExtent.resize(3);
+  m_xGlobalMin.resize( 3 );
+  m_xGlobalMax.resize( 3 );
+  m_domainExtent.resize( 3 );
   for( int i=0; i<3; i++ )
   {
     m_xGlobalMin[i] = partition.getGlobalMin()[i] + m_hEl[i];
