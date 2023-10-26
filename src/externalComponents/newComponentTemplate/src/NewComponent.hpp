@@ -33,23 +33,23 @@ class NewComponent : public SolverBase
 {
 public:
   NewComponent( string const & name,
-                Group * const parent);
+                Group * const parent );
   virtual ~NewComponent() override;
 
   static string catalogName() { return "NewComponent"; }
-  string getCatalogName() const override  { return catalogName(); }
+  string getCatalogName() const override { return catalogName(); }
 
-  virtual real64 SolverStep( real64 const& time_n,
-                         real64 const& dt,
-                         integer const cycleNumber,
-                         DomainPartition * domain ) override;
+  virtual real64 SolverStep( real64 const & time_n,
+                             real64 const & dt,
+                             integer const cycleNumber,
+                             DomainPartition * domain ) override;
 
 private:
   NewComponent() = delete;
-  NewComponent(const NewComponent&) = delete;
-  NewComponent(const NewComponent&&) = delete;
-  NewComponent& operator=(const NewComponent&) = delete;
-  NewComponent& operator=(const NewComponent&&) = delete;
+  NewComponent( const NewComponent & ) = delete;
+  NewComponent( const NewComponent && ) = delete;
+  NewComponent & operator=( const NewComponent & ) = delete;
+  NewComponent & operator=( const NewComponent && ) = delete;
 };
 
 } /* namespace geos */

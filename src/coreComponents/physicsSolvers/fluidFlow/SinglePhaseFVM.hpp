@@ -115,7 +115,7 @@ public:
   /**
    * @copydoc SolverBase::getCatalogName()
    */
-  string getCatalogName() const override  { return catalogName(); }
+  string getCatalogName() const override { return catalogName(); }
 
   /**
    * @defgroup Solver Interface Function

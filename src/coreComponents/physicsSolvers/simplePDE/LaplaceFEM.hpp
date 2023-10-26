@@ -46,7 +46,7 @@ public:
   /**
    * @copydoc SolverBase::getCatalogName()
    */
-  string getCatalogName() const override  { return catalogName(); }
+  string getCatalogName() const override { return catalogName(); }
 
 //END_SPHINX_INCLUDE_BEGINCLASS
 // /**

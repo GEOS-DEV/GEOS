@@ -64,7 +64,7 @@ public:
   /**
    * @copydoc SolverBase::getCatalogName()
    */
-  string getCatalogName() const override  { return catalogName(); }
+  string getCatalogName() const override { return catalogName(); }
 
   /**
    * @brief accessor for the pointer to the proppant transport solver

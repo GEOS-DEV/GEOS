@@ -62,7 +62,7 @@ public:
   /**
    * @copydoc SolverBase::getCatalogName()
    */
-  string getCatalogName() const override  { return catalogName(); }
+  string getCatalogName() const override { return catalogName(); }
 
   virtual void registerDataOnMesh( Group & MeshBody ) override final;
 
