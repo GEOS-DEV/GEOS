@@ -471,16 +471,16 @@ real64 CompositionalMultiphaseFVM::scalingForSystemSolution( DomainPartition & d
 
   string const massUnit = m_useMass ? "kg/m3" : "mol/m3";
   GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "        {}: Max pressure change: {} Pa (before scaling)",
-                                      getName(), fmt::format( "{:.{}f}", maxDeltaPres, 3 ) ) );
+                                      getName(), GEOS_FMT( "{:.{}f}", maxDeltaPres, 3 ) ) );
   GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "        {}: Max component density change: {} {} (before scaling)",
-                                      getName(), fmt::format( "{:.{}f}", maxDeltaCompDens, 3 ), massUnit ) );
+                                      getName(), GEOS_FMT( "{:.{}f}", maxDeltaCompDens, 3 ), massUnit ) );
 
   if( m_isThermal )
   {
     maxDeltaTemp = MpiWrapper::max( maxDeltaTemp );
     minTempScalingFactor = MpiWrapper::min( minTempScalingFactor );
     GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "        {}: Max temperature change: {} K (before scaling)",
-                                        getName(), fmt::format( "{:.{}f}", maxDeltaTemp, 3 ) ) );
+                                        getName(), GEOS_FMT( "{:.{}f}", maxDeltaTemp, 3 ) ) );
   }
 
   if( m_scalingType == ScalingType::Local )

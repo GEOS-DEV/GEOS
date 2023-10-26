@@ -282,7 +282,7 @@ void MultiphasePoromechanics::updateState( DomainPartition & domain )
   } );
 
   GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "        {}: Max phase volume fraction change: {}",
-                                      getName(), fmt::format( "{:.{}f}", maxDeltaPhaseVolFrac, 2 ) ) );
+                                      getName(), GEOS_FMT( "{:.{}f}", maxDeltaPhaseVolFrac, 2 ) ) );
 }
 
 void MultiphasePoromechanics::initializePostInitialConditionsPreSubGroups()

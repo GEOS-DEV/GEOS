@@ -1993,15 +1993,15 @@ real64 CompositionalMultiphaseBase::setNextDtBasedOnStateChange( real64 const & 
   maxAbsolutePhaseVolFracChange = MpiWrapper::max( maxAbsolutePhaseVolFracChange );
 
   GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "{}: Max relative pressure change during time step: {} %",
-                                      getName(), fmt::format( "{:.{}f}", 100*maxRelativePresChange, 3 ) ) );
+                                      getName(), GEOS_FMT( "{:.{}f}", 100*maxRelativePresChange, 3 ) ) );
   GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "{}: Max absolute phase volume fraction change during time step: {}",
-                                      getName(), fmt::format( "{:.{}f}", maxAbsolutePhaseVolFracChange, 3 ) ) );
+                                      getName(), GEOS_FMT( "{:.{}f}", maxAbsolutePhaseVolFracChange, 3 ) ) );
 
   if( m_isThermal )
   {
     maxRelativeTempChange = MpiWrapper::max( maxRelativeTempChange );
     GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "{}: Max relative temperature change during time step: {} %",
-                                        getName(), fmt::format( "{:.{}f}", 100*maxRelativeTempChange, 3 ) ) );
+                                        getName(), GEOS_FMT( "{:.{}f}", 100*maxRelativeTempChange, 3 ) ) );
   }
 
   real64 const eps = LvArray::NumericLimits< real64 >::epsilon;
