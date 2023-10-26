@@ -20,8 +20,7 @@
 #define GEOS_CONSTITUTIVE_FLUID_MULTIFLUID_PVTDRIVERRUNTEST_HPP_
 
 #include "PVTDriver.hpp"
-
-#include "constitutive/fluid/multifluid/Layouts.hpp"
+#include "constitutive/fluid/multifluid/MultiFluidBase.hpp"
 
 namespace geos
 {
@@ -75,29 +74,24 @@ void PVTDriver::runTest( FLUID_TYPE & fluid, arrayView2d< real64 > const & table
   using ExecPolicy = typename FLUID_TYPE::exec_policy;
   forAll< ExecPolicy >( composition.size( 0 ),
                         [numPhases, numComponents, numSteps, kernelWrapper, table, composition,
-                         molarWeights=componentMolarWeights.toViewConst(),
                          outputCompressibility=m_outputCompressibility,
                          outputPhaseComposition=m_outputPhaseComposition]
                         GEOS_HOST_DEVICE ( localIndex const i )
   {
-    constexpr real64 epsilon = LvArray::NumericLimits< real64 >::epsilon;
-
-    // Pressure derivative index
-    constexpr integer dPIndex = constitutive::multifluid::DerivativeOffset::dP;
-
     // Index for start of phase properties
     integer const PHASE = outputCompressibility != 0 ? TEMP + 3 : TEMP + 2;
+
+    // Temporary space for phase mole fractions
+    stackArray1d< real64, constitutive::MultiFluidBase::MAX_NUM_COMPONENTS > phaseComposition( numComponents );
 
     for( integer n = 0; n <= numSteps; ++n )
     {
       kernelWrapper.update( i, 0, table( n, PRES ), table( n, TEMP ), composition[i] );
-      real64 const totalDensity = kernelWrapper.totalDensity()( i, 0 );
-      table( n, TEMP + 1 ) = totalDensity;
+      table( n, TEMP + 1 ) = kernelWrapper.totalDensity()( i, 0 );
 
       if( outputCompressibility != 0 )
       {
-        real64 compressibility = kernelWrapper.dTotalDensity()( i, 0, dPIndex ) / totalDensity;
-        table( n, TEMP + 2 ) =  LvArray::math::max( 0.0, compressibility );
+        table( n, TEMP + 2 ) = kernelWrapper.totalCompressibility( i, 0 );
       }
 
       for( integer p = 0; p < numPhases; ++p )
@@ -112,20 +106,10 @@ void PVTDriver::runTest( FLUID_TYPE & fluid, arrayView2d< real64 > const & table
         {
           integer const compStartIndex = PHASE + 3 * numPhases + p * numComponents;
 
-          // Convert mass fractions to molar fractions
-          real64 molarSum = 0.0;
+          kernelWrapper.phaseCompMoleFraction( i, 0, p, phaseComposition );
           for( integer ic = 0; ic < numComponents; ++ic )
           {
-            real64 const massFraction = kernelWrapper.phaseCompFraction()( i, 0, p, ic );
-            table( n, compStartIndex + ic ) = massFraction / molarWeights[ic];
-            molarSum += table( n, compStartIndex + ic );
-          }
-
-          real64 const invMolarSum = epsilon < molarSum ? 1.0/molarSum : 0.0;
-
-          for( integer ic = 0; ic < numComponents; ++ic )
-          {
-            table( n, compStartIndex + ic ) *= invMolarSum;
+            table( n, compStartIndex + ic ) = phaseComposition[ic];
           }
         }
       }

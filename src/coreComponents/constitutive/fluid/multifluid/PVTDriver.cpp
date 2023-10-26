@@ -25,6 +25,7 @@
 #include "fileIO/Outputs/OutputBase.hpp"
 #include "functions/FunctionManager.hpp"
 #include "functions/TableFunction.hpp"
+#include "codingUtilities/StringUtilities.hpp"
 
 #include <fstream>
 
@@ -236,20 +237,24 @@ void PVTDriver::outputResults()
   {
     fprintf( fp, "# column %d = total compressibility\n", ++columnIndex );
   }
-  fprintf( fp, "# columns %d-%d = phase fractions\n", columnIndex+1, columnIndex + m_numPhases );
+
+  auto const phaseNames = getFluid().phaseNames();
+  string const joinedPhaseNames = stringutilities::join( phaseNames, ", " );
+
+  fprintf( fp, "# columns %d-%d = phase fractions [%s]\n", columnIndex+1, columnIndex + m_numPhases, joinedPhaseNames.c_str() );
   columnIndex += m_numPhases;
-  fprintf( fp, "# columns %d-%d = phase densities\n", columnIndex+1, columnIndex + m_numPhases );
+  fprintf( fp, "# columns %d-%d = phase densities [%s]\n", columnIndex+1, columnIndex + m_numPhases, joinedPhaseNames.c_str() );
   columnIndex += m_numPhases;
-  fprintf( fp, "# columns %d-%d = phase viscosities\n", columnIndex+1, columnIndex + m_numPhases );
+  fprintf( fp, "# columns %d-%d = phase viscosities [%s]\n", columnIndex+1, columnIndex + m_numPhases, joinedPhaseNames.c_str() );
   columnIndex += m_numPhases;
 
   if( m_outputPhaseComposition != 0 )
   {
-    auto const phaseNames = getFluid().phaseNames();
+    string const componentNames = stringutilities::join( getFluid().componentNames(), ", " );
     for( integer ip = 0; ip < m_numPhases; ++ip )
     {
-      fprintf( fp, "# columns %d-%d = %s phase fractions\n", columnIndex+1, columnIndex + m_numComponents,
-               phaseNames[ip].c_str() );
+      fprintf( fp, "# columns %d-%d = %s phase fractions [%s]\n", columnIndex+1, columnIndex + m_numComponents,
+               phaseNames[ip].c_str(), componentNames.c_str() );
       columnIndex += m_numComponents;
     }
   }
