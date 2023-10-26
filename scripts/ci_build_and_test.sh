@@ -19,9 +19,17 @@ BUILD_DIR_MOUNT_POINT=/tmp/GEOSX
 # We need to keep track of the building container (hence the `CONTAINER_NAME`)
 # so we can extract the data from it later (if needed). Another solution would have been to use a mount point,
 # but that would not have solved the problem for the TPLs (we would require extra action to copy them to the mount point).
-CONTAINER_NAME=geosx_build
+
+# we also need to clean this container if it already exists.
+SPLIT_DOCKER_REPOSITORY=(${DOCKER_REPOSITORY//:/ })
+CONTAINER_NAME=geosx_build_${SPLIT_DOCKER_REPOSITORY[1]}_${GEOSX_TPL_TAG}
+if [ "$(docker ps -aq -f name=${CONTAINER_NAME})" ]; then
+  docker rm -f ${CONTAINER_NAME}
+fi
+
 # Now we can build GEOSX.
 docker run \
+  ${DOCKER_RUN_ARGS} \
   --name=${CONTAINER_NAME} \
   --volume=${BUILD_DIR}:${BUILD_DIR_MOUNT_POINT} \
   --cap-add=ALL \

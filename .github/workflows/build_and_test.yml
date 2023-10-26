@@ -45,6 +45,7 @@ jobs:
       DOCKER_REPOSITORY: ${{ inputs.DOCKER_REPOSITORY }}
       CMAKE_BUILD_TYPE: ${{ inputs.CMAKE_BUILD_TYPE }}
       BUILD_AND_TEST_ARGS: ${{ inputs.BUILD_AND_TEST_ARGS }}
+      DOCKER_RUN_ARGS: ${{ inputs.DOCKER_RUN_ARGS }}
       ENABLE_HYPRE: ${{ inputs.ENABLE_HYPRE }}
       ENABLE_HYPRE_DEVICE: ${{ inputs.ENABLE_HYPRE_DEVICE }}
       ENABLE_TRILINOS: ${{ inputs.ENABLE_TRILINOS }}

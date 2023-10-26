@@ -198,6 +198,7 @@ jobs:
             OS: self-hosted
             CMAKE_BUILD_TYPE: Debug
             BUILD_AND_TEST_ARGS: "--disable-unit-tests --build-exe-only --disable-schema-deployment"
+            DOCKER_RUN_ARGS: "--cpus=4 --memory=16g"
             ENABLE_HYPRE: ON
             ENABLE_HYPRE_DEVICE: CUDA
             ENABLE_TRILINOS: OFF
@@ -207,6 +208,7 @@ jobs:
             OS: self-hosted
             CMAKE_BUILD_TYPE: Release
             BUILD_AND_TEST_ARGS: "--disable-unit-tests --disable-schema-deployment"
+            DOCKER_RUN_ARGS: "--cpus=4 --memory=16g"
             ENABLE_HYPRE: ON
             ENABLE_HYPRE_DEVICE: CUDA
             ENABLE_TRILINOS: OFF
@@ -216,6 +218,7 @@ jobs:
             OS: self-hosted
             CMAKE_BUILD_TYPE: Release
             BUILD_AND_TEST_ARGS: "--disable-unit-tests --disable-schema-deployment"
+            DOCKER_RUN_ARGS: "--cpus=4 --memory=16g"
 
           # Matrix job that deploys to Google Cloud
           - name: Pecan GPU (centos 7.7, gcc 8.2.0, open-mpi 4.0.1, mkl 2019.5, cuda 11.5.119)
@@ -223,6 +226,7 @@ jobs:
             OS: self-hosted
             CMAKE_BUILD_TYPE: Release
             BUILD_AND_TEST_ARGS: "--build-exe-only --disable-unit-tests --disable-schema-deployment"
+            DOCKER_RUN_ARGS: "--cpus=4 --memory=16g"
             HOST_CONFIG: host-configs/TOTAL/pecan-GPU.cmake
             GCP_BUCKET: geosx/Pecan-GPU
     uses: ./.github/workflows/build_and_test.yml
@@ -231,6 +235,7 @@ jobs:
       DOCKER_REPOSITORY: ${{ matrix.DOCKER_REPOSITORY }}
       CMAKE_BUILD_TYPE: ${{ matrix.CMAKE_BUILD_TYPE }}
       BUILD_AND_TEST_ARGS: ${{ matrix.BUILD_AND_TEST_ARGS }}
+      DOCKER_RUN_ARGS: ${{ matrix.DOCKER_RUN_ARGS }}
       HOST_CONFIG: ${{ matrix.HOST_CONFIG }}
       ENABLE_HYPRE: ${{ matrix.ENABLE_HYPRE }}
       ENABLE_HYPRE_DEVICE: ${{ matrix.ENABLE_HYPRE_DEVICE }}
