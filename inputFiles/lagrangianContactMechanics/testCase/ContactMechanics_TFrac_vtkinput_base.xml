@@ -40,14 +40,6 @@
         krylovTol="1.0e-10"
         logLevel="0"/>
     </SolidMechanics_LagrangianFEM>
-
-    <SurfaceGenerator
-      name="SurfaceGen"
-      logLevel="0"
-      fractureRegion="Fracture"
-      targetRegions="{ Region }"
-      rockToughness="1.0e6"
-      mpiCommOrder="1"/>
   <!-- SPHINX_SOLVER_END -->
   </Solvers>
 
@@ -181,12 +173,12 @@
   <Tasks>
     <PackCollection
       name="tractionCollection"
-      objectPath="ElementRegions/Fracture/faceElementSubRegion"
+      objectPath="ElementRegions/Fracture/fracture"
       fieldName="traction"/>
 
     <PackCollection
       name="displacementJumpCollection"
-      objectPath="ElementRegions/Fracture/faceElementSubRegion"
+      objectPath="ElementRegions/Fracture/fracture"
       fieldName="displacementJump"/>
   </Tasks>
   <!-- SPHINX_TASKS_END -->
