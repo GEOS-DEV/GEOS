@@ -20,6 +20,7 @@
 
 #include "constitutive/fluid/multifluid/CO2Brine/functions/SpanWagnerCO2Density.hpp"
 #include "functions/FunctionManager.hpp"
+#include "common/Units.hpp"
 
 namespace geos
 {
@@ -51,7 +52,7 @@ void fenghourCO2ViscosityFunction( real64 const & temperatureCent,
   constexpr real64 vcrit = 0.0;
 
   // temperature in Kelvin
-  real64 const temperatureKelvin = temperatureCent + 273.15;
+  real64 const temperatureKelvin = units::convertCToK( temperatureCent );
   // equation (5) of Fenghour and Wakeham (1998)
   real64 const Tred = temperatureKelvin * esparInv;
   real64 const x = log( Tred );
@@ -123,8 +124,9 @@ TableFunction const * makeViscosityTable( string_array const & inputParams,
   else
   {
     TableFunction * const viscosityTable = dynamicCast< TableFunction * >( functionManager.createChild( "TableFunction", tableName ) );
-    viscosityTable->setTableCoordinates( tableCoords.getCoords() );
-    viscosityTable->setTableValues( viscosity );
+    viscosityTable->setTableCoordinates( tableCoords.getCoords(),
+                                         { units::Pressure, units::TemperatureInC } );
+    viscosityTable->setTableValues( viscosity, units::Viscosity );
     viscosityTable->setInterpolationMethod( TableFunction::InterpolationType::Linear );
     return viscosityTable;
   }
@@ -141,6 +143,13 @@ FenghourCO2Viscosity::FenghourCO2Viscosity( string const & name,
                      componentMolarWeight )
 {
   m_CO2ViscosityTable = makeViscosityTable( inputParams, m_functionName, FunctionManager::getInstance() );
+}
+
+void FenghourCO2Viscosity::checkTablesParameters( real64 const pressure,
+                                                  real64 const temperature ) const
+{
+  m_CO2ViscosityTable->checkCoord( pressure, 0 );
+  m_CO2ViscosityTable->checkCoord( temperature, 1 );
 }
 
 FenghourCO2Viscosity::KernelWrapper

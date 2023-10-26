@@ -18,6 +18,7 @@
 
 #include "constitutive/fluid/multifluid/reactive/chemicalReactions/KineticReactions.hpp"
 #include "functions/FunctionManager.hpp"
+#include "common/Units.hpp"
 
 namespace geos
 {
@@ -194,7 +195,7 @@ void KineticReactions::KernelWrapper::computeReactionRates( real64 const & tempe
    //   // dissolving/precipitating. Not sure why porosity is included.
    //   real64 S = surfaceArea0[ir] * pow( volumeFraction[ir] / volumeFraction0[ir], 2.0/3.0 ) * pow( porosity / porosity0, 2.0/3.0 );
    //   // computing the rate at the correct temperature. Looks like EQ36 database has it at 298.15 K
-   //   real64 rateTemp = exp( -kineticReaction.E / RConst * (1.0 / (temperature + 273.15) - 1.0 / 298.15));
+   //   real64 rateTemp = exp( -kineticReaction.E / RConst * (1.0 / units::convertCToK( temperature ) - 1.0 / 298.15));
    //   real64 SS = (pow( 10.0, SIndex ) - 1.0);
    //   kineticReactionRate[ir] = S * kineticReaction.rateConst * rateTemp * SS;
    //}

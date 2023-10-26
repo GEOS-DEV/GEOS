@@ -2,8 +2,8 @@
 # Specify all headers
 #
 set( math_headers
-  	 interpolation/Interpolation.hpp
-	 extrapolation/Extrapolation.hpp)
+     interpolation/Interpolation.hpp
+     extrapolation/Extrapolation.hpp)
 
 blt_add_library( NAME         math
                  SOURCES               

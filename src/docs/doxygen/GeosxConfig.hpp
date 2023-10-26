@@ -30,7 +30,7 @@
 #define GEOSX_USE_MPI
 
 /// Enables use of OpenMP (CMake option ENABLE_OPENMP)
-#define GEOSX_USE_OPENMP
+/* #undef GEOSX_USE_OPENMP */
 
 /// Enables use of CUDA (CMake option ENABLE_CUDA)
 /* #undef GEOS_USE_CUDA */
@@ -171,7 +171,7 @@
 #define fmt_VERSION 10.0.0
 
 /// Version information for python
-#define Python3_VERSION 3.10.8
+#define Python3_VERSION 3.9.13
 
 /// Version information for CUDAToolkit
 /* #undef CUDAToolkit_VERSION */
