@@ -188,6 +188,7 @@ public:
     static constexpr char const * massString() { return "mass"; }
     static constexpr char const * materialVolumeString() { return "materialVolume"; }
     static constexpr char const * velocityString() { return "velocity"; }
+    static constexpr char const * dVelocityString() { return "dVelocity"; }
     static constexpr char const * momentumString() { return "momentum"; }
     static constexpr char const * accelerationString() { return "acceleration"; }
     static constexpr char const * forceContactString() { return "contactForce"; }
@@ -236,6 +237,7 @@ public:
 
   void singleFaceVectorFieldSymmetryBC( const int face,
                                         arrayView3d< real64 > const & vectorMultiField,
+                                        arrayView3d< real64 > const & dVectorMultiField,
                                         arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const gridPosition,
                                         Group & nodeSets );
 
