@@ -11,9 +11,16 @@
 #------------------------------------------------------------------------------------------------------------
 
 # geosx@develop%clang@10.0.1+cuda cuda_arch=70 ^cuda@11.8.0+allow-unsupported-compilers
+# geosx@develop%gcc@8.3.1+cuda cuda_arch=70 ^cuda@11.8.0+allow-unsupported-compilers
+# geosx@develop%clang@13.0.1+cuda cuda_arch=70 ^cuda@11.8.0+allow-unsupported-compilers
 #
 # Uberenv command to build geos dependencies:
 # python3 ./scripts/uberenv/uberenv.py --spec="%clang@10.0.1+cuda~uncrustify cuda_arch=70 ^cuda@11.8.0+allow-unsupported-compilers"
+#
+# python3 ./scripts/uberenv/uberenv.py --spec="%gcc@8.3.1+cuda~uncrustify cuda_arch=70 ^cuda@11.8.0+allow-unsupported-compilers"
+#
+# python3 ./scripts/uberenv/uberenv.py --spec="%clang@13.0.1+cuda~uncrustify cuda_arch=70 ^cuda@11.8.0+allow-unsupported-compilers"
+
 
 spack:
   config:
@@ -48,8 +55,8 @@ spack:
       paths:
         cc: /usr/tce/packages/clang/clang-13.0.1-gcc-8.3.1/bin/clang
         cxx: /usr/tce/packages/clang/clang-13.0.1-gcc-8.3.1/bin/clang++
-        f77: /usr/tce/packages/xl/xl-2022.08.19-cuda-11.8.0/bin/xlf_r
-        fc: /usr/tce/packages/xl/xl-2022.08.19-cuda-11.8.0/bin/xlf_r
+        f77: /usr/tce/packages/gcc/gcc-8.3.1/bin/gfortran
+        fc: /usr/tce/packages/gcc/gcc-8.3.1/bin/gfortran
       flags: {}
       operating_system: rhel7
       target: ppc64le

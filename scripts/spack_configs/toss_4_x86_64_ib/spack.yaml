@@ -11,9 +11,12 @@
 #------------------------------------------------------------------------------------------------------------
 
 # geosx@develop%clang@14.0.6
+# geosx@develop%gcc@12.1.1
 #
 # Uberenv command to build pygeosx dependencies:
 # python3 ./scripts/uberenv/uberenv.py --spec="%clang@14.0.6 +docs"
+#
+# python3 ./scripts/uberenv/uberenv.py --spec="%gcc@12.1.1 +docs"
 
 spack:
   config:
@@ -123,7 +126,9 @@ spack:
       buildable: False
       externals:
       - spec: python@3.10.8
-        prefix: /usr/tce/packages/python/python-3.10.8/
+        prefix: /usr/gapps/GEOSX/thirdPartyLibs/python/quartz-gcc-python/python/
+    # This needs to be the prefix to the pygeosx LC installation
+    # or system install with pygeosx dependencies
     py-sphinx:
       buildable: False
       externals:
