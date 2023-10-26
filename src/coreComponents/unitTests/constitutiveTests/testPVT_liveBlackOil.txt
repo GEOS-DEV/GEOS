@@ -6,9 +6,9 @@
 # columns 6-8 = phase fractions
 # columns 9-11 = phase densities
 # columns 12-14 = phase viscosities
-# columns 15-17 = oil phase fractions
-# columns 18-20 = gas phase fractions
-# columns 21-23 = water phase fractions
+# columns 15-17 = oil phase fractions [oil, gas, water]
+# columns 18-20 = gas phase fractions [oil, gas, water]
+# columns 21-23 = water phase fractions [oil, gas, water]
 0.0000e+00 1.0000e+06 3.5000e+02 2.9619e+02 8.4674e-08 8.2133e-01 8.1900e-02 9.6774e-02 7.7373e+02 3.6930e+01 9.9758e+02 3.4095e-03 1.1639e-05 5.5146e-04 9.6531e-01 3.4688e-02 0.0000e+00 0.0000e+00 1.0000e+00 0.0000e+00 0.0000e+00 0.0000e+00 1.0000e+00 
 2.0408e-02 2.0000e+06 3.5000e+02 3.2258e+02 8.6002e-08 8.2591e-01 7.7314e-02 9.6774e-02 7.7048e+02 4.0037e+01 9.9791e+02 3.3421e-03 1.1904e-05 5.5146e-04 9.2944e-01 7.0564e-02 0.0000e+00 0.0000e+00 1.0000e+00 0.0000e+00 0.0000e+00 0.0000e+00 1.0000e+00 
 4.0816e-02 3.0000e+06 3.5000e+02 3.5174e+02 8.6996e-08 8.3050e-01 7.2727e-02 9.6774e-02 7.6729e+02 4.3714e+01 9.9824e+02 3.2747e-03 1.2169e-05 5.5146e-04 8.9613e-01 1.0387e-01 0.0000e+00 0.0000e+00 1.0000e+00 0.0000e+00 0.0000e+00 0.0000e+00 1.0000e+00 

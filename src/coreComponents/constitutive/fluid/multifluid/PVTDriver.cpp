@@ -239,13 +239,12 @@ void PVTDriver::outputResults()
   }
 
   auto const phaseNames = getFluid().phaseNames();
-  string const joinedPhaseNames = stringutilities::join( phaseNames, ", " );
 
-  fprintf( fp, "# columns %d-%d = phase fractions [%s]\n", columnIndex+1, columnIndex + m_numPhases, joinedPhaseNames.c_str() );
+  fprintf( fp, "# columns %d-%d = phase fractions\n", columnIndex+1, columnIndex + m_numPhases );
   columnIndex += m_numPhases;
-  fprintf( fp, "# columns %d-%d = phase densities [%s]\n", columnIndex+1, columnIndex + m_numPhases, joinedPhaseNames.c_str() );
+  fprintf( fp, "# columns %d-%d = phase densities\n", columnIndex+1, columnIndex + m_numPhases );
   columnIndex += m_numPhases;
-  fprintf( fp, "# columns %d-%d = phase viscosities [%s]\n", columnIndex+1, columnIndex + m_numPhases, joinedPhaseNames.c_str() );
+  fprintf( fp, "# columns %d-%d = phase viscosities\n", columnIndex+1, columnIndex + m_numPhases );
   columnIndex += m_numPhases;
 
   if( m_outputPhaseComposition != 0 )

@@ -47,17 +47,10 @@ void PVTDriver::runTest( FLUID_TYPE & fluid, arrayView2d< real64 > const & table
   GEOS_ASSERT_EQ( numComponents, m_feed.size() );
   array2d< real64, compflow::LAYOUT_COMP > const compositionValues( 1, numComponents );
 
-  // extract the molecular weights
-  array1d< real64 > const componentMolarWeights( numComponents );
-  for( integer i = 0; i < numComponents; ++i )
-  {
-    componentMolarWeights[i] = fluid.componentMolarWeights()[i];
-  }
-
   real64 sum = 0.0;
   for( integer i = 0; i < numComponents; ++i )
   {
-    compositionValues[0][i] = m_feed[i] * componentMolarWeights[i];
+    compositionValues[0][i] = m_feed[i] * fluid.componentMolarWeights()[i];
     sum += compositionValues[0][i];
   }
   for( integer i = 0; i < numComponents; ++i )
