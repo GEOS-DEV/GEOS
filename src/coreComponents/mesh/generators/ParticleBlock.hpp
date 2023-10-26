@@ -157,6 +157,7 @@ public:
   /**
    * @brief Set the list of particle strength scale values in this subregion.
    * @param particleStrengthScale The input list of strength scale values
+   * @param particleDamage The input list of strength scale values
    */
   void setParticleStrengthScale( array1d< real64 > const particleStrengthScale )
   { m_particleStrengthScale = particleStrengthScale; }
