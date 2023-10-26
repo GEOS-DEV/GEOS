@@ -707,10 +707,9 @@ void FlowSolverBase::saveAquiferConvergedState( real64 const & time,
 
     if( bc.getLogLevel() >= 1 )
     {
-      //TODO: replace (this->)catalogName() to getCatalogName() in order to get the final class name.
       GEOS_LOG_RANK_0( GEOS_FMT( "{} {}: at time {}s, the "
                                  "boundary condition produces a flux of {} m3 through the {} {}.",
-                                 catalogName(), getName(), time + dt, dt * globalSumFluxes[aquiferIndex],
+                                 getCatalogName(), getName(), time + dt, dt * globalSumFluxes[aquiferIndex],
                                  AquiferBoundaryCondition::catalogName(), bc.getDataContext() ) );
     }
     bc.saveConvergedState( dt * globalSumFluxes[aquiferIndex] );

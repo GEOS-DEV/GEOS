@@ -250,8 +250,8 @@ assembleCouplingTerms( real64 const time_n,
   using COFFSET = singlePhaseWellKernels::ColOffset;
 
   GEOS_THROW_IF( !Base::m_isWellTransmissibilityComputed,
-                 GEOS_FMT( "{} `{}`: The well transmissibility has not been computed yet",
-                           catalogName(), this->getName() ),
+                 GEOS_FMT( "{} {}: The well transmissibility has not been computed yet",
+                           this->getCatalogName(), this->getDataContext() ),
                  std::runtime_error );
 
   this->template forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,

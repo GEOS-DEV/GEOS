@@ -281,7 +281,8 @@ void MultiphasePoromechanics::updateState( DomainPartition & domain )
     } );
   } );
 
-  GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "        {}: Max phase volume fraction change: {}", getName(), fmt::format( "{:.{}f}", maxDeltaPhaseVolFrac, 2 ) ) );
+  GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "        {}: Max phase volume fraction change: {}",
+                                      getName(), fmt::format( "{:.{}f}", maxDeltaPhaseVolFrac, 2 ) ) );
 }
 
 void MultiphasePoromechanics::initializePostInitialConditionsPreSubGroups()
@@ -298,20 +299,20 @@ void MultiphasePoromechanics::initializePostInitialConditionsPreSubGroups()
   {
     GEOS_THROW_IF( std::find( solidMechanicsTargetRegionNames.begin(), solidMechanicsTargetRegionNames.end(), poromechanicsTargetRegionNames[i] )
                    == solidMechanicsTargetRegionNames.end(),
-                   GEOS_FMT( "{} {}: region `{}` must be a target region of `{}`",
-                             catalogName(), getName(), poromechanicsTargetRegionNames[i], solidMechanicsSolver()->getName() ),
+                   GEOS_FMT( "{} {}: region {} must be a target region of {}",
+                             getCatalogName(), getDataContext(), poromechanicsTargetRegionNames[i], solidMechanicsSolver()->getDataContext() ),
                    InputError );
     GEOS_THROW_IF( std::find( flowTargetRegionNames.begin(), flowTargetRegionNames.end(), poromechanicsTargetRegionNames[i] )
                    == flowTargetRegionNames.end(),
-                   GEOS_FMT( "{} {}: region `{}` must be a target region of `{}`",
-                             catalogName(), getName(), poromechanicsTargetRegionNames[i], flowSolver()->getName() ),
+                   GEOS_FMT( "{} {}: region {} must be a target region of {}",
+                             getCatalogName(), getDataContext(), poromechanicsTargetRegionNames[i], flowSolver()->getDataContext() ),
                    InputError );
   }
 
   integer & isFlowThermal = flowSolver()->getReference< integer >( FlowSolverBase::viewKeyStruct::isThermalString() );
-  GEOS_LOG_RANK_0_IF( m_isThermal && !isFlowThermal,
-                      GEOS_FMT( "{} {}: The attribute `{}` of the flow solver `{}` is set to 1 since the poromechanics solver is thermal",
-                                catalogName(), getName(), FlowSolverBase::viewKeyStruct::isThermalString(), flowSolver()->getName() ) );
+  GEOS_WARNING_IF( m_isThermal && !isFlowThermal,
+                   GEOS_FMT( "{} {}: The attribute {} of the flow solver {} is set to 1 since the poromechanics solver is thermal",
+                             getCatalogName(), getDataContext(), FlowSolverBase::viewKeyStruct::isThermalString(), flowSolver()->getDataContext() ) );
   isFlowThermal = m_isThermal;
 
   if( m_isThermal )

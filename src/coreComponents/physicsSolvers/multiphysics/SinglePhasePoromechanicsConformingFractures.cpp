@@ -53,8 +53,11 @@ void SinglePhasePoromechanicsConformingFractures::initializePostInitialCondition
 
   integer const & isPoromechanicsSolverThermal = poromechanicsSolver()->getReference< integer >( SinglePhasePoromechanics::viewKeyStruct::isThermalString() );
 
-  GEOS_ERROR_IF( isPoromechanicsSolverThermal != m_isThermal, GEOS_FMT( "{} {}: The attribute `{}` of the poromechanics solver `{}` must be set to the same value as for this solver.",
-                                                                        catalogName(), getName(), SinglePhasePoromechanics::viewKeyStruct::isThermalString(), poromechanicsSolver()->getName() ) );
+  GEOS_ERROR_IF( isPoromechanicsSolverThermal != m_isThermal,
+                 GEOS_FMT( "{} {}: The attribute `{}` of the poromechanics solver {} must be set to the same value as for this solver.",
+                           getCatalogName(), getDataContext(),
+                           SinglePhasePoromechanics::viewKeyStruct::isThermalString(),
+                           poromechanicsSolver()->getDataContext() ) );
 }
 
 void SinglePhasePoromechanicsConformingFractures::setupCoupling( DomainPartition const & domain,

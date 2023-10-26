@@ -139,7 +139,7 @@ void SinglePhasePoromechanics::initializePreSubGroups()
       porousName = getConstitutiveName< CoupledSolidBase >( subRegion );
       GEOS_THROW_IF( porousName.empty(),
                      GEOS_FMT( "{} {} : Solid model not found on subregion {}",
-                               catalogName(), getDataContext().toString(), subRegion.getName() ),
+                               getCatalogName(), getDataContext().toString(), subRegion.getName() ),
                      InputError );
 
       if( subRegion.hasField< fields::poromechanics::bulkDensity >() )
@@ -195,16 +195,16 @@ void SinglePhasePoromechanics::initializePostInitialConditionsPreSubGroups()
   {
     GEOS_THROW_IF( std::find( flowTargetRegionNames.begin(), flowTargetRegionNames.end(), poromechanicsTargetRegionNames[i] )
                    == flowTargetRegionNames.end(),
-                   GEOS_FMT( "{} {}: region `{}` must be a target region of `{}`",
-                             catalogName(), getName(), poromechanicsTargetRegionNames[i], flowSolver()->getName() ),
+                   GEOS_FMT( "{} {}: region `{}` must be a target region of {}",
+                             getCatalogName(), getDataContext(), poromechanicsTargetRegionNames[i], flowSolver()->getDataContext() ),
                    InputError );
   }
 
   integer & isFlowThermal = flowSolver()->getReference< integer >( FlowSolverBase::viewKeyStruct::isThermalString() );
   GEOS_LOG_RANK_0_IF( m_isThermal && !isFlowThermal,
-                      GEOS_FMT( "{} {}: The attribute `{}` of the flow solver `{}` is set to 1 since the poromechanics solver is thermal",
-                                catalogName(), getDataContext().toString(),
-                                FlowSolverBase::viewKeyStruct::isThermalString(), flowSolver()->getName() ) );
+                      GEOS_FMT( "{} {}: The attribute `{}` of the flow solver {} is set to 1 since the poromechanics solver is thermal",
+                                getCatalogName(), getDataContext(),
+                                FlowSolverBase::viewKeyStruct::isThermalString(), flowSolver()->getDataContext() ) );
   isFlowThermal = m_isThermal;
 
   if( m_isThermal )
