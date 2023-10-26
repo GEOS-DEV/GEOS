@@ -43,6 +43,10 @@ public:
   /// "CatalogName()" return the string used as XML tag in the input file.  It ties the XML tag with
   /// this C++ classes. This is important.
   static string catalogName() { return "LaplaceFEM"; }
+  /**
+   * @copydoc SolverBase::getCatalogName()
+   */
+  string getCatalogName() const override  { return catalogName(); }
 
 //END_SPHINX_INCLUDE_BEGINCLASS
 // /**

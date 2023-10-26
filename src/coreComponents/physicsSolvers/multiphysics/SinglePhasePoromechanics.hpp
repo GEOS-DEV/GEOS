@@ -63,6 +63,10 @@ public:
    * @return string that contains the catalog name to generate a new SinglePhasePoromechanics object through the object catalog.
    */
   static string catalogName() { return "SinglePhasePoromechanics"; }
+  /**
+   * @copydoc SolverBase::getCatalogName()
+   */
+  string getCatalogName() const override  { return catalogName(); }
 
   /**
    * @brief accessor for the pointer to the solid mechanics solver

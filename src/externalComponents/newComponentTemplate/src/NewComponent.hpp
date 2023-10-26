@@ -37,7 +37,7 @@ public:
   virtual ~NewComponent() override;
 
   static string catalogName() { return "NewComponent"; }
-
+  string getCatalogName() const override  { return catalogName(); }
 
   virtual real64 SolverStep( real64 const& time_n,
                          real64 const& dt,

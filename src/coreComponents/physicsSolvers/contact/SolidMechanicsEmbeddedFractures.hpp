@@ -44,6 +44,10 @@ public:
   {
     return "SolidMechanicsEmbeddedFractures";
   }
+  /**
+   * @copydoc SolverBase::getCatalogName()
+   */
+  string getCatalogName() const override  { return catalogName(); }
 
   virtual void registerDataOnMesh( dataRepository::Group & meshBodies ) override final;
 

@@ -68,6 +68,10 @@ public:
    * @return string that contains the catalog name to generate a new object through the object catalog.
    */
   static string catalogName() { return "CompositionalMultiphaseHybridFVM"; }
+  /**
+   * @copydoc SolverBase::getCatalogName()
+   */
+  string getCatalogName() const override  { return catalogName(); }
 
   virtual void registerDataOnMesh( Group & MeshBodies ) override;
 

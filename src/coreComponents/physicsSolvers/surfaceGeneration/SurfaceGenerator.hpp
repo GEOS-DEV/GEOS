@@ -65,6 +65,10 @@ public:
 
 
   static string catalogName() { return "SurfaceGenerator"; }
+  /**
+   * @copydoc SolverBase::getCatalogName()
+   */
+  string getCatalogName() const override  { return catalogName(); }
 
   virtual void registerDataOnMesh( Group & MeshBody ) override final;
 

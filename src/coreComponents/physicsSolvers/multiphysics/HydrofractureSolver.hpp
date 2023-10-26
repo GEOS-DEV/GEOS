@@ -68,6 +68,10 @@ public:
   ~HydrofractureSolver() override {}
 
   static string catalogName();
+  /**
+   * @copydoc SolverBase::getCatalogName()
+   */
+  string getCatalogName() const override  { return catalogName(); }
 
   /// String used to form the solverName used to register solvers in CoupledSolver
   static string coupledSolverAttributePrefix() { return "poromechanics"; }

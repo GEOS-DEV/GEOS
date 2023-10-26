@@ -44,6 +44,10 @@ public:
   virtual ~ElasticFirstOrderWaveEquationSEM() override;
 
   static string catalogName() { return "ElasticFirstOrderSEM"; }
+  /**
+   * @copydoc SolverBase::getCatalogName()
+   */
+  string getCatalogName() const override  { return catalogName(); }
 
   virtual void initializePreSubGroups() override;
 
