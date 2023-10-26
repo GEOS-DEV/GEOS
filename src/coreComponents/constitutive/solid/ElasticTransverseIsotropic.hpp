@@ -150,7 +150,7 @@ public:
   GEOS_HOST_DEVICE
   virtual real64 getShearModulus( localIndex const k ) const override final
   {
-    return (m_c44[k] + 2*m_c66[k]) / 3.0;
+    return std::max( m_c44[k], m_c66[k] );
   }
 
 
