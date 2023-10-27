@@ -38,8 +38,8 @@ string toLower( string const & input )
   return output;
 }
 
-string trim( string const & str,
-             string const & charsToRemove )
+string_view trim( string_view str,
+                  string_view charsToRemove )
 {
   std::size_t const first = str.find_first_not_of( charsToRemove );
   if( first != string::npos )
@@ -49,7 +49,7 @@ string trim( string const & str,
   }
   return {};
 }
-string trimSpaces( string const & str )
+string_view trimSpaces( string_view str )
 {
   return trim( str, " \f\n\r\t\v" );
 }

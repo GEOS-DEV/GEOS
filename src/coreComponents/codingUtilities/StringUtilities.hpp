@@ -164,15 +164,15 @@ CONTAINER< string > tokenizeBySpaces( string const & str )
  * @param[in] charsToRemove the list of characters to remove
  * @return the trimmed string
  */
-string trim( string const & str,
-             string const & charsToRemove );
+string_view trim( string_view str,
+                  string_view charsToRemove );
 
 /**
  * @brief Trim the string so it does not starts nor ends with any whitespaces
  * @param[in] str the string to trim
  * @return the trimmed string
  */
-string trimSpaces( string const & str );
+string_view trimSpaces( string_view str );
 
 /**
  * @brief Search for a string in the line, and return the line truncated before the string
