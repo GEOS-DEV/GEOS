@@ -1269,11 +1269,9 @@ void VTKPolyDataWriterInterface::write( real64 const time,
                                         integer const cycle,
                                         DomainPartition const & domain )
 {
-  // This guard prevents crashes observed on MacOS due to a floating point exception
+  // This guard prevents crashes due to a floating point exception (SIGFPE)
   // triggered inside VTK by a progress indicator
-#if defined(__APPLE__) && defined(__MACH__)
   LvArray::system::FloatingPointExceptionGuard guard;
-#endif
 
   string const stepSubDir = joinPath( m_outputName, getCycleSubFolder( cycle ) );
   string const stepSubDirFull = joinPath( m_outputDir, stepSubDir );
