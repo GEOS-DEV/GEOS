@@ -203,6 +203,9 @@ public:
     static constexpr char const * boundaryNodesString() { return "boundaryNodes"; }
     static constexpr char const * bufferNodesString() { return "bufferNodes"; }
 
+    static constexpr char const * vPlusString() { return "vPlus"; }
+    static constexpr char const * dVPlusString() { return "dVPlus"; }
+
     dataRepository::ViewKey timeIntegrationOption = { timeIntegrationOptionString() };
   } solidMechanicsViewKeys;
 
@@ -385,7 +388,9 @@ public:
 
   void gridToParticle( real64 dt,
                        ParticleManager & particleManager,
-                       NodeManager & nodeManager );
+                       NodeManager & nodeManager,
+                       DomainPartition & domain, 
+                       MeshLevel & mesh );
 
   void performFLIPUpdate( real64 dt,
                           ParticleManager & particleManager,
@@ -397,11 +402,15 @@ public:
 
   void performXPICUpdate( real64 dt,
                           ParticleManager & particleManager,
-                          NodeManager & nodeManager );
+                          NodeManager & nodeManager,
+                          DomainPartition & domain, 
+                          MeshLevel & mesh );
 
   void performFMPMUpdate( real64 dt,
                           ParticleManager & particleManager,
-                          NodeManager & nodeManager );
+                          NodeManager & nodeManager,
+                          DomainPartition & domain, 
+                          MeshLevel & mesh );
 
   void updateSolverDependencies( ParticleManager & particleManager );
 
@@ -422,7 +431,9 @@ public:
                                      real64 const & damageA,
                                      real64 const & damageB,
                                      real64 const & maxDamageA,
-                                     real64 const & maxDamageB );
+                                     real64 const & maxDamageB,
+                                     arraySlice1d< real64 const > const xA,
+                                     arraySlice1d< real64 const > const xB );
 
   void flagOutOfRangeParticles( ParticleManager & particleManager );
 
@@ -457,6 +468,8 @@ public:
 
   void correctParticleCentersAcrossPeriodicBoundaries( ParticleManager & particleManager,
                                                        SpatialPartition & partition );
+
+  void resetDeformationGradient( ParticleManager & particleManager );
 
   void unscaleCPDIVectors( ParticleManager & particleManager );
 
@@ -539,6 +552,7 @@ protected:
   int m_needsNeighborList;
   real64 m_neighborRadius;
   int m_binSizeMultiplier;
+  real64 m_thinFeatureDFGThreshold;
 
   int m_useDamageAsSurfaceFlag;
 
@@ -577,6 +591,7 @@ protected:
   int m_contactGapCorrection;
   // int m_directionalOverlapCorrection;
 
+  int m_resetDefGradForFullyDamagedParticles;
   int m_plotUnscaledParticles;
 
   real64 m_frictionCoefficient;

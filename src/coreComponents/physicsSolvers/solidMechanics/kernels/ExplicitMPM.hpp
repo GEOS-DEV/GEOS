@@ -32,6 +32,7 @@ namespace solidMechanicsMPMKernels
 
 using namespace constitutive;
 
+// CC: TODO should be moved to some other header that can be included in the SolidMechanicsMPM solver too, for now there is a copied separate function there for specific tasks
 // A helper function to calculate polar decomposition. TODO: Previously this was an LvArray method, hopefully it will be again someday.
 GEOS_HOST_DEVICE
 void polarDecomposition( real64 (& R)[3][3],
