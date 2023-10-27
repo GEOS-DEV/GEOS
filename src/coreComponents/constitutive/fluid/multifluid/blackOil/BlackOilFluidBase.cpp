@@ -82,10 +82,10 @@ BlackOilFluidBase::BlackOilFluidBase( string const & name,
   registerWrapper( "hydrocarbonPhaseOrder", &m_hydrocarbonPhaseOrder )
     .setSizedFromParent( 0 )
     .setRestartFlags( RestartFlags::NO_WRITE );
-  registerWrapper( "formationVolFactorTableWrappers", &m_formationVolFactorTables )
+  registerWrapper( "formationVolFactorTableWrappers", &m_formationVolFactorTableKernels )
     .setSizedFromParent( 0 )
     .setRestartFlags( RestartFlags::NO_WRITE );
-  registerWrapper( "viscosityTableWrappers", &m_viscosityTables )
+  registerWrapper( "viscosityTableWrappers", &m_viscosityTableKernels )
     .setSizedFromParent( 0 )
     .setRestartFlags( RestartFlags::NO_WRITE );
 }
@@ -141,14 +141,14 @@ void BlackOilFluidBase::fillHydrocarbonData( integer const ip,
 
   TableFunction & tablePVDX_B =
     dynamicCast< TableFunction & >( *functionManager.createChild( "TableFunction", formationVolFactorTableName ) );
-  tablePVDX_B.setTableCoordinates( pressureCoords );
-  tablePVDX_B.setTableValues( formationVolFactor );
+  tablePVDX_B.setTableCoordinates( pressureCoords, { units::Pressure } );
+  tablePVDX_B.setTableValues( formationVolFactor, units::Dimensionless );
   tablePVDX_B.setInterpolationMethod( TableFunction::InterpolationType::Linear );
 
   TableFunction & tablePVDX_visc =
     dynamicCast< TableFunction & >( *functionManager.createChild( "TableFunction", viscosityTableName ) );
-  tablePVDX_visc.setTableCoordinates( pressureCoords );
-  tablePVDX_visc.setTableValues( viscosity );
+  tablePVDX_visc.setTableCoordinates( pressureCoords, { units::Pressure } );
+  tablePVDX_visc.setTableValues( viscosity, units::Viscosity );
   tablePVDX_visc.setInterpolationMethod( TableFunction::InterpolationType::Linear );
 }
 
@@ -202,38 +202,78 @@ void BlackOilFluidBase::postProcessInput()
   {
     readInputDataFromPVTFiles();
   }
-
 }
 
 void BlackOilFluidBase::initializePostSubGroups()
 {
   MultiFluidBase::initializePostSubGroups();
+
+  {
+    FunctionManager const & functionManager = FunctionManager::getInstance();
+    for( integer IP_HDRINCL = 0; IP_HDRINCL < m_hydrocarbonPhaseOrder.size(); ++IP_HDRINCL )
+    {
+      // grab the tables by name from the function manager
+      TableFunction const & fvfTable = functionManager.getGroup< TableFunction const >( m_formationVolFactorTableNames[IP_HDRINCL] );
+      TableFunction const & viscosityTable = functionManager.getGroup< TableFunction const >( m_viscosityTableNames[IP_HDRINCL] );
+      // validate them, then add them in a list to create their table wrappers when needed
+      validateTable( fvfTable, false );
+      validateTable( viscosityTable, true );
+      m_formationVolFactorTables.emplace_back( &fvfTable );
+      m_viscosityTables.emplace_back( &viscosityTable );
+    }
+  }
+
   createAllKernelWrappers();
+}
+
+void BlackOilFluidBase::checkTablesParameters( real64 const pressure,
+                                               real64 const temperature ) const
+{
+  constexpr std::string_view errorMsg = "{} {}: {} table reading error for hydrocarbon phase {}.\n";
+
+  GEOS_UNUSED_VAR( temperature );
+
+  if( !m_checkPVTTablesRanges )
+  {
+    return;
+  }
+
+  for( integer iph = 0; iph < m_hydrocarbonPhaseOrder.size(); ++iph )
+  {
+    try
+    {
+      m_formationVolFactorTables[iph]->checkCoord( pressure, 0 );
+    } catch( SimulationError const & ex )
+    {
+      throw SimulationError( ex, GEOS_FMT( errorMsg, getCatalogName(), getDataContext(),
+                                           "formation volume factor", iph ) );
+    }
+
+    try
+    {
+      m_viscosityTables[iph]->checkCoord( pressure, 0 );
+    } catch( SimulationError const & ex )
+    {
+      throw SimulationError( ex, GEOS_FMT( errorMsg, getCatalogName(), getDataContext(),
+                                           "viscosity", iph ) );
+    }
+  }
 }
 
 void BlackOilFluidBase::createAllKernelWrappers()
 {
-  FunctionManager const & functionManager = FunctionManager::getInstance();
-
   GEOS_THROW_IF( m_hydrocarbonPhaseOrder.size() != 1 && m_hydrocarbonPhaseOrder.size() != 2,
                  GEOS_FMT( "{}: the number of hydrocarbon phases must be 1 (oil) or 2 (oil+gas)", getFullName() ),
                  InputError );
 
-  if( m_formationVolFactorTables.empty() && m_viscosityTables.empty() )
+  if( m_formationVolFactorTableKernels.empty() && m_viscosityTableKernels.empty() )
   {
-
     // loop over the hydrocarbon phases
     for( integer iph = 0; iph < m_hydrocarbonPhaseOrder.size(); ++iph )
     {
-      // grab the tables by name from the function manager
-      TableFunction const & fvfTable = functionManager.getGroup< TableFunction const >( m_formationVolFactorTableNames[iph] );
-      TableFunction const & viscosityTable = functionManager.getGroup< TableFunction const >( m_viscosityTableNames[iph] );
-      validateTable( fvfTable, false );
-      validateTable( viscosityTable, true );
-
       // create the table wrapper for the oil and (if present) the gas phases
-      m_formationVolFactorTables.emplace_back( fvfTable.createKernelWrapper() );
-      m_viscosityTables.emplace_back( viscosityTable.createKernelWrapper() );
+      m_formationVolFactorTableKernels.emplace_back( m_formationVolFactorTables[iph]->createKernelWrapper() );
+      m_viscosityTableKernels.emplace_back( m_viscosityTables[iph]->createKernelWrapper() );
     }
   }
 }

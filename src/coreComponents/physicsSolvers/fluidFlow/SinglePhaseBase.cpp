@@ -26,7 +26,7 @@
 #include "constitutive/fluid/singlefluid/SingleFluidSelector.hpp"
 #include "constitutive/permeability/PermeabilityFields.hpp"
 #include "constitutive/solid/SolidInternalEnergy.hpp"
-#include "constitutive/thermalConductivity/singlePhaseThermalConductivitySelector.hpp"
+#include "constitutive/thermalConductivity/SinglePhaseThermalConductivitySelector.hpp"
 #include "fieldSpecification/AquiferBoundaryCondition.hpp"
 #include "fieldSpecification/EquilibriumInitialCondition.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
@@ -598,8 +598,8 @@ void SinglePhaseBase::computeHydrostaticEquilibrium()
 
     string const tableName = fs.getName() + "_" + subRegion.getName() + "_table";
     TableFunction * const presTable = dynamicCast< TableFunction * >( functionManager.createChild( TableFunction::catalogName(), tableName ) );
-    presTable->setTableCoordinates( elevationValues );
-    presTable->setTableValues( pressureValues );
+    presTable->setTableCoordinates( elevationValues, { units::Distance } );
+    presTable->setTableValues( pressureValues, units::Pressure );
     presTable->setInterpolationMethod( TableFunction::InterpolationType::Linear );
     TableFunction::KernelWrapper presTableWrapper = presTable->createKernelWrapper();
 

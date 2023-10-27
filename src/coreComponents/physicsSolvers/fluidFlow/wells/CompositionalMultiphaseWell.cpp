@@ -235,6 +235,25 @@ void CompositionalMultiphaseWell::registerDataOnMesh( Group & meshBodies )
         reference().resizeDimension< 0 >( m_numComponents );
       wellControls.registerWrapper< real64 >( viewKeyStruct::dCurrentTotalVolRate_dRateString() ).
         setRestartFlags( RestartFlags::NO_WRITE );
+
+      // write rates output header
+      // the rank that owns the reference well element is responsible
+      if( getLogLevel() > 0 && subRegion.isLocallyOwned() )
+      {
+        string const wellControlsName = wellControls.getName();
+        string const massUnit = m_useMass ? "kg" : "mol";
+        integer const useSurfaceConditions = wellControls.useSurfaceConditions();
+        string const conditionKey = useSurfaceConditions ? "surface" : "reservoir";
+        string const unitKey = useSurfaceConditions ? "s" : "r";
+        integer const numPhase = m_numPhases;
+        // format: time,bhp,total_rate,total_vol_rate,phase0_vol_rate,phase1_vol_rate,...
+        std::ofstream outputFile( m_ratesOutputDir + "/" + wellControlsName + ".csv" );
+        outputFile << "time [s],bhp [Pa],total rate [" << massUnit << "/s],total " << conditionKey << " volumetric rate [" << unitKey << "m3/s]";
+        for( integer ip = 0; ip < numPhase; ++ip )
+          outputFile << ",phase" << ip << " " << conditionKey << " volumetric rate [" << unitKey << "m3/s]";
+        outputFile << std::endl;
+        outputFile.close();
+      }
     } );
   } );
 
@@ -639,6 +658,15 @@ void CompositionalMultiphaseWell::updateVolRatesForConstraint( WellElementSubReg
 
   constitutive::constitutiveUpdatePassThru( fluid, [&] ( auto & castedFluid )
   {
+    try
+    {
+      castedFluid.checkTablesParameters( surfacePres, surfaceTemp );
+    } catch( SimulationError const & ex )
+    {
+      string const errorMsg = GEOS_FMT( "{}: wrong surface pressure / temperature.\n", getDataContext() );
+      throw SimulationError( ex, errorMsg );
+    }
+
     typename TYPEOFREF( castedFluid ) ::KernelWrapper fluidWrapper = castedFluid.createKernelWrapper();
 
     // bring everything back to host, capture the scalars by reference
@@ -1208,7 +1236,7 @@ CompositionalMultiphaseWell::calculateResidualNorm( real64 const & time_n,
 
   if( getLogLevel() >= 1 && logger::internal::rank == 0 )
   {
-    std::cout << GEOS_FMT( "    ( R{} ) = ( {:4.2e} ) ; ", coupledSolverAttributePrefix(), residualNorm );
+    std::cout << GEOS_FMT( "        ( R{} ) = ( {:4.2e} )", coupledSolverAttributePrefix(), residualNorm );
   }
   return residualNorm;
 }
@@ -1794,6 +1822,16 @@ void CompositionalMultiphaseWell::implicitStepComplete( real64 const & time_n,
 {
   WellSolverBase::implicitStepComplete( time_n, dt, domain );
 
+  if( getLogLevel() > 0 )
+  {
+    printRates( time_n, dt, domain );
+  }
+}
+
+void CompositionalMultiphaseWell::printRates( real64 const & time_n,
+                                              real64 const & dt,
+                                              DomainPartition & domain )
+{
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
                                                                 arrayView1d< string const > const & regionNames )
@@ -1813,6 +1851,28 @@ void CompositionalMultiphaseWell::implicitStepComplete( real64 const & time_n,
       }
 
       integer const numPhase = m_numPhases;
+
+      // control data
+
+      WellControls const & wellControls = getWellControls( subRegion );
+      string const wellControlsName = wellControls.getName();
+
+      // format: time,total_rate,total_vol_rate,phase0_vol_rate,phase1_vol_rate,...
+      std::ofstream outputFile( m_ratesOutputDir + "/" + wellControlsName + ".csv", std::ios_base::app );
+
+      outputFile << time_n + dt;
+
+      if( !wellControls.isWellOpen( time_n + dt ) )
+      {
+        GEOS_LOG( GEOS_FMT( "{}: well is shut", wellControlsName ) );
+        // print all zeros in the rates file
+        outputFile << "0.0,0.0,0.0";
+        for( integer ip = 0; ip < numPhase; ++ip )
+          outputFile << ",0.0";
+        outputFile << std::endl;
+        return;
+      }
+
       localIndex const iwelemRef = subRegion.getTopWellElementIndex();
       string const massUnit = m_useMass ? "kg" : "mol";
 
@@ -1820,21 +1880,6 @@ void CompositionalMultiphaseWell::implicitStepComplete( real64 const & time_n,
 
       arrayView1d< real64 const > const & connRate =
         subRegion.getField< fields::well::mixtureConnectionRate >();
-
-      // control data
-
-      WellControls const & wellControls = getWellControls( subRegion );
-      string const wellControlsName = wellControls.getName();
-
-      if( wellControls.getLogLevel() == 0 )
-      {
-        return;
-      }
-      if( !wellControls.isWellOpen( time_n + dt ) )
-      {
-        GEOS_LOG( GEOS_FMT( "{}: well is shut", wellControlsName ) );
-        return;
-      }
 
       integer const useSurfaceConditions = wellControls.useSurfaceConditions();
 
@@ -1854,7 +1899,8 @@ void CompositionalMultiphaseWell::implicitStepComplete( real64 const & time_n,
                                   currentPhaseVolRate,
                                   &iwelemRef,
                                   &wellControlsName,
-                                  &massUnit] ( localIndex const )
+                                  &massUnit,
+                                  &outputFile] ( localIndex const )
       {
         string const conditionKey = useSurfaceConditions ? "surface" : "reservoir";
         string const unitKey = useSurfaceConditions ? "s" : "r";
@@ -1862,15 +1908,19 @@ void CompositionalMultiphaseWell::implicitStepComplete( real64 const & time_n,
         real64 const currentTotalRate = connRate[iwelemRef];
         GEOS_LOG( GEOS_FMT( "{}: BHP (at the specified reference elevation): {} Pa",
                             wellControlsName, currentBHP ) );
+        outputFile << "," << currentBHP;
         GEOS_LOG( GEOS_FMT( "{}: Total rate: {} {}/s; total {} volumetric rate: {} {}m3/s",
                             wellControlsName, currentTotalRate, massUnit, conditionKey, currentTotalVolRate, unitKey ) );
+        outputFile << "," << currentTotalRate << "," << currentTotalVolRate;
         for( integer ip = 0; ip < numPhase; ++ip )
         {
           GEOS_LOG( GEOS_FMT( "{}: Phase {} {} volumetric rate: {} {}m3/s",
                               wellControlsName, ip, conditionKey, currentPhaseVolRate[ip], unitKey ) );
+          outputFile << "," << currentPhaseVolRate[ip];
         }
-
+        outputFile << std::endl;
       } );
+      outputFile.close();
     } );
   } );
 }
