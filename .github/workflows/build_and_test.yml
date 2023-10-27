@@ -32,6 +32,9 @@ on:
       GCP_BUCKET:
         required: false
         type: string
+      NUM_PROCS:
+        required: false
+        type: string
       COMMIT:
         required: true
         type: string
@@ -48,6 +51,7 @@ jobs:
       DOCKER_REPOSITORY: ${{ inputs.DOCKER_REPOSITORY }}
       CMAKE_BUILD_TYPE: ${{ inputs.CMAKE_BUILD_TYPE }}
       BUILD_AND_TEST_ARGS: ${{ inputs.BUILD_AND_TEST_ARGS }}
+      NUM_PROCS: ${{ inputs.NUM_PROCS }}
       DOCKER_RUN_ARGS: ${{ inputs.DOCKER_RUN_ARGS }}
       ENABLE_HYPRE: ${{ inputs.ENABLE_HYPRE }}
       ENABLE_HYPRE_DEVICE: ${{ inputs.ENABLE_HYPRE_DEVICE }}
@@ -81,7 +85,9 @@ jobs:
     # Builds only the geosx executable (timeout when building tests)
     - name: Build and test
       if: ${{ !(env.GCP_BUCKET) }}
-      run: ./scripts/ci_build_and_test.sh
+      run: |
+        ./scripts/ci_build_and_test.sh
+        docker rm -f ${CONTAINER_NAME}
 
     # Build, test, uploads GEOSX and its TPL to GCP/GCS using gcloud CLI
     - name: Build and test and deploy
@@ -94,3 +100,5 @@ jobs:
         GEOSX_BUNDLE=${TMP_DIR}/${GEOSX_EXPORT_DIR}.tar.gz
         tar czf ${GEOSX_BUNDLE} --directory=${TMP_DIR} ${GEOSX_EXPORT_DIR}
         CLOUDSDK_PYTHON=python3 gsutil cp -a public-read ${GEOSX_BUNDLE} gs://${GCP_BUCKET}/
+        docker rm -f ${CONTAINER_NAME}
+

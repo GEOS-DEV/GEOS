@@ -37,6 +37,10 @@ if [[ -z "${GEOSX_DIR}" ]]; then
   exit 1
 fi
 
+if [[ -z "${NUM_PROCS}" ]]; then
+  NUM_PROCS = $(nproc)
+fi
+
 GEOSX_INSTALL_SCHEMA=1
 if [[ "$*" == *--disable-schema-deployment* ]]; then
   GEOSX_INSTALL_SCHEMA=0
@@ -82,9 +86,9 @@ fi
 # "Make" target check (builds geosx executable target only if true)
 # Use one process to prevent out-of-memory error
 if [[ "$*" == *--build-exe-only* ]]; then
-  or_die ninja -j $(nproc) geosx
+  or_die ninja -j ${NUM_PROCS} geosx
 else
-  or_die ninja -j $(nproc)
+  or_die ninja -j ${NUM_PROCS}
   or_die ninja install
 fi
 

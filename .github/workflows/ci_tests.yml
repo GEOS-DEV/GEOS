@@ -236,6 +236,7 @@ jobs:
       CMAKE_BUILD_TYPE: ${{ matrix.CMAKE_BUILD_TYPE }}
       BUILD_AND_TEST_ARGS: ${{ matrix.BUILD_AND_TEST_ARGS }}
       DOCKER_RUN_ARGS: ${{ matrix.DOCKER_RUN_ARGS }}
+      NUM_PROCS: 4
       HOST_CONFIG: ${{ matrix.HOST_CONFIG }}
       ENABLE_HYPRE: ${{ matrix.ENABLE_HYPRE }}
       ENABLE_HYPRE_DEVICE: ${{ matrix.ENABLE_HYPRE_DEVICE }}

@@ -21,7 +21,7 @@ BUILD_DIR_MOUNT_POINT=/tmp/GEOSX
 # but that would not have solved the problem for the TPLs (we would require extra action to copy them to the mount point).
 
 # we also need to clean this container if it already exists.
-SPLIT_DOCKER_REPOSITORY=(${DOCKER_REPOSITORY//:/ })
+SPLIT_DOCKER_REPOSITORY=(${DOCKER_REPOSITORY//// })
 CONTAINER_NAME=geosx_build_${SPLIT_DOCKER_REPOSITORY[1]}_${GEOSX_TPL_TAG}
 if [ "$(docker ps -aq -f name=${CONTAINER_NAME})" ]; then
   docker rm -f ${CONTAINER_NAME}
@@ -39,6 +39,7 @@ docker run \
   -e ENABLE_HYPRE=${ENABLE_HYPRE:-OFF} \
   -e ENABLE_HYPRE_DEVICE=${ENABLE_HYPRE_DEVICE:-CPU} \
   -e ENABLE_TRILINOS=${ENABLE_TRILINOS:-ON} \
+  -e NUM_PROCS=${NUM_PROCS} \
   ${DOCKER_REPOSITORY}:${GEOSX_TPL_TAG} \
   ${BUILD_DIR_MOUNT_POINT}/scripts/ci_build_and_test_in_container.sh ${BUILD_AND_TEST_ARGS};
 
