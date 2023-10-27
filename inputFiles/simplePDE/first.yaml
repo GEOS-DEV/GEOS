@@ -1,0 +1,112 @@
+geos:
+  input_file_version: 0.0.1
+  allow_keyword_forwarding: false
+
+mesh:
+  vtk:
+    file_name: test.vtm
+    regions:
+      block_name: main
+      attribute: marker
+      mapping:
+        reservoir: 0
+        overburden: 1
+        underburden: 2
+    fractures:
+      block_name: fracture
+
+#mesh:
+#  internal:
+#    element_type: hexahedra
+#    x_range: [ 0, 1 ]
+#    y_range: [ 0, 1 ]
+#    z_range: [ 0, 1 ]
+#    nx: [ 10 ]
+#    ny: [ 10 ]
+#    nz: [ 10 ]
+#    regions:
+#      mapping:
+#        reservoir: [
+#          [0, 0, 0],
+#          [1, 0, 0],
+#        ]
+#        overburden:  [
+#          [2, 0, 0],
+#        ]
+
+boundary_conditions:
+  - all:
+      - field: pressure
+        value: 0.
+      - field: temperature
+        vtk_field: my_temp
+      - field: displacement
+        value: [0, 0, 0]
+  - xneg:
+      - field: pressure
+        value: 0.
+      - field: temperature
+        vtk_field: my_temp
+      - field: displacement
+        value: [0, 0, 0]
+
+
+initial_conditions:
+  - regions/reservoir:
+      - field: pressure
+        value: 0.
+      - field: temperature
+        vtk_field: my_temp
+      - field: displacement
+        value: [0, 0, 0]
+  - regions/overburden:
+      - field: temperature
+        value: 0
+  - regions/underburden:
+      - field: temperature
+        table_path: filename.txt
+  - regions/{overburden, underburden}:
+      - field: temperature
+        value: 0
+  - regions/*:
+      - field: displacement
+        value: [1, 1, 1]
+
+#initial_conditions:
+#  - pressure:
+#      location: regions/reservoir
+#      value: 0.
+#  - stress:
+#      location: regions/reservoir
+#      vtk_field: my_pressure
+#  - displacement:
+#      location: regions/overburden
+#      table_path: filename.txt
+#  - temperature:
+#      location: regions/overburden
+#      gradient:
+#        x: 1
+#        y: 2
+
+simulation:
+  begin: 0
+  end: 1   s
+
+outputs:
+  - vtk:
+      every: 1 y
+      fields: [pressure, stress]
+      write_ghost_cells: true
+      file_root: annual
+  - vtk:
+      at: [1, 2]
+      fields: [pressure, displacement]
+      write_ghost_cells: true
+  - restart:
+      at: [1 s, 2 s, 3 d]
+      every: 1 min
+  - restart:
+      at: [4, 5, 6]
+  - collect:
+      fields: [pressure]
+      every: 1 timestep

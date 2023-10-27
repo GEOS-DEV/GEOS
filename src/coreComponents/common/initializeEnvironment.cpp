@@ -159,7 +159,7 @@ void setupCaliper( cali::ConfigManager & caliperManager,
   GEOS_WARNING_IF( !adiak::systime(), "Error getting the systime." );
   GEOS_WARNING_IF( !adiak::cputime(), "Error getting the cputime." );
 
-  for( auto & fileName: commandLineOptions.inputFileNames )
+  for( auto & fileName: commandLineOptions.xmlInputFileNames )
   {
     adiak::value( "XML File", splitPath( fileName ).second );
   }

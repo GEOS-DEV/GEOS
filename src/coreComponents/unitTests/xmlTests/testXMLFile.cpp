@@ -193,7 +193,7 @@ TEST( testXML, testXMLFileLines )
   {
     problemManager.parseCommandLineInput();
     Group & commandLine = problemManager.getGroup( problemManager.groupKeys.commandLine );
-    string const & inputFileName = commandLine.getReference< string >( problemManager.viewKeys.inputFileName );
+    string const & inputFileName = commandLine.getReference< string >( problemManager.viewKeys.xmlInputFileName );
     xmlDoc.loadFile( inputFileName, true );
     problemManager.parseXMLDocument( xmlDoc );
   }

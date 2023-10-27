@@ -68,6 +68,9 @@
 /// Enables use of Hypre library (CMake option ENABLE_HYPRE)
 #cmakedefine GEOSX_USE_HYPRE
 
+/// Enables use of controlled input files (yaml)
+#cmakedefine GEOS_USE_CONTROLLED_INPUT
+
 #if defined( GEOSX_USE_HYPRE )
   /// Parsed hypre version information
   #define HYPRE_VERSION_MAJOR @HYPRE_VERSION_MAJOR@

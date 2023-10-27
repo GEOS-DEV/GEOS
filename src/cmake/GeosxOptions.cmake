@@ -28,6 +28,8 @@ option( ENABLE_UNCRUSTIFY "" ON )
 
 option( ENABLE_XML_UPDATES "" ON )
 
+option( ENABLE_CONTROLLED_INPUT "" OFF )
+
 option( ENABLE_FORTRAN "Enables Fortran support" OFF )
 
 option( ENABLE_METIS "Enables METIS" ON )

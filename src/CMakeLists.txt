@@ -24,6 +24,15 @@ set( CMAKE_ENABLE_EXPORTS ON )
 
 #set_property(GLOBAL PROPERTY RULE_LAUNCH_COMPILE "${CMAKE_COMMAND} -E time")
 
+if( ENABLE_CONTROLLED_INPUT )
+  include( FetchContent )
+  FetchContent_Declare( yaml-cpp
+                        GIT_REPOSITORY https://github.com/jbeder/yaml-cpp
+                        GIT_TAG 0.8.0
+  )
+  FetchContent_MakeAvailable( yaml-cpp )
+endif()
+
 ################################
 # Include blt
 ################################

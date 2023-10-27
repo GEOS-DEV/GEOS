@@ -1,6 +1,7 @@
 set( PREPROCESSOR_DEFINES ARRAY_BOUNDS_CHECK
                           CALIPER
                           CHAI
+                          CONTROLLED_INPUT
                           CUDA
                           CUDA_NVTOOLSEXT
                           HIP
@@ -28,7 +29,7 @@ set( PREPROCESSOR_DEFINES ARRAY_BOUNDS_CHECK
                           ${externalComponentsList} )
 
 foreach( DEP in ${PREPROCESSOR_DEFINES} )
-    if( ${DEP}_FOUND OR ENABLE_${DEP} OR GEOSX_ENABLE_${DEP} )
+    if( ${DEP}_FOUND OR ENABLE_${DEP} OR GEOSX_ENABLE_${DEP} OR GEOS_ENABLE_${DEP} )
         set( USE_${DEP} TRUE )
         set( GEOSX_USE_${DEP} TRUE )
         set( GEOS_USE_${DEP} TRUE )

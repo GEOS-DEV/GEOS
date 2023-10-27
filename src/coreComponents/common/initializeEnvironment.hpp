@@ -42,7 +42,10 @@ namespace geos
 struct CommandLineOptions
 {
   /// The paths to the input xml files.
-  string_array inputFileNames;
+  string_array xmlInputFileNames;
+
+  /// The paths to the controlled input yaml files.
+  string_array controlledInputFileNames;
 
   /// True iff restarting from the middle of an existing run.
   bool beginFromRestart = false;

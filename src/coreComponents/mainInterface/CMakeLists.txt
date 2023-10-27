@@ -6,6 +6,7 @@ set( mainInterface_headers
      ProblemManager.hpp
      initialization.hpp
      version.hpp
+     ControlledInput.hpp
    )
 
 #
@@ -16,9 +17,14 @@ set( mainInterface_sources
      ProblemManager.cpp
      initialization.cpp
      version.cpp
+     ControlledInput.cpp
    )
 
 set( dependencyList ${parallelDeps} physicsSolvers discretizationMethods fieldSpecification linearAlgebra dataRepository events fileIO optionparser )
+
+if( ENABLE_CONTROLLED_INPUT )
+  set( dependencyList ${dependencyList} yaml-cpp )
+endif()
 
 blt_add_library( NAME       mainInterface
                  SOURCES    ${mainInterface_sources}

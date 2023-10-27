@@ -47,6 +47,10 @@
 #include "physicsSolvers/SolverBase.hpp"
 #include "schema/schemaUtilities.hpp"
 
+#if defined(GEOS_USE_CONTROLLED_INPUT)
+#include "ControlledInput.hpp"
+#endif
+
 // System includes
 #include <vector>
 #include <regex>
@@ -83,9 +87,13 @@ ProblemManager::ProblemManager( conduit::Node & root ):
   m_functionManager = &registerGroup< FunctionManager >( groupKeys.functionManager );
 
   // Command line entries
-  commandLine.registerWrapper< string >( viewKeys.inputFileName.key() ).
+  commandLine.registerWrapper< string >( viewKeys.xmlInputFileName.key() ).
     setRestartFlags( RestartFlags::WRITE ).
     setDescription( "Name of the input xml file." );
+
+  commandLine.registerWrapper< string >( viewKeys.controlledInputFileName.key() ).
+    setRestartFlags( RestartFlags::WRITE ).
+    setDescription( "Name of the input yaml file." );
 
   commandLine.registerWrapper< string >( viewKeys.restartFileName.key() ).
     setRestartFlags( RestartFlags::WRITE ).
@@ -185,8 +193,10 @@ void ProblemManager::parseCommandLineInput()
   outputDirectory = opts.outputDirectory;
   OutputBase::setOutputDirectory( outputDirectory );
 
-  string & inputFileName = commandLine.getReference< string >( viewKeys.inputFileName );
-  inputFileName = xmlWrapper::buildMultipleInputXML( opts.inputFileNames, outputDirectory );
+  string & xmlInputFileName = commandLine.getReference< string >( viewKeys.xmlInputFileName );
+  xmlInputFileName = xmlWrapper::buildMultipleInputXML( opts.xmlInputFileNames, outputDirectory );
+  string & controlledInputFileName = commandLine.getReference< string >( viewKeys.controlledInputFileName );
+  controlledInputFileName = xmlWrapper::buildMultipleInputXML( opts.controlledInputFileNames, outputDirectory );
 
   string & schemaName = commandLine.getReference< string >( viewKeys.schemaFileName );
   schemaName = opts.schemaName;
@@ -197,9 +207,16 @@ void ProblemManager::parseCommandLineInput()
 
   if( schemaName.empty())
   {
-    inputFileName = getAbsolutePath( inputFileName );
-    Path::pathPrefix() = splitPath( inputFileName ).first;
-  }
+    if( not xmlInputFileName.empty() )
+    {
+      xmlInputFileName = getAbsolutePath( xmlInputFileName );
+      Path::pathPrefix() = splitPath( xmlInputFileName ).first;
+    }
+    if( not controlledInputFileName.empty() )
+    {
+      controlledInputFileName = getAbsolutePath( controlledInputFileName );
+      Path::pathPrefix() = splitPath( controlledInputFileName ).first;
+    }  }
 
   if( opts.traceDataMigration )
   {
@@ -384,14 +401,26 @@ void ProblemManager::setSchemaDeviations( xmlWrapper::xmlNode schemaRoot,
 void ProblemManager::parseInputFile()
 {
   Group & commandLine = getGroup( groupKeys.commandLine );
-  string const & inputFileName = commandLine.getReference< string >( viewKeys.inputFileName );
+
+  string const xmlInputFileName = commandLine.getReference< string >( viewKeys.xmlInputFileName );
+  string const controlledInputFileName = commandLine.getReference< string >( viewKeys.controlledInputFileName );
 
   // Load preprocessed xml file
   xmlWrapper::xmlDocument xmlDocument;
-  xmlWrapper::xmlResult const xmlResult = xmlDocument.loadFile( inputFileName, true );
-  GEOS_THROW_IF( !xmlResult, GEOS_FMT( "Errors found while parsing XML file {}\nDescription: {}\nOffset: {}",
-                                       inputFileName, xmlResult.description(), xmlResult.offset ), InputError );
-
+  if( not xmlInputFileName.empty() )
+  {
+    xmlWrapper::xmlResult const xmlResult = xmlDocument.loadFile( xmlInputFileName.c_str(), true );
+    GEOS_THROW_IF( !xmlResult, GEOS_FMT( "Errors found while parsing XML file {}\nDescription: {}\nOffset: {}",
+                                         xmlInputFileName, xmlResult.description(), xmlResult.offset ), InputError );
+  }
+  else
+  {
+#if defined(GEOS_USE_CONTROLLED_INPUT)
+    input::convert( controlledInputFileName, xmlDocument );
+#else
+    GEOS_ERROR("Unsupported input type.");
+#endif
+  }
   // Parse the results
   parseXMLDocument( xmlDocument );
 }

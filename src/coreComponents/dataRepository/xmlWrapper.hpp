@@ -254,6 +254,11 @@ public:
    */
   bool hasNodeFileInfo() const;
 
+  pugi::xml_document & getPugiDocument()
+  {
+    return pugiDocument;
+  }
+
 private:
   /// original xml_document object that this class aims to wrap
   pugi::xml_document pugiDocument;
