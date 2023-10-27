@@ -41,10 +41,11 @@ public:
                          real64 const & displacementJumpThreshold,
                          TableFunction const & apertureTable,
                          integer const useApertureModel, 
+                         real64 const & refNormalStress,
                          real64 const & cohesion,
                          real64 const & frictionCoefficient,
                          arrayView2d< real64 > const & elasticSlip )
-    : ContactBaseUpdates( penaltyStiffness, shearStiffness, displacementJumpThreshold, apertureTable, useApertureModel ),
+    : ContactBaseUpdates( penaltyStiffness, shearStiffness, displacementJumpThreshold, apertureTable, useApertureModel, refNormalStress ),
     m_cohesion( cohesion ),
     m_frictionCoefficient( frictionCoefficient ),
     m_elasticSlip( elasticSlip )

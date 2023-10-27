@@ -43,12 +43,14 @@ public:
                       real64 const & shearStiffness,
                       real64 const & displacementJumpThreshold,
                       TableFunction const & apertureTable,
-                      integer const useApertureModel )
+                      integer const useApertureModel,
+                      real64 const & refNormalStress )
     : m_penaltyStiffness( penaltyStiffness ),
     m_shearStiffness( shearStiffness ),
     m_displacementJumpThreshold( displacementJumpThreshold ),
     m_apertureTable(), 
-    m_useApertureModel( useApertureModel )
+    m_useApertureModel( useApertureModel ),
+    m_refNormalStress( refNormalStress )
   {
     if( !m_useApertureModel )
     {
@@ -156,6 +158,9 @@ protected:
 
   /// The flag for using nonlinear aperture model instead of the aperture table 
   integer m_useApertureModel;
+
+  /// The reference contact normal stress for the nonlinear aperture model 
+  real64 m_refNormalStress; 
 };
 
 
@@ -224,6 +229,9 @@ public:
 
     /// string/key for the flag to use nonlinear aperture model 
     constexpr static char const * useApertureModelString() { return "useApertureModel"; }
+
+    /// string/key for the reference normal stress in the aperture model 
+    constexpr static char const * refNormalStressString() { return "refNormalStress"; }
   };
 
 protected:
@@ -258,6 +266,9 @@ protected:
 
   /// The flag for using nonlinear aperture model instead of the aperture table 
   integer m_useApertureModel;
+
+  /// The reference contact normal stress for the nonlinear aperture model 
+  real64 m_refNormalStress; 
 };
 
 GEOS_HOST_DEVICE
@@ -268,12 +279,10 @@ real64 ContactBaseUpdates::computeHydraulicAperture( real64 const aperture,
 {
   if( m_useApertureModel )
   {
-    real64 const refNormalStress = 5e7;
-
     real64 const penaltyNormalStress = -m_penaltyStiffness * aperture;
 
-    real64 const hydraulicAperture = (aperture >= 0.0)? (aperture + refAperture) : refAperture / ( 1 + 9*penaltyNormalStress/refNormalStress );
-    real64 const dHydraulicAperture_dNormalStress = -hydraulicAperture / ( 1 + 9*penaltyNormalStress/refNormalStress ) * 9/refNormalStress;
+    real64 const hydraulicAperture = (aperture >= 0.0)? (aperture + refAperture) : refAperture / ( 1 + 9*penaltyNormalStress/m_refNormalStress );
+    real64 const dHydraulicAperture_dNormalStress = -hydraulicAperture / ( 1 + 9*penaltyNormalStress/m_refNormalStress ) * 9/m_refNormalStress;
 
     dHydraulicAperture_dAperture = (aperture >= 0.0)? 1.0:dHydraulicAperture_dNormalStress * -m_penaltyStiffness;
 

@@ -46,7 +46,8 @@ FrictionlessContactUpdates FrictionlessContact::createKernelWrapper() const
                                      m_shearStiffness,
                                      m_displacementJumpThreshold,
                                      *m_apertureTable,
-                                     m_useApertureModel );
+                                     m_useApertureModel,
+                                     m_refNormalStress );
 }
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, FrictionlessContact, string const &, Group * const )

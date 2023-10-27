@@ -64,6 +64,11 @@ ContactBase::ContactBase( string const & name,
   registerWrapper( viewKeyStruct::useApertureModelString(), &m_useApertureModel ).
     setApplyDefaultValue( 0 ).
     setInputFlag( InputFlags::OPTIONAL );
+
+  registerWrapper( viewKeyStruct::refNormalStressString(), &m_refNormalStress ).
+    setApplyDefaultValue( 0.0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Value of the reference normal stress in the aperture model." );
 }
 
 ContactBase::~ContactBase()
@@ -75,6 +80,9 @@ void ContactBase::postProcessInput()
 
   GEOS_THROW_IF( m_apertureTableName.empty() && m_useApertureModel == 0,
                  getFullName() << ": the aperture table name " << m_apertureTableName << " is empty", InputError );
+
+  GEOS_THROW_IF( m_useApertureModel == 1 && m_refNormalStress <= 0.0,
+                 getFullName() << ": the reference normal stress is not given or has a wrong value", InputError );
 
 }
 
@@ -163,7 +171,8 @@ ContactBaseUpdates ContactBase::createKernelWrapper() const
                              m_shearStiffness,
                              m_displacementJumpThreshold,
                              *m_apertureTable,
-                             m_useApertureModel );
+                             m_useApertureModel,
+                             m_refNormalStress );
 }
 
 } /* end namespace constitutive */
