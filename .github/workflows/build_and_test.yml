@@ -86,7 +86,7 @@ jobs:
     - name: Build and test
       if: ${{ !(env.GCP_BUCKET) }}
       run: |
-        ./scripts/ci_build_and_test.sh
+        source ./scripts/ci_build_and_test.sh
         docker rm -f ${CONTAINER_NAME}
 
     # Build, test, uploads GEOSX and its TPL to GCP/GCS using gcloud CLI

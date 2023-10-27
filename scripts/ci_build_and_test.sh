@@ -22,7 +22,7 @@ BUILD_DIR_MOUNT_POINT=/tmp/GEOSX
 
 # we also need to clean this container if it already exists.
 SPLIT_DOCKER_REPOSITORY=(${DOCKER_REPOSITORY//// })
-CONTAINER_NAME=geosx_build_${SPLIT_DOCKER_REPOSITORY[1]}_${GEOSX_TPL_TAG}
+CONTAINER_NAME=geosx_build_${SPLIT_DOCKER_REPOSITORY[1]}_${GITHUB_SHA:0:7}
 if [ "$(docker ps -aq -f name=${CONTAINER_NAME})" ]; then
   docker rm -f ${CONTAINER_NAME}
 fi
