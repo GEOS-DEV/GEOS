@@ -234,9 +234,9 @@ constexpr size_t cstrlen( char const * const str )
 }
 
 /**
- * @return true if the string starts with the suffix.
+ * @return true if the string starts with the prefix.
  * @param str The string to compare
- * @param suffix A suffix we want to know if the string starts with.
+ * @param prefix A prefix we want to know if the string starts with.
  */
 constexpr bool startsWith( std::string_view str, std::string_view prefix )
 {
