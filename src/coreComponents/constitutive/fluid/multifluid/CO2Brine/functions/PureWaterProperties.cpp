@@ -102,8 +102,8 @@ PureWaterProperties::makeSaturationViscosityTable( string const & functionName,
   else
   {
     TableFunction * const viscosityTable = dynamicCast< TableFunction * >( functionManager.createChild( TableFunction::catalogName(), tableName ) );
-    viscosityTable->setTableCoordinates( temperatures );
-    viscosityTable->setTableValues( viscosities );
+    viscosityTable->setTableCoordinates( temperatures, { units::TemperatureInC } );
+    viscosityTable->setTableValues( viscosities, units::Viscosity );
     viscosityTable->setInterpolationMethod( TableFunction::InterpolationType::Linear );
     return viscosityTable;
   }
@@ -152,7 +152,7 @@ PureWaterProperties::makeSaturationDensityTable( string const & functionName,
   densities[2] = 998.21;
   densities[3] = 997.05;
   densities[4] = 995.65;
-  densities[5] = 995.65;
+  densities[5] = 992.25;
   densities[6] = 988.04;
   densities[7] = 983.2;
   densities[8] = 977.76;
@@ -182,8 +182,8 @@ PureWaterProperties::makeSaturationDensityTable( string const & functionName,
   else
   {
     TableFunction * const densityTable = dynamicCast< TableFunction * >( functionManager.createChild( TableFunction::catalogName(), tableName ) );
-    densityTable->setTableCoordinates( temperatures );
-    densityTable->setTableValues( densities );
+    densityTable->setTableCoordinates( temperatures, { units::TemperatureInC } );
+    densityTable->setTableValues( densities, units::Density );
     densityTable->setInterpolationMethod( TableFunction::InterpolationType::Linear );
     return densityTable;
   }
@@ -262,8 +262,8 @@ PureWaterProperties::makeSaturationPressureTable( string const & functionName,
   else
   {
     TableFunction * const pressureTable = dynamicCast< TableFunction * >( functionManager.createChild( TableFunction::catalogName(), tableName ) );
-    pressureTable->setTableCoordinates( temperatures );
-    pressureTable->setTableValues( pressures );
+    pressureTable->setTableCoordinates( temperatures, { units::TemperatureInC } );
+    pressureTable->setTableValues( pressures, units::Pressure );
     pressureTable->setInterpolationMethod( TableFunction::InterpolationType::Linear );
     return pressureTable;
   }
