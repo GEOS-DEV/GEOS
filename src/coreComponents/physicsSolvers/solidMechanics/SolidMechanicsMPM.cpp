@@ -605,6 +605,11 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
     setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "domain L" );
 
+  registerWrapper( "globalFaceReactions", &m_globalFaceReactions).
+    setInputFlag( InputFlags::FALSE).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
+    setDescription( "Stores the global face reactions for stress control between timesteps" );
+
   registerWrapper( "numElements", &m_nEl).
     setInputFlag( InputFlags::FALSE).
     setRestartFlags( RestartFlags::WRITE_AND_READ ).
@@ -981,7 +986,7 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
   m_domainF.resize( 3 );
   LvArray::tensorOps::fill< 3 >(m_domainF, 1.0);
   m_domainL.resize( 3 );
-  LvArray::tensorOps::fill< 3 >(m_domainF, 0.0);
+  LvArray::tensorOps::fill< 3 >(m_domainL, 0.0);
 
   if( m_prescribedBoundaryFTable == 1 && m_prescribedFTable == 1 )
   {
@@ -7515,13 +7520,22 @@ void SolidMechanicsMPM::overlapCorrection( real64 const dt,
             particleDeformationGradient[p][i][j] *= scale;
             particleFDot[p][i][j] += ( particleDeformationGradient[p][i][j] - Fold[i][j] ) / dt;
             // p_Fdot[pp](i,j) = p_Fdot[pp](i,j) + (1./dt)*( p_F[pp](i,j) - Fold(i,j) );
+
+            // Update velocity gradient without taking the inverse of the particle deformation gradient
+            particleVelocityGradient[p][i][j] /= scale;
+            if( i == j )
+            {
+              particleVelocityGradient[p][i][j] += ( scale - 1.0 ) / ( scale * dt );
+            } 
           }
         }
         // Modify p_L as well, consistent with the change to p_F in case a hypoelastic constitutive model
         // is used, and so the update to the internal energy is consistent with the change in F.
-        real64 invF[3][3] = { { 0 } };
-        LvArray::tensorOps::invert< 3 >( invF, particleDeformationGradient[p] );
-        LvArray::tensorOps::Rij_eq_AikBkj< 3, 3, 3 >( particleVelocityGradient[p], particleFDot[p], invF );
+        
+        // real64 invF[3][3] = { { 0 } };
+        // LvArray::tensorOps::invert< 3 >( invF, particleDeformationGradient[p] );
+        // LvArray::tensorOps::Rij_eq_AikBkj< 3, 3, 3 >( particleVelocityGradient[p], particleFDot[p], invF );
+
         // p_L[pp].AijBjk( p_Fdot[pp], p_F[pp] ); // Error previously, p_F should be inverse p_F
       }
     } );
