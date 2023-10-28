@@ -21,6 +21,8 @@
 
 #include "physicsSolvers/fluidFlow/IsothermalCompositionalMultiphaseBaseKernels.hpp"
 
+#include "common/Units.hpp"
+
 namespace geos
 {
 
@@ -535,6 +537,9 @@ public:
    * @param[in] pressure the pressure vector
    * @param[in] temperature the temperature vector
    * @param[in] compDens the component density vector
+   * @param[in] pressureScalingFactor the pressure local scaling factor
+   * @param[in] compDensScalingFactor the component density local scaling factor
+   * @param[in] temperatureFactor the temperature local scaling factor
    */
   ScalingForSystemSolutionKernel( real64 const maxRelativePresChange,
                                   real64 const maxRelativeTempChange,
@@ -567,6 +572,18 @@ public:
   {}
 
   /**
+   * @brief Compute the local value
+   * @param[in] ei the element index
+   * @param[inout] stack the stack variables
+   */
+  GEOS_HOST_DEVICE
+  void compute( localIndex const ei,
+                StackVariables & stack ) const
+  {
+    computeScalingFactor( ei, stack );
+  }
+
+  /**
    * @brief Compute the local value of the scaling factor
    * @param[in] ei the element index
    * @param[inout] stack the stack variables
@@ -576,7 +593,6 @@ public:
                              StackVariables & stack ) const
   {
     real64 constexpr eps = isothermalCompositionalMultiphaseBaseKernels::minDensForDivision;
-
     Base::computeScalingFactor( ei, stack, [&] ()
     {
       // compute the change in temperature
@@ -600,9 +616,9 @@ public:
           {
             stack.localMinVal = tempScalingFactor;
           }
-          if( stack.localMinTempScalFac > tempScalingFactor )
+          if( stack.localMinTempScalingFactor > tempScalingFactor )
           {
-            stack.localMinTempScalFac = tempScalingFactor;
+            stack.localMinTempScalingFactor = tempScalingFactor;
           }
         }
       }
@@ -618,7 +634,7 @@ protected:
   arrayView1d< real64 const > const m_temperature;
 
   /// View on the scaling factor
-  arrayView1d< real64 > m_temperatureScalingFactor;
+  arrayView1d< real64 > const m_temperatureScalingFactor;
 
 };
 
@@ -662,7 +678,8 @@ public:
                                            rankOffset, numComp, dofKey, subRegion, localSolution,
                                            pressure, temperature, compDens, pressureScalingFactor,
                                            temperatureScalingFactor, compDensScalingFactor );
-    return ScalingForSystemSolutionKernel::launch< POLICY >( subRegion.size(), kernel );
+    return thermalCompositionalMultiphaseBaseKernels::
+             ScalingForSystemSolutionKernel::launch< POLICY >( subRegion.size(), kernel );
   }
 
 };
@@ -682,7 +699,7 @@ public:
   using Base::m_localSolution;
   using Base::m_scalingFactor;
 
-  static real64 constexpr minTemperature = 273.15;
+  static real64 constexpr minTemperature = constants::zeroDegreesCelsiusInKelvin;
 
   /**
    * @brief Create a new kernel instance
