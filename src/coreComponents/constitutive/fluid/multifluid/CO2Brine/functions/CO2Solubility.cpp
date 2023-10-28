@@ -21,6 +21,7 @@
 #include "constitutive/fluid/multifluid/CO2Brine/functions/CO2EOSSolver.hpp"
 #include "constitutive/fluid/multifluid/CO2Brine/functions/PVTFunctionHelpers.hpp"
 #include "functions/FunctionManager.hpp"
+#include "common/Units.hpp"
 
 namespace geos
 {
@@ -36,7 +37,6 @@ namespace PVTProps
 namespace
 {
 
-constexpr real64 T_K_f  = 273.15;
 constexpr real64 P_Pa_f = 1e+5;
 constexpr real64 P_c    = 73.773 * P_Pa_f;
 constexpr real64 T_c    = 304.1282;
@@ -53,7 +53,7 @@ real64 co2EOS( real64 const & T, real64 const & P, real64 const & V_r )
   // reduced pressure
   real64 const P_r = P*P_Pa_f/P_c;
   // reduced temperature
-  real64 const T_r = (T_K_f+T)/T_c;
+  real64 const T_r = units::convertCToK( T )/T_c;
 
   // CO2 equation of state
   // see equation (A1) in Duan and Sun (2003)
@@ -76,9 +76,9 @@ real64 PWater( real64 const & T )
   real64 const P_c_w = 220.85;
   // H2O critical temperature (K)
   real64 const T_c_w = 647.29;
-  real64 const tt = ( (T+T_K_f)-T_c_w )/T_c_w;
+  real64 const tt = ( units::convertCToK( T )-T_c_w )/T_c_w;
   // Empirical model for water pressure of equation (B1) of Duan and Sun (2003)
-  real64 const x = (P_c_w*(T+T_K_f)/T_c_w)
+  real64 const x = ( P_c_w*units::convertCToK( T )/T_c_w )
                    * (1
                       + ccoef[0]*pow( -tt, 1.9 )
                       + ccoef[1]*tt
@@ -94,7 +94,7 @@ real64 logF( real64 const & T, real64 const & P, real64 const & V_r )
   // reduced pressure
   real64 const P_r = P*P_Pa_f/P_c;
   // reduced temperature
-  real64 const T_r = (T_K_f+T)/T_c;
+  real64 const T_r = units::convertCToK( T ) / T_c;
   real64 const Z   = P_r * V_r/T_r;
 
   // fugacity coefficient of CO2, equation (A6) of Duan and Sun (2003)
@@ -133,7 +133,7 @@ real64 CO2SolubilityFunction( string const & name,
                               real64 (* f)( real64 const & x1, real64 const & x2, real64 const & x3 ) )
 {
   // compute the initial guess for Newton's method
-  real64 const initialReducedVolume = 0.75*Rgas*(T_K_f+T)/(P*P_Pa_f)*(1/V_c);
+  real64 const initialReducedVolume = 0.75*Rgas*units::convertCToK( T )/(P*P_Pa_f)*(1/V_c);
 
   // define the local solver parameters
   // for now, this is hard-coded, but we may want to let the user access the parameters at some point
@@ -188,10 +188,10 @@ void calculateCO2Solubility( string const & functionName,
       real64 const V_r = CO2SolubilityFunction( functionName, tolerance, T, P, &co2EOS );
 
       // compute equation (6) of Duan and Sun (2003)
-      real64 const logK = Par( T+T_K_f, P, mu )
+      real64 const logK = Par( units::convertCToK( T ), P, mu )
                           - logF( T, P, V_r )
-                          + 2*Par( T+T_K_f, P, lambda ) * salinity
-                          + Par( T+T_K_f, P, zeta ) * salinity * salinity;
+                          + 2*Par( units::convertCToK( T ), P, lambda ) * salinity
+                          + Par( units::convertCToK( T ), P, zeta ) * salinity * salinity;
       real64 const expLogK = exp( logK );
 
       // mole fraction of CO2 in vapor phase, equation (4) of Duan and Sun (2003)
@@ -205,8 +205,8 @@ void calculateCO2Solubility( string const & functionName,
 
       if( values[j*nPressures+i] < 0 )
       {
-        GEOS_WARNING( GEOS_FMT( "CO2Solubility: negative solubility value = {}, y_CO2 = {}, P = {}, PWater(T) = {}; corrected to 0",
-                                values[j * nPressures + i], y_CO2, P, Pw ) );
+        GEOS_LOG_RANK_0( GEOS_FMT( "CO2Solubility: negative solubility value = {}, y_CO2 = {}, P = {}, PWater(T) = {}; corrected to 0",
+                                   values[j * nPressures + i], y_CO2, P, Pw ) );
         values[j*nPressures+i] = 0.0;
       }
     }
@@ -252,8 +252,9 @@ TableFunction const * makeSolubilityTable( string_array const & inputParams,
   else
   {
     TableFunction * const solubilityTable = dynamicCast< TableFunction * >( functionManager.createChild( "TableFunction", tableName ) );
-    solubilityTable->setTableCoordinates( tableCoords.getCoords() );
-    solubilityTable->setTableValues( values );
+    solubilityTable->setTableCoordinates( tableCoords.getCoords(),
+                                          { units::Pressure, units::TemperatureInC } );
+    solubilityTable->setTableValues( values, units::Solubility );
     solubilityTable->setInterpolationMethod( TableFunction::InterpolationType::Linear );
     return solubilityTable;
   }
@@ -290,6 +291,13 @@ CO2Solubility::CO2Solubility( string const & name,
   m_phaseLiquidIndex = PVTFunctionHelpers::findName( phaseNames, expectedWaterPhaseNames, "phaseNames" );
 
   m_CO2SolubilityTable = makeSolubilityTable( inputParams, m_modelName, FunctionManager::getInstance() );
+}
+
+void CO2Solubility::checkTablesParameters( real64 const pressure,
+                                           real64 const temperature ) const
+{
+  m_CO2SolubilityTable->checkCoord( pressure, 0 );
+  m_CO2SolubilityTable->checkCoord( temperature, 1 );
 }
 
 CO2Solubility::KernelWrapper CO2Solubility::createKernelWrapper() const
