@@ -20,6 +20,7 @@
 #define GEOS_CONSTITUTIVE_FLUID_MULTIFLUID_COMPOSITIONAL_FUNCTIONS_CUBICEOSPHASEMODEL_HPP_
 
 #include "common/DataTypes.hpp"
+#include "constitutive/fluid/multifluid/MultiFluidConstants.hpp"
 
 namespace geos
 {
@@ -65,12 +66,6 @@ template< typename EOS_TYPE >
 struct CubicEOSPhaseModel
 {
 public:
-
-  /// Max number of components allowed in the class for now
-  static constexpr integer maxNumComps = 5;
-  /// Constant for PI
-  static constexpr real64 pi = 3.141592653589793238;
-
   /**
    * @brief Main entry point of the cubic EOS model
    * @param[in] numComps number of components
@@ -290,8 +285,8 @@ compute( integer const numComps,
          arraySlice1d< real64 > const logFugacityCoefficients )
 {
   // step 0: allocate the stack memory needed for the update
-  stackArray1d< real64, maxNumComps > aPureCoefficient( numComps );
-  stackArray1d< real64, maxNumComps > bPureCoefficient( numComps );
+  stackArray1d< real64, MultiFluidConstants::MAX_NUM_COMPONENTS > aPureCoefficient( numComps );
+  stackArray1d< real64, MultiFluidConstants::MAX_NUM_COMPONENTS > bPureCoefficient( numComps );
   real64 aMixtureCoefficient = 0.0;
   real64 bMixtureCoefficient = 0.0;
   real64 compressibilityFactor = 0.0;
@@ -395,7 +390,7 @@ computeMixtureCoefficients( integer const numComps,
                             arraySlice1d< real64 > const dbMixtureCoefficient_dz )
 {
   GEOS_UNUSED_VAR( criticalPressure );
-  stackArray1d< real64, maxNumComps > daPureCoefficient_dx( numComps );
+  stackArray1d< real64, MultiFluidConstants::MAX_NUM_COMPONENTS > daPureCoefficient_dx( numComps );
   // Calculate pressure derivatives
   daMixtureCoefficient_dp = aMixtureCoefficient / pressure;
   dbMixtureCoefficient_dp = bMixtureCoefficient / pressure;
@@ -486,8 +481,8 @@ computeCompressibilityFactor( integer const numComps,
       }
     }
 
-    stackArray1d< real64, maxNumComps > logFugacityCoefficientsMax( numComps );
-    stackArray1d< real64, maxNumComps > logFugacityCoefficientsMin( numComps );
+    stackArray1d< real64, MultiFluidConstants::MAX_NUM_COMPONENTS > logFugacityCoefficientsMax( numComps );
+    stackArray1d< real64, MultiFluidConstants::MAX_NUM_COMPONENTS > logFugacityCoefficientsMin( numComps );
     computeLogFugacityCoefficients( numComps, composition, binaryInteractionCoefficients, zMin,
                                     aPureCoefficient, bPureCoefficient, aMixtureCoefficient, bMixtureCoefficient,
                                     logFugacityCoefficientsMin.toSlice() );
@@ -539,7 +534,7 @@ computeCompressibilityFactor( integer const numComps,
 
   // Implicit differentiation scale
   real64 const denominator = (3.0*a*compressibilityFactor + 2.0*b)*compressibilityFactor + c;
-  constexpr real64 epsilon = LvArray::NumericLimits< real64 >::epsilon;
+  constexpr real64 epsilon = MultiFluidConstants::epsilon;
   real64 const scalingFactor = fabs( denominator ) < epsilon ? 0.0 : -1.0 / denominator;
 
   // Pressure derivatives
@@ -581,7 +576,7 @@ computeLogFugacityCoefficients( integer const numComps,
                                 real64 const & bMixtureCoefficient,
                                 arraySlice1d< real64 > const logFugacityCoefficients )
 {
-  stackArray1d< real64, maxNumComps > ki( numComps );
+  stackArray1d< real64, MultiFluidConstants::MAX_NUM_COMPONENTS > ki( numComps );
 
   // ki
   for( integer ic = 0; ic < numComps; ++ic )
@@ -634,8 +629,8 @@ solveCubicPolynomial( real64 const & m3,
     real64 const theta = acos( r / sqrt( qCubed ) );
     real64 const qSqrt = sqrt( q );
     roots[0] = -2 * qSqrt * cos( theta / 3 ) - a1 / 3;
-    roots[1] = -2 * qSqrt * cos( ( theta + 2 * pi ) / 3 ) - a1 / 3;
-    roots[2] = -2 * qSqrt * cos( ( theta + 4 * pi ) / 3 ) - a1 / 3;
+    roots[1] = -2 * qSqrt * cos( ( theta + 2 * MultiFluidConstants::pi ) / 3 ) - a1 / 3;
+    roots[2] = -2 * qSqrt * cos( ( theta + 4 * MultiFluidConstants::pi ) / 3 ) - a1 / 3;
     numRoots = 3;
   }
   // one real root
