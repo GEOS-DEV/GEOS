@@ -64,14 +64,14 @@ public:
   using AbstractBase::m_dt;
   using AbstractBase::m_gravCoef;
   using AbstractBase::m_dCompFrac_dCompDens;
-  using AbstractBase::m_permeability;
-  using AbstractBase::m_dPerm_dPres;
 
   using Base = isothermalCompositionalMultiphaseFVMKernels::FaceBasedAssemblyKernel< NUM_COMP, NUM_DOF, STENCILWRAPPER >;
   using Base::numComp;
   using Base::numDof;
   using Base::numEqn;
   using Base::numFluxSupportPoints;
+  using Base::m_permeability;
+  using Base::m_dPerm_dPres;
 
   using DissCompFlowAccessors =
     StencilAccessors< fields::flow::pressure_n,
@@ -230,10 +230,10 @@ public:
       }
 
       // bias towards x and y direction for miscible
-      /* The point of this "directional coefficient" was to add less dissipation flux in the direction of gravity and 
-      more in all other directions.  These hard-coded values of 1000 and 100 were picked by some tuning and as 
-      expected are not robust. Further research/testing is needed to generalize this idea.
-      */
+      /* The point of this "directional coefficient" was to add less dissipation flux in the direction of gravity and
+         more in all other directions.  These hard-coded values of 1000 and 100 were picked by some tuning and as
+         expected are not robust. Further research/testing is needed to generalize this idea.
+       */
       real64 directional_coef = 1.0;
       if( m_miscibleDBC )
       {
