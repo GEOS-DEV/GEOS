@@ -35,6 +35,7 @@ SinglePhaseWell                             node :ref:`DATASTRUCTURE_SinglePhase
 SolidMechanicsEmbeddedFractures             node :ref:`DATASTRUCTURE_SolidMechanicsEmbeddedFractures`             
 SolidMechanicsLagrangianSSLE                node :ref:`DATASTRUCTURE_SolidMechanicsLagrangianSSLE`                
 SolidMechanics_LagrangianFEM                node :ref:`DATASTRUCTURE_SolidMechanics_LagrangianFEM`                
+SolidMechanics_MPM                          node :ref:`DATASTRUCTURE_SolidMechanics_MPM`                          
 SurfaceGenerator                            node :ref:`DATASTRUCTURE_SurfaceGenerator`                            
 =========================================== ==== ================================================================ 
 

@@ -92,6 +92,32 @@ toVTKCellType( ElementType const elementType, localIndex const numNodes )
   return VTK_EMPTY_CELL;
 }
 
+static int
+toVTKCellType( ParticleType const particleType )
+{
+  switch( particleType )
+  {
+    case ParticleType::SinglePoint:   return VTK_HEXAHEDRON;
+    case ParticleType::CPDI:          return VTK_HEXAHEDRON;
+    case ParticleType::CPDI2:         return VTK_HEXAHEDRON;
+    case ParticleType::CPTI:          return VTK_TETRA;
+  }
+  return VTK_EMPTY_CELL;
+}
+
+static std::vector< int >
+getVtkToGeosxNodeOrdering( ParticleType const particleType )
+{
+  switch( particleType )
+  {
+    case ParticleType::SinglePoint:   return { 0, 1, 3, 2, 4, 5, 7, 6 };
+    case ParticleType::CPDI:          return { 0, 1, 3, 2, 4, 5, 7, 6 };
+    case ParticleType::CPDI2:         return { 0, 1, 3, 2, 4, 5, 7, 6 };
+    case ParticleType::CPTI:          return { 0, 1, 2, 3 };
+  }
+  return {};
+}
+
 /**
  * @brief Provide the local list of nodes or face streams for the corresponding VTK element
  *
@@ -221,6 +247,30 @@ getVtkPoints( NodeManager const & nodeManager,
   {
     localIndex const v = nodeIndices[k];
     pts->SetPoint( k, coord[v][0], coord[v][1], coord[v][2] );
+  } );
+  return points;
+}
+
+/**
+ * @brief Gets the vertex coordinates as a VTK Object for @p particleManager
+ * @param[in] particleManager the ParticleManager associated with the domain being written
+ * @return a VTK object storing all particle centers/corners of the mesh
+ */
+static vtkSmartPointer< vtkPoints >
+getVtkPoints( ParticleRegion const & particleRegion ) // TODO: Loop over the subregions owned by this region and operate on them directly
+{
+  // Particles are plotted as polyhedron with the geometry determined by the particle
+  // type.  CPDI particles are parallelepiped (8 corners and 6 faces).
+  // TODO: add support for CPTI (tet) and single point (cube or sphere) geometries
+
+  localIndex const numCornersPerParticle = 8; // Each CPDI particle has 8 corners. TODO: add support for other particle types.
+  localIndex const numCorners = numCornersPerParticle * particleRegion.getNumberOfParticles();
+  auto points = vtkSmartPointer< vtkPoints >::New();
+  points->SetNumberOfPoints( numCorners );
+  array2d< real64 > const coord = particleRegion.getParticleCorners();
+  forAll< parallelHostPolicy >( numCorners, [=, pts = points.GetPointer()]( localIndex const k )
+  {
+    pts->SetPoint( k, coord[k][0], coord[k][1], coord[k][2] );
   } );
   return points;
 }
@@ -521,6 +571,44 @@ getVtkCells( CellElementRegion const & region,
   return { std::move( cellTypes ), cellsArray, std::move( relevantNodes ) };
 }
 
+using ParticleData = std::pair< std::vector< int >, vtkSmartPointer< vtkCellArray > >;
+/**
+ * @brief Gets the cell connectivities as a VTK object for the ParticleRegion @p region
+ * @param[in] region the ParticleRegion to be written
+ * @return a standard pair consisting of:
+ *         - a list of types for each cell,
+ *         - a VTK object containing the connectivity information
+ */
+static ParticleData
+getVtkCells( ParticleRegion const & region )
+{
+  vtkSmartPointer< vtkCellArray > cellsArray = vtkCellArray::New();
+  cellsArray->SetNumberOfCells( region.getNumberOfParticles< ParticleRegion >() );
+  std::vector< int > cellType;
+  cellType.reserve( region.getNumberOfParticles< ParticleRegion >() );
+
+  vtkIdType nodeIndex = 0;
+
+  region.forParticleSubRegions< ParticleSubRegion >( [&]( ParticleSubRegion const & subRegion )
+  {
+    std::vector< int > vtkOrdering = getVtkToGeosxNodeOrdering( subRegion.getParticleType() );
+    std::vector< vtkIdType > connectivity( vtkOrdering.size() );
+    int vtkCellType = toVTKCellType( subRegion.getParticleType() );
+    for( localIndex c = 0; c < subRegion.size(); c++ )
+    {
+      for( std::size_t i = 0; i < connectivity.size(); i++ )
+      {
+
+        connectivity[i] = vtkOrdering.size()*nodeIndex + vtkOrdering[i];
+      }
+      nodeIndex++;
+      cellType.push_back( vtkCellType );
+      cellsArray->InsertNextCell( vtkOrdering.size(), connectivity.data() );
+    }
+  } );
+  return std::make_pair( cellType, cellsArray );
+}
+
 /**
  * @brief Writes timestamp information required by VisIt
  * @param[in] ug the VTK unstructured grid.
@@ -801,6 +889,60 @@ writeElementField( Group const & subRegions,
   cellData->AddArray( data );
 }
 
+void VTKPolyDataWriterInterface::writeParticleFields( ParticleRegionBase const & region,
+                                                      vtkCellData * cellData ) const
+{
+  std::unordered_set< string > materialFields;
+  conduit::Node fakeRoot;
+  Group materialData( "materialData", fakeRoot );
+  region.forParticleSubRegions( [&]( ParticleSubRegionBase const & subRegion )
+  {
+    // Register a dummy group for each subregion
+    Group & subReg = materialData.registerGroup( subRegion.getName() );
+    subReg.resize( subRegion.size() );
+
+    // Collect a list of plotted constitutive fields and create wrappers containing averaged data
+    subRegion.getConstitutiveModels().forSubGroups( [&]( Group const & material )
+    {
+      material.forWrappers( [&]( WrapperBase const & wrapper )
+      {
+        string const fieldName = constitutive::ConstitutiveBase::makeFieldName( material.getName(), wrapper.getName() );
+        if( outputUtilities::isFieldPlotEnabled( wrapper.getPlotLevel(), m_plotLevel, fieldName, m_fieldNames, m_onlyPlotSpecifiedFieldNames ) )
+        {
+          subReg.registerWrapper( wrapper.averageOverSecondDim( fieldName, subReg ) );
+          materialFields.insert( fieldName );
+        }
+      } );
+    } );
+  } );
+
+  // Write averaged material data
+  for( string const & field : materialFields )
+  {
+    writeElementField( materialData, field, cellData );
+  }
+
+  // Collect a list of regular fields (filter out material field wrappers)
+  // TODO: this can be removed if we stop hanging constitutive wrappers on the mesh
+  std::unordered_set< string > regularFields;
+  region.forParticleSubRegions( [&]( ParticleSubRegionBase const & subRegion )
+  {
+    for( auto const & wrapperIter : subRegion.wrappers() )
+    {
+      if( isFieldPlotEnabled( *wrapperIter.second ) && materialFields.count( wrapperIter.first ) == 0 )
+      {
+        regularFields.insert( wrapperIter.first );
+      }
+    }
+  } );
+
+  // Write regular fields
+  for( string const & field : regularFields )
+  {
+    writeElementField( region.getGroup( ParticleRegionBase::viewKeyStruct::particleSubRegions() ), field, cellData );
+  }
+}
+
 void VTKPolyDataWriterInterface::writeNodeFields( NodeManager const & nodeManager,
                                                   arrayView1d< localIndex const > const & nodeIndices,
                                                   vtkPointData * pointData ) const
@@ -906,6 +1048,27 @@ void VTKPolyDataWriterInterface::writeCellElementRegions( real64 const time,
   } );
 }
 
+void VTKPolyDataWriterInterface::writeParticleRegions( real64 const time,
+                                                       ParticleManager const & particleManager,
+                                                       string const & path ) const
+{
+  particleManager.forParticleRegions< ParticleRegion >( [&]( ParticleRegion const & region )
+  {
+    auto VTKCells = getVtkCells( region );
+    auto VTKPoints = getVtkPoints( region );
+
+    auto const ug = vtkSmartPointer< vtkUnstructuredGrid >::New();
+    ug->SetPoints( VTKPoints );
+    ug->SetCells( VTKCells.first.data(), VTKCells.second );
+
+    writeTimestamp( ug.GetPointer(), time );
+    writeParticleFields( region, ug->GetCellData() );
+
+    string const regionDir = joinPath( path, region.getName() );
+    writeUnstructuredGrid( regionDir, ug.GetPointer() );
+  } );
+}
+
 void VTKPolyDataWriterInterface::writeWellElementRegions( real64 const time,
                                                           ElementRegionManager const & elemManager,
                                                           NodeManager const & nodeManager,
@@ -998,10 +1161,24 @@ void VTKPolyDataWriterInterface::writeVtmFile( integer const cycle,
       }
 
       ElementRegionManager const & elemManager = meshLevel.getElemManager();
+      ParticleManager const & particleManager = meshLevel.getParticleManager();
+
       string const meshPath = joinPath( getCycleSubFolder( cycle ), meshBody.getName(), meshLevel.getName() );
       int const mpiSize = MpiWrapper::commSize();
 
-      auto addRegion = [&]( ElementRegionBase const & region )
+      auto addElementRegion = [&]( ElementRegionBase const & region )
+      {
+        std::vector< string > const blockPath{ meshBody.getName(), meshLevel.getName(), region.getCatalogName(), region.getName() };
+        string const regionPath = joinPath( meshPath, region.getName() );
+        for( int i = 0; i < mpiSize; i++ )
+        {
+          string const dataSetName = getRankFileName( i );
+          string const dataSetFile = joinPath( regionPath, dataSetName + ".vtu" );
+          vtmWriter.addDataSet( blockPath, dataSetName, dataSetFile );
+        }
+      };
+
+      auto addParticleRegion = [&]( ParticleRegionBase const & region )
       {
         std::vector< string > const blockPath{ meshBody.getName(), meshLevel.getName(), region.getCatalogName(), region.getName() };
         string const regionPath = joinPath( meshPath, region.getName() );
@@ -1016,17 +1193,22 @@ void VTKPolyDataWriterInterface::writeVtmFile( integer const cycle,
       // Output each of the region types
       if( m_outputRegionType == VTKRegionTypes::CELL || m_outputRegionType == VTKRegionTypes::ALL )
       {
-        elemManager.forElementRegions< CellElementRegion >( addRegion );
+        elemManager.forElementRegions< CellElementRegion >( addElementRegion );
       }
 
       if( m_outputRegionType == VTKRegionTypes::WELL || m_outputRegionType == VTKRegionTypes::ALL )
       {
-        elemManager.forElementRegions< WellElementRegion >( addRegion );
+        elemManager.forElementRegions< WellElementRegion >( addElementRegion );
       }
 
       if( m_outputRegionType == VTKRegionTypes::SURFACE || m_outputRegionType == VTKRegionTypes::ALL )
       {
-        elemManager.forElementRegions< SurfaceElementRegion >( addRegion );
+        elemManager.forElementRegions< SurfaceElementRegion >( addElementRegion );
+      }
+
+      if( m_outputRegionType == VTKRegionTypes::PARTICLE || m_outputRegionType == VTKRegionTypes::ALL )
+      {
+        particleManager.forParticleRegions< ParticleRegion >( addParticleRegion );
       }
     } );
   } );
@@ -1087,11 +1269,9 @@ void VTKPolyDataWriterInterface::write( real64 const time,
                                         integer const cycle,
                                         DomainPartition const & domain )
 {
-  // This guard prevents crashes observed on MacOS due to a floating point exception
+  // This guard prevents crashes due to a floating point exception (SIGFPE)
   // triggered inside VTK by a progress indicator
-#if defined(__APPLE__) && defined(__MACH__)
   LvArray::system::FloatingPointExceptionGuard guard;
-#endif
 
   string const stepSubDir = joinPath( m_outputName, getCycleSubFolder( cycle ) );
   string const stepSubDirFull = joinPath( m_outputDir, stepSubDir );
@@ -1115,6 +1295,7 @@ void VTKPolyDataWriterInterface::write( real64 const time,
       }
 
       ElementRegionManager const & elemManager = meshLevel.getElemManager();
+      ParticleManager const & particleManager = meshLevel.getParticleManager();
       NodeManager const & nodeManager = meshLevel.getNodeManager();
       EmbeddedSurfaceNodeManager const & embSurfNodeManager = meshLevel.getEmbSurfNodeManager();
       string const & meshLevelName = meshLevel.getName();
@@ -1143,6 +1324,10 @@ void VTKPolyDataWriterInterface::write( real64 const time,
       if( m_outputRegionType == VTKRegionTypes::SURFACE || m_outputRegionType == VTKRegionTypes::ALL )
       {
         writeSurfaceElementRegions( time, elemManager, nodeManager, embSurfNodeManager, meshDir );
+      }
+      if( m_outputRegionType == VTKRegionTypes::PARTICLE || m_outputRegionType == VTKRegionTypes::ALL )
+      {
+        writeParticleRegions( time, particleManager, meshDir );
       }
     } );
   } );
