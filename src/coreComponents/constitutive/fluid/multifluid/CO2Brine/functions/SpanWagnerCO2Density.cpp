@@ -20,6 +20,7 @@
 
 #include "constitutive/fluid/multifluid/CO2Brine/functions/CO2EOSSolver.hpp"
 #include "functions/FunctionManager.hpp"
+#include "common/Units.hpp"
 
 namespace geos
 {
@@ -237,8 +238,8 @@ TableFunction const * makeDensityTable( string_array const & inputParams,
   else
   {
     TableFunction * const densityTable = dynamicCast< TableFunction * >( functionManager.createChild( "TableFunction", tableName ) );
-    densityTable->setTableCoordinates( tableCoords.getCoords() );
-    densityTable->setTableValues( densities );
+    densityTable->setTableCoordinates( tableCoords.getCoords(), tableCoords.coordsUnits );
+    densityTable->setTableValues( densities, units::Density );
     densityTable->setInterpolationMethod( TableFunction::InterpolationType::Linear );
     return densityTable;
   }
@@ -252,7 +253,7 @@ void SpanWagnerCO2Density::calculateCO2Density( string const & functionName,
                                                 array1d< real64 > const & densities )
 {
 
-  constexpr real64 TK_f = 273.15;
+  constexpr real64 TK_f = constants::zeroDegreesCelsiusInKelvin;
 
   localIndex const nPressures = tableCoords.nPressures();
   localIndex const nTemperatures = tableCoords.nTemperatures();
@@ -280,6 +281,13 @@ SpanWagnerCO2Density::SpanWagnerCO2Density( string const & name,
   m_CO2Index = PVTFunctionHelpers::findName( componentNames, expectedCO2ComponentNames, "componentNames" );
 
   m_CO2DensityTable = makeDensityTable( inputParams, m_functionName, FunctionManager::getInstance() );
+}
+
+void SpanWagnerCO2Density::checkTablesParameters( real64 const pressure,
+                                                  real64 const temperature ) const
+{
+  m_CO2DensityTable->checkCoord( pressure, 0 );
+  m_CO2DensityTable->checkCoord( temperature, 1 );
 }
 
 SpanWagnerCO2Density::KernelWrapper
