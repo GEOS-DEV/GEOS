@@ -7,7 +7,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  GEOSX_TPL_TAG: 238-63
+  GEOSX_TPL_TAG: 228-73
 
 jobs:
 
@@ -204,7 +204,7 @@ jobs:
 
           - name: Ubuntu CUDA (20.04, clang 10.0.0 + gcc 9.4.0, open-mpi 4.0.3, cuda-11.8.89)
             DOCKER_REPOSITORY: geosx/ubuntu20.04-clang10.0.0-cuda11.8.89
-            OS: ubuntu-22.04
+            OS: Runner_4core_16GB
             CMAKE_BUILD_TYPE: Release
             BUILD_AND_TEST_ARGS: "--disable-unit-tests --disable-schema-deployment"
             ENABLE_HYPRE: ON
@@ -213,14 +213,14 @@ jobs:
 
           - name: Centos (7.7, gcc 8.3.1, open-mpi 1.10.7, cuda 11.8.89)
             DOCKER_REPOSITORY: geosx/centos7.7-gcc8.3.1-cuda11.8.89
-            OS: ubuntu-22.04
+            OS: Runner_4core_16GB
             CMAKE_BUILD_TYPE: Release
             BUILD_AND_TEST_ARGS: "--disable-unit-tests --disable-schema-deployment"
 
           # Matrix job that deploys to Google Cloud
           - name: Pecan GPU (centos 7.7, gcc 8.2.0, open-mpi 4.0.1, mkl 2019.5, cuda 11.5.119)
             DOCKER_REPOSITORY: geosx/pecan-gpu-gcc8.2.0-openmpi4.0.1-mkl2019.5-cuda11.5.119
-            OS: ubuntu-22.04
+            OS: Runner_4core_16GB
             CMAKE_BUILD_TYPE: Release
             BUILD_AND_TEST_ARGS: "--build-exe-only --disable-unit-tests --disable-schema-deployment"
             HOST_CONFIG: host-configs/TOTAL/pecan-GPU.cmake
