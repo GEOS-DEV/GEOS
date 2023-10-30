@@ -207,10 +207,8 @@ public:
 
       /// Step 2. Collect all contributions
       real64 poreVolume_n = 0.0; // Pore volume contribution
-      real64 trans = 0.0; // Transmissibility contribution
       for( integer ke = 0; ke < numFluxSupportPoints; ++ke )
       {
-        trans = std::max( stack.transmissibility[connectionIndex][ke], trans );
         poreVolume_n += m_volume[seri[ke]][sesri[ke]][sei[ke]] * m_porosity_n[seri[ke]][sesri[ke]][sei[ke]][0];
       }
       poreVolume_n /= numFluxSupportPoints;
@@ -247,12 +245,12 @@ public:
       }
 
       // multiplier with all contributions
-      real64 const multiplier = m_kappaDBC * m_omegaDBC * trans / poreVolume_n * m_dt * potential_gradient * directional_coef;
+      real64 const multiplier = m_kappaDBC * m_omegaDBC / poreVolume_n * m_dt * potential_gradient * directional_coef;
 
       /// Step 3. Compute the dissipation flux and its derivative
       for( integer ke = 0; ke < numFluxSupportPoints; ++ke )
       {
-        real64 const coef = multiplier * viscosityMult[ip] * fluxPointCoef[ke];
+        real64 const coef = multiplier * viscosityMult[ip] * stack.transmissibility[connectionIndex][ke];
         for( integer ic = 0; ic < numComp; ++ic )
         {
           localIndex const er  = seri[ke];
