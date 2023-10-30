@@ -104,11 +104,11 @@ void ContactBase::allocateConstitutiveData( Group & parent,
   // this check is necessary to ensure that the coordinates are strictly increasing
   if( apertureTransition > apertureValues[apertureValues.size()-1] )
   {
-    GEOS_LOG( GEOS_FMT ( "Adding aperture transition for table {}:", m_apertureTableName ) );
+    GEOS_LOG_RANK_0( GEOS_FMT ( "Adding aperture transition for table {}:", m_apertureTableName ) );
     std::ostringstream s_orig;
     for( localIndex i = 0; i < apertureValues.size(); i++ )
       s_orig << "[ " << apertureValues[i] << ", " << hydraulicApertureValues[i] << " ] ";
-    GEOS_LOG( GEOS_FMT ( "    Original table = {}", s_orig.str()));
+    GEOS_LOG_RANK_0( GEOS_FMT ( "    Original table = {}", s_orig.str()));
 
     coords.emplaceBack( 0, apertureTransition );
     hydraulicApertureValues.emplace_back( apertureTransition );
@@ -124,7 +124,7 @@ void ContactBase::allocateConstitutiveData( Group & parent,
     std::ostringstream s_mod;
     for( localIndex i = 0; i < apertureValues.size(); i++ )
       s_mod << "[ " << apertureValues[i] << ", " << hydraulicApertureValues[i] << " ] ";
-    GEOS_LOG( GEOS_FMT ( "    Modified table = {}", s_mod.str()));
+    GEOS_LOG_RANK_0( GEOS_FMT ( "    Modified table = {}", s_mod.str()));
   }
 
   m_apertureTable = &apertureTable;
