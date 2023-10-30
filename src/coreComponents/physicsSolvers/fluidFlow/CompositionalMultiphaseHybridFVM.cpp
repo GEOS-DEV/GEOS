@@ -636,6 +636,7 @@ real64 CompositionalMultiphaseHybridFVM::calculateResidualNorm( real64 const & G
                                                    subRegion,
                                                    fluid,
                                                    solid,
+                                                   m_nonlinearSolverParameters.m_minNormalizer,
                                                    subRegionResidualNorm,
                                                    subRegionResidualNormalizer );
 
@@ -673,6 +674,7 @@ real64 CompositionalMultiphaseHybridFVM::calculateResidualNorm( real64 const & G
                                                  elemManager,
                                                  faceManager,
                                                  dt,
+                                                 m_nonlinearSolverParameters.m_minNormalizer,
                                                  faceResidualNorm,
                                                  faceResidualNormalizer );
 
