@@ -69,18 +69,6 @@ NegativeTwoPhaseFlashModelUpdate( arrayView1d< real64 const > const & componentM
 template class NegativeTwoPhaseFlashModel< PengRobinsonEOS, PengRobinsonEOS >;
 template class NegativeTwoPhaseFlashModel< SoaveRedlichKwongEOS, SoaveRedlichKwongEOS >;
 
-REGISTER_CATALOG_ENTRY( FunctionBase, NegativeTwoPhaseFlashPRPR,
-                        string const &,
-                        string_array const &,
-                        array1d< real64 > const &,
-                        ComponentProperties const & )
-
-REGISTER_CATALOG_ENTRY( FunctionBase, NegativeTwoPhaseFlashSRKSRK,
-                        string const &,
-                        string_array const &,
-                        array1d< real64 > const &,
-                        ComponentProperties const & )
-
 } // end namespace compositional
 
 } // namespace constitutive

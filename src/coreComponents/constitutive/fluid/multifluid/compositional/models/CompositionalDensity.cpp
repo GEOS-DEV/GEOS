@@ -51,12 +51,6 @@ CompositionalDensity::createKernelWrapper() const
                         m_componentProperties );
 }
 
-REGISTER_CATALOG_ENTRY( FunctionBase, CompositionalDensity,
-                        string const &,
-                        string_array const &,
-                        array1d< real64 > const &,
-                        ComponentProperties const & )
-
 } // namespace PVTProps
 
 } // namespace constitutive

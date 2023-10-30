@@ -72,9 +72,10 @@ public:
 
   static string catalogName();
 
-  virtual string getCatalogName() const final { return catalogName(); }
-
-  FunctionType functionType() const override { return FunctionType::FLASH; }
+  FunctionType functionType() const override
+  {
+    return FunctionType::FLASH;
+  }
 
   // Mark as a 2-phase flash
   static constexpr integer getNumberOfPhases() { return 2; }

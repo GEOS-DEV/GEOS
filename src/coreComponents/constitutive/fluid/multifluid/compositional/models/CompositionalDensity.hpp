@@ -68,8 +68,6 @@ public:
 
   static string catalogName() { return "CompositionalDensity"; }
 
-  virtual string getCatalogName() const final { return catalogName(); }
-
   virtual FunctionType functionType() const override
   {
     return FunctionType::DENSITY;

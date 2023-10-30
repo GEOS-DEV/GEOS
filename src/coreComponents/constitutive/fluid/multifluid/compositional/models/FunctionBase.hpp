@@ -91,20 +91,6 @@ public:
 
   virtual ~FunctionBase() = default;
 
-  using CatalogInterface = dataRepository::CatalogInterface< FunctionBase,
-                                                             string const &,
-                                                             array1d< string > const &,
-                                                             array1d< real64 > const &,
-                                                             ComponentProperties const & >;
-
-  static typename CatalogInterface::CatalogType & getCatalog()
-  {
-    static CatalogInterface::CatalogType catalog;
-    return catalog;
-  }
-
-  virtual string getCatalogName() const = 0;
-
   string const & functionName() const { return m_functionName; }
 
   virtual FunctionType functionType() const = 0;

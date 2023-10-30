@@ -20,7 +20,6 @@
 #define GEOS_CONSTITUTIVE_FLUID_MULTIFLUID_COMPOSITIONAL_COMPOSITIONALMULTIPHASEFLUID_HPP_
 
 #include "constitutive/fluid/multifluid/compositional/CompositionalMultiphaseFluidUpdates.hpp"
-#include "constitutive/fluid/multifluid/compositional/CompositionalMultiphaseFluidParameters.hpp"
 #include "constitutive/fluid/multifluid/compositional/models/ConstantViscosity.hpp"
 #include "constitutive/fluid/multifluid/compositional/models/CompositionalDensity.hpp"
 #include "constitutive/fluid/multifluid/compositional/models/NegativeTwoPhaseFlashModel.hpp"
@@ -82,9 +81,9 @@ public:
 
   struct viewKeyStruct : MultiFluidBase::viewKeyStruct
   {
-    static constexpr char const * equationsOfStateString() { return "equationsOfState"; }
     static constexpr char const * componentCriticalPressureString() { return "componentCriticalPressure"; }
     static constexpr char const * componentCriticalTemperatureString() { return "componentCriticalTemperature"; }
+    static constexpr char const * componentCriticalVolumeString() { return "componentCriticalVolume"; }
     static constexpr char const * componentAcentricFactorString() { return "componentAcentricFactor"; }
     static constexpr char const * componentVolumeShiftString() { return "componentVolumeShift"; }
     static constexpr char const * componentBinaryCoeffString() { return "componentBinaryCoeff"; }
@@ -106,8 +105,18 @@ protected:
   virtual void initializePostSubGroups() override;
 
 private:
-  PhaseType getPhaseType( string const & name ) const;
+  /**
+   * @brief Estimate critical volumes using Ihmels' (2010) correlation
+   * @details reference: http://dx.doi.org/10.1021/je100167w
+   * @param[in] criticalPressure The component critical pressures
+   * @param[in] criticalTemperature The component critical temperatures
+   * @param[in] criticalVolume The component critical volumes
+   */
+  void calculateCriticalVolume( arrayView1d< const real64 > const criticalPressure,
+                                arrayView1d< const real64 > const criticalTemperature,
+                                arrayView1d< real64 > const criticalVolume ) const;
 
+private:
   // Create the fluid models
   void createModels();
 
@@ -121,12 +130,10 @@ private:
 
   std::unique_ptr< compositional::ComponentProperties > m_componentProperties{};
 
-  // names of equations of state to use for each phase
-  string_array m_equationsOfState;
-
   // standard EOS component input
   array1d< real64 > m_componentCriticalPressure;
   array1d< real64 > m_componentCriticalTemperature;
+  array1d< real64 > m_componentCriticalVolume;
   array1d< real64 > m_componentAcentricFactor;
   array1d< real64 > m_componentVolumeShift;
   array2d< real64 > m_componentBinaryCoeff;

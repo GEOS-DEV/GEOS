@@ -84,11 +84,9 @@ public:
 
   virtual ~NullModel() override = default;
 
-  static string catalogName() { return "NullCompositionalPVTModel"; }
+  static string catalogName() { return "NullPVTModel"; }
 
   static constexpr FunctionType function(){ return FunctionType::UNKNOWN; }
-
-  virtual string getCatalogName() const override final { return catalogName(); }
 
   virtual FunctionType functionType() const override
   {

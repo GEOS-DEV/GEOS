@@ -69,9 +69,7 @@ public:
 
   virtual ~ConstantViscosity() override = default;
 
-  static string catalogName() { return "ConstantViscosity"; }
-
-  virtual string getCatalogName() const override final { return catalogName(); }
+  static string catalogName() { return ""; }
 
   FunctionType functionType() const override
   {
