@@ -28,7 +28,7 @@
     <PVTDriver
       name="testDeadOilB"
       fluid="deadOilB"
-      feedComposition="{ 0.55, 0.45 }"
+      feedComposition="{ 0.55, 0.25, 0.20 }"
       pressureControl="pressureFunction"
       temperatureControl="temperatureFunction"
       steps="49"
