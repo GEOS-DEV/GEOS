@@ -32,24 +32,24 @@ namespace fields
 namespace wavesolverfields
 {
 
-DECLARE_FIELD( Delta,
-               "delta",
+DECLARE_FIELD( MediumDelta,
+               "mediumDelta",
                array1d< real32 >,
                0,
                NOPLOT,
                WRITE_AND_READ,
                "Delta thomsen anisotropy parameter" );
 
-DECLARE_FIELD( Epsilon,
-               "epsilon",
+DECLARE_FIELD( MediumEpsilon,
+               "mediumEpsilon",
                array1d< real32 >,
                0,
                NOPLOT,
                WRITE_AND_READ,
                "Epsilon thomsen anisotropy parameter" );
 
-DECLARE_FIELD( F,
-               "f",
+DECLARE_FIELD( MediumF,
+               "mediumF",
                array1d< real32 >,
                0,
                NOPLOT,

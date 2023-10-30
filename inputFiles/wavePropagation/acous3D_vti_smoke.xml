@@ -63,24 +63,24 @@
       scale="0.0"
       setNames="{ xpos, xneg, ypos, yneg }"/>
     <FieldSpecification
-      name="Epsilon"
+      name="mediumEpsilon"
       initialCondition="1"
       objectPath="ElementRegions/Region/cb"
-      fieldName="epsilon"
+      fieldName="mediumEpsilon"
       scale="0.24"
       setNames="{ all }"/>
     <FieldSpecification
-      name="Delta"
+      name="mediumDelta"
       initialCondition="1"
       objectPath="ElementRegions/Region/cb"
-      fieldName="delta"
+      fieldName="mediumDelta"
       scale="0.1"
       setNames="{ all }"/>
     <FieldSpecification
-      name="f"
+      name="mediumF"
       initialCondition="1"
       objectPath="ElementRegions/Region/cb"
-      fieldName="f"
+      fieldName="mediumF"
       scale="1.0"
       setNames="{ all }"/>
     </FieldSpecifications>

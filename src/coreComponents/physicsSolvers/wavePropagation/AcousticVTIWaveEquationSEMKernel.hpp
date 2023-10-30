@@ -433,9 +433,9 @@ public:
     m_q_n( nodeManager.getField< fields::wavesolverfields::Pressure_q_n >() ),
     m_stiffnessVector_p( nodeManager.getField< fields::wavesolverfields::StiffnessVector_p >() ),
     m_stiffnessVector_q( nodeManager.getField< fields::wavesolverfields::StiffnessVector_q >() ),
-    m_epsilon( elementSubRegion.template getField< fields::wavesolverfields::Epsilon >() ),
-    m_delta( elementSubRegion.template getField< fields::wavesolverfields::Delta >() ),
-    m_vti_f( elementSubRegion.template getField< fields::wavesolverfields::F >() ),
+    m_epsilon( elementSubRegion.template getField< fields::wavesolverfields::MediumEpsilon >() ),
+    m_delta( elementSubRegion.template getField< fields::wavesolverfields::MediumDelta >() ),
+    m_vti_f( elementSubRegion.template getField< fields::wavesolverfields::MediumF >() ),
     m_dt( dt )
   {
     GEOS_UNUSED_VAR( edgeManager );

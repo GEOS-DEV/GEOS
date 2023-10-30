@@ -90,9 +90,8 @@ void AcousticVTIDensityWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
 
     elemManager.forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion & subRegion )
     {
-      subRegion.registerField< fields::wavesolverfields::Delta >( getName() );
-      subRegion.registerField< fields::wavesolverfields::Epsilon >( getName() );
-      subRegion.registerField< fields::wavesolverfields::F >( getName() );
+      subRegion.registerField< fields::wavesolverfields::MediumDelta >( getName() );
+      subRegion.registerField< fields::wavesolverfields::MediumEpsilon >( getName() );
       subRegion.registerField< fields::wavesolverfields::MediumVelocity >( getName() );
       subRegion.registerField< fields::wavesolverfields::MediumDensity >( getName() );
     } );
@@ -277,8 +276,8 @@ void AcousticVTIDensityWaveEquationSEM::initializePostInitialConditionsPreSubGro
       arrayView2d< localIndex const > const elemsToFaces = elementSubRegion.faceList();
       arrayView1d< real32 const > const velocity = elementSubRegion.getField< fields::wavesolverfields::MediumVelocity >();
       arrayView1d< real32 const > const density = elementSubRegion.getField< fields::wavesolverfields::MediumDensity >();
-      arrayView1d< real32 const > const epsilon  = elementSubRegion.getField< fields::wavesolverfields::Epsilon >();
-      arrayView1d< real32 const > const delta    = elementSubRegion.getField< fields::wavesolverfields::Delta >();
+      arrayView1d< real32 const > const epsilon  = elementSubRegion.getField< fields::wavesolverfields::MediumEpsilon >();
+      arrayView1d< real32 const > const delta    = elementSubRegion.getField< fields::wavesolverfields::MediumDelta >();
 
       finiteElement::FiniteElementBase const &
       fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );

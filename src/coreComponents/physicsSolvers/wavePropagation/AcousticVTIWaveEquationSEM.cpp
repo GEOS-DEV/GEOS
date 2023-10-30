@@ -90,9 +90,9 @@ void AcousticVTIWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
 
     elemManager.forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion & subRegion )
     {
-      subRegion.registerField< fields::wavesolverfields::Delta >( getName() );
-      subRegion.registerField< fields::wavesolverfields::Epsilon >( getName() );
-      subRegion.registerField< fields::wavesolverfields::F >( getName() );
+      subRegion.registerField< fields::wavesolverfields::MediumDelta >( getName() );
+      subRegion.registerField< fields::wavesolverfields::MediumEpsilon >( getName() );
+      subRegion.registerField< fields::wavesolverfields::MediumF >( getName() );
       subRegion.registerField< fields::wavesolverfields::MediumVelocity >( getName() );
     } );
   } );
@@ -274,9 +274,9 @@ void AcousticVTIWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
       arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemsToNodes = elementSubRegion.nodeList();
       arrayView2d< localIndex const > const elemsToFaces = elementSubRegion.faceList();
       arrayView1d< real32 const > const velocity = elementSubRegion.getField< fields::wavesolverfields::MediumVelocity >();
-      arrayView1d< real32 const > const epsilon  = elementSubRegion.getField< fields::wavesolverfields::Epsilon >();
-      arrayView1d< real32 const > const delta    = elementSubRegion.getField< fields::wavesolverfields::Delta >();
-      arrayView1d< real32 const > const vti_f    = elementSubRegion.getField< fields::wavesolverfields::F >();
+      arrayView1d< real32 const > const epsilon  = elementSubRegion.getField< fields::wavesolverfields::MediumEpsilon >();
+      arrayView1d< real32 const > const delta    = elementSubRegion.getField< fields::wavesolverfields::MediumDelta >();
+      arrayView1d< real32 const > const vti_f    = elementSubRegion.getField< fields::wavesolverfields::MediumF >();
 
       finiteElement::FiniteElementBase const &
       fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
