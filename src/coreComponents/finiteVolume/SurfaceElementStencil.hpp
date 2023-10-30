@@ -510,6 +510,15 @@ SurfaceElementStencilWrapper::
       dWeight_dVar2[connectionIndex][0][0] =   ( m_meanPermCoefficient * dHarmonic_dvar2[0] + (1 - m_meanPermCoefficient) * dArithmetic_dvar2[0] );
       dWeight_dVar2[connectionIndex][1][0] = -( m_meanPermCoefficient * dHarmonic_dvar2[1] + (1 - m_meanPermCoefficient) * dArithmetic_dvar2[1] );
 
+      if (value< 0) //hack if trans is smaller than zero
+      {
+        weight[connectionIndex][0] = 1e-50; 
+        weight[connectionIndex][1] = 1e-50;
+        dWeight_dVar1[connectionIndex][0] = 1e-50; 
+        dWeight_dVar1[connectionIndex][1] = 1e-50;
+        dWeight_dVar2[connectionIndex][0][0] = 1e-50;
+        dWeight_dVar2[connectionIndex][1][0] = 1e-50;
+      }
       connectionIndex++;
     }
   }
@@ -626,7 +635,7 @@ SurfaceElementStencilWrapper::
     localIndex const esr =  m_elementSubRegionIndices[iconn][k];
     localIndex const ei  =  m_elementIndices[iconn][k];
 
-    m_weights[iconn][k] = m_weights[iconn][k] / (hydraulicAperture[er][esr][ei]);
+    m_weights[iconn][k] = m_weights[iconn][k] / (hydraulicAperture[er][esr][ei] + 1e-16);
   }
 }
 
@@ -641,7 +650,7 @@ SurfaceElementStencilWrapper::
     localIndex const esr =  m_elementSubRegionIndices[iconn][k];
     localIndex const ei  =  m_elementIndices[iconn][k];
 
-    m_weights[iconn][k] = m_weights[iconn][k] * hydraulicAperture[er][esr][ei];
+    m_weights[iconn][k] = m_weights[iconn][k] * (hydraulicAperture[er][esr][ei] + 1e-16);
   }
 }
 

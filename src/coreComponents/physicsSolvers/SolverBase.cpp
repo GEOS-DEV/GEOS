@@ -931,6 +931,11 @@ bool SolverBase::solveNonlinearSystem( real64 const & time_n,
     debugOutputSystem( time_n, cycleNumber, newtonIter, m_matrix, m_rhs );
 
     // Solve the linear system
+    //if (time_n > 399)
+   // {
+   //   m_matrix.write("A", geos::LAIOutputFormat::NATIVE_ASCII);
+   //   m_rhs.write("rhs", geos::LAIOutputFormat::NATIVE_ASCII);
+   // }
     solveLinearSystem( m_dofManager, m_matrix, m_rhs, m_solution );
 
     // Increment the solver statistics for reporting purposes
@@ -941,7 +946,7 @@ bool SolverBase::solveNonlinearSystem( real64 const & time_n,
 
     // Compute the scaling factor for the Newton update
     scaleFactor = scalingForSystemSolution( domain, m_dofManager, m_solution.values() );
-    std::cout << "scaling factor " << scaleFactor<< std::endl;
+    //std::cout << "scaling factor " << scaleFactor<< std::endl;
 
     if( !checkSystemSolution( domain, m_dofManager, m_solution.values(), scaleFactor ) )
     {
@@ -951,8 +956,8 @@ bool SolverBase::solveNonlinearSystem( real64 const & time_n,
     }
 
     // apply the system solution to the fields/variables
-    std::ofstream strm("update.txt");
-    m_solution.print(strm);
+    //std::ofstream strm("update.txt");
+    //m_solution.print(strm);
     applySystemSolution( m_dofManager, m_solution.values(), scaleFactor, stepDt, domain );
 
     // update non-primary variables (constitutive models)

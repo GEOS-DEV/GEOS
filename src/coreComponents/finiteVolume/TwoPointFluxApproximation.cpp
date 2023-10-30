@@ -548,7 +548,7 @@ void TwoPointFluxApproximation::initNewFractureFieldsDFM( MeshLevel & mesh,
   {
     localIndex const newElemIndex = allNewElems[k];
     // if the value of pressure was not set, then set it to zero and punt.
-    if( fluidPressure[newElemIndex] > 1.0e98 )
+    if( fluidPressure[newElemIndex] > 1.0e10 )
     {
       fluidPressure[newElemIndex] = 0.0;
     }
