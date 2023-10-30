@@ -94,7 +94,7 @@ HydrofractureSolver< POROMECHANICS_SOLVER >::HydrofractureSolver( const string &
     setApplyDefaultValue( 0 ).
     setInputFlag( InputFlags::OPTIONAL );
 
-  registerWrapper( viewKeyStruct::useQNString(), &m_useQN ).
+  registerWrapper( viewKeyStruct::useQuasiNewtonString(), &m_useQuasiNewton ).
     setApplyDefaultValue( 0 ).
     setInputFlag( InputFlags::OPTIONAL );
 
@@ -795,7 +795,7 @@ assembleFluidMassResidualDerivativeWrtDisplacement( DomainPartition const & doma
           launch< parallelDevicePolicy<> >( subRegion.size(),
                                             rankOffset,
                                             contactWrapper,
-                                            m_useQN,
+                                            m_useQuasiNewton,
                                             elemsToFaces,
                                             faceToNodeMap,
                                             faceNormal,

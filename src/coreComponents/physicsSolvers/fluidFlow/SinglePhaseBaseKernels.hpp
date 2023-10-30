@@ -497,6 +497,8 @@ public:
   virtual void computeLinf( localIndex const ei,
                             LinfStackVariables & stack ) const override
   {
+      std::cout << " residual = " << m_localResidual[stack.localRow] << std::endl;
+      GEOS_ERROR_IF(std::isnan(m_localResidual[stack.localRow]), "NAN in the residual");
     real64 const massNormalizer = LvArray::math::max( m_minNormalizer, m_density_n[ei][0] * m_porosity_n[ei][0] * m_volume[ei] );
     real64 const valMass = LvArray::math::abs( m_localResidual[stack.localRow] ) / massNormalizer;
     if( valMass > stack.localValue[0] )
@@ -509,6 +511,8 @@ public:
   virtual void computeL2( localIndex const ei,
                           L2StackVariables & stack ) const override
   {
+      std::cout << " residual = " << m_localResidual[stack.localRow] << std::endl;
+      GEOS_ERROR_IF(std::isnan(m_localResidual[stack.localRow]), "NAN in the residual");
     real64 const massNormalizer = LvArray::math::max( m_minNormalizer, m_density_n[ei][0] * m_porosity_n[ei][0] * m_volume[ei] );
     stack.localValue[0] += m_localResidual[stack.localRow] * m_localResidual[stack.localRow];
     stack.localNormalizer[0] += massNormalizer;

@@ -219,7 +219,7 @@ struct FluidMassResidualDerivativeAssemblyKernel
   launch( localIndex const size,
           globalIndex const rankOffset,
           CONTACT_WRAPPER const & contactWrapper,
-          integer const useQN,
+          integer const useQuasiNewton,
           ArrayOfArraysView< localIndex const > const elemsToFaces,
           ArrayOfArraysView< localIndex const > const faceToNodeMap,
           arrayView2d< real64 const > const faceNormal,
@@ -263,7 +263,7 @@ struct FluidMassResidualDerivativeAssemblyKernel
                                                                           2 * numNodesPerFace * 3 );
       }
 //
-      if( useQN == 0 )
+      if( useQuasiNewton == 0 )
       {
         localIndex const numColumns = dFluxResidual_dAperture.numNonZeros( ei );
         arraySlice1d< localIndex const > const & columns = dFluxResidual_dAperture.getColumns( ei );
