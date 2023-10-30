@@ -319,6 +319,7 @@ real64 CompositionalMultiphaseFVM::calculateResidualNorm( real64 const & GEOS_UN
                                                      fluid,
                                                      solid,
                                                      solidInternalEnergy,
+                                                     m_nonlinearSolverParameters.m_minNormalizer,
                                                      subRegionResidualNorm,
                                                      subRegionResidualNormalizer );
       }
@@ -336,6 +337,7 @@ real64 CompositionalMultiphaseFVM::calculateResidualNorm( real64 const & GEOS_UN
                                                      subRegion,
                                                      fluid,
                                                      solid,
+                                                     m_nonlinearSolverParameters.m_minNormalizer,
                                                      subRegionFlowResidualNorm,
                                                      subRegionFlowResidualNormalizer );
         subRegionResidualNorm[0] = subRegionFlowResidualNorm[0];

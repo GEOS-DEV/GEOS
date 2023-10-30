@@ -1663,7 +1663,7 @@ class ResidualNormKernel : public solverBaseKernels::ResidualNormKernelBase< 1 >
 public:
 
   using Base = solverBaseKernels::ResidualNormKernelBase< 1 >;
-  using Base::minNormalizer;
+  using Base::m_minNormalizer;
   using Base::m_rankOffset;
   using Base::m_localResidual;
   using Base::m_dofNumber;
@@ -1675,11 +1675,13 @@ public:
                       integer const numComponents,
                       ElementSubRegionBase const & subRegion,
                       MultiFluidBase const & fluid,
-                      CoupledSolidBase const & solid )
+                      CoupledSolidBase const & solid,
+                      real64 const minNormalizer )
     : Base( rankOffset,
             localResidual,
             dofNumber,
-            ghostRank ),
+            ghostRank,
+            minNormalizer ),
     m_numComponents( numComponents ),
     m_volume( subRegion.getElementVolume() ),
     m_porosity_n( solid.getPorosity_n() ),
@@ -1691,8 +1693,8 @@ public:
                             LinfStackVariables & stack ) const override
   {
     // this should never be zero if the simulation is set up correctly, but we never know
-    real64 const massNormalizer = LvArray::math::max( minNormalizer, m_totalDens_n[ei][0] * m_porosity_n[ei][0] * m_volume[ei] );
-    real64 const volumeNormalizer = LvArray::math::max( minNormalizer, m_porosity_n[ei][0] * m_volume[ei] );
+    real64 const massNormalizer = LvArray::math::max( m_minNormalizer, m_totalDens_n[ei][0] * m_porosity_n[ei][0] * m_volume[ei] );
+    real64 const volumeNormalizer = LvArray::math::max( m_minNormalizer, m_porosity_n[ei][0] * m_volume[ei] );
 
     // step 1: mass residuals
 
@@ -1720,7 +1722,7 @@ public:
   {
     // note: for the L2 norm, we bundle the volume and mass residuals/normalizers
 
-    real64 const massNormalizer = LvArray::math::max( minNormalizer, m_totalDens_n[ei][0] * m_porosity_n[ei][0] * m_volume[ei] );
+    real64 const massNormalizer = LvArray::math::max( m_minNormalizer, m_totalDens_n[ei][0] * m_porosity_n[ei][0] * m_volume[ei] );
 
     // step 1: mass residuals
 
@@ -1786,13 +1788,14 @@ public:
                    ElementSubRegionBase const & subRegion,
                    MultiFluidBase const & fluid,
                    CoupledSolidBase const & solid,
+                   real64 const minNormalizer,
                    real64 (& residualNorm)[1],
                    real64 (& residualNormalizer)[1] )
   {
     arrayView1d< globalIndex const > const dofNumber = subRegion.getReference< array1d< globalIndex > >( dofKey );
     arrayView1d< integer const > const ghostRank = subRegion.ghostRank();
 
-    ResidualNormKernel kernel( rankOffset, localResidual, dofNumber, ghostRank, numComps, subRegion, fluid, solid );
+    ResidualNormKernel kernel( rankOffset, localResidual, dofNumber, ghostRank, numComps, subRegion, fluid, solid, minNormalizer );
     if( normType == solverBaseKernels::NormType::Linf )
     {
       ResidualNormKernel::launchLinf< POLICY >( subRegion.size(), kernel, residualNorm );
