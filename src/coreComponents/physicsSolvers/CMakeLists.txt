@@ -140,6 +140,8 @@ set( physicsSolvers_headers
      wavePropagation/AcousticFirstOrderWaveEquationSEMKernel.hpp
      wavePropagation/AcousticVTIWaveEquationSEM.hpp
      wavePropagation/AcousticVTIWaveEquationSEMKernel.hpp
+     wavePropagation/AcousticVTIDensityWaveEquationSEM.hpp
+     wavePropagation/AcousticVTIDensityWaveEquationSEMKernel.hpp
    )
 
 #
@@ -205,6 +207,7 @@ set( physicsSolvers_sources
      wavePropagation/ElasticFirstOrderWaveEquationSEM.cpp
      wavePropagation/AcousticFirstOrderWaveEquationSEM.cpp
      wavePropagation/AcousticVTIWaveEquationSEM.cpp
+     wavePropagation/AcousticVTIDensityWaveEquationSEM.cpp
    )
 
   include( solidMechanics/kernels/SolidMechanicsKernels.cmake)
