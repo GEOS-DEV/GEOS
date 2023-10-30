@@ -31,6 +31,10 @@ namespace dissipationCompositionalMultiphaseFVMKernels
 
 using namespace constitutive;
 
+static constexpr integer newtonContinuationCutoffIteration = 5;
+static constexpr real64 initialDirectionalCoef = 100;
+static constexpr real64 multiplierDirectionalCoef = 1000;
+
 /******************************** FaceBasedAssemblyKernel ********************************/
 
 /**
@@ -151,7 +155,7 @@ public:
 
     if( continuation )   // if continuation is enabled
     {
-      if( curNewton >= 5 )
+      if( curNewton >= newtonContinuationCutoffIteration )
       {
         m_kappaDBC = kappamin;
       }
@@ -235,12 +239,12 @@ public:
       real64 directional_coef = 1.0;
       if( m_miscibleDBC )
       {
-        directional_coef = 100.0;
+        directional_coef = initialDirectionalCoef;
         if( LvArray::math::abs( grad_depth ) > 0.0 )
         {
           real64 const d2 = LvArray::math::abs( grad_depth * grad_depth );
-          if( 1000.0 / d2 < 100.0 )
-            directional_coef = 1000.0 / d2;
+          if( multiplierDirectionalCoef / d2 < initialDirectionalCoef )
+            directional_coef = multiplierDirectionalCoef / d2;
         }
       }
 
