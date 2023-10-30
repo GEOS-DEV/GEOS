@@ -262,7 +262,7 @@ public:
           // composition gradient contribution to the dissipation flux
           dissFlux[ic] += coef * m_compFrac[er][esr][ei][ic];
 
-          dDissFlux_dP[ke][ic] = 0; // Pavel: TODO ?
+          dDissFlux_dP[ke][ic] = 0; // no dependency on pressure at n+1, compFrad is global component fraction (z_c)
 
           for( integer jc = 0; jc < numComp; ++jc )
           {
