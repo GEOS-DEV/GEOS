@@ -77,10 +77,10 @@
       scale="0.1"
       setNames="{ all }"/>
     <FieldSpecification
-      name="mediumF"
+      name="mediumSigma"
       initialCondition="1"
       objectPath="ElementRegions/Region/cb"
-      fieldName="mediumF"
+      fieldName="mediumSigma"
       scale="1.0"
       setNames="{ all }"/>
     </FieldSpecifications>

@@ -48,13 +48,13 @@ DECLARE_FIELD( MediumEpsilon,
                WRITE_AND_READ,
                "Epsilon thomsen anisotropy parameter" );
 
-DECLARE_FIELD( MediumF,
-               "mediumF",
+DECLARE_FIELD( MediumSigma,
+               "mediumSigma",
                array1d< real32 >,
                0,
                NOPLOT,
                WRITE_AND_READ,
-               "f quantity in VTI/TTI Fletcher's equations" );
+               "Sigma quantity in VTI/TTI Fletcher's equations" );
 
 DECLARE_FIELD( StiffnessVector_p,
                "stiffnessVector_p",

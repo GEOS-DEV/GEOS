@@ -276,8 +276,8 @@ void AcousticVTIDensityWaveEquationSEM::initializePostInitialConditionsPreSubGro
       arrayView2d< localIndex const > const elemsToFaces = elementSubRegion.faceList();
       arrayView1d< real32 const > const velocity = elementSubRegion.getField< fields::wavesolverfields::MediumVelocity >();
       arrayView1d< real32 const > const density = elementSubRegion.getField< fields::wavesolverfields::MediumDensity >();
-      arrayView1d< real32 const > const epsilon  = elementSubRegion.getField< fields::wavesolverfields::MediumEpsilon >();
-      arrayView1d< real32 const > const delta    = elementSubRegion.getField< fields::wavesolverfields::MediumDelta >();
+      arrayView1d< real32 const > const vti_epsilon  = elementSubRegion.getField< fields::wavesolverfields::MediumEpsilon >();
+      arrayView1d< real32 const > const vti_delta    = elementSubRegion.getField< fields::wavesolverfields::MediumDelta >();
 
       finiteElement::FiniteElementBase const &
       fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
@@ -306,8 +306,8 @@ void AcousticVTIDensityWaveEquationSEM::initializePostInitialConditionsPreSubGro
                                                                bottomSurfaceFaceIndicator,
                                                                velocity,
 							       density,
-                                                               epsilon,
-                                                               delta,
+                                                               vti_epsilon,
+                                                               vti_delta,
                                                                damping_p,
                                                                damping_q,
                                                                damping_pq,

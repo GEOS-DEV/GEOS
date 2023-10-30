@@ -264,9 +264,9 @@ struct DampingMatrixKernel
    * @param[in] lateralSurfaceFaceIndicator flag equal to 1 if the face is on a lateral surface, and to 0 otherwise
    * @param[in] bottomSurfaceFaceIndicator flag equal to 1 if the face is on the bottom surface, and to 0 otherwise
    * @param[in] velocity cell-wise velocity
-   * @param[in] epsilon cell-wise Thomsen epsilon parameter
-   * @param[in] delta cell-wise Thomsen delta parameter
-   * @param[in] vti_f cell-wise f parameter in Fletcher's equation
+   * @param[in] vti_epsilon cell-wise Thomsen epsilon parameter
+   * @param[in] vti_delta cell-wise Thomsen delta parameter
+   * @param[in] vti_sigma cell-wise sigma parameter in Fletcher's equation
    * @param[out] damping_p diagonal of the damping matrix for quantities in p in p-equation
    * @param[out] damping_q diagonal of the damping matrix for quantities in q in q-equation
    * @param[out] damping_pq diagonal of the damping matrix for quantities in q in p-equation
@@ -283,9 +283,9 @@ struct DampingMatrixKernel
           arrayView1d< localIndex const > const lateralSurfaceFaceIndicator,
           arrayView1d< localIndex const > const bottomSurfaceFaceIndicator,
           arrayView1d< real32 const > const velocity,
-          arrayView1d< real32 const > const epsilon,
-          arrayView1d< real32 const > const delta,
-          arrayView1d< real32 const > const vti_f,
+          arrayView1d< real32 const > const vti_epsilon,
+          arrayView1d< real32 const > const vti_delta,
+          arrayView1d< real32 const > const vti_sigma,
           arrayView1d< real32 > const damping_p,
           arrayView1d< real32 > const damping_q,
           arrayView1d< real32 > const damping_pq,
@@ -299,29 +299,6 @@ struct DampingMatrixKernel
         // face on the domain boundary and not on free surface
         if( facesDomainBoundaryIndicator[f] == 1 && freeSurfaceFaceIndicator[f] != 1 )
         {
-          // ABC coefficients
-          real32 alpha = 1.0 / velocity[e];
-          // VTI coefficients
-          real32 vti_p_xy= 0, vti_p_z = 0, vti_pq_z = 0;
-          real32 vti_q_xy= 0, vti_q_z = 0, vti_qp_xy= 0;
-          if( lateralSurfaceFaceIndicator[f] == 1 )
-          {
-            // ABC coefficients updated to fit horizontal velocity
-            alpha /= sqrt( 1+2*epsilon[e] );
-
-            vti_p_xy  = (1+2*epsilon[e]);
-            vti_q_xy  = -(vti_f[e]-1);
-            vti_qp_xy = (vti_f[e]+2*delta[e]);
-          }
-          if( bottomSurfaceFaceIndicator[f] == 1 )
-          {
-            // ABC coefficients updated to fit horizontal velocity
-            alpha /= sqrt( 1+2*delta[e] );
-            vti_p_z  = -(vti_f[e]-1);
-            vti_pq_z = vti_f[e];
-            vti_q_z  = 1;
-          }
-
           constexpr localIndex numNodesPerFace = FE_TYPE::numNodesPerFace;
           real64 xLocal[ numNodesPerFace ][ 3 ];
           for( localIndex a = 0; a < numNodesPerFace; ++a )
@@ -330,6 +307,30 @@ struct DampingMatrixKernel
             {
               xLocal[a][d] = nodeCoords( facesToNodes( f, a ), d );
             }
+          }
+
+          // ABC coefficients
+          real32 alpha = 1.0 / velocity[e];
+          // VTI coefficients
+          real32 vti_p_xy= 0, vti_p_z = 0, vti_pq_z = 0;
+          real32 vti_q_xy= 0, vti_q_z = 0, vti_qp_xy= 0;
+	  real32 vti_f = 1 - (vti_epsilon[e] - vti_delta[e]) / vti_sigma[e];
+          if( lateralSurfaceFaceIndicator[f] == 1 )
+          {
+            // ABC coefficients updated to fit horizontal velocity
+            alpha /= sqrt( 1+2*vti_epsilon[e] );
+
+            vti_p_xy  = (1+2*vti_epsilon[e]);
+            vti_q_xy  = -(vti_f-1);
+            vti_qp_xy = (vti_f+2*vti_delta[e]);
+          }
+          if( bottomSurfaceFaceIndicator[f] == 1 )
+          {
+            // ABC coefficients updated to fit horizontal velocity
+            alpha /= sqrt( 1+2*vti_delta[e] );
+            vti_p_z  = -(vti_f-1);
+            vti_pq_z = vti_f;
+            vti_q_z  = 1;
           }
 
           for( localIndex q = 0; q < numNodesPerFace; ++q )
@@ -433,9 +434,9 @@ public:
     m_q_n( nodeManager.getField< fields::wavesolverfields::Pressure_q_n >() ),
     m_stiffnessVector_p( nodeManager.getField< fields::wavesolverfields::StiffnessVector_p >() ),
     m_stiffnessVector_q( nodeManager.getField< fields::wavesolverfields::StiffnessVector_q >() ),
-    m_epsilon( elementSubRegion.template getField< fields::wavesolverfields::MediumEpsilon >() ),
-    m_delta( elementSubRegion.template getField< fields::wavesolverfields::MediumDelta >() ),
-    m_vti_f( elementSubRegion.template getField< fields::wavesolverfields::MediumF >() ),
+    m_vti_epsilon( elementSubRegion.template getField< fields::wavesolverfields::MediumEpsilon >() ),
+    m_vti_delta( elementSubRegion.template getField< fields::wavesolverfields::MediumDelta >() ),
+    m_vti_sigma( elementSubRegion.template getField< fields::wavesolverfields::MediumSigma >() ),
     m_dt( dt )
   {
     GEOS_UNUSED_VAR( edgeManager );
@@ -501,9 +502,10 @@ public:
     // Pseudo Stiffness xy
     m_finiteElementSpace.template computeStiffnessxyTerm( q, stack.xLocal, [&] ( int i, int j, real64 val )
     {
-      real32 const localIncrement_p = val*(-1-2*m_epsilon[k])*m_p_n[m_elemsToNodes[k][j]];
+      real32 vti_f = 1 - (m_vti_epsilon[k] - m_vti_delta[k]) / m_vti_sigma[k];
+      real32 const localIncrement_p = val*(-1-2*m_vti_epsilon[k])*m_p_n[m_elemsToNodes[k][j]];
       RAJA::atomicAdd< parallelDeviceAtomic >( &m_stiffnessVector_p[m_elemsToNodes[k][i]], localIncrement_p );
-      real32 const localIncrement_q = val*((-2*m_delta[k]-m_vti_f[k])*m_p_n[m_elemsToNodes[k][j]] +(m_vti_f[k]-1)*m_q_n[m_elemsToNodes[k][j]]);
+      real32 const localIncrement_q = val*((-2*m_vti_delta[k]-vti_f)*m_p_n[m_elemsToNodes[k][j]] +(vti_f-1)*m_q_n[m_elemsToNodes[k][j]]);
       RAJA::atomicAdd< parallelDeviceAtomic >( &m_stiffnessVector_q[m_elemsToNodes[k][i]], localIncrement_q );
     } );
 
@@ -511,7 +513,8 @@ public:
 
     m_finiteElementSpace.template computeStiffnesszTerm( q, stack.xLocal, [&] ( int i, int j, real64 val )
     {
-      real32 const localIncrement_p = val*((m_vti_f[k]-1)*m_p_n[m_elemsToNodes[k][j]] - m_vti_f[k]*m_q_n[m_elemsToNodes[k][j]]);
+      real32 vti_f = 1 - (m_vti_epsilon[k] - m_vti_delta[k]) / m_vti_sigma[k];
+      real32 const localIncrement_p = val*((vti_f-1)*m_p_n[m_elemsToNodes[k][j]] - vti_f*m_q_n[m_elemsToNodes[k][j]]);
       RAJA::atomicAdd< parallelDeviceAtomic >( &m_stiffnessVector_p[m_elemsToNodes[k][i]], localIncrement_p );
 
       real32 const localIncrement_q = -val*m_q_n[m_elemsToNodes[k][j]];
@@ -536,13 +539,13 @@ protected:
   arrayView1d< real32 > const m_stiffnessVector_q;
 
   /// The array containing the epsilon Thomsen parameter.
-  arrayView1d< real32 const > const m_epsilon;
+  arrayView1d< real32 const > const m_vti_epsilon;
 
   /// The array containing the delta Thomsen parameter.
-  arrayView1d< real32 const > const m_delta;
+  arrayView1d< real32 const > const m_vti_delta;
 
-  /// The array containing the f parameter.
-  arrayView1d< real32 const > const m_vti_f;
+  /// The array containing the sigma parameter.
+  arrayView1d< real32 const > const m_vti_sigma;
 
   /// The time increment for this time integration step.
   real64 const m_dt;

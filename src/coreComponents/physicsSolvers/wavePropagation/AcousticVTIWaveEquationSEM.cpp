@@ -92,7 +92,7 @@ void AcousticVTIWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
     {
       subRegion.registerField< fields::wavesolverfields::MediumDelta >( getName() );
       subRegion.registerField< fields::wavesolverfields::MediumEpsilon >( getName() );
-      subRegion.registerField< fields::wavesolverfields::MediumF >( getName() );
+      subRegion.registerField< fields::wavesolverfields::MediumSigma >( getName() );
       subRegion.registerField< fields::wavesolverfields::MediumVelocity >( getName() );
     } );
   } );
@@ -274,9 +274,9 @@ void AcousticVTIWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
       arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemsToNodes = elementSubRegion.nodeList();
       arrayView2d< localIndex const > const elemsToFaces = elementSubRegion.faceList();
       arrayView1d< real32 const > const velocity = elementSubRegion.getField< fields::wavesolverfields::MediumVelocity >();
-      arrayView1d< real32 const > const epsilon  = elementSubRegion.getField< fields::wavesolverfields::MediumEpsilon >();
-      arrayView1d< real32 const > const delta    = elementSubRegion.getField< fields::wavesolverfields::MediumDelta >();
-      arrayView1d< real32 const > const vti_f    = elementSubRegion.getField< fields::wavesolverfields::MediumF >();
+      arrayView1d< real32 const > const vti_epsilon  = elementSubRegion.getField< fields::wavesolverfields::MediumEpsilon >();
+      arrayView1d< real32 const > const vti_delta    = elementSubRegion.getField< fields::wavesolverfields::MediumDelta >();
+      arrayView1d< real32 const > const vti_sigma    = elementSubRegion.getField< fields::wavesolverfields::MediumSigma >();
 
       finiteElement::FiniteElementBase const &
       fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
@@ -303,9 +303,9 @@ void AcousticVTIWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
                                                                lateralSurfaceFaceIndicator,
                                                                bottomSurfaceFaceIndicator,
                                                                velocity,
-                                                               epsilon,
-                                                               delta,
-                                                               vti_f,
+                                                               vti_epsilon,
+                                                               vti_delta,
+                                                               vti_sigma,
                                                                damping_p,
                                                                damping_q,
                                                                damping_pq,
