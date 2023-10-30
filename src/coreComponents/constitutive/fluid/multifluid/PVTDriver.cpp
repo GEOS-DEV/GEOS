@@ -22,6 +22,7 @@
 #include "constitutive/ConstitutiveManager.hpp"
 #include "constitutive/fluid/multifluid/MultiFluidBase.hpp"
 #include "constitutive/fluid/multifluid/MultiFluidSelector.hpp"
+#include "constitutive/fluid/multifluid/MultiFluidConstants.hpp"
 #include "fileIO/Outputs/OutputBase.hpp"
 #include "functions/FunctionManager.hpp"
 #include "functions/TableFunction.hpp"
@@ -309,7 +310,7 @@ void PVTDriver::compareWithBaseline()
       file >> value;
 
       real64 const error = fabs( m_table[row][col]-value ) / ( fabs( value )+1 );
-      GEOS_THROW_IF( error > m_baselineTol, "Results do not match baseline at data row " << row+1
+      GEOS_THROW_IF( error > MultiFluidConstants::baselineTolerance, "Results do not match baseline at data row " << row+1
                                                                                          << " (row " << row+headerRows << " with header)"
                                                                                          << " and column " << col+1, std::runtime_error );
     }

@@ -112,7 +112,6 @@ private:
 
   enum columnKeys { TIME, PRES, TEMP }; ///< Enumeration of "input" column keys for readability
 
-  static constexpr real64 m_baselineTol = 1e-3; ///< Comparison tolerance for baseline results
 };
 
 } /* namespace geos */
