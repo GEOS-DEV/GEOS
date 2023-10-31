@@ -1,6 +1,11 @@
 from collections import defaultdict
 from dataclasses import dataclass
-from typing import List, Tuple, Iterator, Sequence, Iterable, FrozenSet
+from typing import (
+    Sequence,
+    Iterable,
+    Union,
+    Sized,
+)
 
 from vtkmodules.vtkCommonCore import (
     vtkIdList,
@@ -23,7 +28,7 @@ class Result:
     dummy: float
 
 
-def parse_face_stream(ids: vtkIdList) -> Tuple[Tuple[int, ...], ...]:
+def parse_face_stream(ids: vtkIdList) -> Sequence[Sequence[int]]:
     """
     Parses the face stream raw information and converts it into a tuple of tuple of integers,
     each tuple of integer being the nodes of a face.
@@ -52,11 +57,11 @@ class FaceStream:
     """
     Helper class to manipulate the vtk face streams.
     """
-    def __init__(self, data: Tuple[Tuple[int, ...], ...]):
+    def __init__(self, data: Sequence[Sequence[int]]):
         # self.__data contains the list of faces nodes, like it appears in vtk face streams.
         # Except that the additional size information is removed
         # in favor of the __len__ of the containers.
-        self.__data = data
+        self.__data: Sequence[Sequence[int]] = data
 
     @staticmethod
     def build_from_vtk_id_list(ids: vtkIdList):
@@ -84,7 +89,7 @@ class FaceStream:
         return len(self.__data)
 
     @property
-    def support_point_ids(self) -> Iterable[int]:
+    def support_point_ids(self) -> Union[Iterable[int], Sized]:
         """
         The list of all (unique) support points of the face stream, in no specific order.
         :return: The set of all the point ids.
@@ -102,7 +107,7 @@ class FaceStream:
         """
         return len(self.support_point_ids)
 
-    def __getitem__(self, face_index) -> Tuple[int, ...]:
+    def __getitem__(self, face_index) -> Sequence[int]:
         """
         The support point ids for the `face_index` face.
         :param face_index: The face index (within the face stream).
