@@ -62,7 +62,8 @@ NegativeTwoPhaseFlashModelUpdate< EOS_TYPE_LIQUID, EOS_TYPE_VAPOUR >::
 NegativeTwoPhaseFlashModelUpdate( arrayView1d< real64 const > const & componentMolarWeight,
                                   ComponentProperties const & componentProperties ):
   FunctionBaseUpdate( componentMolarWeight,
-                      componentProperties )
+                      componentProperties ),
+  m_numComponents( componentMolarWeight.size( 0 ))
 {}
 
 // Explicit instantiation of the model template.

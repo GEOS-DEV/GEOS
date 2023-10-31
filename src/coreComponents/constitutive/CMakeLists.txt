@@ -69,12 +69,10 @@ set( constitutive_headers
      fluid/multifluid/compositional/models/ConstantViscosity.hpp
      fluid/multifluid/compositional/models/FunctionBase.hpp
      fluid/multifluid/compositional/models/NegativeTwoPhaseFlashModel.hpp
-     fluid/multifluid/compositional/models/NegativeTwoPhaseFlashModelImpl.hpp
      fluid/multifluid/compositional/models/NullModel.hpp
      fluid/multifluid/compositional/models/PhaseModel.hpp
      fluid/multifluid/compositional/CompositionalMultiphaseFluid.hpp
      fluid/multifluid/compositional/CompositionalMultiphaseFluidUpdates.hpp
-     fluid/multifluid/compositional/CompositionalMultiphaseFluidParameters.hpp
      fluid/multifluid/reactive/ReactiveBrineFluid.hpp
      fluid/multifluid/reactive/ReactiveMultiFluid.hpp
      fluid/multifluid/reactive/ReactiveMultiFluidFields.hpp

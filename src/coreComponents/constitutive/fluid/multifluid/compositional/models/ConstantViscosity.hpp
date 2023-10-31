@@ -45,7 +45,7 @@ public:
   void compute( real64 const & pressure,
                 real64 const & temperature,
                 arraySlice1d< real64 const, USD1 > const & phaseComposition,
-                real64 & value,
+                real64 & viscosity,
                 bool useMass ) const;
 
   template< int USD1, int USD2, int USD3 >
@@ -54,8 +54,8 @@ public:
                 real64 const & temperature,
                 arraySlice1d< real64 const, USD1 > const & phaseComposition,
                 arraySlice2d< real64 const, USD2 > const & dPhaseComposition,
-                real64 & value,
-                arraySlice1d< real64, USD3 > const & dValue,
+                real64 & viscosity,
+                arraySlice1d< real64, USD3 > const & dViscosity,
                 bool useMass ) const;
 };
 
@@ -92,14 +92,13 @@ GEOS_FORCE_INLINE
 void ConstantViscosityUpdate::compute( real64 const & pressure,
                                        real64 const & temperature,
                                        arraySlice1d< real64 const, USD1 > const & phaseComposition,
-                                       real64 & value,
+                                       real64 & viscosity,
                                        bool useMass ) const
 {
-  GEOS_UNUSED_VAR( pressure,
-                   temperature,
-                   phaseComposition,
-                   useMass );
-  value = 0.001;
+  GEOS_UNUSED_VAR( pressure, temperature, useMass );
+  GEOS_UNUSED_VAR( phaseComposition );
+
+  viscosity = 0.001;
 }
 
 template< int USD1, int USD2, int USD3 >
@@ -109,19 +108,16 @@ void ConstantViscosityUpdate::compute( real64 const & pressure,
                                        real64 const & temperature,
                                        arraySlice1d< real64 const, USD1 > const & phaseComposition,
                                        arraySlice2d< real64 const, USD2 > const & dPhaseComposition,
-                                       real64 & value,
-                                       arraySlice1d< real64, USD3 > const & dValue,
+                                       real64 & viscosity,
+                                       arraySlice1d< real64, USD3 > const & dViscosity,
                                        bool useMass ) const
 {
-  GEOS_UNUSED_VAR( pressure,
-                   temperature,
-                   phaseComposition,
-                   dPhaseComposition,
-                   useMass );
+  GEOS_UNUSED_VAR( pressure, temperature, useMass );
+  GEOS_UNUSED_VAR( phaseComposition, dPhaseComposition );
 
-  value = 0.001;
+  viscosity = 0.001;
 
-  LvArray::forValuesInSlice( dValue, []( real64 & val ){ val = 0.0; } );
+  LvArray::forValuesInSlice( dViscosity, setZero );
 }
 
 } // end namespace compositional

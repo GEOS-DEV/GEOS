@@ -66,6 +66,11 @@ public:
   }
 
 protected:
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
+  static void setZero( real64 & val ){ val = 0.0; }
+
+protected:
 
   /// Array storing the component molar weights
   arrayView1d< real64 const > m_componentMolarWeight;

@@ -43,7 +43,8 @@ public:
   void compute( real64 const & pressure,
                 real64 const & temperature,
                 arraySlice1d< real64 const, USD1 > const & phaseComposition,
-                real64 & value,
+                real64 & molarDensity,
+                real64 & massDensity,
                 bool useMass ) const;
 
   template< int USD1, int USD2, int USD3 >
@@ -52,8 +53,10 @@ public:
                 real64 const & temperature,
                 arraySlice1d< real64 const, USD1 > const & phaseComposition,
                 arraySlice2d< real64 const, USD2 > const & dPhaseComposition,
-                real64 & value,
-                arraySlice1d< real64, USD3 > const & dValue,
+                real64 & molarDensity,
+                real64 & massDensity,
+                arraySlice1d< real64, USD3 > const & dMolarDensity,
+                arraySlice1d< real64, USD3 > const & dMassDensity,
                 bool useMass ) const;
 };
 
@@ -88,15 +91,15 @@ GEOS_HOST_DEVICE
 void CompositionalDensityUpdate::compute( real64 const & pressure,
                                           real64 const & temperature,
                                           arraySlice1d< real64 const, USD1 > const & phaseComposition,
-                                          real64 & value,
+                                          real64 & molarDensity,
+                                          real64 & massDensity,
                                           bool useMass ) const
 {
-  GEOS_UNUSED_VAR( pressure,
-                   temperature,
-                   phaseComposition,
-                   useMass );
+  GEOS_UNUSED_VAR( pressure, temperature, useMass );
+  GEOS_UNUSED_VAR( phaseComposition );
 
-  value = 100.0;
+  massDensity = 1000.0;
+  molarDensity = massDensity/40.0;
 }
 
 template< int USD1, int USD2, int USD3 >
@@ -105,19 +108,20 @@ void CompositionalDensityUpdate::compute( real64 const & pressure,
                                           real64 const & temperature,
                                           arraySlice1d< real64 const, USD1 > const & phaseComposition,
                                           arraySlice2d< real64 const, USD2 > const & dPhaseComposition,
-                                          real64 & value,
-                                          arraySlice1d< real64, USD3 > const & dValue,
+                                          real64 & molarDensity,
+                                          real64 & massDensity,
+                                          arraySlice1d< real64, USD3 > const & dMolarDensity,
+                                          arraySlice1d< real64, USD3 > const & dMassDensity,
                                           bool useMass ) const
 {
-  GEOS_UNUSED_VAR( pressure,
-                   temperature,
-                   phaseComposition,
-                   dPhaseComposition,
-                   useMass );
+  GEOS_UNUSED_VAR( pressure, temperature, useMass );
+  GEOS_UNUSED_VAR( phaseComposition, dPhaseComposition );
 
-  value = 100.0;
+  massDensity = 1000.0;
+  molarDensity = massDensity/40.0;
 
-  LvArray::forValuesInSlice( dValue, []( real64 & val ){ val = 0.0; } );
+  LvArray::forValuesInSlice( dMolarDensity, setZero );
+  LvArray::forValuesInSlice( dMassDensity, setZero );
 }
 
 } // end namespace compositional

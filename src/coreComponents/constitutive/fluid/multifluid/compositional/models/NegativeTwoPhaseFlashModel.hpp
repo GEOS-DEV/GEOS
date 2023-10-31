@@ -23,6 +23,7 @@
 
 #include "constitutive/fluid/multifluid/Layouts.hpp"
 #include "constitutive/fluid/multifluid/MultiFluidUtils.hpp"
+#include "constitutive/fluid/multifluid/compositional/functions/CubicEOSPhaseModel.hpp"
 
 namespace geos
 {
@@ -50,7 +51,18 @@ public:
                 real64 const & temperature,
                 arraySlice1d< real64 const, USD1 > const & compFraction,
                 arraySlice1d< real64, USD2 > const & phaseFraction,
-                arraySlice2d< real64, USD3 > const & phaseCompFraction ) const;
+                arraySlice2d< real64, USD3 > const & phaseCompFraction ) const
+  {
+    GEOS_UNUSED_VAR( pressure, temperature );
+    // TODO: Constant values for now. To be linked with the static function call
+    phaseFraction[m_liquidIndex] = 0.5;
+    phaseFraction[m_vapourIndex] = 0.5;
+    for( integer ic = 0; ic < m_numComponents; ++ic )
+    {
+      phaseCompFraction[m_liquidIndex][ic] = compFraction[ic];
+      phaseCompFraction[m_vapourIndex][ic] = compFraction[ic];
+    }
+  }
 
   template< int USD1 >
   GEOS_HOST_DEVICE
@@ -58,7 +70,27 @@ public:
                 real64 const & temperature,
                 arraySlice1d< real64 const, USD1 > const & compFraction,
                 PhaseProp::SliceType const phaseFraction,
-                PhaseComp::SliceType const phaseCompFraction ) const;
+                PhaseComp::SliceType const phaseCompFraction ) const
+  {
+    GEOS_UNUSED_VAR( pressure, temperature );
+
+    // TODO: Constant values for now. To be linked with the static function call
+    phaseFraction.value[m_liquidIndex] = 0.5;
+    phaseFraction.value[m_vapourIndex] = 0.5;
+    for( integer ic = 0; ic < m_numComponents; ++ic )
+    {
+      phaseCompFraction.value[m_liquidIndex][ic] = compFraction[ic];
+      phaseCompFraction.value[m_vapourIndex][ic] = compFraction[ic];
+    }
+
+    LvArray::forValuesInSlice( phaseFraction.derivs, setZero );
+    LvArray::forValuesInSlice( phaseCompFraction.derivs, setZero );
+  }
+
+private:
+  integer const m_numComponents;
+  integer const m_liquidIndex{0};
+  integer const m_vapourIndex{1};
 };
 
 template< typename EOS_TYPE_LIQUID, typename EOS_TYPE_VAPOUR >
@@ -90,13 +122,13 @@ public:
   KernelWrapper createKernelWrapper() const;
 };
 
+using NegativeTwoPhaseFlashPRPR = NegativeTwoPhaseFlashModel< PengRobinsonEOS, PengRobinsonEOS >;
+using NegativeTwoPhaseFlashSRKSRK = NegativeTwoPhaseFlashModel< SoaveRedlichKwongEOS, SoaveRedlichKwongEOS >;
+
 } // end namespace compositional
 
 } // end namespace constitutive
 
 } // end namespace geos
-
-// Implementation
-#include "NegativeTwoPhaseFlashModelImpl.hpp"
 
 #endif //GEOS_CONSTITUTIVE_FLUID_MULTIFLUID_COMPOSITIONAL_MODELS_NEGATIVETWOPHASEFLASHMODEL_HPP_
