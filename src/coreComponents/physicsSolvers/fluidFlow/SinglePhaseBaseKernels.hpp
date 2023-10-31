@@ -497,11 +497,6 @@ public:
   virtual void computeLinf( localIndex const ei,
                             LinfStackVariables & stack ) const override
   {
-<<<<<<< HEAD
-      std::cout << " residual = " << m_localResidual[stack.localRow] << std::endl;
-      GEOS_ERROR_IF(std::isnan(m_localResidual[stack.localRow]), "NAN in the residual");
-=======
->>>>>>> origin/develop
     real64 const massNormalizer = LvArray::math::max( m_minNormalizer, m_density_n[ei][0] * m_porosity_n[ei][0] * m_volume[ei] );
     real64 const valMass = LvArray::math::abs( m_localResidual[stack.localRow] ) / massNormalizer;
     if( valMass > stack.localValue[0] )
@@ -514,11 +509,6 @@ public:
   virtual void computeL2( localIndex const ei,
                           L2StackVariables & stack ) const override
   {
-<<<<<<< HEAD
-      std::cout << " residual = " << m_localResidual[stack.localRow] << std::endl;
-      GEOS_ERROR_IF(std::isnan(m_localResidual[stack.localRow]), "NAN in the residual");
-=======
->>>>>>> origin/develop
     real64 const massNormalizer = LvArray::math::max( m_minNormalizer, m_density_n[ei][0] * m_porosity_n[ei][0] * m_volume[ei] );
     stack.localValue[0] += m_localResidual[stack.localRow] * m_localResidual[stack.localRow];
     stack.localNormalizer[0] += massNormalizer;
@@ -592,22 +582,12 @@ public:
 struct SolutionCheckKernel
 {
   template< typename POLICY >
-<<<<<<< HEAD
-  static localIndex launch( arrayView1d< real64 const > const & localSolution,
-                            globalIndex const rankOffset,
-                            arrayView1d< globalIndex const > const & dofNumber,
-                            arrayView1d< integer const > const & ghostRank,
-                            arrayView1d< real64 const > const & pres,
-                            arrayView1d< real64 const > const & mob,
-                            real64 const scalingFactor )
-=======
   static std::pair< integer, real64 > launch( arrayView1d< real64 const > const & localSolution,
                                               globalIndex const rankOffset,
                                               arrayView1d< globalIndex const > const & dofNumber,
                                               arrayView1d< integer const > const & ghostRank,
                                               arrayView1d< real64 const > const & pres,
                                               real64 const scalingFactor )
->>>>>>> origin/develop
   {
     RAJA::ReduceSum< ReducePolicy< POLICY >, integer > numNegativePressures( 0 );
     RAJA::ReduceMin< ReducePolicy< POLICY >, integer > minValue( 0 );
@@ -621,13 +601,8 @@ struct SolutionCheckKernel
 
         if( newPres < 0.0 )
         {
-<<<<<<< HEAD
-            std::cout << " Negative pressure = " << newPres << " old value = " << pres[ei] << " mobility = " << mob[ei] << std::endl;
-          //minVal.min( 0 );
-=======
           numNegativePressures += 1;
           minValue.min( newPres );
->>>>>>> origin/develop
         }
       }
 
@@ -673,55 +648,6 @@ struct ScalingForSystemSolutionKernel
     } );
 
     return { scalingFactor.get(), maxDeltaPres.get() };
-  }
-
-};
-
-/******************************** ScalingForSystemSolutionKernel ********************************/
-
-struct ScalingForSystemSolutionKernel
-{
-  template< typename POLICY >
-  static real64 launch( arrayView1d< real64 const > const & localSolution,
-                            globalIndex const rankOffset,
-                            arrayView1d< globalIndex const > const & dofNumber,
-                            arrayView1d< integer const > const & ghostRank,
-                            arrayView1d< real64 const > const & pres )
-  {
-    real64 constexpr eps = 1e-10;
-    real64 const maxRelativePresChange = 0.1;
-
-    RAJA::ReduceMin< ReducePolicy< POLICY >, real64 > minVal( 1.0 );
-
-    forAll< POLICY >( dofNumber.size(), [=] GEOS_HOST_DEVICE ( localIndex const ei ) mutable
-    {
-      if( ghostRank[ei] < 0 && dofNumber[ei] >= 0 )
-      {
-        localIndex const lid = dofNumber[ei] - rankOffset;
-
-          // compute the change in pressure
-          real64 const absPresChange = LvArray::math::abs( localSolution[lid] );
-
-          if(absPresChange > 1e10)
-          {
-              real64 const presScalingFactor = absPresChange / 1e10;
-              minVal.min( presScalingFactor );
-          }
-//          if( LvArray::math::abs(pres[ei]) > eps )
-//        {
-//          real64 const relativePresChange = absPresChange / pres[ei];
-//          if( relativePresChange > maxRelativePresChange )
-//          {
-//              std::cout << " abs pressure change = " << absPresChange << " realtive = " << relativePresChange << " pres = " << pres[ei] << " new pres = " << pres[ei] +localSolution[lid] << std::endl;
-//            real64 const presScalingFactor = maxRelativePresChange / relativePresChange;
-//            minVal.min( presScalingFactor );
-//          }
-//        }
-      }
-
-    } );
-
-    return minVal.get();
   }
 
 };
