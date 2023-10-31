@@ -658,6 +658,17 @@ void CompositionalMultiphaseWell::updateVolRatesForConstraint( WellElementSubReg
 
   constitutive::constitutiveUpdatePassThru( fluid, [&] ( auto & castedFluid )
   {
+    try
+    {
+      castedFluid.checkTablesParameters( surfacePres, surfaceTemp );
+    } catch( SimulationError const & ex )
+    {
+      string const errorMsg = GEOS_FMT( "{}: wrong surface pressure / temperature.\n", getDataContext() );
+      GEOS_WARNING( errorMsg );
+      GEOS_UNUSED_VAR( ex );
+      // throw SimulationError( ex, errorMsg );
+    }
+
     typename TYPEOFREF( castedFluid ) ::KernelWrapper fluidWrapper = castedFluid.createKernelWrapper();
 
     // bring everything back to host, capture the scalars by reference
@@ -1209,6 +1220,7 @@ CompositionalMultiphaseWell::calculateResidualNorm( real64 const & time_n,
                                                    wellControls,
                                                    time_n + dt,
                                                    dt,
+                                                   m_nonlinearSolverParameters.m_minNormalizer,
                                                    subRegionResidualNorm );
 
       // step 2: reduction across meshBodies/regions/subRegions
