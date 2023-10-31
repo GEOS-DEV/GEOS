@@ -81,7 +81,7 @@
       initialCondition="1"
       objectPath="ElementRegions/Region/cb"
       fieldName="mediumSigma"
-      scale="1.0"
+      scale="0.75"
       setNames="{ all }"/>
     </FieldSpecifications>
   <Solvers>
