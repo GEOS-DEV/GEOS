@@ -246,7 +246,7 @@ struct FluidMassResidualDerivativeAssemblyKernel
                                                                           2 * numNodesPerFace * 3 );
       }
 //
-      if( useQuasiNewton == 0 )
+      if( useQuasiNewton == 0 ) // when Quasi Newton is not enabled - add flux derivatives
       {
         localIndex const numColumns = dFluxResidual_dAperture.numNonZeros( ei );
         arraySlice1d< localIndex const > const & columns = dFluxResidual_dAperture.getColumns( ei );
