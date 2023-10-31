@@ -21,6 +21,8 @@
 
 #include "physicsSolvers/fluidFlow/IsothermalCompositionalMultiphaseBaseKernels.hpp"
 
+#include "common/Units.hpp"
+
 namespace geos
 {
 
@@ -697,7 +699,7 @@ public:
   using Base::m_localSolution;
   using Base::m_scalingFactor;
 
-  static real64 constexpr minTemperature = 273.15;
+  static real64 constexpr minTemperature = constants::zeroDegreesCelsiusInKelvin;
 
   /**
    * @brief Create a new kernel instance
@@ -831,7 +833,7 @@ class ResidualNormKernel : public solverBaseKernels::ResidualNormKernelBase< 2 >
 public:
 
   using Base = ResidualNormKernelBase< 2 >;
-  using Base::minNormalizer;
+  using Base::m_minNormalizer;
   using Base::m_rankOffset;
   using Base::m_localResidual;
   using Base::m_dofNumber;
@@ -845,11 +847,13 @@ public:
                       ElementSubRegionBase const & subRegion,
                       MultiFluidBase const & fluid,
                       CoupledSolidBase const & solid,
-                      SolidInternalEnergy const & solidInternalEnergy )
+                      SolidInternalEnergy const & solidInternalEnergy,
+                      real64 const minNormalizer )
     : Base( rankOffset,
             localResidual,
             dofNumber,
-            ghostRank ),
+            ghostRank,
+            minNormalizer ),
     m_numComponents( numComponents ),
     m_numPhases( numPhases ),
     m_volume( subRegion.getElementVolume() ),
@@ -866,7 +870,7 @@ public:
                                      real64 & massNormalizer,
                                      real64 & energyNormalizer ) const
   {
-    massNormalizer = LvArray::math::max( minNormalizer, m_totalDens_n[ei][0] * m_porosity_n[ei][0] * m_volume[ei] );
+    massNormalizer = LvArray::math::max( m_minNormalizer, m_totalDens_n[ei][0] * m_porosity_n[ei][0] * m_volume[ei] );
     real64 const poreVolume = m_porosity_n[ei][0] * m_volume[ei];
     energyNormalizer = m_solidInternalEnergy_n[ei][0] * ( 1.0 - m_porosity_n[ei][0] ) * m_volume[ei];
     for( integer ip = 0; ip < m_numPhases; ++ip )
@@ -874,7 +878,7 @@ public:
       energyNormalizer += m_phaseInternalEnergy_n[ei][0][ip] * m_phaseDens_n[ei][0][ip] * m_phaseVolFrac_n[ei][ip] * poreVolume;
     }
     // warning: internal energy can be negative
-    energyNormalizer = LvArray::math::max( minNormalizer, LvArray::math::abs( energyNormalizer ) );
+    energyNormalizer = LvArray::math::max( m_minNormalizer, LvArray::math::abs( energyNormalizer ) );
   }
 
   GEOS_HOST_DEVICE
@@ -883,7 +887,7 @@ public:
   {
     real64 massNormalizer = 0.0, energyNormalizer = 0.0;
     computeMassEnergyNormalizers( ei, massNormalizer, energyNormalizer );
-    real64 const volumeNormalizer = LvArray::math::max( minNormalizer, m_porosity_n[ei][0] * m_volume[ei] );
+    real64 const volumeNormalizer = LvArray::math::max( m_minNormalizer, m_porosity_n[ei][0] * m_volume[ei] );
 
     // step 1: mass residual
 
@@ -996,12 +1000,13 @@ public:
                    integer const numComps,
                    integer const numPhases,
                    globalIndex const rankOffset,
-                   string const dofKey,
+                   string const & dofKey,
                    arrayView1d< real64 const > const & localResidual,
                    ElementSubRegionBase const & subRegion,
                    MultiFluidBase const & fluid,
                    CoupledSolidBase const & solid,
                    SolidInternalEnergy const & solidInternalEnergy,
+                   real64 const minNormalizer,
                    real64 (& residualNorm)[2],
                    real64 (& residualNormalizer)[2] )
   {
@@ -1009,7 +1014,7 @@ public:
     arrayView1d< integer const > const ghostRank = subRegion.ghostRank();
 
     ResidualNormKernel kernel( rankOffset, localResidual, dofNumber, ghostRank,
-                               numComps, numPhases, subRegion, fluid, solid, solidInternalEnergy );
+                               numComps, numPhases, subRegion, fluid, solid, solidInternalEnergy, minNormalizer );
     if( normType == solverBaseKernels::NormType::Linf )
     {
       ResidualNormKernel::launchLinf< POLICY >( subRegion.size(), kernel, residualNorm );
