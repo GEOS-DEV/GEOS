@@ -72,7 +72,7 @@ public:
     static constexpr char const * lineSearchInterpolationTypeString() { return "lineSearchInterpolationType"; }
 
     static constexpr char const * normTypeString()                { return "normType"; }
-      static constexpr char const * minNormalizerString()               { return "minNormalizer"; }
+    static constexpr char const * minNormalizerString()           { return "minNormalizer"; }
     static constexpr char const * newtonTolString()               { return "newtonTol"; }
     static constexpr char const * newtonMaxIterString()           { return "newtonMaxIter"; }
     static constexpr char const * newtonMinIterString()           { return "newtonMinIter"; }
@@ -274,8 +274,8 @@ public:
   /// Flag to specify whether subcycling is allowed or not in sequential schemes
   integer m_subcyclingOption;
 
-    /// Value used to make sure that residual normalizers are not too small when computing residual norm
-    real64 m_minNormalizer = 1e-12;
+  /// Value used to make sure that residual normalizers are not too small when computing residual norm
+  real64 m_minNormalizer = 1e-12;
 };
 
 ENUM_STRINGS( NonlinearSolverParameters::LineSearchAction,

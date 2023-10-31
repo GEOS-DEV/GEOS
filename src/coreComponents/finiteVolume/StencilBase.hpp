@@ -138,9 +138,6 @@ protected:
 
   /// The container for the weights for each point in each stencil
   typename TRAITS::WeightContainerViewType m_weights;
-
-    /// Used to avoid division by zero
-    static constexpr real64 m_minForDivision = 1e-15;
 };
 
 
