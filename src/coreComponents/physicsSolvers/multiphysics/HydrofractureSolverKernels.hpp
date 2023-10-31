@@ -53,6 +53,7 @@ struct DeformationUpdateKernel
 #endif
           )
   {
+
     RAJA::ReduceMax< ReducePolicy< POLICY >, real64 > maxApertureChange( 0.0 );
     RAJA::ReduceMax< ReducePolicy< POLICY >, real64 > maxHydraulicApertureChange( 0.0 );
     RAJA::ReduceMin< ReducePolicy< POLICY >, real64 > minAperture( 1e10 );
@@ -63,16 +64,17 @@ struct DeformationUpdateKernel
     forAll< POLICY >( size,
                       [=] GEOS_HOST_DEVICE ( localIndex const kfe ) mutable
     {
-      if( elemsToFaces.sizeOfArray( kfe ) != 2 ) { return; }
+      if( elemsToFaces.sizeOfArray( kfe ) != 2 )
+      { return; }
 
       localIndex const kf0 = elemsToFaces[kfe][0];
       localIndex const kf1 = elemsToFaces[kfe][1];
       localIndex const numNodesPerFace = faceToNodeMap.sizeOfArray( kf0 );
-      real64 temp[3] = {0};
-      for( localIndex a = 0; a < numNodesPerFace; ++a )
+      real64 temp[ 3 ] = { 0 };
+      for( localIndex a=0; a<numNodesPerFace; ++a )
       {
-        LvArray::tensorOps::add< 3 >( temp, u[faceToNodeMap( kf0, a )] );
-        LvArray::tensorOps::subtract< 3 >( temp, u[faceToNodeMap( kf1, a )] );
+        LvArray::tensorOps::add< 3 >( temp, u[ faceToNodeMap( kf0, a ) ] );
+        LvArray::tensorOps::subtract< 3 >( temp, u[ faceToNodeMap( kf1, a ) ] );
       }
 
       // TODO this needs a proper contact based strategy for aperture
