@@ -177,6 +177,8 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::postProcessInput()
   m_surfaceGenerator = &this->getParent().template getGroup< SurfaceGenerator >( m_surfaceGeneratorName );
 
   flowSolver()->allowNegativePressure();
+
+  GEOS_LOG_RANK_0_IF( m_useQuasiNewton, GEOS_FMT( "{}: activated Quasi-Newton", this->getName()));
 }
 
 template< typename POROMECHANICS_SOLVER >
