@@ -98,35 +98,38 @@ void ContactBase::allocateConstitutiveData( Group & parent,
   arraySlice1d< real64 const > apertureValues = coords[0];
   array1d< real64 > & hydraulicApertureValues = apertureTable.getValues();
 
-  localIndex const n = apertureValues.size()-1;
-  real64 const slope = ( hydraulicApertureValues[n] - hydraulicApertureValues[n-1] ) / ( apertureValues[n] - apertureValues[n-1] );
-  real64 const apertureTransition = ( hydraulicApertureValues[n] - slope * apertureValues[n] ) / ( 1.0 - slope );
-
-  // if the aperture transition is larger than the last coordinates, we enlarge the table
-  // this check is necessary to ensure that the coordinates are strictly increasing
-  if( apertureTransition > apertureValues[apertureValues.size()-1] )
+  if(false)
   {
-    GEOS_LOG_RANK_0( GEOS_FMT ( "Adding aperture transition for table {}:", m_apertureTableName ) );
-    std::ostringstream s_orig;
-    for( localIndex i = 0; i < apertureValues.size(); i++ )
-      s_orig << "[ " << apertureValues[i] << ", " << hydraulicApertureValues[i] << " ] ";
-    GEOS_LOG_RANK_0( GEOS_FMT ( "    Original table = {}", s_orig.str()));
+    localIndex const n = apertureValues.size() - 1;
+    real64 const slope = ( hydraulicApertureValues[n] - hydraulicApertureValues[n - 1] ) / ( apertureValues[n] - apertureValues[n - 1] );
+    real64 const apertureTransition = ( hydraulicApertureValues[n] - slope * apertureValues[n] ) / ( 1.0 - slope );
 
-    coords.emplaceBack( 0, apertureTransition );
-    hydraulicApertureValues.emplace_back( apertureTransition );
-    // if the aperture transition is larger than 0, we keep enlarging the table
+    // if the aperture transition is larger than the last coordinates, we enlarge the table
     // this check is necessary to ensure that the coordinates are strictly increasing
-    if( apertureTransition > 0 )
+    if( apertureTransition > apertureValues[apertureValues.size() - 1] )
     {
-      coords.emplaceBack( 0, apertureTransition*10e9 );
-      hydraulicApertureValues.emplace_back( apertureTransition*10e9 );
-      apertureTable.reInitializeFunction();
-    }
+      GEOS_LOG_RANK_0( GEOS_FMT( "Adding aperture transition for table {}:", m_apertureTableName ) );
+      std::ostringstream s_orig;
+      for( localIndex i = 0; i < apertureValues.size(); i++ )
+        s_orig << "[ " << apertureValues[i] << ", " << hydraulicApertureValues[i] << " ] ";
+      GEOS_LOG_RANK_0( GEOS_FMT( "    Original table = {}", s_orig.str() ) );
 
-    std::ostringstream s_mod;
-    for( localIndex i = 0; i < apertureValues.size(); i++ )
-      s_mod << "[ " << apertureValues[i] << ", " << hydraulicApertureValues[i] << " ] ";
-    GEOS_LOG_RANK_0( GEOS_FMT ( "    Modified table = {}", s_mod.str()));
+      coords.emplaceBack( 0, apertureTransition );
+      hydraulicApertureValues.emplace_back( apertureTransition );
+      // if the aperture transition is larger than 0, we keep enlarging the table
+      // this check is necessary to ensure that the coordinates are strictly increasing
+      if( apertureTransition > 0 )
+      {
+        coords.emplaceBack( 0, apertureTransition * 10e9 );
+        hydraulicApertureValues.emplace_back( apertureTransition * 10e9 );
+        apertureTable.reInitializeFunction();
+      }
+
+      std::ostringstream s_mod;
+      for( localIndex i = 0; i < apertureValues.size(); i++ )
+        s_mod << "[ " << apertureValues[i] << ", " << hydraulicApertureValues[i] << " ] ";
+      GEOS_LOG_RANK_0( GEOS_FMT( "    Modified table = {}", s_mod.str() ) );
+    }
   }
 
   m_apertureTable = &apertureTable;
@@ -145,9 +148,9 @@ void ContactBase::validateApertureTable( TableFunction const & apertureTable ) c
   arraySlice1d< real64 const > apertureValues = coords[0];
   localIndex const size = apertureValues.size();
 
-  GEOS_THROW_IF( coords( 0, size-1 ) > 0.0 || coords( 0, size-1 ) < 0.0,
-                 getFullName() << ": Invalid aperture limiter table. Last coordinate must be zero!",
-                 InputError );
+//  GEOS_THROW_IF( coords( 0, size-1 ) > 0.0 || coords( 0, size-1 ) < 0.0,
+//                 getFullName() << ": Invalid aperture limiter table. Last coordinate must be zero!",
+//                 InputError );
 
   GEOS_THROW_IF( apertureValues.size() < 2,
                  getFullName() << ": Invalid aperture limiter table. Must have more than two points specified",
@@ -156,9 +159,10 @@ void ContactBase::validateApertureTable( TableFunction const & apertureTable ) c
   localIndex const n = apertureValues.size()-1;
   real64 const slope = ( hydraulicApertureValues[n] - hydraulicApertureValues[n-1] ) / ( apertureValues[n] - apertureValues[n-1] );
 
-  GEOS_THROW_IF( slope >= 1.0,
-                 getFullName() << ": Invalid aperture table. The slope of the last two points >= 1 is invalid.",
-                 InputError );
+  std::cout << " === " << hydraulicApertureValues[n] << "  "<< hydraulicApertureValues[n-1] << "  " << apertureValues[n] << "  " << apertureValues[n-1] << std::endl;
+//  GEOS_THROW_IF( slope >= 1.0 && hydraulicApertureValues[n] > 0.0,
+//                 getFullName() << ": Invalid aperture table. The slope of the last two points >= 1 is invalid.",
+//                 InputError );
 }
 
 
