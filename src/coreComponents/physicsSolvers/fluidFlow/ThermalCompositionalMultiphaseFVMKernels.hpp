@@ -696,10 +696,13 @@ public:
 
   using Base = typename isothermalCompositionalMultiphaseFVMKernels::DiffusionDispersionFaceBasedAssemblyKernel< NUM_COMP, NUM_DOF, STENCILWRAPPER >;
   using DiffusionAccessors = typename Base::DiffusionAccessors;
+  using DispersionAccessors = typename Base::DispersionAccessors;
+  using PorosityAccessors = typename Base::PorosityAccessors;
   using Base::numFluxSupportPoints;
   using Base::numEqn;
   using Base::numComp;
   using Base::numDof;
+  using Base::m_referencePorosity;
   using Base::m_phaseVolFrac;
   using Base::m_phaseDens;
   using Base::m_dPhaseDens;
@@ -714,6 +717,8 @@ public:
    * @param[in] compFlowAccessors
    * @param[in] multiFluidAccessors
    * @param[in] diffusionAccessors
+   * @param[in] dispersionAccessors
+   * @param[in] porosityAccessors
    * @param[in] dt time step size
    * @param[inout] localMatrix the local CRS matrix
    * @param[inout] localRhs the local right-hand side vector
@@ -725,6 +730,8 @@ public:
                                               CompFlowAccessors const & compFlowAccessors,
                                               MultiFluidAccessors const & multiFluidAccessors,
                                               DiffusionAccessors const & diffusionAccessors,
+                                              DispersionAccessors const & dispersionAccessors,
+                                              PorosityAccessors const & porosityAccessors,
                                               real64 const & dt,
                                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                               arrayView1d< real64 > const & localRhs )
@@ -735,6 +742,8 @@ public:
             compFlowAccessors,
             multiFluidAccessors,
             diffusionAccessors,
+            dispersionAccessors,
+            porosityAccessors,
             dt,
             localMatrix,
             localRhs )
@@ -756,14 +765,14 @@ public:
   };
 
   /**
-   * @brief Compute the local flux contributions to the residual and Jacobian
+   * @brief Compute the local diffusion flux contributions to the residual and Jacobian
    * @param[in] iconn the connection index
    * @param[inout] stack the stack variables
    */
   GEOS_HOST_DEVICE
   inline
-  void computeFlux( localIndex const iconn,
-                    StackVariables & stack ) const
+  void computeDiffusionFlux( localIndex const iconn,
+                             StackVariables & stack ) const
   {
     using Deriv = multifluid::DerivativeOffset;
 
@@ -771,19 +780,19 @@ public:
     // First, we call the base computeFlux to compute the diffusionFlux and its derivatives (including derivatives wrt temperature),
     //
     // We use the lambda below (called **inside** the phase loop of the base computeFlux) to access these variables
-    Base::computeFlux( iconn, stack, [&] ( integer const ip,
-                                           integer const ic,
-                                           localIndex const (&k)[2],
-                                           localIndex const (&seri)[2],
-                                           localIndex const (&sesri)[2],
-                                           localIndex const (&sei)[2],
-                                           localIndex const connectionIndex,
-                                           localIndex const k_up,
-                                           localIndex const er_up,
-                                           localIndex const esr_up,
-                                           localIndex const ei_up,
-                                           real64 const & compFracGrad,
-                                           real64 const & upwindCoefficient )
+    Base::computeDiffusionFlux( iconn, stack, [&] ( integer const ip,
+                                                    integer const ic,
+                                                    localIndex const (&k)[2],
+                                                    localIndex const (&seri)[2],
+                                                    localIndex const (&sesri)[2],
+                                                    localIndex const (&sei)[2],
+                                                    localIndex const connectionIndex,
+                                                    localIndex const k_up,
+                                                    localIndex const er_up,
+                                                    localIndex const esr_up,
+                                                    localIndex const ei_up,
+                                                    real64 const & compFracGrad,
+                                                    real64 const & upwindCoefficient )
     {
       // We are in the loop over phases and components, ip provides the current phase index.
 
@@ -808,6 +817,7 @@ public:
 
       // add contributions of the derivatives of upwind coefficient wrt temperature
       real64 const dUpwindCoefficient_dT =
+        m_referencePorosity[er_up][esr_up][ei_up] *
         m_phaseDiffusivityMultiplier[er_up][esr_up][ei_up][0][ip] *
         ( m_dPhaseDens[er_up][esr_up][ei_up][0][ip][Deriv::dT] * m_phaseVolFrac[er_up][esr_up][ei_up][ip]
           + m_phaseDens[er_up][esr_up][ei_up][0][ip] * m_dPhaseVolFrac[er_up][esr_up][ei_up][ip][Deriv::dT] );
@@ -826,8 +836,71 @@ public:
     } );
   }
 
-protected:
+  /**
+   * @brief Compute the local dispersion flux contributions to the residual and Jacobian
+   * @param[in] iconn the connection index
+   * @param[inout] stack the stack variables
+   */
+  GEOS_HOST_DEVICE
+  inline
+  void computeDispersionFlux( localIndex const iconn,
+                              StackVariables & stack ) const
+  {
+    using Deriv = multifluid::DerivativeOffset;
 
+    // ***********************************************
+    // First, we call the base computeFlux to compute the dispersionFlux and its derivatives (including derivatives wrt temperature),
+    //
+    // We use the lambda below (called **inside** the phase loop of the base computeFlux) to access these variables
+    Base::computeDispersionFlux( iconn, stack, [&] ( integer const ip,
+                                                     integer const ic,
+                                                     localIndex const (&k)[2],
+                                                     localIndex const (&seri)[2],
+                                                     localIndex const (&sesri)[2],
+                                                     localIndex const (&sei)[2],
+                                                     localIndex const connectionIndex,
+                                                     localIndex const k_up,
+                                                     localIndex const er_up,
+                                                     localIndex const esr_up,
+                                                     localIndex const ei_up,
+                                                     real64 const & compFracGrad )
+    {
+      // We are in the loop over phases and components, ip provides the current phase index.
+
+      real64 dCompFracGrad_dT[numFluxSupportPoints]{};
+      real64 dDispersionFlux_dT[numFluxSupportPoints]{};
+
+      /// compute the TPFA component difference
+      for( integer i = 0; i < numFluxSupportPoints; i++ )
+      {
+        localIndex const er  = seri[i];
+        localIndex const esr = sesri[i];
+        localIndex const ei  = sei[i];
+
+        dCompFracGrad_dT[i] += stack.transmissibility[connectionIndex][i] * m_dPhaseCompFrac[er][esr][ei][0][ip][ic][Deriv::dT];
+      }
+
+      // add contributions of the derivatives of component fractions wrt pressure/component fractions
+      for( integer ke = 0; ke < numFluxSupportPoints; ++ke )
+      {
+        dDispersionFlux_dT[ke] += m_phaseDens[er_up][esr_up][ei_up][0][ip] * dCompFracGrad_dT[ke];
+      }
+
+      // add contributions of the derivatives of upwind coefficient wrt temperature
+      dDispersionFlux_dT[k_up] += m_dPhaseDens[er_up][esr_up][ei_up][0][ip][Deriv::dT] * compFracGrad;
+
+      // finally, increment local flux and local Jacobian
+      integer const eqIndex0 = k[0] * numEqn + ic;
+      integer const eqIndex1 = k[1] * numEqn + ic;
+
+      for( integer ke = 0; ke < numFluxSupportPoints; ++ke )
+      {
+        localIndex const localDofIndexTemp = k[ke] * numDof + numComp + 1;
+        stack.localFluxJacobian[eqIndex0][localDofIndexTemp] += m_dt * dDispersionFlux_dT[ke];
+        stack.localFluxJacobian[eqIndex1][localDofIndexTemp] -= m_dt * dDispersionFlux_dT[ke];
+      }
+    } );
+  }
 };
 
 /**
@@ -845,6 +918,9 @@ public:
    * @param[in] numPhases the number of fluid phases
    * @param[in] rankOffset the offset of my MPI rank
    * @param[in] dofKey string to get the element degrees of freedom numbers
+   * @param[in] hasDiffusion flag specifying whether diffusion is used or not
+   * @param[in] hasDispersion flag specifying whether dispersion is used or not
+   * @param[in] solverName the name of the solver
    * @param[in] elemManager reference to the element region manager
    * @param[in] stencilWrapper reference to the stencil wrapper
    * @param[in] dt time step size
@@ -857,6 +933,8 @@ public:
                    integer const numPhases,
                    globalIndex const rankOffset,
                    string const & dofKey,
+                   integer const & hasDiffusion,
+                   integer const & hasDispersion,
                    string const & solverName,
                    ElementRegionManager const & elemManager,
                    STENCILWRAPPER const & stencilWrapper,
@@ -878,11 +956,16 @@ public:
       typename kernelType::CompFlowAccessors compFlowAccessors( elemManager, solverName );
       typename kernelType::MultiFluidAccessors multiFluidAccessors( elemManager, solverName );
       typename kernelType::DiffusionAccessors diffusionAccessors( elemManager, solverName );
+      typename kernelType::DispersionAccessors dispersionAccessors( elemManager, solverName );
+      typename kernelType::PorosityAccessors porosityAccessors( elemManager, solverName );
 
-      kernelType kernel( numPhases, rankOffset, stencilWrapper, dofNumberAccessor,
-                         compFlowAccessors, multiFluidAccessors, diffusionAccessors,
+      kernelType kernel( numPhases, rankOffset, stencilWrapper,
+                         dofNumberAccessor, compFlowAccessors, multiFluidAccessors,
+                         diffusionAccessors, dispersionAccessors, porosityAccessors,
                          dt, localMatrix, localRhs );
-      kernelType::template launch< POLICY >( stencilWrapper.size(), kernel );
+      kernelType::template launch< POLICY >( stencilWrapper.size(),
+                                             hasDiffusion, hasDispersion,
+                                             kernel );
     } );
   }
 };

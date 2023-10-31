@@ -117,7 +117,7 @@ public:
    * @brief Recompute phase volume fractions (saturations) from constitutive and primary variables
    * @param dataGroup the group storing the required fields
    */
-  void updatePhaseVolumeFraction( ObjectManagerBase & dataGroup ) const;
+  real64 updatePhaseVolumeFraction( ObjectManagerBase & dataGroup ) const;
 
   /**
    * @brief Update all relevant fluid models using current values of pressure and composition
@@ -149,7 +149,7 @@ public:
    */
   virtual void updatePhaseMobility( ObjectManagerBase & dataGroup ) const = 0;
 
-  void updateFluidState( ObjectManagerBase & dataGroup ) const;
+  real64 updateFluidState( ObjectManagerBase & dataGroup ) const;
 
   virtual void saveConvergedState( ElementSubRegionBase & subRegion ) const override final;
 
@@ -236,6 +236,8 @@ public:
     static constexpr char const * relPermNamesString() { return "relPermNames"; }
     static constexpr char const * capPressureNamesString() { return "capPressureNames"; }
     static constexpr char const * thermalConductivityNamesString() { return "thermalConductivityNames"; }
+    static constexpr char const * diffusionNamesString() { return "diffusionNames"; }
+    static constexpr char const * dispersionNamesString() { return "dispersionNames"; }
 
 
     // time stepping controls

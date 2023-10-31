@@ -133,6 +133,24 @@ public:
    */
   arrayView3d< real64 const > dDiffusivity_dTemperature() const { return m_dDiffusivity_dTemperature; }
 
+  /**
+   * @brief Initialize the diffusivity state (needed when diffusion depends on temperature)
+   * @param[in] initialTemperature the initial temperature field after reservoir initialization
+   *
+   * Note: this is needed because for now, the temperature is treated **explicitly** in the diffusion tensor
+   */
+  virtual void initializeTemperatureState( arrayView1d< real64 const > const & initialTemperature ) const
+  { GEOS_UNUSED_VAR( initialTemperature ); }
+
+  /**
+   * @brief Save the temperature state (needed when diffusion depends on temperature)
+   * @param[in] convergedTemperature the converged temperature field
+   *
+   * Note: this is needed because for now, the temperature is treated **explicitly** in the diffusion tensor
+   */
+  virtual void saveConvergedTemperatureState( arrayView1d< real64 const > const & convergedTemperature ) const
+  { GEOS_UNUSED_VAR( convergedTemperature ); }
+
   struct viewKeyStruct : ConstitutiveBase::viewKeyStruct
   {
     static constexpr char const * phaseNamesString() { return "phaseNames"; }

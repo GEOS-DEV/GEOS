@@ -27,12 +27,16 @@
 #include "constitutive/capillaryPressure/CapillaryPressureBase.hpp"
 #include "constitutive/diffusion/DiffusionFields.hpp"
 #include "constitutive/diffusion/DiffusionBase.hpp"
+#include "constitutive/dispersion/DispersionFields.hpp"
+#include "constitutive/dispersion/DispersionBase.hpp"
 #include "constitutive/fluid/multifluid/MultiFluidBase.hpp"
 #include "constitutive/fluid/multifluid/MultiFluidFields.hpp"
 #include "constitutive/fluid/multifluid/MultiFluidSelector.hpp"
 #include "constitutive/permeability/PermeabilityFields.hpp"
 #include "constitutive/relativePermeability/RelativePermeabilityBase.hpp"
 #include "constitutive/relativePermeability/RelativePermeabilityFields.hpp"
+#include "constitutive/solid/porosity/PorosityBase.hpp"
+#include "constitutive/solid/porosity/PorosityFields.hpp"
 #include "fieldSpecification/AquiferBoundaryCondition.hpp"
 #include "finiteVolume/BoundaryStencil.hpp"
 #include "mesh/ElementRegionManager.hpp"
@@ -894,6 +898,14 @@ public:
                               fields::diffusion::dDiffusivity_dTemperature,
                               fields::diffusion::phaseDiffusivityMultiplier >;
 
+  using DispersionAccessors =
+    StencilMaterialAccessors< DispersionBase,
+                              fields::dispersion::dispersivity >;
+
+  using PorosityAccessors =
+    StencilMaterialAccessors< PorosityBase,
+                              fields::porosity::referencePorosity >;
+
   /**
    * @brief Constructor for the kernel interface
    * @param[in] numPhases the number of fluid phases
@@ -903,6 +915,8 @@ public:
    * @param[in] compFlowAccessors
    * @param[in] multiFluidAccessors
    * @param[in] diffusionAccessors
+   * @param[in] dispersionAccessors
+   * @param[in] porosityAccessors
    * @param[in] dt time step size
    * @param[inout] localMatrix the local CRS matrix
    * @param[inout] localRhs the local right-hand side vector
@@ -914,6 +928,8 @@ public:
                                               CompFlowAccessors const & compFlowAccessors,
                                               MultiFluidAccessors const & multiFluidAccessors,
                                               DiffusionAccessors const & diffusionAccessors,
+                                              DispersionAccessors const & dispersionAccessors,
+                                              PorosityAccessors const & porosityAccessors,
                                               real64 const & dt,
                                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                               arrayView1d< real64 > const & localRhs )
@@ -931,6 +947,8 @@ public:
     m_diffusivity( diffusionAccessors.get( fields::diffusion::diffusivity {} ) ),
     m_dDiffusivity_dTemp( diffusionAccessors.get( fields::diffusion::dDiffusivity_dTemperature {} ) ),
     m_phaseDiffusivityMultiplier( diffusionAccessors.get( fields::diffusion::phaseDiffusivityMultiplier {} ) ),
+    m_dispersivity( dispersionAccessors.get( fields::dispersion::dispersivity {} ) ),
+    m_referencePorosity( porosityAccessors.get( fields::porosity::referencePorosity {} ) ),
     m_stencilWrapper( stencilWrapper ),
     m_seri( stencilWrapper.getElementRegionIndices() ),
     m_sesri( stencilWrapper.getElementSubRegionIndices() ),
@@ -1027,7 +1045,7 @@ public:
   }
 
   /**
-   * @brief Compute the local flux contributions to the residual and Jacobian
+   * @brief Compute the local diffusion flux contributions to the residual and Jacobian
    * @tparam FUNC the type of the function that can be used to customize the computation of the phase fluxes
    * @param[in] iconn the connection index
    * @param[inout] stack the stack variables
@@ -1036,9 +1054,9 @@ public:
   template< typename FUNC = NoOpFunc >
   GEOS_HOST_DEVICE
   inline
-  void computeFlux( localIndex const iconn,
-                    StackVariables & stack,
-                    FUNC && diffusionFluxKernelOp = NoOpFunc{} ) const
+  void computeDiffusionFlux( localIndex const iconn,
+                             StackVariables & stack,
+                             FUNC && diffusionFluxKernelOp = NoOpFunc{} ) const
   {
     using Deriv = multifluid::DerivativeOffset;
 
@@ -1066,7 +1084,6 @@ public:
         real64 dDiffusionFlux_dP[numFluxSupportPoints][numComp]{};
         real64 dDiffusionFlux_dC[numFluxSupportPoints][numComp][numComp]{};
         real64 dDens_dC[numComp]{};
-        real64 dCompFrac_dC[numComp]{};
 
         real64 const trans[numFluxSupportPoints] = { stack.transmissibility[connectionIndex][0],
                                                      stack.transmissibility[connectionIndex][1] };
@@ -1084,26 +1101,13 @@ public:
             real64 dCompFracGrad_dP[numFluxSupportPoints]{};
             real64 dCompFracGrad_dC[numFluxSupportPoints][numComp]{};
 
-            /// compute the TPFA component difference
-            for( integer i = 0; i < numFluxSupportPoints; i++ )
-            {
-              localIndex const er  = seri[i];
-              localIndex const esr = sesri[i];
-              localIndex const ei  = sei[i];
-
-              compFracGrad += trans[i] * m_phaseCompFrac[er][esr][ei][0][ip][ic];
-              dCompFracGrad_dP[i] += trans[i] * m_dPhaseCompFrac[er][esr][ei][0][ip][ic][Deriv::dP];
-
-              applyChainRule( numComp,
-                              m_dCompFrac_dCompDens[er][esr][ei],
-                              m_dPhaseCompFrac[er][esr][ei][0][ip][ic],
-                              dCompFrac_dC,
-                              Deriv::dC );
-              for( integer jc = 0; jc < numComp; ++jc )
-              {
-                dCompFracGrad_dC[i][jc] += trans[i] * dCompFrac_dC[jc];
-              }
-            }
+            // compute the component fraction gradient using the diffusion transmissibility
+            computeCompFractionGradient( ip, ic,
+                                         seri, sesri, sei,
+                                         trans,
+                                         compFracGrad,
+                                         dCompFracGrad_dP,
+                                         dCompFracGrad_dC );
 
             // choose upstream cell for composition upwinding
             localIndex const k_up = (compFracGrad >= 0) ? 0 : 1;
@@ -1114,7 +1118,9 @@ public:
 
             // computation of the upwinded mass flux
             real64 const upwindCoefficient =
-              m_phaseDiffusivityMultiplier[er_up][esr_up][ei_up][0][ip] * m_phaseDens[er_up][esr_up][ei_up][0][ip] * m_phaseVolFrac[er_up][esr_up][ei_up][ip];
+              m_referencePorosity[er_up][esr_up][ei_up] *
+              m_phaseDiffusivityMultiplier[er_up][esr_up][ei_up][0][ip] *
+              m_phaseDens[er_up][esr_up][ei_up][0][ip] * m_phaseVolFrac[er_up][esr_up][ei_up][ip];
             diffusionFlux[ic] += upwindCoefficient * compFracGrad;
 
             // add contributions of the derivatives of component fractions wrt pressure/component fractions
@@ -1129,6 +1135,7 @@ public:
 
             // add contributions of the derivatives of upwind coefficient wrt pressure/component fractions
             real64 const dUpwindCoefficient_dP =
+              m_referencePorosity[er_up][esr_up][ei_up] *
               m_phaseDiffusivityMultiplier[er_up][esr_up][ei_up][0][ip] *
               ( m_dPhaseDens[er_up][esr_up][ei_up][0][ip][Deriv::dP] * m_phaseVolFrac[er_up][esr_up][ei_up][ip]
                 + m_phaseDens[er_up][esr_up][ei_up][0][ip] * m_dPhaseVolFrac[er_up][esr_up][ei_up][ip][Deriv::dP] );
@@ -1142,6 +1149,7 @@ public:
             for( integer jc = 0; jc < numComp; ++jc )
             {
               real64 const dUpwindCoefficient_dC =
+                m_referencePorosity[er_up][esr_up][ei_up] *
                 m_phaseDiffusivityMultiplier[er_up][esr_up][ei_up][0][ip] *
                 ( dDens_dC[jc] * m_phaseVolFrac[er_up][esr_up][ei_up][ip]
                   + m_phaseDens[er_up][esr_up][ei_up][0][ip] * m_dPhaseVolFrac[er_up][esr_up][ei_up][ip][Deriv::dC+jc] );
@@ -1157,34 +1165,228 @@ public:
           } // loop over components
         } // loop over phases
 
-        // loop over components
-        for( integer ic = 0; ic < numComp; ++ic )
-        {
-          // finally, increment local flux and local Jacobian
-          integer const eqIndex0 = k[0] * numEqn + ic;
-          integer const eqIndex1 = k[1] * numEqn + ic;
+        // add diffusion flux to local flux and local flux jacobian
+        addToLocalFluxAndJacobian( k,
+                                   stack,
+                                   diffusionFlux,
+                                   dDiffusionFlux_dP,
+                                   dDiffusionFlux_dC );
 
-          stack.localFlux[eqIndex0]  +=  m_dt * diffusionFlux[ic];
-          stack.localFlux[eqIndex1]  -=  m_dt * diffusionFlux[ic];
-
-          for( integer ke = 0; ke < numFluxSupportPoints; ++ke )
-          {
-            localIndex const localDofIndexPres = k[ke] * numDof;
-            stack.localFluxJacobian[eqIndex0][localDofIndexPres] += m_dt * dDiffusionFlux_dP[ke][ic];
-            stack.localFluxJacobian[eqIndex1][localDofIndexPres] -= m_dt * dDiffusionFlux_dP[ke][ic];
-
-            for( integer jc = 0; jc < numComp; ++jc )
-            {
-              localIndex const localDofIndexComp = localDofIndexPres + jc + 1;
-              stack.localFluxJacobian[eqIndex0][localDofIndexComp] += m_dt * dDiffusionFlux_dC[ke][ic][jc];
-              stack.localFluxJacobian[eqIndex1][localDofIndexComp] -= m_dt * dDiffusionFlux_dC[ke][ic][jc];
-            }
-          }
-        }
         connectionIndex++;
       }   // loop over k[1]
     }   // loop over k[0]
   }
+
+  /**
+   * @brief Compute the local dispersion flux contributions to the residual and Jacobian
+   * @tparam FUNC the type of the function that can be used to customize the computation of the phase fluxes
+   * @param[in] iconn the connection index
+   * @param[inout] stack the stack variables
+   * @param[in] dispersionFluxKernelOp the function used to customize the computation of the component fluxes
+   */
+  template< typename FUNC = NoOpFunc >
+  GEOS_HOST_DEVICE
+  inline
+  void computeDispersionFlux( localIndex const iconn,
+                              StackVariables & stack,
+                              FUNC && dispersionFluxKernelOp = NoOpFunc{} ) const
+  {
+    using Deriv = multifluid::DerivativeOffset;
+
+    // first, compute the transmissibilities at this face
+    // note that the dispersion tensor is lagged in iteration
+    m_stencilWrapper.computeWeights( iconn,
+                                     m_dispersivity,
+                                     m_dispersivity, // this is just to pass something, but the resulting derivative won't be used
+                                     stack.transmissibility,
+                                     stack.dTrans_dTemp ); // will not be used
+
+
+    localIndex k[numFluxSupportPoints]{};
+    localIndex connectionIndex = 0;
+    for( k[0] = 0; k[0] < stack.numConnectedElems; ++k[0] )
+    {
+      for( k[1] = k[0] + 1; k[1] < stack.numConnectedElems; ++k[1] )
+      {
+        /// cell indices
+        localIndex const seri[numFluxSupportPoints]  = {m_seri( iconn, k[0] ), m_seri( iconn, k[1] )};
+        localIndex const sesri[numFluxSupportPoints] = {m_sesri( iconn, k[0] ), m_sesri( iconn, k[1] )};
+        localIndex const sei[numFluxSupportPoints]   = {m_sei( iconn, k[0] ), m_sei( iconn, k[1] )};
+
+        // clear working arrays
+        real64 dispersionFlux[numComp]{};
+        real64 dDispersionFlux_dP[numFluxSupportPoints][numComp]{};
+        real64 dDispersionFlux_dC[numFluxSupportPoints][numComp][numComp]{};
+        real64 dDens_dC[numComp]{};
+
+        real64 const trans[numFluxSupportPoints] = { stack.transmissibility[connectionIndex][0],
+                                                     stack.transmissibility[connectionIndex][1] };
+
+        //***** calculation of flux *****
+        // loop over phases, compute and upwind phase flux and sum contributions to each component's flux
+        for( integer ip = 0; ip < m_numPhases; ++ip )
+        {
+
+          // loop over components
+          for( integer ic = 0; ic < numComp; ++ic )
+          {
+
+            real64 compFracGrad = 0.0;
+            real64 dCompFracGrad_dP[numFluxSupportPoints]{};
+            real64 dCompFracGrad_dC[numFluxSupportPoints][numComp]{};
+
+            // compute the component fraction gradient using the dispersion transmissibility
+            computeCompFractionGradient( ip, ic,
+                                         seri, sesri, sei,
+                                         trans,
+                                         compFracGrad,
+                                         dCompFracGrad_dP,
+                                         dCompFracGrad_dC );
+
+            // choose upstream cell for composition upwinding
+            localIndex const k_up = (compFracGrad >= 0) ? 0 : 1;
+
+            localIndex const er_up  = seri[k_up];
+            localIndex const esr_up = sesri[k_up];
+            localIndex const ei_up  = sei[k_up];
+
+            // computation of the upwinded mass flux
+            dispersionFlux[ic] += m_phaseDens[er_up][esr_up][ei_up][0][ip] * compFracGrad;
+
+            // add contributions of the derivatives of component fractions wrt pressure/component fractions
+            for( integer ke = 0; ke < numFluxSupportPoints; ke++ )
+            {
+              dDispersionFlux_dP[ke][ic] += m_phaseDens[er_up][esr_up][ei_up][0][ip] * dCompFracGrad_dP[ke];
+              for( integer jc = 0; jc < numComp; ++jc )
+              {
+                dDispersionFlux_dC[ke][ic][jc] += m_phaseDens[er_up][esr_up][ei_up][0][ip] * dCompFracGrad_dC[ke][jc];
+              }
+            }
+
+            // add contributions of the derivatives of upwind coefficient wrt pressure/component fractions
+            dDispersionFlux_dP[k_up][ic] += m_dPhaseDens[er_up][esr_up][ei_up][0][ip][Deriv::dP] * compFracGrad;
+
+            applyChainRule( numComp,
+                            m_dCompFrac_dCompDens[er_up][esr_up][ei_up],
+                            m_dPhaseDens[er_up][esr_up][ei_up][0][ip],
+                            dDens_dC,
+                            Deriv::dC );
+            for( integer jc = 0; jc < numComp; ++jc )
+            {
+              dDispersionFlux_dC[k_up][ic][jc] += dDens_dC[jc] * compFracGrad;
+            }
+
+            // call the lambda in the phase loop to allow the reuse of the phase fluxes and their derivatives
+            // possible use: assemble the derivatives wrt temperature, and the flux term of the energy equation for this phase
+            dispersionFluxKernelOp( ip, ic, k, seri, sesri, sei, connectionIndex,
+                                    k_up, seri[k_up], sesri[k_up], sei[k_up],
+                                    compFracGrad );
+
+          } // loop over components
+        } // loop over phases
+
+        // add dispersion flux to local flux and local flux jacobian
+        addToLocalFluxAndJacobian( k,
+                                   stack,
+                                   dispersionFlux,
+                                   dDispersionFlux_dP,
+                                   dDispersionFlux_dC );
+
+        connectionIndex++;
+      }   // loop over k[1]
+    }   // loop over k[0]
+  }
+
+  /**
+   * @brief Compute the component fraction gradient at this interface
+   * @param[in] ip the phase index
+   * @param[in] ic the component index
+   * @param[in] seri the region indices
+   * @param[in] sesri the subregion indices
+   * @param[in] sei the element indices
+   * @param[out] compFracGrad the component fraction gradient
+   * @param[out] dCompFracGrad_dP the derivatives of the component fraction gradient wrt pressure
+   * @param[out] dCompFracGrad_dC the derivatives of the component fraction gradient wrt component densities
+   */
+  GEOS_HOST_DEVICE
+  inline
+  void computeCompFractionGradient( integer const ip,
+                                    integer const ic,
+                                    localIndex const (&seri)[numFluxSupportPoints],
+                                    localIndex const (&sesri)[numFluxSupportPoints],
+                                    localIndex const (&sei)[numFluxSupportPoints],
+                                    real64 const (&trans)[numFluxSupportPoints],
+                                    real64 & compFracGrad,
+                                    real64 (& dCompFracGrad_dP)[numFluxSupportPoints],
+                                    real64 (& dCompFracGrad_dC)[numFluxSupportPoints][numComp] ) const
+  {
+    using Deriv = multifluid::DerivativeOffset;
+
+    real64 dCompFrac_dC[numComp]{};
+
+    for( integer i = 0; i < numFluxSupportPoints; i++ )
+    {
+      localIndex const er  = seri[i];
+      localIndex const esr = sesri[i];
+      localIndex const ei  = sei[i];
+
+      compFracGrad += trans[i] * m_phaseCompFrac[er][esr][ei][0][ip][ic];
+      dCompFracGrad_dP[i] += trans[i] * m_dPhaseCompFrac[er][esr][ei][0][ip][ic][Deriv::dP];
+
+      applyChainRule( numComp,
+                      m_dCompFrac_dCompDens[er][esr][ei],
+                      m_dPhaseCompFrac[er][esr][ei][0][ip][ic],
+                      dCompFrac_dC,
+                      Deriv::dC );
+      for( integer jc = 0; jc < numComp; ++jc )
+      {
+        dCompFracGrad_dC[i][jc] += trans[i] * dCompFrac_dC[jc];
+      }
+    }
+  }
+
+  /**
+   * @brief Add the local diffusion/dispersion flux contributions to the residual and Jacobian
+   * @param[in] k the cell indices
+   * @param[in] stack the stack variables
+   * @param[in] flux the diffusion/dispersion flux
+   * @param[in] dFlux_dP the derivative of the diffusion/dispersion flux wrt pressure
+   * @param[in] dFlux_dC the derivative of the diffusion/dispersion flux wrt compositions
+   */
+  GEOS_HOST_DEVICE
+  inline
+  void addToLocalFluxAndJacobian( localIndex const (&k)[numFluxSupportPoints],
+                                  StackVariables & stack,
+                                  real64 const (&flux)[numComp],
+                                  real64 const (&dFlux_dP)[numFluxSupportPoints][numComp],
+                                  real64 const (&dFlux_dC)[numFluxSupportPoints][numComp][numComp] ) const
+  {
+    // loop over components
+    for( integer ic = 0; ic < numComp; ++ic )
+    {
+      // finally, increment local flux and local Jacobian
+      integer const eqIndex0 = k[0] * numEqn + ic;
+      integer const eqIndex1 = k[1] * numEqn + ic;
+
+      stack.localFlux[eqIndex0] += m_dt * flux[ic];
+      stack.localFlux[eqIndex1] -= m_dt * flux[ic];
+
+      for( integer ke = 0; ke < numFluxSupportPoints; ++ke )
+      {
+        localIndex const localDofIndexPres = k[ke] * numDof;
+        stack.localFluxJacobian[eqIndex0][localDofIndexPres] += m_dt * dFlux_dP[ke][ic];
+        stack.localFluxJacobian[eqIndex1][localDofIndexPres] -= m_dt * dFlux_dP[ke][ic];
+
+        for( integer jc = 0; jc < numComp; ++jc )
+        {
+          localIndex const localDofIndexComp = localDofIndexPres + jc + 1;
+          stack.localFluxJacobian[eqIndex0][localDofIndexComp] += m_dt * dFlux_dC[ke][ic][jc];
+          stack.localFluxJacobian[eqIndex1][localDofIndexComp] -= m_dt * dFlux_dC[ke][ic][jc];
+        }
+      }
+    }
+  }
+
 
   /**
    * @brief Performs the complete phase for the kernel.
@@ -1245,6 +1447,8 @@ public:
   template< typename POLICY, typename KERNEL_TYPE >
   static void
   launch( localIndex const numConnections,
+          integer const & hasDiffusion,
+          integer const & hasDispersion,
           KERNEL_TYPE const & kernelComponent )
   {
     GEOS_MARK_FUNCTION;
@@ -1254,7 +1458,14 @@ public:
                                                   kernelComponent.numPointsInFlux( iconn ) );
 
       kernelComponent.setup( iconn, stack );
-      kernelComponent.computeFlux( iconn, stack );
+      if( hasDiffusion )
+      {
+        kernelComponent.computeDiffusionFlux( iconn, stack );
+      }
+      if( hasDispersion )
+      {
+        kernelComponent.computeDispersionFlux( iconn, stack );
+      }
       kernelComponent.complete( iconn, stack );
     } );
   }
@@ -1273,7 +1484,11 @@ protected:
   ElementViewConst< arrayView3d< real64 const > > const m_dDiffusivity_dTemp;
   ElementViewConst< arrayView3d< real64 const > > const m_phaseDiffusivityMultiplier;
 
-  /// View on the phase diffusivity multiplier
+  /// Views on dispersivity
+  ElementViewConst< arrayView3d< real64 const > > const m_dispersivity;
+
+  /// View on the reference porosity
+  ElementViewConst< arrayView1d< real64 const > > const m_referencePorosity;
 
   // Stencil information
 
@@ -1302,6 +1517,9 @@ public:
    * @param[in] numPhases the number of fluid phases
    * @param[in] rankOffset the offset of my MPI rank
    * @param[in] dofKey string to get the element degrees of freedom numbers
+   * @param[in] hasDiffusion flag specifying whether diffusion is used or not
+   * @param[in] hasDispersion flag specifying whether dispersion is used or not
+   * @param[in] solverName the name of the solver
    * @param[in] elemManager reference to the element region manager
    * @param[in] stencilWrapper reference to the stencil wrapper
    * @param[in] dt time step size
@@ -1314,6 +1532,8 @@ public:
                    integer const numPhases,
                    globalIndex const rankOffset,
                    string const & dofKey,
+                   integer const & hasDiffusion,
+                   integer const & hasDispersion,
                    string const & solverName,
                    ElementRegionManager const & elemManager,
                    STENCILWRAPPER const & stencilWrapper,
@@ -1334,11 +1554,16 @@ public:
       typename kernelType::CompFlowAccessors compFlowAccessors( elemManager, solverName );
       typename kernelType::MultiFluidAccessors multiFluidAccessors( elemManager, solverName );
       typename kernelType::DiffusionAccessors diffusionAccessors( elemManager, solverName );
+      typename kernelType::DispersionAccessors dispersionAccessors( elemManager, solverName );
+      typename kernelType::PorosityAccessors porosityAccessors( elemManager, solverName );
 
-      kernelType kernel( numPhases, rankOffset, stencilWrapper, dofNumberAccessor,
-                         compFlowAccessors, multiFluidAccessors, diffusionAccessors,
+      kernelType kernel( numPhases, rankOffset, stencilWrapper,
+                         dofNumberAccessor, compFlowAccessors, multiFluidAccessors,
+                         diffusionAccessors, dispersionAccessors, porosityAccessors,
                          dt, localMatrix, localRhs );
-      kernelType::template launch< POLICY >( stencilWrapper.size(), kernel );
+      kernelType::template launch< POLICY >( stencilWrapper.size(),
+                                             hasDiffusion, hasDispersion,
+                                             kernel );
     } );
   }
 };

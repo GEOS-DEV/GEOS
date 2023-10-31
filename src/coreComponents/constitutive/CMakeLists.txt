@@ -24,13 +24,15 @@ set( constitutive_headers
      diffusion/ConstantDiffusion.hpp
      diffusion/DiffusionBase.hpp
      diffusion/DiffusionFields.hpp
-        dispersion/ConstantDispersion.hpp
-        dispersion/DispersionBase.hpp
-        dispersion/DispersionFields.hpp
-        dispersion/DispersionSelector.hpp
+     diffusion/DiffusionSelector.hpp
+     dispersion/DispersionBase.hpp
+     dispersion/DispersionFields.hpp
+     dispersion/DispersionSelector.hpp
+     dispersion/LinearIsotropicDispersion.hpp
      fluid/multifluid/Layouts.hpp
      fluid/multifluid/MultiFluidSelector.hpp
      fluid/multifluid/MultiFluidBase.hpp
+     fluid/multifluid/MultiFluidConstants.hpp
      fluid/multifluid/MultiFluidUtils.hpp
      fluid/multifluid/MultiFluidFields.hpp
      fluid/multifluid/PVTDriver.hpp
@@ -57,6 +59,7 @@ set( constitutive_headers
      fluid/multifluid/CO2Brine/functions/CO2EOSSolver.hpp
      fluid/multifluid/CO2Brine/functions/PureWaterProperties.hpp
      fluid/multifluid/CO2Brine/functions/WaterDensity.hpp
+     fluid/multifluid/compositional/functions/CompositionalProperties.hpp
      fluid/multifluid/compositional/functions/CubicEOSPhaseModel.hpp
      fluid/multifluid/compositional/functions/KValueInitialization.hpp
      fluid/multifluid/compositional/functions/NegativeTwoPhaseFlash.hpp
@@ -121,6 +124,7 @@ set( constitutive_headers
      solid/ElasticTransverseIsotropic.hpp
      solid/ElasticOrthotropic.hpp
      solid/InvariantDecompositions.hpp
+     solid/PerfectlyPlastic.hpp
      solid/PorousSolid.hpp
      solid/PropertyConversions.hpp
      solid/SolidBase.hpp
@@ -131,6 +135,7 @@ set( constitutive_headers
      solid/SolidModelDiscretizationOpsIsotropic.hpp
      solid/SolidModelDiscretizationOpsTransverseIsotropic.hpp
      solid/SolidModelDiscretizationOpsOrthotropic.hpp
+     solid/CeramicDamage.hpp
      solid/TriaxialDriver.hpp
      solid/porosity/PorosityFields.hpp
      solid/porosity/BiotPorosity.hpp
@@ -141,12 +146,12 @@ set( constitutive_headers
      thermalConductivity/MultiPhaseConstantThermalConductivity.hpp
      thermalConductivity/MultiPhaseThermalConductivityBase.hpp
      thermalConductivity/MultiPhaseThermalConductivityFields.hpp
-     thermalConductivity/multiPhaseThermalConductivitySelector.hpp
+     thermalConductivity/MultiPhaseThermalConductivitySelector.hpp
      thermalConductivity/MultiPhaseVolumeWeightedThermalConductivity.hpp
      thermalConductivity/SinglePhaseConstantThermalConductivity.hpp
      thermalConductivity/SinglePhaseThermalConductivityBase.hpp
      thermalConductivity/SinglePhaseThermalConductivityFields.hpp
-     thermalConductivity/singlePhaseThermalConductivitySelector.hpp
+     thermalConductivity/SinglePhaseThermalConductivitySelector.hpp
      thermalConductivity/ThermalConductivityFields.hpp
    )
 #
@@ -167,8 +172,8 @@ set( constitutive_sources
      contact/FrictionlessContact.cpp
      diffusion/ConstantDiffusion.cpp
      diffusion/DiffusionBase.cpp
-        dispersion/ConstantDispersion.cpp
-        dispersion/DispersionBase.cpp
+     dispersion/DispersionBase.cpp
+     dispersion/LinearIsotropicDispersion.cpp
      fluid/multifluid/MultiFluidBase.cpp
      fluid/multifluid/PVTDriver.cpp
      fluid/multifluid/blackOil/BlackOilFluidBase.cpp
@@ -194,6 +199,7 @@ set( constitutive_sources
      fluid/multifluid/CO2Brine/functions/CO2EOSSolver.cpp
      fluid/multifluid/CO2Brine/functions/PureWaterProperties.cpp
      fluid/multifluid/CO2Brine/functions/WaterDensity.cpp
+     fluid/multifluid/compositional/functions/CompositionalProperties.cpp
      fluid/multifluid/reactive/ReactiveBrineFluid.cpp
      fluid/multifluid/reactive/ReactiveMultiFluid.cpp
      fluid/multifluid/reactive/ReactiveFluidDriver.cpp
@@ -243,9 +249,11 @@ set( constitutive_sources
      solid/ElasticIsotropicPressureDependent.cpp
      solid/ElasticTransverseIsotropic.cpp
      solid/ElasticOrthotropic.cpp
+     solid/PerfectlyPlastic.cpp
      solid/PorousSolid.cpp
      solid/SolidBase.cpp
      solid/SolidInternalEnergy.cpp
+     solid/CeramicDamage.cpp
      solid/TriaxialDriver.cpp
      solid/porosity/BiotPorosity.cpp
      solid/porosity/PorosityBase.cpp
