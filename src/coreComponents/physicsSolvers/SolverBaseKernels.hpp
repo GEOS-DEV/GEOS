@@ -54,7 +54,7 @@ public:
     m_localResidual( localResidual ),
     m_dofNumber( dofNumber ),
     m_ghostRank( ghostRank ),
-    m_minNormalizer(minNormalizer)
+    m_minNormalizer( minNormalizer )
   {}
 
   /**
@@ -231,7 +231,8 @@ protected:
   /// View on the ghost ranks
   arrayView1d< integer const > const m_ghostRank;
 
-    real64 const m_minNormalizer;
+  /// Value used to make sure that normalizers are never zero
+  real64 const m_minNormalizer;
 
 };
 

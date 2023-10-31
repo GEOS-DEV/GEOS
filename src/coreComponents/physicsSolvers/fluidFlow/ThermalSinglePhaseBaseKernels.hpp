@@ -506,7 +506,7 @@ public:
             localResidual,
             dofNumber,
             ghostRank,
-            minNormalizer),
+            minNormalizer ),
     m_volume( subRegion.getElementVolume() ),
     m_porosity_n( solid.getPorosity_n() ),
     m_density_n( fluid.density_n() ),

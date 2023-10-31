@@ -678,7 +678,7 @@ public:
             localResidual,
             dofNumber,
             ghostRank,
-            minNormalizer),
+            minNormalizer ),
     m_numComp( numComp ),
     m_numDof( numDof ),
     m_targetPhaseIndex( targetPhaseIndex ),
