@@ -86,9 +86,6 @@ void ParticleMeshGenerator::generateMesh( DomainPartition & domain )
 
   // This should probably handled elsewhere:
   int aa = 0;
-  
-  // CC: debug
-  GEOS_LOG_RANK("Block Names: " << m_blockNames);
 
   for( auto & particleBlockName : m_blockNames )
   {
