@@ -884,11 +884,8 @@ map< std::tuple< string, string, string, string >, localIndex > ProblemManager::
 
         for( auto const & regionName : regionNames )
         {
-          // CC: debug
-          GEOS_LOG_RANK( "Region Name (calcRegionQuadrature): " << regionName );
           if( particleManager.hasRegion( regionName ) )
           {
-            GEOS_LOG_RANK( "Has region Name (calcRegionQuadrature): " << regionName );
             ParticleRegionBase & particleRegion = particleManager.getRegion( regionName );
 
             particleRegion.forParticleSubRegions( [&]( auto & subRegion )

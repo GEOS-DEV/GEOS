@@ -685,7 +685,6 @@ void SolidMechanicsMPM::registerDataOnMesh( Group & meshBodies )
     // Set constitutive names on particles
     if( meshBody.hasParticles() )
     {
-      GEOS_LOG_RANK("SolidMechanicsMPM::registerDataOnMesh, " << regionNames);
       particleManager.forParticleSubRegions< ParticleSubRegionBase >( regionNames,
                                                                       [&]( localIndex const,
                                                                            ParticleSubRegionBase & subRegion )
