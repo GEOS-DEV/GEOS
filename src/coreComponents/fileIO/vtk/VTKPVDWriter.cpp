@@ -40,6 +40,18 @@ void VTKPVDWriter::setFileName( string fileName )
   m_fileName = std::move( fileName );
 }
 
+// If running job from restart the pvd file should be read in to append to, not overwritten
+void VTKPVDWriter::read()
+{
+  //CC: do I need to clear the document first?
+  m_pvdFile.reset();
+
+  // If restarting job and pvd already exists read in and append to that
+  xmlWrapper::xmlResult const xmlResult = m_pvdFile.load_file( m_fileName.c_str() );
+  GEOS_THROW_IF( !xmlResult, GEOS_FMT( "Errors found while parsing XML file {}\nDescription: {}\nOffset: {}",
+                                       m_fileName, xmlResult.description(), xmlResult.offset ), InputError );
+}
+
 void VTKPVDWriter::save() const
 {
   m_pvdFile.save_file( m_fileName.c_str() );

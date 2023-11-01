@@ -1031,7 +1031,7 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
     LvArray::tensorOps::fill< 3 >( m_stressControlITerm, 0.0 );
     
 
-    GEOS_ERROR_IF(m_stressTable.size(0) == 0, "Stress table cannot be empty is stress control is enabled");
+    GEOS_ERROR_IF(m_stressTable.size(0) == 0, "Stress table cannot be empty if stress control is enabled");
     GEOS_ERROR_IF(m_stressTable.size(1) == 0, "Stress table must have 4 columns");
 
     for(int i = 0; i < m_stressTable.size(0) ; i++)
@@ -1455,6 +1455,15 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
 {
   GEOS_MARK_FUNCTION;
 
+  // // CC: debug
+  // GEOS_LOG_RANK( "Domain Start: " <<
+  //                "xLocalMin=" << m_xLocalMin << ", " <<
+  //                "xLocalMax=" << m_xLocalMax << ", " <<
+  //                "xGlobalMin=" << m_xGlobalMin << ", " <<
+  //                "xGlobalMax=" << m_xGlobalMax << ", " << 
+  //                "domainL=" << m_domainL << ", " <<
+  //                "domainF=" << m_domainF);
+
   #define USE_PHYSICS_LOOP
 
   //#######################################################################################
@@ -1463,6 +1472,12 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
   //#######################################################################################
   SpatialPartition & partition = dynamic_cast< SpatialPartition & >( domain.getPartition() );
   arrayView1d< int const > const periodic = partition.getPeriodic();
+
+  // // CC: debug
+  // GEOS_LOG_RANK( "Step start: LocalMin=" << partition.getLocalMin() << ", " << 
+  //                "LocalMax=" << partition.getLocalMax() << ", " << 
+  //                "GridMin=" << partition.getGlobalMin() << ", " <<  
+  //                "GridMax=" << partition.getGlobalMax() );
 
   // ***** We assume that there are exactly two mesh bodies, and that one has particles and one does not. *****
   Group & meshBodies = domain.getMeshBodies();
@@ -1516,11 +1531,13 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
                    partition );
   }
 
+
   //#######################################################################################
   GEOS_LOG_RANK_IF( m_debugFlag == 1, "Update global-to-local map" );
   solverProfiling( "Update global-to-local map" );
   //#######################################################################################
   particleManager.updateMaps();
+
 
   //#######################################################################################
   GEOS_LOG_RANK_IF( m_debugFlag == 1 && MpiWrapper::commSize( MPI_COMM_GEOSX ) > 1 && m_needsNeighborList == 1,  "Perform particle ghosting" );
@@ -1541,6 +1558,7 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
     partition.getGhostParticlesFromNeighboringPartitions( domain, m_iComm, m_neighborRadius );
   }
 
+
   //#######################################################################################
   GEOS_LOG_RANK_IF(m_debugFlag == 1, "Get indices of non-ghost particles" );
   solverProfiling( "Get indices of non-ghost particles" );
@@ -1550,6 +1568,7 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
     subRegion.setActiveParticleIndices();
   } );
 
+
   //#######################################################################################
   GEOS_LOG_RANK_IF(m_debugFlag == 1 && ( periodic[0] == 1 || periodic[1] == 1 || periodic[2] == 1 ), "Correct ghost particle centers across periodic boundaries" );
   solverProfilingIf( "Correct ghost particle centers across periodic boundaries",  periodic[0] == 1 || periodic[1] == 1 || periodic[2] == 1 );
@@ -1558,6 +1577,7 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
   {
     correctGhostParticleCentersAcrossPeriodicBoundaries(particleManager, partition);
   }
+
 
   //#######################################################################################
   GEOS_LOG_RANK_IF(m_debugFlag == 1 && m_needsNeighborList == 1, "Construct neighbor list" );
@@ -1589,6 +1609,7 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
     computeSurfaceFlags( particleManager );
   }
 
+
   //#######################################################################################
   GEOS_LOG_RANK_IF( m_debugFlag == 1 && m_damageFieldPartitioning == 1, "Compute damage field gradient" );
   solverProfilingIf( "Compute damage field gradient", m_damageFieldPartitioning == 1 );
@@ -1597,6 +1618,7 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
   {
     computeDamageFieldGradient( particleManager );
   }
+
 
   //#######################################################################################
   GEOS_LOG_RANK_IF( m_debugFlag == 1, "Update surface flag overload" );
@@ -1627,6 +1649,7 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
     boundaryConditionUpdate( dt, time_n );
   }
 
+
   //#######################################################################################
   GEOS_LOG_RANK_IF( m_debugFlag == 1 && m_cpdiDomainScaling == 1, "Perform r-vector scaling (CPDI domain scaling)" );
   solverProfilingIf( "Perform r-vector scaling (CPDI domain scaling)", m_cpdiDomainScaling == 1 );
@@ -1636,12 +1659,13 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
     cpdiDomainScaling( particleManager );
   }
 
+
   //#######################################################################################
   GEOS_LOG_RANK_IF( m_debugFlag == 1, "Resize and populate mapping arrays" );
   solverProfiling( "Resize and populate mapping arrays" );
   //#######################################################################################
   resizeMappingArrays( particleManager );
-  populateMappingArrays( particleManager, nodeManager );
+  populateMappingArrays( particleManager, nodeManager );//, partition );
 
   //#######################################################################################
   GEOS_LOG_RANK_IF( m_debugFlag == 1 && m_damageFieldPartitioning == 1, "Project damage field gradient to the grid and then sync" );
@@ -1669,6 +1693,7 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
                                           particleManager );
   } 
 
+
   //#######################################################################################
   GEOS_LOG_RANK_IF( m_debugFlag == 1, "Particle-to-grid interpolation" );
   solverProfiling( "Particle-to-grid interpolation" );
@@ -1677,6 +1702,7 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
                   cycleNumber,
                   particleManager,
                   nodeManager );
+
 
   //#######################################################################################
   GEOS_LOG_RANK_IF( m_debugFlag == 1, "Grid MPI operations" );
@@ -1697,6 +1723,7 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
   solverProfiling( "Determine trial momenta and velocities based on acceleration due to internal and external forces, but before contact enforcement" );
   //#######################################################################################
   gridTrialUpdate( dt, nodeManager );
+
 
   //#######################################################################################
   GEOS_LOG_RANK_IF( m_debugFlag == 1 && m_numVelocityFields > 1, "Contact enforcement" );
@@ -1764,12 +1791,12 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
   gridToParticle( dt, particleManager, nodeManager, domain, mesh );
 
 
-  //#######################################################################################
-  GEOS_LOG_RANK_IF( m_debugFlag == 1, "Compute kinetic energy" );
-  solverProfiling( "Compute kinetic energy" );
-  //#######################################################################################
-  // 1/2*m*v^2 calculation, TODO add micro kinetic energy.
-  computeKineticEnergy( particleManager );
+  // //#######################################################################################
+  // GEOS_LOG_RANK_IF( m_debugFlag == 1, "Compute kinetic energy" );
+  // solverProfiling( "Compute kinetic energy" );
+  // //#######################################################################################
+  // // 1/2*m*v^2 calculation, TODO add micro kinetic energy.
+  // computeKineticEnergy( particleManager );
 
 
   //#######################################################################################
@@ -1807,21 +1834,21 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
   //#######################################################################################
   particleKinematicUpdate( particleManager );
 
-  //#######################################################################################
-  GEOS_LOG_RANK_IF( m_debugFlag == 1 && m_useArtificialViscosity, "Compute artificial viscosity" );
-  solverProfilingIf( "Compute artificial viscosity", m_useArtificialViscosity );
-  //#######################################################################################
-  if( m_useArtificialViscosity )
-  {
-    computeArtificialViscosity( particleManager );
-  }
+  // //#######################################################################################
+  // GEOS_LOG_RANK_IF( m_debugFlag == 1 && m_useArtificialViscosity, "Compute artificial viscosity" );
+  // solverProfilingIf( "Compute artificial viscosity", m_useArtificialViscosity );
+  // //#######################################################################################
+  // if( m_useArtificialViscosity )
+  // {
+  //   computeArtificialViscosity( particleManager );
+  // }
 
- //#######################################################################################
-  GEOS_LOG_RANK_IF( m_debugFlag == 1, "Increment internalEnergy with old stress and Fdot" );
-  solverProfiling( "Increment internalEnergy with old stress and Fdot" );
-  //#######################################################################################
-  computeInternalEnergyAndTemperature( dt,
-                                       particleManager );
+//  //#######################################################################################
+//   GEOS_LOG_RANK_IF( m_debugFlag == 1, "Increment internalEnergy with old stress and Fdot" );
+//   solverProfiling( "Increment internalEnergy with old stress and Fdot" );
+//   //#######################################################################################
+//   computeInternalEnergyAndTemperature( dt,
+//                                        particleManager );
 
   //#######################################################################################
   GEOS_LOG_RANK_IF( m_debugFlag == 1, "Update constitutive model dependencies" );
@@ -1841,12 +1868,12 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
   //#######################################################################################
   updateSolverDependencies( particleManager );
 
- //#######################################################################################
-  GEOS_LOG_RANK_IF( m_debugFlag == 1, "Increment internalEnergy with new stress and Fdot" );
-  solverProfiling( "Increment internalEnergy with new stress and Fdot" );
-  //#######################################################################################
-  computeInternalEnergyAndTemperature( dt,
-                                       particleManager );
+//  //#######################################################################################
+//   GEOS_LOG_RANK_IF( m_debugFlag == 1, "Increment internalEnergy with new stress and Fdot" );
+//   solverProfiling( "Increment internalEnergy with new stress and Fdot" );
+//   //#######################################################################################
+//   computeInternalEnergyAndTemperature( dt,
+//                                        particleManager );
 
   //#######################################################################################
   GEOS_LOG_RANK_IF( m_debugFlag == 1 && m_boxAverageHistory == 1, "Compute and write box averages" );
@@ -1917,9 +1944,6 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
       } );
       partition.repartitionMasterParticles( subRegion, m_iComm );
 
-      // CC: We need to know which of the particles are master to correct the particle centers across periodic boundaries
-      // We could perform this correction on all particles, but that might be slower since we would also be iterating over
-      // Ghost particles that get update beginning of next time step anyways
       subRegion.setActiveParticleIndices();
     } );
 
@@ -1971,6 +1995,21 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
   {
     printProfilingResults();
   }
+
+  // // CC: debug
+  // GEOS_LOG_RANK( "Domain End: " <<
+  //                "xLocalMin=" << m_xLocalMin << ", " <<
+  //                "xLocalMax=" << m_xLocalMax << ", " <<
+  //                "xGlobalMin=" << m_xGlobalMin << ", " <<
+  //                "xGlobalMax=" << m_xGlobalMax << ", " << 
+  //                "domainL=" << m_domainL << ", " <<
+  //                "domainF=" << m_domainF);
+
+  // // CC: debug
+  // GEOS_LOG_RANK( "Step end: LocalMin=" << partition.getLocalMin() << ", " << 
+  //                "LocalMax=" << partition.getLocalMax() << ", " << 
+  //                "GridMin=" << partition.getGlobalMin() << ", " <<  
+  //                "GridMax=" << partition.getGlobalMax() );
 
   // Return stable time step
   return dtReturn;
@@ -2412,10 +2451,13 @@ void SolidMechanicsMPM::performMaterialSwap( ParticleManager & particleManager,
     arrayView1d< real64 > const sourceParticleTemperature = sourceSubRegion.getField< fields::mpm::particleTemperature >();
     arrayView1d< real64 > const sourceParticleInitialVolume = sourceSubRegion.getField< fields::mpm::particleInitialVolume >();
     arrayView1d< real64 > const sourceParticleDensity = sourceSubRegion.getField< fields::mpm::particleDensity >();
-    arrayView1d< real64 > sourceParticleOverlap = sourceSubRegion.getField< fields::mpm::particleOverlap >();
-    arrayView1d< int > sourceParticleSurfaceFlag = sourceSubRegion.getField< fields::mpm::particleSurfaceFlag >();
-    arrayView1d< int > sourceIsBad = sourceSubRegion.getField< fields::mpm::isBad >();
-    arrayView1d< int > sourceParticleCrystalHealFlag = sourceSubRegion.getField< fields::mpm::particleCrystalHealFlag >();
+    arrayView1d< real64 > const sourceParticleOverlap = sourceSubRegion.getField< fields::mpm::particleOverlap >();
+    arrayView1d< int > const sourceParticleSurfaceFlag = sourceSubRegion.getField< fields::mpm::particleSurfaceFlag >();
+    arrayView1d< int > const sourceIsBad = sourceSubRegion.getField< fields::mpm::isBad >();
+    arrayView1d< int > const sourceParticleCrystalHealFlag = sourceSubRegion.getField< fields::mpm::particleCrystalHealFlag >();
+    arrayView1d< real64 > const sourceParticleInternalEnergy = sourceSubRegion.getField< fields::mpm::particleInternalEnergy >();
+    arrayView1d< real64 > const sourceParticleArtificialViscosity = sourceSubRegion.getField< fields::mpm::particleArtificialViscosity >();
+    arrayView1d< real64 > const sourceParticleHeatCapacity = sourceSubRegion.getField< fields::mpm::particleHeatCapacity >();
 
     arrayView2d< real64 > const sourceParticleReferencePosition = sourceSubRegion.getField< fields::mpm::particleReferencePosition >();
     arrayView2d< real64 > const sourceParticleInitialMaterialDirection = sourceSubRegion.getParticleInitialMaterialDirection();
@@ -2429,14 +2471,17 @@ void SolidMechanicsMPM::performMaterialSwap( ParticleManager & particleManager,
     arrayView3d< real64 > const sourceParticleInitialRVectors = sourceSubRegion.getField< fields::mpm::particleInitialRVectors >();
     arrayView3d< real64 > const sourceParticleSphF = sourceSubRegion.getField< fields::mpm::particleSphF >();
 
-    arrayView1d< real64 > destinationParticleMass = destinationSubRegion.getField< fields::mpm::particleMass >();
-    arrayView1d< real64 > destinationParticleTemperature = destinationSubRegion.getField< fields::mpm::particleTemperature >();
-    arrayView1d< real64 > destinationParticleInitialVolume = destinationSubRegion.getField< fields::mpm::particleInitialVolume >();
-    arrayView1d< real64 > destinationParticleDensity = destinationSubRegion.getField< fields::mpm::particleDensity >();
-    arrayView1d< real64 > destinationParticleOverlap = destinationSubRegion.getField< fields::mpm::particleOverlap >();
-    arrayView1d< int > destinationParticleSurfaceFlag = destinationSubRegion.getField< fields::mpm::particleSurfaceFlag >();
-    arrayView1d< int > destinationIsBad = destinationSubRegion.getField< fields::mpm::isBad >();
-    arrayView1d< int > destinationParticleCrystalHealFlag = destinationSubRegion.getField< fields::mpm::particleCrystalHealFlag >();
+    arrayView1d< real64 > const destinationParticleMass = destinationSubRegion.getField< fields::mpm::particleMass >();
+    arrayView1d< real64 > const destinationParticleTemperature = destinationSubRegion.getField< fields::mpm::particleTemperature >();
+    arrayView1d< real64 > const destinationParticleInitialVolume = destinationSubRegion.getField< fields::mpm::particleInitialVolume >();
+    arrayView1d< real64 > const destinationParticleDensity = destinationSubRegion.getField< fields::mpm::particleDensity >();
+    arrayView1d< real64 > const destinationParticleOverlap = destinationSubRegion.getField< fields::mpm::particleOverlap >();
+    arrayView1d< int > const destinationParticleSurfaceFlag = destinationSubRegion.getField< fields::mpm::particleSurfaceFlag >();
+    arrayView1d< int > const destinationIsBad = destinationSubRegion.getField< fields::mpm::isBad >();
+    arrayView1d< int > const destinationParticleCrystalHealFlag = destinationSubRegion.getField< fields::mpm::particleCrystalHealFlag >();
+    arrayView1d< real64 > const destinationParticleInternalEnergy = destinationSubRegion.getField< fields::mpm::particleInternalEnergy >();
+    arrayView1d< real64 > const destinationParticleArtificialViscosity = destinationSubRegion.getField< fields::mpm::particleArtificialViscosity >();
+    arrayView1d< real64 > const destinationParticleHeatCapacity = destinationSubRegion.getField< fields::mpm::particleHeatCapacity >();
 
     arrayView2d< real64 > const destinationParticleReferencePosition = destinationSubRegion.getField< fields::mpm::particleReferencePosition >();
     arrayView2d< real64 > const destinationParticleInitialMaterialDirection = destinationSubRegion.getParticleInitialMaterialDirection();
@@ -2472,6 +2517,9 @@ void SolidMechanicsMPM::performMaterialSwap( ParticleManager & particleManager,
       destinationParticleSurfaceFlag[p] = sourceParticleSurfaceFlag[p];
       destinationIsBad[p] = sourceIsBad[p];
       destinationParticleCrystalHealFlag[p] = sourceParticleCrystalHealFlag[p];
+      destinationParticleInternalEnergy[p] = sourceParticleInternalEnergy[p];
+      destinationParticleArtificialViscosity[p] = sourceParticleArtificialViscosity[p];
+      destinationParticleHeatCapacity[p] = sourceParticleHeatCapacity[p];
 
       LvArray::tensorOps::copy< 3 >( destinationParticleReferencePosition[p], sourceParticleReferencePosition[p]);
       LvArray::tensorOps::copy< 3 >( destinationParticleInitialMaterialDirection[p], sourceParticleInitialMaterialDirection[p] );
@@ -4839,23 +4887,23 @@ void SolidMechanicsMPM::stressControl( real64 dt,
 		}
 	}
 
-  // CC: debug
-  GEOS_LOG_RANK_0( "Current stress: " << currentStress << "\n" << 
-                   "Domain stress: " << m_domainStress << "\n" << 
-                   "Target stress: " << targetStress[0] << ", " << targetStress[1] << ", " << targetStress[2] << "\n" << 
-                   "Box Material Volume: " << boxMaterialVolume << "\n" <<
-                   "Relative density: " << relativeDensity << "\n" << 
-                   "Gains (kp, ki, kd): " << m_stressControlKp << ", " << m_stressControlKi << ", " << m_stressControlKd << "\n" << 
-                   "error: " << error[0] << ", " << error[1] << ", " << error[2] << "\n" <<
-                   "dedt: " << dedt[0] << ", " << dedt[1] << ", " << dedt[2] << "\n" <<  
-                   "P: " << stressControlPTerm[0] << ", " << stressControlPTerm[1] << ", " << stressControlPTerm[2] << "\n" << 
-                   "I: " << stressControlITerm[0] << ", " << stressControlITerm[1] << ", " << stressControlITerm[2] << "\n" << 
-                   "D: " << stressControlDTerm[0] << ", " << stressControlDTerm[1] << ", " << stressControlDTerm[2] << "\n" << 
-                   "Lnew (x,y,z): " << L_new[0] << ", " << L_new[1] << ", " << L_new[2] << "\n" << 
-                   "Lmin (x,y,z): " << Lxx_min << ", " << Lyy_min << ", " << Lzz_min << "\n" << 
-                   "Lmax (x,y,z): " << Lxx_max << ", " << Lyy_max << ", " << Lzz_max << "\n" << 
-                   "Domain L: " << m_domainL << "\n" << 
-                   "Domain F: " << m_domainF );
+  // // CC: debug
+  // GEOS_LOG_RANK_0( "Current stress: " << currentStress << "\n" << 
+  //                  "Domain stress: " << m_domainStress << "\n" << 
+  //                  "Target stress: " << targetStress[0] << ", " << targetStress[1] << ", " << targetStress[2] << "\n" << 
+  //                  "Box Material Volume: " << boxMaterialVolume << "\n" <<
+  //                  "Relative density: " << relativeDensity << "\n" << 
+  //                  "Gains (kp, ki, kd): " << m_stressControlKp << ", " << m_stressControlKi << ", " << m_stressControlKd << "\n" << 
+  //                  "error: " << error[0] << ", " << error[1] << ", " << error[2] << "\n" <<
+  //                  "dedt: " << dedt[0] << ", " << dedt[1] << ", " << dedt[2] << "\n" <<  
+  //                  "P: " << stressControlPTerm[0] << ", " << stressControlPTerm[1] << ", " << stressControlPTerm[2] << "\n" << 
+  //                  "I: " << stressControlITerm[0] << ", " << stressControlITerm[1] << ", " << stressControlITerm[2] << "\n" << 
+  //                  "D: " << stressControlDTerm[0] << ", " << stressControlDTerm[1] << ", " << stressControlDTerm[2] << "\n" << 
+  //                  "Lnew (x,y,z): " << L_new[0] << ", " << L_new[1] << ", " << L_new[2] << "\n" << 
+  //                  "Lmin (x,y,z): " << Lxx_min << ", " << Lyy_min << ", " << Lzz_min << "\n" << 
+  //                  "Lmax (x,y,z): " << Lxx_max << ", " << Lyy_max << ", " << Lzz_max << "\n" << 
+  //                  "Domain L: " << m_domainL << "\n" << 
+  //                  "Domain F: " << m_domainF );
 }
 
 
@@ -6760,7 +6808,8 @@ int SolidMechanicsMPM::factorial( int n )
 
  
 void SolidMechanicsMPM::populateMappingArrays( ParticleManager & particleManager,
-                                               NodeManager & nodeManager )
+                                               NodeManager & nodeManager ) //,
+                                              //  SpatialPartition & partition )
 {
   GEOS_MARK_FUNCTION;
 
@@ -6770,6 +6819,8 @@ void SolidMechanicsMPM::populateMappingArrays( ParticleManager & particleManager
   LvArray::tensorOps::copy< 3 >( hEl, m_hEl );
   real64 xLocalMin[3] = {0};
   LvArray::tensorOps::copy< 3 >( xLocalMin, m_xLocalMin );
+  real64 xLocalMax[3] = {0};
+  LvArray::tensorOps::copy< 3 >( xLocalMax, m_xLocalMax);
 
   localIndex subRegionIndex = 0;
   particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
@@ -6782,6 +6833,14 @@ void SolidMechanicsMPM::populateMappingArrays( ParticleManager & particleManager
     // Get particle fields
     SortedArrayView< localIndex const > const activeParticleIndices = subRegion.activeParticleIndices();
     arrayView2d< real64 const > const particlePosition = subRegion.getParticleCenter();
+
+    // GEOS_LOG_RANK( "mappedNodes=" << mappedNodes.size( 0 ) << ", " << mappedNodes.size( 1 ) << ", " << 
+    //                "shapeFunctions=" << shapeFunctionValues.size( 0 ) << ", " << shapeFunctionValues.size( 1 ) << ", " << 
+    //                "shapeFunctionGradients=" << shapeFunctionGradientValues.size( 0 ) << ", " << shapeFunctionGradientValues.size( 1 ) << ", " << shapeFunctionGradientValues.size( 2 ) << ", " << 
+    //                "activeParticleIndices=" << activeParticleIndices.size() << ", " << 
+    //                "particlePosition=" << particlePosition.size( 0 ) << ", " << particlePosition.size( 1 ) << ", " << 
+    //                "gridPosition=" << gridPosition.size( 0 ) << ", " << gridPosition.size( 1 ) << ", " <<
+    //                "ijkMap=" << ijkMap.size( 0 ) << ", " << ijkMap.size( 1 ) << ", " << ijkMap.size( 2 ) );
 
     // Populate mapping arrays based on particle type
     switch( subRegion.getParticleType() )
@@ -6904,6 +6963,43 @@ void SolidMechanicsMPM::populateMappingArrays( ParticleManager & particleManager
                                                                                                         // below?
             }
           }
+
+          // for( int corner=0; corner<8; corner++ )
+          // {
+          //   real64 cornerPos[3] ={ 0 };
+          //   for( int w=0; w<3; w++ )
+          //   {
+          //     cornerPos[w] = particlePosition[p][w] + 
+          //                    signs[corner][0] * particleRVectors[p][0][w] + 
+          //                    signs[corner][1] * particleRVectors[p][1][w] + 
+          //                    signs[corner][2] * particleRVectors[p][2][w];                             
+          //   }
+
+          //   for( int i=0; i<2; i++ )
+          //     {
+          //       for( int j=0; j<2; j++ )
+          //       {
+          //         for( int k=0; k<2; k++ )
+          //         {
+          //           if( cornerIJK[corner][0] + i >= ijkMap.size( 0 ) || cornerIJK[corner][1] + j >= ijkMap.size( 1 ) || cornerIJK[corner][2] + k >= ijkMap.size( 2 ))
+          //           {
+          //             GEOS_LOG_RANK( "Particle: " << p << ", " << 
+          //                            "ijk size={" << ijkMap.size( 0 ) << ", " << ijkMap.size( 1 ) << ", " << ijkMap.size( 2 )  << "}, " << 
+          //                            "cornerIJK=" << cornerIJK[corner][0] << ", " << cornerIJK[corner][1] << ", " << cornerIJK[corner][2] << ", " <<
+          //                            "i=" << i << ", j=" << j << ", k=" << k << ", " << 
+          //                            "particlePos=" << particlePosition[p] << ", " << 
+          //                            "cornerPos={" << cornerPos[0] << ", " << cornerPos[1] << ", " <<  cornerPos[2] << "}" <<
+          //                            "xLocalMin={" << xLocalMin[0] << ", " << xLocalMin[1] << ", " <<  xLocalMin[2] << "}" <<
+          //                            "xLocalMax={" << xLocalMax[0] << ", " << xLocalMax[1] << ", " <<  xLocalMax[2] << "}" << 
+          //                            "InPartition=" << ( partition.isCoordInPartition( particlePosition[p][0], 0 ) && partition.isCoordInPartition( particlePosition[p][1], 1 ) && partition.isCoordInPartition( particlePosition[p][2], 2 ) ) );
+          //                           //  << ", " << 
+          //                           //  "PartitionMin={" << partition.getLocalMin()[0] << ", " << partition.getLocalMin()[1] << ", " << partition.getLocalMin()[2] << "}, " << 
+          //                           //  "PartitionMax={" << partition.getLocalMax()[0] << ", " << partition.getLocalMax()[1] << ", " << partition.getLocalMax()[2] << "}");
+          //           }
+          //         }
+          //       }
+          //     }
+          // }
 
           // get node IDs associated with each corner from IJK map, along with weights and grad weights
           // *** The order in which we access the IJK map must match the order we evaluate the shape functions! ***
@@ -7471,7 +7567,7 @@ void SolidMechanicsMPM::overlapCorrection( real64 const dt,
 
       if ( J <= 0.0 )
       {
-        GEOS_ERROR( "Particel jacobian was negative!" );
+        return; // CC: For lambda we would return instead of continue?
       }
 
       // If there is overdensification, the jacobian as computed from the sph kernel will be much less
@@ -7519,15 +7615,12 @@ void SolidMechanicsMPM::overlapCorrection( real64 const dt,
           {
             particleDeformationGradient[p][i][j] *= scale;
             particleFDot[p][i][j] += ( particleDeformationGradient[p][i][j] - Fold[i][j] ) / dt;
-            // p_Fdot[pp](i,j) = p_Fdot[pp](i,j) + (1./dt)*( p_F[pp](i,j) - Fold(i,j) );
 
             // Update velocity gradient without taking the inverse of the particle deformation gradient
             particleVelocityGradient[p][i][j] /= scale;
-            if( i == j )
-            {
-              particleVelocityGradient[p][i][j] += ( scale - 1.0 ) / ( scale * dt );
-            } 
           }
+
+          particleVelocityGradient[p][i][i] += ( scale - 1.0 ) / ( scale * dt );
         }
         // Modify p_L as well, consistent with the change to p_F in case a hypoelastic constitutive model
         // is used, and so the update to the internal energy is consistent with the change in F.
@@ -7535,8 +7628,6 @@ void SolidMechanicsMPM::overlapCorrection( real64 const dt,
         // real64 invF[3][3] = { { 0 } };
         // LvArray::tensorOps::invert< 3 >( invF, particleDeformationGradient[p] );
         // LvArray::tensorOps::Rij_eq_AikBkj< 3, 3, 3 >( particleVelocityGradient[p], particleFDot[p], invF );
-
-        // p_L[pp].AijBjk( p_Fdot[pp], p_F[pp] ); // Error previously, p_F should be inverse p_F
       }
     } );
   } );

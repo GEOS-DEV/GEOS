@@ -444,7 +444,8 @@ public:
   void resizeMappingArrays( ParticleManager & particleManager );
 
   void populateMappingArrays( ParticleManager & particleManager,
-                              NodeManager & nodeManager );
+                              NodeManager & nodeManager ); //,
+                                              //  SpatialPartition & partition  );
 
   void computeBodyForce( ParticleManager & particleManager );
   

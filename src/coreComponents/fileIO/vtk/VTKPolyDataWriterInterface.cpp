@@ -1304,6 +1304,13 @@ void VTKPolyDataWriterInterface::write( real64 const time,
     VTKVTMWriter vtmWriter( joinPath( m_outputDir, vtmName ) );
     writeVtmFile( cycle, domain, vtmWriter );
 
+    // CC: for restarts need the vtk pvd file to be appended to which requires reading it in from file
+    if( m_previousCycle == -1 && cycle != 0)
+    {
+      GEOS_LOG_RANK_0( "Restart detected, importing existing pvd file!");
+      m_pvd.read();
+    }
+
     if( cycle != m_previousCycle )
     {
       m_pvd.addData( time, vtmName );

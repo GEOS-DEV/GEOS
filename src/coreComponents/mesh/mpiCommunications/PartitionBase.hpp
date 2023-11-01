@@ -40,7 +40,7 @@ public:
    * @param dir The considered direction.
    * @return The predicate result.
    */
-  virtual bool isCoordInPartition( const real64 & coord, const int dir ) = 0;
+  virtual bool isCoordInPartition( const real64 & coord, const int dir ) const = 0;
 
   /**
    * @brief Defines the dimensions of the grid.
