@@ -122,3 +122,60 @@ It will also verify that the ``VTK_POLYHEDRON`` cells can effectively get conver
 
 .. command-output:: python mesh_doctor.py supported_elements --help
    :cwd: ../../../coreComponents/python/modules/geosx_mesh_doctor
+
+``Using mesh_doctor in paraview``
+""""""""""""""""""""""""""""""""""
+To use ``mesh_doctor`` in Paraview as a python programmable filter, a python package install is required first in Paraview python resolved
+path. Paraview is storing its python ressources under its *lib/pythonX.X* depending on the paraview version, *e.g* Paraview 5.11 is working
+with python 3.9. As a results the following command will install ``mesh_doctor`` package into Paraview resolved path.
+
+.. command-output:: python3 -m pip install --index-url https://test.pypi.org/simple/ --no-deps --upgrade --target /path/to/Paraview/lib/python3.9/ mesh_doctor
+
+.. note::
+    ``pip`` is installing the ``mesh_doctor`` package from the test.pypi repo, which is intended to test package deployment.
+    Once stabilized and ``mesh_doctor`` uploaded onto the main package repo, this should be dropped out.
+
+Once the installation done, the */path/to/Paraview/lib/pythonX.X* should holds ``mesh_doctor`` package content, *i.e.* ``checks`` and ``parsing``.
+Then launching ``Paraview`` and loading our *mesh.vtu*, as an example, we will design a *Programmable python filter* relying on *element_volumes* from
+``mesh_doctor``. Add such a filter pipelined after the mesh reader, in the script section paste the following,
+
+.. code-block:: python
+    :linenos:
+
+    input0 = inputs[0]
+    tol = 1.2e-6
+
+    from checks import element_volumes
+    import vtk
+    #
+    res = element_volumes.__check(inputs[0].VTKObject, element_volumes.Options(tol))
+    #print(res)
+    ids = vtk.vtkIdTypeArray()
+    ids.SetNumberOfComponents(1)
+    for val in res.element_volumes:
+     ids.InsertNextValue(val[0])
+    #
+    selectionNode = vtk.vtkSelectionNode()
+    selectionNode.SetFieldType(vtk.vtkSelectionNode.CELL)
+    selectionNode.SetContentType(vtk.vtkSelectionNode.INDICES)
+    selectionNode.SetSelectionList(ids)
+    selection = vtk.vtkSelection()
+    selection.AddNode(selectionNode)
+    extracted = vtk.vtkExtractSelection()
+    extracted.SetInputDataObject(0, inputs[0].VTKObject)
+    extracted.SetInputData(1, selection)
+    extracted.Update()
+    print("There are {} cells under {} m3 vol".format(extracted.GetOutput().GetNumberOfCells(), tol))
+    output.ShallowCopy(extracted.GetOutput())
+
+Here we rely on ``pyvtk`` interface more than on Paraview adaptation, for legacy and reusability reasons. This is the reason
+for the full ``import vtk`` instead of ``from paraview import vtk``, the `vtkSelectionNode` being fully wrapped in paraview
+and not accessible otherwise.
+
+On line 7, we leverage ``mesh_doctor`` package to provide us with pairs of `(index,volumes)` of cells with volumes lower
+than tolerance `tol`. As input of *Programmable Python Filter* is wrapped in a `dataset_adapter.UnstructuredGrid`, we rely on
+the copy of the inital VTKObject `inputs[0].VTKObject` to ensure consistency with our ``pyvtk`` workflow.
+
+What follows is ``pyvtk`` steps in oder to convert into input struct and extract from the original mesh this list of cells.
+Eventually, the `extracted` selection is shallow-copied to the output and then accessible in ``Paraview``. An helper print
+is left and should be reported in *Output Message* of ``Paraview`` (and in launching terminal if exist).
