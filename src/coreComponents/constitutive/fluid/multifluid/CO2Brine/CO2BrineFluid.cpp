@@ -84,6 +84,8 @@ CO2BrineFluid< PHASE1, PHASE2, FLASH >::
 CO2BrineFluid( string const & name, Group * const parent ):
   MultiFluidBase( name, parent )
 {
+  enableLogLevelInput();
+
   registerWrapper( viewKeyStruct::phasePVTParaFilesString(), &m_phasePVTParaFiles ).
     setInputFlag( InputFlags::REQUIRED ).
     setRestartFlags( RestartFlags::NO_WRITE ).
@@ -336,7 +338,8 @@ void CO2BrineFluid< PHASE1, PHASE2, FLASH >::createPVTModels()
                                                  strs,
                                                  m_phaseNames,
                                                  m_componentNames,
-                                                 m_componentMolarWeight );
+                                                 m_componentMolarWeight,
+                                                 getLogLevel() > 0 && logger::internal::rank==0 );
           }
         }
         else
