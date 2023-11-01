@@ -87,7 +87,8 @@ public:
   SpanWagnerCO2Density( string const &,
                         string_array const & inputParams,
                         string_array const & componentNames,
-                        array1d< real64 > const & componentMolarWeight );
+                        array1d< real64 > const & componentMolarWeight,
+                        bool const printTable );
 
   static string catalogName() { return "SpanWagnerCO2Density"; }
 
@@ -116,7 +117,8 @@ public:
   void calculateCO2Density( string const & functionName,
                             real64 const & tolerance,
                             PVTProps::PTTableCoordinates const & tableCoords,
-                            array1d< real64 > const & densities );
+                            array1d< real64 > const & densities,
+                            bool const printTable );
 
 private:
 

@@ -182,13 +182,12 @@ void calculateCO2Solubility( string const & functionName,
   std::ofstream table_file;
   if( printTable )
   {
-    table_file.open( functionName + ".csv" );
-
-    table_file << "P[bar]\\T[C]";
+    table_file.open( "CO2Solubility.csv" );
+    table_file << "P[bar]";
     for( localIndex j = 0; j < nTemperatures; ++j )
     {
       real64 const T = tableCoords.getTemperature( j );
-      table_file<< ","<<T;
+      table_file << ",T=" << T << "[C]";
     }
     table_file << std::endl;
   }
@@ -198,7 +197,7 @@ void calculateCO2Solubility( string const & functionName,
     real64 const P = tableCoords.getPressure( i ) / P_Pa_f;
 
     if( printTable )
-      table_file<< P;
+      table_file << P;
 
     for( localIndex j = 0; j < nTemperatures; ++j )
     {

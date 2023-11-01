@@ -201,7 +201,8 @@ real64 helmholtzCO2Enthalpy( real64 const & T,
 
 TableFunction const * makeCO2EnthalpyTable( string_array const & inputParams,
                                             string const & functionName,
-                                            FunctionManager & functionManager )
+                                            FunctionManager & functionManager,
+                                            bool const printTable )
 {
   string const tableName = functionName + "_CO2_enthalpy_table";
 
@@ -233,9 +234,9 @@ TableFunction const * makeCO2EnthalpyTable( string_array const & inputParams,
     array1d< real64 > enthalpies( tableCoords.nPressures() * tableCoords.nTemperatures() );
 
 
-    SpanWagnerCO2Density::calculateCO2Density( functionName, tolerance, tableCoords, densities );
+    SpanWagnerCO2Density::calculateCO2Density( functionName, tolerance, tableCoords, densities, printTable );
 
-    CO2Enthalpy::calculateCO2Enthalpy( tableCoords, densities, enthalpies );
+    CO2Enthalpy::calculateCO2Enthalpy( tableCoords, densities, enthalpies, printTable );
 
     TableFunction * const enthalpyTable = dynamicCast< TableFunction * >( functionManager.createChild( TableFunction::catalogName(), tableName ) );
     enthalpyTable->setTableCoordinates( tableCoords.getCoords(),
@@ -251,7 +252,8 @@ TableFunction const * makeCO2EnthalpyTable( string_array const & inputParams,
 CO2Enthalpy::CO2Enthalpy( string const & name,
                           string_array const & inputParams,
                           string_array const & componentNames,
-                          array1d< real64 > const & componentMolarWeight ):
+                          array1d< real64 > const & componentMolarWeight,
+                          bool const printTable ):
   PVTFunctionBase( name,
                    componentNames,
                    componentMolarWeight )
@@ -259,17 +261,25 @@ CO2Enthalpy::CO2Enthalpy( string const & name,
   string const expectedCO2ComponentNames[] = { "CO2", "co2" };
   m_CO2Index = PVTFunctionHelpers::findName( componentNames, expectedCO2ComponentNames, "componentNames" );
 
-  m_CO2EnthalpyTable = makeCO2EnthalpyTable( inputParams, m_functionName, FunctionManager::getInstance() );
+  m_CO2EnthalpyTable = makeCO2EnthalpyTable( inputParams, m_functionName, FunctionManager::getInstance(), printTable );
 }
 
 
 void
 CO2Enthalpy::calculateCO2Enthalpy( PTTableCoordinates const & tableCoords,
                                    array1d< real64 > const & densities,
-                                   array1d< real64 > const & enthalpies )
+                                   array1d< real64 > const & enthalpies,
+                                   bool const printTable )
 {
   localIndex const nPressures = tableCoords.nPressures();
   localIndex const nTemperatures = tableCoords.nTemperatures();
+
+  std::ofstream table_file;
+  if( printTable )
+  {
+    table_file.open( "CO2Enthalpy.csv" );
+    table_file << "T[C]" << std::endl;
+  }
 
   // Note that the enthalpy values given in Span and Wagner assume a reference enthalphy defined as: h_0 = 0 J/kg at T_0 = 298.15 K
   // Therefore, the enthalpy computed using the Span and Wagner methid must be shifted by the enthalpy at 298.15 K
@@ -281,8 +291,12 @@ CO2Enthalpy::calculateCO2Enthalpy( PTTableCoordinates const & tableCoords,
     {
       real64 const TC = tableCoords.getTemperature( j );
       enthalpies[j*nPressures+i] = helmholtzCO2Enthalpy( TC, densities[j*nPressures+i] ) + referenceEnthalpy;
+      if( i == 0 && printTable )
+        table_file << TC << "," << enthalpies[j*nPressures+i] << std::endl;
     }
   }
+  if( printTable )
+    table_file.close();
 }
 
 void CO2Enthalpy::checkTablesParameters( real64 const pressure,
@@ -301,7 +315,7 @@ CO2Enthalpy::createKernelWrapper() const
                         m_CO2Index );
 }
 
-REGISTER_CATALOG_ENTRY( PVTFunctionBase, CO2Enthalpy, string const &, string_array const &, string_array const &, array1d< real64 > const & )
+REGISTER_CATALOG_ENTRY( PVTFunctionBase, CO2Enthalpy, string const &, string_array const &, string_array const &, array1d< real64 > const &, bool const )
 
 } // namespace PVTProps
 

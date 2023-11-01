@@ -82,7 +82,7 @@ public:
                                                              string_array const &,
                                                              string_array const &,
                                                              string_array const &,
-                                                             array1d< real64 > const &, 
+                                                             array1d< real64 > const &,
                                                              bool const >;
   static typename CatalogInterface::CatalogType & getCatalog()
   {

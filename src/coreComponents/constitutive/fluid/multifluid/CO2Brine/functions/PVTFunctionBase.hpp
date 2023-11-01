@@ -79,7 +79,8 @@ public:
                                                              string const &,
                                                              array1d< string > const &,
                                                              array1d< string > const &,
-                                                             array1d< real64 > const & >;
+                                                             array1d< real64 > const &,
+                                                             bool const >;
   static typename CatalogInterface::CatalogType & getCatalog()
   {
     static CatalogInterface::CatalogType catalog;
