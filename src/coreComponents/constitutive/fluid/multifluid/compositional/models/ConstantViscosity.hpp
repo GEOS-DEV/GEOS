@@ -45,6 +45,7 @@ public:
   void compute( real64 const & pressure,
                 real64 const & temperature,
                 arraySlice1d< real64 const, USD1 > const & phaseComposition,
+                real64 const & density,
                 real64 & viscosity,
                 bool useMass ) const;
 
@@ -54,6 +55,8 @@ public:
                 real64 const & temperature,
                 arraySlice1d< real64 const, USD1 > const & phaseComposition,
                 arraySlice2d< real64 const, USD2 > const & dPhaseComposition,
+                real64 const & density,
+                arraySlice1d< real64 const, USD3 > const & dDensity,
                 real64 & viscosity,
                 arraySlice1d< real64, USD3 > const & dViscosity,
                 bool useMass ) const;
@@ -92,11 +95,13 @@ GEOS_FORCE_INLINE
 void ConstantViscosityUpdate::compute( real64 const & pressure,
                                        real64 const & temperature,
                                        arraySlice1d< real64 const, USD1 > const & phaseComposition,
+                                       real64 const & density,
                                        real64 & viscosity,
                                        bool useMass ) const
 {
   GEOS_UNUSED_VAR( pressure, temperature, useMass );
   GEOS_UNUSED_VAR( phaseComposition );
+  GEOS_UNUSED_VAR( density );
 
   viscosity = 0.001;
 }
@@ -108,12 +113,15 @@ void ConstantViscosityUpdate::compute( real64 const & pressure,
                                        real64 const & temperature,
                                        arraySlice1d< real64 const, USD1 > const & phaseComposition,
                                        arraySlice2d< real64 const, USD2 > const & dPhaseComposition,
+                                       real64 const & density,
+                                       arraySlice1d< real64 const, USD3 > const & dDensity,
                                        real64 & viscosity,
                                        arraySlice1d< real64, USD3 > const & dViscosity,
                                        bool useMass ) const
 {
   GEOS_UNUSED_VAR( pressure, temperature, useMass );
   GEOS_UNUSED_VAR( phaseComposition, dPhaseComposition );
+  GEOS_UNUSED_VAR( density, dDensity );
 
   viscosity = 0.001;
 

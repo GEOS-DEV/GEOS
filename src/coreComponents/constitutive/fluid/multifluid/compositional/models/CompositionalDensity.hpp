@@ -54,8 +54,8 @@ public:
                 arraySlice1d< real64 const, USD1 > const & phaseComposition,
                 arraySlice2d< real64 const, USD2 > const & dPhaseComposition,
                 real64 & molarDensity,
-                real64 & massDensity,
                 arraySlice1d< real64, USD3 > const & dMolarDensity,
+                real64 & massDensity,
                 arraySlice1d< real64, USD3 > const & dMassDensity,
                 bool useMass ) const;
 };
@@ -109,8 +109,8 @@ void CompositionalDensityUpdate::compute( real64 const & pressure,
                                           arraySlice1d< real64 const, USD1 > const & phaseComposition,
                                           arraySlice2d< real64 const, USD2 > const & dPhaseComposition,
                                           real64 & molarDensity,
-                                          real64 & massDensity,
                                           arraySlice1d< real64, USD3 > const & dMolarDensity,
+                                          real64 & massDensity,
                                           arraySlice1d< real64, USD3 > const & dMassDensity,
                                           bool useMass ) const
 {
