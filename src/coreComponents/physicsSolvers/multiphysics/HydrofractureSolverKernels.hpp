@@ -32,7 +32,7 @@ struct DeformationUpdateKernel
 {
 
   template< typename POLICY, typename CONTACT_WRAPPER >
-  static void
+  static std::tuple< double, double, double, double, double, double >
   launch( localIndex const size,
           CONTACT_WRAPPER const & contactWrapper,
           arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const & u,
@@ -54,7 +54,16 @@ struct DeformationUpdateKernel
 #endif
           )
   {
-    forAll< POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const kfe )
+
+    RAJA::ReduceMax< ReducePolicy< POLICY >, real64 > maxApertureChange( 0.0 );
+    RAJA::ReduceMax< ReducePolicy< POLICY >, real64 > maxHydraulicApertureChange( 0.0 );
+    RAJA::ReduceMin< ReducePolicy< POLICY >, real64 > minAperture( 1e10 );
+    RAJA::ReduceMax< ReducePolicy< POLICY >, real64 > maxAperture( -1e10 );
+    RAJA::ReduceMin< ReducePolicy< POLICY >, real64 > minHydraulicAperture( 1e10 );
+    RAJA::ReduceMax< ReducePolicy< POLICY >, real64 > maxHydraulicAperture( -1e10 );
+
+    forAll< POLICY >( size,
+                      [=] GEOS_HOST_DEVICE ( localIndex const kfe ) mutable
     {
       if( elemsToFaces.sizeOfArray( kfe ) != 2 )
       { return; }
@@ -70,12 +79,18 @@ struct DeformationUpdateKernel
       }
 
       // TODO this needs a proper contact based strategy for aperture
-      aperture[kfe] = -LvArray::tensorOps::AiBi< 3 >( temp, faceNormal[ kf0 ] ) / numNodesPerFace;
+      real64 const newAperture = -LvArray::tensorOps::AiBi< 3 >( temp, faceNormal[kf0] ) / numNodesPerFace;
+      maxApertureChange.max( std::fabs( newAperture - aperture[kfe] ));
+      aperture[kfe] = newAperture;
+      minAperture.min( aperture[kfe] );
+      maxAperture.max( aperture[kfe] );
 
       real64 dHydraulicAperture_dAperture = 0.0;
-      hydraulicAperture[kfe] = contactWrapper.computeHydraulicAperture( aperture[kfe], refAperture[kfe], dHydraulicAperture_dAperture );
-
-      GEOS_UNUSED_VAR( dHydraulicAperture_dAperture );
+      real64 const newHydraulicAperture = contactWrapper.computeHydraulicAperture( aperture[kfe], refAperture[kfe], dHydraulicAperture_dAperture );
+      maxHydraulicApertureChange.max( std::fabs( newHydraulicAperture - hydraulicAperture[kfe] ));
+      hydraulicAperture[kfe] = newHydraulicAperture;
+      minHydraulicAperture.min( hydraulicAperture[kfe] );
+      maxHydraulicAperture.max( hydraulicAperture[kfe] );
 
 #ifdef GEOSX_USE_SEPARATION_COEFFICIENT
       real64 const s = aperture[kfe] / apertureAtFailure[kfe];
@@ -95,6 +110,8 @@ struct DeformationUpdateKernel
 #endif
       deltaVolume[kfe] = hydraulicAperture[kfe] * area[kfe] - volume[kfe];
     } );
+
+    return std::make_tuple( maxApertureChange.get(), maxHydraulicApertureChange.get(), minAperture.get(), maxAperture.get(), minHydraulicAperture.get(), maxHydraulicAperture.get() );
   }
 };
 
@@ -174,7 +191,9 @@ struct FluidMassResidualDerivativeAssemblyKernel
           real64 const dGap_dU = kfSign[kf] * Nbar[i] / numNodesPerFace;
 
           real64 dHydraulicAperture_dAperture = 0.0;
-          real64 const hydraulicAperture = contactWrapper.computeHydraulicAperture( aperture[ei2], refAperture[ei2], dHydraulicAperture_dAperture );
+          real64 const hydraulicAperture = contactWrapper.computeHydraulicAperture( aperture[ei2],
+                                                                                    refAperture[ei2],
+                                                                                    dHydraulicAperture_dAperture );
 
           GEOS_UNUSED_VAR( hydraulicAperture );
 
