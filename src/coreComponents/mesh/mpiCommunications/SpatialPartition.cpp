@@ -55,27 +55,134 @@ SpatialPartition::SpatialPartition( string const & name,
   m_Partitions(),
   m_Periodic( nsdof ),
   m_coords( nsdof ),
-  m_min{ 0.0 },
-  m_max{ 0.0 },
-  m_blockSize{ 1.0 },
-  m_gridSize{ 0.0 },
-  m_gridMin{ 0.0 },
-  m_gridMax{ 0.0 }
+  m_min( 3 ), //{ 0.0, 0.0, 0.0 },
+  m_max( 3 ), //{ 0.0, 0.0, 0.0 },
+  m_partitionLocations( 3 ),
+  m_blockSize( 3 ), //{ 1.0, 1.0, 1.0 },
+  m_gridSize( 3 ), //{ 0.0, 0.0, 0.0 },
+  m_gridMin( 3 ), //{ 0.0, 0.0, 0.0 },
+  m_gridMax( 3 ), //{ 0.0, 0.0, 0.0 }
+  m_contactGhostMin( 3 ),
+  m_contactGhostMax( 3 ) 
 {
   m_size = 0;
   m_rank = 0;
-  m_numColors = 8,
-  setPartitions( 1, 1, 1 );
+  m_numColors = 8;
 
-  LvArray::tensorOps::fill< 3 >(m_Periodic, 0);
+  setPartitions( 1, 1, 1 );
 
   registerWrapper( viewKeyStruct::periodicString(), &m_Periodic ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "periodic flag for each direction of mesh" );
+
+  registerWrapper( viewKeyStruct::minString() , &m_min ).
+    setInputFlag( InputFlags::FALSE ).
+    setDescription( "Minimum extent of partition dimensions (excluding ghost objects)" );
+
+  registerWrapper( viewKeyStruct::maxString() , &m_max ).
+    setInputFlag( InputFlags::FALSE ).
+    setDescription( "Maximum extent of partition dimensions (excluding ghost objects)" );
+
+  registerWrapper( viewKeyStruct::partitionLocationsString() , &m_partitionLocations ).
+    setInputFlag( InputFlags::FALSE ).
+    setDescription( "Locations of partition boundaries" );
+
+  registerWrapper( viewKeyStruct::blockSizeString() , &m_blockSize ).
+    setInputFlag( InputFlags::FALSE ).
+    setDescription( "Length of partition dimensions (excluding ghost objects)." );
+
+  registerWrapper( viewKeyStruct::gridSizeString() , &m_gridSize ).
+    setInputFlag( InputFlags::FALSE ).
+    setDescription( "Total length of problem dimensions (excluding ghost objects)." );
+
+  registerWrapper( viewKeyStruct::gridMinString() , &m_gridMin ).
+    setInputFlag( InputFlags::FALSE ).
+    setDescription( "Minimum extent of problem dimensions (excluding ghost objects)." );
+
+  registerWrapper( viewKeyStruct::gridMaxString() , &m_gridMax ).
+    setInputFlag( InputFlags::FALSE ).
+    setDescription( "Maximum extent of problem dimensions (excluding ghost objects)." );
+
+  registerWrapper( viewKeyStruct::contactGhostMinString() , &m_contactGhostMin ).
+    setInputFlag( InputFlags::FALSE ).
+    setDescription( "Ghost position min." );
+
+  registerWrapper( viewKeyStruct::contactGhostMaxString() , &m_contactGhostMax ).
+    setInputFlag( InputFlags::FALSE ).
+    setDescription( "Ghost position max." );
+
 }
 
 SpatialPartition::~SpatialPartition()
 {}
+
+
+void SpatialPartition::postProcessInput()
+{
+  PartitionBase::postProcessInput();
+
+    // Do LvArrays explicitly need to be resized to 0?
+    if( m_partitionLocations.size() == 0)
+    {
+      m_partitionLocations.resize( 3 );
+      for( int i= 0; i < 3; i++){
+        m_partitionLocations[i].resize( 0 );
+      }
+    }
+
+    if( m_Periodic.size() == 0 ){
+      GEOS_ERROR_IF( m_Periodic.size() !=3, "Periodic flags must have size 3" );
+      m_Periodic.resize( 3 );
+      LvArray::tensorOps::fill< 3 >(m_Periodic, 0);
+    }
+
+    if( m_min.size() == 0 )
+    {
+      m_min.resize( 3 );
+      LvArray::tensorOps::fill< 3 >(m_min, 0.0);
+    }
+    
+    if( m_max.size() == 0 )
+    {
+      m_max.resize( 3 );
+      LvArray::tensorOps::fill< 3 >(m_max, 0.0);
+    }
+
+    if( m_blockSize.size() == 0 ) 
+    {
+      m_blockSize.resize( 3 );
+      LvArray::tensorOps::fill< 3 >(m_blockSize, 1.0) ;
+    }
+    if( m_gridSize.size() == 0 )
+    {
+      m_gridSize.resize( 3 );
+      LvArray::tensorOps::fill< 3 >(m_gridSize, 0.0);
+    }
+
+    if( m_gridMin.size() == 0 )
+    {
+      m_gridMin.resize( 3 );
+      LvArray::tensorOps::fill< 3 >(m_gridMin, 0.0);
+    }
+
+    if( m_gridMax.size() == 0 )
+    {
+      m_gridMax.resize( 3 );
+      LvArray::tensorOps::fill< 3 >(m_gridMax, 0.0);
+    }
+
+    if( m_contactGhostMin.size() == 0 )
+    {
+      m_contactGhostMin.resize( 3 );
+    }
+
+    if( m_contactGhostMax.size() == 0 )
+    {
+      m_contactGhostMax.resize( 3 );
+    }
+
+}
+
 
 void SpatialPartition::setPartitions( unsigned int xPartitions,
                                       unsigned int yPartitions,
@@ -173,7 +280,7 @@ void SpatialPartition::updateSizes( arrayView1d< real64 > const domainL,
     real64 ratio = 1.0 + domainL[i] * dt;
     m_min[i] *= ratio;
     m_max[i] *= ratio;
-    //m_PartitionLocations[i] *= ratio; ?
+    //m_partitionLocations[i] *= ratio; ?
     m_blockSize[i] *= ratio;
     m_gridSize[i] *= ratio;
     m_gridMin[i] *= ratio;
@@ -234,36 +341,36 @@ void SpatialPartition::setSizes( real64 const ( &min )[ 3 ],
   {
     const int nloc = m_Partitions( i ) - 1;
     const localIndex nlocl = static_cast< localIndex >(nloc);
-    if( m_PartitionLocations[i].empty() )
+    if( m_partitionLocations[i].empty() )
     {
       // the default "even" spacing
       m_blockSize[ i ] /= m_Partitions( i );
       m_min[ i ] += m_coords( i ) * m_blockSize[ i ];
       m_max[ i ] = min[ i ] + (m_coords( i ) + 1) * m_blockSize[ i ];
 
-      m_PartitionLocations[i].resize( nlocl );
-      for( localIndex j = 0; j < m_PartitionLocations[ i ].size(); ++j )
+      m_partitionLocations[i].resize( nlocl );
+      for( localIndex j = 0; j < m_partitionLocations[ i ].size(); ++j )
       {
-        m_PartitionLocations[ i ][ j ] = (j+1) * m_blockSize[ i ];
+        m_partitionLocations[ i ][ j ] = (j+1) * m_blockSize[ i ];
       }
     }
-    else if( nlocl == m_PartitionLocations[i].size() )
+    else if( nlocl == m_partitionLocations[i].size() )
     {
       const int parIndex = m_coords[i];
       if( parIndex == 0 )
       {
         m_min[i] = min[i];
-        m_max[i] = m_PartitionLocations[i][parIndex];
+        m_max[i] = m_partitionLocations[i][parIndex];
       }
       else if( parIndex == nloc )
       {
-        m_min[i] = m_PartitionLocations[i][parIndex-1];
+        m_min[i] = m_partitionLocations[i][parIndex-1];
         m_max[i] = max[i];
       }
       else
       {
-        m_min[i] = m_PartitionLocations[i][parIndex-1];
-        m_max[i] = m_PartitionLocations[i][parIndex];
+        m_min[i] = m_partitionLocations[i][parIndex-1];
+        m_max[i] = m_partitionLocations[i][parIndex];
       }
     }
     else
@@ -273,7 +380,7 @@ void SpatialPartition::setSizes( real64 const ( &min )[ 3 ],
   }
 }
 
-bool SpatialPartition::isCoordInPartition( const real64 & coord, const int dir )
+bool SpatialPartition::isCoordInPartition( const real64 & coord, const int dir ) const
 {
   bool rval = true;
   const int i = dir;
@@ -295,7 +402,7 @@ bool SpatialPartition::isCoordInPartition( const real64 & coord, const int dir )
 }
 
 bool SpatialPartition::isCoordInPartitionBoundingBox( const R1Tensor & elemCenter,
-                                                      const real64 & boundaryRadius )
+                                                      const real64 & boundaryRadius ) const
 // test a point relative to a boundary box. If non-zero buffer specified, expand the box.
 {
   for( int i = 0; i < nsdof; i++ )

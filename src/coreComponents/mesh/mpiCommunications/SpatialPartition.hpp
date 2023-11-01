@@ -110,10 +110,10 @@ public:
 
   ~SpatialPartition() override;
 
-  bool isCoordInPartition( const real64 & coord, const int dir ) override;
+  bool isCoordInPartition( const real64 & coord, const int dir ) const override;
 
   bool isCoordInPartitionBoundingBox( const R1Tensor & elemCenter,
-                                      const real64 & boundaryRadius );
+                                      const real64 & boundaryRadius ) const;
 
   void updateSizes( arrayView1d< real64 > const domainL,
                     real64 const dt );
@@ -121,22 +121,26 @@ public:
   void setSizes( real64 const ( &min )[ 3 ],
                  real64 const ( &max )[ 3 ] ) override;
 
-  real64 * getLocalMin()
+  // real64 * getLocalMin()
+  arrayView1d< real64 > getLocalMin()
   {
     return m_min;
   }
 
-  real64 * getLocalMax()
+  // real64 * getLocalMax()
+  arrayView1d< real64 > getLocalMax()
   {
     return m_max;
   }
 
-  real64 * getGlobalMin()
+  // real64 * getGlobalMin()
+  arrayView1d< real64 > getGlobalMin()
   {
     return m_gridMin;
   }
 
-  real64 * getGlobalMax()
+  // real64 * getGlobalMax()
+  arrayView1d< real64 > getGlobalMax()
   {
     return m_gridMax;
   }
@@ -188,19 +192,31 @@ public:
   struct viewKeyStruct
   {
     static constexpr char const * periodicString() { return "periodic"; }
-    
+    static constexpr char const * minString() { return "min"; }
+    static constexpr char const * maxString() { return "max"; }
+    static constexpr char const * partitionLocationsString() { return "partitionLocations"; }
+    static constexpr char const * blockSizeString() { return "blockSize"; }
+    static constexpr char const * gridSizeString() { return "gridSize"; }
+    static constexpr char const * gridMinString() { return "gridMin"; }
+    static constexpr char const * gridMaxString() { return "gridMax"; }
+    static constexpr char const * contactGhostMinString() { return "contactGhostMin"; }
+    static constexpr char const * contactGhostMaxString() { return "contactGhostMax"; }
   } partitionViewKeys;
 
   static string catalogName() { return "SpatialPartition"; }
 
-  /// number of partitions
+  void postProcessInput() override; 
+
+ /// number of partitions
   array1d< int > m_Partitions;
+  
   /**
    * @brief Boolean like array of length 3 (space dimensions).
    *
    * 1 means periodic.
    */
   array1d< int > m_Periodic;
+
   /// ijk partition indexes
   array1d< int > m_coords;
 
@@ -225,32 +241,43 @@ private:
   void setContactGhostRange( const real64 bufferSize );
 
   /// Minimum extent of partition dimensions (excluding ghost objects)
-  real64 m_min[3];
+  // real64 m_min[3];
+  array1d< real64 > m_min;
+
   /// Maximum extent of partition dimensions (excluding ghost objects)
-  real64 m_max[3];
+  // real64 m_max[3];
+  array1d< real64 > m_max;
 
   /// Locations of partition boundaries
-  array1d< real64 > m_PartitionLocations[3];
+  array1d< array1d< real64 > > m_partitionLocations;
 
   /// Length of partition dimensions (excluding ghost objects).
-  real64 m_blockSize[3];
+  // real64 m_blockSize[3];
+  array1d< real64 > m_blockSize;
 
   /// Total length of problem dimensions (excluding ghost objects).
-  real64 m_gridSize[3];
+  // real64 m_gridSize[3];
+  array1d< real64 > m_gridSize;
+  
   /// Minimum extent of problem dimensions (excluding ghost objects).
-  real64 m_gridMin[3];
+  // real64 m_gridMin[3];
+  array1d< real64 > m_gridMin;
+
   /// Maximum extent of problem dimensions (excluding ghost objects).
-  real64 m_gridMax[3];
+  // real64 m_gridMax[3];
+  array1d< real64 > m_gridMax;
 
   /**
    * @brief Ghost position (min).
    */
-  real64 m_contactGhostMin[3];
+  // real64 m_contactGhostMin[3];
+  array1d< real64 > m_contactGhostMin;
 
   /**
    * @brief Ghost position (max).
    */
-  real64 m_contactGhostMax[3];
+  // real64 m_contactGhostMax[3];
+  array1d< real64 > m_contactGhostMax;
 };
 
 }

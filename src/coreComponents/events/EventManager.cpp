@@ -211,6 +211,16 @@ bool EventManager::run( DomainPartition & domain )
     m_currentSubEvent = 0;
   }
 
+  // Add note to output file if job exits before maxTime
+  if( m_time < m_maxTime )
+  {
+    GEOS_LOG_RANK_0( "Job exited early" );
+  }
+  else
+  {
+    GEOS_LOG_RANK_0( "Job complete" );
+  }
+
   // Cleanup
   GEOS_LOG_RANK_0( "Cleaning up events" );
 
@@ -256,7 +266,7 @@ void EventManager::outputTime() const
   }
   else if( m_timeOutputFormat == TimeOutputFormat::seconds )
   {
-    GEOS_LOG_RANK_0( GEOS_FMT( "Time: {:4.2e} s, dt: {} s, Cycle: {}", m_time, m_dt, m_cycle ) );
+    GEOS_LOG_RANK_0( GEOS_FMT( "Time: {:4.5e} s, dt: {} s, Cycle: {}", m_time, m_dt, m_cycle ) );
   }
   else
   {
