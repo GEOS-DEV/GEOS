@@ -231,7 +231,6 @@ CompositionalMultiphaseFluidUpdates< FLASH, PHASE1, PHASE2, PHASE3 >::compute(
   if( m_useMass )
   {
 
-    // unfortunately here, we have to copy the molecular weight coming from PVT package...
     real64 phaseMolecularWeight[maxNumPhase]{};
     for( integer ip = 0; ip < numPhase; ++ip )
     {
@@ -366,8 +365,6 @@ CompositionalMultiphaseFluidUpdates< FLASH, PHASE1, PHASE2, PHASE3 >::compute(
   // 5. if mass variables used instead of molar, perform the conversion
   if( m_useMass )
   {
-
-    // unfortunately here, we have to copy the molecular weight coming from PVT package...
     real64 phaseMolecularWeight[maxNumPhase]{};
     real64 dPhaseMolecularWeight[maxNumPhase][maxNumComp+2]{};
 
