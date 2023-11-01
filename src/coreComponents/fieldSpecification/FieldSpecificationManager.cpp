@@ -216,6 +216,7 @@ void FieldSpecificationManager::applyInitialConditions( MeshLevel & mesh ) const
   {
     if( fs.initialCondition() )
     {
+      std::cout << "applying initial condition: "  << fs.getName() << std::endl;
       fs.apply< dataRepository::Group >( mesh,
                                          [&]( FieldSpecificationBase const & bc,
                                               string const &,

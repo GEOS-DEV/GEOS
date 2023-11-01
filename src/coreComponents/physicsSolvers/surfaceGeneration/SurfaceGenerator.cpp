@@ -33,6 +33,7 @@
 #include "physicsSolvers/solidMechanics/kernels/SolidMechanicsLagrangianFEMKernels.hpp"
 #include "physicsSolvers/surfaceGeneration/SurfaceGeneratorFields.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
+#include "fieldSpecification/FieldSpecificationManager.hpp"
 
 
 #include <algorithm>
@@ -442,7 +443,7 @@ void SurfaceGenerator::postRestartInitialization()
 
 real64 SurfaceGenerator::solverStep( real64 const & time_n,
                                      real64 const & dt,
-                                     const int GEOS_UNUSED_PARAM( cycleNumber ),
+                                     const int cycleNumber,
                                      DomainPartition & domain )
 {
   int rval = 0;
@@ -531,8 +532,16 @@ real64 SurfaceGenerator::solverStep( real64 const & time_n,
       PermeabilityBase & permModel = getConstitutiveModel< PermeabilityBase >( fractureSubRegion, permModelName );
       permModel.initializeState();
     }
-
+    
+    if( cycleNumber == 0 && time_n + dt <= 0 )
+    { 
+      /// THIS is a hack to force variables in the fractures to be initialized since they are created after initialization occurs.
+      FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();;
+      fsManager.applyInitialConditions( meshLevel );
+    }
   } );
+
+
 
   return rval;
 }
