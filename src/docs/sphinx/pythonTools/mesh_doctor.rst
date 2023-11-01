@@ -142,19 +142,19 @@ Then launching ``Paraview`` and loading our *mesh.vtu*, as an example, we will d
 .. code-block:: python
     :linenos:
 
-    input0 = inputs[0]
+    mesh = inputs[0].VTKObject
     tol = 1.2e-6
 
     from checks import element_volumes
     import vtk
-    #
-    res = element_volumes.__check(inputs[0].VTKObject, element_volumes.Options(tol))
+
+    res = element_volumes.__check(mesh, element_volumes.Options(tol))
     #print(res)
     ids = vtk.vtkIdTypeArray()
     ids.SetNumberOfComponents(1)
-    for val in res.element_volumes:
-     ids.InsertNextValue(val[0])
-    #
+    for cell_index, volume in res.element_volumes:
+        ids.InsertNextValue(cell_index)
+
     selectionNode = vtk.vtkSelectionNode()
     selectionNode.SetFieldType(vtk.vtkSelectionNode.CELL)
     selectionNode.SetContentType(vtk.vtkSelectionNode.INDICES)
@@ -162,7 +162,7 @@ Then launching ``Paraview`` and loading our *mesh.vtu*, as an example, we will d
     selection = vtk.vtkSelection()
     selection.AddNode(selectionNode)
     extracted = vtk.vtkExtractSelection()
-    extracted.SetInputDataObject(0, inputs[0].VTKObject)
+    extracted.SetInputDataObject(0, mesh)
     extracted.SetInputData(1, selection)
     extracted.Update()
     print("There are {} cells under {} m3 vol".format(extracted.GetOutput().GetNumberOfCells(), tol))
