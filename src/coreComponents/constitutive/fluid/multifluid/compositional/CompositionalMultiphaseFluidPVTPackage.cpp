@@ -13,10 +13,10 @@
  */
 
 /**
- * @file CompositionalMultiphaseFluidPVT.cpp
+ * @file CompositionalMultiphaseFluidPVTPackage.cpp
  */
 
-#include "CompositionalMultiphaseFluidPVT.hpp"
+#include "CompositionalMultiphaseFluidPVTPackage.hpp"
 
 #include "codingUtilities/Utilities.hpp"
 #include "constitutive/fluid/multifluid/CO2Brine/functions/PVTFunctionHelpers.hpp"
@@ -34,7 +34,7 @@ using namespace dataRepository;
 namespace constitutive
 {
 
-CompositionalMultiphaseFluidPVT::CompositionalMultiphaseFluidPVT( string const & name, Group * const parent )
+CompositionalMultiphaseFluidPVTPackage::CompositionalMultiphaseFluidPVTPackage( string const & name, Group * const parent )
   : MultiFluidBase( name, parent )
 {
   getWrapperBase( viewKeyStruct::componentNamesString() ).setInputFlag( InputFlags::REQUIRED );
@@ -66,13 +66,13 @@ CompositionalMultiphaseFluidPVT::CompositionalMultiphaseFluidPVT( string const &
     setDescription( "Table of binary interaction coefficients" );
 }
 
-integer CompositionalMultiphaseFluidPVT::getWaterPhaseIndex() const
+integer CompositionalMultiphaseFluidPVTPackage::getWaterPhaseIndex() const
 {
   string const expectedWaterPhaseNames[] = { "water" };
   return PVTProps::PVTFunctionHelpers::findName( m_phaseNames, expectedWaterPhaseNames, viewKeyStruct::phaseNamesString() );
 }
 
-void CompositionalMultiphaseFluidPVT::postProcessInput()
+void CompositionalMultiphaseFluidPVTPackage::postProcessInput()
 {
   MultiFluidBase::postProcessInput();
 
@@ -121,13 +121,13 @@ void CompositionalMultiphaseFluidPVT::postProcessInput()
   checkInputSize( m_componentBinaryCoeff, NC * NC, viewKeyStruct::componentBinaryCoeffString() );
 }
 
-void CompositionalMultiphaseFluidPVT::initializePostSubGroups()
+void CompositionalMultiphaseFluidPVTPackage::initializePostSubGroups()
 {
   MultiFluidBase::initializePostSubGroups();
   createFluid();
 }
 
-void CompositionalMultiphaseFluidPVT::createFluid()
+void CompositionalMultiphaseFluidPVTPackage::createFluid()
 {
   auto const getCompositionalEosType = [&]( string const & name )
   {
@@ -154,17 +154,17 @@ void CompositionalMultiphaseFluidPVT::createFluid()
 }
 
 std::unique_ptr< ConstitutiveBase >
-CompositionalMultiphaseFluidPVT::deliverClone( string const & name,
-                                               Group * const parent ) const
+CompositionalMultiphaseFluidPVTPackage::deliverClone( string const & name,
+                                                      Group * const parent ) const
 {
   std::unique_ptr< ConstitutiveBase > clone = MultiFluidBase::deliverClone( name, parent );
-  CompositionalMultiphaseFluidPVT & fluid = dynamicCast< CompositionalMultiphaseFluidPVT & >( *clone );
+  CompositionalMultiphaseFluidPVTPackage & fluid = dynamicCast< CompositionalMultiphaseFluidPVTPackage & >( *clone );
   fluid.m_phaseTypes = m_phaseTypes;
   fluid.createFluid();
   return clone;
 }
 
-CompositionalMultiphaseFluidPVT::KernelWrapper::
+CompositionalMultiphaseFluidPVTPackage::KernelWrapper::
   KernelWrapper( pvt::MultiphaseSystem & fluid,
                  arrayView1d< pvt::PHASE_TYPE > const & phaseTypes,
                  arrayView1d< geos::real64 const > const & componentMolarWeight,
@@ -191,8 +191,8 @@ CompositionalMultiphaseFluidPVT::KernelWrapper::
   m_phaseTypes( phaseTypes )
 {}
 
-CompositionalMultiphaseFluidPVT::KernelWrapper
-CompositionalMultiphaseFluidPVT::createKernelWrapper()
+CompositionalMultiphaseFluidPVTPackage::KernelWrapper
+CompositionalMultiphaseFluidPVTPackage::createKernelWrapper()
 {
   return KernelWrapper( *m_fluid,
                         m_phaseTypes,
@@ -208,7 +208,7 @@ CompositionalMultiphaseFluidPVT::createKernelWrapper()
                         m_totalDensity.toView() );
 }
 
-REGISTER_CATALOG_ENTRY( ConstitutiveBase, CompositionalMultiphaseFluidPVT, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, CompositionalMultiphaseFluidPVTPackage, string const &, Group * const )
 
 } // namespace constitutive
 

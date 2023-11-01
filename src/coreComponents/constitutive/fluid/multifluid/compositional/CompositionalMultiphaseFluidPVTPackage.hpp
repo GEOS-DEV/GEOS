@@ -13,11 +13,11 @@
  */
 
 /**
- * @file CompositionalMultiphaseFluidPVT.hpp
+ * @file CompositionalMultiphaseFluidPVTPackage.hpp
  */
 
-#ifndef GEOS_CONSTITUTIVE_FLUID_MULTIFLUID_COMPOSITIONAL_COMPOSITIONALMULTIPHASEFLUIDPVT_HPP_
-#define GEOS_CONSTITUTIVE_FLUID_MULTIFLUID_COMPOSITIONAL_COMPOSITIONALMULTIPHASEFLUIDPVT_HPP_
+#ifndef GEOS_CONSTITUTIVE_FLUID_MULTIFLUID_COMPOSITIONAL_COMPOSITIONALMULTIPHASEFLUIDPVTPACKAGE_HPP_
+#define GEOS_CONSTITUTIVE_FLUID_MULTIFLUID_COMPOSITIONAL_COMPOSITIONALMULTIPHASEFLUIDPVTPACKAGE_HPP_
 
 #include "constitutive/fluid/multifluid/MultiFluidBase.hpp"
 #include "constitutive/fluid/multifluid/MultiFluidUtils.hpp"
@@ -29,13 +29,13 @@ namespace geos
 namespace constitutive
 {
 
-class CompositionalMultiphaseFluidPVT : public MultiFluidBase
+class CompositionalMultiphaseFluidPVTPackage : public MultiFluidBase
 {
 public:
 
   using exec_policy = serialPolicy;
 
-  CompositionalMultiphaseFluidPVT( string const & name, Group * const parent );
+  CompositionalMultiphaseFluidPVTPackage( string const & name, Group * const parent );
 
   virtual std::unique_ptr< ConstitutiveBase >
   deliverClone( string const & name,
@@ -67,7 +67,7 @@ public:
   };
 
   /**
-   * @brief Kernel wrapper class for CompositionalMultiphaseFluidPVT.
+   * @brief Kernel wrapper class for CompositionalMultiphaseFluidPVTPackage.
    */
   class KernelWrapper final : public MultiFluidBase::KernelWrapper
   {
@@ -108,7 +108,7 @@ public:
 
 private:
 
-    friend class CompositionalMultiphaseFluidPVT;
+    friend class CompositionalMultiphaseFluidPVTPackage;
 
     KernelWrapper( pvt::MultiphaseSystem & fluid,
                    arrayView1d< pvt::PHASE_TYPE > const & phaseTypes,
@@ -165,7 +165,7 @@ private:
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
 void
-CompositionalMultiphaseFluidPVT::KernelWrapper::
+CompositionalMultiphaseFluidPVTPackage::KernelWrapper::
   compute( real64 const pressure,
            real64 const temperature,
            arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & composition,
@@ -272,7 +272,7 @@ CompositionalMultiphaseFluidPVT::KernelWrapper::
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
 void
-CompositionalMultiphaseFluidPVT::KernelWrapper::
+CompositionalMultiphaseFluidPVTPackage::KernelWrapper::
   compute( real64 const pressure,
            real64 const temperature,
            arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & composition,
@@ -424,7 +424,7 @@ CompositionalMultiphaseFluidPVT::KernelWrapper::
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
 void
-CompositionalMultiphaseFluidPVT::KernelWrapper::
+CompositionalMultiphaseFluidPVTPackage::KernelWrapper::
   update( localIndex const k,
           localIndex const q,
           real64 const pressure,
@@ -448,4 +448,4 @@ CompositionalMultiphaseFluidPVT::KernelWrapper::
 
 } /* namespace geos */
 
-#endif //GEOS_CONSTITUTIVE_FLUID_COMPOSITIONALMULTIPHASEFLUIDPVT_HPP_
+#endif //GEOS_CONSTITUTIVE_FLUID_COMPOSITIONALMULTIPHASEFLUIDPVTPACKAGE_HPP_
