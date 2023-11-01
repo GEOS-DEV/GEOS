@@ -36,12 +36,16 @@ namespace compositional
 class ComponentProperties final
 {
 public:
-  ComponentProperties( array1d< real64 > const & componentCriticalPressure,
+  ComponentProperties( string_array const & componentNames,
+                       array1d< real64 > const & componentMolarWeight,
+                       array1d< real64 > const & componentCriticalPressure,
                        array1d< real64 > const & componentCriticalTemperature,
                        array1d< real64 > const & componentCriticalVolume,
                        array1d< real64 > const & componentAcentricFactor,
                        array1d< real64 > const & componentVolumeShift,
                        array2d< real64 > const & componentBinaryCoeff ):
+    m_componentNames ( componentNames ),
+    m_componentMolarWeight ( componentMolarWeight ),
     m_componentCriticalPressure ( componentCriticalPressure ),
     m_componentCriticalTemperature( componentCriticalTemperature ),
     m_componentCriticalVolume( componentCriticalVolume ),
@@ -54,14 +58,22 @@ public:
   ComponentProperties( const ComponentProperties & ) = default;
   const ComponentProperties & operator=( const ComponentProperties & ) = delete;
 
+  /**
+   * @brief Get the number of components
+   * @return The number of components
+   */
+  integer getNumberOfComponents() const { return m_componentMolarWeight.size( 0 ); }
+
   struct KernelWrapper
   {
-    KernelWrapper( arrayView1d< real64 const > const & componentCriticalPressure,
+    KernelWrapper( arrayView1d< real64 const > const & componentMolarWeight,
+                   arrayView1d< real64 const > const & componentCriticalPressure,
                    arrayView1d< real64 const > const & componentCriticalTemperature,
                    arrayView1d< real64 const > const & componentCriticalVolume,
                    arrayView1d< real64 const > const & componentAcentricFactor,
                    arrayView1d< real64 const > const & componentVolumeShift,
                    arrayView2d< real64 const > const & componentBinaryCoeff ):
+      m_componentMolarWeight ( componentMolarWeight ),
       m_componentCriticalPressure ( componentCriticalPressure ),
       m_componentCriticalTemperature( componentCriticalTemperature ),
       m_componentCriticalVolume( componentCriticalVolume ),
@@ -79,6 +91,7 @@ public:
      */
     void move( LvArray::MemorySpace const space, bool const touch )
     {
+      m_componentMolarWeight.move( space, touch );
       m_componentCriticalPressure.move( space, touch );
       m_componentCriticalTemperature.move( space, touch );
       m_componentCriticalVolume.move( space, touch );
@@ -88,6 +101,7 @@ public:
     }
 
     // Standard compositional input
+    arrayView1d< real64 const > m_componentMolarWeight;
     arrayView1d< real64 const > m_componentCriticalPressure;
     arrayView1d< real64 const > m_componentCriticalTemperature;
     arrayView1d< real64 const > m_componentCriticalVolume;
@@ -102,7 +116,8 @@ public:
    */
   KernelWrapper createKernelWrapper() const
   {
-    return KernelWrapper( m_componentCriticalPressure,
+    return KernelWrapper( m_componentMolarWeight,
+                          m_componentCriticalPressure,
                           m_componentCriticalTemperature,
                           m_componentCriticalVolume,
                           m_componentAcentricFactor,
@@ -112,6 +127,8 @@ public:
 
 private:
   // Standard compositional input
+  string_array const & m_componentNames;
+  array1d< real64 > const & m_componentMolarWeight;
   array1d< real64 > const & m_componentCriticalPressure;
   array1d< real64 > const & m_componentCriticalTemperature;
   array1d< real64 > const & m_componentCriticalVolume;

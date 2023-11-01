@@ -34,10 +34,8 @@ class NullModelUpdate final : public FunctionBaseUpdate
 {
 public:
 
-  NullModelUpdate( arrayView1d< real64 const > const & componentMolarWeight,
-                   ComponentProperties const & componentProperties ):
-    FunctionBaseUpdate( componentMolarWeight,
-                        componentProperties )
+  explicit NullModelUpdate( ComponentProperties const & componentProperties ):
+    FunctionBaseUpdate( componentProperties )
   {}
 
   template< int USD1 >
@@ -73,12 +71,8 @@ class NullModel : public FunctionBase
 public:
 
   NullModel( string const & name,
-             string_array const & componentNames,
-             array1d< real64 > const & componentMolarWeight,
              ComponentProperties const & componentProperties ):
     FunctionBase( name,
-                  componentNames,
-                  componentMolarWeight,
                   componentProperties )
   {}
 
@@ -102,8 +96,7 @@ public:
    */
   KernelWrapper createKernelWrapper() const
   {
-    return KernelWrapper( m_componentMolarWeight,
-                          m_componentProperties );
+    return KernelWrapper( m_componentProperties );
   };
 
 };

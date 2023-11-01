@@ -28,20 +28,15 @@ namespace compositional
 {
 
 ConstantViscosity::ConstantViscosity( string const & name,
-                                      array1d< string > const & componentNames,
-                                      array1d< real64 > const & componentMolarWeight,
                                       ComponentProperties const & componentProperties ):
   FunctionBase( name,
-                componentNames,
-                componentMolarWeight,
                 componentProperties )
 {}
 
 ConstantViscosity::KernelWrapper
 ConstantViscosity::createKernelWrapper() const
 {
-  return KernelWrapper( m_componentMolarWeight,
-                        m_componentProperties );
+  return KernelWrapper( m_componentProperties );
 }
 
 } // end namespace compositional

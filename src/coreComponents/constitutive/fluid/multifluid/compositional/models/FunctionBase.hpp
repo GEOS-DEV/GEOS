@@ -46,9 +46,7 @@ class FunctionBaseUpdate
 {
 public:
 
-  FunctionBaseUpdate( arrayView1d< real64 const > const & componentMolarWeight,
-                      ComponentProperties const & componentProperties ):
-    m_componentMolarWeight( componentMolarWeight ),
+  explicit FunctionBaseUpdate( ComponentProperties const & componentProperties ):
     m_componentProperties ( componentProperties.createKernelWrapper() )
   {}
 
@@ -61,7 +59,6 @@ public:
    */
   virtual void move( LvArray::MemorySpace const space, bool const touch )
   {
-    m_componentMolarWeight.move( space, touch );
     m_componentProperties.move( space, touch );
   }
 
@@ -85,12 +82,8 @@ class FunctionBase
 public:
 
   FunctionBase( string const & name,
-                array1d< string > const & componentNames,
-                array1d< real64 > const & componentMolarWeight,
                 ComponentProperties const & componentProperties ):
     m_functionName( name ),
-    m_componentNames( componentNames ),
-    m_componentMolarWeight( componentMolarWeight ),
     m_componentProperties ( componentProperties )
   {}
 
@@ -101,15 +94,8 @@ public:
   virtual FunctionType functionType() const = 0;
 
 protected:
-
   /// Name of the PVT function
   string m_functionName;
-
-  /// Array storing the name of the components
-  array1d< string > const & m_componentNames;
-
-  /// Array storing the component molar weights
-  array1d< real64 > const & m_componentMolarWeight;
 
   // Standard compositional input
   ComponentProperties const & m_componentProperties;

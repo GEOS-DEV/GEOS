@@ -51,20 +51,12 @@ struct PhaseModel
    * @param[in] componentProperties EOS parameters for components
    */
   PhaseModel( string const & phaseModelName,
-              string_array const & componentNames,
-              array1d< real64 > const & componentMolarWeight,
               ComponentProperties const & componentProperties ):
     density( phaseModelName + "_" + Density::catalogName(),
-             componentNames,
-             componentMolarWeight,
              componentProperties ),
     viscosity( phaseModelName + "_" + Viscosity::catalogName(),
-               componentNames,
-               componentMolarWeight,
                componentProperties ),
     enthalpy( phaseModelName + "_" + Enthalpy::catalogName(),
-              componentNames,
-              componentMolarWeight,
               componentProperties )
   {}
 

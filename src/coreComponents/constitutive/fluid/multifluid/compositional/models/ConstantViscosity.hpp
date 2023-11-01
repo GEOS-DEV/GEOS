@@ -34,10 +34,8 @@ class ConstantViscosityUpdate final : public FunctionBaseUpdate
 {
 public:
 
-  ConstantViscosityUpdate( arrayView1d< real64 const > const & componentMolarWeight,
-                           ComponentProperties const & componentProperties ):
-    FunctionBaseUpdate( componentMolarWeight,
-                        componentProperties )
+  explicit ConstantViscosityUpdate( ComponentProperties const & componentProperties ):
+    FunctionBaseUpdate( componentProperties )
   {}
 
   template< int USD1 >
@@ -66,8 +64,6 @@ class ConstantViscosity : public FunctionBase
 {
 public:
   ConstantViscosity( string const & name,
-                     array1d< string > const & componentNames,
-                     array1d< real64 > const & componentMolarWeight,
                      ComponentProperties const & componentProperties );
 
   virtual ~ConstantViscosity() override = default;

@@ -35,8 +35,7 @@ namespace compositional
 class CompositionalDensityUpdate final : public FunctionBaseUpdate
 {
 public:
-  CompositionalDensityUpdate( arrayView1d< real64 const > const & componentMolarWeight,
-                              ComponentProperties const & componentProperties );
+  explicit CompositionalDensityUpdate( ComponentProperties const & componentProperties );
 
   template< int USD1 >
   GEOS_HOST_DEVICE
@@ -65,8 +64,6 @@ class CompositionalDensity : public FunctionBase
 public:
 
   CompositionalDensity( string const & name,
-                        array1d< string > const & componentNames,
-                        array1d< real64 > const & componentMolarWeight,
                         ComponentProperties const & componentProperties );
 
   static string catalogName() { return "CompositionalDensity"; }

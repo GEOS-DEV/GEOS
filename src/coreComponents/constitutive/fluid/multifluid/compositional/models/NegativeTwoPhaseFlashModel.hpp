@@ -42,8 +42,7 @@ public:
   using PhaseProp = MultiFluidVar< real64, 3, multifluid::LAYOUT_PHASE, multifluid::LAYOUT_PHASE_DC >;
   using PhaseComp = MultiFluidVar< real64, 4, multifluid::LAYOUT_PHASE_COMP, multifluid::LAYOUT_PHASE_COMP_DC >;
 
-  NegativeTwoPhaseFlashModelUpdate( arrayView1d< real64 const > const & componentMolarWeight,
-                                    ComponentProperties const & componentProperties );
+  explicit NegativeTwoPhaseFlashModelUpdate( ComponentProperties const & componentProperties );
 
   template< int USD1, int USD2, int USD3 >
   GEOS_HOST_DEVICE
@@ -98,8 +97,6 @@ class NegativeTwoPhaseFlashModel : public FunctionBase
 {
 public:
   NegativeTwoPhaseFlashModel( string const & name,
-                              string_array const & componentNames,
-                              array1d< real64 > const & componentMolarWeight,
                               ComponentProperties const & componentProperties );
 
   static string catalogName();

@@ -28,27 +28,20 @@ namespace compositional
 {
 
 CompositionalDensityUpdate::CompositionalDensityUpdate(
-  arrayView1d< real64 const > const & componentMolarWeight,
   ComponentProperties const & componentProperties ):
-  FunctionBaseUpdate( componentMolarWeight,
-                      componentProperties )
+  FunctionBaseUpdate( componentProperties )
 {}
 
 CompositionalDensity::CompositionalDensity( string const & name,
-                                            array1d< string > const & componentNames,
-                                            array1d< real64 > const & componentMolarWeight,
                                             ComponentProperties const & componentProperties ):
   FunctionBase( name,
-                componentNames,
-                componentMolarWeight,
                 componentProperties )
 {}
 
 typename CompositionalDensity::KernelWrapper
 CompositionalDensity::createKernelWrapper() const
 {
-  return KernelWrapper( m_componentMolarWeight,
-                        m_componentProperties );
+  return KernelWrapper( m_componentProperties );
 }
 
 } // namespace PVTProps

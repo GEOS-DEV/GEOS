@@ -178,6 +178,8 @@ template< typename FLASH, typename PHASE1, typename PHASE2, typename PHASE3 >
 void CompositionalMultiphaseFluid< FLASH, PHASE1, PHASE2, PHASE3 >::createModels()
 {
   m_componentProperties = std::make_unique< compositional::ComponentProperties >(
+    m_componentNames,
+    m_componentMolarWeight,
     m_componentCriticalPressure,
     m_componentCriticalTemperature,
     m_componentCriticalVolume,
@@ -186,23 +188,15 @@ void CompositionalMultiphaseFluid< FLASH, PHASE1, PHASE2, PHASE3 >::createModels
     m_componentBinaryCoeff );
 
   m_flash = std::make_unique< FLASH >( getName() + '_' + FLASH::catalogName(),
-                                       m_componentNames,
-                                       m_componentMolarWeight,
                                        *m_componentProperties );
 
   m_phase1 = std::make_unique< PHASE1 >( GEOS_FMT( "{}_PhaseModel1", getName() ),
-                                         m_componentNames,
-                                         m_componentMolarWeight,
                                          *m_componentProperties );
 
   m_phase2 = std::make_unique< PHASE2 >( GEOS_FMT( "{}_PhaseModel2", getName() ),
-                                         m_componentNames,
-                                         m_componentMolarWeight,
                                          *m_componentProperties );
 
   m_phase3 = std::make_unique< PHASE3 >( GEOS_FMT( "{}_PhaseModel3", getName() ),
-                                         m_componentNames,
-                                         m_componentMolarWeight,
                                          *m_componentProperties );
 }
 
