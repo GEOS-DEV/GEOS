@@ -37,9 +37,8 @@ if [[ -z "${GEOSX_DIR}" ]]; then
   exit 1
 fi
 
-echo NUM_PROCS: ${NUM_PROCS}
 if [[ -z "${NUM_PROCS}" ]]; then
-  NUM_PROCS = $(nproc)
+  NUM_PROCS=$(nproc)
 fi
 echo NUM_PROCS: ${NUM_PROCS}
 
