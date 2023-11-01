@@ -86,7 +86,7 @@ public:
                        componentNames,
                        componentMolarWeight )
   {
-    GEOS_UNUSED_VAR( inputPara );
+    GEOS_UNUSED_VAR( inputPara, printTable );
   }
 
   virtual ~NoOpPVTFunction() override = default;
