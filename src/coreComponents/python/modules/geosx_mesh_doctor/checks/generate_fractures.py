@@ -2,14 +2,15 @@ from collections import defaultdict
 from dataclasses import dataclass
 import logging
 from typing import (
-    Tuple,
-    Iterable,
-    Dict,
-    Mapping,
-    FrozenSet,
-    List,
-    Set,
     Collection,
+    Dict,
+    FrozenSet,
+    Iterable,
+    List,
+    Mapping,
+    Optional,
+    Set,
+    Tuple,
 )
 
 from tqdm import tqdm
@@ -340,9 +341,39 @@ def __generate_fracture_mesh(mesh_points: vtkPoints,
     :return: The fracture mesh.
     """
     logging.info("Generating the meshes")
-    fracture_nodes: Collection[int] = tuple(fracture_info.node_to_cells.keys())
-    num_points: int = len(fracture_nodes)
 
+    is_node_duplicated = numpy.zeros(mesh_points.GetNumberOfPoints(), dtype=bool)  # defaults to False
+    for node_mapping in cell_to_node_mapping.values():
+        for i, o in node_mapping.items():
+            if not is_node_duplicated[i]:
+                is_node_duplicated[i] = i != o
+
+    # Some elements can have all their nodes not duplicated.
+    # In this case, it's mandatory not get rid of this element
+    # because the neighboring 3d elements won't follow.
+    face_nodes: List[Collection[int]] = []
+    discarded_face_nodes: Set[Iterable[int]] = set()
+    for ns in fracture_info.face_nodes:
+        if any(map(is_node_duplicated.__getitem__, ns)):
+            face_nodes.append(ns)
+        else:
+            discarded_face_nodes.add(ns)
+
+    if discarded_face_nodes:
+        # tmp = []
+        # for dfns in discarded_face_nodes:
+        #     tmp.append(", ".join(map(str, dfns)))
+        msg: str = "(" + '), ('.join(map(lambda dfns: ", ".join(map(str, dfns)), discarded_face_nodes)) + ")"
+        # logging.info(f"The {len(tmp)} faces made of nodes ({'), ('.join(tmp)}) were/was discarded from the fracture mesh because none of their/its nodes were duplicated.")
+        # print(f"The {len(tmp)} faces made of nodes ({'), ('.join(tmp)}) were/was discarded from the fracture mesh because none of their/its nodes were duplicated.")
+        print(f"The faces made of nodes [{msg}] were/was discarded from the fracture mesh because none of their/its nodes were duplicated.")
+
+    fracture_nodes_tmp = numpy.ones(mesh_points.GetNumberOfPoints(), dtype=int) * -1
+    for ns in face_nodes:
+        for n in ns:
+            fracture_nodes_tmp[n] = n
+    fracture_nodes: Collection[int] = tuple(filter(lambda n: n > -1, fracture_nodes_tmp))
+    num_points: int = len(fracture_nodes)
     points = vtkPoints()
     points.SetNumberOfPoints(num_points)
     node_3d_to_node_2d: Dict[int, int] = {}  # Building the node mapping, from 3d mesh nodes to 2d fracture nodes.
@@ -352,7 +383,7 @@ def __generate_fracture_mesh(mesh_points: vtkPoints,
         node_3d_to_node_2d[n] = i
 
     polygons = vtkCellArray()
-    for ns in fracture_info.face_nodes:
+    for ns in face_nodes:
         polygon = vtkPolygon()
         polygon.GetPointIds().SetNumberOfIds(len(ns))
         for i, n in enumerate(ns):
@@ -362,11 +393,12 @@ def __generate_fracture_mesh(mesh_points: vtkPoints,
     buckets: Dict[int, Set[int]] = defaultdict(set)
     for node_mapping in cell_to_node_mapping.values():
         for i, o in node_mapping.items():
-            k: int = node_3d_to_node_2d[min(i, o)]
-            buckets[k].update((i, o))
+            k: Optional[int] = node_3d_to_node_2d.get(min(i, o))
+            if k is not None:
+                buckets[k].update((i, o))
 
     assert set(buckets.keys()) == set(range(num_points))
-    max_duplicated_nodes: int = max(map(len, buckets.values()))
+    max_duplicated_nodes: int = max(map(len, buckets.values())) if buckets.values() else 0
     collocated_nodes = numpy.ones((num_points, max_duplicated_nodes), dtype=int) * -1
     for i, bucket in buckets.items():
         for j, val in enumerate(bucket):
@@ -374,9 +406,10 @@ def __generate_fracture_mesh(mesh_points: vtkPoints,
     array = numpy_to_vtk(collocated_nodes, array_type=VTK_ID_TYPE)
     array.SetName("collocated_nodes")
 
-    fracture_mesh = vtkUnstructuredGrid()  # We could be using vtkPolyData, but it's not supported by GEOSX for now.
+    fracture_mesh = vtkUnstructuredGrid()  # We could be using vtkPolyData, but it's not supported by GEOS for now.
     fracture_mesh.SetPoints(points)
-    fracture_mesh.SetCells([VTK_POLYGON] * polygons.GetNumberOfCells(), polygons)
+    if polygons.GetNumberOfCells() > 0:
+        fracture_mesh.SetCells([VTK_POLYGON] * polygons.GetNumberOfCells(), polygons)
     fracture_mesh.GetPointData().AddArray(array)
     return fracture_mesh
 

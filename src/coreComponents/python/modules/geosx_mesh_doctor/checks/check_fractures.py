@@ -117,7 +117,6 @@ def __check_neighbors(matrix: vtkUnstructuredGrid,
             point_ids = frozenset(vtk_iter(face.GetPointIds()))
             if point_ids <= fracture_nodes:
                 fracture_faces.add(point_ids)
-    print(len(fracture_faces))
     # Finding the cells
     for c in tqdm(range(fracture.GetNumberOfCells()), desc="Finding neighbor cell pairs"):
         cell: vtkCell = fracture.GetCell(c)

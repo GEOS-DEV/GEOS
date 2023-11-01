@@ -19,15 +19,23 @@ import pytest
 
 from vtkmodules.vtkCommonDataModel import (
     vtkUnstructuredGrid,
+    VTK_POLYHEDRON,
+    VTK_HEXAHEDRON,
 )
-
-
 from vtkmodules.util.numpy_support import (
     numpy_to_vtk,
     vtk_to_numpy,
 )
+
 import sys
 sys.path.append("..")
+
+
+from checks.vtk_utils import (
+    to_vtk_id_list,
+    vtk_iter,
+)
+
 
 # import sys
 # sys.path.insert(0, "/Users/j0436735/CLionProjects/GEOS/src/coreComponents/python/modules/geosx_mesh_doctor")
@@ -188,16 +196,11 @@ def __generate_test_data() -> Iterator[Tuple[vtkUnstructuredGrid, Options]]:
     yield TestCase(input_mesh=mesh, options=options, collocated_nodes=collocated_nodes,
                    result=(6 * 4, 3, 2 * 4, 2))
 
-    # No duplication one quad fracture
-    collocated_nodes = (
-        (4 + 12,),
-        (7 + 12,),
-        (4 + 12 * 2,),
-        (7 + 12 * 2,),
-    )
+    # Discarded fracture element if no node duplication.
+    collocated_nodes = ()
     mesh, options = __build_test_case((three_nodes, four_nodes, four_nodes), [0, ] * 8 + [1, 2] + [0, ] * 8, field_values=(1, 2))
     yield TestCase(input_mesh=mesh, options=options, collocated_nodes=collocated_nodes,
-                   result=(3 * 4 * 4, 2 * 3 * 3, 4, 1))
+                   result=(3 * 4 * 4, 2 * 3 * 3, 0, 0))
 
     # Fracture on a corner
     inc = Incrementor(3 * 4 * 4)
@@ -215,6 +218,26 @@ def __generate_test_data() -> Iterator[Tuple[vtkUnstructuredGrid, Options]]:
     mesh, options = __build_test_case((three_nodes, four_nodes, four_nodes), [0, ] * 6 + [1, 2, 1, 2, 0, 0, 1, 2, 1, 2, 0, 0], field_values=(1, 2))
     yield TestCase(input_mesh=mesh, options=options, collocated_nodes=collocated_nodes,
                    result=(3 * 4 * 4 + 4, 2 * 3 * 3, 9, 4))
+
+    # Generate mesh with 2 hexs, one being a standard hex, the other a 42 hex.
+    inc = Incrementor(3 * 2 * 2)
+    collocated_nodes = (
+        (1, *inc.next(1)),
+        (1 + 3, *inc.next(1)),
+        (1 + 6, *inc.next(1)),
+        (1 + 9, *inc.next(1)),
+    )
+    mesh, options = __build_test_case((three_nodes, two_nodes, two_nodes), (0, 1))
+    polyhedron_mesh = vtkUnstructuredGrid()
+    polyhedron_mesh.SetPoints(mesh.GetPoints())
+    polyhedron_mesh.Allocate(2)
+    polyhedron_mesh.InsertNextCell(VTK_HEXAHEDRON, to_vtk_id_list((1, 2, 5, 4, 7, 8, 10, 11)))
+    poly = to_vtk_id_list([6] + [4, 0, 1, 7, 6] + [4, 1, 4, 10, 7] + [4, 4, 3, 9, 10] + [4, 3, 0, 6, 9] + [4, 6, 7, 10, 9] + [4, 1, 0, 3, 4])
+    polyhedron_mesh.InsertNextCell(VTK_POLYHEDRON, poly)
+    polyhedron_mesh.GetCellData().AddArray(mesh.GetCellData().GetArray("attribute"))
+
+    yield TestCase(input_mesh=polyhedron_mesh, options=options, collocated_nodes=collocated_nodes,
+                   result=(4 * 4, 2, 4, 1))
 
 
 def __format_collocated_nodes(fracture_mesh: vtkUnstructuredGrid):

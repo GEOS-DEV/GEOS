@@ -3,8 +3,7 @@ from dataclasses import dataclass
 from typing import (
     Sequence,
     Iterable,
-    Union,
-    Sized,
+    Collection,
 )
 
 from vtkmodules.vtkCommonCore import (
@@ -89,7 +88,7 @@ class FaceStream:
         return len(self.__data)
 
     @property
-    def support_point_ids(self) -> Union[Iterable[int], Sized]:
+    def support_point_ids(self) -> Collection[int]:
         """
         The list of all (unique) support points of the face stream, in no specific order.
         :return: The set of all the point ids.
