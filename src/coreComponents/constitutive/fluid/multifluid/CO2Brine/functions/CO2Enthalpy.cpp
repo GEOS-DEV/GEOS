@@ -278,7 +278,7 @@ CO2Enthalpy::calculateCO2Enthalpy( PTTableCoordinates const & tableCoords,
   if( printTable )
   {
     table_file.open( "CO2Enthalpy.csv" );
-    table_file << "T[C]" << std::endl;
+    table_file << "T[C],Enthalpy" << std::endl;
   }
 
   // Note that the enthalpy values given in Span and Wagner assume a reference enthalphy defined as: h_0 = 0 J/kg at T_0 = 298.15 K

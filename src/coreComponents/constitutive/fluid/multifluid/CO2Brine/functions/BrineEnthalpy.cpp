@@ -83,7 +83,7 @@ void calculateBrineEnthalpy( PTTableCoordinates const & tableCoords,
   if( printTable )
   {
     table_file.open( "BrineEnthalpy.csv" );
-    table_file << "T[C]" << std::endl;
+    table_file << "T[C],Enthalpy" << std::endl;
   }
 
   for( localIndex i = 0; i < nTemperatures; ++i )
