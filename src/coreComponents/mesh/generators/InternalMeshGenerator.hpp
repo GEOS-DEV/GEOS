@@ -345,7 +345,11 @@ private:
           // Verify that the bias is non-zero and applied to more than one block:
           if( ( !isZero( m_nElemBias[i][block] ) ) && (m_nElems[i][block]>1))
           {
-            GEOS_ERROR_IF( fabs( m_nElemBias[i][block] ) >= 1, "Mesh bias must between -1 and 1!" );
+            GEOS_ERROR_IF( fabs( m_nElemBias[i][block] ) >= 1,
+                           getWrapperDataContext( i == 0 ? viewKeyStruct::xBiasString() :
+                                                  i == 1 ? viewKeyStruct::yBiasString() :
+                                                  viewKeyStruct::zBiasString() ) <<
+                           ", block index = " << block << " : Mesh bias must between -1 and 1!" );
 
             real64 len = max -  min;
             real64 xmean = len / m_nElems[i][block];
