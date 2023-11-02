@@ -190,39 +190,12 @@ void EzrokhiBrineDensityUpdate::compute( real64 const & pressure,
   value = waterDensity * pow( 10, value );
   if( !useMass )
   {
-    value /= m_componentMolarWeight[m_waterIndex];
+    real64 const MT =
+      phaseComposition[m_waterIndex] * m_componentMolarWeight[m_waterIndex] +
+      phaseComposition[m_CO2Index] * m_componentMolarWeight[m_CO2Index];
+    value /= MT;
   }
 }
-
-//template< int USD1 >
-//GEOS_HOST_DEVICE
-//void EzrokhiBrineDensityUpdate::compute( real64 const & pressure,
-//                                         real64 const & temperature,
-//                                         arraySlice1d< real64 const, USD1 > const & phaseComposition,
-//                                         real64 & value,
-//                                         bool useMass ) const
-//{
-//
-//  real64 const temp = 95.0;
-//  std::ofstream table_file( "brine_dens.csv" );
-//  table_file << "P[Pa]" << std::endl;
-//  for(real64 pres = 50*1e5; pres <=500*1e5; pres+= 10*1e5)
-//  {
-//    real64 const waterSatDensity = m_waterSatDensityTable.compute( &temp );
-//    real64 const waterSatPressure = m_waterSatPressureTable.compute( &temp );
-//
-//    real64 const waterDensity = waterSatDensity * exp( m_waterCompressibility * ( pres - waterSatPressure ) );
-//    std::cout << waterDensity << " " << waterSatDensity << " " << m_waterCompressibility << " " << pres << " " << waterSatPressure << std::endl;
-//    // we have to convert molar component phase fraction (phaseComposition[m_CO2Index]) to mass fraction
-//    real64 const massPhaseCompositionCO2 = 0.0;
-//
-//    value = ( m_coef0 + temp * ( m_coef1 + m_coef2 * temp ) ) * massPhaseCompositionCO2;
-//    value = waterDensity * pow( 10, value );
-//    table_file<<pres<<","<<value<<std::endl;
-//  }
-//  table_file.close();
-//  exit(-1);
-//}
 
 template< int USD1, int USD2, int USD3 >
 GEOS_HOST_DEVICE
@@ -265,20 +238,42 @@ void EzrokhiBrineDensityUpdate::compute( real64 const & pressure,
   // compute only common part of derivatives w.r.t. CO2 and water phase compositions
   // later to be multiplied by (phaseComposition[m_waterIndex]) and ( -phaseComposition[m_CO2Index] ) respectively
   real64 const exponent_dPhaseComp = coefPhaseComposition * m_componentMolarWeight[m_CO2Index] * m_componentMolarWeight[m_waterIndex] * waterMWInv * waterMWInv;
-  real64 const exponentPowered = useMass ? pow( 10, exponent ) : pow( 10, exponent ) / m_componentMolarWeight[m_waterIndex];
+  real64 exponentPowered = pow( 10, exponent );
 
   value = waterDensity * exponentPowered;
 
   real64 const dValueCoef = LvArray::math::log( 10 ) * value;
-
-  real64 const dValue_dPhaseComp = dValueCoef * exponent_dPhaseComp;
   dValue[Deriv::dP] = dValueCoef * exponent_dPressure + waterDensity_dPressure * exponentPowered;
   dValue[Deriv::dT] = dValueCoef * exponent_dTemperature + waterDensity_dTemperature * exponentPowered;
 
   // here, we multiply common part of derivatives by specific coefficients
+  real64 const dValue_dPhaseComp = dValueCoef * exponent_dPhaseComp;
   dValue[Deriv::dC+m_CO2Index] = dValue_dPhaseComp * phaseComposition[m_waterIndex] * dPhaseComposition[m_CO2Index][Deriv::dC+m_CO2Index];
   dValue[Deriv::dC+m_waterIndex] = dValue_dPhaseComp * ( -phaseComposition[m_CO2Index] ) * dPhaseComposition[m_waterIndex][Deriv::dC+m_waterIndex];
 
+  if( !useMass )
+  {
+    real64 const MT =
+      phaseComposition[m_waterIndex] * m_componentMolarWeight[m_waterIndex] +
+      phaseComposition[m_CO2Index] * m_componentMolarWeight[m_CO2Index];
+    value /= MT;
+    real64 const dMT_dPres =
+      dPhaseComposition[m_waterIndex][Deriv::dP] * m_componentMolarWeight[m_waterIndex] +
+      dPhaseComposition[m_CO2Index][Deriv::dP] * m_componentMolarWeight[m_CO2Index];
+    dValue[Deriv::dP] = (dValue[Deriv::dP] - value * dMT_dPres) / MT; // value is already divided by MT
+    real64 const dMT_dTemp =
+      dPhaseComposition[m_waterIndex][Deriv::dT] * m_componentMolarWeight[m_waterIndex] +
+      dPhaseComposition[m_CO2Index][Deriv::dT] * m_componentMolarWeight[m_CO2Index];
+    dValue[Deriv::dT] = (dValue[Deriv::dT] - value * dMT_dTemp) / MT; // value is already divided by MT
+    real64 const dMT_dC_CO2 =
+      dPhaseComposition[m_waterIndex][Deriv::dC+m_CO2Index] * m_componentMolarWeight[m_waterIndex] +
+      dPhaseComposition[m_CO2Index][Deriv::dC+m_CO2Index] * m_componentMolarWeight[m_CO2Index];
+    dValue[Deriv::dC+m_CO2Index] = (dValue[Deriv::dC+m_CO2Index] - value * dMT_dC_CO2) / MT; // value is already divided by MT
+    real64 const dMT_dC_water =
+      dPhaseComposition[m_waterIndex][Deriv::dC+m_waterIndex] * m_componentMolarWeight[m_waterIndex] +
+      dPhaseComposition[m_CO2Index][Deriv::dC+m_waterIndex] * m_componentMolarWeight[m_CO2Index];
+    dValue[Deriv::dC+m_waterIndex] = (dValue[Deriv::dC+m_waterIndex] - value * dMT_dC_water) / MT; // value is already divided by MT
+  }
 }
 
 } // end namespace PVTProps

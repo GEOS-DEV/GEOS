@@ -170,13 +170,13 @@ void PhillipsBrineDensityUpdate::compute( real64 const & pressure,
 
   // Brine density
   // equation (1) from Garcia (2001)
-  if( useMass )
+  value = density + m_componentMolarWeight[m_CO2Index] * conc - concDensVol;
+  if( !useMass )
   {
-    value = density + m_componentMolarWeight[m_CO2Index] * conc - concDensVol;
-  }
-  else
-  {
-    value = density / m_componentMolarWeight[m_waterIndex] + conc - concDensVol / m_componentMolarWeight[m_waterIndex];
+    real64 const MT =
+      phaseComposition[m_waterIndex] * m_componentMolarWeight[m_waterIndex] +
+      phaseComposition[m_CO2Index] * m_componentMolarWeight[m_CO2Index];
+    value /= MT;
   }
 }
 
@@ -244,37 +244,41 @@ void PhillipsBrineDensityUpdate::compute( real64 const & pressure,
 
   // Brine density
   // equation (1) from Garcia (2001)
-  if( useMass )
+  value = density
+          + m_componentMolarWeight[m_CO2Index] * conc
+          - concDensVol;
+  dValue[Deriv::dP] = densityDeriv[0]
+                      + m_componentMolarWeight[m_CO2Index] * dConc_dPres
+                      - dConcDensVol_dPres;
+  dValue[Deriv::dT] = densityDeriv[1]
+                      + m_componentMolarWeight[m_CO2Index] * dConc_dTemp
+                      - dConcDensVol_dTemp;
+  dValue[Deriv::dC+m_CO2Index] = m_componentMolarWeight[m_CO2Index] * dConc_dComp[m_CO2Index]
+                                 - dConcDensVol_dComp[m_CO2Index];
+  dValue[Deriv::dC+m_waterIndex] = m_componentMolarWeight[m_CO2Index] * dConc_dComp[m_waterIndex]
+                                   - dConcDensVol_dComp[m_waterIndex];
+  if( !useMass )
   {
-    value = density
-            + m_componentMolarWeight[m_CO2Index] * conc
-            - concDensVol;
-    dValue[Deriv::dP] = densityDeriv[0]
-                        + m_componentMolarWeight[m_CO2Index] * dConc_dPres
-                        - dConcDensVol_dPres;
-    dValue[Deriv::dT] = densityDeriv[1]
-                        + m_componentMolarWeight[m_CO2Index] * dConc_dTemp
-                        - dConcDensVol_dTemp;
-    dValue[Deriv::dC+m_CO2Index] = m_componentMolarWeight[m_CO2Index] * dConc_dComp[m_CO2Index]
-                                   - dConcDensVol_dComp[m_CO2Index];
-    dValue[Deriv::dC+m_waterIndex] = m_componentMolarWeight[m_CO2Index] * dConc_dComp[m_waterIndex]
-                                     - dConcDensVol_dComp[m_waterIndex];
-  }
-  else
-  {
-    value = density / m_componentMolarWeight[m_waterIndex]
-            + conc
-            - concDensVol / m_componentMolarWeight[m_waterIndex];
-    dValue[Deriv::dP] = densityDeriv[0]  / m_componentMolarWeight[m_waterIndex]
-                        + dConc_dPres
-                        - dConcDensVol_dPres / m_componentMolarWeight[m_waterIndex];
-    dValue[Deriv::dT] = densityDeriv[1]  / m_componentMolarWeight[m_waterIndex]
-                        + dConc_dTemp
-                        - dConcDensVol_dTemp  / m_componentMolarWeight[m_waterIndex];
-    dValue[Deriv::dC+m_CO2Index] = dConc_dComp[m_CO2Index]
-                                   - dConcDensVol_dComp[m_CO2Index] / m_componentMolarWeight[m_waterIndex];
-    dValue[Deriv::dC+m_waterIndex] = dConc_dComp[m_waterIndex]
-                                     - dConcDensVol_dComp[m_waterIndex] / m_componentMolarWeight[m_waterIndex];
+    real64 const MT =
+      phaseComposition[m_waterIndex] * m_componentMolarWeight[m_waterIndex] +
+      phaseComposition[m_CO2Index] * m_componentMolarWeight[m_CO2Index];
+    value /= MT;
+    real64 const dMT_dPres =
+      dPhaseComposition[m_waterIndex][Deriv::dP] * m_componentMolarWeight[m_waterIndex] +
+      dPhaseComposition[m_CO2Index][Deriv::dP] * m_componentMolarWeight[m_CO2Index];
+    dValue[Deriv::dP] = (dValue[Deriv::dP] - value * dMT_dPres) / MT; // value is already divided by MT
+    real64 const dMT_dTemp =
+      dPhaseComposition[m_waterIndex][Deriv::dT] * m_componentMolarWeight[m_waterIndex] +
+      dPhaseComposition[m_CO2Index][Deriv::dT] * m_componentMolarWeight[m_CO2Index];
+    dValue[Deriv::dT] = (dValue[Deriv::dT] - value * dMT_dTemp) / MT; // value is already divided by MT
+    real64 const dMT_dC_CO2 =
+      dPhaseComposition[m_waterIndex][Deriv::dC+m_CO2Index] * m_componentMolarWeight[m_waterIndex] +
+      dPhaseComposition[m_CO2Index][Deriv::dC+m_CO2Index] * m_componentMolarWeight[m_CO2Index];
+    dValue[Deriv::dC+m_CO2Index] = (dValue[Deriv::dC+m_CO2Index] - value * dMT_dC_CO2) / MT; // value is already divided by MT
+    real64 const dMT_dC_water =
+      dPhaseComposition[m_waterIndex][Deriv::dC+m_waterIndex] * m_componentMolarWeight[m_waterIndex] +
+      dPhaseComposition[m_CO2Index][Deriv::dC+m_waterIndex] * m_componentMolarWeight[m_CO2Index];
+    dValue[Deriv::dC+m_waterIndex] = (dValue[Deriv::dC+m_waterIndex] - value * dMT_dC_water) / MT; // value is already divided by MT
   }
 }
 
