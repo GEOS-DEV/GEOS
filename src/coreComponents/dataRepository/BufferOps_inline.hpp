@@ -594,8 +594,8 @@ localIndex Unpack( buffer_unit_type const * & buffer,
                    std::pair< T_FIRST, T_SECOND > & var,
                    MPI_Op op )
 {
-  localIndex sizeOfUnpackedChars = Unpack( buffer, var.first );
-  sizeOfUnpackedChars += Unpack( buffer, var.second );
+  localIndex sizeOfUnpackedChars = Unpack( buffer, var.first, op );
+  sizeOfUnpackedChars += Unpack( buffer, var.second, op );
   return sizeOfUnpackedChars;
 }
 

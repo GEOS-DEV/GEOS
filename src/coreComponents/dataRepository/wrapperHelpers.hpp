@@ -770,7 +770,7 @@ PackByIndexDevice( buffer_unit_type * &, T const &, IDX &, parallelDeviceEvents 
 template< typename T >
 inline std::enable_if_t< bufferOps::is_container< T >, localIndex >
 UnpackDevice( buffer_unit_type const * & buffer, T const & var, parallelDeviceEvents & events, MPI_Op op )
-{ return bufferOps::UnpackDevice( buffer, var, events ); }
+{ return bufferOps::UnpackDevice( buffer, var, events, op ); }
 
 template< typename T >
 inline std::enable_if_t< !bufferOps::is_container< T >, localIndex >

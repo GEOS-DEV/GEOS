@@ -15,3 +15,6 @@ set(MPI_HOME /usr/tce/packages/spectrum-mpi/spectrum-mpi-rolling-release-gcc-8.3
 set(MPI_Fortran_COMPILER ${MPI_HOME}/bin/mpifort CACHE PATH "")
 
 include(${CMAKE_CURRENT_LIST_DIR}/lassen-base.cmake)
+
+
+# -mcmodel=large
