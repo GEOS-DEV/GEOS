@@ -51,7 +51,6 @@
     </InternalMesh>
   </Mesh>
 
-
   <NumericalMethods>
     <FiniteElements>
       <FiniteElementSpace
@@ -176,5 +175,38 @@
       interpolation="lower"/>
   </Functions>
   
+<<<<<<< HEAD:inputFiles/poromechanics/PoroElastic_staircase_singlephase_3d_base.xml
+=======
+  <Tasks>
+    <SolidMechanicsStatistics
+      name="linearElasticityStatistics"
+      solidSolverName="linearElasticity"
+      logLevel="1"/>
+    <SinglePhaseStatistics
+      name="singlePhaseFlowStatistics"
+      flowSolverName="singlePhaseFlow"
+      logLevel="1"/>
+
+    <SinglePhasePoromechanicsInitialization 
+      logLevel="1"      
+      name="singlePhasePoroelasticityPreEquilibrationStep"
+      performStressInitialization="1"
+      poromechanicsSolverName="singlePhasePoroelasticity"/>
+    
+    <SinglePhasePoromechanicsInitialization 
+      logLevel="1"      
+      name="singlePhasePoroelasticityPostEquilibrationStep"
+      performStressInitialization="0"
+      poromechanicsSolverName="singlePhasePoroelasticity"/>
+  </Tasks>
+  
+  <Outputs>
+    <VTK
+      name="vtkOutput"
+      fieldNames="{ initialPressure, skeletonChannel_density }"/>
+    <Restart
+      name="restartOutput"/>
+  </Outputs>
+>>>>>>> origin/develop:inputFiles/poromechanics/PoroElastic_staircase_singlephase_3d.xml
 </Problem>
 

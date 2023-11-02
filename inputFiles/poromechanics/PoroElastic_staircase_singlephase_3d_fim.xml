@@ -83,11 +83,6 @@
       targetTime="-1e11"
       beginTime="-1e11"
       target="/Tasks/singlePhasePoroelasticityPreEquilibrationStep"/>
-    <SoloEvent
-      name="solidMechanicsPreEquilibrationStep"
-      targetTime="-1e11"
-      beginTime="-1e11"      
-      target="/Tasks/solidMechanicsPreEquilibrationStep"/>
     
     <PeriodicEvent
       name="solverApplicationsEquilibration"
@@ -100,10 +95,6 @@
       name="singlePhasePoroelasticityPostEquilibrationStep"
       targetTime="0"
       target="/Tasks/singlePhasePoroelasticityPostEquilibrationStep"/>
-    <SoloEvent
-      name="solidMechanicsPostEquilibrationStep"
-      targetTime="0"
-      target="/Tasks/solidMechanicsPostEquilibrationStep"/>
 
     <PeriodicEvent
       name="linearElasticityStatistics"
@@ -140,20 +131,12 @@
       name="singlePhasePoroelasticityPreEquilibrationStep"
       performStressInitialization="1"
       poromechanicsSolverName="singlePhasePoroelasticity"/>
-    <SolidMechanicsStateReset 
-      logLevel="2"      
-      name="solidMechanicsPreEquilibrationStep"
-      solidSolverName="linearElasticity"/>
     
     <SinglePhasePoromechanicsInitialization 
       logLevel="1"      
       name="singlePhasePoroelasticityPostEquilibrationStep"
       performStressInitialization="0"
       poromechanicsSolverName="singlePhasePoroelasticity"/>
-    <SolidMechanicsStateReset 
-      logLevel="2"      
-      name="solidMechanicsPostEquilibrationStep"
-      solidSolverName="linearElasticity"/>
   </Tasks>
   
   <Outputs>
