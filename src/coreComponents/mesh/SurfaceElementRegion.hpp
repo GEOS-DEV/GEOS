@@ -201,7 +201,8 @@ private:
       subRegionNames.push_back( sr.getName() );
     } );
     GEOS_ERROR_IF( subRegionNames.size() != 1,
-                   "Surface region \"" << getName() << "\" should have one unique sub region. \"" << subRegionNames.size() << "\" found." );
+                   "Surface region \"" << getDataContext() <<
+                   "\" should have one unique sub region (" << subRegionNames.size() << " found)." );
     return subRegionNames.front();
   }
 
