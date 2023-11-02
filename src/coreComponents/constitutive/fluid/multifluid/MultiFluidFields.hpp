@@ -34,6 +34,7 @@ namespace multifluid
 using array2dLayoutFluid = array2d< real64, constitutive::multifluid::LAYOUT_FLUID >;
 using array3dLayoutFluid_dC = array3d< real64, constitutive::multifluid::LAYOUT_FLUID_DC >;
 using array3dLayoutPhase = array3d< real64, constitutive::multifluid::LAYOUT_PHASE >;
+using array4dLayoutPhase = array4d< real64, constitutive::multifluid::LAYOUT_PHASE_VELOCITY >;
 using array4dLayoutPhase_dC = array4d< real64, constitutive::multifluid::LAYOUT_PHASE_DC >;
 using array4dLayoutPhaseComp = array4d< real64, constitutive::multifluid::LAYOUT_PHASE_COMP >;
 using array5dLayoutPhaseComp_dC = array5d< real64, constitutive::multifluid::LAYOUT_PHASE_COMP_DC >;
@@ -205,6 +206,14 @@ DECLARE_FIELD( dTotalDensity,
                NOPLOT,
                NO_WRITE,
                "Derivative of total density with respect to pressure, temperature, and global component fractions" );
+
+DECLARE_FIELD( phaseVelocity,
+               "cellCenterPhaseVelocity",
+               array4dLayoutPhase,
+               1,
+               LEVEL_0,
+               NO_WRITE,
+               "Phase velocities reconstructed at cell center" );
 
 }
 

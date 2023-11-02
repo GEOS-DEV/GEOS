@@ -300,7 +300,8 @@ public:
                               fields::multifluid::phaseMassDensity,
                               fields::multifluid::dPhaseMassDensity,
                               fields::multifluid::phaseCompFraction,
-                              fields::multifluid::dPhaseCompFraction >;
+                              fields::multifluid::dPhaseCompFraction,
+                              fields::multifluid::phaseVelocity >;
 
   using CapPressureAccessors =
     StencilMaterialAccessors< CapillaryPressureBase,
@@ -362,6 +363,9 @@ protected:
   /// Views on phase component fractions
   ElementViewConst< arrayView4d< real64 const, multifluid::USD_PHASE_COMP > > const m_phaseCompFrac;
   ElementViewConst< arrayView5d< real64 const, multifluid::USD_PHASE_COMP_DC > > const m_dPhaseCompFrac;
+
+  /// Views on phase velocity
+  ElementRegionManager::ElementView< arrayView4d< real64, multifluid::USD_PHASE_VELOCITY > > const m_phaseVelocity;
 
   // Residual and jacobian
 
@@ -486,6 +490,8 @@ public:
 
     // Transmissibility and derivatives
 
+    /// Normed Transmissibility
+    real64 normedTransmissibility[maxNumConns][numFluxSupportPoints]{};
     /// Transmissibility
     real64 transmissibility[maxNumConns][numFluxSupportPoints]{};
     /// Derivatives of transmissibility with respect to pressure
@@ -621,6 +627,11 @@ public:
             phaseFlux,
             dPhaseFlux_dP,
             dPhaseFlux_dC );
+
+          //TODO (jacques) update PhaseVelocity on both side
+          m_stencilWrapper.computeVelocity( iconn, ip,
+                                            phaseFlux,
+                                            m_phaseVelocity );
 
           isothermalCompositionalMultiphaseFVMKernelUtilities::
             PhaseComponentFlux::compute< numComp, numFluxSupportPoints >
@@ -1251,6 +1262,7 @@ public:
             localIndex const ei_up  = sei[k_up];
 
             // computation of the upwinded mass flux
+            //TODO (jacques) put newly phase indexed reconstituated value for velocity LvArray::abs(...)
             dispersionFlux[ic] += m_phaseDens[er_up][esr_up][ei_up][0][ip] * compFracGrad;
 
             // add contributions of the derivatives of component fractions wrt pressure/component fractions

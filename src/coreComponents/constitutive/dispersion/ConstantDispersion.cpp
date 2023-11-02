@@ -4,5 +4,5 @@
 
 #include "ConstantDispersion.hpp"
 
-namespace geos {
-} // geos
+namespace geos
+{} // geos

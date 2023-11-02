@@ -93,6 +93,15 @@ public:
                                     real64 ( &stabilizationWeight )[1][2] ) const;
 
   /**
+   * @brief Compute approximate cell-centered velocity field
+   */
+  GEOS_HOST_DEVICE
+  void computeVelocity( localIndex iconn,
+                        localIndex ip,
+                        real64 const ( &phaseFlux ),
+                        ElementRegionManager::ElementView< arrayView4d< real64> > const & phaseVelocity ) const;
+
+  /**
    * @brief Give the number of stencil entries.
    * @return The number of stencil entries
    */
@@ -274,6 +283,38 @@ CellElementStencilTPFAWrapper::
   dWeight_dVar[0][0] = 0.0;
   dWeight_dVar[0][1] = 0.0;
 }
+
+GEOS_HOST_DEVICE
+inline void
+CellElementStencilTPFAWrapper::
+  computeVelocity( localIndex iconn,
+                   localIndex ip,
+                   const real64 (&phaseFlux),
+                   ElementRegionManager::ElementView< arrayView4d< real64> > const & phaseVelocity ) const
+{
+
+  real64 surface[2];
+
+  for( localIndex i = 0; i < 2; i++ )
+  {
+      localIndex const er = m_elementRegionIndices[iconn][i];
+      localIndex const esr = m_elementSubRegionIndices[iconn][i];
+      localIndex const ei = m_elementIndices[iconn][i];
+
+
+      real64 faceNormal[3];
+    LvArray::tensorOps::copy< 3 >( faceNormal, m_faceNormal[iconn] );
+    surface[i] = LvArray::tensorOps::normalize< 3 >( faceNormal );
+    LvArray::tensorOps::scale< 3 >( faceNormal, phaseFlux );
+
+    for( int j = 0; j < 3; ++j )
+    {
+        phaseVelocity[er][esr][ei][0][ip][j] += faceNormal[j]/surface[i];
+    }
+
+  }
+}
+
 
 GEOS_HOST_DEVICE
 inline void

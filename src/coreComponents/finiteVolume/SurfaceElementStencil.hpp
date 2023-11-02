@@ -198,6 +198,22 @@ public:
                        real64 ( &geometricWeight )[maxNumPointsInFlux] ) const;
 
   /**
+   * Pass through for CellTPFA cell-centered velocity reconstruction
+   * @param iconn
+   * @param ip
+   * @param phaseFlux
+   * @param phaseVelocity
+   */
+    GEOS_HOST_DEVICE
+    inline void
+    computeVelocity( localIndex iconn,
+                     localIndex ip,
+                     const real64 (&phaseFlux),
+                     ElementRegionManager::ElementView< arrayView4d< real64> > const & phaseVelocity ) const
+    {
+        GEOS_UNUSED_VAR(iconn,ip,phaseFlux,phaseVelocity);
+    };
+  /**
    * @brief Compute the stabilization weights
    * @param[in] iconn connection index
    * @param[out] stabilizationWeight view weights

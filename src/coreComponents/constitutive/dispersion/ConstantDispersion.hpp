@@ -5,11 +5,11 @@
 #ifndef GEOSX_CONSTANTDISPERSION_HPP
 #define GEOSX_CONSTANTDISPERSION_HPP
 
-namespace geos {
+namespace geos
+{
 
-    class ConstantDispersion {
-
-    };
+class ConstantDispersion
+{};
 
 } // geos
 

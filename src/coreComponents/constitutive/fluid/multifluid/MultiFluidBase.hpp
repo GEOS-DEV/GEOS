@@ -638,6 +638,9 @@ protected:
   array4d< real64, multifluid::LAYOUT_PHASE_COMP > m_phaseCompFraction_n;
   array2d< real64, multifluid::LAYOUT_FLUID > m_totalDensity_n;
 
+  // misc
+  array4d< real64, multifluid::LAYOUT_PHASE_VELOCITY > m_phaseVelocity;
+
 };
 
 template< integer maxNumComp, typename OUT_ARRAY >
