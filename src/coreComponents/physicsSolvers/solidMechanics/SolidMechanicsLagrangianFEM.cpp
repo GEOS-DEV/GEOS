@@ -636,7 +636,7 @@ real64 SolidMechanicsLagrangianFEM::explicitStep( real64 const & time_n,
 
     // this includes  a device sync after launching all the unpacking kernels
     parallelDeviceEvents unpackEvents;
-    CommunicationTools::getInstance().finalizeUnpack( mesh, domain.getNeighbors(), m_iComm, unpackEvents );
+    CommunicationTools::getInstance().finalizeUnpack( mesh, domain.getNeighbors(), m_iComm, unpackEvents, MPI_REPLACE );
 
   } );
 

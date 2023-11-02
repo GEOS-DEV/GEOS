@@ -309,54 +309,55 @@ localIndex ObjectManagerBase::packImpl( buffer_unit_type * & buffer,
 localIndex ObjectManagerBase::unpack( buffer_unit_type const * & buffer,
                                       arrayView1d< localIndex > & packList,
                                       integer const recursive,
-                                      parallelDeviceEvents & events )
+                                      parallelDeviceEvents & events,
+                                      MPI_Op op )
 {
   localIndex unpackedSize = 0;
   string groupName;
-  unpackedSize += bufferOps::Unpack( buffer, groupName );
+  unpackedSize += bufferOps::Unpack( buffer, groupName, MPI_REPLACE );
   GEOS_ERROR_IF_NE( groupName, this->getName() );
 
   int sendingRank;
-  unpackedSize += bufferOps::Unpack( buffer, sendingRank );
+  unpackedSize += bufferOps::Unpack( buffer, sendingRank, MPI_REPLACE );
 
   localIndex numUnpackedIndices;
-  unpackedSize += bufferOps::Unpack( buffer, numUnpackedIndices );
+  unpackedSize += bufferOps::Unpack( buffer, numUnpackedIndices, MPI_REPLACE );
   if( numUnpackedIndices > 0 )
   {
 
     string wrappersLabel;
-    unpackedSize += bufferOps::Unpack( buffer, wrappersLabel );
+    unpackedSize += bufferOps::Unpack( buffer, wrappersLabel, MPI_REPLACE );
     GEOS_ERROR_IF_NE( wrappersLabel, "Wrappers" );
 
     localIndex numWrappers;
-    unpackedSize += bufferOps::Unpack( buffer, numWrappers );
+    unpackedSize += bufferOps::Unpack( buffer, numWrappers, MPI_REPLACE );
     for( localIndex a=0; a<numWrappers; ++a )
     {
       string wrapperName;
-      unpackedSize += bufferOps::Unpack( buffer, wrapperName );
-      unpackedSize += this->getWrapperBase( wrapperName ).unpackByIndex( buffer, packList, true, events );
+      unpackedSize += bufferOps::Unpack( buffer, wrapperName, MPI_REPLACE );
+      unpackedSize += this->getWrapperBase( wrapperName ).unpackByIndex( buffer, packList, true, events, op );
     }
   }
 
   if( recursive > 0 )
   {
     string subGroups;
-    unpackedSize += bufferOps::Unpack( buffer, subGroups );
+    unpackedSize += bufferOps::Unpack( buffer, subGroups, MPI_REPLACE );
     GEOS_ERROR_IF_NE( subGroups, "SubGroups" );
 
     decltype( this->getSubGroups().size()) numSubGroups;
-    unpackedSize += bufferOps::Unpack( buffer, numSubGroups );
+    unpackedSize += bufferOps::Unpack( buffer, numSubGroups, MPI_REPLACE );
     GEOS_ERROR_IF_NE( numSubGroups, this->getSubGroups().size() );
 
     for( localIndex i = 0; i < this->numSubGroups(); ++i )
     {
       string subGroupName;
-      unpackedSize += bufferOps::Unpack( buffer, subGroupName );
-      unpackedSize += this->getGroup( subGroupName ).unpack( buffer, packList, recursive, events );
+      unpackedSize += bufferOps::Unpack( buffer, subGroupName,  MPI_REPLACE );
+      unpackedSize += this->getGroup( subGroupName ).unpack( buffer, packList, recursive, events, op );
     }
   }
 
-  unpackedSize += bufferOps::Unpack( buffer, groupName );
+  unpackedSize += bufferOps::Unpack( buffer, groupName, MPI_REPLACE );
   GEOS_ERROR_IF_NE( groupName, this->getName() );
 
   return unpackedSize;
@@ -410,7 +411,7 @@ localIndex ObjectManagerBase::unpackParentChildMaps( buffer_unit_type const * & 
   {
     arrayView1d< localIndex > const & parentIndex = this->getField< fields::parentIndex >();
     string shouldBeParentIndexString;
-    unpackedSize += bufferOps::Unpack( buffer, shouldBeParentIndexString );
+    unpackedSize += bufferOps::Unpack( buffer, shouldBeParentIndexString, MPI_REPLACE );
     GEOS_ERROR_IF( shouldBeParentIndexString != fields::parentIndex::key(),
                    "value read from buffer is:" << shouldBeParentIndexString << ". It should be " << fields::parentIndex::key() );
     unpackedSize += bufferOps::Unpack( buffer,
@@ -424,7 +425,7 @@ localIndex ObjectManagerBase::unpackParentChildMaps( buffer_unit_type const * & 
   {
     arrayView1d< localIndex > const & childIndex = this->getField< fields::childIndex >();
     string shouldBeChildIndexString;
-    unpackedSize += bufferOps::Unpack( buffer, shouldBeChildIndexString );
+    unpackedSize += bufferOps::Unpack( buffer, shouldBeChildIndexString, MPI_REPLACE );
     GEOS_ERROR_IF( shouldBeChildIndexString != fields::childIndex::key(),
                    "value read from buffer is:" << shouldBeChildIndexString << ". It should be " << fields::childIndex::key() );
     unpackedSize += bufferOps::Unpack( buffer,
@@ -473,15 +474,15 @@ localIndex ObjectManagerBase::unpackSets( buffer_unit_type const * & buffer )
 {
   localIndex unpackedSize = 0;
   string name;
-  unpackedSize += bufferOps::Unpack( buffer, name );
+  unpackedSize += bufferOps::Unpack( buffer, name, MPI_REPLACE );
   GEOS_ERROR_IF( name != m_sets.getName(), "ObjectManagerBase::UnpackSets(): group names do not match" );
 
   localIndex numUnpackedSets;
-  unpackedSize += bufferOps::Unpack( buffer, numUnpackedSets );
+  unpackedSize += bufferOps::Unpack( buffer, numUnpackedSets, MPI_REPLACE );
   for( localIndex a=0; a<numUnpackedSets; ++a )
   {
     string setName;
-    unpackedSize += bufferOps::Unpack( buffer, setName );
+    unpackedSize += bufferOps::Unpack( buffer, setName, MPI_REPLACE );
     SortedArray< localIndex > & targetSet = m_sets.getReference< SortedArray< localIndex > >( setName );
 
     SortedArray< globalIndex > junk;
@@ -582,19 +583,19 @@ localIndex ObjectManagerBase::unpackGlobalMaps( buffer_unit_type const * & buffe
 
   localIndex unpackedSize = 0;
   string groupName;
-  unpackedSize += bufferOps::Unpack( buffer, groupName );
+  unpackedSize += bufferOps::Unpack( buffer, groupName, MPI_REPLACE );
   string msg = "ObjectManagerBase::unpack(): group names do not match as they are groupName = " + groupName + " and this->getName= " + this->getName();
   GEOS_ERROR_IF( groupName != this->getName(), msg );
 
   string localToGlobalString;
-  unpackedSize += bufferOps::Unpack( buffer, localToGlobalString );
+  unpackedSize += bufferOps::Unpack( buffer, localToGlobalString, MPI_REPLACE );
   GEOS_ERROR_IF( localToGlobalString != viewKeyStruct::localToGlobalMapString(), "ObjectManagerBase::unpack(): label incorrect" );
 
   int sendingRank;
-  unpackedSize += bufferOps::Unpack( buffer, sendingRank );
+  unpackedSize += bufferOps::Unpack( buffer, sendingRank, MPI_REPLACE );
 
   localIndex numUnpackedIndices;
-  unpackedSize += bufferOps::Unpack( buffer, numUnpackedIndices );
+  unpackedSize += bufferOps::Unpack( buffer, numUnpackedIndices, MPI_REPLACE );
 
   if( numUnpackedIndices > 0 )
   {
@@ -602,7 +603,7 @@ localIndex ObjectManagerBase::unpackGlobalMaps( buffer_unit_type const * & buffe
     unpackedLocalIndices.resize( numUnpackedIndices );
 
     array1d< globalIndex > globalIndices;
-    unpackedSize += bufferOps::Unpack( buffer, globalIndices );
+    unpackedSize += bufferOps::Unpack( buffer, globalIndices, MPI_REPLACE );
     localIndex numNewIndices = 0;
     array1d< globalIndex > newGlobalIndices;
     newGlobalIndices.reserve( numUnpackedIndices );
@@ -665,7 +666,7 @@ localIndex ObjectManagerBase::unpackGlobalMaps( buffer_unit_type const * & buffe
   {
     arrayView1d< localIndex > const & parentIndex = this->getField< fields::parentIndex >();
     string parentIndicesString;
-    unpackedSize += bufferOps::Unpack( buffer, parentIndicesString );
+    unpackedSize += bufferOps::Unpack( buffer, parentIndicesString, MPI_REPLACE );
     GEOS_ERROR_IF( parentIndicesString != fields::parentIndex::key(), "ObjectManagerBase::unpack(): label incorrect" );
     unpackedSize += bufferOps::Unpack( buffer,
                                        parentIndex,
@@ -678,18 +679,18 @@ localIndex ObjectManagerBase::unpackGlobalMaps( buffer_unit_type const * & buffe
   if( recursive > 0 )
   {
     string subGroups;
-    unpackedSize += bufferOps::Unpack( buffer, subGroups );
+    unpackedSize += bufferOps::Unpack( buffer, subGroups, MPI_REPLACE );
     GEOS_ERROR_IF( subGroups != "SubGroups", "Group::unpack(): group names do not match" );
 
     decltype( this->getSubGroups().size()) numSubGroups;
-    unpackedSize += bufferOps::Unpack( buffer, numSubGroups );
+    unpackedSize += bufferOps::Unpack( buffer, numSubGroups, MPI_REPLACE );
     GEOS_ERROR_IF( numSubGroups != this->getSubGroups().size(), "Group::unpack(): incorrect number of subGroups" );
 
     for( auto const & index : this->getSubGroups() )
     {
       GEOS_UNUSED_VAR( index );
       string subGroupName;
-      unpackedSize += bufferOps::Unpack( buffer, subGroupName );
+      unpackedSize += bufferOps::Unpack( buffer, subGroupName, MPI_REPLACE );
       unpackedSize += this->getGroup< ObjectManagerBase >( subGroupName ).unpackGlobalMaps( buffer, packList, recursive );
     }
   }
@@ -833,6 +834,18 @@ void ObjectManagerBase::copyObject( const localIndex source, const localIndex de
     if( targetSet.count( source ) > 0 )
     {
       targetSet.insert( destination );
+    }
+  }
+}
+
+void ObjectManagerBase::eraseObject( std::set< localIndex > const & indicesToErase )
+{
+  for( auto & nameToWrapper: wrappers() )
+  {
+    WrapperBase * wrapper = nameToWrapper.second;
+    if( wrapper->sizedFromParent() )
+    {
+      wrapper->erase( indicesToErase );
     }
   }
 }

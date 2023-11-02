@@ -494,43 +494,44 @@ localIndex Group::pack( buffer_unit_type * & buffer,
 localIndex Group::unpack( buffer_unit_type const * & buffer,
                           arrayView1d< localIndex > & packList,
                           integer const recursive,
-                          parallelDeviceEvents & events )
+                          parallelDeviceEvents & events,
+                          MPI_Op op )
 {
   localIndex unpackedSize = 0;
   string groupName;
-  unpackedSize += bufferOps::Unpack( buffer, groupName );
+  unpackedSize += bufferOps::Unpack( buffer, groupName, op );
   GEOS_ERROR_IF( groupName != getName(), "Group::unpack(): group names do not match" );
 
   string wrappersLabel;
-  unpackedSize += bufferOps::Unpack( buffer, wrappersLabel );
+  unpackedSize += bufferOps::Unpack( buffer, wrappersLabel, op );
   GEOS_ERROR_IF( wrappersLabel != "Wrappers", "Group::unpack(): wrapper label incorrect" );
 
   localIndex numWrappers;
-  unpackedSize += bufferOps::Unpack( buffer, numWrappers );
+  unpackedSize += bufferOps::Unpack( buffer, numWrappers, op );
   for( localIndex a=0; a<numWrappers; ++a )
   {
     string wrapperName;
-    unpackedSize += bufferOps::Unpack( buffer, wrapperName );
-    getWrapperBase( wrapperName ).unpackByIndex( buffer, packList, true, events );
+    unpackedSize += bufferOps::Unpack( buffer, wrapperName, op );
+    getWrapperBase( wrapperName ).unpackByIndex( buffer, packList, true, events, op );
   }
 
 
   if( recursive > 0 )
   {
     string subGroups;
-    unpackedSize += bufferOps::Unpack( buffer, subGroups );
+    unpackedSize += bufferOps::Unpack( buffer, subGroups, op );
     GEOS_ERROR_IF( subGroups != "SubGroups", "Group::unpack(): group names do not match" );
 
     decltype( m_subGroups.size()) numSubGroups;
-    unpackedSize += bufferOps::Unpack( buffer, numSubGroups );
+    unpackedSize += bufferOps::Unpack( buffer, numSubGroups, op );
     GEOS_ERROR_IF( numSubGroups != m_subGroups.size(), "Group::unpack(): incorrect number of subGroups" );
 
     for( auto const & index : m_subGroups )
     {
       GEOS_UNUSED_VAR( index );
       string subGroupName;
-      unpackedSize += bufferOps::Unpack( buffer, subGroupName );
-      unpackedSize += getGroup( subGroupName ).unpack( buffer, packList, recursive, events );
+      unpackedSize += bufferOps::Unpack( buffer, subGroupName, op );
+      unpackedSize += getGroup( subGroupName ).unpack( buffer, packList, recursive, events, op );
     }
   }
 

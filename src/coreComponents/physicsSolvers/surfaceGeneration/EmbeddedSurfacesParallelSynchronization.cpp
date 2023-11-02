@@ -266,7 +266,7 @@ void unpackNewToGhosts( NeighborCommunicator * const neighbor,
   nodeManager.unpackUpDownMaps( receiveBufferPtr, newGhostNodes, true, true );
   elemManager.unpackUpDownMaps( receiveBufferPtr, newGhostElems, true );
 
-  nodeManager.unpack( receiveBufferPtr, newGhostNodes, 0, events );
+  nodeManager.unpack( receiveBufferPtr, newGhostNodes, 0, events, MPI_REPLACE );
   elemManager.unpack( receiveBufferPtr, newGhostElems );
 
   waitAllDeviceEvents( events );

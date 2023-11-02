@@ -297,18 +297,18 @@ public:
   /// @copydoc WrapperBase::unpack
   virtual
   localIndex
-  unpack( buffer_unit_type const * & buffer, bool withMetadata, parallelDeviceEvents & events ) override final
+  unpack( buffer_unit_type const * & buffer, bool withMetadata, parallelDeviceEvents & events, MPI_Op op ) override final
   {
-    return unpackImpl( buffer, withMetadata, events );
+    return unpackImpl( buffer, withMetadata, events, op );
   }
 
   ///////////////////////////////////////////////////////////////////////////////////////////////////
   /// @copydoc WrapperBase::unpackByIndex
   virtual
   localIndex
-  unpackByIndex( buffer_unit_type const * & buffer, arrayView1d< localIndex const > const & unpackIndices, bool withMetadata, parallelDeviceEvents & events ) override final
+  unpackByIndex( buffer_unit_type const * & buffer, arrayView1d< localIndex const > const & unpackIndices, bool withMetadata, parallelDeviceEvents & events, MPI_Op op ) override final
   {
-    return unpackByIndexImpl( buffer, unpackIndices, withMetadata, events );
+    return unpackByIndexImpl( buffer, unpackIndices, withMetadata, events, op );
   }
 
   ///@}
@@ -374,9 +374,9 @@ public:
     static void copy( Array< U, NDIM, PERMUTATION > const & array, localIndex const sourceIndex, localIndex const destIndex )
     {
       LvArray::forValuesInSliceWithIndices( array[ sourceIndex ],
-                                            [destIndex, &array]( U const & sourceVal, auto const ... indices )
+                                            [destIndex, &array]( U const & sourceVal, auto const ... indicesToErase )
       {
-        array( destIndex, indices ... ) = sourceVal;
+        array( destIndex, indicesToErase ... ) = sourceVal;
       } );
     }
 
@@ -410,6 +410,105 @@ public:
   {
     Wrapper< T > const & castedSource = dynamicCast< Wrapper< T > const & >( source );
     copy_wrapper::copyData( *m_data, *castedSource.m_data );
+  }
+
+
+  /// @cond DO_NOT_DOCUMENT
+  struct erase_wrapper // This should probably be in LvArray?
+  {
+    template< typename TYPE >
+    static void erase( TYPE &, std::set< localIndex > const & )
+    {}
+
+    template< typename TYPE >
+    static void erase( array1d< TYPE > & array, std::set< localIndex > const & indicesToErase )
+    {
+      int oldSize = array.size( 0 );
+      int numToErase = indicesToErase.size();
+      int newSize = oldSize - numToErase;
+      std::set< localIndex >::iterator it = indicesToErase.begin();
+      int offset = 0;
+      for( localIndex i=*it+1; i<oldSize; i++ )
+      {
+        if( i == *it + 1 )
+        {
+          offset++;
+          if( offset < numToErase )
+          {
+            it++;
+          }
+        }
+        array[i-offset] = array[i];
+      }
+      array.resize( newSize );
+    }
+
+    template< typename TYPE >
+    static void erase( array2d< TYPE > & array, std::set< localIndex > const & indicesToErase )
+    {
+      int oldSize = array.size( 0 );
+      int numToErase = indicesToErase.size();
+      int newSize = oldSize - numToErase;
+      int dim1 = array.size( 1 );
+      std::set< localIndex >::iterator it = indicesToErase.begin();
+      int offset = 0;
+      for( localIndex i=*it+1; i<oldSize; i++ )
+      {
+        if( i == *it + 1 )
+        {
+          offset++;
+          if( offset < numToErase )
+          {
+            it++;
+          }
+        }
+        for( int j=0; j<dim1; j++ )
+        {
+          array[i-offset][j] = array[i][j];
+        }
+      }
+      array.resize( newSize );
+    }
+
+    template< typename TYPE >
+    static void erase( array3d< TYPE > & array, std::set< localIndex > const & indicesToErase )
+    {
+      int oldSize = array.size( 0 );
+      int numToErase = indicesToErase.size();
+      int newSize = oldSize - numToErase;
+      int dim1 = array.size( 1 );
+      int dim2 = array.size( 2 );
+      std::set< localIndex >::iterator it = indicesToErase.begin();
+      int offset = 0;
+      for( localIndex i=*it+1; i<oldSize; i++ )
+      {
+        if( i == *it + 1 )
+        {
+          offset++;
+          if( offset < numToErase )
+          {
+            it++;
+          }
+        }
+        for( int j=0; j<dim1; j++ )
+        {
+          for( int k=0; k<dim2; k++ )
+          {
+            array[i-offset][j][k] = array[i][j][k];
+          }
+        }
+      }
+      array.resize( newSize );
+    }
+  };
+  /// @endcond
+
+
+  ///////////////////////////////////////////////////////////////////////////////////////////////////
+  void erase( std::set< localIndex > const & indicesToErase ) override
+  {
+    GEOS_ERROR_IF( indicesToErase.size() == 0, "Wrapper::erase() can only be called on a populated set of indices!" );
+    erase_wrapper::erase( reference(), indicesToErase );
   }
 
 
@@ -838,104 +937,104 @@ private:
     if( withMetadata )
     {
       string name;
-      unpackedSize += bufferOps::Unpack( buffer, name );
+      unpackedSize += bufferOps::Unpack( buffer, name, MPI_REPLACE );
       GEOS_ERROR_IF( name != getName(), "buffer unpack leads to wrapper names that don't match" );
-      unpackedSize += wrapperHelpers::UnpackDevice( buffer, referenceAsView(), events );
+      unpackedSize += wrapperHelpers::UnpackDevice( buffer, referenceAsView(), events, MPI_REPLACE );
     }
     else
     {
-      unpackedSize += wrapperHelpers::UnpackDataDevice( buffer, referenceAsView(), events );
+      unpackedSize += wrapperHelpers::UnpackDataDevice( buffer, referenceAsView(), events, MPI_REPLACE );
     }
     return unpackedSize;
   }
 
-  localIndex unpackHostImpl( buffer_unit_type const * & buffer, bool withMetadata, parallelDeviceEvents & )
+  localIndex unpackHostImpl( buffer_unit_type const * & buffer, bool withMetadata, parallelDeviceEvents &, MPI_Op op )
   {
     localIndex unpackedSize = 0;
     if( withMetadata )
     {
       string name;
-      unpackedSize += bufferOps::Unpack( buffer, name );
+      unpackedSize += bufferOps::Unpack( buffer, name, MPI_REPLACE );
       GEOS_ERROR_IF( name != getName(), "buffer unpack leads to wrapper names that don't match" );
     }
-    unpackedSize += bufferOps::Unpack( buffer, *m_data );
+    unpackedSize += bufferOps::Unpack( buffer, *m_data, op );
     return unpackedSize;
   }
 
   template< typename U = T >
   typename std::enable_if_t< traits::HasMemorySpaceFunctions< U >, localIndex >
-  unpackImpl( buffer_unit_type const * & buffer, bool withMetadata, parallelDeviceEvents & events )
+  unpackImpl( buffer_unit_type const * & buffer, bool withMetadata, parallelDeviceEvents & events, MPI_Op op )
   {
     static_assert( std::is_same< T, U >::value, "should only be instantiated for the wrapped type!" );
     if( reference().getPreviousSpace() == LvArray::MemorySpace::host )
     {
-      return unpackHostImpl( buffer, withMetadata, events );
+      return unpackHostImpl( buffer, withMetadata, events, op );
     }
     else
     {
-      return unpackDeviceImpl( buffer, withMetadata, events );
+      return unpackDeviceImpl( buffer, withMetadata, events, op );
     }
   }
 
   template< typename U = T >
   typename std::enable_if_t< !traits::HasMemorySpaceFunctions< U >, localIndex >
-  unpackImpl( buffer_unit_type const * & buffer, bool withMetadata, parallelDeviceEvents & events )
+  unpackImpl( buffer_unit_type const * & buffer, bool withMetadata, parallelDeviceEvents & events, MPI_Op op )
   {
     static_assert( std::is_same< T, U >::value, "should only be instantiated for the wrapped type!" );
-    return unpackHostImpl( buffer, withMetadata, events );
+    return unpackHostImpl( buffer, withMetadata, events, op );
   }
 
-  localIndex unpackByIndexHostImpl( buffer_unit_type const * & buffer, arrayView1d< localIndex const > const & unpackIndices, bool withMetadata, parallelDeviceEvents & )
+  localIndex unpackByIndexHostImpl( buffer_unit_type const * & buffer, arrayView1d< localIndex const > const & unpackIndices, bool withMetadata, parallelDeviceEvents &, MPI_Op op )
   {
     localIndex unpackedSize = 0;
     if( withMetadata )
     {
       string name;
-      unpackedSize += bufferOps::Unpack( buffer, name );
+      unpackedSize += bufferOps::Unpack( buffer, name, MPI_REPLACE );
       GEOS_ERROR_IF( name != getName(), "buffer unpack leads to wrapper names that don't match" );
     }
-    unpackedSize += wrapperHelpers::UnpackByIndex( buffer, *m_data, unpackIndices );
+    unpackedSize += wrapperHelpers::UnpackByIndex( buffer, *m_data, unpackIndices, op );
     return unpackedSize;
   }
 
-  localIndex unpackByIndexDeviceImpl( buffer_unit_type const * & buffer, arrayView1d< localIndex const > const & unpackIndices, bool withMetadata, parallelDeviceEvents & events )
+  localIndex unpackByIndexDeviceImpl( buffer_unit_type const * & buffer, arrayView1d< localIndex const > const & unpackIndices, bool withMetadata, parallelDeviceEvents & events, MPI_Op op )
   {
     localIndex unpackedSize = 0;
     if( withMetadata )
     {
       string name;
-      unpackedSize += bufferOps::Unpack( buffer, name );
+      unpackedSize += bufferOps::Unpack( buffer, name, MPI_REPLACE );
       GEOS_ERROR_IF( name != getName(), "buffer unpack leads to wrapper names that don't match" );
-      unpackedSize += wrapperHelpers::UnpackByIndexDevice( buffer, referenceAsView(), unpackIndices, events );
+      unpackedSize += wrapperHelpers::UnpackByIndexDevice( buffer, referenceAsView(), unpackIndices, events, op );
     }
     else
     {
-      unpackedSize += wrapperHelpers::UnpackDataByIndexDevice( buffer, referenceAsView(), unpackIndices, events );
+      unpackedSize += wrapperHelpers::UnpackDataByIndexDevice( buffer, referenceAsView(), unpackIndices, events, op );
     }
     return unpackedSize;
   }
 
   template< typename U = T >
   typename std::enable_if_t< traits::HasMemorySpaceFunctions< U >, localIndex >
-  unpackByIndexImpl( buffer_unit_type const * & buffer, arrayView1d< localIndex const > const & unpackIndices, bool withMetadata, parallelDeviceEvents & events )
+  unpackByIndexImpl( buffer_unit_type const * & buffer, arrayView1d< localIndex const > const & unpackIndices, bool withMetadata, parallelDeviceEvents & events, MPI_Op op )
   {
     static_assert( std::is_same< T, U >::value, "should only be instantiated for the wrapped type!" );
     if( reference().getPreviousSpace() == LvArray::MemorySpace::host )
     {
-      return unpackByIndexHostImpl( buffer, unpackIndices, withMetadata, events );
+      return unpackByIndexHostImpl( buffer, unpackIndices, withMetadata, events, op );
     }
     else
     {
-      return unpackByIndexDeviceImpl( buffer, unpackIndices, withMetadata, events );
+      return unpackByIndexDeviceImpl( buffer, unpackIndices, withMetadata, events, op );
     }
   }
 
   template< typename U = T >
   typename std::enable_if_t< !traits::HasMemorySpaceFunctions< U >, localIndex >
-  unpackByIndexImpl( buffer_unit_type const * & buffer, arrayView1d< localIndex const > const & unpackIndices, bool withMetadata, parallelDeviceEvents & events )
+  unpackByIndexImpl( buffer_unit_type const * & buffer, arrayView1d< localIndex const > const & unpackIndices, bool withMetadata, parallelDeviceEvents & events, MPI_Op op )
   {
     static_assert( std::is_same< T, U >::value, "should only be instantiated for the wrapped type!" );
-    return unpackByIndexHostImpl( buffer, unpackIndices, withMetadata, events );
+    return unpackByIndexHostImpl( buffer, unpackIndices, withMetadata, events, op );
   }
 
 

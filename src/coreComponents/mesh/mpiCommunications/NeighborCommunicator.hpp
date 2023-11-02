@@ -230,7 +230,8 @@ public:
   void unpackBufferForSync( FieldIdentifiers const & fieldsToBeSync,
                             MeshLevel & meshLevel,
                             int const commID,
-                            parallelDeviceEvents & events );
+                            parallelDeviceEvents & events,
+                            MPI_Op op );
 
   int neighborRank() const { return m_neighborRank; }
 

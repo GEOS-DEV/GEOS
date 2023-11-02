@@ -472,7 +472,7 @@ localIndex FaceManager::unpackUpDownMaps( buffer_unit_type const * & buffer,
   localIndex unPackedSize = 0;
 
   string nodeListString;
-  unPackedSize += bufferOps::Unpack( buffer, nodeListString );
+  unPackedSize += bufferOps::Unpack( buffer, nodeListString, MPI_REPLACE );
   GEOS_ERROR_IF_NE( nodeListString, viewKeyStruct::nodeListString() );
 
   unPackedSize += bufferOps::Unpack( buffer,
@@ -483,7 +483,7 @@ localIndex FaceManager::unpackUpDownMaps( buffer_unit_type const * & buffer,
                                      m_toNodesRelation.relatedObjectGlobalToLocal() );
 
   string edgeListString;
-  unPackedSize += bufferOps::Unpack( buffer, edgeListString );
+  unPackedSize += bufferOps::Unpack( buffer, edgeListString, MPI_REPLACE );
   GEOS_ERROR_IF_NE( edgeListString, viewKeyStruct::edgeListString() );
 
   unPackedSize += bufferOps::Unpack( buffer,
@@ -494,7 +494,7 @@ localIndex FaceManager::unpackUpDownMaps( buffer_unit_type const * & buffer,
                                      m_toEdgesRelation.relatedObjectGlobalToLocal() );
 
   string elementListString;
-  unPackedSize += bufferOps::Unpack( buffer, elementListString );
+  unPackedSize += bufferOps::Unpack( buffer, elementListString, MPI_REPLACE );
   GEOS_ERROR_IF_NE( elementListString, viewKeyStruct::elementListString() );
 
   unPackedSize += bufferOps::Unpack( buffer,

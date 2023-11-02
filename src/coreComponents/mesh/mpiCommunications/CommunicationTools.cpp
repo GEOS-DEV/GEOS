@@ -1005,7 +1005,8 @@ void CommunicationTools::synchronizePackSendRecv( FieldIdentifiers const & field
 bool CommunicationTools::asyncUnpack( MeshLevel & mesh,
                                       std::vector< NeighborCommunicator > & neighbors,
                                       MPI_iCommData & icomm,
-                                      parallelDeviceEvents & events )
+                                      parallelDeviceEvents & events,
+                                      MPI_Op op )
 {
   GEOS_MARK_FUNCTION;
 
@@ -1021,7 +1022,7 @@ bool CommunicationTools::asyncUnpack( MeshLevel & mesh,
   for( int recvIdx = 0; recvIdx < recvCount; ++recvIdx )
   {
     NeighborCommunicator & neighbor = neighbors[ neighborIndices[ recvIdx ] ];
-    neighbor.unpackBufferForSync( icomm.getFieldsToBeSync(), mesh, icomm.commID(), events );
+    neighbor.unpackBufferForSync( icomm.getFieldsToBeSync(), mesh, icomm.commID(), events, op );
   }
 
   // we don't want to check if the request has completed,
@@ -1045,14 +1046,13 @@ bool CommunicationTools::asyncUnpack( MeshLevel & mesh,
 void CommunicationTools::finalizeUnpack( MeshLevel & mesh,
                                          std::vector< NeighborCommunicator > & neighbors,
                                          MPI_iCommData & icomm,
-                                         parallelDeviceEvents & events )
+                                         parallelDeviceEvents & events,
+                                         MPI_Op op )
 {
   GEOS_MARK_FUNCTION;
 
   // poll mpi for completion then wait 10 nanoseconds 6,000,000,000 times (60 sec timeout)
-  GEOS_ASYNC_WAIT( 6000000000, 10, asyncUnpack( mesh, neighbors, icomm, events ) );
-  waitAllDeviceEvents( events );
-
+  GEOS_ASYNC_WAIT( 6000000000, 10, asyncUnpack( mesh, neighbors, icomm, events, op ) );
   MpiWrapper::waitAll( icomm.size(),
                        icomm.mpiSendBufferSizeRequest(),
                        icomm.mpiSendBufferSizeStatus() );
@@ -1069,7 +1069,7 @@ void CommunicationTools::synchronizeUnpack( MeshLevel & mesh,
 {
   GEOS_MARK_FUNCTION;
   parallelDeviceEvents events;
-  finalizeUnpack( mesh, neighbors, icomm, events );
+  finalizeUnpack( mesh, neighbors, icomm, events, MPI_REPLACE );
 }
 
 void CommunicationTools::synchronizeFields( FieldIdentifiers const & fieldsToBeSync,

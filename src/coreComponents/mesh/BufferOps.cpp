@@ -81,7 +81,7 @@ localIndex Unpack( buffer_unit_type const * & buffer,
   localIndex sizeOfUnpackedChars = 0;
 
   localIndex numIndicesUnpacked;
-  sizeOfUnpackedChars += bufferOps::Unpack( buffer, numIndicesUnpacked );
+  sizeOfUnpackedChars += bufferOps::Unpack( buffer, numIndicesUnpacked, MPI_REPLACE );
   GEOS_ERROR_IF( numIndicesUnpacked != packList.size(), "" );
 
   using ElementID = std::array< localIndex, 3 >;
@@ -99,7 +99,7 @@ localIndex Unpack( buffer_unit_type const * & buffer,
     values.clear();
 
     localIndex const index = packList[a];
-    sizeOfUnpackedChars += bufferOps::Unpack( buffer, numIndicesUnpacked );
+    sizeOfUnpackedChars += bufferOps::Unpack( buffer, numIndicesUnpacked, MPI_REPLACE );
 
     if( !clearFlag )
     {
@@ -115,13 +115,13 @@ localIndex Unpack( buffer_unit_type const * & buffer,
     {
 
       localIndex elemRegionIndex;
-      sizeOfUnpackedChars += bufferOps::Unpack( buffer, elemRegionIndex );
+      sizeOfUnpackedChars += bufferOps::Unpack( buffer, elemRegionIndex, MPI_REPLACE );
 
       localIndex elemSubRegionIndex;
-      sizeOfUnpackedChars += bufferOps::Unpack( buffer, elemSubRegionIndex );
+      sizeOfUnpackedChars += bufferOps::Unpack( buffer, elemSubRegionIndex, MPI_REPLACE );
 
       globalIndex globalElementIndex;
-      sizeOfUnpackedChars += bufferOps::Unpack( buffer, globalElementIndex );
+      sizeOfUnpackedChars += bufferOps::Unpack( buffer, globalElementIndex, MPI_REPLACE);
 
       if( elemRegionIndex!=-1 && elemSubRegionIndex!=-1 )
       {
@@ -295,7 +295,7 @@ localIndex Unpack( buffer_unit_type const * & buffer,
   localIndex sizeOfUnpackedChars = 0;
 
   localIndex numIndicesUnpacked;
-  sizeOfUnpackedChars += bufferOps::Unpack( buffer, numIndicesUnpacked );
+  sizeOfUnpackedChars += bufferOps::Unpack( buffer, numIndicesUnpacked, MPI_REPLACE );
   GEOS_ERROR_IF( numIndicesUnpacked != packList.size(), "" );
 
   for( localIndex a=0; a<packList.size(); ++a )
@@ -303,7 +303,7 @@ localIndex Unpack( buffer_unit_type const * & buffer,
     localIndex index = packList[a];
     localIndex numSubIndicesUnpacked;
 
-    sizeOfUnpackedChars += bufferOps::Unpack( buffer, numSubIndicesUnpacked );
+    sizeOfUnpackedChars += bufferOps::Unpack( buffer, numSubIndicesUnpacked, MPI_REPLACE );
     GEOS_ERROR_IF( numSubIndicesUnpacked != var.m_toElementRegion.size( 1 ), "" );
 
     for( localIndex b=0; b<numSubIndicesUnpacked; ++b )
@@ -312,9 +312,9 @@ localIndex Unpack( buffer_unit_type const * & buffer,
       localIndex recvElemSubRegionIndex;
       globalIndex globalElementIndex;
 
-      sizeOfUnpackedChars += bufferOps::Unpack( buffer, recvElemRegionIndex );
-      sizeOfUnpackedChars += bufferOps::Unpack( buffer, recvElemSubRegionIndex );
-      sizeOfUnpackedChars += bufferOps::Unpack( buffer, globalElementIndex );
+      sizeOfUnpackedChars += bufferOps::Unpack( buffer, recvElemRegionIndex, MPI_REPLACE );
+      sizeOfUnpackedChars += bufferOps::Unpack( buffer, recvElemSubRegionIndex, MPI_REPLACE );
+      sizeOfUnpackedChars += bufferOps::Unpack( buffer, globalElementIndex, MPI_REPLACE );
 
       if( recvElemRegionIndex!=-1 && recvElemSubRegionIndex!=-1 && globalElementIndex!=-1 )
       {

@@ -319,7 +319,7 @@ pullDataFromConduitNode( T & var, conduit::Node const & node )
   buffer_unit_type const * buffer = valuesNode.value();
 
   // Unpack the object from the array.
-  localIndex const bytesRead = bufferOps::Unpack( buffer, var );
+  localIndex const bytesRead = bufferOps::Unpack( buffer, var, MPI_REPLACE );
   GEOS_ERROR_IF_NE( bytesRead, byteSize );
 }
 
@@ -715,12 +715,12 @@ PackByIndex( buffer_unit_type * &, T &, IDX & )
 
 template< typename T, typename IDX >
 inline std::enable_if_t< bufferOps::is_host_packable_by_index< T >, localIndex >
-UnpackByIndex( buffer_unit_type const * & buffer, T & var, IDX & idx )
-{ return bufferOps::UnpackByIndex( buffer, var, idx ); }
+UnpackByIndex( buffer_unit_type const * & buffer, T & var, IDX & idx, MPI_Op op )
+{ return bufferOps::UnpackByIndex( buffer, var, idx, op ); }
 
 template< typename T, typename IDX >
 inline std::enable_if_t< !bufferOps::is_host_packable_by_index< T >, localIndex >
-UnpackByIndex( buffer_unit_type const * &, T &, IDX & )
+UnpackByIndex( buffer_unit_type const * &, T &, IDX &, MPI_Op )
 {
   GEOS_ERROR( "Trying to unpack data type (" << LvArray::system::demangleType< T >() << ") by index. Operation not supported." );
   return 0;
@@ -769,12 +769,12 @@ PackByIndexDevice( buffer_unit_type * &, T const &, IDX &, parallelDeviceEvents 
 
 template< typename T >
 inline std::enable_if_t< bufferOps::is_container< T >, localIndex >
-UnpackDevice( buffer_unit_type const * & buffer, T const & var, parallelDeviceEvents & events )
+UnpackDevice( buffer_unit_type const * & buffer, T const & var, parallelDeviceEvents & events, MPI_Op op )
 { return bufferOps::UnpackDevice( buffer, var, events ); }
 
 template< typename T >
 inline std::enable_if_t< !bufferOps::is_container< T >, localIndex >
-UnpackDevice( buffer_unit_type const * &, T const &, parallelDeviceEvents & )
+UnpackDevice( buffer_unit_type const * &, T const &, parallelDeviceEvents &, MPI_Op )
 {
   GEOS_ERROR( "Trying to unpack data type (" << LvArray::system::demangleType< T >() << ") on device. Operation not supported." );
   return 0;
@@ -782,12 +782,12 @@ UnpackDevice( buffer_unit_type const * &, T const &, parallelDeviceEvents & )
 
 template< typename T, typename IDX >
 inline std::enable_if_t< bufferOps::is_container< T >, localIndex >
-UnpackByIndexDevice( buffer_unit_type const * & buffer, T const & var, IDX & idx, parallelDeviceEvents & events )
-{ return bufferOps::UnpackByIndexDevice( buffer, var, idx, events ); }
+UnpackByIndexDevice( buffer_unit_type const * & buffer, T const & var, IDX & idx, parallelDeviceEvents & events, MPI_Op op )
+{ return bufferOps::UnpackByIndexDevice( buffer, var, idx, events, op ); }
 
 template< typename T, typename IDX >
 inline std::enable_if_t< !bufferOps::is_container< T >, localIndex >
-UnpackByIndexDevice( buffer_unit_type const * &, T &, IDX &, parallelDeviceEvents & )
+UnpackByIndexDevice( buffer_unit_type const * &, T &, IDX &, parallelDeviceEvents &, MPI_Op )
 {
   GEOS_ERROR( "Trying to unpack data type (" << LvArray::system::demangleType< T >() << ") by index on device. Operation not supported." );
   return 0;
@@ -814,12 +814,12 @@ PackDataByIndexDevice( buffer_unit_type * &, T const &, IDX &, parallelDeviceEve
 
 template< typename T >
 inline std::enable_if_t< bufferOps::is_container< T >, localIndex >
-UnpackDataDevice( buffer_unit_type const * & buffer, T const & var, parallelDeviceEvents & events )
-{ return bufferOps::UnpackDataDevice( buffer, var, events ); }
+UnpackDataDevice( buffer_unit_type const * & buffer, T const & var, parallelDeviceEvents & events, MPI_Op op )
+{ return bufferOps::UnpackDataDevice( buffer, var, events, op ); }
 
 template< typename T >
 inline std::enable_if_t< !bufferOps::is_container< T >, localIndex >
-UnpackDataDevice( buffer_unit_type const * &, T const &, parallelDeviceEvents & )
+UnpackDataDevice( buffer_unit_type const * &, T const &, parallelDeviceEvents &, MPI_Op )
 {
   GEOS_ERROR( "Trying to unpack data type (" << LvArray::system::demangleType< T >() << ") on device. Operation not supported." );
   return 0;
@@ -827,12 +827,12 @@ UnpackDataDevice( buffer_unit_type const * &, T const &, parallelDeviceEvents & 
 
 template< typename T, typename IDX >
 inline std::enable_if_t< bufferOps::is_container< T >, localIndex >
-UnpackDataByIndexDevice( buffer_unit_type const * & buffer, T const & var, IDX & idx, parallelDeviceEvents & events )
-{ return bufferOps::UnpackDataByIndexDevice( buffer, var, idx, events ); }
+UnpackDataByIndexDevice( buffer_unit_type const * & buffer, T const & var, IDX & idx, parallelDeviceEvents & events, MPI_Op op )
+{ return bufferOps::UnpackDataByIndexDevice( buffer, var, idx, events, op ); }
 
 template< typename T, typename IDX >
 inline std::enable_if_t< !bufferOps::is_container< T >, localIndex >
-UnpackDataByIndexDevice( buffer_unit_type const * &, T const &, IDX &, parallelDeviceEvents & )
+UnpackDataByIndexDevice( buffer_unit_type const * &, T const &, IDX &, parallelDeviceEvents &, MPI_Op )
 {
   GEOS_ERROR( "Trying to unpack data type (" << LvArray::system::demangleType< T >() << ") by index on device. Operation not supported." );
   return 0;

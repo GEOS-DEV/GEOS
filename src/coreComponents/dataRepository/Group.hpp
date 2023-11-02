@@ -1029,6 +1029,7 @@ public:
    * @param[out] events      a collection of events to poll for completion of async
    *                         packing kernels ( device packing is incomplete until all
    *                         events are finalized )
+   * @param[in] op           the operation to perform while unpacking
    * @return                 the number of bytes unpacked.
    *
    * This function takes a reference to a pointer to const buffer type, and
@@ -1040,8 +1041,8 @@ public:
   virtual localIndex unpack( buffer_unit_type const * & buffer,
                              arrayView1d< localIndex > & packList,
                              integer const recursive,
-                             parallelDeviceEvents & events );
-
+                             parallelDeviceEvents & events,
+                             MPI_Op op );
   ///@}
 
   //***********************************************************************************************

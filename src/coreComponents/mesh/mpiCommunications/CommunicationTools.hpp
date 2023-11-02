@@ -120,12 +120,14 @@ public:
   bool asyncUnpack( MeshLevel & mesh,
                     std::vector< NeighborCommunicator > & neighbors,
                     MPI_iCommData & icomm,
-                    parallelDeviceEvents & events );
+                    parallelDeviceEvents & events,
+                    MPI_Op op );
 
   void finalizeUnpack( MeshLevel & mesh,
                        std::vector< NeighborCommunicator > & neighbors,
                        MPI_iCommData & icomm,
-                       parallelDeviceEvents & events );
+                       parallelDeviceEvents & events,
+                       MPI_Op op );
 
 private:
   std::set< int > m_freeCommIDs;

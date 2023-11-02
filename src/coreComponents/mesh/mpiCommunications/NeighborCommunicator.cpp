@@ -329,9 +329,9 @@ void NeighborCommunicator::unpackGhosts( MeshLevel & mesh,
   unpackedSize += elemManager.unpackUpDownMaps( receiveBufferPtr, elementAdjacencyReceiveListArray, false );
 
   parallelDeviceEvents events;
-  unpackedSize += nodeManager.unpack( receiveBufferPtr, nodeUnpackList, 0, events );
-  unpackedSize += edgeManager.unpack( receiveBufferPtr, edgeUnpackList, 0, events );
-  unpackedSize += faceManager.unpack( receiveBufferPtr, faceUnpackList, 0, events );
+  unpackedSize += nodeManager.unpack( receiveBufferPtr, nodeUnpackList, 0, events, MPI_REPLACE );
+  unpackedSize += edgeManager.unpack( receiveBufferPtr, edgeUnpackList, 0, events, MPI_REPLACE );
+  unpackedSize += faceManager.unpack( receiveBufferPtr, faceUnpackList, 0, events, MPI_REPLACE );
   unpackedSize += elemManager.unpack( receiveBufferPtr, elementAdjacencyReceiveList );
   waitAllDeviceEvents( events );
 
@@ -594,7 +594,8 @@ void NeighborCommunicator::packCommBufferForSync( FieldIdentifiers const & field
 void NeighborCommunicator::unpackBufferForSync( FieldIdentifiers const & fieldsToBeSync,
                                                 MeshLevel & mesh,
                                                 int const commID,
-                                                parallelDeviceEvents & events )
+                                                parallelDeviceEvents & events,
+                                                MPI_Op op )
 {
   GEOS_MARK_FUNCTION;
 
@@ -620,24 +621,24 @@ void NeighborCommunicator::unpackBufferForSync( FieldIdentifiers const & fieldsT
     {
       case FieldLocation::Node:
       {
-        unpackedSize += nodeManager.unpack( receiveBufferPtr, nodeGhostsToReceive, 0, events );
+        unpackedSize += nodeManager.unpack( receiveBufferPtr, nodeGhostsToReceive, 0, events, op );
         break;
       }
       case FieldLocation::Edge:
       {
-        unpackedSize += edgeManager.unpack( receiveBufferPtr, edgeGhostsToReceive, 0, events );
+        unpackedSize += edgeManager.unpack( receiveBufferPtr, edgeGhostsToReceive, 0, events, op );
         break;
       }
       case FieldLocation::Face:
       {
-        unpackedSize += faceManager.unpack( receiveBufferPtr, faceGhostsToReceive, 0, events );
+        unpackedSize += faceManager.unpack( receiveBufferPtr, faceGhostsToReceive, 0, events, op );
         break;
       }
       case FieldLocation::Elem:
       {
         elemManager.getRegion( fieldsToBeSync.getRegionName( iter.first ) ).forElementSubRegions< ElementSubRegionBase >( [&]( ElementSubRegionBase & subRegion )
         {
-          unpackedSize += subRegion.unpack( receiveBufferPtr, subRegion.getNeighborData( m_neighborRank ).ghostsToReceive(), 0, events );
+          unpackedSize += subRegion.unpack( receiveBufferPtr, subRegion.getNeighborData( m_neighborRank ).ghostsToReceive(), 0, events, op );
         } );
         break;
       }

@@ -339,9 +339,9 @@ localIndex unpackNewAndModifiedObjectsOnOwningRanks( NeighborCommunicator * cons
   unpackedSize += edgeManager.unpackParentChildMaps( receiveBufferPtr, newLocalEdges );
   unpackedSize += faceManager.unpackParentChildMaps( receiveBufferPtr, newLocalFaces );
 
-  unpackedSize += nodeManager.unpack( receiveBufferPtr, newLocalNodes, 0, events );
-  unpackedSize += edgeManager.unpack( receiveBufferPtr, newLocalEdges, 0, events );
-  unpackedSize += faceManager.unpack( receiveBufferPtr, newLocalFaces, 0, events );
+  unpackedSize += nodeManager.unpack( receiveBufferPtr, newLocalNodes, 0, events, MPI_REPLACE );
+  unpackedSize += edgeManager.unpack( receiveBufferPtr, newLocalEdges, 0, events, MPI_REPLACE );
+  unpackedSize += faceManager.unpack( receiveBufferPtr, newLocalFaces, 0, events, MPI_REPLACE );
   unpackedSize += elemManager.unpack( receiveBufferPtr, newLocalElements );
 
   unpackedSize += nodeManager.unpackUpDownMaps( receiveBufferPtr, modifiedLocalNodes, false, true );
@@ -353,9 +353,9 @@ localIndex unpackNewAndModifiedObjectsOnOwningRanks( NeighborCommunicator * cons
   unpackedSize += edgeManager.unpackParentChildMaps( receiveBufferPtr, modifiedLocalEdges );
   unpackedSize += faceManager.unpackParentChildMaps( receiveBufferPtr, modifiedLocalFaces );
 
-  unpackedSize += nodeManager.unpack( receiveBufferPtr, modifiedLocalNodes, 0, events );
-  unpackedSize += edgeManager.unpack( receiveBufferPtr, modifiedLocalEdges, 0, events );
-  unpackedSize += faceManager.unpack( receiveBufferPtr, modifiedLocalFaces, 0, events );
+  unpackedSize += nodeManager.unpack( receiveBufferPtr, modifiedLocalNodes, 0, events, MPI_REPLACE );
+  unpackedSize += edgeManager.unpack( receiveBufferPtr, modifiedLocalEdges, 0, events, MPI_REPLACE );
+  unpackedSize += faceManager.unpack( receiveBufferPtr, modifiedLocalFaces, 0, events, MPI_REPLACE );
 //    unpackedSize += elemManager.Unpack( receiveBufferPtr, modifiedElements );
 
   waitAllDeviceEvents( events );
@@ -661,9 +661,9 @@ void unpackNewModToGhosts( NeighborCommunicator * const neighbor,
   edgeManager.unpackParentChildMaps( receiveBufferPtr, newGhostEdges );
   faceManager.unpackParentChildMaps( receiveBufferPtr, newGhostFaces );
 
-  nodeManager.unpack( receiveBufferPtr, newGhostNodes, 0, events );
-  edgeManager.unpack( receiveBufferPtr, newGhostEdges, 0, events );
-  faceManager.unpack( receiveBufferPtr, newGhostFaces, 0, events );
+  nodeManager.unpack( receiveBufferPtr, newGhostNodes, 0, events, MPI_REPLACE );
+  edgeManager.unpack( receiveBufferPtr, newGhostEdges, 0, events, MPI_REPLACE );
+  faceManager.unpack( receiveBufferPtr, newGhostFaces, 0, events, MPI_REPLACE );
   elemManager.unpack( receiveBufferPtr, newGhostElems );
 
   nodeManager.unpackUpDownMaps( receiveBufferPtr, modGhostNodes, false, true );

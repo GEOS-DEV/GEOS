@@ -78,7 +78,8 @@ GEOS_HOST_DEVICE
 localIndex
 UnpackPointerDevice( buffer_unit_type const * & buffer,
                      T * const GEOS_RESTRICT var,
-                     localIndex const expectedLength );
+                     localIndex const expectedLength,
+                     MPI_Op op );
 
 //------------------------------------------------------------------------------
 template< bool DO_PACKING, typename T, int NDIM, int USD >
@@ -124,14 +125,16 @@ template< typename T, int NDIM, int USD >
 typename std::enable_if< is_device_packable< T >, localIndex >::type
 UnpackDevice( buffer_unit_type const * & buffer,
               ArrayView< T, NDIM, USD > const & var,
-              parallelDeviceEvents & events );
+              parallelDeviceEvents & events,
+              MPI_Op op );
 
 //------------------------------------------------------------------------------
 template< typename T >
 localIndex
 UnpackDevice( buffer_unit_type const * & GEOS_UNUSED_PARAM( buffer ),
               T & GEOS_UNUSED_PARAM( var ),
-              parallelDeviceEvents & GEOS_UNUSED_PARAM( events ) )
+              parallelDeviceEvents & GEOS_UNUSED_PARAM( events ),
+              MPI_Op GEOS_UNUSED_PARAM( op ) )
 {
   GEOS_ERROR( "Trying to unpack data type (" << LvArray::system::demangleType< T >() << ") on device but type is not packable." );
   return 0;
@@ -143,7 +146,8 @@ typename std::enable_if< is_device_packable< T >, localIndex >::type
 UnpackByIndexDevice ( buffer_unit_type const * & buffer,
                       ArrayView< T, NDIM, USD > const & var,
                       T_INDICES const & indices,
-                      parallelDeviceEvents & events );
+                      parallelDeviceEvents & events,
+                      MPI_Op op );
 
 //------------------------------------------------------------------------------
 template< typename T, typename T_INDICES >
@@ -151,7 +155,8 @@ localIndex
 UnpackByIndexDevice( buffer_unit_type const * & GEOS_UNUSED_PARAM( buffer ),
                      T & GEOS_UNUSED_PARAM( var ),
                      T_INDICES const & GEOS_UNUSED_PARAM( indices ),
-                     parallelDeviceEvents & GEOS_UNUSED_PARAM( events ) )
+                     parallelDeviceEvents & GEOS_UNUSED_PARAM( events ),
+                     MPI_Op GEOS_UNUSED_PARAM( op ) )
 {
   GEOS_ERROR( "Trying to unpack data type (" << LvArray::system::demangleType< T >() << ") but type is not packable by index." );
   return 0;
@@ -174,7 +179,8 @@ localIndex
 UnpackDataPointerDevice( buffer_unit_type const * & buffer,
                          T * const GEOS_RESTRICT var,
                          localIndex const expectedLength,
-                         parallelDeviceEvents & events );
+                         parallelDeviceEvents & events,
+                         MPI_Op op );
 
 //------------------------------------------------------------------------------
 template< bool DO_PACKING, typename T, int NDIM, int USD >
@@ -220,14 +226,16 @@ template< typename T, int NDIM, int USD >
 typename std::enable_if< is_device_packable< T >, localIndex >::type
 UnpackDataDevice( buffer_unit_type const * & buffer,
                   ArrayView< T, NDIM, USD > const & var,
-                  parallelDeviceEvents & events );
+                  parallelDeviceEvents & events,
+                  MPI_Op op );
 
 //------------------------------------------------------------------------------
 template< typename T >
 localIndex
 UnpackDataDevice( buffer_unit_type const * & GEOS_UNUSED_PARAM( buffer ),
                   T & GEOS_UNUSED_PARAM( var ),
-                  parallelDeviceEvents & GEOS_UNUSED_PARAM( events ) )
+                  parallelDeviceEvents & GEOS_UNUSED_PARAM( events ),
+                  MPI_Op GEOS_UNUSED_PARAM( op ) )
 {
   GEOS_ERROR( "Trying to unpack data type (" << LvArray::system::demangleType< T >() << ") on device but type is not packable." );
   return 0;
@@ -239,7 +247,8 @@ typename std::enable_if< is_device_packable< T >, localIndex >::type
 UnpackDataByIndexDevice ( buffer_unit_type const * & buffer,
                           ArrayView< T, NDIM, USD > const & var,
                           T_INDICES const & indices,
-                          parallelDeviceEvents & events );
+                          parallelDeviceEvents & events,
+                          MPI_Op op );
 
 //------------------------------------------------------------------------------
 template< typename T, typename T_INDICES >
@@ -247,7 +256,8 @@ localIndex
 UnpackDataByIndexDevice( buffer_unit_type const * & GEOS_UNUSED_PARAM( buffer ),
                          T & GEOS_UNUSED_PARAM( var ),
                          T_INDICES const & GEOS_UNUSED_PARAM( indices ),
-                         parallelDeviceEvents & GEOS_UNUSED_PARAM( events ) )
+                         parallelDeviceEvents & GEOS_UNUSED_PARAM( events ),
+                         MPI_Op GEOS_UNUSED_PARAM( op ) )
 {
   GEOS_ERROR( "Trying to unpack data type (" << LvArray::system::demangleType< T >() << ") but type is not packable by index." );
   return 0;
