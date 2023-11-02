@@ -104,6 +104,7 @@ extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.doctest',
     'sphinx.ext.inheritance_diagram',
+    'sphinx.ext.imgmath',
     'sphinxarg.ext',
     'matplotlib.sphinxext.plot_directive',
     'sphinx.ext.napoleon',
@@ -260,6 +261,8 @@ latex_elements['preamble'] = '\\usepackage{amsmath}\n\\usepackage{amssymb}\n\\us
 
 f = open('docs/sphinx/latex_macros.sty')
 imgmath_latex_preamble = ""
+imgmath_image_format = 'svg'
+imgmath_font_size = 14
 
 for macro in f:
     # used when building latex and pdf versions
