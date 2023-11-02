@@ -278,7 +278,13 @@ CO2Enthalpy::calculateCO2Enthalpy( PTTableCoordinates const & tableCoords,
   if( printTable )
   {
     table_file.open( "CO2Enthalpy.csv" );
-    table_file << "T[C],Enthalpy" << std::endl;
+    table_file << "P[Pa]";
+    for( localIndex j = 0; j < nTemperatures; ++j )
+    {
+      real64 const T = tableCoords.getTemperature( j );
+      table_file << ",T=" << T << "[C]";
+    }
+    table_file << std::endl;
   }
 
   // Note that the enthalpy values given in Span and Wagner assume a reference enthalphy defined as: h_0 = 0 J/kg at T_0 = 298.15 K
@@ -287,13 +293,18 @@ CO2Enthalpy::calculateCO2Enthalpy( PTTableCoordinates const & tableCoords,
 
   for( localIndex i = 0; i < nPressures; ++i )
   {
+    real64 const P = tableCoords.getPressure( i );
+    if( printTable )
+      table_file << P;
     for( localIndex j = 0; j < nTemperatures; ++j )
     {
       real64 const TC = tableCoords.getTemperature( j );
       enthalpies[j*nPressures+i] = helmholtzCO2Enthalpy( TC, densities[j*nPressures+i] ) + referenceEnthalpy;
-      if( i == 0 && printTable )
-        table_file << TC << "," << enthalpies[j*nPressures+i] << std::endl;
+      if( printTable )
+        table_file << "," << enthalpies[j*nPressures+i];
     }
+    if( printTable )
+      table_file << std::endl;
   }
   if( printTable )
     table_file.close();

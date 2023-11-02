@@ -82,19 +82,29 @@ void calculateCO2Viscosity( PTTableCoordinates const & tableCoords,
   if( printTable )
   {
     table_file.open( "FenghourCO2Viscosity.csv" );
-    table_file << "T[C],Viscosity" << std::endl;
+    table_file << "P[Pa]";
+    for( localIndex j = 0; j < nTemperatures; ++j )
+    {
+      real64 const T = tableCoords.getTemperature( j );
+      table_file << ",T=" << T << "[C]";
+    }
+    table_file << std::endl;
   }
 
   for( localIndex i = 0; i < nPressures; ++i )
   {
+    real64 const P = tableCoords.getPressure( i );
+    if( printTable )
+      table_file << P;
     for( localIndex j = 0; j < nTemperatures; ++j )
     {
       real64 const T = tableCoords.getTemperature( j );
-      viscosities[j*nPressures+i] = fenghourCO2ViscosityFunction( T,
-                                                                  densities[j*nPressures+i] );
-      if( i==0 && printTable )
-        table_file << T<< "," << viscosities[j*nPressures+i] << std::endl;
+      viscosities[j*nPressures+i] = fenghourCO2ViscosityFunction( T, densities[j*nPressures+i] );
+      if( printTable )
+        table_file << "," << viscosities[j*nPressures+i];
     }
+    if( printTable )
+      table_file << std::endl;
   }
   if( printTable )
     table_file.close();
