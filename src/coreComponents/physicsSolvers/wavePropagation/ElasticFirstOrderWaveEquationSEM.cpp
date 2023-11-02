@@ -424,6 +424,11 @@ void ElasticFirstOrderWaveEquationSEM::initializePostInitialConditionsPreSubGrou
   } );
 }
 
+real64 ElasticFirstOrderWaveEquationSEM::computeTimeStep()
+{
+  GEOS_ERROR( getDataContext() << ":  Time-Step computation for the first order elastic wave propagator not yet implemented" );
+  return 0;
+}
 
 void ElasticFirstOrderWaveEquationSEM::applyFreeSurfaceBC( real64 const time, DomainPartition & domain )
 {

@@ -585,20 +585,90 @@ void ElasticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
                                                                dampingx,
                                                                dampingy,
                                                                dampingz );
+   
+        //This portion of code work asd follow: compute the time-step then exit the code to let you put it inside the XML
+        if(m_preComputeDt==1)
 
-      elasticWaveEquationSEMKernels::ComputeTimeStep< FE_TYPE > kernelT( finiteElement );
+        {
+          elasticWaveEquationSEMKernels::ComputeTimeStep< FE_TYPE > kernelT( finiteElement );
+  
+          dtCompute = kernelT.template launch< EXEC_POLICY, ATOMIC_POLICY >( elementSubRegion.size(),
+                                                                             nodeManager.size(),
+                                                                             nodeCoords,
+                                                                             density,
+                                                                             velocityVp,
+                                                                             velocityVs,
+                                                                             elemsToNodes,
+                                                                             mass);
+  
+        
+          real64 globaldt = MpiWrapper::min(dtCompute);      
 
-      dtCompute = kernelT.template launch< EXEC_POLICY, ATOMIC_POLICY >( elementSubRegion.size(),
-                                                                         nodeManager.size(),
-                                                                         nodeCoords,
-                                                                         density,
-                                                                         velocityVp,
-                                                                         velocityVs,
-                                                                         elemsToNodes,
-                                                                         mass);
+          printf("dt=%f\n",globaldt);
+
+          exit(2);                                                        
+
+        }  
+
+
+      } );
+    } );
+  } );
+
+}
+
+real64 ElasticWaveEquationSEM::computeTimeStep()
+{
+
+  DomainPartition & domain = getGroupByPath< DomainPartition >( "/Problem/domain" );
+
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                MeshLevel & mesh,
+                                                                arrayView1d< string const > const & regionNames )
+  {
+
+    NodeManager & nodeManager = mesh.getNodeManager();
+    FaceManager & faceManager = mesh.getFaceManager();
+    ElementRegionManager & elemManager = mesh.getElemManager();
+
+    arrayView2d< wsCoordType const, nodes::REFERENCE_POSITION_USD > const nodeCoords = nodeManager.getField< fields::referencePosition32 >().toViewConst();
+
+    // mass matrix to be computed in this function
+    arrayView1d< real32 > const mass = nodeManager.getField< fields::MassVector >();
+
+    elemManager.forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
+                                                                                CellElementSubRegion & elementSubRegion )
+    {
+      finiteElement::FiniteElementBase const &
+      fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
+
+      arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemsToNodes = elementSubRegion.nodeList();
+
+      arrayView1d< real32 const > const density = elementSubRegion.getField< fields::MediumDensity >();
+      arrayView1d< real32 const > const velocityVp = elementSubRegion.getField< fields::MediumVelocityVp >();
+      arrayView1d< real32 const > const velocityVs = elementSubRegion.getField< fields::MediumVelocityVs >();
+
+      real64 dtCompute=0.0;
+
+      finiteElement::FiniteElementDispatchHandler< SEM_FE_TYPES >::dispatch3D( fe, [&] ( auto const finiteElement )
+      {
+        using FE_TYPE = TYPEOFREF( finiteElement );
+
+        elasticWaveEquationSEMKernels::ComputeTimeStep< FE_TYPE > kernelT( finiteElement );
+
+        dtCompute = kernelT.template launch< EXEC_POLICY, ATOMIC_POLICY >( elementSubRegion.size(),
+                                                                           nodeManager.size(),
+                                                                           nodeCoords,
+                                                                           density,
+                                                                           velocityVp,
+                                                                           velocityVs,
+                                                                           elemsToNodes,
+                                                                           mass);
 
       
       real64 globaldt = MpiWrapper::min(dtCompute);                                                              
+
+      return globaldt;
 
 
       } );

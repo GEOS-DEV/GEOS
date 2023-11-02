@@ -356,6 +356,12 @@ void AcousticFirstOrderWaveEquationSEM::initializePostInitialConditionsPreSubGro
   } );
 }
 
+real64 AcousticFirstOrderWaveEquationSEM::computeTimeStep()
+{
+  GEOS_ERROR( getDataContext() << ":  Time-Step computation for the first order acoustic wave propagator not yet implemented" );
+  return 0;
+}
+
 
 void AcousticFirstOrderWaveEquationSEM::applyFreeSurfaceBC( real64 const time, DomainPartition & domain )
 {

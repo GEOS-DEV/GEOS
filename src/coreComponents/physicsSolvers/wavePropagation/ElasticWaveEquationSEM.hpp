@@ -190,6 +190,8 @@ private:
    */
   virtual void applyPML( real64 const time, DomainPartition & domain ) override;
 
+  virtual real64 computeTimeStep() override;
+
   localIndex getNumNodesPerElem();
 
   /// Indices of the nodes (in the right order) for each source point

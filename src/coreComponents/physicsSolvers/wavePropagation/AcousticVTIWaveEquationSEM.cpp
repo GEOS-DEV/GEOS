@@ -317,6 +317,12 @@ void AcousticVTIWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
 
 }
 
+real64 AcousticVTIWaveEquationSEM::computeTimeStep()
+{
+  GEOS_ERROR( getDataContext() << ":  Time-Step computation for the second order acoustic vti wave propagator not yet implemented" );
+  return 0;
+}
+
 void AcousticVTIWaveEquationSEM::precomputeSurfaceFieldIndicator( DomainPartition & domain )
 {
   real64 const time = 0.0;
