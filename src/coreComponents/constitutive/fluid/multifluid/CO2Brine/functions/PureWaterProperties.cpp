@@ -99,10 +99,10 @@ PureWaterProperties::makeSaturationViscosityTable( string const & functionName,
   if( printTable )
   {
     std::ofstream table_file( "PureWaterSaturationViscosity.csv" );
-    table_file << "T[C]" << std::endl;
+    table_file << "T[C],Viscosity" << std::endl;
     for( localIndex i = 0; i < nValues; ++i )
     {
-      table_file << temperatures[0][i] << "," <<viscosities[i] << std::endl;
+      table_file << temperatures[0][i] << "," << viscosities[i] << std::endl;
     }
     table_file.close();
   }
@@ -192,7 +192,7 @@ PureWaterProperties::makeSaturationDensityTable( string const & functionName,
   if( printTable )
   {
     std::ofstream table_file( "PureWaterSaturationDensity.csv" );
-    table_file << "T[C]" << std::endl;
+    table_file << "T[C],Density" << std::endl;
     for( localIndex i = 0; i < nValues; ++i )
     {
       table_file << temperatures[0][i] << "," << densities[i] << std::endl;
@@ -285,7 +285,7 @@ PureWaterProperties::makeSaturationPressureTable( string const & functionName,
   if( printTable )
   {
     std::ofstream table_file( "PureWaterSaturationPressure.csv" );
-    table_file << "T[C]" << std::endl;
+    table_file << "T[C],Pressure" << std::endl;
     for( localIndex i = 0; i < nValues; ++i )
     {
       table_file << temperatures[0][i] << "," << pressures[i] << std::endl;
