@@ -80,7 +80,7 @@ MultiFluidBase::MultiFluidBase( string const & name, Group * const parent )
   registerField( fields::multifluid::totalDensity_n{}, &m_totalDensity_n );
   registerField( fields::multifluid::dTotalDensity{}, &m_totalDensity.derivs );
 
-  registerField( fields::multifluid::phaseVelocity{}, &m_phaseVelocity);
+  registerField( fields::multifluid::phaseVelocity{}, &m_phaseVelocity );
 
 
   registerWrapper( viewKeyStruct::checkPVTTablesRangesString(), &m_checkPVTTablesRanges ).
@@ -126,7 +126,7 @@ void MultiFluidBase::resizeFields( localIndex const size, localIndex const numPt
   m_totalDensity_n.resize( size, numPts );
   m_totalDensity.derivs.resize( size, numPts, numDof );
 
-  m_phaseVelocity.resize(size, numPts, numPhase, numDir);
+  m_phaseVelocity.resize( size, numPts, numPhase, numDir );
 }
 
 void MultiFluidBase::setLabels()
