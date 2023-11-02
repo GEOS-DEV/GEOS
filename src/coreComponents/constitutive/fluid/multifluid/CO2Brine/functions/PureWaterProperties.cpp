@@ -102,7 +102,7 @@ PureWaterProperties::makeSaturationViscosityTable( string const & functionName,
     table_file << "T[C],Viscosity" << std::endl;
     for( localIndex i = 0; i < nValues; ++i )
     {
-      table_file << temperatures[0][i] << "," <<viscosities[i] << std::endl;
+      table_file << temperatures[0][i] << "," << viscosities[i] << std::endl;
     }
     table_file.close();
   }
