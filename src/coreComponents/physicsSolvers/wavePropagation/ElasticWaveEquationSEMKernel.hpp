@@ -39,7 +39,7 @@ struct PrecomputeSourceAndReceiverKernel
    * @tparam FE_TYPE finite element type
    * @param[in] size the number of cells in the subRegion
    * @param[in] numFacesPerElem number of face on an element
-   * @param[in] X coordinates of the nodes
+   * @param[in] nodeCoords coordinates of the nodes
    * @param[in] elemGhostRank array containing the ghost rank
    * @param[in] elemsToNodes map from element to nodes
    * @param[in] elemsToFaces map from element to faces
@@ -71,7 +71,7 @@ struct PrecomputeSourceAndReceiverKernel
   static void
   launch( localIndex const size,
           localIndex const numFacesPerElem,
-          arrayView2d< WaveSolverBase::wsCoordType const, nodes::REFERENCE_POSITION_USD > const X,
+          arrayView2d< WaveSolverBase::wsCoordType const, nodes::REFERENCE_POSITION_USD > const nodeCoords,
           arrayView1d< integer const > const elemGhostRank,
           arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes,
           arrayView2d< localIndex const > const elemsToFaces,
@@ -126,7 +126,7 @@ struct PrecomputeSourceAndReceiverKernel
           {
             for( localIndex i=0; i<3; ++i )
             {
-              xLocal[a][i] = X( elemsToNodes( k, a ), i );
+              xLocal[a][i] = nodeCoords( elemsToNodes( k, a ), i );
             }
           }
 
@@ -146,7 +146,7 @@ struct PrecomputeSourceAndReceiverKernel
 
             WaveSolverUtils::computeCoordinatesOnReferenceElement< FE_TYPE >( coords,
                                                                               elemsToNodes[k],
-                                                                              X,
+                                                                              nodeCoords,
                                                                               coordsOnRefElem );
             sourceIsAccessible[isrc] = 1;
 
@@ -214,7 +214,7 @@ struct PrecomputeSourceAndReceiverKernel
 
             WaveSolverUtils::computeCoordinatesOnReferenceElement< FE_TYPE >( coords,
                                                                               elemsToNodes[k],
-                                                                              X,
+                                                                              nodeCoords,
                                                                               coordsOnRefElem );
             receiverIsLocal[ircv] = 1;
 
@@ -258,7 +258,7 @@ struct MassMatrixKernel
    * @tparam ATOMIC_POLICY the atomic policy
    * @param[in] size the number of cells in the subRegion
    * @param[in] numFacesPerElem number of faces per element
-   * @param[in] X coordinates of the nodes
+   * @param[in] nodeCoords coordinates of the nodes
    * @param[in] elemsToNodes map from element to nodes
    * @param[in] velocity cell-wise velocity
    * @param[out] mass diagonal of the mass matrix
@@ -267,7 +267,7 @@ struct MassMatrixKernel
   //std::enable_if_t< geos::is_sem_formulation< std::remove_cv_t< FE_TYPE_ > >::value, void >
   void
   launch( localIndex const size,
-          arrayView2d< WaveSolverBase::wsCoordType const, nodes::REFERENCE_POSITION_USD > const X,
+          arrayView2d< WaveSolverBase::wsCoordType const, nodes::REFERENCE_POSITION_USD > const nodeCoords,
           arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemsToNodes,
           arrayView1d< real32 const > const density,
           arrayView1d< real32 > const mass )
@@ -284,7 +284,7 @@ struct MassMatrixKernel
       {
         for( localIndex i = 0; i < 3; ++i )
         {
-          xLocal[a][i] = X( elemsToNodes( e, a ), i );
+          xLocal[a][i] = nodeCoords( elemsToNodes( e, a ), i );
         }
       }
 
@@ -446,7 +446,7 @@ public:
     Base( elementSubRegion,
           finiteElementSpace,
           inputConstitutiveType ),
-    m_X( nodeManager.getField< fields::referencePosition32 >() ),
+    m_nodeCoords( nodeManager.getField< fields::referencePosition32 >() ),
     m_ux_n( nodeManager.getField< fields::Displacementx_n >() ),
     m_uy_n( nodeManager.getField< fields::Displacementy_n >() ),
     m_uz_n( nodeManager.getField< fields::Displacementz_n >() ),
@@ -503,7 +503,7 @@ public:
       localIndex const nodeIndex = m_elemsToNodes( k, a );
       for( int i=0; i< 3; ++i )
       {
-        stack.xLocal[ a ][ i ] = m_X[ nodeIndex ][ i ];
+        stack.xLocal[ a ][ i ] = m_nodeCoords[ nodeIndex ][ i ];
       }
     }
     stack.mu = m_density[k] * m_velocityVs[k] * m_velocityVs[k];
@@ -549,7 +549,7 @@ public:
 
 protected:
   /// The array containing the nodal position array.
-  arrayView2d< WaveSolverBase::wsCoordType const, nodes::REFERENCE_POSITION_USD > const m_X;
+  arrayView2d< WaveSolverBase::wsCoordType const, nodes::REFERENCE_POSITION_USD > const m_nodeCoords;
 
   /// The array containing the nodal displacement array in x direction.
   arrayView1d< real32 > const m_ux_n;
