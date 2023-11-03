@@ -162,14 +162,11 @@ jobs:
       GEOSX_TPL_TAG: ${{ needs.check_pull_request_is_not_a_draft.outputs.GEOSX_TPL_TAG }}
       DOCKER_REPOSITORY: ${{ matrix.DOCKER_REPOSITORY }}
       CMAKE_BUILD_TYPE: ${{ matrix.CMAKE_BUILD_TYPE }}
-      BUILD_AND_TEST_ARGS: ${{ matrix.BUILD_AND_TEST_ARGS }}
       HOST_CONFIG: ${{ matrix.HOST_CONFIG }}
       ENABLE_HYPRE: ${{ matrix.ENABLE_HYPRE }}
-      ENABLE_HYPRE_DEVICE: ${{ matrix.ENABLE_HYPRE_DEVICE }}
       ENABLE_TRILINOS: ${{ matrix.ENABLE_TRILINOS }}
       GCP_BUCKET: ${{ matrix.GCP_BUCKET }}
       COMMIT: ${{ github.event.pull_request.head.sha }}
-      OS: ${{ matrix.OS }}
     secrets: inherit
 
   run_integrated_tests:

@@ -35,7 +35,7 @@ on:
       OS:
         required: false
         type: string
-        default: "ubuntu-22.04"
+        default: ubuntu-22.04
       build_type:
         required: false
         type: string
