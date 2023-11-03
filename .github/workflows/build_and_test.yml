@@ -32,10 +32,9 @@ on:
       COMMIT:
         required: true
         type: string
-      OS:
-        required: false
+      RUNS_ON:
+        required: true
         type: string
-        default: ubuntu-22.04
       build_type:
         required: false
         type: string
@@ -49,7 +48,7 @@ on:
         required: false
 jobs:
   build_and_test:
-    runs-on: ${{ inputs.OS }}
+    runs-on: ${{ inputs.RUNS_ON }}
     env:
       DOCKER_REPOSITORY: ${{ inputs.DOCKER_REPOSITORY }}
       CMAKE_BUILD_TYPE: ${{ inputs.CMAKE_BUILD_TYPE }}
