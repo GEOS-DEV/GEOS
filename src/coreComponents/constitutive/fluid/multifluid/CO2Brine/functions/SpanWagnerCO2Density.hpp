@@ -117,8 +117,7 @@ public:
   void calculateCO2Density( string const & functionName,
                             real64 const & tolerance,
                             PVTProps::PTTableCoordinates const & tableCoords,
-                            array1d< real64 > const & densities,
-                            bool const printTable );
+                            array1d< real64 > const & densities );
 
 private:
 

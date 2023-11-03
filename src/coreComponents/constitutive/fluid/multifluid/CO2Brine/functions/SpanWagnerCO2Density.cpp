@@ -209,8 +209,7 @@ real64 spanWagnerCO2DensityFunction( string const & name,
 
 TableFunction const * makeDensityTable( string_array const & inputParams,
                                         string const & functionName,
-                                        FunctionManager & functionManager,
-                                        bool const printTable )
+                                        FunctionManager & functionManager )
 {
   PTTableCoordinates tableCoords;
   PVTFunctionHelpers::initializePropertyTable( inputParams, tableCoords );
@@ -229,7 +228,7 @@ TableFunction const * makeDensityTable( string_array const & inputParams,
   }
 
   array1d< real64 > densities( tableCoords.nPressures() * tableCoords.nTemperatures() );
-  SpanWagnerCO2Density::calculateCO2Density( functionName, tolerance, tableCoords, densities, printTable );
+  SpanWagnerCO2Density::calculateCO2Density( functionName, tolerance, tableCoords, densities );
 
   string const & tableName = functionName + "_table";
   if( functionManager.hasGroup< TableFunction >( tableName ) )
@@ -251,8 +250,7 @@ TableFunction const * makeDensityTable( string_array const & inputParams,
 void SpanWagnerCO2Density::calculateCO2Density( string const & functionName,
                                                 real64 const & tolerance,
                                                 PTTableCoordinates const & tableCoords,
-                                                array1d< real64 > const & densities,
-                                                bool const printTable )
+                                                array1d< real64 > const & densities )
 {
 
   constexpr real64 TK_f = constants::zeroDegreesCelsiusInKelvin;
@@ -260,36 +258,15 @@ void SpanWagnerCO2Density::calculateCO2Density( string const & functionName,
   localIndex const nPressures = tableCoords.nPressures();
   localIndex const nTemperatures = tableCoords.nTemperatures();
 
-  std::ofstream table_file;
-  if( printTable )
-  {
-    table_file.open( "SpanWagnerCO2Density.csv" );
-    table_file << "P[Pa]";
-    for( localIndex j = 0; j < nTemperatures; ++j )
-    {
-      real64 const TK = tableCoords.getTemperature( j ) + TK_f;
-      table_file << ",T=" << TK << "[K]";
-    }
-    table_file << std::endl;
-  }
-
   for( localIndex i = 0; i < nPressures; ++i )
   {
     real64 const PPa = tableCoords.getPressure( i );
-    if( printTable )
-      table_file << PPa;
     for( localIndex j = 0; j < nTemperatures; ++j )
     {
       real64 const TK = tableCoords.getTemperature( j ) + TK_f;
       densities[j*nPressures+i] = spanWagnerCO2DensityFunction( functionName, tolerance, TK, PPa, &co2HelmholtzEnergy );
-      if( printTable )
-        table_file << "," << densities[j*nPressures+i];
     }
-    if( printTable )
-      table_file << std::endl;
   }
-  if( printTable )
-    table_file.close();
 }
 
 SpanWagnerCO2Density::SpanWagnerCO2Density( string const & name,
@@ -304,7 +281,9 @@ SpanWagnerCO2Density::SpanWagnerCO2Density( string const & name,
   string const expectedCO2ComponentNames[] = { "CO2", "co2" };
   m_CO2Index = PVTFunctionHelpers::findName( componentNames, expectedCO2ComponentNames, "componentNames" );
 
-  m_CO2DensityTable = makeDensityTable( inputParams, m_functionName, FunctionManager::getInstance(), printTable );
+  m_CO2DensityTable = makeDensityTable( inputParams, m_functionName, FunctionManager::getInstance() );
+  if( printTable )
+    m_CO2DensityTable->print( m_CO2DensityTable->getName());
 }
 
 void SpanWagnerCO2Density::checkTablesParameters( real64 const pressure,

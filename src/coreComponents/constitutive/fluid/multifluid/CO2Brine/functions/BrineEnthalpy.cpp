@@ -73,34 +73,21 @@ real64 michaelidesBrineEnthalpy( real64 const & T,
 
 void calculateBrineEnthalpy( PTTableCoordinates const & tableCoords,
                              real64 const & m,
-                             array1d< real64 > const & enthalpies,
-                             bool const printTable )
+                             array1d< real64 > const & enthalpies )
 {
 
   localIndex const nTemperatures = tableCoords.nTemperatures();
-
-  std::ofstream table_file;
-  if( printTable )
-  {
-    table_file.open( "BrineEnthalpy.csv" );
-    table_file << "T[C],Enthalpy" << std::endl;
-  }
 
   for( localIndex i = 0; i < nTemperatures; ++i )
   {
     real64 const TC = tableCoords.getTemperature( i );
     enthalpies[i] = michaelidesBrineEnthalpy( TC, m );
-    if( printTable )
-      table_file << TC << "," << enthalpies[i] << std::endl;
   }
-  if( printTable )
-    table_file.close();
 }
 
 TableFunction const * makeCO2EnthalpyTable( string_array const & inputParams,
                                             string const & functionName,
-                                            FunctionManager & functionManager,
-                                            bool const printTable )
+                                            FunctionManager & functionManager )
 {
   string const tableName = functionName + "_CO2_enthalpy_table";
 
@@ -132,9 +119,9 @@ TableFunction const * makeCO2EnthalpyTable( string_array const & inputParams,
     array1d< real64 > enthalpies( tableCoords.nPressures() * tableCoords.nTemperatures() );
 
 
-    SpanWagnerCO2Density::calculateCO2Density( functionName, tolerance, tableCoords, densities, printTable );
+    SpanWagnerCO2Density::calculateCO2Density( functionName, tolerance, tableCoords, densities );
 
-    CO2Enthalpy::calculateCO2Enthalpy( tableCoords, densities, enthalpies, printTable );
+    CO2Enthalpy::calculateCO2Enthalpy( tableCoords, densities, enthalpies );
 
     TableFunction * const enthalpyTable = dynamicCast< TableFunction * >( functionManager.createChild( TableFunction::catalogName(), tableName ) );
     enthalpyTable->setTableCoordinates( tableCoords.getCoords(), tableCoords.coordsUnits );
@@ -146,8 +133,7 @@ TableFunction const * makeCO2EnthalpyTable( string_array const & inputParams,
 
 TableFunction const * makeBrineEnthalpyTable( string_array const & inputParams,
                                               string const & functionName,
-                                              FunctionManager & functionManager,
-                                              bool const printTable )
+                                              FunctionManager & functionManager )
 {
   string const tableName = functionName + "_brine_enthalpy_table";
 
@@ -181,7 +167,7 @@ TableFunction const * makeBrineEnthalpyTable( string_array const & inputParams,
     temperatures.resize( 1 );
     temperatures[0] = tableCoords.getTemperatures();
 
-    calculateBrineEnthalpy( tableCoords, salinity, enthalpies, printTable );
+    calculateBrineEnthalpy( tableCoords, salinity, enthalpies );
 
 
     TableFunction * const enthalpyTable = dynamicCast< TableFunction * >( functionManager.createChild( TableFunction::catalogName(), tableName ) );
@@ -209,8 +195,13 @@ BrineEnthalpy::BrineEnthalpy( string const & name,
   string const expectedWaterComponentNames[] = { "Water", "water" };
   m_waterIndex = PVTFunctionHelpers::findName( componentNames, expectedWaterComponentNames, "componentNames" );
 
-  m_CO2EnthalpyTable = makeCO2EnthalpyTable( inputParams, m_functionName, FunctionManager::getInstance(), printTable );
-  m_brineEnthalpyTable = makeBrineEnthalpyTable( inputParams, m_functionName, FunctionManager::getInstance(), printTable );
+  m_CO2EnthalpyTable = makeCO2EnthalpyTable( inputParams, m_functionName, FunctionManager::getInstance() );
+  m_brineEnthalpyTable = makeBrineEnthalpyTable( inputParams, m_functionName, FunctionManager::getInstance() );
+  if( printTable )
+  {
+    m_CO2EnthalpyTable->print( m_CO2EnthalpyTable->getName());
+    m_brineEnthalpyTable->print( m_brineEnthalpyTable->getName());
+  }
 }
 
 void BrineEnthalpy::checkTablesParameters( real64 const pressure,

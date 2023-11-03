@@ -166,8 +166,7 @@ void calculateCO2Solubility( string const & functionName,
                              real64 const & tolerance,
                              PTTableCoordinates const & tableCoords,
                              real64 const & salinity,
-                             array1d< real64 > const & values,
-                             bool const printTable )
+                             array1d< real64 > const & values )
 {
   // Interaction parameters, see Table 2 of Duan and Sun (2003)
   constexpr real64 mu[] =
@@ -179,25 +178,9 @@ void calculateCO2Solubility( string const & functionName,
   localIndex const nPressures = tableCoords.nPressures();
   localIndex const nTemperatures = tableCoords.nTemperatures();
 
-  std::ofstream table_file;
-  if( printTable )
-  {
-    table_file.open( "CO2Solubility.csv" );
-    table_file << "P[bar]";
-    for( localIndex j = 0; j < nTemperatures; ++j )
-    {
-      real64 const T = tableCoords.getTemperature( j );
-      table_file << ",T=" << T << "[C]";
-    }
-    table_file << std::endl;
-  }
-
   for( localIndex i = 0; i < nPressures; ++i )
   {
     real64 const P = tableCoords.getPressure( i ) / P_Pa_f;
-
-    if( printTable )
-      table_file << P;
 
     for( localIndex j = 0; j < nTemperatures; ++j )
     {
@@ -218,9 +201,6 @@ void calculateCO2Solubility( string const & functionName,
       real64 const y_CO2 = (P - Pw)/P;
       values[j*nPressures+i] = y_CO2 * P / expLogK;
 
-      if( printTable )
-        table_file << "," << values[j*nPressures+i];
-
       GEOS_WARNING_IF( expLogK <= 1e-10,
                        GEOS_FMT( "CO2Solubility: exp(logK) = {} is too small (logK = {}, P = {}, T = {}, V_r = {}), resulting solubility value is {}",
                                  expLogK, logK, P, T, V_r, values[j*nPressures+i] ));
@@ -232,15 +212,12 @@ void calculateCO2Solubility( string const & functionName,
         values[j*nPressures+i] = 0.0;
       }
     }
-    if( printTable )
-      table_file << std::endl;
   }
 }
 
 TableFunction const * makeSolubilityTable( string_array const & inputParams,
                                            string const & functionName,
-                                           FunctionManager & functionManager,
-                                           bool const printTable )
+                                           FunctionManager & functionManager )
 {
   // initialize the (p,T) coordinates
   PTTableCoordinates tableCoords;
@@ -267,7 +244,7 @@ TableFunction const * makeSolubilityTable( string_array const & inputParams,
   }
 
   array1d< real64 > values( tableCoords.nPressures() * tableCoords.nTemperatures() );
-  calculateCO2Solubility( functionName, tolerance, tableCoords, salinity, values, printTable );
+  calculateCO2Solubility( functionName, tolerance, tableCoords, salinity, values );
 
   string const tableName = functionName + "_table";
   if( functionManager.hasGroup< TableFunction >( tableName ) )
@@ -316,7 +293,9 @@ CO2Solubility::CO2Solubility( string const & name,
   string const expectedWaterPhaseNames[] = { "Water", "water", "Liquid", "liquid" };
   m_phaseLiquidIndex = PVTFunctionHelpers::findName( phaseNames, expectedWaterPhaseNames, "phaseNames" );
 
-  m_CO2SolubilityTable = makeSolubilityTable( inputParams, m_modelName, FunctionManager::getInstance(), printTable );
+  m_CO2SolubilityTable = makeSolubilityTable( inputParams, m_modelName, FunctionManager::getInstance() );
+  if( printTable )
+    m_CO2SolubilityTable->print( m_CO2SolubilityTable->getName());
 }
 
 void CO2Solubility::checkTablesParameters( real64 const pressure,

@@ -57,8 +57,9 @@ protected:
   template< int USD >
   real64 computePhaseMolarWeight( arraySlice1d< real64 const, USD > const & phaseComposition ) const
   {
+    integer const numComp = phaseComposition.size();
     real64 MT = 0.0;
-    for( int i = 0; i < phaseComposition.size(); i++ )
+    for( integer i = 0; i < numComp; i++ )
     {
       MT += phaseComposition[i] * m_componentMolarWeight[i];
     }
@@ -78,14 +79,17 @@ protected:
                                  arraySlice2d< real64 const, USD2 > const & dPhaseComposition,
                                  real64 & value, arraySlice1d< real64, USD3 > const & dValue ) const
   {
+    integer const numComp = phaseComposition.size();
+    integer const numDerivs = dValue.size();
+
     real64 const MT = computePhaseMolarWeight( phaseComposition );
 
     value /= MT;
 
-    for( int der = 0; der < dValue.size(); der++ )
+    for( int der = 0; der < numDerivs; der++ )
     {
       real64 dMT = 0.0;
-      for( int ic = 0; ic < phaseComposition.size(); ic++ )
+      for( int ic = 0; ic < numComp; ic++ )
       {
         dMT += dPhaseComposition[ic][der] * m_componentMolarWeight[ic];
       }

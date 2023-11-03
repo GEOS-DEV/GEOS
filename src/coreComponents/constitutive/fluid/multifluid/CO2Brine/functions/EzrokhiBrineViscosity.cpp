@@ -49,7 +49,9 @@ EzrokhiBrineViscosity::EzrokhiBrineViscosity( string const & name,
   m_waterIndex = PVTFunctionHelpers::findName( componentNames, expectedWaterComponentNames, "componentNames" );
 
   makeCoefficients( inputPara );
-  m_waterViscosityTable = PureWaterProperties::makeSaturationViscosityTable( m_functionName, FunctionManager::getInstance(), printTable );
+  m_waterViscosityTable = PureWaterProperties::makeSaturationViscosityTable( m_functionName, FunctionManager::getInstance() );
+  if( printTable )
+    m_waterViscosityTable->print( m_waterViscosityTable->getName());
 }
 
 void EzrokhiBrineViscosity::makeCoefficients( string_array const & inputPara )

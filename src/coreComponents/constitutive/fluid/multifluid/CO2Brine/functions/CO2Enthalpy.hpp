@@ -114,8 +114,7 @@ public:
 
   static void calculateCO2Enthalpy( PTTableCoordinates const & tableCoords,
                                     array1d< real64 > const & densities,
-                                    array1d< real64 > const & enthalpies,
-                                    bool const printTable );
+                                    array1d< real64 > const & enthalpies );
 
 
 private:

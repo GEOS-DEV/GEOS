@@ -31,8 +31,7 @@ namespace PVTProps
 
 TableFunction const *
 PureWaterProperties::makeSaturationViscosityTable( string const & functionName,
-                                                   FunctionManager & functionManager,
-                                                   bool const printTable )
+                                                   FunctionManager & functionManager )
 {
   array1d< array1d< real64 > > temperatures;
   array1d< real64 > viscosities;
@@ -96,17 +95,6 @@ PureWaterProperties::makeSaturationViscosityTable( string const & functionName,
   viscosities[24] = 0.0000703;
   viscosities[25] = 0.0000603;
 
-  if( printTable )
-  {
-    std::ofstream table_file( "PureWaterSaturationViscosity.csv" );
-    table_file << "T[C],Viscosity" << std::endl;
-    for( localIndex i = 0; i < nValues; ++i )
-    {
-      table_file << temperatures[0][i] << "," << viscosities[i] << std::endl;
-    }
-    table_file.close();
-  }
-
   string const tableName = functionName +  "_table";
   if( functionManager.hasGroup< TableFunction >( tableName ) )
   {
@@ -124,8 +112,7 @@ PureWaterProperties::makeSaturationViscosityTable( string const & functionName,
 
 TableFunction const *
 PureWaterProperties::makeSaturationDensityTable( string const & functionName,
-                                                 FunctionManager & functionManager,
-                                                 bool const printTable )
+                                                 FunctionManager & functionManager )
 {
   array1d< array1d< real64 > > temperatures;
   array1d< real64 > densities;
@@ -189,17 +176,6 @@ PureWaterProperties::makeSaturationDensityTable( string const & functionName,
   densities[24] = 610.67;
   densities[25] = 527.59;
 
-  if( printTable )
-  {
-    std::ofstream table_file( "PureWaterSaturationDensity.csv" );
-    table_file << "T[C],Density" << std::endl;
-    for( localIndex i = 0; i < nValues; ++i )
-    {
-      table_file << temperatures[0][i] << "," << densities[i] << std::endl;
-    }
-    table_file.close();
-  }
-
   string const tableName = functionName +  "_sat_density_table";
   if( functionManager.hasGroup< TableFunction >( tableName ) )
   {
@@ -217,8 +193,7 @@ PureWaterProperties::makeSaturationDensityTable( string const & functionName,
 
 TableFunction const *
 PureWaterProperties::makeSaturationPressureTable( string const & functionName,
-                                                  FunctionManager & functionManager,
-                                                  bool const printTable )
+                                                  FunctionManager & functionManager )
 {
   array1d< array1d< real64 > > temperatures;
   array1d< real64 > pressures;
@@ -281,17 +256,6 @@ PureWaterProperties::makeSaturationPressureTable( string const & functionName,
   pressures[23] = 11300000;
   pressures[24] = 14600000;
   pressures[25] = 18700000;
-
-  if( printTable )
-  {
-    std::ofstream table_file( "PureWaterSaturationPressure.csv" );
-    table_file << "T[C],Pressure" << std::endl;
-    for( localIndex i = 0; i < nValues; ++i )
-    {
-      table_file << temperatures[0][i] << "," << pressures[i] << std::endl;
-    }
-    table_file.close();
-  }
 
   string const tableName = functionName +  "_sat_pressure_table";
   if( functionManager.hasGroup< TableFunction >( tableName ) )

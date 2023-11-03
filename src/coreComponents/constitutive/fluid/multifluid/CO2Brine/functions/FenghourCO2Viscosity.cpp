@@ -71,49 +71,25 @@ real64 fenghourCO2ViscosityFunction( real64 const & temperatureCent,
 
 void calculateCO2Viscosity( PTTableCoordinates const & tableCoords,
                             array1d< real64 > const & densities,
-                            array1d< real64 > const & viscosities,
-                            bool const printTable )
+                            array1d< real64 > const & viscosities )
 {
 
   localIndex const nPressures = tableCoords.nPressures();
   localIndex const nTemperatures = tableCoords.nTemperatures();
 
-  std::ofstream table_file;
-  if( printTable )
-  {
-    table_file.open( "FenghourCO2Viscosity.csv" );
-    table_file << "P[Pa]";
-    for( localIndex j = 0; j < nTemperatures; ++j )
-    {
-      real64 const T = tableCoords.getTemperature( j );
-      table_file << ",T=" << T << "[C]";
-    }
-    table_file << std::endl;
-  }
-
   for( localIndex i = 0; i < nPressures; ++i )
   {
-    real64 const P = tableCoords.getPressure( i );
-    if( printTable )
-      table_file << P;
     for( localIndex j = 0; j < nTemperatures; ++j )
     {
       real64 const T = tableCoords.getTemperature( j );
       viscosities[j*nPressures+i] = fenghourCO2ViscosityFunction( T, densities[j*nPressures+i] );
-      if( printTable )
-        table_file << "," << viscosities[j*nPressures+i];
     }
-    if( printTable )
-      table_file << std::endl;
   }
-  if( printTable )
-    table_file.close();
 }
 
 TableFunction const * makeViscosityTable( string_array const & inputParams,
                                           string const & functionName,
-                                          FunctionManager & functionManager,
-                                          bool const printTable )
+                                          FunctionManager & functionManager )
 {
   PTTableCoordinates tableCoords;
   PVTFunctionHelpers::initializePropertyTable( inputParams, tableCoords );
@@ -135,8 +111,8 @@ TableFunction const * makeViscosityTable( string_array const & inputParams,
   localIndex const nT = tableCoords.nTemperatures();
   array1d< real64 > density( nP * nT );
   array1d< real64 > viscosity( nP * nT );
-  SpanWagnerCO2Density::calculateCO2Density( functionName, tolerance, tableCoords, density, printTable );
-  calculateCO2Viscosity( tableCoords, density, viscosity, printTable );
+  SpanWagnerCO2Density::calculateCO2Density( functionName, tolerance, tableCoords, density );
+  calculateCO2Viscosity( tableCoords, density, viscosity );
 
   string const tableName = functionName + "_table";
   if( functionManager.hasGroup< TableFunction >( tableName ) )
@@ -165,7 +141,9 @@ FenghourCO2Viscosity::FenghourCO2Viscosity( string const & name,
                      componentNames,
                      componentMolarWeight )
 {
-  m_CO2ViscosityTable = makeViscosityTable( inputParams, m_functionName, FunctionManager::getInstance(), printTable );
+  m_CO2ViscosityTable = makeViscosityTable( inputParams, m_functionName, FunctionManager::getInstance() );
+  if( printTable )
+    m_CO2ViscosityTable->print( m_CO2ViscosityTable->getName());
 }
 
 void FenghourCO2Viscosity::checkTablesParameters( real64 const pressure,

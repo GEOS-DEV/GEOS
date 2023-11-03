@@ -49,8 +49,13 @@ EzrokhiBrineDensity::EzrokhiBrineDensity( string const & name,
   m_waterIndex = PVTFunctionHelpers::findName( componentNames, expectedWaterComponentNames, "componentNames" );
 
   makeCoefficients( inputPara );
-  m_waterSatDensityTable = PureWaterProperties::makeSaturationDensityTable( m_functionName, FunctionManager::getInstance(), printTable );
-  m_waterSatPressureTable = PureWaterProperties::makeSaturationPressureTable( m_functionName, FunctionManager::getInstance(), printTable );
+  m_waterSatDensityTable = PureWaterProperties::makeSaturationDensityTable( m_functionName, FunctionManager::getInstance() );
+  m_waterSatPressureTable = PureWaterProperties::makeSaturationPressureTable( m_functionName, FunctionManager::getInstance() );
+  if( printTable )
+  {
+    m_waterSatDensityTable->print( m_waterSatDensityTable->getName());
+    m_waterSatPressureTable->print( m_waterSatPressureTable->getName());
+  }
 }
 
 void EzrokhiBrineDensity::makeCoefficients( string_array const & inputPara )

@@ -219,7 +219,7 @@ void ReactiveFluidDriver::runTest( FLUID_TYPE & fluid, arrayView2d< real64 > con
   }
 
   TableFunction const * waterDensityTable =
-    constitutive::PVTProps::PureWaterProperties::makeSaturationDensityTable( "helpTable", FunctionManager::getInstance(), false );
+    constitutive::PVTProps::PureWaterProperties::makeSaturationDensityTable( "helpTable", FunctionManager::getInstance() );
 
   TableFunction::KernelWrapper waterDensityTableWrapper  = waterDensityTable->createKernelWrapper();
 

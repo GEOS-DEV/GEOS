@@ -36,8 +36,7 @@ namespace
 
 void calculateBrineDensity( PTTableCoordinates const & tableCoords,
                             real64 const & salinity,
-                            array1d< real64 > const & densities,
-                            bool const printTable )
+                            array1d< real64 > const & densities )
 {
   // these coefficients come from Phillips et al. (1981), equations (4) and (5), pages 14 and 15
   constexpr real64 c1 = -9.9595;
@@ -56,25 +55,9 @@ void calculateBrineDensity( PTTableCoordinates const & tableCoords,
   localIndex const nPressures = tableCoords.nPressures();
   localIndex const nTemperatures = tableCoords.nTemperatures();
 
-  std::ofstream table_file;
-  if( printTable )
-  {
-    table_file.open( "PhillipsBrineDensity.csv" );
-    table_file << "P[bar]";
-    for( localIndex j = 0; j < nTemperatures; ++j )
-    {
-      real64 const T = tableCoords.getTemperature( j );
-      table_file << ",T=" << T << "[K]";
-    }
-    table_file << std::endl;
-  }
-
   for( localIndex i = 0; i < nPressures; ++i )
   {
     real64 const P = tableCoords.getPressure( i ) / 1e5;
-
-    if( printTable )
-      table_file << P;
 
     for( localIndex j = 0; j < nTemperatures; ++j )
     {
@@ -84,20 +67,13 @@ void calculateBrineDensity( PTTableCoordinates const & tableCoords,
                        + c2 * exp( a2 * T )
                        + c3 * exp( a3 * P );
       densities[j*nPressures+i] = (AA + BB * x + CC * x * x + DD * x * x * x) * 1000.0;
-      if( printTable )
-        table_file << "," << densities[j*nPressures+i];
     }
-    if( printTable )
-      table_file << std::endl;
   }
-  if( printTable )
-    table_file.close();
 }
 
 void calculatePureWaterDensity( PTTableCoordinates const & tableCoords,
                                 string const & functionName,
-                                array1d< real64 > const & densities,
-                                bool const printTable )
+                                array1d< real64 > const & densities )
 {
   // if no salinity, we fall back to the standard approach in three steps
   // 1- Get the saturation density as a function of temperature
@@ -105,9 +81,9 @@ void calculatePureWaterDensity( PTTableCoordinates const & tableCoords,
   // 3- Get the pure water density
 
   TableFunction const * waterSatDensityTable =
-    PureWaterProperties::makeSaturationDensityTable( functionName, FunctionManager::getInstance(), printTable );
+    PureWaterProperties::makeSaturationDensityTable( functionName, FunctionManager::getInstance() );
   TableFunction const * waterSatPressureTable =
-    PureWaterProperties::makeSaturationPressureTable( functionName, FunctionManager::getInstance(), printTable );
+    PureWaterProperties::makeSaturationPressureTable( functionName, FunctionManager::getInstance() );
 
   localIndex const nPressures = tableCoords.nPressures();
   localIndex const nTemperatures = tableCoords.nTemperatures();
@@ -135,8 +111,7 @@ void calculatePureWaterDensity( PTTableCoordinates const & tableCoords,
 
 TableFunction const * makeDensityTable( string_array const & inputParams,
                                         string const & functionName,
-                                        FunctionManager & functionManager,
-                                        bool const printTable )
+                                        FunctionManager & functionManager )
 {
   GEOS_THROW_IF_LT_MSG( inputParams.size(), 9,
                         GEOS_FMT( "{}: insufficient number of model parameters", functionName ),
@@ -162,7 +137,7 @@ TableFunction const * makeDensityTable( string_array const & inputParams,
   {
     // if we are in the range of validity of the Phillips method, everything is good
     // if we are not, we issue a warning message
-    calculateBrineDensity( tableCoords, salinity, densities, printTable );
+    calculateBrineDensity( tableCoords, salinity, densities );
     GEOS_LOG_RANK_0_IF( salinity < 0.25,
                         GEOS_FMT( "{}: Warning! The salinity value of {} is below the range of validity of the Phillips model, results may be inaccurate",
                                   functionName, salinity ) );
@@ -171,7 +146,7 @@ TableFunction const * makeDensityTable( string_array const & inputParams,
   {
     // the Phillips correlation is inaccurate in the absence of salinity.
     // since this is a very frequent case, we implement an alternate (more accurate) method below
-    calculatePureWaterDensity( tableCoords, functionName, densities, printTable );
+    calculatePureWaterDensity( tableCoords, functionName, densities );
   }
 
   string const tableName = functionName + "_table";
@@ -207,7 +182,9 @@ PhillipsBrineDensity::PhillipsBrineDensity( string const & name,
   string const expectedWaterComponentNames[] = { "Water", "water" };
   m_waterIndex = PVTFunctionHelpers::findName( componentNames, expectedWaterComponentNames, "componentNames" );
 
-  m_brineDensityTable = makeDensityTable( inputParams, m_functionName, FunctionManager::getInstance(), printTable );
+  m_brineDensityTable = makeDensityTable( inputParams, m_functionName, FunctionManager::getInstance() );
+  if( printTable )
+    m_brineDensityTable->print( m_brineDensityTable->getName());
 }
 
 PhillipsBrineDensity::KernelWrapper

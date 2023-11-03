@@ -44,8 +44,7 @@ struct PureWaterProperties
    */
   static
   TableFunction const * makeSaturationViscosityTable( string const & functionName,
-                                                      FunctionManager & functionManager,
-                                                      bool const printTable );
+                                                      FunctionManager & functionManager );
 
   /**
    * @brief Creates a table of pure water saturation density [kg/m^3] as a function of temperature [degC]
@@ -55,8 +54,7 @@ struct PureWaterProperties
    */
   static
   TableFunction const * makeSaturationDensityTable( string const & functionName,
-                                                    FunctionManager & functionManager,
-                                                    bool const printTable );
+                                                    FunctionManager & functionManager );
 
   /**
    * @brief Creates a table of pure water saturation pressure [Pa] as a function of temperature [degC]
@@ -66,8 +64,7 @@ struct PureWaterProperties
    */
   static
   TableFunction const * makeSaturationPressureTable( string const & functionName,
-                                                     FunctionManager & functionManager,
-                                                     bool const printTable );
+                                                     FunctionManager & functionManager );
 
   /// Water molecular weight in kg/mol
   static constexpr real64 MOLECULAR_WEIGHT = 18e-3;
