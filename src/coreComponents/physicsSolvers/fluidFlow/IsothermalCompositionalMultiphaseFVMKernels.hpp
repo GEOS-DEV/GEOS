@@ -1262,21 +1262,20 @@ public:
             localIndex const ei_up  = sei[k_up];
 
             // computation of the upwinded mass flux
-            //TODO (jacques) put newly phase indexed reconstituated value for velocity LvArray::abs(...)
-            dispersionFlux[ic] += m_phaseDens[er_up][esr_up][ei_up][0][ip] * compFracGrad;
+            dispersionFlux[ic] += m_phaseDens[er_up][esr_up][ei_up][0][ip] * compFracGrad * LvArray::tensorOps::l2Norm<3>(m_phaseVelocity[er_up][esr_up][ei_up][0][ip]);
 
             // add contributions of the derivatives of component fractions wrt pressure/component fractions
             for( integer ke = 0; ke < numFluxSupportPoints; ke++ )
             {
-              dDispersionFlux_dP[ke][ic] += m_phaseDens[er_up][esr_up][ei_up][0][ip] * dCompFracGrad_dP[ke];
+              dDispersionFlux_dP[ke][ic] += m_phaseDens[er_up][esr_up][ei_up][0][ip] * dCompFracGrad_dP[ke] * LvArray::tensorOps::l2Norm<3>(m_phaseVelocity[er_up][esr_up][ei_up][0][ip]);
               for( integer jc = 0; jc < numComp; ++jc )
               {
-                dDispersionFlux_dC[ke][ic][jc] += m_phaseDens[er_up][esr_up][ei_up][0][ip] * dCompFracGrad_dC[ke][jc];
+                dDispersionFlux_dC[ke][ic][jc] += m_phaseDens[er_up][esr_up][ei_up][0][ip] * dCompFracGrad_dC[ke][jc] * LvArray::tensorOps::l2Norm<3>(m_phaseVelocity[er_up][esr_up][ei_up][0][ip]);
               }
             }
 
             // add contributions of the derivatives of upwind coefficient wrt pressure/component fractions
-            dDispersionFlux_dP[k_up][ic] += m_dPhaseDens[er_up][esr_up][ei_up][0][ip][Deriv::dP] * compFracGrad;
+            dDispersionFlux_dP[k_up][ic] += m_dPhaseDens[er_up][esr_up][ei_up][0][ip][Deriv::dP] * compFracGrad * LvArray::tensorOps::l2Norm<3>(m_phaseVelocity[er_up][esr_up][ei_up][0][ip]);
 
             applyChainRule( numComp,
                             m_dCompFrac_dCompDens[er_up][esr_up][ei_up],
@@ -1285,7 +1284,7 @@ public:
                             Deriv::dC );
             for( integer jc = 0; jc < numComp; ++jc )
             {
-              dDispersionFlux_dC[k_up][ic][jc] += dDens_dC[jc] * compFracGrad;
+              dDispersionFlux_dC[k_up][ic][jc] += dDens_dC[jc] * compFracGrad * LvArray::tensorOps::l2Norm<3>(m_phaseVelocity[er_up][esr_up][ei_up][0][ip]);
             }
 
             // call the lambda in the phase loop to allow the reuse of the phase fluxes and their derivatives

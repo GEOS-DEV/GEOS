@@ -293,7 +293,7 @@ CellElementStencilTPFAWrapper::
                    ElementRegionManager::ElementView< arrayView4d< real64 > > const & phaseVelocity ) const
 {
 
-  real64 surface[2];
+  real64 sqSurface[2];
 
   for( localIndex i = 0; i < 2; i++ )
   {
@@ -304,13 +304,15 @@ CellElementStencilTPFAWrapper::
 
     real64 faceNormal[3];
     LvArray::tensorOps::copy< 3 >( faceNormal, m_faceNormal[iconn] );
-    surface[i] = LvArray::tensorOps::normalize< 3 >( faceNormal );
+    sqSurface[i] = LvArray::tensorOps::l2NormSquared<3>(faceNormal);
     LvArray::tensorOps::scale< 3 >( faceNormal, phaseFlux );
 
-    for( int j = 0; j < 3; ++j )
-    {
-      phaseVelocity[er][esr][ei][0][ip][j] += faceNormal[j]/surface[i];
-    }
+//    for( int j = 0; j < 3; ++j )
+//    {
+//      phaseVelocity[er][esr][ei][0][ip][j] += faceNormal[j]/sqSurface[i];
+//    }
+    LvArray::tensorOps::scale<3>(faceNormal,1./sqSurface[i]);
+    LvArray::tensorOps::add<3>(phaseVelocity[er][esr][ei][0][ip],faceNormal);
 
   }
 }
