@@ -124,12 +124,12 @@ jobs:
             OS: ubuntu-22.04
             CMAKE_BUILD_TYPE: Release
 
-          - name: Ubuntu debug (20.04, gcc 10.3.0, open-mpi 4.0.3)
+          - name: Ubuntu debug (20.04, gcc 10.3.0, open-mpi 4.0.3) - github codespaces
             DOCKER_REPOSITORY: geosx/ubuntu20.04-gcc10
             OS: ubuntu-22.04
             CMAKE_BUILD_TYPE: Debug
 
-          - name: Ubuntu (20.04, gcc 10.3.0, open-mpi 4.0.3)
+          - name: Ubuntu (20.04, gcc 10.3.0, open-mpi 4.0.3) - github codespaces
             DOCKER_REPOSITORY: geosx/ubuntu20.04-gcc10
             OS: ubuntu-22.04
             CMAKE_BUILD_TYPE: Release
