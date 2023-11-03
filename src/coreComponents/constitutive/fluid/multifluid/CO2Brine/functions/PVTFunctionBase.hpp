@@ -54,6 +54,45 @@ public:
 
 protected:
 
+  template< int USD >
+  real64 computePhaseMolarWeight( arraySlice1d< real64 const, USD > const & phaseComposition ) const
+  {
+    real64 MT = 0.0;
+    for( int i = 0; i < phaseComposition.size(); i++ )
+    {
+      MT += phaseComposition[i] * m_componentMolarWeight[i];
+    }
+    return MT;
+  }
+
+  template< int USD >
+  void divideByPhaseMolarWeight( arraySlice1d< real64 const, USD > const & phaseComposition, real64 & value ) const
+  {
+    real64 const MT = computePhaseMolarWeight( phaseComposition );
+
+    value /= MT;
+  }
+
+  template< int USD1, int USD2, int USD3 >
+  void divideByPhaseMolarWeight( arraySlice1d< real64 const, USD1 > const & phaseComposition,
+                                 arraySlice2d< real64 const, USD2 > const & dPhaseComposition,
+                                 real64 & value, arraySlice1d< real64, USD3 > const & dValue ) const
+  {
+    real64 const MT = computePhaseMolarWeight( phaseComposition );
+
+    value /= MT;
+
+    for( int der = 0; der < dValue.size(); der++ )
+    {
+      real64 dMT = 0.0;
+      for( int ic = 0; ic < phaseComposition.size(); ic++ )
+      {
+        dMT += dPhaseComposition[ic][der] * m_componentMolarWeight[ic];
+      }
+      dValue[der] = ( dValue[der] - value * dMT ) / MT; // value is already divided by MT
+    }
+  }
+
   /// Array storing the component molar weights
   arrayView1d< real64 const > m_componentMolarWeight;
 

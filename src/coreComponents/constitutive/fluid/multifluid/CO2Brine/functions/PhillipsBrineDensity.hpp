@@ -173,10 +173,7 @@ void PhillipsBrineDensityUpdate::compute( real64 const & pressure,
   value = density + m_componentMolarWeight[m_CO2Index] * conc - concDensVol;
   if( !useMass )
   {
-    real64 const MT =
-      phaseComposition[m_waterIndex] * m_componentMolarWeight[m_waterIndex] +
-      phaseComposition[m_CO2Index] * m_componentMolarWeight[m_CO2Index];
-    value /= MT;
+    divideByPhaseMolarWeight( phaseComposition, value );
   }
 }
 
@@ -259,26 +256,7 @@ void PhillipsBrineDensityUpdate::compute( real64 const & pressure,
                                    - dConcDensVol_dComp[m_waterIndex];
   if( !useMass )
   {
-    real64 const MT =
-      phaseComposition[m_waterIndex] * m_componentMolarWeight[m_waterIndex] +
-      phaseComposition[m_CO2Index] * m_componentMolarWeight[m_CO2Index];
-    value /= MT;
-    real64 const dMT_dPres =
-      dPhaseComposition[m_waterIndex][Deriv::dP] * m_componentMolarWeight[m_waterIndex] +
-      dPhaseComposition[m_CO2Index][Deriv::dP] * m_componentMolarWeight[m_CO2Index];
-    dValue[Deriv::dP] = (dValue[Deriv::dP] - value * dMT_dPres) / MT; // value is already divided by MT
-    real64 const dMT_dTemp =
-      dPhaseComposition[m_waterIndex][Deriv::dT] * m_componentMolarWeight[m_waterIndex] +
-      dPhaseComposition[m_CO2Index][Deriv::dT] * m_componentMolarWeight[m_CO2Index];
-    dValue[Deriv::dT] = (dValue[Deriv::dT] - value * dMT_dTemp) / MT; // value is already divided by MT
-    real64 const dMT_dC_CO2 =
-      dPhaseComposition[m_waterIndex][Deriv::dC+m_CO2Index] * m_componentMolarWeight[m_waterIndex] +
-      dPhaseComposition[m_CO2Index][Deriv::dC+m_CO2Index] * m_componentMolarWeight[m_CO2Index];
-    dValue[Deriv::dC+m_CO2Index] = (dValue[Deriv::dC+m_CO2Index] - value * dMT_dC_CO2) / MT; // value is already divided by MT
-    real64 const dMT_dC_water =
-      dPhaseComposition[m_waterIndex][Deriv::dC+m_waterIndex] * m_componentMolarWeight[m_waterIndex] +
-      dPhaseComposition[m_CO2Index][Deriv::dC+m_waterIndex] * m_componentMolarWeight[m_CO2Index];
-    dValue[Deriv::dC+m_waterIndex] = (dValue[Deriv::dC+m_waterIndex] - value * dMT_dC_water) / MT; // value is already divided by MT
+    divideByPhaseMolarWeight( phaseComposition, dPhaseComposition, value, dValue );
   }
 }
 
