@@ -295,7 +295,7 @@ CO2Solubility::CO2Solubility( string const & name,
 
   m_CO2SolubilityTable = makeSolubilityTable( inputParams, m_modelName, FunctionManager::getInstance() );
   if( printTable )
-    m_CO2SolubilityTable->print( m_CO2SolubilityTable->getName());
+    m_CO2SolubilityTable->print( m_CO2SolubilityTable->getName() );
 }
 
 void CO2Solubility::checkTablesParameters( real64 const pressure,

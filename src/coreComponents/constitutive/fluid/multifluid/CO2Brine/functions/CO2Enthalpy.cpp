@@ -262,7 +262,7 @@ CO2Enthalpy::CO2Enthalpy( string const & name,
 
   m_CO2EnthalpyTable = makeCO2EnthalpyTable( inputParams, m_functionName, FunctionManager::getInstance() );
   if( printTable )
-    m_CO2EnthalpyTable->print( m_CO2EnthalpyTable->getName());
+    m_CO2EnthalpyTable->print( m_CO2EnthalpyTable->getName() );
 }
 
 

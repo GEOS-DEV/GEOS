@@ -199,8 +199,8 @@ BrineEnthalpy::BrineEnthalpy( string const & name,
   m_brineEnthalpyTable = makeBrineEnthalpyTable( inputParams, m_functionName, FunctionManager::getInstance() );
   if( printTable )
   {
-    m_CO2EnthalpyTable->print( m_CO2EnthalpyTable->getName());
-    m_brineEnthalpyTable->print( m_brineEnthalpyTable->getName());
+    m_CO2EnthalpyTable->print( m_CO2EnthalpyTable->getName() );
+    m_brineEnthalpyTable->print( m_brineEnthalpyTable->getName() );
   }
 }
 
