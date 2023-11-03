@@ -658,15 +658,16 @@ void CompositionalMultiphaseWell::updateVolRatesForConstraint( WellElementSubReg
 
   constitutive::constitutiveUpdatePassThru( fluid, [&] ( auto & castedFluid )
   {
-    try
+    if( useSurfaceConditions )
     {
-      castedFluid.checkTablesParameters( surfacePres, surfaceTemp );
-    } catch( SimulationError const & ex )
-    {
-      string const errorMsg = GEOS_FMT( "{}: wrong surface pressure / temperature.\n", getDataContext() );
-      GEOS_WARNING( errorMsg );
-      GEOS_UNUSED_VAR( ex );
-      // throw SimulationError( ex, errorMsg );
+      try
+      {
+        castedFluid.checkTablesParameters( surfacePres, surfaceTemp );
+      } catch( SimulationError const & ex )
+      {
+        string const errorMsg = GEOS_FMT( "{}: wrong surface pressure / temperature.\n", getDataContext() );
+        throw SimulationError( ex, errorMsg );
+      }
     }
 
     typename TYPEOFREF( castedFluid ) ::KernelWrapper fluidWrapper = castedFluid.createKernelWrapper();
