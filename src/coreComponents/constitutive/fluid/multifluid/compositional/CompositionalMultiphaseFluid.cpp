@@ -18,6 +18,7 @@
 
 #include "CompositionalMultiphaseFluid.hpp"
 
+#include "constitutive/fluid/multifluid/CO2Brine/functions/PVTFunctionHelpers.hpp"
 #include "codingUtilities/Utilities.hpp"
 
 namespace geos
@@ -65,7 +66,8 @@ CompositionalMultiphaseFluid( string const & name, Group * const parent )
 template< typename FLASH, typename PHASE1, typename PHASE2, typename PHASE3 >
 integer CompositionalMultiphaseFluid< FLASH, PHASE1, PHASE2, PHASE3 >::getWaterPhaseIndex() const
 {
-  return -1;
+  string const expectedWaterPhaseNames[] = { "water" };
+  return PVTProps::PVTFunctionHelpers::findName( m_phaseNames, expectedWaterPhaseNames, viewKeyStruct::phaseNamesString() );
 }
 
 // Naming conventions
