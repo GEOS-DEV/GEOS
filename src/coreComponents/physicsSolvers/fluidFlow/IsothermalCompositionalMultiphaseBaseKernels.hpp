@@ -960,6 +960,8 @@ public:
    * @param[in] localSolution the Newton update
    * @param[in] pressure the pressure vector
    * @param[in] compDens the component density vector
+   * @param[in] pressureScalingFactor the pressure local scaling factor
+   * @param[in] compDensScalingFactor the component local scaling factor
    */
   ScalingAndCheckingSystemSolutionKernelBase( globalIndex const rankOffset,
                                               integer const numComp,
@@ -1078,8 +1080,8 @@ protected:
   arrayView2d< real64 const, compflow::USD_COMP > const m_compDens;
 
   /// View on the scaling factors
-  arrayView1d< real64 > m_pressureScalingFactor;
-  arrayView1d< real64 > m_compDensScalingFactor;
+  arrayView1d< real64 > const m_pressureScalingFactor;
+  arrayView1d< real64 > const m_compDensScalingFactor;
 
 };
 
@@ -1113,6 +1115,8 @@ public:
    * @param[in] localSolution the Newton update
    * @param[in] pressure the pressure vector
    * @param[in] compDens the component density vector
+   * @param[in] pressureScalingFactor the pressure local scaling factor
+   * @param[in] compDensScalingFactor the component density local scaling factor
    */
   ScalingForSystemSolutionKernel( real64 const maxRelativePresChange,
                                   real64 const maxCompFracChange,
@@ -1152,26 +1156,26 @@ public:
                     real64 _localMaxDeltaPres,
                     real64 _localMaxDeltaTemp,
                     real64 _localMaxDeltaCompDens,
-                    real64 _localMinPresScalFac,
-                    real64 _localMinTempScalFac,
-                    real64 _localMinCompDensScalFac )
+                    real64 _localMinPresScalingFactor,
+                    real64 _localMinTempScalingFactor,
+                    real64 _localMinCompDensScalingFactor )
       :
       Base::StackVariables( _localMinVal ),
       localMaxDeltaPres( _localMaxDeltaPres ),
       localMaxDeltaTemp( _localMaxDeltaTemp ),
       localMaxDeltaCompDens( _localMaxDeltaCompDens ),
-      localMinPresScalFac( _localMinPresScalFac ),
-      localMinTempScalFac( _localMinTempScalFac ),
-      localMinCompDensScalFac( _localMinCompDensScalFac )
+      localMinPresScalingFactor( _localMinPresScalingFactor ),
+      localMinTempScalingFactor( _localMinTempScalingFactor ),
+      localMinCompDensScalingFactor( _localMinCompDensScalingFactor )
     { }
 
     real64 localMaxDeltaPres;
     real64 localMaxDeltaTemp;
     real64 localMaxDeltaCompDens;
 
-    real64 localMinPresScalFac;
-    real64 localMinTempScalFac;
-    real64 localMinCompDensScalFac;
+    real64 localMinPresScalingFactor;
+    real64 localMinTempScalingFactor;
+    real64 localMinCompDensScalingFactor;
 
   };
 
@@ -1188,12 +1192,15 @@ public:
           KERNEL_TYPE const & kernelComponent )
   {
     RAJA::ReduceMin< ReducePolicy< POLICY >, real64 > globalScalingFactor( 1.0 );
+
     RAJA::ReduceMax< ReducePolicy< POLICY >, real64 > maxDeltaPres( 0.0 );
     RAJA::ReduceMax< ReducePolicy< POLICY >, real64 > maxDeltaTemp( 0.0 );
     RAJA::ReduceMax< ReducePolicy< POLICY >, real64 > maxDeltaCompDens( 0.0 );
-    RAJA::ReduceMin< ReducePolicy< POLICY >, real64 > minPresScalFac( 1.0 );
-    RAJA::ReduceMin< ReducePolicy< POLICY >, real64 > minTempScalFac( 1.0 );
-    RAJA::ReduceMin< ReducePolicy< POLICY >, real64 > minCompDensScalFac( 1.0 );
+
+    RAJA::ReduceMin< ReducePolicy< POLICY >, real64 > minPresScalingFactor( 1.0 );
+    RAJA::ReduceMin< ReducePolicy< POLICY >, real64 > minTempScalingFactor( 1.0 );
+    RAJA::ReduceMin< ReducePolicy< POLICY >, real64 > minCompDensScalingFactor( 1.0 );
+
     forAll< POLICY >( numElems, [=] GEOS_HOST_DEVICE ( localIndex const ei )
     {
       if( kernelComponent.ghostRank( ei ) >= 0 )
@@ -1204,17 +1211,25 @@ public:
       StackVariables stack;
       kernelComponent.setup( ei, stack );
       kernelComponent.compute( ei, stack );
+
       globalScalingFactor.min( stack.localMinVal );
+
       maxDeltaPres.max( stack.localMaxDeltaPres );
-      maxDeltaTemp.max( stack.localMaxDeltaPres );
+      maxDeltaTemp.max( stack.localMaxDeltaTemp );
       maxDeltaCompDens.max( stack.localMaxDeltaCompDens );
-      minPresScalFac.min( stack.localMinPresScalFac );
-      minTempScalFac.min( stack.localMinTempScalFac );
-      minCompDensScalFac.min( stack.localMinCompDensScalFac );
+
+      minPresScalingFactor.min( stack.localMinPresScalingFactor );
+      minTempScalingFactor.min( stack.localMinTempScalingFactor );
+      minCompDensScalingFactor.min( stack.localMinCompDensScalingFactor );
     } );
 
-    return StackVariables( globalScalingFactor.get(), maxDeltaPres.get(), maxDeltaTemp.get(), maxDeltaCompDens.get(),
-                           minPresScalFac.get(), minTempScalFac.get(), minCompDensScalFac.get() );
+    return StackVariables( globalScalingFactor.get(),
+                           maxDeltaPres.get(),
+                           maxDeltaTemp.get(),
+                           maxDeltaCompDens.get(),
+                           minPresScalingFactor.get(),
+                           minTempScalingFactor.get(),
+                           minCompDensScalingFactor.get() );
   }
 
   GEOS_HOST_DEVICE
@@ -1227,9 +1242,9 @@ public:
     stack.localMaxDeltaTemp = 0.0;
     stack.localMaxDeltaCompDens = 0.0;
 
-    stack.localMinPresScalFac = 1.0;
-    stack.localMinTempScalFac = 1.0;
-    stack.localMinCompDensScalFac = 1.0;
+    stack.localMinPresScalingFactor = 1.0;
+    stack.localMinTempScalingFactor = 1.0;
+    stack.localMinCompDensScalingFactor = 1.0;
   }
 
   /**
@@ -1281,9 +1296,9 @@ public:
         {
           stack.localMinVal = presScalingFactor;
         }
-        if( stack.localMinPresScalFac > presScalingFactor )
+        if( stack.localMinPresScalingFactor > presScalingFactor )
         {
-          stack.localMinPresScalFac = presScalingFactor;
+          stack.localMinPresScalingFactor = presScalingFactor;
         }
       }
     }
@@ -1322,9 +1337,9 @@ public:
         {
           stack.localMinVal = compScalingFactor;
         }
-        if( stack.localMinCompDensScalFac > compScalingFactor )
+        if( stack.localMinCompDensScalingFactor > compScalingFactor )
         {
-          stack.localMinCompDensScalFac = compScalingFactor;
+          stack.localMinCompDensScalingFactor = compScalingFactor;
         }
       }
     }
@@ -1572,7 +1587,7 @@ class ResidualNormKernel : public solverBaseKernels::ResidualNormKernelBase< 1 >
 public:
 
   using Base = solverBaseKernels::ResidualNormKernelBase< 1 >;
-  using Base::minNormalizer;
+  using Base::m_minNormalizer;
   using Base::m_rankOffset;
   using Base::m_localResidual;
   using Base::m_dofNumber;
@@ -1584,11 +1599,13 @@ public:
                       integer const numComponents,
                       ElementSubRegionBase const & subRegion,
                       MultiFluidBase const & fluid,
-                      CoupledSolidBase const & solid )
+                      CoupledSolidBase const & solid,
+                      real64 const minNormalizer )
     : Base( rankOffset,
             localResidual,
             dofNumber,
-            ghostRank ),
+            ghostRank,
+            minNormalizer ),
     m_numComponents( numComponents ),
     m_volume( subRegion.getElementVolume() ),
     m_porosity_n( solid.getPorosity_n() ),
@@ -1600,8 +1617,8 @@ public:
                             LinfStackVariables & stack ) const override
   {
     // this should never be zero if the simulation is set up correctly, but we never know
-    real64 const massNormalizer = LvArray::math::max( minNormalizer, m_totalDens_n[ei][0] * m_porosity_n[ei][0] * m_volume[ei] );
-    real64 const volumeNormalizer = LvArray::math::max( minNormalizer, m_porosity_n[ei][0] * m_volume[ei] );
+    real64 const massNormalizer = LvArray::math::max( m_minNormalizer, m_totalDens_n[ei][0] * m_porosity_n[ei][0] * m_volume[ei] );
+    real64 const volumeNormalizer = LvArray::math::max( m_minNormalizer, m_porosity_n[ei][0] * m_volume[ei] );
 
     // step 1: mass residuals
 
@@ -1629,7 +1646,7 @@ public:
   {
     // note: for the L2 norm, we bundle the volume and mass residuals/normalizers
 
-    real64 const massNormalizer = LvArray::math::max( minNormalizer, m_totalDens_n[ei][0] * m_porosity_n[ei][0] * m_volume[ei] );
+    real64 const massNormalizer = LvArray::math::max( m_minNormalizer, m_totalDens_n[ei][0] * m_porosity_n[ei][0] * m_volume[ei] );
 
     // step 1: mass residuals
 
@@ -1695,13 +1712,14 @@ public:
                    ElementSubRegionBase const & subRegion,
                    MultiFluidBase const & fluid,
                    CoupledSolidBase const & solid,
+                   real64 const minNormalizer,
                    real64 (& residualNorm)[1],
                    real64 (& residualNormalizer)[1] )
   {
     arrayView1d< globalIndex const > const dofNumber = subRegion.getReference< array1d< globalIndex > >( dofKey );
     arrayView1d< integer const > const ghostRank = subRegion.ghostRank();
 
-    ResidualNormKernel kernel( rankOffset, localResidual, dofNumber, ghostRank, numComps, subRegion, fluid, solid );
+    ResidualNormKernel kernel( rankOffset, localResidual, dofNumber, ghostRank, numComps, subRegion, fluid, solid, minNormalizer );
     if( normType == solverBaseKernels::NormType::Linf )
     {
       ResidualNormKernel::launchLinf< POLICY >( subRegion.size(), kernel, residualNorm );
