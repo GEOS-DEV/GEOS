@@ -35,6 +35,10 @@ on:
       OS:
         required: true
         type: string
+      lfs:
+        required: false
+        type: boolean
+        default: false
       USE_SCCACHE:
         required: false
         type: boolean
@@ -62,7 +66,7 @@ jobs:
       uses: actions/checkout@v3
       with:
         submodules: true
-        lfs: false
+        lfs: ${{ inputs.lfs }}
 
     - id: 'auth'
       if: ${{ env.GCP_BUCKET || env.USE_SCCACHE }}
