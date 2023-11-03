@@ -4715,7 +4715,7 @@ The expected format is "{ waterMax, oilMax }", in that order-->
 	<xsd:complexType name="CellElementRegionType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded" />
 		<!--cellBlocks => (no description available)-->
-		<xsd:attribute name="cellBlocks" type="string_array" default="{}" />
+		<xsd:attribute name="cellBlocks" type="string_array" use="required" />
 		<!--coarseningRatio => (no description available)-->
 		<xsd:attribute name="coarseningRatio" type="real64" default="0" />
 		<!--materialList => List of materials present in this region-->
