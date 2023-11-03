@@ -4,6 +4,7 @@
 
 set( gtest_geosx_tests
      testMimeticInnerProducts.cpp
+     testVelocityReconstruction.cpp
    )
 
 set( dependencyList ${parallelDeps} gtest )
