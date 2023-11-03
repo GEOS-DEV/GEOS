@@ -193,6 +193,25 @@ private:
 
 };
 
+// these aliases are useful in constitutive dispatch
+using CO2BrinePhillipsFluid =
+  CO2BrineFluid< PhaseModel< PVTProps::PhillipsBrineDensity, PVTProps::PhillipsBrineViscosity, PVTProps::NoOpPVTFunction >,
+                 PhaseModel< PVTProps::SpanWagnerCO2Density, PVTProps::FenghourCO2Viscosity, PVTProps::NoOpPVTFunction >,
+                 PVTProps::CO2Solubility >;
+using CO2BrinePhillipsThermalFluid =
+  CO2BrineFluid< PhaseModel< PVTProps::PhillipsBrineDensity, PVTProps::PhillipsBrineViscosity, PVTProps::BrineEnthalpy >,
+                 PhaseModel< PVTProps::SpanWagnerCO2Density, PVTProps::FenghourCO2Viscosity, PVTProps::CO2Enthalpy >,
+                 PVTProps::CO2Solubility >;
+
+using CO2BrineEzrokhiFluid =
+  CO2BrineFluid< PhaseModel< PVTProps::EzrokhiBrineDensity, PVTProps::EzrokhiBrineViscosity, PVTProps::NoOpPVTFunction >,
+                 PhaseModel< PVTProps::SpanWagnerCO2Density, PVTProps::FenghourCO2Viscosity, PVTProps::NoOpPVTFunction >,
+                 PVTProps::CO2Solubility >;
+using CO2BrineEzrokhiThermalFluid =
+  CO2BrineFluid< PhaseModel< PVTProps::EzrokhiBrineDensity, PVTProps::EzrokhiBrineViscosity, PVTProps::BrineEnthalpy >,
+                 PhaseModel< PVTProps::SpanWagnerCO2Density, PVTProps::FenghourCO2Viscosity, PVTProps::CO2Enthalpy >,
+                 PVTProps::CO2Solubility >;
+
 template< typename PHASE1, typename PHASE2, typename FLASH >
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
@@ -394,25 +413,6 @@ CO2BrineFluid< PHASE1, PHASE2, FLASH >::KernelWrapper::
            m_phaseCompFraction( k, q ),
            m_totalDensity( k, q ) );
 }
-
-// these aliases are useful in constitutive dispatch
-using CO2BrinePhillipsFluid =
-  CO2BrineFluid< PhaseModel< PVTProps::PhillipsBrineDensity, PVTProps::PhillipsBrineViscosity, PVTProps::NoOpPVTFunction >,
-                 PhaseModel< PVTProps::SpanWagnerCO2Density, PVTProps::FenghourCO2Viscosity, PVTProps::NoOpPVTFunction >,
-                 PVTProps::CO2Solubility >;
-using CO2BrinePhillipsThermalFluid =
-  CO2BrineFluid< PhaseModel< PVTProps::PhillipsBrineDensity, PVTProps::PhillipsBrineViscosity, PVTProps::BrineEnthalpy >,
-                 PhaseModel< PVTProps::SpanWagnerCO2Density, PVTProps::FenghourCO2Viscosity, PVTProps::CO2Enthalpy >,
-                 PVTProps::CO2Solubility >;
-
-using CO2BrineEzrokhiFluid =
-  CO2BrineFluid< PhaseModel< PVTProps::EzrokhiBrineDensity, PVTProps::EzrokhiBrineViscosity, PVTProps::NoOpPVTFunction >,
-                 PhaseModel< PVTProps::SpanWagnerCO2Density, PVTProps::FenghourCO2Viscosity, PVTProps::NoOpPVTFunction >,
-                 PVTProps::CO2Solubility >;
-using CO2BrineEzrokhiThermalFluid =
-  CO2BrineFluid< PhaseModel< PVTProps::EzrokhiBrineDensity, PVTProps::EzrokhiBrineViscosity, PVTProps::BrineEnthalpy >,
-                 PhaseModel< PVTProps::SpanWagnerCO2Density, PVTProps::FenghourCO2Viscosity, PVTProps::CO2Enthalpy >,
-                 PVTProps::CO2Solubility >;
 
 } // namespace constitutive
 
