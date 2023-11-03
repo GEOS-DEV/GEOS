@@ -33,12 +33,13 @@ on:
         required: true
         type: string
       OS:
-        required: true
-        type: string
-      lfs:
         required: false
-        type: boolean
-        default: false
+        type: string
+        default: ubuntu-22.04
+      build_type:
+        required: false
+        type: string
+        default: build
       USE_SCCACHE:
         required: false
         type: boolean
@@ -66,7 +67,8 @@ jobs:
       uses: actions/checkout@v3
       with:
         submodules: true
-        lfs: ${{ inputs.lfs }}
+        # lfs: ${{ inputs.build_type == 'integrated_tests' }}
+        lfs: false
 
     - id: 'auth'
       if: ${{ env.GCP_BUCKET || env.USE_SCCACHE }}
@@ -86,12 +88,12 @@ jobs:
     # Build and test only
     # Builds only the geosx executable (timeout when building tests)
     - name: Build and test
-      if: ${{ !(env.GCP_BUCKET) }}
+      if: ${{ inputs.build_type == 'build' && !(env.GCP_BUCKET) }}
       run: ./scripts/ci_build_and_test.sh
 
     # Build, test, uploads GEOSX and its TPL to GCP/GCS using gcloud CLI
     - name: Build and test and deploy
-      if: env.GCP_BUCKET
+      if: ${{ inputs.build_type == 'build' && env.GCP_BUCKET }}
       run: |
         source ./scripts/ci_build_and_test.sh
         TMP_DIR=/tmp
@@ -100,3 +102,14 @@ jobs:
         GEOSX_BUNDLE=${TMP_DIR}/${GEOSX_EXPORT_DIR}.tar.gz
         tar czf ${GEOSX_BUNDLE} --directory=${TMP_DIR} ${GEOSX_EXPORT_DIR}
         CLOUDSDK_PYTHON=python3 gsutil cp -a public-read ${GEOSX_BUNDLE} gs://${GCP_BUCKET}/
+
+    - name: Run integrated tests
+      if: ${{ inputs.build_type == 'integrated_tests' }}
+      run: |
+        docker run \
+          --name=${CONTAINER_NAME} \
+          --volume=${GITHUB_WORKSPACE}:/tmp/GEOS \
+          --cap-add=ALL \
+          -e SHORT_COMMIT=${COMMIT:0:7} \
+          ${DOCKER_REPOSITORY}:${GEOSX_TPL_TAG} \
+          ${BUILD_DIR_MOUNT_POINT}/scripts/ci_run_integrated_tests.sh
