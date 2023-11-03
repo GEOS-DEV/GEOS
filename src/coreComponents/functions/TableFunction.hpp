@@ -299,48 +299,11 @@ private:
    */
   void setTableValues( real64_array values, units::Unit unit = units::Unknown );
 
-  void print( std::string const & filename ) const
-  {
-    integer const numDimensions = LvArray::integerConversion< integer >( m_coordinates.size() );
-    GEOS_ERROR_IF( numDimensions > 2, "Printing tables with more than 2 dimensions is not supported" );
-
-    std::ofstream os( filename + ".csv" );
-
-    if( numDimensions == 1 )
-    {
-      arraySlice1d< real64 const > const coords = m_coordinates[0];
-      integer const N = coords.size();
-      os << units::getDescription( getDimUnit( 0 )) << "," << units::getDescription( m_valueUnit ) << "\n";
-      for( integer i = 0; i < N; i++ )
-      {
-        os << coords[i] << "," << m_values[i] << "\n";
-      }
-    }
-    else if( numDimensions == 2 )
-    {
-      arraySlice1d< real64 const > const coords0 = m_coordinates[0];
-      arraySlice1d< real64 const > const coords1 = m_coordinates[1];
-      integer const N0 = coords0.size();
-      integer const N1 = coords1.size();
-      os<<units::getDescription( getDimUnit( 0 ));
-      for( integer j = 0; j < N1; j++ )
-      {
-        os << "," << units::getDescription( getDimUnit( 1 )) << "=" << coords1[j];
-      }
-      os << "\n";
-      for( integer i = 0; i < N0; i++ )
-      {
-        os << coords0[i];
-        for( integer j = 0; j < N1; j++ )
-        {
-          os << "," << m_values[ j*N0 + i ];
-        }
-        os << "\n";
-      }
-    }
-
-    os.close();
-  }
+  /**
+   * @brief Print table into a CSV file (only 1d and 2d tables are supported)
+   * @param filename Filename for output
+   */
+  void print( std::string const & filename ) const;
 
   /**
    * @brief Create an instance of the kernel wrapper
