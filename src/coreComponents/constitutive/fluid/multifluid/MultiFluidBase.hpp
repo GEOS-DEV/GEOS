@@ -210,7 +210,6 @@ protected:
   using PhaseComp = MultiFluidVar< real64, 4, multifluid::LAYOUT_PHASE_COMP, multifluid::LAYOUT_PHASE_COMP_DC >;
   using FluidProp = MultiFluidVar< real64, 2, multifluid::LAYOUT_FLUID, multifluid::LAYOUT_FLUID_DC >;
 
-public:
   class KernelWrapper
   {
 public:
@@ -660,17 +659,41 @@ MultiFluidBase::KernelWrapper::computeValues( FLUIDWRAPPER fluidWrapper,
                                               arraySlice2d< real64, multifluid::USD_PHASE_COMP-2 > const & phaseCompFraction,
                                               real64 & totalDensity )
 {
-  GEOS_UNUSED_VAR( pressure );
-  GEOS_UNUSED_VAR( temperature );
-  GEOS_UNUSED_VAR( composition );
-  GEOS_UNUSED_VAR( phaseFraction );
-  GEOS_UNUSED_VAR( phaseDensity );
-  GEOS_UNUSED_VAR( phaseMassDensity );
-  GEOS_UNUSED_VAR( phaseViscosity );
-  GEOS_UNUSED_VAR( phaseEnthalpy );
-  GEOS_UNUSED_VAR( phaseInternalEnergy );
-  GEOS_UNUSED_VAR( phaseCompFraction );
-  GEOS_UNUSED_VAR( totalDensity );
+  integer constexpr maxNumPhase = MAX_NUM_PHASES;
+  integer constexpr maxNumComp = MAX_NUM_COMPONENTS;
+  integer constexpr maxNumDof = MAX_NUM_COMPONENTS + 2;
+  integer const numPhase = fluidWrapper.numPhases();
+  integer const numComp = fluidWrapper.numComponents();
+
+  // Allocate data for derivatives. All properties of the same type will use the same memory
+  // space for the derivatives. The derivatives returned will clearly be garbage but the values
+  // should be correct.
+  StackArray< real64, 4, maxNumDof * maxNumPhase, multifluid::LAYOUT_PHASE_DC > dPhaseProp( 1, 1, numPhase, numComp+2 );
+  StackArray< real64, 5, maxNumDof * maxNumComp * maxNumPhase, multifluid::LAYOUT_PHASE_COMP_DC > dPhaseComp( 1, 1, numPhase, numComp, numComp+2 );
+  StackArray< real64, 3, maxNumDof, multifluid::LAYOUT_FLUID_DC > dFluidProp( 1, 1, numComp+2 );
+
+  // Wrap the output in multi variable objects
+  PhaseProp::SliceType phaseFractionWrapper { phaseFraction, dPhaseProp[0][0] };
+  PhaseProp::SliceType phaseDensityWrapper { phaseDensity, dPhaseProp[0][0] };
+  PhaseProp::SliceType phaseMassDensityWrapper { phaseMassDensity, dPhaseProp[0][0] };
+  PhaseProp::SliceType phaseViscosityWrapper { phaseViscosity, dPhaseProp[0][0] };
+  PhaseProp::SliceType phaseEnthalpyWrapper { phaseEnthalpy, dPhaseProp[0][0] };
+  PhaseProp::SliceType phaseInternalEnergyWrapper { phaseInternalEnergy, dPhaseProp[0][0] };
+  PhaseComp::SliceType phaseCompFractionWrapper { phaseCompFraction, dPhaseComp[0][0] };
+  FluidProp::SliceType totalDensityWrapper { totalDensity, dFluidProp[0][0] };
+
+  // Pass on to fluid kernel
+  fluidWrapper.compute( pressure,
+                        temperature,
+                        composition,
+                        phaseFractionWrapper,
+                        phaseDensityWrapper,
+                        phaseMassDensityWrapper,
+                        phaseViscosityWrapper,
+                        phaseEnthalpyWrapper,
+                        phaseInternalEnergyWrapper,
+                        phaseCompFractionWrapper,
+                        totalDensityWrapper );
 }
 
 template< integer maxNumComp, typename OUT_ARRAY >
