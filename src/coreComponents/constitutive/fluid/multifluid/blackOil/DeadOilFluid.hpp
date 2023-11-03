@@ -44,20 +44,6 @@ public:
   class KernelWrapper final : public BlackOilFluidBase::KernelWrapper
   {
 public:
-
-    GEOS_HOST_DEVICE
-    virtual void compute( real64 const pressure,
-                          real64 const temperature,
-                          arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & composition,
-                          arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & phaseFraction,
-                          arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & phaseDensity,
-                          arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & phaseMassDensity,
-                          arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & phaseViscosity,
-                          arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & phaseEnthalpy,
-                          arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & phaseInternalEnergy,
-                          arraySlice2d< real64, multifluid::USD_PHASE_COMP-2 > const & phaseCompFraction,
-                          real64 & totalDensity ) const override;
-
     GEOS_HOST_DEVICE
     virtual void compute( real64 const pressure,
                           real64 const temperature,
@@ -321,57 +307,6 @@ DeadOilFluid::KernelWrapper::
     phaseVisc.value[ipWater] = m_waterParams.viscosity;
     phaseVisc.derivs[ipWater][Deriv::dP] = 0.0;
   }
-}
-
-GEOS_HOST_DEVICE
-GEOS_FORCE_INLINE
-void
-DeadOilFluid::KernelWrapper::
-  compute( real64 const pressure,
-           real64 const temperature,
-           arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & composition,
-           arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & phaseFraction,
-           arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & phaseDensity,
-           arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & phaseMassDensity,
-           arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & phaseViscosity,
-           arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & phaseEnthalpy,
-           arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & phaseInternalEnergy,
-           arraySlice2d< real64, multifluid::USD_PHASE_COMP - 2 > const & phaseCompFraction,
-           real64 & totalDensity ) const
-{
-  GEOS_UNUSED_VAR( temperature, phaseEnthalpy, phaseInternalEnergy );
-
-  integer constexpr maxNumComp = 3;
-  integer constexpr maxNumPhase = 3;
-  integer const nComps = numComponents();
-  integer const nPhases = numPhases();
-
-  // 1. Read viscosities and formation volume factors from tables, update mass densities
-  computeViscosities( pressure, phaseViscosity );
-  computeDensities( pressure, phaseMassDensity );
-
-  // 2. Update phaseDens (mass density if useMass == 1, molar density otherwise)
-  for( integer ip = 0; ip < nPhases; ++ip )
-  {
-    real64 const mult = m_useMass ? 1.0 : 1.0 / m_componentMolarWeight[ip];
-    phaseDensity[ip] = phaseMassDensity[ip] * mult;
-  }
-
-  // 3. Update remaining variables: phaseFrac, phaseCompFrac using Dead-Oil assumptions
-  for( integer ip = 0; ip < nPhases; ++ip )
-  {
-    phaseFraction[ip] = composition[ip];
-    for( integer ic = 0; ic < nComps; ++ic )
-    {
-      phaseCompFraction[ip][ic] = (ip == ic) ? 1.0 : 0.0;
-    }
-  }
-
-  // 4. Compute total fluid mass/molar density
-  computeTotalDensity< maxNumComp, maxNumPhase >( phaseFraction,
-                                                  phaseDensity,
-                                                  totalDensity );
-
 }
 
 GEOS_HOST_DEVICE

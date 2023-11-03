@@ -210,6 +210,7 @@ protected:
   using PhaseComp = MultiFluidVar< real64, 4, multifluid::LAYOUT_PHASE_COMP, multifluid::LAYOUT_PHASE_COMP_DC >;
   using FluidProp = MultiFluidVar< real64, 2, multifluid::LAYOUT_FLUID, multifluid::LAYOUT_FLUID_DC >;
 
+public:
   class KernelWrapper
   {
 public:
@@ -277,6 +278,37 @@ public:
 
     GEOS_HOST_DEVICE arrayView3d< real64 const, multifluid::USD_PHASE > phaseInternalEnergy() const
     { return m_phaseInternalEnergy.value; }
+
+    /**
+     * @brief Compute function to update properties in a cell without returning derivatives.
+     * @details This delegates the call to the fluid wrapper using the value and derivative function.
+     *          This is used for initialisation and boundary conditions.
+     * @param[in] pressure pressure in the cell
+     * @param[in] temperature temperature in the cell
+     * @param[in] composition mass/molar component fractions in the cell
+     * @param[out] phaseFraction phase fractions in the cell
+     * @param[out] phaseDensity phase mass/molar density in the cell
+     * @param[out] phaseMassDensity phase mass density in the cell
+     * @param[out] phaseViscosity phase viscosity in the cell
+     * @param[out] phaseEnthalpy phase enthalpy in the cell
+     * @param[out] phaseInternalEnergy phase internal energy in the cell
+     * @param[out] phaseCompFraction phase component fraction in the cell
+     * @param[out] totalDensity total mass/molar density in the cell
+     */
+    template< typename FLUIDWRAPPER >
+    GEOS_HOST_DEVICE
+    static void computeValues( FLUIDWRAPPER fluidWrapper,
+                               real64 const pressure,
+                               real64 const temperature,
+                               arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & composition,
+                               arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & phaseFraction,
+                               arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & phaseDensity,
+                               arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & phaseMassDensity,
+                               arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & phaseViscosity,
+                               arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & phaseEnthalpy,
+                               arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & phaseInternalEnergy,
+                               arraySlice2d< real64, multifluid::USD_PHASE_COMP-2 > const & phaseCompFraction,
+                               real64 & totalDensity );
 
 protected:
 
@@ -516,34 +548,6 @@ private:
                                              arraySlice2d< real64, multifluid::USD_PHASE_DC - 2 > const dPhaseEnthalpy,
                                              arraySlice2d< real64, multifluid::USD_PHASE_DC - 2 > const dPhaseInternalEnergy ) const;
 
-
-    /**
-     * @brief Main compute function to update properties in a cell without returning derivatives (used at initialization)
-     * @param[in] pressure pressure in the cell
-     * @param[in] temperature temperature in the cell
-     * @param[in] composition mass/molar component fractions in the cell
-     * @param[out] phaseFraction phase fractions in the cell
-     * @param[out] phaseDensity phase mass/molar density in the cell
-     * @param[out] phaseMassDensity phase mass density in the cell
-     * @param[out] phaseViscosity phase viscosity in the cell
-     * @param[out] phaseEnthalpy phase enthalpy in the cell
-     * @param[out] phaseInternalEnergy phase internal energy in the cell
-     * @param[out] phaseCompFraction phase component fraction in the cell
-     * @param[out] totalDensity total mass/molar density in the cell
-     */
-    GEOS_HOST_DEVICE
-    virtual void compute( real64 const pressure,
-                          real64 const temperature,
-                          arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & composition,
-                          arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & phaseFraction,
-                          arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & phaseDensity,
-                          arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & phaseMassDensity,
-                          arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & phaseViscosity,
-                          arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & phaseEnthalpy,
-                          arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & phaseInternalEnergy,
-                          arraySlice2d< real64, multifluid::USD_PHASE_COMP-2 > const & phaseCompFraction,
-                          real64 & totalDensity ) const = 0;
-
     /**
      * @brief Main compute function to update properties in a cell with derivatives (used in Newton iterations)
      * @param[in] pressure pressure in the cell
@@ -639,6 +643,35 @@ protected:
   array2d< real64, multifluid::LAYOUT_FLUID > m_totalDensity_n;
 
 };
+
+template< typename FLUIDWRAPPER >
+GEOS_HOST_DEVICE
+void
+MultiFluidBase::KernelWrapper::computeValues( FLUIDWRAPPER fluidWrapper,
+                                              real64 const pressure,
+                                              real64 const temperature,
+                                              arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & composition,
+                                              arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & phaseFraction,
+                                              arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & phaseDensity,
+                                              arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & phaseMassDensity,
+                                              arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & phaseViscosity,
+                                              arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & phaseEnthalpy,
+                                              arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & phaseInternalEnergy,
+                                              arraySlice2d< real64, multifluid::USD_PHASE_COMP-2 > const & phaseCompFraction,
+                                              real64 & totalDensity )
+{
+  GEOS_UNUSED_VAR( pressure );
+  GEOS_UNUSED_VAR( temperature );
+  GEOS_UNUSED_VAR( composition );
+  GEOS_UNUSED_VAR( phaseFraction );
+  GEOS_UNUSED_VAR( phaseDensity );
+  GEOS_UNUSED_VAR( phaseMassDensity );
+  GEOS_UNUSED_VAR( phaseViscosity );
+  GEOS_UNUSED_VAR( phaseEnthalpy );
+  GEOS_UNUSED_VAR( phaseInternalEnergy );
+  GEOS_UNUSED_VAR( phaseCompFraction );
+  GEOS_UNUSED_VAR( totalDensity );
+}
 
 template< integer maxNumComp, typename OUT_ARRAY >
 GEOS_HOST_DEVICE

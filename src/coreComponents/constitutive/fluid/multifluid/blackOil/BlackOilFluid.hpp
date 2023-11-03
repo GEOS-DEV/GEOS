@@ -58,20 +58,6 @@ public:
   class KernelWrapper final : public BlackOilFluidBase::KernelWrapper
   {
 public:
-
-    GEOS_HOST_DEVICE
-    virtual void compute( real64 pressure,
-                          real64 temperature,
-                          arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & composition,
-                          arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & phaseFraction,
-                          arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & phaseDensity,
-                          arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & phaseMassDensity,
-                          arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & phaseViscosity,
-                          arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & phaseEnthalpy,
-                          arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & phaseInternalEnergy,
-                          arraySlice2d< real64, multifluid::USD_PHASE_COMP-2 > const & phaseCompFraction,
-                          real64 & totalDensity ) const override;
-
     GEOS_HOST_DEVICE
     virtual void compute( real64 const pressure,
                           real64 const temperature,
@@ -361,76 +347,6 @@ private:
   PVTOData m_PVTO;
 
 };
-
-GEOS_HOST_DEVICE
-GEOS_FORCE_INLINE
-void
-BlackOilFluid::KernelWrapper::
-  compute( real64 pressure,
-           real64 temperature,
-           arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & composition,
-           arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & phaseFraction,
-           arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & phaseDensity,
-           arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & phaseMassDensity,
-           arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & phaseViscosity,
-           arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & phaseEnthalpy,
-           arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & phaseInternalEnergy,
-           arraySlice2d< real64, multifluid::USD_PHASE_COMP - 2 > const & phaseCompFraction,
-           real64 & totalDensity ) const
-{
-  GEOS_UNUSED_VAR( temperature, phaseEnthalpy, phaseInternalEnergy );
-
-  real64 compMoleFrac[NC_BO]{};
-  real64 phaseMolecularWeight[NP_BO]{};
-
-  // 1. Convert to mass if necessary
-
-  if( m_useMass )
-  {
-    convertToMoleFractions< NC_BO >( composition,
-                                     compMoleFrac );
-  }
-  else
-  {
-    for( integer ic = 0; ic < NC_BO; ++ic )
-    {
-      compMoleFrac[ic] = composition[ic];
-    }
-  }
-
-  // 2. Compute phase fractions and phase component fractions
-
-  computeEquilibrium( pressure,
-                      compMoleFrac,
-                      phaseFraction,
-                      phaseCompFraction );
-
-  // 3. Compute phase densities and viscosities
-
-  computeDensitiesViscosities( pressure,
-                               compMoleFrac,
-                               phaseFraction,
-                               phaseDensity,
-                               phaseMassDensity,
-                               phaseViscosity,
-                               phaseMolecularWeight );
-
-  // 4. If mass variables used instead of molar, perform the conversion
-
-  if( m_useMass )
-  {
-    convertToMassFractions< NC_BO >( phaseMolecularWeight,
-                                     phaseFraction,
-                                     phaseCompFraction );
-  }
-
-  // 5. Compute total fluid mass/molar density and derivatives
-
-  computeTotalDensity< NC_BO, NP_BO >( phaseFraction,
-                                       phaseDensity,
-                                       totalDensity );
-
-}
 
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
