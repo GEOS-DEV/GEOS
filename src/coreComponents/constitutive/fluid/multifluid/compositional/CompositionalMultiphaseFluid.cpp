@@ -82,7 +82,7 @@ template< typename FLASH, typename PHASE1, typename PHASE2, typename PHASE3 >
 string CompositionalMultiphaseFluid< FLASH, PHASE1, PHASE2, PHASE3 >::catalogName()
 {
   return GEOS_FMT( "Compositonal{}Fluid{}{}",
-                   compositional::PhaseName< FLASH::getNumberOfPhases() >::catalogName(),
+                   compositional::PhaseName< FLASH::KernelWrapper::getNumberOfPhases() >::catalogName(),
                    FLASH::catalogName(),
                    PHASE1::Viscosity::catalogName() );
 }

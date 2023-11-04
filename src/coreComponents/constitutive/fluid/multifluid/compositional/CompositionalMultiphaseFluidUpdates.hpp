@@ -99,7 +99,6 @@ private:
   // Phase model kernel wrappers
   typename PHASE1::KernelWrapper m_phase1;
   typename PHASE2::KernelWrapper m_phase2;
-  typename PHASE3::KernelWrapper m_phase3;
 };
 
 template< typename FLASH, typename PHASE1, typename PHASE2, typename PHASE3 >
@@ -131,9 +130,8 @@ CompositionalMultiphaseFluidUpdates( compositional::ComponentProperties const & 
                                  std::move( totalDensity ) ),
   m_componentProperties( componentProperties.createKernelWrapper() ),
   m_flash( flash.createKernelWrapper() ),
-  m_phase1( phase1.createKernelWrapper()),
-  m_phase2( phase2.createKernelWrapper()),
-  m_phase3( phase3.createKernelWrapper())
+  m_phase1( phase1.createKernelWrapper() ),
+  m_phase2( phase2.createKernelWrapper() )
 {}
 
 template< typename FLASH, typename PHASE1, typename PHASE2, typename PHASE3 >
@@ -196,15 +194,6 @@ CompositionalMultiphaseFluidUpdates< FLASH, PHASE1, PHASE2, PHASE3 >::compute(
                             phaseDens[1],
                             phaseMassDens[1],
                             m_useMass );
-  if constexpr (2 < FLASH::getNumberOfPhases())
-  {
-    m_phase3.density.compute( pressure,
-                              temperature,
-                              phaseCompFrac[2].toSliceConst(),
-                              phaseDens[2],
-                              phaseMassDens[2],
-                              m_useMass );
-  }
 
   // 4. Calculate the phase viscosities
   m_phase1.viscosity.compute( pressure,
@@ -219,15 +208,6 @@ CompositionalMultiphaseFluidUpdates< FLASH, PHASE1, PHASE2, PHASE3 >::compute(
                               phaseMassDens[1],
                               phaseVisc[1],
                               m_useMass );
-  if constexpr (2 < FLASH::getNumberOfPhases())
-  {
-    m_phase3.viscosity.compute( pressure,
-                                temperature,
-                                phaseCompFrac[2].toSliceConst(),
-                                phaseMassDens[2],
-                                phaseVisc[2],
-                                m_useMass );
-  }
 
   // 5. if mass variables used instead of molar, perform the conversion
 
@@ -326,18 +306,6 @@ CompositionalMultiphaseFluidUpdates< FLASH, PHASE1, PHASE2, PHASE3 >::compute(
                             phaseMassDensity.value[1],
                             phaseMassDensity.derivs[1],
                             m_useMass );
-  if constexpr (2 < FLASH::getNumberOfPhases())
-  {
-    m_phase3.density.compute( pressure,
-                              temperature,
-                              phaseCompFrac.value[2].toSliceConst(),
-                              phaseCompFrac.derivs[2].toSliceConst(),
-                              phaseDens.value[2],
-                              phaseDens.derivs[2],
-                              phaseMassDensity.value[2],
-                              phaseMassDensity.derivs[2],
-                              m_useMass );
-  }
 
   // 4. Calculate the phase viscosities
   m_phase1.viscosity.compute( pressure,
@@ -358,18 +326,6 @@ CompositionalMultiphaseFluidUpdates< FLASH, PHASE1, PHASE2, PHASE3 >::compute(
                               phaseVisc.value[1],
                               phaseVisc.derivs[1],
                               m_useMass );
-  if constexpr (2 < FLASH::getNumberOfPhases())
-  {
-    m_phase3.viscosity.compute( pressure,
-                                temperature,
-                                phaseCompFrac.value[2].toSliceConst(),
-                                phaseCompFrac.derivs[2].toSliceConst(),
-                                phaseMassDensity.value[2],
-                                phaseMassDensity.derivs[2].toSliceConst(),
-                                phaseVisc.value[2],
-                                phaseVisc.derivs[2],
-                                m_useMass );
-  }
 
   // 5. if mass variables used instead of molar, perform the conversion
   if( m_useMass )

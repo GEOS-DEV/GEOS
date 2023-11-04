@@ -44,6 +44,10 @@ public:
 
   explicit NegativeTwoPhaseFlashModelUpdate( ComponentProperties const & componentProperties );
 
+  // Mark as a 2-phase flash
+  GEOS_HOST_DEVICE
+  static constexpr integer getNumberOfPhases() { return 2; }
+
   template< int USD1, int USD2, int USD3 >
   GEOS_HOST_DEVICE
   void compute( real64 const & pressure,
@@ -105,9 +109,6 @@ public:
   {
     return FunctionType::FLASH;
   }
-
-  // Mark as a 2-phase flash
-  static constexpr integer getNumberOfPhases() { return 2; }
 
   /// Type of kernel wrapper for in-kernel update
   using KernelWrapper = NegativeTwoPhaseFlashModelUpdate< EOS_TYPE_LIQUID, EOS_TYPE_VAPOUR >;
