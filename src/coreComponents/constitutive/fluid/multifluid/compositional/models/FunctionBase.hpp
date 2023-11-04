@@ -56,7 +56,9 @@ public:
    *       and have their contents properly moved between memory spaces.
    */
   virtual void move( LvArray::MemorySpace const space, bool const touch )
-  {}
+  {
+    GEOS_UNUSED_VAR( space, touch );
+  }
 
 protected:
   GEOS_HOST_DEVICE
