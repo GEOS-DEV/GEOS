@@ -18,7 +18,8 @@
                 "github.vscode-github-actions",
                 "GitHub.vscode-pull-request-github",
                 "ms-vscode.cpptools-extension-pack",
-                "redhat.vscode-xml"
+                "redhat.vscode-xml",
+                "GitHub.vscode-github-actions"
             ]
         }
     },
