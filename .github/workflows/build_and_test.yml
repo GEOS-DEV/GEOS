@@ -105,9 +105,10 @@ jobs:
     - name: Run integrated tests
       if: ${{ inputs.build_type == 'integrated_tests' }}
       run: |
+        BUILD_DIR_MOUNT_POINT=/tmp/GEOS
         docker run \
           --name=${CONTAINER_NAME} \
-          --volume=${GITHUB_WORKSPACE}:/tmp/GEOS \
+          --volume=${GITHUB_WORKSPACE}:${BUILD_DIR_MOUNT_POINT} \
           --cap-add=ALL \
           -e SHORT_COMMIT=${COMMIT:0:7} \
           ${DOCKER_REPOSITORY}:${GEOSX_TPL_TAG} \
