@@ -171,23 +171,17 @@ jobs:
     secrets: inherit
 
   run_integrated_tests:
-    name: ${{ matrix.name }}
     needs: 
-      - check_pull_request_is_not_a_draft
       - linux_builds
-    strategy:
-      fail-fast : false
-      matrix:
-        include:
-          - name: Run integrated tests on ubuntu (22.04, gcc 11.2.0, open-mpi 4.1.2)
-            DOCKER_REPOSITORY: geosx/ubuntu22.04-gcc11
-            build_type: integrated_tests
+      - check_pull_request_is_not_a_draft
     uses: ./.github/workflows/build_and_test.yml
     with:
       GEOSX_TPL_TAG: ${{ needs.check_pull_request_is_not_a_draft.outputs.GEOSX_TPL_TAG }}
       CMAKE_BUILD_TYPE: Release
-      DOCKER_REPOSITORY: ${{ matrix.DOCKER_REPOSITORY }}
+      build_type: integrated_tests
+      DOCKER_REPOSITORY: geosx/ubuntu22.04-gcc11
       COMMIT: ${{ github.event.pull_request.head.sha }}
+      RUNS_ON: ubuntu-22.04
     secrets: inherit
 
   # If "flag: ready to be merged" PR label found, cuda jobs run
