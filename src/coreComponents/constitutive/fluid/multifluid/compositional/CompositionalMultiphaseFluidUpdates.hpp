@@ -132,7 +132,9 @@ CompositionalMultiphaseFluidUpdates( compositional::ComponentProperties const & 
   m_flash( flash.createKernelWrapper() ),
   m_phase1( phase1.createKernelWrapper() ),
   m_phase2( phase2.createKernelWrapper() )
-{}
+{
+  GEOS_UNUSED_VAR( phase3 );
+}
 
 template< typename FLASH, typename PHASE1, typename PHASE2, typename PHASE3 >
 GEOS_HOST_DEVICE
