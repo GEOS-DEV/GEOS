@@ -33,25 +33,24 @@ namespace compositional
 class NullModelUpdate final : public FunctionBaseUpdate
 {
 public:
-
-  explicit NullModelUpdate( ComponentProperties const & componentProperties ):
-    FunctionBaseUpdate( componentProperties )
-  {}
+  NullModelUpdate() = default;
 
   template< int USD1 >
   GEOS_HOST_DEVICE
-  void compute( real64 const & pressure,
+  void compute( ComponentProperties::KernelWrapper const & componentProperties,
+                real64 const & pressure,
                 real64 const & temperature,
                 arraySlice1d< real64 const, USD1 > const & phaseComposition,
                 real64 & value,
                 bool useMass ) const
   {
-    GEOS_UNUSED_VAR( pressure, temperature, phaseComposition, value, useMass );
+    GEOS_UNUSED_VAR( componentProperties, pressure, temperature, phaseComposition, value, useMass );
   }
 
   template< int USD1, int USD2, int USD3 >
   GEOS_HOST_DEVICE
-  void compute( real64 const & pressure,
+  void compute( ComponentProperties::KernelWrapper const & componentProperties,
+                real64 const & pressure,
                 real64 const & temperature,
                 arraySlice1d< real64 const, USD1 > const & phaseComposition,
                 arraySlice2d< real64 const, USD2 > const & dPhaseComposition,
@@ -59,7 +58,8 @@ public:
                 arraySlice1d< real64, USD3 > const & dValue,
                 bool useMass ) const
   {
-    GEOS_UNUSED_VAR( pressure, temperature,
+    GEOS_UNUSED_VAR( componentProperties,
+                     pressure, temperature,
                      phaseComposition, dPhaseComposition,
                      value, dValue,
                      useMass );
@@ -72,8 +72,7 @@ public:
 
   NullModel( string const & name,
              ComponentProperties const & componentProperties ):
-    FunctionBase( name,
-                  componentProperties )
+    FunctionBase( name, componentProperties )
   {}
 
   virtual ~NullModel() override = default;
@@ -96,7 +95,7 @@ public:
    */
   KernelWrapper createKernelWrapper() const
   {
-    return KernelWrapper( m_componentProperties );
+    return KernelWrapper();
   };
 
 };

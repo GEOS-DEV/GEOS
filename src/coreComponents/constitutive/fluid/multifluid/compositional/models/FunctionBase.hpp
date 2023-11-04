@@ -46,9 +46,7 @@ class FunctionBaseUpdate
 {
 public:
 
-  explicit FunctionBaseUpdate( ComponentProperties const & componentProperties ):
-    m_componentProperties ( componentProperties.createKernelWrapper() )
-  {}
+  FunctionBaseUpdate() = default;
 
   /**
    * @brief Move the KernelWrapper to the given execution space, optionally touching it.
@@ -58,22 +56,12 @@ public:
    *       and have their contents properly moved between memory spaces.
    */
   virtual void move( LvArray::MemorySpace const space, bool const touch )
-  {
-    m_componentProperties.move( space, touch );
-  }
+  {}
 
 protected:
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
   static void setZero( real64 & val ){ val = 0.0; }
-
-protected:
-
-  /// Array storing the component molar weights
-  arrayView1d< real64 const > m_componentMolarWeight;
-
-  // Standard compositional input
-  ComponentProperties::KernelWrapper m_componentProperties;
 };
 
 class FunctionBase
@@ -84,7 +72,7 @@ public:
   FunctionBase( string const & name,
                 ComponentProperties const & componentProperties ):
     m_functionName( name ),
-    m_componentProperties ( componentProperties )
+    m_componentProperties( componentProperties )
   {}
 
   virtual ~FunctionBase() = default;
@@ -97,7 +85,7 @@ protected:
   /// Name of the PVT function
   string m_functionName;
 
-  // Standard compositional input
+  /// Compositional component properties
   ComponentProperties const & m_componentProperties;
 };
 

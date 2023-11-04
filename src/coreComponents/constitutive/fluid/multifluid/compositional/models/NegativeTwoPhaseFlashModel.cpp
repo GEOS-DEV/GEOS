@@ -41,22 +41,20 @@ template< typename EOS_TYPE_LIQUID, typename EOS_TYPE_VAPOUR >
 NegativeTwoPhaseFlashModel< EOS_TYPE_LIQUID, EOS_TYPE_VAPOUR >::
 NegativeTwoPhaseFlashModel( string const & name,
                             ComponentProperties const & componentProperties ):
-  FunctionBase( name,
-                componentProperties )
+  FunctionBase( name, componentProperties )
 {}
 
 template< typename EOS_TYPE_LIQUID, typename EOS_TYPE_VAPOUR >
 typename NegativeTwoPhaseFlashModel< EOS_TYPE_LIQUID, EOS_TYPE_VAPOUR >::KernelWrapper
 NegativeTwoPhaseFlashModel< EOS_TYPE_LIQUID, EOS_TYPE_VAPOUR >::createKernelWrapper() const
 {
-  return KernelWrapper( m_componentProperties );
+  return KernelWrapper( m_componentProperties.getNumberOfComponents() );
 }
 
 template< typename EOS_TYPE_LIQUID, typename EOS_TYPE_VAPOUR >
 NegativeTwoPhaseFlashModelUpdate< EOS_TYPE_LIQUID, EOS_TYPE_VAPOUR >::
-NegativeTwoPhaseFlashModelUpdate( ComponentProperties const & componentProperties ):
-  FunctionBaseUpdate( componentProperties ),
-  m_numComponents( componentProperties.getNumberOfComponents())
+NegativeTwoPhaseFlashModelUpdate( integer const numComponents ):
+  m_numComponents( numComponents )
 {}
 
 // Explicit instantiation of the model template.

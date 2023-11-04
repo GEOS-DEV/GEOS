@@ -52,8 +52,8 @@ public:
 
   // Get the number of phases
   static constexpr integer NUM_PHASES = FlashModel::KernelWrapper::getNumberOfPhases();
-  // Currently restrict to 2 phases
-  static_assert( NUM_PHASES == 2 );
+  // Currently restrict to 2 or 3 phases
+  static_assert( NUM_PHASES == 2 || NUM_PHASES == 3 );
 
   using exec_policy = parallelDevicePolicy<>;
 
