@@ -15,11 +15,10 @@
             "extensions": [
                 "eamodio.gitlens",
                 "fredericbonnet.cmake-test-adapter",
-                "github.vscode-github-actions",
+                "GitHub.vscode-github-actions",
                 "GitHub.vscode-pull-request-github",
                 "ms-vscode.cpptools-extension-pack",
-                "redhat.vscode-xml",
-                "GitHub.vscode-github-actions"
+                "redhat.vscode-xml"
             ]
         }
     },
