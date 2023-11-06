@@ -323,6 +323,28 @@ void compareMulticomponentModels( MODEL1_TYPE const & lhs, MODEL2_TYPE const & r
 
 }
 
+/**
+ * @brief Checks if the WellControls parameters are within the fluid tables ranges
+ * @param fluid the fluid to check
+ */
+void CompositionalMultiphaseWell::validateWellControlsForFluid( WellControls const & wellControls,
+                                                                MultiFluidBase const & fluid ) const
+{
+  if( wellControls.useSurfaceConditions() )
+  {
+    try
+    {
+      real64 const & surfaceTemp = wellControls.getSurfaceTemperature();
+      real64 const & surfacePres = wellControls.getSurfacePressure();
+      fluid.checkTablesParameters( surfacePres, surfaceTemp );
+    } catch( SimulationError const & ex )
+    {
+      string const errorMsg = GEOS_FMT( "{}: wrong surface pressure / temperature.\n", getDataContext() );
+      throw SimulationError( ex, errorMsg );
+    }
+  }
+}
+
 void CompositionalMultiphaseWell::validateConstitutiveModels( DomainPartition const & domain ) const
 {
   GEOS_MARK_FUNCTION;
@@ -348,6 +370,9 @@ void CompositionalMultiphaseWell::validateConstitutiveModels( DomainPartition co
       string const & relpermName = subRegion.getReference< string >( viewKeyStruct::relPermNamesString() );
       RelativePermeabilityBase const & relPerm = getConstitutiveModel< RelativePermeabilityBase >( subRegion, relpermName );
       compareMultiphaseModels( relPerm, referenceFluid );
+
+      WellControls const & wellControls = getWellControls( subRegion );
+      validateWellControlsForFluid( wellControls, fluid );
     } );
 
   } );
@@ -431,24 +456,6 @@ void CompositionalMultiphaseWell::validateWellConstraints( real64 const & time_n
                  "WellControls " << wellControls.getDataContext() <<
                  ": Target total rate cannot be used for producers",
                  InputError );
-
-  if( wellControls.useSurfaceConditions() )
-  {
-    // check if the pressure & temperature is within the fluid tables ranges
-    constitutive::constitutiveUpdatePassThru( fluid, [&] ( auto & castedFluid )
-    {
-      try
-      {
-        real64 const & surfaceTemp = wellControls.getSurfaceTemperature();
-        real64 const & surfacePres = wellControls.getSurfacePressure();
-        castedFluid.checkTablesParameters( surfacePres, surfaceTemp );
-      } catch( SimulationError const & ex )
-      {
-        string const errorMsg = GEOS_FMT( "{}: wrong surface pressure / temperature.\n", getDataContext() );
-        throw SimulationError( ex, errorMsg );
-      }
-    } );
-  }
 
   // Find target phase index for phase rate constraint
   for( integer ip = 0; ip < fluid.numFluidPhases(); ++ip )
