@@ -335,6 +335,7 @@ struct AssemblerKernelHelper
                           arrayView1d< real64 const > const & mimFaceGravCoef,
                           arraySlice1d< localIndex const > const & elemToFaces,
                           real64 const & elemGravCoef,
+                          integer const useTotalMassEquation,
                           ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const & phaseDens,
                           ElementViewConst< arrayView4d< real64 const, multifluid::USD_PHASE_DC > > const & dPhaseDens,
                           ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const & phaseMassDens,
@@ -522,6 +523,7 @@ struct AssemblerKernel
            arraySlice1d< localIndex const > const & elemToFaces,
            real64 const & elemPres,
            real64 const & elemGravCoef,
+           const integer useTotalMassEquation,
            ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const & phaseDens,
            ElementViewConst< arrayView4d< real64 const, multifluid::USD_PHASE_DC > > const & dPhaseDens,
            ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const & phaseMassDens,
@@ -636,6 +638,7 @@ struct FluxKernel
           globalIndex const rankOffset,
           real64 const lengthTolerance,
           real64 const dt,
+          integer const useTotalMassEquation,
           CRSMatrixView< real64, globalIndex const > const & localMatrix,
           arrayView1d< real64 > const & localRhs );
 
