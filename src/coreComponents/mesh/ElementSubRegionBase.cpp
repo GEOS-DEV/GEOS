@@ -29,7 +29,8 @@ ElementSubRegionBase::ElementSubRegionBase( string const & name, Group * const p
   m_numEdgesPerElement(),
   m_numFacesPerElement(),
   m_elementCenter(),
-  m_elementVolume()
+  m_elementVolume(),
+  m_elementGlobalIndex()
 {
   registerGroup( groupKeyStruct::constitutiveModelsString(), &m_constitutiveModels ).
     setSizedFromParent( 1 );
@@ -45,6 +46,9 @@ ElementSubRegionBase::ElementSubRegionBase( string const & name, Group * const p
     reference().resizeDimension< 1 >( 3 );
 
   registerWrapper( viewKeyStruct::elementVolumeString(), &m_elementVolume ).
+    setPlotLevel( PlotLevel::LEVEL_1 );
+
+  registerWrapper( viewKeyStruct::elementGlobalIndexString(), &m_elementGlobalIndex ).
     setPlotLevel( PlotLevel::LEVEL_1 );
 }
 

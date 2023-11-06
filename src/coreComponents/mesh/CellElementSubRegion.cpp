@@ -297,6 +297,9 @@ void CellElementSubRegion::
   calculateElementCenterAndVolume( localIndex const k,
                                    arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X ) const
 {
+  // TODO: Compute the global cell index
+  m_elementGlobalIndex[k] = 0;
+
   auto getElementCoordinatesaAndComputeElementCenter = [k, X, this]( auto & XLocal )
   {
     LvArray::tensorOps::fill< 3 >( m_elementCenter[k], 0 );

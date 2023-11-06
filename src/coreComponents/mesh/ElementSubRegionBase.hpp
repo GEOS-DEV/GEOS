@@ -160,6 +160,13 @@ public:
   { return m_elementVolume; }
 
   /**
+   * @brief Get the global index of each element in this subregion.
+   * @return an arrayView1d of element global indexes
+   */
+  arrayView1d< globalIndex const > getElementGlobalIndex() const
+  { return m_elementGlobalIndex; }
+
+  /**
    * @brief Get the group in which the constitutive models of this subregion are registered.
    * @return a pointer to the const group in which the constitutive models are registered
    */
@@ -228,6 +235,8 @@ public:
     static constexpr char const * elementCenterString() { return "elementCenter"; }
     /// @return String key for the member level field for the element volume.
     static constexpr char const * elementVolumeString() { return "elementVolume"; }
+    /// @return String key for the member level field for the element global index.
+    static constexpr char const * elementGlobalIndexString() { return "elementGlobalIndex"; }
   };
 
   /**
@@ -259,6 +268,9 @@ protected:
 
   /// Member level field for the element volume.
   array1d< real64 > m_elementVolume;
+
+  /// Member level field for the element global index.
+  array1d< globalIndex > m_elementGlobalIndex;
 
   /// Type of element in this subregion.
   ElementType m_elementType;
