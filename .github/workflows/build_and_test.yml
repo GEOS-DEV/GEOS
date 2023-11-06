@@ -105,11 +105,15 @@ jobs:
     - name: Run integrated tests
       if: ${{ inputs.build_type == 'integrated_tests' }}
       run: |
-        BUILD_DIR_MOUNT_POINT=/tmp/GEOS
-        docker run \
-          --name=${CONTAINER_NAME} \
-          --volume=${GITHUB_WORKSPACE}:${BUILD_DIR_MOUNT_POINT} \
-          --cap-add=ALL \
-          -e SHORT_COMMIT=${COMMIT:0:7} \
-          ${DOCKER_REPOSITORY}:${GEOSX_TPL_TAG} \
-          ${BUILD_DIR_MOUNT_POINT}/scripts/ci_run_integrated_tests.sh
+        ./scripts/ci_build_and_test.sh
+        
+
+
+        # BUILD_DIR_MOUNT_POINT=/tmp/GEOS
+        # docker run \
+        #   --name=${CONTAINER_NAME} \
+        #   --volume=${GITHUB_WORKSPACE}:${BUILD_DIR_MOUNT_POINT} \
+        #   --cap-add=ALL \
+        #   -e SHORT_COMMIT=${COMMIT:0:7} \
+        #   ${DOCKER_REPOSITORY}:${GEOSX_TPL_TAG} \
+        #   ${BUILD_DIR_MOUNT_POINT}/scripts/ci_run_integrated_tests.sh

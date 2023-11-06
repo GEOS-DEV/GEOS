@@ -34,6 +34,7 @@ Usage: $0
   [ --no-install-schema ]
   [ --no-run-unit-tests ]
   [ --no-use-sccache ]
+  [ --run-integrated-tests ]
   [ --test-code-style ]
   [ --test-documentation ]
   [ -h | --help ]
@@ -44,7 +45,7 @@ exit 1
 # Working in the root of the cloned repository
 or_die cd $(dirname $0)/..
 
-args=$(getopt -a -o h --long build-exe-only,cmake-build-type:,no-run-unit-tests,gcp-credential-file:,host-config:,no-install-schema,install-dir:,test-code-style,test-documentation,no-use-sccache,help -- "$@")
+args=$(getopt -a -o h --long build-exe-only,cmake-build-type:,no-run-unit-tests,gcp-credential-file:,host-config:,no-install-schema,install-dir:,test-code-style,test-documentation,no-use-sccache,run-integrated-tests,help -- "$@")
 if [[ $? -gt 0 ]]; then
   echo "Error after getopt"
   echo "which getop"
@@ -61,6 +62,7 @@ HOST_CONFIG=unset
 GEOSX_DIR=unset
 GEOSX_INSTALL_SCHEMA=true
 RUN_UNIT_TESTS=true
+RUN_INTEGRATED_TESTS=false
 USE_SCCACHE=true
 TEST_CODE_STYLE=false
 TEST_DOCUMENTATION=false
@@ -69,17 +71,18 @@ eval set -- ${args}
 while :
 do
   case $1 in
-    --build-exe-only)      BUILD_EXE_ONLY=true; RUN_UNIT_TESTS=false; shift;;
-    --cmake-build-type)    CMAKE_BUILD_TYPE=$2;        shift 2;;
-    --gcp-credential-file) GCP_CREDENTIAL_FILE=$2;     shift 2;;
-    --host-config)         HOST_CONFIG=$2;             shift 2;;
-    --install-dir)         GEOSX_DIR=$2;               shift 2;;
-    --no-install-schema)   GEOSX_INSTALL_SCHEMA=false; shift;;
-    --no-run-unit-tests)   RUN_UNIT_TESTS=false;       shift;;
-    --no-use-sccache)      USE_SCCACHE=false;          shift;;
-    --test-code-style)     TEST_CODE_STYLE=true;       shift;;
-    --test-documentation)  TEST_DOCUMENTATION=true;    shift;;
-    -h | --help)           usage;                      shift;;
+    --build-exe-only)       BUILD_EXE_ONLY=true; RUN_UNIT_TESTS=false; shift;;
+    --cmake-build-type)     CMAKE_BUILD_TYPE=$2;        shift 2;;
+    --gcp-credential-file)  GCP_CREDENTIAL_FILE=$2;     shift 2;;
+    --host-config)          HOST_CONFIG=$2;             shift 2;;
+    --install-dir)          GEOSX_DIR=$2;               shift 2;;
+    --no-install-schema)    GEOSX_INSTALL_SCHEMA=false; shift;;
+    --no-run-unit-tests)    RUN_UNIT_TESTS=false;       shift;;
+    --no-use-sccache)       USE_SCCACHE=false;          shift;;
+    --run-integrated-tests) RUN_INTEGRATED_TESTS=true;  shift;;
+    --test-code-style)      TEST_CODE_STYLE=true;       shift;;
+    --test-documentation)   TEST_DOCUMENTATION=true;    shift;;
+    -h | --help)            usage;                      shift;;
     # -- means the end of the arguments; drop this, and break out of the while loop
     --) shift; break;;
     *) >&2 echo Unsupported option: $1
@@ -121,6 +124,10 @@ EOT
 
   echo "sccache initial state"
   ${SCCACHE} --show-stats
+fi
+
+if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
+  echo "We should be running the integrated tests."
 fi
 
 # The -DBLT_MPI_COMMAND_APPEND="--allow-run-as-root;--oversubscribe" option is added for OpenMPI.

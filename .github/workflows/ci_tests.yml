@@ -177,6 +177,7 @@ jobs:
     uses: ./.github/workflows/build_and_test.yml
     with:
       GEOSX_TPL_TAG: ${{ needs.check_pull_request_is_not_a_draft.outputs.GEOSX_TPL_TAG }}
+      BUILD_AND_TEST_ARGS: --run-integrated-tests
       CMAKE_BUILD_TYPE: Release
       build_type: integrated_tests
       DOCKER_REPOSITORY: geosx/ubuntu22.04-gcc11
