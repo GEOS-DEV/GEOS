@@ -1,7 +1,7 @@
 # Specify list of tests
 set( gtest_geosx_tests
-	testWavePropagation.cpp
-        testWavePropagationAcousticFirstOrder.cpp )
+	   testWavePropagation.cpp
+     testWavePropagationAcousticFirstOrder.cpp )
 
 set( dependencyList ${parallelDeps} gtest )
 
@@ -15,10 +15,9 @@ endif()
 foreach(test ${gtest_geosx_tests})
     get_filename_component( test_name ${test} NAME_WE )
     blt_add_executable( NAME ${test_name}
-            SOURCES ${test}
-            OUTPUT_DIR ${TEST_OUTPUT_DIRECTORY}
-            DEPENDS_ON ${dependencyList}
-            )
+                        SOURCES ${test}
+                        OUTPUT_DIR ${TEST_OUTPUT_DIRECTORY}
+                        DEPENDS_ON ${dependencyList}  )
 
     # Guard to prevent GCC (version 8) from giving warnings due
     # to some sort of possible conversion from int to long unsigned.

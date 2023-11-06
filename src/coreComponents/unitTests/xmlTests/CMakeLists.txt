@@ -47,6 +47,7 @@ foreach( test ${gtest_tests_with_input} )
   # test a single input file
   foreach( input ${input_files} )
     geos_add_test( NAME ${test_name}_${input}
+                   EXECUTABLE ${test_name}
                    COMMAND ${test_name} -i ${CMAKE_CURRENT_LIST_DIR}/${input}.xml )
   endforeach()
 
