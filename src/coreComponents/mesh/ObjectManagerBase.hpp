@@ -90,7 +90,8 @@ public:
                              arrayView1d< localIndex > & packList,
                              integer const recursive,
                              bool onDevice,
-                             parallelDeviceEvents & events ) override;
+                             parallelDeviceEvents & events,
+                             MPI_Op op=MPI_REPLACE ) override;
 
   /**
    * @brief Packs the elements of each set that actually are in @p packList.
@@ -422,6 +423,12 @@ public:
    * @param destination The destination index.
    */
   void copyObject( localIndex const source, localIndex const destination );
+
+  /**
+   * @brief Erase object from this object manager
+   * @param indicesToErase The local indices of the object to be erased.
+   */
+  void eraseObject( std::set< localIndex > const & indicesToErase );
 
   /**
    * @brief Computes the maximum global index allong all the MPI ranks.
@@ -901,8 +908,9 @@ public:
 
   /**
    * @brief Get the domain boundary indicator
-   * @return The information in an array of integers, mainly treated as booleans
-   *         (1 meaning the "index" is on the boundary).
+   * @return The information in an array of integers, mainly treated as booleans.
+   * @note Domain boundary is to be understood as the boundary of the domain <em>on the current rank</em>,
+   * not the whole physical domain which spans all the ranks.
    */
   array1d< integer > & getDomainBoundaryIndicator()
   {
@@ -969,13 +977,11 @@ void ObjectManagerBase::fixUpDownMaps( TYPE_RELATION & relation,
 
   bool allValuesMapped = true;
   unordered_map< globalIndex, localIndex > const & globalToLocal = relation.relatedObjectGlobalToLocal();
-  for( map< localIndex, array1d< globalIndex > >::iterator iter = unmappedIndices.begin();
-       iter != unmappedIndices.end();
-       ++iter )
+  for( auto & unmappedIndex: unmappedIndices )
   {
-    localIndex const li = iter->first;
-    array1d< globalIndex > const & globalIndices = iter->second;
-    for( localIndex a=0; a<globalIndices.size(); ++a )
+    localIndex const li = unmappedIndex.first;
+    array1d< globalIndex > const & globalIndices = unmappedIndex.second;
+    for( localIndex a = 0; a < globalIndices.size(); ++a )
     {
       if( globalIndices[a] != unmappedLocalIndexValue )
       {
@@ -988,7 +994,7 @@ void ObjectManagerBase::fixUpDownMaps( TYPE_RELATION & relation,
           allValuesMapped = false;
         }
       }
-      GEOS_ERROR_IF( relation[li][a]==unmappedLocalIndexValue, "Index not set" );
+      GEOS_ERROR_IF( relation[li][a] == unmappedLocalIndexValue, "Index not set" );
     }
   }
   GEOS_ERROR_IF( !allValuesMapped, "some values of unmappedIndices were not used" );

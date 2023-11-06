@@ -415,9 +415,9 @@ void SurfaceGenerator::postRestartInitialization()
     SurfaceElementRegion & fractureRegion = elemManager.getRegion< SurfaceElementRegion >( this->m_fractureRegionName );
     FaceElementSubRegion & fractureSubRegion = fractureRegion.getSubRegion< FaceElementSubRegion >( 0 );
 
-    for( localIndex fce = 0; fce < fractureSubRegion.m_fractureConnectorEdgesToFaceElements.size(); ++fce )
+    for( localIndex fce = 0; fce < fractureSubRegion.m_2dFaceTo2dElems.size(); ++fce )
     {
-      fractureSubRegion.m_recalculateFractureConnectorEdges.insert( fce );
+      fractureSubRegion.m_recalculateConnectionsFor2dFaces.insert( fce );
     }
 
     for( localIndex fe = 0; fe < fractureSubRegion.size(); ++fe )
@@ -434,7 +434,7 @@ void SurfaceGenerator::postRestartInitialization()
       }
     }
 
-    fractureSubRegion.m_recalculateFractureConnectorEdges.clear();
+    fractureSubRegion.m_recalculateConnectionsFor2dFaces.clear();
     fractureSubRegion.m_newFaceElements.clear();
   } );
 }
@@ -490,7 +490,7 @@ real64 SurfaceGenerator::solverStep( real64 const & time_n,
     }
 
     FaceElementSubRegion & fractureSubRegion = fractureRegion.getUniqueSubRegion< FaceElementSubRegion >();
-    fractureSubRegion.m_recalculateFractureConnectorEdges.clear();
+    fractureSubRegion.m_recalculateConnectionsFor2dFaces.clear();
     fractureSubRegion.m_newFaceElements.clear();
 
     // Recreate geometric sets
@@ -695,7 +695,7 @@ int SurfaceGenerator::separationDriver( DomainPartition & domain,
     elementManager.forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
     {
       FaceElementSubRegion::NodeMapType & nodeMap = subRegion.nodeList();
-      FaceElementSubRegion::FaceMapType & faceMap = subRegion.faceList();
+      ArrayOfArraysView< localIndex const > const faceMap = subRegion.faceList().toViewConst();
 
       for( localIndex kfe=0; kfe<subRegion.size(); ++kfe )
       {
@@ -1704,15 +1704,14 @@ void SurfaceGenerator::performFracture( const localIndex nodeID,
 
   // Split the node into two, using the original index, and a new one.
   localIndex newNodeIndex;
-  if( getLogLevel() )
+  if( getLogLevel() > 0 )
   {
-    GEOS_LOG_RANK( "" );
-    std::cout<<"Splitting node "<<nodeID<<" along separation plane faces: ";
+    std::ostringstream s;
     for( std::set< localIndex >::const_iterator i=separationPathFaces.begin(); i!=separationPathFaces.end(); ++i )
     {
-      std::cout<<*i<<", ";
+      s << *i << " ";
     }
-    std::cout<<std::endl;
+    GEOS_LOG_RANK( GEOS_FMT( "Splitting node {} along separation plane faces: {}", nodeID, s.str() ) );
   }
 
 
@@ -1752,8 +1751,10 @@ void SurfaceGenerator::performFracture( const localIndex nodeID,
 //  usedFacesNew = usedFaces[nodeID];
 
 
-  if( getLogLevel() )
-    std::cout<<"Done splitting node "<<nodeID<<" into nodes "<<nodeID<<" and "<<newNodeIndex<<std::endl;
+  if( getLogLevel() > 0 )
+  {
+    GEOS_LOG_RANK( GEOS_FMT( "Done splitting node {} into nodes {} and {}", nodeID, nodeID, newNodeIndex ) );
+  }
 
   // split edges
   map< localIndex, localIndex > splitEdges;
@@ -1774,10 +1775,9 @@ void SurfaceGenerator::performFracture( const localIndex nodeID,
 
       edgeToFaceMap.clearSet( newEdgeIndex );
 
-      if( getLogLevel() )
+      if( getLogLevel() > 0 )
       {
-        GEOS_LOG_RANK( "" );
-        std::cout<<"  Split edge "<<parentEdgeIndex<<" into edges "<<parentEdgeIndex<<" and "<<newEdgeIndex<<std::endl;
+        GEOS_LOG_RANK( GEOS_FMT ( "Split edge {} into edges {} and {}", parentEdgeIndex, parentEdgeIndex, newEdgeIndex ) );
       }
 
       splitEdges[parentEdgeIndex] = newEdgeIndex;
@@ -1835,10 +1835,9 @@ void SurfaceGenerator::performFracture( const localIndex nodeID,
       if( faceManager.splitObject( faceIndex, rank, newFaceIndex ) )
       {
 
-        if( getLogLevel() )
+        if( getLogLevel() > 0 )
         {
-          GEOS_LOG_RANK( "" );
-          std::cout<<"  Split face "<<faceIndex<<" into faces "<<faceIndex<<" and "<<newFaceIndex<<std::endl;
+          GEOS_LOG_RANK( GEOS_FMT ( "Split face {} into faces {} and {}", faceIndex, faceIndex, newFaceIndex ) );
         }
 
         splitFaces[faceIndex] = newFaceIndex;
@@ -2926,7 +2925,7 @@ void SurfaceGenerator::calculateNodeAndFaceSif( DomainPartition const & domain,
       }
     }
 
-    if( unpinchedNodeID.size() < 3 )
+    if( unpinchedNodeID.size() < 2 || (unpinchedNodeID.size() == 2 && tipEdgesID.size() < 2) )
     {
       for( localIndex const nodeIndex : pinchedNodeID )
       {
@@ -3226,7 +3225,10 @@ void SurfaceGenerator::calculateNodeAndFaceSif( DomainPartition const & domain,
   {
     if( isNodeGhost[nodeIndex] < 0 )
     {
-      SIFNode[nodeIndex] = *min_element( SIFNode_All[nodeIndex].begin(), SIFNode_All[nodeIndex].end());
+      if( SIFNode_All[nodeIndex].size() >= 1 )
+      {
+        SIFNode[nodeIndex] = *min_element( SIFNode_All[nodeIndex].begin(), SIFNode_All[nodeIndex].end());
+      }
 
       for( localIndex const edgeIndex: m_tipEdges )
       {
@@ -3236,7 +3238,10 @@ void SurfaceGenerator::calculateNodeAndFaceSif( DomainPartition const & domain,
           {
             if( m_tipFaces.contains( faceIndex ))
             {
-              SIFonFace[faceIndex] = *max_element( SIFonFace_All[faceIndex].begin(), SIFonFace_All[faceIndex].end());
+              if( SIFonFace_All[faceIndex].size() >= 1 )
+              {
+                SIFonFace[faceIndex] = *max_element( SIFonFace_All[faceIndex].begin(), SIFonFace_All[faceIndex].end());
+              }
             }
           }
         }
@@ -4512,7 +4517,7 @@ SurfaceGenerator::calculateRuptureRate( SurfaceElementRegion & faceElementRegion
   FaceElementSubRegion & subRegion = faceElementRegion.getSubRegion< FaceElementSubRegion >( 0 );
 
   ArrayOfArraysView< localIndex const > const &
-  fractureConnectorEdgesToFaceElements = subRegion.m_fractureConnectorEdgesToFaceElements.toViewConst();
+  fractureConnectorEdgesToFaceElements = subRegion.m_2dFaceTo2dElems.toViewConst();
 
   arrayView1d< real64 > const & ruptureTime = subRegion.getField< fields::ruptureTime >();
   arrayView1d< real64 > const & ruptureRate = subRegion.getField< surfaceGeneration::ruptureRate >();

@@ -426,7 +426,7 @@ void CompositionalMultiphaseHybridFVM::assembleStabilizedFluxTerms( real64 const
   assembleFluxTerms( dt, domain, dofManager, localMatrix, localRhs );
 }
 
-real64 CompositionalMultiphaseHybridFVM::scalingForSystemSolution( DomainPartition const & domain,
+real64 CompositionalMultiphaseHybridFVM::scalingForSystemSolution( DomainPartition & domain,
                                                                    DofManager const & dofManager,
                                                                    arrayView1d< real64 const > const & localSolution )
 {
@@ -447,13 +447,13 @@ real64 CompositionalMultiphaseHybridFVM::scalingForSystemSolution( DomainPartiti
   real64 scalingFactor = 1.0;
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                                MeshLevel const & mesh,
+                                                                MeshLevel & mesh,
                                                                 arrayView1d< string const > const & regionNames )
   {
     mesh.getElemManager().forElementSubRegions< ElementSubRegionBase >( regionNames, [&]( localIndex const,
-                                                                                          ElementSubRegionBase const & subRegion )
+                                                                                          ElementSubRegionBase & subRegion )
     {
-      real64 const subRegionScalingFactor =
+      auto const subRegionData =
         isothermalCompositionalMultiphaseBaseKernels::
           ScalingForSystemSolutionKernelFactory::
           createAndLaunch< parallelDevicePolicy<> >( m_maxRelativePresChange,
@@ -464,7 +464,7 @@ real64 CompositionalMultiphaseHybridFVM::scalingForSystemSolution( DomainPartiti
                                                      subRegion,
                                                      localSolution );
 
-      scalingFactor = std::min( scalingFactor, subRegionScalingFactor );
+      scalingFactor = std::min( scalingFactor, subRegionData.localMinVal );
     } );
 
     FaceManager const & faceManager = mesh.getFaceManager();
@@ -506,7 +506,7 @@ real64 CompositionalMultiphaseHybridFVM::scalingForSystemSolution( DomainPartiti
 }
 
 
-bool CompositionalMultiphaseHybridFVM::checkSystemSolution( DomainPartition const & domain,
+bool CompositionalMultiphaseHybridFVM::checkSystemSolution( DomainPartition & domain,
                                                             DofManager const & dofManager,
                                                             arrayView1d< real64 const > const & localSolution,
                                                             real64 const scalingFactor )
@@ -517,18 +517,19 @@ bool CompositionalMultiphaseHybridFVM::checkSystemSolution( DomainPartition cons
   integer localCheck = 1;
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                                MeshLevel const & mesh,
+                                                                MeshLevel & mesh,
                                                                 arrayView1d< string const > const & regionNames )
   {
     // check cell-centered variables for each region
     mesh.getElemManager().forElementSubRegions< ElementSubRegionBase >( regionNames, [&]( localIndex const,
-                                                                                          ElementSubRegionBase const & subRegion )
+                                                                                          ElementSubRegionBase & subRegion )
     {
       // check that pressure and component densities are non-negative
       integer const subRegionSolutionCheck =
         isothermalCompositionalMultiphaseBaseKernels::
           SolutionCheckKernelFactory::
           createAndLaunch< parallelDevicePolicy<> >( m_allowCompDensChopping,
+                                                     CompositionalMultiphaseFVM::ScalingType::Global,
                                                      scalingFactor,
                                                      dofManager.rankOffset(),
                                                      m_numComponents,
@@ -635,6 +636,7 @@ real64 CompositionalMultiphaseHybridFVM::calculateResidualNorm( real64 const & G
                                                    subRegion,
                                                    fluid,
                                                    solid,
+                                                   m_nonlinearSolverParameters.m_minNormalizer,
                                                    subRegionResidualNorm,
                                                    subRegionResidualNormalizer );
 
@@ -672,6 +674,7 @@ real64 CompositionalMultiphaseHybridFVM::calculateResidualNorm( real64 const & G
                                                  elemManager,
                                                  faceManager,
                                                  dt,
+                                                 m_nonlinearSolverParameters.m_minNormalizer,
                                                  faceResidualNorm,
                                                  faceResidualNormalizer );
 
@@ -705,7 +708,7 @@ real64 CompositionalMultiphaseHybridFVM::calculateResidualNorm( real64 const & G
 
   if( getLogLevel() >= 1 && logger::internal::rank == 0 )
   {
-    std::cout << GEOS_FMT( "    ( R{} ) = ( {:4.2e} ) ; ", coupledSolverAttributePrefix(), residualNorm );
+    std::cout << GEOS_FMT( "        ( R{} ) = ( {:4.2e} )", coupledSolverAttributePrefix(), residualNorm );
   }
 
   return residualNorm;
