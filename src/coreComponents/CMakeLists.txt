@@ -149,3 +149,6 @@ endmacro()
 get_all_test_targets(unittests_targets)
 add_custom_target(unittests COMMAND ${CMAKE_CTEST_COMMAND} DEPENDS ${unittests_targets})
 ########################################################################
+
+# ninja only: use `JOB_POOLS` to prevent OOM errors in CI (CUDA)
+set_property(GLOBAL PROPERTY JOB_POOLS one_jobs=1 two_jobs=2)
