@@ -123,32 +123,8 @@ if( GEOS_ENABLE_TESTS )
   add_subdirectory( unitTests )
 endif( )
 
-########################################################################
-# the following adds a `unittests` CMake target such that running `$ make unittests test`
+# the following adds a `build_test` CMake target such that running `$ make build_test test`
 # builds the unit tests before running them
-function(get_all_test_targets var)
-    set(targets)
-    get_all_test_targets_recursive(targets ${CMAKE_CURRENT_SOURCE_DIR})
-    set(${var} ${targets} PARENT_SCOPE)
-endfunction()
-
-macro(get_all_test_targets_recursive targets dir)
-    get_property(subdirectories DIRECTORY ${dir} PROPERTY SUBDIRECTORIES)
-    foreach(subdir ${subdirectories})
-        get_all_test_targets_recursive(${targets} ${subdir})
-    endforeach()
-
-    get_property(current_targets DIRECTORY ${dir} PROPERTY BUILDSYSTEM_TARGETS)
-    foreach(target ${current_targets})
-      if(${target} MATCHES "(test|example).+")
-        list(APPEND ${targets} ${target})
-      endif()
-    endforeach()
-endmacro()
-
-get_all_test_targets(unittests_targets)
-add_custom_target(unittests COMMAND ${CMAKE_CTEST_COMMAND} DEPENDS ${unittests_targets})
-########################################################################
-
-# ninja only: use `JOB_POOLS` to prevent OOM errors in CI (CUDA)
-set_property(GLOBAL PROPERTY JOB_POOLS one_jobs=1 two_jobs=2)
+get_property( tmp GLOBAL PROPERTY geos_tests_list )
+add_custom_target( build_test COMMAND ${CMAKE_CTEST_COMMAND} DEPENDS ${tmp} )
+# message( STATUS "geos_tests: ${tmp} " )  # debug

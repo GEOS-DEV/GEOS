@@ -5,15 +5,14 @@
 set( gtest_geosx_tests
      testSinglePhaseBaseKernels.cpp
      testThermalCompMultiphaseFlow.cpp
-     testThermalSinglePhaseFlow.cpp
-   )
+     testThermalSinglePhaseFlow.cpp )
 
 set( dependencyList ${parallelDeps} gtest )
 
 if ( GEOSX_BUILD_SHARED_LIBS )
-  set (dependencyList ${dependencyList} geosx_core )
+  set( dependencyList ${dependencyList} geosx_core )
 else()
-  set (dependencyList ${dependencyList} ${geosx_core_libs} )
+  set( dependencyList ${dependencyList} ${geosx_core_libs} )
 endif()
 
 
@@ -37,8 +36,8 @@ foreach(test ${gtest_geosx_tests})
                       OUTPUT_DIR ${TEST_OUTPUT_DIRECTORY}
                       DEPENDS_ON ${dependencyList} )
 
-  blt_add_test( NAME ${test_name}
-                COMMAND ${test_name} )
+  geos_add_test( NAME ${test_name}
+                 COMMAND ${test_name} )
 endforeach()
 
 # For some reason, BLT is not setting CUDA language for these source files

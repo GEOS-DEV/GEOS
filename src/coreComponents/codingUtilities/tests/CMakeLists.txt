@@ -5,8 +5,7 @@
 set( testSources
      testGeosxTraits.cpp
      testStringUtilities.cpp
-     testParsing.cpp
-     )
+     testParsing.cpp )
 
 set(dependencyList gtest codingUtilities ${parallelDeps} )
 
@@ -20,8 +19,7 @@ foreach( test ${testSources} )
                       OUTPUT_DIR ${TEST_OUTPUT_DIRECTORY}
                       DEPENDS_ON ${dependencyList} )
 
-  blt_add_test( NAME ${test_name}
-                COMMAND ${test_name}
-                )
+  geos_add_test( NAME ${test_name}
+                 COMMAND ${test_name} )
 
 endforeach()

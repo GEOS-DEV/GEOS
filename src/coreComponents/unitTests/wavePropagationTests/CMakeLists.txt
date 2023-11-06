@@ -35,9 +35,8 @@ foreach(test ${gtest_geosx_tests})
       endif()
     endif()
 
-    blt_add_test( NAME ${test_name}
-            COMMAND ${test_name}
-            )
+    geos_add_test( NAME ${test_name}
+                   COMMAND ${test_name} )
 
 endforeach()
 

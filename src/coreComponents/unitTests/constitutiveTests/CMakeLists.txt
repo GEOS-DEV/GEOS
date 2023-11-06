@@ -51,14 +51,12 @@ endif()
 foreach(test ${gtest_geosx_tests})
     get_filename_component( test_name ${test} NAME_WE )
     blt_add_executable( NAME ${test_name}
-            SOURCES ${test}
-            OUTPUT_DIR ${TEST_OUTPUT_DIRECTORY}
-            DEPENDS_ON ${dependencyList}
-            )
+                        SOURCES ${test}
+                        OUTPUT_DIR ${TEST_OUTPUT_DIRECTORY}
+                        DEPENDS_ON ${dependencyList} )
 
-    blt_add_test( NAME ${test_name}
-                  COMMAND ${test_name}
-                )
+    geos_add_test( NAME ${test_name}
+                   COMMAND ${test_name} )
 
 endforeach()
 
@@ -74,9 +72,8 @@ blt_add_executable( NAME testTriaxial
 
 foreach(test ${gtest_triaxial_xmls})
     get_filename_component( test_name ${test} NAME_WE )
-    blt_add_test( NAME ${test_name}
-                  COMMAND testTriaxial -i ${CMAKE_CURRENT_LIST_DIR}/${test}
-                  )
+    geos_add_test( NAME ${test_name}
+                   COMMAND testTriaxial -i ${CMAKE_CURRENT_LIST_DIR}/${test} )
 endforeach()
 
 #
@@ -91,9 +88,8 @@ blt_add_executable( NAME testPVT
 
 foreach(test ${gtest_pvt_xmls})
     get_filename_component( test_name ${test} NAME_WE )
-    blt_add_test( NAME ${test_name}
-                  COMMAND testPVT -i ${CMAKE_CURRENT_LIST_DIR}/${test}
-                  )
+    geos_add_test( NAME ${test_name}
+                   COMMAND testPVT -i ${CMAKE_CURRENT_LIST_DIR}/${test} )
 endforeach()
 
 
@@ -109,7 +105,6 @@ blt_add_executable( NAME testReactiveFluid
 
 foreach(test ${gtest_reactivefluid_xmls})
     get_filename_component( test_name ${test} NAME_WE )
-    blt_add_test( NAME ${test_name}
-                  COMMAND testReactiveFluid -i ${CMAKE_CURRENT_LIST_DIR}/${test}
-                  )
+    geos_add_test( NAME ${test_name}
+                   COMMAND testReactiveFluid -i ${CMAKE_CURRENT_LIST_DIR}/${test} )
 endforeach()

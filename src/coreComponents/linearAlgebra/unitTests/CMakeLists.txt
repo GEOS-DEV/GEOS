@@ -19,8 +19,8 @@ foreach(test_name ${serial_tests})
                       SOURCES ${exec_name}.cpp
                       OUTPUT_DIR ${TEST_OUTPUT_DIRECTORY}
                       DEPENDS_ON ${dependencyList} )
-  blt_add_test( NAME testLinearAlgebra_${test_name}
-                COMMAND ${exec_name} )
+  geos_add_test( NAME testLinearAlgebra_${test_name}
+                 COMMAND ${exec_name} )
 endforeach()
 
 foreach(test_name ${parallel_tests})
@@ -30,11 +30,11 @@ foreach(test_name ${parallel_tests})
                       OUTPUT_DIR ${TEST_OUTPUT_DIRECTORY}
                       DEPENDS_ON ${dependencyList} )
   if ( ENABLE_MPI )
-    blt_add_test( NAME testLinearAlgebra_${test_name}
-                  COMMAND ${exec_name} -x ${nranks}
-                  NUM_MPI_TASKS ${nranks} )
+    geos_add_test( NAME testLinearAlgebra_${test_name}
+                   COMMAND ${exec_name} -x ${nranks}
+                   NUM_MPI_TASKS ${nranks} )
   else()
-    blt_add_test( NAME testLinearAlgebra_${test_name}
-                  COMMAND ${exec_name} )
+    geos_add_test( NAME testLinearAlgebra_${test_name}
+                   COMMAND ${exec_name} )
   endif()
 endforeach()

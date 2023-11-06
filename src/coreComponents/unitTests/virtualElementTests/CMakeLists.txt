@@ -2,16 +2,15 @@
 # Specify list of tests
 #
 
-set(testSources
-  testConformingVirtualElementOrder1.cpp
-   )
+set( testSources
+     testConformingVirtualElementOrder1.cpp )
 
 set( dependencyList ${parallelDeps} gtest )
 
 if ( GEOSX_BUILD_SHARED_LIBS )
-  set (dependencyList ${dependencyList} geosx_core)
+  set( dependencyList ${dependencyList} geosx_core)
 else()
-  set (dependencyList ${dependencyList} ${geosx_core_libs} )
+  set( dependencyList ${dependencyList} ${geosx_core_libs} )
 endif()
 
 #
@@ -24,9 +23,8 @@ foreach(test ${testSources})
                         OUTPUT_DIR ${TEST_OUTPUT_DIRECTORY}
                         DEPENDS_ON ${dependencyList} )
 
-    blt_add_test( NAME ${test_name}
-                  COMMAND ${test_name}
-                  )
+    geos_add_test( NAME ${test_name}
+                  COMMAND ${test_name} )
 
     if( ( NOT ${ENABLE_CUDA} ) AND ( CMAKE_CXX_COMPILER_ID STREQUAL "Clang" ) )
         set_target_properties(${test_name} PROPERTIES COMPILE_FLAGS "-Wno-everything")

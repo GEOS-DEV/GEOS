@@ -13,8 +13,8 @@ foreach(test ${gtest_geosx_tests})
                         OUTPUT_DIR ${TEST_OUTPUT_DIRECTORY}
                         DEPENDS_ON ${dependencyList} )
 
-    blt_add_test( NAME ${test_name}
-                  COMMAND ${test_name} )
+    geos_add_test( NAME ${test_name}
+                   COMMAND ${test_name} )
 
     # NOTE: we explicitly depend on internal headers in order to check for the spurious addition of -DNDEBUG flag
     target_include_directories( ${test_name} PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents )

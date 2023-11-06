@@ -11,8 +11,7 @@ set(testSources
     testH1_Pyramid_Lagrange1_Gauss5.cpp
     testH1_TriangleFace_Lagrange1_Gauss1.cpp
     testQ3_Hexahedron_Lagrange_GaussLobatto.cpp
-    testQ5_Hexahedron_Lagrange_GaussLobatto.cpp
-   )
+    testQ5_Hexahedron_Lagrange_GaussLobatto.cpp )
 
 set( dependencyList gtest finiteElement ${parallelDeps} )
 
@@ -30,9 +29,8 @@ foreach(test ${testSources})
                         OUTPUT_DIR ${TEST_OUTPUT_DIRECTORY}
                         DEPENDS_ON ${dependencyList} )
 
-    blt_add_test( NAME ${test_name}
-                  COMMAND ${test_name}
-                  )
+    geos_add_test( NAME ${test_name}
+                   COMMAND ${test_name} )
 
     if( ( NOT ${ENABLE_CUDA} ) AND ( CMAKE_CXX_COMPILER_ID STREQUAL "Clang" ) )
         set_target_properties(${test_name} PROPERTIES COMPILE_FLAGS "-Wno-everything")

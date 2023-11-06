@@ -236,3 +236,9 @@ if( EXISTS "${CMAKE_SOURCE_DIR}/../integratedTests/CMakeLists.txt")
 else()
   message( "Could not find the integratedTests submodule" )
 endif()
+
+# ninja only: use `JOB_POOLS` to prevent OOM errors in CI (CUDA)
+set_property(GLOBAL PROPERTY JOB_POOLS one_jobs=1 two_jobs=2)
+
+# populated by `geos_add_test` (private list of all geos tests)
+set_property( GLOBAL PROPERTY geos_tests_list )

@@ -3,8 +3,7 @@
 #
 
 set( gtest_geosx_tests
-     testFunctions.cpp
-   )
+     testFunctions.cpp )
 
 
 set( dependencyList ${parallelDeps} gtest functions )
@@ -23,11 +22,9 @@ foreach(test ${gtest_geosx_tests})
     blt_add_executable( NAME ${test_name}
             SOURCES ${test}
             OUTPUT_DIR ${TEST_OUTPUT_DIRECTORY}
-            DEPENDS_ON ${dependencyList}
-            )
+            DEPENDS_ON ${dependencyList} )
 
-    blt_add_test( NAME ${test_name}
-            COMMAND ${test_name}
-            )
+    geos_add_test( NAME ${test_name}
+                   COMMAND ${test_name} )
 
 endforeach()

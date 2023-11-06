@@ -13,6 +13,6 @@ foreach(test_name ${serial_tests})
                       SOURCES ${exec_name}.cpp
                       OUTPUT_DIR ${TEST_OUTPUT_DIRECTORY}
                       DEPENDS_ON ${dependencyList} )
-  blt_add_test( NAME testDenseLinearAlgebra_${test_name}
-                COMMAND ${exec_name} )
+  geos_add_test( NAME testDenseLinearAlgebra_${test_name}
+                 COMMAND ${exec_name} )
 endforeach()

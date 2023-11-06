@@ -34,8 +34,8 @@ foreach(test ${gtest_geosx_tests})
                       OUTPUT_DIR ${TEST_OUTPUT_DIRECTORY}
                       DEPENDS_ON ${dependencyList} )
 
-  blt_add_test( NAME ${test_name}
-                COMMAND ${test_name} )
+  geos_add_test( NAME ${test_name}
+                 COMMAND ${test_name} )
 endforeach()
 
 # For some reason, BLT is not setting CUDA language for these source files

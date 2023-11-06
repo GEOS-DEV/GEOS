@@ -54,3 +54,31 @@ macro( geosx_add_code_checks )
     endif()
 
 endmacro( geosx_add_code_checks )
+
+
+##------------------------------------------------------------------------------
+## geos_add_test( NAME    [name]
+##                COMMAND [command] )
+##
+## Adds a test to the project, remaining arguments are forwarded to `blt_add_test`
+##------------------------------------------------------------------------------
+macro( geos_add_test )
+
+    set( options )
+    set( singleValueArgs NAME COMMAND )
+    set( multiValueArgs )
+
+    # Parse the arguments to the macro
+    cmake_parse_arguments( arg
+         "${options}" "${singleValueArgs}" "${multiValueArgs}" ${ARGN} )
+
+    get_property(tmp GLOBAL PROPERTY geos_tests_list)
+    list(APPEND tmp ${arg_NAME})
+    set_property(GLOBAL PROPERTY geos_tests_list "${tmp}")
+
+    # message( STATUS "blt_add_test: ${arg_NAME} ${arg_COMMAND} ${ARGN}")  # debug
+
+    blt_add_test( NAME ${arg_NAME}
+                  COMMAND ${arg_COMMAND} ${ARGN} )
+
+endmacro( geos_add_test )

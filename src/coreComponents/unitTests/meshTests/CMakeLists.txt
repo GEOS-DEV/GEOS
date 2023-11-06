@@ -6,20 +6,16 @@
 set( gtest_geosx_tests
      testMeshEnums.cpp
      testMeshGeneration.cpp
-     testNeighborCommunicator.cpp
-     )
+     testNeighborCommunicator.cpp )
 
 set( gtest_geosx_mpi_tests
-     testNeighborCommunicator.cpp
-     )
+     testNeighborCommunicator.cpp )
 
 if( ENABLE_VTK )
   list( APPEND gtest_geosx_tests
-        testVTKImport.cpp
-        )
+        testVTKImport.cpp )
   list( APPEND gtest_geosx_mpi_tests
-        testVTKImport.cpp
-        )
+        testVTKImport.cpp )
 endif()
 
 if( ENABLE_VTK )
@@ -43,12 +39,10 @@ foreach( test ${gtest_geosx_tests} )
   blt_add_executable( NAME ${test_name}
                       SOURCES ${test}
                       OUTPUT_DIR ${TEST_OUTPUT_DIRECTORY}
-                      DEPENDS_ON ${dependencyList}
-                      )
+                      DEPENDS_ON ${dependencyList} )
 
-  blt_add_test( NAME ${test_name}
-                COMMAND ${test_name} ${CMAKE_CURRENT_LIST_DIR}
-                )
+  geos_add_test( NAME ${test_name}
+                 COMMAND ${test_name} ${CMAKE_CURRENT_LIST_DIR} )
 
   # Older g++ version need a hint to use std::filesystem
   if( CMAKE_CXX_COMPILER_ID STREQUAL "GNU" )
@@ -71,13 +65,11 @@ if( ENABLE_MPI )
     blt_add_executable( NAME ${test_name}
                         SOURCES ${test}
                         OUTPUT_DIR ${TEST_OUTPUT_DIRECTORY}
-                        DEPENDS_ON ${dependencyList}
-                        )
+                        DEPENDS_ON ${dependencyList} )
 
-    blt_add_test( NAME ${test_name}
-                  COMMAND ${test_name} -x ${nranks}
-                  NUM_MPI_TASKS ${nranks}
-                  )
+    geos_add_test( NAME ${test_name}
+                   COMMAND ${test_name} -x ${nranks}
+                   NUM_MPI_TASKS ${nranks} )
     # Older g++ version need a hint to use std::filesystem
     if( CMAKE_CXX_COMPILER_ID STREQUAL "GNU" )
         if( CMAKE_CXX_COMPILER_VERSION VERSION_LESS 9 )
