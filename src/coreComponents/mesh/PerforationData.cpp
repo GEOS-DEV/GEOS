@@ -128,9 +128,11 @@ void PerforationData::computeWellTransmissibility( MeshLevel const & mesh,
       WellElementRegion const & wellRegion = dynamicCast< WellElementRegion const & >( wellElemSubRegion.getParent().getParent() );
       GEOS_UNUSED_VAR( wellRegion ); // unused if geos_error_if is nulld
       GEOS_LOG_RANK_IF( isZero( m_wellTransmissibility[iperf] ),
-                        "\n \nWarning! A perforation is defined with a zero transmissibility in " << wellRegion.getWellGeneratorName() << "! \n" <<
+                        "\n \nWarning! Perforation " << wellRegion.getWellGeneratorName() <<
+                        " is defined with a zero transmissibility.\n" <<
                         "The simulation is going to proceed with this zero transmissibility,\n" <<
-                        "but a better strategy to shut down a perforation is to remove the <Perforation> block from the XML\n \n" );
+                        "but a better strategy to shut down a perforation is to remove the " <<
+                        "<Perforation> block from the XML\n \n" );
       continue;
     }
 
@@ -150,7 +152,8 @@ void PerforationData::computeWellTransmissibility( MeshLevel const & mesh,
     if( dx <= 0 || dy <= 0 || dz <= 0 )
     {
       WellElementRegion const & wellRegion = dynamicCast< WellElementRegion const & >( wellElemSubRegion.getParent().getParent() );
-      GEOS_THROW( "The reservoir element dimensions (dx, dy, and dz) should be positive in " << wellRegion.getWellGeneratorName(),
+      GEOS_THROW( "The reservoir element dimensions (dx, dy, and dz) should be positive in " <<
+                  wellRegion.getWellGeneratorName(),
                   InputError );
     }
 
@@ -212,7 +215,8 @@ void PerforationData::computeWellTransmissibility( MeshLevel const & mesh,
     if( m_wellTransmissibility[iperf] <= 0 )
     {
       WellElementRegion const & wellRegion = dynamicCast< WellElementRegion const & >( wellElemSubRegion.getParent().getParent() );
-      GEOS_THROW( "The well index is negative or equal to zero in " << wellRegion.getWellGeneratorName(),
+      GEOS_THROW( "The well index is negative or equal to zero in " <<
+                  wellRegion.getWellGeneratorName(),
                   InputError );
     }
   }
