@@ -28,14 +28,14 @@ if ( ENABLE_MPI )
   set( geosx_fileio_parallel_tests
        testHDFParallelFile.cpp )
   foreach(test ${geosx_fileio_parallel_tests})
-     get_filename_component( test_name ${test} NAME_WE )
-     blt_add_executable( NAME ${test_name}
-                         SOURCES ${test}
-                         OUTPUT_DIR ${TEST_OUTPUT_DIRECTORY}
-                         DEPENDS_ON ${dependencyList} )
+    get_filename_component( test_name ${test} NAME_WE )
+    blt_add_executable( NAME ${test_name}
+                        SOURCES ${test}
+                        OUTPUT_DIR ${TEST_OUTPUT_DIRECTORY}
+                        DEPENDS_ON ${dependencyList} )
 
-      geos_add_test( NAME ${test_name}
-                     COMMAND ${test_name}
-                     NUM_MPI_TASKS ${nranks} )
+    geos_add_test( NAME ${test_name}
+                   COMMAND ${test_name}
+                   NUM_MPI_TASKS ${nranks} )
   endforeach()
 endif()
