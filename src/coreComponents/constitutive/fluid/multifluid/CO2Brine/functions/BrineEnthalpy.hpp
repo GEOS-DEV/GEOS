@@ -104,6 +104,11 @@ public:
 
   virtual string getCatalogName() const final { return catalogName(); }
 
+  /**
+   * @copydoc PVTFunctionBase::checkTablesParameters( real64 pressure, real64 temperature )
+   */
+  void checkTablesParameters( real64 pressure, real64 temperature ) const override final;
+
   virtual PVTFunctionType functionType() const override
   {
     return PVTFunctionType::ENTHALPY;
@@ -197,9 +202,11 @@ void BrineEnthalpyUpdate::compute( real64 const & pressure,
     dvalue_dC = brineEnthalpy - CO2Enthalpy;
     dValue[Deriv::dP] = (1.0 - C ) * CO2EnthalpyDeriv[0]
                         + dvalue_dC * dPhaseComposition[m_waterIndex][Deriv::dP];
-    dValue[Deriv::dT] = (1.0 - C ) * CO2EnthalpyDeriv[1]
-                        + C * brineEnthalpy_dTemperature
-                        + dvalue_dC * dPhaseComposition[m_waterIndex][Deriv::dT];
+    dValue[Deriv::dT] =
+      LvArray::math::max( 0.0,
+                          (1.0 - C ) * CO2EnthalpyDeriv[1]
+                          + C * brineEnthalpy_dTemperature
+                          + dvalue_dC * dPhaseComposition[m_waterIndex][Deriv::dT] );
   }
   else
   {
@@ -211,9 +218,11 @@ void BrineEnthalpyUpdate::compute( real64 const & pressure,
     dvalue_dC = brineEnthalpy * waterMWInv - CO2Enthalpy * CO2MWInv;
     dValue[Deriv::dP] = (1.0 - C ) * CO2EnthalpyDeriv[0] * CO2MWInv
                         + dvalue_dC * dPhaseComposition[m_waterIndex][Deriv::dP];
-    dValue[Deriv::dT] = (1.0 - C ) * CO2EnthalpyDeriv[1] * CO2MWInv
-                        + C * brineEnthalpy_dTemperature * waterMWInv
-                        + dvalue_dC * dPhaseComposition[m_waterIndex][Deriv::dT];
+    dValue[Deriv::dT] =
+      LvArray::math::max( 0.0,
+                          (1.0 - C ) * CO2EnthalpyDeriv[1] * CO2MWInv
+                          + C * brineEnthalpy_dTemperature * waterMWInv
+                          + dvalue_dC * dPhaseComposition[m_waterIndex][Deriv::dT] );
   }
 
   dValue[Deriv::dC+m_CO2Index]   = dvalue_dC * dPhaseComposition[m_waterIndex][Deriv::dC+m_CO2Index];

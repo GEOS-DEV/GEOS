@@ -39,7 +39,7 @@ struct PrecomputeSourceAndReceiverKernel
    * @tparam FE_TYPE finite element type
    * @param[in] size the number of cells in the subRegion
    * @param[in] numFacesPerElem number of face on an element
-   * @param[in] X coordinates of the nodes
+   * @param[in] nodeCoords coordinates of the nodes
    * @param[in] elemGhostRank array containing the ghost rank
    * @param[in] elemsToNodes map from element to nodes
    * @param[in] elemsToFaces map from element to faces
@@ -65,7 +65,7 @@ struct PrecomputeSourceAndReceiverKernel
   static void
   launch( localIndex const size,
           localIndex const numFacesPerElem,
-          arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X,
+          arrayView2d< WaveSolverBase::wsCoordType const, nodes::REFERENCE_POSITION_USD > const nodeCoords,
           arrayView1d< integer const > const elemGhostRank,
           arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes,
           arrayView2d< localIndex const > const elemsToFaces,
@@ -85,6 +85,7 @@ struct PrecomputeSourceAndReceiverKernel
           arrayView2d< real32 > const sourceValue,
           real64 const dt,
           real32 const timeSourceFrequency,
+          real32 const timeSourceDelay,
           localIndex const rickerOrder,
           R1Tensor const sourceForce,
           R2SymTensor const sourceMoment )
@@ -116,7 +117,7 @@ struct PrecomputeSourceAndReceiverKernel
           {
             for( localIndex i=0; i<3; ++i )
             {
-              xLocal[a][i] = X( elemsToNodes( k, a ), i );
+              xLocal[a][i] = nodeCoords( elemsToNodes( k, a ), i );
             }
           }
 
@@ -136,7 +137,7 @@ struct PrecomputeSourceAndReceiverKernel
 
             WaveSolverUtils::computeCoordinatesOnReferenceElement< FE_TYPE >( coords,
                                                                               elemsToNodes[k],
-                                                                              X,
+                                                                              nodeCoords,
                                                                               coordsOnRefElem );
             sourceIsAccessible[isrc] = 1;
 
@@ -161,8 +162,7 @@ struct PrecomputeSourceAndReceiverKernel
 
             for( localIndex cycle = 0; cycle < sourceValue.size( 0 ); ++cycle )
             {
-              real64 const time = cycle*dt;
-              sourceValue[cycle][isrc] = WaveSolverUtils::evaluateRicker( time, timeSourceFrequency, rickerOrder );
+              sourceValue[cycle][isrc] = WaveSolverUtils::evaluateRicker( cycle * dt, timeSourceFrequency, timeSourceDelay, rickerOrder );
             }
 
           }
@@ -194,7 +194,7 @@ struct PrecomputeSourceAndReceiverKernel
           {
             WaveSolverUtils::computeCoordinatesOnReferenceElement< FE_TYPE >( coords,
                                                                               elemsToNodes[k],
-                                                                              X,
+                                                                              nodeCoords,
                                                                               coordsOnRefElem );
 
             receiverIsLocal[ircv] = 1;
@@ -230,7 +230,7 @@ struct MassMatrixKernel
    * @tparam ATOMIC_POLICY the atomic policy
    * @param[in] size the number of cells in the subRegion
    * @param[in] numFacesPerElem number of faces per element
-   * @param[in] X coordinates of the nodes
+   * @param[in] nodeCoords coordinates of the nodes
    * @param[in] elemsToNodes map from element to nodes
    * @param[in] velocity cell-wise velocity
    * @param[out] mass diagonal of the mass matrix
@@ -239,13 +239,13 @@ struct MassMatrixKernel
   //std::enable_if_t< geos::is_sem_formulation< std::remove_cv_t< FE_TYPE_ > >::value, void >
   void
   launch( localIndex const size,
-          arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X,
+          arrayView2d< WaveSolverBase::wsCoordType const, nodes::REFERENCE_POSITION_USD > const nodeCoords,
           arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemsToNodes,
           arrayView1d< real32 const > const density,
           arrayView1d< real32 > const mass )
 
   {
-    forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const k )
+    forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const e )
     {
 
       constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
@@ -256,14 +256,14 @@ struct MassMatrixKernel
       {
         for( localIndex i = 0; i < 3; ++i )
         {
-          xLocal[a][i] = X( elemsToNodes( k, a ), i );
+          xLocal[a][i] = nodeCoords( elemsToNodes( e, a ), i );
         }
       }
 
       for( localIndex q = 0; q < numQuadraturePointsPerElem; ++q )
       {
-        real32 const localIncrement = density[k] * m_finiteElement.computeMassTerm( q, xLocal );
-        RAJA::atomicAdd< ATOMIC_POLICY >( &mass[elemsToNodes[k][q]], localIncrement );
+        real32 const localIncrement = density[e] * m_finiteElement.computeMassTerm( q, xLocal );
+        RAJA::atomicAdd< ATOMIC_POLICY >( &mass[elemsToNodes( e, q )], localIncrement );
       }
     } ); // end loop over element
   }
@@ -286,8 +286,8 @@ struct DampingMatrixKernel
    * @tparam EXEC_POLICY the execution policy
    * @tparam ATOMIC_POLICY the atomic policy
    * @param[in] size the number of cells in the subRegion
-   * @param[in] X coordinates of the nodes
-   * @param[in] facesToElems map from faces to elements
+   * @param[in] nodeCoords coordinates of the nodes
+   * @param[in] elemsToFaces map from elements to faces
    * @param[in] facesToNodes map from face to nodes
    * @param[in] facesDomainBoundaryIndicator flag equal to 1 if the face is on the boundary, and to 0 otherwise
    * @param[in] freeSurfaceFaceIndicator flag equal to 1 if the face is on the free surface, and to 0 otherwise
@@ -298,8 +298,8 @@ struct DampingMatrixKernel
   //std::enable_if_t< geos::is_sem_formulation< std::remove_cv_t< FE_TYPE_ > >::value, void >
   void
   launch( localIndex const size,
-          arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X,
-          arrayView2d< localIndex const > const facesToElems,
+          arrayView2d< WaveSolverBase::wsCoordType const, nodes::REFERENCE_POSITION_USD > const nodeCoords,
+          arrayView2d< localIndex const > const elemsToFaces,
           ArrayOfArraysView< localIndex const > const facesToNodes,
           arrayView1d< integer const > const facesDomainBoundaryIndicator,
           arrayView1d< localIndex const > const freeSurfaceFaceIndicator,
@@ -311,49 +311,39 @@ struct DampingMatrixKernel
           arrayView1d< real32 > const dampingy,
           arrayView1d< real32 > const dampingz )
   {
-    forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const f )
+    forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const e )
     {
-      // face on the domain boundary and not on free surface
-      if( facesDomainBoundaryIndicator[f] == 1 && freeSurfaceFaceIndicator[f] != 1 )
+      for( localIndex i = 0; i < elemsToFaces.size( 1 ); ++i )
       {
-        localIndex k = facesToElems( f, 0 );
-        if( k < 0 )
+        localIndex const f = elemsToFaces( e, i );
+        // face on the domain boundary and not on free surface
+        if( facesDomainBoundaryIndicator[f] == 1 && freeSurfaceFaceIndicator[f] != 1 )
         {
-          k = facesToElems( f, 1 );
-        }
-
-        constexpr localIndex numNodesPerFace = FE_TYPE::numNodesPerFace;
-
-        real64 xLocal[ numNodesPerFace ][ 3 ];
-        for( localIndex a = 0; a < numNodesPerFace; ++a )
-        {
-          for( localIndex i = 0; i < 3; ++i )
+          constexpr localIndex numNodesPerFace = FE_TYPE::numNodesPerFace;
+          real64 xLocal[ numNodesPerFace ][ 3 ];
+          for( localIndex a = 0; a < numNodesPerFace; ++a )
           {
-            xLocal[a][i] = X( facesToNodes( f, a ), i );
+            for( localIndex d = 0; d < 3; ++d )
+            {
+              xLocal[a][d] = nodeCoords( facesToNodes( f, a ), d );
+            }
+          }
+
+          real32 const nx = faceNormal( f, 0 ), ny = faceNormal( f, 1 ), nz = faceNormal( f, 2 );
+          for( localIndex q = 0; q < numNodesPerFace; ++q )
+          {
+            real32 const aux = density[e] * m_finiteElement.computeDampingTerm( q, xLocal );
+            real32 const localIncrementx = aux * ( velocityVp[e] * abs( nx ) + velocityVs[e] * sqrt( pow( ny, 2 ) + pow( nz, 2 ) ) );
+            real32 const localIncrementy = aux * ( velocityVp[e] * abs( ny ) + velocityVs[e] * sqrt( pow( nx, 2 ) + pow( nz, 2 ) ) );
+            real32 const localIncrementz = aux * ( velocityVp[e] * abs( nz ) + velocityVs[e] * sqrt( pow( nx, 2 ) + pow( ny, 2 ) ) );
+
+            RAJA::atomicAdd< ATOMIC_POLICY >( &dampingx[facesToNodes( f, q )], localIncrementx );
+            RAJA::atomicAdd< ATOMIC_POLICY >( &dampingy[facesToNodes( f, q )], localIncrementy );
+            RAJA::atomicAdd< ATOMIC_POLICY >( &dampingz[facesToNodes( f, q )], localIncrementz );
           }
         }
-
-        for( localIndex q = 0; q < numNodesPerFace; ++q )
-        {
-          real32 const localIncrementx = density[k] * (velocityVp[k]*LvArray::math::abs( faceNormal[f][0] ) + velocityVs[k]*sqrt( faceNormal[f][1]*faceNormal[f][1] +
-                                                                                                                                  faceNormal[f][2]*faceNormal[f][2] ) )* m_finiteElement.computeDampingTerm(
-            q,
-            xLocal );
-          real32 const localIncrementy = density[k] * (velocityVp[k]*LvArray::math::abs( faceNormal[f][1] ) + velocityVs[k]*sqrt( faceNormal[f][0]*faceNormal[f][0] +
-                                                                                                                                  faceNormal[f][2]*faceNormal[f][2] ) )* m_finiteElement.computeDampingTerm(
-            q,
-            xLocal );
-          real32 const localIncrementz = density[k] * (velocityVp[k]*LvArray::math::abs( faceNormal[f][2] ) + velocityVs[k]*sqrt( faceNormal[f][0]*faceNormal[f][0] +
-                                                                                                                                  faceNormal[f][1]*faceNormal[f][1] ) )*  m_finiteElement.computeDampingTerm(
-            q,
-            xLocal );
-
-          RAJA::atomicAdd< ATOMIC_POLICY >( &dampingx[facesToNodes[f][q]], localIncrementx );
-          RAJA::atomicAdd< ATOMIC_POLICY >( &dampingy[facesToNodes[f][q]], localIncrementy );
-          RAJA::atomicAdd< ATOMIC_POLICY >( &dampingz[facesToNodes[f][q]], localIncrementz );
-        }
       }
-    } ); // end loop over element
+    } );
   }
 
   /// The finite element space/discretization object for the element type in the subRegion
@@ -428,7 +418,7 @@ public:
     Base( elementSubRegion,
           finiteElementSpace,
           inputConstitutiveType ),
-    m_X( nodeManager.referencePosition() ),
+    m_nodeCoords( nodeManager.getField< fields::referencePosition32 >() ),
     m_ux_n( nodeManager.getField< fields::Displacementx_n >() ),
     m_uy_n( nodeManager.getField< fields::Displacementy_n >() ),
     m_uz_n( nodeManager.getField< fields::Displacementz_n >() ),
@@ -485,7 +475,7 @@ public:
       localIndex const nodeIndex = m_elemsToNodes( k, a );
       for( int i=0; i< 3; ++i )
       {
-        stack.xLocal[ a ][ i ] = m_X[ nodeIndex ][ i ];
+        stack.xLocal[ a ][ i ] = m_nodeCoords[ nodeIndex ][ i ];
       }
     }
     stack.mu = m_density[k] * m_velocityVs[k] * m_velocityVs[k];
@@ -531,7 +521,7 @@ public:
 
 protected:
   /// The array containing the nodal position array.
-  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const m_X;
+  arrayView2d< WaveSolverBase::wsCoordType const, nodes::REFERENCE_POSITION_USD > const m_nodeCoords;
 
   /// The array containing the nodal displacement array in x direction.
   arrayView1d< real32 > const m_ux_n;

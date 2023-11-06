@@ -141,9 +141,9 @@ initializePreSubGroups()
   bool const useMassFlow = flowSolver->getReference< integer >( CompositionalMultiphaseBase::viewKeyStruct::useMassFlagString() );;
   bool const useMassWell = Base::wellSolver()->template getReference< integer >( CompositionalMultiphaseWell::viewKeyStruct::useMassFlagString() );
   GEOS_THROW_IF( useMassFlow != useMassWell,
-                 GEOS_FMT( "CompositionalMultiphaseReservoir '{}': the input flag {} must be the same in the flow and well solvers, respectively '{}' and '{}'",
-                           this->getName(), CompositionalMultiphaseBase::viewKeyStruct::useMassFlagString(),
-                           Base::reservoirSolver()->getName(), Base::wellSolver()->getName() ),
+                 GEOS_FMT( "{}: the input flag {} must be the same in the flow and well solvers, respectively '{}' and '{}'",
+                           this->getDataContext(), CompositionalMultiphaseBase::viewKeyStruct::useMassFlagString(),
+                           Base::reservoirSolver()->getDataContext(), Base::wellSolver()->getDataContext() ),
                  InputError );
 }
 
@@ -278,6 +278,11 @@ assembleCouplingTerms( real64 const time_n,
   using TAG = compositionalMultiphaseWellKernels::SubRegionTag;
   using ROFFSET = compositionalMultiphaseWellKernels::RowOffset;
   using COFFSET = compositionalMultiphaseWellKernels::ColOffset;
+
+  GEOS_THROW_IF( !Base::m_isWellTransmissibilityComputed,
+                 GEOS_FMT( "{} `{}`: The well transmissibility has not been computed yet",
+                           catalogName(), this->getName() ),
+                 std::runtime_error );
 
   this->template forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                                MeshLevel const & mesh,

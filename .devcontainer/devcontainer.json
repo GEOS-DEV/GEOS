@@ -1,17 +1,23 @@
 {
     "build": {
-        "dockerfile": "Dockerfile"
+        "dockerfile": "Dockerfile",
+        "args": {
+            "GEOS_TPL_TAG": "245-86"
+        }
     },
     "runArgs": [
-        "--cap-add=ALL"
+        "--cap-add=SYS_PTRACE",
+        "--security-opt",
+        "seccomp=unconfined"
     ],
     "customizations": {
         "vscode": {
             "extensions": [
-                "ms-vscode.cpptools-extension-pack",
-                "GitHub.vscode-pull-request-github",
                 "eamodio.gitlens",
                 "fredericbonnet.cmake-test-adapter",
+                "github.vscode-github-actions",
+                "GitHub.vscode-pull-request-github",
+                "ms-vscode.cpptools-extension-pack",
                 "redhat.vscode-xml"
             ]
         }
@@ -21,5 +27,5 @@
             "version": "latest"
         }
     },
-    "postCreateCommand": "/usr/bin/ln -s /workspaces/GEOS/.vscode-codespaces /workspaces/GEOS/.vscode"
+    "postCreateCommand": "bash .devcontainer/postCreateCommand.sh"
 }

@@ -33,6 +33,7 @@
 #include "constitutive/fluid/multifluid/CO2Brine/functions/PhillipsBrineDensity.hpp"
 #include "constitutive/fluid/multifluid/CO2Brine/functions/PhillipsBrineViscosity.hpp"
 #include "constitutive/fluid/multifluid/CO2Brine/functions/SpanWagnerCO2Density.hpp"
+#include "common/Units.hpp"
 
 
 #include <memory>
@@ -144,6 +145,11 @@ private:
   };
 
   virtual integer getWaterPhaseIndex() const override final;
+
+  /**
+   * @copydoc MultiFluidBase::checkTablesParameters( real64 pressure, real64 temperature )
+   */
+  void checkTablesParameters( real64 pressure, real64 temperature ) const override final;
 
   /**
    * @brief Names of the submodels for input
@@ -260,7 +266,7 @@ CO2BrineFluid< PHASE1, PHASE2, FLASH >::KernelWrapper::
 
   // 2. Compute phase fractions and phase component fractions
 
-  real64 const temperatureInCelsius = temperature - 273.15;
+  real64 const temperatureInCelsius = units::convertKToC( temperature );
   m_flash.compute( pressure,
                    temperatureInCelsius,
                    compMoleFrac.toSliceConst(),
@@ -415,7 +421,7 @@ CO2BrineFluid< PHASE1, PHASE2, FLASH >::KernelWrapper::
 
   // 2. Compute phase fractions and phase component fractions
 
-  real64 const temperatureInCelsius = temperature - 273.15;
+  real64 const temperatureInCelsius = units::convertKToC( temperature );
   m_flash.compute( pressure,
                    temperatureInCelsius,
                    compMoleFrac.toSliceConst(),

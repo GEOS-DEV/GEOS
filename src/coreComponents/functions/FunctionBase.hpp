@@ -178,10 +178,10 @@ void FunctionBase::evaluateT( dataRepository::Group const & group,
       dataRepository::WrapperBase const & wrapper = group.getWrapperBase( varName );
       varSize[varIndex] = wrapper.numArrayComp();
 
-      using Types = types::ArrayTypes< types::TypeList< real64 >, types::DimsUpTo< 2 > >;
-      types::dispatch( Types{}, wrapper.getTypeId(), true, [&]( auto array )
+      using Types = types::ListofTypeList< types::ArrayTypes< types::TypeList< real64 >, types::DimsUpTo< 2 > > >;
+      types::dispatch( Types{}, [&]( auto tupleOfTypes )
       {
-        using ArrayType = decltype( array );
+        using ArrayType = camp::first< decltype( tupleOfTypes ) >;
         auto const view = dataRepository::Wrapper< ArrayType >::cast( wrapper ).reference().toViewConst();
         view.move( hostMemorySpace, false );
         for( int dim = 0; dim < ArrayType::NDIM; ++dim )
@@ -189,16 +189,18 @@ void FunctionBase::evaluateT( dataRepository::Group const & group,
           varStride[varIndex][dim] = view.strides()[dim];
         }
         inputPtrs[varIndex] = view.data();
-      } );
+      }, wrapper );
     }
     totalVarSize += varSize[varIndex];
   }
 
   // Make sure the inputs do not exceed the maximum length
-  GEOS_ERROR_IF_GT_MSG( totalVarSize, MAX_VARS, "Function input size exceeded" );
+  GEOS_ERROR_IF_GT_MSG( totalVarSize, MAX_VARS,
+                        getDataContext() << ": Function input size exceeded" );
 
   // Make sure the result / set size match
-  GEOS_ERROR_IF_NE_MSG( result.size(), set.size(), "To apply a function to a set, the size of the result and set must match" );
+  GEOS_ERROR_IF_NE_MSG( result.size(), set.size(),
+                        getDataContext() << ": To apply a function to a set, the size of the result and set must match" );
 
   forAll< POLICY >( set.size(), [=]( localIndex const i )
   {
