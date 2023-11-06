@@ -15,15 +15,14 @@ BUILD_DIR=${GITHUB_WORKSPACE}
 # Since this information is repeated twice, we use a variable.
 BUILD_DIR_MOUNT_POINT=/tmp/GEOSX
 
+SCCACHE_CLI="--no-use-sccache"
+SCCACHE_VOLUME_MOUNT=""
 if [ ${USE_SCCACHE} = true ]; then
   echo "Creating the configuration file for sccache..."
   mkdir -p /opt/gcs
   cp -rp ${GOOGLE_GHA_CREDS_PATH} /opt/gcs/credentials.json
   SCCACHE_CLI=""
   SCCACHE_VOLUME_MOUNT="--volume=/opt/gcs:/opt/gcs"
-else
-  SCCACHE_CLI="--no-use-sccache"
-  SCCACHE_VOLUME_MOUNT=""
 fi
 
 # We need to keep track of the building container (hence the `CONTAINER_NAME`)

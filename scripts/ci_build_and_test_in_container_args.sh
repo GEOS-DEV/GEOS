@@ -106,6 +106,7 @@ if [[ -z "${GEOSX_DIR}" ]]; then
   exit 1
 fi
 
+SCCACHE_CMAKE_PARAMETERS=""
 if [[ "${USE_SCCACHE}" = true ]]; then
   mkdir -p ${HOME}/.config/sccache
   cat <<EOT >> ${HOME}/.config/sccache/config
