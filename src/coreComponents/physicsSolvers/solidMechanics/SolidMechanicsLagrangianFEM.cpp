@@ -702,25 +702,29 @@ void SolidMechanicsLagrangianFEM::applyDisplacementBCImplicit( real64 const time
   if( getLogLevel() >= 1 )
   {
     integer isDisplacementBCAppliedGlobal[3]{};
-    MpiWrapper::allReduce( isDisplacementBCApplied,
-                           isDisplacementBCAppliedGlobal,
-                           3,
-                           MpiWrapper::getMpiOp( MpiWrapper::Reduction::Max ),
-                           MPI_COMM_GEOSX );
+    MpiWrapper::reduce( isDisplacementBCApplied,
+                        isDisplacementBCAppliedGlobal,
+                        3,
+                        MpiWrapper::getMpiOp( MpiWrapper::Reduction::Max ),
+                        0,
+                        MPI_COMM_GEOSX );
 
-    char const bcLogMessage[] =
-      "\nWarning!"
-      "\n{} {}: There is no displacement boundary condition applied to this problem in the {} direction. \n"
-      "The problem may be ill-posed.\n";
-    GEOS_LOG_RANK_0_IF( isDisplacementBCAppliedGlobal[0] == 0, // target set is empty
-                        GEOS_FMT( bcLogMessage,
-                                  getCatalogName(), getDataContext(), 'x' ) );
-    GEOS_LOG_RANK_0_IF( isDisplacementBCAppliedGlobal[1] == 0, // target set is empty
-                        GEOS_FMT( bcLogMessage,
-                                  getCatalogName(), getDataContext(), 'y' ) );
-    GEOS_LOG_RANK_0_IF( isDisplacementBCAppliedGlobal[2] == 0, // target set is empty
-                        GEOS_FMT( bcLogMessage,
-                                  getCatalogName(), getDataContext(), 'z' ) );
+    if( MpiWrapper::commRank() == 0 )
+    {
+      char const bcLogMessage[] =
+        "\nWarning!"
+        "\n{} {}: There is no displacement boundary condition applied to this problem in the {} direction. \n"
+        "The problem may be ill-posed.\n";
+      GEOS_WARNING_IF( isDisplacementBCAppliedGlobal[0] == 0, // target set is empty
+                       GEOS_FMT( bcLogMessage,
+                                 getCatalogName(), getDataContext(), 'x' ) );
+      GEOS_WARNING_IF( isDisplacementBCAppliedGlobal[1] == 0, // target set is empty
+                       GEOS_FMT( bcLogMessage,
+                                 getCatalogName(), getDataContext(), 'y' ) );
+      GEOS_WARNING_IF( isDisplacementBCAppliedGlobal[2] == 0, // target set is empty
+                       GEOS_FMT( bcLogMessage,
+                                 getCatalogName(), getDataContext(), 'z' ) );
+    }
   }
 
 }
