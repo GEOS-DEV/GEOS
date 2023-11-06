@@ -349,6 +349,8 @@ assembleCouplingTerms( real64 const time_n,
       arrayView1d< localIndex const > const & resElementIndex =
         perforationData->getField< fields::perforation::reservoirElementIndex >();
 
+      bool const useTotalMassEquation = this->flowSolver()->useTotalMassEquation() > 0;
+
       RAJA::ReduceSum< parallelDeviceReduce, integer > numCrossflowPerforations( 0 );
 
       // loop over the perforations and add the rates to the residual and jacobian
@@ -411,10 +413,13 @@ assembleCouplingTerms( real64 const time_n,
           }
         }
 
-        // Apply equation/variable change transformation(s)
-        stackArray1d< real64, 2 * MAX_NUM_DOF > work( 2 * resNumDofs );
-        shiftBlockRowsAheadByOneAndReplaceFirstRowWithColumnSum( numComps, numComps, resNumDofs*2, 2, localPerfJacobian, work );
-        shiftBlockElementsAheadByOneAndReplaceFirstElementWithSum( numComps, numComps, 2, localPerf );
+        if( useTotalMassEquation )
+        {
+          // Apply equation/variable change transformation(s)
+          stackArray1d< real64, 2 * MAX_NUM_DOF > work( 2 * resNumDofs );
+          shiftBlockRowsAheadByOneAndReplaceFirstRowWithColumnSum( numComps, numComps, resNumDofs * 2, 2, localPerfJacobian, work );
+          shiftBlockElementsAheadByOneAndReplaceFirstElementWithSum( numComps, numComps, 2, localPerf );
+        }
 
         for( localIndex i = 0; i < localPerf.size(); ++i )
         {
