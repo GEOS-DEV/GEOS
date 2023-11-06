@@ -1,12 +1,9 @@
-#
 # Specify list of tests
-#
-
-set(gtest_geosx_tests
-    testDataTypes.cpp
-    testFixedSizeDeque.cpp
-    testTypeDispatch.cpp
-    testLifoStorage.cpp )
+set( gtest_geosx_tests
+     testDataTypes.cpp
+     testFixedSizeDeque.cpp
+     testTypeDispatch.cpp
+     testLifoStorage.cpp )
 
 if ( ENABLE_CALIPER )
   list( APPEND gtest_geosx_tests
@@ -14,9 +11,8 @@ if ( ENABLE_CALIPER )
 endif()
 
 set( dependencyList ${parallelDeps} common hdf5 gtest )
-#
+
 # Add gtest C++ based tests
-#
 foreach(test ${gtest_geosx_tests})
     get_filename_component( test_name ${test} NAME_WE )
     blt_add_executable( NAME ${test_name}

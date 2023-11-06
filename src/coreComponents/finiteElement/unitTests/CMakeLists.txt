@@ -1,7 +1,4 @@
-#
 # Specify list of tests
-#
-
 set(testSources
     testFiniteElementBase.cpp
     testH1_QuadrilateralFace_Lagrange1_GaussLegendre2.cpp
@@ -16,12 +13,10 @@ set(testSources
 set( dependencyList gtest finiteElement ${parallelDeps} )
 
 if( ENABLE_CUDA_NVTOOLSEXT )
-  set( dependencyList ${dependencyList} CUDA::nvToolsExt )
+  list( APPEND dependencyList CUDA::nvToolsExt )
 endif()
 
-#
 # Add gtest C++ based tests
-#
 foreach(test ${testSources})
     get_filename_component( test_name ${test} NAME_WE )
     blt_add_executable( NAME ${test_name}
@@ -39,6 +34,6 @@ foreach(test ${testSources})
 endforeach()
 
 if ( ENABLE_CUDA )
-#blt_add_target_compile_flags( TO testShapeFunctionKernel
-#                              FLAGS "--maxrregcount=64")
+# blt_add_target_compile_flags( TO testShapeFunctionKernel
+#                               FLAGS "--maxrregcount=64")
 endif()

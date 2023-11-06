@@ -52,13 +52,13 @@ endif()
 
 if( ENABLE_MPI )
   add_subdirectory( coupling/hdf5_interface )
-  set( dependencyList ${dependencyList} mpi hdf5_interface )
+  list( APPEND dependencyList mpi hdf5_interface )
   list( APPEND fileIO_headers coupling/ChomboCoupler.hpp Outputs/ChomboIO.hpp )
   list( APPEND fileIO_sources coupling/ChomboCoupler.cpp Outputs/ChomboIO.cpp )
 endif()
 
 if( ENABLE_SILO )
-  set( dependencyList ${dependencyList} silo )
+  list( APPEND dependencyList silo )
   list( APPEND fileIO_headers 
                silo/SiloFile.hpp 
                Outputs/SiloOutput.hpp )
@@ -84,7 +84,7 @@ if( ENABLE_VTK )
 endif()
 
 if( ENABLE_CUDA_NVTOOLSEXT )
-  set( dependencyList ${dependencyList} CUDA::nvToolsExt )
+  list( APPEND dependencyList CUDA::nvToolsExt )
 endif()
 
 blt_add_library( NAME       fileIO

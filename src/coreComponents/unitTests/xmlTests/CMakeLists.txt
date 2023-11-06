@@ -1,7 +1,4 @@
-#
 # Specify list of tests
-#
-
 set( gtest_geosx_tests
      testXML.cpp )
 
@@ -18,15 +15,13 @@ set( multi_files
      multifile_input/outputs.xml
      multifile_input/solver.xml )
 
-#
 # Add gtest C++ based tests
-#
 set( dependencyList ${parallelDeps} gtest optionparser )
 
 if ( GEOSX_BUILD_SHARED_LIBS )
-  set( dependencyList ${dependencyList} geosx_core )
+  list( APPEND dependencyList geosx_core )
 else()
-  set( dependencyList ${dependencyList} ${geosx_core_libs} )
+  list( APPEND dependencyList ${geosx_core_libs} )
 endif()
 
 # create test executables

@@ -1,7 +1,4 @@
-#
 # Specify list of tests
-#
-
 set( gtest_geosx_tests
      testCompositionalProperties.cpp
      testDamageUtilities.cpp
@@ -18,12 +15,10 @@ set( gtest_geosx_tests
 set( dependencyList gtest constitutive ${parallelDeps} )
 
 if( ENABLE_CUDA_NVTOOLSEXT )
-  set( dependencyList ${dependencyList} CUDA::nvToolsExt )
+  list( APPEND dependencyList CUDA::nvToolsExt )
 endif()
 
-#
 # Add gtest C++ based tests
-#
 foreach(test ${gtest_geosx_tests})
     get_filename_component( test_name ${test} NAME_WE )
     blt_add_executable( NAME ${test_name}

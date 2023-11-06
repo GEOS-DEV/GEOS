@@ -4,7 +4,7 @@ set( serial_tests
 set( dependencyList gtest denseLinearAlgebra )
 
 if ( ENABLE_CUDA )
-  set( dependencyList ${dependencyList} cuda )
+  list( APPEND dependencyList cuda )
 endif()
 
 foreach(test_name ${serial_tests})

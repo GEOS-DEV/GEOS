@@ -1,13 +1,9 @@
-#
 # Specify list of tests
-#
-
 set( gtest_geosx_tests
      testDamage.cpp
      testRelPerm.cpp
      testRelPermHysteresis.cpp
-     testCapillaryPressure.cpp
-   )
+     testCapillaryPressure.cpp )
 
 set( gtest_triaxial_xmls
      testTriaxial_druckerPragerExtended.xml
@@ -19,12 +15,10 @@ set( gtest_triaxial_xmls
      testTriaxial_delftEggLoadPathDryUseLinear.xml
      testTriaxial_delftEggLoadPathWetUseLinear.xml
      testTriaxial_delftEggCase1.xml
-     testTriaxial_delftEggCase2.xml
-   )
+     testTriaxial_delftEggCase2.xml )
 
 set( gtest_pvt_xmls
-     testPVT.xml
-   )
+     testPVT.xml )
 
 set( gtest_reactivefluid_xmls
      testReactiveFluid.xml )
@@ -32,9 +26,9 @@ set( gtest_reactivefluid_xmls
 set( dependencyList ${parallelDeps} gtest )
 
 if ( GEOSX_BUILD_SHARED_LIBS )
-  set (dependencyList ${dependencyList} geosx_core )
+  list( APPEND dependencyList geosx_core )
 else()
-  set (dependencyList ${dependencyList} ${geosx_core_libs} )
+  list( APPEND dependencyList ${geosx_core_libs} )
 endif()
 
 if( ENABLE_PVTPackage )
@@ -42,12 +36,10 @@ if( ENABLE_PVTPackage )
           testMultiFluid.cpp
           testCO2BrinePVTModels.cpp )
 
-    set( dependencyList ${dependencyList} PVTPackage )
+    list( APPEND dependencyList PVTPackage )
 endif()
 
-#
 # Add gtest C++ based tests
-#
 foreach(test ${gtest_geosx_tests})
     get_filename_component( test_name ${test} NAME_WE )
     blt_add_executable( NAME ${test_name}
@@ -60,15 +52,11 @@ foreach(test ${gtest_geosx_tests})
 
 endforeach()
 
-#
 # Add triaxial xml based tests
-#
-
 blt_add_executable( NAME testTriaxial
                     SOURCES testTriaxial.cpp
                     OUTPUT_DIR ${TEST_OUTPUT_DIRECTORY}
-                    DEPENDS_ON ${dependencyList} "-lz"
-                  )
+                    DEPENDS_ON ${dependencyList} "-lz" )
 
 foreach(test ${gtest_triaxial_xmls})
     get_filename_component( test_name ${test} NAME_WE )
@@ -76,15 +64,11 @@ foreach(test ${gtest_triaxial_xmls})
                    COMMAND testTriaxial -i ${CMAKE_CURRENT_LIST_DIR}/${test} )
 endforeach()
 
-#
 # Add pvtdriver xml based tests
-#
-
 blt_add_executable( NAME testPVT
                     SOURCES testPVT.cpp
                     OUTPUT_DIR ${TEST_OUTPUT_DIRECTORY}
-                    DEPENDS_ON ${dependencyList} "-lz"
-                  )
+                    DEPENDS_ON ${dependencyList} "-lz" )
 
 foreach(test ${gtest_pvt_xmls})
     get_filename_component( test_name ${test} NAME_WE )
@@ -93,15 +77,11 @@ foreach(test ${gtest_pvt_xmls})
 endforeach()
 
 
-#
 # Add reactivefluiddriver xml based tests
-#
-
 blt_add_executable( NAME testReactiveFluid
                     SOURCES testReactiveFluid.cpp
                     OUTPUT_DIR ${TEST_OUTPUT_DIRECTORY}
-                    DEPENDS_ON ${dependencyList} "-lz"
-                  )
+                    DEPENDS_ON ${dependencyList} "-lz" )
 
 foreach(test ${gtest_reactivefluid_xmls})
     get_filename_component( test_name ${test} NAME_WE )

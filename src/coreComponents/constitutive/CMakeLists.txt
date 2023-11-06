@@ -282,7 +282,7 @@ if( ENABLE_PVTPackage )
 
     add_subdirectory( PVTPackage )
 
-    set( dependencyList ${dependencyList} PVTPackage )
+    list( APPEND dependencyList PVTPackage )
 endif()
 
 blt_add_library( NAME       constitutive

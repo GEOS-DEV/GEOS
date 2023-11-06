@@ -1,21 +1,17 @@
-#
 # Specify list of tests
-#
 set( LAI_tests
      testDofManager.cpp
      testLAIHelperFunctions.cpp )
 
 set( nranks 2 )
 
-#
 # Add gtest C++ based tests
-#
 set( dependencyList ${parallelDeps} gtest )
 
 if ( GEOSX_BUILD_SHARED_LIBS )
-  set( dependencyList ${dependencyList} geosx_core )
+  list( APPEND dependencyList geosx_core )
 else()
-  set( dependencyList ${dependencyList} ${geosx_core_libs} )
+  list( APPEND dependencyList ${geosx_core_libs} )
 endif()
 
 foreach(test ${LAI_tests})
