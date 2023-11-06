@@ -3,6 +3,8 @@ set -euo pipefail
 
 env
 
+echo "Running CLI $0 $@"
+
 echo "running nproc"
 nproc
 
@@ -52,32 +54,32 @@ fi
 # or_die args=$(getopt -a -o h --long build-exe-only,cmake-build-type:,no-run-unit-tests,gcp-credential-file:,host-config:,no-install-schema,install-dir:,test-code-style,test-documentation,no-use-sccache,help -- "$@")
 
 # Variables and default values
-BUILD_EXE_ONLY=0
+BUILD_EXE_ONLY=false
 CMAKE_BUILD_TYPE=unset
 GCP_CREDENTIAL_FILE=unset
 HOST_CONFIG=unset
 GEOSX_DIR=unset
-GEOSX_INSTALL_SCHEMA=1
-RUN_UNIT_TESTS=1
-USE_SCCACHE=1
-TEST_CODE_STYLE=0
-TEST_DOCUMENTATION=0
+GEOSX_INSTALL_SCHEMA=true
+RUN_UNIT_TESTS=true
+USE_SCCACHE=true
+TEST_CODE_STYLE=false
+TEST_DOCUMENTATION=false
 
 eval set -- ${args}
 while :
 do
   case $1 in
-    --build-exe-only)      BUILD_EXE_ONLY=1;       shift;;
-    --cmake-build-type)    CMAKE_BUILD_TYPE=$2;    shift 2;;
-    --gcp-credential-file) GCP_CREDENTIAL_FILE=$2; shift 2;;
-    --host-config)         HOST_CONFIG=$2;         shift 2;;
-    --install-dir)         GEOSX_DIR=$2;           shift 2;;
-    --no-install-schema)   GEOSX_INSTALL_SCHEMA=0; shift;;
-    --no-run-unit-tests)   RUN_UNIT_TESTS=0;       shift;;
-    --no-use-sccache)      USE_SCCACHE=0;          shift;;
-    --test-code-style)     TEST_CODE_STYLE=1;      shift;;
-    --test-documentation)  TEST_DOCUMENTATION=1;   shift;;
-    -h | --help)           usage;                  shift;;
+    --build-exe-only)      BUILD_EXE_ONLY=true; RUN_UNIT_TESTS=false; shift;;
+    --cmake-build-type)    CMAKE_BUILD_TYPE=$2;        shift 2;;
+    --gcp-credential-file) GCP_CREDENTIAL_FILE=$2;     shift 2;;
+    --host-config)         HOST_CONFIG=$2;             shift 2;;
+    --install-dir)         GEOSX_DIR=$2;               shift 2;;
+    --no-install-schema)   GEOSX_INSTALL_SCHEMA=false; shift;;
+    --no-run-unit-tests)   RUN_UNIT_TESTS=false;       shift;;
+    --no-use-sccache)      USE_SCCACHE=false;          shift;;
+    --test-code-style)     TEST_CODE_STYLE=true;       shift;;
+    --test-documentation)  TEST_DOCUMENTATION=true;    shift;;
+    -h | --help)           usage;                      shift;;
     # -- means the end of the arguments; drop this, and break out of the while loop
     --) shift; break;;
     *) >&2 echo Unsupported option: $1
@@ -104,7 +106,7 @@ if [[ -z "${GEOSX_DIR}" ]]; then
   exit 1
 fi
 
-if [[ ${USE_SCCACHE} ]]; then
+if [[ "${USE_SCCACHE}" = true ]]; then
   mkdir -p ${HOME}/.config/sccache
   cat <<EOT >> ${HOME}/.config/sccache/config
 [cache.gcs]
@@ -147,20 +149,20 @@ or_die cd ${GEOSX_BUILD_DIR}
 
 # Code style check
 # if [[ "$*" == *--test-code-style* ]]; then
-if [[ ${TEST_CODE_STYLE} ]]; then
+if [[ "${TEST_CODE_STYLE}" = true ]]; then
   or_die ctest --output-on-failure -R "testUncrustifyCheck"
   exit 0
 fi
 
 # Documentation check
-if [[ ${TEST_DOCUMENTATION} ]]; then
+if [[ "${TEST_DOCUMENTATION}" = true ]]; then
   or_die ctest --output-on-failure -R "testDoxygenCheck"
   exit 0
 fi
 
 # "Make" target check (builds geosx executable target only if true)
 # Use one process to prevent out-of-memory error
-if [[ ${BUILD_EXE_ONLY} ]]; then
+if [[ "${BUILD_EXE_ONLY}" = true ]]; then
   or_die ninja -j $(nproc) geosx
 else
   or_die ninja -j $(nproc)
@@ -168,11 +170,11 @@ else
 fi
 
 # Unit tests (excluding previously ran checks)
-if [[ ${RUN_UNIT_TESTS} ]]; then
+if [[ "${RUN_UNIT_TESTS}" = true ]]; then
   or_die ctest --output-on-failure -E "testUncrustifyCheck|testDoxygenCheck"
 fi
  
-if [[ ${USE_SCCACHE} ]]; then
+if [[ "${USE_SCCACHE}" = true ]]; then
   echo "sccache final state"
   ${SCCACHE} --show-stats
 fi
