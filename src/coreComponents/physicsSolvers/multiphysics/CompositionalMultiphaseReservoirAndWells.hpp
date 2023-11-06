@@ -94,6 +94,7 @@ public:
   { flowSolver()->updateSolidInternalEnergyModel( dataGroup ); }
 
   integer & isThermal() { return flowSolver()->isThermal(); }
+  integer useTotalMassEquation() const { return flowSolver()->useTotalMassEquation(); }
   integer numFluidPhases() { return flowSolver()->numFluidPhases(); }
   integer numFluidComponents() { return flowSolver()->numFluidComponents(); }
 
