@@ -94,6 +94,19 @@ SinglePhasePoromechanics< FLOW_SOLVER >::SinglePhasePoromechanics( const string 
 }
 
 template< typename FLOW_SOLVER >
+void SinglePhasePoromechanics< FLOW_SOLVER >::postProcessInput()
+{
+  Base::postProcessInput();
+
+  GEOS_ERROR_IF( flowSolver()->catalogName() == "CompositionalMultiphaseReservoir" &&
+                 this->getNonlinearSolverParameters().couplingType() != NonlinearSolverParameters::CouplingType::Sequential,
+                 GEOS_FMT( "{}: {} solver is only designed to work for {} = {}",
+                           this->getName(), catalogName(), NonlinearSolverParameters::viewKeysStruct::couplingTypeString(),
+                           EnumStrings< NonlinearSolverParameters::CouplingType >::toString( NonlinearSolverParameters::CouplingType::Sequential )
+                           ));
+}
+
+template< typename FLOW_SOLVER >
 void SinglePhasePoromechanics< FLOW_SOLVER >::registerDataOnMesh( Group & meshBodies )
 {
   SolverBase::registerDataOnMesh( meshBodies );

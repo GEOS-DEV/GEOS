@@ -89,6 +89,8 @@ public:
    */
   /**@{*/
 
+  virtual void postProcessInput() override;
+
   virtual void registerDataOnMesh( dataRepository::Group & MeshBodies ) override;
 
   virtual void setupCoupling( DomainPartition const & domain,
