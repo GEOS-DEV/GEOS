@@ -378,6 +378,41 @@ public:
   static void allReduce( Span< T const > src, Span< T > dst, Reduction const op, MPI_Comm comm = MPI_COMM_GEOSX );
 
 
+  /**
+   * @brief Strongly typed wrapper around MPI_Reduce.
+   * @param[in] sendbuf The pointer to the sending buffer.
+   * @param[out] recvbuf The pointer to the receive buffer (only significant at root).
+   * @param[in] count The number of values to send/receive.
+   * @param[in] op The MPI_Op to perform.
+   * @param[in] comm The MPI_Comm over which the gather operates.
+   * @return The return value of the underlying call to MPI_Reduce().
+   */
+  template< typename T >
+  static int reduce( T const * sendbuf, T * recvbuf, int count, MPI_Op op, int root, MPI_Comm comm = MPI_COMM_GEOSX );
+
+  /**
+   * @brief Convenience wrapper for the MPI_Reduce function.
+   * @tparam T type of data to reduce. Must correspond to a valid MPI_Datatype.
+   * @param value The value to send to the reduction.
+   * @param op The Reduction enum to perform.
+   * @param comm The communicator.
+   * @return The value of reduction (only significant at root)
+   */
+  template< typename T >
+  static T reduce( T const & value, Reduction const op, int root, MPI_Comm comm = MPI_COMM_GEOSX );
+
+  /**
+   * @brief Convenience wrapper for the MPI_Reduce function. Version for sequences.
+   * @tparam T type of data to reduce. Must correspond to a valid MPI_Datatype.
+   * @param src[in] The values to send to the reduction.
+   * @param dst[out] The resulting values (only significant at root).
+   * @param op The Reduction enum to perform.
+   * @param comm The communicator.
+   */
+  template< typename T >
+  static void reduce( Span< T const > src, Span< T > dst, Reduction const op, int root, MPI_Comm comm = MPI_COMM_GEOSX );
+
+
   template< typename T >
   static int scan( T const * sendbuf, T * recvbuf, int count, MPI_Op op, MPI_Comm comm );
 
@@ -739,6 +774,26 @@ int MpiWrapper::allReduce( T const * const sendbuf,
 }
 
 template< typename T >
+int MpiWrapper::reduce( T const * const sendbuf,
+                        T * const recvbuf,
+                        int const count,
+                        MPI_Op const MPI_PARAM( op ),
+                        int root,
+                        MPI_Comm const MPI_PARAM( comm ) )
+{
+#ifdef GEOSX_USE_MPI
+  MPI_Datatype const mpiType = internal::getMpiType< T >();
+  return MPI_Reduce( sendbuf == recvbuf ? MPI_IN_PLACE : sendbuf, recvbuf, count, mpiType, op, root, comm );
+#else
+  if( sendbuf != recvbuf )
+  {
+    memcpy( recvbuf, sendbuf, count * sizeof( T ) );
+  }
+  return 0;
+#endif
+}
+
+template< typename T >
 int MpiWrapper::scan( T const * const sendbuf,
                       T * const recvbuf,
                       int count,
@@ -1035,6 +1090,23 @@ void MpiWrapper::max( Span< T const > src, Span< T > dst, MPI_Comm comm )
 {
   MpiWrapper::allReduce( src, dst, Reduction::Max, comm );
 }
+
+
+template< typename T >
+T MpiWrapper::reduce( T const & value, Reduction const op, int root, MPI_Comm const comm )
+{
+  T result;
+  reduce( &value, &result, 1, getMpiOp( op ), root, comm );
+  return result;
+}
+
+template< typename T >
+void MpiWrapper::reduce( Span< T const > const src, Span< T > const dst, Reduction const op, int root, MPI_Comm const comm )
+{
+  GEOS_ASSERT_EQ( src.size(), dst.size() );
+  reduce( src.data(), dst.data(), LvArray::integerConversion< int >( src.size() ), getMpiOp( op ), root, comm );
+}
+
 
 } /* namespace geos */
 
