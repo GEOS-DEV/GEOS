@@ -23,7 +23,7 @@ function or_die () {
 
 function usage () {
 >&2 cat << EOF
-  Usage: $0
+Usage: $0
   [ --build-exe-only ]
   [ --cmake-build-type ]
   [ --no-run-unit-tests ]
@@ -44,6 +44,9 @@ or_die cd $(dirname $0)/..
 
 args=$(getopt -a -o h --long build-exe-only,cmake-build-type:,no-run-unit-tests,gcp-credential-file:,host-config:,no-install-schema,install-dir:,test-code-style,test-documentation,no-use-sccache,help -- "$@")
 if [[ $? -gt 0 ]]; then
+  echo "Error after getopt"
+  echo "which getop"
+  echo $(which getopt)
   usage
 fi
 # or_die args=$(getopt -a -o h --long build-exe-only,cmake-build-type:,no-run-unit-tests,gcp-credential-file:,host-config:,no-install-schema,install-dir:,test-code-style,test-documentation,no-use-sccache,help -- "$@")
