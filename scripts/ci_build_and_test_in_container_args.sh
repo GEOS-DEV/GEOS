@@ -26,14 +26,14 @@ function usage () {
 Usage: $0
   [ --build-exe-only ]
   [ --cmake-build-type ]
-  [ --no-run-unit-tests ]
   [ --gcp-credential-file ]
   [ --host-config ]
-  [ --no-install-schema ]
   [ --install-dir ]
+  [ --no-install-schema ]
+  [ --no-run-unit-tests ]
+  [ --no-use-sccache ]
   [ --test-code-style ]
   [ --test-documentation ]
-  [ --no-use-sccache ]
   [ -h | --help ]
 EOF
 exit 1
@@ -54,14 +54,14 @@ fi
 # Variables and default values
 BUILD_EXE_ONLY=0
 CMAKE_BUILD_TYPE=unset
-RUN_UNIT_TESTS=1
 GCP_CREDENTIAL_FILE=unset
+HOST_CONFIG=unset
 GEOSX_DIR=unset
 GEOSX_INSTALL_SCHEMA=1
-HOST_CONFIG=unset
+RUN_UNIT_TESTS=1
+USE_SCCACHE=1
 TEST_CODE_STYLE=0
 TEST_DOCUMENTATION=0
-USE_SCCACHE=1
 
 eval set -- ${args}
 while :
@@ -85,9 +85,9 @@ do
   esac
 done
 
-if [[ $# -eq 0 ]]; then
-  usage
-fi
+# if [[ $# -eq 0 ]]; then
+#   usage
+# fi
 
 if [[ -z "${HOST_CONFIG}" ]]; then
   echo "Variable \"HOST_CONFIG\" is undefined or empty. Define it using '--host-config'."
