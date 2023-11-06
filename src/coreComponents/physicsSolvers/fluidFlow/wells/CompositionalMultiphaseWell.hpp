@@ -329,6 +329,13 @@ protected:
   void validateConstitutiveModels( DomainPartition const & domain ) const;
 
   /**
+   * @brief Checks if the WellControls parameters are within the fluid tables ranges
+   * @param fluid the fluid to check
+   */
+  void validateWellControlsForFluid( WellControls const & wellControls,
+                                     constitutive::MultiFluidBase const & fluid ) const;
+
+  /**
    * @brief Checks injection streams for validity (compositions sum to one)
    * @param subRegion the well subRegion
    */
