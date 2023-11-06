@@ -60,6 +60,7 @@ CompositionalMultiphaseWell::CompositionalMultiphaseWell( const string & name,
   m_numPhases( 0 ),
   m_numComponents( 0 ),
   m_useMass( false ),
+  m_useTotalMassEquation( 1 ),
   m_maxCompFracChange( 1.0 ),
   m_maxRelativePresChange( 0.2 ),
   m_minScalingFactor( 0.01 ),
@@ -70,6 +71,11 @@ CompositionalMultiphaseWell::CompositionalMultiphaseWell( const string & name,
     setApplyDefaultValue( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Use mass formulation instead of molar" );
+
+  this->registerWrapper( viewKeyStruct::useMassFlagString(), &m_useTotalMassEquation ).
+    setApplyDefaultValue( 0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Use total mass equation" );
 
   this->registerWrapper( viewKeyStruct::maxCompFracChangeString(), &m_maxCompFracChange ).
     setSizedFromParent( 0 ).
@@ -1036,6 +1042,7 @@ void CompositionalMultiphaseWell::assembleFluxTerms( real64 const GEOS_UNUSED_PA
         KernelLaunchSelector1< FluxKernel >( numFluidComponents(),
                                              subRegion.size(),
                                              dofManager.rankOffset(),
+                                             m_useTotalMassEquation,
                                              wellControls,
                                              wellElemDofNumber,
                                              nextWellElemIndex,
@@ -1103,6 +1110,7 @@ void CompositionalMultiphaseWell::assembleAccumulationTerms( DomainPartition con
                                                      subRegion.size(),
                                                      numFluidPhases(),
                                                      dofManager.rankOffset(),
+                                                     m_useTotalMassEquation,
                                                      wellElemDofNumber,
                                                      wellElemGhostRank,
                                                      wellElemVolume,
