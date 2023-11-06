@@ -52,6 +52,7 @@ MultiphasePoromechanics( NodeManager const & nodeManager,
                          string const inputFlowDofKey,
                          localIndex const numComponents,
                          localIndex const numPhases,
+                         integer const useTotalMassEquation,
                          string const fluidModelKey ):
   Base( nodeManager,
         edgeManager,
@@ -73,7 +74,8 @@ MultiphasePoromechanics( NodeManager const & nodeManager,
   m_dFluidPhaseVolFrac( elementSubRegion.template getField< fields::flow::dPhaseVolumeFraction >() ),
   m_dGlobalCompFraction_dGlobalCompDensity( elementSubRegion.template getField< fields::flow::dGlobalCompFraction_dGlobalCompDensity >() ),
   m_numComponents( numComponents ),
-  m_numPhases( numPhases )
+  m_numPhases( numPhases ),
+  m_useTotalMassEquation( useTotalMassEquation )
 {
   GEOS_ERROR_IF_GT_MSG( m_numComponents, maxNumComponents,
                         "MultiphasePoromechanics solver allows at most " <<
@@ -641,12 +643,15 @@ complete( localIndex const k,
   integer numDisplacementDofs = numSupportPoints * numDofPerTestSupportPoint;
   constexpr integer maxNumDisplacementDofs = FE_TYPE::maxSupportPoints * numDofPerTestSupportPoint;
 
-  // Apply equation/variable change transformation(s)
-  real64 work[maxNumDisplacementDofs > ( maxNumComponents + 1 ) ? maxNumDisplacementDofs : maxNumComponents + 1];
-  shiftRowsAheadByOneAndReplaceFirstRowWithColumnSum( m_numComponents, numDisplacementDofs, stack.dLocalResidualMass_dDisplacement, work );
-  shiftRowsAheadByOneAndReplaceFirstRowWithColumnSum( m_numComponents, 1, stack.dLocalResidualMass_dPressure, work );
-  shiftRowsAheadByOneAndReplaceFirstRowWithColumnSum( m_numComponents, m_numComponents, stack.dLocalResidualMass_dComponents, work );
-  shiftElementsAheadByOneAndReplaceFirstElementWithSum( m_numComponents, stack.localResidualMass );
+  if( m_useTotalMassEquation > 0 )
+  {
+    // Apply equation/variable change transformation(s)
+    real64 work[maxNumDisplacementDofs > ( maxNumComponents + 1 ) ? maxNumDisplacementDofs : maxNumComponents + 1];
+    shiftRowsAheadByOneAndReplaceFirstRowWithColumnSum( m_numComponents, numDisplacementDofs, stack.dLocalResidualMass_dDisplacement, work );
+    shiftRowsAheadByOneAndReplaceFirstRowWithColumnSum( m_numComponents, 1, stack.dLocalResidualMass_dPressure, work );
+    shiftRowsAheadByOneAndReplaceFirstRowWithColumnSum( m_numComponents, m_numComponents, stack.dLocalResidualMass_dComponents, work );
+    shiftElementsAheadByOneAndReplaceFirstElementWithSum( m_numComponents, stack.localResidualMass );
+  }
 
   for( int localNode = 0; localNode < numSupportPoints; ++localNode )
   {
