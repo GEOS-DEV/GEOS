@@ -94,11 +94,17 @@ public:
 
   /**
    * @brief Compute approximate cell-centered velocity field
+   * @param[in] iconn connection index
+   * @param[in] ip phase index
+   * @param[in] globalCellToFace pair of globalCellId ordered distance of connection to neighboring cells
+   * @param[in] phaseFlux flux for a specific phase ip and connection iconn
+   * @param[out] phaseVelocity slice of the cell-wise global 3-vector to be filled
    */
   GEOS_HOST_DEVICE
   void computeVelocity( localIndex iconn,
                         localIndex ip,
                         real64 const ( &phaseFlux ),
+                        arraySlice1d<real64 const> const (&globalCellToFace)[2],
                         ElementRegionManager::ElementView< arrayView4d< real64 > > const & phaseVelocity ) const;
 
   /**
@@ -290,6 +296,7 @@ CellElementStencilTPFAWrapper::
   computeVelocity( localIndex iconn,
                    localIndex ip,
                    const real64 (&phaseFlux),
+                   arraySlice1d<real64 const> const (&globalCellToFace)[2],
                    ElementRegionManager::ElementView< arrayView4d< real64 > > const & phaseVelocity ) const
 {
 
@@ -302,16 +309,17 @@ CellElementStencilTPFAWrapper::
     localIndex const ei = m_elementIndices[iconn][i];
 
 
-    real64 faceNormal[3];
+    real64 faceNormal[3], invDist[3];
     LvArray::tensorOps::copy< 3 >( faceNormal, m_faceNormal[iconn] );
     sqSurface[i] = LvArray::tensorOps::l2NormSquared<3>(faceNormal);
     LvArray::tensorOps::scale< 3 >( faceNormal, phaseFlux );
 
-//    for( int j = 0; j < 3; ++j )
-//    {
-//      phaseVelocity[er][esr][ei][0][ip][j] += faceNormal[j]/sqSurface[i];
-//    }
     LvArray::tensorOps::scale<3>(faceNormal,1./sqSurface[i]);
+    LvArray::tensorOps::AiBi<3>(faceNormal, m_cellToFaceVec[iconn][i]);
+      for (int dir = 0; dir < 3; ++dir) {
+          invDist[dir] = (globalCellToFace[i][dir]>0) ? 1./globalCellToFace[i][dir] : LvArray::NumericLimits<real64 >::epsilon;
+      }
+    LvArray::tensorOps::AiBi<3>(faceNormal,invDist);
     LvArray::tensorOps::add<3>(phaseVelocity[er][esr][ei][0][ip],faceNormal);
 
   }

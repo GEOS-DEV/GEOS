@@ -207,7 +207,7 @@ void CompositionalMultiphaseBase::registerDataOnMesh( Group & meshBodies )
       string const dispersionName = getConstitutiveName< DispersionBase >( subRegion );
       if( !dispersionName.empty() )
       {
-        GEOS_ERROR( "Dispersion is not supported yet, please remove this model from this XML file" );
+//        GEOS_ERROR( "Dispersion is not supported yet, please remove this model from this XML file" );
         m_hasDispersion = true;
       }
 

@@ -17,11 +17,25 @@
  *
  */
 
+#include "LvArray/src/tensorOps.hpp"
+#include "mesh/utilities/ComputationalGeometry.hpp"
+#include "finiteVolume/ProjectionEDFMHelper.hpp"
+#include "common/MpiWrapper.hpp"
 #include "FluxApproximationBase.hpp"
 
 #include "fieldSpecification/FieldSpecificationManager.hpp"
 #include "fieldSpecification/AquiferBoundaryCondition.hpp"
-#include "mesh/mpiCommunications/CommunicationTools.hpp"
+
+const geos::arraySlice1d<geos::real64 const> geos::FluxApproximationBase::getGlobalCellToFace(ElementRegionManager const & elemManager, localIndex const seri, localIndex const sesri, localIndex  const sei) const
+{
+    ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > > const elemGlobalIndex =
+            elemManager.constructArrayViewAccessor< globalIndex, 1 >( ObjectManagerBase::viewKeyStruct::localToGlobalMapString() );
+
+
+    globalIndex const selectedGlobalIndex = elemGlobalIndex[seri][sesri][sei];
+
+    return m_globalCellToFace[selectedGlobalIndex];
+}
 
 namespace geos
 {
@@ -126,6 +140,7 @@ void FluxApproximationBase::initializePostInitialConditionsPreSubGroups()
       if( !(mesh.isShallowCopy() ) )
       {
         // Group structure: mesh1/finiteVolumeStencils/myTPFA
+        m_globalCellToFace.resize(mesh.getElemManager().getNumberOfElements(), 3);
 
         // Compute the main cell-based stencil
         computeCellStencil( mesh );

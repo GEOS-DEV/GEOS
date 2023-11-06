@@ -64,7 +64,8 @@ public:
   };
 
 private:
-  virtual void registerCellStencil( Group & stencilGroup ) const override;
+
+    virtual void registerCellStencil( Group & stencilGroup ) const override;
 
   virtual void computeFractureStencil( MeshLevel & mesh ) const override;
 
@@ -146,10 +147,12 @@ private:
   void initNewFractureFieldsDFM( MeshLevel & mesh,
                                  string const & faceElementRegionName ) const;
 
-  /// mean permeability coefficient
+
+    /// mean permeability coefficient
   real64 m_meanPermCoefficient;
   /// flag to determine whether or not to use projection EDFM
   integer m_useProjectionEmbeddedFractureMethod;
+
 };
 
 }

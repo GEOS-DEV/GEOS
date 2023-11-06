@@ -33,6 +33,7 @@
 #include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
 
 #include "LvArray/src/tensorOps.hpp"
+#include "FluxApproximationBase.hpp"
 
 #if defined( __INTEL_COMPILER )
 #pragma GCC optimize "O0"
@@ -70,9 +71,10 @@ TwoPointFluxApproximation::TwoPointFluxApproximation( string const & name,
     setInputFlag( dataRepository::InputFlags::OPTIONAL ).
     setApplyDefaultValue( 0 ).
     setRestartFlags( RestartFlags::NO_WRITE );
+
 }
 
-void TwoPointFluxApproximation::registerCellStencil( Group & stencilGroup ) const
+    void TwoPointFluxApproximation::registerCellStencil( Group & stencilGroup ) const
 {
   stencilGroup.registerWrapper< CellElementStencilTPFA >( viewKeyStruct::cellStencilString() ).
     setRestartFlags( RestartFlags::NO_WRITE );
@@ -184,8 +186,17 @@ void TwoPointFluxApproximation::computeCellStencil( MeshLevel & mesh ) const
       elementIndex[ke] = ei;
       stencilCellsGlobalIndex[ke] = elemGlobalIndex[er][esr][ei];
 
+
       LvArray::tensorOps::copy< 3 >( cellToFaceVec[ke], faceCenter );
       LvArray::tensorOps::subtract< 3 >( cellToFaceVec[ke], elemCenter[er][esr][ei] );
+
+      //cumulating signed distance to from face to cell center to form denom in cell-wise linear interpolation
+      real64 absCellToFaceVec[3];
+        for (int dir = 0; dir < 3; ++dir) {
+            absCellToFaceVec[dir] = LvArray::math::abs(cellToFaceVec[ke][dir]);
+        }
+
+      LvArray::tensorOps::add<3>( m_globalCellToFace[stencilCellsGlobalIndex[ke]], absCellToFaceVec );
 
       real64 const c2fDistance = LvArray::tensorOps::normalize< 3 >( cellToFaceVec[ke] );
 
@@ -220,7 +231,7 @@ void TwoPointFluxApproximation::computeCellStencil( MeshLevel & mesh ) const
   } );
 }
 
-void TwoPointFluxApproximation::registerFractureStencil( Group & stencilGroup ) const
+    void TwoPointFluxApproximation::registerFractureStencil( Group & stencilGroup ) const
 {
   stencilGroup.registerWrapper< SurfaceElementStencil >( viewKeyStruct::fractureStencilString() ).
     setRestartFlags( RestartFlags::NO_WRITE );

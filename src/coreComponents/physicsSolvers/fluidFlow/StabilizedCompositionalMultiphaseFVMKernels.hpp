@@ -119,6 +119,8 @@ public:
   FaceBasedAssemblyKernel( integer const numPhases,
                            globalIndex const rankOffset,
                            integer const hasCapPressure,
+                           FluxApproximationBase const & fluxApprox,
+                           ElementRegionManager const & elemManager,
                            STENCILWRAPPER const & stencilWrapper,
                            DofNumberAccessor const & dofNumberAccessor,
                            CompFlowAccessors const & compFlowAccessors,
@@ -134,6 +136,8 @@ public:
     : Base( numPhases,
             rankOffset,
             hasCapPressure,
+            fluxApprox,
+            elemManager,
             stencilWrapper,
             dofNumberAccessor,
             compFlowAccessors,
@@ -327,6 +331,7 @@ public:
                    string const & dofKey,
                    integer const hasCapPressure,
                    string const & solverName,
+                   FluxApproximationBase const & fluxApprox,
                    ElementRegionManager const & elemManager,
                    STENCILWRAPPER const & stencilWrapper,
                    real64 const & dt,
@@ -352,7 +357,7 @@ public:
       typename KERNEL_TYPE::PermeabilityAccessors permeabilityAccessors( elemManager, solverName );
       typename KERNEL_TYPE::RelPermAccessors relPermAccessors( elemManager, solverName );
 
-      KERNEL_TYPE kernel( numPhases, rankOffset, hasCapPressure, stencilWrapper, dofNumberAccessor,
+      KERNEL_TYPE kernel( numPhases, rankOffset, hasCapPressure, fluxApprox, elemManager, stencilWrapper, dofNumberAccessor,
                           compFlowAccessors, stabCompFlowAccessors, multiFluidAccessors, stabMultiFluidAccessors,
                           capPressureAccessors, permeabilityAccessors, relPermAccessors,
                           dt, localMatrix, localRhs );

@@ -42,6 +42,20 @@ LinearIsotropicDispersion::deliverClone( string const & name,
   return DispersionBase::deliverClone( name, parent );
 }
 
+void LinearIsotropicDispersion::allocateConstitutiveData(dataRepository::Group &parent,
+                                                         const geos::localIndex numConstitutivePointsPerParentIndex)
+                                                         {
+    DispersionBase::allocateConstitutiveData(parent,numConstitutivePointsPerParentIndex);
+                                                             for (int ei = 0; ei < parent.size(); ++ei)
+                                                             {
+                                                                 for (int q = 0; q < 1; ++q) {
+                                                                     m_dispersivity[ei][q][0] = m_longitudinalDispersivity;
+                                                                 }
+
+                                                             }
+
+                                                         }
+
 void LinearIsotropicDispersion::postProcessInput()
 {
   GEOS_THROW_IF( m_longitudinalDispersivity < 0,

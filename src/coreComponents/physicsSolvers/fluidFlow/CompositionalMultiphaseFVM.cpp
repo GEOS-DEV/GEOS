@@ -146,6 +146,7 @@ void CompositionalMultiphaseFVM::assembleFluxTerms( real64 const dt,
                                                      elemDofKey,
                                                      m_hasCapPressure,
                                                      getName(),
+                                                     fluxApprox,
                                                      mesh.getElemManager(),
                                                      stencilWrapper,
                                                      dt,
@@ -161,8 +162,8 @@ void CompositionalMultiphaseFVM::assembleFluxTerms( real64 const dt,
                                                      dofManager.rankOffset(),
                                                      elemDofKey,
                                                      m_hasCapPressure,
-                                                     fluxApprox.upwindingParams(),
                                                      getName(),
+                                                     fluxApprox,
                                                      mesh.getElemManager(),
                                                      stencilWrapper,
                                                      dt,
@@ -249,6 +250,7 @@ void CompositionalMultiphaseFVM::assembleStabilizedFluxTerms( real64 const dt,
                                                    elemDofKey,
                                                    m_hasCapPressure,
                                                    getName(),
+                                                   fluxApprox,
                                                    mesh.getElemManager(),
                                                    stencilWrapper,
                                                    dt,
@@ -888,7 +890,7 @@ void CompositionalMultiphaseFVM::applyFaceDirichletBC( real64 const time_n,
 
       string const & elemDofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
 
-      if( m_isThermal )
+      /*if( m_isThermal )
       {
         thermalCompositionalMultiphaseFVMKernels::
           DirichletFaceBasedAssemblyKernelFactory::
@@ -905,7 +907,7 @@ void CompositionalMultiphaseFVM::applyFaceDirichletBC( real64 const time_n,
                                                      localMatrix,
                                                      localRhs );
       }
-      else
+      else*/
       {
         isothermalCompositionalMultiphaseFVMKernels::
           DirichletFaceBasedAssemblyKernelFactory::
@@ -915,6 +917,7 @@ void CompositionalMultiphaseFVM::applyFaceDirichletBC( real64 const time_n,
                                                      elemDofKey,
                                                      getName(),
                                                      faceManager,
+                                                     fluxApprox,
                                                      elemManager,
                                                      stencilWrapper,
                                                      multiFluidBase,

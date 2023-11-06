@@ -243,6 +243,8 @@ public:
   FaceBasedAssemblyKernel( integer const numPhases,
                            globalIndex const rankOffset,
                            integer const hasCapPressure,
+                           FluxApproximationBase const & fluxApprox,
+                           ElementRegionManager const & elemManager,
                            STENCILWRAPPER const & stencilWrapper,
                            DofNumberAccessor const & dofNumberAccessor,
                            CompFlowAccessors const & compFlowAccessors,
@@ -258,6 +260,8 @@ public:
     : Base( numPhases,
             rankOffset,
             hasCapPressure,
+            fluxApprox,
+            elemManager,
             stencilWrapper,
             dofNumberAccessor,
             compFlowAccessors,
@@ -628,6 +632,7 @@ public:
                    string const & dofKey,
                    integer const hasCapPressure,
                    string const & solverName,
+                   FluxApproximationBase const & fluxApprox,
                    ElementRegionManager const & elemManager,
                    STENCILWRAPPER const & stencilWrapper,
                    real64 const & dt,
@@ -653,7 +658,7 @@ public:
       typename KernelType::PermeabilityAccessors permeabilityAccessors( elemManager, solverName );
       typename KernelType::ThermalConductivityAccessors thermalConductivityAccessors( elemManager, solverName );
 
-      KernelType kernel( numPhases, rankOffset, hasCapPressure, stencilWrapper, dofNumberAccessor,
+      KernelType kernel( numPhases, rankOffset, hasCapPressure, fluxApprox, elemManager, stencilWrapper, dofNumberAccessor,
                          compFlowAccessors, thermalCompFlowAccessors, multiFluidAccessors, thermalMultiFluidAccessors,
                          capPressureAccessors, permeabilityAccessors, thermalConductivityAccessors,
                          dt, localMatrix, localRhs );

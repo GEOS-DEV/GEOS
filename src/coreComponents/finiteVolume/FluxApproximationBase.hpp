@@ -213,7 +213,19 @@ public:
    * @brief get the upwinding parameters.
    * @return upwinding parameters structure.
    */
-  UpwindingParameters const & upwindingParams() const { return m_upwindingParams; }
+  UpwindingParameters const & getUpwindingParams() const { return m_upwindingParams; }
+
+/**
+ * @brief Get the total cell-to-face distance as a vector
+ * @param elemManager
+ * @param seri
+ * @param sesri
+ * @param sei
+ * @return
+ */
+    virtual const arraySlice1d<real64 const>
+    getGlobalCellToFace(const ElementRegionManager& elemManager, const localIndex seri, const localIndex sesri, const localIndex sei) const;
+
 
 protected:
 
@@ -301,6 +313,8 @@ protected:
   /// upwinding parameters
   UpwindingParameters m_upwindingParams;
 
+/// container used to store cell-wise distance to faces (for interpolation)
+array2d<real64> m_globalCellToFace;
 };
 
 template< typename TYPE >
