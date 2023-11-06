@@ -260,13 +260,7 @@ void WellControls::postProcessInput()
                  getWrapperDataContext( viewKeyStruct::useSurfaceConditionsString() ) << ": The flag to select surface/reservoir conditions must be equal to 0 or 1",
                  InputError );
 
-  // 4) check the flag for surface / reservoir conditions
-  GEOS_THROW_IF( m_useSurfaceConditions == 1 && m_surfacePres <= 0,
-                 "WellControls " << getDataContext() << ": When " << viewKeyStruct::useSurfaceConditionsString() << " == 1, " <<
-                 viewKeyStruct::surfacePressureString() << " must be defined",
-                 InputError );
-
-  // 5) check that at least one rate constraint has been defined
+  // 4) check that at least one rate constraint has been defined
   GEOS_THROW_IF( ((m_targetPhaseRate <= 0.0 && m_targetPhaseRateTableName.empty()) &&
                   (m_targetTotalRate <= 0.0 && m_targetTotalRateTableName.empty())),
                  "WellControls " << getDataContext() << ": You need to specify a phase rate constraint or a total rate constraint. \n" <<
@@ -278,7 +272,7 @@ void WellControls::postProcessInput()
                  " or " << viewKeyStruct::targetTotalRateTableNameString(),
                  InputError );
 
-  // 6) check whether redundant information has been provided
+  // 5) check whether redundant information has been provided
   GEOS_THROW_IF( ((m_targetPhaseRate > 0.0 && !m_targetPhaseRateTableName.empty())),
                  "WellControls " << getDataContext() << ": You have provided redundant information for well phase rate." <<
                  " The keywords " << viewKeyStruct::targetPhaseRateString() << " and " << viewKeyStruct::targetPhaseRateTableNameString() << " cannot be specified together",

@@ -434,23 +434,13 @@ void CompositionalMultiphaseWell::validateWellConstraints( real64 const & time_n
 
   if( wellControls.useSurfaceConditions() )
   {
-    real64 const & surfaceTemp = wellControls.getSurfaceTemperature();
-    real64 const & surfacePres = wellControls.getSurfacePressure();
-
-    GEOS_THROW_IF( surfaceTemp <= 0,
-                   "WellControls " << wellControls.getDataContext() <<
-                   ": Surface temperature must be set to a strictly positive value",
-                   InputError );
-    GEOS_THROW_IF( surfacePres <= 0,
-                   "WellControls " << wellControls.getDataContext() <<
-                   ": Surface pressure must be set to a strictly positive value",
-                   InputError );
-
     // check if the pressure & temperature is within the fluid tables ranges
     constitutive::constitutiveUpdatePassThru( fluid, [&] ( auto & castedFluid )
     {
       try
       {
+        real64 const & surfaceTemp = wellControls.getSurfaceTemperature();
+        real64 const & surfacePres = wellControls.getSurfacePressure();
         castedFluid.checkTablesParameters( surfacePres, surfaceTemp );
       } catch( SimulationError const & ex )
       {
