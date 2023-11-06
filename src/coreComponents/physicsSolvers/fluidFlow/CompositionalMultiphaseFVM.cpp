@@ -105,8 +105,8 @@ void CompositionalMultiphaseFVM::initializePreSubGroups()
   CompositionalMultiphaseBase::initializePreSubGroups();
 
   m_linearSolverParameters.get().mgr.strategy = m_isThermal
-    ? LinearSolverParameters::MGR::StrategyType::thermalCompositionalMultiphaseFVM
-    : LinearSolverParameters::MGR::StrategyType::compositionalMultiphaseFVM;
+                                                ? LinearSolverParameters::MGR::StrategyType::thermalCompositionalMultiphaseFVM
+                                                : LinearSolverParameters::MGR::StrategyType::compositionalMultiphaseFVM;
 
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
@@ -176,6 +176,7 @@ void CompositionalMultiphaseFVM::assembleFluxTerms( real64 const dt,
                                                      dofManager.rankOffset(),
                                                      elemDofKey,
                                                      m_hasCapPressure,
+                                                     m_useTotalMassEquation,
                                                      getName(),
                                                      mesh.getElemManager(),
                                                      stencilWrapper,
@@ -194,6 +195,7 @@ void CompositionalMultiphaseFVM::assembleFluxTerms( real64 const dt,
                                                        dofManager.rankOffset(),
                                                        elemDofKey,
                                                        m_hasCapPressure,
+                                                       m_useTotalMassEquation,
                                                        getName(),
                                                        mesh.getElemManager(),
                                                        stencilWrapper,
@@ -210,19 +212,20 @@ void CompositionalMultiphaseFVM::assembleFluxTerms( real64 const dt,
         else
         {
           isothermalCompositionalMultiphaseFVMKernels::
-            FaceBasedAssemblyKernelFactory::
-            createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
-                                                       m_numPhases,
-                                                       dofManager.rankOffset(),
-                                                       elemDofKey,
-                                                       m_hasCapPressure,
-                                                       fluxApprox.upwindingParams(),
-                                                       getName(),
-                                                       mesh.getElemManager(),
-                                                       stencilWrapper,
-                                                       dt,
-                                                       localMatrix.toViewConstSizes(),
-                                                       localRhs.toView() );
+          FaceBasedAssemblyKernelFactory::
+          createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
+                                                     m_numPhases,
+                                                     dofManager.rankOffset(),
+                                                     elemDofKey,
+                                                     m_hasCapPressure,
+                                                     m_useTotalMassEquation,
+                                                     fluxApprox.upwindingParams(),
+                                                     getName(),
+                                                     mesh.getElemManager(),
+                                                     stencilWrapper,
+                                                     dt,
+                                                     localMatrix.toViewConstSizes(),
+                                                     localRhs.toView() );
         }
       }
 
@@ -240,6 +243,7 @@ void CompositionalMultiphaseFVM::assembleFluxTerms( real64 const dt,
                                                        elemDofKey,
                                                        m_hasDiffusion,
                                                        m_hasDispersion,
+                                                       m_useTotalMassEquation,
                                                        getName(),
                                                        mesh.getElemManager(),
                                                        stencilWrapper,
@@ -257,6 +261,7 @@ void CompositionalMultiphaseFVM::assembleFluxTerms( real64 const dt,
                                                        elemDofKey,
                                                        m_hasDiffusion,
                                                        m_hasDispersion,
+                                                       m_useTotalMassEquation,
                                                        getName(),
                                                        mesh.getElemManager(),
                                                        stencilWrapper,
@@ -304,6 +309,7 @@ void CompositionalMultiphaseFVM::assembleStabilizedFluxTerms( real64 const dt,
                                                    dofManager.rankOffset(),
                                                    elemDofKey,
                                                    m_hasCapPressure,
+                                                   m_useTotalMassEquation,
                                                    getName(),
                                                    mesh.getElemManager(),
                                                    stencilWrapper,
@@ -951,6 +957,7 @@ void CompositionalMultiphaseFVM::applyFaceDirichletBC( real64 const time_n,
           createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
                                                      m_numPhases,
                                                      dofManager.rankOffset(),
+                                                     m_useTotalMassEquation,
                                                      elemDofKey,
                                                      getName(),
                                                      faceManager,
@@ -968,6 +975,7 @@ void CompositionalMultiphaseFVM::applyFaceDirichletBC( real64 const time_n,
           createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
                                                      m_numPhases,
                                                      dofManager.rankOffset(),
+                                                     m_useTotalMassEquation,
                                                      elemDofKey,
                                                      getName(),
                                                      faceManager,
@@ -1048,6 +1056,7 @@ void CompositionalMultiphaseFVM::applyAquiferBC( real64 const time,
                                                                         m_numPhases,
                                                                         waterPhaseIndex,
                                                                         allowAllPhasesIntoAquifer,
+                                                                        m_useTotalMassEquation,
                                                                         stencil,
                                                                         dofManager.rankOffset(),
                                                                         elemDofNumber.toNestedViewConst(),
