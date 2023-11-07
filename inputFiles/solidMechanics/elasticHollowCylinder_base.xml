@@ -66,13 +66,13 @@
     <PeriodicEvent
       name="outputs"
       timeFrequency="1.0"
-      target="/Outputs/siloOutput"/>
+      target="/Outputs/vtkOutput"/>
 
-    <!--PeriodicEvent
+    <PeriodicEvent
       name="restarts"
-      timeFrequency="1e99"
+      timeFrequency="2.0"
       targetExactTimestep="0"
-      target="/Outputs/restartOutput"/-->
+      target="/Outputs/restartOutput"/>
   </Events>
 
   <!-- SPHINX_FEDiscretization -->
@@ -85,22 +85,39 @@
   </NumericalMethods>
 
   <!-- SPHINX_FEDiscretizationEnd -->
-  <ElementRegions>
-    <CellElementRegion
-      name="Region1"
-      cellBlocks="{ cb1 }"
-      materialList="{ steel }"/>
-  </ElementRegions>
 
   <Constitutive>
     <!-- SPHINX_Material -->
     <ElasticIsotropic
-      name="steel"
+      name="isotropicMaterial"
       defaultDensity="2700"
       defaultBulkModulus="175e9"
       defaultShearModulus="80.8e9"/>
 
     <!-- SPHINX_MaterialEnd -->
+
+    <ElasticTransverseIsotropic
+      name="transverseIsotropicMaterial"
+      defaultDensity="2700"
+      defaultPoissonRatioAxialTransverse="0.3"
+      defaultPoissonRatioTransverse="0.3"
+      defaultYoungModulusAxial="210.0e9"
+      defaultYoungModulusTransverse="210.0e9"
+      defaultShearModulusAxialTransverse="80.8e9"/>
+
+    <ElasticOrthotropic
+      name="orthotropicMaterial"
+      defaultDensity="2700"
+      defaultC11="283e9"
+      defaultC12="121e9"
+      defaultC13="121e9"
+      defaultC22="283e9"
+      defaultC23="121e9"
+      defaultC33="283e9"
+      defaultC44="80.8e9"
+      defaultC55="80.8e9"
+      defaultC66="80.8e9"/>
+
   </Constitutive>
 
   <!-- SPHINX_BoundaryConditions -->
@@ -158,12 +175,11 @@
 
   <!-- SPHINX_TableFunctionEnd -->
   <Outputs>
-    <Silo
-      name="siloOutput"
-      parallelThreads="32"
-      childDirectory="sub"/>
+    <VTK 
+      name="vtkOutput"    
+    />
 
-    <!--Restart
-      name="restartOutput"/-->
+    <Restart
+      name="restartOutput"/>
   </Outputs>
 </Problem>

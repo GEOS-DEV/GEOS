@@ -8,6 +8,8 @@
       discretization="fluidTPFA"
       temperature="368.15"
       useMass="1"
+      useTotalMassEquation="0"
+      useSimpleAccumulation="1"
       targetRegions="{ region }">
       <NonlinearSolverParameters
         newtonTol="1.0e-5"
