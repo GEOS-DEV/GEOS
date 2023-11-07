@@ -25,6 +25,8 @@ jobs:
     - name: Check that the PR is not a draft (cancel rest of jobs otherwise)
       id: check_pr
       run: |
+        pwd
+        ls
         echo "GEOSX_TPL_TAG=$(jq '.build.args.GEOS_TPL_TAG' -r .devcontainer/devcontainer.json)" >> "$GITHUB_OUTPUT"
         draft_status=$(curl -H "Accept: application/vnd.github+json" \
            https://api.github.com/repos/${{ github.repository }}/pulls/${{ github.event.number }} \
