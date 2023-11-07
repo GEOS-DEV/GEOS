@@ -129,6 +129,7 @@ fi
 ATS_ARGUMENTS=""
 if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
   echo "We should be running the integrated tests."
+  apt-get install -y virtualenv
   ATS_ARGUMENTS="-DATS_ARGUMENTS=\"--machine openmpi --ats openmpi_mpirun=/usr/bin/mpirun --ats openmpi_args=--oversubscribe --ats openmpi_procspernode=2 --ats openmpi_maxprocs=2\""
 fi
 
