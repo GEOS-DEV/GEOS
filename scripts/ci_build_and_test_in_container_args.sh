@@ -126,8 +126,10 @@ EOT
   ${SCCACHE} --show-stats
 fi
 
+ATS_ARGUMENTS=""
 if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
   echo "We should be running the integrated tests."
+  ATS_ARGUMENTS="-DATS_ARGUMENTS=\"--machine openmpi --ats openmpi_mpirun=/usr/bin/mpirun --ats openmpi_args=--oversubscribe --ats openmpi_procspernode=2 --ats openmpi_maxprocs=2\""
 fi
 
 # The -DBLT_MPI_COMMAND_APPEND="--allow-run-as-root;--oversubscribe" option is added for OpenMPI.
@@ -151,12 +153,11 @@ or_die python3 scripts/config-build.py \
                -ip ${GEOSX_DIR} \
                --ninja \
                -DBLT_MPI_COMMAND_APPEND='"--allow-run-as-root;--oversubscribe"' \
-               -DGEOSX_INSTALL_SCHEMA=${GEOSX_INSTALL_SCHEMA} ${SCCACHE_CMAKE_PARAMETERS}
+               -DGEOSX_INSTALL_SCHEMA=${GEOSX_INSTALL_SCHEMA} ${SCCACHE_CMAKE_PARAMETERS} ${ATS_ARGUMENTS}
 
 or_die cd ${GEOSX_BUILD_DIR}
 
 # Code style check
-# if [[ "$*" == *--test-code-style* ]]; then
 if [[ "${TEST_CODE_STYLE}" = true ]]; then
   or_die ctest --output-on-failure -R "testUncrustifyCheck"
   exit 0
@@ -181,7 +182,13 @@ fi
 if [[ "${RUN_UNIT_TESTS}" = true ]]; then
   or_die ctest --output-on-failure -E "testUncrustifyCheck|testDoxygenCheck"
 fi
- 
+
+if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
+  or_die ninja geosx_python_tools
+  or_die ninja ats_run
+  exit 0
+fi
+
 if [[ "${USE_SCCACHE}" = true ]]; then
   echo "sccache final state"
   ${SCCACHE} --show-stats
