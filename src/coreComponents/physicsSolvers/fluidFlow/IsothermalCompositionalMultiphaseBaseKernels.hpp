@@ -1507,6 +1507,7 @@ public:
    * @param[in] compDens the component density vector
    */
   SolutionCheckKernel( integer const allowCompDensChopping,
+                       integer const allowNegativePressure,
                        CompositionalMultiphaseFVM::ScalingType const scalingType,
                        real64 const scalingFactor,
                        globalIndex const rankOffset,
@@ -1528,6 +1529,7 @@ public:
             pressureScalingFactor,
             compDensScalingFactor ),
     m_allowCompDensChopping( allowCompDensChopping ),
+      m_allowNegativePressure( allowNegativePressure ),
     m_scalingFactor( scalingFactor ),
     m_scalingType( scalingType )
   {}
@@ -1667,7 +1669,10 @@ public:
     real64 const newPres = m_pressure[ei] + (localScaling ? m_pressureScalingFactor[ei] : m_scalingFactor) * m_localSolution[stack.localRow];
     if( newPres < 0 )
     {
-      stack.localMinVal = 0;
+      if(!m_allowNegativePressure)
+      {
+        stack.localMinVal = 0;
+      }
       stack.localNumNegPressures += 1;
       if( newPres < stack.localMinPres )
         stack.localMinPres = newPres;
@@ -1715,6 +1720,9 @@ protected:
   /// flag to allow the component density chopping
   integer const m_allowCompDensChopping;
 
+  /// flag to allow negative pressure values
+  integer const m_allowNegativePressure;
+
   /// scaling factor
   real64 const m_scalingFactor;
 
@@ -1744,6 +1752,7 @@ public:
   template< typename POLICY >
   static SolutionCheckKernel::StackVariables
   createAndLaunch( integer const allowCompDensChopping,
+                   integer const allowNegativePressure,
                    CompositionalMultiphaseFVM::ScalingType const scalingType,
                    real64 const scalingFactor,
                    globalIndex const rankOffset,
@@ -1760,7 +1769,7 @@ public:
       subRegion.getField< fields::flow::pressureScalingFactor >();
     arrayView1d< real64 > compDensScalingFactor =
       subRegion.getField< fields::flow::globalCompDensityScalingFactor >();
-    SolutionCheckKernel kernel( allowCompDensChopping, scalingType, scalingFactor, rankOffset,
+    SolutionCheckKernel kernel( allowCompDensChopping, allowNegativePressure, scalingType, scalingFactor, rankOffset,
                                 numComp, dofKey, subRegion, localSolution, pressure, compDens, pressureScalingFactor, compDensScalingFactor );
     return SolutionCheckKernel::launch< POLICY >( subRegion.size(), kernel );
   }

@@ -73,6 +73,7 @@ public:
     static constexpr char const * permeabilityNamesString() { return "permeabilityNames"; }
     static constexpr char const * isThermalString() { return "isThermal"; }
     static constexpr char const * solidInternalEnergyNamesString() { return "solidInternalEnergyNames"; }
+    static constexpr char const * allowNegativePressureString() { return "allowNegativePressure"; }
   };
 
   /**
@@ -129,6 +130,11 @@ public:
 
   integer & isThermal() { return m_isThermal; }
 
+  /**
+ * @brief Function to activate the flag allowing negative pressure
+ */
+  void allowNegativePressure() { m_allowNegativePressure = 1; }
+
 protected:
 
   /**
@@ -179,6 +185,9 @@ protected:
 
   /// enable the fixed stress poromechanics update of porosity
   bool m_isFixedStressPoromechanicsUpdate;
+
+  /// flag if negative pressure is allowed
+  integer m_allowNegativePressure;
 
 private:
   virtual void setConstitutiveNames( ElementSubRegionBase & subRegion ) const override;

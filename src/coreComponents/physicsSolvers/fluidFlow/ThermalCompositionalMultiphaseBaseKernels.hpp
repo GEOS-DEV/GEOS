@@ -725,6 +725,7 @@ public:
    * @param[in] compDens the component density vector
    */
   SolutionCheckKernel( integer const allowCompDensChopping,
+                       integer const allowNegativePressure,
                        CompositionalMultiphaseFVM::ScalingType const scalingType,
                        real64 const scalingFactor,
                        globalIndex const rankOffset,
@@ -739,6 +740,7 @@ public:
                        arrayView1d< real64 > compDensScalingFactor,
                        arrayView1d< real64 > temperatureScalingFactor )
     : Base( allowCompDensChopping,
+            allowNegativePressure,
             scalingType,
             scalingFactor,
             rankOffset,
@@ -807,6 +809,7 @@ public:
   template< typename POLICY >
   static SolutionCheckKernel::StackVariables
   createAndLaunch( integer const allowCompDensChopping,
+                   integer const allowNegativePressure,
                    CompositionalMultiphaseFVM::ScalingType const scalingType,
                    real64 const scalingFactor,
                    globalIndex const rankOffset,
@@ -824,7 +827,7 @@ public:
     arrayView1d< real64 > pressureScalingFactor = subRegion.getField< fields::flow::pressureScalingFactor >();
     arrayView1d< real64 > temperatureScalingFactor = subRegion.getField< fields::flow::temperatureScalingFactor >();
     arrayView1d< real64 > compDensScalingFactor = subRegion.getField< fields::flow::globalCompDensityScalingFactor >();
-    SolutionCheckKernel kernel( allowCompDensChopping, scalingType, scalingFactor,
+    SolutionCheckKernel kernel( allowCompDensChopping, allowNegativePressure, scalingType, scalingFactor,
                                 rankOffset, numComp, dofKey, subRegion, localSolution,
                                 pressure, temperature, compDens, pressureScalingFactor, temperatureScalingFactor, compDensScalingFactor );
     return SolutionCheckKernel::launch< POLICY >( subRegion.size(), kernel );

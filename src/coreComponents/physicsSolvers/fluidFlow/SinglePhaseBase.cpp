@@ -64,11 +64,6 @@ SinglePhaseBase::SinglePhaseBase( const string & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( -1.0 ).   // disabled by default
     setDescription( "Maximum (absolute) pressure change in a Newton iteration" );
-
-  this->registerWrapper( viewKeyStruct::allowNegativePressureString(), &m_allowNegativePressure ).
-    setApplyDefaultValue( 1 ). // negative pressure is allowed by default
-    setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Flag indicating if negative pressure is allowed" );
 }
 
 
