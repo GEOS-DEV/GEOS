@@ -214,7 +214,6 @@ public:
     // inputs
     static constexpr char const * inputTemperatureString() { return "temperature"; }
     static constexpr char const * thermalConductivityNamesString() { return "thermalConductivityNames"; }
-    static constexpr char const * maxPressureChangeString() { return "maxPressureChange"; }
   };
 
   /**
@@ -397,9 +396,6 @@ protected:
 
   /// flag to freeze the initial state during initialization in coupled problems
   integer m_keepFlowVariablesConstantDuringInitStep;
-
-  /// maximum (absolute) pressure change in a Newton iteration
-  real64 m_maxPressureChange;
 
 private:
   virtual void setConstitutiveNames( ElementSubRegionBase & subRegion ) const override;

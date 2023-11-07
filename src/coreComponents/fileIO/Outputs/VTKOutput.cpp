@@ -130,7 +130,7 @@ bool VTKOutput::execute( real64 const time_n,
                          real64 const GEOS_UNUSED_PARAM ( eventProgress ),
                          DomainPartition & domain )
 {
-  GEOS_LOG_LEVEL_RANK_0(1, GEOS_FMT("{}: writing {} at time {} s (cycle number {})", getName(), m_fieldNames, time_n + dt, cycleNumber));
+  GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "{}: writing {} at time {} s (cycle number {})", getName(), m_fieldNames, time_n + dt, cycleNumber ));
 
   m_writer.setWriteGhostCells( m_writeGhostCells );
   m_writer.setOutputMode( m_writeBinaryData );

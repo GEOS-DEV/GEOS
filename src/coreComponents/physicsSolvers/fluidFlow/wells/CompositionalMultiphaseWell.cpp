@@ -63,6 +63,7 @@ CompositionalMultiphaseWell::CompositionalMultiphaseWell( const string & name,
   m_useTotalMassEquation( 1 ),
   m_maxCompFracChange( 1.0 ),
   m_maxRelativePresChange( 0.2 ),
+  m_maxAbsolutePresChange( -1 ), // disabled by default
   m_minScalingFactor( 0.01 ),
   m_allowCompDensChopping( 1 ),
   m_targetPhaseIndex( -1 )
@@ -88,6 +89,12 @@ CompositionalMultiphaseWell::CompositionalMultiphaseWell( const string & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( 1.0 ).
     setDescription( "Maximum (relative) change in pressure between two Newton iterations (recommended with rate control)" );
+
+  this->registerWrapper( viewKeyStruct::maxAbsolutePresChangeString(), &m_maxAbsolutePresChange ).
+    setSizedFromParent( 0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( -1.0 ).       // disabled by default
+    setDescription( "Maximum (absolute) pressure change in a Newton iteration" );
 
   this->registerWrapper( viewKeyStruct::allowLocalCompDensChoppingString(), &m_allowCompDensChopping ).
     setSizedFromParent( 0 ).
@@ -1258,15 +1265,15 @@ CompositionalMultiphaseWell::scalingForSystemSolution( DomainPartition & domain,
 {
   GEOS_MARK_FUNCTION;
 
-  bool const skipCompFracDamping = m_maxCompFracChange >= 1.0;
-  bool const skipPresDamping = m_maxRelativePresChange >= 1.0;
-
-  // check if we want to rescale the Newton update
-  if( skipCompFracDamping && skipPresDamping )
-  {
-    // no rescaling wanted, we just return 1.0;
-    return 1.0;
-  }
+//  bool const skipCompFracDamping = m_maxCompFracChange >= 1.0;
+//  bool const skipPresDamping = m_maxRelativePresChange >= 1.0;
+//
+//  // check if we want to rescale the Newton update
+//  if( skipCompFracDamping && skipPresDamping )
+//  {
+//    // no rescaling wanted, we just return 1.0;
+//    return 1.0;
+//  }
 
   string const wellDofKey = dofManager.getKey( wellElementDofName() );
 
@@ -1284,6 +1291,7 @@ CompositionalMultiphaseWell::scalingForSystemSolution( DomainPartition & domain,
         compositionalMultiphaseWellKernels::
           ScalingForSystemSolutionKernelFactory::
           createAndLaunch< parallelDevicePolicy<> >( m_maxRelativePresChange,
+                                                     m_maxAbsolutePresChange,
                                                      m_maxCompFracChange,
                                                      dofManager.rankOffset(),
                                                      m_numComponents,

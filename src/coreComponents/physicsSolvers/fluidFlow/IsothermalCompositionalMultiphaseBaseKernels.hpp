@@ -1195,6 +1195,7 @@ public:
    * @param[in] compDensScalingFactor the component density local scaling factor
    */
   ScalingForSystemSolutionKernel( real64 const maxRelativePresChange,
+                                  real64 const maxAbsolutePresChange,
                                   real64 const maxCompFracChange,
                                   globalIndex const rankOffset,
                                   integer const numComp,
@@ -1215,6 +1216,7 @@ public:
             pressureScalingFactor,
             compDensScalingFactor ),
     m_maxRelativePresChange( maxRelativePresChange ),
+    m_maxAbsolutePresChange( maxAbsolutePresChange ),
     m_maxCompFracChange( maxCompFracChange )
   {}
 
@@ -1358,25 +1360,32 @@ public:
       stack.localMaxDeltaPres = absPresChange;
     }
 
-    m_pressureScalingFactor[ei] = 1.0;
-
-    if( pres > eps )
+    // compute pressure scaling factor
+    real64 presScalingFactor = 1.0;
+    // when enabled, absolute change scaling has a priority over relative change
+    if( m_maxAbsolutePresChange > 0.0 ) // maxAbsolutePresChange <= 0.0 means that absolute scaling is disabled
+    {
+      if( absPresChange > m_maxAbsolutePresChange )
+      {
+        presScalingFactor = m_maxAbsolutePresChange / absPresChange;
+      }
+    }
+    else if( pres > eps )
     {
       real64 const relativePresChange = absPresChange / pres;
       if( relativePresChange > m_maxRelativePresChange )
       {
-        real64 const presScalingFactor = m_maxRelativePresChange / relativePresChange;
-        m_pressureScalingFactor[ei] = presScalingFactor;
-
-        if( stack.localMinVal > presScalingFactor )
-        {
-          stack.localMinVal = presScalingFactor;
-        }
-        if( stack.localMinPresScalingFactor > presScalingFactor )
-        {
-          stack.localMinPresScalingFactor = presScalingFactor;
-        }
+        presScalingFactor = m_maxRelativePresChange / relativePresChange;
       }
+    }
+    m_pressureScalingFactor[ei] = presScalingFactor;
+    if( stack.localMinVal > presScalingFactor )
+    {
+      stack.localMinVal = presScalingFactor;
+    }
+    if( stack.localMinPresScalingFactor > presScalingFactor )
+    {
+      stack.localMinPresScalingFactor = presScalingFactor;
     }
 
     real64 prevTotalDens = 0;
@@ -1428,6 +1437,7 @@ protected:
 
   /// Max allowed changes in primary variables
   real64 const m_maxRelativePresChange;
+  real64 const m_maxAbsolutePresChange;
   real64 const m_maxCompFracChange;
 
 };
@@ -1454,6 +1464,7 @@ public:
   template< typename POLICY >
   static ScalingForSystemSolutionKernel::StackVariables
   createAndLaunch( real64 const maxRelativePresChange,
+                   real64 const maxAbsolutePresChange,
                    real64 const maxCompFracChange,
                    globalIndex const rankOffset,
                    integer const numComp,
@@ -1469,7 +1480,7 @@ public:
       subRegion.getField< fields::flow::pressureScalingFactor >();
     arrayView1d< real64 > compDensScalingFactor =
       subRegion.getField< fields::flow::globalCompDensityScalingFactor >();
-    ScalingForSystemSolutionKernel kernel( maxRelativePresChange, maxCompFracChange, rankOffset,
+    ScalingForSystemSolutionKernel kernel( maxRelativePresChange, maxAbsolutePresChange, maxCompFracChange, rankOffset,
                                            numComp, dofKey, subRegion, localSolution, pressure, compDens, pressureScalingFactor, compDensScalingFactor );
     return ScalingForSystemSolutionKernel::launch< POLICY >( subRegion.size(), kernel );
   }

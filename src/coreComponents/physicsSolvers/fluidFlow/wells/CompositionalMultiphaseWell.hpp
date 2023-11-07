@@ -283,6 +283,8 @@ public:
 
     static constexpr char const * maxRelativePresChangeString() { return "maxRelativePressureChange"; }
 
+    static constexpr char const * maxAbsolutePresChangeString() { return "maxAbsolutePressureChange"; }
+
     static constexpr char const * allowLocalCompDensChoppingString() { return CompositionalMultiphaseBase::viewKeyStruct::allowLocalCompDensChoppingString(); }
 
     // control data (not registered on the mesh)
@@ -379,6 +381,9 @@ private:
 
   /// maximum (relative) change in pressure between two Newton iterations
   real64 m_maxRelativePresChange;
+
+  /// maximum (absolute) change in pressure between two Newton iterations
+  real64 m_maxAbsolutePresChange;
 
   /// minimum value of the scaling factor obtained by enforcing maxCompFracChange
   real64 m_minScalingFactor;

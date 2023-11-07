@@ -58,12 +58,6 @@ SinglePhaseBase::SinglePhaseBase( const string & name,
     setApplyDefaultValue( 0.0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Temperature" );
-
-  this->registerWrapper( viewKeyStruct::maxPressureChangeString(), &m_maxPressureChange ).
-    setSizedFromParent( 0 ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setApplyDefaultValue( -1.0 ).   // disabled by default
-    setDescription( "Maximum (absolute) pressure change in a Newton iteration" );
 }
 
 
@@ -1286,7 +1280,7 @@ real64 SinglePhaseBase::scalingForSystemSolution( DomainPartition & domain,
 
       auto const subRegionData =
         singlePhaseBaseKernels::ScalingForSystemSolutionKernel::
-          launch< parallelDevicePolicy<> >( localSolution, rankOffset, dofNumber, ghostRank, m_maxPressureChange );
+          launch< parallelDevicePolicy<> >( localSolution, rankOffset, dofNumber, ghostRank, m_maxAbsolutePresChange );
 
       scalingFactor = std::min( scalingFactor, subRegionData.first );
       maxDeltaPres  = std::max( maxDeltaPres, subRegionData.second );
