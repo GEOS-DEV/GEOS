@@ -282,6 +282,7 @@ public:
      * @brief Compute function to update properties in a cell without returning derivatives.
      * @details This delegates the call to the fluid wrapper using the value and derivative function.
      *          This is used for initialisation and boundary conditions.
+     * @param[in] fluidWrapper the actual fluid kernel
      * @param[in] pressure pressure in the cell
      * @param[in] temperature temperature in the cell
      * @param[in] composition mass/molar component fractions in the cell
@@ -296,7 +297,7 @@ public:
      */
     template< typename FLUIDWRAPPER >
     GEOS_HOST_DEVICE
-    static void computeValues( FLUIDWRAPPER fluidWrapper,
+    static void computeValues( FLUIDWRAPPER const fluidWrapper,
                                real64 const pressure,
                                real64 const temperature,
                                arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & composition,
@@ -646,7 +647,7 @@ protected:
 template< typename FLUIDWRAPPER >
 GEOS_HOST_DEVICE
 void
-MultiFluidBase::KernelWrapper::computeValues( FLUIDWRAPPER fluidWrapper,
+MultiFluidBase::KernelWrapper::computeValues( FLUIDWRAPPER const fluidWrapper,
                                               real64 const pressure,
                                               real64 const temperature,
                                               arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & composition,
