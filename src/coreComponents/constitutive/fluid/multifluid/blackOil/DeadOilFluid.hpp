@@ -105,15 +105,6 @@ private:
                    FluidProp::ViewType totalDensity );
 
     /**
-     * @brief Utility function to compute mass densities as a function of pressure (no derivatives)
-     * @param[in] pressure pressure in the cell
-     * @param[out] phaseMassDens the phase mass densities in the cell
-     */
-    GEOS_HOST_DEVICE
-    void computeDensities( real64 const pressure,
-                           arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & phaseMassDens ) const;
-
-    /**
      * @brief Utility function to compute mass densities as a function of pressure (keeping derivatives)
      * @param[in] pressure pressure in the cell
      * @param[out] phaseMassDens the phase mass densities in the cell (+ derivatives)
@@ -121,15 +112,6 @@ private:
     GEOS_HOST_DEVICE
     void computeDensities( real64 const pressure,
                            PhaseProp::SliceType const & phaseMassDens ) const;
-
-    /**
-     * @brief Utility function to compute viscosities as a function of pressure (no derivatives)
-     * @param[in] pressure pressure in the cell
-     * @param[out] phaseVisc the phase viscosities in the cell
-     */
-    GEOS_HOST_DEVICE
-    void computeViscosities( real64 const pressure,
-                             arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & phaseVisc ) const;
 
     /**
      * @brief Utility function to compute viscosities as a function of pressure (keeping derivatives)
@@ -161,40 +143,6 @@ private:
   virtual void readInputDataFromPVTFiles() override;
 
 };
-
-GEOS_HOST_DEVICE
-GEOS_FORCE_INLINE
-void
-DeadOilFluid::KernelWrapper::
-  computeDensities( real64 const pressure,
-                    arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & phaseMassDens ) const
-{
-  // 1. Hydrocarbon phases: look up in the formation vol factor tables
-
-  for( integer iph = 0; iph < m_hydrocarbonPhaseOrder.size(); ++iph )
-  {
-    // get the phase index
-    integer const ip = m_hydrocarbonPhaseOrder[iph];
-    // interpolate in the table to get the phase formation vol factor, and discard the derivative
-    real64 const fvf = m_formationVolFactorTables[iph].compute( &pressure );
-
-    // we are ready to update the densities
-    phaseMassDens[ip] = m_surfacePhaseMassDensity[ip] / fvf;
-  }
-
-  // 2. Water phase: use the constant formation volume factor and compressibility provided by the user
-
-  using PT = DeadOilFluid::PhaseType;
-  integer const ipWater = m_phaseOrder[PT::WATER];
-
-  // if water is present
-  if( ipWater >= 0 )
-  {
-    // note: double check, but I think std::exp is allowed in kernel
-    real64 const denom = m_waterParams.formationVolFactor * std::exp( -m_waterParams.compressibility * ( pressure - m_waterParams.referencePressure ) );
-    phaseMassDens[ipWater] = m_surfacePhaseMassDensity[ipWater] / denom;
-  }
-}
 
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
@@ -239,36 +187,6 @@ DeadOilFluid::KernelWrapper::
     real64 const denomInv = 1.0 / denom;
     phaseMassDens.value[ipWater] = m_surfacePhaseMassDensity[ipWater] * denomInv;
     phaseMassDens.derivs[ipWater][Deriv::dP] = -dDenom_dPres * phaseMassDens.value[ipWater] * denomInv;
-  }
-}
-
-GEOS_HOST_DEVICE
-GEOS_FORCE_INLINE
-void
-DeadOilFluid::KernelWrapper::
-  computeViscosities( real64 const pressure,
-                      arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & phaseVisc ) const
-{
-  // 1. Hydrocarbon phases: look up in the viscosity tables
-
-  for( integer iph = 0; iph < m_hydrocarbonPhaseOrder.size(); ++iph )
-  {
-    // get the phase index
-    integer const ip = m_hydrocarbonPhaseOrder[iph];
-    // interpolate in the table to get the phase viscosity, and discard the derivative
-    phaseVisc[ip] = m_viscosityTables[iph].compute( &pressure );
-  }
-
-  // 2. Water phase: use the constant viscosity provided by the user
-
-  using PT = DeadOilFluid::PhaseType;
-  integer const ipWater = m_phaseOrder[PT::WATER];
-
-  // if water is present
-  if( ipWater >= 0 )
-  {
-    // just assign the viscosity value
-    phaseVisc[ipWater] = m_waterParams.viscosity;
   }
 }
 

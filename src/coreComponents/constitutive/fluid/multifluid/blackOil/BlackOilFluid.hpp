@@ -121,25 +121,6 @@ private:
                    FluidProp::ViewType totalDensity );
 
     /**
-     * @brief Utility function computing mass/molar densities and viscosity (no derivatives)
-     * @param[in] pressure pressure in the cell
-     * @param[in] composition component fractions in the cell
-     * @param[in] phaseFrac phase fractions in the cell
-     * @param[out] phaseDensity phase mass/molar densities in the cell
-     * @param[out] phaseMassDensity phase mass densities in the cell
-     * @param[out] phaseViscosity phase viscosities in the cell
-     * @param[out] phaseMolecularWeight phase molecular weights in the cell
-     */
-    GEOS_HOST_DEVICE
-    void computeDensitiesViscosities( real64 const pressure,
-                                      real64 const composition[NC_BO],
-                                      arraySlice1d< real64 const, multifluid::USD_PHASE - 2 > const & phaseFrac,
-                                      arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & phaseDensity,
-                                      arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & phaseMassDensity,
-                                      arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & phaseViscosity,
-                                      real64 phaseMolecularWeight[NP_BO] ) const;
-
-    /**
      * @brief Utility function computing mass/molar densities and viscosity (keeping derivatives)
      * @param[in] needDerivs flag to decide whether derivatives are computed or not
      * @param[in] pressure pressure in the cell
@@ -161,19 +142,6 @@ private:
                                       PhaseProp::SliceType const & phaseVisc,
                                       real64 phaseMolecularWeight[NP_BO],
                                       real64 dPhaseMolecularWeight[NP_BO][NC_BO+2] ) const;
-
-    /**
-     * @brief Utility function to compute phase fractions and phase component fractions (no derivatives)
-     * @param[in] pressure pressure in the cell
-     * @param[in] composition component fractions in the cell
-     * @param[out] phaseFraction phase fractions in the cell
-     * @param[out] phaseCompFraction phase component fractions in the cell
-     */
-    GEOS_HOST_DEVICE
-    void computeEquilibrium( real64 const pressure,
-                             real64 const composition[NC_BO],
-                             arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & phaseFraction,
-                             arraySlice2d< real64, multifluid::USD_PHASE_COMP - 2 > const & phaseCompFraction ) const;
 
     /**
      * @brief Utility function to compute phase fractions and phase component fractions (keeping derivatives)
@@ -435,34 +403,6 @@ GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
 void
 BlackOilFluid::KernelWrapper::
-  computeEquilibrium( real64 const pressure,
-                      real64 const composition[NC_BO],
-                      arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & phaseFrac,
-                      arraySlice2d< real64, multifluid::USD_PHASE_COMP - 2 > const & phaseCompFrac ) const
-{
-  using namespace multifluid;
-
-  integer constexpr NDERIV = NC_BO + 2;
-
-  StackArray< real64, 4, NDERIV *NP_BO, LAYOUT_PHASE_DC > dPhaseFrac( 1, 1, NP_BO, NDERIV );
-  MultiFluidVarSlice< real64, 1, USD_PHASE - 2, USD_PHASE_DC - 2 >
-  phaseFracAndDeriv { phaseFrac, dPhaseFrac[0][0] };
-
-  StackArray< real64, 5, NDERIV *NC_BO *NP_BO, LAYOUT_PHASE_COMP_DC > dPhaseCompFrac( 1, 1, NP_BO, NC_BO, NDERIV );
-  MultiFluidVarSlice< real64, 2, USD_PHASE_COMP - 2, USD_PHASE_COMP_DC - 2 >
-  phaseCompFracAndDeriv { phaseCompFrac, dPhaseCompFrac[0][0] };
-
-  computeEquilibrium( false, // no need to compute derivatives
-                      pressure,
-                      composition,
-                      phaseFracAndDeriv,
-                      phaseCompFracAndDeriv );
-}
-
-GEOS_HOST_DEVICE
-GEOS_FORCE_INLINE
-void
-BlackOilFluid::KernelWrapper::
   computeEquilibrium( bool const needDerivs,
                       real64 const pressure,
                       real64 const composition[NC_BO],
@@ -606,47 +546,6 @@ BlackOilFluid::KernelWrapper::
       phaseCompFraction.derivs[ipOil][icGas][Deriv::dC+icGas] = 1.0;
     }
   }
-}
-
-GEOS_HOST_DEVICE
-GEOS_FORCE_INLINE
-void
-BlackOilFluid::KernelWrapper::
-  computeDensitiesViscosities( real64 const pressure,
-                               real64 const composition[NC_BO],
-                               arraySlice1d< real64 const, multifluid::USD_PHASE - 2 > const & phaseFrac,
-                               arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & phaseDensity,
-                               arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & phaseMassDensity,
-                               arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & phaseViscosity,
-                               real64 phaseMolecularWeight[NP_BO] ) const
-{
-  using namespace multifluid;
-
-  integer constexpr NDERIV = NC_BO + 2;
-
-  StackArray< real64, 4, NDERIV *NP_BO, LAYOUT_PHASE_DC > dPhaseDensity( 1, 1, NP_BO, NDERIV );
-  MultiFluidVarSlice< real64, 1, USD_PHASE - 2, USD_PHASE_DC - 2 >
-  phaseDensityAndDeriv { phaseDensity, dPhaseDensity[0][0] };
-
-  StackArray< real64, 4, NDERIV *NP_BO, LAYOUT_PHASE_DC > dPhaseMassDensity( 1, 1, NP_BO, NDERIV );
-  MultiFluidVarSlice< real64, 1, USD_PHASE - 2, USD_PHASE_DC - 2 >
-  phaseMassDensityAndDeriv { phaseMassDensity, dPhaseMassDensity[0][0] };
-
-  StackArray< real64, 4, NDERIV *NP_BO, LAYOUT_PHASE_DC > dPhaseViscosity( 1, 1, NP_BO, NDERIV );
-  MultiFluidVarSlice< real64, 1, USD_PHASE - 2, USD_PHASE_DC - 2 >
-  phaseViscosityAndDeriv { phaseViscosity, dPhaseViscosity[0][0] };
-
-  real64 dPhaseMolecularWeight[NP_BO][NC_BO+2]{};
-
-  computeDensitiesViscosities( false, // no need to compute derivatives
-                               pressure,
-                               composition,
-                               phaseFrac,
-                               phaseDensityAndDeriv,
-                               phaseMassDensityAndDeriv,
-                               phaseViscosityAndDeriv,
-                               phaseMolecularWeight,
-                               dPhaseMolecularWeight );
 }
 
 GEOS_HOST_DEVICE
