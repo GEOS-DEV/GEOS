@@ -1664,7 +1664,7 @@ public:
   {
     bool const localScaling = m_scalingType == CompositionalMultiphaseFVM::ScalingType::Local;
 
-    real64 const newPres = m_pressure[ei] + (localScaling ? m_pressureScalingFactor[ei] : m_scalingFactor * m_localSolution[stack.localRow]);
+    real64 const newPres = m_pressure[ei] + (localScaling ? m_pressureScalingFactor[ei] : m_scalingFactor) * m_localSolution[stack.localRow];
     if( newPres < 0 )
     {
       stack.localMinVal = 0;
@@ -1680,7 +1680,7 @@ public:
     {
       for( integer ic = 0; ic < m_numComp; ++ic )
       {
-        real64 const newDens = m_compDens[ei][ic] + (localScaling ? m_compDensScalingFactor[ei] : m_scalingFactor * m_localSolution[stack.localRow + ic + 1]);
+        real64 const newDens = m_compDens[ei][ic] + (localScaling ? m_compDensScalingFactor[ei] : m_scalingFactor) * m_localSolution[stack.localRow + ic + 1];
         if( newDens < 0 )
         {
           stack.localMinVal = 0;
@@ -1695,7 +1695,7 @@ public:
       real64 totalDens = 0.0;
       for( integer ic = 0; ic < m_numComp; ++ic )
       {
-        real64 const newDens = m_compDens[ei][ic] + (localScaling ? m_compDensScalingFactor[ei] : m_scalingFactor * m_localSolution[stack.localRow + ic + 1]);
+        real64 const newDens = m_compDens[ei][ic] + (localScaling ? m_compDensScalingFactor[ei] : m_scalingFactor) * m_localSolution[stack.localRow + ic + 1];
         totalDens += ( newDens > 0.0 ) ? newDens : 0.0;
       }
       if( totalDens < 0 )
