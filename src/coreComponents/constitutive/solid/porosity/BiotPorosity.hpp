@@ -106,7 +106,6 @@ public:
   GEOS_HOST_DEVICE
   void computePorosity( real64 const & deltaPressureFromBeginningOfTimeStep,
                         real64 const & deltaTemperatureFromBeginningOfTimeStep,
-                        real64 const & deltaTemperatureFromLastIteration,
                         real64 const & porosity_n,
                         real64 const & referencePorosity,
                         real64 & porosity,
@@ -134,7 +133,7 @@ public:
     if( !isZero( averageMeanTotalStressIncrement_k ) ) // TODO: find a better way to disable this at the first flow iteration
     {
       porosity += fixedStressPressureCoefficient * deltaPressureFromBeginningOfTimeStep // fixed-stress pressure term
-                  + fixedStressTemperatureCoefficient * deltaTemperatureFromLastIteration; // fixed-stress temperature term
+                  + fixedStressTemperatureCoefficient * deltaTemperatureFromBeginningOfTimeStep; // fixed-stress temperature term
       dPorosity_dPressure += fixedStressPressureCoefficient;
       dPorosity_dTemperature += fixedStressTemperatureCoefficient;
     }
@@ -147,16 +146,14 @@ public:
                                                  real64 const & GEOS_UNUSED_PARAM( pressure_k ), // last iteration (for sequential)
                                                  real64 const & pressure_n, // last time step
                                                  real64 const & temperature,
-                                                 real64 const & temperature_k,
+                                                 real64 const & GEOS_UNUSED_PARAM( temperature_k ),
                                                  real64 const & temperature_n ) const override final
   {
     real64 const deltaPressureFromBeginningOfTimeStep = pressure - pressure_n;
     real64 const deltaTemperatureFromBeginningOfTimeStep = temperature - temperature_n;
-    real64 const deltaTemperatureFromLastIteration = temperature - temperature_k;
 
     computePorosity( deltaPressureFromBeginningOfTimeStep,
                      deltaTemperatureFromBeginningOfTimeStep,
-                     deltaTemperatureFromLastIteration,
                      m_porosity_n[k][q],
                      m_referencePorosity[k],
                      m_newPorosity[k][q],
