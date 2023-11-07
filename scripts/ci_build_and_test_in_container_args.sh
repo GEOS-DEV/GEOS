@@ -131,7 +131,7 @@ if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
   echo "We should be running the integrated tests."
   apt-get install -y virtualenv python-is-python3
   virtualenv /tmp/run_integrated_tests_virtualenv
-  ATS_ARGUMENTS="-DATS_ARGUMENTS=\"--machine openmpi --ats openmpi_mpirun=/usr/bin/mpirun --ats openmpi_args=--oversubscribe --ats openmpi_procspernode=2 --ats openmpi_maxprocs=2\" -DPython3_ROOT_DIR=/tmp/run_integrated_tests_virtualenv"
+  ATS_ARGUMENTS="-DATS_ARGUMENTS=\"--machine openmpi --ats openmpi_mpirun=/usr/bin/mpirun --ats openmpi_args=\"--oversubscribe --allow-run-as-root\" --ats openmpi_procspernode=2 --ats openmpi_maxprocs=2\" -DPython3_ROOT_DIR=/tmp/run_integrated_tests_virtualenv"
 fi
 
 # The -DBLT_MPI_COMMAND_APPEND="--allow-run-as-root;--oversubscribe" option is added for OpenMPI.
