@@ -189,7 +189,7 @@ if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
   # or_die ninja geosx_python_tools
   # or_die ninja ats_run
   ninja geosx_python_tools
-  ninja ats_run
+  ninja --verbose ats_run
   cat /tmp/build/integratedTests/geos_ats.sh
 fi
 
