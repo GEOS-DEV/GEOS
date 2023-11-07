@@ -7,12 +7,14 @@ function usage () {
 >&2 cat << EOF
 Usage: $0
   [ --cmake-build-type ]
+  [ --docker-repository ]
+  [ --docker-tag ]
   [ -h | --help ]
 EOF
 exit 1
 }
 
-args=$(getopt -a -o h --long cmake-build-type:,help -- "$@")
+args=$(getopt -a -o h --long cmake-build-type:,docker-repository:,docker-tag:,help -- "$@")
 if [[ $? -gt 0 ]]; then
   echo "Error after getopt"
   usage
@@ -23,8 +25,10 @@ eval set -- ${args}
 while :
 do
   case $1 in
-    --cmake-build-type) CMAKE_BUILD_TYPE=$2; shift 2;;
-    -h | --help)        usage;               shift;;
+    --cmake-build-type)  CMAKE_BUILD_TYPE=$2;  shift 2;;
+    --docker-repository) DOCKER_REPOSITORY=$2; shift 2;;
+    --docker-tag)        DOCKER_TAG=$2;        shift 2;;
+    -h | --help)         usage;               shift;;
     # -- means the end of the arguments; drop this, and break out of the while loop
     --) shift; break;;
     *) >&2 echo Unsupported option: $1
@@ -32,13 +36,13 @@ do
   esac
 done
 
-
-# The linux build relies on two environment variables DOCKER_REPOSITORY and GEOSX_TPL_TAG to define the TPL version.
+# The linux build relies on the two variables DOCKER_REPOSITORY and DOCKER_TAG to define the proper image version.
+DOCKER_IMAGE=${DOCKER_REPOSITORY}:${DOCKER_TAG}
 # And another CMAKE_BUILD_TYPE to define the build type we want for GEOSX.
 # Optional BUILD_AND_TEST_ARGS to pass arguments to build_test_helper.sh script.
 #
 # We extract the location of the GEOSX_TPL from the container...
-GEOSX_TPL_DIR=$(docker run --rm ${DOCKER_REPOSITORY}:${GEOSX_TPL_TAG} /bin/bash -c 'echo ${GEOSX_TPL_DIR}' | tail -1)
+GEOSX_TPL_DIR=$(docker run --rm ${DOCKER_IMAGE} /bin/bash -c 'echo ${GEOSX_TPL_DIR}' | tail -1)
 # ... so we can install GEOSX alongside. This is assumed for bundling the binaries, so consider modifying with care.
 GEOSX_DIR=${GEOSX_TPL_DIR}/../GEOSX-${GITHUB_SHA:0:7}
 # We need to get the build directory
@@ -69,7 +73,7 @@ docker run \
   -e ENABLE_HYPRE=${ENABLE_HYPRE:-OFF} \
   -e ENABLE_HYPRE_DEVICE=${ENABLE_HYPRE_DEVICE:-CPU} \
   -e ENABLE_TRILINOS=${ENABLE_TRILINOS:-ON} \
-  ${DOCKER_REPOSITORY}:${GEOSX_TPL_TAG} \
+  ${DOCKER_IMAGE} \
   ${BUILD_DIR_MOUNT_POINT}/scripts/ci_build_and_test_in_container_args.sh \
     --cmake-build-type ${CMAKE_BUILD_TYPE} \
     --install-dir ${GEOSX_DIR} \

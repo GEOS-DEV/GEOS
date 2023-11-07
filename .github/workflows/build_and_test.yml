@@ -50,7 +50,7 @@ jobs:
   build_and_test:
     runs-on: ${{ inputs.RUNS_ON }}
     env:
-      DOCKER_REPOSITORY: ${{ inputs.DOCKER_REPOSITORY }}
+      # DOCKER_REPOSITORY: ${{ inputs.DOCKER_REPOSITORY }}
       # CMAKE_BUILD_TYPE: ${{ inputs.CMAKE_BUILD_TYPE }}
       BUILD_AND_TEST_ARGS: ${{ inputs.BUILD_AND_TEST_ARGS }}
       ENABLE_HYPRE: ${{ inputs.ENABLE_HYPRE }}
@@ -59,7 +59,7 @@ jobs:
       GCP_BUCKET: ${{ inputs.GCP_BUCKET }}
       HOST_CONFIG: ${{ inputs.HOST_CONFIG }}
       # COMMIT: ${{ inputs.COMMIT }}
-      GEOSX_TPL_TAG: ${{ inputs.GEOSX_TPL_TAG }}
+      # GEOSX_TPL_TAG: ${{ inputs.GEOSX_TPL_TAG }}
       USE_SCCACHE: ${{ inputs.USE_SCCACHE }}
     steps:
     - name: Checkout Repository
@@ -90,6 +90,8 @@ jobs:
       if: ${{ inputs.build_type == 'build' && !(env.GCP_BUCKET) }}
       run: |
         ./scripts/ci_build_and_test.sh \
+          --docker-repository ${{ inputs.DOCKER_REPOSITORY }} \
+          --docker-tag ${{ inputs.GEOSX_TPL_TAG }} \
           --cmake-build-type ${{ inputs.CMAKE_BUILD_TYPE }}
 
     # Build, test, uploads GEOSX and its TPL to GCP/GCS using gcloud CLI
@@ -97,6 +99,8 @@ jobs:
       if: ${{ inputs.build_type == 'build' && env.GCP_BUCKET }}
       run: |
         source ./scripts/ci_build_and_test.sh \
+          --docker-repository ${{ inputs.DOCKER_REPOSITORY }} \
+          --docker-tag ${{ inputs.GEOSX_TPL_TAG }} \
           --cmake-build-type ${{ inputs.CMAKE_BUILD_TYPE }}
         TMP_DIR=/tmp
         COMMIT=${{ inputs.COMMIT }}
@@ -110,8 +114,9 @@ jobs:
       if: ${{ inputs.build_type == 'integrated_tests' }}
       run: |
         ./scripts/ci_build_and_test.sh \
+          --docker-repository ${{ inputs.DOCKER_REPOSITORY }} \
+          --docker-tag ${{ inputs.GEOSX_TPL_TAG }} \
           --cmake-build-type ${{ inputs.CMAKE_BUILD_TYPE }}
-        
 
 
         # BUILD_DIR_MOUNT_POINT=/tmp/GEOS
