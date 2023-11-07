@@ -1317,7 +1317,7 @@ CompositionalMultiphaseWell::checkSystemSolution( DomainPartition & domain,
                                                                         [&]( localIndex const,
                                                                              WellElementSubRegion & subRegion )
     {
-      integer const subRegionSolutionCheck =
+      auto const subRegionData =
         compositionalMultiphaseWellKernels::
           SolutionCheckKernelFactory::
           createAndLaunch< parallelDevicePolicy<> >( m_allowCompDensChopping,
@@ -1329,13 +1329,13 @@ CompositionalMultiphaseWell::checkSystemSolution( DomainPartition & domain,
                                                      subRegion,
                                                      localSolution );
 
-      if( !subRegionSolutionCheck )
+      if( !subRegionData.localMinVal )
       {
         GEOS_LOG_LEVEL( 1, "Solution is invalid in well " << subRegion.getName()
                                                           << " (either a negative pressure or a negative component density was found)." );
       }
 
-      localCheck = std::min( localCheck, subRegionSolutionCheck );
+      localCheck = std::min( localCheck, subRegionData.localMinVal );
     } );
   } );
 

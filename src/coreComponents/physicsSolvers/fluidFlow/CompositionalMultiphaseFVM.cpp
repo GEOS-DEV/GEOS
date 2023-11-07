@@ -512,6 +512,8 @@ bool CompositionalMultiphaseFVM::checkSystemSolution( DomainPartition & domain,
 
   string const dofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
   integer localCheck = 1;
+  real64 minPres = 0.0, minDens = 0.0, minTotalDens = 0.0;
+  integer numNegPres = 0, numNegDens = 0, numNegTotalDens = 0;
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel & mesh,
@@ -523,7 +525,7 @@ bool CompositionalMultiphaseFVM::checkSystemSolution( DomainPartition & domain,
     {
       // check that pressure and component densities are non-negative
       // for thermal, check that temperature is above 273.15 K
-      integer const subRegionSolutionCheck =
+      auto const subRegionData =
         m_isThermal
   ? thermalCompositionalMultiphaseBaseKernels::
           SolutionCheckKernelFactory::
@@ -546,9 +548,34 @@ bool CompositionalMultiphaseFVM::checkSystemSolution( DomainPartition & domain,
                                                      subRegion,
                                                      localSolution );
 
-      localCheck = std::min( localCheck, subRegionSolutionCheck );
+      localCheck = std::min( localCheck, subRegionData.localMinVal );
+
+      minPres  = std::min( minPres, subRegionData.localMinPres );
+      minDens = std::min( minDens, subRegionData.localMinDens );
+      minTotalDens = std::min( minTotalDens, subRegionData.localMinTotalDens );
+      numNegPres += subRegionData.localNumNegPressures;
+      numNegDens += subRegionData.localNumNegDens;
+      numNegTotalDens += subRegionData.localNumNegTotalDens;
     } );
   } );
+
+  minPres  = MpiWrapper::min( minPres );
+  minDens = MpiWrapper::min( minDens );
+  minTotalDens = MpiWrapper::min( minTotalDens );
+  numNegPres = MpiWrapper::sum( numNegPres );
+  numNegDens = MpiWrapper::sum( numNegDens );
+  numNegTotalDens = MpiWrapper::sum( numNegTotalDens );
+
+  if( numNegPres > 0 )
+    GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "        {}: Number of negative pressure values: {}, minimum value: {} Pa",
+                                        getName(), numNegPres, fmt::format( "{:.{}f}", minPres, 3 ) ) );
+  string const massUnit = m_useMass ? "kg/m3" : "mol/m3";
+  if( numNegDens > 0 )
+    GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "        {}: Number of negative component density values: {}, minimum value: {} {}}",
+                                        getName(), numNegDens, fmt::format( "{:.{}f}", minDens, 3 ), massUnit ) );
+  if( minTotalDens > 0 )
+    GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "        {}: Number of negative total density values: {}, minimum value: {} {}}",
+                                        getName(), minTotalDens, fmt::format( "{:.{}f}", minDens, 3 ), massUnit ) );
 
   return MpiWrapper::min( localCheck );
 }

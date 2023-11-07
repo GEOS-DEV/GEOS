@@ -590,7 +590,7 @@ struct SolutionCheckKernel
                                               real64 const scalingFactor )
   {
     RAJA::ReduceSum< ReducePolicy< POLICY >, integer > numNegativePressures( 0 );
-    RAJA::ReduceMin< ReducePolicy< POLICY >, integer > minValue( 0 );
+    RAJA::ReduceMin< ReducePolicy< POLICY >, real64 > minPres( 0.0 );
 
     forAll< POLICY >( dofNumber.size(), [=] GEOS_HOST_DEVICE ( localIndex const ei )
     {
@@ -602,13 +602,13 @@ struct SolutionCheckKernel
         if( newPres < 0.0 )
         {
           numNegativePressures += 1;
-          minValue.min( newPres );
+          minPres.min( newPres );
         }
       }
 
     } );
 
-    return { numNegativePressures.get(), minValue.get() };
+    return { numNegativePressures.get(), minPres.get() };
   }
 
 };

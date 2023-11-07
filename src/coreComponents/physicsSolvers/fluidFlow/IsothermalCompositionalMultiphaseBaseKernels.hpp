@@ -1533,6 +1533,111 @@ public:
   {}
 
   /**
+ * @struct StackVariables
+ * @brief Kernel variables located on the stack
+ */
+  struct StackVariables : public Base::StackVariables
+  {
+    GEOS_HOST_DEVICE
+    StackVariables()
+    { }
+
+    StackVariables( real64 _localMinVal,
+                    real64 _localMinPres,
+                    real64 _localMinDens,
+                    real64 _localMinTotalDens,
+                    integer _localNumNegPressures,
+                    integer _localNumNegDens,
+                    integer _localNumNegTotalDens )
+      :
+      Base::StackVariables( _localMinVal ),
+      localMinPres( _localMinPres ),
+      localMinDens( _localMinDens ),
+      localMinTotalDens( _localMinTotalDens ),
+      localNumNegPressures( _localNumNegPressures ),
+      localNumNegDens( _localNumNegDens ),
+      localNumNegTotalDens( _localNumNegTotalDens )
+    { }
+
+    real64 localMinPres;
+    real64 localMinDens;
+    real64 localMinTotalDens;
+
+    integer localNumNegPressures;
+    integer localNumNegDens;
+    integer localNumNegTotalDens;
+
+  };
+
+  /**
+ * @brief Performs the kernel launch
+ * @tparam POLICY the policy used in the RAJA kernels
+ * @tparam KERNEL_TYPE the kernel type
+ * @param[in] numElems the number of elements
+ * @param[inout] kernelComponent the kernel component providing access to the compute function
+ */
+  template< typename POLICY, typename KERNEL_TYPE >
+  static StackVariables
+  launch( localIndex const numElems,
+          KERNEL_TYPE const & kernelComponent )
+  {
+    RAJA::ReduceMin< ReducePolicy< POLICY >, integer > globalMinVal( 1 );
+
+    RAJA::ReduceMin< ReducePolicy< POLICY >, real64 > minPres( 0.0 );
+    RAJA::ReduceMin< ReducePolicy< POLICY >, real64 > minDens( 0.0 );
+    RAJA::ReduceMin< ReducePolicy< POLICY >, real64 > minTotalDens( 0.0 );
+
+    RAJA::ReduceSum< ReducePolicy< POLICY >, integer > numNegPressures( 0 );
+    RAJA::ReduceSum< ReducePolicy< POLICY >, integer > numNegDens( 0 );
+    RAJA::ReduceSum< ReducePolicy< POLICY >, integer > numNegTotalDens( 0 );
+
+    forAll< POLICY >( numElems, [=] GEOS_HOST_DEVICE ( localIndex const ei )
+    {
+      if( kernelComponent.ghostRank( ei ) >= 0 )
+      {
+        return;
+      }
+
+      StackVariables stack;
+      kernelComponent.setup( ei, stack );
+      kernelComponent.compute( ei, stack );
+
+      globalMinVal.min( stack.localMinVal );
+
+      minPres.min( stack.localMinPres );
+      minDens.min( stack.localMinDens );
+      minTotalDens.min( stack.localMinTotalDens );
+
+      numNegPressures += stack.localNumNegPressures;
+      numNegDens += stack.localNumNegDens;
+      numNegTotalDens += stack.localNumNegTotalDens;
+    } );
+
+    return StackVariables( globalMinVal.get(),
+                           minPres.get(),
+                           minDens.get(),
+                           minTotalDens.get(),
+                           numNegPressures.get(),
+                           numNegDens.get(),
+                           numNegTotalDens.get() );
+  }
+
+  GEOS_HOST_DEVICE
+  void setup( localIndex const ei,
+              StackVariables & stack ) const
+  {
+    Base::setup( ei, stack );
+
+    stack.localMinPres = 0.0;
+    stack.localMinDens = 0.0;
+    stack.localMinTotalDens = 0.0;
+
+    stack.localNumNegPressures = 0;
+    stack.localNumNegDens = 0;
+    stack.localNumNegTotalDens = 0;
+  }
+
+  /**
    * @brief Compute the local value
    * @param[in] ei the element index
    * @param[inout] stack the stack variables
@@ -1563,6 +1668,9 @@ public:
     if( newPres < 0 )
     {
       stack.localMinVal = 0;
+      stack.localNumNegPressures += 1;
+      if(newPres < stack.localMinPres)
+        stack.localMinPres = newPres;
     }
 
     // if component density chopping is not allowed, the time step fails if a component density is negative
@@ -1576,6 +1684,9 @@ public:
         if( newDens < 0 )
         {
           stack.localMinVal = 0;
+          stack.localNumNegDens += 1;
+          if(newDens < stack.localMinDens)
+            stack.localMinDens = newDens;
         }
       }
     }
@@ -1590,6 +1701,9 @@ public:
       if( totalDens < 0 )
       {
         stack.localMinVal = 0;
+        stack.localNumNegTotalDens += 1;
+        if(totalDens < stack.localMinTotalDens)
+          stack.localMinTotalDens = totalDens;
       }
     }
 
@@ -1628,7 +1742,7 @@ public:
    * @param[in] localSolution the Newton update
    */
   template< typename POLICY >
-  static integer
+  static SolutionCheckKernel::StackVariables
   createAndLaunch( integer const allowCompDensChopping,
                    CompositionalMultiphaseFVM::ScalingType const scalingType,
                    real64 const scalingFactor,
