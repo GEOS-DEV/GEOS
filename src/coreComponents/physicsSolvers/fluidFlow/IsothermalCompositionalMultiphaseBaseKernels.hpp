@@ -1533,9 +1533,9 @@ public:
   {}
 
   /**
- * @struct StackVariables
- * @brief Kernel variables located on the stack
- */
+   * @struct StackVariables
+   * @brief Kernel variables located on the stack
+   */
   struct StackVariables : public Base::StackVariables
   {
     GEOS_HOST_DEVICE
@@ -1570,12 +1570,12 @@ public:
   };
 
   /**
- * @brief Performs the kernel launch
- * @tparam POLICY the policy used in the RAJA kernels
- * @tparam KERNEL_TYPE the kernel type
- * @param[in] numElems the number of elements
- * @param[inout] kernelComponent the kernel component providing access to the compute function
- */
+   * @brief Performs the kernel launch
+   * @tparam POLICY the policy used in the RAJA kernels
+   * @tparam KERNEL_TYPE the kernel type
+   * @param[in] numElems the number of elements
+   * @param[inout] kernelComponent the kernel component providing access to the compute function
+   */
   template< typename POLICY, typename KERNEL_TYPE >
   static StackVariables
   launch( localIndex const numElems,
@@ -1669,7 +1669,7 @@ public:
     {
       stack.localMinVal = 0;
       stack.localNumNegPressures += 1;
-      if(newPres < stack.localMinPres)
+      if( newPres < stack.localMinPres )
         stack.localMinPres = newPres;
     }
 
@@ -1685,7 +1685,7 @@ public:
         {
           stack.localMinVal = 0;
           stack.localNumNegDens += 1;
-          if(newDens < stack.localMinDens)
+          if( newDens < stack.localMinDens )
             stack.localMinDens = newDens;
         }
       }
@@ -1702,7 +1702,7 @@ public:
       {
         stack.localMinVal = 0;
         stack.localNumNegTotalDens += 1;
-        if(totalDens < stack.localMinTotalDens)
+        if( totalDens < stack.localMinTotalDens )
           stack.localMinTotalDens = totalDens;
       }
     }
