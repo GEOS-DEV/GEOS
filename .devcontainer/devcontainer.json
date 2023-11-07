@@ -20,6 +20,31 @@
                 "ms-vscode.cpptools-extension-pack",
                 "redhat.vscode-xml"
             ]
+        },
+        "codespaces": {
+            "repositories": {
+                "GEOS-DEV/hdf5_interface": {
+                    "permissions": {
+                        "contents": "write"
+                    }
+                },
+                "GEOS-DEV/integratedTests": {
+                    "permissions": {
+                        "contents": "write"
+                    }
+                },
+                "GEOS-DEV/LvArray": {
+                    "permissions": {
+                        "contents": "write"
+                    }
+                },
+                "GEOS-DEV/PVTPackage": {
+                    "permissions": {
+                        "contents": "write"
+                    }
+                }
+            },
+            "openFiles": []
         }
     },
     "features": {
