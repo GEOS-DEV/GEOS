@@ -123,8 +123,8 @@ FlowSolverBase::FlowSolverBase( string const & name,
 
   this->registerWrapper( viewKeyStruct::allowNegativePressureString(), &m_allowNegativePressure ).
     setApplyDefaultValue( 1 ). // negative pressure is allowed by default
-        setInputFlag( InputFlags::OPTIONAL ).
-        setDescription( "Flag indicating if negative pressure is allowed" );
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Flag indicating if negative pressure is allowed" );
 
   // allow the user to select a norm
   getNonlinearSolverParameters().getWrapper< solverBaseKernels::NormType >( NonlinearSolverParameters::viewKeysStruct::normTypeString() ).setInputFlag( InputFlags::OPTIONAL );

@@ -131,8 +131,8 @@ public:
   integer & isThermal() { return m_isThermal; }
 
   /**
- * @brief Function to activate the flag allowing negative pressure
- */
+   * @brief Function to activate the flag allowing negative pressure
+   */
   void allowNegativePressure() { m_allowNegativePressure = 1; }
 
 protected:

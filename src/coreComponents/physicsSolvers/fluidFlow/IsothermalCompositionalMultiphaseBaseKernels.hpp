@@ -1529,7 +1529,7 @@ public:
             pressureScalingFactor,
             compDensScalingFactor ),
     m_allowCompDensChopping( allowCompDensChopping ),
-      m_allowNegativePressure( allowNegativePressure ),
+    m_allowNegativePressure( allowNegativePressure ),
     m_scalingFactor( scalingFactor ),
     m_scalingType( scalingType )
   {}
@@ -1669,7 +1669,7 @@ public:
     real64 const newPres = m_pressure[ei] + (localScaling ? m_pressureScalingFactor[ei] : m_scalingFactor) * m_localSolution[stack.localRow];
     if( newPres < 0 )
     {
-      if(!m_allowNegativePressure)
+      if( !m_allowNegativePressure )
       {
         stack.localMinVal = 0;
       }
