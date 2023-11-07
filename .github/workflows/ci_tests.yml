@@ -6,8 +6,7 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
-# env:
-#   GEOSX_TPL_TAG: 245-86
+# Please define `build.args.GEOS_TPL_TAG` in `.devcontainer/devcontainer.json`
 
 jobs:
 
@@ -19,20 +18,30 @@ jobs:
     # Workaround due to github actions variable scope restrictions passing to
     # another job's env
     outputs:
-      # GEOSX_TPL_TAG: ${{ env.GEOSX_TPL_TAG}}
-      GEOSX_TPL_TAG: ${{ steps.check_pr.outputs.GEOSX_TPL_TAG }}
+      DOCKER_IMAGE_TAG: ${{ steps.extract_docker_image_tag.outputs.DOCKER_IMAGE_TAG }}
     steps:
     - name: Check that the PR is not a draft (cancel rest of jobs otherwise)
-      id: check_pr
       run: |
-        ls -l
-        echo "GEOSX_TPL_TAG=$(jq '.build.args.GEOS_TPL_TAG' -r .devcontainer/devcontainer.json)" >> "$GITHUB_OUTPUT"
         draft_status=$(curl -H "Accept: application/vnd.github+json" \
            https://api.github.com/repos/${{ github.repository }}/pulls/${{ github.event.number }} \
            | jq '.draft')
         echo "Is PR a draft? (Check PR's draft status )"
         echo $draft_status
         if [[ $draft_status == false ]]; then "true" ; else "false"; fi
+    - name: Checkout .devcontainer/devcontainer.json
+      uses: actions/checkout@v3
+      with:
+        sparse-checkout: |
+          .devcontainer/devcontainer.json
+        sparse-checkout-cone-mode: false
+        submodules: false
+        lfs: false
+        fetch-depth: 1
+    - name: Extract docker image tag
+      id: extract_docker_image_tag
+      run: |
+        echo "DOCKER_IMAGE_TAG=$(jq '.build.args.GEOS_TPL_TAG' -r .devcontainer/devcontainer.json)" >> "$GITHUB_OUTPUT"
+
 
   # PR must be assigned to be merged.
   # This job will fail if this is not the case.
@@ -99,7 +108,7 @@ jobs:
       run: |
         ./scripts/ci_build_and_test.sh \
           --docker-repository geosx/ubuntu20.04-gcc9 \
-          --docker-tag ${{ needs.check_pull_request_is_not_a_draft.outputs.GEOSX_TPL_TAG }} \
+          --docker-tag ${{ needs.check_pull_request_is_not_a_draft.outputs.DOCKER_IMAGE_TAG }} \
           --cmake-build-type Release
 
   documentation:
@@ -119,7 +128,7 @@ jobs:
       run: |
         ./scripts/ci_build_and_test.sh \
           --docker-repository geosx/ubuntu20.04-gcc9 \
-          --docker-tag ${{ needs.check_pull_request_is_not_a_draft.outputs.GEOSX_TPL_TAG }} \
+          --docker-tag ${{ needs.check_pull_request_is_not_a_draft.outputs.DOCKER_IMAGE_TAG }} \
           --cmake-build-type Release
 
   linux_builds:
@@ -171,7 +180,7 @@ jobs:
             GCP_BUCKET: geosx/ubuntu22.04-gcc11
     uses: ./.github/workflows/build_and_test.yml
     with:
-      GEOSX_TPL_TAG: ${{ needs.check_pull_request_is_not_a_draft.outputs.GEOSX_TPL_TAG }}
+      DOCKER_IMAGE_TAG: ${{ needs.check_pull_request_is_not_a_draft.outputs.DOCKER_IMAGE_TAG }}
       DOCKER_REPOSITORY: ${{ matrix.DOCKER_REPOSITORY }}
       CMAKE_BUILD_TYPE: ${{ matrix.CMAKE_BUILD_TYPE }}
       HOST_CONFIG: ${{ matrix.HOST_CONFIG }}
@@ -188,7 +197,7 @@ jobs:
       - check_pull_request_is_not_a_draft
     uses: ./.github/workflows/build_and_test.yml
     with:
-      GEOSX_TPL_TAG: ${{ needs.check_pull_request_is_not_a_draft.outputs.GEOSX_TPL_TAG }}
+      DOCKER_IMAGE_TAG: ${{ needs.check_pull_request_is_not_a_draft.outputs.DOCKER_IMAGE_TAG }}
       BUILD_AND_TEST_ARGS: --run-integrated-tests
       CMAKE_BUILD_TYPE: Release
       build_type: integrated_tests
@@ -245,7 +254,7 @@ jobs:
             GCP_BUCKET: geosx/Pecan-GPU
     uses: ./.github/workflows/build_and_test.yml
     with:
-      GEOSX_TPL_TAG: ${{ needs.check_pull_request_is_not_a_draft.outputs.GEOSX_TPL_TAG }}
+      DOCKER_IMAGE_TAG: ${{ needs.check_pull_request_is_not_a_draft.outputs.DOCKER_IMAGE_TAG }}
       DOCKER_REPOSITORY: ${{ matrix.DOCKER_REPOSITORY }}
       CMAKE_BUILD_TYPE: ${{ matrix.CMAKE_BUILD_TYPE }}
       BUILD_AND_TEST_ARGS: ${{ matrix.BUILD_AND_TEST_ARGS }}
