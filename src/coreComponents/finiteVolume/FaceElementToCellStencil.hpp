@@ -136,6 +136,16 @@ public:
                        real64 ( &weight )[1][2],
                        real64 ( &dWeight_dVar1 )[1][2],
                        real64 ( &dWeight_dVar2 )[1][2] ) const;
+
+  /**
+   *
+   */
+    GEOS_HOST_DEVICE
+    inline void
+    initVelocity( localIndex iconn, localIndex ip, ElementRegionManager::ElementView< arrayView4d< real64 > > const & phaseVelocity ) const
+    {
+        GEOS_UNUSED_VAR( iconn, ip, phaseVelocity );
+    };
   /**
    * Pass through for CellTPFA cell-centered velocity reconstruction
    * @param iconn

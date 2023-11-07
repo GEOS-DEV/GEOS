@@ -92,13 +92,16 @@ public:
   void computeStabilizationWeights( localIndex iconn,
                                     real64 ( &stabilizationWeight )[1][2] ) const;
 
+
+  GEOS_HOST_DEVICE
+  void initVelocity(localIndex iconn, localIndex ip, ElementRegionManager::ElementView< arrayView4d< real64 > > const & phaseVelocity ) const;
   /**
    * @brief Compute approximate cell-centered velocity field
    * @param[in] iconn connection index
    * @param[in] ip phase index
    * @param[in] globalCellToFace pair of globalCellId ordered distance of connection to neighboring cells
    * @param[in] phaseFlux flux for a specific phase ip and connection iconn
-   * @param[out] phaseVelocity slice of the cell-wise global 3-vector to be filled
+   * @param[out] phaseVelocity slice of the cell-wise global 3-vector to be
    */
   GEOS_HOST_DEVICE
   void computeVelocity( localIndex iconn,
@@ -300,7 +303,7 @@ CellElementStencilTPFAWrapper::
                    ElementRegionManager::ElementView< arrayView4d< real64 > > const & phaseVelocity ) const
 {
 
-  real64 sqSurface[2];
+  real64 surface[2];
 
   for( localIndex i = 0; i < 2; i++ )
   {
@@ -308,14 +311,20 @@ CellElementStencilTPFAWrapper::
     localIndex const esr = m_elementSubRegionIndices[iconn][i];
     localIndex const ei = m_elementIndices[iconn][i];
 
+    //halfWeight is d(Cell,Face)/area, we want area
+    real64 const halfWeight = m_weights[iconn][i];
+    real64 c2fVec[3];
+    LvArray::tensorOps::copy<3>(c2fVec, m_cellToFaceVec[iconn][i]);
+    real64 const c2fDistance = LvArray::tensorOps::normalize< 3 >( c2fVec );
 
-    real64 faceNormal[3], invDist[3];
+    surface[i] = c2fDistance*halfWeight;
+
+    real64 faceNormal[3], invDist[3], velocityNorm[3];
     LvArray::tensorOps::copy< 3 >( faceNormal, m_faceNormal[iconn] );
-    sqSurface[i] = LvArray::tensorOps::l2NormSquared<3>(faceNormal);
     LvArray::tensorOps::scale< 3 >( faceNormal, phaseFlux );
 
-    LvArray::tensorOps::scale<3>(faceNormal,1./sqSurface[i]);
-    LvArray::tensorOps::AiBi<3>(faceNormal, m_cellToFaceVec[iconn][i]);
+    LvArray::tensorOps::scale<3>(faceNormal,1./surface[i]);
+    LvArray::tensorOps::hadamardProduct<3>( velocityNorm, faceNormal, m_cellToFaceVec[iconn][i]);
       for (int dir = 0; dir < 3; ++dir) {
           invDist[dir] = (globalCellToFace[i][dir]>0) ? 1./globalCellToFace[i][dir] : LvArray::NumericLimits<real64 >::epsilon;
       }
@@ -323,6 +332,21 @@ CellElementStencilTPFAWrapper::
     LvArray::tensorOps::add<3>(phaseVelocity[er][esr][ei][0][ip],faceNormal);
 
   }
+}
+
+GEOS_HOST_DEVICE
+inline void
+CellElementStencilTPFAWrapper::initVelocity(localIndex iconn, localIndex ip, ElementRegionManager::ElementView< arrayView4d< real64 > > const & phaseVelocity ) const
+{
+   for( localIndex i = 0; i < 2; i++ ) {
+       localIndex const er = m_elementRegionIndices[iconn][i];
+       localIndex const esr = m_elementSubRegionIndices[iconn][i];
+       localIndex const ei = m_elementIndices[iconn][i];
+
+       real64 zero[3] = {0,0,0};
+      LvArray::tensorOps::copy<3>(phaseVelocity[er][esr][ei][0][ip], zero );
+
+   }
 }
 
 

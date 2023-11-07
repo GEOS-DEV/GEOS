@@ -552,6 +552,10 @@ public:
         stack.dofColIndices[i * numDof + jdof] = offset + jdof;
       }
     }
+      for( integer ip = 0; ip < m_numPhases; ++ip ) {
+          m_stencilWrapper.initVelocity(iconn, ip, m_phaseVelocity);
+      }
+
   }
 
   /**
