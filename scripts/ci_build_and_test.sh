@@ -1,6 +1,38 @@
 #!/bin/bash
 env
 
+echo "Running CLI $0 $@"
+
+function usage () {
+>&2 cat << EOF
+Usage: $0
+  [ --cmake-build-type ]
+  [ -h | --help ]
+EOF
+exit 1
+}
+
+args=$(getopt -a -o h --long cmake-build-type:,help -- "$@")
+if [[ $? -gt 0 ]]; then
+  echo "Error after getopt"
+  usage
+fi
+
+CMAKE_BUILD_TYPE=unset
+eval set -- ${args}
+while :
+do
+  case $1 in
+    --cmake-build-type) CMAKE_BUILD_TYPE=$2; shift 2;;
+    -h | --help)        usage;               shift;;
+    # -- means the end of the arguments; drop this, and break out of the while loop
+    --) shift; break;;
+    *) >&2 echo Unsupported option: $1
+       usage;;
+  esac
+done
+
+
 # The linux build relies on two environment variables DOCKER_REPOSITORY and GEOSX_TPL_TAG to define the TPL version.
 # And another CMAKE_BUILD_TYPE to define the build type we want for GEOSX.
 # Optional BUILD_AND_TEST_ARGS to pass arguments to build_test_helper.sh script.

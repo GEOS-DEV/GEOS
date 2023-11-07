@@ -51,7 +51,7 @@ jobs:
     runs-on: ${{ inputs.RUNS_ON }}
     env:
       DOCKER_REPOSITORY: ${{ inputs.DOCKER_REPOSITORY }}
-      CMAKE_BUILD_TYPE: ${{ inputs.CMAKE_BUILD_TYPE }}
+      # CMAKE_BUILD_TYPE: ${{ inputs.CMAKE_BUILD_TYPE }}
       BUILD_AND_TEST_ARGS: ${{ inputs.BUILD_AND_TEST_ARGS }}
       ENABLE_HYPRE: ${{ inputs.ENABLE_HYPRE }}
       ENABLE_HYPRE_DEVICE: ${{ inputs.ENABLE_HYPRE_DEVICE }}
@@ -88,13 +88,16 @@ jobs:
     # Builds only the geosx executable (timeout when building tests)
     - name: Build and test
       if: ${{ inputs.build_type == 'build' && !(env.GCP_BUCKET) }}
-      run: ./scripts/ci_build_and_test.sh
+      run: |
+        ./scripts/ci_build_and_test.sh \
+          --cmake-build-type ${{ inputs.CMAKE_BUILD_TYPE }}
 
     # Build, test, uploads GEOSX and its TPL to GCP/GCS using gcloud CLI
     - name: Build and test and deploy
       if: ${{ inputs.build_type == 'build' && env.GCP_BUCKET }}
       run: |
-        source ./scripts/ci_build_and_test.sh
+        source ./scripts/ci_build_and_test.sh \
+          --cmake-build-type ${{ inputs.CMAKE_BUILD_TYPE }}
         TMP_DIR=/tmp
         GEOSX_EXPORT_DIR=GEOSX-and-TPL-${COMMIT:0:7}
         docker cp -a ${CONTAINER_NAME}:${GEOSX_TPL_DIR}/.. ${TMP_DIR}/${GEOSX_EXPORT_DIR}
@@ -105,7 +108,8 @@ jobs:
     - name: Run integrated tests
       if: ${{ inputs.build_type == 'integrated_tests' }}
       run: |
-        ./scripts/ci_build_and_test.sh
+        ./scripts/ci_build_and_test.sh \
+          --cmake-build-type ${{ inputs.CMAKE_BUILD_TYPE }}
         
 
 

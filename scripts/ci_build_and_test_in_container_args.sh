@@ -188,7 +188,7 @@ fi
 if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
   or_die ninja geosx_python_tools
   or_die ninja ats_run
-  exit 0
+  cat /tmp/build/integratedTests/geos_ats.sh
 fi
 
 if [[ "${USE_SCCACHE}" = true ]]; then
