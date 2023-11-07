@@ -44,6 +44,19 @@ using namespace constitutive;
 
 static constexpr real64 minDensForDivision = 1e-10;
 
+enum class ElementBasedAssemblyKernelFlags
+{
+  SimpleAccumulation = 1 << 0, // 1
+  TotalMassEquation = 1 << 1, // 2
+  /// Add more flags like that if needed:
+  // Flag3 = 1 << 2, // 4
+  // Flag4 = 1 << 3, // 8
+  // Flag5 = 1 << 4, // 16
+  // Flag6 = 1 << 5, // 32
+  // Flag7 = 1 << 6, // 64
+  // Flag8 = 1 << 7  //128
+};
+
 /******************************** PropertyKernelBase ********************************/
 
 /**
@@ -567,7 +580,8 @@ public:
                               MultiFluidBase const & fluid,
                               CoupledSolidBase const & solid,
                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                              arrayView1d< real64 > const & localRhs )
+                              arrayView1d< real64 > const & localRhs,
+                              BitFlags< ElementBasedAssemblyKernelFlags > const kernelFlags )
     : m_numPhases( numPhases ),
     m_rankOffset( rankOffset ),
     m_dofNumber( subRegion.getReference< array1d< globalIndex > >( dofKey ) ),
@@ -586,8 +600,11 @@ public:
     m_phaseCompFrac_n( fluid.phaseCompFraction_n() ),
     m_phaseCompFrac( fluid.phaseCompFraction() ),
     m_dPhaseCompFrac( fluid.dPhaseCompFraction() ),
+    m_compDens( subRegion.getField< fields::flow::globalCompDensity >() ),
+    m_compDens_n( subRegion.getField< fields::flow::globalCompDensity_n >() ),
     m_localMatrix( localMatrix ),
-    m_localRhs( localRhs )
+    m_localRhs( localRhs ),
+    m_kernelFlags( kernelFlags )
   {}
 
   /**
@@ -670,6 +687,12 @@ public:
                             StackVariables & stack,
                             FUNC && phaseAmountKernelOp = NoOpFunc{} ) const
   {
+    if( m_kernelFlags.isSet( ElementBasedAssemblyKernelFlags::SimpleAccumulation ) )
+    {
+      computeAccumulationSimple( ei, stack );
+      return;
+    }
+
     using Deriv = multifluid::DerivativeOffset;
 
     // construct the slices for variables accessed multiple times
@@ -732,15 +755,50 @@ public:
         {
           real64 const dPhaseCompAmount_dC = dPhaseCompFrac_dC[jc] * phaseAmount
                                              + phaseCompFrac[ip][ic] * dPhaseAmount_dC[jc];
+
           stack.localJacobian[ic][jc + 1] += dPhaseCompAmount_dC;
         }
-
       }
 
       // call the lambda in the phase loop to allow the reuse of the phase amounts and their derivatives
       // possible use: assemble the derivatives wrt temperature, and the accumulation term of the energy equation for this phase
       phaseAmountKernelOp( ip, phaseAmount, phaseAmount_n, dPhaseAmount_dP, dPhaseAmount_dC );
 
+    }
+
+    // check zero diagonal (works only in debug)
+    for( integer ic = 0; ic < numComp; ++ic )
+    {
+      GEOS_ASSERT_MSG ( LvArray::math::abs( stack.localJacobian[ic][ic] ) > minDensForDivision,
+                        GEOS_FMT( "Zero diagonal in Jacobian: equation {}, value = {}", ic, stack.localJacobian[ic][ic] ) );
+    }
+  }
+
+  template< typename FUNC = NoOpFunc >
+  GEOS_HOST_DEVICE
+  void computeAccumulationSimple( localIndex const ei,
+                                  StackVariables & stack ) const
+  {
+    // ic - index of component whose conservation equation is assembled
+    // (i.e. row number in local matrix)
+    for( integer ic = 0; ic < numComp; ++ic )
+    {
+      real64 const compAmount = stack.poreVolume * m_compDens[ei][ic];
+      real64 const compAmount_n = stack.poreVolume_n * m_compDens_n[ei][ic];
+
+      stack.localResidual[ic] += compAmount - compAmount_n;
+
+      // Pavel: commented below is some experiment, needs to be re-tested
+      //real64 const compDens = (ic == 0 && m_compDens[ei][ic] < 1e-6) ? 1e-3 : m_compDens[ei][ic];
+      real64 const dCompAmount_dP = stack.dPoreVolume_dPres * m_compDens[ei][ic];
+      GEOS_ASSERT_MSG( !(ic == 0 && LvArray::math::abs( dCompAmount_dP ) < minDensForDivision),
+                       GEOS_FMT( "Zero diagonal in Jacobian: equation {}, value = {}", ic, dCompAmount_dP ) );
+      stack.localJacobian[ic][0] += dCompAmount_dP;
+
+      real64 const dCompAmount_dC = stack.poreVolume;
+      GEOS_ASSERT_MSG( !(ic == ic + 1 && LvArray::math::abs( dCompAmount_dC ) < minDensForDivision),
+                       GEOS_FMT( "Zero diagonal in Jacobian: equation {}, value = {}", ic, dCompAmount_dC ) );
+      stack.localJacobian[ic][ic + 1] += dCompAmount_dC;
     }
   }
 
@@ -800,16 +858,20 @@ public:
   {
     using namespace compositionalMultiphaseUtilities;
 
-    // apply equation/variable change transformation to the component mass balance equations
-    real64 work[numDof]{};
-    shiftRowsAheadByOneAndReplaceFirstRowWithColumnSum( numComp, numDof, stack.localJacobian, work );
-    shiftElementsAheadByOneAndReplaceFirstElementWithSum( numComp, stack.localResidual );
+    if( m_kernelFlags.isSet( ElementBasedAssemblyKernelFlags::TotalMassEquation ) )
+    {
+      // apply equation/variable change transformation to the component mass balance equations
+      real64 work[numDof]{};
+      shiftRowsAheadByOneAndReplaceFirstRowWithColumnSum( numComp, numDof, stack.localJacobian, work );
+      shiftElementsAheadByOneAndReplaceFirstElementWithSum( numComp, stack.localResidual );
+    }
 
     // add contribution to residual and jacobian into:
     // - the component mass balance equations (i = 0 to i = numComp-1)
     // - the volume balance equations (i = numComp)
     // note that numDof includes derivatives wrt temperature if this class is derived in ThermalKernels
-    for( integer i = 0; i < numComp+1; ++i )
+    integer const numRows = numComp+1;
+    for( integer i = 0; i < numRows; ++i )
     {
       m_localRhs[stack.localRow + i] += stack.localResidual[i];
       m_localMatrix.addToRow< serialAtomic >( stack.localRow + i,
@@ -889,11 +951,16 @@ protected:
   arrayView4d< real64 const, multifluid::USD_PHASE_COMP > const m_phaseCompFrac;
   arrayView5d< real64 const, multifluid::USD_PHASE_COMP_DC > const m_dPhaseCompFrac;
 
+  // Views on component densities
+  arrayView2d< real64 const, compflow::USD_COMP > m_compDens;
+  arrayView2d< real64 const, compflow::USD_COMP > m_compDens_n;
+
   /// View on the local CRS matrix
   CRSMatrixView< real64, globalIndex const > const m_localMatrix;
   /// View on the local RHS
   arrayView1d< real64 > const m_localRhs;
 
+  BitFlags< ElementBasedAssemblyKernelFlags > const m_kernelFlags;
 };
 
 /**
@@ -921,6 +988,8 @@ public:
   createAndLaunch( integer const numComps,
                    integer const numPhases,
                    globalIndex const rankOffset,
+                   integer const useTotalMassEquation,
+                   integer const useSimpleAccumulation,
                    string const dofKey,
                    ElementSubRegionBase const & subRegion,
                    MultiFluidBase const & fluid,
@@ -932,8 +1001,15 @@ public:
     {
       integer constexpr NUM_COMP = NC();
       integer constexpr NUM_DOF = NC()+1;
+
+      BitFlags< ElementBasedAssemblyKernelFlags > kernelFlags;
+      if( useTotalMassEquation )
+        kernelFlags.set( ElementBasedAssemblyKernelFlags::TotalMassEquation );
+      if( useSimpleAccumulation )
+        kernelFlags.set( ElementBasedAssemblyKernelFlags::SimpleAccumulation );
+
       ElementBasedAssemblyKernel< NUM_COMP, NUM_DOF >
-      kernel( numPhases, rankOffset, dofKey, subRegion, fluid, solid, localMatrix, localRhs );
+      kernel( numPhases, rankOffset, dofKey, subRegion, fluid, solid, localMatrix, localRhs, kernelFlags );
       ElementBasedAssemblyKernel< NUM_COMP, NUM_DOF >::template launch< POLICY >( subRegion.size(), kernel );
     } );
   }
