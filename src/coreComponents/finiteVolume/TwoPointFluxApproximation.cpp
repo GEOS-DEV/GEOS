@@ -198,7 +198,8 @@ void TwoPointFluxApproximation::computeCellStencil( MeshLevel & mesh ) const
 
       LvArray::tensorOps::add<3>( m_globalCellToFace[stencilCellsGlobalIndex[ke]], absCellToFaceVec );
 
-      real64 const c2fDistance = LvArray::tensorOps::normalize< 3 >( cellToFaceVec[ke] );
+//      real64 const c2fDistance = LvArray::tensorOps::normalize< 3 >( cellToFaceVec[ke] );
+        real64 const c2fDistance = LvArray::tensorOps::l2Norm< 3 >( cellToFaceVec[ke] );
 
       stencilWeights[ke] = faceArea / c2fDistance;
       stencilStabilizationWeights[ke] = faceArea * c2fDistance;
