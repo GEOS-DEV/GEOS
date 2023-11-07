@@ -319,18 +319,16 @@ CellElementStencilTPFAWrapper::
 
     surface[i] = c2fDistance*halfWeight;
 
-    real64 faceNormal[3], invDist[3], velocityNorm[3];
+    real64 faceNormal[3], invDist[3], velocityNorm[3], phaseVel[3];
     LvArray::tensorOps::copy< 3 >( faceNormal, m_faceNormal[iconn] );
-    LvArray::tensorOps::scale< 3 >( faceNormal, phaseFlux );
 
-    LvArray::tensorOps::scale<3>(faceNormal,1./surface[i]);
+    LvArray::tensorOps::scale<3>(faceNormal,phaseFlux/surface[i]);
     LvArray::tensorOps::hadamardProduct<3>( velocityNorm, faceNormal, m_cellToFaceVec[iconn][i]);
       for (int dir = 0; dir < 3; ++dir) {
           invDist[dir] = (globalCellToFace[i][dir]>0) ? 1./globalCellToFace[i][dir] : LvArray::NumericLimits<real64 >::epsilon;
       }
-    LvArray::tensorOps::AiBi<3>(faceNormal,invDist);
-    LvArray::tensorOps::add<3>(phaseVelocity[er][esr][ei][0][ip],faceNormal);
-
+    LvArray::tensorOps::hadamardProduct<3>(phaseVel, velocityNorm, invDist);
+    LvArray::tensorOps::add<3>(phaseVelocity[er][esr][ei][0][ip], phaseVel);
   }
 }
 

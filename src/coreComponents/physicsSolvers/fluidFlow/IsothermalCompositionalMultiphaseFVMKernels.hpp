@@ -552,10 +552,15 @@ public:
         stack.dofColIndices[i * numDof + jdof] = offset + jdof;
       }
     }
-      for( integer ip = 0; ip < m_numPhases; ++ip ) {
+  }
+
+  GEOS_HOST_DEVICE
+  inline
+  void initVelocity( localIndex const iconn) const
+  {
+      for (integer ip = 0; ip < m_numPhases; ++ip) {
           m_stencilWrapper.initVelocity(iconn, ip, m_phaseVelocity);
       }
-
   }
 
   /**
@@ -749,9 +754,13 @@ public:
   launch( localIndex const numConnections,
           KERNEL_TYPE const & kernelComponent )
   {
-    GEOS_MARK_FUNCTION;
-    forAll< POLICY >( numConnections, [=] GEOS_HOST_DEVICE ( localIndex const iconn )
-    {
+      GEOS_MARK_FUNCTION;
+      forAll< POLICY >( numConnections, [=] GEOS_HOST_DEVICE ( localIndex const iconn ) {
+
+      });
+
+      forAll< POLICY >( numConnections, [=] GEOS_HOST_DEVICE ( localIndex const iconn )
+      {
       typename KERNEL_TYPE::StackVariables stack( kernelComponent.stencilSize( iconn ),
                                                   kernelComponent.numPointsInFlux( iconn ) );
 
@@ -1273,8 +1282,6 @@ public:
             localIndex const esr_up = sesri[k_up];
             localIndex const ei_up  = sei[k_up];
 
-            GEOS_LOG_RANK_0(GEOS_FMT("Using dispersion model with velocity norm {}\n",LvArray::tensorOps::l2Norm<3>(m_phaseVelocity[er_up][esr_up][ei_up][0][ip])));
-            GEOS_LOG_RANK_0(GEOS_FMT("And dispersivity {}\n", m_dispersivity[er_up][esr_up][ei_up][0][0]));
             real64 const linearDispersionFactor = m_dispersivity[er_up][esr_up][ei_up][0][0]*LvArray::tensorOps::l2Norm<3>(m_phaseVelocity[er_up][esr_up][ei_up][0][ip]);
             // computation of the upwinded mass flux
             dispersionFlux[ic] += m_phaseDens[er_up][esr_up][ei_up][0][ip] * compFracGrad * linearDispersionFactor;
