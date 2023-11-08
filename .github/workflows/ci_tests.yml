@@ -29,8 +29,10 @@ jobs:
         draft_status=$(echo ${pr_json} | jq '.draft')
         echo "Draft status of PR is ${draft_status}."
         if [[ $draft_status == true ]]; then exit 1 ; fi
-        echo "LABELS=$(echo ${pr_json} | jq jq -c '[.labels.[].name]')" >> "$GITHUB_OUTPUT"
-        echo "ASSIGNEE=$(echo ${pr_json} | jq '.assignee.id')" >> "$GITHUB_OUTPUT"
+        echo "::set-output name=LABELS::$(echo ${pr_json} | jq jq -c '[.labels.[].name]')"
+        # echo "LABELS=$(echo ${pr_json} | jq jq -c '[.labels.[].name]')" >> "$GITHUB_OUTPUT"
+        echo "::set-output name=ASSIGNEE::$(echo ${pr_json} | jq '.assignee.id')"
+        # echo "ASSIGNEE=$(echo ${pr_json} | jq '.assignee.id')" >> "$GITHUB_OUTPUT"
     - name: Checkout .devcontainer/devcontainer.json
       uses: actions/checkout@v3
       with:
@@ -43,7 +45,8 @@ jobs:
     - name: Extract docker image tag
       id: extract_docker_image_tag
       run: |
-        echo "DOCKER_IMAGE_TAG=$(jq '.build.args.GEOS_TPL_TAG' -r .devcontainer/devcontainer.json)" >> "$GITHUB_OUTPUT"
+        echo "::set-output name=DOCKER_IMAGE_TAG::$(jq '.build.args.GEOS_TPL_TAG' -r .devcontainer/devcontainer.json)"
+        # echo "DOCKER_IMAGE_TAG=$(jq '.build.args.GEOS_TPL_TAG' -r .devcontainer/devcontainer.json)" >> "$GITHUB_OUTPUT"
 
   # PR must be assigned to be merged.
   # This job will fail if this is not the case.
@@ -196,10 +199,11 @@ jobs:
     steps:
     - name: Check if running the integrated tests is requested
       run: |
+        echo ${{ needs.check_pull_request_is_not_a_draft.outputs.LABELS }}
         labels=${{ needs.check_pull_request_is_not_a_draft.outputs.LABELS }}
         echo $labels
         # if [[ ${{ contains( fromJSON( needs.check_pull_request_is_not_a_draft.outputs.LABELS ), 'ci: run integrated tests') }} == true ]]; then 0 ; else 1; fi
-        if [[ ${{ contains(  needs.check_pull_request_is_not_a_draft.outputs.LABELS, 'ci: run integrated tests') }} == true ]]; then 0 ; else 1; fi
+        # if [[ ${{ contains(  needs.check_pull_request_is_not_a_draft.outputs.LABELS, 'ci: run integrated tests') }} == true ]]; then 0 ; else 1; fi
 
   run_integrated_tests:
     needs:
