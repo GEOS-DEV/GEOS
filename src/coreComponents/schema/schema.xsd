@@ -4568,8 +4568,8 @@ The expected format is "{ waterMax, oilMax }", in that order-->
 		</xsd:choice>
 	</xsd:complexType>
 	<xsd:complexType name="FileType">
-		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="groupName" use="required" />
+		<!--name => The relative file path.-->
+		<xsd:attribute name="name" type="path" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="ParametersType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
