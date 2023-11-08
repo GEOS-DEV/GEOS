@@ -17,6 +17,7 @@ on:
       HOST_CONFIG:
         required: false
         type: string
+        default: host-configs/environment.cmake
       ENABLE_HYPRE:
         required: false
         type: string
@@ -54,8 +55,6 @@ jobs:
       ENABLE_HYPRE: ${{ inputs.ENABLE_HYPRE }}
       ENABLE_HYPRE_DEVICE: ${{ inputs.ENABLE_HYPRE_DEVICE }}
       ENABLE_TRILINOS: ${{ inputs.ENABLE_TRILINOS }}
-      # GCP_BUCKET: ${{ inputs.GCP_BUCKET }}
-      # HOST_CONFIG: ${{ inputs.HOST_CONFIG }}
       USE_SCCACHE: ${{ inputs.USE_SCCACHE }}
     steps:
     - name: Checkout Repository

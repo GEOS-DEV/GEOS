@@ -21,7 +21,7 @@ if [[ $? -gt 0 ]]; then
 fi
 
 CMAKE_BUILD_TYPE=""
-HOST_CONFIG="host-configs/environment.cmake"
+HOST_CONFIG=""
 eval set -- ${args}
 while :
 do
