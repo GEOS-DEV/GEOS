@@ -557,7 +557,7 @@ public:
     static constexpr char const * defaultDensityString() { return "defaultDensity"; }  ///< Default density key
     static constexpr char const * thermalExpansionCoefficientString() { return "thermalExpansionCoefficient"; } // Thermal expansion
                                                                                                                 // coefficient key
-    static constexpr char const * defaultThermalExpansionCoefficientString() { return "defaultThermalExpansionCoefficient"; } // Default
+    static constexpr char const * defaultThermalExpansionCoefficientString() { return "defaultDrainedLinearTEC"; } // Default
                                                                                                                               // thermal
                                                                                                                               // expansion
                                                                                                                               // coefficient

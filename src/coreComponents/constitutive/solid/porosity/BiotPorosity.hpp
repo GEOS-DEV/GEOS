@@ -230,7 +230,7 @@ public:
 
     static constexpr char const *solidBulkModulusString() { return "solidBulkModulus"; }
 
-    static constexpr char const *defaultThermalExpansionCoefficientString() { return "defaultThermalExpansionCoefficient"; }
+    static constexpr char const *defaultThermalExpansionCoefficientString() { return "defaultPorosityTEC"; }
   } viewKeys;
 
   virtual void initializeState() const override final;
