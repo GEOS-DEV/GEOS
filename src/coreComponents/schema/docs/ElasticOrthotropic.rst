@@ -1,8 +1,8 @@
 
 
-================================== ====== ======== ==================================================================== 
+================================== ====== ======== ============================================================================ 
 Name                               Type   Default  Description                                                          
-================================== ====== ======== ==================================================================== 
+================================== ====== ======== ============================================================================ 
 defaultC11                         real64 -1       Default C11 Component of Voigt Stiffness Tensor                      
 defaultC12                         real64 -1       Default C12 Component of Voigt Stiffness Tensor                      
 defaultC13                         real64 -1       Default C13 Component of Voigt Stiffness Tensor                      
@@ -22,8 +22,8 @@ defaultG23                         real64 -1       Default Shear Modulus G23
 defaultNu12                        real64 -1       Default Poission's Ratio Nu12                                        
 defaultNu13                        real64 -1       Default Poission's Ratio Nu13                                        
 defaultNu23                        real64 -1       Default Poission's Ratio Nu23                                        
-defaultThermalExpansionCoefficient real64 0        Default Linear Thermal Expansion Coefficient of the Solid Rock Frame 
+defaultDrainedLinearTEC            real64 0        Default Drained Linear Thermal Expansion Coefficient of the Solid Rock Frame 
 name                               string required A name is required for any non-unique nodes                          
-================================== ====== ======== ==================================================================== 
+================================== ====== ======== ============================================================================ 
 
 
