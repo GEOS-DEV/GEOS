@@ -30,7 +30,9 @@ jobs:
         echo "Draft status of PR is ${draft_status}."
         if [[ $draft_status == true ]]; then exit 1 ; fi
         echo "ASSIGNEE=$(echo ${pr_json} | jq '.assignee.id')" >> "$GITHUB_OUTPUT"
-        echo "LABELS=$(echo ${pr_json} | jq jq -c '[.labels.[].name]')" >> "$GITHUB_OUTPUT"
+        echo "LABELS=$(echo ${pr_json} | jq -c '[.labels.[].name]')" >> "$GITHUB_OUTPUT"
+        echo $(echo ${pr_json} | jq -c '[.labels.[].name]')
+        echo $(echo ${pr_json} | jq -crM '[.labels.[].name]')
     - name: Checkout .devcontainer/devcontainer.json
       uses: actions/checkout@v3
       with:
