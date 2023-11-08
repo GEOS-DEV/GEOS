@@ -129,7 +129,7 @@ fi
 ATS_ARGUMENTS=""
 if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
   echo "We should be running the integrated tests."
-  apt-get install -y virtualenv python-is-python3
+  apt-get install -y virtualenv python3-dev python-is-python3
   virtualenv /tmp/run_integrated_tests_virtualenv
   ATS_ARGUMENTS="-DATS_ARGUMENTS=\"--machine openmpi --ats openmpi_mpirun=/usr/bin/mpirun --ats openmpi_args=--allow-run-as-root --ats openmpi_procspernode=2 --ats openmpi_maxprocs=2\" -DPython3_ROOT_DIR=/tmp/run_integrated_tests_virtualenv"
 fi
@@ -189,12 +189,12 @@ if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
   # or_die ninja geosx_python_tools
   # or_die ninja ats_run
   # ninja geosx_python_tools
-  pwd
-  echo "$PWD"
+  echo "cwd is ${PWD}"
   or_die ninja ats_environment
   # ninja --verbose ats_run
   cat /tmp/build/integratedTests/geos_ats.sh
-  or_die /tmp/build/integratedTests/geos_ats.sh
+  return_code=$(integratedTests/geos_ats.sh --failIfTestsFail)
+  echo "The return code is ${return_code}"
 fi
 
 if [[ "${USE_SCCACHE}" = true ]]; then
