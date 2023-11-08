@@ -17,7 +17,6 @@ on:
       HOST_CONFIG:
         required: false
         type: string
-        default: host-configs/environment.cmake
       ENABLE_HYPRE:
         required: false
         type: string
@@ -55,6 +54,7 @@ jobs:
       ENABLE_HYPRE: ${{ inputs.ENABLE_HYPRE }}
       ENABLE_HYPRE_DEVICE: ${{ inputs.ENABLE_HYPRE_DEVICE }}
       ENABLE_TRILINOS: ${{ inputs.ENABLE_TRILINOS }}
+      HOST_CONFIG: ${{ inputs.HOST_CONFIG }}
       USE_SCCACHE: ${{ inputs.USE_SCCACHE }}
     steps:
     - name: Checkout Repository
@@ -87,8 +87,7 @@ jobs:
         ./scripts/ci_build_and_test.sh \
           --docker-repository ${{ inputs.DOCKER_REPOSITORY }} \
           --docker-tag ${{ inputs.DOCKER_IMAGE_TAG }} \
-          --cmake-build-type ${{ inputs.CMAKE_BUILD_TYPE }} \
-          --host-config ${{ inputs.HOST_CONFIG }}
+          --cmake-build-type ${{ inputs.CMAKE_BUILD_TYPE }}
 
     # Build, test, uploads GEOSX and its TPL to GCP/GCS using gcloud CLI
     - name: Build and test and deploy
@@ -97,8 +96,7 @@ jobs:
         source ./scripts/ci_build_and_test.sh \
           --docker-repository ${{ inputs.DOCKER_REPOSITORY }} \
           --docker-tag ${{ inputs.DOCKER_IMAGE_TAG }} \
-          --cmake-build-type ${{ inputs.CMAKE_BUILD_TYPE }} \
-          --host-config ${{ inputs.HOST_CONFIG }}
+          --cmake-build-type ${{ inputs.CMAKE_BUILD_TYPE }}
         TMP_DIR=/tmp
         COMMIT=${{ inputs.COMMIT }}
         GEOSX_EXPORT_DIR=GEOSX-and-TPL-${COMMIT:0:7}
@@ -121,5 +119,4 @@ jobs:
         ./scripts/ci_build_and_test.sh \
           --docker-repository ${{ inputs.DOCKER_REPOSITORY }} \
           --docker-tag ${{ inputs.DOCKER_IMAGE_TAG }} \
-          --cmake-build-type ${{ inputs.CMAKE_BUILD_TYPE }} \
-          --host-config ${{ inputs.HOST_CONFIG }}
+          --cmake-build-type ${{ inputs.CMAKE_BUILD_TYPE }}

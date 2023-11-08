@@ -14,14 +14,13 @@ EOF
 exit 1
 }
 
-args=$(getopt -a -o h --long cmake-build-type:,docker-repository:,docker-tag:,host-config:,help -- "$@")
+args=$(getopt -a -o h --long cmake-build-type:,docker-repository:,docker-tag:,help -- "$@")
 if [[ $? -gt 0 ]]; then
   echo "Error after getopt"
   usage
 fi
 
 CMAKE_BUILD_TYPE=""
-HOST_CONFIG=""
 eval set -- ${args}
 while :
 do
@@ -29,7 +28,6 @@ do
     --cmake-build-type)  CMAKE_BUILD_TYPE=$2;  shift 2;;
     --docker-repository) DOCKER_REPOSITORY=$2; shift 2;;
     --docker-tag)        DOCKER_TAG=$2;        shift 2;;
-    --host-config)       HOST_CONFIG=$2;       shift 2;;
     -h | --help)         usage;                shift;;
     # -- means the end of the arguments; drop this, and break out of the while loop
     --) shift; break;;
@@ -82,6 +80,4 @@ docker run \
   ${GITHUB_WORKSPACE_MOUNT_POINT}/scripts/ci_build_and_test_in_container_args.sh \
     --cmake-build-type ${CMAKE_BUILD_TYPE} \
     --install-dir ${GEOSX_DIR} \
-    --host-config ${HOST_CONFIG} ${BUILD_AND_TEST_ARGS} ${SCCACHE_CLI};
-
-    # --host-config ${HOST_CONFIG:-host-configs/environment.cmake} ${BUILD_AND_TEST_ARGS} ${SCCACHE_CLI};
+    --host-config ${HOST_CONFIG:-host-configs/environment.cmake} ${BUILD_AND_TEST_ARGS} ${SCCACHE_CLI};
