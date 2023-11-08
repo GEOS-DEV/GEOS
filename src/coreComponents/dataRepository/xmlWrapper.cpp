@@ -38,9 +38,11 @@ void validateString( string const & value, Regex const & regex )
   if( !inputValidated || m.length() != ptrdiff_t( value.length() ) )
   {
     ptrdiff_t errorId = ( m.size()>0 && m.position( 0 )==0 ) ? m.length() : 0;
-    GEOS_THROW( "Input string validation failed at:\n" <<
-                "  \"" << value << "\"\n   " << string( errorId, ' ' ) << "^\n" <<
-                "  Expected format: " << regex.m_formatDescription,
+    GEOS_THROW( GEOS_FMT( "Input string validation failed at:\n"
+                          "  \"{}\"\n"
+                          "   {:>{}}\n"
+                          "  Expected format: {}",
+                          value, '^', errorId+1, regex.m_formatDescription ),
                 InputError );
   }
 }
