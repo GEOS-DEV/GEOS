@@ -3480,7 +3480,7 @@ The expected format is "{ waterMax, oilMax }", in that order-->
 		<xsd:attribute name="componentNames" type="string_array" use="required" />
 		<!--componentVolumeShift => Component volume shifts-->
 		<xsd:attribute name="componentVolumeShift" type="real64_array" default="{0}" />
-		<!--equationsOfState => List of equation of state types for each phase. Can be PR (= PENG_ROBINSON) or SRK (= REDLICH_KWONG_SOAVE).-->
+		<!--equationsOfState => List of equation of state types for each phase. Can be "PR" (Peng-Robinson) or "SRK" (Redlich-Kwong-Soave).-->
 		<xsd:attribute name="equationsOfState" type="string_array" use="required" />
 		<!--phaseNames => List of fluid phases-->
 		<xsd:attribute name="phaseNames" type="groupNameRef_array" use="required" />
