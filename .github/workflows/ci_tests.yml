@@ -31,8 +31,6 @@ jobs:
         if [[ $draft_status == true ]]; then exit 1 ; fi
         echo "ASSIGNEE=$(echo ${pr_json} | jq '.assignee.id')" >> "$GITHUB_OUTPUT"
         echo "LABELS=$(echo ${pr_json} | jq -crM '[.labels[].name]')" >> "$GITHUB_OUTPUT"
-        echo $(echo ${pr_json} | jq -c '[.labels[].name]')
-        echo $(echo ${pr_json} | jq -crM '[.labels[].name]')
     - name: Checkout .devcontainer/devcontainer.json
       uses: actions/checkout@v3
       with:
@@ -202,7 +200,7 @@ jobs:
         # labels=${{ needs.check_pull_request_is_not_a_draft.outputs.LABELS }}
         # echo $labels
         # if [[ ${{ contains( fromJSON( needs.check_pull_request_is_not_a_draft.outputs.LABELS ), 'ci: run integrated tests') }} == true ]]; then 0 ; else 1; fi
-        # if [[ ${{ contains(  needs.check_pull_request_is_not_a_draft.outputs.LABELS, 'ci: run integrated tests') }} == true ]]; then 0 ; else 1; fi
+        if [[ ${{ contains( fromJSON( needs.check_pull_request_is_not_a_draft.outputs.LABELS ), 'ci: run integrated tests') }} == true ]]; then 0 ; else 1; fi
 
   run_integrated_tests:
     needs:
