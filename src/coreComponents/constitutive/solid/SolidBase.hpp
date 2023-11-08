@@ -558,10 +558,12 @@ public:
     static constexpr char const * thermalExpansionCoefficientString() { return "thermalExpansionCoefficient"; } // Thermal expansion
                                                                                                                 // coefficient key
     static constexpr char const * defaultThermalExpansionCoefficientString() { return "defaultDrainedLinearTEC"; } // Default
-                                                                                                                              // thermal
-                                                                                                                              // expansion
-                                                                                                                              // coefficient
-                                                                                                                              // key
+                                                                                                                   // drained
+                                                                                                                   // linear
+                                                                                                                   // thermal
+                                                                                                                   // expansion
+                                                                                                                   // coefficient
+                                                                                                                   // key
   };
 
   /**
