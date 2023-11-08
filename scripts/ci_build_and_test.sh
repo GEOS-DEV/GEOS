@@ -14,7 +14,7 @@ EOF
 exit 1
 }
 
-args=$(getopt -a -o h --long cmake-build-type:,docker-repository:,docker-tag:,help -- "$@")
+args=$(getopt -a -o h --long cmake-build-type:,docker-repository:,docker-tag:,host-config:,help -- "$@")
 if [[ $? -gt 0 ]]; then
   echo "Error after getopt"
   usage

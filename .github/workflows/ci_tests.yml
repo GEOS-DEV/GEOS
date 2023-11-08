@@ -196,7 +196,7 @@ jobs:
     steps:
     - name: Check if running the integrated tests is requested
       run: |
-        contains(fromJSON( ${{ needs.check_pull_request_is_not_a_draft.outputs.LABELS }} ), "ci: run integrated tests")
+        contains( ${{ needs.check_pull_request_is_not_a_draft.outputs.LABELS }}, "ci: run integrated tests")
 
   run_integrated_tests:
     needs:
