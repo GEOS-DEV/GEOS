@@ -19,15 +19,18 @@ jobs:
     # another job's env
     outputs:
       DOCKER_IMAGE_TAG: ${{ steps.extract_docker_image_tag.outputs.DOCKER_IMAGE_TAG }}
+      ASSIGNEE: ${{ steps.pr_info_extraction.outputs.ASSIGNEE }}
+      LABELS: ${{ steps.pr_info_extraction.outputs.LABELS }}
     steps:
     - name: Check that the PR is not a draft (cancel rest of jobs otherwise)
+      id: pr_info_extraction
       run: |
-        draft_status=$(curl -H "Accept: application/vnd.github+json" \
-           https://api.github.com/repos/${{ github.repository }}/pulls/${{ github.event.number }} \
-           | jq '.draft')
-        echo "Is PR a draft? (Check PR's draft status )"
-        echo $draft_status
-        if [[ $draft_status == false ]]; then "true" ; else "false"; fi
+        pr_json=$(curl -H "Accept: application/vnd.github+json" https://api.github.com/repos/${{ github.repository }}/pulls/${{ github.event.number }})
+        draft_status=$(echo ${pr_json} | jq '.draft')
+        echo "Draft status of PR is ${draft_status}."
+        if [[ $draft_status == true ]]; then exit 1 ; fi
+        echo "LABELS=$(echo ${pr_json} | jq jq -c '[.labels.[].name]')" >> "$GITHUB_OUTPUT"
+        echo "ASSIGNEE=$(echo ${pr_json} | jq '.assignee.id')" >> "$GITHUB_OUTPUT"
     - name: Checkout .devcontainer/devcontainer.json
       uses: actions/checkout@v3
       with:
@@ -42,7 +45,6 @@ jobs:
       run: |
         echo "DOCKER_IMAGE_TAG=$(jq '.build.args.GEOS_TPL_TAG' -r .devcontainer/devcontainer.json)" >> "$GITHUB_OUTPUT"
 
-
   # PR must be assigned to be merged.
   # This job will fail if this is not the case.
   check_pull_request_is_assigned:
@@ -52,12 +54,8 @@ jobs:
     # Assignee ID will be null if PR is not assigned
     - name: Check that the PR is assigned
       run: |
-        id=$(curl -H "Accept: application/vnd.github+json" \
-           https://api.github.com/repos/${{ github.repository }}/pulls/${{ github.event.number }} \
-           | jq '.assignee.id')
-        echo "Is PR Assigned? (Check for Assignee ID)"
-        echo $id
-        if [[ $id != null ]]; then "true" ; else "false"; fi
+        echo "Assignee status of PR is ${{ needs.check_pull_request_is_not_a_draft.outputs.ASSIGNEE }}."
+        if [[ ${{ needs.check_pull_request_is_not_a_draft.outputs.ASSIGNEE }} != null ]]; then "true" ; else "false"; fi
 
   # PR must be labeled "ready to be merged" to run CUDA jobs.
   # This job will fail if this is not the case.
@@ -68,13 +66,16 @@ jobs:
     steps:
     - name: Check that the PR is ready to be merged
       run: |
-        labels=$(curl -H "Accept: application/vnd.github+json" \
-           https://api.github.com/repos/${{ github.repository }}/pulls/${{ github.event.number }} \
-           | jq '.labels')
-        ready_label="ready to be merged"
-        echo "Is PR Ready to be Merged? (Check for $ready_label label)"
-        echo "Labels found are: $labels"
-        if [[ $labels == *"$ready_label"* ]]; then "true" ; else "false"; fi
+        echo "Labels of the PR is/are $(join(${{ needs.check_pull_request_is_not_a_draft.outputs.ASSIGNEE }}, ', '))."
+        contains(fromJSON( ${{ needs.check_pull_request_is_not_a_draft.outputs.LABELS }} ), "flag: ready to be merged")
+        # if [[ contains(  ) ]]; then "true" ; else "false"; fi
+        # labels=$(curl -H "Accept: application/vnd.github+json" \
+        #    https://api.github.com/repos/${{ github.repository }}/pulls/${{ github.event.number }} \
+        #    | jq '.labels')
+        # ready_label="ready to be merged"
+        # echo "Is PR Ready to be Merged? (Check for $ready_label label)"
+        # echo "Labels found are: $labels"
+        # if [[ $labels == *"$ready_label"* ]]; then "true" ; else "false"; fi
 
   check_submodules:
     needs: [check_pull_request_is_not_a_draft]
@@ -187,11 +188,22 @@ jobs:
       RUNS_ON: ubuntu-22.04
     secrets: inherit
 
-  run_integrated_tests:
-    needs: 
+  check_run_integrated_tests:
+    needs:
       # - linux_builds
       - check_pull_request_is_not_a_draft
+    runs-on: ubuntu-22.04
+    steps:
+    - name: Check if running the integrated tests is requested
+      run: |
+        contains(fromJSON( ${{ needs.check_pull_request_is_not_a_draft.outputs.LABELS }} ), "ci: run integrated tests")
+
+  run_integrated_tests:
+    needs:
+      - check_run_integrated_tests
+      - check_pull_request_is_not_a_draft
     uses: ./.github/workflows/build_and_test.yml
+    secrets: inherit
     with:
       DOCKER_IMAGE_TAG: ${{ needs.check_pull_request_is_not_a_draft.outputs.DOCKER_IMAGE_TAG }}
       BUILD_AND_TEST_ARGS: --run-integrated-tests
@@ -200,7 +212,6 @@ jobs:
       DOCKER_REPOSITORY: geosx/ubuntu22.04-gcc11
       COMMIT: ${{ github.event.pull_request.head.sha }}
       RUNS_ON: ubuntu-22.04
-    secrets: inherit
 
   # If "flag: ready to be merged" PR label found, cuda jobs run
   # immediately along side linux jobs.
