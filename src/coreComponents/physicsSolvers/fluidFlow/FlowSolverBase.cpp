@@ -114,7 +114,8 @@ FlowSolverBase::FlowSolverBase( string const & name,
   SolverBase( name, parent ),
   m_numDofPerCell( 0 ),
   m_isThermal( 0 ),
-  m_isFixedStressPoromechanicsUpdate( false )
+  m_isFixedStressPoromechanicsUpdate( false ),
+  m_isJumpStabilized( false )
 {
   this->registerWrapper( viewKeyStruct::isThermalString(), &m_isThermal ).
     setApplyDefaultValue( 0 ).
@@ -262,6 +263,11 @@ void FlowSolverBase::saveIterationState( DomainPartition & domain ) const
 void FlowSolverBase::enableFixedStressPoromechanicsUpdate()
 {
   m_isFixedStressPoromechanicsUpdate = true;
+}
+
+void FlowSolverBase::enableJumpStabilization()
+{
+  m_isJumpStabilized = true;
 }
 
 void FlowSolverBase::setConstitutiveNamesCallSuper( ElementSubRegionBase & subRegion ) const

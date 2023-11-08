@@ -93,6 +93,8 @@ public:
 
   void enableFixedStressPoromechanicsUpdate();
 
+  void enableJumpStabilization();   
+
   void updatePorosityAndPermeability( CellElementSubRegion & subRegion ) const;
 
   virtual void updatePorosityAndPermeability( SurfaceElementSubRegion & subRegion ) const;
@@ -192,6 +194,8 @@ protected:
 
   /// flag if negative pressure is allowed
   integer m_allowNegativePressure;
+
+  bool m_isJumpStabilized;
 
 private:
   virtual void setConstitutiveNames( ElementSubRegionBase & subRegion ) const override;

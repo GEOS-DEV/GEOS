@@ -101,6 +101,9 @@ public:
   void enableFixedStressPoromechanicsUpdate()
   { flowSolver()->enableFixedStressPoromechanicsUpdate();  }
 
+  void enableJumpStabilization()
+  { flowSolver()->enableJumpStabilization();  }
+
   void saveIterationState( DomainPartition & domain ) const { flowSolver()->saveIterationState( domain ); }
 
 protected:

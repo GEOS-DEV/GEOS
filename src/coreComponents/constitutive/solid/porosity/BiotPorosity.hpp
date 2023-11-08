@@ -116,11 +116,14 @@ public:
                         real64 const & biotCoefficient,
                         real64 const & thermalExpansionCoefficient,
                         real64 const & meanEffectiveStressIncrement_k,
-                        real64 const & bulkModulus ) const
+                        real64 & bulkModulus ) const
   {
+
+    //bulkModulus = 5.0e9;
+
     real64 const biotSkeletonModulusInverse = (biotCoefficient - referencePorosity) / m_grainBulkModulus;
     real64 const porosityThermalExpansion = 3 * thermalExpansionCoefficient * ( biotCoefficient - referencePorosity );
-    real64 const fixedStressPressureCoefficient = biotCoefficient * biotCoefficient / bulkModulus;
+    real64 const fixedStressPressureCoefficient = biotCoefficient * biotCoefficient / (bulkModulus);
     real64 const fixedStressTemperatureCoefficient = 3 * biotCoefficient * thermalExpansionCoefficient;
 
     porosity = porosity_n
@@ -138,6 +141,8 @@ public:
       dPorosity_dPressure += fixedStressPressureCoefficient;
       dPorosity_dTemperature += fixedStressTemperatureCoefficient;
     }
+    //
+    //GEOS_UNUSED_VAR(fixedStressPressureCoefficient, deltaPressureFromLastIteration, fixedStressTemperatureCoefficient, deltaTemperatureFromLastIteration);
   }
 
   GEOS_HOST_DEVICE

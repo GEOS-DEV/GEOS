@@ -153,6 +153,8 @@ void MultiphasePoromechanics< FLOW_SOLVER >::registerDataOnMesh( Group & meshBod
       {
         subRegion.registerField< fields::flow::macroElementIndex >( this->getName() );
         subRegion.registerField< fields::flow::elementStabConstant >( this->getName() );
+
+        flowSolver()->enableJumpStabilization();
       }
 
       if( this->getNonlinearSolverParameters().m_couplingType == NonlinearSolverParameters::CouplingType::Sequential )
@@ -422,6 +424,12 @@ void MultiphasePoromechanics< FLOW_SOLVER >::implicitStepSetup( real64 const & t
 {
   flowSolver()->keepFlowVariablesConstantDuringInitStep( m_performStressInitialization );
   Base::implicitStepSetup( time_n, dt, domain );
+
+  if (this->getNonlinearSolverParameters().m_couplingType == NonlinearSolverParameters::CouplingType::Sequential &&
+  (m_stabilizationType == StabilizationType::Global || m_stabilizationType == StabilizationType::Local))
+  {
+    updateStabilizationParameters( domain );
+  }
 }
 
 template< typename FLOW_SOLVER >
