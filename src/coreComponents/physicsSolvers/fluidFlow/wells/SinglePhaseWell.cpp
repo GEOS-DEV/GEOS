@@ -1057,7 +1057,7 @@ void SinglePhaseWell::printRates( real64 const & time_n,
       {
         GEOS_LOG( GEOS_FMT( "{}: well is shut", wellControlsName ) );
         // print all zeros in the rates file
-        outputFile << "0.0,0.0,0.0" << std::endl;
+        outputFile << ",0.0,0.0,0.0" << std::endl;
         return;
       }
 
