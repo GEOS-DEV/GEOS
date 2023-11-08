@@ -186,15 +186,16 @@ if [[ "${RUN_UNIT_TESTS}" = true ]]; then
 fi
 
 if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
-  # or_die ninja geosx_python_tools
-  # or_die ninja ats_run
-  # ninja geosx_python_tools
   echo "cwd is ${PWD}"
+  # We split the process in two steps. First installing the environment, then runnint the tests.
+  # The tests are not run using ninja because it swallows the output shile all the simulations are running.
+  # We directly use the script instead.
   or_die ninja ats_environment
   # ninja --verbose ats_run
   cat /tmp/build/integratedTests/geos_ats.sh
-  return_code=$(integratedTests/geos_ats.sh --failIfTestsFail)
-  echo "The return code is ${return_code}"
+  integratedTests/geos_ats.sh --failIfTestsFail
+  exit_status=$?
+  echo "The return code is ${exit_status}"
 fi
 
 if [[ "${USE_SCCACHE}" = true ]]; then
