@@ -189,10 +189,12 @@ if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
   # or_die ninja geosx_python_tools
   # or_die ninja ats_run
   # ninja geosx_python_tools
-  ninja ats_environment
+  pwd
+  echo "$PWD"
+  or_die ninja ats_environment
   # ninja --verbose ats_run
-  /tmp/build/integratedTests/geos_ats.sh
   cat /tmp/build/integratedTests/geos_ats.sh
+  or_die /tmp/build/integratedTests/geos_ats.sh
 fi
 
 if [[ "${USE_SCCACHE}" = true ]]; then
