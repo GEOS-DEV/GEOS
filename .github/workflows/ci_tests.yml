@@ -18,8 +18,8 @@ jobs:
     # Workaround due to github actions variable scope restrictions passing to
     # another job's env
     outputs:
-      DOCKER_IMAGE_TAG: ${{ steps.extract_docker_image_tag.outputs.DOCKER_IMAGE_TAG }}
       ASSIGNEE: ${{ steps.pr_info_extraction.outputs.ASSIGNEE }}
+      DOCKER_IMAGE_TAG: ${{ steps.extract_docker_image_tag.outputs.DOCKER_IMAGE_TAG }}
       LABELS: ${{ steps.pr_info_extraction.outputs.LABELS }}
     steps:
     - name: Check that the PR is not a draft (cancel rest of jobs otherwise)
@@ -29,8 +29,8 @@ jobs:
         draft_status=$(echo ${pr_json} | jq '.draft')
         echo "Draft status of PR is ${draft_status}."
         if [[ $draft_status == true ]]; then exit 1 ; fi
-        echo "LABELS=$(echo ${pr_json} | jq jq -c '[.labels.[].name]')" >> "$GITHUB_OUTPUT"
         echo "ASSIGNEE=$(echo ${pr_json} | jq '.assignee.id')" >> "$GITHUB_OUTPUT"
+        echo "LABELS=$(echo ${pr_json} | jq jq -c '[.labels.[].name]')" >> "$GITHUB_OUTPUT"
     - name: Checkout .devcontainer/devcontainer.json
       uses: actions/checkout@v3
       with:
@@ -196,7 +196,7 @@ jobs:
     steps:
     - name: Check if running the integrated tests is requested
       run: |
-        echo ${{ needs.check_pull_request_is_not_a_draft.outputs.LABELS }}
+        echo '${{ needs.check_pull_request_is_not_a_draft.outputs.LABELS }}'
         # labels=${{ needs.check_pull_request_is_not_a_draft.outputs.LABELS }}
         # echo $labels
         # if [[ ${{ contains( fromJSON( needs.check_pull_request_is_not_a_draft.outputs.LABELS ), 'ci: run integrated tests') }} == true ]]; then 0 ; else 1; fi
