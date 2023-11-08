@@ -196,7 +196,10 @@ jobs:
     steps:
     - name: Check if running the integrated tests is requested
       run: |
-        if [[ ${{ contains( fromJSON( needs.check_pull_request_is_not_a_draft.outputs.LABELS ), 'ci: run integrated tests') }} == true ]]; then 0 ; else 1; fi
+        labels=${{ needs.check_pull_request_is_not_a_draft.outputs.LABELS }}
+        echo $labels
+        # if [[ ${{ contains( fromJSON( needs.check_pull_request_is_not_a_draft.outputs.LABELS ), 'ci: run integrated tests') }} == true ]]; then 0 ; else 1; fi
+        if [[ ${{ contains(  needs.check_pull_request_is_not_a_draft.outputs.LABELS, 'ci: run integrated tests') }} == true ]]; then 0 ; else 1; fi
 
   run_integrated_tests:
     needs:
