@@ -51,7 +51,7 @@ DECLARE_FIELD( MediumEpsilon,
 DECLARE_FIELD( MediumSigma,
                "mediumSigma",
                array1d< real32 >,
-               0,
+               0.75,
                NOPLOT,
                WRITE_AND_READ,
                "Sigma quantity in VTI/TTI Fletcher's equations" );
