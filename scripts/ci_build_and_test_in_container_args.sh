@@ -28,7 +28,6 @@ function usage () {
 Usage: $0
   [ --build-exe-only ]
   [ --cmake-build-type ]
-  [ --gcp-credential-file ]
   [ --host-config ]
   [ --install-dir ]
   [ --no-install-schema ]
@@ -45,7 +44,7 @@ exit 1
 # Working in the root of the cloned repository
 or_die cd $(dirname $0)/..
 
-args=$(getopt -a -o h --long build-exe-only,cmake-build-type:,no-run-unit-tests,gcp-credential-file:,host-config:,no-install-schema,install-dir:,test-code-style,test-documentation,no-use-sccache,run-integrated-tests,help -- "$@")
+args=$(getopt -a -o h --long build-exe-only,cmake-build-type:,no-run-unit-tests,host-config:,no-install-schema,install-dir:,test-code-style,test-documentation,no-use-sccache,run-integrated-tests,help -- "$@")
 if [[ $? -gt 0 ]]; then
   echo "Error after getopt"
   echo "which getop"
@@ -54,12 +53,8 @@ if [[ $? -gt 0 ]]; then
 fi
 # or_die args=$(getopt -a -o h --long build-exe-only,cmake-build-type:,no-run-unit-tests,gcp-credential-file:,host-config:,no-install-schema,install-dir:,test-code-style,test-documentation,no-use-sccache,help -- "$@")
 
-# Variables and default values
+# Variables with default values
 BUILD_EXE_ONLY=false
-CMAKE_BUILD_TYPE=unset
-GCP_CREDENTIAL_FILE=unset
-HOST_CONFIG=unset
-GEOSX_DIR=unset
 GEOSX_INSTALL_SCHEMA=true
 RUN_UNIT_TESTS=true
 RUN_INTEGRATED_TESTS=false
@@ -73,7 +68,6 @@ do
   case $1 in
     --build-exe-only)       BUILD_EXE_ONLY=true; RUN_UNIT_TESTS=false; shift;;
     --cmake-build-type)     CMAKE_BUILD_TYPE=$2;        shift 2;;
-    --gcp-credential-file)  GCP_CREDENTIAL_FILE=$2;     shift 2;;
     --host-config)          HOST_CONFIG=$2;             shift 2;;
     --install-dir)          GEOSX_DIR=$2;               shift 2;;
     --no-install-schema)    GEOSX_INSTALL_SCHEMA=false; shift;;

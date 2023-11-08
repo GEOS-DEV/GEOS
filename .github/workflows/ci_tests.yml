@@ -102,8 +102,6 @@ jobs:
         lfs: false
     - name: Check style
       env:
-        # DOCKER_REPOSITORY: geosx/ubuntu20.04-gcc9
-        # CMAKE_BUILD_TYPE: Release
         BUILD_AND_TEST_ARGS: --test-code-style --no-use-sccache
       run: |
         ./scripts/ci_build_and_test.sh \
@@ -122,8 +120,6 @@ jobs:
         lfs: false
     - name: Check documentation
       env:
-        # DOCKER_REPOSITORY: geosx/ubuntu20.04-gcc9
-        # CMAKE_BUILD_TYPE: Release
         BUILD_AND_TEST_ARGS: --test-documentation --no-use-sccache
       run: |
         ./scripts/ci_build_and_test.sh \

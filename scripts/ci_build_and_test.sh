@@ -20,7 +20,8 @@ if [[ $? -gt 0 ]]; then
   usage
 fi
 
-CMAKE_BUILD_TYPE=unset
+CMAKE_BUILD_TYPE=""
+HOST_CONFIG="host-configs/environment.cmake"
 eval set -- ${args}
 while :
 do
@@ -28,13 +29,19 @@ do
     --cmake-build-type)  CMAKE_BUILD_TYPE=$2;  shift 2;;
     --docker-repository) DOCKER_REPOSITORY=$2; shift 2;;
     --docker-tag)        DOCKER_TAG=$2;        shift 2;;
-    -h | --help)         usage;               shift;;
+    --host-config)       HOST_CONFIG=$2;       shift 2;;
+    -h | --help)         usage;                shift;;
     # -- means the end of the arguments; drop this, and break out of the while loop
     --) shift; break;;
     *) >&2 echo Unsupported option: $1
        usage;;
   esac
 done
+
+if [[ -z "${CMAKE_BUILD_TYPE}" ]]; then
+  echo "Variable \"CMAKE_BUILD_TYPE\" is undefined or empty. Define it using '--cmake-build-type'."
+  exit 1
+fi
 
 # The linux build relies on the two variables DOCKER_REPOSITORY and DOCKER_TAG to define the proper image version.
 DOCKER_IMAGE=${DOCKER_REPOSITORY}:${DOCKER_TAG}
@@ -45,11 +52,9 @@ DOCKER_IMAGE=${DOCKER_REPOSITORY}:${DOCKER_TAG}
 GEOSX_TPL_DIR=$(docker run --rm ${DOCKER_IMAGE} /bin/bash -c 'echo ${GEOSX_TPL_DIR}' | tail -1)
 # ... so we can install GEOSX alongside. This is assumed for bundling the binaries, so consider modifying with care.
 GEOSX_DIR=${GEOSX_TPL_DIR}/../GEOSX-${GITHUB_SHA:0:7}
-# We need to get the build directory
-BUILD_DIR=${GITHUB_WORKSPACE}
 # We need to know where the code folder is mounted inside the container so we can run the script at the proper location!
 # Since this information is repeated twice, we use a variable.
-BUILD_DIR_MOUNT_POINT=/tmp/GEOSX
+GITHUB_WORKSPACE_MOUNT_POINT=/tmp/geos
 
 SCCACHE_CLI="--no-use-sccache"
 SCCACHE_VOLUME_MOUNT=""
@@ -64,17 +69,19 @@ fi
 # We need to keep track of the building container (hence the `CONTAINER_NAME`)
 # so we can extract the data from it later (if needed). Another solution would have been to use a mount point,
 # but that would not have solved the problem for the TPLs (we would require extra action to copy them to the mount point).
-CONTAINER_NAME=geosx_build
-# Now we can build GEOSX.
+CONTAINER_NAME=geos_build
+# Now we can build GEOS.
 docker run \
   --name=${CONTAINER_NAME} \
-  --volume=${BUILD_DIR}:${BUILD_DIR_MOUNT_POINT} ${SCCACHE_VOLUME_MOUNT} \
+  --volume=${GITHUB_WORKSPACE}:${GITHUB_WORKSPACE_MOUNT_POINT} ${SCCACHE_VOLUME_MOUNT} \
   --cap-add=ALL \
   -e ENABLE_HYPRE=${ENABLE_HYPRE:-OFF} \
   -e ENABLE_HYPRE_DEVICE=${ENABLE_HYPRE_DEVICE:-CPU} \
   -e ENABLE_TRILINOS=${ENABLE_TRILINOS:-ON} \
   ${DOCKER_IMAGE} \
-  ${BUILD_DIR_MOUNT_POINT}/scripts/ci_build_and_test_in_container_args.sh \
+  ${GITHUB_WORKSPACE_MOUNT_POINT}/scripts/ci_build_and_test_in_container_args.sh \
     --cmake-build-type ${CMAKE_BUILD_TYPE} \
     --install-dir ${GEOSX_DIR} \
-    --host-config ${HOST_CONFIG:-host-configs/environment.cmake} ${BUILD_AND_TEST_ARGS} ${SCCACHE_CLI};
+    --host-config ${HOST_CONFIG} ${BUILD_AND_TEST_ARGS} ${SCCACHE_CLI};
+
+    # --host-config ${HOST_CONFIG:-host-configs/environment.cmake} ${BUILD_AND_TEST_ARGS} ${SCCACHE_CLI};

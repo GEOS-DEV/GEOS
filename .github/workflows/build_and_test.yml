@@ -54,8 +54,8 @@ jobs:
       ENABLE_HYPRE: ${{ inputs.ENABLE_HYPRE }}
       ENABLE_HYPRE_DEVICE: ${{ inputs.ENABLE_HYPRE_DEVICE }}
       ENABLE_TRILINOS: ${{ inputs.ENABLE_TRILINOS }}
-      GCP_BUCKET: ${{ inputs.GCP_BUCKET }}
-      HOST_CONFIG: ${{ inputs.HOST_CONFIG }}
+      # GCP_BUCKET: ${{ inputs.GCP_BUCKET }}
+      # HOST_CONFIG: ${{ inputs.HOST_CONFIG }}
       USE_SCCACHE: ${{ inputs.USE_SCCACHE }}
     steps:
     - name: Checkout Repository
@@ -66,13 +66,13 @@ jobs:
         lfs: false
 
     - id: 'auth'
-      if: ${{ env.GCP_BUCKET || env.USE_SCCACHE }}
+      if: ${{ inputs.GCP_BUCKET || inputs.USE_SCCACHE }}
       uses: 'google-github-actions/auth@v1'
       with:
         credentials_json: '${{ secrets.GOOGLE_CLOUD_GCP }}'
         create_credentials_file: true
     - name: 'Set up Cloud SDK'
-      if: env.GCP_BUCKET
+      if: inputs.GCP_BUCKET
       uses: 'google-github-actions/setup-gcloud@v1'
       with:
         version: '>= 363.0.0'
@@ -83,28 +83,30 @@ jobs:
     # Build and test only
     # Builds only the geosx executable (timeout when building tests)
     - name: Build and test
-      if: ${{ inputs.build_type == 'build' && !(env.GCP_BUCKET) }}
+      if: ${{ inputs.build_type == 'build' && !(inputs.GCP_BUCKET) }}
       run: |
         ./scripts/ci_build_and_test.sh \
           --docker-repository ${{ inputs.DOCKER_REPOSITORY }} \
           --docker-tag ${{ inputs.DOCKER_IMAGE_TAG }} \
-          --cmake-build-type ${{ inputs.CMAKE_BUILD_TYPE }}
+          --cmake-build-type ${{ inputs.CMAKE_BUILD_TYPE }} \
+          --host-config ${{ inputs.HOST_CONFIG }}
 
     # Build, test, uploads GEOSX and its TPL to GCP/GCS using gcloud CLI
     - name: Build and test and deploy
-      if: ${{ inputs.build_type == 'build' && env.GCP_BUCKET }}
+      if: ${{ inputs.build_type == 'build' && inputs.GCP_BUCKET }}
       run: |
         source ./scripts/ci_build_and_test.sh \
           --docker-repository ${{ inputs.DOCKER_REPOSITORY }} \
           --docker-tag ${{ inputs.DOCKER_IMAGE_TAG }} \
-          --cmake-build-type ${{ inputs.CMAKE_BUILD_TYPE }}
+          --cmake-build-type ${{ inputs.CMAKE_BUILD_TYPE }} \
+          --host-config ${{ inputs.HOST_CONFIG }}
         TMP_DIR=/tmp
         COMMIT=${{ inputs.COMMIT }}
         GEOSX_EXPORT_DIR=GEOSX-and-TPL-${COMMIT:0:7}
         docker cp -a ${CONTAINER_NAME}:${GEOSX_TPL_DIR}/.. ${TMP_DIR}/${GEOSX_EXPORT_DIR}
         GEOSX_BUNDLE=${TMP_DIR}/${GEOSX_EXPORT_DIR}.tar.gz
         tar czf ${GEOSX_BUNDLE} --directory=${TMP_DIR} ${GEOSX_EXPORT_DIR}
-        CLOUDSDK_PYTHON=python3 gsutil cp -a public-read ${GEOSX_BUNDLE} gs://${GCP_BUCKET}/
+        CLOUDSDK_PYTHON=python3 gsutil cp -a public-read ${GEOSX_BUNDLE} gs://${{ inputs.GCP_BUCKET }}/
 
     # - name: Setup upterm session
     #   uses: lhotari/action-upterm@v1
@@ -120,4 +122,5 @@ jobs:
         ./scripts/ci_build_and_test.sh \
           --docker-repository ${{ inputs.DOCKER_REPOSITORY }} \
           --docker-tag ${{ inputs.DOCKER_IMAGE_TAG }} \
-          --cmake-build-type ${{ inputs.CMAKE_BUILD_TYPE }}
+          --cmake-build-type ${{ inputs.CMAKE_BUILD_TYPE }} \
+          --host-config ${{ inputs.HOST_CONFIG }}
