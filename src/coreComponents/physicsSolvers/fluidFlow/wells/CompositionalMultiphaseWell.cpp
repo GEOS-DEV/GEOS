@@ -1884,7 +1884,7 @@ void CompositionalMultiphaseWell::printRates( real64 const & time_n,
       {
         GEOS_LOG( GEOS_FMT( "{}: well is shut", wellControlsName ) );
         // print all zeros in the rates file
-        outputFile << "0.0,0.0,0.0";
+        outputFile << ",0.0,0.0,0.0";
         for( integer ip = 0; ip < numPhase; ++ip )
           outputFile << ",0.0";
         outputFile << std::endl;
