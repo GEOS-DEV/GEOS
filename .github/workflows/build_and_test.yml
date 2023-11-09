@@ -101,7 +101,7 @@ jobs:
       if: ${{ inputs.build_type == 'build' && inputs.GCP_BUCKET }}
       run: |
         HC=${{ inputs.HOST_CONFIG }}
-        HC_CLI=${HC:+"--host-config ${HC}"}
+        HC_CLI=${HC:+"--host-config ${HC}"}  # source command doesn't work with process substitution in bash, so we use an extra variable.
         echo "${HC_CLI}"
         source ./scripts/ci_build_and_test.sh \
           --docker-repository ${{ inputs.DOCKER_REPOSITORY }} \
