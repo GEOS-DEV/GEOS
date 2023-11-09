@@ -27,15 +27,15 @@ function usage () {
 >&2 cat << EOF
 Usage: $0
   [ --build-exe-only ]
-  [ --cmake-build-type ]
-  [ --host-config ]
-  [ --install-dir ]
+  [ --cmake-build-type ... ]
+  [ --host-config ... ]
+  [ --install-dir ... ]
   [ --no-install-schema ]
   [ --no-run-unit-tests ]
-  [ --no-use-sccache ]
   [ --run-integrated-tests ]
   [ --test-code-style ]
   [ --test-documentation ]
+  [ --use-sccache (true|false) ]
   [ -h | --help ]
 EOF
 exit 1
@@ -44,14 +44,14 @@ exit 1
 # Working in the root of the cloned repository
 or_die cd $(dirname $0)/..
 
-args=$(getopt -a -o h --long build-exe-only,cmake-build-type:,no-run-unit-tests,host-config:,no-install-schema,install-dir:,test-code-style,test-documentation,no-use-sccache,run-integrated-tests,help -- "$@")
+args=$(getopt -a -o h --long build-exe-only,cmake-build-type:,no-run-unit-tests,host-config:,no-install-schema,install-dir:,test-code-style,test-documentation,use-sccache:,run-integrated-tests,help -- "$@")
 if [[ $? -gt 0 ]]; then
   echo "Error after getopt"
   echo "which getop"
   echo $(which getopt)
   usage
 fi
-# or_die args=$(getopt -a -o h --long build-exe-only,cmake-build-type:,no-run-unit-tests,gcp-credential-file:,host-config:,no-install-schema,install-dir:,test-code-style,test-documentation,no-use-sccache,help -- "$@")
+# TODO or_die args=$(...)
 
 # Variables with default values
 BUILD_EXE_ONLY=false
@@ -72,7 +72,7 @@ do
     --install-dir)          GEOSX_DIR=$2;               shift 2;;
     --no-install-schema)    GEOSX_INSTALL_SCHEMA=false; shift;;
     --no-run-unit-tests)    RUN_UNIT_TESTS=false;       shift;;
-    --no-use-sccache)       USE_SCCACHE=false;          shift;;
+    --use-sccache)          USE_SCCACHE=$2;             shift;;
     --run-integrated-tests) RUN_INTEGRATED_TESTS=true;  shift;;
     --test-code-style)      TEST_CODE_STYLE=true;       shift;;
     --test-documentation)   TEST_DOCUMENTATION=true;    shift;;

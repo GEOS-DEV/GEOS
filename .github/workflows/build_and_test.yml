@@ -50,7 +50,7 @@ jobs:
   build_and_test:
     runs-on: ${{ inputs.RUNS_ON }}
     env:
-      BUILD_AND_TEST_ARGS: ${{ inputs.BUILD_AND_TEST_ARGS }}
+      # BUILD_AND_TEST_ARGS: ${{ inputs.BUILD_AND_TEST_ARGS }}
       ENABLE_HYPRE: ${{ inputs.ENABLE_HYPRE }}
       ENABLE_HYPRE_DEVICE: ${{ inputs.ENABLE_HYPRE_DEVICE }}
       ENABLE_TRILINOS: ${{ inputs.ENABLE_TRILINOS }}
@@ -89,7 +89,9 @@ jobs:
         ./scripts/ci_build_and_test.sh \
           --docker-repository ${{ inputs.DOCKER_REPOSITORY }} \
           --docker-tag ${{ inputs.DOCKER_IMAGE_TAG }} \
-          --cmake-build-type ${{ inputs.CMAKE_BUILD_TYPE }}
+          --use-sccache ${{ inputs.USE_SCCACHE }} \
+          -- \
+          --cmake-build-type ${{ inputs.CMAKE_BUILD_TYPE }} ${{ inputs.BUILD_AND_TEST_ARGS }}
 
     # Build, test, uploads GEOSX and its TPL to GCP/GCS using gcloud CLI
     - name: Build and test and deploy
@@ -98,7 +100,9 @@ jobs:
         source ./scripts/ci_build_and_test.sh \
           --docker-repository ${{ inputs.DOCKER_REPOSITORY }} \
           --docker-tag ${{ inputs.DOCKER_IMAGE_TAG }} \
-          --cmake-build-type ${{ inputs.CMAKE_BUILD_TYPE }}
+          --use-sccache ${{ inputs.USE_SCCACHE }} \
+          -- \
+          --cmake-build-type ${{ inputs.CMAKE_BUILD_TYPE }} ${{ inputs.BUILD_AND_TEST_ARGS }}
         TMP_DIR=/tmp
         COMMIT=${{ inputs.COMMIT }}
         GEOSX_EXPORT_DIR=GEOSX-and-TPL-${COMMIT:0:7}
@@ -121,4 +125,6 @@ jobs:
         ./scripts/ci_build_and_test.sh \
           --docker-repository ${{ inputs.DOCKER_REPOSITORY }} \
           --docker-tag ${{ inputs.DOCKER_IMAGE_TAG }} \
-          --cmake-build-type ${{ inputs.CMAKE_BUILD_TYPE }}
+          --use-sccache ${{ inputs.USE_SCCACHE }} \
+          -- \
+          --cmake-build-type ${{ inputs.CMAKE_BUILD_TYPE }} ${{ inputs.BUILD_AND_TEST_ARGS }}
