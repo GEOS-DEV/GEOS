@@ -336,7 +336,6 @@ void ParticleMeshGenerator::generateMesh( DomainPartition & domain )
     }
     numParticles += size;
     particleRegion.resize( size );
-    GEOS_LOG_RANK( "Particle region " << particleRegion.getName() << " contains " << size << " particles on this rank." );
   } );
 
   particleManager.resize( numParticles ); // All this does is change m_size for the particleManager, gives a convenient way to get the total
