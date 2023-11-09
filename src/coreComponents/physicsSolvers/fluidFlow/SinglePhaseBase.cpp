@@ -1331,7 +1331,6 @@ bool SinglePhaseBase::checkSystemSolution( DomainPartition & domain,
       arrayView1d< globalIndex const > const dofNumber = subRegion.getReference< array1d< globalIndex > >( dofKey );
       arrayView1d< integer const > const ghostRank = subRegion.ghostRank();
       arrayView1d< real64 const > const pres = subRegion.getField< fields::flow::pressure >();
-      arrayView1d< real64 const > const mob = subRegion.getField< fields::flow::mobility >();
 
       auto const statistics =
         singlePhaseBaseKernels::SolutionCheckKernel::
