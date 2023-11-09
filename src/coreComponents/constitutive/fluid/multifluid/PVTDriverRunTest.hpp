@@ -20,6 +20,7 @@
 #define GEOS_CONSTITUTIVE_FLUID_MULTIFLUID_PVTDRIVERRUNTEST_HPP_
 
 #include "PVTDriver.hpp"
+#include "constitutive/fluid/multifluid/MultiFluidBase.hpp"
 
 namespace geos
 {
@@ -65,18 +66,44 @@ void PVTDriver::runTest( FLUID_TYPE & fluid, arrayView2d< real64 > const & table
   integer const numSteps = m_numSteps;
   using ExecPolicy = typename FLUID_TYPE::exec_policy;
   forAll< ExecPolicy >( composition.size( 0 ),
-                        [numPhases, numSteps, kernelWrapper, table, composition] GEOS_HOST_DEVICE ( localIndex const i )
+                        [this, numPhases, numComponents, numSteps, kernelWrapper,
+                         table, composition]
+                        GEOS_HOST_DEVICE ( localIndex const i )
   {
+    // Index for start of phase properties
+    integer const PHASE = m_outputCompressibility != 0 ? TEMP + 3 : TEMP + 2;
+
+    // Temporary space for phase mole fractions
+    stackArray1d< real64, constitutive::MultiFluidBase::MAX_NUM_COMPONENTS > phaseComposition( numComponents );
+
     for( integer n = 0; n <= numSteps; ++n )
     {
       kernelWrapper.update( i, 0, table( n, PRES ), table( n, TEMP ), composition[i] );
       table( n, TEMP + 1 ) = kernelWrapper.totalDensity()( i, 0 );
 
+      if( m_outputCompressibility != 0 )
+      {
+        table( n, TEMP + 2 ) = kernelWrapper.totalCompressibility( i, 0 );
+      }
+
       for( integer p = 0; p < numPhases; ++p )
       {
-        table( n, TEMP + 2 + p ) = kernelWrapper.phaseFraction()( i, 0, p );
-        table( n, TEMP + 2 + p + numPhases ) = kernelWrapper.phaseDensity()( i, 0, p );
-        table( n, TEMP + 2 + p + 2 * numPhases ) = kernelWrapper.phaseViscosity()( i, 0, p );
+        table( n, PHASE + p ) = kernelWrapper.phaseFraction()( i, 0, p );
+        table( n, PHASE + p + numPhases ) = kernelWrapper.phaseDensity()( i, 0, p );
+        table( n, PHASE + p + 2 * numPhases ) = kernelWrapper.phaseViscosity()( i, 0, p );
+      }
+      if( m_outputPhaseComposition != 0 )
+      {
+        for( integer p = 0; p < numPhases; ++p )
+        {
+          integer const compStartIndex = PHASE + 3 * numPhases + p * numComponents;
+
+          kernelWrapper.phaseCompMoleFraction( i, 0, p, phaseComposition );
+          for( integer ic = 0; ic < numComponents; ++ic )
+          {
+            table( n, compStartIndex + ic ) = phaseComposition[ic];
+          }
+        }
       }
     }
   } );
@@ -84,6 +111,5 @@ void PVTDriver::runTest( FLUID_TYPE & fluid, arrayView2d< real64 > const & table
 }
 
 }
-
 
 #endif /* GEOS_CONSTITUTIVE_PVTDRIVERRUNTEST_HPP_ */
