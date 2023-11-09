@@ -150,7 +150,9 @@ public:
     real64 const bulkModulus = m_solidUpdate.getBulkModulus( k );
     real64 const meanEffectiveStressIncrement = bulkModulus * ( strainIncrement[0] + strainIncrement[1] + strainIncrement[2] );
     real64 const biotCoefficient = m_porosityUpdate.getBiotCoefficient( k );
-    real64 const meanTotalStressIncrement = meanEffectiveStressIncrement - biotCoefficient * ( pressure - pressure_n );
+    real64 const thermalExpansionCoefficient = m_solidUpdate.getThermalExpansionCoefficient( k );
+    real64 const meanTotalStressIncrement = meanEffectiveStressIncrement - biotCoefficient * ( pressure - pressure_n )
+                                            - 3 * thermalExpansionCoefficient * bulkModulus * ( temperature - temperature_n );
     m_porosityUpdate.updateMeanTotalStressIncrement( k, q, meanTotalStressIncrement );
   }
 
