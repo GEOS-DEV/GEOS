@@ -50,6 +50,8 @@ jobs:
   build_and_test:
     runs-on: ${{ inputs.RUNS_ON }}
     env:
+      # Those env variables could be passed as scripts parameters as well,
+      # but a specific care must be taken to be sure there's no conflict with the host-config files.
       ENABLE_HYPRE: ${{ inputs.ENABLE_HYPRE }}
       ENABLE_HYPRE_DEVICE: ${{ inputs.ENABLE_HYPRE_DEVICE }}
       ENABLE_TRILINOS: ${{ inputs.ENABLE_TRILINOS }}

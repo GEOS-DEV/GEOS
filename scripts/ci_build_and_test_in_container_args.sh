@@ -89,20 +89,15 @@ done
 #   usage
 # fi
 
-# if [[ -z "${HOST_CONFIG}" ]]; then
-#   echo "Variable \"HOST_CONFIG\" is undefined or empty. Define it using '--host-config'."
+# if [[ -z "${CMAKE_BUILD_TYPE}" ]]; then
+#   echo "Variable \"CMAKE_BUILD_TYPE\" is undefined or empty. Define it using '--cmake-build-type'."
 #   exit 1
 # fi
 
-if [[ -z "${CMAKE_BUILD_TYPE}" ]]; then
-  echo "Variable \"CMAKE_BUILD_TYPE\" is undefined or empty. Define it using '--cmake-build-type'."
-  exit 1
-fi
-
-if [[ -z "${GEOSX_DIR}" ]]; then
-  echo "Variable \"GEOSX_DIR\" is undefined or empty. Define it using '--install-dir'."
-  exit 1
-fi
+# if [[ -z "${GEOSX_DIR}" ]]; then
+#   echo "Variable \"GEOSX_DIR\" is undefined or empty. Define it using '--install-dir'."
+#   exit 1
+# fi
 
 SCCACHE_CMAKE_PARAMETERS=""
 if [[ "${USE_SCCACHE}" = true ]]; then
