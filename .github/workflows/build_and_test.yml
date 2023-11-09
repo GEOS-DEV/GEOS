@@ -89,7 +89,7 @@ jobs:
         ./scripts/ci_build_and_test.sh \
           --docker-repository ${{ inputs.DOCKER_REPOSITORY }} \
           --docker-tag ${{ inputs.DOCKER_IMAGE_TAG }} \
-          --host-config ${{ inputs.HOST_CONFIG }} \
+          ${${{ inputs.HOST_CONFIG }}:+"--host-config ${{ inputs.HOST_CONFIG }}"} \
           --use-sccache ${{ inputs.USE_SCCACHE }} \
           -- \
           --cmake-build-type ${{ inputs.CMAKE_BUILD_TYPE }} ${{ inputs.BUILD_AND_TEST_ARGS }}
@@ -101,7 +101,7 @@ jobs:
         source ./scripts/ci_build_and_test.sh \
           --docker-repository ${{ inputs.DOCKER_REPOSITORY }} \
           --docker-tag ${{ inputs.DOCKER_IMAGE_TAG }} \
-          --host-config ${{ inputs.HOST_CONFIG }} \
+          $([ -v ${{ inputs.HOST_CONFIG }} ] && echo "--host-config ${{ inputs.HOST_CONFIG }}" || echo "") \
           --use-sccache ${{ inputs.USE_SCCACHE }} \
           -- \
           --cmake-build-type ${{ inputs.CMAKE_BUILD_TYPE }} ${{ inputs.BUILD_AND_TEST_ARGS }}
@@ -127,7 +127,7 @@ jobs:
         ./scripts/ci_build_and_test.sh \
           --docker-repository ${{ inputs.DOCKER_REPOSITORY }} \
           --docker-tag ${{ inputs.DOCKER_IMAGE_TAG }} \
-          --host-config ${{ inputs.HOST_CONFIG }} \
+          $([ -v ${{ inputs.HOST_CONFIG }} ] && echo "--host-config ${{ inputs.HOST_CONFIG }}" || echo "") \
           --use-sccache ${{ inputs.USE_SCCACHE }} \
           -- \
           --cmake-build-type ${{ inputs.CMAKE_BUILD_TYPE }} ${{ inputs.BUILD_AND_TEST_ARGS }}

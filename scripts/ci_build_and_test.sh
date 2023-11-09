@@ -42,6 +42,7 @@ do
 done
 
 ADDITIONAL_ARGS=$@
+echo "Additional arguments '${ADDITIONAL_ARGS}' will be transfered to the final build."
 
 # if [[ -z "${CMAKE_BUILD_TYPE}" ]]; then
 #   echo "Variable \"CMAKE_BUILD_TYPE\" is undefined or empty. Define it using '--cmake-build-type'."

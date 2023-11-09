@@ -72,7 +72,7 @@ do
     --install-dir)          GEOSX_DIR=$2;               shift 2;;
     --no-install-schema)    GEOSX_INSTALL_SCHEMA=false; shift;;
     --no-run-unit-tests)    RUN_UNIT_TESTS=false;       shift;;
-    --use-sccache)          USE_SCCACHE=$2;             shift;;
+    --use-sccache)          USE_SCCACHE=$2;             shift 2;;
     --run-integrated-tests) RUN_INTEGRATED_TESTS=true;  shift;;
     --test-code-style)      TEST_CODE_STYLE=true;       shift;;
     --test-documentation)   TEST_DOCUMENTATION=true;    shift;;
