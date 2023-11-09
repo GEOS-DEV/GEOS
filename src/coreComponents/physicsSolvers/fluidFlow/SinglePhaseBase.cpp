@@ -66,7 +66,7 @@ SinglePhaseBase::SinglePhaseBase( const string & name,
     setDescription( "Maximum (absolute) pressure change in a Newton iteration" );
 
   this->registerWrapper( viewKeyStruct::allowNegativePressureString(), &m_allowNegativePressure ).
-    setApplyDefaultValue( 0 ). // by default not allowed, except fot HydrofractureSolver
+    setApplyDefaultValue( 1 ). // negative pressure is allowed by default
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Flag indicating if negative pressure is allowed" );
 }
@@ -1331,7 +1331,6 @@ bool SinglePhaseBase::checkSystemSolution( DomainPartition & domain,
       arrayView1d< globalIndex const > const dofNumber = subRegion.getReference< array1d< globalIndex > >( dofKey );
       arrayView1d< integer const > const ghostRank = subRegion.ghostRank();
       arrayView1d< real64 const > const pres = subRegion.getField< fields::flow::pressure >();
-      arrayView1d< real64 const > const mob = subRegion.getField< fields::flow::mobility >();
 
       auto const statistics =
         singlePhaseBaseKernels::SolutionCheckKernel::
