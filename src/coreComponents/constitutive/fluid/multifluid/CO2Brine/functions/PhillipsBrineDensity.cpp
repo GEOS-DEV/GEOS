@@ -90,7 +90,7 @@ void calculatePureWaterDensity( PTTableCoordinates const & tableCoords,
 
   for( localIndex i = 0; i < nPressures; ++i )
   {
-    real64 const P = tableCoords.getPressure( i ) / 1e5;
+    real64 const P = tableCoords.getPressure( i );
 
     for( localIndex j = 0; j < nTemperatures; ++j )
     {
