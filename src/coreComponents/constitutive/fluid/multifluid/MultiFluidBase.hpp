@@ -22,6 +22,7 @@
 #include "common/DataLayouts.hpp"
 #include "constitutive/ConstitutiveBase.hpp"
 #include "constitutive/fluid/multifluid/Layouts.hpp"
+#include "constitutive/fluid/multifluid/MultiFluidConstants.hpp"
 #include "constitutive/fluid/multifluid/MultiFluidUtils.hpp"
 
 namespace geos
@@ -46,14 +47,14 @@ public:
    *
    * @note This puts an upper bound on memory use, allowing to optimize code better
    */
-  static constexpr integer MAX_NUM_COMPONENTS = 16;
+  static constexpr integer MAX_NUM_COMPONENTS = MultiFluidConstants::MAX_NUM_COMPONENTS;
 
   /**
    * @brief Maximum supported number of fluid phases
    *
    * @note This puts an upper bound on memory use, allowing to optimize code better
    */
-  static constexpr integer MAX_NUM_PHASES = 4;
+  static constexpr integer MAX_NUM_PHASES = MultiFluidConstants::MAX_NUM_PHASES;
 
   /**
    * @return number of fluid components (species) in the model
@@ -186,12 +187,21 @@ public:
    */
   virtual void saveConvergedState() const override;
 
+  /**
+   * @brief If m_checkPVTTablesRanges, Check if the input values are in the expected PVT tables bounds
+   * @param pressure input pressure to check
+   * @param temperature input temperature to check (in K)
+   * @throw a SimulationError if one of the input values is out of bound.
+   */
+  virtual void checkTablesParameters( real64 pressure, real64 temperature ) const = 0;
+
   struct viewKeyStruct : ConstitutiveBase::viewKeyStruct
   {
     static constexpr char const * componentNamesString() { return "componentNames"; }
     static constexpr char const * componentMolarWeightString() { return "componentMolarWeight"; }
     static constexpr char const * phaseNamesString() { return "phaseNames"; }
     static constexpr char const * useMassString() { return "useMass"; }
+    static constexpr char const * checkPVTTablesRangesString() { return "checkPVTTablesRanges"; }
   };
 
 protected:
@@ -599,6 +609,9 @@ protected:
 
   // flag indicating whether input/output component fractions are treated as mass fractions
   int m_useMass;
+
+  /// Enable an error when checkTableParameters() is called and the input pressure or temperature of the PVT tables is out of range
+  integer m_checkPVTTablesRanges;
 
   // general fluid composition information
 

@@ -134,8 +134,8 @@ TEST( FunctionTests, 1DTable )
   values[3] = 7.0;
 
   TableFunction & table_a = dynamicCast< TableFunction & >( *functionManager->createChild( "TableFunction", "table_a" ) );
-  table_a.setTableCoordinates( coordinates );
-  table_a.setTableValues( values );
+  table_a.setTableCoordinates( coordinates, { units::Dimensionless } );
+  table_a.setTableValues( values, units::Dimensionless );
   table_a.reInitializeFunction();
 
   // Setup testing coordinates, expected values
@@ -240,8 +240,8 @@ TEST( FunctionTests, 2DTable )
 
   // Initialize the table
   TableFunction & table_b = dynamicCast< TableFunction & >( *functionManager->createChild( "TableFunction", "table_b" ) );
-  table_b.setTableCoordinates( coordinates );
-  table_b.setTableValues( values );
+  table_b.setTableCoordinates( coordinates, { units::Dimensionless } );
+  table_b.setTableValues( values, units::Dimensionless );
   table_b.setInterpolationMethod( TableFunction::InterpolationType::Linear );
   table_b.setInputVarNames( inputVarNames );
   table_b.reInitializeFunction();
@@ -362,8 +362,8 @@ TEST( FunctionTests, 4DTable_multipleInputs )
 
   // Initialize the table
   TableFunction & table_c = dynamicCast< TableFunction & >( *functionManager->createChild( "TableFunction", "table_c" ) );
-  table_c.setTableCoordinates( coordinates );
-  table_c.setTableValues( values );
+  table_c.setTableCoordinates( coordinates, { units::Dimensionless } );
+  table_c.setTableValues( values, units::Dimensionless );
   table_c.setInterpolationMethod( TableFunction::InterpolationType::Linear );
   table_c.setInputVarNames( inputVarNames );
   table_c.reInitializeFunction();
@@ -487,8 +487,8 @@ TEST( FunctionTests, 4DTable_derivatives )
 
   // Initialize the table
   TableFunction & table_d = dynamicCast< TableFunction & >( *functionManager->createChild( "TableFunction", "table_d" ) );
-  table_d.setTableCoordinates( coordinates );
-  table_d.setTableValues( values );
+  table_d.setTableCoordinates( coordinates, { units::Dimensionless } );
+  table_d.setTableValues( values, units::Dimensionless );
   table_d.setInterpolationMethod( TableFunction::InterpolationType::Linear );
   table_d.setInputVarNames( inputVarNames );
   table_d.reInitializeFunction();
