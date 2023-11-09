@@ -26,7 +26,6 @@ using namespace geos::testing;
 using namespace geos::constitutive;
 
 static constexpr real64 relTol = 1.0e-5;
-static constexpr real64 absTol = 1.0e-8;
 
 TEST( CubicEOSTest, testCubicEOSTwoComponentsSRK )
 {
