@@ -68,6 +68,19 @@ fi
 # but that would not have solved the problem for the TPLs (we would require extra action to copy them to the mount point).
 CONTAINER_NAME=geos_build
 # Now we can build GEOS.
+echo "docker run \
+  --name=${CONTAINER_NAME} \
+  --volume=${GITHUB_WORKSPACE}:${GITHUB_WORKSPACE_MOUNT_POINT} ${SCCACHE_VOLUME_MOUNT} \
+  --cap-add=ALL \
+  -e ENABLE_HYPRE=${ENABLE_HYPRE:-OFF} \
+  -e ENABLE_HYPRE_DEVICE=${ENABLE_HYPRE_DEVICE:-CPU} \
+  -e ENABLE_TRILINOS=${ENABLE_TRILINOS:-ON} \
+  ${DOCKER_IMAGE} \
+  ${GITHUB_WORKSPACE_MOUNT_POINT}/scripts/ci_build_and_test_in_container_args.sh \
+    --install-dir ${GEOSX_DIR} \
+    --host-config ${HOST_CONFIG:-host-configs/environment.cmake} \
+    --use-sccache ${USE_SCCACHE} ${ADDITIONAL_ARGS};"
+
 docker run \
   --name=${CONTAINER_NAME} \
   --volume=${GITHUB_WORKSPACE}:${GITHUB_WORKSPACE_MOUNT_POINT} ${SCCACHE_VOLUME_MOUNT} \
