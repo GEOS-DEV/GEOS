@@ -274,6 +274,7 @@ struct LinearSolverParameters
       compositionalMultiphaseFVM,                ///< finite volume compositional multiphase flow
       compositionalMultiphaseHybridFVM,          ///< hybrid finite volume compositional multiphase flow
       compositionalMultiphaseReservoirFVM,       ///< finite volume compositional multiphase flow with wells
+      thermalCompositionalMultiphaseReservoirFVM,///< thermal multiphase finite volume compositional flow with wells
       compositionalMultiphaseReservoirHybridFVM, ///< hybrid finite volume compositional multiphase flow with wells
       reactiveCompositionalMultiphaseOBL,        ///< finite volume reactive compositional flow with OBL
       thermalCompositionalMultiphaseFVM,         ///< finite volume thermal compositional multiphase flow

@@ -96,6 +96,7 @@ TEST( LinearSolverParametersEnums, MGRStrategyType )
   ASSERT_EQ( "compositionalMultiphaseHybridFVM", toString( EnumType::compositionalMultiphaseHybridFVM ) );
   ASSERT_EQ( "compositionalMultiphaseReservoirFVM", toString( EnumType::compositionalMultiphaseReservoirFVM ) );
   ASSERT_EQ( "compositionalMultiphaseReservoirHybridFVM", toString( EnumType::compositionalMultiphaseReservoirHybridFVM ) );
+  ASSERT_EQ( "thermalCompositionalMultiphaseReservoirFVM", toString( EnumType::thermalCompositionalMultiphaseReservoirFVM ) );
   ASSERT_EQ( "multiphasePoromechanics", toString( EnumType::multiphasePoromechanics ) );
   ASSERT_EQ( "hydrofracture", toString( EnumType::hydrofracture ) );
   ASSERT_EQ( "lagrangianContactMechanics", toString( EnumType::lagrangianContactMechanics ) );

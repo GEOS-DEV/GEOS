@@ -79,9 +79,11 @@ public:
     // Block Jacobi for the system made of pressure, temperature, and densities
     m_levelSmoothType[0]  = 0;
     m_levelSmoothIters[0] = 1;
+#if GEOS_USE_HYPRE_DEVICE != GEOS_USE_HYPRE_HIP
     // ILU smoothing for the system made of pressure, temperature, and densities (except the last one)
     m_levelSmoothType[1]  = 16;
     m_levelSmoothIters[1] = 1;
+#endif
   }
 
   /**
