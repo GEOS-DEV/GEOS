@@ -79,7 +79,7 @@ jobs:
       run: printenv
 
     # Build and test only
-    # Builds only the geosx executable (timeout when building tests)
+    # Builds only the geos executable (timeout when building tests)
     - name: Build and test
       if: ${{ inputs.build_type == 'build' && !(inputs.GCP_BUCKET) }}
       run: |
@@ -93,7 +93,7 @@ jobs:
           --cmake-build-type ${{ inputs.CMAKE_BUILD_TYPE }} \
           ${{ inputs.BUILD_AND_TEST_ARGS }}
 
-    # Build, test, uploads GEOSX and its TPL to GCP/GCS using gcloud CLI
+    # Build, test, uploads geos and its TPL to GCP/GCS using gcloud CLI
     - name: Build and test and deploy
       if: ${{ inputs.build_type == 'build' && inputs.GCP_BUCKET }}
       run: |
@@ -109,11 +109,11 @@ jobs:
           --cmake-build-type ${{ inputs.CMAKE_BUILD_TYPE }} ${{ inputs.BUILD_AND_TEST_ARGS }}
         TMP_DIR=/tmp
         COMMIT=${{ inputs.COMMIT }}
-        GEOSX_EXPORT_DIR=GEOSX-and-TPL-${COMMIT:0:7}
-        docker cp -a ${CONTAINER_NAME}:${GEOSX_TPL_DIR}/.. ${TMP_DIR}/${GEOSX_EXPORT_DIR}
-        GEOSX_BUNDLE=${TMP_DIR}/${GEOSX_EXPORT_DIR}.tar.gz
-        tar czf ${GEOSX_BUNDLE} --directory=${TMP_DIR} ${GEOSX_EXPORT_DIR}
-        CLOUDSDK_PYTHON=python3 gsutil cp -a public-read ${GEOSX_BUNDLE} gs://${{ inputs.GCP_BUCKET }}/
+        GEOS_EXPORT_DIR=GEOSX-and-TPL-${COMMIT:0:7}
+        docker cp -a ${CONTAINER_NAME}:${GEOSX_TPL_DIR}/.. ${TMP_DIR}/${GEOS_EXPORT_DIR}
+        GEOS_BUNDLE=${TMP_DIR}/${GEOS_EXPORT_DIR}.tar.gz
+        tar czf ${GEOS_BUNDLE} --directory=${TMP_DIR} ${GEOS_EXPORT_DIR}
+        CLOUDSDK_PYTHON=python3 gsutil cp -a public-read ${GEOS_BUNDLE} gs://${{ inputs.GCP_BUCKET }}/
 
     # - name: Setup upterm session
     #   uses: lhotari/action-upterm@v1

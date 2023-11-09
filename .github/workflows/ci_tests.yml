@@ -12,7 +12,7 @@ jobs:
 
   # Jobs will be cancelled if PR is a draft.
   # PR status must be "Open" to run CI.
-  check_pull_request_is_not_a_draft:
+  is_pull_request_a_draft:
     # Everywhere in this workflow, we use the most recent ubuntu distribution available in Github Actions
     # to ensure maximum support of google cloud's sdk.
     runs-on: ubuntu-22.04
@@ -37,7 +37,7 @@ jobs:
         # If the workflow is meant to continue, we extract additional information for the json of the pr.
         echo "NUM_ASSIGNEES=$(echo ${pr_json} | jq '.assignees | length')" >> "$GITHUB_OUTPUT"
         echo "LABELS=$(echo ${pr_json} | jq -crM '[.labels[].name]')" >> "$GITHUB_OUTPUT"
-    # The TPL tag is contained in the codespaces configuration to avoir duplications.
+    # The TPL tag is contained in the codespaces configuration to avoid duplications.
     - name: Checkout .devcontainer/devcontainer.json
       uses: actions/checkout@v3
       with:
@@ -54,14 +54,14 @@ jobs:
 
   # PR must be assigned to be merged.
   # This job will fail if this is not the case.
-  check_pull_request_is_assigned:
-    needs: [check_pull_request_is_not_a_draft]
+  is_pull_request_assigned:
+    needs: [is_pull_request_a_draft]
     runs-on: ubuntu-22.04
     steps:
     - name: Check that the PR is assigned
       run: |
-        echo "There are ${{ needs.check_pull_request_is_not_a_draft.outputs.NUM_ASSIGNEES }} on this PR."
-        ${{ needs.check_pull_request_is_not_a_draft.outputs.NUM_ASSIGNEES > 0 }}
+        echo "There are ${{ needs.is_pull_request_a_draft.outputs.NUM_ASSIGNEES }} on this PR."
+        ${{ needs.is_pull_request_a_draft.outputs.NUM_ASSIGNEES > 0 }}
 
   # This job will fail if running the integrated tests has not been requested.
   # (Add the 'ci: run integrated tests' to the PR to do so).
@@ -71,31 +71,31 @@ jobs:
   #       This would allow to collapse the "gate" and the main jobs,
   #       reducing the complexity of the workflow.
   #       Also, the current situation maintains a symmetry with the CUDA jobs.
-  check_integrated_tests_are_requested:
-    needs: [check_pull_request_is_not_a_draft]
+  are_integrated_tests_requested:
+    needs: [is_pull_request_a_draft]
     runs-on: ubuntu-22.04
     steps:
     - name: Check if running the integrated tests is requested
       run: |
-        echo 'Labels are ${{ needs.check_pull_request_is_not_a_draft.outputs.LABELS }}'
-        ${{ contains( fromJSON( needs.check_pull_request_is_not_a_draft.outputs.LABELS ), 'ci: run integrated tests') }}
+        echo 'Labels are ${{ needs.is_pull_request_a_draft.outputs.LABELS }}'
+        ${{ contains( fromJSON( needs.is_pull_request_a_draft.outputs.LABELS ), 'ci: run integrated tests') }}
 
-  # Same behavior than job 'check_integrated_tests_are_requested', but for CUDA builds.
+  # Same behavior than job 'are_integrated_tests_requested', but for CUDA builds.
   # Use the flag 'ci: ready to be merged' instead.
   # Note: Label should only be added if PR is in merge queue.
-  check_cuda_builds_are_requested:
-    needs: [check_pull_request_is_not_a_draft]
+  are_cuda_builds_requested:
+    needs: [is_pull_request_a_draft]
     runs-on: ubuntu-22.04
     steps:
     - name: Check that the PR is ready to be merged
       run: |
-        echo 'Labels are ${{ needs.check_pull_request_is_not_a_draft.outputs.LABELS }}'
-        ${{ contains( fromJSON( needs.check_pull_request_is_not_a_draft.outputs.LABELS ), 'ci: ready to be merged') }}
+        echo 'Labels are ${{ needs.is_pull_request_a_draft.outputs.LABELS }}'
+        ${{ contains( fromJSON( needs.is_pull_request_a_draft.outputs.LABELS ), 'ci: ready to be merged') }}
 
   # Validates that the pr is still poiting to the HEAD of the main branch of the submodules repositories.
   # (There are exceptions, read the script about those).
-  check_submodules:
-    needs: [check_pull_request_is_not_a_draft]
+  are_submodules_in_sync:
+    needs: [is_pull_request_a_draft]
     runs-on: ubuntu-22.04
     steps:
     # The integrated test submodule repository contains large data (using git lfs).
@@ -112,7 +112,7 @@ jobs:
 
   # Validates the code-style using uncrustify
   check_code_style:
-    needs: [check_pull_request_is_not_a_draft]
+    needs: [is_pull_request_a_draft]
     runs-on: ubuntu-22.04
     steps:
     - name: Checkout Repository
@@ -125,7 +125,7 @@ jobs:
       run: |
         ./scripts/ci_build_and_test.sh \
           --docker-repository geosx/ubuntu20.04-gcc9 \
-          --docker-tag ${{ needs.check_pull_request_is_not_a_draft.outputs.DOCKER_IMAGE_TAG }} \
+          --docker-tag ${{ needs.is_pull_request_a_draft.outputs.DOCKER_IMAGE_TAG }} \
           --use-sccache false \
           -- \
           --cmake-build-type Release \
@@ -133,7 +133,7 @@ jobs:
 
   # Validates that the documentation generated using doxygen has no hole.
   check_documentation:
-    needs: [check_pull_request_is_not_a_draft]
+    needs: [is_pull_request_a_draft]
     runs-on: ubuntu-22.04
     steps:
     - name: Checkout Repository
@@ -146,7 +146,7 @@ jobs:
       run: |
         ./scripts/ci_build_and_test.sh \
           --docker-repository geosx/ubuntu20.04-gcc9 \
-          --docker-tag ${{ needs.check_pull_request_is_not_a_draft.outputs.DOCKER_IMAGE_TAG }} \
+          --docker-tag ${{ needs.is_pull_request_a_draft.outputs.DOCKER_IMAGE_TAG }} \
           --use-sccache false \
           -- \
           --cmake-build-type Release \
@@ -156,7 +156,7 @@ jobs:
   # Those are quite fase and can efficiently benefit from the `sccache' tool to make them even faster.
   cpu_builds:
     name: ${{ matrix.name }}
-    needs: [check_pull_request_is_not_a_draft]
+    needs: [is_pull_request_a_draft]
     strategy:
 
       # In-progress jobs will not be cancelled if there is a failure
@@ -206,7 +206,7 @@ jobs:
     with:
       CMAKE_BUILD_TYPE: ${{ matrix.CMAKE_BUILD_TYPE }}
       COMMIT: ${{ github.event.pull_request.head.sha }}
-      DOCKER_IMAGE_TAG: ${{ needs.check_pull_request_is_not_a_draft.outputs.DOCKER_IMAGE_TAG }}
+      DOCKER_IMAGE_TAG: ${{ needs.is_pull_request_a_draft.outputs.DOCKER_IMAGE_TAG }}
       DOCKER_REPOSITORY: ${{ matrix.DOCKER_REPOSITORY }}
       ENABLE_HYPRE: ${{ matrix.ENABLE_HYPRE }}
       ENABLE_TRILINOS: ${{ matrix.ENABLE_TRILINOS }}
@@ -217,8 +217,8 @@ jobs:
 
   run_integrated_tests:
     needs:
-      - check_integrated_tests_are_requested
-      - check_pull_request_is_not_a_draft
+      - are_integrated_tests_requested
+      - is_pull_request_a_draft
       # - cpu_builds
     uses: ./.github/workflows/build_and_test.yml
     secrets: inherit
@@ -227,7 +227,7 @@ jobs:
       build_type: integrated_tests
       CMAKE_BUILD_TYPE: Release
       COMMIT: ${{ github.event.pull_request.head.sha }}
-      DOCKER_IMAGE_TAG: ${{ needs.check_pull_request_is_not_a_draft.outputs.DOCKER_IMAGE_TAG }}
+      DOCKER_IMAGE_TAG: ${{ needs.is_pull_request_a_draft.outputs.DOCKER_IMAGE_TAG }}
       DOCKER_REPOSITORY: geosx/ubuntu22.04-gcc11
       RUNS_ON: ubuntu-22.04
 
@@ -236,8 +236,8 @@ jobs:
   cuda_builds:
     name: ${{ matrix.name }}
     needs:
-    - check_pull_request_is_not_a_draft
-    - check_cuda_builds_are_requested
+    - is_pull_request_a_draft
+    - are_cuda_builds_requested
     strategy:
 
       # In-progress jobs will not be cancelled if there is a failure
@@ -278,7 +278,7 @@ jobs:
             RUNS_ON: Runner_4core_16GB
     uses: ./.github/workflows/build_and_test.yml
     with:
-      DOCKER_IMAGE_TAG: ${{ needs.check_pull_request_is_not_a_draft.outputs.DOCKER_IMAGE_TAG }}
+      DOCKER_IMAGE_TAG: ${{ needs.is_pull_request_a_draft.outputs.DOCKER_IMAGE_TAG }}
       DOCKER_REPOSITORY: ${{ matrix.DOCKER_REPOSITORY }}
       CMAKE_BUILD_TYPE: ${{ matrix.CMAKE_BUILD_TYPE }}
       BUILD_AND_TEST_ARGS: ${{ matrix.BUILD_AND_TEST_ARGS }}
