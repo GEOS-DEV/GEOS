@@ -317,10 +317,10 @@ void AcousticVTIWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
   WaveSolverUtils::initTrace( "seismoTraceReceiver", getName(), m_receiverConstants.size( 0 ), m_receiverIsLocal );
 }
 
-real64 AcousticVTIWaveEquationSEM::computeTimeStep()
+real64 AcousticVTIWaveEquationSEM::computeTimeStep(real64 & dtOut)
 {
   GEOS_ERROR( getDataContext() << ":  Time-Step computation for the second order acoustic vti wave propagator not yet implemented" );
-  return 0;
+  return dtOut;
 }
 
 void AcousticVTIWaveEquationSEM::precomputeSurfaceFieldIndicator( DomainPartition & domain )

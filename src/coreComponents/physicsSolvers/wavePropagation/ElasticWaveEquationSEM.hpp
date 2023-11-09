@@ -167,7 +167,7 @@ private:
    */
   virtual void applyPML( real64 const time, DomainPartition & domain ) override;
 
-  virtual real64 computeTimeStep() override;
+  virtual real64 computeTimeStep(real64 & dtOut) override;
 
   localIndex getNumNodesPerElem();
 

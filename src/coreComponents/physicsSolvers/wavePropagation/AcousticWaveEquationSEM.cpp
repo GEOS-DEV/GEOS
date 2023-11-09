@@ -337,6 +337,8 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
 
           printf("dt=%f\n",globaldt);
 
+          exit(2);
+
         }
 
       } );
@@ -348,7 +350,7 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
 
 //This function is only to give an easy accesss to the computation of the time-step for Pygeosx interface and avoid to exit the code when using Pygeosx
 
-real64 AcousticWaveEquationSEM::computeTimeStep()
+real64 AcousticWaveEquationSEM::computeTimeStep(real64 & dtOut)
 {
 
   DomainPartition & domain = getGroupByPath< DomainPartition >( "/Problem/domain" );
@@ -359,7 +361,6 @@ real64 AcousticWaveEquationSEM::computeTimeStep()
   {
 
     NodeManager & nodeManager = mesh.getNodeManager();
-    FaceManager & faceManager = mesh.getFaceManager();
     ElementRegionManager & elemManager = mesh.getElemManager();
 
     /// get the array of indicators: 1 if the face is on the boundary; 0 otherwise
@@ -390,14 +391,14 @@ real64 AcousticWaveEquationSEM::computeTimeStep()
                                                                            elemsToNodes,
                                                                            mass );
 
-        real64 globaldt = MpiWrapper::min(dtCompute);
+        dtOut = MpiWrapper::min(dtCompute);
 
-        return globaldt;
+        
 
       } );
     } );
   } );
-
+  return dtOut;
 }
 
 

@@ -571,10 +571,11 @@ void ElasticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
       } );
     } );
   } );
-
+  WaveSolverUtils::initTrace( "seismoTraceReceiver", getName(), m_receiverConstants.size( 0 ), m_receiverIsLocal );
+  WaveSolverUtils::initTrace( "dasTraceReceiver", getName(), m_linearDASGeometry.size( 0 ), m_receiverIsLocal );
 }
 
-real64 ElasticWaveEquationSEM::computeTimeStep()
+real64 ElasticWaveEquationSEM::computeTimeStep(real64 & dtOut)
 {
 
   DomainPartition & domain = getGroupByPath< DomainPartition >( "/Problem/domain" );
@@ -585,7 +586,6 @@ real64 ElasticWaveEquationSEM::computeTimeStep()
   {
 
     NodeManager & nodeManager = mesh.getNodeManager();
-    FaceManager & faceManager = mesh.getFaceManager();
     ElementRegionManager & elemManager = mesh.getElemManager();
 
     arrayView2d< wsCoordType const, nodes::REFERENCE_POSITION_USD > const nodeCoords = nodeManager.getField< fields::referencePosition32 >().toViewConst();
@@ -623,17 +623,13 @@ real64 ElasticWaveEquationSEM::computeTimeStep()
                                                                            mass);
 
       
-      real64 globaldt = MpiWrapper::min(dtCompute);                                                              
-
-      return globaldt;
+      dtOut = MpiWrapper::min(dtCompute);                                                              
 
 
       } );
     } );
   } );
-
-  WaveSolverUtils::initTrace( "seismoTraceReceiver", getName(), m_receiverConstants.size( 0 ), m_receiverIsLocal );
-  WaveSolverUtils::initTrace( "dasTraceReceiver", getName(), m_linearDASGeometry.size( 0 ), m_receiverIsLocal );
+  return dtOut;
 }
 
 

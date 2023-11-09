@@ -147,7 +147,7 @@ protected:
 
   /**
    */
-  virtual real64 computeTimeStep() = 0;
+  virtual real64 computeTimeStep(real64 & dtOut) = 0;
 
   /**
    * @brief Initialize DAS fiber geometry. This will duplicate the number of point receivers to be modeled

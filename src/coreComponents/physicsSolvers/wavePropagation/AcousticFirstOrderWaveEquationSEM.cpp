@@ -314,6 +314,8 @@ void AcousticFirstOrderWaveEquationSEM::initializePostInitialConditionsPreSubGro
       arrayView1d< real32 const > const velocity = elementSubRegion.getField< wavesolverfields::MediumVelocity >();
       arrayView1d< real32 const > const density = elementSubRegion.getField< wavesolverfields::MediumDensity >();
 
+      real64 dtCompute=0.0;
+
       finiteElement::FiniteElementBase const &
       fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
       finiteElement::FiniteElementDispatchHandler< SEM_FE_TYPES >::dispatch3D( fe, [&] ( auto const finiteElement )
@@ -339,6 +341,29 @@ void AcousticFirstOrderWaveEquationSEM::initializePostInitialConditionsPreSubGro
                                                                freeSurfaceFaceIndicator,
                                                                velocity,
                                                                damping );
+        //This portion of code work asd follow: compute the time-step then exit the code to let you put it inside the XML
+        if(m_preComputeDt==1)
+
+        {
+          acousticFirstOrderWaveEquationSEMKernels::ComputeTimeStep< FE_TYPE > kernelT( finiteElement );
+  
+          dtCompute = kernelT.template launch< EXEC_POLICY, ATOMIC_POLICY >( elementSubRegion.size(),
+                                                                             nodeManager.size(),
+                                                                             X,
+                                                                             elemsToNodes,
+                                                                             density,
+                                                                             mass);
+  
+        
+          real64 globaldt = MpiWrapper::min(dtCompute);      
+
+          printf("dt=%f\n",globaldt);
+
+          exit(2);                                                        
+
+        }  
+
+
       } );
     } );
   } );
@@ -346,10 +371,10 @@ void AcousticFirstOrderWaveEquationSEM::initializePostInitialConditionsPreSubGro
   WaveSolverUtils::initTrace( "seismoTraceReceiver", getName(), m_receiverConstants.size( 0 ), m_receiverIsLocal );
 }
 
-real64 AcousticFirstOrderWaveEquationSEM::computeTimeStep()
+real64 AcousticFirstOrderWaveEquationSEM::computeTimeStep(real64 & dtOut)
 {
   GEOS_ERROR( getDataContext() << ":  Time-Step computation for the first order acoustic wave propagator not yet implemented" );
-  return 0;
+  return dtOut;
 }
 
 
