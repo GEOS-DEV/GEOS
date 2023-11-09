@@ -2048,7 +2048,7 @@ the relative residual norm satisfies:
 		<!--timeSourceDelay => Source time delay (1 / f0 by default)-->
 		<xsd:attribute name="timeSourceDelay" type="real32" default="-1" />
 		<!--timeSourceFrequency => Central frequency for the time source-->
-		<xsd:attribute name="timeSourceFrequency" type="real32" use="required" />
+		<xsd:attribute name="timeSourceFrequency" type="real32" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
@@ -2096,7 +2096,7 @@ the relative residual norm satisfies:
 		<!--timeSourceDelay => Source time delay (1 / f0 by default)-->
 		<xsd:attribute name="timeSourceDelay" type="real32" default="-1" />
 		<!--timeSourceFrequency => Central frequency for the time source-->
-		<xsd:attribute name="timeSourceFrequency" type="real32" use="required" />
+		<xsd:attribute name="timeSourceFrequency" type="real32" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
@@ -2144,7 +2144,7 @@ the relative residual norm satisfies:
 		<!--timeSourceDelay => Source time delay (1 / f0 by default)-->
 		<xsd:attribute name="timeSourceDelay" type="real32" default="-1" />
 		<!--timeSourceFrequency => Central frequency for the time source-->
-		<xsd:attribute name="timeSourceFrequency" type="real32" use="required" />
+		<xsd:attribute name="timeSourceFrequency" type="real32" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
@@ -2407,7 +2407,7 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		<!--timeSourceDelay => Source time delay (1 / f0 by default)-->
 		<xsd:attribute name="timeSourceDelay" type="real32" default="-1" />
 		<!--timeSourceFrequency => Central frequency for the time source-->
-		<xsd:attribute name="timeSourceFrequency" type="real32" use="required" />
+		<xsd:attribute name="timeSourceFrequency" type="real32" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
@@ -2459,7 +2459,7 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		<!--timeSourceDelay => Source time delay (1 / f0 by default)-->
 		<xsd:attribute name="timeSourceDelay" type="real32" default="-1" />
 		<!--timeSourceFrequency => Central frequency for the time source-->
-		<xsd:attribute name="timeSourceFrequency" type="real32" use="required" />
+		<xsd:attribute name="timeSourceFrequency" type="real32" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
@@ -3222,6 +3222,10 @@ Local - Add stabilization only to interiors of macro elements.-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--output => Output file-->
 		<xsd:attribute name="output" type="string" default="none" />
+		<!--outputCompressibility => Flag to indicate that the total compressibility should be output-->
+		<xsd:attribute name="outputCompressibility" type="integer" default="0" />
+		<!--outputPhaseComposition => Flag to indicate that phase compositions should be output-->
+		<xsd:attribute name="outputPhaseComposition" type="integer" default="0" />
 		<!--pressureControl => Function controlling pressure time history-->
 		<xsd:attribute name="pressureControl" type="string" use="required" />
 		<!--steps => Number of load steps to take-->
