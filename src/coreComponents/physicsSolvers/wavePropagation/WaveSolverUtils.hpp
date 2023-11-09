@@ -342,7 +342,7 @@ struct WaveSolverUtils
   {
 
     RAJA::ReduceSum< parallelDeviceReduce, real64 > tmp( 0.0 );
-    forAll< WaveSolverBase::EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const a )
+    forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const a )
     {
       tmp+= vector1[a]*vector2[a];
     } );
