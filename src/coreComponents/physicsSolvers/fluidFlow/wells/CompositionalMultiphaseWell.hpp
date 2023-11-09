@@ -276,6 +276,8 @@ public:
 
     static constexpr char const * useMassFlagString() { return CompositionalMultiphaseBase::viewKeyStruct::useMassFlagString(); }
 
+    static constexpr char const * useTotalMassEquationString() { return CompositionalMultiphaseBase::viewKeyStruct::useTotalMassEquationString(); }
+
     static constexpr char const * relPermNamesString() { return CompositionalMultiphaseBase::viewKeyStruct::relPermNamesString(); }
 
     static constexpr char const * maxCompFracChangeString() { return CompositionalMultiphaseBase::viewKeyStruct::maxCompFracChangeString(); }
@@ -312,8 +314,6 @@ public:
 
 protected:
 
-
-
   virtual void postProcessInput() override;
 
   virtual void initializePostSubGroups() override;
@@ -346,6 +346,10 @@ protected:
                                 real64 const & dt,
                                 WellElementSubRegion const & subRegion );
 
+  void printRates( real64 const & time_n,
+                   real64 const & dt,
+                   DomainPartition & domain ) override;
+
 private:
 
   /**
@@ -364,6 +368,9 @@ private:
 
   /// flag indicating whether mass or molar formulation should be used
   integer m_useMass;
+
+  /// flag indicating whether total mass equation should be used
+  integer m_useTotalMassEquation;
 
   /// list of relative permeability model names per target region
   array1d< string > m_relPermModelNames;

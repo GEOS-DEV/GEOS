@@ -100,6 +100,7 @@ public:
                            string const inputFlowDofKey,
                            localIndex const numComponents,
                            localIndex const numPhases,
+                           integer const useTotalMassEquation,
                            string const fluidModelKey );
 
   //*****************************************************************************
@@ -343,6 +344,8 @@ protected:
   /// Number of phases
   localIndex const m_numPhases;
 
+  /// Use total mass equation flag
+  integer const m_useTotalMassEquation;
 };
 
 using MultiphasePoromechanicsKernelFactory =
@@ -356,6 +359,7 @@ using MultiphasePoromechanicsKernelFactory =
                                 string const,
                                 localIndex const,
                                 localIndex const,
+                                integer const,
                                 string const >;
 
 /**

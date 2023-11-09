@@ -116,17 +116,18 @@ void InternalWellboreGenerator::postProcessInput()
 {
 
   GEOS_ERROR_IF( m_nElems[1].size() > 1,
-                 "Only one block in the theta direction is currently supported. "
-                 "This is specified by the nt keyword in InternalWellbore" );
+                 getWrapperDataContext( viewKeyStruct::yElemsString() ) <<
+                 ": Only one block in the theta direction is currently supported. " );
 
   GEOS_ERROR_IF( m_nElems[2].size() > 1,
-                 "Only one block in the z direction is currently supported. "
-                 "This is specified by the nz keyword in InternalWellbore" );
+                 getWrapperDataContext( viewKeyStruct::yElemsString() ) <<
+                 ": Only one block in the z direction is currently supported. " );
 
 
 
   GEOS_ERROR_IF( m_trajectory.size( 0 ) != 2 || m_trajectory.size( 1 ) != 3,
-                 "Input for trajectory should be specified in the form of "
+                 getWrapperDataContext( viewKeyStruct::trajectoryString() ) <<
+                 ": Input for trajectory should be specified in the form of "
                  "{ { xbottom, ybottom, zbottom }, { xtop, ytop, ztop } }." );
 
   // Project trajectory to bottom and top of the wellbore

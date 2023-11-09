@@ -8,9 +8,10 @@ build:
   apt_packages:
   - npm
   - plantuml
+  - texlive
   tools:
     nodejs: "16"
-    python: "3.7"
+    python: "3.10"
   jobs:
     post_install:
     - npm install -g npm@9.8.1

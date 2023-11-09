@@ -101,6 +101,7 @@ HydrofractureSolver< POROMECHANICS_SOLVER >::HydrofractureSolver( const string &
   m_linearSolverParameters.get().mgr.separateComponents = false;
   m_linearSolverParameters.get().mgr.displacementFieldName = solidMechanics::totalDisplacement::key();
   m_linearSolverParameters.get().dofsPerNode = 3;
+
 }
 
 template< typename POROMECHANICS_SOLVER >
@@ -170,6 +171,8 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::postProcessInput()
   GEOS_ERROR_IF( binaryOptions.count( m_isMatrixPoroelastic ) == 0, viewKeyStruct::isMatrixPoroelasticString() << " option can be either 0 (false) or 1 (true)" );
 
   m_surfaceGenerator = &this->getParent().template getGroup< SurfaceGenerator >( m_surfaceGeneratorName );
+
+  flowSolver()->allowNegativePressure();
 }
 
 template< typename POROMECHANICS_SOLVER >
@@ -187,6 +190,8 @@ real64 HydrofractureSolver< POROMECHANICS_SOLVER >::fullyCoupledSolverStep( real
   int solveIter;
   for( solveIter=0; solveIter<maxIter; ++solveIter )
   {
+    GEOS_LOG_RANK_0( GEOS_FMT( "  Fracture propagation iteration {}", solveIter ) );
+
     int locallyFractured = 0;
     int globallyFractured = 0;
 
@@ -267,6 +272,13 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::updateDeformationForCoupling( 
   arrayView2d< real64 const > const faceNormal = faceManager.faceNormal();
   ArrayOfArraysView< localIndex const > const faceToNodeMap = faceManager.nodeList().toViewConst();
 
+  real64 maxApertureChange( 0.0 );
+  real64 maxHydraulicApertureChange( 0.0 );
+  real64 minAperture( 1e10 );
+  real64 maxAperture( -1e10 );
+  real64 minHydraulicAperture( 1e10 );
+  real64 maxHydraulicAperture( -1e10 );
+
   elemManager.forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
   {
 
@@ -297,26 +309,33 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::updateDeformationForCoupling( 
       using ContactType = TYPEOFREF( castedContact );
       typename ContactType::KernelWrapper contactWrapper = castedContact.createKernelWrapper();
 
-      hydrofractureSolverKernels::DeformationUpdateKernel
-        ::launch< parallelDevicePolicy<> >( subRegion.size(),
-                                            contactWrapper,
-                                            u,
-                                            faceNormal,
-                                            faceToNodeMap,
-                                            elemsToFaces,
-                                            area,
-                                            volume,
-                                            deltaVolume,
-                                            aperture,
-                                            hydraulicAperture
+      auto const statistics = hydrofractureSolverKernels::DeformationUpdateKernel
+                                ::launch< parallelDevicePolicy<> >( subRegion.size(),
+                                                                    contactWrapper,
+                                                                    u,
+                                                                    faceNormal,
+                                                                    faceToNodeMap,
+                                                                    elemsToFaces,
+                                                                    area,
+                                                                    volume,
+                                                                    deltaVolume,
+                                                                    aperture,
+                                                                    hydraulicAperture
 #ifdef GEOSX_USE_SEPARATION_COEFFICIENT
-                                            ,
-                                            apertureF,
-                                            separationCoeff,
-                                            dSeparationCoeff_dAper,
-                                            separationCoeff0
+                                                                    ,
+                                                                    apertureF,
+                                                                    separationCoeff,
+                                                                    dSeparationCoeff_dAper,
+                                                                    separationCoeff0
 #endif
-                                            );
+                                                                    );
+
+      maxApertureChange = std::max( maxApertureChange, std::get< 0 >( statistics ));
+      maxHydraulicApertureChange = std::max( maxHydraulicApertureChange, std::get< 1 >( statistics ));
+      minAperture = std::min( minAperture, std::get< 2 >( statistics ));
+      maxAperture = std::max( maxAperture, std::get< 3 >( statistics ));
+      minHydraulicAperture = std::min( minHydraulicAperture, std::get< 4 >( statistics ));
+      maxHydraulicAperture = std::max( maxHydraulicAperture, std::get< 5 >( statistics ));
 
     } );
 
@@ -326,6 +345,21 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::updateDeformationForCoupling( 
 //    hydraulicAperture.move( parallelDeviceMemorySpace );
 //#endif
   } );
+
+  maxApertureChange = MpiWrapper::max( maxApertureChange );
+  maxHydraulicApertureChange = MpiWrapper::max( maxHydraulicApertureChange );
+  minAperture  = MpiWrapper::min( minAperture );
+  maxAperture  = MpiWrapper::max( maxAperture );
+  minHydraulicAperture  = MpiWrapper::min( minHydraulicAperture );
+  maxHydraulicAperture  = MpiWrapper::max( maxHydraulicAperture );
+
+  GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "        {}: Max aperture change: {} m, max hydraulic aperture change: {} m",
+                                      this->getName(), fmt::format( "{:.{}f}", maxApertureChange, 6 ), fmt::format( "{:.{}f}", maxHydraulicApertureChange, 6 ) ) );
+  GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "        {}: Min aperture: {} m, max aperture: {} m",
+                                      this->getName(), fmt::format( "{:.{}f}", minAperture, 6 ), fmt::format( "{:.{}f}", maxAperture, 6 ) ) );
+  GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "        {}: Min hydraulic aperture: {} m, max hydraulic aperture: {} m",
+                                      this->getName(), fmt::format( "{:.{}f}", minHydraulicAperture, 6 ), fmt::format( "{:.{}f}", maxHydraulicAperture, 6 ) ) );
+
 }
 template< typename POROMECHANICS_SOLVER >
 void HydrofractureSolver< POROMECHANICS_SOLVER >::setupCoupling( DomainPartition const & domain,
