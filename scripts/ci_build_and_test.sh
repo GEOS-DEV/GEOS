@@ -23,12 +23,10 @@ fi
 
 HOST_CONFIG="host-configs/environment.cmake"
 USE_SCCACHE=true
-# CMAKE_BUILD_TYPE=""
 eval set -- ${args}
 while :
 do
   case $1 in
-    # --cmake-build-type)  CMAKE_BUILD_TYPE=$2;  shift 2;;
     --docker-repository) DOCKER_REPOSITORY=$2; shift 2;;
     --docker-tag)        DOCKER_TAG=$2;        shift 2;;
     --host-config)       HOST_CONFIG=$2;       shift 2;;
@@ -43,11 +41,6 @@ done
 
 ADDITIONAL_ARGS=$@
 echo "Additional arguments '${ADDITIONAL_ARGS}' will be transfered to the final build."
-
-# if [[ -z "${CMAKE_BUILD_TYPE}" ]]; then
-#   echo "Variable \"CMAKE_BUILD_TYPE\" is undefined or empty. Define it using '--cmake-build-type'."
-#   exit 1
-# fi
 
 # The linux build relies on the two variables DOCKER_REPOSITORY and DOCKER_TAG to define the proper image version.
 DOCKER_IMAGE=${DOCKER_REPOSITORY}:${DOCKER_TAG}
@@ -86,6 +79,3 @@ docker run \
     --host-config ${HOST_CONFIG} \
     --use-sccache ${USE_SCCACHE} \
     ${ADDITIONAL_ARGS}
-
-    # --cmake-build-type ${CMAKE_BUILD_TYPE} \
-    # --host-config ${HOST_CONFIG:-host-configs/environment.cmake} \

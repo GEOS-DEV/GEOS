@@ -13,7 +13,8 @@ jobs:
   # Jobs will be cancelled if PR is a draft.
   # PR status must be "Open" to run CI.
   check_pull_request_is_not_a_draft:
-    # We use the most recent ubuntu distribution available in Github Actions to ensure maximum support of google cloud's sdk.
+    # Everywhere in this workflow, we use the most recent ubuntu distribution available in Github Actions
+    # to ensure maximum support of google cloud's sdk.
     runs-on: ubuntu-22.04
     outputs:
       NUM_ASSIGNEES: ${{ steps.extract_pr_info.outputs.NUM_ASSIGNEES }}
@@ -27,11 +28,16 @@ jobs:
         # Changing labels or assignee in the PR would not allow to simply re-run the job with a different outcome.
         pr_json=$(curl -H "Accept: application/vnd.github+json" https://api.github.com/repos/${{ github.repository }}/pulls/${{ github.event.number }})
         if [[ $? -gt 0 ]]; then echo "Error during the curl process"; exit 1; fi
+        #
+        # We stop the workflow if the pr is draft
         draft_status=$(echo ${pr_json} | jq '.draft')
         echo "Draft status of PR is ${draft_status}."
         if [[ $draft_status == true ]]; then exit 1 ; fi
+        #
+        # If the workflow is meant to continue, we extract additional information for the json of the pr.
         echo "NUM_ASSIGNEES=$(echo ${pr_json} | jq '.assignees | length')" >> "$GITHUB_OUTPUT"
         echo "LABELS=$(echo ${pr_json} | jq -crM '[.labels[].name]')" >> "$GITHUB_OUTPUT"
+    # The TPL tag is contained in the codespaces configuration to avoir duplications.
     - name: Checkout .devcontainer/devcontainer.json
       uses: actions/checkout@v3
       with:
@@ -56,8 +62,15 @@ jobs:
       run: |
         echo "There are ${{ needs.check_pull_request_is_not_a_draft.outputs.NUM_ASSIGNEES }} on this PR."
         ${{ needs.check_pull_request_is_not_a_draft.outputs.NUM_ASSIGNEES > 0 }}
-        # if [[ ${{ needs.check_pull_request_is_not_a_draft.outputs.NUM_ASSIGNEES }} != null ]]; then "true" ; else "false"; fi
 
+  # This job will fail if running the integrated tests has not been requested.
+  # (Add the 'ci: run integrated tests' to the PR to do so).
+  # This job acts like a gate to the integrated tests.
+  # If this job fails, the workflow will not be validated.
+  # Note: I did not manage to make this job a step of the matrix 'cpu_builds'.
+  #       This would allow to collapse the "gate" and the main jobs,
+  #       reducing the complexity of the workflow.
+  #       Also, the current situation maintains a symmetry with the CUDA jobs.
   check_integrated_tests_are_requested:
     needs: [check_pull_request_is_not_a_draft]
     runs-on: ubuntu-22.04
@@ -67,8 +80,8 @@ jobs:
         echo 'Labels are ${{ needs.check_pull_request_is_not_a_draft.outputs.LABELS }}'
         ${{ contains( fromJSON( needs.check_pull_request_is_not_a_draft.outputs.LABELS ), 'ci: run integrated tests') }}
 
-  # PR must be labeled "ci: ready to be merged" to run CUDA jobs.
-  # This job will fail if this is not the case.
+  # Same behavior than job 'check_integrated_tests_are_requested', but for CUDA builds.
+  # Use the flag 'ci: ready to be merged' instead.
   # Note: Label should only be added if PR is in merge queue.
   check_cuda_builds_are_requested:
     needs: [check_pull_request_is_not_a_draft]
@@ -79,6 +92,8 @@ jobs:
         echo 'Labels are ${{ needs.check_pull_request_is_not_a_draft.outputs.LABELS }}'
         ${{ contains( fromJSON( needs.check_pull_request_is_not_a_draft.outputs.LABELS ), 'ci: ready to be merged') }}
 
+  # Validates that the pr is still poiting to the HEAD of the main branch of the submodules repositories.
+  # (There are exceptions, read the script about those).
   check_submodules:
     needs: [check_pull_request_is_not_a_draft]
     runs-on: ubuntu-22.04
@@ -95,6 +110,7 @@ jobs:
     - name: Check that submodules are up to date
       run: "scripts/test_submodule_updated.sh"
 
+  # Validates the code-style using uncrustify
   check_code_style:
     needs: [check_pull_request_is_not_a_draft]
     runs-on: ubuntu-22.04
@@ -106,8 +122,6 @@ jobs:
         lfs: false
         fetch-depth: 1
     - name: Check style
-      # env:
-      #   BUILD_AND_TEST_ARGS: --test-code-style --no-use-sccache
       run: |
         ./scripts/ci_build_and_test.sh \
           --docker-repository geosx/ubuntu20.04-gcc9 \
@@ -117,6 +131,7 @@ jobs:
           --cmake-build-type Release \
           --test-code-style
 
+  # Validates that the documentation generated using doxygen has no hole.
   check_documentation:
     needs: [check_pull_request_is_not_a_draft]
     runs-on: ubuntu-22.04
@@ -128,8 +143,6 @@ jobs:
         lfs: false
         fetch-depth: 1
     - name: Check documentation
-      # env:
-      #   BUILD_AND_TEST_ARGS: --test-documentation --no-use-sccache
       run: |
         ./scripts/ci_build_and_test.sh \
           --docker-repository geosx/ubuntu20.04-gcc9 \
@@ -139,6 +152,8 @@ jobs:
           --cmake-build-type Release \
           --test-documentation
 
+  # Matrix containing all the CPU build.
+  # Those are quite fase and can efficiently benefit from the `sccache' tool to make them even faster.
   cpu_builds:
     name: ${{ matrix.name }}
     needs: [check_pull_request_is_not_a_draft]
@@ -146,6 +161,7 @@ jobs:
 
       # In-progress jobs will not be cancelled if there is a failure
       fail-fast : false
+
       matrix:
         include:
           - name: Ubuntu (20.04, gcc 9.3.0, open-mpi 4.0.3)
@@ -160,7 +176,7 @@ jobs:
             DOCKER_REPOSITORY: geosx/ubuntu20.04-gcc10
             CMAKE_BUILD_TYPE: Release
 
-          # Matrix jobs that deploy to Google Cloud
+          # Below this line, jobs that deploy to Google Cloud.
           - name: Pecan CPU (centos 7.7, gcc 8.2.0, open-mpi 4.0.1, mkl 2019.5)
             DOCKER_REPOSITORY: geosx/pecan-cpu-gcc8.2.0-openmpi4.0.1-mkl2019.5
             CMAKE_BUILD_TYPE: Release
@@ -215,8 +231,8 @@ jobs:
       DOCKER_REPOSITORY: geosx/ubuntu22.04-gcc11
       RUNS_ON: ubuntu-22.04
 
-  # If "ci: ready to be merged" PR label found, cuda jobs run immediately along side linux jobs.
-  # CUDA jobs should only be run if PR is ready to merge.
+  # If the 'ci: ready to be merged' PR label is found, the cuda jobs run immediately along side linux jobs.
+  # Note: CUDA jobs should only be run if PR is ready to merge.
   cuda_builds:
     name: ${{ matrix.name }}
     needs:
@@ -252,7 +268,7 @@ jobs:
             DOCKER_REPOSITORY: geosx/centos7.7-gcc8.3.1-cuda11.8.89
             RUNS_ON: Runner_4core_16GB
 
-          # Matrix job that deploys to Google Cloud
+          # Below this line, jobs that deploy to Google Cloud.
           - name: Pecan GPU (centos 7.7, gcc 8.2.0, open-mpi 4.0.1, mkl 2019.5, cuda 11.5.119)
             BUILD_AND_TEST_ARGS: "--build-exe-only --no-install-schema"
             CMAKE_BUILD_TYPE: Release
@@ -274,38 +290,3 @@ jobs:
       COMMIT: ${{ github.event.pull_request.head.sha }}
       RUNS_ON: ${{ matrix.RUNS_ON }}
     secrets: inherit
-
-  # # Convenience job - passes when all other jobs have passed
-  # # (must pass the CUDA jobs)
-  # check_that_all_jobs_succeeded:
-  #   runs-on: ubuntu-22.04
-  #   needs:
-  #   - check_pull_request_is_not_a_draft
-  #   - check_pull_request_is_assigned
-  #   - check_cuda_builds_are_requested
-  #   - check_submodules
-  #   - check_code_style
-  #   - check_documentation
-  #   - cpu_builds
-  #   - run_integrated_tests
-  #   - cuda_builds
-  #   if: ${{ always() }}
-  #   env:
-  #     RETURN_VAL: |
-  #       ${{
-  #       needs.check_pull_request_is_not_a_draft.result == 'success' &&
-  #       needs.check_pull_request_is_assigned.result == 'success' &&
-  #       needs.check_submodules.result == 'success' &&
-  #       needs.check_code_style.result == 'success' &&
-  #       needs.check_documentation.result == 'success' &&
-  #       needs.cpu_builds.result == 'success' &&
-  #       needs.run_integrated_tests.result == 'success' &&
-  #       needs.cuda_builds.result == 'success'
-  #       }}
-  #   steps:
-  #   - name: PR Success
-  #     if: ${{ contains(env.RETURN_VAL, 'true') }}
-  #     run: "true"
-  #   - name: PR Failure
-  #     if: ${{ contains(env.RETURN_VAL, 'false') }}
-  #     run: "false"

@@ -2,20 +2,24 @@ name: Build and Test Configuration
 on:
   workflow_call:
     inputs:
+      BUILD_AND_TEST_ARGS:
+        required: false
+        type: string
+      build_type:
+        required: false
+        type: string
+        default: build
+      CMAKE_BUILD_TYPE:
+        required: true
+        type: string
+      COMMIT:
+        required: true
+        type: string
       DOCKER_IMAGE_TAG:
         required: true
         type: string
       DOCKER_REPOSITORY:
         required: true
-        type: string
-      CMAKE_BUILD_TYPE:
-        required: true
-        type: string
-      BUILD_AND_TEST_ARGS:
-        required: false
-        type: string
-      HOST_CONFIG:
-        required: false
         type: string
       ENABLE_HYPRE:
         required: false
@@ -29,16 +33,12 @@ on:
       GCP_BUCKET:
         required: false
         type: string
-      COMMIT:
-        required: true
+      HOST_CONFIG:
+        required: false
         type: string
       RUNS_ON:
         required: true
         type: string
-      build_type:
-        required: false
-        type: string
-        default: build
       USE_SCCACHE:
         required: false
         type: boolean
@@ -50,12 +50,9 @@ jobs:
   build_and_test:
     runs-on: ${{ inputs.RUNS_ON }}
     env:
-      # BUILD_AND_TEST_ARGS: ${{ inputs.BUILD_AND_TEST_ARGS }}
       ENABLE_HYPRE: ${{ inputs.ENABLE_HYPRE }}
       ENABLE_HYPRE_DEVICE: ${{ inputs.ENABLE_HYPRE_DEVICE }}
       ENABLE_TRILINOS: ${{ inputs.ENABLE_TRILINOS }}
-      # HOST_CONFIG: ${{ inputs.HOST_CONFIG }}
-      # USE_SCCACHE: ${{ inputs.USE_SCCACHE }}
     steps:
     - name: Checkout Repository
       uses: actions/checkout@v3
@@ -101,8 +98,8 @@ jobs:
       if: ${{ inputs.build_type == 'build' && inputs.GCP_BUCKET }}
       run: |
         HC=${{ inputs.HOST_CONFIG }}
-        HC_CLI=${HC:+"--host-config ${HC}"}  # source command doesn't work with process substitution in bash, so we use an extra variable.
-        echo "${HC_CLI}"
+        # `source' command doesn't work with process substitution in bash, so we use an extra variable `HC_CLI'.
+        HC_CLI=${HC:+"--host-config ${HC}"}
         source ./scripts/ci_build_and_test.sh \
           --docker-repository ${{ inputs.DOCKER_REPOSITORY }} \
           --docker-tag ${{ inputs.DOCKER_IMAGE_TAG }} \
