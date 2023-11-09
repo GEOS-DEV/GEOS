@@ -86,22 +86,25 @@ jobs:
     - name: Build and test
       if: ${{ inputs.build_type == 'build' && !(inputs.GCP_BUCKET) }}
       run: |
+        HC=${{ inputs.HOST_CONFIG }}
         ./scripts/ci_build_and_test.sh \
           --docker-repository ${{ inputs.DOCKER_REPOSITORY }} \
           --docker-tag ${{ inputs.DOCKER_IMAGE_TAG }} \
-          ${${{ inputs.HOST_CONFIG }}:+"--host-config ${{ inputs.HOST_CONFIG }}"} \
+          ${HC:+"--host-config ${HC}"} \
           --use-sccache ${{ inputs.USE_SCCACHE }} \
           -- \
-          --cmake-build-type ${{ inputs.CMAKE_BUILD_TYPE }} ${{ inputs.BUILD_AND_TEST_ARGS }}
+          --cmake-build-type ${{ inputs.CMAKE_BUILD_TYPE }} \
+          ${{ inputs.BUILD_AND_TEST_ARGS }}
 
     # Build, test, uploads GEOSX and its TPL to GCP/GCS using gcloud CLI
     - name: Build and test and deploy
       if: ${{ inputs.build_type == 'build' && inputs.GCP_BUCKET }}
       run: |
+        HC=${{ inputs.HOST_CONFIG }}
         source ./scripts/ci_build_and_test.sh \
           --docker-repository ${{ inputs.DOCKER_REPOSITORY }} \
           --docker-tag ${{ inputs.DOCKER_IMAGE_TAG }} \
-          $([ -v ${{ inputs.HOST_CONFIG }} ] && echo "--host-config ${{ inputs.HOST_CONFIG }}" || echo "") \
+          ${HC:+"--host-config ${HC}"} \
           --use-sccache ${{ inputs.USE_SCCACHE }} \
           -- \
           --cmake-build-type ${{ inputs.CMAKE_BUILD_TYPE }} ${{ inputs.BUILD_AND_TEST_ARGS }}
@@ -124,10 +127,12 @@ jobs:
     - name: Run integrated tests
       if: ${{ inputs.build_type == 'integrated_tests' }}
       run: |
+        HC=${{ inputs.HOST_CONFIG }}
         ./scripts/ci_build_and_test.sh \
           --docker-repository ${{ inputs.DOCKER_REPOSITORY }} \
           --docker-tag ${{ inputs.DOCKER_IMAGE_TAG }} \
-          $([ -v ${{ inputs.HOST_CONFIG }} ] && echo "--host-config ${{ inputs.HOST_CONFIG }}" || echo "") \
+          ${HC:+"--host-config ${HC}"} \
           --use-sccache ${{ inputs.USE_SCCACHE }} \
           -- \
-          --cmake-build-type ${{ inputs.CMAKE_BUILD_TYPE }} ${{ inputs.BUILD_AND_TEST_ARGS }}
+          --cmake-build-type ${{ inputs.CMAKE_BUILD_TYPE }} \
+          ${{ inputs.BUILD_AND_TEST_ARGS }}
