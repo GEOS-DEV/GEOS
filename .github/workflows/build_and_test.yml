@@ -58,8 +58,8 @@ jobs:
       uses: actions/checkout@v3
       with:
         submodules: true
-        lfs: ${{ inputs.build_type == 'integrated_tests' }}
-        # lfs: false
+        # lfs: ${{ inputs.build_type == 'integrated_tests' }}
+        lfs: false
         fetch-depth: 1
 
     - id: 'auth'
@@ -87,10 +87,10 @@ jobs:
         ./scripts/ci_build_and_test.sh \
           --docker-repository ${{ inputs.DOCKER_REPOSITORY }} \
           --docker-tag ${{ inputs.DOCKER_IMAGE_TAG }} \
-          ${HC:+"--host-config ${HC}"} \
           --use-sccache ${{ inputs.USE_SCCACHE }} \
           -- \
           --cmake-build-type ${{ inputs.CMAKE_BUILD_TYPE }} \
+          ${HC:+"--host-config ${HC}"} \
           ${{ inputs.BUILD_AND_TEST_ARGS }}
 
     # Build, test, uploads geos and its TPL to GCP/GCS using gcloud CLI
@@ -103,10 +103,11 @@ jobs:
         source ./scripts/ci_build_and_test.sh \
           --docker-repository ${{ inputs.DOCKER_REPOSITORY }} \
           --docker-tag ${{ inputs.DOCKER_IMAGE_TAG }} \
-          ${HC_CLI} \
           --use-sccache ${{ inputs.USE_SCCACHE }} \
           -- \
-          --cmake-build-type ${{ inputs.CMAKE_BUILD_TYPE }} ${{ inputs.BUILD_AND_TEST_ARGS }}
+          --cmake-build-type ${{ inputs.CMAKE_BUILD_TYPE }} \
+          ${HC_CLI} \
+          ${{ inputs.BUILD_AND_TEST_ARGS }}
         TMP_DIR=/tmp
         COMMIT=${{ inputs.COMMIT }}
         GEOS_EXPORT_DIR=GEOSX-and-TPL-${COMMIT:0:7}
@@ -130,8 +131,8 @@ jobs:
         ./scripts/ci_build_and_test.sh \
           --docker-repository ${{ inputs.DOCKER_REPOSITORY }} \
           --docker-tag ${{ inputs.DOCKER_IMAGE_TAG }} \
-          ${HC:+"--host-config ${HC}"} \
           --use-sccache ${{ inputs.USE_SCCACHE }} \
           -- \
           --cmake-build-type ${{ inputs.CMAKE_BUILD_TYPE }} \
+          ${HC:+"--host-config ${HC}"} \
           ${{ inputs.BUILD_AND_TEST_ARGS }}

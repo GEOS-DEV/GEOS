@@ -8,20 +8,20 @@ function usage () {
 Usage: $0
   [ --docker-repository ... ]
   [ --docker-tag ... ]
-  [ --host-config ... ]
   [ --use-sccache (true|false) ]
   [ -h | --help ]
 EOF
 exit 1
 }
 
-args=$(getopt -a -o h --long docker-repository:,docker-tag:,host-config:,use-sccache:,help -- "$@")
+# args=$(getopt -a -o h --long docker-repository:,docker-tag:,host-config:,use-sccache:,help -- "$@")
+args=$(getopt -a -o h --long docker-repository:,docker-tag:,use-sccache:,help -- "$@")
 if [[ $? -gt 0 ]]; then
   echo "Error after getopt"
   usage
 fi
 
-HOST_CONFIG="host-configs/environment.cmake"
+# HOST_CONFIG="host-configs/environment.cmake"
 USE_SCCACHE=true
 eval set -- ${args}
 while :
@@ -29,7 +29,7 @@ do
   case $1 in
     --docker-repository) DOCKER_REPOSITORY=$2; shift 2;;
     --docker-tag)        DOCKER_TAG=$2;        shift 2;;
-    --host-config)       HOST_CONFIG=$2;       shift 2;;
+    # --host-config)       HOST_CONFIG=$2;       shift 2;;
     --use-sccache)       USE_SCCACHE=$2;       shift 2;;
     -h | --help)         usage;                shift;;
     # -- means the end of the arguments; drop this, and break out of the while loop
@@ -76,6 +76,11 @@ docker run \
   ${DOCKER_IMAGE} \
   ${GITHUB_WORKSPACE_MOUNT_POINT}/scripts/ci_build_and_test_in_container_args.sh \
     --install-dir ${GEOSX_DIR} \
-    --host-config ${HOST_CONFIG} \
     --use-sccache ${USE_SCCACHE} \
     ${ADDITIONAL_ARGS}
+
+
+
+
+
+    # --host-config ${HOST_CONFIG}

@@ -56,6 +56,7 @@ fi
 # Variables with default values
 BUILD_EXE_ONLY=false
 GEOSX_INSTALL_SCHEMA=true
+HOST_CONFIG="host-configs/environment.cmake"
 RUN_UNIT_TESTS=true
 RUN_INTEGRATED_TESTS=false
 USE_SCCACHE=true
@@ -88,10 +89,10 @@ done
 #   usage
 # fi
 
-if [[ -z "${HOST_CONFIG}" ]]; then
-  echo "Variable \"HOST_CONFIG\" is undefined or empty. Define it using '--host-config'."
-  exit 1
-fi
+# if [[ -z "${HOST_CONFIG}" ]]; then
+#   echo "Variable \"HOST_CONFIG\" is undefined or empty. Define it using '--host-config'."
+#   exit 1
+# fi
 
 if [[ -z "${CMAKE_BUILD_TYPE}" ]]; then
   echo "Variable \"CMAKE_BUILD_TYPE\" is undefined or empty. Define it using '--cmake-build-type'."
