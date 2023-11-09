@@ -463,6 +463,46 @@ protected:
     PhaseComp::ViewType m_phaseCompFraction;
     FluidProp::ViewType m_totalDensity;
 
+public:
+    /**
+     * @brief Calculate the total fluid compressibility
+     * @param i Element index
+     * @param q Quadrature node index
+     * @return The total fluid compressibility
+     */
+    GEOS_HOST_DEVICE
+    real64 totalCompressibility( integer const i, integer const q ) const
+    {
+      real64 const totalFluidDensity = totalDensity()( i, q );
+      real64 const dTotalFluidDensity_dP = m_totalDensity.derivs( i, q, multifluid::DerivativeOffset::dP );
+      return 0.0 < totalFluidDensity ? dTotalFluidDensity_dP / totalFluidDensity : 0.0;
+    }
+
+    /**
+     * @brief Extract the phase mole fractions for a phase
+     * @param i Element index
+     * @param q Quadrature node index
+     * @param p Phase index
+     * @param[out] moleFractions The calculated mole fractions
+     */
+    template< typename OUT_ARRAY >
+    GEOS_HOST_DEVICE
+    void phaseCompMoleFraction( integer const i,
+                                integer const q,
+                                integer const p,
+                                OUT_ARRAY && moleFractions ) const
+    {
+      integer const numComponents = m_componentMolarWeight.size( 0 );
+      for( integer ic = 0; ic < numComponents; ++ic )
+      {
+        moleFractions[ic] = m_phaseCompFraction.value( i, q, p, ic );
+      }
+      detail::convertToMoleFractions( numComponents,
+                                      m_componentMolarWeight,
+                                      moleFractions,
+                                      moleFractions );
+    }
+
 private:
 
     /**

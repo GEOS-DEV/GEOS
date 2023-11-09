@@ -24,6 +24,11 @@
 namespace geos
 {
 
+namespace constitutive
+{
+class MultiFluidBase;
+}
+
 /**
  * @class PVTDriver
  *
@@ -69,6 +74,11 @@ public:
 private:
 
   /**
+   * @brief Get the fluid model from the catalog
+   */
+  constitutive::MultiFluidBase & getFluid();
+
+  /**
    * @struct viewKeyStruct holds char strings and viewKeys for fast lookup
    */
   struct viewKeyStruct
@@ -80,17 +90,20 @@ private:
     constexpr static char const * outputString() { return "output"; }
     constexpr static char const * baselineString() { return "baseline"; }
     constexpr static char const * feedString() { return "feedComposition"; }
+    constexpr static char const * outputCompressibilityString() { return "outputCompressibility"; }
+    constexpr static char const * outputPhaseCompositionString() { return "outputPhaseComposition"; }
   };
 
   integer m_numSteps;      ///< Number of load steps
-  integer m_numColumns;    ///< Number of columns in data table (depends on number of fluid phases)
   integer m_numPhases;     ///< Number of fluid phases
   integer m_numComponents; ///< Number of fluid components
 
-  string m_fluidName;               ///< Fluid identifier
-  string m_pressureFunctionName;    ///< Time-dependent function controlling pressure
-  string m_temperatureFunctionName; ///< Time-dependent function controlling temperature
-  string m_outputFile;              ///< Output file (optional, no output if not specified)
+  string m_fluidName;                   ///< Fluid identifier
+  string m_pressureFunctionName;        ///< Time-dependent function controlling pressure
+  string m_temperatureFunctionName;     ///< Time-dependent function controlling temperature
+  string m_outputFile;                  ///< Output file (optional, no output if not specified)
+  integer m_outputCompressibility{0};   ///< Flag to indicate that the total compressibility should be output
+  integer m_outputPhaseComposition{0};  ///< Flag to indicate that phase compositions should be output
 
   array1d< real64 > m_feed;  ///< User specified feed composition
   array2d< real64 > m_table; ///< Table storing time-history of input/output
