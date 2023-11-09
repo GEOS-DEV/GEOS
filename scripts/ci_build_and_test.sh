@@ -6,20 +6,22 @@ echo "Running CLI $0 $@"
 function usage () {
 >&2 cat << EOF
 Usage: $0
-  [ --docker-repository ]
-  [ --docker-tag ]
+  [ --docker-repository ... ]
+  [ --docker-tag ... ]
+  [ --host-config ... ]
   [ --use-sccache (true|false) ]
   [ -h | --help ]
 EOF
 exit 1
 }
 
-args=$(getopt -a -o h --long docker-repository:,docker-tag:,use-sccache:,help -- "$@")
+args=$(getopt -a -o h --long docker-repository:,docker-tag:,host-config:,use-sccache:,help -- "$@")
 if [[ $? -gt 0 ]]; then
   echo "Error after getopt"
   usage
 fi
 
+HOST_CONFIG="host-configs/environment.cmake"
 USE_SCCACHE=true
 # CMAKE_BUILD_TYPE=""
 eval set -- ${args}
@@ -29,7 +31,8 @@ do
     # --cmake-build-type)  CMAKE_BUILD_TYPE=$2;  shift 2;;
     --docker-repository) DOCKER_REPOSITORY=$2; shift 2;;
     --docker-tag)        DOCKER_TAG=$2;        shift 2;;
-    --use-sccache)       USE_SCCACHE=$2;     shift 2;;
+    --host-config)       HOST_CONFIG=$2;       shift 2;;
+    --use-sccache)       USE_SCCACHE=$2;       shift 2;;
     -h | --help)         usage;                shift;;
     # -- means the end of the arguments; drop this, and break out of the while loop
     --) shift; break;;
@@ -78,7 +81,8 @@ docker run \
   ${DOCKER_IMAGE} \
   ${GITHUB_WORKSPACE_MOUNT_POINT}/scripts/ci_build_and_test_in_container_args.sh \
     --install-dir ${GEOSX_DIR} \
-    --host-config ${HOST_CONFIG:-host-configs/environment.cmake} \
+    --host-config ${HOST_CONFIG} \
     --use-sccache ${USE_SCCACHE} ${ADDITIONAL_ARGS};
 
     # --cmake-build-type ${CMAKE_BUILD_TYPE} \
+    # --host-config ${HOST_CONFIG:-host-configs/environment.cmake} \

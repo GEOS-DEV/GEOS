@@ -54,8 +54,8 @@ jobs:
       ENABLE_HYPRE: ${{ inputs.ENABLE_HYPRE }}
       ENABLE_HYPRE_DEVICE: ${{ inputs.ENABLE_HYPRE_DEVICE }}
       ENABLE_TRILINOS: ${{ inputs.ENABLE_TRILINOS }}
-      HOST_CONFIG: ${{ inputs.HOST_CONFIG }}
-      USE_SCCACHE: ${{ inputs.USE_SCCACHE }}
+      # HOST_CONFIG: ${{ inputs.HOST_CONFIG }}
+      # USE_SCCACHE: ${{ inputs.USE_SCCACHE }}
     steps:
     - name: Checkout Repository
       uses: actions/checkout@v3
@@ -89,6 +89,7 @@ jobs:
         ./scripts/ci_build_and_test.sh \
           --docker-repository ${{ inputs.DOCKER_REPOSITORY }} \
           --docker-tag ${{ inputs.DOCKER_IMAGE_TAG }} \
+          --host-config ${{ inputs.HOST_CONFIG }} \
           --use-sccache ${{ inputs.USE_SCCACHE }} \
           -- \
           --cmake-build-type ${{ inputs.CMAKE_BUILD_TYPE }} ${{ inputs.BUILD_AND_TEST_ARGS }}
@@ -100,6 +101,7 @@ jobs:
         source ./scripts/ci_build_and_test.sh \
           --docker-repository ${{ inputs.DOCKER_REPOSITORY }} \
           --docker-tag ${{ inputs.DOCKER_IMAGE_TAG }} \
+          --host-config ${{ inputs.HOST_CONFIG }} \
           --use-sccache ${{ inputs.USE_SCCACHE }} \
           -- \
           --cmake-build-type ${{ inputs.CMAKE_BUILD_TYPE }} ${{ inputs.BUILD_AND_TEST_ARGS }}
@@ -125,6 +127,7 @@ jobs:
         ./scripts/ci_build_and_test.sh \
           --docker-repository ${{ inputs.DOCKER_REPOSITORY }} \
           --docker-tag ${{ inputs.DOCKER_IMAGE_TAG }} \
+          --host-config ${{ inputs.HOST_CONFIG }} \
           --use-sccache ${{ inputs.USE_SCCACHE }} \
           -- \
           --cmake-build-type ${{ inputs.CMAKE_BUILD_TYPE }} ${{ inputs.BUILD_AND_TEST_ARGS }}
