@@ -199,6 +199,20 @@ Element: CompositionalMultiphaseWell
 .. include:: ../../coreComponents/schema/docs/CompositionalMultiphaseWell.rst
 
 
+.. _XML_CompositonalTwoPhaseFluidPengRobinson:
+
+Element: CompositonalTwoPhaseFluidPengRobinson
+==============================================
+.. include:: ../../coreComponents/schema/docs/CompositonalTwoPhaseFluidPengRobinson.rst
+
+
+.. _XML_CompositonalTwoPhaseFluidSoaveRedlichKwong:
+
+Element: CompositonalTwoPhaseFluidSoaveRedlichKwong
+===================================================
+.. include:: ../../coreComponents/schema/docs/CompositonalTwoPhaseFluidSoaveRedlichKwong.rst
+
+
 .. _XML_CompressibleSinglePhaseFluid:
 
 Element: CompressibleSinglePhaseFluid
@@ -1489,6 +1503,20 @@ Datastructure: CompositionalMultiphaseStatistics
 Datastructure: CompositionalMultiphaseWell
 ==========================================
 .. include:: ../../coreComponents/schema/docs/CompositionalMultiphaseWell_other.rst
+
+
+.. _DATASTRUCTURE_CompositonalTwoPhaseFluidPengRobinson:
+
+Datastructure: CompositonalTwoPhaseFluidPengRobinson
+====================================================
+.. include:: ../../coreComponents/schema/docs/CompositonalTwoPhaseFluidPengRobinson_other.rst
+
+
+.. _DATASTRUCTURE_CompositonalTwoPhaseFluidSoaveRedlichKwong:
+
+Datastructure: CompositonalTwoPhaseFluidSoaveRedlichKwong
+=========================================================
+.. include:: ../../coreComponents/schema/docs/CompositonalTwoPhaseFluidSoaveRedlichKwong_other.rst
 
 
 .. _DATASTRUCTURE_CompressibleSinglePhaseFluid:
