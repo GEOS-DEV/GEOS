@@ -212,20 +212,20 @@ void CompositionalMultiphaseFVM::assembleFluxTerms( real64 const dt,
         else
         {
           isothermalCompositionalMultiphaseFVMKernels::
-          FaceBasedAssemblyKernelFactory::
-          createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
-                                                     m_numPhases,
-                                                     dofManager.rankOffset(),
-                                                     elemDofKey,
-                                                     m_hasCapPressure,
-                                                     m_useTotalMassEquation,
-                                                     fluxApprox.upwindingParams(),
-                                                     getName(),
-                                                     mesh.getElemManager(),
-                                                     stencilWrapper,
-                                                     dt,
-                                                     localMatrix.toViewConstSizes(),
-                                                     localRhs.toView() );
+            FaceBasedAssemblyKernelFactory::
+            createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
+                                                       m_numPhases,
+                                                       dofManager.rankOffset(),
+                                                       elemDofKey,
+                                                       m_hasCapPressure,
+                                                       m_useTotalMassEquation,
+                                                       fluxApprox.upwindingParams(),
+                                                       getName(),
+                                                       mesh.getElemManager(),
+                                                       stencilWrapper,
+                                                       dt,
+                                                       localMatrix.toViewConstSizes(),
+                                                       localRhs.toView() );
         }
       }
 
