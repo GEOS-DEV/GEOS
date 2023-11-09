@@ -46,7 +46,7 @@ ADDITIONAL_ARGS=$@
 # fi
 
 # The linux build relies on the two variables DOCKER_REPOSITORY and DOCKER_TAG to define the proper image version.
-DOCKER_IMAGE=${DOCKER_REPOSITORY}:${DOCKER_TAG}#
+DOCKER_IMAGE=${DOCKER_REPOSITORY}:${DOCKER_TAG}
 # We extract the location of the GEOSX_TPL from the container...
 GEOSX_TPL_DIR=$(docker run --rm ${DOCKER_IMAGE} /bin/bash -c 'echo ${GEOSX_TPL_DIR}' | tail -1)
 # ... so we can install GEOSX alongside. This is assumed for bundling the binaries, so consider modifying with care.
@@ -68,19 +68,6 @@ fi
 # but that would not have solved the problem for the TPLs (we would require extra action to copy them to the mount point).
 CONTAINER_NAME=geos_build
 # Now we can build GEOS.
-echo "docker run \
-  --name=${CONTAINER_NAME} \
-  --volume=${GITHUB_WORKSPACE}:${GITHUB_WORKSPACE_MOUNT_POINT} ${SCCACHE_VOLUME_MOUNT} \
-  --cap-add=ALL \
-  -e ENABLE_HYPRE=${ENABLE_HYPRE:-OFF} \
-  -e ENABLE_HYPRE_DEVICE=${ENABLE_HYPRE_DEVICE:-CPU} \
-  -e ENABLE_TRILINOS=${ENABLE_TRILINOS:-ON} \
-  ${DOCKER_IMAGE} \
-  ${GITHUB_WORKSPACE_MOUNT_POINT}/scripts/ci_build_and_test_in_container_args.sh \
-    --install-dir ${GEOSX_DIR} \
-    --host-config ${HOST_CONFIG:-host-configs/environment.cmake} \
-    --use-sccache ${USE_SCCACHE} ${ADDITIONAL_ARGS};"
-
 docker run \
   --name=${CONTAINER_NAME} \
   --volume=${GITHUB_WORKSPACE}:${GITHUB_WORKSPACE_MOUNT_POINT} ${SCCACHE_VOLUME_MOUNT} \
@@ -93,7 +80,5 @@ docker run \
     --install-dir ${GEOSX_DIR} \
     --host-config ${HOST_CONFIG:-host-configs/environment.cmake} \
     --use-sccache ${USE_SCCACHE} ${ADDITIONAL_ARGS};
-
-
 
     # --cmake-build-type ${CMAKE_BUILD_TYPE} \
