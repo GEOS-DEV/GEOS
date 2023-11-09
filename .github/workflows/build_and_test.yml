@@ -101,10 +101,12 @@ jobs:
       if: ${{ inputs.build_type == 'build' && inputs.GCP_BUCKET }}
       run: |
         HC=${{ inputs.HOST_CONFIG }}
+        HC_CLI=${HC:+"--host-config ${HC}"}
+        echo "${HC_CLI}"
         source ./scripts/ci_build_and_test.sh \
           --docker-repository ${{ inputs.DOCKER_REPOSITORY }} \
           --docker-tag ${{ inputs.DOCKER_IMAGE_TAG }} \
-          ${HC:+"--host-config ${HC}"} \
+          ${HC_CLI} \
           --use-sccache ${{ inputs.USE_SCCACHE }} \
           -- \
           --cmake-build-type ${{ inputs.CMAKE_BUILD_TYPE }} ${{ inputs.BUILD_AND_TEST_ARGS }}
