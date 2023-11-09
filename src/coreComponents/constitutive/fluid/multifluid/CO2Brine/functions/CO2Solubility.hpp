@@ -46,12 +46,14 @@ public:
 
   CO2SolubilityUpdate( arrayView1d< real64 const > const & componentMolarWeight,
                        TableFunction const & CO2SolubilityTable,
+                       TableFunction const & waterVapourisationTable,
                        integer const CO2Index,
                        integer const waterIndex,
                        integer const phaseGasIndex,
                        integer const phaseLiquidIndex )
     : FlashModelBaseUpdate( componentMolarWeight ),
     m_CO2SolubilityTable( CO2SolubilityTable.createKernelWrapper() ),
+    m_WaterVapourisationTable( waterVapourisationTable.createKernelWrapper() ),
     m_CO2Index( CO2Index ),
     m_waterIndex( waterIndex ),
     m_phaseGasIndex( phaseGasIndex ),
@@ -78,6 +80,7 @@ public:
   {
     FlashModelBaseUpdate::move( space, touch );
     m_CO2SolubilityTable.move( space, touch );
+    m_WaterVapourisationTable.move( space, touch );
   }
 
 protected:
@@ -87,6 +90,9 @@ protected:
 
   /// Table with CO2 solubility tabulated as a function (P,T)
   TableFunction::KernelWrapper m_CO2SolubilityTable;
+
+  /// Table with water vapourisation as a function (P,T)
+  TableFunction::KernelWrapper m_WaterVapourisationTable;
 
   /// Index of the CO2 phase
   integer m_CO2Index;
@@ -134,6 +140,9 @@ private:
 
   /// Table to compute solubility as a function of pressure and temperature
   TableFunction const * m_CO2SolubilityTable;
+
+  /// Table to compute  water vapourisation as a function of pressure and temperature
+  TableFunction const * m_WaterVapourisationTable;
 
   /// Index of the CO2 component
   integer m_CO2Index;
@@ -237,9 +246,9 @@ CO2SolubilityUpdate::compute( real64 const & pressure,
   real64 const input[2] = { pressure, temperature };
 
   real64 co2SolubilityDeriv[2]{};
-  real64 watSolubilityDeriv[] = { 0.0, 0.0 };
+  real64 watSolubilityDeriv[2]{};
   real64 co2Solubility = m_CO2SolubilityTable.compute( input, co2SolubilityDeriv );
-  real64 watSolubility = 0.0;
+  real64 watSolubility = m_WaterVapourisationTable.compute( input, watSolubilityDeriv );
 
   // Convert the solubility to mole/mole
   co2Solubility *= m_componentMolarWeight[m_waterIndex];
