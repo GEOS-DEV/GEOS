@@ -63,6 +63,7 @@ jobs:
         submodules: true
         # lfs: ${{ inputs.build_type == 'integrated_tests' }}
         lfs: false
+        fetch-depth: 1
 
     - id: 'auth'
       if: ${{ inputs.GCP_BUCKET || inputs.USE_SCCACHE }}
@@ -70,6 +71,7 @@ jobs:
       with:
         credentials_json: '${{ secrets.GOOGLE_CLOUD_GCP }}'
         create_credentials_file: true
+
     - name: 'Set up Cloud SDK'
       if: inputs.GCP_BUCKET
       uses: 'google-github-actions/setup-gcloud@v1'
