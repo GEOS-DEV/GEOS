@@ -131,7 +131,7 @@ char const * xmlInput =
         name="cellDensity"
         initialCondition="1"
         objectPath="ElementRegions/Region/cb"
-        fieldName="mediumDensity"
+        fieldName="mediumDensityA"
         scale="1"
         setNames="{ all }"/>
       <FieldSpecification

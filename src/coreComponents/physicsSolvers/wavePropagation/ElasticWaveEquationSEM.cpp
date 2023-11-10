@@ -199,16 +199,7 @@ void ElasticWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
 
 void ElasticWaveEquationSEM::postProcessInput()
 {
-
   WaveSolverBase::postProcessInput();
-
-  GEOS_ERROR_IF( m_sourceCoordinates.size( 1 ) != 3,
-                 getWrapperDataContext( WaveSolverBase::viewKeyStruct::sourceCoordinatesString() ) <<
-                 ": Invalid number of physical coordinates for the sources" );
-
-  GEOS_ERROR_IF( m_receiverCoordinates.size( 1 ) != 3,
-                 getWrapperDataContext( WaveSolverBase::viewKeyStruct::receiverCoordinatesString() ) <<
-                 ": Invalid number of physical coordinates for the receivers" );
 
   EventManager const & event = getGroupByPath< EventManager >( "/Problem/Events" );
   real64 const & maxTime = event.getReference< real64 >( EventManager::viewKeyStruct::maxTimeString() );

@@ -208,7 +208,6 @@
   <Outputs>
     <VTK
       name="vtkOutput"
-      levelNames="{ FE1 }"
       plotLevel="0"/>
     <TimeHistory
       name="timeHistoryOutput"
