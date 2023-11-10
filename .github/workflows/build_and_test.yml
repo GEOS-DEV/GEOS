@@ -130,15 +130,14 @@ jobs:
       if: ${{ inputs.build_type == 'integrated_tests' }}
       run: |
         HC=${{ inputs.HOST_CONFIG }}
-        ./scripts/ci_build_and_test.sh \
+        exit_status=$(./scripts/ci_build_and_test.sh \
           --docker-repository ${{ inputs.DOCKER_REPOSITORY }} \
           --docker-tag ${{ inputs.DOCKER_IMAGE_TAG }} \
           --use-sccache ${{ inputs.USE_SCCACHE }} \
           -- \
           --cmake-build-type ${{ inputs.CMAKE_BUILD_TYPE }} \
           ${HC:+"--host-config ${HC}"} \
-          ${{ inputs.BUILD_AND_TEST_ARGS }}
-        exit_status=$?
+          ${{ inputs.BUILD_AND_TEST_ARGS }})
         #
         TMP_DIR=/tmp
         COMMIT=${{ inputs.COMMIT }}
