@@ -149,7 +149,7 @@ struct PrecomputeSourceAndReceiverKernel
             for( localIndex q=0; q< numNodesPerElem; ++q )
             {
               real64 inc[3] = { 0, 0, 0 };
-              sourceNodeIds[isrc][q] = elemsToNodes[k][q];
+              sourceNodeIds[isrc][q] = elemsToNodes( k, q );
               inc[0] += sourceForce[0] * N[q];
               inc[1] += sourceForce[1] * N[q];
               inc[2] += sourceForce[2] * N[q];
@@ -205,7 +205,7 @@ struct PrecomputeSourceAndReceiverKernel
 
             for( localIndex a = 0; a < numNodesPerElem; ++a )
             {
-              receiverNodeIds[ircv][a] = elemsToNodes[k][a];
+              receiverNodeIds[ircv][a] = elemsToNodes( k, a );
               receiverConstants[ircv][a] = Ntest[a];
             }
           }
