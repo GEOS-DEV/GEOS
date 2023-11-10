@@ -220,8 +220,8 @@ void CompositionalMultiphaseStatistics::computeRegionStatistics( MeshLevel & mes
     //get min vol fraction for each phase to dispactche immobile/mobile mass
     string const & relpermName = subRegion.getReference< string >( CompositionalMultiphaseBase::viewKeyStruct::relPermNamesString() );
     RelativePermeabilityBase const & relperm = constitutiveModels.getGroup< RelativePermeabilityBase >( relpermName );
-    arrayView3d< real64 const, relperm::USD_RELPERM > const phaseTrappedVolFrac = relperm.phaseTrappedVolFraction();
-    arrayView3d< real64 const, relperm::USD_RELPERM > const phaseRelperm = relperm.phaseRelPerm();
+    arrayView3d< real64 const, relperm::USD_PHASE > const phaseTrappedVolFrac = relperm.phaseTrappedVolFraction();
+    arrayView4d< real64 const, relperm::USD_RELPERM > const phaseRelperm = relperm.phaseRelPerm();
 
     real64 subRegionAvgPresNumerator = 0.0;
     real64 subRegionMinPres = 0.0;
@@ -509,8 +509,8 @@ void CompositionalMultiphaseStatistics::computeCFLNumbers( real64 const & dt,
 
       string const & relpermName = subRegion.getReference< string >( CompositionalMultiphaseBase::viewKeyStruct::relPermNamesString() );
       RelativePermeabilityBase const & relperm = constitutiveModels.getGroup< RelativePermeabilityBase >( relpermName );
-      arrayView3d< real64 const, relperm::USD_RELPERM > const & phaseRelPerm = relperm.phaseRelPerm();
-      arrayView4d< real64 const, relperm::USD_RELPERM_DS > const & dPhaseRelPerm_dPhaseVolFrac = relperm.dPhaseRelPerm_dPhaseVolFraction();
+      arrayView4d< real64 const, relperm::USD_RELPERM > const & phaseRelPerm = relperm.phaseRelPerm();
+      arrayView5d< real64 const, relperm::USD_RELPERM_DS > const & dPhaseRelPerm_dPhaseVolFrac = relperm.dPhaseRelPerm_dPhaseVolFraction();
 
       string const & solidName = subRegion.getReference< string >( CompositionalMultiphaseBase::viewKeyStruct::solidNamesString() );
       CoupledSolidBase const & solid = constitutiveModels.getGroup< CoupledSolidBase >( solidName );

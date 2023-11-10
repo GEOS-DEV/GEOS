@@ -1841,8 +1841,8 @@ struct StatisticsKernel
           arrayView3d< real64 const, multifluid::USD_PHASE > const & phaseDensity,
           arrayView4d< real64 const, multifluid::USD_PHASE_COMP > const & phaseCompFraction,
           arrayView2d< real64 const, compflow::USD_PHASE > const & phaseVolFrac,
-          arrayView3d< real64 const, relperm::USD_RELPERM > const & phaseTrappedVolFrac,
-          arrayView3d< real64 const, relperm::USD_RELPERM > const & phaseRelperm,
+          arrayView3d< real64 const, relperm::USD_PHASE > const & phaseTrappedVolFrac,
+          arrayView4d< real64 const, relperm::USD_RELPERM > const & phaseRelperm,
           real64 & minPres,
           real64 & avgPresNumerator,
           real64 & maxPres,
@@ -1922,25 +1922,28 @@ struct StatisticsKernel
       subRegionAvgTempNumerator += uncompactedPoreVol * temp[ei];
       subRegionMaxTemp.max( temp[ei] );
       subRegionTotalUncompactedPoreVol += uncompactedPoreVol;
-      for( integer ip = 0; ip < numPhases; ++ip )
-      {
-        real64 const elemPhaseVolume = dynamicPoreVol * phaseVolFrac[ei][ip];
-        real64 const elemPhaseMass = phaseDensity[ei][0][ip] * elemPhaseVolume;
-        real64 const elemTrappedPhaseMass = phaseDensity[ei][0][ip] * dynamicPoreVol * phaseTrappedVolFrac[ei][0][ip];
-        // RAJA::atomicAdd used here because we do not use ReduceSum here (for the reason explained above)
-        RAJA::atomicAdd( parallelDeviceAtomic{}, &phaseDynamicPoreVol[ip], elemPhaseVolume );
-        RAJA::atomicAdd( parallelDeviceAtomic{}, &phaseMass[ip], elemPhaseMass );
-        RAJA::atomicAdd( parallelDeviceAtomic{}, &trappedPhaseMass[ip], elemTrappedPhaseMass );
-        if( phaseRelperm[ei][0][ip] < relpermThreshold )
-        {
-          RAJA::atomicAdd( parallelDeviceAtomic{}, &immobilePhaseMass[ip], elemPhaseMass );
+        for (int dir = 0; dir < 3; ++dir) {
+
+
+            for (integer ip = 0; ip < numPhases; ++ip) {
+                real64 const elemPhaseVolume = dynamicPoreVol * phaseVolFrac[ei][ip];
+                real64 const elemPhaseMass = phaseDensity[ei][0][ip] * elemPhaseVolume;
+                real64 const elemTrappedPhaseMass =
+                        phaseDensity[ei][0][ip] * dynamicPoreVol * phaseTrappedVolFrac[ei][0][ip];
+                // RAJA::atomicAdd used here because we do not use ReduceSum here (for the reason explained above)
+                RAJA::atomicAdd(parallelDeviceAtomic{}, &phaseDynamicPoreVol[ip], elemPhaseVolume);
+                RAJA::atomicAdd(parallelDeviceAtomic{}, &phaseMass[ip], elemPhaseMass);
+                RAJA::atomicAdd(parallelDeviceAtomic{}, &trappedPhaseMass[ip], elemTrappedPhaseMass);
+                if (phaseRelperm[ei][0][ip][dir] < relpermThreshold) {
+                    RAJA::atomicAdd(parallelDeviceAtomic{}, &immobilePhaseMass[ip], elemPhaseMass);
+                }
+                for (integer ic = 0; ic < numComps; ++ic) {
+                    // RAJA::atomicAdd used here because we do not use ReduceSum here (for the reason explained above)
+                    RAJA::atomicAdd(parallelDeviceAtomic{}, &dissolvedComponentMass[ip][ic],
+                                    phaseCompFraction[ei][0][ip][ic] * elemPhaseMass);
+                }
+            }
         }
-        for( integer ic = 0; ic < numComps; ++ic )
-        {
-          // RAJA::atomicAdd used here because we do not use ReduceSum here (for the reason explained above)
-          RAJA::atomicAdd( parallelDeviceAtomic{}, &dissolvedComponentMass[ip][ic], phaseCompFraction[ei][0][ip][ic] * elemPhaseMass );
-        }
-      }
 
     } );
 
