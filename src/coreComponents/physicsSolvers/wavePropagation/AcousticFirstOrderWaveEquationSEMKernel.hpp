@@ -354,15 +354,15 @@ struct ComputeTimeStep
 
     array1d< real32 > const p( sizeNode );
     array1d< real32 > const pAux( sizeNode );
-    array2d< real32 > const ux(sizeElem,sizeNode);
-    array2d< real32 > const uy(sizeElem,sizeNode);
-    array2d< real32 > const uz(sizeElem,sizeNode);
+    array2d< real32 > const ux(sizeElem,numNodesPerElem);
+    array2d< real32 > const uy(sizeElem,numNodesPerElem);
+    array2d< real32 > const uz(sizeElem,numNodesPerElem);
 
     arrayView1d< real32 > const pView = p;
     arrayView1d< real32 > const pAuxView = pAux;
     arrayView2d< real32 > const uxView = ux;
     arrayView2d< real32 > const uyView = uy;
-    arrayView2d< real32 > const uzView = uy;
+    arrayView2d< real32 > const uzView = uz;
 
 
     //Randomize p values
@@ -393,9 +393,6 @@ struct ComputeTimeStep
         }
       }
 
-      real32 uelemx[numNodesPerElem] = {0.0};
-      real32 uelemy[numNodesPerElem] = {0.0};
-      real32 uelemz[numNodesPerElem] = {0.0};
       real32 flowx[numNodesPerElem] = {0.0};
       real32 flowy[numNodesPerElem] = {0.0};
       real32 flowz[numNodesPerElem] = {0.0};
@@ -403,21 +400,21 @@ struct ComputeTimeStep
       for( localIndex q=0; q<numQuadraturePointsPerElem; ++q )
       {
 
-        m_finiteElement.template computeFirstOrderStiffnessTermX( q, xLocal, [&] ( int i, int j, real32 dfx1, real32 dfx2, real32 dfx3 )
+        m_finiteElement.computeFirstOrderStiffnessTermX( q, xLocal, [&] ( int i, int j, real32 dfx1, real32 dfx2, real32 dfx3 )
         {
           flowx[j] += dfx1*pView[elemsToNodes[k][i]];
           flowy[j] += dfx2*pView[elemsToNodes[k][i]];
           flowz[j] += dfx3*pView[elemsToNodes[k][i]];
         } );
 
-        m_finiteElement.template computeFirstOrderStiffnessTermY( q, xLocal, [&] ( int i, int j, real32 dfy1, real32 dfy2, real32 dfy3 )
+        m_finiteElement.computeFirstOrderStiffnessTermY( q, xLocal, [&] ( int i, int j, real32 dfy1, real32 dfy2, real32 dfy3 )
         {
           flowx[j] += dfy1*pView[elemsToNodes[k][i]];
           flowy[j] += dfy2*pView[elemsToNodes[k][i]];
           flowz[j] += dfy3*pView[elemsToNodes[k][i]];
         } );
 
-        m_finiteElement.template computeFirstOrderStiffnessTermZ( q, xLocal, [&] ( int i, int j, real32 dfz1, real32 dfz2, real32 dfz3 )
+        m_finiteElement.computeFirstOrderStiffnessTermZ( q, xLocal, [&] ( int i, int j, real32 dfz1, real32 dfz2, real32 dfz3 )
         {
           flowx[j] += dfz1*pView[elemsToNodes[k][i]];
           flowy[j] += dfz2*pView[elemsToNodes[k][i]];
@@ -430,9 +427,9 @@ struct ComputeTimeStep
       {
         real32 massLoc = m_finiteElement.computeMassTerm( i, xLocal );
 
-        uxView[k][i] = uelemx[i]/(massLoc*density[k]);
-        uyView[k][i] = uelemy[i]/(massLoc*density[k]);
-        uzView[k][i] = uelemz[i]/(massLoc*density[k]);
+        uxView[k][i] = flowx[i]/(massLoc*density[k]);
+        uyView[k][i] = flowy[i]/(massLoc*density[k]);
+        uzView[k][i] = flowz[i]/(massLoc*density[k]);
       }
     } );
 
@@ -461,21 +458,21 @@ struct ComputeTimeStep
       for( localIndex q=0; q<numQuadraturePointsPerElem; ++q )
       {
 
-        m_finiteElement.template computeFirstOrderStiffnessTermX( q, xLocal, [&] ( int i, int j, real32 dfx1, real32 dfx2, real32 dfx3 )
+        m_finiteElement.computeFirstOrderStiffnessTermX( q, xLocal, [&] ( int i, int j, real32 dfx1, real32 dfx2, real32 dfx3 )
         {
           auxx[i] -= dfx1*uxView[k][j];
           auyy[i] -= dfx2*uyView[k][j];
           auzz[i] -= dfx3*uzView[k][j];
         } );
 
-        m_finiteElement.template computeFirstOrderStiffnessTermY( q, xLocal, [&] ( int i, int j, real32 dfy1, real32 dfy2, real32 dfy3 )
+        m_finiteElement.computeFirstOrderStiffnessTermY( q, xLocal, [&] ( int i, int j, real32 dfy1, real32 dfy2, real32 dfy3 )
         {
           auxx[i] -= dfy1*uxView[k][j];
           auyy[i] -= dfy2*uyView[k][j];
           auzz[i] -= dfy3*uzView[k][j];
         } );
 
-        m_finiteElement.template computeFirstOrderStiffnessTermZ( q, xLocal, [&] ( int i, int j, real32 dfz1, real32 dfz2, real32 dfz3 )
+        m_finiteElement.computeFirstOrderStiffnessTermZ( q, xLocal, [&] ( int i, int j, real32 dfz1, real32 dfz2, real32 dfz3 )
         {
           auxx[i] -= dfz1*uxView[k][j];
           auyy[i] -= dfz2*uyView[k][j];
@@ -506,8 +503,6 @@ struct ComputeTimeStep
 
     lambdaNew = dotProductPPaux/normP;
 
-    //lambdaNew = LvArray::tensorOps::AiBi<sizeNode>(p,pAux)/LvArray::tensorOps::AiBi<sizeNode>(pAux,pAux);
-
     real64 normPaux = 0.0;
     WaveSolverUtils::dotProduct( sizeNode, pAuxView, pAuxView, normPaux );
     forAll< EXEC_POLICY >( sizeNode, [=] GEOS_HOST_DEVICE ( localIndex const a )
@@ -531,9 +526,6 @@ struct ComputeTimeStep
           }
         }
   
-        real32 uelemx[numNodesPerElem] = {0.0};
-        real32 uelemy[numNodesPerElem] = {0.0};
-        real32 uelemz[numNodesPerElem] = {0.0};
         real32 flowx[numNodesPerElem] = {0.0};
         real32 flowy[numNodesPerElem] = {0.0};
         real32 flowz[numNodesPerElem] = {0.0};
@@ -541,21 +533,21 @@ struct ComputeTimeStep
         for( localIndex q=0; q<numQuadraturePointsPerElem; ++q )
         {
   
-          m_finiteElement.template computeFirstOrderStiffnessTermX( q, xLocal, [&] ( int i, int j, real32 dfx1, real32 dfx2, real32 dfx3 )
+          m_finiteElement.computeFirstOrderStiffnessTermX( q, xLocal, [&] ( int i, int j, real32 dfx1, real32 dfx2, real32 dfx3 )
           {
             flowx[j] += dfx1*pView[elemsToNodes[k][i]];
             flowy[j] += dfx2*pView[elemsToNodes[k][i]];
             flowz[j] += dfx3*pView[elemsToNodes[k][i]];
           } );
   
-          m_finiteElement.template computeFirstOrderStiffnessTermY( q, xLocal, [&] ( int i, int j, real32 dfy1, real32 dfy2, real32 dfy3 )
+          m_finiteElement.computeFirstOrderStiffnessTermY( q, xLocal, [&] ( int i, int j, real32 dfy1, real32 dfy2, real32 dfy3 )
           {
             flowx[j] += dfy1*pView[elemsToNodes[k][i]];
             flowy[j] += dfy2*pView[elemsToNodes[k][i]];
             flowz[j] += dfy3*pView[elemsToNodes[k][i]];
           } );
   
-          m_finiteElement.template computeFirstOrderStiffnessTermZ( q, xLocal, [&] ( int i, int j, real32 dfz1, real32 dfz2, real32 dfz3 )
+          m_finiteElement.computeFirstOrderStiffnessTermZ( q, xLocal, [&] ( int i, int j, real32 dfz1, real32 dfz2, real32 dfz3 )
           {
             flowx[j] += dfz1*pView[elemsToNodes[k][i]];
             flowy[j] += dfz2*pView[elemsToNodes[k][i]];
@@ -568,9 +560,9 @@ struct ComputeTimeStep
         {
           real32 massLoc = m_finiteElement.computeMassTerm( i, xLocal );
   
-          uxView[k][i] = uelemx[i]/(massLoc*density[k]);
-          uyView[k][i] = uelemy[i]/(massLoc*density[k]);
-          uzView[k][i] = uelemz[i]/(massLoc*density[k]);
+          uxView[k][i] = flowx[i]/(massLoc*density[k]);
+          uyView[k][i] = flowy[i]/(massLoc*density[k]);
+          uzView[k][i] = flowz[i]/(massLoc*density[k]);
         }
       } );
   
@@ -599,21 +591,21 @@ struct ComputeTimeStep
         for( localIndex q=0; q<numQuadraturePointsPerElem; ++q )
         {
   
-          m_finiteElement.template computeFirstOrderStiffnessTermX( q, xLocal, [&] ( int i, int j, real32 dfx1, real32 dfx2, real32 dfx3 )
+          m_finiteElement.computeFirstOrderStiffnessTermX( q, xLocal, [&] ( int i, int j, real32 dfx1, real32 dfx2, real32 dfx3 )
           {
             auxx[i] -= dfx1*uxView[k][j];
             auyy[i] -= dfx2*uyView[k][j];
             auzz[i] -= dfx3*uzView[k][j];
           } );
   
-          m_finiteElement.template computeFirstOrderStiffnessTermY( q, xLocal, [&] ( int i, int j, real32 dfy1, real32 dfy2, real32 dfy3 )
+          m_finiteElement.computeFirstOrderStiffnessTermY( q, xLocal, [&] ( int i, int j, real32 dfy1, real32 dfy2, real32 dfy3 )
           {
             auxx[i] -= dfy1*uxView[k][j];
             auyy[i] -= dfy2*uyView[k][j];
             auzz[i] -= dfy3*uzView[k][j];
           } );
   
-          m_finiteElement.template computeFirstOrderStiffnessTermZ( q, xLocal, [&] ( int i, int j, real32 dfz1, real32 dfz2, real32 dfz3 )
+          m_finiteElement.computeFirstOrderStiffnessTermZ( q, xLocal, [&] ( int i, int j, real32 dfz1, real32 dfz2, real32 dfz3 )
           {
             auxx[i] -= dfz1*uxView[k][j];
             auyy[i] -= dfz2*uyView[k][j];

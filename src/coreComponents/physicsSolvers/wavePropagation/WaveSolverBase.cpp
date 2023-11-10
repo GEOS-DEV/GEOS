@@ -170,7 +170,7 @@ WaveSolverBase::WaveSolverBase( const std::string & name,
     setSizedFromParent( 0 ).
     setDescription( "Flag that indicates whether the receiver is local to this MPI rank" );
 
- registerWrapper( viewKeyStruct::enableLifoString(), &m_preComputeDt ).
+ registerWrapper( viewKeyStruct::preComputeDtString(), &m_preComputeDt ).
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( 0 ).
     setDescription( "Set to 1 to precompute the time-step using the power iteration method " );

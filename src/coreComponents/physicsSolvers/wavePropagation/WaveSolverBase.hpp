@@ -118,7 +118,7 @@ public:
     static constexpr char const * receiverRegionString() { return "receiverRegion"; }
     static constexpr char const * freeSurfaceString() { return "FreeSurface"; }
 
-    static constexpr char const * preComputeDt() { return "preComputeDt"; }
+    static constexpr char const * preComputeDtString() { return "preComputeDt"; }
 
   };
 
