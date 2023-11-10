@@ -290,7 +290,7 @@ void AcousticVTIDensityWaveEquationSEM::initializePostInitialConditionsPreSubGro
                                                                nodeCoords,
                                                                elemsToNodes,
                                                                velocity,
-							       density,
+                                                               density,
                                                                mass );
 
         acousticVTIDensityWaveEquationSEMKernels::DampingMatrixKernel< FE_TYPE > kernelD( finiteElement );
@@ -304,7 +304,7 @@ void AcousticVTIDensityWaveEquationSEM::initializePostInitialConditionsPreSubGro
                                                                lateralSurfaceFaceIndicator,
                                                                bottomSurfaceFaceIndicator,
                                                                velocity,
-							       density,
+                                                               density,
                                                                vti_epsilon,
                                                                vti_delta,
                                                                damping_p,
