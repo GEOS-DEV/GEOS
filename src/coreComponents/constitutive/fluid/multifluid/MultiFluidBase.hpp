@@ -204,7 +204,8 @@ public:
     static constexpr char const * checkPVTTablesRangesString() { return "checkPVTTablesRanges"; }
   };
 
-protected:
+
+public:
 
   using PhaseProp = MultiFluidVar< real64, 3, multifluid::LAYOUT_PHASE, multifluid::LAYOUT_PHASE_DC >;
   using PhaseComp = MultiFluidVar< real64, 4, multifluid::LAYOUT_PHASE_COMP, multifluid::LAYOUT_PHASE_COMP_DC >;
