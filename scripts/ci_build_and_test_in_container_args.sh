@@ -1,5 +1,6 @@
 #!/bin/bash
-set -euo pipefail
+# set -euo pipefail
+set -eo pipefail
 
 printenv
 
@@ -38,7 +39,7 @@ Usage: $0
   [ --run-integrated-tests ]
   [ --test-code-style ]
   [ --test-documentation ]
-  [ --use-sccache (true|false) ]
+  [ --use-sccache ... ]
   [ -h | --help ]
 EOF
 exit 1
@@ -62,7 +63,8 @@ GEOSX_INSTALL_SCHEMA=true
 HOST_CONFIG="host-configs/environment.cmake"
 RUN_UNIT_TESTS=true
 RUN_INTEGRATED_TESTS=false
-USE_SCCACHE=true
+# USE_SCCACHE=true
+# SCCACHE=""
 TEST_CODE_STYLE=false
 TEST_DOCUMENTATION=false
 
@@ -76,7 +78,7 @@ do
     --install-dir)          GEOSX_DIR=$2;               shift 2;;
     --no-install-schema)    GEOSX_INSTALL_SCHEMA=false; shift;;
     --no-run-unit-tests)    RUN_UNIT_TESTS=false;       shift;;
-    --use-sccache)          USE_SCCACHE=$2;             shift 2;;
+    --use-sccache)          SCCACHE_CREDS=$2;           shift 2;;
     --run-integrated-tests) RUN_INTEGRATED_TESTS=true;  shift;;
     --test-code-style)      TEST_CODE_STYLE=true;       shift;;
     --test-documentation)   TEST_DOCUMENTATION=true;    shift;;
@@ -92,39 +94,52 @@ done
 #   usage
 # fi
 
-# if [[ -z "${CMAKE_BUILD_TYPE}" ]]; then
-#   echo "Variable \"CMAKE_BUILD_TYPE\" is undefined or empty. Define it using '--cmake-build-type'."
-#   exit 1
-# fi
+# TODO duplicated with the outside.
+GEOS_SRC_DIR=/tmp/geos
 
-# if [[ -z "${GEOSX_DIR}" ]]; then
-#   echo "Variable \"GEOSX_DIR\" is undefined or empty. Define it using '--install-dir'."
-#   exit 1
-# fi
-
-SCCACHE_CMAKE_PARAMETERS=""
-if [[ "${USE_SCCACHE}" = true ]]; then
+# SCCACHE_CMAKE_ARGS=""
+if [[ ! -z "${SCCACHE_CREDS}" ]]; then
   mkdir -p ${HOME}/.config/sccache
   cat <<EOT >> ${HOME}/.config/sccache/config
 [cache.gcs]
 rw_mode = "READ_WRITE"
-cred_path = "/opt/gcs/credentials.json"
+cred_path = "${GEOS_SRC_DIR}/${SCCACHE_CREDS}"
 bucket = "geos-dev"
 key_prefix = "sccache"
 EOT
 
-  SCCACHE_CMAKE_PARAMETERS="-DCMAKE_CXX_COMPILER_LAUNCHER=${SCCACHE} -DCMAKE_CUDA_COMPILER_LAUNCHER=${SCCACHE}"
+  cat ${HOME}/.config/sccache/config
+
+  SCCACHE_CMAKE_ARGS="-DCMAKE_CXX_COMPILER_LAUNCHER=${SCCACHE} -DCMAKE_CUDA_COMPILER_LAUNCHER=${SCCACHE}"
 
   echo "sccache initial state"
   ${SCCACHE} --show-stats
 fi
 
-ATS_ARGUMENTS=""
+# SCCACHE_CMAKE_ARGS=""
+# if [[ "${USE_SCCACHE}" = true ]]; then
+#   mkdir -p ${HOME}/.config/sccache
+#   cat <<EOT >> ${HOME}/.config/sccache/config
+# [cache.gcs]
+# rw_mode = "READ_WRITE"
+# cred_path = "/opt/gcs/credentials.json"
+# bucket = "geos-dev"
+# key_prefix = "sccache"
+# EOT
+
+#   SCCACHE_CMAKE_ARGS="-DCMAKE_CXX_COMPILER_LAUNCHER=${SCCACHE} -DCMAKE_CUDA_COMPILER_LAUNCHER=${SCCACHE}"
+
+#   echo "sccache initial state"
+#   ${SCCACHE} --show-stats
+# fi
+
+# ATS_CMAKE_ARGS=""
 if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
   echo "We should be running the integrated tests."
   apt-get install -y virtualenv python3-dev python-is-python3
-  virtualenv /tmp/run_integrated_tests_virtualenv
-  ATS_ARGUMENTS="-DATS_ARGUMENTS=\"--machine openmpi --ats openmpi_mpirun=/usr/bin/mpirun --ats openmpi_args=--allow-run-as-root --ats openmpi_procspernode=2 --ats openmpi_maxprocs=2\" -DPython3_ROOT_DIR=/tmp/run_integrated_tests_virtualenv"
+  ATS_PYTHON_HOME=/tmp/run_integrated_tests_virtualenv
+  virtualenv ${ATS_PYTHON_HOME}
+  ATS_CMAKE_ARGS="-DATS_ARGUMENTS=\"--machine openmpi --ats openmpi_mpirun=/usr/bin/mpirun --ats openmpi_args=--allow-run-as-root --ats openmpi_procspernode=2 --ats openmpi_maxprocs=2\" -DPython3_ROOT_DIR=${ATS_PYTHON_HOME}"
 fi
 
 # The -DBLT_MPI_COMMAND_APPEND="--allow-run-as-root;--oversubscribe" option is added for OpenMPI.
@@ -148,7 +163,9 @@ or_die python3 scripts/config-build.py \
                -ip ${GEOSX_DIR} \
                --ninja \
                -DBLT_MPI_COMMAND_APPEND='"--allow-run-as-root;--oversubscribe"' \
-               -DGEOSX_INSTALL_SCHEMA=${GEOSX_INSTALL_SCHEMA} ${SCCACHE_CMAKE_PARAMETERS} ${ATS_ARGUMENTS}
+               -DGEOSX_INSTALL_SCHEMA=${GEOSX_INSTALL_SCHEMA} \
+               ${SCCACHE_CMAKE_ARGS} \
+               ${ATS_CMAKE_ARGS}
 
 or_die cd ${GEOSX_BUILD_DIR}
 
@@ -193,7 +210,8 @@ if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
   echo "The return code is ${exit_status}"
 fi
 
-if [[ "${USE_SCCACHE}" = true ]]; then
+# if [[ "${USE_SCCACHE}" = true ]]; then
+if [[ ! -z "${SCCACHE_CREDS}" ]]; then
   echo "sccache final state"
   ${SCCACHE} --show-stats
 fi

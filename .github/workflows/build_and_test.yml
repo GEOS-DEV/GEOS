@@ -130,20 +130,20 @@ jobs:
       if: ${{ inputs.build_type == 'integrated_tests' }}
       run: |
         if ${{ inputs.USE_SCCACHE }} == 'true'; then
-          SCCACHE_CRED=$(basename ${GOOGLE_GHA_CREDS_PATH})
-          echo ${SCCACHE_CRED}
+          SCCACHE_CLI="--use-sccache $(basename ${GOOGLE_GHA_CREDS_PATH})"
+          echo ${SCCACHE_CLI}
         fi
-        echo "again for fun"
-        SCCACHE_CRED=$(basename ${GOOGLE_GHA_CREDS_PATH})
-        echo ${SCCACHE_CRED}
+        # echo "again for fun"
+        # SCCACHE_CLI="--use-sccache $(basename ${GOOGLE_GHA_CREDS_PATH})"
+        # echo ${SCCACHE_CLI}
         HOST_CONFIG=${{ inputs.HOST_CONFIG }}
         ./scripts/ci_build_and_test.sh \
           --docker-repository ${{ inputs.DOCKER_REPOSITORY }} \
           --docker-tag ${{ inputs.DOCKER_IMAGE_TAG }} \
-          --use-sccache ${{ inputs.USE_SCCACHE }} \
           -- \
           --cmake-build-type ${{ inputs.CMAKE_BUILD_TYPE }} \
           ${HOST_CONFIG:+"--host-config ${HOST_CONFIG}"} \
+          ${SCCACHE_CLI} \
           ${{ inputs.BUILD_AND_TEST_ARGS }}
         #
         TMP_DIR=/tmp
