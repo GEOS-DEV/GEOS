@@ -1,5 +1,6 @@
 #!/bin/bash
-env
+
+printenv
 
 echo "Running CLI $0 $@"
 
@@ -53,8 +54,8 @@ SCCACHE_VOLUME_MOUNT=""
 if [ ${USE_SCCACHE} = true ]; then
   echo "Creating the configuration file for sccache..."
   echo "File path is ${GOOGLE_GHA_CREDS_PATH}"
-  echo "GITHUB_WORSPACE is ${GITHUB_WORSPACE}"
-  ls /home/runner/work/GEOS/GEOS
+  echo "GITHUB_WORKSPACE is ${GITHUB_WORKSPACE}"
+  ls /home/runner/work/GEOS/GEOS  # -> it's the root of the repository
   mkdir -p /opt/gcs
   cp -rp ${GOOGLE_GHA_CREDS_PATH} /opt/gcs/credentials.json
   SCCACHE_VOLUME_MOUNT="--volume=/opt/gcs:/opt/gcs"

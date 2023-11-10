@@ -85,30 +85,30 @@ jobs:
     - name: Build and test
       if: ${{ inputs.build_type == 'build' && !(inputs.GCP_BUCKET) }}
       run: |
-        HC=${{ inputs.HOST_CONFIG }}
+        HOST_CONFIG=${{ inputs.HOST_CONFIG }}
         ./scripts/ci_build_and_test.sh \
           --docker-repository ${{ inputs.DOCKER_REPOSITORY }} \
           --docker-tag ${{ inputs.DOCKER_IMAGE_TAG }} \
           --use-sccache ${{ inputs.USE_SCCACHE }} \
           -- \
           --cmake-build-type ${{ inputs.CMAKE_BUILD_TYPE }} \
-          ${HC:+"--host-config ${HC}"} \
+          ${HOST_CONFIG:+"--host-config ${HOST_CONFIG}"} \
           ${{ inputs.BUILD_AND_TEST_ARGS }}
 
     # Build, test, uploads geos and its TPL to GCP/GCS using gcloud CLI
     - name: Build and test and deploy
       if: ${{ inputs.build_type == 'build' && inputs.GCP_BUCKET }}
       run: |
-        HC=${{ inputs.HOST_CONFIG }}
-        # `source' command doesn't work with process substitution in bash, so we use an extra variable `HC_CLI'.
-        HC_CLI=${HC:+"--host-config ${HC}"}
+        HOST_CONFIG=${{ inputs.HOST_CONFIG }}
+        # `source' command doesn't work with process substitution in bash, so we use an extra variable `HOST_CONFIG_CLI'.
+        HOST_CONFIG_CLI=${HOST_CONFIG:+"--host-config ${HOST_CONFIG}"}
         source ./scripts/ci_build_and_test.sh \
           --docker-repository ${{ inputs.DOCKER_REPOSITORY }} \
           --docker-tag ${{ inputs.DOCKER_IMAGE_TAG }} \
           --use-sccache ${{ inputs.USE_SCCACHE }} \
           -- \
           --cmake-build-type ${{ inputs.CMAKE_BUILD_TYPE }} \
-          ${HC_CLI} \
+          ${HOST_CONFIG_CLI} \
           ${{ inputs.BUILD_AND_TEST_ARGS }}
         TMP_DIR=/tmp
         COMMIT=${{ inputs.COMMIT }}
@@ -129,14 +129,21 @@ jobs:
     - name: Run integrated tests
       if: ${{ inputs.build_type == 'integrated_tests' }}
       run: |
-        HC=${{ inputs.HOST_CONFIG }}
+        if ${{ inputs.USE_SCCACHE }} == 'true'; then
+          SCCACHE_CRED=$(basename ${GOOGLE_GHA_CREDS_PATH})
+          echo ${SCCACHE_CRED}
+        fi
+        echo "again for fun"
+        SCCACHE_CRED=$(basename ${GOOGLE_GHA_CREDS_PATH})
+        echo ${SCCACHE_CRED}
+        HOST_CONFIG=${{ inputs.HOST_CONFIG }}
         ./scripts/ci_build_and_test.sh \
           --docker-repository ${{ inputs.DOCKER_REPOSITORY }} \
           --docker-tag ${{ inputs.DOCKER_IMAGE_TAG }} \
           --use-sccache ${{ inputs.USE_SCCACHE }} \
           -- \
           --cmake-build-type ${{ inputs.CMAKE_BUILD_TYPE }} \
-          ${HC:+"--host-config ${HC}"} \
+          ${HOST_CONFIG:+"--host-config ${HOST_CONFIG}"} \
           ${{ inputs.BUILD_AND_TEST_ARGS }}
         #
         TMP_DIR=/tmp
@@ -150,3 +157,9 @@ jobs:
         CLOUDSDK_PYTHON=python3 gsutil cp -a public-read ${GEOS_BUNDLE} gs://${{ inputs.GCP_BUCKET }}/
         #
         exit ${exit_status}
+
+
+
+# utiliser if: ${{ success() && inputs.build_type == 'build' }}
+# utiliser if: ${{ inputs.build_type == 'integrated_tests' }}
+

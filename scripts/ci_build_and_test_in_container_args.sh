@@ -1,7 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 
-env
+printenv
 
 echo "Running CLI $0 $@"
 
@@ -10,6 +10,9 @@ nproc
 
 echo "running free -m"
 free -m
+
+echo "ls /tmp/geos"
+ls /tmp/geos
 
 # The or_die function run the passed command line and
 # exits the program in case of non zero error code
@@ -184,7 +187,8 @@ if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
   # ninja --verbose ats_run
   cat /tmp/build/integratedTests/geos_ats.sh
   # integratedTests/geos_ats.sh --failIfTestsFail
-  integratedTests/geos_ats.sh
+  # integratedTests/geos_ats.sh
+  /tmp/build/bin/run_geos_ats /tmp/build/bin --workingDir /tmp/geos/integratedTests/tests/allTests/simplePDE --logs /tmp/build/integratedTests/TestResults --ats openmpi_mpirun=/usr/bin/mpirun --ats openmpi_args=--allow-run-as-root --ats openmpi_procspernode=2 --ats openmpi_maxprocs=2 --machine openmpi
   exit_status=$?
   echo "The return code is ${exit_status}"
 fi
