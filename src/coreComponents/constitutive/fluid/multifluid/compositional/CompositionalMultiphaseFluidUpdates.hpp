@@ -134,16 +134,7 @@ CompositionalMultiphaseFluidUpdates( compositional::ComponentProperties const & 
   m_phase1( phase1.createKernelWrapper() ),
   m_phase2( phase2.createKernelWrapper() ),
   m_phase3( phase3.createKernelWrapper() )
-{
-  std::cout << "Sizes:\n"
-            << "this: " << sizeof(CompositionalMultiphaseFluidUpdates) << "\n"
-            << "props: " << sizeof(compositional::ComponentProperties::KernelWrapper) << "\n"
-            << "flash: " << sizeof(typename FLASH::KernelWrapper) << "\n"
-            << "phase1: " << sizeof(typename PHASE1::KernelWrapper) << "\n"
-            << "phase2: " << sizeof(typename PHASE2::KernelWrapper) << "\n"
-            << "phase3: " << sizeof(typename PHASE3::KernelWrapper) << "\n"
-            << std::endl;
-}
+{}
 
 template< typename FLASH, typename PHASE1, typename PHASE2, typename PHASE3 >
 GEOS_HOST_DEVICE

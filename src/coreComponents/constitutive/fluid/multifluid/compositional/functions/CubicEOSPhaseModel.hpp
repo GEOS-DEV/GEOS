@@ -629,8 +629,8 @@ solveCubicPolynomial( real64 const & m3,
     real64 const theta = acos( r / sqrt( qCubed ) );
     real64 const qSqrt = sqrt( q );
     roots[0] = -2 * qSqrt * cos( theta / 3 ) - a1 / 3;
-    roots[1] = -2 * qSqrt * cos( ( theta + 2 * MultiFluidConstants::pi ) / 3 ) - a1 / 3;
-    roots[2] = -2 * qSqrt * cos( ( theta + 4 * MultiFluidConstants::pi ) / 3 ) - a1 / 3;
+    roots[1] = -2 * qSqrt * cos( ( theta + 2 * constants::pi ) / 3 ) - a1 / 3;
+    roots[2] = -2 * qSqrt * cos( ( theta + 4 * constants::pi ) / 3 ) - a1 / 3;
     numRoots = 3;
   }
   // one real root

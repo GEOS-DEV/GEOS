@@ -16,8 +16,8 @@
  * @file PhysicsConstants.hpp
  * @brief Regroups useful constants that are globally used for math and physics computations.
  */
-#ifndef GEOS_MATH_PHYSICSCONSTANTS_HPP_
-#define GEOS_MATH_PHYSICSCONSTANTS_HPP_
+#ifndef GEOS_COMMON_PHYSICSCONSTANTS_HPP_
+#define GEOS_COMMON_PHYSICSCONSTANTS_HPP_
 
 namespace geos
 {
@@ -25,15 +25,23 @@ namespace geos
 namespace constants
 {
 
-
 /**
  * @brief Zero degree Celsius in Kelvin
  */
 constexpr double zeroDegreesCelsiusInKelvin = 273.15;
 
+/**
+* @brief Shorthand for pi
+*/
+constexpr double pi = 3.141592653589793238;
+
+/**
+* @brief Universal gas constant
+*/
+constexpr double gasConstant = 8.31446261815324;
 
 } // end namespace constants
 
 } // end namespace geos
 
-#endif //GEOS_MATH_PHYSICSCONSTANTS_HPP_
+#endif //GEOS_COMMON_PHYSICSCONSTANTS_HPP_
