@@ -125,7 +125,7 @@
       objectPath="ElementRegions"
       fieldName="rockPerm_permeability"
       scale="1e-15"
-      functionName="permxFunc"/>
+      valuesFile="tables_FieldCaseTuto/perm.geos"/>
 
     <FieldSpecification
       name="permy"
@@ -135,7 +135,7 @@
       objectPath="ElementRegions"
       fieldName="rockPerm_permeability"
       scale="1e-15"
-      functionName="permyFunc"/>
+      valuesFile="tables_FieldCaseTuto/perm.geos"/>
 
     <FieldSpecification
       name="permz"
@@ -145,7 +145,7 @@
       objectPath="ElementRegions"
       fieldName="rockPerm_permeability"
       scale="3e-15"
-      functionName="permzFunc"/>
+      valuesFile="tables_FieldCaseTuto/perm.geos"/>
 
     <FieldSpecification
       name="initialPressure"

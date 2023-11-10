@@ -17,6 +17,7 @@
 #include "common/MpiWrapper.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
 #include "mesh/DomainPartition.hpp"
+#include "codingUtilities/Parsing.hpp"
 
 
 namespace geos
@@ -54,6 +55,11 @@ FieldSpecificationBase::FieldSpecificationBase( string const & name, Group * par
   registerWrapper( viewKeyStruct::functionNameString(), &m_functionName ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Name of function that specifies variation of the boundary condition." );
+
+  registerWrapper( viewKeyStruct::valuesFileString(), &m_valuesFile ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setDescription( "Values file name for the field." );
 
   registerWrapper( viewKeyStruct::bcApplicationTableNameString(), &m_bcApplicationFunctionName ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -108,7 +114,18 @@ void FieldSpecificationBase::setMeshObjectPath( Group const & meshBodies )
   }
 }
 
-
+void FieldSpecificationBase::readFile( string const & filename, array1d< real64 > & target ) const
+{
+  auto const skipped = []( char const c ){ return std::isspace( c ) || c == ','; };
+  try
+  {
+    geos::parseFile( filename, target, skipped );
+  }
+  catch( std::runtime_error const & e )
+  {
+    GEOS_THROW( GEOS_FMT( "{} {}: {}", catalogName(), getDataContext(), e.what() ), InputError );
+  }
+}
 
 REGISTER_CATALOG_ENTRY( FieldSpecificationBase, FieldSpecificationBase, string const &, Group * const )
 

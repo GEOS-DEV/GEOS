@@ -386,6 +386,8 @@ public:
     constexpr static char const * scaleString() { return "scale"; }
     /// @return The key for functionName
     constexpr static char const * functionNameString() { return "functionName"; }
+    /// @return Key for name of file containing field values
+    static constexpr char const * valuesFileString() { return "valuesFile"; }
     /// @return The key for initialCondition
     constexpr static char const * initialConditionString() { return "initialCondition"; }
     /// @return The key for beginTime
@@ -550,6 +552,7 @@ public:
 
 protected:
 
+  void readFile( string const & filename, array1d< real64 > & target ) const;
 
 private:
 
@@ -579,6 +582,9 @@ private:
   /// The name of the function used to generate values for application.
   string m_functionName;
 
+  /// The name of the file containing values for application.
+  string m_valuesFile;
+
   /// The scale factor to use on the value of the boundary condition.
   real64 m_scale;
 
@@ -603,13 +609,31 @@ void FieldSpecificationBase::applyFieldValueKernel( ArrayView< T, N, USD > const
   integer const component = getComponent();
   FunctionManager & functionManager = FunctionManager::getInstance();
 
-  if( m_functionName.empty() )
+  if( m_functionName.empty() && m_valuesFile.empty() )
   {
     real64 const value = m_scale;
     forAll< POLICY >( targetSet.size(), [=] GEOS_HOST_DEVICE ( localIndex const i )
     {
       localIndex const a = targetSet[ i ];
       FIELD_OP::SpecifyFieldValue( field, a, component, value );
+    } );
+  }
+  else if( m_functionName.empty() )
+  {
+    array1d< real64 > values;
+    readFile( m_valuesFile, values );
+    GEOS_ERROR_IF( values.size() < targetSet.size(),
+                     GEOS_FMT( "{}: number of values = {} from file {} is less than the number of targets = {}",
+                               getWrapperDataContext( viewKeyStruct::valuesFileString() ),
+                               values.size(), m_valuesFile, targetSet.size() ) );
+    GEOS_WARNING_IF( values.size() != targetSet.size(),
+                     GEOS_FMT( "{}: number of values = {} read from file {} does not match the number of targets = {}",
+                               getWrapperDataContext( viewKeyStruct::valuesFileString() ),
+                               values.size(), m_valuesFile, targetSet.size() ) );
+    forAll< POLICY >( targetSet.size(), [=] GEOS_HOST_DEVICE ( localIndex const i )
+    {
+      localIndex const a = targetSet[ i ];
+      FIELD_OP::SpecifyFieldValue( field, a, component, m_scale * values[i] );
     } );
   }
   else
