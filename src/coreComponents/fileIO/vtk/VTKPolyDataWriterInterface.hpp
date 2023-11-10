@@ -31,9 +31,11 @@ namespace geos
 
 class DomainPartition;
 class ElementRegionBase;
+class ParticleRegionBase;
 class EmbeddedSurfaceNodeManager;
 class ElementRegionManager;
 class NodeManager;
+class ParticleManager;
 
 namespace vtk
 {
@@ -49,6 +51,7 @@ enum struct VTKRegionTypes
   CELL,
   WELL,
   SURFACE,
+  PARTICLE,
   ALL
 };
 
@@ -62,6 +65,7 @@ ENUM_STRINGS( VTKRegionTypes,
               "cell",
               "well",
               "surface",
+              "particle",
               "all" );
 
 /**
@@ -219,6 +223,10 @@ private:
                                 NodeManager const & nodeManager,
                                 string const & path ) const;
 
+  void writeParticleRegions( real64 const time,
+                             ParticleManager const & particleManager,
+                             string const & path ) const;
+
   /**
    * @brief Writes the files containing the well representation
    * @details There will be one file written per WellElementRegion and per rank
@@ -276,6 +284,9 @@ private:
    */
   void writeElementFields( ElementRegionBase const & subRegion,
                            vtkCellData * cellData ) const;
+
+  void writeParticleFields( ParticleRegionBase const & region,
+                            vtkCellData * cellData ) const;
 
   /**
    * @brief Writes an unstructured grid
