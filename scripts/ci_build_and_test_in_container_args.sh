@@ -193,10 +193,10 @@ if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
   exit_status=$?
   echo "The return code is ${exit_status}"
 
-  # TODO check for DATA_EXCHANGE
-  tar czf ${DATA_EXCHANGE}/integratedTests.tar.gz \
-    --directory ${GEOS_SRC_DIR} --transform 's/^integratedTests/repo/' integratedTests \
-    --directory ${GEOSX_BUILD_DIR} --transform 's/^integratedTests/logs/' integratedTests
+  tar czf ${DATA_EXCHANGE}/integratedTests.tar --directory ${GEOS_SRC_DIR} --transform 's/^integratedTests/integratedTests\/repo/' integratedTests
+  tar czf --append --file=${DATA_EXCHANGE}/integratedTests.tar --directory ${GEOSX_BUILD_DIR} --transform 's/^integratedTests/integratedTests\/logs/' integratedTests
+  tar cvzf ${DATA_EXCHANGE}/integratedTests.tar.gz ${DATA_EXCHANGE}/integratedTests.tar
+  rm ${DATA_EXCHANGE}/integratedTests.tar
 fi
 
 if [[ ! -z "${SCCACHE_CREDS}" ]]; then

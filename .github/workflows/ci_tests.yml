@@ -220,7 +220,7 @@ jobs:
     uses: ./.github/workflows/build_and_test.yml
     secrets: inherit
     with:
-      BUILD_AND_TEST_ARGS: --run-integrated-tests
+      BUILD_AND_TEST_ARGS: "--build-exe-only --run-integrated-tests"
       build_type: integrated_tests
       CMAKE_BUILD_TYPE: Release
       COMMIT: ${{ github.event.pull_request.head.sha }}
