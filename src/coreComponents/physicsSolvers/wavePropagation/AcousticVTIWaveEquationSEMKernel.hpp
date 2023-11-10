@@ -308,8 +308,7 @@ struct DampingMatrixKernel
               xLocal[a][d] = nodeCoords( facesToNodes( f, a ), d );
             }
           }
-
-	  real32 vti_f = 1 - (vti_epsilon[e] - vti_delta[e]) / vti_sigma[e];
+          real32 vti_f = 1 - (vti_epsilon[e] - vti_delta[e]) / vti_sigma[e];
           if( lateralSurfaceFaceIndicator[f] == 1 )
           {
             // ABC coefficients
@@ -317,7 +316,7 @@ struct DampingMatrixKernel
             // VTI coefficients
             real32 vti_p_xy = 0;
             real32 vti_q_xy = 0;
-	    real32 vti_qp_xy= 0;
+            real32 vti_qp_xy= 0;
 
             vti_p_xy  = (1+2*vti_epsilon[e]);
             vti_q_xy  = -(vti_f - 1);
@@ -341,7 +340,7 @@ struct DampingMatrixKernel
             real32 alpha = 1.0 / (velocity[e] * sqrt( 1+2*vti_delta[e] ));
             // VTI coefficients
             real32 vti_p_z  = 0;
-	    real32 vti_pq_z = 0;
+            real32 vti_pq_z = 0;
             real32 vti_q_z  = 0;
             vti_p_z  = -(vti_f - 1);
             vti_pq_z = vti_f;
