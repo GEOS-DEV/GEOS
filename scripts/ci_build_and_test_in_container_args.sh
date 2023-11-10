@@ -76,7 +76,7 @@ do
     --host-config)          HOST_CONFIG=$2;             shift 2;;
     --no-install-schema)    GEOSX_INSTALL_SCHEMA=false; shift;;
     --no-run-unit-tests)    RUN_UNIT_TESTS=false;       shift;;
-    --repository)           GEOS_SRC_DIR=true;          shift;;
+    --repository)           GEOS_SRC_DIR=$2;            shift 2;;
     --run-integrated-tests) RUN_INTEGRATED_TESTS=true;  shift;;
     --sccache-credentials)  SCCACHE_CREDS=$2;           shift 2;;
     --test-code-style)      TEST_CODE_STYLE=true;       shift;;
