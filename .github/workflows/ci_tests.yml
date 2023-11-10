@@ -229,6 +229,7 @@ jobs:
       COMMIT: ${{ github.event.pull_request.head.sha }}
       DOCKER_IMAGE_TAG: ${{ needs.is_pull_request_a_draft.outputs.DOCKER_IMAGE_TAG }}
       DOCKER_REPOSITORY: geosx/ubuntu22.04-gcc11
+      GCP_BUCKET: geosx/integratedTests
       RUNS_ON: ubuntu-22.04
 
   # If the 'ci: ready to be merged' PR label is found, the cuda jobs run immediately along side linux jobs.
