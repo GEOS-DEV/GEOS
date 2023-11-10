@@ -229,8 +229,7 @@ void AcousticVTIDensityWaveEquationSEM::initializePostInitialConditionsPreSubGro
 
   DomainPartition & domain = getGroupByPath< DomainPartition >( "/Problem/domain" );
 
-  real64 const time = 0.0;
-  applyFreeSurfaceBC( time, domain );
+  applyFreeSurfaceBC( 0.0, domain );
   precomputeSurfaceFieldIndicator( domain );
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
@@ -316,6 +315,7 @@ void AcousticVTIDensityWaveEquationSEM::initializePostInitialConditionsPreSubGro
     } );
   } );
 
+  WaveSolverUtils::initTrace( "seismoTraceReceiver", getName(), m_receiverConstants.size( 0 ), m_receiverIsLocal );
 }
 
 void AcousticVTIDensityWaveEquationSEM::precomputeSurfaceFieldIndicator( DomainPartition & domain )
@@ -651,8 +651,9 @@ real64 AcousticVTIDensityWaveEquationSEM::explicitStepInternal( real64 const & t
 
     // compute the seismic traces since last step.
     arrayView2d< real32 > const pReceivers   = m_pressureNp1AtReceivers.toView();
-
     computeAllSeismoTraces( time_n, dt, p_np1, p_n, pReceivers );
+
+    incrementIndexSeismoTrace( time_n );
 
     /// prepare next step
     forAll< EXEC_POLICY >( nodeManager.size(), [=] GEOS_HOST_DEVICE ( localIndex const a )
