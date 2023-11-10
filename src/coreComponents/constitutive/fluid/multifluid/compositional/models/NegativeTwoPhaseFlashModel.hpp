@@ -42,17 +42,22 @@ public:
   using PhaseProp = MultiFluidVar< real64, 3, multifluid::LAYOUT_PHASE, multifluid::LAYOUT_PHASE_DC >;
   using PhaseComp = MultiFluidVar< real64, 4, multifluid::LAYOUT_PHASE_COMP, multifluid::LAYOUT_PHASE_COMP_DC >;
 
-  explicit NegativeTwoPhaseFlashModelUpdate( ComponentProperties const & componentProperties );
+  explicit NegativeTwoPhaseFlashModelUpdate( integer const numComponents );
+
+  // Mark as a 2-phase flash
+  GEOS_HOST_DEVICE
+  static constexpr integer getNumberOfPhases() { return 2; }
 
   template< int USD1, int USD2, int USD3 >
   GEOS_HOST_DEVICE
-  void compute( real64 const & pressure,
+  void compute( ComponentProperties::KernelWrapper const & componentProperties,
+                real64 const & pressure,
                 real64 const & temperature,
                 arraySlice1d< real64 const, USD1 > const & compFraction,
                 arraySlice1d< real64, USD2 > const & phaseFraction,
                 arraySlice2d< real64, USD3 > const & phaseCompFraction ) const
   {
-    GEOS_UNUSED_VAR( pressure, temperature );
+    GEOS_UNUSED_VAR( componentProperties, pressure, temperature );
     // TODO: Constant values for now. To be linked with the static function call
     phaseFraction[m_liquidIndex] = 0.5;
     phaseFraction[m_vapourIndex] = 0.5;
@@ -65,13 +70,14 @@ public:
 
   template< int USD1 >
   GEOS_HOST_DEVICE
-  void compute( real64 const & pressure,
+  void compute( ComponentProperties::KernelWrapper const & componentProperties,
+                real64 const & pressure,
                 real64 const & temperature,
                 arraySlice1d< real64 const, USD1 > const & compFraction,
                 PhaseProp::SliceType const phaseFraction,
                 PhaseComp::SliceType const phaseCompFraction ) const
   {
-    GEOS_UNUSED_VAR( pressure, temperature );
+    GEOS_UNUSED_VAR( componentProperties, pressure, temperature );
 
     // TODO: Constant values for now. To be linked with the static function call
     phaseFraction.value[m_liquidIndex] = 0.5;
@@ -106,9 +112,6 @@ public:
     return FunctionType::FLASH;
   }
 
-  // Mark as a 2-phase flash
-  static constexpr integer getNumberOfPhases() { return 2; }
-
   /// Type of kernel wrapper for in-kernel update
   using KernelWrapper = NegativeTwoPhaseFlashModelUpdate< EOS_TYPE_LIQUID, EOS_TYPE_VAPOUR >;
 
@@ -119,12 +122,8 @@ public:
   KernelWrapper createKernelWrapper() const;
 };
 
-using NegativeTwoPhaseFlashPRPR = NegativeTwoPhaseFlashModel<
-  CubicEOSPhaseModel< PengRobinsonEOS >,
-  CubicEOSPhaseModel< PengRobinsonEOS > >;
-using NegativeTwoPhaseFlashSRKSRK = NegativeTwoPhaseFlashModel<
-  CubicEOSPhaseModel< SoaveRedlichKwongEOS >,
-  CubicEOSPhaseModel< SoaveRedlichKwongEOS > >;
+using NegativeTwoPhaseFlashPRPR = NegativeTwoPhaseFlashModel< PengRobinsonEOS, PengRobinsonEOS >;
+using NegativeTwoPhaseFlashSRKSRK = NegativeTwoPhaseFlashModel< SoaveRedlichKwongEOS, SoaveRedlichKwongEOS >;
 
 } // end namespace compositional
 

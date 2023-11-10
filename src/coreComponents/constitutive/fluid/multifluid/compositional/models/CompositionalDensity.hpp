@@ -35,11 +35,12 @@ namespace compositional
 class CompositionalDensityUpdate final : public FunctionBaseUpdate
 {
 public:
-  explicit CompositionalDensityUpdate( ComponentProperties const & componentProperties );
+  CompositionalDensityUpdate() = default;
 
   template< int USD1 >
   GEOS_HOST_DEVICE
-  void compute( real64 const & pressure,
+  void compute( ComponentProperties::KernelWrapper const & componentProperties,
+                real64 const & pressure,
                 real64 const & temperature,
                 arraySlice1d< real64 const, USD1 > const & phaseComposition,
                 real64 & molarDensity,
@@ -48,7 +49,8 @@ public:
 
   template< int USD1, int USD2, int USD3 >
   GEOS_HOST_DEVICE
-  void compute( real64 const & pressure,
+  void compute( ComponentProperties::KernelWrapper const & componentProperties,
+                real64 const & pressure,
                 real64 const & temperature,
                 arraySlice1d< real64 const, USD1 > const & phaseComposition,
                 arraySlice2d< real64 const, USD2 > const & dPhaseComposition,
@@ -62,7 +64,6 @@ public:
 class CompositionalDensity : public FunctionBase
 {
 public:
-
   CompositionalDensity( string const & name,
                         ComponentProperties const & componentProperties );
 
@@ -85,14 +86,15 @@ public:
 
 template< int USD1 >
 GEOS_HOST_DEVICE
-void CompositionalDensityUpdate::compute( real64 const & pressure,
+void CompositionalDensityUpdate::compute( ComponentProperties::KernelWrapper const & componentProperties,
+                                          real64 const & pressure,
                                           real64 const & temperature,
                                           arraySlice1d< real64 const, USD1 > const & phaseComposition,
                                           real64 & molarDensity,
                                           real64 & massDensity,
                                           bool useMass ) const
 {
-  GEOS_UNUSED_VAR( pressure, temperature, useMass );
+  GEOS_UNUSED_VAR( componentProperties, pressure, temperature, useMass );
   GEOS_UNUSED_VAR( phaseComposition );
 
   massDensity = 1000.0;
@@ -101,7 +103,8 @@ void CompositionalDensityUpdate::compute( real64 const & pressure,
 
 template< int USD1, int USD2, int USD3 >
 GEOS_HOST_DEVICE
-void CompositionalDensityUpdate::compute( real64 const & pressure,
+void CompositionalDensityUpdate::compute( ComponentProperties::KernelWrapper const & componentProperties,
+                                          real64 const & pressure,
                                           real64 const & temperature,
                                           arraySlice1d< real64 const, USD1 > const & phaseComposition,
                                           arraySlice2d< real64 const, USD2 > const & dPhaseComposition,
@@ -111,7 +114,7 @@ void CompositionalDensityUpdate::compute( real64 const & pressure,
                                           arraySlice1d< real64, USD3 > const & dMassDensity,
                                           bool useMass ) const
 {
-  GEOS_UNUSED_VAR( pressure, temperature, useMass );
+  GEOS_UNUSED_VAR( componentProperties, pressure, temperature, useMass );
   GEOS_UNUSED_VAR( phaseComposition, dPhaseComposition );
 
   massDensity = 1000.0;

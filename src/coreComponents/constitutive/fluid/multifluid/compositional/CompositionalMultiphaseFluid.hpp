@@ -51,7 +51,7 @@ public:
   using Phase3Model = PHASE3;
 
   // Get the number of phases
-  static constexpr integer NUM_PHASES = FlashModel::getNumberOfPhases();
+  static constexpr integer NUM_PHASES = FlashModel::KernelWrapper::getNumberOfPhases();
   // Currently restrict to 2 or 3 phases
   static_assert( NUM_PHASES == 2 || NUM_PHASES == 3 );
 

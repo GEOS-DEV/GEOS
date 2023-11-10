@@ -27,21 +27,15 @@ namespace constitutive
 namespace compositional
 {
 
-CompositionalDensityUpdate::CompositionalDensityUpdate(
-  ComponentProperties const & componentProperties ):
-  FunctionBaseUpdate( componentProperties )
-{}
-
 CompositionalDensity::CompositionalDensity( string const & name,
                                             ComponentProperties const & componentProperties ):
-  FunctionBase( name,
-                componentProperties )
+  FunctionBase( name, componentProperties )
 {}
 
-typename CompositionalDensity::KernelWrapper
+CompositionalDensity::KernelWrapper
 CompositionalDensity::createKernelWrapper() const
 {
-  return KernelWrapper( m_componentProperties );
+  return KernelWrapper();
 }
 
 } // namespace PVTProps

@@ -29,14 +29,13 @@ namespace compositional
 
 ConstantViscosity::ConstantViscosity( string const & name,
                                       ComponentProperties const & componentProperties ):
-  FunctionBase( name,
-                componentProperties )
+  FunctionBase( name, componentProperties )
 {}
 
 ConstantViscosity::KernelWrapper
 ConstantViscosity::createKernelWrapper() const
 {
-  return KernelWrapper( m_componentProperties );
+  return KernelWrapper( );
 }
 
 } // end namespace compositional
