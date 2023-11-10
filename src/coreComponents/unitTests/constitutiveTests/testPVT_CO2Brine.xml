@@ -5,13 +5,13 @@
     <PVTDriver
       name="testCo2BrinePhillipsMixtureA"
       fluid="co2BrinePhillipsMixture"
-      feedComposition="{ 1.0, 0.0 }"
+      feedComposition="{ 0.1, 0.9 }"
       pressureControl="pressureFunction"
       temperatureControl="temperatureFunction"
       steps="3"
       outputCompressibility="1"
       outputPhaseComposition="1"
-      $FILE="testPVT_CO2Brine_testCo2BrinePhillipsMixtureA.txt"
+      baseline="testPVT_CO2Brine_testCo2BrinePhillipsMixtureA.txt"
       logLevel="1" />
   </Tasks>
 

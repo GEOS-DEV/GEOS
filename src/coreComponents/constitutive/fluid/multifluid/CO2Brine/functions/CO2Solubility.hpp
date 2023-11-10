@@ -305,8 +305,7 @@ CO2SolubilityUpdate::compute( real64 const & pressure,
     // Pressure and temperature derivatives
     for( integer ic = 0; ic < 2; ic++ )
     {
-      y_watDeriv[ic] = watSolubilityDeriv[ic] * (z_co2 - x_co2)
-                       - watSolubility * x_co2Deriv[ic];
+      y_watDeriv[ic] = watSolubilityDeriv[ic] * (z_co2 - x_co2) - watSolubility * x_co2Deriv[ic];
     }
     // Composition derivatives
     y_watDeriv[2+m_CO2Index] = watSolubility*(1.0 - x_co2Deriv[2+m_CO2Index]);
@@ -319,7 +318,7 @@ CO2SolubilityUpdate::compute( real64 const & pressure,
 
   // Liquid and vapour phase fractions
   real64 const L = x_co2 + z_wat - y_wat;
-  real64 const V = y_wat + z_co2 - x_co2; // = 1.0 - L;
+  real64 const V = y_wat + z_co2 - x_co2; // = 1 - L;
 
   if( minForDivision < L && minForDivision < V )
   {
@@ -330,12 +329,12 @@ CO2SolubilityUpdate::compute( real64 const & pressure,
     real64 const dL_dP = x_co2Deriv[0] - y_watDeriv[0];
     real64 const dL_dT = x_co2Deriv[1] - y_watDeriv[1];
     real64 const dL_dzco2 = x_co2Deriv[2+m_CO2Index] - y_watDeriv[2+m_CO2Index];
-    real64 const dL_dzwat = 1.0 + x_co2Deriv[2+m_waterIndex] - y_watDeriv[2+m_waterIndex];
+    real64 const dL_dzwat = x_co2Deriv[2+m_waterIndex] + 1.0 - y_watDeriv[2+m_waterIndex];
 
-    real64 const dV_dP = -dL_dP;
-    real64 const dV_dT = -dL_dT;
-    real64 const dV_dzco2 = -dL_dzco2;
-    real64 const dV_dzwat = -dL_dzwat;
+    real64 const dV_dP = y_watDeriv[0] - x_co2Deriv[0];
+    real64 const dV_dT = y_watDeriv[1] - x_co2Deriv[1];
+    real64 const dV_dzco2 = y_watDeriv[2+m_CO2Index] + 1.0 - x_co2Deriv[2+m_CO2Index];
+    real64 const dV_dzwat = y_watDeriv[2+m_waterIndex] - x_co2Deriv[2+m_waterIndex];
 
     phaseFraction.value[m_phaseLiquidIndex] = L;
 
@@ -397,9 +396,7 @@ CO2SolubilityUpdate::compute( real64 const & pressure,
 
     // 2) Compute phase component fractions
     // Setup default values which will be overridden for the active phase
-    phaseCompFraction.value[m_phaseGasIndex][m_CO2Index]   = 1.0;
-    phaseCompFraction.value[m_phaseGasIndex][m_waterIndex] = 0.0;
-    phaseCompFraction.value[m_phaseLiquidIndex][m_CO2Index]   = 0.0;
+    phaseCompFraction.value[m_phaseGasIndex][m_CO2Index] = 1.0;
     phaseCompFraction.value[m_phaseLiquidIndex][m_waterIndex] = 1.0;
     // Set the global composition as the composition of the active phase
     for( integer ic = 0; ic < numComps; ++ic )

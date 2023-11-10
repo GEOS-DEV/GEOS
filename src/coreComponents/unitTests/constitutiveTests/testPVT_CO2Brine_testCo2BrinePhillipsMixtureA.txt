@@ -1,0 +1,14 @@
+# column 1 = time
+# column 2 = pressure
+# column 3 = temperature
+# column 4 = density
+# column 5 = total compressibility
+# columns 6-7 = phase fractions
+# columns 8-9 = phase densities
+# columns 10-11 = phase viscosities
+# columns 12-13 = gas phase fractions [co2, water]
+# columns 14-15 = water phase fractions [co2, water]
+0.0000e+00 1.0000e+06 3.5000e+02 7.0350e+01 -0.0000e+00 2.0920e-01 7.9080e-01 1.5581e+01 1.0033e+03 1.7476e-05 4.1330e-04 1.0000e+00 0.0000e+00 2.2780e-03 9.9772e-01 
+3.3333e-01 1.7333e+07 3.5000e+02 8.8389e+02 1.8255e-08 1.7472e-01 8.2528e-01 5.3970e+02 1.0219e+03 4.0932e-05 4.1330e-04 1.0000e+00 0.0000e+00 1.9739e-02 9.8026e-01 
+6.6667e-01 3.3667e+07 3.5000e+02 9.8271e+02 2.6836e-09 1.6714e-01 8.3286e-01 7.9054e+02 1.0331e+03 7.0528e-05 4.1330e-04 1.0000e+00 0.0000e+00 2.3484e-02 9.7652e-01 
+1.0000e+00 5.0000e+07 3.5000e+02 1.0141e+03 -0.0000e+00 1.6160e-01 8.3840e-01 8.8476e+02 1.0435e+03 8.8389e-05 4.1330e-04 1.0000e+00 0.0000e+00 2.6197e-02 9.7380e-01 
