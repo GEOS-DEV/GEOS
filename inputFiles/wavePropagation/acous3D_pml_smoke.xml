@@ -189,7 +189,7 @@
       name="cellDensity1"
       initialCondition="1"
       objectPath="ElementRegions/interiorDomain"
-      fieldName="mediumDensity"
+      fieldName="mediumDensityA"
       scale="1"
       setNames="{ all }"/>
 
@@ -206,7 +206,7 @@
       name="cellDensity2"
       initialCondition="1"
       objectPath="ElementRegions/pmlDomain"
-      fieldName="mediumDensity"
+      fieldName="mediumDensityA"
       scale="1"
       setNames="{ all }"/>
 

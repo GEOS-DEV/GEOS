@@ -120,7 +120,7 @@ void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh,
   FaceManager const & faceManager = mesh.getFaceManager();
 
   arrayView2d< wsCoordType const, nodes::REFERENCE_POSITION_USD > const
-  X32 = nodeManager.getField< fields::referencePosition32 >().toViewConst();
+  nodeCoords32 = nodeManager.getField< fields::referencePosition32 >().toViewConst();
 
   arrayView2d< real64 const > const faceNormal  = faceManager.faceNormal();
   arrayView2d< real64 const > const faceCenter  = faceManager.faceCenter();
@@ -180,7 +180,7 @@ void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh,
           launch< EXEC_POLICY, FE_TYPE >
           ( elementSubRegion.size(),
           numFacesPerElem,
-          X32,
+          nodeCoords32,
           elemGhostRank,
           elemsToNodes,
           elemsToFaces,
@@ -431,7 +431,7 @@ void AcousticWaveEquationSEM::initializePML()
     NodeManager & nodeManager = mesh.getNodeManager();
     /// WARNING: the array below is one of the PML auxiliary variables
     arrayView1d< real32 > const indicatorPML = nodeManager.getField< fields::AuxiliaryVar4PML >();
-    arrayView2d< wsCoordType const, nodes::REFERENCE_POSITION_USD > const X32 = nodeManager.getField< fields::referencePosition32 >().toViewConst();
+    arrayView2d< wsCoordType const, nodes::REFERENCE_POSITION_USD > const nodeCoords32 = nodeManager.getField< fields::referencePosition32 >().toViewConst();
     indicatorPML.zero();
 
     real32 xInteriorMin[3]{};
@@ -490,20 +490,20 @@ void AcousticWaveEquationSEM::initializePML()
 
     forAll< EXEC_POLICY >( nodeManager.size(), [=] GEOS_HOST_DEVICE ( localIndex const a )
     {
-      xMinGlobal.min( X32[a][0] );
-      yMinGlobal.min( X32[a][1] );
-      zMinGlobal.min( X32[a][2] );
-      xMaxGlobal.max( X32[a][0] );
-      yMaxGlobal.max( X32[a][1] );
-      zMaxGlobal.max( X32[a][2] );
+      xMinGlobal.min( nodeCoords32[a][0] );
+      yMinGlobal.min( nodeCoords32[a][1] );
+      zMinGlobal.min( nodeCoords32[a][2] );
+      xMaxGlobal.max( nodeCoords32[a][0] );
+      yMaxGlobal.max( nodeCoords32[a][1] );
+      zMaxGlobal.max( nodeCoords32[a][2] );
       if( !isZero( indicatorPML[a] - 1.0 ))
       {
-        xMinInterior.min( X32[a][0] );
-        yMinInterior.min( X32[a][1] );
-        zMinInterior.min( X32[a][2] );
-        xMaxInterior.max( X32[a][0] );
-        yMaxInterior.max( X32[a][1] );
-        zMaxInterior.max( X32[a][2] );
+        xMinInterior.min( nodeCoords32[a][0] );
+        yMinInterior.min( nodeCoords32[a][1] );
+        zMinInterior.min( nodeCoords32[a][2] );
+        xMaxInterior.max( nodeCoords32[a][0] );
+        yMaxInterior.max( nodeCoords32[a][1] );
+        zMaxInterior.max( nodeCoords32[a][2] );
       }
     } );
 
@@ -574,7 +574,7 @@ void AcousticWaveEquationSEM::initializePML()
           waveSpeedPMLKernel< FE_TYPE > kernel( finiteElement );
         kernel.template launch< EXEC_POLICY, ATOMIC_POLICY >
           ( targetSet,
-          X32,
+          nodeCoords32,
           elemToNodesViewConst,
           vel,
           xMin,
@@ -665,7 +665,7 @@ void AcousticWaveEquationSEM::applyPML( real64 const time, DomainPartition & dom
     arrayView2d< real32 > const grad_n = nodeManager.getField< fields::AuxiliaryVar2PML >();
     arrayView1d< real32 > const divV_n = nodeManager.getField< fields::AuxiliaryVar3PML >();
     arrayView1d< real32 const > const u_n = nodeManager.getField< fields::AuxiliaryVar4PML >();
-    arrayView2d< wsCoordType const, nodes::REFERENCE_POSITION_USD > const X32 = nodeManager.getField< fields::referencePosition32 >().toViewConst();
+    arrayView2d< wsCoordType const, nodes::REFERENCE_POSITION_USD > const nodeCoords32 = nodeManager.getField< fields::referencePosition32 >().toViewConst();
 
     /// Select the subregions concerned by the PML (specified in the xml by the Field Specification)
     /// 'targetSet' contains the indices of the elements in a given subregion
@@ -722,7 +722,7 @@ void AcousticWaveEquationSEM::applyPML( real64 const time, DomainPartition & dom
           PMLKernel< FE_TYPE > kernel( finiteElement );
         kernel.template launch< EXEC_POLICY, ATOMIC_POLICY >
           ( targetSet,
-          X32,
+          nodeCoords32,
           elemToNodesViewConst,
           vel,
           p_n,
@@ -999,7 +999,7 @@ void AcousticWaveEquationSEM::computeUnknowns( real64 const & time_n,
     arrayView1d< real32 > const divV_n = nodeManager.getField< fields::AuxiliaryVar3PML >();
     arrayView1d< real32 > const u_n = nodeManager.getField< fields::AuxiliaryVar4PML >();
     arrayView2d< wsCoordType const, nodes::REFERENCE_POSITION_USD > const
-    X32 = nodeManager.getField< fields::referencePosition32 >().toViewConst();
+    nodeCoords32 = nodeManager.getField< fields::referencePosition32 >().toViewConst();
 
     real32 const xMin[ 3 ] = {param.xMinPML[0], param.xMinPML[1], param.xMinPML[2]};
     real32 const xMax[ 3 ] = {param.xMaxPML[0], param.xMaxPML[1], param.xMaxPML[2]};
@@ -1024,7 +1024,7 @@ void AcousticWaveEquationSEM::computeUnknowns( real64 const & time_n,
 
         for( integer i=0; i<3; ++i )
         {
-          xLocal[i] = X32[a][i];
+          xLocal[i] = nodeCoords32[a][i];
         }
 
         acousticWaveEquationSEMKernels::PMLKernelHelper::computeDampingProfilePML(
