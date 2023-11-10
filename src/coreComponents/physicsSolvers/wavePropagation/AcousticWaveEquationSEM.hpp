@@ -46,6 +46,8 @@ public:
   AcousticWaveEquationSEM & operator=( AcousticWaveEquationSEM const & ) = delete;
   AcousticWaveEquationSEM & operator=( AcousticWaveEquationSEM && ) = delete;
 
+  /// String used to form the solverName used to register solvers in CoupledSolver
+  static string coupledSolverAttributePrefix() { return "acoustic"; }
 
   static string catalogName() { return "AcousticSEM"; }
 
@@ -112,6 +114,22 @@ public:
                                real64 const & dt,
                                integer const cycleNumber,
                                DomainPartition & domain );
+
+  void computeUnknowns( real64 const & time_n,
+                        real64 const & dt,
+                        integer const cycleNumber,
+                        DomainPartition & domain,
+                        MeshLevel & mesh,
+                        arrayView1d< string const > const & regionNames );
+
+  void synchronizeUnknowns( real64 const & time_n,
+                            real64 const & dt,
+                            integer const cycleNumber,
+                            DomainPartition & domain,
+                            MeshLevel & mesh,
+                            arrayView1d< string const > const & regionNames );
+
+  void prepareNextTimestep( MeshLevel & mesh );
 
 protected:
 
@@ -183,8 +201,8 @@ DECLARE_FIELD( ForcingRHS,
                WRITE_AND_READ,
                "RHS" );
 
-DECLARE_FIELD( MassVector,
-               "massVector",
+DECLARE_FIELD( MassVectorA,
+               "massVectorA",
                array1d< real32 >,
                0,
                NOPLOT,
@@ -207,8 +225,8 @@ DECLARE_FIELD( MediumVelocity,
                WRITE_AND_READ,
                "Medium velocity of the cell" );
 
-DECLARE_FIELD( MediumDensity,
-               "mediumDensity",
+DECLARE_FIELD( MediumDensityA,
+               "mediumDensityA",
                array1d< real32 >,
                0,
                NOPLOT,
@@ -223,16 +241,16 @@ DECLARE_FIELD( StiffnessVector,
                WRITE_AND_READ,
                "Stiffness vector contains R_h*Pressure_n." );
 
-DECLARE_FIELD( FreeSurfaceFaceIndicator,
-               "freeSurfaceFaceIndicator",
+DECLARE_FIELD( FreeSurfaceFaceIndicatorA,
+               "freeSurfaceFaceIndicatorA",
                array1d< localIndex >,
                0,
                NOPLOT,
                WRITE_AND_READ,
                "Free surface indicator, 1 if a face is on free surface 0 otherwise." );
 
-DECLARE_FIELD( FreeSurfaceNodeIndicator,
-               "freeSurfaceNodeIndicator",
+DECLARE_FIELD( FreeSurfaceNodeIndicatorA,
+               "freeSurfaceNodeIndicatorA",
                array1d< localIndex >,
                0,
                NOPLOT,

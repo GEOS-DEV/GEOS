@@ -425,7 +425,7 @@ public:
     m_stiffnessVectorx( nodeManager.getField< fields::StiffnessVectorx >() ),
     m_stiffnessVectory( nodeManager.getField< fields::StiffnessVectory >() ),
     m_stiffnessVectorz( nodeManager.getField< fields::StiffnessVectorz >() ),
-    m_density( elementSubRegion.template getField< fields::MediumDensity >() ),
+    m_density( elementSubRegion.template getField< fields::MediumDensityE >() ),
     m_velocityVp( elementSubRegion.template getField< fields::MediumVelocityVp >() ),
     m_velocityVs( elementSubRegion.template getField< fields::MediumVelocityVs >() ),
     m_dt( dt )
@@ -508,13 +508,13 @@ public:
       real32 const Ryz_ij = val*(stack.lambda*J[p][1]*J[r][2]+stack.mu*J[p][2]*J[r][1]);
       real32 const Rzy_ij = val*(stack.mu*J[p][1]*J[r][2]+stack.lambda*J[p][2]*J[r][1]);
 
-      real32 const localIncrementx = (Rxx_ij * m_ux_n[m_elemsToNodes[k][j]] + Rxy_ij*m_uy_n[m_elemsToNodes[k][j]] + Rxz_ij*m_uz_n[m_elemsToNodes[k][j]]);
-      real32 const localIncrementy = (Ryx_ij * m_ux_n[m_elemsToNodes[k][j]] + Ryy_ij*m_uy_n[m_elemsToNodes[k][j]] + Ryz_ij*m_uz_n[m_elemsToNodes[k][j]]);
-      real32 const localIncrementz = (Rzx_ij * m_ux_n[m_elemsToNodes[k][j]] + Rzy_ij*m_uy_n[m_elemsToNodes[k][j]] + Rzz_ij*m_uz_n[m_elemsToNodes[k][j]]);
+      real32 const localIncrementx = (Rxx_ij * m_ux_n[m_elemsToNodes( k, j )] + Rxy_ij*m_uy_n[m_elemsToNodes( k, j )] + Rxz_ij*m_uz_n[m_elemsToNodes( k, j )]);
+      real32 const localIncrementy = (Ryx_ij * m_ux_n[m_elemsToNodes( k, j )] + Ryy_ij*m_uy_n[m_elemsToNodes( k, j )] + Ryz_ij*m_uz_n[m_elemsToNodes( k, j )]);
+      real32 const localIncrementz = (Rzx_ij * m_ux_n[m_elemsToNodes( k, j )] + Rzy_ij*m_uy_n[m_elemsToNodes( k, j )] + Rzz_ij*m_uz_n[m_elemsToNodes( k, j )]);
 
-      RAJA::atomicAdd< parallelDeviceAtomic >( &m_stiffnessVectorx[m_elemsToNodes[k][i]], localIncrementx );
-      RAJA::atomicAdd< parallelDeviceAtomic >( &m_stiffnessVectory[m_elemsToNodes[k][i]], localIncrementy );
-      RAJA::atomicAdd< parallelDeviceAtomic >( &m_stiffnessVectorz[m_elemsToNodes[k][i]], localIncrementz );
+      RAJA::atomicAdd< parallelDeviceAtomic >( &m_stiffnessVectorx[m_elemsToNodes( k, i )], localIncrementx );
+      RAJA::atomicAdd< parallelDeviceAtomic >( &m_stiffnessVectory[m_elemsToNodes( k, i )], localIncrementy );
+      RAJA::atomicAdd< parallelDeviceAtomic >( &m_stiffnessVectorz[m_elemsToNodes( k, i )], localIncrementz );
     } );
   }
 
@@ -532,13 +532,13 @@ protected:
   /// The array containing the nodal displacement array in z direction.
   arrayView1d< real32 > const m_uz_n;
 
-  /// The array containing the product of the stiffness matrix and the nodal pressure.
+  /// The array containing the product of the stiffness matrix and the nodal displacement.
   arrayView1d< real32 > const m_stiffnessVectorx;
 
-  /// The array containing the product of the stiffness matrix and the nodal pressure.
+  /// The array containing the product of the stiffness matrix and the nodal displacement.
   arrayView1d< real32 > const m_stiffnessVectory;
 
-  /// The array containing the product of the stiffness matrix and the nodal pressure.
+  /// The array containing the product of the stiffness matrix and the nodal displacement.
   arrayView1d< real32 > const m_stiffnessVectorz;
 
   /// The array containing the density of the medium

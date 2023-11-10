@@ -139,13 +139,11 @@ void ElasticWaveEquationSEM::initializePreSubGroups()
   localIndex const numNodesPerElem = getNumNodesPerElem();
 
   localIndex const numSourcesGlobal = m_sourceCoordinates.size( 0 );
-  m_sourceNodeIds.resize( numSourcesGlobal, numNodesPerElem );
   m_sourceConstantsx.resize( numSourcesGlobal, numNodesPerElem );
   m_sourceConstantsy.resize( numSourcesGlobal, numNodesPerElem );
   m_sourceConstantsz.resize( numSourcesGlobal, numNodesPerElem );
 
   localIndex const numReceiversGlobal = m_receiverCoordinates.size( 0 );
-  m_receiverNodeIds.resize( numReceiversGlobal, numNodesPerElem );
   m_receiverConstants.resize( numReceiversGlobal, numNodesPerElem );
 
 }
@@ -173,17 +171,17 @@ void ElasticWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
                                fields::ForcingRHSx,
                                fields::ForcingRHSy,
                                fields::ForcingRHSz,
-                               fields::MassVector,
+                               fields::MassVectorE,
                                fields::DampingVectorx,
                                fields::DampingVectory,
                                fields::DampingVectorz,
                                fields::StiffnessVectorx,
                                fields::StiffnessVectory,
                                fields::StiffnessVectorz,
-                               fields::FreeSurfaceNodeIndicator >( getName() );
+                               fields::FreeSurfaceNodeIndicatorE >( getName() );
 
     FaceManager & faceManager = mesh.getFaceManager();
-    faceManager.registerField< fields::FreeSurfaceFaceIndicator >( getName() );
+    faceManager.registerField< fields::FreeSurfaceFaceIndicatorE >( getName() );
 
     ElementRegionManager & elemManager = mesh.getElemManager();
 
@@ -191,7 +189,7 @@ void ElasticWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
     {
       subRegion.registerField< fields::MediumVelocityVp >( getName() );
       subRegion.registerField< fields::MediumVelocityVs >( getName() );
-      subRegion.registerField< fields::MediumDensity >( getName() );
+      subRegion.registerField< fields::MediumDensityE >( getName() );
     } );
 
   } );
@@ -228,19 +226,15 @@ void ElasticWaveEquationSEM::postProcessInput()
 
   if( m_dtSeismoTrace > 0 )
   {
-    m_nsamplesSeismoTrace = int( maxTime / m_dtSeismoTrace) + 1;
+    m_nsamplesSeismoTrace = int( maxTime / m_dtSeismoTrace ) + 1;
   }
   else
   {
     m_nsamplesSeismoTrace = 0;
   }
-  localIndex const nsamples = int(maxTime/dt) + 1;
-
-  localIndex const numSourcesGlobal = m_sourceCoordinates.size( 0 );
-  m_sourceIsAccessible.resize( numSourcesGlobal );
-
+  localIndex const nsamples = int( maxTime / dt ) + 1;
   localIndex const numReceiversGlobal = m_receiverCoordinates.size( 0 );
-  m_receiverIsLocal.resize( numReceiversGlobal );
+  localIndex const numSourcesGlobal = m_sourceCoordinates.size( 0 );
 
   m_displacementXNp1AtReceivers.resize( m_nsamplesSeismoTrace, numReceiversGlobal + 1 );
   m_displacementYNp1AtReceivers.resize( m_nsamplesSeismoTrace, numReceiversGlobal + 1 );
@@ -470,8 +464,7 @@ void ElasticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
 
   DomainPartition & domain = getGroupByPath< DomainPartition >( "/Problem/domain" );
 
-  real64 const time = 0.0;
-  applyFreeSurfaceBC( time, domain );
+  applyFreeSurfaceBC( 0.0, domain );
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
@@ -486,7 +479,7 @@ void ElasticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
     arrayView2d< wsCoordType const, nodes::REFERENCE_POSITION_USD > const nodeCoords = nodeManager.getField< fields::referencePosition32 >().toViewConst();
 
     // mass matrix to be computed in this function
-    arrayView1d< real32 > const mass = nodeManager.getField< fields::MassVector >();
+    arrayView1d< real32 > const mass = nodeManager.getField< fields::MassVectorE >();
     mass.zero();
     /// damping matrix to be computed for each dof in the boundary of the mesh
     arrayView1d< real32 > const dampingx = nodeManager.getField< fields::DampingVectorx >();
@@ -497,7 +490,7 @@ void ElasticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
     dampingz.zero();
 
     /// get array of indicators: 1 if face is on the free surface; 0 otherwise
-    arrayView1d< localIndex const > const freeSurfaceFaceIndicator    = faceManager.getField< fields::FreeSurfaceFaceIndicator >();
+    arrayView1d< localIndex const > const freeSurfaceFaceIndicator    = faceManager.getField< fields::FreeSurfaceFaceIndicatorE >();
     arrayView1d< integer const > const & facesDomainBoundaryIndicator = faceManager.getDomainBoundaryIndicator();
     ArrayOfArraysView< localIndex const > const facesToNodes          = faceManager.nodeList().toViewConst();
     arrayView2d< real64 const > const faceNormal                      = faceManager.faceNormal();
@@ -511,7 +504,9 @@ void ElasticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
       arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemsToNodes = elementSubRegion.nodeList();
       arrayView2d< localIndex const > const elemsToFaces = elementSubRegion.faceList();
 
-      arrayView1d< real32 const > const density = elementSubRegion.getField< fields::MediumDensity >();
+      computeTargetNodeSet( elemsToNodes, elementSubRegion.size(), fe.getNumQuadraturePoints() );
+
+      arrayView1d< real32 const > const density = elementSubRegion.getField< fields::MediumDensityE >();
       arrayView1d< real32 const > const velocityVp = elementSubRegion.getField< fields::MediumVelocityVp >();
       arrayView1d< real32 const > const velocityVs = elementSubRegion.getField< fields::MediumVelocityVs >();
 
@@ -570,10 +565,10 @@ void ElasticWaveEquationSEM::applyFreeSurfaceBC( real64 const time, DomainPartit
   ArrayOfArraysView< localIndex const > const faceToNodeMap = faceManager.nodeList().toViewConst();
 
   /// set array of indicators: 1 if a face is on on free surface; 0 otherwise
-  arrayView1d< localIndex > const freeSurfaceFaceIndicator = faceManager.getField< fields::FreeSurfaceFaceIndicator >();
+  arrayView1d< localIndex > const freeSurfaceFaceIndicator = faceManager.getField< fields::FreeSurfaceFaceIndicatorE >();
 
   /// set array of indicators: 1 if a node is on on free surface; 0 otherwise
-  arrayView1d< localIndex > const freeSurfaceNodeIndicator = nodeManager.getField< fields::FreeSurfaceNodeIndicator >();
+  arrayView1d< localIndex > const freeSurfaceNodeIndicator = nodeManager.getField< fields::FreeSurfaceNodeIndicatorE >();
 
 
   fsManager.apply( time,
@@ -646,6 +641,169 @@ real64 ElasticWaveEquationSEM::explicitStepBackward( real64 const & time_n,
   return dtOut;
 }
 
+void ElasticWaveEquationSEM::computeUnknowns( real64 const &,
+                                              real64 const & dt,
+                                              integer const cycleNumber,
+                                              DomainPartition &,
+                                              MeshLevel & mesh,
+                                              arrayView1d< string const > const & regionNames )
+{
+  NodeManager & nodeManager = mesh.getNodeManager();
+
+  arrayView1d< real32 const > const mass = nodeManager.getField< fields::MassVectorE >();
+  arrayView1d< real32 const > const dampingx = nodeManager.getField< fields::DampingVectorx >();
+  arrayView1d< real32 const > const dampingy = nodeManager.getField< fields::DampingVectory >();
+  arrayView1d< real32 const > const dampingz = nodeManager.getField< fields::DampingVectorz >();
+  arrayView1d< real32 > const stiffnessVectorx = nodeManager.getField< fields::StiffnessVectorx >();
+  arrayView1d< real32 > const stiffnessVectory = nodeManager.getField< fields::StiffnessVectory >();
+  arrayView1d< real32 > const stiffnessVectorz = nodeManager.getField< fields::StiffnessVectorz >();
+
+  arrayView1d< real32 > const ux_nm1 = nodeManager.getField< fields::Displacementx_nm1 >();
+  arrayView1d< real32 > const uy_nm1 = nodeManager.getField< fields::Displacementy_nm1 >();
+  arrayView1d< real32 > const uz_nm1 = nodeManager.getField< fields::Displacementz_nm1 >();
+  arrayView1d< real32 > const ux_n = nodeManager.getField< fields::Displacementx_n >();
+  arrayView1d< real32 > const uy_n = nodeManager.getField< fields::Displacementy_n >();
+  arrayView1d< real32 > const uz_n = nodeManager.getField< fields::Displacementz_n >();
+  arrayView1d< real32 > const ux_np1 = nodeManager.getField< fields::Displacementx_np1 >();
+  arrayView1d< real32 > const uy_np1 = nodeManager.getField< fields::Displacementy_np1 >();
+  arrayView1d< real32 > const uz_np1 = nodeManager.getField< fields::Displacementz_np1 >();
+
+  /// get array of indicators: 1 if node on free surface; 0 otherwise
+  arrayView1d< localIndex const > const freeSurfaceNodeIndicator = nodeManager.getField< fields::FreeSurfaceNodeIndicatorE >();
+
+  arrayView1d< real32 > const rhsx = nodeManager.getField< fields::ForcingRHSx >();
+  arrayView1d< real32 > const rhsy = nodeManager.getField< fields::ForcingRHSy >();
+  arrayView1d< real32 > const rhsz = nodeManager.getField< fields::ForcingRHSz >();
+
+  auto kernelFactory = elasticWaveEquationSEMKernels::ExplicitElasticSEMFactory( dt );
+
+  finiteElement::
+    regionBasedKernelApplication< EXEC_POLICY,
+                                  constitutive::NullModel,
+                                  CellElementSubRegion >( mesh,
+                                                          regionNames,
+                                                          getDiscretizationName(),
+                                                          "",
+                                                          kernelFactory );
+
+
+  addSourceToRightHandSide( cycleNumber, rhsx, rhsy, rhsz );
+
+  real64 const dt2 = pow( dt, 2 );
+  SortedArrayView< localIndex const > const solverTargetNodesSet = m_solverTargetNodesSet.toViewConst();
+  forAll< EXEC_POLICY >( solverTargetNodesSet.size(), [=] GEOS_HOST_DEVICE ( localIndex const n )
+  {
+    localIndex const a = solverTargetNodesSet[n];
+    if( freeSurfaceNodeIndicator[a] != 1 )
+    {
+      ux_np1[a] = ux_n[a];
+      ux_np1[a] *= 2.0*mass[a];
+      ux_np1[a] -= (mass[a]-0.5*dt*dampingx[a])*ux_nm1[a];
+      ux_np1[a] += dt2*(rhsx[a]-stiffnessVectorx[a]);
+      ux_np1[a] /= mass[a]+0.5*dt*dampingx[a];
+      uy_np1[a] = uy_n[a];
+      uy_np1[a] *= 2.0*mass[a];
+      uy_np1[a] -= (mass[a]-0.5*dt*dampingy[a])*uy_nm1[a];
+      uy_np1[a] += dt2*(rhsy[a]-stiffnessVectory[a]);
+      uy_np1[a] /= mass[a]+0.5*dt*dampingy[a];
+      uz_np1[a] = uz_n[a];
+      uz_np1[a] *= 2.0*mass[a];
+      uz_np1[a] -= (mass[a]-0.5*dt*dampingz[a])*uz_nm1[a];
+      uz_np1[a] += dt2*(rhsz[a]-stiffnessVectorz[a]);
+      uz_np1[a] /= mass[a]+0.5*dt*dampingz[a];
+    }
+  } );
+}
+
+void ElasticWaveEquationSEM::synchronizeUnknowns( real64 const & time_n,
+                                                  real64 const & dt,
+                                                  integer const,
+                                                  DomainPartition & domain,
+                                                  MeshLevel & mesh,
+                                                  arrayView1d< string const > const & )
+{
+  NodeManager & nodeManager = mesh.getNodeManager();
+
+  arrayView1d< real32 > const stiffnessVectorx = nodeManager.getField< fields::StiffnessVectorx >();
+  arrayView1d< real32 > const stiffnessVectory = nodeManager.getField< fields::StiffnessVectory >();
+  arrayView1d< real32 > const stiffnessVectorz = nodeManager.getField< fields::StiffnessVectorz >();
+
+  arrayView1d< real32 > const ux_nm1 = nodeManager.getField< fields::Displacementx_nm1 >();
+  arrayView1d< real32 > const uy_nm1 = nodeManager.getField< fields::Displacementy_nm1 >();
+  arrayView1d< real32 > const uz_nm1 = nodeManager.getField< fields::Displacementz_nm1 >();
+  arrayView1d< real32 > const ux_n   = nodeManager.getField< fields::Displacementx_n >();
+  arrayView1d< real32 > const uy_n   = nodeManager.getField< fields::Displacementy_n >();
+  arrayView1d< real32 > const uz_n   = nodeManager.getField< fields::Displacementz_n >();
+  arrayView1d< real32 > const ux_np1 = nodeManager.getField< fields::Displacementx_np1 >();
+  arrayView1d< real32 > const uy_np1 = nodeManager.getField< fields::Displacementy_np1 >();
+  arrayView1d< real32 > const uz_np1 = nodeManager.getField< fields::Displacementz_np1 >();
+
+  arrayView1d< real32 > const rhsx = nodeManager.getField< fields::ForcingRHSx >();
+  arrayView1d< real32 > const rhsy = nodeManager.getField< fields::ForcingRHSy >();
+  arrayView1d< real32 > const rhsz = nodeManager.getField< fields::ForcingRHSz >();
+
+  /// synchronize displacement fields
+  FieldIdentifiers fieldsToBeSync;
+  fieldsToBeSync.addFields( FieldLocation::Node, { fields::Displacementx_np1::key(), fields::Displacementy_np1::key(), fields::Displacementz_np1::key() } );
+
+  CommunicationTools & syncFields = CommunicationTools::getInstance();
+  syncFields.synchronizeFields( fieldsToBeSync,
+                                domain.getMeshBody( 0 ).getMeshLevel( m_discretizationName ),
+                                domain.getNeighbors(),
+                                true );
+
+  // compute the seismic traces since last step.
+  arrayView2d< real32 > const uXReceivers = m_displacementXNp1AtReceivers.toView();
+  arrayView2d< real32 > const uYReceivers = m_displacementYNp1AtReceivers.toView();
+  arrayView2d< real32 > const uZReceivers = m_displacementZNp1AtReceivers.toView();
+
+  computeAllSeismoTraces( time_n, dt, ux_np1, ux_n, uXReceivers );
+  computeAllSeismoTraces( time_n, dt, uy_np1, uy_n, uYReceivers );
+  computeAllSeismoTraces( time_n, dt, uz_np1, uz_n, uZReceivers );
+
+  incrementIndexSeismoTrace( time_n );
+}
+
+void ElasticWaveEquationSEM::prepareNextTimestep( MeshLevel & mesh )
+{
+  NodeManager & nodeManager = mesh.getNodeManager();
+
+  arrayView1d< real32 > const ux_nm1 = nodeManager.getField< fields::Displacementx_nm1 >();
+  arrayView1d< real32 > const uy_nm1 = nodeManager.getField< fields::Displacementy_nm1 >();
+  arrayView1d< real32 > const uz_nm1 = nodeManager.getField< fields::Displacementz_nm1 >();
+  arrayView1d< real32 > const ux_n   = nodeManager.getField< fields::Displacementx_n >();
+  arrayView1d< real32 > const uy_n   = nodeManager.getField< fields::Displacementy_n >();
+  arrayView1d< real32 > const uz_n   = nodeManager.getField< fields::Displacementz_n >();
+  arrayView1d< real32 > const ux_np1 = nodeManager.getField< fields::Displacementx_np1 >();
+  arrayView1d< real32 > const uy_np1 = nodeManager.getField< fields::Displacementy_np1 >();
+  arrayView1d< real32 > const uz_np1 = nodeManager.getField< fields::Displacementz_np1 >();
+
+  arrayView1d< real32 > const stiffnessVectorx = nodeManager.getField< fields::StiffnessVectorx >();
+  arrayView1d< real32 > const stiffnessVectory = nodeManager.getField< fields::StiffnessVectory >();
+  arrayView1d< real32 > const stiffnessVectorz = nodeManager.getField< fields::StiffnessVectorz >();
+
+  arrayView1d< real32 > const rhsx = nodeManager.getField< fields::ForcingRHSx >();
+  arrayView1d< real32 > const rhsy = nodeManager.getField< fields::ForcingRHSy >();
+  arrayView1d< real32 > const rhsz = nodeManager.getField< fields::ForcingRHSz >();
+
+  SortedArrayView< localIndex const > const solverTargetNodesSet = m_solverTargetNodesSet.toViewConst();
+
+  forAll< EXEC_POLICY >( solverTargetNodesSet.size(), [=] GEOS_HOST_DEVICE ( localIndex const n )
+  {
+    localIndex const a = solverTargetNodesSet[n];
+    ux_nm1[a] = ux_n[a];
+    uy_nm1[a] = uy_n[a];
+    uz_nm1[a] = uz_n[a];
+    ux_n[a] = ux_np1[a];
+    uy_n[a] = uy_np1[a];
+    uz_n[a] = uz_np1[a];
+
+    stiffnessVectorx[a] = stiffnessVectory[a] = stiffnessVectorz[a] = 0.0;
+    rhsx[a] = rhsy[a] = rhsz[a] = 0.0;
+  } );
+
+}
+
 real64 ElasticWaveEquationSEM::explicitStepInternal( real64 const & time_n,
                                                      real64 const & dt,
                                                      integer const cycleNumber,
@@ -659,114 +817,12 @@ real64 ElasticWaveEquationSEM::explicitStepInternal( real64 const & time_n,
                                                                 MeshLevel & mesh,
                                                                 arrayView1d< string const > const & regionNames )
   {
-    NodeManager & nodeManager = mesh.getNodeManager();
-
-    arrayView1d< real32 const > const mass = nodeManager.getField< fields::MassVector >();
-    arrayView1d< real32 const > const dampingx = nodeManager.getField< fields::DampingVectorx >();
-    arrayView1d< real32 const > const dampingy = nodeManager.getField< fields::DampingVectory >();
-    arrayView1d< real32 const > const dampingz = nodeManager.getField< fields::DampingVectorz >();
-    arrayView1d< real32 > const stiffnessVectorx = nodeManager.getField< fields::StiffnessVectorx >();
-    arrayView1d< real32 > const stiffnessVectory = nodeManager.getField< fields::StiffnessVectory >();
-    arrayView1d< real32 > const stiffnessVectorz = nodeManager.getField< fields::StiffnessVectorz >();
-
-
-    arrayView1d< real32 > const ux_nm1 = nodeManager.getField< fields::Displacementx_nm1 >();
-    arrayView1d< real32 > const uy_nm1 = nodeManager.getField< fields::Displacementy_nm1 >();
-    arrayView1d< real32 > const uz_nm1 = nodeManager.getField< fields::Displacementz_nm1 >();
-    arrayView1d< real32 > const ux_n = nodeManager.getField< fields::Displacementx_n >();
-    arrayView1d< real32 > const uy_n = nodeManager.getField< fields::Displacementy_n >();
-    arrayView1d< real32 > const uz_n = nodeManager.getField< fields::Displacementz_n >();
-    arrayView1d< real32 > const ux_np1 = nodeManager.getField< fields::Displacementx_np1 >();
-    arrayView1d< real32 > const uy_np1 = nodeManager.getField< fields::Displacementy_np1 >();
-    arrayView1d< real32 > const uz_np1 = nodeManager.getField< fields::Displacementz_np1 >();
-
-    /// get array of indicators: 1 if node on free surface; 0 otherwise
-    arrayView1d< localIndex const > const freeSurfaceNodeIndicator = nodeManager.getField< fields::FreeSurfaceNodeIndicator >();
-
-    arrayView1d< real32 > const rhsx = nodeManager.getField< fields::ForcingRHSx >();
-    arrayView1d< real32 > const rhsy = nodeManager.getField< fields::ForcingRHSy >();
-    arrayView1d< real32 > const rhsz = nodeManager.getField< fields::ForcingRHSz >();
-
-    auto kernelFactory = elasticWaveEquationSEMKernels::ExplicitElasticSEMFactory( dt );
-
-    finiteElement::
-      regionBasedKernelApplication< EXEC_POLICY,
-                                    constitutive::NullModel,
-                                    CellElementSubRegion >( mesh,
-                                                            regionNames,
-                                                            getDiscretizationName(),
-                                                            "",
-                                                            kernelFactory );
-
-
-    addSourceToRightHandSide( cycleNumber, rhsx, rhsy, rhsz );
-
-
-
-    real64 const dt2 = dt*dt;
-    forAll< EXEC_POLICY >( nodeManager.size(), [=] GEOS_HOST_DEVICE ( localIndex const a )
-    {
-      if( freeSurfaceNodeIndicator[a] != 1 )
-      {
-        ux_np1[a] = ux_n[a];
-        ux_np1[a] *= 2.0*mass[a];
-        ux_np1[a] -= (mass[a]-0.5*dt*dampingx[a])*ux_nm1[a];
-        ux_np1[a] += dt2*(rhsx[a]-stiffnessVectorx[a]);
-        ux_np1[a] /= mass[a]+0.5*dt*dampingx[a];
-        uy_np1[a] = uy_n[a];
-        uy_np1[a] *= 2.0*mass[a];
-        uy_np1[a] -= (mass[a]-0.5*dt*dampingy[a])*uy_nm1[a];
-        uy_np1[a] += dt2*(rhsy[a]-stiffnessVectory[a]);
-        uy_np1[a] /= mass[a]+0.5*dt*dampingy[a];
-        uz_np1[a] = uz_n[a];
-        uz_np1[a] *= 2.0*mass[a];
-        uz_np1[a] -= (mass[a]-0.5*dt*dampingz[a])*uz_nm1[a];
-        uz_np1[a] += dt2*(rhsz[a]-stiffnessVectorz[a]);
-        uz_np1[a] /= mass[a]+0.5*dt*dampingz[a];
-      }
-    } );
-
-    /// synchronize pressure fields
-    FieldIdentifiers fieldsToBeSync;
-    fieldsToBeSync.addFields( FieldLocation::Node, { fields::Displacementx_np1::key(), fields::Displacementy_np1::key(), fields::Displacementz_np1::key() } );
-
-    CommunicationTools & syncFields = CommunicationTools::getInstance();
-    syncFields.synchronizeFields( fieldsToBeSync,
-                                  domain.getMeshBody( 0 ).getMeshLevel( m_discretizationName ),
-                                  domain.getNeighbors(),
-                                  true );
-
-    // compute the seismic traces since last step.
-    arrayView2d< real32 > const uXReceivers = m_displacementXNp1AtReceivers.toView();
-    arrayView2d< real32 > const uYReceivers = m_displacementYNp1AtReceivers.toView();
-    arrayView2d< real32 > const uZReceivers = m_displacementZNp1AtReceivers.toView();
-
-    computeAllSeismoTraces( time_n, dt, ux_np1, ux_n, uXReceivers );
-    computeAllSeismoTraces( time_n, dt, uy_np1, uy_n, uYReceivers );
-    computeAllSeismoTraces( time_n, dt, uz_np1, uz_n, uZReceivers );
-
-    incrementIndexSeismoTrace( time_n );
-
-    forAll< EXEC_POLICY >( nodeManager.size(), [=] GEOS_HOST_DEVICE ( localIndex const a )
-    {
-      ux_nm1[a] = ux_n[a];
-      uy_nm1[a] = uy_n[a];
-      uz_nm1[a] = uz_n[a];
-      ux_n[a] = ux_np1[a];
-      uy_n[a] = uy_np1[a];
-      uz_n[a] = uz_np1[a];
-
-      stiffnessVectorx[a] = 0.0;
-      stiffnessVectory[a] = 0.0;
-      stiffnessVectorz[a] = 0.0;
-      rhsx[a] = 0.0;
-      rhsy[a] = 0.0;
-      rhsz[a] = 0.0;
-    } );
+    computeUnknowns( time_n, dt, cycleNumber, domain, mesh, regionNames );
+    synchronizeUnknowns( time_n, dt, cycleNumber, domain, mesh, regionNames );
+    prepareNextTimestep( mesh );
   } );
 
   return dt;
-
 }
 
 void ElasticWaveEquationSEM::cleanup( real64 const time_n,

@@ -40,7 +40,6 @@ struct PrecomputeSourceAndReceiverKernel
    * @tparam EXEC_POLICY execution policy
    * @tparam FE_TYPE finite element type
    * @param[in] size the number of cells in the subRegion
-   * @param[in] numNodesPerElem number of nodes per element
    * @param[in] nodeCoords coordinates of the nodes
    * @param[in] elemsToNodes map from element to nodes
    * @param[in] elemsToFaces map from element to faces
@@ -58,7 +57,6 @@ struct PrecomputeSourceAndReceiverKernel
   template< typename EXEC_POLICY, typename FE_TYPE >
   static void
   launch( localIndex const size,
-          localIndex const numNodesPerElem,
           localIndex const numFacesPerElem,
           arrayView2d< WaveSolverBase::wsCoordType const, nodes::REFERENCE_POSITION_USD > const nodeCoords,
           arrayView1d< integer const > const elemGhostRank,
@@ -84,6 +82,8 @@ struct PrecomputeSourceAndReceiverKernel
 
     forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const k )
     {
+      constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
+
       real64 const center[3] = { elemCenter[k][0],
                                  elemCenter[k][1],
                                  elemCenter[k][2] };
@@ -117,7 +117,7 @@ struct PrecomputeSourceAndReceiverKernel
                                                                               coordsOnRefElem );
 
             sourceIsAccessible[isrc] = 1;
-            real64 Ntest[FE_TYPE::numNodes];
+            real64 Ntest[numNodesPerElem];
             FE_TYPE::calcN( coordsOnRefElem, Ntest );
 
             for( localIndex a = 0; a < numNodesPerElem; ++a )
@@ -738,7 +738,7 @@ public:
     m_nodeCoords( nodeManager.getField< fields::referencePosition32 >() ),
     m_p_n( nodeManager.getField< fields::Pressure_n >() ),
     m_stiffnessVector( nodeManager.getField< fields::StiffnessVector >() ),
-    m_density( elementSubRegion.template getField< fields::MediumDensity >() ),
+    m_density( elementSubRegion.template getField< fields::MediumDensityA >() ),
     m_dt( dt )
   {
     GEOS_UNUSED_VAR( edgeManager );
@@ -803,9 +803,9 @@ public:
   {
     m_finiteElementSpace.template computeStiffnessTerm( q, stack.xLocal, [&] ( int i, int j, real64 val )
     {
-      real32 invDensity = 1./m_density[k];
-      real32 const localIncrement = invDensity*val*m_p_n[m_elemsToNodes[k][j]];
-      RAJA::atomicAdd< parallelDeviceAtomic >( &m_stiffnessVector[m_elemsToNodes[k][i]], localIncrement );
+      real32 invDensity = 1.0 / m_density[k];
+      real32 const localIncrement = invDensity*val*m_p_n[m_elemsToNodes( k, j )];
+      RAJA::atomicAdd< parallelDeviceAtomic >( &m_stiffnessVector[m_elemsToNodes( k, i )], localIncrement );
     } );
   }
 
