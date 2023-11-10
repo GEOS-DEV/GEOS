@@ -125,7 +125,6 @@ jobs:
         ./scripts/ci_build_and_test.sh \
           --docker-repository geosx/ubuntu20.04-gcc9 \
           --docker-tag ${{ needs.is_pull_request_a_draft.outputs.DOCKER_IMAGE_TAG }} \
-          --use-sccache false \
           -- \
           --cmake-build-type Release \
           --test-code-style
@@ -146,7 +145,6 @@ jobs:
         ./scripts/ci_build_and_test.sh \
           --docker-repository geosx/ubuntu20.04-gcc9 \
           --docker-tag ${{ needs.is_pull_request_a_draft.outputs.DOCKER_IMAGE_TAG }} \
-          --use-sccache false \
           -- \
           --cmake-build-type Release \
           --test-documentation

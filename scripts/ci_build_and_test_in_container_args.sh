@@ -39,7 +39,7 @@ Usage: $0
   [ --run-integrated-tests ]
   [ --test-code-style ]
   [ --test-documentation ]
-  [ --use-sccache ... ]
+  [ --sccache-credentials ... ]
   [ -h | --help ]
 EOF
 exit 1
@@ -48,7 +48,7 @@ exit 1
 # Working in the root of the cloned repository
 or_die cd $(dirname $0)/..
 
-args=$(getopt -a -o h --long build-exe-only,cmake-build-type:,no-run-unit-tests,host-config:,no-install-schema,install-dir:,test-code-style,test-documentation,use-sccache:,run-integrated-tests,help -- "$@")
+args=$(getopt -a -o h --long build-exe-only,cmake-build-type:,no-run-unit-tests,host-config:,no-install-schema,install-dir:,test-code-style,test-documentation,sccache-credentials:,run-integrated-tests,help -- "$@")
 if [[ $? -gt 0 ]]; then
   echo "Error after getopt"
   echo "which getop"
@@ -63,8 +63,6 @@ GEOSX_INSTALL_SCHEMA=true
 HOST_CONFIG="host-configs/environment.cmake"
 RUN_UNIT_TESTS=true
 RUN_INTEGRATED_TESTS=false
-# USE_SCCACHE=true
-# SCCACHE=""
 TEST_CODE_STYLE=false
 TEST_DOCUMENTATION=false
 
@@ -78,7 +76,7 @@ do
     --install-dir)          GEOSX_DIR=$2;               shift 2;;
     --no-install-schema)    GEOSX_INSTALL_SCHEMA=false; shift;;
     --no-run-unit-tests)    RUN_UNIT_TESTS=false;       shift;;
-    --use-sccache)          SCCACHE_CREDS=$2;           shift 2;;
+    --sccache-credentials)  SCCACHE_CREDS=$2;           shift 2;;
     --run-integrated-tests) RUN_INTEGRATED_TESTS=true;  shift;;
     --test-code-style)      TEST_CODE_STYLE=true;       shift;;
     --test-documentation)   TEST_DOCUMENTATION=true;    shift;;
@@ -97,7 +95,6 @@ done
 # TODO duplicated with the outside.
 GEOS_SRC_DIR=/tmp/geos
 
-# SCCACHE_CMAKE_ARGS=""
 if [[ ! -z "${SCCACHE_CREDS}" ]]; then
   mkdir -p ${HOME}/.config/sccache
   cat <<EOT >> ${HOME}/.config/sccache/config
@@ -116,24 +113,6 @@ EOT
   ${SCCACHE} --show-stats
 fi
 
-# SCCACHE_CMAKE_ARGS=""
-# if [[ "${USE_SCCACHE}" = true ]]; then
-#   mkdir -p ${HOME}/.config/sccache
-#   cat <<EOT >> ${HOME}/.config/sccache/config
-# [cache.gcs]
-# rw_mode = "READ_WRITE"
-# cred_path = "/opt/gcs/credentials.json"
-# bucket = "geos-dev"
-# key_prefix = "sccache"
-# EOT
-
-#   SCCACHE_CMAKE_ARGS="-DCMAKE_CXX_COMPILER_LAUNCHER=${SCCACHE} -DCMAKE_CUDA_COMPILER_LAUNCHER=${SCCACHE}"
-
-#   echo "sccache initial state"
-#   ${SCCACHE} --show-stats
-# fi
-
-# ATS_CMAKE_ARGS=""
 if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
   echo "We should be running the integrated tests."
   apt-get install -y virtualenv python3-dev python-is-python3
@@ -210,7 +189,6 @@ if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
   echo "The return code is ${exit_status}"
 fi
 
-# if [[ "${USE_SCCACHE}" = true ]]; then
 if [[ ! -z "${SCCACHE_CREDS}" ]]; then
   echo "sccache final state"
   ${SCCACHE} --show-stats

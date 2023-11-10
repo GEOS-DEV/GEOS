@@ -14,8 +14,6 @@ EOF
 exit 1
 }
 
-# --use-sccache ${USE_SCCACHE} \
-# args=$(getopt -a -o h --long docker-repository:,docker-tag:,use-sccache:,help -- "$@")
 args=$(getopt -a -o h --long docker-repository:,docker-tag:,help -- "$@")
 if [[ $? -gt 0 ]]; then
   echo "Error after getopt"
@@ -29,7 +27,6 @@ do
   case $1 in
     --docker-repository) DOCKER_REPOSITORY=$2; shift 2;;
     --docker-tag)        DOCKER_TAG=$2;        shift 2;;
-    # --use-sccache)       USE_SCCACHE=$2;       shift 2;;
     -h | --help)         usage;                shift;;
     # -- means the end of the arguments; drop this, and break out of the while loop
     --) shift; break;;
@@ -78,7 +75,3 @@ docker run \
   ${GITHUB_WORKSPACE_MOUNT_POINT}/scripts/ci_build_and_test_in_container_args.sh \
     --install-dir ${GEOSX_DIR} \
     ${ADDITIONAL_ARGS}
-
-
-  # ${SCCACHE_VOLUME_MOUNT} \
-    # --use-sccache ${USE_SCCACHE} \
