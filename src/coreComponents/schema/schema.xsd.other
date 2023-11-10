@@ -1098,8 +1098,28 @@
 		<xsd:attribute name="bcTable" type="real64_array2d" />
 		<!--binSizeMultiplier => Multiplier for setting bin size, used to speed up particle neighbor sorting-->
 		<xsd:attribute name="binSizeMultiplier" type="integer" />
+		<!--domainExtent => domain extent-->
+		<xsd:attribute name="domainExtent" type="real64_array" />
+		<!--domainF => domain deformation gradient-->
+		<xsd:attribute name="domainF" type="real64_array" />
+		<!--domainL => domain L-->
+		<xsd:attribute name="domainL" type="real64_array" />
+		<!--elementSize => Minimum element size in x, y and z-->
+		<xsd:attribute name="elementSize" type="real64_array" />
 		<!--fTable => Array that stores time-dependent grid-aligned stretches interpreted as a global background grid F.-->
 		<xsd:attribute name="fTable" type="real64_array2d" />
+		<!--globalMaximum => global maximum-->
+		<xsd:attribute name="globalMaximum" type="real64_array" />
+		<!--globalMinimum => global minimum-->
+		<xsd:attribute name="globalMinimum" type="real64_array" />
+		<!--localMaximum => local maximum-->
+		<xsd:attribute name="localMaximum" type="real64_array" />
+		<!--localMaximumNoGhost => local maximum without ghost cells-->
+		<xsd:attribute name="localMaximumNoGhost" type="real64_array" />
+		<!--localMinimum => local minimum-->
+		<xsd:attribute name="localMinimum" type="real64_array" />
+		<!--localMinimumNoGhost => local minimum without ghost cells-->
+		<xsd:attribute name="localMinimumNoGhost" type="real64_array" />
 		<!--m_ijkMap => Map from indices in each spatial dimension to local node ID-->
 		<xsd:attribute name="m_ijkMap" type="integer_array3d" />
 		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
@@ -1112,8 +1132,12 @@
 		<xsd:attribute name="numContactGroups" type="integer" />
 		<!--numDims => The number of active spatial dimensions, 2 for plane strain, 3 otherwise-->
 		<xsd:attribute name="numDims" type="integer" />
+		<!--numElements => number of elements along partition directions-->
+		<xsd:attribute name="numElements" type="integer_array" />
 		<!--numVelocityFields => Number of velocity fields-->
 		<xsd:attribute name="numVelocityFields" type="integer" />
+		<!--partitionExtent => parititon extent-->
+		<xsd:attribute name="partitionExtent" type="real64_array" />
 		<!--smallMass => The small mass threshold for ignoring extremely low-mass nodes.-->
 		<xsd:attribute name="smallMass" type="real64" />
 	</xsd:complexType>
