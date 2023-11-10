@@ -67,6 +67,7 @@ public:
     m_newtonTol = params.m_newtonTol;
     m_maxIterNewton = params.m_maxIterNewton;
     m_minIterNewton = params.m_minIterNewton;
+    m_numNewtonIterations = params.m_numNewtonIterations;
 
     m_maxAllowedResidualNorm = params.m_maxAllowedResidualNorm;
     m_allowNonConverged = params.m_allowNonConverged;
