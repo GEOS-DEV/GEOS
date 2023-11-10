@@ -38,19 +38,19 @@
   hexahedral mesh generated internally by GEOSX
   6400x1600x4800m domain
   # R1-Q5 (pseudo-2D)
-  sourceCoordinates="{ { 1500, 20, 2900  } }"
+  sourceCoordinates="{ { 1500, 20, 2900 } }"
   yCoords="{ 0, 40 }"
   nx="{ 160 }"
   ny="{ 1 }"
   nz="{ 60, 60 }"
   # R2-Q2 (pseudo-2D)
-  sourceCoordinates="{ { 1500, 10, 2900  } }"
+  sourceCoordinates="{ { 1500, 10, 2900 } }"
   yCoords="{ 0, 20 }"
   nx="{ 320 }"
   ny="{ 1 }"
   nz="{ 120, 120 }"
   # R5-Q1 (pseudo-2D)
-  sourceCoordinates="{ { 1500, 4, 2900  } }"
+  sourceCoordinates="{ { 1500, 4, 2900 } }"
   yCoords="{ 0, 8 }"
   nx="{ 800 }"
   ny="{ 1 }"
@@ -94,7 +94,7 @@
   </NumericalMethods>
 
   <Events
-    maxTime="3">
+    maxTime="2">
     <PeriodicEvent
       name="outputs"
       timeFrequency="5e-2"
