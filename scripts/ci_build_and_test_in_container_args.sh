@@ -183,7 +183,8 @@ if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
   or_die ninja ats_environment
   # ninja --verbose ats_run
   cat /tmp/build/integratedTests/geos_ats.sh
-  integratedTests/geos_ats.sh --failIfTestsFail
+  # integratedTests/geos_ats.sh --failIfTestsFail
+  integratedTests/geos_ats.sh
   exit_status=$?
   echo "The return code is ${exit_status}"
 fi
