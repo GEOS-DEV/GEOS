@@ -110,7 +110,7 @@ ENUM_STRINGS( ElementType,
               "Polyhedron" );
 
 /// String available for mesh errors
-inline auto constexpr generalMeshErrorAdvice = "\nPlease consider checking the validity of your mesh with the `mesh_doctor` GEOS python tools.";
+inline auto constexpr generalMeshErrorAdvice = "Please consider checking the validity of your mesh with the `mesh_doctor` GEOS python tools.";
 
 } // namespace geos
 
