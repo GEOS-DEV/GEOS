@@ -361,7 +361,7 @@ void CompositionalMultiphaseBase::registerDataOnMesh( Group & meshBodies )
       subRegion.registerField< phaseVolumeFraction_n >( getName() ).
         reference().resizeDimension< 1 >( m_numPhases );
       subRegion.registerField< phaseMobility_n >( getName() ).
-        reference().resizeDimension< 1 >( m_numPhases );
+        reference().resizeDimension< 1, 2 >( m_numPhases, numDir);
     } );
 
     FaceManager & faceManager = mesh.getFaceManager();

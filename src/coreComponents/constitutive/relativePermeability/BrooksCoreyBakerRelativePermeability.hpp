@@ -271,11 +271,11 @@ namespace geos {
                                                          dOilRelPerm_wo_dOilVolFrac,
                                                          oilRelPerm_go,
                                                          dOilRelPerm_go_dOilVolFrac,
-                                                         phaseRelPerm[ipOil],
-                                                         dPhaseRelPerm_dPhaseVolFrac[ipOil]);
+                                                         phaseRelPerm[ipOil][dir],
+                                                         dPhaseRelPerm_dPhaseVolFrac[ipOil][dir]);
                 }
 
-            }
+            }//end loop on dir
             // update trapped phase volume fraction
             if (ipWater >= 0) {
                 phaseTrappedVolFrac[ipWater] = LvArray::math::min(phaseVolFraction[ipWater],

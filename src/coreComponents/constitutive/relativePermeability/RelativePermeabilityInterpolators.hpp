@@ -54,24 +54,23 @@ namespace geos {
                         real64 const &dWoRelPerm_dOilVolFrac,
                         real64 const &goRelPerm,
                         real64 const &dGoRelPerm_dOilVolFrac,
-                        arraySlice1d<real64, relperm::USD_RELPERM - 3 > const &threePhaseRelPerm,
-                        arraySlice2d<real64, relperm::USD_RELPERM_DS - 3> const &dThreePhaseRelPerm_dVolFrac) {
+                        real64 &threePhaseRelPerm,
+                        arraySlice1d<real64, relperm::USD_RELPERM_DS - 4> const &dThreePhaseRelPerm_dVolFrac) {
                     using PT = RelativePermeabilityBase::PhaseType;
                     integer const ipWater = phaseOrder[PT::WATER];
                     integer const ipOil = phaseOrder[PT::OIL];
                     integer const ipGas = phaseOrder[PT::GAS];
 
-                    for (int dir = 0; dir < 3; ++dir) {
 
                         // if water phase is immobile, then use the two-phase gas-oil data only
                         if (shiftedWaterVolFrac <= 0.0) {
-                            threePhaseRelPerm[dir] = goRelPerm;
-                            dThreePhaseRelPerm_dVolFrac[ipOil][dir] = dGoRelPerm_dOilVolFrac;
+                            threePhaseRelPerm = goRelPerm;
+                            dThreePhaseRelPerm_dVolFrac[ipOil]= dGoRelPerm_dOilVolFrac;
                         }
                             // if gas phase is immobile, then use the two-phase water-oil data only
                         else if (gasVolFrac <= 0.0) {
-                            threePhaseRelPerm[dir] = woRelPerm;
-                            dThreePhaseRelPerm_dVolFrac[ipOil][dir] = dWoRelPerm_dOilVolFrac;
+                            threePhaseRelPerm= woRelPerm;
+                            dThreePhaseRelPerm_dVolFrac[ipOil] = dWoRelPerm_dOilVolFrac;
                         }
                             // if both the water phase and the gas phase are mobile,
                             // then use a saturation-weighted interpolation of the two-phase oil rel perms
@@ -90,17 +89,16 @@ namespace geos {
                             real64 const dSumVolFracInv_dGasVolFrac = dSumVolFracInv_dWaterVolFrac;
 
                             // three-phase oil rel perm
-                            threePhaseRelPerm[dir] = sumRelPerm * sumVolFracInv;
+                            threePhaseRelPerm = sumRelPerm * sumVolFracInv;
                             // derivative w.r.t. Sw
-                            dThreePhaseRelPerm_dVolFrac[ipWater][dir] = dSumRelPerm_dWaterVolFrac * sumVolFracInv
+                            dThreePhaseRelPerm_dVolFrac[ipWater]= dSumRelPerm_dWaterVolFrac * sumVolFracInv
                                                                         + sumRelPerm * dSumVolFracInv_dWaterVolFrac;
                             // derivative w.r.t. So
-                            dThreePhaseRelPerm_dVolFrac[ipOil][dir] = dSumRelPerm_dOilVolFrac * sumVolFracInv;
+                            dThreePhaseRelPerm_dVolFrac[ipOil]= dSumRelPerm_dOilVolFrac * sumVolFracInv;
                             // derivative w.r.t. Sg
-                            dThreePhaseRelPerm_dVolFrac[ipGas][dir] = dSumRelPerm_dGasVolFrac * sumVolFracInv
+                            dThreePhaseRelPerm_dVolFrac[ipGas]= dSumRelPerm_dGasVolFrac * sumVolFracInv
                                                                       + sumRelPerm * dSumVolFracInv_dGasVolFrac;
                         }
-                    }
                 }
 
             };
