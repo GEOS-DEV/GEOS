@@ -127,6 +127,10 @@ public:
     return maxNumPointsInFlux;
   }
 
+    void getFaceNormal(localIndex const iconn, real64 (&faceNormal)[3] ) const
+    {
+        LvArray::tensorOps::copy<3>( faceNormal, m_faceNormal[iconn] );
+    }
 private:
 
   arrayView2d< real64 > m_faceNormal;
@@ -201,6 +205,8 @@ public:
    * @return the wrapper
    */
   KernelWrapper createKernelWrapper() const;
+
+
 
 private:
 
