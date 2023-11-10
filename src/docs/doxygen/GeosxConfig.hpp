@@ -33,16 +33,16 @@
 #define GEOSX_USE_OPENMP
 
 /// Enables use of CUDA (CMake option ENABLE_CUDA)
-#define GEOS_USE_CUDA
+/* #undef GEOS_USE_CUDA */
 
 /// Enables use of CUDA NVToolsExt (CMake option ENABLE_CUDA_NVTOOLSEXT)
-#define GEOS_USE_CUDA_NVTOOLSEXT
+/* #undef GEOS_USE_CUDA_NVTOOLSEXT */
 
 /// Enables use of HIP (CMake option ENABLE_HIP)
 /* #undef GEOS_USE_HIP */
 
 /// Workaround for FMT compilation issue on some NVCC/PowerPC machines (CMake option ENABLE_FMT_CONST_FORMATTER_WORKAROUND)
-#define GEOS_USE_FMT_CONST_FORMATTER_WORKAROUND
+/* #undef GEOS_USE_FMT_CONST_FORMATTER_WORKAROUND */
 
 /// Enables use of PVTPackage (CMake option ENABLE_PVTPackage)
 #define GEOSX_USE_PVTPackage
@@ -84,7 +84,7 @@
 /// Denotes HYPRE using HIP
 #define GEOS_USE_HYPRE_HIP 2
 /// Macro determining what parellel interface hypre is using
-#define GEOS_USE_HYPRE_DEVICE GEOS_USE_HYPRE_CUDA
+#define GEOS_USE_HYPRE_DEVICE GEOS_USE_HYPRE_CPU
 
 /// Enables use of SuperLU_dist library through HYPRE (CMake option ENABLE_SUPERLU_DIST)
 #define GEOSX_USE_SUPERLU_DIST
