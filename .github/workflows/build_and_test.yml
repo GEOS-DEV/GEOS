@@ -138,6 +138,8 @@ jobs:
           --cmake-build-type ${{ inputs.CMAKE_BUILD_TYPE }} \
           ${HC:+"--host-config ${HC}"} \
           ${{ inputs.BUILD_AND_TEST_ARGS }}
+        exit_status=$?
+        #
         TMP_DIR=/tmp
         COMMIT=${{ inputs.COMMIT }}
         GEOS_EXPORT_DIR=integratedTests-pr${{ github.event.number }}-${{ github.run_number }}-${COMMIT:0:7}
@@ -147,4 +149,5 @@ jobs:
         GEOS_BUNDLE=${TMP_DIR}/${GEOS_EXPORT_DIR}.tar.gz
         tar czf ${GEOS_BUNDLE} --directory=${TMP_DIR} ${GEOS_EXPORT_DIR}
         CLOUDSDK_PYTHON=python3 gsutil cp -a public-read ${GEOS_BUNDLE} gs://${{ inputs.GCP_BUCKET }}/
-  
+        #
+        exit ${exit_status}
