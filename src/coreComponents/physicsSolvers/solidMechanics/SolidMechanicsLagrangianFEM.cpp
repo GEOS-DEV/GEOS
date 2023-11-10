@@ -131,7 +131,6 @@ void SolidMechanicsLagrangianFEM::postProcessInput()
   linParams.amg.separateComponents = true;
 
   m_surfaceGenerator = this->getParent().getGroupPointer< SolverBase >( m_surfaceGeneratorName );
-  GEOS_ERROR_IF( m_surfaceGenerator == nullptr, GEOS_FMT( "{}: SurfaceGenerator {} not found", getName(), m_surfaceGeneratorName ) );
 }
 
 SolidMechanicsLagrangianFEM::~SolidMechanicsLagrangianFEM()
