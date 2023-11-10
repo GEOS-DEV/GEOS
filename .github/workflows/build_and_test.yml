@@ -135,6 +135,9 @@ jobs:
     - name: Run integrated tests
       if: ${{ inputs.build_type == 'integrated_tests' }}
       run: |
+        DATA_EXCHANGE=/tmp/exchange
+        mkdir ${DATA_EXCHANGE}
+        df -hT
         HOST_CONFIG=${{ inputs.HOST_CONFIG }}
         if ${{ inputs.USE_SCCACHE }} == 'true'; then
           SCCACHE_CLI="--sccache-credentials $(basename ${GOOGLE_GHA_CREDS_PATH})"
@@ -142,22 +145,28 @@ jobs:
         ./scripts/ci_build_and_test.sh \
           --docker-repository ${{ inputs.DOCKER_REPOSITORY }} \
           --docker-tag ${{ inputs.DOCKER_IMAGE_TAG }} \
+          --exchange ${DATA_EXCHANGE} \
           -- \
           --cmake-build-type ${{ inputs.CMAKE_BUILD_TYPE }} \
           ${HOST_CONFIG:+"--host-config ${HOST_CONFIG}"} \
           ${SCCACHE_CLI} \
           ${{ inputs.BUILD_AND_TEST_ARGS }}
         #
-        TMP_DIR=/tmp
-        COMMIT=${{ inputs.COMMIT }}
-        GEOS_EXPORT_DIR=integratedTests-pr${{ github.event.number }}-${{ github.run_number }}-${COMMIT:0:7}
-        mkdir -p ${TMP_DIR}/${GEOS_EXPORT_DIR}/{src,build}
-        docker cp -a geos_build:/tmp/geos/integratedTests ${TMP_DIR}/${GEOS_EXPORT_DIR}/src
-        docker cp -a geos_build:/tmp/build/integratedTests ${TMP_DIR}/${GEOS_EXPORT_DIR}/build
-        GEOS_BUNDLE=${TMP_DIR}/${GEOS_EXPORT_DIR}.tar.gz
-        tar czf ${GEOS_BUNDLE} --directory=${TMP_DIR} ${GEOS_EXPORT_DIR}
-        CLOUDSDK_PYTHON=python3 gsutil cp -a public-read ${GEOS_BUNDLE} gs://${{ inputs.GCP_BUCKET }}/
-        echo "Download the integrated tests at https://storage.googleapis.com/geosx/integratedTests/${GEOS_EXPORT_DIR}.tar.gz"
+        COMMIT=${{ inputs.COMMIT }}  # TODO Remove and use the env variable?
+        BASENAME=integratedTests-pr${{ github.event.number }}-${{ github.run_number }}-${COMMIT:0:7}.tar.gz
+        mv ${DATA_EXCHANGE}/*.tar.gz ${DATA_EXCHANGE}/${BASENAME}
+        CLOUDSDK_PYTHON=python3 gsutil cp -a public-read ${DATA_EXCHANGE}/${BASENAME} gs://${{ inputs.GCP_BUCKET }}/
+        echo "Download the integrated tests at https://storage.googleapis.com/geosx/integratedTests/${BASENAME}"
+        #
+        # TMP_DIR=/tmp
+        # GEOS_EXPORT_DIR=integratedTests-pr${{ github.event.number }}-${{ github.run_number }}-${COMMIT:0:7}
+        # mkdir -p ${TMP_DIR}/${GEOS_EXPORT_DIR}/{src,build}
+        # docker cp -a geos_build:/tmp/geos/integratedTests ${TMP_DIR}/${GEOS_EXPORT_DIR}/src
+        # docker cp -a geos_build:/tmp/build/integratedTests ${TMP_DIR}/${GEOS_EXPORT_DIR}/build
+        # GEOS_BUNDLE=${TMP_DIR}/${GEOS_EXPORT_DIR}.tar.gz
+        # tar czf ${GEOS_BUNDLE} --directory=${TMP_DIR} ${GEOS_EXPORT_DIR}
+        # CLOUDSDK_PYTHON=python3 gsutil cp -a public-read ${GEOS_BUNDLE} gs://${{ inputs.GCP_BUCKET }}/
+        # echo "Download the integrated tests at https://storage.googleapis.com/geosx/integratedTests/${GEOS_EXPORT_DIR}.tar.gz"
         #
         exit ${exit_status}
 

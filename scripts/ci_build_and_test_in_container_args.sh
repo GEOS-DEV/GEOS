@@ -32,14 +32,14 @@ function usage () {
 Usage: $0
   [ --build-exe-only ]
   [ --cmake-build-type ... ]
+  [ --exchange ... ]
   [ --host-config ... ]
-  [ --install-dir ... ]
   [ --no-install-schema ]
   [ --no-run-unit-tests ]
   [ --run-integrated-tests ]
+  [ --sccache-credentials ... ]
   [ --test-code-style ]
   [ --test-documentation ]
-  [ --sccache-credentials ... ]
   [ -h | --help ]
 EOF
 exit 1
@@ -48,7 +48,7 @@ exit 1
 # Working in the root of the cloned repository
 or_die cd $(dirname $0)/..
 
-args=$(getopt -a -o h --long build-exe-only,cmake-build-type:,no-run-unit-tests,host-config:,no-install-schema,install-dir:,test-code-style,test-documentation,sccache-credentials:,run-integrated-tests,help -- "$@")
+args=$(getopt -a -o h --long build-exe-only,cmake-build-type:,exchange:,no-run-unit-tests,host-config:,no-install-schema,install-dir:,test-code-style,test-documentation,sccache-credentials:,repository:,run-integrated-tests,help -- "$@")
 if [[ $? -gt 0 ]]; then
   echo "Error after getopt"
   echo "which getop"
@@ -72,12 +72,13 @@ do
   case $1 in
     --build-exe-only)       BUILD_EXE_ONLY=true; RUN_UNIT_TESTS=false; shift;;
     --cmake-build-type)     CMAKE_BUILD_TYPE=$2;        shift 2;;
+    --exchange)             DATA_EXCHANGE=$2;           shift 2;;
     --host-config)          HOST_CONFIG=$2;             shift 2;;
-    --install-dir)          GEOSX_DIR=$2;               shift 2;;
     --no-install-schema)    GEOSX_INSTALL_SCHEMA=false; shift;;
     --no-run-unit-tests)    RUN_UNIT_TESTS=false;       shift;;
-    --sccache-credentials)  SCCACHE_CREDS=$2;           shift 2;;
+    --repository)           GEOS_SRC_DIR=true;          shift;;
     --run-integrated-tests) RUN_INTEGRATED_TESTS=true;  shift;;
+    --sccache-credentials)  SCCACHE_CREDS=$2;           shift 2;;
     --test-code-style)      TEST_CODE_STYLE=true;       shift;;
     --test-documentation)   TEST_DOCUMENTATION=true;    shift;;
     -h | --help)            usage;                      shift;;
@@ -92,8 +93,12 @@ done
 #   usage
 # fi
 
-# TODO duplicated with the outside.
-GEOS_SRC_DIR=/tmp/geos
+# GEOS_SRC_DIR=/tmp/geos
+if [[ -z "${GEOS_SRC_DIR}" ]]; then
+  echo "Variable GEOS_SRC_DIR is either empty or not defined. Please define it using '--repository'."
+  exit 1
+fi
+GEOSX_DIR=${GEOSX_TPL_DIR}/../GEOSX-${GITHUB_SHA:0:7}
 
 if [[ ! -z "${SCCACHE_CREDS}" ]]; then
   mkdir -p ${HOME}/.config/sccache
@@ -187,6 +192,11 @@ if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
   /tmp/build/bin/run_geos_ats /tmp/build/bin --workingDir /tmp/geos/integratedTests/tests/allTests/simplePDE --logs /tmp/build/integratedTests/TestResults --ats openmpi_mpirun=/usr/bin/mpirun --ats openmpi_args=--allow-run-as-root --ats openmpi_procspernode=2 --ats openmpi_maxprocs=2 --machine openmpi
   exit_status=$?
   echo "The return code is ${exit_status}"
+
+  # TODO check for DATA_EXCHANGE
+  tar czf ${DATA_EXCHANGE}/integratedTests.tar.gz \
+    --directory ${GEOS_SRC_DIR} --transform 's/^integratedTests/repo/' integratedTests \
+    --directory ${GEOSX_BUILD_DIR} --transform 's/^integratedTests/logs/' integratedTests
 fi
 
 if [[ ! -z "${SCCACHE_CREDS}" ]]; then
