@@ -93,16 +93,16 @@ set( constitutive_headers
      permeability/ProppantPermeability.hpp
      permeability/SlipDependentPermeability.hpp
      permeability/WillisRichardsPermeability.hpp
-     relativePermeability/RelpermDriver.hpp
-     relativePermeability/RelpermDriverRunTest.hpp
+#     relativePermeability/RelpermDriver.hpp
+#     relativePermeability/RelpermDriverRunTest.hpp
      relativePermeability/BrooksCoreyBakerRelativePermeability.hpp
      relativePermeability/BrooksCoreyRelativePermeability.hpp
      relativePermeability/RelativePermeabilityBase.hpp
      relativePermeability/RelativePermeabilityFields.hpp
      relativePermeability/RelativePermeabilityInterpolators.hpp
-     relativePermeability/TableRelativePermeability.hpp
-     relativePermeability/TableRelativePermeabilityHelpers.hpp
-     relativePermeability/TableRelativePermeabilityHysteresis.hpp
+#     relativePermeability/TableRelativePermeability.hpp
+#     relativePermeability/TableRelativePermeabilityHelpers.hpp
+#     relativePermeability/TableRelativePermeabilityHysteresis.hpp
      relativePermeability/VanGenuchtenBakerRelativePermeability.hpp
      relativePermeability/layouts.hpp
      relativePermeability/RelativePermeabilitySelector.hpp
@@ -224,16 +224,16 @@ set( constitutive_sources
      relativePermeability/BrooksCoreyBakerRelativePermeability.cpp
      relativePermeability/BrooksCoreyRelativePermeability.cpp
      relativePermeability/RelativePermeabilityBase.cpp
-     relativePermeability/TableRelativePermeability.cpp
-     relativePermeability/TableRelativePermeabilityHelpers.cpp
-     relativePermeability/TableRelativePermeabilityHysteresis.cpp
+#     relativePermeability/TableRelativePermeability.cpp
+#     relativePermeability/TableRelativePermeabilityHelpers.cpp
+#     relativePermeability/TableRelativePermeabilityHysteresis.cpp
      relativePermeability/VanGenuchtenBakerRelativePermeability.cpp
-     relativePermeability/RelpermDriver.cpp
-     relativePermeability/RelpermDriverBrooksCoreyBakerRunTest.cpp
-     relativePermeability/RelpermDriverBrooksCoreyRunTest.cpp
-     relativePermeability/RelpermDriverVanGenuchtenBakerRunTest.cpp
-     relativePermeability/RelpermDriverTableRelativeRunTest.cpp
-     relativePermeability/RelpermDriverTableRelativeHysteresisRunTest.cpp
+#     relativePermeability/RelpermDriver.cpp
+#     relativePermeability/RelpermDriverBrooksCoreyBakerRunTest.cpp
+#     relativePermeability/RelpermDriverBrooksCoreyRunTest.cpp
+#     relativePermeability/RelpermDriverVanGenuchtenBakerRunTest.cpp
+#     relativePermeability/RelpermDriverTableRelativeRunTest.cpp
+#     relativePermeability/RelpermDriverTableRelativeHysteresisRunTest.cpp
      solid/CompressibleSolid.cpp
      solid/CoupledSolidBase.cpp
      solid/ProppantSolid.cpp

@@ -91,10 +91,11 @@ void RelativePermeabilityBase::postProcessInput()
 void RelativePermeabilityBase::resizeFields( localIndex const size, localIndex const numPts )
 {
   integer const numPhases = numFluidPhases();
+  integer const numDir = 3;
 
-  m_phaseRelPerm.resize( size, numPts, numPhases );
-  m_phaseRelPerm_n.resize( size, numPts, numPhases );
-  m_dPhaseRelPerm_dPhaseVolFrac.resize( size, numPts, numPhases, numPhases );
+  m_phaseRelPerm.resize( size, numPts, numPhases, numDir );
+  m_phaseRelPerm_n.resize( size, numPts, numPhases, numDir );
+  m_dPhaseRelPerm_dPhaseVolFrac.resize( size, numPts, numPhases, numPhases, numDir );
   //phase trapped for stats
   m_phaseTrappedVolFrac.resize( size, numPts, numPhases );
   m_phaseTrappedVolFrac.zero();

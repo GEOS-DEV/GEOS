@@ -40,7 +40,7 @@ public:
    */
 
   GEOS_HOST_DEVICE
-  arrayView3d< real64 const, relperm::USD_RELPERM > relperm() const
+  arrayView4d< real64 const, relperm::USD_RELPERM > relperm() const
   { return m_phaseRelPerm; }
 
   /**
@@ -69,9 +69,9 @@ protected:
 
   RelativePermeabilityBaseUpdate( arrayView1d< integer const > const & phaseTypes,
                                   arrayView1d< integer const > const & phaseOrder,
-                                  arrayView3d< real64, relperm::USD_RELPERM > const & phaseRelPerm,
-                                  arrayView4d< real64, relperm::USD_RELPERM_DS > const & dPhaseRelPerm_dPhaseVolFrac,
-                                  arrayView3d< real64, relperm::USD_RELPERM > const & phaseTrappedVolFrac )
+                                  arrayView4d< real64, relperm::USD_RELPERM > const & phaseRelPerm,
+                                  arrayView5d< real64, relperm::USD_RELPERM_DS > const & dPhaseRelPerm_dPhaseVolFrac,
+                                  arrayView3d< real64, relperm::USD_PHASE > const & phaseTrappedVolFrac )
     : m_phaseTypes( phaseTypes ),
     m_phaseOrder( phaseOrder ),
     m_phaseRelPerm( phaseRelPerm ),
@@ -81,10 +81,10 @@ protected:
   arrayView1d< integer const > m_phaseTypes;
   arrayView1d< integer const > m_phaseOrder;
 
-  arrayView3d< real64, relperm::USD_RELPERM > m_phaseRelPerm;
-  arrayView4d< real64, relperm::USD_RELPERM_DS > m_dPhaseRelPerm_dPhaseVolFrac;
+  arrayView4d< real64, relperm::USD_RELPERM > m_phaseRelPerm;
+  arrayView5d< real64, relperm::USD_RELPERM_DS > m_dPhaseRelPerm_dPhaseVolFrac;
 
-  arrayView3d< real64, relperm::USD_RELPERM > m_phaseTrappedVolFrac;
+  arrayView3d< real64, relperm::USD_PHASE > m_phaseTrappedVolFrac;
 
 private:
   GEOS_HOST_DEVICE
@@ -138,10 +138,10 @@ public:
 
   arrayView1d< string const > phaseNames() const { return m_phaseNames; }
 
-  arrayView3d< real64 const, relperm::USD_RELPERM > phaseTrappedVolFraction() const { return m_phaseTrappedVolFrac; }
+  arrayView3d< real64 const, relperm::USD_PHASE > phaseTrappedVolFraction() const { return m_phaseTrappedVolFrac; }
 
-  arrayView3d< real64 const, relperm::USD_RELPERM > phaseRelPerm() const { return m_phaseRelPerm; }
-  arrayView4d< real64 const, relperm::USD_RELPERM_DS > dPhaseRelPerm_dPhaseVolFraction() const { return m_dPhaseRelPerm_dPhaseVolFrac; }
+  arrayView4d< real64 const, relperm::USD_RELPERM > phaseRelPerm() const { return m_phaseRelPerm; }
+  arrayView5d< real64 const, relperm::USD_RELPERM_DS > dPhaseRelPerm_dPhaseVolFraction() const { return m_dPhaseRelPerm_dPhaseVolFrac; }
 
   arrayView1d< integer const > getPhaseOrder() const { return m_phaseOrder; }
   virtual arrayView1d< real64 const > getPhaseMinVolumeFraction() const = 0;
@@ -194,10 +194,10 @@ protected:
 protected:
 
   // output quantities
-  array3d< real64, relperm::LAYOUT_RELPERM > m_phaseRelPerm;
-  array3d< real64, relperm::LAYOUT_RELPERM >  m_phaseRelPerm_n;
-  array4d< real64, relperm::LAYOUT_RELPERM_DS > m_dPhaseRelPerm_dPhaseVolFrac;
-  array3d< real64, relperm::LAYOUT_RELPERM > m_phaseTrappedVolFrac;
+  array4d< real64, relperm::LAYOUT_RELPERM > m_phaseRelPerm;
+  array4d< real64, relperm::LAYOUT_RELPERM >  m_phaseRelPerm_n;
+  array5d< real64, relperm::LAYOUT_RELPERM_DS > m_dPhaseRelPerm_dPhaseVolFrac;
+  array3d< real64, relperm::LAYOUT_PHASE > m_phaseTrappedVolFrac;
 
 };
 
