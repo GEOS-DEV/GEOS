@@ -153,6 +153,12 @@ public:
   virtual void copy( localIndex const sourceIndex, localIndex const destIndex ) = 0;
 
   /**
+   * @brief Calls T::erase(indicesToErase)
+   * @param[in] indicesToErase indices to erase
+   */
+  virtual void erase( std::set< localIndex > const & indicesToErase ) = 0;
+
+  /**
    * @brief Calls T::move(space, touch)
    * @param[in] space A CHAI execution space to move the data into
    * @param[in] touch whether to register a touch in target space
@@ -350,13 +356,15 @@ public:
    * @param[out] events      a collection of events to poll for completion of async
    *                         packing kernels ( device packing is incomplete until all
    *                         events are finalized )
+   * @param[in] op           the operation to perform while unpacking
    * @return                  the number of @p buffer_unit_type units unpacked
    */
   virtual localIndex unpackByIndex( buffer_unit_type const * & buffer,
                                     arrayView1d< localIndex const > const & unpackIndices,
                                     bool withMetadata,
                                     bool onDevice,
-                                    parallelDeviceEvents & events ) = 0;
+                                    parallelDeviceEvents & events,
+                                    MPI_Op op=MPI_REPLACE ) = 0;
 
   ///@}
 

@@ -20,6 +20,7 @@
 
 #include "common/MpiWrapper.hpp"
 #include "mesh/WellElementSubRegion.hpp"
+#include "mesh/generators/InternalWellGenerator.hpp"
 
 namespace geos
 {
@@ -67,7 +68,8 @@ void WellElementRegion::generateWell( MeshLevel & mesh,
 
   globalIndex const matchedPerforations = MpiWrapper::sum( perforationData->size() );
   GEOS_THROW_IF( matchedPerforations != numPerforationsGlobal,
-                 "Invalid mapping perforation-to-element in well " << lineBlock.getName() << "." <<
+                 "Invalid mapping perforation-to-element in "<<
+                 InternalWellGenerator::catalogName() << " " << getWellGeneratorName() << "." <<
                  " This happens when GEOSX cannot match a perforation with a reservoir element." <<
                  " There are two common reasons for this error:\n" <<
                  " 1- The most common reason for this error is that a perforation is on a section of " <<

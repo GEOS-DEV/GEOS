@@ -64,7 +64,8 @@ PoromechanicsInitialization< POROMECHANICS_SOLVER >::
 PoromechanicsInitialization( const string & name,
                              Group * const parent ):
   TaskBase( name, parent ),
-  m_poromechanicsSolverName()
+  m_poromechanicsSolverName(),
+  m_solidMechanicsStateResetTask( name, parent )
 {
   enableLogLevelInput();
 
@@ -97,17 +98,21 @@ postProcessInput()
                  InputError );
 
   m_poromechanicsSolver = &physicsSolverManager.getGroup< POROMECHANICS_SOLVER >( m_poromechanicsSolverName );
+
+  m_solidMechanicsStateResetTask.setLogLevel( getLogLevel());
+  m_solidMechanicsStateResetTask.m_solidSolverName = m_poromechanicsSolver->solidMechanicsSolver()->getName();
+  m_solidMechanicsStateResetTask.postProcessInput();
 }
 
 template< typename POROMECHANICS_SOLVER >
 bool
 PoromechanicsInitialization< POROMECHANICS_SOLVER >::
 execute( real64 const time_n,
-         real64 const GEOS_UNUSED_PARAM( dt ),
-         integer const GEOS_UNUSED_PARAM( cycleNumber ),
-         integer const GEOS_UNUSED_PARAM( eventCounter ),
-         real64 const GEOS_UNUSED_PARAM( eventProgress ),
-         DomainPartition & GEOS_UNUSED_PARAM( domain ) )
+         real64 const dt,
+         integer const cycleNumber,
+         integer const eventCounter,
+         real64 const eventProgress,
+         DomainPartition & domain )
 {
   if( m_performStressInitialization )
   {
@@ -121,6 +126,8 @@ execute( real64 const time_n,
                                         getName(), time_n, m_poromechanicsSolverName ) );
     m_poromechanicsSolver->setStressInitialization( false );
   }
+
+  m_solidMechanicsStateResetTask.execute( time_n, dt, cycleNumber, eventCounter, eventProgress, domain );
 
   // always returns false because we don't want early return (see EventManager.cpp)
   return false;

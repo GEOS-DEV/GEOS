@@ -1059,6 +1059,7 @@ public:
    * @param[out] events      a collection of events to poll for completion of async
    *                         packing kernels ( device packing is incomplete until all
    *                         events are finalized )
+   * @param[in] op           the operation to perform while unpacking
    * @return                 the number of bytes unpacked.
    *
    * This function takes a reference to a pointer to const buffer type, and
@@ -1071,7 +1072,8 @@ public:
                              arrayView1d< localIndex > & packList,
                              integer const recursive,
                              bool onDevice,
-                             parallelDeviceEvents & events );
+                             parallelDeviceEvents & events,
+                             MPI_Op op=MPI_REPLACE );
 
   ///@}
 
@@ -1460,6 +1462,12 @@ public:
 
   /// Enable verbosity input for object
   void enableLogLevelInput();
+
+  /**
+   * @brief Set verbosity level
+   * @param logLevel new verbosity level value
+   */
+  void setLogLevel( integer const logLevel ) { m_logLevel = logLevel; }
 
   /// @return The verbosity level
   integer getLogLevel() const { return m_logLevel; }

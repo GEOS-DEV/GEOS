@@ -179,6 +179,7 @@ void MultiphasePoromechanics::assembleSystem( real64 const GEOS_UNUSED_PARAM( ti
                                                                                                     flowDofKey,
                                                                                                     flowSolver()->numFluidComponents(),
                                                                                                     flowSolver()->numFluidPhases(),
+                                                                                                    flowSolver()->useTotalMassEquation(),
                                                                                                     FlowSolverBase::viewKeyStruct::fluidNamesString() );
     }
     else
@@ -195,6 +196,7 @@ void MultiphasePoromechanics::assembleSystem( real64 const GEOS_UNUSED_PARAM( ti
                                                                                       flowDofKey,
                                                                                       flowSolver()->numFluidComponents(),
                                                                                       flowSolver()->numFluidPhases(),
+                                                                                      flowSolver()->useTotalMassEquation(),
                                                                                       FlowSolverBase::viewKeyStruct::fluidNamesString() );
     }
   } );
@@ -282,7 +284,7 @@ void MultiphasePoromechanics::updateState( DomainPartition & domain )
     } );
   } );
 
-  GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "        {}: Max deltaPhaseVolFrac = {}", getName(), maxDeltaPhaseVolFrac ) );
+  GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "        {}: Max phase volume fraction change: {}", getName(), fmt::format( "{:.{}f}", maxDeltaPhaseVolFrac, 2 ) ) );
 }
 
 void MultiphasePoromechanics::initializePostInitialConditionsPreSubGroups()

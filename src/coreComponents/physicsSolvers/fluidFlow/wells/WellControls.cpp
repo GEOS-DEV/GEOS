@@ -190,7 +190,7 @@ TableFunction * createWellTable( string const & tableName,
 
   FunctionManager & functionManager = FunctionManager::getInstance();
   TableFunction * table = dynamicCast< TableFunction * >( functionManager.createChild( TableFunction::catalogName(), tableName ));
-  table->setTableCoordinates( timeCoord );
+  table->setTableCoordinates( timeCoord, { units::Time } );
   table->setTableValues( constantValueArray );
   table->setInterpolationMethod( TableFunction::InterpolationType::Lower );
   return table;

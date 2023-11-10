@@ -323,7 +323,12 @@ public:
   ///////////////////////////////////////////////////////////////////////////////////////////////////
   /// @copydoc WrapperBase::unpackByIndex
   virtual
-  localIndex unpackByIndex( buffer_unit_type const * & buffer, arrayView1d< localIndex const > const & unpackIndices, bool withMetadata, bool onDevice, parallelDeviceEvents & events ) override final
+  localIndex unpackByIndex( buffer_unit_type const * & buffer,
+                            arrayView1d< localIndex const > const & unpackIndices,
+                            bool withMetadata,
+                            bool onDevice,
+                            parallelDeviceEvents & events,
+                            MPI_Op op ) override final
   {
     localIndex unpackedSize = 0;
 
@@ -337,11 +342,11 @@ public:
     {
       if( withMetadata )
       {
-        unpackedSize += wrapperHelpers::UnpackByIndexDevice( buffer, referenceAsView(), unpackIndices, events );
+        unpackedSize += wrapperHelpers::UnpackByIndexDevice( buffer, referenceAsView(), unpackIndices, events, op );
       }
       else
       {
-        unpackedSize += wrapperHelpers::UnpackDataByIndexDevice( buffer, referenceAsView(), unpackIndices, events );
+        unpackedSize += wrapperHelpers::UnpackDataByIndexDevice( buffer, referenceAsView(), unpackIndices, events, op );
       }
     }
     else
@@ -415,9 +420,9 @@ public:
     static void copy( Array< U, NDIM, PERMUTATION > const & array, localIndex const sourceIndex, localIndex const destIndex )
     {
       LvArray::forValuesInSliceWithIndices( array[ sourceIndex ],
-                                            [destIndex, &array]( U const & sourceVal, auto const ... indices )
+                                            [destIndex, &array]( U const & sourceVal, auto const ... indicesToErase )
       {
-        array( destIndex, indices ... ) = sourceVal;
+        array( destIndex, indicesToErase ... ) = sourceVal;
       } );
     }
 
@@ -451,6 +456,105 @@ public:
   {
     Wrapper< T > const & castedSource = dynamicCast< Wrapper< T > const & >( source );
     copy_wrapper::copyData( *m_data, *castedSource.m_data );
+  }
+
+
+  /// @cond DO_NOT_DOCUMENT
+  struct erase_wrapper // This should probably be in LvArray?
+  {
+    template< typename TYPE >
+    static void erase( TYPE &, std::set< localIndex > const & )
+    {}
+
+    template< typename TYPE >
+    static void erase( array1d< TYPE > & array, std::set< localIndex > const & indicesToErase )
+    {
+      int oldSize = array.size( 0 );
+      int numToErase = indicesToErase.size();
+      int newSize = oldSize - numToErase;
+      std::set< localIndex >::iterator it = indicesToErase.begin();
+      int offset = 0;
+      for( localIndex i=*it+1; i<oldSize; i++ )
+      {
+        if( i == *it + 1 )
+        {
+          offset++;
+          if( offset < numToErase )
+          {
+            it++;
+          }
+        }
+        array[i-offset] = array[i];
+      }
+      array.resize( newSize );
+    }
+
+    template< typename TYPE >
+    static void erase( array2d< TYPE > & array, std::set< localIndex > const & indicesToErase )
+    {
+      int oldSize = array.size( 0 );
+      int numToErase = indicesToErase.size();
+      int newSize = oldSize - numToErase;
+      int dim1 = array.size( 1 );
+      std::set< localIndex >::iterator it = indicesToErase.begin();
+      int offset = 0;
+      for( localIndex i=*it+1; i<oldSize; i++ )
+      {
+        if( i == *it + 1 )
+        {
+          offset++;
+          if( offset < numToErase )
+          {
+            it++;
+          }
+        }
+        for( int j=0; j<dim1; j++ )
+        {
+          array[i-offset][j] = array[i][j];
+        }
+      }
+      array.resize( newSize );
+    }
+
+    template< typename TYPE >
+    static void erase( array3d< TYPE > & array, std::set< localIndex > const & indicesToErase )
+    {
+      int oldSize = array.size( 0 );
+      int numToErase = indicesToErase.size();
+      int newSize = oldSize - numToErase;
+      int dim1 = array.size( 1 );
+      int dim2 = array.size( 2 );
+      std::set< localIndex >::iterator it = indicesToErase.begin();
+      int offset = 0;
+      for( localIndex i=*it+1; i<oldSize; i++ )
+      {
+        if( i == *it + 1 )
+        {
+          offset++;
+          if( offset < numToErase )
+          {
+            it++;
+          }
+        }
+        for( int j=0; j<dim1; j++ )
+        {
+          for( int k=0; k<dim2; k++ )
+          {
+            array[i-offset][j][k] = array[i][j][k];
+          }
+        }
+      }
+      array.resize( newSize );
+    }
+  };
+  /// @endcond
+
+
+  ///////////////////////////////////////////////////////////////////////////////////////////////////
+  void erase( std::set< localIndex > const & indicesToErase ) override
+  {
+    GEOS_ERROR_IF( indicesToErase.size() == 0, "Wrapper::erase() can only be called on a populated set of indices!" );
+    erase_wrapper::erase( reference(), indicesToErase );
   }
 
 

@@ -261,8 +261,8 @@ void AquiferBoundaryCondition::setupDefaultPressureInfluenceFunction()
   m_pressureInfluenceFunctionName = getName() + "_pressureInfluence_table";
   TableFunction * const pressureInfluenceTable =
     dynamicCast< TableFunction * >( functionManager.createChild( TableFunction::catalogName(), m_pressureInfluenceFunctionName ) );
-  pressureInfluenceTable->setTableCoordinates( dimensionlessTime );
-  pressureInfluenceTable->setTableValues( pressureInfluence );
+  pressureInfluenceTable->setTableCoordinates( dimensionlessTime, { units::Dimensionless } );
+  pressureInfluenceTable->setTableValues( pressureInfluence, units::Dimensionless );
   pressureInfluenceTable->setInterpolationMethod( TableFunction::InterpolationType::Linear );
 
 }
