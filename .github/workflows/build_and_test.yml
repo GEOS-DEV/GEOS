@@ -115,7 +115,7 @@ jobs:
           --exchange ${DATA_EXCHANGE_DIR} \
           -- \
           --cmake-build-type ${{ inputs.CMAKE_BUILD_TYPE }} \
-          --data-basename-we ${ DATA_BASENAME_WE } \
+          --data-basename-we ${DATA_BASENAME_WE} \
           ${HOST_CONFIG:+"--host-config ${HOST_CONFIG}"} \
           ${SCCACHE_CLI} \
           ${{ inputs.BUILD_AND_TEST_ARGS }}
@@ -172,7 +172,7 @@ jobs:
           --exchange ${DATA_EXCHANGE_DIR} \
           -- \
           --cmake-build-type ${{ inputs.CMAKE_BUILD_TYPE }} \
-          --data-basename-we ${ DATA_BASENAME_WE } \
+          --data-basename-we ${DATA_BASENAME_WE} \
           ${HOST_CONFIG:+"--host-config ${HOST_CONFIG}"} \
           ${SCCACHE_CLI} \
           ${{ inputs.BUILD_AND_TEST_ARGS }}
