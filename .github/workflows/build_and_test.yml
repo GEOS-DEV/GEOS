@@ -99,7 +99,8 @@ jobs:
     - name: Build and test and deploy
       if: ${{ inputs.build_type == 'build' && inputs.GCP_BUCKET }}
       run: |
-        DATA_BASENAME_WE=GEOSX-and-TPL-${GITHUB_SHA:0:7}
+        COMMIT=${{ github.event.pull_request.head.sha }}  # TODO Remove and use the env variable?
+        DATA_BASENAME_WE=GEOSX-and-TPL-${COMMIT:0:7}
         DATA_EXCHANGE_DIR=/tmp/exchange  # TODO maybe use /mnt size it has more free space?
         mkdir ${DATA_EXCHANGE_DIR}
         #
@@ -154,7 +155,8 @@ jobs:
     - name: Run integrated tests
       if: ${{ inputs.build_type == 'integrated_tests' }}
       run: |
-        DATA_BASENAME_WE=integratedTests-pr${{ github.event.number }}-${{ github.run_number }}-${GITHUB_SHA:0:7}
+        COMMIT=${{ github.event.pull_request.head.sha }}  # TODO Remove and use the env variable?
+        DATA_BASENAME_WE=integratedTests-pr${{ github.event.number }}-${{ github.run_number }}-${COMMIT:0:7}
         DATA_EXCHANGE_DIR=/tmp/exchange  # TODO maybe use /mnt size it has more free space?
         mkdir ${DATA_EXCHANGE_DIR}
         #
