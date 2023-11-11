@@ -82,13 +82,18 @@ jobs:
     - name: Build and test
       if: ${{ inputs.build_type == 'build' && !(inputs.GCP_BUCKET) }}
       run: |
+        DATA_EXCHANGE_DIR=/tmp/exchange  # TODO maybe use /mnt size it has more free space?
+        mkdir ${DATA_EXCHANGE_DIR}
+        #
         HOST_CONFIG=${{ inputs.HOST_CONFIG }}
         if ${{ inputs.USE_SCCACHE }} == 'true'; then
           SCCACHE_CLI="--sccache-credentials $(basename ${GOOGLE_GHA_CREDS_PATH})"
         fi
+        #
         ./scripts/ci_build_and_test.sh \
           --docker-repository ${{ inputs.DOCKER_REPOSITORY }} \
           --docker-tag ${{ inputs.DOCKER_IMAGE_TAG }} \
+          --exchange ${DATA_EXCHANGE_DIR} \
           -- \
           --cmake-build-type ${{ inputs.CMAKE_BUILD_TYPE }} \
           ${HOST_CONFIG:+"--host-config ${HOST_CONFIG}"} \
@@ -156,8 +161,7 @@ jobs:
       if: ${{ inputs.build_type == 'integrated_tests' }}
       run: |
         COMMIT=${{ github.event.pull_request.head.sha }}
-        # DATA_BASENAME_WE=integratedTests-pr${{ github.event.number }}-${{ github.run_number }}-${COMMIT:0:7}
-        DATA_BASENAME_WE=integratedTests-pr${{ github.event.number }}-${{ github.run_number }}-${{ github.event.pull_request.head.sha }}
+        DATA_BASENAME_WE=integratedTests-pr${{ github.event.number }}-${{ github.run_number }}-${COMMIT:0:7}
         DATA_EXCHANGE_DIR=/tmp/exchange  # TODO maybe use /mnt size it has more free space?
         mkdir ${DATA_EXCHANGE_DIR}
         #
