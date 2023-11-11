@@ -32,6 +32,7 @@ function usage () {
 Usage: $0
   [ --build-exe-only ]
   [ --cmake-build-type ... ]
+  [ --data-basename-we ... ]
   [ --exchange ... ]
   [ --host-config ... ]
   [ --no-install-schema ]
@@ -48,7 +49,7 @@ exit 1
 # Working in the root of the cloned repository
 or_die cd $(dirname $0)/..
 
-args=$(getopt -a -o h --long build-exe-only,cmake-build-type:,exchange:,no-run-unit-tests,host-config:,no-install-schema,install-dir:,test-code-style,test-documentation,sccache-credentials:,repository:,run-integrated-tests,help -- "$@")
+args=$(getopt -a -o h --long build-exe-only,cmake-build-type:,data-basename-we:,exchange:,no-run-unit-tests,host-config:,no-install-schema,install-dir:,test-code-style,test-documentation,sccache-credentials:,repository:,run-integrated-tests,help -- "$@")
 if [[ $? -gt 0 ]]; then
   echo "Error after getopt"
   echo "which getop"
@@ -72,7 +73,8 @@ do
   case $1 in
     --build-exe-only)       BUILD_EXE_ONLY=true; RUN_UNIT_TESTS=false; shift;;
     --cmake-build-type)     CMAKE_BUILD_TYPE=$2;        shift 2;;
-    --exchange)             DATA_EXCHANGE=$2;           shift 2;;
+    --data-basename-we)     DATA_BASENAME_WE=$2;        shift 2;;
+    --exchange)             DATA_EXCHANGE_DIR=$2;       shift 2;;
     --host-config)          HOST_CONFIG=$2;             shift 2;;
     --no-install-schema)    GEOSX_INSTALL_SCHEMA=false; shift;;
     --no-run-unit-tests)    RUN_UNIT_TESTS=false;       shift;;
@@ -172,6 +174,11 @@ if [[ "${BUILD_EXE_ONLY}" = true ]]; then
 else
   or_die ninja -j $(nproc)
   or_die ninja install
+
+  if [[ ! -z "${DATA_BASENAME_WE}" ]]; then
+    # Here we pack the installation
+   tar czf ${DATA_EXCHANGE_DIR}/${DATA_BASENAME_WE}.tar.gz --directory=${${GEOSX_TPL_DIR}/..} --transform 's/^/${DATA_BASENAME_WE}\//' .
+  fi
 fi
 
 # Unit tests (excluding previously ran checks)
@@ -193,12 +200,9 @@ if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
   exit_status=$?
   echo "The return code is ${exit_status}"
 
-  # tar czf ${DATA_EXCHANGE}/integratedTests.tar --directory ${GEOS_SRC_DIR} --transform 's/^integratedTests/integratedTests\/repo/' integratedTests
-  # tar czf --append --file=${DATA_EXCHANGE}/integratedTests.tar --directory ${GEOSX_BUILD_DIR} --transform 's/^integratedTests/integratedTests\/logs/' integratedTests
-  tar cfM ${DATA_EXCHANGE}/integratedTests.tar --directory ${GEOS_SRC_DIR} --transform 's/^integratedTests/integratedTests\/repo/' integratedTests
-  tar rfM ${DATA_EXCHANGE}/integratedTests.tar --directory ${GEOSX_BUILD_DIR} --transform 's/^integratedTests/integratedTests\/logs/' integratedTests
-  tar czf ${DATA_EXCHANGE}/integratedTests.tar.gz --directory ${DATA_EXCHANGE} integratedTests.tar
-  rm ${DATA_EXCHANGE}/integratedTests.tar
+  tar cfM ${DATA_EXCHANGE_DIR}/${DATA_BASENAME_WE}.tar --directory ${GEOS_SRC_DIR}    --transform 's/^integratedTests/integratedTests\/repo/' integratedTests
+  tar rfM ${DATA_EXCHANGE_DIR}/${DATA_BASENAME_WE}.tar --directory ${GEOSX_BUILD_DIR} --transform 's/^integratedTests/integratedTests\/logs/' integratedTests
+  gzip ${DATA_EXCHANGE_DIR}/${DATA_BASENAME_WE}.tar
 fi
 
 if [[ ! -z "${SCCACHE_CREDS}" ]]; then

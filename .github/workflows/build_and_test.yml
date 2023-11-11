@@ -12,9 +12,6 @@ on:
       CMAKE_BUILD_TYPE:
         required: true
         type: string
-      COMMIT:
-        required: true
-        type: string
       DOCKER_IMAGE_TAG:
         required: true
         type: string
@@ -102,27 +99,49 @@ jobs:
     - name: Build and test and deploy
       if: ${{ inputs.build_type == 'build' && inputs.GCP_BUCKET }}
       run: |
+        DATA_BASENAME_WE=GEOSX-and-TPL-${GITHUB_SHA:0:7}
+        DATA_EXCHANGE_DIR=/tmp/exchange  # TODO maybe use /mnt size it has more free space?
+        mkdir ${DATA_EXCHANGE_DIR}
+        #
         HOST_CONFIG=${{ inputs.HOST_CONFIG }}
-        # `source' command doesn't work with process substitution in bash, so we use an extra variable `HOST_CONFIG_CLI'.
-        HOST_CONFIG_CLI=${HOST_CONFIG:+"--host-config ${HOST_CONFIG}"}
         if ${{ inputs.USE_SCCACHE }} == 'true'; then
           SCCACHE_CLI="--sccache-credentials $(basename ${GOOGLE_GHA_CREDS_PATH})"
         fi
-        source ./scripts/ci_build_and_test.sh \
+        #
+        ./scripts/ci_build_and_test.sh \
           --docker-repository ${{ inputs.DOCKER_REPOSITORY }} \
           --docker-tag ${{ inputs.DOCKER_IMAGE_TAG }} \
+          --exchange ${DATA_EXCHANGE_DIR} \
           -- \
           --cmake-build-type ${{ inputs.CMAKE_BUILD_TYPE }} \
-          ${HOST_CONFIG_CLI} \
+          --data-basename-we ${ DATA_BASENAME_WE } \
+          ${HOST_CONFIG:+"--host-config ${HOST_CONFIG}"} \
           ${SCCACHE_CLI} \
           ${{ inputs.BUILD_AND_TEST_ARGS }}
-        TMP_DIR=/tmp
-        COMMIT=${{ inputs.COMMIT }}
-        GEOS_EXPORT_DIR=GEOSX-and-TPL-${COMMIT:0:7}
-        docker cp -a ${CONTAINER_NAME}:${GEOSX_TPL_DIR}/.. ${TMP_DIR}/${GEOS_EXPORT_DIR}
-        GEOS_BUNDLE=${TMP_DIR}/${GEOS_EXPORT_DIR}.tar.gz
-        tar czf ${GEOS_BUNDLE} --directory=${TMP_DIR} ${GEOS_EXPORT_DIR}
-        CLOUDSDK_PYTHON=python3 gsutil cp -a public-read ${GEOS_BUNDLE} gs://${{ inputs.GCP_BUCKET }}/
+        #
+        # Send to the bucket and print download link
+        CLOUDSDK_PYTHON=python3 gsutil cp -a public-read ${DATA_EXCHANGE_DIR}/${DATA_BASENAME_WE}.tar.gz gs://${{ inputs.GCP_BUCKET }}/
+        echo "Download the integrated tests at https://storage.googleapis.com/${{ inputs.GCP_BUCKET }}/${DATA_BASENAME_WE}.tar.gz"
+
+        # # `source' command doesn't work with process substitution in bash, so we use an extra variable `HOST_CONFIG_CLI'.
+        # HOST_CONFIG_CLI=${HOST_CONFIG:+"--host-config ${HOST_CONFIG}"}
+        # if ${{ inputs.USE_SCCACHE }} == 'true'; then
+        #   SCCACHE_CLI="--sccache-credentials $(basename ${GOOGLE_GHA_CREDS_PATH})"
+        # fi
+        # source ./scripts/ci_build_and_test.sh \
+        #   --docker-repository ${{ inputs.DOCKER_REPOSITORY }} \
+        #   --docker-tag ${{ inputs.DOCKER_IMAGE_TAG }} \
+        #   -- \
+        #   --cmake-build-type ${{ inputs.CMAKE_BUILD_TYPE }} \
+        #   ${HOST_CONFIG_CLI} \
+        #   ${SCCACHE_CLI} \
+        #   ${{ inputs.BUILD_AND_TEST_ARGS }}
+        # TMP_DIR=/tmp
+        # GEOS_EXPORT_DIR=GEOSX-and-TPL-${GITHUB_SHA:0:7}
+        # docker cp -a ${CONTAINER_NAME}:${GEOSX_TPL_DIR}/.. ${TMP_DIR}/${GEOS_EXPORT_DIR}
+        # GEOS_BUNDLE=${TMP_DIR}/${GEOS_EXPORT_DIR}.tar.gz
+        # tar czf ${GEOS_BUNDLE} --directory=${TMP_DIR} ${GEOS_EXPORT_DIR}
+        # CLOUDSDK_PYTHON=python3 gsutil cp -a public-read ${GEOS_BUNDLE} gs://${{ inputs.GCP_BUCKET }}/
 
     # - name: Setup upterm session
     #   uses: lhotari/action-upterm@v1
@@ -135,39 +154,29 @@ jobs:
     - name: Run integrated tests
       if: ${{ inputs.build_type == 'integrated_tests' }}
       run: |
-        DATA_EXCHANGE=/tmp/exchange
-        mkdir ${DATA_EXCHANGE}
-        df -hT
+        DATA_BASENAME_WE=integratedTests-pr${{ github.event.number }}-${{ github.run_number }}-${GITHUB_SHA:0:7}
+        DATA_EXCHANGE_DIR=/tmp/exchange  # TODO maybe use /mnt size it has more free space?
+        mkdir ${DATA_EXCHANGE_DIR}
+        #
         HOST_CONFIG=${{ inputs.HOST_CONFIG }}
         if ${{ inputs.USE_SCCACHE }} == 'true'; then
           SCCACHE_CLI="--sccache-credentials $(basename ${GOOGLE_GHA_CREDS_PATH})"
         fi
+        #
         ./scripts/ci_build_and_test.sh \
           --docker-repository ${{ inputs.DOCKER_REPOSITORY }} \
           --docker-tag ${{ inputs.DOCKER_IMAGE_TAG }} \
-          --exchange ${DATA_EXCHANGE} \
+          --exchange ${DATA_EXCHANGE_DIR} \
           -- \
           --cmake-build-type ${{ inputs.CMAKE_BUILD_TYPE }} \
+          --data-basename-we ${ DATA_BASENAME_WE } \
           ${HOST_CONFIG:+"--host-config ${HOST_CONFIG}"} \
           ${SCCACHE_CLI} \
           ${{ inputs.BUILD_AND_TEST_ARGS }}
         #
-        COMMIT=${{ inputs.COMMIT }}  # TODO Remove and use the env variable?
-        BASENAME=integratedTests-pr${{ github.event.number }}-${{ github.run_number }}-${COMMIT:0:7}.tar.gz
-        mv ${DATA_EXCHANGE}/*.tar.gz ${DATA_EXCHANGE}/${BASENAME}
-        CLOUDSDK_PYTHON=python3 gsutil cp -a public-read ${DATA_EXCHANGE}/${BASENAME} gs://${{ inputs.GCP_BUCKET }}/
-        echo "Download the integrated tests at https://storage.googleapis.com/geosx/integratedTests/${BASENAME}"
-        #
-        # TMP_DIR=/tmp
-        # GEOS_EXPORT_DIR=integratedTests-pr${{ github.event.number }}-${{ github.run_number }}-${COMMIT:0:7}
-        # mkdir -p ${TMP_DIR}/${GEOS_EXPORT_DIR}/{src,build}
-        # docker cp -a geos_build:/tmp/geos/integratedTests ${TMP_DIR}/${GEOS_EXPORT_DIR}/src
-        # docker cp -a geos_build:/tmp/build/integratedTests ${TMP_DIR}/${GEOS_EXPORT_DIR}/build
-        # GEOS_BUNDLE=${TMP_DIR}/${GEOS_EXPORT_DIR}.tar.gz
-        # tar czf ${GEOS_BUNDLE} --directory=${TMP_DIR} ${GEOS_EXPORT_DIR}
-        # CLOUDSDK_PYTHON=python3 gsutil cp -a public-read ${GEOS_BUNDLE} gs://${{ inputs.GCP_BUCKET }}/
-        # echo "Download the integrated tests at https://storage.googleapis.com/geosx/integratedTests/${GEOS_EXPORT_DIR}.tar.gz"
-        #
+        # Send to the bucket and print download link
+        CLOUDSDK_PYTHON=python3 gsutil cp -a public-read ${DATA_EXCHANGE_DIR}/${DATA_BASENAME_WE}.tar.gz gs://${{ inputs.GCP_BUCKET }}/
+        echo "Download the integrated tests at https://storage.googleapis.com/${{ inputs.GCP_BUCKET }}/${DATA_BASENAME_WE}.tar.gz"
         exit ${exit_status}
 
 

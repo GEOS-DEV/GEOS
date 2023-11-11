@@ -202,7 +202,6 @@ jobs:
     uses: ./.github/workflows/build_and_test.yml
     with:
       CMAKE_BUILD_TYPE: ${{ matrix.CMAKE_BUILD_TYPE }}
-      COMMIT: ${{ github.event.pull_request.head.sha }}
       DOCKER_IMAGE_TAG: ${{ needs.is_pull_request_a_draft.outputs.DOCKER_IMAGE_TAG }}
       DOCKER_REPOSITORY: ${{ matrix.DOCKER_REPOSITORY }}
       ENABLE_HYPRE: ${{ matrix.ENABLE_HYPRE }}
@@ -223,7 +222,6 @@ jobs:
       BUILD_AND_TEST_ARGS: "--build-exe-only --run-integrated-tests"
       build_type: integrated_tests
       CMAKE_BUILD_TYPE: Release
-      COMMIT: ${{ github.event.pull_request.head.sha }}
       DOCKER_IMAGE_TAG: ${{ needs.is_pull_request_a_draft.outputs.DOCKER_IMAGE_TAG }}
       DOCKER_REPOSITORY: geosx/ubuntu22.04-gcc11
       GCP_BUCKET: geosx/integratedTests
@@ -285,6 +283,5 @@ jobs:
       ENABLE_HYPRE_DEVICE: ${{ matrix.ENABLE_HYPRE_DEVICE }}
       ENABLE_TRILINOS: ${{ matrix.ENABLE_TRILINOS }}
       GCP_BUCKET: ${{ matrix.GCP_BUCKET }}
-      COMMIT: ${{ github.event.pull_request.head.sha }}
       RUNS_ON: ${{ matrix.RUNS_ON }}
     secrets: inherit
