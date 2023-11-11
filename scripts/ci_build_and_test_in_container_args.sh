@@ -182,7 +182,7 @@ else
 
   if [[ ! -z "${DATA_BASENAME_WE}" ]]; then
     # Here we pack the installation
-   tar czf ${DATA_EXCHANGE_DIR}/${DATA_BASENAME_WE}.tar.gz --directory=${GEOSX_TPL_DIR}/.. --transform "s/^/${DATA_BASENAME_WE}\//" .
+   tar czf ${DATA_EXCHANGE_DIR}/${DATA_BASENAME_WE}.tar.gz --directory=${GEOSX_TPL_DIR}/.. --transform "s/^./${DATA_BASENAME_WE}/" .
   fi
 fi
 
@@ -205,8 +205,8 @@ if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
   exit_status=$?
   echo "The return code is ${exit_status}"
 
-  tar cfM ${DATA_EXCHANGE_DIR}/${DATA_BASENAME_WE}.tar --directory ${GEOS_SRC_DIR}    --transform 's/^integratedTests/integratedTests\/repo/' integratedTests
-  tar rfM ${DATA_EXCHANGE_DIR}/${DATA_BASENAME_WE}.tar --directory ${GEOSX_BUILD_DIR} --transform 's/^integratedTests/integratedTests\/logs/' integratedTests
+  tar cfM ${DATA_EXCHANGE_DIR}/${DATA_BASENAME_WE}.tar --directory ${GEOS_SRC_DIR}    --transform "s/^integratedTests/${DATA_BASENAME_WE}\/repo/" integratedTests
+  tar rfM ${DATA_EXCHANGE_DIR}/${DATA_BASENAME_WE}.tar --directory ${GEOSX_BUILD_DIR} --transform "s/^integratedTests/${DATA_BASENAME_WE}\/logs/" integratedTests
   gzip ${DATA_EXCHANGE_DIR}/${DATA_BASENAME_WE}.tar
 fi
 
