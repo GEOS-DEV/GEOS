@@ -49,7 +49,7 @@ exit 1
 # Working in the root of the cloned repository
 or_die cd $(dirname $0)/..
 
-args=$(getopt -a -o h --long build-exe-only,cmake-build-type:,data-basename-we:,exchange:,no-run-unit-tests,host-config:,no-install-schema,install-dir:,test-code-style,test-documentation,sccache-credentials:,repository:,run-integrated-tests,help -- "$@")
+args=$(getopt -a -o h --long build-exe-only,cmake-build-type:,data-basename-we:,exchange:,no-run-unit-tests,host-config:,install-dir-basename:,no-install-schema,install-dir:,test-code-style,test-documentation,sccache-credentials:,repository:,run-integrated-tests,help -- "$@")
 if [[ $? -gt 0 ]]; then
   echo "Error after getopt"
   echo "which getop"
@@ -71,19 +71,20 @@ eval set -- ${args}
 while :
 do
   case $1 in
-    --build-exe-only)       BUILD_EXE_ONLY=true; RUN_UNIT_TESTS=false; shift;;
-    --cmake-build-type)     CMAKE_BUILD_TYPE=$2;        shift 2;;
-    --data-basename-we)     DATA_BASENAME_WE=$2;        shift 2;;
-    --exchange)             DATA_EXCHANGE_DIR=$2;       shift 2;;
-    --host-config)          HOST_CONFIG=$2;             shift 2;;
-    --no-install-schema)    GEOSX_INSTALL_SCHEMA=false; shift;;
-    --no-run-unit-tests)    RUN_UNIT_TESTS=false;       shift;;
-    --repository)           GEOS_SRC_DIR=$2;            shift 2;;
-    --run-integrated-tests) RUN_INTEGRATED_TESTS=true;  shift;;
-    --sccache-credentials)  SCCACHE_CREDS=$2;           shift 2;;
-    --test-code-style)      TEST_CODE_STYLE=true;       shift;;
-    --test-documentation)   TEST_DOCUMENTATION=true;    shift;;
-    -h | --help)            usage;                      shift;;
+    --build-exe-only)        BUILD_EXE_ONLY=true; RUN_UNIT_TESTS=false; shift;;
+    --cmake-build-type)      CMAKE_BUILD_TYPE=$2;        shift 2;;
+    --data-basename-we)      DATA_BASENAME_WE=$2;        shift 2;;
+    --exchange)              DATA_EXCHANGE_DIR=$2;       shift 2;;
+    --host-config)           HOST_CONFIG=$2;             shift 2;;
+    --install-dir-basename ) GEOSX_DIR=${GEOSX_TPL_DIR}/../$2; shift 2;;
+    --no-install-schema)     GEOSX_INSTALL_SCHEMA=false; shift;;
+    --no-run-unit-tests)     RUN_UNIT_TESTS=false;       shift;;
+    --repository)            GEOS_SRC_DIR=$2;            shift 2;;
+    --run-integrated-tests)  RUN_INTEGRATED_TESTS=true;  shift;;
+    --sccache-credentials)   SCCACHE_CREDS=$2;           shift 2;;
+    --test-code-style)       TEST_CODE_STYLE=true;       shift;;
+    --test-documentation)    TEST_DOCUMENTATION=true;    shift;;
+    -h | --help)             usage;                      shift;;
     # -- means the end of the arguments; drop this, and break out of the while loop
     --) shift; break;;
     *) >&2 echo Unsupported option: $1
@@ -99,7 +100,12 @@ if [[ -z "${GEOS_SRC_DIR}" ]]; then
   echo "Variable GEOS_SRC_DIR is either empty or not defined. Please define it using '--repository'."
   exit 1
 fi
-GEOSX_DIR=${GEOSX_TPL_DIR}/../GEOSX-${GITHUB_SHA:0:7}
+
+# if [[ -z "${GEOSX_DIR}" ]]; then
+#   echo "Variable GEOSX_DIR is either empty or not defined. Please define it using '--install-dir-basename'."
+#   exit 1
+# fi
+# GEOSX_DIR=${GEOSX_TPL_DIR}/../GEOSX-${GITHUB_SHA:0:7}
 
 if [[ ! -z "${SCCACHE_CREDS}" ]]; then
   mkdir -p ${HOME}/.config/sccache
@@ -176,7 +182,7 @@ else
 
   if [[ ! -z "${DATA_BASENAME_WE}" ]]; then
     # Here we pack the installation
-   tar czf ${DATA_EXCHANGE_DIR}/${DATA_BASENAME_WE}.tar.gz --directory=${GEOSX_TPL_DIR}/.. --transform 's/^/${DATA_BASENAME_WE}\//' .
+   tar czf ${DATA_EXCHANGE_DIR}/${DATA_BASENAME_WE}.tar.gz --directory=${GEOSX_TPL_DIR}/.. --transform "s/^/${DATA_BASENAME_WE}\//" .
   fi
 fi
 

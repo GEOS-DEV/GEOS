@@ -101,7 +101,8 @@ jobs:
       if: ${{ inputs.build_type == 'build' && inputs.GCP_BUCKET }}
       run: |
         COMMIT=${{ github.event.pull_request.head.sha }}
-        DATA_BASENAME_WE=GEOSX-and-TPL-${COMMIT:0:7}
+        SHORT_COMMIT=${COMMIT:0:7}
+        DATA_BASENAME_WE=GEOSX-and-TPL-${SHORT_COMMIT}
         DATA_EXCHANGE_DIR=/tmp/exchange  # TODO maybe use /mnt size it has more free space?
         mkdir ${DATA_EXCHANGE_DIR}
         #
@@ -117,6 +118,7 @@ jobs:
           -- \
           --cmake-build-type ${{ inputs.CMAKE_BUILD_TYPE }} \
           --data-basename-we ${DATA_BASENAME_WE} \
+          --install-dir-basename GEOSX-${SHORT_COMMIT} \
           ${HOST_CONFIG:+"--host-config ${HOST_CONFIG}"} \
           ${SCCACHE_CLI} \
           ${{ inputs.BUILD_AND_TEST_ARGS }}
@@ -124,26 +126,6 @@ jobs:
         # Send to the bucket and print download link
         CLOUDSDK_PYTHON=python3 gsutil cp -a public-read ${DATA_EXCHANGE_DIR}/${DATA_BASENAME_WE}.tar.gz gs://${{ inputs.GCP_BUCKET }}/
         echo "Download the integrated tests at https://storage.googleapis.com/${{ inputs.GCP_BUCKET }}/${DATA_BASENAME_WE}.tar.gz"
-
-        # # `source' command doesn't work with process substitution in bash, so we use an extra variable `HOST_CONFIG_CLI'.
-        # HOST_CONFIG_CLI=${HOST_CONFIG:+"--host-config ${HOST_CONFIG}"}
-        # if ${{ inputs.USE_SCCACHE }} == 'true'; then
-        #   SCCACHE_CLI="--sccache-credentials $(basename ${GOOGLE_GHA_CREDS_PATH})"
-        # fi
-        # source ./scripts/ci_build_and_test.sh \
-        #   --docker-repository ${{ inputs.DOCKER_REPOSITORY }} \
-        #   --docker-tag ${{ inputs.DOCKER_IMAGE_TAG }} \
-        #   -- \
-        #   --cmake-build-type ${{ inputs.CMAKE_BUILD_TYPE }} \
-        #   ${HOST_CONFIG_CLI} \
-        #   ${SCCACHE_CLI} \
-        #   ${{ inputs.BUILD_AND_TEST_ARGS }}
-        # TMP_DIR=/tmp
-        # GEOS_EXPORT_DIR=GEOSX-and-TPL-${GITHUB_SHA:0:7}
-        # docker cp -a ${CONTAINER_NAME}:${GEOSX_TPL_DIR}/.. ${TMP_DIR}/${GEOS_EXPORT_DIR}
-        # GEOS_BUNDLE=${TMP_DIR}/${GEOS_EXPORT_DIR}.tar.gz
-        # tar czf ${GEOS_BUNDLE} --directory=${TMP_DIR} ${GEOS_EXPORT_DIR}
-        # CLOUDSDK_PYTHON=python3 gsutil cp -a public-read ${GEOS_BUNDLE} gs://${{ inputs.GCP_BUCKET }}/
 
     # - name: Setup upterm session
     #   uses: lhotari/action-upterm@v1
@@ -157,7 +139,8 @@ jobs:
       if: ${{ inputs.build_type == 'integrated_tests' }}
       run: |
         COMMIT=${{ github.event.pull_request.head.sha }}
-        DATA_BASENAME_WE=integratedTests-pr${{ github.event.number }}-${{ github.run_number }}-${COMMIT:0:7}
+        SHORT_COMMIT=${COMMIT:0:7}
+        DATA_BASENAME_WE=integratedTests-pr${{ github.event.number }}-${{ github.run_number }}-${SHORT_COMMIT}
         DATA_EXCHANGE_DIR=/tmp/exchange  # TODO maybe use /mnt size it has more free space?
         mkdir ${DATA_EXCHANGE_DIR}
         #
@@ -173,6 +156,7 @@ jobs:
           -- \
           --cmake-build-type ${{ inputs.CMAKE_BUILD_TYPE }} \
           --data-basename-we ${DATA_BASENAME_WE} \
+          --install-dir-basename GEOSX-${SHORT_COMMIT} \
           ${HOST_CONFIG:+"--host-config ${HOST_CONFIG}"} \
           ${SCCACHE_CLI} \
           ${{ inputs.BUILD_AND_TEST_ARGS }}
