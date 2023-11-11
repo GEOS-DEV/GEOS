@@ -155,8 +155,9 @@ jobs:
     - name: Run integrated tests
       if: ${{ inputs.build_type == 'integrated_tests' }}
       run: |
-        COMMIT="${{ github.event.pull_request.head.sha }}"
-        DATA_BASENAME_WE=integratedTests-pr${{ github.event.number }}-${{ github.run_number }}-${COMMIT:0:7}
+        COMMIT=${{ github.event.pull_request.head.sha }}
+        # DATA_BASENAME_WE=integratedTests-pr${{ github.event.number }}-${{ github.run_number }}-${COMMIT:0:7}
+        DATA_BASENAME_WE=integratedTests-pr-${COMMIT:0:7}
         DATA_EXCHANGE_DIR=/tmp/exchange  # TODO maybe use /mnt size it has more free space?
         mkdir ${DATA_EXCHANGE_DIR}
         #
