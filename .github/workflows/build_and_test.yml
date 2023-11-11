@@ -82,9 +82,6 @@ jobs:
     - name: Build and test
       if: ${{ inputs.build_type == 'build' && !(inputs.GCP_BUCKET) }}
       run: |
-        DATA_EXCHANGE_DIR=/tmp/exchange  # TODO maybe use /mnt size it has more free space?
-        mkdir ${DATA_EXCHANGE_DIR}
-        #
         HOST_CONFIG=${{ inputs.HOST_CONFIG }}
         if ${{ inputs.USE_SCCACHE }} == 'true'; then
           SCCACHE_CLI="--sccache-credentials $(basename ${GOOGLE_GHA_CREDS_PATH})"
@@ -93,7 +90,6 @@ jobs:
         ./scripts/ci_build_and_test.sh \
           --docker-repository ${{ inputs.DOCKER_REPOSITORY }} \
           --docker-tag ${{ inputs.DOCKER_IMAGE_TAG }} \
-          --exchange ${DATA_EXCHANGE_DIR} \
           -- \
           --cmake-build-type ${{ inputs.CMAKE_BUILD_TYPE }} \
           ${HOST_CONFIG:+"--host-config ${HOST_CONFIG}"} \

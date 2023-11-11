@@ -40,11 +40,17 @@ done
 ADDITIONAL_ARGS=$@
 echo "Additional arguments '${ADDITIONAL_ARGS}' will be transfered to the final build."
 
-if [[ -z "${DATA_EXCHANGE}" ]]; then
-  echo "Variable DATA_EXCHANGE is either empty or not defined. Please define it using '--exchange'."
-  exit 1
+# if [[ -z "${DATA_EXCHANGE}" ]]; then
+#   echo "Variable DATA_EXCHANGE is either empty or not defined. Please define it using '--exchange'."
+#   exit 1
+# fi
+# DATA_EXCHANGE_MOUNT_POINT=/tmp/exchange-in-docker
+
+if [[ ! -z "${DATA_EXCHANGE}" ]]; then
+  DATA_EXCHANGE_MOUNT_POINT=/tmp/exchange-in-docker
+  DATA_EXCHANGE_DOCKER_ARGS="--volume=${DATA_EXCHANGE}:${DATA_EXCHANGE_MOUNT_POINT}"
+  DATA_EXCHANGE_SCRIPT_ARGS="--exchange ${DATA_EXCHANGE_MOUNT_POINT}"
 fi
-DATA_EXCHANGE_MOUNT_POINT=/tmp/exchange-in-docker
 
 # We need to know where the code folder is mounted inside the container so we can run the script at the proper location!
 # Since this information is repeated twice, we use a variable.
@@ -57,17 +63,18 @@ GITHUB_WORKSPACE_MOUNT_POINT=/tmp/geos
 
 # Now we can build GEOS.
 docker run \
-  --volume=${GITHUB_WORKSPACE}:${GITHUB_WORKSPACE_MOUNT_POINT} \
-  --volume=${DATA_EXCHANGE}:${DATA_EXCHANGE_MOUNT_POINT} \
   --cap-add=SYS_PTRACE \
+  --volume=${GITHUB_WORKSPACE}:${GITHUB_WORKSPACE_MOUNT_POINT} \
+  ${DATA_EXCHANGE_DOCKER_ARGS} \
   -e ENABLE_HYPRE=${ENABLE_HYPRE:-OFF} \
   -e ENABLE_HYPRE_DEVICE=${ENABLE_HYPRE_DEVICE:-CPU} \
   -e ENABLE_TRILINOS=${ENABLE_TRILINOS:-ON} \
   ${DOCKER_REPOSITORY}:${DOCKER_TAG} \
   ${GITHUB_WORKSPACE_MOUNT_POINT}/scripts/ci_build_and_test_in_container_args.sh \
     --repository ${GITHUB_WORKSPACE_MOUNT_POINT} \
-    --exchange ${DATA_EXCHANGE_MOUNT_POINT} \
+    ${DATA_EXCHANGE_SCRIPT_ARGS} \
     ${ADDITIONAL_ARGS}
 
   # --name=${CONTAINER_NAME} \
     # --install-dir ${GEOSX_DIR} \
+  # --volume=${DATA_EXCHANGE}:${DATA_EXCHANGE_MOUNT_POINT} \
