@@ -95,7 +95,6 @@ done
 #   usage
 # fi
 
-# GEOS_SRC_DIR=/tmp/geos
 if [[ -z "${GEOS_SRC_DIR}" ]]; then
   echo "Variable GEOS_SRC_DIR is either empty or not defined. Please define it using '--repository'."
   exit 1
@@ -177,7 +176,7 @@ else
 
   if [[ ! -z "${DATA_BASENAME_WE}" ]]; then
     # Here we pack the installation
-   tar czf ${DATA_EXCHANGE_DIR}/${DATA_BASENAME_WE}.tar.gz --directory=${${GEOSX_TPL_DIR}/..} --transform 's/^/${DATA_BASENAME_WE}\//' .
+   tar czf ${DATA_EXCHANGE_DIR}/${DATA_BASENAME_WE}.tar.gz --directory=${GEOSX_TPL_DIR}/.. --transform 's/^/${DATA_BASENAME_WE}\//' .
   fi
 fi
 
@@ -209,5 +208,4 @@ if [[ ! -z "${SCCACHE_CREDS}" ]]; then
   echo "sccache final state"
   ${SCCACHE} --show-stats
 fi
-
 exit 0

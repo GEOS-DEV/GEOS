@@ -9,6 +9,7 @@ function usage () {
 Usage: $0
   [ --docker-repository ... ]
   [ --docker-tag ... ]
+  [ --exchange ... ]
   [ -h | --help ]
 EOF
 exit 1
@@ -19,8 +20,6 @@ if [[ $? -gt 0 ]]; then
   echo "Error after getopt"
   usage
 fi
-
-# DATA_EXCHANGE=/tmp/exchange  # TODO get from outside
 
 eval set -- ${args}
 while :
@@ -39,12 +38,6 @@ done
 
 ADDITIONAL_ARGS=$@
 echo "Additional arguments '${ADDITIONAL_ARGS}' will be transfered to the final build."
-
-# if [[ -z "${DATA_EXCHANGE}" ]]; then
-#   echo "Variable DATA_EXCHANGE is either empty or not defined. Please define it using '--exchange'."
-#   exit 1
-# fi
-# DATA_EXCHANGE_MOUNT_POINT=/tmp/exchange-in-docker
 
 if [[ ! -z "${DATA_EXCHANGE}" ]]; then
   DATA_EXCHANGE_MOUNT_POINT=/tmp/exchange-in-docker
@@ -74,7 +67,3 @@ docker run \
     --repository ${GITHUB_WORKSPACE_MOUNT_POINT} \
     ${DATA_EXCHANGE_SCRIPT_ARGS} \
     ${ADDITIONAL_ARGS}
-
-  # --name=${CONTAINER_NAME} \
-    # --install-dir ${GEOSX_DIR} \
-  # --volume=${DATA_EXCHANGE}:${DATA_EXCHANGE_MOUNT_POINT} \
