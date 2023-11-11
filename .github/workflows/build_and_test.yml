@@ -82,6 +82,9 @@ jobs:
     - name: Build and test
       if: ${{ inputs.build_type == 'build' && !(inputs.GCP_BUCKET) }}
       run: |
+        COMMIT=${{ github.event.pull_request.head.sha }}
+        SHORT_COMMIT=${COMMIT:0:7}
+        #
         HOST_CONFIG=${{ inputs.HOST_CONFIG }}
         if ${{ inputs.USE_SCCACHE }} == 'true'; then
           SCCACHE_CLI="--sccache-credentials $(basename ${GOOGLE_GHA_CREDS_PATH})"
@@ -92,6 +95,7 @@ jobs:
           --docker-tag ${{ inputs.DOCKER_IMAGE_TAG }} \
           -- \
           --cmake-build-type ${{ inputs.CMAKE_BUILD_TYPE }} \
+          --install-dir-basename GEOSX-${SHORT_COMMIT} \
           ${HOST_CONFIG:+"--host-config ${HOST_CONFIG}"} \
           ${SCCACHE_CLI} \
           ${{ inputs.BUILD_AND_TEST_ARGS }}
