@@ -101,6 +101,10 @@ if [[ -z "${GEOS_SRC_DIR}" ]]; then
   exit 1
 fi
 
+if [[ -z "${GEOSX_DIR}" ]]; then
+  echo "Installation folder undefined. Set to default value '/dev/null'. Please define it using '--install-dir-basename'."
+  GEOSX_DIR=/dev/null
+fi
 # if [[ -z "${GEOSX_DIR}" ]]; then
 #   echo "Variable GEOSX_DIR is either empty or not defined. Please define it using '--install-dir-basename'."
 #   exit 1
