@@ -40,7 +40,7 @@ ADDITIONAL_ARGS=$@
 echo "Additional arguments '${ADDITIONAL_ARGS}' will be transfered to the final build."
 
 if [[ ! -z "${DATA_EXCHANGE}" ]]; then
-  DATA_EXCHANGE_MOUNT_POINT=/tmp/exchange-in-docker
+  DATA_EXCHANGE_MOUNT_POINT=/tmp/exchange
   DATA_EXCHANGE_DOCKER_ARGS="--volume=${DATA_EXCHANGE}:${DATA_EXCHANGE_MOUNT_POINT}"
   DATA_EXCHANGE_SCRIPT_ARGS="--exchange-dir ${DATA_EXCHANGE_MOUNT_POINT}"
 fi
