@@ -12,9 +12,6 @@ nproc
 echo "running free -m"
 free -m
 
-echo "ls /tmp/geos"
-ls /tmp/geos
-
 # The or_die function run the passed command line and
 # exits the program in case of non zero error code
 function or_die () {
@@ -46,7 +43,8 @@ EOF
 exit 1
 }
 
-# Working in the root of the cloned repository
+# First working in the root of the cloned repository.
+# Then we'll move to the build dir.
 or_die cd $(dirname $0)/..
 
 args=$(or_die getopt -a -o h --long build-exe-only,cmake-build-type:,data-basename:,exchange-dir:,no-run-unit-tests,host-config:,install-dir-basename:,no-install-schema,install-dir:,test-code-style,test-documentation,sccache-credentials:,repository:,run-integrated-tests,help -- "$@")
@@ -168,6 +166,7 @@ or_die python3 scripts/config-build.py \
                ${SCCACHE_CMAKE_ARGS} \
                ${ATS_CMAKE_ARGS}
 
+# The configuration step is done, we now move to the build dir for the build!
 or_die cd ${GEOSX_BUILD_DIR}
 
 # Code style check
@@ -203,7 +202,6 @@ if [[ "${RUN_UNIT_TESTS}" = true ]]; then
 fi
 
 if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
-  echo "cwd is ${PWD}"
   # We split the process in two steps. First installing the environment, then runnint the tests.
   # The tests are not run using ninja because it swallows the output shile all the simulations are running.
   # We directly use the script instead.
@@ -211,12 +209,12 @@ if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
   # ninja --verbose ats_run
   cat /tmp/build/integratedTests/geos_ats.sh
   # integratedTests/geos_ats.sh --failIfTestsFail
-  # integratedTests/geos_ats.sh
-  /tmp/build/bin/run_geos_ats /tmp/build/bin --workingDir /tmp/geos/integratedTests/tests/allTests/simplePDE --logs /tmp/build/integratedTests/TestResults --ats openmpi_mpirun=/usr/bin/mpirun --ats openmpi_args=--allow-run-as-root --ats openmpi_procspernode=2 --ats openmpi_maxprocs=2 --machine openmpi
+  # /tmp/build/bin/run_geos_ats /tmp/build/bin --workingDir /tmp/geos/integratedTests/tests/allTests/simplePDE --logs /tmp/build/integratedTests/TestResults --ats openmpi_mpirun=/usr/bin/mpirun --ats openmpi_args=--allow-run-as-root --ats openmpi_procspernode=2 --ats openmpi_maxprocs=2 --machine openmpi
+  /tmp/build/bin/run_geos_ats /tmp/build/bin --workingDir /tmp/geos/integratedTests/tests/allTests/simplePDE --logs /tmp/build/integratedTests/TestResults --ats openmpi_mpirun=/usr/bin/mpirun --ats openmpi_args=--allow-run-as-root --ats openmpi_procspernode=2 --ats openmpi_maxprocs=2 --machine openmpi --failIfTestsFail
   INTEGRATED_TEST_EXIT_STATUS=$?
-  echo "The return code is ${INTEGRATED_TEST_EXIT_STATUS}"
+  echo "The return code of the integrated tests is ${INTEGRATED_TEST_EXIT_STATUS}"
 
-  # We need to pack both the logs and the computed results.
+  # Whatever the result of the integrated tests, we want to pack both the logs and the computed results.
   # They are not in the same folder, so we do it in 2 steps.
   # The `--transform` parameter is here to separate the two informations (originally in a folder with the same name)
   # in two different folder with meaningful names when unpacking. 
