@@ -49,7 +49,7 @@ exit 1
 # Working in the root of the cloned repository
 or_die cd $(dirname $0)/..
 
-or_die args=$(getopt -a -o h --long build-exe-only,cmake-build-type:,data-basename:,exchange-dir:,no-run-unit-tests,host-config:,install-dir-basename:,no-install-schema,install-dir:,test-code-style,test-documentation,sccache-credentials:,repository:,run-integrated-tests,help -- "$@")
+args=$(or_die getopt -a -o h --long build-exe-only,cmake-build-type:,data-basename:,exchange-dir:,no-run-unit-tests,host-config:,install-dir-basename:,no-install-schema,install-dir:,test-code-style,test-documentation,sccache-credentials:,repository:,run-integrated-tests,help -- "$@")
 if [[ $? -gt 0 ]]; then
   echo "Error after getopt"
   echo "which getop"

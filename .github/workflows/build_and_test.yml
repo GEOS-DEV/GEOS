@@ -130,3 +130,5 @@ jobs:
             echo "Download the integrated tests at https://storage.googleapis.com/${{ inputs.GCP_BUCKET }}/${DATA_BASENAME}"
           fi
         fi
+
+        exit ${EXIT_STATUS}
