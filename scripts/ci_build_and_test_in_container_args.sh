@@ -81,7 +81,7 @@ do
       DATA_BASENAME=$2
       DATA_BASENAME_WE=${DATA_BASENAME%%.*}
       DATA_BASENAME_EXT=${DATA_BASENAME#*.}
-      if [[ ${DATA_BASENAME_EXT} != ".tar.tz" ]] ; then
+      if [[ ${DATA_BASENAME_EXT} != ".tar.gz" ]] ; then
           echo "The script ${SCRIPT_NAME} can only pack data into a '.tar.gz' file."
           exit 1
       fi
