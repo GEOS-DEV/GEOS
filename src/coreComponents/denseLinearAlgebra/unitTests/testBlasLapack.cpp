@@ -987,6 +987,7 @@ void matrix_rand_test()
   A_max = std::max_element( mat.begin(), mat.end());
   A_min = std::min_element( mat.begin(), mat.end());
   EXPECT_TRUE( -1.0 <= *A_min && *A_max <= 1.0 );
+  EXPECT_TRUE(false) ;
 
   // --- normal distribution (0,1);
   // TODO: Add normality test
