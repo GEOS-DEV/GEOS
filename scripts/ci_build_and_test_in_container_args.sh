@@ -229,7 +229,9 @@ if [[ ! -z "${SCCACHE_CREDS}" ]]; then
 fi
 
 if [[ -z "${INTEGRATED_TEST_EXIT_STATUS+x}" ]]; then
+  echo "Exiting the build process with exit status ${INTEGRATED_TEST_EXIT_STATUS} from the integrated tests."
   exit ${INTEGRATED_TEST_EXIT_STATUS}
 else
+  echo "Exiting the build process with exit status 0."
   exit 0
 fi

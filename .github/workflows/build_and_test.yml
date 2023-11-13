@@ -121,6 +121,7 @@ jobs:
           ${RUN_INTEGRATED_TESTS_CLI_ARGS} \
           ${{ inputs.BUILD_AND_TEST_CLI_ARGS }}
         EXIT_STATUS=$?
+        echo "Received exit status ${EXIT_STATUS} from the build process."
         set -e
         
         # Send to the bucket and print the download link when it makes sense.
