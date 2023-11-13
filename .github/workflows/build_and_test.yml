@@ -82,6 +82,7 @@ jobs:
         COMMIT=${{ github.event.pull_request.head.sha }}
         SHORT_COMMIT=${COMMIT:0:7}
         
+        # All the data exchanged with the docker container is eventually meant to be send to the cloud. 
         if [[ ! -z "${{ inputs.GCP_BUCKET }}" ]]; then
           if [ "${{ inputs.BUILD_TYPE }}" = "build" ]; then
             DATA_BASENAME=GEOSX-and-TPL-${SHORT_COMMIT}.tar.gz
@@ -102,6 +103,11 @@ jobs:
           SCCACHE_CLI_ARGS="--sccache-credentials $(basename ${GOOGLE_GHA_CREDS_PATH})"
         fi
         
+        # In case of integrated tests run, we still want to send the results to the cloud for inspection.
+        # While for standard build (if even possible), pushing a failed build would be pointless.
+        # GHA set `-e` to bash scripts by default to fail asap,
+        # but for this precise call, we want to deal with it more precisely
+        set +e
         ./scripts/ci_build_and_test.sh \
           --docker-repository ${{ inputs.DOCKER_REPOSITORY }} \
           --docker-tag ${{ inputs.DOCKER_IMAGE_TAG }} \
@@ -114,9 +120,13 @@ jobs:
           ${SCCACHE_CLI_ARGS} \
           ${RUN_INTEGRATED_TESTS_CLI_ARGS} \
           ${{ inputs.BUILD_AND_TEST_CLI_ARGS }}
+        EXIT_STATUS=$?
+        set -e
         
-        # Send to the bucket and print download link
+        # Send to the bucket and print the download link when it makes sense.
         if [[ ! -z "${{ inputs.GCP_BUCKET }}" ]]; then
-          CLOUDSDK_PYTHON=python3 gsutil cp -a public-read ${DATA_EXCHANGE_DIR}/${DATA_BASENAME} gs://${{ inputs.GCP_BUCKET }}/
-          echo "Download the integrated tests at https://storage.googleapis.com/${{ inputs.GCP_BUCKET }}/${DATA_BASENAME}"
+          if [ "${{ inputs.BUILD_TYPE }}" = "integrated_tests" || ${EXIT_STATUS} -eq 0 ]; then
+            CLOUDSDK_PYTHON=python3 gsutil cp -a public-read ${DATA_EXCHANGE_DIR}/${DATA_BASENAME} gs://${{ inputs.GCP_BUCKET }}/
+            echo "Download the integrated tests at https://storage.googleapis.com/${{ inputs.GCP_BUCKET }}/${DATA_BASENAME}"
+          fi
         fi

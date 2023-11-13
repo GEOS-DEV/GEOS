@@ -1,6 +1,5 @@
 #!/bin/bash
-# set -euo pipefail
-set -eo pipefail
+set -o pipefail
 
 printenv
 
@@ -50,14 +49,13 @@ exit 1
 # Working in the root of the cloned repository
 or_die cd $(dirname $0)/..
 
-args=$(getopt -a -o h --long build-exe-only,cmake-build-type:,data-basename:,exchange-dir:,no-run-unit-tests,host-config:,install-dir-basename:,no-install-schema,install-dir:,test-code-style,test-documentation,sccache-credentials:,repository:,run-integrated-tests,help -- "$@")
+or_die args=$(getopt -a -o h --long build-exe-only,cmake-build-type:,data-basename:,exchange-dir:,no-run-unit-tests,host-config:,install-dir-basename:,no-install-schema,install-dir:,test-code-style,test-documentation,sccache-credentials:,repository:,run-integrated-tests,help -- "$@")
 if [[ $? -gt 0 ]]; then
   echo "Error after getopt"
   echo "which getop"
   echo $(which getopt)
   usage
 fi
-# TODO or_die args=$(...)
 
 # Variables with default values
 BUILD_EXE_ONLY=false
@@ -120,8 +118,8 @@ if [[ -z "${GEOSX_DIR}" ]]; then
 fi
 
 if [[ ! -z "${SCCACHE_CREDS}" ]]; then
-  mkdir -p ${HOME}/.config/sccache
-  cat <<EOT >> ${HOME}/.config/sccache/config
+  or_die mkdir -p ${HOME}/.config/sccache
+  or_die cat <<EOT >> ${HOME}/.config/sccache/config
 [cache.gcs]
 rw_mode = "READ_WRITE"
 cred_path = "${GEOS_SRC_DIR}/${SCCACHE_CREDS}"
@@ -129,7 +127,7 @@ bucket = "geos-dev"
 key_prefix = "sccache"
 EOT
 
-  cat ${HOME}/.config/sccache/config
+  or_die cat ${HOME}/.config/sccache/config
 
   SCCACHE_CMAKE_ARGS="-DCMAKE_CXX_COMPILER_LAUNCHER=${SCCACHE} -DCMAKE_CUDA_COMPILER_LAUNCHER=${SCCACHE}"
 
@@ -139,9 +137,9 @@ fi
 
 if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
   echo "We should be running the integrated tests."
-  apt-get install -y virtualenv python3-dev python-is-python3
+  or_die apt-get install -y virtualenv python3-dev python-is-python3
   ATS_PYTHON_HOME=/tmp/run_integrated_tests_virtualenv
-  virtualenv ${ATS_PYTHON_HOME}
+  or_die virtualenv ${ATS_PYTHON_HOME}
   ATS_CMAKE_ARGS="-DATS_ARGUMENTS=\"--machine openmpi --ats openmpi_mpirun=/usr/bin/mpirun --ats openmpi_args=--allow-run-as-root --ats openmpi_procspernode=2 --ats openmpi_maxprocs=2\" -DPython3_ROOT_DIR=${ATS_PYTHON_HOME}"
 fi
 
@@ -193,8 +191,9 @@ else
   or_die ninja install
 
   if [[ ! -z "${DATA_BASENAME_WE}" ]]; then
-    # Here we pack the installation
-   tar czf ${DATA_EXCHANGE_DIR}/${DATA_BASENAME_WE}.tar.gz --directory=${GEOSX_TPL_DIR}/.. --transform "s/^./${DATA_BASENAME_WE}/" .
+    # Here we pack the installation. 
+    # The `--transform` parameter provides consistency between the tarball name and the unpacked folder.
+    or_die tar czf ${DATA_EXCHANGE_DIR}/${DATA_BASENAME_WE}.tar.gz --directory=${GEOSX_TPL_DIR}/.. --transform "s/^./${DATA_BASENAME_WE}/" .
   fi
 fi
 
@@ -214,16 +213,25 @@ if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
   # integratedTests/geos_ats.sh --failIfTestsFail
   # integratedTests/geos_ats.sh
   /tmp/build/bin/run_geos_ats /tmp/build/bin --workingDir /tmp/geos/integratedTests/tests/allTests/simplePDE --logs /tmp/build/integratedTests/TestResults --ats openmpi_mpirun=/usr/bin/mpirun --ats openmpi_args=--allow-run-as-root --ats openmpi_procspernode=2 --ats openmpi_maxprocs=2 --machine openmpi
-  exit_status=$?
-  echo "The return code is ${exit_status}"
+  INTEGRATED_TEST_EXIT_STATUS=$?
+  echo "The return code is ${INTEGRATED_TEST_EXIT_STATUS}"
 
-  tar cfM ${DATA_EXCHANGE_DIR}/${DATA_BASENAME_WE}.tar --directory ${GEOS_SRC_DIR}    --transform "s/^integratedTests/${DATA_BASENAME_WE}\/repo/" integratedTests
-  tar rfM ${DATA_EXCHANGE_DIR}/${DATA_BASENAME_WE}.tar --directory ${GEOSX_BUILD_DIR} --transform "s/^integratedTests/${DATA_BASENAME_WE}\/logs/" integratedTests
-  gzip ${DATA_EXCHANGE_DIR}/${DATA_BASENAME_WE}.tar
+  # We need to pack both the logs and the computed results.
+  # They are not in the same folder, so we do it in 2 steps.
+  # The `--transform` parameter is here to separate the two informations (originally in a folder with the same name)
+  # in two different folder with meaningful names when unpacking. 
+  or_die tar cfM ${DATA_EXCHANGE_DIR}/${DATA_BASENAME_WE}.tar --directory ${GEOS_SRC_DIR}    --transform "s/^integratedTests/${DATA_BASENAME_WE}\/repo/" integratedTests
+  or_die tar rfM ${DATA_EXCHANGE_DIR}/${DATA_BASENAME_WE}.tar --directory ${GEOSX_BUILD_DIR} --transform "s/^integratedTests/${DATA_BASENAME_WE}\/logs/" integratedTests
+  or_die gzip ${DATA_EXCHANGE_DIR}/${DATA_BASENAME_WE}.tar
 fi
 
 if [[ ! -z "${SCCACHE_CREDS}" ]]; then
   echo "sccache final state"
-  ${SCCACHE} --show-stats
+  or_die ${SCCACHE} --show-stats
 fi
-exit 0
+
+if [[ -z "${INTEGRATED_TEST_EXIT_STATUS+x}" ]]; then
+  exit ${INTEGRATED_TEST_EXIT_STATUS}
+else
+  exit 0
+fi
