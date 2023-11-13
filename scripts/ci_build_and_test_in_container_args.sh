@@ -27,18 +27,31 @@ function or_die () {
 function usage () {
 >&2 cat << EOF
 Usage: $0
-  [ --build-exe-only ]
-  [ --cmake-build-type ... ]
-  [ --data-basename ... ]
-  [ --exchange-dir ... ]
-  [ --host-config ... ]
-  [ --no-install-schema ]
-  [ --no-run-unit-tests ]
-  [ --run-integrated-tests ]
-  [ --sccache-credentials ... ]
-  [ --test-code-style ]
-  [ --test-documentation ]
-  [ -h | --help ]
+  --build-exe-only
+      Request for the build of geos only.
+  --cmake-build-type ...
+      One of Debug, Release, RelWithDebInfo and MinSizeRel. Forwarded to CMAKE_BUILD_TYPE.
+  --data-basename output.tar.gz
+      If some data needs to be extracted from the build, the argument will define the tarball. Has to be a `tar.gz`.
+  --exchange-dir /path/to/exchange
+      Folder to share data with outside of the container.
+  --host-config host-config/my_config.cmake
+      The host-config. Path is relative to the root of the repository.
+  --install-dir-basename GEOS-e42ffc1
+      Geos installtion basename.
+  --no-install-schema
+      Do not install the xsd schema.
+  --no-run-unit-tests
+      Do not run the unit tests (but they will be built).
+  --repository /path/to/repository
+      Internal mountpoint where the geos repository will be available. 
+  --run-integrated-tests
+      Run the integrated tests. Then bundle and send the results to the cloud.
+  --sccache-credentials credentials.json
+      Basename of the json credentials file to connect to the sccache cloud cache.
+  --test-code-style
+  --test-documentation
+  -h | --help
 EOF
 exit 1
 }
@@ -47,13 +60,8 @@ exit 1
 # Then we'll move to the build dir.
 or_die cd $(dirname $0)/..
 
-args=$(or_die getopt -a -o h --long build-exe-only,cmake-build-type:,data-basename:,exchange-dir:,no-run-unit-tests,host-config:,install-dir-basename:,no-install-schema,install-dir:,test-code-style,test-documentation,sccache-credentials:,repository:,run-integrated-tests,help -- "$@")
-if [[ $? -gt 0 ]]; then
-  echo "Error after getopt"
-  echo "which getop"
-  echo $(which getopt)
-  usage
-fi
+# Parsing using getopt
+args=$(or_die getopt -a -o h --long build-exe-only,cmake-build-type:,data-basename:,exchange-dir:,host-config:,install-dir-basename:,no-install-schema,no-run-unit-tests,repository:,run-integrated-tests,sccache-credentials:,test-code-style,test-documentation,help -- "$@")
 
 # Variables with default values
 BUILD_EXE_ONLY=false
@@ -81,11 +89,11 @@ do
           echo "The script ${SCRIPT_NAME} can only pack data into a '.tar.gz' file."
           exit 1
       fi
-      unset DATA_BASENAME DATA_BASENAME_EXT  # We do not need those anymore
+      unset DATA_BASENAME DATA_BASENAME_EXT
       shift 2;;
     --exchange-dir)          DATA_EXCHANGE_DIR=$2;       shift 2;;
     --host-config)           HOST_CONFIG=$2;             shift 2;;
-    --install-dir-basename ) GEOSX_DIR=${GEOSX_TPL_DIR}/../$2; shift 2;;
+    --install-dir-basename)  GEOSX_DIR=${GEOSX_TPL_DIR}/../$2; shift 2;;
     --no-install-schema)     GEOSX_INSTALL_SCHEMA=false; shift;;
     --no-run-unit-tests)     RUN_UNIT_TESTS=false;       shift;;
     --repository)            GEOS_SRC_DIR=$2;            shift 2;;
@@ -101,21 +109,20 @@ do
   esac
 done
 
-# if [[ $# -eq 0 ]]; then
-#   usage
-# fi
-
 if [[ -z "${GEOS_SRC_DIR}" ]]; then
   echo "Variable GEOS_SRC_DIR is either empty or not defined. Please define it using '--repository'."
   exit 1
 fi
 
 if [[ -z "${GEOSX_DIR}" ]]; then
-  echo "Installation folder undefined. Set to default value '/dev/null'. Please define it using '--install-dir-basename'."
+  echo "Installation folder undefined. Set to default value '/dev/null'. You can define it using '--install-dir-basename'."
   GEOSX_DIR=/dev/null
 fi
 
 if [[ ! -z "${SCCACHE_CREDS}" ]]; then
+  # The creadential json file is available at the root of the geos repository.
+  # We hereafter create the config file that points to it.
+  # We use this file since it's managed by the 'google-github-actions/auth' actions.
   or_die mkdir -p ${HOME}/.config/sccache
   or_die cat <<EOT >> ${HOME}/.config/sccache/config
 [cache.gcs]
@@ -125,8 +132,8 @@ bucket = "geos-dev"
 key_prefix = "sccache"
 EOT
 
-  or_die cat ${HOME}/.config/sccache/config
-
+  # To use `sccache`, it's enough to tell `cmake` to launch the compilation using `sccache`.
+  # The path to the `sccache` executable is available through the SCCACHE environment variable.
   SCCACHE_CMAKE_ARGS="-DCMAKE_CXX_COMPILER_LAUNCHER=${SCCACHE} -DCMAKE_CUDA_COMPILER_LAUNCHER=${SCCACHE}"
 
   echo "sccache initial state"
@@ -134,7 +141,8 @@ EOT
 fi
 
 if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
-  echo "We should be running the integrated tests."
+  echo "Running the integrated tests has been requested."
+  # We install the python environment required by ATS to run the integrated tests.
   or_die apt-get install -y virtualenv python3-dev python-is-python3
   ATS_PYTHON_HOME=/tmp/run_integrated_tests_virtualenv
   or_die virtualenv ${ATS_PYTHON_HOME}
@@ -154,7 +162,7 @@ fi
 # In case we have more powerful nodes, consider removing `--oversubscribe` and use `--use-hwthread-cpus` instead.
 # This will tells OpenMPI to discover the number of hardware threads on the node,
 # and use that as the number of slots available. (There is a distinction between threads and cores).
-GEOSX_BUILD_DIR=/tmp/build
+GEOSX_BUILD_DIR=/tmp/geos-build
 or_die python3 scripts/config-build.py \
                -hc ${HOST_CONFIG} \
                -bt ${CMAKE_BUILD_TYPE} \
@@ -166,7 +174,7 @@ or_die python3 scripts/config-build.py \
                ${SCCACHE_CMAKE_ARGS} \
                ${ATS_CMAKE_ARGS}
 
-# The configuration step is done, we now move to the build dir for the build!
+# The configuration step is now over, we can now move to the build directory for the build!
 or_die cd ${GEOSX_BUILD_DIR}
 
 # Code style check
@@ -181,8 +189,7 @@ if [[ "${TEST_DOCUMENTATION}" = true ]]; then
   exit 0
 fi
 
-# "Make" target check (builds geosx executable target only if true)
-# Use one process to prevent out-of-memory error
+# Performing the requested build.
 if [[ "${BUILD_EXE_ONLY}" = true ]]; then
   or_die ninja -j $(nproc) geosx
 else
@@ -190,27 +197,25 @@ else
   or_die ninja install
 
   if [[ ! -z "${DATA_BASENAME_WE}" ]]; then
-    # Here we pack the installation. 
+    # Here we pack the installation.
     # The `--transform` parameter provides consistency between the tarball name and the unpacked folder.
     or_die tar czf ${DATA_EXCHANGE_DIR}/${DATA_BASENAME_WE}.tar.gz --directory=${GEOSX_TPL_DIR}/.. --transform "s/^./${DATA_BASENAME_WE}/" .
   fi
 fi
 
-# Unit tests (excluding previously ran checks)
+# Run the unit tests (excluding previously ran checks).
 if [[ "${RUN_UNIT_TESTS}" = true ]]; then
   or_die ctest --output-on-failure -E "testUncrustifyCheck|testDoxygenCheck"
 fi
 
 if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
-  # We split the process in two steps. First installing the environment, then runnint the tests.
-  # The tests are not run using ninja because it swallows the output shile all the simulations are running.
-  # We directly use the script instead.
+  # We split the process in two steps. First installing the environment, then running the tests.
   or_die ninja ats_environment
-  # ninja --verbose ats_run
-  cat /tmp/build/integratedTests/geos_ats.sh
-  # integratedTests/geos_ats.sh --failIfTestsFail
-  # /tmp/build/bin/run_geos_ats /tmp/build/bin --workingDir /tmp/geos/integratedTests/tests/allTests/simplePDE --logs /tmp/build/integratedTests/TestResults --ats openmpi_mpirun=/usr/bin/mpirun --ats openmpi_args=--allow-run-as-root --ats openmpi_procspernode=2 --ats openmpi_maxprocs=2 --machine openmpi
-  /tmp/build/bin/run_geos_ats /tmp/build/bin --workingDir /tmp/geos/integratedTests/tests/allTests/simplePDE --logs /tmp/build/integratedTests/TestResults --ats openmpi_mpirun=/usr/bin/mpirun --ats openmpi_args=--allow-run-as-root --ats openmpi_procspernode=2 --ats openmpi_maxprocs=2 --machine openmpi --failIfTestsFail
+  # The tests are not run using ninja (`ninja --verbose ats_run`) because it swallows the output while all the simulations are running.
+  # We directly use the script instead...
+  integratedTests/geos_ats.sh --failIfTestsFail
+  # Even (and even moreover) if the integrated testa fail, we want to pack the results for further investigations.
+  # So we store the status code for further use.
   INTEGRATED_TEST_EXIT_STATUS=$?
   echo "The return code of the integrated tests is ${INTEGRATED_TEST_EXIT_STATUS}"
 
@@ -228,6 +233,7 @@ if [[ ! -z "${SCCACHE_CREDS}" ]]; then
   or_die ${SCCACHE} --show-stats
 fi
 
+# If we're here, either everything went OK or we have to deal with the integrated tests manually.
 if [[ ! -z "${INTEGRATED_TEST_EXIT_STATUS+x}" ]]; then
   echo "Exiting the build process with exit status ${INTEGRATED_TEST_EXIT_STATUS} from the integrated tests."
   exit ${INTEGRATED_TEST_EXIT_STATUS}

@@ -7,14 +7,18 @@ echo "Running CLI $0 $@"
 function usage () {
 >&2 cat << EOF
 Usage: $0
-  [ --docker-repository ... ]
-  [ --docker-tag ... ]
-  [ --exchange-dir ... ]
-  [ -h | --help ]
+  --docker-repository geosx/ubuntu22.04-gcc11
+      The geos image that will be used for the build.
+  --docker-tag 245-96
+      The tag of the docker image.
+  --exchange-dir /path/to/exchange
+      Folder to share data with outside of the container.
+  -h | --help
 EOF
 exit 1
 }
 
+# Parsing using getopt
 args=$(getopt -a -o h --long docker-repository:,docker-tag:,exchange-dir:,help -- "$@")
 if [[ $? -gt 0 ]]; then
   echo "Error after getopt"
@@ -39,6 +43,7 @@ done
 ADDITIONAL_SCRIPT_CLI_ARGS=$@
 echo "Additional arguments '${ADDITIONAL_SCRIPT_CLI_ARGS}' will be transfered to the final build."
 
+# When we want to extract some data from the container, we do it through a mount point.
 if [[ ! -z "${DATA_EXCHANGE}" ]]; then
   DATA_EXCHANGE_MOUNT_POINT=/tmp/exchange
   DATA_EXCHANGE_DOCKER_CLI_ARGS="--volume=${DATA_EXCHANGE}:${DATA_EXCHANGE_MOUNT_POINT}"
@@ -49,12 +54,7 @@ fi
 # Since this information is repeated twice, we use a variable.
 GITHUB_WORKSPACE_MOUNT_POINT=/tmp/geos
 
-# We need to keep track of the building container (hence the `CONTAINER_NAME`)
-# so we can extract the data from it later (if needed). Another solution would have been to use a mount point,
-# but that would not have solved the problem for the TPLs (we would require extra action to copy them to the mount point).
-# CONTAINER_NAME=geos_build
-
-# Now we can build GEOS.
+# Now we start the building process inside of the dedicated container.
 docker run \
   --cap-add=SYS_PTRACE \
   --volume=${GITHUB_WORKSPACE}:${GITHUB_WORKSPACE_MOUNT_POINT} \
