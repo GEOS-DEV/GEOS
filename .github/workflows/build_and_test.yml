@@ -92,7 +92,7 @@ jobs:
           DATA_BASENAME_CLI="--data-basename ${DATA_BASENAME}"
 
           DATA_EXCHANGE_DIR=/mnt/exchange
-          mkdir ${DATA_EXCHANGE_DIR}
+          sudo mkdir ${DATA_EXCHANGE_DIR}
           DATA_EXCHANGE_DIR_CLI=${--exchange-dir ${DATA_EXCHANGE_DIR}}
         fi
                 
