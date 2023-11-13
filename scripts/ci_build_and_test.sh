@@ -9,13 +9,13 @@ function usage () {
 Usage: $0
   [ --docker-repository ... ]
   [ --docker-tag ... ]
-  [ --exchange ... ]
+  [ --exchange-dir ... ]
   [ -h | --help ]
 EOF
 exit 1
 }
 
-args=$(getopt -a -o h --long docker-repository:,docker-tag:,exchange:,help -- "$@")
+args=$(getopt -a -o h --long docker-repository:,docker-tag:,exchange-dir:,help -- "$@")
 if [[ $? -gt 0 ]]; then
   echo "Error after getopt"
   usage
@@ -27,7 +27,7 @@ do
   case $1 in
     --docker-repository) DOCKER_REPOSITORY=$2; shift 2;;
     --docker-tag)        DOCKER_TAG=$2;        shift 2;;
-    --exchange)          DATA_EXCHANGE=$2;     shift 2;;
+    --exchange-dir)      DATA_EXCHANGE=$2;     shift 2;;
     -h | --help)         usage;                shift;;
     # -- means the end of the arguments; drop this, and break out of the while loop
     --) shift; break;;
@@ -42,7 +42,7 @@ echo "Additional arguments '${ADDITIONAL_ARGS}' will be transfered to the final 
 if [[ ! -z "${DATA_EXCHANGE}" ]]; then
   DATA_EXCHANGE_MOUNT_POINT=/tmp/exchange-in-docker
   DATA_EXCHANGE_DOCKER_ARGS="--volume=${DATA_EXCHANGE}:${DATA_EXCHANGE_MOUNT_POINT}"
-  DATA_EXCHANGE_SCRIPT_ARGS="--exchange ${DATA_EXCHANGE_MOUNT_POINT}"
+  DATA_EXCHANGE_SCRIPT_ARGS="--exchange-dir ${DATA_EXCHANGE_MOUNT_POINT}"
 fi
 
 # We need to know where the code folder is mounted inside the container so we can run the script at the proper location!

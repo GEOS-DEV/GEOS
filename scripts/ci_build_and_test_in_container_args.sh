@@ -4,7 +4,8 @@ set -eo pipefail
 
 printenv
 
-echo "Running CLI $0 $@"
+SCRIPT_NAME=$0
+echo "Running CLI ${SCRIPT_NAME} $@"
 
 echo "running nproc"
 nproc
@@ -32,8 +33,8 @@ function usage () {
 Usage: $0
   [ --build-exe-only ]
   [ --cmake-build-type ... ]
-  [ --data-basename-we ... ]
-  [ --exchange ... ]
+  [ --data-basename ... ]
+  [ --exchange-dir ... ]
   [ --host-config ... ]
   [ --no-install-schema ]
   [ --no-run-unit-tests ]
@@ -49,7 +50,7 @@ exit 1
 # Working in the root of the cloned repository
 or_die cd $(dirname $0)/..
 
-args=$(getopt -a -o h --long build-exe-only,cmake-build-type:,data-basename-we:,exchange:,no-run-unit-tests,host-config:,install-dir-basename:,no-install-schema,install-dir:,test-code-style,test-documentation,sccache-credentials:,repository:,run-integrated-tests,help -- "$@")
+args=$(getopt -a -o h --long build-exe-only,cmake-build-type:,data-basename:,exchange-dir:,no-run-unit-tests,host-config:,install-dir-basename:,no-install-schema,install-dir:,test-code-style,test-documentation,sccache-credentials:,repository:,run-integrated-tests,help -- "$@")
 if [[ $? -gt 0 ]]; then
   echo "Error after getopt"
   echo "which getop"
@@ -71,10 +72,22 @@ eval set -- ${args}
 while :
 do
   case $1 in
-    --build-exe-only)        BUILD_EXE_ONLY=true; RUN_UNIT_TESTS=false; shift;;
+    --build-exe-only)
+      BUILD_EXE_ONLY=true
+      RUN_UNIT_TESTS=false
+      shift;;
     --cmake-build-type)      CMAKE_BUILD_TYPE=$2;        shift 2;;
-    --data-basename-we)      DATA_BASENAME_WE=$2;        shift 2;;
-    --exchange)              DATA_EXCHANGE_DIR=$2;       shift 2;;
+    --data-basename)
+      DATA_BASENAME=$2
+      DATA_BASENAME_WE=${DATA_BASENAME%%.*}
+      DATA_BASENAME_EXT=${DATA_BASENAME$*.}
+      if [[ ${DATA_BASENAME_EXT} != ".tar.tz" ]] ; then
+          echo "The script ${SCRIPT_NAME} can only pack data into a '.tar.gz' file."
+          exit 1
+      fi
+      unset DATA_BASENAME DATA_BASENAME_EXT  # We do not need those anymore
+      shift 2;;
+    --exchange-dir)          DATA_EXCHANGE_DIR=$2;       shift 2;;
     --host-config)           HOST_CONFIG=$2;             shift 2;;
     --install-dir-basename ) GEOSX_DIR=${GEOSX_TPL_DIR}/../$2; shift 2;;
     --no-install-schema)     GEOSX_INSTALL_SCHEMA=false; shift;;
@@ -105,11 +118,6 @@ if [[ -z "${GEOSX_DIR}" ]]; then
   echo "Installation folder undefined. Set to default value '/dev/null'. Please define it using '--install-dir-basename'."
   GEOSX_DIR=/dev/null
 fi
-# if [[ -z "${GEOSX_DIR}" ]]; then
-#   echo "Variable GEOSX_DIR is either empty or not defined. Please define it using '--install-dir-basename'."
-#   exit 1
-# fi
-# GEOSX_DIR=${GEOSX_TPL_DIR}/../GEOSX-${GITHUB_SHA:0:7}
 
 if [[ ! -z "${SCCACHE_CREDS}" ]]; then
   mkdir -p ${HOME}/.config/sccache

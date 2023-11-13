@@ -106,7 +106,7 @@ jobs:
       run: |
         COMMIT=${{ github.event.pull_request.head.sha }}
         SHORT_COMMIT=${COMMIT:0:7}
-        DATA_BASENAME_WE=GEOSX-and-TPL-${SHORT_COMMIT}
+        DATA_BASENAME=GEOSX-and-TPL-${SHORT_COMMIT}.tar.gz
         DATA_EXCHANGE_DIR=/tmp/exchange  # TODO maybe use /mnt size it has more free space?
         mkdir ${DATA_EXCHANGE_DIR}
         #
@@ -118,18 +118,18 @@ jobs:
         ./scripts/ci_build_and_test.sh \
           --docker-repository ${{ inputs.DOCKER_REPOSITORY }} \
           --docker-tag ${{ inputs.DOCKER_IMAGE_TAG }} \
-          --exchange ${DATA_EXCHANGE_DIR} \
+          --exchange-dir ${DATA_EXCHANGE_DIR} \
           -- \
           --cmake-build-type ${{ inputs.CMAKE_BUILD_TYPE }} \
-          --data-basename-we ${DATA_BASENAME_WE} \
+          --data-basename ${DATA_BASENAME} \
           --install-dir-basename GEOSX-${SHORT_COMMIT} \
           ${HOST_CONFIG:+"--host-config ${HOST_CONFIG}"} \
           ${SCCACHE_CLI} \
           ${{ inputs.BUILD_AND_TEST_ARGS }}
         #
         # Send to the bucket and print download link
-        CLOUDSDK_PYTHON=python3 gsutil cp -a public-read ${DATA_EXCHANGE_DIR}/${DATA_BASENAME_WE}.tar.gz gs://${{ inputs.GCP_BUCKET }}/
-        echo "Download the integrated tests at https://storage.googleapis.com/${{ inputs.GCP_BUCKET }}/${DATA_BASENAME_WE}.tar.gz"
+        CLOUDSDK_PYTHON=python3 gsutil cp -a public-read ${DATA_EXCHANGE_DIR}/${DATA_BASENAME} gs://${{ inputs.GCP_BUCKET }}/
+        echo "Download the integrated tests at https://storage.googleapis.com/${{ inputs.GCP_BUCKET }}/${DATA_BASENAME}"
 
     # - name: Setup upterm session
     #   uses: lhotari/action-upterm@v1
@@ -144,7 +144,7 @@ jobs:
       run: |
         COMMIT=${{ github.event.pull_request.head.sha }}
         SHORT_COMMIT=${COMMIT:0:7}
-        DATA_BASENAME_WE=integratedTests-pr${{ github.event.number }}-${{ github.run_number }}-${SHORT_COMMIT}
+        DATA_BASENAME=integratedTests-pr${{ github.event.number }}-${{ github.run_number }}-${SHORT_COMMIT}.tar.gz
         DATA_EXCHANGE_DIR=/tmp/exchange  # TODO maybe use /mnt size it has more free space?
         mkdir ${DATA_EXCHANGE_DIR}
         #
@@ -156,16 +156,16 @@ jobs:
         ./scripts/ci_build_and_test.sh \
           --docker-repository ${{ inputs.DOCKER_REPOSITORY }} \
           --docker-tag ${{ inputs.DOCKER_IMAGE_TAG }} \
-          --exchange ${DATA_EXCHANGE_DIR} \
+          --exchange-dir ${DATA_EXCHANGE_DIR} \
           -- \
           --cmake-build-type ${{ inputs.CMAKE_BUILD_TYPE }} \
-          --data-basename-we ${DATA_BASENAME_WE} \
+          --data-basename ${DATA_BASENAME} \
           --install-dir-basename GEOSX-${SHORT_COMMIT} \
           ${HOST_CONFIG:+"--host-config ${HOST_CONFIG}"} \
           ${SCCACHE_CLI} \
           ${{ inputs.BUILD_AND_TEST_ARGS }}
         #
         # Send to the bucket and print download link
-        CLOUDSDK_PYTHON=python3 gsutil cp -a public-read ${DATA_EXCHANGE_DIR}/${DATA_BASENAME_WE}.tar.gz gs://${{ inputs.GCP_BUCKET }}/
-        echo "Download the integrated tests at https://storage.googleapis.com/${{ inputs.GCP_BUCKET }}/${DATA_BASENAME_WE}.tar.gz"
+        CLOUDSDK_PYTHON=python3 gsutil cp -a public-read ${DATA_EXCHANGE_DIR}/${DATA_BASENAME} gs://${{ inputs.GCP_BUCKET }}/
+        echo "Download the integrated tests at https://storage.googleapis.com/${{ inputs.GCP_BUCKET }}/${DATA_BASENAME}"
         exit ${exit_status}
