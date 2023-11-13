@@ -80,7 +80,7 @@ do
     --data-basename)
       DATA_BASENAME=$2
       DATA_BASENAME_WE=${DATA_BASENAME%%.*}
-      DATA_BASENAME_EXT=${DATA_BASENAME$*.}
+      DATA_BASENAME_EXT=${DATA_BASENAME#*.}
       if [[ ${DATA_BASENAME_EXT} != ".tar.tz" ]] ; then
           echo "The script ${SCRIPT_NAME} can only pack data into a '.tar.gz' file."
           exit 1
