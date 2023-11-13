@@ -122,7 +122,7 @@ jobs:
         fetch-depth: 1
     - name: Check style
       run: |
-        ./scripts/ci_build_and_test.sh \
+        ./scripts/ci_build_and_test_gha.sh \
           --docker-repository geosx/ubuntu20.04-gcc9 \
           --docker-tag ${{ needs.is_pull_request_a_draft.outputs.DOCKER_IMAGE_TAG }} \
           -- \
@@ -142,7 +142,7 @@ jobs:
         fetch-depth: 1
     - name: Check documentation
       run: |
-        ./scripts/ci_build_and_test.sh \
+        ./scripts/ci_build_and_test_gha.sh \
           --docker-repository geosx/ubuntu20.04-gcc9 \
           --docker-tag ${{ needs.is_pull_request_a_draft.outputs.DOCKER_IMAGE_TAG }} \
           -- \

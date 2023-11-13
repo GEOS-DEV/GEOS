@@ -63,7 +63,7 @@ docker run \
   -e ENABLE_HYPRE_DEVICE=${ENABLE_HYPRE_DEVICE:-CPU} \
   -e ENABLE_TRILINOS=${ENABLE_TRILINOS:-ON} \
   ${DOCKER_REPOSITORY}:${DOCKER_TAG} \
-  ${GITHUB_WORKSPACE_MOUNT_POINT}/scripts/ci_build_and_test_in_container_args.sh \
+  ${GITHUB_WORKSPACE_MOUNT_POINT}/scripts/ci_build_and_test_in_container.sh \
     --repository ${GITHUB_WORKSPACE_MOUNT_POINT} \
     ${DATA_EXCHANGE_SCRIPT_CLI_ARGS} \
     ${ADDITIONAL_SCRIPT_CLI_ARGS}

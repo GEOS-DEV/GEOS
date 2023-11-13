@@ -108,7 +108,7 @@ jobs:
         # GHA set `-e` to bash scripts by default to fail asap,
         # but for this precise call, we want to deal with it more precisely
         set +e
-        ./scripts/ci_build_and_test.sh \
+        ./scripts/ci_build_and_test_gha.sh \
           --docker-repository ${{ inputs.DOCKER_REPOSITORY }} \
           --docker-tag ${{ inputs.DOCKER_IMAGE_TAG }} \
           ${DATA_EXCHANGE_DIR_CLI_ARGS} \
