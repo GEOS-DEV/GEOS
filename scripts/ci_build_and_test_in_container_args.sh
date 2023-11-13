@@ -228,7 +228,7 @@ if [[ ! -z "${SCCACHE_CREDS}" ]]; then
   or_die ${SCCACHE} --show-stats
 fi
 
-if [[ -z "${INTEGRATED_TEST_EXIT_STATUS+x}" ]]; then
+if [[ ! -z "${INTEGRATED_TEST_EXIT_STATUS+x}" ]]; then
   echo "Exiting the build process with exit status ${INTEGRATED_TEST_EXIT_STATUS} from the integrated tests."
   exit ${INTEGRATED_TEST_EXIT_STATUS}
 else
