@@ -177,30 +177,35 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
 
   registerWrapper( "boxAverageMin", &m_boxAverageMin).
     setInputFlag( InputFlags::OPTIONAL ).
-    setRestartFlags( RestartFlags::WRITE_AND_READ ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    // setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "Minimum corner position of box average" );
 
   registerWrapper( "boxAverageMax", &m_boxAverageMax).
     setInputFlag( InputFlags::OPTIONAL ).
-    setRestartFlags( RestartFlags::WRITE_AND_READ ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    // setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "Maximum corner position of box average" );
 
   registerWrapper( "nextBoxAverageWriteTime", &m_nextBoxAverageWriteTime ).
     setInputFlag( InputFlags::FALSE ).
     setApplyDefaultValue( 0 ).
+    // setRestartFlags( RestartFlags::NO_WRITE ).
     setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "Next time to write box averages" );
 
   registerWrapper( "reactionHistory", &m_reactionHistory ).
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( 0 ).
-    setRestartFlags( RestartFlags::WRITE_AND_READ ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    // setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "Flag for whether to output face reaction history" );
 
   registerWrapper( "reactionWriteInterval", &m_reactionWriteInterval ).
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( 0 ).
-    setRestartFlags( RestartFlags::WRITE_AND_READ ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    // setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "Interval between writing reactions to files" );
 
   registerWrapper( "nextReactionWriteTime", &m_nextReactionWriteTime ).
@@ -934,6 +939,10 @@ real64 SolidMechanicsMPM::solverStep( real64 const & time_n,
   return dtReturn;
 }
 
+bool compareFloat( real64 a, real64 b, real64 epsilon){
+  return std::fabs( a - b ) < epsilon;
+}
+
 void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
                                     ParticleManager & particleManager,
                                     SpatialPartition & partition )
@@ -959,12 +968,19 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
       
       GEOS_ERROR_IF(m_bcTable[i][0] < 0, "BCTable times must be positive.");
 
-      GEOS_ERROR_IF(roundf(m_bcTable[i][1]) != m_bcTable[i][1] || 
-                    roundf(m_bcTable[i][2]) != m_bcTable[i][1] || 
-                    roundf(m_bcTable[i][3]) != m_bcTable[i][1] || 
-                    roundf(m_bcTable[i][4]) != m_bcTable[i][1] || 
-                    roundf(m_bcTable[i][5]) != m_bcTable[i][1] || 
-                    roundf(m_bcTable[i][6]) != m_bcTable[i][1], "Only integer boundary condition types are permitted.");
+      GEOS_ERROR_IF( compareFloat( roundf(m_bcTable[i][1]), m_bcTable[i][1], 1e-12 ) || 
+                     compareFloat( roundf(m_bcTable[i][2]), m_bcTable[i][1], 1e-12 ) || 
+                     compareFloat( roundf(m_bcTable[i][3]), m_bcTable[i][1], 1e-12 ) || 
+                     compareFloat( roundf(m_bcTable[i][4]), m_bcTable[i][1], 1e-12 ) || 
+                     compareFloat( roundf(m_bcTable[i][5]), m_bcTable[i][1], 1e-12 ) || 
+                     compareFloat( roundf(m_bcTable[i][6]), m_bcTable[i][1], 1e-12 ), "Only integer boundary condition types are permitted.");
+
+      // GEOS_ERROR_IF(roundf(m_bcTable[i][1]) != m_bcTable[i][1] || 
+      //               roundf(m_bcTable[i][2]) != m_bcTable[i][1] || 
+      //               roundf(m_bcTable[i][3]) != m_bcTable[i][1] || 
+      //               roundf(m_bcTable[i][4]) != m_bcTable[i][1] || 
+      //               roundf(m_bcTable[i][5]) != m_bcTable[i][1] || 
+      //               roundf(m_bcTable[i][6]) != m_bcTable[i][1], "Only integer boundary condition types are permitted.");
 
       GEOS_ERROR_IF( ( m_bcTable[i][1] < 0 || 
                        m_bcTable[i][2] < 0 || 
@@ -998,9 +1014,9 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
 
       if(i == 0)
       {
-        GEOS_ERROR_IF( m_fTable[i][1] != 1.0 || 
-                       m_fTable[i][2] != 1.0 || 
-                       m_fTable[i][3] != 1.0 , "Deformation of first row of FTable must be 1." );
+        GEOS_ERROR_IF( compareFloat( m_fTable[i][1], 1.0, 1e-12 ) || 
+                       compareFloat( m_fTable[i][2], 1.0, 1e-12 ) || 
+                       compareFloat( m_fTable[i][3], 1.0, 1e-12 ) , "Deformation of first row of FTable must be 1." );
       }
       else
       {
@@ -1299,7 +1315,7 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
                    MPI_DOUBLE,
                    MPI_MIN,
                    MPI_COMM_GEOSX );
-    m_smallMass = fmin( globalMinMass * 1.0e-12, m_smallMass );
+    m_smallMass = fmin( globalMinMass * 1.0e-12, m_smallMass ); // CC: should the small mass be DBL_MIN instead?
 
     // Initialize deformation gradient and velocity gradient
     for( int p=0; p<subRegion.size(); p++ )
@@ -3063,7 +3079,7 @@ void SolidMechanicsMPM::normalizeGridSurfaceNormals( arrayView2d< real64 const >
 
 void SolidMechanicsMPM::initializeFrictionCoefficients()
 {
- // Table is only used if the frictionCoefficient in the input file is not specified
+  // Table is only used if the frictionCoefficient in the input file is not specified
   if( static_cast<int>( m_frictionCoefficient ) == -1 )
   {
     GEOS_ERROR_IF( m_frictionCoefficientTable.size(0) == 0, "No frictionCoefficient or frictionCoefficientTable was defined." );
@@ -4260,11 +4276,13 @@ void SolidMechanicsMPM::updateDeformationGradient( real64 dt,
       {
         LvArray::tensorOps::copy< 3, 3 >( previousDeformationGradient, particleDeformationGradient[p] );
 
-        real64 temp[3][3];
+        real64 temp[3][3] = { { 0 } };
         LvArray::tensorOps::copy< 3, 3 >( temp, previousDeformationGradient );
-        LvArray::tensorOps::Rij_eq_AikBkj< 3, 3, 3 >( temp, particleVelocityGradient[p], temp );
-        LvArray::tensorOps::scale< 3, 3 >( temp , dtSub);
-        LvArray::tensorOps::add< 3, 3 >( particleDeformationGradient[p], temp );
+
+        real64 tempFDot[3][3] = { { 0 } };
+        LvArray::tensorOps::Rij_eq_AikBkj< 3, 3, 3 >( tempFDot, particleVelocityGradient[p], temp );
+        LvArray::tensorOps::scale< 3, 3 >( tempFDot, dtSub);
+        LvArray::tensorOps::add< 3, 3 >( particleDeformationGradient[p], tempFDot );
       }
 
       if (m_exactJIntegration)

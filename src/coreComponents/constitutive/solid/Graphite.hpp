@@ -623,7 +623,7 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
     // GEOS_LOG_RANK( "Particle " << k << ": dmg: " << m_damage[k][q] << ", Fac: " << fac );
 
     // Enforce damage, no tensile stress on plane, and frictional response to shear.
-    if(m_damage[k][q] == 1.0)
+    if(m_damage[k][q] >= 1.0) //Some compilers complain about == comparison with floating point numbers (use tolerance check?)
     {
         if ( planeNormalStress > 0 )
         {
