@@ -433,16 +433,6 @@ real64 CompositionalMultiphaseHybridFVM::scalingForSystemSolution( DomainPartiti
 {
   GEOS_MARK_FUNCTION;
 
-//  bool const skipCompFracDamping = m_maxCompFracChange >= 1.0;
-//  bool const skipPresDamping = m_maxRelativePresChange >= 1.0;
-//
-//  // check if we want to rescale the Newton update
-//  if( skipCompFracDamping && skipPresDamping )
-//  {
-//    // no rescaling wanted, we just return 1.0;
-//    return 1.0;
-//  }
-
   string const dofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
 
   real64 scalingFactor = 1.0;
