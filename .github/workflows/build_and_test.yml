@@ -5,7 +5,7 @@ on:
       BUILD_AND_TEST_CLI_ARGS:
         required: false
         type: string
-      build_type:
+      BUILD_TYPE:
         required: false
         type: string
         default: build
@@ -57,7 +57,7 @@ jobs:
       uses: actions/checkout@v3
       with:
         submodules: true
-        # lfs: ${{ inputs.build_type == 'integrated_tests' }}
+        # lfs: ${{ inputs.BUILD_TYPE == 'integrated_tests' }}
         lfs: false
         fetch-depth: 1
 
@@ -77,21 +77,22 @@ jobs:
     - name: Print environment
       run: printenv
 
-    - name: Build and test and deploy new
+    - name: Build, test, deploy.
       run: |
         COMMIT=${{ github.event.pull_request.head.sha }}
         SHORT_COMMIT=${COMMIT:0:7}
         
         if [[ ! -z "${{ inputs.GCP_BUCKET }}" ]]; then
-          if [ "${{ inputs.build_type }}" = "build" ]; then
+          if [ "${{ inputs.BUILD_TYPE }}" = "build" ]; then
             DATA_BASENAME=GEOSX-and-TPL-${SHORT_COMMIT}.tar.gz
-          elif [ "${{ inputs.build_type }}" = "integrated_tests" ]; then
+          elif [ "${{ inputs.BUILD_TYPE }}" = "integrated_tests" ]; then
             DATA_BASENAME=integratedTests-pr${{ github.event.number }}-${{ github.run_number }}-${SHORT_COMMIT}.tar.gz
+            RUN_INTEGRATED_TESTS_CLI_ARGS=--run-integrated-tests
           fi
 
           DATA_BASENAME_CLI_ARGS="--data-basename ${DATA_BASENAME}"
 
-          DATA_EXCHANGE_DIR=/mnt/exchange
+          DATA_EXCHANGE_DIR=/mnt/geos-exchange
           sudo mkdir -p ${DATA_EXCHANGE_DIR}
           DATA_EXCHANGE_DIR_CLI_ARGS="--exchange-dir ${DATA_EXCHANGE_DIR}"
         fi
@@ -111,6 +112,7 @@ jobs:
           --install-dir-basename GEOSX-${SHORT_COMMIT} \
           ${HOST_CONFIG:+"--host-config ${HOST_CONFIG}"} \
           ${SCCACHE_CLI_ARGS} \
+          ${RUN_INTEGRATED_TESTS_CLI_ARGS} \
           ${{ inputs.BUILD_AND_TEST_CLI_ARGS }}
         
         # Send to the bucket and print download link

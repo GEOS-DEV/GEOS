@@ -219,8 +219,8 @@ jobs:
     uses: ./.github/workflows/build_and_test.yml
     secrets: inherit
     with:
-      BUILD_AND_TEST_CLI_ARGS: "--build-exe-only --run-integrated-tests"
-      build_type: integrated_tests
+      BUILD_AND_TEST_CLI_ARGS: --build-exe-only
+      BUILD_TYPE: integrated_tests
       CMAKE_BUILD_TYPE: Release
       DOCKER_IMAGE_TAG: ${{ needs.is_pull_request_a_draft.outputs.DOCKER_IMAGE_TAG }}
       DOCKER_REPOSITORY: geosx/ubuntu22.04-gcc11
