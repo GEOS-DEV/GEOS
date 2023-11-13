@@ -2,7 +2,7 @@ name: Build and Test Configuration
 on:
   workflow_call:
     inputs:
-      BUILD_AND_TEST_ARGS:
+      BUILD_AND_TEST_CLI_ARGS:
         required: false
         type: string
       build_type:
@@ -89,125 +89,32 @@ jobs:
             DATA_BASENAME=integratedTests-pr${{ github.event.number }}-${{ github.run_number }}-${SHORT_COMMIT}.tar.gz
           fi
 
-          DATA_BASENAME_CLI="--data-basename ${DATA_BASENAME}"
+          DATA_BASENAME_CLI_ARGS="--data-basename ${DATA_BASENAME}"
 
-          DATA_EXCHANGE_DIR=/mnt/exchange
+          DATA_EXCHANGE_DIR=/tmp/exchange
           sudo mkdir ${DATA_EXCHANGE_DIR}
-          DATA_EXCHANGE_DIR_CLI=${--exchange-dir ${DATA_EXCHANGE_DIR}}
+          DATA_EXCHANGE_DIR_CLI_ARGS=${--exchange-dir ${DATA_EXCHANGE_DIR}}
         fi
                 
         HOST_CONFIG=${{ inputs.HOST_CONFIG }}
         if ${{ inputs.USE_SCCACHE }} == 'true'; then
-          SCCACHE_CLI="--sccache-credentials $(basename ${GOOGLE_GHA_CREDS_PATH})"
+          SCCACHE_CLI_ARGS="--sccache-credentials $(basename ${GOOGLE_GHA_CREDS_PATH})"
         fi
         
         ./scripts/ci_build_and_test.sh \
           --docker-repository ${{ inputs.DOCKER_REPOSITORY }} \
           --docker-tag ${{ inputs.DOCKER_IMAGE_TAG }} \
-          ${DATA_EXCHANGE_DIR_CLI} \
+          ${DATA_EXCHANGE_DIR_CLI_ARGS} \
           -- \
           --cmake-build-type ${{ inputs.CMAKE_BUILD_TYPE }} \
-           ${DATA_BASENAME_CLI} \
+           ${DATA_BASENAME_CLI_ARGS} \
           --install-dir-basename GEOSX-${SHORT_COMMIT} \
           ${HOST_CONFIG:+"--host-config ${HOST_CONFIG}"} \
-          ${SCCACHE_CLI} \
-          ${{ inputs.BUILD_AND_TEST_ARGS }}
+          ${SCCACHE_CLI_ARGS} \
+          ${{ inputs.BUILD_AND_TEST_CLI_ARGS }}
         
         # Send to the bucket and print download link
         if [[ ! -z "${{ inputs.GCP_BUCKET }}" ]]; then
           CLOUDSDK_PYTHON=python3 gsutil cp -a public-read ${DATA_EXCHANGE_DIR}/${DATA_BASENAME} gs://${{ inputs.GCP_BUCKET }}/
           echo "Download the integrated tests at https://storage.googleapis.com/${{ inputs.GCP_BUCKET }}/${DATA_BASENAME}"
         fi
-
-    # # Build and test only
-    # # Builds only the geos executable (timeout when building tests)
-    # - name: Build and test
-    #   if: ${{ inputs.build_type == 'build' && !(inputs.GCP_BUCKET) }}
-    #   run: |
-    #     COMMIT=${{ github.event.pull_request.head.sha }}
-    #     SHORT_COMMIT=${COMMIT:0:7}
-    #     #
-    #     HOST_CONFIG=${{ inputs.HOST_CONFIG }}
-    #     if ${{ inputs.USE_SCCACHE }} == 'true'; then
-    #       SCCACHE_CLI="--sccache-credentials $(basename ${GOOGLE_GHA_CREDS_PATH})"
-    #     fi
-    #     #
-    #     ./scripts/ci_build_and_test.sh \
-    #       --docker-repository ${{ inputs.DOCKER_REPOSITORY }} \
-    #       --docker-tag ${{ inputs.DOCKER_IMAGE_TAG }} \
-    #       -- \
-    #       --cmake-build-type ${{ inputs.CMAKE_BUILD_TYPE }} \
-    #       --install-dir-basename GEOSX-${SHORT_COMMIT} \
-    #       ${HOST_CONFIG:+"--host-config ${HOST_CONFIG}"} \
-    #       ${SCCACHE_CLI} \
-    #       ${{ inputs.BUILD_AND_TEST_ARGS }}
-
-    # # Build, test, uploads geos and its TPL to GCP/GCS using gcloud CLI
-    # - name: Build and test and deploy
-    #   if: ${{ inputs.build_type == 'build' && inputs.GCP_BUCKET }}
-    #   run: |
-    #     COMMIT=${{ github.event.pull_request.head.sha }}
-    #     SHORT_COMMIT=${COMMIT:0:7}
-    #     DATA_BASENAME=GEOSX-and-TPL-${SHORT_COMMIT}.tar.gz
-    #     DATA_EXCHANGE_DIR=/tmp/exchange  # TODO maybe use /mnt size it has more free space?
-    #     mkdir ${DATA_EXCHANGE_DIR}
-    #     #
-    #     HOST_CONFIG=${{ inputs.HOST_CONFIG }}
-    #     if ${{ inputs.USE_SCCACHE }} == 'true'; then
-    #       SCCACHE_CLI="--sccache-credentials $(basename ${GOOGLE_GHA_CREDS_PATH})"
-    #     fi
-    #     #
-    #     ./scripts/ci_build_and_test.sh \
-    #       --docker-repository ${{ inputs.DOCKER_REPOSITORY }} \
-    #       --docker-tag ${{ inputs.DOCKER_IMAGE_TAG }} \
-    #       --exchange-dir ${DATA_EXCHANGE_DIR} \
-    #       -- \
-    #       --cmake-build-type ${{ inputs.CMAKE_BUILD_TYPE }} \
-    #       --data-basename ${DATA_BASENAME} \
-    #       --install-dir-basename GEOSX-${SHORT_COMMIT} \
-    #       ${HOST_CONFIG:+"--host-config ${HOST_CONFIG}"} \
-    #       ${SCCACHE_CLI} \
-    #       ${{ inputs.BUILD_AND_TEST_ARGS }}
-    #     #
-    #     # Send to the bucket and print download link
-    #     CLOUDSDK_PYTHON=python3 gsutil cp -a public-read ${DATA_EXCHANGE_DIR}/${DATA_BASENAME} gs://${{ inputs.GCP_BUCKET }}/
-    #     echo "Download the integrated tests at https://storage.googleapis.com/${{ inputs.GCP_BUCKET }}/${DATA_BASENAME}"
-
-    # # - name: Setup upterm session
-    # #   uses: lhotari/action-upterm@v1
-    # #   with:
-    # #     ## limits ssh access and adds the ssh public key for the user which triggered the workflow
-    # #     limit-access-to-actor: true
-    # #     ## limits ssh access and adds the ssh public keys of the listed GitHub users
-    # #     limit-access-to-users: TotoGaz
-  
-    # - name: Run integrated tests
-    #   if: ${{ inputs.build_type == 'integrated_tests' }}
-    #   run: |
-    #     COMMIT=${{ github.event.pull_request.head.sha }}
-    #     SHORT_COMMIT=${COMMIT:0:7}
-    #     DATA_BASENAME=integratedTests-pr${{ github.event.number }}-${{ github.run_number }}-${SHORT_COMMIT}.tar.gz
-    #     DATA_EXCHANGE_DIR=/tmp/exchange  # TODO maybe use /mnt size it has more free space?
-    #     mkdir ${DATA_EXCHANGE_DIR}
-    #     #
-    #     HOST_CONFIG=${{ inputs.HOST_CONFIG }}
-    #     if ${{ inputs.USE_SCCACHE }} == 'true'; then
-    #       SCCACHE_CLI="--sccache-credentials $(basename ${GOOGLE_GHA_CREDS_PATH})"
-    #     fi
-    #     #
-    #     ./scripts/ci_build_and_test.sh \
-    #       --docker-repository ${{ inputs.DOCKER_REPOSITORY }} \
-    #       --docker-tag ${{ inputs.DOCKER_IMAGE_TAG }} \
-    #       --exchange-dir ${DATA_EXCHANGE_DIR} \
-    #       -- \
-    #       --cmake-build-type ${{ inputs.CMAKE_BUILD_TYPE }} \
-    #       --data-basename ${DATA_BASENAME} \
-    #       --install-dir-basename GEOSX-${SHORT_COMMIT} \
-    #       ${HOST_CONFIG:+"--host-config ${HOST_CONFIG}"} \
-    #       ${SCCACHE_CLI} \
-    #       ${{ inputs.BUILD_AND_TEST_ARGS }}
-    #     #
-    #     # Send to the bucket and print download link
-    #     CLOUDSDK_PYTHON=python3 gsutil cp -a public-read ${DATA_EXCHANGE_DIR}/${DATA_BASENAME} gs://${{ inputs.GCP_BUCKET }}/
-    #     echo "Download the integrated tests at https://storage.googleapis.com/${{ inputs.GCP_BUCKET }}/${DATA_BASENAME}"
-    #     exit ${exit_status}

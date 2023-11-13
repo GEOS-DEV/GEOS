@@ -36,13 +36,13 @@ do
   esac
 done
 
-ADDITIONAL_ARGS=$@
-echo "Additional arguments '${ADDITIONAL_ARGS}' will be transfered to the final build."
+ADDITIONAL_SCRIPT_CLI_ARGS=$@
+echo "Additional arguments '${ADDITIONAL_SCRIPT_CLI_ARGS}' will be transfered to the final build."
 
 if [[ ! -z "${DATA_EXCHANGE}" ]]; then
   DATA_EXCHANGE_MOUNT_POINT=/tmp/exchange
-  DATA_EXCHANGE_DOCKER_ARGS="--volume=${DATA_EXCHANGE}:${DATA_EXCHANGE_MOUNT_POINT}"
-  DATA_EXCHANGE_SCRIPT_ARGS="--exchange-dir ${DATA_EXCHANGE_MOUNT_POINT}"
+  DATA_EXCHANGE_DOCKER_CLI_ARGS="--volume=${DATA_EXCHANGE}:${DATA_EXCHANGE_MOUNT_POINT}"
+  DATA_EXCHANGE_SCRIPT_CLI_ARGS="--exchange-dir ${DATA_EXCHANGE_MOUNT_POINT}"
 fi
 
 # We need to know where the code folder is mounted inside the container so we can run the script at the proper location!
@@ -58,12 +58,12 @@ GITHUB_WORKSPACE_MOUNT_POINT=/tmp/geos
 docker run \
   --cap-add=SYS_PTRACE \
   --volume=${GITHUB_WORKSPACE}:${GITHUB_WORKSPACE_MOUNT_POINT} \
-  ${DATA_EXCHANGE_DOCKER_ARGS} \
+  ${DATA_EXCHANGE_DOCKER_CLI_ARGS} \
   -e ENABLE_HYPRE=${ENABLE_HYPRE:-OFF} \
   -e ENABLE_HYPRE_DEVICE=${ENABLE_HYPRE_DEVICE:-CPU} \
   -e ENABLE_TRILINOS=${ENABLE_TRILINOS:-ON} \
   ${DOCKER_REPOSITORY}:${DOCKER_TAG} \
   ${GITHUB_WORKSPACE_MOUNT_POINT}/scripts/ci_build_and_test_in_container_args.sh \
     --repository ${GITHUB_WORKSPACE_MOUNT_POINT} \
-    ${DATA_EXCHANGE_SCRIPT_ARGS} \
-    ${ADDITIONAL_ARGS}
+    ${DATA_EXCHANGE_SCRIPT_CLI_ARGS} \
+    ${ADDITIONAL_SCRIPT_CLI_ARGS}
