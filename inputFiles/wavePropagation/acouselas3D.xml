@@ -18,7 +18,6 @@
       name="elasticSolver"
       discretization="FE1"
       targetRegions="{ Solid }"
-      sourceCoordinates="{ }"
       outputSeismoTrace="1"
       dtSeismoTrace="1e-3"
       receiverCoordinates="{ { 3752.2936, 2400, 1866.6667 } }"/>
@@ -60,12 +59,14 @@
     ny="{ 240 }"
     nz="{ 120, 120 }
     => local threshold for local builds 3D Q1 Δt=1e-4 (18e6 elems, 10Gb per 1 GPU)
-    => Q4 180 procs / GPU 16h
-    => Q1 180 procs / GPU 1e40min
+    -> Q4 180 procs / GPU 16h
+    -> Q1 180 procs / GPU 1h40min
+    -> Q3 gar6more results
     nx="{ 160 }"
     ny="{ 120 }"
     nz="{ 60, 60 }
     => local threshold for local builds 3D Q2 Δt=1e-4 (2e6 elems, 4Gb per 1 GPU)
+    -> Q3 swaps
     nx="{ 80 }"
     ny="{ 60 }"
     nz="{ 30, 30 }
