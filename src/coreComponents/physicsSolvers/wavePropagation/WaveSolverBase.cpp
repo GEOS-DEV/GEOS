@@ -41,12 +41,12 @@ WaveSolverBase::WaveSolverBase( const std::string & name,
 {
 
   registerWrapper( viewKeyStruct::sourceCoordinatesString(), &m_sourceCoordinates ).
-    setInputFlag( InputFlags::REQUIRED ).
+    setInputFlag( InputFlags::OPTIONAL ).
     setSizedFromParent( 0 ).
     setDescription( "Coordinates (x,y,z) of the sources" );
 
   registerWrapper( viewKeyStruct::receiverCoordinatesString(), &m_receiverCoordinates ).
-    setInputFlag( InputFlags::REQUIRED ).
+    setInputFlag( InputFlags::OPTIONAL ).
     setSizedFromParent( 0 ).
     setDescription( "Coordinates (x,y,z) of the receivers" );
 
@@ -55,10 +55,6 @@ WaveSolverBase::WaveSolverBase( const std::string & name,
     setRestartFlags( RestartFlags::NO_WRITE ).
     setSizedFromParent( 0 ).
     setDescription( "Source Value of the sources" );
-
-  registerWrapper( viewKeyStruct::timeSourceFrequencyString(), &m_timeSourceFrequency ).
-    setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "Central frequency for the time source" );
 
   registerWrapper( viewKeyStruct::timeSourceDelayString(), &m_timeSourceDelay ).
     setInputFlag( InputFlags::OPTIONAL ).
