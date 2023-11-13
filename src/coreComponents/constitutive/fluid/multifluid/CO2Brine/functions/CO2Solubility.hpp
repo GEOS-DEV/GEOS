@@ -265,7 +265,7 @@ CO2SolubilityUpdate::compute( real64 const & pressure,
   real64 const determinant = 1.0 - co2Solubility*watSolubility;
   real64 invDeterminant = 0.0;
   real64 invDeterminantDeriv[] = { 0.0, 0.0 };
-  if( minForDivision < fabs( determinant ) )
+  if( minForDivision < LvArray::math::abs( determinant ) )
   {
     invDeterminant = 1.0 / determinant;
     for( integer ic = 0; ic < 2; ic++ )
