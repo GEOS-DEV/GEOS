@@ -411,17 +411,6 @@ real64 CompositionalMultiphaseFVM::scalingForSystemSolution( DomainPartition & d
 {
   GEOS_MARK_FUNCTION;
 
-//  bool const skipCompFracDamping = m_maxCompFracChange >= 1.0;
-//  bool const skipPresDamping = m_maxRelativePresChange >= 1.0;
-//  bool const skipTempDamping = m_maxRelativeTempChange >= 1.0 || !m_isThermal;
-//
-//  // check if we want to rescale the Newton update
-//  if( skipCompFracDamping && skipPresDamping && skipTempDamping )
-//  {
-//    // no rescaling wanted, we just return 1.0;
-//    return 1.0;
-//  }
-
   string const dofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
   real64 scalingFactor = 1.0;
   real64 maxDeltaPres = 0.0, maxDeltaCompDens = 0.0, maxDeltaTemp = 0.0;
