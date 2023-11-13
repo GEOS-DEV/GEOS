@@ -7,7 +7,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  GEOSX_TPL_TAG: 248-85
+  GEOSX_TPL_TAG: 248-88
 
 jobs:
 
