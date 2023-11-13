@@ -31,6 +31,7 @@ TableFunction::TableFunction( const string & name,
                               Group * const parent ):
   FunctionBase( name, parent ),
   m_interpolationMethod( InterpolationType::Linear ),
+  m_valueUnit( units::Unknown ),
   m_kernelWrapper( createKernelWrapper() )
 {
   registerWrapper( viewKeyStruct::coordinatesString(), &m_tableCoordinates1D ).
@@ -66,7 +67,7 @@ void TableFunction::readFile( string const & filename, array1d< real64 > & targe
   }
   catch( std::runtime_error const & e )
   {
-    GEOS_THROW( GEOS_FMT( "{} {}: {}", catalogName(), getName(), e.what() ), InputError );
+    GEOS_THROW( GEOS_FMT( "{} {}: {}", catalogName(), getDataContext(), e.what() ), InputError );
   }
 }
 
@@ -76,8 +77,10 @@ void TableFunction::setInterpolationMethod( InterpolationType const method )
   reInitializeFunction();
 }
 
-void TableFunction::setTableCoordinates( array1d< real64_array > const & coordinates )
+void TableFunction::setTableCoordinates( array1d< real64_array > const & coordinates,
+                                         std::vector< units::Unit > const & dimUnits )
 {
+  m_dimUnits = dimUnits;
   m_coordinates.resize( 0 );
   for( localIndex i = 0; i < coordinates.size(); ++i )
   {
@@ -85,7 +88,7 @@ void TableFunction::setTableCoordinates( array1d< real64_array > const & coordin
     {
       GEOS_THROW_IF( coordinates[i][j] - coordinates[i][j-1] <= 0,
                      GEOS_FMT( "{} {}: coordinates must be strictly increasing, but axis {} is not",
-                               catalogName(), getName(), i ),
+                               catalogName(), getDataContext(), i ),
                      InputError );
     }
     m_coordinates.appendArray( coordinates[i].begin(), coordinates[i].end() );
@@ -93,9 +96,10 @@ void TableFunction::setTableCoordinates( array1d< real64_array > const & coordin
   reInitializeFunction();
 }
 
-void TableFunction::setTableValues( real64_array values )
+void TableFunction::setTableValues( real64_array values, units::Unit unit )
 {
   m_values = std::move( values );
+  m_valueUnit = unit;
   reInitializeFunction();
 }
 
@@ -113,7 +117,7 @@ void TableFunction::initializeFunction()
     m_coordinates.appendArray( m_tableCoordinates1D.begin(), m_tableCoordinates1D.end() );
     GEOS_THROW_IF_NE_MSG( m_tableCoordinates1D.size(), m_values.size(),
                           GEOS_FMT( "{} {}: 1D table function coordinates and values must have the same length",
-                                    catalogName(), getName() ),
+                                    catalogName(), getDataContext() ),
                           InputError );
   }
   else
@@ -146,7 +150,7 @@ void TableFunction::reInitializeFunction()
     {
       GEOS_THROW_IF( m_coordinates[ii][j] - m_coordinates[ii][j-1] <= 0,
                      GEOS_FMT( "{} {}: coordinates must be strictly increasing, but axis {} is not",
-                               catalogName(), getName(), ii ),
+                               catalogName(), getDataContext(), ii ),
                      InputError );
     }
   }
@@ -154,12 +158,26 @@ void TableFunction::reInitializeFunction()
   {
     GEOS_THROW_IF_NE_MSG( increment, m_values.size(),
                           GEOS_FMT( "{} {}: number of values does not match total number of table coordinates",
-                                    catalogName(), getName() ),
+                                    catalogName(), getDataContext() ),
                           InputError );
   }
 
   // Create the kernel wrapper
   m_kernelWrapper = createKernelWrapper();
+}
+
+void TableFunction::checkCoord( real64 const coord, localIndex const dim ) const
+{
+  GEOS_THROW_IF( dim >= m_coordinates.size() || dim < 0,
+                 GEOS_FMT( "{}: The {} dimension ( no. {} ) doesn't exist in the table.",
+                           getDataContext(), units::getDescription( getDimUnit( dim ) ), dim ),
+                 SimulationError );
+  real64 const lowerBound = m_coordinates[dim][0];
+  real64 const upperBound = m_coordinates[dim][m_coordinates.sizeOfArray( dim ) - 1];
+  GEOS_THROW_IF( coord > upperBound || coord < lowerBound,
+                 GEOS_FMT( "{}: Requested {} is out of the table bounds ( lower bound: {} -> upper bound: {} ).",
+                           getDataContext(), units::formatValue( coord, getDimUnit( dim ) ), lowerBound, upperBound ),
+                 SimulationError );
 }
 
 TableFunction::KernelWrapper TableFunction::createKernelWrapper() const

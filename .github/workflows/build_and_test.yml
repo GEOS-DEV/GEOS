@@ -1,0 +1,98 @@
+name: Build and Test Configuration
+on:
+  workflow_call:
+    inputs:
+      GEOSX_TPL_TAG:
+        required: true
+        type: string
+      DOCKER_REPOSITORY:
+        required: true
+        type: string
+      CMAKE_BUILD_TYPE:
+        required: true
+        type: string
+      BUILD_AND_TEST_ARGS:
+        required: false
+        type: string
+      HOST_CONFIG:
+        required: false
+        type: string
+      ENABLE_HYPRE:
+        required: false
+        type: string
+      ENABLE_HYPRE_DEVICE:
+        required: false
+        type: string
+      ENABLE_TRILINOS:
+        required: false
+        type: string
+      GCP_BUCKET:
+        required: false
+        type: string
+      COMMIT:
+        required: true
+        type: string
+      OS:
+        required: true
+        type: string
+      USE_SCCACHE:
+        required: false
+        type: boolean
+        default: true
+    secrets:
+      GOOGLE_CLOUD_GCP:
+        required: false
+jobs:
+  build_and_test:
+    runs-on: ${{ inputs.OS }}
+    env:
+      DOCKER_REPOSITORY: ${{ inputs.DOCKER_REPOSITORY }}
+      CMAKE_BUILD_TYPE: ${{ inputs.CMAKE_BUILD_TYPE }}
+      BUILD_AND_TEST_ARGS: ${{ inputs.BUILD_AND_TEST_ARGS }}
+      ENABLE_HYPRE: ${{ inputs.ENABLE_HYPRE }}
+      ENABLE_HYPRE_DEVICE: ${{ inputs.ENABLE_HYPRE_DEVICE }}
+      ENABLE_TRILINOS: ${{ inputs.ENABLE_TRILINOS }}
+      GCP_BUCKET: ${{ inputs.GCP_BUCKET }}
+      HOST_CONFIG: ${{ inputs.HOST_CONFIG }}
+      COMMIT: ${{ inputs.COMMIT }}
+      GEOSX_TPL_TAG: ${{ inputs.GEOSX_TPL_TAG }}
+      USE_SCCACHE: ${{ inputs.USE_SCCACHE }}
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v3
+      with:
+        submodules: true
+        lfs: false
+
+    - id: 'auth'
+      if: ${{ env.GCP_BUCKET || env.USE_SCCACHE }}
+      uses: 'google-github-actions/auth@v1'
+      with:
+        credentials_json: '${{ secrets.GOOGLE_CLOUD_GCP }}'
+        create_credentials_file: true
+    - name: 'Set up Cloud SDK'
+      if: env.GCP_BUCKET
+      uses: 'google-github-actions/setup-gcloud@v1'
+      with:
+        version: '>= 363.0.0'
+
+    - name: Print environment
+      run: printenv
+
+    # Build and test only
+    # Builds only the geosx executable (timeout when building tests)
+    - name: Build and test
+      if: ${{ !(env.GCP_BUCKET) }}
+      run: ./scripts/ci_build_and_test.sh
+
+    # Build, test, uploads GEOSX and its TPL to GCP/GCS using gcloud CLI
+    - name: Build and test and deploy
+      if: env.GCP_BUCKET
+      run: |
+        source ./scripts/ci_build_and_test.sh
+        TMP_DIR=/tmp
+        GEOSX_EXPORT_DIR=GEOSX-and-TPL-${COMMIT:0:7}
+        docker cp -a ${CONTAINER_NAME}:${GEOSX_TPL_DIR}/.. ${TMP_DIR}/${GEOSX_EXPORT_DIR}
+        GEOSX_BUNDLE=${TMP_DIR}/${GEOSX_EXPORT_DIR}.tar.gz
+        tar czf ${GEOSX_BUNDLE} --directory=${TMP_DIR} ${GEOSX_EXPORT_DIR}
+        CLOUDSDK_PYTHON=python3 gsutil cp -a public-read ${GEOSX_BUNDLE} gs://${GCP_BUCKET}/

@@ -310,6 +310,9 @@ void ProblemManager::setSchemaDeviations( xmlWrapper::xmlNode schemaRoot,
   ElementRegionManager & elementManager = domain.getMeshBody( 0 ).getBaseDiscretization().getElemManager();
   elementManager.generateDataStructureSkeleton( 0 );
   schemaUtilities::SchemaConstruction( elementManager, schemaRoot, targetChoiceNode, documentationType );
+  ParticleManager & particleManager = domain.getMeshBody( 0 ).getBaseDiscretization().getParticleManager(); // TODO is this necessary? SJP
+  particleManager.generateDataStructureSkeleton( 0 );
+  schemaUtilities::SchemaConstruction( particleManager, schemaRoot, targetChoiceNode, documentationType );
 
 
   // Add entries that are only used in the pre-processor
@@ -424,9 +427,38 @@ void ProblemManager::parseXMLDocument( xmlWrapper::xmlDocument & xmlDocument )
     MeshManager & meshManager = this->getGroup< MeshManager >( groupKeys.meshManager );
     meshManager.generateMeshLevels( domain );
     Group & meshBodies = domain.getMeshBodies();
+
+    // Parse element regions
     xmlWrapper::xmlNode elementRegionsNode = xmlProblemNode.child( MeshLevel::groupStructKeys::elemManagerString() );
 
     for( xmlWrapper::xmlNode regionNode : elementRegionsNode.children() )
+    {
+      string const regionName = regionNode.attribute( "name" ).value();
+      try
+      {
+        string const
+        regionMeshBodyName = ElementRegionBase::verifyMeshBodyName( meshBodies,
+                                                                    regionNode.attribute( "meshBody" ).value() );
+
+        MeshBody & meshBody = domain.getMeshBody( regionMeshBodyName );
+        meshBody.forMeshLevels( [&]( MeshLevel & meshLevel )
+        {
+          ElementRegionManager & elementManager = meshLevel.getElemManager();
+          Group * newRegion = elementManager.createChild( regionNode.name(), regionName );
+          newRegion->processInputFileRecursive( xmlDocument, regionNode );
+        } );
+      }
+      catch( InputError const & e )
+      {
+        string const nodePosString = xmlDocument.getNodePosition( regionNode ).toString();
+        throw InputError( e, "Error while parsing region " + regionName + " (" + nodePosString + "):\n" );
+      }
+    }
+
+    // Parse particle regions
+    xmlWrapper::xmlNode particleRegionsNode = xmlProblemNode.child( MeshLevel::groupStructKeys::particleManagerString() );
+
+    for( xmlWrapper::xmlNode regionNode : particleRegionsNode.children() )
     {
       string const regionName = regionNode.attribute( "name" ).value();
       string const
@@ -434,10 +466,11 @@ void ProblemManager::parseXMLDocument( xmlWrapper::xmlDocument & xmlDocument )
                                                                   regionNode.attribute( "meshBody" ).value() );
 
       MeshBody & meshBody = domain.getMeshBody( regionMeshBodyName );
+      meshBody.setHasParticles( true );
       meshBody.forMeshLevels( [&]( MeshLevel & meshLevel )
       {
-        ElementRegionManager & elementManager = meshLevel.getElemManager();
-        Group * newRegion = elementManager.createChild( regionNode.name(), regionName );
+        ParticleManager & particleManager = meshLevel.getParticleManager();
+        Group * newRegion = particleManager.createChild( regionNode.name(), regionName );
         newRegion->processInputFileRecursive( xmlDocument, regionNode );
       } );
     }
@@ -528,7 +561,6 @@ void ProblemManager::generateMesh()
 
   MeshManager & meshManager = this->getGroup< MeshManager >( groupKeys.meshManager );
 
-
   meshManager.generateMeshes( domain );
 
   // get all the discretizations from the numerical methods.
@@ -539,15 +571,29 @@ void ProblemManager::generateMesh()
   // setup the base discretizations (hard code this for now)
   domain.forMeshBodies( [&]( MeshBody & meshBody )
   {
-    CellBlockManagerABC const & cellBlockManager = meshBody.getCellBlockManager();
-
     MeshLevel & baseMesh = meshBody.getBaseDiscretization();
     array1d< string > junk;
-    this->generateMeshLevel( baseMesh, cellBlockManager, nullptr, junk.toViewConst() );
 
-    ElementRegionManager & elemManager = baseMesh.getElemManager();
-    elemManager.generateWells( cellBlockManager, baseMesh );
+    if( meshBody.hasParticles() ) // mesh bodies with particles load their data into particle blocks, not cell blocks
+    {
+      ParticleBlockManagerABC & particleBlockManager = meshBody.getGroup< ParticleBlockManagerABC >( keys::particleManager );
 
+      this->generateMeshLevel( baseMesh,
+                               particleBlockManager,
+                               junk.toViewConst() );
+    }
+    else
+    {
+      CellBlockManagerABC & cellBlockManager = meshBody.getGroup< CellBlockManagerABC >( keys::cellManager );
+
+      this->generateMeshLevel( baseMesh,
+                               cellBlockManager,
+                               nullptr,
+                               junk.toViewConst() );
+
+      ElementRegionManager & elemManager = baseMesh.getElemManager();
+      elemManager.generateWells( cellBlockManager, baseMesh );
+    }
   } );
 
   Group const & commandLine = this->getGroup< Group >( groupKeys.commandLine );
@@ -560,8 +606,9 @@ void ProblemManager::generateMesh()
     string const & meshBodyName = discretizationPair.first.first;
     MeshBody & meshBody = domain.getMeshBody( meshBodyName );
 
-    if( discretizationPair.first.second!=nullptr ) // this check shouldn't be required
-    {
+    if( discretizationPair.first.second!=nullptr && !meshBody.hasParticles() ) // this check shouldn't be required
+    {                                                                          // particle mesh bodies don't have a finite element
+                                                                               // discretization
       FiniteElementDiscretization const * const
       feDiscretization = dynamic_cast< FiniteElementDiscretization const * >( discretizationPair.first.second );
 
@@ -609,13 +656,29 @@ void ProblemManager::generateMesh()
 
   domain.forMeshBodies( [&]( MeshBody & meshBody )
   {
-
-    meshBody.deregisterCellBlockManager();
+    if( meshBody.hasGroup( keys::particleManager ) )
+    {
+      meshBody.deregisterGroup( keys::particleManager );
+    }
+    else if( meshBody.hasGroup( keys::cellManager ) )
+    {
+      // meshBody.deregisterGroup( keys::cellManager );
+      meshBody.deregisterCellBlockManager();
+    }
 
     meshBody.forMeshLevels( [&]( MeshLevel & meshLevel )
     {
       FaceManager & faceManager = meshLevel.getFaceManager();
       EdgeManager & edgeManager = meshLevel.getEdgeManager();
+      NodeManager const & nodeManager = meshLevel.getNodeManager();
+
+      // The computation of geometric quantities is now possible for `FaceElementSubRegion`,
+      // because the ghosting ensures that the neighbor cells of the fracture elements are available.
+      // These neighbor cells are providing the node information to the fracture elements.
+      meshLevel.getElemManager().forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
+      {
+        subRegion.calculateElementGeometricQuantities( nodeManager, faceManager );
+      } );
 
       faceManager.setIsExternal();
       edgeManager.setIsExternal( faceManager );
@@ -724,46 +787,72 @@ void ProblemManager::generateMeshLevel( MeshLevel & meshLevel,
   NodeManager & nodeManager = meshLevel.getNodeManager();
   EdgeManager & edgeManager = meshLevel.getEdgeManager();
   FaceManager & faceManager = meshLevel.getFaceManager();
-  ElementRegionManager & elemManager = meshLevel.getElemManager();
+  ElementRegionManager & elemRegionManager = meshLevel.getElemManager();
 
-  bool isbaseMeshLevel =  meshLevel.getName() == MeshBody::groupStructKeys::baseDiscretizationString();
+  bool const isBaseMeshLevel = meshLevel.getName() == MeshBody::groupStructKeys::baseDiscretizationString();
 
-  elemManager.generateMesh( cellBlockManager );
-  nodeManager.setGeometricalRelations( cellBlockManager, elemManager, isbaseMeshLevel );
-  edgeManager.setGeometricalRelations( cellBlockManager, isbaseMeshLevel );
-  faceManager.setGeometricalRelations( cellBlockManager,
-                                       elemManager,
-                                       nodeManager, isbaseMeshLevel );
+  elemRegionManager.generateMesh( cellBlockManager );
+  nodeManager.setGeometricalRelations( cellBlockManager, elemRegionManager, isBaseMeshLevel );
+  edgeManager.setGeometricalRelations( cellBlockManager, isBaseMeshLevel );
+  faceManager.setGeometricalRelations( cellBlockManager, elemRegionManager, nodeManager, isBaseMeshLevel );
   nodeManager.constructGlobalToLocalMap( cellBlockManager );
   // Edge, face and element region managers rely on the sets provided by the node manager.
   // This is why `nodeManager.buildSets` is called first.
   nodeManager.buildSets( cellBlockManager, this->getGroup< GeometricObjectManager >( groupKeys.geometricObjectManager ) );
   edgeManager.buildSets( nodeManager );
   faceManager.buildSets( nodeManager );
-  elemManager.buildSets( nodeManager );
+  elemRegionManager.buildSets( nodeManager );
   // The edge manager do not hold any information related to the regions nor the elements.
   // This is why the element region manager is not provided.
-  nodeManager.setupRelatedObjectsInRelations( edgeManager, faceManager, elemManager );
+  nodeManager.setupRelatedObjectsInRelations( edgeManager, faceManager, elemRegionManager );
   edgeManager.setupRelatedObjectsInRelations( nodeManager, faceManager );
-  faceManager.setupRelatedObjectsInRelations( nodeManager, edgeManager, elemManager );
+  faceManager.setupRelatedObjectsInRelations( nodeManager, edgeManager, elemRegionManager );
   // Node and edge managers rely on the boundary information provided by the face manager.
   // This is why `faceManager.setDomainBoundaryObjects` is called first.
-  faceManager.setDomainBoundaryObjects();
-  nodeManager.setDomainBoundaryObjects( faceManager );
+  faceManager.setDomainBoundaryObjects( elemRegionManager );
   edgeManager.setDomainBoundaryObjects( faceManager );
+  nodeManager.setDomainBoundaryObjects( faceManager, edgeManager );
+
   meshLevel.generateSets();
 
-
-  elemManager.forElementSubRegions< ElementSubRegionBase >( [&]( ElementSubRegionBase & subRegion )
+  elemRegionManager.forElementSubRegions< ElementSubRegionBase >( [&]( ElementSubRegionBase & subRegion )
   {
     subRegion.setupRelatedObjectsInRelations( meshLevel );
-    if( isbaseMeshLevel )
+    // `FaceElementSubRegion` has no node and therefore needs the nodes positions from the neighbor elements
+    // in order to compute the geometric quantities.
+    // And this point of the process, the ghosting has not been done and some elements of the `FaceElementSubRegion`
+    // can have no neighbor. Making impossible the computation, which is therfore postponed to after the ghosting.
+    if( isBaseMeshLevel && !dynamicCast< FaceElementSubRegion * >( &subRegion ) )
     {
       subRegion.calculateElementGeometricQuantities( nodeManager, faceManager );
     }
     subRegion.setMaxGlobalIndex();
   } );
-  elemManager.setMaxGlobalIndex();
+  elemRegionManager.setMaxGlobalIndex();
+}
+
+void ProblemManager::generateMeshLevel( MeshLevel & meshLevel,
+                                        ParticleBlockManagerABC & particleBlockManager,
+                                        arrayView1d< string const > const & )
+{
+  ParticleManager & particleManager = meshLevel.getParticleManager();
+
+  if( meshLevel.getName() == MeshBody::groupStructKeys::baseDiscretizationString() )
+  {
+    particleManager.generateMesh( particleBlockManager );
+  }
+
+  meshLevel.generateSets();
+
+  if( meshLevel.getName() == MeshBody::groupStructKeys::baseDiscretizationString() )
+  {
+    particleManager.forParticleSubRegions< ParticleSubRegionBase >( [&]( ParticleSubRegionBase & subRegion )
+    {
+      subRegion.setMaxGlobalIndex();
+    } );
+
+    particleManager.setMaxGlobalIndex();
+  }
 }
 
 
@@ -799,10 +888,29 @@ map< std::tuple< string, string, string, string >, localIndex > ProblemManager::
         MeshLevel & meshLevel = targetMeshLevel.isShallowCopyOf( baseMeshLevel ) ? baseMeshLevel : targetMeshLevel;
 
         NodeManager & nodeManager = meshLevel.getNodeManager();
+        ParticleManager & particleManager = meshLevel.getParticleManager();
         ElementRegionManager & elemManager = meshLevel.getElemManager();
         FaceManager const & faceManager = meshLevel.getFaceManager();
         EdgeManager const & edgeManager = meshLevel.getEdgeManager();
         arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X = nodeManager.referencePosition();
+
+        for( auto const & regionName : regionNames )
+        {
+          if( particleManager.hasRegion( regionName ) )
+          {
+            ParticleRegionBase & particleRegion = particleManager.getRegion( regionName );
+
+            particleRegion.forParticleSubRegions( [&]( auto & subRegion )
+            {
+              localIndex & numQuadraturePointsInList = regionQuadrature[ std::make_tuple( meshBodyName,
+                                                                                          meshLevel.getName(),
+                                                                                          regionName,
+                                                                                          subRegion.getName() ) ];
+              localIndex const numQuadraturePoints = 1; // Particles always have 1 quadrature point
+              numQuadraturePointsInList = std::max( numQuadraturePointsInList, numQuadraturePoints );
+            } );
+          }
+        }
 
         for( auto const & regionName : regionNames )
         {
@@ -892,7 +1000,27 @@ void ProblemManager::setRegionQuadrature( Group & meshBodies,
     MeshBody & meshBody = meshBodies.getGroup< MeshBody >( meshBodyName );
     MeshLevel & meshLevel = meshBody.getMeshLevel( meshLevelName );
 
+    if( meshBody.hasParticles() ) // branch due to difference in particle vs cell regions
+    {
+      ParticleManager & particleManager = meshLevel.getParticleManager();
+      ParticleRegionBase & particleRegion = particleManager.getRegion( regionName );
+      ParticleSubRegionBase & particleSubRegion = particleRegion.getSubRegion( subRegionName );
+
+      string_array const & materialList = particleRegion.getMaterialList();
+      for( auto & materialName : materialList )
+      {
+        constitutiveManager.hangConstitutiveRelation( materialName, &particleSubRegion, numQuadraturePoints );
+        GEOS_LOG_RANK_0( GEOS_FMT( "{}/{}/{}/{}/{} allocated {} quadrature points",
+                                   meshBodyName,
+                                   meshLevelName,
+                                   regionName,
+                                   subRegionName,
+                                   materialName,
+                                   numQuadraturePoints ) );
+      }
+    }
 //    if( meshLevel.isShallowCopy() )
+    else
     {
       ElementRegionManager & elemRegionManager = meshLevel.getElemManager();
       ElementRegionBase & elemRegion = elemRegionManager.getRegion( regionName );
