@@ -74,6 +74,11 @@ jobs:
     needs: [is_pull_request_a_draft]
     runs-on: ubuntu-22.04
     steps:
+    - name: Temporary deactivation
+      if: ${{ ! always() }}
+      run: |
+        echo "This should not be run"
+        exit 1
     - name: Check if running the integrated tests is requested
       run: |
         echo 'Labels are ${{ needs.is_pull_request_a_draft.outputs.LABELS }}'
@@ -215,7 +220,7 @@ jobs:
     needs:
       - are_integrated_tests_requested
       - is_pull_request_a_draft
-      # - cpu_builds
+      - cpu_builds
     uses: ./.github/workflows/build_and_test.yml
     secrets: inherit
     with:
