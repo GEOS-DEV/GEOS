@@ -91,9 +91,9 @@ jobs:
 
           DATA_BASENAME_CLI_ARGS="--data-basename ${DATA_BASENAME}"
 
-          DATA_EXCHANGE_DIR=/tmp/exchange
-          sudo mkdir ${DATA_EXCHANGE_DIR}
-          DATA_EXCHANGE_DIR_CLI_ARGS=${--exchange-dir ${DATA_EXCHANGE_DIR}}
+          DATA_EXCHANGE_DIR=/mnt/exchange
+          sudo mkdir -p ${DATA_EXCHANGE_DIR}
+          DATA_EXCHANGE_DIR_CLI_ARGS="--exchange-dir ${DATA_EXCHANGE_DIR}"
         fi
                 
         HOST_CONFIG=${{ inputs.HOST_CONFIG }}
