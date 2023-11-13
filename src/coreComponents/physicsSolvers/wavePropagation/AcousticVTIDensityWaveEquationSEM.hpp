@@ -36,7 +36,7 @@ public:
   using ATOMIC_POLICY = AtomicPolicy< EXEC_POLICY >;
 
   AcousticVTIDensityWaveEquationSEM( const std::string & name,
-                              Group * const parent );
+                                     Group * const parent );
 
   static string catalogName() { return "AcousticVTIDensitySEM"; }
 

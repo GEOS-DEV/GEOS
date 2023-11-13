@@ -314,11 +314,11 @@ struct DampingMatrixKernel
           if( lateralSurfaceFaceIndicator[f] == 1 )
           {
             // ABC coefficients updated to fit horizontal velocity
-            real32 alpha = 1.0 / (velocity[e] *sqrt( 1+2*vti_epsilon[e]) * density[e]);
+            real32 alpha = 1.0 / (velocity[e] *sqrt( 1+2*vti_epsilon[e] ) * density[e]);
             // VTI coefficients
             real32 vti_p_xy  = (1+2*vti_epsilon[e]);
-            real32 vti_qp_xy = sqrt(1+2*vti_delta[e]);
-      
+            real32 vti_qp_xy = sqrt( 1+2*vti_delta[e] );
+
             for( localIndex q = 0; q < numNodesPerFace; ++q )
             {
               real32 const aux = m_finiteElement.computeDampingTerm( q, xLocal );
@@ -332,9 +332,9 @@ struct DampingMatrixKernel
           if( bottomSurfaceFaceIndicator[f] == 1 )
           {
             // ABC coefficients updated to fit horizontal velocity
-            real32 alpha = 1.0 / (velocity[e] *sqrt( 1+2*vti_delta[e]) * density[e]);
+            real32 alpha = 1.0 / (velocity[e] *sqrt( 1+2*vti_delta[e] ) * density[e]);
             // VTI coefficients
-            real32 vti_pq_z = sqrt(1+2*vti_delta[e]);
+            real32 vti_pq_z = sqrt( 1+2*vti_delta[e] );
             real32 vti_q_z  = 1;
             for( localIndex q = 0; q < numNodesPerFace; ++q )
             {
@@ -380,10 +380,10 @@ template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
           typename FE_TYPE >
 class ExplicitAcousticVTIDensitySEM : public finiteElement::KernelBase< SUBREGION_TYPE,
-                                                                 CONSTITUTIVE_TYPE,
-                                                                 FE_TYPE,
-                                                                 1,
-                                                                 1 >
+                                                                        CONSTITUTIVE_TYPE,
+                                                                        FE_TYPE,
+                                                                        1,
+                                                                        1 >
 {
 public:
 
@@ -418,13 +418,13 @@ public:
    *   elements to be processed during this kernel launch.
    */
   ExplicitAcousticVTIDensitySEM( NodeManager & nodeManager,
-                          EdgeManager const & edgeManager,
-                          FaceManager const & faceManager,
-                          localIndex const targetRegionIndex,
-                          SUBREGION_TYPE const & elementSubRegion,
-                          FE_TYPE const & finiteElementSpace,
-                          CONSTITUTIVE_TYPE & inputConstitutiveType,
-                          real64 const dt ):
+                                 EdgeManager const & edgeManager,
+                                 FaceManager const & faceManager,
+                                 localIndex const targetRegionIndex,
+                                 SUBREGION_TYPE const & elementSubRegion,
+                                 FE_TYPE const & finiteElementSpace,
+                                 CONSTITUTIVE_TYPE & inputConstitutiveType,
+                                 real64 const dt ):
     Base( elementSubRegion,
           finiteElementSpace,
           inputConstitutiveType ),
@@ -501,9 +501,9 @@ public:
     // Pseudo Stiffness xy
     m_finiteElementSpace.template computeStiffnessxyTerm( q, stack.xLocal, [&] ( int i, int j, real64 val )
     {
-      real32 const localIncrement_p = - val * ((1 + 2 * m_vti_epsilon[k]) / m_density[k]) * m_p_n[m_elemsToNodes[k][j]];
+      real32 const localIncrement_p = -val * ((1 + 2 * m_vti_epsilon[k]) / m_density[k]) * m_p_n[m_elemsToNodes[k][j]];
       RAJA::atomicAdd< parallelDeviceAtomic >( &m_stiffnessVector_p[m_elemsToNodes[k][i]], localIncrement_p );
-      real32 const localIncrement_q = - val*((sqrt(1 + 2 * m_vti_delta[k])) / m_density[k]) * m_p_n[m_elemsToNodes[k][j]] ;
+      real32 const localIncrement_q = -val*((sqrt( 1 + 2 * m_vti_delta[k] )) / m_density[k]) * m_p_n[m_elemsToNodes[k][j]];
       RAJA::atomicAdd< parallelDeviceAtomic >( &m_stiffnessVector_q[m_elemsToNodes[k][i]], localIncrement_q );
     } );
 
@@ -511,7 +511,7 @@ public:
 
     m_finiteElementSpace.template computeStiffnesszTerm( q, stack.xLocal, [&] ( int i, int j, real64 val )
     {
-      real32 const localIncrement_p = -val*(sqrt(1 + 2 * m_vti_delta[k]) / m_density[k]) * m_q_n[m_elemsToNodes[k][j]];
+      real32 const localIncrement_p = -val*(sqrt( 1 + 2 * m_vti_delta[k] ) / m_density[k]) * m_q_n[m_elemsToNodes[k][j]];
       RAJA::atomicAdd< parallelDeviceAtomic >( &m_stiffnessVector_p[m_elemsToNodes[k][i]], localIncrement_p );
 
       real32 const localIncrement_q = -val*(1 / m_density[k]) * m_q_n[m_elemsToNodes[k][j]];
@@ -554,7 +554,7 @@ protected:
 
 /// The factory used to construct a ExplicitAcousticVTIDensityWaveEquation kernel.
 using ExplicitAcousticVTIDensitySEMFactory = finiteElement::KernelFactory< ExplicitAcousticVTIDensitySEM,
-                                                                    real64 >;
+                                                                           real64 >;
 
 } // namespace acousticVTIDensityWaveEquationSEMKernels
 
