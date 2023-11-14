@@ -227,7 +227,3 @@ endif()
 
 geosx_add_code_checks( PREFIX physicsSolvers )
 
-# prevent OOM failures on GHA runners
-if( DEFINED ENV{CI} AND ENABLE_CUDA )
-  set_property( TARGET physicsSolvers PROPERTY JOB_POOL_COMPILE two_jobs )
-endif()
