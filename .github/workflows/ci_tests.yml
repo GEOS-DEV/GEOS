@@ -166,6 +166,7 @@ jobs:
           BUILD_AND_TEST_ARGS: --test-documentation
     uses: ./.github/workflows/build_and_test.yml
     with:
+      BUILD_AND_TEST_CLI_ARGS: ${{ matrix.BUILD_AND_TEST_ARGS }}
       CMAKE_BUILD_TYPE: Release
       DOCKER_IMAGE_TAG: ${{ needs.is_pull_request_a_draft.outputs.DOCKER_IMAGE_TAG }}
       DOCKER_REPOSITORY: geosx/ubuntu20.04-gcc9
@@ -297,14 +298,14 @@ jobs:
             RUNS_ON: Runner_4core_16GB
     uses: ./.github/workflows/build_and_test.yml
     with:
+      BUILD_AND_TEST_CLI_ARGS: ${{ matrix.BUILD_AND_TEST_CLI_ARGS }}
+      CMAKE_BUILD_TYPE: ${{ matrix.CMAKE_BUILD_TYPE }}
       DOCKER_IMAGE_TAG: ${{ needs.is_pull_request_a_draft.outputs.DOCKER_IMAGE_TAG }}
       DOCKER_REPOSITORY: ${{ matrix.DOCKER_REPOSITORY }}
-      CMAKE_BUILD_TYPE: ${{ matrix.CMAKE_BUILD_TYPE }}
-      BUILD_AND_TEST_CLI_ARGS: ${{ matrix.BUILD_AND_TEST_CLI_ARGS }}
-      HOST_CONFIG: ${{ matrix.HOST_CONFIG }}
-      ENABLE_HYPRE: ${{ matrix.ENABLE_HYPRE }}
       ENABLE_HYPRE_DEVICE: ${{ matrix.ENABLE_HYPRE_DEVICE }}
+      ENABLE_HYPRE: ${{ matrix.ENABLE_HYPRE }}
       ENABLE_TRILINOS: ${{ matrix.ENABLE_TRILINOS }}
       GCP_BUCKET: ${{ matrix.GCP_BUCKET }}
+      HOST_CONFIG: ${{ matrix.HOST_CONFIG }}
       RUNS_ON: ${{ matrix.RUNS_ON }}
     secrets: inherit
