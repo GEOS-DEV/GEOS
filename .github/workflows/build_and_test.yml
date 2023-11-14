@@ -21,7 +21,7 @@ on:
       ENABLE_HYPRE:
         required: false
         type: string
-        default: "OFF"
+        default: OFF
       ENABLE_HYPRE_DEVICE:
         required: false
         type: string
@@ -29,7 +29,7 @@ on:
       ENABLE_TRILINOS:
         required: false
         type: string
-        default: "ON"
+        default: ON
       GCP_BUCKET:
         required: false
         type: string
@@ -49,12 +49,12 @@ on:
 jobs:
   build_test_deploy:
     runs-on: ${{ inputs.RUNS_ON }}
-    env:
-      # Those env variables could be passed as scripts parameters as well,
-      # but a specific care must be taken to be sure there's no conflict with the host-config files.
-      ENABLE_HYPRE: ${{ inputs.ENABLE_HYPRE }}
-      ENABLE_HYPRE_DEVICE: ${{ inputs.ENABLE_HYPRE_DEVICE }}
-      ENABLE_TRILINOS: ${{ inputs.ENABLE_TRILINOS }}
+    # env:
+    #   # Those env variables could be passed as scripts parameters as well,
+    #   # but a specific care must be taken to be sure there's no conflict with the host-config files.
+    #   ENABLE_HYPRE: ${{ inputs.ENABLE_HYPRE }}
+    #   ENABLE_HYPRE_DEVICE: ${{ inputs.ENABLE_HYPRE_DEVICE }}
+    #   ENABLE_TRILINOS: ${{ inputs.ENABLE_TRILINOS }}
     steps:
     - name: Checkout Repository
       uses: actions/checkout@v3
