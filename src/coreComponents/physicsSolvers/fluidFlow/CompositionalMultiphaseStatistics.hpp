@@ -123,18 +123,22 @@ private:
 
   /**
    * @brief Compute some statistics on the reservoir (average field pressure, etc)
+   * @param[in] time current time
    * @param[in] mesh the mesh level object
    * @param[in] regionNames the array of target region names
    */
-  void computeRegionStatistics( MeshLevel & mesh,
+  void computeRegionStatistics( real64 const time,
+                                MeshLevel & mesh,
                                 arrayView1d< string const > const & regionNames ) const;
 
   /**
    * @brief Compute CFL numbers
+   * @param[in] time current time
    * @param[in] dt the time step size
    * @param[in] domain the domain partition
    */
-  void computeCFLNumbers( real64 const & dt,
+  void computeCFLNumbers( real64 const time,
+                          real64 const dt,
                           DomainPartition & domain ) const;
 
   void postProcessInput() override;
@@ -149,6 +153,9 @@ private:
 
   /// Threshold to decide whether a phase is considered "mobile" or not
   real64 m_relpermThreshold;
+
+  // Output directory
+  string const m_outputDir;
 
 };
 

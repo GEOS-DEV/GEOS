@@ -254,9 +254,9 @@ void CompositionalMultiphaseWell::registerDataOnMesh( Group & meshBodies )
         integer const numPhase = m_numPhases;
         // format: time,bhp,total_rate,total_vol_rate,phase0_vol_rate,phase1_vol_rate,...
         std::ofstream outputFile( m_ratesOutputDir + "/" + wellControlsName + ".csv" );
-        outputFile << "time [s],bhp [Pa],total rate [" << massUnit << "/s],total " << conditionKey << " volumetric rate [" << unitKey << "m3/s]";
+        outputFile << "Time [s],BHP [Pa],Total rate [" << massUnit << "/s],Total " << conditionKey << " Volumetric rate [" << unitKey << "m3/s]";
         for( integer ip = 0; ip < numPhase; ++ip )
-          outputFile << ",phase" << ip << " " << conditionKey << " volumetric rate [" << unitKey << "m3/s]";
+          outputFile << ",Phase" << ip << " " << conditionKey << " volumetric rate [" << unitKey << "m3/s]";
         outputFile << std::endl;
         outputFile.close();
       }
@@ -1877,7 +1877,7 @@ void CompositionalMultiphaseWell::printRates( real64 const & time_n,
       {
         GEOS_LOG( GEOS_FMT( "{}: well is shut", wellControlsName ) );
         // print all zeros in the rates file
-        outputFile << "0.0,0.0,0.0";
+        outputFile << ",0.0,0.0,0.0";
         for( integer ip = 0; ip < numPhase; ++ip )
           outputFile << ",0.0";
         outputFile << std::endl;

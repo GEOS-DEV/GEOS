@@ -98,8 +98,8 @@ void SinglePhaseWell::registerDataOnMesh( Group & meshBodies )
         string const unitKey = useSurfaceConditions ? "s" : "r";
         // format: time,bhp,total_rate,total_vol_rate
         std::ofstream outputFile( m_ratesOutputDir + "/" + wellControlsName + ".csv" );
-        outputFile << "time [s],bhp [Pa],total rate [kg/s],total " << conditionKey << " volumetric rate ["<<unitKey<<"m3/s]";
-        outputFile<<std::endl;
+        outputFile << "Time [s],BHP [Pa],Total rate [kg/s],Total " << conditionKey << " volumetric rate ["<<unitKey<<"m3/s]" << std::endl;
+        outputFile.close();
       }
 
       string & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
@@ -1058,7 +1058,7 @@ void SinglePhaseWell::printRates( real64 const & time_n,
       {
         GEOS_LOG( GEOS_FMT( "{}: well is shut", wellControlsName ) );
         // print all zeros in the rates file
-        outputFile << "0.0,0.0,0.0" << std::endl;
+        outputFile << ",0.0,0.0,0.0" << std::endl;
         return;
       }
 
@@ -1089,6 +1089,7 @@ void SinglePhaseWell::printRates( real64 const & time_n,
                             wellControlsName, currentTotalRate, conditionKey, currentTotalVolRate, unitKey ) );
         outputFile << "," << currentTotalRate << "," << currentTotalVolRate << std::endl;
       } );
+      outputFile.close();
     } );
   } );
 }
