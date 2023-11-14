@@ -100,7 +100,7 @@ public:
   /**
    * destructor
    */
-  virtual ~SolidMechanicsMPM() override;
+  virtual ~SolidMechanicsMPM() override {};
 
   /**
    * @return The string that may be used to generate a new instance from the SolverBase::CatalogInterface::CatalogType
@@ -349,6 +349,8 @@ public:
                       ParticleManager & particleManager,
                       SpatialPartition & partition );
 
+  void initializeConstitutiveModelDependencies( ParticleManager & particleManager);
+
   void updateConstitutiveModelDependencies( ParticleManager & particleManager );
 
   void updateStress( real64 dt,
@@ -494,6 +496,8 @@ public:
 
 protected:
   virtual void postProcessInput() override final;
+
+  virtual void postRestartInitialization() override final;
 
   virtual void setConstitutiveNamesCallSuper( ParticleSubRegionBase & subRegion ) const override;
 

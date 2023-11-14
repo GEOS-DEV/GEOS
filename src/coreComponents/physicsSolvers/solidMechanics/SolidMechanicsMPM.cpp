@@ -58,12 +58,17 @@ GEOS_HOST_DEVICE
 void polarDecomposition( real64 (& R)[3][3],
                          real64 const (&matrix)[3][3] );
 
+bool compareFloat( real64 a, real64 b, real64 epsilon){
+  return std::fabs( a - b ) < epsilon;
+}
+
 SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
                                       Group * const parent ):
   SolverBase( name, parent ),
   m_solverProfiling( 0 ),
   m_timeIntegrationOption( TimeIntegrationOption::ExplicitDynamic ),
   m_updateMethod( UpdateMethodOption::FLIP ),
+  m_updateOrder( 2 ),
   m_iComm( CommunicationTools::getInstance().getCommID() ),
   m_prescribedBcTable( 0 ),
   m_boundaryConditionTypes(),
@@ -81,6 +86,9 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
   m_stressControlKp( 0.1 ),
   m_stressControlKi( 0.0 ),
   m_stressControlKd( 0.0 ),
+  m_domainStress(),
+  m_stressControlLastError(),
+  m_stressControlITerm(),
   m_boxAverageHistory( 0 ),
   m_reactionHistory( 0 ),
   m_needsNeighborList( 0 ),
@@ -106,7 +114,7 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
   m_artificialViscosityQ1( 0.0 ),
   m_cpdiDomainScaling( 0 ),
   m_smallMass( DBL_MAX ),
-  m_numContactGroups(),
+  m_numContactGroups( 0 ),
   m_numContactFlags(),
   m_numVelocityFields(),
   m_separabilityMinDamage( 0.5 ),
@@ -136,7 +144,8 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
 
   registerWrapper( "solverProfiling", &m_solverProfiling ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setRestartFlags( RestartFlags::WRITE_AND_READ ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    // setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "Flag for timing subroutines in the solver" );
 
   registerWrapper( viewKeyStruct::timeIntegrationOptionString(), &m_timeIntegrationOption ).
@@ -153,44 +162,41 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
 
   registerWrapper( "updateOrder", &m_updateOrder ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setApplyDefaultValue( 2 ).
+    setApplyDefaultValue( m_updateOrder ).
     setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription("Order for update method, only applies to XPIC and FMPM");
 
   registerWrapper( "prescribedBcTable", &m_prescribedBcTable ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setApplyDefaultValue( 0 ).
-    setRestartFlags( RestartFlags::WRITE_AND_READ ).
+    setApplyDefaultValue( m_prescribedBcTable ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "Flag for whether to have time-dependent boundary condition types" );
 
   registerWrapper( "boxAverageHistory", &m_boxAverageHistory ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setApplyDefaultValue( 0 ).
-    setRestartFlags( RestartFlags::WRITE_AND_READ ).
+    setApplyDefaultValue( m_boxAverageHistory ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "Flag for whether to output box average history" );
 
   registerWrapper( "boxAverageWriteInterval", &m_boxAverageWriteInterval ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setApplyDefaultValue( 0 ).
-    setRestartFlags( RestartFlags::WRITE_AND_READ ).
+    setApplyDefaultValue( m_boxAverageWriteInterval ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "Interval between writing box averages to files" );
 
   registerWrapper( "boxAverageMin", &m_boxAverageMin).
     setInputFlag( InputFlags::OPTIONAL ).
     setRestartFlags( RestartFlags::NO_WRITE ).
-    // setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "Minimum corner position of box average" );
 
   registerWrapper( "boxAverageMax", &m_boxAverageMax).
     setInputFlag( InputFlags::OPTIONAL ).
     setRestartFlags( RestartFlags::NO_WRITE ).
-    // setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "Maximum corner position of box average" );
 
   registerWrapper( "nextBoxAverageWriteTime", &m_nextBoxAverageWriteTime ).
     setInputFlag( InputFlags::FALSE ).
     setApplyDefaultValue( 0 ).
-    // setRestartFlags( RestartFlags::NO_WRITE ).
     setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "Next time to write box averages" );
 
@@ -198,14 +204,12 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( 0 ).
     setRestartFlags( RestartFlags::NO_WRITE ).
-    // setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "Flag for whether to output face reaction history" );
 
   registerWrapper( "reactionWriteInterval", &m_reactionWriteInterval ).
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( 0 ).
     setRestartFlags( RestartFlags::NO_WRITE ).
-    // setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "Interval between writing reactions to files" );
 
   registerWrapper( "nextReactionWriteTime", &m_nextReactionWriteTime ).
@@ -216,73 +220,88 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
 
   registerWrapper( "boundaryConditionTypes", &m_boundaryConditionTypes ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setRestartFlags( RestartFlags::WRITE_AND_READ ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "Boundary conditions on x-, x+, y-, y+, z- and z+ faces. Options are:\n* " + EnumStrings< BoundaryConditionOption >::concat( "\n* " ) );
 
   registerWrapper( "bodyForce", &m_bodyForce ).
     setInputFlag(InputFlags::OPTIONAL).
-    setRestartFlags( RestartFlags::WRITE_AND_READ ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "Array that stores uniform body force" );
 
   registerWrapper( "bcTable", &m_bcTable ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setRestartFlags( RestartFlags::WRITE_AND_READ ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "Array that stores time-dependent bc types on x-, x+, y-, y+, z- and z+ faces." );
 
   registerWrapper( "prescribedFTable", &m_prescribedFTable ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setRestartFlags( RestartFlags::WRITE_AND_READ ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "Flag for whether to have time-dependent superimposed velocity gradient for triply periodic simulations" );
 
   registerWrapper( "prescribedBoundaryFTable", &m_prescribedBoundaryFTable ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setRestartFlags( RestartFlags::WRITE_AND_READ ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "Flag for whether to have time-dependent boundary conditions described by a global background grid F" );
 
   registerWrapper( "fTableInterpType", &m_fTableInterpType ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setRestartFlags( RestartFlags::WRITE_AND_READ ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "The type of F table interpolation. Options are 0 (linear), 1 (cosine), 2 (quintic polynomial)." );
 
   registerWrapper( "fTable", &m_fTable ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setRestartFlags( RestartFlags::WRITE_AND_READ ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "Array that stores time-dependent grid-aligned stretches interpreted as a gloabl background grid F read from the XML file." );
 
   registerWrapper( "stressControl" , &m_stressControl).
     setInputFlag( InputFlags::OPTIONAL ).
-    setRestartFlags( RestartFlags::WRITE_AND_READ ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "Flag for whether stress control using box averages is enabled" );
 
   registerWrapper( "stressTableInterpType", &m_stressTableInterpType ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setRestartFlags( RestartFlags::WRITE_AND_READ ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "The type of stress table interpolation. Options are 0 (linear), 1 (cosine), 2 (quintic polynomial)." );
 
   registerWrapper( "stressTable", &m_stressTable ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setRestartFlags( RestartFlags::WRITE_AND_READ ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "Array that stores the time-depended grid aligned stresses" );
 
   registerWrapper( "stressControlKp", &m_stressControlKp ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setRestartFlags( RestartFlags::WRITE_AND_READ ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "Proportional gain of stress PID controller" );
 
   registerWrapper( "stressControlKi", &m_stressControlKi ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setRestartFlags( RestartFlags::WRITE_AND_READ ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "Integral gain of stress PID controller" );
 
    registerWrapper( "stressControlKd", &m_stressControlKd ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setRestartFlags( RestartFlags::WRITE_AND_READ ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "Derivative gain of stress PID controller" );
+
+  registerWrapper( "domainStress", &m_domainStress ).
+    setInputFlag( InputFlags::FALSE ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
+    setDescription( "Stores current target domain stress as driven by stress control" );
+
+  registerWrapper( "stressControlLastError", &m_stressControlLastError ).
+    setInputFlag( InputFlags::FALSE ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
+    setDescription( "Stress control error from previous timestep" );
+
+  registerWrapper( "stressControlITerm", &m_stressControlITerm ).
+    setInputFlag( InputFlags::FALSE ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
+    setDescription( "Stress control integral term" );
 
   registerWrapper( "needsNeighborList", &m_needsNeighborList ).
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( 0 ).
-    setRestartFlags( RestartFlags::WRITE_AND_READ ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "Flag for whether to construct neighbor list" );
 
   registerWrapper( "neighborRadius", &m_neighborRadius ).
@@ -294,126 +313,126 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
   registerWrapper( "binSizeMultiplier", &m_binSizeMultiplier ).
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( 1 ).
-    setRestartFlags( RestartFlags::WRITE_AND_READ ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "Multiplier for setting bin size, used to speed up particle neighbor sorting" );
 
   registerWrapper( "thinFeatureDFGThreshold", &m_thinFeatureDFGThreshold ).
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( m_thinFeatureDFGThreshold ).
-    setRestartFlags( RestartFlags::WRITE_AND_READ ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "Threshold to treat relatively thin ( compared to grid spacing ) damaged material to avoid spurious slip surfaces" );
 
   registerWrapper( "useDamageAsSurfaceFlag", &m_useDamageAsSurfaceFlag ).
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( 0 ).
-    setRestartFlags( RestartFlags::WRITE_AND_READ ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "Indicates whether particle damage at the beginning of the simulation should be interpreted as a surface flag" );
 
   registerWrapper( "FSubCycles", &m_FSubcycles ).
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( m_FSubcycles ).
-    setRestartFlags( RestartFlags::WRITE_AND_READ ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "Number of sub cycles to more accurately integrate the deformation gradient" );
 
   registerWrapper( "LBar", &m_LBar ).
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( m_LBar ).
-    setRestartFlags( RestartFlags::WRITE_AND_READ ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "Used to choose the Lbar method. 0 = do nothing, 1 = run trD through the SPH kernel, 2 = straight-up volume average" );
 
   registerWrapper( "LBarScale", &m_LBarScale ).
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( m_LBarScale ).
-    setRestartFlags( RestartFlags::WRITE_AND_READ ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "Scales the contribution of volume-averaged trD to particle L, alleviates checkerboarding" );
 
   registerWrapper( "exactJIntegration", &m_exactJIntegration ).
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( m_exactJIntegration ).
-    setRestartFlags( RestartFlags::WRITE_AND_READ ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "Will force integration of F to have an exact integral of J." );
 
   registerWrapper( "maxParticleVelocity", &m_maxParticleVelocity ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDefaultValue( 1e6 ).
-    setRestartFlags( RestartFlags::WRITE_AND_READ ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "Velocity above which particles are deleted" );
 
   registerWrapper( "maxParticleVelocitySquared", &m_maxParticleVelocitySquared).
     setInputFlag( InputFlags::FALSE ).
-    setRestartFlags( RestartFlags::WRITE_AND_READ ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "Square of the max particle velocity" );
 
   registerWrapper( "minParticleJacobian", &m_minParticleJacobian ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDefaultValue( m_minParticleJacobian ).
-    setRestartFlags( RestartFlags::WRITE_AND_READ ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "Jacobian value below which particles are deleted" );
 
   registerWrapper( "maxParticleJacobian", &m_maxParticleJacobian ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDefaultValue( m_maxParticleJacobian ).
-    setRestartFlags( RestartFlags::WRITE_AND_READ ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "Jacobian value above which particles are deleted" );
 
   registerWrapper( "overlapCorrection", &m_overlapCorrection ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDefaultValue( m_overlapCorrection ).
-    setRestartFlags( RestartFlags::WRITE_AND_READ ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "Overlap correction flag (0=off, 1=increase normal force to remove gap. (not fully developed), 2=compute the SPH Jacobian and use it to scale particle density to improve the overlap. )" );
 
   registerWrapper( "overlapThreshold1", &m_overlapThreshold1 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDefaultValue( m_overlapThreshold1 ).
-    setRestartFlags( RestartFlags::WRITE_AND_READ ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "Overlap correction threshold 1" );
 
   registerWrapper( "overlapThreshold2", &m_overlapThreshold2 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDefaultValue( m_overlapThreshold2 ).
-    setRestartFlags( RestartFlags::WRITE_AND_READ ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "Overlap correction threshold 2" );
 
   registerWrapper( "computeSPHJacobian", &m_computeSPHJacobian ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDefaultValue( m_computeSPHJacobian ).
-    setRestartFlags( RestartFlags::WRITE_AND_READ ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "Overlap correction flag (0=off, 1=increase normal force to remove gap. (not fully developed), 2=compute the SPH Jacobian and use it to scale particle density to improve the overlap. )" );
 
   registerWrapper( "initialTemperature", &m_initialTemperature ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDefaultValue( m_initialTemperature ).
-    setRestartFlags( RestartFlags::WRITE_AND_READ ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "Initial particle temperature" );
 
   registerWrapper( "shockHeating", &m_shockHeating ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDefaultValue( m_shockHeating ).
-    setRestartFlags( RestartFlags::WRITE_AND_READ ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "Initial particle temperature" );
 
   registerWrapper( "useArtificialViscosity", &m_useArtificialViscosity ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDefaultValue( m_useArtificialViscosity ).
-    setRestartFlags( RestartFlags::WRITE_AND_READ ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "Flag to enable artificial viscosity" );
 
   registerWrapper( "artificialViscosityQ0", &m_artificialViscosityQ0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDefaultValue( m_artificialViscosityQ0 ).
-    setRestartFlags( RestartFlags::WRITE_AND_READ ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "Initial particle temperature" );
 
   registerWrapper( "cpdiDomainScaling", &m_cpdiDomainScaling ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDefaultValue( 0 ).
-    setRestartFlags( RestartFlags::WRITE_AND_READ ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "Option for CPDI domain scaling" );
 
   registerWrapper( "generalizedVortexMMS", &m_generalizedVortexMMS ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDefaultValue( 0 ).
-    setRestartFlags( RestartFlags::WRITE_AND_READ ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "Option for CPDI domain scaling" );
 
   registerWrapper( "smallMass", &m_smallMass ).
@@ -424,6 +443,7 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
 
   registerWrapper( "numContactGroups", &m_numContactGroups ).
     setInputFlag( InputFlags::FALSE ).
+    setApplyDefaultValue( m_numContactGroups ).
     setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "Number of prescribed contact groups" );
 
@@ -438,78 +458,78 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
     setDescription( "Number of velocity fields" );
 
   registerWrapper( "separabilityMinDamage", &m_separabilityMinDamage ).
-    setApplyDefaultValue( 0.5 ).
+    setApplyDefaultValue( m_separabilityMinDamage ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setRestartFlags( RestartFlags::WRITE_AND_READ ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "Damage threshold for field separability" );
 
   registerWrapper( "treatFullyDamagedAsSingleField", &m_treatFullyDamagedAsSingleField ).
-    setApplyDefaultValue( 1 ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setRestartFlags( RestartFlags::WRITE_AND_READ ).
+    setApplyDefaultValue( m_treatFullyDamagedAsSingleField ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "Whether to consolidate fully damaged fields into a single field. Nice for modeling damaged mush." );
 
   registerWrapper( "surfaceDetection", &m_surfaceDetection ).
     setApplyDefaultValue( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setRestartFlags( RestartFlags::WRITE_AND_READ ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "Flag for automatic surface detection on the 1st cycle" );
 
   registerWrapper( "damageFieldPartitioning", &m_damageFieldPartitioning ).
     setApplyDefaultValue( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setRestartFlags( RestartFlags::WRITE_AND_READ ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "Flag for using the gradient of the particle damage field to partition material into separate velocity fields" );
 
   registerWrapper( "contactNormalType", &m_contactNormalType ).
     setApplyDefaultValue( m_contactNormalType ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setRestartFlags( RestartFlags::WRITE_AND_READ ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "Flag for contact normal type" );
 
   registerWrapper( "contactGapCorrection", &m_contactGapCorrection ).
-    setApplyDefaultValue( m_contactGapCorrection ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setRestartFlags( RestartFlags::WRITE_AND_READ ).
+    setApplyDefaultValue( m_contactGapCorrection ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "Flag for mitigating contact gaps" );
 
   registerWrapper( "resetDefGradForFullyDamagedParticles", &m_resetDefGradForFullyDamagedParticles ).
     setApplyDefaultValue( m_resetDefGradForFullyDamagedParticles ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setRestartFlags( RestartFlags::WRITE_AND_READ ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "Flag for resetting deformation gradient of fully damaged particles" );
 
   registerWrapper( "plotUnscaledParticles", &m_plotUnscaledParticles ).
     setApplyDefaultValue( m_plotUnscaledParticles ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setRestartFlags( RestartFlags::WRITE_AND_READ ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "Flag for plotting particles without CPDI domain scaling" );
 
   // registerWrapper( "directionalOverlapCorrection", &m_directionalOverlapCorrection ).
   //   setApplyDefaultValue( 0 ).
   //   setInputFlag( InputFlags::OPTIONAL ).
-  //   setRestartFlags( RestartFlags::WRITE_AND_READ ).
+  //   setRestartFlags( RestartFlags::NO_WRITE ).
   //   setDescription( "Flag for mitigating pile-up of particles at contact interfaces" );
 
   registerWrapper( "frictionCoefficient", &m_frictionCoefficient ).
     setApplyDefaultValue( -1 ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setRestartFlags( RestartFlags::WRITE_AND_READ ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "Coefficient of friction, currently assumed to be the same everywhere" );
 
   registerWrapper( "frictionCoefficientTable", &m_frictionCoefficientTable ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setRestartFlags( RestartFlags::WRITE_AND_READ ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "Friction coefficient table for different groups" );
 
   registerWrapper( "planeStrain", &m_planeStrain ).
-    setApplyDefaultValue( false ).
+    setApplyDefaultValue( m_planeStrain ).
     setInputFlag( InputFlags::OPTIONAL ).
     setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "Flag for performing plane strain calculations" );
 
   registerWrapper( "numDims", &m_numDims ).
-    setApplyDefaultValue( 3 ).
+    setApplyDefaultValue( m_numDims ).
     setInputFlag( InputFlags::FALSE ).
     setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "The number of active spatial dimensions, 2 for plane strain, 3 otherwise" );
@@ -522,25 +542,25 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
   registerWrapper("useEvents", &m_useEvents).
     setInputFlag( InputFlags::OPTIONAL ).
     setDefaultValue( m_useEvents ).
-    setRestartFlags( RestartFlags::WRITE_AND_READ ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "Enable events" );
 
   registerWrapper( "debugFlag", &m_debugFlag ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDefaultValue( m_debugFlag ).
-    setRestartFlags( RestartFlags::WRITE_AND_READ ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "Enables debugging of MPM explicit timestep" );
 
   registerWrapper( "computeXProfile", &m_computeXProfile ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDefaultValue( m_computeXProfile ).
-    setRestartFlags( RestartFlags::WRITE_AND_READ ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "Flag to enable x profiling" );
 
   registerWrapper( "xProfileWriteInterval", &m_xProfileWriteInterval ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDefaultValue( m_xProfileWriteInterval ).
-    setRestartFlags( RestartFlags::WRITE_AND_READ ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "Interval between writing x profiling data" );
 
   registerWrapper( "nextXProfileWriteTime", &m_nextXProfileWriteTime ).
@@ -623,6 +643,43 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
   m_mpmEventManager = &registerGroup< MPMEventManager >( groupKeys.mpmEventManager );
 }
 
+void SolidMechanicsMPM::postRestartInitialization()
+{
+  SolverBase::postRestartInitialization();
+
+  // Initialize friction coefficient table
+  if(m_numContactGroups > 0 )
+  {
+    initializeFrictionCoefficients();
+  }
+
+  // Initialize box average history file and write its header
+  if( m_boxAverageHistory == 1 )
+  {
+    // Initialize box average extent
+    if(  m_boxAverageMin.size() == 0  )
+    {
+      m_boxAverageMin.resize( 3 );
+      LvArray::tensorOps::copy< 3 >( m_boxAverageMin, m_xGlobalMin );
+    }
+    else
+    {
+      GEOS_ERROR_IF( m_boxAverageMin.size() != 3, "Box average min must have 3 elements" );
+    }
+
+    if(  m_boxAverageMax.size() == 0  )
+    {
+      m_boxAverageMax.resize( 3 );
+      LvArray::tensorOps::copy< 3 >( m_boxAverageMax, m_xGlobalMax );
+    }
+    else
+    {
+      GEOS_ERROR_IF( m_boxAverageMax.size() != 3, "Box average min must have 3 elements" );
+    }
+
+    GEOS_ERROR_IF( ( m_boxAverageMin[0] > m_boxAverageMax[0] ) || ( m_boxAverageMin[1] > m_boxAverageMax[1] ) || ( m_boxAverageMin[2] > m_boxAverageMax[2] ) , "Box minimums must be less than box maximums");
+  }
+}
 
 void SolidMechanicsMPM::postProcessInput()
 {
@@ -655,6 +712,77 @@ void SolidMechanicsMPM::postProcessInput()
     LvArray::tensorOps::fill< 6 >( m_boundaryConditionTypes, 0 );
   }
 
+    // Read and distribute BC table
+  if( m_prescribedBcTable == 1 )
+  {
+    // Reads the FTable directly from the xml
+    int numRows = m_bcTable.size( 0 );
+
+    GEOS_ERROR_IF(numRows == 0, "Prescribed boundary conditions is enabled but no bcTable was specified.");
+    for(int i = 0; i < numRows; ++i){
+      GEOS_ERROR_IF(m_bcTable[i].size() != 7, "BCtable row " << i+1 << " must have 7 elements.");
+      
+      GEOS_ERROR_IF(m_bcTable[i][0] < 0, "BCTable times must be positive.");
+
+      GEOS_ERROR_IF( compareFloat( roundf(m_bcTable[i][1]), m_bcTable[i][1], 1e-12 ) || 
+                     compareFloat( roundf(m_bcTable[i][2]), m_bcTable[i][1], 1e-12 ) || 
+                     compareFloat( roundf(m_bcTable[i][3]), m_bcTable[i][1], 1e-12 ) || 
+                     compareFloat( roundf(m_bcTable[i][4]), m_bcTable[i][1], 1e-12 ) || 
+                     compareFloat( roundf(m_bcTable[i][5]), m_bcTable[i][1], 1e-12 ) || 
+                     compareFloat( roundf(m_bcTable[i][6]), m_bcTable[i][1], 1e-12 ), "Only integer boundary condition types are permitted.");
+
+      GEOS_ERROR_IF( ( m_bcTable[i][1] < 0 || 
+                       m_bcTable[i][2] < 0 || 
+                       m_bcTable[i][3] < 0 || 
+                       m_bcTable[i][4] < 0 || 
+                       m_bcTable[i][5] < 0 || 
+                       m_bcTable[i][6] < 0 ) && 
+                     ( m_bcTable[i][1] > 3 || 
+                       m_bcTable[i][2] > 3 || 
+                       m_bcTable[i][3] > 3 || 
+                       m_bcTable[i][4] > 3 || 
+                       m_bcTable[i][5] > 3 || 
+                       m_bcTable[i][6] > 3 ), "Boundary types must be 0, 1, 2 or 3");
+    }
+  }
+
+  // Initialize domain F and L, then read and distribute F table
+  if( m_domainF.size() == 0 )
+  {
+    m_domainF.resize( 3 );
+    LvArray::tensorOps::fill< 3 >(m_domainF, 1.0);
+  }
+
+  if( m_domainL.size() == 0 )
+  {
+    m_domainL.resize( 3 );
+    LvArray::tensorOps::fill< 3 >(m_domainL, 0.0);
+  }
+
+  if( m_prescribedBoundaryFTable == 1 && m_prescribedFTable == 1 )
+  {
+    // Reads the FTable directly from the xml
+    int numRows = m_fTable.size( 0 );
+    GEOS_ERROR_IF(numRows == 0, "Prescribed boundary deformation is enabled but no F table was specified.");
+    for(int i = 0; i < numRows; ++i){
+      GEOS_ERROR_IF(m_fTable[i].size() != 4, "F table row " << i+1 << " must have 4 elements.");
+      GEOS_ERROR_IF(m_fTable[i][0] < 0, "F table times must be positive.");
+
+      if(i == 0)
+      {
+        GEOS_ERROR_IF( compareFloat( m_fTable[i][1], 1.0, 1e-12 ) || 
+                       compareFloat( m_fTable[i][2], 1.0, 1e-12 ) || 
+                       compareFloat( m_fTable[i][3], 1.0, 1e-12 ) , "Deformation of first row of F table must be 1." );
+      }
+      else
+      {
+        GEOS_ERROR_IF( m_fTable[i][1] < 0 || 
+                       m_fTable[i][2] < 0 || 
+                       m_fTable[i][3] < 0, "F table entries must be positive." );
+      }
+    }
+  }
+
   // Throw error if boundary conditions are incorrectly specified
   GEOS_ERROR_IF( m_bodyForce.size() != 3 && m_bodyForce.size() > 0,
                  "bodyForce must be of length 3. ");
@@ -664,14 +792,59 @@ void SolidMechanicsMPM::postProcessInput()
   {
     m_bodyForce.resize(3);
     LvArray::tensorOps::fill< 3 >(m_bodyForce, 0.0 );
+  } 
+  else 
+  {
+    GEOS_ERROR_IF( m_bodyForce.size() != 3, "Body force input must have size 3." );
   }
-}
+  
+  // Initialze reactions for each face of box to 0
+  if( m_globalFaceReactions.size() == 0 )
+  {
+    m_globalFaceReactions.resize( 6 );
+    LvArray::tensorOps::fill< 6 >( m_globalFaceReactions, 0.0 );
+  }
 
-SolidMechanicsMPM::~SolidMechanicsMPM()
-{
-  // TODO Auto-generated destructor stub
-}
+  // Check stress control
+  if( m_stressControl.size() == 0 ){
+    m_stressControl.resize( 3 );
+    LvArray::tensorOps::fill<3>( m_stressControl, 0 );
+  }
+  else
+  {
+    GEOS_ERROR_IF( m_stressControl.size() != 3, "Stress control input must have size 3.");
+  }
 
+  if( m_domainStress.size() == 0 )
+  {
+    m_domainStress.resize( 3 );
+    LvArray::tensorOps::fill< 3 >( m_domainStress, 0.0 );
+  }
+
+  if( m_stressControlLastError.size() == 0 )
+  {
+    m_stressControlLastError.resize(3);
+    LvArray::tensorOps::fill< 3 >( m_stressControlLastError, 0.0 );
+  }
+
+  if( m_stressControlITerm.size() == 0 )
+  {
+    m_stressControlITerm.resize(3);
+    LvArray::tensorOps::fill< 3 >( m_stressControlITerm, 0.0 );
+  }
+    
+  if( m_stressControl[0] == 1 || m_stressControl[1] == 1 || m_stressControl[2] == 1 )
+  {
+    GEOS_ERROR_IF(m_stressTable.size(0) == 0, "Stress table cannot be empty if stress control is enabled");
+    GEOS_ERROR_IF(m_stressTable.size(1) == 0, "Stress table must have 4 columns");
+
+    for(int i = 0; i < m_stressTable.size(0) ; i++)
+    {
+      GEOS_ERROR_IF(m_stressTable[i][0] < 0.0, "Stress table times must be positive");
+    }
+  }
+
+}
 
 void SolidMechanicsMPM::registerDataOnMesh( Group & meshBodies )
 {
@@ -939,10 +1112,6 @@ real64 SolidMechanicsMPM::solverStep( real64 const & time_n,
   return dtReturn;
 }
 
-bool compareFloat( real64 a, real64 b, real64 epsilon){
-  return std::fabs( a - b ) < epsilon;
-}
-
 void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
                                     ParticleManager & particleManager,
                                     SpatialPartition & partition )
@@ -955,105 +1124,6 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
     OrderedVariableToManyParticleRelation & neighborList = subRegion.neighborList();
     neighborList.setParticleManager( particleManager );
   } );
-
-  // Read and distribute BC table
-  if( m_prescribedBcTable == 1 )
-  {
-    // Reads the FTable directly from the xml
-    int numRows = m_bcTable.size( 0 );
-
-    GEOS_ERROR_IF(numRows == 0, "Prescribed boundary conditions is enabled but no bcTable was specified.");
-    for(int i = 0; i < numRows; ++i){
-      GEOS_ERROR_IF(m_bcTable[i].size() != 7, "BCtable row " << i+1 << " must have 7 elements.");
-      
-      GEOS_ERROR_IF(m_bcTable[i][0] < 0, "BCTable times must be positive.");
-
-      GEOS_ERROR_IF( compareFloat( roundf(m_bcTable[i][1]), m_bcTable[i][1], 1e-12 ) || 
-                     compareFloat( roundf(m_bcTable[i][2]), m_bcTable[i][1], 1e-12 ) || 
-                     compareFloat( roundf(m_bcTable[i][3]), m_bcTable[i][1], 1e-12 ) || 
-                     compareFloat( roundf(m_bcTable[i][4]), m_bcTable[i][1], 1e-12 ) || 
-                     compareFloat( roundf(m_bcTable[i][5]), m_bcTable[i][1], 1e-12 ) || 
-                     compareFloat( roundf(m_bcTable[i][6]), m_bcTable[i][1], 1e-12 ), "Only integer boundary condition types are permitted.");
-
-      // GEOS_ERROR_IF(roundf(m_bcTable[i][1]) != m_bcTable[i][1] || 
-      //               roundf(m_bcTable[i][2]) != m_bcTable[i][1] || 
-      //               roundf(m_bcTable[i][3]) != m_bcTable[i][1] || 
-      //               roundf(m_bcTable[i][4]) != m_bcTable[i][1] || 
-      //               roundf(m_bcTable[i][5]) != m_bcTable[i][1] || 
-      //               roundf(m_bcTable[i][6]) != m_bcTable[i][1], "Only integer boundary condition types are permitted.");
-
-      GEOS_ERROR_IF( ( m_bcTable[i][1] < 0 || 
-                       m_bcTable[i][2] < 0 || 
-                       m_bcTable[i][3] < 0 || 
-                       m_bcTable[i][4] < 0 || 
-                       m_bcTable[i][5] < 0 || 
-                       m_bcTable[i][6] < 0 ) && 
-                     ( m_bcTable[i][1] > 3 || 
-                       m_bcTable[i][2] > 3 || 
-                       m_bcTable[i][3] > 3 || 
-                       m_bcTable[i][4] > 3 || 
-                       m_bcTable[i][5] > 3 || 
-                       m_bcTable[i][6] > 3 ), "Boundary types must be 0, 1, 2 or 3");
-    }
-  }
-
-  // Initialize domain F and L, then read and distribute F table
-  m_domainF.resize( 3 );
-  LvArray::tensorOps::fill< 3 >(m_domainF, 1.0);
-  m_domainL.resize( 3 );
-  LvArray::tensorOps::fill< 3 >(m_domainL, 0.0);
-
-  if( m_prescribedBoundaryFTable == 1 && m_prescribedFTable == 1 )
-  {
-    // Reads the FTable directly from the xml
-    int numRows = m_fTable.size( 0 );
-    GEOS_ERROR_IF(numRows == 0, "Prescribed boundary deformation is enabled but no fTable was specified.");
-    for(int i = 0; i < numRows; ++i){
-      GEOS_ERROR_IF(m_fTable[i].size() != 4, "Ftable row " << i+1 << " must have 4 elements.");
-      GEOS_ERROR_IF(m_fTable[i][0] < 0, "FTable times must be positive.");
-
-      if(i == 0)
-      {
-        GEOS_ERROR_IF( compareFloat( m_fTable[i][1], 1.0, 1e-12 ) || 
-                       compareFloat( m_fTable[i][2], 1.0, 1e-12 ) || 
-                       compareFloat( m_fTable[i][3], 1.0, 1e-12 ) , "Deformation of first row of FTable must be 1." );
-      }
-      else
-      {
-        GEOS_ERROR_IF( m_fTable[i][1] < 0 || 
-                       m_fTable[i][2] < 0 || 
-                       m_fTable[i][3] < 0, "Deformations of FTable must be positive." );
-      }
-    }
-  }
-
-  // Initialze reactions for each face of box to 0
-  m_globalFaceReactions.resize( 6 );
-  LvArray::tensorOps::fill< 6 >( m_globalFaceReactions, 0.0 );
-
-  // Check stress control
-  if( m_stressControl.size() == 0 ){
-    m_stressControl.resize( 3 );
-    LvArray::tensorOps::fill<3>( m_stressControl, 0 );
-  }
-
-  if( m_stressControl[0] == 1 || m_stressControl[1] == 1 || m_stressControl[2] == 1 )
-  {
-    m_domainStress.resize( 3 );
-    m_stressControlLastError.resize(3);
-    LvArray::tensorOps::fill< 3 >( m_stressControlLastError, 0.0 );
-    m_stressControlITerm.resize(3);
-    LvArray::tensorOps::fill< 3 >( m_stressControlITerm, 0.0 );
-    
-
-    GEOS_ERROR_IF(m_stressTable.size(0) == 0, "Stress table cannot be empty if stress control is enabled");
-    GEOS_ERROR_IF(m_stressTable.size(1) == 0, "Stress table must have 4 columns");
-
-    for(int i = 0; i < m_stressTable.size(0) ; i++)
-    {
-      GEOS_ERROR_IF(m_stressTable[i][0] < 0.0, "Stress table times must be positive");
-    }
-  }
 
   // Get nodal position
   arrayView1d< int const > const periodic = partition.getPeriodic();
@@ -1095,9 +1165,6 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
   LvArray::tensorOps::fill< 3 >(m_xLocalMin, DBL_MAX);
   m_xLocalMax.resize(3);
   LvArray::tensorOps::fill< 3 >(m_xLocalMax, -DBL_MAX);
-  m_xLocalMinNoGhost.resize(3);
-  m_xLocalMaxNoGhost.resize(3);
-  m_partitionExtent.resize(3);
   for( int g=0; g<numNodes; g++ )
   {
     for( int i=0; i<3; i++ )
@@ -1106,6 +1173,10 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
       m_xLocalMax[i] = std::fmax( m_xLocalMax[i], gridPosition[g][i] );
     }
   }
+
+  m_xLocalMinNoGhost.resize(3);
+  m_xLocalMaxNoGhost.resize(3);
+  m_partitionExtent.resize(3);
   for( int i=0; i<3; i++ )
   {
     m_xLocalMinNoGhost[i] = partition.getLocalMin()[i];
@@ -1176,7 +1247,6 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
     int j = std::round( ( gridPosition[g][1] - m_xLocalMin[1] ) / m_hEl[1] );
     int k = std::round( ( gridPosition[g][2] - m_xLocalMin[2] ) / m_hEl[2] );
     m_ijkMap[i][j][k] = g;
-    
   }
 
   // Identify node sets for applying boundary conditions. We need boundary nodes and buffer nodes.
@@ -1216,25 +1286,6 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
 
     m_boundaryNodes[face].insert( tmpBoundaryNodes.begin(), tmpBoundaryNodes.end() );
     m_bufferNodes[face].insert( tmpBufferNodes.begin(), tmpBufferNodes.end() );
-  }
-
-  // Initialize reaction force history file and write its header
-  if( MpiWrapper::commRank( MPI_COMM_GEOSX ) == 0 && m_reactionHistory == 1 )
-  {
-    std::ofstream file;
-    file.open( "reactionHistory.csv", std::ios::out); // | std::ios::app );
-    if( file.fail() )
-      throw std::ios_base::failure( std::strerror( errno ) );
-    //make sure write fails with exception if something is wrong
-    file.exceptions( file.exceptions() | std::ios::failbit | std::ifstream::badbit );
-    file << "time, F00, F11, F22, length_x, length_y, length_z, Rx-, Rx+, Ry-, Ry+, Rz-, Rz+, L00, L11, L22" << std::endl;
-    file << std::setprecision( std::numeric_limits< long double >::digits10 )
-         << 0.0 << ","
-         << 1.0 << "," << 1.0 << "," << 1.0 << ","
-         << m_domainExtent[0] << "," << m_domainExtent[1] << "," << m_domainExtent[2] << ","
-         << 0.0 << "," << 0.0 << "," << 0.0 << "," << 0.0 << "," << 0.0 << "," << 0.0 << ","
-         << 0.0 << "," << 0.0 << "," << 0.0
-         << std::endl;
   }
 
   // Initialize particle fields that weren't intialized by reading the particle input file
@@ -1339,10 +1390,29 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
     subRegion.setActiveParticleIndices(); // Needed for computeAndWriteBoxAverage().
   } );
 
+  
+  // Initialize reaction force history file and write its header
+  if( MpiWrapper::commRank( MPI_COMM_GEOSX ) == 0 && m_reactionHistory == 1 )
+  {
+    std::ofstream file;
+    file.open( "reactionHistory.csv", std::ios::out); // | std::ios::app );
+    if( file.fail() )
+      throw std::ios_base::failure( std::strerror( errno ) );
+    //make sure write fails with exception if something is wrong
+    file.exceptions( file.exceptions() | std::ios::failbit | std::ifstream::badbit );
+    file << "time, F00, F11, F22, length_x, length_y, length_z, Rx-, Rx+, Ry-, Ry+, Rz-, Rz+, L00, L11, L22" << std::endl;
+    file << std::setprecision( std::numeric_limits< long double >::digits10 )
+         << 0.0 << ","
+         << 1.0 << "," << 1.0 << "," << 1.0 << ","
+         << m_domainExtent[0] << "," << m_domainExtent[1] << "," << m_domainExtent[2] << ","
+         << 0.0 << "," << 0.0 << "," << 0.0 << "," << 0.0 << "," << 0.0 << "," << 0.0 << ","
+         << 0.0 << "," << 0.0 << "," << 0.0
+         << std::endl;
+  }
+
   // Initialize box average history file and write its header
   if( m_boxAverageHistory == 1 )
   {
-
     if( MpiWrapper::commRank( MPI_COMM_GEOSX ) == 0 )
     {
       std::ofstream file;
@@ -1364,7 +1434,7 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
     }
     else
     {
-      GEOS_ERROR_IF( m_boxAverageMin.size() > 3, "Box average min must have 3 elements" );
+      GEOS_ERROR_IF( m_boxAverageMin.size() != 3, "Box average min must have 3 elements" );
     }
 
     if(  m_boxAverageMax.size() == 0  )
@@ -1374,7 +1444,7 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
     }
     else
     {
-      GEOS_ERROR_IF( m_boxAverageMax.size() > 3, "Box average min must have 3 elements" );
+      GEOS_ERROR_IF( m_boxAverageMax.size() != 3, "Box average min must have 3 elements" );
     }
 
     GEOS_ERROR_IF( ( m_boxAverageMin[0] > m_boxAverageMax[0] ) || ( m_boxAverageMin[1] > m_boxAverageMax[1] ) || ( m_boxAverageMin[2] > m_boxAverageMax[2] ) , "Box minimums must be less than box maximums");
@@ -1434,6 +1504,20 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
   nodeManager.getReference< array3d< real64 > >( viewKeyStruct::vPlusString() ).resize( numNodes, m_numVelocityFields, 3 );
   nodeManager.getReference< array3d< real64 > >( viewKeyStruct::dVPlusString() ).resize( numNodes, m_numVelocityFields, 3 );
 
+  // Precompute the square to save on computation later
+  m_maxParticleVelocitySquared = m_maxParticleVelocity * m_maxParticleVelocity;
+
+  initializeConstitutiveModelDependencies( particleManager );
+
+  initializeFrictionCoefficients();
+
+  // Initialize particle wavespeed
+  computeWavespeed( particleManager );
+}
+
+// Load any particle dependent properties into constitutive model such as strength scale which is determiend per particle not by material model input
+void SolidMechanicsMPM::initializeConstitutiveModelDependencies( ParticleManager & particleManager)
+{
   // Load strength scale into constitutive model (for ceramic)
   particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
   {
@@ -1452,15 +1536,6 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
       } );
     }
   } );
-
-  // Precompute the square to save on computation later
-  m_maxParticleVelocitySquared = m_maxParticleVelocity * m_maxParticleVelocity;
-
-  // Initialize friction coefficient table
-  initializeFrictionCoefficients();
-
-  // Initialize particle wavespeed
-  computeWavespeed( particleManager );
 }
 
 real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
@@ -1470,15 +1545,6 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
 {
   GEOS_MARK_FUNCTION;
 
-  // // CC: debug
-  // GEOS_LOG_RANK( "Domain Start: " <<
-  //                "xLocalMin=" << m_xLocalMin << ", " <<
-  //                "xLocalMax=" << m_xLocalMax << ", " <<
-  //                "xGlobalMin=" << m_xGlobalMin << ", " <<
-  //                "xGlobalMax=" << m_xGlobalMax << ", " << 
-  //                "domainL=" << m_domainL << ", " <<
-  //                "domainF=" << m_domainF);
-
   #define USE_PHYSICS_LOOP
 
   //#######################################################################################
@@ -1487,12 +1553,6 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
   //#######################################################################################
   SpatialPartition & partition = dynamic_cast< SpatialPartition & >( domain.getPartition() );
   arrayView1d< int const > const periodic = partition.getPeriodic();
-
-  // // CC: debug
-  // GEOS_LOG_RANK( "Step start: LocalMin=" << partition.getLocalMin() << ", " << 
-  //                "LocalMax=" << partition.getLocalMax() << ", " << 
-  //                "GridMin=" << partition.getGlobalMin() << ", " <<  
-  //                "GridMax=" << partition.getGlobalMax() );
 
   // ***** We assume that there are exactly two mesh bodies, and that one has particles and one does not. *****
   Group & meshBodies = domain.getMeshBodies();
@@ -1525,7 +1585,6 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
   // Must be done every time step despite grid fields being registered
   // TODO: Only doing this on the 1st cycle breaks restarts, can we do better? Why aren't labels part of the restart data?
   setGridFieldLabels( nodeManager );
-
 
   //#######################################################################################
   GEOS_LOG_RANK_IF( m_debugFlag == 1, "Set grid fields to zero" );
@@ -2055,7 +2114,6 @@ void SolidMechanicsMPM::triggerEvents( const real64 dt,
 
       if( event.getName() == "Anneal" )
       {
-        GEOS_LOG_RANK_0( "Processing anneal event");
         AnnealMPMEvent & anneal = dynamicCast< AnnealMPMEvent & >( event );
 
         particleManager.forParticleRegions< ParticleRegion >( [&]( ParticleRegion & region )
