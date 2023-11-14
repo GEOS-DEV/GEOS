@@ -21,7 +21,7 @@ on:
       ENABLE_HYPRE:
         required: false
         type: string
-        default: OFF
+        default: "OFF"
       ENABLE_HYPRE_DEVICE:
         required: false
         type: string
@@ -29,7 +29,7 @@ on:
       ENABLE_TRILINOS:
         required: false
         type: string
-        default: ON
+        default: "ON"
       GCP_BUCKET:
         required: false
         type: string
@@ -99,7 +99,7 @@ jobs:
           DATA_EXCHANGE_DIR=/mnt/geos-exchange  # Exchange folder outside of the container
           sudo mkdir -p ${DATA_EXCHANGE_DIR}
           DATA_EXCHANGE_MOUNT_POINT=/tmp/exchange  # Exchange folder inside of the container
-          DATA_EXCHANGE_DOCKER_CLI_ARGS="--volume=${DATA_EXCHANGE}:${DATA_EXCHANGE_MOUNT_POINT}"
+          DATA_EXCHANGE_DOCKER_CLI_ARGS="--volume=${DATA_EXCHANGE_DIR}:${DATA_EXCHANGE_MOUNT_POINT}"
           DATA_EXCHANGE_SCRIPT_CLI_ARGS="--exchange-dir ${DATA_EXCHANGE_MOUNT_POINT}"
           # DATA_EXCHANGE_DIR_CLI_ARGS="--exchange-dir ${DATA_EXCHANGE_DIR}"
         fi
