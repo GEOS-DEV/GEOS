@@ -121,7 +121,7 @@ void CompositionalMultiphaseStatistics::registerDataOnMesh( Group & meshBodies )
         regionStatistics.phaseMass.resizeDimension< 0 >( numPhases );
         regionStatistics.trappedPhaseMass.resizeDimension< 0 >( numPhases );
         regionStatistics.immobilePhaseMass.resizeDimension< 0 >( numPhases );
-        regionStatistics.dissolvedComponentMass.resizeDimension< 0, 1 >( numPhases, numComps );
+        regionStatistics.componentMass.resizeDimension< 0, 1 >( numPhases, numComps );
 
         // write output header
         if( getLogLevel() > 0 && MpiWrapper::commRank() == 0 )
@@ -148,7 +148,7 @@ void CompositionalMultiphaseStatistics::registerDataOnMesh( Group & meshBodies )
           for( integer ip = 0; ip < numPhases; ++ip )
           {
             for( integer ic = 0; ic < numComps; ++ic )
-              outputFile << ",Dissolved component " << ic << " (phase " << ip << ") mass [" << massUnit << "]";
+              outputFile << ",Component " << ic << " (phase " << ip << ") mass [" << massUnit << "]";
           }
           outputFile << std::endl;
           outputFile.close();
@@ -234,7 +234,7 @@ void CompositionalMultiphaseStatistics::computeRegionStatistics( real64 const ti
     regionStatistics.phaseMass.setValues< serialPolicy >( 0.0 );
     regionStatistics.trappedPhaseMass.setValues< serialPolicy >( 0.0 );
     regionStatistics.immobilePhaseMass.setValues< serialPolicy >( 0.0 );
-    regionStatistics.dissolvedComponentMass.setValues< serialPolicy >( 0.0 );
+    regionStatistics.componentMass.setValues< serialPolicy >( 0.0 );
   }
 
   // Step 2: increment the average/min/max quantities for all the subRegions
@@ -283,7 +283,7 @@ void CompositionalMultiphaseStatistics::computeRegionStatistics( real64 const ti
     array1d< real64 > subRegionTrappedPhaseMass( numPhases );
     array1d< real64 > subRegionImmobilePhaseMass( numPhases );
     array1d< real64 > subRegionRelpermPhaseMass( numPhases );
-    array2d< real64 > subRegionDissolvedComponentMass( numPhases, numComps );
+    array2d< real64 > subRegionComponentMass( numPhases, numComps );
 
     isothermalCompositionalMultiphaseBaseKernels::
       StatisticsKernel::
@@ -316,7 +316,7 @@ void CompositionalMultiphaseStatistics::computeRegionStatistics( real64 const ti
                                         subRegionPhaseMass.toView(),
                                         subRegionTrappedPhaseMass.toView(),
                                         subRegionImmobilePhaseMass.toView(),
-                                        subRegionDissolvedComponentMass.toView() );
+                                        subRegionComponentMass.toView() );
 
     ElementRegionBase & region = elemManager.getRegion( subRegion.getParent().getParent().getName() );
     RegionStatistics & regionStatistics = region.getReference< RegionStatistics >( viewKeyStruct::regionStatisticsString() );
@@ -360,7 +360,7 @@ void CompositionalMultiphaseStatistics::computeRegionStatistics( real64 const ti
 
       for( integer ic = 0; ic < numComps; ++ic )
       {
-        regionStatistics.dissolvedComponentMass[ip][ic] += subRegionDissolvedComponentMass[ip][ic];
+        regionStatistics.componentMass[ip][ic] += subRegionComponentMass[ip][ic];
       }
     }
 
@@ -389,7 +389,7 @@ void CompositionalMultiphaseStatistics::computeRegionStatistics( real64 const ti
       regionStatistics.totalPoreVolume += regionStatistics.phasePoreVolume[ip];
       for( integer ic = 0; ic < numComps; ++ic )
       {
-        regionStatistics.dissolvedComponentMass[ip][ic] = MpiWrapper::sum( regionStatistics.dissolvedComponentMass[ip][ic] );
+        regionStatistics.componentMass[ip][ic] = MpiWrapper::sum( regionStatistics.componentMass[ip][ic] );
       }
     }
     regionStatistics.averagePressure = MpiWrapper::sum( regionStatistics.averagePressure );
@@ -417,7 +417,7 @@ void CompositionalMultiphaseStatistics::computeRegionStatistics( real64 const ti
                                         getName(), regionNames[i], time, regionStatistics.minTemperature, regionStatistics.averageTemperature, regionStatistics.maxTemperature ) );
     GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "{}, {} (time {} s): Total dynamic pore volume: {} rm^3",
                                         getName(), regionNames[i], time, regionStatistics.totalPoreVolume ) );
-    GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "{}, {} (time {} s): Phase dynamic pore volumes: {} rm^3",
+    GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "{}, {} (time {} s): Phase dynamic pore volume: {} rm^3",
                                         getName(), regionNames[i], time, regionStatistics.phasePoreVolume ) );
     GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "{}, {} (time {} s): Phase mass: {} {}",
                                         getName(), regionNames[i], time, regionStatistics.phaseMass, massUnit ) );
@@ -434,8 +434,8 @@ void CompositionalMultiphaseStatistics::computeRegionStatistics( real64 const ti
     GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "{}, {} (time {} s): Mobile phase mass (metric 2): {} {}",
                                         getName(), regionNames[i], time, mobilePhaseMass, massUnit ) );
 
-    GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "{}, {} (time {} s): Dissolved component mass: {} {}",
-                                        getName(), regionNames[i], time, regionStatistics.dissolvedComponentMass, massUnit ) );
+    GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "{}, {} (time {} s): Component mass: {} {}",
+                                        getName(), regionNames[i], time, regionStatistics.componentMass, massUnit ) );
 
     if( getLogLevel() > 0 && MpiWrapper::commRank() == 0 )
     {
@@ -458,7 +458,7 @@ void CompositionalMultiphaseStatistics::computeRegionStatistics( real64 const ti
       for( integer ip = 0; ip < numPhases; ++ip )
       {
         for( integer ic = 0; ic < numComps; ++ic )
-          outputFile << "," << regionStatistics.dissolvedComponentMass[ip][ic];
+          outputFile << "," << regionStatistics.componentMass[ip][ic];
       }
       outputFile << std::endl;
       outputFile.close();

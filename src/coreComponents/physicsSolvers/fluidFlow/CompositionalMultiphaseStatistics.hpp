@@ -115,8 +115,8 @@ private:
     array1d< real64 > trappedPhaseMass;
     /// immobile region phase mass
     array1d< real64 > immobilePhaseMass;
-    /// dissolved region component mass
-    array2d< real64 > dissolvedComponentMass;
+    /// region component mass
+    array2d< real64 > componentMass;
 
 
   };
