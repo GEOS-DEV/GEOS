@@ -46,19 +46,12 @@ on:
 jobs:
   build_test_deploy:
     runs-on: ${{ inputs.RUNS_ON }}
-    # env:
-    #   # Those env variables could be passed as scripts parameters as well,
-    #   # but a specific care must be taken to be sure there's no conflict with the host-config files.
-    #   ENABLE_HYPRE: ${{ inputs.ENABLE_HYPRE }}
-    #   ENABLE_HYPRE_DEVICE: ${{ inputs.ENABLE_HYPRE_DEVICE }}
-    #   ENABLE_TRILINOS: ${{ inputs.ENABLE_TRILINOS }}
     steps:
     - name: Checkout Repository
       uses: actions/checkout@v3
       with:
         submodules: true
-        # lfs: ${{ inputs.BUILD_TYPE == 'integrated_tests' }}
-        lfs: false
+        lfs: ${{ inputs.BUILD_TYPE == 'integrated_tests' }}
         fetch-depth: 1
 
     - id: 'auth'
@@ -124,18 +117,6 @@ jobs:
         # GHA set `-e` to bash scripts by default to fail asap,
         # but for this precise call, we want to deal with it more precisely
         set +e
-        # ./scripts/ci_build_and_test_gha.sh \
-        #   --docker-repository ${{ inputs.DOCKER_REPOSITORY }} \
-        #   --docker-tag ${{ inputs.DOCKER_IMAGE_TAG }} \
-        #   ${DATA_EXCHANGE_DIR_CLI_ARGS} \
-        #   -- \
-        #   --cmake-build-type ${{ inputs.CMAKE_BUILD_TYPE }} \
-        #   ${DATA_BASENAME_CLI_ARGS} \
-        #   --install-dir-basename GEOSX-${SHORT_COMMIT} \
-        #   ${HOST_CONFIG_CLI_ARGS} \
-        #   ${SCCACHE_CLI_ARGS} \
-        #   ${RUN_INTEGRATED_TESTS_CLI_ARGS} \
-        #   ${{ inputs.BUILD_AND_TEST_CLI_ARGS }}
         docker run \
           --cap-add=SYS_PTRACE \
           --volume=${GITHUB_WORKSPACE}:${GITHUB_WORKSPACE_MOUNT_POINT} \

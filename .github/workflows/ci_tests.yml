@@ -74,7 +74,7 @@ jobs:
     needs: [is_pull_request_a_draft]
     runs-on: ubuntu-22.04
     # Temporarily deactivate
-    # if: ${{ ! always() }}
+    if: ${{ ! always() }}
     steps:
     - name: Check if running the integrated tests is requested
       run: |
