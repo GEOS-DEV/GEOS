@@ -43,21 +43,22 @@ set( constitutive_headers
      fluid/multifluid/blackOil/PVTOData.hpp
      fluid/multifluid/CO2Brine/CO2BrineFluid.hpp
      fluid/multifluid/CO2Brine/PhaseModel.hpp
-     fluid/multifluid/CO2Brine/functions/PhillipsBrineDensity.hpp
-     fluid/multifluid/CO2Brine/functions/PhillipsBrineViscosity.hpp
-     fluid/multifluid/CO2Brine/functions/EzrokhiBrineDensity.hpp
-     fluid/multifluid/CO2Brine/functions/EzrokhiBrineViscosity.hpp
-     fluid/multifluid/CO2Brine/functions/CO2Solubility.hpp
-     fluid/multifluid/CO2Brine/functions/FenghourCO2Viscosity.hpp
-     fluid/multifluid/CO2Brine/functions/FlashModelBase.hpp
-     fluid/multifluid/CO2Brine/functions/PVTFunctionBase.hpp
-     fluid/multifluid/CO2Brine/functions/NoOpPVTFunction.hpp
-     fluid/multifluid/CO2Brine/functions/PVTFunctionHelpers.hpp
-     fluid/multifluid/CO2Brine/functions/SpanWagnerCO2Density.hpp
      fluid/multifluid/CO2Brine/functions/BrineEnthalpy.hpp
      fluid/multifluid/CO2Brine/functions/CO2Enthalpy.hpp
      fluid/multifluid/CO2Brine/functions/CO2EOSSolver.hpp
+     fluid/multifluid/CO2Brine/functions/CO2Solubility.hpp
+     fluid/multifluid/CO2Brine/functions/CO2SolubilitySpycherPruess.hpp
+     fluid/multifluid/CO2Brine/functions/EzrokhiBrineDensity.hpp
+     fluid/multifluid/CO2Brine/functions/EzrokhiBrineViscosity.hpp
+     fluid/multifluid/CO2Brine/functions/FenghourCO2Viscosity.hpp
+     fluid/multifluid/CO2Brine/functions/FlashModelBase.hpp
+     fluid/multifluid/CO2Brine/functions/NoOpPVTFunction.hpp
+     fluid/multifluid/CO2Brine/functions/PhillipsBrineDensity.hpp
+     fluid/multifluid/CO2Brine/functions/PhillipsBrineViscosity.hpp
      fluid/multifluid/CO2Brine/functions/PureWaterProperties.hpp
+     fluid/multifluid/CO2Brine/functions/PVTFunctionBase.hpp
+     fluid/multifluid/CO2Brine/functions/PVTFunctionHelpers.hpp
+     fluid/multifluid/CO2Brine/functions/SpanWagnerCO2Density.hpp
      fluid/multifluid/CO2Brine/functions/WaterDensity.hpp
      fluid/multifluid/compositional/functions/CompositionalProperties.hpp     
      fluid/multifluid/compositional/functions/CubicEOSPhaseModel.hpp     
@@ -200,6 +201,7 @@ set( constitutive_sources
      fluid/multifluid/CO2Brine/functions/EzrokhiBrineDensity.cpp
      fluid/multifluid/CO2Brine/functions/EzrokhiBrineViscosity.cpp
      fluid/multifluid/CO2Brine/functions/CO2Solubility.cpp
+     fluid/multifluid/CO2Brine/functions/CO2SolubilitySpycherPruess.cpp
      fluid/multifluid/CO2Brine/functions/FenghourCO2Viscosity.cpp
      fluid/multifluid/CO2Brine/functions/SpanWagnerCO2Density.cpp
      fluid/multifluid/CO2Brine/functions/PVTFunctionHelpers.cpp

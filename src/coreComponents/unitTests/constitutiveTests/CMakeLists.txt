@@ -3,10 +3,12 @@
 #
 
 set( gtest_geosx_tests
+     testCapillaryPressure.cpp
+     testCO2BrinePVTModels.cpp
+     testCO2SpycherPruessModels.cpp
      testDamage.cpp
      testRelPerm.cpp
      testRelPermHysteresis.cpp
-     testCapillaryPressure.cpp
    )
 
 set( gtest_triaxial_xmls
@@ -41,8 +43,7 @@ endif()
 
 if( ENABLE_PVTPackage )
     list( APPEND gtest_geosx_tests
-          testMultiFluid.cpp
-          testCO2BrinePVTModels.cpp )
+          testMultiFluid.cpp )
 
     set( dependencyList ${dependencyList} PVTPackage )
 endif()
