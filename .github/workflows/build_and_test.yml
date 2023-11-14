@@ -89,15 +89,17 @@ jobs:
             DATA_BASENAME=integratedTests-pr${{ github.event.number }}-${{ github.run_number }}-${SHORT_COMMIT}.tar.gz
             RUN_INTEGRATED_TESTS_CLI_ARGS=--run-integrated-tests
           fi
-
+          
           DATA_BASENAME_CLI_ARGS="--data-basename ${DATA_BASENAME}"
-
+          
           DATA_EXCHANGE_DIR=/mnt/geos-exchange
           sudo mkdir -p ${DATA_EXCHANGE_DIR}
           DATA_EXCHANGE_DIR_CLI_ARGS="--exchange-dir ${DATA_EXCHANGE_DIR}"
         fi
-                
+        
         HOST_CONFIG=${{ inputs.HOST_CONFIG }}
+        HOST_CONFIG_CLI_ARGS=${HOST_CONFIG:+"--host-config ${HOST_CONFIG}"}
+        
         if ${{ inputs.USE_SCCACHE }} == 'true'; then
           SCCACHE_CLI_ARGS="--sccache-credentials $(basename ${GOOGLE_GHA_CREDS_PATH})"
         fi
@@ -113,9 +115,9 @@ jobs:
           ${DATA_EXCHANGE_DIR_CLI_ARGS} \
           -- \
           --cmake-build-type ${{ inputs.CMAKE_BUILD_TYPE }} \
-           ${DATA_BASENAME_CLI_ARGS} \
+          ${DATA_BASENAME_CLI_ARGS} \
           --install-dir-basename GEOSX-${SHORT_COMMIT} \
-          ${HOST_CONFIG:+"--host-config ${HOST_CONFIG}"} \
+          ${HOST_CONFIG_CLI_ARGS} \
           ${SCCACHE_CLI_ARGS} \
           ${RUN_INTEGRATED_TESTS_CLI_ARGS} \
           ${{ inputs.BUILD_AND_TEST_CLI_ARGS }}
@@ -130,5 +132,5 @@ jobs:
             echo "Download the integrated tests at https://storage.googleapis.com/${{ inputs.GCP_BUCKET }}/${DATA_BASENAME}"
           fi
         fi
-
+        
         exit ${EXIT_STATUS}

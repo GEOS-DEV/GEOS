@@ -111,45 +111,65 @@ jobs:
     - name: Check that submodules are up to date
       run: "scripts/test_submodule_updated.sh"
 
-  # Validates the code-style using uncrustify
-  check_code_style:
-    needs: [is_pull_request_a_draft]
-    runs-on: ubuntu-22.04
-    steps:
-    - name: Checkout Repository
-      uses: actions/checkout@v3
-      with:
-        submodules: true
-        lfs: false
-        fetch-depth: 1
-    - name: Check style
-      run: |
-        ./scripts/ci_build_and_test_gha.sh \
-          --docker-repository geosx/ubuntu20.04-gcc9 \
-          --docker-tag ${{ needs.is_pull_request_a_draft.outputs.DOCKER_IMAGE_TAG }} \
-          -- \
-          --cmake-build-type Release \
-          --test-code-style
+  # # Validates the code-style using uncrustify
+  # check_code_style:
+  #   needs: [is_pull_request_a_draft]
+  #   runs-on: ubuntu-22.04
+  #   steps:
+  #   - name: Checkout Repository
+  #     uses: actions/checkout@v3
+  #     with:
+  #       submodules: true
+  #       lfs: false
+  #       fetch-depth: 1
+  #   - name: Check style
+  #     run: |
+  #       ./scripts/ci_build_and_test_gha.sh \
+  #         --docker-repository geosx/ubuntu20.04-gcc9 \
+  #         --docker-tag ${{ needs.is_pull_request_a_draft.outputs.DOCKER_IMAGE_TAG }} \
+  #         -- \
+  #         --cmake-build-type Release \
+  #         --test-code-style
 
-  # Validates that the documentation generated using doxygen has no hole.
-  check_documentation:
+  # # Validates that the documentation generated using doxygen has no hole.
+  # check_documentation:
+  #   needs: [is_pull_request_a_draft]
+  #   runs-on: ubuntu-22.04
+  #   steps:
+  #   - name: Checkout Repository
+  #     uses: actions/checkout@v3
+  #     with:
+  #       submodules: true
+  #       lfs: false
+  #       fetch-depth: 1
+  #   - name: Check documentation
+  #     run: |
+  #       ./scripts/ci_build_and_test_gha.sh \
+  #         --docker-repository geosx/ubuntu20.04-gcc9 \
+  #         --docker-tag ${{ needs.is_pull_request_a_draft.outputs.DOCKER_IMAGE_TAG }} \
+  #         -- \
+  #         --cmake-build-type Release \
+  #         --test-documentation
+
+  check_code_style_and_documentation:
+    name: ${{ matrix.name }}
     needs: [is_pull_request_a_draft]
-    runs-on: ubuntu-22.04
-    steps:
-    - name: Checkout Repository
-      uses: actions/checkout@v3
-      with:
-        submodules: true
-        lfs: false
-        fetch-depth: 1
-    - name: Check documentation
-      run: |
-        ./scripts/ci_build_and_test_gha.sh \
-          --docker-repository geosx/ubuntu20.04-gcc9 \
-          --docker-tag ${{ needs.is_pull_request_a_draft.outputs.DOCKER_IMAGE_TAG }} \
-          -- \
-          --cmake-build-type Release \
-          --test-documentation
+    strategy:
+      fail-fast : false
+      matrix:
+        include:
+        # Validates the code-style using uncrustify
+        - name: Check code style
+          BUILD_AND_TEST_ARGS: --test-code-style
+        # Validates that the documentation generated using doxygen has no hole.
+        - name: Check documentation
+          BUILD_AND_TEST_ARGS: --test-documentation
+    uses: ./.github/workflows/build_and_test.yml
+    with:
+      CMAKE_BUILD_TYPE: Release
+      DOCKER_IMAGE_TAG: ${{ needs.is_pull_request_a_draft.outputs.DOCKER_IMAGE_TAG }}
+      DOCKER_REPOSITORY: geosx/ubuntu20.04-gcc9
+      RUNS_ON: ubuntu-22.04
 
   # Matrix containing all the CPU build.
   # Those are quite fase and can efficiently benefit from the `sccache' tool to make them even faster.
