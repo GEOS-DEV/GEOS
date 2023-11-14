@@ -170,6 +170,7 @@ jobs:
       DOCKER_IMAGE_TAG: ${{ needs.is_pull_request_a_draft.outputs.DOCKER_IMAGE_TAG }}
       DOCKER_REPOSITORY: geosx/ubuntu20.04-gcc9
       RUNS_ON: ubuntu-22.04
+      USE_SCCACHE: false
 
   # Matrix containing all the CPU build.
   # Those are quite fase and can efficiently benefit from the `sccache' tool to make them even faster.

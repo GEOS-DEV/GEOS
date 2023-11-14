@@ -44,7 +44,7 @@ on:
       GOOGLE_CLOUD_GCP:
         required: false
 jobs:
-  build_and_test:
+  build_test_deploy:
     runs-on: ${{ inputs.RUNS_ON }}
     env:
       # Those env variables could be passed as scripts parameters as well,
