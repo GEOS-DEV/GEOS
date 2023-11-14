@@ -21,15 +21,12 @@ on:
       ENABLE_HYPRE:
         required: false
         type: string
-        default: OFF
       ENABLE_HYPRE_DEVICE:
         required: false
         type: string
-        default: CPU
       ENABLE_TRILINOS:
         required: false
         type: string
-        default: ON
       GCP_BUCKET:
         required: false
         type: string
@@ -118,6 +115,9 @@ jobs:
         # The linear algebra environment variables (ENABLE_HYPRE, ENABLE_HYPRE_DEVICE & ENABLE_TRILINOS)
         # could be passed as scripts parameters as well, but a specific care must be taken to be sure
         # there's no conflict with the host-config files.
+        ENABLE_HYPRE=${{ inputs.ENABLE_HYPRE }}
+        ENABLE_HYPRE_DEVICE=${{ inputs.ENABLE_HYPRE_DEVICE }}
+        ENABLE_TRILINOS=${{ inputs.ENABLE_TRILINOS }}
 
         # In case of integrated tests run, we still want to send the results to the cloud for inspection.
         # While for standard build (if even possible), pushing a failed build would be pointless.
@@ -140,9 +140,9 @@ jobs:
           --cap-add=SYS_PTRACE \
           --volume=${GITHUB_WORKSPACE}:${GITHUB_WORKSPACE_MOUNT_POINT} \
           ${DATA_EXCHANGE_DOCKER_CLI_ARGS} \
-          -e ENABLE_HYPRE=${{ inputs.ENABLE_HYPRE }} \
-          -e ENABLE_HYPRE_DEVICE=${{ inputs.ENABLE_HYPRE_DEVICE }} \
-          -e ENABLE_TRILINOS=${{ inputs.ENABLE_TRILINOS }} \
+          -e ENABLE_HYPRE=${ENABLE_HYPRE:-OFF} \
+          -e ENABLE_HYPRE_DEVICE=${ENABLE_HYPRE_DEVICE:-CPU} \
+          -e ENABLE_TRILINOS=${ENABLE_TRILINOS:-ON} \
           ${{ inputs.DOCKER_REPOSITORY }}:${{ inputs.DOCKER_IMAGE_TAG }} \
           ${GITHUB_WORKSPACE_MOUNT_POINT}/scripts/ci_build_and_test_in_container.sh \
             --cmake-build-type ${{ inputs.CMAKE_BUILD_TYPE }} \
