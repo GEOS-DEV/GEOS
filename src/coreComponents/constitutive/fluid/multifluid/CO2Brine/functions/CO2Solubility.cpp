@@ -322,18 +322,25 @@ CO2Solubility::CO2Solubility( string const & name,
   string const expectedWaterPhaseNames[] = { "Water", "water", "Liquid", "liquid" };
   m_phaseLiquidIndex = PVTFunctionHelpers::findName( phaseNames, expectedWaterPhaseNames, "phaseNames" );
 
+  string const solubilityModel = 10 < inputParams.size() ? inputParams[10] : "DuanSun";
   FunctionManager & functionManager = FunctionManager::getInstance();
-  if( 10 < inputParams.size() && inputParams[10] == "SpycherPruess" )
+  if( solubilityModel == "SpycherPruess" )
   {
     std::pair< TableFunction const *, TableFunction const * > tables =
       CO2SolubilitySpycherPruess::makeSolubilityTables( inputParams, m_modelName, functionManager );
     m_CO2SolubilityTable = tables.first;
     m_WaterVapourisationTable = tables.second;
   }
-  else
+  else if( solubilityModel == "DuanSun" )
   {
     m_CO2SolubilityTable = makeSolubilityTable( inputParams, m_modelName, functionManager );
     m_WaterVapourisationTable = makeVapourisationTable( inputParams, m_modelName, functionManager );
+  }
+  else
+  {
+    GEOS_THROW( GEOS_FMT( "The CO2Solubility model {} is not known."
+                          " This should be either 'DuanSun' or 'SpycherPruess'.", solubilityModel ),
+                InputError );
   }
 }
 

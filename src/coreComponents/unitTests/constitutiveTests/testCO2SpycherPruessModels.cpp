@@ -84,29 +84,29 @@ CO2SolubilitySpycherPruessTest::makeFlashModel( string const & fileContent )
 
 TEST_F( CO2SolubilitySpycherPruessTest, flashCO2SolubilitySpycherPruessTest )
 {
+  std::cout << std::scientific << std::setprecision( 10 );
   //constexpr char const * fileContent = "FlashModel CO2Solubility 1e5 7.5e7 5e4 285.15 369.15 4.0 0.15";
-  constexpr char const * fileContent = "FlashModel CO2Solubility 1e5 7.5e7 5e4 285.15 369.15 4.0 0.15 1.0e-8 SpycherPruess";
+  constexpr char const * fileContent = "FlashModel CO2Solubility 1e5 2e5 1e5 293.15 303.15 10.0 0.15 1.0e-8 SpycherPruess";
   flashModel = makeFlashModel( fileContent );
-  std::cout << flashModel.get() << std::endl;
-  /**
-     auto const * tableFunction = FunctionManager::getInstance().getGroupPointer< TableFunction >( "SpanWagnerCO2Density_table" );
-     std::cout << tableFunction << std::endl;
-     std::cout << tableFunction->getName() << std::endl;
-     const auto & coords = tableFunction->getCoordinates();
-     const auto & values = tableFunction->getValues();
-     integer const np = coords[0].size();
-     integer const nt = coords[1].size();
-     //integer const nv = values.size();
-     std::cout << std::scientific << std::setprecision( 8 );
-     for( integer ip=0; ip<np; ip++ )
-     {
-     std::cout << std::setw( 18 ) << coords[0][ip];
-     for( integer it=0; it<nt; it++ )
-     {
-      std::cout << std::setw( 18 ) << values[it*np+ip];
-     }
-     std::cout << "\n";
-     }*/
+  auto const * co2Function = FunctionManager::getInstance().getGroupPointer< TableFunction >( "CO2Solubility_co2Solubility_table" );
+  auto const * h2oFunction = FunctionManager::getInstance().getGroupPointer< TableFunction >( "CO2Solubility_waterVaporization_table" );
+  const auto & coords = co2Function->getCoordinates();
+  const auto & co2Values = co2Function->getValues();
+  const auto & h2oValues = h2oFunction->getValues();
+  integer const np = coords[0].size();
+  integer const nt = coords[1].size();
+  //integer const nv = values.size();
+  for( integer it=0; it<nt; it++ )
+  {
+    for( integer ip=0; ip<np; ip++ )
+    {
+      std::cout << std::setw( 18 ) << coords[1][it];
+      std::cout << std::setw( 18 ) << coords[0][ip];
+      std::cout << std::setw( 18 ) << h2oValues[it*np+ip];
+      std::cout << std::setw( 18 ) << co2Values[it*np+ip];
+      std::cout << "\n";
+    }
+  }
 }
 
 int main( int argc, char * * argv )
