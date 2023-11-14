@@ -27,12 +27,12 @@ jobs:
         # We do not rely on the `github.event.pull_request.labels` information since it's cached at the job.
         # Changing labels or assignee in the PR would not allow to simply re-run the job with a different outcome.
         pr_json=$(curl -H "Accept: application/vnd.github+json" https://api.github.com/repos/${{ github.repository }}/pulls/${{ github.event.number }})
-        #
+        
         # We stop the workflow if the pr is draft
         draft_status=$(echo ${pr_json} | jq '.draft')
         echo "Draft status of PR is ${draft_status}."
         if [[ $draft_status == true ]]; then exit 1 ; fi
-        #
+        
         # If the workflow is meant to continue, we extract additional information for the json of the pr.
         echo "NUM_ASSIGNEES=$(echo ${pr_json} | jq '.assignees | length')" >> "$GITHUB_OUTPUT"
         echo "LABELS=$(echo ${pr_json} | jq -crM '[.labels[].name]')" >> "$GITHUB_OUTPUT"
@@ -110,46 +110,6 @@ jobs:
         fetch-depth: 1
     - name: Check that submodules are up to date
       run: "scripts/test_submodule_updated.sh"
-
-  # # Validates the code-style using uncrustify
-  # check_code_style:
-  #   needs: [is_pull_request_a_draft]
-  #   runs-on: ubuntu-22.04
-  #   steps:
-  #   - name: Checkout Repository
-  #     uses: actions/checkout@v3
-  #     with:
-  #       submodules: true
-  #       lfs: false
-  #       fetch-depth: 1
-  #   - name: Check style
-  #     run: |
-  #       ./scripts/ci_build_and_test_gha.sh \
-  #         --docker-repository geosx/ubuntu20.04-gcc9 \
-  #         --docker-tag ${{ needs.is_pull_request_a_draft.outputs.DOCKER_IMAGE_TAG }} \
-  #         -- \
-  #         --cmake-build-type Release \
-  #         --test-code-style
-
-  # # Validates that the documentation generated using doxygen has no hole.
-  # check_documentation:
-  #   needs: [is_pull_request_a_draft]
-  #   runs-on: ubuntu-22.04
-  #   steps:
-  #   - name: Checkout Repository
-  #     uses: actions/checkout@v3
-  #     with:
-  #       submodules: true
-  #       lfs: false
-  #       fetch-depth: 1
-  #   - name: Check documentation
-  #     run: |
-  #       ./scripts/ci_build_and_test_gha.sh \
-  #         --docker-repository geosx/ubuntu20.04-gcc9 \
-  #         --docker-tag ${{ needs.is_pull_request_a_draft.outputs.DOCKER_IMAGE_TAG }} \
-  #         -- \
-  #         --cmake-build-type Release \
-  #         --test-documentation
 
   check_code_style_and_documentation:
     name: ${{ matrix.name }}
