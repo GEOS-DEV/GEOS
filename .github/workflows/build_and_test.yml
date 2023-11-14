@@ -21,12 +21,15 @@ on:
       ENABLE_HYPRE:
         required: false
         type: string
+        default: OFF
       ENABLE_HYPRE_DEVICE:
         required: false
         type: string
+        default: CPU
       ENABLE_TRILINOS:
         required: false
         type: string
+        default: ON
       GCP_BUCKET:
         required: false
         type: string
@@ -57,7 +60,8 @@ jobs:
       uses: actions/checkout@v3
       with:
         submodules: true
-        lfs: ${{ inputs.BUILD_TYPE == 'integrated_tests' }}
+        # lfs: ${{ inputs.BUILD_TYPE == 'integrated_tests' }}
+        lfs: false
         fetch-depth: 1
 
     - id: 'auth'
@@ -92,9 +96,12 @@ jobs:
           
           DATA_BASENAME_CLI_ARGS="--data-basename ${DATA_BASENAME}"
           
-          DATA_EXCHANGE_DIR=/mnt/geos-exchange
+          DATA_EXCHANGE_DIR=/mnt/geos-exchange  # Exchange folder outside of the container
           sudo mkdir -p ${DATA_EXCHANGE_DIR}
-          DATA_EXCHANGE_DIR_CLI_ARGS="--exchange-dir ${DATA_EXCHANGE_DIR}"
+          DATA_EXCHANGE_MOUNT_POINT=/tmp/exchange  # Exchange folder inside of the container
+          DATA_EXCHANGE_DOCKER_CLI_ARGS="--volume=${DATA_EXCHANGE}:${DATA_EXCHANGE_MOUNT_POINT}"
+          DATA_EXCHANGE_SCRIPT_CLI_ARGS="--exchange-dir ${DATA_EXCHANGE_MOUNT_POINT}"
+          # DATA_EXCHANGE_DIR_CLI_ARGS="--exchange-dir ${DATA_EXCHANGE_DIR}"
         fi
         
         HOST_CONFIG=${{ inputs.HOST_CONFIG }}
@@ -103,24 +110,50 @@ jobs:
         if ${{ inputs.USE_SCCACHE }} == 'true'; then
           SCCACHE_CLI_ARGS="--sccache-credentials $(basename ${GOOGLE_GHA_CREDS_PATH})"
         fi
+
+        # We need to know where the code folder is mounted inside the container so we can run the script at the proper location!
+        # Since this information is repeated twice, we use a variable.
+        GITHUB_WORKSPACE_MOUNT_POINT=/tmp/geos
         
+        # The linear algebra environment variables (ENABLE_HYPRE, ENABLE_HYPRE_DEVICE & ENABLE_TRILINOS)
+        # could be passed as scripts parameters as well, but a specific care must be taken to be sure
+        # there's no conflict with the host-config files.
+
         # In case of integrated tests run, we still want to send the results to the cloud for inspection.
         # While for standard build (if even possible), pushing a failed build would be pointless.
         # GHA set `-e` to bash scripts by default to fail asap,
         # but for this precise call, we want to deal with it more precisely
         set +e
-        ./scripts/ci_build_and_test_gha.sh \
-          --docker-repository ${{ inputs.DOCKER_REPOSITORY }} \
-          --docker-tag ${{ inputs.DOCKER_IMAGE_TAG }} \
-          ${DATA_EXCHANGE_DIR_CLI_ARGS} \
-          -- \
-          --cmake-build-type ${{ inputs.CMAKE_BUILD_TYPE }} \
-          ${DATA_BASENAME_CLI_ARGS} \
-          --install-dir-basename GEOSX-${SHORT_COMMIT} \
-          ${HOST_CONFIG_CLI_ARGS} \
-          ${SCCACHE_CLI_ARGS} \
-          ${RUN_INTEGRATED_TESTS_CLI_ARGS} \
-          ${{ inputs.BUILD_AND_TEST_CLI_ARGS }}
+        # ./scripts/ci_build_and_test_gha.sh \
+        #   --docker-repository ${{ inputs.DOCKER_REPOSITORY }} \
+        #   --docker-tag ${{ inputs.DOCKER_IMAGE_TAG }} \
+        #   ${DATA_EXCHANGE_DIR_CLI_ARGS} \
+        #   -- \
+        #   --cmake-build-type ${{ inputs.CMAKE_BUILD_TYPE }} \
+        #   ${DATA_BASENAME_CLI_ARGS} \
+        #   --install-dir-basename GEOSX-${SHORT_COMMIT} \
+        #   ${HOST_CONFIG_CLI_ARGS} \
+        #   ${SCCACHE_CLI_ARGS} \
+        #   ${RUN_INTEGRATED_TESTS_CLI_ARGS} \
+        #   ${{ inputs.BUILD_AND_TEST_CLI_ARGS }}
+        docker run \
+          --cap-add=SYS_PTRACE \
+          --volume=${GITHUB_WORKSPACE}:${GITHUB_WORKSPACE_MOUNT_POINT} \
+          ${DATA_EXCHANGE_DOCKER_CLI_ARGS} \
+          -e ENABLE_HYPRE=${{ inputs.ENABLE_HYPRE }} \
+          -e ENABLE_HYPRE_DEVICE=${{ inputs.ENABLE_HYPRE_DEVICE }} \
+          -e ENABLE_TRILINOS=${{ inputs.ENABLE_TRILINOS }} \
+          ${{ inputs.DOCKER_REPOSITORY }}:${{ inputs.DOCKER_IMAGE_TAG }} \
+          ${GITHUB_WORKSPACE_MOUNT_POINT}/scripts/ci_build_and_test_in_container.sh \
+            --cmake-build-type ${{ inputs.CMAKE_BUILD_TYPE }} \
+            ${DATA_BASENAME_CLI_ARGS} \
+            ${DATA_EXCHANGE_SCRIPT_CLI_ARGS} \
+            ${HOST_CONFIG_CLI_ARGS} \
+            --install-dir-basename GEOSX-${SHORT_COMMIT} \
+            --repository ${GITHUB_WORKSPACE_MOUNT_POINT} \
+            ${SCCACHE_CLI_ARGS} \
+            ${RUN_INTEGRATED_TESTS_CLI_ARGS} \
+            ${{ inputs.BUILD_AND_TEST_CLI_ARGS }}
         EXIT_STATUS=$?
         echo "Received exit status ${EXIT_STATUS} from the build process."
         set -e
