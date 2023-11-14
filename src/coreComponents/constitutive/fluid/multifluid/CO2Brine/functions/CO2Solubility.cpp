@@ -18,6 +18,7 @@
 
 #include "constitutive/fluid/multifluid/CO2Brine/functions/CO2Solubility.hpp"
 
+#include "constitutive/fluid/multifluid/CO2Brine/functions/CO2SolubilitySpycherPruess.hpp"
 #include "constitutive/fluid/multifluid/CO2Brine/functions/CO2EOSSolver.hpp"
 #include "constitutive/fluid/multifluid/CO2Brine/functions/PVTFunctionHelpers.hpp"
 #include "constitutive/fluid/multifluid/MultiFluidConstants.hpp"
@@ -321,8 +322,19 @@ CO2Solubility::CO2Solubility( string const & name,
   string const expectedWaterPhaseNames[] = { "Water", "water", "Liquid", "liquid" };
   m_phaseLiquidIndex = PVTFunctionHelpers::findName( phaseNames, expectedWaterPhaseNames, "phaseNames" );
 
-  m_CO2SolubilityTable = makeSolubilityTable( inputParams, m_modelName, FunctionManager::getInstance() );
-  m_WaterVapourisationTable = makeVapourisationTable( inputParams, m_modelName, FunctionManager::getInstance() );
+  FunctionManager & functionManager = FunctionManager::getInstance();
+  if( 10 < inputParams.size() && inputParams[10] == "SpycherPruess" )
+  {
+    std::pair< TableFunction const *, TableFunction const * > tables =
+      CO2SolubilitySpycherPruess::makeSolubilityTables( inputParams, m_modelName, functionManager );
+    m_CO2SolubilityTable = tables.first;
+    m_WaterVapourisationTable = tables.second;
+  }
+  else
+  {
+    m_CO2SolubilityTable = makeSolubilityTable( inputParams, m_modelName, functionManager );
+    m_WaterVapourisationTable = makeVapourisationTable( inputParams, m_modelName, functionManager );
+  }
 }
 
 void CO2Solubility::checkTablesParameters( real64 const pressure,

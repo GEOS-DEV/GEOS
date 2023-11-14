@@ -21,8 +21,8 @@
 //#include "constitutive/fluid/multifluid/CO2Brine/functions/EzrokhiBrineViscosity.hpp"
 //#include "constitutive/fluid/multifluid/CO2Brine/functions/FenghourCO2Viscosity.hpp"
 //#include "constitutive/fluid/multifluid/CO2Brine/functions/PhillipsBrineDensity.hpp"
-#include "constitutive/fluid/multifluid/CO2Brine/functions/SpanWagnerCO2Density.hpp"
-//#include "constitutive/fluid/multifluid/CO2Brine/functions/CO2Solubility.hpp"
+//#include "constitutive/fluid/multifluid/CO2Brine/functions/SpanWagnerCO2Density.hpp"
+#include "constitutive/fluid/multifluid/CO2Brine/functions/CO2Solubility.hpp"
 //#include "constitutive/fluid/multifluid/CO2Brine/functions/BrineEnthalpy.hpp"
 //#include "constitutive/fluid/multifluid/CO2Brine/functions/CO2Enthalpy.hpp"
 #include "mainInterface/GeosxState.hpp"
@@ -40,10 +40,28 @@ using namespace geos::stringutilities;
 using namespace geos::constitutive::PVTProps;
 //using namespace geos::constitutive::multifluid;
 
-template< typename MODEL >
-std::unique_ptr< MODEL > makePVTFunction( string const & fileContent )
+class CO2SolubilitySpycherPruessTest : public ::testing::Test
 {
-  // define component names and molar weight
+public:
+  CO2SolubilitySpycherPruessTest() = default;
+  ~CO2SolubilitySpycherPruessTest() override = default;
+
+protected:
+  static std::unique_ptr< CO2Solubility > makeFlashModel( string const & fileContent );
+
+  std::unique_ptr< CO2Solubility > flashModel{nullptr};
+};
+
+std::unique_ptr< CO2Solubility >
+CO2SolubilitySpycherPruessTest::makeFlashModel( string const & fileContent )
+{
+  // Define phase names
+  string_array phaseNames;
+  phaseNames.resize( 2 );
+  phaseNames[0] = "gas";
+  phaseNames[1] = "liquid";
+
+  // Define component names and molar weight
   string_array componentNames;
   componentNames.resize( 2 );
   componentNames[0] = "co2";
@@ -51,56 +69,44 @@ std::unique_ptr< MODEL > makePVTFunction( string const & fileContent )
 
   array1d< real64 > componentMolarWeight;
   componentMolarWeight.resize( 2 );
-  componentMolarWeight[0] = 44e-3;
-  componentMolarWeight[1] = 18e-3;
+  componentMolarWeight[0] = 44.0e-3;
+  componentMolarWeight[1] = 18.0e-3;
 
-  // read parameters from file
-  std::unique_ptr< MODEL > pvtFunction = nullptr;
+  // Read file parameters
   array1d< string > const strs = stringutilities::tokenizeBySpaces< array1d >( fileContent );
 
-  pvtFunction = std::make_unique< MODEL >( strs[1],
-                                           strs,
-                                           componentNames,
-                                           componentMolarWeight );
-
-  return pvtFunction;
+  return std::make_unique< CO2Solubility >( strs[1],
+                                            strs,
+                                            phaseNames,
+                                            componentNames,
+                                            componentMolarWeight );
 }
 
-class SpanWagnerCO2DensityTest : public ::testing::Test
+TEST_F( CO2SolubilitySpycherPruessTest, flashCO2SolubilitySpycherPruessTest )
 {
-public:
-  SpanWagnerCO2DensityTest()
-    : pvtFunction ( makePVTFunction< SpanWagnerCO2Density >( fileContent ))
-  {}
-
-  ~SpanWagnerCO2DensityTest() override = default;
-
-protected:
-  string const fileContent = "DensityFun SpanWagnerCO2Density 1e6 5e7 1e6 340 360 10";
-  std::unique_ptr< SpanWagnerCO2Density > pvtFunction;
-};
-
-TEST_F( SpanWagnerCO2DensityTest, spanWagnerCO2DensityMassValuesAndDeriv )
-{
-  std::cout << pvtFunction.get() << std::endl;
-  auto const * tableFunction = FunctionManager::getInstance().getGroupPointer< TableFunction >( "SpanWagnerCO2Density_table" );
-  std::cout << tableFunction << std::endl;
-  std::cout << tableFunction->getName() << std::endl;
-  const auto & coords = tableFunction->getCoordinates();
-  const auto & values = tableFunction->getValues();
-  integer const np = coords[0].size();
-  integer const nt = coords[1].size();
-  //integer const nv = values.size();
-  std::cout << std::scientific << std::setprecision( 8 );
-  for( integer ip=0; ip<np; ip++ )
-  {
-    std::cout << std::setw( 18 ) << coords[0][ip];
-    for( integer it=0; it<nt; it++ )
-    {
+  //constexpr char const * fileContent = "FlashModel CO2Solubility 1e5 7.5e7 5e4 285.15 369.15 4.0 0.15";
+  constexpr char const * fileContent = "FlashModel CO2Solubility 1e5 7.5e7 5e4 285.15 369.15 4.0 0.15 1.0e-8 SpycherPruess";
+  flashModel = makeFlashModel( fileContent );
+  std::cout << flashModel.get() << std::endl;
+  /**
+     auto const * tableFunction = FunctionManager::getInstance().getGroupPointer< TableFunction >( "SpanWagnerCO2Density_table" );
+     std::cout << tableFunction << std::endl;
+     std::cout << tableFunction->getName() << std::endl;
+     const auto & coords = tableFunction->getCoordinates();
+     const auto & values = tableFunction->getValues();
+     integer const np = coords[0].size();
+     integer const nt = coords[1].size();
+     //integer const nv = values.size();
+     std::cout << std::scientific << std::setprecision( 8 );
+     for( integer ip=0; ip<np; ip++ )
+     {
+     std::cout << std::setw( 18 ) << coords[0][ip];
+     for( integer it=0; it<nt; it++ )
+     {
       std::cout << std::setw( 18 ) << values[it*np+ip];
-    }
-    std::cout << "\n";
-  }
+     }
+     std::cout << "\n";
+     }*/
 }
 
 int main( int argc, char * * argv )

@@ -36,30 +36,19 @@ struct CO2SolubilitySpycherPruess
 {
 
 /**
- * @brief Create a CO2 solubility table based on Spycher, Pruess, Ennis-King (2003)
+ * @brief Create CO2 and H2O solubility table based on Spycher, Pruess, Ennis-King (2003)
  * @details The generated table is a 2D table with lookup properties pressure (in Pa) and
  *          temperature (in degC). The returned solubility is in mole of CO2 per mole of water.
  * @param[in] inputParams A list of input parameters
  * @param[in] functionName The name of the model
  * @param[in] functionManager The function manager to which the table should be attached
- * @return The newly created table
+ * @return The created tables with first CO2 solubility table and second H2O solubility table
  */
-  static TableFunction const * makeSolubilityTable( string_array const & inputParams,
-                                                    string const & functionName,
-                                                    FunctionManager & functionManager );
+  static std::pair< TableFunction const *, TableFunction const * >
+  makeSolubilityTables( string_array const & inputParams,
+                        string const & functionName,
+                        FunctionManager & functionManager );
 
-/**
- * @brief Create a H2O solubility table based on Spycher, Pruess, Ennis-King (2003)
- * @details The generated table is a 2D table with lookup properties pressure (in Pa) and
- *          temperature (in degC). The returned solubility is in mole of H2O per mole of CO2.
- * @param[in] inputParams A list of input parameters
- * @param[in] functionName The name of the model
- * @param[in] functionManager The function manager to which the table should be attached
- * @return The newly created table.
- */
-  static TableFunction const * makeVapourisationTable( string_array const & inputParams,
-                                                       string const & functionName,
-                                                       FunctionManager & functionManager );
 };
 
 } // end namespace PVTProps
