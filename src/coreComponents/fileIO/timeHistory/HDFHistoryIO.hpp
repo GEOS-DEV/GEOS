@@ -50,8 +50,6 @@ public:
                 string const & name,
                 std::type_index typeId,
                 localIndex writeHead = 0,
-                localIndex initAlloc = 1,
-                localIndex overallocMultiple = 2,
                 MPI_Comm comm = MPI_COMM_GEOSX );
 
   /**
@@ -66,8 +64,6 @@ public:
   HDFHistoryIO( string const & filename,
                 const HistoryMetadata & spec,
                 localIndex writeHead = 0,
-                localIndex initAlloc = 1,
-                localIndex overallocMultiple = 2,
                 MPI_Comm comm = MPI_COMM_GEOSX ):
     HDFHistoryIO( filename,
                   spec.getRank(),
@@ -75,15 +71,11 @@ public:
                   spec.getName(),
                   spec.getType(),
                   writeHead,
-                  initAlloc,
-                  overallocMultiple,
                   comm )
   { }
 
   /// Destructor
   virtual ~HDFHistoryIO() { }
-
-  virtual buffer_unit_type * getBufferHead() override;
 
   /// @copydoc geos::BufferedHistoryIO::init
   virtual void init( bool existsOkay ) override;
@@ -92,24 +84,13 @@ public:
   virtual void write( ) override;
 
   /// @copydoc geos::BufferedHistoryIO::compressInFile
-  virtual void compressInFile( ) override;
+  virtual void finalize( ) override;
 
-  /// @copydoc geos::BufferedHistoryIO::updateCollectingCount
-  virtual void updateCollectingCount( localIndex count ) override;
+  /// @copydoc geos::BufferedHistoryIO::shareable
+  virtual bool shareable( ) const override { return true; }
 
-  localIndex getBufferedCount() override
-  { return m_bufferedCount; }
 
 private:
-
-  /**
-   * @brief Get the size in bytes the buffer is currently set to hold per collection operation.
-   * @return The size in bytes.
-   */
-  size_t getRowBytes();
-
-  /// @brief Empty the history collection buffer
-  void emptyBuffer();
 
   /**
    * @brief Setup the parallel 'partitioning' of the data to allow dynamically sized output over time
@@ -132,21 +113,9 @@ private:
    */
   void resizeFileIfNeeded( localIndex bufferedCount );
 
-  /// @brief Resize the buffer to accomodate additional history collection.
-  void resizeBuffer();
-
-  /// The current number of records in the buffer
-  localIndex m_bufferedCount;
-  /// The write head of the buffer
-  buffer_unit_type * m_bufferHead;
-  /// The data buffer containing the history info
-  buffer_type m_dataBuffer;
-
   // file io params
   /// The filename to write to
   string m_filename;
-  /// How much to scale the internal and file allocations by when room runs out
-  const localIndex m_overallocMultiple;
   /// The global index offset for this mpi rank for this data set
   globalIndex m_globalIdxOffset;
   /// The global index count for this mpi rank for this data set
@@ -165,16 +134,7 @@ private:
   // history metadata
   /// The underlying data type for this history data set
   hsize_t m_hdfType;
-  /// The size in byte of the data type
-  size_t m_typeSize;
-  /// The number of variables of data type in this data set
-  hsize_t m_typeCount;   // prod(dims[0:n])
-  /// The rank of the data set
-  hsize_t m_rank;
-  /// The dimensions of the data set
-  std::vector< hsize_t > m_dims;
-  ///
-  std::vector< globalIndex > m_localIdxCounts_buffered;
+
   /// The name of the data set
   string m_name;
   /// The communicator across which the data set is distributed
@@ -182,8 +142,6 @@ private:
   /// The communicator with only members of the m_comm comm which have nonzero ammounts of local data (required for chunking output ->
   /// growing the data size in the file)
   MPI_Comm m_subcomm;
-  /// Whether the size of the collected data has changed between writes to file
-  int m_sizeChanged;
 };
 
 }

@@ -23,6 +23,7 @@
 #include "fileIO/timeHistory/HistoryCollection.hpp"
 #include "fileIO/timeHistory/BufferedHistoryIO.hpp"
 #include "fileIO/timeHistory/HDFHistoryIO.hpp"
+#include "fileIO/timeHistory/CSVHistoryIO.hpp"
 
 #include "LvArray/src/Array.hpp" // just for collector
 
