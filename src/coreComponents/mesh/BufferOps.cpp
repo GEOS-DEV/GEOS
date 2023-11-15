@@ -121,7 +121,7 @@ localIndex Unpack( buffer_unit_type const * & buffer,
       sizeOfUnpackedChars += bufferOps::Unpack( buffer, elemSubRegionIndex, MPI_REPLACE );
 
       globalIndex globalElementIndex;
-      sizeOfUnpackedChars += bufferOps::Unpack( buffer, globalElementIndex, MPI_REPLACE);
+      sizeOfUnpackedChars += bufferOps::Unpack( buffer, globalElementIndex, MPI_REPLACE );
 
       if( elemRegionIndex!=-1 && elemSubRegionIndex!=-1 )
       {

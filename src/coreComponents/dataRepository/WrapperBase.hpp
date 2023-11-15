@@ -323,7 +323,7 @@ public:
   virtual localIndex unpack( buffer_unit_type const * & buffer,
                              bool withMetadata,
                              parallelDeviceEvents & events,
-                             
+
                              MPI_Op op ) = 0;
 
   /**
@@ -334,7 +334,7 @@ public:
    * @param[out] events      a collection of events to poll for completion of async
    *                         packing kernels ( device packing is incomplete until all
    *                         events are finalized )
-   * @param[in] op           the operation to perform while unpacking 
+   * @param[in] op           the operation to perform while unpacking
    * @return                  the number of @p buffer_unit_type units unpacked
    */
   virtual localIndex unpackByIndex( buffer_unit_type const * & buffer,

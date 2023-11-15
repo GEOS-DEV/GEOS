@@ -135,8 +135,8 @@ void PackCollection::updateSetsIndices( DomainPartition const & domain )
     // throw if the object isn't packable. Otherwise is the target is a mesh object and we're not collecting
     // all of it (using sets for indices), throw if we can't pack the object by index.
     GEOS_ERROR_IF( !( ( !m_targetIsMeshObject && collectAll ) ?
-                        targetField.isPackable( ) :
-                        targetField.isPackableByIndex() ),
+                      targetField.isPackable( ) :
+                      targetField.isPackableByIndex() ),
                    GEOS_FMT( "The object targeted for collection ({}: {}, {}: {}) must be packable in its last modified memory space!",
                              viewKeysStruct::objectPathString(),
                              m_objectPath,

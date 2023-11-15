@@ -443,7 +443,7 @@ template< typename T >
 typename std::enable_if< is_host_packable_scalar< T >, localIndex >::type
 Unpack( buffer_unit_type const * & buffer,
         T & var,
-        MPI_Op op )
+        MPI_Op )
 {
   localIndex const sizeOfUnpackedChars = sizeof(T);
   memcpy( &var, buffer, sizeOfUnpackedChars );
@@ -481,7 +481,7 @@ template< typename T >
 localIndex
 Unpack( buffer_unit_type const * & buffer,
         SortedArray< T > & var,
-        MPI_Op op )
+        MPI_Op )
 {
   var.clear();
   localIndex set_length;
@@ -697,7 +697,7 @@ template< typename T, int NDIM, int USD, typename T_indices >
 localIndex
 UnpackByIndex( buffer_unit_type const * & buffer,
                ArrayView< T, NDIM, USD > const & var,
-               const T_indices & indices, 
+               const T_indices & indices,
                MPI_Op op )
 {
   localIndex strides[NDIM];

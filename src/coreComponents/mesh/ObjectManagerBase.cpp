@@ -352,7 +352,7 @@ localIndex ObjectManagerBase::unpack( buffer_unit_type const * & buffer,
     for( localIndex i = 0; i < this->numSubGroups(); ++i )
     {
       string subGroupName;
-      unpackedSize += bufferOps::Unpack( buffer, subGroupName,  MPI_REPLACE );
+      unpackedSize += bufferOps::Unpack( buffer, subGroupName, MPI_REPLACE );
       unpackedSize += this->getGroup( subGroupName ).unpack( buffer, packList, recursive, events, op );
     }
   }
