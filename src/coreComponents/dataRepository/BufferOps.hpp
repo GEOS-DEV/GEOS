@@ -445,7 +445,7 @@ template< typename T >
 typename std::enable_if< !is_host_packable< T >, localIndex >::type
 Unpack( buffer_unit_type const * & GEOS_UNUSED_PARAM( buffer ),
         T & GEOS_UNUSED_PARAM( var ),
-        MPI_Op op )
+        MPI_Op GEOS_UNUSED_PARAM( op ) )
 {
   GEOS_ERROR( "Trying to unpack data type ("<<typeid(T).name()<<") but type is not packable." );
   return 0;
