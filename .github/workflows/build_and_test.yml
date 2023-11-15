@@ -79,11 +79,6 @@ jobs:
     - name: Print environment
       run: printenv
 
-    - name: Set Swap Space
-      uses: actionhippie/swap-space@v1
-      with:
-        size: 16
-
     # Build and test only
     # Builds only the geosx executable (timeout when building tests)
     - name: Build and test
