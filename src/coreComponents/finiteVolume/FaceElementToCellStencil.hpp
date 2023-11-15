@@ -140,12 +140,12 @@ public:
   /**
    *
    */
-    GEOS_HOST_DEVICE
-    inline void
-    initVelocity( localIndex iconn, localIndex ip, ElementRegionManager::ElementView< arrayView4d< real64 > > const & phaseVelocity ) const
-    {
-        GEOS_UNUSED_VAR( iconn, ip, phaseVelocity );
-    };
+  GEOS_HOST_DEVICE
+  inline void
+  initVelocity( localIndex iconn, localIndex ip, ElementRegionManager::ElementView< arrayView4d< real64 > > const & phaseVelocity ) const
+  {
+    GEOS_UNUSED_VAR( iconn, ip, phaseVelocity );
+  };
   /**
    * Pass through for CellTPFA cell-centered velocity reconstruction
    * @param iconn
@@ -158,7 +158,7 @@ public:
   computeVelocity( localIndex iconn,
                    localIndex ip,
                    const real64 (&phaseFlux),
-                   arraySlice1d<real64 const> const (&globalCellToFace)[2],
+                   arraySlice1d< real64 const > const (&globalCellToFace)[2],
                    ElementRegionManager::ElementView< arrayView4d< real64 > > const & phaseVelocity ) const
   {
     GEOS_UNUSED_VAR( iconn, ip, phaseFlux, phaseVelocity );

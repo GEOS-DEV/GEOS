@@ -891,8 +891,8 @@ void CompositionalMultiphaseFVM::applyFaceDirichletBC( real64 const time_n,
       string const & elemDofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
 
       /*if( m_isThermal )
-      {
-        thermalCompositionalMultiphaseFVMKernels::
+         {
+         thermalCompositionalMultiphaseFVMKernels::
           DirichletFaceBasedAssemblyKernelFactory::
           createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
                                                      m_numPhases,
@@ -906,8 +906,8 @@ void CompositionalMultiphaseFVM::applyFaceDirichletBC( real64 const time_n,
                                                      dt,
                                                      localMatrix,
                                                      localRhs );
-      }
-      else*/
+         }
+         else*/
       {
         isothermalCompositionalMultiphaseFVMKernels::
           DirichletFaceBasedAssemblyKernelFactory::

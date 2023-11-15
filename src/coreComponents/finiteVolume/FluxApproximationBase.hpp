@@ -223,8 +223,8 @@ public:
  * @param sei
  * @return
  */
-    virtual const arraySlice1d<real64 const>
-    getGlobalCellToFace(const ElementRegionManager& elemManager, const localIndex seri, const localIndex sesri, const localIndex sei) const;
+  virtual const arraySlice1d< real64 const >
+  getGlobalCellToFace( const ElementRegionManager & elemManager, const localIndex seri, const localIndex sesri, const localIndex sei ) const;
 
 
 protected:
@@ -314,7 +314,7 @@ protected:
   UpwindingParameters m_upwindingParams;
 
 /// container used to store cell-wise distance to faces (for interpolation)
-array2d<real64> m_globalCellToFace;
+  array2d< real64 > m_globalCellToFace;
 };
 
 template< typename TYPE >

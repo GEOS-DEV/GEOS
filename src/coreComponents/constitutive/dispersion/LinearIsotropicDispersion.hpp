@@ -85,7 +85,7 @@ public:
 
   static string catalogName() { return "LinearIsotropicDispersion"; }
 
-  virtual void allocateConstitutiveData(dataRepository::Group &parent, const geos::localIndex numConstitutivePointsPerParentIndex) override;
+  virtual void allocateConstitutiveData( dataRepository::Group & parent, const geos::localIndex numConstitutivePointsPerParentIndex ) override;
 
   virtual string getCatalogName() const override { return catalogName(); }
 
