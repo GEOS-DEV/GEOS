@@ -23,17 +23,22 @@ if [ ${USE_SCCACHE} = true ]; then
   SCCACHE_CLI="--use-sccache"
 fi
 
+dargs=()  # docker arguments
+dargs+=(--name=${CONTAINER_NAME})
+dargs+=(--volume=${BUILD_DIR}:${BUILD_DIR_MOUNT_POINT} ${SCCACHE_VOLUME_MOUNT})
+dargs+=(--cap-add=ALL)
+
+if [ $CMAKE_BUILD_TYPE == 'Debug' ]; then
+  dargs+=(--memory-swap='-1')
+  dargs+=(--oom-kill-disable)
+fi
+
 # We need to keep track of the building container (hence the `CONTAINER_NAME`)
 # so we can extract the data from it later (if needed). Another solution would have been to use a mount point,
 # but that would not have solved the problem for the TPLs (we would require extra action to copy them to the mount point).
 CONTAINER_NAME=geosx_build
 # Now we can build GEOSX.
-docker run \
-  --name=${CONTAINER_NAME} \
-  --volume=${BUILD_DIR}:${BUILD_DIR_MOUNT_POINT} ${SCCACHE_VOLUME_MOUNT} \
-  --oom-kill-disable \
-  --memory='16g' --memory-swap='32g' \
-  --cap-add=ALL \
+docker run "${dargs[@]}" \
   -e HOST_CONFIG=${HOST_CONFIG:-host-configs/environment.cmake} \
   -e CMAKE_BUILD_TYPE \
   -e GEOSX_DIR=${GEOSX_DIR} \
