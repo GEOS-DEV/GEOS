@@ -364,6 +364,8 @@ void ElasticFirstOrderWaveEquationSEM::initializePostInitialConditionsPreSubGrou
     /// get array of indicators: 1 if face is on the free surface; 0 otherwise
     arrayView1d< localIndex const > const freeSurfaceFaceIndicator = faceManager.getField< wavesolverfields::FreeSurfaceFaceIndicator >();
 
+    real64 dtCompute=0.0;
+
     mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                           CellElementSubRegion & elementSubRegion )
     {
@@ -373,6 +375,8 @@ void ElasticFirstOrderWaveEquationSEM::initializePostInitialConditionsPreSubGrou
       arrayView1d< real32 > const density = elementSubRegion.getField< wavesolverfields::MediumDensity >();
       arrayView1d< real32 > const velocityVp = elementSubRegion.getField< wavesolverfields::MediumVelocityVp >();
       arrayView1d< real32 > const velocityVs = elementSubRegion.getField< wavesolverfields::MediumVelocityVs >();
+      arrayView1d< real32 > const lambda = elementSubRegion.getField< wavesolverfields::Lambda >();
+      arrayView1d< real32 > const mu = elementSubRegion.getField< wavesolverfields::Mu >();
 
       finiteElement::FiniteElementBase const &
       fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
@@ -406,6 +410,31 @@ void ElasticFirstOrderWaveEquationSEM::initializePostInitialConditionsPreSubGrou
                                                                dampingx,
                                                                dampingy,
                                                                dampingz );
+
+       if(m_preComputeDt==1)
+
+        {
+          elasticFirstOrderWaveEquationSEMKernels::ComputeTimeStep< FE_TYPE > kernelT( finiteElement );
+  
+          dtCompute = kernelT.template launch< EXEC_POLICY, ATOMIC_POLICY >( elementSubRegion.size(),
+                                                                             nodeManager.size(),
+                                                                             X,
+                                                                             elemsToNodes,
+                                                                             density,
+                                                                             velocityVp,
+                                                                             velocityVs,
+                                                                             lambda,
+                                                                             mu,
+                                                                             mass);
+  
+        
+          real64 globaldt = MpiWrapper::min(dtCompute);      
+
+          printf("dt=%f\n",globaldt);
+
+          exit(2);                                                        
+
+        } 
       } );
     } );
   } );
