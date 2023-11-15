@@ -15,22 +15,24 @@ BUILD_DIR=${GITHUB_WORKSPACE}
 # Since this information is repeated twice, we use a variable.
 BUILD_DIR_MOUNT_POINT=/tmp/GEOSX
 
-if [ ${USE_SCCACHE} = true ]; then
-  echo "Creating the configuration file for sccache..."
-  mkdir -p /opt/gcs
-  cp -rp ${GOOGLE_GHA_CREDS_PATH} /opt/gcs/credentials.json
-  SCCACHE_VOLUME_MOUNT="--volume=/opt/gcs:/opt/gcs"
-  SCCACHE_CLI="--use-sccache"
-fi
-
 # We need to keep track of the building container (hence the `CONTAINER_NAME`)
 # so we can extract the data from it later (if needed). Another solution would have been to use a mount point,
 # but that would not have solved the problem for the TPLs (we would require extra action to copy them to the mount point).
 CONTAINER_NAME=geosx_build
 
 dargs=()  # docker arguments
+
+if [ ${USE_SCCACHE} = true ]; then
+  dargs+=(--volume=/opt/gcs:/opt/gcs)
+  SCCACHE_CLI="--use-sccache"
+
+  echo "Creating the configuration file for sccache..."
+  mkdir -p /opt/gcs
+  cp -rp ${GOOGLE_GHA_CREDS_PATH} /opt/gcs/credentials.json
+fi
+
 dargs+=(--name=${CONTAINER_NAME})
-dargs+=(--volume=${BUILD_DIR}:${BUILD_DIR_MOUNT_POINT} ${SCCACHE_VOLUME_MOUNT})
+dargs+=(--volume=${BUILD_DIR}:${BUILD_DIR_MOUNT_POINT})
 dargs+=(--cap-add=ALL)
 
 if [ ${CMAKE_BUILD_TYPE} == 'Debug' ]; then
