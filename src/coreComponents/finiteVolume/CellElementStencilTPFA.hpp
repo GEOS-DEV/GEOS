@@ -242,15 +242,13 @@ CellElementStencilTPFAWrapper::
     }
 
     real64 faceConormal[3];
-    LvArray::tensorOps::hadamardProduct< 3 >( faceConormal, coefficient[er][esr][ei][0], faceNormal );
+    LvArray::tensorOps::Ri_eq_symAijBj< 3 >( faceConormal, coefficient[er][esr][ei][0], faceNormal )
     halfWeight[i] *= LvArray::tensorOps::AiBi< 3 >( m_cellToFaceVec[iconn][i], faceConormal );
 
     // correct negative weight issue arising from non-K-orthogonal grids
     if( halfWeight[i] < 0.0 )
     {
-      LvArray::tensorOps::hadamardProduct< 3 >( faceConormal,
-                                                coefficient[er][esr][ei][0],
-                                                m_cellToFaceVec[iconn][i] );
+      LvArray::tensorOps::Ri_eq_symAijBj< 3 >( faceConormal, coefficient[er][esr][ei][0], m_cellToFaceVec[iconn][i] )
       halfWeight[i] = m_weights[iconn][i];
       halfWeight[i] *= LvArray::tensorOps::AiBi< 3 >( m_cellToFaceVec[iconn][i], faceConormal );
     }
@@ -258,7 +256,7 @@ CellElementStencilTPFAWrapper::
 
   // Do harmonic and arithmetic averaging
   real64 const product = halfWeight[0]*halfWeight[1];
-  real64 const sum = halfWeight[0]+halfWeight[1];
+  real64 const sum     = halfWeight[0]+halfWeight[1];
 
   real64 const harmonicWeight   = sum > 0 ? product / sum : 0.0;
   real64 const arithmeticWeight = sum / 2;

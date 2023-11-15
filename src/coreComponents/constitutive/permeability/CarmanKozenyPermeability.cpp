@@ -44,7 +44,8 @@ CarmanKozenyPermeability::CarmanKozenyPermeability( string const & name, Group *
     setDefaultValue( m_anisotropy ).
     setDescription( "Anisotropy factors for three permeability components." );
 
-  registerWrapper( viewKeyStruct::dPerm_dPorosityString(), &m_dPerm_dPorosity );
+  registerWrapper( viewKeyStruct::dPerm_dPorosityString(), &m_dPerm_dPorosity ).
+  setApplyDefaultValue(0.0);
 }
 
 std::unique_ptr< ConstitutiveBase >
@@ -60,6 +61,7 @@ void CarmanKozenyPermeability::allocateConstitutiveData( dataRepository::Group &
   // NOTE: enforcing 1 quadrature point
   m_dPerm_dPorosity.resize( 0, 1, 3 );
   PermeabilityBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
+  getWrapper( PermeabilityBase::viewKeyStruct::permeabilityString() ).setApplyDefaultValue(0.0);
 }
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, CarmanKozenyPermeability, string const &, Group * const )
