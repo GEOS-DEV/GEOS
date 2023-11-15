@@ -23,6 +23,7 @@
 #include "finiteElement/kernelInterface/KernelBase.hpp"
 #include "WaveSolverBaseFields.hpp"
 #include "WaveSolverUtils.hpp"
+#include "WaveSolverKernelBase.hpp"
 
 
 namespace geos
@@ -230,11 +231,11 @@ struct MassMatrixKernel
         }
       }
 
-      for( localIndex q = 0; q < numQuadraturePointsPerElem; ++q )
+      FE_TYPE::staticForOnCell( [&] (auto index )
       {
-        real32 const localIncrement = invC2 * m_finiteElement.computeMassTerm( q, xLocal );
-        RAJA::atomicAdd< ATOMIC_POLICY >( &mass[elemsToNodes( e, q )], localIncrement );
-      }
+        real32 const localIncrement = invC2 * m_finiteElement.template computeMassTerm< index.q >( xLocal );
+        RAJA::atomicAdd< ATOMIC_POLICY >( &mass[elemsToNodes( e, index.q )], localIncrement );
+      } );
     } ); // end loop over element
   }
 
@@ -332,21 +333,21 @@ struct DampingMatrixKernel
             }
           }
 
-          for( localIndex q = 0; q < numNodesPerFace; ++q )
+          FE_TYPE::staticForOnFace( [&] ( auto index )
           {
-            real32 const aux = m_finiteElement.computeDampingTerm( q, xLocal );
+            real32 const aux = m_finiteElement.template computeDampingTerm< index.q >( xLocal );
             real32 const localIncrement_p = alpha*(vti_p_xy + vti_p_z) * aux;
-            RAJA::atomicAdd< ATOMIC_POLICY >( &damping_p[facesToNodes( f, q )], localIncrement_p );
+            RAJA::atomicAdd< ATOMIC_POLICY >( &damping_p[facesToNodes( f, index.q )], localIncrement_p );
 
             real32 const localIncrement_pq = alpha*vti_pq_z * aux;
-            RAJA::atomicAdd< ATOMIC_POLICY >( &damping_pq[facesToNodes( f, q )], localIncrement_pq );
+            RAJA::atomicAdd< ATOMIC_POLICY >( &damping_pq[facesToNodes( f, index.q )], localIncrement_pq );
 
             real32 const localIncrement_q = alpha*(vti_q_xy + vti_q_z) * aux;
-            RAJA::atomicAdd< ATOMIC_POLICY >( &damping_q[facesToNodes( f, q )], localIncrement_q );
+            RAJA::atomicAdd< ATOMIC_POLICY >( &damping_q[facesToNodes( f, index.q )], localIncrement_q );
 
             real32 const localIncrement_qp = alpha*vti_qp_xy * aux;
-            RAJA::atomicAdd< ATOMIC_POLICY >( &damping_qp[facesToNodes( f, q )], localIncrement_qp );
-          }
+            RAJA::atomicAdd< ATOMIC_POLICY >( &damping_qp[facesToNodes( f, index.q )], localIncrement_qp );
+          } );
         }
       }
     } );
@@ -379,20 +380,15 @@ struct DampingMatrixKernel
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
           typename FE_TYPE >
-class ExplicitAcousticVTISEM : public finiteElement::KernelBase< SUBREGION_TYPE,
-                                                                 CONSTITUTIVE_TYPE,
-                                                                 FE_TYPE,
-                                                                 1,
-                                                                 1 >
+class ExplicitAcousticVTISEM : public geos::finiteElement::WaveSolverKernelBase< SUBREGION_TYPE,
+                                                                                 CONSTITUTIVE_TYPE,
+                                                                                 FE_TYPE >
 {
 public:
-
   /// Alias for the base class;
-  using Base = finiteElement::KernelBase< SUBREGION_TYPE,
-                                          CONSTITUTIVE_TYPE,
-                                          FE_TYPE,
-                                          1,
-                                          1 >;
+  using Base = geos::finiteElement::WaveSolverKernelBase< SUBREGION_TYPE,
+                                                          CONSTITUTIVE_TYPE,
+                                                          FE_TYPE >;
 
   /// Maximum number of nodes per element, which is equal to the maxNumTestSupportPointPerElem and
   /// maxNumTrialSupportPointPerElem by definition. When the FE_TYPE is not a Virtual Element, this
@@ -492,14 +488,14 @@ public:
    * Calculates stiffness vector
    *
    */
+  template< int q >
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
   void quadraturePointKernel( localIndex const k,
-                              localIndex const q,
                               StackVariables & stack ) const
   {
     // Pseudo Stiffness xy
-    m_finiteElementSpace.template computeStiffnessxyTerm( q, stack.xLocal, [&] ( int i, int j, real64 val )
+    m_finiteElementSpace.template computeStiffnessxyTerm< q >( stack.xLocal, [&] ( int i, int j, real64 val )
     {
       real32 const localIncrement_p = val*(-1-2*m_epsilon[k])*m_p_n[m_elemsToNodes[k][j]];
       RAJA::atomicAdd< parallelDeviceAtomic >( &m_stiffnessVector_p[m_elemsToNodes[k][i]], localIncrement_p );
@@ -509,7 +505,7 @@ public:
 
     // Pseudo-Stiffness z
 
-    m_finiteElementSpace.template computeStiffnesszTerm( q, stack.xLocal, [&] ( int i, int j, real64 val )
+    m_finiteElementSpace.template computeStiffnesszTerm< q >( stack.xLocal, [&] ( int i, int j, real64 val )
     {
       real32 const localIncrement_p = val*((m_vti_f[k]-1)*m_p_n[m_elemsToNodes[k][j]] - m_vti_f[k]*m_q_n[m_elemsToNodes[k][j]]);
       RAJA::atomicAdd< parallelDeviceAtomic >( &m_stiffnessVector_p[m_elemsToNodes[k][i]], localIncrement_p );

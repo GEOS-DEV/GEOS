@@ -20,6 +20,7 @@
 #define GEOS_PHYSICSSOLVERS_WAVEPROPAGATION_ACOUSTICWAVEEQUATIONSEMKERNEL_HPP_
 
 #include "finiteElement/kernelInterface/KernelBase.hpp"
+#include "WaveSolverKernelBase.hpp"
 #include "WaveSolverUtils.hpp"
 #if !defined( GEOS_USE_HIP )
 #include "finiteElement/elementFormulations/Qk_Hexahedron_Lagrange_GaussLobatto.hpp"
@@ -226,11 +227,11 @@ struct MassMatrixKernel
         }
       }
 
-      for( localIndex q = 0; q < numQuadraturePointsPerElem; ++q )
+      FE_TYPE::staticForOnCell( [&] ( auto index )
       {
-        real32 const localIncrement = invC2 * m_finiteElement.computeMassTerm( q, xLocal );
-        RAJA::atomicAdd< ATOMIC_POLICY >( &mass[elemsToNodes( e, q )], localIncrement );
-      }
+        real32 const localIncrement = invC2 * m_finiteElement.template computeMassTerm< index.q >( xLocal );
+        RAJA::atomicAdd< ATOMIC_POLICY >( &mass[elemsToNodes( e, index.q )], localIncrement );
+      } );
     } ); // end loop over element
   }
 
@@ -292,11 +293,11 @@ struct DampingMatrixKernel
           }
           real32 const alpha = 1.0 / (density[e] * velocity[e]);
 
-          for( localIndex q = 0; q < numNodesPerFace; ++q )
+          FE_TYPE::staticForOnFace( [&] ( auto index )
           {
-            real32 const localIncrement = alpha * m_finiteElement.computeDampingTerm( q, xLocal );
-            RAJA::atomicAdd< ATOMIC_POLICY >( &damping[facesToNodes( f, q )], localIncrement );
-          }
+            real32 const localIncrement = alpha * m_finiteElement.template computeDampingTerm< index.q >( xLocal );
+            RAJA::atomicAdd< ATOMIC_POLICY >( &damping[facesToNodes( f, index.q )], localIncrement );
+          } );
         }
       }
     } );
@@ -686,20 +687,15 @@ struct waveSpeedPMLKernel
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
           typename FE_TYPE >
-class ExplicitAcousticSEM : public finiteElement::KernelBase< SUBREGION_TYPE,
-                                                              CONSTITUTIVE_TYPE,
-                                                              FE_TYPE,
-                                                              1,
-                                                              1 >
+class ExplicitAcousticSEM : public geos::finiteElement::WaveSolverKernelBase< SUBREGION_TYPE,
+                                                                              CONSTITUTIVE_TYPE,
+                                                                              FE_TYPE >
 {
 public:
-
   /// Alias for the base class;
-  using Base = finiteElement::KernelBase< SUBREGION_TYPE,
-                                          CONSTITUTIVE_TYPE,
-                                          FE_TYPE,
-                                          1,
-                                          1 >;
+  using Base = geos::finiteElement::WaveSolverKernelBase< SUBREGION_TYPE,
+                                                          CONSTITUTIVE_TYPE,
+                                                          FE_TYPE >;
 
   /// Maximum number of nodes per element, which is equal to the maxNumTestSupportPointPerElem and
   /// maxNumTrialSupportPointPerElem by definition. When the FE_TYPE is not a Virtual Element, this
@@ -712,6 +708,7 @@ public:
   using Base::m_elemGhostRank;
   using Base::m_constitutiveUpdate;
   using Base::m_finiteElementSpace;
+
 
 //*****************************************************************************
   /**
@@ -758,11 +755,14 @@ public:
 public:
     GEOS_HOST_DEVICE
     StackVariables():
-      xLocal()
+      Base::StackVariables(),
+      xLocal(),
+      stiffnessVectorLocal()
     {}
 
     /// C-array stack storage for element local the nodal positions.
     real64 xLocal[ numNodesPerElem ][ 3 ];
+    real32 stiffnessVectorLocal[ numNodesPerElem ]; 
   };
   //***************************************************************************
 
@@ -785,7 +785,37 @@ public:
       {
         stack.xLocal[ a ][ i ] = m_nodeCoords[ nodeIndex ][ i ];
       }
+      stack.stiffnessVectorLocal[ a ] = 0;
     }
+  }
+
+  /**
+   * @copydoc geos::finiteElement::KernelBase::complete
+   */
+  GEOS_HOST_DEVICE
+  inline
+  real64 complete( localIndex const k,
+                   StackVariables & stack ) const
+  {
+    constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
+    for(int i=0;i<numNodesPerElem;i++)
+    {
+      RAJA::atomicAdd< parallelDeviceAtomic >( &m_stiffnessVector[m_elemsToNodes[k][i]], stack.stiffnessVectorLocal[i] );
+    }
+ //   FE_TYPE::staticForOnCell( [&] (auto index )
+ //   {
+ //     if(index.qa== 0 || index.qa == FE_TYPE::num1dNodes ||
+ //        index.qb== 0 || index.qb == FE_TYPE::num1dNodes || 
+ //        index.qc== 0 || index.qc == FE_TYPE::num1dNodes )
+ //    {
+ //       RAJA::atomicAdd< parallelDeviceAtomic >( &m_stiffnessVector[m_elemsToNodes[k][index.q]], stack.stiffnessVectorLocal[index.q] );
+ //    }
+ //    else
+ //    {
+ //       m_stiffnessVector[m_elemsToNodes[k][index.q]] += stack.stiffnessVectorLocal[index.q];
+ //    }
+ //   } );
+    return 0;
   }
 
   /**
@@ -795,17 +825,20 @@ public:
    * Calculates stiffness vector
    *
    */
+  template< int q >
   GEOS_HOST_DEVICE
   inline
   void quadraturePointKernel( localIndex const k,
-                              localIndex const q,
                               StackVariables & stack ) const
   {
-    m_finiteElementSpace.template computeStiffnessTerm( q, stack.xLocal, [&] ( int i, int j, real64 val )
+    m_finiteElementSpace.template computeStiffnessTerm< q >( stack.xLocal, [&] ( int i, int j, real64 val )
     {
       real32 invDensity = 1./m_density[k];
       real32 const localIncrement = invDensity*val*m_p_n[m_elemsToNodes[k][j]];
-      RAJA::atomicAdd< parallelDeviceAtomic >( &m_stiffnessVector[m_elemsToNodes[k][i]], localIncrement );
+      //if(k==4000000)
+      //  printf("q=%i, i=%i, j=%i, invd=%e, val=%e, p=%e\n", q, i, j, invDensity, val, m_p_n[j]);
+      //RAJA::atomicAdd< parallelDeviceAtomic >( &m_stiffnessVector[m_elemsToNodes[k][i]], localIncrement );
+      stack.stiffnessVectorLocal[ i ] += localIncrement;
     } );
   }
 

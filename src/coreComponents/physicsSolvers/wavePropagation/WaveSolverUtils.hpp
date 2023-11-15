@@ -269,7 +269,7 @@ struct WaveSolverUtils
     }
     // coordsOnRefElem = invJ*(coords-coordsNode_0)
     real64 invJ[3][3]{};
-    FE_TYPE::invJacobianTransformation( 0, xLocal, invJ );
+    FE_TYPE::template invJacobianTransformation< 0 >(xLocal, invJ );
     for( localIndex i = 0; i < 3; ++i )
     {
       // init at (-1,-1,-1) as the origin of the referential elem

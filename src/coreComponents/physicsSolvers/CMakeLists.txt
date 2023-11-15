@@ -128,11 +128,11 @@ set( physicsSolvers_headers
      surfaceGeneration/SurfaceGenerator.hpp
      surfaceGeneration/SurfaceGeneratorFields.hpp
      wavePropagation/WaveSolverBase.hpp
+     wavePropagation/WaveSolverKernelBase.hpp
      wavePropagation/WaveSolverUtils.hpp
      wavePropagation/WaveSolverBaseFields.hpp
      wavePropagation/AcousticWaveEquationSEM.hpp
      wavePropagation/AcousticWaveEquationSEMKernel.hpp
-     wavePropagation/ElasticWaveEquationSEM.hpp
      wavePropagation/ElasticWaveEquationSEMKernel.hpp
      wavePropagation/ElasticFirstOrderWaveEquationSEM.hpp
      wavePropagation/ElasticFirstOrderWaveEquationSEMKernel.hpp
