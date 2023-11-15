@@ -60,6 +60,7 @@ CompositionalMultiphaseWell::CompositionalMultiphaseWell( const string & name,
   m_numPhases( 0 ),
   m_numComponents( 0 ),
   m_useMass( false ),
+  m_useTotalMassEquation( 1 ),
   m_maxCompFracChange( 1.0 ),
   m_maxRelativePresChange( 0.2 ),
   m_minScalingFactor( 0.01 ),
@@ -70,6 +71,11 @@ CompositionalMultiphaseWell::CompositionalMultiphaseWell( const string & name,
     setApplyDefaultValue( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Use mass formulation instead of molar" );
+
+  this->registerWrapper( viewKeyStruct::useMassFlagString(), &m_useTotalMassEquation ).
+    setApplyDefaultValue( 0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Use total mass equation" );
 
   this->registerWrapper( viewKeyStruct::maxCompFracChangeString(), &m_maxCompFracChange ).
     setSizedFromParent( 0 ).
@@ -658,6 +664,17 @@ void CompositionalMultiphaseWell::updateVolRatesForConstraint( WellElementSubReg
 
   constitutive::constitutiveUpdatePassThru( fluid, [&] ( auto & castedFluid )
   {
+    try
+    {
+      castedFluid.checkTablesParameters( surfacePres, surfaceTemp );
+    } catch( SimulationError const & ex )
+    {
+      string const errorMsg = GEOS_FMT( "{}: wrong surface pressure / temperature.\n", getDataContext() );
+      GEOS_WARNING( errorMsg );
+      GEOS_UNUSED_VAR( ex );
+      // throw SimulationError( ex, errorMsg );
+    }
+
     typename TYPEOFREF( castedFluid ) ::KernelWrapper fluidWrapper = castedFluid.createKernelWrapper();
 
     // bring everything back to host, capture the scalars by reference
@@ -1025,6 +1042,7 @@ void CompositionalMultiphaseWell::assembleFluxTerms( real64 const GEOS_UNUSED_PA
         KernelLaunchSelector1< FluxKernel >( numFluidComponents(),
                                              subRegion.size(),
                                              dofManager.rankOffset(),
+                                             m_useTotalMassEquation,
                                              wellControls,
                                              wellElemDofNumber,
                                              nextWellElemIndex,
@@ -1092,6 +1110,7 @@ void CompositionalMultiphaseWell::assembleAccumulationTerms( DomainPartition con
                                                      subRegion.size(),
                                                      numFluidPhases(),
                                                      dofManager.rankOffset(),
+                                                     m_useTotalMassEquation,
                                                      wellElemDofNumber,
                                                      wellElemGhostRank,
                                                      wellElemVolume,
@@ -1209,6 +1228,7 @@ CompositionalMultiphaseWell::calculateResidualNorm( real64 const & time_n,
                                                    wellControls,
                                                    time_n + dt,
                                                    dt,
+                                                   m_nonlinearSolverParameters.m_minNormalizer,
                                                    subRegionResidualNorm );
 
       // step 2: reduction across meshBodies/regions/subRegions

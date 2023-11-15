@@ -139,6 +139,42 @@ struct MultiFluidVar
   }
 };
 
+namespace detail
+{
+/**
+ * @brief Utility function to convert mass fractions to mole fractions
+ * @tparam ARRAY1 the type of array storing the component molar weights
+ * @tparam ARRAY2 the type of array storing the component mass fractions
+ * @tparam ARRAY3 the type of array storing the component mole fractions
+ * @param[in] componentMolarWeight the component molar weights
+ * @param[in] massFractions the component mass fractions
+ * @param[out] moleFractions the newly converted component mole fractions
+ */
+template< typename ARRAY1, typename ARRAY2, typename ARRAY3 >
+GEOS_HOST_DEVICE
+void convertToMoleFractions( integer numComponents,
+                             ARRAY1 const & componentMolarWeight,
+                             ARRAY2 const & massFractions,
+                             ARRAY3 & moleFractions )
+{
+  real64 totalMolality = 0.0;
+  for( integer ic = 0; ic < numComponents; ++ic )
+  {
+    moleFractions[ic] = massFractions[ic] / componentMolarWeight[ic];
+    totalMolality += moleFractions[ic];
+  }
+
+  constexpr real64 epsilon = LvArray::NumericLimits< real64 >::epsilon;
+
+  real64 const totalMolalityInv = epsilon < totalMolality ? 1.0 / totalMolality : 0.0;
+  for( integer ic = 0; ic < numComponents; ++ic )
+  {
+    moleFractions[ic] *= totalMolalityInv;
+  }
+}
+
+} // namespace detail
+
 } // namespace constitutive
 
 } // namespace geos
