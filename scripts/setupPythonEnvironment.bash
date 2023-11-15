@@ -19,42 +19,57 @@ declare -a LINK_SCRIPTS=("preprocess_xml"
 
 
 # Read input arguments
-PYTHON_TARGET="$(which python)"
+PYTHON_TARGET="$(which python3)"
 VIRTUAL_PATH=""
 VIRTUAL_NAME="geosx"
 MINICONDA_BUILD=""
 INSTALL_VIRTUAL=false
 BIN_DIR=""
+PIP_CMD="pip --disable-pip-version-check"
+
+
+if [[ -z "${VERBOSE}" ]]
+then
+    VERBOSE=false
+else
+    VERBOSE=true
+fi
+
 
 while [[ $# > 0 ]]
 do
 key="$1"
 
 case $key in
-    -p|--python_target)
+    -p|--python-target)
     PYTHON_TARGET="$2"
     shift # past argument
     ;;
-    -m|--miniconda_build)
+    -m|--miniconda-build)
     MINICONDA_BUILD="$2"
     shift # past argument
     ;;
-    -v|--virtual_path)
+    -e|--environment-path)
     VIRTUAL_PATH="$2"
     INSTALL_VIRTUAL=true
     shift # past argument
     ;;
-    -b|--bin_dir)
+    -b|--bin-dir)
     BIN_DIR="$2"
+    shift # past argument
+    ;;
+    -v|--verbose)
+    VERBOSE=true
     shift # past argument
     ;;
     -?|--help)
     echo ""
     echo "Python environment setup options:"
-    echo "-p/--python_target \"Target parent python bin\""
-    echo "-m/--miniconda_build \"Fetch and build miniconda for the virtual environment (default = false)\""
-    echo "-v/--virtual_path \"Path to store the new virtual environment\""
-    echo "-b/--bin_dir \"Directory to link new scripts\""
+    echo "-p/--python-target \"Target parent python bin\""
+    echo "-m/--miniconda-build \"Fetch and build miniconda at the target directory (instead of targeting an existing version of python)\""
+    echo "-e/--environment-path \"Path to store the new virtual environment\""
+    echo "-b/--bin-dir \"Directory to link new scripts\""
+    echo "-v/--verbose \"Increase verbosity level\""
     echo ""
     exit
     ;;
@@ -109,10 +124,25 @@ then
         if [ -d "$p" ]
         then
             echo "  $p"
-            RES=$($PYTHON_TARGET -m pip install $p 2>&1)
+            RES=""
+            if $VERBOSE
+            then
+                RES=$($PYTHON_TARGET -m $PIP_CMD install $p)
+                echo $RES
+            else
+                RES=$($PYTHON_TARGET -m $PIP_CMD install $p 2>&1)
+            fi
+            
+            if [[ $RES =~ "HTTP error" ]]
+            then
+                echo "Could not access package dependencies:"
+                echo $RES
+                exit 1
+            fi
+
             if [[ $RES =~ "Error" ]]
             then
-                echo "  (cannot install target packes directly)"
+                echo "Failed to install target package... attempting to do so in a virtual environment"
                 INSTALL_VIRTUAL=true
                 break
             fi
@@ -129,7 +159,13 @@ then
     echo "Attempting to create a virtual python environment..."
     
     # Check to see if virtualenv is installed before continuing
-    RES=$($PYTHON_TARGET -m pip list)
+    RES=$($PYTHON_TARGET -m $PIP_CMD list)
+    if $VERBOSE
+    then
+        echo "Available packages in base python environment:"
+        echo $RES
+    fi
+
     if [[ ! $RES =~ "virtualenv" ]]
     then
         echo "Error: The parent python environment must have virtualenv installed"
@@ -144,6 +180,12 @@ then
     fi
 
     # Setup the virtual environment
+    if $VERBOSE
+    then
+        echo "Virtual environment path:"
+        echo $VIRTUAL_PATH
+    fi
+
     mkdir -p $VIRTUAL_PATH/$VIRTUAL_NAME
     $PYTHON_TARGET -m virtualenv --system-site-packages $VIRTUAL_PATH/$VIRTUAL_NAME
 
@@ -155,7 +197,27 @@ then
         if [ -d "$p" ]
         then
             echo "  $p"
-            $PYTHON_TARGET -m pip install $p
+            RES=""
+            if $VERBOSE
+            then
+                RES=$($PYTHON_TARGET -m $PIP_CMD install $p)
+                echo $RES
+            else
+                RES=$($PYTHON_TARGET -m $PIP_CMD install $p 2>&1)
+            fi
+
+            if [[ $RES =~ "HTTP error" ]]
+            then
+                echo "Could not access package dependencies"
+                echo $RES
+                exit 1
+            fi
+            
+            if [[ $RES =~ "Error" ]]
+            then
+                echo "  (failed to install target package)"
+                break
+            fi
         else
             echo "Could not find target package: $p"
         fi
@@ -184,13 +246,21 @@ then
     for p in "${LINK_SCRIPTS[@]}"
     do
         echo "  $p"
+        if $VERBOSE
+        then
+            echo "    searching the following paths:"
+        fi
         package_found="0"
 
         for MOD_PATH in "${MOD_SEARCH_PATH[@]}"
         do
             # Check to see if the tool exists
             pp=
-            echo "$MOD_PATH/$p"
+            if $VERBOSE
+            then
+                echo "      $MOD_PATH/$p"
+            fi
+            
             if [ -f "$MOD_PATH/$p" ]
             then
                 pp="$MOD_PATH/$p"
@@ -205,7 +275,10 @@ then
             # Create links
             if [ ! -z "$pp" ]
             then
-                echo "    (found $p as $pp)"
+                if $VERBOSE
+                then
+                    echo "    (found $p as $pp)"
+                fi
                 ln -s $pp $BIN_DIR/$p 
                 package_found="1"
                 break
