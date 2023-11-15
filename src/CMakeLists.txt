@@ -22,8 +22,8 @@ else()
 endif()
 set( CMAKE_ENABLE_EXPORTS ON )
 
-# populated by `geos_add_test` (private list of all geos tests)
-set_property( GLOBAL PROPERTY geos_tests_list )
+# populated by `geos_add_test` (private list of all geos tests, keep in sync with the macro definition)
+set_property( GLOBAL PROPERTY geos_tests_exe_list )
 
 ################################
 # Include blt
