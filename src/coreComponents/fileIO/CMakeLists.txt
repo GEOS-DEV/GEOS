@@ -1,6 +1,4 @@
-#
 # Specify all headers
-#
 set( fileIO_headers
      Outputs/BlueprintOutput.hpp
      Outputs/OutputBase.hpp
@@ -14,12 +12,9 @@ set( fileIO_headers
      timeHistory/BufferedHistoryIO.hpp
      timeHistory/PackCollection.hpp
      timeHistory/HDFHistoryIO.hpp
-     timeHistory/HistoryCollection.hpp
-   )
+     timeHistory/HistoryCollection.hpp )
 
-#
 # Specify all sources
-#
 set( fileIO_sources
      Outputs/BlueprintOutput.cpp
      Outputs/OutputBase.cpp
@@ -31,21 +26,18 @@ set( fileIO_sources
      timeHistory/HDFFile.cpp
      timeHistory/HistoryCollectionBase.cpp
      timeHistory/PackCollection.cpp
-     timeHistory/HDFHistoryIO.cpp
-   )
+     timeHistory/HDFHistoryIO.cpp )
 
 set( dependencyList ${parallelDeps} mesh constitutive hdf5 )
 if( ENABLE_PYGEOSX )
   list( APPEND fileIO_headers
         python/PyHistoryCollectionType.hpp
         python/PyHistoryOutputType.hpp
-        python/PyVTKOutputType.hpp
-	      )
+        python/PyVTKOutputType.hpp )
   list( APPEND fileIO_sources
         python/PyHistoryCollection.cpp
         python/PyHistoryOutput.cpp
-        python/PyVTKOutput.cpp
-        )
+        python/PyVTKOutput.cpp )
   list( APPEND dependencyList Python3::Python pylvarray )
 endif()
 
@@ -91,8 +83,7 @@ blt_add_library( NAME       fileIO
                  SOURCES    ${fileIO_sources}
                  HEADERS    ${fileIO_headers}
                  DEPENDS_ON ${dependencyList}
-                 OBJECT     ${GEOSX_BUILD_OBJ_LIBS}
-               )
+                 OBJECT     ${GEOSX_BUILD_OBJ_LIBS} )
 
 
 target_include_directories( fileIO PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents )
