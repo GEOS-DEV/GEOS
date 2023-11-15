@@ -135,7 +135,7 @@ public:
                 + fixedStressTemperatureCoefficient * deltaTemperatureFromBeginningOfTimeStep; // fixed-stress temperature term
     dPorosity_dPressure += fixedStressPressureCoefficient;
     dPorosity_dTemperature += fixedStressTemperatureCoefficient;
- }
+  }
 
   GEOS_HOST_DEVICE
   virtual void updateFromPressureAndTemperature( localIndex const k,
