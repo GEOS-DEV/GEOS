@@ -128,6 +128,7 @@ void CompositionalMultiphaseFVM::assembleFluxTerms( real64 const dt,
     NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
     FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
     FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( m_discretizationName );
+    arrayView2d< real64 const > const & globalDistance = fluxApprox.getGlobalCellToFace();
 
     string const & elemDofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
 
@@ -146,8 +147,8 @@ void CompositionalMultiphaseFVM::assembleFluxTerms( real64 const dt,
                                                      elemDofKey,
                                                      m_hasCapPressure,
                                                      getName(),
-                                                     fluxApprox,
                                                      mesh.getElemManager(),
+                                                     globalDistance,
                                                      stencilWrapper,
                                                      dt,
                                                      localMatrix.toViewConstSizes(),
@@ -163,8 +164,9 @@ void CompositionalMultiphaseFVM::assembleFluxTerms( real64 const dt,
                                                      elemDofKey,
                                                      m_hasCapPressure,
                                                      getName(),
-                                                     fluxApprox,
+                                                     fluxApprox.getUpwindingParams(),
                                                      mesh.getElemManager(),
+                                                     globalDistance,
                                                      stencilWrapper,
                                                      dt,
                                                      localMatrix.toViewConstSizes(),
@@ -231,6 +233,8 @@ void CompositionalMultiphaseFVM::assembleStabilizedFluxTerms( real64 const dt,
     FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
     FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( m_discretizationName );
 
+    arrayView2d< real64 const > const & globalDistance = fluxApprox.getGlobalCellToFace();
+
     string const & elemDofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
     ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > > elemDofNumber =
       mesh.getElemManager().constructArrayViewAccessor< globalIndex, 1 >( elemDofKey );
@@ -250,8 +254,8 @@ void CompositionalMultiphaseFVM::assembleStabilizedFluxTerms( real64 const dt,
                                                    elemDofKey,
                                                    m_hasCapPressure,
                                                    getName(),
-                                                   fluxApprox,
                                                    mesh.getElemManager(),
+                                                   globalDistance,
                                                    stencilWrapper,
                                                    dt,
                                                    localMatrix.toViewConstSizes(),
@@ -842,6 +846,8 @@ void CompositionalMultiphaseFVM::applyFaceDirichletBC( real64 const time_n,
   FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
   FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( m_discretizationName );
 
+  arrayView2d< real64 const > const & globalDistance = fluxApprox.getGlobalCellToFace();
+
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
                                                                 arrayView1d< string const > const & )
@@ -890,9 +896,9 @@ void CompositionalMultiphaseFVM::applyFaceDirichletBC( real64 const time_n,
 
       string const & elemDofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
 
-      /*if( m_isThermal )
-         {
-         thermalCompositionalMultiphaseFVMKernels::
+      if( m_isThermal )
+      {
+        thermalCompositionalMultiphaseFVMKernels::
           DirichletFaceBasedAssemblyKernelFactory::
           createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
                                                      m_numPhases,
@@ -901,13 +907,14 @@ void CompositionalMultiphaseFVM::applyFaceDirichletBC( real64 const time_n,
                                                      getName(),
                                                      faceManager,
                                                      elemManager,
+                                                     globalDistance,
                                                      stencilWrapper,
                                                      multiFluidBase,
                                                      dt,
                                                      localMatrix,
                                                      localRhs );
-         }
-         else*/
+      }
+      else
       {
         isothermalCompositionalMultiphaseFVMKernels::
           DirichletFaceBasedAssemblyKernelFactory::
@@ -917,8 +924,8 @@ void CompositionalMultiphaseFVM::applyFaceDirichletBC( real64 const time_n,
                                                      elemDofKey,
                                                      getName(),
                                                      faceManager,
-                                                     fluxApprox,
                                                      elemManager,
+                                                     globalDistance,
                                                      stencilWrapper,
                                                      multiFluidBase,
                                                      dt,

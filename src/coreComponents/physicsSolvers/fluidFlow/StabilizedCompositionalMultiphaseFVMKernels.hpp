@@ -55,6 +55,7 @@ public:
 
   using AbstractBase = isothermalCompositionalMultiphaseFVMKernels::FaceBasedAssemblyKernelBase;
   using DofNumberAccessor = AbstractBase::DofNumberAccessor;
+  using GlobalIndexAccessor = AbstractBase::GlobalIndexAccessor;
   using CompFlowAccessors = AbstractBase::CompFlowAccessors;
   using MultiFluidAccessors = AbstractBase::MultiFluidAccessors;
   using CapPressureAccessors = AbstractBase::CapPressureAccessors;
@@ -118,13 +119,12 @@ public:
    * @param[inout] localRhs the local right-hand side vector
    */
   FaceBasedAssemblyKernel( integer const numPhases,
-                           //TODO (jacques) propagate use of DispersionAccesssors
                            globalIndex const rankOffset,
                            integer const hasCapPressure,
-                           FluxApproximationBase const & fluxApprox,
-                           ElementRegionManager const & elemManager,
                            STENCILWRAPPER const & stencilWrapper,
                            DofNumberAccessor const & dofNumberAccessor,
+                           const GlobalIndexAccessor & globalIndexAccessor,
+                           arrayView2d< real64 const > const & globalDistance,
                            CompFlowAccessors const & compFlowAccessors,
                            StabCompFlowAccessors const & stabCompFlowAccessors,
                            MultiFluidAccessors const & multiFluidAccessors,
@@ -139,10 +139,10 @@ public:
     : Base( numPhases,
             rankOffset,
             hasCapPressure,
-            fluxApprox,
-            elemManager,
             stencilWrapper,
             dofNumberAccessor,
+            globalIndexAccessor,
+            globalDistance,
             compFlowAccessors,
             multiFluidAccessors,
             dispersionAccessors,
@@ -335,8 +335,8 @@ public:
                    string const & dofKey,
                    integer const hasCapPressure,
                    string const & solverName,
-                   FluxApproximationBase const & fluxApprox,
                    ElementRegionManager const & elemManager,
+                   arrayView2d< real64 const > const & globalDistance,
                    STENCILWRAPPER const & stencilWrapper,
                    real64 const & dt,
                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
@@ -352,6 +352,10 @@ public:
         elemManager.constructArrayViewAccessor< globalIndex, 1 >( dofKey );
       dofNumberAccessor.setName( solverName + "/accessors/" + dofKey );
 
+      ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > > const elemGlobalIndexAccessor =
+        elemManager.constructArrayViewAccessor< globalIndex, 1 >( ObjectManagerBase::viewKeyStruct::localToGlobalMapString() );
+
+
       using KERNEL_TYPE = FaceBasedAssemblyKernel< NUM_COMP, NUM_DOF, STENCILWRAPPER >;
       typename KERNEL_TYPE::CompFlowAccessors compFlowAccessors( elemManager, solverName );
       typename KERNEL_TYPE::MultiFluidAccessors multiFluidAccessors( elemManager, solverName );
@@ -362,8 +366,10 @@ public:
       typename KERNEL_TYPE::RelPermAccessors relPermAccessors( elemManager, solverName );
       typename KERNEL_TYPE::DispersionAccessors dispersionAccessors( elemManager, solverName );
 
-      KERNEL_TYPE kernel( numPhases, rankOffset, hasCapPressure, fluxApprox, elemManager, stencilWrapper, dofNumberAccessor,
-                          compFlowAccessors, stabCompFlowAccessors, multiFluidAccessors, dispersionAccessors, stabMultiFluidAccessors,
+      KERNEL_TYPE kernel( numPhases, rankOffset, hasCapPressure, stencilWrapper, dofNumberAccessor,
+                          elemGlobalIndexAccessor, globalDistance,
+                          compFlowAccessors, stabCompFlowAccessors, multiFluidAccessors, dispersionAccessors,
+                          stabMultiFluidAccessors,
                           capPressureAccessors, permeabilityAccessors, relPermAccessors,
                           dt, localMatrix, localRhs );
       KERNEL_TYPE::template launch< POLICY >( stencilWrapper.size(), kernel );

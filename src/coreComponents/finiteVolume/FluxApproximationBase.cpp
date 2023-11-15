@@ -26,22 +26,14 @@
 #include "fieldSpecification/FieldSpecificationManager.hpp"
 #include "fieldSpecification/AquiferBoundaryCondition.hpp"
 
-const geos::arraySlice1d< geos::real64 const > geos::FluxApproximationBase::getGlobalCellToFace( ElementRegionManager const & elemManager, localIndex const seri, localIndex const sesri,
-                                                                                                 localIndex const sei ) const
-{
-  ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > > const elemGlobalIndex =
-    elemManager.constructArrayViewAccessor< globalIndex, 1 >( ObjectManagerBase::viewKeyStruct::localToGlobalMapString() );
 
-
-  globalIndex const selectedGlobalIndex = elemGlobalIndex[seri][sesri][sei];
-
-  return m_globalCellToFace[selectedGlobalIndex];
-}
 
 namespace geos
 {
 
 using namespace dataRepository;
+
+
 
 FluxApproximationBase::FluxApproximationBase( string const & name, Group * const parent )
   : Group( name, parent ),

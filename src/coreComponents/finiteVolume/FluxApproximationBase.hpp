@@ -223,8 +223,10 @@ public:
  * @param sei
  * @return
  */
-  virtual const arraySlice1d< real64 const >
-  getGlobalCellToFace( const ElementRegionManager & elemManager, const localIndex seri, const localIndex sesri, const localIndex sei ) const;
+  virtual const arrayView2d< real64 const > getGlobalCellToFace() const
+  {
+    return m_globalCellToFace;
+  }
 
 
 protected:
