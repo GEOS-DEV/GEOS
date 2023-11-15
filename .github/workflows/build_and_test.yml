@@ -80,9 +80,9 @@ jobs:
       run: printenv
 
     - name: Set Swap Space
-      uses: pierotofy/set-swap-space@master
+      uses: actionhippie/swap-space@v1
       with:
-        swap-size-gb: 16
+        size: 16
 
     # Build and test only
     # Builds only the geosx executable (timeout when building tests)
