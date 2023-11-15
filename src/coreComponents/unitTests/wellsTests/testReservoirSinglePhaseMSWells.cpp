@@ -413,7 +413,7 @@ TEST_F( SinglePhaseReservoirSolverTest, jacobianNumericalCheck_Flux )
                          [&] ( CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                arrayView1d< real64 > const & localRhs )
   {
-    solver->wellSolver()->assembleFluxTerms( time, dt, domain, solver->getDofManager(), localMatrix, localRhs );
+    solver->wellSolver()->assembleFluxTerms( dt, domain, solver->getDofManager(), localMatrix, localRhs );
   } );
 }
 
