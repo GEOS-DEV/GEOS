@@ -51,10 +51,11 @@ void SinglePhasePoromechanicsConformingFractures::initializePostInitialCondition
 {
   contactSolver()->setSolidSolverDofFlags( false );
 
-  integer const & isPoromechanicsSolverThermal = poromechanicsSolver()->getReference< integer >( SinglePhasePoromechanics::viewKeyStruct::isThermalString() );
+  integer const & isPoromechanicsSolverThermal = poromechanicsSolver()->getReference< integer >( SinglePhasePoromechanics< SinglePhaseBase >::viewKeyStruct::isThermalString() );
 
   GEOS_ERROR_IF( isPoromechanicsSolverThermal != m_isThermal, GEOS_FMT( "{} {}: The attribute `{}` of the poromechanics solver `{}` must be set to the same value as for this solver.",
-                                                                        catalogName(), getName(), SinglePhasePoromechanics::viewKeyStruct::isThermalString(), poromechanicsSolver()->getName() ) );
+                                                                        catalogName(), getName(), SinglePhasePoromechanics< SinglePhaseBase >::viewKeyStruct::isThermalString(),
+                                                                        poromechanicsSolver()->getName() ) );
 }
 
 void SinglePhasePoromechanicsConformingFractures::setupCoupling( DomainPartition const & domain,
@@ -212,7 +213,7 @@ void SinglePhasePoromechanicsConformingFractures::assembleCellBasedContributions
                       thermalPoromechanicsKernels::ThermalSinglePhasePoromechanicsKernelFactory >( mesh,
                                                                                                    dofManager,
                                                                                                    regionNames,
-                                                                                                   SinglePhasePoromechanics::viewKeyStruct::porousMaterialNamesString(),
+                                                                                                   SinglePhasePoromechanics< SinglePhaseBase >::viewKeyStruct::porousMaterialNamesString(),
                                                                                                    localMatrix,
                                                                                                    localRhs,
                                                                                                    dt,
@@ -225,7 +226,7 @@ void SinglePhasePoromechanicsConformingFractures::assembleCellBasedContributions
                       poromechanicsKernels::SinglePhasePoromechanicsKernelFactory >( mesh,
                                                                                      dofManager,
                                                                                      regionNames,
-                                                                                     SinglePhasePoromechanics::viewKeyStruct::porousMaterialNamesString(),
+                                                                                     SinglePhasePoromechanics< SinglePhaseBase >::viewKeyStruct::porousMaterialNamesString(),
                                                                                      localMatrix,
                                                                                      localRhs,
                                                                                      dt,

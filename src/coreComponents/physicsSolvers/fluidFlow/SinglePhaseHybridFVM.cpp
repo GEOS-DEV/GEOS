@@ -194,8 +194,7 @@ void SinglePhaseHybridFVM::setupDofs( DomainPartition const & GEOS_UNUSED_PARAM(
                           DofManager::Connector::Elem );
 }
 
-void SinglePhaseHybridFVM::assembleFluxTerms( real64 const GEOS_UNUSED_PARAM( time_n ),
-                                              real64 const dt,
+void SinglePhaseHybridFVM::assembleFluxTerms( real64 const dt,
                                               DomainPartition const & domain,
                                               DofManager const & dofManager,
                                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
@@ -261,7 +260,7 @@ void SinglePhaseHybridFVM::assembleFluxTerms( real64 const GEOS_UNUSED_PARAM( ti
 
 }
 
-void SinglePhaseHybridFVM::assembleEDFMFluxTerms( real64 const time_n,
+void SinglePhaseHybridFVM::assembleEDFMFluxTerms( real64 const GEOS_UNUSED_PARAM( time_n ),
                                                   real64 const dt,
                                                   DomainPartition const & domain,
                                                   DofManager const & dofManager,
@@ -271,8 +270,7 @@ void SinglePhaseHybridFVM::assembleEDFMFluxTerms( real64 const time_n,
 {
   GEOS_UNUSED_VAR ( jumpDofKey );
 
-  assembleFluxTerms( time_n,
-                     dt,
+  assembleFluxTerms( dt,
                      domain,
                      dofManager,
                      localMatrix,

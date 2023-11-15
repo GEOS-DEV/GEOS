@@ -163,8 +163,7 @@ public:
    * @param localRhs the system right-hand side vector
    */
   virtual void
-  assembleFluxTerms( real64 const time_n,
-                     real64 const dt,
+  assembleFluxTerms( real64 const dt,
                      DomainPartition const & domain,
                      DofManager const & dofManager,
                      CRSMatrixView< real64, globalIndex const > const & localMatrix,
@@ -215,8 +214,6 @@ public:
     // inputs
     static constexpr char const * inputTemperatureString() { return "temperature"; }
     static constexpr char const * thermalConductivityNamesString() { return "thermalConductivityNames"; }
-    static constexpr char const * maxPressureChangeString() { return "maxPressureChange"; }
-    static constexpr char const * allowNegativePressureString() { return "allowNegativePressure"; }
   };
 
   /**
@@ -342,11 +339,6 @@ public:
                                                 CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                 arrayView1d< real64 > const & localRhs ) const;
 
-  /**
-   * @brief Function to activate the flag allowing negative pressure
-   */
-  void allowNegativePressure() { m_allowNegativePressure = 1; }
-
 protected:
 
   /**
@@ -404,12 +396,6 @@ protected:
 
   /// flag to freeze the initial state during initialization in coupled problems
   integer m_keepFlowVariablesConstantDuringInitStep;
-
-  /// maximum (absolute) pressure change in a Newton iteration
-  real64 m_maxPressureChange;
-
-  /// flag if negative pressure is allowed
-  integer m_allowNegativePressure;
 
 private:
   virtual void setConstitutiveNames( ElementSubRegionBase & subRegion ) const override;

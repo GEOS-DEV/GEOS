@@ -73,6 +73,8 @@ public:
     static constexpr char const * permeabilityNamesString() { return "permeabilityNames"; }
     static constexpr char const * isThermalString() { return "isThermal"; }
     static constexpr char const * solidInternalEnergyNamesString() { return "solidInternalEnergyNames"; }
+    static constexpr char const * allowNegativePressureString() { return "allowNegativePressure"; }
+    static constexpr char const * maxAbsolutePresChangeString() { return "maxAbsolutePressureChange"; }
   };
 
   /**
@@ -127,6 +129,12 @@ public:
                                            std::map< string, localIndex > const & bcNameToBcId,
                                            arrayView1d< globalIndex > const & bcAllSetsSize ) const;
 
+  integer & isThermal() { return m_isThermal; }
+
+  /**
+   * @brief Function to activate the flag allowing negative pressure
+   */
+  void allowNegativePressure() { m_allowNegativePressure = 1; }
 
 protected:
 
@@ -178,6 +186,12 @@ protected:
 
   /// enable the fixed stress poromechanics update of porosity
   bool m_isFixedStressPoromechanicsUpdate;
+
+  /// maximum (absolute) pressure change in a Newton iteration
+  real64 m_maxAbsolutePresChange;
+
+  /// flag if negative pressure is allowed
+  integer m_allowNegativePressure;
 
 private:
   virtual void setConstitutiveNames( ElementSubRegionBase & subRegion ) const override;
