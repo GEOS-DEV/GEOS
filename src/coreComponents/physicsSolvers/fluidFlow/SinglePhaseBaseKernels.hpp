@@ -590,7 +590,7 @@ struct SolutionCheckKernel
                                               real64 const scalingFactor )
   {
     RAJA::ReduceSum< ReducePolicy< POLICY >, integer > numNegativePressures( 0 );
-    RAJA::ReduceMin< ReducePolicy< POLICY >, integer > minValue( 0 );
+    RAJA::ReduceMin< ReducePolicy< POLICY >, real64 > minValue( 0.0 );
 
     forAll< POLICY >( dofNumber.size(), [=] GEOS_HOST_DEVICE ( localIndex const ei )
     {
