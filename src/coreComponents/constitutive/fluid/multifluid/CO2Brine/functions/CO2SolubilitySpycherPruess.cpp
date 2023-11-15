@@ -218,6 +218,9 @@ CO2SolubilitySpycherPruess::makeSolubilityTables( string_array const & inputPara
                                              tableCoords,
                                              densities );
 
+  real64 constexpr co2MolarMass = 44.01e-3;
+  real64 constexpr h2oMolarMass = 18.01e-3;
+
   array1d< real64 > co2Values( nPressures*nTemperatures );
   array1d< real64 > h2oValues( nPressures*nTemperatures );
   for( localIndex i = 0; i < nPressures; ++i )
@@ -241,8 +244,8 @@ CO2SolubilitySpycherPruess::makeSolubilityTables( string_array const & inputPara
       real64 const x_CO2 = B*(1.0 - y_H2O);
 
       // Calculate the solubility
-      co2Values[j*nPressures+i] = x_CO2;
-      h2oValues[j*nPressures+i] = y_H2O;
+      co2Values[j*nPressures+i] = x_CO2/((1.0 - x_CO2)*h2oMolarMass);
+      h2oValues[j*nPressures+i] = y_H2O/((1.0 - y_H2O)*co2MolarMass);
     }
   }
 
