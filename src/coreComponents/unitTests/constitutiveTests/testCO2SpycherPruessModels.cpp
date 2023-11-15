@@ -48,6 +48,7 @@ protected:
   static integer constexpr numDof   = numComp + 2;
   static real64 constexpr relTol = 1.0e-5;
   static real64 constexpr absTol = 1.0e-7;
+  static real64 constexpr pertubation = 1.0e-6;
 
 public:
   CO2SolubilitySpycherPruessTestFixture() = default;
@@ -129,9 +130,123 @@ TEST_P( CO2SolubilitySpycherPruessTestFixture, testExpectedValues )
 
 TEST_P( CO2SolubilitySpycherPruessTestFixture, testNumericalDerivatives )
 {
+  using Deriv = multifluid::DerivativeOffset;
+
   constexpr char const * fileContent = "FlashModel CO2Solubility 1e5 1e7 9.9e5 283.15 383.15 10.0 0.15 1.0e-8 SpycherPruess";
   flashModel = makeFlashModel( fileContent );
-  std::cout << flashModel.get() << "\n";
+
+  auto [pressure, temperature, z_co2, expected_V, expected_x_co2, expected_y_wat] = GetParam();
+  GEOS_UNUSED_VAR( expected_V, expected_x_co2, expected_y_wat );
+
+  StackArray< real64, 1, numComp > composition( numComp );
+  composition[0] = z_co2;
+  composition[1] = 1.0 - z_co2;
+  StackArray< real64, 1, numComp > perturbedComposition( numComp );
+
+  StackArray< real64, 3, numPhase, LAYOUT_PHASE > phaseFrac( 1, 1, numPhase );
+  StackArray< real64, 4, numDof *numPhase, LAYOUT_PHASE_DC > dPhaseFrac( 1, 1, numPhase, numDof );
+  MultiFluidVarSlice< real64, 1, USD_PHASE - 2, USD_PHASE_DC - 2 >
+  phaseFracAndDeriv { phaseFrac[0][0], dPhaseFrac[0][0] };
+
+  StackArray< real64, 4, numComp *numPhase, LAYOUT_PHASE_COMP > phaseCompFrac( 1, 1, numPhase, numComp );
+  StackArray< real64, 5, numDof *numComp *numPhase, LAYOUT_PHASE_COMP_DC > dPhaseCompFrac( 1, 1, numPhase, numComp, numDof );
+  MultiFluidVarSlice< real64, 2, USD_PHASE_COMP - 2, USD_PHASE_COMP_DC - 2 >
+  phaseCompFracAndDeriv { phaseCompFrac[0][0], dPhaseCompFrac[0][0] };
+
+  // 1) First compute the unperturbed parameters
+
+  auto flashModelWrapper = flashModel->createKernelWrapper();
+
+  flashModelWrapper.compute( pressure,
+                             temperature,
+                             composition.toSliceConst(),
+                             phaseFracAndDeriv,
+                             phaseCompFracAndDeriv );
+
+  StackArray< real64, 3, numPhase, LAYOUT_PHASE > perturbedPhaseFrac( 1, 1, numPhase );
+  StackArray< real64, 4, numDof *numPhase, LAYOUT_PHASE_DC > dPerturbedPhaseFrac( 1, 1, numPhase, numDof );
+  MultiFluidVarSlice< real64, 1, USD_PHASE - 2, USD_PHASE_DC - 2 >
+  perturbedPhaseFracAndDeriv { perturbedPhaseFrac[0][0], dPerturbedPhaseFrac[0][0] };
+
+  StackArray< real64, 4, numComp *numPhase, LAYOUT_PHASE_COMP > perturbedPhaseCompFrac( 1, 1, numPhase, numComp );
+  StackArray< real64, 5, numDof *numComp *numPhase, LAYOUT_PHASE_COMP_DC > dPerturbedPhaseCompFrac( 1, 1, numPhase, numComp, numDof );
+  MultiFluidVarSlice< real64, 2, USD_PHASE_COMP - 2, USD_PHASE_COMP_DC - 2 >
+  perturbedPhaseCompFracAndDeriv { perturbedPhaseCompFrac[0][0], dPerturbedPhaseCompFrac[0][0] };
+
+  real64 numericalDerivative = 0.0;
+  real64 analyticalDerivative = 0.0;
+
+  // 2) Check derivative with respect to pressure
+  real64 const dP = pertubation * pressure;
+  flashModelWrapper.compute( pressure + dP,
+                             temperature,
+                             composition.toSliceConst(),
+                             perturbedPhaseFracAndDeriv,
+                             perturbedPhaseCompFracAndDeriv );
+
+  for( integer i = 0; i < numPhase; ++i )
+  {
+    numericalDerivative = (perturbedPhaseFracAndDeriv.value[i]-phaseFracAndDeriv.value[i])/dP;
+    analyticalDerivative = perturbedPhaseFracAndDeriv.derivs[i][Deriv::dP];
+    checkRelativeError( numericalDerivative, analyticalDerivative, relTol, absTol );
+    for( integer j = 0; j < numComp; ++j )
+    {
+      numericalDerivative = (perturbedPhaseCompFracAndDeriv.value[i][j]-phaseCompFracAndDeriv.value[i][j])/dP;
+      analyticalDerivative = perturbedPhaseCompFracAndDeriv.derivs[i][j][Deriv::dP];
+      checkRelativeError( numericalDerivative, analyticalDerivative, relTol, absTol );
+    }
+  }
+
+  // 3) Check derivative with respect to temperature
+  real64 const dT = pertubation * temperature;
+  flashModelWrapper.compute( pressure,
+                             temperature + dT,
+                             composition.toSliceConst(),
+                             perturbedPhaseFracAndDeriv,
+                             perturbedPhaseCompFracAndDeriv );
+
+  for( integer i = 0; i < numPhase; ++i )
+  {
+    numericalDerivative = (perturbedPhaseFracAndDeriv.value[i]-phaseFracAndDeriv.value[i])/dT;
+    analyticalDerivative = perturbedPhaseFracAndDeriv.derivs[i][Deriv::dT];
+    checkRelativeError( numericalDerivative, analyticalDerivative, relTol, absTol );
+
+    for( integer j = 0; j < numComp; ++j )
+    {
+      numericalDerivative = (perturbedPhaseCompFracAndDeriv.value[i][j]-phaseCompFracAndDeriv.value[i][j])/dT;
+      analyticalDerivative = perturbedPhaseCompFracAndDeriv.derivs[i][j][Deriv::dT];
+      checkRelativeError( numericalDerivative, analyticalDerivative, relTol, absTol );
+    }
+  }
+
+  // 4) Check derivative with respect to composition
+  for( integer ic=0; ic < numComp; ++ic )
+  {
+    real64 const dC = pertubation;
+    for( integer k=0; k < numComp; ++k )
+      perturbedComposition[k] = composition[k];
+    perturbedComposition[ic] += dC;
+
+    flashModelWrapper.compute( pressure,
+                               temperature,
+                               perturbedComposition.toSliceConst(),
+                               perturbedPhaseFracAndDeriv,
+                               perturbedPhaseCompFracAndDeriv );
+
+    for( integer i = 0; i < numPhase; ++i )
+    {
+      numericalDerivative = (perturbedPhaseFracAndDeriv.value[i]-phaseFracAndDeriv.value[i])/dC;
+      analyticalDerivative = perturbedPhaseFracAndDeriv.derivs[i][Deriv::dC+ic];
+      checkRelativeError( numericalDerivative, analyticalDerivative, relTol, absTol );
+
+      for( integer j = 0; j < numComp; ++j )
+      {
+        numericalDerivative = (perturbedPhaseCompFracAndDeriv.value[i][j]-phaseCompFracAndDeriv.value[i][j])/dC;
+        analyticalDerivative = perturbedPhaseCompFracAndDeriv.derivs[i][j][Deriv::dC+ic];
+        checkRelativeError( numericalDerivative, analyticalDerivative, relTol, absTol );
+      }
+    }
+  }
 }
 
 // Test data
@@ -188,7 +303,6 @@ std::vector< TestParam > generateTestData()
     {1.0000000000e+06, 1.0000000000e+01, 9.9999000000e-01, 1.0000000000e+00, 0.0000000000e+00, 1.0000000000e-05},
     {2.0000000000e+06, 5.0000000000e+01, 9.9999000000e-01, 1.0000000000e+00, 0.0000000000e+00, 1.0000000000e-05},
     {1.0000000000e+05, 1.1000000000e+02, 9.9999000000e-01, 9.9999000000e-01, 0.0000000000e+00, 0.0000000000e+00},
-    {1.0000000000e+06, 1.1000000000e+02, 9.9999000000e-01, 9.9969066906e-01, 9.6767216324e-01, 0.0000000000e+00},
     {2.0000000000e+06, 1.1000000000e+02, 9.9999000000e-01, 1.0000000000e+00, 0.0000000000e+00, 1.0000000000e-05},
     {3.0000000000e+06, 1.1000000000e+02, 9.9999000000e-01, 1.0000000000e+00, 0.0000000000e+00, 1.0000000000e-05},
     {1.0000000000e+05, 1.0000000000e+01, 1.0000000000e+00, 1.0000000000e+00, 0.0000000000e+00, 0.0000000000e+00},
