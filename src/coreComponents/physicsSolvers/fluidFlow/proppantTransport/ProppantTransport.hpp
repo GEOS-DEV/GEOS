@@ -168,8 +168,7 @@ public:
    * @param time_n previous time value
    * @param dt time step
    */
-  void assembleFluxTerms( real64 const time_n,
-                          real64 const dt,
+  void assembleFluxTerms( real64 const dt,
                           DomainPartition const & domain,
                           DofManager const & dofManager,
                           CRSMatrixView< real64, globalIndex const > const & localMatrix,

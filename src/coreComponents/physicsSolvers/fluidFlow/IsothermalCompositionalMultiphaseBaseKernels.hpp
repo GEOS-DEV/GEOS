@@ -1195,6 +1195,7 @@ public:
    * @param[in] compDensScalingFactor the component density local scaling factor
    */
   ScalingForSystemSolutionKernel( real64 const maxRelativePresChange,
+                                  real64 const maxAbsolutePresChange,
                                   real64 const maxCompFracChange,
                                   globalIndex const rankOffset,
                                   integer const numComp,
@@ -1215,6 +1216,7 @@ public:
             pressureScalingFactor,
             compDensScalingFactor ),
     m_maxRelativePresChange( maxRelativePresChange ),
+    m_maxAbsolutePresChange( maxAbsolutePresChange ),
     m_maxCompFracChange( maxCompFracChange )
   {}
 
@@ -1358,25 +1360,32 @@ public:
       stack.localMaxDeltaPres = absPresChange;
     }
 
-    m_pressureScalingFactor[ei] = 1.0;
-
-    if( pres > eps )
+    // compute pressure scaling factor
+    real64 presScalingFactor = 1.0;
+    // when enabled, absolute change scaling has a priority over relative change
+    if( m_maxAbsolutePresChange > 0.0 ) // maxAbsolutePresChange <= 0.0 means that absolute scaling is disabled
+    {
+      if( absPresChange > m_maxAbsolutePresChange )
+      {
+        presScalingFactor = m_maxAbsolutePresChange / absPresChange;
+      }
+    }
+    else if( pres > eps )
     {
       real64 const relativePresChange = absPresChange / pres;
       if( relativePresChange > m_maxRelativePresChange )
       {
-        real64 const presScalingFactor = m_maxRelativePresChange / relativePresChange;
-        m_pressureScalingFactor[ei] = presScalingFactor;
-
-        if( stack.localMinVal > presScalingFactor )
-        {
-          stack.localMinVal = presScalingFactor;
-        }
-        if( stack.localMinPresScalingFactor > presScalingFactor )
-        {
-          stack.localMinPresScalingFactor = presScalingFactor;
-        }
+        presScalingFactor = m_maxRelativePresChange / relativePresChange;
       }
+    }
+    m_pressureScalingFactor[ei] = presScalingFactor;
+    if( stack.localMinVal > presScalingFactor )
+    {
+      stack.localMinVal = presScalingFactor;
+    }
+    if( stack.localMinPresScalingFactor > presScalingFactor )
+    {
+      stack.localMinPresScalingFactor = presScalingFactor;
     }
 
     real64 prevTotalDens = 0;
@@ -1428,6 +1437,7 @@ protected:
 
   /// Max allowed changes in primary variables
   real64 const m_maxRelativePresChange;
+  real64 const m_maxAbsolutePresChange;
   real64 const m_maxCompFracChange;
 
 };
@@ -1454,6 +1464,7 @@ public:
   template< typename POLICY >
   static ScalingForSystemSolutionKernel::StackVariables
   createAndLaunch( real64 const maxRelativePresChange,
+                   real64 const maxAbsolutePresChange,
                    real64 const maxCompFracChange,
                    globalIndex const rankOffset,
                    integer const numComp,
@@ -1469,7 +1480,7 @@ public:
       subRegion.getField< fields::flow::pressureScalingFactor >();
     arrayView1d< real64 > compDensScalingFactor =
       subRegion.getField< fields::flow::globalCompDensityScalingFactor >();
-    ScalingForSystemSolutionKernel kernel( maxRelativePresChange, maxCompFracChange, rankOffset,
+    ScalingForSystemSolutionKernel kernel( maxRelativePresChange, maxAbsolutePresChange, maxCompFracChange, rankOffset,
                                            numComp, dofKey, subRegion, localSolution, pressure, compDens, pressureScalingFactor, compDensScalingFactor );
     return ScalingForSystemSolutionKernel::launch< POLICY >( subRegion.size(), kernel );
   }
@@ -1507,6 +1518,7 @@ public:
    * @param[in] compDens the component density vector
    */
   SolutionCheckKernel( integer const allowCompDensChopping,
+                       integer const allowNegativePressure,
                        CompositionalMultiphaseFVM::ScalingType const scalingType,
                        real64 const scalingFactor,
                        globalIndex const rankOffset,
@@ -1528,9 +1540,115 @@ public:
             pressureScalingFactor,
             compDensScalingFactor ),
     m_allowCompDensChopping( allowCompDensChopping ),
+    m_allowNegativePressure( allowNegativePressure ),
     m_scalingFactor( scalingFactor ),
     m_scalingType( scalingType )
   {}
+
+  /**
+   * @struct StackVariables
+   * @brief Kernel variables located on the stack
+   */
+  struct StackVariables : public Base::StackVariables
+  {
+    GEOS_HOST_DEVICE
+    StackVariables()
+    { }
+
+    StackVariables( real64 _localMinVal,
+                    real64 _localMinPres,
+                    real64 _localMinDens,
+                    real64 _localMinTotalDens,
+                    integer _localNumNegPressures,
+                    integer _localNumNegDens,
+                    integer _localNumNegTotalDens )
+      :
+      Base::StackVariables( _localMinVal ),
+      localMinPres( _localMinPres ),
+      localMinDens( _localMinDens ),
+      localMinTotalDens( _localMinTotalDens ),
+      localNumNegPressures( _localNumNegPressures ),
+      localNumNegDens( _localNumNegDens ),
+      localNumNegTotalDens( _localNumNegTotalDens )
+    { }
+
+    real64 localMinPres;
+    real64 localMinDens;
+    real64 localMinTotalDens;
+
+    integer localNumNegPressures;
+    integer localNumNegDens;
+    integer localNumNegTotalDens;
+
+  };
+
+  /**
+   * @brief Performs the kernel launch
+   * @tparam POLICY the policy used in the RAJA kernels
+   * @tparam KERNEL_TYPE the kernel type
+   * @param[in] numElems the number of elements
+   * @param[inout] kernelComponent the kernel component providing access to the compute function
+   */
+  template< typename POLICY, typename KERNEL_TYPE >
+  static StackVariables
+  launch( localIndex const numElems,
+          KERNEL_TYPE const & kernelComponent )
+  {
+    RAJA::ReduceMin< ReducePolicy< POLICY >, integer > globalMinVal( 1 );
+
+    RAJA::ReduceMin< ReducePolicy< POLICY >, real64 > minPres( 0.0 );
+    RAJA::ReduceMin< ReducePolicy< POLICY >, real64 > minDens( 0.0 );
+    RAJA::ReduceMin< ReducePolicy< POLICY >, real64 > minTotalDens( 0.0 );
+
+    RAJA::ReduceSum< ReducePolicy< POLICY >, integer > numNegPressures( 0 );
+    RAJA::ReduceSum< ReducePolicy< POLICY >, integer > numNegDens( 0 );
+    RAJA::ReduceSum< ReducePolicy< POLICY >, integer > numNegTotalDens( 0 );
+
+    forAll< POLICY >( numElems, [=] GEOS_HOST_DEVICE ( localIndex const ei )
+    {
+      if( kernelComponent.ghostRank( ei ) >= 0 )
+      {
+        return;
+      }
+
+      StackVariables stack;
+      kernelComponent.setup( ei, stack );
+      kernelComponent.compute( ei, stack );
+
+      globalMinVal.min( stack.localMinVal );
+
+      minPres.min( stack.localMinPres );
+      minDens.min( stack.localMinDens );
+      minTotalDens.min( stack.localMinTotalDens );
+
+      numNegPressures += stack.localNumNegPressures;
+      numNegDens += stack.localNumNegDens;
+      numNegTotalDens += stack.localNumNegTotalDens;
+    } );
+
+    return StackVariables( globalMinVal.get(),
+                           minPres.get(),
+                           minDens.get(),
+                           minTotalDens.get(),
+                           numNegPressures.get(),
+                           numNegDens.get(),
+                           numNegTotalDens.get() );
+  }
+
+  GEOS_HOST_DEVICE
+  void setup( localIndex const ei,
+              StackVariables & stack ) const
+  {
+    Base::setup( ei, stack );
+
+    stack.localMinPres = 0.0;
+    stack.localMinDens = 0.0;
+    stack.localMinTotalDens = 0.0;
+
+    stack.localNumNegPressures = 0;
+    stack.localNumNegDens = 0;
+    stack.localNumNegTotalDens = 0;
+  }
 
   /**
    * @brief Compute the local value
@@ -1559,10 +1677,16 @@ public:
   {
     bool const localScaling = m_scalingType == CompositionalMultiphaseFVM::ScalingType::Local;
 
-    real64 const newPres = m_pressure[ei] + (localScaling ? m_pressureScalingFactor[ei] : m_scalingFactor * m_localSolution[stack.localRow]);
+    real64 const newPres = m_pressure[ei] + (localScaling ? m_pressureScalingFactor[ei] : m_scalingFactor) * m_localSolution[stack.localRow];
     if( newPres < 0 )
     {
-      stack.localMinVal = 0;
+      if( !m_allowNegativePressure )
+      {
+        stack.localMinVal = 0;
+      }
+      stack.localNumNegPressures += 1;
+      if( newPres < stack.localMinPres )
+        stack.localMinPres = newPres;
     }
 
     // if component density chopping is not allowed, the time step fails if a component density is negative
@@ -1572,10 +1696,13 @@ public:
     {
       for( integer ic = 0; ic < m_numComp; ++ic )
       {
-        real64 const newDens = m_compDens[ei][ic] + (localScaling ? m_compDensScalingFactor[ei] : m_scalingFactor * m_localSolution[stack.localRow + ic + 1]);
+        real64 const newDens = m_compDens[ei][ic] + (localScaling ? m_compDensScalingFactor[ei] : m_scalingFactor) * m_localSolution[stack.localRow + ic + 1];
         if( newDens < 0 )
         {
           stack.localMinVal = 0;
+          stack.localNumNegDens += 1;
+          if( newDens < stack.localMinDens )
+            stack.localMinDens = newDens;
         }
       }
     }
@@ -1584,12 +1711,15 @@ public:
       real64 totalDens = 0.0;
       for( integer ic = 0; ic < m_numComp; ++ic )
       {
-        real64 const newDens = m_compDens[ei][ic] + (localScaling ? m_compDensScalingFactor[ei] : m_scalingFactor * m_localSolution[stack.localRow + ic + 1]);
+        real64 const newDens = m_compDens[ei][ic] + (localScaling ? m_compDensScalingFactor[ei] : m_scalingFactor) * m_localSolution[stack.localRow + ic + 1];
         totalDens += ( newDens > 0.0 ) ? newDens : 0.0;
       }
       if( totalDens < 0 )
       {
         stack.localMinVal = 0;
+        stack.localNumNegTotalDens += 1;
+        if( totalDens < stack.localMinTotalDens )
+          stack.localMinTotalDens = totalDens;
       }
     }
 
@@ -1600,6 +1730,9 @@ protected:
 
   /// flag to allow the component density chopping
   integer const m_allowCompDensChopping;
+
+  /// flag to allow negative pressure values
+  integer const m_allowNegativePressure;
 
   /// scaling factor
   real64 const m_scalingFactor;
@@ -1628,8 +1761,9 @@ public:
    * @param[in] localSolution the Newton update
    */
   template< typename POLICY >
-  static integer
+  static SolutionCheckKernel::StackVariables
   createAndLaunch( integer const allowCompDensChopping,
+                   integer const allowNegativePressure,
                    CompositionalMultiphaseFVM::ScalingType const scalingType,
                    real64 const scalingFactor,
                    globalIndex const rankOffset,
@@ -1646,7 +1780,7 @@ public:
       subRegion.getField< fields::flow::pressureScalingFactor >();
     arrayView1d< real64 > compDensScalingFactor =
       subRegion.getField< fields::flow::globalCompDensityScalingFactor >();
-    SolutionCheckKernel kernel( allowCompDensChopping, scalingType, scalingFactor, rankOffset,
+    SolutionCheckKernel kernel( allowCompDensChopping, allowNegativePressure, scalingType, scalingFactor, rankOffset,
                                 numComp, dofKey, subRegion, localSolution, pressure, compDens, pressureScalingFactor, compDensScalingFactor );
     return SolutionCheckKernel::launch< POLICY >( subRegion.size(), kernel );
   }
