@@ -22,13 +22,8 @@ else()
 endif()
 set( CMAKE_ENABLE_EXPORTS ON )
 
-# ninja only: use `JOB_POOLS` to prevent OOM errors in CI (CUDA)
-set_property(GLOBAL PROPERTY JOB_POOLS one_jobs=1 two_jobs=2)
-
 # populated by `geos_add_test` (private list of all geos tests)
 set_property( GLOBAL PROPERTY geos_tests_list )
-
-# set_property(GLOBAL PROPERTY RULE_LAUNCH_COMPILE "${CMAKE_COMMAND} -E time")
 
 ################################
 # Include blt
