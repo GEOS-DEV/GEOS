@@ -32,6 +32,7 @@ docker run \
   --name=${CONTAINER_NAME} \
   --volume=${BUILD_DIR}:${BUILD_DIR_MOUNT_POINT} ${SCCACHE_VOLUME_MOUNT} \
   --oom-kill-disable \
+  --memory='16g' --memory-swap='32g' \
   --cap-add=ALL \
   -e HOST_CONFIG=${HOST_CONFIG:-host-configs/environment.cmake} \
   -e CMAKE_BUILD_TYPE \

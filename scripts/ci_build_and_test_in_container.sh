@@ -4,8 +4,13 @@ env
 echo "running nproc"
 nproc
 
+# docs.docker.com/config/containers/resource_constraints
+# Inside the container, tools like free report the host's available swap, not what's available inside the container.
+# Don't rely on the output of free or similar tools to determine whether swap is present.
 echo "running free -m"
 free -m
+
+docker stats --format "table {{.Name}}\t{{.MemUsage}}"
 
 # The or_die function run the passed command line and
 # exits the program in case of non zero error code
