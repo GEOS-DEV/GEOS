@@ -102,7 +102,7 @@ fi
 # "Make" target check (builds geosx executable target only if true)
 # Reduce n° of processes to prevent out-of-memory error
 if [ ${CMAKE_BUILD_TYPE} == 'Debug' ]; then
-  np=2
+  np=1
 else
   np=$(nproc)
 fi

@@ -61,6 +61,8 @@ endmacro( geosx_add_code_checks )
 ##                EXECUTABLE [executable] )
 ##
 ## Adds a test to the project, remaining arguments are forwarded to `blt_add_test`
+## As a side effect, uses and populates a global property named `geos_tests_exe_list`
+## initialized in `src/CMakeLists.txt`.
 ##------------------------------------------------------------------------------
 macro( geos_add_test )
 
