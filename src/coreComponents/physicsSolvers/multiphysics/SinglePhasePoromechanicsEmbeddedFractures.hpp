@@ -21,11 +21,12 @@
 
 #include "physicsSolvers/multiphysics/SinglePhasePoromechanics.hpp"
 #include "physicsSolvers/contact/SolidMechanicsEmbeddedFractures.hpp"
+#include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
 
 namespace geos
 {
 
-class SinglePhasePoromechanicsEmbeddedFractures : public SinglePhasePoromechanics
+class SinglePhasePoromechanicsEmbeddedFractures : public SinglePhasePoromechanics< SinglePhaseBase >
 {
 public:
   SinglePhasePoromechanicsEmbeddedFractures( const std::string & name,

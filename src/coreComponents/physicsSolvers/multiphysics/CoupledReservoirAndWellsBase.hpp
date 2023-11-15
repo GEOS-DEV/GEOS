@@ -87,6 +87,9 @@ public:
     Well = 1
   };
 
+  /// String used to form the solverName used to register solvers in CoupledSolver
+  static string coupledSolverAttributePrefix() { return "reservoirAndWells"; }
+
   /**
    * @brief main constructor for ManagedGroup Objects
    * @param name the name of this instantiation of ManagedGroup in the repository

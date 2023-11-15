@@ -32,6 +32,7 @@
       timeIntegrationOption="QuasiStatic"
       logLevel="0"
       discretization="FE1"
+      surfaceGeneratorName="SurfaceGen"
       targetRegions="{ Region }">
       <NonlinearSolverParameters
         newtonTol="1.0e-6"

@@ -112,12 +112,12 @@ CompositionalMultiphaseBase::CompositionalMultiphaseBase( const string & name,
     setSizedFromParent( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( 0.5 ).
-    setDescription( "Maximum (relative) change in pressure in a Newton iteration (expected value between 0 and 1)" );
+    setDescription( "Maximum (relative) change in pressure in a Newton iteration" );
   this->registerWrapper( viewKeyStruct::maxRelativeTempChangeString(), &m_maxRelativeTempChange ).
     setSizedFromParent( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( 0.5 ).
-    setDescription( "Maximum (relative) change in temperature in a Newton iteration (expected value between 0 and 1)" );
+    setDescription( "Maximum (relative) change in temperature in a Newton iteration" );
 
   this->registerWrapper( viewKeyStruct::allowLocalCompDensChoppingString(), &m_allowCompDensChopping ).
     setSizedFromParent( 0 ).
@@ -155,19 +155,12 @@ void CompositionalMultiphaseBase::postProcessInput()
   GEOS_ERROR_IF_LE_MSG( m_maxCompFracChange, 0.0,
                         getWrapperDataContext( viewKeyStruct::maxCompFracChangeString() ) <<
                         ": The maximum absolute change in component fraction in a Newton iteration must be larger than 0.0" );
-  GEOS_ERROR_IF_GT_MSG( m_maxRelativePresChange, 1.0,
-                        getWrapperDataContext( viewKeyStruct::maxRelativePresChangeString() ) <<
-                        ": The maximum relative change in pressure in a Newton iteration must be smaller or equal to 1.0 (i.e., 100 percent change)" );
   GEOS_ERROR_IF_LE_MSG( m_maxRelativePresChange, 0.0,
                         getWrapperDataContext( viewKeyStruct::maxRelativePresChangeString() ) <<
                         ": The maximum relative change in pressure in a Newton iteration must be larger than 0.0" );
-  GEOS_ERROR_IF_GT_MSG( m_maxRelativeTempChange, 1.0,
-                        getWrapperDataContext( viewKeyStruct::maxRelativeTempChangeString() ) <<
-                        ": The maximum relative change in temperature in a Newton iteration must be smaller or equal to 1.0 (i.e., 100 percent change)" );
   GEOS_ERROR_IF_LE_MSG( m_maxRelativeTempChange, 0.0,
                         getWrapperDataContext( viewKeyStruct::maxRelativeTempChangeString() ) <<
                         ": The maximum relative change in temperature in a Newton iteration must be larger than 0.0" );
-
   GEOS_ERROR_IF_LE_MSG( m_targetRelativePresChange, 0.0,
                         getWrapperDataContext( viewKeyStruct::targetRelativePresChangeString() ) <<
                         ": The target relative change in pressure in a time step must be larger than 0.0" );
@@ -2249,7 +2242,7 @@ void CompositionalMultiphaseBase::updateState( DomainPartition & domain )
     } );
   } );
 
-  GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "{}: Max deltaPhaseVolFrac = {}", getName(), maxDeltaPhaseVolFrac ) );
+  GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "        {}: Max phase volume fraction change = {}", getName(), maxDeltaPhaseVolFrac ) );
 }
 
 } // namespace geos
