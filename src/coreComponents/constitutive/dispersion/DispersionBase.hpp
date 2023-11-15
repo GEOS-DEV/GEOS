@@ -22,6 +22,7 @@
 #include "common/DataLayouts.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
 #include "constitutive/ConstitutiveBase.hpp"
+#include "constitutive/dispersion/Layout.hpp"
 
 namespace geos
 {
@@ -118,7 +119,7 @@ public:
   virtual void saveConvergedVelocityState( arrayView2d< real64 const > const & convergedVelocity ) const
   { GEOS_UNUSED_VAR( convergedVelocity ); }
 
-private:
+protected:
 
   /**
    * @brief Function called internally to resize member arrays
@@ -127,13 +128,15 @@ private:
    */
   void resizeFields( localIndex const size, localIndex const numPts );
 
-protected:
 
   virtual void postProcessInput() override;
 
   /// cell-wise dispersivity in the subregion
   /// TODO: support full tensor if linear isotropic diffusion is no longer enough
   array3d< real64 > m_dispersivity;
+
+  // misc
+  array4d< real64, dispersion::LAYOUT_PHASE_VELOCITY > m_phaseVelocity;
 
 };
 

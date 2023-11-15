@@ -59,6 +59,7 @@ public:
   using MultiFluidAccessors = AbstractBase::MultiFluidAccessors;
   using CapPressureAccessors = AbstractBase::CapPressureAccessors;
   using PermeabilityAccessors = AbstractBase::PermeabilityAccessors;
+  using DispersionAccessors = AbstractBase::DispersionAccessors;
 
   using StabCompFlowAccessors =
     StencilAccessors< fields::flow::macroElementIndex,
@@ -117,6 +118,7 @@ public:
    * @param[inout] localRhs the local right-hand side vector
    */
   FaceBasedAssemblyKernel( integer const numPhases,
+                           //TODO (jacques) propagate use of DispersionAccesssors
                            globalIndex const rankOffset,
                            integer const hasCapPressure,
                            FluxApproximationBase const & fluxApprox,
@@ -126,6 +128,7 @@ public:
                            CompFlowAccessors const & compFlowAccessors,
                            StabCompFlowAccessors const & stabCompFlowAccessors,
                            MultiFluidAccessors const & multiFluidAccessors,
+                           DispersionAccessors const & dispersionAccessors,
                            StabMultiFluidAccessors const & stabMultiFluidAccessors,
                            CapPressureAccessors const & capPressureAccessors,
                            PermeabilityAccessors const & permeabilityAccessors,
@@ -142,6 +145,7 @@ public:
             dofNumberAccessor,
             compFlowAccessors,
             multiFluidAccessors,
+            dispersionAccessors,
             capPressureAccessors,
             permeabilityAccessors,
             dt,
@@ -356,9 +360,10 @@ public:
       typename KERNEL_TYPE::CapPressureAccessors capPressureAccessors( elemManager, solverName );
       typename KERNEL_TYPE::PermeabilityAccessors permeabilityAccessors( elemManager, solverName );
       typename KERNEL_TYPE::RelPermAccessors relPermAccessors( elemManager, solverName );
+      typename KERNEL_TYPE::DispersionAccessors dispersionAccessors( elemManager, solverName );
 
       KERNEL_TYPE kernel( numPhases, rankOffset, hasCapPressure, fluxApprox, elemManager, stencilWrapper, dofNumberAccessor,
-                          compFlowAccessors, stabCompFlowAccessors, multiFluidAccessors, stabMultiFluidAccessors,
+                          compFlowAccessors, stabCompFlowAccessors, multiFluidAccessors, dispersionAccessors, stabMultiFluidAccessors,
                           capPressureAccessors, permeabilityAccessors, relPermAccessors,
                           dt, localMatrix, localRhs );
       KERNEL_TYPE::template launch< POLICY >( stencilWrapper.size(), kernel );

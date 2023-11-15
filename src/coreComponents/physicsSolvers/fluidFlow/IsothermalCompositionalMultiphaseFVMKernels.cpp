@@ -38,6 +38,7 @@ FaceBasedAssemblyKernelBase::FaceBasedAssemblyKernelBase( integer const numPhase
                                                           DofNumberAccessor const & dofNumberAccessor,
                                                           CompFlowAccessors const & compFlowAccessors,
                                                           MultiFluidAccessors const & multiFluidAccessors,
+                                                          DispersionAccessors const & dispersionAccessors,
                                                           real64 const & dt,
                                                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                           arrayView1d< real64 > const & localRhs )
@@ -52,7 +53,7 @@ FaceBasedAssemblyKernelBase::FaceBasedAssemblyKernelBase( integer const numPhase
   m_dPhaseVolFrac( compFlowAccessors.get( fields::flow::dPhaseVolumeFraction {} ) ),
   m_phaseCompFrac( multiFluidAccessors.get( fields::multifluid::phaseCompFraction {} ) ),
   m_dPhaseCompFrac( multiFluidAccessors.get( fields::multifluid::dPhaseCompFraction {} ) ),
-  m_phaseVelocity( multiFluidAccessors.get( fields::multifluid::phaseVelocity {} ) ),
+  m_phaseVelocity( dispersionAccessors.get( fields::dispersion::phaseVelocity {} ) ),
   m_localMatrix( localMatrix ),
   m_localRhs( localRhs )
 {}

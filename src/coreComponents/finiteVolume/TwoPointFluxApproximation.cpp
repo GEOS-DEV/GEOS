@@ -74,7 +74,7 @@ TwoPointFluxApproximation::TwoPointFluxApproximation( string const & name,
 
 }
 
-    void TwoPointFluxApproximation::registerCellStencil( Group & stencilGroup ) const
+void TwoPointFluxApproximation::registerCellStencil( Group & stencilGroup ) const
 {
   stencilGroup.registerWrapper< CellElementStencilTPFA >( viewKeyStruct::cellStencilString() ).
     setRestartFlags( RestartFlags::NO_WRITE );
@@ -192,14 +192,15 @@ void TwoPointFluxApproximation::computeCellStencil( MeshLevel & mesh ) const
 
       //cumulating signed distance to from face to cell center to form denom in cell-wise linear interpolation
       real64 absCellToFaceVec[3];
-        for (int dir = 0; dir < 3; ++dir) {
-            absCellToFaceVec[dir] = LvArray::math::abs(cellToFaceVec[ke][dir]);
-        }
+      for( int dir = 0; dir < 3; ++dir )
+      {
+        absCellToFaceVec[dir] = LvArray::math::abs( cellToFaceVec[ke][dir] );
+      }
 
-      LvArray::tensorOps::add<3>( m_globalCellToFace[stencilCellsGlobalIndex[ke]], absCellToFaceVec );
+      LvArray::tensorOps::add< 3 >( m_globalCellToFace[stencilCellsGlobalIndex[ke]], absCellToFaceVec );
 
 //      real64 const c2fDistance = LvArray::tensorOps::normalize< 3 >( cellToFaceVec[ke] );
-        real64 const c2fDistance = LvArray::tensorOps::l2Norm< 3 >( cellToFaceVec[ke] );
+      real64 const c2fDistance = LvArray::tensorOps::l2Norm< 3 >( cellToFaceVec[ke] );
 
       stencilWeights[ke] = faceArea / c2fDistance;
       stencilStabilizationWeights[ke] = faceArea * c2fDistance;
@@ -232,7 +233,7 @@ void TwoPointFluxApproximation::computeCellStencil( MeshLevel & mesh ) const
   } );
 }
 
-    void TwoPointFluxApproximation::registerFractureStencil( Group & stencilGroup ) const
+void TwoPointFluxApproximation::registerFractureStencil( Group & stencilGroup ) const
 {
   stencilGroup.registerWrapper< SurfaceElementStencil >( viewKeyStruct::fractureStencilString() ).
     setRestartFlags( RestartFlags::NO_WRITE );

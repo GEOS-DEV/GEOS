@@ -31,6 +31,7 @@ DispersionBase::DispersionBase( string const & name, Group * const parent )
   : ConstitutiveBase( name, parent )
 {
   registerField( fields::dispersion::dispersivity{}, &m_dispersivity );
+  registerField( fields::dispersion::phaseVelocity{}, &m_phaseVelocity );
 }
 
 void DispersionBase::postProcessInput()
@@ -48,6 +49,15 @@ void DispersionBase::allocateConstitutiveData( dataRepository::Group & parent,
 
   ConstitutiveBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 }
+
+void DispersionBase::resizeFields( const geos::localIndex size, const geos::localIndex numPts )
+{
+
+  integer const numPhase = 3;   //FIXME change soon
+  integer const numDir = 3;   //as in the real world
+  m_phaseVelocity.resize( size, numPts, numPhase, numDir );
+}
+
 
 } // namespace constitutive
 

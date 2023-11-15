@@ -180,6 +180,7 @@ public:
   using MultiFluidAccessors = AbstractBase::MultiFluidAccessors;
   using CapPressureAccessors = AbstractBase::CapPressureAccessors;
   using PermeabilityAccessors = AbstractBase::PermeabilityAccessors;
+  using DispersionAccessors = AbstractBase::DispersionAccessors;
 
   using AbstractBase::m_dt;
   using AbstractBase::m_numPhases;
@@ -250,6 +251,7 @@ public:
                            CompFlowAccessors const & compFlowAccessors,
                            ThermalCompFlowAccessors const & thermalCompFlowAccessors,
                            MultiFluidAccessors const & multiFluidAccessors,
+                           DispersionAccessors const & dispersionAccessors,
                            ThermalMultiFluidAccessors const & thermalMultiFluidAccessors,
                            CapPressureAccessors const & capPressureAccessors,
                            PermeabilityAccessors const & permeabilityAccessors,
@@ -266,6 +268,7 @@ public:
             dofNumberAccessor,
             compFlowAccessors,
             multiFluidAccessors,
+            dispersionAccessors,
             capPressureAccessors,
             permeabilityAccessors,
             dt,
@@ -657,9 +660,10 @@ public:
       typename KernelType::CapPressureAccessors capPressureAccessors( elemManager, solverName );
       typename KernelType::PermeabilityAccessors permeabilityAccessors( elemManager, solverName );
       typename KernelType::ThermalConductivityAccessors thermalConductivityAccessors( elemManager, solverName );
+      typename KernelType::DispersionAccessors dispersionAccessors( elemManager, solverName );
 
       KernelType kernel( numPhases, rankOffset, hasCapPressure, fluxApprox, elemManager, stencilWrapper, dofNumberAccessor,
-                         compFlowAccessors, thermalCompFlowAccessors, multiFluidAccessors, thermalMultiFluidAccessors,
+                         compFlowAccessors, thermalCompFlowAccessors, multiFluidAccessors, dispersionAccessors, thermalMultiFluidAccessors,
                          capPressureAccessors, permeabilityAccessors, thermalConductivityAccessors,
                          dt, localMatrix, localRhs );
       KernelType::template launch< POLICY >( stencilWrapper.size(), kernel );

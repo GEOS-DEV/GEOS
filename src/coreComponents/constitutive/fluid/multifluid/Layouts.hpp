@@ -67,8 +67,6 @@ using LAYOUT_PHASE = RAJA::PERM_IJK;
 /// Constitutive model phase property compositional derivative array layout
 using LAYOUT_PHASE_DC = RAJA::PERM_IJKL;
 
-using LAYOUT_PHASE_VELOCITY = RAJA::PERM_IJKL;
-
 /// Constitutive model phase composition array layout
 using LAYOUT_PHASE_COMP = RAJA::PERM_IJKL;
 /// Constitutive model phase composition compositional derivative array layout
@@ -90,8 +88,6 @@ static constexpr int USD_PHASE_DC = LvArray::typeManipulation::getStrideOneDimen
 static constexpr int USD_PHASE_COMP = LvArray::typeManipulation::getStrideOneDimension( LAYOUT_PHASE_COMP{} );
 /// Constitutive model phase composition compositional derivative unit stride dimension
 static constexpr int USD_PHASE_COMP_DC = LvArray::typeManipulation::getStrideOneDimension( LAYOUT_PHASE_COMP_DC{} );
-/// Constitutive model phase velocity unit stride dimension
-static constexpr int USD_PHASE_VELOCITY = LvArray::typeManipulation::getStrideOneDimension( LAYOUT_PHASE_VELOCITY{} );
 
 /// Constitutive model fluid property unit stride dimension
 static constexpr int USD_FLUID = LvArray::typeManipulation::getStrideOneDimension( LAYOUT_FLUID{} );
