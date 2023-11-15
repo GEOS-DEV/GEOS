@@ -79,6 +79,11 @@ jobs:
     - name: Print environment
       run: printenv
 
+    - name: Set Swap Space
+      uses: pierotofy/set-swap-space@master
+      with:
+        swap-size-gb: 16
+
     # Build and test only
     # Builds only the geosx executable (timeout when building tests)
     - name: Build and test
