@@ -197,8 +197,7 @@ public:
    * @param matrix the system matrix
    * @param rhs the system right-hand side vector
    */
-  virtual void assembleFluxTerms( real64 const time_n,
-                                  real64 const dt,
+  virtual void assembleFluxTerms( real64 const dt,
                                   DomainPartition const & domain,
                                   DofManager const & dofManager,
                                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
@@ -283,6 +282,8 @@ public:
     static constexpr char const * maxCompFracChangeString() { return CompositionalMultiphaseBase::viewKeyStruct::maxCompFracChangeString(); }
 
     static constexpr char const * maxRelativePresChangeString() { return "maxRelativePressureChange"; }
+
+    static constexpr char const * maxAbsolutePresChangeString() { return "maxAbsolutePressureChange"; }
 
     static constexpr char const * allowLocalCompDensChoppingString() { return CompositionalMultiphaseBase::viewKeyStruct::allowLocalCompDensChoppingString(); }
 
@@ -380,6 +381,9 @@ private:
 
   /// maximum (relative) change in pressure between two Newton iterations
   real64 m_maxRelativePresChange;
+
+  /// maximum (absolute) change in pressure between two Newton iterations
+  real64 m_maxAbsolutePresChange;
 
   /// minimum value of the scaling factor obtained by enforcing maxCompFracChange
   real64 m_minScalingFactor;

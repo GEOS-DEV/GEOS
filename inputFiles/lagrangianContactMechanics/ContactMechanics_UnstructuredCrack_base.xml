@@ -26,6 +26,7 @@
       name="lagsolve"
       timeIntegrationOption="QuasiStatic"
       discretization="FE1"
+      surfaceGeneratorName="SurfaceGen"
       targetRegions="{ Region }"
       >
       <NonlinearSolverParameters
