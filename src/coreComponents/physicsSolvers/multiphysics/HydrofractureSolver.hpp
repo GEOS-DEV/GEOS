@@ -22,13 +22,14 @@
 #include "physicsSolvers/multiphysics/CoupledSolver.hpp"
 #include "physicsSolvers/surfaceGeneration/SurfaceGenerator.hpp"
 #include "physicsSolvers/multiphysics/SinglePhasePoromechanics.hpp"
+#include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
 
 namespace geos
 {
 
 using dataRepository::Group;
 
-template< typename POROMECHANICS_SOLVER = SinglePhasePoromechanics >
+template< typename POROMECHANICS_SOLVER = SinglePhasePoromechanics< SinglePhaseBase > >
 class HydrofractureSolver : public POROMECHANICS_SOLVER
 {
 public:
