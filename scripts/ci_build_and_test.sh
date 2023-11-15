@@ -35,7 +35,6 @@ dargs+=(--cap-add=ALL)
 
 if [ ${CMAKE_BUILD_TYPE} == 'Debug' ]; then
   dargs+=(--memory-swap='-1')
-  dargs+=(--oom-kill-disable)
 fi
 
 # Now we can build GEOSX.
