@@ -56,15 +56,15 @@ public:
    * @return number of phases
    */
   GEOS_HOST_DEVICE
-    localIndex numPhases() const { return m_dispersivity.size(2);}
+  localIndex numPhases() const { return m_dispersivity.size( 3 );}
 
 
-    /**
-     * @brief Get the number of physical dimensions
-     * @return number of physical dimensions
-     */
-    GEOS_HOST_DEVICE
-    localIndex numDims() const { return m_dispersivity.size(3);}
+  /**
+   * @brief Get the number of physical dimensions
+   * @return number of physical dimensions
+   */
+  GEOS_HOST_DEVICE
+  localIndex numDims() const { return m_dispersivity.size( 2 );}
 
 protected:
 
@@ -72,12 +72,12 @@ protected:
    * @brief Constructor for the class performing the dispersion updates
    * @param dispersivity the array of cell-wise dispersion in the subregion
    */
-  DispersionBaseUpdate( arrayView4d< real64 > const & dispersivity )
+  DispersionBaseUpdate( arrayView3d< real64 > const & dispersivity )
     : m_dispersivity( dispersivity )
   {}
 
   /// View on the cell-wise dispersivity
-  arrayView4d< real64 > const m_dispersivity;
+  arrayView3d< real64 > const m_dispersivity;
 
 private:
 
@@ -114,7 +114,7 @@ public:
    * @brief Getter for the dispersivities in the subRegion
    * @return an arrayView of dispersivities
    */
-  arrayView4d< real64 const > dispersivity() const { return m_dispersivity; }
+  arrayView3d< real64 const > dispersivity() const { return m_dispersivity; }
 
   /**
    * @brief Initialize the velocity state (needed because dispersion depends on total velocity)
@@ -140,7 +140,7 @@ protected:
 
   /// cell-wise dispersivity in the subregion
   /// TODO: support full tensor if linear isotropic diffusion is no longer enough
-  array4d< real64 > m_dispersivity;
+  array3d< real64 > m_dispersivity;
 
   // misc
   array3d< real64, dispersion::LAYOUT_PHASE_VELOCITY > m_phaseVelocity;

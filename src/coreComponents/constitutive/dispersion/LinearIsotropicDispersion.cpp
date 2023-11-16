@@ -50,11 +50,12 @@ void LinearIsotropicDispersion::allocateConstitutiveData( dataRepository::Group 
   {
     for( int q = 0; q < 1; ++q )
     {
-        for (int ip = 0; ip < m_dispersivity.size(2); ++ip) {
-            m_dispersivity[ei][q][ip][0] = m_longitudinalDispersivity;
-            m_dispersivity[ei][q][ip][1] = m_longitudinalDispersivity;
-            m_dispersivity[ei][q][ip][2] = m_longitudinalDispersivity;
-        }
+      for( int ip = 0; ip < m_dispersivity.size( 2 ); ++ip )
+      {
+        m_dispersivity[ei][q][0] = m_longitudinalDispersivity;
+        m_dispersivity[ei][q][1] = m_longitudinalDispersivity;
+        m_dispersivity[ei][q][2] = m_longitudinalDispersivity;
+      }
     }
 
   }

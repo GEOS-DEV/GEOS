@@ -39,7 +39,7 @@ public:
    * @param dispersivity the array of cell-wise dispersivities in the subregion
    * @param longitunidalDispersivity longitudinal dispersivity in the subregion
    */
-  LinearIsotropicDispersionUpdate( arrayView4d< real64 > const & dispersivity,
+  LinearIsotropicDispersionUpdate( arrayView3d< real64 > const & dispersivity,
                                    real64 const & longitudinalDispersivity )
     : DispersionBaseUpdate( dispersivity ),
     m_longitudinalDispersivity( longitudinalDispersivity )
@@ -52,11 +52,12 @@ public:
   {
     for( integer i = 0; i < 3; ++i )
     {
-        for (int ip = 0; ip < numPhases(); ++ip) {
+//      for( int ip = 0; ip < numPhases(); ++ip )
+//      {
 
-            real64 const velocityNorm = LvArray::tensorOps::l2Norm<3>(laggedTotalVelocityComponents[ip]);
-            m_dispersivity[k][q][ip][i] = m_longitudinalDispersivity * velocityNorm;
-        }
+//        real64 const velocityNorm = LvArray::tensorOps::l2Norm< 3 >( laggedTotalVelocityComponents[ip] );
+        m_dispersivity[k][q][i] = m_longitudinalDispersivity;
+//      }
     }
   }
 

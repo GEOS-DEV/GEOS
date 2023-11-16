@@ -35,7 +35,7 @@ using array3dLayoutPhase = array3d< real64, constitutive::dispersion::LAYOUT_PHA
 
 DECLARE_FIELD( dispersivity,
                "dispersivity",
-               array4d< real64 >,
+               array3d< real64 >,
                0,
                LEVEL_0,
                WRITE_AND_READ,

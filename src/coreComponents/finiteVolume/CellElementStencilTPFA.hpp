@@ -241,6 +241,7 @@ CellElementStencilTPFAWrapper::
 
   real64 halfWeight[2];
 
+
   // real64 const tolerance = 1e-30 * lengthTolerance; // TODO: choice of constant based on physics?
 
   for( localIndex i = 0; i < 2; ++i )
@@ -252,25 +253,29 @@ CellElementStencilTPFAWrapper::
     halfWeight[i] = m_weights[iconn][i];
 
     // Proper computation
-    real64 faceNormal[3];
+    real64 faceNormal[3], cellToFaceVec[3];
+    // previously was normalized in container
+    LvArray::tensorOps::copy<3>(cellToFaceVec, m_cellToFaceVec[iconn][i]);
+    LvArray::tensorOps::normalize<3>(cellToFaceVec);
+
     LvArray::tensorOps::copy< 3 >( faceNormal, m_faceNormal[iconn] );
-    if( LvArray::tensorOps::AiBi< 3 >( m_cellToFaceVec[iconn][i], faceNormal ) < 0.0 )
+    if( LvArray::tensorOps::AiBi< 3 >( cellToFaceVec, faceNormal ) < 0.0 )
     {
       LvArray::tensorOps::scale< 3 >( faceNormal, -1 );
     }
 
     real64 faceConormal[3];
     LvArray::tensorOps::hadamardProduct< 3 >( faceConormal, coefficient[er][esr][ei][0], faceNormal );
-    halfWeight[i] *= LvArray::tensorOps::AiBi< 3 >( m_cellToFaceVec[iconn][i], faceConormal );
+    halfWeight[i] *= LvArray::tensorOps::AiBi< 3 >( cellToFaceVec, faceConormal );
 
     // correct negative weight issue arising from non-K-orthogonal grids
     if( halfWeight[i] < 0.0 )
     {
       LvArray::tensorOps::hadamardProduct< 3 >( faceConormal,
                                                 coefficient[er][esr][ei][0],
-                                                m_cellToFaceVec[iconn][i] );
+                                                cellToFaceVec );
       halfWeight[i] = m_weights[iconn][i];
-      halfWeight[i] *= LvArray::tensorOps::AiBi< 3 >( m_cellToFaceVec[iconn][i], faceConormal );
+      halfWeight[i] *= LvArray::tensorOps::AiBi< 3 >( cellToFaceVec, faceConormal );
     }
   }
 
@@ -366,22 +371,25 @@ CellElementStencilTPFAWrapper::
     halfWeight[i] = m_weights[iconn][i];
 
     // Proper computation
-    real64 faceNormal[3];
+    real64 faceNormal[3],cellToFaceVec[3];
+      // previously was normalized in container
+      LvArray::tensorOps::copy<3>(cellToFaceVec, m_cellToFaceVec[iconn][i]);
+      LvArray::tensorOps::normalize<3>(cellToFaceVec);
 
     LvArray::tensorOps::copy< 3 >( faceNormal, m_faceNormal[iconn] );
 
-    if( LvArray::tensorOps::AiBi< 3 >( m_cellToFaceVec[iconn][i], faceNormal ) < 0.0 )
+    if( LvArray::tensorOps::AiBi< 3 >( cellToFaceVec, faceNormal ) < 0.0 )
     {
       LvArray::tensorOps::scale< 3 >( faceNormal, -1 );
     }
 
-    halfWeight[i] *= LvArray::tensorOps::AiBi< 3 >( m_cellToFaceVec[iconn][i], faceNormal );
+    halfWeight[i] *= LvArray::tensorOps::AiBi< 3 >( cellToFaceVec, faceNormal );
 
     // correct negative weight issue arising from non-K-orthogonal grids
     if( halfWeight[i] < 0.0 )
     {
       halfWeight[i] = m_weights[iconn][i];
-      halfWeight[i] *= LvArray::tensorOps::AiBi< 3 >( m_cellToFaceVec[iconn][i], m_cellToFaceVec[iconn][i] );
+//      halfWeight[i] *= LvArray::tensorOps::AiBi< 3 >( m_cellToFaceVec[iconn][i], m_cellToFaceVec[iconn][i] ); //useless as normalized vector it should be 1 always
     }
   }
 
