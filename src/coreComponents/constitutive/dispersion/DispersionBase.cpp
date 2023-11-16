@@ -39,6 +39,7 @@ void DispersionBase::postProcessInput()
   ConstitutiveBase::postProcessInput();
 
   m_dispersivity.resize( 0, 0, 0, 3 );
+  m_phaseVelocity.resize(0,0,3);
 }
 
 void DispersionBase::allocateConstitutiveData( dataRepository::Group & parent,

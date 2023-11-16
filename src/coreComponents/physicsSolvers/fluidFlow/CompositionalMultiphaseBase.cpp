@@ -874,8 +874,8 @@ void CompositionalMultiphaseBase::initializeFluidState( MeshLevel & mesh,
 //      GEOS_UNUSED_VAR( dispersionMaterial );
       // TODO: compute the phase velocities here
       //dispersionMaterial.saveConvergedVelocitySate( phaseVelovity );
-      arrayView3d<real64 const> phaseVelocity = subRegion.template getField< fields::dispersion::phaseVelocity >();
-      dispersionMaterial.initializeVelocityState( phaseVelocity );
+//      arrayView3d<real64 const> phaseVelocity = subRegion.template getField< fields::dispersion::phaseVelocity >();
+//      dispersionMaterial.initializeVelocityState( phaseVelocity );
     }
 
   } );
