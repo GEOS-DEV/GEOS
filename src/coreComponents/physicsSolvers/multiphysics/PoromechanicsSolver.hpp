@@ -135,8 +135,8 @@ protected:
     // diff = r2 - r1
     array1d< real64 > diff = addTwoVecs( r2, r1, -1.0 );
 
-    const real64 denom = dotTwoVecs( diff, diff );
-    const real64 numer = dotTwoVecs( r1, diff );
+    real64 const denom = dotTwoVecs( diff, diff );
+    real64 const numer = dotTwoVecs( r1, diff );
 
     real64 omega1 = 1.0;
     if( !isZero( denom ))
