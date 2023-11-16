@@ -38,26 +38,19 @@ void DispersionBase::postProcessInput()
 {
   ConstitutiveBase::postProcessInput();
 
-  m_dispersivity.resize( 0, 0, 3 );
+  m_dispersivity.resize( 0, 0, 0, 3 );
 }
 
 void DispersionBase::allocateConstitutiveData( dataRepository::Group & parent,
                                                localIndex const numConstitutivePointsPerParentIndex )
 {
+    const int numPhase_ = 3;//FIXME
   // NOTE: enforcing 1 quadrature point
-  m_dispersivity.resize( 0, 1, 3 );
+  m_dispersivity.resize( parent.size() , 1, numPhase_, 3 );
+  m_phaseVelocity.resize( parent.size(), numPhase_, 3 );
 
   ConstitutiveBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 }
-
-void DispersionBase::resizeFields( const geos::localIndex size, const geos::localIndex numPts )
-{
-
-  integer const numPhase = 3;   //FIXME change soon
-  integer const numDir = 3;   //as in the real world
-  m_phaseVelocity.resize( size, numPts, numPhase, numDir );
-}
-
 
 } // namespace constitutive
 

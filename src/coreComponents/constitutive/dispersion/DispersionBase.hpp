@@ -51,18 +51,33 @@ public:
   GEOS_HOST_DEVICE
   localIndex numGauss() const { return m_dispersivity.size( 1 ); }
 
+  /**
+   * @brief Get the number of present phases
+   * @return number of phases
+   */
+  GEOS_HOST_DEVICE
+    localIndex numPhases() const { return m_dispersivity.size(2);}
+
+
+    /**
+     * @brief Get the number of physical dimensions
+     * @return number of physical dimensions
+     */
+    GEOS_HOST_DEVICE
+    localIndex numDims() const { return m_dispersivity.size(3);}
+
 protected:
 
   /**
    * @brief Constructor for the class performing the dispersion updates
    * @param dispersivity the array of cell-wise dispersion in the subregion
    */
-  DispersionBaseUpdate( arrayView3d< real64 > const & dispersivity )
+  DispersionBaseUpdate( arrayView4d< real64 > const & dispersivity )
     : m_dispersivity( dispersivity )
   {}
 
   /// View on the cell-wise dispersivity
-  arrayView3d< real64 > const m_dispersivity;
+  arrayView4d< real64 > const m_dispersivity;
 
 private:
 
@@ -75,7 +90,7 @@ private:
   GEOS_HOST_DEVICE
   virtual void update( localIndex const k,
                        localIndex const q,
-                       arraySlice1d< real64 const > const & laggedTotalVelocityComponents ) const = 0;
+                       arraySlice2d< real64 const > const & laggedTotalVelocityComponents ) const = 0;
 };
 
 /**
@@ -99,7 +114,7 @@ public:
    * @brief Getter for the dispersivities in the subRegion
    * @return an arrayView of dispersivities
    */
-  arrayView3d< real64 const > dispersivity() const { return m_dispersivity; }
+  arrayView4d< real64 const > dispersivity() const { return m_dispersivity; }
 
   /**
    * @brief Initialize the velocity state (needed because dispersion depends on total velocity)
@@ -107,7 +122,7 @@ public:
    *
    * Note: this is needed because for now, the velocity field is treated **explicitly** in the dispersion tensor
    */
-  virtual void initializeVelocityState( arrayView2d< real64 const > const & initialVelocity ) const
+  virtual void initializeVelocityState( arrayView3d< real64 const > const & initialVelocity ) const
   { GEOS_UNUSED_VAR( initialVelocity ); }
 
   /**
@@ -116,27 +131,19 @@ public:
    *
    * Note: this is needed because for now, the velocity is treated **explicitly** in the dispersion tensor
    */
-  virtual void saveConvergedVelocityState( arrayView2d< real64 const > const & convergedVelocity ) const
+  virtual void saveConvergedVelocityState( arrayView3d< real64 const > const & convergedVelocity ) const
   { GEOS_UNUSED_VAR( convergedVelocity ); }
 
 protected:
-
-  /**
-   * @brief Function called internally to resize member arrays
-   * @param size primary dimension (e.g. number of cells)
-   * @param numPts secondary dimension (e.g. number of gauss points per cell)
-   */
-  void resizeFields( localIndex const size, localIndex const numPts );
-
 
   virtual void postProcessInput() override;
 
   /// cell-wise dispersivity in the subregion
   /// TODO: support full tensor if linear isotropic diffusion is no longer enough
-  array3d< real64 > m_dispersivity;
+  array4d< real64 > m_dispersivity;
 
   // misc
-  array4d< real64, dispersion::LAYOUT_PHASE_VELOCITY > m_phaseVelocity;
+  array3d< real64, dispersion::LAYOUT_PHASE_VELOCITY > m_phaseVelocity;
 
 };
 

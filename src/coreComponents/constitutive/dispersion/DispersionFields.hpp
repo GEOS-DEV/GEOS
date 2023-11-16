@@ -31,11 +31,11 @@ namespace fields
 namespace dispersion
 {
 
-using array4dLayoutPhase = array4d< real64, constitutive::dispersion::LAYOUT_PHASE_VELOCITY >;
+using array3dLayoutPhase = array3d< real64, constitutive::dispersion::LAYOUT_PHASE_VELOCITY >;
 
 DECLARE_FIELD( dispersivity,
                "dispersivity",
-               array3d< real64 >,
+               array4d< real64 >,
                0,
                LEVEL_0,
                WRITE_AND_READ,
@@ -43,7 +43,7 @@ DECLARE_FIELD( dispersivity,
 
 DECLARE_FIELD( phaseVelocity,
                "cellCenterPhaseVelocity",
-               array4dLayoutPhase,
+               array3dLayoutPhase,
                1,
                LEVEL_0,
                NO_WRITE,

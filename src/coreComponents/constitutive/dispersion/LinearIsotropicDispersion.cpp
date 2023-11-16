@@ -50,7 +50,8 @@ void LinearIsotropicDispersion::allocateConstitutiveData( dataRepository::Group 
   {
     for( int q = 0; q < 1; ++q )
     {
-      m_dispersivity[ei][q][0] = m_longitudinalDispersivity;
+        for (int ip = 0; ip < m_dispersivity.size(2); ++ip)
+            m_dispersivity[ei][q][ip][0] = m_longitudinalDispersivity;
     }
 
   }
@@ -65,12 +66,12 @@ void LinearIsotropicDispersion::postProcessInput()
                  InputError );
 }
 
-void LinearIsotropicDispersion::initializeVelocityState( arrayView2d< real64 const > const & initialVelocity ) const
+void LinearIsotropicDispersion::initializeVelocityState( arrayView3d< real64 const > const & initialVelocity ) const
 {
   saveConvergedVelocityState( initialVelocity );
 }
 
-void LinearIsotropicDispersion::saveConvergedVelocityState( arrayView2d< real64 const > const & convergedVelocity ) const
+void LinearIsotropicDispersion::saveConvergedVelocityState( arrayView3d< real64 const > const & convergedVelocity ) const
 {
   // note that the update function is called here, and not in the solver, because total velocity is treated explicitly
   KernelWrapper dispersionWrapper = createKernelWrapper();

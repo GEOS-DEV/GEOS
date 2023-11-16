@@ -372,7 +372,7 @@ protected:
   ElementViewConst< arrayView5d< real64 const, multifluid::USD_PHASE_COMP_DC > > const m_dPhaseCompFrac;
 
   /// Views on phase velocity
-  ElementRegionManager::ElementView< arrayView4d< real64, dispersion::USD_PHASE_VELOCITY > > const m_phaseVelocity;
+  ElementRegionManager::ElementView< arrayView3d< real64, dispersion::USD_PHASE_VELOCITY > > const m_phaseVelocity;
 
 
   // Residual and jacobian
@@ -1301,22 +1301,21 @@ public:
             localIndex const esr_up = sesri[k_up];
             localIndex const ei_up  = sei[k_up];
 
-            real64 const linearDispersionFactor = m_dispersivity[er_up][esr_up][ei_up][0][0]*LvArray::tensorOps::l2Norm< 3 >( m_phaseVelocity[er_up][esr_up][ei_up][0][ip] );
             // computation of the upwinded mass flux
-            dispersionFlux[ic] += m_phaseDens[er_up][esr_up][ei_up][0][ip] * compFracGrad * linearDispersionFactor;
+            dispersionFlux[ic] += m_phaseDens[er_up][esr_up][ei_up][0][ip] * compFracGrad;
 
             // add contributions of the derivatives of component fractions wrt pressure/component fractions
             for( integer ke = 0; ke < numFluxSupportPoints; ke++ )
             {
-              dDispersionFlux_dP[ke][ic] += m_phaseDens[er_up][esr_up][ei_up][0][ip] * dCompFracGrad_dP[ke] * linearDispersionFactor;
+              dDispersionFlux_dP[ke][ic] += m_phaseDens[er_up][esr_up][ei_up][0][ip] * dCompFracGrad_dP[ke];
               for( integer jc = 0; jc < numComp; ++jc )
               {
-                dDispersionFlux_dC[ke][ic][jc] += m_phaseDens[er_up][esr_up][ei_up][0][ip] * dCompFracGrad_dC[ke][jc] * linearDispersionFactor;
+                dDispersionFlux_dC[ke][ic][jc] += m_phaseDens[er_up][esr_up][ei_up][0][ip] * dCompFracGrad_dC[ke][jc];
               }
             }
 
             // add contributions of the derivatives of upwind coefficient wrt pressure/component fractions
-            dDispersionFlux_dP[k_up][ic] += m_dPhaseDens[er_up][esr_up][ei_up][0][ip][Deriv::dP] * compFracGrad * linearDispersionFactor;
+            dDispersionFlux_dP[k_up][ic] += m_dPhaseDens[er_up][esr_up][ei_up][0][ip][Deriv::dP] * compFracGrad;
             applyChainRule( numComp,
                             m_dCompFrac_dCompDens[er_up][esr_up][ei_up],
                             m_dPhaseDens[er_up][esr_up][ei_up][0][ip],
@@ -1324,7 +1323,7 @@ public:
                             Deriv::dC );
             for( integer jc = 0; jc < numComp; ++jc )
             {
-              dDispersionFlux_dC[k_up][ic][jc] += dDens_dC[jc] * compFracGrad * linearDispersionFactor;
+              dDispersionFlux_dC[k_up][ic][jc] += dDens_dC[jc] * compFracGrad;
             }
 
             // call the lambda in the phase loop to allow the reuse of the phase fluxes and their derivatives
