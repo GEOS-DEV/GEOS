@@ -19,11 +19,8 @@ declare -a LINK_SCRIPTS=("preprocess_xml"
 
 
 # Read input arguments
-PYTHON_TARGET="$(which python3)"
-VIRTUAL_PATH=""
-VIRTUAL_NAME="geosx"
-INSTALL_VIRTUAL=false
-BIN_DIR=""
+PYTHON_TARGET=
+BIN_DIR=
 PIP_CMD="pip --disable-pip-version-check"
 
 
@@ -44,11 +41,6 @@ case $key in
     PYTHON_TARGET="$2"
     shift # past argument
     ;;
-    -e|--environment-path)
-    VIRTUAL_PATH="$2"
-    INSTALL_VIRTUAL=true
-    shift # past argument
-    ;;
     -b|--bin-dir)
     BIN_DIR="$2"
     shift # past argument
@@ -61,7 +53,6 @@ case $key in
     echo ""
     echo "Python environment setup options:"
     echo "-p/--python-target \"Target parent python bin\""
-    echo "-e/--environment-path \"Path to store the new virtual environment\""
     echo "-b/--bin-dir \"Directory to link new scripts\""
     echo "-v/--verbose \"Increase verbosity level\""
     echo ""
@@ -80,6 +71,12 @@ done
 
 # Check to make sure that the python target exists
 echo "Checking the python target..."
+if [[ -z "${PYTHON_TARGET}" ]]
+then
+    echo "To setup the python environment, please specify the python executable path"
+    exit 1
+fi
+
 if [ ! -f "$PYTHON_TARGET" ]
 then
     echo "The target python executable ($PYTHON_TARGET) cannot be found"
@@ -93,47 +90,8 @@ then
 fi
 
 
-# Virtual python installation method
-if $INSTALL_VIRTUAL
-then
-    echo "Attempting to create a virtual python environment..."
-    
-    # Check to see if virtualenv is installed before continuing
-    RES=$($PYTHON_TARGET -m $PIP_CMD list)
-    if $VERBOSE
-    then
-        echo "Available packages in base python environment:"
-        echo $RES
-    fi
-
-    if [[ ! $RES =~ "virtualenv" ]]
-    then
-        echo "Error: The parent python environment must have virtualenv installed"
-        echo "       in order to setup a virtual environment!"
-        exit 1
-    fi
-
-    # Set the default path if not already defined
-    if [ -z "${VIRTUAL_PATH}" ]
-    then
-        VIRTUAL_PATH="$PWD/virtual_python_environment"
-    fi
-
-    # Setup the virtual environment
-    if $VERBOSE
-    then
-        echo "Virtual environment path:"
-        echo $VIRTUAL_PATH
-    fi
-
-    mkdir -p $VIRTUAL_PATH/$VIRTUAL_NAME
-    $PYTHON_TARGET -m virtualenv --system-site-packages $VIRTUAL_PATH/$VIRTUAL_NAME
-
-    PYTHON_TARGET=$VIRTUAL_PATH/$VIRTUAL_NAME/bin/python
-fi
-
-
 # Install packages
+echo "Installing python packages..."
 for p in "${TARGET_PACKAGES[@]}"
 do
     if [ -d "$p" ]
@@ -156,9 +114,10 @@ do
                 echo "The setup script may have failed to fetch external dependencies"
                 echo "Try re-running the \"make ats_environment\" script again on a machine that can access github"
             else
-                echo "Failed to install packages... Try one of the following:"
-                echo "    - Build a virtual environment with the -e/--environment-path option"
-                echo "    - Change the target python distribution"
+                echo "Failed to install packages"
+                echo "Note: if you do not have write access for your target python environment,"
+                echo "consider using a virtual python environment.  See these instructions for details:"
+                echo "https://docs.python.org/3/library/venv.html"
             fi
 
             exit $INSTALL_RC
