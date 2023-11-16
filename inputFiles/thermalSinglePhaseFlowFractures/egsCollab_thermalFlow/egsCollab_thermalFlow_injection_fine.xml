@@ -17,7 +17,10 @@
         newtonTol="1.0e-2"
         newtonMaxIter="10"
         maxAllowedResidualNorm="1e25"
-        lineSearchAction="None"/>
+        maxTimeStepCuts="5"
+        lineSearchMaxCuts="3"
+        timeStepDecreaseIterLimit="0.7"
+        timeStepIncreaseIterLimit="0.3"/>
       <LinearSolverParameters
         solverType="gmres"
         preconditionerType="amg"
@@ -28,7 +31,7 @@
       name="SurfaceGenerator"
       discretization="FE1"
       targetRegions="{ matrix }"
-      targetObjects="{ FracturePlanes }"
+      targetObjects="{ FracturePlane }"
       fractureRegion="fracture"
       logLevel="1"
       mpiCommOrder="1"/>

@@ -226,11 +226,11 @@ void EventManager::outputTime() const
 {
   if( m_timeOutputFormat==TimeOutputFormat::full )
   {
-    integer const yearsOut   =   m_time / YEAR;
-    integer const daysOut    =  (m_time - yearsOut * YEAR) / DAY;
-    integer const hoursOut   =  (m_time - yearsOut * YEAR - daysOut * DAY) / HOUR;
-    integer const minutesOut =  (m_time - yearsOut * YEAR - daysOut * DAY - hoursOut * HOUR) / MINUTE;
-    integer const secondsOut =   m_time - yearsOut * YEAR - daysOut * DAY - hoursOut * HOUR - minutesOut * MINUTE;
+    long long unsigned int const yearsOut   =   m_time / YEAR;
+    long long unsigned int const daysOut    =  (m_time - yearsOut * YEAR) / DAY;
+    long long unsigned int const hoursOut   =  (m_time - yearsOut * YEAR - daysOut * DAY) / HOUR;
+    long long unsigned int const minutesOut =  (m_time - yearsOut * YEAR - daysOut * DAY - hoursOut * HOUR) / MINUTE;
+    long long unsigned int const secondsOut =   m_time - yearsOut * YEAR - daysOut * DAY - hoursOut * HOUR - minutesOut * MINUTE;
 
     GEOS_LOG_RANK_0( GEOS_FMT( "Time: {} years, {} days, {} hrs, {} min, {} s, dt: {} s, Cycle: {}", yearsOut, daysOut, hoursOut, minutesOut, secondsOut, m_dt, m_cycle ) );
   }

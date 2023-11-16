@@ -10,6 +10,7 @@ set( fieldSpecification_headers
      TractionBoundaryCondition.hpp
      AquiferBoundaryCondition.hpp
      PerfectlyMatchedLayer.hpp
+     MaterialPropertiesUpdate.hpp
    )
 
 #
@@ -24,6 +25,7 @@ set( fieldSpecification_sources
      TractionBoundaryCondition.cpp
      AquiferBoundaryCondition.cpp
      PerfectlyMatchedLayer.cpp
+     MaterialPropertiesUpdate.cpp
    )
 
 set( dependencyList ${parallelDeps} functions linearAlgebra )

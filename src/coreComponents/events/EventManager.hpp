@@ -127,13 +127,13 @@ public:
   };
 
   /// seconds in a minute
-  static constexpr integer MINUTE = 60;
+  static constexpr long long unsigned int MINUTE = 60;
   /// seconds in a hour
-  static constexpr integer HOUR   = 60 * MINUTE;
+  static constexpr long long unsigned int HOUR   = 60 * MINUTE;
   /// seconds in a day
-  static constexpr integer DAY    = 24 * HOUR;
+  static constexpr long long unsigned int DAY    = 24 * HOUR;
   /// seconds in a year
-  static constexpr integer YEAR   = 365 * DAY;
+  static constexpr long long unsigned int YEAR   = 365 * DAY;
 
 private:
 

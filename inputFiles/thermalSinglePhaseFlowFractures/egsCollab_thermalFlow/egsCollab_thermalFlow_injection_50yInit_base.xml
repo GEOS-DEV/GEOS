@@ -15,15 +15,32 @@
     <SurfaceElementRegion
       name="fracture"
       subRegionType="embeddedElement"
-      materialList="{ water, fractureFilling, thermalCond }"
+      materialList="{ water, fractureFilling, thermalCondFrac }"
       defaultAperture="1e-3"/>  
   </ElementRegions>
 
+  <!-- maxTime="1.5798240000E+09 7.884302400e10" -->
   <Events
-     maxTime="1.57852800e9">
+     maxTime="1.5798240000e9"
+     timeOutputFormat="full">
      <SoloEvent
      name="preFracture"
      target="/Solvers/SurfaceGenerator"/>
+
+    <PeriodicEvent
+     name="outputs_initialization"
+     timeFrequency="1.576800000e9"
+     beginTime="0.0"
+     endTime="1.576800000e9"
+     targetExactStartStop="1"
+     target="/Outputs/vtkOutput"/>   
+
+   <PeriodicEvent
+     name="outputs"
+     timeFrequency="21600"
+     beginTime="1.576800001e9"
+     targetExactTimestep="1"
+     target="/Outputs/vtkOutput"/> 
 
     <PeriodicEvent
        name="solverApplications1"
@@ -35,28 +52,45 @@
     <PeriodicEvent
        name="solverApplications2"
        beginTime="1e6"
-       endTime="1.5768e9"
-       maxEventDt="1.5e7"
+       endTime="1.576800000e9"
+       targetExactStartStop="1"
+       maxEventDt="1e8"
        target="/Solvers/singleFlow"/>
+
+    <SoloEvent
+       name="modifyFracPermeability"
+       target="/Tasks/fracPermUpdate"
+       targetTime="1.576800000e9"
+       targetExactTimestep="1"
+       logLevel="1"/>
 
     <PeriodicEvent
        name="solverApplications3"
        forceDt="1"
-       beginTime="1.5768e9"
-       endTime="1.576800001e9"
+       beginTime="1.576800001e9"
+       endTime="1.576800010e9"
        target="/Solvers/singleFlow"/>
 
     <PeriodicEvent
        name="solverApplications4"
-       beginTime="1.576800001e9"
-       endTime="1.57852800e9"
-       maxEventDt="2"
-       target="/Solvers/singleFlow"/>   
-
-     <PeriodicEvent
-       name="outputs"
-       cycleFrequency="1"
-       target="/Outputs/vtkOutput"/>
+       beginTime="1.576800010e9"
+       endTime="1.5783552000E+09"
+       maxEventDt="3600"
+       target="/Solvers/singleFlow"/>
+    
+    <!-- Shut-down period -->
+    <PeriodicEvent
+       name="solverApplications5"
+       beginTime="1.5783552001E+09"
+       endTime="1.5791436500E+09"
+       maxEventDt="7200"
+       target="/Solvers/singleFlow"/>
+       
+    <PeriodicEvent
+       name="solverApplications6"
+       beginTime="1.5791436500E+09"
+       maxEventDt="3600"
+       target="/Solvers/singleFlow"/>     
    </Events>
 
   <FieldSpecifications>
@@ -74,7 +108,29 @@
        setNames="{ all }"
        objectPath="ElementRegions/fracture"
        fieldName="fracturePorosity_referencePorosity"
-       scale="1.0"/>   
+       scale="1.0"/>
+       
+    <FieldSpecification
+       name="fracPermeability"
+       setNames="{ all }"
+       component="0"
+       logLevel="1"
+       propertyUpdate="1"
+       objectPath="ElementRegions/fracture"
+       fieldName="fracturePerm_permeability"
+       beginTime="1.576800000e9"
+       scale="1.0e-9"/>
+       
+    <FieldSpecification
+       name="fracPressureAtInjection"
+       setNames="{ all }"
+       logLevel="1"
+       propertyUpdate="1"
+       objectPath="ElementRegions/fracture"
+       fieldName="pressure"
+       beginTime="1.576800000e9"
+       endTime="1.576800000e9"
+       scale="13.3e6"/>      
 
     <FieldSpecification
       name="initialPressure"
@@ -119,10 +175,26 @@
       
     <FieldSpecification
       name="DriftTemperature"
-      objectPath="ElementRegions/matrix"
+      objectPath="ElementRegions"
       fieldName="temperature"
       scale="291.65"
       setNames="{ Drift }"/>   
+
+    <FieldSpecification
+      name="BatteryTemperature"
+      objectPath="ElementRegions/matrix"
+      fieldName="temperature"
+      scale="293.637"
+      setNames="{ Battery }"/>   
+
+    <FieldSpecification
+      name="DriftFracturePressure"
+      objectPath="ElementRegions/fracture"  
+      fieldName="pressure"
+      scale="13.3e6"
+      beginTime="1.576800001e9"
+      setNames="{ Drift }"/>   
+  
     <!-- Injection -->
     <SourceFlux                                                                                                                                                                          
       name="TU_massFlux"                                                                                                                                                                  
@@ -130,14 +202,14 @@
       setNames="{ TU_injector }"                                                                                                                                                                
       objectPath="ElementRegions/fracture"                                                                                                                                              
       functionName="injectionSchedule_massFlux"                                                                                                                                                      
-      scale="-1.0"/>
+      scale="-1.0e-3"/>
 
     <FieldSpecification                                                                                                                                                                  
       name="TU_temperature"                                                                                                                                                       
       objectPath="ElementRegions/fracture"                                                                                                                                              
       fieldName="temperature"                                                                                                                                                            
       functionName="injectionSchedule_temperature"
-      beginTime="1.5768e9"
+      beginTime="1.576800001e9"
       scale="1"                                                                                                                                                                          
       setNames="{ TU_injector }"/>
 
@@ -148,7 +220,7 @@
       setNames="{ TN_producer }"                                                                                                                                                                
       objectPath="ElementRegions/fracture"                                                                                                                                              
       functionName="TN_massFlux"                                                                                                                                                      
-      scale="1.0"/>
+      scale="1.0e-3"/>
 
     <SourceFlux                                                                                                                                                                          
       name="TC_massFlux"                                                                                                                                                                  
@@ -156,7 +228,7 @@
       setNames="{ TC_producer }"                                                                                                                                                                
       objectPath="ElementRegions/fracture"                                                                                                                                              
       functionName="TC_massFlux"                                                                                                                                                      
-      scale="1.0"/>
+      scale="1.0e-3"/>
   </FieldSpecifications>
 
   <Functions>
@@ -177,35 +249,42 @@
     <TableFunction
       name="injectionSchedule_massFlux"
       inputVarNames="{ time }"
-      coordinateFiles="{ injectionSchedule_time.csv }"
+      coordinateFiles="{ injectionSchedule_time_50y_init.csv }"
       voxelFile="TU_flowRate.csv"
       interpolation="linear"/> 
 
     <TableFunction
       name="injectionSchedule_temperature"
       inputVarNames="{ time }"
-      coordinateFiles="{ injectionSchedule_time.csv }"
+      coordinateFiles="{ injectionSchedule_time_50y_init.csv }"
       voxelFile="TU_temperature.csv"
       interpolation="linear"/>
 
     <TableFunction
       name="TN_massFlux"
       inputVarNames="{ time }"
-      coordinateFiles="{ productionSchedule_time.csv }"
+      coordinateFiles="{ productionSchedule_time_50y_init.csv }"
       voxelFile="TN_flowRate.csv"
       interpolation="linear"/>
 
     <TableFunction
       name="TC_massFlux"
       inputVarNames="{ time }"
-      coordinateFiles="{ productionSchedule_time.csv }"
+      coordinateFiles="{ productionSchedule_time_50y_init.csv }"
       voxelFile="TC_flowRate.csv"
       interpolation="linear"/>   
   </Functions>
 
+  <Tasks>
+    <MaterialPropertiesUpdate
+      name="fracPermUpdate"/>
+  </Tasks>
+  
   <Outputs>
     <VTK
       name="vtkOutput"
-      plotFileRoot="thermalFlowFrac_collab_circulation"/>
+      plotFileRoot="thermalFlowFrac_collab_circulation"
+      onlyPlotSpecifiedFieldNames="1"
+      fieldNames="{temperature, pressure, elementCenter}"/>
   </Outputs>
 </Problem>
