@@ -22,6 +22,7 @@
 #include "codingUtilities/StringUtilities.hpp"
 #include "common/DataTypes.hpp"
 #include "LvArray/src/limits.hpp"
+#include "common/GEOS_RAJA_Interface.hpp"
 
 namespace geos
 {
@@ -423,7 +424,7 @@ VECTOR_TYPE addTwoVecs( VECTOR_TYPE const & vec1,
   const localIndex N = vec1.size();
   VECTOR_TYPE result( N );
   RAJA::forall< parallelHostPolicy >( RAJA::TypedRangeSegment< localIndex >( 0, N ),
-                                          [&] GEOS_HOST_DEVICE ( localIndex const i )
+                                      [&] GEOS_HOST_DEVICE ( localIndex const i )
   {
     result[i] = vec1[i] + sign * vec2[i];
   } );
@@ -437,7 +438,7 @@ VECTOR_TYPE scalarMultiplyAVec( VECTOR_TYPE const & vec,
   const localIndex N = vec.size();
   VECTOR_TYPE result( N );
   RAJA::forall< parallelHostPolicy >( RAJA::TypedRangeSegment< localIndex >( 0, N ),
-                                          [&] GEOS_HOST_DEVICE ( localIndex const i )
+                                      [&] GEOS_HOST_DEVICE ( localIndex const i )
   {
     result[i] = scalarMult * vec[i];
   } );
@@ -449,14 +450,14 @@ real64 dotTwoVecs( VECTOR_TYPE const & vec1,
                    VECTOR_TYPE const & vec2 )
 {
   GEOS_ASSERT( vec1.size() == vec2.size());
-  real64 result = 0;
+  RAJA::ReduceSum< parallelHostReduce, real64 > result( 0.0 );
   const localIndex N = vec1.size();
   RAJA::forall< parallelHostPolicy >( RAJA::TypedRangeSegment< localIndex >( 0, N ),
-                                          [&] GEOS_HOST_DEVICE ( localIndex const i )
+                                      [&] GEOS_HOST_DEVICE ( localIndex const i )
   {
     result += vec1[i] * vec2[i];
   } );
-  return result;
+  return result.get();
 }
 
 } // namespace geos
