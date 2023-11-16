@@ -22,7 +22,6 @@ declare -a LINK_SCRIPTS=("preprocess_xml"
 PYTHON_TARGET="$(which python3)"
 VIRTUAL_PATH=""
 VIRTUAL_NAME="geosx"
-MINICONDA_BUILD=""
 INSTALL_VIRTUAL=false
 BIN_DIR=""
 PIP_CMD="pip --disable-pip-version-check"
@@ -45,10 +44,6 @@ case $key in
     PYTHON_TARGET="$2"
     shift # past argument
     ;;
-    -m|--miniconda-build)
-    MINICONDA_BUILD="$2"
-    shift # past argument
-    ;;
     -e|--environment-path)
     VIRTUAL_PATH="$2"
     INSTALL_VIRTUAL=true
@@ -66,7 +61,6 @@ case $key in
     echo ""
     echo "Python environment setup options:"
     echo "-p/--python-target \"Target parent python bin\""
-    echo "-m/--miniconda-build \"Fetch and build miniconda at the target directory (instead of targeting an existing version of python)\""
     echo "-e/--environment-path \"Path to store the new virtual environment\""
     echo "-b/--bin-dir \"Directory to link new scripts\""
     echo "-v/--verbose \"Increase verbosity level\""
@@ -84,18 +78,6 @@ shift # past argument or value
 done
 
 
-# If requested, build a copy of miniconda
-if [ -n "$MINICONDA_BUILD" ]
-then
-    echo "Building a copy of miniconda..."
-    mkdir -p $MINICONDA_BUILD
-    wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
-    bash Miniconda3-latest-Linux-x86_64.sh -b -p $MINICONDA_BUILD/miniconda
-    rm Miniconda3-latest-Linux-x86_64.sh
-    PYTHON_TARGET=$MINICONDA_BUILD/miniconda/bin/python
-fi
-
-
 # Check to make sure that the python target exists
 echo "Checking the python target..."
 if [ ! -f "$PYTHON_TARGET" ]
@@ -106,50 +88,8 @@ then
     then
         echo "If GEOSX is configured to use pygeosx, you may need to run \"make pygeosx\""
         echo "before setting up the geosx_python_tools!"
-    else
-        echo "Note: if you use the \"-m\" argument, this script will try to build a version of miniconda"
-        echo "that can support the target tools"
     fi
     exit 1
-fi
-
-
-# If a virtual environment is not explicitly requested,
-# try installing packages directly
-if ! $INSTALL_VIRTUAL
-then
-    echo "Attempting to install packages directly in target python environment..."
-    for p in "${TARGET_PACKAGES[@]}"
-    do
-        if [ -d "$p" ]
-        then
-            echo "  $p"
-            RES=""
-            if $VERBOSE
-            then
-                RES=$($PYTHON_TARGET -m $PIP_CMD install $p)
-                echo $RES
-            else
-                RES=$($PYTHON_TARGET -m $PIP_CMD install $p 2>&1)
-            fi
-            
-            if [[ $RES =~ "HTTP error" ]]
-            then
-                echo "Could not access package dependencies:"
-                echo $RES
-                exit 1
-            fi
-
-            if [[ $RES =~ "Error" ]]
-            then
-                echo "Failed to install target package... attempting to do so in a virtual environment"
-                INSTALL_VIRTUAL=true
-                break
-            fi
-        else
-            echo "Could not find target package: $p"
-        fi
-    done
 fi
 
 
@@ -189,48 +129,44 @@ then
     mkdir -p $VIRTUAL_PATH/$VIRTUAL_NAME
     $PYTHON_TARGET -m virtualenv --system-site-packages $VIRTUAL_PATH/$VIRTUAL_NAME
 
-    # Install packages
-    echo "Installing packages..."
     PYTHON_TARGET=$VIRTUAL_PATH/$VIRTUAL_NAME/bin/python
-    for p in "${TARGET_PACKAGES[@]}"
-    do
-        if [ -d "$p" ]
-        then
-            echo "  $p"
-            RES=""
-            if $VERBOSE
-            then
-                RES=$($PYTHON_TARGET -m $PIP_CMD install $p)
-                echo $RES
-            else
-                RES=$($PYTHON_TARGET -m $PIP_CMD install $p 2>&1)
-            fi
-
-            if [[ $RES =~ "HTTP error" ]]
-            then
-                echo "Could not access package dependencies"
-                echo $RES
-                exit 1
-            fi
-            
-            if [[ $RES =~ "Error" ]]
-            then
-                echo "  (failed to install target package)"
-                break
-            fi
-        else
-            echo "Could not find target package: $p"
-        fi
-    done
-
-    # Print user-info
-    echo ""
-    echo "Notes:"
-    echo "To load the virtual environment, run:"
-    echo "  source $VIRTUAL_PATH/$VIRTUAL_NAME/bin/activate"
-    echo "To exit the environent, run:"
-    echo "  deactivate"
 fi
+
+
+# Install packages
+for p in "${TARGET_PACKAGES[@]}"
+do
+    if [ -d "$p" ]
+    then
+        echo "  $p"
+        if $VERBOSE
+            INSTALL_MSG=$($PYTHON_TARGET -m $PIP_CMD install $p)
+            INSTALL_RC=$?
+        then
+            INSTALL_MSG=$($PYTHON_TARGET -m $PIP_CMD install $p 2>&1)
+            INSTALL_RC=$?
+        fi
+
+        if [ $INSTALL_RC -ne 0 ]
+        then
+            echo $INSTALL_MSG
+
+            if [[ $INSTALL_MSG =~ "HTTP error" ]]
+            then
+                echo "The setup script may have failed to fetch external dependencies"
+                echo "Try re-running the \"make ats_environment\" script again on a machine that can access github"
+            else
+                echo "Failed to install packages... Try one of the following:"
+                echo "    - Build a virtual environment with the -e/--environment-path option"
+                echo "    - Change the target python distribution"
+            fi
+
+            exit $INSTALL_RC
+        fi
+    else
+        echo "Could not find target package: $p"
+    fi
+done
 
 
 # Link key scripts to the bin directory
