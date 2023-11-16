@@ -10,8 +10,6 @@ nproc
 echo "running free -m"
 free -m
 
-docker stats --format "table {{.Name}}\t{{.MemUsage}}"
-
 # The or_die function run the passed command line and
 # exits the program in case of non zero error code
 function or_die () {
@@ -105,16 +103,10 @@ if [[ "$*" == *--test-documentation* ]]; then
 fi
 
 # "Make" target check (builds geosx executable target only if true)
-# Reduce n° of processes to prevent out-of-memory error
-if [ ${CMAKE_BUILD_TYPE} == 'Debug' -a ${ENABLE_HYPRE_DEVICE} == 'CUDA' ]; then
-  np=$(($(nproc) / 2))
-else
-  np=$(nproc)
-fi
 if [[ "$*" == *--build-exe-only* ]]; then
-  or_die ninja -j $np geosx
+  or_die ninja -j $(nproc) geosx
 else
-  or_die ninja -j $np
+  or_die ninja -j $(nproc)
   or_die ninja install
 fi
 
