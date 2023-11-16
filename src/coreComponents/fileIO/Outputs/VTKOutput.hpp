@@ -121,7 +121,7 @@ private:
   /// array of names of the fields to output
   array1d< string > m_fieldNames;
 
-  /// array of names of the mesh levels to output
+  /// array of names of the mesh levels to output (an empty array means all levels are saved)
   array1d< string > m_levelNames;
 
   /// VTK output mode

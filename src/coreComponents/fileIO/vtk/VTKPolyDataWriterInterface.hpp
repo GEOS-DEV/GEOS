@@ -150,7 +150,7 @@ public:
 
   /**
    * @brief Set the names of the mesh levels to output
-   * @param[in] levelNames the mesh levels to output
+   * @param[in] levelNames the mesh levels to output (an empty array means all levels are saved)
    */
   void setLevelNames( arrayView1d< string const > const & levelNames )
   {
@@ -326,7 +326,7 @@ private:
   /// Names of the fields to output
   std::set< string > m_fieldNames;
 
-  /// Names of the mesh levels to output
+  /// Names of the mesh levels to output (an empty array means all levels are saved)
   std::set< string > m_levelNames;
 
   /// The previousCycle
