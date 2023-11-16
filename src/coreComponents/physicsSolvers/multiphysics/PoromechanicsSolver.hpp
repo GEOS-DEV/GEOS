@@ -23,6 +23,7 @@
 #include "physicsSolvers/multiphysics/CoupledSolver.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
 #include "constitutive/solid/PorousSolid.hpp"
+#include "codingUtilities/Utilities.hpp"
 
 namespace geos
 {
@@ -120,45 +121,6 @@ protected:
         }
       } );
     } );
-  }
-
-  array1d< real64 > addTwoVecs( array1d< real64 > const & vec1,
-                                array1d< real64 > const & vec2,
-                                real64 const sign )
-  {
-    GEOS_ASSERT( vec1.size() == vec2.size());
-    array1d< real64 > result;
-    const localIndex N = vec1.size();
-    for( localIndex i = 0; i < N; i++ )
-    {
-      result.emplace_back( vec1[i] + sign * vec2[i] );
-    }
-    return result;
-  }
-
-  array1d< real64 > scalarMultiplyAVec( array1d< real64 > const & vec,
-                                        real64 const scalarMult )
-  {
-    array1d< real64 > result;
-    const localIndex N = vec.size();
-    for( localIndex i = 0; i < N; i++ )
-    {
-      result.emplace_back( scalarMult * vec[i] );
-    }
-    return result;
-  }
-
-  real64 dotTwoVecs( array1d< real64 > const & vec1,
-                     array1d< real64 > const & vec2 )
-  {
-    GEOS_ASSERT( vec1.size() == vec2.size());
-    real64 result = 0;
-    const localIndex N = vec1.size();
-    for( localIndex i = 0; i < N; i++ )
-    {
-      result += vec1[i] * vec2[i];
-    }
-    return result;
   }
 
   real64 computeAitkenRelaxationFactor( array1d< real64 > const & s0,
