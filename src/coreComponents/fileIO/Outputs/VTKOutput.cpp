@@ -38,6 +38,8 @@ VTKOutput::VTKOutput( string const & name,
   m_fieldNames(),
   m_writer( getOutputDirectory() + '/' + m_plotFileRoot )
 {
+  enableLogLevelInput();
+
   registerWrapper( viewKeysStruct::plotFileRoot, &m_plotFileRoot ).
     setDefaultValue( m_plotFileRoot ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -123,12 +125,14 @@ void VTKOutput::reinit()
 }
 
 bool VTKOutput::execute( real64 const time_n,
-                         real64 const GEOS_UNUSED_PARAM( dt ),
+                         real64 const dt,
                          integer const cycleNumber,
                          integer const GEOS_UNUSED_PARAM( eventCounter ),
                          real64 const GEOS_UNUSED_PARAM ( eventProgress ),
                          DomainPartition & domain )
 {
+  GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "{}: writing {} at time {} s (cycle number {})", getName(), m_fieldNames, time_n + dt, cycleNumber ));
+
   m_writer.setWriteGhostCells( m_writeGhostCells );
   m_writer.setOutputMode( m_writeBinaryData );
   m_writer.setOutputRegionType( m_outputRegionType );

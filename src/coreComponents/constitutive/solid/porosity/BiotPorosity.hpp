@@ -131,13 +131,11 @@ public:
     dPorosity_dPressure = biotSkeletonModulusInverse;
     dPorosity_dTemperature = -porosityThermalExpansion;
 
-    if( !isZero( meanEffectiveStressIncrement_k ) ) // TODO: find a better way to disable this at the first flow iteration
-    {
-      porosity += fixedStressPressureCoefficient * deltaPressureFromLastIteration // fixed-stress pressure term
-                  + fixedStressTemperatureCoefficient * deltaTemperatureFromLastIteration; // fixed-stress temperature term
-      dPorosity_dPressure += fixedStressPressureCoefficient;
-      dPorosity_dTemperature += fixedStressTemperatureCoefficient;
-    }
+    // Fixed-stress part
+    porosity += fixedStressPressureCoefficient * deltaPressureFromLastIteration   // fixed-stress pressure term
+                + fixedStressTemperatureCoefficient * deltaTemperatureFromLastIteration;   // fixed-stress temperature term
+    dPorosity_dPressure += fixedStressPressureCoefficient;
+    dPorosity_dTemperature += fixedStressTemperatureCoefficient;
   }
 
   GEOS_HOST_DEVICE
@@ -171,8 +169,8 @@ public:
   }
 
   GEOS_HOST_DEVICE
-  void updateBiotCoefficient( localIndex const k,
-                              real64 const bulkModulus ) const
+  void updateBiotCoefficientAndAssignBulkModulus( localIndex const k,
+                                                  real64 const bulkModulus ) const
   {
     m_bulkModulus[k] = bulkModulus;
     m_biotCoefficient[k] = 1 - bulkModulus / m_grainBulkModulus;

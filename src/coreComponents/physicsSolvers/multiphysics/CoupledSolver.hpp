@@ -577,8 +577,7 @@ protected:
   {
     forEachArgInTuple( m_solvers, [&]( auto & solver, auto )
     {
-      solver->getNonlinearSolverParameters().m_numNewtonIterations =
-        m_nonlinearSolverParameters.m_numNewtonIterations;
+      solver->getNonlinearSolverParameters() = m_nonlinearSolverParameters;
     } );
   }
 
