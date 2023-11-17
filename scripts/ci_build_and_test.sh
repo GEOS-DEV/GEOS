@@ -35,17 +35,15 @@ dargs+=(--name=${CONTAINER_NAME})
 dargs+=(--volume=${BUILD_DIR}:${BUILD_DIR_MOUNT_POINT})
 dargs+=(--cap-add=ALL)
 
-if [ ${CMAKE_BUILD_TYPE} == 'Debug' ]; then
-  dargs+=(--memory-swap='-1')
-fi
+dargs+=(-e HOST_CONFIG=${HOST_CONFIG:-host-configs/environment.cmake})
+dargs+=(-e GEOSX_DIR=${GEOSX_DIR})
+dargs+=(-e ENABLE_HYPRE=${ENABLE_HYPRE:-OFF})
+dargs+=(-e ENABLE_HYPRE_DEVICE=${ENABLE_HYPRE_DEVICE:-CPU})
+dargs+=(-e ENABLE_TRILINOS=${ENABLE_TRILINOS:-ON})
+dargs+=(-e CMAKE_BUILD_TYPE)
 
 # Now we can build GEOSX.
 docker run "${dargs[@]}" \
-  -e HOST_CONFIG=${HOST_CONFIG:-host-configs/environment.cmake} \
-  -e CMAKE_BUILD_TYPE \
-  -e GEOSX_DIR=${GEOSX_DIR} \
-  -e ENABLE_HYPRE=${ENABLE_HYPRE:-OFF} \
-  -e ENABLE_HYPRE_DEVICE=${ENABLE_HYPRE_DEVICE:-CPU} \
-  -e ENABLE_TRILINOS=${ENABLE_TRILINOS:-ON} \
-  ${DOCKER_REPOSITORY}:${GEOSX_TPL_TAG} \
-  ${BUILD_DIR_MOUNT_POINT}/scripts/ci_build_and_test_in_container.sh ${BUILD_AND_TEST_ARGS} ${SCCACHE_CLI};
+${DOCKER_REPOSITORY}:${GEOSX_TPL_TAG} \
+${BUILD_DIR_MOUNT_POINT}/scripts/ci_build_and_test_in_container.sh \
+${BUILD_AND_TEST_ARGS} ${SCCACHE_CLI};
