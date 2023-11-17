@@ -38,7 +38,7 @@ Usage: $0
   --host-config host-config/my_config.cmake
       The host-config. Path is relative to the root of the repository.
   --install-dir-basename GEOS-e42ffc1
-      Geos installtion basename.
+      GEOS installation basename.
   --no-install-schema
       Do not install the xsd schema.
   --no-run-unit-tests
@@ -120,7 +120,7 @@ if [[ -z "${GEOSX_DIR}" ]]; then
 fi
 
 if [[ ! -z "${SCCACHE_CREDS}" ]]; then
-  # The creadential json file is available at the root of the geos repository.
+  # The credential json file is available at the root of the geos repository.
   # We hereafter create the config file that points to it.
   # We use this file since it's managed by the 'google-github-actions/auth' actions.
   or_die mkdir -p ${HOME}/.config/sccache
@@ -214,7 +214,7 @@ if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
   # The tests are not run using ninja (`ninja --verbose ats_run`) because it swallows the output while all the simulations are running.
   # We directly use the script instead...
   integratedTests/geos_ats.sh --failIfTestsFail
-  # Even (and even moreover) if the integrated testa fail, we want to pack the results for further investigations.
+  # Even (and even moreover) if the integrated tests fail, we want to pack the results for further investigations.
   # So we store the status code for further use.
   INTEGRATED_TEST_EXIT_STATUS=$?
   echo "The return code of the integrated tests is ${INTEGRATED_TEST_EXIT_STATUS}"

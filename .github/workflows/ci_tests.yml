@@ -93,7 +93,7 @@ jobs:
         echo 'Labels are ${{ needs.is_pull_request_a_draft.outputs.LABELS }}'
         ${{ contains( fromJSON( needs.is_pull_request_a_draft.outputs.LABELS ), 'ci: ready to be merged') }}
 
-  # Validates that the pr is still poiting to the HEAD of the main branch of the submodules repositories.
+  # Validates that the PR is still pointing to the HEAD of the main branch of the submodules repositories.
   # (There are exceptions, read the script about those).
   are_submodules_in_sync:
     needs: [is_pull_request_a_draft]
@@ -134,7 +134,7 @@ jobs:
       USE_SCCACHE: false
 
   # Matrix containing all the CPU build.
-  # Those are quite fase and can efficiently benefit from the `sccache' tool to make them even faster.
+  # Those are quite fast and can efficiently benefit from the `sccache' tool to make them even faster.
   cpu_builds:
     name: ${{ matrix.name }}
     needs: [is_pull_request_a_draft]
