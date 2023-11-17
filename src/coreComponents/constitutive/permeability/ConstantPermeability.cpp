@@ -28,22 +28,22 @@ namespace constitutive
 
 
 ConstantPermeability::ConstantPermeability( string const & name, Group * const parent ):
-  PermeabilityBase( name, parent )
+  PermeabilityBase( name, parent ),
+  m_diagonalPermeabilityTensor{-1.0, -1.0, -1.0},
+  m_symmetricFullPermeabilityTensor{-1.0, -1.0, -1.0, 0.0, 0.0, 0.0}
 {
   registerWrapper( viewKeyStruct::diagonalPermeabilityTensorString(), &m_diagonalPermeabilityTensor ).
     setInputFlag( InputFlags::OPTIONAL ).
     setRestartFlags( RestartFlags::NO_WRITE ).
-    setApplyDefaultValue(-1.0)
     setDescription( "xx, yy and zz components of a diagonal permeability tensor." );
 
-  registerWrapper( viewKeyStruct::symmetricFullPermabilityTensorString(), &m_symmetricFullPermeabilityTensor ).
+  registerWrapper( viewKeyStruct::symmetricFullPermeabilityTensorString(), &m_symmetricFullPermeabilityTensor ).
     setInputFlag( InputFlags::OPTIONAL ).
     setRestartFlags( RestartFlags::NO_WRITE ).
-    setApplyDefaultValue(-1.0).
     setDescription( "xx, yy and zz, xz, yz, xy components of a symmetric permeability tensor." );
 }
 
-ConstantPermeability::postProcessInput()
+void ConstantPermeability::postProcessInput()
 {
   GEOS_ERROR_IF( m_diagonalPermeabilityTensor[0] < 0.0 && m_symmetricFullPermeabilityTensor[0] < 0.0, 
   "Either a diagonal permeability tensor or a full tensor must be provided.");
@@ -57,9 +57,9 @@ ConstantPermeability::postProcessInput()
     { 
       m_symmetricFullPermeabilityTensor[i] = m_diagonalPermeabilityTensor[i]; 
     }
-    for( int j=4; j < 6; i++ )
+    for( int j=4; j < 6; j++ )
     { 
-      m_symmetricFullPermeabilityTensor[i] = 0.0; 
+      m_symmetricFullPermeabilityTensor[j] = 0.0; 
     }
   }
 }
@@ -94,7 +94,7 @@ void ConstantPermeability::initializeState() const
   integer constexpr numQuad = 1; // NOTE: enforcing 1 quadrature point
 
   auto permView = m_permeability.toView();
-  real64 const permComponents[3] = { m_symmetricFullPermeabilityTensor[0],
+  real64 const permComponents[6] = { m_symmetricFullPermeabilityTensor[0],
                                      m_symmetricFullPermeabilityTensor[1],
                                      m_symmetricFullPermeabilityTensor[2],
                                      m_symmetricFullPermeabilityTensor[3],

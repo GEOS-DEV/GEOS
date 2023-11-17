@@ -16,6 +16,7 @@
  * @file CarmanKozenyPermeability.cpp
  */
 
+#include "PermeabilityFields.hpp"
 #include "CarmanKozenyPermeability.hpp"
 
 namespace geos
@@ -59,9 +60,8 @@ void CarmanKozenyPermeability::allocateConstitutiveData( dataRepository::Group &
                                                          localIndex const numConstitutivePointsPerParentIndex )
 {
   // NOTE: enforcing 1 quadrature point
-  m_dPerm_dPorosity.resize( 0, 1, 3 );
+  m_dPerm_dPorosity.resize( 0, 1, 6 );
   PermeabilityBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
-  getWrapper( PermeabilityBase::viewKeyStruct::permeabilityString() ).setApplyDefaultValue(0.0);
 }
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, CarmanKozenyPermeability, string const &, Group * const )
