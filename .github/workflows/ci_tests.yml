@@ -253,7 +253,6 @@ jobs:
             BUILD_AND_TEST_CLI_ARGS: "--build-exe-only --no-install-schema"
             CMAKE_BUILD_TYPE: Release
             DOCKER_REPOSITORY: geosx/pecan-gpu-gcc8.2.0-openmpi4.0.1-mkl2019.5-cuda11.5.119
-            GCP_BUCKET: geosx/Pecan-GPU
             HOST_CONFIG: host-configs/TOTAL/pecan-GPU.cmake
             RUNS_ON: Runner_4core_16GB
     uses: ./.github/workflows/build_and_test.yml
@@ -265,7 +264,6 @@ jobs:
       ENABLE_HYPRE_DEVICE: ${{ matrix.ENABLE_HYPRE_DEVICE }}
       ENABLE_HYPRE: ${{ matrix.ENABLE_HYPRE }}
       ENABLE_TRILINOS: ${{ matrix.ENABLE_TRILINOS }}
-      GCP_BUCKET: ${{ matrix.GCP_BUCKET }}
       HOST_CONFIG: ${{ matrix.HOST_CONFIG }}
       RUNS_ON: ${{ matrix.RUNS_ON }}
     secrets: inherit
