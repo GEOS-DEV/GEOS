@@ -12,20 +12,23 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
+#include "common/GeosxConfig.hpp"
 #include <gtest/gtest.h>
 
 TEST( Toolchain, NDEBUGfromTPls )
 {
   /*
-   * This test guards against spurious propagation of -DNDEBUG preprocessor flag (HDF5 in our case),
-   * which has the effect of disabling LvArray assertions:
-   * instead, we always check that this test fails in CMake Debug mode, whilst it should always
-   * pass in RelWithDebInfo or Release builds.
+   * This test guards against spurious propagation of -DNDEBUG preprocessor flag
+   * (HDF5 from the TPLs in our case), which has the bogus effect of disabling LvArray assertions:
+   * we check that we are in RelWithDebInfo or Release build type when NDEBUG is defined and in Debug
+   * configuration when NDEBUG is not defined: thus, LvArray assertions remain in Debug builds.
    */
+  bool constexpr isDebug = std::string_view( GEOSX_CMAKE_BUILD_TYPE ) == std::string_view( "Debug" );
+
 #ifdef NDEBUG
-  SUCCEED();  // RelWithDebInfo or Release builds
+  ASSERT_FALSE( isDebug );  // RelWithDebInfo or Release builds only
 #else
-  FAIL();  // Debug builds
+  ASSERT_TRUE( isDebug );  // Debug builds only
 #endif
 }
 

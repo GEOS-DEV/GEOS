@@ -18,9 +18,4 @@ foreach(test ${gtest_geosx_tests})
 
     # NOTE: we explicitly depend on internal headers in order to check for the spurious addition of -DNDEBUG flag
     target_include_directories( ${test_name} PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents )
-
-  if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-    set_tests_properties(${test_name} PROPERTIES WILL_FAIL TRUE)
-  endif()
-
 endforeach()
