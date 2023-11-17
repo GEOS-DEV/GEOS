@@ -31,10 +31,11 @@ namespace hydrofractureSolverKernels
 struct DeformationUpdateKernel
 {
 
-  template< typename POLICY, typename CONTACT_WRAPPER >
+  template< typename POLICY, typename CONTACT_WRAPPER, typename POROUS_WRAPPER >
   static std::tuple< double, double, double, double, double, double >
   launch( localIndex const size,
           CONTACT_WRAPPER const & contactWrapper,
+          POROUS_WRAPPER const & porousMaterialWrapper,
           arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const & u,
           arrayView2d< real64 const > const & faceNormal,
           ArrayOfArraysView< localIndex const > const & faceToNodeMap,
@@ -78,18 +79,27 @@ struct DeformationUpdateKernel
       }
 
       // TODO this needs a proper contact based strategy for aperture
-      real64 const newAperture = -LvArray::tensorOps::AiBi< 3 >( temp, faceNormal[kf0] ) / numNodesPerFace;
-      maxApertureChange.max( std::fabs( newAperture - aperture[kfe] ));
-      aperture[kfe] = newAperture;
+      real64 const normalJump = -LvArray::tensorOps::AiBi< 3 >( temp, faceNormal[kf0] ) / numNodesPerFace;
+      maxApertureChange.max( std::fabs( normalJump - aperture[kfe] ));
+      aperture[kfe] = normalJump;
       minAperture.min( aperture[kfe] );
       maxAperture.max( aperture[kfe] );
 
-      real64 dHydraulicAperture_dAperture = 0;
-      real64 const newHydraulicAperture = contactWrapper.computeHydraulicAperture( aperture[kfe], dHydraulicAperture_dAperture );
+      real64 dHydraulicAperture_dNormalJump = 0;
+      real64 const newHydraulicAperture = contactWrapper.computeHydraulicAperture( aperture[kfe], dHydraulicAperture_dNormalJump );
       maxHydraulicApertureChange.max( std::fabs( newHydraulicAperture - hydraulicAperture[kfe] ));
+      real64 const oldHydraulicAperture = hydraulicAperture[kfe];
       hydraulicAperture[kfe] = newHydraulicAperture;
       minHydraulicAperture.min( hydraulicAperture[kfe] );
       maxHydraulicAperture.max( hydraulicAperture[kfe] );
+
+      real64 const jump[3] = { normalJump, 0.0, 0.0 };
+      real64 const traction[3] = {0.0, 0.0, 0.0};
+
+      porousMaterialWrapper.updateStateFromPressureApertureJumpAndTraction( kfe, 0, 0.0,
+                                                                            oldHydraulicAperture, newHydraulicAperture,
+                                                                            dHydraulicAperture_dNormalJump,
+                                                                            jump, traction );
 
 #ifdef GEOSX_USE_SEPARATION_COEFFICIENT
       real64 const s = aperture[kfe] / apertureAtFailure[kfe];
@@ -131,7 +141,7 @@ struct FluidMassResidualDerivativeAssemblyKernel
                                  real64 const & dens,
                                  globalIndex (& nodeDOF)[8 * 3],
                                  arraySlice1d< real64 > const dRdU )
-  {  
+  {
     real64 dHydraulicAperture_dNormalJump = 0;
     real64 const hydraulicAperture = contactWrapper.computeHydraulicAperture( aperture, dHydraulicAperture_dNormalJump );
     GEOS_UNUSED_VAR( hydraulicAperture );
@@ -144,7 +154,7 @@ struct FluidMassResidualDerivativeAssemblyKernel
         for( int i = 0; i < 3; ++i )
         {
           nodeDOF[kf * 3 * numNodesPerFace + 3 * a + i] = dispDofNumber[faceToNodeMap( elemsToFaces[kf], a )] + i;
-          
+
           real64 const dNormalJump_dDisplacement = kfSign[kf] * Nbar[i] / numNodesPerFace;
           real64 const dHydraulicAperture_dDisplacement = dHydraulicAperture_dNormalJump * dNormalJump_dDisplacement;
           real64 const dVolume_dDisplacement = area * dHydraulicAperture_dDisplacement;

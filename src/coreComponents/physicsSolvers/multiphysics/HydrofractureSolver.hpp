@@ -110,7 +110,7 @@ public:
 
   /**@}*/
 
-  void updateDeformationForCoupling( DomainPartition & domain );
+  void updateHydraulicApertureAndFracturePermeability( DomainPartition & domain );
 
   void assembleForceResidualDerivativeWrtPressure( DomainPartition & domain,
                                                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
