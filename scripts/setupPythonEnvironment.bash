@@ -80,12 +80,6 @@ fi
 if [ ! -f "$PYTHON_TARGET" ]
 then
     echo "The target python executable ($PYTHON_TARGET) cannot be found"
-
-    if [[ "$PYTHON_TARGET" == *"PYGEOSX"* ]]
-    then
-        echo "If GEOSX is configured to use pygeosx, you may need to run \"make pygeosx\""
-        echo "before setting up the geosx_python_tools!"
-    fi
     exit 1
 fi
 
