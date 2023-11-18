@@ -84,9 +84,10 @@ public:
                                                              localIndex const q,
                                                              real64 const & oldHydraulicAperture,
                                                              real64 const & newHydraulicAperture,
+                                                             real64 const & dHydraulicAperture_dNormalJump,
                                                              real64 const & proppantPackVolumeFraction ) const override final
   {
-    GEOS_UNUSED_VAR( q );
+    GEOS_UNUSED_VAR( q, dHydraulicAperture_dNormalJump );
 
     compute( oldHydraulicAperture,
              newHydraulicAperture,
