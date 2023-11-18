@@ -181,7 +181,7 @@ void SinglePhasePoromechanicsConformingFractures::assembleSystem( real64 const t
                                                                    dofManager,
                                                                    localMatrix,
                                                                    localRhs,
-                                                                   getDerivativeFluxResidual_dAperture() );
+                                                                   getDerivativeFluxResidual_dNormalJump() );
 
   // This step must occur after the fluxes are assembled because that's when DerivativeFluxResidual_dAperture is filled.
   assembleCouplingTerms( time_n,
@@ -594,7 +594,7 @@ void SinglePhasePoromechanicsConformingFractures::
   ArrayOfArraysView< localIndex const > const & faceToNodeMap = faceManager.nodeList().toViewConst();
 
   CRSMatrixView< real64 const, localIndex const > const &
-  dFluxResidual_dAperture = getDerivativeFluxResidual_dAperture().toViewConst();
+  dFluxResidual_dNormalJump = getDerivativeFluxResidual_dNormalJump().toViewConst();
 
   string const & dispDofKey = dofManager.getKey( solidMechanics::totalDisplacement::key() );
   string const & presDofKey = dofManager.getKey( m_pressureKey );
@@ -680,9 +680,9 @@ void SinglePhasePoromechanicsConformingFractures::
 
       // flux derivative
       bool skipAssembly = true;
-      localIndex const numColumns = dFluxResidual_dAperture.numNonZeros( kfe );
-      arraySlice1d< localIndex const > const & columns = dFluxResidual_dAperture.getColumns( kfe );
-      arraySlice1d< real64 const > const & values = dFluxResidual_dAperture.getEntries( kfe );
+      localIndex const numColumns = dFluxResidual_dNormalJump.numNonZeros( kfe );
+      arraySlice1d< localIndex const > const & columns = dFluxResidual_dNormalJump.getColumns( kfe );
+      arraySlice1d< real64 const > const & values = dFluxResidual_dNormalJump.getEntries( kfe );
 
       skipAssembly &= !isFractureOpen;
 
