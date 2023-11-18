@@ -106,14 +106,52 @@ TEST( testGroupPath, testGlobalPaths )
   catch( const std::domain_error & e )
   {
     static constexpr auto expectedMsg = "***** Controlling expression (should be false): child == nullptr\n"
-                                        "***** Rank 0: Group /Mesh has no child named mesh2\n"
+                                        "***** Rank 0: Group Mesh (CodeIncludedXML0, l.10) has no child named mesh2\n"
                                         "The children of Mesh are: { mesh1 }";
     // checks if the exception contains the expected message
-    ASSERT_TRUE( string( e.what() ).find( expectedMsg ) != string::npos );
+    GEOS_ERROR_IF_EQ_MSG( string( e.what() ).find( expectedMsg ), string::npos,
+                          "The error message was not containing the expected sequence.\n" <<
+                          "  Error message :\n" << e.what() <<
+                          "  expected sequence :\n" << expectedMsg );
     trowHappened = true;
   }
   // checks if the exception has been thrown as expected
   ASSERT_TRUE( trowHappened );
+
+  auto const testGroupContextString = [&]( string const & groupPath, string const & ctxString )
+  {
+    Group const * const groupToTest = &problem.getGroupByPath( groupPath );
+    ASSERT_NE( groupToTest, nullptr );
+    ASSERT_STREQ( groupToTest->getDataContext().toString().c_str(),
+                  ctxString.c_str() );
+  };
+  auto const testWrapperContextString = [&]( string const & groupPath, string const & wrapperName,
+                                             string const & ctxString )
+  {
+    Group const * const containingGroup = &problem.getGroupByPath( groupPath );
+    ASSERT_NE( containingGroup, nullptr );
+    WrapperBase const * const wrapperToTest = &containingGroup->getWrapperBase( wrapperName );
+    ASSERT_NE( wrapperToTest, nullptr );
+    ASSERT_STREQ( wrapperToTest->getDataContext().toString().c_str(),
+                  ctxString.c_str() );
+  };
+
+  // check if the DataContext string of a Group and a Wrapper declared in the XML is formatted as expected
+  testGroupContextString( "/Mesh/mesh1",
+                          "mesh1 (CodeIncludedXML0, l.11)" );
+  testWrapperContextString( "/Mesh/mesh1", "xCoords",
+                            "mesh1/xCoords (CodeIncludedXML0, l.14)" );
+
+  // check if the DataContext string of implicitly created Groups are formatted as expected
+  testGroupContextString( "/Solvers/lagsolve/NonlinearSolverParameters",
+                          "/Solvers/lagsolve(CodeIncludedXML0,l.4)/NonlinearSolverParameters" );
+  testGroupContextString( "/domain/MeshBodies/mesh1/meshLevels/Level0/ElementRegions/elementRegionsGroup/Region2/elementSubRegions",
+                          "/domain/MeshBodies/mesh1/meshLevels/Level0/ElementRegions/elementRegionsGroup/Region2(CodeIncludedXML0,l.37)/elementSubRegions" );
+  // check if the DataContext string of implicitly created Wrappers are formatted as expected
+  testWrapperContextString( "/Mesh/mesh1", "positionTolerance",
+                            "mesh1/positionTolerance (CodeIncludedXML0, l.11)" );
+  testWrapperContextString( "/Solvers/lagsolve/NonlinearSolverParameters", "newtonMaxIter",
+                            "/Solvers/lagsolve(CodeIncludedXML0,l.4)/NonlinearSolverParameters/newtonMaxIter" );
 }
 
 int main( int argc, char * * argv )

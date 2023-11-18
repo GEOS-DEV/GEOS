@@ -110,7 +110,7 @@ The preliminary tasks are now done. Let us build the image that will be containe
 .. code:: shell
 
     PS> cd [path-to-dockerfile-folder]/
-    PS > docker build --build-arg ORG=geosx --build-arg IMG=${env:IMG} --build-arg VERSION=${env:VERSION} -t ${env:REMOTE_DEV_IMG}:${env:VERSION} -f Dockerfile
+    PS > docker build --build-arg ORG=geosx --build-arg IMG=${env:IMG} --build-arg VERSION=${env:VERSION} -t ${env:REMOTE_DEV_IMG}:${env:VERSION} -f Dockerfile .
 
 As described above, we are passing our environment variables in the building stage, which offer the flexibility of changing the version or image by a simple redefinition.
 A log updating or pulling the different layers should be displayed afterwards and on the last line the *image id*. We can check that the image is created using ``PowerShell`` CLI:

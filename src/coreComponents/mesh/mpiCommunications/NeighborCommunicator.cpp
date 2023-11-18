@@ -240,22 +240,21 @@ void NeighborCommunicator::prepareAndSendGhosts( bool const GEOS_UNUSED_PARAM( c
 {
   GEOS_MARK_FUNCTION;
 
-  this->postSizeRecv( commID,
-                      mpiRecvSizeRequest ); // post recv for buffer size from neighbor.
+  this->postSizeRecv( commID, mpiRecvSizeRequest ); // post recv for buffer size from neighbor.
 
   NodeManager & nodeManager = mesh.getNodeManager();
   EdgeManager & edgeManager = mesh.getEdgeManager();
   FaceManager & faceManager = mesh.getFaceManager();
   ElementRegionManager & elemManager = mesh.getElemManager();
 
-  localIndex_array & nodeAdjacencyList = nodeManager.getNeighborData( m_neighborRank ).adjacencyList();
-  localIndex_array & edgeAdjacencyList = edgeManager.getNeighborData( m_neighborRank ).adjacencyList();
-  localIndex_array & faceAdjacencyList = faceManager.getNeighborData( m_neighborRank ).adjacencyList();
+  array1d< localIndex > & nodeAdjacencyList = nodeManager.getNeighborData( m_neighborRank ).adjacencyList();
+  array1d< localIndex > & edgeAdjacencyList = edgeManager.getNeighborData( m_neighborRank ).adjacencyList();
+  array1d< localIndex > & faceAdjacencyList = faceManager.getNeighborData( m_neighborRank ).adjacencyList();
 
   {
     ElemAdjListRefWrapType elementAdjacencyList =
-      elemManager.constructReferenceAccessor< localIndex_array >( ObjectManagerBase::viewKeyStruct::adjacencyListString(),
-                                                                  std::to_string( this->m_neighborRank ) );
+      elemManager.constructReferenceAccessor< array1d< localIndex > >( ObjectManagerBase::viewKeyStruct::adjacencyListString(),
+                                                                       std::to_string( this->m_neighborRank ) );
 
     mesh.generateAdjacencyLists( nodeManager.getNeighborData( m_neighborRank ).matchedPartitionBoundary(),
                                  nodeAdjacencyList,
@@ -268,15 +267,13 @@ void NeighborCommunicator::prepareAndSendGhosts( bool const GEOS_UNUSED_PARAM( c
   ElemAdjListViewType const elemAdjacencyList =
     elemManager.constructViewAccessor< array1d< localIndex >, arrayView1d< localIndex > >( ObjectManagerBase::viewKeyStruct::adjacencyListString(),
                                                                                            std::to_string( this->m_neighborRank ) );
-
   int const bufferSize = GhostSize( nodeManager, nodeAdjacencyList,
                                     edgeManager, edgeAdjacencyList,
                                     faceManager, faceAdjacencyList,
                                     elemManager, elemAdjacencyList );
 
   this->resizeSendBuffer( commID, bufferSize );
-  this->postSizeSend( commID,
-                      mpiSendSizeRequest );
+  this->postSizeSend( commID, mpiSendSizeRequest );
 
   buffer_type & sendBuff = sendBuffer( commID );
   buffer_unit_type * sendBufferPtr = sendBuff.data();
@@ -504,7 +501,7 @@ int NeighborCommunicator::packCommSizeForSync( FieldIdentifiers const & fieldsTo
 
   for( auto const & iter : fieldsToBeSync.getFields() )
   {
-    FieldLocation location;
+    FieldLocation location{};
     fieldsToBeSync.getLocation( iter.first, location );
     switch( location )
     {
@@ -562,7 +559,7 @@ void NeighborCommunicator::packCommBufferForSync( FieldIdentifiers const & field
 
   for( auto const & iter : fieldsToBeSync.getFields() )
   {
-    FieldLocation location;
+    FieldLocation location{};
     fieldsToBeSync.getLocation( iter.first, location );
     switch( location )
     {
@@ -600,7 +597,8 @@ void NeighborCommunicator::unpackBufferForSync( FieldIdentifiers const & fieldsT
                                                 MeshLevel & mesh,
                                                 int const commID,
                                                 bool onDevice,
-                                                parallelDeviceEvents & events )
+                                                parallelDeviceEvents & events,
+                                                MPI_Op op )
 {
   GEOS_MARK_FUNCTION;
 
@@ -626,7 +624,7 @@ void NeighborCommunicator::unpackBufferForSync( FieldIdentifiers const & fieldsT
     {
       case FieldLocation::Node:
       {
-        unpackedSize += nodeManager.unpack( receiveBufferPtr, nodeGhostsToReceive, 0, onDevice, events );
+        unpackedSize += nodeManager.unpack( receiveBufferPtr, nodeGhostsToReceive, 0, onDevice, events, op );
         break;
       }
       case FieldLocation::Edge:

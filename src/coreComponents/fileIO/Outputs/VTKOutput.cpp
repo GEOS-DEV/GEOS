@@ -38,6 +38,8 @@ VTKOutput::VTKOutput( string const & name,
   m_fieldNames(),
   m_writer( getOutputDirectory() + '/' + m_plotFileRoot )
 {
+  enableLogLevelInput();
+
   registerWrapper( viewKeysStruct::plotFileRoot, &m_plotFileRoot ).
     setDefaultValue( m_plotFileRoot ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -92,18 +94,21 @@ void VTKOutput::postProcessInput()
 
   GEOS_THROW_IF( ( m_onlyPlotSpecifiedFieldNames != 0 ) && m_fieldNames.empty(),
                  GEOS_FMT( "{} `{}`: the flag `{}` is different from zero, but `{}` is empty, which is inconsistent",
-                           catalogName(), getName(), onlyPlotSpecifiedFieldNamesString, fieldNamesString ),
+                           catalogName(), getDataContext(),
+                           onlyPlotSpecifiedFieldNamesString, fieldNamesString ),
                  InputError );
 
   GEOS_LOG_RANK_0_IF( !m_fieldNames.empty() && ( m_onlyPlotSpecifiedFieldNames != 0 ),
                       GEOS_FMT(
                         "{} `{}`: found {} fields to plot in `{}`. These fields will be output regardless of the `plotLevel` specified by the user. No other field will be output.",
-                        catalogName(), getName(), std::to_string( m_fieldNames.size() ), fieldNamesString ) );
+                        catalogName(), getDataContext(),
+                        std::to_string( m_fieldNames.size() ), fieldNamesString ) );
 
   GEOS_LOG_RANK_0_IF( !m_fieldNames.empty() && ( m_onlyPlotSpecifiedFieldNames == 0 ),
                       GEOS_FMT(
                         "{} `{}`: found {} fields to plot in `{}`, in addition to all fields with `plotLevel` smaller or equal to {}.",
-                        catalogName(), getName(), std::to_string( m_fieldNames.size() ), fieldNamesString, m_plotLevel ) );
+                        catalogName(), getDataContext(),
+                        std::to_string( m_fieldNames.size() ), fieldNamesString, m_plotLevel ) );
 }
 
 
@@ -119,12 +124,14 @@ void VTKOutput::reinit()
 }
 
 bool VTKOutput::execute( real64 const time_n,
-                         real64 const GEOS_UNUSED_PARAM( dt ),
+                         real64 const dt,
                          integer const cycleNumber,
                          integer const GEOS_UNUSED_PARAM( eventCounter ),
                          real64 const GEOS_UNUSED_PARAM ( eventProgress ),
                          DomainPartition & domain )
 {
+  GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "{}: writing {} at time {} s (cycle number {})", getName(), m_fieldNames, time_n + dt, cycleNumber ));
+
   m_writer.setWriteGhostCells( m_writeGhostCells );
   m_writer.setOutputMode( m_writeBinaryData );
   m_writer.setOutputRegionType( m_outputRegionType );

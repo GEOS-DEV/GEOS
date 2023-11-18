@@ -115,7 +115,8 @@ AquiferBoundaryCondition::AquiferBoundaryCondition( string const & name, Group *
 void AquiferBoundaryCondition::postProcessInput()
 {
   GEOS_THROW_IF_LE_MSG( m_permeability, 0.0,
-                        getCatalogName() << " " << getName() << ": the aquifer permeability cannot be equal to zero or negative",
+                        getCatalogName() << " " << getDataContext() <<
+                        ": the aquifer permeability cannot be equal to zero or negative",
                         InputError );
 
   if( m_pressureInfluenceFunctionName.empty() )
@@ -126,13 +127,16 @@ void AquiferBoundaryCondition::postProcessInput()
   {
     FunctionManager const & functionManager = FunctionManager::getInstance();
     GEOS_THROW_IF( !functionManager.hasGroup( m_pressureInfluenceFunctionName ),
-                   getCatalogName() << " " << getName() << ": the pressure influence table " << m_pressureInfluenceFunctionName << " could not be found",
+                   getCatalogName() << " " << getDataContext() <<
+                   ": the pressure influence table " << m_pressureInfluenceFunctionName << " could not be found",
                    InputError );
 
     TableFunction const & pressureInfluenceFunction = functionManager.getGroup< TableFunction >( m_pressureInfluenceFunctionName );
     GEOS_THROW_IF( pressureInfluenceFunction.getInterpolationMethod() != TableFunction::InterpolationType::Linear,
-                   getCatalogName() << " " << getName() << ": The interpolation method for the pressure influence function table "
-                                    << pressureInfluenceFunction.getName() << " should be TableFunction::InterpolationType::Linear",
+                   getCatalogName() << " " << getDataContext() <<
+                   ": The interpolation method for the pressure influence function table " <<
+                   pressureInfluenceFunction.getDataContext() <<
+                   " should be TableFunction::InterpolationType::Linear",
                    InputError );
   }
 
@@ -140,17 +144,19 @@ void AquiferBoundaryCondition::postProcessInput()
   computeInfluxConstant();
 
   GEOS_THROW_IF_LE_MSG( m_timeConstant, 0.0,
-                        getCatalogName() << " " << getName() << ": the aquifer time constant is equal to zero or negative, the simulation cannot procede",
+                        getCatalogName() << " " << getDataContext() <<
+                        ": the aquifer time constant is equal to zero or negative, the simulation cannot procede",
                         InputError );
 
   GEOS_THROW_IF_LE_MSG( m_influxConstant, 0.0,
-                        getCatalogName() << " " << getName() << ": the aquifer influx constant is equal to zero or negative, the simulation cannot procede",
+                        getCatalogName() << " " << getDataContext() <<
+                        ": the aquifer influx constant is equal to zero or negative, the simulation cannot procede",
                         InputError );
 
   GEOS_THROW_IF_NE_MSG( m_phaseComponentFraction.size(), m_phaseComponentNames.size(),
-                        getCatalogName() << " " << getName() << ": the sizes of "
-                                         << viewKeyStruct::aquiferWaterPhaseComponentFractionString() << " and " << viewKeyStruct::aquiferWaterPhaseComponentNamesString()
-                                         << " are inconsistent",
+                        getCatalogName() << " " << getDataContext() <<
+                        ": the sizes of " << viewKeyStruct::aquiferWaterPhaseComponentFractionString() <<
+                        " and " << viewKeyStruct::aquiferWaterPhaseComponentNamesString() << " are inconsistent",
                         InputError );
 
 }
@@ -254,8 +260,8 @@ void AquiferBoundaryCondition::setupDefaultPressureInfluenceFunction()
   m_pressureInfluenceFunctionName = getName() + "_pressureInfluence_table";
   TableFunction * const pressureInfluenceTable =
     dynamicCast< TableFunction * >( functionManager.createChild( TableFunction::catalogName(), m_pressureInfluenceFunctionName ) );
-  pressureInfluenceTable->setTableCoordinates( dimensionlessTime );
-  pressureInfluenceTable->setTableValues( pressureInfluence );
+  pressureInfluenceTable->setTableCoordinates( dimensionlessTime, { units::Dimensionless } );
+  pressureInfluenceTable->setTableValues( pressureInfluence, units::Dimensionless );
   pressureInfluenceTable->setInterpolationMethod( TableFunction::InterpolationType::Linear );
 
 }
@@ -263,7 +269,7 @@ void AquiferBoundaryCondition::setupDefaultPressureInfluenceFunction()
 void AquiferBoundaryCondition::setGravityVector( R1Tensor const & gravityVector )
 {
   GEOS_LOG_RANK_0_IF( ( !isZero( gravityVector[0] ) || !isZero( gravityVector[1] ) ),
-                      catalogName() << " " << getName() <<
+                      catalogName() << " " << getDataContext() <<
                       "The gravity vector specified in this simulation (" << gravityVector[0] << " " << gravityVector[1] << " " << gravityVector[2] <<
                       ") is not aligned with the z-axis. \n" <<
                       "But, the pressure difference between reservoir and aquifer uses " << viewKeyStruct::aquiferElevationString() <<

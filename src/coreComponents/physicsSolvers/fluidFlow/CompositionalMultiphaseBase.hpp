@@ -117,7 +117,7 @@ public:
    * @brief Recompute phase volume fractions (saturations) from constitutive and primary variables
    * @param dataGroup the group storing the required fields
    */
-  void updatePhaseVolumeFraction( ObjectManagerBase & dataGroup ) const;
+  real64 updatePhaseVolumeFraction( ObjectManagerBase & dataGroup ) const;
 
   /**
    * @brief Update all relevant fluid models using current values of pressure and composition
@@ -149,7 +149,7 @@ public:
    */
   virtual void updatePhaseMobility( ObjectManagerBase & dataGroup ) const = 0;
 
-  void updateFluidState( ObjectManagerBase & dataGroup ) const;
+  real64 updateFluidState( ObjectManagerBase & dataGroup ) const;
 
   virtual void saveConvergedState( ElementSubRegionBase & subRegion ) const override final;
 
@@ -221,8 +221,6 @@ public:
                                DofManager const & dofManager,
                                CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                arrayView1d< real64 > const & localRhs ) const = 0;
-
-
   /**@}*/
 
   struct viewKeyStruct : FlowSolverBase::viewKeyStruct
@@ -236,6 +234,8 @@ public:
     static constexpr char const * relPermNamesString() { return "relPermNames"; }
     static constexpr char const * capPressureNamesString() { return "capPressureNames"; }
     static constexpr char const * thermalConductivityNamesString() { return "thermalConductivityNames"; }
+    static constexpr char const * diffusionNamesString() { return "diffusionNames"; }
+    static constexpr char const * dispersionNamesString() { return "dispersionNames"; }
 
 
     // time stepping controls
@@ -251,6 +251,9 @@ public:
     static constexpr char const * maxRelativePresChangeString() { return "maxRelativePressureChange"; }
     static constexpr char const * maxRelativeTempChangeString() { return "maxRelativeTemperatureChange"; }
     static constexpr char const * allowLocalCompDensChoppingString() { return "allowLocalCompDensityChopping"; }
+    static constexpr char const * useTotalMassEquationString() { return "useTotalMassEquation"; }
+    static constexpr char const * useSimpleAccumulationString() { return "useSimpleAccumulation"; }
+    static constexpr char const * minCompDensString() { return "minCompDens"; }
 
   };
 
@@ -355,6 +358,8 @@ public:
 
   virtual void initializePostInitialConditionsPreSubGroups() override;
 
+  integer useTotalMassEquation() const { return m_useTotalMassEquation; }
+
 protected:
 
   virtual void postProcessInput() override;
@@ -407,6 +412,12 @@ protected:
   /// flag to determine whether or not to apply capillary pressure
   integer m_hasCapPressure;
 
+  /// flag to determine whether or not to apply diffusion
+  integer m_hasDiffusion;
+
+  /// flag to determine whether or not to apply dispersion
+  integer m_hasDispersion;
+
   /// flag to freeze the initial state during initialization in coupled problems
   integer m_keepFlowVariablesConstantDuringInitStep;
 
@@ -436,6 +447,15 @@ protected:
 
   /// flag indicating whether local (cell-wise) chopping of negative compositions is allowed
   integer m_allowCompDensChopping;
+
+  /// flag indicating whether total mass equation is used
+  integer m_useTotalMassEquation;
+
+  /// flag indicating whether simple accumulation form is used
+  integer m_useSimpleAccumulation;
+
+  /// minimum allowed global component density
+  real64 m_minCompDens;
 
   /// name of the fluid constitutive model used as a reference for component/phase description
   string m_referenceFluidModelName;

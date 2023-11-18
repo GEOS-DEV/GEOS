@@ -25,7 +25,7 @@ This benchmark test is based on the XML file located below:
 
 .. code-block:: console
 
-  ../../../../../../../inputFiles/compositionalMultiphaseWell/benchmarks/Class09Pb3/class09_pb3_smoke.xml
+  ../../../../../../../inputFiles/compositionalMultiphaseWell/benchmarks/Class09Pb3/class09_pb3_smoke_3d.xml
   ../../../../../../../inputFiles/compositionalMultiphaseWell/benchmarks/Class09Pb3/class09_pb3_drainageOnly_iterative_base.xml
 
 ------------------------------------------------------------------------
@@ -71,7 +71,7 @@ values over the cell.
 The structured mesh is generated using some helpers python scripts from the formatted Point/Cells list provided.
 It is then imported using ``meshImport``
 
-.. literalinclude:: ../../../../../../../inputFiles/compositionalMultiphaseWell/benchmarks/Class09Pb3/class09_pb3_smoke.xml
+.. literalinclude:: ../../../../../../../inputFiles/compositionalMultiphaseWell/benchmarks/Class09Pb3/class09_pb3_smoke_3d.xml
     :language: xml
     :start-after: <!-- SPHINX_MESH -->
     :end-before: <!-- SPHINX_MESH_END -->
@@ -236,7 +236,7 @@ In order to output partitioning of CO2 mass, we use reservoir statistics impleme
 ``flowSolverName`` pointing to the dedicated solver and ``computeRegionStatistics`` set to 1 to compute statistics by regions.
 The ``setNames`` field is set to 3 as it is its attribute tag in the input *vtu* mesh.
 
-.. literalinclude:: ../../../../../../../inputFiles/compositionalMultiphaseWell/benchmarks/Class09Pb3/class09_pb3_smoke.xml
+.. literalinclude:: ../../../../../../../inputFiles/compositionalMultiphaseWell/benchmarks/Class09Pb3/class09_pb3_smoke_3d.xml
     :language: xml
     :start-after: <!-- SPHINX_STATS -->
     :end-before: <!-- SPHINX_STATS_END -->
@@ -244,7 +244,7 @@ The ``setNames`` field is set to 3 as it is its attribute tag in the input *vtu*
 and an **Event** for this to occur recursively with a `forceDt` argument for the period over which statistics are output and
 `target` pointing towards the aforementioned **Task**.
 
-.. literalinclude:: ../../../../../../../inputFiles/compositionalMultiphaseWell/benchmarks/Class09Pb3/class09_pb3_smoke.xml
+.. literalinclude:: ../../../../../../../inputFiles/compositionalMultiphaseWell/benchmarks/Class09Pb3/class09_pb3_smoke_3d.xml
     :language: xml
     :start-after: <!-- SPHINX_STAT_EV -->
     :end-before: <!-- SPHINX_STAT_EV_END -->

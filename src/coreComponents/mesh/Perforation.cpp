@@ -51,7 +51,8 @@ Perforation::Perforation( string const & name, Group * const parent )
 void Perforation::postProcessInput()
 {
   GEOS_ERROR_IF( m_distanceFromHead <= 0,
-                 "Invalid distance well head to perforation " << getName() );
+                 getWrapperDataContext( viewKeyStruct::distanceFromHeadString() ) <<
+                 ": distance from well head to perforation cannot be negative." );
 }
 
 

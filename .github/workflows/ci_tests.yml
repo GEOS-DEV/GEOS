@@ -6,40 +6,97 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
-env:
-  GEOSX_TPL_TAG: 227-991
+# Please define `build.args.GEOS_TPL_TAG` in `.devcontainer/devcontainer.json`
 
 jobs:
-  # Matrix jobs will be cancelled if PR is a draft.
+
+  # Jobs will be cancelled if PR is a draft.
   # PR status must be "Open" to run CI.
-  check_pull_request_is_not_a_draft:
-    # We use the most recent ubuntu distribution available in Github Actions to ensure maximum support of google cloud's sdk.
+  is_pull_request_a_draft:
+    # Everywhere in this workflow, we use the most recent ubuntu distribution available in Github Actions
+    # to ensure maximum support of google cloud's sdk.
     runs-on: ubuntu-22.04
+    outputs:
+      NUM_ASSIGNEES: ${{ steps.extract_pr_info.outputs.NUM_ASSIGNEES }}
+      DOCKER_IMAGE_TAG: ${{ steps.extract_docker_image_tag.outputs.DOCKER_IMAGE_TAG }}
+      LABELS: ${{ steps.extract_pr_info.outputs.LABELS }}
     steps:
     - name: Check that the PR is not a draft (cancel rest of jobs otherwise)
+      id: extract_pr_info
       run: |
-        echo "Is PR a draft?"
-        echo ${{ toJSON(github.event.pull_request.draft) }}
-        if [[ ${{ toJSON(github.event.pull_request.draft) }} == true ]]; then "false" ; else "true"; fi
+        # We do not rely on the `github.event.pull_request.labels` information since it's cached at the job.
+        # Changing labels or assignee in the PR would not allow to simply re-run the job with a different outcome.
+        pr_json=$(curl -H "Accept: application/vnd.github+json" https://api.github.com/repos/${{ github.repository }}/pulls/${{ github.event.number }})
+        
+        # We stop the workflow if the pr is draft
+        draft_status=$(echo ${pr_json} | jq '.draft')
+        echo "Draft status of PR is ${draft_status}."
+        if [[ $draft_status == true ]]; then exit 1 ; fi
+        
+        # If the workflow is meant to continue, we extract additional information for the json of the pr.
+        echo "NUM_ASSIGNEES=$(echo ${pr_json} | jq '.assignees | length')" >> "$GITHUB_OUTPUT"
+        echo "LABELS=$(echo ${pr_json} | jq -crM '[.labels[].name]')" >> "$GITHUB_OUTPUT"
+    # The TPL tag is contained in the codespaces configuration to avoid duplications.
+    - name: Checkout .devcontainer/devcontainer.json
+      uses: actions/checkout@v3
+      with:
+        sparse-checkout: |
+          .devcontainer/devcontainer.json
+        sparse-checkout-cone-mode: false
+        submodules: false
+        lfs: false
+        fetch-depth: 1
+    - name: Extract docker image tag
+      id: extract_docker_image_tag
+      run: |
+        echo "DOCKER_IMAGE_TAG=$(jq '.build.args.GEOS_TPL_TAG' -r .devcontainer/devcontainer.json)" >> "$GITHUB_OUTPUT"
 
   # PR must be assigned to be merged.
   # This job will fail if this is not the case.
-  check_pull_request_is_assigned:
-    needs: [check_pull_request_is_not_a_draft]
+  is_pull_request_assigned:
+    needs: [is_pull_request_a_draft]
     runs-on: ubuntu-22.04
     steps:
-    # Assignee ID will be null if PR is not assigned
     - name: Check that the PR is assigned
       run: |
-        id=$(curl -H "Accept: application/vnd.github+json" \
-           https://api.github.com/repos/${{ github.repository }}/pulls/${{ github.event.number }} \
-           | jq '.assignee.id')
-        echo "Is PR Assigned? (Check for Assignee ID)"
-        echo $id
-        if [[ $id != null ]]; then "true" ; else "false"; fi
+        echo "There are ${{ needs.is_pull_request_a_draft.outputs.NUM_ASSIGNEES }} on this PR."
+        ${{ needs.is_pull_request_a_draft.outputs.NUM_ASSIGNEES > 0 }}
 
-  check_submodules:
-    needs: [check_pull_request_is_not_a_draft]
+  # This job will fail if running the integrated tests has not been requested.
+  # (Add the 'ci: run integrated tests' to the PR to do so).
+  # This job acts like a gate to the integrated tests.
+  # If this job fails, the workflow will not be validated.
+  # Note: I did not manage to make this job a step of the matrix 'cpu_builds'.
+  #       This would allow to collapse the "gate" and the main jobs,
+  #       reducing the complexity of the workflow.
+  #       Also, the current situation maintains a symmetry with the CUDA jobs.
+  are_integrated_tests_requested:
+    needs: [is_pull_request_a_draft]
+    runs-on: ubuntu-22.04
+    # Temporarily deactivate
+    if: ${{ ! always() }}
+    steps:
+    - name: Check if running the integrated tests is requested
+      run: |
+        echo 'Labels are ${{ needs.is_pull_request_a_draft.outputs.LABELS }}'
+        ${{ contains( fromJSON( needs.is_pull_request_a_draft.outputs.LABELS ), 'ci: run integrated tests') }}
+
+  # Same behavior than job 'are_integrated_tests_requested', but for CUDA builds.
+  # Use the flag 'ci: ready to be merged' instead.
+  # Note: Label should only be added if PR is in merge queue.
+  are_cuda_builds_requested:
+    needs: [is_pull_request_a_draft]
+    runs-on: ubuntu-22.04
+    steps:
+    - name: Check that the PR is ready to be merged
+      run: |
+        echo 'Labels are ${{ needs.is_pull_request_a_draft.outputs.LABELS }}'
+        ${{ contains( fromJSON( needs.is_pull_request_a_draft.outputs.LABELS ), 'ci: ready to be merged') }}
+
+  # Validates that the PR is still pointing to the HEAD of the main branch of the submodules repositories.
+  # (There are exceptions, read the script about those).
+  are_submodules_in_sync:
+    needs: [is_pull_request_a_draft]
     runs-on: ubuntu-22.04
     steps:
     # The integrated test submodule repository contains large data (using git lfs).
@@ -50,112 +107,65 @@ jobs:
         # Let script update submodules; Github Actions submodule history causes error
         submodules: false
         lfs: false
+        fetch-depth: 1
     - name: Check that submodules are up to date
       run: "scripts/test_submodule_updated.sh"
 
-  code_style:
-    needs: [check_pull_request_is_not_a_draft]
-    runs-on: ubuntu-22.04
-    steps:
-    - name: Checkout Repository
-      uses: actions/checkout@v3
-      with:
-        submodules: true
-        lfs: false
-    - name: Check style
-      env:
-        DOCKER_REPOSITORY: geosx/ubuntu20.04-gcc9
-        CMAKE_BUILD_TYPE: Release
-        BUILD_AND_TEST_ARGS: --test-code-style
-      run: ./scripts/ci_build_and_test.sh
-
-  documentation:
-    needs: [check_pull_request_is_not_a_draft]
-    runs-on: ubuntu-22.04
-    steps:
-    - name: Checkout Repository
-      uses: actions/checkout@v3
-      with:
-        submodules: true
-        lfs: false
-    - name: Check documentation
-      env:
-        DOCKER_REPOSITORY: geosx/ubuntu20.04-gcc9
-        CMAKE_BUILD_TYPE: Release
-        BUILD_AND_TEST_ARGS: --test-documentation
-      run: ./scripts/ci_build_and_test.sh
-
-
-  linux_builds:
+  check_code_style_and_documentation:
     name: ${{ matrix.name }}
-#    runs-on: ubuntu-22.04
-    runs-on: ${{ matrix.os }}
-    needs: [check_pull_request_is_not_a_draft]
+    needs: [is_pull_request_a_draft]
+    strategy:
+      fail-fast : false
+      matrix:
+        include:
+        # Validates the code-style using uncrustify
+        - name: Check code style
+          BUILD_AND_TEST_ARGS: --test-code-style
+        # Validates that the documentation generated using doxygen has no hole.
+        - name: Check documentation
+          BUILD_AND_TEST_ARGS: --test-documentation
+    uses: ./.github/workflows/build_and_test.yml
+    with:
+      BUILD_AND_TEST_CLI_ARGS: ${{ matrix.BUILD_AND_TEST_ARGS }}
+      CMAKE_BUILD_TYPE: Release
+      DOCKER_IMAGE_TAG: ${{ needs.is_pull_request_a_draft.outputs.DOCKER_IMAGE_TAG }}
+      DOCKER_REPOSITORY: geosx/ubuntu20.04-gcc9
+      RUNS_ON: ubuntu-22.04
+      USE_SCCACHE: false
+
+  # Matrix containing all the CPU build.
+  # Those are quite fast and can efficiently benefit from the `sccache' tool to make them even faster.
+  cpu_builds:
+    name: ${{ matrix.name }}
+    needs: [is_pull_request_a_draft]
     strategy:
 
       # In-progress jobs will not be cancelled if there is a failure
       fail-fast : false
+
       matrix:
         include:
-          - name: Ubuntu CUDA debug (20.04, clang 10.0.0 + gcc 9.4.0, open-mpi 4.0.3, cuda-11.2.152)
-            DOCKER_REPOSITORY: geosx/ubuntu20.04-clang10.0.0-cuda11.2.152
-            OS: Runner_4core_16GB
-            CMAKE_BUILD_TYPE: Debug
-            BUILD_AND_TEST_ARGS: "--disable-unit-tests --build-exe-only --disable-schema-deployment"
-            ENABLE_HYPRE: ON
-            ENABLE_HYPRE_DEVICE: CUDA
-            ENABLE_TRILINOS: OFF
-
-          - name: Ubuntu CUDA (20.04, clang 10.0.0 + gcc 9.4.0, open-mpi 4.0.3, cuda-11.2.152)
-            DOCKER_REPOSITORY: geosx/ubuntu20.04-clang10.0.0-cuda11.2.152
-#            OS: Runner_8core_32GB
-            OS: ubuntu-22.04
-            CMAKE_BUILD_TYPE: Release
-            BUILD_AND_TEST_ARGS: "--disable-unit-tests --disable-schema-deployment"
-            ENABLE_HYPRE: ON
-            ENABLE_HYPRE_DEVICE: CUDA
-            ENABLE_TRILINOS: OFF
-
-          - name: Centos (7.7, gcc 8.3.1, open-mpi 1.10.7, cuda 11.8.0)
-            DOCKER_REPOSITORY: geosx/centos7.7-gcc8.3.1-cuda11.8.0
-            OS: ubuntu-22.04
-            CMAKE_BUILD_TYPE: Release
-            BUILD_AND_TEST_ARGS: "--disable-unit-tests --disable-schema-deployment"
-
           - name: Ubuntu (20.04, gcc 9.3.0, open-mpi 4.0.3)
             DOCKER_REPOSITORY: geosx/ubuntu20.04-gcc9
-            OS: ubuntu-22.04
             CMAKE_BUILD_TYPE: Release
 
-          - name: Ubuntu debug (20.04, gcc 10.3.0, open-mpi 4.0.3)
+          - name: Ubuntu debug (20.04, gcc 10.3.0, open-mpi 4.0.3) - github codespaces
             DOCKER_REPOSITORY: geosx/ubuntu20.04-gcc10
-            OS: ubuntu-22.04
             CMAKE_BUILD_TYPE: Debug
 
-          - name: Ubuntu (20.04, gcc 10.3.0, open-mpi 4.0.3)
+          - name: Ubuntu (20.04, gcc 10.3.0, open-mpi 4.0.3) - github codespaces
             DOCKER_REPOSITORY: geosx/ubuntu20.04-gcc10
-            OS: ubuntu-22.04
             CMAKE_BUILD_TYPE: Release
 
-          # Matrix jobs that deploy to Google Cloud
-          - name: Pecan GPU (centos 7.7, gcc 8.2.0, open-mpi 4.0.1, mkl 2019.5, cuda 11.5.119)
-            DOCKER_REPOSITORY: geosx/pecan-gpu-gcc8.2.0-openmpi4.0.1-mkl2019.5-cuda11.5.119
-            OS: ubuntu-22.04
-            CMAKE_BUILD_TYPE: Release
-            BUILD_AND_TEST_ARGS: "--build-exe-only --disable-unit-tests --disable-schema-deployment"
-            HOST_CONFIG: host-configs/TOTAL/pecan-GPU.cmake
-            GCP_BUCKET: geosx/Pecan-GPU
-
+          # Below this line, jobs that deploy to Google Cloud.
           - name: Pecan CPU (centos 7.7, gcc 8.2.0, open-mpi 4.0.1, mkl 2019.5)
             DOCKER_REPOSITORY: geosx/pecan-cpu-gcc8.2.0-openmpi4.0.1-mkl2019.5
-            OS: ubuntu-22.04
             CMAKE_BUILD_TYPE: Release
             HOST_CONFIG: host-configs/TOTAL/pecan-CPU.cmake
             GCP_BUCKET: geosx/Pecan-CPU
 
           - name: Pangea 2 (centos 7.6, gcc 8.3.0, open-mpi 2.1.5, mkl 2019.3)
             DOCKER_REPOSITORY: geosx/pangea2-gcc8.3.0-openmpi2.1.5-mkl2019.3
-            OS: ubuntu-22.04
             CMAKE_BUILD_TYPE: Release
             GCP_BUCKET: geosx/Pangea2
             ENABLE_HYPRE: ON
@@ -163,7 +173,6 @@ jobs:
 
           - name: Sherlock CPU (centos 7.9.2009, gcc 10.1.0, open-mpi 4.1.2, openblas 0.3.10)
             DOCKER_REPOSITORY: geosx/sherlock-gcc10.1.0-openmpi4.1.2-openblas0.3.10-zlib1.2.11
-            OS: ubuntu-22.04
             CMAKE_BUILD_TYPE: Release
             HOST_CONFIG: host-configs/Stanford/sherlock-gcc10-ompi4.1.2-openblas0.3.10.cmake
             GCP_BUCKET: geosx/Sherlock-CPU
@@ -172,68 +181,109 @@ jobs:
 
           - name: Ubuntu (22.04, gcc 11.2.0, open-mpi 4.1.2)
             DOCKER_REPOSITORY: geosx/ubuntu22.04-gcc11
-            OS: ubuntu-22.04
             CMAKE_BUILD_TYPE: Release
             GCP_BUCKET: geosx/ubuntu22.04-gcc11
+    uses: ./.github/workflows/build_and_test.yml
+    with:
+      CMAKE_BUILD_TYPE: ${{ matrix.CMAKE_BUILD_TYPE }}
+      DOCKER_IMAGE_TAG: ${{ needs.is_pull_request_a_draft.outputs.DOCKER_IMAGE_TAG }}
+      DOCKER_REPOSITORY: ${{ matrix.DOCKER_REPOSITORY }}
+      ENABLE_HYPRE: ${{ matrix.ENABLE_HYPRE }}
+      ENABLE_TRILINOS: ${{ matrix.ENABLE_TRILINOS }}
+      GCP_BUCKET: ${{ matrix.GCP_BUCKET }}
+      HOST_CONFIG: ${{ matrix.HOST_CONFIG }}
+      RUNS_ON: ubuntu-22.04
+    secrets: inherit
 
-    steps:
-    - name: Checkout Repository
-      uses: actions/checkout@v3
-      with:
-        submodules: true
-        lfs: false
+  run_integrated_tests:
+    needs:
+      - are_integrated_tests_requested
+      - is_pull_request_a_draft
+      - cpu_builds
+    uses: ./.github/workflows/build_and_test.yml
+    secrets: inherit
+    with:
+      BUILD_AND_TEST_CLI_ARGS: --build-exe-only
+      BUILD_TYPE: integrated_tests
+      CMAKE_BUILD_TYPE: Release
+      DOCKER_IMAGE_TAG: ${{ needs.is_pull_request_a_draft.outputs.DOCKER_IMAGE_TAG }}
+      DOCKER_REPOSITORY: geosx/ubuntu22.04-gcc11
+      GCP_BUCKET: geosx/integratedTests
+      RUNS_ON: ubuntu-22.04
 
-    - id: 'auth'
-      if: matrix.GCP_BUCKET
-      uses: 'google-github-actions/auth@v1'
-      with:
-        credentials_json: '${{ secrets.GOOGLE_CLOUD_GCP }}'
-    - name: 'Set up Cloud SDK'
-      if: matrix.GCP_BUCKET
-      uses: 'google-github-actions/setup-gcloud@v1'
-      with:
-        version: '>= 363.0.0'
+  # If the 'ci: ready to be merged' PR label is found, the cuda jobs run immediately along side linux jobs.
+  # Note: CUDA jobs should only be run if PR is ready to merge.
+  cuda_builds:
+    name: ${{ matrix.name }}
+    needs:
+    - is_pull_request_a_draft
+    - are_cuda_builds_requested
+    strategy:
 
-    - name: Print environment
-      run: printenv
+      # In-progress jobs will not be cancelled if there is a failure
+      fail-fast : false
+      matrix:
+        include:
+          - name: Ubuntu CUDA debug (20.04, clang 10.0.0 + gcc 9.4.0, open-mpi 4.0.3, cuda-11.8.89)
+            BUILD_AND_TEST_CLI_ARGS: "--build-exe-only --no-install-schema"
+            CMAKE_BUILD_TYPE: Debug
+            DOCKER_REPOSITORY: geosx/ubuntu20.04-clang10.0.0-cuda11.8.89
+            ENABLE_HYPRE_DEVICE: CUDA
+            ENABLE_HYPRE: ON
+            ENABLE_TRILINOS: OFF
+            RUNS_ON: Runner_4core_16GB
 
-    # Build and test only
-    # Builds only the geosx executable (timeout when building tests)
-    - name: Build and test
-      if: ${{ !(matrix.GCP_BUCKET) }}
-      env:
-        DOCKER_REPOSITORY: ${{ matrix.DOCKER_REPOSITORY }}
-        CMAKE_BUILD_TYPE: ${{ matrix.CMAKE_BUILD_TYPE }}
-        BUILD_AND_TEST_ARGS: ${{ matrix.BUILD_AND_TEST_ARGS }}
-        ENABLE_HYPRE: ${{ matrix.ENABLE_HYPRE }}
-        ENABLE_HYPRE_DEVICE: ${{ matrix.ENABLE_HYPRE_DEVICE }}
-        ENABLE_TRILINOS: ${{ matrix.ENABLE_TRILINOS }}
-      run: ./scripts/ci_build_and_test.sh
+          - name: Ubuntu CUDA (20.04, clang 10.0.0 + gcc 9.4.0, open-mpi 4.0.3, cuda-11.8.89)
+            BUILD_AND_TEST_CLI_ARGS: "--no-run-unit-tests --no-install-schema"
+            CMAKE_BUILD_TYPE: Release
+            DOCKER_REPOSITORY: geosx/ubuntu20.04-clang10.0.0-cuda11.8.89
+            ENABLE_HYPRE_DEVICE: CUDA
+            ENABLE_HYPRE: ON
+            ENABLE_TRILINOS: OFF
+            RUNS_ON: Runner_4core_16GB
 
-    # Build, test, uploads GEOSX and its TPL to GCP/GCS using gcloud CLI
-    - name: Build and test and deploy
-      if: matrix.GCP_BUCKET
-      env:
-        DOCKER_REPOSITORY: ${{ matrix.DOCKER_REPOSITORY }}
-        CMAKE_BUILD_TYPE: ${{ matrix.CMAKE_BUILD_TYPE }}
-        BUILD_AND_TEST_ARGS: ${{ matrix.BUILD_AND_TEST_ARGS }}
-        HOST_CONFIG: ${{ matrix.HOST_CONFIG }}
-        ENABLE_HYPRE: ${{ matrix.ENABLE_HYPRE }}
-        ENABLE_TRILINOS: ${{ matrix.ENABLE_TRILINOS }}
-        GCP_BUCKET: ${{ matrix.GCP_BUCKET }}
-      run: |
-        source ./scripts/ci_build_and_test.sh
-        TMP_DIR=/tmp
-        GEOSX_EXPORT_DIR=GEOSX-and-TPL-${GITHUB_SHA:0:7}
-        docker cp -a ${CONTAINER_NAME}:${GEOSX_TPL_DIR}/.. ${TMP_DIR}/${GEOSX_EXPORT_DIR}
-        GEOSX_BUNDLE=${TMP_DIR}/${GEOSX_EXPORT_DIR}.tar.gz
-        tar czf ${GEOSX_BUNDLE} --directory=${TMP_DIR} ${GEOSX_EXPORT_DIR}
-        CLOUDSDK_PYTHON=python3 gsutil cp -a public-read ${GEOSX_BUNDLE} gs://${GCP_BUCKET}/
+          - name: Centos (7.7, gcc 8.3.1, open-mpi 1.10.7, cuda 11.8.89)
+            BUILD_AND_TEST_CLI_ARGS: "--no-run-unit-tests --no-install-schema"
+            CMAKE_BUILD_TYPE: Release
+            DOCKER_REPOSITORY: geosx/centos7.7-gcc8.3.1-cuda11.8.89
+            RUNS_ON: Runner_4core_16GB
 
-  # Convenience job - passes when all other jobs have passed.
+          # Below this line, jobs that deploy to Google Cloud.
+          - name: Pecan GPU (centos 7.7, gcc 8.2.0, open-mpi 4.0.1, mkl 2019.5, cuda 11.5.119)
+            BUILD_AND_TEST_CLI_ARGS: "--build-exe-only --no-install-schema"
+            CMAKE_BUILD_TYPE: Release
+            DOCKER_REPOSITORY: geosx/pecan-gpu-gcc8.2.0-openmpi4.0.1-mkl2019.5-cuda11.5.119
+            HOST_CONFIG: host-configs/TOTAL/pecan-GPU.cmake
+            RUNS_ON: Runner_4core_16GB
+    uses: ./.github/workflows/build_and_test.yml
+    with:
+      BUILD_AND_TEST_CLI_ARGS: ${{ matrix.BUILD_AND_TEST_CLI_ARGS }}
+      CMAKE_BUILD_TYPE: ${{ matrix.CMAKE_BUILD_TYPE }}
+      DOCKER_IMAGE_TAG: ${{ needs.is_pull_request_a_draft.outputs.DOCKER_IMAGE_TAG }}
+      DOCKER_REPOSITORY: ${{ matrix.DOCKER_REPOSITORY }}
+      ENABLE_HYPRE_DEVICE: ${{ matrix.ENABLE_HYPRE_DEVICE }}
+      ENABLE_HYPRE: ${{ matrix.ENABLE_HYPRE }}
+      ENABLE_TRILINOS: ${{ matrix.ENABLE_TRILINOS }}
+      HOST_CONFIG: ${{ matrix.HOST_CONFIG }}
+      RUNS_ON: ${{ matrix.RUNS_ON }}
+    secrets: inherit
+
+  # Convenience job - passes when all other jobs have passed (must pass the CUDA jobs).
   check_that_all_jobs_succeeded:
     runs-on: ubuntu-22.04
-    needs: [check_pull_request_is_not_a_draft, check_pull_request_is_assigned, check_submodules, code_style, documentation, linux_builds]
+    needs:
+    - is_pull_request_assigned
+    - are_submodules_in_sync
+    - check_code_style_and_documentation
+    - cpu_builds
+    - cuda_builds
+    if: ${{ always() }}
     steps:
-    - name: Success
-      run: "true"
+    - run: |
+        ${{
+          needs.is_pull_request_assigned.result == 'success' &&
+          needs.are_submodules_in_sync.result == 'success' &&
+          needs.check_code_style_and_documentation.result == 'success' &&
+          needs.cpu_builds.result == 'success' &&
+          needs.cuda_builds.result == 'success'
+        }}

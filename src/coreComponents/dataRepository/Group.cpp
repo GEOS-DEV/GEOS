@@ -18,6 +18,7 @@
 #include "codingUtilities/StringUtilities.hpp"
 #include "codingUtilities/Utilities.hpp"
 #include "common/TimingMacros.hpp"
+#include "GroupContext.hpp"
 #if defined(GEOSX_USE_PYGEOSX)
 #include "python/PyGroupType.hpp"
 #endif
@@ -31,7 +32,7 @@ Group::Group( string const & name,
               Group * const parent ):
   Group( name, parent->getConduitNode() )
 {
-  GEOS_ERROR_IF( parent == nullptr, "Should not be null." );
+  GEOS_ERROR_IF( parent == nullptr, "Should not be null (for Group named " << name << ")." );
   m_parent = parent;
 }
 
@@ -47,7 +48,8 @@ Group::Group( string const & name,
   m_logLevel( 0 ),
   m_restart_flags( RestartFlags::WRITE_AND_READ ),
   m_input_flags( InputFlags::INVALID ),
-  m_conduitNode( rootNode[ name ] )
+  m_conduitNode( rootNode[ name ] ),
+  m_dataContext( std::make_unique< GroupContext >( *this ) )
 {}
 
 Group::~Group()
@@ -71,7 +73,8 @@ WrapperBase & Group::registerWrapper( std::unique_ptr< WrapperBase > wrapper )
 
 void Group::deregisterWrapper( string const & name )
 {
-  GEOS_ERROR_IF( !hasWrapper( name ), "Wrapper " << name << " doesn't exist." );
+  GEOS_ERROR_IF( !hasWrapper( name ),
+                 "Wrapper " << name << " doesn't exist in Group" << getDataContext() << '.' );
   m_wrappers.erase( name );
   m_conduitNode.remove( name );
 }
@@ -125,15 +128,16 @@ void Group::reserve( indexType const newSize )
 
 string Group::getPath() const
 {
-  // In the Conduit node heirarchy everything begins with 'Problem', we should change it so that
+  // In the Conduit node hierarchy everything begins with 'Problem', we should change it so that
   // the ProblemManager actually uses the root Conduit Node but that will require a full rebaseline.
   string const noProblem = getConduitNode().path().substr( stringutilities::cstrlen( dataRepository::keys::ProblemManager ) );
   return noProblem.empty() ? "/" : noProblem;
 }
 
-void Group::processInputFileRecursive( xmlWrapper::xmlNode & targetNode )
+void Group::processInputFileRecursive( xmlWrapper::xmlDocument & xmlDocument,
+                                       xmlWrapper::xmlNode & targetNode )
 {
-  xmlWrapper::addIncludedXML( targetNode );
+  xmlDocument.addIncludedXML( targetNode );
 
   // Handle the case where the node was imported from a different input file
   // Set the path prefix to make sure all relative Path variables are interpreted correctly
@@ -141,8 +145,7 @@ void Group::processInputFileRecursive( xmlWrapper::xmlNode & targetNode )
   xmlWrapper::xmlAttribute filePath = targetNode.attribute( xmlWrapper::filePathString );
   if( filePath )
   {
-    Path::pathPrefix() = splitPath( filePath.value() ).first;
-    targetNode.remove_attribute( filePath );
+    Path::pathPrefix() = getAbsolutePath( splitPath( filePath.value() ).first );
   }
 
   // Loop over the child nodes of the targetNode
@@ -159,8 +162,11 @@ void Group::processInputFileRecursive( xmlWrapper::xmlNode & targetNode )
     {
       // Make sure child names are not duplicated
       GEOS_ERROR_IF( std::find( childNames.begin(), childNames.end(), childName ) != childNames.end(),
-                     GEOS_FMT( "Error: An XML block cannot contain children with duplicated names ({}/{}). ",
-                               getPath(), childName ) );
+                     GEOS_FMT( "Error: An XML block cannot contain children with duplicated names.\n"
+                               "Error detected at node {} with name = {} ({}:l.{})",
+                               childNode.path(), childName, xmlDocument.getFilePath(),
+                               xmlDocument.getNodePosition( childNode ).line ) );
+
       childNames.emplace_back( childName );
     }
 
@@ -172,22 +178,31 @@ void Group::processInputFileRecursive( xmlWrapper::xmlNode & targetNode )
     }
     if( newChild != nullptr )
     {
-      newChild->processInputFileRecursive( childNode );
+      newChild->processInputFileRecursive( xmlDocument, childNode );
     }
   }
 
-  processInputFile( targetNode );
+  processInputFile( xmlDocument, targetNode );
 
   // Restore original prefix once the node is processed
   Path::pathPrefix() = oldPrefix;
 }
 
-void Group::processInputFile( xmlWrapper::xmlNode const & targetNode )
+void Group::processInputFile( xmlWrapper::xmlDocument const & xmlDocument,
+                              xmlWrapper::xmlNode const & targetNode )
 {
+  xmlWrapper::xmlNodePos nodePos = xmlDocument.getNodePosition( targetNode );
+
+  if( nodePos.isFound() )
+  {
+    m_dataContext = std::make_unique< DataFileContext >( targetNode, nodePos );
+  }
+
+
   std::set< string > processedAttributes;
   for( std::pair< string const, WrapperBase * > & pair : m_wrappers )
   {
-    if( pair.second->processInputFile( targetNode ) )
+    if( pair.second->processInputFile( targetNode, nodePos ) )
     {
       processedAttributes.insert( pair.first );
     }
@@ -196,13 +211,14 @@ void Group::processInputFile( xmlWrapper::xmlNode const & targetNode )
   for( xmlWrapper::xmlAttribute attribute : targetNode.attributes() )
   {
     string const attributeName = attribute.name();
-    if( attributeName != "name" && attributeName != "xmlns:xsi" && attributeName != "xsi:noNamespaceSchemaLocation" )
+    if( !xmlWrapper::isFileMetadataAttribute( attributeName ) )
     {
       GEOS_THROW_IF( processedAttributes.count( attributeName ) == 0,
-                     GEOS_FMT( "XML Node '{}' with name='{}' contains unused attribute '{}'.\n"
+                     GEOS_FMT( "XML Node at '{}' with name={} contains unused attribute '{}'.\n"
                                "Valid attributes are:\n{}\nFor more details, please refer to documentation at:\n"
                                "http://geosx-geosx.readthedocs-hosted.com/en/latest/docs/sphinx/userGuide/Index.html",
-                               targetNode.path(), targetNode.attribute( "name" ).value(), attributeName, dumpInputOptions() ),
+                               targetNode.path(), m_dataContext->toString(), attributeName,
+                               dumpInputOptions() ),
                      InputError );
     }
   }
@@ -241,14 +257,16 @@ Group * Group::createChild( string const & childKey, string const & childName )
 
 void Group::printDataHierarchy( integer const indent )
 {
+  GEOS_LOG( string( indent, '\t' ) << getName() << " : " << LvArray::system::demangleType( *this ) );
   for( auto & view : wrappers() )
   {
-    GEOS_LOG( string( indent, '\t' ) << view.second->getName() << ", " << LvArray::system::demangleType( view.second ) );
+    GEOS_LOG( string( indent, '\t' ) << "-> " << view.second->getName() << " : "
+                                     << LvArray::system::demangleType( *view.second ) );
   }
+  GEOS_LOG( string( indent, '\t' ) );
 
   for( auto & group : m_subGroups )
   {
-    GEOS_LOG( string( indent, '\t' ) << group.first << ':' );
     group.second->printDataHierarchy( indent + 1 );
   }
 }
@@ -380,7 +398,7 @@ localIndex Group::packImpl( buffer_unit_type * & buffer,
     }
     else
     {
-      GEOS_ERROR( "Wrapper " << wrapperName << " not found in Group " << getName() << "." );
+      GEOS_ERROR( "Wrapper " << wrapperName << " not found in Group " << getDataContext() << "." );
     }
   }
 
@@ -484,7 +502,8 @@ localIndex Group::unpack( buffer_unit_type const * & buffer,
                           arrayView1d< localIndex > & packList,
                           integer const recursive,
                           bool onDevice,
-                          parallelDeviceEvents & events )
+                          parallelDeviceEvents & events,
+                          MPI_Op GEOS_UNUSED_PARAM( op ) )
 {
   localIndex unpackedSize = 0;
   string groupName;

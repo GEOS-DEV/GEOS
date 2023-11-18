@@ -89,6 +89,10 @@ SolidMechanicsLagrangianFEM::SolidMechanicsLagrangianFEM( const string & name,
     setApplyDefaultValue( m_timeIntegrationOption ).
     setDescription( "Time integration method. Options are:\n* " + EnumStrings< TimeIntegrationOption >::concat( "\n* " ) );
 
+  registerWrapper( viewKeyStruct::surfaceGeneratorNameString(), &m_surfaceGeneratorName ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Name of the surface generator to use" );
+
   registerWrapper( viewKeyStruct::maxNumResolvesString(), &m_maxNumResolves ).
     setApplyDefaultValue( 10 ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -125,6 +129,8 @@ void SolidMechanicsLagrangianFEM::postProcessInput()
   linParams.isSymmetric = true;
   linParams.dofsPerNode = 3;
   linParams.amg.separateComponents = true;
+
+  m_surfaceGenerator = this->getParent().getGroupPointer< SolverBase >( m_surfaceGeneratorName );
 }
 
 SolidMechanicsLagrangianFEM::~SolidMechanicsLagrangianFEM()
@@ -216,7 +222,8 @@ void SolidMechanicsLagrangianFEM::setConstitutiveNamesCallSuper( ElementSubRegio
 
   string & solidMaterialName = subRegion.getReference< string >( viewKeyStruct::solidMaterialNamesString() );
   solidMaterialName = SolverBase::getConstitutiveName< SolidBase >( subRegion );
-  GEOS_ERROR_IF( solidMaterialName.empty(), GEOS_FMT( "SolidBase model not found on subregion {}", subRegion.getName() ) );
+  GEOS_ERROR_IF( solidMaterialName.empty(), GEOS_FMT( "{}: SolidBase model not found on subregion {}",
+                                                      getDataContext(), subRegion.getDataContext() ) );
 
 }
 
@@ -294,7 +301,8 @@ real64 SolidMechanicsLagrangianFEM::explicitKernelDispatch( MeshLevel & mesh,
   }
   else
   {
-    GEOS_ERROR( "Invalid option for strain theory (0 = infinitesimal strain, 1 = finite strain" );
+    GEOS_ERROR( getWrapperDataContext( viewKeyStruct::strainTheoryString() ) <<
+                ": Invalid option for strain theory (0 = infinitesimal strain, 1 = finite strain" );
   }
 
   return rval;
@@ -449,26 +457,24 @@ real64 SolidMechanicsLagrangianFEM::solverStep( real64 const & time_n,
   GEOS_MARK_FUNCTION;
   real64 dtReturn = dt;
 
-  SolverBase * const surfaceGenerator = this->getParent().getGroupPointer< SolverBase >( "SurfaceGen" );
-
   if( m_timeIntegrationOption == TimeIntegrationOption::ExplicitDynamic )
   {
     dtReturn = explicitStep( time_n, dt, cycleNumber, domain );
 
-    if( surfaceGenerator!=nullptr )
+    if( m_surfaceGenerator != nullptr )
     {
-      surfaceGenerator->solverStep( time_n, dt, cycleNumber, domain );
+      m_surfaceGenerator->solverStep( time_n, dt, cycleNumber, domain );
     }
   }
   else if( m_timeIntegrationOption == TimeIntegrationOption::ImplicitDynamic ||
            m_timeIntegrationOption == TimeIntegrationOption::QuasiStatic )
   {
     int const maxNumResolves = m_maxNumResolves;
-    int locallyFractured = 0;
     int globallyFractured = 0;
     implicitStepSetup( time_n, dt, domain );
-    for( int solveIter=0; solveIter<maxNumResolves; ++solveIter )
+    for( int solveIter=0; solveIter<maxNumResolves+1; ++solveIter )
     {
+      GEOS_ERROR_IF( solveIter == maxNumResolves, "Maximum number of resolves achieved" );
 
       Timestamp const meshModificationTimestamp = getMeshModificationTimestamp( domain );
 
@@ -484,9 +490,11 @@ real64 SolidMechanicsLagrangianFEM::solverStep( real64 const & time_n,
                                         cycleNumber,
                                         domain );
 
-      if( surfaceGenerator!=nullptr )
+      if( m_surfaceGenerator != nullptr )
       {
-        if( surfaceGenerator->solverStep( time_n, dt, cycleNumber, domain ) > 0 )
+        int locallyFractured = 0;
+        globallyFractured = 0;
+        if( m_surfaceGenerator->solverStep( time_n, dt, cycleNumber, domain ) > 0 )
         {
           locallyFractured = 1;
         }
@@ -502,7 +510,7 @@ real64 SolidMechanicsLagrangianFEM::solverStep( real64 const & time_n,
       }
       else
       {
-        GEOS_LOG_RANK_0( "Fracture Occurred. Resolve" );
+        GEOS_LOG_RANK_0( GEOS_FMT( "Fracture Occurred. Resolve: {}", solveIter + 1 ) );
       }
     }
     implicitStepComplete( time_n, dt, domain );
@@ -576,7 +584,7 @@ real64 SolidMechanicsLagrangianFEM::explicitStep( real64 const & time_n,
                                     SortedArrayView< localIndex const > const & targetSet )
     {
       integer const component = bc.getComponent();
-      GEOS_ERROR_IF_LT_MSG( component, 0, "Component index required for displacement BC " << bc.getName() );
+      GEOS_ERROR_IF_LT_MSG( component, 0, getDataContext() << ": Component index required for displacement BC " << bc.getDataContext() );
 
       forAll< parallelDevicePolicy< 1024 > >( targetSet.size(),
                                               [=] GEOS_DEVICE ( localIndex const i )
@@ -589,7 +597,7 @@ real64 SolidMechanicsLagrangianFEM::explicitStep( real64 const & time_n,
                                     SortedArrayView< localIndex const > const & targetSet )
     {
       integer const component = bc.getComponent();
-      GEOS_ERROR_IF_LT_MSG( component, 0, "Component index required for displacement BC " << bc.getName() );
+      GEOS_ERROR_IF_LT_MSG( component, 0, getDataContext() << ": Component index required for displacement BC " << bc.getDataContext() );
 
       forAll< parallelDevicePolicy< 1024 > >( targetSet.size(),
                                               [=] GEOS_DEVICE ( localIndex const i )
@@ -1014,23 +1022,25 @@ void SolidMechanicsLagrangianFEM::assembleSystem( real64 const GEOS_UNUSED_PARAM
 
   if( m_isFixedStressPoromechanicsUpdate )
   {
-    GEOS_UNUSED_VAR( dt );
+    //GEOS_UNUSED_VAR( dt );
     assemblyLaunch< constitutive::PorousSolid< ElasticIsotropic >, // TODO: change once there is a cmake solution
                     solidMechanicsLagrangianFEMKernels::FixedStressThermoPoromechanicsFactory >( domain,
                                                                                                  dofManager,
                                                                                                  localMatrix,
-                                                                                                 localRhs );
+                                                                                                 localRhs,
+                                                                                                 dt );
   }
   else
   {
     if( m_timeIntegrationOption == TimeIntegrationOption::QuasiStatic )
     {
-      GEOS_UNUSED_VAR( dt );
+      //GEOS_UNUSED_VAR( dt );
       assemblyLaunch< constitutive::SolidBase,
                       solidMechanicsLagrangianFEMKernels::QuasiStaticFactory >( domain,
                                                                                 dofManager,
                                                                                 localMatrix,
-                                                                                localRhs );
+                                                                                localRhs,
+                                                                                dt );
     }
     else if( m_timeIntegrationOption == TimeIntegrationOption::ImplicitDynamic )
     {
@@ -1039,11 +1049,11 @@ void SolidMechanicsLagrangianFEM::assembleSystem( real64 const GEOS_UNUSED_PARAM
                                                                                     dofManager,
                                                                                     localMatrix,
                                                                                     localRhs,
+                                                                                    dt,
                                                                                     m_newmarkGamma,
                                                                                     m_newmarkBeta,
                                                                                     m_massDamping,
-                                                                                    m_stiffnessDamping,
-                                                                                    dt );
+                                                                                    m_stiffnessDamping );
     }
   }
 }
@@ -1183,7 +1193,7 @@ SolidMechanicsLagrangianFEM::
 
   if( getLogLevel() >= 1 && logger::internal::rank==0 )
   {
-    std::cout << GEOS_FMT( "    ( R{} ) = ( {:4.2e} ) ; ", coupledSolverAttributePrefix(), totalResidualNorm );
+    std::cout << GEOS_FMT( "        ( R{} ) = ( {:4.2e} )", coupledSolverAttributePrefix(), totalResidualNorm );
   }
 
   return totalResidualNorm;
@@ -1195,8 +1205,10 @@ void
 SolidMechanicsLagrangianFEM::applySystemSolution( DofManager const & dofManager,
                                                   arrayView1d< real64 const > const & localSolution,
                                                   real64 const scalingFactor,
+                                                  real64 const dt,
                                                   DomainPartition & domain )
 {
+  GEOS_UNUSED_VAR( dt );
   GEOS_MARK_FUNCTION;
   dofManager.addVectorToField( localSolution,
                                solidMechanics::totalDisplacement::key(),
@@ -1293,20 +1305,18 @@ void SolidMechanicsLagrangianFEM::applyContactConstraint( DofManager const & dof
         real64 const contactStiffness = contact.stiffness();
 
         arrayView1d< real64 > const area = subRegion.getElementArea();
-        arrayView2d< localIndex const > const elemsToFaces = subRegion.faceList();
+        ArrayOfArraysView< localIndex const > const elemsToFaces = subRegion.faceList().toViewConst();
 
         // TODO: use parallel policy?
         forAll< serialPolicy >( subRegion.size(), [=] ( localIndex const kfe )
         {
-          real64 Nbar[ 3 ] = { faceNormal[elemsToFaces[kfe][0]][0] - faceNormal[elemsToFaces[kfe][1]][0],
-                               faceNormal[elemsToFaces[kfe][0]][1] - faceNormal[elemsToFaces[kfe][1]][1],
-                               faceNormal[elemsToFaces[kfe][0]][2] - faceNormal[elemsToFaces[kfe][1]][2] };
+          localIndex const kf0 = elemsToFaces[kfe][0], kf1 = elemsToFaces[kfe][1];
+          real64 Nbar[ 3 ] = { faceNormal[kf0][0] - faceNormal[kf1][0],
+                               faceNormal[kf0][1] - faceNormal[kf1][1],
+                               faceNormal[kf0][2] - faceNormal[kf1][2] };
 
           LvArray::tensorOps::normalize< 3 >( Nbar );
 
-
-          localIndex const kf0 = elemsToFaces[kfe][0];
-          localIndex const kf1 = elemsToFaces[kfe][1];
           localIndex const numNodesPerFace=facesToNodes.sizeOfArray( kf0 );
           real64 const Ja = area[kfe] / numNodesPerFace;
 
@@ -1367,7 +1377,7 @@ void SolidMechanicsLagrangianFEM::applyContactConstraint( DofManager const & dof
 }
 
 real64
-SolidMechanicsLagrangianFEM::scalingForSystemSolution( DomainPartition const & domain,
+SolidMechanicsLagrangianFEM::scalingForSystemSolution( DomainPartition & domain,
                                                        DofManager const & dofManager,
                                                        arrayView1d< real64 const > const & localSolution )
 {
