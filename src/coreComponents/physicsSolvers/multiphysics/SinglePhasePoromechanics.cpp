@@ -201,10 +201,10 @@ void SinglePhasePoromechanics< FLOW_SOLVER >::initializePreSubGroups()
                                catalogName(), this->getDataContext().toString(), subRegion.getName() ),
                      InputError );
       string & porosityModelName = subRegion.getReference< string >( CoupledSolidBase::viewKeyStruct::porosityModelNameString() );
-      porosityModelName = getConstitutiveName< PorosityBase >( subRegion );
+      porosityModelName = this->template getConstitutiveName< PorosityBase >( subRegion );
       GEOS_THROW_IF( porosityModelName.empty(),
                      GEOS_FMT( "{} {} : Porosity model not found on subregion {}",
-                               catalogName(), getDataContext().toString(), subRegion.getName() ),
+                               catalogName(), this->getDataContext().toString(), subRegion.getName() ),
                      InputError );
 
 
