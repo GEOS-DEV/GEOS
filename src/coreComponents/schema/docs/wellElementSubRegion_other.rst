@@ -14,7 +14,6 @@ reservoirElementIndex     integer_array                                         
 reservoirElementRegion    integer_array                                                        For each perforation, elementRegion index of the perforated element    
 reservoirElementSubregion integer_array                                                        For each perforation, elementSubRegion index of the perforated element 
 wellElementIndex          integer_array                                                        For each perforation, index of the well element                        
-wellSkinFactor            real64_array                                                         For each perforation, well skin factor                                 
 wellTransmissibility      real64_array                                                         For each perforation, well transmissibility                            
 neighborData              node                                                                 :ref:`DATASTRUCTURE_neighborData`                                      
 sets                      node                                                                 :ref:`DATASTRUCTURE_sets`                                              
