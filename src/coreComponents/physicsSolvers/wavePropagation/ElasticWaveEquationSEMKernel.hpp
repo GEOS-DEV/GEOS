@@ -21,7 +21,6 @@
 
 #include "finiteElement/kernelInterface/KernelBase.hpp"
 #include "WaveSolverUtils.hpp"
-#include "WaveSolverKernelBase.hpp"
 
 
 namespace geos
@@ -261,11 +260,11 @@ struct MassMatrixKernel
         }
       }
 
-      FE_TYPE::staticForOnCell( [&] ( auto index )
+      for( localIndex q = 0; q < numQuadraturePointsPerElem; ++q )
       {
-        real32 const localIncrement = density[e] * m_finiteElement.template computeMassTerm< index.q>( xLocal );
-        RAJA::atomicAdd< ATOMIC_POLICY >( &mass[elemsToNodes( e, index.q )], localIncrement );
-      } );
+        real32 const localIncrement = density[e] * m_finiteElement.computeMassTerm( q, xLocal );
+        RAJA::atomicAdd< ATOMIC_POLICY >( &mass[elemsToNodes( e, q )], localIncrement );
+      }
     } ); // end loop over element
   }
 
@@ -331,17 +330,17 @@ struct DampingMatrixKernel
           }
 
           real32 const nx = faceNormal( f, 0 ), ny = faceNormal( f, 1 ), nz = faceNormal( f, 2 );
-          FE_TYPE::staticForOnFace( [&] ( auto index )
+          for( localIndex q = 0; q < numNodesPerFace; ++q )
           {
-            real32 const aux = density[e] * m_finiteElement.template computeDampingTerm< index.q >( xLocal );
+            real32 const aux = density[e] * m_finiteElement.computeDampingTerm( q, xLocal );
             real32 const localIncrementx = aux * ( velocityVp[e] * abs( nx ) + velocityVs[e] * sqrt( pow( ny, 2 ) + pow( nz, 2 ) ) );
             real32 const localIncrementy = aux * ( velocityVp[e] * abs( ny ) + velocityVs[e] * sqrt( pow( nx, 2 ) + pow( nz, 2 ) ) );
             real32 const localIncrementz = aux * ( velocityVp[e] * abs( nz ) + velocityVs[e] * sqrt( pow( nx, 2 ) + pow( ny, 2 ) ) );
 
-            RAJA::atomicAdd< ATOMIC_POLICY >( &dampingx[facesToNodes( f, index.q )], localIncrementx );
-            RAJA::atomicAdd< ATOMIC_POLICY >( &dampingy[facesToNodes( f, index.q )], localIncrementy );
-            RAJA::atomicAdd< ATOMIC_POLICY >( &dampingz[facesToNodes( f, index.q )], localIncrementz );
-          } );
+            RAJA::atomicAdd< ATOMIC_POLICY >( &dampingx[facesToNodes( f, q )], localIncrementx );
+            RAJA::atomicAdd< ATOMIC_POLICY >( &dampingy[facesToNodes( f, q )], localIncrementy );
+            RAJA::atomicAdd< ATOMIC_POLICY >( &dampingz[facesToNodes( f, q )], localIncrementz );
+          }
         }
       }
     } );
@@ -372,19 +371,23 @@ struct DampingMatrixKernel
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
           typename FE_TYPE >
-class ExplicitElasticSEM : public geos::finiteElement::WaveSolverKernelBase< SUBREGION_TYPE,
-                                                                             CONSTITUTIVE_TYPE,
-                                                                             FE_TYPE >
+class ExplicitElasticSEM : public finiteElement::KernelBase< SUBREGION_TYPE,
+                                                             CONSTITUTIVE_TYPE,
+                                                             FE_TYPE,
+                                                             1,
+                                                             1 >
 {
 public:
-  /// Alias for the base class;
-  using Base = geos::finiteElement::WaveSolverKernelBase< SUBREGION_TYPE,
-                                                          CONSTITUTIVE_TYPE,
-                                                          FE_TYPE >;
 
-  /// Maximum number of nodes per element, which is equal to the maxNumTestSupportPointPerElem and
-  /// maxNumTrialSupportPointPerElem by definition. When the FE_TYPE is not a Virtual Element, this
-  /// will be the actual number of nodes per element.
+  /// Alias for the base class;
+  using Base = finiteElement::KernelBase< SUBREGION_TYPE,
+                                          CONSTITUTIVE_TYPE,
+                                          FE_TYPE,
+                                          1,
+                                          1 >;
+
+  /// Number of nodes per element...which is equal to the
+  /// numTestSupportPointPerElem and numTrialSupportPointPerElem by definition.
   static constexpr int numNodesPerElem = Base::maxNumTestSupportPointsPerElem;
 
   using Base::numDofPerTestSupportPoint;
@@ -486,14 +489,14 @@ public:
    * Calculates stiffness vector
    *
    */
-  template< int q >
   GEOS_HOST_DEVICE
   inline
   void quadraturePointKernel( localIndex const k,
+                              localIndex const q,
                               StackVariables & stack ) const
   {
 
-    m_finiteElementSpace.template computeFirstOrderStiffnessTerm< q >( stack.xLocal, [&] ( int i, int j, real64 val, real64 J[3][3], int p, int r )
+    m_finiteElementSpace.template computeFirstOrderStiffnessTerm( q, stack.xLocal, [&] ( int i, int j, real64 val, real64 J[3][3], int p, int r )
     {
       real32 const Rxx_ij = val*((stack.lambda+2.0*stack.mu)*J[p][0]*J[r][0]+stack.mu*(J[p][1]*J[r][1]+J[p][2]*J[r][2]));
       real32 const Ryy_ij = val*((stack.lambda+2.0*stack.mu)*J[p][1]*J[r][1]+stack.mu*(J[p][0]*J[r][0]+J[p][2]*J[r][2]));

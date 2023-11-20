@@ -21,7 +21,6 @@
 
 #include "finiteElement/kernelInterface/KernelBase.hpp"
 #include "WaveSolverUtils.hpp"
-#include "WaveSolverKernelBase.hpp"
 
 
 namespace geos
@@ -234,11 +233,11 @@ struct MassMatrixKernel
         }
       }
 
-      FE_TYPE::staticForOnCell( [&] ( auto index )
+      for( localIndex q = 0; q < numQuadraturePointsPerElem; ++q )
       {
-        real32 const localIncrement = density[k] * m_finiteElement.template computeMassTerm< index.q >( xLocal );
-        RAJA::atomicAdd< ATOMIC_POLICY >( &mass[elemsToNodes[k][index.q]], localIncrement );
-      } );
+        real32 const localIncrement = density[k] * m_finiteElement.computeMassTerm( q, xLocal );
+        RAJA::atomicAdd< ATOMIC_POLICY >( &mass[elemsToNodes[k][q]], localIncrement );
+      }
     } ); // end loop over element
   }
 
@@ -303,17 +302,17 @@ struct DampingMatrixKernel
           }
 
           real32 const nx = faceNormal( f, 0 ), ny = faceNormal( f, 1 ), nz = faceNormal( f, 2 );
-          FE_TYPE::staticForOnFace( [&] ( auto index )
+          for( localIndex q = 0; q < numNodesPerFace; ++q )
           {
-            real32 const aux = density[e] * m_finiteElement.template computeDampingTerm< index.q >( xLocal );
+            real32 const aux = density[e] * m_finiteElement.computeDampingTerm( q, xLocal );
             real32 const localIncrementx = density[e] * (velocityVp[e] * abs( nx ) + velocityVs[e] * sqrt( pow( ny, 2 ) + pow( nz, 2 ) ) ) * aux;
             real32 const localIncrementy = density[e] * (velocityVp[e] * abs( ny ) + velocityVs[e] * sqrt( pow( nx, 2 ) + pow( nz, 2 ) ) ) * aux;
             real32 const localIncrementz = density[e] * (velocityVp[e] * abs( nz ) + velocityVs[e] * sqrt( pow( nx, 2 ) + pow( ny, 2 ) ) ) * aux;
 
-            RAJA::atomicAdd< ATOMIC_POLICY >( &dampingx[facesToNodes( f, index.q )], localIncrementx );
-            RAJA::atomicAdd< ATOMIC_POLICY >( &dampingy[facesToNodes( f, index.q )], localIncrementy );
-            RAJA::atomicAdd< ATOMIC_POLICY >( &dampingz[facesToNodes( f, index.q )], localIncrementz );
-          } );
+            RAJA::atomicAdd< ATOMIC_POLICY >( &dampingx[facesToNodes( f, q )], localIncrementx );
+            RAJA::atomicAdd< ATOMIC_POLICY >( &dampingy[facesToNodes( f, q )], localIncrementy );
+            RAJA::atomicAdd< ATOMIC_POLICY >( &dampingz[facesToNodes( f, q )], localIncrementz );
+          }
         }
       }
     } );
@@ -396,21 +395,22 @@ struct StressComputation
 
 
       //Pre-multiplication by mass matrix
-      FE_TYPE::staticForOnCell( [&] ( auto index )
+      for( localIndex i = 0; i < numNodesPerElem; ++i )
       {
-        real32 massLoc = m_finiteElement.template computeMassTerm< index.q >( xLocal );
-        uelemxx[index.q] = massLoc*stressxx[k][index.q];
-        uelemyy[index.q] = massLoc*stressyy[k][index.q];
-        uelemzz[index.q] = massLoc*stresszz[k][index.q];
-        uelemxy[index.q] = massLoc*stressxy[k][index.q];
-        uelemxz[index.q] = massLoc*stressxz[k][index.q];
-        uelemyz[index.q] = massLoc*stressyz[k][index.q];
-      } );
+        real32 massLoc = m_finiteElement.computeMassTerm( i, xLocal );
+        uelemxx[i] = massLoc*stressxx[k][i];
+        uelemyy[i] = massLoc*stressyy[k][i];
+        uelemzz[i] = massLoc*stresszz[k][i];
+        uelemxy[i] = massLoc*stressxy[k][i];
+        uelemxz[i] = massLoc*stressxz[k][i];
+        uelemyz[i] = massLoc*stressyz[k][i];
+      }
 
-      FE_TYPE::staticForOnCell( [&] ( auto index )
+      for( localIndex q=0; q<numQuadraturePointsPerElem; ++q )
       {
+
         //Volume integral
-        m_finiteElement.template computeFirstOrderStiffnessTermX< index.q >( xLocal, [&] ( int i, int j, real32 dfx1, real32 dfx2, real32 dfx3 )
+        m_finiteElement.template computeFirstOrderStiffnessTermX( q, xLocal, [&] ( int i, int j, real32 dfx1, real32 dfx2, real32 dfx3 )
         {
           auxx[j]+= dfx1*ux_np1[elemsToNodes[k][i]];
           auyy[j]+= dfx2*uy_np1[elemsToNodes[k][i]];
@@ -421,7 +421,7 @@ struct StressComputation
 
         } );
 
-        m_finiteElement.template computeFirstOrderStiffnessTermY< index.q >( xLocal, [&] ( int i, int j, real32 dfy1, real32 dfy2, real32 dfy3 )
+        m_finiteElement.template computeFirstOrderStiffnessTermY( q, xLocal, [&] ( int i, int j, real32 dfy1, real32 dfy2, real32 dfy3 )
         {
           auxx[j]+= dfy1*ux_np1[elemsToNodes[k][i]];
           auyy[j]+= dfy2*uy_np1[elemsToNodes[k][i]];
@@ -432,7 +432,7 @@ struct StressComputation
 
         } );
 
-        m_finiteElement.template computeFirstOrderStiffnessTermZ< index.q >(xLocal, [&] ( int i, int j, real32 dfz1, real32 dfz2, real32 dfz3 )
+        m_finiteElement.template computeFirstOrderStiffnessTermZ( q, xLocal, [&] ( int i, int j, real32 dfz1, real32 dfz2, real32 dfz3 )
         {
           auxx[j]+= dfz1*ux_np1[elemsToNodes[k][i]];
           auyy[j]+= dfz2*uy_np1[elemsToNodes[k][i]];
@@ -443,7 +443,7 @@ struct StressComputation
 
         } );
 
-      } );
+      }
       //Time integration
       for( localIndex i = 0; i < numNodesPerElem; ++i )
       {
@@ -457,16 +457,16 @@ struct StressComputation
       }
 
       // Multiplication by inverse mass matrix
-      FE_TYPE::staticForOnCell( [&] ( auto index )
+      for( localIndex i = 0; i < numNodesPerElem; ++i )
       {
-        real32 massLoc = m_finiteElement.template computeMassTerm< index.q >( xLocal );
-        stressxx[k][index.q] = uelemxx[index.q]/massLoc;
-        stressyy[k][index.q] = uelemyy[index.q]/massLoc;
-        stresszz[k][index.q] = uelemzz[index.q]/massLoc;
-        stressxy[k][index.q] = uelemxy[index.q]/massLoc;
-        stressxz[k][index.q] = uelemxz[index.q]/massLoc;
-        stressyz[k][index.q] = uelemyz[index.q]/massLoc;
-      } );
+        real32 massLoc = m_finiteElement.computeMassTerm( i, xLocal );
+        stressxx[k][i] = uelemxx[i]/massLoc;
+        stressyy[k][i] = uelemyy[i]/massLoc;
+        stresszz[k][i] = uelemzz[i]/massLoc;
+        stressxy[k][i] = uelemxy[i]/massLoc;
+        stressxz[k][i] = uelemxz[i]/massLoc;
+        stressyz[k][i] = uelemyz[i]/massLoc;
+      }
 
 
       //Source injection
@@ -476,14 +476,14 @@ struct StressComputation
         {
           if( sourceElem[isrc]==k && sourceRegion[isrc] == regionIndex )
           {
-            FE_TYPE::staticForOnCell( [&] ( auto index )
+            for( localIndex i = 0; i < numNodesPerElem; ++i )
             {
-              real32 massLoc = m_finiteElement.template computeMassTerm< index.q >( xLocal );
-              real32 const localIncrement = dt*(sourceConstants[isrc][index.q]*sourceValue[cycleNumber][isrc])/massLoc;
-              RAJA::atomicAdd< ATOMIC_POLICY >( &stressxx[k][index.q], localIncrement );
-              RAJA::atomicAdd< ATOMIC_POLICY >( &stressyy[k][index.q], localIncrement );
-              RAJA::atomicAdd< ATOMIC_POLICY >( &stresszz[k][index.q], localIncrement );
-            } );
+              real32 massLoc = m_finiteElement.computeMassTerm( i, xLocal );
+              real32 const localIncrement = dt*(sourceConstants[isrc][i]*sourceValue[cycleNumber][isrc])/massLoc;
+              RAJA::atomicAdd< ATOMIC_POLICY >( &stressxx[k][i], localIncrement );
+              RAJA::atomicAdd< ATOMIC_POLICY >( &stressyy[k][i], localIncrement );
+              RAJA::atomicAdd< ATOMIC_POLICY >( &stresszz[k][i], localIncrement );
+            }
 
           }
 
@@ -561,10 +561,12 @@ struct VelocityComputation
       real32 flowy[numNodesPerElem] = {0.0};
       real32 flowz[numNodesPerElem] = {0.0};
 
-      FE_TYPE::staticForOnCell( [&] ( auto index )
+      for( localIndex q=0; q<numQuadraturePointsPerElem; ++q )
       {
+
+
         // Stiffness part
-        m_finiteElement.template computeFirstOrderStiffnessTermX< index.q >( xLocal, [&] ( int i, int j, real32 dfx1, real32 dfx2, real32 dfx3 )
+        m_finiteElement.template computeFirstOrderStiffnessTermX( q, xLocal, [&] ( int i, int j, real32 dfx1, real32 dfx2, real32 dfx3 )
         {
           flowx[i] -= stressxx[k][j]*dfx1 + stressxy[k][j]*dfx2 + stressxz[k][j]*dfx3;
           flowy[i] -= stressxy[k][j]*dfx1 + stressyy[k][j]*dfx2 + stressyz[k][j]*dfx3;
@@ -572,21 +574,21 @@ struct VelocityComputation
 
         } );
 
-        m_finiteElement.template computeFirstOrderStiffnessTermY< index.q >( xLocal, [&] ( int i, int j, real32 dfy1, real32 dfy2, real32 dfy3 )
+        m_finiteElement.template computeFirstOrderStiffnessTermY( q, xLocal, [&] ( int i, int j, real32 dfy1, real32 dfy2, real32 dfy3 )
         {
           flowx[i] -= stressxx[k][j]*dfy1 + stressxy[k][j]*dfy2 + stressxz[k][j]*dfy3;
           flowy[i] -= stressxy[k][j]*dfy1 + stressyy[k][j]*dfy2 + stressyz[k][j]*dfy3;
           flowz[i] -= stressxz[k][j]*dfy1 + stressyz[k][j]*dfy2 + stresszz[k][j]*dfy3;
         } );
 
-        m_finiteElement.template computeFirstOrderStiffnessTermZ< index.q >( xLocal, [&] ( int i, int j, real32 dfz1, real32 dfz2, real32 dfz3 )
+        m_finiteElement.template computeFirstOrderStiffnessTermZ( q, xLocal, [&] ( int i, int j, real32 dfz1, real32 dfz2, real32 dfz3 )
         {
           flowx[i] -= stressxx[k][j]*dfz1 + stressxy[k][j]*dfz2 + stressxz[k][j]*dfz3;
           flowy[i] -= stressxy[k][j]*dfz1 + stressyy[k][j]*dfz2 + stressyz[k][j]*dfz3;
           flowz[i] -= stressxz[k][j]*dfz1 + stressyz[k][j]*dfz2 + stresszz[k][j]*dfz3;
         } );
 
-      } );
+      }
       // Time update
       for( localIndex i = 0; i < numNodesPerElem; ++i )
       {

@@ -59,121 +59,6 @@ public:
   /// The number of quadrature points per element.
   constexpr static localIndex numQuadraturePoints = numNodes;
 
-  /// Precomputed values at quadrature points
-  template< int qi >
-  struct MultiIndex3D
-  {
-    constexpr static int q = qi;
-    constexpr static int qa = ( qi % ( GL_BASIS::numSupportPoints*GL_BASIS::numSupportPoints ) ) % GL_BASIS::numSupportPoints;
-    constexpr static int qb = ( qi % ( GL_BASIS::numSupportPoints*GL_BASIS::numSupportPoints ) ) / GL_BASIS::numSupportPoints;
-    constexpr static int qc = ( qi / ( GL_BASIS::numSupportPoints*GL_BASIS::numSupportPoints ) );
-  };
-  template< int qa, int qb, int qc >
-  struct LinearIndex3D
-  {
-    constexpr static int q = qa + qb * GL_BASIS::numSupportPoints + qc * GL_BASIS::numSupportPoints * GL_BASIS::numSupportPoints;
-  };
-
-  template< int qi >
-  struct MultiIndex2D
-  {
-    constexpr static int q = qi;
-    constexpr static int qa = qi % GL_BASIS::numSupportPoints;
-    constexpr static int qb = qi / GL_BASIS::numSupportPoints;
-  };
-  template< int qa, int qb >
-  struct LinearIndex2D
-  {
-    constexpr static int q = qa + qb * GL_BASIS::numSupportPoints;
-  };
-  template< int i >
-  struct Index1D
-  {
-    constexpr static int idx = i;
-  };
-  template< int q >
-  struct BasisWeightAtQ
-  {
-    constexpr static double val = GL_BASIS::weight( q );
-  };
-  template< int q >
-  struct BasisParentSupportCoordAtQ
-  {
-    constexpr static double val = GL_BASIS::parentSupportCoord( q );
-  };
-  template< int qa, int qb >
-  struct BasisValueAtQ
-  {
-    constexpr static double val = GL_BASIS::value( qa, GL_BASIS::parentSupportCoord( qb ) );
-  };
-  template< int qa, int qb >
-  struct BasisGradientAtQ
-  {
-    constexpr static double val = GL_BASIS::gradient( qa, GL_BASIS::parentSupportCoord( qb ) );
-  };
-
-  // static for loops, used to enable compile-time optimization
-  template< class F, std::size_t... Qs >
-  GEOS_HOST_DEVICE
-  GEOS_FORCE_INLINE
-  constexpr static void staticForOnCell( F func, std::index_sequence<  Qs... > )
-  {
-    ( func( MultiIndex3D< Qs >{} ), ... );
-  }
-  template< typename F >
-  GEOS_HOST_DEVICE
-  GEOS_FORCE_INLINE
-  constexpr static void staticForOnCell( F func )
-  {
-    staticForOnCell( func, std::make_index_sequence< GL_BASIS::numSupportPoints * 
-                                                            GL_BASIS::numSupportPoints * 
-                                                            GL_BASIS::numSupportPoints > () );
-  }
-  template< class F, std::size_t... Qs >
-  GEOS_HOST_DEVICE
-  GEOS_FORCE_INLINE
-  constexpr static void staticForOnFace( F func, std::index_sequence< Qs... > )
-  {
-    ( func( MultiIndex2D< Qs>{} ), ... );
-  }
-  template< typename F >
-  GEOS_HOST_DEVICE
-  GEOS_FORCE_INLINE
-  constexpr static void staticForOnFace( F func )
-  {
-    staticForOnFace( func, std::make_index_sequence< GL_BASIS::numSupportPoints * GL_BASIS::numSupportPoints >() );
-  }
-  template< class F, std::size_t... Qs >
-  GEOS_HOST_DEVICE
-  GEOS_FORCE_INLINE
-  constexpr static void staticFor2D( F func, std::index_sequence< Qs... > )
-  {
-    ( func( Index1D< MultiIndex2D< Qs >::qa >{}, Index1D< MultiIndex2D< Qs >::qb >{} ), ... );
-  }
-  template< typename F >
-  GEOS_HOST_DEVICE
-  GEOS_FORCE_INLINE
-  constexpr static void staticFor2D( F func )
-  {
-    staticFor2D( func, std::make_index_sequence< GL_BASIS::numSupportPoints * GL_BASIS::numSupportPoints >( ) );
-  }
-  template< class F, std::size_t... Qs >
-  GEOS_HOST_DEVICE
-  GEOS_FORCE_INLINE
-  constexpr static void staticFor1D( F func, std::index_sequence< Qs... > )
-  {
-    ( func( Index1D< Qs >{} ), ... );
-  }
-  template< typename F >
-  GEOS_HOST_DEVICE
-  GEOS_FORCE_INLINE
-  constexpr static void staticFor1D( F func )
-  {
-    staticFor1D( func, std::make_index_sequence< GL_BASIS::numSupportPoints >( ) );
-  }
-
-
-
   /** @cond Doxygen_Suppress */
   USING_FINITEELEMENTBASE
   /** @endcond Doxygen_Suppress */
@@ -182,7 +67,6 @@ public:
   {}
 
   GEOS_HOST_DEVICE
-  GEOS_FORCE_INLINE
   virtual localIndex getNumQuadraturePoints() const override
   {
     return numQuadraturePoints;
@@ -194,7 +78,6 @@ public:
    * @return The number of quadrature points.
    */
   GEOS_HOST_DEVICE
-  GEOS_FORCE_INLINE
   static localIndex getNumQuadraturePoints( StackVariables const & stack )
   {
     GEOS_UNUSED_VAR( stack );
@@ -202,14 +85,12 @@ public:
   }
 
   GEOS_HOST_DEVICE
-  GEOS_FORCE_INLINE
   virtual localIndex getNumSupportPoints() const override
   {
     return numNodes;
   }
 
   GEOS_HOST_DEVICE
-  GEOS_FORCE_INLINE
   virtual localIndex getMaxSupportPoints() const override
   {
     return maxSupportPoints;
@@ -221,7 +102,6 @@ public:
    * @return The number of support points.
    */
   GEOS_HOST_DEVICE
-  GEOS_FORCE_INLINE
   static localIndex getNumSupportPoints( StackVariables const & stack )
   {
     GEOS_UNUSED_VAR( stack );
@@ -235,12 +115,13 @@ public:
    * @param[out] N The shape function values.
    */
   GEOS_HOST_DEVICE
-  GEOS_FORCE_INLINE
+  inline
   static void calcN( real64 const (&coords)[3],
                      real64 (& N)[numNodes] )
   {
     GL_BASIS::TensorProduct3D::value( coords, N );
   }
+
 
   /**
    * @brief Calculate shape functions values for each support point at a
@@ -250,8 +131,9 @@ public:
    *   point.
    */
   GEOS_HOST_DEVICE
-  GEOS_FORCE_INLINE
-  static void calcN( localIndex const q, real64 (& N)[numNodes] )
+  inline
+  static void calcN( localIndex const q,
+                     real64 (& N)[numNodes] )
   {
     int qa, qb, qc;
     GL_BASIS::TensorProduct3D::multiIndex( q, qa, qb, qc );
@@ -266,33 +148,12 @@ public:
    * @brief Calculate shape functions values for each support point at a
    *   quadrature point.
    * @param q Index of the quadrature point.
-   * @param N An array to pass back the shape function values for each support
-   *   point.
-   */
-  template< int q >
-  GEOS_HOST_DEVICE
-  GEOS_FORCE_INLINE
-  static void calcN( real64 (& N)[numNodes] )
-  {
-    using indexJ= MultiIndex3D< q >;
-    staticForOnCell( [&] ( auto indexI )
-    {
-      N[ indexI.q ] =  BasisValueAtQ< indexI.qa, indexJ::qa >::val*
-                      BasisValueAtQ< indexI.qb, indexJ::qb >::val*
-                      BasisValueAtQ< indexI.qc, indexJ::qc >::val;
-    } );
-  }
-
-  /**
-   * @brief Calculate shape functions values for each support point at a
-   *   quadrature point.
-   * @param q Index of the quadrature point.
    * @param stack Variables allocated on the stack as filled by @ref setupStack.
    * @param N An array to pass back the shape function values for each support
    *   point.
    */
   GEOS_HOST_DEVICE
-  GEOS_FORCE_INLINE
+  inline
   static void calcN( localIndex const q,
                      StackVariables const & stack,
                      real64 ( & N )[numNodes] )
@@ -302,24 +163,6 @@ public:
   }
 
   /**
-   * @brief Calculate shape functions values for each support point at a
-   *   quadrature point.
-   * @param q Index of the quadrature point.
-   * @param stack Variables allocated on the stack as filled by @ref setupStack.
-   * @param N An array to pass back the shape function values for each support
-   *   point.
-   */
-  template< int q >
-  GEOS_HOST_DEVICE
-  GEOS_FORCE_INLINE
-  static void calcN( StackVariables const & stack,
-                     real64 ( & N )[numNodes] )
-  {
-    GEOS_UNUSED_VAR( stack );
-    return calcN( q, N );
-  }
-
-  /**
    * @brief Calculate the shape functions derivatives wrt the physical
    *   coordinates.
    * @param q Index of the quadrature point.
@@ -329,25 +172,8 @@ public:
    * @return The determinant of the parent/physical transformation matrix.
    */
   GEOS_HOST_DEVICE
-  GEOS_FORCE_INLINE
   static real64 calcGradN( localIndex const q,
                            real64 const (&X)[numNodes][3],
-                           real64 ( &gradN )[numNodes][3] );
-
-
-  /**
-   * @brief Calculate the shape functions derivatives wrt the physical
-   *   coordinates.
-   * @param q Index of the quadrature point.
-   * @param X Array containing the coordinates of the support points.
-   * @param gradN Array to contain the shape function derivatives for all
-   *   support points at the coordinates of the quadrature point @p q.
-   * @return The determinant of the parent/physical transformation matrix.
-   */
-  template< int q >
-  GEOS_HOST_DEVICE
-  GEOS_FORCE_INLINE
-  static real64 calcGradN( real64 const (&X)[numNodes][3],
                            real64 ( &gradN )[numNodes][3] );
 
   /**
@@ -360,12 +186,10 @@ public:
    * @return The determinant of the parent/physical transformation matrix.
    */
   GEOS_HOST_DEVICE
-  GEOS_FORCE_INLINE
   static real64 calcGradN( real64 const (&coords)[3],
                            real64 const (&X)[numNodes][3],
                            real64 ( &gradN )[numNodes][3] );
 
-
   /**
    * @brief Calculate the shape functions derivatives wrt the physical
    *   coordinates.
@@ -377,24 +201,9 @@ public:
    * @return The determinant of the parent/physical transformation matrix.
    */
   GEOS_HOST_DEVICE
-  GEOS_FORCE_INLINE
-  static real64 calcGradN( localIndex const q, real64 const (&X)[numNodes][3],
-                           StackVariables const & stack,
-                           real64 ( &gradN )[numNodes][3] );
-  /**
-   * @brief Calculate the shape functions derivatives wrt the physical
-   *   coordinates.
-   * @param q Index of the quadrature point.
-   * @param X Array containing the coordinates of the support points.
-   * @param stack Variables allocated on the stack as filled by @ref setupStack.
-   * @param gradN Array to contain the shape function derivatives for all
-   *   support points at the coordinates of the quadrature point @p q.
-   * @return The determinant of the parent/physical transformation matrix.
-   */
-  template< int q >
-  GEOS_HOST_DEVICE
-  GEOS_FORCE_INLINE
-  static real64 calcGradN( real64 const (&X)[numNodes][3],
+  inline
+  static real64 calcGradN( localIndex const q,
+                           real64 const (&X)[numNodes][3],
                            StackVariables const & stack,
                            real64 ( &gradN )[numNodes][3] );
 
@@ -405,11 +214,9 @@ public:
    * @return The product of the quadrature rule weight and the determinate of
    *   the parent/physical transformation matrix.
    */
-  template< int q >
   GEOS_HOST_DEVICE
-  GEOS_FORCE_INLINE
-  static real64 transformedQuadratureWeight( real64 const (&X)[numNodes][3] );
-
+  static real64 transformedQuadratureWeight( localIndex const q,
+                                             real64 const (&X)[numNodes][3] );
 
   /**
    * @brief Calculates the isoparametric "Jacobian" transformation
@@ -420,24 +227,9 @@ public:
    * @param J Array to store the Jacobian transformation.
    */
   GEOS_HOST_DEVICE
-  GEOS_FORCE_INLINE
   static void jacobianTransformation2d( int const qa,
                                         int const qb,
                                         real64 const (&X)[numNodesPerFace][3],
-                                        real64 ( &J )[3][2] );
-
-  /**
-   * @brief Calculates the isoparametric "Jacobian" transformation
-   *   matrix/mapping from the parent space to the physical space on a 2D domain (face).
-   * @param qa The 1d quadrature point index in xi0 direction (0,1)
-   * @param qb The 1d quadrature point index in xi1 direction (0,1)
-   * @param X Array containing the coordinates of the support points.
-   * @param J Array to store the Jacobian transformation.
-   */
-  template< int qa, int qb >
-  GEOS_HOST_DEVICE
-  GEOS_FORCE_INLINE
-  static void jacobianTransformation2d( real64 const (&X)[numNodesPerFace][3],
                                         real64 ( &J )[3][2] );
 
 
@@ -449,14 +241,14 @@ public:
    * @param J Array to store the Jacobian transformation.
    * @return The determinant of the Jacobian transformation matrix.
    */
-  template< int q >
   GEOS_HOST_DEVICE
-  GEOS_FORCE_INLINE
-  static real64 invJacobianTransformation( real64 const (&X)[numNodes][3],
+  static real64 invJacobianTransformation( int const q,
+                                           real64 const (&X)[numNodes][3],
                                            real64 ( & J )[3][3] )
   {
-    using index = MultiIndex3D< q >;
-    jacobianTransformation< index::qa, index::qb, index::qc >( X, J );
+    int qa, qb, qc;
+    GL_BASIS::TensorProduct3D::multiIndex( q, qa, qb, qc );
+    jacobianTransformation( qa, qb, qc, X, J );
     return LvArray::tensorOps::invert< 3 >( J );
   }
 
@@ -471,10 +263,9 @@ public:
    *   operator on.
    * @param grad The symmetric gradient in Voigt notation.
    */
-  template< int q >
   GEOS_HOST_DEVICE
-  GEOS_FORCE_INLINE
-  static void symmetricGradient( real64 const (&invJ)[3][3],
+  static void symmetricGradient( int const q,
+                                 real64 const (&invJ)[3][3],
                                  real64 const (&var)[numNodes][3],
                                  real64 ( &grad )[6] );
 
@@ -495,10 +286,9 @@ public:
    * \f]
    *
    */
-  template< int q >
   GEOS_HOST_DEVICE
-  GEOS_FORCE_INLINE
-  static void gradient( real64 const (&invJ)[3][3],
+  static void gradient( int const q,
+                        real64 const (&invJ)[3][3],
                         real64 const (&var)[numNodes][3],
                         real64 ( &grad )[3][3] );
 
@@ -518,12 +308,13 @@ public:
    * where \f$\frac{\partial N_a}{\partial X_j}\f$ is the basis function gradient,
    *   \f$var_{ij}\f$ is the rank-2 symmetric tensor.
    */
-  template< int q >
   GEOS_HOST_DEVICE
-  GEOS_FORCE_INLINE
-  static void plusGradNajAij( real64 const (&invJ)[3][3],
+  static void plusGradNajAij( int const q,
+                              real64 const (&invJ)[3][3],
                               real64 const (&var)[6],
                               real64 ( &R )[numNodes][3] );
+
+
 
   /**
    * @brief Calculates the isoparametric "Jacobian" transformation
@@ -535,28 +326,10 @@ public:
    * @param J Array to store the Jacobian transformation.
    */
   GEOS_HOST_DEVICE
-  GEOS_FORCE_INLINE
   static void jacobianTransformation( int const qa,
                                       int const qb,
                                       int const qc,
                                       real64 const (&X)[numNodes][3],
-                                      real64 ( &J )[3][3] );
-
-
-
-  /**
-   * @brief Calculates the isoparametric "Jacobian" transformation
-   *   matrix/mapping from the parent space to the physical space.
-   * @param qa The 1d quadrature point index in xi0 direction (0,1)
-   * @param qb The 1d quadrature point index in xi1 direction (0,1)
-   * @param qc The 1d quadrature point index in xi2 direction (0,1)
-   * @param X Array containing the coordinates of the support points.
-   * @param J Array to store the Jacobian transformation.
-   */
-  template< int qa, int qb, int qc >
-  GEOS_HOST_DEVICE
-  GEOS_FORCE_INLINE
-  static void jacobianTransformation( real64 const (&X)[numNodes][3],
                                       real64 ( &J )[3][3] );
 
   /**
@@ -567,7 +340,6 @@ public:
    * @param J Array to store the Jacobian transformation.
    */
   GEOS_HOST_DEVICE
-  GEOS_FORCE_INLINE
   static void jacobianTransformation( real64 const (&coords)[3],
                                       real64 const (&X)[numNodes][3],
                                       real64 ( &J )[3][3] );
@@ -581,7 +353,6 @@ public:
    * @param[out] coords Real-world coordinates of the interpolated point
    */
   GEOS_HOST_DEVICE
-  GEOS_FORCE_INLINE
   static void
     trilinearInterp( real64 const alpha,
                      real64 const beta,
@@ -595,7 +366,6 @@ public:
    * @param[out] X Array containing the coordinates of the support points.
    */
   GEOS_HOST_DEVICE
-  GEOS_FORCE_INLINE
   static void
   computeLocalCoords( real64 const (&Xmesh)[8][3],
                       real64 const (&X)[numNodes][3] );
@@ -607,11 +377,10 @@ public:
    * @param X Array containing the coordinates of the support points.
    * @return The diagonal mass term associated to q
    */
-  template< int q >
   GEOS_HOST_DEVICE
-  GEOS_FORCE_INLINE
   static real64
-  computeMassTerm( real64 const (&X)[numNodes][3] );
+  computeMassTerm( int q,
+                   real64 const (&X)[numNodes][3] );
 
   /**
    * @brief computes the non-zero contributions of the d.o.f. indexd by q to the
@@ -621,11 +390,10 @@ public:
    * @param X Array containing the coordinates of the support points.
    * @return The diagonal damping term associated to q
    */
-  template< int q >
   GEOS_HOST_DEVICE
-  GEOS_FORCE_INLINE
   static real64
-  computeDampingTerm( real64 const (&X)[numNodesPerFace][3] );
+  computeDampingTerm( int q,
+                      real64 const (&X)[numNodesPerFace][3] );
 
   /**
    * @brief computes the matrix B, defined as J^{-T}J^{-1}/det(J), where J is the Jacobian matrix,
@@ -637,11 +405,12 @@ public:
    * @param J Array to store the Jacobian
    * @param B Array to store the matrix B, in Voigt notation
    */
-  template< int qa, int qb, int qc >
   GEOS_HOST_DEVICE
-  GEOS_FORCE_INLINE
   static void
-    computeBMatrix( real64 const (&X)[numNodes][3],
+    computeBMatrix( int const qa,
+                    int const qb,
+                    int const qc,
+                    real64 const (&X)[numNodes][3],
                     real64 ( &J )[3][3],
                     real64 ( &B )[6] );
 
@@ -653,11 +422,11 @@ public:
    * @param X Array containing the coordinates of the support points.
    * @param func Callback function accepting three parameters: i, j and R_ij
    */
-  template< int q, typename FUNC >
+  template< typename FUNC >
   GEOS_HOST_DEVICE
-  GEOS_FORCE_INLINE
   static void
-  computeStiffnessTerm( real64 const (&X)[numNodes][3],
+  computeStiffnessTerm( int q,
+                        real64 const (&X)[numNodes][3],
                         FUNC && func );
 
   /**
@@ -670,11 +439,12 @@ public:
    * @param J Array to store the Jacobian
    * @param B Array to store the matrix B, in Voigt notation
    */
-  template< int qa, int qb, int qc >
   GEOS_HOST_DEVICE
-  GEOS_FORCE_INLINE
   static void
-    computeBxyMatrix( real64 const (&X)[numNodes][3],
+    computeBxyMatrix( int const qa,
+                      int const qb,
+                      int const qc,
+                      real64 const (&X)[numNodes][3],
                       real64 ( &J )[3][3],
                       real64 ( &B )[6] );
 
@@ -686,11 +456,11 @@ public:
    * @param X Array containing the coordinates of the support points.
    * @param func Callback function accepting three parameters: i, j and R_ij
    */
-  template< int q, typename FUNC >
+  template< typename FUNC >
   GEOS_HOST_DEVICE
-  GEOS_FORCE_INLINE
   static void
-  computeStiffnessxyTerm( real64 const (&X)[numNodes][3],
+  computeStiffnessxyTerm( int q,
+                          real64 const (&X)[numNodes][3],
                           FUNC && func );
 
   /**
@@ -703,11 +473,12 @@ public:
    * @param J Array to store the Jacobian
    * @param B Array to store the matrix B, in Voigt notation
    */
-  template< int qa, int qb, int qc >
   GEOS_HOST_DEVICE
-  GEOS_FORCE_INLINE
   static void
-    computeBzMatrix( real64 const (&X)[numNodes][3],
+    computeBzMatrix( int const qa,
+                     int const qb,
+                     int const qc,
+                     real64 const (&X)[numNodes][3],
                      real64 ( &J )[3][3],
                      real64 ( &B )[6] );
 
@@ -719,11 +490,11 @@ public:
    * @param X Array containing the coordinates of the support points.
    * @param func Callback function accepting three parameters: i, j and R_ij
    */
-  template< int q, typename FUNC >
+  template< typename FUNC >
   GEOS_HOST_DEVICE
-  GEOS_FORCE_INLINE
   static void
-  computeStiffnesszTerm( real64 const (&X)[numNodes][3],
+  computeStiffnesszTerm( int q,
+                         real64 const (&X)[numNodes][3],
                          FUNC && func );
 
 /**
@@ -735,11 +506,13 @@ public:
  * @param B Array of the B matrix, in Voigt notation
  * @param func Callback function accepting three parameters: i, j and R_ij
  */
-  template< int qa, int qb, int qc, typename FUNC >
+  template< typename FUNC >
   GEOS_HOST_DEVICE
-  GEOS_FORCE_INLINE
   static void
-  computeGradPhiBGradPhi( real64 const (&B)[6],
+  computeGradPhiBGradPhi( int qa,
+                          int qb,
+                          int qc,
+                          real64 const (&B)[6],
                           FUNC && func );
 
   /**
@@ -750,11 +523,11 @@ public:
    * @param X Array containing the coordinates of the support points.
    * @param func Callback function accepting three parameters: i, j and R_ij
    */
-  template< int q, typename FUNC >
+  template< typename FUNC >
   GEOS_HOST_DEVICE
-  GEOS_FORCE_INLINE
   static void
-  computeFirstOrderStiffnessTermX( real64 const (&X)[numNodes][3],
+  computeFirstOrderStiffnessTermX( int q,
+                                   real64 const (&X)[numNodes][3],
                                    FUNC && func );
   /**
    * @brief computes the non-zero contributions of the d.o.f. indexd by q to the
@@ -764,11 +537,11 @@ public:
    * @param X Array containing the coordinates of the support points.
    * @param func Callback function accepting three parameters: i, j and R_ij
    */
-  template< int q, typename FUNC >
+  template< typename FUNC >
   GEOS_HOST_DEVICE
-  GEOS_FORCE_INLINE
   static void
-  computeFirstOrderStiffnessTermY( real64 const (&X)[numNodes][3],
+  computeFirstOrderStiffnessTermY( int q,
+                                   real64 const (&X)[numNodes][3],
                                    FUNC && func );
   /**
    * @brief computes the non-zero contributions of the d.o.f. indexd by q to the
@@ -778,11 +551,11 @@ public:
    * @param X Array containing the coordinates of the support points.
    * @param func Callback function accepting three parameters: i, j and R_ij
    */
-  template< int q, typename FUNC >
+  template< typename FUNC >
   GEOS_HOST_DEVICE
-  GEOS_FORCE_INLINE
   static void
-  computeFirstOrderStiffnessTermZ( real64 const (&X)[numNodes][3],
+  computeFirstOrderStiffnessTermZ( int q,
+                                   real64 const (&X)[numNodes][3],
                                    FUNC && func );
   /**
    * @brief computes the non-zero contributions of the d.o.f. indexd by q to the
@@ -793,10 +566,11 @@ public:
    * @param X Array containing the coordinates of the support points.
    * @param stiffnessVal Callback function accepting three parameters: i, j and R_ij
    */
-  template< int q, typename FUNC >
+  template< typename FUNC >
   GEOS_HOST_DEVICE
   static void
-  computeFirstOrderStiffnessTerm( real64 const (&X)[numNodes][3],
+  computeFirstOrderStiffnessTerm( int q,
+                                  real64 const (&X)[numNodes][3],
                                   FUNC && stiffnessVal );
 
 
@@ -812,26 +586,11 @@ public:
    *   support points at the coordinates of the quadrature point @p q.
    */
   GEOS_HOST_DEVICE
-  GEOS_FORCE_INLINE
   static void
-    applyTransformationToParentGradients( int qa, int qb, int qc, real64 const ( &invJ )[3][3],
-                                          real64 ( &gradN )[numNodes][3] );
-  /**
-   * @brief Apply a Jacobian transformation matrix from the parent space to the
-   *   physical space on the parent shape function derivatives, producing the
-   *   shape function derivatives in the physical space.
-   * @param qa The 1d quadrature point index in xi0 direction (0,1)
-   * @param qb The 1d quadrature point index in xi1 direction (0,1)
-   * @param qc The 1d quadrature point index in xi2 direction (0,1)
-   * @param invJ The Jacobian transformation from parent->physical space.
-   * @param gradN Array to contain the shape function derivatives for all
-   *   support points at the coordinates of the quadrature point @p q.
-   */
-  template< int qa, int qb, int qc >
-  GEOS_HOST_DEVICE
-  GEOS_FORCE_INLINE
-  static void
-    applyTransformationToParentGradients( real64 const ( &invJ )[3][3],
+    applyTransformationToParentGradients( int const qa,
+                                          int const qb,
+                                          int const qc,
+                                          real64 const ( &invJ )[3][3],
                                           real64 ( &gradN )[numNodes][3] );
 
   /**
@@ -844,7 +603,6 @@ public:
    *   support points at the coordinates of the quadrature point @p q.
    */
   GEOS_HOST_DEVICE
-  GEOS_FORCE_INLINE
   static void
     applyTransformationToParentGradients( real64 const (&coords)[3],
                                           real64 const ( &invJ )[3][3],
@@ -858,7 +616,6 @@ private:
   /// The volume of the element in the parent configuration.
   constexpr static real64 parentVolume = parentLength*parentLength*parentLength;
 
-
   /**
    * @brief Applies a function inside a generic loop in over the tensor product
    *   indices.
@@ -872,28 +629,10 @@ private:
    */
   template< typename FUNC, typename ... PARAMS >
   GEOS_HOST_DEVICE
-  GEOS_FORCE_INLINE
   static void supportLoop( int const qa,
                            int const qb,
                            int const qc,
                            FUNC && func,
-                           PARAMS &&... params );
-
-  /**
-   * @brief Applies a function inside a generic loop in over the tensor product
-   *   indices.
-   * @tparam FUNC The type of function to call within the support loop.
-   * @tparam PARAMS The parameter pack types to pass through to @p FUNC.
-   * @param qa The 1d quadrature point index in xi0 direction (0,1)
-   * @param qb The 1d quadrature point index in xi1 direction (0,1)
-   * @param qc The 1d quadrature point index in xi2 direction (0,1)
-   * @param func The function to call within the support loop.
-   * @param params The parameters to pass to @p func.
-   */
-  template< int qa, int qb, int qc, typename FUNC, typename ... PARAMS >
-  GEOS_HOST_DEVICE
-  GEOS_FORCE_INLINE
-  static void supportLoop( FUNC && func,
                            PARAMS &&... params );
   /**
    * @brief Applies a function inside a generic loop in over the tensor product
@@ -906,7 +645,6 @@ private:
    */
   template< typename FUNC, typename ... PARAMS >
   GEOS_HOST_DEVICE
-  GEOS_FORCE_INLINE
   static void supportLoop( real64 const (&coords)[3],
                            FUNC && func,
                            PARAMS &&... params );
@@ -923,37 +661,17 @@ private:
    */
   template< typename FUNC, typename ... PARAMS >
   GEOS_HOST_DEVICE
-  GEOS_FORCE_INLINE
   static void supportLoop2d( int const qa,
                              int const qb,
                              FUNC && func,
-                             PARAMS &&... params );
-
-  /**
-   * @brief Applies a function inside a generic loop in over the tensor product
-   *   indices, over a 2d domain.
-   * @tparam FUNC The type of function to call within the support loop.
-   * @tparam PARAMS The parameter pack types to pass through to @p FUNC.
-   * @param qa The 1d quadrature point index in xi0 direction (0,1)
-   * @param qb The 1d quadrature point index in xi1 direction (0,1)
-   * @param func The function to call within the support loop.
-   * @param params The parameters to pass to @p func.
-   */
-  template< int qa, int qb, typename FUNC, typename ... PARAMS >
-  GEOS_HOST_DEVICE
-  GEOS_FORCE_INLINE
-  static void supportLoop2d( FUNC && func,
                              PARAMS &&... params );
 };
 
 /// @cond Doxygen_Suppress
 
-
 template< typename GL_BASIS >
 template< typename FUNC, typename ... PARAMS >
-GEOS_HOST_DEVICE 
-GEOS_FORCE_INLINE
-void
+GEOS_HOST_DEVICE inline void
 Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::supportLoop( int const qa,
                                                               int const qb,
                                                               int const qc,
@@ -967,63 +685,41 @@ Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::supportLoop( int const qa,
   supportLoop( qCoords, std::forward< FUNC >( func ), std::forward< PARAMS >( params )... );
 }
 
-template< typename GL_BASIS >
-template< int qa, int qb, int qc, typename FUNC, typename ... PARAMS >
-GEOS_HOST_DEVICE
-GEOS_FORCE_INLINE
-void
-Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::supportLoop( FUNC && func,
-                                                              PARAMS &&... params )
-{
-
-  staticForOnCell( [&] ( auto index )
-  {
-    real64 const dNdXi[3] = { BasisGradientAtQ< index.qa, qa >::val*
-                              BasisValueAtQ< index.qb, qb >::val*
-                              BasisValueAtQ< index.qc, qc >::val,
-                              BasisValueAtQ< index.qa, qa >::val*
-                              BasisGradientAtQ< index.qb, qb >::val*
-                              BasisValueAtQ< index.qc, qc >::val,
-                              BasisValueAtQ< index.qa, qa >::val*
-                              BasisValueAtQ< index.qb, qb >::val*
-                              BasisGradientAtQ< index.qc, qc >::val};
-
-    func( dNdXi, index.q, std::forward< PARAMS >( params )... );
-  } );
-}
-
 
 template< typename GL_BASIS >
 template< typename FUNC, typename ... PARAMS >
-GEOS_HOST_DEVICE
-GEOS_FORCE_INLINE
-void
+GEOS_HOST_DEVICE inline void
 Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::supportLoop( real64 const (&coords)[3],
                                                               FUNC && func,
                                                               PARAMS &&... params )
 {
-  staticForOnCell( [&] ( auto index )
+  for( int c=0; c<num1dNodes; ++c )
   {
-    real64 const dNdXi[3] = { GL_BASIS::gradient( index.qa, coords[0] )*
-                              GL_BASIS::value( index.qb, coords[1] )*
-                              GL_BASIS::value( index.qc, coords[2] ),
-                              GL_BASIS::value( index.qa, coords[0] )*
-                              GL_BASIS::gradient( index.qb, coords[1] )*
-                              GL_BASIS::value( index.qc, coords[2] ),
-                              GL_BASIS::value( index.qa, coords[0] )*
-                              GL_BASIS::value( index.qb, coords[1] )*
-                              GL_BASIS::gradient( index.qc, coords[2] )};
+    for( int b=0; b<num1dNodes; ++b )
+    {
+      for( int a=0; a<num1dNodes; ++a )
+      {
+        real64 const dNdXi[3] = { GL_BASIS::gradient( a, coords[0] )*
+                                  GL_BASIS::value( b, coords[1] )*
+                                  GL_BASIS::value( c, coords[2] ),
+                                  GL_BASIS::value( a, coords[0] )*
+                                  GL_BASIS::gradient( b, coords[1] )*
+                                  GL_BASIS::value( c, coords[2] ),
+                                  GL_BASIS::value( a, coords[0] )*
+                                  GL_BASIS::value( b, coords[1] )*
+                                  GL_BASIS::gradient( c, coords[2] )};
 
-    func( dNdXi, index.q, std::forward< PARAMS >( params )... );
+        localIndex const nodeIndex = GL_BASIS::TensorProduct3D::linearIndex( a, b, c );
 
-  } );
+        func( dNdXi, nodeIndex, std::forward< PARAMS >( params )... );
+      }
+    }
+  }
 }
-
 
 template< typename GL_BASIS >
 template< typename FUNC, typename ... PARAMS >
-GEOS_HOST_DEVICE
-GEOS_FORCE_INLINE void
+GEOS_HOST_DEVICE inline void
 Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::supportLoop2d( int const qa,
                                                                 int const qb,
                                                                 FUNC && func,
@@ -1048,30 +744,10 @@ Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::supportLoop2d( int const qa,
   }
 }
 
-template< typename GL_BASIS >
-template< int qa, int qb, typename FUNC, typename ... PARAMS >
-GEOS_HOST_DEVICE
-GEOS_FORCE_INLINE
-void
-Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::supportLoop2d( FUNC && func,
-                                                                PARAMS &&... params )
-{
-
-  staticForOnFace( [&] ( auto index )
-  {
-    real64 const dNdXi[2] = { BasisGradientAtQ< index.qa, qa >::val *
-                              BasisValueAtQ< index.qb, qb >::val,
-                              BasisValueAtQ< index.qa, qa >::val *
-                              BasisGradientAtQ< index.qb, qb >::val };
-
-    func( dNdXi, index.q, std::forward< PARAMS >( params )... );
-  } );
-}
-
 //*************************************************************************************************
 template< typename GL_BASIS >
 GEOS_HOST_DEVICE
-GEOS_FORCE_INLINE
+inline
 real64
 Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::calcGradN( localIndex const q,
                                                             real64 const (&X)[numNodes][3],
@@ -1081,10 +757,6 @@ Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::calcGradN( localIndex const q,
 
   int qa, qb, qc;
   GL_BASIS::TensorProduct3D::multiIndex( q, qa, qb, qc );
-
-  real64 const qCoords[3] = { GL_BASIS::parentSupportCoord( qa ),
-                              GL_BASIS::parentSupportCoord( qb ),
-                              GL_BASIS::parentSupportCoord( qc ) };
 
   jacobianTransformation( qa, qb, qc, X, J );
 
@@ -1097,30 +769,8 @@ Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::calcGradN( localIndex const q,
 
 //*************************************************************************************************
 template< typename GL_BASIS >
-template< int q >
 GEOS_HOST_DEVICE
-GEOS_FORCE_INLINE
-real64
-Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::calcGradN( real64 const (&X)[numNodes][3],
-                                                            real64 (& gradN)[numNodes][3] )
-{
-  real64 J[3][3] = {{0}};
-
-  using index = MultiIndex3D< q >;
-
-  jacobianTransformation< index::qa, index::qb, index::qc >( X, J );
-
-  real64 const detJ = LvArray::tensorOps::invert< 3 >( J );
-
-  applyTransformationToParentGradients< index::qa, index::qb, index::qc >( J, gradN );
-
-  return detJ;
-}
-
-//*************************************************************************************************
-template< typename GL_BASIS >
-GEOS_HOST_DEVICE
-GEOS_FORCE_INLINE
+inline
 real64
 Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::calcGradN( real64 const (&coords)[3],
                                                             real64 const (&X)[numNodes][3],
@@ -1136,24 +786,12 @@ Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::calcGradN( real64 const (&coord
 
   return detJ;
 }
-
 template< typename GL_BASIS >
 GEOS_HOST_DEVICE
-GEOS_FORCE_INLINE
+inline
 real64 Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
-calcGradN( localIndex const q, real64 const (&X)[numNodes][3],
-           StackVariables const & GEOS_UNUSED_PARAM( stack ),
-           real64 ( & gradN )[numNodes][3] )
-{
-  return calcGradN( q, X, gradN );
-}
-
-template< typename GL_BASIS >
-template< int q >
-GEOS_HOST_DEVICE
-GEOS_FORCE_INLINE
-real64 Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
-calcGradN( real64 const (&X)[numNodes][3],
+calcGradN( localIndex const q,
+           real64 const (&X)[numNodes][3],
            StackVariables const & GEOS_UNUSED_PARAM( stack ),
            real64 ( & gradN )[numNodes][3] )
 {
@@ -1168,7 +806,7 @@ calcGradN( real64 const (&X)[numNodes][3],
 
 template< typename GL_BASIS >
 GEOS_HOST_DEVICE
-GEOS_FORCE_INLINE
+inline
 void
 Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
 jacobianTransformation( int const qa,
@@ -1203,37 +841,9 @@ jacobianTransformation( int const qa,
 
   }, X, J );
 }
-
-
-
-template< typename GL_BASIS >
-template< int qa, int qb, int qc >
-GEOS_HOST_DEVICE
-GEOS_FORCE_INLINE
-void
-Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
-jacobianTransformation( real64 const (&X)[numNodes][3],
-                        real64 ( & J )[3][3] )
-{
-  supportLoop< qa, qb, qc >( [] GEOS_HOST_DEVICE ( real64 const (&dNdXi)[3],
-                                                   int const nodeIndex,
-                                                   real64 const (&X)[numNodes][3],
-                                                   real64 (& J)[3][3] )
-  {
-    real64 const * const GEOS_RESTRICT Xnode = X[nodeIndex];
-    for( int i = 0; i < 3; ++i )
-    {
-      for( int j = 0; j < 3; ++j )
-      {
-        J[i][j] = J[i][j] + dNdXi[ j ] * Xnode[i];
-      }
-    }
-
-  }, X, J );
-}
 template< typename GL_BASIS >
 GEOS_HOST_DEVICE
-GEOS_FORCE_INLINE
+inline
 void
 Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
 jacobianTransformation( real64 const (&coords)[3],
@@ -1258,7 +868,7 @@ jacobianTransformation( real64 const (&coords)[3],
 
 template< typename GL_BASIS >
 GEOS_HOST_DEVICE
-GEOS_FORCE_INLINE
+inline
 void
 Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
 trilinearInterp( real64 const alpha,
@@ -1289,16 +899,16 @@ Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
 computeLocalCoords( real64 const (&Xmesh)[8][3],
                     real64 const (&X)[numNodes][3] )
 {
-
-  staticForOnCell( [&] ( auto index )
+  int qa, qb, qc;
+  for( int q=0; q<numNodes; q++ )
   {
-    real64 alpha = ( BasisParentSupportCoordAtQ< index.qa >::val + 1.0 ) / 2.0;
-    real64 beta = ( BasisParentSupportCoordAtQ< index.qb >::val + 1.0 ) / 2.0;
-    real64 gamma = ( BasisParentSupportCoordAtQ< index.qc >::val + 1.0 ) / 2.0;
-    trilinearInterp( alpha, beta, gamma, Xmesh, X[index.q] );
-  } );
+    GL_BASIS::TensorProduct3D::multiIndex( q, qa, qb, qc );
+    real64 alpha = ( GL_BASIS::parentSupportCoord( qa ) + 1.0 ) / 2.0;
+    real64 beta = ( GL_BASIS::parentSupportCoord( qb ) + 1.0 ) / 2.0;
+    real64 gamma = ( GL_BASIS::parentSupportCoord( qc ) + 1.0 ) / 2.0;
+    trilinearInterp( alpha, beta, gamma, Xmesh, X[q] );
+  }
 }
-
 
 template< typename GL_BASIS >
 GEOS_HOST_DEVICE
@@ -1327,77 +937,53 @@ jacobianTransformation2d( int const qa,
 }
 
 template< typename GL_BASIS >
-template< int qa, int qb >
 GEOS_HOST_DEVICE
-GEOS_FORCE_INLINE
-void
-Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
-jacobianTransformation2d( real64 const (&X)[numNodesPerFace][3],
-                          real64 ( & J )[3][2] )
-{
-  supportLoop2d< qa, qb >( [] GEOS_HOST_DEVICE ( real64 const (&dNdXi)[2],
-                                                 int const nodeIndex,
-                                                 real64 const (&X)[numNodesPerFace][3],
-                                                 real64 ( & J)[3][2] )
-  {
-    real64 const * const GEOS_RESTRICT Xnode = X[nodeIndex];
-    for( int i = 0; i < 3; ++i )
-    {
-      for( int j = 0; j < 2; ++j )
-      {
-        J[i][j] = J[i][j] + dNdXi[ j ] * Xnode[i];
-      }
-    }
-  }, X, J );
-}
-
-template< typename GL_BASIS >
-template< int q >
-GEOS_HOST_DEVICE
-GEOS_FORCE_INLINE
+inline
 real64
 Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
-computeMassTerm( real64 const (&X)[numNodes][3] )
+computeMassTerm( int q,
+                 real64 const (&X)[numNodes][3] )
 {
-  using index = MultiIndex3D< q >;
   real64 J[3][3] = {{0}};
-  jacobianTransformation< index::qa, index::qb, index::qc >( X, J );
-  return LvArray::math::abs( LvArray::tensorOps::determinant< 3 >( J ) )*BasisWeightAtQ< index::qa >::val *
-         BasisWeightAtQ< index::qb >::val *
-         BasisWeightAtQ< index::qc >::val;
+  int qa, qb, qc;
+  GL_BASIS::TensorProduct3D::multiIndex( q, qa, qb, qc );
+  jacobianTransformation( qa, qb, qc, X, J );
+  return LvArray::math::abs( LvArray::tensorOps::determinant< 3 >( J ) )*GL_BASIS::weight( qa )*GL_BASIS::weight( qb )*GL_BASIS::weight( qc );
 }
 
 template< typename GL_BASIS >
-template< int q >
 GEOS_HOST_DEVICE
-GEOS_FORCE_INLINE
+inline
 real64
 Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
-computeDampingTerm( real64 const (&X)[numNodesPerFace][3] )
+computeDampingTerm( int q,
+                    real64 const (&X)[numNodesPerFace][3] )
 {
   real64 B[3];
   real64 J[3][2] = {{0}};
-
-  using index = MultiIndex2D< q >;
-  jacobianTransformation2d< index::qa, index::qb >( X, J );
+  int qa, qb;
+  GL_BASIS::TensorProduct2D::multiIndex( q, qa, qb );
+  jacobianTransformation2d( qa, qb, X, J );
   // compute J^T.J, using Voigt notation for B
   B[0] = J[0][0]*J[0][0]+J[1][0]*J[1][0]+J[2][0]*J[2][0];
   B[1] = J[0][1]*J[0][1]+J[1][1]*J[1][1]+J[2][1]*J[2][1];
   B[2] = J[0][0]*J[0][1]+J[1][0]*J[1][1]+J[2][0]*J[2][1];
-  return sqrt( LvArray::math::abs( LvArray::tensorOps::symDeterminant< 2 >( B ) ) )*BasisWeightAtQ< index::qa >::val *  BasisWeightAtQ< index::qb >::val;
+  return sqrt( LvArray::math::abs( LvArray::tensorOps::symDeterminant< 2 >( B ) ) )*GL_BASIS::weight( qa )*GL_BASIS::weight( qb );
 }
 
 template< typename GL_BASIS >
-template< int qa, int qb, int qc >
 GEOS_HOST_DEVICE
-GEOS_FORCE_INLINE
+inline
 void
 Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
-computeBMatrix( real64 const (&X)[numNodes][3],
+computeBMatrix( int const qa,
+                int const qb,
+                int const qc,
+                real64 const (&X)[numNodes][3],
                 real64 (& J)[3][3],
                 real64 (& B)[6] )
 {
-  jacobianTransformation< qa, qb, qc >( X, J );
+  jacobianTransformation( qa, qb, qc, X, J );
   real64 const detJ = LvArray::tensorOps::determinant< 3 >( J );
 
   // compute J^T.J/det(J), using Voigt notation for B
@@ -1413,16 +999,18 @@ computeBMatrix( real64 const (&X)[numNodes][3],
 }
 
 template< typename GL_BASIS >
-template< int qa, int qb, int qc >
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
 void
 Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
-computeBzMatrix( real64 const (&X)[numNodes][3],
+computeBzMatrix( int const qa,
+                 int const qb,
+                 int const qc,
+                 real64 const (&X)[numNodes][3],
                  real64 (& J)[3][3],
                  real64 (& B)[6] )
 {
-  jacobianTransformation< qa, qb, qc >( X, J );
+  jacobianTransformation( qa, qb, qc, X, J );
   real64 const detJ = LvArray::tensorOps::determinant< 3 >( J );
 
   real64 Jinv[3][3] = {{0}};
@@ -1438,16 +1026,18 @@ computeBzMatrix( real64 const (&X)[numNodes][3],
 }
 
 template< typename GL_BASIS >
-template< int qa, int qb, int qc >
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
 void
 Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
-computeBxyMatrix( real64 const (&X)[numNodes][3],
+computeBxyMatrix( int const qa,
+                  int const qb,
+                  int const qc,
+                  real64 const (&X)[numNodes][3],
                   real64 (& J)[3][3],
                   real64 (& B)[6] )
 {
-  jacobianTransformation< qa, qb, qc >( X, J );
+  jacobianTransformation( qa, qb, qc, X, J );
   real64 const detJ = LvArray::tensorOps::determinant< 3 >( J );
 
   real64 Jinv[3][3] = {{0}};
@@ -1463,317 +1053,464 @@ computeBxyMatrix( real64 const (&X)[numNodes][3],
 }
 
 template< typename GL_BASIS >
-template< int qa, int qb, int qc, typename FUNC >
+template< typename FUNC >
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
 void
 Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
-computeGradPhiBGradPhi( real64 const (&B)[6],
+computeGradPhiBGradPhi( int qa,
+                        int qb,
+                        int qc,
+                        real64 const (&B)[6],
                         FUNC && func )
 {
   // diagonal terms
-  staticFor2D( [&] ( auto i, auto j )
+  for( int i=0; i<num1dNodes; i++ )
   {
-    func( LinearIndex3D< i.idx, qb, qc >::q,
-          LinearIndex3D< j.idx, qb, qc >::q,
-          BasisWeightAtQ< qa >::val *BasisWeightAtQ< qb >::val *BasisWeightAtQ< qc >::val *B[0]*
-          BasisGradientAtQ< i.idx, qa >::val *
-          BasisGradientAtQ< j.idx, qa >::val );
-    func( LinearIndex3D< qa, i.idx, qc >::q,
-          LinearIndex3D< qa, j.idx, qc >::q,
-          BasisWeightAtQ< qa >::val *BasisWeightAtQ< qb >::val *BasisWeightAtQ< qc >::val *B[1]*
-          BasisGradientAtQ< i.idx, qb >::val *
-          BasisGradientAtQ< j.idx, qb >::val );
-    func( LinearIndex3D< qa, qb, i.idx >::q,
-          LinearIndex3D< qa, qb, j.idx >::q,
-          BasisWeightAtQ< qa >::val *BasisWeightAtQ< qb >::val *BasisWeightAtQ< qc >::val *B[2]*
-          BasisGradientAtQ< i.idx, qc >::val *
-          BasisGradientAtQ< j.idx, qc >::val );
-    constexpr int ii3 = LinearIndex3D< qa, i.idx, qc >::q;
-    constexpr int jj3 = LinearIndex3D< qa, qb, j.idx >::q;
-    real64 val3 = BasisWeightAtQ< qa >::val*BasisWeightAtQ< qb >::val*BasisWeightAtQ< qc >::val*B[3]*
-                 BasisGradientAtQ< i.idx, qb >::val*
-                 BasisGradientAtQ< j.idx, qc >::val;
-    func( ii3, jj3, val3 );
-    func( jj3, ii3, val3 );
-    constexpr int ii4 = LinearIndex3D< i.idx, qb, qc >::q;
-    constexpr int jj4 = LinearIndex3D< qa, qb, j.idx >::q;
-    real64 val4 = BasisWeightAtQ< qa >::val*BasisWeightAtQ< qb >::val*BasisWeightAtQ< qc >::val*B[4]*
-                 BasisGradientAtQ< i.idx, qa >::val*
-                 BasisGradientAtQ< j.idx, qc >::val;
-    func( ii4, jj4, val4 );
-    func( jj4, ii4, val4 );
-    constexpr int ii5 = LinearIndex3D< i.idx, qb, qc >::q;
-    constexpr int jj5 = LinearIndex3D< qa, j.idx, qc >::q;
-    real64 val5 = BasisWeightAtQ< qa >::val*BasisWeightAtQ< qb >::val*BasisWeightAtQ< qc >::val*B[5]*
-                 BasisGradientAtQ< i.idx, qa >::val*
-                 BasisGradientAtQ< j.idx, qb >::val;
-    func( ii5, jj5, val5 );
-    func( jj5, ii5, val5 );
-  } );
+    for( int j=0; j<num1dNodes; j++ )
+    {
+      func( GL_BASIS::TensorProduct3D::linearIndex( i, qb, qc ),
+            GL_BASIS::TensorProduct3D::linearIndex( j, qb, qc ),
+            GL_BASIS::weight( qa )*GL_BASIS::weight( qb )*GL_BASIS::weight( qc )*B[0]*
+            GL_BASIS::gradient( i, GL_BASIS::parentSupportCoord( qa ) )*
+            GL_BASIS::gradient( j, GL_BASIS::parentSupportCoord( qa ) ) );
+    }
+  }
+  for( int i=0; i<num1dNodes; i++ )
+  {
+    for( int j=0; j<num1dNodes; j++ )
+    {
+      func( GL_BASIS::TensorProduct3D::linearIndex( qa, i, qc ),
+            GL_BASIS::TensorProduct3D::linearIndex( qa, j, qc ),
+            GL_BASIS::weight( qa )*GL_BASIS::weight( qb )*GL_BASIS::weight( qc )*B[1]*
+            GL_BASIS::gradient( i, GL_BASIS::parentSupportCoord( qb ) )*
+            GL_BASIS::gradient( j, GL_BASIS::parentSupportCoord( qb ) ) );
+    }
+  }
+  for( int i=0; i<num1dNodes; i++ )
+  {
+    for( int j=0; j<num1dNodes; j++ )
+    {
+      func( GL_BASIS::TensorProduct3D::linearIndex( qa, qb, i ),
+            GL_BASIS::TensorProduct3D::linearIndex( qa, qb, j ),
+            GL_BASIS::weight( qa )*GL_BASIS::weight( qb )*GL_BASIS::weight( qc )*B[2]*
+            GL_BASIS::gradient( i, GL_BASIS::parentSupportCoord( qc ) )*
+            GL_BASIS::gradient( j, GL_BASIS::parentSupportCoord( qc ) ) );
+    }
+  }
+  // off-diagonal terms
+  for( int i=0; i<num1dNodes; i++ )
+  {
+    for( int j=0; j<num1dNodes; j++ )
+    {
+      int ii = GL_BASIS::TensorProduct3D::linearIndex( qa, i, qc );
+      int jj = GL_BASIS::TensorProduct3D::linearIndex( qa, qb, j );
+      real64 val = GL_BASIS::weight( qa )*GL_BASIS::weight( qb )*GL_BASIS::weight( qc )*B[3]*
+                   GL_BASIS::gradient( i, GL_BASIS::parentSupportCoord( qb ) )*
+                   GL_BASIS::gradient( j, GL_BASIS::parentSupportCoord( qc ) );
+      func( ii, jj, val );
+      func( jj, ii, val );
+    }
+  }
+  for( int i=0; i<num1dNodes; i++ )
+  {
+    for( int j=0; j<num1dNodes; j++ )
+    {
+      int ii = GL_BASIS::TensorProduct3D::linearIndex( i, qb, qc );
+      int jj = GL_BASIS::TensorProduct3D::linearIndex( qa, qb, j );
+      real64 val = GL_BASIS::weight( qa )*GL_BASIS::weight( qb )*GL_BASIS::weight( qc )*B[4]*
+                   GL_BASIS::gradient( i, GL_BASIS::parentSupportCoord( qa ) )*
+                   GL_BASIS::gradient( j, GL_BASIS::parentSupportCoord( qc ) );
+      func( ii, jj, val );
+      func( jj, ii, val );
+    }
+  }
+  for( int i=0; i<num1dNodes; i++ )
+  {
+    for( int j=0; j<num1dNodes; j++ )
+    {
+      int ii = GL_BASIS::TensorProduct3D::linearIndex( i, qb, qc );
+      int jj = GL_BASIS::TensorProduct3D::linearIndex( qa, j, qc );
+      real64 val = GL_BASIS::weight( qa )*GL_BASIS::weight( qb )*GL_BASIS::weight( qc )*B[5]*
+                   GL_BASIS::gradient( i, GL_BASIS::parentSupportCoord( qa ) )*
+                   GL_BASIS::gradient( j, GL_BASIS::parentSupportCoord( qb ) );
+      func( ii, jj, val );
+      func( jj, ii, val );
+    }
+  }
 }
 
 template< typename GL_BASIS >
-template< int q, typename FUNC >
+template< typename FUNC >
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
 void
 Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
-computeStiffnessxyTerm( real64 const (&X)[numNodes][3],
+computeStiffnessxyTerm( int q,
+                        real64 const (&X)[numNodes][3],
                         FUNC && func )
 {
   real64 B[6] = {0};
   real64 J[3][3] = {{0}};
-  using index = MultiIndex3D< q >;
-  computeBxyMatrix< index::qa, index::qb, index::qc >( X, J, B ); // The only change!
-  computeGradPhiBGradPhi< index::qa, index::qb, index::qc >( B, func );
+  int qa, qb, qc;
+  GL_BASIS::TensorProduct3D::multiIndex( q, qa, qb, qc );
+  computeBxyMatrix( qa, qb, qc, X, J, B ); // The only change!
+  computeGradPhiBGradPhi( qa, qb, qc, B, func );
 }
 
 template< typename GL_BASIS >
-template< int q, typename FUNC >
+template< typename FUNC >
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
 void
 Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
-computeStiffnesszTerm( real64 const (&X)[numNodes][3],
+computeStiffnesszTerm( int q,
+                       real64 const (&X)[numNodes][3],
                        FUNC && func )
 {
   real64 B[6] = {0};
   real64 J[3][3] = {{0}};
-  using index = MultiIndex3D< q >;
-  computeBzMatrix< index::qa, index::qb, index::qc >( X, J, B ); // The only change!
-  computeGradPhiBGradPhi< index::qa, index::qb, index::qc >( B, func );
+  int qa, qb, qc;
+  GL_BASIS::TensorProduct3D::multiIndex( q, qa, qb, qc );
+  computeBzMatrix( qa, qb, qc, X, J, B ); // The only change!
+  computeGradPhiBGradPhi( qa, qb, qc, B, func );
 }
 
 template< typename GL_BASIS >
-template< int q, typename FUNC >
+template< typename FUNC >
 GEOS_HOST_DEVICE
-GEOS_FORCE_INLINE
+inline
 void
 Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
-computeStiffnessTerm( real64 const (&X)[numNodes][3],
+computeStiffnessTerm( int q,
+                      real64 const (&X)[numNodes][3],
                       FUNC && func )
 {
   real64 B[6] = {0};
   real64 J[3][3] = {{0}};
-  using index = MultiIndex3D< q >;
-  computeBMatrix< index::qa, index::qb, index::qc >( X, J, B );
+  int qa, qb, qc;
+  GL_BASIS::TensorProduct3D::multiIndex( q, qa, qb, qc );
+  computeBMatrix( qa, qb, qc, X, J, B );
   // diagonal terms
-  staticFor2D( [&] ( auto i, auto j )
+  for( int i=0; i<num1dNodes; i++ )
   {
-    constexpr real64 w = BasisWeightAtQ< index::qa >::val *BasisWeightAtQ< index::qb >::val *BasisWeightAtQ< index::qc >::val;
-    func( LinearIndex3D< i.idx, index::qb, index::qc >::q,
-          LinearIndex3D< j.idx, index::qb, index::qc >::q,
-          w * B[0]*
-          BasisGradientAtQ< i.idx, index::qa >::val *
-          BasisGradientAtQ< j.idx, index::qa >::val );
-
-    func( LinearIndex3D< index::qa, i.idx, index::qc >::q,
-          LinearIndex3D< index::qa, j.idx, index::qc >::q,
-          w *B[1]*
-          BasisGradientAtQ< i.idx, index::qb >::val *
-          BasisGradientAtQ< j.idx, index::qb >::val );
-
-    func( LinearIndex3D< index::qa, index::qb, i.idx >::q,
-          LinearIndex3D< index::qa, index::qb, j.idx >::q,
-          w *B[2]*
-          BasisGradientAtQ< i.idx, index::qc >::val *
-          BasisGradientAtQ< j.idx, index::qc >::val );
- 
-    constexpr int ii3 = LinearIndex3D< index::qa, i.idx, index::qc >::q;
-    constexpr int jj3 = LinearIndex3D< index::qa, index::qb, j.idx >::q;
-    real64 val3 = w*B[3]*
-                  BasisGradientAtQ< i.idx, index::qb >::val*
-                  BasisGradientAtQ< j.idx, index::qc >::val;
-    func( ii3, jj3, val3 );
-    func( jj3, ii3, val3 );
-
-    constexpr int ii4 = LinearIndex3D< i.idx, index::qb, index::qc >::q;
-    constexpr int jj4 = LinearIndex3D< index::qa, index::qb, j.idx >::q;
-    real64 val4 = w*B[4]*
-                  BasisGradientAtQ< i.idx, index::qa >::val*
-                  BasisGradientAtQ< j.idx, index::qc >::val;
-    func( ii4, jj4, val4 );
-    func( jj4, ii4, val4 );
-
-    constexpr int ii5 = LinearIndex3D< i.idx, index::qb, index::qc >::q;
-    constexpr int jj5 = LinearIndex3D< index::qa, j.idx, index::qc >::q;
-    real64 val5 = w*B[5]*
-                  BasisGradientAtQ< i.idx, index::qa >::val*
-                  BasisGradientAtQ< j.idx, index::qb >::val;
-    func( ii5, jj5, val5 );
-    func( jj5, ii5, val5 );
-  } );
+    for( int j=0; j<num1dNodes; j++ )
+    {
+      func( GL_BASIS::TensorProduct3D::linearIndex( i, qb, qc ),
+            GL_BASIS::TensorProduct3D::linearIndex( j, qb, qc ),
+            GL_BASIS::weight( qa )*GL_BASIS::weight( qb )*GL_BASIS::weight( qc )*B[0]*
+            GL_BASIS::gradient( i, GL_BASIS::parentSupportCoord( qa ) )*
+            GL_BASIS::gradient( j, GL_BASIS::parentSupportCoord( qa ) ) );
+    }
+  }
+  for( int i=0; i<num1dNodes; i++ )
+  {
+    for( int j=0; j<num1dNodes; j++ )
+    {
+      func( GL_BASIS::TensorProduct3D::linearIndex( qa, i, qc ),
+            GL_BASIS::TensorProduct3D::linearIndex( qa, j, qc ),
+            GL_BASIS::weight( qa )*GL_BASIS::weight( qb )*GL_BASIS::weight( qc )*B[1]*
+            GL_BASIS::gradient( i, GL_BASIS::parentSupportCoord( qb ) )*
+            GL_BASIS::gradient( j, GL_BASIS::parentSupportCoord( qb ) ) );
+    }
+  }
+  for( int i=0; i<num1dNodes; i++ )
+  {
+    for( int j=0; j<num1dNodes; j++ )
+    {
+      func( GL_BASIS::TensorProduct3D::linearIndex( qa, qb, i ),
+            GL_BASIS::TensorProduct3D::linearIndex( qa, qb, j ),
+            GL_BASIS::weight( qa )*GL_BASIS::weight( qb )*GL_BASIS::weight( qc )*B[2]*
+            GL_BASIS::gradient( i, GL_BASIS::parentSupportCoord( qc ) )*
+            GL_BASIS::gradient( j, GL_BASIS::parentSupportCoord( qc ) ) );
+    }
+  }
+  // off-diagonal terms
+  for( int i=0; i<num1dNodes; i++ )
+  {
+    for( int j=0; j<num1dNodes; j++ )
+    {
+      int ii = GL_BASIS::TensorProduct3D::linearIndex( qa, i, qc );
+      int jj = GL_BASIS::TensorProduct3D::linearIndex( qa, qb, j );
+      real64 val = GL_BASIS::weight( qa )*GL_BASIS::weight( qb )*GL_BASIS::weight( qc )*B[3]*
+                   GL_BASIS::gradient( i, GL_BASIS::parentSupportCoord( qb ) )*
+                   GL_BASIS::gradient( j, GL_BASIS::parentSupportCoord( qc ) );
+      func( ii, jj, val );
+      func( jj, ii, val );
+    }
+  }
+  for( int i=0; i<num1dNodes; i++ )
+  {
+    for( int j=0; j<num1dNodes; j++ )
+    {
+      int ii = GL_BASIS::TensorProduct3D::linearIndex( i, qb, qc );
+      int jj = GL_BASIS::TensorProduct3D::linearIndex( qa, qb, j );
+      real64 val = GL_BASIS::weight( qa )*GL_BASIS::weight( qb )*GL_BASIS::weight( qc )*B[4]*
+                   GL_BASIS::gradient( i, GL_BASIS::parentSupportCoord( qa ) )*
+                   GL_BASIS::gradient( j, GL_BASIS::parentSupportCoord( qc ) );
+      func( ii, jj, val );
+      func( jj, ii, val );
+    }
+  }
+  for( int i=0; i<num1dNodes; i++ )
+  {
+    for( int j=0; j<num1dNodes; j++ )
+    {
+      int ii = GL_BASIS::TensorProduct3D::linearIndex( i, qb, qc );
+      int jj = GL_BASIS::TensorProduct3D::linearIndex( qa, j, qc );
+      real64 val = GL_BASIS::weight( qa )*GL_BASIS::weight( qb )*GL_BASIS::weight( qc )*B[5]*
+                   GL_BASIS::gradient( i, GL_BASIS::parentSupportCoord( qa ) )*
+                   GL_BASIS::gradient( j, GL_BASIS::parentSupportCoord( qb ) );
+      func( ii, jj, val );
+      func( jj, ii, val );
+    }
+  }
 }
 
 template< typename GL_BASIS >
-template< int q, typename FUNC >
+template< typename FUNC >
 GEOS_HOST_DEVICE
-GEOS_FORCE_INLINE
+inline
 void
 Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
-computeFirstOrderStiffnessTerm( real64 const (&X)[numNodes][3],
+computeFirstOrderStiffnessTerm( int q,
+                                real64 const (&X)[numNodes][3],
                                 FUNC && func )
 {
   real64 J[3][3] = {{0}};
-  using index = MultiIndex3D< q >;
-  jacobianTransformation< index::qa, index::qb, index::qc >( X, J );
+  int qa, qb, qc;
+  GL_BASIS::TensorProduct3D::multiIndex( q, qa, qb, qc );
+  jacobianTransformation( qa, qb, qc, X, J );
   real64 const detJ = LvArray::tensorOps::invert< 3 >( J );
   // diagonal terms
-  staticFor2D( [&] ( auto i, auto j )
+  for( int i=0; i<num1dNodes; i++ )
   {
-    func( LinearIndex3D< i.idx, index::qb, index::qc >::q,
-          LinearIndex3D< j.idx, index::qb, index::qc >::q,
-          detJ*BasisWeightAtQ< index::qa >::val *BasisWeightAtQ< index::qb >::val *BasisWeightAtQ< index::qc >::val *
-          BasisGradientAtQ< i.idx, index::qa >::val *
-          BasisGradientAtQ< j.idx, index::qa >::val,
-          J,
-          0,
-          0 );
-    func( LinearIndex3D< index::qa, i.idx, index::qc >::q,
-          LinearIndex3D< index::qa, j.idx, index::qc >::q,
-          detJ*BasisWeightAtQ< index::qa >::val *BasisWeightAtQ< index::qb >::val *BasisWeightAtQ< index::qc >::val *
-          BasisGradientAtQ< i.idx, index::qb >::val *
-          BasisGradientAtQ< j.idx, index::qb >::val,
-          J,
-          1,
-          1 );
-    func( LinearIndex3D< index::qa, index::qb, i.idx >::q,
-          LinearIndex3D< index::qa, index::qb, j.idx >::q,
-          detJ*BasisWeightAtQ< index::qa >::val *BasisWeightAtQ< index::qb >::val *BasisWeightAtQ< index::qc >::val *
-          BasisGradientAtQ< i.idx, index::qc >::val *
-          BasisGradientAtQ< j.idx, index::qc >::val,
-          J,
-          2,
-          2 );
+    for( int j=0; j<num1dNodes; j++ )
+    {
+      func( GL_BASIS::TensorProduct3D::linearIndex( i, qb, qc ),
+            GL_BASIS::TensorProduct3D::linearIndex( j, qb, qc ),
+            detJ*GL_BASIS::weight( qa )*GL_BASIS::weight( qb )*GL_BASIS::weight( qc )*
+            GL_BASIS::gradient( i, GL_BASIS::parentSupportCoord( qa ) )*
+            GL_BASIS::gradient( j, GL_BASIS::parentSupportCoord( qa ) ),
+            J,
+            0,
+            0 );
+    }
+  }
+  for( int i=0; i<num1dNodes; i++ )
+  {
+    for( int j=0; j<num1dNodes; j++ )
+    {
+      func( GL_BASIS::TensorProduct3D::linearIndex( qa, i, qc ),
+            GL_BASIS::TensorProduct3D::linearIndex( qa, j, qc ),
+            detJ*GL_BASIS::weight( qa )*GL_BASIS::weight( qb )*GL_BASIS::weight( qc )*
+            GL_BASIS::gradient( i, GL_BASIS::parentSupportCoord( qb ) )*
+            GL_BASIS::gradient( j, GL_BASIS::parentSupportCoord( qb ) ),
+            J,
+            1,
+            1 );
+    }
+  }
+  for( int i=0; i<num1dNodes; i++ )
+  {
+    for( int j=0; j<num1dNodes; j++ )
+    {
+      func( GL_BASIS::TensorProduct3D::linearIndex( qa, qb, i ),
+            GL_BASIS::TensorProduct3D::linearIndex( qa, qb, j ),
+            detJ*GL_BASIS::weight( qa )*GL_BASIS::weight( qb )*GL_BASIS::weight( qc )*
+            GL_BASIS::gradient( i, GL_BASIS::parentSupportCoord( qc ) )*
+            GL_BASIS::gradient( j, GL_BASIS::parentSupportCoord( qc ) ),
+            J,
+            2,
+            2 );
+    }
+  }
+  // off-diagonal terms
+  for( int i=0; i<num1dNodes; i++ )
+  {
+    for( int j=0; j<num1dNodes; j++ )
+    {
+      func( GL_BASIS::TensorProduct3D::linearIndex( qa, i, qc ),
+            GL_BASIS::TensorProduct3D::linearIndex( qa, qb, j ),
+            detJ*GL_BASIS::weight( qa )*GL_BASIS::weight( qb )*GL_BASIS::weight( qc )*
+            GL_BASIS::gradient( i, GL_BASIS::parentSupportCoord( qb ) )*
+            GL_BASIS::gradient( j, GL_BASIS::parentSupportCoord( qc ) ),
+            J,
+            1,
+            2 );
+    }
+  }
 
-    func( LinearIndex3D< index::qa, i.idx, index::qc >::q,
-          LinearIndex3D< index::qa, index::qb, j.idx >::q,
-          detJ*BasisWeightAtQ< index::qa >::val *BasisWeightAtQ< index::qb >::val *BasisWeightAtQ< index::qc >::val *
-          BasisGradientAtQ< i.idx, index::qb >::val *
-          BasisGradientAtQ< j.idx, index::qc >::val,
-          J,
-          1,
-          2 );
-    func( LinearIndex3D< index::qa, index::qb, j.idx >::q,
-          LinearIndex3D< index::qa, i.idx, index::qc >::q,
-          detJ*BasisWeightAtQ< index::qa >::val *BasisWeightAtQ< index::qb >::val *BasisWeightAtQ< index::qc >::val *
-          BasisGradientAtQ< i.idx, index::qb >::val *
-          BasisGradientAtQ< j.idx, index::qc >::val,
-          J,
-          2,
-          1 );
-    func( LinearIndex3D< i.idx, index::qb, index::qc >::q,
-          LinearIndex3D< index::qa, index::qb, j.idx >::q,
-          detJ*BasisWeightAtQ< index::qa >::val *BasisWeightAtQ< index::qb >::val *BasisWeightAtQ< index::qc >::val *
-          BasisGradientAtQ< i.idx, index::qa >::val *
-          BasisGradientAtQ< j.idx, index::qc >::val,
-          J,
-          0,
-          2 );
-    func( LinearIndex3D< index::qa, index::qb, j.idx >::q,
-          LinearIndex3D< i.idx, index::qb, index::qc >::q,
-          detJ*BasisWeightAtQ< index::qa >::val *BasisWeightAtQ< index::qb >::val *BasisWeightAtQ< index::qc >::val *
-          BasisGradientAtQ< i.idx, index::qa >::val *
-          BasisGradientAtQ< j.idx, index::qc >::val,
-          J,
-          2,
-          0 );
-    func( LinearIndex3D< i.idx, index::qb, index::qc >::q,
-          LinearIndex3D< index::qa, j.idx, index::qc >::q,
-          detJ*BasisWeightAtQ< index::qa >::val *BasisWeightAtQ< index::qb >::val *BasisWeightAtQ< index::qc >::val *
-          BasisGradientAtQ< i.idx, index::qa >::val *
-          BasisGradientAtQ< j.idx, index::qb >::val,
-          J,
-          0,
-          1 );
-    func( LinearIndex3D< index::qa, j.idx, index::qc >::q,
-          LinearIndex3D< i.idx, index::qb, index::qc >::q,
-          detJ*BasisWeightAtQ< index::qa >::val *BasisWeightAtQ< index::qb >::val *BasisWeightAtQ< index::qc >::val *
-          BasisGradientAtQ< i.idx, index::qa >::val *
-          BasisGradientAtQ< j.idx, index::qb >::val,
-          J,
-          1,
-          0 );
-  } );
+  for( int i=0; i<num1dNodes; i++ )
+  {
+    for( int j=0; j<num1dNodes; j++ )
+    {
+      func( GL_BASIS::TensorProduct3D::linearIndex( qa, qb, j ),
+            GL_BASIS::TensorProduct3D::linearIndex( qa, i, qc ),
+            detJ*GL_BASIS::weight( qa )*GL_BASIS::weight( qb )*GL_BASIS::weight( qc )*
+            GL_BASIS::gradient( i, GL_BASIS::parentSupportCoord( qb ) )*
+            GL_BASIS::gradient( j, GL_BASIS::parentSupportCoord( qc ) ),
+            J,
+            2,
+            1 );
+    }
+  }
+
+  for( int i=0; i<num1dNodes; i++ )
+  {
+    for( int j=0; j<num1dNodes; j++ )
+    {
+      func( GL_BASIS::TensorProduct3D::linearIndex( i, qb, qc ),
+            GL_BASIS::TensorProduct3D::linearIndex( qa, qb, j ),
+            detJ*GL_BASIS::weight( qa )*GL_BASIS::weight( qb )*GL_BASIS::weight( qc )*
+            GL_BASIS::gradient( i, GL_BASIS::parentSupportCoord( qa ) )*
+            GL_BASIS::gradient( j, GL_BASIS::parentSupportCoord( qc ) ),
+            J,
+            0,
+            2 );
+
+    }
+  }
+
+  for( int i=0; i<num1dNodes; i++ )
+  {
+    for( int j=0; j<num1dNodes; j++ )
+    {
+      func( GL_BASIS::TensorProduct3D::linearIndex( qa, qb, j ),
+            GL_BASIS::TensorProduct3D::linearIndex( i, qb, qc ),
+            detJ*GL_BASIS::weight( qa )*GL_BASIS::weight( qb )*GL_BASIS::weight( qc )*
+            GL_BASIS::gradient( i, GL_BASIS::parentSupportCoord( qa ) )*
+            GL_BASIS::gradient( j, GL_BASIS::parentSupportCoord( qc ) ),
+            J,
+            2,
+            0 );
+
+    }
+  }
+
+  for( int i=0; i<num1dNodes; i++ )
+  {
+    for( int j=0; j<num1dNodes; j++ )
+    {
+      func( GL_BASIS::TensorProduct3D::linearIndex( i, qb, qc ),
+            GL_BASIS::TensorProduct3D::linearIndex( qa, j, qc ),
+            detJ*GL_BASIS::weight( qa )*GL_BASIS::weight( qb )*GL_BASIS::weight( qc )*
+            GL_BASIS::gradient( i, GL_BASIS::parentSupportCoord( qa ) )*
+            GL_BASIS::gradient( j, GL_BASIS::parentSupportCoord( qb ) ),
+            J,
+            0,
+            1 );
+    }
+  }
+
+  for( int i=0; i<num1dNodes; i++ )
+  {
+    for( int j=0; j<num1dNodes; j++ )
+    {
+      func( GL_BASIS::TensorProduct3D::linearIndex( qa, j, qc ),
+            GL_BASIS::TensorProduct3D::linearIndex( i, qb, qc ),
+            detJ*GL_BASIS::weight( qa )*GL_BASIS::weight( qb )*GL_BASIS::weight( qc )*
+            GL_BASIS::gradient( i, GL_BASIS::parentSupportCoord( qa ) )*
+            GL_BASIS::gradient( j, GL_BASIS::parentSupportCoord( qb ) ),
+            J,
+            1,
+            0 );
+    }
+  }
+
 }
 
 template< typename GL_BASIS >
-template< int q, typename FUNC >
+template< typename FUNC >
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
 void
 Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
-computeFirstOrderStiffnessTermX( real64 const (&X)[numNodes][3],
+computeFirstOrderStiffnessTermX( int q,
+                                 real64 const (&X)[numNodes][3],
                                  FUNC && func )
 {
   real64 J[3][3] = {{0}};
-  using index = MultiIndex3D< q >;
-  jacobianTransformation< index::qa, index::qb, index::qc >( X, J );
+  int qa, qb, qc;
+  GL_BASIS::TensorProduct3D::multiIndex( q, qa, qb, qc );
+  jacobianTransformation( qa, qb, qc, X, J );
   real64 const detJ = LvArray::tensorOps::invert< 3 >( J );
 
-  staticFor1D( [&] ( auto i1 )
+  for( int i1 = 0; i1 < num1dNodes; ++i1 )
   {
-    real64 val = BasisWeightAtQ< index::qa >::val*BasisWeightAtQ< index::qb >::val*BasisWeightAtQ< index::qc >::val*BasisGradientAtQ< i1.idx, index::qa >::val;
-    func( LinearIndex3D< i1.idx, index::qb, index::qc >::q,
-          LinearIndex3D< index::qa, index::qb, index::qc >::q,
+    real64 val = GL_BASIS::weight( qa )*GL_BASIS::weight( qb )*GL_BASIS::weight( qc )*GL_BASIS::gradient( i1, GL_BASIS::parentSupportCoord( qa ) );
+    func( GL_BASIS::TensorProduct3D::linearIndex( i1, qb, qc ),
+          GL_BASIS::TensorProduct3D::linearIndex( qa, qb, qc ),
           detJ*J[0][0]*val, detJ*J[0][1]*val, detJ*J[0][2]*val );
-  } );
+
+  }
+
 }
 
 template< typename GL_BASIS >
-template< int q, typename FUNC >
+template< typename FUNC >
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
 void
 Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
-computeFirstOrderStiffnessTermY( real64 const (&X)[numNodes][3],
+computeFirstOrderStiffnessTermY( int q,
+                                 real64 const (&X)[numNodes][3],
                                  FUNC && func )
 {
   real64 J[3][3] = {{0}};
-  using index = MultiIndex3D< q >;
-  jacobianTransformation< index::qa, index::qb, index::qc >( X, J );
+  int qa, qb, qc;
+  GL_BASIS::TensorProduct3D::multiIndex( q, qa, qb, qc );
+  jacobianTransformation( qa, qb, qc, X, J );
   real64 const detJ = LvArray::tensorOps::invert< 3 >( J );
 
-  staticFor1D( [&] ( auto i2 )
+  for( int i2 = 0; i2 < num1dNodes; ++i2 )
   {
-    real64 val = BasisWeightAtQ< index::qa >::val*BasisWeightAtQ< index::qb >::val*BasisWeightAtQ< index::qc >::val*BasisGradientAtQ< i2.idx, index::qb >::val;
-    func( LinearIndex3D< index::qa, i2.idx, index::qc >::q,
-          LinearIndex3D< index::qa, index::qb, index::qc >::q,
+    real64 val = GL_BASIS::weight( qa )*GL_BASIS::weight( qb )*GL_BASIS::weight( qc )*GL_BASIS::gradient( i2, GL_BASIS::parentSupportCoord( qb ) );
+    func( GL_BASIS::TensorProduct3D::linearIndex( qa, i2, qc ),
+          GL_BASIS::TensorProduct3D::linearIndex( qa, qb, qc ),
           detJ*J[1][0]*val, detJ*J[1][1]*val, detJ*J[1][2]*val );
-  } );
+
+  }
+
 }
 
 template< typename GL_BASIS >
-template< int q, typename FUNC >
+template< typename FUNC >
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
 void
 Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
-computeFirstOrderStiffnessTermZ( real64 const (&X)[numNodes][3],
+computeFirstOrderStiffnessTermZ( int q,
+                                 real64 const (&X)[numNodes][3],
                                  FUNC && func )
 {
   real64 J[3][3] = {{0}};
-  using index = MultiIndex3D< q >;
-  jacobianTransformation< index::qa, index::qb, index::qc >( X, J );
+  int qa, qb, qc;
+  GL_BASIS::TensorProduct3D::multiIndex( q, qa, qb, qc );
+  jacobianTransformation( qa, qb, qc, X, J );
   real64 const detJ = LvArray::tensorOps::invert< 3 >( J );
 
-  staticFor1D( [&] ( auto i3 )
+  for( int i3 = 0; i3 < num1dNodes; ++i3 )
   {
-    real64 val = BasisWeightAtQ< index::qa >::val*BasisWeightAtQ< index::qb >::val*BasisWeightAtQ< index::qc >::val*BasisGradientAtQ< i3.idx, index::qc >::val;
-    func( LinearIndex3D< index::qa, index::qb, i3.idx >::q,
-          LinearIndex3D< index::qa, index::qb, index::qc >::q,
+    real64 val = GL_BASIS::weight( qa )*GL_BASIS::weight( qb )*GL_BASIS::weight( qc )*GL_BASIS::gradient( i3, GL_BASIS::parentSupportCoord( qc ) );
+    func( GL_BASIS::TensorProduct3D::linearIndex( qa, qb, i3 ),
+          GL_BASIS::TensorProduct3D::linearIndex( qa, qb, qc ),
           detJ*J[2][0]*val, detJ*J[2][1]*val, detJ*J[2][2]*val );
-  } );
+
+  }
+
 }
 
 //*************************************************************************************************
 template< typename GL_BASIS >
 GEOS_HOST_DEVICE
-GEOS_FORCE_INLINE
+inline
 void
 Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
-applyTransformationToParentGradients( int qa, int qb, int qc, real64 const ( &invJ )[3][3],
+applyTransformationToParentGradients( int const qa,
+                                      int const qb,
+                                      int const qc,
+                                      real64 const ( &invJ )[3][3],
                                       real64 (& gradN)[numNodes][3] )
 {
   supportLoop( qa, qb, qc, [] GEOS_HOST_DEVICE ( real64 const (&dNdXi)[3],
@@ -1781,28 +1518,14 @@ applyTransformationToParentGradients( int qa, int qb, int qc, real64 const ( &in
                                                  real64 const (&invJ)[3][3],
                                                  real64 (& gradN)[numNodes][3] )
   {
-    // smaller register footprint by manually unrolling the for loops.
-    gradN[nodeIndex][0] = dNdXi[0] * invJ[0][0] + dNdXi[1] * invJ[1][0] + dNdXi[2] * invJ[2][0];
-    gradN[nodeIndex][1] = dNdXi[0] * invJ[0][1] + dNdXi[1] * invJ[1][1] + dNdXi[2] * invJ[2][1];
-    gradN[nodeIndex][2] = dNdXi[0] * invJ[0][2] + dNdXi[1] * invJ[1][2] + dNdXi[2] * invJ[2][2];
-
-
-  }, invJ, gradN );
-}
-template< typename GL_BASIS >
-template< int qa, int qb, int qc >
-GEOS_HOST_DEVICE
-GEOS_FORCE_INLINE
-void
-Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
-applyTransformationToParentGradients( real64 const ( &invJ )[3][3],
-                                      real64 (& gradN)[numNodes][3] )
-{
-  supportLoop< qa, qb, qc >( [] GEOS_HOST_DEVICE ( real64 const (&dNdXi)[3],
-                                                   int const nodeIndex,
-                                                   real64 const (&invJ)[3][3],
-                                                   real64 (& gradN)[numNodes][3] )
-  {
+//    for( int i = 0; i < 3; ++i )
+//    {
+//      gradN[nodeIndex][i] = 0.0;
+//      for( int j = 0; j < 3; ++j )
+//      {
+//        gradN[nodeIndex][i] = gradN[nodeIndex][i] + dNdXi[ j ] * invJ[j][i];
+//      }
+//    }
     // smaller register footprint by manually unrolling the for loops.
     gradN[nodeIndex][0] = dNdXi[0] * invJ[0][0] + dNdXi[1] * invJ[1][0] + dNdXi[2] * invJ[2][0];
     gradN[nodeIndex][1] = dNdXi[0] * invJ[0][1] + dNdXi[1] * invJ[1][1] + dNdXi[2] * invJ[2][1];
@@ -1815,7 +1538,7 @@ applyTransformationToParentGradients( real64 const ( &invJ )[3][3],
 //*************************************************************************************************
 template< typename GL_BASIS >
 GEOS_HOST_DEVICE
-GEOS_FORCE_INLINE
+inline
 void
 Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
 applyTransformationToParentGradients( real64 const (&coords)[3],
@@ -1834,18 +1557,19 @@ applyTransformationToParentGradients( real64 const (&coords)[3],
 }
 
 template< typename GL_BASIS >
-template< int q >
 GEOS_HOST_DEVICE
-GEOS_FORCE_INLINE
+inline
 real64
 Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
-transformedQuadratureWeight( real64 const (&X)[numNodes][3] )
+transformedQuadratureWeight( localIndex const q,
+                             real64 const (&X)[numNodes][3] )
 {
   real64 J[3][3] = {{0}};
 
-  using index = MultiIndex3D< q >;
+  int qa, qb, qc;
+  GL_BASIS::TensorProduct3D::multiIndex( q, qa, qb, qc );
 
-  jacobianTransformation< index::qa, index::qb, index::qc >( X, J );
+  jacobianTransformation( qa, qb, qc, X, J );
 
   return LvArray::tensorOps::determinant< 3 >( J );
 }
@@ -1853,21 +1577,22 @@ transformedQuadratureWeight( real64 const (&X)[numNodes][3] )
 
 
 template< typename GL_BASIS >
-template< int q >
 GEOS_HOST_DEVICE
-GEOS_FORCE_INLINE
+inline
 void Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
-symmetricGradient( real64 const (&invJ)[3][3],
+symmetricGradient( int const q,
+                   real64 const (&invJ)[3][3],
                    real64 const (&var)[numNodes][3],
                    real64 (& grad)[6] )
 {
-  using index = MultiIndex3D< q >;
+  int qa, qb, qc;
+  GL_BASIS::TensorProduct3D::multiIndex( q, qa, qb, qc );
 
-  supportLoop< index::qa, index::qb, index::qc >( [] GEOS_HOST_DEVICE ( real64 const (&dNdXi)[3],
-                                                                        int const nodeIndex,
-                                                                        real64 const (&invJ)[3][3],
-                                                                        real64 const (&var)[numNodes][3],
-                                                                        real64 (& grad)[6] )
+  supportLoop( qa, qb, qc, [] GEOS_HOST_DEVICE ( real64 const (&dNdXi)[3],
+                                                 int const nodeIndex,
+                                                 real64 const (&invJ)[3][3],
+                                                 real64 const (&var)[numNodes][3],
+                                                 real64 (& grad)[6] )
   {
 
     real64 gradN[3] = {0, 0, 0};
@@ -1889,23 +1614,24 @@ symmetricGradient( real64 const (&invJ)[3][3],
 }
 
 template< typename GL_BASIS >
-template< int q >
 GEOS_HOST_DEVICE
-GEOS_FORCE_INLINE
+inline
 void Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
-plusGradNajAij( real64 const (&invJ)[3][3],
+plusGradNajAij( int const q,
+                real64 const (&invJ)[3][3],
                 real64 const (&var)[6],
                 real64 (& R)[numNodes][3] )
 {
-  using index = MultiIndex3D< q >;
+  int qa, qb, qc;
+  GL_BASIS::TensorProduct3D::multiIndex( q, qa, qb, qc );
 
-  supportLoop< index::qa, index::qb, index::qc >(
-    [] GEOS_HOST_DEVICE
-      ( real64 const (&dNdXi)[3],
-      int const nodeIndex,
-      real64 const (&invJ)[3][3],
-      real64 const (&var)[6],
-      real64 (& R)[numNodes][3] )
+  supportLoop( qa, qb, qc,
+               [] GEOS_HOST_DEVICE
+                 ( real64 const (&dNdXi)[3],
+                 int const nodeIndex,
+                 real64 const (&invJ)[3][3],
+                 real64 const (&var)[6],
+                 real64 (& R)[numNodes][3] )
   {
 
     real64 gradN[3] = {0, 0, 0};
@@ -1925,21 +1651,22 @@ plusGradNajAij( real64 const (&invJ)[3][3],
 
 
 template< typename GL_BASIS >
-template< int q >
 GEOS_HOST_DEVICE
-GEOS_FORCE_INLINE
+inline
 void Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
-gradient( real64 const (&invJ)[3][3],
+gradient( int const q,
+          real64 const (&invJ)[3][3],
           real64 const (&var)[numNodes][3],
           real64 (& grad)[3][3] )
 {
-  using index = MultiIndex3D< q >;
+  int qa, qb, qc;
+  GL_BASIS::TensorProduct3D::multiIndex( q, qa, qb, qc );
 
-  supportLoop< index::qa, index::qb, index::qc >( [] GEOS_HOST_DEVICE ( real64 const (&dNdXi)[3],
-                                                                        int const nodeIndex,
-                                                                        real64 const (&invJ)[3][3],
-                                                                        real64 const (&var)[numNodes][3],
-                                                                        real64 (& grad)[3][3] )
+  supportLoop( qa, qb, qc, [] GEOS_HOST_DEVICE ( real64 const (&dNdXi)[3],
+                                                 int const nodeIndex,
+                                                 real64 const (&invJ)[3][3],
+                                                 real64 const (&var)[numNodes][3],
+                                                 real64 (& grad)[3][3] )
   {
     for( int i = 0; i < 3; ++i )
     {
@@ -2166,246 +1893,6 @@ using Q5_Hexahedron_Lagrange_GaussLobatto = Qk_Hexahedron_Lagrange_GaussLobatto<
 #pragma GCC diagnostic pop
 #endif
 #undef PARENT_GRADIENT_METHOD
-
-// explicit template instantiations to reduce compilation time
-// Q1
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis1 >:: MultiIndex3D< 0 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis1 >:: MultiIndex3D< 1 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis1 >:: MultiIndex3D< 2 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis1 >:: MultiIndex3D< 3 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis1 >:: MultiIndex3D< 4 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis1 >:: MultiIndex3D< 5 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis1 >:: MultiIndex3D< 6 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis1 >:: MultiIndex3D< 7 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis1 >:: LinearIndex3D< 0, 0, 0 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis1 >:: LinearIndex3D< 0, 0, 1 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis1 >:: LinearIndex3D< 0, 1, 0 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis1 >:: LinearIndex3D< 0, 1, 1 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis1 >:: LinearIndex3D< 1, 0, 0 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis1 >:: LinearIndex3D< 1, 0, 1 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis1 >:: LinearIndex3D< 1, 1, 0 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis1 >:: LinearIndex3D< 1, 1, 1 >;
-//
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis1 >:: MultiIndex2D< 0 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis1 >:: MultiIndex2D< 1 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis1 >:: MultiIndex2D< 2 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis1 >:: MultiIndex2D< 3 >;
-//// Q2 
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis2 >:: MultiIndex3D< 0 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis2 >:: MultiIndex3D< 1 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis2 >:: MultiIndex3D< 2 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis2 >:: MultiIndex3D< 3 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis2 >:: MultiIndex3D< 4 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis2 >:: MultiIndex3D< 5 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis2 >:: MultiIndex3D< 6 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis2 >:: MultiIndex3D< 7 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis2 >:: MultiIndex3D< 8 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis2 >:: MultiIndex3D< 9 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis2 >:: MultiIndex3D< 10>;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis2 >:: MultiIndex3D< 11>;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis2 >:: MultiIndex3D< 12>;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis2 >:: MultiIndex3D< 13>;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis2 >:: MultiIndex3D< 14>;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis2 >:: MultiIndex3D< 15>;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis2 >:: MultiIndex3D< 16>;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis2 >:: MultiIndex3D< 17>;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis2 >:: MultiIndex3D< 18>;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis2 >:: MultiIndex3D< 19>;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis2 >:: MultiIndex3D< 20>;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis2 >:: MultiIndex3D< 21>;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis2 >:: MultiIndex3D< 22>;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis2 >:: MultiIndex3D< 23>;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis2 >:: MultiIndex3D< 24>;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis2 >:: MultiIndex3D< 25>;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis2 >:: MultiIndex3D< 26>;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis2 >:: MultiIndex3D< 27>;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis2 >:: LinearIndex3D< 0, 0, 0 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis2 >:: LinearIndex3D< 0, 0, 1 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis2 >:: LinearIndex3D< 0, 0, 2 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis2 >:: LinearIndex3D< 0, 1, 0 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis2 >:: LinearIndex3D< 0, 1, 1 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis2 >:: LinearIndex3D< 0, 1, 2 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis2 >:: LinearIndex3D< 0, 2, 0 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis2 >:: LinearIndex3D< 0, 2, 1 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis2 >:: LinearIndex3D< 0, 2, 2 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis2 >:: LinearIndex3D< 1, 0, 0 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis2 >:: LinearIndex3D< 1, 0, 1 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis2 >:: LinearIndex3D< 1, 0, 2 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis2 >:: LinearIndex3D< 1, 1, 0 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis2 >:: LinearIndex3D< 1, 1, 1 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis2 >:: LinearIndex3D< 1, 1, 2 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis2 >:: LinearIndex3D< 1, 2, 0 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis2 >:: LinearIndex3D< 1, 2, 1 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis2 >:: LinearIndex3D< 1, 2, 2 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis2 >:: LinearIndex3D< 2, 0, 0 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis2 >:: LinearIndex3D< 2, 0, 1 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis2 >:: LinearIndex3D< 2, 0, 2 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis2 >:: LinearIndex3D< 2, 1, 0 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis2 >:: LinearIndex3D< 2, 1, 1 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis2 >:: LinearIndex3D< 2, 1, 2 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis2 >:: LinearIndex3D< 2, 2, 0 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis2 >:: LinearIndex3D< 2, 2, 1 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis2 >:: LinearIndex3D< 2, 2, 2 >;
-//
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis2 >:: MultiIndex2D< 0 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis2 >:: MultiIndex2D< 1 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis2 >:: MultiIndex2D< 2 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis2 >:: MultiIndex2D< 3 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis2 >:: MultiIndex2D< 4 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis2 >:: MultiIndex2D< 5 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis2 >:: MultiIndex2D< 6 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis2 >:: MultiIndex2D< 7 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis2 >:: MultiIndex2D< 8 >;
-////Q3
-//
-//
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis3GL >::MultiIndex3D< 0 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis3GL >::MultiIndex3D< 1 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis3GL >::MultiIndex3D< 2 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis3GL >::MultiIndex3D< 3 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis3GL >::MultiIndex3D< 4 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis3GL >::MultiIndex3D< 5 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis3GL >::MultiIndex3D< 6 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis3GL >::MultiIndex3D< 7 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis3GL >::MultiIndex3D< 8 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis3GL >::MultiIndex3D< 9 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis3GL >::MultiIndex3D< 10 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis3GL >::MultiIndex3D< 11 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis3GL >::MultiIndex3D< 12 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis3GL >::MultiIndex3D< 13 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis3GL >::MultiIndex3D< 14 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis3GL >::MultiIndex3D< 15 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis3GL >::MultiIndex3D< 16 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis3GL >::MultiIndex3D< 17 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis3GL >::MultiIndex3D< 18 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis3GL >::MultiIndex3D< 19 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis3GL >::MultiIndex3D< 20 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis3GL >::MultiIndex3D< 21 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis3GL >::MultiIndex3D< 22 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis3GL >::MultiIndex3D< 23 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis3GL >::MultiIndex3D< 24 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis3GL >::MultiIndex3D< 25 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis3GL >::MultiIndex3D< 26 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis3GL >::MultiIndex3D< 27 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis3GL >::MultiIndex3D< 28 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis3GL >::MultiIndex3D< 29 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis3GL >::MultiIndex3D< 30 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis3GL >::MultiIndex3D< 31 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis3GL >::MultiIndex3D< 32 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis3GL >::MultiIndex3D< 33 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis3GL >::MultiIndex3D< 34 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis3GL >::MultiIndex3D< 35 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis3GL >::MultiIndex3D< 36 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis3GL >::MultiIndex3D< 37 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis3GL >::MultiIndex3D< 38 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis3GL >::MultiIndex3D< 39 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis3GL >::MultiIndex3D< 40 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis3GL >::MultiIndex3D< 41 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis3GL >::MultiIndex3D< 42 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis3GL >::MultiIndex3D< 43 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis3GL >::MultiIndex3D< 44 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis3GL >::MultiIndex3D< 45 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis3GL >::MultiIndex3D< 46 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis3GL >::MultiIndex3D< 47 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis3GL >::MultiIndex3D< 48 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis3GL >::MultiIndex3D< 49 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis3GL >::MultiIndex3D< 50 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis3GL >::MultiIndex3D< 51 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis3GL >::MultiIndex3D< 52 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis3GL >::MultiIndex3D< 53 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis3GL >::MultiIndex3D< 54 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis3GL >::MultiIndex3D< 55 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis3GL >::MultiIndex3D< 56 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis3GL >::MultiIndex3D< 57 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis3GL >::MultiIndex3D< 58 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis3GL >::MultiIndex3D< 59 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis3GL >::MultiIndex3D< 60 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis3GL >::MultiIndex3D< 61 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis3GL >::MultiIndex3D< 62 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis3GL >::MultiIndex3D< 63 >;
-//
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis3GL >:: LinearIndex3D< 0, 0, 0 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis3GL >:: LinearIndex3D< 0, 0, 1 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis3GL >:: LinearIndex3D< 0, 0, 2 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis3GL >:: LinearIndex3D< 0, 0, 3 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis3GL >:: LinearIndex3D< 0, 1, 0 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis3GL >:: LinearIndex3D< 0, 1, 1 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis3GL >:: LinearIndex3D< 0, 1, 2 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis3GL >:: LinearIndex3D< 0, 1, 3 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis3GL >:: LinearIndex3D< 0, 2, 0 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis3GL >:: LinearIndex3D< 0, 2, 1 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis3GL >:: LinearIndex3D< 0, 2, 2 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis3GL >:: LinearIndex3D< 0, 2, 3 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis3GL >:: LinearIndex3D< 0, 3, 0 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis3GL >:: LinearIndex3D< 0, 3, 1 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis3GL >:: LinearIndex3D< 0, 3, 2 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis3GL >:: LinearIndex3D< 0, 3, 3 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis3GL >:: LinearIndex3D< 1, 0, 0 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis3GL >:: LinearIndex3D< 1, 0, 1 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis3GL >:: LinearIndex3D< 1, 0, 2 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis3GL >:: LinearIndex3D< 1, 0, 3 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis3GL >:: LinearIndex3D< 1, 1, 0 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis3GL >:: LinearIndex3D< 1, 1, 1 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis3GL >:: LinearIndex3D< 1, 1, 2 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis3GL >:: LinearIndex3D< 1, 1, 3 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis3GL >:: LinearIndex3D< 1, 2, 0 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis3GL >:: LinearIndex3D< 1, 2, 1 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis3GL >:: LinearIndex3D< 1, 2, 2 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis3GL >:: LinearIndex3D< 1, 2, 3 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis3GL >:: LinearIndex3D< 1, 3, 0 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis3GL >:: LinearIndex3D< 1, 3, 1 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis3GL >:: LinearIndex3D< 1, 3, 2 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis3GL >:: LinearIndex3D< 1, 3, 3 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis3GL >:: LinearIndex3D< 2, 0, 0 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis3GL >:: LinearIndex3D< 2, 0, 1 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis3GL >:: LinearIndex3D< 2, 0, 2 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis3GL >:: LinearIndex3D< 2, 0, 3 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis3GL >:: LinearIndex3D< 2, 1, 0 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis3GL >:: LinearIndex3D< 2, 1, 1 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis3GL >:: LinearIndex3D< 2, 1, 2 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis3GL >:: LinearIndex3D< 2, 1, 3 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis3GL >:: LinearIndex3D< 2, 2, 0 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis3GL >:: LinearIndex3D< 2, 2, 1 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis3GL >:: LinearIndex3D< 2, 2, 2 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis3GL >:: LinearIndex3D< 2, 2, 3 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis3GL >:: LinearIndex3D< 2, 3, 0 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis3GL >:: LinearIndex3D< 2, 3, 1 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis3GL >:: LinearIndex3D< 2, 3, 2 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis3GL >:: LinearIndex3D< 2, 3, 3 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis3GL >:: LinearIndex3D< 3, 0, 0 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis3GL >:: LinearIndex3D< 3, 0, 1 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis3GL >:: LinearIndex3D< 3, 0, 2 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis3GL >:: LinearIndex3D< 3, 0, 3 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis3GL >:: LinearIndex3D< 3, 1, 0 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis3GL >:: LinearIndex3D< 3, 1, 1 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis3GL >:: LinearIndex3D< 3, 1, 2 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis3GL >:: LinearIndex3D< 3, 1, 3 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis3GL >:: LinearIndex3D< 3, 2, 0 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis3GL >:: LinearIndex3D< 3, 2, 1 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis3GL >:: LinearIndex3D< 3, 2, 2 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis3GL >:: LinearIndex3D< 3, 2, 3 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis3GL >:: LinearIndex3D< 3, 3, 0 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis3GL >:: LinearIndex3D< 3, 3, 1 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis3GL >:: LinearIndex3D< 3, 3, 2 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis3GL >:: LinearIndex3D< 3, 3, 3 >;
-// 
-//
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis3GL >::MultiIndex2D< 0 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis3GL >::MultiIndex2D< 1 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis3GL >::MultiIndex2D< 2 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis3GL >::MultiIndex2D< 3 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis3GL >::MultiIndex2D< 4 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis3GL >::MultiIndex2D< 5 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis3GL >::MultiIndex2D< 6 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis3GL >::MultiIndex2D< 7 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis3GL >::MultiIndex2D< 8 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis3GL >::MultiIndex2D< 9 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis3GL >::MultiIndex2D< 10 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis3GL >::MultiIndex2D< 11 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis3GL >::MultiIndex2D< 12 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis3GL >::MultiIndex2D< 13 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis3GL >::MultiIndex2D< 14 >;
-//template struct Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis3GL >::MultiIndex2D< 15 >;
 }
 }
 

@@ -979,8 +979,6 @@ real64 AcousticWaveEquationSEM::explicitStepInternal( real64 const & time_n,
       {
         if( freeSurfaceNodeIndicator[a] != 1 )
         {
-          //if( time_n > 0.01 )
-               //printf("in time loop, a=%i, mass=%e, stiffnessV=%e, rhs=%e\n", a, mass[a], stiffnessVector[a], rhs[a]);
           p_np1[a] = p_n[a];
           p_np1[a] *= 2.0*mass[a];
           p_np1[a] -= (mass[a]-0.5*dt*damping[a])*p_nm1[a];
