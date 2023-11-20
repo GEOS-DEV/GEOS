@@ -31,6 +31,7 @@ namespace fields
 namespace dispersion
 {
 
+using array3dLayoutPhase = array3d< real64, constitutive::dispersion::LAYOUT_PHASE_VELOCITY_NORM >;
 using array4dLayoutPhase = array4d< real64, constitutive::dispersion::LAYOUT_PHASE_VELOCITY >;
 
 DECLARE_FIELD( dispersivity,
@@ -49,6 +50,13 @@ DECLARE_FIELD( phaseVelocity,
                WRITE_AND_READ,
                "Phase velocities reconstructed at cell center" );
 
+    DECLARE_FIELD( phaseVelocityNorm,
+                   "cellCenterLaggedPhaseVelocityNorm",
+                   array3dLayoutPhase,
+                   1,
+                   LEVEL_0,
+                   WRITE_AND_READ,
+                   "Lagged Phase velocities norm at cell center" );
 
 }
 

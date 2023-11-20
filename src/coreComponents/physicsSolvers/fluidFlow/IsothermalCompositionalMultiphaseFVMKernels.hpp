@@ -316,7 +316,8 @@ public:
 
   using DispersionAccessors = StencilMaterialAccessors< DispersionBase,
                                                         fields::dispersion::dispersivity,
-                                                        fields::dispersion::phaseVelocity >;
+                                                        fields::dispersion::phaseVelocity,
+                                                        fields::dispersion::phaseVelocityNorm >;
 
   /**
    * @brief Constructor for the kernel interface
@@ -944,7 +945,8 @@ public:
   using DispersionAccessors =
     StencilMaterialAccessors< DispersionBase,
                               fields::dispersion::dispersivity,
-                              fields::dispersion::phaseVelocity >;
+                              fields::dispersion::phaseVelocity,
+                              fields::dispersion::phaseVelocityNorm >;
 
   using PorosityAccessors =
     StencilMaterialAccessors< PorosityBase,
@@ -993,6 +995,7 @@ public:
     m_dDiffusivity_dTemp( diffusionAccessors.get( fields::diffusion::dDiffusivity_dTemperature {} ) ),
     m_phaseDiffusivityMultiplier( diffusionAccessors.get( fields::diffusion::phaseDiffusivityMultiplier {} ) ),
     m_dispersivity( dispersionAccessors.get( fields::dispersion::dispersivity {} ) ),
+    m_phaseMultiplier( dispersionAccessors.get(fields::dispersion::phaseVelocityNorm{} )),
     m_referencePorosity( porosityAccessors.get( fields::porosity::referencePorosity {} ) ),
     m_stencilWrapper( stencilWrapper ),
     m_seri( stencilWrapper.getElementRegionIndices() ),
@@ -1299,7 +1302,8 @@ public:
             localIndex const esr_up = sesri[k_up];
             localIndex const ei_up  = sei[k_up];
 
-            real64 const linearDispersionFactor = LvArray::tensorOps::l2Norm< 3 >( m_phaseVelocity[er_up][esr_up][ei_up][0][ip] );
+//            real64 const linearDispersionFactor = LvArray::tensorOps::l2Norm< 3 >( m_phaseVelocity[er_up][esr_up][ei_up][0][ip] );
+              real64 const linearDispersionFactor = m_phaseMultiplier[er_up][esr_up][ei_up][0][ip];
             // computation of the upwinded mass flux
             dispersionFlux[ic] += m_phaseDens[er_up][esr_up][ei_up][0][ip] * compFracGrad * linearDispersionFactor;
 
@@ -1535,6 +1539,7 @@ protected:
 
   /// Views on dispersivity
   ElementViewConst< arrayView3d< real64 const > > const m_dispersivity;
+  ElementViewConst< arrayView3d< real64 const > > const m_phaseMultiplier;
 
   /// View on the reference porosity
   ElementViewConst< arrayView1d< real64 const > > const m_referencePorosity;

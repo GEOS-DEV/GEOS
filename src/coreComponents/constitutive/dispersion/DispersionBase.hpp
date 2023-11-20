@@ -51,21 +51,6 @@ public:
   GEOS_HOST_DEVICE
   localIndex numGauss() const { return m_dispersivity.size( 1 ); }
 
-  /**
-   * @brief Get the number of present phases
-   * @return number of phases
-   */
-  GEOS_HOST_DEVICE
-  localIndex numPhases() const { return m_dispersivity.size( 3 );}
-
-
-  /**
-   * @brief Get the number of physical dimensions
-   * @return number of physical dimensions
-   */
-  GEOS_HOST_DEVICE
-  localIndex numDims() const { return m_dispersivity.size( 2 );}
-
 protected:
 
   /**

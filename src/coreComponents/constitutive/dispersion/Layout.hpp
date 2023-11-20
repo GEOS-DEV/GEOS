@@ -35,13 +35,17 @@ namespace dispersion
 #if defined( GEOS_USE_DEVICE )
 //TODO check
 using LAYOUT_PHASE_VELOCITY = RAJA::PERM_JKIL;
+using LAYOUT_PHASE_VELOCITY_NORM = RAJA::PERM_JKI;
 #else
 using LAYOUT_PHASE_VELOCITY = RAJA::PERM_IJKL;
+        using LAYOUT_PHASE_VELOCITY_NORM = RAJA::PERM_IJK;
 #endif
 
 /// Constitutive model phase velocity unit stride dimension
 static constexpr int USD_PHASE_VELOCITY = LvArray::typeManipulation::getStrideOneDimension(
   LAYOUT_PHASE_VELOCITY{} );
+        static constexpr int USD_PHASE_VELOCITY_NORM = LvArray::typeManipulation::getStrideOneDimension(
+                LAYOUT_PHASE_VELOCITY_NORM{} );
 
 
 }
