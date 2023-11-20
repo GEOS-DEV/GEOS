@@ -133,7 +133,7 @@ public:
    */
   GEOS_HOST_DEVICE
   inline void
-  initVelocity( localIndex iconn, localIndex ip, ElementRegionManager::ElementView< arrayView3d< real64 > > const & phaseVelocity ) const
+  initVelocity( localIndex iconn, localIndex ip, ElementRegionManager::ElementView< arrayView4d< real64 > > const & phaseVelocity ) const
   {
     GEOS_UNUSED_VAR( iconn, ip, phaseVelocity );
   };
@@ -151,7 +151,7 @@ public:
                    localIndex ip,
                    const real64 (&phaseFlux),
                    arraySlice1d< real64 const > const (&globalCellToFace)[2],
-                   ElementRegionManager::ElementView< arrayView3d< real64 > > const & phaseVelocity ) const
+                   ElementRegionManager::ElementView< arrayView4d< real64 > > const & phaseVelocity ) const
   {
     GEOS_UNUSED_VAR( iconn, ip, phaseFlux, phaseVelocity );
   };

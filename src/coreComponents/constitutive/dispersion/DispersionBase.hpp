@@ -100,6 +100,9 @@ class DispersionBase : public ConstitutiveBase
 {
 public:
 
+  /// Max number of phases allowed in the class
+  static constexpr integer MAX_NUM_PHASES = 3;
+
   /**
    * @brief Constructor for the abstract base class
    * @param[in] name the name of the class
@@ -111,10 +114,24 @@ public:
                                          localIndex const numConstitutivePointsPerParentIndex ) override;
 
   /**
+   * @brief Getter for the number of fluid phases
+   * @return the number of fluid phases
+   */
+  integer numFluidPhases() const { return LvArray::integerConversion< integer >( m_phaseNames.size() ); }
+
+  /**
    * @brief Getter for the dispersivities in the subRegion
    * @return an arrayView of dispersivities
    */
   arrayView3d< real64 const > dispersivity() const { return m_dispersivity; }
+
+  /**
+   * @brief Getter for phase Velolcity in the subRegion
+   * @return an arrayView of the phase velocities
+   */
+  //TODO reduce gauss point dim
+  arrayView4d< real64 const > phaseVelocity() const { return m_phaseVelocity; }
+
 
   /**
    * @brief Initialize the velocity state (needed because dispersion depends on total velocity)
@@ -122,7 +139,7 @@ public:
    *
    * Note: this is needed because for now, the velocity field is treated **explicitly** in the dispersion tensor
    */
-  virtual void initializeVelocityState( arrayView3d< real64 const > const & initialVelocity ) const
+  virtual void initializeVelocityState( arrayView4d< real64 const > const & initialVelocity ) const
   { GEOS_UNUSED_VAR( initialVelocity ); }
 
   /**
@@ -131,8 +148,14 @@ public:
    *
    * Note: this is needed because for now, the velocity is treated **explicitly** in the dispersion tensor
    */
-  virtual void saveConvergedVelocityState( arrayView3d< real64 const > const & convergedVelocity ) const
+  virtual void saveConvergedVelocityState( arrayView4d< real64 const > const & convergedVelocity ) const
   { GEOS_UNUSED_VAR( convergedVelocity ); }
+
+
+  struct viewKeyStruct : public ConstitutiveBase::viewKeyStruct
+  {
+    static constexpr char const * phaseNamesString() { return "phaseNames"; }
+  };
 
 protected:
 
@@ -142,8 +165,10 @@ protected:
   /// TODO: support full tensor if linear isotropic diffusion is no longer enough
   array3d< real64 > m_dispersivity;
 
+  /// phase names read from input
+  string_array m_phaseNames;
   // misc
-  array3d< real64, dispersion::LAYOUT_PHASE_VELOCITY > m_phaseVelocity;
+  array4d< real64, dispersion::LAYOUT_PHASE_VELOCITY > m_phaseVelocity;
 
 };
 

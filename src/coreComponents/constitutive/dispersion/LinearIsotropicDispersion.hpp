@@ -56,7 +56,7 @@ public:
 //      {
 
 //        real64 const velocityNorm = LvArray::tensorOps::l2Norm< 3 >( laggedTotalVelocityComponents[ip] );
-        m_dispersivity[k][q][i] = m_longitudinalDispersivity;
+      m_dispersivity[k][q][i] = m_longitudinalDispersivity;
 //      }
     }
   }
@@ -91,9 +91,9 @@ public:
 
   virtual string getCatalogName() const override { return catalogName(); }
 
-  virtual void initializeVelocityState( arrayView3d< real64 const > const & initialVelocity ) const override;
+  virtual void initializeVelocityState( arrayView4d< real64 const > const & initialVelocity ) const override;
 
-  virtual void saveConvergedVelocityState( arrayView3d< real64 const > const & convergedVelocity ) const override;
+  virtual void saveConvergedVelocityState( arrayView4d< real64 const > const & convergedVelocity ) const override;
 
   /// Type of kernel wrapper for in-kernel update
   using KernelWrapper = LinearIsotropicDispersionUpdate;

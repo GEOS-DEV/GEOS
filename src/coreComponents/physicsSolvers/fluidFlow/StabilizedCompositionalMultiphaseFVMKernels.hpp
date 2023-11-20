@@ -118,27 +118,23 @@ public:
    * @param[inout] localMatrix the local CRS matrix
    * @param[inout] localRhs the local right-hand side vector
    */
-  FaceBasedAssemblyKernel( integer const numPhases,
-                           globalIndex const rankOffset,
-                           integer const hasCapPressure,
-                           STENCILWRAPPER const & stencilWrapper,
-                           DofNumberAccessor const & dofNumberAccessor,
-                           const GlobalIndexAccessor & globalIndexAccessor,
-                           arrayView2d< real64 const > const & globalDistance,
-                           CompFlowAccessors const & compFlowAccessors,
+  FaceBasedAssemblyKernel( integer const numPhases, globalIndex const rankOffset, integer const hasCapPressure,
+                           integer const hasVelocityCompute, STENCILWRAPPER const & stencilWrapper,
+                           DofNumberAccessor const & dofNumberAccessor, const GlobalIndexAccessor & globalIndexAccessor,
+                           arrayView2d< real64 const > const & globalDistance, CompFlowAccessors const & compFlowAccessors,
                            StabCompFlowAccessors const & stabCompFlowAccessors,
                            MultiFluidAccessors const & multiFluidAccessors,
                            DispersionAccessors const & dispersionAccessors,
                            StabMultiFluidAccessors const & stabMultiFluidAccessors,
                            CapPressureAccessors const & capPressureAccessors,
                            PermeabilityAccessors const & permeabilityAccessors,
-                           RelPermAccessors const & relPermAccessors,
-                           real64 const & dt,
+                           RelPermAccessors const & relPermAccessors, real64 const & dt,
                            CRSMatrixView< real64, globalIndex const > const & localMatrix,
                            arrayView1d< real64 > const & localRhs )
     : Base( numPhases,
             rankOffset,
             hasCapPressure,
+            hasVelocityCompute,
             stencilWrapper,
             dofNumberAccessor,
             globalIndexAccessor,
@@ -329,18 +325,11 @@ public:
    */
   template< typename POLICY, typename STENCILWRAPPER >
   static void
-  createAndLaunch( integer const numComps,
-                   integer const numPhases,
-                   globalIndex const rankOffset,
-                   string const & dofKey,
-                   integer const hasCapPressure,
-                   string const & solverName,
-                   ElementRegionManager const & elemManager,
-                   arrayView2d< real64 const > const & globalDistance,
-                   STENCILWRAPPER const & stencilWrapper,
-                   real64 const & dt,
-                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                   arrayView1d< real64 > const & localRhs )
+  createAndLaunch( integer const numComps, integer const numPhases, globalIndex const rankOffset, string const & dofKey,
+                   integer const hasCapPressure, integer const hasVelocityCompute, string const & solverName,
+                   ElementRegionManager const & elemManager, arrayView2d< real64 const > const & globalDistance,
+                   STENCILWRAPPER const & stencilWrapper, real64 const & dt,
+                   CRSMatrixView< real64, globalIndex const > const & localMatrix, arrayView1d< real64 > const & localRhs )
   {
     isothermalCompositionalMultiphaseBaseKernels::
       internal::kernelLaunchSelectorCompSwitch( numComps, [&]( auto NC )
@@ -366,7 +355,7 @@ public:
       typename KERNEL_TYPE::RelPermAccessors relPermAccessors( elemManager, solverName );
       typename KERNEL_TYPE::DispersionAccessors dispersionAccessors( elemManager, solverName );
 
-      KERNEL_TYPE kernel( numPhases, rankOffset, hasCapPressure, stencilWrapper, dofNumberAccessor,
+      KERNEL_TYPE kernel( numPhases, rankOffset, hasCapPressure, hasVelocityCompute, stencilWrapper, dofNumberAccessor,
                           elemGlobalIndexAccessor, globalDistance,
                           compFlowAccessors, stabCompFlowAccessors, multiFluidAccessors, dispersionAccessors,
                           stabMultiFluidAccessors,

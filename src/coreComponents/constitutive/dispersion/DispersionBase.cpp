@@ -30,25 +30,41 @@ namespace constitutive
 DispersionBase::DispersionBase( string const & name, Group * const parent )
   : ConstitutiveBase( name, parent )
 {
+  registerWrapper( viewKeyStruct::phaseNamesString(), &m_phaseNames ).
+    setInputFlag( InputFlags::REQUIRED ).
+    setDescription( "List of fluid phases" );
+
   registerField( fields::dispersion::dispersivity{}, &m_dispersivity );
   registerField( fields::dispersion::phaseVelocity{}, &m_phaseVelocity );
+
+
 }
 
 void DispersionBase::postProcessInput()
 {
   ConstitutiveBase::postProcessInput();
 
+    integer const numPhases = numFluidPhases();
+    GEOS_THROW_IF_LT_MSG( numPhases, 2,
+                          GEOS_FMT( "{}: invalid number of phases", getFullName() ),
+                          InputError );
+    GEOS_THROW_IF_GT_MSG( numPhases, MAX_NUM_PHASES,
+                          GEOS_FMT( "{}: invalid number of phases", getFullName() ),
+                          InputError );
+
   m_dispersivity.resize( 0, 0, 0 );
-  m_phaseVelocity.resize(0,0,3);
+  m_phaseVelocity.resize( 0, 0, 0, 3 );
+    //and labels
+    getField< fields::dispersion::phaseVelocity >().
+            setDimLabels( 2, m_phaseNames );
 }
 
 void DispersionBase::allocateConstitutiveData( dataRepository::Group & parent,
                                                localIndex const numConstitutivePointsPerParentIndex )
 {
-  const int numPhase_ = 3;  //FIXME
   // NOTE: enforcing 1 quadrature point
   m_dispersivity.resize( parent.size(), 1, 3 );
-  m_phaseVelocity.resize( parent.size(), numPhase_, 3 );
+  m_phaseVelocity.resize( parent.size(), 1, numFluidPhases(), 3 );
 
   ConstitutiveBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 }

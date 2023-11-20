@@ -2154,7 +2154,7 @@ void CompositionalMultiphaseBase::implicitStepComplete( real64 const & time,
         DispersionBase const & dispersionMaterial = getConstitutiveModel< DispersionBase >( subRegion, dispersionName );
 //        GEOS_UNUSED_VAR( dispersionMaterial );
         // TODO: compute the total velocity here
-        arrayView3d< real64 const > const velocity = subRegion.template getField< fields::dispersion::phaseVelocity >();
+        arrayView4d< real64 const > const velocity = dispersionMaterial.phaseVelocity();
         dispersionMaterial.saveConvergedVelocityState( velocity );
       }
     } );

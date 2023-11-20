@@ -94,7 +94,7 @@ public:
 
 
   GEOS_HOST_DEVICE
-  void initVelocity( localIndex iconn, localIndex ip, ElementRegionManager::ElementView< arrayView3d< real64 > > const & phaseVelocity ) const;
+  void initVelocity( localIndex iconn, localIndex ip, ElementRegionManager::ElementView< arrayView4d< real64 > > const & phaseVelocity ) const;
   /**
    * @brief Compute approximate cell-centered velocity field
    * @param[in] iconn connection index
@@ -108,7 +108,7 @@ public:
                         localIndex ip,
                         real64 const ( &phaseFlux ),
                         arraySlice1d< real64 const > const (&globalCellToFace)[2],
-                        ElementRegionManager::ElementView< arrayView3d< real64 > > const & phaseVelocity ) const;
+                        ElementRegionManager::ElementView< arrayView4d< real64 > > const & phaseVelocity ) const;
 
   /**
    * @brief Give the number of stencil entries.
@@ -255,8 +255,8 @@ CellElementStencilTPFAWrapper::
     // Proper computation
     real64 faceNormal[3], cellToFaceVec[3];
     // previously was normalized in container
-    LvArray::tensorOps::copy<3>(cellToFaceVec, m_cellToFaceVec[iconn][i]);
-    LvArray::tensorOps::normalize<3>(cellToFaceVec);
+    LvArray::tensorOps::copy< 3 >( cellToFaceVec, m_cellToFaceVec[iconn][i] );
+    LvArray::tensorOps::normalize< 3 >( cellToFaceVec );
 
     LvArray::tensorOps::copy< 3 >( faceNormal, m_faceNormal[iconn] );
     if( LvArray::tensorOps::AiBi< 3 >( cellToFaceVec, faceNormal ) < 0.0 )
@@ -305,7 +305,7 @@ CellElementStencilTPFAWrapper::
                    localIndex ip,
                    const real64 (&phaseFlux),
                    arraySlice1d< real64 const > const (&globalCellToFace)[2],
-                   ElementRegionManager::ElementView< arrayView3d< real64 > > const & phaseVelocity ) const
+                   ElementRegionManager::ElementView< arrayView4d< real64 > > const & phaseVelocity ) const
 {
 
   real64 surface[2];
@@ -334,13 +334,13 @@ CellElementStencilTPFAWrapper::
       invDist[dir] = (globalCellToFace[i][dir]>0) ? 1./globalCellToFace[i][dir] : LvArray::NumericLimits< real64 >::epsilon;
     }
     LvArray::tensorOps::hadamardProduct< 3 >( phaseVel, velocityNorm, invDist );
-    LvArray::tensorOps::add< 3 >( phaseVelocity[er][esr][ei][ip], phaseVel );
+    LvArray::tensorOps::add< 3 >( phaseVelocity[er][esr][ei][0][ip], phaseVel );
   }
 }
 
 GEOS_HOST_DEVICE
 inline void
-CellElementStencilTPFAWrapper::initVelocity( localIndex iconn, localIndex ip, ElementRegionManager::ElementView< arrayView3d< real64 > > const & phaseVelocity ) const
+CellElementStencilTPFAWrapper::initVelocity( localIndex iconn, localIndex ip, ElementRegionManager::ElementView< arrayView4d< real64 > > const & phaseVelocity ) const
 {
   for( localIndex i = 0; i < 2; i++ )
   {
@@ -349,7 +349,7 @@ CellElementStencilTPFAWrapper::initVelocity( localIndex iconn, localIndex ip, El
     localIndex const ei = m_elementIndices[iconn][i];
 
     real64 zero[3] = {0, 0, 0};
-    LvArray::tensorOps::copy< 3 >( phaseVelocity[er][esr][ei][ip], zero );
+    LvArray::tensorOps::copy< 3 >( phaseVelocity[er][esr][ei][0][ip], zero );
 
   }
 }
@@ -371,10 +371,10 @@ CellElementStencilTPFAWrapper::
     halfWeight[i] = m_weights[iconn][i];
 
     // Proper computation
-    real64 faceNormal[3],cellToFaceVec[3];
-      // previously was normalized in container
-      LvArray::tensorOps::copy<3>(cellToFaceVec, m_cellToFaceVec[iconn][i]);
-      LvArray::tensorOps::normalize<3>(cellToFaceVec);
+    real64 faceNormal[3], cellToFaceVec[3];
+    // previously was normalized in container
+    LvArray::tensorOps::copy< 3 >( cellToFaceVec, m_cellToFaceVec[iconn][i] );
+    LvArray::tensorOps::normalize< 3 >( cellToFaceVec );
 
     LvArray::tensorOps::copy< 3 >( faceNormal, m_faceNormal[iconn] );
 
@@ -389,7 +389,8 @@ CellElementStencilTPFAWrapper::
     if( halfWeight[i] < 0.0 )
     {
       halfWeight[i] = m_weights[iconn][i];
-//      halfWeight[i] *= LvArray::tensorOps::AiBi< 3 >( m_cellToFaceVec[iconn][i], m_cellToFaceVec[iconn][i] ); //useless as normalized vector it should be 1 always
+//      halfWeight[i] *= LvArray::tensorOps::AiBi< 3 >( m_cellToFaceVec[iconn][i], m_cellToFaceVec[iconn][i] ); //useless as normalized
+// vector it should be 1 always
     }
   }
 

@@ -34,9 +34,9 @@ namespace dispersion
 
 #if defined( GEOS_USE_DEVICE )
 //TODO check
-using LAYOUT_PHASE_VELOCITY = RAJA::PERM_JKI;
+using LAYOUT_PHASE_VELOCITY = RAJA::PERM_JKIL;
 #else
-using LAYOUT_PHASE_VELOCITY = RAJA::PERM_IJK;
+using LAYOUT_PHASE_VELOCITY = RAJA::PERM_IJKL;
 #endif
 
 /// Constitutive model phase velocity unit stride dimension

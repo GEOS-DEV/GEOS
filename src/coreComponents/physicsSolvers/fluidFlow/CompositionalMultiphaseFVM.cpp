@@ -145,14 +145,14 @@ void CompositionalMultiphaseFVM::assembleFluxTerms( real64 const dt,
                                                      m_numPhases,
                                                      dofManager.rankOffset(),
                                                      elemDofKey,
-                                                     m_hasCapPressure,
+                                                     m_hasCapPressure, m_hasDispersion,
                                                      getName(),
                                                      mesh.getElemManager(),
                                                      globalDistance,
                                                      stencilWrapper,
                                                      dt,
                                                      localMatrix.toViewConstSizes(),
-                                                     localRhs.toView() );
+                                                     localRhs.toView());
       }
       else
       {
@@ -162,7 +162,7 @@ void CompositionalMultiphaseFVM::assembleFluxTerms( real64 const dt,
                                                      m_numPhases,
                                                      dofManager.rankOffset(),
                                                      elemDofKey,
-                                                     m_hasCapPressure,
+                                                     m_hasCapPressure, m_hasDispersion,
                                                      getName(),
                                                      fluxApprox.getUpwindingParams(),
                                                      mesh.getElemManager(),
@@ -170,7 +170,7 @@ void CompositionalMultiphaseFVM::assembleFluxTerms( real64 const dt,
                                                      stencilWrapper,
                                                      dt,
                                                      localMatrix.toViewConstSizes(),
-                                                     localRhs.toView() );
+                                                     localRhs.toView());
       }
 
       // Diffusive and dispersive flux
@@ -252,14 +252,14 @@ void CompositionalMultiphaseFVM::assembleStabilizedFluxTerms( real64 const dt,
                                                    m_numPhases,
                                                    dofManager.rankOffset(),
                                                    elemDofKey,
-                                                   m_hasCapPressure,
+                                                   m_hasCapPressure, m_hasDispersion,
                                                    getName(),
                                                    mesh.getElemManager(),
                                                    globalDistance,
                                                    stencilWrapper,
                                                    dt,
                                                    localMatrix.toViewConstSizes(),
-                                                   localRhs.toView() );
+                                                   localRhs.toView());
 
     } );
   } );
