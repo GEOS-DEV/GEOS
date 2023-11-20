@@ -420,9 +420,9 @@ void ElasticFirstOrderWaveEquationSEM::initializePostInitialConditionsPreSubGrou
                                                                              nodeManager.size(),
                                                                              X,
                                                                              elemsToNodes,
-                                                                             density,
                                                                              velocityVp,
                                                                              velocityVs,
+                                                                             density,
                                                                              lambda,
                                                                              mu,
                                                                              mass);

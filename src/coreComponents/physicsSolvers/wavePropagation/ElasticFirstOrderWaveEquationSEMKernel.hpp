@@ -438,19 +438,6 @@ struct ComputeTimeStep
       real32 auxz[numNodesPerElem] = {0.0};
       real32 auyz[numNodesPerElem] = {0.0};
 
-
-      //Pre-multiplication by mass matrix
-      for( localIndex i = 0; i < numNodesPerElem; ++i )
-      {
-        real32 massLoc = m_finiteElement.computeMassTerm( i, xLocal );
-        uelemxx[i] = massLoc*stressxxView[k][i];
-        uelemyy[i] = massLoc*stressyyView[k][i];
-        uelemzz[i] = massLoc*stresszzView[k][i];
-        uelemxy[i] = massLoc*stressxyView[k][i];
-        uelemxz[i] = massLoc*stressxzView[k][i];
-        uelemyz[i] = massLoc*stressyzView[k][i];
-      }
-
       for( localIndex q=0; q<numQuadraturePointsPerElem; ++q )
       {
 
@@ -648,19 +635,6 @@ struct ComputeTimeStep
         real32 auxy[numNodesPerElem] = {0.0};
         real32 auxz[numNodesPerElem] = {0.0};
         real32 auyz[numNodesPerElem] = {0.0};
-  
-  
-        //Pre-multiplication by mass matrix
-        for( localIndex i = 0; i < numNodesPerElem; ++i )
-        {
-          real32 massLoc = m_finiteElement.computeMassTerm( i, xLocal );
-          uelemxx[i] = massLoc*stressxxView[k][i];
-          uelemyy[i] = massLoc*stressyyView[k][i];
-          uelemzz[i] = massLoc*stresszzView[k][i];
-          uelemxy[i] = massLoc*stressxyView[k][i];
-          uelemxz[i] = massLoc*stressxzView[k][i];
-          uelemyz[i] = massLoc*stressyzView[k][i];
-        }
   
         for( localIndex q=0; q<numQuadraturePointsPerElem; ++q )
         {
