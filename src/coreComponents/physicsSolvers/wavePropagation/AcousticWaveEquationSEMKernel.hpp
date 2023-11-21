@@ -758,11 +758,13 @@ public:
 public:
     GEOS_HOST_DEVICE
     StackVariables():
-      xLocal()
+      xLocal(),
+      stiffnessVectorLocal()
     {}
 
     /// C-array stack storage for element local the nodal positions.
     real64 xLocal[ numNodesPerElem ][ 3 ];
+    real32 stiffnessVectorLocal[ numNodesPerElem ]; 
   };
   //***************************************************************************
 
@@ -785,8 +787,26 @@ public:
       {
         stack.xLocal[ a ][ i ] = m_nodeCoords[ nodeIndex ][ i ];
       }
+      stack.stiffnessVectorLocal[ a ] = 0;
     }
   }
+
+  /**
+   * @copydoc geos::finiteElement::KernelBase::complete
+   */
+  GEOS_HOST_DEVICE
+  inline
+  real64 complete( localIndex const k,
+                   StackVariables & stack ) const
+  {
+    constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
+    for(int i=0;i<numNodesPerElem;i++)
+    {
+      RAJA::atomicAdd< parallelDeviceAtomic >( &m_stiffnessVector[m_elemsToNodes[k][i]], stack.stiffnessVectorLocal[i] );
+    }
+    return 0;
+  }
+
 
   /**
    * @copydoc geos::finiteElement::KernelBase::quadraturePointKernel
@@ -805,7 +825,7 @@ public:
     {
       real32 invDensity = 1./m_density[k];
       real32 const localIncrement = invDensity*val*m_p_n[m_elemsToNodes[k][j]];
-      RAJA::atomicAdd< parallelDeviceAtomic >( &m_stiffnessVector[m_elemsToNodes[k][i]], localIncrement );
+      stack.stiffnessVectorLocal[ i ] += localIncrement;
     } );
   }
 
