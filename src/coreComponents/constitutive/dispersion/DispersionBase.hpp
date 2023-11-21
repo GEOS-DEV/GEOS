@@ -75,7 +75,8 @@ private:
   GEOS_HOST_DEVICE
   virtual void update( localIndex const k,
                        localIndex const q,
-                       arraySlice2d< real64 const > const & laggedTotalVelocityComponents ) const = 0;
+                       arraySlice2d< real64 const > const & laggedTotalVelocityComponents,
+                       arraySlice1d< real64 const > const & phaseDensity ) const = 0;
 };
 
 /**
@@ -117,14 +118,13 @@ public:
   //TODO reduce gauss point dim
   arrayView4d< real64 const > phaseVelocity() const { return m_phaseVelocity; }
 
-
   /**
    * @brief Initialize the velocity state (needed because dispersion depends on total velocity)
    * @param[in] initialVelocity the initial velocity field after reservoir initialization
    *
    * Note: this is needed because for now, the velocity field is treated **explicitly** in the dispersion tensor
    */
-  virtual void initializeVelocityState( arrayView4d< real64 const > const & initialVelocity ) const
+  virtual void initializeVelocityState( arrayView4d< real64 const > const & initialVelocity, arrayView3d< real64 const > const & phaseDensity ) const
   { GEOS_UNUSED_VAR( initialVelocity ); }
 
   /**
@@ -133,7 +133,7 @@ public:
    *
    * Note: this is needed because for now, the velocity is treated **explicitly** in the dispersion tensor
    */
-  virtual void saveConvergedVelocityState( arrayView4d< real64 const > const & convergedVelocity ) const
+  virtual void saveConvergedVelocityState( arrayView4d< real64 const > const & convergedVelocity, arrayView3d< real64 const > const & phaseDensity ) const
   { GEOS_UNUSED_VAR( convergedVelocity ); }
 
 

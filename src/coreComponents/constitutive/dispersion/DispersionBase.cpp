@@ -44,19 +44,19 @@ void DispersionBase::postProcessInput()
 {
   ConstitutiveBase::postProcessInput();
 
-    integer const numPhases = numFluidPhases();
-    GEOS_THROW_IF_LT_MSG( numPhases, 2,
-                          GEOS_FMT( "{}: invalid number of phases", getFullName() ),
-                          InputError );
-    GEOS_THROW_IF_GT_MSG( numPhases, MAX_NUM_PHASES,
-                          GEOS_FMT( "{}: invalid number of phases", getFullName() ),
-                          InputError );
+  integer const numPhases = numFluidPhases();
+  GEOS_THROW_IF_LT_MSG( numPhases, 2,
+                        GEOS_FMT( "{}: invalid number of phases", getFullName() ),
+                        InputError );
+  GEOS_THROW_IF_GT_MSG( numPhases, MAX_NUM_PHASES,
+                        GEOS_FMT( "{}: invalid number of phases", getFullName() ),
+                        InputError );
 
   m_dispersivity.resize( 0, 0, 0 );
   m_phaseVelocity.resize( 0, 0, 0, 3 );
-    //and labels
-    getField< fields::dispersion::phaseVelocity >().
-            setDimLabels( 2, m_phaseNames );
+  //and labels
+  getField< fields::dispersion::phaseVelocity >().
+    setDimLabels( 2, m_phaseNames );
 }
 
 void DispersionBase::allocateConstitutiveData( dataRepository::Group & parent,

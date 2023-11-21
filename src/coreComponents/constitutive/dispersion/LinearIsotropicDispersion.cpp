@@ -73,12 +73,12 @@ void LinearIsotropicDispersion::postProcessInput()
                  InputError );
 }
 
-void LinearIsotropicDispersion::initializeVelocityState( arrayView4d< real64 const > const & initialVelocity ) const
+void LinearIsotropicDispersion::initializeVelocityState( arrayView4d< real64 const > const & initialVelocity, arrayView3d< real64 const > const & phaseDensity ) const
 {
-  saveConvergedVelocityState( initialVelocity );
+  saveConvergedVelocityState( initialVelocity, phaseDensity );
 }
 
-void LinearIsotropicDispersion::saveConvergedVelocityState( arrayView4d< real64 const > const & convergedVelocity ) const
+void LinearIsotropicDispersion::saveConvergedVelocityState( arrayView4d< real64 const > const & convergedVelocity, arrayView3d< real64 const > const & phaseDensity ) const
 {
   // note that the update function is called here, and not in the solver, because total velocity is treated explicitly
   KernelWrapper dispersionWrapper = createKernelWrapper();
@@ -87,7 +87,7 @@ void LinearIsotropicDispersion::saveConvergedVelocityState( arrayView4d< real64 
   {
     for( localIndex q = 0; q < dispersionWrapper.numGauss(); ++q )
     {
-      dispersionWrapper.update( k, q, convergedVelocity[k][q] );
+      dispersionWrapper.update( k, q, convergedVelocity[k][q], phaseDensity[k][q] );
     }
   } );
 }

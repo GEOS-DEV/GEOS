@@ -43,26 +43,27 @@ public:
    * @param dispersivity the array of cell-wise dispersivities in the subregion
    * @param longitunidalDispersivity longitudinal dispersivity in the subregion
    */
-  LinearIsotropicDispersionUpdate(arrayView3d<real64> const &dispersivity,
-                                  real64 const &longitudinalDispersivity,
-                                  arrayView3d<real64> const &phaseVelocityNorm)
+  LinearIsotropicDispersionUpdate( arrayView3d< real64 > const & dispersivity,
+                                   real64 const & longitudinalDispersivity,
+                                   arrayView3d< real64 > const & phaseVelocityNorm )
     : DispersionBaseUpdate( dispersivity ),
     m_longitudinalDispersivity( longitudinalDispersivity ),
-    m_phaseVelocityNorm(phaseVelocityNorm)
+    m_phaseVelocityNorm( phaseVelocityNorm )
   {}
 
   GEOS_HOST_DEVICE
   virtual void update( localIndex const k,
                        localIndex const q,
-                       arraySlice2d< real64 const > const & laggedTotalVelocityComponents ) const override
+                       arraySlice2d< real64 const > const & laggedTotalVelocityComponents,
+                       arraySlice1d< real64 const > const & phaseDensity ) const override
   {
     for( integer i = 0; i < 3; ++i )
     {
-        m_dispersivity[k][q][i] = m_longitudinalDispersivity;
-      for( int ip = 0; ip < laggedTotalVelocityComponents.size(0); ++ip )
+      m_dispersivity[k][q][i] = m_longitudinalDispersivity;
+      for( int ip = 0; ip < laggedTotalVelocityComponents.size( 0 ); ++ip )
       {
         real64 const velocityNorm = LvArray::tensorOps::l2Norm< 3 >( laggedTotalVelocityComponents[ip] );
-        m_phaseVelocityNorm[k][q][ip] = velocityNorm;
+        m_phaseVelocityNorm[k][q][ip] = velocityNorm/phaseDensity[ip];
       }
     }
   }
@@ -98,16 +99,16 @@ public:
 
   virtual string getCatalogName() const override { return catalogName(); }
 
-  virtual void initializeVelocityState( arrayView4d< real64 const > const & initialVelocity ) const override;
+  virtual void initializeVelocityState( arrayView4d< real64 const > const & initialVelocity, arrayView3d< real64 const > const & phaseDensity ) const override;
 
-  virtual void saveConvergedVelocityState( arrayView4d< real64 const > const & convergedVelocity ) const override;
+  virtual void saveConvergedVelocityState( arrayView4d< real64 const > const & convergedVelocity, arrayView3d< real64 const > const & phaseDensity ) const override;
 
-    /**
-      * @brief Getter for phase Velolcity norm in the subRegion
-      * @return an arrayView of the phase velocities
-      * @note it is a *lagged* version of the velocities and not only the norm of it
-      */
-    arrayView3d< real64 const > phaseVelocityNorm() const { return m_phaseVelocityNorm; }
+  /**
+   * @brief Getter for phase Velolcity norm in the subRegion
+   * @return an arrayView of the phase velocities
+   * @note it is a *lagged* version of the velocities and not only the norm of it
+   */
+  arrayView3d< real64 const > phaseVelocityNorm() const { return m_phaseVelocityNorm; }
 
   /// Type of kernel wrapper for in-kernel update
   using KernelWrapper = LinearIsotropicDispersionUpdate;

@@ -439,11 +439,13 @@ public:
                            const integer hasVelocityCompute, const STENCILWRAPPER & stencilWrapper,
                            const DofNumberAccessor & dofNumberAccessor,
                            const GlobalIndexAccessor & globalIndexAccessor,
-                           arrayView2d< real64 const > const & globalDistance, const CompFlowAccessors & compFlowAccessors,
+                           arrayView2d< real64 const > const & globalDistance,
+                           const CompFlowAccessors & compFlowAccessors,
                            const MultiFluidAccessors & multiFluidAccessors,
                            const DispersionAccessors & dispersionAccessors,
                            const CapPressureAccessors & capPressureAccessors,
-                           const PermeabilityAccessors & permeabilityAccessors, const real64 & dt,
+                           const PermeabilityAccessors & permeabilityAccessors,
+                           const real64 & dt,
                            const CRSMatrixView< real64, globalIndex const > & localMatrix,
                            const arrayView1d< real64 > & localRhs )
     : FaceBasedAssemblyKernelBase( numPhases,
@@ -775,7 +777,7 @@ public:
       typename KERNEL_TYPE::StackVariables stack( kernelComponent.stencilSize( iconn ),
                                                   kernelComponent.numPointsInFlux( iconn ) );
 
-      kernelComponent.initVelocity(iconn);
+      kernelComponent.initVelocity( iconn );
 
       kernelComponent.setup( iconn, stack );
       kernelComponent.computeFlux( iconn, stack );
@@ -995,7 +997,7 @@ public:
     m_dDiffusivity_dTemp( diffusionAccessors.get( fields::diffusion::dDiffusivity_dTemperature {} ) ),
     m_phaseDiffusivityMultiplier( diffusionAccessors.get( fields::diffusion::phaseDiffusivityMultiplier {} ) ),
     m_dispersivity( dispersionAccessors.get( fields::dispersion::dispersivity {} ) ),
-    m_phaseMultiplier( dispersionAccessors.get(fields::dispersion::phaseVelocityNorm{} )),
+    m_phaseMultiplier( dispersionAccessors.get( fields::dispersion::phaseVelocityNorm {} )),
     m_referencePorosity( porosityAccessors.get( fields::porosity::referencePorosity {} ) ),
     m_stencilWrapper( stencilWrapper ),
     m_seri( stencilWrapper.getElementRegionIndices() ),
@@ -1302,8 +1304,9 @@ public:
             localIndex const esr_up = sesri[k_up];
             localIndex const ei_up  = sei[k_up];
 
-//            real64 const linearDispersionFactor = LvArray::tensorOps::l2Norm< 3 >( m_phaseVelocity[er_up][esr_up][ei_up][0][ip] );
-              real64 const linearDispersionFactor = m_phaseMultiplier[er_up][esr_up][ei_up][0][ip];
+            // lagged memoized velocity norm
+            real64 const linearDispersionFactor = m_phaseMultiplier[er_up][esr_up][ei_up][0][ip]/m_phaseDens[er_up][esr_up][ei_up][0][ip];
+
             // computation of the upwinded mass flux
             dispersionFlux[ic] += m_phaseDens[er_up][esr_up][ei_up][0][ip] * compFracGrad * linearDispersionFactor;
 
