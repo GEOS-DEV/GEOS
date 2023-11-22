@@ -118,6 +118,10 @@ struct PrecomputeSourceAndReceiverKernel
 
             sourceIsAccessible[isrc] = 1;
             real64 Ntest[FE_TYPE::numNodes];
+            FE_TYPE::calcN( 0, Ntest );
+            printf("TEST Computing basis values\n values: %f, %f, %f, %f, %f, %f, %f, %f\n", 
+                    Ntest[0], Ntest[1], Ntest[2], Ntest[3], Ntest[4].
+                    Ntest[5], Ntest[6], Ntest[7] );
             FE_TYPE::calcN( coordsOnRefElem, Ntest );
 
             for( localIndex a = 0; a < numNodesPerElem; ++a )

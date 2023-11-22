@@ -34,6 +34,12 @@ namespace geos
 namespace finiteElement
 {
 
+// template< typename GL_BASIS > 
+// class Qk_Hexahedron_Lagrange_GaussLobatto_Precalc
+// {
+// 
+// }
+
 /**
  * This class is the basis class for the hexahedron finite element cells with
  * shape functions defined on Gauss-Lobatto quadrature points.
@@ -60,163 +66,177 @@ public:
 
   /// The number of quadrature points per element.
   constexpr static localIndex numQuadraturePoints = numNodes;
-
-  template< localIndex... q >
-  // GEOS_HOST_DEVICE
-  // GEOS_FORCE_INLINE
-  constexpr static auto generate3DIndices( std::integer_sequence< localIndex, q...> )
+ 
+  constexpr static auto generateWeightValues( )
   {
-    //array2d< localIndex > indices( num3dNodes, 3);
-    std::array< std::array< localIndex, 3 >, num3dNodes > indices{};
-    ((indices[q][0]=( q % ( numNodes*numNodes ) ) % numNodes,
-      indices[q][1]=( q % ( numNodes*numNodes ) ) / numNodes,
-      indices[q][2]=( q / ( numNodes*numNodes ) ) ), ...);
-    return indices;
+    std::array< real64, num1dNodes> values{};
+    for(int q = 0; q < num1dNodes; q++)
+    {
+      values[q] = GL_BASIS::weight( q );
+    }
+    return values;
   }
-  constexpr static auto index3D = generate3DIndices(std::make_integer_sequence< localIndex, num3dNodes >() );
+  constexpr static auto weightAtQ = generateWeightValues();
+
+  constexpr static auto generateBasisValues( )
+  {
+    std::array< std::array< real64, num1dNodes >, num1dNodes > values{};
+    for(int q = 0; q < num1dNodes; q++)
+    {
+      for(int p = 0; p < num1dNodes; p++)
+      {
+        values[q][p] = GL_BASIS::value( q, GL_BASIS::parentSupportCoord( p ) );
+      }
+    }
+    return values;
+  }
+  constexpr static auto basisValueAtQ = generateBasisValues();
+
+  constexpr static auto generateGradientValues()
+  {
+    std::array< std::array< real64, num1dNodes >, num1dNodes > values{};
+    for(int q = 0; q < num1dNodes; q++)
+    {
+      for(int p = 0; p < num1dNodes; p++)
+      {
+        values[q][p] = GL_BASIS::gradient( q, GL_BASIS::parentSupportCoord( p ) );
+      }
+    }
+    return values;
+  }
+  constexpr static auto gradientValueAtQ = generateGradientValues( );
+
+  // constexpr static auto generateBasis3DValues()
+  // {
+  //   std::array< std::array< real64, num3dNodes >, num3dNodes > values{};
+  //   for(int q = 0; q < num3dNodes; q++)
+  //   {
+  //     for(int p = 0; p < num3dNodes; p++)
+  //     {
+  //       values[q][p] = basisValueAtQ[ index3DI(  q  ) ][ index3DI(  p  ) ] *
+  //                      basisValueAtQ[ index3DJ(  q  ) ][ index3DJ(  p  ) ] *
+  //                      basisValueAtQ[ index3DK(  q  ) ][ index3DK(  p  ) ];
+  //     }
+  //   }
+  //   return values;
+  // }
+  // constexpr static auto N = generateBasis3DValues();
+
+
+  // constexpr static auto generateGradient3DValues()
+  // {
+  //   std::array< std::array< std::array< real64, 3 >, num3dNodes >, num3dNodes > values{};
+  //   for(int q = 0; q < num3dNodes; q++)
+  //   {
+  //     for(int p = 0; p < num3dNodes; p++)
+  //     {                     
+  //       values[q][p] = { gradientValueAtQ[ index3DI(  q  ) ][ index3DI(  p  ) ] *
+  //                        basisValueAtQ[ index3DJ(  q  ) ][ index3DJ(  p  ) ] *
+  //                        basisValueAtQ[ index3DK(  q  ) ][ index3DK(  p  ) ],
+  //                        basisValueAtQ[ index3DI(  q  ) ][ index3DI(  p  ) ] *
+  //                        gradientValueAtQ[ index3DJ(  q  ) ][ index3DJ(  p  ) ] *
+  //                        basisValueAtQ[ index3DK(  q  ) ][ index3DK(  p  ) ],
+  //                        basisValueAtQ[ index3DI(  q  ) ][ index3DI(  p  ) ] *
+  //                        basisValueAtQ[ index3DJ(  q  ) ][ index3DJ(  p  ) ] *
+  //                        gradientValueAtQ[ index3DK(  q  ) ][ index3DK(  p  ) ] };
+  //     }
+  //   }
+  //   return values;
+  // }
+  // constexpr static auto dNdX = generateGradient3DValues();
+
+  // constexpr static auto generateBasis2DValues()
+  // {
+  //   std::array< std::array< real64, num2dNodes >, num2dNodes > values{};
+  //   for(int q = 0; q < num2dNodes; q++)
+  //   {
+  //     for(int p = 0; p < num2dNodes; p++)
+  //     {
+  //       values[q][p] = basisValueAtQ[ index2D[ q ][ 0 ] ][ index2D[ p ][ 0 ] ] *
+  //                      basisValueAtQ[ index2D[ q ][ 1 ] ][ index2D[ p ][ 1 ] ];
+  //     }
+  //   }
+  //   return values;
+  // }
+  // constexpr static auto N2D = generateBasis2DValues();
+
+  // constexpr static auto generateGradient2DValues( )
+  // {
+  //   std::array< std::array< std::array< real64, 2 >, num2dNodes >, num2dNodes > values{};
+  //   for(int q = 0; q < num2dNodes; q++)
+  //   {
+  //     for(int p = 0; p < num2dNodes; p++)
+  //     {
+  //       values[q][p] = { gradientValueAtQ[ index2D[ q ][ 0 ] ][ index2D[ p ][ 0 ] ] *
+  //                        basisValueAtQ[ index2D[ q ][ 1 ] ][ index2D[ p ][ 1 ] ],
+  //                        basisValueAtQ[ index2D[ q ][ 0 ] ][ index2D[ p ][ 0 ] ] *
+  //                        gradientValueAtQ[ index2D[ q ][ 1 ] ][ index2D[ p ][ 1 ] ] };
+  //     }
+  //   }
+  //   return values;
+  // }
+  // constexpr static auto dNdX2D = generateGradient2DValues();
+
+  //constexpr static auto generate2DIndices()
+  //{
+  //  //array2d< localIndex > indices( num2dNodes, 2);
+  //  std::array< std::array< localIndex, 2 >, num3dNodes > indices{};
+  //  for(int q = 0; q < num2dNodes; q++)
+  //  { 
+  //    indices[q][0]= q % num1dNodes;
+  //    indices[q][1]= q / num1dNodes;
+  //  }
+  //  return indices;
+  //}
+  //constexpr static auto index2D = generate2DIndices();
+
+  //constexpr static auto generate2DLinearIndex()
+  //{
+  //  std::array< std::array< localIndex, num1dNodes >, num1dNodes > indices{};
+  //  for( int qa = 0; qa < num3dNodes; qa++ )
+  //  {
+  //    for( int qb = 0; qb < num3dNodes; qb++ )
+  //    {
+  //      indices[qa][qb]= qa + qb * num1dNodes;
+  //    }
+  //  }
+  //  return indices;
+  //}
+  //constexpr static auto linearIndex2D = generate2DLinearIndex();
+  //
+  //
+  //constexpr static auto generate3DIndices()
+  //{
+  //  std::array< std::array< localIndex, 3 >, num3dNodes > indices{};
+  //  for( int q = 0; q < num3dNodes; q++ )
+  //  {
+  //    indices[q][0]= (q % ( num2dNodes ) ) % num1dNodes; 
+  //    indices[q][1]= (q % ( num2dNodes ) ) / num1dNodes;
+  //    indices[q][2]= (q / ( num2dNodes ) );
+  //  }
+  //  return indices;
+  //}
+  //constexpr static auto index3D = generate3DIndices();
+
+  //constexpr static auto generate3DLinearIndex()
+  //{
+  //  std::array< std::array< std::array< localIndex, num1dNodes >, num1dNodes >, num1dNodes > indices{};
+  //  for( int qa = 0; qa < num3dNodes; qa++ )
+  //  {
+  //    for( int qb = 0; qb < num3dNodes; qb++ )
+  //    {
+  //      for( int qc = 0; qc < num3dNodes; qc++ )
+  //      {
+  //        indices[qa][qb][qc]= qa + qb * num1dNodes + qc * num2dNodes;
+  //      }
+  //    }
+  //  }
+  //  return indices;
+  //}
+  //constexpr static auto linearIndex3D = generate3DLinearIndex();
   
-  template< int... q >
-  // GEOS_HOST_DEVICE
-  // GEOS_FORCE_INLINE
-  constexpr static auto generate2DIndices( std::integer_sequence< localIndex, q...> )
-  {
-    //array2d< localIndex > indices( num2dNodes, 2);
-    std::array< std::array< localIndex, 2 >, num3dNodes > indices{};
-    ((indices[q][0]= q % numNodes,
-      indices[q][1]= q / numNodes ), ...);
-    return indices;
-  }
-  constexpr static auto index2D = generate2DIndices(std::make_integer_sequence< localIndex, num2dNodes >() );
 
-  
 
-  template< localIndex q, localIndex... p >
-  // GEOS_HOST_DEVICE
-  // GEOS_FORCE_INLINE
-  constexpr static auto generateBasisValuesLine( std::array< real64, numNodes > slice, std::integer_sequence< localIndex, p...> )
-  {
-    ((slice[p] =  GL_BASIS::value( q, GL_BASIS::parentSupportCoord( p ) ) ), ...);
-  }
-
-  template< localIndex... q >
-  // GEOS_HOST_DEVICE
-  // GEOS_FORCE_INLINE
-  constexpr static auto generateBasisValues( std::integer_sequence< localIndex, q...> )
-  {
-    std::array< std::array< real64, numNodes >, numNodes > values{};
-    ((generateBasisValuesLine< q >( values[q], std::make_integer_sequence< localIndex, numNodes >() ) ), ...);
-    return values;
-  }
-  constexpr static auto basisValueAtQ = generateBasisValues(std::make_integer_sequence< localIndex, numNodes >() );
-
-  template< localIndex q, localIndex... p >
-  // GEOS_HOST_DEVICE
-  // GEOS_FORCE_INLINE
-  constexpr static auto generateGradientValuesLine( std::array< real64, numNodes > slice, std::integer_sequence< localIndex, p...> )
-  {
-    ((slice[p] =  GL_BASIS::gradient( q, GL_BASIS::parentSupportCoord( p ) ) ), ...);
-  }
-
-  template< localIndex... q >
-  // GEOS_HOST_DEVICE
-  // GEOS_FORCE_INLINE
-  constexpr static auto generateGradientValues( std::integer_sequence< localIndex, q...> )
-  {
-    std::array< std::array< real64, numNodes >, numNodes > values{};
-    ((generateGradientValuesLine< q >( values[q], std::make_integer_sequence< localIndex, numNodes >() ) ), ...);
-    return values;
-  }
-  constexpr static auto gradientValueAtQ = generateGradientValues( std::make_integer_sequence< localIndex, numNodes >() );
-
-  template< localIndex q, localIndex... p >
-  // GEOS_HOST_DEVICE
-  // GEOS_FORCE_INLINE
-  constexpr static auto generateBasis3DValuesLine( std::array< real64, num3dNodes > slice, std::integer_sequence< localIndex, p...> )
-  {
-    ((slice[p] =  basisValueAtQ[ index3D[ q ][ 0 ] ][ index3D[ p ][ 0 ] ] *
-                  basisValueAtQ[ index3D[ q ][ 1 ] ][ index3D[ p ][ 1 ] ] *
-                  basisValueAtQ[ index3D[ q ][ 2 ] ][ index3D[ p ][ 2 ] ] ), ...);
-  }
-
-  template< localIndex... q >
-  // GEOS_HOST_DEVICE
-  // GEOS_FORCE_INLINE
-  constexpr static auto generateBasis3DValues( std::integer_sequence< localIndex, q...> )
-  {
-    std::array< std::array< real64, num3dNodes >, num3dNodes > values{};
-    ((generateBasis3DValuesLine< q >( values[q], std::make_integer_sequence< localIndex, num3dNodes >() ) ), ...);
-    return values;
-  }
-  constexpr static auto N = generateBasis3DValues(std::make_integer_sequence< localIndex, num3dNodes >() );
-
-  template< localIndex q, localIndex... p >
-  // GEOS_HOST_DEVICE
-  // GEOS_FORCE_INLINE
-  constexpr static auto generateGradient3DValuesLine( std::array< std::array< real64, 3 >, num3dNodes > slice, std::integer_sequence< localIndex, p...> )
-  {
-    ((slice[p][0] = gradientValueAtQ[ index3D[ q ][ 0 ] ][ index3D[ p ][ 0 ] ] *
-                    basisValueAtQ[ index3D[ q ][ 1 ] ][ index3D[ p ][ 1 ] ] *
-                    basisValueAtQ[ index3D[ q ][ 2 ] ][ index3D[ p ][ 2 ] ],
-      slice[p][1] = basisValueAtQ[ index3D[ q ][ 0 ] ][ index3D[ p ][ 0 ] ] *
-                    gradientValueAtQ[ index3D[ q ][ 1 ] ][ index3D[ p ][ 1 ] ] *
-                    basisValueAtQ[ index3D[ q ][ 2 ] ][ index3D[ p ][ 2 ] ],
-      slice[p][2] = basisValueAtQ[ index3D[ q ][ 0 ] ][ index3D[ p ][ 0 ] ] *
-                    basisValueAtQ[ index3D[ q ][ 1 ] ][ index3D[ p ][ 1 ] ] *
-                    gradientValueAtQ[ index3D[ q ][ 2 ] ][ index3D[ p ][ 2 ] ] ), ... );
-  }
-
-  template< localIndex... q >
-  // GEOS_HOST_DEVICE
-  // GEOS_FORCE_INLINE
-  constexpr static auto generateGradient3DValues( std::integer_sequence< localIndex, q...> )
-  {
-    std::array< std::array< std::array< real64, 3 >, num3dNodes >, num3dNodes > values{};
-    ((generateGradient3DValuesLine< q >( values[q], std::make_integer_sequence< localIndex, num3dNodes >() ) ), ...);
-    return values;
-  }
- // constexpr static auto dNdX = generateGradient3DValues(std::make_integer_sequence< localIndex, num3dNodes >() );
-
-  template< localIndex q, localIndex... p >
-  // GEOS_HOST_DEVICE
-  // GEOS_FORCE_INLINE
-  constexpr static auto generateBasis2DValuesLine( std::array< real64, num2dNodes > slice, std::integer_sequence< localIndex, p...> )
-  {
-    ((slice[p] =  basisValueAtQ[ index2D[ q ][ 0 ] ][ index2D[ p ][ 0 ] ] *
-                  basisValueAtQ[ index2D[ q ][ 1 ] ][ index2D[ p ][ 1 ] ] ), ...);
-  }
-
-  template< localIndex... q >
-  // GEOS_HOST_DEVICE
-  // GEOS_FORCE_INLINE
-  constexpr static auto generateBasis2DValues( std::integer_sequence< localIndex, q...> )
-  {
-    std::array< std::array< real64, num2dNodes >, num2dNodes > values{};
-    ((generateBasis2DValuesLine< q >( values[q], std::make_integer_sequence< localIndex, num2dNodes >() ) ), ...);
-    return values;
-  }
-   constexpr static auto N2D = generateBasis2DValues(std::make_integer_sequence< localIndex, num2dNodes >() );
-
-  template< localIndex q, localIndex... p >
-  // GEOS_HOST_DEVICE
-  // GEOS_FORCE_INLINE
-  constexpr static auto generateGradient2DValuesLine( std::array< std::array< real64, 2 >, num2dNodes > slice, std::integer_sequence< localIndex, p...> )
-  {
-    ((slice[p][0] = gradientValueAtQ[ index2D[ q ][ 0 ] ][ index2D[ p ][ 0 ] ] *
-                    basisValueAtQ[ index2D[ q ][ 1 ] ][ index2D[ p ][ 1 ] ],
-      slice[p][1] = basisValueAtQ[ index2D[ q ][ 0 ] ][ index2D[ p ][ 0 ] ] *
-                    gradientValueAtQ[ index2D[ q ][ 1 ] ][ index2D[ p ][ 1 ] ] ), ... );
-  }
-
-  template< localIndex... q >
-  // GEOS_HOST_DEVICE
-  // GEOS_FORCE_INLINE
-  constexpr static auto generateGradient2DValues( std::integer_sequence< localIndex, q...> )
-  {
-    std::array< std::array< std::array< real64, 2 >, num2dNodes >, num2dNodes > values{};
-    ((generateGradient2DValuesLine< q >( values[q], std::make_integer_sequence< localIndex, num2dNodes >() ) ), ...);
-    return values;
-  }
-   constexpr static auto dNdX2D = generateGradient2DValues(std::make_integer_sequence< localIndex, num2dNodes >() );
   
   /** @cond Doxygen_Suppress */
   USING_FINITEELEMENTBASE
@@ -296,11 +316,20 @@ public:
   {
     int qa, qb, qc;
     GL_BASIS::TensorProduct3D::multiIndex( q, qa, qb, qc );
-    real64 const qCoords[3] = { GL_BASIS::parentSupportCoord( qa ),
-                                GL_BASIS::parentSupportCoord( qb ),
-                                GL_BASIS::parentSupportCoord( qc ) };
-
-    GL_BASIS::TensorProduct3D::value( qCoords, N );
+    for( int pa = 0; pa < num1dNodes; pa++)
+    {
+      for( int pb = 0; pb < num1dNodes; pb++)
+      {
+        for( int pc = 0; pc < num1dNodes; pc++)
+        {
+          const int lindex = GL_BASIS::TensorProduct3D::linearIndex( pa, pb, pc );
+          N[ lindex ] = basisValueAtQ[pa][qa] *
+                        basisValueAtQ[pb][qb] *
+                        basisValueAtQ[pc][qc];
+           
+        }
+      }
+    }
   }
 
   /**
