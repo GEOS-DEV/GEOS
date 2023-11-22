@@ -433,8 +433,7 @@ void SinglePhaseWell::initializeWells( DomainPartition & domain )
   } );
 }
 
-void SinglePhaseWell::assembleFluxTerms( real64 const GEOS_UNUSED_PARAM( time_n ),
-                                         real64 const dt,
+void SinglePhaseWell::assembleFluxTerms( real64 const dt,
                                          DomainPartition const & domain,
                                          DofManager const & dofManager,
                                          CRSMatrixView< real64, globalIndex const > const & localMatrix,
@@ -821,6 +820,7 @@ SinglePhaseWell::calculateResidualNorm( real64 const & time_n,
                                                    wellControls,
                                                    time_n + dt,
                                                    dt,
+                                                   m_nonlinearSolverParameters.m_minNormalizer,
                                                    subRegionResidualNorm );
 
       // step 2: reduction across meshBodies/regions/subRegions
@@ -1057,7 +1057,7 @@ void SinglePhaseWell::printRates( real64 const & time_n,
       {
         GEOS_LOG( GEOS_FMT( "{}: well is shut", wellControlsName ) );
         // print all zeros in the rates file
-        outputFile << "0.0,0.0,0.0" << std::endl;
+        outputFile << ",0.0,0.0,0.0" << std::endl;
         return;
       }
 

@@ -22,6 +22,7 @@
 #include "common/DataLayouts.hpp"
 #include "constitutive/ConstitutiveBase.hpp"
 #include "constitutive/fluid/multifluid/Layouts.hpp"
+#include "constitutive/fluid/multifluid/MultiFluidConstants.hpp"
 #include "constitutive/fluid/multifluid/MultiFluidUtils.hpp"
 
 namespace geos
@@ -46,14 +47,14 @@ public:
    *
    * @note This puts an upper bound on memory use, allowing to optimize code better
    */
-  static constexpr integer MAX_NUM_COMPONENTS = 16;
+  static constexpr integer MAX_NUM_COMPONENTS = MultiFluidConstants::MAX_NUM_COMPONENTS;
 
   /**
    * @brief Maximum supported number of fluid phases
    *
    * @note This puts an upper bound on memory use, allowing to optimize code better
    */
-  static constexpr integer MAX_NUM_PHASES = 4;
+  static constexpr integer MAX_NUM_PHASES = MultiFluidConstants::MAX_NUM_PHASES;
 
   /**
    * @return number of fluid components (species) in the model
@@ -203,7 +204,8 @@ public:
     static constexpr char const * checkPVTTablesRangesString() { return "checkPVTTablesRanges"; }
   };
 
-protected:
+
+public:
 
   using PhaseProp = MultiFluidVar< real64, 3, multifluid::LAYOUT_PHASE, multifluid::LAYOUT_PHASE_DC >;
   using PhaseComp = MultiFluidVar< real64, 4, multifluid::LAYOUT_PHASE_COMP, multifluid::LAYOUT_PHASE_COMP_DC >;
@@ -461,6 +463,46 @@ protected:
     PhaseProp::ViewType m_phaseInternalEnergy;
     PhaseComp::ViewType m_phaseCompFraction;
     FluidProp::ViewType m_totalDensity;
+
+public:
+    /**
+     * @brief Calculate the total fluid compressibility
+     * @param i Element index
+     * @param q Quadrature node index
+     * @return The total fluid compressibility
+     */
+    GEOS_HOST_DEVICE
+    real64 totalCompressibility( integer const i, integer const q ) const
+    {
+      real64 const totalFluidDensity = totalDensity()( i, q );
+      real64 const dTotalFluidDensity_dP = m_totalDensity.derivs( i, q, multifluid::DerivativeOffset::dP );
+      return 0.0 < totalFluidDensity ? dTotalFluidDensity_dP / totalFluidDensity : 0.0;
+    }
+
+    /**
+     * @brief Extract the phase mole fractions for a phase
+     * @param i Element index
+     * @param q Quadrature node index
+     * @param p Phase index
+     * @param[out] moleFractions The calculated mole fractions
+     */
+    template< typename OUT_ARRAY >
+    GEOS_HOST_DEVICE
+    void phaseCompMoleFraction( integer const i,
+                                integer const q,
+                                integer const p,
+                                OUT_ARRAY && moleFractions ) const
+    {
+      integer const numComponents = m_componentMolarWeight.size( 0 );
+      for( integer ic = 0; ic < numComponents; ++ic )
+      {
+        moleFractions[ic] = m_phaseCompFraction.value( i, q, p, ic );
+      }
+      detail::convertToMoleFractions( numComponents,
+                                      m_componentMolarWeight,
+                                      moleFractions,
+                                      moleFractions );
+    }
 
 private:
 
