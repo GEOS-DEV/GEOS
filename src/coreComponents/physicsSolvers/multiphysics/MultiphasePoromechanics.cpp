@@ -115,7 +115,7 @@ void MultiphasePoromechanics< FLOW_SOLVER >::postProcessInput()
   GEOS_ERROR_IF( flowSolver()->catalogName() == "CompositionalMultiphaseReservoir" &&
                  this->getNonlinearSolverParameters().couplingType() != NonlinearSolverParameters::CouplingType::Sequential,
                  GEOS_FMT( "{}: {} solver is only designed to work for {} = {}",
-                           this->getName(), catalogName(), NonlinearSolverParameters::viewKeysStruct::couplingTypeString(),
+                           this->getDataContext(), catalogName(), NonlinearSolverParameters::viewKeysStruct::couplingTypeString(),
                            EnumStrings< NonlinearSolverParameters::CouplingType >::toString( NonlinearSolverParameters::CouplingType::Sequential )
                            ));
 }
@@ -361,14 +361,14 @@ void MultiphasePoromechanics< FLOW_SOLVER >::initializePostInitialConditionsPreS
     GEOS_THROW_IF( std::find( flowTargetRegionNames.begin(), flowTargetRegionNames.end(), poromechanicsTargetRegionNames[i] )
                    == flowTargetRegionNames.end(),
                    GEOS_FMT( "{} {}: region `{}` must be a target region of `{}`",
-                             getCatalogName(), getDataContext(), poromechanicsTargetRegionNames[i], flowSolver()->getDataContext() ),
+                             getCatalogName(), this->getDataContext(), poromechanicsTargetRegionNames[i], flowSolver()->getDataContext() ),
                    InputError );
   }
 
   integer & isFlowThermal = flowSolver()->isThermal();
   GEOS_WARNING_IF( m_isThermal && !isFlowThermal,
                    GEOS_FMT( "{} {}: The attribute `{}` of the flow solver `{}` is set to 1 since the poromechanics solver is thermal",
-                             getCatalogName(), getDataContext(), FlowSolverBase::viewKeyStruct::isThermalString(), flowSolver()->getDataContext() ) );
+                             getCatalogName(), this->getDataContext(), FlowSolverBase::viewKeyStruct::isThermalString(), flowSolver()->getDataContext() ) );
   isFlowThermal = m_isThermal;
 
   if( m_isThermal )

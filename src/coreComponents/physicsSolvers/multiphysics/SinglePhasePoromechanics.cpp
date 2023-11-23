@@ -192,7 +192,7 @@ void SinglePhasePoromechanics< FLOW_SOLVER >::initializePreSubGroups()
       porousName = this->template getConstitutiveName< CoupledSolidBase >( subRegion );
       GEOS_THROW_IF( porousName.empty(),
                      GEOS_FMT( "{} {} : Solid model not found on subregion {}",
-                               getCatalogName(), getDataContext().toString(), subRegion.getName() ),
+                               getCatalogName(), this->getDataContext().toString(), subRegion.getName() ),
                      InputError );
 
       if( subRegion.hasField< fields::poromechanics::bulkDensity >() )
@@ -252,14 +252,14 @@ void SinglePhasePoromechanics< FLOW_SOLVER >::initializePostInitialConditionsPre
     GEOS_THROW_IF( std::find( flowTargetRegionNames.begin(), flowTargetRegionNames.end(), poromechanicsTargetRegionNames[i] )
                    == flowTargetRegionNames.end(),
                    GEOS_FMT( "{} {}: region `{}` must be a target region of `{}`",
-                             getCatalogName(), getDataContext(), poromechanicsTargetRegionNames[i], flowSolver()->getDataContext() ),
+                             getCatalogName(), this->getDataContext(), poromechanicsTargetRegionNames[i], flowSolver()->getDataContext() ),
                    InputError );
   }
 
   integer & isFlowThermal = flowSolver()->isThermal();
   GEOS_LOG_RANK_0_IF( m_isThermal && !isFlowThermal,
                       GEOS_FMT( "{} {}: The attribute `{}` of the flow solver `{}` is set to 1 since the poromechanics solver is thermal",
-                                getCatalogName(), getDataContext(),
+                                getCatalogName(), this->getDataContext(),
                                 FlowSolverBase::viewKeyStruct::isThermalString(), flowSolver()->getDataContext() ) );
   isFlowThermal = m_isThermal;
 
