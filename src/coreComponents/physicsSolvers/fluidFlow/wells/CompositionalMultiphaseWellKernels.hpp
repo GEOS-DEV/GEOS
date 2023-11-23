@@ -163,6 +163,7 @@ struct FluxKernel
   static void
   launch( localIndex const size,
           globalIndex const rankOffset,
+          integer const useTotalMassEquation,
           WellControls const & wellControls,
           arrayView1d< globalIndex const > const & wellElemDofNumber,
           arrayView1d< localIndex const > const & nextWellElemIndex,
@@ -361,6 +362,7 @@ struct AccumulationKernel
   launch( localIndex const size,
           integer const numPhases,
           globalIndex const rankOffset,
+          integer const useTotalMassEquation,
           arrayView1d< globalIndex const > const & wellElemDofNumber,
           arrayView1d< integer const > const & wellElemGhostRank,
           arrayView1d< real64 const > const & wellElemVolume,
@@ -899,6 +901,7 @@ public:
   template< typename POLICY >
   static isothermalCompositionalMultiphaseBaseKernels::ScalingForSystemSolutionKernel::StackVariables
   createAndLaunch( real64 const maxRelativePresChange,
+                   real64 const maxAbsolutePresChange,
                    real64 const maxCompFracChange,
                    globalIndex const rankOffset,
                    integer const numComp,
@@ -915,7 +918,7 @@ public:
     arrayView1d< real64 > compDensScalingFactor =
       subRegion.getField< fields::well::globalCompDensityScalingFactor >();
     isothermalCompositionalMultiphaseBaseKernels::
-      ScalingForSystemSolutionKernel kernel( maxRelativePresChange, maxCompFracChange, rankOffset,
+      ScalingForSystemSolutionKernel kernel( maxRelativePresChange, maxAbsolutePresChange, maxCompFracChange, rankOffset,
                                              numComp, dofKey, subRegion, localSolution, pressure, compDens, pressureScalingFactor, compDensScalingFactor );
     return isothermalCompositionalMultiphaseBaseKernels::
              ScalingForSystemSolutionKernel::
@@ -945,7 +948,7 @@ public:
    * @param[in] localSolution the Newton update
    */
   template< typename POLICY >
-  static integer
+  static isothermalCompositionalMultiphaseBaseKernels::SolutionCheckKernel::StackVariables
   createAndLaunch( integer const allowCompDensChopping,
                    CompositionalMultiphaseFVM::ScalingType const scalingType,
                    real64 const scalingFactor,
@@ -960,7 +963,7 @@ public:
     arrayView1d< real64 > pressureScalingFactor = subRegion.getField< fields::well::pressureScalingFactor >();
     arrayView1d< real64 > compDensScalingFactor = subRegion.getField< fields::well::globalCompDensityScalingFactor >();
     isothermalCompositionalMultiphaseBaseKernels::
-      SolutionCheckKernel kernel( allowCompDensChopping, scalingType, scalingFactor, rankOffset,
+      SolutionCheckKernel kernel( allowCompDensChopping, 0, scalingType, scalingFactor, rankOffset, // no negative pressure
                                   numComp, dofKey, subRegion, localSolution, pressure, compDens, pressureScalingFactor, compDensScalingFactor );
     return isothermalCompositionalMultiphaseBaseKernels::
              SolutionCheckKernel::

@@ -22,13 +22,14 @@
 #include "physicsSolvers/multiphysics/CoupledSolver.hpp"
 #include "physicsSolvers/surfaceGeneration/SurfaceGenerator.hpp"
 #include "physicsSolvers/multiphysics/SinglePhasePoromechanics.hpp"
+#include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
 
 namespace geos
 {
 
 using dataRepository::Group;
 
-template< typename POROMECHANICS_SOLVER = SinglePhasePoromechanics >
+template< typename POROMECHANICS_SOLVER = SinglePhasePoromechanics< SinglePhaseBase > >
 class HydrofractureSolver : public POROMECHANICS_SOLVER
 {
 public:
@@ -113,7 +114,7 @@ public:
 
   /**@}*/
 
-  void updateDeformationForCoupling( DomainPartition & domain );
+  void updateHydraulicApertureAndFracturePermeability( DomainPartition & domain );
 
   void assembleForceResidualDerivativeWrtPressure( DomainPartition & domain,
                                                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
@@ -127,12 +128,12 @@ public:
     return m_derivativeFluxResidual_dAperture;
   }
 
-  CRSMatrixView< real64, localIndex const > getDerivativeFluxResidual_dAperture()
+  CRSMatrixView< real64, localIndex const > getDerivativeFluxResidual_dNormalJump()
   {
     return m_derivativeFluxResidual_dAperture->toViewConstSizes();
   }
 
-  CRSMatrixView< real64 const, localIndex const > getDerivativeFluxResidual_dAperture() const
+  CRSMatrixView< real64 const, localIndex const > getDerivativeFluxResidual_dNormalJump() const
   {
     return m_derivativeFluxResidual_dAperture->toViewConst();
   }

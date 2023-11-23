@@ -21,8 +21,8 @@
 #define GEOS_PHYSICSSOLVERS_WAVEPROPAGATION_ACOUSTICFIRSTORDERWAVEEQUATIONSEM_HPP_
 
 #include "mesh/MeshFields.hpp"
-#include "WaveSolverUtils.hpp"
 #include "WaveSolverBaseFields.hpp"
+#include "WaveSolverBase.hpp"
 
 namespace geos
 {
@@ -82,37 +82,6 @@ public:
    */
   virtual void addSourceToRightHandSide( integer const & cycleNumber, arrayView1d< real32 > const rhs );
 
-  /**
-   * TODO: move implementation into WaveSolverUtils
-   * @brief Computes the traces on all receivers (see @computeSeismoTraces) up to time_n+dt
-   * @param time_n the time corresponding to the field values pressure_n
-   * @param dt the simulation timestep
-   * @param var_np1 the field values at time_n + dt
-   * @param var_n the field values at time_n
-   * @param var_receivers the array holding the trace values, where the output is written
-   */
-  virtual void computeAllSeismoTraces( real64 const time_n,
-                                       real64 const dt,
-                                       arrayView1d< real32 const > const var_np1,
-                                       arrayView1d< real32 const > const var_n,
-                                       arrayView2d< real32 > varAtReceivers );
-
-  /**
-   * TODO: move implementation into WaveSolverUtils
-   * @brief Computes the traces on all receivers (see @computeSeismoTraces) up to time_n+dt for a 2d variable
-   * @param time_n the time corresponding to the field values pressure_n
-   * @param dt the simulation timestep
-   * @param var_np1 the field values at time_n + dt
-   * @param var_n the field values at time_n
-   * @param var_receivers the array holding the trace values, where the output is written
-   */
-  virtual void compute2dVariableAllSeismoTraces( localIndex const regionIndex,
-                                                 real64 const time_n,
-                                                 real64 const dt,
-                                                 arrayView2d< real32 const > const var_np1,
-                                                 arrayView2d< real32 const > const var_n,
-                                                 arrayView2d< real32 > varAtReceivers );
-
 
   /**
    * @brief Initialize Perfectly Matched Layer (PML) information
@@ -137,8 +106,6 @@ public:
 
     static constexpr char const * sourceElemString() { return "sourceElem"; }
     static constexpr char const * sourceRegionString() { return "sourceRegion"; }
-    static constexpr char const * receiverElemString() { return "rcvElem"; }
-    static constexpr char const * receiverRegionString() { return "receiverRegion"; }
 
   } waveEquationViewKeys;
 
@@ -201,13 +168,6 @@ private:
 
   /// Array containing the elements which contain the region which the source belongs
   array1d< localIndex > m_sourceRegion;
-
-  /// Array containing the elements which contain the region which the receiver belongs
-  array1d< localIndex > m_receiverRegion;
-
-  /// Array containing the elements which contain a receiver
-  array1d< localIndex > m_rcvElem;
-
 };
 
 

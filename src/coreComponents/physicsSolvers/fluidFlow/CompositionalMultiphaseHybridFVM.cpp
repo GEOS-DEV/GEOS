@@ -407,6 +407,7 @@ void CompositionalMultiphaseHybridFVM::assembleFluxTerms( real64 const dt,
                                          dofManager.rankOffset(),
                                          lengthTolerance,
                                          dt,
+                                         m_useTotalMassEquation,
                                          localMatrix,
                                          localRhs );
 
@@ -432,16 +433,6 @@ real64 CompositionalMultiphaseHybridFVM::scalingForSystemSolution( DomainPartiti
 {
   GEOS_MARK_FUNCTION;
 
-  bool const skipCompFracDamping = m_maxCompFracChange >= 1.0;
-  bool const skipPresDamping = m_maxRelativePresChange >= 1.0;
-
-  // check if we want to rescale the Newton update
-  if( skipCompFracDamping && skipPresDamping )
-  {
-    // no rescaling wanted, we just return 1.0;
-    return 1.0;
-  }
-
   string const dofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
 
   real64 scalingFactor = 1.0;
@@ -457,6 +448,7 @@ real64 CompositionalMultiphaseHybridFVM::scalingForSystemSolution( DomainPartiti
         isothermalCompositionalMultiphaseBaseKernels::
           ScalingForSystemSolutionKernelFactory::
           createAndLaunch< parallelDevicePolicy<> >( m_maxRelativePresChange,
+                                                     m_maxAbsolutePresChange,
                                                      m_maxCompFracChange,
                                                      dofManager.rankOffset(),
                                                      m_numComponents,
@@ -525,10 +517,11 @@ bool CompositionalMultiphaseHybridFVM::checkSystemSolution( DomainPartition & do
                                                                                           ElementSubRegionBase & subRegion )
     {
       // check that pressure and component densities are non-negative
-      integer const subRegionSolutionCheck =
+      auto const subRegionData =
         isothermalCompositionalMultiphaseBaseKernels::
           SolutionCheckKernelFactory::
           createAndLaunch< parallelDevicePolicy<> >( m_allowCompDensChopping,
+                                                     m_allowNegativePressure,
                                                      CompositionalMultiphaseFVM::ScalingType::Global,
                                                      scalingFactor,
                                                      dofManager.rankOffset(),
@@ -537,7 +530,7 @@ bool CompositionalMultiphaseHybridFVM::checkSystemSolution( DomainPartition & do
                                                      subRegion,
                                                      localSolution );
 
-      localCheck = std::min( localCheck, subRegionSolutionCheck );
+      localCheck = std::min( localCheck, subRegionData.localMinVal );
     } );
   } );
 
