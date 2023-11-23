@@ -271,9 +271,9 @@ void FaceManager::sortAllFaceNodes( NodeManager const & nodeManager,
     if( facesToElements( faceIndex, 0 ) < 0 && facesToElements( faceIndex, 1 ) < 0 )
     {
       GEOS_ERROR( getDataContext() << ": Face " << faceIndex << " is not connected to any cell." <<
-                  "You might have forgotten one cell type in the " <<
-                  elemManager.getWrapperDataContext( CellElementRegion::viewKeyStruct::sourceCellBlockNamesString() ) <<
-                  ", or your mesh might be invalid" );
+                  "You might have forgotten one cell type in the \"" <<
+                  CellElementRegion::viewKeyStruct::sourceCellBlockNamesString() <<
+                  "\" attribute, or your mesh might be invalid" );
     }
 
     // Take the first defined face-to-(elt/region/sub region) to sorting direction.
