@@ -22,15 +22,16 @@
 #include "physicsSolvers/multiphysics/SinglePhasePoromechanics.hpp"
 #include "physicsSolvers/multiphysics/CoupledSolver.hpp"
 #include "physicsSolvers/contact/LagrangianContactSolver.hpp"
+#include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
 
 namespace geos
 {
 
-class SinglePhasePoromechanicsConformingFractures : public CoupledSolver< SinglePhasePoromechanics, LagrangianContactSolver >
+class SinglePhasePoromechanicsConformingFractures : public CoupledSolver< SinglePhasePoromechanics< SinglePhaseBase >, LagrangianContactSolver >
 {
 public:
 
-  using Base = CoupledSolver< SinglePhasePoromechanics, LagrangianContactSolver >;
+  using Base = CoupledSolver< SinglePhasePoromechanics< SinglePhaseBase >, LagrangianContactSolver >;
   using Base::m_solvers;
   using Base::m_dofManager;
   using Base::m_localMatrix;
@@ -77,7 +78,7 @@ public:
    * @brief accessor for the pointer to the poromechanics solver
    * @return a pointer to the flow solver
    */
-  SinglePhasePoromechanics * poromechanicsSolver() const
+  SinglePhasePoromechanics< SinglePhaseBase > * poromechanicsSolver() const
   {
     return std::get< toUnderlying( SolverType::Poromechanics ) >( m_solvers );
   }
@@ -219,12 +220,12 @@ private:
     return m_derivativeFluxResidual_dAperture;
   }
 
-  CRSMatrixView< real64, localIndex const > getDerivativeFluxResidual_dAperture()
+  CRSMatrixView< real64, localIndex const > getDerivativeFluxResidual_dNormalJump()
   {
     return m_derivativeFluxResidual_dAperture->toViewConstSizes();
   }
 
-  CRSMatrixView< real64 const, localIndex const > getDerivativeFluxResidual_dAperture() const
+  CRSMatrixView< real64 const, localIndex const > getDerivativeFluxResidual_dNormalJump() const
   {
     return m_derivativeFluxResidual_dAperture->toViewConst();
   }
