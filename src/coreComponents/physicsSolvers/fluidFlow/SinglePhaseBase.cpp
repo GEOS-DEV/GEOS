@@ -1032,7 +1032,7 @@ void SinglePhaseBase::applySourceFluxBC( real64 const time_n,
       {
         if( fs.getLogLevel() >= 1 )
         {
-          GEOS_LOG_RANK( GEOS_FMT( "{}: trying to apply SourceFlux, but set named '{}' intesects with non-simulated region named '{}'.",
+          GEOS_LOG_RANK( GEOS_FMT( "{}: trying to apply SourceFlux, but its targetSet named '{}' intersects with non-simulated region named '{}'.",
                                    getDataContext(), setName, subRegion.getName() ) );
         }
         return;
