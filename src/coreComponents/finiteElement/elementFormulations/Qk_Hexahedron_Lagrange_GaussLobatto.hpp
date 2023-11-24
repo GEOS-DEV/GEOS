@@ -34,12 +34,6 @@ namespace geos
 namespace finiteElement
 {
 
-// template< typename GL_BASIS > 
-// class Qk_Hexahedron_Lagrange_GaussLobatto_Precalc
-// {
-// 
-// }
-
 /**
  * This class is the basis class for the hexahedron finite element cells with
  * shape functions defined on Gauss-Lobatto quadrature points.
@@ -66,177 +60,274 @@ public:
 
   /// The number of quadrature points per element.
   constexpr static localIndex numQuadraturePoints = numNodes;
- 
-  constexpr static auto generateWeightValues( )
-  {
-    std::array< real64, num1dNodes> values{};
-    for(int q = 0; q < num1dNodes; q++)
-    {
-      values[q] = GL_BASIS::weight( q );
-    }
-    return values;
-  }
-  constexpr static auto weightAtQ = generateWeightValues();
 
-  constexpr static auto generateBasisValues( )
-  {
-    std::array< std::array< real64, num1dNodes >, num1dNodes > values{};
-    for(int q = 0; q < num1dNodes; q++)
-    {
-      for(int p = 0; p < num1dNodes; p++)
-      {
-        values[q][p] = GL_BASIS::value( q, GL_BASIS::parentSupportCoord( p ) );
-      }
-    }
-    return values;
-  }
-  constexpr static auto basisValueAtQ = generateBasisValues();
-
-  constexpr static auto generateGradientValues()
-  {
-    std::array< std::array< real64, num1dNodes >, num1dNodes > values{};
-    for(int q = 0; q < num1dNodes; q++)
-    {
-      for(int p = 0; p < num1dNodes; p++)
-      {
-        values[q][p] = GL_BASIS::gradient( q, GL_BASIS::parentSupportCoord( p ) );
-      }
-    }
-    return values;
-  }
-  constexpr static auto gradientValueAtQ = generateGradientValues( );
-
-  // constexpr static auto generateBasis3DValues()
-  // {
-  //   std::array< std::array< real64, num3dNodes >, num3dNodes > values{};
-  //   for(int q = 0; q < num3dNodes; q++)
-  //   {
-  //     for(int p = 0; p < num3dNodes; p++)
-  //     {
-  //       values[q][p] = basisValueAtQ[ index3DI(  q  ) ][ index3DI(  p  ) ] *
-  //                      basisValueAtQ[ index3DJ(  q  ) ][ index3DJ(  p  ) ] *
-  //                      basisValueAtQ[ index3DK(  q  ) ][ index3DK(  p  ) ];
-  //     }
-  //   }
-  //   return values;
-  // }
-  // constexpr static auto N = generateBasis3DValues();
-
-
-  // constexpr static auto generateGradient3DValues()
-  // {
-  //   std::array< std::array< std::array< real64, 3 >, num3dNodes >, num3dNodes > values{};
-  //   for(int q = 0; q < num3dNodes; q++)
-  //   {
-  //     for(int p = 0; p < num3dNodes; p++)
-  //     {                     
-  //       values[q][p] = { gradientValueAtQ[ index3DI(  q  ) ][ index3DI(  p  ) ] *
-  //                        basisValueAtQ[ index3DJ(  q  ) ][ index3DJ(  p  ) ] *
-  //                        basisValueAtQ[ index3DK(  q  ) ][ index3DK(  p  ) ],
-  //                        basisValueAtQ[ index3DI(  q  ) ][ index3DI(  p  ) ] *
-  //                        gradientValueAtQ[ index3DJ(  q  ) ][ index3DJ(  p  ) ] *
-  //                        basisValueAtQ[ index3DK(  q  ) ][ index3DK(  p  ) ],
-  //                        basisValueAtQ[ index3DI(  q  ) ][ index3DI(  p  ) ] *
-  //                        basisValueAtQ[ index3DJ(  q  ) ][ index3DJ(  p  ) ] *
-  //                        gradientValueAtQ[ index3DK(  q  ) ][ index3DK(  p  ) ] };
-  //     }
-  //   }
-  //   return values;
-  // }
-  // constexpr static auto dNdX = generateGradient3DValues();
-
-  // constexpr static auto generateBasis2DValues()
-  // {
-  //   std::array< std::array< real64, num2dNodes >, num2dNodes > values{};
-  //   for(int q = 0; q < num2dNodes; q++)
-  //   {
-  //     for(int p = 0; p < num2dNodes; p++)
-  //     {
-  //       values[q][p] = basisValueAtQ[ index2D[ q ][ 0 ] ][ index2D[ p ][ 0 ] ] *
-  //                      basisValueAtQ[ index2D[ q ][ 1 ] ][ index2D[ p ][ 1 ] ];
-  //     }
-  //   }
-  //   return values;
-  // }
-  // constexpr static auto N2D = generateBasis2DValues();
-
-  // constexpr static auto generateGradient2DValues( )
-  // {
-  //   std::array< std::array< std::array< real64, 2 >, num2dNodes >, num2dNodes > values{};
-  //   for(int q = 0; q < num2dNodes; q++)
-  //   {
-  //     for(int p = 0; p < num2dNodes; p++)
-  //     {
-  //       values[q][p] = { gradientValueAtQ[ index2D[ q ][ 0 ] ][ index2D[ p ][ 0 ] ] *
-  //                        basisValueAtQ[ index2D[ q ][ 1 ] ][ index2D[ p ][ 1 ] ],
-  //                        basisValueAtQ[ index2D[ q ][ 0 ] ][ index2D[ p ][ 0 ] ] *
-  //                        gradientValueAtQ[ index2D[ q ][ 1 ] ][ index2D[ p ][ 1 ] ] };
-  //     }
-  //   }
-  //   return values;
-  // }
-  // constexpr static auto dNdX2D = generateGradient2DValues();
-
-  //constexpr static auto generate2DIndices()
-  //{
-  //  //array2d< localIndex > indices( num2dNodes, 2);
-  //  std::array< std::array< localIndex, 2 >, num3dNodes > indices{};
-  //  for(int q = 0; q < num2dNodes; q++)
-  //  { 
-  //    indices[q][0]= q % num1dNodes;
-  //    indices[q][1]= q / num1dNodes;
-  //  }
-  //  return indices;
-  //}
-  //constexpr static auto index2D = generate2DIndices();
-
-  //constexpr static auto generate2DLinearIndex()
-  //{
-  //  std::array< std::array< localIndex, num1dNodes >, num1dNodes > indices{};
-  //  for( int qa = 0; qa < num3dNodes; qa++ )
-  //  {
-  //    for( int qb = 0; qb < num3dNodes; qb++ )
-  //    {
-  //      indices[qa][qb]= qa + qb * num1dNodes;
-  //    }
-  //  }
-  //  return indices;
-  //}
-  //constexpr static auto linearIndex2D = generate2DLinearIndex();
   //
+  // Constexpr quantities for optimization 
   //
-  //constexpr static auto generate3DIndices()
-  //{
-  //  std::array< std::array< localIndex, 3 >, num3dNodes > indices{};
-  //  for( int q = 0; q < num3dNodes; q++ )
-  //  {
-  //    indices[q][0]= (q % ( num2dNodes ) ) % num1dNodes; 
-  //    indices[q][1]= (q % ( num2dNodes ) ) / num1dNodes;
-  //    indices[q][2]= (q / ( num2dNodes ) );
-  //  }
-  //  return indices;
-  //}
-  //constexpr static auto index3D = generate3DIndices();
-
-  //constexpr static auto generate3DLinearIndex()
-  //{
-  //  std::array< std::array< std::array< localIndex, num1dNodes >, num1dNodes >, num1dNodes > indices{};
-  //  for( int qa = 0; qa < num3dNodes; qa++ )
-  //  {
-  //    for( int qb = 0; qb < num3dNodes; qb++ )
-  //    {
-  //      for( int qc = 0; qc < num3dNodes; qc++ )
-  //      {
-  //        indices[qa][qb][qc]= qa + qb * num1dNodes + qc * num2dNodes;
-  //      }
-  //    }
-  //  }
-  //  return indices;
-  //}
-  //constexpr static auto linearIndex3D = generate3DLinearIndex();
   
+  // Indices for 3D tensor-product bases
+
+  GEOS_HOST_DEVICE 
+  GEOS_FORCE_INLINE
+  constexpr static localIndex index3D( const localIndex q, const int i )
+  {
+    switch( i )
+    {
+      case 0:
+        return (q % num2dNodes ) % num1dNodes;  
+      case 1:
+        return (q % num2dNodes ) / num1dNodes;  
+      case 2:
+        return q / num2dNodes;
+      default:
+        return -1;
+    }
+  }
+
+  GEOS_HOST_DEVICE 
+  GEOS_FORCE_INLINE
+  constexpr static localIndex linearIndex3D( const localIndex qa, localIndex const qb, localIndex const qc )
+  {
+    return qc + qb * num1dNodes + qc * num2dNodes;
+  }
+
+  // Indices for 2D tensor-product bases
+  GEOS_HOST_DEVICE 
+  GEOS_FORCE_INLINE
+  constexpr static localIndex index2D( const localIndex q, const int i )
+  {
+    switch( i )
+    {
+      case 0:
+        return q % num1dNodes;
+      case 1:
+        return q / num1dNodes;
+      default:
+        return -1;
+    }
+  }
+
+  GEOS_HOST_DEVICE 
+  GEOS_FORCE_INLINE
+  constexpr static localIndex linearIndex2D( const localIndex qa, localIndex const qb )
+  {
+    return qb + qa * num1dNodes;
+  }
+  
+  // Specific values of basis functions at quadrature points
+
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
+  constexpr static real64 basisValueAtQ( const int q, const int p)
+  {
+    return GL_BASIS::value( q, GL_BASIS::parentSupportCoord( p ) );
+  }
+ 
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
+  constexpr static real64 basisGradientAtQ( const int q, const int p)
+  {
+    return GL_BASIS::gradient( q, GL_BASIS::parentSupportCoord( p ) );
+  }
+
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
+  constexpr static real64 basisWeightAtQ( const int q )
+  {
+    return GL_BASIS::weight( q );
+  }
+
+  // Specific values of 3D tensor-product basis functions at quadrature points
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
+  constexpr static real64 basis3DValueAtQ( const int qa, const int qb, const int qc, const int pa, const int pb, const int pc )
+  {
+    return basisValueAtQ( qa, pa ) * basisValueAtQ( qb, pb ) * basisValueAtQ( qc, pc );
+  }
+
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
+  constexpr static real64 basis3DValueAtQ( const int q, const int pa, const int pb, const int pc )
+  {
+    return basis3DValueAtQ( index3D( q, 0 ), index3D( q, 1 ), index3D( q, 2 ), pa, pb, pc );
+  }
+
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
+  constexpr static real64 basis3DValueAtQ( const int q, const int p)
+  {
+    return basis3DValueAtQ( q, index3D( p, 0 ), index3D( p, 1 ), index3D( p, 2 ) );
+  }
+
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
+  constexpr static real64 basis3DGradientAtQ( const int qa, const int qb, const int qc, const int pa, const int pb, const int pc, const int i )
+  {
+    switch( i )
+    {
+      case 0:
+        return basisGradientAtQ( qa, pa ) * basisValueAtQ( qb, pb ) * basisValueAtQ( qc, pc );
+      case 1:
+        return basisValueAtQ( qa, pa ) * basisGradientAtQ( qb, pb ) * basisValueAtQ( qc, pc );
+      case 2:
+        return basisValueAtQ( qa, pa ) * basisValueAtQ( qb, pb ) * basisGradientAtQ( qc, pc );
+      default:
+        return 0;
+    }
+  }
+
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
+  constexpr static real64 basis3DGradientAtQ( const int q, const int pa, const int pb, const int pc, const int i)
+  {
+    return basis3DGradientAtQ( index3D( q, 0 ), index3D( q, 1 ), index3D( q, 2 ), pa, pb, pc, i );
+  }
+
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
+  constexpr static real64 basis3DGradientAtQ( const int q, const int p, const int i )
+  {
+    return basis3DGradientAtQ( q, index3D( p, 0 ), index3D( p, 1 ), index3D( p, 2 ), i );
+  }
+
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
+  constexpr static real64 basis3DWeightAtQ( const int qa, const int qb, const int qc )
+  {
+    return basisWeightAtQ( qa ) * basisWeightAtQ( qb ) * basisWeightAtQ( qc );
+  }
+
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
+  constexpr static real64 basis3DWeightAtQ( const int q )
+  {
+    return basis3DWeightAtQ( index3D( q, 0 ), index3D( q, 1 ), index3D( q, 2 ) );
+  }
+
+  // Specific values of 2D tensor-product basis functions at quadrature points
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
+  constexpr static real64 basis2DValueAtQ( const int qa, const int qb, const int pa, const int pb )
+  {
+    return basisValueAtQ( qa, pa ) * basisValueAtQ( qb, pb );
+  }
+
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
+  constexpr static real64 basis2DValueAtQ( const int q, const int pa, const int pb )
+  {
+    return basis2DValueAtQ( index2D( q, 0 ), index2D( q, 1 ), pa, pb );
+  }
+
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
+  constexpr static real64 basis2DValueAtQ( const int q, const int p)
+  {
+    return basis2DValueAtQ( q, index2D( p, 0 ), index2D( p, 1 ) );
+  }
+
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
+  constexpr static real64 basis2DGradientAtQ( const int qa, const int qb, const int pa, const int pb, const int i )
+  {
+    switch( i )
+    {
+      case 0:
+        return basisGradientAtQ( qa, pa ) * basisValueAtQ( qb, pb );
+      case 1:
+        return basisValueAtQ( qa, pa ) * basisGradientAtQ( qb, pb );
+      default:
+        return 0;
+     }
+  }
+
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
+  constexpr static real64 basis2DGradientAtQ( const int q, const int pa, const int pb, const int i )
+  {
+    return basis2DGradientAtQ( index2D( q, 0 ), index2D( q, 1 ), pa, pb, i );
+  }
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
+  constexpr static real64 basis2DGradientAtQ( const int q, const int p, const int i )
+  {
+    return basis2DGradientAtQ( q, index2D( p, 1 ), index2D( p, 2 ), i );
+  }
 
 
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
+  constexpr static real64 basis2DWeightAtQ( const int qa, const int qb )
+  {
+    return basisWeightAtQ( qa ) * basisWeightAtQ( qb );
+  }
+
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
+  constexpr static real64 basis2DWeightAtQ( const int q )
+  {
+    return basis2DWeightAtQ( index2D( q, 0 ), index2D( q, 1 ) );
+  }
+
+  // Pre-computed coefficients for the 2D and 3D jacobians
+
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
+  constexpr static real64 interpolationCoordinate( const int k, const int q )
+  {
+    constexpr real64 alpha = ( GL_BASIS::parentSupportCoord( index3D( q, 0 ) ) + 1.0 ) / 2.0;
+    constexpr real64 beta = ( GL_BASIS::parentSupportCoord( index3D( q, 1 ) ) + 1.0 ) / 2.0;
+    constexpr real64 gamma = ( GL_BASIS::parentSupportCoord( index3D( q, 2 ) ) + 1.0 ) / 2.0;
+    switch( k )
+    {
+    case 0:
+      return ( 1.0 - alpha ) * ( 1.0 - beta ) * ( 1.0 - gamma );
+    case 1:
+      return alpha * ( 1.0 - beta ) * ( 1.0 - gamma );
+    case 2:
+      return ( 1.0 - alpha ) * beta * ( 1.0 - gamma );
+    case 3:
+      return alpha * beta * ( 1.0 - gamma );
+     case 4:
+      return ( 1.0 - alpha ) * ( 1.0 - beta ) * gamma;
+    case 5:
+      return alpha * ( 1.0 - beta ) * gamma;
+    case 6:
+      return ( 1.0 - alpha ) * beta * gamma;
+    case 7:
+      return alpha * beta * gamma;
+    }
+  }
+
+  /**
+   * Pre-computed coefficients c(q, k, j) of the 8 mesh vertices int 3D and 2D jacobians.
+   * The jacobian matrix at q is then expressed (for any polynomial order) as
+   * J_{i,j}(q) = sum_{k=0}^7 c(q, k, j) * X_k(i)
+   * @param q from 0 to num3dNodes-1, the node at which the jacobian is computed
+   * @param k from 0 to 7, the mesh vertex
+   * @param j from 0 to 2, the coordinate 
+   */ 
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
+  constexpr static real64 jacobian3DCoefficient( const int q, const int k, const int j )
+  {
+    real64 coeff = 0;
+    for( int c=0; c<num1dNodes; ++c )
+    {
+      for( int b=0; b<num1dNodes; ++b )
+      {
+        for( int a=0; a<num1dNodes; ++a )
+        {
+          coeff += basis3DGradientAtQ( q, a, b, c, j ) * interpolationCoordinate( k, linearIndex3D( a, b, c ) ); 
+        } 
+      } 
+    }
+    return coeff; 
+  } 
+
+
+
+  constexpr static real64 temp = jacobian3DCoefficient( 0, 0, 0 );
   
   /** @cond Doxygen_Suppress */
   USING_FINITEELEMENTBASE
@@ -323,9 +414,7 @@ public:
         for( int pc = 0; pc < num1dNodes; pc++)
         {
           const int lindex = GL_BASIS::TensorProduct3D::linearIndex( pa, pb, pc );
-          N[ lindex ] = basisValueAtQ[pa][qa] *
-                        basisValueAtQ[pb][qb] *
-                        basisValueAtQ[pc][qc];
+          N[ lindex ] = basis3DValueAtQ(pa, pb, pc, qa, qb, qc ); 
            
         }
       }
