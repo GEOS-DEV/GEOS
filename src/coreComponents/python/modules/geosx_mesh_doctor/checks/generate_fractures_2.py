@@ -309,7 +309,7 @@ def __perform_polyhedron_split(old_mesh: vtkUnstructuredGrid,
 
         new_mesh.InsertNextCell(cell_type, faceId)
 
-    __iterate_through_polyhedron_cells(new_mesh)
+    #__iterate_through_polyhedron_cells(new_mesh)
     __copy_fields(old_mesh, new_mesh, collocated_nodes)
 
     return new_mesh
