@@ -172,8 +172,7 @@ public:
    * @param matrix the system matrix
    * @param rhs the system right-hand side vector
    */
-  void assembleFluxTerms( real64 const time_n,
-                          real64 const dt,
+  void assembleFluxTerms( real64 const dt,
                           DomainPartition const & domain,
                           DofManager const & dofManager,
                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
@@ -253,6 +252,10 @@ public:
 protected:
 
   virtual void initializePostSubGroups() override;
+
+  void printRates( real64 const & time_n,
+                   real64 const & dt,
+                   DomainPartition & domain ) override;
 
 private:
 

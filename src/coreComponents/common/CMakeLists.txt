@@ -15,6 +15,7 @@ set( common_headers
      Path.hpp
      Span.hpp
      Stopwatch.hpp
+     Timer.hpp
      Tensor.hpp
      TimingMacros.hpp
      TypeDispatch.hpp
@@ -25,6 +26,8 @@ set( common_headers
      FixedSizeDeque.hpp
      FixedSizeDequeWithMutexes.hpp
      MultiMutexesLock.hpp
+     PhysicsConstants.hpp
+     Units.hpp
    )
 
 if ( ENABLE_CUDA )

@@ -2,20 +2,21 @@ name: Build and Test Configuration
 on:
   workflow_call:
     inputs:
-      GEOSX_TPL_TAG:
+      BUILD_AND_TEST_CLI_ARGS:
+        required: false
+        type: string
+      BUILD_TYPE:
+        required: false
+        type: string
+        default: build
+      CMAKE_BUILD_TYPE:
+        required: true
+        type: string
+      DOCKER_IMAGE_TAG:
         required: true
         type: string
       DOCKER_REPOSITORY:
         required: true
-        type: string
-      CMAKE_BUILD_TYPE:
-        required: true
-        type: string
-      BUILD_AND_TEST_ARGS:
-        required: false
-        type: string
-      HOST_CONFIG:
-        required: false
         type: string
       ENABLE_HYPRE:
         required: false
@@ -29,43 +30,39 @@ on:
       GCP_BUCKET:
         required: false
         type: string
-      COMMIT:
+      HOST_CONFIG:
+        required: false
+        type: string
+      RUNS_ON:
         required: true
         type: string
-      OS:
-        required: true
-        type: string
+      USE_SCCACHE:
+        required: false
+        type: boolean
+        default: true
     secrets:
       GOOGLE_CLOUD_GCP:
         required: false
 jobs:
-  build_and_test:
-    runs-on: ${{ inputs.OS }}
-    env:
-      DOCKER_REPOSITORY: ${{ inputs.DOCKER_REPOSITORY }}
-      CMAKE_BUILD_TYPE: ${{ inputs.CMAKE_BUILD_TYPE }}
-      BUILD_AND_TEST_ARGS: ${{ inputs.BUILD_AND_TEST_ARGS }}
-      ENABLE_HYPRE: ${{ inputs.ENABLE_HYPRE }}
-      ENABLE_HYPRE_DEVICE: ${{ inputs.ENABLE_HYPRE_DEVICE }}
-      ENABLE_TRILINOS: ${{ inputs.ENABLE_TRILINOS }}
-      GCP_BUCKET: ${{ inputs.GCP_BUCKET }}
-      HOST_CONFIG: ${{ inputs.HOST_CONFIG }}
-      COMMIT: ${{ inputs.COMMIT }}
-      GEOSX_TPL_TAG: ${{ inputs.GEOSX_TPL_TAG }}
+  build_test_deploy:
+    runs-on: ${{ inputs.RUNS_ON }}
     steps:
     - name: Checkout Repository
       uses: actions/checkout@v3
       with:
         submodules: true
-        lfs: false
+        lfs: ${{ inputs.BUILD_TYPE == 'integrated_tests' }}
+        fetch-depth: 1
 
     - id: 'auth'
-      if: env.GCP_BUCKET
+      if: ${{ inputs.GCP_BUCKET || inputs.USE_SCCACHE }}
       uses: 'google-github-actions/auth@v1'
       with:
         credentials_json: '${{ secrets.GOOGLE_CLOUD_GCP }}'
+        create_credentials_file: true
+
     - name: 'Set up Cloud SDK'
-      if: env.GCP_BUCKET
+      if: inputs.GCP_BUCKET
       uses: 'google-github-actions/setup-gcloud@v1'
       with:
         version: '>= 363.0.0'
@@ -73,20 +70,80 @@ jobs:
     - name: Print environment
       run: printenv
 
-    # Build and test only
-    # Builds only the geosx executable (timeout when building tests)
-    - name: Build and test
-      if: ${{ !(env.GCP_BUCKET) }}
-      run: ./scripts/ci_build_and_test.sh
-
-    # Build, test, uploads GEOSX and its TPL to GCP/GCS using gcloud CLI
-    - name: Build and test and deploy
-      if: env.GCP_BUCKET
+    - name: Build, test, deploy.
       run: |
-        source ./scripts/ci_build_and_test.sh
-        TMP_DIR=/tmp
-        GEOSX_EXPORT_DIR=GEOSX-and-TPL-${COMMIT:0:7}
-        docker cp -a ${CONTAINER_NAME}:${GEOSX_TPL_DIR}/.. ${TMP_DIR}/${GEOSX_EXPORT_DIR}
-        GEOSX_BUNDLE=${TMP_DIR}/${GEOSX_EXPORT_DIR}.tar.gz
-        tar czf ${GEOSX_BUNDLE} --directory=${TMP_DIR} ${GEOSX_EXPORT_DIR}
-        CLOUDSDK_PYTHON=python3 gsutil cp -a public-read ${GEOSX_BUNDLE} gs://${GCP_BUCKET}/
+        COMMIT=${{ github.event.pull_request.head.sha }}
+        SHORT_COMMIT=${COMMIT:0:7}
+        
+        # All the data exchanged with the docker container is eventually meant to be send to the cloud. 
+        if [[ ! -z "${{ inputs.GCP_BUCKET }}" ]]; then
+          if [ "${{ inputs.BUILD_TYPE }}" = "build" ]; then
+            DATA_BASENAME=GEOSX-and-TPL-${SHORT_COMMIT}.tar.gz
+          elif [ "${{ inputs.BUILD_TYPE }}" = "integrated_tests" ]; then
+            DATA_BASENAME=integratedTests-pr${{ github.event.number }}-${{ github.run_number }}-${SHORT_COMMIT}.tar.gz
+            RUN_INTEGRATED_TESTS_CLI_ARGS=--run-integrated-tests
+          fi
+          
+          DATA_BASENAME_CLI_ARGS="--data-basename ${DATA_BASENAME}"
+          
+          DATA_EXCHANGE_DIR=/mnt/geos-exchange  # Exchange folder outside of the container
+          sudo mkdir -p ${DATA_EXCHANGE_DIR}
+          DATA_EXCHANGE_MOUNT_POINT=/tmp/exchange  # Exchange folder inside of the container
+          DATA_EXCHANGE_DOCKER_CLI_ARGS="--volume=${DATA_EXCHANGE_DIR}:${DATA_EXCHANGE_MOUNT_POINT}"
+          DATA_EXCHANGE_SCRIPT_CLI_ARGS="--exchange-dir ${DATA_EXCHANGE_MOUNT_POINT}"
+        fi
+        
+        HOST_CONFIG=${{ inputs.HOST_CONFIG }}
+        HOST_CONFIG_CLI_ARGS=${HOST_CONFIG:+"--host-config ${HOST_CONFIG}"}
+        
+        if ${{ inputs.USE_SCCACHE }} == 'true'; then
+          SCCACHE_CLI_ARGS="--sccache-credentials $(basename ${GOOGLE_GHA_CREDS_PATH})"
+        fi
+
+        # We need to know where the code folder is mounted inside the container so we can run the script at the proper location!
+        # Since this information is repeated twice, we use a variable.
+        GITHUB_WORKSPACE_MOUNT_POINT=/tmp/geos
+        
+        # The linear algebra environment variables (ENABLE_HYPRE, ENABLE_HYPRE_DEVICE & ENABLE_TRILINOS)
+        # could be passed as scripts parameters as well, but a specific care must be taken to be sure
+        # there's no conflict with the host-config files.
+        ENABLE_HYPRE=${{ inputs.ENABLE_HYPRE }}
+        ENABLE_HYPRE_DEVICE=${{ inputs.ENABLE_HYPRE_DEVICE }}
+        ENABLE_TRILINOS=${{ inputs.ENABLE_TRILINOS }}
+
+        # In case of integrated tests run, we still want to send the results to the cloud for inspection.
+        # While for standard build (if even possible), pushing a failed build would be pointless.
+        # GHA set `-e` to bash scripts by default to fail asap,
+        # but for this precise call, we want to deal with it more precisely
+        set +e
+        docker run \
+          --cap-add=SYS_PTRACE \
+          --volume=${GITHUB_WORKSPACE}:${GITHUB_WORKSPACE_MOUNT_POINT} \
+          ${DATA_EXCHANGE_DOCKER_CLI_ARGS} \
+          -e ENABLE_HYPRE=${ENABLE_HYPRE:-OFF} \
+          -e ENABLE_HYPRE_DEVICE=${ENABLE_HYPRE_DEVICE:-CPU} \
+          -e ENABLE_TRILINOS=${ENABLE_TRILINOS:-ON} \
+          ${{ inputs.DOCKER_REPOSITORY }}:${{ inputs.DOCKER_IMAGE_TAG }} \
+          ${GITHUB_WORKSPACE_MOUNT_POINT}/scripts/ci_build_and_test_in_container.sh \
+            --cmake-build-type ${{ inputs.CMAKE_BUILD_TYPE }} \
+            ${DATA_BASENAME_CLI_ARGS} \
+            ${DATA_EXCHANGE_SCRIPT_CLI_ARGS} \
+            ${HOST_CONFIG_CLI_ARGS} \
+            --install-dir-basename GEOSX-${SHORT_COMMIT} \
+            --repository ${GITHUB_WORKSPACE_MOUNT_POINT} \
+            ${SCCACHE_CLI_ARGS} \
+            ${RUN_INTEGRATED_TESTS_CLI_ARGS} \
+            ${{ inputs.BUILD_AND_TEST_CLI_ARGS }}
+        EXIT_STATUS=$?
+        echo "Received exit status ${EXIT_STATUS} from the build process."
+        set -e
+        
+        # Send to the bucket and print the download link when it makes sense.
+        if [[ ! -z "${{ inputs.GCP_BUCKET }}" ]]; then
+          if [[ "${{ inputs.BUILD_TYPE }}" = "integrated_tests" || ${EXIT_STATUS} -eq 0 ]]; then
+            CLOUDSDK_PYTHON=python3 gsutil cp -a public-read ${DATA_EXCHANGE_DIR}/${DATA_BASENAME} gs://${{ inputs.GCP_BUCKET }}/
+            echo "Download the integrated tests at https://storage.googleapis.com/${{ inputs.GCP_BUCKET }}/${DATA_BASENAME}"
+          fi
+        fi
+        
+        exit ${EXIT_STATUS}

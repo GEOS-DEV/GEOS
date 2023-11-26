@@ -58,9 +58,10 @@ public:
   virtual void updateFromAperture( localIndex const k,
                                    localIndex const q,
                                    real64 const & oldHydraulicAperture,
-                                   real64 const & newHydraulicAperture ) const
+                                   real64 const & newHydraulicAperture,
+                                   real64 const & dHydraulicAperture_dNormalJump ) const
   {
-    GEOS_UNUSED_VAR( k, q, oldHydraulicAperture, newHydraulicAperture );
+    GEOS_UNUSED_VAR( k, q, oldHydraulicAperture, newHydraulicAperture, dHydraulicAperture_dNormalJump );
   }
 
   GEOS_HOST_DEVICE
@@ -68,11 +69,12 @@ public:
                                                        localIndex const q,
                                                        real64 const & oldHydraulicAperture,
                                                        real64 const & newHydraulicAperture,
+                                                       real64 const & dHydraulicAperture_dNormalJump,
                                                        real64 const & pressure,
                                                        real64 const ( &dispJump )[3],
                                                        real64 const ( &traction )[3] ) const
   {
-    GEOS_UNUSED_VAR( k, q, oldHydraulicAperture, newHydraulicAperture, dispJump, traction, pressure );
+    GEOS_UNUSED_VAR( k, q, oldHydraulicAperture, newHydraulicAperture, dHydraulicAperture_dNormalJump, dispJump, traction, pressure );
   }
 
   GEOS_HOST_DEVICE
@@ -80,9 +82,10 @@ public:
                                                              localIndex const q,
                                                              real64 const & oldHydraulicAperture,
                                                              real64 const & newHydraulicAperture,
+                                                             real64 const & dHydraulicAperture_dNormalJump,
                                                              real64 const & proppantPackVolumeFraction ) const
   {
-    GEOS_UNUSED_VAR( k, q, oldHydraulicAperture, newHydraulicAperture, proppantPackVolumeFraction );
+    GEOS_UNUSED_VAR( k, q, oldHydraulicAperture, newHydraulicAperture, dHydraulicAperture_dNormalJump, proppantPackVolumeFraction );
   }
 
 protected:
