@@ -13,25 +13,25 @@
  */
 
 /**
- * @file SinglePhasePoromechanicsConformingFractures.hpp
+ * @file SinglePhasePoromechanicsConformingFracturesVEM.hpp
  */
 
-#ifndef GEOS_PHYSICSSOLVERS_MULTIPHYSICS_SINGLEPHASEPOROMECHANICSCONFORMINGFRACTURES_HPP_
-#define GEOS_PHYSICSSOLVERS_MULTIPHYSICS_SINGLEPHASEPOROMECHANICSCONFORMINGFRACTURES_HPP_
+#ifndef GEOS_PHYSICSSOLVERS_MULTIPHYSICS_SINGLEPHASEPOROMECHANICSCONFORMINGFRACTURESVEM_HPP_
+#define GEOS_PHYSICSSOLVERS_MULTIPHYSICS_SINGLEPHASEPOROMECHANICSCONFORMINGFRACTURESVEM_HPP_
 
 #include "physicsSolvers/multiphysics/SinglePhasePoromechanics.hpp"
 #include "physicsSolvers/multiphysics/CoupledSolver.hpp"
-#include "physicsSolvers/contact/LagrangianContactSolver.hpp"
+#include "physicsSolvers/contact/SolidMechanicsConformingFracturesVEM.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
 
 namespace geos
 {
 
-class SinglePhasePoromechanicsConformingFractures : public CoupledSolver< SinglePhasePoromechanics< SinglePhaseBase >, LagrangianContactSolver >
+class SinglePhasePoromechanicsConformingFracturesVEM : public CoupledSolver< SinglePhasePoromechanics< SinglePhaseBase >, SolidMechanicsConformingFracturesVEM >
 {
 public:
 
-  using Base = CoupledSolver< SinglePhasePoromechanics< SinglePhaseBase >, LagrangianContactSolver >;
+  using Base = CoupledSolver< SinglePhasePoromechanics< SinglePhaseBase >, SolidMechanicsConformingFracturesVEM >;
   using Base::m_solvers;
   using Base::m_dofManager;
   using Base::m_localMatrix;
@@ -45,31 +45,31 @@ public:
   };
 
   /// String used to form the solverName used to register solvers in CoupledSolver
-  static string coupledSolverAttributePrefix() { return "poromechanicsConformingFractures"; }
+  static string coupledSolverAttributePrefix() { return "poromechanicsConformingFracturesVEM"; }
 
   /**
-   * @brief main constructor for SinglePhasePoromechanicsConformingFractures objects
-   * @param name the name of this instantiation of SinglePhasePoromechanicsConformingFractures in the repository
-   * @param parent the parent group of this instantiation of SinglePhasePoromechanicsConformingFractures
+   * @brief main constructor for SinglePhasePoromechanicsConformingFracturesVEM objects
+   * @param name the name of this instantiation of SinglePhasePoromechanicsConformingFracturesVEM in the repository
+   * @param parent the parent group of this instantiation of SinglePhasePoromechanicsConformingFracturesVEM
    */
-  SinglePhasePoromechanicsConformingFractures( const string & name,
+  SinglePhasePoromechanicsConformingFracturesVEM( const string & name,
                                                Group * const parent );
 
   /// Destructor for the class
-  ~SinglePhasePoromechanicsConformingFractures() override {}
+  ~SinglePhasePoromechanicsConformingFracturesVEM() override {}
 
   /**
    * @brief name of the node manager in the object catalog
-   * @return string that contains the catalog name to generate a new SinglePhasePoromechanicsConformingFractures object through the object
+   * @return string that contains the catalog name to generate a new SinglePhasePoromechanicsConformingFracturesVEM object through the object
    * catalog.
    */
-  static string catalogName() { return "SinglePhasePoromechanicsConformingFractures"; }
+  static string catalogName() { return "SinglePhasePoromechanicsConformingFracturesVEM"; }
 
   /**
    * @brief accessor for the pointer to the solid mechanics solver
    * @return a pointer to the solid mechanics solver
    */
-  LagrangianContactSolver * contactSolver() const
+  SolidMechanicsConformingFracturesVEM * contactSolver() const
   {
     return std::get< toUnderlying( SolverType::Contact ) >( m_solvers );
   }
@@ -241,7 +241,7 @@ private:
 template< typename CONSTITUTIVE_BASE,
           typename KERNEL_WRAPPER,
           typename ... PARAMS >
-real64 SinglePhasePoromechanicsConformingFractures::assemblyLaunch( MeshLevel & mesh,
+real64 SinglePhasePoromechanicsConformingFracturesVEM::assemblyLaunch( MeshLevel & mesh,
                                                                     DofManager const & dofManager,
                                                                     arrayView1d< string const > const & regionNames,
                                                                     string const & materialNamesString,
@@ -280,4 +280,4 @@ real64 SinglePhasePoromechanicsConformingFractures::assemblyLaunch( MeshLevel & 
 
 } /* namespace geos */
 
-#endif /* GEOS_PHYSICSSOLVERS_MULTIPHYSICS_SINGLEPHASEPOROMECHANICSCONFORMINGFRACTURES_HPP_ */
+#endif /* GEOS_PHYSICSSOLVERS_MULTIPHYSICS_SINGLEPHASEPOROMECHANICSCONFORMINGFRACTURESVEM_HPP_ */

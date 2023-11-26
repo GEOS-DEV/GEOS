@@ -13,10 +13,10 @@
  */
 
 /**
- * @file SinglePhasePoromechanicsConformingFractures.cpp
+ * @file SinglePhasePoromechanicsConformingFracturesVEM.cpp
  */
 
-#include "SinglePhasePoromechanicsConformingFractures.hpp"
+#include "SinglePhasePoromechanicsConformingFracturesVEM.hpp"
 
 #include "constitutive/solid/PorousSolid.hpp"
 #include "constitutive/fluid/singlefluid/SingleFluidBase.hpp"
@@ -36,7 +36,7 @@ using namespace constitutive;
 using namespace dataRepository;
 using namespace fields;
 
-SinglePhasePoromechanicsConformingFractures::SinglePhasePoromechanicsConformingFractures( const string & name,
+SinglePhasePoromechanicsConformingFracturesVEM::SinglePhasePoromechanicsConformingFracturesVEM( const string & name,
                                                                                           Group * const parent )
   : Base( name, parent ),
   m_isThermal( 0 )
@@ -47,7 +47,7 @@ SinglePhasePoromechanicsConformingFractures::SinglePhasePoromechanicsConformingF
     setDescription( "Flag indicating whether the problem is thermal or not. Set isThermal=\"1\" to enable the thermal coupling" );
 }
 
-void SinglePhasePoromechanicsConformingFractures::initializePostInitialConditionsPostSubGroups()
+void SinglePhasePoromechanicsConformingFracturesVEM::initializePostInitialConditionsPostSubGroups()
 {
   contactSolver()->setSolidSolverDofFlags( false );
 
@@ -58,7 +58,7 @@ void SinglePhasePoromechanicsConformingFractures::initializePostInitialCondition
                                                                         poromechanicsSolver()->getName() ) );
 }
 
-void SinglePhasePoromechanicsConformingFractures::setupCoupling( DomainPartition const & domain,
+void SinglePhasePoromechanicsConformingFracturesVEM::setupCoupling( DomainPartition const & domain,
                                                                  DofManager & dofManager ) const
 {
   GEOS_MARK_FUNCTION;
@@ -73,17 +73,17 @@ void SinglePhasePoromechanicsConformingFractures::setupCoupling( DomainPartition
                           DofManager::Connector::Elem );
 }
 
-bool SinglePhasePoromechanicsConformingFractures::updateConfiguration( DomainPartition & domain )
+bool SinglePhasePoromechanicsConformingFracturesVEM::updateConfiguration( DomainPartition & domain )
 {
   return contactSolver()->updateConfiguration( domain );
 }
 
-bool SinglePhasePoromechanicsConformingFractures::resetConfigurationToDefault( DomainPartition & domain ) const
+bool SinglePhasePoromechanicsConformingFracturesVEM::resetConfigurationToDefault( DomainPartition & domain ) const
 {
   return contactSolver()->resetConfigurationToDefault( domain );
 }
 
-void SinglePhasePoromechanicsConformingFractures::setupSystem( DomainPartition & domain,
+void SinglePhasePoromechanicsConformingFracturesVEM::setupSystem( DomainPartition & domain,
                                                                DofManager & dofManager,
                                                                CRSMatrix< real64, globalIndex > & localMatrix,
                                                                ParallelVector & rhs,
@@ -153,7 +153,7 @@ void SinglePhasePoromechanicsConformingFractures::setupSystem( DomainPartition &
   // }
 }
 
-void SinglePhasePoromechanicsConformingFractures::assembleSystem( real64 const time_n,
+void SinglePhasePoromechanicsConformingFracturesVEM::assembleSystem( real64 const time_n,
                                                                   real64 const dt,
                                                                   DomainPartition & domain,
                                                                   DofManager const & dofManager,
@@ -192,7 +192,7 @@ void SinglePhasePoromechanicsConformingFractures::assembleSystem( real64 const t
                          localRhs );
 }
 
-void SinglePhasePoromechanicsConformingFractures::assembleCellBasedContributions( real64 const time_n,
+void SinglePhasePoromechanicsConformingFracturesVEM::assembleCellBasedContributions( real64 const time_n,
                                                                                   real64 const dt,
                                                                                   DomainPartition & domain,
                                                                                   DofManager const & dofManager,
@@ -249,7 +249,7 @@ void SinglePhasePoromechanicsConformingFractures::assembleCellBasedContributions
   } );
 }
 
-void SinglePhasePoromechanicsConformingFractures::assembleCouplingTerms( real64 const time_n,
+void SinglePhasePoromechanicsConformingFracturesVEM::assembleCouplingTerms( real64 const time_n,
                                                                          real64 const dt,
                                                                          DomainPartition const & domain,
                                                                          DofManager const & dofManager,
@@ -268,7 +268,7 @@ void SinglePhasePoromechanicsConformingFractures::assembleCouplingTerms( real64 
   } );
 }
 
-void SinglePhasePoromechanicsConformingFractures::
+void SinglePhasePoromechanicsConformingFracturesVEM::
   setUpDflux_dApertureMatrix( DomainPartition & domain,
                               DofManager const & GEOS_UNUSED_PARAM( dofManager ),
                               CRSMatrix< real64, globalIndex > & localMatrix )
@@ -327,7 +327,7 @@ void SinglePhasePoromechanicsConformingFractures::
   } );
 }
 
-void SinglePhasePoromechanicsConformingFractures::
+void SinglePhasePoromechanicsConformingFracturesVEM::
   addTransmissibilityCouplingNNZ( DomainPartition const & domain,
                                   DofManager const & dofManager,
                                   arrayView1d< localIndex > const & rowLengths ) const
@@ -389,7 +389,7 @@ void SinglePhasePoromechanicsConformingFractures::
   } );
 }
 
-void SinglePhasePoromechanicsConformingFractures::
+void SinglePhasePoromechanicsConformingFracturesVEM::
   addTransmissibilityCouplingPattern( DomainPartition const & domain,
                                       DofManager const & dofManager,
                                       SparsityPatternView< globalIndex > const & pattern ) const
@@ -482,7 +482,7 @@ void SinglePhasePoromechanicsConformingFractures::
   } );
 }
 
-void SinglePhasePoromechanicsConformingFractures::
+void SinglePhasePoromechanicsConformingFracturesVEM::
   assembleForceResidualDerivativeWrtPressure( MeshLevel const & mesh,
                                               arrayView1d< string const > const & regionNames,
                                               DofManager const & dofManager,
@@ -496,7 +496,11 @@ void SinglePhasePoromechanicsConformingFractures::
   ElementRegionManager const & elemManager = mesh.getElemManager();
 
   ArrayOfArraysView< localIndex const > const & faceToNodeMap = faceManager.nodeList().toViewConst();
+  ArrayOfArraysView< localIndex const > const faceToEdgeMap = faceManager.edgeList().toViewConst();
+  arrayView2d< localIndex const > const & edgeToNodeMap = edgeManager.nodeList().toViewConst();
+  arrayView2d< real64 const > faceCenters = faceManager.faceCenter();
   arrayView2d< real64 const > const & faceNormal = faceManager.faceNormal();
+  arrayView1d< real64 const > faceAreas = faceManager.faceArea();
 
   string const & dispDofKey = dofManager.getKey( solidMechanics::totalDisplacement::key() );
   string const & presDofKey = dofManager.getKey( m_pressureKey );
@@ -542,7 +546,16 @@ void SinglePhasePoromechanicsConformingFractures::
         {
           // Compute local area contribution for each node
           array1d< real64 > nodalArea;
-          contactSolver()->computeFaceNodalArea( nodePosition, faceToNodeMap, elemsToFaces[kfe][kf], nodalArea );
+          // contactSolver()->computeFaceNodalArea( nodePosition, faceToNodeMap, elemsToFaces[kfe][kf], nodalArea );
+          contactSolver()->computeProjectors( elemsToFaces[kfe][kf],
+                                              nodePosition, 
+                                              faceToNodeMap, 
+                                              faceToEdgeMap,
+                                              edgeToNodeMap,
+                                              faceCenters,
+                                              faceNormal,
+                                              faceAreas,
+                                              nodalArea);
 
           real64 const nodalForceMag = -( pressure[kfe] ) * nodalArea[a];
           array1d< real64 > globalNodalForce( 3 );
@@ -577,7 +590,7 @@ void SinglePhasePoromechanicsConformingFractures::
   } );
 }
 
-void SinglePhasePoromechanicsConformingFractures::
+void SinglePhasePoromechanicsConformingFracturesVEM::
   assembleFluidMassResidualDerivativeWrtDisplacement( MeshLevel const & mesh,
                                                       arrayView1d< string const > const & regionNames,
                                                       DofManager const & dofManager,
@@ -590,8 +603,12 @@ void SinglePhasePoromechanicsConformingFractures::
   NodeManager const & nodeManager = mesh.getNodeManager();
   ElementRegionManager const & elemManager = mesh.getElemManager();
 
-  arrayView2d< real64 const > const & faceNormal = faceManager.faceNormal();
   ArrayOfArraysView< localIndex const > const & faceToNodeMap = faceManager.nodeList().toViewConst();
+  ArrayOfArraysView< localIndex const > const faceToEdgeMap = faceManager.edgeList().toViewConst();
+  arrayView2d< localIndex const > const & edgeToNodeMap = edgeManager.nodeList().toViewConst();
+  arrayView2d< real64 const > faceCenters = faceManager.faceCenter();
+  arrayView2d< real64 const > const & faceNormal = faceManager.faceNormal();
+  arrayView1d< real64 const > faceAreas = faceManager.faceArea();
 
   CRSMatrixView< real64 const, localIndex const > const &
   dFluxResidual_dNormalJump = getDerivativeFluxResidual_dNormalJump().toViewConst();
@@ -647,8 +664,17 @@ void SinglePhasePoromechanicsConformingFractures::
         {
           // Compute local area contribution for each node
           array1d< real64 > nodalArea;
-          contactSolver()->computeFaceNodalArea( nodePosition, faceToNodeMap, elemsToFaces[kfe][kf], nodalArea );
-
+          // contactSolver()->computeFaceNodalArea( nodePosition, faceToNodeMap, elemsToFaces[kfe][kf], nodalArea );
+          contactSolver()->computeProjectors( elemsToFaces[kfe][kf],
+                                              nodePosition, 
+                                              faceToNodeMap, 
+                                              faceToEdgeMap,
+                                              edgeToNodeMap,
+                                              faceCenters,
+                                              faceNormal,
+                                              faceAreas,
+                                              nodalArea);
+      
           // TODO: move to something like this plus a static method.
           // localIndex const numNodesPerFace = faceToNodeMap.sizeOfArray( elemsToFaces[kfe][kf] );
           // stackArray1d<real64, 4> nodalArea( numNodesPerFace );
@@ -698,8 +724,17 @@ void SinglePhasePoromechanicsConformingFractures::
         {
           // Compute local area contribution for each node
           array1d< real64 > nodalArea;
-          contactSolver()->computeFaceNodalArea( nodePosition, faceToNodeMap, elemsToFaces[kfe2][kf], nodalArea );
-
+          // contactSolver()->computeFaceNodalArea( nodePosition, faceToNodeMap, elemsToFaces[kfe2][kf], nodalArea );
+          contactSolver()->computeProjectors( elemsToFaces[kfe2][kf],
+                                              nodePosition, 
+                                              faceToNodeMap, 
+                                              faceToEdgeMap,
+                                              edgeToNodeMap,
+                                              faceCenters,
+                                              faceNormal,
+                                              faceAreas,
+                                              nodalArea);
+                                                        
           for( localIndex a=0; a<numNodesPerFace; ++a )
           {
             for( localIndex i=0; i<3; ++i )
@@ -729,7 +764,7 @@ void SinglePhasePoromechanicsConformingFractures::
   } );
 }
 
-void SinglePhasePoromechanicsConformingFractures::updateState( DomainPartition & domain )
+void SinglePhasePoromechanicsConformingFracturesVEM::updateState( DomainPartition & domain )
 {
 
   Base::updateState( domain );
@@ -763,7 +798,7 @@ void SinglePhasePoromechanicsConformingFractures::updateState( DomainPartition &
   } );
 }
 
-void SinglePhasePoromechanicsConformingFractures::updateHydraulicApertureAndFracturePermeability( DomainPartition & domain )
+void SinglePhasePoromechanicsConformingFracturesVEM::updateHydraulicApertureAndFracturePermeability( DomainPartition & domain )
 {
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
@@ -815,11 +850,11 @@ void SinglePhasePoromechanicsConformingFractures::updateHydraulicApertureAndFrac
 }
 
 
-void SinglePhasePoromechanicsConformingFractures::outputConfigurationStatistics( DomainPartition const & domain ) const
+void SinglePhasePoromechanicsConformingFracturesVEM::outputConfigurationStatistics( DomainPartition const & domain ) const
 {
   contactSolver()->outputConfigurationStatistics( domain );
 }
 
-REGISTER_CATALOG_ENTRY( SolverBase, SinglePhasePoromechanicsConformingFractures, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( SolverBase, SinglePhasePoromechanicsConformingFracturesVEM, string const &, Group * const )
 
 } /* namespace geos */
