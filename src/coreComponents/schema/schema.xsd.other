@@ -532,13 +532,15 @@
 		<xsd:attribute name="pressureNp1AtReceivers" type="real32_array2d" />
 		<!--rcvElem => Element containing the receivers-->
 		<xsd:attribute name="rcvElem" type="integer_array" />
+		<!--receiverConstants => Constant part of the receiver for the nodes listed in m_receiverNodeIds-->
+		<xsd:attribute name="receiverConstants" type="real64_array2d" />
 		<!--receiverIsLocal => Flag that indicates whether the receiver is local to this MPI rank-->
 		<xsd:attribute name="receiverIsLocal" type="integer_array" />
 		<!--receiverNodeIds => Indices of the nodes (in the right order) for each receiver point-->
 		<xsd:attribute name="receiverNodeIds" type="integer_array2d" />
 		<!--receiverRegion => Region containing the receivers-->
 		<xsd:attribute name="receiverRegion" type="integer_array" />
-		<!--sourceConstants => Constant part of the receiver for the nodes listed in m_receiverNodeIds-->
+		<!--sourceConstants => Constant part of the source for the nodes listed in m_sourceNodeIds-->
 		<xsd:attribute name="sourceConstants" type="real64_array2d" />
 		<!--sourceElem => Element containing the sources-->
 		<xsd:attribute name="sourceElem" type="integer_array" />
@@ -593,11 +595,17 @@
 		<xsd:attribute name="meshTargets" type="geos_mapBase&lt;std_pair&lt;string, string >, LvArray_Array&lt;string, 1, camp_int_seq&lt;long, 0l>, int, LvArray_ChaiBuffer>, std_integral_constant&lt;bool, true> >" />
 		<!--pressureNp1AtReceivers => Pressure value at each receiver for each timestep-->
 		<xsd:attribute name="pressureNp1AtReceivers" type="real32_array2d" />
+		<!--rcvElem => Element containing the receivers-->
+		<xsd:attribute name="rcvElem" type="integer_array" />
+		<!--receiverConstants => Constant part of the receiver for the nodes listed in m_receiverNodeIds-->
+		<xsd:attribute name="receiverConstants" type="real64_array2d" />
 		<!--receiverIsLocal => Flag that indicates whether the receiver is local to this MPI rank-->
 		<xsd:attribute name="receiverIsLocal" type="integer_array" />
 		<!--receiverNodeIds => Indices of the nodes (in the right order) for each receiver point-->
 		<xsd:attribute name="receiverNodeIds" type="integer_array2d" />
-		<!--sourceConstants => Constant part of the receiver for the nodes listed in m_receiverNodeIds-->
+		<!--receiverRegion => Region containing the receivers-->
+		<xsd:attribute name="receiverRegion" type="integer_array" />
+		<!--sourceConstants => Constant part of the source for the nodes listed in m_sourceNodeIds-->
 		<xsd:attribute name="sourceConstants" type="real64_array2d" />
 		<!--sourceIsAccessible => Flag that indicates whether the source is local to this MPI rank-->
 		<xsd:attribute name="sourceIsAccessible" type="integer_array" />
@@ -624,11 +632,17 @@
 		<xsd:attribute name="meshTargets" type="geos_mapBase&lt;std_pair&lt;string, string >, LvArray_Array&lt;string, 1, camp_int_seq&lt;long, 0l>, int, LvArray_ChaiBuffer>, std_integral_constant&lt;bool, true> >" />
 		<!--pressureNp1AtReceivers => Pressure value at each receiver for each timestep-->
 		<xsd:attribute name="pressureNp1AtReceivers" type="real32_array2d" />
+		<!--rcvElem => Element containing the receivers-->
+		<xsd:attribute name="rcvElem" type="integer_array" />
+		<!--receiverConstants => Constant part of the receiver for the nodes listed in m_receiverNodeIds-->
+		<xsd:attribute name="receiverConstants" type="real64_array2d" />
 		<!--receiverIsLocal => Flag that indicates whether the receiver is local to this MPI rank-->
 		<xsd:attribute name="receiverIsLocal" type="integer_array" />
 		<!--receiverNodeIds => Indices of the nodes (in the right order) for each receiver point-->
 		<xsd:attribute name="receiverNodeIds" type="integer_array2d" />
-		<!--sourceConstants => Constant part of the receiver for the nodes listed in m_receiverNodeIds-->
+		<!--receiverRegion => Region containing the receivers-->
+		<xsd:attribute name="receiverRegion" type="integer_array" />
+		<!--sourceConstants => Constant part of the source for the nodes listed in m_sourceNodeIds-->
 		<xsd:attribute name="sourceConstants" type="real64_array2d" />
 		<!--sourceIsAccessible => Flag that indicates whether the source is local to this MPI rank-->
 		<xsd:attribute name="sourceIsAccessible" type="integer_array" />
@@ -719,13 +733,15 @@
 		<xsd:attribute name="meshTargets" type="geos_mapBase&lt;std_pair&lt;string, string >, LvArray_Array&lt;string, 1, camp_int_seq&lt;long, 0l>, int, LvArray_ChaiBuffer>, std_integral_constant&lt;bool, true> >" />
 		<!--rcvElem => Element containing the receivers-->
 		<xsd:attribute name="rcvElem" type="integer_array" />
+		<!--receiverConstants => Constant part of the receiver for the nodes listed in m_receiverNodeIds-->
+		<xsd:attribute name="receiverConstants" type="real64_array2d" />
 		<!--receiverIsLocal => Flag that indicates whether the receiver is local to this MPI rank-->
 		<xsd:attribute name="receiverIsLocal" type="integer_array" />
 		<!--receiverNodeIds => Indices of the nodes (in the right order) for each receiver point-->
 		<xsd:attribute name="receiverNodeIds" type="integer_array2d" />
 		<!--receiverRegion => Region containing the receivers-->
 		<xsd:attribute name="receiverRegion" type="integer_array" />
-		<!--sourceConstants => Constant part of the receiver for the nodes listed in m_receiverNodeIds-->
+		<!--sourceConstants => Constant part of the source for the nodes listed in m_sourceNodeIds-->
 		<xsd:attribute name="sourceConstants" type="real64_array2d" />
 		<!--sourceElem => Element containing the sources-->
 		<xsd:attribute name="sourceElem" type="integer_array" />
@@ -760,13 +776,19 @@
 		<xsd:attribute name="maxStableDt" type="real64" />
 		<!--meshTargets => MeshBody/Region combinations that the solver will be applied to.-->
 		<xsd:attribute name="meshTargets" type="geos_mapBase&lt;std_pair&lt;string, string >, LvArray_Array&lt;string, 1, camp_int_seq&lt;long, 0l>, int, LvArray_ChaiBuffer>, std_integral_constant&lt;bool, true> >" />
+		<!--rcvElem => Element containing the receivers-->
+		<xsd:attribute name="rcvElem" type="integer_array" />
+		<!--receiverConstants => Constant part of the receiver for the nodes listed in m_receiverNodeIds-->
+		<xsd:attribute name="receiverConstants" type="real64_array2d" />
 		<!--receiverIsLocal => Flag that indicates whether the receiver is local to this MPI rank-->
 		<xsd:attribute name="receiverIsLocal" type="integer_array" />
 		<!--receiverNodeIds => Indices of the nodes (in the right order) for each receiver point-->
 		<xsd:attribute name="receiverNodeIds" type="integer_array2d" />
-		<!--sourceConstants => Constant part of the receiver for the nodes listed in m_receiverNodeIds-->
+		<!--receiverRegion => Region containing the receivers-->
+		<xsd:attribute name="receiverRegion" type="integer_array" />
+		<!--sourceConstants => Constant part of the source for the nodes listed in m_sourceNodeIds in z-direction-->
 		<xsd:attribute name="sourceConstants" type="real64_array2d" />
-		<!--sourceIsAccessible => Flag that indicates whether the source is accessible to this MPI rank-->
+		<!--sourceIsAccessible => Flag that indicates whether the source is local to this MPI rank-->
 		<xsd:attribute name="sourceIsAccessible" type="integer_array" />
 		<!--sourceNodeIds => Indices of the nodes (in the right order) for each source point-->
 		<xsd:attribute name="sourceNodeIds" type="integer_array2d" />
@@ -1088,8 +1110,28 @@
 		<xsd:attribute name="bcTable" type="real64_array2d" />
 		<!--binSizeMultiplier => Multiplier for setting bin size, used to speed up particle neighbor sorting-->
 		<xsd:attribute name="binSizeMultiplier" type="integer" />
+		<!--domainExtent => domain extent-->
+		<xsd:attribute name="domainExtent" type="real64_array" />
+		<!--domainF => domain deformation gradient-->
+		<xsd:attribute name="domainF" type="real64_array" />
+		<!--domainL => domain L-->
+		<xsd:attribute name="domainL" type="real64_array" />
+		<!--elementSize => Minimum element size in x, y and z-->
+		<xsd:attribute name="elementSize" type="real64_array" />
 		<!--fTable => Array that stores time-dependent grid-aligned stretches interpreted as a global background grid F.-->
 		<xsd:attribute name="fTable" type="real64_array2d" />
+		<!--globalMaximum => global maximum-->
+		<xsd:attribute name="globalMaximum" type="real64_array" />
+		<!--globalMinimum => global minimum-->
+		<xsd:attribute name="globalMinimum" type="real64_array" />
+		<!--localMaximum => local maximum-->
+		<xsd:attribute name="localMaximum" type="real64_array" />
+		<!--localMaximumNoGhost => local maximum without ghost cells-->
+		<xsd:attribute name="localMaximumNoGhost" type="real64_array" />
+		<!--localMinimum => local minimum-->
+		<xsd:attribute name="localMinimum" type="real64_array" />
+		<!--localMinimumNoGhost => local minimum without ghost cells-->
+		<xsd:attribute name="localMinimumNoGhost" type="real64_array" />
 		<!--m_ijkMap => Map from indices in each spatial dimension to local node ID-->
 		<xsd:attribute name="m_ijkMap" type="integer_array3d" />
 		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
@@ -1102,8 +1144,12 @@
 		<xsd:attribute name="numContactGroups" type="integer" />
 		<!--numDims => The number of active spatial dimensions, 2 for plane strain, 3 otherwise-->
 		<xsd:attribute name="numDims" type="integer" />
+		<!--numElements => number of elements along partition directions-->
+		<xsd:attribute name="numElements" type="integer_array" />
 		<!--numVelocityFields => Number of velocity fields-->
 		<xsd:attribute name="numVelocityFields" type="integer" />
+		<!--partitionExtent => parititon extent-->
+		<xsd:attribute name="partitionExtent" type="real64_array" />
 		<!--smallMass => The small mass threshold for ignoring extremely low-mass nodes.-->
 		<xsd:attribute name="smallMass" type="real64" />
 	</xsd:complexType>
@@ -1206,6 +1252,8 @@
 			<xsd:element name="CarmanKozenyPermeability" type="CarmanKozenyPermeabilityType" />
 			<xsd:element name="CeramicDamage" type="CeramicDamageType" />
 			<xsd:element name="CompositionalMultiphaseFluid" type="CompositionalMultiphaseFluidType" />
+			<xsd:element name="CompositonalTwoPhaseFluidPengRobinson" type="CompositonalTwoPhaseFluidPengRobinsonType" />
+			<xsd:element name="CompositonalTwoPhaseFluidSoaveRedlichKwong" type="CompositonalTwoPhaseFluidSoaveRedlichKwongType" />
 			<xsd:element name="CompressibleSinglePhaseFluid" type="CompressibleSinglePhaseFluidType" />
 			<xsd:element name="CompressibleSolidCarmanKozenyPermeability" type="CompressibleSolidCarmanKozenyPermeabilityType" />
 			<xsd:element name="CompressibleSolidConstantPermeability" type="CompressibleSolidConstantPermeabilityType" />
@@ -1607,6 +1655,98 @@
 		<xsd:attribute name="thermalExpansionCoefficient" type="real64_array" />
 	</xsd:complexType>
 	<xsd:complexType name="CompositionalMultiphaseFluidType">
+		<!--dPhaseCompFraction => Derivative of phase component fraction with respect to pressure, temperature, and global component fractions-->
+		<xsd:attribute name="dPhaseCompFraction" type="LvArray_Array&lt;double, 5, camp_int_seq&lt;long, 0l, 1l, 2l, 3l, 4l>, int, LvArray_ChaiBuffer>" />
+		<!--dPhaseDensity => Derivative of phase density with respect to pressure, temperature, and global component fractions-->
+		<xsd:attribute name="dPhaseDensity" type="real64_array4d" />
+		<!--dPhaseEnthalpy => Derivative of phase enthalpy with respect to pressure, temperature, and global component fractions-->
+		<xsd:attribute name="dPhaseEnthalpy" type="real64_array4d" />
+		<!--dPhaseFraction => Derivative of phase fraction with respect to pressure, temperature, and global component fractions-->
+		<xsd:attribute name="dPhaseFraction" type="real64_array4d" />
+		<!--dPhaseInternalEnergy => Derivative of phase internal energy with respect to pressure, temperature, and global component fractions-->
+		<xsd:attribute name="dPhaseInternalEnergy" type="real64_array4d" />
+		<!--dPhaseMassDensity => Derivative of phase mass density with respect to pressure, temperature, and global component fractions-->
+		<xsd:attribute name="dPhaseMassDensity" type="real64_array4d" />
+		<!--dPhaseViscosity => Derivative of phase viscosity with respect to pressure, temperature, and global component fractions-->
+		<xsd:attribute name="dPhaseViscosity" type="real64_array4d" />
+		<!--dTotalDensity => Derivative of total density with respect to pressure, temperature, and global component fractions-->
+		<xsd:attribute name="dTotalDensity" type="real64_array3d" />
+		<!--phaseCompFraction => Phase component fraction-->
+		<xsd:attribute name="phaseCompFraction" type="real64_array4d" />
+		<!--phaseCompFraction_n => Phase component fraction at the previous converged time step-->
+		<xsd:attribute name="phaseCompFraction_n" type="real64_array4d" />
+		<!--phaseDensity => Phase density-->
+		<xsd:attribute name="phaseDensity" type="real64_array3d" />
+		<!--phaseDensity_n => Phase density at the previous converged time step-->
+		<xsd:attribute name="phaseDensity_n" type="real64_array3d" />
+		<!--phaseEnthalpy => Phase enthalpy-->
+		<xsd:attribute name="phaseEnthalpy" type="real64_array3d" />
+		<!--phaseEnthalpy_n => Phase enthalpy at the previous converged time step-->
+		<xsd:attribute name="phaseEnthalpy_n" type="real64_array3d" />
+		<!--phaseFraction => Phase fraction-->
+		<xsd:attribute name="phaseFraction" type="real64_array3d" />
+		<!--phaseInternalEnergy => Phase internal energy-->
+		<xsd:attribute name="phaseInternalEnergy" type="real64_array3d" />
+		<!--phaseInternalEnergy_n => Phase internal energy at the previous converged time step-->
+		<xsd:attribute name="phaseInternalEnergy_n" type="real64_array3d" />
+		<!--phaseMassDensity => Phase mass density-->
+		<xsd:attribute name="phaseMassDensity" type="real64_array3d" />
+		<!--phaseViscosity => Phase viscosity-->
+		<xsd:attribute name="phaseViscosity" type="real64_array3d" />
+		<!--totalDensity => Total density-->
+		<xsd:attribute name="totalDensity" type="real64_array2d" />
+		<!--totalDensity_n => Total density at the previous converged time step-->
+		<xsd:attribute name="totalDensity_n" type="real64_array2d" />
+		<!--useMass => (no description available)-->
+		<xsd:attribute name="useMass" type="integer" />
+	</xsd:complexType>
+	<xsd:complexType name="CompositonalTwoPhaseFluidPengRobinsonType">
+		<!--dPhaseCompFraction => Derivative of phase component fraction with respect to pressure, temperature, and global component fractions-->
+		<xsd:attribute name="dPhaseCompFraction" type="LvArray_Array&lt;double, 5, camp_int_seq&lt;long, 0l, 1l, 2l, 3l, 4l>, int, LvArray_ChaiBuffer>" />
+		<!--dPhaseDensity => Derivative of phase density with respect to pressure, temperature, and global component fractions-->
+		<xsd:attribute name="dPhaseDensity" type="real64_array4d" />
+		<!--dPhaseEnthalpy => Derivative of phase enthalpy with respect to pressure, temperature, and global component fractions-->
+		<xsd:attribute name="dPhaseEnthalpy" type="real64_array4d" />
+		<!--dPhaseFraction => Derivative of phase fraction with respect to pressure, temperature, and global component fractions-->
+		<xsd:attribute name="dPhaseFraction" type="real64_array4d" />
+		<!--dPhaseInternalEnergy => Derivative of phase internal energy with respect to pressure, temperature, and global component fractions-->
+		<xsd:attribute name="dPhaseInternalEnergy" type="real64_array4d" />
+		<!--dPhaseMassDensity => Derivative of phase mass density with respect to pressure, temperature, and global component fractions-->
+		<xsd:attribute name="dPhaseMassDensity" type="real64_array4d" />
+		<!--dPhaseViscosity => Derivative of phase viscosity with respect to pressure, temperature, and global component fractions-->
+		<xsd:attribute name="dPhaseViscosity" type="real64_array4d" />
+		<!--dTotalDensity => Derivative of total density with respect to pressure, temperature, and global component fractions-->
+		<xsd:attribute name="dTotalDensity" type="real64_array3d" />
+		<!--phaseCompFraction => Phase component fraction-->
+		<xsd:attribute name="phaseCompFraction" type="real64_array4d" />
+		<!--phaseCompFraction_n => Phase component fraction at the previous converged time step-->
+		<xsd:attribute name="phaseCompFraction_n" type="real64_array4d" />
+		<!--phaseDensity => Phase density-->
+		<xsd:attribute name="phaseDensity" type="real64_array3d" />
+		<!--phaseDensity_n => Phase density at the previous converged time step-->
+		<xsd:attribute name="phaseDensity_n" type="real64_array3d" />
+		<!--phaseEnthalpy => Phase enthalpy-->
+		<xsd:attribute name="phaseEnthalpy" type="real64_array3d" />
+		<!--phaseEnthalpy_n => Phase enthalpy at the previous converged time step-->
+		<xsd:attribute name="phaseEnthalpy_n" type="real64_array3d" />
+		<!--phaseFraction => Phase fraction-->
+		<xsd:attribute name="phaseFraction" type="real64_array3d" />
+		<!--phaseInternalEnergy => Phase internal energy-->
+		<xsd:attribute name="phaseInternalEnergy" type="real64_array3d" />
+		<!--phaseInternalEnergy_n => Phase internal energy at the previous converged time step-->
+		<xsd:attribute name="phaseInternalEnergy_n" type="real64_array3d" />
+		<!--phaseMassDensity => Phase mass density-->
+		<xsd:attribute name="phaseMassDensity" type="real64_array3d" />
+		<!--phaseViscosity => Phase viscosity-->
+		<xsd:attribute name="phaseViscosity" type="real64_array3d" />
+		<!--totalDensity => Total density-->
+		<xsd:attribute name="totalDensity" type="real64_array2d" />
+		<!--totalDensity_n => Total density at the previous converged time step-->
+		<xsd:attribute name="totalDensity_n" type="real64_array2d" />
+		<!--useMass => (no description available)-->
+		<xsd:attribute name="useMass" type="integer" />
+	</xsd:complexType>
+	<xsd:complexType name="CompositonalTwoPhaseFluidSoaveRedlichKwongType">
 		<!--dPhaseCompFraction => Derivative of phase component fraction with respect to pressure, temperature, and global component fractions-->
 		<xsd:attribute name="dPhaseCompFraction" type="LvArray_Array&lt;double, 5, camp_int_seq&lt;long, 0l, 1l, 2l, 3l, 4l>, int, LvArray_ChaiBuffer>" />
 		<!--dPhaseDensity => Derivative of phase density with respect to pressure, temperature, and global component fractions-->
