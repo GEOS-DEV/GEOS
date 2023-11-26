@@ -82,7 +82,8 @@ set( physicsSolvers_headers
      multiphysics/poromechanicsKernels/PoromechanicsBase.hpp
      multiphysics/poromechanicsKernels/SinglePhasePoromechanics.hpp
      multiphysics/poromechanicsKernels/SinglePhasePoromechanics_impl.hpp
-     multiphysics/poromechanicsKernels/SinglePhasePoromechanicsConformingFractures.hpp     
+     multiphysics/poromechanicsKernels/SinglePhasePoromechanicsConformingFractures.hpp
+     multiphysics/poromechanicsKernels/SinglePhasePoromechanicsConformingFracturesVEM.hpp     
      multiphysics/poromechanicsKernels/SinglePhasePoromechanicsEFEM.hpp
      multiphysics/poromechanicsKernels/SinglePhasePoromechanicsEFEM_impl.hpp
      multiphysics/poromechanicsKernels/SinglePhasePoromechanicsFractures.hpp
@@ -97,6 +98,7 @@ set( physicsSolvers_headers
      multiphysics/poromechanicsKernels/ThermalSinglePhasePoromechanicsEmbeddedFractures.hpp
      multiphysics/SinglePhasePoromechanics.hpp
      multiphysics/SinglePhasePoromechanicsEmbeddedFractures.hpp
+     multiphysics/SinglePhasePoromechanicsConformingFracturesVEM.hpp
      multiphysics/SinglePhasePoromechanicsConformingFractures.hpp
      multiphysics/SinglePhaseReservoirAndWells.hpp
      simplePDE/LaplaceBaseH1.hpp
@@ -188,6 +190,7 @@ set( physicsSolvers_sources
      multiphysics/SinglePhasePoromechanics.cpp
      multiphysics/SinglePhasePoromechanicsEmbeddedFractures.cpp
      multiphysics/SinglePhasePoromechanicsConformingFractures.cpp
+     multiphysics/SinglePhasePoromechanicsConformingFracturesVEM.cpp
      multiphysics/SinglePhaseReservoirAndWells.cpp
      simplePDE/LaplaceBaseH1.cpp
      simplePDE/LaplaceFEM.cpp

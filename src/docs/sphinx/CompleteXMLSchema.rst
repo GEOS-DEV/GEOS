@@ -185,6 +185,20 @@ Element: CompositionalMultiphaseReservoir
 .. include:: ../../coreComponents/schema/docs/CompositionalMultiphaseReservoir.rst
 
 
+.. _XML_CompositionalMultiphaseReservoirPoromechanics:
+
+Element: CompositionalMultiphaseReservoirPoromechanics
+======================================================
+.. include:: ../../coreComponents/schema/docs/CompositionalMultiphaseReservoirPoromechanics.rst
+
+
+.. _XML_CompositionalMultiphaseReservoirPoromechanicsInitialization:
+
+Element: CompositionalMultiphaseReservoirPoromechanicsInitialization
+====================================================================
+.. include:: ../../coreComponents/schema/docs/CompositionalMultiphaseReservoirPoromechanicsInitialization.rst
+
+
 .. _XML_CompositionalMultiphaseStatistics:
 
 Element: CompositionalMultiphaseStatistics
@@ -1032,6 +1046,20 @@ Element: SinglePhaseReservoir
 .. include:: ../../coreComponents/schema/docs/SinglePhaseReservoir.rst
 
 
+.. _XML_SinglePhaseReservoirPoromechanics:
+
+Element: SinglePhaseReservoirPoromechanics
+==========================================
+.. include:: ../../coreComponents/schema/docs/SinglePhaseReservoirPoromechanics.rst
+
+
+.. _XML_SinglePhaseReservoirPoromechanicsInitialization:
+
+Element: SinglePhaseReservoirPoromechanicsInitialization
+========================================================
+.. include:: ../../coreComponents/schema/docs/SinglePhaseReservoirPoromechanicsInitialization.rst
+
+
 .. _XML_SinglePhaseStatistics:
 
 Element: SinglePhaseStatistics
@@ -1496,6 +1524,20 @@ Datastructure: CompositionalMultiphaseHybridFVM
 Datastructure: CompositionalMultiphaseReservoir
 ===============================================
 .. include:: ../../coreComponents/schema/docs/CompositionalMultiphaseReservoir_other.rst
+
+
+.. _DATASTRUCTURE_CompositionalMultiphaseReservoirPoromechanics:
+
+Datastructure: CompositionalMultiphaseReservoirPoromechanics
+============================================================
+.. include:: ../../coreComponents/schema/docs/CompositionalMultiphaseReservoirPoromechanics_other.rst
+
+
+.. _DATASTRUCTURE_CompositionalMultiphaseReservoirPoromechanicsInitialization:
+
+Datastructure: CompositionalMultiphaseReservoirPoromechanicsInitialization
+==========================================================================
+.. include:: ../../coreComponents/schema/docs/CompositionalMultiphaseReservoirPoromechanicsInitialization_other.rst
 
 
 .. _DATASTRUCTURE_CompositionalMultiphaseStatistics:
@@ -2364,6 +2406,20 @@ Datastructure: SinglePhaseProppantFVM
 Datastructure: SinglePhaseReservoir
 ===================================
 .. include:: ../../coreComponents/schema/docs/SinglePhaseReservoir_other.rst
+
+
+.. _DATASTRUCTURE_SinglePhaseReservoirPoromechanics:
+
+Datastructure: SinglePhaseReservoirPoromechanics
+================================================
+.. include:: ../../coreComponents/schema/docs/SinglePhaseReservoirPoromechanics_other.rst
+
+
+.. _DATASTRUCTURE_SinglePhaseReservoirPoromechanicsInitialization:
+
+Datastructure: SinglePhaseReservoirPoromechanicsInitialization
+==============================================================
+.. include:: ../../coreComponents/schema/docs/SinglePhaseReservoirPoromechanicsInitialization_other.rst
 
 
 .. _DATASTRUCTURE_SinglePhaseStatistics:
