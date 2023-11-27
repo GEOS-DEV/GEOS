@@ -192,11 +192,11 @@ struct WaveSolverUtils
         }
         // linear interpolation between the pressure value at time_n and time_{n+1}
         varAtReceivers( iSeismo, ircv ) = a1 * vtmp_n + a2 * vtmp_np1;
+        // NOTE: varAtReceivers has size(1) = numReceiversGlobal + 1, this does not OOB
+        // left in the forAll loop for sync issues since the following does not depend on `ircv`
+        varAtReceivers( iSeismo, nReceivers ) = a1 * time_n + a2 * time_np1;
       }
     } );
-
-    // NOTE: varAtReceivers has size(1) = numReceiversGlobal + 1, this does not OOB
-    varAtReceivers( iSeismo, nReceivers ) = a1 * time_n + a2 * time_np1;
   }
 
   static void compute2dVariableSeismoTrace( real64 const time_n,
@@ -233,12 +233,12 @@ struct WaveSolverUtils
           }
           // linear interpolation between the pressure value at time_n and time_{n+1}
           varAtReceivers( iSeismo, ircv ) = a1 * vtmp_n + a2 * vtmp_np1;
+          // NOTE: varAtReceivers has size(1) = numReceiversGlobal + 1, this does not OOB
+          // left in the forAll loop for sync issues since the following does not depend on `ircv`
+          varAtReceivers( iSeismo, nReceivers ) = a1 * time_n + a2 * time_np1;
         }
       }
     } );
-
-    // NOTE: varAtReceivers has size(1) = numReceiversGlobal + 1, this does not OOB
-    varAtReceivers( iSeismo, nReceivers ) = a1 * time_n + a2 * time_np1;
   }
 
   /**
