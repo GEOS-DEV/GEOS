@@ -176,7 +176,7 @@ public:
 
   using AbstractBase = isothermalCompositionalMultiphaseFVMKernels::FaceBasedAssemblyKernelBase;
   using DofNumberAccessor = AbstractBase::DofNumberAccessor;
-  using GlobalIndexAccessor = AbstractBase::GlobalIndexAccessor;
+  using GlobalDistanceAccessor = AbstractBase::GlobalDistanceAccessor;
   using CompFlowAccessors = AbstractBase::CompFlowAccessors;
   using MultiFluidAccessors = AbstractBase::MultiFluidAccessors;
   using CapPressureAccessors = AbstractBase::CapPressureAccessors;
@@ -244,7 +244,7 @@ public:
    */
   FaceBasedAssemblyKernel( integer const numPhases, globalIndex const rankOffset, integer const hasCapPressure,
                            integer const hasVelocityCompute, STENCILWRAPPER const & stencilWrapper,
-                           DofNumberAccessor const & dofNumberAccessor, GlobalIndexAccessor const & globalIndexAccessor,
+                           DofNumberAccessor const & dofNumberAccessor, GlobalDistanceAccessor const & globalIndexAccessor,
                            arrayView2d< real64 const > const & globalDistance, CompFlowAccessors const & compFlowAccessors,
                            ThermalCompFlowAccessors const & thermalCompFlowAccessors,
                            MultiFluidAccessors const & multiFluidAccessors,
@@ -631,7 +631,8 @@ public:
                    globalIndex const rankOffset,
                    string const & dofKey,
                    integer const hasCapPressure, integer const hasVelocityCompute, string const & solverName,
-                   ElementRegionManager const & elemManager, arrayView2d< real64 const > const & globalDistance,
+                   ElementRegionManager const & elemManager,
+                   arrayView2d< real64 const > const & globalDistance,
                    STENCILWRAPPER const & stencilWrapper, real64 const & dt,
                    CRSMatrixView< real64, globalIndex const > const & localMatrix, arrayView1d< real64 > const & localRhs )
   {
@@ -645,8 +646,12 @@ public:
         elemManager.constructArrayViewAccessor< globalIndex, 1 >( dofKey );
       dofNumberAccessor.setName( solverName + "/accessors/" + dofKey );
 
-      ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > > const globalIndexAccessor =
-        elemManager.constructArrayViewAccessor< globalIndex, 1 >( ObjectManagerBase::viewKeyStruct::localToGlobalMapString());
+//      ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > > const globalIndexAccessor =
+//        elemManager.constructArrayViewAccessor< globalIndex, 1 >( ObjectManagerBase::viewKeyStruct::localToGlobalMapString());
+
+        ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > const globalDistanceAccessor =
+                elemManager.constructArrayViewAccessor< real64 , 2 >( CellElementSubRegion::viewKeyStruct::globalCellToFaceString() );
+
 
 
       using KernelType = FaceBasedAssemblyKernel< NUM_COMP, NUM_DOF, STENCILWRAPPER >;
@@ -659,7 +664,7 @@ public:
       typename KernelType::ThermalConductivityAccessors thermalConductivityAccessors( elemManager, solverName );
       typename KernelType::DispersionAccessors dispersionAccessors( elemManager, solverName );
 
-      KernelType kernel( numPhases, rankOffset, hasCapPressure, hasVelocityCompute, stencilWrapper, dofNumberAccessor, globalIndexAccessor, globalDistance,
+      KernelType kernel( numPhases, rankOffset, hasCapPressure, hasVelocityCompute, stencilWrapper, dofNumberAccessor, globalDistanceAccessor, globalDistance,
                          compFlowAccessors, thermalCompFlowAccessors, multiFluidAccessors, dispersionAccessors, thermalMultiFluidAccessors,
                          capPressureAccessors, permeabilityAccessors, thermalConductivityAccessors,
                          dt, localMatrix, localRhs );
@@ -694,7 +699,7 @@ public:
 
   using AbstractBase = isothermalCompositionalMultiphaseFVMKernels::FaceBasedAssemblyKernelBase;
   using DofNumberAccessor = AbstractBase::DofNumberAccessor;
-  using GlobalIndexAccessor = AbstractBase::GlobalIndexAccessor;
+  using GlobalDistanceAccessor = AbstractBase::GlobalDistanceAccessor;
   using CompFlowAccessors = AbstractBase::CompFlowAccessors;
   using MultiFluidAccessors = AbstractBase::MultiFluidAccessors;
   using AbstractBase::m_dt;
@@ -734,7 +739,7 @@ public:
                                               globalIndex const rankOffset,
                                               STENCILWRAPPER const & stencilWrapper,
                                               DofNumberAccessor const & dofNumberAccessor,
-                                              GlobalIndexAccessor const & globalIndexAccessor,
+                                              GlobalDistanceAccessor const & globalDistanceAccessor,
                                               CompFlowAccessors const & compFlowAccessors,
                                               MultiFluidAccessors const & multiFluidAccessors,
                                               DiffusionAccessors const & diffusionAccessors,
@@ -747,7 +752,7 @@ public:
             rankOffset,
             stencilWrapper,
             dofNumberAccessor,
-            globalIndexAccessor,
+            globalDistanceAccessor,
             compFlowAccessors,
             multiFluidAccessors,
             diffusionAccessors,
@@ -961,8 +966,11 @@ public:
         elemManager.constructArrayViewAccessor< globalIndex, 1 >( dofKey );
       dofNumberAccessor.setName( solverName + "/accessors/" + dofKey );
 
-      ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > > const globalIndexAccessor =
-        elemManager.constructArrayViewAccessor< globalIndex, 1 >( ObjectManagerBase::viewKeyStruct::localToGlobalMapString());
+//      ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > > const globalIndexAccessor =
+//        elemManager.constructArrayViewAccessor< globalIndex, 1 >( ObjectManagerBase::viewKeyStruct::localToGlobalMapString());
+
+        ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > const globalDistanceAccessor =
+                elemManager.constructArrayViewAccessor< real64 , 2 >( CellElementSubRegion::viewKeyStruct::globalCellToFaceString() );
 
       using kernelType = DiffusionDispersionFaceBasedAssemblyKernel< NUM_COMP, NUM_DOF, STENCILWRAPPER >;
       typename kernelType::CompFlowAccessors compFlowAccessors( elemManager, solverName );
@@ -972,7 +980,7 @@ public:
       typename kernelType::PorosityAccessors porosityAccessors( elemManager, solverName );
 
       kernelType kernel( numPhases, rankOffset, stencilWrapper,
-                         dofNumberAccessor, globalIndexAccessor,
+                         dofNumberAccessor, globalDistanceAccessor,
                          compFlowAccessors, multiFluidAccessors,
                          diffusionAccessors, dispersionAccessors, porosityAccessors,
                          dt, localMatrix, localRhs );
@@ -1010,7 +1018,7 @@ public:
 
   using AbstractBase = isothermalCompositionalMultiphaseFVMKernels::FaceBasedAssemblyKernelBase;
   using DofNumberAccessor = AbstractBase::DofNumberAccessor;
-  using GlobalIndexAccessor = AbstractBase::GlobalIndexAccessor;
+  using GlobalDistanceAccessor = AbstractBase::GlobalDistanceAccessor;
   using CompFlowAccessors = AbstractBase::CompFlowAccessors;
   using MultiFluidAccessors = AbstractBase::MultiFluidAccessors;
   using CapPressureAccessors = AbstractBase::CapPressureAccessors;
@@ -1080,7 +1088,7 @@ public:
                                     integer const hasCapPressure, integer const hasVelocityCompute,
                                     FaceManager const & faceManager, BoundaryStencilWrapper const & stencilWrapper,
                                     FLUIDWRAPPER const & fluidWrapper, DofNumberAccessor const & dofNumberAccessor,
-                                    GlobalIndexAccessor const & globalIndexAccessor,
+                                    GlobalDistanceAccessor const & globalDistanceAccessor,
                                     arrayView2d< real64 const > const & globalDistance,
                                     CompFlowAccessors const & compFlowAccessors,
                                     ThermalCompFlowAccessors const & thermalCompFlowAccessors,
@@ -1100,7 +1108,7 @@ public:
             stencilWrapper,
             fluidWrapper,
             dofNumberAccessor,
-            globalIndexAccessor,
+            globalDistanceAccessor,
             globalDistance,
             compFlowAccessors,
             multiFluidAccessors,
@@ -1414,8 +1422,11 @@ public:
           elemManager.constructArrayViewAccessor< globalIndex, 1 >( dofKey );
         dofNumberAccessor.setName( solverName + "/accessors/" + dofKey );
 
-        ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > > const globalIndexAccessor =
-          elemManager.constructArrayViewAccessor< globalIndex, 1 >( ObjectManagerBase::viewKeyStruct::localToGlobalMapString());
+//        ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > > const globalIndexAccessor =
+//          elemManager.constructArrayViewAccessor< globalIndex, 1 >( ObjectManagerBase::viewKeyStruct::localToGlobalMapString());
+
+          ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > const globalDistanceAccessor =
+                  elemManager.constructArrayViewAccessor< real64, 2 >( CellElementSubRegion::viewKeyStruct::globalCellToFaceString() );
 
 
         using KernelType = DirichletFaceBasedAssemblyKernel< NUM_COMP, NUM_DOF, typename FluidType::KernelWrapper >;
@@ -1433,7 +1444,7 @@ public:
         bool const hasVelocityCompute = false;
 
         KernelType kernel( numPhases, rankOffset, hasCapPressure, hasVelocityCompute, faceManager, stencilWrapper, fluidWrapper,
-                           dofNumberAccessor, globalIndexAccessor, globalDistance,
+                           dofNumberAccessor, globalDistanceAccessor, globalDistance,
                            compFlowAccessors, thermalCompFlowAccessors, multiFluidAccessors, dispersionAccessors,
                            thermalMultiFluidAccessors, capPressureAccessors, permeabilityAccessors, thermalConductivityAccessors,
                            dt, localMatrix, localRhs );

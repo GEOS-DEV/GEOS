@@ -68,6 +68,8 @@ FluxApproximationBase::FluxApproximationBase( string const & name, Group * const
 //    setApplyDefaultValue( 1e-10 ).
 //    setInputFlag( InputFlags::OPTIONAL ).
 //    setDescription( "Tolerance for C1-PPU smoothing" );
+
+
 }
 
 FluxApproximationBase::CatalogInterface::CatalogType &
@@ -133,7 +135,6 @@ void FluxApproximationBase::initializePostInitialConditionsPreSubGroups()
       if( !(mesh.isShallowCopy() ) )
       {
         // Group structure: mesh1/finiteVolumeStencils/myTPFA
-        m_globalCellToFace.resize( mesh.getElemManager().getNumberOfElements(), 3 );
 
         // Compute the main cell-based stencil
         computeCellStencil( mesh );

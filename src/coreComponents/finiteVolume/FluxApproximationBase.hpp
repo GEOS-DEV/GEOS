@@ -179,6 +179,7 @@ public:
     /// @return The key for epsC1PPU
     //static constexpr char const * epsC1PPUString() { return "epsC1PPU"; }
 
+
   };
 
   /**
@@ -214,20 +215,6 @@ public:
    * @return upwinding parameters structure.
    */
   UpwindingParameters const & getUpwindingParams() const { return m_upwindingParams; }
-
-/**
- * @brief Get the total cell-to-face distance as a vector
- * @param elemManager
- * @param seri
- * @param sesri
- * @param sei
- * @return
- */
-  virtual const arrayView2d< real64 const > getGlobalCellToFace() const
-  {
-    return m_globalCellToFace;
-  }
-
 
 protected:
 
@@ -315,8 +302,6 @@ protected:
   /// upwinding parameters
   UpwindingParameters m_upwindingParams;
 
-/// container used to store cell-wise distance to faces (for interpolation)
-  array2d< real64 > m_globalCellToFace;
 };
 
 template< typename TYPE >

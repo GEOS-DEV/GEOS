@@ -35,7 +35,7 @@ namespace isothermalCompositionalMultiphaseFVMKernels
 
 FaceBasedAssemblyKernelBase::FaceBasedAssemblyKernelBase( integer const numPhases, globalIndex const rankOffset,
                                                           DofNumberAccessor const & dofNumberAccessor,
-                                                          GlobalIndexAccessor const & globalIndexAccessor,
+                                                          GlobalDistanceAccessor const & globalDistanceAccessor,
                                                           CompFlowAccessors const & compFlowAccessors,
                                                           MultiFluidAccessors const & multiFluidAccessors,
                                                           DispersionAccessors const & dispersionAccessors,
@@ -43,20 +43,20 @@ FaceBasedAssemblyKernelBase::FaceBasedAssemblyKernelBase( integer const numPhase
                                                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                           arrayView1d< real64 > const & localRhs )
   : m_numPhases( numPhases ),
-  m_rankOffset( rankOffset ),
-  m_dt( dt ),
-  m_dofNumber( dofNumberAccessor.toNestedViewConst() ),
-  m_globalIndexNumber( globalIndexAccessor.toNestedViewConst()),
-  m_ghostRank( compFlowAccessors.get( fields::ghostRank {} ) ),
-  m_gravCoef( compFlowAccessors.get( fields::flow::gravityCoefficient {} ) ),
-  m_pres( compFlowAccessors.get( fields::flow::pressure {} ) ),
-  m_dCompFrac_dCompDens( compFlowAccessors.get( fields::flow::dGlobalCompFraction_dGlobalCompDensity {} ) ),
-  m_dPhaseVolFrac( compFlowAccessors.get( fields::flow::dPhaseVolumeFraction {} ) ),
-  m_phaseCompFrac( multiFluidAccessors.get( fields::multifluid::phaseCompFraction {} ) ),
-  m_dPhaseCompFrac( multiFluidAccessors.get( fields::multifluid::dPhaseCompFraction {} ) ),
-  m_phaseVelocity( dispersionAccessors.get( fields::dispersion::phaseVelocity {} ) ),
-  m_localMatrix( localMatrix ),
-  m_localRhs( localRhs )
+    m_rankOffset( rankOffset ),
+    m_dt( dt ),
+    m_dofNumber( dofNumberAccessor.toNestedViewConst() ),
+    m_globalDistanceAccess(globalDistanceAccessor.toNestedViewConst()),
+    m_ghostRank( compFlowAccessors.get( fields::ghostRank {} ) ),
+    m_gravCoef( compFlowAccessors.get( fields::flow::gravityCoefficient {} ) ),
+    m_pres( compFlowAccessors.get( fields::flow::pressure {} ) ),
+    m_dCompFrac_dCompDens( compFlowAccessors.get( fields::flow::dGlobalCompFraction_dGlobalCompDensity {} ) ),
+    m_dPhaseVolFrac( compFlowAccessors.get( fields::flow::dPhaseVolumeFraction {} ) ),
+    m_phaseCompFrac( multiFluidAccessors.get( fields::multifluid::phaseCompFraction {} ) ),
+    m_dPhaseCompFrac( multiFluidAccessors.get( fields::multifluid::dPhaseCompFraction {} ) ),
+    m_phaseVelocity( dispersionAccessors.get( fields::dispersion::phaseVelocity {} ) ),
+    m_localMatrix( localMatrix ),
+    m_localRhs( localRhs )
 {}
 
 /******************************** CFLFluxKernel ********************************/

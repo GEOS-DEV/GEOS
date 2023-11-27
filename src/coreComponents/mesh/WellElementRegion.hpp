@@ -135,7 +135,9 @@ public:
                      globalIndex nodeOffsetGlobal,
                      globalIndex elemOffsetGlobal );
 
-  ///@}
+
+
+    ///@}
 
   /**
    * @brief Struct to serve as a container for variable strings and keys.

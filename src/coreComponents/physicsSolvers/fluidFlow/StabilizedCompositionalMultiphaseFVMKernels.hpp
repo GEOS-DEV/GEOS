@@ -55,7 +55,7 @@ public:
 
   using AbstractBase = isothermalCompositionalMultiphaseFVMKernels::FaceBasedAssemblyKernelBase;
   using DofNumberAccessor = AbstractBase::DofNumberAccessor;
-  using GlobalIndexAccessor = AbstractBase::GlobalIndexAccessor;
+  using GlobalDistanceAccessor = AbstractBase::GlobalDistanceAccessor;
   using CompFlowAccessors = AbstractBase::CompFlowAccessors;
   using MultiFluidAccessors = AbstractBase::MultiFluidAccessors;
   using CapPressureAccessors = AbstractBase::CapPressureAccessors;
@@ -120,7 +120,7 @@ public:
    */
   FaceBasedAssemblyKernel( integer const numPhases, globalIndex const rankOffset, integer const hasCapPressure,
                            integer const hasVelocityCompute, STENCILWRAPPER const & stencilWrapper,
-                           DofNumberAccessor const & dofNumberAccessor, const GlobalIndexAccessor & globalIndexAccessor,
+                           DofNumberAccessor const & dofNumberAccessor, const GlobalDistanceAccessor& globalDistanceAccessor,
                            arrayView2d< real64 const > const & globalDistance, CompFlowAccessors const & compFlowAccessors,
                            StabCompFlowAccessors const & stabCompFlowAccessors,
                            MultiFluidAccessors const & multiFluidAccessors,
@@ -137,7 +137,7 @@ public:
             hasVelocityCompute,
             stencilWrapper,
             dofNumberAccessor,
-            globalIndexAccessor,
+            globalDistanceAccessor,
             globalDistance,
             compFlowAccessors,
             multiFluidAccessors,
@@ -341,8 +341,8 @@ public:
         elemManager.constructArrayViewAccessor< globalIndex, 1 >( dofKey );
       dofNumberAccessor.setName( solverName + "/accessors/" + dofKey );
 
-      ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > > const elemGlobalIndexAccessor =
-        elemManager.constructArrayViewAccessor< globalIndex, 1 >( ObjectManagerBase::viewKeyStruct::localToGlobalMapString() );
+      ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > const globalDistanceAccessor =
+        elemManager.constructArrayViewAccessor< real64, 2 >( CellElementSubRegion::viewKeyStruct::globalCellToFaceString() );
 
 
       using KERNEL_TYPE = FaceBasedAssemblyKernel< NUM_COMP, NUM_DOF, STENCILWRAPPER >;
@@ -356,7 +356,7 @@ public:
       typename KERNEL_TYPE::DispersionAccessors dispersionAccessors( elemManager, solverName );
 
       KERNEL_TYPE kernel( numPhases, rankOffset, hasCapPressure, hasVelocityCompute, stencilWrapper, dofNumberAccessor,
-                          elemGlobalIndexAccessor, globalDistance,
+                          globalDistanceAccessor, globalDistance,
                           compFlowAccessors, stabCompFlowAccessors, multiFluidAccessors, dispersionAccessors,
                           stabMultiFluidAccessors,
                           capPressureAccessors, permeabilityAccessors, relPermAccessors,

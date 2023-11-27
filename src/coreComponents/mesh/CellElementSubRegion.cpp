@@ -44,11 +44,16 @@ CellElementSubRegion::CellElementSubRegion( string const & name, Group * const p
 
   registerWrapper( viewKeyStruct::fracturedCellsString(), &m_fracturedCells ).setSizedFromParent( 1 );
 
+  registerWrapper( viewKeyStruct::globalCellToFaceString(), &m_globalCellToFace).
+            setSizedFromParent(1).
+            reference().resizeDimension< 1 >( 3 );
+
   excludeWrappersFromPacking( { viewKeyStruct::nodeListString(),
                                 viewKeyStruct::edgeListString(),
                                 viewKeyStruct::faceListString(),
                                 viewKeyStruct::fracturedCellsString(),
-                                viewKeyStruct::toEmbSurfString() } );
+                                viewKeyStruct::toEmbSurfString(),
+                                viewKeyStruct::globalCellToFaceString() } );
 }
 
 
@@ -417,6 +422,82 @@ void CellElementSubRegion::setupRelatedObjectsInRelations( MeshLevel const & mes
   this->m_toNodesRelation.setRelatedObject( mesh.getNodeManager() );
   this->m_toEdgesRelation.setRelatedObject( mesh.getEdgeManager() );
   this->m_toFacesRelation.setRelatedObject( mesh.getFaceManager() );
+}
+
+void CellElementSubRegion::calculateCellToFaceDistance( ElementRegionManager const & elemManager, FaceManager const & faceManager, NodeManager const & nodeManager)
+{
+
+    arrayView2d<localIndex const> const & elemRegionList = faceManager.elementRegionList();
+    arrayView2d<localIndex const> const & elemSubRegionList = faceManager.elementSubRegionList();
+    arrayView2d< localIndex const > const & elemList = faceManager.elementList();
+
+    ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > const elemCenter =
+        elemManager.constructArrayViewAccessor< real64, 2 >( CellElementSubRegion::viewKeyStruct::elementCenterString() );
+
+    arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X = nodeManager.referencePosition();
+
+    ElementRegionManager::ElementViewAccessor< arrayView1d< integer const > > const elemGhostRank =
+            elemManager.constructArrayViewAccessor< integer, 1 >( ObjectManagerBase::viewKeyStruct::ghostRankString() );
+
+    ArrayOfArraysView< localIndex const > const faceToNodes = faceManager.nodeList().toViewConst();
+
+    forAll< serialPolicy >( faceManager.size(), [=]( localIndex const kf ) {
+
+        real64 faceCenter[ 3 ], faceNormal[ 3 ], cellToFaceVec[2][ 3 ];
+        real64 const areaTolerance = 1e-12;
+        real64 const faceArea = computationalGeometry::centroid_3DPolygon( faceToNodes[kf], X, faceCenter, faceNormal, areaTolerance );
+
+        // Filter out boundary faces
+        if( elemList[kf][0] < 0 || elemList[kf][1] < 0 )
+        {
+            return;
+        }
+
+        // Filter out faces where neither cell is locally owned
+        if( elemGhostRank[elemRegionList[kf][0]][elemSubRegionList[kf][0]][elemList[kf][0]] >= 0 &&
+            elemGhostRank[elemRegionList[kf][1]][elemSubRegionList[kf][1]][elemList[kf][1]] >= 0 )
+        {
+            return;
+        }
+
+/*
+        // make a list of region indices to be included
+        SortedArray< localIndex > regionFilter;
+        arrayView1d< string const > const targetRegions = m_targetRegions.at( mesh.getParent().getParent().getName() );
+        elemManager.forElementRegionsComplete< CellElementRegion >( targetRegions,
+                                                                    [&]( localIndex,
+                                                                         localIndex const ei,
+                                                                         CellElementRegion const & )
+                                                                    {
+                                                                        regionFilter.insert( ei );
+                                                                    } );
+
+        // Filter out faces where either of two cells is outside of target regions
+        if( !( regionFilter.contains( elemRegionList[kf][0] ) && regionFilter.contains( elemRegionList[kf][1] ) ) )
+        {
+            return;
+        }
+*/
+
+
+     for( localIndex ke = 0; ke < 2; ++ke ) {
+
+         localIndex const er  = elemRegionList[kf][ke];
+         localIndex const esr = elemSubRegionList[kf][ke];
+         localIndex const ei  = elemList[kf][ke];
+
+         LvArray::tensorOps::copy< 3 >( cellToFaceVec[ke], faceCenter );
+         LvArray::tensorOps::subtract< 3 >( cellToFaceVec[ke], elemCenter[er][esr][ei] );
+
+         //cumulating signed distance to from face to cell center to form denom in cell-wise linear interpolation
+         for( int dir = 0; dir < 3; ++dir )
+         {
+             m_globalCellToFace[ke][dir] += LvArray::math::abs( cellToFaceVec[ke][dir] );
+         }
+
+     }
+    });
+
 }
 
 REGISTER_CATALOG_ENTRY( ObjectManagerBase, CellElementSubRegion, string const &, Group * const )

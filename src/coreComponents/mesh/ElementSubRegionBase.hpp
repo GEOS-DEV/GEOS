@@ -29,6 +29,7 @@ namespace geos
 class NodeManager;
 class FaceManager;
 class MeshLevel;
+class ElementRegionManager;
 
 namespace constitutive
 {
@@ -78,6 +79,12 @@ public:
    */
   virtual void calculateElementGeometricQuantities( NodeManager const & nodeManager,
                                                     FaceManager const & faceManager ) = 0;
+
+
+
+  virtual void calculateCellToFaceDistance(ElementRegionManager const & elemManager,
+                                     FaceManager const & faceManager,
+                                     NodeManager const& nodeManager ) = 0;
 
   /**
    * @brief Link the connectivity maps of the subregion to the managers storing the mesh information.

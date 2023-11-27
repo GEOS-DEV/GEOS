@@ -71,7 +71,6 @@ TwoPointFluxApproximation::TwoPointFluxApproximation( string const & name,
     setInputFlag( dataRepository::InputFlags::OPTIONAL ).
     setApplyDefaultValue( 0 ).
     setRestartFlags( RestartFlags::NO_WRITE );
-
 }
 
 void TwoPointFluxApproximation::registerCellStencil( Group & stencilGroup ) const
@@ -114,6 +113,9 @@ void TwoPointFluxApproximation::computeCellStencil( MeshLevel & mesh ) const
 
   ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > const elemCenter =
     elemManager.constructArrayViewAccessor< real64, 2 >( CellElementSubRegion::viewKeyStruct::elementCenterString() );
+
+  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > const globalCellToFace =
+            elemManager.constructArrayViewAccessor< real64, 2 >( CellElementSubRegion::viewKeyStruct::globalCellToFaceString() );
 
   ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > > const elemGlobalIndex =
     elemManager.constructArrayViewAccessor< globalIndex, 1 >( ObjectManagerBase::viewKeyStruct::localToGlobalMapString() );
@@ -191,13 +193,13 @@ void TwoPointFluxApproximation::computeCellStencil( MeshLevel & mesh ) const
       LvArray::tensorOps::subtract< 3 >( cellToFaceVec[ke], elemCenter[er][esr][ei] );
 
       //cumulating signed distance to from face to cell center to form denom in cell-wise linear interpolation
-      real64 absCellToFaceVec[3];
-      for( int dir = 0; dir < 3; ++dir )
-      {
-        absCellToFaceVec[dir] = LvArray::math::abs( cellToFaceVec[ke][dir] );
-      }
+//      real64 absCellToFaceVec[3];
+//      for( int dir = 0; dir < 3; ++dir )
+//      {
+//        absCellToFaceVec[dir] = LvArray::math::abs( cellToFaceVec[ke][dir] );
+//        globalCellToFace[stencilCellsGlobalIndex[ke]][dir] += absCellToFaceVec[dir];
+//      }
 
-      LvArray::tensorOps::add< 3 >( m_globalCellToFace[stencilCellsGlobalIndex[ke]], absCellToFaceVec );
 
 //      real64 const c2fDistance = LvArray::tensorOps::normalize< 3 >( cellToFaceVec[ke] );
       real64 const c2fDistance = LvArray::tensorOps::l2Norm< 3 >( cellToFaceVec[ke] );

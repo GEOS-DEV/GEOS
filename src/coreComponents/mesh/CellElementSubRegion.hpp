@@ -192,6 +192,8 @@ public:
     /// @return String key to fracturedCells
     static constexpr char const * fracturedCellsString() { return "fracturedCells"; }
 
+    static constexpr char const * globalCellToFaceString() { return "globalCellToFace";}
+
     /// ViewKey for the constitutive grouping
     dataRepository::ViewKey constitutiveGrouping  = { constitutiveGroupingString() };
     /// ViewKey for the constitutive map
@@ -327,6 +329,11 @@ public:
   void calculateElementGeometricQuantities( NodeManager const & nodeManager,
                                             FaceManager const & faceManager ) override;
 
+
+  void calculateCellToFaceDistance(ElementRegionManager const & elemManager,
+                                   FaceManager const & faceManager,
+                                   NodeManager const& nodeManager ) override;
+
 private:
 
   /// Map used for constitutive grouping
@@ -358,6 +365,7 @@ private:
   void calculateElementCenterAndVolume( localIndex const k,
                                         arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X ) const;
 
+
   /// The array of shape function derivaties.
   array4d< real64 > m_dNdX;
 
@@ -378,6 +386,9 @@ private:
 
   /// Map from local Cell Elements to Embedded Surfaces
   EmbSurfMapType m_toEmbeddedSurfaces;
+
+  /// container used to store cell-wise distance to faces (for interpolation)
+  array2d< real64 > m_globalCellToFace;
 
   /**
    * @brief Pack element-to-node and element-to-face maps

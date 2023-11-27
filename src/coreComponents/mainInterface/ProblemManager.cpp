@@ -818,6 +818,7 @@ void ProblemManager::generateMeshLevel( MeshLevel & meshLevel,
     if( isBaseMeshLevel && !dynamicCast< FaceElementSubRegion * >( &subRegion ) )
     {
       subRegion.calculateElementGeometricQuantities( nodeManager, faceManager );
+      subRegion.calculateCellToFaceDistance(meshLevel.getElemManager(), faceManager, nodeManager);
     }
     subRegion.setMaxGlobalIndex();
   } );
