@@ -1011,6 +1011,13 @@ Element: SinglePhasePoromechanicsConformingFractures
 .. include:: ../../coreComponents/schema/docs/SinglePhasePoromechanicsConformingFractures.rst
 
 
+.. _XML_SinglePhasePoromechanicsConformingFracturesVEM:
+
+Element: SinglePhasePoromechanicsConformingFracturesVEM
+=======================================================
+.. include:: ../../coreComponents/schema/docs/SinglePhasePoromechanicsConformingFracturesVEM.rst
+
+
 .. _XML_SinglePhasePoromechanicsEmbeddedFractures:
 
 Element: SinglePhasePoromechanicsEmbeddedFractures
@@ -2371,6 +2378,13 @@ Datastructure: SinglePhasePoromechanics
 Datastructure: SinglePhasePoromechanicsConformingFractures
 ==========================================================
 .. include:: ../../coreComponents/schema/docs/SinglePhasePoromechanicsConformingFractures_other.rst
+
+
+.. _DATASTRUCTURE_SinglePhasePoromechanicsConformingFracturesVEM:
+
+Datastructure: SinglePhasePoromechanicsConformingFracturesVEM
+=============================================================
+.. include:: ../../coreComponents/schema/docs/SinglePhasePoromechanicsConformingFracturesVEM_other.rst
 
 
 .. _DATASTRUCTURE_SinglePhasePoromechanicsEmbeddedFractures:

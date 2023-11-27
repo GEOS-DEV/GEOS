@@ -493,6 +493,7 @@ void SinglePhasePoromechanicsConformingFracturesVEM::
 
   FaceManager const & faceManager = mesh.getFaceManager();
   NodeManager const & nodeManager = mesh.getNodeManager();
+  EdgeManager const & edgeManager = mesh.getEdgeManager();
   ElementRegionManager const & elemManager = mesh.getElemManager();
 
   ArrayOfArraysView< localIndex const > const & faceToNodeMap = faceManager.nodeList().toViewConst();
@@ -601,6 +602,7 @@ void SinglePhasePoromechanicsConformingFracturesVEM::
 
   FaceManager const & faceManager = mesh.getFaceManager();
   NodeManager const & nodeManager = mesh.getNodeManager();
+  EdgeManager const & edgeManager = mesh.getEdgeManager();
   ElementRegionManager const & elemManager = mesh.getElemManager();
 
   ArrayOfArraysView< localIndex const > const & faceToNodeMap = faceManager.nodeList().toViewConst();
