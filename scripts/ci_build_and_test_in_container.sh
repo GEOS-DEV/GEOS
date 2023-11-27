@@ -230,7 +230,7 @@ fi
 
 if [[ ! -z "${SCCACHE_CREDS}" ]]; then
   echo "sccache final state"
-  or_die ${SCCACHE} --show-stats
+  or_die ${SCCACHE} --show-adv-stats
 fi
 
 # If we're here, either everything went OK or we have to deal with the integrated tests manually.
