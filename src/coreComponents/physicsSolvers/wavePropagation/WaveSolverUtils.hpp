@@ -104,7 +104,7 @@ struct WaveSolverUtils
   }
 
   /**
-   * @brief Convenient helper for 3D vectors calling 3 times the scalar version.
+   * @brief Convenient helper for 3D vectors calling 3 times the scalar version with only the sampled variable argument changed.
    */
   static void writeSeismoTraceVector( char const * prefix,
                                       string const & name,
@@ -143,13 +143,13 @@ struct WaveSolverUtils
         std::ofstream f( fn, std::ios::app );
         if( f )
         {
+          GEOS_LOG_RANK( GEOS_FMT( "Append to seismo trace file {}", fn ) );
           for( localIndex iSample = 0; iSample < nsamplesSeismoTrace; ++iSample )
           {
             // index - time - value
             f << iSample << " " << varAtReceivers[iSample][nReceivers] << " " << varAtReceivers[iSample][ircv] << std::endl;
           }
           f.close();
-          GEOS_LOG_RANK( GEOS_FMT( "Wrote seismo trace file {}", fn ) );
         }
         else
         {
@@ -192,11 +192,11 @@ struct WaveSolverUtils
         }
         // linear interpolation between the pressure value at time_n and time_{n+1}
         varAtReceivers( iSeismo, ircv ) = a1 * vtmp_n + a2 * vtmp_np1;
-        // NOTE: varAtReceivers has size(1) = numReceiversGlobal + 1, this does not OOB
-        // left in the forAll loop for sync issues since the following does not depend on `ircv`
-        varAtReceivers( iSeismo, nReceivers ) = a1 * time_n + a2 * time_np1;
       }
     } );
+
+    // NOTE: varAtReceivers has size(1) = numReceiversGlobal + 1, this does not OOB
+    varAtReceivers( iSeismo, nReceivers ) = a1 * time_n + a2 * time_np1;
   }
 
   static void compute2dVariableSeismoTrace( real64 const time_n,
@@ -212,7 +212,7 @@ struct WaveSolverUtils
                                             arrayView2d< real32 const > const var_n,
                                             arrayView2d< real32 > varAtReceivers )
   {
-    real64 const time_np1 = time_n+dt;
+    real64 const time_np1 = time_n + dt;
 
     real32 const a1 = dt < epsilonLoc ? 1.0 : (time_np1 - timeSeismo) / dt;
     real32 const a2 = 1.0 - a1;
@@ -233,12 +233,12 @@ struct WaveSolverUtils
           }
           // linear interpolation between the pressure value at time_n and time_{n+1}
           varAtReceivers( iSeismo, ircv ) = a1 * vtmp_n + a2 * vtmp_np1;
-          // NOTE: varAtReceivers has size(1) = numReceiversGlobal + 1, this does not OOB
-          // left in the forAll loop for sync issues since the following does not depend on `ircv`
-          varAtReceivers( iSeismo, nReceivers ) = a1 * time_n + a2 * time_np1;
         }
       }
     } );
+
+    // NOTE: varAtReceivers has size(1) = numReceiversGlobal + 1, this does not OOB
+    varAtReceivers( iSeismo, nReceivers ) = a1 * time_n + a2 * time_np1;
   }
 
   /**
