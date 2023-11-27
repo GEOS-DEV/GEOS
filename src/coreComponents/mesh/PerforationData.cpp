@@ -41,6 +41,7 @@ PerforationData::PerforationData( string const & name, Group * const parent )
   registerField( fields::perforation::wellElementIndex{}, &m_wellElementIndex );
   registerField( fields::perforation::location{}, &m_location );
   registerField( fields::perforation::wellTransmissibility{}, &m_wellTransmissibility );
+  registerField( fields::perforation::wellSkinFactor{}, &m_wellSkinFactor );
 }
 
 PerforationData::~PerforationData()
@@ -210,7 +211,7 @@ void PerforationData::computeWellTransmissibility( MeshLevel const & mesh,
     }
 
     // compute the well Peaceman index
-    m_wellTransmissibility[iperf] = 2 * M_PI * kh / std::log( rEq / wellElemRadius[wellElemIndex] );
+    m_wellTransmissibility[iperf] = 2 * M_PI * kh / ( std::log( rEq / wellElemRadius[wellElemIndex] ) + m_wellSkinFactor[iperf] );
 
     if( m_wellTransmissibility[iperf] <= 0 )
     {
