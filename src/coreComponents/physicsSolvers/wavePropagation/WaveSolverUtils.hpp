@@ -149,6 +149,7 @@ struct WaveSolverUtils
             f << iSample << " " << varAtReceivers[iSample][nReceivers] << " " << varAtReceivers[iSample][ircv] << std::endl;
           }
           f.close();
+          GEOS_LOG_RANK( GEOS_FMT( "Wrote seismo trace file {}", fn ) );
         }
         else
         {
