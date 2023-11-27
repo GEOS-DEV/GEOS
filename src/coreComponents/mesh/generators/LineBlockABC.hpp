@@ -141,6 +141,12 @@ public:
   virtual arrayView1d< real64 const > getPerfTransmissibility() const = 0;
 
   /**
+   * @brief Get the well skin factor at the perforations.
+   * @return list of well skin factor at all the perforations on the well
+   */
+  virtual arrayView1d< real64 const > getPerfSkinFactor() const = 0;
+
+  /**
    * @brief Get the global indices of the well elements connected to each perforation.
    * @return list providing the global index of the connected well element for each perforation
    */

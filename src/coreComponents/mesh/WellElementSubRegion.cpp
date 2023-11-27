@@ -755,6 +755,7 @@ void WellElementSubRegion::connectPerforationsToMeshElements( MeshLevel & mesh,
 {
   arrayView2d< real64 const > const perfCoordsGlobal = lineBlock.getPerfCoords();
   arrayView1d< real64 const > const perfWellTransmissibilityGlobal = lineBlock.getPerfTransmissibility();
+  arrayView1d< real64 const > const perfWellSkinFactorGlobal = lineBlock.getPerfSkinFactor();
 
   m_perforationData.resize( perfCoordsGlobal.size( 0 ) );
   localIndex iperfLocal = 0;
@@ -801,6 +802,7 @@ void WellElementSubRegion::connectPerforationsToMeshElements( MeshLevel & mesh,
 
       // construct the local wellTransmissibility and location maps
       m_perforationData.getWellTransmissibility()[iperfLocal] = perfWellTransmissibilityGlobal[iperfGlobal];
+      m_perforationData.getWellSkinFactor()[iperfLocal] = perfWellSkinFactorGlobal[iperfGlobal];
       LvArray::tensorOps::copy< 3 >( perfLocation[iperfLocal], location );
 
       // increment the local to global map
