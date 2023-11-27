@@ -80,9 +80,12 @@ struct WaveSolverUtils
    */
   static void initTrace( char const * prefix,
                          string const & name,
+                         bool const outputSeismoTrace,
                          localIndex const nReceivers,
                          arrayView1d< localIndex const > const receiverIsLocal )
   {
+    if( !outputSeismoTrace ) return;
+
     string const outputDir = OutputBase::getOutputDirectory();
     RAJA::ReduceSum< ReducePolicy< serialPolicy >, localIndex > count( 0 );
 
