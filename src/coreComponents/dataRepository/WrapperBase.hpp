@@ -345,7 +345,7 @@ public:
                                     bool withMetadata,
                                     bool onDevice,
                                     parallelDeviceEvents & events,
-                                    MPI_Op op=MPI_REPLACE ) = 0;
+                                    MPI_Op op = MPI_REPLACE ) = 0;
 
   ///@}
 

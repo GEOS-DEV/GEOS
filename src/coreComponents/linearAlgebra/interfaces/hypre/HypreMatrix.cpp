@@ -573,7 +573,7 @@ void HypreMatrix::insert( arrayView1d< globalIndex const > const & rowIndices,
   HYPRE_BigInt const numRows = rowIndices.size();
 
   array1d< HYPRE_Int > nCols( numRows );
-  for( int i=0; i<numRows; ++i )
+  for( int i = 0; i < numRows; ++i )
   {
     nCols[i] = 1;
   }

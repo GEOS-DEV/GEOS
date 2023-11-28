@@ -81,7 +81,7 @@ public:
                           arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & phaseViscosity,
                           arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & phaseEnthalpy,
                           arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & phaseInternalEnergy,
-                          arraySlice2d< real64, multifluid::USD_PHASE_COMP-2 > const & phaseCompFraction,
+                          arraySlice2d< real64, multifluid::USD_PHASE_COMP - 2 > const & phaseCompFraction,
                           real64 & totalDensity ) const override;
 
     GEOS_HOST_DEVICE
@@ -240,7 +240,7 @@ CO2BrineFluid< PHASE1, PHASE2, FLASH >::KernelWrapper::
            arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & phaseViscosity,
            arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & phaseEnthalpy,
            arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & phaseInternalEnergy,
-           arraySlice2d< real64, multifluid::USD_PHASE_COMP-2 > const & phaseCompFraction,
+           arraySlice2d< real64, multifluid::USD_PHASE_COMP - 2 > const & phaseCompFraction,
            real64 & totalDensity ) const
 {
   integer constexpr numComp = 2;
@@ -462,10 +462,10 @@ CO2BrineFluid< PHASE1, PHASE2, FLASH >::KernelWrapper::
     // 4.1 Compute the phase molecular weights (ultimately, get that from the PVT function)
 
     real64 phaseMolecularWeight[numPhase]{};
-    real64 dPhaseMolecularWeight[numPhase][numComp+2]{};
+    real64 dPhaseMolecularWeight[numPhase][numComp + 2]{};
 
     real64 phaseMolarDens{};
-    stackArray1d< real64, numComp+2 > dPhaseMolarDens( numComp+2 );
+    stackArray1d< real64, numComp + 2 > dPhaseMolarDens( numComp + 2 );
 
     m_phase1.density.compute( pressure,
                               temperatureInCelsius,
@@ -473,7 +473,7 @@ CO2BrineFluid< PHASE1, PHASE2, FLASH >::KernelWrapper::
                               phaseMolarDens, dPhaseMolarDens.toSlice(),
                               false );
     phaseMolecularWeight[ip1] = phaseDensity.value[ip1] / phaseMolarDens;
-    for( integer idof = 0; idof < numComp+2; ++idof )
+    for( integer idof = 0; idof < numComp + 2; ++idof )
     {
       dPhaseMolecularWeight[ip1][idof] = phaseDensity.derivs[ip1][idof] / phaseMolarDens - phaseMolecularWeight[ip1] * dPhaseMolarDens[idof] / phaseMolarDens;
     }
@@ -484,7 +484,7 @@ CO2BrineFluid< PHASE1, PHASE2, FLASH >::KernelWrapper::
                               phaseMolarDens, dPhaseMolarDens.toSlice(),
                               false );
     phaseMolecularWeight[ip2] = phaseDensity.value[ip2] / phaseMolarDens;
-    for( integer idof = 0; idof < numComp+2; ++idof )
+    for( integer idof = 0; idof < numComp + 2; ++idof )
     {
       dPhaseMolecularWeight[ip2][idof] = phaseDensity.derivs[ip2][idof] / phaseMolarDens - phaseMolecularWeight[ip2] * dPhaseMolarDens[idof] / phaseMolarDens;
     }
@@ -505,7 +505,7 @@ CO2BrineFluid< PHASE1, PHASE2, FLASH >::KernelWrapper::
     for( integer ip = 0; ip < numPhase; ++ip )
     {
       phaseMassDensity.value[ip] = phaseDensity.value[ip];
-      for( integer idof = 0; idof < numComp+2; ++idof )
+      for( integer idof = 0; idof < numComp + 2; ++idof )
       {
         phaseMassDensity.derivs[ip][idof] = phaseDensity.derivs[ip][idof];
       }

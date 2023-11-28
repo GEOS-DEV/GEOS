@@ -230,8 +230,8 @@ void BlackOilFluid::fillPVTOData( array1d< array1d< real64 > > const & oilTable,
 
   // Step 5: save surface densities (for now, this info is passed twice to the kernels)
 
-  m_PVTO.surfaceMassDensity.resize( NC_BO-1 );
-  m_PVTO.surfaceMoleDensity.resize( NC_BO-1 );
+  m_PVTO.surfaceMassDensity.resize( NC_BO - 1 );
+  m_PVTO.surfaceMoleDensity.resize( NC_BO - 1 );
 
   using PT = BlackOilFluid::PhaseType;
 

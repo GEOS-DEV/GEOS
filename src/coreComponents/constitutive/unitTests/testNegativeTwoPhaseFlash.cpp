@@ -115,7 +115,7 @@ public:
     // Check liquid composition
     if( expectedVapourFraction < 1.0 - absTol )
     {
-      for( integer ic=0; ic<numComps; ++ic )
+      for( integer ic = 0; ic < numComps; ++ic )
       {
         checkRelativeError( expectedLiquidComposition[ic], liquidComposition[ic], relTol, absTol );
       }
@@ -124,7 +124,7 @@ public:
     // Check vapour composition
     if( absTol < expectedVapourFraction )
     {
-      for( integer ic=0; ic<numComps; ++ic )
+      for( integer ic = 0; ic < numComps; ++ic )
       {
         checkRelativeError( expectedVapourComposition[ic], vapourComposition[ic], relTol, absTol );
       }

@@ -191,17 +191,17 @@ void ElasticIsotropicUpdates::getElasticStiffness( localIndex const k,
 
   LvArray::tensorOps::fill< 6, 6 >( stiffness, 0 );
 
-  stiffness[0][0] = lambda + 2*G;
+  stiffness[0][0] = lambda + 2 * G;
   stiffness[0][1] = lambda;
   stiffness[0][2] = lambda;
 
   stiffness[1][0] = lambda;
-  stiffness[1][1] = lambda + 2*G;
+  stiffness[1][1] = lambda + 2 * G;
   stiffness[1][2] = lambda;
 
   stiffness[2][0] = lambda;
   stiffness[2][1] = lambda;
-  stiffness[2][2] = lambda + 2*G;
+  stiffness[2][2] = lambda + 2 * G;
 
   stiffness[3][3] = G;
   stiffness[4][4] = G;
@@ -218,9 +218,9 @@ void ElasticIsotropicUpdates::getElasticStrain( localIndex const k,
   real64 const E = conversions::bulkModAndShearMod::toYoungMod( m_bulkModulus[k], m_shearModulus[k] );
   real64 const nu = conversions::bulkModAndShearMod::toPoissonRatio( m_bulkModulus[k], m_shearModulus[k] );
 
-  elasticStrain[0] = (    m_newStress[k][q][0] - nu*m_newStress[k][q][1] - nu*m_newStress[k][q][2])/E;
-  elasticStrain[1] = (-nu*m_newStress[k][q][0] +    m_newStress[k][q][1] - nu*m_newStress[k][q][2])/E;
-  elasticStrain[2] = (-nu*m_newStress[k][q][0] - nu*m_newStress[k][q][1] +    m_newStress[k][q][2])/E;
+  elasticStrain[0] = (    m_newStress[k][q][0] - nu * m_newStress[k][q][1] - nu * m_newStress[k][q][2]) / E;
+  elasticStrain[1] = (-nu * m_newStress[k][q][0] + m_newStress[k][q][1] - nu * m_newStress[k][q][2]) / E;
+  elasticStrain[2] = (-nu * m_newStress[k][q][0] - nu * m_newStress[k][q][1] + m_newStress[k][q][2]) / E;
 
   elasticStrain[3] = m_newStress[k][q][3] / m_shearModulus[k];
   elasticStrain[4] = m_newStress[k][q][4] / m_shearModulus[k];

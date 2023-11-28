@@ -30,7 +30,7 @@ using namespace geos::testing;
 
 CommandLineOptions g_commandLineOptions;
 constexpr real64 absTol = geos::testing::DEFAULT_ABS_TOL;
-constexpr real64 relTol = geos::testing::DEFAULT_REL_TOL*10;
+constexpr real64 relTol = geos::testing::DEFAULT_REL_TOL * 10;
 
 template< typename VEM >
 GEOS_HOST_DEVICE
@@ -100,7 +100,7 @@ checkStabilizationMatrixConsistency ( arrayView2d< real64 const,
   {
     for( localIndex numOthVertex = 0; numOthVertex < numVertex; ++numOthVertex )
     {
-      real64 vertDiff[ 3 ]{};
+      real64 vertDiff[3]{};
       LvArray::tensorOps::copy< 3 >( vertDiff, nodesCoords[cellToNodes( cellIndex, numVertex )] );
       LvArray::tensorOps::subtract< 3 >( vertDiff,
                                          nodesCoords[cellToNodes( cellIndex, numOthVertex )] );
@@ -112,14 +112,14 @@ checkStabilizationMatrixConsistency ( arrayView2d< real64 const,
     }
   }
   cellDiameter = LvArray::math::sqrt< real64 >( cellDiameter );
-  real64 const invCellDiameter = 1.0/cellDiameter;
+  real64 const invCellDiameter = 1.0 / cellDiameter;
 
-  stackArray2d< real64, 3*VEM::numNodes > monomialVemDofs( 3, numCellPoints );
+  stackArray2d< real64, 3 * VEM::numNodes > monomialVemDofs( 3, numCellPoints );
   for( localIndex numVertex = 0; numVertex < numCellPoints; ++numVertex )
   {
     for( localIndex pos = 0; pos < 3; ++pos )
-      monomialVemDofs[ pos ][ numVertex ] = invCellDiameter*
-                                            (nodesCoords( cellToNodes( cellIndex, numVertex ), pos ) - cellCenters( cellIndex, pos ));
+      monomialVemDofs[pos][numVertex] = invCellDiameter *
+                                        (nodesCoords( cellToNodes( cellIndex, numVertex ), pos ) - cellCenters( cellIndex, pos ));
   }
 
   stackArray1d< real64, VEM::numNodes > stabTimeMonomialDofs( numCellPoints );
@@ -134,22 +134,22 @@ checkStabilizationMatrixConsistency ( arrayView2d< real64 const,
     stabTimeMonomialDofsNorm( 0 ) = 0.0;
     for( localIndex j = 0; j < numCellPoints; ++j )
     {
-      stabTimeMonomialDofs( i ) += stabilizationMatrix[ i ][ j ];
+      stabTimeMonomialDofs( i ) += stabilizationMatrix[i][j];
     }
     stabTimeMonomialDofsNorm( 0 ) += stabTimeMonomialDofs( i ) * stabTimeMonomialDofs( i );
   }
 
   for( localIndex monomInd = 0; monomInd < 3; ++monomInd )
   {
-    stabTimeMonomialDofsNorm( monomInd+1 ) = 0;
+    stabTimeMonomialDofsNorm( monomInd + 1 ) = 0;
     for( localIndex i = 0; i < numCellPoints; ++i )
     {
       stabTimeMonomialDofs( i ) = 0.0;
       for( localIndex j = 0; j < numCellPoints; ++j )
       {
-        stabTimeMonomialDofs( i ) += stabilizationMatrix[ i ][ j ] * monomialVemDofs( monomInd, j );
+        stabTimeMonomialDofs( i ) += stabilizationMatrix[i][j] * monomialVemDofs( monomInd, j );
       }
-      stabTimeMonomialDofsNorm( monomInd+1 ) += stabTimeMonomialDofs( i ) * stabTimeMonomialDofs( i );
+      stabTimeMonomialDofsNorm( monomInd + 1 ) += stabTimeMonomialDofs( i ) * stabTimeMonomialDofs( i );
     }
   }
 
@@ -258,7 +258,7 @@ static void testCellsInMeshLevel( MeshLevel const & mesh )
 
 TEST( ConformingVirtualElementOrder1, hexahedra )
 {
-  string const inputStream=
+  string const inputStream =
     "<Problem>"
     "  <Mesh>"
     "    <InternalMesh"
@@ -312,7 +312,7 @@ TEST( ConformingVirtualElementOrder1, hexahedra )
 
 TEST( ConformingVirtualElementOrder1, wedges )
 {
-  string const inputStream=
+  string const inputStream =
     "<Problem>"
     "  <Mesh>"
     "    <InternalMesh"

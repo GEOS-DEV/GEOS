@@ -94,7 +94,7 @@ PackDataDevice( buffer_unit_type * & buffer,
     parallelDeviceStream stream;
     events.emplace_back( forAll< parallelDeviceAsyncPolicy<> >( stream, var.size(), [=] GEOS_DEVICE ( localIndex ii )
     {
-      reinterpret_cast< std::remove_const_t< T > * >( buffer )[ ii ] = var.data()[ ii ];
+      reinterpret_cast< std::remove_const_t< T > * >( buffer )[ii] = var.data()[ii];
     } ) );
   }
   localIndex packedSize = var.size() * sizeof(T);
@@ -126,7 +126,7 @@ UnpackDataDevice( buffer_unit_type const * & buffer,
   parallelDeviceStream stream;
   events.emplace_back( forAll< parallelDeviceAsyncPolicy<> >( stream, var.size(), [=] GEOS_DEVICE ( localIndex ii )
   {
-    var.data()[ ii ] = reinterpret_cast< const T * >( buffer )[ ii ];
+    var.data()[ii] = reinterpret_cast< const T * >( buffer )[ii];
   } ) );
   localIndex packedSize = var.size() * sizeof(T);
   buffer += var.size() * sizeof(T);
@@ -167,8 +167,8 @@ PackDataByIndexDevice ( buffer_unit_type * & buffer,
     parallelDeviceStream stream;
     events.emplace_back( forAll< parallelDevicePolicy< > >( stream, numIndices, [=] GEOS_DEVICE ( localIndex const ii )
     {
-      T * threadBuffer = &devBuffer[ ii * sliceSize ];
-      LvArray::forValuesInSlice( var[ indices[ ii ] ], [&] GEOS_DEVICE ( T const & value )
+      T * threadBuffer = &devBuffer[ii * sliceSize];
+      LvArray::forValuesInSlice( var[indices[ii]], [&] GEOS_DEVICE ( T const & value )
       {
         *threadBuffer = value;
         ++threadBuffer;
@@ -222,8 +222,8 @@ UnpackDataByIndexDevice ( buffer_unit_type const * & buffer,
   {
     events.emplace_back( forAll< parallelDeviceAsyncPolicy<> >( stream, numIndices, [=] GEOS_DEVICE ( localIndex const ii )
     {
-      T const * threadBuffer = &devBuffer[ ii * sliceSize ];
-      LvArray::forValuesInSlice( var[ indices[ ii ] ], [&threadBuffer] GEOS_DEVICE ( T & value )
+      T const * threadBuffer = &devBuffer[ii * sliceSize];
+      LvArray::forValuesInSlice( var[indices[ii]], [&threadBuffer] GEOS_DEVICE ( T & value )
       {
         value += *threadBuffer;
         ++threadBuffer;
@@ -234,8 +234,8 @@ UnpackDataByIndexDevice ( buffer_unit_type const * & buffer,
   {
     events.emplace_back( forAll< parallelDeviceAsyncPolicy<> >( stream, numIndices, [=] GEOS_DEVICE ( localIndex const ii )
     {
-      T const * threadBuffer = &devBuffer[ ii * sliceSize ];
-      LvArray::forValuesInSlice( var[ indices[ ii ] ], [&threadBuffer] GEOS_DEVICE ( T & value )
+      T const * threadBuffer = &devBuffer[ii * sliceSize];
+      LvArray::forValuesInSlice( var[indices[ii]], [&threadBuffer] GEOS_DEVICE ( T & value )
       {
         value = *threadBuffer;
         ++threadBuffer;
@@ -246,12 +246,12 @@ UnpackDataByIndexDevice ( buffer_unit_type const * & buffer,
   {
     events.emplace_back( forAll< parallelDeviceAsyncPolicy<> >( stream, numIndices, [=] GEOS_DEVICE ( localIndex const ii )
     {
-      T const * threadBuffer = &devBuffer[ ii * sliceSize ];
+      T const * threadBuffer = &devBuffer[ii * sliceSize];
       int count = 0;
       real64 LHSNormSquared = 0.0, RHSNormSquared = 0.0;
 
       // Identify if existing value or incoming value has higher norm
-      LvArray::forValuesInSlice( var[ indices[ ii ] ], [&threadBuffer, &LHSNormSquared, &RHSNormSquared, &count] GEOS_DEVICE ( T & value )
+      LvArray::forValuesInSlice( var[indices[ii]], [&threadBuffer, &LHSNormSquared, &RHSNormSquared, &count] GEOS_DEVICE ( T & value )
       {
         LHSNormSquared += value * value; // "value" can be an R1Tensor, in which case this becomes the dot product
         RHSNormSquared += (*threadBuffer) * (*threadBuffer);
@@ -260,7 +260,7 @@ UnpackDataByIndexDevice ( buffer_unit_type const * & buffer,
       } );
 
       // Roll back threadBuffer
-      for( int i=0; i<count; i++ )
+      for( int i = 0; i < count; i++ )
       {
         --threadBuffer;
       }
@@ -268,7 +268,7 @@ UnpackDataByIndexDevice ( buffer_unit_type const * & buffer,
       // Load in the buffer if it had higher norm
       if( LHSNormSquared < RHSNormSquared )
       {
-        LvArray::forValuesInSlice( var[ indices[ ii ] ], [&threadBuffer] GEOS_DEVICE ( T & value )
+        LvArray::forValuesInSlice( var[indices[ii]], [&threadBuffer] GEOS_DEVICE ( T & value )
         {
           value = *threadBuffer;
           ++threadBuffer;

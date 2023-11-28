@@ -59,7 +59,7 @@ real64_array FunctionBase::evaluateStats( dataRepository::Group const & group,
   result[0] = 1e10;   // min
   result[1] = 0.0;    // avg
   result[2] = -1e10;  // max
-  for( localIndex ii=0; ii<N; ii++ )
+  for( localIndex ii = 0; ii < N; ii++ )
   {
     result[0] = std::min( result[0], sub[ii] );
     result[1] += sub[ii];

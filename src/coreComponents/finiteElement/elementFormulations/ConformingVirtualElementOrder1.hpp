@@ -233,7 +233,7 @@ public:
         real64 const contribution = scaleFactor * stack.stabilizationMatrix[i][j];
         for( localIndex d = 0; d < NUMDOFSPERTRIALSUPPORTPOINT; ++d )
         {
-          matrix[i*NUMDOFSPERTRIALSUPPORTPOINT + d][j*NUMDOFSPERTRIALSUPPORTPOINT + d] += contribution;
+          matrix[i * NUMDOFSPERTRIALSUPPORTPOINT + d][j * NUMDOFSPERTRIALSUPPORTPOINT + d] += contribution;
         }
       }
     }

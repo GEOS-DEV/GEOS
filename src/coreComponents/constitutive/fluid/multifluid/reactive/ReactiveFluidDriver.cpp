@@ -85,7 +85,7 @@ void ReactiveFluidDriver::postProcessInput()
   // resize data table to fit number of timesteps and concentrations
   // (numRows,numCols) = (numSteps+1,3+numPrimarySpecies + numSecSpecies + numKineticReactions)
   // column order = time, pressure, temp, primarySpeciesConcentration, secondarySpeciesConcentration, reaction rates,
-  m_table.resize( m_numSteps+1, m_numPrimarySpecies + m_numSecondarySpecies + m_numKineticReactions + 3 );
+  m_table.resize( m_numSteps + 1, m_numPrimarySpecies + m_numSecondarySpecies + m_numKineticReactions + 3 );
 
   // initialize functions
 
@@ -101,13 +101,13 @@ void ReactiveFluidDriver::postProcessInput()
 
   ArrayOfArraysView< real64 > coordinates = pressureFunction.getCoordinates();
   real64 const minTime = coordinates[0][0];
-  real64 const maxTime = coordinates[0][coordinates.sizeOfArray( 0 )-1];
-  real64 const dt = (maxTime-minTime) / m_numSteps;
+  real64 const maxTime = coordinates[0][coordinates.sizeOfArray( 0 ) - 1];
+  real64 const dt = (maxTime - minTime) / m_numSteps;
 
   // set input columns
-  for( integer n=0; n<m_numSteps+1; ++n )
+  for( integer n = 0; n < m_numSteps + 1; ++n )
   {
-    m_table( n, TIME ) = minTime + n*dt;
+    m_table( n, TIME ) = minTime + n * dt;
     m_table( n, PRES ) = pressureFunction.evaluate( &m_table( n, TIME ) );
     m_table( n, TEMP ) = temperatureFunction.evaluate( &m_table( n, TIME ) );
   }
@@ -211,7 +211,7 @@ void ReactiveFluidDriver::runTest( FLUID_TYPE & fluid, arrayView2d< real64 > con
     primarySpeciesTotalConcentrationValues[0][i] = m_feed[i];
   }
 
-  real64 const hPlusConcentration = -2*m_feed[2]+2*m_feed[3]+m_feed[4]-2*m_feed[5]-m_feed[6];
+  real64 const hPlusConcentration = -2 * m_feed[2] + 2 * m_feed[3] + m_feed[4] - 2 * m_feed[5] - m_feed[6];
 
   if( ( hPlusConcentration + m_feed[1] ) > 0 )
   {
@@ -254,17 +254,17 @@ void ReactiveFluidDriver::runTest( FLUID_TYPE & fluid, arrayView2d< real64 > con
     for( integer n = 0; n <= numSteps; ++n )
     {
       kernelWrapper.updateChemistry( ei, 0, table( n, PRES ), table( n, TEMP ), composition[0] );
-      for( integer p=0; p<numPrimarySpecies; ++p )
+      for( integer p = 0; p < numPrimarySpecies; ++p )
       {
-        table( n, TEMP+1+p ) = primarySpeciesConcentration( ei, p );
+        table( n, TEMP + 1 + p ) = primarySpeciesConcentration( ei, p );
       }
-      for( integer s=0; s<numSecondarySpecies; ++s )
+      for( integer s = 0; s < numSecondarySpecies; ++s )
       {
-        table( n, TEMP+1+numPrimarySpecies+s ) = secondarySpeciesConcentration( ei, s );
+        table( n, TEMP + 1 + numPrimarySpecies + s ) = secondarySpeciesConcentration( ei, s );
       }
-      for( integer k=0; k<numKineticReactions; ++k )
+      for( integer k = 0; k < numKineticReactions; ++k )
       {
-        table( n, TEMP+1+numPrimarySpecies+numSecondarySpecies+k ) = kineticReactionRates( ei, k );
+        table( n, TEMP + 1 + numPrimarySpecies + numSecondarySpecies + k ) = kineticReactionRates( ei, k );
       }
     }
   } );
@@ -282,11 +282,11 @@ void ReactiveFluidDriver::outputResults()
   fprintf( fp, "# column 1 = time\n" );
   fprintf( fp, "# column 2 = pressure\n" );
   fprintf( fp, "# column 3 = temperature\n" );
-  fprintf( fp, "# columns %d-%d = concentrations\n", 4, 3+m_numPrimarySpecies+m_numSecondarySpecies );
+  fprintf( fp, "# columns %d-%d = concentrations\n", 4, 3 + m_numPrimarySpecies + m_numSecondarySpecies );
 
-  for( integer n=0; n<m_table.size( 0 ); ++n )
+  for( integer n = 0; n < m_table.size( 0 ); ++n )
   {
-    for( integer col=0; col<m_table.size( 1 ); ++col )
+    for( integer col = 0; col < m_table.size( 1 ); ++col )
     {
       fprintf( fp, "%.4e ", m_table( n, col ) );
     }
@@ -306,7 +306,7 @@ void ReactiveFluidDriver::compareWithBaseline()
   // discard file header
 
   string line;
-  for( integer row=0; row < 4; ++row )
+  for( integer row = 0; row < 4; ++row )
   {
     getline( file, line );
   }
@@ -319,17 +319,17 @@ void ReactiveFluidDriver::compareWithBaseline()
   real64 value;
   real64 error;
 
-  for( integer row=0; row < m_table.size( 0 ); ++row )
+  for( integer row = 0; row < m_table.size( 0 ); ++row )
   {
-    for( integer col=0; col < m_table.size( 1 ); ++col )
+    for( integer col = 0; col < m_table.size( 1 ); ++col )
     {
       GEOS_THROW_IF( file.eof(), "Baseline file appears shorter than internal results", std::runtime_error );
       file >> value;
 
-      error = fabs( m_table[row][col]-value ) / ( fabs( value )+1 );
-      GEOS_THROW_IF( error > m_baselineTol, "Results do not match baseline at data row " << row+1
-                                                                                         << " (row " << row+m_numColumns << " with header)"
-                                                                                         << " and column " << col+1, std::runtime_error );
+      error = fabs( m_table[row][col] - value ) / ( fabs( value ) + 1 );
+      GEOS_THROW_IF( error > m_baselineTol, "Results do not match baseline at data row " << row + 1
+                                                                                         << " (row " << row + m_numColumns << " with header)"
+                                                                                         << " and column " << col + 1, std::runtime_error );
     }
   }
 

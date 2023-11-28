@@ -84,8 +84,8 @@ public:
         mat.getRowCopy( iRow, cols, vals );
         for( localIndex k = 0; k < rowLength; ++k )
         {
-          localIndex const jCol = LvArray::integerConversion< localIndex >( cols[k]-i );
-          if( cols[k] >= i && cols[k] < i+LvArray::integerConversion< globalIndex >( m_blockSize ) )
+          localIndex const jCol = LvArray::integerConversion< localIndex >( cols[k] - i );
+          if( cols[k] >= i && cols[k] < i + LvArray::integerConversion< globalIndex >( m_blockSize ) )
           {
             values( j, jCol ) = vals[k];
           }

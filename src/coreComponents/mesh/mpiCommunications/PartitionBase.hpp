@@ -46,8 +46,8 @@ public:
    * @param min Global minimum spatial dimensions.
    * @param max Global maximum spatial dimensions.
    */
-  virtual void setSizes( real64 const ( &min )[ 3 ],
-                         real64 const ( &max )[ 3 ] ) = 0;
+  virtual void setSizes( real64 const ( &min )[3],
+                         real64 const ( &max )[3] ) = 0;
 
   /**
    * @brief Defines the number of partitions along the three (x, y, z) axis.

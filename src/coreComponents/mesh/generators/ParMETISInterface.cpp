@@ -69,7 +69,7 @@ meshToDual( ArrayOfArraysView< idx_t const, idx_t > const & elemToNodes,
   // There is no way to direct-copy values into ArrayOfArrays without UB (casting away const)
   forAll< parallelHostPolicy >( numElems, [xadj, adjncy, graph = graph.toView()]( localIndex const k )
   {
-    graph.appendToArray( k, adjncy + xadj[k], adjncy + xadj[k+1] );
+    graph.appendToArray( k, adjncy + xadj[k], adjncy + xadj[k + 1] );
   } );
 
   METIS_Free( xadj );

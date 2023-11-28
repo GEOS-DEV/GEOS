@@ -197,12 +197,12 @@ public:
     real64 dOneSidedVolFlux_dFacePres[NUM_FACE][NUM_FACE]{};
 
     real64 divMassFluxes = 0;
-    real64 dDivMassFluxes_dElemVars[NUM_FACE+1]{};
+    real64 dDivMassFluxes_dElemVars[NUM_FACE + 1]{};
     real64 dDivMassFluxes_dFaceVars[NUM_FACE]{};
 
     localIndex cellCenteredEqnRowIndex = 0;
     localIndex faceCenteredEqnRowIndex[NUM_FACE]{};
-    globalIndex elemDofColIndices[NUM_FACE+1]{};
+    globalIndex elemDofColIndices[NUM_FACE + 1]{};
     globalIndex faceDofColIndices[NUM_FACE]{};
   };
 
@@ -329,7 +329,7 @@ public:
       // compute the mass flux at the one-sided face plus its derivatives and add the newly computed flux to the sum
       stack.divMassFluxes = stack.divMassFluxes + dt_upwMobility * stack.oneSidedVolFlux[iFaceLoc];
       stack.dDivMassFluxes_dElemVars[0] = stack.dDivMassFluxes_dElemVars[0] + m_dt * upwMobility * stack.dOneSidedVolFlux_dPres[iFaceLoc];
-      stack.dDivMassFluxes_dElemVars[iFaceLoc+1] = m_dt * dUpwMobility_dPres * stack.oneSidedVolFlux[iFaceLoc];
+      stack.dDivMassFluxes_dElemVars[iFaceLoc + 1] = m_dt * dUpwMobility_dPres * stack.oneSidedVolFlux[iFaceLoc];
       for( integer jFaceLoc = 0; jFaceLoc < NUM_FACE; ++jFaceLoc )
       {
         stack.dDivMassFluxes_dFaceVars[jFaceLoc] = stack.dDivMassFluxes_dFaceVars[jFaceLoc]
@@ -337,7 +337,7 @@ public:
       }
 
       // collect the relevant dof numbers
-      stack.elemDofColIndices[iFaceLoc+1] = upwDofNumber;
+      stack.elemDofColIndices[iFaceLoc + 1] = upwDofNumber;
     }
   }
 
@@ -356,7 +356,7 @@ public:
   {
     GEOS_UNUSED_VAR( ei, stack, kernelOp );
 
-    real64 const perm[ 3 ] = { m_elemPerm[ei][0][0], m_elemPerm[ei][0][1], m_elemPerm[ei][0][2] };
+    real64 const perm[3] = { m_elemPerm[ei][0][0], m_elemPerm[ei][0][1], m_elemPerm[ei][0][2] };
 
     // recompute the local transmissibility matrix at each iteration
     // we can decide later to precompute transMatrix if needed
@@ -424,7 +424,7 @@ public:
       m_localMatrix.addToRowBinarySearchUnsorted< serialAtomic >( stack.cellCenteredEqnRowIndex,
                                                                   &stack.elemDofColIndices[0],
                                                                   &stack.dDivMassFluxes_dElemVars[0],
-                                                                  NUM_FACE+1 );
+                                                                  NUM_FACE + 1 );
 
       // jacobian -- derivatives wrt face centered vars
       m_localMatrix.addToRowBinarySearchUnsorted< serialAtomic >( stack.cellCenteredEqnRowIndex,

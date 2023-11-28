@@ -86,7 +86,7 @@ public:
     {}
 
     /// C-array stack storage for element local the nodal positions.
-    real64 xLocal[ numNodesPerElem ][ 3 ];
+    real64 xLocal[numNodesPerElem][3];
 
     /// C-array stack storage for sampling points coordinates.
     real64 samplingPointCoord[3];
@@ -115,7 +115,7 @@ public:
       kernelComponent.setup( k, stack );
 
       real64 averageDistance = 0.0;
-      for( integer np=0; np<numSamplingPoints; ++np )
+      for( integer np = 0; np < numSamplingPoints; ++np )
       {
         kernelComponent.samplingPointCoord( np, stack );
         averageDistance += kernelComponent.computeDistance( k, stack.samplingPointCoord );
@@ -135,13 +135,13 @@ public:
   void setup( localIndex const k,
               StackVariables & stack ) const
   {
-    for( localIndex a=0; a<numNodesPerElem; ++a )
+    for( localIndex a = 0; a < numNodesPerElem; ++a )
     {
       localIndex const localNodeIndex = m_elemsToNodes( k, a );
 
-      for( int i=0; i<3; ++i )
+      for( int i = 0; i < 3; ++i )
       {
-        stack.xLocal[ a ][ i ] = m_X[ localNodeIndex ][ i ];
+        stack.xLocal[a][i] = m_X[localNodeIndex][i];
       }
     }
   }
@@ -185,9 +185,9 @@ public:
     LvArray::tensorOps::fill< 3 >( stack.samplingPointCoord, 0.0 );
 
     // Compute sampling point coord in the physical space
-    for( localIndex a=0; a<numNodesPerElem; a++ )
+    for( localIndex a = 0; a < numNodesPerElem; a++ )
     {
-      for( int i =0; i < 3; i++ )
+      for( int i = 0; i < 3; i++ )
       {
         stack.samplingPointCoord[i] += stack.xLocal[a][i] * N[a];
       }

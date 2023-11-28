@@ -547,14 +547,14 @@ extern MPI_Comm comm;
  * @param comm global MPI communicator
  * @param rank_output_dir output directory for rank log files
  */
-void InitializeLogger( MPI_Comm comm, const std::string & rank_output_dir="" );
+void InitializeLogger( MPI_Comm comm, const std::string & rank_output_dir = "" );
 #endif
 
 /**
  * @brief Initialize the logger in a serial build.
  * @param rank_output_dir output directory for rank log files
  */
-void InitializeLogger( const std::string & rank_output_dir="" );
+void InitializeLogger( const std::string & rank_output_dir = "" );
 
 /**
  * @brief Finalize the logger and close the rank streams.

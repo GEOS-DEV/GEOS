@@ -87,14 +87,14 @@ TYPED_TEST( ComponentMaskTest, SimpleConstruct_HalfComp_NoneIncluded )
 {
   using Mask = typename TestFixture::CompMask;
   constexpr int N = TestFixture::MAX_COMP;
-  compare( Mask( N/2, false ), {} );
+  compare( Mask( N / 2, false ), {} );
 }
 
 TYPED_TEST( ComponentMaskTest, SimpleConstruct_HalfComp_AllIncluded )
 {
   using Mask = typename TestFixture::CompMask;
   constexpr int N = TestFixture::MAX_COMP;
-  compare( Mask( N/2, true ), make_range( 0, N/2 ) );
+  compare( Mask( N / 2, true ), make_range( 0, N / 2 ) );
 }
 
 TYPED_TEST( ComponentMaskTest, SimpleConstruct_MaxComp_NoneIncluded )
@@ -122,28 +122,28 @@ TYPED_TEST( ComponentMaskTest, RangeConstruct_MaxComp_FirstHalfIncluded )
 {
   using Mask = typename TestFixture::CompMask;
   constexpr int N = TestFixture::MAX_COMP;
-  compare( Mask( N, 0, N/2 ), make_range( 0, N/2 ) );
+  compare( Mask( N, 0, N / 2 ), make_range( 0, N / 2 ) );
 }
 
 TYPED_TEST( ComponentMaskTest, RangeConstruct_MaxComp_SecondHalfIncluded )
 {
   using Mask = typename TestFixture::CompMask;
   constexpr int N = TestFixture::MAX_COMP;
-  compare( Mask( N, N/2, N ), make_range( N/2, N ) );
+  compare( Mask( N, N / 2, N ), make_range( N / 2, N ) );
 }
 
 TYPED_TEST( ComponentMaskTest, RangeConstruct_MaxComp_MiddleHalfIncluded )
 {
   using Mask = typename TestFixture::CompMask;
   constexpr int N = TestFixture::MAX_COMP;
-  compare( Mask( N, N/4, 3*N/4 ), make_range( N/4, 3*N/4 ) );
+  compare( Mask( N, N / 4, 3 * N / 4 ), make_range( N / 4, 3 * N / 4 ) );
 }
 
 TYPED_TEST( ComponentMaskTest, ConversionConstruct_HalfComp_NoneIncluded )
 {
   using Mask = typename TestFixture::CompMask;
   int constexpr N = TestFixture::MAX_COMP;
-  ComponentMask< N/2 > src( N/2, false );
+  ComponentMask< N / 2 > src( N / 2, false );
   compare( Mask( src ), {} );
 }
 
@@ -151,8 +151,8 @@ TYPED_TEST( ComponentMaskTest, ConversionConstruct_HalfComp_AllIncluded )
 {
   using Mask = typename TestFixture::CompMask;
   int constexpr N = TestFixture::MAX_COMP;
-  ComponentMask< N/2 > src( N/2, true );
-  compare( Mask( src ), make_range( 0, N/2 ) );
+  ComponentMask< N / 2 > src( N / 2, true );
+  compare( Mask( src ), make_range( 0, N / 2 ) );
 }
 
 TYPED_TEST( ComponentMaskTest, Set_SingleComp )
@@ -240,16 +240,16 @@ TYPED_TEST( ComponentMaskTest, Invert_RemoveFirstHalf )
 {
   using Mask = typename TestFixture::CompMask;
   constexpr int N = TestFixture::MAX_COMP;
-  Mask mask( N, 0, N/2 );
+  Mask mask( N, 0, N / 2 );
   mask.invert();
-  compare( mask, make_range( N/2, N ) );
+  compare( mask, make_range( N / 2, N ) );
 }
 
 TYPED_TEST( ComponentMaskTest, Invert_RemoveMiddleHalf )
 {
   using Mask = typename TestFixture::CompMask;
   constexpr int N = TestFixture::MAX_COMP;
-  Mask mask( N, N/4, 3*N/4 );
+  Mask mask( N, N / 4, 3 * N / 4 );
   mask.invert();
-  compare( mask, join_range( make_range( 0, N/4 ), make_range( 3*N/4, N ) ) );
+  compare( mask, join_range( make_range( 0, N / 4 ), make_range( 3 * N / 4, N ) ) );
 }

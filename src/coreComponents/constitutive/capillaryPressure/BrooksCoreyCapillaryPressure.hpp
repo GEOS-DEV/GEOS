@@ -177,7 +177,7 @@ BrooksCoreyCapillaryPressureUpdate::
     real64 const entryPressure = -m_phaseEntryPressure[ip_gas]; // for gas capillary pressure, take the opposite of the
                                                                 // BC function
 
-    real64 const wettingVolFracScaled           = 1-volFracScaled;
+    real64 const wettingVolFracScaled           = 1 - volFracScaled;
     real64 const dWettingVolFracScaled_dVolFrac =  -volFracScaleInv;
 
     evaluateBrooksCoreyFunction( wettingVolFracScaled,

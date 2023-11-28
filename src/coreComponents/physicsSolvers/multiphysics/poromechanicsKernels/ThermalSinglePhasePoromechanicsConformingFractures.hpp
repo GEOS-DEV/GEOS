@@ -231,8 +231,8 @@ public:
       for( integer ke = 0; ke < 2; ++ke )
       {
         localIndex const localDofIndexTemp = k[ke] * numDof + numDof - 1;
-        stack.localFluxJacobian[k[0]*numEqn][localDofIndexTemp] += m_dt * dMassFlux_dT[ke];
-        stack.localFluxJacobian[k[1]*numEqn][localDofIndexTemp] -= m_dt * dMassFlux_dT[ke];
+        stack.localFluxJacobian[k[0] * numEqn][localDofIndexTemp] += m_dt * dMassFlux_dT[ke];
+        stack.localFluxJacobian[k[1] * numEqn][localDofIndexTemp] -= m_dt * dMassFlux_dT[ke];
       }
     } );
 
@@ -265,17 +265,17 @@ public:
         computeConductiveFlux( seri, sesri, sei, m_temp, thermalTrans, stack.energyFlux, stack.dEnergyFlux_dT );
 
         // add energyFlux and its derivatives to localFlux and localFluxJacobian
-        stack.localFlux[k[0]*numEqn + numEqn - 1] += m_dt * stack.energyFlux;
-        stack.localFlux[k[1]*numEqn + numEqn - 1] -= m_dt * stack.energyFlux;
+        stack.localFlux[k[0] * numEqn + numEqn - 1] += m_dt * stack.energyFlux;
+        stack.localFlux[k[1] * numEqn + numEqn - 1] -= m_dt * stack.energyFlux;
 
         for( integer ke = 0; ke < 2; ++ke )
         {
           integer const localDofIndexPres = k[ke] * numDof;
-          stack.localFluxJacobian[k[0]*numEqn + numEqn - 1][localDofIndexPres] =  m_dt * stack.dEnergyFlux_dP[ke];
-          stack.localFluxJacobian[k[1]*numEqn + numEqn - 1][localDofIndexPres] = -m_dt * stack.dEnergyFlux_dP[ke];
+          stack.localFluxJacobian[k[0] * numEqn + numEqn - 1][localDofIndexPres] =  m_dt * stack.dEnergyFlux_dP[ke];
+          stack.localFluxJacobian[k[1] * numEqn + numEqn - 1][localDofIndexPres] = -m_dt * stack.dEnergyFlux_dP[ke];
           integer const localDofIndexTemp = localDofIndexPres + 1;
-          stack.localFluxJacobian[k[0]*numEqn + numEqn - 1][localDofIndexTemp] =  m_dt * stack.dEnergyFlux_dT[ke];
-          stack.localFluxJacobian[k[1]*numEqn + numEqn - 1][localDofIndexTemp] = -m_dt * stack.dEnergyFlux_dT[ke];
+          stack.localFluxJacobian[k[0] * numEqn + numEqn - 1][localDofIndexTemp] =  m_dt * stack.dEnergyFlux_dT[ke];
+          stack.localFluxJacobian[k[1] * numEqn + numEqn - 1][localDofIndexTemp] = -m_dt * stack.dEnergyFlux_dT[ke];
         }
 
         connectionIndex++;
@@ -298,11 +298,11 @@ public:
                                         localIndex const localRow )
     {
       // The no. of fluxes is equal to the no. of equations in m_localRhs and m_localMatrix
-      RAJA::atomicAdd( parallelDeviceAtomic{}, &SinglePhaseFVMAbstractBase::m_localRhs[localRow + numEqn-1], stack.localFlux[i * numEqn + numEqn-1] );
+      RAJA::atomicAdd( parallelDeviceAtomic{}, &SinglePhaseFVMAbstractBase::m_localRhs[localRow + numEqn - 1], stack.localFlux[i * numEqn + numEqn - 1] );
 
-      SinglePhaseFVMAbstractBase::m_localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( localRow + numEqn-1,
+      SinglePhaseFVMAbstractBase::m_localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( localRow + numEqn - 1,
                                                                                                       stack.dofColIndices.data(),
-                                                                                                      stack.localFluxJacobian[i * numEqn + numEqn-1].dataIfContiguous(),
+                                                                                                      stack.localFluxJacobian[i * numEqn + numEqn - 1].dataIfContiguous(),
                                                                                                       stack.stencilSize * numDof );
 
     } );

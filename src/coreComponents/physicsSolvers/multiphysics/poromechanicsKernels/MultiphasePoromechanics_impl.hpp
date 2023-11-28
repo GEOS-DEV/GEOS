@@ -123,7 +123,7 @@ setup( localIndex const k,
   // setup component dofs
   // for now, maxNumComponents > m_numComponents, so we pad localComponentDofIndices with -1
   LvArray::tensorOps::fill< maxNumComponents >( stack.localComponentDofIndices, -1.0 );
-  for( integer flowDofIndex=0; flowDofIndex < m_numComponents; ++flowDofIndex )
+  for( integer flowDofIndex = 0; flowDofIndex < m_numComponents; ++flowDofIndex )
   {
     stack.localComponentDofIndices[flowDofIndex] = stack.localPressureDofIndex + flowDofIndex + 1;
   }
@@ -236,7 +236,7 @@ computeBodyForce( localIndex const k,
                     Deriv::dC );
     for( integer jc = 0; jc < m_numComponents; ++jc )
     {
-      dTotalMassDensity_dComponents[jc] += dPhaseVolFrac( ip, Deriv::dC+jc ) * phaseMassDensity( ip )
+      dTotalMassDensity_dComponents[jc] += dPhaseVolFrac( ip, Deriv::dC + jc ) * phaseMassDensity( ip )
                                            + phaseVolFrac( ip ) * dPhaseMassDensity_dComponents[jc];
     }
   }
@@ -292,7 +292,7 @@ computeFluidIncrement( localIndex const k,
   arraySlice2d< real64 const, constitutive::multifluid::USD_PHASE_DC - 2 > const dPhaseDensity = m_dFluidPhaseDensity[k][q];
   arraySlice2d< real64 const, constitutive::multifluid::USD_PHASE_COMP - 2 > const phaseCompFrac = m_fluidPhaseCompFrac[k][q];
   arraySlice2d< real64 const, constitutive::multifluid::USD_PHASE_COMP - 2 > const phaseCompFrac_n = m_fluidPhaseCompFrac_n[k][q];
-  arraySlice3d< real64 const, constitutive::multifluid::USD_PHASE_COMP_DC -2 > const dPhaseCompFrac = m_dFluidPhaseCompFrac[k][q];
+  arraySlice3d< real64 const, constitutive::multifluid::USD_PHASE_COMP_DC - 2 > const dPhaseCompFrac = m_dFluidPhaseCompFrac[k][q];
   arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const phaseVolFrac = m_fluidPhaseVolFrac[k];
   arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const phaseVolFrac_n = m_fluidPhaseVolFrac_n[k];
   arraySlice2d< real64 const, compflow::USD_PHASE_DC - 1 > const dPhaseVolFrac = m_dFluidPhaseVolFrac[k];
@@ -325,7 +325,7 @@ computeFluidIncrement( localIndex const k,
     for( integer jc = 0; jc < m_numComponents; ++jc )
     {
       dPhaseAmount_dC[jc] = dPhaseAmount_dC[jc] * phaseVolFrac( ip )
-                            + phaseDensity( ip ) * dPhaseVolFrac( ip, Deriv::dC+jc );
+                            + phaseDensity( ip ) * dPhaseVolFrac( ip, Deriv::dC + jc );
       dPhaseAmount_dC[jc] *= porosity;
     }
 
@@ -385,7 +385,7 @@ computePoreVolumeConstraint( localIndex const k,
 
     for( integer jc = 0; jc < m_numComponents; ++jc )
     {
-      stack.dPoreVolConstraint_dComponents[0][jc] -= dPhaseVolFrac( ip, Deriv::dC+jc ) * porosity_n;
+      stack.dPoreVolConstraint_dComponents[0][jc] -= dPhaseVolFrac( ip, Deriv::dC + jc ) * porosity_n;
     }
   }
   stack.poreVolConstraint *= porosity_n;
@@ -703,7 +703,7 @@ complete( localIndex const k,
                                                   stack.localComponentDofIndices,
                                                   stack.dLocalResidualMass_dComponents[i],
                                                   m_numComponents );
-      RAJA::atomicAdd< serialAtomic >( &m_rhs[dof+i], stack.localResidualMass[i] );
+      RAJA::atomicAdd< serialAtomic >( &m_rhs[dof + i], stack.localResidualMass[i] );
     }
 
     m_matrix.template addToRow< serialAtomic >( dof + m_numComponents,
@@ -716,7 +716,7 @@ complete( localIndex const k,
                                                 stack.dLocalResidualPoreVolConstraint_dComponents[0],
                                                 m_numComponents );
 
-    RAJA::atomicAdd< serialAtomic >( &m_rhs[dof+m_numComponents], stack.localResidualPoreVolConstraint[0] );
+    RAJA::atomicAdd< serialAtomic >( &m_rhs[dof + m_numComponents], stack.localResidualPoreVolConstraint[0] );
   }
   return maxForce;
 }
@@ -741,7 +741,7 @@ kernelLaunch( localIndex const numElems,
     typename KERNEL_TYPE::StackVariables stack;
 
     kernelComponent.setup( k, stack );
-    for( integer q=0; q<KERNEL_TYPE::numQuadraturePointsPerElem; ++q )
+    for( integer q = 0; q < KERNEL_TYPE::numQuadraturePointsPerElem; ++q )
     {
       kernelComponent.quadraturePointKernel( k, q, stack );
     }

@@ -433,8 +433,8 @@ public:
       // Step 4: add dCompFlux_dTemp to localFluxJacobian
       for( integer ic = 0; ic < numComp; ++ic )
       {
-        integer const eqIndex0 = k[0]* numEqn + ic;
-        integer const eqIndex1 = k[1]* numEqn + ic;
+        integer const eqIndex0 = k[0] * numEqn + ic;
+        integer const eqIndex1 = k[1] * numEqn + ic;
         for( integer ke = 0; ke < numFluxSupportPoints; ++ke )
         {
           integer const localDofIndexTemp = k[ke] * numDof + numDof - 1;
@@ -571,11 +571,11 @@ public:
                                         localIndex const localRow )
     {
       // beware, there is  volume balance eqn in m_localRhs and m_localMatrix!
-      RAJA::atomicAdd( parallelDeviceAtomic{}, &AbstractBase::m_localRhs[localRow + numEqn], stack.localFlux[i * numEqn + numEqn-1] );
+      RAJA::atomicAdd( parallelDeviceAtomic{}, &AbstractBase::m_localRhs[localRow + numEqn], stack.localFlux[i * numEqn + numEqn - 1] );
       AbstractBase::m_localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >
         ( localRow + numEqn,
         stack.dofColIndices.data(),
-        stack.localFluxJacobian[i * numEqn + numEqn-1].dataIfContiguous(),
+        stack.localFluxJacobian[i * numEqn + numEqn - 1].dataIfContiguous(),
         stack.stencilSize * numDof );
 
     } );
@@ -1177,7 +1177,7 @@ public:
                                            real64 const f, // potGrad times trans
                                            real64 const facePhaseMob,
                                            arraySlice1d< const real64, multifluid::USD_PHASE - 2 > const & facePhaseEnthalpy,
-                                           arraySlice2d< const real64, multifluid::USD_PHASE_COMP-2 > const & facePhaseCompFrac,
+                                           arraySlice2d< const real64, multifluid::USD_PHASE_COMP - 2 > const & facePhaseCompFrac,
                                            real64 const phaseFlux,
                                            real64 const dPhaseFlux_dP,
                                            real64 const (&dPhaseFlux_dC)[numComp] )
@@ -1300,18 +1300,18 @@ public:
     // Step 1: add dCompFlux_dTemp to localFluxJacobian
     for( integer ic = 0; ic < numComp; ++ic )
     {
-      stack.localFluxJacobian[ic][numDof-1] =  m_dt * stack.dCompFlux_dT[ic];
+      stack.localFluxJacobian[ic][numDof - 1] =  m_dt * stack.dCompFlux_dT[ic];
     }
 
     // Step 2: add energyFlux and its derivatives to localFlux and localFluxJacobian
-    integer const localRowIndexEnergy = numEqn-1;
+    integer const localRowIndexEnergy = numEqn - 1;
     stack.localFlux[localRowIndexEnergy] =  m_dt * stack.energyFlux;
 
     stack.localFluxJacobian[localRowIndexEnergy][0] =  m_dt * stack.dEnergyFlux_dP;
-    stack.localFluxJacobian[localRowIndexEnergy][numDof-1] =  m_dt * stack.dEnergyFlux_dT;
+    stack.localFluxJacobian[localRowIndexEnergy][numDof - 1] =  m_dt * stack.dEnergyFlux_dT;
     for( integer jc = 0; jc < numComp; ++jc )
     {
-      stack.localFluxJacobian[localRowIndexEnergy][jc+1] =  m_dt * stack.dEnergyFlux_dC[jc];
+      stack.localFluxJacobian[localRowIndexEnergy][jc + 1] =  m_dt * stack.dEnergyFlux_dC[jc];
     }
   }
 
@@ -1329,11 +1329,11 @@ public:
     Base::complete( iconn, stack, [&] ( localIndex const localRow )
     {
       // beware, there is  volume balance eqn in m_localRhs and m_localMatrix!
-      RAJA::atomicAdd( parallelDeviceAtomic{}, &AbstractBase::m_localRhs[localRow + numEqn], stack.localFlux[numEqn-1] );
+      RAJA::atomicAdd( parallelDeviceAtomic{}, &AbstractBase::m_localRhs[localRow + numEqn], stack.localFlux[numEqn - 1] );
       AbstractBase::m_localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >
         ( localRow + numEqn,
         stack.dofColIndices,
-        stack.localFluxJacobian[numEqn-1],
+        stack.localFluxJacobian[numEqn - 1],
         numDof );
 
     } );

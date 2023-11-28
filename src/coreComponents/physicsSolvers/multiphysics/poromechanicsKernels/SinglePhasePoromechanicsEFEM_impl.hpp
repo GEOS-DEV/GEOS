@@ -122,7 +122,7 @@ kernelLaunch( localIndex const numElems,
     typename KERNEL_TYPE::StackVariables stack;
 
     kernelComponent.setup( k, stack );
-    for( integer q=0; q<numQuadraturePointsPerElem; ++q )
+    for( integer q = 0; q < numQuadraturePointsPerElem; ++q )
     {
       kernelComponent.quadraturePointKernel( k, q, stack );
     }
@@ -146,30 +146,30 @@ setup( localIndex const k,
   localIndex const embSurfIndex = m_cellsToEmbeddedSurfaces[k][0];
 
   stack.hInv = m_surfaceArea[embSurfIndex] / m_elementVolume[k];
-  for( localIndex a=0; a<numNodesPerElem; ++a )
+  for( localIndex a = 0; a < numNodesPerElem; ++a )
   {
     localIndex const localNodeIndex = m_elemsToNodes( k, a );
 
-    for( int i=0; i<3; ++i )
+    for( int i = 0; i < 3; ++i )
     {
-      stack.dispEqnRowIndices[a*3+i] = m_dofNumber[localNodeIndex]+i-m_dofRankOffset;
-      stack.dispColIndices[a*3+i]    = m_dofNumber[localNodeIndex]+i;
-      stack.xLocal[ a ][ i ] = m_X[ localNodeIndex ][ i ];
-      stack.dispLocal[ a*3 + i ] = m_disp[ localNodeIndex ][ i ];
-      stack.deltaDispLocal[ a ][ i ] = m_deltaDisp[ localNodeIndex ][ i ];
+      stack.dispEqnRowIndices[a * 3 + i] = m_dofNumber[localNodeIndex] + i - m_dofRankOffset;
+      stack.dispColIndices[a * 3 + i]    = m_dofNumber[localNodeIndex] + i;
+      stack.xLocal[a][i] = m_X[localNodeIndex][i];
+      stack.dispLocal[a * 3 + i] = m_disp[localNodeIndex][i];
+      stack.deltaDispLocal[a][i] = m_deltaDisp[localNodeIndex][i];
     }
   }
 
-  for( int i=0; i<3; ++i )
+  for( int i = 0; i < 3; ++i )
   {
     // need to grab the index.
     stack.jumpEqnRowIndices[i] = m_wDofNumber[embSurfIndex] + i - m_dofRankOffset;
     stack.jumpColIndices[i]    = m_wDofNumber[embSurfIndex] + i;
-    stack.wLocal[ i ] = m_w[ embSurfIndex ][i];
-    stack.tractionVec[ i ] = m_tractionVec[ embSurfIndex ][i] * m_surfaceArea[embSurfIndex];
-    for( int ii=0; ii < 3; ++ii )
+    stack.wLocal[i] = m_w[embSurfIndex][i];
+    stack.tractionVec[i] = m_tractionVec[embSurfIndex][i] * m_surfaceArea[embSurfIndex];
+    for( int ii = 0; ii < 3; ++ii )
     {
-      stack.dTractiondw[ i ][ ii ] = m_dTraction_dJump[embSurfIndex][i][ii] * m_surfaceArea[embSurfIndex];
+      stack.dTractiondw[i][ii] = m_dTraction_dJump[embSurfIndex][i][ii] * m_surfaceArea[embSurfIndex];
     }
   }
 }
@@ -196,7 +196,7 @@ quadraturePointKernel( localIndex const k,
   real64 const detJ = m_finiteElementSpace.template getGradN< FE_TYPE >( k, q, stack.xLocal, dNdX );
 
   // EFEM part starts here
-  constexpr int nUdof = numNodesPerElem*3;
+  constexpr int nUdof = numNodesPerElem * 3;
 
   // Gauss contribution to Kww, Kwu and Kuw blocks
   real64 Kww_gauss[3][3]{}, Kwu_gauss[3][nUdof]{}, Kuw_gauss[nUdof][3]{}, Kwpm_gauss[3]{};
@@ -206,7 +206,7 @@ quadraturePointKernel( localIndex const k,
   real64 compMatrix[3][6]{}, strainMatrix[6][nUdof]{}, eqMatrix[3][6]{};
   real64 matBD[nUdof][6]{}, matED[3][6]{};
   real64 biotCoefficient{};
-  int Heaviside[ numNodesPerElem ]{};
+  int Heaviside[numNodesPerElem]{};
 
   m_constitutiveUpdate.getBiotCoefficient( k, biotCoefficient );
 
@@ -248,7 +248,7 @@ quadraturePointKernel( localIndex const k,
   LvArray::tensorOps::Rij_eq_AikBjk< nUdof, 3, 6 >( Kuw_gauss, matBD, compMatrix );
 
   LvArray::tensorOps::fill< 3 >( Kwpm_gauss, 0 );
-  for( int i=0; i < 3; ++i )
+  for( int i = 0; i < 3; ++i )
   {
     Kwpm_gauss[0] += eqMatrix[0][i];
     Kwpm_gauss[1] += eqMatrix[1][i];
@@ -263,7 +263,7 @@ quadraturePointKernel( localIndex const k,
   /// TODO: should this be negative???
   // I had No neg coz the total stress = effective stress - porePressure
   // and all signs are flipped here.
-  LvArray::tensorOps::scaledAdd< 3 >( stack.localKwpm, Kwpm_gauss, detJ*biotCoefficient );
+  LvArray::tensorOps::scaledAdd< 3 >( stack.localKwpm, Kwpm_gauss, detJ * biotCoefficient );
 
   kernelOp( eqMatrix, detJ );
 }
@@ -278,7 +278,7 @@ complete( localIndex const k,
           StackVariables & stack ) const
 {
   real64 maxForce = 0;
-  constexpr int nUdof = numNodesPerElem*3;
+  constexpr int nUdof = numNodesPerElem * 3;
 
   globalIndex matrixPressureColIndex = m_matrixPresDofNumber[k];
 
@@ -288,7 +288,7 @@ complete( localIndex const k,
   LvArray::tensorOps::Ri_add_AijBj< nUdof, 3 >( stack.localDispResidual, stack.localKuw, stack.wLocal );
 
   // add pore pressure contribution
-  LvArray::tensorOps::scaledAdd< 3 >( stack.localJumpResidual, stack.localKwpm, m_matrixPressure[ k ] );
+  LvArray::tensorOps::scaledAdd< 3 >( stack.localJumpResidual, stack.localKwpm, m_matrixPressure[k] );
 
   localIndex const embSurfIndex = m_cellsToEmbeddedSurfaces[k][0];
 
@@ -304,12 +304,12 @@ complete( localIndex const k,
   real64 const newMass =  m_fluidDensity( embSurfIndex, 0 ) * newVolume;
   real64 const oldMass =  m_fluidDensity_n( embSurfIndex, 0 ) * m_elementVolume( embSurfIndex );
   real64 const localFlowResidual = ( newMass - oldMass );
-  real64 const localFlowJumpJacobian = m_fluidDensity( embSurfIndex, 0 ) * m_surfaceArea[ embSurfIndex ];
+  real64 const localFlowJumpJacobian = m_fluidDensity( embSurfIndex, 0 ) * m_surfaceArea[embSurfIndex];
   real64 const localFlowFlowJacobian = m_dFluidDensity_dPressure( embSurfIndex, 0 ) * newVolume;
 
   for( localIndex i = 0; i < nUdof; ++i )
   {
-    localIndex const uDof = LvArray::integerConversion< localIndex >( stack.dispEqnRowIndices[ i ] );
+    localIndex const uDof = LvArray::integerConversion< localIndex >( stack.dispEqnRowIndices[i] );
     if( uDof < 0 || uDof >= m_matrix.numRows() )
       continue;
 
@@ -322,9 +322,9 @@ complete( localIndex const k,
 
   }
 
-  for( localIndex i=0; i < 3; ++i )
+  for( localIndex i = 0; i < 3; ++i )
   {
-    localIndex const dof = LvArray::integerConversion< localIndex >( stack.jumpEqnRowIndices[ i ] );
+    localIndex const dof = LvArray::integerConversion< localIndex >( stack.jumpEqnRowIndices[i] );
 
     if( dof < 0 || dof >= m_matrix.numRows() )
       continue;
@@ -339,7 +339,7 @@ complete( localIndex const k,
     m_matrix.template addToRowBinarySearchUnsorted< parallelDeviceAtomic >( dof,
                                                                             stack.dispColIndices,
                                                                             stack.localKwu[i],
-                                                                            numNodesPerElem*3 );
+                                                                            numNodesPerElem * 3 );
 
     m_matrix.template addToRowBinarySearchUnsorted< parallelDeviceAtomic >( dof,
                                                                             &matrixPressureColIndex,
@@ -353,12 +353,12 @@ complete( localIndex const k,
   {
 
     m_matrix.template addToRowBinarySearchUnsorted< parallelDeviceAtomic >( stack.jumpEqnRowIndices[0],
-                                                                            &m_fracturePresDofNumber[ embSurfIndex ],
+                                                                            &m_fracturePresDofNumber[embSurfIndex],
                                                                             &localJumpFracPressureJacobian,
                                                                             1 );
   }
 
-  localIndex const fracturePressureDof = m_fracturePresDofNumber[ embSurfIndex ] - m_dofRankOffset;
+  localIndex const fracturePressureDof = m_fracturePresDofNumber[embSurfIndex] - m_dofRankOffset;
   if( fracturePressureDof >= 0 && fracturePressureDof < m_matrix.numRows() )
   {
 
@@ -368,11 +368,11 @@ complete( localIndex const k,
                                                                             1 );
 
     m_matrix.template addToRowBinarySearchUnsorted< parallelDeviceAtomic >( fracturePressureDof,
-                                                                            &m_fracturePresDofNumber[ embSurfIndex ],
+                                                                            &m_fracturePresDofNumber[embSurfIndex],
                                                                             &localFlowFlowJacobian,
                                                                             1 );
 
-    RAJA::atomicAdd< serialAtomic >( &m_rhs[ fracturePressureDof ], localFlowResidual );
+    RAJA::atomicAdd< serialAtomic >( &m_rhs[fracturePressureDof], localFlowResidual );
   }
 
   return maxForce;

@@ -146,7 +146,7 @@ void EmbeddedSurfaceGenerator::initializePostSubGroups()
     // Initialize variables
     globalIndex nodeIndex;
     integer isPositive, isNegative;
-    real64 distVec[ 3 ];
+    real64 distVec[3];
 
     elemManager.forElementSubRegionsComplete< CellElementSubRegion >(
       [&]( localIndex const er, localIndex const esr, ElementRegionBase &, CellElementSubRegion & subRegion )
@@ -156,9 +156,9 @@ void EmbeddedSurfaceGenerator::initializePostSubGroups()
 
       arrayView1d< integer const > const ghostRank = subRegion.ghostRank();
 
-      forAll< serialPolicy >( subRegion.size(), [ &, ghostRank,
-                                                  cellToNodes,
-                                                  nodesCoord ] ( localIndex const cellIndex )
+      forAll< serialPolicy >( subRegion.size(), [&, ghostRank,
+                                                 cellToNodes,
+                                                 nodesCoord] ( localIndex const cellIndex )
       {
         if( ghostRank[cellIndex] < 0 )
         {
@@ -197,7 +197,7 @@ void EmbeddedSurfaceGenerator::initializePostSubGroups()
               // Add the information to the CellElementSubRegion
               subRegion.addFracturedElement( cellIndex, localNumberOfSurfaceElems );
 
-              newObjects.newElements[ {embeddedSurfaceRegion.getIndexInParent(), embeddedSurfaceSubRegion.getIndexInParent()} ].insert( localNumberOfSurfaceElems );
+              newObjects.newElements[{embeddedSurfaceRegion.getIndexInParent(), embeddedSurfaceSubRegion.getIndexInParent()}].insert( localNumberOfSurfaceElems );
 
               localNumberOfSurfaceElems++;
             }
@@ -303,7 +303,7 @@ real64 EmbeddedSurfaceGenerator::solverStep( real64 const & GEOS_UNUSED_PARAM( t
 
       forAll< parallelHostPolicy >( fractureSubRegion.size(), [=] ( localIndex const ei )
       {
-        gravityCoef[ ei ] = LvArray::tensorOps::AiBi< 3 >( elemCenter[ ei ], gravVector );
+        gravityCoef[ei] = LvArray::tensorOps::AiBi< 3 >( elemCenter[ei], gravVector );
       } );
     }
   } );
@@ -322,10 +322,10 @@ void EmbeddedSurfaceGenerator::addToFractureStencil( DomainPartition & domain )
   {
     MeshLevel & meshLevel = dynamicCast< MeshBody * >( mesh.second )->getBaseDiscretization();
 
-    for( localIndex a=0; a<fvManager.numSubGroups(); ++a )
+    for( localIndex a = 0; a < fvManager.numSubGroups(); ++a )
     {
       FluxApproximationBase * const fluxApprox = fvManager.getGroupPointer< FluxApproximationBase >( a );
-      if( fluxApprox!=nullptr )
+      if( fluxApprox != nullptr )
       {
         fluxApprox->addEmbeddedFracturesToStencils( meshLevel, this->m_fractureRegionName );
       }
@@ -347,7 +347,7 @@ void EmbeddedSurfaceGenerator::setGlobalIndices( ElementRegionManager & elemMana
   MpiWrapper::allGather( embeddedSurfaceSubRegion.size(), numberOfSurfaceElemsPerRank );
 
   globalIndexOffset[0] = 0; // offSet for the globalIndex
-  localIndex totalNumberOfSurfaceElements = numberOfSurfaceElemsPerRank[ 0 ];  // Sum across all ranks
+  localIndex totalNumberOfSurfaceElements = numberOfSurfaceElemsPerRank[0];    // Sum across all ranks
   for( int rank = 1; rank < commSize; ++rank )
   {
     globalIndexOffset[rank] = globalIndexOffset[rank - 1] + numberOfSurfaceElemsPerRank[rank - 1];
@@ -360,7 +360,7 @@ void EmbeddedSurfaceGenerator::setGlobalIndices( ElementRegionManager & elemMana
 
   forAll< serialPolicy >( embeddedSurfaceSubRegion.size(), [&, elemLocalToGlobal] ( localIndex const ei )
   {
-    elemLocalToGlobal( ei ) = ei + globalIndexOffset[ thisRank ] + elemManager.maxGlobalIndex() + 1;
+    elemLocalToGlobal( ei ) = ei + globalIndexOffset[thisRank] + elemManager.maxGlobalIndex() + 1;
     embeddedSurfaceSubRegion.updateGlobalToLocalMap( ei );
   } );
 
@@ -381,7 +381,7 @@ void EmbeddedSurfaceGenerator::setGlobalIndices( ElementRegionManager & elemMana
   arrayView1d< globalIndex > const & nodesLocalToGlobal = embSurfNodeManager.localToGlobalMap();
   forAll< serialPolicy >( embSurfNodeManager.size(), [=, &embSurfNodeManager, &globalIndexOffset] ( localIndex const ni )
   {
-    nodesLocalToGlobal( ni ) = ni + globalIndexOffset[ thisRank ];
+    nodesLocalToGlobal( ni ) = ni + globalIndexOffset[thisRank];
     embSurfNodeManager.updateGlobalToLocalMap( ni );
   } );
 }
@@ -406,7 +406,7 @@ void EmbeddedSurfaceGenerator::addEmbeddedElementsToSets( ElementRegionManager c
 
     forAll< serialPolicy >( fracturedElements.size(), [&,
                                                        fracturedElements,
-                                                       cellToEmbSurf ] ( localIndex const ei )
+                                                       cellToEmbSurf] ( localIndex const ei )
     {
       localIndex const cellIndex    = fracturedElements[ei];
       localIndex const embSurfIndex = cellToEmbSurf[cellIndex][0];

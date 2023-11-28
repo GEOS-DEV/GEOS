@@ -275,7 +275,7 @@ real64 SolidMechanicsLagrangianFEM::explicitKernelDispatch( MeshLevel & mesh,
 {
   GEOS_MARK_FUNCTION;
   real64 rval = 0;
-  if( m_strainTheory==0 )
+  if( m_strainTheory == 0 )
   {
     auto kernelFactory = solidMechanicsLagrangianFEMKernels::ExplicitSmallStrainFactory( dt, elementListName );
     rval = finiteElement::
@@ -287,7 +287,7 @@ real64 SolidMechanicsLagrangianFEM::explicitKernelDispatch( MeshLevel & mesh,
                                                                    viewKeyStruct::solidMaterialNamesString(),
                                                                    kernelFactory );
   }
-  else if( m_strainTheory==1 )
+  else if( m_strainTheory == 1 )
   {
     auto kernelFactory = solidMechanicsLagrangianFEMKernels::ExplicitFiniteStrainFactory( dt, elementListName );
     rval = finiteElement::
@@ -387,7 +387,7 @@ void SolidMechanicsLagrangianFEM::initializePostInitialConditionsPreSubGroups()
           constexpr localIndex numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
 
           real64 N[maxSupportPoints];
-          for( localIndex k=0; k < elemsToNodes.size( 0 ); ++k )
+          for( localIndex k = 0; k < elemsToNodes.size( 0 ); ++k )
           {
             typename FE_TYPE::StackVariables feStack;
             finiteElement.template setup< FE_TYPE >( k, meshData, feStack );
@@ -395,11 +395,11 @@ void SolidMechanicsLagrangianFEM::initializePostInitialConditionsPreSubGroups()
               finiteElement.template numSupportPoints< FE_TYPE >( feStack );
 
 //#if ! defined( CALC_FEM_SHAPE_IN_KERNEL ) // we don't calculate detJ in this case
-            for( localIndex q=0; q<numQuadraturePointsPerElem; ++q )
+            for( localIndex q = 0; q < numQuadraturePointsPerElem; ++q )
             {
               FE_TYPE::calcN( q, feStack, N );
 
-              for( localIndex a=0; a< numSupportPoints; ++a )
+              for( localIndex a = 0; a < numSupportPoints; ++a )
               {
                 mass[elemsToNodes[k][a]] += rho[k][q] * detJ[k][q] * N[a];
               }
@@ -407,7 +407,7 @@ void SolidMechanicsLagrangianFEM::initializePostInitialConditionsPreSubGroups()
 //#endif
 
             bool isAttachedToGhostNode = false;
-            for( localIndex a=0; a<elementSubRegion.numNodesPerElement(); ++a )
+            for( localIndex a = 0; a < elementSubRegion.numNodesPerElement(); ++a )
             {
               if( nodeGhostRank[elemsToNodes[k][a]] >= -1 )
               {
@@ -472,7 +472,7 @@ real64 SolidMechanicsLagrangianFEM::solverStep( real64 const & time_n,
     int const maxNumResolves = m_maxNumResolves;
     int globallyFractured = 0;
     implicitStepSetup( time_n, dt, domain );
-    for( int solveIter=0; solveIter<maxNumResolves+1; ++solveIter )
+    for( int solveIter = 0; solveIter < maxNumResolves + 1; ++solveIter )
     {
       GEOS_ERROR_IF( solveIter == maxNumResolves, "Maximum number of resolves achieved" );
 
@@ -589,7 +589,7 @@ real64 SolidMechanicsLagrangianFEM::explicitStep( real64 const & time_n,
       forAll< parallelDevicePolicy< 1024 > >( targetSet.size(),
                                               [=] GEOS_DEVICE ( localIndex const i )
       {
-        localIndex const a = targetSet[ i ];
+        localIndex const a = targetSet[i];
         vel( a, component ) = u( a, component );
       } );
     },
@@ -602,7 +602,7 @@ real64 SolidMechanicsLagrangianFEM::explicitStep( real64 const & time_n,
       forAll< parallelDevicePolicy< 1024 > >( targetSet.size(),
                                               [=] GEOS_DEVICE ( localIndex const i )
       {
-        localIndex const a = targetSet[ i ];
+        localIndex const a = targetSet[i];
         uhat( a, component ) = u( a, component ) - vel( a, component );
         vel( a, component )  = uhat( a, component ) / dt;
       } );
@@ -795,16 +795,16 @@ void SolidMechanicsLagrangianFEM::applyChomboPressure( DofManager const & dofMan
     forAll< serialPolicy >( faceManager.size(), [=] ( localIndex const kf )
     {
       int const numNodes = LvArray::integerConversion< int >( faceToNodeMap.sizeOfArray( kf ));
-      for( int a=0; a<numNodes; ++a )
+      for( int a = 0; a < numNodes; ++a )
       {
-        localIndex const dof = dofNumber[ faceToNodeMap( kf, a ) ];
+        localIndex const dof = dofNumber[faceToNodeMap( kf, a )];
         if( dof < 0 || dof >= localRhs.size() )
           continue;
 
-        for( int component=0; component<3; ++component )
+        for( int component = 0; component < 3; ++component )
         {
-          real64 const value = -facePressure[ kf ] * faceNormal( kf, component ) * faceArea[kf] / numNodes;
-          localRhs[ dof + component ] += value;
+          real64 const value = -facePressure[kf] * faceNormal( kf, component ) * faceArea[kf] / numNodes;
+          localRhs[dof + component] += value;
         }
       }
     } );
@@ -846,10 +846,10 @@ SolidMechanicsLagrangianFEM::
 
       forAll< parallelDevicePolicy<  > >( numNodes, [=] GEOS_HOST_DEVICE ( localIndex const a )
       {
-        for( int i=0; i<3; ++i )
+        for( int i = 0; i < 3; ++i )
         {
-          vtilde[a][i] = v_n( a, i ) + (1.0-newmarkGamma) * a_n( a, i ) * dt;
-          uhatTilde[a][i] = ( v_n( a, i ) + 0.5 * ( 1.0 - 2.0*newmarkBeta ) * a_n( a, i ) * dt ) *dt;
+          vtilde[a][i] = v_n( a, i ) + (1.0 - newmarkGamma) * a_n( a, i ) * dt;
+          uhatTilde[a][i] = ( v_n( a, i ) + 0.5 * ( 1.0 - 2.0 * newmarkBeta ) * a_n( a, i ) * dt ) * dt;
           uhat( a, i ) = uhatTilde[a][i];
           disp( a, i ) += uhatTilde[a][i];
         }
@@ -859,7 +859,7 @@ SolidMechanicsLagrangianFEM::
     {
       forAll< parallelDevicePolicy<  > >( numNodes, [=] GEOS_HOST_DEVICE ( localIndex const a )
       {
-        for( int i=0; i<3; ++i )
+        for( int i = 0; i < 3; ++i )
         {
           uhat( a, i ) = 0.0;
         }
@@ -911,9 +911,9 @@ void SolidMechanicsLagrangianFEM::implicitStepComplete( real64 const & GEOS_UNUS
       RAJA::forall< parallelDevicePolicy<> >( RAJA::TypedRangeSegment< localIndex >( 0, numNodes ),
                                               [=] GEOS_HOST_DEVICE ( localIndex const a )
       {
-        for( int i=0; i<3; ++i )
+        for( int i = 0; i < 3; ++i )
         {
-          a_n( a, i ) = 1.0 / ( newmarkBeta * dt*dt) * ( uhat( a, i ) - uhatTilde[a][i] );
+          a_n( a, i ) = 1.0 / ( newmarkBeta * dt * dt) * ( uhat( a, i ) - uhatTilde[a][i] );
           v_n[a][i] = vtilde[a][i] + newmarkGamma * a_n( a, i ) * dt;
         }
       } );
@@ -959,7 +959,7 @@ void SolidMechanicsLagrangianFEM::setupSystem( DomainPartition & domain,
 
   SparsityPattern< globalIndex > sparsityPattern( dofManager.numLocalDofs(),
                                                   dofManager.numGlobalDofs(),
-                                                  8*8*3*1.2 );
+                                                  8 * 8 * 3 * 1.2 );
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
@@ -1173,25 +1173,25 @@ SolidMechanicsLagrangianFEM::
                         0,
                         MPI_COMM_GEOSX );
 
-    if( rank==0 )
+    if( rank == 0 )
     {
-      for( int r=0; r<size; ++r )
+      for( int r = 0; r < size; ++r )
       {
         // sum/max across all ranks
-        globalResidualNorm[0] += globalValues[r*2];
-        globalResidualNorm[1] = std::max( globalResidualNorm[1], globalValues[r*2+1] );
+        globalResidualNorm[0] += globalValues[r * 2];
+        globalResidualNorm[1] = std::max( globalResidualNorm[1], globalValues[r * 2 + 1] );
       }
     }
 
     MpiWrapper::bcast( globalResidualNorm, 2, 0, MPI_COMM_GEOSX );
 
 
-    real64 const residual = sqrt( globalResidualNorm[0] )/(globalResidualNorm[1]+1); // the + 1 is for the first
-                                                                                     // time-step when maxForce = 0;
+    real64 const residual = sqrt( globalResidualNorm[0] ) / (globalResidualNorm[1] + 1); // the + 1 is for the first
+                                                                                         // time-step when maxForce = 0;
     totalResidualNorm = std::max( residual, totalResidualNorm );
   } );
 
-  if( getLogLevel() >= 1 && logger::internal::rank==0 )
+  if( getLogLevel() >= 1 && logger::internal::rank == 0 )
   {
     std::cout << GEOS_FMT( "        ( R{} ) = ( {:4.2e} )", coupledSolverAttributePrefix(), totalResidualNorm );
   }
@@ -1311,53 +1311,53 @@ void SolidMechanicsLagrangianFEM::applyContactConstraint( DofManager const & dof
         forAll< serialPolicy >( subRegion.size(), [=] ( localIndex const kfe )
         {
           localIndex const kf0 = elemsToFaces[kfe][0], kf1 = elemsToFaces[kfe][1];
-          real64 Nbar[ 3 ] = { faceNormal[kf0][0] - faceNormal[kf1][0],
-                               faceNormal[kf0][1] - faceNormal[kf1][1],
-                               faceNormal[kf0][2] - faceNormal[kf1][2] };
+          real64 Nbar[3] = { faceNormal[kf0][0] - faceNormal[kf1][0],
+                             faceNormal[kf0][1] - faceNormal[kf1][1],
+                             faceNormal[kf0][2] - faceNormal[kf1][2] };
 
           LvArray::tensorOps::normalize< 3 >( Nbar );
 
-          localIndex const numNodesPerFace=facesToNodes.sizeOfArray( kf0 );
+          localIndex const numNodesPerFace = facesToNodes.sizeOfArray( kf0 );
           real64 const Ja = area[kfe] / numNodesPerFace;
 
-          stackArray1d< globalIndex, maxDofPerElem > rowDOF( numNodesPerFace*3*2 );
-          stackArray1d< real64, maxDofPerElem > nodeRHS( numNodesPerFace*3*2 );
-          stackArray2d< real64, maxDofPerElem *maxDofPerElem > dRdP( numNodesPerFace*3*2, numNodesPerFace*3*2 );
+          stackArray1d< globalIndex, maxDofPerElem > rowDOF( numNodesPerFace * 3 * 2 );
+          stackArray1d< real64, maxDofPerElem > nodeRHS( numNodesPerFace * 3 * 2 );
+          stackArray2d< real64, maxDofPerElem *maxDofPerElem > dRdP( numNodesPerFace * 3 * 2, numNodesPerFace * 3 * 2 );
 
-          for( localIndex a=0; a<numNodesPerFace; ++a )
+          for( localIndex a = 0; a < numNodesPerFace; ++a )
           {
-            real64 penaltyForce[ 3 ] = LVARRAY_TENSOROPS_INIT_LOCAL_3( Nbar );
+            real64 penaltyForce[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( Nbar );
             localIndex const node0 = facesToNodes[kf0][a];
-            localIndex const node1 = facesToNodes[kf1][ a==0 ? a : numNodesPerFace-a ];
-            real64 gap[ 3 ] = LVARRAY_TENSOROPS_INIT_LOCAL_3( u[node1] );
+            localIndex const node1 = facesToNodes[kf1][a == 0 ? a : numNodesPerFace - a];
+            real64 gap[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( u[node1] );
             LvArray::tensorOps::subtract< 3 >( gap, u[node0] );
             real64 const gapNormal = LvArray::tensorOps::AiBi< 3 >( gap, Nbar );
 
-            for( int i=0; i<3; ++i )
+            for( int i = 0; i < 3; ++i )
             {
-              rowDOF[3*a+i]                     = nodeDofNumber[node0]+i;
-              rowDOF[3*(numNodesPerFace + a)+i] = nodeDofNumber[node1]+i;
+              rowDOF[3 * a + i]                     = nodeDofNumber[node0] + i;
+              rowDOF[3 * (numNodesPerFace + a) + i] = nodeDofNumber[node1] + i;
             }
 
             if( gapNormal < 0 )
             {
               LvArray::tensorOps::scale< 3 >( penaltyForce, -contactStiffness * gapNormal * Ja );
-              for( int i=0; i<3; ++i )
+              for( int i = 0; i < 3; ++i )
               {
                 LvArray::tensorOps::subtract< 3 >( fc[node0], penaltyForce );
                 LvArray::tensorOps::add< 3 >( fc[node1], penaltyForce );
-                nodeRHS[3*a+i]                     -= penaltyForce[i];
-                nodeRHS[3*(numNodesPerFace + a)+i] += penaltyForce[i];
+                nodeRHS[3 * a + i]                     -= penaltyForce[i];
+                nodeRHS[3 * (numNodesPerFace + a) + i] += penaltyForce[i];
 
-                dRdP( 3*a+i, 3*a+i )                                         -= contactStiffness * Ja * Nbar[i] * Nbar[i];
-                dRdP( 3*a+i, 3*(numNodesPerFace + a)+i )                     += contactStiffness * Ja * Nbar[i] * Nbar[i];
-                dRdP( 3*(numNodesPerFace + a)+i, 3*a+i )                     += contactStiffness * Ja * Nbar[i] * Nbar[i];
-                dRdP( 3*(numNodesPerFace + a)+i, 3*(numNodesPerFace + a)+i ) -= contactStiffness * Ja * Nbar[i] * Nbar[i];
+                dRdP( 3 * a + i, 3 * a + i )                                         -= contactStiffness * Ja * Nbar[i] * Nbar[i];
+                dRdP( 3 * a + i, 3 * (numNodesPerFace + a) + i )                     += contactStiffness * Ja * Nbar[i] * Nbar[i];
+                dRdP( 3 * (numNodesPerFace + a) + i, 3 * a + i )                     += contactStiffness * Ja * Nbar[i] * Nbar[i];
+                dRdP( 3 * (numNodesPerFace + a) + i, 3 * (numNodesPerFace + a) + i ) -= contactStiffness * Ja * Nbar[i] * Nbar[i];
               }
             }
           }
 
-          for( localIndex idof = 0; idof < numNodesPerFace*3*2; ++idof )
+          for( localIndex idof = 0; idof < numNodesPerFace * 3 * 2; ++idof )
           {
             localIndex const localRow = LvArray::integerConversion< localIndex >( rowDOF[idof] - rankOffset );
 
@@ -1366,7 +1366,7 @@ void SolidMechanicsLagrangianFEM::applyContactConstraint( DofManager const & dof
               localMatrix.addToRowBinarySearchUnsorted< serialAtomic >( localRow,
                                                                         rowDOF.data(),
                                                                         dRdP[idof].dataIfContiguous(),
-                                                                        numNodesPerFace*3*2 );
+                                                                        numNodesPerFace * 3 * 2 );
               RAJA::atomicAdd( serialAtomic{}, &localRhs[localRow], nodeRHS[idof] );
             }
           }

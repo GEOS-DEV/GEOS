@@ -108,7 +108,7 @@ struct DamageInterpolationKernel
 
       for( localIndex q = 0; q < n_q_points; ++q )
       {
-        real64 N[ numNodesPerElement ];
+        real64 N[numNodesPerElement];
         FE_TYPE::calcN( q, N );
 
         damageFieldOnMaterial( k, q ) = 0;

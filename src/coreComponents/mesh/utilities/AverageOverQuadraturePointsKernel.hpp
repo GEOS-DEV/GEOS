@@ -81,7 +81,7 @@ public:
     {}
 
     /// C-array stack storage for element local the nodal positions.
-    real64 xLocal[ FE_TYPE::maxSupportPoints ][ 3 ];
+    real64 xLocal[FE_TYPE::maxSupportPoints][3];
 
     /// Stack variables needed for the underlying FEM type
     typename FE_TYPE::StackVariables feStack;

@@ -63,7 +63,7 @@ void ParticleManager::resize( integer_array const & numParticles,
                               string_array const & GEOS_UNUSED_PARAM( particleTypes ) )
 {
   localIndex const n_regions = LvArray::integerConversion< localIndex >( regionNames.size());
-  for( localIndex reg=0; reg<n_regions; ++reg )
+  for( localIndex reg = 0; reg < n_regions; ++reg )
   {
     this->getRegion( reg ).resize( numParticles[reg] );
   }
@@ -86,7 +86,7 @@ void ParticleManager::setMaxGlobalIndex()
 Group * ParticleManager::createChild( string const & childKey, string const & childName )
 {
   GEOS_ERROR_IF( !(CatalogInterface::hasKeyName( childKey )),
-                 "KeyName ("<<childKey<<") not found in ObjectManager::Catalog" );
+                 "KeyName (" << childKey << ") not found in ObjectManager::Catalog" );
   GEOS_LOG_RANK_0( "Adding Object " << childKey << " named " << childName << " from ObjectManager::Catalog." );
 
   Group & particleRegions = this->getGroup( ParticleManager::groupKeyStruct::particleRegionsGroup() );
@@ -99,7 +99,7 @@ void ParticleManager::expandObjectCatalogs()
 {
   ObjectManagerBase::CatalogInterface::CatalogType const & catalog = ObjectManagerBase::getCatalog();
   for( ObjectManagerBase::CatalogInterface::CatalogType::const_iterator iter = catalog.begin();
-       iter!=catalog.end();
+       iter != catalog.end();
        ++iter )
   {
     string const key = iter->first;
@@ -170,7 +170,7 @@ ParticleManager::PackPrivate( buffer_unit_type * & buffer,
   packedSize += bufferOps::Pack< DOPACK >( buffer, numRegions() );
 
   parallelDeviceEvents events;
-  for( typename dataRepository::indexType kReg=0; kReg<numRegions(); ++kReg )
+  for( typename dataRepository::indexType kReg = 0; kReg < numRegions(); ++kReg )
   {
     ParticleRegionBase const & particleRegion = getRegion( kReg );
     packedSize += bufferOps::Pack< DOPACK >( buffer, particleRegion.getName() );
@@ -226,7 +226,7 @@ int ParticleManager::unpackPrivate( buffer_unit_type const * & buffer,
   unpackedSize += bufferOps::Unpack( buffer, numRegionsRead );
 
   parallelDeviceEvents events;
-  for( localIndex kReg=0; kReg<numRegionsRead; ++kReg )
+  for( localIndex kReg = 0; kReg < numRegionsRead; ++kReg )
   {
     string regionName;
     unpackedSize += bufferOps::Unpack( buffer, regionName );
@@ -272,7 +272,7 @@ ParticleManager::PackGlobalMapsPrivate( buffer_unit_type * & buffer,
 
   packedSize += bufferOps::Pack< DOPACK >( buffer, numRegions() );
 
-  for( typename dataRepository::indexType kReg=0; kReg<numRegions(); ++kReg )
+  for( typename dataRepository::indexType kReg = 0; kReg < numRegions(); ++kReg )
   {
     ParticleRegionBase const & particleRegion = getRegion( kReg );
     packedSize += bufferOps::Pack< DOPACK >( buffer, particleRegion.getName() );
@@ -309,7 +309,7 @@ ParticleManager::UnpackGlobalMaps( buffer_unit_type const * & buffer,
   unpackedSize += bufferOps::Unpack( buffer, numRegionsRead );
 
   packList.resize( numRegionsRead );
-  for( localIndex kReg=0; kReg<numRegionsRead; ++kReg )
+  for( localIndex kReg = 0; kReg < numRegionsRead; ++kReg )
   {
     string regionName;
     unpackedSize += bufferOps::Unpack( buffer, regionName );

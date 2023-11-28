@@ -31,8 +31,8 @@ TEST( PropertyConversionTests, testElasticConversions )
   young      = conversions::bulkModAndPoissonRatio::toYoungMod( bulk, poisson );
   shear       = conversions::bulkModAndPoissonRatio::toShearMod( bulk, poisson );
 
-  EXPECT_DOUBLE_EQ( young, 3*bulk*(1-2*poisson) );
-  EXPECT_DOUBLE_EQ( shear, 3*bulk*(1-2*poisson)/(2+2*poisson) );
+  EXPECT_DOUBLE_EQ( young, 3 * bulk * (1 - 2 * poisson) );
+  EXPECT_DOUBLE_EQ( shear, 3 * bulk * (1 - 2 * poisson) / (2 + 2 * poisson) );
 
   // bulk and shear
   poisson_out = conversions::bulkModAndShearMod::toPoissonRatio( bulk, shear );
@@ -64,7 +64,7 @@ TEST( PropertyConversionTests, testElasticConversions )
 
   // shear and poisson
   bulk_out = conversions::shearModAndPoissonRatio::toBulkMod( shear, poisson );
-  young_out =conversions::shearModAndPoissonRatio::toYoungMod( shear, poisson );
+  young_out = conversions::shearModAndPoissonRatio::toYoungMod( shear, poisson );
 
   EXPECT_DOUBLE_EQ( bulk, bulk_out );
   EXPECT_DOUBLE_EQ( young, young_out );
@@ -72,5 +72,5 @@ TEST( PropertyConversionTests, testElasticConversions )
   // first lame (bulk and shear input only)
   real64 lame = conversions::bulkModAndShearMod::toFirstLame( bulk, shear );
 
-  EXPECT_DOUBLE_EQ( lame, bulk-2*shear/3 );
+  EXPECT_DOUBLE_EQ( lame, bulk - 2 * shear / 3 );
 }

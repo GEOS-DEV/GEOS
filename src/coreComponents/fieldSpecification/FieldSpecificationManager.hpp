@@ -94,7 +94,7 @@ public:
    * and calls FieldSpecificationBase::applyFieldValue().
    *
    */
-  template< typename POLICY=parallelHostPolicy >
+  template< typename POLICY = parallelHostPolicy >
   void applyFieldValue( real64 const time,
                         MeshLevel & mesh,
                         string const & fieldName ) const
@@ -130,7 +130,7 @@ public:
    * to apply any operations required for completing the application of the value to the field in addition to
    * setting the target field.
    */
-  template< typename POLICY=parallelHostPolicy, typename LAMBDA=void >
+  template< typename POLICY = parallelHostPolicy, typename LAMBDA = void >
   void applyFieldValue( real64 const time,
                         MeshLevel & mesh,
                         string const & fieldName,
@@ -165,7 +165,7 @@ public:
    * operations required for completing the application of the value to the field in addition to
    * setting the target field.
    */
-  template< typename POLICY=parallelHostPolicy, typename PRELAMBDA=void, typename POSTLAMBDA=void >
+  template< typename POLICY = parallelHostPolicy, typename PRELAMBDA = void, typename POSTLAMBDA = void >
   void applyFieldValue( real64 const time,
                         MeshLevel & mesh,
                         string const & fieldName,
@@ -205,7 +205,7 @@ public:
    * values of fieldPath,fieldName, against each FieldSpecificationBase object contained in the
    * FieldSpecificationManager and decides on whether or not to call the user defined lambda.
    */
-  template< typename OBJECT_TYPE=dataRepository::Group,
+  template< typename OBJECT_TYPE = dataRepository::Group,
             typename BCTYPE = FieldSpecificationBase,
             typename LAMBDA >
   void apply( real64 const time,
@@ -222,7 +222,7 @@ public:
     this->forSubGroups< BCTYPE >( [&] ( BCTYPE const & fs )
     {
       integer const isInitialCondition = fs.initialCondition();
-      if( ( isInitialCondition && fieldName=="") || // this only use case for this line is in the unit test for field specification
+      if( ( isInitialCondition && fieldName == "") || // this only use case for this line is in the unit test for field specification
           ( !isInitialCondition && time >= fs.getStartTime() && time < fs.getEndTime() && fieldName == fs.getFieldName() ) )
       {
         fs.template apply< OBJECT_TYPE, BCTYPE, LAMBDA >( mesh, std::forward< LAMBDA >( lambda ) );

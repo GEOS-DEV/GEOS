@@ -203,7 +203,7 @@ bool isFileMetadataAttribute( string const & name )
 }
 
 constexpr size_t xmlDocument::npos;
-size_t documentId=0;
+size_t documentId = 0;
 
 xmlDocument::xmlDocument():
   pugiDocument(),
@@ -294,7 +294,7 @@ xmlNodePos xmlDocument::getNodePosition( xmlNode const & node ) const
     auto sourceBuffer = m_originalBuffers.find( filePath );
     string nodeName = node.name();
 
-    if( sourceBuffer!=m_originalBuffers.end() &&
+    if( sourceBuffer != m_originalBuffers.end() &&
         offset > 0 && offset + nodeName.size() < sourceBuffer->second.size() &&
         sourceBuffer->second.substr( offset, nodeName.size() ) == nodeName )
     {

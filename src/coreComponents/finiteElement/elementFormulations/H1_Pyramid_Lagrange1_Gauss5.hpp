@@ -407,17 +407,17 @@ H1_Pyramid_Lagrange1_Gauss5::
                                        quadratureParentCoords1( q ),
                                        quadratureParentCoords2( q ) };
 
-  real64 const psi0[2] = { 0.5 - 0.5*quadratureCoords[0],
-                           0.5 + 0.5*quadratureCoords[0] };
-  real64 const psi1[2] = { 0.5 - 0.5*quadratureCoords[1],
-                           0.5 + 0.5*quadratureCoords[1] };
-  real64 const psi2 = 0.5 - 0.5*quadratureCoords[2];
+  real64 const psi0[2] = { 0.5 - 0.5 * quadratureCoords[0],
+                           0.5 + 0.5 * quadratureCoords[0] };
+  real64 const psi1[2] = { 0.5 - 0.5 * quadratureCoords[1],
+                           0.5 + 0.5 * quadratureCoords[1] };
+  real64 const psi2 = 0.5 - 0.5 * quadratureCoords[2];
   constexpr real64 dpsi[2] = { -0.5, 0.5 };
 
   // Contributions from basis functions paired with base nodes
-  for( localIndex a=0; a<2; ++a )
+  for( localIndex a = 0; a < 2; ++a )
   {
-    for( localIndex b=0; b<2; ++b )
+    for( localIndex b = 0; b < 2; ++b )
     {
       real64 const dNdXi[3] = { dpsi[a] * psi1[b] * psi2,
                                 psi0[a] * dpsi[b] * psi2,
@@ -427,7 +427,7 @@ H1_Pyramid_Lagrange1_Gauss5::
       {
         for( int j = 0; j < 3; ++j )
         {
-          J[i][j] = J[i][j] + dNdXi[ j ] * X[nodeIndex][i];
+          J[i][j] = J[i][j] + dNdXi[j] * X[nodeIndex][i];
         }
       }
     }
@@ -454,17 +454,17 @@ H1_Pyramid_Lagrange1_Gauss5::
                                        quadratureParentCoords1( q ),
                                        quadratureParentCoords2( q ) };
 
-  real64 const psi0[2] = { 0.5*( 1.0 - quadratureCoords[0] ),
-                           0.5*( 1.0 + quadratureCoords[0] ) };
-  real64 const psi1[2] = { 0.5*( 1.0 - quadratureCoords[1] ),
-                           0.5*( 1.0 + quadratureCoords[1] ) };
-  real64 const psi2 = 0.5*( 1.0 - quadratureCoords[2]);
+  real64 const psi0[2] = { 0.5 * ( 1.0 - quadratureCoords[0] ),
+                           0.5 * ( 1.0 + quadratureCoords[0] ) };
+  real64 const psi1[2] = { 0.5 * ( 1.0 - quadratureCoords[1] ),
+                           0.5 * ( 1.0 + quadratureCoords[1] ) };
+  real64 const psi2 = 0.5 * ( 1.0 - quadratureCoords[2]);
   constexpr real64 dpsi[2] = { -0.5, 0.5 };
 
   // Contributions from basis functions paired with base nodes
-  for( localIndex a=0; a<2; ++a )
+  for( localIndex a = 0; a < 2; ++a )
   {
-    for( localIndex b=0; b<2; ++b )
+    for( localIndex b = 0; b < 2; ++b )
     {
       real64 const dNdXi[3] = { dpsi[a] * psi1[b] * psi2,
                                 psi0[a] * dpsi[b] * psi2,
@@ -475,7 +475,7 @@ H1_Pyramid_Lagrange1_Gauss5::
         gradN[nodeIndex][i] = 0.0;
         for( int j = 0; j < 3; ++j )
         {
-          gradN[nodeIndex][i] = gradN[nodeIndex][i] + dNdXi[ j ] * invJ[j][i];
+          gradN[nodeIndex][i] = gradN[nodeIndex][i] + dNdXi[j] * invJ[j][i];
         }
       }
     }
@@ -497,11 +497,11 @@ H1_Pyramid_Lagrange1_Gauss5::
   calcN( real64 const ( &pointCoord )[3],
          real64 ( & N )[numNodes] )
 {
-  N[0] = 0.125*( 1.0 - pointCoord[0] ) * ( 1.0 - pointCoord[1] ) * ( 1.0 - pointCoord[2] );
-  N[1] = 0.125*( 1.0 + pointCoord[0] ) * ( 1.0 - pointCoord[1] ) * ( 1.0 - pointCoord[2] );
-  N[2] = 0.125*( 1.0 - pointCoord[0] ) * ( 1.0 + pointCoord[1] ) * ( 1.0 - pointCoord[2] );
-  N[3] = 0.125*( 1.0 + pointCoord[0] ) * ( 1.0 + pointCoord[1] ) * ( 1.0 - pointCoord[2] );
-  N[4] = 0.5*( 1.0 + pointCoord[2] );
+  N[0] = 0.125 * ( 1.0 - pointCoord[0] ) * ( 1.0 - pointCoord[1] ) * ( 1.0 - pointCoord[2] );
+  N[1] = 0.125 * ( 1.0 + pointCoord[0] ) * ( 1.0 - pointCoord[1] ) * ( 1.0 - pointCoord[2] );
+  N[2] = 0.125 * ( 1.0 - pointCoord[0] ) * ( 1.0 + pointCoord[1] ) * ( 1.0 - pointCoord[2] );
+  N[3] = 0.125 * ( 1.0 + pointCoord[0] ) * ( 1.0 + pointCoord[1] ) * ( 1.0 - pointCoord[2] );
+  N[4] = 0.5 * ( 1.0 + pointCoord[2] );
 }
 
 GEOS_HOST_DEVICE

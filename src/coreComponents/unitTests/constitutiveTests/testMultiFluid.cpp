@@ -124,7 +124,7 @@ void testNumericalDerivatives( MultiFluidBase & fluid,
 
   integer const NC = fluid.numFluidComponents();
   integer const NP = fluid.numFluidPhases();
-  integer const NDOF = NC+2;
+  integer const NDOF = NC + 2;
 
   // Copy input values into an array with expected layout
   array2d< real64, compflow::LAYOUT_COMP > compositionValues( 1, NC );
@@ -271,15 +271,15 @@ void testNumericalDerivatives( MultiFluidBase & fluid,
       fluidWrapper.update( 0, 0, P, T, compNew[0] );
 
       string const var = "compFrac[" + components[jc] + "]";
-      checkDerivative( phaseFracCopy.toSliceConst(), phaseFrac.value.toSliceConst(), dPhaseFrac[Deriv::dC+jc].toSliceConst(),
+      checkDerivative( phaseFracCopy.toSliceConst(), phaseFrac.value.toSliceConst(), dPhaseFrac[Deriv::dC + jc].toSliceConst(),
                        dC, relTol, absTol, "phaseFrac", var, phases );
-      checkDerivative( phaseDensCopy.toSliceConst(), phaseDens.value.toSliceConst(), dPhaseDens[Deriv::dC+jc].toSliceConst(),
+      checkDerivative( phaseDensCopy.toSliceConst(), phaseDens.value.toSliceConst(), dPhaseDens[Deriv::dC + jc].toSliceConst(),
                        dC, relTol, absTol, "phaseDens", var, phases );
-      checkDerivative( phaseViscCopy.toSliceConst(), phaseVisc.value.toSliceConst(), dPhaseVisc[Deriv::dC+jc].toSliceConst(),
+      checkDerivative( phaseViscCopy.toSliceConst(), phaseVisc.value.toSliceConst(), dPhaseVisc[Deriv::dC + jc].toSliceConst(),
                        dC, relTol, absTol, "phaseVisc", var, phases );
-      checkDerivative( totalDensCopy, totalDens.value, dTotalDens[Deriv::dC+jc],
+      checkDerivative( totalDensCopy, totalDens.value, dTotalDens[Deriv::dC + jc],
                        dC, relTol, absTol, "totalDens", var );
-      checkDerivative( phaseCompFracCopy.toSliceConst(), phaseCompFrac.value.toSliceConst(), dPhaseCompFrac[Deriv::dC+jc].toSliceConst(),
+      checkDerivative( phaseCompFracCopy.toSliceConst(), phaseCompFrac.value.toSliceConst(), dPhaseCompFrac[Deriv::dC + jc].toSliceConst(),
                        dC, relTol, absTol, "phaseCompFrac", var, phases, components );
     }
   } );

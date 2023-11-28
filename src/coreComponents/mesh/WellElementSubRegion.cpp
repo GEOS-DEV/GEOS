@@ -90,7 +90,7 @@ void collectLocalAndBoundaryNodes( LineBlockABC const & lineBlock,
     localNodes.insert( inodeBottomGlobal );
 
     localIndex const nextGlobal =
-      LvArray::integerConversion< localIndex >( nextElemIdGlobal[ LvArray::integerConversion< localIndex >( currGlobal ) ] );
+      LvArray::integerConversion< localIndex >( nextElemIdGlobal[LvArray::integerConversion< localIndex >( currGlobal )] );
 
     // if the next well elem is not local, add the node in between curr and next to boundaryNodes
     if( nextGlobal >= 0 && !localElems.contains( nextGlobal ))
@@ -185,7 +185,7 @@ bool visitNeighborElements( MeshLevel const & mesh,
   for( localIndex currNode : currNodes )
   {
     // collect the elements that have not been visited yet
-    for( localIndex b=0; b<toElementRegionList.sizeOfArray( currNode ); ++b )
+    for( localIndex b = 0; b < toElementRegionList.sizeOfArray( currNode ); ++b )
     {
       localIndex const er      = toElementRegionList[currNode][b];
       localIndex const esr     = toElementSubRegionList[currNode][b];
@@ -495,7 +495,7 @@ void WellElementSubRegion::checkPartitioningValidity( LineBlockABC const & lineB
 
   // we are going to make sure that the partitioning is good,
   // well element per well element, starting from the bottom of the well
-  for( globalIndex iwelemGlobal = lineBlock.numElements()-1; iwelemGlobal >= 0; --iwelemGlobal )
+  for( globalIndex iwelemGlobal = lineBlock.numElements() - 1; iwelemGlobal >= 0; --iwelemGlobal )
   {
 
     // communicate the status of this element
@@ -516,7 +516,7 @@ void WellElementSubRegion::checkPartitioningValidity( LineBlockABC const & lineB
     if( numLocalRanks == 0 )
     {
       globalIndex const numBranches = prevElemIdsGlobal[iwelemGlobal].size();
-      globalIndex const prevGlobal  = prevElemIdsGlobal[iwelemGlobal][numBranches-1];
+      globalIndex const prevGlobal  = prevElemIdsGlobal[iwelemGlobal][numBranches - 1];
 
       GEOS_THROW_IF( prevGlobal <= iwelemGlobal || prevGlobal < 0,
                      "The structure of well " << lineBlock.getDataContext() << " is invalid. " <<
@@ -615,7 +615,7 @@ void WellElementSubRegion::updateNodeManagerSize( MeshLevel & mesh,
 
     // update node manager maps and position
     nodeLocalToGlobal[inodeLocal]  = nodeOffsetGlobal + iwellNodeGlobal; // global *nodeManager* index
-    LvArray::tensorOps::copy< 3 >( X[inodeLocal], nodeCoordsGlobal[ iwellNodeGlobal ] );
+    LvArray::tensorOps::copy< 3 >( X[inodeLocal], nodeCoordsGlobal[iwellNodeGlobal] );
 
     // mark the boundary nodes for ghosting in DomainPartition::SetupCommunications
     if( boundaryNodes.contains( iwellNodeGlobal ) )
@@ -692,7 +692,7 @@ void WellElementSubRegion::constructSubRegionLocalElementMaps( MeshLevel & mesh,
       }
     }
 
-    LvArray::tensorOps::copy< 3 >( m_elementCenter[ iwelemLocal ], elemCoordsGlobal[ iwelemGlobal ] );
+    LvArray::tensorOps::copy< 3 >( m_elementCenter[iwelemLocal], elemCoordsGlobal[iwelemGlobal] );
 
     m_elementVolume[iwelemLocal] = elemVolumeGlobal[iwelemGlobal];
     m_radius[iwelemLocal] = lineBlock.getElementRadius();
@@ -734,7 +734,7 @@ void WellElementSubRegion::updateNodeManagerNodeToElementMap( MeshLevel & mesh )
   // for each (new) well element
   for( localIndex iwelemLocal = 0; iwelemLocal < size(); ++iwelemLocal )
   {
-    for( localIndex a=0; a < numNodesPerElement(); ++a )
+    for( localIndex a = 0; a < numNodesPerElement(); ++a )
     {
       // get the local node index (in nodeManager ordering) using the elem-to-nodes maps constructed above
       localIndex const inodeLocal = m_toNodesRelation[iwelemLocal][a];

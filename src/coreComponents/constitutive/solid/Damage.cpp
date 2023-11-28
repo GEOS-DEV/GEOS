@@ -101,7 +101,7 @@ void Damage< BASE >::postProcessInput()
 {
   BASE::postProcessInput();
 
-  GEOS_ERROR_IF( m_extDrivingForceFlag != 0 && m_extDrivingForceFlag!= 1,
+  GEOS_ERROR_IF( m_extDrivingForceFlag != 0 && m_extDrivingForceFlag != 1,
                  BASE::getDataContext() << ": invalid external driving force flag option - must"
                                            " be 0 or 1" );
   GEOS_ERROR_IF( m_extDrivingForceFlag == 1 && m_tensileStrength <= 0.0,

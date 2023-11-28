@@ -149,19 +149,19 @@ void SlipDependentPermeabilityUpdate::compute( real64 const ( &dispJump )[3],
                                                arraySlice1d< real64 > const & permeability,
                                                arraySlice2d< real64 > const & dPerm_dDispJump ) const
 {
-  real64 const shearMag = std::sqrt( dispJump[1]*dispJump[1] + dispJump[2]*dispJump[2] );
+  real64 const shearMag = std::sqrt( dispJump[1] * dispJump[1] + dispJump[2] * dispJump[2] );
 
-  real64 const tmpTanh = std::tanh ( 3.0 * shearMag/m_shearDispThreshold );
+  real64 const tmpTanh = std::tanh ( 3.0 * shearMag / m_shearDispThreshold );
 
   real64 const permMultiplier = ( m_maxPermMultiplier - 1.0 ) * tmpTanh + 1.0;
 
-  real64 const dpermMultiplier_dshearMag = ( m_maxPermMultiplier - 1.0 ) * ( 1.0 - tmpTanh * tmpTanh ) * 3.0/m_shearDispThreshold;
+  real64 const dpermMultiplier_dshearMag = ( m_maxPermMultiplier - 1.0 ) * ( 1.0 - tmpTanh * tmpTanh ) * 3.0 / m_shearDispThreshold;
 
-  for( localIndex i=0; i < permeability.size(); i++ )
+  for( localIndex i = 0; i < permeability.size(); i++ )
   {
     permeability[i] = permMultiplier * initialPermeability[i];
     dPerm_dDispJump[i][0] = 0.0;
-    real64 const tmpValue = shearMag > 0.0 ? initialPermeability[i] * dpermMultiplier_dshearMag /shearMag : 0.0;
+    real64 const tmpValue = shearMag > 0.0 ? initialPermeability[i] * dpermMultiplier_dshearMag / shearMag : 0.0;
     dPerm_dDispJump[i][1] = tmpValue * dispJump[1];
     dPerm_dDispJump[i][2] = tmpValue * dispJump[2];
   }

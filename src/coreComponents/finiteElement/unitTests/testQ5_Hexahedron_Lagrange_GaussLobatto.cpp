@@ -47,13 +47,13 @@ void testKernelDriver()
   forAll< POLICY >( 1,
                     [=] GEOS_HOST_DEVICE ( localIndex const )
   {
-    for( localIndex q=0; q<numQuadraturePoints; ++q )
+    for( localIndex q = 0; q < numQuadraturePoints; ++q )
     {
       real64 N[numNodes] = {0};
       Q5_Hexahedron_Lagrange_GaussLobatto::calcN( q, N );
-      for( localIndex a=0; a<numNodes; ++a )
+      for( localIndex a = 0; a < numNodes; ++a )
       {
-        if( fabs( N[a] )<1e-9 )
+        if( fabs( N[a] ) < 1e-9 )
         {
           viewN( q, a ) = 0;
         }
@@ -63,16 +63,16 @@ void testKernelDriver()
         }
         Ntest[q][a] = 0.0;
       }
-      Ntest[q][q]=1.0;
+      Ntest[q][q] = 1.0;
     }
   } );
 
   forAll< serialPolicy >( 1,
                           [=] ( localIndex const )
   {
-    for( localIndex q=0; q<numQuadraturePoints; ++q )
+    for( localIndex q = 0; q < numQuadraturePoints; ++q )
     {
-      for( localIndex a=0; a<numNodes; ++a )
+      for( localIndex a = 0; a < numNodes; ++a )
       {
         EXPECT_FLOAT_EQ( Ntest[q][a], viewN[q][a] );
       }
@@ -82,36 +82,36 @@ void testKernelDriver()
 
   array2d< real64 > xCoordsData( numNodes, 3 );
   arrayView2d< real64 > const & xCoords = xCoordsData;
-  xCoords[0][0]=-1.0;
-  xCoords[1][0]=-sqrt( 1.0/21.0*(7.0+2.0*sqrt( 7.0 )));
-  xCoords[2][0]=-sqrt( 1.0/21.0*(7.0-2.0*sqrt( 7.0 )));
-  xCoords[3][0]=sqrt( 1.0/21.0*(7.0-2.0*sqrt( 7.0 )));
-  xCoords[4][0]=sqrt( 1.0/21.0*(7.0+2.0*sqrt( 7.0 )));
-  xCoords[5][0]=1.0;
+  xCoords[0][0] = -1.0;
+  xCoords[1][0] = -sqrt( 1.0 / 21.0 * (7.0 + 2.0 * sqrt( 7.0 )));
+  xCoords[2][0] = -sqrt( 1.0 / 21.0 * (7.0 - 2.0 * sqrt( 7.0 )));
+  xCoords[3][0] = sqrt( 1.0 / 21.0 * (7.0 - 2.0 * sqrt( 7.0 )));
+  xCoords[4][0] = sqrt( 1.0 / 21.0 * (7.0 + 2.0 * sqrt( 7.0 )));
+  xCoords[5][0] = 1.0;
 
-  xCoords[0][1]=-1.0;
-  xCoords[6][1]=-sqrt( 1.0/21.0*(7.0+2.0*sqrt( 7.0 )));
-  xCoords[12][1]=-sqrt( 1.0/21.0*(7.0-2.0*sqrt( 7.0 )));
-  xCoords[18][1]=sqrt( 1.0/21.0*(7.0-2.0*sqrt( 7.0 )));
-  xCoords[24][1]=sqrt( 1.0/21.0*(7.0+2.0*sqrt( 7.0 )));
-  xCoords[30][1]=1.0;
+  xCoords[0][1] = -1.0;
+  xCoords[6][1] = -sqrt( 1.0 / 21.0 * (7.0 + 2.0 * sqrt( 7.0 )));
+  xCoords[12][1] = -sqrt( 1.0 / 21.0 * (7.0 - 2.0 * sqrt( 7.0 )));
+  xCoords[18][1] = sqrt( 1.0 / 21.0 * (7.0 - 2.0 * sqrt( 7.0 )));
+  xCoords[24][1] = sqrt( 1.0 / 21.0 * (7.0 + 2.0 * sqrt( 7.0 )));
+  xCoords[30][1] = 1.0;
 
-  xCoords[0][2]=-1.0;
-  xCoords[36][2]=-sqrt( 1.0/21.0*(7.0+2.0*sqrt( 7.0 )));
-  xCoords[72][2]=-sqrt( 1.0/21.0*(7.0-2.0*sqrt( 7.0 )));
-  xCoords[108][2]=sqrt( 1.0/21.0*(7.0-2.0*sqrt( 7.0 )));
-  xCoords[144][2]=sqrt( 1.0/21.0*(7.0+2.0*sqrt( 7.0 )));
-  xCoords[180][2]=1.0;
+  xCoords[0][2] = -1.0;
+  xCoords[36][2] = -sqrt( 1.0 / 21.0 * (7.0 + 2.0 * sqrt( 7.0 )));
+  xCoords[72][2] = -sqrt( 1.0 / 21.0 * (7.0 - 2.0 * sqrt( 7.0 )));
+  xCoords[108][2] = sqrt( 1.0 / 21.0 * (7.0 - 2.0 * sqrt( 7.0 )));
+  xCoords[144][2] = sqrt( 1.0 / 21.0 * (7.0 + 2.0 * sqrt( 7.0 )));
+  xCoords[180][2] = 1.0;
 
-  for( localIndex k=0; k<6; ++k )
+  for( localIndex k = 0; k < 6; ++k )
   {
-    for( localIndex j=0; j<6; ++j )
+    for( localIndex j = 0; j < 6; ++j )
     {
-      for( localIndex i=0; i<6; ++i )
+      for( localIndex i = 0; i < 6; ++i )
       {
-        xCoords[i+6*j+36*k][0]=xCoords[i][0];
-        xCoords[i+6*j+36*k][1]=xCoords[6*j][1];
-        xCoords[i+6*j+36*k][2]=xCoords[36*k][2];
+        xCoords[i + 6 * j + 36 * k][0] = xCoords[i][0];
+        xCoords[i + 6 * j + 36 * k][1] = xCoords[6 * j][1];
+        xCoords[i + 6 * j + 36 * k][2] = xCoords[36 * k][2];
       }
     }
   }
@@ -123,64 +123,64 @@ void testKernelDriver()
   arrayView2d< real64 > const & gradNytest = gradNytestArray;
   arrayView2d< real64 > const & gradNztest = gradNztestArray;
 
-  gradNxtest[0][0]=-15.0/2.0;
-  gradNxtest[0][1]=1.0/6.0*(-2.0-sqrt( 7.0 )-sqrt( 21.0+6.0*sqrt( 7.0 )));
-  gradNxtest[0][2]=1.0/6.0*(-2.0+sqrt( 7.0 )+sqrt( 21.0-6.0*sqrt( 7.0 )));
-  gradNxtest[0][3]=1.0/6.0*(-2.0+sqrt( 7.0 )-sqrt( 21.0-6.0*sqrt( 7.0 )));
-  gradNxtest[0][4]=-1.0/6.0*(2.0+sqrt( 7.0 )-sqrt( 21.0+6.0*sqrt( 7.0 )));
-  gradNxtest[0][5]= -1.0/2.0;
+  gradNxtest[0][0] = -15.0 / 2.0;
+  gradNxtest[0][1] = 1.0 / 6.0 * (-2.0 - sqrt( 7.0 ) - sqrt( 21.0 + 6.0 * sqrt( 7.0 )));
+  gradNxtest[0][2] = 1.0 / 6.0 * (-2.0 + sqrt( 7.0 ) + sqrt( 21.0 - 6.0 * sqrt( 7.0 )));
+  gradNxtest[0][3] = 1.0 / 6.0 * (-2.0 + sqrt( 7.0 ) - sqrt( 21.0 - 6.0 * sqrt( 7.0 )));
+  gradNxtest[0][4] = -1.0 / 6.0 * (2.0 + sqrt( 7.0 ) - sqrt( 21.0 + 6.0 * sqrt( 7.0 )));
+  gradNxtest[0][5] = -1.0 / 2.0;
 
-  gradNxtest[1][0]=1.0/4.0*(7.0+4.0*sqrt( 7.0 )+sqrt( 343.0+70.0*sqrt( 7.0 )));
-  gradNxtest[1][1]=0.0;
-  gradNxtest[1][2]=-1.0/24.0*sqrt( 28.0-2.0*sqrt( 7.0 ))*(5.0+sqrt( 3.0 )-sqrt( 7.0 )+sqrt( 21.0 ));
-  gradNxtest[1][3]=1.0/24.0*sqrt( 28.0-2.0*sqrt( 7.0 ))*(-5.0+sqrt( 3.0 )+sqrt( 7.0 )+sqrt( 21.0 ));
-  gradNxtest[1][4]=-1.0/2.0*sqrt( 7-2.0*sqrt( 7.0 ));
-  gradNxtest[1][5]=1.0/4.0*(-7.0-4.0*sqrt( 7.0 )+sqrt( 343.0+70.0*sqrt( 7.0 )));
+  gradNxtest[1][0] = 1.0 / 4.0 * (7.0 + 4.0 * sqrt( 7.0 ) + sqrt( 343.0 + 70.0 * sqrt( 7.0 )));
+  gradNxtest[1][1] = 0.0;
+  gradNxtest[1][2] = -1.0 / 24.0 * sqrt( 28.0 - 2.0 * sqrt( 7.0 )) * (5.0 + sqrt( 3.0 ) - sqrt( 7.0 ) + sqrt( 21.0 ));
+  gradNxtest[1][3] = 1.0 / 24.0 * sqrt( 28.0 - 2.0 * sqrt( 7.0 )) * (-5.0 + sqrt( 3.0 ) + sqrt( 7.0 ) + sqrt( 21.0 ));
+  gradNxtest[1][4] = -1.0 / 2.0 * sqrt( 7 - 2.0 * sqrt( 7.0 ));
+  gradNxtest[1][5] = 1.0 / 4.0 * (-7.0 - 4.0 * sqrt( 7.0 ) + sqrt( 343.0 + 70.0 * sqrt( 7.0 )));
 
-  gradNxtest[2][0]=1.0/4.0*(7.0-4.0*sqrt( 7.0 )-sqrt( 343.0-70.0*sqrt( 7.0 )));
-  gradNxtest[2][1]=1.0/12.0*sqrt( 7.0+sqrt( 7.0 )/2.0 )*(5.0-sqrt( 3.0 )+sqrt( 7.0 )+sqrt( 21.0 ));
-  gradNxtest[2][2]=0.0;
-  gradNxtest[2][3]=-1.0/2.0*sqrt( 7.0+2.0*sqrt( 7.0 ));
-  gradNxtest[2][4]=1.0/12.0*sqrt( 7.0+sqrt( 7.0 )/2.0 )*(5.0+sqrt( 3.0 )+sqrt( 7.0 )-sqrt( 21.0 ));
-  gradNxtest[2][5]=1.0/4.0*(-7.0+4.0*sqrt( 7.0 )-sqrt( 343.0-70.0*sqrt( 7.0 )));
+  gradNxtest[2][0] = 1.0 / 4.0 * (7.0 - 4.0 * sqrt( 7.0 ) - sqrt( 343.0 - 70.0 * sqrt( 7.0 )));
+  gradNxtest[2][1] = 1.0 / 12.0 * sqrt( 7.0 + sqrt( 7.0 ) / 2.0 ) * (5.0 - sqrt( 3.0 ) + sqrt( 7.0 ) + sqrt( 21.0 ));
+  gradNxtest[2][2] = 0.0;
+  gradNxtest[2][3] = -1.0 / 2.0 * sqrt( 7.0 + 2.0 * sqrt( 7.0 ));
+  gradNxtest[2][4] = 1.0 / 12.0 * sqrt( 7.0 + sqrt( 7.0 ) / 2.0 ) * (5.0 + sqrt( 3.0 ) + sqrt( 7.0 ) - sqrt( 21.0 ));
+  gradNxtest[2][5] = 1.0 / 4.0 * (-7.0 + 4.0 * sqrt( 7.0 ) - sqrt( 343.0 - 70.0 * sqrt( 7.0 )));
 
-  gradNxtest[3][0]=-gradNxtest[2][5];
-  gradNxtest[3][1]=-gradNxtest[2][4];
-  gradNxtest[3][2]=-gradNxtest[2][3];
-  gradNxtest[3][3]=-gradNxtest[2][2];
-  gradNxtest[3][4]=-gradNxtest[2][1];
-  gradNxtest[3][5]=-gradNxtest[2][0];
+  gradNxtest[3][0] = -gradNxtest[2][5];
+  gradNxtest[3][1] = -gradNxtest[2][4];
+  gradNxtest[3][2] = -gradNxtest[2][3];
+  gradNxtest[3][3] = -gradNxtest[2][2];
+  gradNxtest[3][4] = -gradNxtest[2][1];
+  gradNxtest[3][5] = -gradNxtest[2][0];
 
-  gradNxtest[4][0]=-gradNxtest[1][5];
-  gradNxtest[4][1]=-gradNxtest[1][4];
-  gradNxtest[4][2]=-gradNxtest[1][3];
-  gradNxtest[4][3]=-gradNxtest[1][2];
-  gradNxtest[4][4]=-gradNxtest[1][1];
-  gradNxtest[4][5]=-gradNxtest[1][0];
+  gradNxtest[4][0] = -gradNxtest[1][5];
+  gradNxtest[4][1] = -gradNxtest[1][4];
+  gradNxtest[4][2] = -gradNxtest[1][3];
+  gradNxtest[4][3] = -gradNxtest[1][2];
+  gradNxtest[4][4] = -gradNxtest[1][1];
+  gradNxtest[4][5] = -gradNxtest[1][0];
 
-  gradNxtest[5][0]=-gradNxtest[0][5];
-  gradNxtest[5][1]=-gradNxtest[0][4];
-  gradNxtest[5][2]=-gradNxtest[0][3];
-  gradNxtest[5][3]=-gradNxtest[0][2];
-  gradNxtest[5][4]=-gradNxtest[0][1];
-  gradNxtest[5][5]=-gradNxtest[0][0];
+  gradNxtest[5][0] = -gradNxtest[0][5];
+  gradNxtest[5][1] = -gradNxtest[0][4];
+  gradNxtest[5][2] = -gradNxtest[0][3];
+  gradNxtest[5][3] = -gradNxtest[0][2];
+  gradNxtest[5][4] = -gradNxtest[0][1];
+  gradNxtest[5][5] = -gradNxtest[0][0];
 
-  for( localIndex k=0; k<6; ++k )
+  for( localIndex k = 0; k < 6; ++k )
   {
-    for( localIndex j=0; j<6; ++j )
+    for( localIndex j = 0; j < 6; ++j )
     {
-      for( localIndex i=0; i<6; ++i )
+      for( localIndex i = 0; i < 6; ++i )
       {
-        for( localIndex l=0; l<6; ++l )
+        for( localIndex l = 0; l < 6; ++l )
         {
-          gradNxtest[i+6*j+36*k][l+6*j+36*k]=gradNxtest[i][l];
-          gradNxtest[i+6*j+36*k][l+6*j+36*k]=gradNxtest[i][l];
+          gradNxtest[i + 6 * j + 36 * k][l + 6 * j + 36 * k] = gradNxtest[i][l];
+          gradNxtest[i + 6 * j + 36 * k][l + 6 * j + 36 * k] = gradNxtest[i][l];
 
-          gradNytest[i+6*j+36*k][i+6*l+36*k]=gradNxtest[j][l];
-          gradNytest[i+6*j+36*k][i+6*l+36*k]=gradNxtest[j][l];
+          gradNytest[i + 6 * j + 36 * k][i + 6 * l + 36 * k] = gradNxtest[j][l];
+          gradNytest[i + 6 * j + 36 * k][i + 6 * l + 36 * k] = gradNxtest[j][l];
 
-          gradNztest[i+6*j+36*k][i+6*j+36*l]=gradNxtest[k][l];
-          gradNztest[i+6*j+36*k][i+6*j+36*l]=gradNxtest[k][l];
+          gradNztest[i + 6 * j + 36 * k][i + 6 * j + 36 * l] = gradNxtest[k][l];
+          gradNztest[i + 6 * j + 36 * k][i + 6 * j + 36 * l] = gradNxtest[k][l];
         }
       }
     }
@@ -192,15 +192,15 @@ void testKernelDriver()
 
     real64 xLocal[numNodes][3];
 
-    for( localIndex a=0; a< numNodes; ++a )
+    for( localIndex a = 0; a < numNodes; ++a )
     {
-      for( localIndex i=0; i<3; ++i )
+      for( localIndex i = 0; i < 3; ++i )
       {
         xLocal[a][i] = xCoords[a][i];
       }
     }
 
-    for( localIndex q=0; q<numQuadraturePoints; ++q )
+    for( localIndex q = 0; q < numQuadraturePoints; ++q )
     {
 
       real64 dNdX[numNodes][3] = {{0}};
@@ -209,11 +209,11 @@ void testKernelDriver()
                                                                     xLocal,
                                                                     dNdX );
 
-      for( localIndex a=0; a<numNodes; ++a )
+      for( localIndex a = 0; a < numNodes; ++a )
       {
         for( int i = 0; i < 3; ++i )
         {
-          if( fabs( dNdX[a][i] )<1e-9 )
+          if( fabs( dNdX[a][i] ) < 1e-9 )
           {
             viewdNdX( q, a, i ) = 0;
           }
@@ -230,9 +230,9 @@ void testKernelDriver()
                           [=] ( localIndex const )
   {
 
-    for( localIndex q=0; q<numQuadraturePoints; ++q )
+    for( localIndex q = 0; q < numQuadraturePoints; ++q )
     {
-      for( localIndex a=0; a<numNodes; ++a )
+      for( localIndex a = 0; a < numNodes; ++a )
       {
         EXPECT_FLOAT_EQ( gradNxtest[a][q], viewdNdX( q, a, 0 ) );
         EXPECT_FLOAT_EQ( gradNytest[a][q], viewdNdX( q, a, 1 ) );

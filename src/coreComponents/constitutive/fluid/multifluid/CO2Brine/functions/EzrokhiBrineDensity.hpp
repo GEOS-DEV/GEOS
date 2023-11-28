@@ -185,7 +185,7 @@ void EzrokhiBrineDensityUpdate::compute( real64 const & pressure,
   real64 const massPhaseCompositionCO2 = phaseComposition[m_CO2Index] * m_componentMolarWeight[m_CO2Index] /
                                          ( phaseComposition[m_CO2Index] * m_componentMolarWeight[m_CO2Index] + phaseComposition[m_waterIndex] * m_componentMolarWeight[m_waterIndex]);
 
-  value = ( m_coef0  + temperature * ( m_coef1 + m_coef2 * temperature ) ) * massPhaseCompositionCO2;
+  value = ( m_coef0 + temperature * ( m_coef1 + m_coef2 * temperature ) ) * massPhaseCompositionCO2;
   value = waterDensity * pow( 10, value );
   if( !useMass )
   {
@@ -245,8 +245,8 @@ void EzrokhiBrineDensityUpdate::compute( real64 const & pressure,
   dValue[Deriv::dT] = dValueCoef * exponent_dTemperature + waterDensity_dTemperature * exponentPowered;
 
   // here, we multiply common part of derivatives by specific coefficients
-  dValue[Deriv::dC+m_CO2Index] = dValue_dPhaseComp * phaseComposition[m_waterIndex] * dPhaseComposition[m_CO2Index][Deriv::dC+m_CO2Index];
-  dValue[Deriv::dC+m_waterIndex] = dValue_dPhaseComp * ( -phaseComposition[m_CO2Index] ) * dPhaseComposition[m_waterIndex][Deriv::dC+m_waterIndex];
+  dValue[Deriv::dC + m_CO2Index] = dValue_dPhaseComp * phaseComposition[m_waterIndex] * dPhaseComposition[m_CO2Index][Deriv::dC + m_CO2Index];
+  dValue[Deriv::dC + m_waterIndex] = dValue_dPhaseComp * ( -phaseComposition[m_CO2Index] ) * dPhaseComposition[m_waterIndex][Deriv::dC + m_waterIndex];
 
 }
 

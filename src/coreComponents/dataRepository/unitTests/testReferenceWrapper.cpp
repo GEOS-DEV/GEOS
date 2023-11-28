@@ -53,7 +53,7 @@ TEST( testReferenceWrapper, testArrayWrapper )
 
   ReferenceWrapper< Array< int, 1, int > > wrappedArr( arr );
 
-  for( int i=0; i<4; ++i )
+  for( int i = 0; i < 4; ++i )
   {
     wrappedArr[i] = 2 * i;
   }
@@ -90,11 +90,11 @@ TEST( testReferenceWrapper, testOperatorParen )
 
   ReferenceWrapper< array2d > wrappedArr( arr );
 
-  for( int i=0; i<2; ++i )
+  for( int i = 0; i < 2; ++i )
   {
-    for( int j=0; j<3; ++j )
+    for( int j = 0; j < 3; ++j )
     {
-      wrappedArr( i, j ) = 3*i+j;
+      wrappedArr( i, j ) = 3 * i + j;
     }
   }
 
@@ -114,11 +114,11 @@ TEST( testReferenceWrapper, testNestedOperatorSquare )
 
   ReferenceWrapper< array2d > wrappedArr( arr );
 
-  for( int i=0; i<2; ++i )
+  for( int i = 0; i < 2; ++i )
   {
-    for( int j=0; j<3; ++j )
+    for( int j = 0; j < 3; ++j )
     {
-      wrappedArr[i][j] = 3*i+j;
+      wrappedArr[i][j] = 3 * i + j;
     }
   }
 

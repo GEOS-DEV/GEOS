@@ -419,7 +419,7 @@ public:
     template< typename U, int NDIM, typename PERMUTATION >
     static void copy( Array< U, NDIM, PERMUTATION > const & array, localIndex const sourceIndex, localIndex const destIndex )
     {
-      LvArray::forValuesInSliceWithIndices( array[ sourceIndex ],
+      LvArray::forValuesInSliceWithIndices( array[sourceIndex],
                                             [destIndex, &array]( U const & sourceVal, auto const ... indicesToErase )
       {
         array( destIndex, indicesToErase ... ) = sourceVal;
@@ -430,14 +430,14 @@ public:
     static void copy( U const &, localIndex const, localIndex const )
     {}
 
-    template< typename U=T >
+    template< typename U = T >
     static std::enable_if_t< traits::hasCopyAssignmentOp< U > >
     copyData( U & destinationData, U const & sourceData )
     {
       destinationData = sourceData;
     }
 
-    template< typename U=T >
+    template< typename U = T >
     static std::enable_if_t< !traits::hasCopyAssignmentOp< U > >
     copyData( U &, U const & )
     {}
@@ -474,7 +474,7 @@ public:
       int newSize = oldSize - numToErase;
       std::set< localIndex >::iterator it = indicesToErase.begin();
       int offset = 0;
-      for( localIndex i=*it+1; i<oldSize; i++ )
+      for( localIndex i = *it + 1; i < oldSize; i++ )
       {
         if( i == *it + 1 )
         {
@@ -484,7 +484,7 @@ public:
             it++;
           }
         }
-        array[i-offset] = array[i];
+        array[i - offset] = array[i];
       }
       array.resize( newSize );
     }
@@ -498,7 +498,7 @@ public:
       int dim1 = array.size( 1 );
       std::set< localIndex >::iterator it = indicesToErase.begin();
       int offset = 0;
-      for( localIndex i=*it+1; i<oldSize; i++ )
+      for( localIndex i = *it + 1; i < oldSize; i++ )
       {
         if( i == *it + 1 )
         {
@@ -508,9 +508,9 @@ public:
             it++;
           }
         }
-        for( int j=0; j<dim1; j++ )
+        for( int j = 0; j < dim1; j++ )
         {
-          array[i-offset][j] = array[i][j];
+          array[i - offset][j] = array[i][j];
         }
       }
       array.resize( newSize );
@@ -526,7 +526,7 @@ public:
       int dim2 = array.size( 2 );
       std::set< localIndex >::iterator it = indicesToErase.begin();
       int offset = 0;
-      for( localIndex i=*it+1; i<oldSize; i++ )
+      for( localIndex i = *it + 1; i < oldSize; i++ )
       {
         if( i == *it + 1 )
         {
@@ -536,11 +536,11 @@ public:
             it++;
           }
         }
-        for( int j=0; j<dim1; j++ )
+        for( int j = 0; j < dim1; j++ )
         {
-          for( int k=0; k<dim2; k++ )
+          for( int k = 0; k < dim2; k++ )
           {
-            array[i-offset][j][k] = array[i][j][k];
+            array[i - offset][j][k] = array[i][j][k];
           }
         }
       }
@@ -596,28 +596,28 @@ public:
    * This is used mainly for @p LvArray classes (arrays, etc.) that can convert
    * themselves into views. For other types, a regular reference is returned.
    */
-  template< typename _T=T, typename=std::enable_if_t< traits::HasMemberFunction_toView< _T > > >
+  template< typename _T = T, typename = std::enable_if_t< traits::HasMemberFunction_toView< _T > > >
   GEOS_DECLTYPE_AUTO_RETURN referenceAsView()
   { return m_data->toView(); }
 
   /**
    * @copydoc referenceAsView()
    */
-  template< typename _T=T, typename=std::enable_if_t< !traits::HasMemberFunction_toView< _T > > >
+  template< typename _T = T, typename = std::enable_if_t< !traits::HasMemberFunction_toView< _T > > >
   T & referenceAsView()
   { return *m_data; }
 
   /**
    * @copydoc referenceAsView()
    */
-  template< typename _T=T, typename=std::enable_if_t< traits::HasMemberFunction_toView< _T > > >
+  template< typename _T = T, typename = std::enable_if_t< traits::HasMemberFunction_toView< _T > > >
   GEOS_DECLTYPE_AUTO_RETURN referenceAsView() const
   { return m_data->toViewConst(); }
 
   /**
    * @copydoc referenceAsView()
    */
-  template< typename _T=T, typename=std::enable_if_t< !traits::HasMemberFunction_toView< _T > > >
+  template< typename _T = T, typename = std::enable_if_t< !traits::HasMemberFunction_toView< _T > > >
   T const & referenceAsView() const
   { return *m_data; }
 
@@ -640,7 +640,7 @@ public:
    * @brief Accessor for m_default.
    * @return reference to const m_default member
    */
-  template< typename U=T >
+  template< typename U = T >
   DefaultValue< T > const &
   getDefaultValueStruct() const
   {
@@ -652,7 +652,7 @@ public:
    * @brief Accessor for default value.
    * @return reference to const T
    */
-  template< typename U=T >
+  template< typename U = T >
   std::enable_if_t< DefaultValue< U >::has_default_value, typename DefaultValue< U >::value_type const & >
   getDefaultValue() const
   {
@@ -664,7 +664,7 @@ public:
    * @param defaultVal the new default value
    * @return pointer to Wrapper<T>
    */
-  template< typename U=T >
+  template< typename U = T >
   std::enable_if_t< DefaultValue< U >::has_default_value, Wrapper< T > & >
   setDefaultValue( typename DefaultValue< U >::value_type const & defaultVal )
   {
@@ -677,7 +677,7 @@ public:
    * @param defaultVal the new default value
    * @return pointer to Wrapper<T>
    */
-  template< typename U=T >
+  template< typename U = T >
   std::enable_if_t< !traits::is_array< U > && DefaultValue< U >::has_default_value, Wrapper< T > & >
   setApplyDefaultValue( typename DefaultValue< U >::value_type const & defaultVal )
   {
@@ -691,7 +691,7 @@ public:
    * @param defaultVal the new default value
    * @return pointer to Wrapper<T>
    */
-  template< typename U=T >
+  template< typename U = T >
   std::enable_if_t< traits::is_array< U > && DefaultValue< U >::has_default_value, Wrapper< T > & >
   setApplyDefaultValue( typename DefaultValue< U >::value_type const & defaultVal )
   {
@@ -805,7 +805,7 @@ public:
 
     move( hostMemorySpace, false );
 
-    m_conduitNode[ "__sizedFromParent__" ].set( sizedFromParent() );
+    m_conduitNode["__sizedFromParent__"].set( sizedFromParent() );
 
     wrapperHelpers::pushDataToConduitNode( *m_data, m_conduitNode );
   }
@@ -824,7 +824,7 @@ public:
       return false;
     }
 
-    setSizedFromParent( m_conduitNode[ "__sizedFromParent__" ].value() );
+    setSizedFromParent( m_conduitNode["__sizedFromParent__"].value() );
 
     wrapperHelpers::pullDataFromConduitNode( *m_data, m_conduitNode );
 

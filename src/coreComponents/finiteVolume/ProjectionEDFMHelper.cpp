@@ -75,8 +75,8 @@ std::vector< localIndex > ProjectionEDFMHelper::selectFaces( FixedOneToManyRelat
   arraySlice1d< real64 const > const n = fractureSubRegion.getNormalVector( fracElement );
   arrayView2d< real64 const > const & centers = fractureSubRegion.getElementCenter().toViewConst();
 
-  real64 fracCenter[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( centers[ fracElement ] );
-  real64 cellCenterToFracCenter[ 3 ];
+  real64 fracCenter[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( centers[fracElement] );
+  real64 cellCenterToFracCenter[3];
   real64 distToFrac = getSignedDistanceCellCenterToFracPlane( hostCellID, n, fracCenter, cellCenterToFracCenter );
 
   // pick faces that intersect the fracture
@@ -145,7 +145,7 @@ bool ProjectionEDFMHelper::onLargerSide( localIndex const faceIdx,
 {
   /* Check If face is on the same side of the fracture as the mass center of the cell. */
   real64 const areaTolerance = 10.f * std::numeric_limits< real64 >::epsilon();
-  real64 faceCenter[ 3 ], faceNormal[ 3 ];
+  real64 faceCenter[3], faceNormal[3];
   // compute face center
   computationalGeometry::centroid_3DPolygon( m_faceToNodes[faceIdx], m_nodesCoord,
                                              faceCenter, faceNormal, areaTolerance );
@@ -158,9 +158,9 @@ real64 ProjectionEDFMHelper::getSignedDistanceCellCenterToFracPlane( CellDescrip
                                                                      real64 const (&fracCenter)[3],
                                                                      real64 (& cellCenterToFracOrigin)[3] ) const
 {
-  LvArray::tensorOps::copy< 3 >( cellCenterToFracOrigin, m_cellCenters[ hostCellID.region ]
-                                 [ hostCellID.subRegion ]
-                                 [ hostCellID.index ] );
+  LvArray::tensorOps::copy< 3 >( cellCenterToFracOrigin, m_cellCenters[hostCellID.region]
+                                 [hostCellID.subRegion]
+                                 [hostCellID.index] );
   LvArray::tensorOps::subtract< 3 >( cellCenterToFracOrigin, fracCenter );
 
   return LvArray::tensorOps::AiBi< 3 >( cellCenterToFracOrigin, fracNormal );
@@ -193,7 +193,7 @@ bool ProjectionEDFMHelper::neighborOnSameSide( localIndex const faceIdx,
 
   // embedded fracture elements hosted in the neighbor cell
   // (there could be more than one)
-  auto const & efracElements = efracSurfaces[ neighborCellID.index ];
+  auto const & efracElements = efracSurfaces[neighborCellID.index];
   if( efracElements.size() == 0 )
   {
     return false;
@@ -205,8 +205,8 @@ bool ProjectionEDFMHelper::neighborOnSameSide( localIndex const faceIdx,
   arrayView2d< real64 const > const & centers = fractureSubRegion.getElementCenter().toViewConst();
 
 
-  real64 fracCenter[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( centers[ fracElement ] );
-  real64 cellCenterToFracOrigin[ 3 ];
+  real64 fracCenter[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( centers[fracElement] );
+  real64 cellCenterToFracOrigin[3];
   real64 const signedDistanceNeighborlCenterToFrac =
     getSignedDistanceCellCenterToFracPlane( neighborCellID, n, fracCenter, cellCenterToFracOrigin );
 
@@ -255,18 +255,18 @@ void ProjectionEDFMHelper::
 
   // compute face center and normal
   real64 const areaTolerance = 10.f * std::numeric_limits< real64 >::epsilon();
-  real64 faceCenter[ 3 ], faceNormal[ 3 ];
+  real64 faceCenter[3], faceNormal[3];
   real64 faceArea = computationalGeometry::centroid_3DPolygon( m_faceToNodes[faceIdx], m_nodesCoord,
                                                                faceCenter, faceNormal, areaTolerance );
 
   // get cell center
-  real64 cellCenter[ 3 ] = LVARRAY_TENSOROPS_INIT_LOCAL_3( m_cellCenters[ neighborCell.region ]
-                                                           [ neighborCell.subRegion ]
-                                                           [ neighborCell.index ] );
+  real64 cellCenter[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( m_cellCenters[neighborCell.region]
+                                                         [neighborCell.subRegion]
+                                                         [neighborCell.index] );
 
   // get frac  center
   arrayView2d< real64 const > const & centers = fractureSubRegion.getElementCenter().toViewConst();
-  real64 fracCenter[ 3 ] = LVARRAY_TENSOROPS_INIT_LOCAL_3( centers[ fracElement ] );
+  real64 fracCenter[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( centers[fracElement] );
 
   // Compute projection point: a point  on the face that resides  on a  line
   // connecting edfm element and a neighbor cell

@@ -32,7 +32,7 @@ using namespace geos;
 using INDEX_TYPE = std::ptrdiff_t;
 
 static real64 const machinePrecision = 20.0 * std::numeric_limits< real64 >::epsilon();
-static real64 const pi = std::atan( 1.0 )*4.0;
+static real64 const pi = std::atan( 1.0 ) * 4.0;
 
 template< typename LAI >
 void vector_norm1_test()
@@ -142,15 +142,15 @@ void determinant_test()
 
     // Check
     N_real = static_cast< real64 >(N);
-    theta = pi*0.5/( 2.0*N_real + 1 );
-    lambda_min = std::pow( 2.0*std::sin( theta ), 2 );
-    theta = pi*( N_real - 0.5) / ( 2*N_real + 1 );
-    lambda_max = std::pow( 2.0*std::sin( theta ), 2 );
+    theta = pi * 0.5 / ( 2.0 * N_real + 1 );
+    lambda_min = std::pow( 2.0 * std::sin( theta ), 2 );
+    theta = pi * ( N_real - 0.5) / ( 2 * N_real + 1 );
+    lambda_max = std::pow( 2.0 * std::sin( theta ), 2 );
 
     determinant = N_real + 1.0; // Exact determinant
     EXPECT_NEAR( determinant,
                  LAI::determinant( Laplacian1d ),
-                 (lambda_max/lambda_min) * machinePrecision );
+                 (lambda_max / lambda_min) * machinePrecision );
   }
 }
 
@@ -258,7 +258,7 @@ void vector_vector_add_test()
   real64 alpha = 3.0;
   for( INDEX_TYPE i = 0; i < N; ++i )
   {
-    vecSum( i ) = alpha*vec1( i ) + vec2( i );
+    vecSum( i ) = alpha * vec1( i ) + vec2( i );
   }
 
   // Compute v2 = alpha*vec1 + vec2
@@ -298,7 +298,7 @@ void matrix_matrix_add_test()
   {
     for( INDEX_TYPE j = 0; j < N; ++j )
     {
-      matSum( i, j ) = alpha*mat1( i, j ) + mat2( i, j );
+      matSum( i, j ) = alpha * mat1( i, j ) + mat2( i, j );
     }
   }
 
@@ -334,7 +334,7 @@ void vector_scale_test()
   real64 alpha = 3.0;
   for( INDEX_TYPE i = 0; i < N; ++i )
   {
-    vecScaled( i ) = alpha*vec( i );
+    vecScaled( i ) = alpha * vec( i );
   }
 
   // Compute vec = alpha*vec
@@ -368,7 +368,7 @@ void matrix_scale_test()
   {
     for( INDEX_TYPE j = 0; j < N; ++j )
     {
-      matScaled( i, j ) = alpha*mat( i, j );
+      matScaled( i, j ) = alpha * mat( i, j );
     }
   }
 
@@ -405,14 +405,14 @@ void vector_dot_test()
   real64 vec1DotVec2 = 0.0;
   for( INDEX_TYPE i = 0; i < N; ++i )
   {
-    vec1DotVec2 += vec1( i )*vec2( i );
+    vec1DotVec2 += vec1( i ) * vec2( i );
   }
 
   // Check
   EXPECT_NEAR( vec1DotVec2,
                LAI::vectorDot( vec1,
                                vec2 ),
-               static_cast< real64 >(N)*machinePrecision );
+               static_cast< real64 >(N) * machinePrecision );
 }
 
 template< typename LAI >
@@ -438,10 +438,10 @@ void matrix_vector_multiply_test()
   real64 beta = 7.0;
   for( INDEX_TYPE i = 0; i < M; ++i )
   {
-    vecResult( i ) = beta*Y( i );
+    vecResult( i ) = beta * Y( i );
     for( INDEX_TYPE j = 0; j < N; ++j )
     {
-      vecResult( i ) += alpha*A( i, j )*X( j );
+      vecResult( i ) += alpha * A( i, j ) * X( j );
     }
   }
 
@@ -457,7 +457,7 @@ void matrix_vector_multiply_test()
   {
     EXPECT_NEAR( vecResult( i ),
                  Y( i ),
-                 static_cast< real64 >(N+1)*machinePrecision );
+                 static_cast< real64 >(N + 1) * machinePrecision );
   }
 }
 
@@ -484,10 +484,10 @@ void matrixT_vector_multiply_test()
   real64 beta = 7.0;
   for( INDEX_TYPE i = 0; i < N; ++i )
   {
-    vecResult( i ) = beta*Y( i );
+    vecResult( i ) = beta * Y( i );
     for( INDEX_TYPE j = 0; j < M; ++j )
     {
-      vecResult( i ) += alpha*A( j, i )*X( j );
+      vecResult( i ) += alpha * A( j, i ) * X( j );
     }
   }
 
@@ -503,7 +503,7 @@ void matrixT_vector_multiply_test()
   {
     EXPECT_NEAR( vecResult( i ),
                  Y( i ),
-                 static_cast< real64 >(N+1)*machinePrecision );
+                 static_cast< real64 >(N + 1) * machinePrecision );
   }
 }
 
@@ -550,10 +550,10 @@ void matrix_matrix_multiply_test()
         {
           for( INDEX_TYPE j = 0; j < N; ++j )
           {
-            matResult( i, j ) = beta*C( i, j );
+            matResult( i, j ) = beta * C( i, j );
             for( INDEX_TYPE l = 0; l < K; ++l )
             {
-              matResult( i, j ) += alpha*A( i, l )*B( l, j );
+              matResult( i, j ) += alpha * A( i, l ) * B( l, j );
             }
           }
         }
@@ -572,7 +572,7 @@ void matrix_matrix_multiply_test()
           {
             EXPECT_NEAR( C( i, j ),
                          matResult( i, j ),
-                         static_cast< real64 >(K+1)*machinePrecision );
+                         static_cast< real64 >(K + 1) * machinePrecision );
           }
         }
       }
@@ -624,10 +624,10 @@ void matrixT_matrix_multiply_test()
         {
           for( INDEX_TYPE j = 0; j < N; ++j )
           {
-            matResult( i, j ) = beta*C( i, j );
+            matResult( i, j ) = beta * C( i, j );
             for( INDEX_TYPE l = 0; l < K; ++l )
             {
-              matResult( i, j ) += alpha*A( l, i )*B( l, j );
+              matResult( i, j ) += alpha * A( l, i ) * B( l, j );
             }
           }
         }
@@ -646,7 +646,7 @@ void matrixT_matrix_multiply_test()
           {
             EXPECT_NEAR( C( i, j ),
                          matResult( i, j ),
-                         static_cast< real64 >(K+1)*machinePrecision );
+                         static_cast< real64 >(K + 1) * machinePrecision );
           }
         }
       }
@@ -698,10 +698,10 @@ void matrix_matrixT_multiply_test()
         {
           for( INDEX_TYPE j = 0; j < N; ++j )
           {
-            matResult( i, j ) = beta*C( i, j );
+            matResult( i, j ) = beta * C( i, j );
             for( INDEX_TYPE l = 0; l < K; ++l )
             {
-              matResult( i, j ) += alpha*A( i, l )*B( j, l );
+              matResult( i, j ) += alpha * A( i, l ) * B( j, l );
             }
           }
         }
@@ -720,7 +720,7 @@ void matrix_matrixT_multiply_test()
           {
             EXPECT_NEAR( C( i, j ),
                          matResult( i, j ),
-                         static_cast< real64 >(K+1)*machinePrecision );
+                         static_cast< real64 >(K + 1) * machinePrecision );
           }
         }
       }
@@ -772,10 +772,10 @@ void matrixT_matrixT_multiply_test()
         {
           for( INDEX_TYPE j = 0; j < N; ++j )
           {
-            matResult( i, j ) = beta*C( i, j );
+            matResult( i, j ) = beta * C( i, j );
             for( INDEX_TYPE l = 0; l < K; ++l )
             {
-              matResult( i, j ) += alpha*A( l, i )*B( j, l );
+              matResult( i, j ) += alpha * A( l, i ) * B( j, l );
             }
           }
         }
@@ -794,7 +794,7 @@ void matrixT_matrixT_multiply_test()
           {
             EXPECT_NEAR( C( i, j ),
                          matResult( i, j ),
-                         static_cast< real64 >(K+1)*machinePrecision );
+                         static_cast< real64 >(K + 1) * machinePrecision );
           }
         }
       }
@@ -841,21 +841,21 @@ void matrix_inverse_test()
 
     // Check
     N_real = static_cast< real64 >(N);
-    theta = pi*0.5/( 2.0*N_real + 1 );
-    lambda_min = std::pow( 2.0*std::sin( theta ), 2 );
-    theta = pi*( N_real - 0.5) / ( 2*N_real + 1 );
-    lambda_max = std::pow( 2.0*std::sin( theta ), 2 );
+    theta = pi * 0.5 / ( 2.0 * N_real + 1 );
+    lambda_min = std::pow( 2.0 * std::sin( theta ), 2 );
+    theta = pi * ( N_real - 0.5) / ( 2 * N_real + 1 );
+    lambda_max = std::pow( 2.0 * std::sin( theta ), 2 );
 
     for( INDEX_TYPE i = 0; i < N; ++i )
     {
       for( INDEX_TYPE j = 0; j < N; ++j )
       {
-        exact_entry = static_cast< real64 >((1+std::min( i, j ))*(N+1-(1+std::max( i, j )))) /
+        exact_entry = static_cast< real64 >((1 + std::min( i, j )) * (N + 1 - (1 + std::max( i, j )))) /
                       static_cast< real64 >(( N + 1 ));
 
         EXPECT_NEAR( Laplacian1dInv( i, j ),
                      exact_entry,
-                     (lambda_max / lambda_min)*machinePrecision );
+                     (lambda_max / lambda_min) * machinePrecision );
       }
     }
   }
@@ -1007,7 +1007,7 @@ void set_get_random_number_generator_seed_test()
   LAI::getRandomNumberGeneratorSeed( seedGet );
 
   // Check
-  for( INDEX_TYPE i = 0; i< seedSet.size(); ++i )
+  for( INDEX_TYPE i = 0; i < seedSet.size(); ++i )
   {
     EXPECT_EQ( seedSet( i ), seedGet( i ) );
   }

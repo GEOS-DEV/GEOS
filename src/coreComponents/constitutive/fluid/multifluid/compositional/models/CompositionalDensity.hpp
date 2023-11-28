@@ -98,7 +98,7 @@ void CompositionalDensityUpdate::compute( ComponentProperties::KernelWrapper con
   GEOS_UNUSED_VAR( phaseComposition );
 
   massDensity = 1000.0;
-  molarDensity = massDensity/40.0;
+  molarDensity = massDensity / 40.0;
 }
 
 template< int USD1, int USD2, int USD3 >
@@ -118,7 +118,7 @@ void CompositionalDensityUpdate::compute( ComponentProperties::KernelWrapper con
   GEOS_UNUSED_VAR( phaseComposition, dPhaseComposition );
 
   massDensity = 1000.0;
-  molarDensity = massDensity/40.0;
+  molarDensity = massDensity / 40.0;
 
   LvArray::forValuesInSlice( dMolarDensity, setZero );
   LvArray::forValuesInSlice( dMassDensity, setZero );

@@ -119,10 +119,10 @@ public:
   struct StackVariables : public Base::StackVariables
   {
     /// The number of rows in the pre-allocated element local jacobian matrix (upper bound for numRows).
-    static constexpr int maxNumRows = maxNumTestSupportPointsPerElem *numDofPerTestSupportPoint;
+    static constexpr int maxNumRows = maxNumTestSupportPointsPerElem * numDofPerTestSupportPoint;
 
     /// The number of columns in the pre-allocated element local jacobian matrix (upper bound for numCols).
-    static constexpr int maxNumCols = maxNumTrialSupportPointsPerElem *numDofPerTrialSupportPoint;
+    static constexpr int maxNumCols = maxNumTrialSupportPointsPerElem * numDofPerTrialSupportPoint;
 
     /**
      * Default constructor
@@ -187,21 +187,21 @@ public:
     localIndex numTrialSupportPoints = numTestSupportPoints;
     stack.numRows = numTestSupportPoints * numDofPerTestSupportPoint;
     stack.numCols = numTrialSupportPoints * numDofPerTrialSupportPoint;
-    for( localIndex a=0; a<numTestSupportPoints; ++a )
+    for( localIndex a = 0; a < numTestSupportPoints; ++a )
     {
       localIndex const localNodeIndex = m_elemsToNodes[k][a];
-      for( int i=0; i<numDofPerTestSupportPoint; ++i )
+      for( int i = 0; i < numDofPerTestSupportPoint; ++i )
       {
-        stack.localRowDofIndex[a*numDofPerTestSupportPoint+i] = m_dofNumber[localNodeIndex]+i;
+        stack.localRowDofIndex[a * numDofPerTestSupportPoint + i] = m_dofNumber[localNodeIndex] + i;
       }
     }
 
-    for( localIndex a=0; a<numTrialSupportPoints; ++a )
+    for( localIndex a = 0; a < numTrialSupportPoints; ++a )
     {
       localIndex const localNodeIndex = m_elemsToNodes[k][a];
-      for( int i=0; i<numDofPerTrialSupportPoint; ++i )
+      for( int i = 0; i < numDofPerTrialSupportPoint; ++i )
       {
-        stack.localColDofIndex[a*numDofPerTrialSupportPoint+i] = m_dofNumber[localNodeIndex]+i;
+        stack.localColDofIndex[a * numDofPerTrialSupportPoint + i] = m_dofNumber[localNodeIndex] + i;
       }
     }
   }

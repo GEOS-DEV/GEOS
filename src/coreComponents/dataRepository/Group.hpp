@@ -312,14 +312,14 @@ public:
    */
   template< typename T = Group, typename KEY = void >
   T * getGroupPointer( KEY const & key )
-  { return dynamicCast< T * >( m_subGroups[ key ] ); }
+  { return dynamicCast< T * >( m_subGroups[key] ); }
 
   /**
    * @copydoc getGroupPointer(KEY const &)
    */
   template< typename T = Group, typename KEY = void >
   T const * getGroupPointer( KEY const & key ) const
-  { return dynamicCast< T const * >( m_subGroups[ key ] ); }
+  { return dynamicCast< T const * >( m_subGroups[key] ); }
 
   /**
    * @brief Return a reference to a sub-group of the current Group.
@@ -332,7 +332,7 @@ public:
   template< typename T = Group, typename KEY = void >
   T & getGroup( KEY const & key )
   {
-    Group * const child = m_subGroups[ key ];
+    Group * const child = m_subGroups[key];
     GEOS_THROW_IF( child == nullptr,
                    "Group " << getDataContext() << " has no child named " << key << std::endl
                             << dumpSubGroupsNames(),
@@ -347,7 +347,7 @@ public:
   template< typename T = Group, typename KEY = void >
   T const & getGroup( KEY const & key ) const
   {
-    Group const * const child = m_subGroups[ key ];
+    Group const * const child = m_subGroups[key];
     GEOS_THROW_IF( child == nullptr,
                    "Group " << getDataContext() << " has no child named " << key << std::endl
                             << dumpSubGroupsNames(),
@@ -410,7 +410,7 @@ public:
    */
   template< typename T = Group >
   bool hasGroup( string const & name ) const
-  { return dynamicCast< T const * >( m_subGroups[ name ] ) != nullptr; }
+  { return dynamicCast< T const * >( m_subGroups[name] ) != nullptr; }
 
   /**
    * @brief Check whether a sub-group exists by type.
@@ -791,7 +791,7 @@ public:
    *   Wrapper index in this Group
    * @return A reference to the newly registered/created Wrapper
    */
-  template< typename T, typename TBASE=T >
+  template< typename T, typename TBASE = T >
   Wrapper< TBASE > & registerWrapper( string const & name,
                                       wrapperMap::KeyIndex::index_type * const rkey = nullptr );
 
@@ -802,7 +802,7 @@ public:
    * @param[in] viewKey The KeyIndex that contains the name of the new Wrapper.
    * @return A reference to the newly registered/created Wrapper
    */
-  template< typename T, typename TBASE=T >
+  template< typename T, typename TBASE = T >
   Wrapper< TBASE > & registerWrapper( Group::wrapperMap::KeyIndex const & viewKey );
 
   /**
@@ -856,7 +856,7 @@ public:
   void generateDataStructureSkeleton( integer const level )
   {
     expandObjectCatalogs();
-    string indent( level*2, ' ' );
+    string indent( level * 2, ' ' );
 
     for( auto const & subGroupIter : m_subGroups )
     {
@@ -1063,7 +1063,7 @@ public:
                              integer const recursive,
                              bool onDevice,
                              parallelDeviceEvents & events,
-                             MPI_Op op=MPI_REPLACE );
+                             MPI_Op op = MPI_REPLACE );
 
   ///@}
 
@@ -1089,7 +1089,7 @@ public:
   template< typename KEY >
   WrapperBase const & getWrapperBase( KEY const & key ) const
   {
-    WrapperBase const * const wrapper = m_wrappers[ key ];
+    WrapperBase const * const wrapper = m_wrappers[key];
     GEOS_THROW_IF( wrapper == nullptr,
                    "Group " << getDataContext() << " has no wrapper named " << key << std::endl
                             << dumpWrappersNames(),
@@ -1104,7 +1104,7 @@ public:
   template< typename KEY >
   WrapperBase & getWrapperBase( KEY const & key )
   {
-    WrapperBase * const wrapper = m_wrappers[ key ];
+    WrapperBase * const wrapper = m_wrappers[key];
     GEOS_THROW_IF( wrapper == nullptr,
                    "Group " << getDataContext() << " has no wrapper named " << key << std::endl
                             << dumpWrappersNames(),
@@ -1169,7 +1169,7 @@ public:
    */
   template< typename LOOKUP_TYPE >
   bool hasWrapper( LOOKUP_TYPE const & lookup ) const
-  { return m_wrappers[ lookup ] != nullptr; }
+  { return m_wrappers[lookup] != nullptr; }
 
   /**
    * @brief Retrieve a Wrapper stored in this group.
@@ -1206,14 +1206,14 @@ public:
    */
   template< typename T, typename LOOKUP_TYPE >
   Wrapper< T > const * getWrapperPointer( LOOKUP_TYPE const & index ) const
-  { return dynamicCast< Wrapper< T > const * >( m_wrappers[ index ] ); }
+  { return dynamicCast< Wrapper< T > const * >( m_wrappers[index] ); }
 
   /**
    * @copydoc getWrapperPointer(LOOKUP_TYPE const &) const
    */
   template< typename T, typename LOOKUP_TYPE >
   Wrapper< T > * getWrapperPointer( LOOKUP_TYPE const & index )
-  { return dynamicCast< Wrapper< T > * >( m_wrappers[ index ] ); }
+  { return dynamicCast< Wrapper< T > * >( m_wrappers[index] ); }
 
   ///@}
 

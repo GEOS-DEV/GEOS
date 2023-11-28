@@ -48,7 +48,7 @@ Group::Group( string const & name,
   m_logLevel( 0 ),
   m_restart_flags( RestartFlags::WRITE_AND_READ ),
   m_input_flags( InputFlags::INVALID ),
-  m_conduitNode( rootNode[ name ] ),
+  m_conduitNode( rootNode[name] ),
   m_dataContext( std::make_unique< GroupContext >( *this ) )
 {}
 
@@ -248,8 +248,8 @@ void Group::registerDataOnMeshRecursive( Group & meshBodies )
 Group * Group::createChild( string const & childKey, string const & childName )
 {
   GEOS_ERROR_IF( !(CatalogInterface::hasKeyName( childKey )),
-                 "KeyName ("<<childKey<<") not found in Group::Catalog" );
-  GEOS_LOG_RANK_0( "Adding Object " << childKey<<" named "<< childName<<" from Group::Catalog." );
+                 "KeyName (" << childKey << ") not found in Group::Catalog" );
+  GEOS_LOG_RANK_0( "Adding Object " << childKey << " named " << childName << " from Group::Catalog." );
   return &registerGroup( childName,
                          CatalogInterface::factory( childKey, childName, this ) );
 }
@@ -516,7 +516,7 @@ localIndex Group::unpack( buffer_unit_type const * & buffer,
 
   localIndex numWrappers;
   unpackedSize += bufferOps::Unpack( buffer, numWrappers );
-  for( localIndex a=0; a<numWrappers; ++a )
+  for( localIndex a = 0; a < numWrappers; ++a )
   {
     string wrapperName;
     unpackedSize += bufferOps::Unpack( buffer, wrapperName );
@@ -559,7 +559,7 @@ void Group::prepareToWrite()
     wrapper.registerToWrite();
   } );
 
-  m_conduitNode[ "__size__" ].set( m_size );
+  m_conduitNode["__size__"].set( m_size );
 
   forSubGroups( []( Group & subGroup )
   {
@@ -639,10 +639,10 @@ Group const & Group::getBaseGroupByPath( string const & path ) const
   Group const * currentGroup = this;
   string::size_type previousPosition = 0;
 
-  if( path[ 0 ] == '/' )
+  if( path[0] == '/' )
   {
     bool foundTarget = false;
-    for( int i=0; i<1000; ++i )
+    for( int i = 0; i < 1000; ++i )
     {
       if( currentGroup->m_parent != nullptr )
       {
@@ -656,7 +656,7 @@ Group const & Group::getBaseGroupByPath( string const & path ) const
       }
     }
     GEOS_THROW_IF( !foundTarget,
-                   "Could not find the specified path start.\n"<<
+                   "Could not find the specified path start.\n" <<
                    "Specified path is " << path,
                    std::domain_error );
   }
@@ -669,7 +669,7 @@ Group const & Group::getBaseGroupByPath( string const & path ) const
 
     previousPosition = currentPosition + 1;
 
-    if( curGroupName == "" || curGroupName == "." || curGroupName==currentGroup->m_name )
+    if( curGroupName == "" || curGroupName == "." || curGroupName == currentGroup->m_name )
     {
       continue;
     }

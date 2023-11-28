@@ -157,7 +157,7 @@ void testNumericalDerivatives( PVT_WRAPPER const & pvtFunctionWrapper,
   stackArray2d< real64, numDof *numComp > dPhaseComposition( numComp, numDof );
 
   dPhaseComposition[0][Deriv::dC]   = 1.0;
-  dPhaseComposition[1][Deriv::dC+1] = 1.0;
+  dPhaseComposition[1][Deriv::dC + 1] = 1.0;
   pvtFunctionWrapper.compute( pressure,
                               temperature,
                               phaseComposition,
@@ -177,7 +177,7 @@ void testNumericalDerivatives( PVT_WRAPPER const & pvtFunctionWrapper,
                               perturbedValue,
                               dPerturbedValue.toSlice(),
                               useMass );
-  checkRelativeError( (perturbedValue-value)/dP, dValue[Deriv::dP], relTol );
+  checkRelativeError( (perturbedValue - value) / dP, dValue[Deriv::dP], relTol );
 
   // 3) Check derivative with respect to temperature
   real64 const dT = perturbParameter * (temperature + perturbParameter);
@@ -188,7 +188,7 @@ void testNumericalDerivatives( PVT_WRAPPER const & pvtFunctionWrapper,
                               perturbedValue,
                               dPerturbedValue.toSlice(),
                               useMass );
-  checkRelativeError( (perturbedValue-value)/dT, dValue[Deriv::dT], relTol );
+  checkRelativeError( (perturbedValue - value) / dT, dValue[Deriv::dT], relTol );
 
   // 4) Check derivatives with respect to phaseComposition
   for( integer i = 0; i < numComp; ++i )
@@ -206,7 +206,7 @@ void testNumericalDerivatives( PVT_WRAPPER const & pvtFunctionWrapper,
                                 perturbedValue,
                                 dPerturbedValue.toSlice(),
                                 useMass );
-    checkRelativeError( (perturbedValue-value)/dC, dValue[Deriv::dC+i], relTol );
+    checkRelativeError( (perturbedValue - value) / dC, dValue[Deriv::dC + i], relTol );
   }
 }
 
@@ -263,12 +263,12 @@ void testNumericalDerivatives( FLASH_WRAPPER const & flashModelWrapper,
 
   for( integer i = 0; i < numPhase; ++i )
   {
-    checkRelativeError( (perturbedPhaseFracAndDeriv.value[i]-phaseFracAndDeriv.value[i])/dP,
+    checkRelativeError( (perturbedPhaseFracAndDeriv.value[i] - phaseFracAndDeriv.value[i]) / dP,
                         phaseFracAndDeriv.derivs[i][Deriv::dP],
                         relTol );
     for( integer j = 0; j < numComp; ++j )
     {
-      checkRelativeError( (perturbedPhaseCompFracAndDeriv.value[i][j]-phaseCompFracAndDeriv.value[i][j])/dP,
+      checkRelativeError( (perturbedPhaseCompFracAndDeriv.value[i][j] - phaseCompFracAndDeriv.value[i][j]) / dP,
                           phaseCompFracAndDeriv.derivs[i][j][Deriv::dP],
                           relTol );
     }
@@ -283,12 +283,12 @@ void testNumericalDerivatives( FLASH_WRAPPER const & flashModelWrapper,
                              perturbedPhaseCompFracAndDeriv );
   for( integer i = 0; i < numPhase; ++i )
   {
-    checkRelativeError( (perturbedPhaseFracAndDeriv.value[i]-phaseFracAndDeriv.value[i])/dT,
+    checkRelativeError( (perturbedPhaseFracAndDeriv.value[i] - phaseFracAndDeriv.value[i]) / dT,
                         phaseFracAndDeriv.derivs[i][Deriv::dT],
                         relTol );
     for( integer j = 0; j < numComp; ++j )
     {
-      checkRelativeError( (perturbedPhaseCompFracAndDeriv.value[i][j]-phaseCompFracAndDeriv.value[i][j])/dT,
+      checkRelativeError( (perturbedPhaseCompFracAndDeriv.value[i][j] - phaseCompFracAndDeriv.value[i][j]) / dT,
                           phaseCompFracAndDeriv.derivs[i][j][Deriv::dT],
                           relTol );
     }
@@ -310,13 +310,13 @@ void testNumericalDerivatives( FLASH_WRAPPER const & flashModelWrapper,
                                perturbedPhaseCompFracAndDeriv );
     for( integer j = 0; j < numPhase; ++j )
     {
-      checkRelativeError( (perturbedPhaseFracAndDeriv.value[j]-phaseFracAndDeriv.value[j])/dC,
-                          phaseFracAndDeriv.derivs[j][Deriv::dC+i],
+      checkRelativeError( (perturbedPhaseFracAndDeriv.value[j] - phaseFracAndDeriv.value[j]) / dC,
+                          phaseFracAndDeriv.derivs[j][Deriv::dC + i],
                           relTol );
       for( integer k = 0; k < numComp; ++k )
       {
-        checkRelativeError( (perturbedPhaseCompFracAndDeriv.value[j][k]-phaseCompFracAndDeriv.value[j][k])/dC,
-                            phaseCompFracAndDeriv.derivs[j][k][Deriv::dC+i],
+        checkRelativeError( (perturbedPhaseCompFracAndDeriv.value[j][k] - phaseCompFracAndDeriv.value[j][k]) / dC,
+                            phaseCompFracAndDeriv.derivs[j][k][Deriv::dC + i],
                             relTol );
       }
     }
@@ -359,7 +359,7 @@ std::unique_ptr< MODEL > makePVTFunction( string const & filename,
   {
     array1d< string > const strs = stringutilities::tokenizeBySpaces< array1d >( str );
 
-    if( strs.size()>1 && strs[0] == key )
+    if( strs.size() > 1 && strs[0] == key )
     {
       pvtFunction = std::make_unique< MODEL >( strs[1],
                                                strs,
@@ -399,7 +399,7 @@ std::unique_ptr< MODEL > makeFlashModel( string const & filename,
   {
     array1d< string > const strs = stringutilities::tokenizeBySpaces< array1d >( str );
 
-    if( strs.size()>1 && strs[0] == key )
+    if( strs.size() > 1 && strs[0] == key )
     {
       flashModel = std::make_unique< MODEL >( strs[1],
                                               strs,

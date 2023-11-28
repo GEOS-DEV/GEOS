@@ -223,10 +223,10 @@ void FaceManager::computeGeometry( NodeManager const & nodeManager )
   // loop over faces and calculate faceArea, faceNormal and faceCenter
   forAll< parallelHostPolicy >( this->size(), [&]( localIndex const faceIndex )
   {
-    m_faceArea[ faceIndex ] = computationalGeometry::centroid_3DPolygon( m_toNodesRelation[ faceIndex ],
-                                                                         X,
-                                                                         m_faceCenter[ faceIndex ],
-                                                                         m_faceNormal[ faceIndex ] );
+    m_faceArea[faceIndex] = computationalGeometry::centroid_3DPolygon( m_toNodesRelation[faceIndex],
+                                                                       X,
+                                                                       m_faceCenter[faceIndex],
+                                                                       m_faceNormal[faceIndex] );
 
   } );
 }
@@ -236,9 +236,9 @@ void FaceManager::setIsExternal()
   arrayView1d< integer const > const isDomainBoundary = this->getDomainBoundaryIndicator();
 
   m_isExternal.zero();
-  for( localIndex k=0; k<size(); ++k )
+  for( localIndex k = 0; k < size(); ++k )
   {
-    if( isDomainBoundary[k]==1 )
+    if( isDomainBoundary[k] == 1 )
     {
       m_isExternal[k] = 1;
     }
@@ -406,7 +406,7 @@ FaceManager::extractMapFromObjectForAssignGlobalIndexNumbers( ObjectManagerBase 
   {
     if( isDomainBoundary( faceIndex ) )
     {
-      nodeCounts[ faceIndex ] = faceToNodeMap.sizeOfArray( faceIndex );
+      nodeCounts[faceIndex] = faceToNodeMap.sizeOfArray( faceIndex );
     }
   } );
 
@@ -545,7 +545,7 @@ void FaceManager::enforceStateFieldConsistencyPostTopologyChange( std::set< loca
     localIndex const childIndex = childFaceIndices[targetIndex];
     if( childIndex != -1 )
     {
-      LvArray::tensorOps::scaledCopy< 3 >( m_faceNormal[ targetIndex ], m_faceNormal[ childIndex ], -1 );
+      LvArray::tensorOps::scaledCopy< 3 >( m_faceNormal[targetIndex], m_faceNormal[childIndex], -1 );
     }
   }
 }

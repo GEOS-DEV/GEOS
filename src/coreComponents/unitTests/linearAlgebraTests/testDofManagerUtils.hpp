@@ -292,7 +292,7 @@ void makeSparsityTPFA( DomainPartition const & domain,
     localValues.setValues< serialPolicy >( 1.0 );
 
     // Loop over faces and assemble TPFA-style "flux" contributions
-    for( localIndex kf=0; kf<faceManager.size(); ++kf )
+    for( localIndex kf = 0; kf < faceManager.size(); ++kf )
     {
       localIndex const er0 = faceToElem.m_toElementRegion[kf][0];
       localIndex const er1 = faceToElem.m_toElementRegion[kf][1];
@@ -306,7 +306,7 @@ void makeSparsityTPFA( DomainPartition const & domain,
           localIndex const esr = faceToElem.m_toElementSubRegion[kf][ke];
           localIndex const ei  = faceToElem.m_toElementIndex[kf][ke];
 
-          if( er>-1 && esr>-1 && ei>-1 )
+          if( er > -1 && esr > -1 && ei > -1 )
           {
             for( localIndex c = 0; c < numComp; ++c )
             {
@@ -315,7 +315,7 @@ void makeSparsityTPFA( DomainPartition const & domain,
           }
         }
         std::sort( localDofIndex.begin(), localDofIndex.end() );
-        for( localIndex row=0; row<count; ++row )
+        for( localIndex row = 0; row < count; ++row )
         {
           localIndex const localDofNumber = localDofIndex[row] - rankOffset;
           if( localDofNumber < 0 || localDofNumber >= sparsity.numRows() )
@@ -377,7 +377,7 @@ void makeSparsityFEM( DomainPartition const & domain,
           }
         }
         std::sort( localDofIndex.begin(), localDofIndex.end() );
-        for( localIndex row=0; row<(numNode * numComp); ++row )
+        for( localIndex row = 0; row < (numNode * numComp); ++row )
         {
           localIndex const localDofNumber = localDofIndex[row] - rankOffset;
           if( localDofNumber < 0 || localDofNumber >= sparsity.numRows() )
@@ -458,7 +458,7 @@ void makeSparsityFEM_FVM( DomainPartition const & domain,
         std::sort( localNodeDofIndex.begin(), localNodeDofIndex.end() );
         std::sort( localElemDofIndex.begin(), localElemDofIndex.end() );
 
-        for( localIndex row=0; row<(numNode * numCompNode); ++row )
+        for( localIndex row = 0; row < (numNode * numCompNode); ++row )
         {
           localIndex const localDofNumber = localNodeDofIndex[row] - rankOffset;
           if( localDofNumber < 0 || localDofNumber >= sparsity.numRows() )
@@ -469,7 +469,7 @@ void makeSparsityFEM_FVM( DomainPartition const & domain,
                                    numCompElem );
         }
 
-        for( localIndex row=0; row<(numCompElem); ++row )
+        for( localIndex row = 0; row < (numCompElem); ++row )
         {
           localIndex const localDofNumber = localElemDofIndex[row] - rankOffset;
           if( localDofNumber < 0 || localDofNumber >= sparsity.numRows() )
@@ -523,7 +523,7 @@ void makeSparsityMass( DomainPartition const & domain,
       }
 
       std::sort( localDofIndex.begin(), localDofIndex.end() );
-      for( localIndex row=0; row<numComp; ++row )
+      for( localIndex row = 0; row < numComp; ++row )
       {
         localIndex const localDofNumber = localDofIndex[row] - rankOffset;
         if( localDofNumber < 0 || localDofNumber >= sparsity.numRows() )
@@ -587,7 +587,7 @@ void makeSparsityFlux( DomainPartition const & domain,
 
         std::sort( localDofIndex.begin(), localDofIndex.end() );
 
-        for( localIndex row=0; row<(numFace*numComp); ++row )
+        for( localIndex row = 0; row < (numFace * numComp); ++row )
         {
           localIndex const localDofNumber = localDofIndex[row] - rankOffset;
           if( localDofNumber < 0 || localDofNumber >= sparsity.numRows() )
@@ -595,7 +595,7 @@ void makeSparsityFlux( DomainPartition const & domain,
           sparsity.insertNonZeros( localDofNumber,
                                    localDofIndex.data(),
                                    localValues.data(),
-                                   (numFace*numComp) );
+                                   (numFace * numComp) );
         }
 
       }

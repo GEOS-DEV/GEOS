@@ -125,7 +125,7 @@ public:
     {}
 
     /// Stack storage for the Inertial damping contributions to the Jacobian
-    real64 dRdU_InertiaMassDamping[ maxNumRows ][ maxNumCols ];
+    real64 dRdU_InertiaMassDamping[maxNumRows][maxNumCols];
 
     /// Stack storage for the velocity predictor.
     real64 vtilde_local[numNodesPerElem][numDofPerTrialSupportPoint];

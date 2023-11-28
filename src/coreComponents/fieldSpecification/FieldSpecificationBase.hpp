@@ -170,7 +170,7 @@ public:
    * This function applies the value to a field variable. This function is typically
    * called from within the lambda to a call to FieldSpecificationManager::applyFieldValue().
    */
-  template< typename FIELD_OP, typename POLICY=parallelHostPolicy >
+  template< typename FIELD_OP, typename POLICY = parallelHostPolicy >
   void applyFieldValue( SortedArrayView< localIndex const > const & targetSet,
                         real64 const time,
                         dataRepository::Group & dataGroup,
@@ -608,7 +608,7 @@ void FieldSpecificationBase::applyFieldValueKernel( ArrayView< T, N, USD > const
     real64 const value = m_scale;
     forAll< POLICY >( targetSet.size(), [=] GEOS_HOST_DEVICE ( localIndex const i )
     {
-      localIndex const a = targetSet[ i ];
+      localIndex const a = targetSet[i];
       FIELD_OP::SpecifyFieldValue( field, a, component, value );
     } );
   }
@@ -627,12 +627,12 @@ void FieldSpecificationBase::applyFieldValueKernel( ArrayView< T, N, USD > const
       }
     }();
 
-    if( function.isFunctionOfTime()==2 )
+    if( function.isFunctionOfTime() == 2 )
     {
       real64 const value = m_scale * function.evaluate( &time );
       forAll< POLICY >( targetSet.size(), [=] GEOS_HOST_DEVICE ( localIndex const i )
       {
-        localIndex const a = targetSet[ i ];
+        localIndex const a = targetSet[i];
         FIELD_OP::SpecifyFieldValue( field, a, component, value );
       } );
     }
@@ -644,7 +644,7 @@ void FieldSpecificationBase::applyFieldValueKernel( ArrayView< T, N, USD > const
       real64 const scale = m_scale;
       forAll< POLICY >( targetSet.size(), [=] GEOS_HOST_DEVICE ( localIndex const i )
       {
-        localIndex const a = targetSet[ i ];
+        localIndex const a = targetSet[i];
         FIELD_OP::SpecifyFieldValue( field, a, component, scale * resultView[i] );
       } );
     }
@@ -794,7 +794,7 @@ FieldSpecificationBase::
                           arrayView1d< real64 > const & rhsContribution,
                           LAMBDA && lambda ) const
 {
-  integer const component = ( getComponent() >=0 ) ? getComponent() : 0;
+  integer const component = ( getComponent() >= 0 ) ? getComponent() : 0;
   string const & functionName = getReference< string >( viewKeyStruct::functionNameString() );
   FunctionManager & functionManager = FunctionManager::getInstance();
 
@@ -813,12 +813,12 @@ FieldSpecificationBase::
     forAll< POLICY >( targetSet.size(),
                       [targetSet, dof, dofMap, dofRankOffset, component, matrix, rhsContribution, value, lambda] GEOS_HOST_DEVICE ( localIndex const i )
     {
-      localIndex const a = targetSet[ i ];
-      dof[ i ] = dofMap[ a ] + component;
-      FIELD_OP::SpecifyFieldValue( dof[ i ],
+      localIndex const a = targetSet[i];
+      dof[i] = dofMap[a] + component;
+      FIELD_OP::SpecifyFieldValue( dof[i],
                                    dofRankOffset,
                                    matrix,
-                                   rhsContribution[ i ],
+                                   rhsContribution[i],
                                    value,
                                    lambda( a ) );
     } );
@@ -836,13 +836,13 @@ FieldSpecificationBase::
                       [targetSet, dof, dofMap, dofRankOffset, component, matrix, rhsContribution, results, value, lambda] GEOS_HOST_DEVICE (
                         localIndex const i )
     {
-      localIndex const a = targetSet[ i ];
-      dof[ i ] = dofMap[ a ] + component;
-      FIELD_OP::SpecifyFieldValue( dof[ i ],
+      localIndex const a = targetSet[i];
+      dof[i] = dofMap[a] + component;
+      FIELD_OP::SpecifyFieldValue( dof[i],
                                    dofRankOffset,
                                    matrix,
-                                   rhsContribution[ i ],
-                                   value * results[ i ],
+                                   rhsContribution[i],
+                                   value * results[i],
                                    lambda( a ) );
     } );
   }
@@ -855,18 +855,18 @@ void FieldSpecificationBase::zeroSystemRowsForBoundaryCondition( SortedArrayView
                                                                  CRSMatrixView< real64, globalIndex const > const & matrix ) const
 
 {
-  integer const component = ( getComponent() >=0 ) ? getComponent() : 0;
+  integer const component = ( getComponent() >= 0 ) ? getComponent() : 0;
   forAll< POLICY >( targetSet.size(), [targetSet, dofMap, matrix, component] GEOS_HOST_DEVICE ( localIndex const i )
   {
-    localIndex const a = targetSet[ i ];
-    globalIndex const dof = dofMap[ a ] + component;
+    localIndex const a = targetSet[i];
+    globalIndex const dof = dofMap[a] + component;
 
     arraySlice1d< real64 > const entries = matrix.getEntries( dof );
     localIndex const numEntries = matrix.numNonZeros( dof );
 
     for( localIndex j = 0; j < numEntries; ++j )
     {
-      entries[ j ] = 0;
+      entries[j] = 0;
     }
   } );
 }

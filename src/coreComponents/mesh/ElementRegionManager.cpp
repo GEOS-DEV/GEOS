@@ -49,7 +49,7 @@ void ElementRegionManager::resize( integer_array const & numElements,
                                    string_array const & GEOS_UNUSED_PARAM( elementTypes ) )
 {
   localIndex const n_regions = LvArray::integerConversion< localIndex >( regionNames.size());
-  for( localIndex reg=0; reg<n_regions; ++reg )
+  for( localIndex reg = 0; reg < n_regions; ++reg )
   {
     this->getRegion( reg ).resize( numElements[reg] );
   }
@@ -70,8 +70,8 @@ void ElementRegionManager::setMaxGlobalIndex()
 Group * ElementRegionManager::createChild( string const & childKey, string const & childName )
 {
   GEOS_ERROR_IF( !(CatalogInterface::hasKeyName( childKey )),
-                 "KeyName ("<<childKey<<") not found in ObjectManager::Catalog" );
-  GEOS_LOG_RANK_0( "Adding Object " << childKey<<" named "<< childName<<" from ObjectManager::Catalog." );
+                 "KeyName (" << childKey << ") not found in ObjectManager::Catalog" );
+  GEOS_LOG_RANK_0( "Adding Object " << childKey << " named " << childName << " from ObjectManager::Catalog." );
 
   Group & elementRegions = this->getGroup( ElementRegionManager::groupKeyStruct::elementRegionsGroup() );
   return &elementRegions.registerGroup( childName,
@@ -83,7 +83,7 @@ void ElementRegionManager::expandObjectCatalogs()
 {
   ObjectManagerBase::CatalogInterface::CatalogType const & catalog = ObjectManagerBase::getCatalog();
   for( ObjectManagerBase::CatalogInterface::CatalogType::const_iterator iter = catalog.begin();
-       iter!=catalog.end();
+       iter != catalog.end();
        ++iter )
   {
     string const key = iter->first;
@@ -287,7 +287,7 @@ int ElementRegionManager::packImpl( buffer_unit_type * & buffer,
   packedSize += bufferOps::Pack< DO_PACKING >( buffer, numRegions() );
 
   parallelDeviceEvents events;
-  for( typename dataRepository::indexType kReg=0; kReg<numRegions(); ++kReg )
+  for( typename dataRepository::indexType kReg = 0; kReg < numRegions(); ++kReg )
   {
     ElementRegionBase const & elemRegion = getRegion( kReg );
     packedSize += bufferOps::Pack< DO_PACKING >( buffer, elemRegion.getName() );
@@ -343,7 +343,7 @@ int ElementRegionManager::unpackImpl( buffer_unit_type const * & buffer,
   unpackedSize += bufferOps::Unpack( buffer, numRegionsRead );
 
   parallelDeviceEvents events;
-  for( localIndex kReg=0; kReg<numRegionsRead; ++kReg )
+  for( localIndex kReg = 0; kReg < numRegionsRead; ++kReg )
   {
     string regionName;
     unpackedSize += bufferOps::Unpack( buffer, regionName );
@@ -389,7 +389,7 @@ int ElementRegionManager::packGlobalMapsImpl( buffer_unit_type * & buffer,
 
   packedSize += bufferOps::Pack< DO_PACKING >( buffer, numRegions() );
 
-  for( typename dataRepository::indexType kReg=0; kReg<numRegions(); ++kReg )
+  for( typename dataRepository::indexType kReg = 0; kReg < numRegions(); ++kReg )
   {
     ElementRegionBase const & elemRegion = getRegion( kReg );
     packedSize += bufferOps::Pack< DO_PACKING >( buffer, elemRegion.getName() );
@@ -426,7 +426,7 @@ ElementRegionManager::unpackGlobalMaps( buffer_unit_type const * & buffer,
   unpackedSize += bufferOps::Unpack( buffer, numRegionsRead );
 
   packList.resize( numRegionsRead );
-  for( localIndex kReg=0; kReg<numRegionsRead; ++kReg )
+  for( localIndex kReg = 0; kReg < numRegionsRead; ++kReg )
   {
     string regionName;
     unpackedSize += bufferOps::Unpack( buffer, regionName );
@@ -484,7 +484,7 @@ int ElementRegionManager::packUpDownMapsImpl( buffer_unit_type * & buffer,
 
   packedSize += bufferOps::Pack< DO_PACKING >( buffer, numRegions() );
 
-  for( typename dataRepository::indexType kReg=0; kReg<numRegions(); ++kReg )
+  for( typename dataRepository::indexType kReg = 0; kReg < numRegions(); ++kReg )
   {
     ElementRegionBase const & elemRegion = getRegion( kReg );
     packedSize += bufferOps::Pack< DO_PACKING >( buffer, elemRegion.getName() );
@@ -529,7 +529,7 @@ ElementRegionManager::unpackUpDownMaps( buffer_unit_type const * & buffer,
   localIndex numRegionsRead;
   unpackedSize += bufferOps::Unpack( buffer, numRegionsRead );
 
-  for( localIndex kReg=0; kReg<numRegionsRead; ++kReg )
+  for( localIndex kReg = 0; kReg < numRegionsRead; ++kReg )
   {
     string regionName;
     unpackedSize += bufferOps::Unpack( buffer, regionName );
@@ -584,7 +584,7 @@ int ElementRegionManager::packFracturedElementsImpl( buffer_unit_type * & buffer
 
   packedSize += bufferOps::Pack< DO_PACKING >( buffer, numRegions() );
 
-  for( typename dataRepository::indexType kReg=0; kReg<numRegions(); ++kReg )
+  for( typename dataRepository::indexType kReg = 0; kReg < numRegions(); ++kReg )
   {
     ElementRegionBase const & elemRegion = getRegion( kReg );
     packedSize += bufferOps::Pack< DO_PACKING >( buffer, elemRegion.getName() );
@@ -628,7 +628,7 @@ ElementRegionManager::unpackFracturedElements( buffer_unit_type const * & buffer
   localIndex numRegionsRead;
   unpackedSize += bufferOps::Unpack( buffer, numRegionsRead );
 
-  for( localIndex kReg=0; kReg<numRegionsRead; ++kReg )
+  for( localIndex kReg = 0; kReg < numRegionsRead; ++kReg )
   {
     string regionName;
     unpackedSize += bufferOps::Unpack( buffer, regionName );

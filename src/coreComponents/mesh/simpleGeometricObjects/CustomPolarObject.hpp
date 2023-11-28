@@ -104,7 +104,7 @@ public:
     integer count = 0;
     for( auto coeff:m_coefficients )
     {
-      radius = radius + coeff*cos( count*angle );
+      radius = radius + coeff * cos( count * angle );
       count++;
     }
     return radius;

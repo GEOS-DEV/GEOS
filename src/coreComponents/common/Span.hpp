@@ -181,7 +181,7 @@ public:
   T & back() const
   {
     GEOS_ASSERT_GT( m_size, 0 );
-    return m_data[m_size-1];
+    return m_data[m_size - 1];
   }
 
   /**

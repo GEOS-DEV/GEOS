@@ -338,7 +338,7 @@ computePermutation( localIndex const * const offsets,
   array1d< localIndex > degree( numRows );
   array1d< localIndex > marker( numRows );
   // at most numRows levels
-  array1d< localIndex > level_i( numRows+1 );
+  array1d< localIndex > level_i( numRows + 1 );
   array1d< localIndex > level_j( numRows );
   forAll< parallelHostPolicy >( numRows, [&] ( localIndex const i )
   {

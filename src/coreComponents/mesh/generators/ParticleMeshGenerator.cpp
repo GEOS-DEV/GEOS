@@ -105,7 +105,7 @@ void ParticleMeshGenerator::fillParticleBlockManager( ParticleBlockManager & par
   //GEOS_LOG_RANK_0( "Number of particle types: " << numParticleTypes );
 
   // Read in the material key
-  for( int i=0; i<numMaterials; i++ )
+  for( int i = 0; i < numMaterials; i++ )
   {
     std::getline( headerFile, line );
     std::istringstream iss2( line );
@@ -117,7 +117,7 @@ void ParticleMeshGenerator::fillParticleBlockManager( ParticleBlockManager & par
   }
 
   // Read in the particle type key
-  for( int i=0; i<numParticleTypes; i++ )
+  for( int i = 0; i < numParticleTypes; i++ )
   {
     std::getline( headerFile, line );
     std::istringstream iss2( line );
@@ -129,9 +129,9 @@ void ParticleMeshGenerator::fillParticleBlockManager( ParticleBlockManager & par
   }
 
   // Read in particle data
-  for( size_t i=0; i<particleTypes.size(); i++ )
+  for( size_t i = 0; i < particleTypes.size(); i++ )
   {
-    for( int j=0; j<particleTypeMap[particleTypes[i]]; j++ )
+    for( int j = 0; j < particleTypeMap[particleTypes[i]]; j++ )
     {
       std::getline( particleFile, line );
       std::vector< double > lineData; // TODO: Not great because we cast all input as doubles, but it all gets re-cast later so maybe it's
@@ -144,10 +144,10 @@ void ParticleMeshGenerator::fillParticleBlockManager( ParticleBlockManager & par
       while( lineStream >> value )
       {
         lineData.push_back( value );
-        if( 1<=column && column<4 ) // 0th column is global ID. Columns 1, 2 and 3 are the particle position components - check for
-                                    // partition membership
+        if( 1 <= column && column < 4 ) // 0th column is global ID. Columns 1, 2 and 3 are the particle position components - check for
+                                        // partition membership
         { // TODO: This is super obfuscated and hard to read, make it better
-          inPartition = inPartition && partition.isCoordInPartition( value, column-1 );
+          inPartition = inPartition && partition.isCoordInPartition( value, column - 1 );
           if( !inPartition ) // if the current particle is outside this partition, we can ignore the rest of its data and go to the next
                              // line
           {
@@ -170,7 +170,7 @@ void ParticleMeshGenerator::fillParticleBlockManager( ParticleBlockManager & par
     string_array particleBlockNames = particleRegion.getParticleBlockNames();
     std::string material = particleRegion.getMaterialList()[0]; // We will assume that the material list for a region contains only one
                                                                 // material since MPM will only be doing single phase mechanics for now
-    for( auto i=0; i<particleBlockNames.size(); i++ )
+    for( auto i = 0; i < particleBlockNames.size(); i++ )
     {
       blockMaterialMap[particleBlockNames[i]] = materialMap[material];
     }
@@ -188,7 +188,7 @@ void ParticleMeshGenerator::fillParticleBlockManager( ParticleBlockManager & par
     int numThisType = particleData[particleType].size(); // I hope this returns zero when particleType isn't in the map...
     int materialID;
     int npInBlock = 0; // Number of particles in this particle block
-    for( localIndex i=0; i<numThisType; i++ ) // Find out which particles belong to the current particle block
+    for( localIndex i = 0; i < numThisType; i++ ) // Find out which particles belong to the current particle block
     {
       materialID = particleData[particleType][i][10]; // The particle file is configured such that the 11th column has the material ID
       if( materialID == blockMaterialMap[particleBlock.getName()] )
@@ -252,7 +252,7 @@ void ParticleMeshGenerator::fillParticleBlockManager( ParticleBlockManager & par
       if( particleType == "SinglePoint" )
       {
         particleVolume[index] = particleData[particleType][i][15];
-        double a = std::pow( particleVolume[index], 1.0/3.0 );
+        double a = std::pow( particleVolume[index], 1.0 / 3.0 );
         particleRVectors[index][0][0] = a;
         particleRVectors[index][0][1] = 0.0;
         particleRVectors[index][0][2] = 0.0;
@@ -284,7 +284,7 @@ void ParticleMeshGenerator::fillParticleBlockManager( ParticleBlockManager & par
         particleRVectors[index][2][0] = x3;
         particleRVectors[index][2][1] = y3;
         particleRVectors[index][2][2] = z3;
-        particleVolume[index] = 8.0*std::fabs( -(x3*y2*z1) + x2*y3*z1 + x3*y1*z2 - x1*y3*z2 - x2*y1*z3 + x1*y2*z3 );
+        particleVolume[index] = 8.0 * std::fabs( -(x3 * y2 * z1) + x2 * y3 * z1 + x3 * y1 * z2 - x1 * y3 * z2 - x2 * y1 * z3 + x1 * y2 * z3 );
       }
       else
       {
@@ -314,7 +314,7 @@ void ParticleMeshGenerator::fillParticleBlockManager( ParticleBlockManager & par
     std::string material = particleRegion.getMaterialList()[0]; // We will assume that the material list for a region contains only one
                                                                 // material since MPM will only be doing single phase mechanics for now
     int size = 0;
-    for( auto i=0; i<particleBlockNames.size(); i++ )
+    for( auto i = 0; i < particleBlockNames.size(); i++ )
     {
       size += sizeMap[particleBlockNames[i]];
     }

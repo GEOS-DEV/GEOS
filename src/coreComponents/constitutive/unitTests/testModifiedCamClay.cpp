@@ -121,7 +121,7 @@ void testModifiedCamClayDriver()
 
   StrainData data;
   data.strainIncrement[0] = -1e-4;
-  real64 timeIncrement =0;
+  real64 timeIncrement = 0;
 
   // set initial stress
 
@@ -134,7 +134,7 @@ void testModifiedCamClayDriver()
 
   // run loading
 
-  for( localIndex loadstep=0; loadstep < 500; ++loadstep )
+  for( localIndex loadstep = 0; loadstep < 500; ++loadstep )
   {
     forAll< POLICY >( 1, [=] GEOS_HOST_DEVICE ( localIndex const k )
     {

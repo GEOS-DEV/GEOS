@@ -228,8 +228,8 @@ EmbeddedSurfaceToCellStencilWrapper::
   // We consider the 3rd component of the permeability which is the normal one.
   real64 const t1 = m_weights[iconn][1] * coefficient[er1][esr1][ei1][0][2];
 
-  real64 const sumOfTrans = t0+t1;
-  real64 const value = t0*t1/sumOfTrans;
+  real64 const sumOfTrans = t0 + t1;
+  real64 const value = t0 * t1 / sumOfTrans;
 
   weight[0][0] = value;
   weight[0][1] = -value;
@@ -252,8 +252,8 @@ EmbeddedSurfaceToCellStencilWrapper::
   real64 const t0 = m_weights[iconn][0];
   real64 const t1 = m_weights[iconn][1];
 
-  real64 const sumOfTrans = t0+t1;
-  real64 const value = t0*t1/sumOfTrans;
+  real64 const sumOfTrans = t0 + t1;
+  real64 const value = t0 * t1 / sumOfTrans;
 
   weight[0][0] = value;
   weight[0][1] = -value;
@@ -286,8 +286,8 @@ EmbeddedSurfaceToCellStencilWrapper::
   // We consider the 3rd component of the permeability which is the normal one.
   real64 const t1 = m_weights[iconn][1] * coefficient[er1][esr1][ei1][0][2];
 
-  real64 const sumOfTrans = t0+t1;
-  real64 const value = t0*t1/sumOfTrans;
+  real64 const sumOfTrans = t0 + t1;
+  real64 const value = t0 * t1 / sumOfTrans;
 
   weight[0][0] = value;
   weight[0][1] = -value;

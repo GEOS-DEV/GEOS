@@ -153,7 +153,7 @@ bool EventManager::run( DomainPartition & domain )
       m_dt = m_maxTime - m_time;
 
       // Determine the dt requests for each event
-      for(; m_currentSubEvent<this->numSubGroups(); ++m_currentSubEvent )
+      for(; m_currentSubEvent < this->numSubGroups(); ++m_currentSubEvent )
       {
         EventBase * subEvent = static_cast< EventBase * >( this->getSubGroups()[m_currentSubEvent] );
         m_dt = std::min( subEvent->getTimestepRequest( m_time ), m_dt );
@@ -171,7 +171,7 @@ bool EventManager::run( DomainPartition & domain )
     outputTime();
 
     // Execute
-    for(; m_currentSubEvent<this->numSubGroups(); ++m_currentSubEvent )
+    for(; m_currentSubEvent < this->numSubGroups(); ++m_currentSubEvent )
     {
       EventBase * subEvent = static_cast< EventBase * >( this->getSubGroups()[m_currentSubEvent] );
 
@@ -224,7 +224,7 @@ bool EventManager::run( DomainPartition & domain )
 
 void EventManager::outputTime() const
 {
-  if( m_timeOutputFormat==TimeOutputFormat::full )
+  if( m_timeOutputFormat == TimeOutputFormat::full )
   {
     integer const yearsOut   =   m_time / YEAR;
     integer const daysOut    =  (m_time - yearsOut * YEAR) / DAY;
@@ -234,22 +234,22 @@ void EventManager::outputTime() const
 
     GEOS_LOG_RANK_0( GEOS_FMT( "Time: {} years, {} days, {} hrs, {} min, {} s, dt: {} s, Cycle: {}", yearsOut, daysOut, hoursOut, minutesOut, secondsOut, m_dt, m_cycle ) );
   }
-  else if( m_timeOutputFormat==TimeOutputFormat::years )
+  else if( m_timeOutputFormat == TimeOutputFormat::years )
   {
     real64 const yearsOut = m_time / YEAR;
     GEOS_LOG_RANK_0( GEOS_FMT( "Time: {:.2f} years, dt: {} s, Cycle: {}", yearsOut, m_dt, m_cycle ) );
   }
-  else if( m_timeOutputFormat==TimeOutputFormat::days )
+  else if( m_timeOutputFormat == TimeOutputFormat::days )
   {
     real64 const daysOut = m_time / DAY;
     GEOS_LOG_RANK_0( GEOS_FMT( "Time: {:.2f} days, dt: {} s, Cycle: {}", daysOut, m_dt, m_cycle ) );
   }
-  else if( m_timeOutputFormat==TimeOutputFormat::hours )
+  else if( m_timeOutputFormat == TimeOutputFormat::hours )
   {
     real64 const hoursOut = m_time / HOUR;
     GEOS_LOG_RANK_0( GEOS_FMT( "Time: {:.2f} hrs, dt: {} s, Cycle: {}", hoursOut, m_dt, m_cycle ) );
   }
-  else if( m_timeOutputFormat==TimeOutputFormat::minutes )
+  else if( m_timeOutputFormat == TimeOutputFormat::minutes )
   {
     real64 const minutesOut = m_time / MINUTE;
     GEOS_LOG_RANK_0( GEOS_FMT( "Time: {:.2f} min, dt: {} s, Cycle: {}", minutesOut, m_dt, m_cycle ) );

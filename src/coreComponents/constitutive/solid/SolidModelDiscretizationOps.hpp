@@ -49,7 +49,7 @@ struct SolidModelDiscretizationOps
             typename CBF >
   GEOS_HOST_DEVICE
   void BTDB( BASIS_GRADIENT const & gradN,
-             real64 ( &elementStiffness )[NUM_SUPPORT_POINTS*3][NUM_SUPPORT_POINTS*3],
+             real64 ( &elementStiffness )[NUM_SUPPORT_POINTS * 3][NUM_SUPPORT_POINTS * 3],
              CBF && callbackFunction );
 
   /**
@@ -66,7 +66,7 @@ struct SolidModelDiscretizationOps
             typename CBF >
   GEOS_HOST_DEVICE
   void upperBTDB( BASIS_GRADIENT const & gradN,
-                  real64 ( &elementStiffness )[NUM_SUPPORT_POINTS*3][NUM_SUPPORT_POINTS*3],
+                  real64 ( &elementStiffness )[NUM_SUPPORT_POINTS * 3][NUM_SUPPORT_POINTS * 3],
                   CBF && callbackFunction );
 
   /**
@@ -77,7 +77,7 @@ struct SolidModelDiscretizationOps
   template< int NUM_SUPPORT_POINTS >
   GEOS_HOST_DEVICE
   static
-  void fillLowerBTDB( real64 ( &elementStiffness )[NUM_SUPPORT_POINTS*3][NUM_SUPPORT_POINTS*3] );
+  void fillLowerBTDB( real64 ( &elementStiffness )[NUM_SUPPORT_POINTS * 3][NUM_SUPPORT_POINTS * 3] );
 
   /**
    * @brief Compute diagonal of inner product matrix for solid mechanics
@@ -93,7 +93,7 @@ struct SolidModelDiscretizationOps
             typename CBF >
   GEOS_HOST_DEVICE
   void diagBTDB( BASIS_GRADIENT const & gradN,
-                 real64 ( &diagElementStiffness )[NUM_SUPPORT_POINTS*3],
+                 real64 ( &diagElementStiffness )[NUM_SUPPORT_POINTS * 3],
                  CBF && callbackFunction );
 
   /**
@@ -110,7 +110,7 @@ struct SolidModelDiscretizationOps
             typename CBF >
   GEOS_HOST_DEVICE
   void diagRowSumBTDB( BASIS_GRADIENT const & gradN,
-                       real64 ( &diagSumElementStiffness )[NUM_SUPPORT_POINTS*3],
+                       real64 ( &diagSumElementStiffness )[NUM_SUPPORT_POINTS * 3],
                        CBF && callbackFunction );
 
 };
@@ -123,12 +123,12 @@ template< int NUM_SUPPORT_POINTS,
 GEOS_HOST_DEVICE
 inline
 void SolidModelDiscretizationOps::BTDB( BASIS_GRADIENT const & gradN,
-                                        real64 (& elementStiffness)[NUM_SUPPORT_POINTS*3][NUM_SUPPORT_POINTS*3],
+                                        real64 (& elementStiffness)[NUM_SUPPORT_POINTS * 3][NUM_SUPPORT_POINTS * 3],
                                         CBF && callbackFunction )
 {
-  for( int a=0; a<NUM_SUPPORT_POINTS; ++a )
+  for( int a = 0; a < NUM_SUPPORT_POINTS; ++a )
   {
-    for( int b=0; b<NUM_SUPPORT_POINTS; ++b )
+    for( int b = 0; b < NUM_SUPPORT_POINTS; ++b )
     {
       real64 const gradNa_gradNb[3][3] =
       { { gradN[a][0] * gradN[b][0], gradN[a][0] * gradN[b][1], gradN[a][0] * gradN[b][2] },
@@ -147,12 +147,12 @@ template< int NUM_SUPPORT_POINTS,
 GEOS_HOST_DEVICE
 inline
 void SolidModelDiscretizationOps::upperBTDB( BASIS_GRADIENT const & gradN,
-                                             real64 (& elementStiffness)[NUM_SUPPORT_POINTS*3][NUM_SUPPORT_POINTS*3],
+                                             real64 (& elementStiffness)[NUM_SUPPORT_POINTS * 3][NUM_SUPPORT_POINTS * 3],
                                              CBF && callbackFunction )
 {
-  for( int a=0; a<NUM_SUPPORT_POINTS; ++a )
+  for( int a = 0; a < NUM_SUPPORT_POINTS; ++a )
   {
-    for( int b=a; b<NUM_SUPPORT_POINTS; ++b )
+    for( int b = a; b < NUM_SUPPORT_POINTS; ++b )
     {
       real64 const gradNa_gradNb[3][3] =
       { { gradN[a][0] * gradN[b][0], gradN[a][0] * gradN[b][1], gradN[a][0] * gradN[b][2] },
@@ -168,11 +168,11 @@ void SolidModelDiscretizationOps::upperBTDB( BASIS_GRADIENT const & gradN,
 template< int NUM_SUPPORT_POINTS >
 GEOS_HOST_DEVICE
 inline
-void SolidModelDiscretizationOps::fillLowerBTDB( real64 ( & elementStiffness )[NUM_SUPPORT_POINTS*3][NUM_SUPPORT_POINTS*3] )
+void SolidModelDiscretizationOps::fillLowerBTDB( real64 ( & elementStiffness )[NUM_SUPPORT_POINTS * 3][NUM_SUPPORT_POINTS * 3] )
 {
-  for( int row=1; row<NUM_SUPPORT_POINTS*3; ++row )
+  for( int row = 1; row < NUM_SUPPORT_POINTS * 3; ++row )
   {
-    for( int col=0; col<row; ++col )
+    for( int col = 0; col < row; ++col )
     {
       elementStiffness[row][col] = elementStiffness[col][row];
     }
@@ -187,10 +187,10 @@ template< int NUM_SUPPORT_POINTS,
 GEOS_HOST_DEVICE
 inline
 void SolidModelDiscretizationOps::diagBTDB( BASIS_GRADIENT const & gradN,
-                                            real64 (& diagElementStiffness)[NUM_SUPPORT_POINTS*3],
+                                            real64 (& diagElementStiffness)[NUM_SUPPORT_POINTS * 3],
                                             CBF && callbackFunction )
 {
-  for( int a=0; a<NUM_SUPPORT_POINTS; ++a )
+  for( int a = 0; a < NUM_SUPPORT_POINTS; ++a )
   {
     real64 const gradN_gradN[3] = { gradN[a][0] * gradN[a][0], gradN[a][1] * gradN[a][1], gradN[a][2] * gradN[a][2] };
 
@@ -206,12 +206,12 @@ template< int NUM_SUPPORT_POINTS,
 GEOS_HOST_DEVICE
 inline
 void SolidModelDiscretizationOps::diagRowSumBTDB( BASIS_GRADIENT const & gradN,
-                                                  real64 ( & diagSumElementStiffness )[NUM_SUPPORT_POINTS*3],
+                                                  real64 ( & diagSumElementStiffness )[NUM_SUPPORT_POINTS * 3],
                                                   CBF && callbackFunction )
 {
-  for( int a=0; a<NUM_SUPPORT_POINTS; ++a )
+  for( int a = 0; a < NUM_SUPPORT_POINTS; ++a )
   {
-    for( int b=a; b<NUM_SUPPORT_POINTS; ++b )
+    for( int b = a; b < NUM_SUPPORT_POINTS; ++b )
     {
       real64 const gradNa_gradNb[3][3] =
       { { gradN[a][0] * gradN[b][0], gradN[a][0] * gradN[b][1], gradN[a][0] * gradN[b][2] },

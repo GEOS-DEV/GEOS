@@ -71,7 +71,7 @@ public:
       auto lock = make_multilock( m_emplaceMutex, m_frontMutex );
       {
         LIFO_MARK_SCOPE( waitingForBuffer );
-        m_notFullCond.wait( lock, [ this ]  { return !this->full(); } );
+        m_notFullCond.wait( lock, [this]  { return !this->full(); } );
       }
       {
         LIFO_MARK_SCOPE( copy );
@@ -96,7 +96,7 @@ public:
       auto lock = make_multilock( m_popMutex, m_frontMutex );
       {
         LIFO_MARK_SCOPE( waitingForBuffer );
-        m_notEmptyCond.wait( lock, [ this ]  { return !this->empty(); } );
+        m_notEmptyCond.wait( lock, [this]  { return !this->empty(); } );
       }
       // deadlock can occur if frontMutex is taken after an
       // emplaceMutex (inside pushAsync) but this is prevented by the
@@ -126,11 +126,11 @@ public:
       {
         {
           LIFO_MARK_SCOPE( WaitForBufferToEmplace );
-          m_notFullCond.wait( lock, [ this ]  { return !this->full(); } );
+          m_notFullCond.wait( lock, [this]  { return !this->full(); } );
         }
         {
           LIFO_MARK_SCOPE( WaitForBufferToPop );
-          q2.m_notEmptyCond.wait( lock, [ &q2 ] { return !q2.empty(); } );
+          q2.m_notEmptyCond.wait( lock, [&q2] { return !q2.empty(); } );
         }
       }
       LIFO_MARK_SCOPE( Transfert );
@@ -153,8 +153,8 @@ public:
       auto lock = make_multilock( m_emplaceMutex, q2.m_popMutex, m_backMutex, q2.m_frontMutex );
       while( this->full() || q2.empty() )
       {
-        m_notFullCond.wait( lock, [ this ]  { return !this->full(); } );
-        q2.m_notEmptyCond.wait( lock, [ &q2 ] { return !q2.empty(); } );
+        m_notFullCond.wait( lock, [this]  { return !this->full(); } );
+        q2.m_notEmptyCond.wait( lock, [&q2] { return !q2.empty(); } );
       }
       this->emplace_back( q2.front() ).wait();
       q2.pop_front();

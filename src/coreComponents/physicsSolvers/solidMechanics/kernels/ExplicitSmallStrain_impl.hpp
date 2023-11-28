@@ -67,19 +67,19 @@ inline
 void ExplicitSmallStrain< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::setup( localIndex const k,
                                                                                StackVariables & stack ) const
 {
-  for( localIndex a=0; a< numNodesPerElem; ++a )
+  for( localIndex a = 0; a < numNodesPerElem; ++a )
   {
     localIndex const nodeIndex = m_elemsToNodes( k, a );
-    for( int i=0; i<numDofPerTrialSupportPoint; ++i )
+    for( int i = 0; i < numDofPerTrialSupportPoint; ++i )
     {
 #if defined(CALC_FEM_SHAPE_IN_KERNEL)
-      stack.xLocal[ a ][ i ] = m_X[ nodeIndex ][ i ];
+      stack.xLocal[a][i] = m_X[nodeIndex][i];
 #endif
 
-#if UPDATE_STRESS==2
-      stack.varLocal[ a ][ i ] = m_vel[ nodeIndex ][ i ] * m_dt;
+#if UPDATE_STRESS == 2
+      stack.varLocal[a][i] = m_vel[nodeIndex][i] * m_dt;
 #else
-      stack.varLocal[ a ][ i ] = m_u[ nodeIndex ][ i ];
+      stack.varLocal[a][i] = m_u[nodeIndex][i];
 #endif
     }
   }
@@ -96,14 +96,14 @@ void ExplicitSmallStrain< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::quadratu
 {
 //#define USE_JACOBIAN
 #if !defined( USE_JACOBIAN )
-  real64 dNdX[ numNodesPerElem ][ 3 ];
+  real64 dNdX[numNodesPerElem][3];
   real64 const detJ = m_finiteElementSpace.template getGradN< FE_TYPE >( k, q, stack.xLocal, dNdX );
   /// Macro to substitute in the shape function derivatives.
   real64 strain[6] = {0};
   //real64 timeIncrement = 0.0;
   FE_TYPE::symmetricGradient( dNdX, stack.varLocal, strain );
 
-  real64 stressLocal[ 6 ] = {0};
+  real64 stressLocal[6] = {0};
 #if UPDATE_STRESS == 2
   m_constitutiveUpdate.smallStrainUpdate_StressOnly( k, q, m_dt, strain, stressLocal );
 #else
@@ -113,13 +113,13 @@ void ExplicitSmallStrain< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::quadratu
   for( localIndex c = 0; c < 6; ++c )
   {
 #if UPDATE_STRESS == 2
-    stressLocal[ c ] *= -detJ;
+    stressLocal[c] *= -detJ;
 #elif UPDATE_STRESS == 1
-    stressLocal[ c ] = -( stressLocal[ c ] + m_constitutiveUpdate.m_newStress( k, q, c ) ) * detJ;   // TODO: decide on
+    stressLocal[c] = -( stressLocal[c] + m_constitutiveUpdate.m_newStress( k, q, c ) ) * detJ;       // TODO: decide on
                                                                                                      // initial stress
                                                                                                      // strategy
 #else
-    stressLocal[ c ] *= -detJ;
+    stressLocal[c] *= -detJ;
 #endif
   }
 
@@ -132,7 +132,7 @@ void ExplicitSmallStrain< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::quadratu
   real64 strain[6] = {0};
   FE_TYPE::symmetricGradient( q, invJ, stack.varLocal, strain );
 
-  real64 stressLocal[ 6 ] = {0};
+  real64 stressLocal[6] = {0};
 #if UPDATE_STRESS == 2
   m_constitutiveUpdate.smallStrainUpdate_StressOnly( k, q, m_dt, strain, stressLocal );
 #else
@@ -142,13 +142,13 @@ void ExplicitSmallStrain< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::quadratu
   for( localIndex c = 0; c < 6; ++c )
   {
 #if UPDATE_STRESS == 2
-    stressLocal[ c ] *= detJ;
+    stressLocal[c] *= detJ;
 #elif UPDATE_STRESS == 1
-    stressLocal[ c ] = ( stressLocal[ c ] + m_constitutiveUpdate.m_newStress( k, q, c ) ) * DETJ;   // TODO: decide on
+    stressLocal[c] = ( stressLocal[c] + m_constitutiveUpdate.m_newStress( k, q, c ) ) * DETJ;       // TODO: decide on
                                                                                                     // initial stress
                                                                                                     // strategy
 #else
-    stressLocal[ c ] *= DETJ;
+    stressLocal[c] *= DETJ;
 #endif
   }
 
@@ -169,7 +169,7 @@ real64 ExplicitSmallStrain< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::comple
     localIndex const nodeIndex = m_elemsToNodes( k, a );
     for( int b = 0; b < numDofPerTestSupportPoint; ++b )
     {
-      RAJA::atomicAdd< parallelDeviceAtomic >( &m_acc( nodeIndex, b ), stack.fLocal[ a ][ b ] );
+      RAJA::atomicAdd< parallelDeviceAtomic >( &m_acc( nodeIndex, b ), stack.fLocal[a][b] );
     }
   }
   return 0;
@@ -192,12 +192,12 @@ ExplicitSmallStrain< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::kernelLaunch(
   forAll< POLICY >( numProcElems,
                     [=] GEOS_DEVICE ( localIndex const index )
   {
-    localIndex const k = kernelComponent.m_elementList[ index ];
+    localIndex const k = kernelComponent.m_elementList[index];
 
     typename KERNEL_TYPE::StackVariables stack;
 
     kernelComponent.setup( k, stack );
-    for( integer q=0; q<KERNEL_TYPE::numQuadraturePointsPerElem; ++q )
+    for( integer q = 0; q < KERNEL_TYPE::numQuadraturePointsPerElem; ++q )
     {
       kernelComponent.quadraturePointKernel( k, q, stack );
     }

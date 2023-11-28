@@ -308,7 +308,7 @@ CFLKernel::
     real64 const coef0 = denom * mob[ip1] / mob[ip0] * dMob_dVolFrac[ip0];
     real64 const coef1 = -denom * mob[ip0] / mob[ip1] * dMob_dVolFrac[ip1];
 
-    phaseCFLNumber = LvArray::math::abs( coef0*phaseOutflux[ip0] + coef1*phaseOutflux[ip1] );
+    phaseCFLNumber = LvArray::math::abs( coef0 * phaseOutflux[ip0] + coef1 * phaseOutflux[ip1] );
   }
   // three-phase flow regime
   else if( numMobilePhases == 3 )
@@ -325,7 +325,7 @@ CFLKernel::
     {
       for( integer j = 0; j < 2; ++j )
       {
-        f[i][j]  = ( i == j )*totalMob - mob[i];
+        f[i][j]  = ( i == j ) * totalMob - mob[i];
         f[i][j] /= (totalMob * mob[j]);
         real64 sum = 0;
         for( integer k = 0; k < 3; ++k )
@@ -337,7 +337,7 @@ CFLKernel::
       }
     }
     phaseCFLNumber = f[0][0] + f[1][1];
-    phaseCFLNumber += sqrt( phaseCFLNumber*phaseCFLNumber - 4 * ( f[0][0]*f[1][1] - f[1][0]*f[0][1] ) );
+    phaseCFLNumber += sqrt( phaseCFLNumber * phaseCFLNumber - 4 * ( f[0][0] * f[1][1] - f[1][0] * f[0][1] ) );
     phaseCFLNumber = 0.5 * LvArray::math::abs( phaseCFLNumber ) / poreVol;
   }
 }
@@ -477,7 +477,7 @@ AquiferBCKernel::
            arraySlice2d< real64 const, compflow::USD_COMP_DC - 1 > dCompFrac_dCompDens,
            real64 const dt,
            real64 (& localFlux)[NC],
-           real64 (& localFluxJacobian)[NC][NC+1] )
+           real64 (& localFluxJacobian)[NC][NC + 1] )
 {
   using Deriv = multifluid::DerivativeOffset;
 
@@ -518,7 +518,7 @@ AquiferBCKernel::
         applyChainRule( NC, dCompFrac_dCompDens, dPhaseDens[ip], dProp_dC, Deriv::dC );
         for( integer ic = 0; ic < NC; ++ic )
         {
-          dPhaseFlux_dCompDens[ic] = aquiferVolFlux * ( dProp_dC[ic] * phaseVolFrac[ip] + phaseDens[ip] * dPhaseVolFrac[ip][Deriv::dC+ic] );
+          dPhaseFlux_dCompDens[ic] = aquiferVolFlux * ( dProp_dC[ic] * phaseVolFrac[ip] + phaseDens[ip] * dPhaseVolFrac[ip][Deriv::dC + ic] );
         }
 
         for( integer ic = 0; ic < NC; ++ic )
@@ -529,7 +529,7 @@ AquiferBCKernel::
           applyChainRule( NC, dCompFrac_dCompDens, dPhaseCompFrac[ip][ic], dProp_dC, Deriv::dC );
           for( integer jc = 0; jc < NC; ++jc )
           {
-            localFluxJacobian[ic][jc+1] -= dt * ( dPhaseFlux_dCompDens[jc] * phaseCompFrac[ip][ic] + phaseFlux * dProp_dC[jc] );
+            localFluxJacobian[ic][jc + 1] -= dt * ( dPhaseFlux_dCompDens[jc] * phaseCompFrac[ip][ic] + phaseFlux * dProp_dC[jc] );
           }
         }
       }

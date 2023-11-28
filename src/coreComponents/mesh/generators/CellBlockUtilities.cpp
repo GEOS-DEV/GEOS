@@ -37,7 +37,7 @@ static const string faceIndexError = "Local face index out of range for {} eleme
 
 
 static localIndex getFaceNodesHex( localIndex const faceNum,
-                                   arraySlice1d< localIndex const, cells::NODE_MAP_USD-1 > const & elemNodes,
+                                   arraySlice1d< localIndex const, cells::NODE_MAP_USD - 1 > const & elemNodes,
                                    Span< localIndex > const faceNodes )
 {
   GEOS_ERROR_IF_LT_MSG( faceNodes.size(), 4, GEOS_FMT( nodeCountError, "Hexahedron", faceNum ) );
@@ -157,7 +157,7 @@ static localIndex getFaceNodesWedge( localIndex const faceNum,
 }
 
 static localIndex getFaceNodesTet( localIndex const faceNum,
-                                   arraySlice1d< localIndex const, cells::NODE_MAP_USD-1 > const & elemNodes,
+                                   arraySlice1d< localIndex const, cells::NODE_MAP_USD - 1 > const & elemNodes,
                                    Span< localIndex > const faceNodes )
 {
   GEOS_ERROR_IF_LT_MSG( faceNodes.size(), 3, GEOS_FMT( nodeCountError, "Tetrahedron", faceNum ) );
@@ -383,7 +383,7 @@ createEdgesByLowestNode( localIndex const numNodes,
       // count the edge for its lowest index node
       localIndex const node0 = faceToNodeMap( faceIndex, a );
       localIndex const node1 = faceToNodeMap( faceIndex, ( a + 1 ) % numNodesInFace );
-      RAJA::atomicInc< parallelHostAtomic >( &counts[ std::min( node0, node1 ) ] );
+      RAJA::atomicInc< parallelHostAtomic >( &counts[std::min( node0, node1 )] );
     }
   } );
 
@@ -420,7 +420,7 @@ createEdgesByLowestNode( localIndex const numNodes,
   forAll< parallelHostPolicy >( numNodes, [edgesByLowestNode = edgesByLowestNode.toView(),
                                            comp]( localIndex const nodeIndex )
   {
-    arraySlice1d< EdgeBuilder > const edges = edgesByLowestNode[ nodeIndex ];
+    arraySlice1d< EdgeBuilder > const edges = edgesByLowestNode[nodeIndex];
     std::sort( edges.begin(), edges.end(), comp );
   } );
 
@@ -451,8 +451,8 @@ void populateEdgeMaps( ArrayOfArraysView< EdgeBuilder const > const & edgesByLow
   // loop over all the nodes.
   forAll< parallelHostPolicy >( numNodes, [&]( localIndex const nodeIndex )
   {
-    localIndex curEdgeID = uniqueEdgeOffsets[ nodeIndex ];
-    arraySlice1d< EdgeBuilder const > const edges = edgesByLowestNode[ nodeIndex ];
+    localIndex curEdgeID = uniqueEdgeOffsets[nodeIndex];
+    arraySlice1d< EdgeBuilder const > const edges = edgesByLowestNode[nodeIndex];
     forEqualRanges( edges.begin(), edges.end(), [&]( auto first, auto last )
     {
       // Populate the edge to node map.
@@ -498,8 +498,8 @@ void resizeEdgeMaps( ArrayOfArraysView< EdgeBuilder const > const & edgesByLowes
                                            edgesByLowestNode,
                                            numFacesPerEdge = numFacesPerEdge.toView()]( localIndex const nodeIndex )
   {
-    localIndex curEdgeID = uniqueEdgeOffsets[ nodeIndex ];
-    arraySlice1d< EdgeBuilder const > const edges = edgesByLowestNode[ nodeIndex ];
+    localIndex curEdgeID = uniqueEdgeOffsets[nodeIndex];
+    arraySlice1d< EdgeBuilder const > const edges = edgesByLowestNode[nodeIndex];
     forUniqueValues( edges.begin(), edges.end(), [&]( EdgeBuilder const &, localIndex const numMatches )
     {
       numFacesPerEdge( curEdgeID++ ) = numMatches + CellBlockManagerABC::faceMapExtraSpacePerEdge();
@@ -514,14 +514,14 @@ void resizeEdgeMaps( ArrayOfArraysView< EdgeBuilder const > const & edgesByLowes
                                            numEdgesPerFace = numEdgesPerFace.toView()] ( localIndex const faceIndex )
   {
     localIndex const numNodesInFace = faceToNodeMap.sizeOfArray( faceIndex );
-    numEdgesPerFace[ faceIndex ] = numNodesInFace + CellBlockManagerABC::edgeMapExtraSpacePerFace();
+    numEdgesPerFace[faceIndex] = numNodesInFace + CellBlockManagerABC::edgeMapExtraSpacePerFace();
   } );
   faceToEdgeMap.resizeFromCapacities< parallelHostPolicy >( numFaces, numEdgesPerFace.data() );
   forAll< parallelHostPolicy >( numFaces, [numEdgesPerFace = numEdgesPerFace.toViewConst(),
                                            faceToEdgeMap = faceToEdgeMap.toView()] ( localIndex const faceIndex )
   {
     // There is no API to set size of each sub-array within its capacity in parallel
-    for( localIndex i = 0; i < numEdgesPerFace[ faceIndex ] - CellBlockManagerABC::edgeMapExtraSpacePerFace(); ++i )
+    for( localIndex i = 0; i < numEdgesPerFace[faceIndex] - CellBlockManagerABC::edgeMapExtraSpacePerFace(); ++i )
     {
       faceToEdgeMap.emplaceBack( faceIndex, -1 );
     }

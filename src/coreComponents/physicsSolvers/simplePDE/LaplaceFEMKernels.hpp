@@ -142,11 +142,11 @@ public:
     int xLocal;
 #else
     /// C-array stack storage for element local the nodal positions.
-    real64 xLocal[ maxNumTestSupportPointsPerElem ][ 3 ];
+    real64 xLocal[maxNumTestSupportPointsPerElem][3];
 #endif
 
     /// C-array storage for the element local primary field variable.
-    real64 primaryField_local[ maxNumTestSupportPointsPerElem ];
+    real64 primaryField_local[maxNumTestSupportPointsPerElem];
   };
 
 
@@ -171,13 +171,13 @@ public:
       localIndex const localNodeIndex = m_elemsToNodes( k, a );
 
 #if defined(CALC_FEM_SHAPE_IN_KERNEL)
-      for( int i=0; i<3; ++i )
+      for( int i = 0; i < 3; ++i )
       {
-        stack.xLocal[ a ][ i ] = m_X[ localNodeIndex ][ i ];
+        stack.xLocal[a][i] = m_X[localNodeIndex][i];
       }
 #endif
 
-      stack.primaryField_local[ a ] = m_primaryField[ localNodeIndex ];
+      stack.primaryField_local[a] = m_primaryField[localNodeIndex];
       stack.localRowDofIndex[a] = m_dofNumber[localNodeIndex];
       stack.localColDofIndex[a] = m_dofNumber[localNodeIndex];
     }
@@ -195,14 +195,14 @@ public:
                               localIndex const q,
                               StackVariables & stack ) const
   {
-    real64 dNdX[ maxNumTestSupportPointsPerElem ][ 3 ];
+    real64 dNdX[maxNumTestSupportPointsPerElem][3];
     real64 const detJ = m_finiteElementSpace.template getGradN< FE_TYPE >( k, q, stack.xLocal,
                                                                            stack.feStack, dNdX );
     for( localIndex a = 0; a < stack.numRows; ++a )
     {
       for( localIndex b = 0; b < stack.numCols; ++b )
       {
-        stack.localJacobian[ a ][ b ] += LvArray::tensorOps::AiBi< 3 >( dNdX[a], dNdX[b] ) * detJ;
+        stack.localJacobian[a][b] += LvArray::tensorOps::AiBi< 3 >( dNdX[a], dNdX[b] ) * detJ;
       }
     }
   }
@@ -226,21 +226,21 @@ public:
     {
       for( localIndex b = 0; b < stack.numCols; ++b )
       {
-        stack.localResidual[ a ] += stack.localJacobian[ a ][ b ] * stack.primaryField_local[ b ];
+        stack.localResidual[a] += stack.localJacobian[a][b] * stack.primaryField_local[b];
       }
     }
 
     for( int a = 0; a < stack.numRows; ++a )
     {
-      localIndex const dof = LvArray::integerConversion< localIndex >( stack.localRowDofIndex[ a ] - m_dofRankOffset );
+      localIndex const dof = LvArray::integerConversion< localIndex >( stack.localRowDofIndex[a] - m_dofRankOffset );
       if( dof < 0 || dof >= m_matrix.numRows() ) continue;
       m_matrix.template addToRowBinarySearchUnsorted< parallelDeviceAtomic >( dof,
                                                                               stack.localColDofIndex,
-                                                                              stack.localJacobian[ a ],
+                                                                              stack.localJacobian[a],
                                                                               stack.numCols );
 
-      RAJA::atomicAdd< parallelDeviceAtomic >( &m_rhs[ dof ], stack.localResidual[ a ] );
-      maxForce = fmax( maxForce, fabs( stack.localResidual[ a ] ) );
+      RAJA::atomicAdd< parallelDeviceAtomic >( &m_rhs[dof], stack.localResidual[a] );
+      maxForce = fmax( maxForce, fabs( stack.localResidual[a] ) );
     }
 
     return maxForce;

@@ -92,12 +92,12 @@ public:
                                       localIndex const q ) const override
   {
     #if QUADRATIC_DISSIPATION
-    real64 m = m_criticalFractureEnergy/(2*m_lengthScale*m_criticalStrainEnergy);
+    real64 m = m_criticalFractureEnergy / (2 * m_lengthScale * m_criticalStrainEnergy);
     #else
-    real64 m = 3*m_criticalFractureEnergy/(8*m_lengthScale*m_criticalStrainEnergy);
+    real64 m = 3 * m_criticalFractureEnergy / (8 * m_lengthScale * m_criticalStrainEnergy);
     #endif
     real64 p = 1;
-    return pow( 1 - m_damage( k, q ), 2 ) /( pow( 1 - m_damage( k, q ), 2 ) + m * m_damage( k, q ) * (1 + p*m_damage( k, q )) );
+    return pow( 1 - m_damage( k, q ), 2 ) / ( pow( 1 - m_damage( k, q ), 2 ) + m * m_damage( k, q ) * (1 + p * m_damage( k, q )) );
   }
 
 
@@ -106,12 +106,12 @@ public:
   virtual real64 getDegradationDerivative( real64 const d ) const override
   {
     #if QUADRATIC_DISSIPATION
-    real64 m = m_criticalFractureEnergy/(2*m_lengthScale*m_criticalStrainEnergy);
+    real64 m = m_criticalFractureEnergy / (2 * m_lengthScale * m_criticalStrainEnergy);
     #else
-    real64 m = 3*m_criticalFractureEnergy/(8*m_lengthScale*m_criticalStrainEnergy);
+    real64 m = 3 * m_criticalFractureEnergy / (8 * m_lengthScale * m_criticalStrainEnergy);
     #endif
     real64 p = 1;
-    return -m*(1 - d)*(1 + (2*p + 1)*d) / pow( pow( 1-d, 2 ) + m*d*(1+p*d), 2 );
+    return -m * (1 - d) * (1 + (2 * p + 1) * d) / pow( pow( 1 - d, 2 ) + m * d * (1 + p * d), 2 );
   }
 
 
@@ -120,12 +120,13 @@ public:
   virtual real64 getDegradationSecondDerivative( real64 const d ) const override
   {
     #if QUADRATIC_DISSIPATION
-    real64 m = m_criticalFractureEnergy/(2*m_lengthScale*m_criticalStrainEnergy);
+    real64 m = m_criticalFractureEnergy / (2 * m_lengthScale * m_criticalStrainEnergy);
     #else
-    real64 m = 3*m_criticalFractureEnergy/(8*m_lengthScale*m_criticalStrainEnergy);
+    real64 m = 3 * m_criticalFractureEnergy / (8 * m_lengthScale * m_criticalStrainEnergy);
     #endif
     real64 p = 1;
-    return -2*m*( pow( d, 3 )*(2*m*p*p + m*p + 2*p + 1) + pow( d, 2 )*(-3*m*p*p -3*p) + d*(-3*m*p - 3) + (-m+p+2) )/pow( pow( 1-d, 2 ) + m*d*(1+p*d), 3 );
+    return -2 * m *
+           ( pow( d, 3 ) * (2 * m * p * p + m * p + 2 * p + 1) + pow( d, 2 ) * (-3 * m * p * p - 3 * p) + d * (-3 * m * p - 3) + (-m + p + 2) ) / pow( pow( 1 - d, 2 ) + m * d * (1 + p * d), 3 );
   }
 
 
@@ -151,9 +152,9 @@ public:
     real64 strain[6];
     UPDATE_BASE::getElasticStrain( k, q, strain );
 
-    strain[3] = strain[3]/2; // eigen-decomposition below does not use engineering strains
-    strain[4] = strain[4]/2;
-    strain[5] = strain[5]/2;
+    strain[3] = strain[3] / 2; // eigen-decomposition below does not use engineering strains
+    strain[4] = strain[4] / 2;
+    strain[5] = strain[5] / 2;
 
     real64 traceOfStrain = strain[0] + strain[1] + strain[2];
 
@@ -200,11 +201,11 @@ public:
 
     real64 positiveStress[6] = {};
     real64 negativeStress[6] = {};
-    LvArray::tensorOps::scaledCopy< 6 >( positiveStress, Itensor, lambda*tracePlus );
-    LvArray::tensorOps::scaledCopy< 6 >( negativeStress, Itensor, lambda*traceMinus );
+    LvArray::tensorOps::scaledCopy< 6 >( positiveStress, Itensor, lambda * tracePlus );
+    LvArray::tensorOps::scaledCopy< 6 >( negativeStress, Itensor, lambda * traceMinus );
 
-    LvArray::tensorOps::scaledAdd< 6 >( positiveStress, positivePartOfStrain, 2*mu );
-    LvArray::tensorOps::scaledAdd< 6 >( negativeStress, negativePartOfStrain, 2*mu );
+    LvArray::tensorOps::scaledAdd< 6 >( positiveStress, positivePartOfStrain, 2 * mu );
+    LvArray::tensorOps::scaledAdd< 6 >( negativeStress, negativePartOfStrain, 2 * mu );
 
     LvArray::tensorOps::copy< 6 >( stress, negativeStress );
     LvArray::tensorOps::scaledAdd< 6 >( stress, positiveStress, damageFactor );
@@ -212,9 +213,9 @@ public:
     // stiffness
 
     real64 IxITensor[6][6] = {};
-    for( int i=0; i < 3; i++ )
+    for( int i = 0; i < 3; i++ )
     {
-      for( int j=0; j < 3; j++ )
+      for( int j = 0; j < 3; j++ )
       {
         IxITensor[i][j] = 1.0;
       }
@@ -227,11 +228,11 @@ public:
     PositiveProjectorTensor( eigenValues, eigenVectors, positiveProjector );
     NegativeProjectorTensor( eigenValues, eigenVectors, negativeProjector );
 
-    LvArray::tensorOps::scaledCopy< 6, 6 >( cPositive, IxITensor, lambda*heaviside( traceOfStrain ));
-    LvArray::tensorOps::scaledCopy< 6, 6 >( stiffness, IxITensor, lambda*heaviside( -traceOfStrain ));
+    LvArray::tensorOps::scaledCopy< 6, 6 >( cPositive, IxITensor, lambda * heaviside( traceOfStrain ));
+    LvArray::tensorOps::scaledCopy< 6, 6 >( stiffness, IxITensor, lambda * heaviside( -traceOfStrain ));
 
-    LvArray::tensorOps::scale< 6, 6 >( positiveProjector, 2*mu );
-    LvArray::tensorOps::scale< 6, 6 >( negativeProjector, 2*mu );
+    LvArray::tensorOps::scale< 6, 6 >( positiveProjector, 2 * mu );
+    LvArray::tensorOps::scale< 6, 6 >( negativeProjector, 2 * mu );
 
     LvArray::tensorOps::add< 6, 6 >( cPositive, positiveProjector );
     LvArray::tensorOps::add< 6, 6 >( stiffness, negativeProjector );

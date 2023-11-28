@@ -213,15 +213,15 @@ int MpiWrapper::checkAny( int count, MPI_Request array_of_requests[], int * idx,
   for( int jdx = 0; jdx < count; ++jdx )
   {
     *flag = 0;
-    rvals[ jdx ] = MPI_Request_get_status( array_of_requests[ jdx ], flag, &array_of_statuses[ jdx ] );
+    rvals[jdx] = MPI_Request_get_status( array_of_requests[jdx], flag, &array_of_statuses[jdx] );
     if( *flag && !found )
     {
       *idx = jdx;
       flagCache = *flag;
     }
-    if( rvals[ jdx ] != MPI_SUCCESS )
+    if( rvals[jdx] != MPI_SUCCESS )
     {
-      rval = rvals[ jdx ];
+      rval = rvals[jdx];
     }
   }
   if( found )
@@ -245,14 +245,14 @@ int MpiWrapper::checkAll( int count, MPI_Request array_of_requests[], int * flag
   int iFlag = 0;
   for( int idx = 0; idx < count; ++idx )
   {
-    rvals[ idx ] = MPI_Request_get_status( array_of_requests[ idx ], &iFlag, &array_of_statuses[ idx ] );
+    rvals[idx] = MPI_Request_get_status( array_of_requests[idx], &iFlag, &array_of_statuses[idx] );
     if( !iFlag )
     {
       *flag = iFlag;
     }
-    if( rvals[ idx ] != MPI_SUCCESS )
+    if( rvals[idx] != MPI_SUCCESS )
     {
-      rval = rvals[ idx ];
+      rval = rvals[idx];
     }
   }
   return rval;
@@ -366,7 +366,7 @@ int MpiWrapper::activeWaitSomeCompletePhase( const int participants,
     MPI_Request * const requests = std::get< 0 >( phases[phase] );
     MPI_Status * const statuses = std::get< 1 >( phases[phase] );
     std::function< MPI_Request ( int ) > func = std::get< 2 >( phases[phase] );
-    if( requests!=nullptr )
+    if( requests != nullptr )
     {
       err = activeWaitSome( participants,
                             requests,
@@ -398,7 +398,7 @@ int MpiWrapper::activeWaitOrderedCompletePhase( const int participants,
 
     for( int idx = 0; idx < participants; ++idx )
     {
-      if( requests!=nullptr )
+      if( requests != nullptr )
       {
         wait( &requests[idx], &statuses[idx] );
       }

@@ -71,11 +71,11 @@ struct DeformationUpdateKernel
       localIndex const kf0 = elemsToFaces[kfe][0];
       localIndex const kf1 = elemsToFaces[kfe][1];
       localIndex const numNodesPerFace = faceToNodeMap.sizeOfArray( kf0 );
-      real64 temp[ 3 ] = { 0 };
-      for( localIndex a=0; a<numNodesPerFace; ++a )
+      real64 temp[3] = { 0 };
+      for( localIndex a = 0; a < numNodesPerFace; ++a )
       {
-        LvArray::tensorOps::add< 3 >( temp, u[ faceToNodeMap( kf0, a ) ] );
-        LvArray::tensorOps::subtract< 3 >( temp, u[ faceToNodeMap( kf1, a ) ] );
+        LvArray::tensorOps::add< 3 >( temp, u[faceToNodeMap( kf0, a )] );
+        LvArray::tensorOps::subtract< 3 >( temp, u[faceToNodeMap( kf1, a )] );
       }
 
       // TODO this needs a proper contact based strategy for aperture
@@ -103,7 +103,7 @@ struct DeformationUpdateKernel
 
 #ifdef GEOSX_USE_SEPARATION_COEFFICIENT
       real64 const s = aperture[kfe] / apertureAtFailure[kfe];
-      if( separationCoeff0[kfe]<1.0 && s>separationCoeff0[kfe] )
+      if( separationCoeff0[kfe] < 1.0 && s > separationCoeff0[kfe] )
       {
         if( s >= 1.0 )
         {
@@ -113,7 +113,7 @@ struct DeformationUpdateKernel
         else
         {
           separationCoeff[kfe] = s;
-          dSeparationCoeff_dAper[kfe] = 1.0/apertureAtFailure[kfe];
+          dSeparationCoeff_dAper[kfe] = 1.0 / apertureAtFailure[kfe];
         }
       }
 #endif
@@ -135,7 +135,7 @@ struct FluidMassResidualDerivativeAssemblyKernel
                                  arraySlice1d< localIndex const > const elemsToFaces,
                                  ArrayOfArraysView< localIndex const > const faceToNodeMap,
                                  arrayView1d< globalIndex const > const dispDofNumber,
-                                 real64 const (&Nbar)[ 3 ],
+                                 real64 const (&Nbar)[3],
                                  real64 const & area,
                                  real64 const & aperture,
                                  real64 const & dens,
@@ -175,7 +175,7 @@ struct FluidMassResidualDerivativeAssemblyKernel
                          ArrayOfArraysView< localIndex const > const elemsToFaces,
                          ArrayOfArraysView< localIndex const > const faceToNodeMap,
                          arrayView1d< globalIndex const > const dispDofNumber,
-                         real64 const (&Nbar)[ 3 ],
+                         real64 const (&Nbar)[3],
                          globalIndex (& nodeDOF)[8 * 3],
                          arraySlice1d< real64 > const dRdU )
   {
@@ -240,7 +240,7 @@ struct FluidMassResidualDerivativeAssemblyKernel
                                      nodeDOF,
                                      dRdU );
 
-      if( rowNumber >= 0  && rowNumber < localMatrix.numRows() )
+      if( rowNumber >= 0 && rowNumber < localMatrix.numRows() )
       {
         localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( rowNumber,
                                                                           nodeDOF,

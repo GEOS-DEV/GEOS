@@ -138,7 +138,7 @@ public:
    */
   ///@{
 
-  static void barrier( MPI_Comm const & MPI_PARAM( comm )=MPI_COMM_GEOSX );
+  static void barrier( MPI_Comm const & MPI_PARAM( comm ) = MPI_COMM_GEOSX );
 
   static int cartCoords( MPI_Comm comm, int rank, int maxdims, int coords[] );
 
@@ -149,9 +149,9 @@ public:
 
   static void commFree( MPI_Comm & comm );
 
-  static int commRank( MPI_Comm const & MPI_PARAM( comm )=MPI_COMM_GEOSX );
+  static int commRank( MPI_Comm const & MPI_PARAM( comm ) = MPI_COMM_GEOSX );
 
-  static int commSize( MPI_Comm const & MPI_PARAM( comm )=MPI_COMM_GEOSX );
+  static int commSize( MPI_Comm const & MPI_PARAM( comm ) = MPI_COMM_GEOSX );
 
   static bool commCompare( MPI_Comm const & comm1, MPI_Comm const & comm2 );
 
@@ -711,7 +711,7 @@ int MpiWrapper::allGather( arrayView1d< T const > const & sendValues,
 
 #else
   allValues.resize( sendSize );
-  for( localIndex a=0; a<sendSize; ++a )
+  for( localIndex a = 0; a < sendSize; ++a )
   {
     allValues[a] = sendValues[a];
   }
@@ -748,7 +748,7 @@ int MpiWrapper::scan( T const * const sendbuf,
 #ifdef GEOSX_USE_MPI
   return MPI_Scan( sendbuf, recvbuf, count, internal::getMpiType< T >(), op, comm );
 #else
-  memcpy( recvbuf, sendbuf, count*sizeof(T) );
+  memcpy( recvbuf, sendbuf, count * sizeof(T) );
   return 0;
 #endif
 }
@@ -763,7 +763,7 @@ int MpiWrapper::exscan( T const * const MPI_PARAM( sendbuf ),
 #ifdef GEOSX_USE_MPI
   return MPI_Exscan( sendbuf, recvbuf, count, internal::getMpiType< T >(), op, comm );
 #else
-  memset( recvbuf, 0, count*sizeof(T) );
+  memset( recvbuf, 0, count * sizeof(T) );
   return 0;
 #endif
 }
@@ -860,14 +860,14 @@ int MpiWrapper::iRecv( T * const buf,
                        MPI_Request * MPI_PARAM( request ) )
 {
 #ifdef GEOSX_USE_MPI
-  GEOS_ERROR_IF( (*request)!=MPI_REQUEST_NULL,
+  GEOS_ERROR_IF( (*request) != MPI_REQUEST_NULL,
                  "Attempting to use an MPI_Request that is still in use." );
   return MPI_Irecv( buf, count, internal::getMpiType< T >(), source, tag, comm, request );
 #else
   std::map< int, std::pair< int, void * > > & pointerMap = getTagToPointersMap();
   std::map< int, std::pair< int, void * > >::iterator iPointer = pointerMap.find( tag );
 
-  if( iPointer==pointerMap.end() )
+  if( iPointer == pointerMap.end() )
   {
     pointerMap.insert( {tag, {1, buf} } );
   }
@@ -875,7 +875,7 @@ int MpiWrapper::iRecv( T * const buf,
   {
     GEOS_ERROR_IF( iPointer->second.first != 0,
                    "Tag does is assigned, but pointer was not set by iSend." );
-    memcpy( buf, iPointer->second.second, count*sizeof(T) );
+    memcpy( buf, iPointer->second.second, count * sizeof(T) );
     pointerMap.erase( iPointer );
   }
   return 0;
@@ -919,7 +919,7 @@ int MpiWrapper::iSend( arrayView1d< T > const & buf,
                        MPI_Request * MPI_PARAM( request ) )
 {
 #ifdef GEOSX_USE_MPI
-  GEOS_ERROR_IF( (*request)!=MPI_REQUEST_NULL,
+  GEOS_ERROR_IF( (*request) != MPI_REQUEST_NULL,
                  "Attempting to use an MPI_Request that is still in use." );
   return MPI_Isend( reinterpret_cast< void const * >( buf.data() ),
                     buf.size() * sizeof( T ),
@@ -943,14 +943,14 @@ int MpiWrapper::iSend( T const * const buf,
                        MPI_Request * MPI_PARAM( request ) )
 {
 #ifdef GEOSX_USE_MPI
-  GEOS_ERROR_IF( (*request)!=MPI_REQUEST_NULL,
+  GEOS_ERROR_IF( (*request) != MPI_REQUEST_NULL,
                  "Attempting to use an MPI_Request that is still in use." );
   return MPI_Isend( buf, count, internal::getMpiType< T >(), dest, tag, comm, request );
 #else
   std::map< int, std::pair< int, void * > > & pointerMap = getTagToPointersMap();
   std::map< int, std::pair< int, void * > >::iterator iPointer = pointerMap.find( tag );
 
-  if( iPointer==pointerMap.end() )
+  if( iPointer == pointerMap.end() )
   {
     pointerMap.insert( {tag, {0, const_cast< T * >(buf)}
                        } );
@@ -959,7 +959,7 @@ int MpiWrapper::iSend( T const * const buf,
   {
     GEOS_ERROR_IF( iPointer->second.first != 1,
                    "Tag does is assigned, but pointer was not set by iRecv." );
-    memcpy( iPointer->second.second, buf, count*sizeof(T) );
+    memcpy( iPointer->second.second, buf, count * sizeof(T) );
     pointerMap.erase( iPointer );
   }
   return 0;

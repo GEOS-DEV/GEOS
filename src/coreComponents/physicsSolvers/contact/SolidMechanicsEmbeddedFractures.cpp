@@ -392,9 +392,9 @@ void SolidMechanicsEmbeddedFractures::addCouplingNumNonzeros( DomainPartition & 
 
       ArrayOfArraysView< localIndex const > const cellsToEmbeddedSurfaces = cellElementSubRegion.embeddedSurfacesList().toViewConst();
 
-      localIndex const numDispDof = 3*cellElementSubRegion.numNodesPerElement();
+      localIndex const numDispDof = 3 * cellElementSubRegion.numNodesPerElement();
 
-      for( localIndex ei=0; ei<fracturedElements.size(); ++ei )
+      for( localIndex ei = 0; ei < fracturedElements.size(); ++ei )
       {
         localIndex const cellIndex = fracturedElements[ei];
 
@@ -402,20 +402,20 @@ void SolidMechanicsEmbeddedFractures::addCouplingNumNonzeros( DomainPartition & 
         localIndex const localRow = LvArray::integerConversion< localIndex >( jumpDofNumber[k] - rankOffset );
         if( localRow >= 0 && localRow < rowLengths.size() )
         {
-          for( localIndex i=0; i<3; ++i )
+          for( localIndex i = 0; i < 3; ++i )
           {
             rowLengths[localRow + i] += numDispDof;
           }
         }
 
-        for( localIndex a=0; a<cellElementSubRegion.numNodesPerElement(); ++a )
+        for( localIndex a = 0; a < cellElementSubRegion.numNodesPerElement(); ++a )
         {
           const localIndex & node = cellElementSubRegion.nodeList( cellIndex, a );
           localIndex const localDispRow = LvArray::integerConversion< localIndex >( dispDofNumber[node] - rankOffset );
 
           if( localDispRow >= 0 && localDispRow < rowLengths.size() )
           {
-            for( int d=0; d<3; ++d )
+            for( int d = 0; d < 3; ++d )
             {
               rowLengths[localDispRow + d] += 3;
             }
@@ -463,9 +463,9 @@ void SolidMechanicsEmbeddedFractures::addCouplingSparsityPattern( DomainPartitio
 
       ArrayOfArraysView< localIndex const > const cellsToEmbeddedSurfaces = cellElementSubRegion.embeddedSurfacesList().toViewConst();
 
-      localIndex const numDispDof = 3*cellElementSubRegion.numNodesPerElement();
+      localIndex const numDispDof = 3 * cellElementSubRegion.numNodesPerElement();
 
-      for( localIndex ei=0; ei<fracturedElements.size(); ++ei )
+      for( localIndex ei = 0; ei < fracturedElements.size(); ++ei )
       {
         localIndex const cellIndex = fracturedElements[ei];
         localIndex const k = cellsToEmbeddedSurfaces[cellIndex][0];
@@ -482,13 +482,13 @@ void SolidMechanicsEmbeddedFractures::addCouplingSparsityPattern( DomainPartitio
           dofColIndicesJump[idof] = jumpDofNumber[k] + idof;
         }
 
-        for( localIndex a=0; a<cellElementSubRegion.numNodesPerElement(); ++a )
+        for( localIndex a = 0; a < cellElementSubRegion.numNodesPerElement(); ++a )
         {
           const localIndex & node = cellElementSubRegion.nodeList( cellIndex, a );
           for( localIndex idof = 0; idof < 3; ++idof )
           {
-            eqnRowIndicesDisp[3*a + idof] = dispDofNumber[node] + idof - rankOffset;
-            dofColIndicesDisp[3*a + idof] = dispDofNumber[node] + idof;
+            eqnRowIndicesDisp[3 * a + idof] = dispDofNumber[node] + idof - rankOffset;
+            dofColIndicesDisp[3 * a + idof] = dispDofNumber[node] + idof;
           }
         }
 
@@ -507,7 +507,7 @@ void SolidMechanicsEmbeddedFractures::addCouplingSparsityPattern( DomainPartitio
         {
           if( eqnRowIndicesJump[i] >= 0 && eqnRowIndicesJump[i] < pattern.numRows() )
           {
-            for( localIndex j=0; j < dofColIndicesDisp.size(); ++j )
+            for( localIndex j = 0; j < dofColIndicesDisp.size(); ++j )
             {
               pattern.insertNonZero( eqnRowIndicesJump[i], dofColIndicesDisp[j] );
             }
@@ -531,7 +531,7 @@ void SolidMechanicsEmbeddedFractures::applyTractionBC( real64 const time_n,
                                                                arrayView1d< string const > const & )
   {
 
-    fsManager.apply< ElementSubRegionBase >( time_n+ dt,
+    fsManager.apply< ElementSubRegionBase >( time_n + dt,
                                              mesh,
                                              contact::traction::key(),
                                              [&] ( FieldSpecificationBase const & fs,
@@ -541,7 +541,7 @@ void SolidMechanicsEmbeddedFractures::applyTractionBC( real64 const time_n,
                                                    string const & )
     {
       fs.applyFieldValue< FieldSpecificationEqual, parallelHostPolicy >( targetSet,
-                                                                         time_n+dt,
+                                                                         time_n + dt,
                                                                          subRegion,
                                                                          contact::traction::key() );
     } );
@@ -614,23 +614,23 @@ real64 SolidMechanicsEmbeddedFractures::calculateResidualNorm( real64 const & ti
                           0,
                           MPI_COMM_GEOSX );
 
-      if( rank==0 )
+      if( rank == 0 )
       {
-        for( int r=0; r<numRanks; ++r )
+        for( int r = 0; r < numRanks; ++r )
         {
           // sum/max across all ranks
-          globalResidualNorm[0] += globalValues[r*2];
-          globalResidualNorm[1] = std::max( globalResidualNorm[1], globalValues[r*2+1] );
+          globalResidualNorm[0] += globalValues[r * 2];
+          globalResidualNorm[1] = std::max( globalResidualNorm[1], globalValues[r * 2 + 1] );
         }
       }
 
       MpiWrapper::bcast( globalResidualNorm, 2, 0, MPI_COMM_GEOSX );
     } );
 
-    real64 const fractureResidualNorm = sqrt( globalResidualNorm[0] )/(globalResidualNorm[1]+1);  // the + 1 is for the first
+    real64 const fractureResidualNorm = sqrt( globalResidualNorm[0] ) / (globalResidualNorm[1] + 1);  // the + 1 is for the first
     // time-step when maxForce = 0;
 
-    if( getLogLevel() >= 1 && logger::internal::rank==0 )
+    if( getLogLevel() >= 1 && logger::internal::rank == 0 )
     {
       std::cout << GEOS_FMT( "        ( RFracture ) = ( {:4.2e} )", fractureResidualNorm );
     }

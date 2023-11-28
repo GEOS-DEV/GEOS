@@ -168,12 +168,12 @@ public:
     for( localIndex i = 0; i < m_array.size( 0 ); ++i )
     {
       int curComponent = 0;
-      LvArray::forValuesInSlice( m_array[ i ], [&valuesFromNode, &curComponent, i]( T const & value )
+      LvArray::forValuesInSlice( m_array[i], [&valuesFromNode, &curComponent, i]( T const & value )
       {
         for( int j = 0; j < numComponentsPerValue; ++j )
         {
           auto const valueOfComponent = *wrapperHelpers::internal::getPointerToComponent( value, j );
-          EXPECT_EQ( valueOfComponent, valuesFromNode[ curComponent ][ i ] );
+          EXPECT_EQ( valueOfComponent, valuesFromNode[curComponent][i] );
           ++curComponent;
         }
       } );

@@ -127,7 +127,7 @@ CapillaryPressureBase & makeVanGenuchtenCapPressureThreePhase( string const & na
   array1d< real64 > & phaseCapPressureExpInv = capPressure.getReference< array1d< real64 > >(
     VanGenuchtenCapillaryPressure::viewKeyStruct::phaseCapPressureExponentInvString() );
   phaseCapPressureExpInv.resize( 3 );
-  phaseCapPressureExpInv[0] = 0.33; phaseCapPressureExpInv[1] = 0.4; phaseCapPressureExpInv[ 2 ] = 0.5;
+  phaseCapPressureExpInv[0] = 0.33; phaseCapPressureExpInv[1] = 0.4; phaseCapPressureExpInv[2] = 0.5;
 
   array1d< real64 > & phaseCapPressureMultiplier = capPressure.getReference< array1d< real64 > >(
     VanGenuchtenCapillaryPressure::viewKeyStruct::phaseCapPressureMultiplierString() );
@@ -456,12 +456,12 @@ public:
                               [&phaseCapPressure] ( CapillaryPressureBase & relPerm )
     {
       phaseCapPressure = relPerm.phaseCapPressure();
-      return phaseCapPressure[ 0 ][ 0 ];
+      return phaseCapPressure[0][0];
     },
                               [&dPhaseCapPressure_dPhaseVolFraction] ( CapillaryPressureBase & relPerm )
     {
       dPhaseCapPressure_dPhaseVolFraction = relPerm.dPhaseCapPressure_dPhaseVolFraction();
-      return dPhaseCapPressure_dPhaseVolFraction[ 0 ][ 0 ];
+      return dPhaseCapPressure_dPhaseVolFraction[0][0];
     }
                               );
   }
@@ -481,7 +481,7 @@ TEST_F( CapillaryPressureTest, numericalDerivatives_brooksCoreyCapPressureTwoPha
   array1d< real64 > sat( 2 );
 
   sat[0] = startSat;
-  sat[1] = 1.0-sat[0];
+  sat[1] = 1.0 - sat[0];
 
   while( sat[0] <= endSat )
   {
@@ -506,14 +506,14 @@ TEST_F( CapillaryPressureTest, numericalDerivatives_brooksCoreyCapPressureThreeP
   array1d< real64 > sat( 3 );
 
   sat[0] = startSat;
-  sat[1] = 0.5*(1-sat[0]);
-  sat[2] = 1.0-sat[0]-sat[1];
+  sat[1] = 0.5 * (1 - sat[0]);
+  sat[2] = 1.0 - sat[0] - sat[1];
 
   while( sat[0] <= endSat )
   {
     test( sat, eps, tol );
     sat[0] += dS;
-    sat[1] = 0.5 * ( 1-sat[0] );
+    sat[1] = 0.5 * ( 1 - sat[0] );
     sat[2] = 1.0 - sat[0] - sat[1];
   }
 }
@@ -533,7 +533,7 @@ TEST_F( CapillaryPressureTest, numericalDerivatives_vanGenuchtenCapPressureTwoPh
   array1d< real64 > sat( 2 );
 
   sat[0] = startSat;
-  sat[1] = 1-sat[1];
+  sat[1] = 1 - sat[1];
 
   while( sat[0] <= endSat )
   {
@@ -559,14 +559,14 @@ TEST_F( CapillaryPressureTest, numericalDerivatives_vanGenuchtenCapPressureThree
   array1d< real64 > sat( 3 );
 
   sat[0] = startSat;
-  sat[1] = 0.5*(1-sat[0]);
-  sat[2] = 1.0-sat[0]-sat[1];
+  sat[1] = 0.5 * (1 - sat[0]);
+  sat[2] = 1.0 - sat[0] - sat[1];
 
   while( sat[0] <= endSat )
   {
     test( sat, eps, tol );
     sat[0] += dS;
-    sat[1] = 0.5*(1-sat[0]);
+    sat[1] = 0.5 * (1 - sat[0]);
     sat[2] = 1 - sat[0] - sat[1];
   }
 }
@@ -584,7 +584,7 @@ TEST_F( CapillaryPressureTest, numericalDerivatives_tableCapPressureTwoPhase )
   real64 const dS        = 1e-1;
 
   array1d< real64 > sat( 2 );
-  sat[0] = startSat; sat[1] = 1-sat[0];
+  sat[0] = startSat; sat[1] = 1 - sat[0];
   while( sat[0] <= endSat )
   {
     test( sat, eps, tol );
@@ -609,14 +609,14 @@ TEST_F( CapillaryPressureTest, numericalDerivatives_tableCapPressureThreePhase )
   array1d< real64 > sat( 3 );
 
   sat[0] = startSat;
-  sat[1] = 0.5*(1-sat[0]);
-  sat[2] = 1.0-sat[0]-sat[1];
+  sat[1] = 0.5 * (1 - sat[0]);
+  sat[2] = 1.0 - sat[0] - sat[1];
 
   while( sat[0] <= endSat )
   {
     test( sat, eps, tol );
     sat[0] += dS;
-    sat[1] = 0.5*(1-sat[0]);
+    sat[1] = 0.5 * (1 - sat[0]);
     sat[2] = 1 - sat[0] - sat[1];
   }
 }
@@ -657,7 +657,7 @@ TEST_F( CapillaryPressureTest, numericalDerivatives_jFunctionCapPressureTwoPhase
   real64 const end_sat   = 0.9;
   real64 const dS        = 1e-1;
   array1d< real64 > sat( 2 );
-  sat[0] = start_sat; sat[1] = 1-sat[0];
+  sat[0] = start_sat; sat[1] = 1 - sat[0];
   while( sat[0] <= end_sat )
   {
     test( sat, eps, tol );
@@ -704,13 +704,13 @@ TEST_F( CapillaryPressureTest, numericalDerivatives_jFunctionCapPressureThreePha
   real64 const dS        = 1e-1;
   array1d< real64 > sat( 3 );
   sat[0] = start_sat;
-  sat[1] = 0.5*(1-sat[0]);
-  sat[2] = 1.0-sat[0]-sat[1];
+  sat[1] = 0.5 * (1 - sat[0]);
+  sat[2] = 1.0 - sat[0] - sat[1];
   while( sat[0] <= end_sat )
   {
     test( sat, eps, tol );
     sat[0] += dS;
-    sat[1] = 0.5*(1-sat[0]);
+    sat[1] = 0.5 * (1 - sat[0]);
     sat[2] = 1 - sat[0] - sat[1];
   }
 }

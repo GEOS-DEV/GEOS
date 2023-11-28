@@ -104,7 +104,7 @@ public:
   {
     forAll< POLICY >( targetSet.size(), [=] GEOS_HOST_DEVICE ( localIndex const i )
     {
-      localIndex const ei = targetSet[ i ];
+      localIndex const ei = targetSet[i];
       kernelComponent.compute( ei );
     } );
   }
@@ -326,7 +326,7 @@ public:
       if( !phaseExists )
       {
         phaseVolFrac[ip] = 0.;
-        for( integer jc = 0; jc < numComp+2; ++jc )
+        for( integer jc = 0; jc < numComp + 2; ++jc )
         {
           dPhaseVolFrac[ip][jc] = 0.;
         }
@@ -347,8 +347,8 @@ public:
 
       for( integer jc = 0; jc < numComp; ++jc )
       {
-        dPhaseVolFrac[ip][Deriv::dC+jc] =
-          (dPhaseFrac[ip][Deriv::dC+jc] - phaseVolFrac[ip] * dPhaseDens[ip][Deriv::dC+jc]) * phaseDensInv;
+        dPhaseVolFrac[ip][Deriv::dC + jc] =
+          (dPhaseFrac[ip][Deriv::dC + jc] - phaseVolFrac[ip] * dPhaseDens[ip][Deriv::dC + jc]) * phaseDensInv;
       }
 
       // apply chain rule to convert derivatives from global component fractions to densities
@@ -361,8 +361,8 @@ public:
       // now finalize the computation by multiplying by total density
       for( integer jc = 0; jc < numComp; ++jc )
       {
-        dPhaseVolFrac[ip][Deriv::dC+jc] *= totalDensity;
-        dPhaseVolFrac[ip][Deriv::dC+jc] += phaseVolFrac[ip] * dTotalDens_dCompDens;
+        dPhaseVolFrac[ip][Deriv::dC + jc] *= totalDensity;
+        dPhaseVolFrac[ip][Deriv::dC + jc] += phaseVolFrac[ip] * dTotalDens_dCompDens;
       }
 
       phaseVolFrac[ip] *= totalDensity;
@@ -729,7 +729,7 @@ public:
       for( integer jc = 0; jc < numComp; ++jc )
       {
         dPhaseAmount_dC[jc] = dPhaseAmount_dC[jc] * phaseVolFrac[ip]
-                              + phaseDens[ip] * dPhaseVolFrac[ip][Deriv::dC+jc];
+                              + phaseDens[ip] * dPhaseVolFrac[ip][Deriv::dC + jc];
         dPhaseAmount_dC[jc] *= stack.poreVolume;
       }
 
@@ -830,7 +830,7 @@ public:
 
       for( integer jc = 0; jc < numComp; ++jc )
       {
-        stack.localJacobian[numComp][jc+1] -= dPhaseVolFrac[ip][Deriv::dC+jc];
+        stack.localJacobian[numComp][jc + 1] -= dPhaseVolFrac[ip][Deriv::dC + jc];
       }
     }
 
@@ -870,7 +870,7 @@ public:
     // - the component mass balance equations (i = 0 to i = numComp-1)
     // - the volume balance equations (i = numComp)
     // note that numDof includes derivatives wrt temperature if this class is derived in ThermalKernels
-    integer const numRows = numComp+1;
+    integer const numRows = numComp + 1;
     for( integer i = 0; i < numRows; ++i )
     {
       m_localRhs[stack.localRow + i] += stack.localResidual[i];
@@ -1000,7 +1000,7 @@ public:
     internal::kernelLaunchSelectorCompSwitch( numComps, [&] ( auto NC )
     {
       integer constexpr NUM_COMP = NC();
-      integer constexpr NUM_DOF = NC()+1;
+      integer constexpr NUM_DOF = NC() + 1;
 
       BitFlags< ElementBasedAssemblyKernelFlags > kernelFlags;
       if( useTotalMassEquation )
@@ -2118,7 +2118,7 @@ struct HydrostaticPressureKernel
                               integer const ipInit,
                               integer const maxNumEquilIterations,
                               real64 const & equilTolerance,
-                              real64 const (&gravVector)[ 3 ],
+                              real64 const (&gravVector)[3],
                               FLUID_WRAPPER fluidWrapper,
                               arrayView1d< TableFunction::KernelWrapper const > compFracTableWrappers,
                               TableFunction::KernelWrapper tempTableWrapper,
@@ -2248,7 +2248,7 @@ struct HydrostaticPressureKernel
           integer const ipInit,
           integer const maxNumEquilIterations,
           real64 const equilTolerance,
-          real64 const (&gravVector)[ 3 ],
+          real64 const (&gravVector)[3],
           real64 const & minElevation,
           real64 const & elevationIncrement,
           real64 const & datumElevation,
@@ -2353,12 +2353,12 @@ struct HydrostaticPressureKernel
                                     fluidWrapper,
                                     compFracTableWrappers,
                                     tempTableWrapper,
-                                    elevationValues[0][iRef+i],
-                                    pressureValues[iRef+i],
-                                    phaseMassDens[iRef+i],
-                                    elevationValues[0][iRef+i+1],
-                                    pressureValues[iRef+i+1],
-                                    phaseMassDens[iRef+i+1] );
+                                    elevationValues[0][iRef + i],
+                                    pressureValues[iRef + i],
+                                    phaseMassDens[iRef + i],
+                                    elevationValues[0][iRef + i + 1],
+                                    pressureValues[iRef + i + 1],
+                                    phaseMassDens[iRef + i + 1] );
       if( returnValAboveRef == ReturnType::FAILED_TO_CONVERGE )
       {
         returnVal = ReturnType::FAILED_TO_CONVERGE;
@@ -2386,12 +2386,12 @@ struct HydrostaticPressureKernel
                                     fluidWrapper,
                                     compFracTableWrappers,
                                     tempTableWrapper,
-                                    elevationValues[0][iRef-i],
-                                    pressureValues[iRef-i],
-                                    phaseMassDens[iRef-i],
-                                    elevationValues[0][iRef-i-1],
-                                    pressureValues[iRef-i-1],
-                                    phaseMassDens[iRef-i-1] );
+                                    elevationValues[0][iRef - i],
+                                    pressureValues[iRef - i],
+                                    phaseMassDens[iRef - i],
+                                    elevationValues[0][iRef - i - 1],
+                                    pressureValues[iRef - i - 1],
+                                    phaseMassDens[iRef - i - 1] );
       if( returnValBelowRef == ReturnType::FAILED_TO_CONVERGE )
       {
         returnVal = ReturnType::FAILED_TO_CONVERGE;

@@ -66,7 +66,7 @@ void LinePlaneIntersection( LINEDIR_TYPE const & lineDir,
    * d = (planeOrigin - linePoint) * planeNormal / (lineDir * planeNormal )
    * pInt = d*lineDir+linePoint;
    */
-  real64 dummy[ 3 ] = LVARRAY_TENSOROPS_INIT_LOCAL_3( planeOrigin );
+  real64 dummy[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( planeOrigin );
   LvArray::tensorOps::subtract< 3 >( dummy, linePoint );
   real64 const d = LvArray::tensorOps::AiBi< 3 >( dummy, planeNormal ) /
                    LvArray::tensorOps::AiBi< 3 >( lineDir, planeNormal );
@@ -98,39 +98,39 @@ array1d< int >  orderPointsCCW( arrayView2d< real64 > const & points,
   LvArray::tensorOps::fill< 3 >( centroid, 0 );
   for( localIndex a = 0; a < numPoints; ++a )
   {
-    LvArray::tensorOps::add< 3 >( centroid, points[ a ] );
-    indices[ a ] = a;
+    LvArray::tensorOps::add< 3 >( centroid, points[a] );
+    indices[a] = a;
   }
 
   LvArray::tensorOps::scale< 3 >( centroid, 1.0 / numPoints );
 
   real64 v0[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( centroid );
-  LvArray::tensorOps::subtract< 3 >( v0, points[ 0 ] );
+  LvArray::tensorOps::subtract< 3 >( v0, points[0] );
   LvArray::tensorOps::normalize< 3 >( v0 );
 
   // compute angles
-  angle[ 0 ] = 0;
+  angle[0] = 0;
   for( localIndex a = 1; a < numPoints; ++a )
   {
     real64 v[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( centroid );
-    LvArray::tensorOps::subtract< 3 >( v, points[ a ] );
+    LvArray::tensorOps::subtract< 3 >( v, points[a] );
     real64 const dot = LvArray::tensorOps::AiBi< 3 >( v, v0 );
 
-    real64 crossProduct[ 3 ];
+    real64 crossProduct[3];
     LvArray::tensorOps::crossProduct( crossProduct, v, v0 );
     real64 const det = LvArray::tensorOps::AiBi< 3 >( normal, crossProduct );
 
-    angle[ a ] = std::atan2( det, dot );
+    angle[a] = std::atan2( det, dot );
   }
 
   // sort the indices
-  std::sort( indices.begin(), indices.end(), [&]( int i, int j ) { return angle[ i ] < angle[ j ]; } );
+  std::sort( indices.begin(), indices.end(), [&]( int i, int j ) { return angle[i] < angle[j]; } );
 
   // copy the points in the reorderedPoints array.
-  for( localIndex a=0; a < numPoints; a++ )
+  for( localIndex a = 0; a < numPoints; a++ )
   {
     // fill in with ordered
-    LvArray::tensorOps::copy< 3 >( orderedPoints[ a ], points[ indices[ a ] ] );
+    LvArray::tensorOps::copy< 3 >( orderedPoints[a], points[indices[a]] );
   }
 
   for( localIndex a = 0; a < numPoints; a++ )
@@ -165,13 +165,13 @@ real64 ComputeSurfaceArea( arrayView2d< real64 const > const & points,
 
   for( localIndex a = 0; a < points.size( 0 ) - 2; ++a )
   {
-    real64 v1[ 3 ] = LVARRAY_TENSOROPS_INIT_LOCAL_3( orderedPoints[ a + 1 ] );
-    real64 v2[ 3 ] = LVARRAY_TENSOROPS_INIT_LOCAL_3( orderedPoints[ a + 2 ] );
+    real64 v1[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( orderedPoints[a + 1] );
+    real64 v2[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( orderedPoints[a + 2] );
 
-    LvArray::tensorOps::subtract< 3 >( v1, orderedPoints[ 0 ] );
-    LvArray::tensorOps::subtract< 3 >( v2, orderedPoints[ 0 ] );
+    LvArray::tensorOps::subtract< 3 >( v1, orderedPoints[0] );
+    LvArray::tensorOps::subtract< 3 >( v2, orderedPoints[0] );
 
-    real64 triangleNormal[ 3 ];
+    real64 triangleNormal[3];
     LvArray::tensorOps::crossProduct( triangleNormal, v1, v2 );
     surfaceArea += LvArray::tensorOps::l2Norm< 3 >( triangleNormal );
   }
@@ -210,14 +210,14 @@ real64 centroid_3DPolygon( arraySlice1d< localIndex const > const pointsIndices,
 
   GEOS_ERROR_IF_LT( numberOfPoints, 2 );
 
-  real64 current[ 3 ], next[ 3 ], crossProduct[ 3 ];
+  real64 current[3], next[3], crossProduct[3];
 
-  LvArray::tensorOps::copy< 3 >( next, points[ pointsIndices[ numberOfPoints - 1 ] ] );
+  LvArray::tensorOps::copy< 3 >( next, points[pointsIndices[numberOfPoints - 1]] );
 
-  for( localIndex a=0; a<numberOfPoints; ++a )
+  for( localIndex a = 0; a < numberOfPoints; ++a )
   {
     LvArray::tensorOps::copy< 3 >( current, next );
-    LvArray::tensorOps::copy< 3 >( next, points[ pointsIndices[ a ] ] );
+    LvArray::tensorOps::copy< 3 >( next, points[pointsIndices[a]] );
 
     LvArray::tensorOps::crossProduct( crossProduct, current, next );
 
@@ -235,9 +235,9 @@ real64 centroid_3DPolygon( arraySlice1d< localIndex const > const pointsIndices,
   }
   else if( area < -areaTolerance )
   {
-    for( localIndex a=0; a<numberOfPoints; ++a )
+    for( localIndex a = 0; a < numberOfPoints; ++a )
     {
-      GEOS_LOG_RANK( "Points: " << points[ pointsIndices[ a ] ] << " " << pointsIndices[ a ] );
+      GEOS_LOG_RANK( "Points: " << points[pointsIndices[a]] << " " << pointsIndices[a] );
     }
     GEOS_ERROR( "Negative area found : " << area );
   }
@@ -262,21 +262,21 @@ void FixNormalOrientation_3D( NORMAL_TYPE && normal )
 
   // Orient local normal in global sense.
   // First check: align with z direction
-  if( normal[ 2 ] <= -orientationTolerance )
+  if( normal[2] <= -orientationTolerance )
   {
     LvArray::tensorOps::scale< 3 >( normal, -1.0 );
   }
-  else if( std::fabs( normal[ 2 ] ) < orientationTolerance )
+  else if( std::fabs( normal[2] ) < orientationTolerance )
   {
     // If needed, second check: align with y direction
-    if( normal[ 1 ] <= -orientationTolerance )
+    if( normal[1] <= -orientationTolerance )
     {
       LvArray::tensorOps::scale< 3 >( normal, -1.0 );
     }
-    else if( fabs( normal[ 1 ] ) < orientationTolerance )
+    else if( fabs( normal[1] ) < orientationTolerance )
     {
       // If needed, third check: align with x direction
-      if( normal[ 0 ] <= -orientationTolerance )
+      if( normal[0] <= -orientationTolerance )
       {
         LvArray::tensorOps::scale< 3 >( normal, -1.0 );
       }
@@ -296,14 +296,14 @@ GEOS_HOST_DEVICE
 void RotationMatrix_3D( NORMAL_TYPE const & normal,
                         MATRIX_TYPE && rotationMatrix )
 {
-  real64 m1[ 3 ] = { normal[ 2 ], 0.0, -normal[ 0 ] };
-  real64 m2[ 3 ] = { 0.0, normal[ 2 ], -normal[ 1 ] };
+  real64 m1[3] = { normal[2], 0.0, -normal[0] };
+  real64 m2[3] = { 0.0, normal[2], -normal[1] };
   real64 const norm_m1 = LvArray::tensorOps::l2Norm< 3 >( m1 );
   real64 const norm_m2 = LvArray::tensorOps::l2Norm< 3 >( m2 );
 
   // If present, looks for a vector with 0 norm
   // Fix the uncertain case of norm_m1 very close to norm_m2
-  if( norm_m1+1.e+2*machinePrecision > norm_m2 )
+  if( norm_m1 + 1.e+2 * machinePrecision > norm_m2 )
   {
     LvArray::tensorOps::crossProduct( m2, normal, m1 );
     LvArray::tensorOps::normalize< 3 >( m2 );
@@ -318,15 +318,15 @@ void RotationMatrix_3D( NORMAL_TYPE const & normal,
   }
 
   // Save everything in the standard form (3x3 rotation matrix)
-  rotationMatrix[ 0 ][ 0 ] = normal[ 0 ];
-  rotationMatrix[ 1 ][ 0 ] = normal[ 1 ];
-  rotationMatrix[ 2 ][ 0 ] = normal[ 2 ];
-  rotationMatrix[ 0 ][ 1 ] = m1[ 0 ];
-  rotationMatrix[ 1 ][ 1 ] = m1[ 1 ];
-  rotationMatrix[ 2 ][ 1 ] = m1[ 2 ];
-  rotationMatrix[ 0 ][ 2 ] = m2[ 0 ];
-  rotationMatrix[ 1 ][ 2 ] = m2[ 1 ];
-  rotationMatrix[ 2 ][ 2 ] = m2[ 2 ];
+  rotationMatrix[0][0] = normal[0];
+  rotationMatrix[1][0] = normal[1];
+  rotationMatrix[2][0] = normal[2];
+  rotationMatrix[0][1] = m1[0];
+  rotationMatrix[1][1] = m1[1];
+  rotationMatrix[2][1] = m1[2];
+  rotationMatrix[0][2] = m2[0];
+  rotationMatrix[1][2] = m2[1];
+  rotationMatrix[2][2] = m2[2];
 
   GEOS_ERROR_IF( fabs( LvArray::tensorOps::determinant< 3 >( rotationMatrix ) - 1.0 ) > 1.e+1 * machinePrecision,
                  "Rotation matrix with determinant different from +1.0" );
@@ -430,8 +430,8 @@ void getBoundingBox( localIndex const elemIndex,
     localIndex const id = pointIndices( elemIndex, a );
     for( localIndex d = 0; d < 3; ++d )
     {
-      minCoords[ d ] = fmin( minCoords[ d ], pointCoordinates( id, d ) );
-      boxDims[ d ] = fmax( boxDims[ d ], pointCoordinates( id, d ) );
+      minCoords[d] = fmin( minCoords[d], pointCoordinates( id, d ) );
+      boxDims[d] = fmax( boxDims[d], pointCoordinates( id, d ) );
     }
   }
 
@@ -449,7 +449,7 @@ GEOS_HOST_DEVICE inline
 real64 elementVolume( real64 const (&X)[FE_TYPE::numNodes][3] )
 {
   real64 result{};
-  for( localIndex q=0; q<FE_TYPE::numQuadraturePoints; ++q )
+  for( localIndex q = 0; q < FE_TYPE::numQuadraturePoints; ++q )
   {
     result = result + FE_TYPE::transformedQuadratureWeight( q, X );
   }
@@ -517,7 +517,7 @@ real64 pyramidVolume( real64 const (&X)[5][3] )
 template< integer N >
 GEOS_HOST_DEVICE
 inline
-real64 prismVolume( real64 const (&X)[2*N][3] )
+real64 prismVolume( real64 const (&X)[2 * N][3] )
 {
   static_assert( N > 4,
                  "Function prismVolume can be called for a prism with N-sided polygon base where N > 5." );
@@ -543,15 +543,15 @@ real64 prismVolume( real64 const (&X)[2*N][3] )
   {
 
     LvArray::tensorOps::copy< 3 >( XWedge[0], X[a] );
-    LvArray::tensorOps::copy< 3 >( XWedge[1], X[a+N] );
-    LvArray::tensorOps::copy< 3 >( XWedge[2], X[a+1] );
-    LvArray::tensorOps::copy< 3 >( XWedge[3], X[a+1+N] );
+    LvArray::tensorOps::copy< 3 >( XWedge[1], X[a + N] );
+    LvArray::tensorOps::copy< 3 >( XWedge[2], X[a + 1] );
+    LvArray::tensorOps::copy< 3 >( XWedge[3], X[a + 1 + N] );
     LvArray::tensorOps::copy< 3 >( XWedge[4], XGBot );
     LvArray::tensorOps::copy< 3 >( XWedge[5], XGTop );
     result = result + computationalGeometry::elementVolume< finiteElement::H1_Wedge_Lagrange1_Gauss6 >( XWedge );
   }
-  LvArray::tensorOps::copy< 3 >( XWedge[0], X[N-1] );
-  LvArray::tensorOps::copy< 3 >( XWedge[1], X[2*N-1] );
+  LvArray::tensorOps::copy< 3 >( XWedge[0], X[N - 1] );
+  LvArray::tensorOps::copy< 3 >( XWedge[1], X[2 * N - 1] );
   LvArray::tensorOps::copy< 3 >( XWedge[2], X[0] );
   LvArray::tensorOps::copy< 3 >( XWedge[3], X[N] );
   LvArray::tensorOps::copy< 3 >( XWedge[4], XGBot );

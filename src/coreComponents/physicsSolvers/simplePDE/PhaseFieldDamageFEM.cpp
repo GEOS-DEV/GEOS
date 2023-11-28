@@ -101,7 +101,7 @@ void PhaseFieldDamageFEM::registerDataOnMesh( Group & meshBodies )
 
     ElementRegionManager & elemManager = mesh.getElemManager();
 
-    elemManager.forElementSubRegions< CellElementSubRegion >( regionNames, [ &]( localIndex const, CellElementSubRegion & subRegion )
+    elemManager.forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const, CellElementSubRegion & subRegion )
     {
       subRegion.registerWrapper( viewKeyStruct::coeffNameString(), &m_coeff ).
         setApplyDefaultValue( 0.0 ).
@@ -243,7 +243,7 @@ void PhaseFieldDamageFEM::assembleSystem( real64 const GEOS_UNUSED_PARAM( time_n
                                                  localRhs,
                                                  dt,
                                                  m_fieldName,
-                                                 m_localDissipationOption=="Linear" ? 1 : 2 );
+                                                 m_localDissipationOption == "Linear" ? 1 : 2 );
 
     finiteElement::
       regionBasedKernelApplication< parallelDevicePolicy<>,
@@ -352,9 +352,9 @@ void PhaseFieldDamageFEM::assembleSystem( real64 const GEOS_UNUSED_PARAM( time_n
                     // -
                     //                                   (ell * D/Gc) * Na * qp_damage);
 
-                    element_rhs( a ) += detJ[k][q] * ( -3 * Na / 16  -
-                                                       0.375*pow( ell, 2 ) * LvArray::tensorOps::AiBi< 3 >( qp_grad_damage, dNdX[k][q][a] ) -
-                                                       (0.5 * ell * D/Gc) * Na * constitutiveUpdate.GetDegradationDerivative( qp_damage ));
+                    element_rhs( a ) += detJ[k][q] * ( -3 * Na / 16 -
+                                                       0.375 * pow( ell, 2 ) * LvArray::tensorOps::AiBi< 3 >( qp_grad_damage, dNdX[k][q][a] ) -
+                                                       (0.5 * ell * D / Gc) * Na * constitutiveUpdate.GetDegradationDerivative( qp_damage ));
 
                   }
                   else
@@ -366,7 +366,7 @@ void PhaseFieldDamageFEM::assembleSystem( real64 const GEOS_UNUSED_PARAM( time_n
 
                     element_rhs( a ) -= detJ[k][q] * (Na * qp_damage +
                                                       (pow( ell, 2 ) * LvArray::tensorOps::AiBi< 3 >( qp_grad_damage, dNdX[k][q][a] ) +
-                                                       Na * constitutiveUpdate.GetDegradationDerivative( qp_damage ) * (ell*strainEnergyDensity/Gc)) );
+                                                       Na * constitutiveUpdate.GetDegradationDerivative( qp_damage ) * (ell * strainEnergyDensity / Gc)) );
                   }
 
                   for( localIndex b = 0; b < numNodesPerElement; ++b )
@@ -379,8 +379,8 @@ void PhaseFieldDamageFEM::assembleSystem( real64 const GEOS_UNUSED_PARAM( time_n
                       //                            (ell * D/Gc) * Na * Nb);
                       //
                       element_matrix( a, b ) -= detJ[k][q] *
-                                                (0.375*pow( ell, 2 ) * LvArray::tensorOps::AiBi< 3 >( dNdX[k][q][a], dNdX[k][q][b] ) +
-                                                 (0.5 * ell * D/Gc) * constitutiveUpdate.GetDegradationSecondDerivative( qp_damage ) * Na * Nb);
+                                                (0.375 * pow( ell, 2 ) * LvArray::tensorOps::AiBi< 3 >( dNdX[k][q][a], dNdX[k][q][b] ) +
+                                                 (0.5 * ell * D / Gc) * constitutiveUpdate.GetDegradationSecondDerivative( qp_damage ) * Na * Nb);
 
                     }
                     else
@@ -392,7 +392,7 @@ void PhaseFieldDamageFEM::assembleSystem( real64 const GEOS_UNUSED_PARAM( time_n
 
                       element_matrix( a, b ) -= detJ[k][q] *
                                                 ( pow( ell, 2 ) * LvArray::tensorOps::AiBi< 3 >( dNdX[k][q][a], dNdX[k][q][b] ) +
-                                                  Na * Nb * (1 + constitutiveUpdate.GetDegradationSecondDerivative( qp_damage ) * ell*strainEnergyDensity/Gc )
+                                                  Na * Nb * (1 + constitutiveUpdate.GetDegradationSecondDerivative( qp_damage ) * ell * strainEnergyDensity / Gc )
                                                 );
                     }
                   }
@@ -552,13 +552,13 @@ PhaseFieldDamageFEM::calculateResidualNorm( real64 const & GEOS_UNUSED_PARAM( ti
                       0,
                       MPI_COMM_GEOSX );
 
-  if( rank==0 )
+  if( rank == 0 )
   {
-    for( int r=0; r<size; ++r )
+    for( int r = 0; r < size; ++r )
     {
       // sum/max across all ranks
-      globalResidualNorm[0] += globalValues[r*2];
-      globalResidualNorm[1] = std::max( globalResidualNorm[1], globalValues[r*2+1] );
+      globalResidualNorm[0] += globalValues[r * 2];
+      globalResidualNorm[1] = std::max( globalResidualNorm[1], globalValues[r * 2 + 1] );
     }
   }
 
@@ -567,7 +567,7 @@ PhaseFieldDamageFEM::calculateResidualNorm( real64 const & GEOS_UNUSED_PARAM( ti
 
   const real64 residual = sqrt( globalResidualNorm[0] ) / ( globalResidualNorm[1] );
 
-  if( getLogLevel() >= 1 && logger::internal::rank==0 )
+  if( getLogLevel() >= 1 && logger::internal::rank == 0 )
   {
     std::cout << GEOS_FMT( "        ( R{} ) = ( {:4.2e} )", coupledSolverAttributePrefix(), residual );
   }
@@ -657,7 +657,7 @@ void PhaseFieldDamageFEM::applyIrreversibilityConstraint( DofManager const & dof
 
           if( localRow >= 0 && localRow < localRhs.size() )
           {
-            localRhs[ localRow ] = rhsContribution;
+            localRhs[localRow] = rhsContribution;
           }
         }
       }

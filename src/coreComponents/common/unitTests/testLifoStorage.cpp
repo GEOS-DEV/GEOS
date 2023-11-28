@@ -82,7 +82,7 @@ void testLifoStorage( int elemCnt, int numberOfElementsOnDevice, int numberOfEle
   {
 
     float * dataPointer = array.data();
-    forAll< POLICY >( elemCnt, [dataPointer, j, elemCnt] GEOS_HOST_DEVICE ( int i ) { dataPointer[ i ] = j*elemCnt+i; } );
+    forAll< POLICY >( elemCnt, [dataPointer, j, elemCnt] GEOS_HOST_DEVICE ( int i ) { dataPointer[i] = j * elemCnt + i; } );
     lifo.push( array );
   }
 
@@ -92,7 +92,7 @@ void testLifoStorage( int elemCnt, int numberOfElementsOnDevice, int numberOfEle
     float * dataPointer = array.data();
     forAll< POLICY >( elemCnt, [dataPointer, totalNumberOfBuffers, j, elemCnt] GEOS_HOST_DEVICE ( int i )
     {
-      PORTABLE_EXPECT_EQ( dataPointer[ i ], (float)(totalNumberOfBuffers-j-1)*elemCnt+i );
+      PORTABLE_EXPECT_EQ( dataPointer[i], (float)(totalNumberOfBuffers - j - 1) * elemCnt + i );
     } );
   }
 }
@@ -109,7 +109,7 @@ void testLifoStorageBig( int elemCnt, int numberOfElementsOnDevice, int numberOf
   {
 
     float * dataPointer = array.data();
-    forAll< POLICY >( elemCnt, [dataPointer, j, elemCnt] GEOS_HOST_DEVICE ( int i ) { dataPointer[ i ] = j*elemCnt+i; } );
+    forAll< POLICY >( elemCnt, [dataPointer, j, elemCnt] GEOS_HOST_DEVICE ( int i ) { dataPointer[i] = j * elemCnt + i; } );
     lifo.push( array );
   }
 
@@ -119,7 +119,7 @@ void testLifoStorageBig( int elemCnt, int numberOfElementsOnDevice, int numberOf
     float * dataPointer = array.data();
     forAll< POLICY >( elemCnt, [dataPointer, j, elemCnt] GEOS_HOST_DEVICE ( int i )
     {
-      PORTABLE_EXPECT_EQ( dataPointer[ i ], (float)(10-j-1)*elemCnt+i );
+      PORTABLE_EXPECT_EQ( dataPointer[i], (float)(10 - j - 1) * elemCnt + i );
     } );
   }
 }
@@ -136,7 +136,7 @@ void testLifoStorageAsync( int elemCnt, int numberOfElementsOnDevice, int number
 
     float * dataPointer = array.data();
     lifo.pushWait( );
-    forAll< POLICY >( elemCnt, [dataPointer, j, elemCnt] GEOS_HOST_DEVICE ( int i ) { dataPointer[ i ] = j*elemCnt+i; } );
+    forAll< POLICY >( elemCnt, [dataPointer, j, elemCnt] GEOS_HOST_DEVICE ( int i ) { dataPointer[i] = j * elemCnt + i; } );
     lifo.pushAsync( array );
   }
 
@@ -147,7 +147,7 @@ void testLifoStorageAsync( int elemCnt, int numberOfElementsOnDevice, int number
     float * dataPointer = array.data();
     forAll< POLICY >( elemCnt, [dataPointer, totalNumberOfBuffers, j, elemCnt] GEOS_HOST_DEVICE ( int i )
     {
-      PORTABLE_EXPECT_EQ( dataPointer[ i ], (float)(totalNumberOfBuffers-j-1)*elemCnt+i );
+      PORTABLE_EXPECT_EQ( dataPointer[i], (float)(totalNumberOfBuffers - j - 1) * elemCnt + i );
     } );
   }
 }

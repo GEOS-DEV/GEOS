@@ -52,14 +52,14 @@ public:
   {
 
     // permeability
-    real64 const perm = ( oldHydraulicAperture*oldHydraulicAperture*oldHydraulicAperture +
-                          oldHydraulicAperture*oldHydraulicAperture*newHydraulicAperture +
-                          oldHydraulicAperture*newHydraulicAperture*newHydraulicAperture +
-                          newHydraulicAperture*newHydraulicAperture*newHydraulicAperture ) / 48.0;
+    real64 const perm = ( oldHydraulicAperture * oldHydraulicAperture * oldHydraulicAperture +
+                          oldHydraulicAperture * oldHydraulicAperture * newHydraulicAperture +
+                          oldHydraulicAperture * newHydraulicAperture * newHydraulicAperture +
+                          newHydraulicAperture * newHydraulicAperture * newHydraulicAperture ) / 48.0;
 
-    real64 const dPerm  = ( oldHydraulicAperture*oldHydraulicAperture +
-                            2.0*oldHydraulicAperture*newHydraulicAperture +
-                            3.0*newHydraulicAperture*newHydraulicAperture ) / 48.0;
+    real64 const dPerm  = ( oldHydraulicAperture * oldHydraulicAperture +
+                            2.0 * oldHydraulicAperture * newHydraulicAperture +
+                            3.0 * newHydraulicAperture * newHydraulicAperture ) / 48.0;
 
     real64 const squaredHydraulicAperture = newHydraulicAperture * newHydraulicAperture;
 
@@ -69,7 +69,7 @@ public:
     // vertical multiplier
     permeabilityMultiplier[1] = 1.0 / (1.0 - proppantPackVolumeFraction + proppantPackVolumeFraction * squaredHydraulicAperture / ( 12.0 * m_proppantPackPermeability ) );
 
-    for( int dim=0; dim < 3; dim++ )
+    for( int dim = 0; dim < 3; dim++ )
     {
       permeability[dim]        = perm;
       dPerm_dDispJump[dim][0]  = dPerm;

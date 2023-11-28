@@ -164,20 +164,20 @@ void GmresSolver< VECTOR >::solve( Vector const & b,
         w.axpby( -H( i, j ), m_kspace[i], 1.0 );
       }
 
-      H( j+1, j ) = w.norm2();
-      GEOSX_KRYLOV_BREAKDOWN_IF_ZERO( H( j+1, j ) )
-      m_kspace[j+1].axpby( 1.0 / H( j+1, j ), w, 0.0 );
+      H( j + 1, j ) = w.norm2();
+      GEOSX_KRYLOV_BREAKDOWN_IF_ZERO( H( j + 1, j ) )
+      m_kspace[j + 1].axpby( 1.0 / H( j + 1, j ), w, 0.0 );
 
       // Apply all previous rotations to the new column
       for( integer i = 0; i < j; ++i )
       {
-        ApplyGivensRotation( c[i], s[i], H( i, j ), H( i+1, j ) );
+        ApplyGivensRotation( c[i], s[i], H( i, j ), H( i + 1, j ) );
       }
 
       // Compute and apply the new rotation to eliminate subdiagonal element
-      ComputeGivensRotation( H( j, j ), H( j+1, j ), c[j], s[j] );
-      ApplyGivensRotation( c[j], s[j], H( j, j ), H( j+1, j ) );
-      ApplyGivensRotation( c[j], s[j], g[j], g[j+1] );
+      ComputeGivensRotation( H( j, j ), H( j + 1, j ), c[j], s[j] );
+      ApplyGivensRotation( c[j], s[j], H( j, j ), H( j + 1, j ) );
+      ApplyGivensRotation( c[j], s[j], g[j], g[j + 1] );
     }
 
     // Regardless of how we quit out of inner loop, j is the actual size of H

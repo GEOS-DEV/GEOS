@@ -152,7 +152,7 @@ void EdgeManager::setIsExternal( FaceManager const & faceManager )
   m_isExternal.zero();
 
   // loop through all faces
-  for( localIndex kf=0; kf<faceManager.size(); ++kf )
+  for( localIndex kf = 0; kf < faceManager.size(); ++kf )
   {
     // check to see if the face is on a domain boundary
     if( isExternalFace[kf] == 1 )
@@ -161,7 +161,7 @@ void EdgeManager::setIsExternal( FaceManager const & faceManager )
       localIndex const numEdges = faceToEdges.sizeOfArray( kf );
       for( localIndex a = 0; a < numEdges; ++a )
       {
-        m_isExternal[ faceToEdges( kf, a ) ] = 1;
+        m_isExternal[faceToEdges( kf, a )] = 1;
       }
     }
   }

@@ -42,8 +42,8 @@ namespace geos
  * performance to an index lookup after the first use of a keyIndex.
  */
 template< typename T,
-          typename T_PTR=T *,
-          typename KEY_TYPE=string,
+          typename T_PTR = T *,
+          typename KEY_TYPE = string,
           typename INDEX_TYPE = int >
 class MappedVector
 {
@@ -156,8 +156,8 @@ public:
    */
   inline T const * operator[]( INDEX_TYPE index ) const
   {
-    return ( index>KeyIndex::invalid_index &&
-             index<static_cast< INDEX_TYPE >( m_values.size() ) ) ? const_cast< T const * >(&(*(m_values[index].second))) : nullptr;
+    return ( index > KeyIndex::invalid_index &&
+             index < static_cast< INDEX_TYPE >( m_values.size() ) ) ? const_cast< T const * >(&(*(m_values[index].second))) : nullptr;
   }
 
   /**
@@ -176,7 +176,7 @@ public:
   inline T const * operator[]( KEY_TYPE const & keyName ) const
   {
     typename LookupMapType::const_iterator iter = m_keyLookup.find( keyName );
-    return ( iter!=m_keyLookup.end() ? this->operator[]( iter->second ) : nullptr );
+    return ( iter != m_keyLookup.end() ? this->operator[]( iter->second ) : nullptr );
   }
 
   /**
@@ -196,13 +196,13 @@ public:
   {
     INDEX_TYPE index = keyIndex.index();
 
-    if( index==KeyIndex::invalid_index )
+    if( index == KeyIndex::invalid_index )
     {
       index = getIndex( keyIndex.key() );
       keyIndex.setIndex( index );
     }
 #ifdef MAPPED_VECTOR_RANGE_CHECKING
-    else if( m_values[index].first!=keyIndex.Key() )
+    else if( m_values[index].first != keyIndex.Key() )
     {
       index = getIndex( keyIndex.Key() );
       keyIndex.setIndex( index );
@@ -280,7 +280,7 @@ public:
   inline INDEX_TYPE getIndex( KEY_TYPE const & key ) const
   {
     typename LookupMapType::const_iterator iter = m_keyLookup.find( key );
-    return ( iter!=m_keyLookup.end() ? iter->second : KeyIndex::invalid_index );
+    return ( iter != m_keyLookup.end() ? iter->second : KeyIndex::invalid_index );
   }
 
 
@@ -348,7 +348,7 @@ public:
   void erase( KEY_TYPE const & key )
   {
     typename LookupMapType::const_iterator iter = m_keyLookup.find( key );
-    if( iter!=m_keyLookup.end() )
+    if( iter != m_keyLookup.end() )
     {
       erase( iter->second );
     }
@@ -364,7 +364,7 @@ public:
   {
     INDEX_TYPE index = keyIndex.Index();
 
-    if( (index==KeyIndex::invalid_index) || (m_values[index].first!=keyIndex.Key()) )
+    if( (index == KeyIndex::invalid_index) || (m_values[index].first != keyIndex.Key()) )
     {
       index = getIndex( keyIndex.Key() );
       keyIndex.setIndex( index );
@@ -499,7 +499,7 @@ T * MappedVector< T, T_PTR, KEY_TYPE, INDEX_TYPE >::insert( KEY_TYPE const & key
     }
 
     // if value is empty, then move source into value slot
-    if( m_values[index].second==nullptr )
+    if( m_values[index].second == nullptr )
     {
       m_values[index].second = std::move( source );
       m_constKeyValues[index].second = rawPtr( index );
@@ -518,7 +518,7 @@ T * MappedVector< T, T_PTR, KEY_TYPE, INDEX_TYPE >::insert( KEY_TYPE const & key
       {
         GEOS_ERROR( "MappedVector::insert(): Tried to insert existing key (" << keyName <<
                     ") with a different type without overwrite flag\n " << " " << LvArray::system::demangleType( source ) <<
-                    " != " << LvArray::system::demangleType( m_values[ index ].second ) );
+                    " != " << LvArray::system::demangleType( m_values[index].second ) );
       }
       else
       {

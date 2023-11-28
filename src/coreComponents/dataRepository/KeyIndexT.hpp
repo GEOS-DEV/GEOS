@@ -118,7 +118,7 @@ public:
    */
   bool isIndexSet() const
   {
-    return m_index==INVALID_INDEX ? false : true;
+    return m_index == INVALID_INDEX ? false : true;
   }
 
   /**

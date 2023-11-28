@@ -236,13 +236,13 @@ void addEntriesRestricted( hypre_CSRMatrix const * const src_mat,
   arrayView1d< HYPRE_Int > const dst_permutation = dst_permutation_arr.toView();
   // Each thread adds one row of src into dst
   forAll< hypre::execPolicy >( dst.nrow,
-                               [ src,
-                                 src_colmap,
-                                 dst,
-                                 dst_colmap,
-                                 scale,
-                                 src_permutation,
-                                 dst_permutation] GEOS_HYPRE_DEVICE ( HYPRE_Int const localRow )
+                               [src,
+                                src_colmap,
+                                dst,
+                                dst_colmap,
+                                scale,
+                                src_permutation,
+                                dst_permutation] GEOS_HYPRE_DEVICE ( HYPRE_Int const localRow )
   {
     HYPRE_Int const src_offset = src.rowptr[localRow];
     HYPRE_Int const src_length = src.rowptr[localRow + 1] - src_offset;

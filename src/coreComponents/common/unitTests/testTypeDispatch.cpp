@@ -93,7 +93,7 @@ checkType( types::TypeList< Ts... > )
 }
 
 template< typename TRUE_TYPES_LIST, size_t I = 0, typename ... Ts >
-typename std::enable_if< (I < sizeof...(Ts)), void>::type
+typename std::enable_if < (I < sizeof...(Ts)), void > ::type
 checkType( types::TypeList< Ts... > list )
 {
   EXPECT_TRUE( ( std::is_same< camp::at_t< decltype(list), camp::num< I > >,

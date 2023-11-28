@@ -271,7 +271,7 @@ private:
    */
   inline globalIndex nodeGlobalIndex( int const index[3] )
   {
-    return index[0]*(m_numElemsTotal[1]+1)*(m_numElemsTotal[2]+1) + index[1]*(m_numElemsTotal[2]+1) + index[2];
+    return index[0] * (m_numElemsTotal[1] + 1) * (m_numElemsTotal[2] + 1) + index[1] * (m_numElemsTotal[2] + 1) + index[2];
   }
 
   /**
@@ -280,7 +280,7 @@ private:
    */
   inline globalIndex elemGlobalIndex( int const index[3] )
   {
-    return index[0]*m_numElemsTotal[1]*m_numElemsTotal[2] + index[1]*m_numElemsTotal[2] + index[2];
+    return index[0] * m_numElemsTotal[1] * m_numElemsTotal[2] + index[1] * m_numElemsTotal[2] + index[2];
   }
 
   /**
@@ -303,7 +303,7 @@ private:
       int startingIndex = 0;
       int endingIndex = 0;
       int block = 0;
-      for( block=0; block<m_nElems[0].size(); ++block )
+      for( block = 0; block < m_nElems[0].size(); ++block )
       {
         startingIndex = endingIndex;
         endingIndex = startingIndex + m_nElems[0][block];
@@ -311,9 +311,9 @@ private:
       xPosIndex = endingIndex;
     }
 
-    for( int i=0; i<3; ++i )
+    for( int i = 0; i < 3; ++i )
     {
-      if( m_setCoords[i].size()>0 )
+      if( m_setCoords[i].size() > 0 )
       {
         X[i] = m_setCoords[i][a[i]];
       }
@@ -323,27 +323,27 @@ private:
         int startingIndex = 0;
         int endingIndex = 0;
         int block = 0;
-        for( block=0; block<m_nElems[i].size(); ++block )
+        for( block = 0; block < m_nElems[i].size(); ++block )
         {
           startingIndex = endingIndex;
           endingIndex = startingIndex + m_nElems[i][block];
-          if( a[i]>=startingIndex && a[i]<=endingIndex )
+          if( a[i] >= startingIndex && a[i] <= endingIndex )
           {
             break;
           }
         }
         real64 min = m_vertices[i][block];
-        real64 max = m_vertices[i][block+1];
+        real64 max = m_vertices[i][block + 1];
 
 
-        X[i] = min + (max-min) * ( double( a[i] - startingIndex ) / m_nElems[i][block] );
+        X[i] = min + (max - min) * ( double( a[i] - startingIndex ) / m_nElems[i][block] );
 
         // First check if m_nElemBias contains values
         // Otherwise the next test will cause a segfault when looking for "block"
-        if( m_nElemBias[i].size()>0 )
+        if( m_nElemBias[i].size() > 0 )
         {
           // Verify that the bias is non-zero and applied to more than one block:
-          if( ( !isZero( m_nElemBias[i][block] ) ) && (m_nElems[i][block]>1))
+          if( ( !isZero( m_nElemBias[i][block] ) ) && (m_nElems[i][block] > 1))
           {
             GEOS_ERROR_IF( fabs( m_nElemBias[i][block] ) >= 1,
                            getWrapperDataContext( i == 0 ? viewKeyStruct::xBiasString() :
@@ -351,17 +351,17 @@ private:
                                                   viewKeyStruct::zBiasString() ) <<
                            ", block index = " << block << " : Mesh bias must between -1 and 1!" );
 
-            real64 len = max -  min;
+            real64 len = max - min;
             real64 xmean = len / m_nElems[i][block];
             real64 x0 = xmean * double( a[i] - startingIndex );
-            real64 chi = m_nElemBias[i][block]/(xmean/len - 1.0);
-            real64 dx = -x0*chi + x0*x0*chi/len;
+            real64 chi = m_nElemBias[i][block] / (xmean / len - 1.0);
+            real64 dx = -x0 * chi + x0 * x0 * chi / len;
             X[i] += dx;
           }
         }
 
         // This is for creating regular triangle pattern
-        if( i==0 ) xInterval = (max-min) / m_nElems[i][block];
+        if( i == 0 ) xInterval = (max - min) / m_nElems[i][block];
         if( trianglePattern == 1 && i == 1 && a[1] % 2 == 1 && a[0] != 0 && a[0] != xPosIndex )
           X[0] -= xInterval * 0.5;
       }
@@ -377,9 +377,9 @@ private:
   template< typename OUT_VECTOR >
   inline void getElemCenterPosition( int const k[3], OUT_VECTOR && X )
   {
-    for( int i=0; i<3; ++i )
+    for( int i = 0; i < 3; ++i )
     {
-      X[i] = m_min[i] + (m_max[i]-m_min[i]) * ( ( k[i] + 0.5 ) / m_numElemsTotal[i] );
+      X[i] = m_min[i] + (m_max[i] - m_min[i]) * ( ( k[i] + 0.5 ) / m_numElemsTotal[i] );
     }
   }
 

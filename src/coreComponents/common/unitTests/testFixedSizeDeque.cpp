@@ -94,13 +94,13 @@ TEST( FixedSizeDequeTest, emplace_and_pop )
   EXPECT_EQ( false, deque.full());
 
   for( int i = 0; i < elemCnt; i++ )
-    array[i] = 2*i;
+    array[i] = 2 * i;
   deque.emplace_front( array.toSliceConst() );
   EXPECT_EQ( false, deque.empty());
   EXPECT_EQ( true, deque.full());
 
   for( int i = 0; i < elemCnt; i++ )
-    EXPECT_EQ( deque.front()[i], 2*i );
+    EXPECT_EQ( deque.front()[i], 2 * i );
   for( int i = 0; i < elemCnt; i++ )
     EXPECT_EQ( deque.back()[i], i );
 
@@ -110,9 +110,9 @@ TEST( FixedSizeDequeTest, emplace_and_pop )
   EXPECT_EQ( false, deque.full());
 
   for( int i = 0; i < elemCnt; i++ )
-    EXPECT_EQ( deque.front()[i], 2*i );
+    EXPECT_EQ( deque.front()[i], 2 * i );
   for( int i = 0; i < elemCnt; i++ )
-    EXPECT_EQ( deque.back()[i], 2*i );
+    EXPECT_EQ( deque.back()[i], 2 * i );
 
   deque.pop_front();
   EXPECT_EQ( true, deque.empty());
@@ -132,9 +132,9 @@ TEST( FixedSizeDequeTest, emplace_and_pop_front )
   for( int j = 0; j < maxArray; j++ )
   {
     for( int i = 0; i < elemCnt; i++ )
-      array[i] = i+maxArray*j;
+      array[i] = i + maxArray * j;
     deque.emplace_front( array.toSliceConst() );
-    if( j+1 < maxArray )
+    if( j + 1 < maxArray )
     {
       EXPECT_EQ( false, deque.empty());
       EXPECT_EQ( false, deque.full());
@@ -148,7 +148,7 @@ TEST( FixedSizeDequeTest, emplace_and_pop_front )
   for( int j = 0; j < maxArray; j++ )
   {
     for( int i = 0; i < elemCnt; i++ )
-      EXPECT_EQ( deque.front()[i], i+(maxArray-j-1)*maxArray );
+      EXPECT_EQ( deque.front()[i], i + (maxArray - j - 1) * maxArray );
 
     deque.pop_front();
     if( j + 1 < maxArray )
@@ -178,10 +178,10 @@ TEST( FixedSizeDequeTest, emplace_and_pop_front_cuda )
   for( int j = 0; j < maxArray; j++ )
   {
     for( int i = 0; i < elemCnt; i++ )
-      array[i] = i + j *maxArray;
+      array[i] = i + j * maxArray;
     camp::resources::Event e = deque.emplace_front( array.toSliceConst() );
     stream.wait_for( &e );
-    if( j+1 < maxArray )
+    if( j + 1 < maxArray )
     {
       EXPECT_EQ( false, deque.empty());
       EXPECT_EQ( false, deque.full());
@@ -198,7 +198,7 @@ TEST( FixedSizeDequeTest, emplace_and_pop_front_cuda )
     LvArray::memcpy( array.toSlice(), deque.front() );
     array.move( LvArray::MemorySpace::host, false );
     for( int i = 0; i < elemCnt; i++ )
-      EXPECT_EQ( array[i], i+(maxArray-j-1)*maxArray );
+      EXPECT_EQ( array[i], i + (maxArray - j - 1) * maxArray );
 
     deque.pop_front();
     if( j + 1 < maxArray )

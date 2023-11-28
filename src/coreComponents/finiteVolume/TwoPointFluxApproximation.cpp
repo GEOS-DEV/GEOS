@@ -158,7 +158,7 @@ void TwoPointFluxApproximation::computeCellStencil( MeshLevel & mesh ) const
       return;
     }
 
-    real64 faceCenter[ 3 ], faceNormal[ 3 ], cellToFaceVec[2][ 3 ];
+    real64 faceCenter[3], faceNormal[3], cellToFaceVec[2][3];
     real64 const faceArea = computationalGeometry::centroid_3DPolygon( faceToNodes[kf], X, faceCenter, faceNormal, areaTolerance );
 
     if( faceArea < areaTolerance )
@@ -272,22 +272,22 @@ void TwoPointFluxApproximation::addFractureFractureConnectionsDFM( MeshLevel & m
 
   // add new connectors/connections between face elements to the fracture stencil
   forAll< serialPolicy >( recalculateFractureConnectorEdges.size(),
-                          [ recalculateFractureConnectorEdges,
-                            fractureConnectorsToFaceElements,
-                            fractureConnectorsToEdges,
-                            &edgeManager,
-                            X,
-                            &faceMap,
-                            faceCenter,
-                            hydraulicAperture,
-                            fractureRegionIndex,
-                            elemGhostRank,
-#if SET_CREATION_DISPLACEMENT==1
-                            faceToNodesMap,
-                            totalDisplacement,
-                            aperture,
+                          [recalculateFractureConnectorEdges,
+                           fractureConnectorsToFaceElements,
+                           fractureConnectorsToEdges,
+                           &edgeManager,
+                           X,
+                           &faceMap,
+                           faceCenter,
+                           hydraulicAperture,
+                           fractureRegionIndex,
+                           elemGhostRank,
+#if SET_CREATION_DISPLACEMENT == 1
+                           faceToNodesMap,
+                           totalDisplacement,
+                           aperture,
 #endif
-                            &fractureStencil]
+                           &fractureStencil]
                             ( localIndex const k )
   {
     localIndex const fci = recalculateFractureConnectorEdges[k];
@@ -320,15 +320,15 @@ void TwoPointFluxApproximation::addFractureFractureConnectionsDFM( MeshLevel & m
     bool containsLocalElement = false;
 
     // loop over all face elements attached to the connector and add them to the stencil
-    for( localIndex kfe=0; kfe<numElems; ++kfe )
+    for( localIndex kfe = 0; kfe < numElems; ++kfe )
     {
       localIndex const fractureElementIndex = fractureConnectorsToFaceElements[fci][kfe];
 
       // use straight difference between the edge center and face center for gradient length...
       // TODO: maybe do something better here??
-      real64 cellCenterToEdgeCenter[ 3 ];
+      real64 cellCenterToEdgeCenter[3];
       LvArray::tensorOps::copy< 3 >( cellCenterToEdgeCenter, edgeCenter );
-      LvArray::tensorOps::subtract< 3 >( cellCenterToEdgeCenter, faceCenter[ faceMap[fractureElementIndex][0] ] );
+      LvArray::tensorOps::subtract< 3 >( cellCenterToEdgeCenter, faceCenter[faceMap[fractureElementIndex][0]] );
 
       // form the CellStencil entry
       stencilCellsRegionIndex[kfe] = fractureRegionIndex;
@@ -391,7 +391,7 @@ void TwoPointFluxApproximation::initNewFractureFieldsDFM( MeshLevel & mesh,
   localIndex const fractureRegionIndex = fractureRegion.getIndexInParent();
   FaceElementSubRegion & fractureSubRegion = fractureRegion.getUniqueSubRegion< FaceElementSubRegion >();
   ArrayOfArraysView< localIndex const > const & fractureConnectorsToFaceElements = fractureSubRegion.m_2dFaceTo2dElems.toViewConst();
-#if SET_CREATION_DISPLACEMENT==1
+#if SET_CREATION_DISPLACEMENT == 1
   NodeManager & nodeManager = mesh.getNodeManager();
   FaceManager const & faceManager = mesh.getFaceManager();
   ArrayOfArraysView< localIndex const > const & faceToNodesMap = faceManager.nodeList();
@@ -407,11 +407,11 @@ void TwoPointFluxApproximation::initNewFractureFieldsDFM( MeshLevel & mesh,
   arrayView1d< real64 > const apertureF = fractureSubRegion.getReference< array1d< real64 > >( "apertureAtFailure" );
 #endif
 
-#if ALLOW_CREATION_MASS==0
+#if ALLOW_CREATION_MASS == 0
   arrayView1d< real64 > const dens = fractureSubRegion.getReference< array1d< real64 > >( "density_n" );
 #endif
 
-#if SET_CREATION_PRESSURE==1
+#if SET_CREATION_PRESSURE == 1
   arrayView1d< real64 > const fluidPressure_n = fractureSubRegion.getField< fields::flow::pressure_n >();
   arrayView1d< real64 > const fluidPressure = fractureSubRegion.getField< fields::flow::pressure >();
   // Set the new face elements to some unphysical numbers to make sure they get set by the following routines.
@@ -424,7 +424,7 @@ void TwoPointFluxApproximation::initNewFractureFieldsDFM( MeshLevel & mesh,
 #ifdef GEOSX_USE_SEPARATION_COEFFICIENT
     apertureF[kfe] = aperture[kfe];
 #endif
-#if SET_CREATION_DISPLACEMENT==1
+#if SET_CREATION_DISPLACEMENT == 1
     aperture[kfe] = 1.0e99;
 #endif
   } );
@@ -438,35 +438,35 @@ void TwoPointFluxApproximation::initNewFractureFieldsDFM( MeshLevel & mesh,
 
   // add new connectors/connections between face elements to the fracture stencil
   forAll< serialPolicy >( recalculateFractureConnectorEdges.size(),
-                          [ &allNewElems,
-                            recalculateFractureConnectorEdges,
-                            fractureConnectorsToFaceElements,
-                            fractureRegionIndex,
-                            elemGhostRank,
-                            fluidPressure,
-                            fluidPressure_n,
-#if SET_CREATION_DISPLACEMENT==1
-                            faceToNodesMap,
-                            totalDisplacement,
-                            aperture,
+                          [&allNewElems,
+                           recalculateFractureConnectorEdges,
+                           fractureConnectorsToFaceElements,
+                           fractureRegionIndex,
+                           elemGhostRank,
+                           fluidPressure,
+                           fluidPressure_n,
+#if SET_CREATION_DISPLACEMENT == 1
+                           faceToNodesMap,
+                           totalDisplacement,
+                           aperture,
 #endif
-                            &fractureSubRegion
+                           &fractureSubRegion
                           ]
                             ( localIndex const k )
   {
     localIndex const fci = recalculateFractureConnectorEdges[k];
     localIndex const numElems = fractureConnectorsToFaceElements.sizeOfArray( fci );
-#if SET_CREATION_PRESSURE==1
+#if SET_CREATION_PRESSURE == 1
     real64 initialPressure = 1.0e99;
 #endif
-#if SET_CREATION_DISPLACEMENT==1
+#if SET_CREATION_DISPLACEMENT == 1
     real64 initialAperture = 1.0e99;
 #endif
     SortedArray< localIndex > newElems;
     bool containsLocalElement = false;
 
     // loop over all face elements attached to the connector and add them to the stencil
-    for( localIndex kfe=0; kfe<numElems; ++kfe )
+    for( localIndex kfe = 0; kfe < numElems; ++kfe )
     {
       localIndex const fractureElementIndex = fractureConnectorsToFaceElements[fci][kfe];
       containsLocalElement = containsLocalElement || elemGhostRank[fractureRegionIndex][0][fractureElementIndex] < 0;
@@ -474,10 +474,10 @@ void TwoPointFluxApproximation::initNewFractureFieldsDFM( MeshLevel & mesh,
       // code to initialize new face elements with pressures from neighbors
       if( fractureSubRegion.m_newFaceElements.count( fractureElementIndex ) == 0 )
       {
-#if SET_CREATION_PRESSURE==1
+#if SET_CREATION_PRESSURE == 1
         initialPressure = std::min( initialPressure, fluidPressure_n[fractureElementIndex] );
 #endif
-#if SET_CREATION_DISPLACEMENT==1
+#if SET_CREATION_DISPLACEMENT == 1
         initialAperture = std::min( initialAperture, aperture[fractureElementIndex] );
 #endif
       }
@@ -496,10 +496,10 @@ void TwoPointFluxApproximation::initNewFractureFieldsDFM( MeshLevel & mesh,
     // loop over new face elements attached to this connector
     for( localIndex const newElemIndex : newElems )
     {
-#if SET_CREATION_PRESSURE==1
+#if SET_CREATION_PRESSURE == 1
       fluidPressure[newElemIndex] = std::min( fluidPressure[newElemIndex], initialPressure );
 #endif
-#if SET_CREATION_DISPLACEMENT==1
+#if SET_CREATION_DISPLACEMENT == 1
       // Set the aperture/fluid pressure for the new face element to be the minimum
       // of the existing value, smallest aperture/pressure from a connected face element.
       //aperture[newElemIndex] = std::min(aperture[newElemIndex], initialAperture);
@@ -511,10 +511,10 @@ void TwoPointFluxApproximation::initNewFractureFieldsDFM( MeshLevel & mesh,
 
       bool zeroDisp = true;
 
-      for( localIndex a=0; a<numNodesPerFace; ++a )
+      for( localIndex a = 0; a < numNodesPerFace; ++a )
       {
         localIndex const node0 = faceToNodesMap( faceIndex0, a );
-        localIndex const node1 = faceToNodesMap( faceIndex1, a==0 ? a : numNodesPerFace-a );
+        localIndex const node1 = faceToNodesMap( faceIndex1, a == 0 ? a : numNodesPerFace - a );
         if( LvArray::math::abs( LvArray::tensorOps::l2Norm< 3 >( totalDisplacement[node0] ) ) > 1.0e-99 &&
             LvArray::math::abs( LvArray::tensorOps::l2Norm< 3 >( totalDisplacement[node1] ) ) > 1.0e-99 )
         {
@@ -531,18 +531,18 @@ void TwoPointFluxApproximation::initNewFractureFieldsDFM( MeshLevel & mesh,
 
   SortedArray< localIndex > touchedNodes;
   forAll< serialPolicy >( allNewElems.size(),
-                          [ &allNewElems
-                            , fluidPressure
-                            , fluidPressure_n
-#if SET_CREATION_DISPLACEMENT==1
-                            , aperture
-                            , faceMap
-                            , faceNormal
-                            , faceToNodesMap
-                            , &touchedNodes
-                            , incrementalDisplacement
-                            , totalDisplacement
-                            , this
+                          [&allNewElems
+                           , fluidPressure
+                           , fluidPressure_n
+#if SET_CREATION_DISPLACEMENT == 1
+                           , aperture
+                           , faceMap
+                           , faceNormal
+                           , faceToNodesMap
+                           , &touchedNodes
+                           , incrementalDisplacement
+                           , totalDisplacement
+                           , this
 #endif
                           ]( localIndex const k )
   {
@@ -553,29 +553,29 @@ void TwoPointFluxApproximation::initNewFractureFieldsDFM( MeshLevel & mesh,
       fluidPressure[newElemIndex] = 0.0;
     }
     fluidPressure_n[newElemIndex] = fluidPressure[newElemIndex];
-#if ALLOW_CREATION_MASS==0
+#if ALLOW_CREATION_MASS == 0
     // set the initial density of the face element to 0 to enforce mass conservation ( i.e. no creation of mass)
     dens[newElemIndex] = 0.0;
 #endif
-#if SET_CREATION_DISPLACEMENT==1
+#if SET_CREATION_DISPLACEMENT == 1
     // If the aperture has been set, then we can set the estimate of displacements.
     if( aperture[newElemIndex] < 1e98 )
     {
       localIndex const faceIndex0 = faceMap( newElemIndex, 0 );
       localIndex const faceIndex1 = faceMap( newElemIndex, 1 );
 
-      real64 newDisp[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( faceNormal[ faceIndex0 ] );
+      real64 newDisp[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( faceNormal[faceIndex0] );
       LvArray::tensorOps::scale< 3 >( newDisp, -aperture[newElemIndex] );
       localIndex const numNodesPerFace = faceToNodesMap.sizeOfArray( faceIndex0 );
-      for( localIndex a=0; a<numNodesPerFace; ++a )
+      for( localIndex a = 0; a < numNodesPerFace; ++a )
       {
         localIndex const node0 = faceToNodesMap( faceIndex0, a );
-        localIndex const node1 = faceToNodesMap( faceIndex1, a==0 ? a : numNodesPerFace-a );
+        localIndex const node1 = faceToNodesMap( faceIndex1, a == 0 ? a : numNodesPerFace - a );
 
         touchedNodes.insert( node0 );
         touchedNodes.insert( node1 );
 
-        if( node0 != node1 && touchedNodes.count( node0 )==0 )
+        if( node0 != node1 && touchedNodes.count( node0 ) == 0 )
         {
           LvArray::tensorOps::add< 3 >( incrementalDisplacement[node0], newDisp );
           LvArray::tensorOps::add< 3 >( totalDisplacement[node0], newDisp );
@@ -680,22 +680,22 @@ void TwoPointFluxApproximation::addFractureMatrixConnectionsDFM( MeshLevel & mes
   }
 
   forAll< serialPolicy >( new2dElems.size(),
-                          [ new2dElems,
-                            &elems2dToElems3d,
-                            &faceToCellStencil,
-                            &faceMap,
-                            elemRegionList,
-                            elemSubRegionList,
-                            elemList,
-                            elemGhostRank,
-                            faceCenter,
-                            elemCenter,
-                            faceNormal,
-                            faceArea,
-                            hydraulicAperture,
-                            transMultiplier,
-                            regionIndices = regionIndices.toViewConst(),
-                            fractureRegionIndex ] ( localIndex const k )
+                          [new2dElems,
+                           &elems2dToElems3d,
+                           &faceToCellStencil,
+                           &faceMap,
+                           elemRegionList,
+                           elemSubRegionList,
+                           elemList,
+                           elemGhostRank,
+                           faceCenter,
+                           elemCenter,
+                           faceNormal,
+                           faceArea,
+                           hydraulicAperture,
+                           transMultiplier,
+                           regionIndices = regionIndices.toViewConst(),
+                           fractureRegionIndex] ( localIndex const k )
   {
     localIndex const kfe = new2dElems[k];
     {
@@ -703,7 +703,7 @@ void TwoPointFluxApproximation::addFractureMatrixConnectionsDFM( MeshLevel & mes
 
       GEOS_ERROR_IF( numElems > maxElems, "Max stencil size exceeded by fracture-cell connector " << kfe );
 
-      real64 cellToFaceVec[ 3 ], faceNormalVector[ 3 ];
+      real64 cellToFaceVec[3], faceNormalVector[3];
 
       localIndex connectorIndex = faceToCellStencil.size();
 
@@ -877,7 +877,7 @@ void TwoPointFluxApproximation::addFractureFractureConnectionsEDFM( MeshLevel & 
   fractureStencil.reserve( fractureStencil.size() + embSurfEdgeManager.size() );
 
   // add new connectors/connections between embedded elements to the fracture stencil
-  for( localIndex ke = 0; ke <  embSurfEdgeManager.size(); ke++ )
+  for( localIndex ke = 0; ke < embSurfEdgeManager.size(); ke++ )
   {
     // for now there is no generation of new elements so we add all edges.
     localIndex const numElems = 2;  // hardcoded for now but unless there is an intersection it should always be 2.
@@ -907,7 +907,7 @@ void TwoPointFluxApproximation::addFractureFractureConnectionsEDFM( MeshLevel & 
         localIndex const fractureElementIndex = edgeToEmbSurfacesMap[ke][kes];
 
         // compute distance between cell centers
-        real64 cellCenterToEdgeCenter[ 3 ];
+        real64 cellCenterToEdgeCenter[3];
         LvArray::tensorOps::copy< 3 >( cellCenterToEdgeCenter, edgeCenter );
         LvArray::tensorOps::subtract< 3 >( cellCenterToEdgeCenter, fractureElemCenter[fractureElementIndex] );
 
@@ -1020,8 +1020,8 @@ void TwoPointFluxApproximation::computeBoundaryStencil( MeshLevel & mesh,
   stencil.reserve( faceSet.size() );
   for( localIndex kf : faceSet )
   {
-    real64 faceCenter[ 3 ];
-    real64 faceNormal[ 3 ];
+    real64 faceCenter[3];
+    real64 faceNormal[3];
     real64 const faceArea = computationalGeometry::centroid_3DPolygon( faceToNodes[kf],
                                                                        nodePosition,
                                                                        faceCenter,
@@ -1052,9 +1052,9 @@ void TwoPointFluxApproximation::computeBoundaryStencil( MeshLevel & mesh,
         continue;
       }
 
-      real64 cellToFaceVec[ 3 ];
+      real64 cellToFaceVec[3];
       LvArray::tensorOps::copy< 3 >( cellToFaceVec, faceCenter );
-      LvArray::tensorOps::subtract< 3 >( cellToFaceVec, elemCenter[ er ][ esr ][ ei ] );
+      LvArray::tensorOps::subtract< 3 >( cellToFaceVec, elemCenter[er][esr][ei] );
 
       if( LvArray::tensorOps::AiBi< 3 >( cellToFaceVec, faceNormal ) < 0.0 )
       {

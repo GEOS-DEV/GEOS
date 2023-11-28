@@ -53,7 +53,7 @@ struct is_defaultable
  *
  * default implementation of struct to return if a type \p T has a default value.
  */
-template< typename T, typename ENABLE=void >
+template< typename T, typename ENABLE = void >
 struct Helper
 {
   /// attribute to indicate whether type \p T has a default value

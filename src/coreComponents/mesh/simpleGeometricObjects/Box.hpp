@@ -83,13 +83,13 @@ private:
   /// Maximum (x,y,z) coordinates of the box
   R1Tensor m_max;
   /// Strike angle of the box
-  real64 m_strikeAngle=0.0;
+  real64 m_strikeAngle = 0.0;
   /// Coordinates of the center of the box
-  R1Tensor m_boxCenter={0.0, 0.0, 0.0};
+  R1Tensor m_boxCenter = {0.0, 0.0, 0.0};
   /// Cosine of the strike angle of the box
-  real64 m_cosStrike=0.0;
+  real64 m_cosStrike = 0.0;
   /// Sine of the strike angle of the box
-  real64 m_sinStrike=0.0;
+  real64 m_sinStrike = 0.0;
 
   /// @cond DO_NOT_DOCUMENT
 

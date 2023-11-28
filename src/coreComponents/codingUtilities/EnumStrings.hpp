@@ -139,7 +139,7 @@ struct EnumStrings
     GEOS_THROW_IF( index >= LvArray::integerConversion< base_type >( size ),
                    "Invalid value " << index << " of type " << TypeName< ENUM >::brief() << ". Valid range is 0.." << size - 1,
                    InputError );
-    return strings[ index ];
+    return strings[index];
   }
 
   /**

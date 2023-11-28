@@ -117,11 +117,11 @@ public:
   {
     GEOS_UNUSED_VAR( k );
 
-    for( localIndex r=0; r<stack.numRows; ++r )
+    for( localIndex r = 0; r < stack.numRows; ++r )
     {
       localIndex const row = stack.localRowDofIndex[r] - m_dofRankOffset;
       if( row < 0 || row >= m_sparsity.numRows() ) continue;
-      for( localIndex c=0; c<stack.numCols; ++c )
+      for( localIndex c = 0; c < stack.numCols; ++c )
       {
         m_sparsity.insertNonZero( row,
                                   stack.localColDofIndex[c] );

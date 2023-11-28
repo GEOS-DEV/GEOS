@@ -38,13 +38,13 @@ struct MimeticInnerProductHelpers
    */
   GEOS_HOST_DEVICE
   static
-  void makeFullTensor( real64 const (&values)[ 3 ],
-                       real64 (& result)[ 3 ][ 3 ] )
+  void makeFullTensor( real64 const (&values)[3],
+                       real64 (& result)[3][3] )
   {
     LvArray::tensorOps::fill< 3, 3 >( result, 0.0 );
-    result[ 0 ][ 0 ] = values[ 0 ];
-    result[ 1 ][ 1 ] = values[ 1 ];
-    result[ 2 ][ 2 ] = values[ 2 ];
+    result[0][0] = values[0];
+    result[1][1] = values[1];
+    result[2][2] = values[2];
   }
 
   /**
@@ -58,33 +58,33 @@ struct MimeticInnerProductHelpers
   template< localIndex NF >
   GEOS_HOST_DEVICE
   static
-  void orthonormalize( real64 (& q0)[ NF ],
-                       real64 (& q1)[ NF ],
-                       real64 (& q2)[ NF ],
-                       real64 (& cellToFaceMat)[ NF ][ 3 ] )
+  void orthonormalize( real64 (& q0)[NF],
+                       real64 (& q1)[NF],
+                       real64 (& q2)[NF],
+                       real64 (& cellToFaceMat)[NF][3] )
   {
     // modified Gram-Schmidt algorithm
 
     // q0
-    LvArray::tensorOps::scale< NF >( q0, 1.0/LvArray::tensorOps::l2Norm< NF >( q0 ) );
+    LvArray::tensorOps::scale< NF >( q0, 1.0 / LvArray::tensorOps::l2Norm< NF >( q0 ) );
 
     // q1
     real64 const q0Dotq1 = LvArray::tensorOps::AiBi< NF >( q0, q1 );
     LvArray::tensorOps::scaledAdd< NF >( q1, q0, -q0Dotq1 );
-    LvArray::tensorOps::scale< NF >( q1, 1.0/LvArray::tensorOps::l2Norm< NF >( q1 ) );
+    LvArray::tensorOps::scale< NF >( q1, 1.0 / LvArray::tensorOps::l2Norm< NF >( q1 ) );
 
     // q2
     real64 const q0Dotq2 = LvArray::tensorOps::AiBi< NF >( q0, q2 );
     LvArray::tensorOps::scaledAdd< NF >( q2, q0, -q0Dotq2 );
     real64 const q1Dotq2 = LvArray::tensorOps::AiBi< NF >( q1, q2 );
     LvArray::tensorOps::scaledAdd< NF >( q2, q1, -q1Dotq2 );
-    LvArray::tensorOps::scale< NF >( q2, 1.0/LvArray::tensorOps::l2Norm< NF >( q2 ) );
+    LvArray::tensorOps::scale< NF >( q2, 1.0 / LvArray::tensorOps::l2Norm< NF >( q2 ) );
 
     for( localIndex i = 0; i < NF; ++i )
     {
-      cellToFaceMat[ i ][ 0 ] = q0[ i ];
-      cellToFaceMat[ i ][ 1 ] = q1[ i ];
-      cellToFaceMat[ i ][ 2 ] = q2[ i ];
+      cellToFaceMat[i][0] = q0[i];
+      cellToFaceMat[i][1] = q1[i];
+      cellToFaceMat[i][2] = q2[i];
     }
   }
 
@@ -102,19 +102,19 @@ struct MimeticInnerProductHelpers
   template< localIndex NF >
   GEOS_HOST_DEVICE
   static void
-  computeInvTPFATransWithMultiplier( real64 const (&elemPerm)[ 3 ],
-                                     real64 const (&faceNormal)[ 3 ],
+  computeInvTPFATransWithMultiplier( real64 const (&elemPerm)[3],
+                                     real64 const (&faceNormal)[3],
                                      real64 const & faceArea,
                                      real64 const & transMult,
                                      real64 const & weightToleranceInv,
-                                     real64 (& cellToFaceVec)[ 3 ],
+                                     real64 (& cellToFaceVec)[3],
                                      real64 & tpTransInv )
   {
     real64 const c2fDistance = LvArray::tensorOps::normalize< 3 >( cellToFaceVec );
     real64 const mult = transMult;
     tpTransInv = c2fDistance / faceArea;
 
-    real64 faceConormal[ 3 ] = { 0.0 };
+    real64 faceConormal[3] = { 0.0 };
     LvArray::tensorOps::hadamardProduct< 3 >( faceConormal, elemPerm, faceNormal );
     real64 halfWeight = LvArray::tensorOps::AiBi< 3 >( cellToFaceVec, faceConormal );
     if( halfWeight < 0.0 )
@@ -137,14 +137,14 @@ struct MimeticInnerProductHelpers
   template< localIndex NF >
   GEOS_HOST_DEVICE
   static void
-  computeTransMatrixWithMultipliers( real64 const (&tpTransInv)[ NF ],
+  computeTransMatrixWithMultipliers( real64 const (&tpTransInv)[NF],
                                      arraySlice2d< real64 > const & transMatrix )
   {
     // the inverse of the pertubed inverse is computed using the Sherman-Morrison formula
     for( localIndex k = 0; k < NF; ++k )
     {
       real64 const mult = LvArray::math::sqrt( tpTransInv[k] );
-      real64 Tmult[ NF ] = { 0.0 };
+      real64 Tmult[NF] = { 0.0 };
       for( localIndex i = 0; i < NF; ++i )
       {
         Tmult[i] = transMatrix[k][i] * mult;
@@ -155,7 +155,7 @@ struct MimeticInnerProductHelpers
       {
         for( localIndex j = 0; j < NF; ++j )
         {
-          transMatrix[i][j] -= Tmult[i]*Tmult[j]*invDenom;
+          transMatrix[i][j] -= Tmult[i] * Tmult[j] * invDenom;
         }
       }
     }

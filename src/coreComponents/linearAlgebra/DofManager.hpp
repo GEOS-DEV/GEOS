@@ -84,7 +84,7 @@ public:
     bool add( FieldSupport const & input )
     {
       bool added = false;
-      if( meshBodyName  == input.meshBodyName && meshLevelName == input.meshLevelName )
+      if( meshBodyName == input.meshBodyName && meshLevelName == input.meshLevelName )
       {
         regionNames.insert( input.regionNames.begin(), input.regionNames.end() );
         added = true;

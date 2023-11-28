@@ -222,7 +222,7 @@ void computeRigidBodyModes( MeshLevel const & mesh,
   array1d< localIndex > globalNodeList;
   for( localIndex k = 0; k < LvArray::integerConversion< localIndex >( selection.size() ); ++k )
   {
-    if( dofManager.location( selection[k] ) ==  FieldLocation::Node )
+    if( dofManager.location( selection[k] ) == FieldLocation::Node )
     {
       string const & dispDofKey = dofManager.getKey( selection[k] );
       arrayView1d< globalIndex const > const & dofNumber = nodeManager.getReference< globalIndex_array >( dispDofKey );
@@ -263,7 +263,7 @@ void computeRigidBodyModes( MeshLevel const & mesh,
     case 2:
     {
       localIndex const k = 2;
-      rigidBodyModes[k].create( numNodes*numComponents, MPI_COMM_GEOSX );
+      rigidBodyModes[k].create( numNodes * numComponents, MPI_COMM_GEOSX );
       {
         arrayView1d< real64 > const values = rigidBodyModes[k].open();
         forAll< parallelHostPolicy >( numNodes, [=]( localIndex const i )
@@ -284,7 +284,7 @@ void computeRigidBodyModes( MeshLevel const & mesh,
     case 3:
     {
       localIndex k = 3;
-      rigidBodyModes[k].create( numNodes*numComponents, MPI_COMM_GEOSX );
+      rigidBodyModes[k].create( numNodes * numComponents, MPI_COMM_GEOSX );
       {
         arrayView1d< real64 > const values = rigidBodyModes[k].open();
         forAll< parallelHostPolicy >( numNodes, [=]( localIndex const i )
@@ -302,7 +302,7 @@ void computeRigidBodyModes( MeshLevel const & mesh,
       rigidBodyModes[k].scale( 1.0 / rigidBodyModes[k].norm2() );
 
       ++k;
-      rigidBodyModes[k].create( numNodes*numComponents, MPI_COMM_GEOSX );
+      rigidBodyModes[k].create( numNodes * numComponents, MPI_COMM_GEOSX );
       {
         arrayView1d< real64 > const values = rigidBodyModes[k].open();
         forAll< parallelHostPolicy >( numNodes, [=]( localIndex const i )
@@ -320,7 +320,7 @@ void computeRigidBodyModes( MeshLevel const & mesh,
       rigidBodyModes[k].scale( 1.0 / rigidBodyModes[k].norm2() );
 
       ++k;
-      rigidBodyModes[k].create( numNodes*numComponents, MPI_COMM_GEOSX );
+      rigidBodyModes[k].create( numNodes * numComponents, MPI_COMM_GEOSX );
       {
         arrayView1d< real64 > const values = rigidBodyModes[k].open();
         forAll< parallelHostPolicy >( numNodes, [=]( localIndex const i )

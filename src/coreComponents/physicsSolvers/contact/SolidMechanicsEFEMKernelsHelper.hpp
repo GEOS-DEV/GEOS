@@ -42,7 +42,7 @@ void computeHeavisideFunction( integer (& heaviside)[NUM_NODES],
                                arraySlice1d< real64 const > const normalVector,
                                arraySlice1d< real64 const > const elementCenter )
 {
-  for( int a=0; a < NUM_NODES; a++ )
+  for( int a = 0; a < NUM_NODES; a++ )
   {
     real64 distanceVector[3];
     LvArray::tensorOps::copy< 3 >( distanceVector, X[a] );
@@ -64,21 +64,21 @@ void assembleStrainOperator( real64 ( & strainMatrix )[I_SIZE][J_SIZE],
                              real64 ( & dNdX )[NUM_NODES][3] )
 {
   LvArray::tensorOps::fill< I_SIZE, J_SIZE >( strainMatrix, 0 );  //make 0
-  for( int a=0; a < NUM_NODES; ++a )
+  for( int a = 0; a < NUM_NODES; ++a )
   {
 
-    strainMatrix[0][a*3 + 0] = dNdX[a][0];
-    strainMatrix[1][a*3 + 1] = dNdX[a][1];
-    strainMatrix[2][a*3 + 2] = dNdX[a][2];
+    strainMatrix[0][a * 3 + 0] = dNdX[a][0];
+    strainMatrix[1][a * 3 + 1] = dNdX[a][1];
+    strainMatrix[2][a * 3 + 2] = dNdX[a][2];
 
-    strainMatrix[3][a*3 + 1] = dNdX[a][2];
-    strainMatrix[3][a*3 + 2] = dNdX[a][1];
+    strainMatrix[3][a * 3 + 1] = dNdX[a][2];
+    strainMatrix[3][a * 3 + 2] = dNdX[a][1];
 
-    strainMatrix[4][a*3 + 0] = dNdX[a][2];
-    strainMatrix[4][a*3 + 2] = dNdX[a][0];
+    strainMatrix[4][a * 3 + 0] = dNdX[a][2];
+    strainMatrix[4][a * 3 + 2] = dNdX[a][0];
 
-    strainMatrix[5][a*3 + 0] = dNdX[a][1];
-    strainMatrix[5][a*3 + 1] = dNdX[a][0];
+    strainMatrix[5][a * 3 + 0] = dNdX[a][1];
+    strainMatrix[5][a * 3 + 1] = dNdX[a][0];
   }
 }
 
@@ -99,7 +99,7 @@ void assembleCompatibilityOperator( real64 ( & compMatrix )[3][6],
   // 1. construct mvector sum(dNdX(a) * H(a)) value for each Gauss point
   real64 mVec[3];
   LvArray::tensorOps::fill< 3 >( mVec, 0 );
-  for( integer a=0; a<NUM_NODES; ++a )
+  for( integer a = 0; a < NUM_NODES; ++a )
   {
     mVec[0] -= dNdX[a][0] * heavisideFun[a];
     mVec[1] -= dNdX[a][1] * heavisideFun[a];
@@ -113,9 +113,9 @@ void assembleCompatibilityOperator( real64 ( & compMatrix )[3][6],
   LvArray::tensorOps::symRij_eq_AiBj_plus_AjBi< 3 >( compMatrix[2], mVec, tVec2 );
 
   // scale by 0.5 the diagonal entries (it's like a strain)
-  for( int ii = 0; ii<3; ii++ )
+  for( int ii = 0; ii < 3; ii++ )
   {
-    for( int jj=0; jj<3; jj++ )
+    for( int jj = 0; jj < 3; jj++ )
     {
       compMatrix[ii][jj] *= 0.5;
     }
@@ -136,9 +136,9 @@ void assembleEquilibriumOperator( real64 ( & eqMatrix )[3][6],
   LvArray::tensorOps::symRij_eq_AiBj_plus_AjBi< 3 >( eqMatrix[1], nVec, tVec1 );
   LvArray::tensorOps::symRij_eq_AiBj_plus_AjBi< 3 >( eqMatrix[2], nVec, tVec2 );
 
-  for( int ii = 0; ii<3; ii++ )
+  for( int ii = 0; ii < 3; ii++ )
   {
-    for( int jj=0; jj<3; jj++ )
+    for( int jj = 0; jj < 3; jj++ )
     {
       eqMatrix[ii][jj] *= 0.5;
     }

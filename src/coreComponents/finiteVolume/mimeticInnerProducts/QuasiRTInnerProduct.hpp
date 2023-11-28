@@ -58,7 +58,7 @@ public:
            arraySlice1d< localIndex const > const & elemToFaces,
            arraySlice1d< real64 const > const & elemCenter,
            real64 const & elemVolume,
-           real64 const (&elemPerm)[ 3 ],
+           real64 const (&elemPerm)[3],
            real64 const & lengthTolerance,
            arraySlice2d< real64 > const & transMatrix );
 
@@ -73,7 +73,7 @@ QuasiRTInnerProduct::compute( arrayView2d< real64 const, nodes::REFERENCE_POSITI
                               arraySlice1d< localIndex const > const & elemToFaces,
                               arraySlice1d< real64 const > const & elemCenter,
                               real64 const & elemVolume,
-                              real64 const (&elemPerm)[ 3 ],
+                              real64 const (&elemPerm)[3],
                               real64 const & lengthTolerance,
                               arraySlice2d< real64 > const & transMatrix )
 {

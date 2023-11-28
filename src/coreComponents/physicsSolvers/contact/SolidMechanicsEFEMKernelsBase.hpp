@@ -180,7 +180,7 @@ public:
     real64 hInv;
 
     /// local nodal coordinates
-    real64 X[ numNodesPerElem ][ 3 ];
+    real64 X[numNodesPerElem][3];
 
     /// Stack storage for the traction
     real64 tractionVec[3];
@@ -189,7 +189,7 @@ public:
     real64 dTractiondw[3][3];
 
     /// Stack storage for the constitutive stiffness at a quadrature point.
-    real64 constitutiveStiffness[ 6 ][ 6 ];
+    real64 constitutiveStiffness[6][6];
   };
   //***************************************************************************
 
@@ -221,7 +221,7 @@ public:
       typename KERNEL_TYPE::StackVariables stack;
 
       kernelComponent.setup( k, stack );
-      for( integer q=0; q<numQuadraturePointsPerElem; ++q )
+      for( integer q = 0; q < numQuadraturePointsPerElem; ++q )
       {
         kernelComponent.quadraturePointKernel( k, q, stack );
       }
@@ -240,10 +240,10 @@ public:
   {
     localIndex const embSurfIndex = m_cellsToEmbeddedSurfaces[k][0];
 
-    real64 dNdX[ numNodesPerElem ][ 3 ];
+    real64 dNdX[numNodesPerElem][3];
     real64 const detJ = m_finiteElementSpace.template getGradN< FE_TYPE >( k, q, stack.X, dNdX );
 
-    constexpr int nUdof = numNodesPerElem*3;
+    constexpr int nUdof = numNodesPerElem * 3;
 
     // Gauss contribution to Kww, Kwu and Kuw blocks
     real64 Kww_gauss[3][3], Kwu_gauss[3][nUdof], Kuw_gauss[nUdof][3];
@@ -253,7 +253,7 @@ public:
     real64 compMatrix[3][6], strainMatrix[6][nUdof], eqMatrix[3][6];
     real64 matBD[nUdof][6], matED[3][6];
 
-    int Heaviside[ numNodesPerElem ];
+    int Heaviside[numNodesPerElem];
 
     // TODO: asking for the stiffness here will only work for elastic models.  most other models
     //       need to know the strain increment to compute the current stiffness value.

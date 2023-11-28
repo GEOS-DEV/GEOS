@@ -68,7 +68,7 @@ void Box::postProcessInput()
   // reordering min and max to fit former interface but so that user can input any of the four diagonals
   for( int i = 0; i < m_max.SIZE; ++i )
   {
-    if( m_max[i]<m_min[i] )
+    if( m_max[i] < m_min[i] )
     {
       std::swap( m_max[i], m_min[i] );
       GEOS_LOG_RANK_0( GEOS_FMT( "Reordering box definition for {} component as {} < {} ", i, m_max[i], m_min[i] ) );
@@ -78,12 +78,12 @@ void Box::postProcessInput()
   m_strikeAngle += 90; // Counterclockwise from x-axis
   if( std::fabs( m_strikeAngle ) > 1e-20 )
   {
-    GEOS_ERROR_IF( (m_max[0]-m_min[0]) < (m_max[1]-m_min[1]),
+    GEOS_ERROR_IF( (m_max[0] - m_min[0]) < (m_max[1] - m_min[1]),
                    getDataContext() << ": When a strike angle is specified, the box is supposed to" <<
                    " represent a plane normal to the y direction. This box seems to be too thick." );
 
-    m_cosStrike = std::cos( m_strikeAngle / 180 *M_PI );
-    m_sinStrike = std::sin( m_strikeAngle / 180 *M_PI );
+    m_cosStrike = std::cos( m_strikeAngle / 180 * M_PI );
+    m_sinStrike = std::sin( m_strikeAngle / 180 * M_PI );
   }
 }
 

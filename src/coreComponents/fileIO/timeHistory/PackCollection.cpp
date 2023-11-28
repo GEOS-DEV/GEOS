@@ -191,22 +191,22 @@ void PackCollection::updateSetsIndices( DomainPartition const & domain )
     arrayView1d< integer const > const ghostRank = asOMB( targetGrp )->ghostRank();
     for( std::size_t setIdx = 0; setIdx < numSets; ++setIdx )
     {
-      array1d< localIndex > & setIndices = m_setsIndices[ setIdx ];
+      array1d< localIndex > & setIndices = m_setsIndices[setIdx];
       array1d< localIndex > ownedIndices( setIndices.size() );
 
       localIndex ownIdx = 0;
       for( localIndex idx = 0; idx < setIndices.size(); ++idx )
       {
-        if( ghostRank[ setIndices[ idx ] ] < 0 )
+        if( ghostRank[setIndices[idx]] < 0 )
         {
-          ownedIndices[ ownIdx ] = setIndices[ idx ];
+          ownedIndices[ownIdx] = setIndices[idx];
           ++ownIdx;
         }
       }
 
       localIndex const newSetSize = ownIdx;
 
-      if( oldSetSizes[ setIdx ] != newSetSize )
+      if( oldSetSizes[setIdx] != newSetSize )
       {
         m_setChanged = true;
       }
@@ -214,7 +214,7 @@ void PackCollection::updateSetsIndices( DomainPartition const & domain )
       {
         for( localIndex idx = 0; idx < ownedIndices.size(); ++idx )
         {
-          if( setIndices[ idx ] != ownedIndices[ idx ] )
+          if( setIndices[idx] != ownedIndices[idx] )
           {
             m_setChanged = true;
             break;
@@ -224,7 +224,7 @@ void PackCollection::updateSetsIndices( DomainPartition const & domain )
       setIndices.resize( newSetSize );
       for( localIndex idx = 0; idx < newSetSize; ++idx )
       {
-        setIndices[ idx ] = ownedIndices[ idx ];
+        setIndices[idx] = ownedIndices[idx];
       }
     }
   }

@@ -95,7 +95,7 @@ private:
   {
     for( auto const i : indices )
     {
-      array.emplace_back( data[Fluid::NC *row+i] );
+      array.emplace_back( data[Fluid::NC *row + i] );
     }
   }
 public:

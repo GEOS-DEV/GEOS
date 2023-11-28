@@ -93,8 +93,8 @@ TEST( testStringUtilities, tokenize )
       std::vector< string > tokens1 = stringutilities::tokenize( key, "/", false );
 
 
-      EXPECT_TRUE( tokens0==values0 );
-      EXPECT_TRUE( tokens1==values1 );
+      EXPECT_TRUE( tokens0 == values0 );
+      EXPECT_TRUE( tokens1 == values1 );
     }
   }
 
@@ -178,7 +178,7 @@ TEST( testStringUtilities, tokenize )
       {
         string const result = "{ '" + stringutilities::join( r, "' , '" ) + "' }";
         string const expected = "{ '" + stringutilities::join( test.expected, "' , '" ) + "' }";
-        FAIL() << test << " failed: " << result <<" results instead of " << expected << ".";
+        FAIL() << test << " failed: " << result << " results instead of " << expected << ".";
       }
     }
 
@@ -290,7 +290,7 @@ TEST( testStringUtilities, toMetricPrefixString )
                               "  123 E" };
 
 
-  for( int a=0; a<36; ++a )
+  for( int a = 0; a < 36; ++a )
   {
     std::string const result = toMetricPrefixString( values[a] );
     std::string const negResult = toMetricPrefixString( -values[a] );
@@ -298,7 +298,7 @@ TEST( testStringUtilities, toMetricPrefixString )
     EXPECT_STRCASEEQ( result.c_str(), answer[a].c_str() );
     std::string negAnswer = answer[a];
     int const sign = negAnswer.find_first_not_of( ' ' );
-    negAnswer[sign-1] = '-';
+    negAnswer[sign - 1] = '-';
     EXPECT_STRCASEEQ( negResult.c_str(), negAnswer.c_str() );
   }
 }

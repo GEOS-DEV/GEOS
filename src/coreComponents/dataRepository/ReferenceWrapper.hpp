@@ -112,7 +112,7 @@ public:
    * Calls m_ref->operator=() to allow for any type on the rhs
    * if m_ref->operator=() has a valid overload for T_RHS.
    */
-  template< typename T_RHS, typename U=T >
+  template< typename T_RHS, typename U = T >
   inline
   typename std::enable_if< !std::is_const< U >::value, ReferenceWrapper & >::type
   operator=( T_RHS const & rhs )
@@ -246,7 +246,7 @@ public:
    * @return the return type of <tt>T::operator()</tt>
    */
   template< typename ... ARGS >
-  inline typename std::result_of< T & (ARGS&&...) >::type
+  inline typename std::result_of< T & (ARGS && ...) >::type
   operator()( ARGS && ... args )
   {
     return m_ref->operator()( std::forward< ARGS >(args)... );
@@ -259,7 +259,7 @@ public:
    * @return the return type of <tt>T::operator()</tt> const
    */
   template< typename ... ARGS >
-  inline typename std::result_of< T const&(ARGS&&...) >::type
+  inline typename std::result_of< T const & (ARGS && ...) >::type
   operator()( ARGS && ... args ) const
   {
     return m_ref->operator()( std::forward< ARGS >(args)... );

@@ -265,8 +265,8 @@ static void addUmpireHighWaterMarks()
 
   // Loop over the allocators.
   constexpr int MAX_NAME_LENGTH = 100;
-  char allocatorNameBuffer[ MAX_NAME_LENGTH + 1 ];
-  char allocatorNameMinCharsBuffer[ MAX_NAME_LENGTH + 1 ];
+  char allocatorNameBuffer[MAX_NAME_LENGTH + 1];
+  char allocatorNameMinCharsBuffer[MAX_NAME_LENGTH + 1];
   for( string const & allocatorName : allocatorNames )
   {
     // Skip umpire internal allocators.

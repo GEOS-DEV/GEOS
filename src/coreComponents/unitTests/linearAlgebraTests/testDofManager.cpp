@@ -598,7 +598,7 @@ void DofManagerSparsityTest< LAI >::test( std::vector< FieldDesc > fields,
 
   for( FieldDesc const & f : fields )
   {
-    GEOS_LOG_RANK( "rankOffset = "<<dofManager.rankOffset() );
+    GEOS_LOG_RANK( "rankOffset = " << dofManager.rankOffset() );
     f.makePattern( domain,
                    dofManager.getKey( f.name ),
                    getRegions( domain, f.regions ),

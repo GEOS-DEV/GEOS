@@ -94,7 +94,7 @@ inline
 real64 const * getPointerToComponent( R1Tensor const & var, int const component )
 {
   GEOS_ERROR_IF_GE( component, 3 );
-  return &var[ component ];
+  return &var[component];
 }
 
 } // namespace internal
@@ -215,7 +215,7 @@ resizeDimensions( T & value, int num_dims, localIndex const * const dims )
     GEOS_ERROR( "Data is not multidimensional" );
     return;
   }
-  resize( value, dims[ 0 ] );
+  resize( value, dims[0] );
 }
 
 
@@ -299,7 +299,7 @@ pushDataToConduitNode( T const & var, conduit::Node & node )
   conduit::DataType const dtype( conduitTypeInfo< buffer_unit_type >::id, byteSize );
 
   // Allocate the array in the "__values__" child.
-  conduit::Node & valuesNode = node[ "__values__" ];
+  conduit::Node & valuesNode = node["__values__"];
   valuesNode.set( dtype );
 
   // Get the pointer to the array and pack the object into it.
@@ -334,7 +334,7 @@ pushDataToConduitNode( string const & var, conduit::Node & node )
   conduit::DataType const dtype( conduitTypeID, var.size() );
 
   signed char * const ptr = const_cast< signed char * >( reinterpret_cast< signed char const * >( var.data() ) );
-  node[ "__values__" ].set_external( dtype, ptr );
+  node["__values__"].set_external( dtype, ptr );
 }
 
 // This is for Path since it derives from string. See overload for string.
@@ -358,7 +358,7 @@ pushDataToConduitNode( T const & var, conduit::Node & node )
   conduit::DataType const dtype( conduitTypeID, numBytes / sizeofConduitType );
 
   void * const ptr = const_cast< void * >( static_cast< void const * >( dataPtr( var ) ) );
-  node[ "__values__" ].set_external( dtype, ptr );
+  node["__values__"].set_external( dtype, ptr );
 }
 
 // This is for an object that doesn't need to be packed but isn't an LvArray or a SortedArray.
@@ -404,13 +404,13 @@ pushDataToConduitNode( Array< T, NDIM, PERMUTATION > const & var,
   constexpr int sizeofConduitType = conduitTypeInfo< T >::sizeOfConduitType;
   conduit::DataType const dtype( conduitTypeID, var.size() * sizeof( T ) / sizeofConduitType );
   void * const ptr = const_cast< void * >( static_cast< void const * >( var.data() ) );
-  node[ "__values__" ].set_external( dtype, ptr );
+  node["__values__"].set_external( dtype, ptr );
 
   // Create a copy of the dimensions
-  camp::idx_t temp[ NDIM + 1 ];
+  camp::idx_t temp[NDIM + 1];
   for( int i = 0; i < NDIM; ++i )
   {
-    temp[ i ] = var.size( i );
+    temp[i] = var.size( i );
   }
 
   // If T is something like a Tensor than there is an extra implicit dimension.
@@ -419,26 +419,26 @@ pushDataToConduitNode( Array< T, NDIM, PERMUTATION > const & var,
   constexpr int totalNumDimensions = NDIM + hasImplicitDimension;
   if( hasImplicitDimension )
   {
-    temp[ NDIM ] = implicitDimensionLength;
+    temp[NDIM] = implicitDimensionLength;
   }
 
   // push the dimensions into the node
   conduit::DataType const dimensionType( conduitTypeInfo< camp::idx_t >::id, totalNumDimensions );
-  node[ "__dimensions__" ].set( dimensionType, temp );
+  node["__dimensions__"].set( dimensionType, temp );
 
   // Create a copy of the permutation
   constexpr std::array< camp::idx_t, NDIM > const perm = RAJA::as_array< PERMUTATION >::get();
   for( int i = 0; i < NDIM; ++i )
   {
-    temp[ i ] = perm[ i ];
+    temp[i] = perm[i];
   }
 
   if( hasImplicitDimension )
   {
-    temp[ NDIM ] = NDIM;
+    temp[NDIM] = NDIM;
   }
 
-  node[ "__permutation__" ].set( dimensionType, temp );
+  node["__permutation__"].set( dimensionType, temp );
 }
 
 // This is an LvArray that doesn't need to be packed.
@@ -460,13 +460,13 @@ pullDataFromConduitNode( Array< T, NDIM, PERMUTATION > & var,
   camp::idx_t const * const permFromConduit = permutationNode.value();
   for( int i = 0; i < NDIM; ++i )
   {
-    GEOS_ERROR_IF_NE_MSG( permFromConduit[ i ], perm[ i ],
+    GEOS_ERROR_IF_NE_MSG( permFromConduit[i], perm[i],
                           "The permutation of the data in conduit and the provided Array don't match." );
   }
 
   if( hasImplicitDimension )
   {
-    GEOS_ERROR_IF_NE_MSG( permFromConduit[ NDIM ], NDIM,
+    GEOS_ERROR_IF_NE_MSG( permFromConduit[NDIM], NDIM,
                           "The permutation of the data in conduit and the provided Array don't match." );
   }
 
@@ -477,7 +477,7 @@ pullDataFromConduitNode( Array< T, NDIM, PERMUTATION > & var,
 
   if( hasImplicitDimension )
   {
-    GEOS_ERROR_IF_NE( dims[ NDIM ], implicitDimensionLength );
+    GEOS_ERROR_IF_NE( dims[NDIM], implicitDimensionLength );
   }
 
   var.resize( NDIM, dims );
@@ -524,10 +524,10 @@ addBlueprintField( ArrayView< T const, NDIM, USD > const & var,
   var.move( hostMemorySpace, false );
 
   conduit::DataType dtype( conduitTypeID, var.size( 0 ) );
-  dtype.set_stride( sizeof( ConduitType ) * numComponentsPerValue * var.strides()[ 0 ] );
+  dtype.set_stride( sizeof( ConduitType ) * numComponentsPerValue * var.strides()[0] );
 
   localIndex curComponent = 0;
-  LvArray::forValuesInSliceWithIndices( var[ 0 ], [&fields, &fieldName, &topology, &componentNames, totalNumberOfComponents, &dtype, &curComponent]
+  LvArray::forValuesInSliceWithIndices( var[0], [&fields, &fieldName, &topology, &componentNames, totalNumberOfComponents, &dtype, &curComponent]
                                           ( T const & val, auto const ... indices )
   {
     for( int i = 0; i < numComponentsPerValue; ++i )
@@ -547,16 +547,16 @@ addBlueprintField( ArrayView< T const, NDIM, USD > const & var,
       }
       else
       {
-        name = componentNames[ curComponent++ ];
+        name = componentNames[curComponent++];
       }
 
-      conduit::Node & field = fields[ name ];
-      field[ "association" ] = "element";
-      field[ "volume_dependent" ] = "false";
-      field[ "topology" ] = topology;
+      conduit::Node & field = fields[name];
+      field["association"] = "element";
+      field["volume_dependent"] = "false";
+      field["topology"] = topology;
 
       void const * pointer = internal::getPointerToComponent( val, i );
-      field[ "values" ].set_external( dtype, const_cast< void * >( pointer ) );
+      field["values"].set_external( dtype, const_cast< void * >( pointer ) );
     }
   } );
 }
@@ -593,19 +593,19 @@ populateMCArray( ArrayView< T const, NDIM, USD > const & var,
   var.move( hostMemorySpace, false );
 
   conduit::DataType dtype( conduitTypeID, var.size( 0 ) );
-  dtype.set_stride( sizeof( ConduitType ) * numComponentsPerValue * var.strides()[ 0 ] );
+  dtype.set_stride( sizeof( ConduitType ) * numComponentsPerValue * var.strides()[0] );
 
   localIndex curComponent = 0;
-  LvArray::forValuesInSliceWithIndices( var[ 0 ], [&componentNames, &node, &dtype, &curComponent]
+  LvArray::forValuesInSliceWithIndices( var[0], [&componentNames, &node, &dtype, &curComponent]
                                           ( T const & val, auto const ... indices )
   {
     for( int i = 0; i < numComponentsPerValue; ++i )
     {
       string const name = componentNames.empty() ? internal::getIndicesToComponent( val, i, indices ... ) :
-                          componentNames[ curComponent++ ];
+                          componentNames[curComponent++];
 
       void const * pointer = internal::getPointerToComponent( val, i );
-      node[ name ].set_external( dtype, const_cast< void * >( pointer ) );
+      node[name].set_external( dtype, const_cast< void * >( pointer ) );
     }
   } );
 }
@@ -638,11 +638,11 @@ averageOverSecondDim( ArrayView< T const, NDIM, USD > const & var )
 {
   std::unique_ptr< Array< T, NDIM - 1 > > ret = std::make_unique< Array< T, NDIM - 1 > >();
 
-  localIndex newDims[ NDIM - 1 ];
-  newDims[ 0 ] = var.size( 0 );
+  localIndex newDims[NDIM - 1];
+  newDims[0] = var.size( 0 );
   for( int i = 2; i < NDIM; ++i )
   {
-    newDims[ i - 1 ] = var.size( i );
+    newDims[i - 1] = var.size( i );
   }
 
   ret->resize( NDIM - 1, newDims );
@@ -652,9 +652,9 @@ averageOverSecondDim( ArrayView< T const, NDIM, USD > const & var )
   localIndex const numSamples = var.size( 1 );
   forAll< serialPolicy >( var.size( 0 ), [var, numSamples, &output] ( localIndex const i )
   {
-    LvArray::sumOverFirstDimension( var[ i ], output[ i ] );
+    LvArray::sumOverFirstDimension( var[i], output[i] );
 
-    LvArray::forValuesInSlice( output[ i ], [numSamples] ( T & val )
+    LvArray::forValuesInSlice( output[i], [numSamples] ( T & val )
     {
       val /= numSamples;
     } );
@@ -769,7 +769,7 @@ UnpackDevice( buffer_unit_type const * &, T const &, parallelDeviceEvents & )
 
 template< typename T, typename IDX >
 inline std::enable_if_t< bufferOps::is_container< T >, localIndex >
-UnpackByIndexDevice( buffer_unit_type const * & buffer, T const & var, IDX & idx, parallelDeviceEvents & events, MPI_Op op=MPI_REPLACE )
+UnpackByIndexDevice( buffer_unit_type const * & buffer, T const & var, IDX & idx, parallelDeviceEvents & events, MPI_Op op = MPI_REPLACE )
 { return bufferOps::UnpackByIndexDevice( buffer, var, idx, events, op ); }
 
 template< typename T, typename IDX >

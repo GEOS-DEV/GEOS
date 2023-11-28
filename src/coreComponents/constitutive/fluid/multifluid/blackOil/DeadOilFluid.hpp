@@ -55,7 +55,7 @@ public:
                           arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & phaseViscosity,
                           arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & phaseEnthalpy,
                           arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & phaseInternalEnergy,
-                          arraySlice2d< real64, multifluid::USD_PHASE_COMP-2 > const & phaseCompFraction,
+                          arraySlice2d< real64, multifluid::USD_PHASE_COMP - 2 > const & phaseCompFraction,
                           real64 & totalDensity ) const override;
 
     GEOS_HOST_DEVICE
@@ -411,7 +411,7 @@ DeadOilFluid::KernelWrapper::
     phaseDensity.derivs[ip][Deriv::dP] = phaseMassDensity.derivs[ip][Deriv::dP] * mult;
     for( integer ic = 0; ic < nComps; ++ic )
     {
-      phaseDensity.derivs[ip][Deriv::dC+ic] = 0.0;
+      phaseDensity.derivs[ip][Deriv::dC + ic] = 0.0;
     }
   }
 
@@ -422,13 +422,13 @@ DeadOilFluid::KernelWrapper::
     phaseFraction.derivs[ip][Deriv::dP] = 0.0;
     for( integer ic = 0; ic < nComps; ++ic )
     {
-      phaseFraction.derivs[ip][Deriv::dC+ic] = (ip == ic) ? 1.0 : 0.0;
+      phaseFraction.derivs[ip][Deriv::dC + ic] = (ip == ic) ? 1.0 : 0.0;
 
       phaseCompFraction.value[ip][ic] = (ip == ic) ? 1.0 : 0.0;
       phaseCompFraction.derivs[ip][ic][Deriv::dP] = 0.0;
       for( integer jc = 0; jc < nComps; ++jc )
       {
-        phaseCompFraction.derivs[ip][ic][Deriv::dC+jc] = 0.0;
+        phaseCompFraction.derivs[ip][ic][Deriv::dC + jc] = 0.0;
       }
     }
   }

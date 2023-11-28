@@ -299,7 +299,7 @@ array1d< localIndex > buildFace2dToEdge( vtkIdTypeArray const * globalPtIds,
     vtkCell * edge = edges->GetCell( i );
     for( int j = 0; j < edge->GetNumberOfPoints(); ++j )
     {
-      for( auto const & d: collocatedNodes[ edge->GetPointId( j ) ] )
+      for( auto const & d: collocatedNodes[edge->GetPointId( j )] )
       {
         allDuplicatedNodesOfEdge.emplace_back( d );
       }
@@ -439,7 +439,7 @@ Elem2dTo3dInfo buildElem2dTo3dElemAndFaces( vtkSmartPointer< vtkDataSet > faceMe
     std::set< vtkIdType > allDuplicatedNodes;
     for( std::size_t i = 0; i < collocatedNodes.size(); ++i )
     {
-      std::vector< vtkIdType > const & ns = collocatedNodes[ i ];
+      std::vector< vtkIdType > const & ns = collocatedNodes[i];
       allDuplicatedNodes.insert( ns.cbegin(), ns.cend() );
     }
 
@@ -471,7 +471,7 @@ Elem2dTo3dInfo buildElem2dTo3dElemAndFaces( vtkSmartPointer< vtkDataSet > faceMe
     std::set< vtkIdType > duplicatedPointOfElem2d;
     for( vtkIdType j = 0; j < pointIds->GetNumberOfIds(); ++j )
     {
-      std::vector< vtkIdType > const & ns = collocatedNodes[ pointIds->GetId( j ) ];
+      std::vector< vtkIdType > const & ns = collocatedNodes[pointIds->GetId( j )];
       duplicatedPointOfElem2d.insert( ns.cbegin(), ns.cend() );
     }
 

@@ -614,7 +614,7 @@ void DofManager::addCoupling( string const & rowFieldName,
 
   if( m_coupling.count( {rowFieldIndex, colFieldIndex} ) == 0 )
   {
-    CouplingDescription & coupling = m_coupling[ { rowFieldIndex, colFieldIndex } ];
+    CouplingDescription & coupling = m_coupling[{ rowFieldIndex, colFieldIndex }];
     coupling.connector = connectivity;
     if( connectivity == Connector::None && rowFieldIndex == colFieldIndex )
     {
@@ -632,8 +632,8 @@ void DofManager::addCoupling( string const & rowFieldName,
   }
   else
   {
-    CouplingDescription & coupling = m_coupling[ { rowFieldIndex, colFieldIndex } ];
-    addNewSupports( processSupportList, m_coupling[ { rowFieldIndex, colFieldIndex } ].support );
+    CouplingDescription & coupling = m_coupling[{ rowFieldIndex, colFieldIndex }];
+    addNewSupports( processSupportList, m_coupling[{ rowFieldIndex, colFieldIndex }].support );
 
     // Set connectivity with active symmetry flag
     if( symmetric && colFieldIndex != rowFieldIndex )
@@ -651,7 +651,7 @@ void DofManager::addCoupling( string const & fieldName,
 
   GEOS_ERROR_IF( field.location != FieldLocation::Elem, "Field must be supported on elements in order to use stencil sparsity" );
 
-  CouplingDescription & coupling = m_coupling[ {fieldIndex, fieldIndex} ];
+  CouplingDescription & coupling = m_coupling[{fieldIndex, fieldIndex}];
   coupling.connector = Connector::Stencil;
   coupling.support = field.support;
   coupling.stencils = &stencils;
@@ -1571,7 +1571,7 @@ void DofManager::reorderByRank()
   for( FieldDescription & field : m_fields )
   {
     // compute local permutation of dofs, if needed
-    permutations[ field.name ] = computePermutation( field );
+    permutations[field.name] = computePermutation( field );
   }
 
   // Second loop: compute the dof number array
@@ -1758,9 +1758,9 @@ void DofManager::makeRestrictor( std::vector< SubComponent > const & selection,
     localIndex const numLocalNodes = fieldNew.numLocalDof / fieldNew.numComponents;
 
 
-    rows.resize( numLocalNodes*mask.size() );
-    cols.resize( numLocalNodes*mask.size() );
-    values.resize( numLocalNodes*mask.size() );
+    rows.resize( numLocalNodes * mask.size() );
+    cols.resize( numLocalNodes * mask.size() );
+    values.resize( numLocalNodes * mask.size() );
 
     for( localIndex i = 0; i < numLocalNodes; ++i )
     {
@@ -1770,9 +1770,9 @@ void DofManager::makeRestrictor( std::vector< SubComponent > const & selection,
         globalIndex const row = fieldRow.globalOffset + i * fieldRow.numComponents + ( transpose ? oldComp : newComp );
         globalIndex const col = fieldCol.globalOffset + i * fieldCol.numComponents + ( transpose ? newComp : oldComp );
 
-        rows( i*mask.size() + newComp ) = row;
-        cols( i*mask.size() + newComp ) = col;
-        values[ i*mask.size() + newComp ] = 1.0;
+        rows( i * mask.size() + newComp ) = row;
+        cols( i * mask.size() + newComp ) = col;
+        values[i * mask.size() + newComp] = 1.0;
         ++newComp;
       }
     }

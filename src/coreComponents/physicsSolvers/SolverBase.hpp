@@ -674,7 +674,7 @@ public:
       MeshBody const & meshBody = meshBodies.getGroup< MeshBody >( meshBodyName );
 
       MeshLevel const * meshLevelPtr = meshBody.getMeshLevels().getGroupPointer< MeshLevel >( meshLevelName );
-      if( meshLevelPtr==nullptr )
+      if( meshLevelPtr == nullptr )
       {
         meshLevelPtr = meshBody.getMeshLevels().getGroupPointer< MeshLevel >( MeshBody::groupStructKeys::baseDiscretizationString() );
       }
@@ -700,7 +700,7 @@ public:
       MeshBody & meshBody = meshBodies.getGroup< MeshBody >( meshBodyName );
 
       MeshLevel * meshLevelPtr = meshBody.getMeshLevels().getGroupPointer< MeshLevel >( meshLevelName );
-      if( meshLevelPtr==nullptr )
+      if( meshLevelPtr == nullptr )
       {
         meshLevelPtr = meshBody.getMeshLevels().getGroupPointer< MeshLevel >( MeshBody::groupStructKeys::baseDiscretizationString() );
       }

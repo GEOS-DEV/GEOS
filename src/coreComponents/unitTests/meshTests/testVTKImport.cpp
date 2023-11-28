@@ -46,7 +46,7 @@ using namespace geos::dataRepository;
 
 
 template< class V >
-void TestMeshImport( string const & meshFilePath, V const & validate, string const fractureName="" )
+void TestMeshImport( string const & meshFilePath, V const & validate, string const fractureName = "" )
 {
   string const pattern = R"xml(
     <Mesh>
@@ -357,7 +357,7 @@ TEST( VTKImport, cube )
     SortedArray< localIndex > const & allNodes = cellBlockManager.getNodeSets().at( "all" );
     ASSERT_EQ( allNodes.size(), expectedNumNodes );
 
-    if( cellBlockManager.getNodeSets().size()>1 )
+    if( cellBlockManager.getNodeSets().size() > 1 )
     {
       // The "2" set are all the boundary nodes (64 - 8 inside nodes = 56),
       // minus an extra node that belongs to regions -1 and 9 only.
@@ -559,9 +559,9 @@ TEST( VTKImport, supportedElements )
     ASSERT_EQ( elementToNodes.size( 1 ), 10 );
     ASSERT_EQ( zone4.getElemToEdges().size( 1 ), 15 );
     ASSERT_EQ( zone4.getElemToFaces().size( 1 ), 7 );
-    for( int i=0; i < elementToNodes.size( 1 ); ++i )
+    for( int i = 0; i < elementToNodes.size( 1 ); ++i )
     {
-      EXPECT_EQ( elementToNodes( 0, i ), 31+i );
+      EXPECT_EQ( elementToNodes( 0, i ), 31 + i );
     }
 
     // Hexagonal prism
@@ -569,9 +569,9 @@ TEST( VTKImport, supportedElements )
     ASSERT_EQ( elementToNodes.size( 1 ), 12 );
     ASSERT_EQ( zone5.getElemToEdges().size( 1 ), 18 );
     ASSERT_EQ( zone5.getElemToFaces().size( 1 ), 8 );
-    for( int i=0; i < elementToNodes.size( 1 ); ++i )
+    for( int i = 0; i < elementToNodes.size( 1 ); ++i )
     {
-      EXPECT_EQ( elementToNodes( 0, i ), 41+i );
+      EXPECT_EQ( elementToNodes( 0, i ), 41 + i );
     }
 
     // Heptagonal prism
@@ -579,9 +579,9 @@ TEST( VTKImport, supportedElements )
     ASSERT_EQ( elementToNodes.size( 1 ), 14 );
     ASSERT_EQ( zone6.getElemToEdges().size( 1 ), 21 );
     ASSERT_EQ( zone6.getElemToFaces().size( 1 ), 9 );
-    for( int i=0; i < elementToNodes.size( 1 ); ++i )
+    for( int i = 0; i < elementToNodes.size( 1 ); ++i )
     {
-      EXPECT_EQ( elementToNodes( 0, i ), 53+i );
+      EXPECT_EQ( elementToNodes( 0, i ), 53 + i );
     }
 
     // Octagonal prism
@@ -589,9 +589,9 @@ TEST( VTKImport, supportedElements )
     ASSERT_EQ( elementToNodes.size( 1 ), 16 );
     ASSERT_EQ( zone7.getElemToEdges().size( 1 ), 24 );
     ASSERT_EQ( zone7.getElemToFaces().size( 1 ), 10 );
-    for( int i=0; i < elementToNodes.size( 1 ); ++i )
+    for( int i = 0; i < elementToNodes.size( 1 ); ++i )
     {
-      EXPECT_EQ( elementToNodes( 0, i ), 67+i );
+      EXPECT_EQ( elementToNodes( 0, i ), 67 + i );
     }
 
     // Nonagonal prism
@@ -599,9 +599,9 @@ TEST( VTKImport, supportedElements )
     ASSERT_EQ( elementToNodes.size( 1 ), 18 );
     ASSERT_EQ( zone8.getElemToEdges().size( 1 ), 27 );
     ASSERT_EQ( zone8.getElemToFaces().size( 1 ), 11 );
-    for( int i=0; i < elementToNodes.size( 1 ); ++i )
+    for( int i = 0; i < elementToNodes.size( 1 ); ++i )
     {
-      EXPECT_EQ( elementToNodes( 0, i ), 83+i );
+      EXPECT_EQ( elementToNodes( 0, i ), 83 + i );
     }
 
     // Decagonal prism
@@ -609,9 +609,9 @@ TEST( VTKImport, supportedElements )
     ASSERT_EQ( elementToNodes.size( 1 ), 20 );
     ASSERT_EQ( zone9.getElemToEdges().size( 1 ), 30 );
     ASSERT_EQ( zone9.getElemToFaces().size( 1 ), 12 );
-    for( int i=0; i < elementToNodes.size( 1 ); ++i )
+    for( int i = 0; i < elementToNodes.size( 1 ); ++i )
     {
-      EXPECT_EQ( elementToNodes( 0, i ), 101+i );
+      EXPECT_EQ( elementToNodes( 0, i ), 101 + i );
     }
 
     // Hendecagonal prism
@@ -619,9 +619,9 @@ TEST( VTKImport, supportedElements )
     ASSERT_EQ( elementToNodes.size( 1 ), 22 );
     ASSERT_EQ( zone10.getElemToEdges().size( 1 ), 33 );
     ASSERT_EQ( zone10.getElemToFaces().size( 1 ), 13 );
-    for( int i=0; i < elementToNodes.size( 1 ); ++i )
+    for( int i = 0; i < elementToNodes.size( 1 ); ++i )
     {
-      EXPECT_EQ( elementToNodes( 0, i ), 121+i );
+      EXPECT_EQ( elementToNodes( 0, i ), 121 + i );
     }
 
     for( auto const & z: { &zone0, &zone1, &zone2, &zone4, &zone5, &zone6, &zone7, &zone8, &zone9, &zone10 } )

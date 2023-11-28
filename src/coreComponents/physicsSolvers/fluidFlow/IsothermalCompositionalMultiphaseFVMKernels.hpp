@@ -181,7 +181,7 @@ public:
 
         for( integer jc = 0; jc < numComp; ++jc )
         {
-          dRelPerm_dC[jc] += dRelPerm_dS * dPhaseVolFrac[jp][Deriv::dC+jc];
+          dRelPerm_dC[jc] += dRelPerm_dS * dPhaseVolFrac[jp][Deriv::dC + jc];
         }
       }
 
@@ -194,8 +194,8 @@ public:
       // compositional derivatives
       for( integer jc = 0; jc < numComp; ++jc )
       {
-        dPhaseMob[ip][Deriv::dC+jc] = dRelPerm_dC[jc] * density / viscosity
-                                      + mobility * (dDens_dC[jc] / density - dVisc_dC[jc] / viscosity);
+        dPhaseMob[ip][Deriv::dC + jc] = dRelPerm_dC[jc] * density / viscosity
+                                        + mobility * (dDens_dC[jc] / density - dVisc_dC[jc] / viscosity);
       }
 
       // call the lambda in the phase loop to allow the reuse of the relperm, density, viscosity, and mobility
@@ -410,7 +410,7 @@ public:
   static constexpr integer numDof = NUM_DOF;
 
   /// Compute time value for the number of equations (all of them, except the volume balance equation)
-  static constexpr integer numEqn = NUM_DOF-1;
+  static constexpr integer numEqn = NUM_DOF - 1;
 
   /// Maximum number of elements at the face
   static constexpr localIndex maxNumElems = STENCILWRAPPER::maxNumPointsInFlux;
@@ -911,7 +911,7 @@ public:
   static constexpr integer numDof = NUM_DOF;
 
   /// Compute time value for the number of equations (all of them, except the volume balance equation)
-  static constexpr integer numEqn = NUM_DOF-1;
+  static constexpr integer numEqn = NUM_DOF - 1;
 
   /// Maximum number of elements at the face
   static constexpr localIndex maxNumElems = STENCILWRAPPER::maxNumPointsInFlux;
@@ -1192,7 +1192,7 @@ public:
                 m_referencePorosity[er_up][esr_up][ei_up] *
                 m_phaseDiffusivityMultiplier[er_up][esr_up][ei_up][0][ip] *
                 ( dDens_dC[jc] * m_phaseVolFrac[er_up][esr_up][ei_up][ip]
-                  + m_phaseDens[er_up][esr_up][ei_up][0][ip] * m_dPhaseVolFrac[er_up][esr_up][ei_up][ip][Deriv::dC+jc] );
+                  + m_phaseDens[er_up][esr_up][ei_up][0][ip] * m_dPhaseVolFrac[er_up][esr_up][ei_up][ip][Deriv::dC + jc] );
               dDiffusionFlux_dC[k_up][ic][jc] += dUpwindCoefficient_dC * compFracGrad;
             }
 
@@ -1446,7 +1446,7 @@ public:
     {
       // Apply equation/variable change transformation(s)
       stackArray1d< real64, maxStencilSize * numDof > work( stack.stencilSize * numDof );
-      shiftBlockRowsAheadByOneAndReplaceFirstRowWithColumnSum( numComp, numEqn, numDof*stack.stencilSize, stack.numConnectedElems,
+      shiftBlockRowsAheadByOneAndReplaceFirstRowWithColumnSum( numComp, numEqn, numDof * stack.stencilSize, stack.numConnectedElems,
                                                                stack.localFluxJacobian, work );
       shiftBlockElementsAheadByOneAndReplaceFirstElementWithSum( numComp, numEqn, stack.numConnectedElems,
                                                                  stack.localFlux );
@@ -1919,13 +1919,13 @@ public:
         for( integer jc = 0; jc < numComp; ++jc )
         {
           dPhaseFlux_dC[jc] =
-            m_phaseMob[er][esr][ei][ip] * dF_dC[jc] + m_dPhaseMob[er][esr][ei][ip][Deriv::dC+jc] * f;
+            m_phaseMob[er][esr][ei][ip] * dF_dC[jc] + m_dPhaseMob[er][esr][ei][ip][Deriv::dC + jc] * f;
         }
 
         // slice some constitutive arrays to avoid too much indexing in component loop
-        arraySlice1d< real64 const, multifluid::USD_PHASE_COMP-3 > phaseCompFracSub =
+        arraySlice1d< real64 const, multifluid::USD_PHASE_COMP - 3 > phaseCompFracSub =
           m_phaseCompFrac[er][esr][ei][0][ip];
-        arraySlice2d< real64 const, multifluid::USD_PHASE_COMP_DC-3 > dPhaseCompFracSub =
+        arraySlice2d< real64 const, multifluid::USD_PHASE_COMP_DC - 3 > dPhaseCompFracSub =
           m_dPhaseCompFrac[er][esr][ei][0][ip];
 
         // compute component fluxes and derivatives using element composition
@@ -1989,7 +1989,7 @@ public:
       stack.localFluxJacobian[ic][0] = m_dt * stack.dCompFlux_dP[ic];
       for( integer jc = 0; jc < numComp; ++jc )
       {
-        stack.localFluxJacobian[ic][jc+1] = m_dt * stack.dCompFlux_dC[ic][jc];
+        stack.localFluxJacobian[ic][jc + 1] = m_dt * stack.dCompFlux_dC[ic][jc];
       }
     }
   }
@@ -2235,7 +2235,7 @@ struct CFLKernel
                    arraySlice1d< real64 const, relperm::USD_RELPERM - 2 > phaseRelPerm,
                    arraySlice2d< real64 const, relperm::USD_RELPERM_DS - 2 > dPhaseRelPerm_dPhaseVolFrac,
                    arraySlice1d< real64 const, multifluid::USD_PHASE - 2 > phaseVisc,
-                   arraySlice1d< real64 const, compflow::USD_PHASE- 1 > phaseOutflux,
+                   arraySlice1d< real64 const, compflow::USD_PHASE - 1 > phaseOutflux,
                    real64 & phaseCFLNumber );
 
   template< integer NC >
@@ -2321,7 +2321,7 @@ struct AquiferBCKernel
              arraySlice2d< real64 const, compflow::USD_COMP_DC - 1 > dCompFrac_dCompDens,
              real64 const dt,
              real64 ( &localFlux )[NC],
-             real64 ( &localFluxJacobian )[NC][NC+1] );
+             real64 ( &localFluxJacobian )[NC][NC + 1] );
 
   template< integer NC >
   static void

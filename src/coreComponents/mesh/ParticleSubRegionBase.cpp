@@ -119,7 +119,7 @@ void ParticleSubRegionBase::particleUnpack( buffer_type & buffer,
   // Get the indices we're overwriting during unpack.
   // Before unpacking, those indices should contain junk/default data created when subRegion.resize() was called.
   array1d< localIndex > indices( numberOfIncomingParticles );
-  for( int i=0; i<numberOfIncomingParticles; i++ )
+  for( int i = 0; i < numberOfIncomingParticles; i++ )
   {
     indices[i] = startingIndex + i;
   }
@@ -165,8 +165,9 @@ void ParticleSubRegionBase::updateMaps()
 {
   arrayView1d< globalIndex > const localToGlobalMap = m_localToGlobalMap;
   arrayView1d< globalIndex const > const particleID = m_particleID;
-  forAll< serialPolicy >( this->size(), [=] GEOS_HOST ( localIndex const p ) // TODO: must be on host because constructGlobalToLocalMap has
-                                                                             // to be on host?
+  forAll< serialPolicy >( this->size(), [ = ] GEOS_HOST ( localIndex const p ) // TODO: must be on host because constructGlobalToLocalMap
+                                                                               // has
+                                                                               // to be on host?
     {
       localToGlobalMap[p] = particleID[p];
     } );

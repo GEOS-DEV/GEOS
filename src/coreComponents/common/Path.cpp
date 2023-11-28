@@ -26,7 +26,7 @@ namespace geos
 
 std::string getAbsolutePath( std::string const & path )
 {
-  char buf[ PATH_MAX ];
+  char buf[PATH_MAX];
   if( realpath( path.data(), buf ) )
   {
     return buf;

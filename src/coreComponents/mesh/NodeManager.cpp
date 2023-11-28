@@ -328,7 +328,7 @@ void NodeManager::depopulateUpMaps( std::set< localIndex > const & receivedNodes
   for( auto const & targetIndex : receivedNodes )
   {
     std::set< std::tuple< localIndex, localIndex, localIndex > > eraseList;
-    for( localIndex k=0; k<m_toElements.m_toElementRegion.sizeOfArray( targetIndex ); ++k )
+    for( localIndex k = 0; k < m_toElements.m_toElementRegion.sizeOfArray( targetIndex ); ++k )
     {
       localIndex const elemRegionIndex    = m_toElements.m_toElementRegion[targetIndex][k];
       localIndex const elemSubRegionIndex = m_toElements.m_toElementSubRegion[targetIndex][k];
@@ -339,12 +339,12 @@ void NodeManager::depopulateUpMaps( std::set< localIndex > const & receivedNodes
       arrayView2d< localIndex const, cells::NODE_MAP_USD > const downmap = subRegion.nodeList();
       bool hasTargetIndex = false;
 
-      for( localIndex a=0; a<downmap.size( 1 ); ++a )
+      for( localIndex a = 0; a < downmap.size( 1 ); ++a )
       {
         localIndex const compositeLocalIndex = downmap( elemIndex, a );
-        if( compositeLocalIndex==targetIndex )
+        if( compositeLocalIndex == targetIndex )
         {
-          hasTargetIndex=true;
+          hasTargetIndex = true;
         }
       }
       if( !hasTargetIndex )

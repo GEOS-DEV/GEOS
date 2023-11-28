@@ -87,8 +87,8 @@ struct UpwindingHelper
   template< integer NC, integer NP >
   GEOS_HOST_DEVICE
   static void
-    upwindViscousCoefficient( localIndex const (&localIds)[ 3 ],
-                              localIndex const (&neighborIds)[ 3 ],
+    upwindViscousCoefficient( localIndex const (&localIds)[3],
+                              localIndex const (&neighborIds)[3],
                               ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const & phaseDens,
                               ElementViewConst< arrayView4d< real64 const, multifluid::USD_PHASE_DC > > const & dPhaseDens,
                               ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & phaseMob,
@@ -98,9 +98,9 @@ struct UpwindingHelper
                               ElementViewConst< arrayView5d< real64 const, multifluid::USD_PHASE_COMP_DC > > const & dPhaseCompFrac,
                               ElementViewConst< arrayView1d< globalIndex const > > const & elemDofNumber,
                               real64 const & oneSidedVolFlux,
-                              real64 ( &upwPhaseViscCoef )[ NP ][ NC ],
-                              real64 ( &dUpwPhaseViscCoef_dPres )[ NP ][ NC ],
-                              real64 ( &dUpwPhaseViscCoef_dCompDens )[ NP ][ NC ][ NC ],
+                              real64 ( &upwPhaseViscCoef )[NP][NC],
+                              real64 ( &dUpwPhaseViscCoef_dPres )[NP][NC],
+                              real64 ( &dUpwPhaseViscCoef_dCompDens )[NP][NC][NC],
                               globalIndex & upwViscDofNumber );
 
   /**
@@ -130,8 +130,8 @@ struct UpwindingHelper
   template< integer NC, integer NP >
   GEOS_HOST_DEVICE
   static void
-    upwindBuoyancyCoefficient( localIndex const (&localIds)[ 3 ],
-                               localIndex const (&neighborIds)[ 3 ],
+    upwindBuoyancyCoefficient( localIndex const (&localIds)[3],
+                               localIndex const (&neighborIds)[3],
                                real64 const & transGravCoef,
                                ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const & phaseDens,
                                ElementViewConst< arrayView4d< real64 const, multifluid::USD_PHASE_DC > > const & dPhaseDens,
@@ -142,12 +142,12 @@ struct UpwindingHelper
                                ElementViewConst< arrayView3d< real64 const, compflow::USD_COMP_DC > > const & dCompFrac_dCompDens,
                                ElementViewConst< arrayView4d< real64 const, multifluid::USD_PHASE_COMP > > const & phaseCompFrac,
                                ElementViewConst< arrayView5d< real64 const, multifluid::USD_PHASE_COMP_DC > > const & dPhaseCompFrac,
-                               real64 ( &phaseGravTerm )[ NP ][ NP-1 ],
-                               real64 ( &dPhaseGravTerm_dPres )[ NP ][ NP-1 ][ 2 ],
-                               real64 ( &dPhaseGravTerm_dCompDens )[ NP ][ NP-1 ][ 2 ][ NC ],
-                               real64 ( &upwPhaseGravCoef )[ NP ][ NP-1 ][ NC ],
-                               real64 ( &dUpwPhaseGravCoef_dPres )[ NP ][ NP-1 ][ NC ][ 2 ],
-                               real64 ( &dUpwPhaseGravCoef_dCompDens )[ NP ][ NP-1 ][ NC ][ 2 ][ NC ] );
+                               real64 ( &phaseGravTerm )[NP][NP - 1],
+                               real64 ( &dPhaseGravTerm_dPres )[NP][NP - 1][2],
+                               real64 ( &dPhaseGravTerm_dCompDens )[NP][NP - 1][2][NC],
+                               real64 ( &upwPhaseGravCoef )[NP][NP - 1][NC],
+                               real64 ( &dUpwPhaseGravCoef_dPres )[NP][NP - 1][NC][2],
+                               real64 ( &dUpwPhaseGravCoef_dCompDens )[NP][NP - 1][NC][2][NC] );
 
 
   /**
@@ -166,15 +166,15 @@ struct UpwindingHelper
   template< integer NC, integer NP >
   GEOS_HOST_DEVICE
   static void
-    computePhaseGravTerm( localIndex const (&localIds)[ 3 ],
-                          localIndex const (&neighborIds)[ 3 ],
+    computePhaseGravTerm( localIndex const (&localIds)[3],
+                          localIndex const (&neighborIds)[3],
                           real64 const & transGravCoef,
                           ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const & phaseMassDens,
                           ElementViewConst< arrayView4d< real64 const, multifluid::USD_PHASE_DC > > const & dPhaseMassDens,
                           ElementViewConst< arrayView3d< real64 const, compflow::USD_COMP_DC > > const & dCompFrac_dCompDens,
-                          real64 ( &phaseGravTerm )[ NP ][ NP-1 ],
-                          real64 ( &dPhaseGravTerm_dPres )[ NP ][ NP-1 ][ 2 ],
-                          real64 ( &dPhaseGravTerm_dCompDens )[ NP ][ NP-1 ][ 2 ][ NC ] );
+                          real64 ( &phaseGravTerm )[NP][NP - 1],
+                          real64 ( &dPhaseGravTerm_dPres )[NP][NP - 1][2],
+                          real64 ( &dPhaseGravTerm_dCompDens )[NP][NP - 1][2][NC] );
 
   /**
    * @brief At a given one-sided face, compute the upwinded total mobility
@@ -190,14 +190,14 @@ struct UpwindingHelper
   template< integer NC, integer NP >
   GEOS_HOST_DEVICE
   static void
-    computeUpwindedTotalMobility( localIndex const (&localIds)[ 3 ],
-                                  localIndex const (&neighborIds)[ 3 ],
+    computeUpwindedTotalMobility( localIndex const (&localIds)[3],
+                                  localIndex const (&neighborIds)[3],
                                   ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & phaseMob,
                                   ElementViewConst< arrayView3d< real64 const, compflow::USD_PHASE_DC > > const & dPhaseMob,
-                                  real64 const (&phaseGravTerm)[ NP ][ NP-1 ],
+                                  real64 const (&phaseGravTerm)[NP][NP - 1],
                                   real64 & totalMob,
-                                  real64 ( &dTotalMob_dPres )[ 2 ],
-                                  real64 ( &dTotalMob_dCompDens )[ 2 ][ NC ] );
+                                  real64 ( &dTotalMob_dPres )[2],
+                                  real64 ( &dTotalMob_dCompDens )[2][NC] );
 
   /**
    * @brief Set the element indices used to evaluate the mobility ratios of the buoyancy term in hybrid upwinding
@@ -218,8 +218,8 @@ struct UpwindingHelper
   inline
   static
   void
-  setIndicesForMobilityRatioUpwinding( localIndex const (&localIds)[ 3 ],
-                                       localIndex const (&neighborIds)[ 3 ],
+  setIndicesForMobilityRatioUpwinding( localIndex const (&localIds)[3],
+                                       localIndex const (&neighborIds)[3],
                                        real64 const & gravTerm,
                                        localIndex & eru, localIndex & esru, localIndex & eiu, localIndex & posu,
                                        localIndex & erd, localIndex & esrd, localIndex & eid, localIndex & posd );
@@ -235,11 +235,11 @@ struct UpwindingHelper
   template< integer NP >
   GEOS_HOST_DEVICE
   static void
-    setIndicesForTotalMobilityUpwinding( localIndex const (&localIds)[ 3 ],
-                                         localIndex const (&neighborIds)[ 3 ],
-                                         real64 const (&gravTerm)[ NP ][ NP-1 ],
-                                         localIndex ( &totalMobIds )[ NP ][ 3 ],
-                                         localIndex ( &totalMobPos )[ NP ] );
+    setIndicesForTotalMobilityUpwinding( localIndex const (&localIds)[3],
+                                         localIndex const (&neighborIds)[3],
+                                         real64 const (&gravTerm)[NP][NP - 1],
+                                         localIndex ( &totalMobIds )[NP][3],
+                                         localIndex ( &totalMobPos )[NP] );
 
 };
 
@@ -291,10 +291,10 @@ struct AssemblerKernelHelper
                    arraySlice2d< real64 const, compflow::USD_PHASE_DC - 1 > const & dElemPhaseMob,
                    arraySlice2d< real64 const, compflow::USD_COMP_DC - 1 > const & dElemCompFrac_dCompDens,
                    arraySlice2d< real64 const > const & transMatrix,
-                   real64 ( &oneSidedVolFlux )[ NF ],
-                   real64 ( &dOneSidedVolFlux_dPres )[ NF ],
-                   real64 ( &dOneSidedVolFlux_dFacePres )[ NF ][ NF ],
-                   real64 ( &dOneSidedVolFlux_dCompDens )[ NF ][ NC ] );
+                   real64 ( &oneSidedVolFlux )[NF],
+                   real64 ( &dOneSidedVolFlux_dPres )[NF],
+                   real64 ( &dOneSidedVolFlux_dFacePres )[NF][NF],
+                   real64 ( &dOneSidedVolFlux_dCompDens )[NF][NC] );
 
   /**
    * @brief In a given element, compute the flux divergence, i.e, sum the fluxes at this element's faces
@@ -325,7 +325,7 @@ struct AssemblerKernelHelper
   template< integer NF, integer NC, integer NP >
   GEOS_HOST_DEVICE
   static void
-  assembleFluxDivergence( localIndex const (&localIds)[ 3 ],
+  assembleFluxDivergence( localIndex const (&localIds)[3],
                           globalIndex const rankOffset,
                           arrayView2d< localIndex const > const & elemRegionList,
                           arrayView2d< localIndex const > const & elemSubRegionList,
@@ -347,10 +347,10 @@ struct AssemblerKernelHelper
                           ElementViewConst< arrayView5d< real64 const, multifluid::USD_PHASE_COMP_DC > > const & dPhaseCompFrac,
                           ElementViewConst< arrayView1d< globalIndex const > > const & elemDofNumber,
                           arraySlice2d< real64 const > const & transMatrixGrav,
-                          real64 const (&oneSidedVolFlux)[ NF ],
-                          real64 const (&dOneSidedVolFlux_dPres)[ NF ],
-                          real64 const (&dOneSidedVolFlux_dFacePres)[ NF ][ NF ],
-                          real64 const (&dOneSidedVolFlux_dCompDens)[ NF ][ NC ],
+                          real64 const (&oneSidedVolFlux)[NF],
+                          real64 const (&dOneSidedVolFlux_dPres)[NF],
+                          real64 const (&dOneSidedVolFlux_dFacePres)[NF][NF],
+                          real64 const (&dOneSidedVolFlux_dCompDens)[NF][NC],
                           real64 const & dt,
                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
                           arrayView1d< real64 > const & localRhs );
@@ -378,23 +378,23 @@ struct AssemblerKernelHelper
   GEOS_HOST_DEVICE
   static void
     assembleViscousFlux( localIndex const ifaceLoc,
-                         real64 const (&oneSidedVolFlux)[ NF ],
-                         real64 const (&dOneSidedVolFlux_dPres)[ NF ],
-                         real64 const (&dOneSidedVolFlux_dFacePres)[ NF ][ NF ],
-                         real64 const (&dOneSidedVolFlux_dCompDens)[ NF ][ NC ],
-                         real64 const (&upwPhaseViscCoef)[ NP ][ NC ],
-                         real64 const (&dUpwPhaseViscCoef_dPres)[ NP ][ NC ],
-                         real64 const (&dUpwPhaseViscCoef_dCompDens)[ NP ][ NC ][ NC ],
+                         real64 const (&oneSidedVolFlux)[NF],
+                         real64 const (&dOneSidedVolFlux_dPres)[NF],
+                         real64 const (&dOneSidedVolFlux_dFacePres)[NF][NF],
+                         real64 const (&dOneSidedVolFlux_dCompDens)[NF][NC],
+                         real64 const (&upwPhaseViscCoef)[NP][NC],
+                         real64 const (&dUpwPhaseViscCoef_dPres)[NP][NC],
+                         real64 const (&dUpwPhaseViscCoef_dCompDens)[NP][NC][NC],
                          globalIndex const elemDofNumber,
                          globalIndex const neighborDofNumber,
                          globalIndex const upwViscDofNumber,
                          globalIndex const faceDofNumber,
                          real64 const & dt,
-                         real64 ( &divMassFluxes )[ NC ],
-                         real64 ( &dDivMassFluxes_dElemVars )[ NC ][ (NC+1)*(NF+1) ],
-                         real64 ( &dDivMassFluxes_dFaceVars )[ NC ][ NF ],
-                         globalIndex ( &dofColIndicesElemVars )[ (NC+1)*(NF+1) ],
-                         globalIndex ( &dofColIndicesFaceVars )[ NF ] );
+                         real64 ( &divMassFluxes )[NC],
+                         real64 ( &dDivMassFluxes_dElemVars )[NC][(NC + 1) * (NF + 1)],
+                         real64 ( &dDivMassFluxes_dFaceVars )[NC][NF],
+                         globalIndex ( &dofColIndicesElemVars )[(NC + 1) * (NF + 1)],
+                         globalIndex ( &dofColIndicesFaceVars )[NF] );
 
   /**
    * @brief In a given element, compute the buoyancy flux divergence, i.e, sum the buoyancy fluxes at this element's faces
@@ -416,15 +416,15 @@ struct AssemblerKernelHelper
   GEOS_HOST_DEVICE
   static void
     assembleBuoyancyFlux( localIndex const ifaceLoc,
-                          real64 const (&phaseGravTerm)[ NP ][ NP-1 ],
-                          real64 const (&dPhaseGravTerm_dPres)[ NP ][ NP-1 ][ 2 ],
-                          real64 const (&dPhaseGravTerm_dCompDens)[ NP ][ NP-1 ][ 2 ][ NC ],
-                          real64 const (&upwPhaseGravCoef)[ NP ][ NP-1 ][ NC ],
-                          real64 const (&dUpwPhaseGravCoef_dPres)[ NP ][ NP-1 ][ NC ][ 2 ],
-                          real64 const (&dUpwPhaseGravCoef_dCompDens)[ NP ][ NP-1 ][ NC ][ 2 ][ NC ],
+                          real64 const (&phaseGravTerm)[NP][NP - 1],
+                          real64 const (&dPhaseGravTerm_dPres)[NP][NP - 1][2],
+                          real64 const (&dPhaseGravTerm_dCompDens)[NP][NP - 1][2][NC],
+                          real64 const (&upwPhaseGravCoef)[NP][NP - 1][NC],
+                          real64 const (&dUpwPhaseGravCoef_dPres)[NP][NP - 1][NC][2],
+                          real64 const (&dUpwPhaseGravCoef_dCompDens)[NP][NP - 1][NC][2][NC],
                           real64 const & dt,
-                          real64 ( &divMassFluxes )[ NC ],
-                          real64 ( &dDivMassFluxes_dElemVars )[ NC ][ (NC+1)*(NF+1) ] );
+                          real64 ( &divMassFluxes )[NC],
+                          real64 ( &dDivMassFluxes_dElemVars )[NC][(NC + 1) * (NF + 1)] );
 
   /**
    * @brief In a given element, assemble the constraints at this element's faces
@@ -448,10 +448,10 @@ struct AssemblerKernelHelper
                            arraySlice1d< localIndex const > const & elemToFaces,
                            globalIndex const elemDofNumber,
                            globalIndex const rankOffset,
-                           real64 const (&oneSidedVolFlux)[ NF ],
-                           real64 const (&dOneSidedVolFlux_dPres)[ NF ],
-                           real64 const (&dOneSidedVolFlux_dFacePres)[ NF ][ NF ],
-                           real64 const (&dOneSidedVolFlux_dCompDens)[ NF ][ NC ],
+                           real64 const (&oneSidedVolFlux)[NF],
+                           real64 const (&dOneSidedVolFlux_dPres)[NF],
+                           real64 const (&dOneSidedVolFlux_dFacePres)[NF][NF],
+                           real64 const (&dOneSidedVolFlux_dCompDens)[NF][NC],
                            CRSMatrixView< real64, globalIndex const > const & localMatrix,
                            arrayView1d< real64 > const & localRhs );
 
@@ -743,7 +743,7 @@ public:
 
         for( integer jc = 0; jc < numComp; ++jc )
         {
-          dRelPerm_dC[jc] += dRelPerm_dS * dPhaseVolFrac[jp][Deriv::dC+jc];
+          dRelPerm_dC[jc] += dRelPerm_dS * dPhaseVolFrac[jp][Deriv::dC + jc];
         }
       }
 
@@ -756,8 +756,8 @@ public:
       // compositional derivatives
       for( integer jc = 0; jc < numComp; ++jc )
       {
-        dPhaseMob[ip][Deriv::dC+jc] = dRelPerm_dC[jc] / viscosity
-                                      - mobility * dVisc_dC[jc] / viscosity;
+        dPhaseMob[ip][Deriv::dC + jc] = dRelPerm_dC[jc] / viscosity
+                                        - mobility * dVisc_dC[jc] / viscosity;
       }
 
       // call the lambda in the phase loop to allow the reuse of the relperm, viscosity, and mobility
@@ -1096,7 +1096,7 @@ struct PrecomputeKernel
     {
       stackArray2d< real64, NF *NF > transMatrix( NF, NF );
 
-      real64 const perm[ 3 ] = { elemPerm[ei][0][0], elemPerm[ei][0][1], elemPerm[ei][0][2] };
+      real64 const perm[3] = { elemPerm[ei][0][0], elemPerm[ei][0][1], elemPerm[ei][0][2] };
 
       IP_TYPE::template compute< NF >( nodePosition,
                                        transMultiplier,

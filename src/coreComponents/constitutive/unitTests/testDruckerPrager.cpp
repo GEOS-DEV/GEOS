@@ -65,11 +65,11 @@ void testDruckerPragerDriver()
     "      defaultDensity=\"2700\" "
     "      defaultBulkModulus=\"1000.0\" "
     "      defaultShearModulus=\"1000.0\" "
-    "      defaultFrictionAngle=\"" + std::to_string( friction )+ "\" "
-                                                                  "      defaultDilationAngle=\"15.0\" "
-                                                                  "      defaultHardeningRate=\"-2000.0\" "
-                                                                  "      defaultCohesion=\"1\"/>"
-                                                                  "</Constitutive>";
+    "      defaultFrictionAngle=\"" + std::to_string( friction ) + "\" "
+                                                                   "      defaultDilationAngle=\"15.0\" "
+                                                                   "      defaultHardeningRate=\"-2000.0\" "
+                                                                   "      defaultCohesion=\"1\"/>"
+                                                                   "</Constitutive>";
 
   xmlWrapper::xmlDocument xmlDocument;
   xmlWrapper::xmlResult xmlResult = xmlDocument.loadString( inputStream );
@@ -109,7 +109,7 @@ void testDruckerPragerDriver()
   data.strainIncrement[0] = -1e-4;
   real64 timeIncrement = 0;
 
-  for( localIndex loadstep=0; loadstep < 50; ++loadstep )
+  for( localIndex loadstep = 0; loadstep < 50; ++loadstep )
   {
     forAll< POLICY >( 1, [=] GEOS_HOST_DEVICE ( localIndex const k )
     {
@@ -178,14 +178,14 @@ void testDruckerPragerExtendedDriver()
     "      defaultDensity=\"2700\" "
     "      defaultBulkModulus=\"300\" "
     "      defaultShearModulus=\"300\" "
-    "      defaultInitialFrictionAngle=\"" + std::to_string( initialFriction )+ "\" "
-                                                                                "      defaultResidualFrictionAngle=\"" + std::to_string( residualFriction )+ "\" "
-                                                                                                                                                              "      defaultDilationRatio=\"0.5\" "
-                                                                                                                                                              "      defaultHardening=\"0.001\" "
-                                                                                                                                                              "      defaultCohesion=\"" +
-    std::to_string( cohesion )+ "\" "
-                                "   />"
-                                "</Constitutive>";
+    "      defaultInitialFrictionAngle=\"" + std::to_string( initialFriction ) + "\" "
+                                                                                 "      defaultResidualFrictionAngle=\"" + std::to_string( residualFriction ) + "\" "
+                                                                                                                                                                "      defaultDilationRatio=\"0.5\" "
+                                                                                                                                                                "      defaultHardening=\"0.001\" "
+                                                                                                                                                                "      defaultCohesion=\"" +
+    std::to_string( cohesion ) + "\" "
+                                 "   />"
+                                 "</Constitutive>";
 
   xmlWrapper::xmlDocument xmlDocument;
   xmlWrapper::xmlResult xmlResult = xmlDocument.loadString( inputStream );
@@ -228,7 +228,7 @@ void testDruckerPragerExtendedDriver()
   real64 deviator[6] = {0};
 
   //FILE* fp = fopen("pq.txt","w");
-  for( localIndex loadstep=0; loadstep < 300; ++loadstep )
+  for( localIndex loadstep = 0; loadstep < 300; ++loadstep )
   {
     forAll< POLICY >( 1, [=] GEOS_HOST_DEVICE ( localIndex const k )
     {
@@ -259,7 +259,7 @@ void testDruckerPragerExtendedDriver()
   real64 slope_i = 6 * sin( phi_i ) / ( 3 - sin( phi_i ) );
   real64 intercept = 6 * cohesion * cos( phi_i ) / ( 3 - sin( phi_i ) ) / slope_i;
 
-  EXPECT_TRUE( fabs( invariantQ / (invariantP-intercept) / slope_r + 1 ) < 1e-2 );
+  EXPECT_TRUE( fabs( invariantQ / (invariantP - intercept) / slope_r + 1 ) < 1e-2 );
 
   // we now use a finite-difference check of tangent stiffness to confirm
   // the analytical form is working properly.

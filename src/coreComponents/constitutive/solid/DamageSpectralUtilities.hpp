@@ -37,8 +37,8 @@ namespace geos
 GEOS_HOST_DEVICE inline
 void PositivePartOfTensor( real64 (& eigs)[3], real64 (& eigvecs)[3][3], real64 (& positivePart)[6] )
 {
-  real64 positiveEigs[6]={};
-  for( int i=0; i < 3; i++ )
+  real64 positiveEigs[6] = {};
+  for( int i = 0; i < 3; i++ )
   {
     positiveEigs[i] = fmax( 0.0, eigs[i] );
   }
@@ -49,8 +49,8 @@ void PositivePartOfTensor( real64 (& eigs)[3], real64 (& eigvecs)[3][3], real64 
 GEOS_HOST_DEVICE inline
 void NegativePartOfTensor( real64 (& eigs)[3], real64 (& eigvecs)[3][3], real64 (& negativePart)[6] )
 {
-  real64 negativeEigs[6]={};
-  for( int i=0; i < 3; i++ )
+  real64 negativeEigs[6] = {};
+  for( int i = 0; i < 3; i++ )
   {
     negativeEigs[i] = fmin( 0.0, eigs[i] );
   }
@@ -62,15 +62,15 @@ GEOS_HOST_DEVICE inline
 real64 doubleContraction( real64 (& A)[6], real64 (& B)[6] )
 {
   real64 ans = 0;
-  for( int i=0; i < 6; i++ )
+  for( int i = 0; i < 6; i++ )
   {
     if( i < 3 )
     {
-      ans = ans + A[i]*B[i];
+      ans = ans + A[i] * B[i];
     }
     else
     {
-      ans = ans + 2*A[i]*B[i];
+      ans = ans + 2 * A[i] * B[i];
     }
   }
   return ans;
@@ -101,13 +101,13 @@ real64 heaviside( real64 x )
 GEOS_HOST_DEVICE inline
 void QTensor( real64 const (&eigvector)[3], real64 (& Q)[6][6] )
 {
-  real64 M[6]={0};
+  real64 M[6] = {0};
   LvArray::tensorOps::symRij_eq_AiAj< 3 >( M, eigvector );
-  for( int i = 0; i<6; i++ )
+  for( int i = 0; i < 6; i++ )
   {
-    for( int j = 0; j<6; j++ )
+    for( int j = 0; j < 6; j++ )
     {
-      Q[i][j] = M[ i ] * M[ j ];
+      Q[i][j] = M[i] * M[j];
     }
   }
 }
@@ -117,47 +117,47 @@ GEOS_HOST_DEVICE inline
 void GTensor( real64 (& eigvec1)[3], real64 (& eigvec2)[3], real64 (& G)[6][6] )
 {
   GEOS_UNUSED_VAR( eigvec1, eigvec2, G );
-  real64 M1[6]={0};
-  real64 M2[6]={0};
+  real64 M1[6] = {0};
+  real64 M2[6] = {0};
   LvArray::tensorOps::symRij_eq_AiAj< 3 >( M1, eigvec1 );
   LvArray::tensorOps::symRij_eq_AiAj< 3 >( M2, eigvec2 );
 
-  G[0][0] = M1[0]*M2[0] + M1[0]*M2[0];
-  G[0][1] = M1[5]*M2[5] + M1[5]*M2[5];
-  G[0][2] = M1[4]*M2[4] + M1[4]*M2[4];
-  G[0][3] = M1[5]*M2[4] + M1[4]*M2[5];
-  G[0][4] = M1[0]*M2[4] + M1[4]*M2[0];
-  G[0][5] = M1[0]*M2[5] + M1[5]*M2[0];
-  G[1][0] = M1[5]*M2[5] + M1[5]*M2[5];
-  G[1][1] = M1[1]*M2[1] + M1[1]*M2[1];
-  G[1][2] = M1[3]*M2[3] + M1[3]*M2[3];
-  G[1][3] = M1[1]*M2[3] + M1[3]*M2[1];
-  G[1][4] = M1[5]*M2[3] + M1[3]*M2[5];
-  G[1][5] = M1[5]*M2[1] + M1[1]*M2[5];
-  G[2][0] = M1[4]*M2[4] + M1[4]*M2[4];
-  G[2][1] = M1[3]*M2[3] + M1[3]*M2[3];
-  G[2][2] = M1[2]*M2[2] + M1[2]*M2[2];
-  G[2][3] = M1[3]*M2[2] + M1[2]*M2[3];
-  G[2][4] = M1[4]*M2[2] + M1[2]*M2[4];
-  G[2][5] = M1[4]*M2[3] + M1[3]*M2[4];
-  G[3][0] = M1[5]*M2[4] + M1[5]*M2[4];
-  G[3][1] = M1[1]*M2[3] + M1[1]*M2[3];
-  G[3][2] = M1[3]*M2[2] + M1[3]*M2[2];
-  G[3][3] = M1[1]*M2[2] + M1[3]*M2[3];
-  G[3][4] = M1[5]*M2[2] + M1[3]*M2[4];
-  G[3][5] = M1[5]*M2[3] + M1[1]*M2[4];
-  G[4][0] = M1[0]*M2[4] + M1[0]*M2[4];
-  G[4][1] = M1[5]*M2[3] + M1[5]*M2[3];
-  G[4][2] = M1[4]*M2[2] + M1[4]*M2[2];
-  G[4][3] = M1[5]*M2[2] + M1[4]*M2[3];
-  G[4][4] = M1[0]*M2[2] + M1[4]*M2[4];
-  G[4][5] = M1[0]*M2[3] + M1[5]*M2[4];
-  G[5][0] = M1[0]*M2[5] + M1[0]*M2[5];
-  G[5][1] = M1[5]*M2[1] + M1[5]*M2[1];
-  G[5][2] = M1[4]*M2[3] + M1[4]*M2[3];
-  G[5][3] = M1[5]*M2[3] + M1[4]*M2[1];
-  G[5][4] = M1[0]*M2[3] + M1[4]*M2[5];
-  G[5][5] = M1[0]*M2[1] + M1[5]*M2[5];
+  G[0][0] = M1[0] * M2[0] + M1[0] * M2[0];
+  G[0][1] = M1[5] * M2[5] + M1[5] * M2[5];
+  G[0][2] = M1[4] * M2[4] + M1[4] * M2[4];
+  G[0][3] = M1[5] * M2[4] + M1[4] * M2[5];
+  G[0][4] = M1[0] * M2[4] + M1[4] * M2[0];
+  G[0][5] = M1[0] * M2[5] + M1[5] * M2[0];
+  G[1][0] = M1[5] * M2[5] + M1[5] * M2[5];
+  G[1][1] = M1[1] * M2[1] + M1[1] * M2[1];
+  G[1][2] = M1[3] * M2[3] + M1[3] * M2[3];
+  G[1][3] = M1[1] * M2[3] + M1[3] * M2[1];
+  G[1][4] = M1[5] * M2[3] + M1[3] * M2[5];
+  G[1][5] = M1[5] * M2[1] + M1[1] * M2[5];
+  G[2][0] = M1[4] * M2[4] + M1[4] * M2[4];
+  G[2][1] = M1[3] * M2[3] + M1[3] * M2[3];
+  G[2][2] = M1[2] * M2[2] + M1[2] * M2[2];
+  G[2][3] = M1[3] * M2[2] + M1[2] * M2[3];
+  G[2][4] = M1[4] * M2[2] + M1[2] * M2[4];
+  G[2][5] = M1[4] * M2[3] + M1[3] * M2[4];
+  G[3][0] = M1[5] * M2[4] + M1[5] * M2[4];
+  G[3][1] = M1[1] * M2[3] + M1[1] * M2[3];
+  G[3][2] = M1[3] * M2[2] + M1[3] * M2[2];
+  G[3][3] = M1[1] * M2[2] + M1[3] * M2[3];
+  G[3][4] = M1[5] * M2[2] + M1[3] * M2[4];
+  G[3][5] = M1[5] * M2[3] + M1[1] * M2[4];
+  G[4][0] = M1[0] * M2[4] + M1[0] * M2[4];
+  G[4][1] = M1[5] * M2[3] + M1[5] * M2[3];
+  G[4][2] = M1[4] * M2[2] + M1[4] * M2[2];
+  G[4][3] = M1[5] * M2[2] + M1[4] * M2[3];
+  G[4][4] = M1[0] * M2[2] + M1[4] * M2[4];
+  G[4][5] = M1[0] * M2[3] + M1[5] * M2[4];
+  G[5][0] = M1[0] * M2[5] + M1[0] * M2[5];
+  G[5][1] = M1[5] * M2[1] + M1[5] * M2[1];
+  G[5][2] = M1[4] * M2[3] + M1[4] * M2[3];
+  G[5][3] = M1[5] * M2[3] + M1[4] * M2[1];
+  G[5][4] = M1[0] * M2[3] + M1[4] * M2[5];
+  G[5][5] = M1[0] * M2[1] + M1[5] * M2[5];
 }
 
 //this function takes the eigenvectors and eigenvalues of a tensor and builds the associated positive projector
@@ -178,7 +178,7 @@ void PositiveProjectorTensor( real64 (& eigs)[3], real64 (& eigvecs)[3][3], real
   //test for repeated eigenvalues
   bool repeatedEigenvalues = false;
   real64 tol = 1e-12;
-  if( fabs( eigs[0] - eigs[1] ) < tol || fabs( eigs[0]-eigs[2] ) < tol || fabs( eigs[1]-eigs[2] ) < tol )
+  if( fabs( eigs[0] - eigs[1] ) < tol || fabs( eigs[0] - eigs[2] ) < tol || fabs( eigs[1] - eigs[2] ) < tol )
   {
     repeatedEigenvalues = true;
   }
@@ -193,9 +193,9 @@ void PositiveProjectorTensor( real64 (& eigs)[3], real64 (& eigvecs)[3][3], real
   for( int i = 0; i < 3; i++ )
   {
     real64 ithEigenVector[3] = {};
-    ithEigenVector[0]=eigvecs[0][i];
-    ithEigenVector[1]=eigvecs[1][i];
-    ithEigenVector[2]=eigvecs[2][i];
+    ithEigenVector[0] = eigvecs[0][i];
+    ithEigenVector[1] = eigvecs[1][i];
+    ithEigenVector[2] = eigvecs[2][i];
     //First Part
     //compute Qi
     QTensor( ithEigenVector, Qi );
@@ -207,10 +207,10 @@ void PositiveProjectorTensor( real64 (& eigs)[3], real64 (& eigvecs)[3][3], real
 
       for( int j = 0; j < 3; j++ )
       {
-        real64 jthEigenVector[3]={};
-        jthEigenVector[0]=eigvecs[0][j];
-        jthEigenVector[1]=eigvecs[1][j];
-        jthEigenVector[2]=eigvecs[2][j];
+        real64 jthEigenVector[3] = {};
+        jthEigenVector[0] = eigvecs[0][j];
+        jthEigenVector[1] = eigvecs[1][j];
+        jthEigenVector[2] = eigvecs[2][j];
         if( i == j )
         {
           continue;
@@ -220,7 +220,7 @@ void PositiveProjectorTensor( real64 (& eigs)[3], real64 (& eigvecs)[3][3], real
         GTensor( jthEigenVector, ithEigenVector, Gji );
         LvArray::tensorOps::add< 6, 6 >( Gsym, Gji );
         //Do update
-        LvArray::tensorOps::scale< 6, 6 >( Gsym, 0.5 * (fmax( eigs[i], 0.0 ) - fmax( eigs[j], 0.0 ))/(2*(eigs[i]-eigs[j])));
+        LvArray::tensorOps::scale< 6, 6 >( Gsym, 0.5 * (fmax( eigs[i], 0.0 ) - fmax( eigs[j], 0.0 )) / (2 * (eigs[i] - eigs[j])));
         LvArray::tensorOps::add< 6, 6 >( PositiveProjector, Gsym );
       }
     }
@@ -228,10 +228,10 @@ void PositiveProjectorTensor( real64 (& eigs)[3], real64 (& eigvecs)[3][3], real
     {
       for( int j = 0; j < 3; j++ )
       {
-        real64 jthEigenVector[3]={};
-        jthEigenVector[0]=eigvecs[0][j];
-        jthEigenVector[1]=eigvecs[1][j];
-        jthEigenVector[2]=eigvecs[2][j];
+        real64 jthEigenVector[3] = {};
+        jthEigenVector[0] = eigvecs[0][j];
+        jthEigenVector[1] = eigvecs[1][j];
+        jthEigenVector[2] = eigvecs[2][j];
         if( i == j )
         {
           continue;
@@ -240,7 +240,7 @@ void PositiveProjectorTensor( real64 (& eigs)[3], real64 (& eigvecs)[3][3], real
         GTensor( ithEigenVector, jthEigenVector, Gsym );
         GTensor( jthEigenVector, ithEigenVector, Gji );
         LvArray::tensorOps::add< 6, 6 >( Gsym, Gji );
-        LvArray::tensorOps::scale< 6, 6 >( Gsym, 0.5 * (heaviside( eigs[i] ) + heaviside( eigs[j] ))/4 );
+        LvArray::tensorOps::scale< 6, 6 >( Gsym, 0.5 * (heaviside( eigs[i] ) + heaviside( eigs[j] )) / 4 );
         //do update
         LvArray::tensorOps::add< 6, 6 >( PositiveProjector, Gsym );
       }
@@ -256,7 +256,7 @@ void NegativeProjectorTensor( real64 (& eigs)[3], real64 (& eigvecs)[3][3], real
   //test for repeated eigenvalues
   bool repeatedEigenvalues = false;
   real64 tol = 1e-12;
-  if( fabs( eigs[0] - eigs[1] ) < tol || fabs( eigs[0]-eigs[2] ) < tol || fabs( eigs[1]-eigs[2] ) < tol )
+  if( fabs( eigs[0] - eigs[1] ) < tol || fabs( eigs[0] - eigs[2] ) < tol || fabs( eigs[1] - eigs[2] ) < tol )
   {
     repeatedEigenvalues = true;
   }
@@ -271,9 +271,9 @@ void NegativeProjectorTensor( real64 (& eigs)[3], real64 (& eigvecs)[3][3], real
   for( int i = 0; i < 3; i++ )
   {
     real64 ithEigenVector[3] = {};
-    ithEigenVector[0]=eigvecs[0][i];
-    ithEigenVector[1]=eigvecs[1][i];
-    ithEigenVector[2]=eigvecs[2][i];
+    ithEigenVector[0] = eigvecs[0][i];
+    ithEigenVector[1] = eigvecs[1][i];
+    ithEigenVector[2] = eigvecs[2][i];
     //First Part
     //compute Qi
     QTensor( ithEigenVector, Qi );
@@ -286,9 +286,9 @@ void NegativeProjectorTensor( real64 (& eigs)[3], real64 (& eigvecs)[3][3], real
       for( int j = 0; j < 3; j++ )
       {
         real64 jthEigenVector[3] = {};
-        jthEigenVector[0]=eigvecs[0][j];
-        jthEigenVector[1]=eigvecs[1][j];
-        jthEigenVector[2]=eigvecs[2][j];
+        jthEigenVector[0] = eigvecs[0][j];
+        jthEigenVector[1] = eigvecs[1][j];
+        jthEigenVector[2] = eigvecs[2][j];
         if( i == j )
         {
           continue;
@@ -298,7 +298,7 @@ void NegativeProjectorTensor( real64 (& eigs)[3], real64 (& eigvecs)[3][3], real
         GTensor( jthEigenVector, ithEigenVector, Gji );
         LvArray::tensorOps::add< 6, 6 >( Gsym, Gji );
         //Do update
-        LvArray::tensorOps::scale< 6, 6 >( Gsym, 0.5 * (fmin( eigs[i], 0.0 ) - fmin( eigs[j], 0.0 ))/(2*(eigs[i]-eigs[j])));
+        LvArray::tensorOps::scale< 6, 6 >( Gsym, 0.5 * (fmin( eigs[i], 0.0 ) - fmin( eigs[j], 0.0 )) / (2 * (eigs[i] - eigs[j])));
         LvArray::tensorOps::add< 6, 6 >( NegativeProjector, Gsym );
       }
     }
@@ -307,9 +307,9 @@ void NegativeProjectorTensor( real64 (& eigs)[3], real64 (& eigvecs)[3][3], real
       for( int j = 0; j < 3; j++ )
       {
         real64 jthEigenVector[3] = {};
-        jthEigenVector[0]=eigvecs[0][j];
-        jthEigenVector[1]=eigvecs[1][j];
-        jthEigenVector[2]=eigvecs[2][j];
+        jthEigenVector[0] = eigvecs[0][j];
+        jthEigenVector[1] = eigvecs[1][j];
+        jthEigenVector[2] = eigvecs[2][j];
         if( i == j )
         {
           continue;
@@ -318,7 +318,7 @@ void NegativeProjectorTensor( real64 (& eigs)[3], real64 (& eigvecs)[3][3], real
         GTensor( ithEigenVector, jthEigenVector, Gsym );
         GTensor( jthEigenVector, ithEigenVector, Gji );
         LvArray::tensorOps::add< 6, 6 >( Gsym, Gji );
-        LvArray::tensorOps::scale< 6, 6 >( Gsym, 0.5 * (heaviside( -eigs[i] ) + heaviside( -eigs[j] ))/4 );
+        LvArray::tensorOps::scale< 6, 6 >( Gsym, 0.5 * (heaviside( -eigs[i] ) + heaviside( -eigs[j] )) / 4 );
         //do update
         LvArray::tensorOps::add< 6, 6 >( NegativeProjector, Gsym );
       }
@@ -333,38 +333,38 @@ void getStiffnessTest( real64 (& c)[6][6], real64 (& strain)[6], real64 damage )
 {
 
   //Spectral Split
-  real64 const damageFactor = (1-damage)*(1-damage);
+  real64 const damageFactor = (1 - damage) * (1 - damage);
   real64 const mu = 1;
   real64 const lambda = 1;
   //get strain tensor in voigt form
   real64 traceOfStrain = strain[0] + strain[1] + strain[2];
   //get eigenvalues and eigenvectors
-  real64 eigenValues[3]={};
-  real64 eigenVectors[3][3]={};
+  real64 eigenValues[3] = {};
+  real64 eigenVectors[3][3] = {};
   LvArray::tensorOps::symEigenvectors< 3 >( eigenValues, eigenVectors, strain );
   //construct 4th order IxI tensor
-  real64 IxITensor[6][6]={};
-  for( int i=0; i < 3; i++ )
+  real64 IxITensor[6][6] = {};
+  for( int i = 0; i < 3; i++ )
   {
-    for( int j=0; j < 3; j++ )
+    for( int j = 0; j < 3; j++ )
     {
       IxITensor[i][j] = 1.0;
     }
   }
 
   //construct positive part
-  real64 cPositive[6][6]={};
-  real64 positiveProjector[6][6]={};
+  real64 cPositive[6][6] = {};
+  real64 positiveProjector[6][6] = {};
   PositiveProjectorTensor( eigenValues, eigenVectors, positiveProjector );
-  LvArray::tensorOps::scaledCopy< 6, 6 >( cPositive, IxITensor, lambda*heaviside( traceOfStrain ));
-  LvArray::tensorOps::scale< 6, 6 >( positiveProjector, 2*mu );
+  LvArray::tensorOps::scaledCopy< 6, 6 >( cPositive, IxITensor, lambda * heaviside( traceOfStrain ));
+  LvArray::tensorOps::scale< 6, 6 >( positiveProjector, 2 * mu );
   LvArray::tensorOps::add< 6, 6 >( cPositive, positiveProjector );
 
   //construct negative part
-  real64 negativeProjector[6][6]={};
+  real64 negativeProjector[6][6] = {};
   NegativeProjectorTensor( eigenValues, eigenVectors, negativeProjector );
-  LvArray::tensorOps::scaledCopy< 6, 6 >( c, IxITensor, lambda*heaviside( -traceOfStrain ));
-  LvArray::tensorOps::scale< 6, 6 >( negativeProjector, 2*mu );
+  LvArray::tensorOps::scaledCopy< 6, 6 >( c, IxITensor, lambda * heaviside( -traceOfStrain ));
+  LvArray::tensorOps::scale< 6, 6 >( negativeProjector, 2 * mu );
   LvArray::tensorOps::add< 6, 6 >( c, negativeProjector );
   //finish up
   LvArray::tensorOps::scale< 6, 6 >( cPositive, damageFactor );
@@ -405,10 +405,10 @@ void getTestStress( real64 (& strain)[6], real64 (& stress)[6] )
   NegativePartOfTensor( eigenValues, eigenVectors, negativePartOfStrain );
   real64 positiveStress[6] = {};
   real64 negativeStress[6] = {};
-  LvArray::tensorOps::scaledCopy< 6 >( positiveStress, Itensor, lambda*tracePlus );
-  LvArray::tensorOps::scaledCopy< 6 >( negativeStress, Itensor, lambda*traceMinus );
-  LvArray::tensorOps::scaledAdd< 6 >( positiveStress, positivePartOfStrain, 2*mu );
-  LvArray::tensorOps::scaledAdd< 6 >( negativeStress, negativePartOfStrain, 2*mu );
+  LvArray::tensorOps::scaledCopy< 6 >( positiveStress, Itensor, lambda * tracePlus );
+  LvArray::tensorOps::scaledCopy< 6 >( negativeStress, Itensor, lambda * traceMinus );
+  LvArray::tensorOps::scaledAdd< 6 >( positiveStress, positivePartOfStrain, 2 * mu );
+  LvArray::tensorOps::scaledAdd< 6 >( negativeStress, negativePartOfStrain, 2 * mu );
   LvArray::tensorOps::copy< 6 >( stress, negativeStress );
   LvArray::tensorOps::scaledAdd< 6 >( stress, positiveStress, damageFactor );
 }

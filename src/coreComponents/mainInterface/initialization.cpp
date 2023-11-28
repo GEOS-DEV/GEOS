@@ -129,8 +129,8 @@ std::unique_ptr< CommandLineOptions > parseCommandLineOptions( int argc, char * 
   argc -= ( argc > 0 );
   argv += ( argc > 0 );
   option::Stats stats( usage, argc, argv );
-  option::Option options[ 100 ];//stats.options_max];
-  option::Option buffer[ 100 ];//stats.buffer_max];
+  option::Option options[100];  //stats.options_max];
+  option::Option buffer[100];  //stats.buffer_max];
   option::Parser parse( usage, argc, argv, options, buffer );
 
   // Handle special cases
@@ -149,7 +149,7 @@ std::unique_ptr< CommandLineOptions > parseCommandLineOptions( int argc, char * 
   }
 
   // Iterate over the remaining inputs
-  for( int ii=0; ii<parse.optionsCount(); ++ii )
+  for( int ii = 0; ii < parse.optionsCount(); ++ii )
   {
     option::Option & opt = buffer[ii];
     switch( opt.index() )

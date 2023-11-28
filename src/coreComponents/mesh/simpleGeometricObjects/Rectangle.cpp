@@ -54,13 +54,13 @@ Rectangle::Rectangle( const real64 oldX, const real64 oldY,
   m_origin{ 0.0, 0.0, 0.0 },
   m_tolerance( 1e-5 )
 {
-  m_origin = { (oldX + newX)/2.0, (oldY + newY)/2.0, 0.0};
-  m_normal = { -(newY-oldY), newX-oldX, 0.0 };
-  m_lengthVector = { newX-oldX, newY-oldY, 0.0 };
+  m_origin = { (oldX + newX) / 2.0, (oldY + newY) / 2.0, 0.0};
+  m_normal = { -(newY - oldY), newX - oldX, 0.0 };
+  m_lengthVector = { newX - oldX, newY - oldY, 0.0 };
   m_widthVector = { 0.0, 0.0, 1.0 };
-  real64 norm = std::sqrt( pow( newX-oldX, 2 )+pow( newY-oldY, 2 ));
+  real64 norm = std::sqrt( pow( newX - oldX, 2 ) + pow( newY - oldY, 2 ));
   m_dimensions.resize( 2 );
-  m_dimensions[0] = norm+1e-4; //small tolerance to ensure that both ends are contained in the plane - TODO: try to use m_tolerance
+  m_dimensions[0] = norm + 1e-4; //small tolerance to ensure that both ends are contained in the plane - TODO: try to use m_tolerance
   m_dimensions[1] = 5; //TODO: this is arbitrary, it only needs to be larger than the z thickness in the 2.5D model
 
   m_points.resize( 4, 3 );
@@ -81,7 +81,7 @@ void Rectangle::postProcessInput()
   m_tolerance = m_tolerance * std::min( m_dimensions[0], m_dimensions[1] );
 
   //Check if they are all orthogonal
-  real64 vector[ 3 ];
+  real64 vector[3];
   LvArray::tensorOps::crossProduct( vector, m_lengthVector, m_widthVector );
 
   GEOS_ERROR_IF( std::fabs( std::fabs( LvArray::tensorOps::AiBi< 3 >( m_normal, vector )) - 1 ) > orthoNormalBaseTolerance
@@ -95,8 +95,8 @@ void Rectangle::postProcessInput()
 
 void Rectangle::findRectangleLimits()
 {
-  real64 lengthVec[ 3 ] = LVARRAY_TENSOROPS_INIT_LOCAL_3( m_lengthVector );
-  real64 widthVec[ 3 ] = LVARRAY_TENSOROPS_INIT_LOCAL_3( m_widthVector );
+  real64 lengthVec[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( m_lengthVector );
+  real64 widthVec[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( m_widthVector );
 
   LvArray::tensorOps::scale< 3 >( lengthVec, 0.5 * m_dimensions[0] );
   LvArray::tensorOps::scale< 3 >( widthVec, 0.5 * m_dimensions[1] );
@@ -131,15 +131,15 @@ bool Rectangle::isCoordInObject( real64 const ( &coord ) [3] ) const
 {
   bool isInside = true;
 
-  real64 dummy[ 3 ] = LVARRAY_TENSOROPS_INIT_LOCAL_3( coord );
+  real64 dummy[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( coord );
   LvArray::tensorOps::subtract< 3 >( dummy, m_origin );
 
   // 1. Check if point is on the plane
   if( std::abs( LvArray::tensorOps::AiBi< 3 >( dummy, m_normal ) ) < m_tolerance )
   {
-    real64 vec[ 3 ]   = LVARRAY_TENSOROPS_INIT_LOCAL_3( coord );
-    real64 abVec[ 3 ] = LVARRAY_TENSOROPS_INIT_LOCAL_3( m_points[1] );
-    real64 adVec[ 3 ] = LVARRAY_TENSOROPS_INIT_LOCAL_3( m_points[3] );
+    real64 vec[3]   = LVARRAY_TENSOROPS_INIT_LOCAL_3( coord );
+    real64 abVec[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( m_points[1] );
+    real64 adVec[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( m_points[3] );
 
     LvArray::tensorOps::subtract< 3 >( vec, m_points[0] );
     LvArray::tensorOps::subtract< 3 >( abVec, m_points[0] );

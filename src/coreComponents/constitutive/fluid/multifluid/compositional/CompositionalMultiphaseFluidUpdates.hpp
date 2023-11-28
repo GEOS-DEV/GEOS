@@ -66,7 +66,7 @@ public:
                         arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & phaseEnthalpy,
                         arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & phaseInternalEnergy,
                         arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & phaseVisc,
-                        arraySlice2d< real64, multifluid::USD_PHASE_COMP-2 > const & phaseCompFrac,
+                        arraySlice2d< real64, multifluid::USD_PHASE_COMP - 2 > const & phaseCompFrac,
                         real64 & totalDensity ) const override;
 
   GEOS_HOST_DEVICE
@@ -398,7 +398,7 @@ CompositionalMultiphaseFluidUpdates< FLASH, PHASE1, PHASE2, PHASE3 >::compute(
   if( m_useMass )
   {
     real64 phaseMolecularWeight[maxNumPhase]{};
-    real64 dPhaseMolecularWeight[maxNumPhase][maxNumComp+2]{};
+    real64 dPhaseMolecularWeight[maxNumPhase][maxNumComp + 2]{};
 
     for( integer ip = 0; ip < numPhase; ++ip )
     {
@@ -407,7 +407,7 @@ CompositionalMultiphaseFluidUpdates< FLASH, PHASE1, PHASE2, PHASE3 >::compute(
       dPhaseMolecularWeight[ip][Deriv::dT] = 0.0;
       for( integer ic = 0; ic < numComp; ++ic )
       {
-        dPhaseMolecularWeight[ip][Deriv::dC+ic] = 0.0;
+        dPhaseMolecularWeight[ip][Deriv::dC + ic] = 0.0;
       }
     }
 

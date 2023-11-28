@@ -501,7 +501,7 @@ ProppantSlurryFluidUpdate::
     dDensity_dComponentConcentration[c] = 0.0;
   }
 
-  real64 const coef = pow( 1.0 + 1.25 *  effectiveConcentration / (1.0 - effectiveConcentration / m_maxProppantConcentration), 2.0 );
+  real64 const coef = pow( 1.0 + 1.25 * effectiveConcentration / (1.0 - effectiveConcentration / m_maxProppantConcentration), 2.0 );
   viscosity = fluidViscosity * coef;
   dViscosity_dPressure = dFluidViscosity_dPressure * coef;
 

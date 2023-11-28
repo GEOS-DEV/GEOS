@@ -234,7 +234,7 @@ struct MassMatrixKernel
       constexpr localIndex numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
 
       real32 const invC2 = 1.0 / ( density[k] * velocity[k] * velocity[k] );
-      real64 xLocal[ numNodesPerElem ][ 3 ];
+      real64 xLocal[numNodesPerElem][3];
       for( localIndex a = 0; a < numNodesPerElem; ++a )
       {
         for( localIndex i = 0; i < 3; ++i )
@@ -297,7 +297,7 @@ struct DampingMatrixKernel
         if( facesDomainBoundaryIndicator[f] == 1 && freeSurfaceFaceIndicator[f] != 1 )
         {
           constexpr localIndex numNodesPerFace = FE_TYPE::numNodesPerFace;
-          real64 xLocal[ numNodesPerFace ][ 3 ];
+          real64 xLocal[numNodesPerFace][3];
           for( localIndex a = 0; a < numNodesPerFace; ++a )
           {
             for( localIndex d = 0; d < 3; ++d )
@@ -363,9 +363,9 @@ struct VelocityComputation
       constexpr localIndex numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
 
       real64 xLocal[numNodesPerElem][3];
-      for( localIndex a=0; a< numNodesPerElem; ++a )
+      for( localIndex a = 0; a < numNodesPerElem; ++a )
       {
-        for( localIndex i=0; i<3; ++i )
+        for( localIndex i = 0; i < 3; ++i )
         {
           xLocal[a][i] = nodeCoords( elemsToNodes( k, a ), i );
         }
@@ -381,35 +381,35 @@ struct VelocityComputation
       for( localIndex i = 0; i < numNodesPerElem; ++i )
       {
         real32 massLoc = m_finiteElement.computeMassTerm( i, xLocal );
-        uelemx[i] = massLoc*velocity_x[k][i];
-        uelemy[i] = massLoc*velocity_y[k][i];
-        uelemz[i] = massLoc*velocity_z[k][i];
+        uelemx[i] = massLoc * velocity_x[k][i];
+        uelemy[i] = massLoc * velocity_y[k][i];
+        uelemz[i] = massLoc * velocity_z[k][i];
       }
 
-      for( localIndex q=0; q<numQuadraturePointsPerElem; ++q )
+      for( localIndex q = 0; q < numQuadraturePointsPerElem; ++q )
       {
 
 
 
         m_finiteElement.template computeFirstOrderStiffnessTermX( q, xLocal, [&] ( int i, int j, real32 dfx1, real32 dfx2, real32 dfx3 )
         {
-          flowx[j] += dfx1*p_np1[elemsToNodes[k][i]];
-          flowy[j] += dfx2*p_np1[elemsToNodes[k][i]];
-          flowz[j] += dfx3*p_np1[elemsToNodes[k][i]];
+          flowx[j] += dfx1 * p_np1[elemsToNodes[k][i]];
+          flowy[j] += dfx2 * p_np1[elemsToNodes[k][i]];
+          flowz[j] += dfx3 * p_np1[elemsToNodes[k][i]];
         } );
 
         m_finiteElement.template computeFirstOrderStiffnessTermY( q, xLocal, [&] ( int i, int j, real32 dfy1, real32 dfy2, real32 dfy3 )
         {
-          flowx[j] += dfy1*p_np1[elemsToNodes[k][i]];
-          flowy[j] += dfy2*p_np1[elemsToNodes[k][i]];
-          flowz[j] += dfy3*p_np1[elemsToNodes[k][i]];
+          flowx[j] += dfy1 * p_np1[elemsToNodes[k][i]];
+          flowy[j] += dfy2 * p_np1[elemsToNodes[k][i]];
+          flowz[j] += dfy3 * p_np1[elemsToNodes[k][i]];
         } );
 
         m_finiteElement.template computeFirstOrderStiffnessTermZ( q, xLocal, [&] ( int i, int j, real32 dfz1, real32 dfz2, real32 dfz3 )
         {
-          flowx[j] += dfz1*p_np1[elemsToNodes[k][i]];
-          flowy[j] += dfz2*p_np1[elemsToNodes[k][i]];
-          flowz[j] += dfz3*p_np1[elemsToNodes[k][i]];
+          flowx[j] += dfz1 * p_np1[elemsToNodes[k][i]];
+          flowy[j] += dfz2 * p_np1[elemsToNodes[k][i]];
+          flowz[j] += dfz3 * p_np1[elemsToNodes[k][i]];
 
         } );
 
@@ -417,13 +417,13 @@ struct VelocityComputation
       for( localIndex i = 0; i < numNodesPerElem; ++i )
       {
         real32 massLoc = m_finiteElement.computeMassTerm( i, xLocal );
-        uelemx[i]+=dt*flowx[i]/density[k];
-        uelemy[i]+=dt*flowy[i]/density[k];
-        uelemz[i]+=dt*flowz[i]/density[k];
+        uelemx[i] += dt * flowx[i] / density[k];
+        uelemy[i] += dt * flowy[i] / density[k];
+        uelemz[i] += dt * flowz[i] / density[k];
 
-        velocity_x[k][i] = uelemx[i]/massLoc;
-        velocity_y[k][i] = uelemy[i]/massLoc;
-        velocity_z[k][i] = uelemz[i]/massLoc;
+        velocity_x[k][i] = uelemx[i] / massLoc;
+        velocity_y[k][i] = uelemy[i] / massLoc;
+        velocity_z[k][i] = uelemz[i] / massLoc;
       }
     } );
   }
@@ -489,7 +489,7 @@ struct PressureComputation
     //Pre-mult by the first factor for damping
     forAll< EXEC_POLICY >( size_node, [=] GEOS_HOST_DEVICE ( localIndex const a )
     {
-      p_np1[a] *= 1.0-((dt/2)*(damping[a]/mass[a]));
+      p_np1[a] *= 1.0 - ((dt / 2) * (damping[a] / mass[a]));
     } );
 
     forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const k )
@@ -498,9 +498,9 @@ struct PressureComputation
       constexpr localIndex numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
 
       real64 xLocal[numNodesPerElem][3];
-      for( localIndex a=0; a< numNodesPerElem; ++a )
+      for( localIndex a = 0; a < numNodesPerElem; ++a )
       {
-        for( localIndex i=0; i<3; ++i )
+        for( localIndex i = 0; i < 3; ++i )
         {
           xLocal[a][i] = nodeCoords( elemsToNodes( k, a ), i );
         }
@@ -513,29 +513,29 @@ struct PressureComputation
 
 
       // Volume integration
-      for( localIndex q=0; q<numQuadraturePointsPerElem; ++q )
+      for( localIndex q = 0; q < numQuadraturePointsPerElem; ++q )
       {
 
 
         m_finiteElement.template computeFirstOrderStiffnessTermX( q, xLocal, [&] ( int i, int j, real32 dfx1, real32 dfx2, real32 dfx3 )
         {
-          auxx[i] -= dfx1*velocity_x[k][j];
-          auyy[i] -= dfx2*velocity_y[k][j];
-          auzz[i] -= dfx3*velocity_z[k][j];
+          auxx[i] -= dfx1 * velocity_x[k][j];
+          auyy[i] -= dfx2 * velocity_y[k][j];
+          auzz[i] -= dfx3 * velocity_z[k][j];
         } );
 
         m_finiteElement.template computeFirstOrderStiffnessTermY( q, xLocal, [&] ( int i, int j, real32 dfy1, real32 dfy2, real32 dfy3 )
         {
-          auxx[i] -= dfy1*velocity_x[k][j];
-          auyy[i] -= dfy2*velocity_y[k][j];
-          auzz[i] -= dfy3*velocity_z[k][j];
+          auxx[i] -= dfy1 * velocity_x[k][j];
+          auyy[i] -= dfy2 * velocity_y[k][j];
+          auzz[i] -= dfy3 * velocity_z[k][j];
         } );
 
         m_finiteElement.template computeFirstOrderStiffnessTermZ( q, xLocal, [&] ( int i, int j, real32 dfz1, real32 dfz2, real32 dfz3 )
         {
-          auxx[i] -= dfz1*velocity_x[k][j];
-          auyy[i] -= dfz2*velocity_y[k][j];
-          auzz[i] -= dfz3*velocity_z[k][j];
+          auxx[i] -= dfz1 * velocity_x[k][j];
+          auyy[i] -= dfz2 * velocity_y[k][j];
+          auzz[i] -= dfz3 * velocity_z[k][j];
         } );
 
 
@@ -545,10 +545,10 @@ struct PressureComputation
       //Time update + multiplication by inverse of the mass matrix
       for( localIndex i = 0; i < numNodesPerElem; ++i )
       {
-        real32 diag=(auxx[i]+auyy[i]+auzz[i]);
-        uelemx[i]+=dt*diag;
+        real32 diag = (auxx[i] + auyy[i] + auzz[i]);
+        uelemx[i] += dt * diag;
 
-        real32 const localIncrement = uelemx[i]/mass[elemsToNodes[k][i]];
+        real32 const localIncrement = uelemx[i] / mass[elemsToNodes[k][i]];
         RAJA::atomicAdd< ATOMIC_POLICY >( &p_np1[elemsToNodes[k][i]], localIncrement );
       }
 
@@ -557,11 +557,11 @@ struct PressureComputation
       {
         if( sourceIsAccessible[isrc] == 1 )
         {
-          if( sourceElem[isrc]==k && sourceRegion[isrc] == regionIndex )
+          if( sourceElem[isrc] == k && sourceRegion[isrc] == regionIndex )
           {
             for( localIndex i = 0; i < numNodesPerElem; ++i )
             {
-              real32 const localIncrement2 = dt*(sourceConstants[isrc][i]*sourceValue[cycleNumber][isrc])/(mass[elemsToNodes[k][i]]);
+              real32 const localIncrement2 = dt * (sourceConstants[isrc][i] * sourceValue[cycleNumber][isrc]) / (mass[elemsToNodes[k][i]]);
               RAJA::atomicAdd< ATOMIC_POLICY >( &p_np1[elemsToNodes[k][i]], localIncrement2 );
             }
           }
@@ -573,7 +573,7 @@ struct PressureComputation
     //Pre-mult by the first factor for damping
     forAll< EXEC_POLICY >( size_node, [=] GEOS_HOST_DEVICE ( localIndex const a )
     {
-      p_np1[a] /= 1.0+((dt/2)*(damping[a]/mass[a]));
+      p_np1[a] /= 1.0 + ((dt / 2) * (damping[a] / mass[a]));
     } );
   }
 

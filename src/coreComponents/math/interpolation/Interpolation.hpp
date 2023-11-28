@@ -63,20 +63,20 @@ real64 parabolicInterpolationThreePoints( real64 const lambdac,
   // d1 = (lambdac - lambdam)*lambdac*lambdam < 0
   //      so, if c2 > 0 we have negative curvature and default to
   //      lambdap = sigma1 * lambda.
-  real64 const c2 = lambdam*(ffT-ff0)-lambdac*(ffm-ff0);
+  real64 const c2 = lambdam * (ffT - ff0) - lambdac * (ffm - ff0);
   if( c2 >= 0.0 )
   {
-    return ( sigma1*lambdac );
+    return ( sigma1 * lambdac );
   }
-  real64 const c1 = lambdac*lambdac*(ffm-ff0)-lambdam*lambdam*(ffT-ff0);
-  real64 lambdap = -c1*0.5;
-  if( lambdap > sigma0*lambdac*c2 )
+  real64 const c1 = lambdac * lambdac * (ffm - ff0) - lambdam * lambdam * (ffT - ff0);
+  real64 lambdap = -c1 * 0.5;
+  if( lambdap > sigma0 * lambdac * c2 )
   {
-    lambdap = sigma0*lambdac*c2;
+    lambdap = sigma0 * lambdac * c2;
   }
-  if( lambdap < sigma1*lambdac*c2 )
+  if( lambdap < sigma1 * lambdac * c2 )
   {
-    lambdap = sigma1*lambdac*c2;
+    lambdap = sigma1 * lambdac * c2;
   }
   lambdap /= c2;
   return lambdap;
@@ -152,8 +152,8 @@ void linearInterpolation( arrayView1d< T const > const & xIn,
                                                                 xIn.size(),
                                                                 xOut[i] );
     integer const iUp  = LvArray::math::min( LvArray::math::max( idx, 1 ),
-                                             LvArray::integerConversion< integer >( xIn.size()-1 ) );
-    integer const iLow = iUp-1;
+                                             LvArray::integerConversion< integer >( xIn.size() - 1 ) );
+    integer const iLow = iUp - 1;
     fOut[i] = linearInterpolation( xOut[i] - xIn[iLow], xIn[iUp] - xOut[i], fIn[iLow], fIn[iUp] );
   }
 }

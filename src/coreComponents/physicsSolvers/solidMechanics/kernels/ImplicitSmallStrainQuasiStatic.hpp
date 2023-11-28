@@ -132,7 +132,7 @@ public:
     int xLocal;
 #else
     /// C-array stack storage for element local the nodal positions.
-    real64 xLocal[ numNodesPerElem ][ 3 ];
+    real64 xLocal[numNodesPerElem][3];
 #endif
 
     /// Stack storage for the element local nodal displacement
@@ -142,7 +142,7 @@ public:
     real64 uhat_local[numNodesPerElem][numDofPerTrialSupportPoint];
 
     /// Stack storage for the constitutive stiffness at a quadrature point.
-    real64 constitutiveStiffness[ 6 ][ 6 ];
+    real64 constitutiveStiffness[6][6];
   };
   //*****************************************************************************
 

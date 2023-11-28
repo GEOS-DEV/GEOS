@@ -69,7 +69,7 @@ public:
                           arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & phaseViscosity,
                           arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & phaseEnthalpy,
                           arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & phaseInternalEnergy,
-                          arraySlice2d< real64, multifluid::USD_PHASE_COMP-2 > const & phaseCompFraction,
+                          arraySlice2d< real64, multifluid::USD_PHASE_COMP - 2 > const & phaseCompFraction,
                           real64 & totalDensity ) const override;
 
     GEOS_HOST_DEVICE
@@ -174,7 +174,7 @@ private:
                                       PhaseProp::SliceType const & phaseMassDens,
                                       PhaseProp::SliceType const & phaseVisc,
                                       real64 phaseMolecularWeight[NP_BO],
-                                      real64 dPhaseMolecularWeight[NP_BO][NC_BO+2] ) const;
+                                      real64 dPhaseMolecularWeight[NP_BO][NC_BO + 2] ) const;
 
     /**
      * @brief Utility function to compute phase fractions and phase component fractions (no derivatives)
@@ -454,7 +454,7 @@ BlackOilFluid::KernelWrapper::
   real64 dCompMoleFrac_dCompMassFrac[NC_BO][NC_BO]{};
 
   real64 phaseMolecularWeight[NP_BO]{};
-  real64 dPhaseMolecularWeight[NP_BO][NC_BO+2]{};
+  real64 dPhaseMolecularWeight[NP_BO][NC_BO + 2]{};
 
   // 1. Convert to mass if necessary
 
@@ -583,7 +583,7 @@ BlackOilFluid::KernelWrapper::
     phaseFraction.value[ipWater] = zw;
     if( needDerivs )
     {
-      phaseFraction.derivs[ipWater][Deriv::dC+icWater] = 1.0;
+      phaseFraction.derivs[ipWater][Deriv::dC + icWater] = 1.0;
     }
     phaseCompFraction.value[ipWater][icWater] = 1.0;
     return;
@@ -610,7 +610,7 @@ BlackOilFluid::KernelWrapper::
   real64 const Kg = ( oilSurfaceMoleDensity + gasSurfaceMoleDensity * RsSat ) / ( RsSat * gasSurfaceMoleDensity );
   real64 const dKg_dP = -oilSurfaceMoleDensity / gasSurfaceMoleDensity * dRsSat_dP / ( RsSat * RsSat );
   real64 const gasPhaseFraction = zo / ( 1.0 - Kg ) + zg;
-  real64 const dGasPhaseFraction_dP = zo / ( ( 1.0 - Kg ) * ( 1.0 - Kg ) ) *  dKg_dP;
+  real64 const dGasPhaseFraction_dP = zo / ( ( 1.0 - Kg ) * ( 1.0 - Kg ) ) * dKg_dP;
   real64 const dGasPhaseFraction_dzo = 1.0 / ( 1.0 - Kg );
   real64 const dGasPhaseFraction_dzg = 1.0;
 
@@ -629,12 +629,12 @@ BlackOilFluid::KernelWrapper::
     {
       phaseFraction.derivs[ipOil][Deriv::dP] = -dGasPhaseFraction_dP;
       phaseFraction.derivs[ipGas][Deriv::dP] = dGasPhaseFraction_dP;
-      phaseFraction.derivs[ipOil][Deriv::dC+icOil] = -dGasPhaseFraction_dzo;
-      phaseFraction.derivs[ipOil][Deriv::dC+icGas] = -dGasPhaseFraction_dzg;
-      phaseFraction.derivs[ipOil][Deriv::dC+icWater] = -1.0;
-      phaseFraction.derivs[ipGas][Deriv::dC+icOil] = dGasPhaseFraction_dzo;
-      phaseFraction.derivs[ipGas][Deriv::dC+icGas] = dGasPhaseFraction_dzg;
-      phaseFraction.derivs[ipWater][Deriv::dC+icWater] = 1.0;
+      phaseFraction.derivs[ipOil][Deriv::dC + icOil] = -dGasPhaseFraction_dzo;
+      phaseFraction.derivs[ipOil][Deriv::dC + icGas] = -dGasPhaseFraction_dzg;
+      phaseFraction.derivs[ipOil][Deriv::dC + icWater] = -1.0;
+      phaseFraction.derivs[ipGas][Deriv::dC + icOil] = dGasPhaseFraction_dzo;
+      phaseFraction.derivs[ipGas][Deriv::dC + icGas] = dGasPhaseFraction_dzg;
+      phaseFraction.derivs[ipWater][Deriv::dC + icWater] = 1.0;
     }
 
     // oil
@@ -684,10 +684,10 @@ BlackOilFluid::KernelWrapper::
 
     if( needDerivs )
     {
-      phaseFraction.derivs[ipOil][Deriv::dC+icWater] = -1.0;
-      phaseFraction.derivs[ipWater][Deriv::dC+icWater] = 1.0;
-      phaseCompFraction.derivs[ipOil][icOil][Deriv::dC+icOil] = 1.0;
-      phaseCompFraction.derivs[ipOil][icGas][Deriv::dC+icGas] = 1.0;
+      phaseFraction.derivs[ipOil][Deriv::dC + icWater] = -1.0;
+      phaseFraction.derivs[ipWater][Deriv::dC + icWater] = 1.0;
+      phaseCompFraction.derivs[ipOil][icOil][Deriv::dC + icOil] = 1.0;
+      phaseCompFraction.derivs[ipOil][icGas][Deriv::dC + icGas] = 1.0;
     }
   }
 }
@@ -720,7 +720,7 @@ BlackOilFluid::KernelWrapper::
   MultiFluidVarSlice< real64, 1, USD_PHASE - 2, USD_PHASE_DC - 2 >
   phaseViscosityAndDeriv { phaseViscosity, dPhaseViscosity[0][0] };
 
-  real64 dPhaseMolecularWeight[NP_BO][NC_BO+2]{};
+  real64 dPhaseMolecularWeight[NP_BO][NC_BO + 2]{};
 
   computeDensitiesViscosities( false, // no need to compute derivatives
                                pressure,
@@ -745,7 +745,7 @@ BlackOilFluid::KernelWrapper::
                                PhaseProp::SliceType const & phaseMassDens,
                                PhaseProp::SliceType const & phaseVisc,
                                real64 phaseMolecularWeight[NP_BO],
-                               real64 dPhaseMolecularWeight[NP_BO][NC_BO+2] ) const
+                               real64 dPhaseMolecularWeight[NP_BO][NC_BO + 2] ) const
 {
   using Deriv = multifluid::DerivativeOffset;
   using PT = BlackOilFluid::PhaseType;
@@ -792,9 +792,9 @@ BlackOilFluid::KernelWrapper::
       dPhaseMolecularWeight[ipGas][Deriv::dP] = 0.0;
       for( integer ic = 0; ic < NC_BO; ic++ )
       {
-        phaseMassDens.derivs[ipGas][Deriv::dC+ic]  = 0.0;
-        phaseDens.derivs[ipGas][Deriv::dC+ic]      = 0.0;
-        dPhaseMolecularWeight[ipGas][Deriv::dC+ic] = 0.0;
+        phaseMassDens.derivs[ipGas][Deriv::dC + ic]  = 0.0;
+        phaseDens.derivs[ipGas][Deriv::dC + ic]      = 0.0;
+        dPhaseMolecularWeight[ipGas][Deriv::dC + ic] = 0.0;
       }
     }
 
@@ -824,9 +824,9 @@ BlackOilFluid::KernelWrapper::
       dPhaseMolecularWeight[ipWater][Deriv::dP] = 0.0;
       for( integer ic = 0; ic < NC_BO; ic++ )
       {
-        phaseMassDens.derivs[ipWater][Deriv::dC+ic]  = 0.0;
-        phaseDens.derivs[ipWater][Deriv::dC+ic]      = 0.0;
-        dPhaseMolecularWeight[ipWater][Deriv::dC+ic] = 0.0;
+        phaseMassDens.derivs[ipWater][Deriv::dC + ic]  = 0.0;
+        phaseDens.derivs[ipWater][Deriv::dC + ic]      = 0.0;
+        dPhaseMolecularWeight[ipWater][Deriv::dC + ic] = 0.0;
       }
     }
 
@@ -866,7 +866,7 @@ BlackOilFluid::KernelWrapper::
       real64 const densRatio = m_PVTOView.m_surfaceMoleDensity[PT::OIL] / m_PVTOView.m_surfaceMoleDensity[PT::GAS];
       Rs = densRatio * composition[icGas] / composition[icOil];
       dRs_dC[PT::OIL] = -densRatio * composition[icGas] / (composition[icOil] * composition[icOil]);
-      dRs_dC[PT::GAS] =  densRatio  / composition[icOil];
+      dRs_dC[PT::GAS] =  densRatio / composition[icOil];
 
       // compute undersaturated properties (Bo, viscosity) by two-step interpolation in undersaturated tables
       // this part returns numerical derivatives
@@ -887,8 +887,8 @@ BlackOilFluid::KernelWrapper::
       tmp * ( phaseMassDens.derivs[ipOil][Deriv::dP] * phaseDens.value[ipOil] - phaseDens.derivs[ipOil][Deriv::dP] * phaseMassDens.value[ipOil] );
     for( integer ic = 0; ic < NC_BO; ++ic )
     {
-      dPhaseMolecularWeight[ipOil][Deriv::dC+ic] =
-        tmp * ( phaseMassDens.derivs[ipOil][Deriv::dC+ic] * phaseDens.value[ipOil] - phaseDens.derivs[ipOil][Deriv::dC+ic] * phaseMassDens.value[ipOil] );
+      dPhaseMolecularWeight[ipOil][Deriv::dC + ic] =
+        tmp * ( phaseMassDens.derivs[ipOil][Deriv::dC + ic] * phaseDens.value[ipOil] - phaseDens.derivs[ipOil][Deriv::dC + ic] * phaseMassDens.value[ipOil] );
     }
 
     if( m_useMass )
@@ -899,7 +899,7 @@ BlackOilFluid::KernelWrapper::
         phaseDens.derivs[ipOil][Deriv::dP] = phaseMassDens.derivs[ipOil][Deriv::dP];
         for( integer ic = 0; ic < NC_BO; ++ic )
         {
-          phaseDens.derivs[ipOil][Deriv::dC+ic] = phaseMassDens.derivs[ipOil][Deriv::dC+ic];
+          phaseDens.derivs[ipOil][Deriv::dC + ic] = phaseMassDens.derivs[ipOil][Deriv::dC + ic];
         }
       }
     }
@@ -910,8 +910,8 @@ BlackOilFluid::KernelWrapper::
     if( needDerivs )
     {
       phaseVisc.derivs[ipOil][Deriv::dP] = dVisc_dP;
-      phaseVisc.derivs[ipOil][Deriv::dC+icOil] = dVisc_dC[PT::OIL];
-      phaseVisc.derivs[ipOil][Deriv::dC+icGas] = dVisc_dC[PT::GAS];
+      phaseVisc.derivs[ipOil][Deriv::dC + icOil] = dVisc_dC[PT::OIL];
+      phaseVisc.derivs[ipOil][Deriv::dC + icGas] = dVisc_dC[PT::GAS];
     }
   }
 }
@@ -928,8 +928,8 @@ BlackOilFluid::KernelWrapper::
   integer const idx = LvArray::sortedArrayManipulation::find( m_PVTOView.m_bubblePressure.begin(),
                                                               m_PVTOView.m_bubblePressure.size(),
                                                               presBub );
-  integer const iUp  = LvArray::math::min( LvArray::math::max( idx, 1 ), LvArray::integerConversion< integer >( m_PVTOView.m_bubblePressure.size()-1 ) );
-  integer const iLow = iUp-1;
+  integer const iUp  = LvArray::math::min( LvArray::math::max( idx, 1 ), LvArray::integerConversion< integer >( m_PVTOView.m_bubblePressure.size() - 1 ) );
+  integer const iLow = iUp - 1;
   interpolation::linearInterpolation( presBub - m_PVTOView.m_bubblePressure[iLow], m_PVTOView.m_bubblePressure[iUp] - presBub,
                                       m_PVTOView.m_Rs[iLow], m_PVTOView.m_Rs[iUp],
                                       Rs, dRs_dPres );
@@ -953,8 +953,8 @@ BlackOilFluid::KernelWrapper::
   integer const idx = LvArray::sortedArrayManipulation::find( RsVec.begin(),
                                                               RsVec.size(),
                                                               Rs );
-  integer const iUp  = LvArray::math::min( LvArray::math::max( idx, 1 ), LvArray::integerConversion< integer >( RsVec.size()-1 ) );
-  integer const iLow = iUp-1;
+  integer const iUp  = LvArray::math::min( LvArray::math::max( idx, 1 ), LvArray::integerConversion< integer >( RsVec.size() - 1 ) );
+  integer const iLow = iUp - 1;
 
   interpolation::linearInterpolation( Rs - RsVec[iLow], RsVec[iUp] - Rs,
                                       BoVec[iLow], BoVec[iUp],
@@ -1029,8 +1029,8 @@ BlackOilFluid::KernelWrapper::
   integer idx = LvArray::sortedArrayManipulation::find( RsVec.begin(),
                                                         RsVec.size(),
                                                         Rs );
-  integer const iUp  = LvArray::math::min( LvArray::math::max( idx, 1 ), LvArray::integerConversion< integer >( RsVec.size()-1 ) );
-  integer const iLow = iUp-1;
+  integer const iUp  = LvArray::math::min( LvArray::math::max( idx, 1 ), LvArray::integerConversion< integer >( RsVec.size() - 1 ) );
+  integer const iLow = iUp - 1;
 
   real64 const presBub = interpolation::linearInterpolation( Rs - m_PVTOView.m_Rs[iLow], m_PVTOView.m_Rs[iUp] - Rs,
                                                              m_PVTOView.m_bubblePressure[iLow], m_PVTOView.m_bubblePressure[iUp] );
@@ -1045,16 +1045,16 @@ BlackOilFluid::KernelWrapper::
   idx = LvArray::sortedArrayManipulation::find( presUp.begin(),
                                                 presUp.size(),
                                                 deltaPres );
-  integer const iUpP  = LvArray::math::min( LvArray::math::max( idx, 1 ), LvArray::integerConversion< integer >( presUp.size()-1 ) );
-  integer const iLowP = iUpP-1;
+  integer const iUpP  = LvArray::math::min( LvArray::math::max( idx, 1 ), LvArray::integerConversion< integer >( presUp.size() - 1 ) );
+  integer const iLowP = iUpP - 1;
 
   // Step 3: interpolate for Bo
   arraySlice1d< real64 const > const & BoUp = m_PVTOView.m_undersaturatedBo2d[iUp];
   arraySlice1d< real64 const > const & BoLow = m_PVTOView.m_undersaturatedBo2d[iLow];
 
-  real64 const BoInterpLow = interpolation::linearInterpolation( deltaPres-presLow[iLowP], presLow[iUpP]-deltaPres,
+  real64 const BoInterpLow = interpolation::linearInterpolation( deltaPres - presLow[iLowP], presLow[iUpP] - deltaPres,
                                                                  BoLow[iLowP], BoLow[iUpP] );
-  real64 const BoInterpUp = interpolation::linearInterpolation( deltaPres-presUp[iLowP], presUp[iUpP]-deltaPres,
+  real64 const BoInterpUp = interpolation::linearInterpolation( deltaPres - presUp[iLowP], presUp[iUpP] - deltaPres,
                                                                 BoUp[iLowP], BoUp[iUpP] );
   Bo = interpolation::linearInterpolation( deltaRsLow, deltaRsUp, BoInterpLow, BoInterpUp );
 
@@ -1062,9 +1062,9 @@ BlackOilFluid::KernelWrapper::
   arraySlice1d< real64 const > const & viscUp = m_PVTOView.m_undersaturatedViscosity2d[iUp];
   arraySlice1d< real64 const > const & viscLow = m_PVTOView.m_undersaturatedViscosity2d[iLow];
 
-  real64 const viscInterpLow = interpolation::linearInterpolation( deltaPres-presLow[iLowP], presLow[iUpP]-deltaPres,
+  real64 const viscInterpLow = interpolation::linearInterpolation( deltaPres - presLow[iLowP], presLow[iUpP] - deltaPres,
                                                                    viscLow[iLowP], viscLow[iUpP] );
-  real64 const viscInterpUp = interpolation::linearInterpolation( deltaPres-presUp[iLowP], presUp[iUpP]-deltaPres,
+  real64 const viscInterpUp = interpolation::linearInterpolation( deltaPres - presUp[iLowP], presUp[iUpP] - deltaPres,
                                                                   viscUp[iLowP], viscUp[iUpP] );
   visc = interpolation::linearInterpolation( deltaRsLow, deltaRsUp, viscInterpLow, viscInterpUp );
 }
@@ -1101,8 +1101,8 @@ BlackOilFluid::KernelWrapper::
     integer const icGas = m_phaseOrder[PT::GAS];
 
     dDens[Deriv::dP] = Binv * Binv * (Bo * gasDens * dRs_dPres - tmp * dBo_dPres);
-    dDens[Deriv::dC+icOil] = Binv * Binv * (Bo * gasDens * dRs_dComp[PT::OIL] - tmp * dBo_dComp[PT::OIL]);
-    dDens[Deriv::dC+icGas] = Binv * Binv * (Bo * gasDens * dRs_dComp[PT::GAS] - tmp * dBo_dComp[PT::GAS]);
+    dDens[Deriv::dC + icOil] = Binv * Binv * (Bo * gasDens * dRs_dComp[PT::OIL] - tmp * dBo_dComp[PT::OIL]);
+    dDens[Deriv::dC + icGas] = Binv * Binv * (Bo * gasDens * dRs_dComp[PT::GAS] - tmp * dBo_dComp[PT::GAS]);
   }
 }
 

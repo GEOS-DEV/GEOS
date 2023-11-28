@@ -738,7 +738,7 @@ struct HydrostaticPressureKernel
   static bool
   computeHydrostaticPressure( integer const maxNumEquilIterations,
                               real64 const & equilTolerance,
-                              real64 const (&gravVector)[ 3 ],
+                              real64 const (&gravVector)[3],
                               FLUID_WRAPPER fluidWrapper,
                               real64 const & refElevation,
                               real64 const & refPres,
@@ -795,7 +795,7 @@ struct HydrostaticPressureKernel
   launch( localIndex const size,
           integer const maxNumEquilIterations,
           real64 const equilTolerance,
-          real64 const (&gravVector)[ 3 ],
+          real64 const (&gravVector)[3],
           real64 const & minElevation,
           real64 const & elevationIncrement,
           real64 const & datumElevation,
@@ -858,12 +858,12 @@ struct HydrostaticPressureKernel
                                     equilTolerance,
                                     gravVector,
                                     fluidWrapper,
-                                    elevationValues[0][iRef+i],
-                                    pressureValues[iRef+i],
-                                    dens[iRef+i],
-                                    elevationValues[0][iRef+i+1],
-                                    pressureValues[iRef+i+1],
-                                    dens[iRef+i+1] );
+                                    elevationValues[0][iRef + i],
+                                    pressureValues[iRef + i],
+                                    dens[iRef + i],
+                                    elevationValues[0][iRef + i + 1],
+                                    pressureValues[iRef + i + 1],
+                                    dens[iRef + i + 1] );
       if( !hasConvergedAboveRef )
       {
         hasConverged = false;
@@ -882,12 +882,12 @@ struct HydrostaticPressureKernel
                                     equilTolerance,
                                     gravVector,
                                     fluidWrapper,
-                                    elevationValues[0][iRef-i],
-                                    pressureValues[iRef-i],
-                                    dens[iRef-i],
-                                    elevationValues[0][iRef-i-1],
-                                    pressureValues[iRef-i-1],
-                                    dens[iRef-i-1] );
+                                    elevationValues[0][iRef - i],
+                                    pressureValues[iRef - i],
+                                    dens[iRef - i],
+                                    elevationValues[0][iRef - i - 1],
+                                    pressureValues[iRef - i - 1],
+                                    dens[iRef - i - 1] );
       if( !hasConvergedBelowRef )
       {
         hasConverged = false;

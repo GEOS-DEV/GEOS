@@ -94,42 +94,22 @@ TEST( ElasticIsotropicTests, testStateUpdatePoint )
   arrayView3d< real64, solid::STRESS_USD > const & stress = cm.getStress();
 
   real64 const strain = 0.1;
-  real64 Ddt[ 6 ]{};
-  real64 Rot[ 3 ][ 3 ]{};
+  real64 Ddt[6]{};
+  real64 Rot[3][3]{};
   real64 timeIncrement = 0;
   real64 pointStress[6]{};
   {
-    Ddt[ 0 ] = strain;
-    Rot[ 0 ][ 0 ] = 1;
-    Rot[ 1 ][ 1 ] = 1;
-    Rot[ 2 ][ 2 ] = 1;
-    timeIncrement =0;
-
-    SolidUtilities::hypoUpdate_StressOnly( cmw, 0, 0, timeIncrement, Ddt, Rot, pointStress );
-
-    EXPECT_DOUBLE_EQ( stress( 0, 0, 0 ), (2.0/3.0*strain)*2*G + strain*K );
-    EXPECT_DOUBLE_EQ( stress( 0, 0, 1 ), (-1.0/3.0*strain)*2*G + strain*K );
-    EXPECT_DOUBLE_EQ( stress( 0, 0, 2 ), (-1.0/3.0*strain)*2*G + strain*K );
-    EXPECT_DOUBLE_EQ( stress( 0, 0, 3 ), 0 );
-    EXPECT_DOUBLE_EQ( stress( 0, 0, 4 ), 0 );
-    EXPECT_DOUBLE_EQ( stress( 0, 0, 5 ), 0 );
-  }
-
-  {
-    stress.zero();
-    LvArray::tensorOps::fill< 6 >( Ddt, 0 );
-
-    Ddt[ 1 ] = strain;
-    Rot[ 0 ][ 0 ] = 1;
-    Rot[ 1 ][ 1 ] = 1;
-    Rot[ 2 ][ 2 ] = 1;
+    Ddt[0] = strain;
+    Rot[0][0] = 1;
+    Rot[1][1] = 1;
+    Rot[2][2] = 1;
     timeIncrement = 0;
 
     SolidUtilities::hypoUpdate_StressOnly( cmw, 0, 0, timeIncrement, Ddt, Rot, pointStress );
 
-    EXPECT_DOUBLE_EQ( stress( 0, 0, 0 ), (-1.0/3.0*strain)*2*G + strain*K );
-    EXPECT_DOUBLE_EQ( stress( 0, 0, 1 ), (2.0/3.0*strain)*2*G + strain*K );
-    EXPECT_DOUBLE_EQ( stress( 0, 0, 2 ), (-1.0/3.0*strain)*2*G + strain*K );
+    EXPECT_DOUBLE_EQ( stress( 0, 0, 0 ), (2.0 / 3.0 * strain) * 2 * G + strain * K );
+    EXPECT_DOUBLE_EQ( stress( 0, 0, 1 ), (-1.0 / 3.0 * strain) * 2 * G + strain * K );
+    EXPECT_DOUBLE_EQ( stress( 0, 0, 2 ), (-1.0 / 3.0 * strain) * 2 * G + strain * K );
     EXPECT_DOUBLE_EQ( stress( 0, 0, 3 ), 0 );
     EXPECT_DOUBLE_EQ( stress( 0, 0, 4 ), 0 );
     EXPECT_DOUBLE_EQ( stress( 0, 0, 5 ), 0 );
@@ -139,50 +119,50 @@ TEST( ElasticIsotropicTests, testStateUpdatePoint )
     stress.zero();
     LvArray::tensorOps::fill< 6 >( Ddt, 0 );
 
-    Ddt[ 2 ] = strain;
-    Rot[ 0 ][ 0 ] = 1;
-    Rot[ 1 ][ 1 ] = 1;
-    Rot[ 2 ][ 2 ] = 1;
-    timeIncrement =0;
-
-    SolidUtilities::hypoUpdate_StressOnly( cmw, 0, 0, timeIncrement, Ddt, Rot, pointStress );
-
-    EXPECT_DOUBLE_EQ( stress( 0, 0, 0 ), (-1.0/3.0*strain)*2*G + strain*K );
-    EXPECT_DOUBLE_EQ( stress( 0, 0, 1 ), (-1.0/3.0*strain)*2*G + strain*K );
-    EXPECT_DOUBLE_EQ( stress( 0, 0, 2 ), (2.0/3.0*strain)*2*G + strain*K );
-    EXPECT_DOUBLE_EQ( stress( 0, 0, 3 ), 0 );
-    EXPECT_DOUBLE_EQ( stress( 0, 0, 4 ), 0 );
-    EXPECT_DOUBLE_EQ( stress( 0, 0, 5 ), 0 );
-  }
-
-  {
-    stress.zero();
-    LvArray::tensorOps::fill< 6 >( Ddt, 0 );
-
-    Ddt[ 5 ] = strain;
-    Rot[ 0 ][ 0 ] = 1;
-    Rot[ 1 ][ 1 ] = 1;
-    Rot[ 2 ][ 2 ] = 1;
+    Ddt[1] = strain;
+    Rot[0][0] = 1;
+    Rot[1][1] = 1;
+    Rot[2][2] = 1;
     timeIncrement = 0;
 
     SolidUtilities::hypoUpdate_StressOnly( cmw, 0, 0, timeIncrement, Ddt, Rot, pointStress );
 
-    EXPECT_DOUBLE_EQ( stress( 0, 0, 0 ), 0 );
-    EXPECT_DOUBLE_EQ( stress( 0, 0, 1 ), 0 );
-    EXPECT_DOUBLE_EQ( stress( 0, 0, 2 ), 0 );
+    EXPECT_DOUBLE_EQ( stress( 0, 0, 0 ), (-1.0 / 3.0 * strain) * 2 * G + strain * K );
+    EXPECT_DOUBLE_EQ( stress( 0, 0, 1 ), (2.0 / 3.0 * strain) * 2 * G + strain * K );
+    EXPECT_DOUBLE_EQ( stress( 0, 0, 2 ), (-1.0 / 3.0 * strain) * 2 * G + strain * K );
     EXPECT_DOUBLE_EQ( stress( 0, 0, 3 ), 0 );
     EXPECT_DOUBLE_EQ( stress( 0, 0, 4 ), 0 );
-    EXPECT_DOUBLE_EQ( stress( 0, 0, 5 ), strain*G );
+    EXPECT_DOUBLE_EQ( stress( 0, 0, 5 ), 0 );
   }
 
   {
     stress.zero();
     LvArray::tensorOps::fill< 6 >( Ddt, 0 );
 
-    Ddt[ 4 ] = strain;
-    Rot[ 0 ][ 0 ] = 1;
-    Rot[ 1 ][ 1 ] = 1;
-    Rot[ 2 ][ 2 ] = 1;
+    Ddt[2] = strain;
+    Rot[0][0] = 1;
+    Rot[1][1] = 1;
+    Rot[2][2] = 1;
+    timeIncrement = 0;
+
+    SolidUtilities::hypoUpdate_StressOnly( cmw, 0, 0, timeIncrement, Ddt, Rot, pointStress );
+
+    EXPECT_DOUBLE_EQ( stress( 0, 0, 0 ), (-1.0 / 3.0 * strain) * 2 * G + strain * K );
+    EXPECT_DOUBLE_EQ( stress( 0, 0, 1 ), (-1.0 / 3.0 * strain) * 2 * G + strain * K );
+    EXPECT_DOUBLE_EQ( stress( 0, 0, 2 ), (2.0 / 3.0 * strain) * 2 * G + strain * K );
+    EXPECT_DOUBLE_EQ( stress( 0, 0, 3 ), 0 );
+    EXPECT_DOUBLE_EQ( stress( 0, 0, 4 ), 0 );
+    EXPECT_DOUBLE_EQ( stress( 0, 0, 5 ), 0 );
+  }
+
+  {
+    stress.zero();
+    LvArray::tensorOps::fill< 6 >( Ddt, 0 );
+
+    Ddt[5] = strain;
+    Rot[0][0] = 1;
+    Rot[1][1] = 1;
+    Rot[2][2] = 1;
     timeIncrement = 0;
 
     SolidUtilities::hypoUpdate_StressOnly( cmw, 0, 0, timeIncrement, Ddt, Rot, pointStress );
@@ -191,7 +171,27 @@ TEST( ElasticIsotropicTests, testStateUpdatePoint )
     EXPECT_DOUBLE_EQ( stress( 0, 0, 1 ), 0 );
     EXPECT_DOUBLE_EQ( stress( 0, 0, 2 ), 0 );
     EXPECT_DOUBLE_EQ( stress( 0, 0, 3 ), 0 );
-    EXPECT_DOUBLE_EQ( stress( 0, 0, 4 ), strain*G );
+    EXPECT_DOUBLE_EQ( stress( 0, 0, 4 ), 0 );
+    EXPECT_DOUBLE_EQ( stress( 0, 0, 5 ), strain * G );
+  }
+
+  {
+    stress.zero();
+    LvArray::tensorOps::fill< 6 >( Ddt, 0 );
+
+    Ddt[4] = strain;
+    Rot[0][0] = 1;
+    Rot[1][1] = 1;
+    Rot[2][2] = 1;
+    timeIncrement = 0;
+
+    SolidUtilities::hypoUpdate_StressOnly( cmw, 0, 0, timeIncrement, Ddt, Rot, pointStress );
+
+    EXPECT_DOUBLE_EQ( stress( 0, 0, 0 ), 0 );
+    EXPECT_DOUBLE_EQ( stress( 0, 0, 1 ), 0 );
+    EXPECT_DOUBLE_EQ( stress( 0, 0, 2 ), 0 );
+    EXPECT_DOUBLE_EQ( stress( 0, 0, 3 ), 0 );
+    EXPECT_DOUBLE_EQ( stress( 0, 0, 4 ), strain * G );
     EXPECT_DOUBLE_EQ( stress( 0, 0, 5 ), 0 );
   }
 
@@ -199,17 +199,17 @@ TEST( ElasticIsotropicTests, testStateUpdatePoint )
     stress.zero();
     LvArray::tensorOps::fill< 6 >( Ddt, 0 );
 
-    Ddt[ 3 ] = strain;
-    Rot[ 0 ][ 0 ] = 1;
-    Rot[ 1 ][ 1 ] = 1;
-    Rot[ 2 ][ 2 ] = 1;
+    Ddt[3] = strain;
+    Rot[0][0] = 1;
+    Rot[1][1] = 1;
+    Rot[2][2] = 1;
 
     SolidUtilities::hypoUpdate_StressOnly( cmw, 0, 0, timeIncrement, Ddt, Rot, pointStress );
 
     EXPECT_DOUBLE_EQ( stress( 0, 0, 0 ), 0 );
     EXPECT_DOUBLE_EQ( stress( 0, 0, 1 ), 0 );
     EXPECT_DOUBLE_EQ( stress( 0, 0, 2 ), 0 );
-    EXPECT_DOUBLE_EQ( stress( 0, 0, 3 ), strain*G );
+    EXPECT_DOUBLE_EQ( stress( 0, 0, 3 ), strain * G );
     EXPECT_DOUBLE_EQ( stress( 0, 0, 4 ), 0 );
     EXPECT_DOUBLE_EQ( stress( 0, 0, 5 ), 0 );
   }

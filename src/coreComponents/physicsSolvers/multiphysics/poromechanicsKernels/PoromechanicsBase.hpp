@@ -224,7 +224,7 @@ public:
     localIndex const numSupportPoints =
       m_finiteElementSpace.template numSupportPoints< FE_TYPE >( stack.feStack );
 
-    for( localIndex a=0; a<numSupportPoints; ++a )
+    for( localIndex a = 0; a < numSupportPoints; ++a )
     {
       localIndex const localNodeIndex = m_elemsToNodes( k, a );
 
@@ -235,8 +235,8 @@ public:
 #endif
         stack.u_local[a][i] = m_disp[localNodeIndex][i];
         stack.uhat_local[a][i] = m_uhat[localNodeIndex][i];
-        stack.localRowDofIndex[a*numDims+i] = m_dofNumber[localNodeIndex]+i;
-        stack.localColDofIndex[a*numDims+i] = m_dofNumber[localNodeIndex]+i;
+        stack.localRowDofIndex[a * numDims + i] = m_dofNumber[localNodeIndex] + i;
+        stack.localColDofIndex[a * numDims + i] = m_dofNumber[localNodeIndex] + i;
       }
     }
 

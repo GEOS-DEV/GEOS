@@ -71,7 +71,7 @@ public:
     // Level 1: eliminate the last density of the reservoir block
     m_labels[1].resize( numResLabels - 1 );
     std::iota( m_labels[1].begin(), m_labels[1].begin() + numResCellCenteredLabels - 1, 0 );
-    m_labels[1][numResCellCenteredLabels-1] = numResCellCenteredLabels;
+    m_labels[1][numResCellCenteredLabels - 1] = numResCellCenteredLabels;
     // Level 2: eliminate remaining densities of the reservoir block
     m_labels[2].resize( 2 );
     m_labels[2][0] = 0;

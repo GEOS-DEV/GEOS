@@ -92,19 +92,19 @@ void TriaxialDriver::postProcessInput()
 
   ArrayOfArraysView< real64 > coordinates = axialFunction.getCoordinates();
   real64 const minTime = coordinates[0][0];
-  real64 const maxTime = coordinates[0][coordinates.sizeOfArray( 0 )-1];
-  real64 const dt = (maxTime-minTime) / m_numSteps;
+  real64 const maxTime = coordinates[0][coordinates.sizeOfArray( 0 ) - 1];
+  real64 const dt = (maxTime - minTime) / m_numSteps;
 
   // resize data arrays
 
-  integer const length = m_numSteps+1;
+  integer const length = m_numSteps + 1;
   m_table.resize( length, m_numColumns );
 
   // set time column
 
-  for( integer n=0; n<length; ++n )
+  for( integer n = 0; n < length; ++n )
   {
-    m_table( n, TIME ) = minTime + n*dt;
+    m_table( n, TIME ) = minTime + n * dt;
   }
 
   // initial stress is always isotropic
@@ -118,7 +118,7 @@ void TriaxialDriver::postProcessInput()
   //   strainControl ... specified axial and radial strain
   //   stressControl ... specified axial and radial stress
 
-  for( integer n=0; n<length; ++n )
+  for( integer n = 0; n < length; ++n )
   {
     real64 axi = axialFunction.evaluate( &m_table( n, TIME ) );
     real64 rad = radialFunction.evaluate( &m_table( n, TIME ) );
@@ -171,11 +171,11 @@ void TriaxialDriver::runStrainControlTest( SOLID_TYPE & solid, arrayView2d< real
 
     for( integer n = 1; n <= numSteps; ++n )
     {
-      strainIncrement[0] = table( n, EPS0 )-table( n-1, EPS0 );
-      strainIncrement[1] = table( n, EPS1 )-table( n-1, EPS1 );
-      strainIncrement[2] = table( n, EPS2 )-table( n-1, EPS2 );
+      strainIncrement[0] = table( n, EPS0 ) - table( n - 1, EPS0 );
+      strainIncrement[1] = table( n, EPS1 ) - table( n - 1, EPS1 );
+      strainIncrement[2] = table( n, EPS2 ) - table( n - 1, EPS2 );
 
-      timeIncrement = table( n, TIME )-table( n-1, TIME );
+      timeIncrement = table( n, TIME ) - table( n - 1, TIME );
 
       updates.smallStrainUpdate( ei, 0, timeIncrement, strainIncrement, stress, stiffness );
       updates.saveConvergedState ( ei, 0 );
@@ -214,13 +214,13 @@ void TriaxialDriver::runMixedControlTest( SOLID_TYPE & solid, arrayView2d< real6
     }
     scale = 3 * numSteps / scale;
 
-    for( integer n=1; n<=numSteps; ++n )
+    for( integer n = 1; n <= numSteps; ++n )
     {
-      strainIncrement[0] = table( n, EPS0 )-table( n-1, EPS0 );
+      strainIncrement[0] = table( n, EPS0 ) - table( n - 1, EPS0 );
       strainIncrement[1] = 0;
       strainIncrement[2] = 0;
 
-      timeIncrement = table( n, TIME )-table( n-1, TIME );
+      timeIncrement = table( n, TIME ) - table( n - 1, TIME );
 
       real64 norm, normZero = 1e30;
       integer k = 0;
@@ -230,7 +230,7 @@ void TriaxialDriver::runMixedControlTest( SOLID_TYPE & solid, arrayView2d< real6
       {
         updates.smallStrainUpdate( ei, 0, timeIncrement, strainIncrement, stress, stiffness );
 
-        norm = scale*fabs( stress[1]-table( n, SIG1 ) );
+        norm = scale * fabs( stress[1] - table( n, SIG1 ) );
 
         if( k == 0 )
         {
@@ -250,7 +250,7 @@ void TriaxialDriver::runMixedControlTest( SOLID_TYPE & solid, arrayView2d< real6
         }
         else // newton update
         {
-          deltaStrainIncrement  = (stress[1]-table( n, SIG1 )) / (stiffness[1][1]+stiffness[1][2]);
+          deltaStrainIncrement  = (stress[1] - table( n, SIG1 )) / (stiffness[1][1] + stiffness[1][2]);
           strainIncrement[1]   -= deltaStrainIncrement;
           strainIncrement[2]    = strainIncrement[1];
         }
@@ -259,7 +259,7 @@ void TriaxialDriver::runMixedControlTest( SOLID_TYPE & solid, arrayView2d< real6
       updates.saveConvergedState ( ei, 0 );
 
       table( n, SIG0 ) = stress[0];
-      table( n, EPS1 ) = table( n-1, EPS1 )+strainIncrement[1];
+      table( n, EPS1 ) = table( n - 1, EPS1 ) + strainIncrement[1];
       table( n, EPS2 ) = table( n, EPS1 );
 
       table( n, ITER ) = k;
@@ -308,7 +308,7 @@ void TriaxialDriver::runStressControlTest( SOLID_TYPE & solid, arrayView2d< real
       strainIncrement[1] = 0;
       strainIncrement[2] = 0;
 
-      timeIncrement = table( n, TIME )-table( n-1, TIME );
+      timeIncrement = table( n, TIME ) - table( n - 1, TIME );
 
       real64 norm, normZero = 1e30, det;
       integer k = 0;
@@ -318,10 +318,10 @@ void TriaxialDriver::runStressControlTest( SOLID_TYPE & solid, arrayView2d< real
       {
         updates.smallStrainUpdate( ei, 0, timeIncrement, strainIncrement, stress, stiffness );
 
-        resid[0] = scale * (stress[0]-table( n, SIG0 ));
-        resid[1] = scale * (stress[1]-table( n, SIG1 ));
+        resid[0] = scale * (stress[0] - table( n, SIG0 ));
+        resid[1] = scale * (stress[1] - table( n, SIG1 ));
 
-        norm = sqrt( resid[0]*resid[0] + resid[1]*resid[1] );
+        norm = sqrt( resid[0] * resid[0] + resid[1] * resid[1] );
         //  std::cout<<"k= "<<k<<std::endl;
         // std::cout<<"norm ="<<norm<<std::endl;
 
@@ -347,15 +347,15 @@ void TriaxialDriver::runStressControlTest( SOLID_TYPE & solid, arrayView2d< real
         else // newton update
         {
           cuts = 0;
-          jacobian[0][0] = scale*stiffness[0][0];
-          jacobian[1][0] = scale*stiffness[1][0];
-          jacobian[0][1] = scale*(stiffness[0][1] + stiffness[0][2]);
-          jacobian[1][1] = scale*(stiffness[1][1] + stiffness[1][2]);
+          jacobian[0][0] = scale * stiffness[0][0];
+          jacobian[1][0] = scale * stiffness[1][0];
+          jacobian[0][1] = scale * (stiffness[0][1] + stiffness[0][2]);
+          jacobian[1][1] = scale * (stiffness[1][1] + stiffness[1][2]);
 
-          det = jacobian[0][0]*jacobian[1][1]-jacobian[0][1]*jacobian[1][0];
+          det = jacobian[0][0] * jacobian[1][1] - jacobian[0][1] * jacobian[1][0];
 
-          deltaStrainIncrement[0] = (jacobian[1][1]*resid[0]-jacobian[0][1]*resid[1] ) / det;
-          deltaStrainIncrement[1] = (jacobian[0][0]*resid[1]-jacobian[1][0]*resid[0] ) / det;
+          deltaStrainIncrement[0] = (jacobian[1][1] * resid[0] - jacobian[0][1] * resid[1] ) / det;
+          deltaStrainIncrement[1] = (jacobian[0][0] * resid[1] - jacobian[1][0] * resid[0] ) / det;
 
           strainIncrement[0] -= deltaStrainIncrement[0];
           strainIncrement[1] -= deltaStrainIncrement[1];
@@ -365,8 +365,8 @@ void TriaxialDriver::runStressControlTest( SOLID_TYPE & solid, arrayView2d< real
 
       updates.saveConvergedState ( ei, 0 );
 
-      table( n, EPS0 ) = table( n-1, EPS0 )+strainIncrement[0];
-      table( n, EPS1 ) = table( n-1, EPS1 )+strainIncrement[1];
+      table( n, EPS0 ) = table( n - 1, EPS0 ) + strainIncrement[0];
+      table( n, EPS1 ) = table( n - 1, EPS1 ) + strainIncrement[1];
       table( n, EPS2 ) = table( n, EPS1 );
 
       table( n, ITER ) = k;
@@ -478,7 +478,7 @@ bool TriaxialDriver::execute( real64 const GEOS_UNUSED_PARAM( time_n ),
 
 void TriaxialDriver::validateResults()
 {
-  for( integer n=0; n<m_numSteps; ++n )
+  for( integer n = 0; n < m_numSteps; ++n )
   {
     if( m_table( n, NORM ) > m_newtonTol )
     {
@@ -486,7 +486,7 @@ void TriaxialDriver::validateResults()
       GEOS_LOG_RANK_0( "         This usually indicates the material has completely failed and/or the loading state is inadmissible." );
       GEOS_LOG_RANK_0( "         In rare cases, it may indicate a problem in the material model implementation." );
 
-      for( integer col=EPS0; col<ITER; ++col )
+      for( integer col = EPS0; col < ITER; ++col )
       {
         m_table( n, col ) = 0;
       }
@@ -518,9 +518,9 @@ void TriaxialDriver::outputResults()
   fprintf( fp, "# column 8 = newton_iter\n" );
   fprintf( fp, "# column 9 = residual_norm\n" );
 
-  for( integer n=0; n<=m_numSteps; ++n )
+  for( integer n = 0; n <= m_numSteps; ++n )
   {
-    for( integer col=0; col<m_numColumns; ++col )
+    for( integer col = 0; col < m_numColumns; ++col )
     {
       fprintf( fp, "%.4e ", m_table( n, col ) );
     }
@@ -540,7 +540,7 @@ void TriaxialDriver::compareWithBaseline()
   // discard file header
 
   string line;
-  for( integer row=0; row < m_numColumns; ++row )
+  for( integer row = 0; row < m_numColumns; ++row )
   {
     getline( file, line );
   }
@@ -553,19 +553,19 @@ void TriaxialDriver::compareWithBaseline()
   real64 value;
   real64 error;
 
-  for( integer row=0; row < m_table.size( 0 ); ++row )
+  for( integer row = 0; row < m_table.size( 0 ); ++row )
   {
-    for( integer col=0; col < m_table.size( 1 ); ++col )
+    for( integer col = 0; col < m_table.size( 1 ); ++col )
     {
       GEOS_THROW_IF( file.eof(), "Baseline file appears shorter than internal results", std::runtime_error );
       file >> value;
 
       if( col < ITER ) // only compare "real" data columns
       {
-        error = fabs( m_table[row][col]-value ) / ( fabs( value )+1 );
-        GEOS_THROW_IF( error > m_baselineTol, "Results do not match baseline at data row " << row+1
-                                                                                           << " (row " << row+10 << " with header)"
-                                                                                           << " and column " << col+1, std::runtime_error );
+        error = fabs( m_table[row][col] - value ) / ( fabs( value ) + 1 );
+        GEOS_THROW_IF( error > m_baselineTol, "Results do not match baseline at data row " << row + 1
+                                                                                           << " (row " << row + 10 << " with header)"
+                                                                                           << " and column " << col + 1, std::runtime_error );
       }
     }
   }

@@ -161,25 +161,25 @@ void WillisRichardsPermeabilityUpdate::compute( real64 const ( &dispJump )[3],
                                                 arraySlice2d< real64 > const & dPerm_dDispJump,
                                                 arraySlice2d< real64 > const & dPerm_dTraction ) const
 {
-  real64 const shearMag = std::sqrt( dispJump[1]*dispJump[1] + dispJump[2]*dispJump[2] );
+  real64 const shearMag = std::sqrt( dispJump[1] * dispJump[1] + dispJump[2] * dispJump[2] );
 
   real64 const effNormalStress = -traction[0];
 
-  real64 const aperture = ( m_maxFracAperture + shearMag * m_dilationCoefficient ) / ( 1.0 + 9.0 * effNormalStress/m_refClosureStress );
+  real64 const aperture = ( m_maxFracAperture + shearMag * m_dilationCoefficient ) / ( 1.0 + 9.0 * effNormalStress / m_refClosureStress );
 
   real64 const dPerm_daperture = aperture / 6.0;
 
-  real64 const daperture_dshearMag = m_dilationCoefficient / ( 1.0 + 9.0 * effNormalStress/m_refClosureStress );
+  real64 const daperture_dshearMag = m_dilationCoefficient / ( 1.0 + 9.0 * effNormalStress / m_refClosureStress );
 
-  real64 const daperture_deffNormalStress = -( m_maxFracAperture + shearMag * m_dilationCoefficient ) / ( 1.0 + 9.0 * effNormalStress/m_refClosureStress ) /
-                                            ( 1.0 + 9.0 * effNormalStress/m_refClosureStress ) * 9.0 /m_refClosureStress;
+  real64 const daperture_deffNormalStress = -( m_maxFracAperture + shearMag * m_dilationCoefficient ) / ( 1.0 + 9.0 * effNormalStress / m_refClosureStress ) /
+                                            ( 1.0 + 9.0 * effNormalStress / m_refClosureStress ) * 9.0 / m_refClosureStress;
 
-  for( localIndex i=0; i < permeability.size(); i++ )
+  for( localIndex i = 0; i < permeability.size(); i++ )
   {
     permeability[i] = aperture * aperture / 12.0;
 
     dPerm_dDispJump[i][0] = 0.0;
-    real64 const tmpValue = shearMag > 0.0 ? daperture_dshearMag /shearMag : 0.0;
+    real64 const tmpValue = shearMag > 0.0 ? daperture_dshearMag / shearMag : 0.0;
     dPerm_dDispJump[i][1] = dPerm_daperture * tmpValue * dispJump[1];
     dPerm_dDispJump[i][2] = dPerm_daperture * tmpValue * dispJump[2];
 

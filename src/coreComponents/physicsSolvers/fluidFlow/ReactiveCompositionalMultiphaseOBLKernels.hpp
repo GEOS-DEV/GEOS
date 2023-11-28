@@ -442,11 +442,11 @@ public:
     // + rock energy
     if( enableEnergyBalance )
     {
-      stack.localResidual[numDofs-1] += m_referenceRockVolume[ei] * (OBLVals[RE_INTER_OP] - OBLVals_n[RE_INTER_OP]) * m_rockVolumetricHeatCapacity[ei];
+      stack.localResidual[numDofs - 1] += m_referenceRockVolume[ei] * (OBLVals[RE_INTER_OP] - OBLVals_n[RE_INTER_OP]) * m_rockVolumetricHeatCapacity[ei];
 
       for( integer v = 0; v < numDofs; ++v )
       {
-        stack.localJacobian[numDofs-1][v] += m_referenceRockVolume[ei] * OBLDers[RE_INTER_OP][v] * m_rockVolumetricHeatCapacity[ei];
+        stack.localJacobian[numDofs - 1][v] += m_referenceRockVolume[ei] * OBLDers[RE_INTER_OP][v] * m_rockVolumetricHeatCapacity[ei];
       }   // end of fill offdiagonal part + contribute to diagonal
     }
   }

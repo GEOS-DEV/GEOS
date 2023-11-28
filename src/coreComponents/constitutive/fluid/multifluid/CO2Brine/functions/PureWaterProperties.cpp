@@ -94,7 +94,7 @@ PureWaterProperties::makeSaturationViscosityTable( string const & functionName,
   viscosities[24] = 0.0000703;
   viscosities[25] = 0.0000603;
 
-  string const tableName = functionName +  "_table";
+  string const tableName = functionName + "_table";
   if( functionManager.hasGroup< TableFunction >( tableName ) )
   {
     return functionManager.getGroupPointer< TableFunction >( tableName );
@@ -174,7 +174,7 @@ PureWaterProperties::makeSaturationDensityTable( string const & functionName,
   densities[24] = 610.67;
   densities[25] = 527.59;
 
-  string const tableName = functionName +  "_sat_density_table";
+  string const tableName = functionName + "_sat_density_table";
   if( functionManager.hasGroup< TableFunction >( tableName ) )
   {
     return functionManager.getGroupPointer< TableFunction >( tableName );
@@ -254,7 +254,7 @@ PureWaterProperties::makeSaturationPressureTable( string const & functionName,
   pressures[24] = 14600000;
   pressures[25] = 18700000;
 
-  string const tableName = functionName +  "_sat_pressure_table";
+  string const tableName = functionName + "_sat_pressure_table";
   if( functionManager.hasGroup< TableFunction >( tableName ) )
   {
     return functionManager.getGroupPointer< TableFunction >( tableName );

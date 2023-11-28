@@ -153,26 +153,26 @@ public:
     localIndex const embSurfIndex = m_cellsToEmbeddedSurfaces[k][0];
 
     stack.hInv = m_surfaceArea[embSurfIndex] / m_elementVolume[k];
-    for( localIndex a=0; a<numNodesPerElem; ++a )
+    for( localIndex a = 0; a < numNodesPerElem; ++a )
     {
       localIndex const localNodeIndex = m_elemsToNodes( k, a );
 
-      for( int i=0; i<3; ++i )
+      for( int i = 0; i < 3; ++i )
       {
-        stack.dispEqnRowIndices[a*3+i] = m_dofNumber[localNodeIndex]+i-m_dofRankOffset;
-        stack.dispColIndices[a*3+i]    = m_dofNumber[localNodeIndex]+i;
-        stack.X[ a ][ i ] = m_X[ localNodeIndex ][ i ];
-        stack.uLocal[ a*3 + i ] = m_disp[localNodeIndex][i];
+        stack.dispEqnRowIndices[a * 3 + i] = m_dofNumber[localNodeIndex] + i - m_dofRankOffset;
+        stack.dispColIndices[a * 3 + i]    = m_dofNumber[localNodeIndex] + i;
+        stack.X[a][i] = m_X[localNodeIndex][i];
+        stack.uLocal[a * 3 + i] = m_disp[localNodeIndex][i];
       }
     }
 
-    for( int i=0; i<3; ++i )
+    for( int i = 0; i < 3; ++i )
     {
-      stack.wLocal[ i ] = m_w[ embSurfIndex ][i];
-      stack.tractionVec[ i ] = m_tractionVec[ embSurfIndex ][i] * m_surfaceArea[embSurfIndex];
-      for( int ii=0; ii < 3; ++ii )
+      stack.wLocal[i] = m_w[embSurfIndex][i];
+      stack.tractionVec[i] = m_tractionVec[embSurfIndex][i] * m_surfaceArea[embSurfIndex];
+      for( int ii = 0; ii < 3; ++ii )
       {
-        stack.dTractiondw[ i ][ ii ] = m_dTraction_dJump[embSurfIndex][i][ii] * m_surfaceArea[embSurfIndex];
+        stack.dTractiondw[i][ii] = m_dTraction_dJump[embSurfIndex][i][ii] * m_surfaceArea[embSurfIndex];
       }
     }
   }
@@ -187,7 +187,7 @@ public:
   {
     GEOS_UNUSED_VAR( k );
     real64 maxForce = 0;
-    constexpr int nUdof = numNodesPerElem*3;
+    constexpr int nUdof = numNodesPerElem * 3;
 
     // Compute the local residuals
     LvArray::tensorOps::Ri_add_AijBj< 3, 3 >( stack.localRw, stack.localKww, stack.wLocal );
@@ -218,7 +218,7 @@ public:
 
     for( localIndex i = 0; i < nUdof; ++i )
     {
-      localIndex const dof = LvArray::integerConversion< localIndex >( stack.dispEqnRowIndices[ i ] );
+      localIndex const dof = LvArray::integerConversion< localIndex >( stack.dispEqnRowIndices[i] );
       if( dof < 0 || dof >= m_matrix.numRows() ) continue;
 
       RAJA::atomicAdd< parallelDeviceAtomic >( &m_rhs[dof], stack.localRu[i] );

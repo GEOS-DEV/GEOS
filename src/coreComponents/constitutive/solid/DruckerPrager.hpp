@@ -211,7 +211,7 @@ void DruckerPragerUpdates::smallStrainUpdate( localIndex const k,
 
   // begin newton loop
 
-  for( localIndex iter=0; iter<20; ++iter )
+  for( localIndex iter = 0; iter < 20; ++iter )
   {
     // apply a linear cohesion decay model,
     // then check for complete cohesion loss
@@ -238,12 +238,12 @@ void DruckerPragerUpdates::smallStrainUpdate( localIndex const k,
 
     norm = LvArray::tensorOps::l2Norm< 3 >( residual );
 
-    if( iter==0 )
+    if( iter == 0 )
     {
       normZero = norm;
     }
 
-    if( norm < 1e-8*(normZero+1))
+    if( norm < 1e-8 * (normZero + 1))
     {
       break;
     }
@@ -261,7 +261,7 @@ void DruckerPragerUpdates::smallStrainUpdate( localIndex const k,
     LvArray::tensorOps::invert< 3 >( jacobianInv, jacobian );
     LvArray::tensorOps::Ri_eq_AijBj< 3, 3 >( delta, jacobianInv, residual );
 
-    for( localIndex i=0; i<3; ++i )
+    for( localIndex i = 0; i < 3; ++i )
     {
       solution[i] -= delta[i];
     }
@@ -282,23 +282,23 @@ void DruckerPragerUpdates::smallStrainUpdate( localIndex const k,
 
   real64 c1 = 2 * m_shearModulus[k] * solution[1] / trialQ;
   real64 c2 = jacobianInv[0][0] * m_bulkModulus[k] - c1 / 3;
-  real64 c3 = sqrt( 2./3 ) * 3 * m_shearModulus[k] * jacobianInv[0][1];
-  real64 c4 = sqrt( 2./3 ) * m_bulkModulus[k] * jacobianInv[1][0];
+  real64 c3 = sqrt( 2. / 3 ) * 3 * m_shearModulus[k] * jacobianInv[0][1];
+  real64 c4 = sqrt( 2. / 3 ) * m_bulkModulus[k] * jacobianInv[1][0];
   real64 c5 = 2 * jacobianInv[1][1] * m_shearModulus[k] - c1;
 
   real64 identity[6];
 
-  for( localIndex i=0; i<3; ++i )
+  for( localIndex i = 0; i < 3; ++i )
   {
     stiffness[i][i] = c1;
-    stiffness[i+3][i+3] = 0.5 * c1;
+    stiffness[i + 3][i + 3] = 0.5 * c1;
     identity[i] = 1.0;
-    identity[i+3] = 0.0;
+    identity[i + 3] = 0.0;
   }
 
-  for( localIndex i=0; i<6; ++i )
+  for( localIndex i = 0; i < 6; ++i )
   {
-    for( localIndex j=0; j<6; ++j )
+    for( localIndex j = 0; j < 6; ++j )
     {
       stiffness[i][j] +=   c2 * identity[i] * identity[j]
                          + c3 * identity[i] * deviator[j]

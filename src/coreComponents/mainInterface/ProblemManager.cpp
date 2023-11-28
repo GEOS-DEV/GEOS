@@ -606,7 +606,7 @@ void ProblemManager::generateMesh()
     string const & meshBodyName = discretizationPair.first.first;
     MeshBody & meshBody = domain.getMeshBody( meshBodyName );
 
-    if( discretizationPair.first.second!=nullptr && !meshBody.hasParticles() ) // this check shouldn't be required
+    if( discretizationPair.first.second != nullptr && !meshBody.hasParticles() ) // this check shouldn't be required
     {                                                                          // particle mesh bodies don't have a finite element
                                                                                // discretization
       FiniteElementDiscretization const * const
@@ -632,7 +632,7 @@ void ProblemManager::generateMesh()
                                    regionNames );
         }
         // Just create a shallow copy of the base discretization.
-        else if( order==1 )
+        else if( order == 1 )
         {
           meshBody.createShallowMeshLevel( MeshBody::groupStructKeys::baseDiscretizationString(),
                                            discretizationName );
@@ -741,12 +741,12 @@ ProblemManager::getDiscretizations() const
     Group const *
     discretization = feDiscretizationManager.getGroupPointer( discretizationName );
 
-    if( discretization==nullptr )
+    if( discretization == nullptr )
     {
       discretization = fvDiscretizationManager.getGroupPointer( discretizationName );
     }
 
-    if( discretization!=nullptr )
+    if( discretization != nullptr )
     {
       solver.forDiscretizationOnMeshTargets( meshBodies,
                                              [&]( string const & meshBodyName,
@@ -778,7 +778,7 @@ void ProblemManager::generateMeshLevel( MeshLevel & meshLevel,
     auto const * const
     fvhDisc = dynamic_cast< HybridMimeticDiscretization const * >(discretization);
 
-    if( feDisc==nullptr && fvsDisc==nullptr && fvhDisc==nullptr )
+    if( feDisc == nullptr && fvsDisc == nullptr && fvhDisc == nullptr )
     {
       GEOS_ERROR( "Group expected to cast to a discretization object." );
     }
@@ -864,7 +864,7 @@ map< std::tuple< string, string, string, string >, localIndex > ProblemManager::
 
   map< std::tuple< string, string, string, string >, localIndex > regionQuadrature;
 
-  for( localIndex solverIndex=0; solverIndex<m_physicsSolverManager->numSubGroups(); ++solverIndex )
+  for( localIndex solverIndex = 0; solverIndex < m_physicsSolverManager->numSubGroups(); ++solverIndex )
   {
     SolverBase const * const solver = m_physicsSolverManager->getGroupPointer< SolverBase >( solverIndex );
 
@@ -902,10 +902,10 @@ map< std::tuple< string, string, string, string >, localIndex > ProblemManager::
 
             particleRegion.forParticleSubRegions( [&]( auto & subRegion )
             {
-              localIndex & numQuadraturePointsInList = regionQuadrature[ std::make_tuple( meshBodyName,
-                                                                                          meshLevel.getName(),
-                                                                                          regionName,
-                                                                                          subRegion.getName() ) ];
+              localIndex & numQuadraturePointsInList = regionQuadrature[std::make_tuple( meshBodyName,
+                                                                                         meshLevel.getName(),
+                                                                                         regionName,
+                                                                                         subRegion.getName() )];
               localIndex const numQuadraturePoints = 1; // Particles always have 1 quadrature point
               numQuadraturePointsInList = std::max( numQuadraturePointsInList, numQuadraturePoints );
             } );
@@ -948,10 +948,10 @@ map< std::tuple< string, string, string, string >, localIndex > ProblemManager::
                   feDiscretization->calculateShapeFunctionGradients< SUBREGION_TYPE, FE_TYPE >( X, &subRegion, meshData, finiteElement );
 //#endif
 
-                  localIndex & numQuadraturePointsInList = regionQuadrature[ std::make_tuple( meshBodyName,
-                                                                                              meshLevel.getName(),
-                                                                                              regionName,
-                                                                                              subRegion.getName() ) ];
+                  localIndex & numQuadraturePointsInList = regionQuadrature[std::make_tuple( meshBodyName,
+                                                                                             meshLevel.getName(),
+                                                                                             regionName,
+                                                                                             subRegion.getName() )];
 
                   numQuadraturePointsInList = std::max( numQuadraturePointsInList, numQuadraturePoints );
                 } );
@@ -961,10 +961,10 @@ map< std::tuple< string, string, string, string >, localIndex > ProblemManager::
             {
               elemRegion.forElementSubRegions( [&]( auto & subRegion )
               {
-                localIndex & numQuadraturePointsInList = regionQuadrature[ std::make_tuple( meshBodyName,
-                                                                                            meshLevel.getName(),
-                                                                                            regionName,
-                                                                                            subRegion.getName() ) ];
+                localIndex & numQuadraturePointsInList = regionQuadrature[std::make_tuple( meshBodyName,
+                                                                                           meshLevel.getName(),
+                                                                                           regionName,
+                                                                                           subRegion.getName() )];
                 localIndex const numQuadraturePoints = 1;
                 numQuadraturePointsInList = std::max( numQuadraturePointsInList, numQuadraturePoints );
               } );
@@ -992,8 +992,8 @@ void ProblemManager::setRegionQuadrature( Group & meshBodies,
     string const regionName = std::get< 2 >( key );
     string const subRegionName = std::get< 3 >( key );
 
-    GEOS_LOG_RANK_0( "regionQuadrature: meshBodyName, meshLevelName, regionName, subRegionName = "<<
-                     meshBodyName<<", "<<meshLevelName<<", "<<regionName<<", "<<subRegionName );
+    GEOS_LOG_RANK_0( "regionQuadrature: meshBodyName, meshLevelName, regionName, subRegionName = " <<
+                     meshBodyName << ", " << meshLevelName << ", " << regionName << ", " << subRegionName );
 
 
 

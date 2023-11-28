@@ -49,11 +49,11 @@ void testKernelDriver()
                     [=] GEOS_HOST_DEVICE ( localIndex const )
   {
 
-    for( localIndex q=0; q<numQuadraturePoints; ++q )
+    for( localIndex q = 0; q < numQuadraturePoints; ++q )
     {
       real64 N[numNodes] = {0};
       H1_TriangleFace_Lagrange1_Gauss1::calcN( q, N );
-      for( localIndex a=0; a<numNodes; ++a )
+      for( localIndex a = 0; a < numNodes; ++a )
       {
         viewN( q, a ) = N[a];
       }
@@ -64,7 +64,7 @@ void testKernelDriver()
                     [=] GEOS_HOST_DEVICE ( localIndex const )
   {
 
-    for( localIndex q=0; q<numQuadraturePoints; ++q )
+    for( localIndex q = 0; q < numQuadraturePoints; ++q )
     {
       viewDetJ[q] = H1_TriangleFace_Lagrange1_Gauss1::transformedQuadratureWeight( q,
                                                                                    xCoords );
@@ -79,12 +79,12 @@ void testKernelDriver()
   forAll< serialPolicy >( 1,
                           [=] ( localIndex const )
   {
-    for( localIndex q=0; q<numQuadraturePoints; ++q )
+    for( localIndex q = 0; q < numQuadraturePoints; ++q )
     {
       real64 const xi[2] = { quadratureCoords[0][q],
                              quadratureCoords[1][q] };
 
-      for( localIndex a=0; a<numNodes; ++a )
+      for( localIndex a = 0; a < numNodes; ++a )
       {
         real64 N =   static_cast< real64 >( ( a | 0 ) < 1 )
                    + static_cast< real64 >( ( ( a ^ 1 ) < 1 ) - ( ( a ^ 1 ) == 1 ) ) * xi[0]
@@ -93,7 +93,7 @@ void testKernelDriver()
       }
 
       real64 dXdXi[3][2] = {{0}};
-      for( localIndex a=0; a<numNodes; ++a )
+      for( localIndex a = 0; a < numNodes; ++a )
       {
         real64 dNdXi[2] = { static_cast< real64 >( ( ( a ^ 1 ) < 1 ) - ( ( a ^ 1 ) == 1 ) ),
                             static_cast< real64 >( ( ( a ^ 2 ) < 1 ) - ( ( a ^ 2 ) == 2 ) ) };
@@ -110,7 +110,7 @@ void testKernelDriver()
       real64 n[3] = { dXdXi[1][0] * dXdXi[2][1] - dXdXi[2][0] * dXdXi[1][1],
                       dXdXi[2][0] * dXdXi[0][1] - dXdXi[0][0] * dXdXi[2][1],
                       dXdXi[0][0] * dXdXi[1][1] - dXdXi[1][0] * dXdXi[0][1] };
-      real64 const detJ = sqrt( n[0]*n[0] + n[1]*n[1] + n[2]*n[2] );
+      real64 const detJ = sqrt( n[0] * n[0] + n[1] * n[1] + n[2] * n[2] );
       EXPECT_FLOAT_EQ( detJ * weight, viewDetJ[q] );
 
     }

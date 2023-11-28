@@ -61,7 +61,7 @@ public:
            arraySlice1d< localIndex const > const & elemToFaces,
            arraySlice1d< real64 const > const & elemCenter,
            real64 const & elemVolume,
-           real64 const (&elemPerm)[ 3 ],
+           real64 const (&elemPerm)[3],
            real64 const & lengthTolerance,
            arraySlice2d< real64 > const & transMatrix );
 
@@ -76,7 +76,7 @@ BdVLMInnerProduct::compute( arrayView2d< real64 const, nodes::REFERENCE_POSITION
                             arraySlice1d< localIndex const > const & elemToFaces,
                             arraySlice1d< real64 const > const & elemCenter,
                             real64 const & elemVolume,
-                            real64 const (&elemPerm)[ 3 ],
+                            real64 const (&elemPerm)[3],
                             real64 const & lengthTolerance,
                             arraySlice2d< real64 > const & transMatrix )
 {
@@ -84,17 +84,17 @@ BdVLMInnerProduct::compute( arrayView2d< real64 const, nodes::REFERENCE_POSITION
   real64 const areaTolerance = lengthTolerance * lengthTolerance;
   real64 const weightToleranceInv = 1e30 / lengthTolerance;
 
-  real64 cellToFaceMat[ NF ][ 3 ] = {{ 0 }};
-  real64 normalsMat[ NF ][ 3 ] = {{ 0 }};
-  real64 permMat[ 3 ][ 3 ] = {{ 0 }};
-  real64 faceAreaMat[ NF ][ NF ] = {{ 0 }};
+  real64 cellToFaceMat[NF][3] = {{ 0 }};
+  real64 normalsMat[NF][3] = {{ 0 }};
+  real64 permMat[3][3] = {{ 0 }};
+  real64 faceAreaMat[NF][NF] = {{ 0 }};
 
-  real64 work_dimByDim[ 3 ][ 3 ] = {{ 0 }};
-  real64 work_numFacesByDim[ NF ][ 3 ] = {{ 0 }};
-  real64 work_dimByNumFaces[ 3 ][ NF ] = {{ 0 }};
-  real64 work_numFacesByNumFaces[ NF ][ NF ] = {{ 0 }};
+  real64 work_dimByDim[3][3] = {{ 0 }};
+  real64 work_numFacesByDim[NF][3] = {{ 0 }};
+  real64 work_dimByNumFaces[3][NF] = {{ 0 }};
+  real64 work_numFacesByNumFaces[NF][NF] = {{ 0 }};
 
-  real64 tpTransInv[ NF ] = { 0.0 };
+  real64 tpTransInv[NF] = { 0.0 };
 
   // 0) assemble full coefficient tensor from principal axis/components
   MimeticInnerProductHelpers::makeFullTensor( elemPerm, permMat );
@@ -102,9 +102,9 @@ BdVLMInnerProduct::compute( arrayView2d< real64 const, nodes::REFERENCE_POSITION
   // 1) fill the matrices cellToFaceMat and normalsMat row by row
   for( localIndex ifaceLoc = 0; ifaceLoc < NF; ++ifaceLoc )
   {
-    real64 faceCenter[ 3 ], faceNormal[ 3 ], cellToFaceVec[ 3 ];
+    real64 faceCenter[3], faceNormal[3], cellToFaceVec[3];
     // compute the face geometry data: center, normal, vector from cell center to face center
-    faceAreaMat[ ifaceLoc ][ ifaceLoc ] =
+    faceAreaMat[ifaceLoc][ifaceLoc] =
       computationalGeometry::centroid_3DPolygon( faceToNodes[elemToFaces[ifaceLoc]],
                                                  nodePosition,
                                                  faceCenter,
@@ -114,9 +114,9 @@ BdVLMInnerProduct::compute( arrayView2d< real64 const, nodes::REFERENCE_POSITION
     LvArray::tensorOps::copy< 3 >( cellToFaceVec, faceCenter );
     LvArray::tensorOps::subtract< 3 >( cellToFaceVec, elemCenter );
 
-    cellToFaceMat[ ifaceLoc ][0] = faceAreaMat[ ifaceLoc ][ ifaceLoc ] * cellToFaceVec[ 0 ];
-    cellToFaceMat[ ifaceLoc ][1] = faceAreaMat[ ifaceLoc ][ ifaceLoc ] * cellToFaceVec[ 1 ];
-    cellToFaceMat[ ifaceLoc ][2] = faceAreaMat[ ifaceLoc ][ ifaceLoc ] * cellToFaceVec[ 2 ];
+    cellToFaceMat[ifaceLoc][0] = faceAreaMat[ifaceLoc][ifaceLoc] * cellToFaceVec[0];
+    cellToFaceMat[ifaceLoc][1] = faceAreaMat[ifaceLoc][ifaceLoc] * cellToFaceVec[1];
+    cellToFaceMat[ifaceLoc][2] = faceAreaMat[ifaceLoc][ifaceLoc] * cellToFaceVec[2];
 
     if( LvArray::tensorOps::AiBi< 3 >( cellToFaceVec, faceNormal ) < 0.0 )
     {
@@ -136,9 +136,9 @@ BdVLMInnerProduct::compute( arrayView2d< real64 const, nodes::REFERENCE_POSITION
                                                                          diagEntry );
     tpTransInv[ifaceLoc] = diagEntry;
 
-    normalsMat[ ifaceLoc ][ 0 ] = faceNormal[ 0 ];
-    normalsMat[ ifaceLoc ][ 1 ] = faceNormal[ 1 ];
-    normalsMat[ ifaceLoc ][ 2 ] = faceNormal[ 2 ];
+    normalsMat[ifaceLoc][0] = faceNormal[0];
+    normalsMat[ifaceLoc][1] = faceNormal[1];
+    normalsMat[ifaceLoc][2] = faceNormal[2];
 
   }
 

@@ -55,7 +55,7 @@ public:
 template<> class CompositionalCatalogNames< MultiphasePoromechanics< CompositionalMultiphaseBase > >
 {
 public:
-  static string name() { return MultiphasePoromechanics< CompositionalMultiphaseBase >::catalogName()+"Reservoir"; }
+  static string name() { return MultiphasePoromechanics< CompositionalMultiphaseBase >::catalogName() + "Reservoir"; }
 };
 
 }

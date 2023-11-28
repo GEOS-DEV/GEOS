@@ -184,7 +184,7 @@ VanGenuchtenBakerRelativePermeabilityUpdate::
   if( ipWater >= 0 )
   {
     real64 const scaledWaterVolFrac = (phaseVolFraction[ipWater] - m_phaseMinVolumeFraction[ipWater]) * volFracScaleInv;
-    real64 const scaledOilVolFrac   = (phaseVolFraction[ipOil]   - m_phaseMinVolumeFraction[ipOil])   * volFracScaleInv;
+    real64 const scaledOilVolFrac   = (phaseVolFraction[ipOil] - m_phaseMinVolumeFraction[ipOil]) * volFracScaleInv;
 
     using WOPT = RelativePermeabilityBase::WaterOilPairPhaseType;
     real64 const waterExponentInv = m_waterOilRelPermExponentInv[WOPT::WATER];
@@ -305,8 +305,8 @@ VanGenuchtenBakerRelativePermeabilityUpdate::
   if( scaledVolFrac > 0.0 && scaledVolFrac < 1.0 )
   {
     // intermediate values
-    real64 const a = pow( scaledVolFrac, exponent-1 );
-    real64 const b = pow( 1 - a * scaledVolFrac, exponentInv-1 );
+    real64 const a = pow( scaledVolFrac, exponent - 1 );
+    real64 const b = pow( 1 - a * scaledVolFrac, exponentInv - 1 );
     real64 const c = ( 1 - b * ( 1 - a * scaledVolFrac ) );
     real64 const volFracSquared = scaledVolFrac * scaledVolFrac;
     real64 const dVolFracSquared_dVolFrac = 2 * dScaledVolFrac_dVolFrac * scaledVolFrac;

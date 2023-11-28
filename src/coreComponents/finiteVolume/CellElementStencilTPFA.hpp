@@ -257,8 +257,8 @@ CellElementStencilTPFAWrapper::
   }
 
   // Do harmonic and arithmetic averaging
-  real64 const product = halfWeight[0]*halfWeight[1];
-  real64 const sum = halfWeight[0]+halfWeight[1];
+  real64 const product = halfWeight[0] * halfWeight[1];
+  real64 const sum = halfWeight[0] + halfWeight[1];
 
   real64 const harmonicWeight   = sum > 0 ? product / sum : 0.0;
   real64 const arithmeticWeight = sum / 2;
@@ -286,7 +286,7 @@ CellElementStencilTPFAWrapper::
 
   // real64 const tolerance = 1e-30 * lengthTolerance; // TODO: choice of constant based on physics?
 
-  for( localIndex i =0; i<2; i++ )
+  for( localIndex i = 0; i < 2; i++ )
   {
     halfWeight[i] = m_weights[iconn][i];
 
@@ -311,8 +311,8 @@ CellElementStencilTPFAWrapper::
   }
 
   // Do harmonic and arithmetic averaging
-  real64 const product = halfWeight[0]*halfWeight[1];
-  real64 const sum = halfWeight[0]+halfWeight[1];
+  real64 const product = halfWeight[0] * halfWeight[1];
+  real64 const sum = halfWeight[0] + halfWeight[1];
 
   real64 const harmonicWeight   = sum > 0 ? product / sum : 0.0;
   real64 const arithmeticWeight = sum / 2;

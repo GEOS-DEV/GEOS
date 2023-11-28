@@ -98,8 +98,8 @@ void SinglePhaseWell::registerDataOnMesh( Group & meshBodies )
         string const unitKey = useSurfaceConditions ? "s" : "r";
         // format: time,bhp,total_rate,total_vol_rate
         std::ofstream outputFile( m_ratesOutputDir + "/" + wellControlsName + ".csv" );
-        outputFile << "time [s],bhp [Pa],total rate [kg/s],total " << conditionKey << " volumetric rate ["<<unitKey<<"m3/s]";
-        outputFile<<std::endl;
+        outputFile << "time [s],bhp [Pa],total rate [kg/s],total " << conditionKey << " volumetric rate [" << unitKey << "m3/s]";
+        outputFile << std::endl;
       }
 
       string & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
@@ -304,7 +304,7 @@ void SinglePhaseWell::updateVolRateForConstraint( WellElementSubRegion & subRegi
 
       real64 const densInv = 1.0 / dens[iwelemRef][0];
       currentVolRate = connRate[iwelemRef] * densInv;
-      dCurrentVolRate_dPres = -( useSurfaceConditions ==  0 ) * dDens_dPres[iwelemRef][0] * currentVolRate * densInv;
+      dCurrentVolRate_dPres = -( useSurfaceConditions == 0 ) * dDens_dPres[iwelemRef][0] * currentVolRate * densInv;
       dCurrentVolRate_dRate = densInv;
 
       if( logLevel >= 2 && useSurfaceConditions )

@@ -33,8 +33,8 @@ int dimpower( int n );
 /// @cond DO_NOT_DOCUMENT
 
 template<> inline int dimpower< 1 >( int n ) { return n; }
-template<> inline int dimpower< 2 >( int n ) { return n*n; }
-template<> inline int dimpower< 3 >( int n ) { return n*n*n; }
+template<> inline int dimpower< 2 >( int n ) { return n * n; }
+template<> inline int dimpower< 3 >( int n ) { return n * n * n; }
 
 /// @endcond
 
@@ -71,7 +71,7 @@ void map_index< 2 >( const int index,
                      const int nnx,
                      std::vector< int > & indices )
 {
-  GEOS_ASSERT_GT( nnx*nnx, index );
+  GEOS_ASSERT_GT( nnx * nnx, index );
   indices[0] = index % nnx;
   indices[1] = index / nnx;
 }
@@ -82,10 +82,10 @@ void map_index< 3 >( const int index,
                      const int nnx,
                      std::vector< int > & indices )
 {
-  GEOS_ASSERT_GT( nnx*nnx*nnx, index );
+  GEOS_ASSERT_GT( nnx * nnx * nnx, index );
   indices[0] = index % nnx;
   indices[1] = (index / nnx) % nnx;
-  indices[2] = index / (nnx*nnx);
+  indices[2] = index / (nnx * nnx);
 }
 
 /// @endcond

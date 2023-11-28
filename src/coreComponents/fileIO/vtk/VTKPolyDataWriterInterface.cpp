@@ -599,7 +599,7 @@ getVtkCells( ParticleRegion const & region )
       for( std::size_t i = 0; i < connectivity.size(); i++ )
       {
 
-        connectivity[i] = vtkOrdering.size()*nodeIndex + vtkOrdering[i];
+        connectivity[i] = vtkOrdering.size() * nodeIndex + vtkOrdering[i];
       }
       nodeIndex++;
       cellType.push_back( vtkCellType );
@@ -819,11 +819,11 @@ setComponentMetadata( Wrapper< Array< T, NDIM, PERM > > const & wrapper,
 {
   data->SetNumberOfComponents( wrapper.numArrayComp() );
 
-  std::vector< string > labels[NDIM-1];
+  std::vector< string > labels[NDIM - 1];
   for( integer dim = 1; dim < NDIM; ++dim )
   {
     Span< string const > dimLabels = getDimLabels( wrapper, dim );
-    labels[dim-1].assign( dimLabels.begin(), dimLabels.end() );
+    labels[dim - 1].assign( dimLabels.begin(), dimLabels.end() );
   }
 
   auto const view = wrapper.referenceAsView();

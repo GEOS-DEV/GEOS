@@ -70,10 +70,10 @@ void shiftBlockElementsAheadByOneAndReplaceFirstElementWithSum( integer const nu
     real64 tmp = v[ind];
     for( int j = ind - 1; j >= i * numRowsInBlock; --j )
     {
-      v[j+1] = v[j];
+      v[j + 1] = v[j];
       tmp += v[j];
     }
-    v[i*numRowsInBlock] = tmp;
+    v[i * numRowsInBlock] = tmp;
   }
 }
 
@@ -150,13 +150,13 @@ void shiftBlockRowsAheadByOneAndReplaceFirstRowWithColumnSum( integer const numR
     {
       for( integer j = 0; j < numColsInBlock; ++j )
       {
-        mat[i+1][j] = mat[i][j];
+        mat[i + 1][j] = mat[i][j];
         work[j] += mat[i][j];
       }
     }
     for( integer j = 0; j < numColsInBlock; ++j )
     {
-      mat[k*numRowsInBlock][j] = work[j];
+      mat[k * numRowsInBlock][j] = work[j];
     }
   }
 }

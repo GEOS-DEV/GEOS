@@ -30,7 +30,7 @@ void fill( R1Tensor & val, localIndex )
 {
   for( int i = 0; i < 3; ++i )
   {
-    val[ i ] = rand( -100, 100 );
+    val[i] = rand( -100, 100 );
   }
 }
 
@@ -62,17 +62,17 @@ void fill( std::vector< T > & val, localIndex const maxSize )
 template< typename T, int NDIM, typename PERMUTATION >
 void fill( Array< T, NDIM, PERMUTATION > & val, localIndex const maxSize )
 {
-  localIndex dims[ NDIM ];
+  localIndex dims[NDIM];
   for( int i = 0; i < NDIM; ++i )
   {
-    dims[ i ] = rand( 1, maxSize );
+    dims[i] = rand( 1, maxSize );
   }
 
   val.resize( NDIM, dims );
 
   for( localIndex i = 0; i < val.size(); ++i )
   {
-    fill( val.data()[ i ], 1 );
+    fill( val.data()[i], 1 );
   }
 }
 
@@ -98,7 +98,7 @@ void fill( mapBase< K, V, SORTED > & val, localIndex const maxSize )
     V v;
     fill( k, maxSize );
     fill( v, maxSize );
-    val[ k ] = v;
+    val[k] = v;
   }
 }
 
@@ -114,7 +114,7 @@ void compare( Array< T, NDIM, PERMUTATION > const & val,
   ASSERT_EQ( val.size(), valFromFile.size() );
   for( localIndex i = 0; i < val.size(); ++i )
   {
-    compare( val.data()[ i ], valFromFile.data()[ i ] );
+    compare( val.data()[i], valFromFile.data()[i] );
   }
 }
 
@@ -125,7 +125,7 @@ void compare( SortedArray< T > const & val,
   ASSERT_EQ( val.size(), valFromFile.size() );
   for( localIndex i = 0; i < val.size(); ++i )
   {
-    compare( val[ i ], valFromFile[ i ] );
+    compare( val[i], valFromFile[i] );
   }
 }
 

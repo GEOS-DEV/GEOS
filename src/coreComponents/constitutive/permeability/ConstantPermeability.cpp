@@ -75,7 +75,7 @@ void ConstantPermeability::initializeState() const
   {
     for( localIndex q = 0; q < numQuad; ++q )
     {
-      for( integer dim=0; dim < 3; ++dim )
+      for( integer dim = 0; dim < 3; ++dim )
       {
         // The default value is -1 so if it still -1 it needs to be set to something physical
         if( permView[ei][q][dim] < 0 )

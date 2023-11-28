@@ -83,7 +83,7 @@ public:
                           arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & phaseEnthalpy,
                           arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & phaseInternalEnergy,
                           arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & phaseViscosity,
-                          arraySlice2d< real64, multifluid::USD_PHASE_COMP-2 > const & phaseCompFraction,
+                          arraySlice2d< real64, multifluid::USD_PHASE_COMP - 2 > const & phaseCompFraction,
                           real64 & totalDensity ) const override;
 
     GEOS_HOST_DEVICE
@@ -366,10 +366,10 @@ CompositionalMultiphaseFluidPVTPackage::KernelWrapper::
 
     for( integer jc = 0; jc < numComp; ++jc )
     {
-      phaseFraction.derivs[ip][Deriv::dC+jc] = frac.dz[jc];
-      phaseDensity.derivs[ip][Deriv::dC+jc] = dens.dz[jc];
-      phaseMassDensity.derivs[ip][Deriv::dC+jc] = massDens.dz[jc];
-      phaseViscosity.derivs[ip][Deriv::dC+jc] = 0.0; // TODO
+      phaseFraction.derivs[ip][Deriv::dC + jc] = frac.dz[jc];
+      phaseDensity.derivs[ip][Deriv::dC + jc] = dens.dz[jc];
+      phaseMassDensity.derivs[ip][Deriv::dC + jc] = massDens.dz[jc];
+      phaseViscosity.derivs[ip][Deriv::dC + jc] = 0.0; // TODO
 
       phaseCompFraction.value[ip][jc] = comp.value[jc];
       phaseCompFraction.derivs[ip][jc][Deriv::dP] = comp.dP[jc];
@@ -377,7 +377,7 @@ CompositionalMultiphaseFluidPVTPackage::KernelWrapper::
 
       for( integer ic = 0; ic < numComp; ++ic )
       {
-        phaseCompFraction.derivs[ip][ic][Deriv::dC+jc] = comp.dz[ic][jc];
+        phaseCompFraction.derivs[ip][ic][Deriv::dC + jc] = comp.dz[ic][jc];
       }
     }
   }
@@ -388,7 +388,7 @@ CompositionalMultiphaseFluidPVTPackage::KernelWrapper::
 
     // unfortunately here, we have to copy the molecular weight coming from PVT package...
     real64 phaseMolecularWeight[maxNumPhase]{};
-    real64 dPhaseMolecularWeight[maxNumPhase][maxNumComp+2]{};
+    real64 dPhaseMolecularWeight[maxNumPhase][maxNumComp + 2]{};
 
     for( integer ip = 0; ip < numPhase; ++ip )
     {
@@ -397,7 +397,7 @@ CompositionalMultiphaseFluidPVTPackage::KernelWrapper::
       dPhaseMolecularWeight[ip][Deriv::dT] = props.getMolecularWeight( m_phaseTypes[ip] ).dT;
       for( integer ic = 0; ic < numComp; ++ic )
       {
-        dPhaseMolecularWeight[ip][Deriv::dC+ic] = props.getMolecularWeight( m_phaseTypes[ip] ).dz[ic];
+        dPhaseMolecularWeight[ip][Deriv::dC + ic] = props.getMolecularWeight( m_phaseTypes[ip] ).dz[ic];
       }
     }
 

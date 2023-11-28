@@ -96,7 +96,7 @@ public:
    * @brief name of the node manager in the object catalog
    * @return string that contains the catalog name to generate a new NodeManager object through the object catalog.
    */
-  template< typename _BASE=BASE >
+  template< typename _BASE = BASE >
   static
   typename std::enable_if< std::is_same< _BASE, SinglePhaseBase >::value, string >::type
   catalogName()
@@ -104,7 +104,7 @@ public:
     return "SinglePhaseFVM";
   }
 
-  template< typename _BASE=BASE >
+  template< typename _BASE = BASE >
   static
   typename std::enable_if< std::is_same< _BASE, SinglePhaseProppantBase >::value, string >::type
   catalogName()

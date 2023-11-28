@@ -126,15 +126,15 @@ public:
                                                   real64 (& samplingPointCoord)[3] )
   {
     int const i0 = linearIndex % numSamplingPointsPerDirection;
-    int const i1 = ( (linearIndex - i0)/numSamplingPointsPerDirection ) % numSamplingPointsPerDirection;
-    int const i2 = ( (linearIndex - i0)/numSamplingPointsPerDirection - i1 ) / numSamplingPointsPerDirection;
+    int const i1 = ( (linearIndex - i0) / numSamplingPointsPerDirection ) % numSamplingPointsPerDirection;
+    int const i2 = ( (linearIndex - i0) / numSamplingPointsPerDirection - i1 ) / numSamplingPointsPerDirection;
 
     real64 const step = 1. / ( numSamplingPointsPerDirection - 1 );
 
     real64 const r = i0 * step;
     real64 const s = i1 * step;
     real64 const t = i2 * 2 * step;
-    if( (r+s) <= 1 )
+    if( (r + s) <= 1 )
     {
       samplingPointCoord[0] = r;
       samplingPointCoord[1] = s;
@@ -339,7 +339,7 @@ private:
   inline
   constexpr static real64 quadratureParentCoords0( localIndex const q )
   {
-    return quadratureCrossSectionCoord + 0.5  * parentCoords0( q );
+    return quadratureCrossSectionCoord + 0.5 * parentCoords0( q );
   }
 
   /**
@@ -352,7 +352,7 @@ private:
   inline
   constexpr static real64 quadratureParentCoords1( localIndex const q )
   {
-    return quadratureCrossSectionCoord + 0.5  * parentCoords1( q );
+    return quadratureCrossSectionCoord + 0.5 * parentCoords1( q );
   }
 
   /**
@@ -411,13 +411,13 @@ H1_Wedge_Lagrange1_Gauss6::
   real64 const xi = quadratureParentCoords2( q );
 
   real64 const psiTRI[3] = { 1.0 - r - s, r, s };
-  real64 const psiLIN[2] = { 0.5 - 0.5*xi, 0.5 + 0.5*xi };
+  real64 const psiLIN[2] = { 0.5 - 0.5 * xi, 0.5 + 0.5 * xi };
   constexpr real64 dpsiTRI[2][3] = { { -1.0, 1.0, 0.0 }, { -1.0, 0.0, 1.0 } };
   constexpr real64 dpsiLIN[2] = { -0.5, 0.5 };
 
-  for( localIndex a=0; a<3; ++a )
+  for( localIndex a = 0; a < 3; ++a )
   {
-    for( localIndex b=0; b<2; ++b )
+    for( localIndex b = 0; b < 2; ++b )
     {
       real64 const dNdXi[3] = { dpsiTRI[0][a] * psiLIN[b],
                                 dpsiTRI[1][a] * psiLIN[b],
@@ -427,7 +427,7 @@ H1_Wedge_Lagrange1_Gauss6::
       {
         for( int j = 0; j < 3; ++j )
         {
-          J[i][j] = J[i][j] + dNdXi[ j ] * X[nodeIndex][i];
+          J[i][j] = J[i][j] + dNdXi[j] * X[nodeIndex][i];
         }
       }
     }
@@ -449,13 +449,13 @@ H1_Wedge_Lagrange1_Gauss6::
   real64 const xi = quadratureParentCoords2( q );
 
   real64 const psiTRI[3] = { 1.0 - r - s, r, s };
-  real64 const psiLIN[2] = { 0.5 - 0.5*xi, 0.5 + 0.5*xi };
+  real64 const psiLIN[2] = { 0.5 - 0.5 * xi, 0.5 + 0.5 * xi };
   constexpr real64 dpsiTRI[2][3] = { { -1.0, 1.0, 0.0 }, { -1.0, 0.0, 1.0 } };
   constexpr real64 dpsiLIN[2] = { -0.5, 0.5 };
 
-  for( localIndex a=0; a<3; ++a )
+  for( localIndex a = 0; a < 3; ++a )
   {
-    for( localIndex b=0; b<2; ++b )
+    for( localIndex b = 0; b < 2; ++b )
     {
       real64 const dNdXi[3] = { dpsiTRI[0][a] * psiLIN[b],
                                 dpsiTRI[1][a] * psiLIN[b],
@@ -466,7 +466,7 @@ H1_Wedge_Lagrange1_Gauss6::
         gradN[nodeIndex][i] = 0.0;
         for( int j = 0; j < 3; ++j )
         {
-          gradN[nodeIndex][i] = gradN[nodeIndex][i] + dNdXi[ j ] * invJ[j][i];
+          gradN[nodeIndex][i] = gradN[nodeIndex][i] + dNdXi[j] * invJ[j][i];
         }
       }
     }
@@ -485,12 +485,12 @@ H1_Wedge_Lagrange1_Gauss6::calcN( real64 const (&coords)[3],
   real64 const s  = coords[1];
   real64 const xi = coords[2];
 
-  N[0] = 0.5*( 1.0 - r - s ) * ( 1.0 - xi );
-  N[1] = 0.5*( 1.0 - r - s ) * ( 1.0 + xi );
-  N[2] = 0.5* r * ( 1.0 - xi );
-  N[3] = 0.5* r * ( 1.0 + xi );
-  N[4] = 0.5* s * ( 1.0 - xi );
-  N[5] = 0.5* s * ( 1.0 + xi );
+  N[0] = 0.5 * ( 1.0 - r - s ) * ( 1.0 - xi );
+  N[1] = 0.5 * ( 1.0 - r - s ) * ( 1.0 + xi );
+  N[2] = 0.5 * r * ( 1.0 - xi );
+  N[3] = 0.5 * r * ( 1.0 + xi );
+  N[4] = 0.5 * s * ( 1.0 - xi );
+  N[5] = 0.5 * s * ( 1.0 + xi );
 
 }
 

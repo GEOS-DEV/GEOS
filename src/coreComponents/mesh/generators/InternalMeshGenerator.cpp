@@ -134,9 +134,9 @@ void InternalMeshGenerator::postProcessInput()
   {
     // Check for vertex/element matching
     bool failFlag = false;
-    for( int i=0; i<m_dim; ++i )
+    for( int i = 0; i < m_dim; ++i )
     {
-      failFlag += ( m_nElems[i].size() != m_vertices[i].size()-1 );
+      failFlag += ( m_nElems[i].size() != m_vertices[i].size() - 1 );
     }
     if( failFlag )
     {
@@ -144,7 +144,7 @@ void InternalMeshGenerator::postProcessInput()
     }
 
     // If specified, check to make sure bias values have the correct length
-    for( int i=0; i<m_dim; ++i )
+    for( int i = 0; i < m_dim; ++i )
     {
       if( m_nElemBias[i].size() > 0 )
       {
@@ -188,7 +188,7 @@ void InternalMeshGenerator::postProcessInput()
 
   {
     localIndex numBlocks = 1;
-    for( int i=0; i<m_dim; ++i )
+    for( int i = 0; i < m_dim; ++i )
     {
       numBlocks *= m_nElems[i].size();
     }
@@ -206,22 +206,22 @@ void InternalMeshGenerator::postProcessInput()
     }
   }
 
-  for( int i=0; i<3; ++i )
+  for( int i = 0; i < 3; ++i )
   {
     m_min[i] = m_vertices[i].front();
     m_max[i] = m_vertices[i].back();
   }
 
-  for( int dir=0; dir<3; ++dir )
+  for( int dir = 0; dir < 3; ++dir )
   {
     m_firstElemIndexForBlock[dir].resize( m_nElems[dir].size() );
     m_lastElemIndexForBlock[dir].resize( m_nElems[dir].size() );
     m_firstElemIndexForBlock[dir][0] = 0;
-    m_lastElemIndexForBlock[dir][0] = m_nElems[dir][0]-1;
-    for( int block=1; block<m_nElems[dir].size(); ++block )
+    m_lastElemIndexForBlock[dir][0] = m_nElems[dir][0] - 1;
+    for( int block = 1; block < m_nElems[dir].size(); ++block )
     {
-      m_firstElemIndexForBlock[dir][block] = m_lastElemIndexForBlock[dir][block-1] + 1;
-      m_lastElemIndexForBlock[dir][block] = m_firstElemIndexForBlock[dir][block] + m_nElems[dir][block]-1;
+      m_firstElemIndexForBlock[dir][block] = m_lastElemIndexForBlock[dir][block - 1] + 1;
+      m_lastElemIndexForBlock[dir][block] = m_firstElemIndexForBlock[dir][block] + m_nElems[dir][block] - 1;
     }
   }
 
@@ -682,8 +682,8 @@ void InternalMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockMa
     {
       for( int kblock = 0; kblock < m_nElems[2].size(); ++kblock, ++regionOffset )
       {
-        numElemsInRegions[ m_regionNames[ regionOffset ] ] = 0;
-        elemTypeInRegions[ m_regionNames[ regionOffset ] ] = ElementType::Quadrilateral;
+        numElemsInRegions[m_regionNames[regionOffset]] = 0;
+        elemTypeInRegions[m_regionNames[regionOffset]] = ElementType::Quadrilateral;
       }
     }
   }
@@ -710,8 +710,8 @@ void InternalMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockMa
           }
 
           numElemsInRegion *= m_numElePerBox[iR];
-          numElemsInRegions[ m_regionNames[ regionOffset ] ] += numElemsInRegion;
-          elemTypeInRegions[ m_regionNames[ regionOffset ] ] = EnumStrings< ElementType >::fromString( m_elementType[iR] );
+          numElemsInRegions[m_regionNames[regionOffset]] += numElemsInRegion;
+          elemTypeInRegions[m_regionNames[regionOffset]] = EnumStrings< ElementType >::fromString( m_elementType[iR] );
         }
       }
     }
@@ -834,7 +834,7 @@ void InternalMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockMa
 
           CellBlock & cellBlock = cellBlockManager.getCellBlock( m_regionNames[regionOffset] );
           int const numNodesPerElem = LvArray::integerConversion< int >( cellBlock.numNodesPerElement());
-          integer nodeIDInBox[ 8 ];
+          integer nodeIDInBox[8];
 
           arrayView2d< localIndex, cells::NODE_MAP_USD > elemsToNodes = cellBlock.getElemToNode();
           arrayView1d< globalIndex > const & elemLocalToGlobal = cellBlock.localToGlobalMap();
@@ -907,7 +907,7 @@ void InternalMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockMa
 
                 for( int iEle = 0; iEle < m_numElePerBox[iR]; ++iEle )
                 {
-                  localIndex & localElemIndex = localElemIndexInRegion[ m_regionNames[ regionOffset ] ];
+                  localIndex & localElemIndex = localElemIndexInRegion[m_regionNames[regionOffset]];
                   elemLocalToGlobal[localElemIndex] = elemGlobalIndex( globalIJK ) * m_numElePerBox[iR] + iEle;
 
                   getElemToNodesRelationInBox( elementType,

@@ -404,7 +404,7 @@ complete( localIndex const k,
     for( int dim = 0; dim < numDofPerTestSupportPoint; ++dim )
     {
 
-      localIndex const dof = LvArray::integerConversion< localIndex >( stack.localRowDofIndex[numDofPerTestSupportPoint*localNode + dim] - m_dofRankOffset );
+      localIndex const dof = LvArray::integerConversion< localIndex >( stack.localRowDofIndex[numDofPerTestSupportPoint * localNode + dim] - m_dofRankOffset );
 
       // we need this check to filter out ghost nodes in the assembly
       if( dof < 0 || dof >= m_matrix.numRows() )
@@ -464,7 +464,7 @@ kernelLaunch( localIndex const numElems,
     typename KERNEL_TYPE::StackVariables stack;
 
     kernelComponent.setup( k, stack );
-    for( integer q=0; q<KERNEL_TYPE::numQuadraturePointsPerElem; ++q )
+    for( integer q = 0; q < KERNEL_TYPE::numQuadraturePointsPerElem; ++q )
     {
       kernelComponent.quadraturePointKernel( k, q, stack );
     }

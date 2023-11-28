@@ -145,7 +145,7 @@ void PeriodicEvent::checkOptionalFunctionThreshold( real64 const time,
     SortedArray< localIndex > mySet;
     if( m_functionInputSetname.empty())
     {
-      for( localIndex ii=0; ii<m_functionTarget->size(); ++ii )
+      for( localIndex ii = 0; ii < m_functionTarget->size(); ++ii )
       {
         mySet.insert( ii );
       }

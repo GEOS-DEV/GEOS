@@ -189,9 +189,9 @@ public:
    */
   GEOS_HOST_DEVICE
   void computeWeights( localIndex iconn,
-                       CoefficientAccessor< arrayView3d< real64 const > > const &  coefficient1,
-                       CoefficientAccessor< arrayView3d< real64 const > > const &  coefficient1Multiplier,
-                       CoefficientAccessor< arrayView1d< real64 const > > const &  coefficient2,
+                       CoefficientAccessor< arrayView3d< real64 const > > const & coefficient1,
+                       CoefficientAccessor< arrayView3d< real64 const > > const & coefficient1Multiplier,
+                       CoefficientAccessor< arrayView1d< real64 const > > const & coefficient2,
                        R1Tensor const & gravityVector,
                        real64 ( &weight1 )[maxNumPointsInFlux],
                        real64 ( &weight2 )[maxNumPointsInFlux],
@@ -329,7 +329,7 @@ SurfaceElementStencilWrapper::
 {
 
   real64 sumOfTrans = 0.0;
-  for( localIndex k=0; k<numPointsInFlux( iconn ); ++k )
+  for( localIndex k = 0; k < numPointsInFlux( iconn ); ++k )
   {
     localIndex const er  =  m_elementRegionIndices[iconn][k];
     localIndex const esr =  m_elementSubRegionIndices[iconn][k];
@@ -340,9 +340,9 @@ SurfaceElementStencilWrapper::
 
   localIndex k[2];
   localIndex connectionIndex = 0;
-  for( k[0]=0; k[0]<numPointsInFlux( iconn ); ++k[0] )
+  for( k[0] = 0; k[0] < numPointsInFlux( iconn ); ++k[0] )
   {
-    for( k[1]=k[0]+1; k[1]<numPointsInFlux( iconn ); ++k[1] )
+    for( k[1] = k[0] + 1; k[1] < numPointsInFlux( iconn ); ++k[1] )
     {
       localIndex const er0  =  m_elementRegionIndices[iconn][k[0]];
       localIndex const esr0 =  m_elementSubRegionIndices[iconn][k[0]];
@@ -355,8 +355,8 @@ SurfaceElementStencilWrapper::
       real64 const t0 = m_weights[iconn][0] * coefficient[er0][esr0][ei0][0][0]; // this is a bit insane to access perm
       real64 const t1 = m_weights[iconn][1] * coefficient[er1][esr1][ei1][0][0];
 
-      real64 const harmonicWeight   = t0*t1 / sumOfTrans;
-      real64 const arithmeticWeight = 0.25 * (t0+t1);
+      real64 const harmonicWeight   = t0 * t1 / sumOfTrans;
+      real64 const arithmeticWeight = 0.25 * (t0 + t1);
 
       real64 const value = m_meanPermCoefficient * harmonicWeight + (1 - m_meanPermCoefficient) * arithmeticWeight;
 
@@ -391,22 +391,22 @@ SurfaceElementStencilWrapper::
 {
 
   real64 sumOfTrans = 0.0;
-  for( localIndex k=0; k<numPointsInFlux( iconn ); ++k )
+  for( localIndex k = 0; k < numPointsInFlux( iconn ); ++k )
   {
     sumOfTrans += m_weights[iconn][k];
   }
 
   localIndex k[2];
   localIndex connectionIndex = 0;
-  for( k[0]=0; k[0]<numPointsInFlux( iconn ); ++k[0] )
+  for( k[0] = 0; k[0] < numPointsInFlux( iconn ); ++k[0] )
   {
-    for( k[1]=k[0]+1; k[1]<numPointsInFlux( iconn ); ++k[1] )
+    for( k[1] = k[0] + 1; k[1] < numPointsInFlux( iconn ); ++k[1] )
     {
       real64 const t0 = m_weights[iconn][0];
       real64 const t1 = m_weights[iconn][1];
 
-      real64 const harmonicWeight   = t0*t1 / sumOfTrans;
-      real64 const arithmeticWeight = 0.25 * (t0+t1);
+      real64 const harmonicWeight   = t0 * t1 / sumOfTrans;
+      real64 const arithmeticWeight = 0.25 * (t0 + t1);
 
       real64 const value = m_meanPermCoefficient * harmonicWeight + (1 - m_meanPermCoefficient) * arithmeticWeight;
 
@@ -446,7 +446,7 @@ SurfaceElementStencilWrapper::
                   real64 (& dWeight_dVar2 )[maxNumConnections][2][3] ) const
 {
   real64 sumOfTrans = 0.0;
-  for( localIndex k=0; k<numPointsInFlux( iconn ); ++k )
+  for( localIndex k = 0; k < numPointsInFlux( iconn ); ++k )
   {
     localIndex const er  =  m_elementRegionIndices[iconn][k];
     localIndex const esr =  m_elementSubRegionIndices[iconn][k];
@@ -457,9 +457,9 @@ SurfaceElementStencilWrapper::
 
   localIndex k[2];
   localIndex connectionIndex = 0;
-  for( k[0]=0; k[0]<numPointsInFlux( iconn ); ++k[0] )
+  for( k[0] = 0; k[0] < numPointsInFlux( iconn ); ++k[0] )
   {
-    for( k[1]=k[0]+1; k[1]<numPointsInFlux( iconn ); ++k[1] )
+    for( k[1] = k[0] + 1; k[1] < numPointsInFlux( iconn ); ++k[1] )
     {
       localIndex const er0  =  m_elementRegionIndices[iconn][k[0]];
       localIndex const esr0 =  m_elementSubRegionIndices[iconn][k[0]];
@@ -472,8 +472,8 @@ SurfaceElementStencilWrapper::
       real64 const t0 = m_weights[iconn][0] * coefficient[er0][esr0][ei0][0][0]; // this is a bit insane to access perm
       real64 const t1 = m_weights[iconn][1] * coefficient[er1][esr1][ei1][0][0];
 
-      real64 const harmonicWeight   = t0*t1 / sumOfTrans;
-      real64 const arithmeticWeight = 0.25 * (t0+t1);
+      real64 const harmonicWeight   = t0 * t1 / sumOfTrans;
+      real64 const arithmeticWeight = 0.25 * (t0 + t1);
 
       real64 const value = m_meanPermCoefficient * harmonicWeight + (1 - m_meanPermCoefficient) * arithmeticWeight;
 
@@ -524,7 +524,7 @@ SurfaceElementStencilWrapper::
 {
   // TODO: this should become star-delta method
   real64 sumOfTrans = 0.0;
-  for( localIndex k=0; k<numPointsInFlux( iconn ); ++k )
+  for( localIndex k = 0; k < numPointsInFlux( iconn ); ++k )
   {
     localIndex const er  =  m_elementRegionIndices[iconn][k];
     localIndex const esr =  m_elementSubRegionIndices[iconn][k];
@@ -539,9 +539,9 @@ SurfaceElementStencilWrapper::
 
   localIndex k[2];
   localIndex connectionIndex = 0;
-  for( k[0]=0; k[0]<numPointsInFlux( iconn ); ++k[0] )
+  for( k[0] = 0; k[0] < numPointsInFlux( iconn ); ++k[0] )
   {
-    for( k[1]=k[0]+1; k[1]<numPointsInFlux( iconn ); ++k[1] )
+    for( k[1] = k[0] + 1; k[1] < numPointsInFlux( iconn ); ++k[1] )
     {
       localIndex const er0  =  m_elementRegionIndices[iconn][k[0]];
       localIndex const esr0 =  m_elementSubRegionIndices[iconn][k[0]];
@@ -559,8 +559,8 @@ SurfaceElementStencilWrapper::
       real64 const t0 = mult0 * m_weights[iconn][0] * coefficient[er0][esr0][ei0][0][0];
       real64 const t1 = mult1 * m_weights[iconn][1] * coefficient[er1][esr1][ei1][0][0];
 
-      real64 const harmonicWeight   = t0*t1 / sumOfTrans;
-      real64 const arithmeticWeight = 0.25 * (t0+t1);
+      real64 const harmonicWeight   = t0 * t1 / sumOfTrans;
+      real64 const arithmeticWeight = 0.25 * (t0 + t1);
 
       real64 const value = m_meanPermCoefficient * harmonicWeight + (1 - m_meanPermCoefficient) * arithmeticWeight;
 

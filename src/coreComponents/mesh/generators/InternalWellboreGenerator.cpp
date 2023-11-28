@@ -132,14 +132,14 @@ void InternalWellboreGenerator::postProcessInput()
 
   // Project trajectory to bottom and top of the wellbore
   real64 trajectoryVector[3] = {0};
-  for( int i=0; i<3; ++i )
+  for( int i = 0; i < 3; ++i )
   {
     trajectoryVector[i] = m_trajectory[1][i] - m_trajectory[0][i];
   }
   LvArray::tensorOps::normalize< 3 >( trajectoryVector );
   real64 const scaleb = ( m_vertices[2][0] - m_trajectory[0][2] ) / trajectoryVector[2];
   real64 const scalet = ( m_vertices[2][1] - m_trajectory[1][2] ) / trajectoryVector[2];
-  for( int i=0; i<3; ++i )
+  for( int i = 0; i < 3; ++i )
   {
     m_trajectory[0][i] = m_trajectory[0][i] + scaleb * trajectoryVector[i];
     m_trajectory[1][i] = m_trajectory[1][i] + scalet * trajectoryVector[i];
@@ -160,14 +160,14 @@ void InternalWellboreGenerator::postProcessInput()
     localIndex const numRadialBlocks = m_vertices[0].size() - 1;
 
     // loop over blocks in the radial direction (i-direction).
-    for( localIndex iBlock=0; iBlock<numRadialBlocks; ++iBlock )
+    for( localIndex iBlock = 0; iBlock < numRadialBlocks; ++iBlock )
     {
       real64 const rInner = m_vertices[0][iBlock];
-      real64 const rOuter = m_vertices[0][iBlock+1];
+      real64 const rOuter = m_vertices[0][iBlock + 1];
 
       // if we are on the first block, always insert the inner radius as the
       // fixed inner boundary.
-      if( iBlock==0 )
+      if( iBlock == 0 )
       {
         m_radialCoords.emplace_back( rInner );
       }
@@ -190,12 +190,12 @@ void InternalWellboreGenerator::postProcessInput()
 
         // Loop over an excessive number of elements in the radial direction.
         // This bound needs to be more than we will end up with.
-        for( localIndex i=0; i<(m_nElems[0][iBlock]+1)*100; ++i )
+        for( localIndex i = 0; i < (m_nElems[0][iBlock] + 1) * 100; ++i )
         {
           // approximate the theta direction size at i, and approximate the
           // radius at (i+1).
           real64 const t_i =  m_radialCoords.back() * ( 2 * M_PI * dTheta / 360 ) / m_nElems[1][0];
-          real64 const r_ip1_0 = ( m_radialCoords.back() +  t_i );
+          real64 const r_ip1_0 = ( m_radialCoords.back() + t_i );
 
           // approximate the theta direction size at the approximated radius.
           real64 const tElemSize_ip1_0 =  r_ip1_0 * ( 2 * M_PI * dTheta / 360 ) / m_nElems[1][0];
@@ -215,7 +215,7 @@ void InternalWellboreGenerator::postProcessInput()
             {
               // use and append the overshot value
               m_radialCoords.emplace_back( r_ip1 );
-              actualNumberOfRadialElements = i+1;
+              actualNumberOfRadialElements = i + 1;
               scalingFactor =  ( rOuter - rInner ) / ( r_ip1 - rInner );
             }
             else
@@ -238,7 +238,7 @@ void InternalWellboreGenerator::postProcessInput()
 
         // scale the coordinates to ensure they align with the inner and outer
         // radius of the block.
-        for( localIndex i=startingIndex; i<m_radialCoords.size(); ++i )
+        for( localIndex i = startingIndex; i < m_radialCoords.size(); ++i )
         {
           m_radialCoords[i] = ( m_radialCoords[i] - rInner ) * scalingFactor + rInner;
         }
@@ -247,20 +247,20 @@ void InternalWellboreGenerator::postProcessInput()
       {
         // even/fixed spacing option
         real64 min = m_vertices[0][iBlock];
-        real64 max = m_vertices[0][iBlock+1];
-        real64 const h = (max-min) / m_nElems[0][iBlock];
+        real64 max = m_vertices[0][iBlock + 1];
+        real64 const h = (max - min) / m_nElems[0][iBlock];
         localIndex const numNodes = m_nElems[0][iBlock] + 1;
-        for( localIndex i=1; i<numNodes; ++i )
+        for( localIndex i = 1; i < numNodes; ++i )
         {
-          m_radialCoords.emplace_back( min +  i * h );
+          m_radialCoords.emplace_back( min + i * h );
         }
       }
     }
   }
 
 
-  GEOS_LOG_RANK_0( "Radial elements: "<<m_nElems[0] );
-  GEOS_LOG_RANK_0( "Radial coordinates: "<<m_radialCoords );
+  GEOS_LOG_RANK_0( "Radial elements: " << m_nElems[0] );
+  GEOS_LOG_RANK_0( "Radial coordinates: " << m_radialCoords );
 
 
   // if the cartesian outer boundary has been specified by the user
@@ -272,14 +272,14 @@ void InternalWellboreGenerator::postProcessInput()
                    GEOS_FMT( "{} must be strictly larger than 0",
                              viewKeyStruct::cartesianOuterBoundaryString() ) );
 
-    GEOS_ERROR_IF( m_cartesianOuterBoundary >= m_vertices[0].size()-1,
+    GEOS_ERROR_IF( m_cartesianOuterBoundary >= m_vertices[0].size() - 1,
                    GEOS_FMT( "{} must be strictly smaller than the number of radial blocks (equal to {} here)",
-                             viewKeyStruct::cartesianOuterBoundaryString(), m_vertices[0].size()-1 ) );
+                             viewKeyStruct::cartesianOuterBoundaryString(), m_vertices[0].size() - 1 ) );
 
     // step 2: check that the cartesian inner radius is valid
     bool const isCartesianMappingInnerRadiusSpecified = m_cartesianMappingInnerRadius < 1e98;
     real64 const innerLimit = m_vertices[0][m_cartesianOuterBoundary];
-    real64 const outerLimit = m_vertices[0][m_vertices[0].size()-1];
+    real64 const outerLimit = m_vertices[0][m_vertices[0].size() - 1];
     GEOS_ERROR_IF( isCartesianMappingInnerRadiusSpecified &&
                    m_cartesianMappingInnerRadius > outerLimit,
                    GEOS_FMT( "{} must be inside the outer radius of the mesh",
@@ -407,7 +407,7 @@ void InternalWellboreGenerator::coordinateTransformation( arrayView2d< real64, n
     X[a][1] = meshRact * sin( meshTheta );
 
     // Add mapped values to nodesets
-    if( m_cartesianOuterBoundary<m_vertices[0].size() )
+    if( m_cartesianOuterBoundary < m_vertices[0].size() )
     {
       if( isEqual( X[a][0], -1 * m_max[0], m_coordinatePrecision ) )
       {
@@ -449,11 +449,11 @@ void InternalWellboreGenerator::coordinateTransformation( arrayView2d< real64, n
         }
         else if( yCoord >= 0.0 )
         {
-          tCoord = acos( xCoord/rCoord );
+          tCoord = acos( xCoord / rCoord );
         }
         else
         {
-          tCoord = 2.0 * M_PI - acos( xCoord/rCoord );
+          tCoord = 2.0 * M_PI - acos( xCoord / rCoord );
         }
 
         tCoord *= 180.0 / M_PI;
@@ -476,8 +476,8 @@ void InternalWellboreGenerator::coordinateTransformation( arrayView2d< real64, n
         real64 const dx = xBottomCenter - xTopCenter;
         real64 const dy = yBottomCenter - yTopCenter;
         real64 const dz = zBottom - zTop;
-        real64 const dr = sqrt( dx*dx + dy*dy );
-        real64 const dl = sqrt( dr*dr + dz*dz );
+        real64 const dr = sqrt( dx * dx + dy * dy );
+        real64 const dl = sqrt( dr * dr + dz * dz );
 
         // Azimuth of the wellbore from x-axis
         real64 theta0;
@@ -486,13 +486,13 @@ void InternalWellboreGenerator::coordinateTransformation( arrayView2d< real64, n
         {
           theta0 = 0.0;
         }
-        else if( dy>=0.0 )
+        else if( dy >= 0.0 )
         {
-          theta0 = acos( dx/dr );
+          theta0 = acos( dx / dr );
         }
         else
         {
-          theta0 = 2.0 * M_PI - acos( dx/dr );
+          theta0 = 2.0 * M_PI - acos( dx / dr );
         }
 
         // The horizontal section of an inclined wellbore is an ellipse
@@ -503,7 +503,7 @@ void InternalWellboreGenerator::coordinateTransformation( arrayView2d< real64, n
         // Transform radial coordinate regarding the elliptical shape of the wellbore section in the horizontal plane
         // This transformation ensures that the outer square boundary is unchanged
         // TODO create a function in ComputationalGeometry class for this pure geometrical transformation
-        real64 const transformCoeff = sqrt ( ( 1.0 + tanDTheta * tanDTheta )/( dz*dz/dl/dl + tanDTheta * tanDTheta ) );
+        real64 const transformCoeff = sqrt ( ( 1.0 + tanDTheta * tanDTheta ) / ( dz * dz / dl / dl + tanDTheta * tanDTheta ) );
         real64 const rCoordTransform = rCoord * ( ( meshRout - rCoord ) / ( meshRout - m_min[0] ) * ( transformCoeff - 1.0 ) + 1.0 );
 
         // Compute transformed cartesian coordinates
@@ -512,7 +512,7 @@ void InternalWellboreGenerator::coordinateTransformation( arrayView2d< real64, n
 
         // Moving the coordinate in the horizontal plane with respect to the center of the wellbore section
         // This transformation ensures that the ourter square boundary is unchanged
-        real64 const zRatio = ( zCoord - zTop ) / ( zBottom -zTop );
+        real64 const zRatio = ( zCoord - zTop ) / ( zBottom - zTop );
         real64 const xCenter = xTopCenter + (xBottomCenter - xTopCenter) * zRatio;
         real64 const yCenter = yTopCenter + (yBottomCenter - yTopCenter) * zRatio;
 

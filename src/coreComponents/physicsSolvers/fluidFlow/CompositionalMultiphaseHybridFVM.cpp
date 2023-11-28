@@ -106,8 +106,8 @@ void CompositionalMultiphaseHybridFVM::initializePostInitialConditionsPreSubGrou
   HybridMimeticDiscretization const & hmDiscretization = fvManager.getHybridMimeticDiscretization( m_discretizationName );
   MimeticInnerProductBase const & mimeticInnerProductBase =
     hmDiscretization.getReference< MimeticInnerProductBase >( HybridMimeticDiscretization::viewKeyStruct::innerProductString() );
-  if( dynamicCast< QuasiRTInnerProduct const * >( &mimeticInnerProductBase )  ||
-      dynamicCast< QuasiTPFAInnerProduct const * >( &mimeticInnerProductBase )  ||
+  if( dynamicCast< QuasiRTInnerProduct const * >( &mimeticInnerProductBase ) ||
+      dynamicCast< QuasiTPFAInnerProduct const * >( &mimeticInnerProductBase ) ||
       dynamicCast< SimpleInnerProduct const * >( &mimeticInnerProductBase ) )
   {
     GEOS_ERROR( catalogName() << " " << getDataContext() <<

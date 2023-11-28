@@ -527,7 +527,7 @@ void SinglePhaseBase::computeHydrostaticEquilibrium()
     localIndex const numPointsInTable = ( elevationIncrement > 0 ) ? std::ceil( (maxElevation - minElevation) / elevationIncrement ) + 1 : 1;
 
     real64 const eps = 0.1 * (maxElevation - minElevation); // we add a small buffer to only log in the pathological cases
-    GEOS_LOG_RANK_0_IF( ( (datumElevation > globalMaxElevation[equilIndex]+eps)  || (datumElevation < globalMinElevation[equilIndex]-eps) ),
+    GEOS_LOG_RANK_0_IF( ( (datumElevation > globalMaxElevation[equilIndex] + eps) || (datumElevation < globalMinElevation[equilIndex] - eps) ),
                         SinglePhaseBase::catalogName() << " " << getDataContext() <<
                         ": By looking at the elevation of the cell centers in this model, GEOS found that " <<
                         "the min elevation is " << globalMinElevation[equilIndex] << " and the max elevation is " <<
@@ -755,7 +755,7 @@ void SinglePhaseBase::implicitStepComplete( real64 const & time,
           if( volume[ei] * density_n[ei][0] > 1.1 * creationMass[ei] )
           {
             creationMass[ei] *= 0.75;
-            if( creationMass[ei]<1.0e-20 )
+            if( creationMass[ei] < 1.0e-20 )
             {
               creationMass[ei] = 0.0;
             }
@@ -873,7 +873,7 @@ void applyAndSpecifyFieldValue( real64 const & time_n,
     {
       globalIndex const numTargetElems = MpiWrapper::sum< globalIndex >( lset.size() );
       GEOS_LOG_RANK_0( GEOS_FMT( bcLogMessage,
-                                 solverName, time_n+dt, FieldSpecificationBase::catalogName(),
+                                 solverName, time_n + dt, FieldSpecificationBase::catalogName(),
                                  fs.getName(), setName, subRegion.getName(), fs.getScale(), numTargetElems ) );
     }
 
@@ -1009,7 +1009,7 @@ void SinglePhaseBase::applySourceFluxBC( real64 const time_n,
       {
         globalIndex const numTargetElems = MpiWrapper::sum< globalIndex >( targetSet.size() );
         GEOS_LOG_RANK_0( GEOS_FMT( bcLogMessage,
-                                   getName(), time_n+dt, SourceFluxBoundaryCondition::catalogName(),
+                                   getName(), time_n + dt, SourceFluxBoundaryCondition::catalogName(),
                                    fs.getName(), setName, subRegion.getName(), fs.getScale(), numTargetElems ) );
 
         if( isThermal )
@@ -1020,7 +1020,7 @@ void SinglePhaseBase::applySourceFluxBC( real64 const time_n,
                              "\n - positive value (production): both the mass balance and the energy balance equations are modified to considered the additional source term. " \
                              "\n For the energy balance equation, the mass flux is multipied by the enthalpy in the cell from which the fluid is being produced.";
           GEOS_LOG_RANK_0( GEOS_FMT( msg,
-                                     getName(), time_n+dt, SourceFluxBoundaryCondition::catalogName(), fs.getName() ) );
+                                     getName(), time_n + dt, SourceFluxBoundaryCondition::catalogName(), fs.getName() ) );
         }
       }
 

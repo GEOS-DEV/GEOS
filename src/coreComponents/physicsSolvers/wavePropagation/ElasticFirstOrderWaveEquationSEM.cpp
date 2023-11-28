@@ -452,11 +452,11 @@ void ElasticFirstOrderWaveEquationSEM::applyFreeSurfaceBC( real64 const time, Do
 
       for( localIndex i = 0; i < targetSet.size(); ++i )
       {
-        localIndex const kf = targetSet[ i ];
+        localIndex const kf = targetSet[i];
         freeSurfaceFaceIndicator[kf] = 1;
 
         localIndex const numNodes = faceToNodeMap.sizeOfArray( kf );
-        for( localIndex a=0; a < numNodes; ++a )
+        for( localIndex a = 0; a < numNodes; ++a )
         {
           localIndex const dof = faceToNodeMap( kf, a );
           freeSurfaceNodeIndicator[dof] = 1;

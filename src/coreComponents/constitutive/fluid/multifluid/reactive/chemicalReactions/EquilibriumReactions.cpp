@@ -145,11 +145,11 @@ void EquilibriumReactions::KernelWrapper::assembleEquilibriumReactionSystem( rea
                                  totalConcentration,
                                  dTotalConc_dLog10PrimaryConc );
 
-  for( int i=0; i<m_numPrimarySpecies; i++ )
+  for( int i = 0; i < m_numPrimarySpecies; i++ )
   {
     rhs[i] = 1 - totalConcentration[i] / primarySpeciesTotalConcentration[i];
     rhs[i] = -rhs[i];
-    for( int j=0; j<m_numPrimarySpecies; j++ )
+    for( int j = 0; j < m_numPrimarySpecies; j++ )
     {
       matrix( i, j ) = -dTotalConc_dLog10PrimaryConc( i, j ) / primarySpeciesTotalConcentration[i];
     }
@@ -172,11 +172,11 @@ void EquilibriumReactions::KernelWrapper::updateConcentrations( real64 const tem
   for( int iteration = 0; iteration < m_maxNumIterations; iteration++ )
   {
 
-    for( int i = 0; i< m_numPrimarySpecies; i++ )
+    for( int i = 0; i < m_numPrimarySpecies; i++ )
     {
       rhs[i] = 0.0;
       solution[i] = 0.0;
-      for( int j = 0; j< m_numPrimarySpecies; j++ )
+      for( int j = 0; j < m_numPrimarySpecies; j++ )
       {
         matrix( i, j ) = 0.0;
       }
@@ -289,7 +289,8 @@ void EquilibriumReactions::KernelWrapper::setInitialGuess( arraySlice1d< real64 
   {
     primarySpeciesConcentration[i] = primarySpeciesTotalConcentration[i];
   }
-  real64 const hPlusConcentration = 2*primarySpeciesConcentration[2]-2*primarySpeciesConcentration[3]-primarySpeciesConcentration[4]+2*primarySpeciesConcentration[5]+primarySpeciesConcentration[6];
+  real64 const hPlusConcentration = 2 * primarySpeciesConcentration[2] - 2 * primarySpeciesConcentration[3] - primarySpeciesConcentration[4] + 2 * primarySpeciesConcentration[5] +
+                                    primarySpeciesConcentration[6];
   if( hPlusConcentration < 0 )
   {
     primarySpeciesConcentration[0] = -hPlusConcentration;

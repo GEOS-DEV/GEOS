@@ -78,28 +78,28 @@ public:
   ArraySlice1DLarge front() const
   {
     GEOS_ERROR_IF( empty(), "Can't get front from empty queue" );
-    return m_storage[ POSITIVE_MODULO( m_begin, m_storage.size( 0 ) ) ];
+    return m_storage[POSITIVE_MODULO( m_begin, m_storage.size( 0 ) )];
   }
 
   /// @returns the future first array in the queue after inc_front will be called
   ArraySlice1DLarge next_front() const
   {
     GEOS_ERROR_IF( full(), "Can't increase in a full queue" );
-    return m_storage[ POSITIVE_MODULO( m_begin-1, m_storage.size( 0 ) ) ];
+    return m_storage[POSITIVE_MODULO( m_begin - 1, m_storage.size( 0 ) )];
   }
 
   /// @returns the last array of the queue
   ArraySlice1DLarge back() const
   {
     GEOS_ERROR_IF( empty(), "Can't get back from empty queue" );
-    return m_storage[ POSITIVE_MODULO( m_end, m_storage.size( 0 ) ) ];
+    return m_storage[POSITIVE_MODULO( m_end, m_storage.size( 0 ) )];
   }
 
   /// @returns the future last array of the queue when inc_back will be called
   ArraySlice1DLarge next_back() const
   {
     GEOS_ERROR_IF( full(), "Can't increase in a full queue" );
-    return m_storage[ POSITIVE_MODULO( m_end+1, m_storage.size( 0 ) ) ];
+    return m_storage[POSITIVE_MODULO( m_end + 1, m_storage.size( 0 ) )];
   }
 
   /// Removes first array of the queue
@@ -140,7 +140,7 @@ public:
   camp::resources::Event emplace_front( const LvArray::ArraySlice< T const, 1, 0, INDEX_TYPE2 > & src )
   {
     GEOS_ERROR_IF( full(), "Can't emplace in a full  queue" );
-    camp::resources::Event e = LvArray::memcpy( m_stream, m_storage[ POSITIVE_MODULO( m_begin-1, m_storage.size( 0 ) ) ], src );
+    camp::resources::Event e = LvArray::memcpy( m_stream, m_storage[POSITIVE_MODULO( m_begin - 1, m_storage.size( 0 ) )], src );
     --m_begin;
     return e;
   }
@@ -155,7 +155,7 @@ public:
   camp::resources::Event emplace_back( const LvArray::ArraySlice< T const, 1, 0, INDEX_TYPE2 > & src )
   {
     GEOS_ERROR_IF( full(), "Can't emplace in a full queue" );
-    camp::resources::Event e = LvArray::memcpy( m_stream, m_storage[ POSITIVE_MODULO( m_end+1, m_storage.size( 0 ) ) ], src );
+    camp::resources::Event e = LvArray::memcpy( m_stream, m_storage[POSITIVE_MODULO( m_end + 1, m_storage.size( 0 ) )], src );
     ++m_end;
     return e;
 

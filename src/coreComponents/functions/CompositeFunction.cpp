@@ -58,7 +58,7 @@ CompositeFunction::~CompositeFunction()
 void CompositeFunction::initializeFunction()
 {
   // Register variables
-  for( localIndex ii=0; ii<m_variableNames.size(); ++ii )
+  for( localIndex ii = 0; ii < m_variableNames.size(); ++ii )
   {
     parserContext.addVariable( m_variableNames[ii].c_str(), static_cast< int >(ii * sizeof(double)));
   }
@@ -72,7 +72,7 @@ void CompositeFunction::initializeFunction()
   // Grab pointers to sub functions
   FunctionManager & functionManager = FunctionManager::getInstance();
   m_numSubFunctions = LvArray::integerConversion< localIndex >( m_functionNames.size());
-  for( localIndex ii=0; ii<m_numSubFunctions; ++ii )
+  for( localIndex ii = 0; ii < m_numSubFunctions; ++ii )
   {
     m_subFunctions.emplace_back( &functionManager.getGroup< FunctionBase >( m_functionNames[ii] ) );
   }
@@ -86,7 +86,7 @@ void CompositeFunction::evaluate( dataRepository::Group const & group,
   // Evaluate each of the subFunctions independently and place the results into
   // a temporary field
   array1d< real64_array > subFunctionResults;
-  for( localIndex ii=0; ii<m_numSubFunctions; ++ii )
+  for( localIndex ii = 0; ii < m_numSubFunctions; ++ii )
   {
     real64_array tmp( result.size());
     m_subFunctions[ii]->evaluate( group, time, set, tmp );
@@ -96,9 +96,9 @@ void CompositeFunction::evaluate( dataRepository::Group const & group,
   // Evaluate the symbolic math
   forAll< serialPolicy >( set.size(), [&, result, set]( localIndex const i )
   {
-    localIndex const ii = set[ i ];
+    localIndex const ii = set[i];
     real64 functionResults[m_maxNumSubFunctions];
-    for( localIndex jj=0; jj<m_numSubFunctions; ++jj )
+    for( localIndex jj = 0; jj < m_numSubFunctions; ++jj )
     {
       functionResults[jj] = subFunctionResults[jj][ii];
     }
@@ -110,7 +110,7 @@ real64 CompositeFunction::evaluate( real64 const * const input ) const
 {
   real64 functionResults[m_maxNumSubFunctions];
 
-  for( localIndex ii=0; ii<m_numSubFunctions; ++ii )
+  for( localIndex ii = 0; ii < m_numSubFunctions; ++ii )
   {
     functionResults[ii] = m_subFunctions[ii]->evaluate( input );
   }

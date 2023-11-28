@@ -350,7 +350,7 @@ void SinglePhasePoromechanicsConformingFractures::
 
     stabilizationMethod.forStencils< SurfaceElementStencil >( mesh, [&]( SurfaceElementStencil const & stencil )
     {
-      for( localIndex iconn=0; iconn<stencil.size(); ++iconn )
+      for( localIndex iconn = 0; iconn < stencil.size(); ++iconn )
       {
         localIndex const numFluxElems = stencil.stencilSize( iconn );
         typename SurfaceElementStencil::IndexContainerViewConstType const & seri = stencil.getElementRegionIndices();
@@ -365,21 +365,21 @@ void SinglePhasePoromechanicsConformingFractures::
         arrayView1d< globalIndex const > const faceElementDofNumber =
           elementSubRegion.getReference< array1d< globalIndex > >( presDofKey );
 
-        for( localIndex k0=0; k0<numFluxElems; ++k0 )
+        for( localIndex k0 = 0; k0 < numFluxElems; ++k0 )
         {
           globalIndex const activeFlowDOF = faceElementDofNumber[sei[iconn][k0]];
           globalIndex const rowNumber = activeFlowDOF - rankOffset;
 
           if( rowNumber >= 0 && rowNumber < rowLengths.size() )
           {
-            for( localIndex k1=0; k1<numFluxElems; ++k1 )
+            for( localIndex k1 = 0; k1 < numFluxElems; ++k1 )
             {
               // The coupling with the nodal displacements of the cell itself has already been added by the dofManager
               // so we only add the coupling with the nodal displacements of the neighbors.
               if( k1 != k0 )
               {
                 localIndex const numNodesPerElement = elemsToNodes[sei[iconn][k1]].size();
-                rowLengths[rowNumber] += 3*numNodesPerElement;
+                rowLengths[rowNumber] += 3 * numNodesPerElement;
               }
             }
           }
@@ -446,7 +446,7 @@ void SinglePhasePoromechanicsConformingFractures::
           for( localIndex kf = 0; kf < 2; ++kf )
           {
             // Set row DOF index
-            globalIndex const rowIndex = presDofNumber[sei[iconn][1-kf]];
+            globalIndex const rowIndex = presDofNumber[sei[iconn][1 - kf]];
 
             if( rowIndex > 0 && rowIndex < pattern.numRows() )
             {
@@ -465,7 +465,7 @@ void SinglePhasePoromechanicsConformingFractures::
                 localIndex const faceIndex = elem2dToFaces[fractureIndex][kf1];
 
                 // Save the list of DOF associated with nodes
-                for( localIndex a=0; a<numNodesPerFace; ++a )
+                for( localIndex a = 0; a < numNodesPerFace; ++a )
                 {
                   for( localIndex i = 0; i < 3; ++i )
                   {
@@ -523,22 +523,22 @@ void SinglePhasePoromechanicsConformingFractures::
       localIndex const numNodesPerFace = faceToNodeMap.sizeOfArray( kf0 );
 
       real64 Nbar[3];
-      Nbar[ 0 ] = faceNormal[elemsToFaces[kfe][0]][0] - faceNormal[elemsToFaces[kfe][1]][0];
-      Nbar[ 1 ] = faceNormal[elemsToFaces[kfe][0]][1] - faceNormal[elemsToFaces[kfe][1]][1];
-      Nbar[ 2 ] = faceNormal[elemsToFaces[kfe][0]][2] - faceNormal[elemsToFaces[kfe][1]][2];
+      Nbar[0] = faceNormal[elemsToFaces[kfe][0]][0] - faceNormal[elemsToFaces[kfe][1]][0];
+      Nbar[1] = faceNormal[elemsToFaces[kfe][0]][1] - faceNormal[elemsToFaces[kfe][1]][1];
+      Nbar[2] = faceNormal[elemsToFaces[kfe][0]][2] - faceNormal[elemsToFaces[kfe][1]][2];
       LvArray::tensorOps::normalize< 3 >( Nbar );
 
       globalIndex rowDOF[12];
       real64 nodeRHS[12];
-      stackArray1d< real64, 12 > dRdP( 3*numNodesPerFace );
+      stackArray1d< real64, 12 > dRdP( 3 * numNodesPerFace );
       globalIndex colDOF[1];
       colDOF[0] = presDofNumber[kfe];
 
-      for( localIndex kf=0; kf<2; ++kf )
+      for( localIndex kf = 0; kf < 2; ++kf )
       {
         localIndex const faceIndex = elemsToFaces[kfe][kf];
 
-        for( localIndex a=0; a<numNodesPerFace; ++a )
+        for( localIndex a = 0; a < numNodesPerFace; ++a )
         {
           // Compute local area contribution for each node
           array1d< real64 > nodalArea;
@@ -548,14 +548,14 @@ void SinglePhasePoromechanicsConformingFractures::
           array1d< real64 > globalNodalForce( 3 );
           LvArray::tensorOps::scaledCopy< 3 >( globalNodalForce, Nbar, nodalForceMag );
 
-          for( localIndex i=0; i<3; ++i )
+          for( localIndex i = 0; i < 3; ++i )
           {
-            rowDOF[3*a+i] = dispDofNumber[faceToNodeMap( faceIndex, a )] + LvArray::integerConversion< globalIndex >( i );
+            rowDOF[3 * a + i] = dispDofNumber[faceToNodeMap( faceIndex, a )] + LvArray::integerConversion< globalIndex >( i );
             // Opposite sign w.r.t. theory because of minus sign in stiffness matrix definition (K < 0)
-            nodeRHS[3*a+i] = +globalNodalForce[i] * pow( -1, kf );
+            nodeRHS[3 * a + i] = +globalNodalForce[i] * pow( -1, kf );
 
             // Opposite sign w.r.t. theory because of minus sign in stiffness matrix definition (K < 0)
-            dRdP( 3*a+i ) = -nodalArea[a] * Nbar[i] * pow( -1, kf );
+            dRdP( 3 * a + i ) = -nodalArea[a] * Nbar[i] * pow( -1, kf );
           }
         }
 
@@ -631,19 +631,19 @@ void SinglePhasePoromechanicsConformingFractures::
       elemDOF[0] = presDofNumber[kfe];
 
       real64 Nbar[3];
-      Nbar[ 0 ] = faceNormal[kf0][0] - faceNormal[kf1][0];
-      Nbar[ 1 ] = faceNormal[kf0][1] - faceNormal[kf1][1];
-      Nbar[ 2 ] = faceNormal[kf0][2] - faceNormal[kf1][2];
+      Nbar[0] = faceNormal[kf0][0] - faceNormal[kf1][0];
+      Nbar[1] = faceNormal[kf0][1] - faceNormal[kf1][1];
+      Nbar[2] = faceNormal[kf0][2] - faceNormal[kf1][2];
       LvArray::tensorOps::normalize< 3 >( Nbar );
 
-      stackArray1d< real64, 2*3*4 > dRdU( 2*3*numNodesPerFace );
+      stackArray1d< real64, 2 * 3 * 4 > dRdU( 2 * 3 * numNodesPerFace );
 
       bool const isFractureOpen = ( fractureState[kfe] == fields::contact::FractureState::Open );
 
       // Accumulation derivative
       if( isFractureOpen )
       {
-        for( localIndex kf=0; kf<2; ++kf )
+        for( localIndex kf = 0; kf < 2; ++kf )
         {
           // Compute local area contribution for each node
           array1d< real64 > nodalArea;
@@ -653,15 +653,15 @@ void SinglePhasePoromechanicsConformingFractures::
           // localIndex const numNodesPerFace = faceToNodeMap.sizeOfArray( elemsToFaces[kfe][kf] );
           // stackArray1d<real64, 4> nodalArea( numNodesPerFace );
 
-          for( localIndex a=0; a<numNodesPerFace; ++a )
+          for( localIndex a = 0; a < numNodesPerFace; ++a )
           {
             real64 const dAccumulationResidualdAperture = density[kfe][0] * nodalArea[a];
-            for( localIndex i=0; i<3; ++i )
+            for( localIndex i = 0; i < 3; ++i )
             {
-              nodeDOF[ kf*3*numNodesPerFace + 3*a+i ] = dispDofNumber[faceToNodeMap( elemsToFaces[kfe][kf], a )]
-                                                        + LvArray::integerConversion< globalIndex >( i );
+              nodeDOF[kf * 3 * numNodesPerFace + 3 * a + i] = dispDofNumber[faceToNodeMap( elemsToFaces[kfe][kf], a )]
+                                                              + LvArray::integerConversion< globalIndex >( i );
               real64 const dAper_dU = -pow( -1, kf ) * Nbar[i];
-              dRdU( kf*3*numNodesPerFace + 3*a+i ) = dAccumulationResidualdAperture * dAper_dU;
+              dRdU( kf * 3 * numNodesPerFace + 3 * a + i ) = dAccumulationResidualdAperture * dAper_dU;
             }
           }
         }
@@ -686,7 +686,7 @@ void SinglePhasePoromechanicsConformingFractures::
 
       skipAssembly &= !isFractureOpen;
 
-      for( localIndex kfe1=0; kfe1<numColumns; ++kfe1 )
+      for( localIndex kfe1 = 0; kfe1 < numColumns; ++kfe1 )
       {
         real64 const dR_dAper = values[kfe1];
         localIndex const kfe2 = columns[kfe1];
@@ -694,20 +694,20 @@ void SinglePhasePoromechanicsConformingFractures::
         bool const isOpen = ( fractureState[kfe2] == fields::contact::FractureState::Open );
         skipAssembly &= !isOpen;
 
-        for( localIndex kf=0; kf<2; ++kf )
+        for( localIndex kf = 0; kf < 2; ++kf )
         {
           // Compute local area contribution for each node
           array1d< real64 > nodalArea;
           contactSolver()->computeFaceNodalArea( nodePosition, faceToNodeMap, elemsToFaces[kfe2][kf], nodalArea );
 
-          for( localIndex a=0; a<numNodesPerFace; ++a )
+          for( localIndex a = 0; a < numNodesPerFace; ++a )
           {
-            for( localIndex i=0; i<3; ++i )
+            for( localIndex i = 0; i < 3; ++i )
             {
-              nodeDOF[ kf*3*numNodesPerFace + 3*a+i ] = dispDofNumber[faceToNodeMap( elemsToFaces[kfe2][kf], a )]
-                                                        + LvArray::integerConversion< globalIndex >( i );
+              nodeDOF[kf * 3 * numNodesPerFace + 3 * a + i] = dispDofNumber[faceToNodeMap( elemsToFaces[kfe2][kf], a )]
+                                                              + LvArray::integerConversion< globalIndex >( i );
               real64 const dAper_dU = -pow( -1, kf ) * Nbar[i] * ( nodalArea[a] / area[kfe2] );
-              dRdU( kf*3*numNodesPerFace + 3*a+i ) = dR_dAper * dAper_dU;
+              dRdU( kf * 3 * numNodesPerFace + 3 * a + i ) = dR_dAper * dAper_dU;
             }
           }
         }

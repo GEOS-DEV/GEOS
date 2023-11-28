@@ -55,7 +55,7 @@ void CellElementStencilTPFA::add( localIndex const numPts,
   m_elementIndices.resize( newSize, numPts );
   m_weights.resize( newSize, numPts );
 
-  for( localIndex a=0; a<numPts; ++a )
+  for( localIndex a = 0; a < numPts; ++a )
   {
     m_elementRegionIndices( oldSize, a ) = elementRegionIndices[a];
     m_elementSubRegionIndices( oldSize, a ) = elementSubRegionIndices[a];
@@ -81,7 +81,7 @@ void CellElementStencilTPFA::addVectors( real64 const & transMultiplier,
   m_geometricStabilizationCoef[oldSize] = geometricStabilizationCoef;
 
   LvArray::tensorOps::copy< 3 >( m_faceNormal[oldSize], faceNormal );
-  for( localIndex a=0; a<2; a++ )
+  for( localIndex a = 0; a < 2; a++ )
   {
     LvArray::tensorOps::copy< 3 >( m_cellToFaceVec[oldSize][a], cellToFaceVec[a] );
   }

@@ -61,9 +61,9 @@ void ThickPlane::postProcessInput()
 bool ThickPlane::isCoordInObject( real64 const ( &coord ) [3] ) const
 {
   real64 normalDistance = 0.0;
-  for( int i=0; i<3; ++i )
+  for( int i = 0; i < 3; ++i )
   {
-    normalDistance += m_normal[i]*(coord[i]-m_origin[i]);
+    normalDistance += m_normal[i] * (coord[i] - m_origin[i]);
   }
 
   return std::fabs( normalDistance ) <= m_thickness;

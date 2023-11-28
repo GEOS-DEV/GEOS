@@ -350,7 +350,7 @@ computeMixtureCoefficients( integer const numComps,
     real64 const m = EOS_TYPE::evaluate( acentricFactor[ic] );
     real64 const pr = pressure / criticalPressure[ic];
     real64 const tr = temperature / criticalTemperature[ic];
-    aPureCoefficient[ic] = EOS_TYPE::omegaA * pr / (tr*tr) * pow( 1.0 + m * ( 1.0 - sqrt( tr ) ), 2.0 );
+    aPureCoefficient[ic] = EOS_TYPE::omegaA * pr / (tr * tr) * pow( 1.0 + m * ( 1.0 - sqrt( tr ) ), 2.0 );
     bPureCoefficient[ic] = EOS_TYPE::omegaB * pr / tr;
   }
 
@@ -400,7 +400,7 @@ computeMixtureCoefficients( integer const numComps,
     real64 const m = EOS_TYPE::evaluate( acentricFactor[ic] );
     real64 const sqrtTr = sqrt( temperature / criticalTemperature[ic] );
     real64 const mt = 1.0 + m * (1.0 - sqrtTr);
-    daPureCoefficient_dx[ic] = -aPureCoefficient[ic] * (2.0/temperature + m/(mt*sqrtTr*criticalTemperature[ic]));
+    daPureCoefficient_dx[ic] = -aPureCoefficient[ic] * (2.0 / temperature + m / (mt * sqrtTr * criticalTemperature[ic]));
   }
   daMixtureCoefficient_dt = 0.0;
   dbMixtureCoefficient_dt = -bMixtureCoefficient / temperature;
@@ -409,7 +409,7 @@ computeMixtureCoefficients( integer const numComps,
     for( integer jc = 0; jc < numComps; ++jc )
     {
       real64 const coeff = composition[ic] * composition[jc] * ( 1.0 - binaryInteractionCoefficients ) / sqrt( aPureCoefficient[ic] * aPureCoefficient[jc] );
-      daMixtureCoefficient_dt += 0.5 * coeff * (daPureCoefficient_dx[ic]*aPureCoefficient[jc] + daPureCoefficient_dx[jc]*aPureCoefficient[ic]);
+      daMixtureCoefficient_dt += 0.5 * coeff * (daPureCoefficient_dx[ic] * aPureCoefficient[jc] + daPureCoefficient_dx[jc] * aPureCoefficient[ic]);
     }
   }
   // Calculate composition derivatives
@@ -533,32 +533,32 @@ computeCompressibilityFactor( integer const numComps,
                    - d1pd2 * bMixtureCoefficient * ( bMixtureCoefficient + 1.0 );
 
   // Implicit differentiation scale
-  real64 const denominator = (3.0*a*compressibilityFactor + 2.0*b)*compressibilityFactor + c;
+  real64 const denominator = (3.0 * a * compressibilityFactor + 2.0 * b) * compressibilityFactor + c;
   constexpr real64 epsilon = MultiFluidConstants::epsilon;
   real64 const scalingFactor = fabs( denominator ) < epsilon ? 0.0 : -1.0 / denominator;
 
   // Pressure derivatives
   dbdx = ( d1pd2 - 1.0 ) * dbMixtureCoefficient_dp;
-  dcdx = daMixtureCoefficient_dp + (2.0*(d1xd2-d1pd2)*bMixtureCoefficient-d1pd2)*dbMixtureCoefficient_dp;
-  dddx = -(aMixtureCoefficient*dbMixtureCoefficient_dp + daMixtureCoefficient_dp*bMixtureCoefficient
-           + d1xd2*((3.0*bMixtureCoefficient+2.0)*bMixtureCoefficient*dbMixtureCoefficient_dp));
-  dcompressibilityFactor_dp = (((dbdx*compressibilityFactor) + dcdx)*compressibilityFactor + dddx) * scalingFactor;
+  dcdx = daMixtureCoefficient_dp + (2.0 * (d1xd2 - d1pd2) * bMixtureCoefficient - d1pd2) * dbMixtureCoefficient_dp;
+  dddx = -(aMixtureCoefficient * dbMixtureCoefficient_dp + daMixtureCoefficient_dp * bMixtureCoefficient
+           + d1xd2 * ((3.0 * bMixtureCoefficient + 2.0) * bMixtureCoefficient * dbMixtureCoefficient_dp));
+  dcompressibilityFactor_dp = (((dbdx * compressibilityFactor) + dcdx) * compressibilityFactor + dddx) * scalingFactor;
 
   // Temperature derivatives
   dbdx = ( d1pd2 - 1.0 ) * dbMixtureCoefficient_dt;
-  dcdx = daMixtureCoefficient_dt + (2.0*(d1xd2-d1pd2)*bMixtureCoefficient-d1pd2)*dbMixtureCoefficient_dt;
-  dddx = -(aMixtureCoefficient*dbMixtureCoefficient_dt + daMixtureCoefficient_dt*bMixtureCoefficient
-           + d1xd2*((3.0*bMixtureCoefficient+2.0)*bMixtureCoefficient*dbMixtureCoefficient_dt));
-  dcompressibilityFactor_dt = (((dbdx*compressibilityFactor) + dcdx)*compressibilityFactor + dddx) * scalingFactor;
+  dcdx = daMixtureCoefficient_dt + (2.0 * (d1xd2 - d1pd2) * bMixtureCoefficient - d1pd2) * dbMixtureCoefficient_dt;
+  dddx = -(aMixtureCoefficient * dbMixtureCoefficient_dt + daMixtureCoefficient_dt * bMixtureCoefficient
+           + d1xd2 * ((3.0 * bMixtureCoefficient + 2.0) * bMixtureCoefficient * dbMixtureCoefficient_dt));
+  dcompressibilityFactor_dt = (((dbdx * compressibilityFactor) + dcdx) * compressibilityFactor + dddx) * scalingFactor;
 
   // Composition derivatives
   for( integer ic = 0; ic < numComps; ++ic )
   {
     dbdx = ( d1pd2 - 1.0 ) * dbMixtureCoefficient_dz[ic];
-    dcdx = daMixtureCoefficient_dz[ic] + (2.0*(d1xd2-d1pd2)*bMixtureCoefficient-d1pd2)*dbMixtureCoefficient_dz[ic];
-    dddx = -(aMixtureCoefficient*dbMixtureCoefficient_dz[ic] + daMixtureCoefficient_dz[ic]*bMixtureCoefficient
-             + d1xd2*((3.0*bMixtureCoefficient+2.0)*bMixtureCoefficient*dbMixtureCoefficient_dz[ic]));
-    dcompressibilityFactor_dz[ic] = (((dbdx*compressibilityFactor) + dcdx)*compressibilityFactor + dddx) * scalingFactor;
+    dcdx = daMixtureCoefficient_dz[ic] + (2.0 * (d1xd2 - d1pd2) * bMixtureCoefficient - d1pd2) * dbMixtureCoefficient_dz[ic];
+    dddx = -(aMixtureCoefficient * dbMixtureCoefficient_dz[ic] + daMixtureCoefficient_dz[ic] * bMixtureCoefficient
+             + d1xd2 * ((3.0 * bMixtureCoefficient + 2.0) * bMixtureCoefficient * dbMixtureCoefficient_dz[ic]));
+    dcompressibilityFactor_dz[ic] = (((dbdx * compressibilityFactor) + dcdx) * compressibilityFactor + dddx) * scalingFactor;
   }
 }
 

@@ -83,14 +83,14 @@ static PyObject * collect( PyHistoryCollection * self, PyObject * args )
 
   geos::DomainPartition & domain = self->group->getGroupByPath< DomainPartition >( "/Problem/domain" );
 
-  int cycleNumber = int(round( time/dt ));
+  int cycleNumber = int(round( time / dt ));
   try
   {
     self->group->execute( time, dt, cycleNumber, 0, 0, domain );
   }
   catch( std::out_of_range const & e )
   {
-    std::cout<<"Target not found. Impossible output."<<std::endl;
+    std::cout << "Target not found. Impossible output." << std::endl;
   }
   Py_RETURN_NONE;
 }

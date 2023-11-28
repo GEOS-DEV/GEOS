@@ -241,7 +241,7 @@ public:
 
       kernelComponent.setup( k, stack );
       // #pragma unroll
-      for( integer q=0; q<numQuadraturePointsPerElem; ++q )
+      for( integer q = 0; q < numQuadraturePointsPerElem; ++q )
       {
         kernelComponent.quadraturePointKernel( k, q, stack );
       }

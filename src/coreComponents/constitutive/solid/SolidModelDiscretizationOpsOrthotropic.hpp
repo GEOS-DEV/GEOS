@@ -33,28 +33,28 @@ struct SolidModelDiscretizationOpsOrthotropic : public SolidModelDiscretizationO
   GEOS_HOST_DEVICE
   void BTDB( BASIS_GRADIENT const & gradN,
              real64 const & detJxW,
-             real64 ( &elementStiffness )[NUM_SUPPORT_POINTS*3][NUM_SUPPORT_POINTS*3] );
+             real64 ( &elementStiffness )[NUM_SUPPORT_POINTS * 3][NUM_SUPPORT_POINTS * 3] );
 
   template< int NUM_SUPPORT_POINTS,
             typename BASIS_GRADIENT >
   GEOS_HOST_DEVICE
   void upperBTDB( BASIS_GRADIENT const & gradN,
                   real64 const & detJxW,
-                  real64 ( &elementStiffness )[NUM_SUPPORT_POINTS*3][NUM_SUPPORT_POINTS*3] );
+                  real64 ( &elementStiffness )[NUM_SUPPORT_POINTS * 3][NUM_SUPPORT_POINTS * 3] );
 
   template< int NUM_SUPPORT_POINTS,
             typename BASIS_GRADIENT >
   GEOS_HOST_DEVICE
   void diagBTDB( BASIS_GRADIENT const & gradN,
                  real64 const & detJxW,
-                 real64 ( &diagElementStiffness )[NUM_SUPPORT_POINTS*3] );
+                 real64 ( &diagElementStiffness )[NUM_SUPPORT_POINTS * 3] );
 
   template< int NUM_SUPPORT_POINTS,
             typename BASIS_GRADIENT >
   GEOS_HOST_DEVICE
   void diagRowSumBTDB( BASIS_GRADIENT const & gradN,
                        real64 const & detJxW,
-                       real64 ( &diagSumElementStiffness )[NUM_SUPPORT_POINTS*3] );
+                       real64 ( &diagSumElementStiffness )[NUM_SUPPORT_POINTS * 3] );
 
   GEOS_HOST_DEVICE
   inline
@@ -95,7 +95,7 @@ inline
 void SolidModelDiscretizationOpsOrthotropic::
   BTDB( BASIS_GRADIENT const & gradN,
         real64 const & detJxW,
-        real64 (& elementStiffness)[NUM_SUPPORT_POINTS *3][NUM_SUPPORT_POINTS *3] )
+        real64 (& elementStiffness)[NUM_SUPPORT_POINTS * 3][NUM_SUPPORT_POINTS * 3] )
 {
   real64 const c11 = this->m_c11 * detJxW;
   real64 const c12 = this->m_c12 * detJxW;
@@ -109,29 +109,29 @@ void SolidModelDiscretizationOpsOrthotropic::
 
   SolidModelDiscretizationOps::BTDB< NUM_SUPPORT_POINTS >( gradN,
                                                            elementStiffness,
-                                                           [ c11,
-                                                             c12,
-                                                             c13,
-                                                             c22,
-                                                             c23,
-                                                             c33,
-                                                             c44,
-                                                             c55,
-                                                             c66 ] GEOS_HOST_DEVICE
+                                                           [c11,
+                                                            c12,
+                                                            c13,
+                                                            c22,
+                                                            c23,
+                                                            c33,
+                                                            c44,
+                                                            c55,
+                                                            c66] GEOS_HOST_DEVICE
                                                              ( int const a,
                                                              int const b,
                                                              real64 const (&gradNa_gradNb)[3][3],
-                                                             real64 (& elementStiffness)[NUM_SUPPORT_POINTS*3][NUM_SUPPORT_POINTS*3] )
+                                                             real64 (& elementStiffness)[NUM_SUPPORT_POINTS * 3][NUM_SUPPORT_POINTS * 3] )
   {
-    elementStiffness[a*3+0][b*3+0] += c11 * gradNa_gradNb[0][0] + c66 * gradNa_gradNb[1][1] + c55 * gradNa_gradNb[2][2];
-    elementStiffness[a*3+0][b*3+1] += c12 * gradNa_gradNb[0][1] + c66 * gradNa_gradNb[1][0];
-    elementStiffness[a*3+0][b*3+2] += c13 * gradNa_gradNb[0][2] + c55 * gradNa_gradNb[2][0];
-    elementStiffness[a*3+1][b*3+0] += c66 * gradNa_gradNb[0][1] + c12 * gradNa_gradNb[1][0];
-    elementStiffness[a*3+1][b*3+1] += c66 * gradNa_gradNb[0][0] + c22 * gradNa_gradNb[1][1] + c44 * gradNa_gradNb[2][2];
-    elementStiffness[a*3+1][b*3+2] += c23 * gradNa_gradNb[1][2] + c44 * gradNa_gradNb[2][1];
-    elementStiffness[a*3+2][b*3+0] += c55 * gradNa_gradNb[0][2] + c13 * gradNa_gradNb[2][0];
-    elementStiffness[a*3+2][b*3+1] += c44 * gradNa_gradNb[1][2] + c23 * gradNa_gradNb[2][1];
-    elementStiffness[a*3+2][b*3+2] += c55 * gradNa_gradNb[0][0] + c44 * gradNa_gradNb[1][1] + c33 * gradNa_gradNb[2][2];
+    elementStiffness[a * 3 + 0][b * 3 + 0] += c11 * gradNa_gradNb[0][0] + c66 * gradNa_gradNb[1][1] + c55 * gradNa_gradNb[2][2];
+    elementStiffness[a * 3 + 0][b * 3 + 1] += c12 * gradNa_gradNb[0][1] + c66 * gradNa_gradNb[1][0];
+    elementStiffness[a * 3 + 0][b * 3 + 2] += c13 * gradNa_gradNb[0][2] + c55 * gradNa_gradNb[2][0];
+    elementStiffness[a * 3 + 1][b * 3 + 0] += c66 * gradNa_gradNb[0][1] + c12 * gradNa_gradNb[1][0];
+    elementStiffness[a * 3 + 1][b * 3 + 1] += c66 * gradNa_gradNb[0][0] + c22 * gradNa_gradNb[1][1] + c44 * gradNa_gradNb[2][2];
+    elementStiffness[a * 3 + 1][b * 3 + 2] += c23 * gradNa_gradNb[1][2] + c44 * gradNa_gradNb[2][1];
+    elementStiffness[a * 3 + 2][b * 3 + 0] += c55 * gradNa_gradNb[0][2] + c13 * gradNa_gradNb[2][0];
+    elementStiffness[a * 3 + 2][b * 3 + 1] += c44 * gradNa_gradNb[1][2] + c23 * gradNa_gradNb[2][1];
+    elementStiffness[a * 3 + 2][b * 3 + 2] += c55 * gradNa_gradNb[0][0] + c44 * gradNa_gradNb[1][1] + c33 * gradNa_gradNb[2][2];
   } );
 }
 
@@ -143,7 +143,7 @@ inline
 void SolidModelDiscretizationOpsOrthotropic::
   upperBTDB( BASIS_GRADIENT const & gradN,
              real64 const & detJxW,
-             real64 (& elementStiffness)[NUM_SUPPORT_POINTS *3][NUM_SUPPORT_POINTS *3] )
+             real64 (& elementStiffness)[NUM_SUPPORT_POINTS * 3][NUM_SUPPORT_POINTS * 3] )
 {
   real64 const c11 = this->m_c11 * detJxW;
   real64 const c12 = this->m_c12 * detJxW;
@@ -157,29 +157,29 @@ void SolidModelDiscretizationOpsOrthotropic::
 
   SolidModelDiscretizationOps::upperBTDB< NUM_SUPPORT_POINTS >( gradN,
                                                                 elementStiffness,
-                                                                [ c11,
-                                                                  c12,
-                                                                  c13,
-                                                                  c22,
-                                                                  c23,
-                                                                  c33,
-                                                                  c44,
-                                                                  c55,
-                                                                  c66 ] GEOS_HOST_DEVICE
+                                                                [c11,
+                                                                 c12,
+                                                                 c13,
+                                                                 c22,
+                                                                 c23,
+                                                                 c33,
+                                                                 c44,
+                                                                 c55,
+                                                                 c66] GEOS_HOST_DEVICE
                                                                   ( int const a,
                                                                   int const b,
                                                                   real64 const (&gradNa_gradNb)[3][3],
-                                                                  real64 (& elementStiffness)[NUM_SUPPORT_POINTS*3][NUM_SUPPORT_POINTS*3] )
+                                                                  real64 (& elementStiffness)[NUM_SUPPORT_POINTS * 3][NUM_SUPPORT_POINTS * 3] )
   {
-    elementStiffness[a*3+0][b*3+0] += c11 * gradNa_gradNb[0][0] + c66 * gradNa_gradNb[1][1] + c55 * gradNa_gradNb[2][2];
-    elementStiffness[a*3+0][b*3+1] += c12 * gradNa_gradNb[0][1] + c66 * gradNa_gradNb[1][0];
-    elementStiffness[a*3+0][b*3+2] += c13 * gradNa_gradNb[0][2] + c55 * gradNa_gradNb[2][0];
-    elementStiffness[a*3+1][b*3+0] += c66 * gradNa_gradNb[0][1] + c12 * gradNa_gradNb[1][0];
-    elementStiffness[a*3+1][b*3+1] += c66 * gradNa_gradNb[0][0] + c22 * gradNa_gradNb[1][1] + c44 * gradNa_gradNb[2][2];
-    elementStiffness[a*3+1][b*3+2] += c23 * gradNa_gradNb[1][2] + c44 * gradNa_gradNb[2][1];
-    elementStiffness[a*3+2][b*3+0] += c55 * gradNa_gradNb[0][2] + c13 * gradNa_gradNb[2][0];
-    elementStiffness[a*3+2][b*3+1] += c44 * gradNa_gradNb[1][2] + c23 * gradNa_gradNb[2][1];
-    elementStiffness[a*3+2][b*3+2] += c55 * gradNa_gradNb[0][0] + c44 * gradNa_gradNb[1][1] + c33 * gradNa_gradNb[2][2];
+    elementStiffness[a * 3 + 0][b * 3 + 0] += c11 * gradNa_gradNb[0][0] + c66 * gradNa_gradNb[1][1] + c55 * gradNa_gradNb[2][2];
+    elementStiffness[a * 3 + 0][b * 3 + 1] += c12 * gradNa_gradNb[0][1] + c66 * gradNa_gradNb[1][0];
+    elementStiffness[a * 3 + 0][b * 3 + 2] += c13 * gradNa_gradNb[0][2] + c55 * gradNa_gradNb[2][0];
+    elementStiffness[a * 3 + 1][b * 3 + 0] += c66 * gradNa_gradNb[0][1] + c12 * gradNa_gradNb[1][0];
+    elementStiffness[a * 3 + 1][b * 3 + 1] += c66 * gradNa_gradNb[0][0] + c22 * gradNa_gradNb[1][1] + c44 * gradNa_gradNb[2][2];
+    elementStiffness[a * 3 + 1][b * 3 + 2] += c23 * gradNa_gradNb[1][2] + c44 * gradNa_gradNb[2][1];
+    elementStiffness[a * 3 + 2][b * 3 + 0] += c55 * gradNa_gradNb[0][2] + c13 * gradNa_gradNb[2][0];
+    elementStiffness[a * 3 + 2][b * 3 + 1] += c44 * gradNa_gradNb[1][2] + c23 * gradNa_gradNb[2][1];
+    elementStiffness[a * 3 + 2][b * 3 + 2] += c55 * gradNa_gradNb[0][0] + c44 * gradNa_gradNb[1][1] + c33 * gradNa_gradNb[2][2];
   } );
 }
 
@@ -190,7 +190,7 @@ GEOS_HOST_DEVICE
 inline
 void SolidModelDiscretizationOpsOrthotropic::diagBTDB( BASIS_GRADIENT const & gradN,
                                                        real64 const & detJxW,
-                                                       real64 (& diagElementStiffness)[NUM_SUPPORT_POINTS *3] )
+                                                       real64 (& diagElementStiffness)[NUM_SUPPORT_POINTS * 3] )
 {
   real64 const c11 = this->m_c11 * detJxW;
   real64 const c22 = this->m_c22 * detJxW;
@@ -201,19 +201,19 @@ void SolidModelDiscretizationOpsOrthotropic::diagBTDB( BASIS_GRADIENT const & gr
   SolidModelDiscretizationOps::diagBTDB< NUM_SUPPORT_POINTS,
                                          3 >( gradN,
                                               diagElementStiffness,
-                                              [ c11,
-                                                c22,
-                                                c33,
-                                                c44,
-                                                c55,
-                                                c66 ] GEOS_HOST_DEVICE
+                                              [c11,
+                                               c22,
+                                               c33,
+                                               c44,
+                                               c55,
+                                               c66] GEOS_HOST_DEVICE
                                                 ( const int a,
                                                 const real64 (& gradN_gradN)[3],
-                                                real64 (& diagElementStiffness)[NUM_SUPPORT_POINTS*3] )
+                                                real64 (& diagElementStiffness)[NUM_SUPPORT_POINTS * 3] )
   {
-    diagElementStiffness[a*3+0] += c11 * gradN_gradN[0] + c66 * gradN_gradN[1] + c55 * gradN_gradN[2];
-    diagElementStiffness[a*3+1] += c66 * gradN_gradN[0] + c22 * gradN_gradN[1] + c44 * gradN_gradN[2];
-    diagElementStiffness[a*3+2] += c55 * gradN_gradN[0] + c44 * gradN_gradN[1] + c33 * gradN_gradN[2];
+    diagElementStiffness[a * 3 + 0] += c11 * gradN_gradN[0] + c66 * gradN_gradN[1] + c55 * gradN_gradN[2];
+    diagElementStiffness[a * 3 + 1] += c66 * gradN_gradN[0] + c22 * gradN_gradN[1] + c44 * gradN_gradN[2];
+    diagElementStiffness[a * 3 + 2] += c55 * gradN_gradN[0] + c44 * gradN_gradN[1] + c33 * gradN_gradN[2];
   } );
 }
 
@@ -223,7 +223,7 @@ GEOS_HOST_DEVICE
 inline
 void SolidModelDiscretizationOpsOrthotropic::diagRowSumBTDB( BASIS_GRADIENT const & gradN,
                                                              real64 const & detJxW,
-                                                             real64 ( & diagSumElementStiffness )[NUM_SUPPORT_POINTS*3] )
+                                                             real64 ( & diagSumElementStiffness )[NUM_SUPPORT_POINTS * 3] )
 {
   real64 const c11 = this->m_c11 * detJxW;
   real64 const c12 = this->m_c12 * detJxW;
@@ -237,45 +237,45 @@ void SolidModelDiscretizationOpsOrthotropic::diagRowSumBTDB( BASIS_GRADIENT cons
 
   SolidModelDiscretizationOps::diagRowSumBTDB< NUM_SUPPORT_POINTS >( gradN,
                                                                      diagSumElementStiffness,
-                                                                     [ c11,
-                                                                       c12,
-                                                                       c13,
-                                                                       c22,
-                                                                       c23,
-                                                                       c33,
-                                                                       c44,
-                                                                       c55,
-                                                                       c66 ] GEOS_HOST_DEVICE
+                                                                     [c11,
+                                                                      c12,
+                                                                      c13,
+                                                                      c22,
+                                                                      c23,
+                                                                      c33,
+                                                                      c44,
+                                                                      c55,
+                                                                      c66] GEOS_HOST_DEVICE
                                                                        ( int const a,
                                                                        real64 const (&gradNa_gradNb)[3][3],
-                                                                       real64 (& diagSumElementStiffness)[NUM_SUPPORT_POINTS*3] )
+                                                                       real64 (& diagSumElementStiffness)[NUM_SUPPORT_POINTS * 3] )
   {
-    diagSumElementStiffness[a*3+0] = diagSumElementStiffness[a*3+0] +
-                                     c11 * gradNa_gradNb[0][0] +
-                                     c66 * gradNa_gradNb[1][1] +
-                                     c55 * gradNa_gradNb[2][2] +
-                                     c12 * gradNa_gradNb[0][1] +
-                                     c66 * gradNa_gradNb[1][0] +
-                                     c13 * gradNa_gradNb[0][2] +
-                                     c55 * gradNa_gradNb[2][0];
+    diagSumElementStiffness[a * 3 + 0] = diagSumElementStiffness[a * 3 + 0] +
+                                         c11 * gradNa_gradNb[0][0] +
+                                         c66 * gradNa_gradNb[1][1] +
+                                         c55 * gradNa_gradNb[2][2] +
+                                         c12 * gradNa_gradNb[0][1] +
+                                         c66 * gradNa_gradNb[1][0] +
+                                         c13 * gradNa_gradNb[0][2] +
+                                         c55 * gradNa_gradNb[2][0];
 
-    diagSumElementStiffness[a*3+1] = diagSumElementStiffness[a*3+1] +
-                                     c66 * gradNa_gradNb[0][1] +
-                                     c12 * gradNa_gradNb[1][0] +
-                                     c66 * gradNa_gradNb[0][0] +
-                                     c22 * gradNa_gradNb[1][1] +
-                                     c44 * gradNa_gradNb[2][2] +
-                                     c23 * gradNa_gradNb[1][2] +
-                                     c44 * gradNa_gradNb[2][1];
+    diagSumElementStiffness[a * 3 + 1] = diagSumElementStiffness[a * 3 + 1] +
+                                         c66 * gradNa_gradNb[0][1] +
+                                         c12 * gradNa_gradNb[1][0] +
+                                         c66 * gradNa_gradNb[0][0] +
+                                         c22 * gradNa_gradNb[1][1] +
+                                         c44 * gradNa_gradNb[2][2] +
+                                         c23 * gradNa_gradNb[1][2] +
+                                         c44 * gradNa_gradNb[2][1];
 
-    diagSumElementStiffness[a*3+2] = diagSumElementStiffness[a*3+2] +
-                                     c55 * gradNa_gradNb[0][2] +
-                                     c13 * gradNa_gradNb[2][0] +
-                                     c44 * gradNa_gradNb[1][2] +
-                                     c23 * gradNa_gradNb[2][1] +
-                                     c55 * gradNa_gradNb[0][0] +
-                                     c44 * gradNa_gradNb[1][1] +
-                                     c33 * gradNa_gradNb[2][2];
+    diagSumElementStiffness[a * 3 + 2] = diagSumElementStiffness[a * 3 + 2] +
+                                         c55 * gradNa_gradNb[0][2] +
+                                         c13 * gradNa_gradNb[2][0] +
+                                         c44 * gradNa_gradNb[1][2] +
+                                         c23 * gradNa_gradNb[2][1] +
+                                         c55 * gradNa_gradNb[0][0] +
+                                         c44 * gradNa_gradNb[1][1] +
+                                         c33 * gradNa_gradNb[2][2];
   } );
 }
 

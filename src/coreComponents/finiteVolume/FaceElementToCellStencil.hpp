@@ -274,8 +274,8 @@ inline void FaceElementToCellStencilWrapper::
   // We consider the 3rd component of the permeability which is the normal one.
   real64 const t1 = m_weights[iconn][1] * coefficient[er1][esr1][ei1][0][2];
 
-  real64 const sumOfTrans = t0+t1;
-  real64 const value = m_transMultiplier[iconn]*t0*t1/sumOfTrans;
+  real64 const sumOfTrans = t0 + t1;
+  real64 const value = m_transMultiplier[iconn] * t0 * t1 / sumOfTrans;
 
   weight[0][0] = value;
   weight[0][1] = -value;
@@ -299,8 +299,8 @@ FaceElementToCellStencilWrapper
   real64 const t0 = m_weights[iconn][0] * LvArray::tensorOps::AiBi< 3 >( m_cellToFaceVec[iconn], m_faceNormal[iconn] );
   real64 const t1 = m_weights[iconn][1];
 
-  real64 const sumOfTrans = t0+t1;
-  real64 const value = m_transMultiplier[iconn]*t0*t1/sumOfTrans;
+  real64 const sumOfTrans = t0 + t1;
+  real64 const value = m_transMultiplier[iconn] * t0 * t1 / sumOfTrans;
 
   weight[0][0] = value;
   weight[0][1] = -value;
@@ -336,8 +336,8 @@ FaceElementToCellStencilWrapper::
   // We consider the 3rd component of the permeability which is the normal one.
   real64 const t1 = m_weights[iconn][1] * coefficient[er1][esr1][ei1][0][2];
 
-  real64 const sumOfTrans = t0+t1;
-  real64 const value = m_transMultiplier[iconn]*t0*t1/sumOfTrans;
+  real64 const sumOfTrans = t0 + t1;
+  real64 const value = m_transMultiplier[iconn] * t0 * t1 / sumOfTrans;
 
   weight[0][0] = value;
   weight[0][1] = -value;

@@ -82,7 +82,7 @@ public:
                           arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & phaseViscosity,
                           arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & phaseEnthalpy,
                           arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & phaseInternalEnergy,
-                          arraySlice2d< real64, multifluid::USD_PHASE_COMP-2 > const & phaseCompFraction,
+                          arraySlice2d< real64, multifluid::USD_PHASE_COMP - 2 > const & phaseCompFraction,
                           real64 & totalDensity ) const override;
 
     GEOS_HOST_DEVICE
@@ -202,7 +202,7 @@ ReactiveBrineFluid< PHASE >::KernelWrapper::
            arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & phaseViscosity,
            arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & phaseEnthalpy,
            arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & phaseInternalEnergy,
-           arraySlice2d< real64, multifluid::USD_PHASE_COMP-2 > const & phaseCompFraction,
+           arraySlice2d< real64, multifluid::USD_PHASE_COMP - 2 > const & phaseCompFraction,
            real64 & totalDensity ) const
 {
   integer constexpr numComp = chemicalReactions::ReactionsBase::maxNumPrimarySpecies;

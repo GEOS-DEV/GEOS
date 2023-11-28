@@ -39,7 +39,7 @@ using namespace geos;
 
 char crand( )
 {
-  return 'a' + rand()%26;
+  return 'a' + rand() % 26;
 }
 
 TEST( TestNeighborComms, testBuffers )

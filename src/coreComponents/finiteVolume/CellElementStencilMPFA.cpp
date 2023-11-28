@@ -44,7 +44,7 @@ void CellElementStencilMPFA::add( localIndex const numPts,
   m_elementIndices.appendArray( elementIndices, elementIndices + numPts );
   m_weights.appendArray( weights, weights + numPts );
 
-  m_connectorIndices[connectorIndex] = m_elementRegionIndices.size()-1;
+  m_connectorIndices[connectorIndex] = m_elementRegionIndices.size() - 1;
 }
 
 } /* namespace geos */

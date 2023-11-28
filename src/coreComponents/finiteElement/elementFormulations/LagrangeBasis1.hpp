@@ -220,13 +220,13 @@ public:
     static void value( real64 const (&coords)[2],
                        real64 (& N)[numSupportPoints] )
     {
-      for( int a=0; a<2; ++a )
+      for( int a = 0; a < 2; ++a )
       {
-        for( int b=0; b<2; ++b )
+        for( int b = 0; b < 2; ++b )
         {
           const int lindex = LagrangeBasis1::TensorProduct2D::linearIndex( a, b );
-          N[ lindex ] = LagrangeBasis1::value( a, coords[0] ) *
-                        LagrangeBasis1::value( b, coords[1] );
+          N[lindex] = LagrangeBasis1::value( a, coords[0] ) *
+                      LagrangeBasis1::value( b, coords[1] );
         }
       }
     }
@@ -332,16 +332,16 @@ public:
     static void value( real64 const (&coords)[3],
                        real64 (& N)[numSupportPoints] )
     {
-      for( int a=0; a<2; ++a )
+      for( int a = 0; a < 2; ++a )
       {
-        for( int b=0; b<2; ++b )
+        for( int b = 0; b < 2; ++b )
         {
-          for( int c=0; c<2; ++c )
+          for( int c = 0; c < 2; ++c )
           {
             const int lindex = LagrangeBasis1::TensorProduct3D::linearIndex( a, b, c );
-            N[ lindex ] = LagrangeBasis1::value( a, coords[0] ) *
-                          LagrangeBasis1::value( b, coords[1] ) *
-                          LagrangeBasis1::value( c, coords[2] );
+            N[lindex] = LagrangeBasis1::value( a, coords[0] ) *
+                        LagrangeBasis1::value( b, coords[1] ) *
+                        LagrangeBasis1::value( c, coords[2] );
           }
         }
       }

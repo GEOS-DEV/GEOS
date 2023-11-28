@@ -143,7 +143,7 @@ public:
   GEOS_HOST_DEVICE
   virtual real64 getBulkModulus( localIndex const k ) const override final
   {
-    return -m_refPressure/m_recompressionIndex[k]; // bulk modulus at cell index K
+    return -m_refPressure / m_recompressionIndex[k]; // bulk modulus at cell index K
   }
 
   GEOS_HOST_DEVICE
@@ -205,13 +205,13 @@ void ModifiedCamClayUpdates::evaluateYield( real64 const p,
 {
 
   df_dp = -pc + 2. * p;
-  df_dq = 2. * q /(M*M);
+  df_dq = 2. * q / (M * M);
   df_dpc = -p;
-  real64 dpc_dve = -1./(Cc-Cr) * pc;
+  real64 dpc_dve = -1. / (Cc - Cr) * pc;
   df_dp_dve = 2. * bulkModulus + dpc_dve;
-  df_dq_dse = 2. /(M*M) * 3. * mu;
+  df_dq_dse = 2. / (M * M) * 3. * mu;
 
-  f = q*q/(M*M)+p*(p-pc);
+  f = q * q / (M * M) + p * (p - pc);
 
 }
 
@@ -239,7 +239,7 @@ void ModifiedCamClayUpdates::smallStrainUpdate( localIndex const k,
   real64 const Cc     = m_virginCompressionIndex[k];
 
   real64 pc    = oldPc;
-  real64 bulkModulus  = -p0/Cr;
+  real64 bulkModulus  = -p0 / Cr;
 
   // elastic predictor (assume strainIncrement is all elastic)
 
@@ -272,8 +272,8 @@ void ModifiedCamClayUpdates::smallStrainUpdate( localIndex const k,
   }
 
   // else, plasticity (trial stress point lies outside yield surface)
-  eps_v_trial = std::log( trialP/p0 ) * Cr * (-1.0) + eps_v0;
-  eps_s_trial = trialQ/3.0/mu;
+  eps_v_trial = std::log( trialP / p0 ) * Cr * (-1.0) + eps_v0;
+  eps_s_trial = trialQ / 3.0 / mu;
 
   real64 solution[3] = {}, residual[3] = {}, delta[3] = {};
   real64 jacobian[3][3] = {{}}, jacobianInv[3][3] = {{}};
@@ -289,38 +289,38 @@ void ModifiedCamClayUpdates::smallStrainUpdate( localIndex const k,
 
   // begin Newton loop
 
-  for( localIndex iter=0; iter<20; ++iter )
+  for( localIndex iter = 0; iter < 20; ++iter )
   {
-    trialP = p0 * std::exp( -1./Cr* (solution[0] - eps_v0));
-    bulkModulus = -trialP/Cr;
+    trialP = p0 * std::exp( -1. / Cr * (solution[0] - eps_v0));
+    bulkModulus = -trialP / Cr;
     trialQ = 3. * mu * solution[1];
 
-    pc = oldPc * std::exp( -1./(Cc-Cr)*(eps_v_trial-solution[0]));
+    pc = oldPc * std::exp( -1. / (Cc - Cr) * (eps_v_trial - solution[0]));
 
     evaluateYield( trialP, trialQ, pc, M, Cc, Cr, bulkModulus, mu, yield, df_dp, df_dq, df_dpc, df_dp_dve, df_dq_dse );
-    real64 dpc_dve = -1./(Cc-Cr) * pc;
+    real64 dpc_dve = -1. / (Cc - Cr) * pc;
 
-    real64 scale = 1./(mu*mu); //scale to avoid numerical errors
+    real64 scale = 1. / (mu * mu); //scale to avoid numerical errors
     // assemble residual system
-    residual[0] = solution[0] - eps_v_trial + solution[2]*df_dp;   // strainElasticDev - strainElasticTrialDev + dlambda*dG/dPQ = 0
-    residual[1] = solution[1] - eps_s_trial + solution[2]*df_dq;         // strainElasticVol - strainElasticTrialVol + dlambda*dG/dQ = 0
+    residual[0] = solution[0] - eps_v_trial + solution[2] * df_dp;   // strainElasticDev - strainElasticTrialDev + dlambda*dG/dPQ = 0
+    residual[1] = solution[1] - eps_s_trial + solution[2] * df_dq;         // strainElasticVol - strainElasticTrialVol + dlambda*dG/dQ = 0
     residual[2] = yield * scale;      // F = 0
 
     // check for convergence
 
     norm = LvArray::tensorOps::l2Norm< 3 >( residual );
 
-    if( iter==0 )
+    if( iter == 0 )
     {
       normZero = norm;
       normOld = norm;
     }
 
-    if( norm < 1e-12*(normZero+1.0))
+    if( norm < 1e-12 * (normZero + 1.0))
     {
       break;
     }
-    else if( iter > 0 && norm>normOld && cuts<maxCuts ) //linesearch
+    else if( iter > 0 && norm > normOld && cuts < maxCuts ) //linesearch
     {
       cuts++;
       iter--;
@@ -336,20 +336,20 @@ void ModifiedCamClayUpdates::smallStrainUpdate( localIndex const k,
       normOld = norm;
       cuts = 0;
       real64 dp_dve = bulkModulus;
-      real64 dq_dse = 3. *mu;
+      real64 dq_dse = 3. * mu;
 
       jacobian[0][0] = 1. + solution[2] * df_dp_dve;
       jacobian[0][2] = df_dp;
-      jacobian[1][1] = 1. + solution[2]*df_dq_dse;
+      jacobian[1][1] = 1. + solution[2] * df_dq_dse;
       jacobian[1][2] = df_dq;
-      jacobian[2][0] = (dp_dve * df_dp - dpc_dve * df_dpc)*scale;
-      jacobian[2][1] = (dq_dse * df_dq)*scale;
+      jacobian[2][0] = (dp_dve * df_dp - dpc_dve * df_dpc) * scale;
+      jacobian[2][1] = (dq_dse * df_dq) * scale;
       jacobian[2][2] = 0.0;
 
       LvArray::tensorOps::invert< 3 >( jacobianInv, jacobian );
       LvArray::tensorOps::Ri_eq_AijBj< 3, 3 >( delta, jacobianInv, residual );
 
-      for( localIndex i=0; i<3; ++i )
+      for( localIndex i = 0; i < 3; ++i )
       {
         solution[i] -= delta[i];
       }
@@ -370,60 +370,60 @@ void ModifiedCamClayUpdates::smallStrainUpdate( localIndex const k,
   real64 BB[2][2] = {{}};
 
   //  real64 dpc_dve = 1./(Cc-Cr);//-1./(Cc-Cr) * pc; //linear hardening version
-  real64 dpc_dve = -1./(Cc-Cr) * pc;
+  real64 dpc_dve = -1. / (Cc - Cr) * pc;
   real64 df_dp_depsv;
 
   df_dpc = -trialP;
   df_dp_depsv = dpc_dve;
 
-  real64 a1 = 1. + solution[2]*df_dp_depsv;
+  real64 a1 = 1. + solution[2] * df_dp_depsv;
   real64 a2 = -df_dpc * dpc_dve;
 
-  bulkModulus = -trialP/Cr;
+  bulkModulus = -trialP / Cr;
 
-  real64 scale = 1./(mu*mu); //add scaling factor to improve convergence
-  BB[0][0] = bulkModulus*(a1*jacobianInv[0][0]+a2*jacobianInv[0][2]*scale);
-  BB[0][1] = bulkModulus*jacobianInv[0][1];
-  BB[1][0] = 3. * mu*(a1*jacobianInv[1][0]+a2*jacobianInv[1][2]*scale);
-  BB[1][1] = 3. * mu*jacobianInv[1][1];
+  real64 scale = 1. / (mu * mu); //add scaling factor to improve convergence
+  BB[0][0] = bulkModulus * (a1 * jacobianInv[0][0] + a2 * jacobianInv[0][2] * scale);
+  BB[0][1] = bulkModulus * jacobianInv[0][1];
+  BB[1][0] = 3. * mu * (a1 * jacobianInv[1][0] + a2 * jacobianInv[1][2] * scale);
+  BB[1][1] = 3. * mu * jacobianInv[1][1];
 
   real64 c1;
 
-  if( eps_s_trial<1e-15 ) // confirm eps_s_trial != 0
+  if( eps_s_trial < 1e-15 ) // confirm eps_s_trial != 0
   {
     c1 = 2. * mu;
   }
   else
   {
-    c1 = 2. * trialQ/(3. * eps_s_trial);
+    c1 = 2. * trialQ / (3. * eps_s_trial);
   }
 
-  real64 c2 = BB[0][0] - c1/3.;
-  real64 c3 = std::sqrt( 2./3. ) * BB[0][1];
-  real64 c4 = std::sqrt( 2./3. ) * BB[1][0];
-  real64 c5 = 2./3. * BB[1][1] - c1;
+  real64 c2 = BB[0][0] - c1 / 3.;
+  real64 c3 = std::sqrt( 2. / 3. ) * BB[0][1];
+  real64 c4 = std::sqrt( 2. / 3. ) * BB[1][0];
+  real64 c5 = 2. / 3. * BB[1][1] - c1;
 
   real64 identity[6];
 
-  for( localIndex i=0; i<6; ++i )
+  for( localIndex i = 0; i < 6; ++i )
   {
-    for( localIndex j=0; j<6; ++j )
+    for( localIndex j = 0; j < 6; ++j )
     {
       stiffness[i][j] =  0.0;
     }
   }
 
-  for( localIndex i=0; i<3; ++i )
+  for( localIndex i = 0; i < 3; ++i )
   {
     stiffness[i][i] = c1;
-    stiffness[i+3][i+3] = 0.5 * c1;
+    stiffness[i + 3][i + 3] = 0.5 * c1;
     identity[i] = 1.0;
-    identity[i+3] = 0.0;
+    identity[i + 3] = 0.0;
   }
 
-  for( localIndex i=0; i<6; ++i )
+  for( localIndex i = 0; i < 6; ++i )
   {
-    for( localIndex j=0; j<6; ++j )
+    for( localIndex j = 0; j < 6; ++j )
     {
       stiffness[i][j] +=   c2 * identity[i] * identity[j]
                          + c3 * identity[i] * deviator[j]

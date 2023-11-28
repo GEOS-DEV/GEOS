@@ -62,7 +62,7 @@ public:
   HistoryMetadata( const string & name, localIndex rank, localIndex * dims, std::type_index type ):
     m_name( name ),
     m_rank( rank ),
-    m_dims( dims, dims+rank ),
+    m_dims( dims, dims + rank ),
     m_type( type )
   {}
   /**
@@ -74,7 +74,7 @@ public:
   HistoryMetadata( const string & name, localIndex count, std::type_index type ):
     m_name( name ),
     m_rank( 1 ),
-    m_dims( &count, &count+1 ),
+    m_dims( &count, &count + 1 ),
     m_type( type )
   {}
   /**

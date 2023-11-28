@@ -168,10 +168,10 @@ void ReactiveCompositionalMultiphaseOBL::implicitStepComplete( real64 const & ti
 
       forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const ei )
       {
-        compFrac[ei][numComp-1] = 1.0;
+        compFrac[ei][numComp - 1] = 1.0;
         for( integer ic = 0; ic < numComp - 1; ++ic )
         {
-          compFrac[ei][numComp-1] -= compFrac[ei][ic];
+          compFrac[ei][numComp - 1] -= compFrac[ei][ic];
         }
       } );
 
@@ -364,7 +364,7 @@ real64 ReactiveCompositionalMultiphaseOBL::calculateResidualNorm( real64 const &
 
   real64 const residual = m_useDARTSL2Norm ? MpiWrapper::max( localResidualNorm ) : std::sqrt( MpiWrapper::sum( localResidualNorm ) );
 
-  if( getLogLevel() >= 1 && logger::internal::rank==0 )
+  if( getLogLevel() >= 1 && logger::internal::rank == 0 )
   {
     std::cout << GEOS_FMT( "        ( Rflow ) = ( {:4.2e} )", residual );
   }
@@ -842,7 +842,7 @@ void ReactiveCompositionalMultiphaseOBL::applySourceFluxBC( real64 const time,
       {
         globalIndex const numTargetElems = MpiWrapper::sum< globalIndex >( targetSet.size() );
         GEOS_LOG_RANK_0( GEOS_FMT( bcLogMessage,
-                                   getName(), time+dt, SourceFluxBoundaryCondition::catalogName(),
+                                   getName(), time + dt, SourceFluxBoundaryCondition::catalogName(),
                                    fs.getName(), setName, subRegion.getName(), fs.getScale(), numTargetElems ) );
       }
 
@@ -1081,7 +1081,7 @@ void ReactiveCompositionalMultiphaseOBL::applyDirichletBC( real64 const time,
       {
         globalIndex const numTargetElems = MpiWrapper::sum< globalIndex >( targetSet.size() );
         GEOS_LOG_RANK_0( GEOS_FMT( bcLogMessage,
-                                   getName(), time+dt, FieldSpecificationBase::catalogName(),
+                                   getName(), time + dt, FieldSpecificationBase::catalogName(),
                                    fs.getName(), setName, subRegion.getName(), fs.getScale(), numTargetElems ) );
       }
 
@@ -1121,7 +1121,7 @@ void ReactiveCompositionalMultiphaseOBL::applyDirichletBC( real64 const time,
       {
         globalIndex const numTargetElems = MpiWrapper::sum< globalIndex >( targetSet.size() );
         GEOS_LOG_RANK_0( GEOS_FMT( bcLogMessage,
-                                   getName(), time+dt, FieldSpecificationBase::catalogName(),
+                                   getName(), time + dt, FieldSpecificationBase::catalogName(),
                                    fs.getName(), setName, subRegion.getName(), fs.getScale(), numTargetElems ) );
       }
 
@@ -1233,11 +1233,11 @@ void ReactiveCompositionalMultiphaseOBL::chopPrimaryVariables( DomainPartition &
 
         // Step 1: chop the component fractions between 0 and 1
         real64 sum = 0.0;
-        for( integer ic = 0; ic < numComp-1; ++ic )
+        for( integer ic = 0; ic < numComp - 1; ++ic )
         {
-          if( compFrac[ei][ic] > 1.0-eps )
+          if( compFrac[ei][ic] > 1.0 - eps )
           {
-            compFrac[ei][ic] = 1.0-eps;
+            compFrac[ei][ic] = 1.0 - eps;
             isScalingRequired = true;
           }
           if( compFrac[ei][ic] < eps )
@@ -1260,7 +1260,7 @@ void ReactiveCompositionalMultiphaseOBL::chopPrimaryVariables( DomainPartition &
         // Step 3: rescale the component fractions so they sum to 1, if needed
         if( isScalingRequired )
         {
-          for( integer ic = 0; ic < numComp-1; ++ic )
+          for( integer ic = 0; ic < numComp - 1; ++ic )
           {
             compFrac[ei][ic] /= sum;
           }

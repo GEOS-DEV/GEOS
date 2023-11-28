@@ -113,9 +113,9 @@ struct PrecomputeSourceAndReceiverKernel
 
           real64 xLocal[numNodesPerElem][3];
 
-          for( localIndex a=0; a< numNodesPerElem; ++a )
+          for( localIndex a = 0; a < numNodesPerElem; ++a )
           {
-            for( localIndex i=0; i<3; ++i )
+            for( localIndex i = 0; i < 3; ++i )
             {
               xLocal[a][i] = nodeCoords( elemsToNodes( k, a ), i );
             }
@@ -146,7 +146,7 @@ struct PrecomputeSourceAndReceiverKernel
             FE_TYPE::calcN( coordsOnRefElem, N );
             FE_TYPE::calcGradN( coordsOnRefElem, xLocal, gradN );
             R2SymTensor moment = sourceMoment;
-            for( localIndex q=0; q< numNodesPerElem; ++q )
+            for( localIndex q = 0; q < numNodesPerElem; ++q )
             {
               real64 inc[3] = { 0, 0, 0 };
               sourceNodeIds[isrc][q] = elemsToNodes[k][q];
@@ -251,7 +251,7 @@ struct MassMatrixKernel
       constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
       constexpr localIndex numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
 
-      real64 xLocal[ numNodesPerElem ][ 3 ];
+      real64 xLocal[numNodesPerElem][3];
       for( localIndex a = 0; a < numNodesPerElem; ++a )
       {
         for( localIndex i = 0; i < 3; ++i )
@@ -320,7 +320,7 @@ struct DampingMatrixKernel
         if( facesDomainBoundaryIndicator[f] == 1 && freeSurfaceFaceIndicator[f] != 1 )
         {
           constexpr localIndex numNodesPerFace = FE_TYPE::numNodesPerFace;
-          real64 xLocal[ numNodesPerFace ][ 3 ];
+          real64 xLocal[numNodesPerFace][3];
           for( localIndex a = 0; a < numNodesPerFace; ++a )
           {
             for( localIndex d = 0; d < 3; ++d )
@@ -452,9 +452,9 @@ public:
       xLocal()
     {}
     /// C-array stack storage for element local the nodal positions.
-    real64 xLocal[ numNodesPerElem ][ 3 ]{};
-    real32 mu=0;
-    real32 lambda=0;
+    real64 xLocal[numNodesPerElem][3]{};
+    real32 mu = 0;
+    real32 lambda = 0;
   };
   //***************************************************************************
 
@@ -470,16 +470,16 @@ public:
               StackVariables & stack ) const
   {
     /// numDofPerTrialSupportPoint = 1
-    for( localIndex a=0; a< numNodesPerElem; ++a )
+    for( localIndex a = 0; a < numNodesPerElem; ++a )
     {
       localIndex const nodeIndex = m_elemsToNodes( k, a );
-      for( int i=0; i< 3; ++i )
+      for( int i = 0; i < 3; ++i )
       {
-        stack.xLocal[ a ][ i ] = m_nodeCoords[ nodeIndex ][ i ];
+        stack.xLocal[a][i] = m_nodeCoords[nodeIndex][i];
       }
     }
     stack.mu = m_density[k] * m_velocityVs[k] * m_velocityVs[k];
-    stack.lambda = m_density[k] *m_velocityVp[k] * m_velocityVp[k] - 2.0*stack.mu;
+    stack.lambda = m_density[k] * m_velocityVp[k] * m_velocityVp[k] - 2.0 * stack.mu;
   }
 
   /**
@@ -498,19 +498,19 @@ public:
 
     m_finiteElementSpace.template computeFirstOrderStiffnessTerm( q, stack.xLocal, [&] ( int i, int j, real64 val, real64 J[3][3], int p, int r )
     {
-      real32 const Rxx_ij = val*((stack.lambda+2.0*stack.mu)*J[p][0]*J[r][0]+stack.mu*(J[p][1]*J[r][1]+J[p][2]*J[r][2]));
-      real32 const Ryy_ij = val*((stack.lambda+2.0*stack.mu)*J[p][1]*J[r][1]+stack.mu*(J[p][0]*J[r][0]+J[p][2]*J[r][2]));
-      real32 const Rzz_ij = val*((stack.lambda+2.0*stack.mu)*J[p][2]*J[r][2]+stack.mu*(J[p][0]*J[r][0]+J[p][1]*J[r][1]));
-      real32 const Rxy_ij = val*(stack.lambda*J[p][0]*J[r][1]+stack.mu*J[p][1]*J[r][0]);
-      real32 const Ryx_ij = val*(stack.mu*J[p][0]*J[r][1]+stack.lambda*J[p][1]*J[r][0]);
-      real32 const Rxz_ij = val*(stack.lambda*J[p][0]*J[r][2]+stack.mu*J[p][2]*J[r][0]);
-      real32 const Rzx_ij = val*(stack.mu*J[p][0]*J[r][2]+stack.lambda*J[p][2]*J[r][0]);
-      real32 const Ryz_ij = val*(stack.lambda*J[p][1]*J[r][2]+stack.mu*J[p][2]*J[r][1]);
-      real32 const Rzy_ij = val*(stack.mu*J[p][1]*J[r][2]+stack.lambda*J[p][2]*J[r][1]);
+      real32 const Rxx_ij = val * ((stack.lambda + 2.0 * stack.mu) * J[p][0] * J[r][0] + stack.mu * (J[p][1] * J[r][1] + J[p][2] * J[r][2]));
+      real32 const Ryy_ij = val * ((stack.lambda + 2.0 * stack.mu) * J[p][1] * J[r][1] + stack.mu * (J[p][0] * J[r][0] + J[p][2] * J[r][2]));
+      real32 const Rzz_ij = val * ((stack.lambda + 2.0 * stack.mu) * J[p][2] * J[r][2] + stack.mu * (J[p][0] * J[r][0] + J[p][1] * J[r][1]));
+      real32 const Rxy_ij = val * (stack.lambda * J[p][0] * J[r][1] + stack.mu * J[p][1] * J[r][0]);
+      real32 const Ryx_ij = val * (stack.mu * J[p][0] * J[r][1] + stack.lambda * J[p][1] * J[r][0]);
+      real32 const Rxz_ij = val * (stack.lambda * J[p][0] * J[r][2] + stack.mu * J[p][2] * J[r][0]);
+      real32 const Rzx_ij = val * (stack.mu * J[p][0] * J[r][2] + stack.lambda * J[p][2] * J[r][0]);
+      real32 const Ryz_ij = val * (stack.lambda * J[p][1] * J[r][2] + stack.mu * J[p][2] * J[r][1]);
+      real32 const Rzy_ij = val * (stack.mu * J[p][1] * J[r][2] + stack.lambda * J[p][2] * J[r][1]);
 
-      real32 const localIncrementx = (Rxx_ij * m_ux_n[m_elemsToNodes[k][j]] + Rxy_ij*m_uy_n[m_elemsToNodes[k][j]] + Rxz_ij*m_uz_n[m_elemsToNodes[k][j]]);
-      real32 const localIncrementy = (Ryx_ij * m_ux_n[m_elemsToNodes[k][j]] + Ryy_ij*m_uy_n[m_elemsToNodes[k][j]] + Ryz_ij*m_uz_n[m_elemsToNodes[k][j]]);
-      real32 const localIncrementz = (Rzx_ij * m_ux_n[m_elemsToNodes[k][j]] + Rzy_ij*m_uy_n[m_elemsToNodes[k][j]] + Rzz_ij*m_uz_n[m_elemsToNodes[k][j]]);
+      real32 const localIncrementx = (Rxx_ij * m_ux_n[m_elemsToNodes[k][j]] + Rxy_ij * m_uy_n[m_elemsToNodes[k][j]] + Rxz_ij * m_uz_n[m_elemsToNodes[k][j]]);
+      real32 const localIncrementy = (Ryx_ij * m_ux_n[m_elemsToNodes[k][j]] + Ryy_ij * m_uy_n[m_elemsToNodes[k][j]] + Ryz_ij * m_uz_n[m_elemsToNodes[k][j]]);
+      real32 const localIncrementz = (Rzx_ij * m_ux_n[m_elemsToNodes[k][j]] + Rzy_ij * m_uy_n[m_elemsToNodes[k][j]] + Rzz_ij * m_uz_n[m_elemsToNodes[k][j]]);
 
       RAJA::atomicAdd< parallelDeviceAtomic >( &m_stiffnessVectorx[m_elemsToNodes[k][i]], localIncrementx );
       RAJA::atomicAdd< parallelDeviceAtomic >( &m_stiffnessVectory[m_elemsToNodes[k][i]], localIncrementy );

@@ -65,16 +65,16 @@ AccumulationKernel::
   for( localIndex c1 = 0; c1 < numComps; ++c1 )
   {
 
-    localAccum[c1+1] = ( componentDensNew[c1] * (1.0 - proppantConcNew) - componentDens_n[c1] * (1.0 - proppantConc_n) ) * volume
-                       + (componentDensNew[c1] - componentDens_n[c1]) * packPoreVolume;
+    localAccum[c1 + 1] = ( componentDensNew[c1] * (1.0 - proppantConcNew) - componentDens_n[c1] * (1.0 - proppantConc_n) ) * volume
+                         + (componentDensNew[c1] - componentDens_n[c1]) * packPoreVolume;
 
     for( localIndex c2 = 0; c2 < numComps; ++c2 )
     {
-      localAccumJacobian[c1+1][c2+1] = dCompDens_dCompConc[c1][c2] * ( 1.0 - proppantConcNew ) * volume
-                                       + dCompDens_dCompConc[c1][c2] * packPoreVolume;
+      localAccumJacobian[c1 + 1][c2 + 1] = dCompDens_dCompConc[c1][c2] * ( 1.0 - proppantConcNew ) * volume
+                                           + dCompDens_dCompConc[c1][c2] * packPoreVolume;
     }
 
-    localAccumJacobian[c1+1][0] = -componentDensNew[c1] * volume;
+    localAccumJacobian[c1 + 1][0] = -componentDensNew[c1] * volume;
   }
 }
 
@@ -403,7 +403,7 @@ FluxKernel::
     // note that all the fluid properties are from previous time step
     real64 const fluidFluxCoef = ( isProppantMobile[ei] == 0 || numElems == 1 ) ? 0.0 : 1.0;
 
-    edgeToFaceFluidFlux[i] = mixDens[i] / fluidDens[i] * edgeToFaceFlux[i] - fluidFluxCoef * (mixDens[i] -  fluidDens[i] * (1.0 - proppantC[i])) /
+    edgeToFaceFluidFlux[i] = mixDens[i] / fluidDens[i] * edgeToFaceFlux[i] - fluidFluxCoef * (mixDens[i] - fluidDens[i] * (1.0 - proppantC[i])) /
                              fluidDens[i] * edgeToFaceProppantFlux[i];
 
     dEdgeToFaceFluidFlux_dProppantC[i][i] = -fluidFluxCoef * edgeToFaceProppantFlux[i];
@@ -411,11 +411,11 @@ FluxKernel::
     for( localIndex j = 0; j < numElems; ++j )
     {
       dEdgeToFaceFluidFlux_dProppantC[i][j] += mixDens[i] / fluidDens[i] * dEdgeToFaceFlux_dProppantC[i][j] - fluidFluxCoef *
-                                               (mixDens[i] -  fluidDens[i] * (1.0 - proppantC[i])) / fluidDens[i] * dEdgeToFaceProppantFlux_dProppantC[i][j];
+                                               (mixDens[i] - fluidDens[i] * (1.0 - proppantC[i])) / fluidDens[i] * dEdgeToFaceProppantFlux_dProppantC[i][j];
       for( localIndex c = 0; c < numComps; ++c )
       {
         dEdgeToFaceFluidFlux_dComponentC[i][j][c] += mixDens[i] / fluidDens[i] * dEdgeToFaceFlux_dComponentC[i][j][c] - fluidFluxCoef *
-                                                     (mixDens[i] -  fluidDens[i] * (1.0 - proppantC[i])) / fluidDens[i] *
+                                                     (mixDens[i] - fluidDens[i] * (1.0 - proppantC[i])) / fluidDens[i] *
                                                      dEdgeToFaceProppantFlux_dComponentC[i][j][c];
       }
     }
@@ -711,7 +711,7 @@ FluxKernel::
           {
             for( localIndex c2 = 0; c2 < numComps; ++c2 )
             {
-              localFluxJacobian[idx1][idx2+1+c2] = -( dComponentCe_dComponentC[j][c1][c2] * edgeToFaceFluidFlux[i] ) * dt;
+              localFluxJacobian[idx1][idx2 + 1 + c2] = -( dComponentCe_dComponentC[j][c1][c2] * edgeToFaceFluidFlux[i] ) * dt;
             }
           }
           else
@@ -1091,7 +1091,7 @@ ProppantPackVolumeKernel::
 
       real64 dH = fluidDensity[ei][0] / density[ei][0] * (1.0 - conc[ei]) * settlingFactor[ei] * conc[ei] / maxProppantConcentration * dt;
 
-      real64 const tau = 1.0/8.0 * frictionCoefficient * fluidDensity[ei][0] * velocityMag * velocityMag;
+      real64 const tau = 1.0 / 8.0 * frictionCoefficient * fluidDensity[ei][0] * velocityMag * velocityMag;
 
       real64 const ShieldsNumber = tau / (proppantDensity - fluidDensity[ei][0]) / 9.81 / proppantDiameter;
 

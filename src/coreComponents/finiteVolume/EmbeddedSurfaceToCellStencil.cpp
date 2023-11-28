@@ -42,7 +42,7 @@ void EmbeddedSurfaceToCellStencil::add( localIndex const numPts,
   m_elementIndices.resize( newSize, numPts );
   m_weights.resize( newSize, numPts );
 
-  for( localIndex a=0; a<numPts; ++a )
+  for( localIndex a = 0; a < numPts; ++a )
   {
     m_elementRegionIndices( oldSize, a ) = elementRegionIndices[a];
     m_elementSubRegionIndices( oldSize, a ) = elementSubRegionIndices[a];

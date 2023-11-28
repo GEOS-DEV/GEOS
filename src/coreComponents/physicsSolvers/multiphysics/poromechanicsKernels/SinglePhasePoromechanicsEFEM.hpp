@@ -186,7 +186,7 @@ public:
     real64 hInv;
 
     /// local nodal coordinates
-    real64 xLocal[ numNodesPerElem ][ 3 ];
+    real64 xLocal[numNodesPerElem][3];
 
     /// Stack storage for the traction
     real64 tractionVec[3];
@@ -195,7 +195,7 @@ public:
     real64 dTractiondw[3][3];
 
     /// Stack storage for the constitutive stiffness at a quadrature point.
-    real64 constitutiveStiffness[ 6 ][ 6 ];
+    real64 constitutiveStiffness[6][6];
   };
   //*****************************************************************************
 

@@ -37,7 +37,7 @@ namespace geos
  * @param mesh The geos::MeshLevel that will have all of its elements processed by this function.
  * @param lambda The type of lambda function to execute for each element.
  */
-template< class POLICY=serialPolicy, typename LAMBDA=void >
+template< class POLICY = serialPolicy, typename LAMBDA = void >
 void forAllElemsInMesh( MeshLevel const & mesh, LAMBDA && lambda )
 {
 
@@ -68,7 +68,7 @@ minLocOverElemsInMesh( MeshLevel const & mesh, LAMBDA && lambda )
 
   ElementRegionManager const & elemManager = mesh.getElemManager();
 
-  for( localIndex er=0; er<elemManager.numRegions(); ++er )
+  for( localIndex er = 0; er < elemManager.numRegions(); ++er )
   {
     ElementRegionBase const & elemRegion = elemManager.getRegion( er );
 

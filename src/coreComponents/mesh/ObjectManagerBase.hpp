@@ -91,7 +91,7 @@ public:
                              integer const recursive,
                              bool onDevice,
                              parallelDeviceEvents & events,
-                             MPI_Op op=MPI_REPLACE ) override;
+                             MPI_Op op = MPI_REPLACE ) override;
 
   /**
    * @brief Packs the elements of each set that actually are in @p packList.
@@ -373,10 +373,10 @@ public:
 
     for( localIndex const index : ghostsToSend )
     {
-      integer & owningRank = m_ghostRank[ index ];
+      integer & owningRank = m_ghostRank[index];
       if( owningRank >= 0 )
       {
-        nonLocalGhosts.emplace_back( m_localToGlobalMap[ index ], owningRank );
+        nonLocalGhosts.emplace_back( m_localToGlobalMap[index], owningRank );
       }
       else
       {
@@ -792,9 +792,9 @@ public:
    */
   void updateGlobalToLocalMap( localIndex const lid )
   {
-    globalIndex const gid = m_localToGlobalMap[ lid ];
+    globalIndex const gid = m_localToGlobalMap[lid];
     m_localMaxGlobalIndex = std::max( m_localMaxGlobalIndex, gid );
-    m_globalToLocalMap[ gid ] = lid;
+    m_globalToLocalMap[gid] = lid;
   }
 
   /**

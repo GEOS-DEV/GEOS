@@ -209,9 +209,9 @@ void CompositionalMultiphaseFluid< FLASH, PHASE1, PHASE2, PHASE3 >::calculateCri
   arrayView1d< real64 > const criticalVolume ) const
 {
   integer const numComponents = criticalPressure.size( 0 );
-  for( integer ic=0; ic<numComponents; ++ic )
+  for( integer ic = 0; ic < numComponents; ++ic )
   {
-    criticalVolume[ic] = 2.215e-6 * criticalTemperature[ic] / (0.025 + 1e-6*criticalPressure[ic] );   // m^3/mol
+    criticalVolume[ic] = 2.215e-6 * criticalTemperature[ic] / (0.025 + 1e-6 * criticalPressure[ic] );   // m^3/mol
   }
 }
 

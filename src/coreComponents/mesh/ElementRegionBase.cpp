@@ -61,7 +61,7 @@ string ElementRegionBase::verifyMeshBodyName( Group const & meshBodies,
   {
     string const & onlyMeshBodyName = meshBodies.getGroup( 0 ).getName();
 
-    if( meshBodyName=="" )
+    if( meshBodyName == "" )
     {
       meshBodyName = onlyMeshBodyName;
     }
@@ -75,14 +75,14 @@ string ElementRegionBase::verifyMeshBodyName( Group const & meshBodies,
     bool meshBodyFound = false;
     meshBodies.forSubGroups( [&] ( Group const & meshBody )
     {
-      if( meshBody.getName()==meshBodyName )
+      if( meshBody.getName() == meshBodyName )
       {
         meshBodyFound = true;
       }
     } );
     GEOS_THROW_IF( !meshBodyFound,
                    "There are multiple MeshBodies in this problem, but the "
-                   "specified MeshBody name "<<meshBodyName<<" was not found",
+                   "specified MeshBody name " << meshBodyName << " was not found",
                    InputError );
   }
 

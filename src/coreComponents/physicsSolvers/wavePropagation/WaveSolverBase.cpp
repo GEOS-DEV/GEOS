@@ -287,7 +287,7 @@ void WaveSolverBase::postProcessInput()
     }
   }
 
-  GEOS_THROW_IF( dt < epsilonLoc * maxTime, getDataContext() << ": Value for dt: " << dt <<" is smaller than local threshold: " << epsilonLoc, std::runtime_error );
+  GEOS_THROW_IF( dt < epsilonLoc * maxTime, getDataContext() << ": Value for dt: " << dt << " is smaller than local threshold: " << epsilonLoc, std::runtime_error );
 
   if( m_dtSeismoTrace > 0 )
   {
@@ -309,7 +309,7 @@ void WaveSolverBase::initializeDAS()
   /// double the number of receivers and modify their coordinates
   /// so to have two receivers on each side of each DAS channel
   localIndex const numReceiversGlobal = m_receiverCoordinates.size( 0 );
-  m_receiverCoordinates.resize( 2*numReceiversGlobal, 3 );
+  m_receiverCoordinates.resize( 2 * numReceiversGlobal, 3 );
 
   arrayView2d< real64 > const receiverCoordinates = m_receiverCoordinates.toView();
   arrayView2d< real64 const > const linearDASGeometry = m_linearDASGeometry.toViewConst();
@@ -317,12 +317,12 @@ void WaveSolverBase::initializeDAS()
   for( localIndex ircv = 0; ircv < numReceiversGlobal; ++ircv )
   {
     /// updated xyz of receivers on the far end of a DAS channel
-    receiverCoordinates[numReceiversGlobal+ircv][0] = receiverCoordinates[ircv][0]
-                                                      + cos( linearDASGeometry[ircv][0] ) * cos( linearDASGeometry[ircv][1] ) * linearDASGeometry[ircv][2] / 2.0;
-    receiverCoordinates[numReceiversGlobal+ircv][1] = receiverCoordinates[ircv][1]
-                                                      + cos( linearDASGeometry[ircv][0] ) * sin( linearDASGeometry[ircv][1] ) * linearDASGeometry[ircv][2] / 2.0;
-    receiverCoordinates[numReceiversGlobal+ircv][2] = receiverCoordinates[ircv][2]
-                                                      + sin( linearDASGeometry[ircv][0] ) * linearDASGeometry[ircv][2] / 2.0;
+    receiverCoordinates[numReceiversGlobal + ircv][0] = receiverCoordinates[ircv][0]
+                                                        + cos( linearDASGeometry[ircv][0] ) * cos( linearDASGeometry[ircv][1] ) * linearDASGeometry[ircv][2] / 2.0;
+    receiverCoordinates[numReceiversGlobal + ircv][1] = receiverCoordinates[ircv][1]
+                                                        + cos( linearDASGeometry[ircv][0] ) * sin( linearDASGeometry[ircv][1] ) * linearDASGeometry[ircv][2] / 2.0;
+    receiverCoordinates[numReceiversGlobal + ircv][2] = receiverCoordinates[ircv][2]
+                                                        + sin( linearDASGeometry[ircv][0] ) * linearDASGeometry[ircv][2] / 2.0;
 
     /// updated xyz of receivers on the near end of a DAS channel
     receiverCoordinates[ircv][0] = receiverCoordinates[ircv][0]

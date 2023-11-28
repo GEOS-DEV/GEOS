@@ -68,7 +68,7 @@ MeshObjectPath::fillPathTokens( string const & path,
   // find where the object specification is in the path
   auto findObjectIndex = [&]() -> int
   {
-    for( size_t a=0; a<pathTokens.size(); ++a )
+    for( size_t a = 0; a < pathTokens.size(); ++a )
     {
       if( pathTokens[a] == EnumStrings< ObjectTypes >::toString( m_objectType ) )
       {
@@ -80,7 +80,7 @@ MeshObjectPath::fillPathTokens( string const & path,
 
   int objectIndex = findObjectIndex();
 
-  GEOS_THROW_IF( objectIndex==-1,
+  GEOS_THROW_IF( objectIndex == -1,
                  GEOS_FMT( "Path {} does not contain a valid object type. "
                            "It must contain one of the following: {}, {}, {}, {}",
                            path,
@@ -91,20 +91,20 @@ MeshObjectPath::fillPathTokens( string const & path,
                  InputError );
 
   // No MeshBody or MeshLevels were specified. add all of them
-  if( objectIndex==0 )
+  if( objectIndex == 0 )
   {
     pathTokens.insert( pathTokens.begin(), "{*}" );
     pathTokens.insert( pathTokens.begin(), "{*}" );
   }
   // MeshBody OR MeshLevel specified. Check which one, and add all of the other.
-  else if( objectIndex==1 )
+  else if( objectIndex == 1 )
   {
     string const unidentifiedName = pathTokens[0];
     // if the MeshBody is specified, add all MeshLevels
     if( meshBodies.hasGroup( unidentifiedName ) )
     {
       pathTokens.insert( pathTokens.begin(), unidentifiedName );
-      pathTokens.insert( pathTokens.begin()+1, "{*}" );
+      pathTokens.insert( pathTokens.begin() + 1, "{*}" );
     }
     // It wasn't the MeshBody that was specified, it was the MeshLevel?? Check and add.
     else
@@ -117,7 +117,7 @@ MeshObjectPath::fillPathTokens( string const & path,
       {
         meshBody.forMeshLevels( [&]( MeshLevel const & meshLevel )
         {
-          levelNameFound |= ( unidentifiedName==meshLevel.getName() );
+          levelNameFound |= ( unidentifiedName == meshLevel.getName() );
         } );
       } );
 
@@ -127,7 +127,7 @@ MeshObjectPath::fillPathTokens( string const & path,
         meshBodies.forSubGroups< MeshBody >( [&]( MeshBody const & meshBody )
         {
           std::vector< string > meshLevelsNames;
-          existingMeshBodiesAndLevels += "  MeshBody "+meshBody.getName() + ": { ";
+          existingMeshBodiesAndLevels += "  MeshBody " + meshBody.getName() + ": { ";
           meshBody.forMeshLevels( [&]( MeshLevel const & meshLevel )
           {
             meshLevelsNames.push_back( meshLevel.getName() );
@@ -141,7 +141,7 @@ MeshObjectPath::fillPathTokens( string const & path,
                               existingMeshBodiesAndLevels ),
                     InputError );
       }
-      pathTokens.insert( pathTokens.begin()+1, unidentifiedName );
+      pathTokens.insert( pathTokens.begin() + 1, unidentifiedName );
     }
   }
 
@@ -175,7 +175,7 @@ MeshObjectPath::fillPathTokens( string const & path,
   }
 
 
-  for( size_t a=0; a<pathTokens.size(); ++a )
+  for( size_t a = 0; a < pathTokens.size(); ++a )
   {
     pathTokens[a].erase( std::remove( pathTokens[a].begin(), pathTokens[a].end(), '{' ), pathTokens[a].end());
     pathTokens[a].erase( std::remove( pathTokens[a].begin(), pathTokens[a].end(), '}' ), pathTokens[a].end());
@@ -188,7 +188,7 @@ MeshObjectPath::fillPathTokens( string const & path,
 template< typename SUBNODE >
 static SUBNODE & insertPathNode( std::map< string, SUBNODE > & node, string const & name )
 {
-  return node[ name ];
+  return node[name];
 }
 
 static string & insertPathNode( std::vector< string > & node, string & name )
@@ -224,7 +224,7 @@ void processTokenRecursive( dataRepository::Group const & parentGroup,
       if( fnmatchResult != FNM_NOMATCH )
       {
         auto & subNode = insertPathNode( node, name );
-        foundMatch=true;
+        foundMatch = true;
         // recursive call
         cbfunc( parentGroup.getGroup< TYPE >( name ),
                 subNode );
@@ -293,23 +293,23 @@ void MeshObjectPath::printPermutations() const
 {
   for( auto const & meshBodyPair : m_pathPermutations )
   {
-    std::cout<<meshBodyPair.first<<": "<<std::endl;
+    std::cout << meshBodyPair.first << ": " << std::endl;
     for( auto const & meshLevelPair : meshBodyPair.second )
     {
-      std::cout<<"  "<<meshLevelPair.first<<": "<<std::endl;
+      std::cout << "  " << meshLevelPair.first << ": " << std::endl;
       for( auto const & elemRegionPair : meshLevelPair.second )
       {
-        std::cout<<"    "<<elemRegionPair.first<<": "<<std::endl;
-        std::cout<<"      ";
+        std::cout << "    " << elemRegionPair.first << ": " << std::endl;
+        std::cout << "      ";
         for( auto const & elemSubRegionName : elemRegionPair.second )
         {
-          std::cout<<elemSubRegionName<<", ";
+          std::cout << elemSubRegionName << ", ";
         }
-        std::cout<<std::endl;
+        std::cout << std::endl;
       }
     }
   }
-  std::cout<<std::endl<<std::endl;
+  std::cout << std::endl << std::endl;
 }
 
 bool MeshObjectPath::containsMeshLevel( MeshLevel const & meshLevel ) const

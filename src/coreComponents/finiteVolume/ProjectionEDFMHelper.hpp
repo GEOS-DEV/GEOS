@@ -41,7 +41,7 @@ struct CellDescriptor
    */
   bool operator==( CellDescriptor const & other ) const
   {
-    return( region==other.region && subRegion==other.subRegion && index==other.index );
+    return( region == other.region && subRegion == other.subRegion && index == other.index );
   }
 };
 

@@ -755,13 +755,13 @@ void CompositionalMultiphaseWell::updateVolRatesForConstraint( WellElementSubReg
       stackArray1d< real64, maxNumComp > dTotalDensInv_dCompDens( numComp );
       for( integer ic = 0; ic < numComp; ++ic )
       {
-        dTotalDensInv_dCompDens[ic] = -dTotalDens[iwelemRef][0][Deriv::dC+ic] * totalDensInv * totalDensInv;
+        dTotalDensInv_dCompDens[ic] = -dTotalDens[iwelemRef][0][Deriv::dC + ic] * totalDensInv * totalDensInv;
       }
       applyChainRuleInPlace( numComp, dCompFrac_dCompDens[iwelemRef], dTotalDensInv_dCompDens, work.data() );
 
       // Step 2.2: divide the total mass/molar rate by the total density to get the total volumetric rate
       currentTotalVolRate = currentTotalRate * totalDensInv;
-      dCurrentTotalVolRate_dPres = ( useSurfaceConditions ==  0 ) * currentTotalRate * dTotalDensInv_dPres;
+      dCurrentTotalVolRate_dPres = ( useSurfaceConditions == 0 ) * currentTotalRate * dTotalDensInv_dPres;
       dCurrentTotalVolRate_dRate = totalDensInv;
       for( integer ic = 0; ic < numComp; ++ic )
       {
@@ -797,12 +797,12 @@ void CompositionalMultiphaseWell::updateVolRatesForConstraint( WellElementSubReg
 
         // Step 3.2: divide the total mass/molar rate by the (phase density * phase fraction) to get the phase volumetric rate
         currentPhaseVolRate[ip] = currentTotalRate * phaseFracTimesPhaseDensInv;
-        dCurrentPhaseVolRate_dPres[ip] = ( useSurfaceConditions ==  0 ) * currentTotalRate * dPhaseFracTimesPhaseDensInv_dPres;
+        dCurrentPhaseVolRate_dPres[ip] = ( useSurfaceConditions == 0 ) * currentTotalRate * dPhaseFracTimesPhaseDensInv_dPres;
         dCurrentPhaseVolRate_dRate[ip] = phaseFracTimesPhaseDensInv;
         for( integer ic = 0; ic < numComp; ++ic )
         {
-          dCurrentPhaseVolRate_dCompDens[ip][ic] = -phaseFracTimesPhaseDensInv * dPhaseDens[iwelemRef][0][ip][Deriv::dC+ic] * phaseDensInv;
-          dCurrentPhaseVolRate_dCompDens[ip][ic] += dPhaseFrac[iwelemRef][0][ip][Deriv::dC+ic] * phaseDensInv;
+          dCurrentPhaseVolRate_dCompDens[ip][ic] = -phaseFracTimesPhaseDensInv * dPhaseDens[iwelemRef][0][ip][Deriv::dC + ic] * phaseDensInv;
+          dCurrentPhaseVolRate_dCompDens[ip][ic] += dPhaseFrac[iwelemRef][0][ip][Deriv::dC + ic] * phaseDensInv;
           dCurrentPhaseVolRate_dCompDens[ip][ic] *= currentTotalRate;
         }
         applyChainRuleInPlace( numComp, dCompFrac_dCompDens[iwelemRef], dCurrentPhaseVolRate_dCompDens[ip], work.data() );

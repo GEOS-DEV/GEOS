@@ -59,7 +59,7 @@ void SinglePhaseConstantThermalConductivity::initializeRockFluidState( arrayView
 void SinglePhaseConstantThermalConductivity::update( arrayView2d< real64 const > const & initialPorosity ) const
 {
   real64 thermalConductivityComponents[3];
-  for( int i = 0; i<3; ++i )
+  for( int i = 0; i < 3; ++i )
   {
     thermalConductivityComponents[i] = m_thermalConductivityComponents[i];
   }

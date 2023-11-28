@@ -82,13 +82,13 @@ void ImplicitSmallStrainNewmark< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::
 setup( localIndex const k,
        StackVariables & stack ) const
 {
-  for( localIndex a=0; a<numNodesPerElem; ++a )
+  for( localIndex a = 0; a < numNodesPerElem; ++a )
   {
     localIndex const localNodeIndex = m_elemsToNodes( k, a );
-    for( localIndex i=0; i<numDofPerTrialSupportPoint; ++i )
+    for( localIndex i = 0; i < numDofPerTrialSupportPoint; ++i )
     {
-      stack.vtilde_local[ a ][ i ] = m_vtilde[ localNodeIndex ][ i ];
-      stack.uhattilde_local[ a ][ i ] = m_uhattilde[ localNodeIndex ][ i ];
+      stack.vtilde_local[a][i] = m_vtilde[localNodeIndex][i];
+      stack.uhattilde_local[a][i] = m_uhattilde[localNodeIndex][i];
     }
   }
   Base::setup( k, stack );
@@ -106,29 +106,29 @@ quadraturePointKernel( localIndex const k,
 {
 
   Base::quadraturePointKernel( k, q, stack );
-  real64 detJ=0;
+  real64 detJ = 0;
 
   real64 N[numNodesPerElem];
   FE_TYPE::calcN( q, N );
 
-  for( int a=0; a<numNodesPerElem; ++a )
+  for( int a = 0; a < numNodesPerElem; ++a )
   {
-    for( int b=a; b<numNodesPerElem; ++b )
+    for( int b = a; b < numNodesPerElem; ++b )
     {
       real64 const integrationFactor = m_density( k, q ) * N[a] * N[b] * detJ;
-      real64 const temp1 = ( m_massDamping * m_newmarkGamma/( m_newmarkBeta * m_dt )
-                             + 1.0 / ( m_newmarkBeta * m_dt * m_dt ) )* integrationFactor;
+      real64 const temp1 = ( m_massDamping * m_newmarkGamma / ( m_newmarkBeta * m_dt )
+                             + 1.0 / ( m_newmarkBeta * m_dt * m_dt ) ) * integrationFactor;
 
       constexpr int nsdof = numDofPerTestSupportPoint;
-      for( int i=0; i<nsdof; ++i )
+      for( int i = 0; i < nsdof; ++i )
       {
         real64 const acc = 1.0 / ( m_newmarkBeta * m_dt * m_dt ) * ( stack.uhat_local[b][i] - stack.uhattilde_local[b][i] );
         real64 const vel = stack.vtilde_local[b][i] +
-                           m_newmarkGamma/( m_newmarkBeta * m_dt ) *( stack.uhat_local[b][i]
-                                                                      - stack.uhattilde_local[b][i] );
+                           m_newmarkGamma / ( m_newmarkBeta * m_dt ) * ( stack.uhat_local[b][i]
+                                                                         - stack.uhattilde_local[b][i] );
 
-        stack.dRdU_InertiaMassDamping[ a*nsdof+i][ b*nsdof+i ] -= temp1;
-        stack.localResidual[ a*nsdof+i ] -= ( m_massDamping * vel + acc ) * integrationFactor;
+        stack.dRdU_InertiaMassDamping[a * nsdof + i][b * nsdof + i] -= temp1;
+        stack.localResidual[a * nsdof + i] -= ( m_massDamping * vel + acc ) * integrationFactor;
       }
     }
   }
@@ -144,34 +144,34 @@ complete( localIndex const k,
           StackVariables & stack ) const
 {
 
-  for( int a=0; a<numNodesPerElem; ++a )
+  for( int a = 0; a < numNodesPerElem; ++a )
   {
-    for( int b=0; b<numNodesPerElem; ++b )
+    for( int b = 0; b < numNodesPerElem; ++b )
     {
-      for( int i=0; i<numDofPerTestSupportPoint; ++i )
+      for( int i = 0; i < numDofPerTestSupportPoint; ++i )
       {
-        for( int j=0; j<numDofPerTrialSupportPoint; ++j )
+        for( int j = 0; j < numDofPerTrialSupportPoint; ++j )
         {
-          stack.localResidual[ a*numDofPerTestSupportPoint+i ] =
-            stack.localResidual[ a*numDofPerTestSupportPoint+i ] +
-            m_stiffnessDamping * stack.localJacobian[ a*numDofPerTestSupportPoint+i][ b*numDofPerTrialSupportPoint+j ] *
-            ( stack.vtilde_local[b][j] + m_newmarkGamma/(m_newmarkBeta * m_dt)*(stack.uhat_local[b][j]-stack.uhattilde_local[b][j]) );
+          stack.localResidual[a * numDofPerTestSupportPoint + i] =
+            stack.localResidual[a * numDofPerTestSupportPoint + i] +
+            m_stiffnessDamping * stack.localJacobian[a * numDofPerTestSupportPoint + i][b * numDofPerTrialSupportPoint + j] *
+            ( stack.vtilde_local[b][j] + m_newmarkGamma / (m_newmarkBeta * m_dt) * (stack.uhat_local[b][j] - stack.uhattilde_local[b][j]) );
 
-          stack.localJacobian[a*numDofPerTestSupportPoint+i][b*numDofPerTrialSupportPoint+j] =
-            stack.localJacobian[a*numDofPerTestSupportPoint+i][b*numDofPerTrialSupportPoint+j] +
+          stack.localJacobian[a * numDofPerTestSupportPoint + i][b * numDofPerTrialSupportPoint + j] =
+            stack.localJacobian[a * numDofPerTestSupportPoint + i][b * numDofPerTrialSupportPoint + j] +
             stack.localJacobian[a][b] * (1.0 + m_stiffnessDamping * m_newmarkGamma / ( m_newmarkBeta * m_dt ) ) +
-            stack.dRdU_InertiaMassDamping[ a*numDofPerTestSupportPoint+i ][ b*numDofPerTrialSupportPoint+j ];
+            stack.dRdU_InertiaMassDamping[a * numDofPerTestSupportPoint + i][b * numDofPerTrialSupportPoint + j];
         }
       }
     }
   }
 
-  for( int a=0; a<stack.maxNumRows; ++a )
+  for( int a = 0; a < stack.maxNumRows; ++a )
   {
-    for( int b=0; b<stack.maxNumCols; ++b )
+    for( int b = 0; b < stack.maxNumCols; ++b )
     {
       stack.localJacobian[a][b] += stack.localJacobian[a][b] * (1.0 + m_stiffnessDamping * m_newmarkGamma / ( m_newmarkBeta * m_dt ) )
-                                   + stack.dRdU_InertiaMassDamping[ a ][ b ];
+                                   + stack.dRdU_InertiaMassDamping[a][b];
     }
   }
 

@@ -55,7 +55,7 @@ void PhaseFieldFractureSolver::mapSolutionBetweenSolvers( DomainPartition & doma
 {
 
   GEOS_MARK_FUNCTION;
-  if( solverType ==  static_cast< integer >( SolverType::Damage ) )
+  if( solverType == static_cast< integer >( SolverType::Damage ) )
   {
     forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                   MeshLevel & mesh,

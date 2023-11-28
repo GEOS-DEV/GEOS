@@ -91,7 +91,7 @@ public:
                                  arraySlice1d< localIndex const > const & elemToFaces,
                                  arraySlice1d< real64 const > const & elemCenter,
                                  real64 const & elemVolume,
-                                 real64 const (&elemPerm)[ 3 ],
+                                 real64 const (&elemPerm)[3],
                                  real64 const & tParam,
                                  real64 const & lengthTolerance,
                                  arraySlice2d< real64 > const & transMatrix );
@@ -107,7 +107,7 @@ MimeticInnerProductBase::computeParametricInnerProduct( arrayView2d< real64 cons
                                                         arraySlice1d< localIndex const > const & elemToFaces,
                                                         arraySlice1d< real64 const > const & elemCenter,
                                                         real64 const & elemVolume,
-                                                        real64 const (&elemPerm)[ 3 ],
+                                                        real64 const (&elemPerm)[3],
                                                         real64 const & tParam,
                                                         real64 const & lengthTolerance,
                                                         arraySlice2d< real64 > const & transMatrix )
@@ -115,18 +115,18 @@ MimeticInnerProductBase::computeParametricInnerProduct( arrayView2d< real64 cons
   real64 const areaTolerance = lengthTolerance * lengthTolerance;
   real64 const weightToleranceInv = 1e30 / lengthTolerance;
 
-  real64 cellToFaceMat[ NF ][ 3 ] = {{ 0 }};
-  real64 normalsMat[ NF ][ 3 ] = {{ 0 }};
-  real64 permMat[ 3 ][ 3 ] = {{ 0 }};
+  real64 cellToFaceMat[NF][3] = {{ 0 }};
+  real64 normalsMat[NF][3] = {{ 0 }};
+  real64 permMat[3][3] = {{ 0 }};
 
-  real64 work_dimByNumFaces[ 3 ][ NF ] = {{ 0 }};
-  real64 worka_numFacesByNumFaces[ NF ][ NF ] = {{ 0 }};
-  real64 workb_numFacesByNumFaces[ NF ][ NF ] = {{ 0 }};
-  real64 workc_numFacesByNumFaces[ NF ][ NF ] = {{ 0 }};
+  real64 work_dimByNumFaces[3][NF] = {{ 0 }};
+  real64 worka_numFacesByNumFaces[NF][NF] = {{ 0 }};
+  real64 workb_numFacesByNumFaces[NF][NF] = {{ 0 }};
+  real64 workc_numFacesByNumFaces[NF][NF] = {{ 0 }};
 
-  real64 tpTransInv[ NF ] = { 0.0 };
+  real64 tpTransInv[NF] = { 0.0 };
 
-  real64 q0[ NF ], q1[ NF ], q2[ NF ];
+  real64 q0[NF], q1[NF], q2[NF];
 
   // 0) assemble full coefficient tensor from principal axis/components
   MimeticInnerProductHelpers::makeFullTensor( elemPerm, permMat );
@@ -134,7 +134,7 @@ MimeticInnerProductBase::computeParametricInnerProduct( arrayView2d< real64 cons
   // 1) fill the matrices cellToFaceMat and normalsMat row by row
   for( localIndex ifaceLoc = 0; ifaceLoc < NF; ++ifaceLoc )
   {
-    real64 faceCenter[ 3 ], faceNormal[ 3 ], cellToFaceVec[ 3 ];
+    real64 faceCenter[3], faceNormal[3], cellToFaceVec[3];
     // compute the face geometry data: center, normal, vector from cell center to face center
     real64 const faceArea =
       computationalGeometry::centroid_3DPolygon( faceToNodes[elemToFaces[ifaceLoc]],
@@ -147,9 +147,9 @@ MimeticInnerProductBase::computeParametricInnerProduct( arrayView2d< real64 cons
     LvArray::tensorOps::subtract< 3 >( cellToFaceVec, elemCenter );
 
     // we save this for the orthonormalization
-    q0[ ifaceLoc ] = cellToFaceVec[0];
-    q1[ ifaceLoc ] = cellToFaceVec[1];
-    q2[ ifaceLoc ] = cellToFaceVec[2];
+    q0[ifaceLoc] = cellToFaceVec[0];
+    q1[ifaceLoc] = cellToFaceVec[1];
+    q2[ifaceLoc] = cellToFaceVec[2];
 
     if( LvArray::tensorOps::AiBi< 3 >( cellToFaceVec, faceNormal ) < 0.0 )
     {
@@ -170,9 +170,9 @@ MimeticInnerProductBase::computeParametricInnerProduct( arrayView2d< real64 cons
     tpTransInv[ifaceLoc] = diagEntry;
 
     LvArray::tensorOps::scale< 3 >( faceNormal, faceArea );
-    normalsMat[ ifaceLoc ][ 0 ] = faceNormal[ 0 ];
-    normalsMat[ ifaceLoc ][ 1 ] = faceNormal[ 1 ];
-    normalsMat[ ifaceLoc ][ 2 ] = faceNormal[ 2 ];
+    normalsMat[ifaceLoc][0] = faceNormal[0];
+    normalsMat[ifaceLoc][1] = faceNormal[1];
+    normalsMat[ifaceLoc][2] = faceNormal[2];
 
   }
 
@@ -198,7 +198,7 @@ MimeticInnerProductBase::computeParametricInnerProduct( arrayView2d< real64 cons
   real64 const scale = tParam / elemVolume;
   for( localIndex i = 0; i < NF; ++i )
   {
-    workb_numFacesByNumFaces[ i ][ i ] = scale * transMatrix[ i ][ i ];
+    workb_numFacesByNumFaces[i][i] = scale * transMatrix[i][i];
   }
 
   LvArray::tensorOps::Rij_eq_AikBkj< NF, NF, NF >( workc_numFacesByNumFaces,

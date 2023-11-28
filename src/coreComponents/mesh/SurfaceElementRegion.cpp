@@ -119,7 +119,7 @@ localIndex SurfaceElementRegion::addToFractureMesh( real64 const time_np1,
   localIndex const kfe = subRegion.size() - 1;
   ruptureTime( kfe ) = time_np1;
 
-  LvArray::tensorOps::copy< 3 >( elemCenter[ kfe ], faceCenter[ faceIndices[ 0 ] ] );
+  LvArray::tensorOps::copy< 3 >( elemCenter[kfe], faceCenter[faceIndices[0]] );
 
   faceMap.resizeArray( kfe, 2 );
   faceMap[kfe][0] = faceIndices[0];
@@ -131,8 +131,8 @@ localIndex SurfaceElementRegion::addToFractureMesh( real64 const time_np1,
   subRegionGhostRank[kfe] = faceGhostRank[faceIndices[0]];
 
   // Add the nodes that compose the new FaceElement to the nodeList
-  localIndex const numNodesInFace0 = faceToNodeMap.sizeOfArray( faceIndices[ 0 ] );
-  localIndex const numNodesInFace1 = faceToNodeMap.sizeOfArray( faceIndices[ 1 ] );
+  localIndex const numNodesInFace0 = faceToNodeMap.sizeOfArray( faceIndices[0] );
+  localIndex const numNodesInFace1 = faceToNodeMap.sizeOfArray( faceIndices[1] );
 
   //Temporarily set the map size 8 for both quadrangle and triangle faces. TODO: need to fix for arbitrary face sizes.
   nodeMap.resizeArray( kfe, 8 );
@@ -143,14 +143,14 @@ localIndex SurfaceElementRegion::addToFractureMesh( real64 const time_np1,
     localIndex const bb = aa == 0 ? aa : numNodesInFace1 - aa;
 
     // TODO HACK need to generalize to something other than quads
-    nodeMap[ kfe ][ a ] = faceToNodeMap( faceIndices[ 0 ], aa );
-    nodeMap[ kfe ][ a + numNodesInFace0 ] = faceToNodeMap( faceIndices[ 1 ], bb );
+    nodeMap[kfe][a] = faceToNodeMap( faceIndices[0], aa );
+    nodeMap[kfe][a + numNodesInFace0] = faceToNodeMap( faceIndices[1], bb );
   }
 
   if( numNodesInFace0 == 3 )
   {
-    nodeMap[ kfe ][ 6 ] = faceToNodeMap( faceIndices[ 0 ], 2 );
-    nodeMap[ kfe ][ 7 ] = faceToNodeMap( faceIndices[ 1 ], 2 );
+    nodeMap[kfe][6] = faceToNodeMap( faceIndices[0], 2 );
+    nodeMap[kfe][7] = faceToNodeMap( faceIndices[1], 2 );
   }
 
   // Add the edges that compose the faceElement to the edge map. This is essentially a copy of
@@ -158,7 +158,7 @@ localIndex SurfaceElementRegion::addToFractureMesh( real64 const time_np1,
   localIndex const faceIndex = faceIndices[0];
   localIndex const numEdges = originalFaceToEdgeMap.sizeOfArray( faceIndex );
   edgeMap.resizeArray( kfe, numEdges );
-  for( localIndex a=0; a<numEdges; ++a )
+  for( localIndex a = 0; a < numEdges; ++a )
   {
     edgeMap[kfe][a] = originalFaceToEdgeMap( faceIndex, a );
     connectedEdges.insert( originalFaceToEdgeMap( faceIndex, a ) );
@@ -186,19 +186,19 @@ localIndex SurfaceElementRegion::addToFractureMesh( real64 const time_np1,
   for( auto const & edge : connectedEdges )
   {
     // check to see if the edgesToFractureConnectors already have an entry
-    if( subRegion.m_edgesTo2dFaces.count( edge )==0 )
+    if( subRegion.m_edgesTo2dFaces.count( edge ) == 0 )
     {
       // if not, then fill increase the size of the fractureConnectors to face elements map and
       // fill the fractureConnectorsToEdges map with the current edge....and the inverse map too.
       subRegion.m_2dFaceTo2dElems.appendArray( 0 );
       subRegion.m_2dFaceToEdge.emplace_back( edge );
-      subRegion.m_edgesTo2dFaces[edge] = subRegion.m_2dFaceToEdge.size()-1;
+      subRegion.m_edgesTo2dFaces[edge] = subRegion.m_2dFaceToEdge.size() - 1;
     }
     // now fill the fractureConnectorsToFaceElements map. This is analogous to the edge to face map
     localIndex const connectorIndex = subRegion.m_edgesTo2dFaces[edge];
     localIndex const numCells = subRegion.m_2dFaceTo2dElems.sizeOfArray( connectorIndex ) + 1;
     subRegion.m_2dFaceTo2dElems.resizeArray( connectorIndex, numCells );
-    subRegion.m_2dFaceTo2dElems[connectorIndex][ numCells-1 ] = kfe;
+    subRegion.m_2dFaceTo2dElems[connectorIndex][numCells - 1] = kfe;
 
     // And fill the list of connectors that will need stencil modifications
     subRegion.m_recalculateConnectionsFor2dFaces.insert( connectorIndex );

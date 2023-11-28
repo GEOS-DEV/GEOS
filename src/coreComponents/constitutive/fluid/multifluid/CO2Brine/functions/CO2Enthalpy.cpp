@@ -136,12 +136,12 @@ real64 helmholtzCO2Enthalpy( real64 const & T,
   real64 theta, delta, R, deltard;
 
   Tkelvin = units::convertCToK( T );
-  rd=rho/dc;
-  rt=Tc/Tkelvin;
+  rd = rho / dc;
+  rt = Tc / Tkelvin;
 
   phi0t = a0[1] + a0[2] / rt;
 
-  for( localIndex i=3; i<8; i++ )
+  for( localIndex i = 3; i < 8; i++ )
   {
     phi0t += a0[i] * theta0[i] * (1.0 / (1.0 - exp( -rt * theta0[i] )) - 1.0);
 
@@ -150,7 +150,7 @@ real64 helmholtzCO2Enthalpy( real64 const & T,
   phird = 0.0;
   phirt = 0.0;
 
-  for( localIndex i=0; i<7; i++ )
+  for( localIndex i = 0; i < 7; i++ )
   {
 
     phird += ni[i] * di[i] * pow( rd, di[i] - 1.0 ) * pow( rt, ti[i] );
@@ -160,36 +160,36 @@ real64 helmholtzCO2Enthalpy( real64 const & T,
   }
 
 
-  for( localIndex i=7; i<34; i++ )
+  for( localIndex i = 7; i < 34; i++ )
   {
 
-    phird +=  ni[i]  * exp( -pow( rd, ci[i] )) * pow( rd, di[i]-1.0 ) * pow( rt, ti[i] ) * (di[i]-ci[i] * pow( rd, ci[i] ));
+    phird +=  ni[i] * exp( -pow( rd, ci[i] )) * pow( rd, di[i] - 1.0 ) * pow( rt, ti[i] ) * (di[i] - ci[i] * pow( rd, ci[i] ));
 
     phirt += ni[i] * ti[i] * pow( rd, di[i] ) * pow( rt, ti[i] - 1.0 ) * exp( -pow( rd, ci[i] ));
 
   }
 
 
-  for( localIndex i=34; i<39; i++ )
+  for( localIndex i = 34; i < 39; i++ )
   {
 
-    phird += ni[i]  * pow( rd, di[i] ) * pow( rt, ti[i] ) * exp( -alphai[i] * pow( rd - ei[i], 2.0 ) - betai[i] * pow( rt - gammai[i], 2.0 )) * (di[i] / rd - 2.0 * alphai[i] * (rd - ei[i]));
+    phird += ni[i] * pow( rd, di[i] ) * pow( rt, ti[i] ) * exp( -alphai[i] * pow( rd - ei[i], 2.0 ) - betai[i] * pow( rt - gammai[i], 2.0 )) * (di[i] / rd - 2.0 * alphai[i] * (rd - ei[i]));
 
     phirt += ni[i] * pow( rd, di[i] ) * pow( rt, ti[i] ) * exp( -alphai[i] * pow( rd - ei[i], 2.0 ) - betai[i] * pow( rt - gammai[i], 2.0 )) * (ti[i] / rt - 2.0 * betai[i] * (rt - gammai[i]));
 
   }
 
-  for( localIndex i=39; i<42; i++ )
+  for( localIndex i = 39; i < 42; i++ )
   {
 
     theta = (1.0 - rt) + Ai[i] * pow( pow( rd - 1.0, 2.0 ), (1.0 / (2.0 * betai[i])));
-    delta = pow( theta, 2.0 ) + Bi[i] * pow( rd - 1.0, 2.0*alphai[i] );
+    delta = pow( theta, 2.0 ) + Bi[i] * pow( rd - 1.0, 2.0 * alphai[i] );
     R = exp( -Ci[i] * pow( rd - 1.0, 2.0 ) - Di[i] * pow( rt - 1.0, 2.0 ));
     deltard = (rd - 1.0) * (Ai[i] * theta * 2.0 / betai[i] * pow( pow( rd - 1.0, 2.0 ), 0.5 / betai[i] - 1.0 ) + 2.0 * Bi[i] * alphai[i] * pow( pow( rd - 1.0, 2.0 ), alphai[i] - 1.0 ));
 
-    phird += ni[i] * (pow( delta, bi[i] ) * (R + rd *(-2.0 *Ci[i] * (rd - 1.0) * R)) + bi[i] * pow( delta, bi[i] - 1.0 ) * deltard * rd * R);
+    phird += ni[i] * (pow( delta, bi[i] ) * (R + rd * (-2.0 * Ci[i] * (rd - 1.0) * R)) + bi[i] * pow( delta, bi[i] - 1.0 ) * deltard * rd * R);
 
-    phirt += ni[i] * rd *(-2.0 * theta * bi[i] * pow( delta, bi[i] - 1.0 ) * R + pow( delta, bi[i] ) * (-2.0 * Di[i] * R * (rt - 1.0)));
+    phirt += ni[i] * rd * (-2.0 * theta * bi[i] * pow( delta, bi[i] - 1.0 ) * R + pow( delta, bi[i] ) * (-2.0 * Di[i] * R * (rt - 1.0)));
 
   }
 
@@ -280,7 +280,7 @@ CO2Enthalpy::calculateCO2Enthalpy( PTTableCoordinates const & tableCoords,
     for( localIndex j = 0; j < nTemperatures; ++j )
     {
       real64 const TC = tableCoords.getTemperature( j );
-      enthalpies[j*nPressures+i] = helmholtzCO2Enthalpy( TC, densities[j*nPressures+i] ) + referenceEnthalpy;
+      enthalpies[j * nPressures + i] = helmholtzCO2Enthalpy( TC, densities[j * nPressures + i] ) + referenceEnthalpy;
     }
   }
 }

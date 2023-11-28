@@ -44,8 +44,8 @@ public:
   void updateSizes( arrayView1d< real64 > const domainL,
                     real64 const dt );
 
-  void setSizes( real64 const ( &min )[ 3 ],
-                 real64 const ( &max )[ 3 ] ) override;
+  void setSizes( real64 const ( &min )[3],
+                 real64 const ( &max )[3] ) override;
 
   real64 * getLocalMin()
   {

@@ -712,7 +712,7 @@ RelativePermeabilityBase & makeTableRelPermThreePhase( string const & name, Grou
   real64_array values( Naxis );
   for( localIndex i = 0; i < coordinates[0].size(); ++i )
   {
-    values[i] = coordinates[0][i]*coordinates[0][i];
+    values[i] = coordinates[0][i] * coordinates[0][i];
   }
 
   initializeTable( "water_swof",
@@ -734,7 +734,7 @@ RelativePermeabilityBase & makeTableRelPermThreePhase( string const & name, Grou
 
   for( localIndex i = 0; i < coordinates[0].size(); ++i )
   {
-    values[i] = coordinates[0][i]*coordinates[0][i]*coordinates[0][i];
+    values[i] = coordinates[0][i] * coordinates[0][i] * coordinates[0][i];
   }
 
   initializeTable( "gas_sgof",
@@ -783,12 +783,12 @@ public:
                               [&phaseRelPerm] ( RelativePermeabilityBase & relPerm )
     {
       phaseRelPerm = relPerm.phaseRelPerm();
-      return phaseRelPerm[ 0 ][ 0 ];
+      return phaseRelPerm[0][0];
     },
                               [&dPhaseRelPerm_dPhaseVolFraction] ( RelativePermeabilityBase & relPerm )
     {
       dPhaseRelPerm_dPhaseVolFraction = relPerm.dPhaseRelPerm_dPhaseVolFraction();
-      return dPhaseRelPerm_dPhaseVolFraction[ 0 ][ 0 ];
+      return dPhaseRelPerm_dPhaseVolFraction[0][0];
     }
                               );
   }
@@ -822,13 +822,13 @@ TEST_F( RelPermTest, numericalDerivatives_BrooksCoreyBakerRelPermTwoPhase )
   array1d< real64 > sat( 2 );
 
   sat[0] = startSat;
-  sat[1] = 1.0-sat[0];
+  sat[1] = 1.0 - sat[0];
 
   while( sat[0] <= endSat )
   {
     test( sat, eps, tol );
     sat[0] += dS;
-    sat[1] = 1-sat[0];
+    sat[1] = 1 - sat[0];
   }
 }
 
@@ -847,15 +847,15 @@ TEST_F( RelPermTest, numericalDerivatives_BrooksCoreyBakerRelPermThreePhase )
   array1d< real64 > sat( 3 );
 
   sat[0] = startSat;
-  sat[1] = alpha*(1.0-sat[0]);
-  sat[2] = (1-alpha)*(1.0-sat[0]);
+  sat[1] = alpha * (1.0 - sat[0]);
+  sat[2] = (1 - alpha) * (1.0 - sat[0]);
 
   while( sat[0] <= endSat )
   {
     test( sat, eps, tol );
     sat[0] += dS;
-    sat[1] = alpha *(1-sat[0]);
-    sat[2] = (1-alpha) *(1-sat[0]);
+    sat[1] = alpha * (1 - sat[0]);
+    sat[2] = (1 - alpha) * (1 - sat[0]);
   }
 }
 
@@ -874,13 +874,13 @@ TEST_F( RelPermTest, numericalDerivatives_VanGenuchtenBakerRelPermTwoPhase )
   array1d< real64 > sat( 2 );
 
   sat[0] = startSat;
-  sat[1] = 1.0-sat[0];
+  sat[1] = 1.0 - sat[0];
 
   while( sat[0] <= endSat )
   {
     test( sat, eps, tol );
     sat[0] += dS;
-    sat[1] = 1-sat[0];
+    sat[1] = 1 - sat[0];
   }
 }
 
@@ -899,15 +899,15 @@ TEST_F( RelPermTest, numericalDerivatives_VanGenuchtenBakerRelPermThreePhase )
   array1d< real64 > sat( 3 );
 
   sat[0] = startSat;
-  sat[1] = alpha*(1.0-sat[0]);
-  sat[2] = (1-alpha)*(1.0-sat[0]);
+  sat[1] = alpha * (1.0 - sat[0]);
+  sat[2] = (1 - alpha) * (1.0 - sat[0]);
 
   while( sat[0] <= endSat )
   {
     test( sat, eps, tol );
     sat[0] += dS;
-    sat[1] = alpha *(1-sat[0]);
-    sat[2] = (1-alpha) *(1-sat[0]);
+    sat[1] = alpha * (1 - sat[0]);
+    sat[2] = (1 - alpha) * (1 - sat[0]);
   }
 }
 
@@ -925,12 +925,12 @@ TEST_F( RelPermTest, numericalDerivatives_TableRelPermTwoPhase )
   array1d< real64 > sat( 2 );
 
   sat[0] = startSat;
-  sat[1] = 1.0-sat[0];
+  sat[1] = 1.0 - sat[0];
   while( sat[0] <= endSat )
   {
     test( sat, eps, tol );
     sat[0] += dS;
-    sat[1] = 1-sat[0];
+    sat[1] = 1 - sat[0];
   }
 }
 
@@ -949,15 +949,15 @@ TEST_F( RelPermTest, numericalDerivatives_TableRelPermThreePhase )
   array1d< real64 > sat( 3 );
 
   sat[0] = startSat;
-  sat[1] = alpha*(1.0-sat[0]);
-  sat[2] = (1-alpha)*(1.0-sat[0]);
+  sat[1] = alpha * (1.0 - sat[0]);
+  sat[2] = (1 - alpha) * (1.0 - sat[0]);
 
   while( sat[0] <= endSat )
   {
     test( sat, eps, tol );
     sat[0] += dS;
-    sat[1] = alpha *(1-sat[0]);
-    sat[2] = (1-alpha) *(1-sat[0]);
+    sat[1] = alpha * (1 - sat[0]);
+    sat[2] = (1 - alpha) * (1 - sat[0]);
   }
 }
 
@@ -975,7 +975,7 @@ TEST_F( RelPermTest, numericalDerivatives_TableRelPermHysteresisTwoPhase )
   array2d< real64, compflow::LAYOUT_PHASE > initSat( 1, 2 );
 
   sat[0] = startSat;
-  sat[1] = 1.0-sat[0];
+  sat[1] = 1.0 - sat[0];
   initSat[0][0] = 0.6;
   initSat[0][1] = 0.4;
 
@@ -994,7 +994,7 @@ TEST_F( RelPermTest, numericalDerivatives_TableRelPermHysteresisTwoPhase )
   {
     test( sat, eps, tol );
     sat[0] += dS;
-    sat[1] = 1-sat[0];
+    sat[1] = 1 - sat[0];
   }
 }
 

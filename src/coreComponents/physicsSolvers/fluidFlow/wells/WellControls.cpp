@@ -223,7 +223,7 @@ void WellControls::postProcessInput()
                  getWrapperDataContext( viewKeyStruct::targetPhaseRateString() ) << ": Target oil rate is negative",
                  InputError );
 
-  GEOS_THROW_IF( (m_injectionStream.empty()  && m_injectionTemperature >= 0) ||
+  GEOS_THROW_IF( (m_injectionStream.empty() && m_injectionTemperature >= 0) ||
                  (!m_injectionStream.empty() && m_injectionTemperature < 0),
                  "WellControls " << getDataContext() << ": Both "
                                  << viewKeyStruct::injectionStreamString() << " and " << viewKeyStruct::injectionTemperatureString()
@@ -334,7 +334,7 @@ void WellControls::postProcessInput()
   // 9) Create time-dependent BHP table
   if( m_targetBHPTableName.empty() )
   {
-    m_targetBHPTableName = getName()+"_ConstantBHP_table";
+    m_targetBHPTableName = getName() + "_ConstantBHP_table";
     m_targetBHPTable = createWellTable( m_targetBHPTableName, m_targetBHP );
   }
   else
@@ -351,7 +351,7 @@ void WellControls::postProcessInput()
   // 10) Create time-dependent total rate table
   if( m_targetTotalRateTableName.empty() )
   {
-    m_targetTotalRateTableName = getName()+"_ConstantTotalRate_table";
+    m_targetTotalRateTableName = getName() + "_ConstantTotalRate_table";
     m_targetTotalRateTable = createWellTable( m_targetTotalRateTableName, m_targetTotalRate );
   }
   else
@@ -368,7 +368,7 @@ void WellControls::postProcessInput()
   // 11) Create time-dependent phase rate table
   if( m_targetPhaseRateTableName.empty() )
   {
-    m_targetPhaseRateTableName = getName()+"_ConstantPhaseRate_table";
+    m_targetPhaseRateTableName = getName() + "_ConstantPhaseRate_table";
     m_targetPhaseRateTable = createWellTable( m_targetPhaseRateTableName, m_targetPhaseRate );
   }
   else
@@ -389,7 +389,7 @@ void WellControls::postProcessInput()
     m_statusTableName = GEOS_FMT( "{0}_OpenStatus_table", dataRepository::keys::wellControls );
     FunctionManager & functionManager = FunctionManager::getInstance();
     m_statusTable = functionManager.getGroupPointer< TableFunction const >( m_statusTableName );
-    if( m_statusTable==nullptr )
+    if( m_statusTable == nullptr )
     {
       m_statusTable = createWellTable( m_statusTableName, 1.0 );
     }

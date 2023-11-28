@@ -40,7 +40,7 @@ real64 ArnoldiLargestEigenvalue( LinearOperator< VECTOR > const & op, localIndex
   localIndex const mInternal = std::min( numGlobalRows, m );
 
   // Initialize data structure (Hessenberg matrix and Krylov subspace)
-  array2d< real64, MatrixLayout::ROW_MAJOR_PERM > H( mInternal+1, mInternal );
+  array2d< real64, MatrixLayout::ROW_MAJOR_PERM > H( mInternal + 1, mInternal );
   array1d< VECTOR > V( mInternal + 1 );
 
   // Initial unitary vector
@@ -50,16 +50,16 @@ real64 ArnoldiLargestEigenvalue( LinearOperator< VECTOR > const & op, localIndex
   for( localIndex j = 0; j < mInternal; ++j )
   {
     // Apply operator
-    V[j+1].create( numLocalRows, op.comm() );
-    op.apply( V[j], V[j+1] );
+    V[j + 1].create( numLocalRows, op.comm() );
+    op.apply( V[j], V[j + 1] );
     // Arnoldi process
     for( localIndex i = 0; i <= j; ++i )
     {
-      H( i, j ) = V[i].dot( V[j+1] );
-      V[j+1].axpy( -H( i, j ), V[i] );
+      H( i, j ) = V[i].dot( V[j + 1] );
+      V[j + 1].axpy( -H( i, j ), V[i] );
     }
-    H( j+1, j ) = V[j+1].norm2();
-    V[j+1].scale( 1.0 / H( j+1, j ) );
+    H( j + 1, j ) = V[j + 1].norm2();
+    V[j + 1].scale( 1.0 / H( j + 1, j ) );
   }
 
   // Disregard the last entry and make the matrix square
