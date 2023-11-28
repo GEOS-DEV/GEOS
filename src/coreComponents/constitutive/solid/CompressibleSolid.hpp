@@ -79,10 +79,11 @@ public:
     real64 const temperature = 0;
     real64 const temperature_k = 0;
     real64 const temperature_n = 0;
+    real64 const dHydraulicAperture_dNormalJump = 1.0;
     m_porosityUpdate.updateFromPressureAndTemperature( k, q,
                                                        pressure, pressure_k, pressure_n,
                                                        temperature, temperature_k, temperature_n );
-    m_permUpdate.updateFromAperture( k, q, oldHydraulicAperture, newHydraulicAperture );
+    m_permUpdate.updateFromAperture( k, q, oldHydraulicAperture, newHydraulicAperture, dHydraulicAperture_dNormalJump );
   }
 
   GEOS_HOST_DEVICE
@@ -91,11 +92,12 @@ public:
                                                        real64 const & pressure,
                                                        real64 const & oldHydraulicAperture,
                                                        real64 const & newHydraulicAperture,
+                                                       real64 const & dHydraulicAperture_dNormalJump,
                                                        real64 const ( &dispJump )[3],
                                                        real64 const ( &traction )[3] ) const
   {
     m_porosityUpdate.updateFromPressureAndTemperature( k, q, pressure, 0.0, 0.0, 0.0, 0.0, 0.0 );
-    m_permUpdate.updateFromApertureAndShearDisplacement( k, q, oldHydraulicAperture, newHydraulicAperture, pressure, dispJump, traction );
+    m_permUpdate.updateFromApertureAndShearDisplacement( k, q, oldHydraulicAperture, newHydraulicAperture, dHydraulicAperture_dNormalJump, pressure, dispJump, traction );
   }
 
 private:
