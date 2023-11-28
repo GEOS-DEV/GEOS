@@ -526,6 +526,14 @@
 					<xsd:selector xpath="CompositionalMultiphaseFluid" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
+				<xsd:unique name="domainConstitutiveCompositonalTwoPhaseFluidPengRobinsonUniqueName">
+					<xsd:selector xpath="CompositonalTwoPhaseFluidPengRobinson" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
+				<xsd:unique name="domainConstitutiveCompositonalTwoPhaseFluidSoaveRedlichKwongUniqueName">
+					<xsd:selector xpath="CompositonalTwoPhaseFluidSoaveRedlichKwong" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
 				<xsd:unique name="domainConstitutiveCompressibleSinglePhaseFluidUniqueName">
 					<xsd:selector xpath="CompressibleSinglePhaseFluid" />
 					<xsd:field xpath="@name" />
@@ -2034,7 +2042,7 @@ the relative residual norm satisfies:
 		<!--outputSeismoTrace => Flag that indicates if we write the seismo trace in a file .txt, 0 no output, 1 otherwise-->
 		<xsd:attribute name="outputSeismoTrace" type="integer" default="0" />
 		<!--receiverCoordinates => Coordinates (x,y,z) of the receivers-->
-		<xsd:attribute name="receiverCoordinates" type="real64_array2d" use="required" />
+		<xsd:attribute name="receiverCoordinates" type="real64_array2d" default="{{0}}" />
 		<!--rickerOrder => Flag that indicates the order of the Ricker to be used o, 1 or 2. Order 2 by default-->
 		<xsd:attribute name="rickerOrder" type="integer" default="2" />
 		<!--saveFields => Set to 1 to save fields during forward and restore them during backward-->
@@ -2042,13 +2050,13 @@ the relative residual norm satisfies:
 		<!--shotIndex => Set the current shot for temporary files-->
 		<xsd:attribute name="shotIndex" type="integer" default="0" />
 		<!--sourceCoordinates => Coordinates (x,y,z) of the sources-->
-		<xsd:attribute name="sourceCoordinates" type="real64_array2d" use="required" />
+		<xsd:attribute name="sourceCoordinates" type="real64_array2d" default="{{0}}" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="string_array" use="required" />
 		<!--timeSourceDelay => Source time delay (1 / f0 by default)-->
 		<xsd:attribute name="timeSourceDelay" type="real32" default="-1" />
 		<!--timeSourceFrequency => Central frequency for the time source-->
-		<xsd:attribute name="timeSourceFrequency" type="real32" use="required" />
+		<xsd:attribute name="timeSourceFrequency" type="real32" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
@@ -2082,7 +2090,7 @@ the relative residual norm satisfies:
 		<!--outputSeismoTrace => Flag that indicates if we write the seismo trace in a file .txt, 0 no output, 1 otherwise-->
 		<xsd:attribute name="outputSeismoTrace" type="integer" default="0" />
 		<!--receiverCoordinates => Coordinates (x,y,z) of the receivers-->
-		<xsd:attribute name="receiverCoordinates" type="real64_array2d" use="required" />
+		<xsd:attribute name="receiverCoordinates" type="real64_array2d" default="{{0}}" />
 		<!--rickerOrder => Flag that indicates the order of the Ricker to be used o, 1 or 2. Order 2 by default-->
 		<xsd:attribute name="rickerOrder" type="integer" default="2" />
 		<!--saveFields => Set to 1 to save fields during forward and restore them during backward-->
@@ -2090,13 +2098,13 @@ the relative residual norm satisfies:
 		<!--shotIndex => Set the current shot for temporary files-->
 		<xsd:attribute name="shotIndex" type="integer" default="0" />
 		<!--sourceCoordinates => Coordinates (x,y,z) of the sources-->
-		<xsd:attribute name="sourceCoordinates" type="real64_array2d" use="required" />
+		<xsd:attribute name="sourceCoordinates" type="real64_array2d" default="{{0}}" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="string_array" use="required" />
 		<!--timeSourceDelay => Source time delay (1 / f0 by default)-->
 		<xsd:attribute name="timeSourceDelay" type="real32" default="-1" />
 		<!--timeSourceFrequency => Central frequency for the time source-->
-		<xsd:attribute name="timeSourceFrequency" type="real32" use="required" />
+		<xsd:attribute name="timeSourceFrequency" type="real32" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
@@ -2130,7 +2138,7 @@ the relative residual norm satisfies:
 		<!--outputSeismoTrace => Flag that indicates if we write the seismo trace in a file .txt, 0 no output, 1 otherwise-->
 		<xsd:attribute name="outputSeismoTrace" type="integer" default="0" />
 		<!--receiverCoordinates => Coordinates (x,y,z) of the receivers-->
-		<xsd:attribute name="receiverCoordinates" type="real64_array2d" use="required" />
+		<xsd:attribute name="receiverCoordinates" type="real64_array2d" default="{{0}}" />
 		<!--rickerOrder => Flag that indicates the order of the Ricker to be used o, 1 or 2. Order 2 by default-->
 		<xsd:attribute name="rickerOrder" type="integer" default="2" />
 		<!--saveFields => Set to 1 to save fields during forward and restore them during backward-->
@@ -2138,13 +2146,13 @@ the relative residual norm satisfies:
 		<!--shotIndex => Set the current shot for temporary files-->
 		<xsd:attribute name="shotIndex" type="integer" default="0" />
 		<!--sourceCoordinates => Coordinates (x,y,z) of the sources-->
-		<xsd:attribute name="sourceCoordinates" type="real64_array2d" use="required" />
+		<xsd:attribute name="sourceCoordinates" type="real64_array2d" default="{{0}}" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="string_array" use="required" />
 		<!--timeSourceDelay => Source time delay (1 / f0 by default)-->
 		<xsd:attribute name="timeSourceDelay" type="real32" default="-1" />
 		<!--timeSourceFrequency => Central frequency for the time source-->
-		<xsd:attribute name="timeSourceFrequency" type="real32" use="required" />
+		<xsd:attribute name="timeSourceFrequency" type="real32" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
@@ -2393,7 +2401,7 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		<!--outputSeismoTrace => Flag that indicates if we write the seismo trace in a file .txt, 0 no output, 1 otherwise-->
 		<xsd:attribute name="outputSeismoTrace" type="integer" default="0" />
 		<!--receiverCoordinates => Coordinates (x,y,z) of the receivers-->
-		<xsd:attribute name="receiverCoordinates" type="real64_array2d" use="required" />
+		<xsd:attribute name="receiverCoordinates" type="real64_array2d" default="{{0}}" />
 		<!--rickerOrder => Flag that indicates the order of the Ricker to be used o, 1 or 2. Order 2 by default-->
 		<xsd:attribute name="rickerOrder" type="integer" default="2" />
 		<!--saveFields => Set to 1 to save fields during forward and restore them during backward-->
@@ -2401,13 +2409,13 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		<!--shotIndex => Set the current shot for temporary files-->
 		<xsd:attribute name="shotIndex" type="integer" default="0" />
 		<!--sourceCoordinates => Coordinates (x,y,z) of the sources-->
-		<xsd:attribute name="sourceCoordinates" type="real64_array2d" use="required" />
+		<xsd:attribute name="sourceCoordinates" type="real64_array2d" default="{{0}}" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="string_array" use="required" />
 		<!--timeSourceDelay => Source time delay (1 / f0 by default)-->
 		<xsd:attribute name="timeSourceDelay" type="real32" default="-1" />
 		<!--timeSourceFrequency => Central frequency for the time source-->
-		<xsd:attribute name="timeSourceFrequency" type="real32" use="required" />
+		<xsd:attribute name="timeSourceFrequency" type="real32" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
@@ -2441,7 +2449,7 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		<!--outputSeismoTrace => Flag that indicates if we write the seismo trace in a file .txt, 0 no output, 1 otherwise-->
 		<xsd:attribute name="outputSeismoTrace" type="integer" default="0" />
 		<!--receiverCoordinates => Coordinates (x,y,z) of the receivers-->
-		<xsd:attribute name="receiverCoordinates" type="real64_array2d" use="required" />
+		<xsd:attribute name="receiverCoordinates" type="real64_array2d" default="{{0}}" />
 		<!--rickerOrder => Flag that indicates the order of the Ricker to be used o, 1 or 2. Order 2 by default-->
 		<xsd:attribute name="rickerOrder" type="integer" default="2" />
 		<!--saveFields => Set to 1 to save fields during forward and restore them during backward-->
@@ -2449,7 +2457,7 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		<!--shotIndex => Set the current shot for temporary files-->
 		<xsd:attribute name="shotIndex" type="integer" default="0" />
 		<!--sourceCoordinates => Coordinates (x,y,z) of the sources-->
-		<xsd:attribute name="sourceCoordinates" type="real64_array2d" use="required" />
+		<xsd:attribute name="sourceCoordinates" type="real64_array2d" default="{{0}}" />
 		<!--sourceForce => Force of the source: 3 real values for a vector source, and 6 real values for a tensor source (in Voigt notation).The default value is { 0, 0, 0 } (no net force).-->
 		<xsd:attribute name="sourceForce" type="R1Tensor" default="{0,0,0}" />
 		<!--sourceMoment => Moment of the source: 6 real values describing a symmetric tensor in Voigt notation.The default value is { 1, 1, 1, 0, 0, 0 } (diagonal moment, corresponding to a pure explosion).-->
@@ -2459,7 +2467,7 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		<!--timeSourceDelay => Source time delay (1 / f0 by default)-->
 		<xsd:attribute name="timeSourceDelay" type="real32" default="-1" />
 		<!--timeSourceFrequency => Central frequency for the time source-->
-		<xsd:attribute name="timeSourceFrequency" type="real32" use="required" />
+		<xsd:attribute name="timeSourceFrequency" type="real32" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
@@ -3222,6 +3230,10 @@ Local - Add stabilization only to interiors of macro elements.-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--output => Output file-->
 		<xsd:attribute name="output" type="string" default="none" />
+		<!--outputCompressibility => Flag to indicate that the total compressibility should be output-->
+		<xsd:attribute name="outputCompressibility" type="integer" default="0" />
+		<!--outputPhaseComposition => Flag to indicate that phase compositions should be output-->
+		<xsd:attribute name="outputPhaseComposition" type="integer" default="0" />
 		<!--pressureControl => Function controlling pressure time history-->
 		<xsd:attribute name="pressureControl" type="string" use="required" />
 		<!--steps => Number of load steps to take-->
@@ -3353,6 +3365,8 @@ Local - Add stabilization only to interiors of macro elements.-->
 			<xsd:element name="CarmanKozenyPermeability" type="CarmanKozenyPermeabilityType" />
 			<xsd:element name="CeramicDamage" type="CeramicDamageType" />
 			<xsd:element name="CompositionalMultiphaseFluid" type="CompositionalMultiphaseFluidType" />
+			<xsd:element name="CompositonalTwoPhaseFluidPengRobinson" type="CompositonalTwoPhaseFluidPengRobinsonType" />
+			<xsd:element name="CompositonalTwoPhaseFluidSoaveRedlichKwong" type="CompositonalTwoPhaseFluidSoaveRedlichKwongType" />
 			<xsd:element name="CompressibleSinglePhaseFluid" type="CompressibleSinglePhaseFluidType" />
 			<xsd:element name="CompressibleSolidCarmanKozenyPermeability" type="CompressibleSolidCarmanKozenyPermeabilityType" />
 			<xsd:element name="CompressibleSolidConstantPermeability" type="CompressibleSolidConstantPermeabilityType" />
@@ -3620,6 +3634,54 @@ The expected format is "{ waterMax, oilMax }", in that order-->
 		<xsd:attribute name="componentVolumeShift" type="real64_array" default="{0}" />
 		<!--equationsOfState => List of equation of state types for each phase-->
 		<xsd:attribute name="equationsOfState" type="string_array" use="required" />
+		<!--phaseNames => List of fluid phases-->
+		<xsd:attribute name="phaseNames" type="string_array" use="required" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="string" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="CompositonalTwoPhaseFluidPengRobinsonType">
+		<!--checkPVTTablesRanges => Enable (1) or disable (0) an error when the input pressure or temperature of the PVT tables is out of range.-->
+		<xsd:attribute name="checkPVTTablesRanges" type="integer" default="1" />
+		<!--componentAcentricFactor => Component acentric factors-->
+		<xsd:attribute name="componentAcentricFactor" type="real64_array" use="required" />
+		<!--componentBinaryCoeff => Table of binary interaction coefficients-->
+		<xsd:attribute name="componentBinaryCoeff" type="real64_array2d" default="{{0}}" />
+		<!--componentCriticalPressure => Component critical pressures-->
+		<xsd:attribute name="componentCriticalPressure" type="real64_array" use="required" />
+		<!--componentCriticalTemperature => Component critical temperatures-->
+		<xsd:attribute name="componentCriticalTemperature" type="real64_array" use="required" />
+		<!--componentCriticalVolume => Component critical volumnes-->
+		<xsd:attribute name="componentCriticalVolume" type="real64_array" default="{0}" />
+		<!--componentMolarWeight => Component molar weights-->
+		<xsd:attribute name="componentMolarWeight" type="real64_array" use="required" />
+		<!--componentNames => List of component names-->
+		<xsd:attribute name="componentNames" type="string_array" use="required" />
+		<!--componentVolumeShift => Component volume shifts-->
+		<xsd:attribute name="componentVolumeShift" type="real64_array" default="{0}" />
+		<!--phaseNames => List of fluid phases-->
+		<xsd:attribute name="phaseNames" type="string_array" use="required" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="string" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="CompositonalTwoPhaseFluidSoaveRedlichKwongType">
+		<!--checkPVTTablesRanges => Enable (1) or disable (0) an error when the input pressure or temperature of the PVT tables is out of range.-->
+		<xsd:attribute name="checkPVTTablesRanges" type="integer" default="1" />
+		<!--componentAcentricFactor => Component acentric factors-->
+		<xsd:attribute name="componentAcentricFactor" type="real64_array" use="required" />
+		<!--componentBinaryCoeff => Table of binary interaction coefficients-->
+		<xsd:attribute name="componentBinaryCoeff" type="real64_array2d" default="{{0}}" />
+		<!--componentCriticalPressure => Component critical pressures-->
+		<xsd:attribute name="componentCriticalPressure" type="real64_array" use="required" />
+		<!--componentCriticalTemperature => Component critical temperatures-->
+		<xsd:attribute name="componentCriticalTemperature" type="real64_array" use="required" />
+		<!--componentCriticalVolume => Component critical volumnes-->
+		<xsd:attribute name="componentCriticalVolume" type="real64_array" default="{0}" />
+		<!--componentMolarWeight => Component molar weights-->
+		<xsd:attribute name="componentMolarWeight" type="real64_array" use="required" />
+		<!--componentNames => List of component names-->
+		<xsd:attribute name="componentNames" type="string_array" use="required" />
+		<!--componentVolumeShift => Component volume shifts-->
+		<xsd:attribute name="componentVolumeShift" type="real64_array" default="{0}" />
 		<!--phaseNames => List of fluid phases-->
 		<xsd:attribute name="phaseNames" type="string_array" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
