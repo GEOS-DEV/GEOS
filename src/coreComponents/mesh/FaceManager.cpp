@@ -270,7 +270,8 @@ void FaceManager::sortAllFaceNodes( NodeManager const & nodeManager,
     // The face should be connected to at least one element.
     if( facesToElements( faceIndex, 0 ) < 0 && facesToElements( faceIndex, 1 ) < 0 )
     {
-      GEOS_ERROR( getDataContext() << ": Face " << faceIndex << " is not connected to any cell.\n"
+      GEOS_ERROR( getDataContext() << ": Face " << faceIndex <<
+                  " is not connected to any cell.\n"
                   "You might have:\n"
                   "- an invalid mesh,\n"
                   "- not enough CellElementRegions to describe your input mesh (all regions, simulated or not, must be listed),\n"
