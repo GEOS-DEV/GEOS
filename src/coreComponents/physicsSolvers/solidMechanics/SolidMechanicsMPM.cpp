@@ -906,6 +906,8 @@ void SolidMechanicsMPM::registerDataOnMesh( Group & meshBodies )
         subRegion.registerField< particleDensity >( getName() );
         subRegion.registerField< particleOverlap >( getName() );
         subRegion.registerField< particleSPHJacobian >( getName() );
+        subRegion.registerField< particlePorosity >( getName() );
+        subRegion.registerField< particleReferencePorosity >( getName() );
 
         // Double-indexed fields (vectors and symmetric tensors stored in Voigt notation)
         subRegion.registerField< particleBodyForce >( getName() ).reference().resizeDimension< 1 >( 3 );
@@ -1319,6 +1321,8 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
     arrayView1d< real64 > const particleSPHJacobian = subRegion.getField< fields::mpm::particleSPHJacobian >();
     arrayView2d< real64 > const particleReferencePosition = subRegion.getField< fields::mpm::particleReferencePosition >();
     arrayView1d< int > const particleCrystalHealFlag = subRegion.getField< fields::mpm::particleCrystalHealFlag >();
+    arrayView1d< real64 > const particlePorosity = subRegion.getField< fields::mpm::particlePorosity >();
+    arrayView1d< real64 > const particleReferencePorosity = subRegion.getField< fields::mpm::particleReferencePorosity >();
 
     // Set reference position, volume and R-vectors
     for( int p=0; p<subRegion.size(); p++ )
@@ -1330,6 +1334,8 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
       particleKineticEnergy[p] = 0.0;
       particleArtificialViscosity[p] = 0.0;
       particleSPHJacobian[p] = 1.0;
+      particleReferencePorosity[p] = 0.0;
+      particlePorosity[p] = particleReferencePorosity[p];
       for( int i=0; i<3; i++ )
       {
         particleBodyForce[p][i] = 0;
@@ -2544,6 +2550,9 @@ void SolidMechanicsMPM::performMaterialSwap( ParticleManager & particleManager,
     arrayView3d< real64 > const sourceParticleInitialRVectors = sourceSubRegion.getField< fields::mpm::particleInitialRVectors >();
     arrayView3d< real64 > const sourceParticleSphF = sourceSubRegion.getField< fields::mpm::particleSphF >();
 
+    arrayView1d< real64 > const sourceParticlePorosity = sourceSubRegion.getField< fields::mpm::particlePorosity >();
+    arrayView1d< real64 > const sourceParticleReferencePorosity = sourceSubRegion.getField< fields::mpm::particleReferencePorosity >();
+
     arrayView1d< real64 > const destinationParticleMass = destinationSubRegion.getField< fields::mpm::particleMass >();
     arrayView1d< real64 > const destinationParticleTemperature = destinationSubRegion.getField< fields::mpm::particleTemperature >();
     arrayView1d< real64 > const destinationParticleInitialVolume = destinationSubRegion.getField< fields::mpm::particleInitialVolume >();
@@ -2568,6 +2577,9 @@ void SolidMechanicsMPM::performMaterialSwap( ParticleManager & particleManager,
     arrayView3d< real64 > const destinationParticleInitialRVectors = destinationSubRegion.getField< fields::mpm::particleInitialRVectors >();
     arrayView3d< real64 > const destinationParticleSphF = destinationSubRegion.getField< fields::mpm::particleSphF >();
     
+    arrayView1d< real64 > const destinationParticlePorosity = destinationSubRegion.getField< fields::mpm::particlePorosity >();
+    arrayView1d< real64 > const destinationParticleReferencePorosity = destinationSubRegion.getField< fields::mpm::particleReferencePorosity >();
+
     // destinationParticlePlasticStrain.resize(sourceParticlePlasticStrain.size());
     // destinationParticleDensity.resize(sourceParticleDensity.size());
     // destinationParticleMass.resize(sourceParticleMass.size());
@@ -2593,6 +2605,8 @@ void SolidMechanicsMPM::performMaterialSwap( ParticleManager & particleManager,
       destinationParticleInternalEnergy[p] = sourceParticleInternalEnergy[p];
       destinationParticleArtificialViscosity[p] = sourceParticleArtificialViscosity[p];
       destinationParticleHeatCapacity[p] = sourceParticleHeatCapacity[p];
+      destinationParticlePorosity[p] = sourceParticlePorosity[p];
+      destinationParticleReferencePorosity[p] = sourceParticleReferencePorosity[p];
 
       LvArray::tensorOps::copy< 3 >( destinationParticleReferencePosition[p], sourceParticleReferencePosition[p]);
       LvArray::tensorOps::copy< 3 >( destinationParticleInitialMaterialDirection[p], sourceParticleInitialMaterialDirection[p] );
@@ -3137,11 +3151,8 @@ void SolidMechanicsMPM::normalizeGridSurfaceNormals( arrayView2d< real64 const >
 
 void SolidMechanicsMPM::initializeFrictionCoefficients()
 {
-  // Table is only used if the frictionCoefficient in the input file is not specified
-  if( static_cast<int>( m_frictionCoefficient ) == -1 )
+  if( m_frictionCoefficientTable.size(0) != 0 )
   {
-    GEOS_ERROR_IF( m_frictionCoefficientTable.size(0) == 0, "No frictionCoefficient or frictionCoefficientTable was defined." );
-
     GEOS_ERROR_IF( m_frictionCoefficientTable.size(0) != m_frictionCoefficientTable.size(1), "frictionCoefficientTable must be square.");
     GEOS_ERROR_IF( m_frictionCoefficientTable.size(0) != m_numContactGroups, "frictionCoefficientTable must have the same number of rows and columns as the number of contact groups.");
 
@@ -3152,11 +3163,17 @@ void SolidMechanicsMPM::initializeFrictionCoefficients()
         GEOS_ERROR_IF( std::abs(m_frictionCoefficientTable[i][j] - m_frictionCoefficientTable[j][i]) > DBL_EPSILON, "Off-diagonal friction coefficients must match" );
       }
     }
-
-  } 
+    return;
+  }
   else
   {
+    if( static_cast<int>( m_frictionCoefficient ) == -1 )
+    {
+      m_frictionCoefficient = 0.0;
+    }
+
     GEOS_ERROR_IF( m_frictionCoefficient < 0.0, "Friction coefficient must be positive.");
+
     m_frictionCoefficientTable.resize( m_numContactGroups, m_numContactGroups );
     for(int i = 0; i < m_numContactGroups; i++)
     {
@@ -3166,6 +3183,7 @@ void SolidMechanicsMPM::initializeFrictionCoefficients()
       }
     }
   }
+
 }
 
 void SolidMechanicsMPM::computeContactForces( real64 const dt,
@@ -3185,6 +3203,7 @@ void SolidMechanicsMPM::computeContactForces( real64 const dt,
   forAll< serialPolicy >( numNodes, [&, gridMass, gridVelocity, gridMomentum, gridSurfaceNormal, gridMaterialPosition, gridContactForce] GEOS_HOST ( localIndex const g )
     {
       // Initialize gridContactForce[g] to zero. TODO: This shouldn't be necessary?
+      // This looks to be zeroed every timestep in initializeGridFields, need to test if removing this breaks anything
       for( int fieldIndex = 0; fieldIndex < m_numVelocityFields; fieldIndex++ )
       {
         for( int i=0; i<3; i++ )

@@ -223,6 +223,22 @@ DECLARE_FIELD( particleReferencePosition,
                LEVEL_1,
                WRITE_AND_READ,
                "ParticleReferencePosition" );
+
+DECLARE_FIELD( particlePorosity,
+               "particlePorosity",
+               array1d< real64 >,
+               0,
+               LEVEL_1,
+               WRITE_AND_READ,
+               "ParticlePorosity" );
+
+DECLARE_FIELD( particleReferencePorosity,
+               "particleReferencePorosity",
+               array1d< real64 >,
+               0,
+               LEVEL_1,
+               WRITE_AND_READ,
+               "ParticleReferencePorosity" );
 }
 
 }

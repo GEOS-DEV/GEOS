@@ -178,9 +178,6 @@ struct StateUpdateKernel
       // Copy the updated stress into particleStress
       LvArray::tensorOps::copy< 6 >( particleStress[p], stress );
 
-      // CC: debug
-      // GEOS_LOG_RANK( "Particle " << k << ", Particle stress: {" << particleStress[p][0] << ", " << particleStress[p][1] << ", " << particleStress[p][2] << ", " << particleStress[p][3] << ", " << particleStress[p][4] << ", " << particleStress[p][5] << "}" );
-
       // Copy m_newStress into m_oldStress
       constitutiveWrapper.saveConvergedState( p, 0 );
     } );
