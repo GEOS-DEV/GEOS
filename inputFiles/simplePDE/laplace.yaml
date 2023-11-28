@@ -1,0 +1,9 @@
+simulation:
+  begin: 0
+  end: 2 s
+
+outputs:
+  - vtk:
+      every: 1 s
+  - restart:
+      every: 1 s

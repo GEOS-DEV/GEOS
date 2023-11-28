@@ -201,7 +201,7 @@ public:
     : Output( "__vtk-" + std::to_string( counter ), every, at ),
       m_fields( fields ),
       m_writeGhostCells( writeGhostCells ),
-      m_fileRoot( fileRoot )
+      m_fileRoot( std::move( fileRoot ) )
   { }
 
   void fillOutputsXmlNode( xml_node & outputsNode ) const override
@@ -306,8 +306,8 @@ void operator>>( const YAML::Node & node,
         auto sp = std::make_shared< VtkOutput >( i,
                                                  subNode["every"].as< string >( "" ),
                                                  subNode["at"].as< std::vector< string > >( std::vector< string >() ),
-                                                 subNode["fields"].as< std::vector< string > >(),
-                                                 subNode["write_ghost_cells"].as< bool >(),
+                                                 subNode["fields"].as< std::vector< string > >( std::vector< string >() ),
+                                                 subNode["write_ghost_cells"].as< bool >( false ),
                                                  subNode["file_root"].as< string >( "vtkOutput" ) );
         outputs.push_back( sp );
       }
@@ -338,8 +338,90 @@ void operator>>( const YAML::Node & node,
   deck.setOutputs( outputs );
 }
 
+void fillWithMissingXmlInfo( xml_node & problem )
+{
+  xml_node laplaceFem = problem.append_child( "Solvers" ).append_child( "LaplaceFEM" );
+  laplaceFem.append_attribute( "name" ) = "laplace";
+  laplaceFem.append_attribute( "discretization" ) = "FE1";
+  laplaceFem.append_attribute( "timeIntegrationOption" ) = "SteadyState";
+  laplaceFem.append_attribute( "fieldName" ) = "Temperature";
+  laplaceFem.append_attribute( "targetRegions" ) = "{ Domain }";
+  laplaceFem.append_child( "LinearSolverParameters" ).append_attribute( "directParallel" ).set_value( 0 );
+
+  xpath_node events = problem.select_node( "Events" );
+  {
+    xml_node pe = events.node().append_child( "PeriodicEvent" );
+    pe.append_attribute( "name" ) = "solverApplications";
+    pe.append_attribute( "forceDt" ) = "1.0";
+    pe.append_attribute( "target" ) = "/Solvers/laplace";
+  }
+
+  problem.append_child( "Constitutive" ).append_child( "NullModel" ).append_attribute( "name" ).set_value( "nullModel" );
+
+  xml_node feldSpecifications = problem.append_child( "FieldSpecifications" );
+  {
+    xml_node fs = feldSpecifications.append_child( "FieldSpecification" );
+    fs.append_attribute( "name" ) = "sourceTerm";
+    fs.append_attribute( "fieldName" ) = "Temperature";
+    fs.append_attribute( "objectPath" ) = "nodeManager";
+    fs.append_attribute( "functionName" ) = "DirichletTimeFunction";
+    fs.append_attribute( "scale" ) = "1.0";
+    fs.append_attribute( "setNames" ) = "{ source }";
+  }
+  {
+    xml_node fs = feldSpecifications.append_child( "FieldSpecification" );
+    fs.append_attribute( "name" ) = "sinkTerm";
+    fs.append_attribute( "fieldName" ) = "Temperature";
+    fs.append_attribute( "objectPath" ) = "nodeManager";
+    fs.append_attribute( "scale" ) = "0.0";
+    fs.append_attribute( "setNames" ) = "{ sink }";
+  }
+
+  xml_node geometry = problem.append_child( "Geometry" );
+  {
+    xml_node box = geometry.append_child( "Box" );
+    box.append_attribute( "name" ) = "source";
+    box.append_attribute( "xMin" ) = "{ -0.01, -0.01, -0.01 }";
+    box.append_attribute( "xMax" ) = "{ +0.01, +1.01, +1.01 }";
+  }
+  {
+    xml_node box = geometry.append_child( "Box" );
+    box.append_attribute( "name" ) = "sink";
+    box.append_attribute( "xMin" ) = "{ +0.99, -0.01, -0.01 }";
+    box.append_attribute( "xMax" ) = "{ +1.01, +1.01, +1.01 }";
+  }
+
+  xml_node tableFunctions = problem.append_child( "Functions" ).append_child( "TableFunction" );
+  tableFunctions.append_attribute( "name" ) = "DirichletTimeFunction";
+  tableFunctions.append_attribute( "inputVarNames" ) = "{ time }";
+  tableFunctions.append_attribute( "coordinates" ) = "{ 0.0, 1.0, 2.0 }";
+  tableFunctions.append_attribute( "values" ) = "{ 0.0, 3.e2, 4.e3 }";
+
+  xml_node internalMesh = problem.append_child( "Mesh" ).append_child( "InternalMesh" );
+  internalMesh.append_attribute( "name" ) = "mesh";
+  internalMesh.append_attribute( "elementTypes" ) = "{ C3D8 }";
+  internalMesh.append_attribute( "xCoords" ) = "{ 0, 1 }";
+  internalMesh.append_attribute( "yCoords" ) = "{ 0, 1 }";
+  internalMesh.append_attribute( "zCoords" ) = "{ 0, 1 }";
+  internalMesh.append_attribute( "nx" ) = "{ 10 }";
+  internalMesh.append_attribute( "ny" ) = "{ 10 }";
+  internalMesh.append_attribute( "nz" ) = "{ 10 }";
+  internalMesh.append_attribute( "cellBlockNames" ) = "{ cb1 }";
+
+  xml_node cesr = problem.append_child( "ElementRegions" ).append_child( "CellElementRegion" );
+  cesr.append_attribute( "name" ) = "Domain";
+  cesr.append_attribute( "cellBlocks" ) = "{ cb1 }";
+  cesr.append_attribute( "materialList" ) = "{ nullModel }";
+
+  xml_node fes = problem.append_child( "NumericalMethods" ).append_child( "FiniteElements" ).append_child( "FiniteElementSpace" );
+  fes.append_attribute( "name" ) = "FE1";
+  fes.append_attribute( "order" ) = 1;
+}
+
 void convert( string const & stableInputFileName, xmlWrapper::xmlDocument & doc )
 {
+  xml_document & pugiDoc = doc.getPugiDocument();
+//  pugiDoc.select_node( "/Problem/Events" );
   xml_node problem = doc.appendChild( "Problem" );
 
   YAML::Node const input = YAML::LoadFile( stableInputFileName );
@@ -347,6 +429,8 @@ void convert( string const & stableInputFileName, xmlWrapper::xmlDocument & doc 
   input >> deck;
 
   deck.fillProblemXmlNode( problem );
+
+  fillWithMissingXmlInfo(problem );
 
   doc.getPugiDocument().save( std::cout, "    ", pugi::format_indent | pugi::format_indent_attributes );
 }
