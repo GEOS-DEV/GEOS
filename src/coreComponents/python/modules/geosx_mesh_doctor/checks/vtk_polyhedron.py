@@ -3,9 +3,11 @@ from dataclasses import dataclass
 from typing import (
     Collection,
     Dict,
+    FrozenSet,
     Iterable,
     List,
     Sequence,
+    Tuple,
 )
 
 from vtkmodules.vtkCommonCore import (
@@ -159,9 +161,10 @@ def build_face_to_face_connectivity_through_edges(face_stream: FaceStream, add_c
     :return: A graph which nodes are actually the faces of the polyhedron.
         Two nodes of the graph are connected if they share an edge.
     """
-    edges_to_face_indices = defaultdict(list)
+    edges_to_face_indices: Dict[FrozenSet[int], List[int]] = defaultdict(list)
     for face_index, face_nodes in enumerate(face_stream.face_nodes):
         # Each edge is defined by two nodes. We do a small trick to loop on consecutive points.
+        face_indices: Tuple[int, int]
         for face_indices in zip(face_nodes, face_nodes[1:] + (face_nodes[0], )):
             edges_to_face_indices[frozenset(face_indices)].append(face_index)
     # We are doing here some small validations w.r.t. the connections of the faces

@@ -53,7 +53,7 @@ class Result:
     errors: Sequence[tuple[int, int, int]]
 
 
-def __read_multiblock(vtk_input_file: str, matrix_name: str, fracture_name: str) -> (vtkUnstructuredGrid, vtkUnstructuredGrid):
+def __read_multiblock(vtk_input_file: str, matrix_name: str, fracture_name: str) -> Tuple[vtkUnstructuredGrid, vtkUnstructuredGrid]:
     reader = vtkXMLMultiBlockDataReader()
     reader.SetFileName(vtk_input_file)
     reader.Update()

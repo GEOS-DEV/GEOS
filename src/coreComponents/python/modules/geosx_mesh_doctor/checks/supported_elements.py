@@ -1,7 +1,13 @@
 from dataclasses import dataclass
 import logging
 import multiprocessing
-from typing import Sequence, Set
+from typing import (
+    Iterable,
+    Mapping,
+    Optional,
+    Sequence,
+    Set,
+)
 
 from tqdm import tqdm
 
@@ -13,6 +19,7 @@ from vtkmodules.vtkCommonCore import (
 )
 from vtkmodules.vtkCommonDataModel import (
     vtkCellTypes,
+    vtkUnstructuredGrid,
     VTK_HEXAGONAL_PRISM,
     VTK_HEXAHEDRON,
     VTK_PENTAGONAL_PRISM,
@@ -42,10 +49,14 @@ class Result:
     unsupported_polyhedron_elements: Sequence[int]  # list of polyhedron elements that could not be converted to supported std elements
 
 
-MESH = None  # for multiprocessing, vtkUnstructuredGrid cannot be pickled. Let's use a global variable instead.
+MESH: Optional[vtkUnstructuredGrid] = None  # for multiprocessing, vtkUnstructuredGrid cannot be pickled. Let's use a global variable instead.
+
 
 class IsPolyhedronConvertible:
-    def __init__(self):
+    def __init__(self, mesh: vtkUnstructuredGrid):
+        global MESH  # for multiprocessing, vtkUnstructuredGrid cannot be pickled. Let's use a global variable instead.
+        MESH = mesh
+
         def build_prism_graph(n: int, name: str) -> networkx.Graph:
             """
             Builds the face to face connectivities (through edges) for prism graphs.
@@ -59,12 +70,13 @@ class IsPolyhedronConvertible:
                 tmp.add_edge(node, n + 1)
             tmp.name = name
             return tmp
+
         # Building the reference graphs
         tet_graph = networkx.complete_graph(4)
         tet_graph.name = "Tetrahedron"
         pyr_graph = build_prism_graph(4, "Pyramid")
         pyr_graph.remove_node(5)  # Removing a node also removes its associated edges.
-        self.__reference_graphs = {
+        self.__reference_graphs: Mapping[int, Iterable[networkx.Graph]] = {
             4: (tet_graph,),
             5: (pyr_graph, build_prism_graph(3, "Wedge")),
             6: (build_prism_graph(4, "Hexahedron"),),
@@ -96,6 +108,8 @@ class IsPolyhedronConvertible:
         :param ic: The index element.
         :return: -1 if the polyhedron vtk element can be converted into a supported element type. The index otherwise.
         """
+        global MESH
+        assert MESH is not None
         if MESH.GetCellType(ic) != VTK_POLYHEDRON:
             return -1
         pt_ids = vtkIdList()
@@ -110,7 +124,7 @@ class IsPolyhedronConvertible:
             return ic
 
 
-def __check(mesh, options: Options) -> Result:
+def __check(mesh: vtkUnstructuredGrid, options: Options) -> Result:
     if hasattr(mesh, "GetDistinctCellTypesArray"):  # For more recent versions of vtk.
         cell_types = set(vtk_to_numpy(mesh.GetDistinctCellTypesArray()))
     else:
@@ -130,12 +144,10 @@ def __check(mesh, options: Options) -> Result:
     unsupported_std_elements_types = cell_types - supported_cell_types
 
     # Dealing with polyhedron elements.
-    global MESH  # for multiprocessing, vtkUnstructuredGrid cannot be pickled. Let's use a global variable instead.
-    MESH = mesh
     num_cells = mesh.GetNumberOfCells()
     result = numpy.ones(num_cells, dtype=int) * -1
     with multiprocessing.Pool(processes=options.num_proc) as pool:
-        generator = pool.imap_unordered(IsPolyhedronConvertible(), range(num_cells), chunksize=options.chunk_size)
+        generator = pool.imap_unordered(IsPolyhedronConvertible(mesh), range(num_cells), chunksize=options.chunk_size)
         for i, val in enumerate(tqdm(generator, total=num_cells, desc="Testing support for elements")):
             result[i] = val
     unsupported_polyhedron_elements = [i for i in result if i > -1]
@@ -144,5 +156,5 @@ def __check(mesh, options: Options) -> Result:
 
 
 def check(vtk_input_file: str, options: Options) -> Result:
-    mesh = vtk_utils.read_mesh(vtk_input_file)
+    mesh: vtkUnstructuredGrid = vtk_utils.read_mesh(vtk_input_file)
     return __check(mesh, options)
