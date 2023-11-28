@@ -308,14 +308,10 @@ inline HYPRE_Int getAMGRelaxationType( LinearSolverParameters::AMG::SmootherType
   static map< LinearSolverParameters::AMG::SmootherType, HYPRE_Int > const typeMap =
   {
     { LinearSolverParameters::AMG::SmootherType::default_, -1 },
-#if GEOS_USE_HYPRE_DEVICE == GEOS_USE_HYPRE_CUDA || GEOS_USE_HYPRE_DEVICE == GEOS_USE_HYPRE_HIP
-    { LinearSolverParameters::AMG::SmootherType::jacobi, 7 },
-#else
-    { LinearSolverParameters::AMG::SmootherType::jacobi, 0 },
-#endif
     { LinearSolverParameters::AMG::SmootherType::fgs, 3 },
     { LinearSolverParameters::AMG::SmootherType::bgs, 4 },
     { LinearSolverParameters::AMG::SmootherType::sgs, 6 },
+    { LinearSolverParameters::AMG::SmootherType::jacobi, 7 },
     { LinearSolverParameters::AMG::SmootherType::l1sgs, 8 },
     { LinearSolverParameters::AMG::SmootherType::chebyshev, 16 },
     { LinearSolverParameters::AMG::SmootherType::l1jacobi, 18 },
@@ -394,14 +390,10 @@ inline HYPRE_Int getAMGCoarseType( LinearSolverParameters::AMG::CoarseType const
   static map< LinearSolverParameters::AMG::CoarseType, HYPRE_Int > const typeMap =
   {
     { LinearSolverParameters::AMG::CoarseType::default_, -1 },
-#if GEOS_USE_HYPRE_DEVICE == GEOS_USE_HYPRE_CUDA || GEOS_USE_HYPRE_DEVICE == GEOS_USE_HYPRE_HIP
-    { LinearSolverParameters::AMG::CoarseType::jacobi, 7 },
-#else
-    { LinearSolverParameters::AMG::CoarseType::jacobi, 0 },
-#endif
     { LinearSolverParameters::AMG::CoarseType::fgs, 3 },
     { LinearSolverParameters::AMG::CoarseType::bgs, 4 },
     { LinearSolverParameters::AMG::CoarseType::sgs, 6 },
+    { LinearSolverParameters::AMG::CoarseType::jacobi, 7 },
     { LinearSolverParameters::AMG::CoarseType::l1sgs, 8 },
     { LinearSolverParameters::AMG::CoarseType::direct, 9 },
     { LinearSolverParameters::AMG::CoarseType::chebyshev, 16 },
@@ -438,14 +430,10 @@ inline HYPRE_Int getRelaxationType( LinearSolverParameters::PreconditionerType c
 {
   static map< LinearSolverParameters::PreconditionerType, HYPRE_Int > const typeMap =
   {
-#if GEOS_USE_HYPRE_DEVICE == GEOS_USE_HYPRE_CUDA || GEOS_USE_HYPRE_DEVICE == GEOS_USE_HYPRE_HIP
-    { LinearSolverParameters::PreconditionerType::jacobi, 7 },
-#else
-    { LinearSolverParameters::PreconditionerType::jacobi, 0 },
-#endif
     { LinearSolverParameters::PreconditionerType::fgs, 3 },
     { LinearSolverParameters::PreconditionerType::bgs, 4 },
     { LinearSolverParameters::PreconditionerType::sgs, 6 },
+    { LinearSolverParameters::PreconditionerType::jacobi, 7 },
     { LinearSolverParameters::PreconditionerType::l1sgs, 8 },
     { LinearSolverParameters::PreconditionerType::chebyshev, 16 },
     { LinearSolverParameters::PreconditionerType::l1jacobi, 18 },
@@ -531,28 +519,18 @@ enum class MGRCoarseGridMethod : HYPRE_Int
 };
 
 /**
- * @enum MGRFRelaxationMethod
- * @brief This enum class specifies the F-relaxation strategy.
- */
-enum class MGRFRelaxationMethod : HYPRE_Int
-{
-  singleLevel = 0, //!< single-level relaxation
-  multilevel = 1,  //!< multilevel relaxation
-  amgVCycle = 2    //!< multilevel relaxation
-};
-
-/**
  * @enum MGRFRelaxationType
  * @brief This enum class specifies the F-relaxation type.
  */
 enum class MGRFRelaxationType : HYPRE_Int
 {
-  jacobi = 0,                       //!< Jacobi
+  none = -1,                        //!< no F-relaxation if performed
   singleVCycleSmoother = 1,         //!< V(1,0) cycle smoother
   amgVCycle = 2,                    //!< Full AMG VCycle solver
   forwardHybridGaussSeidel = 3,     //!< hybrid Gauss-Seidel or SOR, forward solve
   backwardHybridGaussSeidel = 4,    //!< hybrid Gauss-Seidel or SOR, backward solve
   hybridSymmetricGaussSeidel = 6,   //!< hybrid symmetric Gauss-Seidel or SSOR
+  jacobi = 7,                       //!< Jacobi
   l1hybridSymmetricGaussSeidel = 8, //!< \f$\ell_1\f$-scaled hybrid symmetric Gauss-Seidel
   gsElim = 9,                       //!< Gaussian Elimination direct solver (for small systems)
   l1forwardGaussSeidel = 13,        //!< \f$\ell_1\f$ Gauss-Seidel, forward solve
@@ -568,9 +546,11 @@ enum class MGRFRelaxationType : HYPRE_Int
  */
 enum class MGRGlobalSmootherType : HYPRE_Int
 {
-  blockJacobi = 0, //!< block Jacobi (default)
-  jacobi = 1,      //!< Jacobi
-  ilu0 = 16        //!< incomplete LU factorization
+  none = -1,            //!< no global smoothing is performed (default)
+  blockJacobi = 0,      //!< block Jacobi
+  blockGaussSeidel = 1, //!< block Jacobi
+  jacobi = 2,           //!< Jacobi
+  ilu0 = 16             //!< incomplete LU factorization
 };
 
 } // namespace hypre
