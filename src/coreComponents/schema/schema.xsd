@@ -2044,7 +2044,7 @@ the relative residual norm satisfies:
 		<!--outputSeismoTrace => Flag that indicates if we write the seismo trace in a file .txt, 0 no output, 1 otherwise-->
 		<xsd:attribute name="outputSeismoTrace" type="integer" default="0" />
 		<!--receiverCoordinates => Coordinates (x,y,z) of the receivers-->
-		<xsd:attribute name="receiverCoordinates" type="real64_array2d" use="required" />
+		<xsd:attribute name="receiverCoordinates" type="real64_array2d" default="{{0}}" />
 		<!--rickerOrder => Flag that indicates the order of the Ricker to be used o, 1 or 2. Order 2 by default-->
 		<xsd:attribute name="rickerOrder" type="integer" default="2" />
 		<!--saveFields => Set to 1 to save fields during forward and restore them during backward-->
@@ -2052,7 +2052,7 @@ the relative residual norm satisfies:
 		<!--shotIndex => Set the current shot for temporary files-->
 		<xsd:attribute name="shotIndex" type="integer" default="0" />
 		<!--sourceCoordinates => Coordinates (x,y,z) of the sources-->
-		<xsd:attribute name="sourceCoordinates" type="real64_array2d" use="required" />
+		<xsd:attribute name="sourceCoordinates" type="real64_array2d" default="{{0}}" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="string_array" use="required" />
 		<!--timeSourceDelay => Source time delay (1 / f0 by default)-->
@@ -2092,7 +2092,7 @@ the relative residual norm satisfies:
 		<!--outputSeismoTrace => Flag that indicates if we write the seismo trace in a file .txt, 0 no output, 1 otherwise-->
 		<xsd:attribute name="outputSeismoTrace" type="integer" default="0" />
 		<!--receiverCoordinates => Coordinates (x,y,z) of the receivers-->
-		<xsd:attribute name="receiverCoordinates" type="real64_array2d" use="required" />
+		<xsd:attribute name="receiverCoordinates" type="real64_array2d" default="{{0}}" />
 		<!--rickerOrder => Flag that indicates the order of the Ricker to be used o, 1 or 2. Order 2 by default-->
 		<xsd:attribute name="rickerOrder" type="integer" default="2" />
 		<!--saveFields => Set to 1 to save fields during forward and restore them during backward-->
@@ -2100,7 +2100,7 @@ the relative residual norm satisfies:
 		<!--shotIndex => Set the current shot for temporary files-->
 		<xsd:attribute name="shotIndex" type="integer" default="0" />
 		<!--sourceCoordinates => Coordinates (x,y,z) of the sources-->
-		<xsd:attribute name="sourceCoordinates" type="real64_array2d" use="required" />
+		<xsd:attribute name="sourceCoordinates" type="real64_array2d" default="{{0}}" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="string_array" use="required" />
 		<!--timeSourceDelay => Source time delay (1 / f0 by default)-->
@@ -2140,7 +2140,7 @@ the relative residual norm satisfies:
 		<!--outputSeismoTrace => Flag that indicates if we write the seismo trace in a file .txt, 0 no output, 1 otherwise-->
 		<xsd:attribute name="outputSeismoTrace" type="integer" default="0" />
 		<!--receiverCoordinates => Coordinates (x,y,z) of the receivers-->
-		<xsd:attribute name="receiverCoordinates" type="real64_array2d" use="required" />
+		<xsd:attribute name="receiverCoordinates" type="real64_array2d" default="{{0}}" />
 		<!--rickerOrder => Flag that indicates the order of the Ricker to be used o, 1 or 2. Order 2 by default-->
 		<xsd:attribute name="rickerOrder" type="integer" default="2" />
 		<!--saveFields => Set to 1 to save fields during forward and restore them during backward-->
@@ -2148,7 +2148,7 @@ the relative residual norm satisfies:
 		<!--shotIndex => Set the current shot for temporary files-->
 		<xsd:attribute name="shotIndex" type="integer" default="0" />
 		<!--sourceCoordinates => Coordinates (x,y,z) of the sources-->
-		<xsd:attribute name="sourceCoordinates" type="real64_array2d" use="required" />
+		<xsd:attribute name="sourceCoordinates" type="real64_array2d" default="{{0}}" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="string_array" use="required" />
 		<!--timeSourceDelay => Source time delay (1 / f0 by default)-->
@@ -2403,7 +2403,7 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		<!--outputSeismoTrace => Flag that indicates if we write the seismo trace in a file .txt, 0 no output, 1 otherwise-->
 		<xsd:attribute name="outputSeismoTrace" type="integer" default="0" />
 		<!--receiverCoordinates => Coordinates (x,y,z) of the receivers-->
-		<xsd:attribute name="receiverCoordinates" type="real64_array2d" use="required" />
+		<xsd:attribute name="receiverCoordinates" type="real64_array2d" default="{{0}}" />
 		<!--rickerOrder => Flag that indicates the order of the Ricker to be used o, 1 or 2. Order 2 by default-->
 		<xsd:attribute name="rickerOrder" type="integer" default="2" />
 		<!--saveFields => Set to 1 to save fields during forward and restore them during backward-->
@@ -2411,7 +2411,7 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		<!--shotIndex => Set the current shot for temporary files-->
 		<xsd:attribute name="shotIndex" type="integer" default="0" />
 		<!--sourceCoordinates => Coordinates (x,y,z) of the sources-->
-		<xsd:attribute name="sourceCoordinates" type="real64_array2d" use="required" />
+		<xsd:attribute name="sourceCoordinates" type="real64_array2d" default="{{0}}" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="string_array" use="required" />
 		<!--timeSourceDelay => Source time delay (1 / f0 by default)-->
@@ -2451,7 +2451,7 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		<!--outputSeismoTrace => Flag that indicates if we write the seismo trace in a file .txt, 0 no output, 1 otherwise-->
 		<xsd:attribute name="outputSeismoTrace" type="integer" default="0" />
 		<!--receiverCoordinates => Coordinates (x,y,z) of the receivers-->
-		<xsd:attribute name="receiverCoordinates" type="real64_array2d" use="required" />
+		<xsd:attribute name="receiverCoordinates" type="real64_array2d" default="{{0}}" />
 		<!--rickerOrder => Flag that indicates the order of the Ricker to be used o, 1 or 2. Order 2 by default-->
 		<xsd:attribute name="rickerOrder" type="integer" default="2" />
 		<!--saveFields => Set to 1 to save fields during forward and restore them during backward-->
@@ -2459,7 +2459,7 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		<!--shotIndex => Set the current shot for temporary files-->
 		<xsd:attribute name="shotIndex" type="integer" default="0" />
 		<!--sourceCoordinates => Coordinates (x,y,z) of the sources-->
-		<xsd:attribute name="sourceCoordinates" type="real64_array2d" use="required" />
+		<xsd:attribute name="sourceCoordinates" type="real64_array2d" default="{{0}}" />
 		<!--sourceForce => Force of the source: 3 real values for a vector source, and 6 real values for a tensor source (in Voigt notation).The default value is { 0, 0, 0 } (no net force).-->
 		<xsd:attribute name="sourceForce" type="R1Tensor" default="{0,0,0}" />
 		<!--sourceMoment => Moment of the source: 6 real values describing a symmetric tensor in Voigt notation.The default value is { 1, 1, 1, 0, 0, 0 } (diagonal moment, corresponding to a pure explosion).-->
