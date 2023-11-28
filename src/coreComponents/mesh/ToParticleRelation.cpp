@@ -30,11 +30,11 @@ void erase( OrderedVariableToManyParticleRelation & relation,
             localIndex const esr,
             localIndex const ei )
 {
-  for( localIndex a=relation.m_toParticleRegion.sizeOfArray( firstIndex )-1; a>=0; --a )
+  for( localIndex a = relation.m_toParticleRegion.sizeOfArray( firstIndex ) - 1; a >= 0; --a )
   {
-    if( er==relation.m_toParticleRegion[firstIndex][a] &&
-        esr==relation.m_toParticleSubRegion[firstIndex][a] &&
-        ei==relation.m_toParticleIndex[firstIndex][a] )
+    if( er == relation.m_toParticleRegion[firstIndex][a] &&
+        esr == relation.m_toParticleSubRegion[firstIndex][a] &&
+        ei == relation.m_toParticleIndex[firstIndex][a] )
     {
       relation.m_numParticles[firstIndex]--;
       relation.m_toParticleRegion.eraseFromArray( firstIndex, a );
@@ -51,11 +51,11 @@ void insert( OrderedVariableToManyParticleRelation & relation,
              localIndex const ei )
 {
   bool alreadyPresent = false;
-  for( localIndex a=0; a<relation.m_toParticleRegion.sizeOfArray( firstIndex ); ++a )
+  for( localIndex a = 0; a < relation.m_toParticleRegion.sizeOfArray( firstIndex ); ++a )
   {
-    if( er==relation.m_toParticleRegion[firstIndex][a] &&
-        esr==relation.m_toParticleSubRegion[firstIndex][a] &&
-        ei==relation.m_toParticleIndex[firstIndex][a] )
+    if( er == relation.m_toParticleRegion[firstIndex][a] &&
+        esr == relation.m_toParticleSubRegion[firstIndex][a] &&
+        ei == relation.m_toParticleIndex[firstIndex][a] )
     {
       alreadyPresent = true;
     }

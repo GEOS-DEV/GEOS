@@ -108,7 +108,7 @@ public:
     {}
 
     /// Local stack storage for nodal displacements.
-    real64 uLocal[ numNodesPerElem ][ numDofPerTrialSupportPoint ];
+    real64 uLocal[numNodesPerElem][numDofPerTrialSupportPoint];
   };
   //*****************************************************************************
 

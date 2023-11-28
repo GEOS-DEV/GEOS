@@ -92,9 +92,9 @@ constexpr real64 DEFAULT_REL_TOL = std::numeric_limits< real64 >::epsilon();
     return ::testing::AssertionFailure() << std::scientific << std::setprecision( 5 )
                                          << " relative error: " << delta / value
                                          << " (" << v1 << " vs " << v2 << "),"
-                                         << " exceeds " << relTol <<". "
+                                         << " exceeds " << relTol << ". "
                                          << " absolute error: " << delta << " exeeds "
-                                         << absTol <<std::endl;
+                                         << absTol << std::endl;
   }
   return ::testing::AssertionSuccess();
 }

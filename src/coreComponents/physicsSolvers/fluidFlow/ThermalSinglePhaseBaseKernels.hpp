@@ -238,7 +238,7 @@ public:
     Base::computeAccumulation( ei, stack, [&] ()
     {
       // Step 1: assemble the derivatives of the mass balance equation w.r.t temperature
-      stack.localJacobian[0][numDof-1] = stack.poreVolume * m_dDensity_dTemp[ei][0] + stack.dPoreVolume_dTemp * m_density[ei][0];
+      stack.localJacobian[0][numDof - 1] = stack.poreVolume * m_dDensity_dTemp[ei][0] + stack.dPoreVolume_dTemp * m_density[ei][0];
 
       // Step 2: assemble the fluid part of the accumulation term of the energy equation
       real64 const fluidEnergy = stack.poreVolume * m_density[ei][0] * m_internalEnergy[ei][0];
@@ -253,17 +253,17 @@ public:
                                      + stack.dPoreVolume_dTemp * m_density[ei][0] * m_internalEnergy[ei][0];
 
       // local accumulation
-      stack.localResidual[numEqn-1] = fluidEnergy - fluidEnergy_n;
+      stack.localResidual[numEqn - 1] = fluidEnergy - fluidEnergy_n;
 
       // derivatives w.r.t. pressure and temperature
-      stack.localJacobian[numEqn-1][0]        = dFluidEnergy_dP;
-      stack.localJacobian[numEqn-1][numDof-1] = dFluidEnergy_dT;
+      stack.localJacobian[numEqn - 1][0]        = dFluidEnergy_dP;
+      stack.localJacobian[numEqn - 1][numDof - 1] = dFluidEnergy_dT;
     } );
 
     // Step 3: assemble the solid part of the accumulation term of the energy equation
-    stack.localResidual[numEqn-1] += stack.solidEnergy - stack.solidEnergy_n;
-    stack.localJacobian[numEqn-1][0] += stack.dSolidEnergy_dPres;
-    stack.localJacobian[numEqn-1][numDof-1] += stack.dSolidEnergy_dTemp;
+    stack.localResidual[numEqn - 1] += stack.solidEnergy - stack.solidEnergy_n;
+    stack.localJacobian[numEqn - 1][0] += stack.dSolidEnergy_dPres;
+    stack.localJacobian[numEqn - 1][numDof - 1] += stack.dSolidEnergy_dTemp;
   }
 
   /**
@@ -279,10 +279,10 @@ public:
     Base::complete( ei, stack );
 
     // Step 2: assemble the energy equation
-    m_localRhs[stack.localRow + numEqn-1] += stack.localResidual[numEqn-1];
-    m_localMatrix.template addToRow< serialAtomic >( stack.localRow + numEqn-1,
+    m_localRhs[stack.localRow + numEqn - 1] += stack.localResidual[numEqn - 1];
+    m_localMatrix.template addToRow< serialAtomic >( stack.localRow + numEqn - 1,
                                                      stack.dofIndices,
-                                                     stack.localJacobian[numEqn-1],
+                                                     stack.localJacobian[numEqn - 1],
                                                      numDof );
 
 

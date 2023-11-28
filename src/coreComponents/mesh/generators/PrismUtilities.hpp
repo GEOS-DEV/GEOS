@@ -46,7 +46,7 @@ localIndex getFaceNodesPrism( localIndex const faceNum,
     GEOS_ERROR_IF_LT_MSG( faceNodes.size(), 4, GEOS_FMT( nodeCountError, N, faceNum ) << generalMeshErrorAdvice );
     faceNodes[0] = elemNodes[0];
     faceNodes[1] = elemNodes[1];
-    faceNodes[2] = elemNodes[N+1];
+    faceNodes[2] = elemNodes[N + 1];
     faceNodes[3] = elemNodes[N];
     return 4;
   }
@@ -54,9 +54,9 @@ localIndex getFaceNodesPrism( localIndex const faceNum,
   {
     GEOS_ERROR_IF_LT_MSG( faceNodes.size(), N, GEOS_FMT( nodeCountError, N, faceNum ) << generalMeshErrorAdvice );
     faceNodes[0] = elemNodes[0];
-    for( localIndex i = 1; i <  N; ++i )
+    for( localIndex i = 1; i < N; ++i )
     {
-      faceNodes[i] = elemNodes[N-i];
+      faceNodes[i] = elemNodes[N - i];
     }
     return N;
   }
@@ -65,25 +65,25 @@ localIndex getFaceNodesPrism( localIndex const faceNum,
     GEOS_ERROR_IF_LT_MSG( faceNodes.size(), 4, GEOS_FMT( nodeCountError, N, faceNum ) << generalMeshErrorAdvice );
     faceNodes[0] = elemNodes[0];
     faceNodes[1] = elemNodes[N];
-    faceNodes[2] = elemNodes[N*2-1];
-    faceNodes[3] = elemNodes[N-1];
+    faceNodes[2] = elemNodes[N * 2 - 1];
+    faceNodes[3] = elemNodes[N - 1];
     return 4;
   }
   else if( faceNum >= 3 && faceNum <= N )
   {
     GEOS_ERROR_IF_LT_MSG( faceNodes.size(), 4, GEOS_FMT( nodeCountError, N, faceNum ) << generalMeshErrorAdvice );
-    faceNodes[0] = elemNodes[faceNum-2];
-    faceNodes[1] = elemNodes[faceNum-1];
-    faceNodes[2] = elemNodes[N+faceNum-1];
-    faceNodes[3] = elemNodes[N+faceNum-2];
+    faceNodes[0] = elemNodes[faceNum - 2];
+    faceNodes[1] = elemNodes[faceNum - 1];
+    faceNodes[2] = elemNodes[N + faceNum - 1];
+    faceNodes[3] = elemNodes[N + faceNum - 2];
     return 4;
   }
   else if( faceNum == N + 1 )
   {
     GEOS_ERROR_IF_LT_MSG( faceNodes.size(), N, GEOS_FMT( nodeCountError, N, faceNum ) << generalMeshErrorAdvice );
-    for( localIndex i = 0; i <  N; ++i )
+    for( localIndex i = 0; i < N; ++i )
     {
-      faceNodes[i] = elemNodes[i+N];
+      faceNodes[i] = elemNodes[i + N];
     }
     return N;
   }

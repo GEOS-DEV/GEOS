@@ -132,7 +132,7 @@ localIndex Pack( buffer_unit_type * & buffer,
 {
   localIndex sizeOfPackedChars = 0;
   sizeOfPackedChars += Pack< DO_PACKING >( buffer, var.size() );
-  for( localIndex a=0; a<var.size(); ++a )
+  for( localIndex a = 0; a < var.size(); ++a )
   {
     sizeOfPackedChars += Pack< DO_PACKING >( buffer, var.sizeOfArray( a ) );
     T const * const data = var[a];
@@ -147,7 +147,7 @@ localIndex Pack( buffer_unit_type * & buffer,
 {
   localIndex sizeOfPackedChars = 0;
   sizeOfPackedChars += Pack< DO_PACKING >( buffer, var.size() );
-  for( localIndex a=0; a<var.size(); ++a )
+  for( localIndex a = 0; a < var.size(); ++a )
   {
     sizeOfPackedChars += Pack< DO_PACKING >( buffer, var.sizeOfSet( a ) );
     T const * const data = var[a];
@@ -212,7 +212,7 @@ PackPointer( buffer_unit_type * & buffer,
   localIndex sizeOfPackedChars = Pack< DO_PACKING >( buffer, length );
   for( INDEX_TYPE a = 0; a < length; ++a )
   {
-    sizeOfPackedChars += Pack< DO_PACKING >( buffer, var[ a ] );
+    sizeOfPackedChars += Pack< DO_PACKING >( buffer, var[a] );
   }
 
   return sizeOfPackedChars;
@@ -231,7 +231,7 @@ PackArray( buffer_unit_type * & buffer,
     T * const GEOS_RESTRICT buffer_T = reinterpret_cast< T * >( buffer );
     for( INDEX_TYPE i = 0; i < length; ++i )
     {
-      buffer_T[ i ] = var[ i ];
+      buffer_T[i] = var[i];
     }
     buffer += length * sizeof(T);
   }
@@ -247,7 +247,7 @@ PackArray( buffer_unit_type * & buffer,
   localIndex sizeOfPackedChars = Pack< DO_PACKING >( buffer, length );
   for( INDEX_TYPE a = 0; a < length; ++a )
   {
-    sizeOfPackedChars += Pack< DO_PACKING >( buffer, var[ a ] );
+    sizeOfPackedChars += Pack< DO_PACKING >( buffer, var[a] );
   }
   return sizeOfPackedChars;
 }
@@ -264,7 +264,7 @@ PackByIndex( buffer_unit_type * & buffer,
   localIndex sizeOfPackedChars = PackPointer< DO_PACKING >( buffer, var.strides(), NDIM );
   for( localIndex a = 0; a < indices.size(); ++a )
   {
-    LvArray::forValuesInSlice( var[ indices[ a ] ],
+    LvArray::forValuesInSlice( var[indices[a]],
                                [&sizeOfPackedChars, &buffer]( T const & value )
     {
       sizeOfPackedChars += Pack< DO_PACKING >( buffer, value );
@@ -352,7 +352,7 @@ Unpack( buffer_unit_type const * & buffer,
   var.clear();
   localIndex set_length;
   localIndex sizeOfUnpackedChars = Unpack( buffer, set_length );
-  for( localIndex a=0; a<set_length; ++a )
+  for( localIndex a = 0; a < set_length; ++a )
   {
     T temp;
     sizeOfUnpackedChars += Unpack( buffer, temp );
@@ -372,7 +372,7 @@ Unpack( buffer_unit_type const * & buffer,
 
   localIndex strides[NDIM];
   sizeOfUnpackedChars += UnpackPointer( buffer, strides, NDIM );
-  for( int i=0; i<NDIM; ++i )
+  for( int i = 0; i < NDIM; ++i )
   {
     GEOS_ASSERT_EQ( strides[i], var.strides()[i] );
   }
@@ -389,7 +389,7 @@ localIndex Unpack( buffer_unit_type const * & buffer,
   localIndex numOfArrays;
   sizeOfUnpackedChars += Unpack( buffer, numOfArrays );
   var.resize( numOfArrays );
-  for( localIndex a=0; a<numOfArrays; ++a )
+  for( localIndex a = 0; a < numOfArrays; ++a )
   {
     localIndex sizeOfArray;
     sizeOfUnpackedChars += Unpack( buffer, sizeOfArray );
@@ -497,7 +497,7 @@ UnpackPointer( buffer_unit_type const * & buffer,
   GEOS_ASSERT_EQ( length, expectedLength );
   GEOS_DEBUG_VAR( expectedLength );
 
-  for( INDEX_TYPE a=0; a<length; ++a )
+  for( INDEX_TYPE a = 0; a < length; ++a )
   {
     sizeOfUnpackedChars += Unpack( buffer, var[a] );
   }
@@ -519,7 +519,7 @@ UnpackArray( buffer_unit_type const * & buffer,
   T const * const GEOS_RESTRICT buffer_T = reinterpret_cast< T const * >( buffer );
   for( INDEX_TYPE i = 0; i < length; ++i )
   {
-    var[ i ] = buffer_T[ i ];
+    var[i] = buffer_T[i];
   }
 
   buffer += length * sizeof(T);
@@ -538,7 +538,7 @@ UnpackArray( buffer_unit_type const * & buffer,
   GEOS_DEBUG_VAR( expectedLength );
   GEOS_ASSERT_EQ( length, expectedLength );
 
-  for( INDEX_TYPE a=0; a<length; ++a )
+  for( INDEX_TYPE a = 0; a < length; ++a )
   {
     sizeOfUnpackedChars += Unpack( buffer, var[a] );
   }
@@ -558,9 +558,9 @@ UnpackByIndex( buffer_unit_type const * & buffer,
   localIndex strides[NDIM];
   localIndex sizeOfUnpackedChars = UnpackPointer( buffer, strides, NDIM );
 
-  for( localIndex a=0; a<indices.size(); ++a )
+  for( localIndex a = 0; a < indices.size(); ++a )
   {
-    LvArray::forValuesInSlice( var[ indices[ a ] ],
+    LvArray::forValuesInSlice( var[indices[a]],
                                [&sizeOfUnpackedChars, &buffer] ( T & value )
     {
       sizeOfUnpackedChars += Unpack( buffer, value );
@@ -618,9 +618,9 @@ localIndex Pack( buffer_unit_type * & buffer,
 {
   localIndex sizeOfPackedChars = Pack< DO_PACKING >( buffer, length );
 
-  for( localIndex a=0; a<length; ++a )
+  for( localIndex a = 0; a < length; ++a )
   {
-    sizeOfPackedChars += Pack< DO_PACKING >( buffer, var[ indices[a] ] );
+    sizeOfPackedChars += Pack< DO_PACKING >( buffer, var[indices[a]] );
   }
 
   return sizeOfPackedChars;
@@ -634,9 +634,9 @@ localIndex Unpack( buffer_unit_type const * & buffer,
 {
   localIndex sizeOfUnpackedChars = Unpack( buffer, length );
 
-  for( INDEX_TYPE a=0; a<length; ++a )
+  for( INDEX_TYPE a = 0; a < length; ++a )
   {
-    sizeOfUnpackedChars += Unpack( buffer, var[ indices[a] ] );
+    sizeOfUnpackedChars += Unpack( buffer, var[indices[a]] );
   }
 
   return sizeOfUnpackedChars;
@@ -652,9 +652,9 @@ Pack( buffer_unit_type * & buffer,
 {
   localIndex sizeOfPackedChars = Pack< DO_PACKING >( buffer, length );
 
-  for( INDEX_TYPE a=0; a<length; ++a )
+  for( INDEX_TYPE a = 0; a < length; ++a )
   {
-    sizeOfPackedChars += Pack< DO_PACKING >( buffer, var[ a ] );
+    sizeOfPackedChars += Pack< DO_PACKING >( buffer, var[a] );
   }
 
   return sizeOfPackedChars;
@@ -674,7 +674,7 @@ Unpack( buffer_unit_type const * & buffer,
   T const * const GEOS_RESTRICT buffer_T = reinterpret_cast< T const * >( buffer );
   for( INDEX_TYPE i = 0; i < length; ++i )
   {
-    var[ i ] = buffer_T[ i ];
+    var[i] = buffer_T[i];
   }
 
   buffer += length * sizeof(T);
@@ -694,7 +694,7 @@ Unpack( buffer_unit_type const * & buffer,
   GEOS_DEBUG_VAR( expectedLength );
   GEOS_ASSERT_EQ( length, expectedLength );
 
-  for( INDEX_TYPE a=0; a<length; ++a )
+  for( INDEX_TYPE a = 0; a < length; ++a )
   {
     sizeOfUnpackedChars += Unpack( buffer, var[a] );
   }
@@ -712,9 +712,9 @@ Pack( buffer_unit_type * & buffer,
 {
   localIndex sizeOfPackedChars = Pack< DO_PACKING >( buffer, length );
 
-  for( INDEX_TYPE a=0; a<length; ++a )
+  for( INDEX_TYPE a = 0; a < length; ++a )
   {
-    sizeOfPackedChars += Pack< DO_PACKING >( buffer, var[ indices[a] ] );
+    sizeOfPackedChars += Pack< DO_PACKING >( buffer, var[indices[a]] );
   }
 
   return sizeOfPackedChars;
@@ -733,9 +733,9 @@ Unpack( buffer_unit_type const * & buffer,
 
   sizeOfUnpackedChars += Unpack( buffer, length );
 
-  for( INDEX_TYPE a=0; a<length; ++a )
+  for( INDEX_TYPE a = 0; a < length; ++a )
   {
-    sizeOfUnpackedChars += Unpack( buffer, var[ indices[a] ] );
+    sizeOfUnpackedChars += Unpack( buffer, var[indices[a]] );
   }
 
   return sizeOfUnpackedChars;
@@ -749,12 +749,12 @@ localIndex Pack( buffer_unit_type * & buffer,
                  SortedArray< globalIndex > const & unmappedGlobalIndices,
                  arraySlice1d< globalIndex const, USD > const & localToGlobal )
 {
-  const localIndex length = LvArray::integerConversion< localIndex >( var.size()+unmappedGlobalIndices.size());
+  const localIndex length = LvArray::integerConversion< localIndex >( var.size() + unmappedGlobalIndices.size());
   localIndex sizeOfPackedChars = Pack< DO_PACKING >( buffer, length );
 
   for( localIndex const lid : var )
   {
-    sizeOfPackedChars += Pack< DO_PACKING >( buffer, localToGlobal[ lid ] );
+    sizeOfPackedChars += Pack< DO_PACKING >( buffer, localToGlobal[lid] );
   }
 
   for( globalIndex const gid : unmappedGlobalIndices )
@@ -781,12 +781,12 @@ localIndex Unpack( buffer_unit_type const * & buffer,
   localIndex set_length;
   localIndex sizeOfUnpackedChars = Unpack( buffer, set_length );
 
-  for( localIndex a=0; a<set_length; ++a )
+  for( localIndex a = 0; a < set_length; ++a )
   {
     globalIndex temp;
     sizeOfUnpackedChars += Unpack( buffer, temp );
     typename mapBase< globalIndex, localIndex, SORTED >::const_iterator iter = globalToLocalMap.find( temp );
-    if( iter==globalToLocalMap.end() )
+    if( iter == globalToLocalMap.end() )
     {
       unmappedGlobalIndices.insert( temp );
     }
@@ -813,9 +813,9 @@ localIndex Pack( buffer_unit_type * & buffer,
 
   localIndex sizeOfPackedChars = Pack< DO_PACKING >( buffer, length );
 
-  for( localIndex a=0; a< packList.size(); ++a )
+  for( localIndex a = 0; a < packList.size(); ++a )
   {
-    if( var.count( packList[ a ] ) )
+    if( var.count( packList[a] ) )
     {
       sizeOfPackedChars += Pack< DO_PACKING >( buffer, localToGlobal[packList[a]] );
     }
@@ -847,7 +847,7 @@ localIndex Pack( buffer_unit_type * & buffer,
   localIndex sizeOfPackedChars = Pack< DO_PACKING >( buffer, length );
 
 
-  for( localIndex a=0; a<length; ++a )
+  for( localIndex a = 0; a < length; ++a )
   {
     sizeOfPackedChars += Pack< DO_PACKING >( buffer, localToGlobal[temp[a]] );
   }
@@ -869,7 +869,7 @@ Pack( buffer_unit_type * & buffer,
   localIndex sizeOfPackedChars = 0;
 
   sizeOfPackedChars += Pack< DO_PACKING >( buffer, indices.size() );
-  for( localIndex a=0; a<indices.size(); ++a )
+  for( localIndex a = 0; a < indices.size(); ++a )
   {
     sizeOfPackedChars += Pack< DO_PACKING >( buffer, var.sizeOfArray( indices[a] ) );
     T const * const data = var[indices[a]];
@@ -889,9 +889,9 @@ Unpack( buffer_unit_type const * & buffer,
   localIndex numUnpackedIndices;
   sizeOfUnpackedChars += Unpack( buffer, numUnpackedIndices );
 
-  GEOS_ERROR_IF( numUnpackedIndices!=indices.size(), "number of unpacked indices does not equal expected number" );
+  GEOS_ERROR_IF( numUnpackedIndices != indices.size(), "number of unpacked indices does not equal expected number" );
 
-  for( localIndex a=0; a<indices.size(); ++a )
+  for( localIndex a = 0; a < indices.size(); ++a )
   {
     localIndex sizeOfSubArray;
     sizeOfUnpackedChars += Unpack( buffer, sizeOfSubArray );
@@ -911,12 +911,12 @@ localIndex Pack( buffer_unit_type * & buffer,
                  arraySlice1d< globalIndex const > const & localToGlobalMap )
 {
   localIndex sizeOfPackedChars = Pack< DO_PACKING >( buffer, length );
-  sizeOfPackedChars += length*sizeof(globalIndex);
+  sizeOfPackedChars += length * sizeof(globalIndex);
 
   if( DO_PACKING )
   {
     globalIndex * const buffer_GI = reinterpret_cast< globalIndex * >(buffer);
-    for( localIndex a=0; a<length; ++a )
+    for( localIndex a = 0; a < length; ++a )
     {
       if( var[a] != unmappedLocalIndexValue )
       {
@@ -949,7 +949,7 @@ Unpack( buffer_unit_type const * & buffer,
   unmappedGlobalIndices.setValues< serialPolicy >( unmappedLocalIndexValue );
 
   bool unpackedGlobalFlag = false;
-  for( localIndex a=0; a<length; ++a )
+  for( localIndex a = 0; a < length; ++a )
   {
     globalIndex unpackedGlobalIndex;
     sizeOfUnpackedChars += Unpack( buffer, unpackedGlobalIndex );
@@ -985,7 +985,7 @@ UnpackSyncList( buffer_unit_type const * & buffer,
   localIndex sizeOfUnpackedChars = Unpack( buffer, length );
   var.resize( length );
 
-  for( localIndex a=0; a<length; ++a )
+  for( localIndex a = 0; a < length; ++a )
   {
     globalIndex unpackedGlobalIndex;
     sizeOfUnpackedChars += Unpack( buffer, unpackedGlobalIndex );
@@ -1012,7 +1012,7 @@ Unpack( buffer_unit_type const * & buffer,
   unmappedGlobalIndices.setValues< serialPolicy >( unmappedLocalIndexValue );
 
   bool unpackedGlobalFlag = false;
-  for( localIndex a=0; a<length; ++a )
+  for( localIndex a = 0; a < length; ++a )
   {
     globalIndex unpackedGlobalIndex;
     sizeOfUnpackedChars += Unpack( buffer, unpackedGlobalIndex );
@@ -1059,7 +1059,7 @@ Unpack( buffer_unit_type const * & buffer,
   unmappedGlobalIndices.setValues< serialPolicy >( unmappedLocalIndexValue );
 
   bool unpackedGlobalFlag = false;
-  for( localIndex a=0; a<length; ++a )
+  for( localIndex a = 0; a < length; ++a )
   {
     globalIndex unpackedGlobalIndex;
     sizeOfUnpackedChars += Unpack( buffer, unpackedGlobalIndex );
@@ -1094,10 +1094,10 @@ Pack( buffer_unit_type * & buffer,
       arrayView1d< globalIndex const > const & localToGlobalMap,
       arrayView1d< globalIndex const > const & relatedObjectLocalToGlobalMap )
 {
-  localIndex sizeOfPackedChars=0;
+  localIndex sizeOfPackedChars = 0;
 
   sizeOfPackedChars += Pack< DO_PACKING >( buffer, indices.size() );
-  for( localIndex a=0; a<indices.size(); ++a )
+  for( localIndex a = 0; a < indices.size(); ++a )
   {
     localIndex const li = indices[a];
     sizeOfPackedChars += Pack< DO_PACKING >( buffer, localToGlobalMap[li] );
@@ -1153,20 +1153,20 @@ Unpack( buffer_unit_type const * & buffer,
 
   localIndex sizeOfUnpackedChars = Unpack( buffer, numIndicesUnpacked );
 
-  GEOS_ERROR_IF( sizeOfIndicesPassedIn!=0 && numIndicesUnpacked!=indices.size(),
-                 "number of unpacked indices("<<numIndicesUnpacked<<") does not equal size of "
-                                                                    "indices passed into Unpack function("<<sizeOfIndicesPassedIn );
+  GEOS_ERROR_IF( sizeOfIndicesPassedIn != 0 && numIndicesUnpacked != indices.size(),
+                 "number of unpacked indices(" << numIndicesUnpacked << ") does not equal size of "
+                                                                        "indices passed into Unpack function(" << sizeOfIndicesPassedIn );
 
-  for( localIndex a=0; a<indices.size(); ++a )
+  for( localIndex a = 0; a < indices.size(); ++a )
   {
     globalIndex gi;
     sizeOfUnpackedChars += Unpack( buffer, gi );
     localIndex & li = indices[a];
     if( sizeOfIndicesPassedIn > 0 )
     {
-      GEOS_ERROR_IF( li!=globalToLocalMap.at( gi ),
-                     "global index "<<gi<<" unpacked from buffer does not equal the lookup "
-                                    <<li<<" for localIndex "<<li<<" on this rank" );
+      GEOS_ERROR_IF( li != globalToLocalMap.at( gi ),
+                     "global index " << gi << " unpacked from buffer does not equal the lookup "
+                                     << li << " for localIndex " << li << " on this rank" );
     }
     else
     {
@@ -1197,10 +1197,10 @@ Pack( buffer_unit_type * & buffer,
       arrayView1d< globalIndex const > const & localToGlobalMap,
       arrayView1d< globalIndex const > const & relatedObjectLocalToGlobalMap )
 {
-  localIndex sizeOfPackedChars=0;
+  localIndex sizeOfPackedChars = 0;
 
   sizeOfPackedChars += Pack< DO_PACKING >( buffer, indices.size() );
-  for( localIndex a=0; a<indices.size(); ++a )
+  for( localIndex a = 0; a < indices.size(); ++a )
   {
     localIndex const li = indices[a];
     sizeOfPackedChars += Pack< DO_PACKING >( buffer, localToGlobalMap[li] );
@@ -1209,7 +1209,7 @@ Pack( buffer_unit_type * & buffer,
       iterUnmappedGI = unmappedGlobalIndices.find( li );
 
     array1d< globalIndex > junk;
-    array1d< globalIndex > const & unmappedGI = iterUnmappedGI==unmappedGlobalIndices.end() ?
+    array1d< globalIndex > const & unmappedGI = iterUnmappedGI == unmappedGlobalIndices.end() ?
                                                 junk :
                                                 iterUnmappedGI->second;
 
@@ -1238,13 +1238,13 @@ Unpack( buffer_unit_type const * & buffer,
 
   localIndex sizeOfUnpackedChars = Unpack( buffer, numIndicesUnpacked );
 
-  GEOS_ERROR_IF( sizeOfIndicesPassedIn!=0 && numIndicesUnpacked!=indices.size(),
-                 "number of unpacked indices("<<numIndicesUnpacked<<") does not equal size of "
-                                                                    "indices passed into Unpack function("<<sizeOfIndicesPassedIn );
+  GEOS_ERROR_IF( sizeOfIndicesPassedIn != 0 && numIndicesUnpacked != indices.size(),
+                 "number of unpacked indices(" << numIndicesUnpacked << ") does not equal size of "
+                                                                        "indices passed into Unpack function(" << sizeOfIndicesPassedIn );
 
   indices.resize( numIndicesUnpacked );
 
-  for( localIndex a=0; a<indices.size(); ++a )
+  for( localIndex a = 0; a < indices.size(); ++a )
   {
     globalIndex gi;
     sizeOfUnpackedChars += Unpack( buffer, gi );
@@ -1252,9 +1252,9 @@ Unpack( buffer_unit_type const * & buffer,
     localIndex & li = indices[a];
     if( sizeOfIndicesPassedIn > 0 )
     {
-      GEOS_ERROR_IF( li!=globalToLocalMap.at( gi ),
-                     "global index "<<gi<<" unpacked from buffer does not equal the lookup "
-                                    <<li<<" for localIndex "<<li<<" on this rank" );
+      GEOS_ERROR_IF( li != globalToLocalMap.at( gi ),
+                     "global index " << gi << " unpacked from buffer does not equal the lookup "
+                                     << li << " for localIndex " << li << " on this rank" );
     }
     else
     {
@@ -1284,11 +1284,11 @@ Pack( buffer_unit_type * & buffer,
       arrayView1d< globalIndex const > const & localToGlobalMap,
       arrayView1d< globalIndex const > const & relatedObjectLocalToGlobalMap )
 {
-  localIndex sizeOfPackedChars=0;
+  localIndex sizeOfPackedChars = 0;
   array1d< globalIndex > junk;
 
   sizeOfPackedChars += Pack< DO_PACKING >( buffer, indices.size() );
-  for( localIndex a=0; a<indices.size(); ++a )
+  for( localIndex a = 0; a < indices.size(); ++a )
   {
     localIndex const li = indices[a];
     sizeOfPackedChars += Pack< DO_PACKING >( buffer, localToGlobalMap[li] );
@@ -1296,7 +1296,7 @@ Pack( buffer_unit_type * & buffer,
     typename mapBase< localIndex, array1d< globalIndex >, SORTED >::const_iterator
       iterUnmappedGI = unmappedGlobalIndices.find( li );
 
-    array1d< globalIndex > const & unmappedGI = iterUnmappedGI==unmappedGlobalIndices.end() ?
+    array1d< globalIndex > const & unmappedGI = iterUnmappedGI == unmappedGlobalIndices.end() ?
                                                 junk :
                                                 iterUnmappedGI->second;
 
@@ -1319,11 +1319,11 @@ Pack( buffer_unit_type * & buffer,
       arrayView1d< globalIndex const > const & localToGlobalMap,
       arrayView1d< globalIndex const > const & relatedObjectLocalToGlobalMap )
 {
-  localIndex sizeOfPackedChars=0;
+  localIndex sizeOfPackedChars = 0;
   SortedArray< globalIndex > junk;
 
   sizeOfPackedChars += Pack< DO_PACKING >( buffer, indices.size() );
-  for( localIndex a=0; a<indices.size(); ++a )
+  for( localIndex a = 0; a < indices.size(); ++a )
   {
     localIndex const li = indices[a];
     sizeOfPackedChars += Pack< DO_PACKING >( buffer, localToGlobalMap[li] );
@@ -1331,7 +1331,7 @@ Pack( buffer_unit_type * & buffer,
     typename mapBase< localIndex, SortedArray< globalIndex >, SORTED >::const_iterator
       iterUnmappedGI = unmappedGlobalIndices.find( li );
 
-    SortedArray< globalIndex > const & unmappedGI = iterUnmappedGI==unmappedGlobalIndices.end() ?
+    SortedArray< globalIndex > const & unmappedGI = iterUnmappedGI == unmappedGlobalIndices.end() ?
                                                     junk :
                                                     iterUnmappedGI->second;
 
@@ -1360,14 +1360,14 @@ Unpack( buffer_unit_type const * & buffer,
 
   localIndex sizeOfUnpackedChars = Unpack( buffer, numIndicesUnpacked );
 
-  GEOS_ERROR_IF( sizeOfIndicesPassedIn!=0 && numIndicesUnpacked!=indices.size(),
-                 "number of unpacked indices("<<numIndicesUnpacked<<") does not equal size of "
-                                                                    "indices passed into Unpack function("<<sizeOfIndicesPassedIn );
+  GEOS_ERROR_IF( sizeOfIndicesPassedIn != 0 && numIndicesUnpacked != indices.size(),
+                 "number of unpacked indices(" << numIndicesUnpacked << ") does not equal size of "
+                                                                        "indices passed into Unpack function(" << sizeOfIndicesPassedIn );
 
   indices.resize( numIndicesUnpacked );
   array1d< globalIndex > unmappedIndices;
 
-  for( localIndex a=0; a<indices.size(); ++a )
+  for( localIndex a = 0; a < indices.size(); ++a )
   {
     globalIndex gi;
     sizeOfUnpackedChars += Unpack( buffer, gi );
@@ -1375,9 +1375,9 @@ Unpack( buffer_unit_type const * & buffer,
     localIndex & li = indices[a];
     if( sizeOfIndicesPassedIn > 0 )
     {
-      GEOS_ERROR_IF( li!=globalToLocalMap.at( gi ),
-                     "global index "<<gi<<" unpacked from buffer does not equal the lookup "
-                                    <<li<<" for localIndex "<<li<<" on this rank" );
+      GEOS_ERROR_IF( li != globalToLocalMap.at( gi ),
+                     "global index " << gi << " unpacked from buffer does not equal the lookup "
+                                     << li << " for localIndex " << li << " on this rank" );
     }
     else
     {
@@ -1419,7 +1419,7 @@ Unpack( buffer_unit_type const * & buffer,
   indices.resize( numIndicesUnpacked );
   array1d< globalIndex > unmappedIndices;
 
-  for( localIndex a=0; a<indices.size(); ++a )
+  for( localIndex a = 0; a < indices.size(); ++a )
   {
     globalIndex gi;
     sizeOfUnpackedChars += bufferOps::Unpack( buffer, gi );
@@ -1456,7 +1456,7 @@ Pack( buffer_unit_type * & buffer,
 {
   localIndex sizeOfPackedChars = Pack< DO_PACKING >( buffer, indices.size() );
 
-  for( localIndex a=0; a<indices.size(); ++a )
+  for( localIndex a = 0; a < indices.size(); ++a )
   {
     localIndex li = indices[a];
     sizeOfPackedChars += Pack< DO_PACKING >( buffer, localToGlobalMap[li] );
@@ -1465,7 +1465,7 @@ Pack( buffer_unit_type * & buffer,
       iterUnmappedGI = unmappedGlobalIndices.find( li );
 
     SortedArray< globalIndex > junk;
-    SortedArray< globalIndex > const & unmappedGI = iterUnmappedGI==unmappedGlobalIndices.end() ?
+    SortedArray< globalIndex > const & unmappedGI = iterUnmappedGI == unmappedGlobalIndices.end() ?
                                                     junk :
                                                     iterUnmappedGI->second;
 
@@ -1490,18 +1490,18 @@ Unpack( buffer_unit_type const * & buffer,
         mapBase< globalIndex, localIndex, SORTED2 > const & relatedObjectGlobalToLocalMap,
         bool const clearFlag )
 {
-  localIndex sizeOfUnpackedChars=0;
+  localIndex sizeOfUnpackedChars = 0;
   localIndex const sizeOfIndicesPassedIn = indices.size();
 
   localIndex numIndicesUnpacked;
   sizeOfUnpackedChars += Unpack( buffer, numIndicesUnpacked );
-  GEOS_ERROR_IF( sizeOfIndicesPassedIn!=0 && numIndicesUnpacked!=indices.size(),
-                 "number of unpacked indices("<<numIndicesUnpacked<<") does not equal size of "
-                                                                    "indices passed into Unpack function("<<sizeOfIndicesPassedIn );
+  GEOS_ERROR_IF( sizeOfIndicesPassedIn != 0 && numIndicesUnpacked != indices.size(),
+                 "number of unpacked indices(" << numIndicesUnpacked << ") does not equal size of "
+                                                                        "indices passed into Unpack function(" << sizeOfIndicesPassedIn );
 
   indices.resize( numIndicesUnpacked );
 
-  for( localIndex a=0; a<numIndicesUnpacked; ++a )
+  for( localIndex a = 0; a < numIndicesUnpacked; ++a )
   {
 
     globalIndex gi;
@@ -1510,9 +1510,9 @@ Unpack( buffer_unit_type const * & buffer,
     localIndex & li = indices[a];
     if( sizeOfIndicesPassedIn > 0 )
     {
-      GEOS_ERROR_IF( li!=globalToLocalMap.at( gi ),
-                     "global index "<<gi<<" unpacked from buffer does equal the lookup "
-                                    <<li<<" for localIndex "<<li<<" on this rank" );
+      GEOS_ERROR_IF( li != globalToLocalMap.at( gi ),
+                     "global index " << gi << " unpacked from buffer does equal the lookup "
+                                     << li << " for localIndex " << li << " on this rank" );
     }
     else
     {
@@ -1542,14 +1542,14 @@ Unpack( buffer_unit_type const * & buffer,
         mapBase< globalIndex, localIndex, SORTED2 > const & relatedObjectGlobalToLocalMap,
         bool const clearFlag )
 {
-  localIndex sizeOfUnpackedChars=0;
+  localIndex sizeOfUnpackedChars = 0;
   localIndex const sizeOfIndicesPassedIn = indices.size();
 
   localIndex numIndicesUnpacked;
   sizeOfUnpackedChars += Unpack( buffer, numIndicesUnpacked );
-  GEOS_ERROR_IF( sizeOfIndicesPassedIn!=0 && numIndicesUnpacked!=indices.size(),
-                 "number of unpacked indices("<<numIndicesUnpacked<<") does not equal size of "
-                                                                    "indices passed into Unpack function("<<sizeOfIndicesPassedIn );
+  GEOS_ERROR_IF( sizeOfIndicesPassedIn != 0 && numIndicesUnpacked != indices.size(),
+                 "number of unpacked indices(" << numIndicesUnpacked << ") does not equal size of "
+                                                                        "indices passed into Unpack function(" << sizeOfIndicesPassedIn );
 
   indices.resize( numIndicesUnpacked );
 
@@ -1570,7 +1570,7 @@ Unpack( buffer_unit_type const * & buffer,
   valuesToInsert.reserve( numIndicesUnpacked );
   valuesToInsert.reserveValues( numIndicesUnpacked * 12 ); // guesstimate
 
-  for( localIndex a=0; a<numIndicesUnpacked; ++a )
+  for( localIndex a = 0; a < numIndicesUnpacked; ++a )
   {
     globalIndex gi;
     sizeOfUnpackedChars += Unpack( buffer, gi );
@@ -1578,9 +1578,9 @@ Unpack( buffer_unit_type const * & buffer,
     localIndex & li = indices[a];
     if( sizeOfIndicesPassedIn > 0 )
     {
-      GEOS_ERROR_IF( li!=globalToLocalMap.at( gi ),
-                     "global index "<<gi<<" unpacked from buffer does equal the lookup "
-                                    <<li<<" for localIndex "<<li<<" on this rank" );
+      GEOS_ERROR_IF( li != globalToLocalMap.at( gi ),
+                     "global index " << gi << " unpacked from buffer does equal the lookup "
+                                     << li << " for localIndex " << li << " on this rank" );
     }
     else
     {
@@ -1695,7 +1695,7 @@ Pack( buffer_unit_type * & buffer,
       arraySlice1d< globalIndex const, USD1 > const & localToGlobalMap )
 {
   localIndex sizeOfPackedChars = Pack< DO_PACKING >( buffer, indices.size() );
-  for( localIndex a=0; a<indices.size(); ++a )
+  for( localIndex a = 0; a < indices.size(); ++a )
   {
     localIndex li = indices[a];
     sizeOfPackedChars += Pack< DO_PACKING >( buffer, localToGlobalMap[li] );
@@ -1720,13 +1720,13 @@ Unpack( buffer_unit_type const * & buffer,
   localIndex numIndicesUnpacked;
   sizeOfUnpackedChars += Unpack( buffer, numIndicesUnpacked );
 
-  GEOS_ERROR_IF( sizeOfIndicesPassedIn!=0 && numIndicesUnpacked!=indices.size(),
-                 "number of unpacked indices("<<numIndicesUnpacked<<") does not equal size of "
-                                                                    "indices passed into Unpack function("<<sizeOfIndicesPassedIn );
+  GEOS_ERROR_IF( sizeOfIndicesPassedIn != 0 && numIndicesUnpacked != indices.size(),
+                 "number of unpacked indices(" << numIndicesUnpacked << ") does not equal size of "
+                                                                        "indices passed into Unpack function(" << sizeOfIndicesPassedIn );
 
   indices.resize( numIndicesUnpacked );
 
-  for( localIndex a=0; a<numIndicesUnpacked; ++a )
+  for( localIndex a = 0; a < numIndicesUnpacked; ++a )
   {
     globalIndex gi;
     sizeOfUnpackedChars += Unpack( buffer, gi );
@@ -1734,9 +1734,9 @@ Unpack( buffer_unit_type const * & buffer,
     localIndex & li = indices[a];
     if( sizeOfIndicesPassedIn > 0 )
     {
-      GEOS_ERROR_IF( li!=globalToLocalMap.at( gi ),
-                     "global index "<<gi<<" unpacked from buffer does equal the lookup "
-                                    <<li<<" for localIndex "<<li<<" on this rank" );
+      GEOS_ERROR_IF( li != globalToLocalMap.at( gi ),
+                     "global index " << gi << " unpacked from buffer does equal the lookup "
+                                     << li << " for localIndex " << li << " on this rank" );
     }
     else
     {
@@ -1764,7 +1764,7 @@ Pack( buffer_unit_type * & buffer,
   array1d< globalIndex > junk;
 
   sizeOfPackedChars += Pack< DO_PACKING >( buffer, indices.size() );
-  for( localIndex a=0; a<indices.size(); ++a )
+  for( localIndex a = 0; a < indices.size(); ++a )
   {
     localIndex li = indices[a];
     sizeOfPackedChars += Pack< DO_PACKING >( buffer, localToGlobalMap[li] );
@@ -1772,7 +1772,7 @@ Pack( buffer_unit_type * & buffer,
     typename mapBase< localIndex, array1d< globalIndex >, SORTED >::const_iterator
       iterUnmappedGI = unmappedGlobalIndices.find( li );
 
-    array1d< globalIndex > const & unmappedGI = iterUnmappedGI==unmappedGlobalIndices.end() ?
+    array1d< globalIndex > const & unmappedGI = iterUnmappedGI == unmappedGlobalIndices.end() ?
                                                 junk :
                                                 iterUnmappedGI->second;
 
@@ -1802,14 +1802,14 @@ Unpack( buffer_unit_type const * & buffer,
 
   localIndex numIndicesUnpacked;
   sizeOfUnpackedChars += Unpack( buffer, numIndicesUnpacked );
-  GEOS_ERROR_IF( sizeOfIndicesPassedIn!=0 && numIndicesUnpacked!=indices.size(),
-                 "number of unpacked indices("<<numIndicesUnpacked<<") does not equal size of "
-                                                                    "indices passed into Unpack function("<<sizeOfIndicesPassedIn );
+  GEOS_ERROR_IF( sizeOfIndicesPassedIn != 0 && numIndicesUnpacked != indices.size(),
+                 "number of unpacked indices(" << numIndicesUnpacked << ") does not equal size of "
+                                                                        "indices passed into Unpack function(" << sizeOfIndicesPassedIn );
 
   indices.resize( numIndicesUnpacked );
   array1d< globalIndex > unmappedIndices;
 
-  for( localIndex a=0; a<numIndicesUnpacked; ++a )
+  for( localIndex a = 0; a < numIndicesUnpacked; ++a )
   {
     globalIndex gi;
     sizeOfUnpackedChars += Unpack( buffer, gi );
@@ -1817,9 +1817,9 @@ Unpack( buffer_unit_type const * & buffer,
     localIndex & li = indices[a];
     if( sizeOfIndicesPassedIn > 0 )
     {
-      GEOS_ERROR_IF( li!=globalToLocalMap.at( gi ),
-                     "global index "<<gi<<" unpacked from buffer does equal the lookup "
-                                    <<li<<" for localIndex "<<li<<" on this rank" );
+      GEOS_ERROR_IF( li != globalToLocalMap.at( gi ),
+                     "global index " << gi << " unpacked from buffer does equal the lookup "
+                                     << li << " for localIndex " << li << " on this rank" );
     }
     else
     {
@@ -1835,7 +1835,7 @@ Unpack( buffer_unit_type const * & buffer,
                                    var.size( 1 ),
                                    relatedObjectGlobalToLocalMap );
 
-    if( unmappedIndices.size()>0 )
+    if( unmappedIndices.size() > 0 )
     {
       unmappedGlobalIndices[li] = unmappedIndices;
     }
@@ -1852,7 +1852,7 @@ Pack( buffer_unit_type * & buffer, MAP_TYPE const & var, T_INDICES const & packI
   typename MAP_TYPE::size_type const length = var.size();
   localIndex sizeOfPackedChars = Pack< DO_PACKING >( buffer, length );
 
-  for( typename MAP_TYPE::const_iterator i=var.begin(); i!=var.end(); ++i )
+  for( typename MAP_TYPE::const_iterator i = var.begin(); i != var.end(); ++i )
   {
     sizeOfPackedChars += Pack< DO_PACKING >( buffer, i->first );
     sizeOfPackedChars += Pack< DO_PACKING >( buffer, i->second, packIndices );
@@ -1871,7 +1871,7 @@ Unpack( buffer_unit_type const * & buffer, MAP_TYPE & map, T_INDICES const & unp
 
   localIndex sizeOfUnpackedChars = Unpack( buffer, map_length );
 
-  for( typename MAP_TYPE::size_type a=0; a<map_length; ++a )
+  for( typename MAP_TYPE::size_type a = 0; a < map_length; ++a )
   {
     typename MAP_TYPE::key_type key;
     typename MAP_TYPE::mapped_type value;

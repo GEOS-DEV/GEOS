@@ -29,19 +29,19 @@ namespace
 // returns a positive value regardless of the sign of numerator
 real64 Mod( real64 num, real64 denom )
 {
-  if( fabs( denom )<fabs( num )*1.0e-14 )
+  if( fabs( denom ) < fabs( num ) * 1.0e-14 )
   {
     return num;
   }
 
-  return num - denom * std::floor( num/denom );
+  return num - denom * std::floor( num / denom );
 }
 
 // MapValueToRange
 // returns a periodic value in the range [min, max)
 real64 MapValueToRange( real64 value, real64 min, real64 max )
 {
-  return Mod( value-min, max-min )+min;
+  return Mod( value - min, max - min ) + min;
 }
 
 }
@@ -159,7 +159,7 @@ void SpatialPartition::addNeighbors( const unsigned int idim,
 void SpatialPartition::updateSizes( arrayView1d< real64 > const domainL,
                                     real64 const dt )
 {
-  for( int i=0; i<3; i++ )
+  for( int i = 0; i < 3; i++ )
   {
     real64 ratio = 1.0 + domainL[i] * dt;
     m_min[i] *= ratio;
@@ -174,8 +174,8 @@ void SpatialPartition::updateSizes( arrayView1d< real64 > const domainL,
   }
 }
 
-void SpatialPartition::setSizes( real64 const ( &min )[ 3 ],
-                                 real64 const ( &max )[ 3 ] )
+void SpatialPartition::setSizes( real64 const ( &min )[3],
+                                 real64 const ( &max )[3] )
 {
 
   {
@@ -228,14 +228,14 @@ void SpatialPartition::setSizes( real64 const ( &min )[ 3 ],
     if( m_PartitionLocations[i].empty() )
     {
       // the default "even" spacing
-      m_blockSize[ i ] /= m_Partitions( i );
-      m_min[ i ] += m_coords( i ) * m_blockSize[ i ];
-      m_max[ i ] = min[ i ] + (m_coords( i ) + 1) * m_blockSize[ i ];
+      m_blockSize[i] /= m_Partitions( i );
+      m_min[i] += m_coords( i ) * m_blockSize[i];
+      m_max[i] = min[i] + (m_coords( i ) + 1) * m_blockSize[i];
 
       m_PartitionLocations[i].resize( nlocl );
-      for( localIndex j = 0; j < m_PartitionLocations[ i ].size(); ++j )
+      for( localIndex j = 0; j < m_PartitionLocations[i].size(); ++j )
       {
-        m_PartitionLocations[ i ][ j ] = (j+1) * m_blockSize[ i ];
+        m_PartitionLocations[i][j] = (j + 1) * m_blockSize[i];
       }
     }
     else if( nlocl == m_PartitionLocations[i].size() )
@@ -248,12 +248,12 @@ void SpatialPartition::setSizes( real64 const ( &min )[ 3 ],
       }
       else if( parIndex == nloc )
       {
-        m_min[i] = m_PartitionLocations[i][parIndex-1];
+        m_min[i] = m_PartitionLocations[i][parIndex - 1];
         m_max[i] = max[i];
       }
       else
       {
-        m_min[i] = m_PartitionLocations[i][parIndex-1];
+        m_min[i] = m_PartitionLocations[i][parIndex - 1];
         m_max[i] = m_PartitionLocations[i][parIndex];
       }
     }
@@ -272,14 +272,14 @@ bool SpatialPartition::isCoordInPartition( const real64 & coord, const int dir )
   {
     if( m_Partitions( i ) != 1 )
     {
-      real64 localCenter = MapValueToRange( coord, m_gridMin[ i ], m_gridMax[ i ] );
-      rval = rval && localCenter >= m_min[ i ] && localCenter < m_max[ i ];
+      real64 localCenter = MapValueToRange( coord, m_gridMin[i], m_gridMax[i] );
+      rval = rval && localCenter >= m_min[i] && localCenter < m_max[i];
     }
 
   }
   else
   {
-    rval = rval && (m_Partitions[ i ] == 1 || (coord >= m_min[ i ] && coord < m_max[ i ]));
+    rval = rval && (m_Partitions[i] == 1 || (coord >= m_min[i] && coord < m_max[i]));
   }
 
   return rval;
@@ -292,7 +292,7 @@ bool SpatialPartition::isCoordInPartitionBoundingBox( const R1Tensor & elemCente
   for( int i = 0; i < nsdof; i++ )
   {
     // Is particle already in bounds of partition?
-    if( !(m_Partitions( i )==1 || ( elemCenter[i] >= (m_min[i] - boundaryRadius) && elemCenter[i] <= (m_max[i] + boundaryRadius) ) ) )
+    if( !(m_Partitions( i ) == 1 || ( elemCenter[i] >= (m_min[i] - boundaryRadius) && elemCenter[i] <= (m_max[i] + boundaryRadius) ) ) )
     {
       // Particle not in bounds, check if direction has a periodic boundary
       if( m_Periodic( i ) && (m_coords[i] == 0 || m_coords[i] == m_Partitions[i] - 1) )
@@ -367,12 +367,12 @@ void SpatialPartition::repartitionMasterParticles( ParticleSubRegion & subRegion
     {
       bool inPartition = true;
       R1Tensor p_x;
-      for( int i=0; i<3; i++ )
+      for( int i = 0; i < 3; i++ )
       {
         p_x[i] = particleCenter[pp][i];
         inPartition = inPartition && isCoordInPartition( p_x[i], i );
       }
-      if( particleRank[pp]==this->m_rank && !inPartition )
+      if( particleRank[pp] == this->m_rank && !inPartition )
       {
         outOfDomainParticleCoordinates.emplace_back( p_x ); // Store the coordinate of the out-of-domain particle
         outOfDomainParticleLocalIndices.push_back( pp );   // Store the local index "pp" for the current coordinate.
@@ -398,13 +398,13 @@ void SpatialPartition::repartitionMasterParticles( ParticleSubRegion & subRegion
   //     of the particles that are to be owned by the current partition.
 
   std::vector< array1d< localIndex > > particleListIndicesRequestingFromNeighbors( nn );
-  for( size_t n=0; n<nn; n++ )
+  for( size_t n = 0; n < nn; n++ )
   {
     // Loop through the unpacked list and make a list of the index of any point in partition interior domain
-    for( int pp=0; pp<particleCoordinatesReceivedFromNeighbors[n].toView().size(); pp++ )
+    for( int pp = 0; pp < particleCoordinatesReceivedFromNeighbors[n].toView().size(); pp++ )
     {
       bool inPartition = true;
-      for( int j=0; j<3; j++ )
+      for( int j = 0; j < 3; j++ )
       {
         inPartition = inPartition && isCoordInPartition( particleCoordinatesReceivedFromNeighbors[n].toView()[pp][j], j );
       }
@@ -436,7 +436,7 @@ void SpatialPartition::repartitionMasterParticles( ParticleSubRegion & subRegion
     unsigned int numberOfRequestedParticles = 0;
     std::vector< int > outOfDomainParticleRequests( outOfDomainParticleLocalIndices.size(), 0 );
 
-    for( size_t n=0; n<nn; n++ )
+    for( size_t n = 0; n < nn; n++ )
     {
       int ni = particleListIndicesRequestedFromNeighbors[n].size();
       numberOfRequestedParticles += ni;
@@ -461,7 +461,7 @@ void SpatialPartition::repartitionMasterParticles( ParticleSubRegion & subRegion
     {
       std::cout << "Rank " << m_rank << " has requests for " << numberOfRequestedParticles << " out of " << outOfDomainParticleLocalIndices.size() << " out-of-domain particles" << std::endl;
     }
-    for( size_t i=0; i<outOfDomainParticleRequests.size(); i++ )
+    for( size_t i = 0; i < outOfDomainParticleRequests.size(); i++ )
     {
       if( outOfDomainParticleRequests[i] != 1 )
       {
@@ -478,7 +478,7 @@ void SpatialPartition::repartitionMasterParticles( ParticleSubRegion & subRegion
   int newSize = subRegion.size();
   std::vector< int > newParticleStartingIndices( nn );
   std::vector< int > numberOfIncomingParticles( nn );
-  for( size_t n=0; n<nn; n++ )
+  for( size_t n = 0; n < nn; n++ )
   {
     numberOfIncomingParticles[n] = particleListIndicesRequestingFromNeighbors[n].size();
     newParticleStartingIndices[n] = newSize;
@@ -575,12 +575,12 @@ void SpatialPartition::getGhostParticlesFromNeighboringPartitions( DomainPartiti
       {
         bool inPartition = true;
         R1Tensor p_x;
-        for( int i=0; i<3; i++ )
+        for( int i = 0; i < 3; i++ )
         {
           p_x[i] = particleCenter[p][i];
           inPartition = inPartition && isCoordInPartition( p_x[i], i );
         }
-        if( particleRank[p]==this->m_rank && inPartition )
+        if( particleRank[p] == this->m_rank && inPartition )
         {
           inDomainMasterParticleCoordinates.emplace_back( p_x );  // Store the coordinate of the out-of-domain particle
           inDomainMasterParticleGlobalIndices.push_back( particleGlobalID[p] );     // Store the local index "pp" for the current
@@ -606,10 +606,10 @@ void SpatialPartition::getGhostParticlesFromNeighboringPartitions( DomainPartiti
     std::vector< array1d< globalIndex > > particleGlobalIndicesSendingToNeighbors( nn );
     std::vector< array1d< globalIndex > > particleGlobalIndicesReceivedFromNeighbors( nn );
 
-    for( size_t n=0; n<nn; ++n )
+    for( size_t n = 0; n < nn; ++n )
     {
       particleGlobalIndicesSendingToNeighbors[n].resize( inDomainMasterParticleGlobalIndices.size() );
-      for( size_t i=0; i<inDomainMasterParticleGlobalIndices.size(); ++i )
+      for( size_t i = 0; i < inDomainMasterParticleGlobalIndices.size(); ++i )
       {
         particleGlobalIndicesSendingToNeighbors[n][i] = inDomainMasterParticleGlobalIndices[i];
       }
@@ -627,9 +627,9 @@ void SpatialPartition::getGhostParticlesFromNeighboringPartitions( DomainPartiti
 
     std::vector< array1d< globalIndex > > particleGlobalIndicesRequestingFromNeighbors( nn );
 
-    for( size_t n=0; n<nn; ++n )
+    for( size_t n = 0; n < nn; ++n )
     {
-      for( localIndex i=0; i<particleCoordinatesReceivedFromNeighbors[n].size(); ++i )
+      for( localIndex i = 0; i < particleCoordinatesReceivedFromNeighbors[n].size(); ++i )
       {
         if( isCoordInPartitionBoundingBox( particleCoordinatesReceivedFromNeighbors[n][i], boundaryRadius ) )
         {
@@ -671,7 +671,7 @@ void SpatialPartition::getGhostParticlesFromNeighboringPartitions( DomainPartiti
     //     still have ghostRank=-1 are orphans and need to be deleted.
 
     int partitionRank = this->m_rank;
-    forAll< parallelHostPolicy >( subRegion.size(), [=] GEOS_HOST ( localIndex const p )   // TODO: Worth moving to device?
+    forAll< parallelHostPolicy >( subRegion.size(), [ = ] GEOS_HOST ( localIndex const p )   // TODO: Worth moving to device?
       {
         if( particleRank[p] != partitionRank )
         {
@@ -687,7 +687,7 @@ void SpatialPartition::getGhostParticlesFromNeighboringPartitions( DomainPartiti
     int newSize = subRegion.size();
     std::vector< int > newParticleStartingIndices( nn );
     std::vector< int > numberOfIncomingParticles( nn );
-    for( size_t n=0; n<nn; n++ )
+    for( size_t n = 0; n < nn; n++ )
     {
       numberOfIncomingParticles[n] = particleGlobalIndicesRequestingFromNeighbors[n].size();
       newParticleStartingIndices[n] = newSize;
@@ -704,11 +704,11 @@ void SpatialPartition::getGhostParticlesFromNeighboringPartitions( DomainPartiti
     {
       std::vector< array1d< localIndex > > particleLocalIndicesRequestedFromNeighbors( nn );
 
-      for( size_t n=0; n<nn; n++ )
+      for( size_t n = 0; n < nn; n++ )
       {
         // make a list of the local indices corresponding to the global indices in the request list for the current neighbor.
         particleLocalIndicesRequestedFromNeighbors[n].resize( particleGlobalIndicesRequestedFromNeighbors[n].size() );
-        for( localIndex i=0; i<particleLocalIndicesRequestedFromNeighbors[n].size(); ++i )
+        for( localIndex i = 0; i < particleLocalIndicesRequestedFromNeighbors[n].size(); ++i )
         {
           particleLocalIndicesRequestedFromNeighbors[n][i] = subRegion.globalToLocalMap( particleGlobalIndicesRequestedFromNeighbors[n][i] );
         }
@@ -780,7 +780,7 @@ void SpatialPartition::sendCoordinateListToNeighbors( arrayView1d< R1Tensor > co
     array1d< MPI_Status >  receiveStatus( nn );
 
     // Send/receive the size of the packed buffer
-    for( size_t n=0; n<nn; n++ )
+    for( size_t n = 0; n < nn; n++ )
     {
       // Initialize to null
       sendRequest[n] = MPI_REQUEST_NULL;
@@ -807,7 +807,7 @@ void SpatialPartition::sendCoordinateListToNeighbors( arrayView1d< R1Tensor > co
     array1d< MPI_Request > receiveRequest( nn );
     array1d< MPI_Status >  receiveStatus( nn );
 
-    for( size_t n=0; n<nn; n++ )
+    for( size_t n = 0; n < nn; n++ )
     {
       // Initialize to null
       sendRequest[n] = MPI_REQUEST_NULL;
@@ -830,7 +830,7 @@ void SpatialPartition::sendCoordinateListToNeighbors( arrayView1d< R1Tensor > co
   }
 
   // Unpack the received coordinate list from each neighbor
-  for( size_t n=0; n<nn; n++ )
+  for( size_t n = 0; n < nn; n++ )
   {
     // Unpack the buffer to an array of coordinates.
     const buffer_unit_type * receiveBufferPtr = receiveBuffer[n].data();  // needed for const cast
@@ -849,7 +849,7 @@ void SpatialPartition::sendListOfIndicesToNeighbors( std::vector< array1d< index
   // Pack the outgoing lists of local indices
   std::vector< unsigned int > sizeOfPacked( nn );
   std::vector< buffer_type > sendBuffer( nn );
-  for( size_t n=0; n<nn; n++ )
+  for( size_t n = 0; n < nn; n++ )
   {
     unsigned int sizeToBePacked = 0;                                                  // size of the outgoing data with packing=false (we
                                                                                       // need to run through it first without packing so we
@@ -879,7 +879,7 @@ void SpatialPartition::sendListOfIndicesToNeighbors( std::vector< array1d< index
     array1d< MPI_Status >  receiveStatus( nn );
 
     // Send/receive the size of the packed buffer
-    for( size_t n=0; n<nn; n++ )
+    for( size_t n = 0; n < nn; n++ )
     {
       // Initialize to null
       sendRequest[n] = MPI_REQUEST_NULL;
@@ -906,7 +906,7 @@ void SpatialPartition::sendListOfIndicesToNeighbors( std::vector< array1d< index
     array1d< MPI_Request > receiveRequest( nn );
     array1d< MPI_Status >  receiveStatus( nn );
 
-    for( size_t n=0; n<nn; n++ )
+    for( size_t n = 0; n < nn; n++ )
     {
       // Initialize to null
       sendRequest[n] = MPI_REQUEST_NULL;
@@ -929,7 +929,7 @@ void SpatialPartition::sendListOfIndicesToNeighbors( std::vector< array1d< index
   }
 
   // Unpack the received list of local indices from each neighbor
-  for( size_t n=0; n<nn; n++ )
+  for( size_t n = 0; n < nn; n++ )
   {
     // Unpack the buffer to an array of coordinates.
     const buffer_unit_type * receiveBufferPtr = receiveBuffer[n].data();  // needed for const cast
@@ -949,7 +949,7 @@ void SpatialPartition::sendParticlesToNeighbor( ParticleSubRegionBase & subRegio
   std::vector< buffer_type > sendBuffer( nn );
   std::vector< unsigned int > sizeOfPacked( nn );
 
-  for( size_t n=0; n<nn; n++ )
+  for( size_t n = 0; n < nn; n++ )
   {
     sizeOfPacked[n] = subRegion.particlePack( sendBuffer[n], particleLocalIndicesToSendToEachNeighbor[n].toView(), false );
     sendBuffer[n].resize( sizeOfPacked[n] );
@@ -969,7 +969,7 @@ void SpatialPartition::sendParticlesToNeighbor( ParticleSubRegionBase & subRegio
     array1d< MPI_Request > receiveRequest( nn );
     array1d< MPI_Status >  receiveStatus( nn );
 
-    for( size_t n=0; n<nn; n++ )
+    for( size_t n = 0; n < nn; n++ )
     {
       // Initialize to null
       sendRequest[n] = MPI_REQUEST_NULL;
@@ -996,7 +996,7 @@ void SpatialPartition::sendParticlesToNeighbor( ParticleSubRegionBase & subRegio
     array1d< MPI_Request > receiveRequest( nn );
     array1d< MPI_Status >  receiveStatus( nn );
 
-    for( size_t n=0; n<nn; n++ )
+    for( size_t n = 0; n < nn; n++ )
     {
       // Initialize to null
       sendRequest[n] = MPI_REQUEST_NULL;
@@ -1018,7 +1018,7 @@ void SpatialPartition::sendParticlesToNeighbor( ParticleSubRegionBase & subRegio
   }
 
   // Unpack the received particle data.
-  for( size_t n=0; n<nn; n++ )
+  for( size_t n = 0; n < nn; n++ )
   {
     // Unpack the buffer to an array of coordinates.
     subRegion.particleUnpack( receiveBuffer[n], newParticleStartingIndices[n], numberOfIncomingParticles[n] );

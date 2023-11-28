@@ -199,7 +199,7 @@ template< typename T >
 struct hasCopyAssignmentOperatorImpl
 {
 private:
-  template< typename U > static constexpr auto test( int )->decltype( std::declval< U >()=std::declval< U >(), bool () )
+  template< typename U > static constexpr auto test( int )->decltype( std::declval< U >() = std::declval< U >(), bool () )
   { return true; }
 
   template< typename U > static constexpr auto test( ... )->bool

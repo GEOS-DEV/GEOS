@@ -200,7 +200,7 @@ void FaceElementSubRegion::setupRelatedObjectsInRelations( MeshLevel const & mes
 void FaceElementSubRegion::calculateSingleElementGeometricQuantities( localIndex const k,
                                                                       arrayView1d< real64 const > const & faceArea )
 {
-  m_elementArea[k] = faceArea[ m_toFacesRelation[k][0] ];
+  m_elementArea[k] = faceArea[m_toFacesRelation[k][0]];
   m_elementVolume[k] = m_elementAperture[k] * faceArea[m_toFacesRelation[k][0]];
 }
 

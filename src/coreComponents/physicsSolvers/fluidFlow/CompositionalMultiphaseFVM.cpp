@@ -584,7 +584,7 @@ void CompositionalMultiphaseFVM::applySystemSolution( DofManager const & dofMana
   bool const localScaling = m_scalingType == ScalingType::Local;
 
   DofManager::CompMask pressureMask( m_numDofPerCell, 0, 1 );
-  DofManager::CompMask componentMask( m_numDofPerCell, 1, m_numComponents+1 );
+  DofManager::CompMask componentMask( m_numDofPerCell, 1, m_numComponents + 1 );
 
   if( localScaling )
   {
@@ -622,7 +622,7 @@ void CompositionalMultiphaseFVM::applySystemSolution( DofManager const & dofMana
 
   if( m_isThermal )
   {
-    DofManager::CompMask temperatureMask( m_numDofPerCell, m_numComponents+1, m_numComponents+2 );
+    DofManager::CompMask temperatureMask( m_numDofPerCell, m_numComponents + 1, m_numComponents + 2 );
     if( localScaling )
     {
       dofManager.addVectorToField( localSolution,
@@ -998,7 +998,7 @@ void CompositionalMultiphaseFVM::applyAquiferBC( real64 const time,
       {
         globalIndex const numTargetFaces = MpiWrapper::sum< globalIndex >( stencil.size() );
         GEOS_LOG_RANK_0( GEOS_FMT( faceBcLogMessage,
-                                   getName(), time+dt, AquiferBoundaryCondition::catalogName(),
+                                   getName(), time + dt, AquiferBoundaryCondition::catalogName(),
                                    bc.getName(), setName, faceManager.getName(), bc.getScale(), numTargetFaces ) );
       }
 

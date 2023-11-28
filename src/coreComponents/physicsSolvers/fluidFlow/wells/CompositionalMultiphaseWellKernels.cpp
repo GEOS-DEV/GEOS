@@ -142,7 +142,7 @@ ControlEquationHelper::
   globalIndex compDofColIndices[NC]{};
   for( integer ic = 0; ic < NC; ++ic )
   {
-    compDofColIndices[ ic ] = presDofColIndex + ic + 1;
+    compDofColIndices[ic] = presDofColIndex + ic + 1;
   }
 
   real64 controlEqn = 0;
@@ -236,7 +236,7 @@ FluxKernel::
     // derivatives with respect to upstream component densities
     for( integer jdof = 0; jdof < NC; ++jdof )
     {
-      oneSidedFluxJacobian_dPresCompUp[ic][jdof+1] = -dt * dCompFlux_dCompDensUp[ic][jdof];
+      oneSidedFluxJacobian_dPresCompUp[ic][jdof + 1] = -dt * dCompFlux_dCompDensUp[ic][jdof];
     }
   }
 }
@@ -250,29 +250,29 @@ FluxKernel::
            real64 const ( &dCompFlux_dRate )[NC],
            real64 const ( &dCompFlux_dPresUp )[NC],
            real64 const ( &dCompFlux_dCompDensUp )[NC][NC],
-           real64 ( & localFlux )[2*NC],
-           real64 ( & localFluxJacobian_dRate )[2*NC][1],
-           real64 ( & localFluxJacobian_dPresCompUp )[2*NC][NC + 1] )
+           real64 ( & localFlux )[2 * NC],
+           real64 ( & localFluxJacobian_dRate )[2 * NC][1],
+           real64 ( & localFluxJacobian_dPresCompUp )[2 * NC][NC + 1] )
 {
   // flux terms
   for( integer ic = 0; ic < NC; ++ic )
   {
-    localFlux[TAG::NEXT *NC+ic]    = dt * compFlux[ic];
-    localFlux[TAG::CURRENT *NC+ic] = -dt * compFlux[ic];
+    localFlux[TAG::NEXT *NC + ic]    = dt * compFlux[ic];
+    localFlux[TAG::CURRENT *NC + ic] = -dt * compFlux[ic];
 
     // derivative with respect to rate
-    localFluxJacobian_dRate[TAG::NEXT *NC+ic][0]    = dt * dCompFlux_dRate[ic];
-    localFluxJacobian_dRate[TAG::CURRENT *NC+ic][0] = -dt * dCompFlux_dRate[ic];
+    localFluxJacobian_dRate[TAG::NEXT *NC + ic][0]    = dt * dCompFlux_dRate[ic];
+    localFluxJacobian_dRate[TAG::CURRENT *NC + ic][0] = -dt * dCompFlux_dRate[ic];
 
     // derivative with respect to upstream pressure
-    localFluxJacobian_dPresCompUp[TAG::NEXT *NC+ic][0]    = dt * dCompFlux_dPresUp[ic];
-    localFluxJacobian_dPresCompUp[TAG::CURRENT *NC+ic][0] = -dt * dCompFlux_dPresUp[ic];
+    localFluxJacobian_dPresCompUp[TAG::NEXT *NC + ic][0]    = dt * dCompFlux_dPresUp[ic];
+    localFluxJacobian_dPresCompUp[TAG::CURRENT *NC + ic][0] = -dt * dCompFlux_dPresUp[ic];
 
     // derivatives with respect to upstream component densities
     for( integer jdof = 0; jdof < NC; ++jdof )
     {
-      localFluxJacobian_dPresCompUp[TAG::NEXT *NC+ic][jdof+1]    =  dt * dCompFlux_dCompDensUp[ic][jdof];
-      localFluxJacobian_dPresCompUp[TAG::CURRENT *NC+ic][jdof+1] = -dt * dCompFlux_dCompDensUp[ic][jdof];
+      localFluxJacobian_dPresCompUp[TAG::NEXT *NC + ic][jdof + 1]    =  dt * dCompFlux_dCompDensUp[ic][jdof];
+      localFluxJacobian_dPresCompUp[TAG::CURRENT *NC + ic][jdof + 1] = -dt * dCompFlux_dCompDensUp[ic][jdof];
     }
   }
 }
@@ -383,7 +383,7 @@ FluxKernel::
       // so we do not use the arrays initialized before the loop
       real64 oneSidedFlux[NC]{};
       real64 oneSidedFluxJacobian_dRate[NC][1]{};
-      real64 oneSidedFluxJacobian_dPresCompUp[NC][NC+1]{};
+      real64 oneSidedFluxJacobian_dPresCompUp[NC][NC + 1]{};
 
       computeExit< NC >( dt,
                          compFlux,
@@ -396,7 +396,7 @@ FluxKernel::
 
 
       globalIndex oneSidedEqnRowIndices[NC]{};
-      globalIndex oneSidedDofColIndices_dPresCompUp[NC+1]{};
+      globalIndex oneSidedDofColIndices_dPresCompUp[NC + 1]{};
       globalIndex oneSidedDofColIndices_dRate = 0;
 
       // jacobian indices
@@ -411,7 +411,7 @@ FluxKernel::
       localIndex const dRateColOffset = COFFSET::DCOMP + NC;
       oneSidedDofColIndices_dRate = offsetCurrent + dRateColOffset;
 
-      for( integer jdof = 0; jdof < NC+1; ++jdof )
+      for( integer jdof = 0; jdof < NC + 1; ++jdof )
       {
         // dofs are the **upstream** pressure and component densities
         oneSidedDofColIndices_dPresCompUp[jdof] = offsetUp + COFFSET::DPRES + jdof;
@@ -437,16 +437,16 @@ FluxKernel::
           localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( oneSidedEqnRowIndices[i],
                                                                             oneSidedDofColIndices_dPresCompUp,
                                                                             oneSidedFluxJacobian_dPresCompUp[i],
-                                                                            NC+1 );
+                                                                            NC + 1 );
           RAJA::atomicAdd( parallelDeviceAtomic{}, &localRhs[oneSidedEqnRowIndices[i]], oneSidedFlux[i] );
         }
       }
     }
     else // not an exit connection
     {
-      real64 localFlux[2*NC]{};
-      real64 localFluxJacobian_dRate[2*NC][1]{};
-      real64 localFluxJacobian_dPresCompUp[2*NC][NC+1]{};
+      real64 localFlux[2 * NC]{};
+      real64 localFluxJacobian_dRate[2 * NC][1]{};
+      real64 localFluxJacobian_dPresCompUp[2 * NC][NC + 1]{};
 
       compute< NC >( dt,
                      compFlux,
@@ -458,8 +458,8 @@ FluxKernel::
                      localFluxJacobian_dPresCompUp );
 
 
-      globalIndex eqnRowIndices[2*NC]{};
-      globalIndex dofColIndices_dPresCompUp[NC+1]{};
+      globalIndex eqnRowIndices[2 * NC]{};
+      globalIndex dofColIndices_dPresCompUp[NC + 1]{};
       globalIndex dofColIndices_dRate = 0;
 
       globalIndex const offsetNext = wellElemDofNumber[iwelemNext];
@@ -468,8 +468,8 @@ FluxKernel::
       for( integer ic = 0; ic < NC; ++ic )
       {
         // mass balance equations for all components
-        eqnRowIndices[TAG::NEXT *NC+ic]    = offsetNext + ROFFSET::MASSBAL + ic - rankOffset;
-        eqnRowIndices[TAG::CURRENT *NC+ic] = offsetCurrent + ROFFSET::MASSBAL + ic - rankOffset;
+        eqnRowIndices[TAG::NEXT *NC + ic]    = offsetNext + ROFFSET::MASSBAL + ic - rankOffset;
+        eqnRowIndices[TAG::CURRENT *NC + ic] = offsetCurrent + ROFFSET::MASSBAL + ic - rankOffset;
       }
 
       // in the dof ordering used in this class, there are 1 pressure dofs
@@ -477,7 +477,7 @@ FluxKernel::
       localIndex const dRateColOffset = COFFSET::DCOMP + NC;
       dofColIndices_dRate = offsetCurrent + dRateColOffset;
 
-      for( integer jdof = 0; jdof < NC+1; ++jdof )
+      for( integer jdof = 0; jdof < NC + 1; ++jdof )
       {
         // dofs are the **upstream** pressure and component densities
         dofColIndices_dPresCompUp[jdof] = offsetUp + COFFSET::DPRES + jdof;
@@ -492,7 +492,7 @@ FluxKernel::
         shiftBlockElementsAheadByOneAndReplaceFirstElementWithSum( NC, NC, 2, localFlux );
       }
 
-      for( integer i = 0; i < 2*NC; ++i )
+      for( integer i = 0; i < 2 * NC; ++i )
       {
         if( eqnRowIndices[i] >= 0 && eqnRowIndices[i] < localMatrix.numRows() )
         {
@@ -503,7 +503,7 @@ FluxKernel::
           localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( eqnRowIndices[i],
                                                                             dofColIndices_dPresCompUp,
                                                                             localFluxJacobian_dPresCompUp[i],
-                                                                            NC+1 );
+                                                                            NC + 1 );
           RAJA::atomicAdd( parallelDeviceAtomic{}, &localRhs[eqnRowIndices[i]], localFlux[i] );
         }
       }
@@ -550,7 +550,7 @@ PressureRelationKernel::
            arraySlice1d< real64 const, compflow::USD_FLUID_DC - 1 > const & dTotalMassDens_dCompDens,
            arraySlice1d< real64 const, compflow::USD_FLUID_DC - 1 > const & dTotalMassDens_dCompDensNext,
            real64 & localPresRel,
-           real64 ( & localPresRelJacobian )[2*(NC+1)] )
+           real64 ( & localPresRelJacobian )[2 * (NC + 1)] )
 {
   // local working variables and arrays
   real64 dAvgMassDens_dCompCurrent[NC]{};
@@ -572,13 +572,13 @@ PressureRelationKernel::
   // TODO: add friction and acceleration terms
 
   localPresRel = ( presNext - pres - avgMassDens * gravD );
-  localPresRelJacobian[TAG::NEXT *(NC+1)]    = ( 1 - dAvgMassDens_dPresNext * gravD );
-  localPresRelJacobian[TAG::CURRENT *(NC+1)] = ( -1 - dAvgMassDens_dPresCurrent * gravD );
+  localPresRelJacobian[TAG::NEXT *(NC + 1)]    = ( 1 - dAvgMassDens_dPresNext * gravD );
+  localPresRelJacobian[TAG::CURRENT *(NC + 1)] = ( -1 - dAvgMassDens_dPresCurrent * gravD );
 
   for( integer ic = 0; ic < NC; ++ic )
   {
-    localPresRelJacobian[TAG::NEXT *(NC+1) + ic+1]    = -dAvgMassDens_dCompNext[ic] * gravD;
-    localPresRelJacobian[TAG::CURRENT *(NC+1) + ic+1] = -dAvgMassDens_dCompCurrent[ic] * gravD;
+    localPresRelJacobian[TAG::NEXT *(NC + 1) + ic + 1]    = -dAvgMassDens_dCompNext[ic] * gravD;
+    localPresRelJacobian[TAG::CURRENT *(NC + 1) + ic + 1] = -dAvgMassDens_dCompCurrent[ic] * gravD;
   }
 }
 
@@ -690,7 +690,7 @@ PressureRelationKernel::
     {
 
       real64 localPresRel = 0;
-      real64 localPresRelJacobian[2*(NC+1)]{};
+      real64 localPresRelJacobian[2 * (NC + 1)]{};
 
       compute< NC >( wellElemGravCoef[iwelem],
                      wellElemGravCoef[iwelemNext],
@@ -707,16 +707,16 @@ PressureRelationKernel::
 
 
       // local working variables and arrays
-      globalIndex dofColIndices[2*(NC+1)];
+      globalIndex dofColIndices[2 * (NC + 1)];
 
       globalIndex const eqnRowIndex = wellElemDofNumber[iwelem] + ROFFSET::CONTROL - rankOffset;
-      dofColIndices[TAG::NEXT *(NC+1)]    = wellElemDofNumber[iwelemNext] + COFFSET::DPRES;
-      dofColIndices[TAG::CURRENT *(NC+1)] = wellElemDofNumber[iwelem] + COFFSET::DPRES;
+      dofColIndices[TAG::NEXT *(NC + 1)]    = wellElemDofNumber[iwelemNext] + COFFSET::DPRES;
+      dofColIndices[TAG::CURRENT *(NC + 1)] = wellElemDofNumber[iwelem] + COFFSET::DPRES;
 
       for( integer ic = 0; ic < NC; ++ic )
       {
-        dofColIndices[TAG::NEXT *(NC+1) + ic+1]    = wellElemDofNumber[iwelemNext] + COFFSET::DCOMP + ic;
-        dofColIndices[TAG::CURRENT *(NC+1) + ic+1] = wellElemDofNumber[iwelem] + COFFSET::DCOMP + ic;
+        dofColIndices[TAG::NEXT *(NC + 1) + ic + 1]    = wellElemDofNumber[iwelemNext] + COFFSET::DCOMP + ic;
+        dofColIndices[TAG::CURRENT *(NC + 1) + ic + 1] = wellElemDofNumber[iwelem] + COFFSET::DCOMP + ic;
       }
 
       if( eqnRowIndex >= 0 && eqnRowIndex < localMatrix.numRows() )
@@ -724,7 +724,7 @@ PressureRelationKernel::
         localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( eqnRowIndex,
                                                                           dofColIndices,
                                                                           localPresRelJacobian,
-                                                                          2 * (NC+1) );
+                                                                          2 * (NC + 1) );
         RAJA::atomicAdd( parallelDeviceAtomic{}, &localRhs[eqnRowIndex], localPresRel );
       }
     }
@@ -926,7 +926,7 @@ PerforationKernel::
 
         for( integer jc = 0; jc < NC; ++jc )
         {
-          dRelPerm_dC[jc] += dResRelPerm_dS * dResPhaseVolFrac[jp][Deriv::dC+jc];
+          dRelPerm_dC[jc] += dResRelPerm_dS * dResPhaseVolFrac[jp][Deriv::dC + jc];
         }
       }
 
@@ -943,7 +943,7 @@ PerforationKernel::
       // compute the phase flux and derivatives using upstream cell mobility
       flux = resPhaseMob * potDiff;
       dFlux_dP[TAG::RES]  = dResPhaseMob_dPres * potDiff + resPhaseMob * dPotDiff_dP[TAG::RES];
-      dFlux_dP[TAG::WELL] = resPhaseMob *  dPotDiff_dP[TAG::WELL];
+      dFlux_dP[TAG::WELL] = resPhaseMob * dPotDiff_dP[TAG::WELL];
 
       for( integer ic = 0; ic < NC; ++ic )
       {
@@ -1022,7 +1022,7 @@ PerforationKernel::
 
         for( integer jc = 0; jc < NC; ++jc )
         {
-          dRelPerm_dC[jc] += dResRelPerm_dS * dResPhaseVolFrac[jp][Deriv::dC+jc];
+          dRelPerm_dC[jc] += dResRelPerm_dS * dResPhaseVolFrac[jp][Deriv::dC + jc];
         }
       }
 
@@ -1232,7 +1232,7 @@ AccumulationKernel::
   for( integer i = 0; i < NC; ++i )
   {
     localAccum[i] = 0.0;
-    for( integer j = 0; j < NC+1; ++j )
+    for( integer j = 0; j < NC + 1; ++j )
     {
       localAccumJacobian[i][j] = 0.0;
     }
@@ -1252,7 +1252,7 @@ AccumulationKernel::
     for( integer jc = 0; jc < NC; ++jc )
     {
       dPhaseAmount_dC[jc] = dPhaseAmount_dC[jc] * phaseVolFrac[ip]
-                            + phaseDens[ip] * dPhaseVolFrac[ip][Deriv::dC+jc];
+                            + phaseDens[ip] * dPhaseVolFrac[ip][Deriv::dC + jc];
       dPhaseAmount_dC[jc] *= volume;
     }
 
@@ -1319,7 +1319,7 @@ AccumulationKernel::
     }
 
     real64 localAccum[NC]{};
-    real64 localAccumJacobian[NC][NC+1]{};
+    real64 localAccumJacobian[NC][NC + 1]{};
 
     compute< NC >( numPhases,
                    wellElemVolume[iwelem],
@@ -1344,8 +1344,8 @@ AccumulationKernel::
     }
 
     // set DOF col indices for this block
-    globalIndex dofColIndices[NC+1]{};
-    for( integer idof = 0; idof < NC+1; ++idof )
+    globalIndex dofColIndices[NC + 1]{};
+    for( integer idof = 0; idof < NC + 1; ++idof )
     {
       dofColIndices[idof] = wellElemDofNumber[iwelem] + COFFSET::DPRES + idof;
     }
@@ -1365,7 +1365,7 @@ AccumulationKernel::
       localMatrix.addToRow< serialAtomic >( eqnRowIndices[ic],
                                             dofColIndices,
                                             localAccumJacobian[ic],
-                                            NC+1 );
+                                            NC + 1 );
     }
   } );
 }
@@ -1410,12 +1410,12 @@ VolumeBalanceKernel::
            arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseVolFrac,
            arraySlice2d< real64 const, compflow::USD_PHASE_DC - 1 > const & dPhaseVolFrac,
            real64 & localVolBalance,
-           real64 ( & localVolBalanceJacobian )[NC+1] )
+           real64 ( & localVolBalanceJacobian )[NC + 1] )
 {
   using Deriv = multifluid::DerivativeOffset;
 
   localVolBalance = 1.0;
-  for( integer ic = 0; ic < NC+1; ++ic )
+  for( integer ic = 0; ic < NC + 1; ++ic )
   {
     localVolBalanceJacobian[ic] = 0.0;
   }
@@ -1428,12 +1428,12 @@ VolumeBalanceKernel::
 
     for( integer jc = 0; jc < NC; ++jc )
     {
-      localVolBalanceJacobian[jc + 1] -= dPhaseVolFrac[ip][Deriv::dC+jc];
+      localVolBalanceJacobian[jc + 1] -= dPhaseVolFrac[ip][Deriv::dC + jc];
     }
   }
 
   // scale saturation-based volume balance by pore volume (for better scaling w.r.t. other equations)
-  for( integer idof = 0; idof < NC+1; ++idof )
+  for( integer idof = 0; idof < NC + 1; ++idof )
   {
     localVolBalanceJacobian[idof] *= volume;
   }
@@ -1463,7 +1463,7 @@ VolumeBalanceKernel::
     }
 
     real64 localVolBalance = 1.0;
-    real64 localVolBalanceJacobian[NC+1]{};
+    real64 localVolBalanceJacobian[NC + 1]{};
 
     compute< NC >( numPhases,
                    wellElemVolume[iwelem],
@@ -1474,8 +1474,8 @@ VolumeBalanceKernel::
 
     // get equation/dof indices
     localIndex const localVolBalanceEqnIndex = wellElemDofNumber[iwelem] - rankOffset + ROFFSET::MASSBAL + NC;
-    globalIndex localVolBalanceDOF[NC+1]{};
-    for( integer jdof = 0; jdof < NC+1; ++jdof )
+    globalIndex localVolBalanceDOF[NC + 1]{};
+    for( integer jdof = 0; jdof < NC + 1; ++jdof )
     {
       localVolBalanceDOF[jdof] = wellElemDofNumber[iwelem] + COFFSET::DPRES + jdof;
     }
@@ -1483,7 +1483,7 @@ VolumeBalanceKernel::
     localMatrix.addToRowBinarySearchUnsorted< serialAtomic >( localVolBalanceEqnIndex,
                                                               localVolBalanceDOF,
                                                               localVolBalanceJacobian,
-                                                              NC+1 );
+                                                              NC + 1 );
     localRhs[localVolBalanceEqnIndex] += localVolBalance;
   } );
 }

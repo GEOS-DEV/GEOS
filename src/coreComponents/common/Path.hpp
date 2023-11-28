@@ -129,7 +129,7 @@ std::string getAbsolutePath( std::string const & path );
  */
 inline bool isAbsolutePath( std::string const & path )
 {
-  return !path.empty() && path[ 0 ] == '/';
+  return !path.empty() && path[0] == '/';
 }
 
 /*!

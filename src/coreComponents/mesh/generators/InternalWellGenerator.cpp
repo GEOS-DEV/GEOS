@@ -100,7 +100,7 @@ void InternalWellGenerator::postProcessInput()
                  ": Invalid size.",
                  InputError );
 
-  GEOS_THROW_IF( m_polyNodeCoords.size( 0 )-1 != m_segmentToPolyNodeMap.size( 0 ),
+  GEOS_THROW_IF( m_polyNodeCoords.size( 0 ) - 1 != m_segmentToPolyNodeMap.size( 0 ),
                  "Incompatible sizes of " << getWrapperDataContext( viewKeyStruct::polylineNodeCoordsString() ) <<
                  " and " << getWrapperDataContext( viewKeyStruct::polylineSegmentConnString() ),
                  InputError );
@@ -195,7 +195,7 @@ void InternalWellGenerator::constructPolylineNodeToSegmentMap()
                    InputError );
 
     GEOS_THROW_IF( m_polyNodeCoords[ipolyNode_a][2] < m_polyNodeCoords[ipolyNode_b][2],
-                   getDataContext() << ": Error in the topology of the well. In the polyline"<<
+                   getDataContext() << ": Error in the topology of the well. In the polyline" <<
                    ", each segment must be going down. \n" <<
                    "This is not the case between polyline nodes " << m_polyNodeCoords[ipolyNode_a] << " and " << m_polyNodeCoords[ipolyNode_b],
                    InputError );
@@ -317,7 +317,7 @@ void InternalWellGenerator::discretizePolyline()
 
       // 2) set the node properties
       globalIndex const iwellNodeTop    = iwelemCurrent;
-      globalIndex const iwellNodeBottom = iwelemCurrent+1;
+      globalIndex const iwellNodeBottom = iwelemCurrent + 1;
       m_elemToNodesMap[iwelemCurrent][LineBlockABC::NodeLocation::TOP]    = iwellNodeTop;
       m_elemToNodesMap[iwelemCurrent][LineBlockABC::NodeLocation::BOTTOM] = iwellNodeBottom;
 
@@ -345,8 +345,8 @@ void InternalWellGenerator::discretizePolyline()
   }
 
   // set the previous index for the bottom segment
-  m_prevElemId[iwelemCurrent-1].resize( 1 );
-  m_prevElemId[iwelemCurrent-1][0] = -1;
+  m_prevElemId[iwelemCurrent - 1].resize( 1 );
+  m_prevElemId[iwelemCurrent - 1][0] = -1;
 
 }
 

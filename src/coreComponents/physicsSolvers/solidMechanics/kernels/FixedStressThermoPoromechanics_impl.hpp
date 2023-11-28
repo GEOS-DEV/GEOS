@@ -94,12 +94,12 @@ setup( localIndex const k,
     for( int i = 0; i < 3; ++i )
     {
 #if defined(CALC_FEM_SHAPE_IN_KERNEL)
-      stack.xLocal[ a ][ i ] = m_X[ localNodeIndex ][ i ];
+      stack.xLocal[a][i] = m_X[localNodeIndex][i];
 #endif
-      stack.u_local[ a ][i] = m_disp[ localNodeIndex ][i];
-      stack.uhat_local[ a ][i] = m_uhat[ localNodeIndex ][i];
-      stack.localRowDofIndex[a*3+i] = m_dofNumber[localNodeIndex]+i;
-      stack.localColDofIndex[a*3+i] = m_dofNumber[localNodeIndex]+i;
+      stack.u_local[a][i] = m_disp[localNodeIndex][i];
+      stack.uhat_local[a][i] = m_uhat[localNodeIndex][i];
+      stack.localRowDofIndex[a * 3 + i] = m_dofNumber[localNodeIndex] + i;
+      stack.localColDofIndex[a * 3 + i] = m_dofNumber[localNodeIndex] + i;
     }
   }
 
@@ -122,7 +122,7 @@ quadraturePointKernel( localIndex const k,
                        localIndex const q,
                        StackVariables & stack ) const
 {
-  real64 dNdX[ numNodesPerElem ][ 3 ];
+  real64 dNdX[numNodesPerElem][3];
   real64 const detJxW = m_finiteElementSpace.template getGradN< FE_TYPE >( k, q, stack.xLocal,
                                                                            stack.feStack, dNdX );
 
@@ -147,16 +147,16 @@ quadraturePointKernel( localIndex const k,
                                                                   totalStress,
                                                                   stiffness );
 
-  for( localIndex i=0; i<6; ++i )
+  for( localIndex i = 0; i < 6; ++i )
   {
     totalStress[i] *= -detJxW;
   }
 
   // Here we consider the bodyForce is purely from the solid
   // Warning: here, we lag (in iteration) the displacement dependence of bulkDensity
-  real64 const gravityForce[3] = { m_gravityVector[0] * m_bulkDensity( k, q )* detJxW,
-                                   m_gravityVector[1] * m_bulkDensity( k, q )* detJxW,
-                                   m_gravityVector[2] * m_bulkDensity( k, q )* detJxW };
+  real64 const gravityForce[3] = { m_gravityVector[0] * m_bulkDensity( k, q ) * detJxW,
+                                   m_gravityVector[1] * m_bulkDensity( k, q ) * detJxW,
+                                   m_gravityVector[2] * m_bulkDensity( k, q ) * detJxW };
 
   real64 N[numNodesPerElem];
   FE_TYPE::calcN( q, stack.feStack, N );
@@ -196,16 +196,16 @@ complete( localIndex const k,
     for( int dim = 0; dim < numDofPerTestSupportPoint; ++dim )
     {
       localIndex const dof =
-        LvArray::integerConversion< localIndex >( stack.localRowDofIndex[ numDofPerTestSupportPoint * localNode + dim ] - m_dofRankOffset );
+        LvArray::integerConversion< localIndex >( stack.localRowDofIndex[numDofPerTestSupportPoint * localNode + dim] - m_dofRankOffset );
       if( dof < 0 || dof >= m_matrix.numRows() )
         continue;
       m_matrix.template addToRowBinarySearchUnsorted< parallelDeviceAtomic >( dof,
                                                                               stack.localRowDofIndex,
-                                                                              stack.localJacobian[ numDofPerTestSupportPoint * localNode + dim ],
+                                                                              stack.localJacobian[numDofPerTestSupportPoint * localNode + dim],
                                                                               stack.numRows );
 
-      RAJA::atomicAdd< parallelDeviceAtomic >( &m_rhs[ dof ], stack.localResidual[ numDofPerTestSupportPoint * localNode + dim ] );
-      maxForce = fmax( maxForce, fabs( stack.localResidual[ numDofPerTestSupportPoint * localNode + dim ] ) );
+      RAJA::atomicAdd< parallelDeviceAtomic >( &m_rhs[dof], stack.localResidual[numDofPerTestSupportPoint * localNode + dim] );
+      maxForce = fmax( maxForce, fabs( stack.localResidual[numDofPerTestSupportPoint * localNode + dim] ) );
     }
   }
   return maxForce;

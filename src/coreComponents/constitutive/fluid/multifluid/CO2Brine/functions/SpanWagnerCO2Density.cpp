@@ -95,17 +95,17 @@ real64 co2HelmholtzEnergy( real64 const & T,
   // this is defined in Table (32) of Span and Wagner (1996)
   real64 phi_r_delta = 0.0;
 
-  for( int i=0; i<7; i++ )
+  for( int i = 0; i < 7; i++ )
   {
-    phi_r_delta += n[i] * d[i] * pow( delta, d[i]-1.0 ) * pow( tau, t[i] );
+    phi_r_delta += n[i] * d[i] * pow( delta, d[i] - 1.0 ) * pow( tau, t[i] );
   }
 
-  for( int i=7; i<34; i++ )
+  for( int i = 7; i < 34; i++ )
   {
     phi_r_delta += n[i] * exp( -pow( delta, c[i] )) * pow( delta, d[i] - 1.0 ) * pow( tau, t[i] ) * (d[i] - c[i] * pow( delta, c[i] ));
   }
 
-  for( int i=34; i<39; i++ )
+  for( int i = 34; i < 39; i++ )
   {
     phi_r_delta += n[i] *
                    pow( delta,
@@ -116,7 +116,7 @@ real64 co2HelmholtzEnergy( real64 const & T,
                         pow( delta - epslon[i], 2.0 ) - beta[i] * pow( tau - gamma0[i], 2.0 )) * (d[i] / delta - 2.0 * alpha[i] * (delta - epslon[i]));
   }
 
-  for( int i=39; i<42; i++ )
+  for( int i = 39; i < 42; i++ )
   {
     theta = 1.0 - tau + A[i] * pow( pow( delta - 1.0, 2.0 ), 1.0 / (2.0 * beta[i]));
     Delta = pow( theta, 2.0 ) + B[i] * pow( pow( delta - 1.0, 2.0 ), a[i] );
@@ -131,7 +131,7 @@ real64 co2HelmholtzEnergy( real64 const & T,
 
     dDelta_delta_b = b[i] * pow( Delta, b[i] - 1.0 ) * dDelta_delta;
 
-    phi_r_delta += n[i] * (pow( Delta, b[i] ) * (Phi + delta *dPhi_delta) + dDelta_delta_b * delta * Phi);
+    phi_r_delta += n[i] * (pow( Delta, b[i] ) * (Phi + delta * dPhi_delta) + dDelta_delta_b * delta * Phi);
   }
 
   // Helmholtz energy equation: see equation (2.2) from Span and Wagner (1996)
@@ -162,14 +162,14 @@ real64 spanWagnerCO2DensityFunction( string const & name,
   if( T < T_c )
   {
     real64 sum = 0;
-    for( integer i=0; i < 4; i++ )
+    for( integer i = 0; i < 4; i++ )
     {
       sum += vpa[i] * pow( 1.0 - T / T_c, vpt[i] );
     }
     real64 const psat = P_c * exp( T_c / T * sum );
 
     sum = 0;
-    for( integer i=0; i < 4; i++ )
+    for( integer i = 0; i < 4; i++ )
     {
       sum += lda[i] * pow( 1.0 - T / T_c, ldt[i] );
     }
@@ -264,7 +264,7 @@ void SpanWagnerCO2Density::calculateCO2Density( string const & functionName,
     for( localIndex j = 0; j < nTemperatures; ++j )
     {
       real64 const TK = tableCoords.getTemperature( j ) + TK_f;
-      densities[j*nPressures+i] = spanWagnerCO2DensityFunction( functionName, tolerance, TK, PPa, &co2HelmholtzEnergy );
+      densities[j * nPressures + i] = spanWagnerCO2DensityFunction( functionName, tolerance, TK, PPa, &co2HelmholtzEnergy );
     }
   }
 }

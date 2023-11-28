@@ -409,7 +409,7 @@ void testPhaseVolumeFractionNumericalDerivatives( CompositionalMultiphaseFVM & s
           real64 const delta = compDens[ei][jc] - compDens_n[ei][jc];
           checkDerivative( phaseVolFrac[ei].toSliceConst(),
                            phaseVolFracOrig[ei].toSliceConst(),
-                           dS[Deriv::dC+jc].toSliceConst(),
+                           dS[Deriv::dC + jc].toSliceConst(),
                            delta,
                            relTol,
                            "phaseVolFrac",
@@ -574,7 +574,7 @@ void testPhaseMobilityNumericalDerivatives( CompositionalMultiphaseFVM & solver,
           real64 const delta = compDens[ei][jc] - compDens_n[ei][jc];
           checkDerivative( phaseMob[ei].toSliceConst(),
                            phaseMobOrig[ei].toSliceConst(),
-                           dMob[Deriv::dC+jc].toSliceConst(),
+                           dMob[Deriv::dC + jc].toSliceConst(),
                            delta,
                            relTol,
                            "phaseMob",

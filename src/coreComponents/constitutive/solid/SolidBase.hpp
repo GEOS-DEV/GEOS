@@ -370,9 +370,9 @@ public:
 
     real64 energy = 0;
 
-    for( localIndex i=0; i<6; ++i )
+    for( localIndex i = 0; i < 6; ++i )
     {
-      energy += stress[i]*strain[i];  // contraction sigma:epsilon
+      energy += stress[i] * strain[i];  // contraction sigma:epsilon
     }
     energy *= 0.5;
 
@@ -435,30 +435,30 @@ public:
     real64 strainIncrementFD[6]{}; // perturbed strain
     real64 norm = 0;               // norm for scaling (note: method is fragile w.r.t. scaling)
 
-    for( localIndex i=0; i<6; ++i )
+    for( localIndex i = 0; i < 6; ++i )
     {
       strainIncrementFD[i] = strainIncrement[i];
       norm += fabs( strainIncrement[i] );
     }
 
-    real64 eps = 1e-4*norm;     // finite difference perturbation
+    real64 eps = 1e-4 * norm;     // finite difference perturbation
 
     smallStrainUpdate( k, q, timeIncrement, strainIncrement, stress, stiffness );
 
-    for( localIndex i=0; i<6; ++i )
+    for( localIndex i = 0; i < 6; ++i )
     {
       strainIncrementFD[i] += eps;
 
-      if( i>0 )
+      if( i > 0 )
       {
-        strainIncrementFD[i-1] -= eps;
+        strainIncrementFD[i - 1] -= eps;
       }
 
       smallStrainUpdate( k, q, timeIncrement, strainIncrementFD, stressFD, stiffnessFD );
 
-      for( localIndex j=0; j<6; ++j )
+      for( localIndex j = 0; j < 6; ++j )
       {
-        stiffnessFD[j][i] = (stressFD[j]-stress[j])/eps;
+        stiffnessFD[j][i] = (stressFD[j] - stress[j]) / eps;
       }
     }
 
@@ -498,11 +498,11 @@ public:
     real64 error = 0;
     real64 norm = 0;
 
-    for( localIndex i=0; i<6; ++i )
+    for( localIndex i = 0; i < 6; ++i )
     {
-      for( localIndex j=0; j<6; ++j )
+      for( localIndex j = 0; j < 6; ++j )
       {
-        error += fabs( stiffnessFD[i][j]-stiffness[i][j] );
+        error += fabs( stiffnessFD[i][j] - stiffness[i][j] );
         norm += fabs( stiffnessFD[i][j] );
       }
     }
@@ -512,9 +512,9 @@ public:
 
     if( print )
     {
-      for( localIndex i=0; i<6; ++i )
+      for( localIndex i = 0; i < 6; ++i )
       {
-        for( localIndex j=0; j<6; ++j )
+        for( localIndex j = 0; j < 6; ++j )
         {
           printf( "[%8.1e vs %8.1e] ", stiffnessFD[i][j], stiffness[i][j] );
         }

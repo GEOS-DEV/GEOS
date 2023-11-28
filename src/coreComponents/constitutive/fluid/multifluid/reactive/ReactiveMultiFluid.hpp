@@ -231,7 +231,7 @@ ReactiveMultiFluid::KernelWrapper::
 {
   // 1. Convert from mole fraction to molarity ( mol/L )
   real64 const conversionFactor = totalDensity / totalMolecularWeight * 1e-3;  //conversion to L instead of cubic meters
-  for( int i=0; i < m_numPrimarySpecies; i++ )
+  for( int i = 0; i < m_numPrimarySpecies; i++ )
   {
     primarySpeciesTotalConcentration[i] = composition[i] * conversionFactor;
   }

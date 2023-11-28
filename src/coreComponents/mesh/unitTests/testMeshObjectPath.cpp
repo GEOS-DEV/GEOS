@@ -73,19 +73,19 @@ private:
 void TestMesh::createTestMesh()
 {
 
-  m_pathPermutations["body0"]["level0"]["region1"]={"subreg0", "subreg1"};
-  m_pathPermutations["body0"]["level0"]["region0"]={"subreg0", "subreg1"};
-  m_pathPermutations["body0"]["level1"]["region0"]={"subreg0", "subreg1"};
-  m_pathPermutations["body0"]["level1"]["region1"]={"subreg0", "subreg1"};
-  m_pathPermutations["body1"]["level0"]["region0"]={"subreg0", "subreg1"};
-  m_pathPermutations["body1"]["level0"]["region1"]={"subreg0", "subreg1"};
-  m_pathPermutations["body1"]["level1"]["region0"]={"subreg0", "subreg1"};
-  m_pathPermutations["body1"]["level1"]["region1"]={"subreg0", "subreg1"};
-  m_pathPermutations["body1"]["level1"]["region2"]={"subreg0", "subreg2"};
-  m_pathPermutations["body3"]["level0"]["region0"]={"subreg0", "subreg1"};
-  m_pathPermutations["body3"]["level0"]["region1"]={"subreg0", "subreg1"};
-  m_pathPermutations["body3"]["level2"]["region0"]={"subreg0", "subreg1"};
-  m_pathPermutations["body3"]["level2"]["region1"]={"subreg0", "subreg1"};
+  m_pathPermutations["body0"]["level0"]["region1"] = {"subreg0", "subreg1"};
+  m_pathPermutations["body0"]["level0"]["region0"] = {"subreg0", "subreg1"};
+  m_pathPermutations["body0"]["level1"]["region0"] = {"subreg0", "subreg1"};
+  m_pathPermutations["body0"]["level1"]["region1"] = {"subreg0", "subreg1"};
+  m_pathPermutations["body1"]["level0"]["region0"] = {"subreg0", "subreg1"};
+  m_pathPermutations["body1"]["level0"]["region1"] = {"subreg0", "subreg1"};
+  m_pathPermutations["body1"]["level1"]["region0"] = {"subreg0", "subreg1"};
+  m_pathPermutations["body1"]["level1"]["region1"] = {"subreg0", "subreg1"};
+  m_pathPermutations["body1"]["level1"]["region2"] = {"subreg0", "subreg2"};
+  m_pathPermutations["body3"]["level0"]["region0"] = {"subreg0", "subreg1"};
+  m_pathPermutations["body3"]["level0"]["region1"] = {"subreg0", "subreg1"};
+  m_pathPermutations["body3"]["level2"]["region0"] = {"subreg0", "subreg1"};
+  m_pathPermutations["body3"]["level2"]["region1"] = {"subreg0", "subreg1"};
 
 
   for( auto const & meshBodyPair : m_pathPermutations )
@@ -147,7 +147,7 @@ TEST( testMeshObjectPath, fillPathTokens )
     auto pathTokens = meshObjectPath.testFillPathTokens( path, meshBodies );
 
     EXPECT_TRUE( pathSize == pathTokens.size() );
-    for( size_t a=0; a<pathTokens.size(); ++a )
+    for( size_t a = 0; a < pathTokens.size(); ++a )
     {
       EXPECT_TRUE( pathTokens[a] == expectedPath[a] );
     }

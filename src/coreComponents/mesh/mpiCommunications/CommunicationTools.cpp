@@ -141,7 +141,7 @@ void CommunicationTools::assignGlobalIndices( ObjectManagerBase & manager,
                               MPI_COMM_GEOSX );
   }
 
-  for( std::size_t count=0; count<neighbors.size(); ++count )
+  for( std::size_t count = 0; count < neighbors.size(); ++count )
   {
     int neighborIndex;
     MpiWrapper::waitAny( commData.size(),
@@ -171,7 +171,7 @@ void CommunicationTools::assignGlobalIndices( ObjectManagerBase & manager,
   // object.
   std::vector< map< globalIndex, std::vector< std::pair< std::vector< globalIndex >, globalIndex > > > > neighborCompositionObjects( neighbors.size() );
 
-  for( std::size_t count=0; count<neighbors.size(); ++count )
+  for( std::size_t count = 0; count < neighbors.size(); ++count )
   {
     int neighborIndex;
     MpiWrapper::waitAny( commData.size(),
@@ -611,22 +611,22 @@ void verifyGhostingConsistency( ObjectManagerBase const & objectManager,
     arrayView1d< localIndex const > const & recvList = neighborData.ghostsToReceive();
     for( localIndex const recvIdx : recvList )
     {
-      if( ghostRank[ recvIdx ] != neighborRank )
+      if( ghostRank[recvIdx] != neighborRank )
       {
         error = true;
         GEOS_LOG_RANK( "Receiving " << recvIdx << " from " << neighborRank <<
-                       " but ghostRank[ " << recvIdx << " ] is " << ghostRank[ recvIdx ] );
+                       " but ghostRank[ " << recvIdx << " ] is " << ghostRank[recvIdx] );
       }
     }
 
     arrayView1d< localIndex const > const & sendList = neighborData.ghostsToSend();
     for( localIndex const sendIdx : sendList )
     {
-      if( ghostRank[ sendIdx ] != -1 )
+      if( ghostRank[sendIdx] != -1 )
       {
         error = true;
         GEOS_LOG_RANK( "Sending " << sendIdx << " to " << neighborRank <<
-                       " but ghostRank[ " << sendIdx << " ] is " << ghostRank[ sendIdx ] );
+                       " but ghostRank[ " << sendIdx << " ] is " << ghostRank[sendIdx] );
       }
     }
 
@@ -674,13 +674,13 @@ void fixReceiveLists( ObjectManagerBase & objectManager,
   /// For each neighbor send them the indices of their ghosts that they mistakenly believe are owned by this rank.
   for( std::size_t i = 0; i < neighbors.size(); ++i )
   {
-    int const neighborRank = neighbors[ i ].neighborRank();
+    int const neighborRank = neighbors[i].neighborRank();
 
     MpiWrapper::iSend( objectManager.getNeighborData( neighborRank ).nonLocalGhosts().toView(),
                        neighborRank,
                        nonLocalGhostsTag,
                        MPI_COMM_GEOSX,
-                       &nonLocalGhostsRequests[ i ] );
+                       &nonLocalGhostsRequests[i] );
   }
 
   for( NeighborCommunicator const & neighbor : neighbors )
@@ -707,9 +707,9 @@ void fixReceiveLists( ObjectManagerBase & objectManager,
     for( std::pair< globalIndex, int > const & pair : ghostsFromSecondNeighbor )
     {
       localIndex const lid = objectManager.globalToLocalMap( pair.first );
-      ghostsBySecondNeighbor[ pair.second ].emplace_back( lid );
+      ghostsBySecondNeighbor[pair.second].emplace_back( lid );
       ghostsToFix.emplace_back( lid );
-      ghostRank[ lid ] = pair.second;
+      ghostRank[lid] = pair.second;
     }
 
     /// Remove the ghosts to fix from the neighbor's receive list.
@@ -743,7 +743,7 @@ void removeUnusedNeighbors( NodeManager & nodeManager,
 {
   for( std::size_t i = 0; i < neighbors.size(); )
   {
-    int const neighborRank = neighbors[ i ].neighborRank();
+    int const neighborRank = neighbors[i].neighborRank();
 
     bool used = false;
 
@@ -1028,7 +1028,7 @@ bool CommunicationTools::asyncUnpack( MeshLevel & mesh,
 
   for( int recvIdx = 0; recvIdx < recvCount; ++recvIdx )
   {
-    NeighborCommunicator & neighbor = neighbors[ neighborIndices[ recvIdx ] ];
+    NeighborCommunicator & neighbor = neighbors[neighborIndices[recvIdx]];
     neighbor.unpackBufferForSync( icomm.getFieldsToBeSync(), mesh, icomm.commID(), onDevice, events, op );
   }
 
@@ -1040,7 +1040,7 @@ bool CommunicationTools::asyncUnpack( MeshLevel & mesh,
   const MPI_Request * reqs = icomm.mpiRecvBufferRequest( );
   for( int idx = 0; idx < icomm.size(); ++idx )
   {
-    if( reqs[ idx ] != MPI_REQUEST_NULL )
+    if( reqs[idx] != MPI_REQUEST_NULL )
     {
       allDone = false;
       break;

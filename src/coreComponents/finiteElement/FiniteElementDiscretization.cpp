@@ -66,7 +66,7 @@ void FiniteElementDiscretization::postProcessInput()
 std::unique_ptr< FiniteElementBase >
 FiniteElementDiscretization::factory( ElementType const parentElementShape ) const
 {
-  if( m_order==1 )
+  if( m_order == 1 )
   {
     switch( parentElementShape )
     {
@@ -176,7 +176,7 @@ FiniteElementDiscretization::factory( ElementType const parentElementShape ) con
     return {};
   }
 
-  if( m_order==2 )
+  if( m_order == 2 )
   {
     switch( parentElementShape )
     {
@@ -198,7 +198,7 @@ FiniteElementDiscretization::factory( ElementType const parentElementShape ) con
     return {};
   }
 
-  if( m_order==3 )
+  if( m_order == 3 )
   {
     switch( parentElementShape )
     {
@@ -220,7 +220,7 @@ FiniteElementDiscretization::factory( ElementType const parentElementShape ) con
     return {};
   }
 
-  if( m_order==4 )
+  if( m_order == 4 )
   {
     switch( parentElementShape )
     {
@@ -242,7 +242,7 @@ FiniteElementDiscretization::factory( ElementType const parentElementShape ) con
     return {};
   }
 
-  if( m_order==5 )
+  if( m_order == 5 )
   {
     switch( parentElementShape )
     {

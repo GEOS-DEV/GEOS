@@ -167,7 +167,7 @@ void packNewObjectsToGhosts( NeighborCommunicator * const neighbor,
         {
           if( elemIndex == elemGhostsToSend[a] )
           {
-            newSurfaceGhostsToSend[ {er, esr} ].insert( k );
+            newSurfaceGhostsToSend[{er, esr}].insert( k );
             return;
           }
         } );
@@ -175,7 +175,7 @@ void packNewObjectsToGhosts( NeighborCommunicator * const neighbor,
     } );
   }
 
-  for( localIndex er=0; er<elemManager.numRegions(); ++er )
+  for( localIndex er = 0; er < elemManager.numRegions(); ++er )
   {
     ElementRegionBase & elemRegion = elemManager.getRegion( er );
     newElemsToSendData[er].resize( elemRegion.numSubRegions() );
@@ -247,12 +247,12 @@ void unpackNewToGhosts( NeighborCommunicator * const neighbor,
   newGhostElems.resize( elemManager.numRegions() );
   newGhostElemsData.resize( elemManager.numRegions() );
 
-  for( localIndex er=0; er<elemManager.numRegions(); ++er )
+  for( localIndex er = 0; er < elemManager.numRegions(); ++er )
   {
     ElementRegionBase & elemRegion = elemManager.getRegion( er );
     newGhostElemsData[er].resize( elemRegion.numSubRegions() );
     newGhostElems[er].resize( elemRegion.numSubRegions() );
-    for( localIndex esr=0; esr<elemRegion.numSubRegions(); ++esr )
+    for( localIndex esr = 0; esr < elemRegion.numSubRegions(); ++esr )
     {
       newGhostElems[er][esr].set( newGhostElemsData[er][esr] );
     }
@@ -302,7 +302,7 @@ void packFracturedToGhosts( NeighborCommunicator * const neighbor,
   elemsToSendData.resize( elemManager.numRegions() );
   elemsToSend.resize( elemManager.numRegions() );
 
-  for( localIndex er=0; er<elemManager.numRegions(); ++er )
+  for( localIndex er = 0; er < elemManager.numRegions(); ++er )
   {
     ElementRegionBase & elemRegion = elemManager.getRegion( er );
     elemsToSendData[er].resize( elemRegion.numSubRegions() );
@@ -356,12 +356,12 @@ void unpackFracturedToGhosts( NeighborCommunicator * const neighbor,
   ghostElems.resize( elemManager.numRegions() );
   ghostElemsData.resize( elemManager.numRegions() );
 
-  for( localIndex er=0; er<elemManager.numRegions(); ++er )
+  for( localIndex er = 0; er < elemManager.numRegions(); ++er )
   {
     ElementRegionBase & elemRegion = elemManager.getRegion( er );
     ghostElemsData[er].resize( elemRegion.numSubRegions() );
     ghostElems[er].resize( elemRegion.numSubRegions() );
-    for( localIndex esr=0; esr<elemRegion.numSubRegions(); ++esr )
+    for( localIndex esr = 0; esr < elemRegion.numSubRegions(); ++esr )
     {
       ghostElems[er][esr].set( ghostElemsData[er][esr] );
     }
@@ -384,7 +384,7 @@ void synchronizeNewNodes( MeshLevel & mesh,
 
   MPI_iCommData commData( CommunicationTools::getInstance().getCommID() );
   commData.resize( neighbors.size());
-  for( unsigned int neighborIndex=0; neighborIndex<neighbors.size(); ++neighborIndex )
+  for( unsigned int neighborIndex = 0; neighborIndex < neighbors.size(); ++neighborIndex )
   {
     NeighborCommunicator & neighbor = neighbors[neighborIndex];
 
@@ -400,7 +400,7 @@ void synchronizeNewNodes( MeshLevel & mesh,
 
   }
 
-  for( unsigned int count=0; count<neighbors.size(); ++count )
+  for( unsigned int count = 0; count < neighbors.size(); ++count )
   {
     int neighborIndex;
     MpiWrapper::waitAny( commData.size(),
@@ -417,7 +417,7 @@ void synchronizeNewNodes( MeshLevel & mesh,
   }
 
 
-  for( unsigned int count=0; count<neighbors.size(); ++count )
+  for( unsigned int count = 0; count < neighbors.size(); ++count )
   {
 
     int neighborIndex = count;
@@ -459,7 +459,7 @@ void synchronizeNewSurfaces( MeshLevel & mesh,
 
   MPI_iCommData commData( CommunicationTools::getInstance().getCommID() );
   commData.resize( neighbors.size());
-  for( unsigned int neighborIndex=0; neighborIndex<neighbors.size(); ++neighborIndex )
+  for( unsigned int neighborIndex = 0; neighborIndex < neighbors.size(); ++neighborIndex )
   {
     NeighborCommunicator & neighbor = neighbors[neighborIndex];
 
@@ -475,7 +475,7 @@ void synchronizeNewSurfaces( MeshLevel & mesh,
 
   }
 
-  for( unsigned int count=0; count<neighbors.size(); ++count )
+  for( unsigned int count = 0; count < neighbors.size(); ++count )
   {
     int neighborIndex;
     MpiWrapper::waitAny( commData.size(),
@@ -492,7 +492,7 @@ void synchronizeNewSurfaces( MeshLevel & mesh,
   }
 
 
-  for( unsigned int count=0; count<neighbors.size(); ++count )
+  for( unsigned int count = 0; count < neighbors.size(); ++count )
   {
 
     int neighborIndex = count;
@@ -530,7 +530,7 @@ void synchronizeFracturedElements( MeshLevel & mesh,
   MPI_iCommData commDataJunk( CommunicationTools::getInstance().getCommID() );
   MPI_iCommData commData( CommunicationTools::getInstance().getCommID() );
   commData.resize( neighbors.size());
-  for( unsigned int neighborIndex=0; neighborIndex<neighbors.size(); ++neighborIndex )
+  for( unsigned int neighborIndex = 0; neighborIndex < neighbors.size(); ++neighborIndex )
   {
     NeighborCommunicator & neighbor = neighbors[neighborIndex];
 
@@ -546,7 +546,7 @@ void synchronizeFracturedElements( MeshLevel & mesh,
 
   }
 
-  for( unsigned int count=0; count<neighbors.size(); ++count )
+  for( unsigned int count = 0; count < neighbors.size(); ++count )
   {
     int neighborIndex;
     MpiWrapper::waitAny( commData.size(),
@@ -563,7 +563,7 @@ void synchronizeFracturedElements( MeshLevel & mesh,
   }
 
 
-  for( unsigned int count=0; count<neighbors.size(); ++count )
+  for( unsigned int count = 0; count < neighbors.size(); ++count )
   {
 
     int neighborIndex = count;

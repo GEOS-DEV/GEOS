@@ -94,9 +94,9 @@ transposeIndexMap( VIEW_TYPE const & srcMap,
   counts.setValues< POLICY >( overAlloc );
   forAll< POLICY >( size0( srcMap ), [srcMap, counts = counts.toView()] ( localIndex const srcIndex )
   {
-    for( localIndex const dstIndex : srcMap[ srcIndex ] )
+    for( localIndex const dstIndex : srcMap[srcIndex] )
     {
-      RAJA::atomicInc< AtomicPolicy< POLICY > >( &counts[ dstIndex ] );
+      RAJA::atomicInc< AtomicPolicy< POLICY > >( &counts[dstIndex] );
     }
   } );
 
@@ -107,7 +107,7 @@ transposeIndexMap( VIEW_TYPE const & srcMap,
   // Fill the sub-arrays with unsorted entries
   forAll< POLICY >( size0( srcMap ), [srcMap, dstMap = dstMap.toView()] ( localIndex const srcIndex )
   {
-    for( localIndex const dstIndex : srcMap[ srcIndex ] )
+    for( localIndex const dstIndex : srcMap[srcIndex] )
     {
       dstMap.emplaceBackAtomic< AtomicPolicy< POLICY > >( dstIndex, srcIndex );
     }
@@ -228,7 +228,7 @@ struct NodeKeyHasher
     // use a boost-style hash function
     for( auto v : arr )
     {
-      hash ^= std::hash< T >{} ( v )  + 0x9e3779b9 + ( hash << 6 ) + ( hash >> 2 );
+      hash ^= std::hash< T >{} ( v ) + 0x9e3779b9 + ( hash << 6 ) + ( hash >> 2 );
     }
     return hash;
   }
@@ -334,48 +334,48 @@ static std::array< T, 6 > createNodeKey( T v1, T v2, T v3, T v4, int a, int b, i
  * @param order the order of the discretization
  */
 template< typename T >
-static std::array< T, 6 > createNodeKey( T const (&elemNodes)[ 8 ], int q1, int q2, int q3, int order )
+static std::array< T, 6 > createNodeKey( T const (&elemNodes)[8], int q1, int q2, int q3, int order )
 {
   bool extremal1 = q1 == 0 || q1 == order;
   bool extremal2 = q2 == 0 || q2 == order;
   bool extremal3 = q3 == 0 || q3 == order;
-  int v1 = q1/order;
-  int v2 = q2/order;
-  int v3 = q3/order;
+  int v1 = q1 / order;
+  int v2 = q2 / order;
+  int v3 = q3 / order;
   if( extremal1 && extremal2 && extremal3 )
   {
     // vertex node
-    return createNodeKey( elemNodes[ v1 + 2*v2 + 4*v3 ] );
+    return createNodeKey( elemNodes[v1 + 2 * v2 + 4 * v3] );
   }
   else if( extremal1 && extremal2 )
   {
     // edge node on v1, v2
-    return createNodeKey( elemNodes[ v1 + 2*v2 ], elemNodes[ v1 + 2*v2 + 4 ], q3, order );
+    return createNodeKey( elemNodes[v1 + 2 * v2], elemNodes[v1 + 2 * v2 + 4], q3, order );
   }
   else if( extremal1 && extremal3 )
   {
     // edge node on v1, v3
-    return createNodeKey( elemNodes[ v1 + 4*v3 ], elemNodes[ v1 + 2 + 4*v3 ], q2, order );
+    return createNodeKey( elemNodes[v1 + 4 * v3], elemNodes[v1 + 2 + 4 * v3], q2, order );
   }
   else if( extremal2 && extremal3 )
   {
     // edge node on v2, v3
-    return createNodeKey( elemNodes[ 2*v2 + 4*v3 ], elemNodes[ 1 + 2*v2 + 4*v3 ], q1, order );
+    return createNodeKey( elemNodes[2 * v2 + 4 * v3], elemNodes[1 + 2 * v2 + 4 * v3], q1, order );
   }
   else if( extremal1 )
   {
     // face node on the face of type 1
-    return createNodeKey( elemNodes[ v1 ], elemNodes[ v1 + 2 ], elemNodes[ v1 + 4 ], elemNodes[ v1 + 2 + 4 ], q2, q3, order );
+    return createNodeKey( elemNodes[v1], elemNodes[v1 + 2], elemNodes[v1 + 4], elemNodes[v1 + 2 + 4], q2, q3, order );
   }
   else if( extremal2 )
   {
     // face node on the face of type 2
-    return createNodeKey( elemNodes[ 2*v2 ], elemNodes[ 1 + 2*v2 ], elemNodes[ 2*v2 + 4 ], elemNodes[ 1 + 2*v2 + 4 ], q1, q3, order );
+    return createNodeKey( elemNodes[2 * v2], elemNodes[1 + 2 * v2], elemNodes[2 * v2 + 4], elemNodes[1 + 2 * v2 + 4], q1, q3, order );
   }
   else if( extremal3 )
   {
     // face node on the face of type 3
-    return createNodeKey( elemNodes[ 4*v3 ], elemNodes[ 1 + 4*v3 ], elemNodes[ 2 + 4*v3 ], elemNodes[ 1 + 2 + 4*v3 ], q1, q2, order );
+    return createNodeKey( elemNodes[4 * v3], elemNodes[1 + 4 * v3], elemNodes[2 + 4 * v3], elemNodes[1 + 2 + 4 * v3], q1, q2, order );
   }
   else
   {

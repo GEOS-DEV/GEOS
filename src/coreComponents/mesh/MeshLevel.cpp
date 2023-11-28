@@ -119,12 +119,12 @@ MeshLevel::MeshLevel( string const & name,
   GEOS_MARK_FUNCTION;
 
   // constants for hex mesh
-  localIndex const numNodesPerEdge = ( order+1 );
-  localIndex const numNodesPerCell = ( order+1 )*( order+1 )*( order+1 );
+  localIndex const numNodesPerEdge = ( order + 1 );
+  localIndex const numNodesPerCell = ( order + 1 ) * ( order + 1 ) * ( order + 1 );
 
-  localIndex const numInternalNodesPerEdge = ( order-1 );
-  localIndex const numInternalNodesPerFace = ( order-1 )*( order-1 );
-  localIndex const numInternalNodesPerCell = ( order-1 )*( order-1 )*( order-1 );
+  localIndex const numInternalNodesPerEdge = ( order - 1 );
+  localIndex const numInternalNodesPerFace = ( order - 1 ) * ( order - 1 );
+  localIndex const numInternalNodesPerCell = ( order - 1 ) * ( order - 1 ) * ( order - 1 );
 
   localIndex const numLocalVertices = source.m_nodeManager->size();
   localIndex const numLocalEdges = source.m_edgeManager->size();
@@ -137,7 +137,7 @@ MeshLevel::MeshLevel( string const & name,
   localIndex numLocalCells = 0;
   source.m_elementManager->forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion const & sourceSubRegion )
   {
-    numLocalCells+= sourceSubRegion.size();
+    numLocalCells += sourceSubRegion.size();
   } );
 
   ////////////////////////////////
@@ -210,7 +210,7 @@ MeshLevel::MeshLevel( string const & name,
     {
       if( sourceSubRegion.getElementType() != ElementType::Hexahedron )
       {
-        GEOS_ERROR( "Current order number "<<order<<" is higher than one are only available for hexahedral meshes." );
+        GEOS_ERROR( "Current order number " << order << " is higher than one are only available for hexahedral meshes." );
       }
 
       // create element sub region with the same name as source element sub region "cb"
@@ -454,7 +454,7 @@ void MeshLevel::generateAdjacencyLists( arrayView1d< localIndex const > const & 
   faceAdjacencyList.resize( LvArray::integerConversion< localIndex >( faceAdjacencySet.size()));
   std::copy( faceAdjacencySet.begin(), faceAdjacencySet.end(), faceAdjacencyList.begin() );
 
-  for( localIndex er=0; er < elemManager.numRegions(); ++er )
+  for( localIndex er = 0; er < elemManager.numRegions(); ++er )
   {
     ElementRegionBase const & elemRegion = elemManager.getRegion( er );
 
@@ -519,7 +519,7 @@ void MeshLevel::generateSets()
         localIndex elementInSet = true;
         for( localIndex i = 0; i < numNodes; ++i )
         {
-          if( !nodeInCurSet( elemToNodeMap[ k ][ i ] ) )
+          if( !nodeInCurSet( elemToNodeMap[k][i] ) )
           {
             elementInSet = false;
             break;
@@ -537,12 +537,12 @@ void MeshLevel::generateSets()
 
 MeshLevel const & MeshLevel::getShallowParent() const
 {
-  return ( m_shallowParent!=nullptr ? *m_shallowParent : *this);
+  return ( m_shallowParent != nullptr ? *m_shallowParent : *this);
 }
 
 MeshLevel & MeshLevel::getShallowParent()
 {
-  return ( m_shallowParent!=nullptr ? *m_shallowParent : *this);
+  return ( m_shallowParent != nullptr ? *m_shallowParent : *this);
 }
 
 

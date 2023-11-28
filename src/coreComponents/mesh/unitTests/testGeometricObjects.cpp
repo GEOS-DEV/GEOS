@@ -71,7 +71,7 @@ TEST( GeometricObjectTests, Cylinder )
   testCoord[2] = -2480;
   for( integer i = 0; i < numSamples; ++i )
   {
-    testCoord[0] = startX + i * (endX-startX)/numSamples;
+    testCoord[0] = startX + i * (endX - startX) / numSamples;
     EXPECT_FALSE( cylinder1.isCoordInObject( testCoord ) );
   }
 
@@ -79,7 +79,7 @@ TEST( GeometricObjectTests, Cylinder )
   testCoord[2] = -2660;
   for( integer j = 0; j < numSamples; ++j )
   {
-    testCoord[1] = startY + j * (endY-startY)/numSamples;
+    testCoord[1] = startY + j * (endY - startY) / numSamples;
     EXPECT_FALSE( cylinder1.isCoordInObject( testCoord ) );
   }
 
@@ -87,7 +87,7 @@ TEST( GeometricObjectTests, Cylinder )
   testCoord[1] = 0.1;
   for( integer k = 0; k < numSamples; ++k )
   {
-    testCoord[2] = startZ + k * (endZ-startZ)/numSamples;
+    testCoord[2] = startZ + k * (endZ - startZ) / numSamples;
     EXPECT_FALSE( cylinder1.isCoordInObject( testCoord ) );
   }
 
@@ -95,7 +95,7 @@ TEST( GeometricObjectTests, Cylinder )
   testCoord[1] = 70;
   for( integer k = 0; k < numSamples; ++k )
   {
-    testCoord[2] = startZ + k * (endZ-startZ)/numSamples;
+    testCoord[2] = startZ + k * (endZ - startZ) / numSamples;
     EXPECT_TRUE( cylinder1.isCoordInObject( testCoord ) );
   }
 
@@ -120,7 +120,7 @@ TEST( GeometricObjectTests, Cylinder )
   testCoord[2] = -2;
   for( integer i = 0; i < numSamples; ++i )
   {
-    testCoord[0] = startX + i * (endX-startX)/numSamples;
+    testCoord[0] = startX + i * (endX - startX) / numSamples;
     EXPECT_FALSE( cylinder2.isCoordInObject( testCoord ) );
   }
 
@@ -128,21 +128,21 @@ TEST( GeometricObjectTests, Cylinder )
   testCoord[2] = 1.5;
   for( integer j = 0; j < numSamples; ++j )
   {
-    testCoord[1] = startY + j * (endY-startY)/numSamples;
+    testCoord[1] = startY + j * (endY - startY) / numSamples;
     EXPECT_FALSE( cylinder2.isCoordInObject( testCoord ) );
   }
 
   testCoord[2] = 0;
   for( integer j = 0; j < numSamples; ++j )
   {
-    testCoord[1] = startY + j * (endY-startY)/numSamples;
+    testCoord[1] = startY + j * (endY - startY) / numSamples;
     testCoord[0] = testCoord[1];
     EXPECT_FALSE( cylinder2.isCoordInObject( testCoord ) );
   }
   for( integer j = 0; j < numSamples; ++j )
   {
-    testCoord[1] = startY + j * (endY-startY)/numSamples;
-    testCoord[0] = testCoord[1]+0.3;
+    testCoord[1] = startY + j * (endY - startY) / numSamples;
+    testCoord[0] = testCoord[1] + 0.3;
     EXPECT_TRUE( cylinder2.isCoordInObject( testCoord ) );
   }
 }

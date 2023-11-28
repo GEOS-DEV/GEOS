@@ -37,7 +37,7 @@ void HistoryCollectionBase::registerBufferProvider( localIndex collectionIdx,
 HistoryCollection & HistoryCollectionBase::getMetaDataCollector( localIndex metaIdx )
 {
   GEOS_ASSERT_MSG( metaIdx >= 0 && metaIdx < numMetaDataCollectors(), "Requesting nonexistent meta collector index." );
-  return *m_metaDataCollectors[ metaIdx ].get( );
+  return *m_metaDataCollectors[metaIdx].get( );
 }
 
 HistoryMetadata HistoryCollectionBase::getTimeMetaData() const
@@ -100,7 +100,7 @@ dataRepository::Group const * HistoryCollectionBase::getTargetObject( DomainPart
       int const numMeshBodies = domain.getMeshBodies().numSubGroups();
 
 
-      if( numMeshBodies==1 )
+      if( numMeshBodies == 1 )
       {
         string const singleMeshBodyName = domain.getMeshBody( 0 ).getName();
         if( targetTokens[0] != singleMeshBodyName )
@@ -114,9 +114,9 @@ dataRepository::Group const * HistoryCollectionBase::getTargetObject( DomainPart
         bool bodyFound = false;
         domain.forMeshBodies( [&]( MeshBody const & meshBody )
         {
-          if( meshBody.getName()==targetTokens[0] )
+          if( meshBody.getName() == targetTokens[0] )
           {
-            bodyFound=true;
+            bodyFound = true;
           }
         } );
 
@@ -131,22 +131,22 @@ dataRepository::Group const * HistoryCollectionBase::getTargetObject( DomainPart
 
       // set mesh level in path
       localIndex const numMeshLevels = meshBody.getMeshLevels().numSubGroups();
-      if( numMeshLevels==1 )
+      if( numMeshLevels == 1 )
       {
         string const singleMeshLevelName = meshBody.getMeshLevels().getGroup< MeshLevel >( 0 ).getName();
         if( targetTokens[1] != singleMeshLevelName )
         {
           ++targetTokenLength;
-          targetTokens.insert( targetTokens.begin()+1, singleMeshLevelName );
+          targetTokens.insert( targetTokens.begin() + 1, singleMeshLevelName );
         }
         else
         {
           bool levelFound = false;
           meshBody.forMeshLevels( [&]( MeshLevel const & meshLevel )
           {
-            if( meshLevel.getName()==targetTokens[1] )
+            if( meshLevel.getName() == targetTokens[1] )
             {
-              levelFound=true;
+              levelFound = true;
             }
           } );
 
@@ -160,7 +160,7 @@ dataRepository::Group const * HistoryCollectionBase::getTargetObject( DomainPart
       {
         string const baseMeshLevelName = MeshBody::groupStructKeys::baseDiscretizationString();
         ++targetTokenLength;
-        targetTokens.insert( targetTokens.begin()+1, baseMeshLevelName );
+        targetTokens.insert( targetTokens.begin() + 1, baseMeshLevelName );
       }
 
       string meshLevelName = targetTokens[1];
@@ -168,7 +168,7 @@ dataRepository::Group const * HistoryCollectionBase::getTargetObject( DomainPart
       targetGroup = &meshLevel;
 
 
-      if( targetTokens[2]== MeshLevel::groupStructKeys::elemManagerString() )
+      if( targetTokens[2] == MeshLevel::groupStructKeys::elemManagerString() )
       {
         ElementRegionManager const & elemRegionManager = meshLevel.getElemManager();
         string const elemRegionName = targetTokens[3];
@@ -184,12 +184,12 @@ dataRepository::Group const * HistoryCollectionBase::getTargetObject( DomainPart
           dataRepository::Group const * const childGroup = targetGroup->getGroupPointer( targetTokens[pathLevel] );
           if( childGroup != nullptr )
           {
-            targetGroup=childGroup;
+            targetGroup = childGroup;
           }
           else
           {
             string const targetTokensStr = stringutilities::join( targetTokens.begin(),
-                                                                  targetTokens.begin()+pathLevel,
+                                                                  targetTokens.begin() + pathLevel,
                                                                   '/' );
             GEOS_THROW( targetTokens[pathLevel] << " not found in path " <<
                         objectPath << std::endl << targetGroup->dumpSubGroupsNames(),

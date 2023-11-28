@@ -442,7 +442,7 @@ void FlowSolverBase::precomputeData( MeshLevel & mesh,
 
     forAll< parallelHostPolicy >( subRegion.size(), [=] ( localIndex const ei )
     {
-      gravityCoef[ ei ] = LvArray::tensorOps::AiBi< 3 >( elemCenter[ ei ], gravVector );
+      gravityCoef[ei] = LvArray::tensorOps::AiBi< 3 >( elemCenter[ei], gravVector );
     } );
   } );
 
@@ -454,7 +454,7 @@ void FlowSolverBase::precomputeData( MeshLevel & mesh,
 
     forAll< parallelHostPolicy >( faceManager.size(), [=] ( localIndex const kf )
     {
-      gravityCoef[ kf ] = LvArray::tensorOps::AiBi< 3 >( faceCenter[ kf ], gravVector );
+      gravityCoef[kf] = LvArray::tensorOps::AiBi< 3 >( faceCenter[kf], gravVector );
     } );
   }
 }
@@ -720,7 +720,7 @@ void FlowSolverBase::saveAquiferConvergedState( real64 const & time,
     {
       GEOS_LOG_RANK_0( GEOS_FMT( string( "FlowSolverBase {}: at time {}s, " )
                                  + string( "the <{}> boundary condition '{}' produces a flux of {} kg (or moles if useMass=0). " ),
-                                 getDataContext(), time+dt, AquiferBoundaryCondition::catalogName(), bc.getName(), dt * globalSumFluxes[aquiferIndex] ) );
+                                 getDataContext(), time + dt, AquiferBoundaryCondition::catalogName(), bc.getName(), dt * globalSumFluxes[aquiferIndex] ) );
     }
     bc.saveConvergedState( dt * globalSumFluxes[aquiferIndex] );
   } );

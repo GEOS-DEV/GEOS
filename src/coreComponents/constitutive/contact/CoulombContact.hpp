@@ -269,12 +269,12 @@ inline void CoulombContactUpdates::computeTraction( localIndex const k,
         tractionVector[2] = limitTau * slip[1] / slipNorm;
 
         dTractionVector_dJump[1][0] = m_penaltyStiffness * dLimitTau_dNormalTraction * slip[0] / slipNorm;
-        dTractionVector_dJump[1][1] = limitTau * pow( slip[1], 2 )  / pow( LvArray::tensorOps::l2NormSquared< 2 >( slip ), 1.5 );
+        dTractionVector_dJump[1][1] = limitTau * pow( slip[1], 2 ) / pow( LvArray::tensorOps::l2NormSquared< 2 >( slip ), 1.5 );
         dTractionVector_dJump[1][2] = limitTau * slip[0] * slip[1] / pow( LvArray::tensorOps::l2NormSquared< 2 >( slip ), 1.5 );
 
         dTractionVector_dJump[2][0] = m_penaltyStiffness * dLimitTau_dNormalTraction * slip[1] / slipNorm;
         dTractionVector_dJump[2][1] = limitTau * slip[0] * slip[1] / pow( LvArray::tensorOps::l2NormSquared< 2 >( slip ), 1.5 );
-        dTractionVector_dJump[2][2] = limitTau * pow( slip[0], 2 )  / pow( LvArray::tensorOps::l2NormSquared< 2 >( slip ), 1.5 );
+        dTractionVector_dJump[2][2] = limitTau * pow( slip[0], 2 ) / pow( LvArray::tensorOps::l2NormSquared< 2 >( slip ), 1.5 );
 
         // Compute elastic component of the slip for this case
         real64 const plasticSlip[2] = { tractionVector[1] / m_shearStiffness,
@@ -297,7 +297,7 @@ inline void CoulombContactUpdates::updateFractureState( localIndex const k,
 {
   using namespace fields::contact;
 
-  if( dispJump[0] >  -m_displacementJumpThreshold )
+  if( dispJump[0] > -m_displacementJumpThreshold )
   {
     fractureState = FractureState::Open;
     m_elasticSlip[k][0] = 0.0;

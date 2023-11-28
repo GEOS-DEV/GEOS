@@ -356,7 +356,7 @@ void EpetraMatrix::insert( arrayView1d< globalIndex const > const & rowIndices,
 {
   GEOS_LAI_ASSERT( insertable() );
   localIndex const n = rowIndices.size();
-  for( localIndex a=0; a<n; ++a )
+  for( localIndex a = 0; a < n; ++a )
   {
     GEOS_LAI_CHECK_ERROR_NNEG( m_matrix->InsertGlobalValues( rowIndices[a],
                                                              1,
@@ -764,7 +764,7 @@ void EpetraMatrix::getRowCopy( globalIndex globalRow,
   GEOS_LAI_ASSERT_GE( values.size(), numEntries );
 
   std::transform( indicesPtr, indicesPtr + numEntries, colIndices.begin(),
-                  [&mat=*m_matrix]( int const c ){ return LvArray::integerConversion< globalIndex >( mat.GCID64( c ) ); } );
+                  [&mat = *m_matrix]( int const c ){ return LvArray::integerConversion< globalIndex >( mat.GCID64( c ) ); } );
   std::copy( valuesPtr, valuesPtr + numEntries, values.begin() );
 }
 

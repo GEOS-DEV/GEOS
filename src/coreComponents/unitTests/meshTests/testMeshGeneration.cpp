@@ -177,10 +177,10 @@ TEST_F( MeshGenerationTest, elementCentersAndVolumes )
     {
       for( localIndex k = 0; k < numElemsInZ; ++k )
       {
-        EXPECT_DOUBLE_EQ( centers[ elemID ][ 0 ], i * dx + dx / 2.0 );
-        EXPECT_DOUBLE_EQ( centers[ elemID ][ 1 ], j * dy + dy / 2.0 );
-        EXPECT_DOUBLE_EQ( centers[ elemID ][ 2 ], k * dz + dz / 2.0 );
-        EXPECT_NEAR( volumes[ elemID ], VOLUME, 1e-13 );
+        EXPECT_DOUBLE_EQ( centers[elemID][0], i * dx + dx / 2.0 );
+        EXPECT_DOUBLE_EQ( centers[elemID][1], j * dy + dy / 2.0 );
+        EXPECT_DOUBLE_EQ( centers[elemID][2], k * dz + dz / 2.0 );
+        EXPECT_NEAR( volumes[elemID], VOLUME, 1e-13 );
         ++elemID;
       }
     }
@@ -257,7 +257,7 @@ TEST_F( MeshGenerationTest, nodeToElemMap )
         localIndex const numElems = expectedElems.size();
         ASSERT_EQ( numElems, nodeToElemMap.sizeOfArray( nodeIndex ) );
 
-        localIndex const * const nodeElems = nodeToElemMap[ nodeIndex ];
+        localIndex const * const nodeElems = nodeToElemMap[nodeIndex];
         std::vector< localIndex > elems( nodeElems, nodeElems + numElems );
 
         std::sort( elems.begin(), elems.end() );
@@ -265,7 +265,7 @@ TEST_F( MeshGenerationTest, nodeToElemMap )
 
         for( localIndex a = 0; a < numElems; ++a )
         {
-          EXPECT_EQ( elems[ a ], expectedElems[ a ] );
+          EXPECT_EQ( elems[a], expectedElems[a] );
         }
 
         ++nodeIndex;
@@ -303,7 +303,7 @@ TEST_F( MeshGenerationTest, faceNodeMaps )
           ASSERT_EQ( faceToNodeMap.sizeOfArray( faceIndex ), 4 );
           for( localIndex a = 0; a < 4; ++a )
           {
-            faceNodesFromFace[ a ] = faceToNodeMap( faceIndex, a );
+            faceNodesFromFace[a] = faceToNodeMap( faceIndex, a );
           }
 
           if( elemID != faceToElementMap( faceIndex, 0 ) )
@@ -314,14 +314,14 @@ TEST_F( MeshGenerationTest, faceNodeMaps )
           std::sort( faceNodesFromElem.begin(), faceNodesFromElem.end() );
           std::sort( faceNodesFromFace.begin(), faceNodesFromFace.end() );
 
-          EXPECT_EQ( faceNodesFromElem[ 0 ], faceNodesFromFace[ 0 ] );
-          EXPECT_EQ( faceNodesFromElem[ 1 ], faceNodesFromFace[ 1 ] );
-          EXPECT_EQ( faceNodesFromElem[ 2 ], faceNodesFromFace[ 2 ] );
-          EXPECT_EQ( faceNodesFromElem[ 3 ], faceNodesFromFace[ 3 ] );
+          EXPECT_EQ( faceNodesFromElem[0], faceNodesFromFace[0] );
+          EXPECT_EQ( faceNodesFromElem[1], faceNodesFromFace[1] );
+          EXPECT_EQ( faceNodesFromElem[2], faceNodesFromFace[2] );
+          EXPECT_EQ( faceNodesFromElem[3], faceNodesFromFace[3] );
 
           for( localIndex a = 0; a < 4; ++a )
           {
-            EXPECT_TRUE( nodeToFaceMap.contains( faceNodesFromElem[ a ], faceIndex ) );
+            EXPECT_TRUE( nodeToFaceMap.contains( faceNodesFromElem[a], faceIndex ) );
           }
         }
         ++elemID;
@@ -372,13 +372,13 @@ TEST_F( MeshGenerationTest, faceElementMaps )
             }
             else
             {
-              EXPECT_EQ( elemID + elemIDOffset[ f ], faceToElementMap( faceIndex, 1 ) );
+              EXPECT_EQ( elemID + elemIDOffset[f], faceToElementMap( faceIndex, 1 ) );
             }
           }
           else
           {
             EXPECT_EQ( elemID, faceToElementMap( faceIndex, 1 ) );
-            EXPECT_EQ( elemID + elemIDOffset[ f ], faceToElementMap( faceIndex, 0 ) );
+            EXPECT_EQ( elemID + elemIDOffset[f], faceToElementMap( faceIndex, 0 ) );
           }
         }
         ++elemID;
@@ -394,15 +394,15 @@ bool walkEdgesToFindNeighbor( localIndex const node0,
 {
   for( localIndex const edgeIndex : nodeEdges )
   {
-    if( edgeToNodeMap[ edgeIndex ][ 0 ] == node0 )
+    if( edgeToNodeMap[edgeIndex][0] == node0 )
     {
-      if( edgeToNodeMap[ edgeIndex ][ 1 ] == node1 )
+      if( edgeToNodeMap[edgeIndex][1] == node1 )
         return true;
     }
     else
     {
-      EXPECT_EQ( edgeToNodeMap[ edgeIndex ][ 1 ], node0 );
-      if( edgeToNodeMap[ edgeIndex ][ 0 ] == node1 )
+      EXPECT_EQ( edgeToNodeMap[edgeIndex][1], node0 );
+      if( edgeToNodeMap[edgeIndex][0] == node1 )
         return true;
     }
   }
@@ -427,32 +427,32 @@ TEST_F( MeshGenerationTest, edgeNodeMaps )
         localIndex numEdges = 0;
         if( i != 0 )
         {
-          EXPECT_TRUE( walkEdgesToFindNeighbor( nodeIndex, nodeIndex - node_dI, nodeToEdgeMap[ nodeIndex ], edgeToNodeMap ) );
+          EXPECT_TRUE( walkEdgesToFindNeighbor( nodeIndex, nodeIndex - node_dI, nodeToEdgeMap[nodeIndex], edgeToNodeMap ) );
           ++numEdges;
         }
         if( i != numNodesInX - 1 )
         {
-          EXPECT_TRUE( walkEdgesToFindNeighbor( nodeIndex, nodeIndex + node_dI, nodeToEdgeMap[ nodeIndex ], edgeToNodeMap ) );
+          EXPECT_TRUE( walkEdgesToFindNeighbor( nodeIndex, nodeIndex + node_dI, nodeToEdgeMap[nodeIndex], edgeToNodeMap ) );
           ++numEdges;
         }
         if( j != 0 )
         {
-          EXPECT_TRUE( walkEdgesToFindNeighbor( nodeIndex, nodeIndex - node_dJ, nodeToEdgeMap[ nodeIndex ], edgeToNodeMap ) );
+          EXPECT_TRUE( walkEdgesToFindNeighbor( nodeIndex, nodeIndex - node_dJ, nodeToEdgeMap[nodeIndex], edgeToNodeMap ) );
           ++numEdges;
         }
         if( j != numNodesInY - 1 )
         {
-          EXPECT_TRUE( walkEdgesToFindNeighbor( nodeIndex, nodeIndex + node_dJ, nodeToEdgeMap[ nodeIndex ], edgeToNodeMap ) );
+          EXPECT_TRUE( walkEdgesToFindNeighbor( nodeIndex, nodeIndex + node_dJ, nodeToEdgeMap[nodeIndex], edgeToNodeMap ) );
           ++numEdges;
         }
         if( k != 0 )
         {
-          EXPECT_TRUE( walkEdgesToFindNeighbor( nodeIndex, nodeIndex - 1, nodeToEdgeMap[ nodeIndex ], edgeToNodeMap ) );
+          EXPECT_TRUE( walkEdgesToFindNeighbor( nodeIndex, nodeIndex - 1, nodeToEdgeMap[nodeIndex], edgeToNodeMap ) );
           ++numEdges;
         }
         if( k != numNodesInZ - 1 )
         {
-          EXPECT_TRUE( walkEdgesToFindNeighbor( nodeIndex, nodeIndex + 1, nodeToEdgeMap[ nodeIndex ], edgeToNodeMap ) );
+          EXPECT_TRUE( walkEdgesToFindNeighbor( nodeIndex, nodeIndex + 1, nodeToEdgeMap[nodeIndex], edgeToNodeMap ) );
           ++numEdges;
         }
 
@@ -499,7 +499,7 @@ TEST_F( MeshGenerationTest, edgeFaceMaps )
             EXPECT_EQ( edgeToNodeMap( edgeIndex, 1 ), node1 );
 
             bool foundFace = false;
-            for( localIndex const id : edgeToFaceMap[ edgeIndex ] )
+            for( localIndex const id : edgeToFaceMap[edgeIndex] )
             {
               if( id == faceIndex )
                 foundFace = true;

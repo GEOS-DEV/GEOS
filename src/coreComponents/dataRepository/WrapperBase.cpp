@@ -38,7 +38,7 @@ WrapperBase::WrapperBase( string const & name,
   m_successfulReadFromInput( false ),
   m_description(),
   m_registeringObjects(),
-  m_conduitNode( parent.getConduitNode()[ name ] ),
+  m_conduitNode( parent.getConduitNode()[name] ),
   m_dataContext( std::make_unique< WrapperContext >( *this ) )
 {}
 
@@ -140,7 +140,7 @@ void WrapperBase::processInputException( std::exception const & ex,
     oss << targetNode.path() << " (name=" << targetNode.attribute( "name" ).value() << ")/" << getName();
   }
   oss << "\n***** Input value: '" << inputStr << '\'';
-  oss << ( exStr[0]=='\n' ? exStr : "'\n" + exStr );
+  oss << ( exStr[0] == '\n' ? exStr : "'\n" + exStr );
 
   throw InputError( oss.str() );
 }
@@ -158,7 +158,7 @@ void WrapperBase::processInputException( std::exception const & ex,
  */
 int TV_ttf_display_type( const geos::dataRepository::WrapperBase * wrapper )
 {
-  if( wrapper!=nullptr )
+  if( wrapper != nullptr )
   {
     //std::cout<<"displaying WrapperBase "<<wrapper->getName()<<" as "<<wrapper->totalviewTypeName()<<std::endl;
 // keep this and try to make it work later on.

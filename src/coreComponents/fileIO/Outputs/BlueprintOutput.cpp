@@ -103,7 +103,7 @@ void reorderElementToNodeMap( CellElementSubRegion const & subRegion, conduit::N
   {
     for( localIndex j = 0; j < numNodesPerElem; ++j )
     {
-      reorderedConnectivity[ i * numNodesPerElem + j ] = elemToNodeMap( i, vtkOrdering[ j ] );
+      reorderedConnectivity[i * numNodesPerElem + j] = elemToNodeMap( i, vtkOrdering[j] );
     }
   } );
 }
@@ -139,20 +139,20 @@ bool BlueprintOutput::execute( real64 const time,
   MeshLevel const & meshLevel = domain.getMeshBody( 0 ).getBaseDiscretization();
 
   conduit::Node meshRoot;
-  conduit::Node & mesh = meshRoot[ "mesh" ];
-  conduit::Node & coordset = mesh[ "coordsets/nodes" ];
-  conduit::Node & topologies = mesh[ "topologies" ];
+  conduit::Node & mesh = meshRoot["mesh"];
+  conduit::Node & coordset = mesh["coordsets/nodes"];
+  conduit::Node & topologies = mesh["topologies"];
 
-  mesh[ "state/time" ] = time;
-  mesh[ "state/cycle" ] = cycle;
+  mesh["state/time"] = time;
+  mesh["state/cycle"] = cycle;
 
-  addNodalData( meshLevel.getNodeManager(), coordset, topologies, mesh[ "fields" ] );
+  addNodalData( meshLevel.getNodeManager(), coordset, topologies, mesh["fields"] );
 
   dataRepository::Group averagedElementData( "averagedElementData", this );
-  addElementData( meshLevel.getElemManager(), coordset, topologies, mesh[ "fields" ], averagedElementData );
+  addElementData( meshLevel.getElemManager(), coordset, topologies, mesh["fields"], averagedElementData );
 
   /// The Blueprint will complain if the fields node is present but empty.
-  if( mesh[ "fields" ].number_of_children() == 0 )
+  if( mesh["fields"].number_of_children() == 0 )
   {
     mesh.remove( "fields" );
   }
@@ -163,7 +163,7 @@ bool BlueprintOutput::execute( real64 const time,
 
   /// Generate the Blueprint index.
   conduit::Node fileRoot;
-  conduit::Node & index = fileRoot[ "blueprint_index/mesh" ];
+  conduit::Node & index = fileRoot["blueprint_index/mesh"];
   conduit::blueprint::mesh::generate_index( mesh, "mesh", MpiWrapper::commSize(), index );
 
   /// Verify that the index conforms to the Blueprint.
@@ -187,23 +187,23 @@ void BlueprintOutput::addNodalData( NodeManager const & nodeManager,
   GEOS_MARK_FUNCTION;
 
   /// Populate the coordset group
-  coordset[ "type" ] = "explicit";
+  coordset["type"] = "explicit";
   dataRepository::wrapperHelpers::populateMCArray( nodeManager.referencePosition(),
-                                                   coordset[ "values" ],
+                                                   coordset["values"],
                                                    { "x", "y", "z" } );
 
   /// Create the points topology
   string const coordsetName = coordset.name();
-  conduit::Node & nodeTopology = topologies[ coordsetName ];
-  nodeTopology[ "coordset" ] = coordsetName;
+  conduit::Node & nodeTopology = topologies[coordsetName];
+  nodeTopology["coordset"] = coordsetName;
 
   /// TODO: Once VisIT supports the implicit "points" topology we can just do the following.
   /// See https://github.com/visit-dav/visit/issues/4593
   // nodeTopology[ "type" ] = "points";
 
-  nodeTopology[ "type" ] = "unstructured";
-  nodeTopology[ "elements/shape" ] = "point";
-  conduit::Node & connectivity = nodeTopology[ "elements/connectivity" ];
+  nodeTopology["type"] = "unstructured";
+  nodeTopology["elements/shape"] = "point";
+  conduit::Node & connectivity = nodeTopology["elements/connectivity"];
 
   localIndex const numNodes = nodeManager.size();
   constexpr int conduitTypeID = dataRepository::conduitTypeInfo< localIndex >::id;
@@ -213,7 +213,7 @@ void BlueprintOutput::addNodalData( NodeManager const & nodeManager,
   localIndex * const nodeIDs = connectivity.value();
   forAll< serialPolicy >( numNodes, [nodeIDs] ( localIndex const i )
   {
-    nodeIDs[ i ] = i;
+    nodeIDs[i] = i;
   } );
 
   /// Write out the fields.
@@ -235,11 +235,11 @@ void BlueprintOutput::addElementData( ElementRegionManager const & elemRegionMan
     string const topologyName = region.getName() + "-" + subRegion.getName();
 
     /// Create the topology representing the sub-region.
-    conduit::Node & topology = topologies[ topologyName ];
-    topology[ "coordset" ] = coordset.name();
-    topology[ "type" ] = "unstructured";
-    topology[ "elements/shape" ] = internal::toBlueprintShape( subRegion.getElementType() );
-    internal::reorderElementToNodeMap( subRegion, topology[ "elements/connectivity" ] );
+    conduit::Node & topology = topologies[topologyName];
+    topology["coordset"] = coordset.name();
+    topology["type"] = "unstructured";
+    topology["elements/shape"] = internal::toBlueprintShape( subRegion.getElementType() );
+    internal::reorderElementToNodeMap( subRegion, topology["elements/connectivity"] );
 
     /// Write out the fields.
     writeOutWrappersAsFields( subRegion, fields, topologyName );

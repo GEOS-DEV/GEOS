@@ -226,9 +226,9 @@ void ElasticOrthotropicUpdates::smallStrainNoStateUpdate_StressOnly( localIndex 
                                                                      real64 ( & stress )[6] ) const
 {
   GEOS_UNUSED_VAR( q );
-  stress[0] = m_c11[k] * totalStrain[0] + m_c12[k] * totalStrain[1] + m_c13[k]*totalStrain[2];
-  stress[1] = m_c12[k] * totalStrain[0] + m_c22[k] * totalStrain[1] + m_c23[k]*totalStrain[2];
-  stress[2] = m_c13[k] * totalStrain[0] + m_c23[k] * totalStrain[1] + m_c33[k]*totalStrain[2];
+  stress[0] = m_c11[k] * totalStrain[0] + m_c12[k] * totalStrain[1] + m_c13[k] * totalStrain[2];
+  stress[1] = m_c12[k] * totalStrain[0] + m_c22[k] * totalStrain[1] + m_c23[k] * totalStrain[2];
+  stress[2] = m_c13[k] * totalStrain[0] + m_c23[k] * totalStrain[1] + m_c33[k] * totalStrain[2];
 
   stress[3] = m_c44[k] * totalStrain[3];
   stress[4] = m_c55[k] * totalStrain[4];

@@ -125,7 +125,7 @@ void DomainPartition::setupBaseLevelMeshGlobalInfo()
 
   for( std::size_t i = 0; i < m_neighbors.size(); ++i )
   {
-    MpiWrapper::iSend( firstNeighborRanks.toView(), m_neighbors[ i ].neighborRank(), neighborsTag, MPI_COMM_GEOSX, &requests[ i ] );
+    MpiWrapper::iSend( firstNeighborRanks.toView(), m_neighbors[i].neighborRank(), neighborsTag, MPI_COMM_GEOSX, &requests[i] );
   }
 
   // This set will contain the second (neighbor of) neighbors ranks.
@@ -134,7 +134,7 @@ void DomainPartition::setupBaseLevelMeshGlobalInfo()
   array1d< int > neighborOfNeighborRanks;
   for( std::size_t i = 0; i < m_neighbors.size(); ++i )
   {
-    MpiWrapper::recv( neighborOfNeighborRanks, m_neighbors[ i ].neighborRank(), neighborsTag, MPI_COMM_GEOSX, MPI_STATUS_IGNORE );
+    MpiWrapper::recv( neighborOfNeighborRanks, m_neighbors[i].neighborRank(), neighborsTag, MPI_COMM_GEOSX, MPI_STATUS_IGNORE );
 
     // Insert the neighbors of the current neighbor into the set of second neighbors.
     secondNeighborRanks.insert( neighborOfNeighborRanks.begin(), neighborOfNeighborRanks.end() );

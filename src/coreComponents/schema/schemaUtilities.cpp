@@ -43,7 +43,7 @@ void ConvertDocumentationToSchema( string const & fname,
 {
   GEOS_LOG_RANK_0( "Generating XML Schema..." );
 
-  string schemaBase=
+  string schemaBase =
     "<?xml version=\"1.1\" encoding=\"ISO-8859-1\" ?>\
   <xsd:schema xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\">\
   <xsd:annotation>\

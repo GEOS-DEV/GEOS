@@ -148,7 +148,7 @@ public:
     int xLocal;
 #else
     /// C-array stack storage for element local the nodal positions.
-    real64 xLocal[ numNodesPerElem ][ 3 ];
+    real64 xLocal[numNodesPerElem][3];
 #endif
 
     /// C-array storage for the element local primary field variable.
@@ -169,15 +169,15 @@ public:
   void setup( localIndex const k,
               StackVariables & stack ) const
   {
-    for( localIndex a=0; a<numNodesPerElem; ++a )
+    for( localIndex a = 0; a < numNodesPerElem; ++a )
     {
       localIndex const localNodeIndex = m_elemsToNodes( k, a );
 
 #if defined(CALC_FEM_SHAPE_IN_KERNEL)
-      LvArray::tensorOps::copy< 3 >( stack.xLocal[ a ], m_X[ localNodeIndex ] );
+      LvArray::tensorOps::copy< 3 >( stack.xLocal[a], m_X[localNodeIndex] );
 #endif
 
-      stack.nodalDamageLocal[ a ] = m_nodalDamage[ localNodeIndex ];
+      stack.nodalDamageLocal[a] = m_nodalDamage[localNodeIndex];
       stack.localRowDofIndex[a] = m_dofNumber[localNodeIndex];
       stack.localColDofIndex[a] = m_dofNumber[localNodeIndex];
     }
@@ -199,8 +199,8 @@ public:
     real64 const threshold = m_constitutiveUpdate.getEnergyThreshold( k, q );
 
     //Interpolate d and grad_d
-    real64 N[ numNodesPerElem ];
-    real64 dNdX[ numNodesPerElem ][ 3 ];
+    real64 N[numNodesPerElem];
+    real64 dNdX[numNodesPerElem][3];
     real64 const detJ = m_finiteElementSpace.template getGradN< FE_TYPE >( k, q, stack.xLocal, dNdX );
     FE_TYPE::calcN( q, N );
 
@@ -219,30 +219,30 @@ public:
     {
       if( m_localDissipationOption == 1 )
       {
-        stack.localResidual[ a ] -= detJ * ( 3 * N[a] / 16
-                                             + 0.375* ell * ell * LvArray::tensorOps::AiBi< 3 >( qp_grad_damage, dNdX[a] )
-                                             + (0.5 * ell * D/Gc) * m_constitutiveUpdate.getDegradationDerivative( qp_damage ) * N[a]
-                                             + 0.5 * ell * m_quadExtDrivingForce[k][q]/Gc * N[a] );
+        stack.localResidual[a] -= detJ * ( 3 * N[a] / 16
+                                           + 0.375 * ell * ell * LvArray::tensorOps::AiBi< 3 >( qp_grad_damage, dNdX[a] )
+                                           + (0.5 * ell * D / Gc) * m_constitutiveUpdate.getDegradationDerivative( qp_damage ) * N[a]
+                                           + 0.5 * ell * m_quadExtDrivingForce[k][q] / Gc * N[a] );
       }
       else
       {
-        stack.localResidual[ a ] -= detJ * ( N[a] * qp_damage
-                                             + ( ell * ell * LvArray::tensorOps::AiBi< 3 >( qp_grad_damage, dNdX[a] )
-                                                 + N[a] * (ell*strainEnergyDensity/Gc) * m_constitutiveUpdate.getDegradationDerivative( qp_damage ) ) );
+        stack.localResidual[a] -= detJ * ( N[a] * qp_damage
+                                           + ( ell * ell * LvArray::tensorOps::AiBi< 3 >( qp_grad_damage, dNdX[a] )
+                                               + N[a] * (ell * strainEnergyDensity / Gc) * m_constitutiveUpdate.getDegradationDerivative( qp_damage ) ) );
 
       }
       for( localIndex b = 0; b < numNodesPerElem; ++b )
       {
         if( m_localDissipationOption == 1 )
         {
-          stack.localJacobian[ a ][ b ] -= detJ * ( 0.375* ell * ell * LvArray::tensorOps::AiBi< 3 >( dNdX[a], dNdX[b] )
-                                                    + (0.5 * ell * D/Gc) * m_constitutiveUpdate.getDegradationSecondDerivative( qp_damage ) * N[a] * N[b] );
+          stack.localJacobian[a][b] -= detJ * ( 0.375 * ell * ell * LvArray::tensorOps::AiBi< 3 >( dNdX[a], dNdX[b] )
+                                                + (0.5 * ell * D / Gc) * m_constitutiveUpdate.getDegradationSecondDerivative( qp_damage ) * N[a] * N[b] );
 
         }
         else
         {
-          stack.localJacobian[ a ][ b ] -= detJ * ( pow( ell, 2 ) * LvArray::tensorOps::AiBi< 3 >( dNdX[a], dNdX[b] )
-                                                    + N[a] * N[b] * (1 + m_constitutiveUpdate.getDegradationSecondDerivative( qp_damage ) * ell * strainEnergyDensity/Gc ) );
+          stack.localJacobian[a][b] -= detJ * ( pow( ell, 2 ) * LvArray::tensorOps::AiBi< 3 >( dNdX[a], dNdX[b] )
+                                                + N[a] * N[b] * (1 + m_constitutiveUpdate.getDegradationSecondDerivative( qp_damage ) * ell * strainEnergyDensity / Gc ) );
         }
       }
     }
@@ -267,15 +267,15 @@ public:
 
     for( int a = 0; a < numNodesPerElem; ++a )
     {
-      localIndex const dof = LvArray::integerConversion< localIndex >( stack.localRowDofIndex[ a ] - m_dofRankOffset );
+      localIndex const dof = LvArray::integerConversion< localIndex >( stack.localRowDofIndex[a] - m_dofRankOffset );
       if( dof < 0 || dof >= m_matrix.numRows() ) continue;
       m_matrix.template addToRowBinarySearchUnsorted< parallelDeviceAtomic >( dof,
                                                                               stack.localColDofIndex,
-                                                                              stack.localJacobian[ a ],
+                                                                              stack.localJacobian[a],
                                                                               numNodesPerElem );
 
-      RAJA::atomicAdd< parallelDeviceAtomic >( &m_rhs[ dof ], stack.localResidual[ a ] );
-      maxForce = fmax( maxForce, fabs( stack.localResidual[ a ] ) );
+      RAJA::atomicAdd< parallelDeviceAtomic >( &m_rhs[dof], stack.localResidual[a] );
+      maxForce = fmax( maxForce, fabs( stack.localResidual[a] ) );
     }
 
     return maxForce;

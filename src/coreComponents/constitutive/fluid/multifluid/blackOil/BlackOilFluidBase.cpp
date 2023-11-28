@@ -133,7 +133,7 @@ void BlackOilFluidBase::fillHydrocarbonData( integer const ip,
 
   m_hydrocarbonPhaseOrder.emplace_back( ip );
   string const formationVolFactorTableName = getName() + (m_phaseTypes[ip] == PhaseType::OIL ? "_PVDO_Bo" : "_PVDG_Bg");
-  string const viscosityTableName = getName() +  (m_phaseTypes[ip] == PhaseType::OIL ? "_PVDO_visco" : "_PVDG_viscg");
+  string const viscosityTableName = getName() + (m_phaseTypes[ip] == PhaseType::OIL ? "_PVDO_visco" : "_PVDG_viscg");
   m_formationVolFactorTableNames.emplace_back( formationVolFactorTableName );
   m_viscosityTableNames.emplace_back( viscosityTableName );
 
@@ -293,7 +293,7 @@ void BlackOilFluidBase::validateTable( TableFunction const & table,
   // we only issue a warning here, as we still want to allow this configuration
   for( localIndex i = 3; i < property.size(); ++i )
   {
-    GEOS_THROW_IF( (property[i] - property[i-1]) * (property[i-1] - property[i-2]) < 0,
+    GEOS_THROW_IF( (property[i] - property[i - 1]) * (property[i - 1] - property[i - 2]) < 0,
                    GEOS_FMT( "{}: in table '{}', viscosity values must be monotone", getFullName(), table.getName() ),
                    InputError );
   }
@@ -301,10 +301,10 @@ void BlackOilFluidBase::validateTable( TableFunction const & table,
   // we don't check the first value, as it may be used to specify surface conditions
   for( localIndex i = 2; i < property.size(); ++i )
   {
-    GEOS_LOG_RANK_0_IF( ( property[i] - property[i-1] < 0 ) && warningIfDecreasing,
+    GEOS_LOG_RANK_0_IF( ( property[i] - property[i - 1] < 0 ) && warningIfDecreasing,
                         GEOS_FMT( "{}: Warning! in table '{}', values must be increasing as a function of pressure, please check your PVT tables",
                                   getFullName(), table.getName() ) );
-    GEOS_LOG_RANK_0_IF( ( property[i] - property[i-1] > 0 ) && !warningIfDecreasing,
+    GEOS_LOG_RANK_0_IF( ( property[i] - property[i - 1] > 0 ) && !warningIfDecreasing,
                         GEOS_FMT( "{}: Warning! In table '{}', values must be decreasing as a function of pressure, please check your PVT tables",
                                   getFullName(), table.getName() ) );
   }

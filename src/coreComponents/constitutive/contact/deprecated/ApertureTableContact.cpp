@@ -76,14 +76,14 @@ void ApertureTableContact::initializePreSubGroups()
   arraySlice1d< real64 const > apertureValues = coords[0];
   array1d< real64 > & effectiveApertureValues = apertureTable.getValues();
 
-  localIndex const n = apertureValues.size()-1;
-  real64 const slope = ( effectiveApertureValues[n] - effectiveApertureValues[n-1] ) / ( apertureValues[n] - apertureValues[n-1] );
+  localIndex const n = apertureValues.size() - 1;
+  real64 const slope = ( effectiveApertureValues[n] - effectiveApertureValues[n - 1] ) / ( apertureValues[n] - apertureValues[n - 1] );
   real64 const apertureTransition = ( effectiveApertureValues[n] - slope * apertureValues[n] ) / ( 1.0 - slope );
 
   coords.emplaceBack( 0, apertureTransition );
   effectiveApertureValues.emplace_back( apertureTransition );
-  coords.emplaceBack( 0, apertureTransition*10e9 );
-  effectiveApertureValues.emplace_back( apertureTransition*10e9 );
+  coords.emplaceBack( 0, apertureTransition * 10e9 );
+  effectiveApertureValues.emplace_back( apertureTransition * 10e9 );
   apertureTable.reInitializeFunction();
 
   m_apertureTable = &apertureTable;
@@ -101,7 +101,7 @@ void ApertureTableContact::validateApertureTable( TableFunction const & aperture
   arraySlice1d< real64 const > apertureValues = coords[0];
   localIndex const size = apertureValues.size();
 
-  GEOS_THROW_IF( coords( 0, size-1 ) > 0.0 || coords( 0, size-1 ) < 0.0,
+  GEOS_THROW_IF( coords( 0, size - 1 ) > 0.0 || coords( 0, size - 1 ) < 0.0,
                  getFullName() << ": Invalid aperture limiter table. Last coordinate must be zero!",
                  InputError );
 
@@ -109,8 +109,8 @@ void ApertureTableContact::validateApertureTable( TableFunction const & aperture
                  getFullName() << ": Invalid aperture limiter table. Must have more than two points specified",
                  InputError );
 
-  localIndex const n = apertureValues.size()-1;
-  real64 const slope = ( effectiveApertureValues[n] - effectiveApertureValues[n-1] ) / ( apertureValues[n] - apertureValues[n-1] );
+  localIndex const n = apertureValues.size() - 1;
+  real64 const slope = ( effectiveApertureValues[n] - effectiveApertureValues[n - 1] ) / ( apertureValues[n] - apertureValues[n - 1] );
 
   GEOS_THROW_IF( slope >= 1.0,
                  getFullName() << ": Invalid aperture table. The slope of the last two points >= 1 is invalid.",

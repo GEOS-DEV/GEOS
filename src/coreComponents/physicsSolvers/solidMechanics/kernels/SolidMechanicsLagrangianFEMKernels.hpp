@@ -40,8 +40,8 @@ inline void velocityUpdate( arrayView2d< real64, nodes::ACCELERATION_USD > const
   localIndex const N = acceleration.size( 0 );
   forAll< parallelDevicePolicy<> >( N, [=] GEOS_DEVICE ( localIndex const i )
   {
-    LvArray::tensorOps::scaledAdd< 3 >( velocity[ i ], acceleration[ i ], dt );
-    LvArray::tensorOps::fill< 3 >( acceleration[ i ], 0 );
+    LvArray::tensorOps::scaledAdd< 3 >( velocity[i], acceleration[i], dt );
+    LvArray::tensorOps::fill< 3 >( acceleration[i], 0 );
   } );
 }
 
@@ -55,9 +55,9 @@ inline void velocityUpdate( arrayView2d< real64, nodes::ACCELERATION_USD > const
 
   forAll< parallelDevicePolicy<> >( indices.size(), [=] GEOS_DEVICE ( localIndex const i )
   {
-    localIndex const a = indices[ i ];
-    LvArray::tensorOps::scale< 3 >( acceleration[ a ], 1.0 / mass[ a ] );
-    LvArray::tensorOps::scaledAdd< 3 >( velocity[ a ], acceleration[ a ], dt );
+    localIndex const a = indices[i];
+    LvArray::tensorOps::scale< 3 >( acceleration[a], 1.0 / mass[a] );
+    LvArray::tensorOps::scaledAdd< 3 >( velocity[a], acceleration[a], dt );
   } );
 }
 
@@ -71,8 +71,8 @@ inline void displacementUpdate( arrayView2d< real64 const, nodes::VELOCITY_USD >
   localIndex const N = velocity.size( 0 );
   forAll< parallelDevicePolicy<> >( N, [=] GEOS_DEVICE ( localIndex const i )
   {
-    LvArray::tensorOps::scaledCopy< 3 >( uhat[ i ], velocity[ i ], dt );
-    LvArray::tensorOps::add< 3 >( u[ i ], uhat[ i ] );
+    LvArray::tensorOps::scaledCopy< 3 >( uhat[i], velocity[i], dt );
+    LvArray::tensorOps::add< 3 >( u[i], uhat[i] );
   } );
 }
 
@@ -90,7 +90,7 @@ struct ExplicitKernel
                              arrayView4d< real64 const > const & dNdX,
                              arrayView2d< real64 const > const & detJ,
                              arrayView3d< real64 const, solid::STRESS_USD > const & stress,
-                             real64 ( & force )[ 3 ] )
+                             real64 ( & force )[3] )
   {
     GEOS_MARK_FUNCTION;
     localIndex const & a = targetNode;
@@ -98,15 +98,15 @@ struct ExplicitKernel
     //Compute Quadrature
     for( localIndex q = 0; q < numQuadraturePoints; ++q )
     {
-      force[ 0 ] -= ( stress( k, q, 0 ) * dNdX( k, q, a, 0 ) +
-                      stress( k, q, 5 ) * dNdX( k, q, a, 1 ) +
-                      stress( k, q, 4 ) * dNdX( k, q, a, 2 ) ) * detJ( k, q );
-      force[ 1 ] -= ( stress( k, q, 5 ) * dNdX( k, q, a, 0 ) +
-                      stress( k, q, 1 ) * dNdX( k, q, a, 1 ) +
-                      stress( k, q, 3 ) * dNdX( k, q, a, 2 ) ) * detJ( k, q );
-      force[ 2 ] -= ( stress( k, q, 4 ) * dNdX( k, q, a, 0 ) +
-                      stress( k, q, 3 ) * dNdX( k, q, a, 1 ) +
-                      stress( k, q, 2 ) * dNdX( k, q, a, 2 ) ) * detJ( k, q );
+      force[0] -= ( stress( k, q, 0 ) * dNdX( k, q, a, 0 ) +
+                    stress( k, q, 5 ) * dNdX( k, q, a, 1 ) +
+                    stress( k, q, 4 ) * dNdX( k, q, a, 2 ) ) * detJ( k, q );
+      force[1] -= ( stress( k, q, 5 ) * dNdX( k, q, a, 0 ) +
+                    stress( k, q, 1 ) * dNdX( k, q, a, 1 ) +
+                    stress( k, q, 3 ) * dNdX( k, q, a, 2 ) ) * detJ( k, q );
+      force[2] -= ( stress( k, q, 4 ) * dNdX( k, q, a, 0 ) +
+                    stress( k, q, 3 ) * dNdX( k, q, a, 1 ) +
+                    stress( k, q, 2 ) * dNdX( k, q, a, 2 ) ) * detJ( k, q );
 
     }//quadrature loop
 

@@ -234,7 +234,7 @@ public:
                             int const commID,
                             bool onDevice,
                             parallelDeviceEvents & events,
-                            MPI_Op op=MPI_REPLACE );
+                            MPI_Op op = MPI_REPLACE );
 
   int neighborRank() const { return m_neighborRank; }
 

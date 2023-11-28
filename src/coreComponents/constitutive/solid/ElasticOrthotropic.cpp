@@ -209,14 +209,14 @@ void ElasticOrthotropic::postProcessInput()
 
     if( delta > 0.0 && Nu23 * Nu32 < 1.0 && Nu31 * Nu13 < 1.0 && Nu12 * Nu21 < 1.0 )
     {
-      c11 = ( 1.0 - Nu23 * Nu32 )  * E1 / delta;
+      c11 = ( 1.0 - Nu23 * Nu32 ) * E1 / delta;
       c12 = ( Nu21 + Nu31 * Nu23 ) * E1 / delta;
       c13 = ( Nu31 + Nu21 * Nu32 ) * E1 / delta;
 
-      c22 = ( 1.0 - Nu31 * Nu13 )  * E2 / delta;
+      c22 = ( 1.0 - Nu31 * Nu13 ) * E2 / delta;
       c23 = ( Nu32 + Nu31 * Nu12 ) * E2 / delta;
 
-      c33 = ( 1.0 - Nu12 * Nu21 )  * E3 / delta;
+      c33 = ( 1.0 - Nu12 * Nu21 ) * E3 / delta;
 
       c44 = G23;
       c55 = G13;

@@ -178,7 +178,7 @@ using Timestamp = unsigned long long int;
 /// Multidimensional array type. See LvArray:Array for details.
 template< typename T,
           int NDIM,
-          typename PERMUTATION=camp::make_idx_seq_t< NDIM > >
+          typename PERMUTATION = camp::make_idx_seq_t< NDIM > >
 using Array = LvArray::Array< T, NDIM, PERMUTATION, localIndex, LvArray::ChaiBuffer >;
 
 /// Multidimensional array view type. See LvArray:ArrayView for details.
@@ -192,7 +192,7 @@ template< typename T, int NDIM, int USD = NDIM - 1 >
 using ArraySlice = LvArray::ArraySlice< T, NDIM, USD, localIndex >;
 
 /// Multidimensional stack-based array type. See LvArray:StackArray for details.
-template< typename T, int NDIM, int MAXSIZE, typename PERMUTATION=camp::make_idx_seq_t< NDIM > >
+template< typename T, int NDIM, int MAXSIZE, typename PERMUTATION = camp::make_idx_seq_t< NDIM > >
 using StackArray = LvArray::StackArray< T, NDIM, PERMUTATION, localIndex, MAXSIZE >;
 
 ///@}
@@ -228,7 +228,7 @@ template< typename T, int MAXSIZE >
 using stackArray1d = StackArray< T, 1, MAXSIZE >;
 
 /// Alias for 2D array.
-template< typename T, typename PERMUTATION=camp::make_idx_seq_t< 2 > >
+template< typename T, typename PERMUTATION = camp::make_idx_seq_t< 2 > >
 using array2d = Array< T, 2, PERMUTATION >;
 
 /// Alias for 2D array view.
@@ -244,15 +244,15 @@ template< typename T, int MAXSIZE >
 using stackArray2d = StackArray< T, 2, MAXSIZE >;
 
 /// Alias for 3D array.
-template< typename T, typename PERMUTATION=camp::make_idx_seq_t< 3 > >
+template< typename T, typename PERMUTATION = camp::make_idx_seq_t< 3 > >
 using array3d = Array< T, 3, PERMUTATION >;
 
 /// Alias for 3D array view.
-template< typename T, int USD=2 >
+template< typename T, int USD = 2 >
 using arrayView3d = ArrayView< T, 3, USD >;
 
 /// Alias for 3D array slice.
-template< typename T, int USD=2 >
+template< typename T, int USD = 2 >
 using arraySlice3d = ArraySlice< T, 3, USD >;
 
 /// Alias for 3D stack array.
@@ -260,15 +260,15 @@ template< typename T, int MAXSIZE >
 using stackArray3d = StackArray< T, 3, MAXSIZE >;
 
 /// Alias for 4D array.
-template< typename T, typename PERMUTATION=camp::make_idx_seq_t< 4 > >
+template< typename T, typename PERMUTATION = camp::make_idx_seq_t< 4 > >
 using array4d = Array< T, 4, PERMUTATION >;
 
 /// Alias for 4D array view.
-template< typename T, int USD=3 >
+template< typename T, int USD = 3 >
 using arrayView4d = ArrayView< T, 4, USD >;
 
 /// Alias for 4D array slice.
-template< typename T, int USD=3 >
+template< typename T, int USD = 3 >
 using arraySlice4d = ArraySlice< T, 4, USD >;
 
 /// Alias for 4D stack array.
@@ -276,15 +276,15 @@ template< typename T, int MAXSIZE >
 using stackArray4d = StackArray< T, 4, MAXSIZE >;
 
 /// Alias for 5D array.
-template< typename T, typename PERMUTATION=camp::make_idx_seq_t< 5 > >
+template< typename T, typename PERMUTATION = camp::make_idx_seq_t< 5 > >
 using array5d = Array< T, 5, PERMUTATION >;
 
 /// Alias for 5D array view.
-template< typename T, int USD=4 >
+template< typename T, int USD = 4 >
 using arrayView5d = ArrayView< T, 5, USD >;
 
 /// Alias for 5D array slice.
-template< typename T, int USD=4 >
+template< typename T, int USD = 4 >
 using arraySlice5d = ArraySlice< T, 5, 4 >;
 
 /// Alias for 5D stack array.
@@ -318,35 +318,35 @@ using SortedArrayView = LvArray::SortedArrayView< T, localIndex, LvArray::ChaiBu
 ///@{
 
 /// Array of variable-sized arrays. See LvArray::ArrayOfArrays for details.
-template< typename T, typename INDEX_TYPE=localIndex >
+template< typename T, typename INDEX_TYPE = localIndex >
 using ArrayOfArrays = LvArray::ArrayOfArrays< T, INDEX_TYPE, LvArray::ChaiBuffer >;
 
 /// View of array of variable-sized arrays. See LvArray::ArrayOfArraysView for details.
-template< typename T, typename INDEX_TYPE=localIndex, bool CONST_SIZES=std::is_const< T >::value >
+template< typename T, typename INDEX_TYPE = localIndex, bool CONST_SIZES = std::is_const< T >::value >
 using ArrayOfArraysView = LvArray::ArrayOfArraysView< T, INDEX_TYPE const, CONST_SIZES, LvArray::ChaiBuffer >;
 
 /// Array of variable-sized sets. See LvArray::ArrayOfSets for details.
-template< typename T, typename INDEX_TYPE=localIndex >
+template< typename T, typename INDEX_TYPE = localIndex >
 using ArrayOfSets = LvArray::ArrayOfSets< T, INDEX_TYPE, LvArray::ChaiBuffer >;
 
 /// View of array of variable-sized sets. See LvArray::ArrayOfSetsView for details.
-template< typename T, typename INDEX_TYPE=localIndex >
+template< typename T, typename INDEX_TYPE = localIndex >
 using ArrayOfSetsView = LvArray::ArrayOfSetsView< T, INDEX_TYPE const, LvArray::ChaiBuffer >;
 
 /// Alias for Sparsity pattern class.
-template< typename COL_INDEX, typename INDEX_TYPE=localIndex >
+template< typename COL_INDEX, typename INDEX_TYPE = localIndex >
 using SparsityPattern = LvArray::SparsityPattern< COL_INDEX, INDEX_TYPE, LvArray::ChaiBuffer >;
 
 /// Alias for Sparsity pattern View.
-template< typename COL_INDEX, typename INDEX_TYPE=localIndex >
+template< typename COL_INDEX, typename INDEX_TYPE = localIndex >
 using SparsityPatternView = LvArray::SparsityPatternView< COL_INDEX, INDEX_TYPE const, LvArray::ChaiBuffer >;
 
 /// Alias for CRS Matrix class.
-template< typename T, typename COL_INDEX=globalIndex >
+template< typename T, typename COL_INDEX = globalIndex >
 using CRSMatrix = LvArray::CRSMatrix< T, COL_INDEX, localIndex, LvArray::ChaiBuffer >;
 
 /// Alias for CRS Matrix View.
-template< typename T, typename COL_INDEX=globalIndex >
+template< typename T, typename COL_INDEX = globalIndex >
 using CRSMatrixView = LvArray::CRSMatrixView< T, COL_INDEX, localIndex const, LvArray::ChaiBuffer >;
 
 ///@}
@@ -614,7 +614,7 @@ private:
     {
       if( dimension > 1 )
       {
-        subPattern = constructArrayRegex( subPattern, dimension-1 );
+        subPattern = constructArrayRegex( subPattern, dimension - 1 );
       }
 
       string arrayPattern;

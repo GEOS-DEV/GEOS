@@ -312,8 +312,8 @@ public:
                                      + stack.poreVolume * (dPhaseVolFrac[ip][Deriv::dT] * phaseDens[ip] + phaseVolFrac[ip] * dPhaseDens[ip][Deriv::dT] );
       for( integer ic = 0; ic < numComp; ++ic )
       {
-        stack.localJacobian[ic][numDof-1] += dPhaseAmount_dT * phaseCompFrac[ip][ic]
-                                             + phaseAmount * dPhaseCompFrac[ip][ic][Deriv::dT];
+        stack.localJacobian[ic][numDof - 1] += dPhaseAmount_dT * phaseCompFrac[ip][ic]
+                                               + phaseAmount * dPhaseCompFrac[ip][ic][Deriv::dT];
       }
 
       // Step 2: assemble the phase-dependent part of the accumulation term of the energy equation
@@ -326,27 +326,27 @@ public:
                                      + phaseAmount * dPhaseInternalEnergy[ip][Deriv::dT];
 
       // local accumulation
-      stack.localResidual[numEqn-1] += phaseEnergy - phaseEnergy_n;
+      stack.localResidual[numEqn - 1] += phaseEnergy - phaseEnergy_n;
 
       // derivatives w.r.t. pressure and temperature
-      stack.localJacobian[numEqn-1][0]        += dPhaseEnergy_dP;
-      stack.localJacobian[numEqn-1][numDof-1] += dPhaseEnergy_dT;
+      stack.localJacobian[numEqn - 1][0]        += dPhaseEnergy_dP;
+      stack.localJacobian[numEqn - 1][numDof - 1] += dPhaseEnergy_dT;
 
       // derivatives w.r.t. component densities
       applyChainRule( numComp, dCompFrac_dCompDens, dPhaseInternalEnergy[ip], dPhaseInternalEnergy_dC, Deriv::dC );
       for( integer jc = 0; jc < numComp; ++jc )
       {
-        stack.localJacobian[numEqn-1][jc + 1] += phaseInternalEnergy[ip] * dPhaseAmount_dC[jc]
-                                                 + dPhaseInternalEnergy_dC[jc] * phaseAmount;
+        stack.localJacobian[numEqn - 1][jc + 1] += phaseInternalEnergy[ip] * dPhaseAmount_dC[jc]
+                                                   + dPhaseInternalEnergy_dC[jc] * phaseAmount;
       }
     } );
 
     // Step 3: assemble the solid part of the accumulation term
 
     // local accumulation and derivatives w.r.t. pressure and temperature
-    stack.localResidual[numEqn-1] += stack.solidEnergy - stack.solidEnergy_n;
-    stack.localJacobian[numEqn-1][0] += stack.dSolidEnergy_dPres;
-    stack.localJacobian[numEqn-1][numDof-1] += stack.dSolidEnergy_dTemp;
+    stack.localResidual[numEqn - 1] += stack.solidEnergy - stack.solidEnergy_n;
+    stack.localJacobian[numEqn - 1][0] += stack.dSolidEnergy_dPres;
+    stack.localJacobian[numEqn - 1][numDof - 1] += stack.dSolidEnergy_dTemp;
 
   }
 
@@ -370,7 +370,7 @@ public:
 
       for( integer ip = 0; ip < m_numPhases; ++ip )
       {
-        stack.localJacobian[numEqn-2][numDof-1] -= dPhaseVolFrac[ip][Deriv::dT];
+        stack.localJacobian[numEqn - 2][numDof - 1] -= dPhaseVolFrac[ip][Deriv::dT];
       }
     } );
   }
@@ -383,10 +383,10 @@ public:
     Base::complete( ei, stack );
 
     // Step 2: assemble the energy equation
-    m_localRhs[stack.localRow + numEqn-1] += stack.localResidual[numEqn-1];
-    m_localMatrix.template addToRow< serialAtomic >( stack.localRow + numEqn-1,
+    m_localRhs[stack.localRow + numEqn - 1] += stack.localResidual[numEqn - 1];
+    m_localMatrix.template addToRow< serialAtomic >( stack.localRow + numEqn - 1,
                                                      stack.dofIndices,
-                                                     stack.localJacobian[numEqn-1],
+                                                     stack.localJacobian[numEqn - 1],
                                                      numDof );
   }
 
@@ -445,7 +445,7 @@ public:
       internal::kernelLaunchSelectorCompSwitch( numComps, [&] ( auto NC )
     {
       localIndex constexpr NUM_COMP = NC();
-      localIndex constexpr NUM_DOF = NC()+2;
+      localIndex constexpr NUM_DOF = NC() + 2;
 
       BitFlags< isothermalCompositionalMultiphaseBaseKernels::ElementBasedAssemblyKernelFlags > kernelFlags;
       if( useTotalMassEquation )

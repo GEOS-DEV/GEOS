@@ -164,9 +164,9 @@ FaceElementFluxKernel::compute( localIndex const numFluxElems,
 
   localIndex k[2];
   localIndex connectionIndex = 0;
-  for( k[0]=0; k[0]<numFluxElems; ++k[0] )
+  for( k[0] = 0; k[0] < numFluxElems; ++k[0] )
   {
-    for( k[1]=k[0]+1; k[1]<numFluxElems; ++k[1] )
+    for( k[1] = k[0] + 1; k[1] < numFluxElems; ++k[1] )
     {
       real64 fluxVal = 0.0;
       real64 dFlux_dTrans = 0.0;

@@ -103,11 +103,11 @@ void PVTDriver::postProcessInput()
   m_numComponents = baseFluid.numFluidComponents();
 
   // Number of rows in numSteps+1
-  integer const numRows = m_numSteps+1;
+  integer const numRows = m_numSteps + 1;
 
   // Number of columns depends on options
   // Default column order = time, pressure, temp, totalDensity, phaseFraction_{1:NP}, phaseDensity_{1:NP}, phaseViscosity_{1:NP}
-  integer numCols = 3*m_numPhases+4;
+  integer numCols = 3 * m_numPhases + 4;
 
   // If the total compressibility is requested then add a column
   if( m_outputCompressibility != 0 )
@@ -138,14 +138,14 @@ void PVTDriver::postProcessInput()
 
   ArrayOfArraysView< real64 > coordinates = pressureFunction.getCoordinates();
   real64 const minTime = coordinates[0][0];
-  real64 const maxTime = coordinates[0][coordinates.sizeOfArray( 0 )-1];
-  real64 const dt = (maxTime-minTime) / m_numSteps;
+  real64 const maxTime = coordinates[0][coordinates.sizeOfArray( 0 ) - 1];
+  real64 const dt = (maxTime - minTime) / m_numSteps;
 
   // set input columns
 
-  for( integer n=0; n<m_numSteps+1; ++n )
+  for( integer n = 0; n < m_numSteps + 1; ++n )
   {
-    m_table( n, TIME ) = minTime + n*dt;
+    m_table( n, TIME ) = minTime + n * dt;
     m_table( n, PRES ) = pressureFunction.evaluate( &m_table( n, TIME ) );
     m_table( n, TEMP ) = temperatureFunction.evaluate( &m_table( n, TIME ) );
   }
@@ -241,11 +241,11 @@ void PVTDriver::outputResults()
 
   auto const phaseNames = getFluid().phaseNames();
 
-  fprintf( fp, "# columns %d-%d = phase fractions\n", columnIndex+1, columnIndex + m_numPhases );
+  fprintf( fp, "# columns %d-%d = phase fractions\n", columnIndex + 1, columnIndex + m_numPhases );
   columnIndex += m_numPhases;
-  fprintf( fp, "# columns %d-%d = phase densities\n", columnIndex+1, columnIndex + m_numPhases );
+  fprintf( fp, "# columns %d-%d = phase densities\n", columnIndex + 1, columnIndex + m_numPhases );
   columnIndex += m_numPhases;
-  fprintf( fp, "# columns %d-%d = phase viscosities\n", columnIndex+1, columnIndex + m_numPhases );
+  fprintf( fp, "# columns %d-%d = phase viscosities\n", columnIndex + 1, columnIndex + m_numPhases );
   columnIndex += m_numPhases;
 
   if( m_outputPhaseComposition != 0 )
@@ -253,15 +253,15 @@ void PVTDriver::outputResults()
     string const componentNames = stringutilities::join( getFluid().componentNames(), ", " );
     for( integer ip = 0; ip < m_numPhases; ++ip )
     {
-      fprintf( fp, "# columns %d-%d = %s phase fractions [%s]\n", columnIndex+1, columnIndex + m_numComponents,
+      fprintf( fp, "# columns %d-%d = %s phase fractions [%s]\n", columnIndex + 1, columnIndex + m_numComponents,
                phaseNames[ip].c_str(), componentNames.c_str() );
       columnIndex += m_numComponents;
     }
   }
 
-  for( integer n=0; n<m_table.size( 0 ); ++n )
+  for( integer n = 0; n < m_table.size( 0 ); ++n )
   {
-    for( integer col=0; col<m_table.size( 1 ); ++col )
+    for( integer col = 0; col < m_table.size( 1 ); ++col )
     {
       fprintf( fp, "%.4e ", m_table( n, col ) );
     }
@@ -291,7 +291,7 @@ void PVTDriver::compareWithBaseline()
   }
 
   string line;
-  for( integer row=0; row < headerRows; ++row )
+  for( integer row = 0; row < headerRows; ++row )
   {
     getline( file, line );
   }
@@ -302,18 +302,18 @@ void PVTDriver::compareWithBaseline()
   // specific.
 
   real64 value;
-  for( integer row=0; row < m_table.size( 0 ); ++row )
+  for( integer row = 0; row < m_table.size( 0 ); ++row )
   {
-    for( integer col=0; col < m_table.size( 1 ); ++col )
+    for( integer col = 0; col < m_table.size( 1 ); ++col )
     {
       GEOS_THROW_IF( file.eof(), "Baseline file appears shorter than internal results", std::runtime_error );
       file >> value;
 
-      real64 const error = fabs( m_table[row][col]-value ) / ( fabs( value )+1 );
+      real64 const error = fabs( m_table[row][col] - value ) / ( fabs( value ) + 1 );
       GEOS_THROW_IF( error > MultiFluidConstants::baselineTolerance,
-                     "Results do not match baseline at data row " << row+1
-                                                                  << " (row " << row+headerRows << " with header)"
-                                                                  << " and column " << col+1, std::runtime_error );
+                     "Results do not match baseline at data row " << row + 1
+                                                                  << " (row " << row + headerRows << " with header)"
+                                                                  << " and column " << col + 1, std::runtime_error );
     }
   }
 

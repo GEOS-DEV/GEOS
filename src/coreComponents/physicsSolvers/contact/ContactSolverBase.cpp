@@ -165,7 +165,7 @@ void ContactSolverBase::computeFractureStateStatistics( MeshLevel const & mesh,
 
 void ContactSolverBase::outputConfigurationStatistics( DomainPartition const & domain ) const
 {
-  if( getLogLevel() >=1 )
+  if( getLogLevel() >= 1 )
   {
     globalIndex numStick = 0;
     globalIndex numSlip  = 0;

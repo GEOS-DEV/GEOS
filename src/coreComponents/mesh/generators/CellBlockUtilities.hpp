@@ -108,12 +108,12 @@ computeUniqueValueOffsets( ArrayOfArraysView< T const > const & sortedLists, COM
 
   // For each node, count number of unique edges that have the node as its lowest
   arrayView1d< localIndex > const numUniqueValuesView = uniqueValueOffsets.toView();
-  forAll< POLICY >( numNodes, [sortedLists, numUniqueValuesView, comp=std::forward< COMP >( comp )]( localIndex const i )
+  forAll< POLICY >( numNodes, [sortedLists, numUniqueValuesView, comp = std::forward< COMP >( comp )]( localIndex const i )
   {
-    arraySlice1d< T const > const list = sortedLists[ i ];
+    arraySlice1d< T const > const list = sortedLists[i];
     forEqualRanges( list.begin(), list.end(), [&]( auto, auto )
     {
-      ++numUniqueValuesView[ i + 1 ];
+      ++numUniqueValuesView[i + 1];
     }, comp );
   } );
 

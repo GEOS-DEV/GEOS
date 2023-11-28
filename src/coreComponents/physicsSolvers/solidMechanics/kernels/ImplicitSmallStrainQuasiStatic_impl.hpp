@@ -90,12 +90,12 @@ setup( localIndex const k,
     for( int i = 0; i < numDofPerTestSupportPoint; ++i )
     {
 #if defined(CALC_FEM_SHAPE_IN_KERNEL)
-      stack.xLocal[ a ][ i ] = m_X[ localNodeIndex ][ i ];
+      stack.xLocal[a][i] = m_X[localNodeIndex][i];
 #endif
-      stack.u_local[ a ][i] = m_disp[ localNodeIndex ][i];
-      stack.uhat_local[ a ][i] = m_uhat[ localNodeIndex ][i];
-      stack.localRowDofIndex[a*3+i] = m_dofNumber[localNodeIndex]+i;
-      stack.localColDofIndex[a*3+i] = m_dofNumber[localNodeIndex]+i;
+      stack.u_local[a][i] = m_disp[localNodeIndex][i];
+      stack.uhat_local[a][i] = m_uhat[localNodeIndex][i];
+      stack.localRowDofIndex[a * 3 + i] = m_dofNumber[localNodeIndex] + i;
+      stack.localColDofIndex[a * 3 + i] = m_dofNumber[localNodeIndex] + i;
     }
   }
   // Add stabilization to block diagonal parts of the local jacobian
@@ -118,7 +118,7 @@ void ImplicitSmallStrainQuasiStatic< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE 
                                                                                                           StackVariables & stack,
                                                                                                           STRESS_MODIFIER && stressModifier ) const
 {
-  real64 dNdX[ numNodesPerElem ][ 3 ];
+  real64 dNdX[numNodesPerElem][3];
   real64 const detJxW = m_finiteElementSpace.template getGradN< FE_TYPE >( k, q, stack.xLocal, stack.feStack, dNdX );
 
   real64 strainInc[6] = {0};
@@ -132,14 +132,14 @@ void ImplicitSmallStrainQuasiStatic< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE 
 
   stressModifier( stress );
   // #pragma unroll
-  for( localIndex i=0; i<6; ++i )
+  for( localIndex i = 0; i < 6; ++i )
   {
     stress[i] *= -detJxW;
   }
 
-  real64 const gravityForce[3] = { m_gravityVector[0] * m_density( k, q )* detJxW,
-                                   m_gravityVector[1] * m_density( k, q )* detJxW,
-                                   m_gravityVector[2] * m_density( k, q )* detJxW };
+  real64 const gravityForce[3] = { m_gravityVector[0] * m_density( k, q ) * detJxW,
+                                   m_gravityVector[1] * m_density( k, q ) * detJxW,
+                                   m_gravityVector[2] * m_density( k, q ) * detJxW };
 
   real64 N[numNodesPerElem];
   FE_TYPE::calcN( q, stack.feStack, N );
@@ -184,16 +184,16 @@ real64 ImplicitSmallStrainQuasiStatic< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYP
     // #pragma unroll
     for( int dim = 0; dim < numDofPerTestSupportPoint; ++dim )
     {
-      localIndex const dof = LvArray::integerConversion< localIndex >( stack.localRowDofIndex[ numDofPerTestSupportPoint * localNode + dim ] - m_dofRankOffset );
+      localIndex const dof = LvArray::integerConversion< localIndex >( stack.localRowDofIndex[numDofPerTestSupportPoint * localNode + dim] - m_dofRankOffset );
       if( dof < 0 || dof >= m_matrix.numRows() )
         continue;
       m_matrix.template addToRowBinarySearchUnsorted< parallelDeviceAtomic >( dof,
                                                                               stack.localRowDofIndex,
-                                                                              stack.localJacobian[ numDofPerTestSupportPoint * localNode + dim ],
+                                                                              stack.localJacobian[numDofPerTestSupportPoint * localNode + dim],
                                                                               stack.numRows );
 
-      RAJA::atomicAdd< parallelDeviceAtomic >( &m_rhs[ dof ], stack.localResidual[ numDofPerTestSupportPoint * localNode + dim ] );
-      maxForce = fmax( maxForce, fabs( stack.localResidual[ numDofPerTestSupportPoint * localNode + dim ] ) );
+      RAJA::atomicAdd< parallelDeviceAtomic >( &m_rhs[dof], stack.localResidual[numDofPerTestSupportPoint * localNode + dim] );
+      maxForce = fmax( maxForce, fabs( stack.localResidual[numDofPerTestSupportPoint * localNode + dim] ) );
     }
   }
 

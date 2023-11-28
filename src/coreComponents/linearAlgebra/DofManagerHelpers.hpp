@@ -413,9 +413,9 @@ struct MeshVisitor< LOC, FieldLocation::Elem, VISIT_GHOSTS >
                                                       localIndex const )
     {
       // loop over all connected locations
-      auto const elemRegions = elemRegionList[ locIdx ];
-      auto const elemSubRegions = elemSubRegionList[ locIdx ];
-      auto const elemIndices = elemIndexList[ locIdx ];
+      auto const elemRegions = elemRegionList[locIdx];
+      auto const elemSubRegions = elemSubRegionList[locIdx];
+      auto const elemIndices = elemIndexList[locIdx];
       for( localIndex b = 0; b < elemIndices.size(); ++b )
       {
         MeshHelper< FieldLocation::Elem >::LocalIndexType const elemIdx =

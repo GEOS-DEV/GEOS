@@ -109,7 +109,7 @@ void LaplaceFEM::setupSystem( DomainPartition & domain,
 
     SparsityPattern< globalIndex > sparsityPattern( dofManager.numLocalDofs(),
                                                     dofManager.numGlobalDofs(),
-                                                    8*8*3 );
+                                                    8 * 8 * 3 );
 
     finiteElement::fillSparsity< CellElementSubRegion,
                                  LaplaceFEMKernel >( mesh,

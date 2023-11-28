@@ -58,12 +58,12 @@ public:
    */
   LifoStorage( std::string name, size_t elemCnt, int numberOfBuffersToStoreOnDevice, int numberOfBuffersToStoreOnHost, int maxNumberOfBuffers ):
     m_maxNumberOfBuffers( maxNumberOfBuffers ),
-    m_bufferSize( elemCnt*sizeof( T ) ),
+    m_bufferSize( elemCnt * sizeof( T ) ),
     m_bufferCount( 0 )
   {
-    LIFO_LOG_RANK( " LIFO : maximum size "<< m_maxNumberOfBuffers << " buffers " );
+    LIFO_LOG_RANK( " LIFO : maximum size " << m_maxNumberOfBuffers << " buffers " );
     double bufferSize = ( ( double ) m_bufferSize ) / ( 1024.0 * 1024.0 );
-    LIFO_LOG_RANK( " LIFO : buffer size "<< bufferSize << "MB" );
+    LIFO_LOG_RANK( " LIFO : buffer size " << bufferSize << "MB" );
     if( numberOfBuffersToStoreOnDevice < 0 )
     {
 #ifdef GEOS_USE_CUDA
@@ -77,8 +77,8 @@ public:
       numberOfBuffersToStoreOnHost =
         LifoStorageCommon< T, INDEX_TYPE >::computeNumberOfBufferOnHost( -numberOfBuffersToStoreOnHost, m_bufferSize, m_maxNumberOfBuffers, numberOfBuffersToStoreOnDevice );
     }
-    LIFO_LOG_RANK( " LIFO : allocating "<< numberOfBuffersToStoreOnHost <<" buffers on host" );
-    LIFO_LOG_RANK( " LIFO : allocating "<< numberOfBuffersToStoreOnDevice <<" buffers on device" );
+    LIFO_LOG_RANK( " LIFO : allocating " << numberOfBuffersToStoreOnHost << " buffers on host" );
+    LIFO_LOG_RANK( " LIFO : allocating " << numberOfBuffersToStoreOnDevice << " buffers on device" );
 #ifdef GEOS_USE_CUDA
     if( numberOfBuffersToStoreOnDevice > 0 )
     {

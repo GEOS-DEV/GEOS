@@ -51,7 +51,7 @@ public:
 template<> class SinglePhaseCatalogNames< SinglePhasePoromechanics< SinglePhaseBase > >
 {
 public:
-  static string name() { return SinglePhasePoromechanics< SinglePhaseBase >::catalogName()+"Reservoir"; }
+  static string name() { return SinglePhasePoromechanics< SinglePhaseBase >::catalogName() + "Reservoir"; }
 };
 }
 
@@ -308,12 +308,12 @@ assembleCouplingTerms( real64 const time_n,
       forAll< parallelDevicePolicy<> >( perforationData->size(), [=] GEOS_HOST_DEVICE ( localIndex const iperf )
       {
         // local working variables and arrays
-        localIndex eqnRowIndices[ 2 ] = { -1 };
-        globalIndex dofColIndices[ 2 ] = { -1 };
+        localIndex eqnRowIndices[2] = { -1 };
+        globalIndex dofColIndices[2] = { -1 };
 
 
-        real64 localPerf[ 2 ]{};
-        real64 localPerfJacobian[ 2 ][ 2 ]{};
+        real64 localPerf[2]{};
+        real64 localPerfJacobian[2][2]{};
 
         // get the reservoir (sub)region and element indices
         localIndex const er = resElementRegion[iperf];

@@ -94,7 +94,7 @@ void ObjectManagerBase::constructSetFromSetAndMap( SortedArrayView< localIndex c
   {
     newset.reserve( numObjects );
 
-    for( localIndex ka=0; ka<numObjects; ++ka )
+    for( localIndex ka = 0; ka < numObjects; ++ka )
     {
       newset.insert( ka );
     }
@@ -102,7 +102,7 @@ void ObjectManagerBase::constructSetFromSetAndMap( SortedArrayView< localIndex c
   else
   {
     localIndex const mapSize = map.size( 1 );
-    for( localIndex ka=0; ka<numObjects; ++ka )
+    for( localIndex ka = 0; ka < numObjects; ++ka )
     {
       if( std::all_of( &map( ka, 0 ), &map( ka, 0 ) + mapSize, [&]( localIndex const i ) { return inputSet.contains( i ); } ) )
       {
@@ -126,14 +126,14 @@ void ObjectManagerBase::constructSetFromSetAndMap( SortedArrayView< localIndex c
   {
     newset.reserve( numObjects );
 
-    for( localIndex ka=0; ka<numObjects; ++ka )
+    for( localIndex ka = 0; ka < numObjects; ++ka )
     {
       newset.insert( ka );
     }
   }
   else
   {
-    for( localIndex ka=0; ka<numObjects; ++ka )
+    for( localIndex ka = 0; ka < numObjects; ++ka )
     {
       if( std::all_of( map[ka].begin(), map[ka].end(), [&]( localIndex const i ) { return inputSet.contains( i ); } ) )
       {
@@ -179,7 +179,7 @@ ObjectManagerBase::constructGlobalListOfBoundaryObjects() const
 {
   array1d< globalIndex > objectList;
   arrayView1d< integer const > const & isDomainBoundary = this->getDomainBoundaryIndicator();
-  for( localIndex k=0; k<size(); ++k )
+  for( localIndex k = 0; k < size(); ++k )
   {
     if( isDomainBoundary[k] == 1 )
     {
@@ -336,7 +336,7 @@ localIndex ObjectManagerBase::unpack( buffer_unit_type const * & buffer,
 
     localIndex numWrappers;
     unpackedSize += bufferOps::Unpack( buffer, numWrappers );
-    for( localIndex a=0; a<numWrappers; ++a )
+    for( localIndex a = 0; a < numWrappers; ++a )
     {
       string wrapperName;
       unpackedSize += bufferOps::Unpack( buffer, wrapperName );
@@ -484,7 +484,7 @@ localIndex ObjectManagerBase::unpackSets( buffer_unit_type const * & buffer )
 
   localIndex numUnpackedSets;
   unpackedSize += bufferOps::Unpack( buffer, numUnpackedSets );
-  for( localIndex a=0; a<numUnpackedSets; ++a )
+  for( localIndex a = 0; a < numUnpackedSets; ++a )
   {
     string setName;
     unpackedSize += bufferOps::Unpack( buffer, setName );
@@ -538,7 +538,7 @@ localIndex ObjectManagerBase::packGlobalMapsImpl( buffer_unit_type * & buffer,
   {
     globalIndex_array globalIndices;
     globalIndices.resize( numPackedIndices );
-    for( localIndex a=0; a<numPackedIndices; ++a )
+    for( localIndex a = 0; a < numPackedIndices; ++a )
     {
       globalIndices[a] = this->m_localToGlobalMap[packList[a]];
     }
@@ -655,7 +655,7 @@ localIndex ObjectManagerBase::unpackGlobalMaps( buffer_unit_type const * & buffe
     this->resize( newSize );
 
     // add the new indices to the maps.
-    for( int a=0; a<numNewIndices; ++a )
+    for( int a = 0; a < numNewIndices; ++a )
     {
       localIndex const b = oldSize + a;
       m_localToGlobalMap[b] = newGlobalIndices( a );
@@ -717,7 +717,7 @@ void ObjectManagerBase::excludeWrappersFromPacking( std::set< string > const & w
 localIndex ObjectManagerBase::getNumberOfGhosts() const
 {
   localIndex rval = 0;
-  for( localIndex i=0; i<size(); ++i )
+  for( localIndex i = 0; i < size(); ++i )
   {
     if( m_ghostRank[i] > -1 )
     {
@@ -731,7 +731,7 @@ localIndex ObjectManagerBase::getNumberOfGhosts() const
 localIndex ObjectManagerBase::getNumberOfLocalIndices() const
 {
   localIndex rval = 0;
-  for( localIndex i=0; i<size(); ++i )
+  for( localIndex i = 0; i < size(); ++i )
   {
     if( m_ghostRank[i] <= -1 )
     {
@@ -749,11 +749,11 @@ void ObjectManagerBase::setReceiveLists()
     pair.second.ghostsToReceive().clear();
   }
 
-  for( localIndex a=0; a<size(); ++a )
+  for( localIndex a = 0; a < size(); ++a )
   {
     if( m_ghostRank[a] > -1 )
     {
-      getNeighborData( m_ghostRank[ a ] ).ghostsToReceive().emplace_back( a );
+      getNeighborData( m_ghostRank[a] ).ghostsToReceive().emplace_back( a );
     }
   }
 }
@@ -765,7 +765,7 @@ integer ObjectManagerBase::splitObject( localIndex const indexToSplit,
   // if the object index has a zero sized childIndices entry, then this object can be split into two
   // new objects
 
-  if( size()+1 > capacity() )
+  if( size() + 1 > capacity() )
   {
     reserve( static_cast< localIndex >( size() * m_overAllocationFactor ) );
   }
@@ -791,7 +791,7 @@ integer ObjectManagerBase::splitObject( localIndex const indexToSplit,
 
   m_localToGlobalMap[newIndex] = -1;
 
-  if( m_isExternal[indexToSplit]==1 )
+  if( m_isExternal[indexToSplit] == 1 )
   {
     m_isExternal[indexToSplit] = 1;
     m_isExternal[newIndex]     = 1;
@@ -812,7 +812,7 @@ void ObjectManagerBase::inheritGhostRankFromParent( std::set< localIndex > const
 
   for( auto const a : indices )
   {
-    m_ghostRank[ a ] = m_ghostRank[ parentIndex[ a ] ];
+    m_ghostRank[a] = m_ghostRank[parentIndex[a]];
   }
 }
 
@@ -828,7 +828,7 @@ void ObjectManagerBase::copyObject( const localIndex source, const localIndex de
     }
   }
 
-  for( localIndex i=0; i<m_sets.wrappers().size(); ++i )
+  for( localIndex i = 0; i < m_sets.wrappers().size(); ++i )
   {
     SortedArray< localIndex > & targetSet = m_sets.getReference< SortedArray< localIndex > >( i );
 
@@ -870,12 +870,12 @@ void ObjectManagerBase::cleanUpMap( std::set< localIndex > const & targetIndices
     for( auto const & compositeIndex : upmap[targetIndex] )
     {
       bool hasTargetIndex = false;
-      for( localIndex a=0; a<downmap.size( 1 ); ++a )
+      for( localIndex a = 0; a < downmap.size( 1 ); ++a )
       {
         localIndex const compositeLocalIndex = downmap[compositeIndex][a];
-        if( compositeLocalIndex==targetIndex )
+        if( compositeLocalIndex == targetIndex )
         {
-          hasTargetIndex=true;
+          hasTargetIndex = true;
         }
       }
       if( !hasTargetIndex )
@@ -899,15 +899,15 @@ void ObjectManagerBase::cleanUpMap( std::set< localIndex > const & targetIndices
   {
     eraseList.clear();
     localIndex pos = 0;
-    for( auto const & compositeIndex : upmap[ targetIndex ] )
+    for( auto const & compositeIndex : upmap[targetIndex] )
     {
       bool hasTargetIndex = false;
-      for( localIndex a=0; a<downmap.size( 1 ); ++a )
+      for( localIndex a = 0; a < downmap.size( 1 ); ++a )
       {
         localIndex const compositeLocalIndex = downmap[compositeIndex][a];
-        if( compositeLocalIndex==targetIndex )
+        if( compositeLocalIndex == targetIndex )
         {
-          hasTargetIndex=true;
+          hasTargetIndex = true;
         }
       }
 
@@ -934,12 +934,12 @@ void ObjectManagerBase::cleanUpMap( std::set< localIndex > const & targetIndices
     for( auto const & compositeIndex : upmap[targetIndex] )
     {
       bool hasTargetIndex = false;
-      for( localIndex a=0; a<downmap[compositeIndex].size(); ++a )
+      for( localIndex a = 0; a < downmap[compositeIndex].size(); ++a )
       {
         localIndex const compositeLocalIndex = downmap[compositeIndex][a];
-        if( compositeLocalIndex==targetIndex )
+        if( compositeLocalIndex == targetIndex )
         {
-          hasTargetIndex=true;
+          hasTargetIndex = true;
         }
       }
       if( !hasTargetIndex )
@@ -963,15 +963,15 @@ void ObjectManagerBase::cleanUpMap( std::set< localIndex > const & targetIndices
   {
     eraseList.clear();
     localIndex pos = 0;
-    for( localIndex const compositeIndex : upmap[ targetIndex ] )
+    for( localIndex const compositeIndex : upmap[targetIndex] )
     {
       bool hasTargetIndex = false;
-      for( localIndex a=0; a<downmap[compositeIndex].size(); ++a )
+      for( localIndex a = 0; a < downmap[compositeIndex].size(); ++a )
       {
         localIndex const compositeLocalIndex = downmap[compositeIndex][a];
-        if( compositeLocalIndex==targetIndex )
+        if( compositeLocalIndex == targetIndex )
         {
-          hasTargetIndex=true;
+          hasTargetIndex = true;
         }
       }
 
@@ -996,10 +996,10 @@ void ObjectManagerBase::cleanUpMap( std::set< localIndex > const & targetIndices
   for( localIndex const targetIndex : targetIndices )
   {
     eraseList.clear();
-    for( localIndex const compositeIndex : upmap[ targetIndex ] )
+    for( localIndex const compositeIndex : upmap[targetIndex] )
     {
       bool hasTargetIndex = false;
-      for( localIndex const compositeLocalIndex : downmap[ compositeIndex ] )
+      for( localIndex const compositeLocalIndex : downmap[compositeIndex] )
       {
         if( compositeLocalIndex == targetIndex )
         {

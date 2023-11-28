@@ -184,7 +184,7 @@ void DelftEggUpdates::evaluateYield( real64 const p,
                                      real64 & df_dp_dve,
                                      real64 & df_dq_dse ) const
 {
-  real64 const c = alpha / (alpha+1.0) * pc;
+  real64 const c = alpha / (alpha + 1.0) * pc;
   real64 a = alpha;
   real64 pa = pc;
   real64 factor = 1.0;
@@ -192,18 +192,18 @@ void DelftEggUpdates::evaluateYield( real64 const p,
   if( p >= c ) // Use MCC
   {
     a = 1.0;
-    factor = 2.0 * alpha / (alpha+1.0);
+    factor = 2.0 * alpha / (alpha + 1.0);
     pa = factor * pc;
   }
-  real64 alphaTerm = 2.0 * a * a * a / (a+1.0);
+  real64 alphaTerm = 2.0 * a * a * a / (a + 1.0);
   df_dp = -alphaTerm * pa + 2.0 * a * a * p;
   df_dq = 2.0 * q / (M * M);
-  df_dpc = 2.0 * a * a * (a-1.0) / (a+1.0) * pc - alphaTerm * p * factor;
-  real64 dpc_dve = -1.0 / (Cc-Cr) * pc;
+  df_dpc = 2.0 * a * a * (a - 1.0) / (a + 1.0) * pc - alphaTerm * p * factor;
+  real64 dpc_dve = -1.0 / (Cc - Cr) * pc;
   df_dp_dve = 2.0 * a * a * bulkModulus + alphaTerm * dpc_dve * factor;
   df_dq_dse = 2.0 / (M * M) * 3.0 * mu;
 
-  f = q * q / (M * M)- a * a * p *(2.0 * a / (a+1.0) * pa - p) + a * a * (a-1.0) / (a+1.0) * pc * pc;
+  f = q * q / (M * M) - a * a * p * (2.0 * a / (a + 1.0) * pa - p) + a * a * (a - 1.0) / (a + 1.0) * pc * pc;
 
 }
 
@@ -262,9 +262,9 @@ void DelftEggUpdates::smallStrainUpdate( localIndex const k,
 
   // else, plasticity (trial stress point lies outside yield surface)
 
-  eps_v_trial = trialP/bulkModulus;
+  eps_v_trial = trialP / bulkModulus;
 
-  eps_s_trial = trialQ/3.0/mu;
+  eps_s_trial = trialQ / 3.0 / mu;
 
   real64 solution[3] = {}, residual[3] = {}, delta[3] = {};
   real64 jacobian[3][3] = {{}}, jacobianInv[3][3] = {{}};
@@ -280,36 +280,36 @@ void DelftEggUpdates::smallStrainUpdate( localIndex const k,
 
   // begin Newton loop
 
-  for( localIndex iter=0; iter<20; ++iter )
+  for( localIndex iter = 0; iter < 20; ++iter )
   {
     trialP = solution[0] * bulkModulus;
     trialQ = 3.0 * mu * solution[1];
-    pc = oldPc * std::exp( -1.0 / (Cc-Cr) * (eps_v_trial-solution[0]));
+    pc = oldPc * std::exp( -1.0 / (Cc - Cr) * (eps_v_trial - solution[0]));
 
     evaluateYield( trialP, trialQ, pc, M, alpha, Cc, Cr, bulkModulus, mu, yield, df_dp, df_dq, df_dpc, df_dp_dve, df_dq_dse );
-    real64 dpc_dve = -1.0 / (Cc-Cr) * pc;
+    real64 dpc_dve = -1.0 / (Cc - Cr) * pc;
 
-    real64 scale = 1.0 / (mu*mu);
+    real64 scale = 1.0 / (mu * mu);
     // assemble residual system
-    residual[0] = solution[0] - eps_v_trial + solution[2]*df_dp;   // strainElasticDev - strainElasticTrialDev + dlambda*dG/dPQ = 0
-    residual[1] = solution[1] - eps_s_trial + solution[2]*df_dq;         // strainElasticVol - strainElasticTrialVol + dlambda*dG/dQ = 0
+    residual[0] = solution[0] - eps_v_trial + solution[2] * df_dp;   // strainElasticDev - strainElasticTrialDev + dlambda*dG/dPQ = 0
+    residual[1] = solution[1] - eps_s_trial + solution[2] * df_dq;         // strainElasticVol - strainElasticTrialVol + dlambda*dG/dQ = 0
     residual[2] = yield * scale;      // F = 0
 
 
     // check for convergence
 
     norm = LvArray::tensorOps::l2Norm< 3 >( residual );
-    if( iter==0 )
+    if( iter == 0 )
     {
       normZero = norm;
       normOld = norm;
     }
 
-    if( norm < 1e-12*(normZero+1.0))
+    if( norm < 1e-12 * (normZero + 1.0))
     {
       break;
     }
-    else if( iter > 0 && norm>normOld && cuts<maxCuts ) //linesearch
+    else if( iter > 0 && norm > normOld && cuts < maxCuts ) //linesearch
     {
       cuts++;
       iter--;
@@ -323,7 +323,7 @@ void DelftEggUpdates::smallStrainUpdate( localIndex const k,
     {
       // solve Newton system
       normOld = norm;
-      cuts=0;
+      cuts = 0;
       real64 dp_dve = bulkModulus;
       real64 dq_dse = 3.0 * mu;
 
@@ -338,7 +338,7 @@ void DelftEggUpdates::smallStrainUpdate( localIndex const k,
       LvArray::tensorOps::invert< 3 >( jacobianInv, jacobian );
       LvArray::tensorOps::Ri_eq_AijBj< 3, 3 >( delta, jacobianInv, residual );
 
-      for( localIndex i=0; i<3; ++i )
+      for( localIndex i = 0; i < 3; ++i )
       {
         solution[i] -= delta[i];
       }
@@ -357,68 +357,68 @@ void DelftEggUpdates::smallStrainUpdate( localIndex const k,
   LvArray::tensorOps::fill< 6, 6 >( stiffness, 0.0 );
   real64 BB[2][2] = {{}};
 
-  real64 const c = alpha/(alpha+1.)*pc;
-  real64 dpc_dve = -1./(Cc-Cr) * pc;
+  real64 const c = alpha / (alpha + 1.) * pc;
+  real64 dpc_dve = -1. / (Cc - Cr) * pc;
   real64 df_dp_depsv;
   real64 factor;
   if( trialP >= c )   // Use MCC
   {
-    factor = 2.0 * alpha / (alpha+1.0);
+    factor = 2.0 * alpha / (alpha + 1.0);
     df_dpc = -factor * trialP;
     df_dp_depsv = factor * dpc_dve;
   }
   else
   {
-    factor = 2.0 * alpha * alpha * alpha / (alpha+1.0);
-    df_dpc = 2.0 * alpha * alpha * (alpha-1.0) /(alpha+1.0) * pc - factor * trialP;
+    factor = 2.0 * alpha * alpha * alpha / (alpha + 1.0);
+    df_dpc = 2.0 * alpha * alpha * (alpha - 1.0) / (alpha + 1.0) * pc - factor * trialP;
     df_dp_depsv = factor * dpc_dve;
   }
 
   real64 a1 = 1.0 + solution[2] * df_dp_depsv;
   real64 a2 = -df_dpc * dpc_dve;
   real64 scale = 1.0 / (mu * mu); //add scaling factor to improve convergence
-  BB[0][0] = bulkModulus * (a1*jacobianInv[0][0] + a2 * jacobianInv[0][2] * scale);
+  BB[0][0] = bulkModulus * (a1 * jacobianInv[0][0] + a2 * jacobianInv[0][2] * scale);
   BB[0][1] = bulkModulus * jacobianInv[0][1];
   BB[1][0] = 3.0 * mu * (a1 * jacobianInv[1][0] + a2 * jacobianInv[1][2] * scale);
   BB[1][1] = 3.0 * mu * jacobianInv[1][1];
 
   real64 c1;
 
-  if( eps_s_trial<1e-15 ) // confirm eps_s_trial != 0
+  if( eps_s_trial < 1e-15 ) // confirm eps_s_trial != 0
   {
     c1 = 2.0 * mu;
   }
   else
   {
-    c1 = 2.0 * trialQ/(3.0 * eps_s_trial);
+    c1 = 2.0 * trialQ / (3.0 * eps_s_trial);
   }
 
   real64 c2 = BB[0][0] - c1 / 3.0;
-  real64 c3 = std::sqrt( 2./3. ) * BB[0][1];
-  real64 c4 = std::sqrt( 2./3. ) * BB[1][0];
-  real64 c5 = 2./3. * BB[1][1] - c1;
+  real64 c3 = std::sqrt( 2. / 3. ) * BB[0][1];
+  real64 c4 = std::sqrt( 2. / 3. ) * BB[1][0];
+  real64 c5 = 2. / 3. * BB[1][1] - c1;
 
   real64 identity[6];
 
-  for( localIndex i=0; i<6; ++i )
+  for( localIndex i = 0; i < 6; ++i )
   {
-    for( localIndex j=0; j<6; ++j )
+    for( localIndex j = 0; j < 6; ++j )
     {
       stiffness[i][j] =  0.0;
     }
   }
 
-  for( localIndex i=0; i<3; ++i )
+  for( localIndex i = 0; i < 3; ++i )
   {
     stiffness[i][i] = c1;
-    stiffness[i+3][i+3] = 0.5 * c1;
+    stiffness[i + 3][i + 3] = 0.5 * c1;
     identity[i] = 1.0;
-    identity[i+3] = 0.0;
+    identity[i + 3] = 0.0;
   }
 
-  for( localIndex i=0; i<6; ++i )
+  for( localIndex i = 0; i < 6; ++i )
   {
-    for( localIndex j=0; j<6; ++j )
+    for( localIndex j = 0; j < 6; ++j )
     {
       stiffness[i][j] +=   c2 * identity[i] * identity[j]
                          + c3 * identity[i] * deviator[j]

@@ -42,7 +42,7 @@ struct ArraySliceOrRefHelper< T, 0, USD >
   using type = T &;
 };
 
-template< typename T, int DIM, int USD=DIM-1 >
+template< typename T, int DIM, int USD = DIM - 1 >
 using ArraySliceOrRef = typename ArraySliceOrRefHelper< T, DIM, USD >::type;
 
 } // namespace internal
@@ -56,7 +56,7 @@ struct MultiFluidVarSlice
 {
   GEOS_HOST_DEVICE
   MultiFluidVarSlice( internal::ArraySliceOrRef< T, DIM, USD > inputValue,
-                      internal::ArraySliceOrRef< T, DIM+1, USD_DC > inputDerivs ):
+                      internal::ArraySliceOrRef< T, DIM + 1, USD_DC > inputDerivs ):
     value( inputValue ),
     derivs( inputDerivs )
   {}

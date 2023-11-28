@@ -67,35 +67,35 @@ void strainDecomposition( real64 const ( &strain )[6],
 {
   volStrain = strain[0] + strain[1] + strain[2];
 
-  for( localIndex i=0; i<3; ++i )
+  for( localIndex i = 0; i < 3; ++i )
   {
-    deviator[i] = strain[i] - volStrain/3.;
-    deviator[i+3] = strain[i+3]/2.; // divide by two ("stress voight")
+    deviator[i] = strain[i] - volStrain / 3.;
+    deviator[i + 3] = strain[i + 3] / 2.; // divide by two ("stress voight")
   }
 
   devStrain = 0;
-  for( localIndex i=0; i<3; ++i )
+  for( localIndex i = 0; i < 3; ++i )
   {
     devStrain += deviator[i] * deviator[i];
-    devStrain += 2 * deviator[i+3] * deviator[i+3];
+    devStrain += 2 * deviator[i + 3] * deviator[i + 3];
   }
   devStrain = std::sqrt( devStrain );
 
   if( devStrain < 1e-12 )
   {
-    for( localIndex i=0; i<6; ++i )
+    for( localIndex i = 0; i < 6; ++i )
     {
       deviator[i] = 0;
     }
   }
   else
   {
-    for( localIndex i=0; i<6; ++i )
+    for( localIndex i = 0; i < 6; ++i )
     {
       deviator[i] /= devStrain;
     }
   }
-  devStrain *= sqrt( 2./3. );
+  devStrain *= sqrt( 2. / 3. );
   return;
 }
 
@@ -117,35 +117,35 @@ void stressDecomposition( real64 const ( &stress )[6],
 {
   volStress = ( stress[0] + stress[1] + stress[2] ) / 3;
 
-  for( localIndex i=0; i<3; ++i )
+  for( localIndex i = 0; i < 3; ++i )
   {
     deviator[i] = stress[i] - volStress;
-    deviator[i+3] = stress[i+3];
+    deviator[i + 3] = stress[i + 3];
   }
 
   devStress = 0;
-  for( localIndex i=0; i<3; ++i )
+  for( localIndex i = 0; i < 3; ++i )
   {
     devStress += deviator[i] * deviator[i];
-    devStress += 2 * deviator[i+3] * deviator[i+3];
+    devStress += 2 * deviator[i + 3] * deviator[i + 3];
   }
   devStress = std::sqrt( devStress );
 
   if( devStress < 1e-12 )
   {
-    for( localIndex i=0; i<6; ++i )
+    for( localIndex i = 0; i < 6; ++i )
     {
       deviator[i] = 0;
     }
   }
   else
   {
-    for( localIndex i=0; i<6; ++i )
+    for( localIndex i = 0; i < 6; ++i )
     {
       deviator[i] /= devStress;
     }
   }
-  devStress *= sqrt( 3./2. );
+  devStress *= sqrt( 3. / 2. );
 
   return;
 }
@@ -166,12 +166,12 @@ void strainRecomposition( real64 const & volStrain,
                           real64 const ( &deviator )[6],
                           real64 ( & strain )[6] )
 {
-  real64 const tmp = sqrt( 1.5 )*devStrain;
+  real64 const tmp = sqrt( 1.5 ) * devStrain;
 
-  for( localIndex i=0; i<3; ++i )
+  for( localIndex i = 0; i < 3; ++i )
   {
-    strain[i]   = volStrain/3. + tmp * deviator[i];
-    strain[i+3] = 2 * tmp * deviator[i+3]; // engineering strain
+    strain[i]   = volStrain / 3. + tmp * deviator[i];
+    strain[i + 3] = 2 * tmp * deviator[i + 3]; // engineering strain
   }
 
   return;
@@ -193,12 +193,12 @@ void stressRecomposition( real64 const & volStress,
                           real64 const ( &deviator )[6],
                           real64 ( & stress )[6] )
 {
-  real64 const tmp = sqrt( 2./3. )*devStress;
+  real64 const tmp = sqrt( 2. / 3. ) * devStress;
 
-  for( localIndex i=0; i<3; ++i )
+  for( localIndex i = 0; i < 3; ++i )
   {
     stress[i]   = volStress + tmp * deviator[i];
-    stress[i+3] = tmp * deviator[i+3];
+    stress[i + 3] = tmp * deviator[i + 3];
   }
 
   return;

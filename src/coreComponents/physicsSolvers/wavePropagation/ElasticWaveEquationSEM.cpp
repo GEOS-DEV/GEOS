@@ -224,7 +224,7 @@ void ElasticWaveEquationSEM::postProcessInput()
     }
   }
 
-  GEOS_THROW_IF( dt < epsilonLoc*maxTime, getDataContext() << ": Value for dt: " << dt <<" is smaller than local threshold: " << epsilonLoc, std::runtime_error );
+  GEOS_THROW_IF( dt < epsilonLoc * maxTime, getDataContext() << ": Value for dt: " << dt << " is smaller than local threshold: " << epsilonLoc, std::runtime_error );
 
   if( m_dtSeismoTrace > 0 )
   {
@@ -234,7 +234,7 @@ void ElasticWaveEquationSEM::postProcessInput()
   {
     m_nsamplesSeismoTrace = 0;
   }
-  localIndex const nsamples = int(maxTime/dt) + 1;
+  localIndex const nsamples = int(maxTime / dt) + 1;
 
   localIndex const numSourcesGlobal = m_sourceCoordinates.size( 0 );
   m_sourceIsAccessible.resize( numSourcesGlobal );
@@ -369,19 +369,19 @@ void ElasticWaveEquationSEM::computeDAS ( arrayView2d< real32 > const xCompRcv,
     /// synchronize receivers across MPI ranks
     MpiWrapper::allReduce( xCompRcv.data(),
                            xCompRcv.data(),
-                           2*numReceiversGlobal*m_nsamplesSeismoTrace,
+                           2 * numReceiversGlobal * m_nsamplesSeismoTrace,
                            MpiWrapper::getMpiOp( MpiWrapper::Reduction::Sum ),
                            MPI_COMM_GEOSX );
 
     MpiWrapper::allReduce( yCompRcv.data(),
                            yCompRcv.data(),
-                           2*numReceiversGlobal*m_nsamplesSeismoTrace,
+                           2 * numReceiversGlobal * m_nsamplesSeismoTrace,
                            MpiWrapper::getMpiOp( MpiWrapper::Reduction::Sum ),
                            MPI_COMM_GEOSX );
 
     MpiWrapper::allReduce( zCompRcv.data(),
                            zCompRcv.data(),
-                           2*numReceiversGlobal*m_nsamplesSeismoTrace,
+                           2 * numReceiversGlobal * m_nsamplesSeismoTrace,
                            MpiWrapper::getMpiOp( MpiWrapper::Reduction::Sum ),
                            MPI_COMM_GEOSX );
 
@@ -399,9 +399,9 @@ void ElasticWaveEquationSEM::computeDAS ( arrayView2d< real32 > const xCompRcv,
         {
           // store strain data in the z-component of the receiver (copied to x after resize)
           zCompRcv[iSample][ircv] =
-            cd * ca * ( xCompRcv[iSample][numReceiversGlobal+ircv] - xCompRcv[iSample][ircv] )
-            + cd * sa * ( yCompRcv[iSample][numReceiversGlobal+ircv] - yCompRcv[iSample][ircv] )
-            + sd * ( zCompRcv[iSample][numReceiversGlobal+ircv] - zCompRcv[iSample][ircv] );
+            cd * ca * ( xCompRcv[iSample][numReceiversGlobal + ircv] - xCompRcv[iSample][ircv] )
+            + cd * sa * ( yCompRcv[iSample][numReceiversGlobal + ircv] - yCompRcv[iSample][ircv] )
+            + sd * ( zCompRcv[iSample][numReceiversGlobal + ircv] - zCompRcv[iSample][ircv] );
           zCompRcv[iSample][ircv] /= linearDASGeometry[ircv][2];
 
         }
@@ -593,11 +593,11 @@ void ElasticWaveEquationSEM::applyFreeSurfaceBC( real64 const time, DomainPartit
 
       for( localIndex i = 0; i < targetSet.size(); ++i )
       {
-        localIndex const kf = targetSet[ i ];
+        localIndex const kf = targetSet[i];
         freeSurfaceFaceIndicator[kf] = 1;
 
         localIndex const numNodes = faceToNodeMap.sizeOfArray( kf );
-        for( localIndex a=0; a < numNodes; ++a )
+        for( localIndex a = 0; a < numNodes; ++a )
         {
           localIndex const dof = faceToNodeMap( kf, a );
           freeSurfaceNodeIndicator[dof] = 1;
@@ -703,26 +703,26 @@ real64 ElasticWaveEquationSEM::explicitStepInternal( real64 const & time_n,
 
 
 
-    real64 const dt2 = dt*dt;
+    real64 const dt2 = dt * dt;
     forAll< EXEC_POLICY >( nodeManager.size(), [=] GEOS_HOST_DEVICE ( localIndex const a )
     {
       if( freeSurfaceNodeIndicator[a] != 1 )
       {
         ux_np1[a] = ux_n[a];
-        ux_np1[a] *= 2.0*mass[a];
-        ux_np1[a] -= (mass[a]-0.5*dt*dampingx[a])*ux_nm1[a];
-        ux_np1[a] += dt2*(rhsx[a]-stiffnessVectorx[a]);
-        ux_np1[a] /= mass[a]+0.5*dt*dampingx[a];
+        ux_np1[a] *= 2.0 * mass[a];
+        ux_np1[a] -= (mass[a] - 0.5 * dt * dampingx[a]) * ux_nm1[a];
+        ux_np1[a] += dt2 * (rhsx[a] - stiffnessVectorx[a]);
+        ux_np1[a] /= mass[a] + 0.5 * dt * dampingx[a];
         uy_np1[a] = uy_n[a];
-        uy_np1[a] *= 2.0*mass[a];
-        uy_np1[a] -= (mass[a]-0.5*dt*dampingy[a])*uy_nm1[a];
-        uy_np1[a] += dt2*(rhsy[a]-stiffnessVectory[a]);
-        uy_np1[a] /= mass[a]+0.5*dt*dampingy[a];
+        uy_np1[a] *= 2.0 * mass[a];
+        uy_np1[a] -= (mass[a] - 0.5 * dt * dampingy[a]) * uy_nm1[a];
+        uy_np1[a] += dt2 * (rhsy[a] - stiffnessVectory[a]);
+        uy_np1[a] /= mass[a] + 0.5 * dt * dampingy[a];
         uz_np1[a] = uz_n[a];
-        uz_np1[a] *= 2.0*mass[a];
-        uz_np1[a] -= (mass[a]-0.5*dt*dampingz[a])*uz_nm1[a];
-        uz_np1[a] += dt2*(rhsz[a]-stiffnessVectorz[a]);
-        uz_np1[a] /= mass[a]+0.5*dt*dampingz[a];
+        uz_np1[a] *= 2.0 * mass[a];
+        uz_np1[a] -= (mass[a] - 0.5 * dt * dampingz[a]) * uz_nm1[a];
+        uz_np1[a] += dt2 * (rhsz[a] - stiffnessVectorz[a]);
+        uz_np1[a] /= mass[a] + 0.5 * dt * dampingz[a];
       }
     } );
 

@@ -526,7 +526,7 @@ private:
   constexpr static real64 m_nonRuptureTime = 1e9;
 
   /// choice of failure criterion
-  integer m_failCriterion=1;
+  integer m_failCriterion = 1;
 
   array1d< localIndex > m_solidMaterialFullIndex;
 

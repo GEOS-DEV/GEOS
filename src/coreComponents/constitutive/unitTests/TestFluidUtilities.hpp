@@ -50,9 +50,9 @@ void testNumericalDerivative( real64 const x, real64 const dx, real64 const deri
                               FUNCTION && function,
                               real64 const absTolerance = absTol, real64 const relTolerance = relTol )
 {
-  real64 const leftValue = function( x-dx );
+  real64 const leftValue = function( x - dx );
   real64 const centreValue = function( x );
-  real64 const rightValue = function( x+dx );
+  real64 const rightValue = function( x + dx );
   real64 const leftDerivative = (centreValue - leftValue) / dx;
   real64 const rightDerivative = (rightValue - centreValue) / dx;
   checkRelativeError( derivative, leftDerivative, relTolerance, absTolerance, "Left derivative" );

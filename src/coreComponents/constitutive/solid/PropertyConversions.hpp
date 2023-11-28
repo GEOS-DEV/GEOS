@@ -88,7 +88,7 @@ GEOS_HOST_DEVICE
 inline
 real64 toBulkMod( real64 const & E, real64 const & nu )
 {
-  return E / (3 * ( 1 - 2*nu ) );
+  return E / (3 * ( 1 - 2 * nu ) );
 }
 
 /**

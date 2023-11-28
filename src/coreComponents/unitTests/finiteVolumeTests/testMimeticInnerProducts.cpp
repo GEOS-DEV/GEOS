@@ -112,9 +112,9 @@ void makeHexa( array2d< real64, nodes::REFERENCE_POSITION_PERM > & nodePosition,
 
   lengthTolerance = 1.73205e-8;
 
-  elemPerm[ 0 ] = 1e-12;
-  elemPerm[ 1 ] = 2e-12;
-  elemPerm[ 2 ] = 3e-12;
+  elemPerm[0] = 1e-12;
+  elemPerm[1] = 2e-12;
+  elemPerm[2] = 3e-12;
 
   // elem-to-faces map
   elemToFaces.resize( numFaces );
@@ -389,9 +389,9 @@ void makeTetra( array2d< real64, nodes::REFERENCE_POSITION_PERM > & nodePosition
 
   lengthTolerance = 1.73205e-8;
 
-  elemPerm[ 0 ] = 1e-12;
-  elemPerm[ 1 ] = 2e-12;
-  elemPerm[ 2 ] = 3e-12;
+  elemPerm[0] = 1e-12;
+  elemPerm[1] = 2e-12;
+  elemPerm[2] = 3e-12;
 
   // elem-to-faces map
   elemToFaces.resize( numFaces );
@@ -556,7 +556,7 @@ TEST( testMimeticInnerProducts, TPFA_hexa )
   center[0] = elemCenter[0];
   center[1] = elemCenter[1];
   center[2] = elemCenter[2];
-  real64 const perm[ 3 ] = { elemPerm[0], elemPerm[1], elemPerm[2] };
+  real64 const perm[3] = { elemPerm[0], elemPerm[1], elemPerm[2] };
 
   TPFAInnerProduct::compute< NF >( nodePosition.toViewConst(),
                                    transMultiplier.toViewConst(),
@@ -606,7 +606,7 @@ TEST( testMimeticInnerProducts, QTPFA_hexa )
   center[0] = elemCenter[0];
   center[1] = elemCenter[1];
   center[2] = elemCenter[2];
-  real64 const perm[ 3 ] = { elemPerm[0], elemPerm[1], elemPerm[2] };
+  real64 const perm[3] = { elemPerm[0], elemPerm[1], elemPerm[2] };
 
   QuasiTPFAInnerProduct::compute< NF >( nodePosition.toViewConst(),
                                         transMultiplier.toViewConst(),
@@ -655,7 +655,7 @@ TEST( testMimeticInnerProducts, Simple_hexa )
   center[0] = elemCenter[0];
   center[1] = elemCenter[1];
   center[2] = elemCenter[2];
-  real64 const perm[ 3 ] = { elemPerm[0], elemPerm[1], elemPerm[2] };
+  real64 const perm[3] = { elemPerm[0], elemPerm[1], elemPerm[2] };
 
   SimpleInnerProduct::compute< NF >( nodePosition.toViewConst(),
                                      transMultiplier.toViewConst(),
@@ -705,7 +705,7 @@ TEST( testMimeticInnerProducts, BdVLM_hexa )
   center[0] = elemCenter[0];
   center[1] = elemCenter[1];
   center[2] = elemCenter[2];
-  real64 const perm[ 3 ] = { elemPerm[0], elemPerm[1], elemPerm[2] };
+  real64 const perm[3] = { elemPerm[0], elemPerm[1], elemPerm[2] };
 
   BdVLMInnerProduct::compute< NF >( nodePosition.toViewConst(),
                                     transMultiplier.toViewConst(),
@@ -752,7 +752,7 @@ TEST( testMimeticInnerProducts, TPFA_tetra )
   center[0] = elemCenter[0];
   center[1] = elemCenter[1];
   center[2] = elemCenter[2];
-  real64 const perm[ 3 ] = { elemPerm[0], elemPerm[1], elemPerm[2] };
+  real64 const perm[3] = { elemPerm[0], elemPerm[1], elemPerm[2] };
 
   TPFAInnerProduct::compute< NF >( nodePosition.toViewConst(),
                                    transMultiplier.toViewConst(),
@@ -799,7 +799,7 @@ TEST( testMimeticInnerProducts, QTPFA_tetra )
   center[0] = elemCenter[0];
   center[1] = elemCenter[1];
   center[2] = elemCenter[2];
-  real64 const perm[ 3 ] = { elemPerm[0], elemPerm[1], elemPerm[2] };
+  real64 const perm[3] = { elemPerm[0], elemPerm[1], elemPerm[2] };
 
   QuasiTPFAInnerProduct::compute< NF >( nodePosition.toViewConst(),
                                         transMultiplier.toViewConst(),
@@ -845,7 +845,7 @@ TEST( testMimeticInnerProducts, Simple_tetra )
   center[0] = elemCenter[0];
   center[1] = elemCenter[1];
   center[2] = elemCenter[2];
-  real64 const perm[ 3 ] = { elemPerm[0], elemPerm[1], elemPerm[2] };
+  real64 const perm[3] = { elemPerm[0], elemPerm[1], elemPerm[2] };
 
   SimpleInnerProduct::compute< NF >( nodePosition.toViewConst(),
                                      transMultiplier.toViewConst(),
@@ -891,7 +891,7 @@ TEST( testMimeticInnerProducts, BdVLMtetra )
   center[0] = elemCenter[0];
   center[1] = elemCenter[1];
   center[2] = elemCenter[2];
-  real64 const perm[ 3 ] = { elemPerm[0], elemPerm[1], elemPerm[2] };
+  real64 const perm[3] = { elemPerm[0], elemPerm[1], elemPerm[2] };
 
   BdVLMInnerProduct::compute< NF >( nodePosition.toViewConst(),
                                     transMultiplier.toViewConst(),

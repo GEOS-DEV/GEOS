@@ -209,7 +209,7 @@ public:
    * @param key The key of particle region, either name or number.
    * @return Reference to const T.
    */
-  template< typename T=ParticleRegionBase, typename KEY_TYPE=void >
+  template< typename T = ParticleRegionBase, typename KEY_TYPE = void >
   T const & getRegion( KEY_TYPE const & key ) const
   {
     return this->getGroup( groupKeyStruct::particleRegionsGroup() ).getGroup< T >( key );
@@ -220,7 +220,7 @@ public:
    * @param key The key of the particle region, either name or number.
    * @return Reference to T.
    */
-  template< typename T=ParticleRegionBase, typename KEY_TYPE=void >
+  template< typename T = ParticleRegionBase, typename KEY_TYPE = void >
   T & getRegion( KEY_TYPE const & key )
   {
     return this->getGroup( groupKeyStruct::particleRegionsGroup() ).getGroup< T >( key );
@@ -232,7 +232,7 @@ public:
    * @param name The name/key of the ParticleRegion
    * @return true if the region exists, false if not.
    */
-  template< typename T=ParticleRegionBase >
+  template< typename T = ParticleRegionBase >
   bool hasRegion( string const & name ) const
   {
     return this->getGroup( groupKeyStruct::particleRegionsGroup() ).hasGroup< T >( name );
@@ -336,7 +336,7 @@ public:
   template< typename REGIONTYPE, typename ... REGIONTYPES, typename LAMBDA >
   void forParticleRegionsComplete( LAMBDA lambda )
   {
-    for( localIndex er=0; er<this->numRegions(); ++er )
+    for( localIndex er = 0; er < this->numRegions(); ++er )
     {
       ParticleRegionBase & particleRegion = this->getRegion( er );
 
@@ -356,7 +356,7 @@ public:
   template< typename REGIONTYPE, typename ... REGIONTYPES, typename LAMBDA >
   void forParticleRegionsComplete( LAMBDA lambda ) const
   {
-    for( localIndex er=0; er<this->numRegions(); ++er )
+    for( localIndex er = 0; er < this->numRegions(); ++er )
     {
       ParticleRegionBase const & particleRegion = this->getRegion( er );
 
@@ -618,11 +618,11 @@ public:
   template< typename SUBREGIONTYPE, typename ... SUBREGIONTYPES, typename LAMBDA >
   void forParticleSubRegionsComplete( LAMBDA && lambda )
   {
-    for( localIndex er=0; er<this->numRegions(); ++er )
+    for( localIndex er = 0; er < this->numRegions(); ++er )
     {
       ParticleRegionBase & particleRegion = this->getRegion( er );
 
-      for( localIndex esr=0; esr<particleRegion.numSubRegions(); ++esr )
+      for( localIndex esr = 0; esr < particleRegion.numSubRegions(); ++esr )
       {
         ParticleSubRegionBase & subRegion = particleRegion.getSubRegion( esr );
 
@@ -643,11 +643,11 @@ public:
   template< typename SUBREGIONTYPE, typename ... SUBREGIONTYPES, typename LAMBDA >
   void forParticleSubRegionsComplete( LAMBDA && lambda ) const
   {
-    for( localIndex er=0; er<this->numRegions(); ++er )
+    for( localIndex er = 0; er < this->numRegions(); ++er )
     {
       ParticleRegionBase const & particleRegion = this->getRegion( er );
 
-      for( localIndex esr=0; esr<particleRegion.numSubRegions(); ++esr )
+      for( localIndex esr = 0; esr < particleRegion.numSubRegions(); ++esr )
       {
         ParticleSubRegionBase const & subRegion = particleRegion.getSubRegion( esr );
 
@@ -674,9 +674,9 @@ public:
     {
       localIndex const er = particleRegion.getIndexInParent();
 
-      if( er>-1 )
+      if( er > -1 )
       {
-        for( localIndex esr=0; esr<particleRegion.numSubRegions(); ++esr )
+        for( localIndex esr = 0; esr < particleRegion.numSubRegions(); ++esr )
         {
           ParticleSubRegionBase & subRegion = particleRegion.getSubRegion( esr );
 
@@ -704,9 +704,9 @@ public:
     {
       localIndex const er = particleRegion.getIndexInParent();
 
-      if( er>-1 )
+      if( er > -1 )
       {
-        for( localIndex esr=0; esr<particleRegion.numSubRegions(); ++esr )
+        for( localIndex esr = 0; esr < particleRegion.numSubRegions(); ++esr )
         {
           ParticleSubRegionBase const & subRegion = particleRegion.getSubRegion( esr );
 
@@ -737,7 +737,7 @@ public:
    * @param neighborName neighbor data name
    * @return ParticleViewAccessor that contains VIEWTYPE data
    */
-  template< typename VIEWTYPE, typename LHS=VIEWTYPE >
+  template< typename VIEWTYPE, typename LHS = VIEWTYPE >
   ParticleViewAccessor< LHS >
   constructViewAccessor( string const & name, string const & neighborName = string() ) const;
 
@@ -748,7 +748,7 @@ public:
    * @param neighborName neighbor data name
    * @return ParticleViewAccessor that contains VIEWTYPE data
    */
-  template< typename VIEWTYPE, typename LHS=VIEWTYPE >
+  template< typename VIEWTYPE, typename LHS = VIEWTYPE >
   ParticleViewAccessor< LHS >
   constructViewAccessor( string const & name, string const & neighborName = string() );
 
@@ -794,7 +794,7 @@ public:
    * @param cm pointer to ConstitutiveManager
    * @return MaterialViewAccessor that contains VIEWTYPE data
    */
-  template< typename VIEWTYPE, typename LHS=VIEWTYPE >
+  template< typename VIEWTYPE, typename LHS = VIEWTYPE >
   MaterialViewAccessor< LHS >
   constructFullMaterialViewAccessor( string const & viewName,
                                      constitutive::ConstitutiveManager const & cm ) const;
@@ -806,7 +806,7 @@ public:
    * @param cm pointer to ConstitutiveManager
    * @return MaterialViewAccessor that contains VIEWTYPE data
    */
-  template< typename VIEWTYPE, typename LHS=VIEWTYPE >
+  template< typename VIEWTYPE, typename LHS = VIEWTYPE >
   MaterialViewAccessor< LHS >
   constructFullMaterialViewAccessor( string const & viewName,
                                      constitutive::ConstitutiveManager const & cm );
@@ -851,7 +851,7 @@ public:
    * list
    * @return ParticleViewAccessor that contains VIEWTYPE data
    */
-  template< typename VIEWTYPE, typename LHS=VIEWTYPE >
+  template< typename VIEWTYPE, typename LHS = VIEWTYPE >
   ParticleViewAccessor< LHS >
   constructMaterialViewAccessor( string const & viewName,
                                  arrayView1d< string const > const & regionNames,
@@ -869,7 +869,7 @@ public:
    * list
    * @return ParticleViewAccessor that contains VIEWTYPE data
    */
-  template< typename VIEWTYPE, typename LHS=VIEWTYPE >
+  template< typename VIEWTYPE, typename LHS = VIEWTYPE >
   ParticleViewAccessor< LHS >
   constructMaterialViewAccessor( string const & viewName,
                                  arrayView1d< string const > const & regionNames,
@@ -902,7 +902,7 @@ public:
    * @return ParticleViewAccessor that contains VIEWTYPE data. Empty views are returned
    *         for subregions that don't contain a model derived from MODELTYPE.
    */
-  template< typename MATERIALTYPE, typename VIEWTYPE, typename LHS=VIEWTYPE >
+  template< typename MATERIALTYPE, typename VIEWTYPE, typename LHS = VIEWTYPE >
   ParticleViewAccessor< LHS >
   constructMaterialViewAccessor( string const & viewName ) const;
 
@@ -1073,7 +1073,7 @@ ParticleManager::constructViewAccessor( string const & viewName, string const & 
 {
   ParticleViewAccessor< LHS > viewAccessor;
   viewAccessor.resize( numRegions() );
-  for( typename dataRepository::indexType kReg=0; kReg<numRegions(); ++kReg )
+  for( typename dataRepository::indexType kReg = 0; kReg < numRegions(); ++kReg )
   {
     ParticleRegionBase const & particleRegion = getRegion( kReg );
     viewAccessor[kReg].resize( particleRegion.numSubRegions() );
@@ -1104,7 +1104,7 @@ ParticleManager::constructViewAccessor( string const & viewName, string const & 
 {
   ParticleViewAccessor< LHS > viewAccessor;
   viewAccessor.resize( numRegions() );
-  for( typename dataRepository::indexType kReg=0; kReg<numRegions(); ++kReg )
+  for( typename dataRepository::indexType kReg = 0; kReg < numRegions(); ++kReg )
   {
     ParticleRegionBase & particleRegion = getRegion( kReg );
     viewAccessor[kReg].resize( particleRegion.numSubRegions() );
@@ -1151,12 +1151,12 @@ ParticleManager::constructReferenceAccessor( string const & viewName, string con
 {
   ParticleViewAccessor< ReferenceWrapper< VIEWTYPE > > viewAccessor;
   viewAccessor.resize( numRegions() );
-  for( typename dataRepository::indexType kReg=0; kReg<numRegions(); ++kReg )
+  for( typename dataRepository::indexType kReg = 0; kReg < numRegions(); ++kReg )
   {
     ParticleRegionBase const & particleRegion = getRegion( kReg );
     viewAccessor[kReg].resize( particleRegion.numSubRegions() );
 
-    for( typename dataRepository::indexType kSubReg=0; kSubReg<particleRegion.numSubRegions(); ++kSubReg )
+    for( typename dataRepository::indexType kSubReg = 0; kSubReg < particleRegion.numSubRegions(); ++kSubReg )
     {
       Group const * group = &particleRegion.getSubRegion( kSubReg );
 
@@ -1180,12 +1180,12 @@ ParticleManager::constructReferenceAccessor( string const & viewName, string con
 {
   ParticleViewAccessor< ReferenceWrapper< VIEWTYPE > > viewAccessor;
   viewAccessor.resize( numRegions() );
-  for( typename dataRepository::indexType kReg=0; kReg<numRegions(); ++kReg )
+  for( typename dataRepository::indexType kReg = 0; kReg < numRegions(); ++kReg )
   {
     ParticleRegionBase & particleRegion = getRegion( kReg );
     viewAccessor[kReg].resize( particleRegion.numSubRegions() );
 
-    for( typename dataRepository::indexType kSubReg=0; kSubReg<particleRegion.numSubRegions(); ++kSubReg )
+    for( typename dataRepository::indexType kSubReg = 0; kSubReg < particleRegion.numSubRegions(); ++kSubReg )
     {
       Group * group = &particleRegion.getSubRegion( kSubReg );
 
@@ -1210,19 +1210,19 @@ ParticleManager::constructFullMaterialViewAccessor( string const & viewName,
 {
   MaterialViewAccessor< LHS > accessor;
   accessor.resize( numRegions() );
-  for( localIndex kReg=0; kReg<numRegions(); ++kReg )
+  for( localIndex kReg = 0; kReg < numRegions(); ++kReg )
   {
     ParticleRegionBase const & particleRegion = getRegion( kReg );
     accessor[kReg].resize( particleRegion.numSubRegions() );
 
-    for( localIndex kSubReg=0; kSubReg<particleRegion.numSubRegions(); ++kSubReg )
+    for( localIndex kSubReg = 0; kSubReg < particleRegion.numSubRegions(); ++kSubReg )
     {
       ParticleSubRegionBase const & subRegion = particleRegion.getSubRegion( kSubReg );
       dataRepository::Group const & constitutiveGroup = subRegion.getConstitutiveModels();
 
       accessor[kReg][kSubReg].resize( cm.numSubGroups() );
 
-      for( localIndex matIndex=0; matIndex<cm.numSubGroups(); ++matIndex )
+      for( localIndex matIndex = 0; matIndex < cm.numSubGroups(); ++matIndex )
       {
         string const & constitutiveName = cm.getGroup( matIndex ).getName();
         dataRepository::Group const * const constitutiveRelation = constitutiveGroup.getGroupPointer( constitutiveName );
@@ -1247,19 +1247,19 @@ ParticleManager::constructFullMaterialViewAccessor( string const & viewName,
 {
   MaterialViewAccessor< LHS > accessor;
   accessor.resize( numRegions() );
-  for( localIndex kReg=0; kReg<numRegions(); ++kReg )
+  for( localIndex kReg = 0; kReg < numRegions(); ++kReg )
   {
     ParticleRegionBase & particleRegion = getRegion( kReg );
     accessor[kReg].resize( particleRegion.numSubRegions() );
 
-    for( localIndex kSubReg=0; kSubReg<particleRegion.numSubRegions(); ++kSubReg )
+    for( localIndex kSubReg = 0; kSubReg < particleRegion.numSubRegions(); ++kSubReg )
     {
       ParticleSubRegionBase & subRegion = particleRegion.getSubRegion( kSubReg );
       dataRepository::Group & constitutiveGroup = subRegion.getConstitutiveModels();
 
       accessor[kReg][kSubReg].resize( cm.numSubGroups() );
 
-      for( localIndex matIndex=0; matIndex<cm.numSubGroups(); ++matIndex )
+      for( localIndex matIndex = 0; matIndex < cm.numSubGroups(); ++matIndex )
       {
         string const & constitutiveName = cm.getGroup( matIndex ).getName();
         dataRepository::Group * const constitutiveRelation = constitutiveGroup.getGroupPointer( constitutiveName );
@@ -1299,7 +1299,7 @@ ParticleManager::constructMaterialViewAccessor( string const & viewName,
   for( localIndex k = 0; k < regionNames.size(); ++k )
   {
     localIndex const er = regionMap.getIndex( regionNames[k] );
-    if( er >=0 )
+    if( er >= 0 )
     {
       GEOS_ERROR_IF_EQ_MSG( er, subGroupMap::KeyIndex::invalid_index, "Region not found: " << regionNames[k] );
       ParticleRegionBase const & region = getRegion( er );
@@ -1347,7 +1347,7 @@ ParticleManager::constructMaterialViewAccessor( string const & viewName,
   for( localIndex k = 0; k < regionNames.size(); ++k )
   {
     localIndex const er = regionMap.getIndex( regionNames[k] );
-    if( er >=0 )
+    if( er >= 0 )
     {
       GEOS_ERROR_IF_EQ_MSG( er, subGroupMap::KeyIndex::invalid_index, "Region not found: " << regionNames[k] );
       ParticleRegionBase & region = getRegion( er );
@@ -1457,18 +1457,18 @@ ParticleManager::constructFullConstitutiveAccessor( constitutive::ConstitutiveMa
 {
   ConstitutiveRelationAccessor< CONSTITUTIVE_TYPE > accessor;
   accessor.resize( numRegions() );
-  for( localIndex kReg=0; kReg<numRegions(); ++kReg )
+  for( localIndex kReg = 0; kReg < numRegions(); ++kReg )
   {
     ParticleRegionBase const & particleRegion = getRegion( kReg );
     accessor[kReg].resize( particleRegion.numSubRegions() );
 
-    for( localIndex kSubReg=0; kSubReg<particleRegion.numSubRegions(); ++kSubReg )
+    for( localIndex kSubReg = 0; kSubReg < particleRegion.numSubRegions(); ++kSubReg )
     {
       ParticleSubRegionBase const & subRegion = particleRegion.getSubRegion( kSubReg );
       dataRepository::Group const & constitutiveGroup = subRegion.getConstitutiveModels();
       accessor[kReg][kSubReg].resize( cm.numSubGroups() );
 
-      for( localIndex matIndex=0; matIndex<cm.numSubGroups(); ++matIndex )
+      for( localIndex matIndex = 0; matIndex < cm.numSubGroups(); ++matIndex )
       {
         string const & constitutiveName = cm.getGroup( matIndex ).getName();
 
@@ -1490,18 +1490,18 @@ ParticleManager::constructFullConstitutiveAccessor( constitutive::ConstitutiveMa
 {
   ConstitutiveRelationAccessor< CONSTITUTIVE_TYPE > accessor;
   accessor.resize( numRegions() );
-  for( localIndex kReg=0; kReg<numRegions(); ++kReg )
+  for( localIndex kReg = 0; kReg < numRegions(); ++kReg )
   {
     ParticleRegionBase & particleRegion = getRegion( kReg );
     accessor[kReg].resize( particleRegion.numSubRegions() );
 
-    for( localIndex kSubReg=0; kSubReg<particleRegion.numSubRegions(); ++kSubReg )
+    for( localIndex kSubReg = 0; kSubReg < particleRegion.numSubRegions(); ++kSubReg )
     {
       ParticleSubRegionBase & subRegion = particleRegion.getSubRegion( kSubReg );
       dataRepository::Group & constitutiveGroup = subRegion.getConstitutiveModels();
       accessor[kReg][kSubReg].resize( cm.numSubGroups() );
 
-      for( localIndex matIndex=0; matIndex<cm.numSubGroups(); ++matIndex )
+      for( localIndex matIndex = 0; matIndex < cm.numSubGroups(); ++matIndex )
       {
         string const & constitutiveName = cm.getGroup( matIndex ).getName();
 

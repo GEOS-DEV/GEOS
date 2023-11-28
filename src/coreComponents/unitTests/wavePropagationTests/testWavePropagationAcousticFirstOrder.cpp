@@ -184,7 +184,7 @@ TEST_F( AcousticFirstOrderWaveEquationSEMTest, SeismoTrace )
   propagator = &state.getProblemManager().getPhysicsSolverManager().getGroup< AcousticFirstOrderWaveEquationSEM >( "acousticFirstOrderSolver" );
   real64 time_n = time;
   // run for 1s (20 steps)
-  for( int i=0; i<20; i++ )
+  for( int i = 0; i < 20; i++ )
   {
     propagator->solverStep( time_n, dt, i, domain );
     time_n += dt;
@@ -230,7 +230,7 @@ TEST_F( AcousticFirstOrderWaveEquationSEMTest, SeismoTrace )
     double avgUx = 0;
     double avgUy = 0;
     double avgUz = 0;
-    for( int r=0; r<8; r++ )
+    for( int r = 0; r < 8; r++ )
     {
       avgP += pReceivers[i][r];
       avgUx += uxReceivers[i][r];

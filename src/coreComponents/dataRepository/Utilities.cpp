@@ -39,10 +39,10 @@ void printMemoryAllocation( Group const & group, integer const indent, real64 co
   // way to do this, but doens't require infrastructure changes.
   static std::unordered_set< Group const * > groupsPrinted;
   // initialize the static variables at the head of the tree.
-  if( indent==0 )
+  if( indent == 0 )
   {
     terminateBranch[0] = true;
-    for( int i=1; i<64; ++i )
+    for( int i = 1; i < 64; ++i )
     {
       terminateBranch[i] = false;
     }
@@ -66,7 +66,7 @@ void printMemoryAllocation( Group const & group, integer const indent, real64 co
 
   // storage for the gathered values of localAllocation
   std::vector< size_t > globalAllocations;
-  if( MpiWrapper::commRank()==0 )
+  if( MpiWrapper::commRank() == 0 )
   {
     globalAllocations.resize( numRanks * numValues );
   }
@@ -79,15 +79,15 @@ void printMemoryAllocation( Group const & group, integer const indent, real64 co
                       MPI_COMM_GEOSX );
 
   // reduce data across ranks (min, max, sum)
-  if( MpiWrapper::commRank()==0 )
+  if( MpiWrapper::commRank() == 0 )
   {
     array2d< size_t > allocationReductions( numValues, 3 );
-    for( int a=0; a<numValues; ++a )
+    for( int a = 0; a < numValues; ++a )
     {
       allocationReductions( a, 0 ) = std::numeric_limits< size_t >::max();
       allocationReductions( a, 1 ) = 0;
       allocationReductions( a, 2 ) = 0;
-      for( int b=0; b<numRanks; ++b )
+      for( int b = 0; b < numRanks; ++b )
       {
         int const recvIndex = a + b * numValues;
         size_t const value = globalAllocations[recvIndex];
@@ -101,7 +101,7 @@ void printMemoryAllocation( Group const & group, integer const indent, real64 co
     {
       size_t const * const groupAllocations = allocationReductions[0];
 
-      if( indent==0 )
+      if( indent == 0 )
       {
         //                          1         2         3         4         5         6         7         8         9        10        11
         //        12
@@ -115,19 +115,19 @@ void printMemoryAllocation( Group const & group, integer const indent, real64 co
 
       string outputLine;
       int indentChars = 0;
-      for( int i=0; i<indent; ++i )
+      for( int i = 0; i < indent; ++i )
       {
-        outputLine += terminateBranch[i]==true ? "   " : "|  ";
+        outputLine += terminateBranch[i] == true ? "   " : "|  ";
         indentChars += 3;
       }
       // put a indent between groups in the tree
-      GEOS_LOG_RANK_0( outputLine.c_str()<<"|" );
+      GEOS_LOG_RANK_0( outputLine.c_str() << "|" );
       indentChars += 1;
       // only allocation data if it is above the threshold...
       if( groupAllocations[0] >= threshold )
       {
         indentChars += 3;
-        outputLine += "|--{:.<" + std::to_string( 83-indentChars ) + "} {:>9s}    {:>9s}    {:>9s}";
+        outputLine += "|--{:.<" + std::to_string( 83 - indentChars ) + "} {:>9s}    {:>9s}    {:>9s}";
         GEOS_LOG_RANK_0( GEOS_FMT( outputLine.c_str(),
                                    "[" + group.getName() + "]",
                                    stringutilities::toMetricPrefixString( groupAllocations[0] ) + 'B',
@@ -151,13 +151,13 @@ void printMemoryAllocation( Group const & group, integer const indent, real64 co
         {
           string outputLine;
           int indentChars = 0;
-          for( int i=0; i<=indent; ++i )
+          for( int i = 0; i <= indent; ++i )
           {
-            outputLine += terminateBranch[i]==true ? "   " : "|  ";
+            outputLine += terminateBranch[i] == true ? "   " : "|  ";
             indentChars += 3;
           }
           indentChars += 5;
-          outputLine += "| - {:.<" + std::to_string( 83-indentChars ) + "} {:>9s}    {:>9s}    {:>9s}";
+          outputLine += "| - {:.<" + std::to_string( 83 - indentChars ) + "} {:>9s}    {:>9s}    {:>9s}";
           GEOS_LOG_RANK_0( GEOS_FMT( outputLine.c_str(),
                                      view.second->getName(),
                                      stringutilities::toMetricPrefixString( allocationReductions( viewCount, 0 ) ) + 'B',
@@ -176,7 +176,7 @@ void printMemoryAllocation( Group const & group, integer const indent, real64 co
   {
     // set flag to indicate whether or not this is the last subgroup so that
     // the ascii art tree may be constructed properly
-    terminateBranch[indent+1] = ++groupCounter==numSubGroups ? true : false;
+    terminateBranch[indent + 1] = ++groupCounter == numSubGroups ? true : false;
 
     // check to see that the group hasen't been printed yet.
     if( groupsPrinted.count( subGroup.second ) == 0 )
@@ -186,7 +186,7 @@ void printMemoryAllocation( Group const & group, integer const indent, real64 co
       printMemoryAllocation( *(subGroup.second), indent + 1, threshold );
     }
   }
-  if( indent==0 )
+  if( indent == 0 )
   {
     //         1         2         3         4         5         6         7         8         9        10
     //1234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890

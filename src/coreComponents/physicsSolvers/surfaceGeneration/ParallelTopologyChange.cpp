@@ -44,7 +44,7 @@ void packNewAndModifiedObjectsToOwningRanks( NeighborCommunicator * const neighb
 
   array1d< localIndex > newNodePackListArray( modifiedObjects.newNodes.size());
   {
-    localIndex a=0;
+    localIndex a = 0;
     for( auto const index : modifiedObjects.newNodes )
     {
       localIndex const parentNodeIndex = ObjectManagerBase::getParentRecursive( parentNodeIndices, index );
@@ -58,7 +58,7 @@ void packNewAndModifiedObjectsToOwningRanks( NeighborCommunicator * const neighb
   }
   array1d< localIndex > modNodePackListArray( modifiedObjects.modifiedNodes.size());
   {
-    localIndex a=0;
+    localIndex a = 0;
     for( auto const index : modifiedObjects.modifiedNodes )
     {
       localIndex const parentNodeIndex = ObjectManagerBase::getParentRecursive( parentNodeIndices, index );
@@ -74,7 +74,7 @@ void packNewAndModifiedObjectsToOwningRanks( NeighborCommunicator * const neighb
 
   array1d< localIndex > newEdgePackListArray( modifiedObjects.newEdges.size());
   {
-    localIndex a=0;
+    localIndex a = 0;
     for( auto const index : modifiedObjects.newEdges )
     {
       localIndex const parentIndex = ObjectManagerBase::getParentRecursive( parentEdgeIndices, index );
@@ -88,7 +88,7 @@ void packNewAndModifiedObjectsToOwningRanks( NeighborCommunicator * const neighb
   }
   array1d< localIndex > modEdgePackListArray( modifiedObjects.modifiedEdges.size());
   {
-    localIndex a=0;
+    localIndex a = 0;
     for( auto const index : modifiedObjects.modifiedEdges )
     {
       localIndex const parentIndex = ObjectManagerBase::getParentRecursive( parentEdgeIndices, index );
@@ -104,7 +104,7 @@ void packNewAndModifiedObjectsToOwningRanks( NeighborCommunicator * const neighb
 
   array1d< localIndex > newFacePackListArray( modifiedObjects.newFaces.size());
   {
-    localIndex a=0;
+    localIndex a = 0;
     for( auto const index : modifiedObjects.newFaces )
     {
       localIndex const parentIndex = ObjectManagerBase::getParentRecursive( parentFaceIndices, index );
@@ -118,7 +118,7 @@ void packNewAndModifiedObjectsToOwningRanks( NeighborCommunicator * const neighb
   }
   array1d< localIndex > modFacePackListArray( modifiedObjects.modifiedFaces.size());
   {
-    localIndex a=0;
+    localIndex a = 0;
     for( auto const index : modifiedObjects.modifiedFaces )
     {
       localIndex const parentIndex = ObjectManagerBase::getParentRecursive( parentFaceIndices, index );
@@ -140,7 +140,7 @@ void packNewAndModifiedObjectsToOwningRanks( NeighborCommunicator * const neighb
   newElemData.resize( elemManager.numRegions());
   modElemPackList.resize( elemManager.numRegions());
   modElemData.resize( elemManager.numRegions());
-  for( localIndex er=0; er<elemManager.numRegions(); ++er )
+  for( localIndex er = 0; er < elemManager.numRegions(); ++er )
   {
     ElementRegionBase & elemRegion = elemManager.getRegion( er );
     newElemPackList[er].resize( elemRegion.numSubRegions() );
@@ -157,7 +157,7 @@ void packNewAndModifiedObjectsToOwningRanks( NeighborCommunicator * const neighb
 
         modElemData[er][esr].resize( elemList.size() );
 
-        localIndex a=0;
+        localIndex a = 0;
         for( auto const index : elemList )
         {
           if( subRegionGhostRank[index] == neighborRank )
@@ -175,7 +175,7 @@ void packNewAndModifiedObjectsToOwningRanks( NeighborCommunicator * const neighb
 
         newElemData[er][esr].resize( elemList.size() );
 
-        localIndex a=0;
+        localIndex a = 0;
         for( auto const index : elemList )
         {
           if( subRegionGhostRank[index] == neighborRank )
@@ -271,7 +271,7 @@ void packNewAndModifiedObjectsToOwningRanks( NeighborCommunicator * const neighb
   // poll for pack completion here
   waitAllDeviceEvents( packEvents );
   GEOS_ERROR_IF( bufferSize != packedSize,
-                 "Allocated Buffer Size ("<<bufferSize<<") is not equal to packed buffer size("<<packedSize<<")" );
+                 "Allocated Buffer Size (" << bufferSize << ") is not equal to packed buffer size(" << packedSize << ")" );
 
 
 }
@@ -308,14 +308,14 @@ localIndex unpackNewAndModifiedObjectsOnOwningRanks( NeighborCommunicator * cons
   newLocalElementsData.resize( elemManager.numRegions());
   modifiedLocalElements.resize( elemManager.numRegions());
   modifiedLocalElementsData.resize( elemManager.numRegions());
-  for( localIndex er=0; er<elemManager.numRegions(); ++er )
+  for( localIndex er = 0; er < elemManager.numRegions(); ++er )
   {
     ElementRegionBase & elemRegion = elemManager.getRegion( er );
     newLocalElements[er].resize( elemRegion.numSubRegions());
     newLocalElementsData[er].resize( elemRegion.numSubRegions());
     modifiedLocalElements[er].resize( elemRegion.numSubRegions());
     modifiedLocalElementsData[er].resize( elemRegion.numSubRegions());
-    for( localIndex esr=0; esr<elemRegion.numSubRegions(); ++esr )
+    for( localIndex esr = 0; esr < elemRegion.numSubRegions(); ++esr )
     {
       newLocalElements[er][esr].set( newLocalElementsData[er][esr] );
       modifiedLocalElements[er][esr].set( modifiedLocalElementsData[er][esr] );
@@ -378,7 +378,7 @@ localIndex unpackNewAndModifiedObjectsOnOwningRanks( NeighborCommunicator * cons
   allNewFaces.insert( newLocalFaces.begin(), newLocalFaces.end() );
   allModifiedFaces.insert( modifiedLocalFaces.begin(), modifiedLocalFaces.end() );
 
-  for( localIndex er=0; er<elemManager.numRegions(); ++er )
+  for( localIndex er = 0; er < elemManager.numRegions(); ++er )
   {
     ElementRegionBase & elemRegion = elemManager.getRegion( er );
     for( localIndex esr = 0; esr < elemRegion.numSubRegions(); ++esr )
@@ -406,9 +406,9 @@ void FilterNewObjectsForPackToGhosts( std::set< localIndex > const & objectList,
   for( auto const index : objectList )
   {
     localIndex const parentIndex = parentIndices[index];
-    for( localIndex a=0; a<ghostsToSend.size(); ++a )
+    for( localIndex a = 0; a < ghostsToSend.size(); ++a )
     {
-      if( ghostsToSend[a]==parentIndex )
+      if( ghostsToSend[a] == parentIndex )
       {
         objectsToSend.emplace_back( index );
         ghostsToSend.emplace_back( index );
@@ -423,7 +423,7 @@ void FilterModObjectsForPackToGhosts( std::set< localIndex > const & objectList,
                                       localIndex_array & objectsToSend )
 {
   ghostsToSend.move( hostMemorySpace );
-  for( localIndex a=0; a<ghostsToSend.size(); ++a )
+  for( localIndex a = 0; a < ghostsToSend.size(); ++a )
   {
     if( objectList.count( ghostsToSend[a] ) > 0 )
     {
@@ -481,7 +481,7 @@ void packNewModifiedObjectsToGhosts( NeighborCommunicator * const neighbor,
   newElemsToSend.resize( elemManager.numRegions() );
   modElemsToSendData.resize( elemManager.numRegions() );
   modElemsToSend.resize( elemManager.numRegions() );
-  for( localIndex er=0; er<elemManager.numRegions(); ++er )
+  for( localIndex er = 0; er < elemManager.numRegions(); ++er )
   {
     ElementRegionBase & elemRegion = elemManager.getRegion( er );
     newElemsToSendData[er].resize( elemRegion.numSubRegions() );
@@ -630,14 +630,14 @@ void unpackNewModToGhosts( NeighborCommunicator * const neighbor,
   newGhostElemsData.resize( elemManager.numRegions() );
   modGhostElems.resize( elemManager.numRegions() );
   modGhostElemsData.resize( elemManager.numRegions() );
-  for( localIndex er=0; er<elemManager.numRegions(); ++er )
+  for( localIndex er = 0; er < elemManager.numRegions(); ++er )
   {
     ElementRegionBase & elemRegion = elemManager.getRegion( er );
     newGhostElemsData[er].resize( elemRegion.numSubRegions() );
     newGhostElems[er].resize( elemRegion.numSubRegions() );
     modGhostElemsData[er].resize( elemRegion.numSubRegions() );
     modGhostElems[er].resize( elemRegion.numSubRegions() );
-    for( localIndex esr=0; esr<elemRegion.numSubRegions(); ++esr )
+    for( localIndex esr = 0; esr < elemRegion.numSubRegions(); ++esr )
     {
       newGhostElems[er][esr].set( newGhostElemsData[er][esr] );
       modGhostElems[er][esr].set( modGhostElemsData[er][esr] );
@@ -680,7 +680,7 @@ void unpackNewModToGhosts( NeighborCommunicator * const neighbor,
   if( newGhostNodes.size() > 0 )
   {
     nodeGhostsToRecv.move( hostMemorySpace );
-    for( localIndex a=0; a<newGhostNodes.size(); ++a )
+    for( localIndex a = 0; a < newGhostNodes.size(); ++a )
     {
       nodeGhostsToRecv.emplace_back( newGhostNodes[a] );
     }
@@ -689,7 +689,7 @@ void unpackNewModToGhosts( NeighborCommunicator * const neighbor,
   if( newGhostEdges.size() > 0 )
   {
     edgeGhostsToRecv.move( hostMemorySpace );
-    for( localIndex a=0; a<newGhostEdges.size(); ++a )
+    for( localIndex a = 0; a < newGhostEdges.size(); ++a )
     {
       edgeGhostsToRecv.emplace_back( newGhostEdges[a] );
     }
@@ -698,7 +698,7 @@ void unpackNewModToGhosts( NeighborCommunicator * const neighbor,
   if( newGhostFaces.size() > 0 )
   {
     faceGhostsToRecv.move( hostMemorySpace );
-    for( localIndex a=0; a<newGhostFaces.size(); ++a )
+    for( localIndex a = 0; a < newGhostFaces.size(); ++a )
     {
       faceGhostsToRecv.emplace_back( newGhostFaces[a] );
     }
@@ -716,12 +716,12 @@ void unpackNewModToGhosts( NeighborCommunicator * const neighbor,
       for( localIndex const & newElemIndex : newGhostElemsData[er][esr] )
       {
         elemGhostsToReceive.emplace_back( newElemIndex );
-        receivedObjects.newElements[ { er, esr } ].insert( newElemIndex );
+        receivedObjects.newElements[{ er, esr }].insert( newElemIndex );
       }
     }
 
-    receivedObjects.modifiedElements[ { er, esr } ].insert( modGhostElemsData[er][esr].begin(),
-                                                            modGhostElemsData[er][esr].end() );
+    receivedObjects.modifiedElements[{ er, esr }].insert( modGhostElemsData[er][esr].begin(),
+                                                          modGhostElemsData[er][esr].end() );
   } );
 
   receivedObjects.newNodes.insert( newGhostNodes.begin(), newGhostNodes.end() );
@@ -745,12 +745,12 @@ void updateConnectorsToFaceElems( std::set< localIndex > const & newFaceElements
   for( localIndex const & kfe : newFaceElements )
   {
     arraySlice1d< localIndex const > const faceToEdges = facesToEdges[kfe];
-    for( localIndex ke=0; ke<faceToEdges.size(); ++ke )
+    for( localIndex ke = 0; ke < faceToEdges.size(); ++ke )
     {
       localIndex const edgeIndex = faceToEdges[ke];
 
       auto connIter = edgesToConnectorEdges.find( edgeIndex );
-      if( connIter==edgesToConnectorEdges.end() )
+      if( connIter == edgesToConnectorEdges.end() )
       {
         connectorToElem.appendArray( 0 );
         connectorEdgesToEdges.emplace_back( edgeIndex );
@@ -760,7 +760,7 @@ void updateConnectorsToFaceElems( std::set< localIndex > const & newFaceElements
 
       localIndex const numExistingCells = connectorToElem.sizeOfArray( connectorIndex );
       bool cellExistsInMap = false;
-      for( localIndex k=0; k<numExistingCells; ++k )
+      for( localIndex k = 0; k < numExistingCells; ++k )
       {
         if( kfe == connectorToElem[connectorIndex][k] )
         {
@@ -769,8 +769,8 @@ void updateConnectorsToFaceElems( std::set< localIndex > const & newFaceElements
       }
       if( !cellExistsInMap )
       {
-        connectorToElem.resizeArray( connectorIndex, numExistingCells+1 );
-        connectorToElem[connectorIndex][ numExistingCells ] = kfe;
+        connectorToElem.resizeArray( connectorIndex, numExistingCells + 1 );
+        connectorToElem[connectorIndex][numExistingCells] = kfe;
         faceElemSubRegion.m_recalculateConnectionsFor2dFaces.insert( connectorIndex );
       }
     }
@@ -800,7 +800,7 @@ void parallelTopologyChange::synchronizeTopologyChange( MeshLevel * const mesh,
   // pack the buffers, and send the size of the buffers
   MPI_iCommData commData( CommunicationTools::getInstance().getCommID() );
   commData.resize( neighbors.size() );
-  for( unsigned int neighborIndex=0; neighborIndex<neighbors.size(); ++neighborIndex )
+  for( unsigned int neighborIndex = 0; neighborIndex < neighbors.size(); ++neighborIndex )
   {
     NeighborCommunicator & neighbor = neighbors[neighborIndex];
 
@@ -817,7 +817,7 @@ void parallelTopologyChange::synchronizeTopologyChange( MeshLevel * const mesh,
   }
 
   // send/recv the buffers
-  for( unsigned int count=0; count<neighbors.size(); ++count )
+  for( unsigned int count = 0; count < neighbors.size(); ++count )
   {
     int neighborIndex;
     MpiWrapper::waitAny( commData.size(),
@@ -834,7 +834,7 @@ void parallelTopologyChange::synchronizeTopologyChange( MeshLevel * const mesh,
   }
 
   // unpack the buffers and get lists of the new objects.
-  for( unsigned int count=0; count<neighbors.size(); ++count )
+  for( unsigned int count = 0; count < neighbors.size(); ++count )
   {
 
     int neighborIndex = count;
@@ -892,7 +892,7 @@ void parallelTopologyChange::synchronizeTopologyChange( MeshLevel * const mesh,
 
   MPI_iCommData commData2( CommunicationTools::getInstance().getCommID() );
   commData2.resize( neighbors.size());
-  for( unsigned int neighborIndex=0; neighborIndex<neighbors.size(); ++neighborIndex )
+  for( unsigned int neighborIndex = 0; neighborIndex < neighbors.size(); ++neighborIndex )
   {
     NeighborCommunicator & neighbor = neighbors[neighborIndex];
 
@@ -908,7 +908,7 @@ void parallelTopologyChange::synchronizeTopologyChange( MeshLevel * const mesh,
 
   }
 
-  for( unsigned int count=0; count<neighbors.size(); ++count )
+  for( unsigned int count = 0; count < neighbors.size(); ++count )
   {
     int neighborIndex;
     MpiWrapper::waitAny( commData2.size(),
@@ -925,7 +925,7 @@ void parallelTopologyChange::synchronizeTopologyChange( MeshLevel * const mesh,
   }
 
 
-  for( unsigned int count=0; count<neighbors.size(); ++count )
+  for( unsigned int count = 0; count < neighbors.size(); ++count )
   {
 
     int neighborIndex = count;

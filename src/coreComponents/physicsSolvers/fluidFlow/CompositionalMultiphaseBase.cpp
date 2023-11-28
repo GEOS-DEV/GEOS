@@ -993,7 +993,7 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium()
       localIndex const numPointsInTable = ( elevationIncrement > 0 ) ? std::ceil( (maxElevation - minElevation) / elevationIncrement ) + 1 : 1;
 
       real64 const eps = 0.1 * (maxElevation - minElevation); // we add a small buffer to only log in the pathological cases
-      GEOS_LOG_RANK_0_IF( ( (datumElevation > globalMaxElevation[equilIndex]+eps)  || (datumElevation < globalMinElevation[equilIndex]-eps) ),
+      GEOS_LOG_RANK_0_IF( ( (datumElevation > globalMaxElevation[equilIndex] + eps) || (datumElevation < globalMinElevation[equilIndex] - eps) ),
                           CompositionalMultiphaseBase::catalogName() << " " << getDataContext() <<
                           ": By looking at the elevation of the cell centers in this model, GEOS found that " <<
                           "the min elevation is " << globalMinElevation[equilIndex] << " and the max elevation is " <<
@@ -1086,7 +1086,7 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium()
                                                elevationValues.toNestedView(),
                                                pressureValues.toView() );
 
-        GEOS_THROW_IF( returnValue ==  isothermalCompositionalMultiphaseBaseKernels::HydrostaticPressureKernel::ReturnType::FAILED_TO_CONVERGE,
+        GEOS_THROW_IF( returnValue == isothermalCompositionalMultiphaseBaseKernels::HydrostaticPressureKernel::ReturnType::FAILED_TO_CONVERGE,
                        CompositionalMultiphaseBase::catalogName() << " " << getDataContext() <<
                        ": hydrostatic pressure initialization failed to converge in region " << region.getName() << "! \n" <<
                        "Try to loosen the equilibration tolerance, or increase the number of equilibration iterations. \n" <<
@@ -1444,7 +1444,7 @@ void CompositionalMultiphaseBase::applySourceFluxBC( real64 const time,
       {
         globalIndex const numTargetElems = MpiWrapper::sum< globalIndex >( targetSet.size() );
         GEOS_LOG_RANK_0( GEOS_FMT( bcLogMessage,
-                                   getName(), time+dt, SourceFluxBoundaryCondition::catalogName(),
+                                   getName(), time + dt, SourceFluxBoundaryCondition::catalogName(),
                                    fs.getName(), setName, subRegion.getName(), fs.getScale(), numTargetElems ) );
       }
 
@@ -2022,7 +2022,7 @@ real64 CompositionalMultiphaseBase::setNextDtBasedOnStateChange( real64 const & 
   maxAbsolutePhaseVolFracChange = MpiWrapper::max( maxAbsolutePhaseVolFracChange );
 
   GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "{}: Max relative pressure change during time step: {} %",
-                                      getName(), fmt::format( "{:.{}f}", 100*maxRelativePresChange, 3 ) ) );
+                                      getName(), fmt::format( "{:.{}f}", 100 * maxRelativePresChange, 3 ) ) );
   GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "{}: Max absolute phase volume fraction change during time step: {}",
                                       getName(), fmt::format( "{:.{}f}", maxAbsolutePhaseVolFracChange, 3 ) ) );
 
@@ -2030,14 +2030,14 @@ real64 CompositionalMultiphaseBase::setNextDtBasedOnStateChange( real64 const & 
   {
     maxRelativeTempChange = MpiWrapper::max( maxRelativeTempChange );
     GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "{}: Max relative temperature change during time step: {} %",
-                                        getName(), fmt::format( "{:.{}f}", 100*maxRelativeTempChange, 3 ) ) );
+                                        getName(), fmt::format( "{:.{}f}", 100 * maxRelativeTempChange, 3 ) ) );
   }
 
   real64 const eps = LvArray::NumericLimits< real64 >::epsilon;
 
-  real64 const nextDtPressure = currentDt *  ( 1.0 + m_solutionChangeScalingFactor ) * m_targetRelativePresChange
+  real64 const nextDtPressure = currentDt * ( 1.0 + m_solutionChangeScalingFactor ) * m_targetRelativePresChange
                                 / std::max( eps, maxRelativePresChange + m_solutionChangeScalingFactor * m_targetRelativePresChange );
-  real64 const nextDtPhaseVolFrac = currentDt *  ( 1.0 + m_solutionChangeScalingFactor ) * m_targetPhaseVolFracChange
+  real64 const nextDtPhaseVolFrac = currentDt * ( 1.0 + m_solutionChangeScalingFactor ) * m_targetPhaseVolFracChange
                                     / std::max( eps, maxAbsolutePhaseVolFracChange + m_solutionChangeScalingFactor * m_targetPhaseVolFracChange );
   real64 const nextDtTemperature = m_isThermal
     ? currentDt * ( 1.0 + m_solutionChangeScalingFactor ) * m_targetRelativeTempChange

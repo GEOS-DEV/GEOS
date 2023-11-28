@@ -72,7 +72,7 @@ public:
    * @brief Initializes silo for input/output
    * @param numGroups number of individual Silo files to generate
    */
-  void initialize( int const numGroups=1 );
+  void initialize( int const numGroups = 1 );
 
   /**
    * @brief finishes/closes up the silo interface

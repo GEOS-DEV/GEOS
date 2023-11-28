@@ -58,11 +58,11 @@ void testKernelDriver()
                     [=] GEOS_HOST_DEVICE ( localIndex const )
   {
 
-    for( localIndex q=0; q<numQuadraturePoints; ++q )
+    for( localIndex q = 0; q < numQuadraturePoints; ++q )
     {
       real64 N[numNodes] = {0};
       H1_Pyramid_Lagrange1_Gauss5::calcN( q, N );
-      for( localIndex a=0; a<numNodes; ++a )
+      for( localIndex a = 0; a < numNodes; ++a )
       {
         viewN( q, a ) = N[a];
       }
@@ -73,7 +73,7 @@ void testKernelDriver()
                     [=] GEOS_HOST_DEVICE ( localIndex const )
   {
 
-    for( localIndex q=0; q<numQuadraturePoints; ++q )
+    for( localIndex q = 0; q < numQuadraturePoints; ++q )
     {
       real64 dNdX[numNodes][3] = {{0}};
       viewDetJ[q] = H1_Pyramid_Lagrange1_Gauss5::calcGradN( q,
@@ -81,7 +81,7 @@ void testKernelDriver()
                                                             dNdX );
 
 
-      for( localIndex a=0; a<numNodes; ++a )
+      for( localIndex a = 0; a < numNodes; ++a )
       {
         for( int i = 0; i < 3; ++i )
         {
@@ -101,32 +101,32 @@ void testKernelDriver()
   forAll< serialPolicy >( 1,
                           [=] ( localIndex const )
   {
-    for( localIndex q=0; q<numQuadraturePoints; ++q )
+    for( localIndex q = 0; q < numQuadraturePoints; ++q )
     {
       real64 const xi[3] = { quadratureCrossSectionCoord *parentCoords[0][q],
-                             quadratureCrossSectionCoord*parentCoords[1][q],
-                             quadratureLongitudinalCoordNeg + quadratureLongitudinalCoordDelta*0.5*( 1 + parentCoords[2][q] ) };
+                             quadratureCrossSectionCoord * parentCoords[1][q],
+                             quadratureLongitudinalCoordNeg + quadratureLongitudinalCoordDelta * 0.5 * ( 1 + parentCoords[2][q] ) };
 
-      for( localIndex a=0; a<numNodes-1; ++a )
+      for( localIndex a = 0; a < numNodes - 1; ++a )
       {
-        real64 N = 0.125 * ( 1 + xi[ 0 ]*parentCoords[ 0 ][ a ] ) *
-                   ( 1 + xi[ 1 ]*parentCoords[ 1 ][ a ] ) *
-                   ( 1 + xi[ 2 ]*parentCoords[ 2 ][ a ] );
+        real64 N = 0.125 * ( 1 + xi[0] * parentCoords[0][a] ) *
+                   ( 1 + xi[1] * parentCoords[1][a] ) *
+                   ( 1 + xi[2] * parentCoords[2][a] );
         EXPECT_FLOAT_EQ( N, viewN[q][a] );
       }
 
       {
-        real64 N = 0.5 * ( 1 + xi[ 2 ]*parentCoords[ 2 ][ numNodes - 1 ] );
-        EXPECT_FLOAT_EQ( N, viewN[q][ numNodes - 1 ] );
+        real64 N = 0.5 * ( 1 + xi[2] * parentCoords[2][numNodes - 1] );
+        EXPECT_FLOAT_EQ( N, viewN[q][numNodes - 1] );
       }
 
       real64 J[3][3] = {{0}};
-      for( localIndex a=0; a<numNodes; ++a )
+      for( localIndex a = 0; a < numNodes; ++a )
       {
-        real64 dNdXi[3] = { 0.5*( 1.0 -  parentCoords[ 2 ][ a ] ) * ( 0.125 * parentCoords[ 0 ][ a ] * ( 1 + xi[ 1 ] * parentCoords[ 1 ][ a ] ) * ( 1 + xi[ 2 ] * parentCoords[ 2 ][ a ] ) ),
-                            0.5*( 1.0 -  parentCoords[ 2 ][ a ] ) * ( 0.125 * ( 1 + xi[ 0 ] * parentCoords[ 0 ][ a ] ) * parentCoords[ 1 ][ a ] * ( 1 + xi[ 2 ] * parentCoords[ 2 ][ a ] ) ),
-                            0.5*( 1.0 -  parentCoords[ 2 ][ a ] ) * ( 0.125 * ( 1 + xi[ 0 ] * parentCoords[ 0 ][ a ] ) * ( 1 + xi[ 1 ] * parentCoords[ 1 ][ a ] ) * parentCoords[ 2 ][ a ] ) +
-                            0.5*( 1.0 +  parentCoords[ 2 ][ a ] ) * ( 0.5 * parentCoords[ 2 ][ a ] ) };
+        real64 dNdXi[3] = { 0.5 * ( 1.0 - parentCoords[2][a] ) * ( 0.125 * parentCoords[0][a] * ( 1 + xi[1] * parentCoords[1][a] ) * ( 1 + xi[2] * parentCoords[2][a] ) ),
+                            0.5 * ( 1.0 - parentCoords[2][a] ) * ( 0.125 * ( 1 + xi[0] * parentCoords[0][a] ) * parentCoords[1][a] * ( 1 + xi[2] * parentCoords[2][a] ) ),
+                            0.5 * ( 1.0 - parentCoords[2][a] ) * ( 0.125 * ( 1 + xi[0] * parentCoords[0][a] ) * ( 1 + xi[1] * parentCoords[1][a] ) * parentCoords[2][a] ) +
+                            0.5 * ( 1.0 + parentCoords[2][a] ) * ( 0.5 * parentCoords[2][a] ) };
 
         for( int i = 0; i < 3; ++i )
         {
@@ -137,15 +137,15 @@ void testKernelDriver()
         }
       }
       real64 const detJ = LvArray::tensorOps::invert< 3 >( J );
-      EXPECT_FLOAT_EQ( detJ*( weight + 0.25 * ( q & 4 ) * weightDelta ), viewDetJ[q] );
+      EXPECT_FLOAT_EQ( detJ * ( weight + 0.25 * ( q & 4 ) * weightDelta ), viewDetJ[q] );
 
-      for( localIndex a=0; a<numNodes; ++a )
+      for( localIndex a = 0; a < numNodes; ++a )
       {
         real64 dNdX[3] = {0};
-        real64 dNdXi[3] = { 0.5*( 1.0 -  parentCoords[ 2 ][ a ] ) * ( 0.125 * parentCoords[ 0 ][ a ] * ( 1 + xi[ 1 ] * parentCoords[ 1 ][ a ] ) * ( 1 + xi[ 2 ] * parentCoords[ 2 ][ a ] ) ),
-                            0.5*( 1.0 -  parentCoords[ 2 ][ a ] ) * ( 0.125 * ( 1 + xi[ 0 ] * parentCoords[ 0 ][ a ] ) * parentCoords[ 1 ][ a ] * ( 1 + xi[ 2 ] * parentCoords[ 2 ][ a ] ) ),
-                            0.5*( 1.0 -  parentCoords[ 2 ][ a ] ) * ( 0.125 * ( 1 + xi[ 0 ] * parentCoords[ 0 ][ a ] ) * ( 1 + xi[ 1 ] * parentCoords[ 1 ][ a ] ) * parentCoords[ 2 ][ a ] ) +
-                            0.5*( 1.0 +  parentCoords[ 2 ][ a ] ) * ( 0.5 * parentCoords[ 2 ][ a ] ) };
+        real64 dNdXi[3] = { 0.5 * ( 1.0 - parentCoords[2][a] ) * ( 0.125 * parentCoords[0][a] * ( 1 + xi[1] * parentCoords[1][a] ) * ( 1 + xi[2] * parentCoords[2][a] ) ),
+                            0.5 * ( 1.0 - parentCoords[2][a] ) * ( 0.125 * ( 1 + xi[0] * parentCoords[0][a] ) * parentCoords[1][a] * ( 1 + xi[2] * parentCoords[2][a] ) ),
+                            0.5 * ( 1.0 - parentCoords[2][a] ) * ( 0.125 * ( 1 + xi[0] * parentCoords[0][a] ) * ( 1 + xi[1] * parentCoords[1][a] ) * parentCoords[2][a] ) +
+                            0.5 * ( 1.0 + parentCoords[2][a] ) * ( 0.5 * parentCoords[2][a] ) };
 
         for( int i = 0; i < 3; ++i )
         {

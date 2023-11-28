@@ -155,9 +155,9 @@ struct FluxKernel
              real64 const ( &dCompFlux_dRate )[NC],
              real64 const ( &dCompFlux_dPresUp )[NC],
              real64 const ( &dCompFlux_dCompDensUp )[NC][NC],
-             real64 ( &localFlux )[2*NC],
-             real64 ( &localFluxJacobian_dRate )[2*NC][1],
-             real64 ( &localFluxJacobian_dPresCompUp )[2*NC][NC + 1] );
+             real64 ( &localFlux )[2 * NC],
+             real64 ( &localFluxJacobian_dRate )[2 * NC][1],
+             real64 ( &localFluxJacobian_dPresCompUp )[2 * NC][NC + 1] );
 
   template< integer NC >
   static void
@@ -200,7 +200,7 @@ struct PressureRelationKernel
              arraySlice1d< real64 const, compflow::USD_FLUID_DC - 1 > const & dTotalMassDens_dCompDens,
              arraySlice1d< real64 const, compflow::USD_FLUID_DC - 1 > const & dTotalMassDens_dCompDensNext,
              real64 & localPresRel,
-             real64 ( &localPresRelJacobian )[2*(NC+1)] );
+             real64 ( &localPresRelJacobian )[2 * (NC + 1)] );
 
   template< integer NC >
   static void
@@ -398,7 +398,7 @@ struct VolumeBalanceKernel
              arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseVolFrac,
              arraySlice2d< real64 const, compflow::USD_PHASE_DC - 1 > const & dPhaseVolFrac,
              real64 & localVolBalance,
-             real64 ( &localVolBalanceJacobian )[NC+1] );
+             real64 ( &localVolBalanceJacobian )[NC + 1] );
 
   template< integer NC >
   static void
@@ -573,7 +573,7 @@ public:
       applyChainRule( numComp, dCompFrac_dCompDens, dPhaseMassDens[ip], dMassDens_dC, Deriv::dC );
       for( integer ic = 0; ic < numComp; ++ic )
       {
-        dTotalMassDens_dCompDens[ic] += dPhaseVolFrac[ip][Deriv::dC+ic] * phaseMassDens[ip]
+        dTotalMassDens_dCompDens[ic] += dPhaseVolFrac[ip][Deriv::dC + ic] * phaseMassDens[ip]
                                         + phaseVolFrac[ip] * dMassDens_dC[ic];
       }
 

@@ -129,13 +129,13 @@ quadraturePointKernel( localIndex const k,
 
     // assemble KwTmLocal
     LvArray::tensorOps::fill< 3 >( KwTm_gauss, 0 );
-    for( int i=0; i < 3; ++i )
+    for( int i = 0; i < 3; ++i )
     {
       KwTm_gauss[0] += eqMatrix[0][i];
       KwTm_gauss[1] += eqMatrix[1][i];
       KwTm_gauss[2] += eqMatrix[2][i];
     }
-    LvArray::tensorOps::scaledAdd< 3 >( stack.localKwTm, KwTm_gauss, 3*detJ*thermalExpansionCoefficient );
+    LvArray::tensorOps::scaledAdd< 3 >( stack.localKwTm, KwTm_gauss, 3 * detJ * thermalExpansionCoefficient );
   } );
 
 }
@@ -154,12 +154,12 @@ complete( localIndex const k,
 
   // add pore pressure contribution
   real64 localJumpResidual_tempContribution[3]{};
-  LvArray::tensorOps::scaledAdd< 3 >( localJumpResidual_tempContribution, stack.localKwTm, m_matrixTemperature[ k ] );
+  LvArray::tensorOps::scaledAdd< 3 >( localJumpResidual_tempContribution, stack.localKwTm, m_matrixTemperature[k] );
 
   globalIndex const matrixTemperatureColIndex = m_matrixPresDofNumber[k] + 1;
-  for( localIndex i=0; i < 3; ++i )
+  for( localIndex i = 0; i < 3; ++i )
   {
-    localIndex const dof = LvArray::integerConversion< localIndex >( stack.jumpEqnRowIndices[ i ] );
+    localIndex const dof = LvArray::integerConversion< localIndex >( stack.jumpEqnRowIndices[i] );
 
     if( dof < 0 || dof >= m_matrix.numRows() )
       continue;
@@ -182,13 +182,13 @@ complete( localIndex const k,
   stack.dFluidMassIncrement_dTemperature =  m_dFluidDensity_dTemperature( embSurfIndex, 0 ) * volume;
 
   stack.energyIncrement               = fluidEnergy - fluidEnergy_n;
-  stack.dEnergyIncrement_dJump        = m_fluidDensity( embSurfIndex, 0 ) * m_fluidInternalEnergy( embSurfIndex, 0 ) * m_surfaceArea[ embSurfIndex ];
+  stack.dEnergyIncrement_dJump        = m_fluidDensity( embSurfIndex, 0 ) * m_fluidInternalEnergy( embSurfIndex, 0 ) * m_surfaceArea[embSurfIndex];
   stack.dEnergyIncrement_dPressure    = m_dFluidDensity_dPressure( embSurfIndex, 0 ) * m_fluidInternalEnergy( embSurfIndex, 0 ) * volume;
   stack.dEnergyIncrement_dTemperature = ( m_dFluidDensity_dTemperature( embSurfIndex, 0 ) * m_fluidInternalEnergy( embSurfIndex, 0 ) +
                                           m_fluidDensity( embSurfIndex, 0 ) * m_dFluidInternalEnergy_dTemperature( embSurfIndex, 0 )  ) * volume;
 
-  globalIndex const fracturePressureDof        = m_fracturePresDofNumber[ embSurfIndex ];
-  globalIndex const fractureTemperatureDof     = m_fracturePresDofNumber[ embSurfIndex ] + 1;
+  globalIndex const fracturePressureDof        = m_fracturePresDofNumber[embSurfIndex];
+  globalIndex const fractureTemperatureDof     = m_fracturePresDofNumber[embSurfIndex] + 1;
   localIndex const massBalanceEquationIndex   = fracturePressureDof - m_dofRankOffset;
   localIndex const energyBalanceEquationIndex = massBalanceEquationIndex + 1;
 
@@ -219,7 +219,7 @@ complete( localIndex const k,
                                                                             &stack.dEnergyIncrement_dTemperature,
                                                                             1 );
 
-    RAJA::atomicAdd< serialAtomic >( &m_rhs[ energyBalanceEquationIndex ], stack.energyIncrement );
+    RAJA::atomicAdd< serialAtomic >( &m_rhs[energyBalanceEquationIndex], stack.energyIncrement );
   }
 
   return maxForce;

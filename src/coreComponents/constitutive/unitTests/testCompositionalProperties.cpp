@@ -91,7 +91,7 @@ public:
     real64 const dp = 1.0e-4 * pressure;
     internal::testNumericalDerivative(
       pressure, dp, dMolarDensity_dp,
-      [this, & t=temperature, & zmf=composition]( real64 const p ) -> real64 {
+      [this, & t = temperature, & zmf = composition]( real64 const p ) -> real64 {
       return computeMolarDensity( p, t, zmf );
     } );
 
@@ -99,7 +99,7 @@ public:
     real64 const dT = 1.0e-6 * temperature;
     internal::testNumericalDerivative(
       temperature, dT, dMolarDensity_dt,
-      [this, & p=pressure, & zmf=composition]( real64 const t ) -> real64 {
+      [this, & p = pressure, & zmf = composition]( real64 const t ) -> real64 {
       return computeMolarDensity( p, t, zmf );
     } );
 
@@ -109,7 +109,7 @@ public:
     {
       internal::testNumericalDerivative(
         0.0, dz, dMolarDensity_dz[ic],
-        [this, & p=pressure, & t=temperature, zmf=composition, ic]( real64 const z ) -> real64 {
+        [this, & p = pressure, & t = temperature, zmf = composition, ic]( real64 const z ) -> real64 {
         zmf[ic] += z;
         real64 const density = computeMolarDensity( p, t, zmf );
         zmf[ic] -= z;
@@ -154,7 +154,7 @@ public:
     real64 const dp = 1.0e-4 * pressure;
     internal::testNumericalDerivative(
       pressure, dp, dMassDensity_dp,
-      [this, & t=temperature, & zmf=composition]( real64 const p ) -> real64 {
+      [this, & t = temperature, & zmf = composition]( real64 const p ) -> real64 {
       return computeMassDensity( p, t, zmf );
     } );
 
@@ -162,7 +162,7 @@ public:
     real64 const dT = 1.0e-6 * temperature;
     internal::testNumericalDerivative(
       temperature, dT, dMassDensity_dt,
-      [this, & p=pressure, & zmf=composition]( real64 const t ) -> real64 {
+      [this, & p = pressure, & zmf = composition]( real64 const t ) -> real64 {
       return computeMassDensity( p, t, zmf );
     } );
 
@@ -172,7 +172,7 @@ public:
     {
       internal::testNumericalDerivative(
         0.0, dz, dMassDensity_dz[ic],
-        [this, & p=pressure, & t=temperature, & zmf=composition, ic]( real64 const z ) -> real64 {
+        [this, & p = pressure, & t = temperature, & zmf = composition, ic]( real64 const z ) -> real64 {
         zmf[ic] += z;
         real64 const density = computeMassDensity( p, t, zmf );
         zmf[ic] -= z;

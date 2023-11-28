@@ -138,10 +138,10 @@ public:
     for( integer i = 0; i < stack.stencilSize; ++i )
     {
       localIndex localDofIndex = numDof * i;
-      stack.dofColIndices[ localDofIndex ]     = m_dofNumber[m_seri( iconn, i )][m_sesri( iconn, i )][m_sei( iconn, i )];
-      stack.dofColIndices[ localDofIndex + 1 ] = m_dispJumpDofNumber[m_seri( iconn, i )][m_sesri( iconn, i )][m_sei( iconn, i )];
-      stack.dofColIndices[ localDofIndex + 2 ] = m_dispJumpDofNumber[m_seri( iconn, i )][m_sesri( iconn, i )][m_sei( iconn, i )] + 1;
-      stack.dofColIndices[ localDofIndex + 3 ] = m_dispJumpDofNumber[m_seri( iconn, i )][m_sesri( iconn, i )][m_sei( iconn, i )] + 2;
+      stack.dofColIndices[localDofIndex]     = m_dofNumber[m_seri( iconn, i )][m_sesri( iconn, i )][m_sei( iconn, i )];
+      stack.dofColIndices[localDofIndex + 1] = m_dispJumpDofNumber[m_seri( iconn, i )][m_sesri( iconn, i )][m_sei( iconn, i )];
+      stack.dofColIndices[localDofIndex + 2] = m_dispJumpDofNumber[m_seri( iconn, i )][m_sesri( iconn, i )][m_sei( iconn, i )] + 1;
+      stack.dofColIndices[localDofIndex + 3] = m_dispJumpDofNumber[m_seri( iconn, i )][m_sesri( iconn, i )][m_sei( iconn, i )] + 2;
     }
   }
 
@@ -205,24 +205,24 @@ public:
     stack.localFlux[1] = -m_dt * fluxVal;
 
     real64 dFlux_dDispJump[2][3] = {{0.0, 0.0, 0.0}, {0.0, 0.0, 0.0}};
-    for( localIndex i=0; i < 3; i++ )
+    for( localIndex i = 0; i < 3; i++ )
     {
       dFlux_dDispJump[0][i] =   dFlux_dTrans * stack.dTrans_dDispJump[0][0][i];
       dFlux_dDispJump[1][i] = -dFlux_dTrans * stack.dTrans_dDispJump[0][1][i];
     }
     for( localIndex ke = 0; ke < 2; ++ke )
     {
-      localIndex const dofIndex = numDof*ke;
+      localIndex const dofIndex = numDof * ke;
 
       stack.localFluxJacobian[0][dofIndex]   =  m_dt * dFlux_dP[ke];
-      stack.localFluxJacobian[0][dofIndex+1] =  m_dt * dFlux_dDispJump[ke][0];
-      stack.localFluxJacobian[0][dofIndex+2] =  m_dt * dFlux_dDispJump[ke][1];
-      stack.localFluxJacobian[0][dofIndex+3] =  m_dt * dFlux_dDispJump[ke][2];
+      stack.localFluxJacobian[0][dofIndex + 1] =  m_dt * dFlux_dDispJump[ke][0];
+      stack.localFluxJacobian[0][dofIndex + 2] =  m_dt * dFlux_dDispJump[ke][1];
+      stack.localFluxJacobian[0][dofIndex + 3] =  m_dt * dFlux_dDispJump[ke][2];
 
       stack.localFluxJacobian[1][dofIndex]   = -m_dt * dFlux_dP[ke];
-      stack.localFluxJacobian[1][dofIndex+1] = -m_dt * dFlux_dDispJump[ke][0];
-      stack.localFluxJacobian[1][dofIndex+2] = -m_dt * dFlux_dDispJump[ke][1];
-      stack.localFluxJacobian[1][dofIndex+3] = -m_dt * dFlux_dDispJump[ke][2];
+      stack.localFluxJacobian[1][dofIndex + 1] = -m_dt * dFlux_dDispJump[ke][0];
+      stack.localFluxJacobian[1][dofIndex + 2] = -m_dt * dFlux_dDispJump[ke][1];
+      stack.localFluxJacobian[1][dofIndex + 3] = -m_dt * dFlux_dDispJump[ke][2];
     }
 
     kernelOp( regionIndex, subRegionIndex, elementIndex, iconn, alpha, mobility, potGrad, fluxVal, dFlux_dTrans, dFlux_dP );

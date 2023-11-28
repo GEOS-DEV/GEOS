@@ -112,7 +112,7 @@ void SolverBase::generateMeshTargetsFromTargetRegions( Group const & meshBodies 
 
     std::vector< string > targetTokens = stringutilities::tokenize( target, "/" );
 
-    if( targetTokens.size()==1 ) // no MeshBody or MeshLevel specified
+    if( targetTokens.size() == 1 ) // no MeshBody or MeshLevel specified
     {
       GEOS_ERROR_IF( meshBodies.numSubGroups() != 1,
                      getDataContext() << ": No MeshBody information is specified in" <<
@@ -126,7 +126,7 @@ void SolverBase::generateMeshTargetsFromTargetRegions( Group const & meshBodies 
       auto const key = std::make_pair( meshBodyName, meshLevelName );
       m_meshTargets[key].emplace_back( regionName );
     }
-    else if( targetTokens.size()==2 )
+    else if( targetTokens.size() == 2 )
     {
       string const meshBodyName = targetTokens[0];
       GEOS_ERROR_IF( !meshBodies.hasGroup( meshBodyName ),
@@ -514,7 +514,7 @@ bool SolverBase::lineSearch( real64 const & time_n,
       rhs.close();
     }
 
-    if( getLogLevel() >= 1 && logger::internal::rank==0 )
+    if( getLogLevel() >= 1 && logger::internal::rank == 0 )
     {
       std::cout << GEOS_FMT( "        Line search @ {:0.3f}:      ", cumulativeScale );
     }
@@ -566,12 +566,12 @@ bool SolverBase::lineSearchWithParabolicInterpolation( real64 const & time_n,
 
   real64 residualNorm0 = lastResidual;
 
-  real64 ff0 = residualNorm0*residualNorm0;
-  real64 ffT = residualNormT*residualNormT;
+  real64 ff0 = residualNorm0 * residualNorm0;
+  real64 ffT = residualNormT * residualNormT;
   real64 ffm = ffT;
   real64 cumulativeScale = scaleFactor;
 
-  while( residualNormT >= (1.0 - alpha*localScaleFactor)*residualNorm0 )
+  while( residualNormT >= (1.0 - alpha * localScaleFactor) * residualNorm0 )
   {
     {
       Timer timer( m_timers["apply solution"] );
@@ -625,7 +625,7 @@ bool SolverBase::lineSearchWithParabolicInterpolation( real64 const & time_n,
       rhs.close();
     }
 
-    if( getLogLevel() >= 1 && logger::internal::rank==0 )
+    if( getLogLevel() >= 1 && logger::internal::rank == 0 )
     {
       std::cout << GEOS_FMT( "        Line search @ {:0.3f}:      ", cumulativeScale );
     }
@@ -638,7 +638,7 @@ bool SolverBase::lineSearchWithParabolicInterpolation( real64 const & time_n,
       GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "        ( R ) = ( {:4.2e} )", residualNormT ) );
     }
     ffm = ffT;
-    ffT = residualNormT*residualNormT;
+    ffT = residualNormT * residualNormT;
     lineSearchIteration += 1;
 
     if( lineSearchIteration > maxNumberLineSearchCuts )
@@ -690,8 +690,8 @@ real64 SolverBase::eisenstatWalker( real64 const newNewtonNorm,
   if( normRatio > 1 )
     normRatio = 1;
 
-  real64 newKrylovTol = gamma*std::pow( normRatio, exponent );
-  real64 altKrylovTol = gamma*std::pow( oldNewtonNorm, exponent );
+  real64 newKrylovTol = gamma * std::pow( normRatio, exponent );
+  real64 altKrylovTol = gamma * std::pow( oldNewtonNorm, exponent );
 
   real64 krylovTol = std::max( newKrylovTol, altKrylovTol );
   krylovTol = std::min( krylovTol, weakestTol );

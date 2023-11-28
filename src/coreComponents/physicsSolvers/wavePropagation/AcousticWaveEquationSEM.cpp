@@ -368,11 +368,11 @@ void AcousticWaveEquationSEM::applyFreeSurfaceBC( real64 time, DomainPartition &
 
       for( localIndex i = 0; i < targetSet.size(); ++i )
       {
-        localIndex const kf = targetSet[ i ];
+        localIndex const kf = targetSet[i];
         freeSurfaceFaceIndicator[kf] = 1;
 
         localIndex const numNodes = faceToNodeMap.sizeOfArray( kf );
-        for( localIndex a=0; a < numNodes; ++a )
+        for( localIndex a = 0; a < numNodes; ++a )
         {
           localIndex const dof = faceToNodeMap( kf, a );
           freeSurfaceNodeIndicator[dof] = 1;
@@ -404,22 +404,22 @@ void AcousticWaveEquationSEM::initializePML()
 
   /// Get the default thicknesses and wave speeds in the PML regions from the PerfectlyMatchedLayer
   /// field specification parameters (from the xml)
-  real32 minThicknessPML=0;
-  real32 smallestXMinPML=0;
-  real32 largestXMaxPML=0;
+  real32 minThicknessPML = 0;
+  real32 smallestXMinPML = 0;
+  real32 largestXMaxPML = 0;
   FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
   fsManager.forSubGroups< PerfectlyMatchedLayer >( [&] ( PerfectlyMatchedLayer const & fs )
   {
-    param.xMinPML=fs.getMin();
-    param.xMaxPML=fs.getMax();
-    param.thicknessMinXYZPML=fs.getThicknessMinXYZ();
-    param.thicknessMaxXYZPML=fs.getThicknessMaxXYZ();
+    param.xMinPML = fs.getMin();
+    param.xMaxPML = fs.getMax();
+    param.thicknessMinXYZPML = fs.getThicknessMinXYZ();
+    param.thicknessMaxXYZPML = fs.getThicknessMaxXYZ();
     param.reflectivityPML = fs.getReflectivity();
-    param.waveSpeedMinXYZPML=fs.getWaveSpeedMinXYZ();
-    param.waveSpeedMaxXYZPML=fs.getWaveSpeedMaxXYZ();
-    minThicknessPML=fs.minThickness;
-    smallestXMinPML=fs.smallestXMin;
-    largestXMaxPML=fs.largestXMax;
+    param.waveSpeedMinXYZPML = fs.getWaveSpeedMinXYZ();
+    param.waveSpeedMaxXYZPML = fs.getWaveSpeedMaxXYZ();
+    minThicknessPML = fs.minThickness;
+    smallestXMinPML = fs.smallestXMin;
+    largestXMaxPML = fs.largestXMax;
   } );
 
   /// Now compute the PML parameters above internally
@@ -464,12 +464,12 @@ void AcousticWaveEquationSEM::initializePML()
 
       forAll< EXEC_POLICY >( targetSet.size(), [=] GEOS_HOST_DEVICE ( localIndex const l )
       {
-        localIndex const k = targetSet[ l ];
+        localIndex const k = targetSet[l];
         localIndex const numNodesPerElem = elemToNodesViewConst[k].size();
 
-        for( localIndex i=0; i<numNodesPerElem; ++i )
+        for( localIndex i = 0; i < numNodesPerElem; ++i )
         {
-          indicatorPML[elemToNodesViewConst[k][i]]=1.0;
+          indicatorPML[elemToNodesViewConst[k][i]] = 1.0;
         }
       } );
     } );
@@ -521,7 +521,7 @@ void AcousticWaveEquationSEM::initializePML()
     xInteriorMax[1] = yMaxInterior.get();
     xInteriorMax[2] = zMaxInterior.get();
 
-    for( integer i=0; i<3; ++i )
+    for( integer i = 0; i < 3; ++i )
     {
       xGlobalMin[i] = MpiWrapper::min( xGlobalMin[i] );
       xGlobalMax[i] = MpiWrapper::max( xGlobalMax[i] );
@@ -532,16 +532,16 @@ void AcousticWaveEquationSEM::initializePML()
 
     /// if the coordinates limits and PML thicknesses are not provided
     /// from the xml, replace them with the above
-    for( integer i=0; i<3; ++i )
+    for( integer i = 0; i < 3; ++i )
     {
-      if( param.xMinPML[i]<smallestXMinPML )
+      if( param.xMinPML[i] < smallestXMinPML )
         param.xMinPML[i] = xInteriorMin[i];
-      if( param.xMaxPML[i]>largestXMaxPML )
+      if( param.xMaxPML[i] > largestXMaxPML )
         param.xMaxPML[i] = xInteriorMax[i];
-      if( param.thicknessMinXYZPML[i]<0 )
-        param.thicknessMinXYZPML[i] = xInteriorMin[i]-xGlobalMin[i];
-      if( param.thicknessMaxXYZPML[i]<0 )
-        param.thicknessMaxXYZPML[i] = xGlobalMax[i]-xInteriorMax[i];
+      if( param.thicknessMinXYZPML[i] < 0 )
+        param.thicknessMinXYZPML[i] = xInteriorMin[i] - xGlobalMin[i];
+      if( param.thicknessMaxXYZPML[i] < 0 )
+        param.thicknessMaxXYZPML[i] = xGlobalMax[i] - xInteriorMax[i];
     }
 
     /// Compute the average wave speeds in the PML regions internally
@@ -587,14 +587,14 @@ void AcousticWaveEquationSEM::initializePML()
       } );
     } );
 
-    for( integer i=0; i<3; ++i )
+    for( integer i = 0; i < 3; ++i )
     {
       cMin[i] = MpiWrapper::sum( cMin[i] );
       cMax[i] = MpiWrapper::sum( cMax[i] );
       counterMin[i] = MpiWrapper::sum( counterMin[i] );
       counterMax[i] = MpiWrapper::sum( counterMax[i] );
     }
-    for( integer i=0; i<3; ++i )
+    for( integer i = 0; i < 3; ++i )
     {
       cMin[i] /= std::max( 1, counterMin[i] );
       cMax[i] /= std::max( 1, counterMax[i] );
@@ -602,26 +602,26 @@ void AcousticWaveEquationSEM::initializePML()
 
     /// if the PML wave speeds are not provided from the xml
     /// replace them with the above
-    for( integer i=0; i<3; ++i )
+    for( integer i = 0; i < 3; ++i )
     {
-      if( param.waveSpeedMinXYZPML[i]<0 )
+      if( param.waveSpeedMinXYZPML[i] < 0 )
         param.waveSpeedMinXYZPML[i] = cMin[i];
-      if( param.waveSpeedMaxXYZPML[i]<0 )
+      if( param.waveSpeedMaxXYZPML[i] < 0 )
         param.waveSpeedMaxXYZPML[i] = cMax[i];
     }
 
     /// add safeguards when PML thickness is negative or too small
-    for( integer i=0; i<3; ++i )
+    for( integer i = 0; i < 3; ++i )
     {
-      if( param.thicknessMinXYZPML[i]<=minThicknessPML )
+      if( param.thicknessMinXYZPML[i] <= minThicknessPML )
       {
-        param.thicknessMinXYZPML[i]=LvArray::NumericLimits< real32 >::max;
-        param.waveSpeedMinXYZPML[i]=0;
+        param.thicknessMinXYZPML[i] = LvArray::NumericLimits< real32 >::max;
+        param.waveSpeedMinXYZPML[i] = 0;
       }
-      if( param.thicknessMaxXYZPML[i]<=minThicknessPML )
+      if( param.thicknessMaxXYZPML[i] <= minThicknessPML )
       {
-        param.thicknessMaxXYZPML[i]=LvArray::NumericLimits< real32 >::max;
-        param.waveSpeedMaxXYZPML[i]=0;
+        param.thicknessMaxXYZPML[i] = LvArray::NumericLimits< real32 >::max;
+        param.waveSpeedMaxXYZPML[i] = 0;
       }
     }
 
@@ -631,13 +631,13 @@ void AcousticWaveEquationSEM::initializePML()
 
     GEOS_LOG_LEVEL_RANK_0( 1,
                            "PML parameters are: \n"
-                           << "\t inner boundaries xMin = "<<param.xMinPML<<"\n"
-                           << "\t inner boundaries xMax = "<<param.xMaxPML<<"\n"
-                           << "\t left, front, top max PML thicknesses  = "<<param.thicknessMinXYZPML<<"\n"
-                           << "\t right, back, bottom max PML thicknesses  = "<<param.thicknessMaxXYZPML<<"\n"
-                           << "\t left, front, top average wave speed  = "<<param.waveSpeedMinXYZPML<<"\n"
-                           << "\t right, back, bottom average wave speed  = "<<param.waveSpeedMaxXYZPML<<"\n"
-                           << "\t theoretical reflectivity = "<< param.reflectivityPML );
+                           << "\t inner boundaries xMin = " << param.xMinPML << "\n"
+                           << "\t inner boundaries xMax = " << param.xMaxPML << "\n"
+                           << "\t left, front, top max PML thicknesses  = " << param.thicknessMinXYZPML << "\n"
+                           << "\t right, back, bottom max PML thicknesses  = " << param.thicknessMaxXYZPML << "\n"
+                           << "\t left, front, top average wave speed  = " << param.waveSpeedMinXYZPML << "\n"
+                           << "\t right, back, bottom average wave speed  = " << param.waveSpeedMaxXYZPML << "\n"
+                           << "\t theoretical reflectivity = " << param.reflectivityPML );
 
   } );
 }
@@ -702,7 +702,7 @@ void AcousticWaveEquationSEM::applyPML( real64 const time, DomainPartition & dom
       real32 dMax[3];
       real32 cMin[3];
       real32 cMax[3];
-      for( integer i=0; i<3; ++i )
+      for( integer i = 0; i < 3; ++i )
       {
         xMin[i] = param.xMinPML[i];
         xMax[i] = param.xMaxPML[i];
@@ -781,7 +781,7 @@ real64 AcousticWaveEquationSEM::explicitStepForward( real64 const & time_n,
       }
       forAll< EXEC_POLICY >( nodeManager.size(), [=] GEOS_HOST_DEVICE ( localIndex const nodeIdx )
       {
-        p_dt2[nodeIdx] = (p_np1[nodeIdx] - 2*p_n[nodeIdx] + p_nm1[nodeIdx])/(dt*dt);
+        p_dt2[nodeIdx] = (p_np1[nodeIdx] - 2 * p_n[nodeIdx] + p_nm1[nodeIdx]) / (dt * dt);
       } );
 
       if( m_enableLifo )
@@ -809,12 +809,12 @@ real64 AcousticWaveEquationSEM::explicitStepForward( real64 const & time_n,
 
         std::ofstream wf( fileName, std::ios::out | std::ios::binary );
         GEOS_THROW_IF( !wf,
-                       getDataContext() << ": Could not open file "<< fileName << " for writing",
+                       getDataContext() << ": Could not open file " << fileName << " for writing",
                        InputError );
-        wf.write( (char *)&p_dt2[0], p_dt2.size()*sizeof( real32 ) );
+        wf.write( (char *)&p_dt2[0], p_dt2.size() * sizeof( real32 ) );
         wf.close( );
         GEOS_THROW_IF( !wf.good(),
-                       getDataContext() << ": An error occured while writing "<< fileName,
+                       getDataContext() << ": An error occured while writing " << fileName,
                        InputError );
       }
 
@@ -853,7 +853,7 @@ real64 AcousticWaveEquationSEM::explicitStepBackward( real64 const & time_n,
 
     EventManager const & event = getGroupByPath< EventManager >( "/Problem/Events" );
     real64 const & maxTime = event.getReference< real64 >( EventManager::viewKeyStruct::maxTimeString() );
-    int const maxCycle = int(round( maxTime/dt ));
+    int const maxCycle = int(round( maxTime / dt ));
 
     if( computeGradient && cycleNumber < maxCycle )
     {
@@ -875,7 +875,7 @@ real64 AcousticWaveEquationSEM::explicitStepBackward( real64 const & time_n,
         std::string fileName = GEOS_FMT( "lifo/rank_{:05}/pressuredt2_{:06}_{:08}.dat", rank, m_shotIndex, cycleNumber );
         std::ifstream wf( fileName, std::ios::in | std::ios::binary );
         GEOS_THROW_IF( !wf,
-                       getDataContext() << ": Could not open file "<< fileName << " for reading",
+                       getDataContext() << ": Could not open file " << fileName << " for reading",
                        InputError );
         //std::string fileName = GEOS_FMT( "pressuredt2_{:06}_{:08}_{:04}.dat", m_shotIndex, cycleNumber, rank );
         //const int fileDesc = open( fileName.c_str(), O_RDONLY | O_DIRECT );
@@ -883,7 +883,7 @@ real64 AcousticWaveEquationSEM::explicitStepBackward( real64 const & time_n,
         //                "Could not open file "<< fileName << " for reading: " << strerror( errno ) );
         // maybe better with registerTouch()
         p_dt2.move( MemorySpace::host, true );
-        wf.read( (char *)&p_dt2[0], p_dt2.size()*sizeof( real32 ) );
+        wf.read( (char *)&p_dt2[0], p_dt2.size() * sizeof( real32 ) );
         wf.close( );
         remove( fileName.c_str() );
       }
@@ -898,12 +898,12 @@ real64 AcousticWaveEquationSEM::explicitStepBackward( real64 const & time_n,
         GEOS_MARK_SCOPE ( updatePartialGradient );
         forAll< EXEC_POLICY >( elementSubRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const eltIdx )
         {
-          if( elemGhostRank[eltIdx]<0 )
+          if( elemGhostRank[eltIdx] < 0 )
           {
             for( localIndex i = 0; i < numNodesPerElem; ++i )
             {
               localIndex nodeIdx = elemsToNodes[eltIdx][i];
-              grad[eltIdx] += (-2/velocity[eltIdx]) * mass[nodeIdx]/8.0 * (p_dt2[nodeIdx] * p_n[nodeIdx]);
+              grad[eltIdx] += (-2 / velocity[eltIdx]) * mass[nodeIdx] / 8.0 * (p_dt2[nodeIdx] * p_n[nodeIdx]);
             }
           }
         } );
@@ -962,12 +962,12 @@ real64 AcousticWaveEquationSEM::explicitStepInternal( real64 const & time_n,
 
     EventManager const & event = getGroupByPath< EventManager >( "/Problem/Events" );
     real64 const & minTime = event.getReference< real64 >( EventManager::viewKeyStruct::minTimeString() );
-    integer const cycleForSource = int(round( -minTime/dt + cycleNumber ));
+    integer const cycleForSource = int(round( -minTime / dt + cycleNumber ));
     //std::cout<<"cycle GEOSX = "<<cycleForSource<<std::endl;
     addSourceToRightHandSide( cycleForSource, rhs );
 
     /// calculate your time integrators
-    real64 const dt2 = dt*dt;
+    real64 const dt2 = dt * dt;
 
     if( !usePML )
     {
@@ -977,10 +977,10 @@ real64 AcousticWaveEquationSEM::explicitStepInternal( real64 const & time_n,
         if( freeSurfaceNodeIndicator[a] != 1 )
         {
           p_np1[a] = p_n[a];
-          p_np1[a] *= 2.0*mass[a];
-          p_np1[a] -= (mass[a]-0.5*dt*damping[a])*p_nm1[a];
-          p_np1[a] += dt2*(rhs[a]-stiffnessVector[a]);
-          p_np1[a] /= mass[a]+0.5*dt*damping[a];
+          p_np1[a] *= 2.0 * mass[a];
+          p_np1[a] -= (mass[a] - 0.5 * dt * damping[a]) * p_nm1[a];
+          p_np1[a] += dt2 * (rhs[a] - stiffnessVector[a]);
+          p_np1[a] /= mass[a] + 0.5 * dt * damping[a];
         }
       } );
     }
@@ -993,12 +993,12 @@ real64 AcousticWaveEquationSEM::explicitStepInternal( real64 const & time_n,
       arrayView1d< real32 > const u_n = nodeManager.getField< fields::AuxiliaryVar4PML >();
       arrayView2d< wsCoordType const, nodes::REFERENCE_POSITION_USD > const X32 = nodeManager.getField< fields::referencePosition32 >().toViewConst();
 
-      real32 const xMin[ 3 ] = {param.xMinPML[0], param.xMinPML[1], param.xMinPML[2]};
-      real32 const xMax[ 3 ] = {param.xMaxPML[0], param.xMaxPML[1], param.xMaxPML[2]};
-      real32 const dMin[ 3 ] = {param.thicknessMinXYZPML[0], param.thicknessMinXYZPML[1], param.thicknessMinXYZPML[2]};
-      real32 const dMax[ 3 ] = {param.thicknessMaxXYZPML[0], param.thicknessMaxXYZPML[1], param.thicknessMaxXYZPML[2]};
-      real32 const cMin[ 3 ] = {param.waveSpeedMinXYZPML[0], param.waveSpeedMinXYZPML[1], param.waveSpeedMinXYZPML[2]};
-      real32 const cMax[ 3 ] = {param.waveSpeedMaxXYZPML[0], param.waveSpeedMaxXYZPML[1], param.waveSpeedMaxXYZPML[2]};
+      real32 const xMin[3] = {param.xMinPML[0], param.xMinPML[1], param.xMinPML[2]};
+      real32 const xMax[3] = {param.xMaxPML[0], param.xMaxPML[1], param.xMaxPML[2]};
+      real32 const dMin[3] = {param.thicknessMinXYZPML[0], param.thicknessMinXYZPML[1], param.thicknessMinXYZPML[2]};
+      real32 const dMax[3] = {param.thicknessMaxXYZPML[0], param.thicknessMaxXYZPML[1], param.thicknessMaxXYZPML[2]};
+      real32 const cMin[3] = {param.waveSpeedMinXYZPML[0], param.waveSpeedMinXYZPML[1], param.waveSpeedMinXYZPML[2]};
+      real32 const cMax[3] = {param.waveSpeedMaxXYZPML[0], param.waveSpeedMaxXYZPML[1], param.waveSpeedMaxXYZPML[2]};
       real32 const r = param.reflectivityPML;
 
       /// apply the main function to update some of the PML auxiliary variables
@@ -1011,9 +1011,9 @@ real64 AcousticWaveEquationSEM::explicitStepInternal( real64 const & time_n,
         if( freeSurfaceNodeIndicator[a] != 1 )
         {
           real32 sigma[3];
-          real32 xLocal[ 3 ];
+          real32 xLocal[3];
 
-          for( integer i=0; i<3; ++i )
+          for( integer i = 0; i < 3; ++i )
           {
             xLocal[i] = X32[a][i];
           }
@@ -1031,17 +1031,17 @@ real64 AcousticWaveEquationSEM::explicitStepInternal( real64 const & time_n,
 
           real32 const alpha = sigma[0] + sigma[1] + sigma[2];
 
-          p_np1[a] = dt2*( (rhs[a] - stiffnessVector[a])/mass[a] - divV_n[a])
-                     - (1 - 0.5*alpha*dt)*p_nm1[a]
-                     + 2*p_n[a];
+          p_np1[a] = dt2 * ( (rhs[a] - stiffnessVector[a]) / mass[a] - divV_n[a])
+                     - (1 - 0.5 * alpha * dt) * p_nm1[a]
+                     + 2 * p_n[a];
 
-          p_np1[a] = p_np1[a] / (1 + 0.5*alpha*dt);
+          p_np1[a] = p_np1[a] / (1 + 0.5 * alpha * dt);
 
-          for( integer i=0; i<3; ++i )
+          for( integer i = 0; i < 3; ++i )
           {
-            v_n[a][i] = (1 - dt*sigma[i])*v_n[a][i] - dt*grad_n[a][i];
+            v_n[a][i] = (1 - dt * sigma[i]) * v_n[a][i] - dt * grad_n[a][i];
           }
-          u_n[a] += dt*p_n[a];
+          u_n[a] += dt * p_n[a];
         }
       } );
     }

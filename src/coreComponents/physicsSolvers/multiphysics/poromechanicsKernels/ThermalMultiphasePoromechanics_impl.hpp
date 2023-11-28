@@ -275,7 +275,7 @@ computeFluidIncrement( localIndex const k,
     arraySlice1d< real64 const, constitutive::multifluid::USD_PHASE - 2 > const phaseDensity = m_fluidPhaseDensity[k][q];
     arraySlice2d< real64 const, constitutive::multifluid::USD_PHASE_DC - 2 > const dPhaseDensity = m_dFluidPhaseDensity[k][q];
     arraySlice2d< real64 const, constitutive::multifluid::USD_PHASE_COMP - 2 > const phaseCompFrac = m_fluidPhaseCompFrac[k][q];
-    arraySlice3d< real64 const, constitutive::multifluid::USD_PHASE_COMP_DC -2 > const dPhaseCompFrac = m_dFluidPhaseCompFrac[k][q];
+    arraySlice3d< real64 const, constitutive::multifluid::USD_PHASE_COMP_DC - 2 > const dPhaseCompFrac = m_dFluidPhaseCompFrac[k][q];
     arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const phaseVolFrac = m_fluidPhaseVolFrac[k];
     arraySlice2d< real64 const, compflow::USD_PHASE_DC - 1 > const dPhaseVolFrac = m_dFluidPhaseVolFrac[k];
     arraySlice2d< real64 const, compflow::USD_COMP_DC - 1 > const dGlobalCompFrac_dGlobalCompDensity = m_dGlobalCompFraction_dGlobalCompDensity[k];
@@ -557,7 +557,7 @@ complete( localIndex const k,
   {
     for( integer dim = 0; dim < numDofPerTestSupportPoint; ++dim )
     {
-      localIndex const dof = LvArray::integerConversion< localIndex >( stack.localRowDofIndex[numDofPerTestSupportPoint*localNode + dim] - m_dofRankOffset );
+      localIndex const dof = LvArray::integerConversion< localIndex >( stack.localRowDofIndex[numDofPerTestSupportPoint * localNode + dim] - m_dofRankOffset );
 
       // we need this check to filter out ghost nodes in the assembly
       if( dof < 0 || dof >= m_matrix.numRows() )
@@ -646,7 +646,7 @@ kernelLaunch( localIndex const numElems,
     typename KERNEL_TYPE::StackVariables stack;
 
     kernelComponent.setup( k, stack );
-    for( integer q=0; q<KERNEL_TYPE::numQuadraturePointsPerElem; ++q )
+    for( integer q = 0; q < KERNEL_TYPE::numQuadraturePointsPerElem; ++q )
     {
       kernelComponent.quadraturePointKernel( k, q, stack );
     }

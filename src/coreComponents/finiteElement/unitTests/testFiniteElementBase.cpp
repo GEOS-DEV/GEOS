@@ -112,7 +112,7 @@ TEST( FiniteElementBase, test_capture )
 
 #if defined(CALC_FEM_SHAPE_IN_KERNEL)
 
-  forAll< parallelDevicePolicy<> >( 1, [ feBase, gradNDimsView, detJDimsView ]( int const i )
+  forAll< parallelDevicePolicy<> >( 1, [feBase, gradNDimsView, detJDimsView]( int const i )
   {
     gradNDimsView[0] = feBase.getGradNView().size( 0 );
     gradNDimsView[1] = feBase.getGradNView().size( 1 );
@@ -132,7 +132,7 @@ TEST( FiniteElementBase, test_capture )
             detJDimsView[1] );
   } );
 
-  forAll< serialPolicy >( 1, [ feBase, gradNDimsView, detJDimsView ]( int const i )
+  forAll< serialPolicy >( 1, [feBase, gradNDimsView, detJDimsView]( int const i )
   {} );
 
   EXPECT_EQ( gradNDimsView[0], 0 );
@@ -145,7 +145,7 @@ TEST( FiniteElementBase, test_capture )
 #endif
 
 
-  forAll< serialPolicy >( 1, [ feBase, gradNDimsView, detJDimsView ]( int const )
+  forAll< serialPolicy >( 1, [feBase, gradNDimsView, detJDimsView]( int const )
   {
     gradNDimsView[0] = feBase.getGradNView().size( 0 );
     gradNDimsView[1] = feBase.getGradNView().size( 1 );
@@ -176,7 +176,7 @@ static void value( real64 const (&N)[NUM_SUPPORT_POINTS],
                    real64 & value )
 {
   value = 0;
-  for( int a=0; a<NUM_SUPPORT_POINTS; ++a )
+  for( int a = 0; a < NUM_SUPPORT_POINTS; ++a )
   {
     value += N[a] * var[a];
   }
@@ -188,13 +188,13 @@ static void value( real64 const (&N)[NUM_SUPPORT_POINTS],
                    real64 const (&var)[NUM_SUPPORT_POINTS][NUM_COMPONENTS],
                    real64 (& value)[NUM_COMPONENTS] )
 {
-  for( int i=0; i<NUM_COMPONENTS; ++i )
+  for( int i = 0; i < NUM_COMPONENTS; ++i )
   {
     value[i] = 0;
   }
-  for( int a=0; a<NUM_SUPPORT_POINTS; ++a )
+  for( int a = 0; a < NUM_SUPPORT_POINTS; ++a )
   {
-    for( int i=0; i<NUM_COMPONENTS; ++i )
+    for( int i = 0; i < NUM_COMPONENTS; ++i )
     {
       value[i] += N[a] * var[a][i];
     }
@@ -209,7 +209,7 @@ TEST( FiniteElementBase, test_value )
   real64 scalar[NUM_SUPPORT_POINTS];
   real64 vector[NUM_SUPPORT_POINTS][3];
 
-  for( int q=0; q<20; ++q )
+  for( int q = 0; q < 20; ++q )
   {
     randomShape( N );
     randomSupportVar( scalar );
@@ -242,18 +242,18 @@ static void symmetricGradient( real64 const (&gradN)[NUM_SUPPORT_POINTS][3],
                                real64 const (&var)[NUM_SUPPORT_POINTS][3],
                                real64 (& gradVar)[6] )
 {
-  for( int i=0; i<6; ++i )
+  for( int i = 0; i < 6; ++i )
   {
     gradVar[i] = 0.0;
   }
-  for( int a=0; a<NUM_SUPPORT_POINTS; ++a )
+  for( int a = 0; a < NUM_SUPPORT_POINTS; ++a )
   {
-    gradVar[0] += gradN[a][0] * var[ a ][0];
-    gradVar[1] += gradN[a][1] * var[ a ][1];
-    gradVar[2] += gradN[a][2] * var[ a ][2];
-    gradVar[3] += gradN[a][2] * var[ a ][1] + gradN[a][1] * var[ a ][2];
-    gradVar[4] += gradN[a][2] * var[ a ][0] + gradN[a][0] * var[ a ][2];
-    gradVar[5] += gradN[a][1] * var[ a ][0] + gradN[a][0] * var[ a ][1];
+    gradVar[0] += gradN[a][0] * var[a][0];
+    gradVar[1] += gradN[a][1] * var[a][1];
+    gradVar[2] += gradN[a][2] * var[a][2];
+    gradVar[3] += gradN[a][2] * var[a][1] + gradN[a][1] * var[a][2];
+    gradVar[4] += gradN[a][2] * var[a][0] + gradN[a][0] * var[a][2];
+    gradVar[5] += gradN[a][1] * var[a][0] + gradN[a][0] * var[a][1];
   }
 }
 
@@ -265,7 +265,7 @@ TEST( FiniteElementBase, test_symmetricGradient )
   real64 gradN[NUM_SUPPORT_POINTS][3];
   real64 vector[NUM_SUPPORT_POINTS][3];
 
-  for( int q=0; q<20; ++q )
+  for( int q = 0; q < 20; ++q )
   {
     randomShapeGradient( gradN );
     randomSupportVar( vector );
@@ -275,7 +275,7 @@ TEST( FiniteElementBase, test_symmetricGradient )
     symmetricGradient( gradN, vector, referenceVectorGradient );
     FiniteElementBase::symmetricGradient( gradN, vector, feBaseVectorGradient );
 
-    for( int i=0; i<6; ++i )
+    for( int i = 0; i < 6; ++i )
     {
       EXPECT_FLOAT_EQ( feBaseVectorGradient[i], referenceVectorGradient[i] );
     }
@@ -289,15 +289,15 @@ static void gradient( real64 const (&gradN)[NUM_SUPPORT_POINTS][3],
                       real64 const (&var)[NUM_SUPPORT_POINTS],
                       real64 (& gradVar)[3] )
 {
-  for( int i=0; i<3; ++i )
+  for( int i = 0; i < 3; ++i )
   {
     gradVar[i] = 0.0;
   }
-  for( int a=0; a<NUM_SUPPORT_POINTS; ++a )
+  for( int a = 0; a < NUM_SUPPORT_POINTS; ++a )
   {
     for( int i = 0; i < 3; ++i )
     {
-      gradVar[i] += var[ a ] * gradN[a][i];
+      gradVar[i] += var[a] * gradN[a][i];
     }
   }
 }
@@ -314,13 +314,13 @@ static void gradient( real64 const (&gradN)[NUM_SUPPORT_POINTS][3],
       gradVar[i][j] = 0.0;
     }
   }
-  for( int a=0; a<NUM_SUPPORT_POINTS; ++a )
+  for( int a = 0; a < NUM_SUPPORT_POINTS; ++a )
   {
     for( int i = 0; i < 3; ++i )
     {
       for( int j = 0; j < 3; ++j )
       {
-        gradVar[i][j] += var[ a ][i] * gradN[a][j];
+        gradVar[i][j] += var[a][i] * gradN[a][j];
       }
     }
   }
@@ -334,7 +334,7 @@ TEST( FiniteElementBase, test_gradient )
   real64 scalar[NUM_SUPPORT_POINTS];
   real64 vector[NUM_SUPPORT_POINTS][3];
 
-  for( int q=0; q<20; ++q )
+  for( int q = 0; q < 20; ++q )
   {
     randomShapeGradient( gradN );
     randomSupportVar( scalar );
@@ -351,9 +351,9 @@ TEST( FiniteElementBase, test_gradient )
     gradient( gradN, vector, referenceVectorGradient );
     FiniteElementBase::gradient( gradN, vector, feBaseVectorGradient );
 
-    for( int i=0; i<3; ++i )
+    for( int i = 0; i < 3; ++i )
     {
-      for( int j=0; j<3; ++j )
+      for( int j = 0; j < 3; ++j )
       {
         EXPECT_FLOAT_EQ( feBaseVectorGradient[i][j], referenceVectorGradient[i][j] );
       }
@@ -377,12 +377,12 @@ static void valueAndGradient( real64 const (&N)[NUM_SUPPORT_POINTS],
     gradVar[i] = 0;
   }
 
-  for( int a=0; a<NUM_SUPPORT_POINTS; ++a )
+  for( int a = 0; a < NUM_SUPPORT_POINTS; ++a )
   {
     value += N[a] * var[a];
     for( int i = 0; i < 3; ++i )
     {
-      gradVar[i] +=  var[ a ] * gradN[a][i];
+      gradVar[i] +=  var[a] * gradN[a][i];
     }
   }
 }
@@ -396,7 +396,7 @@ TEST( FiniteElementBase, test_valueAndGradient )
   real64 scalar[NUM_SUPPORT_POINTS];
   real64 vector[NUM_SUPPORT_POINTS][3];
 
-  for( int q=0; q<20; ++q )
+  for( int q = 0; q < 20; ++q )
   {
     randomShape( N );
     randomShapeGradient( gradN );
@@ -413,7 +413,7 @@ TEST( FiniteElementBase, test_valueAndGradient )
     FiniteElementBase::valueAndGradient( N, gradN, scalar, feBaseScalarValue, feBaseScalarGradient );
 
     EXPECT_FLOAT_EQ( feBaseScalarValue, referenceScalarValue );
-    for( int i=0; i<3; ++i )
+    for( int i = 0; i < 3; ++i )
     {
       EXPECT_FLOAT_EQ( feBaseScalarGradient[i], referenceScalarGradient[i] );
     }
@@ -447,7 +447,7 @@ static void plusGradNajAij( real64 const (&gradN)[NUM_SUPPORT_POINTS][3],
                             real64 const (&var_detJxW)[6],
                             real64 (& R)[NUM_SUPPORT_POINTS][3] )
 {
-  for( int a=0; a<NUM_SUPPORT_POINTS; ++a )
+  for( int a = 0; a < NUM_SUPPORT_POINTS; ++a )
   {
     R[a][0] += var_detJxW[0] * gradN[a][0] + var_detJxW[5] * gradN[a][1] + var_detJxW[4] * gradN[a][2];
     R[a][1] += var_detJxW[5] * gradN[a][0] + var_detJxW[1] * gradN[a][1] + var_detJxW[3] * gradN[a][2];
@@ -463,7 +463,7 @@ void plusGradNajAij( real64 const (&gradN)[NUM_SUPPORT_POINTS][3],
                      real64 const (&var_detJxW)[3][3],
                      real64 (& R)[NUM_SUPPORT_POINTS][3] )
 {
-  for( int a=0; a<NUM_SUPPORT_POINTS; ++a )
+  for( int a = 0; a < NUM_SUPPORT_POINTS; ++a )
   {
     R[a][0] += var_detJxW[0][0] * gradN[a][0] + var_detJxW[0][1] * gradN[a][1] + var_detJxW[0][2] * gradN[a][2];
     R[a][1] += var_detJxW[1][0] * gradN[a][0] + var_detJxW[1][1] * gradN[a][1] + var_detJxW[1][2] * gradN[a][2];
@@ -487,7 +487,7 @@ TEST( FiniteElementBase, test_plusGradNajAij )
   real64 baselineResultSym[NUM_SUPPORT_POINTS][3] = {{0}};
   real64 feResultSym[NUM_SUPPORT_POINTS][3] = {{0}};
 
-  for( int q=0; q<20; ++q )
+  for( int q = 0; q < 20; ++q )
   {
     randomShapeGradient( gradN );
     randomVar( r2Tensor );
@@ -500,9 +500,9 @@ TEST( FiniteElementBase, test_plusGradNajAij )
     FiniteElementBase::plusGradNajAij( gradN, r2SymmTensor, feResultSym );
   }
 
-  for( int a=0; a<NUM_SUPPORT_POINTS; ++a )
+  for( int a = 0; a < NUM_SUPPORT_POINTS; ++a )
   {
-    for( int i=0; i<3; ++i )
+    for( int i = 0; i < 3; ++i )
     {
       EXPECT_FLOAT_EQ( feResult[a][i], baselineResult[a][i] );
       EXPECT_FLOAT_EQ( feResultSym[a][i], baselineResultSym[a][i] );
@@ -517,7 +517,7 @@ static void plusNaFi( real64 const (&N)[NUM_SUPPORT_POINTS],
                       real64 const (&var_detJxW)[3],
                       real64 ( & R )[NUM_SUPPORT_POINTS][3] )
 {
-  for( int a=0; a<NUM_SUPPORT_POINTS; ++a )
+  for( int a = 0; a < NUM_SUPPORT_POINTS; ++a )
   {
     R[a][0] += var_detJxW[0] * N[a];
     R[a][1] += var_detJxW[1] * N[a];
@@ -535,7 +535,7 @@ TEST( FiniteElementBase, test_plusNaFi )
   real64 baselineResult[NUM_SUPPORT_POINTS][3] = {{0}};
   real64 feResult[NUM_SUPPORT_POINTS][3] = {{0}};
 
-  for( int q=0; q<20; ++q )
+  for( int q = 0; q < 20; ++q )
   {
     randomShape( N );
     randomVar( f );
@@ -544,9 +544,9 @@ TEST( FiniteElementBase, test_plusNaFi )
     FiniteElementBase::plusNaFi( N, f, feResult );
   }
 
-  for( int a=0; a<NUM_SUPPORT_POINTS; ++a )
+  for( int a = 0; a < NUM_SUPPORT_POINTS; ++a )
   {
-    for( int i=0; i<3; ++i )
+    for( int i = 0; i < 3; ++i )
     {
       EXPECT_FLOAT_EQ( feResult[a][i], baselineResult[a][i] );
     }
@@ -565,7 +565,7 @@ static void plusGradNajAijPlusNaFi( real64 const (&gradN)[NUM_SUPPORT_POINTS][3]
                                     real64 const (&forcingTerm_detJxW)[3],
                                     real64 (& R)[NUM_SUPPORT_POINTS][3] )
 {
-  for( int a=0; a<NUM_SUPPORT_POINTS; ++a )
+  for( int a = 0; a < NUM_SUPPORT_POINTS; ++a )
   {
     R[a][0] += var_detJxW[0] * gradN[a][0] + var_detJxW[5] * gradN[a][1] + var_detJxW[4] * gradN[a][2] + forcingTerm_detJxW[0] * N[a];
     R[a][1] += var_detJxW[5] * gradN[a][0] + var_detJxW[1] * gradN[a][1] + var_detJxW[3] * gradN[a][2] + forcingTerm_detJxW[1] * N[a];
@@ -580,7 +580,7 @@ static void plusGradNajAijPlusNaFi( real64 const (&gradN)[NUM_SUPPORT_POINTS][3]
                                     real64 const (&forcingTerm_detJxW)[3],
                                     real64 (& R)[NUM_SUPPORT_POINTS][3] )
 {
-  for( int a=0; a<NUM_SUPPORT_POINTS; ++a )
+  for( int a = 0; a < NUM_SUPPORT_POINTS; ++a )
   {
     R[a][0] += var_detJxW[0][0] * gradN[a][0] + var_detJxW[0][1] * gradN[a][1] + var_detJxW[0][2] * gradN[a][2] + forcingTerm_detJxW[0] * N[a];
     R[a][1] += var_detJxW[1][0] * gradN[a][0] + var_detJxW[1][1] * gradN[a][1] + var_detJxW[1][2] * gradN[a][2] + forcingTerm_detJxW[1] * N[a];
@@ -604,7 +604,7 @@ TEST( FiniteElementBase, test_plusGradNajAijPlusNaFi )
   real64 baselineResultSym[NUM_SUPPORT_POINTS][3] = {{0}};
   real64 feResultSym[NUM_SUPPORT_POINTS][3] = {{0}};
 
-  for( int q=0; q<20; ++q )
+  for( int q = 0; q < 20; ++q )
   {
     randomShape( N );
     randomShapeGradient( gradN );
@@ -619,9 +619,9 @@ TEST( FiniteElementBase, test_plusGradNajAijPlusNaFi )
     FiniteElementBase::plusGradNajAijPlusNaFi( gradN, r2SymmTensor, N, f, feResultSym );
   }
 
-  for( int a=0; a<NUM_SUPPORT_POINTS; ++a )
+  for( int a = 0; a < NUM_SUPPORT_POINTS; ++a )
   {
-    for( int i=0; i<3; ++i )
+    for( int i = 0; i < 3; ++i )
     {
       EXPECT_FLOAT_EQ( feResult[a][i], baselineResult[a][i] );
       EXPECT_FLOAT_EQ( feResultSym[a][i], baselineResultSym[a][i] );

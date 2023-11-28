@@ -221,7 +221,7 @@ struct MassMatrixKernel
       constexpr localIndex numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
 
       real32 const invC2 = 1.0 / ( velocity[e] * velocity[e] );
-      real64 xLocal[ numNodesPerElem ][ 3 ];
+      real64 xLocal[numNodesPerElem][3];
       for( localIndex a = 0; a < numNodesPerElem; ++a )
       {
         for( localIndex i = 0; i < 3; ++i )
@@ -302,28 +302,28 @@ struct DampingMatrixKernel
           // ABC coefficients
           real32 alpha = 1.0 / velocity[e];
           // VTI coefficients
-          real32 vti_p_xy= 0, vti_p_z = 0, vti_pq_z = 0;
-          real32 vti_q_xy= 0, vti_q_z = 0, vti_qp_xy= 0;
+          real32 vti_p_xy = 0, vti_p_z = 0, vti_pq_z = 0;
+          real32 vti_q_xy = 0, vti_q_z = 0, vti_qp_xy = 0;
           if( lateralSurfaceFaceIndicator[f] == 1 )
           {
             // ABC coefficients updated to fit horizontal velocity
-            alpha /= sqrt( 1+2*epsilon[e] );
+            alpha /= sqrt( 1 + 2 * epsilon[e] );
 
-            vti_p_xy  = (1+2*epsilon[e]);
-            vti_q_xy  = -(vti_f[e]-1);
-            vti_qp_xy = (vti_f[e]+2*delta[e]);
+            vti_p_xy  = (1 + 2 * epsilon[e]);
+            vti_q_xy  = -(vti_f[e] - 1);
+            vti_qp_xy = (vti_f[e] + 2 * delta[e]);
           }
           if( bottomSurfaceFaceIndicator[f] == 1 )
           {
             // ABC coefficients updated to fit horizontal velocity
-            alpha /= sqrt( 1+2*delta[e] );
-            vti_p_z  = -(vti_f[e]-1);
+            alpha /= sqrt( 1 + 2 * delta[e] );
+            vti_p_z  = -(vti_f[e] - 1);
             vti_pq_z = vti_f[e];
             vti_q_z  = 1;
           }
 
           constexpr localIndex numNodesPerFace = FE_TYPE::numNodesPerFace;
-          real64 xLocal[ numNodesPerFace ][ 3 ];
+          real64 xLocal[numNodesPerFace][3];
           for( localIndex a = 0; a < numNodesPerFace; ++a )
           {
             for( localIndex d = 0; d < 3; ++d )
@@ -335,16 +335,16 @@ struct DampingMatrixKernel
           for( localIndex q = 0; q < numNodesPerFace; ++q )
           {
             real32 const aux = m_finiteElement.computeDampingTerm( q, xLocal );
-            real32 const localIncrement_p = alpha*(vti_p_xy + vti_p_z) * aux;
+            real32 const localIncrement_p = alpha * (vti_p_xy + vti_p_z) * aux;
             RAJA::atomicAdd< ATOMIC_POLICY >( &damping_p[facesToNodes( f, q )], localIncrement_p );
 
-            real32 const localIncrement_pq = alpha*vti_pq_z * aux;
+            real32 const localIncrement_pq = alpha * vti_pq_z * aux;
             RAJA::atomicAdd< ATOMIC_POLICY >( &damping_pq[facesToNodes( f, q )], localIncrement_pq );
 
-            real32 const localIncrement_q = alpha*(vti_q_xy + vti_q_z) * aux;
+            real32 const localIncrement_q = alpha * (vti_q_xy + vti_q_z) * aux;
             RAJA::atomicAdd< ATOMIC_POLICY >( &damping_q[facesToNodes( f, q )], localIncrement_q );
 
-            real32 const localIncrement_qp = alpha*vti_qp_xy * aux;
+            real32 const localIncrement_qp = alpha * vti_qp_xy * aux;
             RAJA::atomicAdd< ATOMIC_POLICY >( &damping_qp[facesToNodes( f, q )], localIncrement_qp );
           }
         }
@@ -459,7 +459,7 @@ public:
     {}
 
     /// C-array stack storage for element local the nodal positions.
-    real64 xLocal[ numNodesPerElem ][ 3 ];
+    real64 xLocal[numNodesPerElem][3];
   };
   //***************************************************************************
 
@@ -475,12 +475,12 @@ public:
               StackVariables & stack ) const
   {
     /// numDofPerTrialSupportPoint = 1
-    for( localIndex a=0; a< numNodesPerElem; ++a )
+    for( localIndex a = 0; a < numNodesPerElem; ++a )
     {
       localIndex const nodeIndex = m_elemsToNodes( k, a );
-      for( int i=0; i< 3; ++i )
+      for( int i = 0; i < 3; ++i )
       {
-        stack.xLocal[ a ][ i ] = m_nodeCoords[ nodeIndex ][ i ];
+        stack.xLocal[a][i] = m_nodeCoords[nodeIndex][i];
       }
     }
   }
@@ -501,9 +501,9 @@ public:
     // Pseudo Stiffness xy
     m_finiteElementSpace.template computeStiffnessxyTerm( q, stack.xLocal, [&] ( int i, int j, real64 val )
     {
-      real32 const localIncrement_p = val*(-1-2*m_epsilon[k])*m_p_n[m_elemsToNodes[k][j]];
+      real32 const localIncrement_p = val * (-1 - 2 * m_epsilon[k]) * m_p_n[m_elemsToNodes[k][j]];
       RAJA::atomicAdd< parallelDeviceAtomic >( &m_stiffnessVector_p[m_elemsToNodes[k][i]], localIncrement_p );
-      real32 const localIncrement_q = val*((-2*m_delta[k]-m_vti_f[k])*m_p_n[m_elemsToNodes[k][j]] +(m_vti_f[k]-1)*m_q_n[m_elemsToNodes[k][j]]);
+      real32 const localIncrement_q = val * ((-2 * m_delta[k] - m_vti_f[k]) * m_p_n[m_elemsToNodes[k][j]] + (m_vti_f[k] - 1) * m_q_n[m_elemsToNodes[k][j]]);
       RAJA::atomicAdd< parallelDeviceAtomic >( &m_stiffnessVector_q[m_elemsToNodes[k][i]], localIncrement_q );
     } );
 
@@ -511,10 +511,10 @@ public:
 
     m_finiteElementSpace.template computeStiffnesszTerm( q, stack.xLocal, [&] ( int i, int j, real64 val )
     {
-      real32 const localIncrement_p = val*((m_vti_f[k]-1)*m_p_n[m_elemsToNodes[k][j]] - m_vti_f[k]*m_q_n[m_elemsToNodes[k][j]]);
+      real32 const localIncrement_p = val * ((m_vti_f[k] - 1) * m_p_n[m_elemsToNodes[k][j]] - m_vti_f[k] * m_q_n[m_elemsToNodes[k][j]]);
       RAJA::atomicAdd< parallelDeviceAtomic >( &m_stiffnessVector_p[m_elemsToNodes[k][i]], localIncrement_p );
 
-      real32 const localIncrement_q = -val*m_q_n[m_elemsToNodes[k][j]];
+      real32 const localIncrement_q = -val * m_q_n[m_elemsToNodes[k][j]];
       RAJA::atomicAdd< parallelDeviceAtomic >( &m_stiffnessVector_q[m_elemsToNodes[k][i]], localIncrement_q );
     } );
   }

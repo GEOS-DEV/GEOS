@@ -208,13 +208,13 @@ void ElasticTransverseIsotropicUpdates::smallStrainNoStateUpdate_StressOnly( loc
 {
   GEOS_UNUSED_VAR( q );
   real64 const c12temp = ( m_c11[k] - 2.0 * m_c66[k] );
-  stress[0] = m_c11[k] * totalStrain[0] +  c12temp * totalStrain[1] + m_c13[k]*totalStrain[2];
-  stress[1] =  c12temp * totalStrain[0] + m_c11[k] * totalStrain[1] + m_c13[k]*totalStrain[2];
-  stress[2] = m_c13[k] * totalStrain[0] + m_c13[k] * totalStrain[1] + m_c33[k]*totalStrain[2];
+  stress[0] = m_c11[k] * totalStrain[0] + c12temp * totalStrain[1] + m_c13[k] * totalStrain[2];
+  stress[1] =  c12temp * totalStrain[0] + m_c11[k] * totalStrain[1] + m_c13[k] * totalStrain[2];
+  stress[2] = m_c13[k] * totalStrain[0] + m_c13[k] * totalStrain[1] + m_c33[k] * totalStrain[2];
 
-  stress[3] = m_c44[k]*totalStrain[3];
-  stress[4] = m_c44[k]*totalStrain[4];
-  stress[5] = m_c66[k]*totalStrain[5];
+  stress[3] = m_c44[k] * totalStrain[3];
+  stress[4] = m_c44[k] * totalStrain[4];
+  stress[5] = m_c66[k] * totalStrain[5];
 }
 
 inline

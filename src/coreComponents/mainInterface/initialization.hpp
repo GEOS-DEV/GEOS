@@ -37,7 +37,7 @@ std::unique_ptr< CommandLineOptions > parseCommandLineOptions( int argc, char * 
  * @return The command line options, if @c parseCommandLine is @c false then the returned value
  *   is default constructed (empty).
  */
-std::unique_ptr< CommandLineOptions > basicSetup( int argc, char * argv[], bool const parseCommandLine=false );
+std::unique_ptr< CommandLineOptions > basicSetup( int argc, char * argv[], bool const parseCommandLine = false );
 
 /**
  * @brief Perform the basic GEOSX cleanup.

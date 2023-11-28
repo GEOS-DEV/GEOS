@@ -19,7 +19,7 @@ TEST( testHDFIO_parallel, SingleValueHistory )
   real64 val = 0.0;
   for( localIndex tidx = 0; tidx < 100; ++tidx )
   {
-    val += 0.5 * (rank+1);
+    val += 0.5 * (rank + 1);
     buffer_unit_type * buffer = io.getBufferHead( );
     memcpy( buffer, &val, sizeof(real64));
   }

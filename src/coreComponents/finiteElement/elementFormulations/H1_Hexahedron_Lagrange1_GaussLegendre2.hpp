@@ -145,8 +145,8 @@ public:
                                                   real64 (& samplingPointCoord)[3] )
   {
     const int i0 = linearIndex % numSamplingPointsPerDirection;
-    const int i1 = ( (linearIndex - i0)/numSamplingPointsPerDirection ) % numSamplingPointsPerDirection;
-    const int i2 = ( (linearIndex - i0)/numSamplingPointsPerDirection - i1 ) / numSamplingPointsPerDirection;
+    const int i1 = ( (linearIndex - i0) / numSamplingPointsPerDirection ) % numSamplingPointsPerDirection;
+    const int i2 = ( (linearIndex - i0) / numSamplingPointsPerDirection - i1 ) / numSamplingPointsPerDirection;
 
     constexpr real64 step = 2. / ( numSamplingPointsPerDirection - 1 );
 
@@ -392,7 +392,7 @@ private:
   constexpr static real64 parentLength = LagrangeBasis1::parentSupportCoord( 1 ) - LagrangeBasis1::parentSupportCoord( 0 );
 
   /// The volume of the element in the parent configuration.
-  constexpr static real64 parentVolume = parentLength*parentLength*parentLength;
+  constexpr static real64 parentVolume = parentLength * parentLength * parentLength;
 
   /// The weight of each quadrature point.
   constexpr static real64 weight = parentVolume / numQuadraturePoints;
@@ -500,20 +500,20 @@ H1_Hexahedron_Lagrange1_GaussLegendre2::supportLoop( int const qa,
 #endif
 
   // Loop over the linear basis indices in each direction.
-  for( int a=0; a<2; ++a )
+  for( int a = 0; a < 2; ++a )
   {
 #if PARENT_GRADIENT_METHOD == 2
-    int const qaa = ( a^qa ); // abs(a-qa)
+    int const qaa = ( a ^ qa ); // abs(a-qa)
 #endif
-    for( int b=0; b<2; ++b )
+    for( int b = 0; b < 2; ++b )
     {
 #if PARENT_GRADIENT_METHOD == 2
-      int const qbb = ( b^qb );
+      int const qbb = ( b ^ qb );
 #endif
-      for( int c=0; c<2; ++c )
+      for( int c = 0; c < 2; ++c )
       {
 #if PARENT_GRADIENT_METHOD == 2
-        int const qcc = ( c^qc );
+        int const qcc = ( c ^ qc );
 #endif
 
 #if PARENT_GRADIENT_METHOD == 1
@@ -527,9 +527,9 @@ H1_Hexahedron_Lagrange1_GaussLegendre2::supportLoop( int const qa,
 //                                  dpsi[b] * psiProductFunc( qaa + qcc ),
 //                                  dpsi[c] * psiProductFunc( qaa + qbb ) };
 
-        real64 const dNdXi[3] = { dpsi[a] * psiProduct[ qbb + qcc ],
-                                  dpsi[b] * psiProduct[ qaa + qcc ],
-                                  dpsi[c] * psiProduct[ qaa + qbb ] };
+        real64 const dNdXi[3] = { dpsi[a] * psiProduct[qbb + qcc],
+                                  dpsi[b] * psiProduct[qaa + qcc],
+                                  dpsi[c] * psiProduct[qaa + qbb] };
 #endif
         localIndex const nodeIndex = LagrangeBasis1::TensorProduct3D::linearIndex( a, b, c );
 
@@ -599,7 +599,7 @@ H1_Hexahedron_Lagrange1_GaussLegendre2::
     {
       for( int j = 0; j < 3; ++j )
       {
-        J[i][j] = J[i][j] + dNdXi[ j ] * Xnode[i];
+        J[i][j] = J[i][j] + dNdXi[j] * Xnode[i];
       }
     }
 
@@ -692,16 +692,16 @@ void H1_Hexahedron_Lagrange1_GaussLegendre2::symmetricGradient( int const q,
     {
       for( int j = 0; j < 3; ++j )
       {
-        gradN[i] = gradN[i] + dNdXi[ j ] * invJ[j][i];
+        gradN[i] = gradN[i] + dNdXi[j] * invJ[j][i];
       }
     }
 
-    grad[0] = grad[0] + gradN[0] * var[ nodeIndex ][0];
-    grad[1] = grad[1] + gradN[1] * var[ nodeIndex ][1];
-    grad[2] = grad[2] + gradN[2] * var[ nodeIndex ][2];
-    grad[3] = grad[3] + gradN[2] * var[ nodeIndex ][1] + gradN[1] * var[ nodeIndex ][2];
-    grad[4] = grad[4] + gradN[2] * var[ nodeIndex ][0] + gradN[0] * var[ nodeIndex ][2];
-    grad[5] = grad[5] + gradN[1] * var[ nodeIndex ][0] + gradN[0] * var[ nodeIndex ][1];
+    grad[0] = grad[0] + gradN[0] * var[nodeIndex][0];
+    grad[1] = grad[1] + gradN[1] * var[nodeIndex][1];
+    grad[2] = grad[2] + gradN[2] * var[nodeIndex][2];
+    grad[3] = grad[3] + gradN[2] * var[nodeIndex][1] + gradN[1] * var[nodeIndex][2];
+    grad[4] = grad[4] + gradN[2] * var[nodeIndex][0] + gradN[0] * var[nodeIndex][2];
+    grad[5] = grad[5] + gradN[1] * var[nodeIndex][0] + gradN[0] * var[nodeIndex][1];
   }, invJ, var, grad );
 }
 
@@ -729,12 +729,12 @@ void H1_Hexahedron_Lagrange1_GaussLegendre2::plusGradNajAij( int const q,
     {
       for( int j = 0; j < 3; ++j )
       {
-        gradN[i] = gradN[i] + dNdXi[ j ] * invJ[j][i];
+        gradN[i] = gradN[i] + dNdXi[j] * invJ[j][i];
       }
     }
-    R[ nodeIndex ][ 0 ] = R[ nodeIndex ][ 0 ] - var[ 0 ] * gradN[ 0 ] - var[ 5 ] * gradN[ 1 ] - var[ 4 ] * gradN[ 2 ];
-    R[ nodeIndex ][ 1 ] = R[ nodeIndex ][ 1 ] - var[ 5 ] * gradN[ 0 ] - var[ 1 ] * gradN[ 1 ] - var[ 3 ] * gradN[ 2 ];
-    R[ nodeIndex ][ 2 ] = R[ nodeIndex ][ 2 ] - var[ 4 ] * gradN[ 0 ] - var[ 3 ] * gradN[ 1 ] - var[ 2 ] * gradN[ 2 ];
+    R[nodeIndex][0] = R[nodeIndex][0] - var[0] * gradN[0] - var[5] * gradN[1] - var[4] * gradN[2];
+    R[nodeIndex][1] = R[nodeIndex][1] - var[5] * gradN[0] - var[1] * gradN[1] - var[3] * gradN[2];
+    R[nodeIndex][2] = R[nodeIndex][2] - var[4] * gradN[0] - var[3] * gradN[1] - var[2] * gradN[2];
   }, invJ, var, R );
 }
 
@@ -758,14 +758,14 @@ void H1_Hexahedron_Lagrange1_GaussLegendre2::gradient( int const q,
   {
     for( int i = 0; i < 3; ++i )
     {
-      real64 gradN=0.0;;
+      real64 gradN = 0.0;;
       for( int j = 0; j < 3; ++j )
       {
-        gradN = gradN + dNdXi[ j ] * invJ[j][i];
+        gradN = gradN + dNdXi[j] * invJ[j][i];
       }
       for( int k = 0; k < 3; ++k )
       {
-        grad[k][i] = grad[k][i] + gradN * var[ nodeIndex ][k];
+        grad[k][i] = grad[k][i] + gradN * var[nodeIndex][k];
       }
     }
   }, invJ, var, grad );

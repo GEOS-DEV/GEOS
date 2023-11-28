@@ -225,8 +225,8 @@ void BrineEnthalpyUpdate::compute( real64 const & pressure,
                           + dvalue_dC * dPhaseComposition[m_waterIndex][Deriv::dT] );
   }
 
-  dValue[Deriv::dC+m_CO2Index]   = dvalue_dC * dPhaseComposition[m_waterIndex][Deriv::dC+m_CO2Index];
-  dValue[Deriv::dC+m_waterIndex] = dvalue_dC * dPhaseComposition[m_waterIndex][Deriv::dC+m_waterIndex];
+  dValue[Deriv::dC + m_CO2Index]   = dvalue_dC * dPhaseComposition[m_waterIndex][Deriv::dC + m_CO2Index];
+  dValue[Deriv::dC + m_waterIndex] = dvalue_dC * dPhaseComposition[m_waterIndex][Deriv::dC + m_waterIndex];
 }
 
 } // end namespace PVTProps

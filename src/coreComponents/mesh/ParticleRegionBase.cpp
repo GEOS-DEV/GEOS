@@ -60,7 +60,7 @@ string ParticleRegionBase::verifyMeshBodyName( Group const & meshBodies,
   {
     string const & onlyMeshBodyName = meshBodies.getGroup( 0 ).getName();
 
-    if( meshBodyName=="" )
+    if( meshBodyName == "" )
     {
       meshBodyName = onlyMeshBodyName;
     }
@@ -73,7 +73,7 @@ string ParticleRegionBase::verifyMeshBodyName( Group const & meshBodies,
     bool meshBodyFound = false;
     meshBodies.forSubGroups( [&] ( Group const & meshBody )
     {
-      if( meshBody.getName()==meshBodyName )
+      if( meshBody.getName() == meshBodyName )
       {
         meshBodyFound = true;
       }

@@ -281,8 +281,8 @@ CO2SolubilityUpdate::compute( real64 const & pressure,
 
       for( localIndex jc = 0; jc < 2; ++jc )
       {
-        phaseCompFraction.derivs[m_phaseLiquidIndex][ic][Deriv::dC+jc] = (ic == jc ) ? 1.0 : 0.0;
-        phaseCompFraction.derivs[m_phaseGasIndex][ic][Deriv::dC+jc] = 0.0;
+        phaseCompFraction.derivs[m_phaseLiquidIndex][ic][Deriv::dC + jc] = (ic == jc ) ? 1.0 : 0.0;
+        phaseCompFraction.derivs[m_phaseGasIndex][ic][Deriv::dC + jc] = 0.0;
       }
     }
   }
@@ -298,17 +298,17 @@ CO2SolubilityUpdate::compute( real64 const & pressure,
 
     phaseFraction.derivs[m_phaseLiquidIndex][Deriv::dP] = solubilityDeriv[0] * onePlusYInv;
     phaseFraction.derivs[m_phaseLiquidIndex][Deriv::dT] = solubilityDeriv[1] * onePlusYInv;
-    phaseFraction.derivs[m_phaseLiquidIndex][Deriv::dC+m_CO2Index] =
+    phaseFraction.derivs[m_phaseLiquidIndex][Deriv::dC + m_CO2Index] =
       -dY_dCompFrac[m_CO2Index] * phaseFraction.value[m_phaseLiquidIndex] * onePlusYInv;
-    phaseFraction.derivs[m_phaseLiquidIndex][Deriv::dC+m_waterIndex] =
+    phaseFraction.derivs[m_phaseLiquidIndex][Deriv::dC + m_waterIndex] =
       -dY_dCompFrac[m_waterIndex] * phaseFraction.value[m_phaseLiquidIndex] * onePlusYInv;
 
     phaseFraction.value[m_phaseGasIndex] = 1.0 - phaseFraction.value[m_phaseLiquidIndex];
 
     phaseFraction.derivs[m_phaseGasIndex][Deriv::dP] = -phaseFraction.derivs[m_phaseLiquidIndex][Deriv::dP];
     phaseFraction.derivs[m_phaseGasIndex][Deriv::dT] = -phaseFraction.derivs[m_phaseLiquidIndex][Deriv::dT];
-    phaseFraction.derivs[m_phaseGasIndex][Deriv::dC+m_CO2Index] = -phaseFraction.derivs[m_phaseLiquidIndex][Deriv::dC+m_CO2Index];
-    phaseFraction.derivs[m_phaseGasIndex][Deriv::dC+m_waterIndex] = -phaseFraction.derivs[m_phaseLiquidIndex][Deriv::dC+m_waterIndex];
+    phaseFraction.derivs[m_phaseGasIndex][Deriv::dC + m_CO2Index] = -phaseFraction.derivs[m_phaseLiquidIndex][Deriv::dC + m_CO2Index];
+    phaseFraction.derivs[m_phaseGasIndex][Deriv::dC + m_waterIndex] = -phaseFraction.derivs[m_phaseLiquidIndex][Deriv::dC + m_waterIndex];
 
     // 2) Compute phase component fractions
 
@@ -316,8 +316,8 @@ CO2SolubilityUpdate::compute( real64 const & pressure,
     real64 const onePlusSolubilityInv = 1.0 / ( 1.0 + solubility );
     phaseCompFraction.value[m_phaseLiquidIndex][m_CO2Index] = solubility * onePlusSolubilityInv;
 
-    phaseCompFraction.derivs[m_phaseLiquidIndex][m_CO2Index][Deriv::dP] = solubilityDeriv[0] * (onePlusSolubilityInv*onePlusSolubilityInv);
-    phaseCompFraction.derivs[m_phaseLiquidIndex][m_CO2Index][Deriv::dT] = solubilityDeriv[1] * (onePlusSolubilityInv*onePlusSolubilityInv);
+    phaseCompFraction.derivs[m_phaseLiquidIndex][m_CO2Index][Deriv::dP] = solubilityDeriv[0] * (onePlusSolubilityInv * onePlusSolubilityInv);
+    phaseCompFraction.derivs[m_phaseLiquidIndex][m_CO2Index][Deriv::dT] = solubilityDeriv[1] * (onePlusSolubilityInv * onePlusSolubilityInv);
 
     phaseCompFraction.value[m_phaseLiquidIndex][m_waterIndex] = 1.0 - phaseCompFraction.value[m_phaseLiquidIndex][m_CO2Index];
 

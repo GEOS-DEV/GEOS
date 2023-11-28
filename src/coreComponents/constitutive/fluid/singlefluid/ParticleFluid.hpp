@@ -290,7 +290,7 @@ void ParticleFluidUpdate::compute( real64 const proppantConcentration,
     {
       singleParticleSettlingVelocity = 1.74
                                        * pow( m_proppantDiameter, 0.5 )
-                                       * pow( 9.81 * (m_proppantDensity - fluidDensity) /fluidDensity, 0.5 );
+                                       * pow( 9.81 * (m_proppantDensity - fluidDensity) / fluidDensity, 0.5 );
       break;
     }
     default:

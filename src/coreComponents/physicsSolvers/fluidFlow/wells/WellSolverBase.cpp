@@ -258,7 +258,7 @@ void WellSolverBase::precomputeData( DomainPartition & domain )
       } );
 
       // set the reference well element where the BHP control is applied
-      wellControls.setReferenceGravityCoef( refElev * gravVector[ 2 ] );
+      wellControls.setReferenceGravityCoef( refElev * gravVector[2] );
 
     } );
   } );

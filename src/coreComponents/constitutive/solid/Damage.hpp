@@ -125,7 +125,7 @@ public:
     // Set a lower bound tolerance for the degradation
     real64 const eps = m_degradationLowerLimit;
 
-    return ((1 - eps)*(1 - pf)*(1 - pf) + eps);
+    return ((1 - eps) * (1 - pf) * (1 - pf) + eps);
   }
 
 
@@ -133,7 +133,7 @@ public:
   GEOS_HOST_DEVICE
   virtual real64 getDegradationDerivative( real64 const d ) const
   {
-    return -2*(1 - d);
+    return -2 * (1 - d);
   }
 
 
@@ -184,17 +184,20 @@ public:
       // Calculate the external driving force according to Kumar et al.
       real64 beta0 = m_deltaCoefficient * 0.375 * m_criticalFractureEnergy / m_lengthScale;
 
-      real64 beta1 = -0.375 * m_criticalFractureEnergy / m_lengthScale * ((1 + m_deltaCoefficient)*(m_compressStrength - m_tensileStrength)/2./m_compressStrength/m_tensileStrength)
-                     - (8*mu + 24*kappa - 27*m_tensileStrength) * (m_compressStrength - m_tensileStrength) / 144. / mu / kappa
-                     - m_lengthScale / m_criticalFractureEnergy * ((mu + 3*kappa)*(pow( m_compressStrength, 3 ) - pow( m_tensileStrength, 3 ))*m_tensileStrength/18/(mu*mu)/(kappa*kappa));
+      real64 beta1 = -0.375 * m_criticalFractureEnergy / m_lengthScale * ((1 + m_deltaCoefficient) * (m_compressStrength - m_tensileStrength) / 2. / m_compressStrength / m_tensileStrength)
+                     - (8 * mu + 24 * kappa - 27 * m_tensileStrength) * (m_compressStrength - m_tensileStrength) / 144. / mu / kappa
+                     - m_lengthScale / m_criticalFractureEnergy *
+                     ((mu + 3 * kappa) * (pow( m_compressStrength, 3 ) - pow( m_tensileStrength, 3 )) * m_tensileStrength / 18 / (mu * mu) / (kappa * kappa));
 
-      real64 beta2 = -0.375 * m_criticalFractureEnergy / m_lengthScale * (sqrt( 3. )*(1 + m_deltaCoefficient)*(m_compressStrength + m_tensileStrength)/2./m_compressStrength/m_tensileStrength)
-                     + (8*mu + 24*kappa - 27*m_tensileStrength)*(m_compressStrength + m_tensileStrength) / 48. / sqrt( 3. ) / mu / kappa
-                     + m_lengthScale / m_criticalFractureEnergy * ((mu + 3*kappa)*(pow( m_compressStrength, 3 ) + pow( m_tensileStrength, 3 ))*m_tensileStrength/6./sqrt( 3. )/(mu*mu)/(kappa*kappa));
+      real64 beta2 = -0.375 * m_criticalFractureEnergy / m_lengthScale *
+                     (sqrt( 3. ) * (1 + m_deltaCoefficient) * (m_compressStrength + m_tensileStrength) / 2. / m_compressStrength / m_tensileStrength)
+                     + (8 * mu + 24 * kappa - 27 * m_tensileStrength) * (m_compressStrength + m_tensileStrength) / 48. / sqrt( 3. ) / mu / kappa
+                     + m_lengthScale / m_criticalFractureEnergy *
+                     ((mu + 3 * kappa) * (pow( m_compressStrength, 3 ) + pow( m_tensileStrength, 3 )) * m_tensileStrength / 6. / sqrt( 3. ) / (mu * mu) / (kappa * kappa));
 
-      real64 beta3 = m_lengthScale * (m_tensileStrength/mu/kappa) / m_criticalFractureEnergy;
+      real64 beta3 = m_lengthScale * (m_tensileStrength / mu / kappa) / m_criticalFractureEnergy;
 
-      m_extDrivingForce( k, q ) = 1. / (1 + beta3*I1*I1) * (beta2 * sqrt_J2 + beta1*I1 + beta0);
+      m_extDrivingForce( k, q ) = 1. / (1 + beta3 * I1 * I1) * (beta2 * sqrt_J2 + beta1 * I1 + beta0);
     }
 
     LvArray::tensorOps::scale< 6 >( stress, factor );
@@ -240,9 +243,9 @@ public:
     return m_criticalStrainEnergy;
     #else
     if( m_extDrivingForceFlag )
-      return 3*m_criticalFractureEnergy/(16 * m_lengthScale) + 0.5 * m_extDrivingForce( k, q );
+      return 3 * m_criticalFractureEnergy / (16 * m_lengthScale) + 0.5 * m_extDrivingForce( k, q );
     else
-      return 3*m_criticalFractureEnergy/(16 * m_lengthScale);
+      return 3 * m_criticalFractureEnergy / (16 * m_lengthScale);
 
     #endif
 

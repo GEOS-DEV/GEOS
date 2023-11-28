@@ -174,7 +174,7 @@ typename std::enable_if< !is_packable< T >, localIndex >::type
 Pack( buffer_unit_type * & GEOS_UNUSED_PARAM( buffer ),
       T const & GEOS_UNUSED_PARAM( var ) )
 {
-  GEOS_ERROR( "Trying to pack data type ("<<typeid(T).name()<<") but type is not packable." );
+  GEOS_ERROR( "Trying to pack data type (" << typeid(T).name() << ") but type is not packable." );
   return 0;
 }
 
@@ -237,7 +237,7 @@ PackByIndex( buffer_unit_type * & GEOS_UNUSED_PARAM( buffer ),
              T const & GEOS_UNUSED_PARAM( var ),
              T_INDICES const & GEOS_UNUSED_PARAM( indices ) )
 {
-  GEOS_ERROR( "Trying to pack data type ("<<typeid(T).name()<<") but type is not packable by index." );
+  GEOS_ERROR( "Trying to pack data type (" << typeid(T).name() << ") but type is not packable by index." );
   return 0;
 }
 
@@ -314,7 +314,7 @@ typename std::enable_if< !is_packable< T >, localIndex >::type
 Unpack( buffer_unit_type const * & GEOS_UNUSED_PARAM( buffer ),
         T & GEOS_UNUSED_PARAM( var ) )
 {
-  GEOS_ERROR( "Trying to unpack data type ("<<typeid(T).name()<<") but type is not packable." );
+  GEOS_ERROR( "Trying to unpack data type (" << typeid(T).name() << ") but type is not packable." );
   return 0;
 }
 
@@ -378,7 +378,7 @@ UnpackByIndex( buffer_unit_type const * & GEOS_UNUSED_PARAM( buffer ),
                T & GEOS_UNUSED_PARAM( var ),
                T_INDICES const & GEOS_UNUSED_PARAM( indices ) )
 {
-  GEOS_ERROR( "Trying to unpack data type ("<<typeid(T).name()<<") but type is not packable by index." );
+  GEOS_ERROR( "Trying to unpack data type (" << typeid(T).name() << ") but type is not packable by index." );
   return 0;
 }
 
@@ -632,7 +632,7 @@ typename std::enable_if< !is_packable_by_index< T > &&
                          !is_map_packable_by_index< T >, localIndex >::type
 Pack( buffer_unit_type * & GEOS_UNUSED_PARAM( buffer ), T const & GEOS_UNUSED_PARAM( var ), T_INDICES const & GEOS_UNUSED_PARAM( indices ) )
 {
-  GEOS_ERROR( "Trying to pack data type ("<<typeid(T).name()<<") but type is not packable by index." );
+  GEOS_ERROR( "Trying to pack data type (" << typeid(T).name() << ") but type is not packable by index." );
   return 0;
 }
 
@@ -642,7 +642,7 @@ typename std::enable_if< !is_packable_by_index< T > &&
                          !is_map_packable_by_index< T >, localIndex >::type
 Unpack( buffer_unit_type const * & GEOS_UNUSED_PARAM( buffer ), T & GEOS_UNUSED_PARAM( var ), T_INDICES const & GEOS_UNUSED_PARAM( indices ) )
 {
-  GEOS_ERROR( "Trying to unpack data type ("<<typeid(T).name()<<") but type is not packable by index." );
+  GEOS_ERROR( "Trying to unpack data type (" << typeid(T).name() << ") but type is not packable by index." );
   return 0;
 }
 

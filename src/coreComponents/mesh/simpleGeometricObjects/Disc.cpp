@@ -61,7 +61,7 @@ bool Disc::isCoordInObject( real64 const ( &coord ) [3] ) const
   bool isInside = true;
 
   //gets the vector from coord to the center
-  real64 dummy[ 3 ] = LVARRAY_TENSOROPS_INIT_LOCAL_3( coord );
+  real64 dummy[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( coord );
   LvArray::tensorOps::subtract< 3 >( dummy, m_center );
 
   // 1. Check if point is on the plane of the disc
@@ -71,7 +71,7 @@ bool Disc::isCoordInObject( real64 const ( &coord ) [3] ) const
   }
 
   // 2. Check if it is inside the disc
-  if( LvArray::tensorOps::l2NormSquared< 3 >( dummy ) > m_radius*m_radius )
+  if( LvArray::tensorOps::l2NormSquared< 3 >( dummy ) > m_radius * m_radius )
   {
     isInside = false;
   }

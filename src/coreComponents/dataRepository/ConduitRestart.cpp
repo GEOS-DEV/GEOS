@@ -39,14 +39,14 @@ string writeRootFile( conduit::Node & root, string const & rootPath )
   {
     makeDirsForPath( completeRootPath );
 
-    root[ "protocol/name" ] = "hdf5";
-    root[ "protocol/version" ] = CONDUIT_VERSION;
+    root["protocol/name"] = "hdf5";
+    root["protocol/version"] = CONDUIT_VERSION;
 
-    root[ "number_of_files" ] = MpiWrapper::commSize();
-    root[ "file_pattern" ] = rootFileName + "/rank_%07d.hdf5";
+    root["number_of_files"] = MpiWrapper::commSize();
+    root["file_pattern"] = rootFileName + "/rank_%07d.hdf5";
 
-    root[ "number_of_trees" ] = 1;
-    root[ "tree_pattern" ] = "/";
+    root["number_of_trees"] = 1;
+    root["tree_pattern"] = "/";
 
     conduit::relay::io::save( root, completeRootPath + ".root", "hdf5" );
   }
@@ -76,7 +76,7 @@ string readRootNode( string const & rootPath )
 
   MpiWrapper::broadcast( rankFilePattern, 0 );
 
-  char buffer[ 1024 ];
+  char buffer[1024];
   GEOS_ERROR_IF_GE( std::snprintf( buffer, 1024, rankFilePattern.data(), MpiWrapper::commRank() ), 1024 );
   return buffer;
 }

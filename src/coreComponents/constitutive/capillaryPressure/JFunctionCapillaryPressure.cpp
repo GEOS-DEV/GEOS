@@ -336,7 +336,7 @@ JFunctionCapillaryPressure::createKernelWrapper()
 void JFunctionCapillaryPressure::allocateConstitutiveData( dataRepository::Group & parent,
                                                            localIndex const numConstitutivePointsPerParentIndex )
 {
-  m_jFuncMultiplier.resize( parent.size(), numFluidPhases()-1 );
+  m_jFuncMultiplier.resize( parent.size(), numFluidPhases() - 1 );
   CapillaryPressureBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 }
 

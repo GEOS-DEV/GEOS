@@ -73,12 +73,12 @@ public:
     {
       case 1:
       case 4:
-        return (1.0/30.0)*(14.0-sqrt_7_);
+        return (1.0 / 30.0) * (14.0 - sqrt_7_);
       case 2:
       case 3:
-        return (1.0/30.0)*(14.0+sqrt_7_);
+        return (1.0 / 30.0) * (14.0 + sqrt_7_);
       default:
-        return 1.0/15.0;
+        return 1.0 / 15.0;
     }
   }
 
@@ -93,7 +93,7 @@ public:
   constexpr static real64 parentSupportCoord( const localIndex supportPointIndex )
   {
 
-    real64 result=0.0;
+    real64 result = 0.0;
 
     switch( supportPointIndex )
     {
@@ -102,19 +102,19 @@ public:
         break;
 
       case 1:
-        result = -sqrt_inv21*sqrt__7_plus_2sqrt7__;
+        result = -sqrt_inv21 * sqrt__7_plus_2sqrt7__;
         break;
 
       case 2:
-        result = -sqrt_inv21*sqrt__7_mins_2sqrt7__;
+        result = -sqrt_inv21 * sqrt__7_mins_2sqrt7__;
         break;
 
       case 3:
-        result = sqrt_inv21*sqrt__7_mins_2sqrt7__;
+        result = sqrt_inv21 * sqrt__7_mins_2sqrt7__;
         break;
 
       case 4:
-        result = sqrt_inv21*sqrt__7_plus_2sqrt7__;
+        result = sqrt_inv21 * sqrt__7_plus_2sqrt7__;
         break;
 
       case 5:
@@ -141,7 +141,7 @@ public:
                                  const real64 xi )
   {
 
-    real64 result=0.0;
+    real64 result = 0.0;
 
     switch( index )
     {
@@ -190,11 +190,11 @@ public:
     /* Define the two GL points needed to compute the basis function at point index 0. Here we need the points
        at index 3,4 called lambda3, lambda4. */
 
-    real64 lambda4=LagrangeBasis5GL::parentSupportCoord( 4 );
-    real64 lambda3=LagrangeBasis5GL::parentSupportCoord( 3 );
+    real64 lambda4 = LagrangeBasis5GL::parentSupportCoord( 4 );
+    real64 lambda3 = LagrangeBasis5GL::parentSupportCoord( 3 );
 
-    return (-21.0/16.0)*(xi*xi*xi*xi*xi-xi*xi*xi*xi-(lambda3*lambda3+lambda4*lambda4)*xi*xi*xi+(lambda3*lambda3+lambda4*lambda4)*xi*xi+
-                         lambda3*lambda3*lambda4*lambda4*xi-lambda3*lambda3*lambda4*lambda4);
+    return (-21.0 / 16.0) * (xi * xi * xi * xi * xi - xi * xi * xi * xi - (lambda3 * lambda3 + lambda4 * lambda4) * xi * xi * xi + (lambda3 * lambda3 + lambda4 * lambda4) * xi * xi +
+                             lambda3 * lambda3 * lambda4 * lambda4 * xi - lambda3 * lambda3 * lambda4 * lambda4);
   }
 
 
@@ -210,11 +210,11 @@ public:
     /* Define the two GL points needed to compute the basis function at point index 1. Here we need the points
        at index 3 and 4 called lambda3, lambda4. */
 
-    real64 lambda3=LagrangeBasis5GL::parentSupportCoord( 3 );
-    real64 lambda4=LagrangeBasis5GL::parentSupportCoord( 4 );
+    real64 lambda3 = LagrangeBasis5GL::parentSupportCoord( 3 );
+    real64 lambda4 = LagrangeBasis5GL::parentSupportCoord( 4 );
 
-    return ((21.0/16.0)*sqrt__7_mins_sqrt7_div2__)*(xi*xi*xi*xi*xi-lambda4*xi*xi*xi*xi-(lambda3*lambda3+1)*xi*xi*xi+lambda4*(lambda3*lambda3+1)*xi*xi+
-                                                    lambda3*lambda3*xi-lambda4*lambda3*lambda3);
+    return ((21.0 / 16.0) * sqrt__7_mins_sqrt7_div2__) * (xi * xi * xi * xi * xi - lambda4 * xi * xi * xi * xi - (lambda3 * lambda3 + 1) * xi * xi * xi + lambda4 * (lambda3 * lambda3 + 1) * xi * xi +
+                                                          lambda3 * lambda3 * xi - lambda4 * lambda3 * lambda3);
   }
 
 /**
@@ -229,11 +229,11 @@ public:
     /* Define the two GL points needed to compute the basis function at point index 2. Here we need the points
        at index 3 and 4 called lambda3, lambda4. */
 
-    real64 lambda4=LagrangeBasis5GL::parentSupportCoord( 4 );
-    real64 lambda3=LagrangeBasis5GL::parentSupportCoord( 3 );
+    real64 lambda4 = LagrangeBasis5GL::parentSupportCoord( 4 );
+    real64 lambda3 = LagrangeBasis5GL::parentSupportCoord( 3 );
 
-    return ((-21.0/16.0)*sqrt__7_plus_sqrt7_div2__)*(xi*xi*xi*xi*xi-lambda3*xi*xi*xi*xi-(lambda4*lambda4+1)*xi*xi*xi+lambda3*(lambda4*lambda4+1)*xi*xi+
-                                                     lambda4*lambda4*xi-lambda3*lambda4*lambda4);
+    return ((-21.0 / 16.0) * sqrt__7_plus_sqrt7_div2__) * (xi * xi * xi * xi * xi - lambda3 * xi * xi * xi * xi - (lambda4 * lambda4 + 1) * xi * xi * xi + lambda3 * (lambda4 * lambda4 + 1) * xi * xi +
+                                                           lambda4 * lambda4 * xi - lambda3 * lambda4 * lambda4);
   }
 
 /**
@@ -248,11 +248,11 @@ public:
     /* Define the two GL points needed to compute the basis function at point index 3. Here we need the points
        at index 3 and 4 called lambda1, lambda2. */
 
-    real64 lambda4=LagrangeBasis5GL::parentSupportCoord( 4 );
-    real64 lambda3=LagrangeBasis5GL::parentSupportCoord( 3 );
+    real64 lambda4 = LagrangeBasis5GL::parentSupportCoord( 4 );
+    real64 lambda3 = LagrangeBasis5GL::parentSupportCoord( 3 );
 
-    return ((21.0/16.0)*sqrt__7_plus_sqrt7_div2__)*(xi*xi*xi*xi*xi+lambda3*xi*xi*xi*xi-(lambda4*lambda4+1)*xi*xi*xi-lambda3*(lambda4*lambda4+1)*xi*xi+
-                                                    lambda4*lambda4*xi+lambda3*lambda4*lambda4);
+    return ((21.0 / 16.0) * sqrt__7_plus_sqrt7_div2__) * (xi * xi * xi * xi * xi + lambda3 * xi * xi * xi * xi - (lambda4 * lambda4 + 1) * xi * xi * xi - lambda3 * (lambda4 * lambda4 + 1) * xi * xi +
+                                                          lambda4 * lambda4 * xi + lambda3 * lambda4 * lambda4);
   }
 
 /**
@@ -267,11 +267,11 @@ public:
     /* Define the two GL points needed to compute the basis function at point index 4. Here we need the points
        at index 3 and 4 called lambda3, lambda4. */
 
-    real64 lambda4=LagrangeBasis5GL::parentSupportCoord( 4 );
-    real64 lambda3=LagrangeBasis5GL::parentSupportCoord( 3 );
+    real64 lambda4 = LagrangeBasis5GL::parentSupportCoord( 4 );
+    real64 lambda3 = LagrangeBasis5GL::parentSupportCoord( 3 );
 
-    return ((-21.0/16.0)*sqrt__7_mins_sqrt7_div2__)*(xi*xi*xi*xi*xi+lambda4*xi*xi*xi*xi-(lambda3*lambda3+1)*xi*xi*xi-lambda4*(lambda3*lambda3+1)*xi*xi+
-                                                     lambda3*lambda3*xi+lambda4*lambda3*lambda3);
+    return ((-21.0 / 16.0) * sqrt__7_mins_sqrt7_div2__) * (xi * xi * xi * xi * xi + lambda4 * xi * xi * xi * xi - (lambda3 * lambda3 + 1) * xi * xi * xi - lambda4 * (lambda3 * lambda3 + 1) * xi * xi +
+                                                           lambda3 * lambda3 * xi + lambda4 * lambda3 * lambda3);
   }
 
 /**
@@ -286,11 +286,11 @@ public:
     /* Define the two GL points needed to compute the basis function at point index 5. Here we need the points
        at index 3 and 4 called lambda3, lambda4. */
 
-    real64 lambda3=LagrangeBasis5GL::parentSupportCoord( 3 );
-    real64 lambda4=LagrangeBasis5GL::parentSupportCoord( 4 );
+    real64 lambda3 = LagrangeBasis5GL::parentSupportCoord( 3 );
+    real64 lambda4 = LagrangeBasis5GL::parentSupportCoord( 4 );
 
-    return (21.0/16.0)*(xi*xi*xi*xi*xi+xi*xi*xi*xi-(lambda4*lambda4+lambda3*lambda3)*xi*xi*xi-(lambda3*lambda3+lambda4*lambda4)*xi*xi+
-                        lambda3*lambda3*lambda4*lambda4*xi+lambda4*lambda4*lambda3*lambda3);
+    return (21.0 / 16.0) * (xi * xi * xi * xi * xi + xi * xi * xi * xi - (lambda4 * lambda4 + lambda3 * lambda3) * xi * xi * xi - (lambda3 * lambda3 + lambda4 * lambda4) * xi * xi +
+                            lambda3 * lambda3 * lambda4 * lambda4 * xi + lambda4 * lambda4 * lambda3 * lambda3);
   }
 
   /**
@@ -307,7 +307,7 @@ public:
                                     const real64 xi )
   {
 
-    real64 result=0.0;
+    real64 result = 0.0;
 
     switch( index )
     {
@@ -354,10 +354,12 @@ public:
   constexpr static real64 gradient0( const real64 xi )
   {
 
-    real64 lambda4=LagrangeBasis5GL::parentSupportCoord( 4 );
-    real64 lambda3=LagrangeBasis5GL::parentSupportCoord( 3 );
+    real64 lambda4 = LagrangeBasis5GL::parentSupportCoord( 4 );
+    real64 lambda3 = LagrangeBasis5GL::parentSupportCoord( 3 );
 
-    return (-21.0/16.0)*(5.0*xi*xi*xi*xi-4.0*xi*xi*xi-3.0*(lambda3*lambda3+lambda4*lambda4)*xi*xi+2.0*(lambda3*lambda3+lambda4*lambda4)*xi+lambda3*lambda3*lambda4*lambda4);
+    return (-21.0 / 16.0) *
+           (5.0 * xi * xi * xi * xi - 4.0 * xi * xi * xi - 3.0 * (lambda3 * lambda3 + lambda4 * lambda4) * xi * xi + 2.0 * (lambda3 * lambda3 + lambda4 * lambda4) * xi + lambda3 * lambda3 * lambda4 *
+            lambda4);
 
   }
 
@@ -372,10 +374,11 @@ public:
   constexpr static real64 gradient1( const real64 xi )
   {
 
-    real64 lambda3=LagrangeBasis5GL::parentSupportCoord( 3 );
-    real64 lambda4=LagrangeBasis5GL::parentSupportCoord( 4 );
+    real64 lambda3 = LagrangeBasis5GL::parentSupportCoord( 3 );
+    real64 lambda4 = LagrangeBasis5GL::parentSupportCoord( 4 );
 
-    return (21.0/16.0)*sqrt__7_mins_sqrt7_div2__*(5.0*xi*xi*xi*xi-4.0*lambda4*xi*xi*xi-3.0*(lambda3*lambda3+1.0)*xi*xi+2.0*lambda4*(lambda3*lambda3+1.0)*xi+lambda3*lambda3);
+    return (21.0 / 16.0) * sqrt__7_mins_sqrt7_div2__ *
+           (5.0 * xi * xi * xi * xi - 4.0 * lambda4 * xi * xi * xi - 3.0 * (lambda3 * lambda3 + 1.0) * xi * xi + 2.0 * lambda4 * (lambda3 * lambda3 + 1.0) * xi + lambda3 * lambda3);
 
   }
 
@@ -390,10 +393,11 @@ public:
   constexpr static real64 gradient2( const real64 xi )
   {
 
-    real64 lambda4=LagrangeBasis5GL::parentSupportCoord( 4 );
-    real64 lambda3=LagrangeBasis5GL::parentSupportCoord( 3 );
+    real64 lambda4 = LagrangeBasis5GL::parentSupportCoord( 4 );
+    real64 lambda3 = LagrangeBasis5GL::parentSupportCoord( 3 );
 
-    return (-21.0/16.0)*sqrt__7_plus_sqrt7_div2__*(5.0*xi*xi*xi*xi-4.0*lambda3*xi*xi*xi-3.0*(lambda4*lambda4+1.0)*xi*xi+2.0*lambda3*(lambda4*lambda4+1.0)*xi+lambda4*lambda4);
+    return (-21.0 / 16.0) * sqrt__7_plus_sqrt7_div2__ *
+           (5.0 * xi * xi * xi * xi - 4.0 * lambda3 * xi * xi * xi - 3.0 * (lambda4 * lambda4 + 1.0) * xi * xi + 2.0 * lambda3 * (lambda4 * lambda4 + 1.0) * xi + lambda4 * lambda4);
 
   }
 
@@ -408,10 +412,11 @@ public:
   constexpr static real64 gradient3( const real64 xi )
   {
 
-    real64 lambda4=LagrangeBasis5GL::parentSupportCoord( 4 );
-    real64 lambda3=LagrangeBasis5GL::parentSupportCoord( 3 );
+    real64 lambda4 = LagrangeBasis5GL::parentSupportCoord( 4 );
+    real64 lambda3 = LagrangeBasis5GL::parentSupportCoord( 3 );
 
-    return (21.0/16.0)*sqrt__7_plus_sqrt7_div2__*(5.0*xi*xi*xi*xi+4.0*lambda3*xi*xi*xi-3.0*(lambda4*lambda4+1.0)*xi*xi-2*lambda3*(lambda4*lambda4+1.0)*xi+lambda4*lambda4);
+    return (21.0 / 16.0) * sqrt__7_plus_sqrt7_div2__ *
+           (5.0 * xi * xi * xi * xi + 4.0 * lambda3 * xi * xi * xi - 3.0 * (lambda4 * lambda4 + 1.0) * xi * xi - 2 * lambda3 * (lambda4 * lambda4 + 1.0) * xi + lambda4 * lambda4);
 
   }
 
@@ -426,10 +431,11 @@ public:
   constexpr static real64 gradient4( const real64 xi )
   {
 
-    real64 lambda4=LagrangeBasis5GL::parentSupportCoord( 4 );
-    real64 lambda3=LagrangeBasis5GL::parentSupportCoord( 3 );
+    real64 lambda4 = LagrangeBasis5GL::parentSupportCoord( 4 );
+    real64 lambda3 = LagrangeBasis5GL::parentSupportCoord( 3 );
 
-    return (-21.0/16.0)*sqrt__7_mins_sqrt7_div2__*(5.0*xi*xi*xi*xi+4.0*lambda4*xi*xi*xi-3.0*(lambda3*lambda3+1.0)*xi*xi-2.0*lambda4*(lambda3*lambda3+1.0)*xi+lambda3*lambda3);
+    return (-21.0 / 16.0) * sqrt__7_mins_sqrt7_div2__ *
+           (5.0 * xi * xi * xi * xi + 4.0 * lambda4 * xi * xi * xi - 3.0 * (lambda3 * lambda3 + 1.0) * xi * xi - 2.0 * lambda4 * (lambda3 * lambda3 + 1.0) * xi + lambda3 * lambda3);
   }
 
   /**
@@ -443,10 +449,12 @@ public:
   constexpr static real64 gradient5( const real64 xi )
   {
 
-    real64 lambda4=LagrangeBasis5GL::parentSupportCoord( 4 );
-    real64 lambda3=LagrangeBasis5GL::parentSupportCoord( 3 );
+    real64 lambda4 = LagrangeBasis5GL::parentSupportCoord( 4 );
+    real64 lambda3 = LagrangeBasis5GL::parentSupportCoord( 3 );
 
-    return (21.0/16.0)*(5.0*xi*xi*xi*xi+4.0*xi*xi*xi-3.0*(lambda3*lambda3+lambda4*lambda4)*xi*xi-2.0*(lambda3*lambda3+lambda4*lambda4)*xi+lambda3*lambda3*lambda4*lambda4);
+    return (21.0 / 16.0) *
+           (5.0 * xi * xi * xi * xi + 4.0 * xi * xi * xi - 3.0 * (lambda3 * lambda3 + lambda4 * lambda4) * xi * xi - 2.0 * (lambda3 * lambda3 + lambda4 * lambda4) * xi + lambda3 * lambda3 * lambda4 *
+            lambda4);
 
   }
 
@@ -521,9 +529,9 @@ public:
                                       int & i1 )
     {
 
-      i1 = linearIndex/6;
+      i1 = linearIndex / 6;
 
-      i0 = linearIndex%6;
+      i0 = linearIndex % 6;
 
     }
 
@@ -539,13 +547,13 @@ public:
     static void value( const real64 (& coords)[2],
                        real64 (& N)[numSupportPoints] )
     {
-      for( int a=0; a<6; ++a )
+      for( int a = 0; a < 6; ++a )
       {
-        for( int b=0; b<6; ++b )
+        for( int b = 0; b < 6; ++b )
         {
           const int lindex = LagrangeBasis5GL::TensorProduct2D::linearIndex( a, b );
-          N[ lindex ] = LagrangeBasis5GL::value( a, coords[0] ) *
-                        LagrangeBasis5GL::value( b, coords[1] );
+          N[lindex] = LagrangeBasis5GL::value( a, coords[0] ) *
+                      LagrangeBasis5GL::value( b, coords[1] );
         }
       }
     }
@@ -639,11 +647,11 @@ public:
                                       int & i2 )
     {
 
-      i2 = linearIndex/36;
+      i2 = linearIndex / 36;
 
-      i1 = (linearIndex%36)/6;
+      i1 = (linearIndex % 36) / 6;
 
-      i0 = (linearIndex%36)%6;
+      i0 = (linearIndex % 36) % 6;
 
     }
 
@@ -659,16 +667,16 @@ public:
     static void value( const real64 (& coords)[3],
                        real64 (& N)[numSupportPoints] )
     {
-      for( int a=0; a<6; ++a )
+      for( int a = 0; a < 6; ++a )
       {
-        for( int b=0; b<6; ++b )
+        for( int b = 0; b < 6; ++b )
         {
-          for( int c=0; c<6; ++c )
+          for( int c = 0; c < 6; ++c )
           {
             const int lindex = LagrangeBasis5GL::TensorProduct3D::linearIndex( a, b, c );
-            N[ lindex ] = LagrangeBasis5GL::value( a, coords[0] ) *
-                          LagrangeBasis5GL::value( b, coords[1] ) *
-                          LagrangeBasis5GL::value( c, coords[2] );
+            N[lindex] = LagrangeBasis5GL::value( a, coords[0] ) *
+                        LagrangeBasis5GL::value( b, coords[1] ) *
+                        LagrangeBasis5GL::value( c, coords[2] );
           }
         }
       }

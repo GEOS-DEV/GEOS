@@ -145,7 +145,7 @@ void verifyDataFileContext( DataFileContext const & fileContext,
   EXPECT_EQ( strToVerify, buffer->substr( fileContext.getOffset(), strToVerify.size() ) ) << errInfo;
 
   // Were trying to reach the line return by DataFileContext::getLine()
-  for( size_t offset=0;
+  for( size_t offset = 0;
        offset < buffer->size() && curLine < fileContext.getLine();
        ++offset )
   {

@@ -50,9 +50,9 @@ public:
                        arraySlice1d< real64 const > const & laggedTotalVelocityComponents ) const override
   {
     real64 const velocityNorm =
-      sqrt( laggedTotalVelocityComponents[0]*laggedTotalVelocityComponents[0]
-            + laggedTotalVelocityComponents[1]*laggedTotalVelocityComponents[1]
-            + laggedTotalVelocityComponents[2]*laggedTotalVelocityComponents[2] );
+      sqrt( laggedTotalVelocityComponents[0] * laggedTotalVelocityComponents[0]
+            + laggedTotalVelocityComponents[1] * laggedTotalVelocityComponents[1]
+            + laggedTotalVelocityComponents[2] * laggedTotalVelocityComponents[2] );
     for( integer i = 0; i < 3; ++i )
     {
       m_dispersivity[k][q][i] = m_longitudinalDispersivity * velocityNorm;

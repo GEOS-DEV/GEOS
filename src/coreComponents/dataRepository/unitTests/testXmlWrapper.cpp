@@ -89,28 +89,28 @@ TEST( testXmlWrapper, array3d )
   localIndex numI = 4;
   localIndex numJ = 5;
   localIndex numK = 3;
-  for( localIndex i=0; i<4; ++i )
+  for( localIndex i = 0; i < 4; ++i )
   {
     input += "{ ";
-    for( localIndex j=0; j<5; ++j )
+    for( localIndex j = 0; j < 5; ++j )
     {
       input += "{ ";
-      for( localIndex k=0; k<3; ++k )
+      for( localIndex k = 0; k < 3; ++k )
       {
-        input += std::to_string( i*2+j*3+k*4 );
-        if( k<(numK-1) )
+        input += std::to_string( i * 2 + j * 3 + k * 4 );
+        if( k < (numK - 1) )
         {
           input += " , ";
         }
       }
       input += " }";
-      if( j<(numJ-1) )
+      if( j < (numJ - 1) )
       {
         input += " , ";
       }
     }
     input += " }";
-    if( i<(numI-1) )
+    if( i < (numI - 1) )
     {
       input += " , ";
     }
@@ -124,13 +124,13 @@ TEST( testXmlWrapper, array3d )
   ASSERT_EQ( array.size( 1 ), numJ );
   ASSERT_EQ( array.size( 2 ), numK );
 
-  for( localIndex i=0; i<array.size( 0 ); ++i )
+  for( localIndex i = 0; i < array.size( 0 ); ++i )
   {
-    for( localIndex j=0; j<array.size( 1 ); ++j )
+    for( localIndex j = 0; j < array.size( 1 ); ++j )
     {
-      for( localIndex k=0; k<array.size( 2 ); ++k )
+      for( localIndex k = 0; k < array.size( 2 ); ++k )
       {
-        ASSERT_EQ( array[i][j][k], i*2+j*3+k*4 );
+        ASSERT_EQ( array[i][j][k], i * 2 + j * 3 + k * 4 );
       }
     }
   }

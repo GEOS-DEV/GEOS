@@ -121,13 +121,13 @@ void UniformStrainHexahedron::reinit( const std::vector< R1TensorT< 3 > > & mapp
   CalculateShapeFunctionDerivative( x, y, b[2] );
 
   data[q].jacobian_determinant = 0.0;
-  for( int a=0; a<8; ++a )
+  for( int a = 0; a < 8; ++a )
   {
-    data[q].jacobian_determinant += x[a]*b[0][a] + y[a]*b[1][a] + z[a]*b[2][a];
+    data[q].jacobian_determinant += x[a] * b[0][a] + y[a] * b[1][a] + z[a] * b[2][a];
   }
   data[q].jacobian_determinant /= 3.0;
 
-  for( int a=0; a<8; ++a )
+  for( int a = 0; a < 8; ++a )
   {
     data[q].mapped_gradients[a]( 0 ) = b[0][m_nodeOrdering[a]] / data[q].jacobian_determinant;
     data[q].mapped_gradients[a]( 1 ) = b[1][m_nodeOrdering[a]] / data[q].jacobian_determinant;
@@ -180,63 +180,63 @@ void CalculateShapeFunctionDerivative( const real64 y[8],
   const real64 z5 = z[5];
   const real64 z6 = z[6];
   const real64 z7 = z[7];
-  const real64 twelfth = 1.0/12.0;
+  const real64 twelfth = 1.0 / 12.0;
 
-  b[0] = ( y1*((z5-z2)-(z3-z4))
-           +y2*(z1-z3)
-           +y3*((z2-z7)-(z4-z1))
-           +y4*((z7-z5)-(z1-z3))
-           +y5*(z4-z1)
-           +y7*(z3-z4) )*twelfth;
+  b[0] = ( y1 * ((z5 - z2) - (z3 - z4))
+           + y2 * (z1 - z3)
+           + y3 * ((z2 - z7) - (z4 - z1))
+           + y4 * ((z7 - z5) - (z1 - z3))
+           + y5 * (z4 - z1)
+           + y7 * (z3 - z4) ) * twelfth;
 
-  b[1] = ( y2*((z6-z3)-(z0-z5))
-           +y3*(z2-z0)
-           +y0*((z3-z4)-(z5-z2))
-           +y5*((z4-z6)-(z2-z0))
-           +y6*(z5-z2)
-           +y4*(z0-z5) )*twelfth;
+  b[1] = ( y2 * ((z6 - z3) - (z0 - z5))
+           + y3 * (z2 - z0)
+           + y0 * ((z3 - z4) - (z5 - z2))
+           + y5 * ((z4 - z6) - (z2 - z0))
+           + y6 * (z5 - z2)
+           + y4 * (z0 - z5) ) * twelfth;
 
-  b[2] = ( y3*((z7-z0)-(z1-z6))
-           +y0*(z3-z1)
-           +y1*((z0-z5)-(z6-z3))
-           +y6*((z5-z7)-(z3-z1))
-           +y7*(z6-z3)
-           +y5*(z1-z6))*twelfth;
+  b[2] = ( y3 * ((z7 - z0) - (z1 - z6))
+           + y0 * (z3 - z1)
+           + y1 * ((z0 - z5) - (z6 - z3))
+           + y6 * ((z5 - z7) - (z3 - z1))
+           + y7 * (z6 - z3)
+           + y5 * (z1 - z6)) * twelfth;
 
-  b[3] = ( y0*((z4-z1)-(z2-z7))
-           +y1*(z0-z2)
-           +y2*((z1-z6)-(z7-z0))
-           +y7*((z6-z4)-(z0-z2))
-           +y4*(z7-z0)
-           +y6*(z2-z7))*twelfth;
+  b[3] = ( y0 * ((z4 - z1) - (z2 - z7))
+           + y1 * (z0 - z2)
+           + y2 * ((z1 - z6) - (z7 - z0))
+           + y7 * ((z6 - z4) - (z0 - z2))
+           + y4 * (z7 - z0)
+           + y6 * (z2 - z7)) * twelfth;
 
-  b[4] = ( y7*((z3-z6)-(z5-z0))
-           +y6*(z7-z5)
-           +y5*((z6-z1)-(z0-z7))
-           +y0*((z1-z3)-(z7-z5))
-           +y3*(z0-z7)
-           +y1*(z5-z0))*twelfth;
+  b[4] = ( y7 * ((z3 - z6) - (z5 - z0))
+           + y6 * (z7 - z5)
+           + y5 * ((z6 - z1) - (z0 - z7))
+           + y0 * ((z1 - z3) - (z7 - z5))
+           + y3 * (z0 - z7)
+           + y1 * (z5 - z0)) * twelfth;
 
-  b[5] = ( y4*((z0-z7)-(z6-z1))
-           +y7*(z4-z6)
-           +y6*((z7-z2)-(z1-z4))
-           +y1*((z2-z0)-(z4-z6))
-           +y0*(z1-z4)
-           +y2*(z6-z1))*twelfth;
+  b[5] = ( y4 * ((z0 - z7) - (z6 - z1))
+           + y7 * (z4 - z6)
+           + y6 * ((z7 - z2) - (z1 - z4))
+           + y1 * ((z2 - z0) - (z4 - z6))
+           + y0 * (z1 - z4)
+           + y2 * (z6 - z1)) * twelfth;
 
-  b[6] = ( y5*((z1-z4)-(z7-z2))
-           +y4*(z5-z7)
-           +y7*((z4-z3)-(z2-z5))
-           +y2*((z3-z1)-(z5-z7))
-           +y1*(z2-z5)
-           +y3*(z7-z2))*twelfth;
+  b[6] = ( y5 * ((z1 - z4) - (z7 - z2))
+           + y4 * (z5 - z7)
+           + y7 * ((z4 - z3) - (z2 - z5))
+           + y2 * ((z3 - z1) - (z5 - z7))
+           + y1 * (z2 - z5)
+           + y3 * (z7 - z2)) * twelfth;
 
-  b[7] = ( y6*((z2-z5)-(z4-z3))
-           +y5*(z6-z4)
-           +y4*((z5-z0)-(z3-z6))
-           +y3*((z0-z2)-(z6-z4))
-           +y2*(z3-z6)
-           +y0*(z4-z3))*twelfth;
+  b[7] = ( y6 * ((z2 - z5) - (z4 - z3))
+           + y5 * (z6 - z4)
+           + y4 * ((z5 - z0) - (z3 - z6))
+           + y3 * ((z0 - z2) - (z6 - z4))
+           + y2 * (z3 - z6)
+           + y0 * (z4 - z3)) * twelfth;
 }
 
 #define WRITEOUT 0
@@ -257,18 +257,18 @@ void CalculateFBHourGlassModes( const array1d< R1Tensor > & xpos,
 
 
   // compute the hourglass modes
-  for( int mode=0; mode<4; ++mode )
+  for( int mode = 0; mode < 4; ++mode )
   {
     xGamma = 0;
 
-    for( int a=0; a<8; ++a )
+    for( int a = 0; a < 8; ++a )
     {
       temp = xpos( a );
       temp *= Gamma[mode][a];
       xGamma += temp;
     }
 
-    for( int a=0; a<8; ++a )
+    for( int a = 0; a < 8; ++a )
     {
       gamma[mode][a] = Gamma[mode][a] - Dot( dNdx( a ), xGamma );
     }
@@ -296,15 +296,15 @@ CalcFBHourForce( const array1d< R1Tensor > & vel,
   const real64 BB = Dot( dNdx[0], dNdx[0] ) + Dot( dNdx[1], dNdx[1] ) + Dot( dNdx[2], dNdx[2] ) + Dot( dNdx[3], dNdx[3] ) +
                     Dot( dNdx[4], dNdx[4] ) + Dot( dNdx[5], dNdx[5] ) + Dot( dNdx[6], dNdx[6] ) + Dot( dNdx[7], dNdx[7] );
 
-  const real64 Cdamp  = dampcoef * sqrt( rho*modulus*BB / 6.0 ) * volume;
+  const real64 Cdamp  = dampcoef * sqrt( rho * modulus * BB / 6.0 ) * volume;
 
   const real64 Cstiff = stiffcoef * modulus * BB * volume / 3.0;
 
-  for( int mode=0; mode<4; ++mode )
+  for( int mode = 0; mode < 4; ++mode )
   {
     R1Tensor temp;
     q[mode] = 0.0;
-    for( int a=0; a<8; ++a )
+    for( int a = 0; a < 8; ++a )
     {
       R1Tensor temp2;
       temp2 = vel( a );
@@ -312,7 +312,7 @@ CalcFBHourForce( const array1d< R1Tensor > & vel,
       q[mode] += temp2;
     }
 
-    q[mode] *= 1.0/sqrt( 8.0 );
+    q[mode] *= 1.0 / sqrt( 8.0 );
 
     temp = q[mode];
     temp *= Cstiff * dt;
@@ -320,13 +320,13 @@ CalcFBHourForce( const array1d< R1Tensor > & vel,
 
     q[mode] *= Cdamp;
     q[mode] += Qstiffness[mode];
-    q[mode] *= 1.0/sqrt( 8.0 );
+    q[mode] *= 1.0 / sqrt( 8.0 );
   }
 
   hgforce = 0.0;
-  for( int a=0; a<8; ++a )
+  for( int a = 0; a < 8; ++a )
   {
-    for( int mode=0; mode<4; ++mode )
+    for( int mode = 0; mode < 4; ++mode )
     {
       R1Tensor temp  = q[mode];
       temp *= gamma[mode][a];

@@ -61,16 +61,16 @@ inline
 void ExplicitFiniteStrain< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::setup( localIndex const k,
                                                                                 StackVariables & stack ) const
 {
-  for( localIndex a=0; a< numNodesPerElem; ++a )
+  for( localIndex a = 0; a < numNodesPerElem; ++a )
   {
     localIndex const nodeIndex = m_elemsToNodes( k, a );
-    for( int i=0; i<numDofPerTrialSupportPoint; ++i )
+    for( int i = 0; i < numDofPerTrialSupportPoint; ++i )
     {
 #if defined(CALC_FEM_SHAPE_IN_KERNEL)
-      stack.xLocal[ a ][ i ] = m_X[ nodeIndex ][ i ];
+      stack.xLocal[a][i] = m_X[nodeIndex][i];
 #endif
-      stack.uLocal[ a ][ i ] = m_u[ nodeIndex ][ i ];
-      stack.varLocal[ a ][ i ] = m_vel[ nodeIndex ][ i ];
+      stack.uLocal[a][i] = m_u[nodeIndex][i];
+      stack.varLocal[a][i] = m_vel[nodeIndex][i];
     }
   }
 }
@@ -84,7 +84,7 @@ void ExplicitFiniteStrain< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::quadrat
                                                                                                 localIndex const q,
                                                                                                 StackVariables & stack ) const
 {
-  real64 dNdX[ numNodesPerElem ][ 3 ];
+  real64 dNdX[numNodesPerElem][3];
   real64 const detJ = m_finiteElementSpace.template getGradN< FE_TYPE >( k, q, stack.xLocal, dNdX );
 
   real64 dUhatdX[3][3] = { {0} };
@@ -113,16 +113,16 @@ void ExplicitFiniteStrain< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::quadrat
   LvArray::tensorOps::addIdentity< 3 >( F, 1.0 );
   real64 const detF = LvArray::tensorOps::invert< 3 >( fInv, F );
 
-  real64 Rot[ 3 ][ 3 ]{};
-  real64 Dadt[ 6 ]{};
+  real64 Rot[3][3]{};
+  real64 Dadt[6]{};
   HughesWinget( Rot, Dadt, Ldt );
 
-  real64 stress[ 6 ]{};
+  real64 stress[6]{};
   constitutive::SolidUtilities::
     hypoUpdate_StressOnly( m_constitutiveUpdate,
                            k, q, m_dt, Dadt, Rot, stress );
 
-  real64 P[ 3 ][ 3 ]{};
+  real64 P[3][3]{};
   LvArray::tensorOps::Rij_eq_symAikBjk< 3 >( P, stress, fInv );
   LvArray::tensorOps::scale< 3, 3 >( P, -detJ * detF );
 

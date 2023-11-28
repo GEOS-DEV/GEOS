@@ -476,14 +476,14 @@ public:
         }
 
         // populate local flux vector and derivatives
-        stack.localFlux[k[0]*numEqn] += m_dt * fluxVal;
-        stack.localFlux[k[1]*numEqn] -= m_dt * fluxVal;
+        stack.localFlux[k[0] * numEqn] += m_dt * fluxVal;
+        stack.localFlux[k[1] * numEqn] -= m_dt * fluxVal;
 
         for( integer ke = 0; ke < 2; ++ke )
         {
           localIndex const localDofIndexPres = k[ke] * numDof;
-          stack.localFluxJacobian[k[0]*numEqn][localDofIndexPres] += m_dt * dFlux_dP[ke];
-          stack.localFluxJacobian[k[1]*numEqn][localDofIndexPres] -= m_dt * dFlux_dP[ke];
+          stack.localFluxJacobian[k[0] * numEqn][localDofIndexPres] += m_dt * dFlux_dP[ke];
+          stack.localFluxJacobian[k[1] * numEqn][localDofIndexPres] -= m_dt * dFlux_dP[ke];
         }
 
         // Customize the kernel with this lambda

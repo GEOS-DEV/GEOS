@@ -98,7 +98,7 @@ void parseFile( string const & filename,
 {
   // Read file and process in 16kb chunks
   std::size_t constexpr BUF_SIZE = 16384;
-  char buf[BUF_SIZE+1];
+  char buf[BUF_SIZE + 1];
   buf[BUF_SIZE] = '\0'; // safe padding for strtol
 
   std::ifstream inputStream( filename );

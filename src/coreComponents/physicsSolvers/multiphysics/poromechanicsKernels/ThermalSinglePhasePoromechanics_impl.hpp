@@ -87,7 +87,7 @@ setup( localIndex const k,
        StackVariables & stack ) const
 {
   Base::setup( k, stack );
-  stack.localTemperatureDofIndex = m_flowDofNumber[k]+1;
+  stack.localTemperatureDofIndex = m_flowDofNumber[k] + 1;
   stack.temperature = m_temperature[k];
   stack.deltaTemperatureFromLastStep = m_temperature[k] - m_temperature_n[k];
 }
@@ -403,7 +403,7 @@ complete( localIndex const k,
   {
     for( integer dim = 0; dim < numDofPerTestSupportPoint; ++dim )
     {
-      localIndex const dof = LvArray::integerConversion< localIndex >( stack.localRowDofIndex[numDofPerTestSupportPoint*localNode + dim] - m_dofRankOffset );
+      localIndex const dof = LvArray::integerConversion< localIndex >( stack.localRowDofIndex[numDofPerTestSupportPoint * localNode + dim] - m_dofRankOffset );
 
       // we need this check to filter out ghost nodes in the assembly
       if( dof < 0 || dof >= m_matrix.numRows() )
@@ -477,7 +477,7 @@ kernelLaunch( localIndex const numElems,
     typename KERNEL_TYPE::StackVariables stack;
 
     kernelComponent.setup( k, stack );
-    for( integer q=0; q<KERNEL_TYPE::numQuadraturePointsPerElem; ++q )
+    for( integer q = 0; q < KERNEL_TYPE::numQuadraturePointsPerElem; ++q )
     {
       kernelComponent.quadraturePointKernel( k, q, stack );
     }

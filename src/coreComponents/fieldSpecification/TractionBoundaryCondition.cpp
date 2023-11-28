@@ -166,7 +166,7 @@ void TractionBoundaryCondition::launch( real64 const time,
   {
     forAll< parallelDevicePolicy<> >( targetSet.size(), [=] GEOS_HOST_DEVICE ( localIndex const i )
     {
-      localIndex const kf = targetSet[ i ];
+      localIndex const kf = targetSet[i];
       localIndex const numNodes = faceToNodeMap.sizeOfArray( kf );
 
       // TODO consider dispatch if appropriate
@@ -206,14 +206,14 @@ void TractionBoundaryCondition::launch( real64 const time,
       traction[1] *= faceArea[kf] / numNodes;
       traction[2] *= faceArea[kf] / numNodes;
 
-      for( localIndex a=0; a<numNodes; ++a )
+      for( localIndex a = 0; a < numNodes; ++a )
       {
-        localIndex const dof = blockLocalDofNumber[ faceToNodeMap( kf, a ) ] - dofRankOffset;
+        localIndex const dof = blockLocalDofNumber[faceToNodeMap( kf, a )] - dofRankOffset;
         if( dof < 0 || dof >= localRhs.size() )
           continue;
-        RAJA::atomicAdd< parallelDeviceAtomic >( &localRhs[dof+0], traction[0] );
-        RAJA::atomicAdd< parallelDeviceAtomic >( &localRhs[dof+1], traction[1] );
-        RAJA::atomicAdd< parallelDeviceAtomic >( &localRhs[dof+2], traction[2] );
+        RAJA::atomicAdd< parallelDeviceAtomic >( &localRhs[dof + 0], traction[0] );
+        RAJA::atomicAdd< parallelDeviceAtomic >( &localRhs[dof + 1], traction[1] );
+        RAJA::atomicAdd< parallelDeviceAtomic >( &localRhs[dof + 2], traction[2] );
       }
     } );
   }

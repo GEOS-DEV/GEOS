@@ -828,7 +828,7 @@ ensureNoEmptyRank( vtkSmartPointer< vtkDataSet > mesh,
     if( myPosition < recipientRanks.size() )
     {
       integer const recipientRank = recipientRanks[myPosition];
-      for( localIndex iElem = numElems/2; iElem < numElems; ++iElem )
+      for( localIndex iElem = numElems / 2; iElem < numElems; ++iElem )
       {
         newParts[iElem] = recipientRank; // I donate half of my cells
       }
@@ -1135,7 +1135,7 @@ splitCellsByType( vtkDataSet & mesh )
       case 2:
       {
         // Merge all 2D elements together as polygons (we don't track their shapes).
-        std::vector< vtkIdType > & surfaceCells = typeToCells[ ElementType::Polygon ];
+        std::vector< vtkIdType > & surfaceCells = typeToCells[ElementType::Polygon];
         surfaceCells.insert( surfaceCells.end(), cellListsByType[t].begin(), cellListsByType[t].end() );
         break;
       }
@@ -1331,12 +1331,12 @@ std::vector< localIndex > getHexahedronNodeOrderingFromPolyhedron( vtkCell * con
 
     if( it0 != &nodeOrder[4] && it1 == &nodeOrder[4] )
     {
-      nodeOrder[ 4 + std::distance( &nodeOrder[0], it0 ) ] = edgeNode1;
+      nodeOrder[4 + std::distance( &nodeOrder[0], it0 )] = edgeNode1;
     }
 
     if( it0 == &nodeOrder[4] && it1 != &nodeOrder[4] )
     {
-      nodeOrder[ 4 + std::distance( &nodeOrder[0], it1 ) ] = edgeNode0;
+      nodeOrder[4 + std::distance( &nodeOrder[0], it1 )] = edgeNode0;
     }
   }
 
@@ -1356,7 +1356,7 @@ std::vector< localIndex > getHexahedronNodeOrderingFromPolyhedron( vtkCell * con
   // If cell volume is negative swap the quads
   if( cellVolume < 0 )
   {
-    std::rotate( nodeOrder.begin(), nodeOrder.begin()+4, nodeOrder.end());
+    std::rotate( nodeOrder.begin(), nodeOrder.begin() + 4, nodeOrder.end());
   }
 
   return nodeOrder;
@@ -1548,7 +1548,7 @@ std::vector< localIndex > getPrismNodeOrderingFromPolyhedron( vtkCell * const ce
   GEOS_ERROR_IF_NE_MSG( cell->GetCellType(), VTK_POLYHEDRON, "Input must be a VTK_POLYHEDRON." );
 
   localIndex iFace;
-  std::vector< localIndex > nodeOrder( 2*NUM_SIDES );
+  std::vector< localIndex > nodeOrder( 2 * NUM_SIDES );
 
   // Generate global to local map
   std::unordered_map< localIndex, localIndex > G2L;
@@ -1597,14 +1597,14 @@ std::vector< localIndex > getPrismNodeOrderingFromPolyhedron( vtkCell * const ce
   }
 
   // Convert global numbering to local numbering
-  for( localIndex iPoint = 0; iPoint < 2*NUM_SIDES; ++iPoint )
+  for( localIndex iPoint = 0; iPoint < 2 * NUM_SIDES; ++iPoint )
   {
     nodeOrder[iPoint] = G2L.at( nodeOrder[iPoint] );
   }
 
   // Compute cell volume
-  real64 Xlocal[2*NUM_SIDES][3];
-  for( localIndex iPoint = 0; iPoint < 2*NUM_SIDES; ++iPoint )
+  real64 Xlocal[2 * NUM_SIDES][3];
+  for( localIndex iPoint = 0; iPoint < 2 * NUM_SIDES; ++iPoint )
   {
     std::copy_n( cell->GetPoints()->GetPoint( nodeOrder[iPoint] ), 3, Xlocal[iPoint] );
   }
@@ -1613,7 +1613,7 @@ std::vector< localIndex > getPrismNodeOrderingFromPolyhedron( vtkCell * const ce
   // If cell volume is negative swap the bases
   if( cellVolume < 0 )
   {
-    std::rotate( nodeOrder.begin(), nodeOrder.begin()+NUM_SIDES, nodeOrder.end());
+    std::rotate( nodeOrder.begin(), nodeOrder.begin() + NUM_SIDES, nodeOrder.end());
   }
 
   return nodeOrder;
@@ -2013,7 +2013,7 @@ void importNodesets( integer const logLevel,
   auto & nodeSets = cellBlockManager.getNodeSets();
   localIndex const numPoints = LvArray::integerConversion< localIndex >( mesh.GetNumberOfPoints() );
 
-  for( int i=0; i < nodesetNames.size(); ++i )
+  for( int i = 0; i < nodesetNames.size(); ++i )
   {
     GEOS_LOG_RANK_0_IF( logLevel >= 2, "    " + nodesetNames[i] );
 
@@ -2023,8 +2023,8 @@ void importNodesets( integer const logLevel,
                    InputError );
     vtkTypeInt64Array const & nodesetMask = *vtkTypeInt64Array::FastDownCast( curArray );
 
-    SortedArray< localIndex > & targetNodeset = nodeSets[ nodesetNames[i] ];
-    for( localIndex j=0; j < numPoints; ++j )
+    SortedArray< localIndex > & targetNodeset = nodeSets[nodesetNames[i]];
+    for( localIndex j = 0; j < numPoints; ++j )
     {
       if( nodesetMask.GetValue( j ) == 1 )
       {
@@ -2074,7 +2074,7 @@ real64 writeNodes( integer const logLevel,
   // Generate the "all" set
   array1d< localIndex > allNodes( numPts );
   std::iota( allNodes.begin(), allNodes.end(), 0 );
-  SortedArray< localIndex > & allNodeSet = cellBlockManager.getNodeSets()[ "all" ];
+  SortedArray< localIndex > & allNodeSet = cellBlockManager.getNodeSets()["all"];
   allNodeSet.insert( allNodes.begin(), allNodes.end() );
 
   // Import remaining nodesets
@@ -2149,7 +2149,7 @@ void writeSurfaces( integer const logLevel,
     GEOS_LOG_RANK_0_IF( logLevel >= 1, "Importing surface " << surfaceName );
 
     // Get or create all surfaces (even those which are empty in this rank)
-    SortedArray< localIndex > & curNodeSet = nodeSets[ surfaceName ];
+    SortedArray< localIndex > & curNodeSet = nodeSets[surfaceName];
 
     for( vtkIdType const c : cellIds )
     {

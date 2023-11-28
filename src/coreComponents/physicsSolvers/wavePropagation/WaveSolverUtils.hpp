@@ -208,7 +208,7 @@ struct WaveSolverUtils
                                             arrayView2d< real32 const > const var_n,
                                             arrayView2d< real32 > varAtReceivers )
   {
-    real64 const time_np1 = time_n+dt;
+    real64 const time_np1 = time_n + dt;
 
     real32 const a1 = dt < epsilonLoc ? 1.0 : (time_np1 - timeSeismo) / dt;
     real32 const a2 = 1.0 - a1;
@@ -307,7 +307,7 @@ struct WaveSolverUtils
     real64 xLocal[FE_TYPE::numNodes][3]{};
     for( localIndex a = 0; a < FE_TYPE::numNodes; ++a )
     {
-      LvArray::tensorOps::copy< 3 >( xLocal[a], nodeCoords[ elemsToNodes[a] ] );
+      LvArray::tensorOps::copy< 3 >( xLocal[a], nodeCoords[elemsToNodes[a]] );
     }
     // coordsOnRefElem = invJ*(coords-coordsNode_0)
     real64 invJ[3][3]{};

@@ -31,7 +31,7 @@ class Base
 public:
   Base( int & junk, double const & junk2 )
   {
-    GEOS_LOG( "calling Base constructor with arguments ("<<junk<<" "<<junk2<<")" );
+    GEOS_LOG( "calling Base constructor with arguments (" << junk << " " << junk2 << ")" );
   }
 
   virtual ~Base()
@@ -57,7 +57,7 @@ public:
   Derived1( int & junk, double const & junk2 ):
     Base( junk, junk2 )
   {
-    GEOS_LOG( "calling Derived1 constructor with arguments ("<<junk<<" "<<junk2<<")" );
+    GEOS_LOG( "calling Derived1 constructor with arguments (" << junk << " " << junk2 << ")" );
   }
 
   ~Derived1()
@@ -78,7 +78,7 @@ public:
   Derived2( int & junk, double const & junk2 ):
     Base( junk, junk2 )
   {
-    GEOS_LOG( "calling Derived2 constructor with arguments ("<<junk<<" "<<junk2<<")" );
+    GEOS_LOG( "calling Derived2 constructor with arguments (" << junk << " " << junk2 << ")" );
   }
 
   ~Derived2()

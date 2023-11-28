@@ -190,7 +190,7 @@ void PerforationData::computeWellTransmissibility( MeshLevel const & mesh,
                      : 0;
 
     // compute the equivalent radius
-    real64 const num = 0.28 * sqrt( d1*d1 * sqrt( k21 ) + d2*d2 * sqrt( k12 ) );
+    real64 const num = 0.28 * sqrt( d1 * d1 * sqrt( k21 ) + d2 * d2 * sqrt( k12 ) );
     real64 const den = std::pow( k12, 0.25 ) + std::pow( k21, 0.25 );
     real64 const rEq = (den > 0)
                      ? num / den
@@ -234,15 +234,15 @@ void PerforationData::getReservoirElementDimensions( MeshLevel const & mesh,
   CellElementSubRegion const & subRegion = region.getSubRegion< CellElementSubRegion >( esr );
 
   // compute the bounding box of the element
-  real64 boxDims[ 3 ];
+  real64 boxDims[3];
   computationalGeometry::getBoundingBox( ei,
                                          subRegion.nodeList(),
                                          nodeManager.referencePosition(),
                                          boxDims );
 
   // dx and dz from bounding box
-  dx = boxDims[ 0 ];
-  dy = boxDims[ 1 ];
+  dx = boxDims[0];
+  dy = boxDims[1];
 
   // dz is computed as vol / (dx * dy)
   dz  = subRegion.getElementVolume()[ei];

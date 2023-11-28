@@ -146,7 +146,7 @@ public:
    * @tparam M number of components in source mask
    * @param other source mask
    */
-  template< int N, typename = std::enable_if_t< ( N < MAX_COMP ) > >
+  template< int N, typename = std::enable_if_t < ( N < MAX_COMP ) > >
   GEOS_HOST_DEVICE
   ComponentMask( ComponentMask< N > const & other )
     : m_numComp( other.numComp() )

@@ -198,17 +198,17 @@ void HDFHistoryIO::init( bool existsOkay )
   if( subcomm != MPI_COMM_NULL )
   {
 
-    std::vector< hsize_t > historyFileDims( m_rank+1 );
+    std::vector< hsize_t > historyFileDims( m_rank + 1 );
     historyFileDims[0] = LvArray::integerConversion< hsize_t >( m_writeLimit );
 
-    std::vector< hsize_t > dimChunks( m_rank+1 );
+    std::vector< hsize_t > dimChunks( m_rank + 1 );
     dimChunks[0] = 1;
 
-    for( hsize_t dd = 1; dd < m_rank+1; ++dd )
+    for( hsize_t dd = 1; dd < m_rank + 1; ++dd )
     {
       // hdf5 doesn't like chunk size 0, hence the subcomm
-      dimChunks[dd] = m_dims[dd-1];
-      historyFileDims[dd] = m_dims[dd-1];
+      dimChunks[dd] = m_dims[dd - 1];
+      historyFileDims[dd] = m_dims[dd - 1];
     }
     dimChunks[1] = m_chunkSize;
     historyFileDims[1] = LvArray::integerConversion< hsize_t >( m_globalIdxCount );
@@ -224,7 +224,7 @@ void HDFHistoryIO::init( bool existsOkay )
       H5Pset_chunk( dcplId, m_rank + 1, &dimChunks[0] );
       maxFileDims[0] = H5S_UNLIMITED;
       maxFileDims[1] = H5S_UNLIMITED;
-      hid_t space = H5Screate_simple( m_rank+1, &historyFileDims[0], &maxFileDims[0] );
+      hid_t space = H5Screate_simple( m_rank + 1, &historyFileDims[0], &maxFileDims[0] );
       hid_t dataset = H5Dcreate( target, m_name.c_str(), m_hdfType, space, H5P_DEFAULT, dcplId, H5P_DEFAULT );
       H5Dclose( dataset );
       H5Sclose( space );
@@ -260,7 +260,7 @@ void HDFHistoryIO::write()
       if( m_sizeChanged )
       {
         // since the highwater might change (the max # of indices / 2nd dimension) when updating the partitioning
-        setupPartition( m_localIdxCounts_buffered[ row ] );
+        setupPartition( m_localIdxCounts_buffered[row] );
         // keep the write limit the same (will only change in resizeFileIfNeeded call above)
         updateDatasetExtent( m_writeLimit );
       }
@@ -272,19 +272,19 @@ void HDFHistoryIO::write()
         hid_t dataset = H5Dopen( target, m_name.c_str(), H5P_DEFAULT );
         hid_t filespace = H5Dget_space( dataset );
 
-        std::vector< hsize_t > fileOffset( m_rank+1 );
+        std::vector< hsize_t > fileOffset( m_rank + 1 );
         fileOffset[0] = LvArray::integerConversion< hsize_t >( m_writeHead );
         // the m_globalIdxOffset will be updated for each row during the partition setup if the size has changed during buffered collection
         fileOffset[1] = LvArray::integerConversion< hsize_t >( m_globalIdxOffset );
 
-        std::vector< hsize_t > bufferedCounts( m_rank+1 );
+        std::vector< hsize_t > bufferedCounts( m_rank + 1 );
         bufferedCounts[0] = LvArray::integerConversion< hsize_t >( 1 );
-        bufferedCounts[1] = LvArray::integerConversion< hsize_t >( m_localIdxCounts_buffered[ row ] );
-        for( hsize_t dd = 2; dd < m_rank+1; ++dd )
+        bufferedCounts[1] = LvArray::integerConversion< hsize_t >( m_localIdxCounts_buffered[row] );
+        for( hsize_t dd = 2; dd < m_rank + 1; ++dd )
         {
-          bufferedCounts[dd] = m_dims[dd-1];
+          bufferedCounts[dd] = m_dims[dd - 1];
         }
-        hid_t memspace = H5Screate_simple( m_rank+1, &bufferedCounts[0], nullptr );
+        hid_t memspace = H5Screate_simple( m_rank + 1, &bufferedCounts[0], nullptr );
 
         hid_t fileHyperslab = filespace;
         H5Sselect_hyperslab( fileHyperslab, H5S_SELECT_SET, &fileOffset[0], nullptr, &bufferedCounts[0], nullptr );
@@ -294,7 +294,7 @@ void HDFHistoryIO::write()
         // forward the data buffer pointer to the start of the next row
         if( dataBuffer )
         {
-          hsize_t rowsize = m_localIdxCounts_buffered[ row ] * m_typeSize;
+          hsize_t rowsize = m_localIdxCounts_buffered[row] * m_typeSize;
           for( hsize_t ii = 1; ii < m_rank; ++ii )
           {
             rowsize *= m_dims[ii];
@@ -340,12 +340,12 @@ void HDFHistoryIO::updateDatasetExtent( hsize_t rowLimit )
   if( m_subcomm != MPI_COMM_NULL )
   {
     HDFFile target( m_filename, false, true, m_subcomm );
-    std::vector< hsize_t > maxFileDims( m_rank+1 );
+    std::vector< hsize_t > maxFileDims( m_rank + 1 );
     maxFileDims[0] = rowLimit;
     maxFileDims[1] = LvArray::integerConversion< hsize_t >( m_globalIdxHighwater );
-    for( hsize_t dd = 2; dd < m_rank+1; ++dd )
+    for( hsize_t dd = 2; dd < m_rank + 1; ++dd )
     {
-      maxFileDims[dd] = m_dims[dd-1];
+      maxFileDims[dd] = m_dims[dd - 1];
     }
     hid_t dataset = H5Dopen( target, m_name.c_str(), H5P_DEFAULT );
     H5Dset_extent( dataset, &maxFileDims[0] );

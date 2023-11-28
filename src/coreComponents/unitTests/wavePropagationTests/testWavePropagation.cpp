@@ -192,7 +192,7 @@ TEST_F( AcousticWaveEquationSEMTest, SeismoTrace )
   propagator = &state.getProblemManager().getPhysicsSolverManager().getGroup< AcousticWaveEquationSEM >( "acousticSolver" );
   real64 time_n = time;
   // run for 1s (10 steps)
-  for( int i=0; i<10; i++ )
+  for( int i = 0; i < 10; i++ )
   {
     propagator->explicitStepForward( time_n, dt, i, domain, false );
     time_n += dt;
@@ -220,7 +220,7 @@ TEST_F( AcousticWaveEquationSEMTest, SeismoTrace )
       ASSERT_TRUE( std::abs( pReceivers[i][8] ) > 0 );
     }
     double avg = 0;
-    for( int r=0; r<8; r++ )
+    for( int r = 0; r < 8; r++ )
     {
       avg += pReceivers[i][r];
     }
@@ -241,7 +241,7 @@ TEST_F( AcousticWaveEquationSEMTest, SeismoTrace )
       ASSERT_TRUE( std::abs( pReceivers[i][8] ) > 0 );
     }
     double avg = 0;
-    for( int r=0; r<8; r++ )
+    for( int r = 0; r < 8; r++ )
     {
       avg += pReceivers[i][r];
     }

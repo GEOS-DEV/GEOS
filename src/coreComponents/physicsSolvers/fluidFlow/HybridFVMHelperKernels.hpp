@@ -54,7 +54,7 @@ struct CellConnectivity
     // one of these two elements is the current element indexed by er, esr, ei
     // but here we are interested in the indices of the other element
     // this other element is "the neighbor" for this one-sided face
-    for( localIndex k=0; k<elemRegionList.size( 1 ); ++k )
+    for( localIndex k = 0; k < elemRegionList.size( 1 ); ++k )
     {
 
       localIndex const erNeighbor  = elemRegionList[elemToFaces[ifaceLoc]][k];

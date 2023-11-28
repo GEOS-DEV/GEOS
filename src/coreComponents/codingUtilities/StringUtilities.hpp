@@ -135,7 +135,7 @@ CONTAINER< string > tokenize( string const & str,
 
   if( tokenBegin < strEnd )
   {
-    tokens.emplace_back( str.substr( tokenBegin, strEnd-tokenBegin ));
+    tokens.emplace_back( str.substr( tokenBegin, strEnd - tokenBegin ));
   }
   else if( !preTrimStr && str.find_first_of( delimiters, strEnd - 1 ) != string::npos )
   {

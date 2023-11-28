@@ -33,9 +33,9 @@ void setArrayElement( ArrayView< T, NDIM > const & arr,
   T const * const dataPtr = data + srcIndex * elemSize;
 
   localIndex i = 0;
-  LvArray::forValuesInSlice( arr[ dstIndex ], [&i, dataPtr]( T & value )
+  LvArray::forValuesInSlice( arr[dstIndex], [&i, dataPtr]( T & value )
   {
-    value = dataPtr[ i ];
+    value = dataPtr[i];
     ++i;
   } );
 }

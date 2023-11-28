@@ -52,11 +52,11 @@ void testKernelDriver()
                     [=] GEOS_HOST_DEVICE ( localIndex const )
   {
 
-    for( localIndex q=0; q<numQuadraturePoints; ++q )
+    for( localIndex q = 0; q < numQuadraturePoints; ++q )
     {
       real64 N[numNodes] = {0};
       H1_Tetrahedron_Lagrange1_Gauss1::calcN( q, N );
-      for( localIndex a=0; a<numNodes; ++a )
+      for( localIndex a = 0; a < numNodes; ++a )
       {
         viewN( q, a ) = N[a];
       }
@@ -67,13 +67,13 @@ void testKernelDriver()
                     [=] GEOS_HOST_DEVICE ( localIndex const )
   {
 
-    for( localIndex q=0; q<numQuadraturePoints; ++q )
+    for( localIndex q = 0; q < numQuadraturePoints; ++q )
     {
       real64 dNdX[numNodes][3] = {{0}};
       viewDetJxW[q] = H1_Tetrahedron_Lagrange1_Gauss1::calcGradN( q,
                                                                   xCoords,
                                                                   dNdX );
-      for( localIndex a=0; a<numNodes; ++a )
+      for( localIndex a = 0; a < numNodes; ++a )
       {
         for( int i = 0; i < 3; ++i )
         {
@@ -92,13 +92,13 @@ void testKernelDriver()
   forAll< serialPolicy >( 1,
                           [=] ( localIndex const )
   {
-    for( localIndex q=0; q<numQuadraturePoints; ++q )
+    for( localIndex q = 0; q < numQuadraturePoints; ++q )
     {
       real64 const xi[3] = { quadratureCoords[0][q],
                              quadratureCoords[1][q],
                              quadratureCoords[2][q] };
 
-      for( localIndex a=0; a<numNodes; ++a )
+      for( localIndex a = 0; a < numNodes; ++a )
       {
         real64 N =   static_cast< real64 >( ( a | 0 ) < 1 )
                    + static_cast< real64 >( ( ( a ^ 1 ) < 1 ) - ( ( a ^ 1 ) == 1 ) ) * xi[0]
@@ -108,7 +108,7 @@ void testKernelDriver()
       }
 
       real64 J[3][3] = {{0}};
-      for( localIndex a=0; a<numNodes; ++a )
+      for( localIndex a = 0; a < numNodes; ++a )
       {
         real64 dNdXi[3] = { static_cast< real64 >( ( ( a ^ 1 ) < 1 ) - ( ( a ^ 1 ) == 1 ) ),
                             static_cast< real64 >( ( ( a ^ 2 ) < 1 ) - ( ( a ^ 2 ) == 2 ) ),
@@ -123,9 +123,9 @@ void testKernelDriver()
         }
       }
       real64 const detJ = LvArray::tensorOps::invert< 3 >( J );
-      EXPECT_FLOAT_EQ( detJ*weight, viewDetJxW[q] );
+      EXPECT_FLOAT_EQ( detJ * weight, viewDetJxW[q] );
 
-      for( localIndex a=0; a<numNodes; ++a )
+      for( localIndex a = 0; a < numNodes; ++a )
       {
         real64 dNdX[3] = {0};
         real64 dNdXi[3] = { static_cast< real64 >( ( ( a ^ 1 ) < 1 ) - ( ( a ^ 1 ) == 1 ) ),

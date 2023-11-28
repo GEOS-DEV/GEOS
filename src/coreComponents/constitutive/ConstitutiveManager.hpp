@@ -98,7 +98,7 @@ ConstitutiveManager::getConstitutiveData( string const & name,
   ViewAccessor< T const > rval( relationGroup->numSubGroups() );
 
   rval.resize( relationGroup->numSubGroups() );
-  for( localIndex a=0; a<this->getSubGroups().size(); ++a )
+  for( localIndex a = 0; a < this->getSubGroups().size(); ++a )
   {
     ConstitutiveBase const & material = relationGroup->getGroup< ConstitutiveBase >( a );
     if( material.hasWrapper( name ) )

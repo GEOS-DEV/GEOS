@@ -77,11 +77,11 @@ TEST( DamageTests, testDamageSpectral )
   DamageSpectral< ElasticIsotropic >::KernelWrapper cmw = cm.createKernelUpdates();
 
   real64 strainIncrement[6] = {1e-4, 0, 0, 0, 0, 0};
-  real64 timeIncrement =0;
+  real64 timeIncrement = 0;
   real64 stress[6]{};
   real64 stiffness[6][6]{};
 
-  for( localIndex loadstep=0; loadstep < 50; ++loadstep )
+  for( localIndex loadstep = 0; loadstep < 50; ++loadstep )
   {
     cmw.smallStrainUpdate( 0, 0, timeIncrement, strainIncrement, stress, stiffness );
     cm.saveConvergedState();

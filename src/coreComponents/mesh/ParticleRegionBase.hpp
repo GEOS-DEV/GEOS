@@ -123,7 +123,7 @@ public:
    * @param key The key to the subregion.
    * @return A reference to the subregion
    */
-  template< typename SUBREGIONTYPE=ParticleSubRegionBase, typename KEY_TYPE=void >
+  template< typename SUBREGIONTYPE = ParticleSubRegionBase, typename KEY_TYPE = void >
   SUBREGIONTYPE const & getSubRegion( KEY_TYPE const & key ) const
   {
     return this->getGroup( viewKeyStruct::particleSubRegions() ).getGroup< SUBREGIONTYPE >( key );
@@ -132,7 +132,7 @@ public:
   /**
    * @copydoc getSubRegion( KEY_TYPE const & key ) const
    */
-  template< typename SUBREGIONTYPE=ParticleSubRegionBase, typename KEY_TYPE=void >
+  template< typename SUBREGIONTYPE = ParticleSubRegionBase, typename KEY_TYPE = void >
   SUBREGIONTYPE & getSubRegion( KEY_TYPE const & key )
   {
     return this->getGroup( viewKeyStruct::particleSubRegions() ).getGroup< SUBREGIONTYPE >( key );
@@ -266,7 +266,7 @@ public:
   template< typename SUBREGIONTYPE, typename ... SUBREGIONTYPES, typename LAMBDA >
   void forParticleSubRegionsIndex( LAMBDA && lambda ) const
   {
-    for( localIndex esr=0; esr<this->numSubRegions(); ++esr )
+    for( localIndex esr = 0; esr < this->numSubRegions(); ++esr )
     {
       ParticleSubRegionBase const & subRegion = this->getSubRegion( esr );
       applyLambdaToContainer< SUBREGIONTYPE, SUBREGIONTYPES... >( subRegion, [&]( auto const & castedSubRegion )
@@ -282,7 +282,7 @@ public:
   template< typename SUBREGIONTYPE, typename ... SUBREGIONTYPES, typename LAMBDA >
   void forParticleSubRegionsIndex( LAMBDA && lambda )
   {
-    for( localIndex esr=0; esr<this->numSubRegions(); ++esr )
+    for( localIndex esr = 0; esr < this->numSubRegions(); ++esr )
     {
       ParticleSubRegionBase & subRegion = this->getSubRegion( esr );
       applyLambdaToContainer< SUBREGIONTYPE, SUBREGIONTYPES... >( subRegion, [&]( auto & castedSubRegion )

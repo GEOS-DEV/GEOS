@@ -89,7 +89,7 @@ void clampMatrixEntries( hypre_CSRMatrix * const mat,
   forAll< execPolicy >( csr.nrow, [=] GEOS_HYPRE_DEVICE ( HYPRE_Int const localRow )
   {
     // Hypre stores diagonal element at the beginning of each row, we assume it's always present
-    for( HYPRE_Int k = csr.rowptr[localRow] + skip_diag; k < csr.rowptr[localRow+1]; ++k )
+    for( HYPRE_Int k = csr.rowptr[localRow] + skip_diag; k < csr.rowptr[localRow + 1]; ++k )
     {
       csr.values[k] = LvArray::math::min( hi, LvArray::math::max( lo, csr.values[k] ) );
     }

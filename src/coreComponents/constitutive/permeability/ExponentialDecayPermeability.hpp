@@ -158,7 +158,7 @@ void ExponentialDecayPermeabilityUpdate::compute( real64 const ( &traction )[3],
   real64 const dpermMultiplier_dTraction = std::exp( -m_empiricalConstant * effNormalStress ) * m_empiricalConstant;
 
 
-  for( localIndex i=0; i < permeability.size(); i++ )
+  for( localIndex i = 0; i < permeability.size(); i++ )
   {
     permeability[i] = permMultiplier * initialPermeability[i];
     dPerm_dTraction[i][0] = initialPermeability[i] * dpermMultiplier_dTraction;

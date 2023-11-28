@@ -33,7 +33,7 @@ void ParticleBlockManager::resize( integer_array const & numParticles,
                                    string_array const & regionNames )
 {
   localIndex const numRegions = LvArray::integerConversion< localIndex >( regionNames.size());
-  for( localIndex reg=0; reg<numRegions; ++reg )
+  for( localIndex reg = 0; reg < numRegions; ++reg )
   {
     this->getParticleBlock( regionNames[reg] ).resize( numParticles[reg] );
   }

@@ -59,10 +59,10 @@ public:
     // Level 0: eliminate last density which corresponds to the volume constraint equation
     m_labels[0].resize( m_numBlocks - 2 );
     std::iota( m_labels[0].begin(), m_labels[0].end(), 0 );
-    m_labels[0].push_back( m_numBlocks-1 ); // keep temperature
+    m_labels[0].push_back( m_numBlocks - 1 ); // keep temperature
     // Level 1: eliminate the other densities
     m_labels[1].push_back( 0 ); // keep pressure
-    m_labels[1].push_back( m_numBlocks-1 ); // keep temperature
+    m_labels[1].push_back( m_numBlocks - 1 ); // keep temperature
 
     setupLabels();
 

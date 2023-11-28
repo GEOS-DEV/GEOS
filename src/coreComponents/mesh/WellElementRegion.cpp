@@ -28,7 +28,7 @@ using namespace dataRepository;
 
 WellElementRegion::WellElementRegion( string const & name, Group * const parent ):
   ElementRegionBase( name, parent ),
-  m_subRegionName( name+"UniqueSubRegion" ),
+  m_subRegionName( name + "UniqueSubRegion" ),
   m_wellControlsName( "" ),
   m_wellGeneratorName( "" )
 {
@@ -65,7 +65,7 @@ void WellElementRegion::generateWell( MeshLevel & mesh,
 
   globalIndex const matchedPerforations = MpiWrapper::sum( perforationData->size() );
   GEOS_THROW_IF( matchedPerforations != numPerforationsGlobal,
-                 "Invalid mapping perforation-to-element in "<<
+                 "Invalid mapping perforation-to-element in " <<
                  InternalWellGenerator::catalogName() << " " << getWellGeneratorName() << "." <<
                  " This happens when GEOSX cannot match a perforation with a reservoir element." <<
                  " There are two common reasons for this error:\n" <<

@@ -96,7 +96,7 @@ public:
   {
     if( baseLifo::m_bufferCount > 0 )
     {
-      m_pushToDeviceEvents[baseLifo::m_bufferCount-1].wait();
+      m_pushToDeviceEvents[baseLifo::m_bufferCount - 1].wait();
     }
   }
 

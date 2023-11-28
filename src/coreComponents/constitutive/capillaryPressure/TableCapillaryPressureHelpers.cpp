@@ -58,13 +58,13 @@ TableCapillaryPressureHelpers::validateCapillaryPressureTable( TableFunction con
     // check the monotonicity of the capillary pressure table
     if( capPresMustBeIncreasing )
     {
-      GEOS_THROW_IF( !isZero( capPres[i] ) && (capPres[i] - capPres[i-1]) < -1e-15,
+      GEOS_THROW_IF( !isZero( capPres[i] ) && (capPres[i] - capPres[i - 1]) < -1e-15,
                      GEOS_FMT( "{}: in table '{}' values must be strictly increasing (i.e. |Delta Pc| > 1e-15 between two non-zero values)", fullConstitutiveName, capPresTable.getName() ),
                      InputError );
     }
     else
     {
-      GEOS_THROW_IF( !isZero( capPres[i] ) && (capPres[i] - capPres[i-1]) > 1e-15,
+      GEOS_THROW_IF( !isZero( capPres[i] ) && (capPres[i] - capPres[i - 1]) > 1e-15,
                      GEOS_FMT( "{}: in table '{}' values must be strictly decreasing  (i.e. |Delta Pc| > 1e-15 between two non-zero values)", fullConstitutiveName, capPresTable.getName() ),
                      InputError );
     }

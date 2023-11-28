@@ -143,7 +143,7 @@ struct PotGrad
 
           for( integer jc = 0; jc < numComp; ++jc )
           {
-            dCapPressure_dC[jc] += dCapPressure_dS * dPhaseVolFrac[er][esr][ei][jp][Deriv::dC+jc];
+            dCapPressure_dC[jc] += dCapPressure_dS * dPhaseVolFrac[er][esr][ei][jp][Deriv::dC + jc];
           }
         }
       }
@@ -281,7 +281,7 @@ struct PPUPhaseFlux
     dPhaseFlux_dP[k_up] += dMob_dP * potGrad;
     for( integer jc = 0; jc < numComp; ++jc )
     {
-      dPhaseFlux_dC[k_up][jc] += dPhaseMobSub[Deriv::dC+jc] * potGrad;
+      dPhaseFlux_dC[k_up][jc] += dPhaseMobSub[Deriv::dC + jc] * potGrad;
     }
   }
 };
@@ -501,9 +501,9 @@ struct PhaseComponentFlux
     real64 dProp_dC[numComp]{};
 
     // slice some constitutive arrays to avoid too much indexing in component loop
-    arraySlice1d< real64 const, constitutive::multifluid::USD_PHASE_COMP-3 > phaseCompFracSub =
+    arraySlice1d< real64 const, constitutive::multifluid::USD_PHASE_COMP - 3 > phaseCompFracSub =
       phaseCompFrac[er_up][esr_up][ei_up][0][ip];
-    arraySlice2d< real64 const, constitutive::multifluid::USD_PHASE_COMP_DC-3 > dPhaseCompFracSub =
+    arraySlice2d< real64 const, constitutive::multifluid::USD_PHASE_COMP_DC - 3 > dPhaseCompFracSub =
       dPhaseCompFrac[er_up][esr_up][ei_up][0][ip];
 
     // compute component fluxes and derivatives using upstream cell composition

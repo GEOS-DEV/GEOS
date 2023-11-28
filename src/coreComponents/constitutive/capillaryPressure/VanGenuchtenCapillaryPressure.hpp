@@ -177,7 +177,7 @@ VanGenuchtenCapillaryPressureUpdate::
     real64 const multiplier    = -m_phaseCapPressureMultiplier[ip_gas]; // for gas capillary pressure, take the opposite
                                                                         // of the VG function
 
-    real64 const scaledWettingVolFrac                = 1-volFracScaled;
+    real64 const scaledWettingVolFrac                = 1 - volFracScaled;
     real64 const dScaledWettingPhaseVolFrac_dVolFrac =  -volFracScaleInv;
 
     evaluateVanGenuchtenFunction( scaledWettingVolFrac,
@@ -207,11 +207,11 @@ VanGenuchtenCapillaryPressureUpdate::
   phaseCapPressure           = 0.0;
   dPhaseCapPressure_dVolFrac = 0.0;
 
-  if( scaledWettingVolFrac >= eps && scaledWettingVolFrac < 1.0-eps )
+  if( scaledWettingVolFrac >= eps && scaledWettingVolFrac < 1.0 - eps )
   {
     // intermediate value
-    real64 const a = 1 / pow( scaledWettingVolFrac, exponent+1 );
-    real64 const b = multiplier * pow( a * scaledWettingVolFrac - 1, 0.5*(1-exponentInv)-1 );
+    real64 const a = 1 / pow( scaledWettingVolFrac, exponent + 1 );
+    real64 const b = multiplier * pow( a * scaledWettingVolFrac - 1, 0.5 * (1 - exponentInv) - 1 );
 
     phaseCapPressure           = b * ( a * scaledWettingVolFrac - 1 ); // multiplier * ( S_w^(-1/m) - 1 )^( (1-m)/2 )
     dPhaseCapPressure_dVolFrac = -dScaledWettingPhaseVolFrac_dVolFrac * 0.5 * exponent * ( 1 - exponentInv ) * a * b;
@@ -219,8 +219,8 @@ VanGenuchtenCapillaryPressureUpdate::
   else // enforce a constant and bounded capillary pressure
   {
     phaseCapPressure = (scaledWettingVolFrac < eps) // div by 0 taken care of by initialization check
-                     ? multiplier * pow( 1 / pow( eps, exponent ) - 1, 0.5*(1-exponentInv) )
-                     : multiplier * pow( 1 / pow( 1-eps, exponent ) - 1, 0.5*(1-exponentInv) );
+                     ? multiplier * pow( 1 / pow( eps, exponent ) - 1, 0.5 * (1 - exponentInv) )
+                     : multiplier * pow( 1 / pow( 1 - eps, exponent ) - 1, 0.5 * (1 - exponentInv) );
   }
 }
 

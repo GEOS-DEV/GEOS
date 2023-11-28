@@ -116,7 +116,7 @@ private:
   void writeOutWrappersAsFields( Group const & group,
                                  conduit::Node & fields,
                                  string const & topology,
-                                 string const & prefix="" );
+                                 string const & prefix = "" );
 
   void writeOutConstitutiveData( dataRepository::Group const & constitutiveModel,
                                  conduit::Node & fields,

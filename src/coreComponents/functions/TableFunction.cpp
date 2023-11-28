@@ -86,7 +86,7 @@ void TableFunction::setTableCoordinates( array1d< real64_array > const & coordin
   {
     for( localIndex j = 1; j < coordinates[i].size(); ++j )
     {
-      GEOS_THROW_IF( coordinates[i][j] - coordinates[i][j-1] <= 0,
+      GEOS_THROW_IF( coordinates[i][j] - coordinates[i][j - 1] <= 0,
                      GEOS_FMT( "{} {}: coordinates must be strictly increasing, but axis {} is not",
                                catalogName(), getDataContext(), i ),
                      InputError );
@@ -148,7 +148,7 @@ void TableFunction::reInitializeFunction()
     increment *= m_coordinates.sizeOfArray( ii );
     for( localIndex j = 1; j < m_coordinates[ii].size(); ++j )
     {
-      GEOS_THROW_IF( m_coordinates[ii][j] - m_coordinates[ii][j-1] <= 0,
+      GEOS_THROW_IF( m_coordinates[ii][j] - m_coordinates[ii][j - 1] <= 0,
                      GEOS_FMT( "{} {}: coordinates must be strictly increasing, but axis {} is not",
                                catalogName(), getDataContext(), ii ),
                      InputError );

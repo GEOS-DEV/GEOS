@@ -87,7 +87,7 @@ void BrooksCoreyBakerRelativePermeability::postProcessInput()
     checkInputSize( m_waterOilRelPermMaxValue, 2, viewKeyStruct::waterOilRelPermMaxValueString() );
   }
 
-  if( m_phaseOrder[PhaseType::GAS] >=0 )
+  if( m_phaseOrder[PhaseType::GAS] >= 0 )
   {
     checkInputSize( m_gasOilRelPermExponent, 2, viewKeyStruct::gasOilRelPermExponentString() );
     checkInputSize( m_gasOilRelPermMaxValue, 2, viewKeyStruct::gasOilRelPermMaxValueString() );

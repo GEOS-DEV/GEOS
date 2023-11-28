@@ -110,7 +110,7 @@ if ( TARGET geosx_core )
 endif()
 
 geosx_add_code_checks( PREFIX coreComponents
-                       EXCLUDES cmake
+                       EXCLUDES cmake LvArray fileIO/coupling/hdf5_interface
                        src/coreComponents/constitutive/PVTPackage )
 
 if( ENABLE_UNCRUSTIFY )

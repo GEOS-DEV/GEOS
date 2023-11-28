@@ -70,7 +70,7 @@ void convertRigidBodyModes( arrayView1d< HypreVector > const & nearNullKernel,
     nullSpacePointer.resize( numRotations );
     for( localIndex k = 0; k < numRotations; ++k )
     {
-      nullSpacePointer[k] = nearNullKernel[dim+k].unwrapped();
+      nullSpacePointer[k] = nearNullKernel[dim + k].unwrapped();
     }
   }
 }

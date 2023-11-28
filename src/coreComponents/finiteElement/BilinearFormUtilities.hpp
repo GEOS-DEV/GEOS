@@ -45,17 +45,17 @@ struct Helper< PDEUtilities::FunctionSpace::P0,
   void static compute( real64 (& mat)[numTestDOF][numTrialDOF],
                        real64 const & Nv,
                        real64 const A,
-                       real64 const (&dNudX)[numTrialDOF/3][3],
+                       real64 const (&dNudX)[numTrialDOF / 3][3],
                        real64 const weight )
   {
     GEOS_UNUSED_VAR( Nv );
     for( int a = 0; a < numTestDOF; ++a )
     {
-      for( int b = 0; b < numTrialDOF/3; ++b )
+      for( int b = 0; b < numTrialDOF / 3; ++b )
       {
-        mat[a][b*3+0] = mat[a][b*3+0] + A * dNudX[b][0] * weight;
-        mat[a][b*3+1] = mat[a][b*3+1] + A * dNudX[b][1] * weight;
-        mat[a][b*3+2] = mat[a][b*3+2] + A * dNudX[b][2] * weight;
+        mat[a][b * 3 + 0] = mat[a][b * 3 + 0] + A * dNudX[b][0] * weight;
+        mat[a][b * 3 + 1] = mat[a][b * 3 + 1] + A * dNudX[b][1] * weight;
+        mat[a][b * 3 + 2] = mat[a][b * 3 + 2] + A * dNudX[b][2] * weight;
       }
     }
   }
@@ -65,17 +65,17 @@ struct Helper< PDEUtilities::FunctionSpace::P0,
   void static compute( real64 (& mat)[numTestDOF][numTrialDOF],
                        real64 const & Nv,
                        real64 const (&A)[numTestDOF],
-                       real64 const (&dNudX)[numTrialDOF/3][3],
+                       real64 const (&dNudX)[numTrialDOF / 3][3],
                        real64 const weight )
   {
     GEOS_UNUSED_VAR( Nv );
     for( int a = 0; a < numTestDOF; ++a )
     {
-      for( int b = 0; b < numTrialDOF/3; ++b )
+      for( int b = 0; b < numTrialDOF / 3; ++b )
       {
-        mat[a][b*3+0] = mat[a][b*3+0] + A[a] * dNudX[b][0] * weight;
-        mat[a][b*3+1] = mat[a][b*3+1] + A[a] * dNudX[b][1] * weight;
-        mat[a][b*3+2] = mat[a][b*3+2] + A[a] * dNudX[b][2] * weight;
+        mat[a][b * 3 + 0] = mat[a][b * 3 + 0] + A[a] * dNudX[b][0] * weight;
+        mat[a][b * 3 + 1] = mat[a][b * 3 + 1] + A[a] * dNudX[b][1] * weight;
+        mat[a][b * 3 + 2] = mat[a][b * 3 + 2] + A[a] * dNudX[b][2] * weight;
       }
     }
   }
@@ -155,19 +155,19 @@ struct Helper< PDEUtilities::FunctionSpace::H1vector,
   template< int numTestDOF, int numTrialDOF >
   GEOS_HOST_DEVICE
   void static compute( real64 (& mat)[numTestDOF][numTrialDOF],
-                       real64 const (&N)[numTestDOF/3],
+                       real64 const (&N)[numTestDOF / 3],
                        real64 const (&A)[3],
                        real64 const & Np,
                        real64 const weight )
   {
     GEOS_UNUSED_VAR( Np );
-    for( int a = 0; a < numTestDOF/3; ++a )
+    for( int a = 0; a < numTestDOF / 3; ++a )
     {
       for( int b = 0; b < numTrialDOF; ++b )
       {
-        mat[a*3+0][b] = mat[a*3+0][b] + N[a] * A[0] * weight;
-        mat[a*3+1][b] = mat[a*3+1][b] + N[a] * A[1] * weight;
-        mat[a*3+2][b] = mat[a*3+2][b] + N[a] * A[2] * weight;
+        mat[a * 3 + 0][b] = mat[a * 3 + 0][b] + N[a] * A[0] * weight;
+        mat[a * 3 + 1][b] = mat[a * 3 + 1][b] + N[a] * A[1] * weight;
+        mat[a * 3 + 2][b] = mat[a * 3 + 2][b] + N[a] * A[2] * weight;
       }
     }
   }
@@ -175,19 +175,19 @@ struct Helper< PDEUtilities::FunctionSpace::H1vector,
   template< int numTestDOF, int numTrialDOF >
   GEOS_HOST_DEVICE
   void static compute( real64 (& mat)[numTestDOF][numTrialDOF],
-                       real64 const (&N)[numTestDOF/3],
+                       real64 const (&N)[numTestDOF / 3],
                        real64 const (&A)[3][numTrialDOF],
                        real64 const & Np,
                        real64 const weight )
   {
     GEOS_UNUSED_VAR( Np );
-    for( int a = 0; a < numTestDOF/3; ++a )
+    for( int a = 0; a < numTestDOF / 3; ++a )
     {
       for( int b = 0; b < numTrialDOF; ++b )
       {
-        mat[a*3+0][b] = mat[a*3+0][b] + N[a] * A[0][b] * weight;
-        mat[a*3+1][b] = mat[a*3+1][b] + N[a] * A[1][b] * weight;
-        mat[a*3+2][b] = mat[a*3+2][b] + N[a] * A[2][b] * weight;
+        mat[a * 3 + 0][b] = mat[a * 3 + 0][b] + N[a] * A[0][b] * weight;
+        mat[a * 3 + 1][b] = mat[a * 3 + 1][b] + N[a] * A[1][b] * weight;
+        mat[a * 3 + 2][b] = mat[a * 3 + 2][b] + N[a] * A[2][b] * weight;
       }
     }
   }
@@ -203,19 +203,19 @@ struct Helper< PDEUtilities::FunctionSpace::H1vector,
   template< int numTestDOF, int numTrialDOF >
   GEOS_HOST_DEVICE
   void static compute( real64 (& mat)[numTestDOF][numTrialDOF],
-                       real64 const (&dNdX)[numTestDOF/3][3],
+                       real64 const (&dNdX)[numTestDOF / 3][3],
                        real64 const (&A)[6],
                        real64 const & Np,
                        real64 const weight )
   {
     GEOS_UNUSED_VAR( Np );
-    for( int a = 0; a < numTestDOF/3; ++a )
+    for( int a = 0; a < numTestDOF / 3; ++a )
     {
       for( int b = 0; b < numTrialDOF; ++b )
       {
-        mat[a*3+0][b] = mat[a*3+0][b] + ( dNdX[a][0] * A[0] + dNdX[a][1] * A[5] + dNdX[a][2] * A[4] ) * weight;
-        mat[a*3+1][b] = mat[a*3+1][b] + ( dNdX[a][0] * A[5] + dNdX[a][1] * A[1] + dNdX[a][2] * A[3] ) * weight;
-        mat[a*3+2][b] = mat[a*3+2][b] + ( dNdX[a][0] * A[4] + dNdX[a][1] * A[3] + dNdX[a][2] * A[2] ) * weight;
+        mat[a * 3 + 0][b] = mat[a * 3 + 0][b] + ( dNdX[a][0] * A[0] + dNdX[a][1] * A[5] + dNdX[a][2] * A[4] ) * weight;
+        mat[a * 3 + 1][b] = mat[a * 3 + 1][b] + ( dNdX[a][0] * A[5] + dNdX[a][1] * A[1] + dNdX[a][2] * A[3] ) * weight;
+        mat[a * 3 + 2][b] = mat[a * 3 + 2][b] + ( dNdX[a][0] * A[4] + dNdX[a][1] * A[3] + dNdX[a][2] * A[2] ) * weight;
       }
     }
   }
@@ -224,19 +224,19 @@ struct Helper< PDEUtilities::FunctionSpace::H1vector,
   template< int numTestDOF, int numTrialDOF >
   GEOS_HOST_DEVICE
   void static compute( real64 (& mat)[numTestDOF][numTrialDOF],
-                       real64 const (&dNdX)[numTestDOF/3][3],
+                       real64 const (&dNdX)[numTestDOF / 3][3],
                        real64 const (&A)[3],
                        real64 const & Np,
                        real64 const weight )
   {
     GEOS_UNUSED_VAR( Np );
-    for( int a = 0; a < numTestDOF/3; ++a )
+    for( int a = 0; a < numTestDOF / 3; ++a )
     {
       for( int b = 0; b < numTrialDOF; ++b )
       {
-        mat[a*3+0][b] = mat[a*3+0][b] + dNdX[a][0] * A[0] * weight;
-        mat[a*3+1][b] = mat[a*3+1][b] + dNdX[a][1] * A[1] * weight;
-        mat[a*3+2][b] = mat[a*3+2][b] + dNdX[a][2] * A[2] * weight;
+        mat[a * 3 + 0][b] = mat[a * 3 + 0][b] + dNdX[a][0] * A[0] * weight;
+        mat[a * 3 + 1][b] = mat[a * 3 + 1][b] + dNdX[a][1] * A[1] * weight;
+        mat[a * 3 + 2][b] = mat[a * 3 + 2][b] + dNdX[a][2] * A[2] * weight;
       }
     }
   }
@@ -245,19 +245,19 @@ struct Helper< PDEUtilities::FunctionSpace::H1vector,
   template< int numTestDOF, int numTrialDOF >
   GEOS_HOST_DEVICE
   void static compute( real64 (& mat)[numTestDOF][numTrialDOF],
-                       real64 const (&dNdX)[numTestDOF/3][3],
+                       real64 const (&dNdX)[numTestDOF / 3][3],
                        real64 const A,
                        real64 const & Np,
                        real64 const weight )
   {
     GEOS_UNUSED_VAR( Np );
-    for( int a = 0; a < numTestDOF/3; ++a )
+    for( int a = 0; a < numTestDOF / 3; ++a )
     {
       for( int b = 0; b < numTrialDOF; ++b )
       {
-        mat[a*3+0][b] = mat[a*3+0][b] + dNdX[a][0] * A * weight;
-        mat[a*3+1][b] = mat[a*3+1][b] + dNdX[a][1] * A * weight;
-        mat[a*3+2][b] = mat[a*3+2][b] + dNdX[a][2] * A * weight;
+        mat[a * 3 + 0][b] = mat[a * 3 + 0][b] + dNdX[a][0] * A * weight;
+        mat[a * 3 + 1][b] = mat[a * 3 + 1][b] + dNdX[a][1] * A * weight;
+        mat[a * 3 + 2][b] = mat[a * 3 + 2][b] + dNdX[a][2] * A * weight;
       }
     }
   }
@@ -273,13 +273,13 @@ struct Helper< PDEUtilities::FunctionSpace::H1vector,
   template< int numTestDOF, int numTrialDOF, typename DISCRETIZATION_OPS >
   GEOS_HOST_DEVICE
   void static compute( real64 (& mat)[numTestDOF][numTrialDOF],
-                       real64 const (&dNvdX)[numTestDOF/3][3],
+                       real64 const (&dNvdX)[numTestDOF / 3][3],
                        DISCRETIZATION_OPS const & A,
-                       real64 const (&dNudX)[numTrialDOF/3][3],
+                       real64 const (&dNudX)[numTrialDOF / 3][3],
                        real64 const weight )
   {
     GEOS_UNUSED_VAR( dNvdX );
-    const_cast< DISCRETIZATION_OPS & >(A).template BTDB< numTestDOF/3 >( dNudX, weight, mat );
+    const_cast< DISCRETIZATION_OPS & >(A).template BTDB< numTestDOF / 3 >( dNudX, weight, mat );
   }
 };
 
@@ -292,24 +292,24 @@ struct Helper< PDEUtilities::FunctionSpace::H1vector,
   template< int numTestDOF, int numTrialDOF >
   GEOS_HOST_DEVICE
   void static compute( real64 (& mat)[numTestDOF][numTrialDOF],
-                       real64 const (&Nv)[numTestDOF/3],
+                       real64 const (&Nv)[numTestDOF / 3],
                        real64 const (&A)[3],
-                       real64 const (&dNudX)[numTestDOF/3][3],
+                       real64 const (&dNudX)[numTestDOF / 3][3],
                        real64 const weight )
   {
-    for( int a = 0; a < numTestDOF/3; ++a )
+    for( int a = 0; a < numTestDOF / 3; ++a )
     {
-      for( int b = 0; b < numTrialDOF/3; ++b )
+      for( int b = 0; b < numTrialDOF / 3; ++b )
       {
-        mat[a*3+0][b*3+0] = mat[a*3+0][b*3+0] + Nv[a] * A[0] * dNudX[b][0] * weight;
-        mat[a*3+0][b*3+1] = mat[a*3+0][b*3+1] + Nv[a] * A[0] * dNudX[b][1] * weight;
-        mat[a*3+0][b*3+2] = mat[a*3+0][b*3+2] + Nv[a] * A[0] * dNudX[b][2] * weight;
-        mat[a*3+1][b*3+0] = mat[a*3+1][b*3+0] + Nv[a] * A[1] * dNudX[b][0] * weight;
-        mat[a*3+1][b*3+1] = mat[a*3+1][b*3+1] + Nv[a] * A[1] * dNudX[b][1] * weight;
-        mat[a*3+1][b*3+2] = mat[a*3+1][b*3+2] + Nv[a] * A[1] * dNudX[b][2] * weight;
-        mat[a*3+2][b*3+0] = mat[a*3+2][b*3+0] + Nv[a] * A[2] * dNudX[b][0] * weight;
-        mat[a*3+2][b*3+1] = mat[a*3+2][b*3+1] + Nv[a] * A[2] * dNudX[b][1] * weight;
-        mat[a*3+2][b*3+2] = mat[a*3+2][b*3+2] + Nv[a] * A[2] * dNudX[b][2] * weight;
+        mat[a * 3 + 0][b * 3 + 0] = mat[a * 3 + 0][b * 3 + 0] + Nv[a] * A[0] * dNudX[b][0] * weight;
+        mat[a * 3 + 0][b * 3 + 1] = mat[a * 3 + 0][b * 3 + 1] + Nv[a] * A[0] * dNudX[b][1] * weight;
+        mat[a * 3 + 0][b * 3 + 2] = mat[a * 3 + 0][b * 3 + 2] + Nv[a] * A[0] * dNudX[b][2] * weight;
+        mat[a * 3 + 1][b * 3 + 0] = mat[a * 3 + 1][b * 3 + 0] + Nv[a] * A[1] * dNudX[b][0] * weight;
+        mat[a * 3 + 1][b * 3 + 1] = mat[a * 3 + 1][b * 3 + 1] + Nv[a] * A[1] * dNudX[b][1] * weight;
+        mat[a * 3 + 1][b * 3 + 2] = mat[a * 3 + 1][b * 3 + 2] + Nv[a] * A[1] * dNudX[b][2] * weight;
+        mat[a * 3 + 2][b * 3 + 0] = mat[a * 3 + 2][b * 3 + 0] + Nv[a] * A[2] * dNudX[b][0] * weight;
+        mat[a * 3 + 2][b * 3 + 1] = mat[a * 3 + 2][b * 3 + 1] + Nv[a] * A[2] * dNudX[b][1] * weight;
+        mat[a * 3 + 2][b * 3 + 2] = mat[a * 3 + 2][b * 3 + 2] + Nv[a] * A[2] * dNudX[b][2] * weight;
       }
     }
   }

@@ -569,21 +569,21 @@ struct FieldSpecificationEqual : public FieldSpecificationOp< OpEqual >
       real64 const minDiagonal = 1e-15;
       for( localIndex j = 0; j < numEntries; ++j )
       {
-        if( columns[ j ] == dof )
+        if( columns[j] == dof )
         {
           // check that the entry is large enough to enforce the boundary condition
           if( entries[j] >= 0 && entries[j] < minDiagonal )
           {
-            entries[ j ] = minDiagonal;
+            entries[j] = minDiagonal;
           }
           else if( entries[j] < 0 && entries[j] > -minDiagonal )
           {
-            entries[ j ] = -minDiagonal;
+            entries[j] = -minDiagonal;
           }
           diagonal = entries[j];
         }
         else
-        { entries[ j ] = 0; }
+        { entries[j] = 0; }
       }
 
       rhs = -diagonal * (bcValue - fieldValue);
@@ -611,9 +611,9 @@ struct FieldSpecificationEqual : public FieldSpecificationOp< OpEqual >
     GEOS_ASSERT_EQ( dof.size(), values.size() );
     forAll< POLICY >( dof.size(), [rhs, dof, dofRankOffset, values] GEOS_HOST_DEVICE ( localIndex const a )
     {
-      globalIndex const localRow = dof[ a ] - dofRankOffset;
+      globalIndex const localRow = dof[a] - dofRankOffset;
       if( localRow >= 0 && localRow < rhs.size() )
-      { rhs[ localRow ] = values[ a ]; }
+      { rhs[localRow] = values[a]; }
     } );
   }
 };
@@ -672,9 +672,9 @@ struct FieldSpecificationAdd : public FieldSpecificationOp< OpAdd >
     GEOS_ASSERT_EQ( dof.size(), values.size() );
     forAll< POLICY >( dof.size(), [rhs, dof, dofRankOffset, values] GEOS_HOST_DEVICE ( localIndex const a )
     {
-      globalIndex const localRow = dof[ a ] - dofRankOffset;
+      globalIndex const localRow = dof[a] - dofRankOffset;
       if( localRow >= 0 && localRow < rhs.size() )
-      { rhs[ localRow ] += values[ a ]; }
+      { rhs[localRow] += values[a]; }
     } );
   }
 

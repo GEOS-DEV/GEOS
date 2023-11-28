@@ -51,8 +51,8 @@ TableRelativePermeabilityHelpers::validateRelativePermeabilityTable( TableFuncti
   arraySlice1d< real64 const > phaseVolFrac = coords[0];
   arrayView1d< real64 const > const relPerm = relPermTable.getValues();
   phaseMinVolFrac = phaseVolFrac[0];
-  phaseMaxVolFrac = phaseVolFrac[phaseVolFrac.size()-1];
-  phaseRelPermEndPoint = relPerm[relPerm.size()-1];
+  phaseMaxVolFrac = phaseVolFrac[phaseVolFrac.size() - 1];
+  phaseRelPermEndPoint = relPerm[relPerm.size() - 1];
 
   // note that the TableFunction class has already checked that coords.sizeOfArray( 0 ) == relPerm.size()
   GEOS_THROW_IF( !isZero( relPerm[0] ),
@@ -70,14 +70,14 @@ TableRelativePermeabilityHelpers::validateRelativePermeabilityTable( TableFuncti
     // note that the TableFunction class has already checked that the coordinates are monotone
 
     // check phase relative permeability
-    GEOS_THROW_IF( !isZero( relPerm[i] ) && (relPerm[i] - relPerm[i-1]) < 1e-15,
+    GEOS_THROW_IF( !isZero( relPerm[i] ) && (relPerm[i] - relPerm[i - 1]) < 1e-15,
                    GEOS_FMT( "{}: TableFunction '{}' values must be strictly increasing (|Delta kr| > 1e-15 between two non-zero values)",
                              fullConstitutiveName, relPermTable.getDataContext() ),
                    InputError );
 
-    if( isZero( relPerm[i-1] ) && !isZero( relPerm[i] ) )
+    if( isZero( relPerm[i - 1] ) && !isZero( relPerm[i] ) )
     {
-      phaseMinVolFrac = phaseVolFrac[i-1];
+      phaseMinVolFrac = phaseVolFrac[i - 1];
     }
   }
 }

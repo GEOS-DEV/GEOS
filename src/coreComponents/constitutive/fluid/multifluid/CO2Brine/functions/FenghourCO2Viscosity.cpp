@@ -57,14 +57,14 @@ void fenghourCO2ViscosityFunction( real64 const & temperatureCent,
   real64 const Tred = temperatureKelvin * esparInv;
   real64 const x = log( Tred );
   // equation (4) of Fenghour and Wakeham (1998)
-  real64 const lnGfun = aa[0] + x * (aa[1] + x * (aa[2] + x *(aa[3] + x * aa[4])));
+  real64 const lnGfun = aa[0] + x * (aa[1] + x * (aa[2] + x * (aa[3] + x * aa[4])));
   real64 const GfunInv = exp( -lnGfun );
   // equation (3) of Fenghour and Wakeham (1998)
   real64 const vlimit = 1.00697 * sqrt( temperatureKelvin ) * GfunInv;
 
   // equation (8) of Fenghour and Wakeham (1998)
   real64 const d2 = density * density;
-  real64 const vxcess = density * (d11 + density * (d21 + d2*d2*(d64 / (Tred*Tred*Tred) + d2*(d81 + d82/Tred))));
+  real64 const vxcess = density * (d11 + density * (d21 + d2 * d2 * (d64 / (Tred * Tred * Tred) + d2 * (d81 + d82 / Tred))));
 
   // equation (1) of Fenghour and Wakeham (1998)
   viscosity = 1e-6 * (vlimit + vxcess + vcrit);
@@ -83,8 +83,8 @@ void calculateCO2Viscosity( PTTableCoordinates const & tableCoords,
     for( localIndex j = 0; j < nTemperatures; ++j )
     {
       fenghourCO2ViscosityFunction( tableCoords.getTemperature( j ),
-                                    densities[j*nPressures+i],
-                                    viscosities[j*nPressures+i] );
+                                    densities[j * nPressures + i],
+                                    viscosities[j * nPressures + i] );
     }
   }
 }

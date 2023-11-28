@@ -276,8 +276,8 @@ public:
       for( integer ke = 0; ke < 2; ++ke )
       {
         localIndex const localDofIndexTemp = k[ke] * numDof + numDof - 1;
-        stack.localFluxJacobian[k[0]*numEqn][localDofIndexTemp] += m_dt * dFlux_dT[ke];
-        stack.localFluxJacobian[k[1]*numEqn][localDofIndexTemp] -= m_dt * dFlux_dT[ke];
+        stack.localFluxJacobian[k[0] * numEqn][localDofIndexTemp] += m_dt * dFlux_dT[ke];
+        stack.localFluxJacobian[k[1] * numEqn][localDofIndexTemp] -= m_dt * dFlux_dT[ke];
       }
 
       // Step 4: compute the enthalpy flux
@@ -358,17 +358,17 @@ public:
         }
 
         // add energyFlux and its derivatives to localFlux and localFluxJacobian
-        stack.localFlux[k[0]*numEqn + numEqn - 1] += m_dt * stack.energyFlux;
-        stack.localFlux[k[1]*numEqn + numEqn - 1] -= m_dt * stack.energyFlux;
+        stack.localFlux[k[0] * numEqn + numEqn - 1] += m_dt * stack.energyFlux;
+        stack.localFlux[k[1] * numEqn + numEqn - 1] -= m_dt * stack.energyFlux;
 
         for( integer ke = 0; ke < 2; ++ke )
         {
           integer const localDofIndexPres = k[ke] * numDof;
-          stack.localFluxJacobian[k[0]*numEqn + numEqn - 1][localDofIndexPres] =  m_dt * stack.dEnergyFlux_dP[ke];
-          stack.localFluxJacobian[k[1]*numEqn + numEqn - 1][localDofIndexPres] = -m_dt * stack.dEnergyFlux_dP[ke];
+          stack.localFluxJacobian[k[0] * numEqn + numEqn - 1][localDofIndexPres] =  m_dt * stack.dEnergyFlux_dP[ke];
+          stack.localFluxJacobian[k[1] * numEqn + numEqn - 1][localDofIndexPres] = -m_dt * stack.dEnergyFlux_dP[ke];
           integer const localDofIndexTemp = localDofIndexPres + numDof - 1;
-          stack.localFluxJacobian[k[0]*numEqn + numEqn - 1][localDofIndexTemp] =  m_dt * stack.dEnergyFlux_dT[ke];
-          stack.localFluxJacobian[k[1]*numEqn + numEqn - 1][localDofIndexTemp] = -m_dt * stack.dEnergyFlux_dT[ke];
+          stack.localFluxJacobian[k[0] * numEqn + numEqn - 1][localDofIndexTemp] =  m_dt * stack.dEnergyFlux_dT[ke];
+          stack.localFluxJacobian[k[1] * numEqn + numEqn - 1][localDofIndexTemp] = -m_dt * stack.dEnergyFlux_dT[ke];
         }
 
         connectionIndex++;
@@ -392,11 +392,11 @@ public:
     {
       // The no. of fluxes is equal to the no. of equations in m_localRhs and m_localMatrix
       // Different from the one in compositional multi-phase flow, which has a volume balance eqn.
-      RAJA::atomicAdd( parallelDeviceAtomic{}, &AbstractBase::m_localRhs[localRow + numEqn-1], stack.localFlux[i * numEqn + numEqn-1] );
+      RAJA::atomicAdd( parallelDeviceAtomic{}, &AbstractBase::m_localRhs[localRow + numEqn - 1], stack.localFlux[i * numEqn + numEqn - 1] );
 
-      AbstractBase::m_localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( localRow + numEqn-1,
+      AbstractBase::m_localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( localRow + numEqn - 1,
                                                                                         stack.dofColIndices.data(),
-                                                                                        stack.localFluxJacobian[i * numEqn + numEqn-1].dataIfContiguous(),
+                                                                                        stack.localFluxJacobian[i * numEqn + numEqn - 1].dataIfContiguous(),
                                                                                         stack.stencilSize * numDof );
 
     } );
@@ -697,7 +697,7 @@ public:
       stack.localFlux[localRowIndexEnergy] =  m_dt * stack.energyFlux;
 
       stack.localFluxJacobian[localRowIndexEnergy][0] =  m_dt * stack.dEnergyFlux_dP;
-      stack.localFluxJacobian[localRowIndexEnergy][numDof-1] =  m_dt * stack.dEnergyFlux_dT;
+      stack.localFluxJacobian[localRowIndexEnergy][numDof - 1] =  m_dt * stack.dEnergyFlux_dT;
     } );
 
   }
@@ -713,12 +713,12 @@ public:
   {
     Base::complete( iconn, stack, [&] ( localIndex const localRow )
     {
-      RAJA::atomicAdd( parallelDeviceAtomic{}, &AbstractBase::m_localRhs[localRow + numEqn - 1], stack.localFlux[numEqn-1] );
+      RAJA::atomicAdd( parallelDeviceAtomic{}, &AbstractBase::m_localRhs[localRow + numEqn - 1], stack.localFlux[numEqn - 1] );
 
       AbstractBase::m_localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >
         ( localRow + numEqn - 1,
         stack.dofColIndices,
-        stack.localFluxJacobian[numEqn-1],
+        stack.localFluxJacobian[numEqn - 1],
         numDof );
     } );
   }

@@ -62,7 +62,7 @@ public:
    */
   LifoStorageCommon( std::string name, size_t elemCnt, int numberOfBuffersToStoreOnHost, int maxNumberOfBuffers ):
     m_maxNumberOfBuffers( maxNumberOfBuffers ),
-    m_bufferSize( elemCnt*sizeof( T ) ),
+    m_bufferSize( elemCnt * sizeof( T ) ),
     m_name( name ),
     m_hostDeque( numberOfBuffersToStoreOnHost, elemCnt, LvArray::MemorySpace::host ),
     m_bufferCount( 0 ), m_bufferToHostCount( 0 ), m_bufferToDiskCount( 0 ),
@@ -123,7 +123,7 @@ public:
       for( int queueId = 0; queueId < 2; queueId++ )
       {
         std::unique_lock< std::mutex > lock( m_task_queue_mutex[queueId] );
-        m_task_queue_not_empty_cond[queueId].wait( lock, [ this, &queueId ] { return m_task_queue[queueId].empty(); } );
+        m_task_queue_not_empty_cond[queueId].wait( lock, [this, &queueId] { return m_task_queue[queueId].empty(); } );
       }
     }
     m_hasPoppedBefore = true;
@@ -225,7 +225,7 @@ protected:
     LIFO_MARK_FUNCTION;
     {
       auto lock = make_multilock( m_hostDeque.m_emplaceMutex, m_hostDeque.m_backMutex );
-      m_hostDeque.m_notFullCond.wait( lock, [ this ]  { return !( m_hostDeque.full() ); } );
+      m_hostDeque.m_notFullCond.wait( lock, [this]  { return !( m_hostDeque.full() ); } );
       readOnDisk( const_cast< T * >(m_hostDeque.next_back().dataIfContiguous()), id );
       m_hostDeque.inc_back();
     }
@@ -260,10 +260,10 @@ protected:
 
     std::ofstream wf( fileName, std::ios::out | std::ios::binary );
     GEOS_ERROR_IF( !wf || wf.fail() || !wf.is_open(),
-                   "Could not open file "<< fileName << " for writting" );
+                   "Could not open file " << fileName << " for writting" );
     wf.write( (const char *)d, m_bufferSize );
     GEOS_ERROR_IF( wf.bad() || wf.fail(),
-                   "An error occured while writting "<< fileName );
+                   "An error occured while writting " << fileName );
     wf.close();
   }
 
@@ -279,7 +279,7 @@ protected:
     std::string fileName = GEOS_FMT( "{}_{:08}.dat", m_name, id );
     std::ifstream wf( fileName, std::ios::in | std::ios::binary );
     GEOS_ERROR_IF( !wf,
-                   "Could not open file "<< fileName << " for reading" );
+                   "Could not open file " << fileName << " for reading" );
     wf.read( (char *)d, m_bufferSize );
     wf.close();
     remove( fileName.c_str() );
@@ -300,7 +300,7 @@ private:
       std::unique_lock< std::mutex > lock( m_task_queue_mutex[queueId] );
       {
         LIFO_MARK_SCOPE( waitForTask );
-        m_task_queue_not_empty_cond[queueId].wait( lock, [ this, &queueId ] { return !( m_task_queue[queueId].empty()  && m_continue ); } );
+        m_task_queue_not_empty_cond[queueId].wait( lock, [this, &queueId] { return !( m_task_queue[queueId].empty() && m_continue ); } );
       }
       if( m_continue == false ) break;
       std::packaged_task< void() > task( std::move( m_task_queue[queueId].front() ) );

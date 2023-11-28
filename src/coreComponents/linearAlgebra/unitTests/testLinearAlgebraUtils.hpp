@@ -203,15 +203,15 @@ void compute2DLaplaceOperator( MPI_Comm comm,
  * @return the quad element stiffness matrix
  */
 GEOS_HOST_DEVICE
-inline stackArray2d< real64, 8*8 > Q12d_local( real64 const & hx,
-                                               real64 const & hy,
-                                               real64 const & E,
-                                               real64 const & nu )
+inline stackArray2d< real64, 8 * 8 > Q12d_local( real64 const & hx,
+                                                 real64 const & hy,
+                                                 real64 const & E,
+                                                 real64 const & nu )
 {
   real64 fac = E / ( 1. - 2. * nu ) / ( 1. + nu );
 
   // Populate stiffness matrix
-  stackArray2d< real64, 8*8 > Ke( 8, 8 );
+  stackArray2d< real64, 8 * 8 > Ke( 8, 8 );
 
   // --- Fill diagonal entries
   real64 Dxx = ( fac * hx * ( 1. - 2. * nu ) ) / ( 6. * hy )
@@ -221,7 +221,7 @@ inline stackArray2d< real64, 8*8 > Q12d_local( real64 const & hx,
   for( localIndex i = 0; i < 8; i += 2 )
   {
     Ke[i][i] = Dxx;
-    Ke[i+1][i+1] = Dyy;
+    Ke[i + 1][i + 1] = Dyy;
   }
 
   // --- Fill upper triangular part
@@ -302,8 +302,8 @@ inline void computeQuadElementDofIndices( globalIndex const & iCell,
 
   for( integer i = 0; i < 4; ++i )
   {
-    localDofIndex[2*i] = cellNodes[i] * 2;
-    localDofIndex[2*i+1] = localDofIndex[2*i] + 1;
+    localDofIndex[2 * i] = cellNodes[i] * 2;
+    localDofIndex[2 * i + 1] = localDofIndex[2 * i] + 1;
   }
 }
 
@@ -362,13 +362,13 @@ void compute2DElasticityOperator( MPI_Comm const comm,
                                            18 );
 
   // Construct local stiffness matrix (same for all cells)
-  stackArray2d< real64, 8*8 > const Ke =  Q12d_local( hx, hy, youngModulus, poissonRatio );
+  stackArray2d< real64, 8 * 8 > const Ke =  Q12d_local( hx, hy, youngModulus, poissonRatio );
 
   globalIndex const iStart = LvArray::math::max( iCellLower - nCellsX, globalIndex( 0 ) );
   globalIndex const iEnd   = LvArray::math::min( iCellUpper + nCellsX, nCells );
 
-  globalIndex const minGlobalDof = iNodeLower*2;
-  globalIndex const maxGlobalDof = iNodeUpper*2 - 1;
+  globalIndex const minGlobalDof = iNodeLower * 2;
+  globalIndex const maxGlobalDof = iNodeUpper * 2 - 1;
 
 #if 1
   for( globalIndex iCell = iStart; iCell < iEnd; ++iCell )
@@ -392,7 +392,7 @@ void compute2DElasticityOperator( MPI_Comm const comm,
   }
 #else // not working on Lassen
   SparsityPatternView< globalIndex > sparsityView = sparsity.toView();
-  forAll< parallelDevicePolicy<> >( iEnd-iStart, [=] GEOS_DEVICE ( localIndex const iCell )
+  forAll< parallelDevicePolicy<> >( iEnd - iStart, [=] GEOS_DEVICE ( localIndex const iCell )
   {
     // Loop over grid cells
     globalIndex localDofIndex[8];
@@ -450,9 +450,9 @@ void compute2DElasticityOperator( MPI_Comm const comm,
 
       for( localIndex j = 0; j < numEntries; ++j )
       {
-        if( columns[ j ] != localRow )
+        if( columns[j] != localRow )
         {
-          entries[ j ] = 0;
+          entries[j] = 0;
         }
       }
     } );

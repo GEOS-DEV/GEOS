@@ -60,7 +60,7 @@ public:
            arraySlice1d< localIndex const > const & elemToFaces,
            arraySlice1d< real64 const > const & elemCenter,
            real64 const & elemVolume,
-           real64 const (&elemPerm)[ 3 ],
+           real64 const (&elemPerm)[3],
            real64 const & lengthTolerance,
            arraySlice2d< real64 > const & transMatrix );
 
@@ -75,26 +75,26 @@ SimpleInnerProduct::compute( arrayView2d< real64 const, nodes::REFERENCE_POSITIO
                              arraySlice1d< localIndex const > const & elemToFaces,
                              arraySlice1d< real64 const > const & elemCenter,
                              real64 const & elemVolume,
-                             real64 const (&elemPerm)[ 3 ],
+                             real64 const (&elemPerm)[3],
                              real64 const & lengthTolerance,
                              arraySlice2d< real64 > const & transMatrix )
 {
   real64 const areaTolerance = lengthTolerance * lengthTolerance;
   real64 const weightToleranceInv = 1e30 / lengthTolerance;
 
-  real64 cellToFaceMat[ NF ][ 3 ] = {{ 0 }};
-  real64 normalsMat[ NF ][ 3 ] = {{ 0 }};
-  real64 permMat[ 3 ][ 3 ] = {{ 0 }};
+  real64 cellToFaceMat[NF][3] = {{ 0 }};
+  real64 normalsMat[NF][3] = {{ 0 }};
+  real64 permMat[3][3] = {{ 0 }};
 
-  real64 work_dimByNumFaces[ 3 ][ NF ] = {{ 0 }};
-  real64 worka_numFacesByNumFaces[ NF ][ NF ] = {{ 0 }};
-  real64 workb_numFacesByNumFaces[ NF ][ NF ] = {{ 0 }};
-  real64 workc_numFacesByNumFaces[ NF ][ NF ] = {{ 0 }};
+  real64 work_dimByNumFaces[3][NF] = {{ 0 }};
+  real64 worka_numFacesByNumFaces[NF][NF] = {{ 0 }};
+  real64 workb_numFacesByNumFaces[NF][NF] = {{ 0 }};
+  real64 workc_numFacesByNumFaces[NF][NF] = {{ 0 }};
 
-  real64 tpTransInv[ NF ] = { 0.0 };
+  real64 tpTransInv[NF] = { 0.0 };
 
-  real64 q0[ NF ], q1[ NF ], q2[ NF ];
-  real64 faceArea[ NF ];
+  real64 q0[NF], q1[NF], q2[NF];
+  real64 faceArea[NF];
 
 
   // 0) assemble full coefficient tensor from principal axis/components
@@ -103,9 +103,9 @@ SimpleInnerProduct::compute( arrayView2d< real64 const, nodes::REFERENCE_POSITIO
   // 1) fill the matrices cellToFaceMat and normalsMat row by row
   for( localIndex ifaceLoc = 0; ifaceLoc < NF; ++ifaceLoc )
   {
-    real64 faceCenter[ 3 ], faceNormal[ 3 ], cellToFaceVec[ 3 ];
+    real64 faceCenter[3], faceNormal[3], cellToFaceVec[3];
     // compute the face geometry data: center, normal, vector from cell center to face center
-    faceArea[ ifaceLoc ] =
+    faceArea[ifaceLoc] =
       computationalGeometry::centroid_3DPolygon( faceToNodes[elemToFaces[ifaceLoc]],
                                                  nodePosition,
                                                  faceCenter,
@@ -115,9 +115,9 @@ SimpleInnerProduct::compute( arrayView2d< real64 const, nodes::REFERENCE_POSITIO
     LvArray::tensorOps::copy< 3 >( cellToFaceVec, faceCenter );
     LvArray::tensorOps::subtract< 3 >( cellToFaceVec, elemCenter );
 
-    q0[ ifaceLoc ] = faceArea[ ifaceLoc ] * cellToFaceVec[ 0 ];
-    q1[ ifaceLoc ] = faceArea[ ifaceLoc ] * cellToFaceVec[ 1 ];
-    q2[ ifaceLoc ] = faceArea[ ifaceLoc ] * cellToFaceVec[ 2 ];
+    q0[ifaceLoc] = faceArea[ifaceLoc] * cellToFaceVec[0];
+    q1[ifaceLoc] = faceArea[ifaceLoc] * cellToFaceVec[1];
+    q2[ifaceLoc] = faceArea[ifaceLoc] * cellToFaceVec[2];
 
     if( LvArray::tensorOps::AiBi< 3 >( cellToFaceVec, faceNormal ) < 0.0 )
     {
@@ -137,10 +137,10 @@ SimpleInnerProduct::compute( arrayView2d< real64 const, nodes::REFERENCE_POSITIO
                                                                          diagEntry );
     tpTransInv[ifaceLoc] = diagEntry;
 
-    LvArray::tensorOps::scale< 3 >( faceNormal, faceArea[ ifaceLoc ] );
-    normalsMat[ ifaceLoc ][ 0 ] = faceNormal[ 0 ];
-    normalsMat[ ifaceLoc ][ 1 ] = faceNormal[ 1 ];
-    normalsMat[ ifaceLoc ][ 2 ] = faceNormal[ 2 ];
+    LvArray::tensorOps::scale< 3 >( faceNormal, faceArea[ifaceLoc] );
+    normalsMat[ifaceLoc][0] = faceNormal[0];
+    normalsMat[ifaceLoc][1] = faceNormal[1];
+    normalsMat[ifaceLoc][2] = faceNormal[2];
 
   }
 
@@ -168,7 +168,7 @@ SimpleInnerProduct::compute( arrayView2d< real64 const, nodes::REFERENCE_POSITIO
   // 7) compute T = ( N K N' + t D P_Q D ) / elemVolume
   for( localIndex i = 0; i < NF; ++i )
   {
-    workb_numFacesByNumFaces[ i ][ i ] = faceArea[ i ];
+    workb_numFacesByNumFaces[i][i] = faceArea[i];
   }
 
   LvArray::tensorOps::Rij_eq_AikBkj< NF, NF, NF >( workc_numFacesByNumFaces,

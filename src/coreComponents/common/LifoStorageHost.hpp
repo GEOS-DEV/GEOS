@@ -69,7 +69,7 @@ public:
     GEOS_ERROR_IF( baseLifo::m_hostDeque.capacity() == 0,
                    "Cannot save on a Lifo without host storage (please set lifoSize, lifoOnDevice and lifoOnHost in xml file)" );
 
-    std::packaged_task< void() > task( std::bind( [ this ] ( int pushId, arrayView1d< T > pushedArray ) {
+    std::packaged_task< void() > task( std::bind( [this] ( int pushId, arrayView1d< T > pushedArray ) {
       baseLifo::m_hostDeque.emplaceFront( pushedArray );
 
       if( baseLifo::m_maxNumberOfBuffers - pushId > (int)baseLifo::m_hostDeque.capacity() )
@@ -99,7 +99,7 @@ public:
   {
     if( baseLifo::m_bufferCount > 0 )
     {
-      m_pushToHostFutures[baseLifo::m_bufferCount-1].wait();
+      m_pushToHostFutures[baseLifo::m_bufferCount - 1].wait();
     }
   }
 
@@ -112,7 +112,7 @@ public:
   {
     int id = --baseLifo::m_bufferCount;
 
-    std::packaged_task< void() > task( std::bind ( [ this ] ( arrayView1d< T > poppedArray ) {
+    std::packaged_task< void() > task( std::bind ( [this] ( arrayView1d< T > poppedArray ) {
       baseLifo::m_hostDeque.popFront( poppedArray );
 
       if( baseLifo::m_bufferToDiskCount > 0 )

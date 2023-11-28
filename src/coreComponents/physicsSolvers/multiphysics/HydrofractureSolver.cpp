@@ -152,7 +152,7 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::implicitStepSetup( real64 cons
       separationCoeff0 = subRegion.getReference< array1d< real64 > >( viewKeyStruct::separationCoeff0String() );
       arrayView1d< real64 const > const &
       separationCoeff = subRegion.getSeparationCoefficient();
-      for( localIndex k=0; k<separationCoeff0.size(); ++k )
+      for( localIndex k = 0; k < separationCoeff0.size(); ++k )
       {
         separationCoeff0[k] = separationCoeff[k];
       }
@@ -188,7 +188,7 @@ real64 HydrofractureSolver< POROMECHANICS_SOLVER >::fullyCoupledSolverStep( real
   int const maxIter = m_maxNumResolves + 1;
   m_numResolves[1] = m_numResolves[0];
   int solveIter;
-  for( solveIter=0; solveIter<maxIter; ++solveIter )
+  for( solveIter = 0; solveIter < maxIter; ++solveIter )
   {
     GEOS_LOG_RANK_0( GEOS_FMT( "  Fracture propagation iteration {}", solveIter ) );
 
@@ -495,7 +495,7 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::addFluxApertureCouplingNNZ( Do
 
   fluxApprox.forStencils< SurfaceElementStencil >( mesh, [&]( SurfaceElementStencil const & stencil )
   {
-    for( localIndex iconn=0; iconn<stencil.size(); ++iconn )
+    for( localIndex iconn = 0; iconn < stencil.size(); ++iconn )
     {
       localIndex const numFluxElems = stencil.stencilSize( iconn );
       typename SurfaceElementStencil::IndexContainerViewConstType const & seri = stencil.getElementRegionIndices();
@@ -510,21 +510,21 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::addFluxApertureCouplingNNZ( Do
       arrayView1d< globalIndex const > const faceElementDofNumber =
         elementSubRegion.getReference< array1d< globalIndex > >( presDofKey );
 
-      for( localIndex k0=0; k0<numFluxElems; ++k0 )
+      for( localIndex k0 = 0; k0 < numFluxElems; ++k0 )
       {
         globalIndex const activeFlowDOF = faceElementDofNumber[sei[iconn][k0]];
         globalIndex const rowNumber = activeFlowDOF - rankOffset;
 
         if( rowNumber >= 0 && rowNumber < rowLengths.size() )
         {
-          for( localIndex k1=0; k1<numFluxElems; ++k1 )
+          for( localIndex k1 = 0; k1 < numFluxElems; ++k1 )
           {
             // The coupling with the nodal displacements of the cell itself has already been added by the dofManager
             // so we only add the coupling with the nodal displacements of the neighbours.
             if( k1 != k0 )
             {
               localIndex const numNodesPerElement = elemsToNodes[sei[iconn][k1]].size();
-              rowLengths[rowNumber] += 3*numNodesPerElement;
+              rowLengths[rowNumber] += 3 * numNodesPerElement;
             }
           }
         }
@@ -558,7 +558,7 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::addFluxApertureCouplingSparsit
 
   fluxApprox.forStencils< SurfaceElementStencil >( mesh, [&]( SurfaceElementStencil const & stencil )
   {
-    for( localIndex iconn=0; iconn<stencil.size(); ++iconn )
+    for( localIndex iconn = 0; iconn < stencil.size(); ++iconn )
     {
       localIndex const numFluxElems = stencil.stencilSize( iconn );
       typename SurfaceElementStencil::IndexContainerViewConstType const & seri = stencil.getElementRegionIndices();
@@ -573,7 +573,7 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::addFluxApertureCouplingSparsit
       arrayView1d< globalIndex const > const faceElementDofNumber =
         elementSubRegion.getReference< array1d< globalIndex > >( presDofKey );
 
-      for( localIndex k0=0; k0<numFluxElems; ++k0 )
+      for( localIndex k0 = 0; k0 < numFluxElems; ++k0 )
       {
         globalIndex const activeFlowDOF = faceElementDofNumber[sei[iconn][k0]];
 
@@ -581,7 +581,7 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::addFluxApertureCouplingSparsit
 
         if( rowIndex >= 0 && rowIndex < pattern.numRows() )
         {
-          for( localIndex k1=0; k1<numFluxElems; ++k1 )
+          for( localIndex k1 = 0; k1 < numFluxElems; ++k1 )
           {
             // The coupling with the nodal displacements of the cell itself has already been added by the dofManager
             // so we only add the coupling with the nodal displacements of the neighbours.
@@ -589,9 +589,9 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::addFluxApertureCouplingSparsit
             {
               localIndex const numNodesPerElement = elemsToNodes[sei[iconn][k1]].size();
 
-              for( localIndex a=0; a<numNodesPerElement; ++a )
+              for( localIndex a = 0; a < numNodesPerElement; ++a )
               {
-                for( int d=0; d<3; ++d )
+                for( int d = 0; d < 3; ++d )
                 {
                   globalIndex const colIndex = dispDofNumber[elemsToNodes[sei[iconn][k1]][a]] + d;
                   pattern.insertNonZero( rowIndex, colIndex );
@@ -729,7 +729,7 @@ assembleForceResidualDerivativeWrtPressure( DomainPartition & domain,
         // TODO make if work for any element type.
         globalIndex rowDOF[24];   // Here it assumes 8 nodes?
         real64 nodeRHS[24];   // Here it assumes 8 nodes?
-        stackArray2d< real64, 12*12 > dRdP( numNodesPerFace*3, 1 );
+        stackArray2d< real64, 12 * 12 > dRdP( numNodesPerFace * 3, 1 );
         globalIndex colDOF = pressureDofNumber[kfe];
 
         real64 const Ja = area[kfe] / numNodesPerFace;
@@ -738,35 +738,35 @@ assembleForceResidualDerivativeWrtPressure( DomainPartition & domain,
         real64 nodalForce[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( Nbar );
         LvArray::tensorOps::scale< 3 >( nodalForce, nodalForceMag );
 
-        for( localIndex kf=0; kf<2; ++kf )
+        for( localIndex kf = 0; kf < 2; ++kf )
         {
           localIndex const faceIndex = elemsToFaces[kfe][kf];
 
-          for( localIndex a=0; a<numNodesPerFace; ++a )
+          for( localIndex a = 0; a < numNodesPerFace; ++a )
           {
 
-            for( int i=0; i<3; ++i )
+            for( int i = 0; i < 3; ++i )
             {
-              rowDOF[3*a+i] = dispDofNumber[faceToNodeMap( faceIndex, a )] + i;
-              nodeRHS[3*a+i] = nodalForce[i] * kfSign[kf];
+              rowDOF[3 * a + i] = dispDofNumber[faceToNodeMap( faceIndex, a )] + i;
+              nodeRHS[3 * a + i] = nodalForce[i] * kfSign[kf];
               RAJA::atomicAdd( AtomicPolicy< execPolicy >{}, &(fext[faceToNodeMap( faceIndex, a )][i]), nodalForce[i] * kfSign[kf] );
 
-              dRdP( 3*a+i, 0 ) = Ja * Nbar[i] * kfSign[kf];
+              dRdP( 3 * a + i, 0 ) = Ja * Nbar[i] * kfSign[kf];
             }
           }
 
-          for( localIndex a=0; a<numNodesPerFace; ++a )
+          for( localIndex a = 0; a < numNodesPerFace; ++a )
           {
-            localIndex const localRow = LvArray::integerConversion< localIndex >( rowDOF[3*a] - rankOffset );
+            localIndex const localRow = LvArray::integerConversion< localIndex >( rowDOF[3 * a] - rankOffset );
             if( localRow >= 0 && localRow < localMatrix.numRows() )
             {
-              for( int i=0; i<3; ++i )
+              for( int i = 0; i < 3; ++i )
               {
                 // TODO: use parallel atomic when loop is parallel
-                RAJA::atomicAdd( AtomicPolicy< execPolicy >{}, &localRhs[localRow + i], nodeRHS[3*a+i] );
+                RAJA::atomicAdd( AtomicPolicy< execPolicy >{}, &localRhs[localRow + i], nodeRHS[3 * a + i] );
                 localMatrix.addToRowBinarySearchUnsorted< AtomicPolicy< execPolicy > >( localRow + i,
                                                                                         &colDOF,
-                                                                                        &dRdP[3*a+i][0],
+                                                                                        &dRdP[3 * a + i][0],
                                                                                         1 );
               }
             }
@@ -894,7 +894,7 @@ real64 HydrofractureSolver< POROMECHANICS_SOLVER >::setNextDt( real64 const & cu
     nextDt = m_surfaceGenerator->getTimestepRequest() < 1e99 ? m_surfaceGenerator->getTimestepRequest() : currentDt;
   }
 
-  GEOS_LOG_LEVEL_RANK_0( 3, this->getName() << ": nextDt request is "  << nextDt );
+  GEOS_LOG_LEVEL_RANK_0( 3, this->getName() << ": nextDt request is " << nextDt );
   return nextDt;
 }
 template< typename POROMECHANICS_SOLVER >

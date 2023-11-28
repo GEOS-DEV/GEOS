@@ -123,7 +123,7 @@ void EquilibriumInitialCondition::postProcessInput()
       GEOS_THROW_IF( !m_componentFractionVsElevationTableNames[ic].empty() &&
                      !functionManager.hasGroup( m_componentFractionVsElevationTableNames[ic] ),
                      getCatalogName() << " " << getDataContext() << ": the component fraction vs elevation table " <<
-                     m_componentFractionVsElevationTableNames[ic] << " could not be found"  << " for component " << ic,
+                     m_componentFractionVsElevationTableNames[ic] << " could not be found" << " for component " << ic,
                      InputError );
 
       TableFunction const & compFracTable = functionManager.getGroup< TableFunction >( m_componentFractionVsElevationTableNames[ic] );
@@ -175,7 +175,7 @@ void EquilibriumInitialCondition::initializePreSubGroups()
       tableSizes[ic] = compFracValues.size();
       if( ic >= 1 )
       {
-        GEOS_THROW_IF( tableSizes[ic] != tableSizes[ic-1],
+        GEOS_THROW_IF( tableSizes[ic] != tableSizes[ic - 1],
                        getCatalogName() << " " << getDataContext() <<
                        ": all the component fraction vs elevation tables must contain the same number of values",
                        InputError );
@@ -197,7 +197,7 @@ void EquilibriumInitialCondition::initializePreSubGroups()
 
         if( ic >= 1 )
         {
-          GEOS_THROW_IF( !isZero( elevation[ic][i] - elevation[ic-1][i] ),
+          GEOS_THROW_IF( !isZero( elevation[ic][i] - elevation[ic - 1][i] ),
                          getCatalogName() << " " << getDataContext() <<
                          ": the elevation values must be the same in all the component vs elevation tables",
                          InputError );

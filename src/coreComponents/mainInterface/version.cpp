@@ -32,22 +32,22 @@ string getCppCompilerIdString()
   std::ostringstream oss;
 
   #if defined(__clang__)
-  oss<<"clang " <<__clang_major__<<"."<<__clang_minor__<<"."<<__clang_patchlevel__;
+  oss << "clang " << __clang_major__ << "." << __clang_minor__ << "." << __clang_patchlevel__;
 #if defined(__apple_build_version__)
-  oss<<" ( apple version " <<__apple_build_version__<<" )";
+  oss << " ( apple version " << __apple_build_version__ << " )";
 #endif
 #if defined(__ibmxl_vrm__)
-  oss<<"IBMXL "
-     <<__ibmxl_version__<<"."
-     <<__ibmxl_release__<<"."
-     <<__ibmxl_modification__<<"."
-     <<__ibmxl_ptf_fix_level__;
+  oss << "IBMXL "
+      << __ibmxl_version__ << "."
+      << __ibmxl_release__ << "."
+      << __ibmxl_modification__ << "."
+      << __ibmxl_ptf_fix_level__;
 #endif
 #elif defined(__GNUC__)
-  oss<<"gcc "
-     <<__GNUC__<<"."
-     <<__GNUC_MINOR__<<"."
-     <<__GNUC_PATCHLEVEL__;
+  oss << "gcc "
+      << __GNUC__ << "."
+      << __GNUC_MINOR__ << "."
+      << __GNUC_PATCHLEVEL__;
 #endif
   return oss.str();
 }
@@ -57,7 +57,7 @@ string getGpuCompilerIdString()
   std::ostringstream oss;
 
 #if defined( GEOS_USE_CUDA )
-  oss<<"  - cuda compiler version: " <<CUDA_VERSION/1000<<"."<<CUDA_VERSION/10%100;
+  oss << "  - cuda compiler version: " << CUDA_VERSION / 1000 << "." << CUDA_VERSION / 10 % 100;
 #endif
   return oss.str();
 }
@@ -67,14 +67,14 @@ void outputVersionInfo()
 
   GEOS_LOG_RANK_0( "GEOSX version: " << getVersion() );
 
-  GEOS_LOG_RANK_0( "  - c++ compiler: "<<getCppCompilerIdString() );
+  GEOS_LOG_RANK_0( "  - c++ compiler: " << getCppCompilerIdString() );
 
   string const gpuCompilerIdString = getGpuCompilerIdString();
   GEOS_LOG_RANK_0_IF( !gpuCompilerIdString.empty(), gpuCompilerIdString );
 
 
 #if defined(_OPENMP)
-  GEOS_LOG_RANK_0( "  - openmp version: "<<_OPENMP );
+  GEOS_LOG_RANK_0( "  - openmp version: " << _OPENMP );
 #endif
 
 #if defined(GEOSX_USE_MPI)

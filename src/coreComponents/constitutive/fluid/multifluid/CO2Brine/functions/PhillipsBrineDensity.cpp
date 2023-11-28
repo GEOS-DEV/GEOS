@@ -65,7 +65,7 @@ void calculateBrineDensity( PTTableCoordinates const & tableCoords,
       real64 const x = c1 * exp( a1 * salinity )
                        + c2 * exp( a2 * tableCoords.getTemperature( j ) )
                        + c3 * exp( a3 * P );
-      densities[j*nPressures+i] = (AA + BB * x + CC * x * x + DD * x * x * x) * 1000.0;
+      densities[j * nPressures + i] = (AA + BB * x + CC * x * x + DD * x * x * x) * 1000.0;
     }
   }
 }
@@ -103,7 +103,7 @@ void calculatePureWaterDensity( PTTableCoordinates const & tableCoords,
       // Note: for now, we keep a constant water compressibility for consistency with the Ezrokhi model
       // In the future, we should query the water compressibility as a function of pressure and temperature in a table
       real64 const waterCompressibility = 4.5e-10; // Pa-1 // TODO: consolidate to a unique file as Dick started doing
-      densities[j*nPressures+i] = waterSatDensity * exp( waterCompressibility * ( P - waterSatPressure ) );
+      densities[j * nPressures + i] = waterSatDensity * exp( waterCompressibility * ( P - waterSatPressure ) );
     }
   }
 }

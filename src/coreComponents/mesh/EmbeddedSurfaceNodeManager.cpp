@@ -95,14 +95,14 @@ void EmbeddedSurfaceNodeManager::setElementMaps( ElementRegionManager const & el
     forElementSubRegions< EmbeddedSurfaceSubRegion >( [&elemsPerNode, &totalNodeElems]( EmbeddedSurfaceSubRegion const & subRegion )
   {
     EmbeddedSurfaceSubRegion::NodeMapType const & elemToNodeMap = subRegion.nodeList();
-    forAll< parallelHostPolicy >( subRegion.size(), [&elemsPerNode, totalNodeElems, &elemToNodeMap ] ( localIndex const k )
+    forAll< parallelHostPolicy >( subRegion.size(), [&elemsPerNode, totalNodeElems, &elemToNodeMap] ( localIndex const k )
     {
       localIndex const numElementNodes = elemToNodeMap.sizeOfArray( k );
       totalNodeElems += numElementNodes;
       for( localIndex a = 0; a < numElementNodes; ++a )
       {
         localIndex const nodeIndex = elemToNodeMap( k, a );
-        RAJA::atomicInc< parallelHostAtomic >( &elemsPerNode[ nodeIndex ] );
+        RAJA::atomicInc< parallelHostAtomic >( &elemsPerNode[nodeIndex] );
       }
     } );
   } );
@@ -132,9 +132,9 @@ void EmbeddedSurfaceNodeManager::setElementMaps( ElementRegionManager const & el
     toElementSubRegionList.appendArray( 0 );
     toElementList.appendArray( 0 );
 
-    toElementRegionList.setCapacityOfArray( nodeIndex, elemsPerNode[ nodeIndex ] + elemMapOverallocation() );
-    toElementSubRegionList.setCapacityOfArray( nodeIndex, elemsPerNode[ nodeIndex ] + elemMapOverallocation() );
-    toElementList.setCapacityOfArray( nodeIndex, elemsPerNode[ nodeIndex ] + elemMapOverallocation() );
+    toElementRegionList.setCapacityOfArray( nodeIndex, elemsPerNode[nodeIndex] + elemMapOverallocation() );
+    toElementSubRegionList.setCapacityOfArray( nodeIndex, elemsPerNode[nodeIndex] + elemMapOverallocation() );
+    toElementList.setCapacityOfArray( nodeIndex, elemsPerNode[nodeIndex] + elemMapOverallocation() );
   }
 
   // Populate the element maps.
@@ -148,7 +148,7 @@ void EmbeddedSurfaceNodeManager::setElementMaps( ElementRegionManager const & el
     EmbeddedSurfaceSubRegion::NodeMapType const & elemToNodeMap = subRegion.nodeList();
     for( localIndex k = 0; k < subRegion.size(); ++k )
     {
-      for( localIndex a=0; a<elemToNodeMap.sizeOfArray( k ); ++a )
+      for( localIndex a = 0; a < elemToNodeMap.sizeOfArray( k ); ++a )
       {
         localIndex const nodeIndex = elemToNodeMap( k, a );
         toElementRegionList.emplaceBack( nodeIndex, er );
@@ -177,7 +177,7 @@ void EmbeddedSurfaceNodeManager::appendNode( arraySlice1d< real64 const > const 
   localIndex nodeIndex =  this->size();
   this->resize( nodeIndex + 1 );
   LvArray::tensorOps::copy< 3 >( m_referencePosition[nodeIndex], pointCoord );
-  m_ghostRank[ nodeIndex ] = pointGhostRank;
+  m_ghostRank[nodeIndex] = pointGhostRank;
 }
 
 
@@ -217,10 +217,10 @@ localIndex EmbeddedSurfaceNodeManager::packNewNodesGlobalMapsImpl( buffer_unit_t
     // 2. the ghostRank
     array1d< integer > ghostRanks;
     ghostRanks.resize( numPackedIndices );
-    for( localIndex a=0; a<numPackedIndices; ++a )
+    for( localIndex a = 0; a < numPackedIndices; ++a )
     {
       globalIndices[a] = this->m_localToGlobalMap[packList[a]];
-      ghostRanks[a]= this->m_ghostRank[ packList[a] ];
+      ghostRanks[a] = this->m_ghostRank[packList[a]];
     }
     packedSize += bufferOps::Pack< DO_PACKING >( buffer, globalIndices );
     packedSize += bufferOps::Pack< DO_PACKING >( buffer, ghostRanks );
@@ -302,9 +302,9 @@ localIndex EmbeddedSurfaceNodeManager::unpackNewNodesGlobalMaps( buffer_unit_typ
           // object already exists on this rank and it's a ghost
           unpackedLocalIndices( a ) = nodeIndexOnThisRank;
 
-          globalIndex const globalIndexOnthisRank = m_localToGlobalMap[ nodeIndexOnThisRank ];
+          globalIndex const globalIndexOnthisRank = m_localToGlobalMap[nodeIndexOnThisRank];
 
-          m_localToGlobalMap[ nodeIndexOnThisRank ] = globalIndices( a );
+          m_localToGlobalMap[nodeIndexOnThisRank] = globalIndices( a );
 
           //modify global to local map
           m_globalToLocalMap.erase( globalIndexOnthisRank );
@@ -318,7 +318,7 @@ localIndex EmbeddedSurfaceNodeManager::unpackNewNodesGlobalMaps( buffer_unit_typ
         const localIndex newLocalIndex = oldSize + numNewIndices;
 
         // add the global index of the new object to the globalToLocal map
-        m_globalToLocalMap[ globalIndices[a] ] = newLocalIndex;
+        m_globalToLocalMap[globalIndices[a]] = newLocalIndex;
 
         unpackedLocalIndices( a ) = newLocalIndex;
 
@@ -350,7 +350,7 @@ localIndex EmbeddedSurfaceNodeManager::unpackNewNodesGlobalMaps( buffer_unit_typ
     this->resize( newSize );
 
     // add the new indices to the maps.
-    for( int a=0; a<numNewIndices; ++a )
+    for( int a = 0; a < numNewIndices; ++a )
     {
       localIndex const b = oldSize + a;
       m_localToGlobalMap[b] = newGlobalIndices( a );
@@ -421,7 +421,7 @@ localIndex EmbeddedSurfaceNodeManager::unpackUpDownMaps( buffer_unit_type const 
 void EmbeddedSurfaceNodeManager::nodeExistsOnThisRank( real64 const (&nodeCoord)[3],
                                                        localIndex & nodeIndexOnThisRank ) const
 {
-  for( localIndex a=0; a<size(); a++ )
+  for( localIndex a = 0; a < size(); a++ )
   {
     real64 const tolerance = 100.0 * std::numeric_limits< real64 >::epsilon();
     real64 distance[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( m_referencePosition[a] );

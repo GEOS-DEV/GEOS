@@ -75,7 +75,7 @@ template< typename T1, typename T2, typename SORTED >
 T2 & stlMapLookup( mapBase< T1, T2, SORTED > & Map, const T1 & key )
 {
   typename mapBase< T1, T2, SORTED >::iterator MapIter = Map.find( key );
-  GEOS_ERROR_IF( MapIter==Map.end(), "Key not found: " << key );
+  GEOS_ERROR_IF( MapIter == Map.end(), "Key not found: " << key );
   return MapIter->second;
 }
 
@@ -91,7 +91,7 @@ bool executeOnMapValue( mapBase< T1, T2, SORTED > const & Map, const T1 & key, L
 {
   bool rval = false;
   typename mapBase< T1, T2, SORTED >::const_iterator MapIter = Map.find( key );
-  if( MapIter!=Map.end() )
+  if( MapIter != Map.end() )
   {
     rval = true;
     lambda( MapIter->second );
@@ -107,7 +107,7 @@ T_VALUE softMapLookup( mapBase< T_KEY, T_VALUE, SORTED > const & theMap,
 {
   T_VALUE rvalue;
   typename mapBase< T_KEY, T_VALUE, SORTED >::const_iterator iter = theMap.find( key );
-  if( iter==theMap.end() )
+  if( iter == theMap.end() )
   {
     rvalue = failValue;
   }
@@ -320,7 +320,7 @@ void copy( integer const N,
 {
   for( integer i = 0; i < N; ++i )
   {
-    v2[offset+i] = v1[i];
+    v2[offset + i] = v1[i];
   }
 }
 
@@ -350,7 +350,7 @@ void applyChainRule( integer const N,
     df_dx[i] = 0.0;
     for( integer j = 0; j < N; ++j )
     {
-      df_dx[i] += df_dy[firstDerivativeOffset+j] * dy_dx[j][i];
+      df_dx[i] += df_dy[firstDerivativeOffset + j] * dy_dx[j][i];
     }
   }
 }

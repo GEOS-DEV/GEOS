@@ -217,7 +217,7 @@ struct MassMatrixKernel
       constexpr localIndex numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
 
       real32 const invC2 = 1.0 / ( density[e] * velocity[e] * velocity[e] );
-      real64 xLocal[ numNodesPerElem ][ 3 ];
+      real64 xLocal[numNodesPerElem][3];
       for( localIndex a = 0; a < numNodesPerElem; ++a )
       {
         for( localIndex i = 0; i < 3; ++i )
@@ -282,7 +282,7 @@ struct DampingMatrixKernel
         if( facesDomainBoundaryIndicator[f] == 1 && freeSurfaceFaceIndicator[f] != 1 )
         {
           constexpr localIndex numNodesPerFace = FE_TYPE::numNodesPerFace;
-          real64 xLocal[ numNodesPerFace ][ 3 ];
+          real64 xLocal[numNodesPerFace][3];
           for( localIndex a = 0; a < numNodesPerFace; ++a )
           {
             for( localIndex d = 0; d < 3; ++d )
@@ -340,33 +340,33 @@ struct PMLKernelHelper
 
     if( xLocal[0] < xMin[0] )
     {
-      real32 const factor =  -3.0/2.0*cMin[0]*log( r )/(dMin[0]*dMin[0]*dMin[0]);
-      sigma[0] = factor*(xLocal[0]-xMin[0])*(xLocal[0]-xMin[0]);
+      real32 const factor =  -3.0 / 2.0 * cMin[0] * log( r ) / (dMin[0] * dMin[0] * dMin[0]);
+      sigma[0] = factor * (xLocal[0] - xMin[0]) * (xLocal[0] - xMin[0]);
     }
     else if( xLocal[0] > xMax[0] )
     {
-      real32 const factor =  -3.0/2.0*cMax[0]*log( r )/(dMax[0]*dMax[0]*dMax[0]);
-      sigma[0] = factor*(xLocal[0]-xMax[0])*(xLocal[0]-xMax[0]);
+      real32 const factor =  -3.0 / 2.0 * cMax[0] * log( r ) / (dMax[0] * dMax[0] * dMax[0]);
+      sigma[0] = factor * (xLocal[0] - xMax[0]) * (xLocal[0] - xMax[0]);
     }
     if( xLocal[1] < xMin[1] )
     {
-      real32 const factor =  -3.0/2.0*cMin[1]*log( r )/(dMin[1]*dMin[1]*dMin[1]);
-      sigma[1] = factor*(xLocal[1]-xMin[1])*(xLocal[1]-xMin[1]);
+      real32 const factor =  -3.0 / 2.0 * cMin[1] * log( r ) / (dMin[1] * dMin[1] * dMin[1]);
+      sigma[1] = factor * (xLocal[1] - xMin[1]) * (xLocal[1] - xMin[1]);
     }
     else if( xLocal[1] > xMax[1] )
     {
-      real32 const factor =  -3.0/2.0*cMax[1]*log( r )/(dMax[1]*dMax[1]*dMax[1]);
-      sigma[1] = factor*(xLocal[1]-xMax[1])*(xLocal[1]-xMax[1]);
+      real32 const factor =  -3.0 / 2.0 * cMax[1] * log( r ) / (dMax[1] * dMax[1] * dMax[1]);
+      sigma[1] = factor * (xLocal[1] - xMax[1]) * (xLocal[1] - xMax[1]);
     }
     if( xLocal[2] < xMin[2] )
     {
-      real32 const factor =  -3.0/2.0*cMin[2]*log( r )/(dMin[2]*dMin[2]*dMin[2]);
-      sigma[2] = factor*(xLocal[2]-xMin[2])*(xLocal[2]-xMin[2]);
+      real32 const factor =  -3.0 / 2.0 * cMin[2] * log( r ) / (dMin[2] * dMin[2] * dMin[2]);
+      sigma[2] = factor * (xLocal[2] - xMin[2]) * (xLocal[2] - xMin[2]);
     }
     else if( xLocal[2] > xMax[2] )
     {
-      real32 const factor =  -3.0/2.0*cMax[2]*log( r )/(dMax[2]*dMax[2]*dMax[2]);
-      sigma[2] = factor*(xLocal[2]-xMax[2])*(xLocal[2]-xMax[2]);
+      real32 const factor =  -3.0 / 2.0 * cMax[2] * log( r ) / (dMax[2] * dMax[2] * dMax[2]);
+      sigma[2] = factor * (xLocal[2] - xMax[2]) * (xLocal[2] - xMax[2]);
     }
   }
 };
@@ -431,30 +431,30 @@ struct PMLKernel
       real32 const c = velocity[k];
 
       /// coordinates of the element nodes
-      real64 xLocal[ numNodesPerElem ][ 3 ];
-      real32 xLocal32[ numNodesPerElem ][ 3 ];
+      real64 xLocal[numNodesPerElem][3];
+      real32 xLocal32[numNodesPerElem][3];
 
       /// local arrays to store the pressure at all nodes and its gradient at a given node
-      real64 pressure[ numNodesPerElem ];
-      real64 pressureGrad[ 3 ];
+      real64 pressure[numNodesPerElem];
+      real64 pressureGrad[3];
 
       /// local arrays to store the PML vectorial auxiliary variable at all nodes and its gradient at a given node
-      real64 auxV[3][ numNodesPerElem ];
+      real64 auxV[3][numNodesPerElem];
       real64 auxVGrad[3][3];
 
       /// local arrays to store the PML scalar auxiliary variable at all nodes and its gradient at a given node
-      real64 auxU[ numNodesPerElem ];
+      real64 auxU[numNodesPerElem];
       real64 auxUGrad[3];
 
       /// local array to store the PML damping profile
-      real32 sigma[ 3 ];
+      real32 sigma[3];
 
       /// copy from global to local arrays
-      for( localIndex i=0; i<numNodesPerElem; ++i )
+      for( localIndex i = 0; i < numNodesPerElem; ++i )
       {
         pressure[i] = p_n[elemToNodesViewConst[k][i]];
         auxU[i] = u_n[elemToNodesViewConst[k][i]];
-        for( int j=0; j<3; ++j )
+        for( int j = 0; j < 3; ++j )
         {
           xLocal[i][j]   = nodeCoords[elemToNodesViewConst[k][i]][j];
           xLocal32[i][j] = nodeCoords[elemToNodesViewConst[k][i]][j];
@@ -463,12 +463,12 @@ struct PMLKernel
       }
 
       /// local arrays to store shape functions gradients
-      real64 gradN[ numNodesPerElem ][ 3 ];
+      real64 gradN[numNodesPerElem][3];
       using GRADIENT_TYPE = TYPEOFREF( gradN );
 
       /// loop over the nodes i in the element k
       /// the nodes are implicitly assumed the same as quadrature points
-      for( localIndex i=0; i<numNodesPerElem; ++i )
+      for( localIndex i = 0; i < numNodesPerElem; ++i )
       {
 
         /// compute the shape functions gradients
@@ -478,7 +478,7 @@ struct PMLKernel
         /// compute the gradient of the pressure and the PML auxiliary variables at the node
         m_finiteElement.template gradient< numNodesPerElem, GRADIENT_TYPE >( gradN, pressure, pressureGrad );
         m_finiteElement.template gradient< numNodesPerElem, GRADIENT_TYPE >( gradN, auxU, auxUGrad );
-        for( int j=0; j<3; ++j )
+        for( int j = 0; j < 3; ++j )
         {
           m_finiteElement.template gradient< numNodesPerElem, GRADIENT_TYPE >( gradN, auxV[j], auxVGrad[j] );
         }
@@ -501,21 +501,21 @@ struct PMLKernel
         /// to each node that is needed. In this case, it is equal to 'numNodesPerElem'. For high-order
         /// SEM, this approach won't work and the average needs to be computed differently (maybe using counters).
         real32 localIncrementArray[3];
-        localIncrementArray[0] = (sigma[0]-sigma[1]-sigma[2])*pressureGrad[0] - (sigma[1]*sigma[2])*auxUGrad[0];
-        localIncrementArray[1] = (sigma[1]-sigma[0]-sigma[2])*pressureGrad[1] - (sigma[0]*sigma[2])*auxUGrad[1];
-        localIncrementArray[2] = (sigma[2]-sigma[0]-sigma[1])*pressureGrad[2] - (sigma[0]*sigma[1])*auxUGrad[2];
-        for( int j=0; j<3; ++j )
+        localIncrementArray[0] = (sigma[0] - sigma[1] - sigma[2]) * pressureGrad[0] - (sigma[1] * sigma[2]) * auxUGrad[0];
+        localIncrementArray[1] = (sigma[1] - sigma[0] - sigma[2]) * pressureGrad[1] - (sigma[0] * sigma[2]) * auxUGrad[1];
+        localIncrementArray[2] = (sigma[2] - sigma[0] - sigma[1]) * pressureGrad[2] - (sigma[0] * sigma[1]) * auxUGrad[2];
+        for( int j = 0; j < 3; ++j )
         {
-          RAJA::atomicAdd< ATOMIC_POLICY >( &grad_n[elemToNodesViewConst[k][i]][j], localIncrementArray[j]/numNodesPerElem );
+          RAJA::atomicAdd< ATOMIC_POLICY >( &grad_n[elemToNodesViewConst[k][i]][j], localIncrementArray[j] / numNodesPerElem );
         }
         /// compute beta.pressure + gamma.u - c^2 * divV where beta and gamma are functions of the damping profile
-        real32 const beta = sigma[0]*sigma[1]+sigma[0]*sigma[2]+sigma[1]*sigma[2];
-        real32 const gamma = sigma[0]*sigma[1]*sigma[2];
-        real32 const localIncrement = beta*p_n[elemToNodesViewConst[k][i]]
-                                      + gamma*u_n[elemToNodesViewConst[k][i]]
-                                      - c*c*( auxVGrad[0][0] + auxVGrad[1][1] + auxVGrad[2][2] );
+        real32 const beta = sigma[0] * sigma[1] + sigma[0] * sigma[2] + sigma[1] * sigma[2];
+        real32 const gamma = sigma[0] * sigma[1] * sigma[2];
+        real32 const localIncrement = beta * p_n[elemToNodesViewConst[k][i]]
+                                      + gamma * u_n[elemToNodesViewConst[k][i]]
+                                      - c * c * ( auxVGrad[0][0] + auxVGrad[1][1] + auxVGrad[2][2] );
 
-        RAJA::atomicAdd< ATOMIC_POLICY >( &divV_n[elemToNodesViewConst[k][i]], localIncrement/numNodesPerElem );
+        RAJA::atomicAdd< ATOMIC_POLICY >( &divV_n[elemToNodesViewConst[k][i]], localIncrement / numNodesPerElem );
       }
     } );
   }
@@ -587,12 +587,12 @@ struct waveSpeedPMLKernel
       real32 const c = velocity[k];
 
       /// coordinates of the element center
-      real64 xLocal[ 3 ] = {0.0, 0.0, 0.0};
+      real64 xLocal[3] = {0.0, 0.0, 0.0};
 
       /// compute the coordinates of the element center
-      for( int j=0; j<3; ++j )
+      for( int j = 0; j < 3; ++j )
       {
-        for( localIndex i=0; i<numNodesPerElem; ++i )
+        for( localIndex i = 0; i < numNodesPerElem; ++i )
         {
           xLocal[j] += nodeCoords[elemToNodesViewConst[k][i]][j];
         }
@@ -646,18 +646,18 @@ struct waveSpeedPMLKernel
     } );
 
     /// transfer local results to global variables
-    cMin[0]+=subRegionAvgWaveSpeedLeft.get();
-    cMin[1]+=subRegionAvgWaveSpeedFront.get();
-    cMin[2]+=subRegionAvgWaveSpeedTop.get();
-    cMax[0]+=subRegionAvgWaveSpeedRight.get();
-    cMax[1]+=subRegionAvgWaveSpeedBack.get();
-    cMax[2]+=subRegionAvgWaveSpeedBottom.get();
-    counterMin[0]+=subRegionAvgWaveSpeedCounterLeft.get();
-    counterMin[1]+=subRegionAvgWaveSpeedCounterFront.get();
-    counterMin[2]+=subRegionAvgWaveSpeedCounterTop.get();
-    counterMax[0]+=subRegionAvgWaveSpeedCounterRight.get();
-    counterMax[1]+=subRegionAvgWaveSpeedCounterBack.get();
-    counterMax[2]+=subRegionAvgWaveSpeedCounterBottom.get();
+    cMin[0] += subRegionAvgWaveSpeedLeft.get();
+    cMin[1] += subRegionAvgWaveSpeedFront.get();
+    cMin[2] += subRegionAvgWaveSpeedTop.get();
+    cMax[0] += subRegionAvgWaveSpeedRight.get();
+    cMax[1] += subRegionAvgWaveSpeedBack.get();
+    cMax[2] += subRegionAvgWaveSpeedBottom.get();
+    counterMin[0] += subRegionAvgWaveSpeedCounterLeft.get();
+    counterMin[1] += subRegionAvgWaveSpeedCounterFront.get();
+    counterMin[2] += subRegionAvgWaveSpeedCounterTop.get();
+    counterMax[0] += subRegionAvgWaveSpeedCounterRight.get();
+    counterMax[1] += subRegionAvgWaveSpeedCounterBack.get();
+    counterMax[2] += subRegionAvgWaveSpeedCounterBottom.get();
   }
 
   /// The finite element space/discretization object for the element type in the subRegion
@@ -762,7 +762,7 @@ public:
     {}
 
     /// C-array stack storage for element local the nodal positions.
-    real64 xLocal[ numNodesPerElem ][ 3 ];
+    real64 xLocal[numNodesPerElem][3];
   };
   //***************************************************************************
 
@@ -778,12 +778,12 @@ public:
               StackVariables & stack ) const
   {
     /// numDofPerTrialSupportPoint = 1
-    for( localIndex a=0; a< numNodesPerElem; ++a )
+    for( localIndex a = 0; a < numNodesPerElem; ++a )
     {
       localIndex const nodeIndex = m_elemsToNodes( k, a );
-      for( int i=0; i< 3; ++i )
+      for( int i = 0; i < 3; ++i )
       {
-        stack.xLocal[ a ][ i ] = m_nodeCoords[ nodeIndex ][ i ];
+        stack.xLocal[a][i] = m_nodeCoords[nodeIndex][i];
       }
     }
   }
@@ -803,8 +803,8 @@ public:
   {
     m_finiteElementSpace.template computeStiffnessTerm( q, stack.xLocal, [&] ( int i, int j, real64 val )
     {
-      real32 invDensity = 1./m_density[k];
-      real32 const localIncrement = invDensity*val*m_p_n[m_elemsToNodes[k][j]];
+      real32 invDensity = 1. / m_density[k];
+      real32 const localIncrement = invDensity * val * m_p_n[m_elemsToNodes[k][j]];
       RAJA::atomicAdd< parallelDeviceAtomic >( &m_stiffnessVector[m_elemsToNodes[k][i]], localIncrement );
     } );
   }

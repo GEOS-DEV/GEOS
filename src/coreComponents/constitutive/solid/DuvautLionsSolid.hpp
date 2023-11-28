@@ -78,7 +78,7 @@ public:
     real64 elasticStiffness[6][6];  //Elastic stiffness
     real64 timeRatio = 1.0 / (1.0 + timeIncrement / m_relaxationTime);
 
-    for( localIndex i=0; i<6; ++i )
+    for( localIndex i = 0; i < 6; ++i )
     {
       trialStress[i] = stress[i];
     }
@@ -95,12 +95,12 @@ public:
     UPDATE_BASE::smallStrainUpdate( k, q, timeIncrement, strainIncrement, stress, stiffness );
 
 
-    for( localIndex i=0; i<6; ++i )
+    for( localIndex i = 0; i < 6; ++i )
     {
-      stress[i] = timeRatio *  trialStress[i] + (1-timeRatio) * stress[i];
-      for( localIndex j=0; j<6; ++j )
+      stress[i] = timeRatio * trialStress[i] + (1 - timeRatio) * stress[i];
+      for( localIndex j = 0; j < 6; ++j )
       {
-        stiffness[i][j] = timeRatio * elasticStiffness[i][j]  + (1 - timeRatio) * stiffness[i][j];
+        stiffness[i][j] = timeRatio * elasticStiffness[i][j] + (1 - timeRatio) * stiffness[i][j];
       }
     }
 

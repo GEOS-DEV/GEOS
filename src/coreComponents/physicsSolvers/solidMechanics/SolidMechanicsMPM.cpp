@@ -533,7 +533,7 @@ real64 SolidMechanicsMPM::solverStep( real64 const & time_n,
   {
     dtReturn = explicitStep( time_n, dt, cycleNumber, domain );
 
-    if( surfaceGenerator!=nullptr )
+    if( surfaceGenerator != nullptr )
     {
       surfaceGenerator->solverStep( time_n, dt, cycleNumber, domain );
     }
@@ -643,15 +643,15 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
   m_xLocalMinNoGhost.resize( 3 );
   m_xLocalMaxNoGhost.resize( 3 );
   m_partitionExtent.resize( 3 );
-  for( int g=0; g<numNodes; g++ )
+  for( int g = 0; g < numNodes; g++ )
   {
-    for( int i=0; i<3; i++ )
+    for( int i = 0; i < 3; i++ )
     {
       m_xLocalMin[i] = std::fmin( m_xLocalMin[i], gridPosition[g][i] );
       m_xLocalMax[i] = std::fmax( m_xLocalMax[i], gridPosition[g][i] );
     }
   }
-  for( int i=0; i<3; i++ )
+  for( int i = 0; i < 3; i++ )
   {
     m_xLocalMinNoGhost[i] = partition.getLocalMin()[i];
     m_xLocalMaxNoGhost[i] = partition.getLocalMax()[i];
@@ -661,9 +661,9 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
   // Get element size
   m_hEl.resize( 3 );
   LvArray::tensorOps::fill< 3 >( m_hEl, DBL_MAX );
-  for( int g=0; g<numNodes; g++ )
+  for( int g = 0; g < numNodes; g++ )
   {
-    for( int i=0; i<3; i++ )
+    for( int i = 0; i < 3; i++ )
     {
       real64 test = gridPosition[g][i] - m_xLocalMin[i]; // By definition, this should always be positive. Furthermore, the gridPosition
                                                          // should only be those on the local partition
@@ -692,7 +692,7 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
   m_xGlobalMin.resize( 3 );
   m_xGlobalMax.resize( 3 );
   m_domainExtent.resize( 3 );
-  for( int i=0; i<3; i++ )
+  for( int i = 0; i < 3; i++ )
   {
     m_xGlobalMin[i] = partition.getGlobalMin()[i] + m_hEl[i];
     m_xGlobalMax[i] = partition.getGlobalMax()[i] - m_hEl[i];
@@ -701,14 +701,14 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
 
   // Get number of elements in each direction
   m_nEl.resize( 3 );
-  for( int i=0; i<3; i++ )
+  for( int i = 0; i < 3; i++ )
   {
     m_nEl[i] = std::round( m_partitionExtent[i] / m_hEl[i] );
   }
 
   // Create element map
   m_ijkMap.resize( m_nEl[0] + 1, m_nEl[1] + 1, m_nEl[2] + 1 );
-  for( int g=0; g<numNodes; g++ )
+  for( int g = 0; g < numNodes; g++ )
   {
     int i = std::round( ( gridPosition[g][0] - m_xLocalMin[0] ) / m_hEl[0] );
     int j = std::round( ( gridPosition[g][1] - m_xLocalMin[1] ) / m_hEl[1] );
@@ -723,7 +723,7 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
   m_boundaryNodes.resize( 6 );
   m_bufferNodes.resize( 6 );
 
-  for( int face=0; face<6; face++ )
+  for( int face = 0; face < 6; face++ )
   {
     std::set< localIndex > tmpBoundaryNodes;
     std::set< localIndex > tmpBufferNodes;
@@ -734,7 +734,7 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
     int sign = 2 * positiveNormal - 1;
     real64 minOrMax = positiveNormal == 0 ? m_xGlobalMin[dir0] : m_xGlobalMax[dir0];
 
-    for( localIndex g=0; g<numNodes; g++ )
+    for( localIndex g = 0; g < numNodes; g++ )
     {
       real64 positionRelativeToBoundary = gridPosition[g][dir0] - minOrMax;
       real64 tolerance = 1.0e-12 * m_hEl[dir0]; // small multiple of element dimension
@@ -795,13 +795,13 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
     arrayView2d< real64 > const particleReferencePosition = subRegion.getField< fields::mpm::particleReferencePosition >();
 
     // Set reference position, volume and R-vectors
-    for( int p=0; p<subRegion.size(); p++ )
+    for( int p = 0; p < subRegion.size(); p++ )
     {
       particleInitialVolume[p] = particleVolume[p];
-      for( int i=0; i<3; i++ )
+      for( int i = 0; i < 3; i++ )
       {
         particleReferencePosition[p][i] = particlePosition[p][i];
-        for( int j=0; j<3; j++ )
+        for( int j = 0; j < 3; j++ )
         {
           particleInitialRVectors[p][i][j] = particleRVectors[p][i][j];
         }
@@ -811,7 +811,7 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
     // Pull initial density from constitutive model, set particle masses and small mass threshold
     real64 localMinMass = 0.0;
     real64 globalMinMass;
-    for( int p=0; p<subRegion.size(); p++ )
+    for( int p = 0; p < subRegion.size(); p++ )
     {
       particleDensity[p] = constitutiveDensity[p][0];
       particleMass[p] = particleDensity[p] * particleVolume[p];
@@ -830,11 +830,11 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
     m_smallMass = fmin( globalMinMass * 1.0e-12, m_smallMass );
 
     // Initialize deformation gradient and velocity gradient
-    for( int p=0; p<subRegion.size(); p++ )
+    for( int p = 0; p < subRegion.size(); p++ )
     {
-      for( int i=0; i<3; i++ )
+      for( int i = 0; i < 3; i++ )
       {
-        for( int j=0; j<3; j++ )
+        for( int j = 0; j < 3; j++ )
         {
           particleDeformationGradient[p][i][j] = i == j ? 1.0 : 0.0;
           particleSphF[p][i][j] = i == j ? 1.0 : 0.0;
@@ -874,7 +874,7 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
   particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
   {
     arrayView1d< int > const particleGroup = subRegion.getParticleGroup();
-    for( int p=0; p<subRegion.size(); p++ )
+    for( int p = 0; p < subRegion.size(); p++ )
     {
       if( particleGroup[p] > maxLocalGroupNumber )
       {
@@ -1258,7 +1258,7 @@ void SolidMechanicsMPM::syncGridFields( std::vector< std::string > const & field
   std::vector< NeighborCommunicator > & neighbors = domain.getNeighbors();
 
   // (2) Swap send and receive indices so we can sum from ghost to master
-  for( size_t n=0; n<neighbors.size(); n++ )
+  for( size_t n = 0; n < neighbors.size(); n++ )
   {
     int const neighborRank = neighbors[n].neighborRank();
     array1d< localIndex > & nodeGhostsToReceive = nodeManager.getNeighborData( neighborRank ).ghostsToReceive();
@@ -1279,7 +1279,7 @@ void SolidMechanicsMPM::syncGridFields( std::vector< std::string > const & field
                                                                                                         // indicate unpack operation
 
   // (4) Swap send and receive indices back so we can sync from master to ghost
-  for( size_t n=0; n<neighbors.size(); n++ )
+  for( size_t n = 0; n < neighbors.size(); n++ )
   {
     int const neighborRank = neighbors[n].neighborRank();
     array1d< localIndex > & nodeGhostsToReceive = nodeManager.getNeighborData( neighborRank ).ghostsToReceive();
@@ -1312,7 +1312,7 @@ void SolidMechanicsMPM::singleFaceVectorFieldSymmetryBC( const int face,
   array1d< SortedArray< localIndex > > & m_boundaryNodes = nodeSets.getReference< array1d< SortedArray< localIndex > > >( viewKeyStruct::boundaryNodesString() );
   array1d< SortedArray< localIndex > > & m_bufferNodes = nodeSets.getReference< array1d< SortedArray< localIndex > > >( viewKeyStruct::bufferNodesString() );
 
-  for( int fieldIndex=0; fieldIndex<m_numVelocityFields; fieldIndex++ )
+  for( int fieldIndex = 0; fieldIndex < m_numVelocityFields; fieldIndex++ )
   {
     // Face-associated quantities
     int dir0 = face / 2;           // 0, 0, 1, 1, 2, 2 (x-, x+, y-, y+, z-, z+)
@@ -1356,7 +1356,7 @@ void SolidMechanicsMPM::enforceGridVectorFieldSymmetryBC( arrayView3d< real64 > 
                                                           arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const gridPosition,
                                                           Group & nodeSets )
 {
-  for( int face=0; face<6; face++ )
+  for( int face = 0; face < 6; face++ )
   {
     if( m_boundaryConditionTypes[face] == 1 || m_boundaryConditionTypes[face] == 2 )
     {
@@ -1531,7 +1531,7 @@ void SolidMechanicsMPM::computeGridSurfaceNormals( ParticleManager & particleMan
     int const numDims = m_numDims;
     int const damageFieldPartitioning = m_damageFieldPartitioning;
     int const numContactGroups = m_numContactGroups;
-    forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST ( localIndex const pp ) // Can parallelize with atomics
+    forAll< serialPolicy >( activeParticleIndices.size(), [ = ] GEOS_HOST ( localIndex const pp ) // Can parallelize with atomics
       {
         localIndex const p = activeParticleIndices[pp];
 
@@ -1542,7 +1542,7 @@ void SolidMechanicsMPM::computeGridSurfaceNormals( ParticleManager & particleMan
           // 0 undamaged or "A" field, 1 for "B" field
           int const nodeFlag = ( damageFieldPartitioning == 1 && LvArray::tensorOps::AiBi< 3 >( gridDamageGradient[mappedNode], particleDamageGradient[p] ) < 0.0 ) ? 1 : 0;
           int const fieldIndex = nodeFlag * numContactGroups + particleGroup[p]; // This ranges from 0 to nMatFields-1
-          for( int i=0; i<numDims; i++ )
+          for( int i = 0; i < numDims; i++ )
           {
             gridSurfaceNormal[mappedNode][fieldIndex][i] += shapeFunctionGradientValues[pp][g][i] * particleVolume[p];
           }
@@ -1571,7 +1571,7 @@ void SolidMechanicsMPM::normalizeGridSurfaceNormals( arrayView2d< real64 const >
         real64 norm = planeStrain == 1 ? sqrt( surfaceNormal[0] * surfaceNormal[0] + surfaceNormal[1] * surfaceNormal[1] ) : LvArray::tensorOps::l2Norm< 3 >( surfaceNormal );
         if( norm > 0.0 ) // TODO: Set a finite threshold?
         {
-          LvArray::tensorOps::scale< 3 >( surfaceNormal, 1.0/norm );
+          LvArray::tensorOps::scale< 3 >( surfaceNormal, 1.0 / norm );
         }
         else
         {
@@ -1608,7 +1608,7 @@ void SolidMechanicsMPM::computeContactForces( real64 const dt,
       // Initialize gridContactForce[g] to zero. TODO: This shouldn't be necessary?
       for( int fieldIndex = 0; fieldIndex < m_numVelocityFields; fieldIndex++ )
       {
-        for( int i=0; i<3; i++ )
+        for( int i = 0; i < 3; i++ )
         {
           gridContactForce[g][fieldIndex][i] = 0.0;
         }
@@ -1691,7 +1691,7 @@ void SolidMechanicsMPM::computePairwiseNodalContactForce( int const & separable,
   // }
 
   // Mass-weighted average of the field normals
-  for( int i=0; i<3; i++ )
+  for( int i = 0; i < 3; i++ )
   {
     nAB[i] = nA[i] * mA - nB[i] * mB;
   }
@@ -1718,12 +1718,13 @@ void SolidMechanicsMPM::computePairwiseNodalContactForce( int const & separable,
   real64 gap0;
   if( m_planeStrain == 1 )
   {
-    gap0 = ( m_hEl[0]*m_hEl[1] ) / sqrt( m_hEl[1]*m_hEl[1]*nAB[0]*nAB[0] + m_hEl[0]*m_hEl[0]*nAB[1]*nAB[1] );
+    gap0 = ( m_hEl[0] * m_hEl[1] ) / sqrt( m_hEl[1] * m_hEl[1] * nAB[0] * nAB[0] + m_hEl[0] * m_hEl[0] * nAB[1] * nAB[1] );
   }
   else
   {
-    gap0 = (m_hEl[0]*m_hEl[1]*m_hEl[2]) /
-           sqrt( m_hEl[2]*m_hEl[2]*nAB[2]*nAB[2]*( m_hEl[1]*m_hEl[1]*nAB[0]*nAB[0] + m_hEl[0]*m_hEl[0]*nAB[1]*nAB[1] ) + m_hEl[0]*m_hEl[0]*m_hEl[1]*m_hEl[1]*( nAB[0]*nAB[0] + nAB[1]*nAB[1] ) );
+    gap0 = (m_hEl[0] * m_hEl[1] * m_hEl[2]) /
+           sqrt( m_hEl[2] * m_hEl[2] * nAB[2] * nAB[2] * ( m_hEl[1] * m_hEl[1] * nAB[0] * nAB[0] + m_hEl[0] * m_hEl[0] * nAB[1] * nAB[1] ) + m_hEl[0] * m_hEl[0] * m_hEl[1] * m_hEl[1] *
+                 ( nAB[0] * nAB[0] + nAB[1] * nAB[1] ) );
   }
   // TODO: A fudge factor of 0.67 on gap0 makes diagonal surfaces (wrt grid) close better I think, but this is more general
   real64 gap = (xB[0] - xA[0]) * nAB[0] + (xB[1] - xA[1]) * nAB[1] + (xB[2] - xA[2]) * nAB[2] - gap0;
@@ -1746,7 +1747,7 @@ void SolidMechanicsMPM::computePairwiseNodalContactForce( int const & separable,
   computeOrthonormalBasis( nAB, s1AB, s2AB );
 
   // Compute force decomposition, declare increment in fA from "this" contact pair
-  real64 fnor =  ( mA / dt ) * ( (vAB[0] - vA[0]) * nAB[0]  + (vAB[1] - vA[1]) * nAB[1]  + (vAB[2] - vA[2]) * nAB[2] ),
+  real64 fnor =  ( mA / dt ) * ( (vAB[0] - vA[0]) * nAB[0] + (vAB[1] - vA[1]) * nAB[1] + (vAB[2] - vA[2]) * nAB[2] ),
          ftan1 = ( mA / dt ) * ( (vAB[0] - vA[0]) * s1AB[0] + (vAB[1] - vA[1]) * s1AB[1] + (vAB[2] - vA[2]) * s1AB[2] ),
          ftan2 = ( mA / dt ) * ( (vAB[0] - vA[0]) * s2AB[0] + (vAB[1] - vA[1]) * s2AB[1] + (vAB[2] - vA[2]) * s2AB[2] );
   real64 dfA[3];
@@ -1880,7 +1881,7 @@ void SolidMechanicsMPM::setGridFieldLabels( NodeManager & nodeManager )
  // I feel like a dimension check would work.
   // Generate labels
   std::vector< std::string > labels1( m_numVelocityFields );
-  std::generate( labels1.begin(), labels1.end(), [i=0]() mutable { return "velocityField" + std::to_string( i++ ); } );
+  std::generate( labels1.begin(), labels1.end(), [i = 0]() mutable { return "velocityField" + std::to_string( i++ ); } );
   string const labels2[] = { "X", "Y", "Z" };
 
   // Apply labels to scalar multi-fields
@@ -1919,7 +1920,7 @@ void SolidMechanicsMPM::resizeGrid( SpatialPartition & partition,
 
   // Modify SolidMechanicsMPM class members
   real64 ratio[3];
-  for( int i=0; i<3; i++ )
+  for( int i = 0; i < 3; i++ )
   {
     // Incremental stretch
     ratio[i] = 1.0 + m_domainL[i] * dt;
@@ -2023,11 +2024,11 @@ real64 SolidMechanicsMPM::computeNeighborList( ParticleManager & particleManager
       int numReserved = std::ceil( subRegion.size() / nbins );
 
       // Loop over bins
-      for( int i=0; i<nxbins; i++ )
+      for( int i = 0; i < nxbins; i++ )
       {
-        for( int j=0; j<nybins; j++ )
+        for( int j = 0; j < nybins; j++ )
         {
-          for( int k=0; k<nzbins; k++ )
+          for( int k = 0; k < nzbins; k++ )
           {
             binKey.binIndex = i + j * nxbins + k * nxbins * nybins;
             bins[binKey].reserve( numReserved );
@@ -2098,11 +2099,11 @@ real64 SolidMechanicsMPM::computeNeighborList( ParticleManager & particleManager
 
         // Adjust bin ijk indices if necessary
         imin = std::max( imin, 0 );
-        imax = std::min( imax, nxbins-1 );
+        imax = std::min( imax, nxbins - 1 );
         jmin = std::max( jmin, 0 );
-        jmax = std::min( jmax, nybins-1 );
+        jmax = std::min( jmax, nybins - 1 );
         kmin = std::max( kmin, 0 );
-        kmax = std::min( kmax, nzbins-1 );
+        kmax = std::min( kmax, nzbins - 1 );
 
         // Inner subregion loop
         particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegionB )
@@ -2121,11 +2122,11 @@ real64 SolidMechanicsMPM::computeNeighborList( ParticleManager & particleManager
 
         // Loop over bins
         int count = 0; // Count the number of neighbors on this subregion
-        for( int iBin=imin; iBin<=imax; iBin++ )
+        for( int iBin = imin; iBin <= imax; iBin++ )
         {
-          for( int jBin=jmin; jBin<=jmax; jBin++ )
+          for( int jBin = jmin; jBin <= jmax; jBin++ )
           {
-            for( int kBin=kmin; kBin<=kmax; kBin++ )
+            for( int kBin = kmin; kBin <= kmax; kBin++ )
             {
               binKey.binIndex = iBin + jBin * nxbins + kBin * nxbins * nybins;
               for( localIndex & b: bins[binKey] )
@@ -2180,7 +2181,7 @@ void SolidMechanicsMPM::optimizeBinSort( ParticleManager & particleManager )
 
   // Identify this partition's optimal multiplier
   real64 minTime = DBL_MAX;
-  for( int multiplier=1; multiplier<=maxMultiplier; multiplier++ )
+  for( int multiplier = 1; multiplier <= maxMultiplier; multiplier++ )
   {
     m_binSizeMultiplier = multiplier;
     real64 sortingTime = computeNeighborList( particleManager );
@@ -2218,7 +2219,8 @@ real64 SolidMechanicsMPM::kernel( real64 const & r ) // distance from particle t
   // Compute the value of a particle kernel function at some point.
 
   const real64 R = m_neighborRadius; // kernel Radius
-  const real64 norm = m_planeStrain ? 1.0610329539459689051/(R*R) : 1.1936620731892150183/(R*R*R); // kernel should integrate to unity
+  const real64 norm = m_planeStrain ? 1.0610329539459689051 / (R * R) : 1.1936620731892150183 / (R * R * R); // kernel should integrate to
+                                                                                                             // unity
 
   if( r < R )
   {
@@ -2239,7 +2241,8 @@ void SolidMechanicsMPM::kernelGradient( arraySlice1d< real64 const > const x,  /
 
   real64 s;
   const real64 R = m_neighborRadius; // kernel Radius
-  const real64 norm = m_planeStrain ? 1.0610329539459689051/(R*R) : 1.1936620731892150183/(R*R*R); // kernel should integrate to unity
+  const real64 norm = m_planeStrain ? 1.0610329539459689051 / (R * R) : 1.1936620731892150183 / (R * R * R); // kernel should integrate to
+                                                                                                             // unity
 
   if( r < R )
   {
@@ -2460,8 +2463,8 @@ void SolidMechanicsMPM::computeDamageFieldGradient( ParticleManager & particleMa
 
     // Loop over neighbors
     SortedArrayView< localIndex const > const activeParticleIndices = subRegion.activeParticleIndices();
-    forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST ( localIndex const pp ) // Must be on host since we call a 'this'
-                                                                                                // method which uses class variables
+    forAll< serialPolicy >( activeParticleIndices.size(), [ = ] GEOS_HOST ( localIndex const pp ) // Must be on host since we call a 'this'
+                                                                                                  // method which uses class variables
       {
         localIndex const p = activeParticleIndices[pp];
 
@@ -2552,7 +2555,7 @@ void SolidMechanicsMPM::projectDamageFieldGradientToGrid( ParticleManager & part
     // Map to grid
     SortedArrayView< localIndex const > const activeParticleIndices = subRegion.activeParticleIndices();
     int const numDims = m_numDims;
-    forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST ( localIndex const pp ) // Parallelize with atomics/reduction
+    forAll< serialPolicy >( activeParticleIndices.size(), [ = ] GEOS_HOST ( localIndex const pp ) // Parallelize with atomics/reduction
       {
         localIndex const p = activeParticleIndices[pp];
 
@@ -2561,7 +2564,7 @@ void SolidMechanicsMPM::projectDamageFieldGradientToGrid( ParticleManager & part
         {
           if( LvArray::tensorOps::l2NormSquared< 3 >( particleDamageGradient[p] ) > LvArray::tensorOps::l2NormSquared< 3 >( gridDamageGradient[g] ) )
           {
-            for( int i=0; i<numDims; i++ )
+            for( int i = 0; i < numDims; i++ )
             {
               gridDamageGradient[g][i] = particleDamageGradient[p][i];
             }
@@ -2718,17 +2721,17 @@ void SolidMechanicsMPM::computeAndWriteBoxAverage( const real64 dt,
 
       // Accumulate values
       SortedArrayView< localIndex const > const activeParticleIndices = subRegion.activeParticleIndices();
-      forAll< serialPolicy >( activeParticleIndices.size(), [=, &boxMass, &boxParticleInitialVolume, &boxStress, &boxDamage] GEOS_HOST ( localIndex const pp ) // This
-                                                                                                                                                               // can
-                                                                                                                                                               // be
-                                                                                                                                                               // parallelized
-                                                                                                                                                               // via
-                                                                                                                                                               // reduction
+      forAll< serialPolicy >( activeParticleIndices.size(), [ =, &boxMass, &boxParticleInitialVolume, &boxStress, &boxDamage] GEOS_HOST ( localIndex const pp ) // This
+                                                                                                                                                                // can
+                                                                                                                                                                // be
+                                                                                                                                                                // parallelized
+                                                                                                                                                                // via
+                                                                                                                                                                // reduction
         {
           localIndex const p = activeParticleIndices[pp];
           boxMass += particleMass[p];
           boxParticleInitialVolume += particleInitialVolume[p];
-          for( int i=0; i<6; i++ )
+          for( int i = 0; i < 6; i++ )
           {
             boxStress[i] += particleStress[p][i] * particleVolume[p]; // volume weighted average, will normalize later.
           }
@@ -2820,7 +2823,7 @@ void SolidMechanicsMPM::initializeGridFields( NodeManager & nodeManager )
   arrayView3d< real64 > const gridSurfaceNormal = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::surfaceNormalString() );
   arrayView3d< real64 > const gridMaterialPosition = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::materialPositionString() );
 
-  forAll< serialPolicy >( numNodes, [=] GEOS_HOST ( localIndex const g ) // Switch to .zero()?
+  forAll< serialPolicy >( numNodes, [ = ] GEOS_HOST ( localIndex const g ) // Switch to .zero()?
     {
       for( int i = 0; i < 3; i++ )
       {
@@ -2859,9 +2862,9 @@ void SolidMechanicsMPM::boundaryConditionUpdate( real64 dt, real64 time_n )
     }
   }
 
-  for( int i=0; i<6; i++ )
+  for( int i = 0; i < 6; i++ )
   {
-    m_boundaryConditionTypes[i] = m_bcTable[bcInterval][i+1];
+    m_boundaryConditionTypes[i] = m_bcTable[bcInterval][i + 1];
   }
 }
 
@@ -2904,9 +2907,9 @@ void SolidMechanicsMPM::particleToGrid( ParticleManager & particleManager,
     int const numDims = m_numDims;
     int voigtMap[3][3] = { {0, 5, 4}, {5, 1, 3}, {4, 3, 2} };
     int const damageFieldPartitioning = m_damageFieldPartitioning;
-    forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST ( localIndex const pp ) // Can be parallized using atomics -
-                                                                                                // remember to pass copies of class
-                                                                                                // variables
+    forAll< serialPolicy >( activeParticleIndices.size(), [ = ] GEOS_HOST ( localIndex const pp ) // Can be parallized using atomics -
+                                                                                                  // remember to pass copies of class
+                                                                                                  // variables
       {                                                                                          // Grid max damage will require reduction
         localIndex const p = activeParticleIndices[pp];
 
@@ -2927,12 +2930,12 @@ void SolidMechanicsMPM::particleToGrid( ParticleManager & particleManager,
           // TODO: Normalizing by volume might be better
           gridDamage[mappedNode][fieldIndex] += particleMass[p] * ( particleSurfaceFlag[p] == 1 ? 1 : particleDamage[pp] ) * shapeFunctionValues[pp][g];
           gridMaxDamage[mappedNode][fieldIndex] = fmax( gridMaxDamage[mappedNode][fieldIndex], particleSurfaceFlag[p] == 1 ? 1 : particleDamage[pp] );
-          for( int i=0; i<numDims; i++ )
+          for( int i = 0; i < numDims; i++ )
           {
             gridMomentum[mappedNode][fieldIndex][i] += particleMass[p] * particleVelocity[p][i] * shapeFunctionValues[pp][g];
             // TODO: Switch to volume weighting?
             gridMaterialPosition[mappedNode][fieldIndex][i] += particleMass[p] * (particlePosition[p][i] - gridPosition[mappedNode][i]) * shapeFunctionValues[pp][g];
-            for( int k=0; k<numDims; k++ )
+            for( int k = 0; k < numDims; k++ )
             {
               int voigt = voigtMap[k][i];
               gridInternalForce[mappedNode][fieldIndex][i] -= particleStress[p][voigt] * shapeFunctionGradientValues[pp][g][k] * particleVolume[p];
@@ -2964,14 +2967,14 @@ void SolidMechanicsMPM::gridTrialUpdate( real64 dt,
   int const numNodes = nodeManager.size();
   real64 const smallMass = m_smallMass;
   int const numDims = m_numDims;
-  for( int fieldIndex=0; fieldIndex<m_numVelocityFields; fieldIndex++ )
+  for( int fieldIndex = 0; fieldIndex < m_numVelocityFields; fieldIndex++ )
   {
     forAll< serialPolicy >( numNodes, [=] GEOS_HOST_DEVICE ( localIndex const g )
     {
       if( gridMass[g][fieldIndex] > smallMass ) // small mass threshold
       {
         gridDamage[g][fieldIndex] /= gridMass[g][fieldIndex];
-        for( int i=0; i<numDims; i++ )
+        for( int i = 0; i < numDims; i++ )
         {
           real64 totalForce = gridInternalForce[g][fieldIndex][i] + gridExternalForce[g][fieldIndex][i];
           gridAcceleration[g][fieldIndex][i] = totalForce / gridMass[g][fieldIndex];
@@ -2983,7 +2986,7 @@ void SolidMechanicsMPM::gridTrialUpdate( real64 dt,
       else
       {
         gridDamage[g][fieldIndex] = 0.0;
-        for( int i=0; i<numDims; i++ )
+        for( int i = 0; i < numDims; i++ )
         {
           gridAcceleration[g][fieldIndex][i] = 0.0;
           gridVelocity[g][fieldIndex][i] = 0.0;
@@ -3043,13 +3046,13 @@ void SolidMechanicsMPM::enforceContact( real64 dt,
   int const numNodes = nodeManager.size();
   real64 const smallMass = m_smallMass;
   int const numDims = m_numDims;
-  for( int fieldIndex=0; fieldIndex<m_numVelocityFields; fieldIndex++ )
+  for( int fieldIndex = 0; fieldIndex < m_numVelocityFields; fieldIndex++ )
   {
     forAll< serialPolicy >( numNodes, [=] GEOS_HOST_DEVICE ( localIndex const g )
     {
       if( gridMass[g][fieldIndex] > smallMass ) // small mass threshold
       {
-        for( int i=0; i<numDims; i++ )
+        for( int i = 0; i < numDims; i++ )
         {
           real64 contactForce = gridContactForce[g][fieldIndex][i];
           gridAcceleration[g][fieldIndex][i] += contactForce / gridMass[g][fieldIndex];
@@ -3093,8 +3096,8 @@ void SolidMechanicsMPM::interpolateFTable( real64 dt, real64 time_n )
       // smooth-step interpolation with 5th order polynomial, zero endpoint velocity and acceleration
       else if( m_fTableInterpType == 2 )
       {
-        Fii_new = m_fTable[fInterval][i+1] + (m_fTable[fInterval+1][i+1] - m_fTable[fInterval][i+1])*
-                  (10.0*pow( timePast/timeInterval, 3 ) - 15.0*pow( timePast/timeInterval, 4 ) + 6.0*pow( timePast/timeInterval, 5 ));
+        Fii_new = m_fTable[fInterval][i + 1] + (m_fTable[fInterval + 1][i + 1] - m_fTable[fInterval][i + 1]) *
+                  (10.0 * pow( timePast / timeInterval, 3 ) - 15.0 * pow( timePast / timeInterval, 4 ) + 6.0 * pow( timePast / timeInterval, 5 ));
       }
       // default linear interpolation
       else
@@ -3164,9 +3167,9 @@ void SolidMechanicsMPM::gridToParticle( real64 dt,
       // Initialize velocity gradient for this particle
       // if( m_directionalOverlapCorrection == 0 )
       // {
-      for( int i=0; i<3; i++ )
+      for( int i = 0; i < 3; i++ )
       {
-        for( int j=0; j<3; j++ )
+        for( int j = 0; j < 3; j++ )
         {
           particleVelocityGradient[p][i][j] = 0.0;
         }
@@ -3187,11 +3190,11 @@ void SolidMechanicsMPM::gridToParticle( real64 dt,
                                                                                                                                                                            // "B"
                                                                                                                                                                            // field
         int const fieldIndex = nodeFlag * numContactGroups + particleGroup[p]; // This ranges from 0 to nMatFields-1
-        for( int i=0; i<numDims; i++ )
+        for( int i = 0; i < numDims; i++ )
         {
           particlePosition[p][i] += gridVelocity[mappedNode][fieldIndex][i] * dt * shapeFunctionValues[pp][g];
           particleVelocity[p][i] += gridAcceleration[mappedNode][fieldIndex][i] * dt * shapeFunctionValues[pp][g]; // FLIP
-          for( int j=0; j<numDims; j++ )
+          for( int j = 0; j < numDims; j++ )
           {
             particleVelocityGradient[p][i][j] += gridVelocity[mappedNode][fieldIndex][i] * shapeFunctionGradientValues[pp][g][j]; // Technically
                                                                                                                                   // wrong,
@@ -3259,11 +3262,11 @@ real64 SolidMechanicsMPM::getStableTimeStep( ParticleManager & particleManager )
     arrayView1d< real64 const > const shearModulus = constitutiveRelation.shearModulus();
     arrayView1d< real64 const > const bulkModulus = constitutiveRelation.bulkModulus();
     SortedArrayView< localIndex const > const activeParticleIndices = subRegion.activeParticleIndices();
-    forAll< serialPolicy >( activeParticleIndices.size(), [=, &wavespeed] GEOS_HOST ( localIndex const pp ) // would need reduction to
-                                                                                                            // parallelize
+    forAll< serialPolicy >( activeParticleIndices.size(), [ =, &wavespeed] GEOS_HOST ( localIndex const pp ) // would need reduction to
+                                                                                                             // parallelize
       {
         localIndex const p = activeParticleIndices[pp];
-        wavespeed = fmax( wavespeed, sqrt( ( bulkModulus[p] + (4.0/3.0) * shearModulus[p] ) / rho[p] ) + LvArray::tensorOps::l2Norm< 3 >( particleVelocity[p] ) );
+        wavespeed = fmax( wavespeed, sqrt( ( bulkModulus[p] + (4.0 / 3.0) * shearModulus[p] ) / rho[p] ) + LvArray::tensorOps::l2Norm< 3 >( particleVelocity[p] ) );
       } );
   } );
 
@@ -3292,9 +3295,9 @@ void SolidMechanicsMPM::deleteBadParticles( ParticleManager & particleManager )
     // Initialize the set of particles to delete
     std::set< localIndex > indicesToErase;
     SortedArrayView< localIndex const > const activeParticleIndices = subRegion.activeParticleIndices();
-    forAll< serialPolicy >( activeParticleIndices.size(), [=, &indicesToErase] GEOS_HOST ( localIndex const pp ) // need reduction or
-                                                                                                                 // atomics to parallelize,
-                                                                                                                 // not sure which
+    forAll< serialPolicy >( activeParticleIndices.size(), [ =, &indicesToErase] GEOS_HOST ( localIndex const pp ) // need reduction or
+                                                                                                                  // atomics to parallelize,
+                                                                                                                  // not sure which
       {
         localIndex const p = activeParticleIndices[pp];
         if( isBad[p] == 1 )
@@ -3325,7 +3328,7 @@ void SolidMechanicsMPM::printProfilingResults()
   // Get total CPU times for each queried time interval
   for( unsigned int i = 0; i < numIntervals; i++ )
   {
-    real64 timeIntervalThisRank = ( m_profilingTimes[i+1] - m_profilingTimes[i] );
+    real64 timeIntervalThisRank = ( m_profilingTimes[i + 1] - m_profilingTimes[i] );
     real64 timeIntervalAllRanks;
     MpiWrapper::allReduce< real64 >( &timeIntervalThisRank,
                                      &timeIntervalAllRanks,
@@ -3383,8 +3386,8 @@ void SolidMechanicsMPM::computeSurfaceFlags( ParticleManager & particleManager )
 
     // Loop over neighbors
     SortedArrayView< localIndex const > const activeParticleIndices = subRegion.activeParticleIndices();
-    forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST ( localIndex const pp ) // Must be on host since we call a 'this'
-                                                                                                // method which uses class variables
+    forAll< serialPolicy >( activeParticleIndices.size(), [ = ] GEOS_HOST ( localIndex const pp ) // Must be on host since we call a 'this'
+                                                                                                  // method which uses class variables
       {
         localIndex const p = activeParticleIndices[pp];
 
@@ -3403,26 +3406,26 @@ void SolidMechanicsMPM::computeSurfaceFlags( ParticleManager & particleManager )
           localIndex subRegionIndex = subRegionIndices[neighborIndex];
           localIndex particleIndex = particleIndices[neighborIndex];
           real64 rSquared = 0.0;
-          for( int i=0; i<m_numDims; i++ )
+          for( int i = 0; i < m_numDims; i++ )
           {
             real64 relativePositionComponent = particlePositionAccessor[regionIndex][subRegionIndex][particleIndex][i] - particlePosition[p][i];
             rSquared += relativePositionComponent * relativePositionComponent;
           }
           real64 kernelVal = kernel( sqrt( rSquared ));
           totalVolume += kernelVal * particleVolumeAccessor[regionIndex][subRegionIndex][particleIndex];
-          for( int i=0; i<m_numDims; i++ )
+          for( int i = 0; i < m_numDims; i++ )
           {
             centroid[i] += kernelVal * particleVolumeAccessor[regionIndex][subRegionIndex][particleIndex] * particlePositionAccessor[regionIndex][subRegionIndex][particleIndex][i];
           }
         }
         real64 positionDifference[3] = { 0.0 };
-        for( int i=0; i<m_numDims; i++ )
+        for( int i = 0; i < m_numDims; i++ )
         {
           centroid[i] /= totalVolume;
           positionDifference[i] = centroid[i] - particlePosition[p][i];
         }
         real64 deltaSquared = 0.0;
-        for( int i=0; i<m_numDims; i++ )
+        for( int i = 0; i < m_numDims; i++ )
         {
           deltaSquared += positionDifference[i] * positionDifference[i];
         }
@@ -3459,9 +3462,9 @@ void SolidMechanicsMPM::computeSphF( ParticleManager & particleManager )
 
     // Loop over neighbors
     SortedArrayView< localIndex const > const activeParticleIndices = subRegion.activeParticleIndices();
-    forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST ( localIndex const pp ) // I think this must be on host since we
-                                                                                                // call a 'this' method which uses class
-                                                                                                // variables
+    forAll< serialPolicy >( activeParticleIndices.size(), [ = ] GEOS_HOST ( localIndex const pp ) // I think this must be on host since we
+                                                                                                  // call a 'this' method which uses class
+                                                                                                  // variables
       {
         localIndex const p = activeParticleIndices[pp];
 
@@ -3485,7 +3488,7 @@ void SolidMechanicsMPM::computeSphF( ParticleManager & particleManager )
           localIndex subRegionIndex = subRegionIndices[neighborIndex];
           localIndex particleIndex = particleIndices[neighborIndex];
           real64 r0Squared = 0.0;
-          for( int i=0; i<m_numDims; i++ )
+          for( int i = 0; i < m_numDims; i++ )
           {
             real64 thisComponent = particleReferencePosition[p][i];
             real64 neighborComponent = particleReferencePositionAccessor[regionIndex][subRegionIndex][particleIndex][i];
@@ -3500,7 +3503,7 @@ void SolidMechanicsMPM::computeSphF( ParticleManager & particleManager )
           {
             neighborVolumes[neighborIndex] = 0.0;
           }
-          for( int i=0; i<3; i++ )
+          for( int i = 0; i < 3; i++ )
           {
             neighborPositions[neighborIndex][i] = particlePositionAccessor[regionIndex][subRegionIndex][particleIndex][i];
             neighborDisplacements[neighborIndex][i] = particlePositionAccessor[regionIndex][subRegionIndex][particleIndex][i] -
@@ -3648,7 +3651,7 @@ void SolidMechanicsMPM::flagOutOfRangeParticles( ParticleManager & particleManag
     // Identify global domain bounds
     real64 globalMin[3]; // including buffer cells
     real64 globalMax[3]; // including buffer cells
-    for( int i=0; i<3; i++ )
+    for( int i = 0; i < 3; i++ )
     {
       globalMin[i] = m_xGlobalMin[i] - m_hEl[i];
       globalMax[i] = m_xGlobalMax[i] + m_hEl[i];
@@ -3662,7 +3665,7 @@ void SolidMechanicsMPM::flagOutOfRangeParticles( ParticleManager & particleManag
 
     // Define tolerance
     real64 tolerance[3];
-    for( int i=0; i<3; i++ )
+    for( int i = 0; i < 3; i++ )
     {
       tolerance[i] = m_hEl[i] * DBL_EPSILON;
     }
@@ -3674,7 +3677,7 @@ void SolidMechanicsMPM::flagOutOfRangeParticles( ParticleManager & particleManag
           forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST_DEVICE ( localIndex const pp )
         {
           localIndex const p = activeParticleIndices[pp];
-          for( int i=0; i<3; i++ )
+          for( int i = 0; i < 3; i++ )
           {
             if( particlePosition[p][i] < globalMin[i] + tolerance[i] || globalMax[i] - tolerance[i] < particlePosition[p][i] )
             {
@@ -3699,9 +3702,9 @@ void SolidMechanicsMPM::flagOutOfRangeParticles( ParticleManager & particleManag
           forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST_DEVICE ( localIndex const pp )
         {
           localIndex const p = activeParticleIndices[pp];
-          for( int cornerIndex=0; cornerIndex<8; cornerIndex++ )
+          for( int cornerIndex = 0; cornerIndex < 8; cornerIndex++ )
           {
-            for( int i=0; i<3; i++ )
+            for( int i = 0; i < 3; i++ )
             {
               real64 cornerPositionComponent = particlePosition[p][i] + signs[cornerIndex][0] * particleRVectors[p][0][i] + signs[cornerIndex][1] * particleRVectors[p][1][i] + signs[cornerIndex][2] *
                                                particleRVectors[p][2][i];
@@ -3741,9 +3744,9 @@ void SolidMechanicsMPM::computeRVectors( ParticleManager & particleManager )
       forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST_DEVICE ( localIndex const pp )
       {
         localIndex const p = activeParticleIndices[pp];
-        for( int i=0; i<3; i++ )
+        for( int i = 0; i < 3; i++ )
         {
-          for( int j=0; j<3; j++ )
+          for( int j = 0; j < 3; j++ )
           {
             particleRVectors[p][i][j] = particleInitialRVectors[p][i][0] * particleDeformationGradient[p][j][0] +
                                         particleInitialRVectors[p][i][1] * particleDeformationGradient[p][j][1] +
@@ -3774,7 +3777,7 @@ void SolidMechanicsMPM::cpdiDomainScaling( ParticleManager & particleManager )
         {
           // Initialize l-vectors.  Eq. 8a-d in the CPDI domain scaling paper.
           real64 l[2][3];
-          for( int i=0; i<3; i++ )
+          for( int i = 0; i < 3; i++ )
           {
             l[0][i] = r1[i] + r2[i]; // la
             l[1][i] = r1[i] - r2[i]; // lb
@@ -3797,7 +3800,7 @@ void SolidMechanicsMPM::cpdiDomainScaling( ParticleManager & particleManager )
           // reconstruct r-vectors.  eq. 11 in the CPDI domain scaling paper.
           if( scale )
           {
-            for( int i=0; i<3; i++ )
+            for( int i = 0; i < 3; i++ )
             {
               r1[i] = 0.5 * (l[0][i] + l[1][i]);
               r2[i] = 0.5 * (l[0][i] - l[1][i]);
@@ -3808,7 +3811,7 @@ void SolidMechanicsMPM::cpdiDomainScaling( ParticleManager & particleManager )
         {
           // Initialize l-vectors.  Eq. 8a-d in the CPDI domain scaling paper.
           real64 l[4][3];
-          for( int i=0; i<3; i++ )
+          for( int i = 0; i < 3; i++ )
           {
             l[0][i] = r1[i] + r2[i] + r3[i]; // la
             l[1][i] = r1[i] - r2[i] + r3[i]; // lb
@@ -3833,7 +3836,7 @@ void SolidMechanicsMPM::cpdiDomainScaling( ParticleManager & particleManager )
           // reconstruct r vectors.  eq. 11 in the CPDI domain scaling paper.
           if( scale )
           {
-            for( int i=0; i<3; i++ )
+            for( int i = 0; i < 3; i++ )
             {
               r1[i] = 0.25 * ( l[0][i] + l[1][i] - l[2][i] - l[3][i] );
               r2[i] = 0.25 * ( l[0][i] - l[1][i] + l[2][i] - l[3][i] );
@@ -3905,7 +3908,7 @@ void SolidMechanicsMPM::populateMappingArrays( ParticleManager & particleManager
 
           // get IJK associated with particle center
           int centerIJK[3];
-          for( int i=0; i<3; i++ )
+          for( int i = 0; i < 3; i++ )
           {
             centerIJK[i] = floor( ( particlePosition[p][i] - xLocalMin[i] ) / hEl[i] );
           }
@@ -3919,19 +3922,19 @@ void SolidMechanicsMPM::populateMappingArrays( ParticleManager & particleManager
           real64 yRel = (particlePosition[p][1] - corner_x[1]) / hEl[1];
           real64 zRel = (particlePosition[p][2] - corner_x[2]) / hEl[2];
 
-          for( int i=0; i<2; i++ )
+          for( int i = 0; i < 2; i++ )
           {
-            real64 xWeight = i*xRel + (1-i)*(1.0-xRel);
-            real64 dxWeight = i/hEl[0] - (1-i)/hEl[0];
-            for( int j=0; j<2; j++ )
+            real64 xWeight = i * xRel + (1 - i) * (1.0 - xRel);
+            real64 dxWeight = i / hEl[0] - (1 - i) / hEl[0];
+            for( int j = 0; j < 2; j++ )
             {
-              real64 yWeight = j*yRel + (1-j)*(1.0-yRel);
-              real64 dyWeight = j/hEl[1] - (1-j)/hEl[1];
-              for( int k=0; k<2; k++ )
+              real64 yWeight = j * yRel + (1 - j) * (1.0 - yRel);
+              real64 dyWeight = j / hEl[1] - (1 - j) / hEl[1];
+              for( int k = 0; k < 2; k++ )
               {
-                real64 zWeight = k*zRel + (1-k)*(1.0-zRel);
-                real64 dzWeight = k/hEl[2] - (1-k)/hEl[2];
-                mappedNodes[pp][node] = ijkMap[centerIJK[0]+i][centerIJK[1]+j][centerIJK[2]+k];
+                real64 zWeight = k * zRel + (1 - k) * (1.0 - zRel);
+                real64 dzWeight = k / hEl[2] - (1 - k) / hEl[2];
+                mappedNodes[pp][node] = ijkMap[centerIJK[0] + i][centerIJK[1] + j][centerIJK[2] + k];
                 shapeFunctionValues[pp][node] = xWeight * yWeight * zWeight;
                 shapeFunctionGradientValues[pp][node][0] = dxWeight * yWeight * zWeight;
                 shapeFunctionGradientValues[pp][node][1] = xWeight * dyWeight * zWeight;
@@ -3962,7 +3965,7 @@ void SolidMechanicsMPM::populateMappingArrays( ParticleManager & particleManager
           real64 cpdiVolume, oneOverV;
           real64 p_r1[3], p_r2[3], p_r3[3]; // allowing 1-indexed r-vectors to persist to torture future postdocs >:)
 
-          for( int i=0; i<3; i++ )
+          for( int i = 0; i < 3; i++ )
           {
             p_r1[i] = particleRVectors[p][0][i];
             p_r2[i] = particleRVectors[p][1][i];
@@ -3970,39 +3973,41 @@ void SolidMechanicsMPM::populateMappingArrays( ParticleManager & particleManager
           }
 
           // We need this because of CPDI domain scaling
-          cpdiVolume = 8.0*(-(p_r1[2]*p_r2[1]*p_r3[0]) + p_r1[1]*p_r2[2]*p_r3[0] + p_r1[2]*p_r2[0]*p_r3[1] - p_r1[0]*p_r2[2]*p_r3[1] - p_r1[1]*p_r2[0]*p_r3[2] + p_r1[0]*p_r2[1]*p_r3[2]);
+          cpdiVolume = 8.0 *
+                       (-(p_r1[2] * p_r2[1] * p_r3[0]) + p_r1[1] * p_r2[2] * p_r3[0] + p_r1[2] * p_r2[0] * p_r3[1] - p_r1[0] * p_r2[2] * p_r3[1] - p_r1[1] * p_r2[0] * p_r3[2] + p_r1[0] * p_r2[1] *
+                        p_r3[2]);
           oneOverV = 1.0 / cpdiVolume;
 
-          alpha[0][0]=oneOverV*(p_r1[2]*p_r2[1] - p_r1[1]*p_r2[2] - p_r1[2]*p_r3[1] + p_r2[2]*p_r3[1] + p_r1[1]*p_r3[2] - p_r2[1]*p_r3[2]);
-          alpha[0][1]=oneOverV*(-(p_r1[2]*p_r2[0]) + p_r1[0]*p_r2[2] + p_r1[2]*p_r3[0] - p_r2[2]*p_r3[0] - p_r1[0]*p_r3[2] + p_r2[0]*p_r3[2]);
-          alpha[0][2]=oneOverV*(p_r1[1]*p_r2[0] - p_r1[0]*p_r2[1] - p_r1[1]*p_r3[0] + p_r2[1]*p_r3[0] + p_r1[0]*p_r3[1] - p_r2[0]*p_r3[1]);
-          alpha[1][0]=oneOverV*(p_r1[2]*p_r2[1] - p_r1[1]*p_r2[2] - p_r1[2]*p_r3[1] - p_r2[2]*p_r3[1] + p_r1[1]*p_r3[2] + p_r2[1]*p_r3[2]);
-          alpha[1][1]=oneOverV*(-(p_r1[2]*p_r2[0]) + p_r1[0]*p_r2[2] + p_r1[2]*p_r3[0] + p_r2[2]*p_r3[0] - p_r1[0]*p_r3[2] - p_r2[0]*p_r3[2]);
-          alpha[1][2]=oneOverV*(p_r1[1]*p_r2[0] - p_r1[0]*p_r2[1] - p_r1[1]*p_r3[0] - p_r2[1]*p_r3[0] + p_r1[0]*p_r3[1] + p_r2[0]*p_r3[1]);
-          alpha[2][0]=oneOverV*(p_r1[2]*p_r2[1] - p_r1[1]*p_r2[2] + p_r1[2]*p_r3[1] - p_r2[2]*p_r3[1] - p_r1[1]*p_r3[2] + p_r2[1]*p_r3[2]);
-          alpha[2][1]=oneOverV*(-(p_r1[2]*p_r2[0]) + p_r1[0]*p_r2[2] - p_r1[2]*p_r3[0] + p_r2[2]*p_r3[0] + p_r1[0]*p_r3[2] - p_r2[0]*p_r3[2]);
-          alpha[2][2]=oneOverV*(p_r1[1]*p_r2[0] - p_r1[0]*p_r2[1] + p_r1[1]*p_r3[0] - p_r2[1]*p_r3[0] - p_r1[0]*p_r3[1] + p_r2[0]*p_r3[1]);
-          alpha[3][0]=oneOverV*(p_r1[2]*p_r2[1] - p_r1[1]*p_r2[2] + p_r1[2]*p_r3[1] + p_r2[2]*p_r3[1] - p_r1[1]*p_r3[2] - p_r2[1]*p_r3[2]);
-          alpha[3][1]=oneOverV*(-(p_r1[2]*p_r2[0]) + p_r1[0]*p_r2[2] - p_r1[2]*p_r3[0] - p_r2[2]*p_r3[0] + p_r1[0]*p_r3[2] + p_r2[0]*p_r3[2]);
-          alpha[3][2]=oneOverV*(p_r1[1]*p_r2[0] - p_r1[0]*p_r2[1] + p_r1[1]*p_r3[0] + p_r2[1]*p_r3[0] - p_r1[0]*p_r3[1] - p_r2[0]*p_r3[1]);
-          alpha[4][0]=oneOverV*(-(p_r1[2]*p_r2[1]) + p_r1[1]*p_r2[2] - p_r1[2]*p_r3[1] + p_r2[2]*p_r3[1] + p_r1[1]*p_r3[2] - p_r2[1]*p_r3[2]);
-          alpha[4][1]=oneOverV*(p_r1[2]*p_r2[0] - p_r1[0]*p_r2[2] + p_r1[2]*p_r3[0] - p_r2[2]*p_r3[0] - p_r1[0]*p_r3[2] + p_r2[0]*p_r3[2]);
-          alpha[4][2]=oneOverV*(-(p_r1[1]*p_r2[0]) + p_r1[0]*p_r2[1] - p_r1[1]*p_r3[0] + p_r2[1]*p_r3[0] + p_r1[0]*p_r3[1] - p_r2[0]*p_r3[1]);
-          alpha[5][0]=oneOverV*(-(p_r1[2]*p_r2[1]) + p_r1[1]*p_r2[2] - p_r1[2]*p_r3[1] - p_r2[2]*p_r3[1] + p_r1[1]*p_r3[2] + p_r2[1]*p_r3[2]);
-          alpha[5][1]=oneOverV*(p_r1[2]*p_r2[0] - p_r1[0]*p_r2[2] + p_r1[2]*p_r3[0] + p_r2[2]*p_r3[0] - p_r1[0]*p_r3[2] - p_r2[0]*p_r3[2]);
-          alpha[5][2]=oneOverV*(-(p_r1[1]*p_r2[0]) + p_r1[0]*p_r2[1] - p_r1[1]*p_r3[0] - p_r2[1]*p_r3[0] + p_r1[0]*p_r3[1] + p_r2[0]*p_r3[1]);
-          alpha[6][0]=oneOverV*(-(p_r1[2]*p_r2[1]) + p_r1[1]*p_r2[2] + p_r1[2]*p_r3[1] - p_r2[2]*p_r3[1] - p_r1[1]*p_r3[2] + p_r2[1]*p_r3[2]);
-          alpha[6][1]=oneOverV*(p_r1[2]*p_r2[0] - p_r1[0]*p_r2[2] - p_r1[2]*p_r3[0] + p_r2[2]*p_r3[0] + p_r1[0]*p_r3[2] - p_r2[0]*p_r3[2]);
-          alpha[6][2]=oneOverV*(-(p_r1[1]*p_r2[0]) + p_r1[0]*p_r2[1] + p_r1[1]*p_r3[0] - p_r2[1]*p_r3[0] - p_r1[0]*p_r3[1] + p_r2[0]*p_r3[1]);
-          alpha[7][0]=oneOverV*(-(p_r1[2]*p_r2[1]) + p_r1[1]*p_r2[2] + p_r1[2]*p_r3[1] + p_r2[2]*p_r3[1] - p_r1[1]*p_r3[2] - p_r2[1]*p_r3[2]);
-          alpha[7][1]=oneOverV*(p_r1[2]*p_r2[0] - p_r1[0]*p_r2[2] - p_r1[2]*p_r3[0] - p_r2[2]*p_r3[0] + p_r1[0]*p_r3[2] + p_r2[0]*p_r3[2]);
-          alpha[7][2]=oneOverV*(-(p_r1[1]*p_r2[0]) + p_r1[0]*p_r2[1] + p_r1[1]*p_r3[0] + p_r2[1]*p_r3[0] - p_r1[0]*p_r3[1] - p_r2[0]*p_r3[1]);
+          alpha[0][0] = oneOverV * (p_r1[2] * p_r2[1] - p_r1[1] * p_r2[2] - p_r1[2] * p_r3[1] + p_r2[2] * p_r3[1] + p_r1[1] * p_r3[2] - p_r2[1] * p_r3[2]);
+          alpha[0][1] = oneOverV * (-(p_r1[2] * p_r2[0]) + p_r1[0] * p_r2[2] + p_r1[2] * p_r3[0] - p_r2[2] * p_r3[0] - p_r1[0] * p_r3[2] + p_r2[0] * p_r3[2]);
+          alpha[0][2] = oneOverV * (p_r1[1] * p_r2[0] - p_r1[0] * p_r2[1] - p_r1[1] * p_r3[0] + p_r2[1] * p_r3[0] + p_r1[0] * p_r3[1] - p_r2[0] * p_r3[1]);
+          alpha[1][0] = oneOverV * (p_r1[2] * p_r2[1] - p_r1[1] * p_r2[2] - p_r1[2] * p_r3[1] - p_r2[2] * p_r3[1] + p_r1[1] * p_r3[2] + p_r2[1] * p_r3[2]);
+          alpha[1][1] = oneOverV * (-(p_r1[2] * p_r2[0]) + p_r1[0] * p_r2[2] + p_r1[2] * p_r3[0] + p_r2[2] * p_r3[0] - p_r1[0] * p_r3[2] - p_r2[0] * p_r3[2]);
+          alpha[1][2] = oneOverV * (p_r1[1] * p_r2[0] - p_r1[0] * p_r2[1] - p_r1[1] * p_r3[0] - p_r2[1] * p_r3[0] + p_r1[0] * p_r3[1] + p_r2[0] * p_r3[1]);
+          alpha[2][0] = oneOverV * (p_r1[2] * p_r2[1] - p_r1[1] * p_r2[2] + p_r1[2] * p_r3[1] - p_r2[2] * p_r3[1] - p_r1[1] * p_r3[2] + p_r2[1] * p_r3[2]);
+          alpha[2][1] = oneOverV * (-(p_r1[2] * p_r2[0]) + p_r1[0] * p_r2[2] - p_r1[2] * p_r3[0] + p_r2[2] * p_r3[0] + p_r1[0] * p_r3[2] - p_r2[0] * p_r3[2]);
+          alpha[2][2] = oneOverV * (p_r1[1] * p_r2[0] - p_r1[0] * p_r2[1] + p_r1[1] * p_r3[0] - p_r2[1] * p_r3[0] - p_r1[0] * p_r3[1] + p_r2[0] * p_r3[1]);
+          alpha[3][0] = oneOverV * (p_r1[2] * p_r2[1] - p_r1[1] * p_r2[2] + p_r1[2] * p_r3[1] + p_r2[2] * p_r3[1] - p_r1[1] * p_r3[2] - p_r2[1] * p_r3[2]);
+          alpha[3][1] = oneOverV * (-(p_r1[2] * p_r2[0]) + p_r1[0] * p_r2[2] - p_r1[2] * p_r3[0] - p_r2[2] * p_r3[0] + p_r1[0] * p_r3[2] + p_r2[0] * p_r3[2]);
+          alpha[3][2] = oneOverV * (p_r1[1] * p_r2[0] - p_r1[0] * p_r2[1] + p_r1[1] * p_r3[0] + p_r2[1] * p_r3[0] - p_r1[0] * p_r3[1] - p_r2[0] * p_r3[1]);
+          alpha[4][0] = oneOverV * (-(p_r1[2] * p_r2[1]) + p_r1[1] * p_r2[2] - p_r1[2] * p_r3[1] + p_r2[2] * p_r3[1] + p_r1[1] * p_r3[2] - p_r2[1] * p_r3[2]);
+          alpha[4][1] = oneOverV * (p_r1[2] * p_r2[0] - p_r1[0] * p_r2[2] + p_r1[2] * p_r3[0] - p_r2[2] * p_r3[0] - p_r1[0] * p_r3[2] + p_r2[0] * p_r3[2]);
+          alpha[4][2] = oneOverV * (-(p_r1[1] * p_r2[0]) + p_r1[0] * p_r2[1] - p_r1[1] * p_r3[0] + p_r2[1] * p_r3[0] + p_r1[0] * p_r3[1] - p_r2[0] * p_r3[1]);
+          alpha[5][0] = oneOverV * (-(p_r1[2] * p_r2[1]) + p_r1[1] * p_r2[2] - p_r1[2] * p_r3[1] - p_r2[2] * p_r3[1] + p_r1[1] * p_r3[2] + p_r2[1] * p_r3[2]);
+          alpha[5][1] = oneOverV * (p_r1[2] * p_r2[0] - p_r1[0] * p_r2[2] + p_r1[2] * p_r3[0] + p_r2[2] * p_r3[0] - p_r1[0] * p_r3[2] - p_r2[0] * p_r3[2]);
+          alpha[5][2] = oneOverV * (-(p_r1[1] * p_r2[0]) + p_r1[0] * p_r2[1] - p_r1[1] * p_r3[0] - p_r2[1] * p_r3[0] + p_r1[0] * p_r3[1] + p_r2[0] * p_r3[1]);
+          alpha[6][0] = oneOverV * (-(p_r1[2] * p_r2[1]) + p_r1[1] * p_r2[2] + p_r1[2] * p_r3[1] - p_r2[2] * p_r3[1] - p_r1[1] * p_r3[2] + p_r2[1] * p_r3[2]);
+          alpha[6][1] = oneOverV * (p_r1[2] * p_r2[0] - p_r1[0] * p_r2[2] - p_r1[2] * p_r3[0] + p_r2[2] * p_r3[0] + p_r1[0] * p_r3[2] - p_r2[0] * p_r3[2]);
+          alpha[6][2] = oneOverV * (-(p_r1[1] * p_r2[0]) + p_r1[0] * p_r2[1] + p_r1[1] * p_r3[0] - p_r2[1] * p_r3[0] - p_r1[0] * p_r3[1] + p_r2[0] * p_r3[1]);
+          alpha[7][0] = oneOverV * (-(p_r1[2] * p_r2[1]) + p_r1[1] * p_r2[2] + p_r1[2] * p_r3[1] + p_r2[2] * p_r3[1] - p_r1[1] * p_r3[2] - p_r2[1] * p_r3[2]);
+          alpha[7][1] = oneOverV * (p_r1[2] * p_r2[0] - p_r1[0] * p_r2[2] - p_r1[2] * p_r3[0] - p_r2[2] * p_r3[0] + p_r1[0] * p_r3[2] + p_r2[0] * p_r3[2]);
+          alpha[7][2] = oneOverV * (-(p_r1[1] * p_r2[0]) + p_r1[0] * p_r2[1] + p_r1[1] * p_r3[0] + p_r2[1] * p_r3[0] - p_r1[0] * p_r3[1] - p_r2[0] * p_r3[1]);
 
           // get IJK associated with each corner
           int cornerIJK[8][3]; // CPDI can map to up to 8 cells
-          for( int corner=0; corner<8; corner++ )
+          for( int corner = 0; corner < 8; corner++ )
           {
-            for( int i=0; i<3; i++ )
+            for( int i = 0; i < 3; i++ )
             {
               real64 cornerPositionComponent = particlePosition[p][i] + signs[corner][0] * particleRVectors[p][0][i] + signs[corner][1] * particleRVectors[p][1][i] + signs[corner][2] *
                                                particleRVectors[p][2][i];
@@ -4015,7 +4020,7 @@ void SolidMechanicsMPM::populateMappingArrays( ParticleManager & particleManager
           // get node IDs associated with each corner from IJK map, along with weights and grad weights
           // *** The order in which we access the IJK map must match the order we evaluate the shape functions! ***
           int node = 0;
-          for( int corner=0; corner<8; corner++ )
+          for( int corner = 0; corner < 8; corner++ )
           {
             int cornerNode = ijkMap[cornerIJK[corner][0]][cornerIJK[corner][1]][cornerIJK[corner][2]];
             auto cornerNodePosition = gridPosition[cornerNode];
@@ -4029,17 +4034,17 @@ void SolidMechanicsMPM::populateMappingArrays( ParticleManager & particleManager
             real64 yRel = (y - cornerNodePosition[1]) / hEl[1];
             real64 zRel = (z - cornerNodePosition[2]) / hEl[2];
 
-            for( int i=0; i<2; i++ )
+            for( int i = 0; i < 2; i++ )
             {
               real64 xWeight = i * xRel + (1 - i) * (1.0 - xRel);
-              for( int j=0; j<2; j++ )
+              for( int j = 0; j < 2; j++ )
               {
                 real64 yWeight = j * yRel + (1 - j) * (1.0 - yRel);
-                for( int k=0; k<2; k++ )
+                for( int k = 0; k < 2; k++ )
                 {
                   real64 zWeight = k * zRel + (1 - k) * (1.0 - zRel);
                   real64 weight = xWeight * yWeight * zWeight;
-                  mappedNodes[pp][node] = ijkMap[cornerIJK[corner][0]+i][cornerIJK[corner][1]+j][cornerIJK[corner][2]+k];
+                  mappedNodes[pp][node] = ijkMap[cornerIJK[corner][0] + i][cornerIJK[corner][1] + j][cornerIJK[corner][2] + k];
                   shapeFunctionValues[pp][node] = 0.125 * weight;
                   shapeFunctionGradientValues[pp][node][0] = alpha[corner][0] * weight;
                   shapeFunctionGradientValues[pp][node][1] = alpha[corner][1] * weight;

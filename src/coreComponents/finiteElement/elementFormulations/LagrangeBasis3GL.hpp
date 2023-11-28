@@ -57,9 +57,9 @@ public:
     {
       case 1:
       case 2:
-        return 5.0/6.0;
+        return 5.0 / 6.0;
       default:
-        return 1.0/6.0;
+        return 1.0 / 6.0;
     }
   }
 
@@ -76,7 +76,7 @@ public:
   //Switch case
   constexpr static real64 parentSupportCoord( const localIndex supportPointIndex )
   {
-    real64 result=0.0;
+    real64 result = 0.0;
 
     switch( supportPointIndex )
     {
@@ -84,10 +84,10 @@ public:
         result = -1.0;
         break;
       case 1:
-        result = -1.0/sqrt5;
+        result = -1.0 / sqrt5;
         break;
       case 2:
-        result = 1.0/sqrt5;
+        result = 1.0 / sqrt5;
         break;
       case 3:
         result = 1.0;
@@ -113,7 +113,7 @@ public:
   constexpr static real64 value( const int index,
                                  const real64 xi )
   {
-    real64 result=0.0;
+    real64 result = 0.0;
 
     switch( index )
     {
@@ -147,7 +147,7 @@ public:
   //MODFI4 : Implemented new base functions and their derivative for Q3
   constexpr static real64 value0( const real64 xi )
   {
-    return -(5.0/8.0)*(xi*xi*xi-xi*xi-(1.0/5.0)*xi+1.0/5.0);
+    return -(5.0 / 8.0) * (xi * xi * xi - xi * xi - (1.0 / 5.0) * xi + 1.0 / 5.0);
   }
 
   /**
@@ -159,7 +159,7 @@ public:
   inline
   constexpr static real64 value1( const real64 xi )
   {
-    return (5.0*sqrt5/8.0)*(xi*xi*xi-(1.0/sqrt5)*xi*xi-xi+1.0/sqrt5);
+    return (5.0 * sqrt5 / 8.0) * (xi * xi * xi - (1.0 / sqrt5) * xi * xi - xi + 1.0 / sqrt5);
   }
 
   /**
@@ -171,7 +171,7 @@ public:
   inline
   constexpr static real64 value2( const real64 xi )
   {
-    return -(5.0*sqrt5/8.0)*(xi*xi*xi+(1.0/sqrt5)*xi*xi-xi-1.0/sqrt5);
+    return -(5.0 * sqrt5 / 8.0) * (xi * xi * xi + (1.0 / sqrt5) * xi * xi - xi - 1.0 / sqrt5);
   }
 
   /**
@@ -183,7 +183,7 @@ public:
   inline
   constexpr static real64 value3( const real64 xi )
   {
-    return (5.0/8.0)*(xi*xi*xi+xi*xi-(1.0/5.0)*xi-1.0/5.0);
+    return (5.0 / 8.0) * (xi * xi * xi + xi * xi - (1.0 / 5.0) * xi - 1.0 / 5.0);
   }
 
 
@@ -200,7 +200,7 @@ public:
   constexpr static real64 gradient( const int index,
                                     const real64 xi )
   {
-    real64 result=0.0;
+    real64 result = 0.0;
 
     switch( index )
     {
@@ -233,7 +233,7 @@ public:
   inline
   constexpr static real64 gradient0( const real64 xi )
   {
-    return -(5.0/8.0)*(3.0*xi*xi-2.0*xi-(1.0/5.0));
+    return -(5.0 / 8.0) * (3.0 * xi * xi - 2.0 * xi - (1.0 / 5.0));
   }
 
   /**
@@ -246,7 +246,7 @@ public:
   inline
   constexpr static real64 gradient1( const real64 xi )
   {
-    return (5.0*sqrt5/8.0)*(3.0*xi*xi-(2.0/sqrt5)*xi-1.0);
+    return (5.0 * sqrt5 / 8.0) * (3.0 * xi * xi - (2.0 / sqrt5) * xi - 1.0);
   }
 
   /**
@@ -259,7 +259,7 @@ public:
   inline
   constexpr static real64 gradient2( const real64 xi )
   {
-    return -(5.0*sqrt5/8.0)*(3.0*xi*xi+(2.0/sqrt5)*xi-1.0);
+    return -(5.0 * sqrt5 / 8.0) * (3.0 * xi * xi + (2.0 / sqrt5) * xi - 1.0);
   }
 
   /**
@@ -272,7 +272,7 @@ public:
   inline
   constexpr static real64 gradient3( const real64 xi )
   {
-    return (5.0/8.0)*(3.0*xi*xi+2.0*xi-(1.0/5.0));;
+    return (5.0 / 8.0) * (3.0 * xi * xi + 2.0 * xi - (1.0 / 5.0));;
   }
 
   /**
@@ -336,9 +336,9 @@ public:
                                       int & i1 )
     {
 
-      i1 = linearIndex/4;
+      i1 = linearIndex / 4;
 
-      i0 = linearIndex%4;
+      i0 = linearIndex % 4;
 
     }
 
@@ -355,13 +355,13 @@ public:
     static void value( const real64 (& coords)[2],
                        real64 (& N)[numSupportPoints] )
     {
-      for( int a=0; a<4; ++a )
+      for( int a = 0; a < 4; ++a )
       {
-        for( int b=0; b<4; ++b )
+        for( int b = 0; b < 4; ++b )
         {
           const int lindex = LagrangeBasis3GL::TensorProduct2D::linearIndex( a, b );
-          N[ lindex ] = LagrangeBasis3GL::value( a, coords[0] ) *
-                        LagrangeBasis3GL::value( b, coords[1] );
+          N[lindex] = LagrangeBasis3GL::value( a, coords[0] ) *
+                      LagrangeBasis3GL::value( b, coords[1] );
         }
       }
     }
@@ -444,11 +444,11 @@ public:
                                       int & i2 )
     {
 
-      i2 = linearIndex/16;
+      i2 = linearIndex / 16;
 
-      i1 = (linearIndex%16)/4;
+      i1 = (linearIndex % 16) / 4;
 
-      i0 = (linearIndex%16)%4;
+      i0 = (linearIndex % 16) % 4;
 
     }
 
@@ -465,16 +465,16 @@ public:
     static void value( const real64 (& coords)[3],
                        real64 (& N)[numSupportPoints] )
     {
-      for( int a=0; a<4; ++a )
+      for( int a = 0; a < 4; ++a )
       {
-        for( int b=0; b<4; ++b )
+        for( int b = 0; b < 4; ++b )
         {
-          for( int c=0; c<4; ++c )
+          for( int c = 0; c < 4; ++c )
           {
             const int lindex = LagrangeBasis3GL::TensorProduct3D::linearIndex( a, b, c );
-            N[ lindex ] = LagrangeBasis3GL::value( a, coords[0] ) *
-                          LagrangeBasis3GL::value( b, coords[1] ) *
-                          LagrangeBasis3GL::value( c, coords[2] );
+            N[lindex] = LagrangeBasis3GL::value( a, coords[0] ) *
+                        LagrangeBasis3GL::value( b, coords[1] ) *
+                        LagrangeBasis3GL::value( c, coords[2] );
           }
         }
       }

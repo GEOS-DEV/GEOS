@@ -84,9 +84,9 @@ string toMetricPrefixString( T const & value )
 
   // format the output of the value to 3 significant digits and append the
   // metric prefix.
-  int const p = 2-std::abs( power - a * 3 );
+  int const p = 2 - std::abs( power - a * 3 );
   char temp[10];
-  snprintf( temp, 8, "%5.*f %c", p, scaledValue, prefixes[a+5] );
+  snprintf( temp, 8, "%5.*f %c", p, scaledValue, prefixes[a + 5] );
   rval = temp;
 
   GEOS_ERROR_IF( rval.empty(),

@@ -137,7 +137,7 @@ public:
    * @return A reference to the subregion
    * @throw std::domain_error if the the requested sub-region doesn't exist.
    */
-  template< typename SUBREGIONTYPE=ElementSubRegionBase, typename KEY_TYPE=void >
+  template< typename SUBREGIONTYPE = ElementSubRegionBase, typename KEY_TYPE = void >
   SUBREGIONTYPE const & getSubRegion( KEY_TYPE const & key ) const
   {
     return this->getGroup( viewKeyStruct::elementSubRegions() ).getGroup< SUBREGIONTYPE >( key );
@@ -146,7 +146,7 @@ public:
   /**
    * @copydoc getSubRegion( KEY_TYPE const & key ) const
    */
-  template< typename SUBREGIONTYPE=ElementSubRegionBase, typename KEY_TYPE=void >
+  template< typename SUBREGIONTYPE = ElementSubRegionBase, typename KEY_TYPE = void >
   SUBREGIONTYPE & getSubRegion( KEY_TYPE const & key )
   {
     return this->getGroup( viewKeyStruct::elementSubRegions() ).getGroup< SUBREGIONTYPE >( key );
@@ -159,7 +159,7 @@ public:
    * @return true if the subregion exists
    * @return false if the subregion does not exist
    */
-  template< typename T=ElementSubRegionBase >
+  template< typename T = ElementSubRegionBase >
   bool hasSubRegion( string const & name ) const
   {
     return this->getGroup( viewKeyStruct::elementSubRegions() ).hasGroup< T >( name );
@@ -293,7 +293,7 @@ public:
   template< typename SUBREGIONTYPE, typename ... SUBREGIONTYPES, typename LAMBDA >
   void forElementSubRegionsIndex( LAMBDA && lambda ) const
   {
-    for( localIndex esr=0; esr<this->numSubRegions(); ++esr )
+    for( localIndex esr = 0; esr < this->numSubRegions(); ++esr )
     {
       ElementSubRegionBase const & subRegion = this->getSubRegion( esr );
       applyLambdaToContainer< SUBREGIONTYPE, SUBREGIONTYPES... >( subRegion, [&]( auto const & castedSubRegion )
@@ -309,7 +309,7 @@ public:
   template< typename SUBREGIONTYPE, typename ... SUBREGIONTYPES, typename LAMBDA >
   void forElementSubRegionsIndex( LAMBDA && lambda )
   {
-    for( localIndex esr=0; esr<this->numSubRegions(); ++esr )
+    for( localIndex esr = 0; esr < this->numSubRegions(); ++esr )
     {
       ElementSubRegionBase & subRegion = this->getSubRegion( esr );
       applyLambdaToContainer< SUBREGIONTYPE, SUBREGIONTYPES... >( subRegion, [&]( auto & castedSubRegion )

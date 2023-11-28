@@ -81,7 +81,7 @@ void evaluate1DFunction( FunctionBase & function,
                          arrayView1d< real64 const > const & inputs,
                          arrayView1d< real64 const > const & outputs )
 {
-  for( localIndex ii=0; ii<inputs.size(); ++ii )
+  for( localIndex ii = 0; ii < inputs.size(); ++ii )
   {
     real64 input = inputs[ii];
     real64 predicted = function.evaluate( &input );
@@ -107,7 +107,7 @@ void checkDirectionalDerivative( real64 const (&input)[4],
   perturbedInput[direction] += dInput;
   perturbedVal = kernelWrapper.compute( perturbedInput, perturbedDerivatives );
 
-  geos::testing::checkRelativeError( derivatives[direction], (perturbedVal-val)/dInput, relTol, geos::testing::DEFAULT_ABS_TOL );
+  geos::testing::checkRelativeError( derivatives[direction], (perturbedVal - val) / dInput, relTol, geos::testing::DEFAULT_ABS_TOL );
 }
 
 TEST( FunctionTests, 1DTable )
@@ -223,13 +223,13 @@ TEST( FunctionTests, 2DTable )
 
   array1d< real64 > values( Nx * Ny );
   localIndex tablePosition = 0;
-  for( localIndex jj=0; jj<Ny; ++jj )
+  for( localIndex jj = 0; jj < Ny; ++jj )
   {
-    for( localIndex ii=0; ii<Nx; ++ii )
+    for( localIndex ii = 0; ii < Nx; ++ii )
     {
       real64 const x = coordinates[0][ii];
       real64 const y = coordinates[1][jj];
-      values[tablePosition] = (2.0*x) - (3.0*y) + 5.0;
+      values[tablePosition] = (2.0 * x) - (3.0 * y) + 5.0;
       ++tablePosition;
     }
   }
@@ -262,7 +262,7 @@ TEST( FunctionTests, 2DTable )
   SortedArray< localIndex > set;
 
   // Build the set
-  for( localIndex ii=0; ii<Ntest; ++ii )
+  for( localIndex ii = 0; ii < Ntest; ++ii )
   {
     set.insert( ii );
   }
@@ -272,16 +272,16 @@ TEST( FunctionTests, 2DTable )
   std::uniform_real_distribution< double > distribution( -0.99, 1.99 );
 
   // Test the function
-  for( localIndex ii=0; ii<Ntest; ++ii )
+  for( localIndex ii = 0; ii < Ntest; ++ii )
   {
-    for( localIndex jj=0; jj<Ndim; ++jj )
+    for( localIndex jj = 0; jj < Ndim; ++jj )
     {
       testCoordinates[ii][jj] = distribution( generator );
     }
 
     real64 const x = testCoordinates[ii][0];
     real64 const y = testCoordinates[ii][1];
-    expected[ii] = (2.0*x) - (3.0*y) + 5.0;
+    expected[ii] = (2.0 * x) - (3.0 * y) + 5.0;
     set.insert( ii );
   }
 
@@ -289,7 +289,7 @@ TEST( FunctionTests, 2DTable )
   table_b.evaluate( testGroup, 0.0, set.toView(), output );
 
   // Compare results
-  for( localIndex ii=0; ii<Ntest; ++ii )
+  for( localIndex ii = 0; ii < Ntest; ++ii )
   {
     ASSERT_NEAR( expected[ii], output[ii], 1e-10 );
   }
@@ -336,19 +336,19 @@ TEST( FunctionTests, 4DTable_multipleInputs )
 
   array1d< real64 > values( Nx * Ny * Nz * Nt );
   localIndex tablePosition = 0;
-  for( localIndex mm=0; mm<Nt; ++mm )
+  for( localIndex mm = 0; mm < Nt; ++mm )
   {
-    for( localIndex kk=0; kk<Nz; ++kk )
+    for( localIndex kk = 0; kk < Nz; ++kk )
     {
-      for( localIndex jj=0; jj<Ny; ++jj )
+      for( localIndex jj = 0; jj < Ny; ++jj )
       {
-        for( localIndex ii=0; ii<Nx; ++ii )
+        for( localIndex ii = 0; ii < Nx; ++ii )
         {
           real64 const x = coordinates[0][ii];
           real64 const y = coordinates[1][jj];
           real64 const z = coordinates[2][kk];
           real64 const t = coordinates[3][mm];
-          values[tablePosition] = 2.0 + (3*x) - (5*y) + (7*z) + (11*t);
+          values[tablePosition] = 2.0 + (3 * x) - (5 * y) + (7 * z) + (11 * t);
           ++tablePosition;
         }
       }
@@ -384,7 +384,7 @@ TEST( FunctionTests, 4DTable_multipleInputs )
   SortedArray< localIndex > set;
 
   // Fill out the set
-  for( localIndex ii=0; ii<Ntest; ++ii )
+  for( localIndex ii = 0; ii < Ntest; ++ii )
   {
     set.insert( ii );
   }
@@ -394,13 +394,13 @@ TEST( FunctionTests, 4DTable_multipleInputs )
   std::uniform_real_distribution< double > distribution( -0.99, 0.99 );
 
   // Build the inputs
-  for( localIndex ii=0; ii<Ntimes; ++ii )
+  for( localIndex ii = 0; ii < Ntimes; ++ii )
   {
     real64 const t = distribution( generator );
 
-    for( localIndex jj=0; jj<Ntest; ++jj )
+    for( localIndex jj = 0; jj < Ntest; ++jj )
     {
-      for( localIndex kk=0; kk<Ndim-1; ++kk )
+      for( localIndex kk = 0; kk < Ndim - 1; ++kk )
       {
         testCoordinates[jj][kk] = distribution( generator );
       }
@@ -408,14 +408,14 @@ TEST( FunctionTests, 4DTable_multipleInputs )
       real64 const x = testCoordinates[jj][0];
       real64 const y = testCoordinates[jj][1];
       real64 const z = testCoordinates[jj][2];
-      expected[jj] = 2.0 + (3*x) - (5*y) + (7*z) + (11*t);
+      expected[jj] = 2.0 + (3 * x) - (5 * y) + (7 * z) + (11 * t);
     }
 
     // Evaluate the function in batch mode
     table_c.evaluate( testGroup, t, set.toView(), output );
 
     // Compare results
-    for( localIndex jj=0; jj<Ntest; ++jj )
+    for( localIndex jj = 0; jj < Ntest; ++jj )
     {
       ASSERT_NEAR( expected[jj], output[jj], 1e-10 );
     }
@@ -461,20 +461,20 @@ TEST( FunctionTests, 4DTable_derivatives )
   coordinates[3][3] = 1.0;
 
   array1d< real64 > values( Nx * Ny * Nz * Nt );
-  for( localIndex mm=0, tablePosition=0; mm<Nt; ++mm )
+  for( localIndex mm = 0, tablePosition = 0; mm < Nt; ++mm )
   {
-    for( localIndex kk=0; kk<Nz; ++kk )
+    for( localIndex kk = 0; kk < Nz; ++kk )
     {
-      for( localIndex jj=0; jj<Ny; ++jj )
+      for( localIndex jj = 0; jj < Ny; ++jj )
       {
-        for( localIndex ii=0; ii<Nx; ++ii, ++tablePosition )
+        for( localIndex ii = 0; ii < Nx; ++ii, ++tablePosition )
         {
           real64 const x = coordinates[0][ii];
           real64 const y = coordinates[1][jj];
           real64 const z = coordinates[2][kk];
           real64 const t = coordinates[3][mm];
 
-          values[tablePosition] = 2.0 + (3*x) - (5*y*y) + (7*z*z*z) + (11*t*t*t*t);
+          values[tablePosition] = 2.0 + (3 * x) - (5 * y * y) + (7 * z * z * z) + (11 * t * t * t * t);
         }
       }
     }
@@ -497,10 +497,10 @@ TEST( FunctionTests, 4DTable_derivatives )
   real64 const eps = std::numeric_limits< real64 >::epsilon();
   real64 const perturb = std::sqrt( eps );
 
-  real64 const start = coordinates[0][0]-0.1; // start outside the table, to check derivatives there too
-  real64 const end = coordinates[0][Nx-1]+0.1; // end outside the table
+  real64 const start = coordinates[0][0] - 0.1; // start outside the table, to check derivatives there too
+  real64 const end = coordinates[0][Nx - 1] + 0.1; // end outside the table
   localIndex const nSamples = 7; // try not to fall on table coordinate, otherwise the finite-difference approximation won't work
-  real64 const delta = (end-start)/nSamples;
+  real64 const delta = (end - start) / nSamples;
 
   real64 val = 0.0;
   real64 perturbedVal = 0.0;
@@ -510,16 +510,16 @@ TEST( FunctionTests, 4DTable_derivatives )
   real64 perturbedDerivatives[4]{};
 
   TableFunction::KernelWrapper kernelWrapper = table_d.createKernelWrapper();
-  for( localIndex mm=0; mm<nSamples; ++mm, input[3] += delta )
+  for( localIndex mm = 0; mm < nSamples; ++mm, input[3] += delta )
   {
     input[2] = start;
-    for( localIndex kk=0; kk<nSamples; ++kk, input[2] += delta )
+    for( localIndex kk = 0; kk < nSamples; ++kk, input[2] += delta )
     {
       input[1] = start;
-      for( localIndex jj=0; jj<nSamples; ++jj, input[1] += delta )
+      for( localIndex jj = 0; jj < nSamples; ++jj, input[1] += delta )
       {
         input[0] = start;
-        for( localIndex ii=0; ii<nSamples; ++ii, input[0] += delta )
+        for( localIndex ii = 0; ii < nSamples; ++ii, input[0] += delta )
         {
           // evaluate once to get the analytical derivatives
           val = kernelWrapper.compute( input, derivatives );
@@ -587,7 +587,7 @@ TEST( FunctionTests, 4DTable_symbolic )
   SortedArray< localIndex > set;
 
   // Fill out the set
-  for( localIndex ii=0; ii<Ntest; ++ii )
+  for( localIndex ii = 0; ii < Ntest; ++ii )
   {
     set.insert( ii );
   }
@@ -597,7 +597,7 @@ TEST( FunctionTests, 4DTable_symbolic )
   std::uniform_real_distribution< double > distribution( -1.0, 1.0 );
 
   // Build the inputs
-  for( localIndex ii=0; ii<Ntest; ++ii )
+  for( localIndex ii = 0; ii < Ntest; ++ii )
   {
     real64 const a = distribution( generator );
     real64 const b = distribution( generator );
@@ -608,14 +608,14 @@ TEST( FunctionTests, 4DTable_symbolic )
     inputC[ii] = c;
     inputD[ii] = d;
 
-    expected[ii] = 1.0+(2.0*a)-(3.0*b*b)+(5.0*c*c*c)-(7.0*d*d*d*d);
+    expected[ii] = 1.0 + (2.0 * a) - (3.0 * b * b) + (5.0 * c * c * c) - (7.0 * d * d * d * d);
   }
 
   // Evaluate the function in batch mode
   table_e.evaluate( testGroup, 0.0, set.toView(), output );
 
   // Compare results
-  for( localIndex jj=0; jj<Ntest; ++jj )
+  for( localIndex jj = 0; jj < Ntest; ++jj )
   {
     ASSERT_NEAR( expected[jj], output[jj], 1e-10 );
   }
@@ -776,7 +776,7 @@ TEST( FunctionTests, 2DMultivariableTable )
 
   array1d< real64 > axisSteps( nDims );
   for( auto i = 0; i < nDims; i++ )
-    axisSteps[i] = (axisMaxs[i] - axisMins[i]) /  axisPoints[i];
+    axisSteps[i] = (axisMaxs[i] - axisMins[i]) / axisPoints[i];
 
   array1d< real64 > values( axisPoints[0] * axisPoints[1] * nOps );
   for( auto i = 0; i < axisPoints[0]; i++ )
@@ -861,7 +861,7 @@ TEST( FunctionTests, MultivariableTableFromFile )
   }
 
   real64 ders[nTest *
-              nOps* nDims] =
+              nOps * nDims] =
   {0.0001940148221947931, 19.68847332124942, 0.4062830261664956, 1.1366559830488714, 4.8455276643095086e-05, -2.9592626628654695, 32.75023111406469, 3.0346605840599614, 0.0001393383426014372,
    -20.98597627326845, -15.133478247625717, 63.31551370493199, 3.135303638867035e-07, -19.983502188118216, -19.983502188118216, -19.98350218811822, 7.964896387703173e-06, -0.023281125656838278,
    -0.07157042919964876, -0.11429929487246732, 0.0001581574364548, -6.598332756805898, 20.21093196228746, -3.9775257787170633, 0.00018582807579339933, -30.549324995402156, -25.34377155909867,

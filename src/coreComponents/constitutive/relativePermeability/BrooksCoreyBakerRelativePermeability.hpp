@@ -185,7 +185,7 @@ BrooksCoreyBakerRelativePermeabilityUpdate::
   if( ipWater >= 0 )
   {
     real64 const scaledWaterVolFrac = (phaseVolFraction[ipWater] - m_phaseMinVolumeFraction[ipWater]) * volFracScaleInv;
-    real64 const scaledOilVolFrac   = (phaseVolFraction[ipOil]   - m_phaseMinVolumeFraction[ipOil])   * volFracScaleInv;
+    real64 const scaledOilVolFrac   = (phaseVolFraction[ipOil] - m_phaseMinVolumeFraction[ipOil]) * volFracScaleInv;
 
     using WOPT = RelativePermeabilityBase::WaterOilPairPhaseType;
     real64 const waterExponent = m_waterOilRelPermExponent[WOPT::WATER];

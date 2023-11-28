@@ -51,7 +51,7 @@ real64 michaelidesBrineEnthalpy( real64 const & T,
   real64 x1, x2, h1, h2, dh;
 
   x1 = 1000.0 / (1000.0 + 58.44 * m);
-  x2 = 58.44 * m  / (1000.0 + 58.44 * m);
+  x2 = 58.44 * m / (1000.0 + 58.44 * m);
 
   dh = 0.0;
 

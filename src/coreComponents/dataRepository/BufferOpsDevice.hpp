@@ -111,7 +111,7 @@ UnpackByIndexDevice ( buffer_unit_type const * & buffer,
                       ArrayView< T, NDIM, USD > const & var,
                       T_INDICES const & indices,
                       parallelDeviceEvents & events,
-                      MPI_Op op=MPI_REPLACE );
+                      MPI_Op op = MPI_REPLACE );
 
 //------------------------------------------------------------------------------
 template< typename T, typename T_INDICES >
@@ -209,7 +209,7 @@ UnpackDataByIndexDevice ( buffer_unit_type const * & buffer,
                           ArrayView< T, NDIM, USD > const & var,
                           T_INDICES const & indices,
                           parallelDeviceEvents & events,
-                          MPI_Op op=MPI_REPLACE );
+                          MPI_Op op = MPI_REPLACE );
 
 //------------------------------------------------------------------------------
 template< typename T, typename T_INDICES >

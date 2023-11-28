@@ -138,12 +138,12 @@ FiniteElementDiscretization::
     finiteElement.template setup< FE_TYPE >( k, meshData, feStack );
     real64 xLocal[numNodesPerElem][3];
     localIndex numSupportPoints = finiteElement.template numSupportPoints< FE_TYPE >( feStack );
-    for( localIndex a=0; a< numSupportPoints; ++a )
+    for( localIndex a = 0; a < numSupportPoints; ++a )
     {
-      localIndex const nodeIndex = elemsToNodes[ k][ a ];
-      for( int i=0; i<3; ++i )
+      localIndex const nodeIndex = elemsToNodes[k][a];
+      for( int i = 0; i < 3; ++i )
       {
-        xLocal[ a ][ i ] = X[ nodeIndex ][ i ];
+        xLocal[a][i] = X[nodeIndex][i];
       }
     }
 
@@ -156,7 +156,7 @@ FiniteElementDiscretization::
 
       for( localIndex b = 0; b < numSupportPoints; ++b )
       {
-        LvArray::tensorOps::copy< 3 >( dNdX[ k ][ q ][ b ], dNdXLocal[b] );
+        LvArray::tensorOps::copy< 3 >( dNdX[k][q][b], dNdXLocal[b] );
       }
     }
   }
