@@ -58,17 +58,6 @@ SinglePhaseBase::SinglePhaseBase( const string & name,
     setApplyDefaultValue( 0.0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Temperature" );
-
-  this->registerWrapper( viewKeyStruct::maxPressureChangeString(), &m_maxPressureChange ).
-    setSizedFromParent( 0 ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setApplyDefaultValue( -1.0 ).   // disabled by default
-    setDescription( "Maximum (absolute) pressure change in a Newton iteration" );
-
-  this->registerWrapper( viewKeyStruct::allowNegativePressureString(), &m_allowNegativePressure ).
-    setApplyDefaultValue( 0 ). // by default not allowed, except fot HydrofractureSolver
-    setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Flag indicating if negative pressure is allowed" );
 }
 
 
@@ -779,7 +768,7 @@ void SinglePhaseBase::implicitStepComplete( real64 const & time,
 }
 
 
-void SinglePhaseBase::assembleSystem( real64 const time_n,
+void SinglePhaseBase::assembleSystem( real64 const GEOS_UNUSED_PARAM( time_n ),
                                       real64 const dt,
                                       DomainPartition & domain,
                                       DofManager const & dofManager,
@@ -793,8 +782,7 @@ void SinglePhaseBase::assembleSystem( real64 const time_n,
                              localMatrix,
                              localRhs );
 
-  assembleFluxTerms( time_n,
-                     dt,
+  assembleFluxTerms( dt,
                      domain,
                      dofManager,
                      localMatrix,
@@ -1292,7 +1280,7 @@ real64 SinglePhaseBase::scalingForSystemSolution( DomainPartition & domain,
 
       auto const subRegionData =
         singlePhaseBaseKernels::ScalingForSystemSolutionKernel::
-          launch< parallelDevicePolicy<> >( localSolution, rankOffset, dofNumber, ghostRank, m_maxPressureChange );
+          launch< parallelDevicePolicy<> >( localSolution, rankOffset, dofNumber, ghostRank, m_maxAbsolutePresChange );
 
       scalingFactor = std::min( scalingFactor, subRegionData.first );
       maxDeltaPres  = std::max( maxDeltaPres, subRegionData.second );
@@ -1331,7 +1319,6 @@ bool SinglePhaseBase::checkSystemSolution( DomainPartition & domain,
       arrayView1d< globalIndex const > const dofNumber = subRegion.getReference< array1d< globalIndex > >( dofKey );
       arrayView1d< integer const > const ghostRank = subRegion.ghostRank();
       arrayView1d< real64 const > const pres = subRegion.getField< fields::flow::pressure >();
-      arrayView1d< real64 const > const mob = subRegion.getField< fields::flow::mobility >();
 
       auto const statistics =
         singlePhaseBaseKernels::SolutionCheckKernel::

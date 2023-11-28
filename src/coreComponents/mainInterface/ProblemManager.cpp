@@ -463,17 +463,25 @@ void ProblemManager::parseXMLDocument( xmlWrapper::xmlDocument & xmlDocument )
     for( xmlWrapper::xmlNode regionNode : elementRegionsNode.children() )
     {
       string const regionName = regionNode.attribute( "name" ).value();
-      string const
-      regionMeshBodyName = ElementRegionBase::verifyMeshBodyName( meshBodies,
-                                                                  regionNode.attribute( "meshBody" ).value() );
-
-      MeshBody & meshBody = domain.getMeshBody( regionMeshBodyName );
-      meshBody.forMeshLevels( [&]( MeshLevel & meshLevel )
+      try
       {
-        ElementRegionManager & elementManager = meshLevel.getElemManager();
-        Group * newRegion = elementManager.createChild( regionNode.name(), regionName );
-        newRegion->processInputFileRecursive( xmlDocument, regionNode );
-      } );
+        string const
+        regionMeshBodyName = ElementRegionBase::verifyMeshBodyName( meshBodies,
+                                                                    regionNode.attribute( "meshBody" ).value() );
+
+        MeshBody & meshBody = domain.getMeshBody( regionMeshBodyName );
+        meshBody.forMeshLevels( [&]( MeshLevel & meshLevel )
+        {
+          ElementRegionManager & elementManager = meshLevel.getElemManager();
+          Group * newRegion = elementManager.createChild( regionNode.name(), regionName );
+          newRegion->processInputFileRecursive( xmlDocument, regionNode );
+        } );
+      }
+      catch( InputError const & e )
+      {
+        string const nodePosString = xmlDocument.getNodePosition( regionNode ).toString();
+        throw InputError( e, "Error while parsing region " + regionName + " (" + nodePosString + "):\n" );
+      }
     }
 
     // Parse particle regions
@@ -597,7 +605,6 @@ void ProblemManager::generateMesh()
 
     if( meshBody.hasParticles() ) // mesh bodies with particles load their data into particle blocks, not cell blocks
     {
-      GEOS_LOG_RANK_0( "Generating particle mesh level" );
       ParticleBlockManagerABC & particleBlockManager = meshBody.getGroup< ParticleBlockManagerABC >( keys::particleManager );
 
       this->generateMeshLevel( baseMesh,

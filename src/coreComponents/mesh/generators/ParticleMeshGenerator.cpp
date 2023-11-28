@@ -21,7 +21,6 @@
 #include "mesh/DomainPartition.hpp"
 #include "mesh/mpiCommunications/PartitionBase.hpp"
 #include "mesh/mpiCommunications/SpatialPartition.hpp"
-
 #include "ParticleBlockManager.hpp"
 
 #include "common/DataTypes.hpp"
@@ -65,6 +64,7 @@ Group * ParticleMeshGenerator::createChild( string const & GEOS_UNUSED_PARAM( ch
 {
   return nullptr;
 }
+
 
 void ParticleMeshGenerator::fillParticleBlockManager( ParticleBlockManager & particleBlockManager, ParticleManager & particleManager, SpatialPartition const & partition )
 {
