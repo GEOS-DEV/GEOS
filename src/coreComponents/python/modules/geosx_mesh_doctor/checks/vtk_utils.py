@@ -25,7 +25,7 @@ class VtkOutput:
     is_data_mode_binary: bool
 
 
-def to_vtk_id_list(data):
+def to_vtk_id_list(data) -> vtkIdList:
     result = vtkIdList()
     result.Allocate(len(data))
     for d in data:

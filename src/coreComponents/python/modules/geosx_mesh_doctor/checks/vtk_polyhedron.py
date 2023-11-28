@@ -1,9 +1,11 @@
 from collections import defaultdict
 from dataclasses import dataclass
 from typing import (
-    Sequence,
-    Iterable,
     Collection,
+    Dict,
+    Iterable,
+    List,
+    Sequence,
 )
 
 from vtkmodules.vtkCommonCore import (
@@ -93,7 +95,7 @@ class FaceStream:
         The list of all (unique) support points of the face stream, in no specific order.
         :return: The set of all the point ids.
         """
-        tmp = []
+        tmp: List[int] = []
         for nodes in self.face_nodes:
             tmp += nodes
         return frozenset(tmp)
@@ -169,7 +171,7 @@ def build_face_to_face_connectivity_through_edges(face_stream: FaceStream, add_c
     for face_indices in edges_to_face_indices.values():
         assert len(face_indices) == 2
     # Computing the graph degree for validation
-    degrees = defaultdict(int)
+    degrees: Dict[int, int] = defaultdict(int)
     for face_indices in edges_to_face_indices.values():
         for face_index in face_indices:
             degrees[face_index] += 1

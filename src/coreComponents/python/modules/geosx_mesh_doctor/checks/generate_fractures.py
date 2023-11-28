@@ -10,6 +10,7 @@ from typing import (
     Mapping,
     Optional,
     Set,
+    Sequence,
     Tuple,
 )
 
@@ -113,7 +114,6 @@ def build_fracture_info(mesh: vtkUnstructuredGrid,
                 neighbor_cell_id = neighbor_cell_ids.GetId(j)
                 if f[neighbor_cell_id] != f[cell_id] and f[neighbor_cell_id] in field_values:
                     cells_to_faces[cell_id].append(i)  # TODO add this (cell_is, face_id) information to the fracture_info?
-
     face_nodes: List[Collection[int]] = list()
     face_nodes_hashes: Set[FrozenSet[int]] = set()  # A temporary not to add multiple times the same face.
     for cell_id, faces_ids in tqdm(cells_to_faces.items(), desc="Extracting the faces of the fractures"):
@@ -193,9 +193,9 @@ def __identify_split(num_points: int,
         """
         def __init__(self, num_nodes: int):
             self.__current_last_index = num_nodes - 1
-            self.__seen = set()
+            self.__seen: Set[int] = set()
 
-        def __call__(self, index) -> int:
+        def __call__(self, index: int) -> int:
             if index in self.__seen:
                 self.__current_last_index += 1
                 return self.__current_last_index
@@ -218,7 +218,7 @@ def __identify_split(num_points: int,
 
 def __copy_fields(old_mesh: vtkUnstructuredGrid,
                   new_mesh: vtkUnstructuredGrid,
-                  collocated_nodes: Collection[int]) -> None:
+                  collocated_nodes: Sequence[int]) -> None:
     """
     Copies the fields from the old mesh to the new one.
     Point data will be duplicated for collocated nodes.
@@ -286,6 +286,7 @@ def __perform_split(old_mesh: vtkUnstructuredGrid,
             if i != o:
                 new_points.SetPoint(o, old_points.GetPoint(i))
                 collocated_nodes[o] = i
+    collocated_nodes.flags.writeable = False
 
     # We are creating a new mesh.
     # The cells will be the same, except that their nodes may be duplicated or renumbered nodes.
