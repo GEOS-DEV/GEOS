@@ -170,6 +170,7 @@ real64 SinglePhaseFVM< BASE >::calculateResidualNorm( real64 const & GEOS_UNUSED
                                                      fluid,
                                                      solid,
                                                      solidInternalEnergy,
+                                                     m_nonlinearSolverParameters.m_minNormalizer,
                                                      subRegionResidualNorm,
                                                      subRegionResidualNormalizer );
       }
@@ -186,6 +187,7 @@ real64 SinglePhaseFVM< BASE >::calculateResidualNorm( real64 const & GEOS_UNUSED
                                                      subRegion,
                                                      fluid,
                                                      solid,
+                                                     m_nonlinearSolverParameters.m_minNormalizer,
                                                      subRegionFlowResidualNorm,
                                                      subRegionFlowResidualNormalizer );
         subRegionResidualNorm[0] = subRegionFlowResidualNorm[0];
@@ -306,8 +308,7 @@ void SinglePhaseFVM< BASE >::applySystemSolution( DofManager const & dofManager,
 }
 
 template< >
-void SinglePhaseFVM< SinglePhaseBase >::assembleFluxTerms( real64 const GEOS_UNUSED_PARAM ( time_n ),
-                                                           real64 const dt,
+void SinglePhaseFVM< SinglePhaseBase >::assembleFluxTerms( real64 const dt,
                                                            DomainPartition const & domain,
                                                            DofManager const & dofManager,
                                                            CRSMatrixView< real64, globalIndex const > const & localMatrix,
@@ -363,8 +364,7 @@ void SinglePhaseFVM< SinglePhaseBase >::assembleFluxTerms( real64 const GEOS_UNU
 
 
 template<>
-void SinglePhaseFVM< SinglePhaseProppantBase >::assembleFluxTerms( real64 const GEOS_UNUSED_PARAM ( time_n ),
-                                                                   real64 const dt,
+void SinglePhaseFVM< SinglePhaseProppantBase >::assembleFluxTerms( real64 const dt,
                                                                    DomainPartition const & domain,
                                                                    DofManager const & dofManager,
                                                                    CRSMatrixView< real64, globalIndex const > const & localMatrix,

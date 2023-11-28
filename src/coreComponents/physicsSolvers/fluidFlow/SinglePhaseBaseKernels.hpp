@@ -470,7 +470,7 @@ class ResidualNormKernel : public solverBaseKernels::ResidualNormKernelBase< 1 >
 public:
 
   using Base = solverBaseKernels::ResidualNormKernelBase< 1 >;
-  using Base::minNormalizer;
+  using Base::m_minNormalizer;
   using Base::m_rankOffset;
   using Base::m_localResidual;
   using Base::m_dofNumber;
@@ -481,11 +481,13 @@ public:
                       arrayView1d< localIndex const > const & ghostRank,
                       ElementSubRegionBase const & subRegion,
                       constitutive::SingleFluidBase const & fluid,
-                      constitutive::CoupledSolidBase const & solid )
+                      constitutive::CoupledSolidBase const & solid,
+                      real64 const minNormalizer )
     : Base( rankOffset,
             localResidual,
             dofNumber,
-            ghostRank ),
+            ghostRank,
+            minNormalizer ),
     m_volume( subRegion.getElementVolume() ),
     m_porosity_n( solid.getPorosity_n() ),
     m_density_n( fluid.density_n() )
@@ -495,7 +497,7 @@ public:
   virtual void computeLinf( localIndex const ei,
                             LinfStackVariables & stack ) const override
   {
-    real64 const massNormalizer = LvArray::math::max( minNormalizer, m_density_n[ei][0] * m_porosity_n[ei][0] * m_volume[ei] );
+    real64 const massNormalizer = LvArray::math::max( m_minNormalizer, m_density_n[ei][0] * m_porosity_n[ei][0] * m_volume[ei] );
     real64 const valMass = LvArray::math::abs( m_localResidual[stack.localRow] ) / massNormalizer;
     if( valMass > stack.localValue[0] )
     {
@@ -507,7 +509,7 @@ public:
   virtual void computeL2( localIndex const ei,
                           L2StackVariables & stack ) const override
   {
-    real64 const massNormalizer = LvArray::math::max( minNormalizer, m_density_n[ei][0] * m_porosity_n[ei][0] * m_volume[ei] );
+    real64 const massNormalizer = LvArray::math::max( m_minNormalizer, m_density_n[ei][0] * m_porosity_n[ei][0] * m_volume[ei] );
     stack.localValue[0] += m_localResidual[stack.localRow] * m_localResidual[stack.localRow];
     stack.localNormalizer[0] += massNormalizer;
   }
@@ -555,13 +557,14 @@ public:
                    ElementSubRegionBase const & subRegion,
                    constitutive::SingleFluidBase const & fluid,
                    constitutive::CoupledSolidBase const & solid,
+                   real64 const minNormalizer,
                    real64 (& residualNorm)[1],
                    real64 (& residualNormalizer)[1] )
   {
     arrayView1d< globalIndex const > const dofNumber = subRegion.getReference< array1d< globalIndex > >( dofKey );
     arrayView1d< integer const > const ghostRank = subRegion.ghostRank();
 
-    ResidualNormKernel kernel( rankOffset, localResidual, dofNumber, ghostRank, subRegion, fluid, solid );
+    ResidualNormKernel kernel( rankOffset, localResidual, dofNumber, ghostRank, subRegion, fluid, solid, minNormalizer );
     if( normType == solverBaseKernels::NormType::Linf )
     {
       ResidualNormKernel::launchLinf< POLICY >( subRegion.size(), kernel, residualNorm );
@@ -579,14 +582,15 @@ public:
 struct SolutionCheckKernel
 {
   template< typename POLICY >
-  static localIndex launch( arrayView1d< real64 const > const & localSolution,
-                            globalIndex const rankOffset,
-                            arrayView1d< globalIndex const > const & dofNumber,
-                            arrayView1d< integer const > const & ghostRank,
-                            arrayView1d< real64 const > const & pres,
-                            real64 const scalingFactor )
+  static std::pair< integer, real64 > launch( arrayView1d< real64 const > const & localSolution,
+                                              globalIndex const rankOffset,
+                                              arrayView1d< globalIndex const > const & dofNumber,
+                                              arrayView1d< integer const > const & ghostRank,
+                                              arrayView1d< real64 const > const & pres,
+                                              real64 const scalingFactor )
   {
-    RAJA::ReduceMin< ReducePolicy< POLICY >, localIndex > minVal( 1 );
+    RAJA::ReduceSum< ReducePolicy< POLICY >, integer > numNegativePressures( 0 );
+    RAJA::ReduceMin< ReducePolicy< POLICY >, real64 > minPres( 0.0 );
 
     forAll< POLICY >( dofNumber.size(), [=] GEOS_HOST_DEVICE ( localIndex const ei )
     {
@@ -597,13 +601,53 @@ struct SolutionCheckKernel
 
         if( newPres < 0.0 )
         {
-          minVal.min( 0 );
+          numNegativePressures += 1;
+          minPres.min( newPres );
         }
       }
 
     } );
 
-    return minVal.get();
+    return { numNegativePressures.get(), minPres.get() };
+  }
+
+};
+
+/******************************** ScalingForSystemSolutionKernel ********************************/
+
+struct ScalingForSystemSolutionKernel
+{
+  template< typename POLICY >
+  static std::pair< real64, real64 > launch( arrayView1d< real64 const > const & localSolution,
+                                             globalIndex const rankOffset,
+                                             arrayView1d< globalIndex const > const & dofNumber,
+                                             arrayView1d< integer const > const & ghostRank,
+                                             real64 const maxAbsolutePresChange )
+  {
+    RAJA::ReduceMin< ReducePolicy< POLICY >, real64 > scalingFactor( 1.0 );
+    RAJA::ReduceMax< ReducePolicy< POLICY >, real64 > maxDeltaPres( 0.0 );
+
+    forAll< POLICY >( dofNumber.size(), [=] GEOS_HOST_DEVICE ( localIndex const ei ) mutable
+    {
+      if( ghostRank[ei] < 0 && dofNumber[ei] >= 0 )
+      {
+        localIndex const lid = dofNumber[ei] - rankOffset;
+
+        // compute the change in pressure
+        real64 const absPresChange = LvArray::math::abs( localSolution[lid] );
+        maxDeltaPres.max( absPresChange );
+
+        // maxAbsolutePresChange <= 0.0 means that scaling is disabled, and we are only collecting maxDeltaPres in this kernel
+        if( maxAbsolutePresChange > 0.0 && absPresChange > maxAbsolutePresChange )
+        {
+          real64 const presScalingFactor = maxAbsolutePresChange / absPresChange;
+          scalingFactor.min( presScalingFactor );
+        }
+      }
+
+    } );
+
+    return { scalingFactor.get(), maxDeltaPres.get() };
   }
 
 };

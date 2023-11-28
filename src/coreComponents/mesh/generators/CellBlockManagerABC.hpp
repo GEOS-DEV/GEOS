@@ -17,7 +17,6 @@
 
 #include "CellBlockUtilities.hpp"
 #include "dataRepository/Group.hpp"
-#include "PartitionDescriptor.hpp"
 #include "LineBlockABC.hpp"
 
 #include <map>

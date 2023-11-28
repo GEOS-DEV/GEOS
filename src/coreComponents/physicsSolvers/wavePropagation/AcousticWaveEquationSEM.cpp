@@ -74,7 +74,7 @@ void AcousticWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
                                fields::MassVector,
                                fields::DampingVector,
                                fields::StiffnessVector,
-                               fields::FreeSurfaceNodeIndicator >( this->getName() );
+                               fields::FreeSurfaceNodeIndicator >( getName() );
 
     /// register  PML auxiliary variables only when a PML is specified in the xml
     if( m_usePML )
@@ -82,22 +82,22 @@ void AcousticWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
       nodeManager.registerField< fields::AuxiliaryVar1PML,
                                  fields::AuxiliaryVar2PML,
                                  fields::AuxiliaryVar3PML,
-                                 fields::AuxiliaryVar4PML >( this->getName() );
+                                 fields::AuxiliaryVar4PML >( getName() );
 
       nodeManager.getField< fields::AuxiliaryVar1PML >().resizeDimension< 1 >( 3 );
       nodeManager.getField< fields::AuxiliaryVar2PML >().resizeDimension< 1 >( 3 );
     }
 
     FaceManager & faceManager = mesh.getFaceManager();
-    faceManager.registerField< fields::FreeSurfaceFaceIndicator >( this->getName() );
+    faceManager.registerField< fields::FreeSurfaceFaceIndicator >( getName() );
 
     ElementRegionManager & elemManager = mesh.getElemManager();
 
     elemManager.forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion & subRegion )
     {
-      subRegion.registerField< fields::MediumVelocity >( this->getName() );
-      subRegion.registerField< fields::MediumDensity >( this->getName() );
-      subRegion.registerField< fields::PartialGradient >( this->getName() );
+      subRegion.registerField< fields::MediumVelocity >( getName() );
+      subRegion.registerField< fields::MediumDensity >( getName() );
+      subRegion.registerField< fields::PartialGradient >( getName() );
     } );
 
   } );
@@ -109,10 +109,7 @@ void AcousticWaveEquationSEM::postProcessInput()
 
   WaveSolverBase::postProcessInput();
 
-  localIndex const numReceiversGlobal = m_receiverCoordinates.size( 0 );
-
-  m_pressureNp1AtReceivers.resize( m_nsamplesSeismoTrace, numReceiversGlobal );
-
+  m_pressureNp1AtReceivers.resize( m_nsamplesSeismoTrace, m_receiverCoordinates.size( 0 ) + 1 );
 }
 
 void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh,
@@ -145,15 +142,13 @@ void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh,
   receiverConstants.setValues< EXEC_POLICY >( -1 );
   receiverIsLocal.zero();
 
-  real32 const timeSourceFrequency = this->m_timeSourceFrequency;
-  localIndex const rickerOrder = this->m_rickerOrder;
   arrayView2d< real32 > const sourceValue = m_sourceValue.toView();
   real64 dt = 0;
-  EventManager const & event = this->getGroupByPath< EventManager >( "/Problem/Events" );
+  EventManager const & event = getGroupByPath< EventManager >( "/Problem/Events" );
   for( localIndex numSubEvent = 0; numSubEvent < event.numSubGroups(); ++numSubEvent )
   {
     EventBase const * subEvent = static_cast< EventBase const * >( event.getSubGroups()[numSubEvent] );
-    if( subEvent->getEventName() == "/Solvers/" + this->getName() )
+    if( subEvent->getEventName() == "/Solvers/" + getName() )
     {
       dt = subEvent->getReference< real64 >( EventBase::viewKeyStruct::forceDtString() );
     }
@@ -205,8 +200,9 @@ void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh,
           receiverConstants,
           sourceValue,
           dt,
-          timeSourceFrequency,
-          rickerOrder );
+          m_timeSourceFrequency,
+          m_timeSourceDelay,
+          m_rickerOrder );
       }
     } );
   } );
@@ -247,10 +243,9 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
     AcousticWaveEquationSEM::initializePML();
   }
 
-  DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
+  DomainPartition & domain = getGroupByPath< DomainPartition >( "/Problem/domain" );
 
-  real64 const time = 0.0;
-  applyFreeSurfaceBC( time, domain );
+  applyFreeSurfaceBC( 0.0, domain );
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
@@ -328,6 +323,7 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
     } );
   } );
 
+  WaveSolverUtils::initTrace( "seismoTraceReceiver", getName(), m_receiverConstants.size( 0 ), m_receiverIsLocal );
 }
 
 
@@ -427,7 +423,7 @@ void AcousticWaveEquationSEM::initializePML()
   } );
 
   /// Now compute the PML parameters above internally
-  DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
+  DomainPartition & domain = getGroupByPath< DomainPartition >( "/Problem/domain" );
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
                                                                 arrayView1d< string const > const & )
@@ -855,7 +851,7 @@ real64 AcousticWaveEquationSEM::explicitStepBackward( real64 const & time_n,
     arrayView1d< real32 > const p_n = nodeManager.getField< fields::Pressure_n >();
     arrayView1d< real32 > const p_np1 = nodeManager.getField< fields::Pressure_np1 >();
 
-    EventManager const & event = this->getGroupByPath< EventManager >( "/Problem/Events" );
+    EventManager const & event = getGroupByPath< EventManager >( "/Problem/Events" );
     real64 const & maxTime = event.getReference< real64 >( EventManager::viewKeyStruct::maxTimeString() );
     int const maxCycle = int(round( maxTime/dt ));
 
@@ -964,7 +960,7 @@ real64 AcousticWaveEquationSEM::explicitStepInternal( real64 const & time_n,
                                                             "",
                                                             kernelFactory );
 
-    EventManager const & event = this->getGroupByPath< EventManager >( "/Problem/Events" );
+    EventManager const & event = getGroupByPath< EventManager >( "/Problem/Events" );
     real64 const & minTime = event.getReference< real64 >( EventManager::viewKeyStruct::minTimeString() );
     integer const cycleForSource = int(round( -minTime/dt + cycleNumber ));
     //std::cout<<"cycle GEOSX = "<<cycleForSource<<std::endl;
@@ -1068,11 +1064,10 @@ real64 AcousticWaveEquationSEM::explicitStepInternal( real64 const & time_n,
                                   true );
 
     /// compute the seismic traces since last step.
-    arrayView2d< real32 > const pReceivers   = m_pressureNp1AtReceivers.toView();
-    if( time_n >= 0 )
-    {
-      computeAllSeismoTraces( time_n, dt, p_np1, p_n, pReceivers );
-    }
+    arrayView2d< real32 > const pReceivers = m_pressureNp1AtReceivers.toView();
+    computeAllSeismoTraces( time_n, dt, p_np1, p_n, pReceivers );
+    incrementIndexSeismoTrace( time_n );
+
     /// prepare next step
     forAll< EXEC_POLICY >( nodeManager.size(), [=] GEOS_HOST_DEVICE ( localIndex const a )
     {
@@ -1110,40 +1105,12 @@ void AcousticWaveEquationSEM::cleanup( real64 const time_n,
     NodeManager & nodeManager = mesh.getNodeManager();
     arrayView1d< real32 const > const p_n = nodeManager.getField< fields::Pressure_n >();
     arrayView1d< real32 const > const p_np1 = nodeManager.getField< fields::Pressure_np1 >();
-    arrayView2d< real32 > const pReceivers   = m_pressureNp1AtReceivers.toView();
-    computeAllSeismoTraces( time_n, 0, p_np1, p_n, pReceivers );
+    arrayView2d< real32 > const pReceivers = m_pressureNp1AtReceivers.toView();
+    computeAllSeismoTraces( time_n, 0.0, p_np1, p_n, pReceivers );
+
+    WaveSolverUtils::writeSeismoTrace( "seismoTraceReceiver", getName(), m_outputSeismoTrace, m_receiverConstants.size( 0 ),
+                                       m_receiverIsLocal, m_nsamplesSeismoTrace, pReceivers );
   } );
-}
-
-void AcousticWaveEquationSEM::computeAllSeismoTraces( real64 const time_n,
-                                                      real64 const dt,
-                                                      arrayView1d< real32 const > const var_np1,
-                                                      arrayView1d< real32 const > const var_n,
-                                                      arrayView2d< real32 > varAtReceivers )
-{
-
-  /*
-   * In forward case we compute seismo if time_n + dt  is the first time
-   * step after the timeSeismo to write.
-   *
-   *  time_n        timeSeismo    time_n + dt
-   *   ---|--------------|-------------|
-   *
-   * In backward (time_n goes decreasing) case we compute seismo if
-   * time_n is the last time step before the timeSeismo to write.
-   *
-   *  time_n - dt    timeSeismo    time_n
-   *   ---|--------------|-------------|
-   */
-  for( real64 timeSeismo;
-       (m_forward)?((timeSeismo = m_dtSeismoTrace*m_indexSeismoTrace) <= (time_n + dt + epsilonLoc) && m_indexSeismoTrace < m_nsamplesSeismoTrace):
-       ((timeSeismo = m_dtSeismoTrace*(m_nsamplesSeismoTrace-m_indexSeismoTrace-1)) >= (time_n - dt -  epsilonLoc) && m_indexSeismoTrace < m_nsamplesSeismoTrace);
-       m_indexSeismoTrace++ )
-  {
-    WaveSolverUtils::computeSeismoTrace( time_n, (m_forward)?dt:-dt, timeSeismo, (m_forward)?m_indexSeismoTrace:(m_nsamplesSeismoTrace-m_indexSeismoTrace-1), m_receiverNodeIds, m_receiverConstants,
-                                         m_receiverIsLocal,
-                                         m_nsamplesSeismoTrace, m_outputSeismoTrace, var_np1, var_n, varAtReceivers );
-  }
 }
 
 REGISTER_CATALOG_ENTRY( SolverBase, AcousticWaveEquationSEM, string const &, dataRepository::Group * const )
