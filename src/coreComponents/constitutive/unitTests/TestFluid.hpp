@@ -20,6 +20,7 @@
 #define GEOS_CONSTITUTIVE_UNITTESTS_TESTFLUID_HPP_
 
 #include "common/DataTypes.hpp"
+#include "constitutive/fluid/multifluid/compositional/models/ComponentProperties.hpp"
 
 namespace geos
 {
@@ -45,11 +46,12 @@ struct Fluid
 
   static constexpr integer Pc = 0;
   static constexpr integer Tc = 1;
-  static constexpr integer Ac = 2;
-  static constexpr integer Mw = 3;
-  static constexpr integer Vs = 4;
+  static constexpr integer Vc = 2;
+  static constexpr integer Ac = 3;
+  static constexpr integer Mw = 4;
+  static constexpr integer Vs = 5;
 
-  static std::array< real64, 55 > data;
+  static std::array< real64, 66 > data;
 };
 
 template< int NC >
@@ -66,18 +68,25 @@ public:
     std::unique_ptr< TestFluid< NC > > testFluid( new TestFluid() );
     createArray( testFluid->criticalPressure, components, Fluid::Pc, Fluid::data );
     createArray( testFluid->criticalTemperature, components, Fluid::Tc, Fluid::data );
+    createArray( testFluid->criticalVolume, components, Fluid::Vc, Fluid::data );
     createArray( testFluid->acentricFactor, components, Fluid::Ac, Fluid::data );
     createArray( testFluid->molecularWeight, components, Fluid::Mw, Fluid::data );
     createArray( testFluid->volumeShift, components, Fluid::Vs, Fluid::data );
+    testFluid->binaryCoeff.resize( NC, NC );
     return testFluid;
   }
 
-  arrayView1d< real64 const > const getCriticalPressure() const { return criticalPressure.toViewConst(); }
-  arrayView1d< real64 const > const getCriticalTemperature() const { return criticalTemperature.toViewConst(); }
-  arrayView1d< real64 const > const getCriticalVolume() const { return criticalVolume.toViewConst(); }
-  arrayView1d< real64 const > const getAcentricFactor() const { return acentricFactor.toViewConst(); }
-  arrayView1d< real64 const > const getMolecularWeight() const { return molecularWeight.toViewConst(); }
-  arrayView1d< real64 const > const getVolumeShift() const { return volumeShift.toViewConst(); }
+  constitutive::compositional::ComponentProperties::KernelWrapper createKernelWrapper() const
+  {
+    return constitutive::compositional::ComponentProperties::KernelWrapper(
+      molecularWeight,
+      criticalPressure,
+      criticalTemperature,
+      criticalVolume,
+      acentricFactor,
+      volumeShift,
+      binaryCoeff );
+  }
 
 private:
   TestFluid() = default;
@@ -88,6 +97,7 @@ private:
   array1d< real64 > acentricFactor;
   array1d< real64 > molecularWeight;
   array1d< real64 > volumeShift;
+  array2d< real64 > binaryCoeff;
 
 private:
   template< typename ARRAY, typename LIST, typename DATAARRAY >
@@ -109,13 +119,16 @@ public:
   }
 };
 
-std::array< real64, 55 > Fluid::data = {
+std::array< real64, 66 > Fluid::data = {
   // -- Pc
   2.2050e+07, 7.3750e+06, 3.4000e+06, 8.9630e+06, 1.2960e+06, 4.8721e+06,
   4.2481e+06, 3.6400e+06, 4.5990e+06, 2.5300e+06, 1.4600e+06,
   // -- Tc
   6.4700e+02, 3.0410e+02, 1.2620e+02, 3.7353e+02, 3.3150e+01, 3.0532e+02,
   3.6983e+02, 4.0785e+02, 1.9060e+02, 6.2200e+02, 7.8200e+02,
+  // -- Vc
+  6.4920e-05, 9.1025e-05, 8.1615e-05, 9.2053e-05, 5.5585e-05, 1.3810e-04,
+  1.9170e-04, 2.4649e-04, 9.1302e-05, 5.3923e-04, 1.1664e-03,
   // -- Ac
   3.4400e-01, 2.3900e-01, 4.0000e-02, 9.4200e-02, -2.1900e-01, 9.9500e-02,
   1.5230e-01, 1.8440e-01, 1.1400e-02, 4.4300e-01, 8.1600e-01,

@@ -26,15 +26,12 @@ namespace constitutive
 
 namespace compositional
 {
-template< typename EOS_TYPE > struct EOSCatalogName {};
-template<> struct EOSCatalogName< PengRobinsonEOS > { static constexpr char const * catalogName() { return "PengRobinson";  } };
-template<> struct EOSCatalogName< SoaveRedlichKwongEOS > { static constexpr char const * catalogName() { return "SoaveRedlichKwong";  } };
 
 // Naming conventions
 template< typename EOS_TYPE_LIQUID, typename EOS_TYPE_VAPOUR >
 string NegativeTwoPhaseFlashModel< EOS_TYPE_LIQUID, EOS_TYPE_VAPOUR >::catalogName()
 {
-  return EOSCatalogName< EOS_TYPE_LIQUID >::catalogName();
+  return EOS_TYPE_LIQUID::catalogName();
 }
 
 template< typename EOS_TYPE_LIQUID, typename EOS_TYPE_VAPOUR >
@@ -58,8 +55,8 @@ NegativeTwoPhaseFlashModelUpdate( integer const numComponents ):
 {}
 
 // Explicit instantiation of the model template.
-template class NegativeTwoPhaseFlashModel< PengRobinsonEOS, PengRobinsonEOS >;
-template class NegativeTwoPhaseFlashModel< SoaveRedlichKwongEOS, SoaveRedlichKwongEOS >;
+template class NegativeTwoPhaseFlashModel< CubicEOSPhaseModel< PengRobinsonEOS >, CubicEOSPhaseModel< PengRobinsonEOS > >;
+template class NegativeTwoPhaseFlashModel< CubicEOSPhaseModel< SoaveRedlichKwongEOS >, CubicEOSPhaseModel< SoaveRedlichKwongEOS > >;
 
 } // end namespace compositional
 

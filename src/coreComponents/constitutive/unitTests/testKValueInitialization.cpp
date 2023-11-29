@@ -20,6 +20,8 @@
 // TPL includes
 #include <gtest/gtest.h>
 
+using namespace geos::constitutive::compositional;
+
 namespace geos
 {
 namespace testing
@@ -49,21 +51,18 @@ public:
 
   void testKValues()
   {
-    real64 const pressure = std::get< 0 >( GetParam());
-    real64 const temperature = std::get< 1 >( GetParam());
-    integer const compIndex = std::get< 2 >( GetParam());
-    real64 const expectedKValue = std::get< 3 >( GetParam());
+    real64 const pressure = std::get< 0 >( GetParam() );
+    real64 const temperature = std::get< 1 >( GetParam() );
+    integer const compIndex = std::get< 2 >( GetParam() );
+    real64 const expectedKValue = std::get< 3 >( GetParam() );
 
     array1d< real64 > kValues( numComps );
 
-    constitutive::KValueInitialization::
-      computeWilsonGasLiquidKvalue( numComps,
-                                    pressure,
-                                    temperature,
-                                    criticalPressure,
-                                    criticalTemperature,
-                                    acentricFactor,
-                                    kValues );
+    KValueInitialization::computeWilsonGasLiquidKvalue( numComps,
+                                                        pressure,
+                                                        temperature,
+                                                        createKernelWrapper(),
+                                                        kValues );
 
     ASSERT_EQ( kValues.size(), NC );
     checkRelativeError( expectedKValue, kValues[compIndex], relTol );
@@ -78,11 +77,25 @@ private:
     }
   }
 
+  ComponentProperties::KernelWrapper createKernelWrapper() const
+  {
+    return ComponentProperties::KernelWrapper(
+      discarded,
+      criticalPressure,
+      criticalTemperature,
+      discarded,
+      acentricFactor,
+      discarded,
+      discarded2d );
+  }
+
 protected:
   const integer numComps;
   array1d< real64 > criticalPressure;
   array1d< real64 > criticalTemperature;
   array1d< real64 > acentricFactor;
+  array1d< real64 > discarded;
+  array2d< real64 > discarded2d;
 };
 
 class WilsonKValues2CompFixture : public WilsonKValueInitializationTestFixture< 2 >
@@ -182,11 +195,11 @@ public:
 
   void testKValues()
   {
-    real64 const pressure = std::get< 0 >( GetParam());
-    real64 const temperature = std::get< 1 >( GetParam());
-    real64 const expectedKValue = std::get< 2 >( GetParam());
+    real64 const pressure = std::get< 0 >( GetParam() );
+    real64 const temperature = std::get< 1 >( GetParam() );
+    real64 const expectedKValue = std::get< 2 >( GetParam() );
 
-    real64 calculatedKValue = constitutive::KValueInitialization::computeWaterGasKvalue( pressure, temperature );
+    real64 calculatedKValue = KValueInitialization::computeWaterGasKvalue( pressure, temperature );
     checkRelativeError( expectedKValue, calculatedKValue, relTol );
   }
 };
