@@ -2,6 +2,16 @@ simulation:
   begin: 0
   end: 2 s
 
+mesh:
+  internal:
+    element_type: hexahedra
+    x_range: [ 0, 1 ]
+    y_range: [ 0, 1 ]
+    z_range: [ 0, 1 ]
+    nx: [ 10 ]
+    ny: [ 10 ]
+    nz: [ 10 ]
+
 outputs:
   - vtk:
       every: 1 s

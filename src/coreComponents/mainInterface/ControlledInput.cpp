@@ -69,6 +69,37 @@ real64 convertTime(string const & time)
   return t * scaling;
 }
 
+string convertYamlElementTypeToGeosElementType( string const yamlElementType )
+{
+  std::map< string, string > m{
+    { "tetrahedra", "C3D4" },
+    { "pyramids", "C3D5" },
+    { "wedges", "C3D6" },
+    { "hexahedra", "C3D8" },
+    { "pentagonal_prism", "PentagonalPrism" },
+    { "hexagonal_prism", "HexagonalPrism" },
+    { "heptagonal_prism", "HeptagonalPrism" },
+    { "octagonal_prism", "OctagonalPrism" },
+    { "nonagonal_prism", "NonagonalPrism" },
+    { "decagonal_prism", "DecagonalPrism" },
+    { "hendecagonal_prism", "HendecagonalPrism" },
+    { "polyhedron", "Polyhedron" },
+  };
+
+  auto const geosIt = m.find( yamlElementType );
+  if( geosIt == m.cend() )
+  {
+    GEOS_ERROR( "Could not find element type " << yamlElementType << " in supported element list." );
+  }
+  return geosIt->second;
+}
+
+template< class T >
+string createGeosArray( T const & t )
+{
+  return "{ " + stringutilities::join( t, ", " ) + " }";
+}
+
 class Simulation
 {
 public:
@@ -209,7 +240,7 @@ public:
     xml_node vtkOutput = outputsNode.append_child( "VTK" );
     vtkOutput.append_attribute( "name" ) = m_name.c_str();
     vtkOutput.append_attribute( "writeGhostCells" ) = m_writeGhostCells ? "1" : "0";
-    vtkOutput.append_attribute( "fieldNames" ) = ( "{ " + stringutilities::join( m_fields, ", " ) + " }" ).c_str();
+    vtkOutput.append_attribute( "fieldNames" ) = createGeosArray( m_fields ).c_str();
     if( !m_fileRoot.empty() )
     {
       vtkOutput.append_attribute( "plotFileRoot" ) = m_fileRoot.c_str();
@@ -239,6 +270,73 @@ public:
   }
 };
 
+class Mesh
+{
+
+};
+
+class InternalMesh: public Mesh // TODO make VtkMesh inherit from Mesh
+{
+public:
+  void setElementType( string const & elementType )
+  {
+    m_elementType = elementType;
+  }
+
+  void setXRange( std::vector< string > const & xRange )
+  {
+    m_xRange = xRange;
+  }
+
+  void setYRange( std::vector< string > const & yRange )
+  {
+    m_yRange = yRange;
+  }
+
+  void setZRange( std::vector< string > const & zRange )
+  {
+    m_zRange = zRange;
+  }
+
+  void setNx( std::vector< string > const & nx )
+  {
+    m_nx = nx;
+  }
+
+  void setNy( std::vector< string > const & ny )
+  {
+    m_ny = ny;
+  }
+
+  void setNz( std::vector< string > const & nz )
+  {
+    m_nz = nz;
+  }
+
+  void fillMeshXmlNode( xml_node & meshNode ) const
+  {
+    xml_node internal = meshNode.append_child( "InternalMesh" );
+    internal.append_attribute( "name" ) = "__generated_internal_mesh";
+    internal.append_attribute( "elementTypes" ) = ( "{ " + convertYamlElementTypeToGeosElementType( m_elementType ) + " }" ).c_str();
+    internal.append_attribute( "xCoords" ) = createGeosArray( m_xRange ).c_str();
+    internal.append_attribute( "yCoords" ) = createGeosArray( m_yRange ).c_str();
+    internal.append_attribute( "zCoords" ) = createGeosArray( m_zRange ).c_str();
+    internal.append_attribute( "nx" ) = createGeosArray( m_nx ).c_str();
+    internal.append_attribute( "ny" ) = createGeosArray( m_ny ).c_str();
+    internal.append_attribute( "nz" ) = createGeosArray( m_nz ).c_str();
+    internal.append_attribute( "cellBlockNames" ) = "{ cb1 }";  // TODO Improve the cell block mgmt!
+  }
+
+private:
+  string m_elementType;
+  std::vector< string > m_xRange;
+  std::vector< string > m_yRange;
+  std::vector< string > m_zRange;
+  std::vector< string > m_nx;
+  std::vector< string > m_ny;
+  std::vector< string > m_nz;
+};
+
 class Deck
 {
 public:
@@ -253,10 +351,16 @@ public:
     m_outputs = outputs;
   }
 
+  void setMesh( InternalMesh const & mesh )
+  {
+    m_mesh = mesh;
+  }
+
   void fillProblemXmlNode( xml_node & problemNode ) const
   {
     xml_node xmlOutputs = problemNode.append_child( "Outputs" );
     xml_node xmlEvents = problemNode.append_child( "Events" );
+    xml_node xmlMesh = problemNode.append_child( "Mesh" );
 
     m_simulation.fillEventsXmlNode( xmlEvents );
 
@@ -269,6 +373,9 @@ public:
       }
     }
 
+    // Create and populate the mesh node
+    m_mesh.fillMeshXmlNode( xmlMesh );
+
     // Add name to all the events.
     int iEvent = 0;
     for( auto it = xmlEvents.children().begin(); it != xmlEvents.children().end(); ++it, ++iEvent )
@@ -280,6 +387,7 @@ public:
 private:
   Simulation m_simulation;
   std::vector< std::shared_ptr< Output > > m_outputs;
+  InternalMesh m_mesh;
 };
 
 void operator>>( const YAML::Node & node,
@@ -327,6 +435,31 @@ void operator>>( const YAML::Node & node,
 }
 
 void operator>>( const YAML::Node & node,
+                 InternalMesh & internalMesh )
+{
+  const YAML::Node & internal = node["internal"];
+  internalMesh.setElementType( internal["element_type"].as< string >() );
+  internalMesh.setXRange( internal["x_range"].as< std::vector< string > >() );
+  internalMesh.setYRange( internal["y_range"].as< std::vector< string > >() );
+  internalMesh.setZRange( internal["z_range"].as< std::vector< string > >() );
+  internalMesh.setNx( internal["nx"].as< std::vector< string > >() );
+  internalMesh.setNy( internal["ny"].as< std::vector< string > >() );
+  internalMesh.setNz( internal["nz"].as< std::vector< string > >() );
+}
+//void operator>>( const YAML::Node & node,
+//                 InternalMesh & internalMesh )
+//{
+//  const YAML::Node & internal = node["internal"];
+//  internalMesh.setElementType( internal["element_type"].as< string >() );
+//  internalMesh.setXRange( internal["x_range"].as< std::vector< string > >() );
+//  internalMesh.setYRange( internal["y_range"].as< std::vector< string > >() );
+//  internalMesh.setZRange( internal["z_range"].as< std::vector< string > >() );
+//  internalMesh.setNx( internal["nx"].as< std::vector< string > >() );
+//  internalMesh.setNy( internal["ny"].as< std::vector< string > >() );
+//  internalMesh.setNz( internal["nz"].as< std::vector< string > >() );
+//}
+
+void operator>>( const YAML::Node & node,
                  Deck & deck )
 {
   Simulation simulation;
@@ -336,6 +469,11 @@ void operator>>( const YAML::Node & node,
   std::vector< std::shared_ptr< Output > > outputs;
   node["outputs"] >> outputs;
   deck.setOutputs( outputs );
+
+//  std::shared_ptr< Mesh > mesh;
+  InternalMesh mesh;
+  node["mesh"] >> mesh;
+  deck.setMesh( mesh );
 }
 
 void fillWithMissingXmlInfo( xml_node & problem )
@@ -397,17 +535,6 @@ void fillWithMissingXmlInfo( xml_node & problem )
   tableFunctions.append_attribute( "coordinates" ) = "{ 0.0, 1.0, 2.0 }";
   tableFunctions.append_attribute( "values" ) = "{ 0.0, 3.e2, 4.e3 }";
 
-  xml_node internalMesh = problem.append_child( "Mesh" ).append_child( "InternalMesh" );
-  internalMesh.append_attribute( "name" ) = "mesh";
-  internalMesh.append_attribute( "elementTypes" ) = "{ C3D8 }";
-  internalMesh.append_attribute( "xCoords" ) = "{ 0, 1 }";
-  internalMesh.append_attribute( "yCoords" ) = "{ 0, 1 }";
-  internalMesh.append_attribute( "zCoords" ) = "{ 0, 1 }";
-  internalMesh.append_attribute( "nx" ) = "{ 10 }";
-  internalMesh.append_attribute( "ny" ) = "{ 10 }";
-  internalMesh.append_attribute( "nz" ) = "{ 10 }";
-  internalMesh.append_attribute( "cellBlockNames" ) = "{ cb1 }";
-
   xml_node cesr = problem.append_child( "ElementRegions" ).append_child( "CellElementRegion" );
   cesr.append_attribute( "name" ) = "Domain";
   cesr.append_attribute( "cellBlocks" ) = "{ cb1 }";
@@ -420,7 +547,7 @@ void fillWithMissingXmlInfo( xml_node & problem )
 
 void convert( string const & stableInputFileName, xmlWrapper::xmlDocument & doc )
 {
-  xml_document & pugiDoc = doc.getPugiDocument();
+//  xml_document & pugiDoc = doc.getPugiDocument();
 //  pugiDoc.select_node( "/Problem/Events" );
   xml_node problem = doc.appendChild( "Problem" );
 
