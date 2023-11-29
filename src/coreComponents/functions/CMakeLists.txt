@@ -30,7 +30,7 @@ endif()
 set( dependencyList ${parallelDeps} codingUtilities dataRepository )
 
 if( ENABLE_MATHPRESSO )
-   set( dependencyList ${dependencyList} mathpresso )
+   list( APPEND dependencyList mathpresso )
 endif()
 
 blt_add_library( NAME       functions
