@@ -107,11 +107,12 @@ public:
 
   /**
    * @brief Defines the number of nodes and resizes some underlying arrays appropriately.
-   * @param[in] numNodes The number of nodes.
+   * @param[in] numNodes The number of nodes on the MPI rank (that is per domain).
+   * Nodes are not duplicated along subregion interfaces.
    *
    * The nodes coordinates and nodes local to global mappings get resized to @p numNodes.
    */
-  void setNumNodes( localIndex numNodes ); // TODO Improve doc. Is it per domain, are there duplicated nodes because of subregions?
+  void setNumNodes( localIndex numNodes );
 
   void generateHighOrderMaps( localIndex const order,
                               globalIndex const maxVertexGlobalID,
