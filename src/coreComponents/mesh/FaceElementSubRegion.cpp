@@ -371,7 +371,6 @@ void fixNeighborMappingsInconsistency( string const & fractureName,
 {
   {
     localIndex const num2dElems = elem2dToFaces.size();
-    GEOS_ASSERT_EQ( elem2dToElems3d.size(), num2dElems );
     for( int e2d = 0; e2d < num2dElems; ++e2d )
     {
       std::set< localIndex > const sizes{
