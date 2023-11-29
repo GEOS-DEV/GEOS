@@ -231,7 +231,7 @@ jobs:
             ENABLE_HYPRE_DEVICE: CUDA
             ENABLE_HYPRE: ON
             ENABLE_TRILINOS: OFF
-            RUNS_ON: Runner_4core_16GB
+            RUNS_ON: Runner_8core_32GB
 
           - name: Ubuntu CUDA (20.04, clang 10.0.0 + gcc 9.4.0, open-mpi 4.0.3, cuda-11.8.89)
             BUILD_AND_TEST_CLI_ARGS: "--no-run-unit-tests --no-install-schema"

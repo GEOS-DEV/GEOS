@@ -9,6 +9,9 @@ echo "Running CLI ${SCRIPT_NAME} $@"
 echo "running nproc"
 nproc
 
+# docs.docker.com/config/containers/resource_constraints
+# Inside the container, tools like free report the host's available swap, not what's available inside the container.
+# Don't rely on the output of free or similar tools to determine whether swap is present.
 echo "running free -m"
 free -m
 
