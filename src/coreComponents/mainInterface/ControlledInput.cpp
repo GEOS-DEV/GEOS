@@ -272,51 +272,34 @@ public:
 
 class Mesh
 {
-
+public:
+  virtual ~Mesh() = default;
+  virtual void fillMeshXmlNode( xml_node & meshNode ) const = 0;
 };
 
 class InternalMesh: public Mesh // TODO make VtkMesh inherit from Mesh
 {
 public:
-  void setElementType( string const & elementType )
-  {
-    m_elementType = elementType;
-  }
+  InternalMesh( string const & elementType,
+                std::vector< string > const & xRange,
+                std::vector< string > const & yRange,
+                std::vector< string > const & zRange,
+                std::vector< string > const & nx,
+                std::vector< string > const & ny,
+                std::vector< string > const & nz )
+    : m_elementType( elementType ),
+      m_xRange( xRange ),
+      m_yRange( yRange ),
+      m_zRange( zRange ),
+      m_nx( nx ),
+      m_ny( ny ),
+      m_nz( nz )
+  { }
 
-  void setXRange( std::vector< string > const & xRange )
-  {
-    m_xRange = xRange;
-  }
-
-  void setYRange( std::vector< string > const & yRange )
-  {
-    m_yRange = yRange;
-  }
-
-  void setZRange( std::vector< string > const & zRange )
-  {
-    m_zRange = zRange;
-  }
-
-  void setNx( std::vector< string > const & nx )
-  {
-    m_nx = nx;
-  }
-
-  void setNy( std::vector< string > const & ny )
-  {
-    m_ny = ny;
-  }
-
-  void setNz( std::vector< string > const & nz )
-  {
-    m_nz = nz;
-  }
-
-  void fillMeshXmlNode( xml_node & meshNode ) const
+  void fillMeshXmlNode( xml_node & meshNode ) const override
   {
     xml_node internal = meshNode.append_child( "InternalMesh" );
-    internal.append_attribute( "name" ) = "__generated_internal_mesh";
+    internal.append_attribute( "name" ) = "__internal_mesh";
     internal.append_attribute( "elementTypes" ) = ( "{ " + convertYamlElementTypeToGeosElementType( m_elementType ) + " }" ).c_str();
     internal.append_attribute( "xCoords" ) = createGeosArray( m_xRange ).c_str();
     internal.append_attribute( "yCoords" ) = createGeosArray( m_yRange ).c_str();
@@ -351,7 +334,7 @@ public:
     m_outputs = outputs;
   }
 
-  void setMesh( InternalMesh const & mesh )
+  void setMesh( std::shared_ptr< Mesh > const & mesh )
   {
     m_mesh = mesh;
   }
@@ -374,7 +357,7 @@ public:
     }
 
     // Create and populate the mesh node
-    m_mesh.fillMeshXmlNode( xmlMesh );
+    m_mesh->fillMeshXmlNode( xmlMesh );
 
     // Add name to all the events.
     int iEvent = 0;
@@ -387,7 +370,7 @@ public:
 private:
   Simulation m_simulation;
   std::vector< std::shared_ptr< Output > > m_outputs;
-  InternalMesh m_mesh;
+  std::shared_ptr< Mesh > m_mesh;
 };
 
 void operator>>( const YAML::Node & node,
@@ -435,29 +418,22 @@ void operator>>( const YAML::Node & node,
 }
 
 void operator>>( const YAML::Node & node,
-                 InternalMesh & internalMesh )
+                 std::shared_ptr< Mesh > & mesh )
 {
-  const YAML::Node & internal = node["internal"];
-  internalMesh.setElementType( internal["element_type"].as< string >() );
-  internalMesh.setXRange( internal["x_range"].as< std::vector< string > >() );
-  internalMesh.setYRange( internal["y_range"].as< std::vector< string > >() );
-  internalMesh.setZRange( internal["z_range"].as< std::vector< string > >() );
-  internalMesh.setNx( internal["nx"].as< std::vector< string > >() );
-  internalMesh.setNy( internal["ny"].as< std::vector< string > >() );
-  internalMesh.setNz( internal["nz"].as< std::vector< string > >() );
+  if( node["internal"] )
+  {
+    const YAML::Node & internal = node["internal"];
+    mesh = std::make_shared< InternalMesh >(
+      internal["element_type"].as< string >(),
+      internal["x_range"].as< std::vector< string > >(),
+      internal["y_range"].as< std::vector< string > >(),
+      internal["z_range"].as< std::vector< string > >(),
+      internal["nx"].as< std::vector< string > >(),
+      internal["ny"].as< std::vector< string > >(),
+      internal["nz"].as< std::vector< string > >()
+    );
+  }
 }
-//void operator>>( const YAML::Node & node,
-//                 InternalMesh & internalMesh )
-//{
-//  const YAML::Node & internal = node["internal"];
-//  internalMesh.setElementType( internal["element_type"].as< string >() );
-//  internalMesh.setXRange( internal["x_range"].as< std::vector< string > >() );
-//  internalMesh.setYRange( internal["y_range"].as< std::vector< string > >() );
-//  internalMesh.setZRange( internal["z_range"].as< std::vector< string > >() );
-//  internalMesh.setNx( internal["nx"].as< std::vector< string > >() );
-//  internalMesh.setNy( internal["ny"].as< std::vector< string > >() );
-//  internalMesh.setNz( internal["nz"].as< std::vector< string > >() );
-//}
 
 void operator>>( const YAML::Node & node,
                  Deck & deck )
@@ -470,8 +446,7 @@ void operator>>( const YAML::Node & node,
   node["outputs"] >> outputs;
   deck.setOutputs( outputs );
 
-//  std::shared_ptr< Mesh > mesh;
-  InternalMesh mesh;
+  std::shared_ptr< Mesh > mesh;
   node["mesh"] >> mesh;
   deck.setMesh( mesh );
 }
@@ -496,9 +471,9 @@ void fillWithMissingXmlInfo( xml_node & problem )
 
   problem.append_child( "Constitutive" ).append_child( "NullModel" ).append_attribute( "name" ).set_value( "nullModel" );
 
-  xml_node feldSpecifications = problem.append_child( "FieldSpecifications" );
+  xml_node fieldSpecifications = problem.append_child( "FieldSpecifications" );
   {
-    xml_node fs = feldSpecifications.append_child( "FieldSpecification" );
+    xml_node fs = fieldSpecifications.append_child( "FieldSpecification" );
     fs.append_attribute( "name" ) = "sourceTerm";
     fs.append_attribute( "fieldName" ) = "Temperature";
     fs.append_attribute( "objectPath" ) = "nodeManager";
@@ -507,7 +482,7 @@ void fillWithMissingXmlInfo( xml_node & problem )
     fs.append_attribute( "setNames" ) = "{ source }";
   }
   {
-    xml_node fs = feldSpecifications.append_child( "FieldSpecification" );
+    xml_node fs = fieldSpecifications.append_child( "FieldSpecification" );
     fs.append_attribute( "name" ) = "sinkTerm";
     fs.append_attribute( "fieldName" ) = "Temperature";
     fs.append_attribute( "objectPath" ) = "nodeManager";
