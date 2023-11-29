@@ -18,6 +18,8 @@
 #include "constitutive/fluid/multifluid/compositional/functions/CubicEOSPhaseModel.hpp"
 #include "TestFluid.hpp"
 
+using namespace geos::constitutive::compositional;
+
 namespace geos
 {
 namespace testing
@@ -71,6 +73,8 @@ public:
 
   void testFlash( FlashData< NC > const & data )
   {
+    auto componentProperties = this->m_fluid->createKernelWrapper();
+
     real64 const pressure = std::get< 0 >( data );
     real64 const temperature = std::get< 1 >( data );
     array1d< real64 > composition;
@@ -88,15 +92,12 @@ public:
     array1d< real64 > liquidComposition( numComps );
     array1d< real64 > vapourComposition( numComps );
 
-    bool status = constitutive::NegativeTwoPhaseFlash::compute< EOS_TYPE, EOS_TYPE >(
+    bool status = NegativeTwoPhaseFlash::compute< EOS_TYPE, EOS_TYPE >(
       numComps,
       pressure,
       temperature,
       composition,
-      m_fluid->getCriticalPressure(),
-      m_fluid->getCriticalTemperature(),
-      m_fluid->getAcentricFactor(),
-      binaryInteractionCoefficients,
+      componentProperties,
       vapourFraction,
       liquidComposition,
       vapourComposition );
@@ -132,14 +133,13 @@ public:
   }
 
 protected:
-  real64 const binaryInteractionCoefficients{0.0};
   std::unique_ptr< TestFluid< NC > > m_fluid{};
 };
 
-using NegativeTwoPhaseFlash2CompPR = NegativeTwoPhaseFlashTestFixture< 2, constitutive::PengRobinsonEOS >;
-using NegativeTwoPhaseFlash2CompSRK = NegativeTwoPhaseFlashTestFixture< 2, constitutive::SoaveRedlichKwongEOS >;
-using NegativeTwoPhaseFlash4CompPR = NegativeTwoPhaseFlashTestFixture< 4, constitutive::PengRobinsonEOS >;
-using NegativeTwoPhaseFlash4CompSRK = NegativeTwoPhaseFlashTestFixture< 4, constitutive::SoaveRedlichKwongEOS >;
+using NegativeTwoPhaseFlash2CompPR = NegativeTwoPhaseFlashTestFixture< 2, CubicEOSPhaseModel< PengRobinsonEOS > >;
+using NegativeTwoPhaseFlash2CompSRK = NegativeTwoPhaseFlashTestFixture< 2, CubicEOSPhaseModel< SoaveRedlichKwongEOS > >;
+using NegativeTwoPhaseFlash4CompPR = NegativeTwoPhaseFlashTestFixture< 4, CubicEOSPhaseModel< PengRobinsonEOS > >;
+using NegativeTwoPhaseFlash4CompSRK = NegativeTwoPhaseFlashTestFixture< 4, CubicEOSPhaseModel< SoaveRedlichKwongEOS > >;
 
 TEST_P( NegativeTwoPhaseFlash2CompPR, testNegativeFlash )
 {
