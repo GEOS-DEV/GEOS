@@ -329,7 +329,7 @@ void ProppantTransport::initializePostInitialConditionsPreSubGroups()
                                        fields::proppant::componentConcentration::key() },
                                      regionNames );
 
-    CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync, mesh, domain.getNeighbors(), true );
+    CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync, mesh, domain.getNeighbors() );
 
     mesh.getElemManager().forElementSubRegions( regionNames, [&]( localIndex const,
                                                                   ElementSubRegionBase & subRegion )
@@ -933,7 +933,7 @@ void ProppantTransport::applySystemSolution( DofManager const & dofManager,
                                        fields::proppant::componentConcentration::key() },
                                      regionNames );
 
-    CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync, mesh, domain.getNeighbors(), true );
+    CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync, mesh, domain.getNeighbors() );
 
     mesh.getElemManager().forElementSubRegions( regionNames,
                                                 [&]( localIndex const,
@@ -1018,7 +1018,7 @@ void ProppantTransport::updateCellBasedFlux( real64 const GEOS_UNUSED_PARAM( tim
     FieldIdentifiers fieldsToBeSync;
     fieldsToBeSync.addElementFields( { fields::proppant::cellBasedFlux::key() }, regionNames );
 
-    CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync, mesh, domain.getNeighbors(), true );
+    CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync, mesh, domain.getNeighbors() );
   } );
 }
 
@@ -1094,7 +1094,7 @@ void ProppantTransport::updateProppantPackVolume( real64 const GEOS_UNUSED_PARAM
                                          fields::proppant::proppantLiftFlux::key() },
                                        regionNames );
 
-      CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync, mesh, domain.getNeighbors(), true );
+      CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync, mesh, domain.getNeighbors() );
     }
 
     elemManager.forElementSubRegions( regionNames,
@@ -1123,7 +1123,7 @@ void ProppantTransport::updateProppantPackVolume( real64 const GEOS_UNUSED_PARAM
                                          fields::proppant::proppantPackVolumeFraction::key() },
                                        regionNames );
 
-      CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync, mesh, domain.getNeighbors(), true );
+      CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync, mesh, domain.getNeighbors() );
     }
 
     elemManager.forElementSubRegions( regionNames,

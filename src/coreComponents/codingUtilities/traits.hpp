@@ -68,6 +68,39 @@ template< typename CLASS >
 static constexpr bool HasMemberFunction_move = LvArray::bufferManipulation::HasMemberFunction_move< CLASS >;
 
 /**
+ * @brief Defines a static constexpr bool HasMemberFunction_getPreviousSpace< @p CLASS >
+ *        that is true iff the method @p CLASS ::getPreviousSpace() exists and the return value is convertable to a LvArray::MemorySpace.
+ * @tparam CLASS The type to test.
+ */
+HAS_MEMBER_FUNCTION( getPreviousSpace, LvArray::MemorySpace, );
+
+/**
+ * @brief Defines a static constexpr bool HasMemberFunction_registerTouch< @p CLASS >
+ *        that is true iff the method @p CLASS ::registerTouch( LvArray::MemorySpace ) exists.
+ * @tparam CLASS The type to test.
+ */
+HAS_MEMBER_FUNCTION_NO_RTYPE( registerTouch, LvArray::MemorySpace() );
+
+/**
+ * @brief Defines a static constexpr bool HasMemberFunction_checkTouch< @p CLASS >
+ *        that is true iff the method @p CLASS :checkTouch( ) exists and the return value is converatble to bool.
+ * @tparam CLASS The type to test.
+ */
+HAS_MEMBER_FUNCTION( checkTouch, bool, );
+
+
+/**
+ * @brief Defines a static constexpr bool HasMemorySpaceFunctions< @p CLASS >
+ *        that is true iff the class exposes the set a memory space movement functions defined above.
+ * @tparam CLASS The type to test.
+ */
+template< typename CLASS >
+static constexpr bool HasMemorySpaceFunctions = HasMemberFunction_move< CLASS > &&
+                                                HasMemberFunction_registerTouch< CLASS > &&
+                                                HasMemberFunction_checkTouch< CLASS > &&
+                                                HasMemberFunction_getPreviousSpace< CLASS >;
+
+/**
  * @brief Defines a static constexpr bool HasMemberFunction_setName< @p CLASS >
  *        that is true iff the method @p CLASS ::setName( string ) exists.
  * @tparam CLASS The type to test.

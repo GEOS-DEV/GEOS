@@ -761,8 +761,7 @@ void CompositionalMultiphaseHybridFVM::applySystemSolution( DofManager const & d
 
     CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync,
                                                          mesh,
-                                                         domain.getNeighbors(),
-                                                         true );
+                                                         domain.getNeighbors() );
   } );
 }
 

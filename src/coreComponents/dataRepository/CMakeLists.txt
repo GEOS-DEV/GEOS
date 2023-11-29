@@ -43,7 +43,7 @@ set( dataRepository_sources
      WrapperContext.cpp
      )
 
-set( dependencyList ${parallelDeps} codingUtilities )
+set( dependencyList ${parallelDeps} conduit::conduit codingUtilities )
 
 if( ENABLE_PYGEOSX )
   list( APPEND dataRepository_headers

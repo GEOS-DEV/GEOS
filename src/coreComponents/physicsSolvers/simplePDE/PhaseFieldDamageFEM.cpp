@@ -446,8 +446,7 @@ void PhaseFieldDamageFEM::applySystemSolution( DofManager const & dofManager,
 
     CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync,
                                                          mesh,
-                                                         domain.getNeighbors(),
-                                                         false );
+                                                         domain.getNeighbors() );
   } );
 
 }

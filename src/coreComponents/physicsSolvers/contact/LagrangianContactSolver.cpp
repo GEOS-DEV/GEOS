@@ -254,8 +254,7 @@ void LagrangianContactSolver::implicitStepComplete( real64 const & time_n,
 
     CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync,
                                                          mesh,
-                                                         domain.getNeighbors(),
-                                                         true );
+                                                         domain.getNeighbors() );
 
   } );
 }
@@ -1733,8 +1732,7 @@ void LagrangianContactSolver::applySystemSolution( DofManager const & dofManager
 
     CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync,
                                                          mesh,
-                                                         domain.getNeighbors(),
-                                                         true );
+                                                         domain.getNeighbors() );
   } );
 }
 

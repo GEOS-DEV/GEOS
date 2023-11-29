@@ -54,14 +54,6 @@ endif()
 
 if( ENABLE_CALIPER )
   set( dependencyList ${dependencyList} caliper )
-endif()
-
-if( ENABLE_CALIPER )
-  set( dependencyList ${dependencyList} caliper )
-
-  if (TARGET adiak::adiak)
-    set( dependencyList ${dependencyList} adiak::adiak )
-  endif()
 
   if (TARGET adiak)
     set( dependencyList ${dependencyList} adiak )
