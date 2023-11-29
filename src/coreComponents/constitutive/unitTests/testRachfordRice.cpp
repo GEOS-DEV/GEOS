@@ -110,8 +110,26 @@ TEST( RachfordRiceTest, testRachfordRiceTwoComponents )
                          presentComponentIds.toSliceConst() );
 
   checkRelativeError( vaporFraction4, expectedVaporFraction4, relTol );
-}
 
+  ////////////////////////////////////////
+
+  kValues[0] = 0.9;
+  kValues[1] = 1.09733;
+
+  feed[0] = 1.0e-10;
+  feed[1] = 1.0 - feed[0];
+
+  presentComponentIds[0] = 0;
+  presentComponentIds[1] = 1;
+
+  real64 const expectedVaporFraction5 = 1;
+  real64 const vaporFraction5 =
+    RachfordRice::solve( kValues.toSliceConst(),
+                         feed.toSliceConst(),
+                         presentComponentIds.toSliceConst() );
+
+  checkRelativeError( vaporFraction5, expectedVaporFraction5, relTol );
+}
 
 TEST( RachfordRiceTest, testRachfordRiceFourComponents )
 {
