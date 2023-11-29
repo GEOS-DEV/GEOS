@@ -32,8 +32,25 @@ using namespace fields;
 
 SolidMechanicsStatistics::SolidMechanicsStatistics( const string & name,
                                                     Group * const parent ):
-  Base( name, parent )
+  Base( name, parent ),
+  m_outputDir( name )
 {}
+
+void SolidMechanicsStatistics::postProcessInput()
+{
+  Base::postProcessInput();
+
+  // create dir for output
+  if( getLogLevel() > 0 )
+  {
+    if( MpiWrapper::commRank() == 0 )
+    {
+      makeDirsForPath( m_outputDir );
+    }
+    // wait till the dir is created by rank 0
+    MPI_Barrier( MPI_COMM_WORLD );
+  }
+}
 
 void SolidMechanicsStatistics::registerDataOnMesh( Group & meshBodies )
 {
@@ -58,11 +75,20 @@ void SolidMechanicsStatistics::registerDataOnMesh( Group & meshBodies )
 
     nodeStatistics.minDisplacement.resizeDimension< 0 >( 3 );
     nodeStatistics.maxDisplacement.resizeDimension< 0 >( 3 );
+
+    // write output header
+    if( getLogLevel() > 0 && MpiWrapper::commRank() == 0 )
+    {
+      std::ofstream outputFile( m_outputDir + "/" + mesh.getName() + "_node_statistics" + ".csv" );
+      outputFile << "Time [s],Min displacement X [m],Min displacement Y [m],Min displacement Z [m],"
+                 << "Max displacement X [m],Max displacement Y [m],Max displacement Z [m]" << std::endl;
+      outputFile.close();
+    }
   } );
 }
 
-bool SolidMechanicsStatistics::execute( real64 const GEOS_UNUSED_PARAM( time_n ),
-                                        real64 const GEOS_UNUSED_PARAM( dt ),
+bool SolidMechanicsStatistics::execute( real64 const time_n,
+                                        real64 const dt,
                                         integer const GEOS_UNUSED_PARAM( cycleNumber ),
                                         integer const GEOS_UNUSED_PARAM( eventCounter ),
                                         real64 const GEOS_UNUSED_PARAM( eventProgress ),
@@ -72,28 +98,29 @@ bool SolidMechanicsStatistics::execute( real64 const GEOS_UNUSED_PARAM( time_n )
                                                                           MeshLevel & mesh,
                                                                           arrayView1d< string const > const & )
   {
-    computeNodeStatistics( mesh );
+    // current time is time_n + dt
+    computeNodeStatistics( mesh, time_n + dt );
   } );
   return false;
 }
 
-void SolidMechanicsStatistics::computeNodeStatistics( MeshLevel & mesh ) const
+void SolidMechanicsStatistics::computeNodeStatistics( MeshLevel & mesh, real64 const time ) const
 {
   GEOS_MARK_FUNCTION;
 
   // Step 1: increment the min/max quantities
 
   NodeManager & nodeManager = mesh.getNodeManager();
-  arrayView1d< integer const > const ghostRank = nodeManager.ghostRank();
+  arrayView1d < integer const > const ghostRank = nodeManager.ghostRank();
   solidMechanics::arrayViewConst2dLayoutTotalDisplacement const & u =
     nodeManager.getField< solidMechanics::totalDisplacement >();
 
-  RAJA::ReduceMax< parallelDeviceReduce, real64 > maxDispX( -LvArray::NumericLimits< real64 >::max );
-  RAJA::ReduceMax< parallelDeviceReduce, real64 > maxDispY( -LvArray::NumericLimits< real64 >::max );
-  RAJA::ReduceMax< parallelDeviceReduce, real64 > maxDispZ( -LvArray::NumericLimits< real64 >::max );
-  RAJA::ReduceMin< parallelDeviceReduce, real64 > minDispX( LvArray::NumericLimits< real64 >::max );
-  RAJA::ReduceMin< parallelDeviceReduce, real64 > minDispY( LvArray::NumericLimits< real64 >::max );
-  RAJA::ReduceMin< parallelDeviceReduce, real64 > minDispZ( LvArray::NumericLimits< real64 >::max );
+  RAJA::ReduceMax <parallelDeviceReduce, real64> maxDispX( -LvArray::NumericLimits< real64 >::max );
+  RAJA::ReduceMax <parallelDeviceReduce, real64> maxDispY( -LvArray::NumericLimits< real64 >::max );
+  RAJA::ReduceMax <parallelDeviceReduce, real64> maxDispZ( -LvArray::NumericLimits< real64 >::max );
+  RAJA::ReduceMin <parallelDeviceReduce, real64> minDispX( LvArray::NumericLimits< real64 >::max );
+  RAJA::ReduceMin <parallelDeviceReduce, real64> minDispY( LvArray::NumericLimits< real64 >::max );
+  RAJA::ReduceMin <parallelDeviceReduce, real64> minDispZ( LvArray::NumericLimits< real64 >::max );
 
   forAll< parallelDevicePolicy<> >( nodeManager.size(), [u,
                                                          ghostRank,
@@ -102,7 +129,9 @@ void SolidMechanicsStatistics::computeNodeStatistics( MeshLevel & mesh ) const
                                                          maxDispZ,
                                                          minDispX,
                                                          minDispY,
-                                                         minDispZ] GEOS_HOST_DEVICE ( localIndex const a )
+                                                         minDispZ]
+  GEOS_HOST_DEVICE( localIndex
+  const a )
   {
     if( ghostRank[a] < 0 )
     {
@@ -138,14 +167,24 @@ void SolidMechanicsStatistics::computeNodeStatistics( MeshLevel & mesh ) const
                          MpiWrapper::getMpiOp( MpiWrapper::Reduction::Min ),
                          MPI_COMM_GEOSX );
 
-  GEOS_LOG_LEVEL_RANK_0( 1, getName() << ": Min displacement (X, Y, Z): "
-                                      << nodeStatistics.minDisplacement[0] << ", "
-                                      << nodeStatistics.minDisplacement[1] << ", "
-                                      << nodeStatistics.minDisplacement[2] << " m" );
-  GEOS_LOG_LEVEL_RANK_0( 1, getName() << ": Max displacement (X, Y, Z): "
-                                      << nodeStatistics.maxDisplacement[0] << ", "
-                                      << nodeStatistics.maxDisplacement[1] << ", "
-                                      << nodeStatistics.maxDisplacement[2] << " m" );
+  GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "{} (time {} s): Min displacement (X, Y, Z): {}, {}, {} m",
+                                      getName(), time, nodeStatistics.minDisplacement[0],
+                                      nodeStatistics.minDisplacement[1], nodeStatistics.minDisplacement[2] ) );
+  GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "{} (time {} s): Max displacement (X, Y, Z): {}, {}, {} m",
+                                      getName(), time, nodeStatistics.maxDisplacement[0],
+                                      nodeStatistics.maxDisplacement[1], nodeStatistics.maxDisplacement[2] ) );
+
+  if( getLogLevel() > 0 && MpiWrapper::commRank() == 0 )
+  {
+    std::ofstream outputFile( m_outputDir + "/" + mesh.getName() + "_node_statistics" + ".csv", std::ios_base::app );
+    outputFile << time;
+    for( integer i = 0; i < 3; ++i )
+      outputFile << "," << nodeStatistics.minDisplacement[i];
+    for( integer i = 0; i < 3; ++i )
+      outputFile << "," << nodeStatistics.maxDisplacement[i];
+    outputFile << std::endl;
+    outputFile.close();
+  }
 }
 
 REGISTER_CATALOG_ENTRY( TaskBase,

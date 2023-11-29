@@ -62,12 +62,6 @@ public:
 
   /**@}*/
 
-  /**
-   * @brief Compute node-based statistics on the reservoir
-   * @param[in] mesh the mesh level object
-   */
-  void computeNodeStatistics( MeshLevel & mesh ) const;
-
 private:
 
   using Base = FieldStatisticsBase< SolidMechanicsLagrangianFEM >;
@@ -89,7 +83,18 @@ private:
     array1d< real64 > maxDisplacement;
   };
 
+  void postProcessInput() override;
+
   void registerDataOnMesh( Group & meshBodies ) override;
+
+  /**
+ * @brief Compute node-based statistics on the reservoir
+ * @param[in] mesh the mesh level object
+ */
+  void computeNodeStatistics( MeshLevel & mesh, real64 const time ) const;
+
+  // Output directory
+  string const m_outputDir;
 };
 
 

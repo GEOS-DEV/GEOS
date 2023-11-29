@@ -126,7 +126,6 @@ void CompositionalMultiphaseStatistics::registerDataOnMesh( Group & meshBodies )
         // write output header
         if( getLogLevel() > 0 && MpiWrapper::commRank() == 0 )
         {
-          // format: time,bhp,total_rate,total_vol_rate
           std::ofstream outputFile( m_outputDir + "/" + regionNames[i] + ".csv" );
           integer const useMass = m_solver->getReference< integer >( CompositionalMultiphaseBase::viewKeyStruct::useMassFlagString() );
           string const massUnit = useMass ? "kg" : "mol";
