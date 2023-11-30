@@ -183,7 +183,7 @@ jobs:
             GCP_BUCKET: geosx/ubuntu22.04-gcc11
             ENABLE_HYPRE: ON
             ENABLE_TRILINOS: OFF
-          uses: ./.github/workflows/build_and_test.yml
+    uses: ./.github/workflows/build_and_test.yml
     with:
       CMAKE_BUILD_TYPE: ${{ matrix.CMAKE_BUILD_TYPE }}
       DOCKER_IMAGE_TAG: ${{ needs.is_pull_request_a_draft.outputs.DOCKER_IMAGE_TAG }}
