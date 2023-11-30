@@ -82,9 +82,9 @@ public:
 
 
 
-  virtual void calculateCellToFaceDistance(ElementRegionManager const & elemManager,
-                                     FaceManager const & faceManager,
-                                     NodeManager const& nodeManager ) = 0;
+  virtual void calculateCellDimension(ElementRegionManager const & elemManager,
+                                      FaceManager const & faceManager,
+                                      NodeManager const& nodeManager ) = 0;
 
   /**
    * @brief Link the connectivity maps of the subregion to the managers storing the mesh information.

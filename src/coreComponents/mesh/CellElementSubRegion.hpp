@@ -192,7 +192,7 @@ public:
     /// @return String key to fracturedCells
     static constexpr char const * fracturedCellsString() { return "fracturedCells"; }
 
-    static constexpr char const * globalCellToFaceString() { return "globalCellToFace";}
+    static constexpr char const * globalCellDimString() { return "globalCellDim";}
 
     /// ViewKey for the constitutive grouping
     dataRepository::ViewKey constitutiveGrouping  = { constitutiveGroupingString() };
@@ -329,10 +329,10 @@ public:
   void calculateElementGeometricQuantities( NodeManager const & nodeManager,
                                             FaceManager const & faceManager ) override;
 
-
-  void calculateCellToFaceDistance(ElementRegionManager const & elemManager,
-                                   FaceManager const & faceManager,
-                                   NodeManager const& nodeManager ) override;
+/// fonction used in velocity reconstruction
+  void calculateCellDimension(ElementRegionManager const & elemManager,
+                              FaceManager const & faceManager,
+                              NodeManager const& nodeManager ) override;
 
 private:
 
@@ -388,7 +388,7 @@ private:
   EmbSurfMapType m_toEmbeddedSurfaces;
 
   /// container used to store cell-wise distance to faces (for interpolation)
-  array2d< real64 > m_globalCellToFace;
+  array2d< real64 > m_globalCellDimension;
 
   /**
    * @brief Pack element-to-node and element-to-face maps

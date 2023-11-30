@@ -99,7 +99,7 @@ public:
   void calculateSingleElementGeometricQuantities( localIndex const k,
                                                   arrayView1d< real64 const > const & faceArea );
 
-  virtual void calculateCellToFaceDistance(ElementRegionManager const & elemManager, FaceManager const & faceManager, NodeManager const& nodeManager ) override
+  virtual void calculateCellDimension(ElementRegionManager const & elemManager, FaceManager const & faceManager, NodeManager const& nodeManager ) override
     {
         GEOS_UNUSED_VAR(elemManager,faceManager,nodeManager);
     }
