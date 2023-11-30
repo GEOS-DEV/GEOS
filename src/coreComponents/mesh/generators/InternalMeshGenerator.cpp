@@ -88,6 +88,7 @@ InternalMeshGenerator::InternalMeshGenerator( string const & name, Group * const
     setDescription( "Bias of element sizes in the z-direction within each mesh block (dz_left=(1+b)*L/N, dz_right=(1-b)*L/N)" );
 
   registerWrapper( viewKeyStruct::cellBlockNamesString(), &m_regionNames ).
+    setRTTypeName( rtTypes::CustomTypes::groupNameRefArray ).
     setInputFlag( InputFlags::REQUIRED ).
     setSizedFromParent( 0 ).
     setDescription( "Names of each mesh block" );

@@ -45,6 +45,7 @@ MultiFluidBase::MultiFluidBase( string const & name, Group * const parent )
     setDescription( "Component molar weights" );
 
   registerWrapper( viewKeyStruct::phaseNamesString(), &m_phaseNames ).
+    setRTTypeName( rtTypes::CustomTypes::groupNameRefArray ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "List of fluid phases" );
 
