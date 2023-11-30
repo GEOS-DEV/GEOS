@@ -78,11 +78,13 @@ InternalWellGenerator::InternalWellGenerator( string const & name, Group * const
     setDescription( "Minimum length of a well element, computed as (segment length / number of elements per segment ) [m]" );
 
   registerWrapper( viewKeyStruct::wellRegionNameString(), &m_wellRegionName ).
+    setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
     setInputFlag( InputFlags::REQUIRED ).
     setSizedFromParent( 0 ).
     setDescription( "Name of the well element region" );
 
   registerWrapper( viewKeyStruct::wellControlsNameString(), &m_wellControlsName ).
+    setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
     setInputFlag( InputFlags::REQUIRED ).
     setSizedFromParent( 0 ).
     setDescription( "Name of the set of constraints associated with this well" );
@@ -145,6 +147,7 @@ void InternalWellGenerator::generateWellGeometry( )
   m_perfCoords.resize( m_numPerforations, 3 );
   m_perfDistFromHead.resize( m_numPerforations );
   m_perfTransmissibility.resize( m_numPerforations );
+  m_perfSkinFactor.resize( m_numPerforations );
   m_perfElemId.resize( m_numPerforations );
 
   // construct a reverse map from the polyline nodes to the segments
@@ -361,6 +364,7 @@ void InternalWellGenerator::connectPerforationsToWellElements()
     Perforation const & perf = this->getGroup< Perforation >( m_perforationList[iperf] );
     m_perfDistFromHead[iperf]  = perf.getDistanceFromWellHead();
     m_perfTransmissibility[iperf] = perf.getWellTransmissibility();
+    m_perfSkinFactor[iperf] = perf.getWellSkinFactor();
 
     // search in all the elements of this well between head and bottom
     globalIndex iwelemTop    = 0;
