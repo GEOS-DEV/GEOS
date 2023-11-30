@@ -923,7 +923,6 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium()
 
   fsManager.forSubGroups< EquilibriumInitialCondition >( [&] ( EquilibriumInitialCondition const & bc )
   {
-    GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "{}: Equilibrium initial condition #{} named '{}' found", getName(), equilCounter, bc.getName()));
 
     // collect all the equilibrium names to idx
     equilNameToEquilId[bc.getName()] = equilCounter;
@@ -1061,10 +1060,6 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium()
 
       // Step 3.4: compute the hydrostatic pressure values
 
-      GEOS_LOG_LEVEL_RANK_0( 1,
-                             GEOS_FMT( "{}: Computing hydrostatic pressure distribution for initial condition #{} in subregion {} using phase = {}, datumElevation = {} m, datumPressure = {} Pa",
-                                       getName(), equilIndex, subRegion.getName(), initPhaseName, datumElevation, datumPressure ));
-
       constitutiveUpdatePassThru( fluid, [&] ( auto & castedFluid )
       {
         using FluidType = TYPEOFREF( castedFluid );
@@ -1129,10 +1124,7 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium()
       arrayView1d< TableFunction::KernelWrapper const > compFracTableWrappersViewConst =
         compFracTableWrappers.toViewConst();
 
-      RAJA::ReduceMin< parallelDeviceReduce, real64 > local_minElevation( LvArray::NumericLimits< real64 >::max );
-      RAJA::ReduceMax< parallelDeviceReduce, real64 > local_maxElevation( -LvArray::NumericLimits< real64 >::max );
-      RAJA::ReduceMin< parallelDeviceReduce, real64 > local_minPressure( LvArray::NumericLimits< real64 >::max );
-      RAJA::ReduceMax< parallelDeviceReduce, real64 > local_maxPressure( -LvArray::NumericLimits< real64 >::max );
+      RAJA::ReduceMin< parallelDeviceReduce, real64 > minPressure( LvArray::NumericLimits< real64 >::max );
 
       forAll< parallelDevicePolicy<> >( targetSet.size(), [targetSet,
                                                            elemCenter,
@@ -1140,22 +1132,16 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium()
                                                            tempTableWrapper,
                                                            compFracTableWrappersViewConst,
                                                            numComps,
-                                                           local_minElevation,
-                                                           local_maxElevation,
-                                                           local_minPressure,
-                                                           local_maxPressure,
+                                                           minPressure,
                                                            pres,
                                                            temp,
                                                            compFrac] GEOS_HOST_DEVICE ( localIndex const i )
       {
         localIndex const k = targetSet[i];
         real64 const elevation = elemCenter[k][2];
-        local_minElevation.min( elevation );
-        local_maxElevation.max( elevation );
 
         pres[k] = presTableWrapper.compute( &elevation );
-        local_minPressure.min( pres[k] );
-        local_maxPressure.max( pres[k] );
+        minPressure.min( pres[k] );
         temp[k] = tempTableWrapper.compute( &elevation );
         for( integer ic = 0; ic < numComps; ++ic )
         {
@@ -1163,23 +1149,9 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium()
         }
       } );
 
-      real64 global_minElevation = local_minElevation;
-      MpiWrapper::min( global_minElevation );
-      real64 global_maxElevation = local_maxElevation;
-      MpiWrapper::max( global_maxElevation );
-      real64 global_minPressure = local_minPressure;
-      MpiWrapper::min( global_minPressure );
-      real64 global_maxPressure = local_maxPressure;
-      MpiWrapper::max( global_maxPressure );
-
-      if( targetSet.size() > 0 )
-        GEOS_LOG_LEVEL_RANK_0( 1,
-                               GEOS_FMT( "{}: Hydrostatic pressure distribution for initial condition #{} in subregion {}: pressure range = [{}, {}] Pa, elevation range = [{}, {}] m",
-                                         getName(), equilCounter, subRegion.getName(), global_minPressure, global_maxPressure, global_minElevation, global_maxElevation ));
-
-      GEOS_ERROR_IF( global_minPressure < 0.0,
+      GEOS_ERROR_IF( minPressure.get() < 0.0,
                      GEOS_FMT( "{}: A negative pressure of {} Pa was found during hydrostatic initialization in region/subRegion {}/{}",
-                               getDataContext(), global_minPressure, region.getName(), subRegion.getName() ) );
+                               getDataContext(), minPressure.get(), region.getName(), subRegion.getName() ) );
     } );
   } );
 }
@@ -2270,7 +2242,7 @@ void CompositionalMultiphaseBase::updateState( DomainPartition & domain )
     } );
   } );
 
-  GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "        {}: Max phase volume fraction change = {}", getName(), fmt::format( "{:.{}f}", maxDeltaPhaseVolFrac, 4 ) ) );
+  GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "        {}: Max phase volume fraction change = {}", getName(), maxDeltaPhaseVolFrac ) );
 }
 
 } // namespace geos
