@@ -111,16 +111,16 @@ void SolidMechanicsStatistics::computeNodeStatistics( MeshLevel & mesh, real64 c
   // Step 1: increment the min/max quantities
 
   NodeManager & nodeManager = mesh.getNodeManager();
-  arrayView1d < integer const > const ghostRank = nodeManager.ghostRank();
+  arrayView1d< integer const > const ghostRank = nodeManager.ghostRank();
   solidMechanics::arrayViewConst2dLayoutTotalDisplacement const & u =
     nodeManager.getField< solidMechanics::totalDisplacement >();
 
-  RAJA::ReduceMax <parallelDeviceReduce, real64> maxDispX( -LvArray::NumericLimits< real64 >::max );
-  RAJA::ReduceMax <parallelDeviceReduce, real64> maxDispY( -LvArray::NumericLimits< real64 >::max );
-  RAJA::ReduceMax <parallelDeviceReduce, real64> maxDispZ( -LvArray::NumericLimits< real64 >::max );
-  RAJA::ReduceMin <parallelDeviceReduce, real64> minDispX( LvArray::NumericLimits< real64 >::max );
-  RAJA::ReduceMin <parallelDeviceReduce, real64> minDispY( LvArray::NumericLimits< real64 >::max );
-  RAJA::ReduceMin <parallelDeviceReduce, real64> minDispZ( LvArray::NumericLimits< real64 >::max );
+  RAJA::ReduceMax< parallelDeviceReduce, real64 > maxDispX( -LvArray::NumericLimits< real64 >::max );
+  RAJA::ReduceMax< parallelDeviceReduce, real64 > maxDispY( -LvArray::NumericLimits< real64 >::max );
+  RAJA::ReduceMax< parallelDeviceReduce, real64 > maxDispZ( -LvArray::NumericLimits< real64 >::max );
+  RAJA::ReduceMin< parallelDeviceReduce, real64 > minDispX( LvArray::NumericLimits< real64 >::max );
+  RAJA::ReduceMin< parallelDeviceReduce, real64 > minDispY( LvArray::NumericLimits< real64 >::max );
+  RAJA::ReduceMin< parallelDeviceReduce, real64 > minDispZ( LvArray::NumericLimits< real64 >::max );
 
   forAll< parallelDevicePolicy<> >( nodeManager.size(), [u,
                                                          ghostRank,
@@ -130,8 +130,7 @@ void SolidMechanicsStatistics::computeNodeStatistics( MeshLevel & mesh, real64 c
                                                          minDispX,
                                                          minDispY,
                                                          minDispZ]
-  GEOS_HOST_DEVICE( localIndex
-  const a )
+                                    GEOS_HOST_DEVICE ( localIndex const a )
   {
     if( ghostRank[a] < 0 )
     {

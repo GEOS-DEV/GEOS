@@ -88,9 +88,9 @@ private:
   void registerDataOnMesh( Group & meshBodies ) override;
 
   /**
- * @brief Compute node-based statistics on the reservoir
- * @param[in] mesh the mesh level object
- */
+   * @brief Compute node-based statistics on the reservoir
+   * @param[in] mesh the mesh level object
+   */
   void computeNodeStatistics( MeshLevel & mesh, real64 const time ) const;
 
   // Output directory
