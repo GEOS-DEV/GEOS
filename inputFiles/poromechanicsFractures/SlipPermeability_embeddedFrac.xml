@@ -12,9 +12,9 @@
       solidSolverName="matrixMechSolver"
       logLevel="1">
       <NonlinearSolverParameters
-        newtonTol="1.0e-1"
+        newtonTol="1.0e-3"
         newtonMaxIter="10"
-        maxTimeStepCuts="1"/>
+        maxTimeStepCuts="5"/>
       <LinearSolverParameters
         directParallel="0"/>
     </SinglePhasePoromechanicsEmbeddedFractures>
@@ -118,7 +118,7 @@
       name="solverApplication2"
       beginTime="5.0e-03"
       endTime="0.05"
-      forceDt="5.0e-03"
+      forceDt="5.0e-04"
       target="/Solvers/poroSolver"/>
 
     <PeriodicEvent
