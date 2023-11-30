@@ -12,7 +12,7 @@
       solidSolverName="matrixMechSolver"
       logLevel="1">
       <NonlinearSolverParameters
-        newtonTol="1.0e-5"
+        newtonTol="1.0e-1"
         newtonMaxIter="10"
         maxTimeStepCuts="1"/>
       <LinearSolverParameters
@@ -21,7 +21,7 @@
 
     <SolidMechanicsEmbeddedFractures
       name="fractureMechSolver"
-      targetRegions="{ Domain }"
+      targetRegions="{ Domain, Fracture }"
       solidSolverName="matrixMechSolver"
       fractureRegionName="Fracture"
       contactRelationName="fractureContact"/>
@@ -334,7 +334,7 @@
     <PackCollection
       name="tractionCollection"
       objectPath="ElementRegions/Fracture/embeddedSurfaceSubRegion"
-      fieldName="fractureTraction"/>
+      fieldName="traction"/>
 
     <PackCollection
       name="displacementJumpCollection"
