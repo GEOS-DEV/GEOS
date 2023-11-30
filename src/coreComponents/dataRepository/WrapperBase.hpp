@@ -64,9 +64,11 @@ public:
    * @brief Constructor.
    * @param[in] name name of the object
    * @param[in] parent pointer to Group that holds this WrapperBase
+   * @param[in] rtTypeName the name of the rtType to use (given by rtType::CustomTypes or rtType::getTypeName())
    */
   explicit WrapperBase( string const & name,
-                        Group & parent );
+                        Group & parent,
+                        string const & rtTypeName );
 
   /// @cond DO_NOT_DOCUMENT
   WrapperBase() = delete;
@@ -164,10 +166,27 @@ public:
   virtual void move( LvArray::MemorySpace const space, bool const touch ) const = 0;
 
   /**
-   * @brief Calls TypeRegex< T >::get().
    * @return regex used to validate inputs of wrapped type
    */
-  virtual string typeRegex() const = 0;
+  virtual Regex const & getTypeRegex() const = 0;
+
+  /**
+   * @return the rtTypeName used when parsing an input value to the wrapped object.
+   */
+  string const & getRTTypeName() const
+  { return m_rtTypeName; }
+
+  /**
+   * @brief override the rtType to use when parsing an input value to the wrapped object. It can be
+   * useful to change the used regex to validate the input value.
+   * @param rtTypeName the name of the rtType to use (given by rtType::CustomTypes or rtType::getTypeName())
+   * @return the reference to this Wrapper
+   */
+  WrapperBase & setRTTypeName( string_view rtTypeName )
+  {
+    m_rtTypeName = rtTypeName;
+    return *this;
+  }
 
   ///@}
 
@@ -650,15 +669,6 @@ protected:
   void createDataContext( xmlWrapper::xmlNode const & targetNode,
                           xmlWrapper::xmlNodePos const & nodePos );
 
-  /**
-   * @brief Helper method to process an exception that has been thrown during xml parsing.
-   * @param ex The caught exception.
-   * @param targetNode The node from which this Group is interpreted.
-   * @param nodePos the target node position.
-   */
-  void processInputException( std::exception const & ex, xmlWrapper::xmlNode const & targetNode,
-                              xmlWrapper::xmlNodePos const & nodePos ) const;
-
 protected:
 
   /// Name of the object that is being wrapped
@@ -684,6 +694,9 @@ protected:
 
   /// A string description of the wrapped object
   string m_description;
+
+  /// A string regex to validate the input values string to parse for the wrapped object
+  string m_rtTypeName;
 
   /// A vector of the names of the objects that created this Wrapper.
   std::set< string > m_registeringObjects;

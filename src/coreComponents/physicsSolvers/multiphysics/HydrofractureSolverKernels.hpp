@@ -31,10 +31,11 @@ namespace hydrofractureSolverKernels
 struct DeformationUpdateKernel
 {
 
-  template< typename POLICY, typename CONTACT_WRAPPER >
+  template< typename POLICY, typename CONTACT_WRAPPER, typename POROUS_WRAPPER >
   static std::tuple< double, double, double, double, double, double >
   launch( localIndex const size,
           CONTACT_WRAPPER const & contactWrapper,
+          POROUS_WRAPPER const & porousMaterialWrapper,
           arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const & u,
           arrayView2d< real64 const > const & faceNormal,
           ArrayOfArraysView< localIndex const > const & faceToNodeMap,
@@ -78,18 +79,27 @@ struct DeformationUpdateKernel
       }
 
       // TODO this needs a proper contact based strategy for aperture
-      real64 const newAperture = -LvArray::tensorOps::AiBi< 3 >( temp, faceNormal[kf0] ) / numNodesPerFace;
-      maxApertureChange.max( std::fabs( newAperture - aperture[kfe] ));
-      aperture[kfe] = newAperture;
+      real64 const normalJump = -LvArray::tensorOps::AiBi< 3 >( temp, faceNormal[kf0] ) / numNodesPerFace;
+      maxApertureChange.max( std::fabs( normalJump - aperture[kfe] ));
+      aperture[kfe] = normalJump;
       minAperture.min( aperture[kfe] );
       maxAperture.max( aperture[kfe] );
 
-      real64 dHydraulicAperture_dAperture = 0;
-      real64 const newHydraulicAperture = contactWrapper.computeHydraulicAperture( aperture[kfe], dHydraulicAperture_dAperture );
+      real64 dHydraulicAperture_dNormalJump = 0;
+      real64 const newHydraulicAperture = contactWrapper.computeHydraulicAperture( aperture[kfe], dHydraulicAperture_dNormalJump );
       maxHydraulicApertureChange.max( std::fabs( newHydraulicAperture - hydraulicAperture[kfe] ));
+      real64 const oldHydraulicAperture = hydraulicAperture[kfe];
       hydraulicAperture[kfe] = newHydraulicAperture;
       minHydraulicAperture.min( hydraulicAperture[kfe] );
       maxHydraulicAperture.max( hydraulicAperture[kfe] );
+
+      real64 const jump[3] = { normalJump, 0.0, 0.0 };
+      real64 const traction[3] = {0.0, 0.0, 0.0};
+
+      porousMaterialWrapper.updateStateFromPressureApertureJumpAndTraction( kfe, 0, 0.0,
+                                                                            oldHydraulicAperture, newHydraulicAperture,
+                                                                            dHydraulicAperture_dNormalJump,
+                                                                            jump, traction );
 
 #ifdef GEOSX_USE_SEPARATION_COEFFICIENT
       real64 const s = aperture[kfe] / apertureAtFailure[kfe];
@@ -132,6 +142,10 @@ struct FluidMassResidualDerivativeAssemblyKernel
                                  globalIndex (& nodeDOF)[8 * 3],
                                  arraySlice1d< real64 > const dRdU )
   {
+    real64 dHydraulicAperture_dNormalJump = 0;
+    real64 const hydraulicAperture = contactWrapper.computeHydraulicAperture( aperture, dHydraulicAperture_dNormalJump );
+    GEOS_UNUSED_VAR( hydraulicAperture );
+
     constexpr integer kfSign[2] = { -1, 1 };
     for( localIndex kf = 0; kf < 2; ++kf )
     {
@@ -141,25 +155,20 @@ struct FluidMassResidualDerivativeAssemblyKernel
         {
           nodeDOF[kf * 3 * numNodesPerFace + 3 * a + i] = dispDofNumber[faceToNodeMap( elemsToFaces[kf], a )] + i;
 
-          real64 const dGap_dU = kfSign[kf] * Nbar[i] / numNodesPerFace;
+          real64 const dNormalJump_dDisplacement = kfSign[kf] * Nbar[i] / numNodesPerFace;
+          real64 const dHydraulicAperture_dDisplacement = dHydraulicAperture_dNormalJump * dNormalJump_dDisplacement;
+          real64 const dVolume_dDisplacement = area * dHydraulicAperture_dDisplacement;
 
-          real64 dHydraulicAperture_dAperture = 0;
-          real64 const hydraulicAperture = contactWrapper.computeHydraulicAperture( aperture, dHydraulicAperture_dAperture );
-          GEOS_UNUSED_VAR( hydraulicAperture );
-          real64 const dAper_dU = dHydraulicAperture_dAperture * dGap_dU;
-
-          dRdU( kf * 3 * numNodesPerFace + 3 * a + i ) = dens * area * dAper_dU;
+          dRdU( kf * 3 * numNodesPerFace + 3 * a + i ) = dens * dVolume_dDisplacement;
         }
       }
     }
   }
 
-  template< typename CONTACT_WRAPPER >
   GEOS_HOST_DEVICE
   inline
   static void
-  computeFluxDerivative( CONTACT_WRAPPER const & contactWrapper,
-                         localIndex const kfe2,
+  computeFluxDerivative( localIndex const kfe2,
                          localIndex const numNodesPerFace,
                          arraySlice1d< localIndex const > const & columns,
                          arraySlice1d< real64 const > const & values,
@@ -167,13 +176,12 @@ struct FluidMassResidualDerivativeAssemblyKernel
                          ArrayOfArraysView< localIndex const > const faceToNodeMap,
                          arrayView1d< globalIndex const > const dispDofNumber,
                          real64 const (&Nbar)[ 3 ],
-                         arrayView1d< real64 const > const aperture,
                          globalIndex (& nodeDOF)[8 * 3],
                          arraySlice1d< real64 > const dRdU )
   {
     constexpr integer kfSign[2] = { -1, 1 };
 
-    real64 const dRdAper = values[kfe2];
+    real64 const dR_dNormalJump = values[kfe2];
     localIndex const ei2 = columns[kfe2];
 
     for( localIndex kf = 0; kf < 2; ++kf )
@@ -183,15 +191,10 @@ struct FluidMassResidualDerivativeAssemblyKernel
         for( localIndex i = 0; i < 3; ++i )
         {
           nodeDOF[kf * 3 * numNodesPerFace + 3 * a + i] = dispDofNumber[faceToNodeMap( elemsToFaces[ei2][kf], a )] + i;
-          real64 const dGap_dU = kfSign[kf] * Nbar[i] / numNodesPerFace;
 
-          real64 dHydraulicAperture_dAperture = 0.0;
-          real64 const hydraulicAperture = contactWrapper.computeHydraulicAperture( aperture[ei2],
-                                                                                    dHydraulicAperture_dAperture );
-          GEOS_UNUSED_VAR( hydraulicAperture );
-          real64 const dAper_dU = dHydraulicAperture_dAperture * dGap_dU;
+          real64 const dNormalJump_dDisplacement = kfSign[kf] * Nbar[i] / numNodesPerFace;
 
-          dRdU( kf * 3 * numNodesPerFace + 3 * a + i ) = dRdAper * dAper_dU;
+          dRdU( kf * 3 * numNodesPerFace + 3 * a + i ) = dR_dNormalJump * dNormalJump_dDisplacement;
         }
       }
     }
@@ -210,7 +213,7 @@ struct FluidMassResidualDerivativeAssemblyKernel
           arrayView1d< globalIndex const > const presDofNumber,
           arrayView1d< globalIndex const > const dispDofNumber,
           arrayView2d< real64 const > const dens,
-          CRSMatrixView< real64 const, localIndex const > const dFluxResidual_dAperture,
+          CRSMatrixView< real64 const, localIndex const > const dFluxResidual_dNormalJump,
           CRSMatrixView< real64, globalIndex const > const & localMatrix )
   {
     forAll< POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex ei )
@@ -245,14 +248,13 @@ struct FluidMassResidualDerivativeAssemblyKernel
                                                                           2 * numNodesPerFace * 3 );
       }
 //
-      localIndex const numColumns = dFluxResidual_dAperture.numNonZeros( ei );
-      arraySlice1d< localIndex const > const & columns = dFluxResidual_dAperture.getColumns( ei );
-      arraySlice1d< real64 const > const & values = dFluxResidual_dAperture.getEntries( ei );
+      localIndex const numColumns = dFluxResidual_dNormalJump.numNonZeros( ei );
+      arraySlice1d< localIndex const > const & columns = dFluxResidual_dNormalJump.getColumns( ei );
+      arraySlice1d< real64 const > const & values = dFluxResidual_dNormalJump.getEntries( ei );
 
       for( localIndex kfe2 = 0; kfe2 < numColumns; ++kfe2 )
       {
-        computeFluxDerivative( contactWrapper,
-                               kfe2,
+        computeFluxDerivative( kfe2,
                                numNodesPerFace,
                                columns,
                                values,
@@ -260,7 +262,6 @@ struct FluidMassResidualDerivativeAssemblyKernel
                                faceToNodeMap,
                                dispDofNumber,
                                Nbar,
-                               aperture,
                                nodeDOF,
                                dRdU );
 
