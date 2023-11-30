@@ -18,6 +18,8 @@
 #include "TestFluid.hpp"
 #include "TestFluidUtilities.hpp"
 
+using namespace geos::constitutive::compositional;
+
 namespace geos
 {
 namespace testing
@@ -195,11 +197,9 @@ private:
   real64 computeMolarDensity( real64 const pressure, real64 const temperature,
                               arrayView1d< real64 const > const & composition ) const
   {
-    auto criticalPressure = m_fluid->getCriticalPressure();
-    auto criticalTemperature = m_fluid->getCriticalTemperature();
-    auto acentricFactor = m_fluid->getAcentricFactor();
-    auto volumeShift = m_fluid->getVolumeShift();
-    real64 const binaryInteractionCoefficients = 0.0;
+    auto const componentProperties = this->m_fluid->createKernelWrapper();
+    auto const binaryInteractionCoefficients = componentProperties.m_componentBinaryCoeff;
+    auto const volumeShift = componentProperties.m_componentVolumeShift;
 
     real64 compressibilityFactor = 0.0;
     real64 molarDensity = 0.0;
@@ -208,21 +208,18 @@ private:
     real64 aMixtureCoefficient = 0.0;
     real64 bMixtureCoefficient = 0.0;
 
-    constitutive::CubicEOSPhaseModel< EOS_TYPE >::
+    CubicEOSPhaseModel< EOS_TYPE >::
     computeMixtureCoefficients( numComps,
                                 pressure,
                                 temperature,
                                 composition,
-                                criticalPressure,
-                                criticalTemperature,
-                                acentricFactor,
-                                binaryInteractionCoefficients,
+                                componentProperties,
                                 aPureCoefficient,
                                 bPureCoefficient,
                                 aMixtureCoefficient,
                                 bMixtureCoefficient );
 
-    constitutive::CubicEOSPhaseModel< EOS_TYPE >::
+    CubicEOSPhaseModel< EOS_TYPE >::
     computeCompressibilityFactor( numComps,
                                   composition,
                                   binaryInteractionCoefficients,
@@ -232,13 +229,13 @@ private:
                                   bMixtureCoefficient,
                                   compressibilityFactor );
 
-    constitutive::CompositionalProperties::computeMolarDensity( numComps,
-                                                                pressure,
-                                                                temperature,
-                                                                composition,
-                                                                volumeShift,
-                                                                compressibilityFactor,
-                                                                molarDensity );
+    CompositionalProperties::computeMolarDensity( numComps,
+                                                  pressure,
+                                                  temperature,
+                                                  composition,
+                                                  volumeShift,
+                                                  compressibilityFactor,
+                                                  molarDensity );
     return molarDensity;
   }
 
@@ -249,11 +246,9 @@ private:
                             real64 & dMolarDensity_dt,
                             arraySlice1d< real64 > const dMolarDensity_dz ) const
   {
-    auto criticalPressure = m_fluid->getCriticalPressure();
-    auto criticalTemperature = m_fluid->getCriticalTemperature();
-    auto acentricFactor = m_fluid->getAcentricFactor();
-    auto volumeShift = m_fluid->getVolumeShift();
-    real64 const binaryInteractionCoefficients = 0.0;
+    auto const componentProperties = this->m_fluid->createKernelWrapper();
+    auto const binaryInteractionCoefficients = componentProperties.m_componentBinaryCoeff;
+    auto const volumeShift = componentProperties.m_componentVolumeShift;
 
     real64 compressibilityFactor = 0.0;
     array1d< real64 > aPureCoefficient( numComps );
@@ -261,15 +256,12 @@ private:
     real64 aMixtureCoefficient = 0.0;
     real64 bMixtureCoefficient = 0.0;
 
-    constitutive::CubicEOSPhaseModel< EOS_TYPE >::
+    CubicEOSPhaseModel< EOS_TYPE >::
     computeMixtureCoefficients( numComps,
                                 pressure,
                                 temperature,
                                 composition,
-                                criticalPressure,
-                                criticalTemperature,
-                                acentricFactor,
-                                binaryInteractionCoefficients,
+                                componentProperties,
                                 aPureCoefficient,
                                 bPureCoefficient,
                                 aMixtureCoefficient,
@@ -282,15 +274,12 @@ private:
     array1d< real64 > daMixtureCoefficient_dz( numComps );
     array1d< real64 > dbMixtureCoefficient_dz( numComps );
 
-    constitutive::CubicEOSPhaseModel< EOS_TYPE >::
+    CubicEOSPhaseModel< EOS_TYPE >::
     computeMixtureCoefficients( numComps,
                                 pressure,
                                 temperature,
                                 composition,
-                                criticalPressure,
-                                criticalTemperature,
-                                acentricFactor,
-                                binaryInteractionCoefficients,
+                                componentProperties,
                                 aPureCoefficient,
                                 bPureCoefficient,
                                 aMixtureCoefficient,
@@ -302,7 +291,7 @@ private:
                                 daMixtureCoefficient_dz,
                                 dbMixtureCoefficient_dz );
 
-    constitutive::CubicEOSPhaseModel< EOS_TYPE >::
+    CubicEOSPhaseModel< EOS_TYPE >::
     computeCompressibilityFactor( numComps,
                                   composition,
                                   binaryInteractionCoefficients,
@@ -316,7 +305,7 @@ private:
     real64 dCompressibilityFactor_dt = 0.0;
     array1d< real64 > dCompressibilityFactor_dz( numComps );
 
-    constitutive::CubicEOSPhaseModel< EOS_TYPE >::
+    CubicEOSPhaseModel< EOS_TYPE >::
     computeCompressibilityFactor( numComps,
                                   aMixtureCoefficient,
                                   bMixtureCoefficient,
@@ -331,7 +320,7 @@ private:
                                   dCompressibilityFactor_dt,
                                   dCompressibilityFactor_dz );
 
-    constitutive::CompositionalProperties::
+    CompositionalProperties::
       computeMolarDensity( numComps,
                            pressure,
                            temperature,
@@ -340,7 +329,7 @@ private:
                            compressibilityFactor,
                            molarDensity );
 
-    constitutive::CompositionalProperties::
+    CompositionalProperties::
       computeMolarDensity( numComps,
                            pressure,
                            temperature,
@@ -359,11 +348,12 @@ private:
   real64 computeMassDensity( real64 const pressure, real64 const temperature,
                              arrayView1d< real64 const > const & composition ) const
   {
-    auto molecularWeight = m_fluid->getMolecularWeight();
+    auto const componentProperties = this->m_fluid->createKernelWrapper();
+    auto const molecularWeight = componentProperties.m_componentMolarWeight;
 
     real64 const molarDensity =     computeMolarDensity( pressure, temperature, composition );
     real64 massDensity = 0.0;
-    constitutive::CompositionalProperties::
+    CompositionalProperties::
       computeMassDensity( numComps,
                           composition,
                           molecularWeight,
@@ -379,7 +369,9 @@ private:
                            real64 & dMassDensity_dt,
                            arraySlice1d< real64 > const dMassDensity_dz ) const
   {
-    auto molecularWeight = m_fluid->getMolecularWeight();
+    auto const componentProperties = this->m_fluid->createKernelWrapper();
+    auto const molecularWeight = componentProperties.m_componentMolarWeight;
+
     massDensity = computeMassDensity( pressure, temperature, composition );
 
     real64 molarDensity = 0.0;
@@ -393,7 +385,7 @@ private:
                          dMolarDensity_dt,
                          dMolarDensity_dz );
 
-    constitutive::CompositionalProperties::
+    CompositionalProperties::
       computeMassDensity( numComps,
                           molecularWeight,
                           molarDensity,
@@ -410,7 +402,7 @@ protected:
   std::unique_ptr< TestFluid< NC > > m_fluid;
 };
 
-using PR4Comp = CompositionalPropertiesTestDataTestFixture< constitutive::PengRobinsonEOS, 4 >;
+using PR4Comp = CompositionalPropertiesTestDataTestFixture< PengRobinsonEOS, 4 >;
 
 TEST_P( PR4Comp, testMolarDensity )
 {
@@ -435,7 +427,7 @@ TEST_P( PR4Comp, testMassDensityDerivative )
 // Test data generated from PVT package
 // All compositions are single phase
 template<>
-std::vector< CompositionalPropertiesTestData< 4 > > generateTestData< constitutive::PengRobinsonEOS, 4 >()
+std::vector< CompositionalPropertiesTestData< 4 > > generateTestData< PengRobinsonEOS, 4 >()
 {
   return {
     { 1.000000e+05, 2.771500e+02, { 0.000000, 0.495099, 0.495118, 0.009783 }, 3.733061e+03, 1.271768e+02, 4.747588e+05 },
@@ -510,7 +502,7 @@ std::vector< CompositionalPropertiesTestData< 4 > > generateTestData< constituti
 INSTANTIATE_TEST_SUITE_P(
   CompositionalPropertiesTest,
   PR4Comp,
-  ::testing::ValuesIn( generateTestData< constitutive::PengRobinsonEOS, 4 >())
+  ::testing::ValuesIn( generateTestData< PengRobinsonEOS, 4 >())
   );
 
 } // testing

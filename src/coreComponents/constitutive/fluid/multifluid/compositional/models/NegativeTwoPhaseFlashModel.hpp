@@ -122,8 +122,12 @@ public:
   KernelWrapper createKernelWrapper() const;
 };
 
-using NegativeTwoPhaseFlashPRPR = NegativeTwoPhaseFlashModel< PengRobinsonEOS, PengRobinsonEOS >;
-using NegativeTwoPhaseFlashSRKSRK = NegativeTwoPhaseFlashModel< SoaveRedlichKwongEOS, SoaveRedlichKwongEOS >;
+using NegativeTwoPhaseFlashPRPR = NegativeTwoPhaseFlashModel<
+  CubicEOSPhaseModel< PengRobinsonEOS >,
+  CubicEOSPhaseModel< PengRobinsonEOS > >;
+using NegativeTwoPhaseFlashSRKSRK = NegativeTwoPhaseFlashModel<
+  CubicEOSPhaseModel< SoaveRedlichKwongEOS >,
+  CubicEOSPhaseModel< SoaveRedlichKwongEOS > >;
 
 } // end namespace compositional
 
