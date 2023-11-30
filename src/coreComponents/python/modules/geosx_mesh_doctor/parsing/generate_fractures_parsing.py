@@ -57,7 +57,7 @@ def convert(parsed_options) -> Options:
     if policy == __FIELD_POLICY:
         field = parsed_options[__FIELD_NAME]
         field_type = parsed_options[__FIELD_TYPE]
-        field_values = tuple(map(int, parsed_options[__FIELD_VALUES].split(",")))
+        field_values = frozenset(map(int, parsed_options[__FIELD_VALUES].split(",")))
     vtk_output = vtk_output_parsing.convert(parsed_options)
     vtk_fracture_output = vtk_output_parsing.convert(parsed_options, prefix=__FRACTURE_PREFIX)
     return Options(policy=policy,

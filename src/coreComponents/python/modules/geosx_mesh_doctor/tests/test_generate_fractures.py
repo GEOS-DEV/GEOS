@@ -4,13 +4,6 @@ from typing import (
     Tuple,
     Iterable,
     Iterator,
-    Dict,
-    Mapping,
-    FrozenSet,
-    List,
-    Set,
-    Sequence,
-    Collection,
 )
 
 import numpy
@@ -24,31 +17,20 @@ from vtkmodules.vtkCommonDataModel import (
 )
 from vtkmodules.util.numpy_support import (
     numpy_to_vtk,
-    vtk_to_numpy,
 )
-
-import sys
-sys.path.append("..")
-
 
 from checks.vtk_utils import (
     to_vtk_id_list,
-    vtk_iter,
 )
 
-
-# import sys
-# sys.path.insert(0, "/Users/j0436735/CLionProjects/GEOS/src/coreComponents/python/modules/geosx_mesh_doctor")
-# sys.path.insert(0, "/Users/j0436735/CLionProjects/GEOS/src/coreComponents/python/modules/geosx_mesh_doctor/tests")
-
+from checks.check_fractures import format_collocated_nodes
 from checks.generate_cube import build_rectilinear_blocks_mesh, XYZ
 from checks.generate_fractures import __split_mesh_on_fracture, Options
-# from ..checks.generate_cube import build_rectilinear_blocks_mesh, XYZ
-# from ..checks.generate_fractures_2 import __split_mesh_on_fracture, Options
 
 
 @dataclass(frozen=True)
 class TestCase:
+    __test__ = False
     input_mesh: vtkUnstructuredGrid
     options: Options
     collocated_nodes: Tuple[Tuple[int, ...], ...]
@@ -83,6 +65,7 @@ def __build_test_case(xs: Tuple[numpy.ndarray, numpy.ndarray, numpy.ndarray],
     return mesh, options
 
 
+# Utility class to generate the new indices of the newly created collocated nodes.
 class Incrementor:
     def __init__(self, start):
         self.__val = start
@@ -240,13 +223,6 @@ def __generate_test_data() -> Iterator[Tuple[vtkUnstructuredGrid, Options]]:
                    result=(4 * 4, 2, 4, 1))
 
 
-def __format_collocated_nodes(fracture_mesh: vtkUnstructuredGrid):
-    collocated_nodes: numpy.ndarray = vtk_to_numpy(fracture_mesh.GetPointData().GetArray("collocated_nodes"))
-    if len(collocated_nodes.shape) == 1:
-        collocated_nodes: numpy.ndarray = collocated_nodes.reshape((collocated_nodes.shape[0], 1))
-    return tuple(sorted(map(lambda bucket: tuple(sorted(filter(lambda i: i != -1, bucket))), collocated_nodes)))  # TODO why the wrapping sorted?
-
-
 @pytest.mark.parametrize("expected", __generate_test_data())
 def test_generate_fracture(expected: TestCase):
     main_mesh, fracture_mesh = __split_mesh_on_fracture(expected.input_mesh, expected.options)
@@ -255,6 +231,6 @@ def test_generate_fracture(expected: TestCase):
     assert fracture_mesh.GetNumberOfPoints() == expected.result[2]
     assert fracture_mesh.GetNumberOfCells() == expected.result[3]
 
-    res = __format_collocated_nodes(fracture_mesh)
+    res = format_collocated_nodes(fracture_mesh)
     assert res == expected.collocated_nodes
     assert len(res) == expected.result[2]
