@@ -809,7 +809,7 @@ real64 SolverBase::nonlinearImplicitStep( real64 const & time_n,
     }
     else
     {
-      GEOS_ERROR( getDataContext() << ": Nonconverged solutions not allowed. Terminating..." );
+      GEOS_ERROR( "Nonconverged solutions not allowed. Terminating..." );
     }
   }
 
