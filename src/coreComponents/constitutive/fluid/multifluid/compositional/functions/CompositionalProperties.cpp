@@ -25,6 +25,9 @@ namespace geos
 namespace constitutive
 {
 
+namespace compositional
+{
+
 /*
  * Calculate the molar volume and apply the Peneloux shift parameters. The parameters should be in
  * dimensional form.
@@ -141,6 +144,8 @@ void CompositionalProperties::computeMassDensity( integer const numComps,
     dMassDensity_dz[ic] = massDensity * dMolarDensity_dz[ic] / molarDensity + molecularWeight[ic] * molarDensity;
   }
 }
+
+} // namespace compositional
 
 } // namespace constitutive
 

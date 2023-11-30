@@ -31,20 +31,20 @@ namespace geos
  */
 std::string insertExMsg( std::string const & originalMsg, std::string const & msgToInsert )
 {
-  // for readability purposes, we try to insert the message after the "***** Rank N: " or after "***** " instead of at the top.
-  static auto constexpr logStart =  "***** ";
   std::string newMsg( originalMsg );
   size_t insertPos = 0;
-  if( ( insertPos = newMsg.rfind( logStart ) ) != std::string::npos )
+  // for readability purposes, we try to insert the message after the "***** Rank N: " or after "***** " instead of at the top.
+  static string_view constexpr rankLogStart =  "***** Rank ";
+  static string_view constexpr rankLogEnd =  ": ";
+  static string_view constexpr simpleLogStart =  "***** ";
+  if( ( insertPos = newMsg.find( rankLogStart ) ) != std::string::npos )
   {
-    static auto constexpr rankStart =  "Rank ";
-    static auto constexpr rankEnd =  ": ";
-    insertPos += stringutilities::cstrlen( logStart );
-    if( newMsg.substr( insertPos, stringutilities::cstrlen( rankStart ) ) == rankStart )
-    {
-      insertPos = newMsg.find( rankEnd, insertPos + stringutilities::cstrlen( rankStart ) )
-                  + stringutilities::cstrlen( rankEnd );
-    }
+    insertPos = newMsg.find( rankLogEnd, insertPos + rankLogStart.size() )
+                + rankLogEnd.size();
+  }
+  else if( ( insertPos = newMsg.rfind( simpleLogStart ) ) != std::string::npos )
+  {
+    insertPos += simpleLogStart.size();
   }
   else
   {
