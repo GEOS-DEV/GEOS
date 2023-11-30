@@ -369,10 +369,6 @@ protected:
   {
     GEOS_MARK_FUNCTION;
 
-    real64 dtReturn = dt;
-
-    real64 dtReturnTemporary;
-
     Timestamp const meshModificationTimestamp = getMeshModificationTimestamp( domain );
 
     // First call Coupled Solver setup  (important for poromechanics initialization for sequentially coupled)
@@ -397,69 +393,108 @@ protected:
     } );
 
     NonlinearSolverParameters & solverParams = getNonlinearSolverParameters();
-    integer & iter = solverParams.m_numNewtonIterations;
-    iter = 0;
+    integer const maxNumberDtCuts = solverParams.m_maxTimeStepCuts;
+    real64 const dtCutFactor = solverParams.m_timeStepCutFactor;
+    integer & dtAttempt = solverParams.m_numTimeStepAttempts;
+
     bool isConverged = false;
-    /// Sequential coupling loop
-    while( iter < solverParams.m_maxIterNewton )
+    // dt may be cut during the course of this step, so we are keeping a local
+    // value to track the achieved dt for this step.
+    real64 stepDt = dt;
+
+    // outer loop attempts to apply full timestep, and managed the cutting of the timestep if
+    // required.
+    for( dtAttempt = 0; dtAttempt < maxNumberDtCuts; ++dtAttempt )
     {
-      if( iter == 0 )
+
+      // TODO configuration loop
+
+      integer & iter = solverParams.m_numNewtonIterations;
+      iter = 0;
+      /// Sequential coupling loop
+      while( iter < solverParams.m_maxIterNewton )
       {
-        // Reset the states of all solvers if any of them had to restart
-        forEachArgInTuple( m_solvers, [&]( auto & solver, auto )
+        if( iter == 0 )
         {
-          solver->resetStateToBeginningOfStep( domain );
-          solver->getSolverStatistics().initializeTimeStepStatistics(); // initialize counters for subsolvers
-        } );
-        resetStateToBeginningOfStep( domain );
-      }
+          // Reset the states of all solvers if any of them had to restart
+          forEachArgInTuple( m_solvers, [&]( auto & solver,
+                                             auto )
+          {
+            solver->resetStateToBeginningOfStep( domain );
+            solver->getSolverStatistics().initializeTimeStepStatistics(); // initialize counters for subsolvers
+          } );
+          resetStateToBeginningOfStep( domain );
+        }
 
-      // Increment the solver statistics for reporting purposes
-      // Pass a "0" as argument (0 linear iteration) to skip the output of linear iteration stats at the end
-      m_solverStatistics.logNonlinearIteration( 0 );
+        // Increment the solver statistics for reporting purposes
+        // Pass a "0" as argument (0 linear iteration) to skip the output of linear iteration stats at the end
+        m_solverStatistics.logNonlinearIteration( 0 );
 
-      // Solve the subproblems nonlinearly
-      forEachArgInTuple( m_solvers, [&]( auto & solver, auto idx )
-      {
-        GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "  Iteration {:2}: {}", iter+1, solver->getName() ) );
-        dtReturnTemporary = solver->nonlinearImplicitStep( time_n,
-                                                           dtReturn,
+        // Solve the subproblems nonlinearly
+        forEachArgInTuple( m_solvers, [&]( auto & solver,
+                                           auto idx )
+        {
+          GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "  Iteration {:2}: {}", iter + 1, solver->getName() ) );
+          real64 solverDt = solver->nonlinearImplicitStep( time_n,
+                                                           stepDt,
                                                            cycleNumber,
                                                            domain );
 
-        mapSolutionBetweenSolvers( domain, idx() );
+          mapSolutionBetweenSolvers( domain, idx() );
 
-        if( dtReturnTemporary < dtReturn )
+          if( solverDt < stepDt ) // subsolver had to cut the time step
+          {
+            iter = 0; // restart outer loop
+            stepDt = solverDt; // sync time step
+          }
+        } );
+
+        // Check convergence of the outer loop
+        isConverged = checkSequentialConvergence( iter,
+                                                  time_n,
+                                                  stepDt,
+                                                  domain );
+
+        if( isConverged )
         {
-          iter = 0;
-          dtReturn = dtReturnTemporary;
+          // Save Time step statistics for the subsolvers
+          forEachArgInTuple( m_solvers, [&]( auto & solver,
+                                             auto )
+          {
+            solver->getSolverStatistics().saveTimeStepStatistics();
+          } );
+          break;
         }
-      } );
-
-      // Check convergence of the outer loop
-      isConverged = checkSequentialConvergence( iter,
-                                                time_n,
-                                                dtReturn,
-                                                domain );
+        // Add convergence check:
+        ++iter;
+      }
 
       if( isConverged )
       {
-        // Save Time step statistics for the subsolvers
-        forEachArgInTuple( m_solvers, [&]( auto & solver, auto )
-        {
-          solver->getSolverStatistics().saveTimeStepStatistics();
-        } );
+        // get out of time loop
         break;
       }
-      // Add convergence check:
-      ++iter;
+      else
+      {
+        // cut timestep, go back to beginning of step and restart the Newton loop
+        stepDt *= dtCutFactor;
+        GEOS_LOG_LEVEL_RANK_0 ( 1, GEOS_FMT( "New dt = {}", stepDt ) );
+
+        // notify the solver statistics counter that this is a time step cut
+        m_solverStatistics.logTimeStepCut();
+        forEachArgInTuple( m_solvers, [&]( auto & solver,
+                                           auto )
+        {
+          solver->getSolverStatistics().logTimeStepCut();
+        } );
+      }
     }
 
     GEOS_ERROR_IF( !isConverged, getDataContext() << ": sequentiallyCoupledSolverStep did not converge!" );
 
     implicitStepComplete( time_n, dt, domain );
 
-    return dtReturn;
+    return stepDt;
   }
 
   /**
