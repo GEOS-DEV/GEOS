@@ -56,15 +56,18 @@ PeriodicEvent::PeriodicEvent( const string & name,
     "If this option is set, the event will reduce its timestep requests to match the specified timeFrequency perfectly: dt_request = min(dt_request, t_last + time_frequency - time))." );
 
   registerWrapper( viewKeyStruct::functionNameString(), &m_functionName ).
+    setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Name of an optional function to evaluate when the time/cycle criteria are met."
                     "If the result is greater than the specified eventThreshold, the function will continue to execute." );
 
   registerWrapper( viewKeyStruct::functionInputObjectString(), &m_functionInputObject ).
+    setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "If the optional function requires an object as an input, specify its path here." );
 
   registerWrapper( viewKeyStruct::functionInputSetnameString(), &m_functionInputSetname ).
+    setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "If the optional function is applied to an object, specify the setname to evaluate (default = everything)." );
 

@@ -35,6 +35,7 @@ RelpermDriver::RelpermDriver( const geos::string & name,
   enableLogLevelInput();
 
   registerWrapper( viewKeyStruct::relpermNameString(), &m_relpermName ).
+    setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Relperm model to test" );
 

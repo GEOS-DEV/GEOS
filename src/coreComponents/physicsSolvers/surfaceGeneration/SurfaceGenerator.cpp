@@ -196,6 +196,7 @@ SurfaceGenerator::SurfaceGenerator( const string & name,
     setDescription( "Flag to enable MPI consistent communication ordering" );
 
   registerWrapper( viewKeyStruct::fractureRegionNameString(), &m_fractureRegionName ).
+    setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
     setInputFlag( dataRepository::InputFlags::OPTIONAL ).
     setApplyDefaultValue( "Fracture" );
 

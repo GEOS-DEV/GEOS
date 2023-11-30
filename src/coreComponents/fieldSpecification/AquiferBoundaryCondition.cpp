@@ -92,6 +92,7 @@ AquiferBoundaryCondition::AquiferBoundaryCondition( string const & name, Group *
     setDescription( "Angle subtended by the aquifer boundary from the center of the reservoir [degress]" );
 
   registerWrapper( viewKeyStruct::pressureInfluenceFunctionNameString(), &m_pressureInfluenceFunctionName ).
+    setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Name of the table describing the pressure influence function\n. "
                     "If not provided, we use a default pressure influence function" );

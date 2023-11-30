@@ -40,6 +40,7 @@ SymbolicFunction::SymbolicFunction( const string & name,
   parserExpression()
 {
   registerWrapper( keys::variableNames, &m_variableNames ).
+    setRTTypeName( rtTypes::CustomTypes::groupNameRefArray ).
     setInputFlag( InputFlags::REQUIRED ).
     setSizedFromParent( 0 ).
     setDescription( "List of variables in expression.  The order must match the evaluate argument" );

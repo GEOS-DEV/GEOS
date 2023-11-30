@@ -78,11 +78,13 @@ InternalWellGenerator::InternalWellGenerator( string const & name, Group * const
     setDescription( "Minimum length of a well element, computed as (segment length / number of elements per segment ) [m]" );
 
   registerWrapper( viewKeyStruct::wellRegionNameString(), &m_wellRegionName ).
+    setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
     setInputFlag( InputFlags::REQUIRED ).
     setSizedFromParent( 0 ).
     setDescription( "Name of the well element region" );
 
   registerWrapper( viewKeyStruct::wellControlsNameString(), &m_wellControlsName ).
+    setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
     setInputFlag( InputFlags::REQUIRED ).
     setSizedFromParent( 0 ).
     setDescription( "Name of the set of constraints associated with this well" );

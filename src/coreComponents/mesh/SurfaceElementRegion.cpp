@@ -35,6 +35,7 @@ SurfaceElementRegion::SurfaceElementRegion( string const & name, Group * const p
     setDescription( "Type of surface element subregion. Valid options: {" + EnumStrings< SurfaceSubRegionType >::concat( ", " ) + "}." );
 
   registerWrapper( viewKeyStruct::faceBlockString(), &m_faceBlockName ).
+    setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDefaultValue( "FractureSubRegion" ).
     setDescription( "The name of the face block in the mesh, or the embedded surface." );
