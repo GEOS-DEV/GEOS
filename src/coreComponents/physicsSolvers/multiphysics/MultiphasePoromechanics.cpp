@@ -82,6 +82,7 @@ MultiphasePoromechanics< FLOW_SOLVER >::MultiphasePoromechanics( const string & 
                     toString( StabilizationType::Local ) + " - Add stabilization only to interiors of macro elements." );
 
   this->registerWrapper( viewKeyStruct::stabilizationRegionNamesString(), &m_stabilizationRegionNames ).
+    setRTTypeName( rtTypes::CustomTypes::groupNameRefArray ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Regions where stabilization is applied." );
 
@@ -333,7 +334,7 @@ void MultiphasePoromechanics< FLOW_SOLVER >::updateState( DomainPartition & doma
     } );
   } );
 
-  GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "        {}: Max phase volume fraction change: {}", this->getName(), fmt::format( "{:.{}f}", maxDeltaPhaseVolFrac, 2 ) ) );
+  GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "        {}: Max phase volume fraction change: {}", this->getName(), fmt::format( "{:.{}f}", maxDeltaPhaseVolFrac, 4 ) ) );
 }
 
 template< typename FLOW_SOLVER >
