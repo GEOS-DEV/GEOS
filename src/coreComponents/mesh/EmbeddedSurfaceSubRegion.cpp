@@ -71,6 +71,7 @@ EmbeddedSurfaceSubRegion::EmbeddedSurfaceSubRegion( string const & name,
     setDescription( "Connectivity index of each EmbeddedSurface." );
 
   registerWrapper( viewKeyStruct::surfaceElementToParentPlaneString(), &m_parentPlaneName ).
+    setRTTypeName( rtTypes::CustomTypes::groupNameRefArray ).
     setDescription( "A map of surface element to the parent fracture name" );
 
   m_normalVector.resizeDimension< 1 >( 3 );
