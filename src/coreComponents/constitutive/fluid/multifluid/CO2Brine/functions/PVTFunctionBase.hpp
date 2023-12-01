@@ -54,8 +54,8 @@ public:
 
 protected:
 
-  GEOS_HOST_DEVICE
   template< int USD >
+  GEOS_HOST_DEVICE
   real64 computePhaseMolarWeight( arraySlice1d< real64 const, USD > const & phaseComposition ) const
   {
     integer const numComp = phaseComposition.size();
@@ -67,8 +67,8 @@ protected:
     return MT;
   }
 
-  GEOS_HOST_DEVICE
   template< int USD >
+  GEOS_HOST_DEVICE
   void divideByPhaseMolarWeight( arraySlice1d< real64 const, USD > const & phaseComposition, real64 & value ) const
   {
     real64 const MT = computePhaseMolarWeight( phaseComposition );
@@ -76,8 +76,8 @@ protected:
     value /= MT;
   }
 
-  GEOS_HOST_DEVICE
   template< int USD1, int USD2, int USD3 >
+  GEOS_HOST_DEVICE
   void divideByPhaseMolarWeight( arraySlice1d< real64 const, USD1 > const & phaseComposition,
                                  arraySlice2d< real64 const, USD2 > const & dPhaseComposition,
                                  real64 & value, arraySlice1d< real64, USD3 > const & dValue ) const
