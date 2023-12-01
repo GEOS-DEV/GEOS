@@ -27,14 +27,12 @@ namespace geos
 namespace constitutive
 {
 
+namespace compositional
+{
+
 struct CompositionalProperties
 {
 public:
-  /// Epsilon used in the calculations
-  static constexpr real64 epsilon = LvArray::NumericLimits< real64 >::epsilon;
-  /// Universal gas constant
-  static constexpr real64 gasConstant = 8.31446261815324;
-
   /**
    * @brief Compute the molar density of a mixture from the composition and the compressibility factor
    * @param[in] numComps number of components
@@ -126,6 +124,8 @@ public:
                                   real64 & dMassDensity_dt,
                                   arraySlice1d< real64 > const & dMassDensity_dz );
 };
+
+} //namespace compositional
 
 } // namespace constitutive
 

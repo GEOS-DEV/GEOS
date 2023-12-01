@@ -137,6 +137,13 @@ string Group::getPath() const
 void Group::processInputFileRecursive( xmlWrapper::xmlDocument & xmlDocument,
                                        xmlWrapper::xmlNode & targetNode )
 {
+  xmlWrapper::xmlNodePos nodePos = xmlDocument.getNodePosition( targetNode );
+  processInputFileRecursive( xmlDocument, targetNode, nodePos );
+}
+void Group::processInputFileRecursive( xmlWrapper::xmlDocument & xmlDocument,
+                                       xmlWrapper::xmlNode & targetNode,
+                                       xmlWrapper::xmlNodePos const & nodePos )
+{
   xmlDocument.addIncludedXML( targetNode );
 
   // Handle the case where the node was imported from a different input file
@@ -152,8 +159,21 @@ void Group::processInputFileRecursive( xmlWrapper::xmlDocument & xmlDocument,
   array1d< string > childNames;
   for( xmlWrapper::xmlNode childNode : targetNode.children() )
   {
+    xmlWrapper::xmlNodePos childNodePos = xmlDocument.getNodePosition( childNode );
+
     // Get the child tag and name
-    string childName = childNode.attribute( "name" ).value();
+    string childName;
+
+    try
+    {
+      xmlWrapper::readAttributeAsType( childName, "name",
+                                       rtTypes::getTypeRegex< string >( rtTypes::CustomTypes::groupName ),
+                                       childNode, string( "" ) );
+    } catch( std::exception const & ex )
+    {
+      xmlWrapper::processInputException( ex, "name", childNode, childNodePos );
+    }
+
     if( childName.empty() )
     {
       childName = childNode.name();
@@ -178,21 +198,19 @@ void Group::processInputFileRecursive( xmlWrapper::xmlDocument & xmlDocument,
     }
     if( newChild != nullptr )
     {
-      newChild->processInputFileRecursive( xmlDocument, childNode );
+      newChild->processInputFileRecursive( xmlDocument, childNode, childNodePos );
     }
   }
 
-  processInputFile( xmlDocument, targetNode );
+  processInputFile( targetNode, nodePos );
 
   // Restore original prefix once the node is processed
   Path::pathPrefix() = oldPrefix;
 }
 
-void Group::processInputFile( xmlWrapper::xmlDocument const & xmlDocument,
-                              xmlWrapper::xmlNode const & targetNode )
+void Group::processInputFile( xmlWrapper::xmlNode const & targetNode,
+                              xmlWrapper::xmlNodePos const & nodePos )
 {
-  xmlWrapper::xmlNodePos nodePos = xmlDocument.getNodePosition( targetNode );
-
   if( nodePos.isFound() )
   {
     m_dataContext = std::make_unique< DataFileContext >( targetNode, nodePos );
@@ -502,7 +520,8 @@ localIndex Group::unpack( buffer_unit_type const * & buffer,
                           arrayView1d< localIndex > & packList,
                           integer const recursive,
                           bool onDevice,
-                          parallelDeviceEvents & events )
+                          parallelDeviceEvents & events,
+                          MPI_Op GEOS_UNUSED_PARAM( op ) )
 {
   localIndex unpackedSize = 0;
   string groupName;

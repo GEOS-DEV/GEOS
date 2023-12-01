@@ -1,6 +1,4 @@
-#
 # Specify solver headers
-#
 set( physicsSolvers_headers
      LinearSolverParameters.hpp
      NonlinearSolverParameters.hpp
@@ -107,8 +105,11 @@ set( physicsSolvers_headers
      solidMechanics/SolidMechanicsLagrangianFEM.hpp
      solidMechanics/SolidMechanicsLagrangianSSLE.hpp
      solidMechanics/kernels/SolidMechanicsLagrangianFEMKernels.hpp
+     solidMechanics/SolidMechanicsMPM.hpp
+     solidMechanics/MPMSolverFields.hpp
      solidMechanics/kernels/ExplicitFiniteStrain.hpp
      solidMechanics/kernels/ExplicitFiniteStrain_impl.hpp
+     solidMechanics/kernels/ExplicitMPM.hpp
      solidMechanics/kernels/ExplicitSmallStrain.hpp
      solidMechanics/kernels/ExplicitSmallStrain_impl.hpp
      solidMechanics/kernels/FixedStressThermoPoromechanics.hpp
@@ -135,11 +136,10 @@ set( physicsSolvers_headers
      wavePropagation/ElasticFirstOrderWaveEquationSEMKernel.hpp
      wavePropagation/AcousticFirstOrderWaveEquationSEM.hpp
      wavePropagation/AcousticFirstOrderWaveEquationSEMKernel.hpp
-   )
+     wavePropagation/AcousticVTIWaveEquationSEM.hpp
+     wavePropagation/AcousticVTIWaveEquationSEMKernel.hpp )
 
-#
 # Specify solver sources
-#
 set( physicsSolvers_sources
      LinearSolverParameters.cpp
      NonlinearSolverParameters.cpp
@@ -187,6 +187,7 @@ set( physicsSolvers_sources
      simplePDE/PhaseFieldDamageFEM.cpp
      solidMechanics/SolidMechanicsLagrangianFEM.cpp
      solidMechanics/SolidMechanicsLagrangianSSLE.cpp
+     solidMechanics/SolidMechanicsMPM.cpp
      solidMechanics/SolidMechanicsStateReset.cpp
      solidMechanics/SolidMechanicsStatistics.cpp
      surfaceGeneration/EmbeddedSurfaceGenerator.cpp
@@ -198,8 +199,7 @@ set( physicsSolvers_sources
      wavePropagation/ElasticWaveEquationSEM.cpp
      wavePropagation/ElasticFirstOrderWaveEquationSEM.cpp
      wavePropagation/AcousticFirstOrderWaveEquationSEM.cpp
-
-   )
+     wavePropagation/AcousticVTIWaveEquationSEM.cpp )
 
   include( solidMechanics/kernels/SolidMechanicsKernels.cmake)
   include( multiphysics/poromechanicsKernels/PoromechanicsKernels.cmake)
@@ -218,8 +218,7 @@ blt_add_library( NAME       physicsSolvers
                  SOURCES    ${physicsSolvers_sources}
                  HEADERS    ${physicsSolvers_headers}
                  DEPENDS_ON ${dependencyList} ${externalComponentDeps}
-                 OBJECT     ${GEOSX_BUILD_OBJ_LIBS}
-               )
+                 OBJECT     ${GEOSX_BUILD_OBJ_LIBS} )
 
 target_include_directories( physicsSolvers PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents )
 if( externalComponentDeps )

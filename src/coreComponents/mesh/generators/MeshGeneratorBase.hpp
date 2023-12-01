@@ -83,10 +83,9 @@ public:
   /**
    * @brief Generate the mesh object the input mesh object.
    * @param parent The parent group of the CellBlockManager.
-   * @param[in] partition Number of domaoins in each dimesion (X,Y,Z)
-   * @return The generated CellBlockManagerABC
+   * @param[in] partition The reference to spatial partition
    */
-  CellBlockManagerABC & generateMesh( Group & parent, array1d< int > const & partition );
+  void generateMesh( Group & parent, SpatialPartition & partition );
 
   /**
    * @brief Describe which kind of block must be considered.
@@ -132,12 +131,6 @@ public:
    */
   std::map< string, string > const & getSurfacicFieldsMapping() const { return m_surfacicFields; }
 
-  /**
-   * @brief Get the associatied SpatialPartition generated.
-   * @return The generated SpatialPartition
-   */
-  SpatialPartition const & getSpatialPartition() const { return m_spatialPartition; }
-
 protected:
   /// Mapping from volumic field source to GEOSX field.
   std::map< string, string > m_volumicFields;
@@ -145,18 +138,34 @@ protected:
   /// Mapping from surfacic field source to GEOSX field.
   std::map< string, string > m_surfacicFields;
 
-  /// SpatialPartition associated with the mesh
-  SpatialPartition m_spatialPartition;
-
 private:
   /**
    * @brief Fill the cellBlockManager object .
    * @param[inout] cellBlockManager the CellBlockManager that will receive the meshing information
-   * @param[in] partition The number of domains in each dimesion (X,Y,Z)
+   * @param[in] partition The reference to spatial partition
    */
-  virtual void fillCellBlockManager( CellBlockManager & cellBlockManager, array1d< int > const & partition ) = 0;
+  virtual void fillCellBlockManager( CellBlockManager & cellBlockManager, SpatialPartition & partition )
+  {
+    GEOS_UNUSED_VAR( cellBlockManager );
+    GEOS_UNUSED_VAR( partition );
+    GEOS_ERROR( "Cell mesh generation not implemented for generator of this type" );
+  }
 
   void attachWellInfo( CellBlockManager & cellBlockManager );
+
+  /**
+   * @brief Fill the particleBlockManager object .
+   * @param[inout] particleBlockManager the particleBlockManager that will receive the meshing information
+   * @param[in] particleManager The reference to the particle manager
+   * @param[in] partition The reference to spatial partition
+   */
+  virtual void fillParticleBlockManager( ParticleBlockManager & particleBlockManager, ParticleManager & particleManager, SpatialPartition const & partition )
+  {
+    GEOS_UNUSED_VAR( particleBlockManager );
+    GEOS_UNUSED_VAR( particleManager );
+    GEOS_UNUSED_VAR( partition );
+    GEOS_ERROR( "Particle mesh generation not implemented for generator of this type" );
+  }
 
 };
 }

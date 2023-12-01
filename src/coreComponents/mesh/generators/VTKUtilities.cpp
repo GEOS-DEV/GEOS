@@ -425,7 +425,8 @@ VTKLegacyDatasetType getVTKLegacyDatasetType( vtkSmartPointer< vtkDataSetReader 
   }
   else
   {
-    GEOS_ERROR( "Unsupported legacy VTK dataset format" );
+    GEOS_ERROR( "Unsupported legacy VTK dataset format.\nLegacy supported formats are: " <<
+                EnumStrings< VTKLegacyDatasetType >::concat( ", " ) << '.' );
   }
   return {};
 }
@@ -475,7 +476,8 @@ loadMesh( Path const & filePath,
         vtkCompositeDataSet * compositeDataSet = reader->GetOutput();
         if( !compositeDataSet->IsA( "vtkMultiBlockDataSet" ) )
         {
-          GEOS_ERROR( "Unsupported vtk multi-block format in file \"" << filePath << "\"" );
+          GEOS_ERROR( "Unsupported vtk multi-block format in file \"" << filePath << "\"" <<
+                      generalMeshErrorAdvice );
         }
         vtkMultiBlockDataSet * multiBlockDataSet = vtkMultiBlockDataSet::SafeDownCast( compositeDataSet );
 
@@ -494,7 +496,8 @@ loadMesh( Path const & filePath,
             }
           }
         }
-        GEOS_ERROR( "Could not find mesh \"" << blockName << "\" in multi-block vtk file \"" << filePath << "\"" );
+        GEOS_ERROR( "Could not find mesh \"" << blockName << "\" in multi-block vtk file \"" << filePath << "\"" <<
+                    generalMeshErrorAdvice );
         return {};
       }
       else
@@ -531,7 +534,7 @@ loadMesh( Path const & filePath,
     case VTKMeshExtension::pvti: return parallelRead( vtkSmartPointer< vtkXMLPImageDataReader >::New() );
     default:
     {
-      GEOS_ERROR( extension << " is not a recognized extension for VTKMesh. Please use .vtk, .vtu, .vtr, .vts, .vti, .pvtu, .pvtr, .pvts or .ptvi." );
+      GEOS_ERROR( extension << " is not a recognized extension for VTKMesh. Please use ." << EnumStrings< VTKMeshExtension >::concat( ", ." ) );
       break;
     }
   }
@@ -745,9 +748,11 @@ vtkSmartPointer< vtkDataSet > manageGlobalIds( vtkSmartPointer< vtkDataSet > mes
     vtkIdTypeArray const * const globalCellId = vtkIdTypeArray::FastDownCast( output->GetCellData()->GetGlobalIds() );
     vtkIdTypeArray const * const globalPointId = vtkIdTypeArray::FastDownCast( output->GetPointData()->GetGlobalIds() );
     GEOS_ERROR_IF( globalCellId->GetNumberOfComponents() != 1 && globalCellId->GetNumberOfTuples() != output->GetNumberOfCells(),
-                   "Global cell IDs are invalid. Check the array or enable automatic generation (useGlobalId < 0)" );
+                   "Global cell IDs are invalid. Check the array or enable automatic generation (useGlobalId < 0)." <<
+                   generalMeshErrorAdvice );
     GEOS_ERROR_IF( globalPointId->GetNumberOfComponents() != 1 && globalPointId->GetNumberOfTuples() != output->GetNumberOfPoints(),
-                   "Global cell IDs are invalid. Check the array or enable automatic generation (useGlobalId < 0)" );
+                   "Global cell IDs are invalid. Check the array or enable automatic generation (useGlobalId < 0)." <<
+                   generalMeshErrorAdvice );
 
     GEOS_LOG_RANK_0( "Using global Ids defined in VTK mesh" );
   }
@@ -802,13 +807,12 @@ ensureNoEmptyRank( vtkSmartPointer< vtkDataSet > mesh,
   // First we sort the donor in order of the number of elems they contain
   std::stable_sort( donorRanks.begin(), donorRanks.end(),
                     [&elemCounts] ( auto i1, auto i2 )
-  { return elemCounts[i1] < elemCounts[i2]; } );
+  { return elemCounts[i1] > elemCounts[i2]; } );
 
   // Then, if my position is "i" in the donorRanks array, I will send half of my elems to the i-th recipient
   integer const myRank = MpiWrapper::commRank();
-  auto const myPosition =
-    LvArray::sortedArrayManipulation::find( donorRanks.begin(), donorRanks.size(), myRank );
-  bool const isDonor = myPosition != donorRanks.size();
+  auto const pos = std::find( donorRanks.begin(), donorRanks.end(), myRank );
+  bool const isDonor = ( pos != donorRanks.end() );
 
   // step 3: my rank was selected to donate cells, let's proceed
   // we need to make a distinction between two configurations
@@ -820,6 +824,7 @@ ensureNoEmptyRank( vtkSmartPointer< vtkDataSet > mesh,
   // we use a strategy that preserves load balancing
   if( isDonor && donorRanks.size() >= recipientRanks.size() )
   {
+    auto const myPosition = std::distance( donorRanks.begin(), pos );
     if( myPosition < recipientRanks.size() )
     {
       integer const recipientRank = recipientRanks[myPosition];
@@ -834,10 +839,11 @@ ensureNoEmptyRank( vtkSmartPointer< vtkDataSet > mesh,
   // we just want the simulation to run and count on ParMetis/PTScotch to restore load balancing
   else if( isDonor && donorRanks.size() < recipientRanks.size() )
   {
+    auto const myPosition = std::distance( donorRanks.begin(), pos );
     localIndex firstRecipientPosition = 0;
     for( integer iRank = 0; iRank < myPosition; ++iRank )
     {
-      firstRecipientPosition += elemCounts[iRank] - 1;
+      firstRecipientPosition += elemCounts[donorRanks[iRank]] - 1;
     }
     if( firstRecipientPosition < recipientRanks.size() )
     {
@@ -869,7 +875,8 @@ ensureNoEmptyRank( vtkSmartPointer< vtkDataSet > mesh,
 
 
 AllMeshes
-redistributeMeshes( vtkSmartPointer< vtkDataSet > loadedMesh,
+redistributeMeshes( integer const logLevel,
+                    vtkSmartPointer< vtkDataSet > loadedMesh,
                     std::map< string, vtkSmartPointer< vtkDataSet > > & namesToFractures,
                     MPI_Comm const comm,
                     PartitionMethod const method,
@@ -926,14 +933,17 @@ redistributeMeshes( vtkSmartPointer< vtkDataSet > loadedMesh,
 
   // Logging some information about the redistribution.
   {
-    string const pattern = "{} = {}";
+    string const pattern = "{}: {}";
     std::vector< string > messages;
-    messages.push_back( GEOS_FMT( pattern, "Mesh sizes are: main", result.getMainMesh()->GetNumberOfCells() ) );
+    messages.push_back( GEOS_FMT( pattern, "Local mesh size", result.getMainMesh()->GetNumberOfCells() ) );
     for( auto const & [faceName, faceMesh]: result.getFaceBlocks() )
     {
       messages.push_back( GEOS_FMT( pattern, faceName, faceMesh->GetNumberOfCells() ) );
     }
-    GEOS_LOG_RANK( stringutilities::join( messages, ", " ) );
+    if( logLevel >= 5 )
+    {
+      GEOS_LOG_RANK( stringutilities::join( messages, ", " ) );
+    }
   }
 
   return result;
@@ -1033,7 +1043,7 @@ geos::ElementType buildGeosxPolyhedronType( vtkCell * const cell )
     case 11: return geos::ElementType::Prism11;
     default:
     {
-      GEOS_ERROR( "Prism with " << numQuads << " sides is not supported." );
+      GEOS_ERROR( "Prism with " << numQuads << " sides is not supported." << generalMeshErrorAdvice );
       return{};
     }
   }
@@ -1063,7 +1073,8 @@ ElementType convertVtkToGeosxElementType( vtkCell *cell )
     case VTK_POLYHEDRON:       return buildGeosxPolyhedronType( cell );
     default:
     {
-      GEOS_ERROR( cell->GetCellType() << " is not a recognized cell type to be used with the VTKMeshGenerator" );
+      GEOS_ERROR( cell->GetCellType() << " is not a recognized cell type to be used with the VTKMeshGenerator" <<
+                  generalMeshErrorAdvice );
       return {};
     }
   }
@@ -1387,7 +1398,7 @@ std::vector< localIndex > getWedgeNodeOrderingFromPolyhedron( vtkCell * const ce
     }
   }
 
-  GEOS_ERROR_IF( iFace == numFaces, "Invalid wedge." );
+  GEOS_ERROR_IF( iFace == numFaces, "Invalid wedge." << generalMeshErrorAdvice );
 
   // Get global pointIds for the first triangle
   for( localIndex i = 0; i < 3; ++i )
@@ -1482,7 +1493,7 @@ std::vector< localIndex > getPyramidNodeOrderingFromPolyhedron( vtkCell * const 
     }
   }
 
-  GEOS_ERROR_IF( iFace == numFaces, "Invalid pyramid." );
+  GEOS_ERROR_IF( iFace == numFaces, "Invalid pyramid." << generalMeshErrorAdvice );
 
   // Get global pointIds for the base
   vtkCell * cellFace = cell->GetFace( iFace );
@@ -1556,7 +1567,7 @@ std::vector< localIndex > getPrismNodeOrderingFromPolyhedron( vtkCell * const ce
     }
   }
 
-  GEOS_ERROR_IF( iFace == numFaces, "Invalid prism." );
+  GEOS_ERROR_IF( iFace == numFaces, "Invalid prism." << generalMeshErrorAdvice );
 
   // Get global pointIds for the first base
   vtkCell *cellFace = cell->GetFace( iFace );
@@ -2053,10 +2064,10 @@ real64 writeNodes( integer const logLevel,
     // TODO: remove this check once the input mesh is cleaned of duplicate points via a filter
     //       and make launch policy parallel again
     GEOS_ERROR_IF( nodeGlobalIds.count( pointGlobalID ) > 0,
-                   GEOS_FMT( "Duplicate point detected: globalID = {}\n"
-                             "Consider cleaning the dataset in Paraview using 'Clean to grid' filter.\n"
-                             "Make sure partitionRefinement is set to 1 or higher (this may help).",
-                             pointGlobalID ) );
+                   GEOS_FMT( "At least one duplicate point detected (globalID = {}).{}\n"
+                             "Potential fixes :\n- Consider cleaning the dataset in Paraview using 'Clean to grid' filter.\n"
+                             "- Make sure partitionRefinement is set to 1 or higher.",
+                             pointGlobalID, generalMeshErrorAdvice ) );
     nodeGlobalIds.insert( pointGlobalID );
   } );
 
