@@ -148,7 +148,7 @@ public:
    * @param[in] currentDt the current time step size
    * @return the prescribed time step size
    */
-  real64 setNextDtBasedOnNewtonIter( real64 const & currentDt );
+  virtual real64 setNextDtBasedOnNewtonIter( real64 const & currentDt );
 
   /**
    * @brief function to set the next dt based on state change

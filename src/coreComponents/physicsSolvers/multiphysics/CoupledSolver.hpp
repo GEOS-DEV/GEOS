@@ -318,6 +318,18 @@ public:
     return nextDt;
   }
 
+  virtual real64 setNextDtBasedOnNewtonIter( real64 const & currentDt ) override
+  {
+    real64 nextDt = SolverBase::setNextDtBasedOnNewtonIter( currentDt );
+    forEachArgInTuple( m_solvers, [&]( auto & solver, auto )
+    {
+      real64 const singlePhysicsNextDt =
+        solver->setNextDtBasedOnNewtonIter( currentDt );
+      nextDt = LvArray::math::min( singlePhysicsNextDt, nextDt );
+    } );
+    return nextDt;
+  }
+
   virtual void cleanup( real64 const time_n,
                         integer const cycleNumber,
                         integer const eventCounter,
