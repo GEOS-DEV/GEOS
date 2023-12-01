@@ -308,7 +308,7 @@ protected:
 
   static real64 constexpr time = 0.0;
   static real64 constexpr dt = 1e4;
-  static real64 constexpr eps = 10*std::numeric_limits< real64 >::epsilon();
+  static real64 constexpr eps = std::numeric_limits< real64 >::epsilon();
 
   GeosxState state;
   CompositionalMultiphaseFVM * solver;
