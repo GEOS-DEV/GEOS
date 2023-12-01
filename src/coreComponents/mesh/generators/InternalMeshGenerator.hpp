@@ -16,17 +16,16 @@
  * @file InternalMeshGenerator.hpp
  */
 
-#ifndef GEOS_MESH_GENERATORS_INTERNALMESHGENERATOR_HPP
-#define GEOS_MESH_GENERATORS_INTERNALMESHGENERATOR_HPP
+#ifndef GEOSX_MESH_GENERATORS_INTERNALMESHGENERATOR_HPP
+#define GEOSX_MESH_GENERATORS_INTERNALMESHGENERATOR_HPP
 
 #include "codingUtilities/EnumStrings.hpp"
 #include "mesh/generators/MeshGeneratorBase.hpp"
-#include "mesh/generators/CellBlockManager.hpp"
-#include "mesh/mpiCommunications/SpatialPartition.hpp"
 
-namespace geos
+namespace geosx
 {
 
+class SpatialPartition;
 
 /**
  * @class InternalMeshGenerator
@@ -51,19 +50,7 @@ public:
    */
   static string catalogName() { return "InternalMesh"; }
 
-
-  void importFieldOnArray( Block block,
-                           string const & blockName,
-                           string const & meshFieldName,
-                           bool isMaterialField,
-                           dataRepository::WrapperBase & wrapper ) const override
-  {
-    GEOS_UNUSED_VAR( block );
-    GEOS_UNUSED_VAR( blockName );
-    GEOS_UNUSED_VAR( meshFieldName );
-    GEOS_UNUSED_VAR( isMaterialField );
-    GEOS_UNUSED_VAR( wrapper );
-  }
+  virtual void generateMesh( DomainPartition & domain ) override;
 
   /**
    * @return Whether or not a Cartesian mesh is being generated.
@@ -81,7 +68,7 @@ public:
   virtual void reduceNumNodesForPeriodicBoundary( SpatialPartition & partition,
                                                   integer (& numNodes) [3] )
   {
-    GEOS_UNUSED_VAR( partition, numNodes );
+    GEOSX_UNUSED_VAR( partition, numNodes );
   };
 
   /**
@@ -96,7 +83,7 @@ public:
   setNodeGlobalIndicesOnPeriodicBoundary( SpatialPartition & partition,
                                           int (& index)[3] )
   {
-    GEOS_UNUSED_VAR( partition, index );
+    GEOSX_UNUSED_VAR( partition, index );
   }
 
   /**
@@ -111,7 +98,7 @@ public:
                                                      int const ( &firstElemIndexInPartition )[3],
                                                      localIndex ( & nodeOfBox )[8] )
   {
-    GEOS_UNUSED_VAR( globalIJK, numNodesInDir, firstElemIndexInPartition, nodeOfBox );
+    GEOSX_UNUSED_VAR( globalIJK, numNodesInDir, firstElemIndexInPartition, nodeOfBox );
   }
 
   /**
@@ -135,8 +122,8 @@ public:
    */
   virtual void coordinateTransformation( arrayView2d< real64, nodes::REFERENCE_POSITION_USD > X, std::map< string, SortedArray< localIndex > > & nodeSets )
   {
-    GEOS_UNUSED_VAR( X );
-    GEOS_UNUSED_VAR( nodeSets );
+    GEOSX_UNUSED_VAR( X );
+    GEOSX_UNUSED_VAR( nodeSets );
   }
 
 
@@ -202,7 +189,7 @@ private:
   array1d< integer > m_lastElemIndexForBlock[3];
 
   /// Array of number of elements per direction
-  globalIndex m_numElemsTotal[3];
+  integer m_numElemsTotal[3];
 
   /// String array listing the element type present
   array1d< string > m_elementType;
@@ -263,15 +250,13 @@ private:
 
 
 
-  virtual void fillCellBlockManager( CellBlockManager & cellBlockManager, SpatialPartition & partition ) override;
-
   /**
    * @brief Convert ndim node spatialized index to node global index.
    * @param[in] node ndim spatialized array index
    */
   inline globalIndex nodeGlobalIndex( int const index[3] )
   {
-    return index[0]*(m_numElemsTotal[1]+1)*(m_numElemsTotal[2]+1) + index[1]*(m_numElemsTotal[2]+1) + index[2];
+    return index[0] + index[1]*(m_numElemsTotal[0]+1) + index[2]*(m_numElemsTotal[0]+1)*(m_numElemsTotal[1]+1);
   }
 
   /**
@@ -280,7 +265,7 @@ private:
    */
   inline globalIndex elemGlobalIndex( int const index[3] )
   {
-    return index[0]*m_numElemsTotal[1]*m_numElemsTotal[2] + index[1]*m_numElemsTotal[2] + index[2];
+    return index[0] + index[1]*m_numElemsTotal[0] + index[2]*m_numElemsTotal[0]*m_numElemsTotal[1];
   }
 
   /**
@@ -345,11 +330,7 @@ private:
           // Verify that the bias is non-zero and applied to more than one block:
           if( ( !isZero( m_nElemBias[i][block] ) ) && (m_nElems[i][block]>1))
           {
-            GEOS_ERROR_IF( fabs( m_nElemBias[i][block] ) >= 1,
-                           getWrapperDataContext( i == 0 ? viewKeyStruct::xBiasString() :
-                                                  i == 1 ? viewKeyStruct::yBiasString() :
-                                                  viewKeyStruct::zBiasString() ) <<
-                           ", block index = " << block << " : Mesh bias must between -1 and 1!" );
+            GEOSX_ERROR_IF( fabs( m_nElemBias[i][block] ) >= 1, "Mesh bias must between -1 and 1!" );
 
             real64 len = max -  min;
             real64 xmean = len / m_nElems[i][block];
@@ -388,6 +369,6 @@ public:
 
 };
 
-} /* namespace geos */
+} /* namespace geosx */
 
-#endif /* GEOS_MESH_GENERATORS_INTERNALMESHGENERATOR_HPP */
+#endif /* GEOSX_MESH_GENERATORS_INTERNALMESHGENERATOR_HPP */
