@@ -20,15 +20,18 @@
 #define GEOS_CONSTITUTIVE_FLUID_MULTIFLUID_COMPOSITIONAL_FUNCTIONS_NEGATIVETWOPHASEFLASH_HPP_
 
 #include "common/DataTypes.hpp"
-#include "CubicEOSPhaseModel.hpp"
 #include "RachfordRice.hpp"
 #include "KValueInitialization.hpp"
 #include "constitutive/fluid/multifluid/MultiFluidConstants.hpp"
+#include "constitutive/fluid/multifluid/compositional/models/ComponentProperties.hpp"
 
 namespace geos
 {
 
 namespace constitutive
+{
+
+namespace compositional
 {
 
 struct NegativeTwoPhaseFlash
@@ -40,10 +43,7 @@ public:
    * @param[in] pressure pressure
    * @param[in] temperature temperature
    * @param[in] composition composition of the mixture
-   * @param[in] criticalPressure critical pressures
-   * @param[in] criticalTemperature critical temperatures
-   * @param[in] acentricFactor acentric factors
-   * @param[in] binaryInteractionCoefficients binary coefficients (currently not implemented)
+   * @param[in] componentProperties The compositional component properties
    * @param[out] vapourPhaseMoleFraction the calculated vapour (gas) mole fraction
    * @param[out] liquidComposition the calculated liquid phase composition
    * @param[out] vapourComposition the calculated vapour phase composition
@@ -55,10 +55,7 @@ public:
                        real64 const pressure,
                        real64 const temperature,
                        arrayView1d< real64 const > const composition,
-                       arrayView1d< real64 const > const criticalPressure,
-                       arrayView1d< real64 const > const criticalTemperature,
-                       arrayView1d< real64 const > const acentricFactor,
-                       real64 const & binaryInteractionCoefficients,
+                       ComponentProperties::KernelWrapper const & componentProperties,
                        real64 & vapourPhaseMoleFraction,
                        arrayView1d< real64 > const liquidComposition,
                        arrayView1d< real64 > const vapourComposition )
@@ -91,9 +88,7 @@ public:
     KValueInitialization::computeWilsonGasLiquidKvalue( numComps,
                                                         pressure,
                                                         temperature,
-                                                        criticalPressure,
-                                                        criticalTemperature,
-                                                        acentricFactor,
+                                                        componentProperties,
                                                         kVapourLiquid );
 
     bool converged = false;
@@ -113,24 +108,18 @@ public:
       normalizeComposition( numComps, vapourComposition );
 
       // Compute the phase fugacities
-      CubicEOSPhaseModel< EOS_TYPE_LIQUID >::compute( numComps,
-                                                      pressure,
-                                                      temperature,
-                                                      liquidComposition,
-                                                      criticalPressure,
-                                                      criticalTemperature,
-                                                      acentricFactor,
-                                                      binaryInteractionCoefficients,
-                                                      logLiquidFugacity );
-      CubicEOSPhaseModel< EOS_TYPE_VAPOUR >::compute( numComps,
-                                                      pressure,
-                                                      temperature,
-                                                      vapourComposition,
-                                                      criticalPressure,
-                                                      criticalTemperature,
-                                                      acentricFactor,
-                                                      binaryInteractionCoefficients,
-                                                      logVapourFugacity );
+      EOS_TYPE_LIQUID::computeLogFugacityCoefficients( numComps,
+                                                       pressure,
+                                                       temperature,
+                                                       liquidComposition,
+                                                       componentProperties,
+                                                       logLiquidFugacity );
+      EOS_TYPE_VAPOUR::computeLogFugacityCoefficients( numComps,
+                                                       pressure,
+                                                       temperature,
+                                                       vapourComposition,
+                                                       componentProperties,
+                                                       logVapourFugacity );
 
       // Compute fugacity ratios and check convergence
       converged = true;
@@ -202,6 +191,8 @@ private:
     return totalMoles;
   }
 };
+
+} // namespace compositional
 
 } // namespace constitutive
 
