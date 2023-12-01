@@ -20,6 +20,7 @@
 #define GEOS_PHYSICSSOLVERS_WAVEPROPAGATION_ELASTICWAVEEQUATIONSEMKERNEL_HPP_
 
 #include "finiteElement/kernelInterface/KernelBase.hpp"
+#include "WaveSolverKernelBase.hpp"
 #include "WaveSolverUtils.hpp"
 
 
@@ -371,20 +372,16 @@ struct DampingMatrixKernel
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
           typename FE_TYPE >
-class ExplicitElasticSEM : public finiteElement::KernelBase< SUBREGION_TYPE,
-                                                             CONSTITUTIVE_TYPE,
-                                                             FE_TYPE,
-                                                             1,
-                                                             1 >
+class ExplicitElasticSEM : public finiteElement::WaveSolverKernelBase< SUBREGION_TYPE,
+                                                                       CONSTITUTIVE_TYPE,
+                                                                       FE_TYPE >
 {
 public:
 
   /// Alias for the base class;
-  using Base = finiteElement::KernelBase< SUBREGION_TYPE,
-                                          CONSTITUTIVE_TYPE,
-                                          FE_TYPE,
-                                          1,
-                                          1 >;
+  using Base = finiteElement::WaveSolverKernelBase< SUBREGION_TYPE,
+                                                    CONSTITUTIVE_TYPE,
+                                                    FE_TYPE >;
 
   /// Number of nodes per element...which is equal to the
   /// numTestSupportPointPerElem and numTrialSupportPointPerElem by definition.
@@ -449,10 +446,17 @@ public:
 public:
     GEOS_HOST_DEVICE
     StackVariables():
-      xLocal()
+      Base::StackVariables(),
+      xLocal(),
+      stiffnessVectorxLocal(),
+      stiffnessVectoryLocal(),
+      stiffnessVectorzLocal()
     {}
     /// C-array stack storage for element local the nodal positions.
-    real64 xLocal[ numNodesPerElem ][ 3 ]{};
+    real64 xLocal[ 8 ][ 3 ]{};
+    real32 stiffnessVectorxLocal[ numNodesPerElem ]; 
+    real32 stiffnessVectoryLocal[ numNodesPerElem ]; 
+    real32 stiffnessVectorzLocal[ numNodesPerElem ]; 
     real32 mu=0;
     real32 lambda=0;
   };
@@ -470,9 +474,9 @@ public:
               StackVariables & stack ) const
   {
     /// numDofPerTrialSupportPoint = 1
-    for( localIndex a=0; a< numNodesPerElem; ++a )
+    for( localIndex a=0; a< 8; a++ )
     {
-      localIndex const nodeIndex = m_elemsToNodes( k, a );
+      localIndex const nodeIndex = FE_TYPE::meshIndexToLinearIndex3D( a );
       for( int i=0; i< 3; ++i )
       {
         stack.xLocal[ a ][ i ] = m_nodeCoords[ nodeIndex ][ i ];
@@ -483,20 +487,38 @@ public:
   }
 
   /**
+   * @copydoc geos::finiteElement::KernelBase::complete
+   */
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
+  real64 complete( localIndex const k,
+                   StackVariables & stack ) const
+  {
+    constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
+    for(int i=0;i<numNodesPerElem;i++)
+    {
+      RAJA::atomicAdd< parallelDeviceAtomic >( &m_stiffnessVectorx[m_elemsToNodes[k][i]], stack.stiffnessVectorxLocal[i] );
+      RAJA::atomicAdd< parallelDeviceAtomic >( &m_stiffnessVectory[m_elemsToNodes[k][i]], stack.stiffnessVectoryLocal[i] );
+      RAJA::atomicAdd< parallelDeviceAtomic >( &m_stiffnessVectorz[m_elemsToNodes[k][i]], stack.stiffnessVectorzLocal[i] );
+    }
+    return 0;
+  }
+
+  /**
    * @copydoc geos::finiteElement::KernelBase::quadraturePointKernel
    *
    * ### ExplicitElasticSEM Description
    * Calculates stiffness vector
    *
    */
+  template< localIndex q >
   GEOS_HOST_DEVICE
-  inline
+  GEOS_FORCE_INLINE
   void quadraturePointKernel( localIndex const k,
-                              localIndex const q,
                               StackVariables & stack ) const
   {
 
-    m_finiteElementSpace.template computeFirstOrderStiffnessTerm( q, stack.xLocal, [&] ( int i, int j, real64 val, real64 J[3][3], int p, int r )
+    m_finiteElementSpace.template computeFirstOrderStiffnessTerm< q > (stack.xLocal, [&] ( int i, int j, real64 val, real64 J[3][3], int p, int r )
     {
       real32 const Rxx_ij = val*((stack.lambda+2.0*stack.mu)*J[p][0]*J[r][0]+stack.mu*(J[p][1]*J[r][1]+J[p][2]*J[r][2]));
       real32 const Ryy_ij = val*((stack.lambda+2.0*stack.mu)*J[p][1]*J[r][1]+stack.mu*(J[p][0]*J[r][0]+J[p][2]*J[r][2]));
@@ -512,9 +534,9 @@ public:
       real32 const localIncrementy = (Ryx_ij * m_ux_n[m_elemsToNodes[k][j]] + Ryy_ij*m_uy_n[m_elemsToNodes[k][j]] + Ryz_ij*m_uz_n[m_elemsToNodes[k][j]]);
       real32 const localIncrementz = (Rzx_ij * m_ux_n[m_elemsToNodes[k][j]] + Rzy_ij*m_uy_n[m_elemsToNodes[k][j]] + Rzz_ij*m_uz_n[m_elemsToNodes[k][j]]);
 
-      RAJA::atomicAdd< parallelDeviceAtomic >( &m_stiffnessVectorx[m_elemsToNodes[k][i]], localIncrementx );
-      RAJA::atomicAdd< parallelDeviceAtomic >( &m_stiffnessVectory[m_elemsToNodes[k][i]], localIncrementy );
-      RAJA::atomicAdd< parallelDeviceAtomic >( &m_stiffnessVectorz[m_elemsToNodes[k][i]], localIncrementz );
+      stack.stiffnessVectorxLocal[ i ] += localIncrementx;
+      stack.stiffnessVectoryLocal[ i ] += localIncrementy;
+      stack.stiffnessVectorzLocal[ i ] += localIncrementz;
     } );
   }
 

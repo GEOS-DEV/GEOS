@@ -20,6 +20,7 @@
 #define GEOS_PHYSICSSOLVERS_WAVEPROPAGATION_ACOUSTICWAVEEQUATIONSEMKERNEL_HPP_
 
 #include "finiteElement/kernelInterface/KernelBase.hpp"
+#include "WaveSolverKernelBase.hpp"
 #include "WaveSolverUtils.hpp"
 #if !defined( GEOS_USE_HIP )
 #include "finiteElement/elementFormulations/Qk_Hexahedron_Lagrange_GaussLobatto.hpp"
@@ -220,9 +221,10 @@ struct MassMatrixKernel
       real64 xLocal[ numNodesPerElem ][ 3 ];
       for( localIndex a = 0; a < numNodesPerElem; ++a )
       {
+        localIndex const nodeIndex = elemsToNodes( e, a);
         for( localIndex i = 0; i < 3; ++i )
         {
-          xLocal[a][i] = nodeCoords( elemsToNodes( e, a ), i );
+          xLocal[a][i] = nodeCoords( elemsToNodes( e, nodeIndex ), i );
         }
       }
 
@@ -686,20 +688,16 @@ struct waveSpeedPMLKernel
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
           typename FE_TYPE >
-class ExplicitAcousticSEM : public finiteElement::KernelBase< SUBREGION_TYPE,
-                                                              CONSTITUTIVE_TYPE,
-                                                              FE_TYPE,
-                                                              1,
-                                                              1 >
+class ExplicitAcousticSEM : public finiteElement::WaveSolverKernelBase< SUBREGION_TYPE,
+                                                                        CONSTITUTIVE_TYPE,
+                                                                        FE_TYPE >
 {
 public:
 
   /// Alias for the base class;
-  using Base = finiteElement::KernelBase< SUBREGION_TYPE,
-                                          CONSTITUTIVE_TYPE,
-                                          FE_TYPE,
-                                          1,
-                                          1 >;
+  using Base = finiteElement::WaveSolverKernelBase< SUBREGION_TYPE,
+                                                    CONSTITUTIVE_TYPE,
+                                                    FE_TYPE >;
 
   /// Maximum number of nodes per element, which is equal to the maxNumTestSupportPointPerElem and
   /// maxNumTrialSupportPointPerElem by definition. When the FE_TYPE is not a Virtual Element, this
@@ -758,13 +756,14 @@ public:
 public:
     GEOS_HOST_DEVICE
     StackVariables():
+      Base::StackVariables(),
       xLocal(),
       stiffnessVectorLocal()
     {}
 
     /// C-array stack storage for element local the nodal positions.
-    real64 xLocal[ numNodesPerElem ][ 3 ];
-    real32 stiffnessVectorLocal[ numNodesPerElem ]; 
+    real64 xLocal[ 8 ][ 3 ];
+    real32 stiffnessVectorLocal[ numNodesPerElem ]{}; 
   };
   //***************************************************************************
 
@@ -780,14 +779,13 @@ public:
               StackVariables & stack ) const
   {
     /// numDofPerTrialSupportPoint = 1
-    for( localIndex a=0; a< numNodesPerElem; ++a )
+    for( localIndex a=0; a< 8; a++ )
     {
-      localIndex const nodeIndex = m_elemsToNodes( k, a );
+      localIndex const nodeIndex = FE_TYPE::meshIndexToLinearIndex3D( a );
       for( int i=0; i< 3; ++i )
       {
         stack.xLocal[ a ][ i ] = m_nodeCoords[ nodeIndex ][ i ];
       }
-      stack.stiffnessVectorLocal[ a ] = 0;
     }
   }
 
@@ -795,7 +793,7 @@ public:
    * @copydoc geos::finiteElement::KernelBase::complete
    */
   GEOS_HOST_DEVICE
-  inline
+  GEOS_FORCE_INLINE
   real64 complete( localIndex const k,
                    StackVariables & stack ) const
   {
@@ -815,13 +813,13 @@ public:
    * Calculates stiffness vector
    *
    */
+  template< localIndex q >
   GEOS_HOST_DEVICE
-  inline
+  GEOS_FORCE_INLINE
   void quadraturePointKernel( localIndex const k,
-                              localIndex const q,
                               StackVariables & stack ) const
   {
-    m_finiteElementSpace.template computeStiffnessTerm( q, stack.xLocal, [&] ( int i, int j, real64 val )
+    m_finiteElementSpace.template computeStiffnessTerm< q >( stack.xLocal, [&] ( int i, int j, real64 val )
     {
       real32 invDensity = 1./m_density[k];
       real32 const localIncrement = invDensity*val*m_p_n[m_elemsToNodes[k][j]];

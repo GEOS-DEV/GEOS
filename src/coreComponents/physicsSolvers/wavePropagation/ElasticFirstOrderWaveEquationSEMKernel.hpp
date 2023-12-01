@@ -369,11 +369,19 @@ struct StressComputation
       constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
       constexpr localIndex numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
       real64 xLocal[numNodesPerElem][3];
+      real64 xLocalMesh[8][3];
       for( localIndex a=0; a< numNodesPerElem; ++a )
       {
         for( localIndex i=0; i<3; ++i )
         {
           xLocal[a][i] = nodeCoords( elemsToNodes( k, a ), i );
+        }
+      }
+      for( localIndex a=0; a< 8; ++a )
+      {
+        for( localIndex i=0; i<3; ++i )
+        {
+          xLocalMesh[a][i] = nodeCoords( elemsToNodes( k, FE_TYPE::meshIndexToLinearIndex3D( a ) ), i );
         }
       }
 
@@ -406,11 +414,11 @@ struct StressComputation
         uelemyz[i] = massLoc*stressyz[k][i];
       }
 
-      for( localIndex q=0; q<numQuadraturePointsPerElem; ++q )
+      FE_TYPE::constForOnCell( [&] (auto q)
       {
 
         //Volume integral
-        m_finiteElement.template computeFirstOrderStiffnessTermX( q, xLocal, [&] ( int i, int j, real32 dfx1, real32 dfx2, real32 dfx3 )
+        m_finiteElement.template computeFirstOrderStiffnessTermX< q >( xLocalMesh, [&] ( int i, int j, real32 dfx1, real32 dfx2, real32 dfx3 )
         {
           auxx[j]+= dfx1*ux_np1[elemsToNodes[k][i]];
           auyy[j]+= dfx2*uy_np1[elemsToNodes[k][i]];
@@ -421,7 +429,7 @@ struct StressComputation
 
         } );
 
-        m_finiteElement.template computeFirstOrderStiffnessTermY( q, xLocal, [&] ( int i, int j, real32 dfy1, real32 dfy2, real32 dfy3 )
+        m_finiteElement.template computeFirstOrderStiffnessTermY< q >( xLocalMesh, [&] ( int i, int j, real32 dfy1, real32 dfy2, real32 dfy3 )
         {
           auxx[j]+= dfy1*ux_np1[elemsToNodes[k][i]];
           auyy[j]+= dfy2*uy_np1[elemsToNodes[k][i]];
@@ -432,7 +440,7 @@ struct StressComputation
 
         } );
 
-        m_finiteElement.template computeFirstOrderStiffnessTermZ( q, xLocal, [&] ( int i, int j, real32 dfz1, real32 dfz2, real32 dfz3 )
+        m_finiteElement.template computeFirstOrderStiffnessTermZ< q >( xLocalMesh, [&] ( int i, int j, real32 dfz1, real32 dfz2, real32 dfz3 )
         {
           auxx[j]+= dfz1*ux_np1[elemsToNodes[k][i]];
           auyy[j]+= dfz2*uy_np1[elemsToNodes[k][i]];
@@ -443,7 +451,7 @@ struct StressComputation
 
         } );
 
-      }
+      } );
       //Time integration
       for( localIndex i = 0; i < numNodesPerElem; ++i )
       {
@@ -545,12 +553,13 @@ struct VelocityComputation
       constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
       constexpr localIndex numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
 
-      real64 xLocal[numNodesPerElem][3];
-      for( localIndex a=0; a< numNodesPerElem; ++a )
+      real64 xLocal[8][3];
+      for( localIndex a=0; a< 8; ++a )
       {
+        localIndex const nodeIndex = FE_TYPE::meshIndexToLinearIndex3D( a );
         for( localIndex i=0; i<3; ++i )
         {
-          xLocal[a][i] = nodeCoords( elemsToNodes( k, a ), i );
+          xLocal[a][i] = nodeCoords( elemsToNodes( k, nodeIndex ), i );
         }
       }
 
@@ -561,12 +570,12 @@ struct VelocityComputation
       real32 flowy[numNodesPerElem] = {0.0};
       real32 flowz[numNodesPerElem] = {0.0};
 
-      for( localIndex q=0; q<numQuadraturePointsPerElem; ++q )
+      FE_TYPE::constForOnCell( [&] (auto q)
       {
 
 
         // Stiffness part
-        m_finiteElement.template computeFirstOrderStiffnessTermX( q, xLocal, [&] ( int i, int j, real32 dfx1, real32 dfx2, real32 dfx3 )
+        m_finiteElement.template computeFirstOrderStiffnessTermX< q >( xLocal, [&] ( int i, int j, real32 dfx1, real32 dfx2, real32 dfx3 )
         {
           flowx[i] -= stressxx[k][j]*dfx1 + stressxy[k][j]*dfx2 + stressxz[k][j]*dfx3;
           flowy[i] -= stressxy[k][j]*dfx1 + stressyy[k][j]*dfx2 + stressyz[k][j]*dfx3;
@@ -574,21 +583,21 @@ struct VelocityComputation
 
         } );
 
-        m_finiteElement.template computeFirstOrderStiffnessTermY( q, xLocal, [&] ( int i, int j, real32 dfy1, real32 dfy2, real32 dfy3 )
+        m_finiteElement.template computeFirstOrderStiffnessTermY< q >( xLocal, [&] ( int i, int j, real32 dfy1, real32 dfy2, real32 dfy3 )
         {
           flowx[i] -= stressxx[k][j]*dfy1 + stressxy[k][j]*dfy2 + stressxz[k][j]*dfy3;
           flowy[i] -= stressxy[k][j]*dfy1 + stressyy[k][j]*dfy2 + stressyz[k][j]*dfy3;
           flowz[i] -= stressxz[k][j]*dfy1 + stressyz[k][j]*dfy2 + stresszz[k][j]*dfy3;
         } );
 
-        m_finiteElement.template computeFirstOrderStiffnessTermZ( q, xLocal, [&] ( int i, int j, real32 dfz1, real32 dfz2, real32 dfz3 )
+        m_finiteElement.template computeFirstOrderStiffnessTermZ< q >( xLocal, [&] ( int i, int j, real32 dfz1, real32 dfz2, real32 dfz3 )
         {
           flowx[i] -= stressxx[k][j]*dfz1 + stressxy[k][j]*dfz2 + stressxz[k][j]*dfz3;
           flowy[i] -= stressxy[k][j]*dfz1 + stressyy[k][j]*dfz2 + stressyz[k][j]*dfz3;
           flowz[i] -= stressxz[k][j]*dfz1 + stressyz[k][j]*dfz2 + stresszz[k][j]*dfz3;
         } );
 
-      }
+      } );
       // Time update
       for( localIndex i = 0; i < numNodesPerElem; ++i )
       {

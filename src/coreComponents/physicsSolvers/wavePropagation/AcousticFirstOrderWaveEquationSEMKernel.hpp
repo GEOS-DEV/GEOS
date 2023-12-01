@@ -1,7 +1,7 @@
 /*
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
- *
+ *                                                                    int q,int q,int q,int q,int q,int q,int q,
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
  * Copyright (c) 2018-2020 TotalEnergies
@@ -363,11 +363,19 @@ struct VelocityComputation
       constexpr localIndex numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
 
       real64 xLocal[numNodesPerElem][3];
+      real64 xLocalMesh[8][3];
       for( localIndex a=0; a< numNodesPerElem; ++a )
       {
         for( localIndex i=0; i<3; ++i )
         {
           xLocal[a][i] = nodeCoords( elemsToNodes( k, a ), i );
+        }
+      }
+      for( localIndex a=0; a< 8; ++a )
+      {
+        for( localIndex i=0; i<3; ++i )
+        {
+          xLocalMesh[a][i] = nodeCoords( elemsToNodes( k, FE_TYPE::meshIndexToLinearIndex3D( a ) ), i );
         }
       }
 
@@ -386,26 +394,24 @@ struct VelocityComputation
         uelemz[i] = massLoc*velocity_z[k][i];
       }
 
-      for( localIndex q=0; q<numQuadraturePointsPerElem; ++q )
+      FE_TYPE::constForOnCell( [&] (auto q)
       {
 
-
-
-        m_finiteElement.template computeFirstOrderStiffnessTermX( q, xLocal, [&] ( int i, int j, real32 dfx1, real32 dfx2, real32 dfx3 )
+        m_finiteElement.template computeFirstOrderStiffnessTermX< q >( xLocalMesh, [&] ( int i, int j, real32 dfx1, real32 dfx2, real32 dfx3 )
         {
           flowx[j] += dfx1*p_np1[elemsToNodes[k][i]];
           flowy[j] += dfx2*p_np1[elemsToNodes[k][i]];
           flowz[j] += dfx3*p_np1[elemsToNodes[k][i]];
         } );
 
-        m_finiteElement.template computeFirstOrderStiffnessTermY( q, xLocal, [&] ( int i, int j, real32 dfy1, real32 dfy2, real32 dfy3 )
+        m_finiteElement.template computeFirstOrderStiffnessTermY< q >( xLocalMesh, [&] ( int i, int j, real32 dfy1, real32 dfy2, real32 dfy3 )
         {
           flowx[j] += dfy1*p_np1[elemsToNodes[k][i]];
           flowy[j] += dfy2*p_np1[elemsToNodes[k][i]];
           flowz[j] += dfy3*p_np1[elemsToNodes[k][i]];
         } );
 
-        m_finiteElement.template computeFirstOrderStiffnessTermZ( q, xLocal, [&] ( int i, int j, real32 dfz1, real32 dfz2, real32 dfz3 )
+        m_finiteElement.template computeFirstOrderStiffnessTermZ< q >( xLocalMesh, [&] ( int i, int j, real32 dfz1, real32 dfz2, real32 dfz3 )
         {
           flowx[j] += dfz1*p_np1[elemsToNodes[k][i]];
           flowy[j] += dfz2*p_np1[elemsToNodes[k][i]];
@@ -413,7 +419,7 @@ struct VelocityComputation
 
         } );
 
-      }
+      } );
       for( localIndex i = 0; i < numNodesPerElem; ++i )
       {
         real32 massLoc = m_finiteElement.computeMassTerm( i, xLocal );
@@ -497,12 +503,13 @@ struct PressureComputation
       constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
       constexpr localIndex numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
 
-      real64 xLocal[numNodesPerElem][3];
-      for( localIndex a=0; a< numNodesPerElem; ++a )
+      real64 xLocal[8][3];
+      for( localIndex a=0; a< 8; ++a )
       {
+        localIndex const nodeIndex = FE_TYPE::meshIndexToLinearIndex3D( a );
         for( localIndex i=0; i<3; ++i )
         {
-          xLocal[a][i] = nodeCoords( elemsToNodes( k, a ), i );
+          xLocal[a][i] = nodeCoords( elemsToNodes( k, nodeIndex ), i );
         }
       }
 
@@ -513,25 +520,25 @@ struct PressureComputation
 
 
       // Volume integration
-      for( localIndex q=0; q<numQuadraturePointsPerElem; ++q )
+      FE_TYPE::constForOnCell( [&] (auto q)
       {
 
 
-        m_finiteElement.template computeFirstOrderStiffnessTermX( q, xLocal, [&] ( int i, int j, real32 dfx1, real32 dfx2, real32 dfx3 )
+        m_finiteElement.template computeFirstOrderStiffnessTermX< q >( xLocal, [&] ( int i, int j, real32 dfx1, real32 dfx2, real32 dfx3 )
         {
           auxx[i] -= dfx1*velocity_x[k][j];
           auyy[i] -= dfx2*velocity_y[k][j];
           auzz[i] -= dfx3*velocity_z[k][j];
         } );
 
-        m_finiteElement.template computeFirstOrderStiffnessTermY( q, xLocal, [&] ( int i, int j, real32 dfy1, real32 dfy2, real32 dfy3 )
+        m_finiteElement.template computeFirstOrderStiffnessTermY< q >( xLocal, [&] ( int i, int j, real32 dfy1, real32 dfy2, real32 dfy3 )
         {
           auxx[i] -= dfy1*velocity_x[k][j];
           auyy[i] -= dfy2*velocity_y[k][j];
           auzz[i] -= dfy3*velocity_z[k][j];
         } );
 
-        m_finiteElement.template computeFirstOrderStiffnessTermZ( q, xLocal, [&] ( int i, int j, real32 dfz1, real32 dfz2, real32 dfz3 )
+        m_finiteElement.template computeFirstOrderStiffnessTermZ< q >( xLocal, [&] ( int i, int j, real32 dfz1, real32 dfz2, real32 dfz3 )
         {
           auxx[i] -= dfz1*velocity_x[k][j];
           auyy[i] -= dfz2*velocity_y[k][j];
@@ -540,7 +547,7 @@ struct PressureComputation
 
 
 
-      }
+      } );
 
       //Time update + multiplication by inverse of the mass matrix
       for( localIndex i = 0; i < numNodesPerElem; ++i )
