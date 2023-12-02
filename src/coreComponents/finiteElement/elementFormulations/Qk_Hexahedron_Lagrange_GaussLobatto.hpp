@@ -88,13 +88,15 @@ public:
   GEOS_FORCE_INLINE
   constexpr static localIndex linearIndex3D( const localIndex qa, localIndex const qb, localIndex const qc )
   {
-    return qc + qb * num1dNodes + qc * num2dNodes;
+    return qa + qb * num1dNodes + qc * num2dNodes;
   }
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
   constexpr static localIndex meshIndexToLinearIndex3D( localIndex k )
   {
-    return linearIndex3D( (k % 4) % 2, (k % 4 ) / 2, k / 4); 
+    return linearIndex3D( ( num1dNodes - 1 ) * ( ( k % 4 ) % 2 ), 
+                          ( num1dNodes - 1 ) * ( ( k % 4 ) / 2 ), 
+                          ( num1dNodes - 1 ) * ( k / 4 ) ); 
   }                                                     
 
   
@@ -174,19 +176,28 @@ public:
     return basis3DGradientAtQ( q, index3D( p, 0 ), index3D( p, 1 ), index3D( p, 2 ), i );
   }
 
+  // aggregate used to compute gradient values at compile-time
+  // we cannot use a std::array since its bracket accessors are not defined on device
+  struct gradArray
+  {
+    real64 data[num1dNodes][num1dNodes];
+  };
+
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
-  static constexpr auto basisGradientArray (){
-    std::array< std::array< double, num1dNodes >, num1dNodes > grad{};
+  constexpr static auto gradientArray()
+  {
+    gradArray grad{};
     for( int i=0; i<num1dNodes; i++ )
-     {
-       for( int j=0; j<num1dNodes; j++ )
-       {
-         grad[i][j] = basisGradientAtQ( i, j );
-       }
-     }
+    {
+      for( int j=0; j<num1dNodes; j++ )
+      {
+        grad.data[i][j] = basisGradientAtQ( i, j );
+      }
+    }
     return grad;
   }
+
 
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
@@ -207,11 +218,14 @@ public:
 
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
-  constexpr static real64 interpolationCoordinate3D( const int k, const localIndex q )
+  constexpr static real64 interpolationCoordinate3D( const int k,
+                                                     const localIndex qa,
+                                                     const localIndex qb,
+                                                     const localIndex qc )
   {
-    real64 const alpha = ( GL_BASIS::parentSupportCoord( index3D( q, 0 ) ) + 1.0 ) / 2.0;
-    real64 const beta = ( GL_BASIS::parentSupportCoord( index3D( q, 1 ) ) + 1.0 ) / 2.0;
-    real64 const gamma = ( GL_BASIS::parentSupportCoord( index3D( q, 2 ) ) + 1.0 ) / 2.0;
+    real64 const alpha = ( GL_BASIS::parentSupportCoord( qa ) + 1.0 ) / 2.0;
+    real64 const beta = ( GL_BASIS::parentSupportCoord( qb ) + 1.0 ) / 2.0;
+    real64 const gamma = ( GL_BASIS::parentSupportCoord( qc ) + 1.0 ) / 2.0;
     switch( k )
     {
     case 0:
@@ -252,7 +266,7 @@ public:
       {
         for( int a=0; a<num1dNodes; ++a )
         {
-          coeff += basis3DGradientAtQ( q, a, b, c, j ) * interpolationCoordinate3D( k, linearIndex3D( a, b, c ) ); 
+          coeff += basis3DGradientAtQ( q, a, b, c, j ) * interpolationCoordinate3D( k, a, b, c ); 
         } 
       } 
     }
@@ -1065,7 +1079,7 @@ jacobianTransformation( real64 const (&X)[8][3],
           { jacobian3DCoefficient( q,6,0),jacobian3DCoefficient( q,6,1),jacobian3DCoefficient( q,6,2)},
           { jacobian3DCoefficient( q,7,0),jacobian3DCoefficient( q,7,1),jacobian3DCoefficient( q,7,2)},
       };
-
+ 
   for(int k = 0; k < 8; k++)
   { 
       for(int i = 0; i < 3; i++)
@@ -1297,7 +1311,13 @@ computeGradPhiBGradPhi( real64 const (&B)[6],
   constexpr auto qa = index3D( q, 0 );
   constexpr auto qb = index3D( q, 1 );
   constexpr auto qc = index3D( q, 2 );
-  constexpr auto grad = basisGradientArray();
+  constexpr auto grad = gradientArray();
+  for( int i=0; i<num1dNodes; i++ )
+  {
+    for( int j=0; j<num1dNodes; j++ )
+    {
+    }
+  }
   for( int i=0; i<num1dNodes; i++ )
   {
     for( int j=0; j<num1dNodes; j++ )
@@ -1308,12 +1328,12 @@ computeGradPhiBGradPhi( real64 const (&B)[6],
       auto ajc = linearIndex3D( qa, j, qc );
       auto abi = linearIndex3D( qa, qb, i );
       auto abj = linearIndex3D( qa, qb, j );
-      auto gia = grad[ i ][ qa ]; 
-      auto gja = grad[ j ][ qa ]; 
-      auto gib = grad[ i ][ qb ]; 
-      auto gjb = grad[ j ][ qb ]; 
-      auto gic = grad[ i ][ qc ]; 
-      auto gjc = grad[ j ][ qc ]; 
+      auto gia = grad.data[ i ][ qa ]; 
+      auto gja = grad.data[ j ][ qa ]; 
+      auto gib = grad.data[ i ][ qb ]; 
+      auto gjb = grad.data[ j ][ qb ]; 
+      auto gic = grad.data[ i ][ qc ]; 
+      auto gjc = grad.data[ j ][ qc ]; 
       // diagonal terms
       auto w0 = w * gia * gja;
       func( ibc, jbc, w0 * B[0] );
@@ -1396,7 +1416,7 @@ computeFirstOrderStiffnessTerm( real64 const (&X)[8][3],
   constexpr auto qa = index3D( q, 0 );
   constexpr auto qb = index3D( q, 1 );
   constexpr auto qc = index3D( q, 2 );
-  constexpr auto grad = basisGradientArray();
+  constexpr auto grad = gradientArray();
   for( int i=0; i<num1dNodes; i++ )
   {
     for( int j=0; j<num1dNodes; j++ )
@@ -1407,12 +1427,12 @@ computeFirstOrderStiffnessTerm( real64 const (&X)[8][3],
       auto ajc = linearIndex3D( qa, j, qc );
       auto abi = linearIndex3D( qa, qb, i );
       auto abj = linearIndex3D( qa, qb, j );
-      auto gia = grad[ i ][ qa ]; 
-      auto gja = grad[ j ][ qa ]; 
-      auto gib = grad[ i ][ qb ]; 
-      auto gjb = grad[ j ][ qb ]; 
-      auto gic = grad[ i ][ qc ]; 
-      auto gjc = grad[ j ][ qc ]; 
+      auto gia = grad.data[ i ][ qa ]; 
+      auto gja = grad.data[ j ][ qa ]; 
+      auto gib = grad.data[ i ][ qb ]; 
+      auto gjb = grad.data[ j ][ qb ]; 
+      auto gic = grad.data[ i ][ qc ]; 
+      auto gjc = grad.data[ j ][ qc ]; 
       // diagonal terms
       auto w00 = w * gia * gja;
       func( ibc, jbc, w00 * detJ, J, 0, 0 );
@@ -1450,11 +1470,11 @@ computeFirstOrderStiffnessTermX( real64 const (&X)[8][3],
   constexpr auto qa = index3D( q, 0 );
   constexpr auto qb = index3D( q, 1 );
   constexpr auto qc = index3D( q, 2 );
-  constexpr auto grad = basisGradientArray();
+  constexpr auto grad = gradientArray();
 
   for( int i1 = 0; i1 < num1dNodes; ++i1 )
   {
-    auto val = w * grad[ i1 ][ qa ];
+    auto val = w * grad.data[ i1 ][ qa ];
     func( linearIndex3D( i1, qb, qc ), q, detJ*J[0][0]*val, detJ*J[0][1]*val, detJ*J[0][2]*val ); 
   }
 
@@ -1476,11 +1496,11 @@ computeFirstOrderStiffnessTermY( real64 const (&X)[8][3],
   constexpr auto qa = index3D( q, 0 );
   constexpr auto qb = index3D( q, 1 );
   constexpr auto qc = index3D( q, 2 );
-  constexpr auto grad = basisGradientArray();
+  constexpr auto grad = gradientArray();
 
   for( int i2 = 0; i2 < num1dNodes; ++i2 )
   {
-    auto val = w * grad[ i2 ][ qb ];
+    auto val = w * grad.data[ i2 ][ qb ];
     func( linearIndex3D( qa, i2, qc ), q, detJ*J[1][0]*val, detJ*J[1][1]*val, detJ*J[1][2]*val );
   }
 }
@@ -1501,11 +1521,11 @@ computeFirstOrderStiffnessTermZ( real64 const (&X)[8][3],
   constexpr auto qa = index3D( q, 0 );
   constexpr auto qb = index3D( q, 1 );
   constexpr auto qc = index3D( q, 2 );
-  constexpr auto grad = basisGradientArray();
+  constexpr auto grad = gradientArray();
 
   for( int i3 = 0; i3 < num1dNodes; ++i3 )
   {
-    auto val = w * grad[ i3 ][ qc ];
+    auto val = w * grad.data[ i3 ][ qc ];
     func( linearIndex3D( qa, qb, i3 ), q, detJ*J[2][0]*val, detJ*J[2][1]*val, detJ*J[2][2]*val );
   }
 }
