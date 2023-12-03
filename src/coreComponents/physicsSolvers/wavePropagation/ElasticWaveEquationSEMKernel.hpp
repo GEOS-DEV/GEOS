@@ -425,9 +425,9 @@ public:
     m_stiffnessVectorx( nodeManager.getField< fields::StiffnessVectorx >() ),
     m_stiffnessVectory( nodeManager.getField< fields::StiffnessVectory >() ),
     m_stiffnessVectorz( nodeManager.getField< fields::StiffnessVectorz >() ),
-    m_density( elementSubRegion.template getField< fields::MediumDensityE >() ),
-    m_velocityVp( elementSubRegion.template getField< fields::MediumVelocityVp >() ),
-    m_velocityVs( elementSubRegion.template getField< fields::MediumVelocityVs >() ),
+    m_density( elementSubRegion.template getField< fields::ElasticDensity >() ),
+    m_velocityVp( elementSubRegion.template getField< fields::ElasticVelocityVp >() ),
+    m_velocityVs( elementSubRegion.template getField< fields::ElasticVelocityVs >() ),
     m_dt( dt )
   {
     GEOS_UNUSED_VAR( edgeManager );

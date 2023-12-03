@@ -738,7 +738,7 @@ public:
     m_nodeCoords( nodeManager.getField< fields::referencePosition32 >() ),
     m_p_n( nodeManager.getField< fields::Pressure_n >() ),
     m_stiffnessVector( nodeManager.getField< fields::StiffnessVector >() ),
-    m_density( elementSubRegion.template getField< fields::MediumDensityA >() ),
+    m_density( elementSubRegion.template getField< fields::AcousticDensity >() ),
     m_dt( dt )
   {
     GEOS_UNUSED_VAR( edgeManager );

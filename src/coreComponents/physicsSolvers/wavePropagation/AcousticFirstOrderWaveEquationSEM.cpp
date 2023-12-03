@@ -96,19 +96,19 @@ void AcousticFirstOrderWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
 
     nodeManager.registerField< wavesolverfields::Pressure_np1,
                                wavesolverfields::ForcingRHS,
-                               wavesolverfields::MassVector,
+                               wavesolverfields::AcousticMassVector,
                                wavesolverfields::DampingVector,
-                               wavesolverfields::FreeSurfaceNodeIndicator >( getName() );
+                               wavesolverfields::AcousticFreeSurfaceNodeIndicator >( getName() );
 
     FaceManager & faceManager = mesh.getFaceManager();
-    faceManager.registerField< wavesolverfields::FreeSurfaceFaceIndicator >( getName() );
+    faceManager.registerField< wavesolverfields::AcousticFreeSurfaceFaceIndicator >( getName() );
 
     ElementRegionManager & elemManager = mesh.getElemManager();
 
     elemManager.forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion & subRegion )
     {
-      subRegion.registerField< wavesolverfields::MediumVelocity >( getName() );
-      subRegion.registerField< wavesolverfields::MediumDensity >( getName() );
+      subRegion.registerField< wavesolverfields::AcousticVelocity >( getName() );
+      subRegion.registerField< wavesolverfields::AcousticDensity >( getName() );
 
       subRegion.registerField< wavesolverfields::Velocity_x >( getName() );
       subRegion.registerField< wavesolverfields::Velocity_y >( getName() );
@@ -296,7 +296,7 @@ void AcousticFirstOrderWaveEquationSEM::initializePostInitialConditionsPreSubGro
     ArrayOfArraysView< localIndex const > const facesToNodes = faceManager.nodeList().toViewConst();
 
     // mass matrix to be computed in this function
-    arrayView1d< real32 > const mass = nodeManager.getField< wavesolverfields::MassVector >();
+    arrayView1d< real32 > const mass = nodeManager.getField< wavesolverfields::AcousticMassVector >();
 
     /// damping matrix to be computed for each dof in the boundary of the mesh
     arrayView1d< real32 > const damping = nodeManager.getField< wavesolverfields::DampingVector >();
@@ -304,15 +304,15 @@ void AcousticFirstOrderWaveEquationSEM::initializePostInitialConditionsPreSubGro
     mass.zero();
 
     /// get array of indicators: 1 if face is on the free surface; 0 otherwise
-    arrayView1d< localIndex const > const freeSurfaceFaceIndicator = faceManager.getField< wavesolverfields::FreeSurfaceFaceIndicator >();
+    arrayView1d< localIndex const > const freeSurfaceFaceIndicator = faceManager.getField< wavesolverfields::AcousticFreeSurfaceFaceIndicator >();
 
     mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                           CellElementSubRegion & elementSubRegion )
     {
       arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemsToNodes = elementSubRegion.nodeList();
       arrayView2d< localIndex const > const elemsToFaces = elementSubRegion.faceList();
-      arrayView1d< real32 const > const velocity = elementSubRegion.getField< wavesolverfields::MediumVelocity >();
-      arrayView1d< real32 const > const density = elementSubRegion.getField< wavesolverfields::MediumDensity >();
+      arrayView1d< real32 const > const velocity = elementSubRegion.getField< wavesolverfields::AcousticVelocity >();
+      arrayView1d< real32 const > const density = elementSubRegion.getField< wavesolverfields::AcousticDensity >();
 
       finiteElement::FiniteElementBase const &
       fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
@@ -360,10 +360,10 @@ void AcousticFirstOrderWaveEquationSEM::applyFreeSurfaceBC( real64 const time, D
   ArrayOfArraysView< localIndex const > const faceToNodeMap = faceManager.nodeList().toViewConst();
 
   /// array of indicators: 1 if a face is on on free surface; 0 otherwise
-  arrayView1d< localIndex > const freeSurfaceFaceIndicator = faceManager.getField< wavesolverfields::FreeSurfaceFaceIndicator >();
+  arrayView1d< localIndex > const freeSurfaceFaceIndicator = faceManager.getField< wavesolverfields::AcousticFreeSurfaceFaceIndicator >();
 
   /// array of indicators: 1 if a node is on on free surface; 0 otherwise
-  arrayView1d< localIndex > const freeSurfaceNodeIndicator = nodeManager.getField< wavesolverfields::FreeSurfaceNodeIndicator >();
+  arrayView1d< localIndex > const freeSurfaceNodeIndicator = nodeManager.getField< wavesolverfields::AcousticFreeSurfaceNodeIndicator >();
 
 
   freeSurfaceFaceIndicator.zero();
@@ -457,7 +457,7 @@ real64 AcousticFirstOrderWaveEquationSEM::explicitStepInternal( real64 const & t
 
     arrayView2d< wsCoordType const, nodes::REFERENCE_POSITION_USD > const X = nodeManager.getField< fields::referencePosition32 >().toViewConst();
 
-    arrayView1d< real32 const > const mass = nodeManager.getField< wavesolverfields::MassVector >();
+    arrayView1d< real32 const > const mass = nodeManager.getField< wavesolverfields::AcousticMassVector >();
     arrayView1d< real32 const > const damping = nodeManager.getField< wavesolverfields::DampingVector >();
 
     arrayView1d< real32 > const p_np1 = nodeManager.getField< wavesolverfields::Pressure_np1 >();
@@ -468,7 +468,7 @@ real64 AcousticFirstOrderWaveEquationSEM::explicitStepInternal( real64 const & t
                                                                                           CellElementSubRegion & elementSubRegion )
     {
       arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes = elementSubRegion.nodeList();
-      arrayView1d< real32 const > const density = elementSubRegion.getField< wavesolverfields::MediumDensity >();
+      arrayView1d< real32 const > const density = elementSubRegion.getField< wavesolverfields::AcousticDensity >();
       arrayView2d< real32 > const velocity_x = elementSubRegion.getField< wavesolverfields::Velocity_x >();
       arrayView2d< real32 > const velocity_y = elementSubRegion.getField< wavesolverfields::Velocity_y >();
       arrayView2d< real32 > const velocity_z = elementSubRegion.getField< wavesolverfields::Velocity_z >();

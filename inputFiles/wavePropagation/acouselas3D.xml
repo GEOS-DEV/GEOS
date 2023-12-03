@@ -152,35 +152,35 @@
       name="acousticVelocity"
       initialCondition="1"
       objectPath="mesh/FE1/ElementRegions/Fluid/fluid"
-      fieldName="mediumVelocity"
+      fieldName="acousticVelocity"
       scale="1500.0"
       setNames="{ all }"/>
     <FieldSpecification
       name="acousticDensity"
       initialCondition="1"
       objectPath="mesh/FE1/ElementRegions/Fluid/fluid"
-      fieldName="mediumDensityA"
+      fieldName="acousticDensity"
       scale="1020.0"
       setNames="{ all }"/>
     <FieldSpecification
       name="elasticVelocityVp"
       initialCondition="1"
       objectPath="mesh/FE1/ElementRegions/Solid/solid"
-      fieldName="mediumVelocityVp"
+      fieldName="elasticVelocityVp"
       scale="3400.0"
       setNames="{ all }"/>
     <FieldSpecification
       name="elasticVelocityVs"
       initialCondition="1"
       objectPath="mesh/FE1/ElementRegions/Solid/solid"
-      fieldName="mediumVelocityVs"
+      fieldName="elasticVelocityVs"
       scale="1963.0"
       setNames="{ all }"/>
     <FieldSpecification
       name="elasticDensity"
       initialCondition="1"
       objectPath="mesh/FE1/ElementRegions/Solid/solid"
-      fieldName="mediumDensityE"
+      fieldName="elasticDensity"
       scale="2500.0"
       setNames="{ all }"/>
   </FieldSpecifications>

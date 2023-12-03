@@ -171,25 +171,25 @@ void ElasticWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
                                fields::ForcingRHSx,
                                fields::ForcingRHSy,
                                fields::ForcingRHSz,
-                               fields::MassVectorE,
+                               fields::ElasticMassVector,
                                fields::DampingVectorx,
                                fields::DampingVectory,
                                fields::DampingVectorz,
                                fields::StiffnessVectorx,
                                fields::StiffnessVectory,
                                fields::StiffnessVectorz,
-                               fields::FreeSurfaceNodeIndicatorE >( getName() );
+                               fields::ElasticFreeSurfaceNodeIndicator >( getName() );
 
     FaceManager & faceManager = mesh.getFaceManager();
-    faceManager.registerField< fields::FreeSurfaceFaceIndicatorE >( getName() );
+    faceManager.registerField< fields::ElasticFreeSurfaceFaceIndicator >( getName() );
 
     ElementRegionManager & elemManager = mesh.getElemManager();
 
     elemManager.forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion & subRegion )
     {
-      subRegion.registerField< fields::MediumVelocityVp >( getName() );
-      subRegion.registerField< fields::MediumVelocityVs >( getName() );
-      subRegion.registerField< fields::MediumDensityE >( getName() );
+      subRegion.registerField< fields::ElasticVelocityVp >( getName() );
+      subRegion.registerField< fields::ElasticVelocityVs >( getName() );
+      subRegion.registerField< fields::ElasticDensity >( getName() );
     } );
 
   } );
@@ -470,7 +470,7 @@ void ElasticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
     arrayView2d< wsCoordType const, nodes::REFERENCE_POSITION_USD > const nodeCoords = nodeManager.getField< fields::referencePosition32 >().toViewConst();
 
     // mass matrix to be computed in this function
-    arrayView1d< real32 > const mass = nodeManager.getField< fields::MassVectorE >();
+    arrayView1d< real32 > const mass = nodeManager.getField< fields::ElasticMassVector >();
     mass.zero();
     /// damping matrix to be computed for each dof in the boundary of the mesh
     arrayView1d< real32 > const dampingx = nodeManager.getField< fields::DampingVectorx >();
@@ -481,7 +481,7 @@ void ElasticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
     dampingz.zero();
 
     /// get array of indicators: 1 if face is on the free surface; 0 otherwise
-    arrayView1d< localIndex const > const freeSurfaceFaceIndicator    = faceManager.getField< fields::FreeSurfaceFaceIndicatorE >();
+    arrayView1d< localIndex const > const freeSurfaceFaceIndicator    = faceManager.getField< fields::ElasticFreeSurfaceFaceIndicator >();
     arrayView1d< integer const > const & facesDomainBoundaryIndicator = faceManager.getDomainBoundaryIndicator();
     ArrayOfArraysView< localIndex const > const facesToNodes          = faceManager.nodeList().toViewConst();
     arrayView2d< real64 const > const faceNormal                      = faceManager.faceNormal();
@@ -497,9 +497,9 @@ void ElasticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
 
       computeTargetNodeSet( elemsToNodes, elementSubRegion.size(), fe.getNumQuadraturePoints() );
 
-      arrayView1d< real32 const > const density = elementSubRegion.getField< fields::MediumDensityE >();
-      arrayView1d< real32 const > const velocityVp = elementSubRegion.getField< fields::MediumVelocityVp >();
-      arrayView1d< real32 const > const velocityVs = elementSubRegion.getField< fields::MediumVelocityVs >();
+      arrayView1d< real32 const > const density = elementSubRegion.getField< fields::ElasticDensity >();
+      arrayView1d< real32 const > const velocityVp = elementSubRegion.getField< fields::ElasticVelocityVp >();
+      arrayView1d< real32 const > const velocityVs = elementSubRegion.getField< fields::ElasticVelocityVs >();
 
       finiteElement::FiniteElementDispatchHandler< SEM_FE_TYPES >::dispatch3D( fe, [&] ( auto const finiteElement )
       {
@@ -556,10 +556,10 @@ void ElasticWaveEquationSEM::applyFreeSurfaceBC( real64 const time, DomainPartit
   ArrayOfArraysView< localIndex const > const faceToNodeMap = faceManager.nodeList().toViewConst();
 
   /// set array of indicators: 1 if a face is on on free surface; 0 otherwise
-  arrayView1d< localIndex > const freeSurfaceFaceIndicator = faceManager.getField< fields::FreeSurfaceFaceIndicatorE >();
+  arrayView1d< localIndex > const freeSurfaceFaceIndicator = faceManager.getField< fields::ElasticFreeSurfaceFaceIndicator >();
 
   /// set array of indicators: 1 if a node is on on free surface; 0 otherwise
-  arrayView1d< localIndex > const freeSurfaceNodeIndicator = nodeManager.getField< fields::FreeSurfaceNodeIndicatorE >();
+  arrayView1d< localIndex > const freeSurfaceNodeIndicator = nodeManager.getField< fields::ElasticFreeSurfaceNodeIndicator >();
 
 
   fsManager.apply( time,
@@ -641,7 +641,7 @@ void ElasticWaveEquationSEM::computeUnknowns( real64 const &,
 {
   NodeManager & nodeManager = mesh.getNodeManager();
 
-  arrayView1d< real32 const > const mass = nodeManager.getField< fields::MassVectorE >();
+  arrayView1d< real32 const > const mass = nodeManager.getField< fields::ElasticMassVector >();
   arrayView1d< real32 const > const dampingx = nodeManager.getField< fields::DampingVectorx >();
   arrayView1d< real32 const > const dampingy = nodeManager.getField< fields::DampingVectory >();
   arrayView1d< real32 const > const dampingz = nodeManager.getField< fields::DampingVectorz >();
@@ -660,7 +660,7 @@ void ElasticWaveEquationSEM::computeUnknowns( real64 const &,
   arrayView1d< real32 > const uz_np1 = nodeManager.getField< fields::Displacementz_np1 >();
 
   /// get array of indicators: 1 if node on free surface; 0 otherwise
-  arrayView1d< localIndex const > const freeSurfaceNodeIndicator = nodeManager.getField< fields::FreeSurfaceNodeIndicatorE >();
+  arrayView1d< localIndex const > const freeSurfaceNodeIndicator = nodeManager.getField< fields::ElasticFreeSurfaceNodeIndicator >();
 
   arrayView1d< real32 > const rhsx = nodeManager.getField< fields::ForcingRHSx >();
   arrayView1d< real32 > const rhsy = nodeManager.getField< fields::ForcingRHSy >();

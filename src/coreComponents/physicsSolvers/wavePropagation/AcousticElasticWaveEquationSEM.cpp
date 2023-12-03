@@ -137,10 +137,10 @@ real64 AcousticElasticWaveEquationSEM::solverStep( real64 const & time_n,
   {
     NodeManager & nodeManager = mesh.getNodeManager();
 
-    arrayView1d< real32 const > const massA = nodeManager.getField< fields::MassVectorA >();
-    arrayView1d< real32 const > const massE = nodeManager.getField< fields::MassVectorE >();
-    arrayView1d< localIndex > const freeSurfaceNodeIndicatorA = nodeManager.getField< fields::FreeSurfaceNodeIndicatorA >();
-    arrayView1d< localIndex > const freeSurfaceNodeIndicatorE = nodeManager.getField< fields::FreeSurfaceNodeIndicatorE >();
+    arrayView1d< real32 const > const acousticMass = nodeManager.getField< fields::AcousticMassVector >();
+    arrayView1d< real32 const > const elasticMass = nodeManager.getField< fields::ElasticMassVector >();
+    arrayView1d< localIndex > const acousticFSNodeIndicator = nodeManager.getField< fields::AcousticFreeSurfaceNodeIndicator >();
+    arrayView1d< localIndex > const elasticFSNodeIndicator = nodeManager.getField< fields::ElasticFreeSurfaceNodeIndicator >();
 
     arrayView1d< real32 const > const p_n    = nodeManager.getField< fields::Pressure_n >();
     arrayView1d< real32 const > const ux_nm1 = nodeManager.getField< fields::Displacementx_nm1 >();
@@ -165,10 +165,10 @@ real64 AcousticElasticWaveEquationSEM::solverStep( real64 const & time_n,
     forAll< EXEC_POLICY >( interfaceNodesSet.size(), [=] GEOS_HOST_DEVICE ( localIndex const n )
     {
       localIndex const a = interfaceNodesSet[n];
-      if( freeSurfaceNodeIndicatorE[a] == 1 )
+      if( elasticFSNodeIndicator[a] == 1 )
         return;
 
-      real32 const aux = -p_n[a] / massE[a];
+      real32 const aux = -p_n[a] / elasticMass[a];
       real32 const localIncrementx = dt2 * atoex[a] * aux;
       real32 const localIncrementy = dt2 * atoey[a] * aux;
       real32 const localIncrementz = dt2 * atoez[a] * aux;
@@ -185,14 +185,14 @@ real64 AcousticElasticWaveEquationSEM::solverStep( real64 const & time_n,
     forAll< EXEC_POLICY >( interfaceNodesSet.size(), [=] GEOS_HOST_DEVICE ( localIndex const n )
     {
       localIndex const a = interfaceNodesSet[n];
-      if( freeSurfaceNodeIndicatorA[a] == 1 )
+      if( acousticFSNodeIndicator[a] == 1 )
         return;
 
       real32 const localIncrement = (
         atoex[a] * ( ux_np1[a] - 2.0 * ux_n[a] + ux_nm1[a] ) +
         atoey[a] * ( uy_np1[a] - 2.0 * uy_n[a] + uy_nm1[a] ) +
         atoez[a] * ( uz_np1[a] - 2.0 * uz_n[a] + uz_nm1[a] )
-        ) / massA[a];
+        ) / acousticMass[a];
 
       RAJA::atomicAdd< ATOMIC_POLICY >( &p_np1[a], localIncrement );
     } );

@@ -313,8 +313,8 @@ DECLARE_FIELD( ForcingRHSz,
                WRITE_AND_READ,
                "RHS for z-direction" );
 
-DECLARE_FIELD( MassVectorE,
-               "massVectorE",
+DECLARE_FIELD( ElasticMassVector,
+               "elasticMassVector",
                array1d< real32 >,
                0,
                NOPLOT,
@@ -369,40 +369,40 @@ DECLARE_FIELD( StiffnessVectorz,
                WRITE_AND_READ,
                "z-component of stiffness vector." );
 
-DECLARE_FIELD( MediumVelocityVp,
-               "mediumVelocityVp",
+DECLARE_FIELD( ElasticVelocityVp,
+               "elasticVelocityVp",
                array1d< real32 >,
                0,
                NOPLOT,
                WRITE_AND_READ,
                "P-waves speed in the cell" );
 
-DECLARE_FIELD( MediumVelocityVs,
-               "mediumVelocityVs",
+DECLARE_FIELD( ElasticVelocityVs,
+               "elasticVelocityVs",
                array1d< real32 >,
                0,
                NOPLOT,
                WRITE_AND_READ,
                "S-waves speed in the cell" );
 
-DECLARE_FIELD( MediumDensityE,
-               "mediumDensityE",
+DECLARE_FIELD( ElasticDensity,
+               "elasticDensity",
                array1d< real32 >,
                0,
                NOPLOT,
                WRITE_AND_READ,
                "Medium density of the cell" );
 
-DECLARE_FIELD( FreeSurfaceFaceIndicatorE,
-               "freeSurfaceFaceIndicatorE",
+DECLARE_FIELD( ElasticFreeSurfaceFaceIndicator,
+               "elasticFreeSurfaceFaceIndicator",
                array1d< localIndex >,
                0,
                NOPLOT,
                WRITE_AND_READ,
                "Free surface indicator, 1 if a face is on free surface 0 otherwise." );
 
-DECLARE_FIELD( FreeSurfaceNodeIndicatorE,
-               "freeSurfaceNodeIndicatorE",
+DECLARE_FIELD( ElasticFreeSurfaceNodeIndicator,
+               "elasticFreeSurfaceNodeIndicator",
                array1d< localIndex >,
                0,
                NOPLOT,
