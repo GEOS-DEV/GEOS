@@ -199,7 +199,8 @@ def build_face_to_face_connectivity_through_edges(face_stream: FaceStream, add_c
         node_0, node_1 = edge
         order_0 = 1 if face_nodes_0[face_nodes_0.index(node_0) + 1] == node_1 else -1
         order_1 = 1 if face_nodes_1[face_nodes_1.index(node_0) + 1] == node_1 else -1
-        # Same order of nodes means that the normals of the faces are not both in the same "direction" (inward or outward).
+        # Same order of nodes means that the normals of the faces
+        # are _not_ both in the same "direction" (inward or outward).
         if order_0 * order_1 == 1:
             if add_compatibility:
                 graph.add_edge(face_index_0, face_index_1, compatible="-")

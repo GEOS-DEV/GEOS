@@ -2,6 +2,8 @@ from dataclasses import dataclass
 import logging
 import multiprocessing
 from typing import (
+    Collection,
+    FrozenSet,
     Iterable,
     Mapping,
     Optional,
@@ -37,6 +39,7 @@ from . import vtk_utils
 from .vtk_utils import vtk_iter
 from .vtk_polyhedron import build_face_to_face_connectivity_through_edges, FaceStream
 
+
 @dataclass(frozen=True)
 class Options:
     num_proc: int
@@ -45,8 +48,8 @@ class Options:
 
 @dataclass(frozen=True)
 class Result:
-    unsupported_std_elements_types: Set[int]  # list of unsupported types
-    unsupported_polyhedron_elements: Sequence[int]  # list of polyhedron elements that could not be converted to supported std elements
+    unsupported_std_elements_types: FrozenSet[int]  # list of unsupported types
+    unsupported_polyhedron_elements: FrozenSet[int]  # list of polyhedron elements that could not be converted to supported std elements
 
 
 MESH: Optional[vtkUnstructuredGrid] = None  # for multiprocessing, vtkUnstructuredGrid cannot be pickled. Let's use a global variable instead.
@@ -151,8 +154,8 @@ def __check(mesh: vtkUnstructuredGrid, options: Options) -> Result:
         for i, val in enumerate(tqdm(generator, total=num_cells, desc="Testing support for elements")):
             result[i] = val
     unsupported_polyhedron_elements = [i for i in result if i > -1]
-    return Result(unsupported_std_elements_types=unsupported_std_elements_types,
-                  unsupported_polyhedron_elements=unsupported_polyhedron_elements)
+    return Result(unsupported_std_elements_types=frozenset(unsupported_std_elements_types),
+                  unsupported_polyhedron_elements=frozenset(unsupported_polyhedron_elements))
 
 
 def check(vtk_input_file: str, options: Options) -> Result:

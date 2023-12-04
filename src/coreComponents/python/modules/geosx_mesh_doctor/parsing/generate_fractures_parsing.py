@@ -56,7 +56,7 @@ def convert(parsed_options) -> Options:
     split_on_domain_boundary = parsed_options[__SPLIT_ON_DOMAIN_BOUNDARY]
     assert policy in __POLICIES
     field = parsed_options[__FIELD_NAME]
-    field_values = tuple(map(int, parsed_options[__FIELD_VALUES].split(",")))
+    field_values = frozenset(map(int, parsed_options[__FIELD_VALUES].split(",")))
     if policy == __FIELD_POLICY:
         field_type = parsed_options[__FIELD_TYPE]
     elif policy == __INTERNAL_SURFACES_POLICY:

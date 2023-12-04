@@ -47,7 +47,6 @@ from .vtk_polyhedron import (
 )
 
 
-
 @dataclass(frozen=True)
 class Options:
     policy: str
@@ -420,8 +419,8 @@ def __generate_fracture_mesh(mesh_points: vtkPoints,
                 buckets[k].update((i, o))
 
     assert set(buckets.keys()) == set(range(num_points))
-    max_duplicated_nodes: int = max(map(len, buckets.values())) if buckets.values() else 0
-    collocated_nodes = numpy.ones((num_points, max_duplicated_nodes), dtype=int) * -1
+    max_collocated_nodes: int = max(map(len, buckets.values())) if buckets.values() else 0
+    collocated_nodes = numpy.ones((num_points, max_collocated_nodes), dtype=int) * -1
     for i, bucket in buckets.items():
         for j, val in enumerate(bucket):
             collocated_nodes[i, j] = val

@@ -2,7 +2,11 @@ from dataclasses import dataclass
 import os.path
 import logging
 import sys
-from typing import Iterator, Any, Union
+from typing import (
+    Any,
+    Iterator,
+    Optional,
+)
 
 from vtkmodules.vtkCommonCore import (
     vtkIdList,
@@ -18,6 +22,7 @@ from vtkmodules.vtkIOXML import (
     vtkXMLUnstructuredGridReader,
     vtkXMLUnstructuredGridWriter,
 )
+
 
 @dataclass(frozen=True)
 class VtkOutput:
@@ -47,7 +52,7 @@ def vtk_iter(l) -> Iterator[Any]:
             yield l.GetCellType(i)
 
 
-def __read_vtk(vtk_input_file: str) -> Union[vtkUnstructuredGrid, None]:
+def __read_vtk(vtk_input_file: str) -> Optional[vtkUnstructuredGrid]:
     reader = vtkUnstructuredGridReader()
     logging.info(f"Testing file format \"{vtk_input_file}\" using legacy format reader...")
     reader.SetFileName(vtk_input_file)
@@ -60,7 +65,7 @@ def __read_vtk(vtk_input_file: str) -> Union[vtkUnstructuredGrid, None]:
         return None
 
 
-def __read_vtu(vtk_input_file: str) -> Union[vtkUnstructuredGrid, None]:
+def __read_vtu(vtk_input_file: str) -> Optional[vtkUnstructuredGrid]:
     reader = vtkXMLUnstructuredGridReader()
     logging.info(f"Testing file format \"{vtk_input_file}\" using XML format reader...")
     if reader.CanReadFile(vtk_input_file):

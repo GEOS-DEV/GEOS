@@ -31,9 +31,13 @@ class Result:
 
 
 def __check(mesh, options: Options) -> Result:
+    # The vtk cell type is an int and will be the key of the following mapping,
+    # that will point to the relevant permutation.
     cell_type_to_ordering: Dict[int, List[int]] = options.cell_type_to_ordering
-    unchanged_cell_types: Set[int] = set()
-    output_mesh = mesh.NewInstance()  # keeping the same instance type.
+    unchanged_cell_types: Set[int] = set()  # For logging purpose
+
+    # Preparing the output mesh by first keeping the same instance type.
+    output_mesh = mesh.NewInstance()
     output_mesh.CopyStructure(mesh)
     output_mesh.CopyAttributes(mesh)
 
