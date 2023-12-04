@@ -92,12 +92,12 @@ def build_fracture_info(mesh: vtkUnstructuredGrid,
                         options: Options) -> FractureInfo:
     field = options.field
     field_values = options.field_values
+    cell_data = mesh.GetCellData()
+    if cell_data.HasArray(field):
+        f = vtk_to_numpy(cell_data.GetArray(field))
+    else:
+        raise ValueError(f"Cell field {field} does not exist in mesh, nothing done")
     if options.policy == "field":
-        cell_data = mesh.GetCellData()
-        if cell_data.HasArray(field):
-            f = vtk_to_numpy(cell_data.GetArray(field))
-        else:
-            raise ValueError(f"Cell field {field} does not exist in mesh, nothing done")
         cells_to_faces: Dict[int, List[int]] = defaultdict(list)
         # For each face of each cell, we search for the unique neighbor cell (if it exists).
         # Then, if the 2 values of the two cells match the field requirements,
@@ -127,25 +127,25 @@ def build_fracture_info(mesh: vtkUnstructuredGrid,
         node_to_cells: Mapping[int, Iterable[int]] = build_node_to_cells(mesh, face_nodes)
     
     if options.policy == "internal_surfaces":
-        node_to_cells = {}
-        face_nodes = []
-        attribute = mesh.GetCellData().GetArray(field)
-        for c in range( mesh.GetNumberOfCells() ):
-            cell = mesh.GetCell(c)
+        node_to_cells: Dict[int, List[int]] = {}
+        face_nodes: List[Collection[int]] = []
+        for cell_id in tqdm(range(mesh.GetNumberOfCells()), desc="Computing the face to nodes mapping"):
+            cell = mesh.GetCell(cell_id)
             if cell.GetCellDimension() == 2:
-                if attribute.GetValue(c) in field_values:
+                if f[cell_id] in field_values:
                     nodes = []
                     for v in range(cell.GetNumberOfPoints()):
-                        node_to_cells[cell.GetPointId(v)] = []
-                        nodes.append(cell.GetPointId(v))
+                        point_id: int = cell.GetPointId(v)
+                        node_to_cells[point_id] = []
+                        nodes.append(point_id)
                     face_nodes.append(tuple(nodes))
 
-        for c in range( mesh.GetNumberOfCells() ):
-            cell = mesh.GetCell(c)
+        for cell_id in tqdm(range(mesh.GetNumberOfCells()), desc="Computing the node to cells mapping"):
+            cell = mesh.GetCell(cell_id)
             if cell.GetCellDimension() == 3:
                 for v in range(cell.GetNumberOfPoints()):
                     if cell.GetPointId(v) in node_to_cells:
-                        node_to_cells[cell.GetPointId(v)].append(c)
+                        node_to_cells[cell.GetPointId(v)].append(cell_id)
 
 
     return FractureInfo(node_to_cells=node_to_cells, face_nodes=face_nodes)
