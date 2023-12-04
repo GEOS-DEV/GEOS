@@ -174,6 +174,12 @@ public:
   arrayView1d< real64 const > getPerfTransmissibility() const override { return m_perfTransmissibility; }
 
   /**
+   * @brief Get the well skin factor at the perforations.
+   * @return list of well skin factor at all the perforations on the well
+   */
+  arrayView1d< real64 const > getPerfSkinFactor() const override { return m_perfSkinFactor; }
+
+  /**
    * @brief Get the global indices of the well elements connected to each perforation.
    * @return list providing the global index of the connected well element for each perforation
    */
@@ -318,6 +324,9 @@ private:
 
   /// Well Peaceman index at the perforation
   array1d< real64 > m_perfTransmissibility;
+
+  /// Skin Factor at the perforation
+  array1d< real64 > m_perfSkinFactor;
 
   /// Global index of the well element
   array1d< globalIndex > m_perfElemId;
