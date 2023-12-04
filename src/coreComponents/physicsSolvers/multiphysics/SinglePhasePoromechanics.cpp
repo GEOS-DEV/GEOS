@@ -259,7 +259,7 @@ void SinglePhasePoromechanics< FLOW_SOLVER >::initializePostInitialConditionsPre
   integer & isFlowThermal = flowSolver()->isThermal();
   GEOS_LOG_RANK_0_IF( m_isThermal && !isFlowThermal,
                       GEOS_FMT( "{} {}: The attribute `{}` of the flow solver `{}` is set to 1 since the poromechanics solver is thermal",
-                                getCatalogName(), this->getDataContext(),
+                                getCatalogName(), this->getName(),
                                 FlowSolverBase::viewKeyStruct::isThermalString(), flowSolver()->getDataContext() ) );
   isFlowThermal = m_isThermal;
 

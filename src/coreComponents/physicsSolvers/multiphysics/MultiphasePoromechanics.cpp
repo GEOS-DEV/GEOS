@@ -368,7 +368,7 @@ void MultiphasePoromechanics< FLOW_SOLVER >::initializePostInitialConditionsPreS
   integer & isFlowThermal = flowSolver()->isThermal();
   GEOS_WARNING_IF( m_isThermal && !isFlowThermal,
                    GEOS_FMT( "{} {}: The attribute `{}` of the flow solver `{}` is set to 1 since the poromechanics solver is thermal",
-                             getCatalogName(), this->getDataContext(), FlowSolverBase::viewKeyStruct::isThermalString(), flowSolver()->getDataContext() ) );
+                             getCatalogName(), this->getName(), FlowSolverBase::viewKeyStruct::isThermalString(), flowSolver()->getName() ) );
   isFlowThermal = m_isThermal;
 
   if( m_isThermal )
