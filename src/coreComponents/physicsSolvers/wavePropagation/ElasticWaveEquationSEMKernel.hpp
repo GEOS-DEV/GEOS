@@ -256,7 +256,7 @@ struct MassMatrixKernel
       {
         for( localIndex i = 0; i < 3; ++i )
         {
-          xLocal[a][i] = nodeCoords( elemsToNodes( e, FE_TYPE::meshIndexTOLinearIndex3D( a ) ), i );
+          xLocal[a][i] = nodeCoords( elemsToNodes( e, FE_TYPE::meshIndexToLinearIndex3D( a ) ), i );
         }
       }
 
