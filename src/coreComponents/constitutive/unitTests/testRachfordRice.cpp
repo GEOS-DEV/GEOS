@@ -147,7 +147,7 @@ TEST( RachfordRiceTest, testRachfordRiceTwoComponents )
                          feed.toSliceConst(),
                          presentComponentIds.toSliceConst() );
 
-  checkRelativeError( vaporFraction6, expectedVaporFraction6, relTol );  
+  checkRelativeError( vaporFraction6, expectedVaporFraction6, relTol );
 }
 
 TEST( RachfordRiceTest, testRachfordRiceFourComponents )

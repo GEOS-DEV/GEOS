@@ -140,12 +140,11 @@ public:
     // step 3: start the Newton loop
     integer newtonIteration = 0;
     real64 newtonValue = gasPhaseMoleFraction;
+    real64 funcNewton = evaluate( kValues, feed, presentComponentIds, newtonValue );
 
     while( ( currentError > newtonTolerance ) && ( newtonIteration < maxNewtonIterations ) )
     {
-      real64 const deltaNewton = -evaluate( kValues, feed, presentComponentIds, newtonValue )
-                                 / evaluateDerivative( kValues, feed, presentComponentIds, newtonValue );
-      currentError = LvArray::math::abs( deltaNewton ) / LvArray::math::abs( newtonValue );
+      real64 const deltaNewton = -funcNewton / evaluateDerivative( kValues, feed, presentComponentIds, newtonValue );
 
       // test if we are stepping out of the [xMin;xMax] interval
       if( newtonValue + deltaNewton < xMin )
@@ -160,6 +159,11 @@ public:
       {
         newtonValue = newtonValue + deltaNewton;
       }
+
+      funcNewton = evaluate( kValues, feed, presentComponentIds, newtonValue );
+
+      currentError = LvArray::math::min( LvArray::math::abs( funcNewton ),
+                                         LvArray::math::abs( deltaNewton ) );
       newtonIteration++;
 
       // TODO: add warning if max number of Newton iterations is reached
