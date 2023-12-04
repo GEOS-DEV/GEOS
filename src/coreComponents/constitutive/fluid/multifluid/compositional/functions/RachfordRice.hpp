@@ -149,6 +149,15 @@ public:
       // test if we are stepping out of the [xMin;xMax] interval
       if( newtonValue + deltaNewton < xMin )
       {
+        deltaNewton = 0.5 * ( xMin - newtonValue );
+      }
+      else if( newtonValue + deltaNewton > xMax )
+      {
+        deltaNewton = 0.5 * ( xMax - NewtonValue );
+      }
+       
+      newtonValue = newtonValue + deltaNewton;
+      {
         newtonValue = 0.5 * ( newtonValue + xMin );
       }
       else if( newtonValue + deltaNewton > xMax )
