@@ -388,7 +388,7 @@ struct VelocityComputation
 
       for( localIndex i = 0; i < numNodesPerElem; ++i )
       {
-        real32 massLoc = m_finiteElement.computeMassTerm( i, xLocal );
+        real32 massLoc = m_finiteElement.computeMassTerm( i, xLocalMesh );
         uelemx[i] = massLoc*velocity_x[k][i];
         uelemy[i] = massLoc*velocity_y[k][i];
         uelemz[i] = massLoc*velocity_z[k][i];
@@ -422,7 +422,7 @@ struct VelocityComputation
       } );
       for( localIndex i = 0; i < numNodesPerElem; ++i )
       {
-        real32 massLoc = m_finiteElement.computeMassTerm( i, xLocal );
+        real32 massLoc = m_finiteElement.computeMassTerm( i, xLocalMesh );
         uelemx[i]+=dt*flowx[i]/density[k];
         uelemy[i]+=dt*flowy[i]/density[k];
         uelemz[i]+=dt*flowz[i]/density[k];
@@ -520,25 +520,25 @@ struct PressureComputation
 
 
       // Volume integration
-      FE_TYPE::constForOnCell( [&] (auto q)
+      for(localIndex q=0; q < numNodesPerElem; q++)
       {
 
 
-        m_finiteElement.template computeFirstOrderStiffnessTermX< q >( xLocal, [&] ( int i, int j, real32 dfx1, real32 dfx2, real32 dfx3 )
+        m_finiteElement.template computeFirstOrderStiffnessTermX( q, xLocal, [&] ( int i, int j, real32 dfx1, real32 dfx2, real32 dfx3 )
         {
           auxx[i] -= dfx1*velocity_x[k][j];
           auyy[i] -= dfx2*velocity_y[k][j];
           auzz[i] -= dfx3*velocity_z[k][j];
         } );
 
-        m_finiteElement.template computeFirstOrderStiffnessTermY< q >( xLocal, [&] ( int i, int j, real32 dfy1, real32 dfy2, real32 dfy3 )
+        m_finiteElement.template computeFirstOrderStiffnessTermY( q, xLocal, [&] ( int i, int j, real32 dfy1, real32 dfy2, real32 dfy3 )
         {
           auxx[i] -= dfy1*velocity_x[k][j];
           auyy[i] -= dfy2*velocity_y[k][j];
           auzz[i] -= dfy3*velocity_z[k][j];
         } );
 
-        m_finiteElement.template computeFirstOrderStiffnessTermZ< q >( xLocal, [&] ( int i, int j, real32 dfz1, real32 dfz2, real32 dfz3 )
+        m_finiteElement.template computeFirstOrderStiffnessTermZ( q, xLocal, [&] ( int i, int j, real32 dfz1, real32 dfz2, real32 dfz3 )
         {
           auxx[i] -= dfz1*velocity_x[k][j];
           auyy[i] -= dfz2*velocity_y[k][j];
