@@ -226,7 +226,7 @@ struct MassMatrixKernel
       {
         for( localIndex i = 0; i < 3; ++i )
         {
-          xLocal[a][i] = nodeCoords( elemsToNodes( e, FE_TYPE::meshIndexToLocalIndex3D( a ) ), i );
+          xLocal[a][i] = nodeCoords( elemsToNodes( e, FE_TYPE::meshIndexToLinearIndex3D( a ) ), i );
         }
       }
 
@@ -324,7 +324,7 @@ struct DampingMatrixKernel
 
           constexpr localIndex numNodesPerFace = FE_TYPE::numNodesPerFace;
           real64 xLocal[ 4 ][ 3 ];
-          for( localIndex a = 0; a <4numNodesPerFace; ++a )
+          for( localIndex a = 0; a <numNodesPerFace; ++a )
           {
             for( localIndex d = 0; d < 3; ++d )
             {

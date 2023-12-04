@@ -286,7 +286,7 @@ struct DampingMatrixKernel
           {
             for( localIndex d = 0; d < 3; ++d )
             {
-              xLocal[a][d] = nodeCoords( facesToNodes( f, FE_TYPE:meshIndexToLinearIndex2D( a ) ), d );
+              xLocal[a][d] = nodeCoords( facesToNodes( f, FE_TYPE::meshIndexToLinearIndex2D( a ) ), d );
             }
           }
           real32 const alpha = 1.0 / (density[e] * velocity[e]);
