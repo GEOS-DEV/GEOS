@@ -405,7 +405,7 @@ struct StressComputation
       //Pre-multiplication by mass matrix
       for( localIndex i = 0; i < numNodesPerElem; ++i )
       {
-        real32 massLoc = m_finiteElement.computeMassTerm( i, xLocal );
+        real32 massLoc = m_finiteElement.computeMassTerm( i, xLocalMesh );
         uelemxx[i] = massLoc*stressxx[k][i];
         uelemyy[i] = massLoc*stressyy[k][i];
         uelemzz[i] = massLoc*stresszz[k][i];
@@ -414,11 +414,11 @@ struct StressComputation
         uelemyz[i] = massLoc*stressyz[k][i];
       }
 
-      FE_TYPE::constForOnCell( [&] (auto q)
+      for( localIndex q = 0; q < numNodesPerElem; q++ )
       {
 
         //Volume integral
-        m_finiteElement.template computeFirstOrderStiffnessTermX< q >( xLocalMesh, [&] ( int i, int j, real32 dfx1, real32 dfx2, real32 dfx3 )
+        m_finiteElement.template computeFirstOrderStiffnessTermX( q, xLocalMesh, [&] ( int i, int j, real32 dfx1, real32 dfx2, real32 dfx3 )
         {
           auxx[j]+= dfx1*ux_np1[elemsToNodes[k][i]];
           auyy[j]+= dfx2*uy_np1[elemsToNodes[k][i]];
@@ -429,7 +429,7 @@ struct StressComputation
 
         } );
 
-        m_finiteElement.template computeFirstOrderStiffnessTermY< q >( xLocalMesh, [&] ( int i, int j, real32 dfy1, real32 dfy2, real32 dfy3 )
+        m_finiteElement.template computeFirstOrderStiffnessTermY( q, xLocalMesh, [&] ( int i, int j, real32 dfy1, real32 dfy2, real32 dfy3 )
         {
           auxx[j]+= dfy1*ux_np1[elemsToNodes[k][i]];
           auyy[j]+= dfy2*uy_np1[elemsToNodes[k][i]];
@@ -440,7 +440,7 @@ struct StressComputation
 
         } );
 
-        m_finiteElement.template computeFirstOrderStiffnessTermZ< q >( xLocalMesh, [&] ( int i, int j, real32 dfz1, real32 dfz2, real32 dfz3 )
+        m_finiteElement.template computeFirstOrderStiffnessTermZ( q, xLocalMesh, [&] ( int i, int j, real32 dfz1, real32 dfz2, real32 dfz3 )
         {
           auxx[j]+= dfz1*ux_np1[elemsToNodes[k][i]];
           auyy[j]+= dfz2*uy_np1[elemsToNodes[k][i]];
@@ -451,7 +451,7 @@ struct StressComputation
 
         } );
 
-      } );
+      }
       //Time integration
       for( localIndex i = 0; i < numNodesPerElem; ++i )
       {
@@ -467,7 +467,7 @@ struct StressComputation
       // Multiplication by inverse mass matrix
       for( localIndex i = 0; i < numNodesPerElem; ++i )
       {
-        real32 massLoc = m_finiteElement.computeMassTerm( i, xLocal );
+        real32 massLoc = m_finiteElement.computeMassTerm( i, xLocalMesh );
         stressxx[k][i] = uelemxx[i]/massLoc;
         stressyy[k][i] = uelemyy[i]/massLoc;
         stresszz[k][i] = uelemzz[i]/massLoc;
@@ -486,7 +486,7 @@ struct StressComputation
           {
             for( localIndex i = 0; i < numNodesPerElem; ++i )
             {
-              real32 massLoc = m_finiteElement.computeMassTerm( i, xLocal );
+              real32 massLoc = m_finiteElement.computeMassTerm( i, xLocalMesh );
               real32 const localIncrement = dt*(sourceConstants[isrc][i]*sourceValue[cycleNumber][isrc])/massLoc;
               RAJA::atomicAdd< ATOMIC_POLICY >( &stressxx[k][i], localIncrement );
               RAJA::atomicAdd< ATOMIC_POLICY >( &stressyy[k][i], localIncrement );
@@ -570,12 +570,12 @@ struct VelocityComputation
       real32 flowy[numNodesPerElem] = {0.0};
       real32 flowz[numNodesPerElem] = {0.0};
 
-      FE_TYPE::constForOnCell( [&] (auto q)
+      for( localIndex q = 0; q < numNodesPerElem; q++ )
       {
 
 
         // Stiffness part
-        m_finiteElement.template computeFirstOrderStiffnessTermX< q >( xLocal, [&] ( int i, int j, real32 dfx1, real32 dfx2, real32 dfx3 )
+        m_finiteElement.template computeFirstOrderStiffnessTermX( q, xLocal, [&] ( int i, int j, real32 dfx1, real32 dfx2, real32 dfx3 )
         {
           flowx[i] -= stressxx[k][j]*dfx1 + stressxy[k][j]*dfx2 + stressxz[k][j]*dfx3;
           flowy[i] -= stressxy[k][j]*dfx1 + stressyy[k][j]*dfx2 + stressyz[k][j]*dfx3;
@@ -583,21 +583,21 @@ struct VelocityComputation
 
         } );
 
-        m_finiteElement.template computeFirstOrderStiffnessTermY< q >( xLocal, [&] ( int i, int j, real32 dfy1, real32 dfy2, real32 dfy3 )
+        m_finiteElement.template computeFirstOrderStiffnessTermY( q, xLocal, [&] ( int i, int j, real32 dfy1, real32 dfy2, real32 dfy3 )
         {
           flowx[i] -= stressxx[k][j]*dfy1 + stressxy[k][j]*dfy2 + stressxz[k][j]*dfy3;
           flowy[i] -= stressxy[k][j]*dfy1 + stressyy[k][j]*dfy2 + stressyz[k][j]*dfy3;
           flowz[i] -= stressxz[k][j]*dfy1 + stressyz[k][j]*dfy2 + stresszz[k][j]*dfy3;
         } );
 
-        m_finiteElement.template computeFirstOrderStiffnessTermZ< q >( xLocal, [&] ( int i, int j, real32 dfz1, real32 dfz2, real32 dfz3 )
+        m_finiteElement.template computeFirstOrderStiffnessTermZ( q, xLocal, [&] ( int i, int j, real32 dfz1, real32 dfz2, real32 dfz3 )
         {
           flowx[i] -= stressxx[k][j]*dfz1 + stressxy[k][j]*dfz2 + stressxz[k][j]*dfz3;
           flowy[i] -= stressxy[k][j]*dfz1 + stressyy[k][j]*dfz2 + stressyz[k][j]*dfz3;
           flowz[i] -= stressxz[k][j]*dfz1 + stressyz[k][j]*dfz2 + stresszz[k][j]*dfz3;
         } );
 
-      } );
+      }
       // Time update
       for( localIndex i = 0; i < numNodesPerElem; ++i )
       {

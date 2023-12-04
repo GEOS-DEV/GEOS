@@ -1763,7 +1763,7 @@ computeFirstOrderStiffnessTermX( localIndex const q,
   constexpr auto i3D = index3D();
   constexpr auto li3D = linearIndex3D();
   constexpr auto bg = basisGradient();
-  auto w = w3D.w[q];
+  auto w = w3D.v[q];
   auto qa = i3D.v[q][0];
   auto qb = i3D.v[q][1];
   auto qc = i3D.v[q][2];
@@ -1793,7 +1793,7 @@ computeFirstOrderStiffnessTermY( localIndex const q,
   constexpr auto i3D = index3D();
   constexpr auto li3D = linearIndex3D();
   constexpr auto bg = basisGradient();
-  auto w = w3D.w[q];
+  auto w = w3D.v[q];
   auto qa = i3D.v[q][0];
   auto qb = i3D.v[q][1];
   auto qc = i3D.v[q][2];
@@ -1822,7 +1822,7 @@ computeFirstOrderStiffnessTermZ( localIndex const q,
   constexpr auto i3D = index3D();
   constexpr auto li3D = linearIndex3D();
   constexpr auto bg = basisGradient();
-  auto w = w3D.w[q];
+  auto w = w3D.v[q];
   auto qa = i3D.v[q][0];
   auto qb = i3D.v[q][1];
   auto qc = i3D.v[q][2];
