@@ -315,6 +315,8 @@ void MultiphasePoromechanics< FLOW_SOLVER >::assembleSystem( real64 const GEOS_U
 template< typename FLOW_SOLVER >
 void MultiphasePoromechanics< FLOW_SOLVER >::updateState( DomainPartition & domain )
 {
+  GEOS_MARK_FUNCTION;
+
   real64 maxDeltaPhaseVolFrac = 0.0;
   this->template forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                                MeshLevel & mesh,
@@ -499,9 +501,6 @@ void MultiphasePoromechanics< FLOW_SOLVER >::mapSolutionBetweenSolvers( DomainPa
   /// After the flow solver
   if( solverType == static_cast< integer >( SolverType::Flow ) )
   {
-    // save pressure and temperature at the end of this iteration
-    //flowSolver()->saveSequentialIterationState( domain );
-
     this->template forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                                 MeshLevel & mesh,
                                                                                 arrayView1d< string const > const & regionNames )

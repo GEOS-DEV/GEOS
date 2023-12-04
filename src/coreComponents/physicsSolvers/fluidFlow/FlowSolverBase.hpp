@@ -76,6 +76,7 @@ public:
     static constexpr char const * allowNegativePressureString() { return "allowNegativePressure"; }
     static constexpr char const * maxAbsolutePresChangeString() { return "maxAbsolutePressureChange"; }
     static constexpr char const * maxSequentialPresChangeString() { return "maxSequentialPressureChange"; }
+    static constexpr char const * maxSequentialTempChangeString() { return "maxSequentialTemperatureChange"; }
   };
 
   /**
@@ -102,7 +103,7 @@ public:
    * @brief Utility function to save the iteration state (useful for sequential simulations)
    * @param[in] domain the domain partition
    */
-  virtual void saveSequentialIterationState( DomainPartition & domain ) const;
+  virtual void saveSequentialIterationState( DomainPartition & domain ) const override;
 
   /**
    * @brief For each equilibrium initial condition, loop over all the target cells and compute the min/max elevation
@@ -198,6 +199,9 @@ protected:
 
   /// maximum (absolute) pressure change in a sequential iteration
   real64 m_maxSequentialPresChange;
+
+  /// maximum (absolute) temperature change in a sequential iteration
+  real64 m_maxSequentialTempChange;
 
 private:
   virtual void setConstitutiveNames( ElementSubRegionBase & subRegion ) const override;

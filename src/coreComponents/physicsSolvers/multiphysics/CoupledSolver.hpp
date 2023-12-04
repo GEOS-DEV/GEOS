@@ -362,7 +362,7 @@ public:
     return isConverged;
   }
 
-  virtual void saveSequentialIterationState( DomainPartition & domain ) const
+  virtual void saveSequentialIterationState( DomainPartition & domain ) const override
   {
     forEachArgInTuple( m_solvers, [&]( auto & solver,
                                        auto )
@@ -483,6 +483,7 @@ protected:
                                                 dtReturn,
                                                 domain );
 
+      // save fields (e.g. pressure and temperature) at the end of this iteration
       saveSequentialIterationState( domain );
 
       if( isConverged )

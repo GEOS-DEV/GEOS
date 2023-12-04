@@ -138,6 +138,12 @@ FlowSolverBase::FlowSolverBase( string const & name,
     setApplyDefaultValue( 1e5 ).           // 0.1 bar = 1e5 Pa
     setDescription( "Maximum (absolute) pressure change in a sequential iteration, used for outer loop convergence check" );
 
+  this->registerWrapper( viewKeyStruct::maxSequentialTempChangeString(), &m_maxSequentialTempChange ).
+    setSizedFromParent( 0 ).
+        setInputFlag( InputFlags::OPTIONAL ).
+        setApplyDefaultValue( 0.1 ).
+        setDescription( "Maximum (absolute) temperature change in a sequential iteration, used for outer loop convergence check" );
+
   // allow the user to select a norm
   getNonlinearSolverParameters().getWrapper< solverBaseKernels::NormType >( NonlinearSolverParameters::viewKeysStruct::normTypeString() ).setInputFlag( InputFlags::OPTIONAL );
 }
@@ -160,6 +166,25 @@ void FlowSolverBase::registerDataOnMesh( Group & meshBodies )
       subRegion.registerField< fields::flow::gravityCoefficient >( getName() ).
         setApplyDefaultValue( 0.0 );
       subRegion.registerField< fields::flow::netToGross >( getName() );
+
+      subRegion.registerField< fields::flow::pressure >( getName() );
+      subRegion.registerField< fields::flow::pressure_n >( getName() );
+      subRegion.registerField< fields::flow::initialPressure >( getName() );
+      subRegion.registerField< fields::flow::deltaPressure >( getName() ); // for reporting/stats purposes
+      subRegion.registerField< fields::flow::bcPressure >( getName() ); // needed for the application of boundary conditions
+      if( m_isFixedStressPoromechanicsUpdate )
+      {
+        subRegion.registerField< fields::flow::pressure_k >( getName() ); // needed for the fixed-stress porosity update
+      }
+
+      subRegion.registerField< fields::flow::temperature >( getName() );
+      subRegion.registerField< fields::flow::temperature_n >( getName() );
+      subRegion.registerField< fields::flow::initialTemperature >( getName() );
+      subRegion.registerField< fields::flow::bcTemperature >( getName() ); // needed for the application of boundary conditions
+      if( m_isFixedStressPoromechanicsUpdate )
+      {
+        subRegion.registerField< fields::flow::temperature_k >( getName() ); // needed for the fixed-stress porosity update
+      }
     } );
 
     elemManager.forElementSubRegionsComplete< SurfaceElementSubRegion >( [&]( localIndex const,
@@ -218,14 +243,7 @@ void FlowSolverBase::saveConvergedState( ElementSubRegionBase & subRegion ) cons
   arrayView1d< real64 > const temp_n = subRegion.template getField< fields::flow::temperature_n >();
   temp_n.setValues< parallelDevicePolicy<> >( temp );
 
-  GEOS_THROW_IF( subRegion.hasField< fields::flow::pressure_k >() !=
-                 subRegion.hasField< fields::flow::temperature_k >(),
-                 GEOS_FMT( "`{}` and `{}` must be either both existing or both non-existing on subregion {}",
-                           fields::flow::pressure_k::key(), fields::flow::temperature_k::key(), subRegion.getName() ),
-                 std::runtime_error );
-
-  if( subRegion.hasField< fields::flow::pressure_k >() &&
-      subRegion.hasField< fields::flow::temperature_k >() )
+  if( m_isFixedStressPoromechanicsUpdate )
   {
     arrayView1d< real64 > const pres_k = subRegion.template getField< fields::flow::pressure_k >();
     arrayView1d< real64 > const temp_k = subRegion.template getField< fields::flow::temperature_k >();
@@ -236,12 +254,6 @@ void FlowSolverBase::saveConvergedState( ElementSubRegionBase & subRegion ) cons
 
 void FlowSolverBase::saveSequentialIterationState( ElementSubRegionBase & subRegion ) const
 {
-  if( !( subRegion.hasField< fields::flow::pressure_k >() &&
-         subRegion.hasField< fields::flow::temperature_k >() ) )
-  {
-    return;
-  }
-
   arrayView1d< real64 const > const pres = subRegion.template getField< fields::flow::pressure >();
   arrayView1d< real64 const > const temp = subRegion.template getField< fields::flow::temperature >();
   arrayView1d< real64 > const pres_k = subRegion.template getField< fields::flow::pressure_k >();
@@ -478,18 +490,11 @@ void FlowSolverBase::updatePorosityAndPermeability( CellElementSubRegion & subRe
   string const & solidName = subRegion.getReference< string >( viewKeyStruct::solidNamesString() );
   CoupledSolidBase & porousSolid = subRegion.template getConstitutiveModel< CoupledSolidBase >( solidName );
 
-  GEOS_THROW_IF( subRegion.hasField< fields::flow::pressure_k >() !=
-                 subRegion.hasField< fields::flow::temperature_k >(),
-                 GEOS_FMT( "`{}` and `{}` must be either both existing or both non-existing on subregion {}",
-                           fields::flow::pressure_k::key(), fields::flow::temperature_k::key(), subRegion.getName() ),
-                 std::runtime_error );
-
   constitutive::ConstitutivePassThru< CoupledSolidBase >::execute( porousSolid, [=, &subRegion] ( auto & castedPorousSolid )
   {
     typename TYPEOFREF( castedPorousSolid ) ::KernelWrapper porousWrapper = castedPorousSolid.createKernelUpdates();
 
-    if( subRegion.hasField< fields::flow::pressure_k >() && // for sequential simulations
-        subRegion.hasField< fields::flow::temperature_k >() )
+    if( m_isFixedStressPoromechanicsUpdate )// for sequential simulations
     {
       arrayView1d< real64 const > const & pressure_k = subRegion.getField< fields::flow::pressure_k >();
       arrayView1d< real64 const > const & temperature_k = subRegion.getField< fields::flow::temperature_k >();
@@ -781,6 +786,7 @@ void FlowSolverBase::updateStencilWeights( DomainPartition & domain ) const
 bool FlowSolverBase::checkSequentialSolutionIncrements( DomainPartition & domain ) const
 {
   real64 maxPresChange = 0.0;
+  real64 maxTempChange = 0.0;
   forDiscretizationOnMeshTargets ( domain.getMeshBodies(), [&]( string const &,
                                                                 MeshLevel & mesh,
                                                                 arrayView1d< string const > const & regionNames )
@@ -793,27 +799,38 @@ bool FlowSolverBase::checkSequentialSolutionIncrements( DomainPartition & domain
 
       arrayView1d< real64 const > const pres = subRegion.getField< fields::flow::pressure >();
       arrayView1d< real64 const > const pres_k = subRegion.getField< fields::flow::pressure_k >();
+      arrayView1d< real64 const > const temp = subRegion.getField< fields::flow::temperature >();
+      arrayView1d< real64 const > const temp_k = subRegion.getField< fields::flow::temperature_k >();
 
       RAJA::ReduceMax< parallelDeviceReduce, real64 > subRegionMaxPresChange( 0.0 );
+      RAJA::ReduceMax< parallelDeviceReduce, real64 > subRegionMaxTempChange( 0.0 );
 
       forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const ei )
       {
         if( ghostRank[ei] < 0 )
         {
           subRegionMaxPresChange.max( LvArray::math::abs( pres[ei] - pres_k[ei] ) );
+          subRegionMaxTempChange.max( LvArray::math::abs( temp[ei] - temp_k[ei] ) );
         }
       } );
 
       maxPresChange = LvArray::math::max( maxPresChange, subRegionMaxPresChange.get() );
+      maxTempChange = LvArray::math::max( maxTempChange, subRegionMaxTempChange.get() );
     } );
   } );
 
   maxPresChange = MpiWrapper::max( maxPresChange );
-
   GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "    {}: Max pressure change during outer iteration: {} Pa",
                                       getName(), fmt::format( "{:.{}f}", maxPresChange, 3 ) ) );
 
-  return maxPresChange < m_maxSequentialPresChange;
+  if( m_isThermal )
+  {
+    maxTempChange = MpiWrapper::max( maxTempChange );
+    GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "    {}: Max temperature change during outer iteration: {} K",
+                                        getName(), fmt::format( "{:.{}f}", maxTempChange, 3 ) ) );
+  }
+
+  return (maxPresChange < m_maxSequentialPresChange) && (maxTempChange < m_maxSequentialTempChange);
 }
 
 } // namespace geos
