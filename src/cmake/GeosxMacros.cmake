@@ -31,7 +31,7 @@ macro( geosx_add_code_checks )
     if( NOT DEFINED arg_EXCLUDES )
         set( _sources ${_all_sources} )
     else()
-        set( _sources )
+        unset( _sources )
         foreach( _source ${_all_sources} )
             set( _to_be_excluded FALSE )
             foreach( _exclude ${arg_EXCLUDES} )
@@ -54,3 +54,38 @@ macro( geosx_add_code_checks )
     endif()
 
 endmacro( geosx_add_code_checks )
+
+##------------------------------------------------------------------------------
+## geos_add_test( NAME       [name]
+##                COMMAND    [command]
+##                EXECUTABLE [executable] )
+##
+## Adds a test to the project, remaining arguments are forwarded to `blt_add_test`
+## As a side effect, uses and populates a global property named `geos_tests_exe_list`
+## initialized in `src/CMakeLists.txt`.
+##------------------------------------------------------------------------------
+macro( geos_add_test )
+
+    set( options )
+    set( singleValueArgs NAME EXECUTABLE )
+    set( multiValueArgs COMMAND )
+
+    # Parse the arguments to the macro
+    cmake_parse_arguments( arg
+         "${options}" "${singleValueArgs}" "${multiValueArgs}" ${ARGN} )
+
+    if( NOT arg_EXECUTABLE )
+      list( GET arg_COMMAND 0 _test_executable )
+      set( arg_EXECUTABLE ${_test_executable} )
+    endif()
+
+    get_property( tmp GLOBAL PROPERTY geos_tests_exe_list )
+    list( APPEND tmp ${arg_EXECUTABLE} )
+    set_property( GLOBAL PROPERTY geos_tests_exe_list "${tmp}" )
+
+    message( DEBUG "arg_NAME=${arg_NAME} arg_EXECUTABLE=${arg_EXECUTABLE} arg_COMMAND=${arg_COMMAND} ARGN=${ARGN}" )  # debug
+
+    blt_add_test( NAME ${arg_NAME}
+                  COMMAND ${arg_COMMAND} ${ARGN} )
+
+endmacro( geos_add_test )
