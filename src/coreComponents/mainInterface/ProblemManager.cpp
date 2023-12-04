@@ -321,6 +321,11 @@ void ProblemManager::setSchemaDeviations( xmlWrapper::xmlNode schemaRoot,
 
   Group & includedFile = IncludedList.registerGroup< Group >( xmlWrapper::includedFileTag );
   includedFile.setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
+  // the name of includedFile is actually a Path.
+  includedFile.registerWrapper< string >( "name" ).
+    setInputFlag( InputFlags::REQUIRED ).
+    setRTTypeName( rtTypes::getTypeName( typeid( Path ) ) ).
+    setDescription( "The relative file path." );
 
   schemaUtilities::SchemaConstruction( IncludedList, schemaRoot, targetChoiceNode, documentationType );
 
@@ -576,7 +581,6 @@ void ProblemManager::generateMesh()
 
     if( meshBody.hasParticles() ) // mesh bodies with particles load their data into particle blocks, not cell blocks
     {
-      GEOS_LOG_RANK_0( "Generating particle mesh level" );
       ParticleBlockManagerABC & particleBlockManager = meshBody.getGroup< ParticleBlockManagerABC >( keys::particleManager );
 
       this->generateMeshLevel( baseMesh,

@@ -25,7 +25,7 @@
 #include "physicsSolvers/solidMechanics/SolidMechanicsFields.hpp"
 #include "physicsSolvers/multiphysics/SinglePhasePoromechanics.hpp"
 #include "physicsSolvers/multiphysics/MultiphasePoromechanics.hpp"
-
+#include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
 
 namespace geos
 {
@@ -43,14 +43,14 @@ template< typename POROMECHANICS_SOLVER > class
   HydrofractureSolverCatalogNames {};
 
 // Class specialization for a POROMECHANICS_SOLVER set to SinglePhasePoromechanics
-template<> class HydrofractureSolverCatalogNames< SinglePhasePoromechanics >
+template<> class HydrofractureSolverCatalogNames< SinglePhasePoromechanics< SinglePhaseBase > >
 {
 public:
   static string name() { return "Hydrofracture"; }
 };
 
 // Class specialization for a POROMECHANICS_SOLVER set to MultiphasePoromechanics
-template<> class HydrofractureSolverCatalogNames< MultiphasePoromechanics >
+template<> class HydrofractureSolverCatalogNames< MultiphasePoromechanics< CompositionalMultiphaseBase > >
 {
 public:
   static string name() { return "MultiphaseHydrofracture"; }
@@ -78,10 +78,12 @@ HydrofractureSolver< POROMECHANICS_SOLVER >::HydrofractureSolver( const string &
   m_isMatrixPoroelastic()
 {
   registerWrapper( viewKeyStruct::surfaceGeneratorNameString(), &m_surfaceGeneratorName ).
+    setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Name of the surface generator to use in the hydrofracture solver" );
 
   registerWrapper( viewKeyStruct::contactRelationNameString(), &m_contactRelationName ).
+    setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Name of contact relation to enforce constraints on fracture boundary." );
 
@@ -138,8 +140,8 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::implicitStepSetup( real64 cons
                                                                      real64 const & dt,
                                                                      DomainPartition & domain )
 {
-  updateDeformationForCoupling( domain );
   Base::implicitStepSetup( time_n, dt, domain );
+  updateHydraulicApertureAndFracturePermeability( domain );
 
 #ifdef GEOSX_USE_SEPARATION_COEFFICIENT
   MeshLevel & mesh = domain.getMeshBody( 0 ).getBaseDiscretization();
@@ -260,7 +262,7 @@ real64 HydrofractureSolver< POROMECHANICS_SOLVER >::fullyCoupledSolverStep( real
   return dtReturn;
 }
 template< typename POROMECHANICS_SOLVER >
-void HydrofractureSolver< POROMECHANICS_SOLVER >::updateDeformationForCoupling( DomainPartition & domain )
+void HydrofractureSolver< POROMECHANICS_SOLVER >::updateHydraulicApertureAndFracturePermeability( DomainPartition & domain )
 {
   MeshLevel & meshLevel = domain.getMeshBody( 0 ).getBaseDiscretization();
   ElementRegionManager & elemManager = meshLevel.getElemManager();
@@ -291,6 +293,9 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::updateDeformationForCoupling( 
     arrayView1d< real64 const > const area = subRegion.getElementArea();
     ArrayOfArraysView< localIndex const > const elemsToFaces = subRegion.faceList().toViewConst();
 
+    string const porousSolidName = subRegion.template getReference< string >( FlowSolverBase::viewKeyStruct::solidNamesString() );
+    CoupledSolidBase const & porousSolid = subRegion.template getConstitutiveModel< CoupledSolidBase >( porousSolidName );
+
 #ifdef GEOSX_USE_SEPARATION_COEFFICIENT
     arrayView1d< real64 const > const &
     apertureF = subRegion.getReference< array1d< real64 > >( viewKeyStruct::apertureAtFailureString() );
@@ -303,39 +308,45 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::updateDeformationForCoupling( 
     arrayView1d< real64 const > const &
     separationCoeff0 = subRegion.getReference< array1d< real64 > >( viewKeyStruct::separationCoeff0String() );
 #endif
-
-    constitutiveUpdatePassThru( contact, [&] ( auto & castedContact )
+    constitutive::ConstitutivePassThru< CompressibleSolidBase >::execute( porousSolid, [&] ( auto & castedPorousSolid )
     {
-      using ContactType = TYPEOFREF( castedContact );
-      typename ContactType::KernelWrapper contactWrapper = castedContact.createKernelWrapper();
+      typename TYPEOFREF( castedPorousSolid ) ::KernelWrapper porousMaterialWrapper = castedPorousSolid.createKernelUpdates();
 
-      auto const statistics = hydrofractureSolverKernels::DeformationUpdateKernel
-                                ::launch< parallelDevicePolicy<> >( subRegion.size(),
-                                                                    contactWrapper,
-                                                                    u,
-                                                                    faceNormal,
-                                                                    faceToNodeMap,
-                                                                    elemsToFaces,
-                                                                    area,
-                                                                    volume,
-                                                                    deltaVolume,
-                                                                    aperture,
-                                                                    hydraulicAperture
+      constitutiveUpdatePassThru( contact, [&] ( auto & castedContact )
+      {
+        using ContactType = TYPEOFREF( castedContact );
+        typename ContactType::KernelWrapper contactWrapper = castedContact.createKernelWrapper();
+
+        auto const statistics = hydrofractureSolverKernels::DeformationUpdateKernel
+                                  ::launch< parallelDevicePolicy<> >( subRegion.size(),
+                                                                      contactWrapper,
+                                                                      porousMaterialWrapper,
+                                                                      u,
+                                                                      faceNormal,
+                                                                      faceToNodeMap,
+                                                                      elemsToFaces,
+                                                                      area,
+                                                                      volume,
+                                                                      deltaVolume,
+                                                                      aperture,
+                                                                      hydraulicAperture
 #ifdef GEOSX_USE_SEPARATION_COEFFICIENT
-                                                                    ,
-                                                                    apertureF,
-                                                                    separationCoeff,
-                                                                    dSeparationCoeff_dAper,
-                                                                    separationCoeff0
+                                                                      ,
+                                                                      apertureF,
+                                                                      separationCoeff,
+                                                                      dSeparationCoeff_dAper,
+                                                                      separationCoeff0
 #endif
-                                                                    );
+                                                                      );
 
-      maxApertureChange = std::max( maxApertureChange, std::get< 0 >( statistics ));
-      maxHydraulicApertureChange = std::max( maxHydraulicApertureChange, std::get< 1 >( statistics ));
-      minAperture = std::min( minAperture, std::get< 2 >( statistics ));
-      maxAperture = std::max( maxAperture, std::get< 3 >( statistics ));
-      minHydraulicAperture = std::min( minHydraulicAperture, std::get< 4 >( statistics ));
-      maxHydraulicAperture = std::max( maxHydraulicAperture, std::get< 5 >( statistics ));
+        maxApertureChange = std::max( maxApertureChange, std::get< 0 >( statistics ));
+        maxHydraulicApertureChange = std::max( maxHydraulicApertureChange, std::get< 1 >( statistics ));
+        minAperture = std::min( minAperture, std::get< 2 >( statistics ));
+        maxAperture = std::max( maxAperture, std::get< 3 >( statistics ));
+        minHydraulicAperture = std::min( minHydraulicAperture, std::get< 4 >( statistics ));
+        maxHydraulicAperture = std::max( maxHydraulicAperture, std::get< 5 >( statistics ));
+
+      } );
 
     } );
 
@@ -652,7 +663,7 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::assembleSystem( real64 const t
                                             dofManager,
                                             localMatrix,
                                             localRhs,
-                                            getDerivativeFluxResidual_dAperture() );
+                                            getDerivativeFluxResidual_dNormalJump() );
 
   assembleForceResidualDerivativeWrtPressure( domain, localMatrix, localRhs );
 
@@ -782,7 +793,7 @@ assembleFluidMassResidualDerivativeWrtDisplacement( DomainPartition const & doma
   globalIndex const rankOffset = m_dofManager.rankOffset();
 
   CRSMatrixView< real64 const, localIndex const > const
-  dFluxResidual_dAperture = getDerivativeFluxResidual_dAperture().toViewConst();
+  dFluxResidual_dNormalJump = getDerivativeFluxResidual_dNormalJump().toViewConst();
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel const & mesh,
@@ -831,26 +842,44 @@ assembleFluidMassResidualDerivativeWrtDisplacement( DomainPartition const & doma
                                             presDofNumber,
                                             dispDofNumber,
                                             dens,
-                                            dFluxResidual_dAperture,
+                                            dFluxResidual_dNormalJump,
                                             localMatrix );
 
       } );
     } );
   } );
 }
+
 template< typename POROMECHANICS_SOLVER >
 void HydrofractureSolver< POROMECHANICS_SOLVER >::updateState( DomainPartition & domain )
 {
+
+  Base::updateState( domain );
+
   // remove the contribution of the hydraulic aperture from the stencil weights
   flowSolver()->prepareStencilWeights( domain );
 
-  updateDeformationForCoupling( domain );
+  updateHydraulicApertureAndFracturePermeability( domain );
 
   // update the stencil weights using the updated hydraulic aperture
   flowSolver()->updateStencilWeights( domain );
 
-  flowSolver()->updateState( domain );
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                MeshLevel & mesh,
+                                                                arrayView1d< string const > const & regionNames )
+  {
+    ElementRegionManager & elemManager = mesh.getElemManager();
+
+    elemManager.forElementSubRegions< FaceElementSubRegion >( regionNames,
+                                                              [&]( localIndex const,
+                                                                   FaceElementSubRegion & subRegion )
+    {
+      // update fluid model
+      flowSolver()->updateFluidState( subRegion );
+    } );
+  } );
 }
+
 template< typename POROMECHANICS_SOLVER >
 real64 HydrofractureSolver< POROMECHANICS_SOLVER >::setNextDt( real64 const & currentDt,
                                                                DomainPartition & domain )
@@ -938,8 +967,8 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::setUpDflux_dApertureMatrix( Do
 
 namespace
 {
-typedef HydrofractureSolver< SinglePhasePoromechanics > SinglePhaseHydrofracture;
-// typedef HydrofractureSolver< MultiphasePoromechanics > MultiphaseHydrofracture;
+typedef HydrofractureSolver< SinglePhasePoromechanics< SinglePhaseBase > > SinglePhaseHydrofracture;
+// typedef HydrofractureSolver< MultiphasePoromechanics< CompositionalMultiphaseBase > > MultiphaseHydrofracture;
 REGISTER_CATALOG_ENTRY( SolverBase, SinglePhaseHydrofracture, string const &, Group * const )
 // REGISTER_CATALOG_ENTRY( SolverBase, MultiphaseHydrofracture, string const &, Group * const )
 }

@@ -38,6 +38,8 @@ VTKOutput::VTKOutput( string const & name,
   m_fieldNames(),
   m_writer( getOutputDirectory() + '/' + m_plotFileRoot )
 {
+  enableLogLevelInput();
+
   registerWrapper( viewKeysStruct::plotFileRoot, &m_plotFileRoot ).
     setDefaultValue( m_plotFileRoot ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -64,6 +66,7 @@ VTKOutput::VTKOutput( string const & name,
     "If this flag is equal to 1, then we only plot the fields listed in `fieldNames`. Otherwise, we plot all the fields with the required `plotLevel`, plus the fields listed in `fieldNames`" );
 
   registerWrapper( viewKeysStruct::fieldNames, &m_fieldNames ).
+    setRTTypeName( rtTypes::CustomTypes::groupNameRefArray ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Names of the fields to output. If this attribute is specified, GEOSX outputs all the fields specified by the user, regardless of their `plotLevel`" );
 
@@ -122,12 +125,14 @@ void VTKOutput::reinit()
 }
 
 bool VTKOutput::execute( real64 const time_n,
-                         real64 const GEOS_UNUSED_PARAM( dt ),
+                         real64 const dt,
                          integer const cycleNumber,
                          integer const GEOS_UNUSED_PARAM( eventCounter ),
                          real64 const GEOS_UNUSED_PARAM ( eventProgress ),
                          DomainPartition & domain )
 {
+  GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "{}: writing {} at time {} s (cycle number {})", getName(), m_fieldNames, time_n + dt, cycleNumber ));
+
   m_writer.setWriteGhostCells( m_writeGhostCells );
   m_writer.setOutputMode( m_writeBinaryData );
   m_writer.setOutputRegionType( m_outputRegionType );
