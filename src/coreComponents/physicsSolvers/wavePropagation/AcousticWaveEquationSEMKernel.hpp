@@ -20,7 +20,6 @@
 #define GEOS_PHYSICSSOLVERS_WAVEPROPAGATION_ACOUSTICWAVEEQUATIONSEMKERNEL_HPP_
 
 #include "finiteElement/kernelInterface/KernelBase.hpp"
-#include "WaveSolverKernelBase.hpp"
 #include "WaveSolverUtils.hpp"
 #if !defined( GEOS_USE_HIP )
 #include "finiteElement/elementFormulations/Qk_Hexahedron_Lagrange_GaussLobatto.hpp"
@@ -218,12 +217,12 @@ struct MassMatrixKernel
       constexpr localIndex numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
 
       real32 const invC2 = 1.0 / ( density[e] * velocity[e] * velocity[e] );
-      real64 xLocal[ numNodesPerElem ][ 3 ];
-      for( localIndex a = 0; a < numNodesPerElem; ++a )
+      real64 xLocal[ 8 ][ 3 ];
+      for( localIndex a = 0; a < 8; ++a )
       {
         for( localIndex i = 0; i < 3; ++i )
         {
-          xLocal[a][i] = nodeCoords( elemsToNodes( e, a ), i );
+          xLocal[a][i] = nodeCoords( elemsToNodes( e, FE_TYPE::meshIndexToLinearIndex3D( a ) ), i );
         }
       }
       for( localIndex q = 0; q < numQuadraturePointsPerElem; ++q )
@@ -282,12 +281,12 @@ struct DampingMatrixKernel
         if( facesDomainBoundaryIndicator[f] == 1 && freeSurfaceFaceIndicator[f] != 1 )
         {
           constexpr localIndex numNodesPerFace = FE_TYPE::numNodesPerFace;
-          real64 xLocal[ numNodesPerFace ][ 3 ];
-          for( localIndex a = 0; a < numNodesPerFace; ++a )
+          real64 xLocal[ 4 ][ 3 ];
+          for( localIndex a = 0; a < 4; ++a )
           {
             for( localIndex d = 0; d < 3; ++d )
             {
-              xLocal[a][d] = nodeCoords( facesToNodes( f, a ), d );
+              xLocal[a][d] = nodeCoords( facesToNodes( f, FE_TYPE:meshIndexToLinearIndex2D( a ) ), d );
             }
           }
           real32 const alpha = 1.0 / (density[e] * velocity[e]);
@@ -686,16 +685,20 @@ struct waveSpeedPMLKernel
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
           typename FE_TYPE >
-class ExplicitAcousticSEM : public finiteElement::WaveSolverKernelBase< SUBREGION_TYPE,
+class ExplicitAcousticSEM : public finiteElement::KernelBase< SUBREGION_TYPE,
                                                                         CONSTITUTIVE_TYPE,
-                                                                        FE_TYPE >
+                                                                        FE_TYPE,
+                                                                        1, 
+                                                                        1 >
 {
 public:
 
   /// Alias for the base class;
-  using Base = finiteElement::WaveSolverKernelBase< SUBREGION_TYPE,
-                                                    CONSTITUTIVE_TYPE,
-                                                    FE_TYPE >;
+  using Base = finiteElement::KernelBase< SUBREGION_TYPE,
+                                          CONSTITUTIVE_TYPE,
+                                          FE_TYPE,
+                                          1,
+                                          1 >;
 
   /// Maximum number of nodes per element, which is equal to the maxNumTestSupportPointPerElem and
   /// maxNumTrialSupportPointPerElem by definition. When the FE_TYPE is not a Virtual Element, this
@@ -754,7 +757,6 @@ public:
 public:
     GEOS_HOST_DEVICE
     StackVariables():
-      Base::StackVariables(),
       xLocal(),
       stiffnessVectorLocal()
     {}
@@ -811,13 +813,13 @@ public:
    * Calculates stiffness vector
    *
    */
-  template< localIndex q >
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
-  void quadraturePointKernel( localIndex const k,
+  void quadraturePointKernel( localIndex const q,
+                              localIndex const k,
                               StackVariables & stack ) const
   {
-    m_finiteElementSpace.template computeStiffnessTerm< q >( stack.xLocal, [&] ( int i, int j, real64 val )
+    m_finiteElementSpace.template computeStiffnessTerm( q, stack.xLocal, [&] ( int i, int j, real64 val )
     {
       real32 invDensity = 1./m_density[k];
       real32 const localIncrement = invDensity*val*m_p_n[m_elemsToNodes[k][j]];

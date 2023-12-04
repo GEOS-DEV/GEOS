@@ -21,7 +21,6 @@
 
 #include "finiteElement/elementFormulations/Qk_Hexahedron_Lagrange_GaussLobatto.hpp"
 #include "finiteElement/kernelInterface/KernelBase.hpp"
-#include "WaveSolverKernelBase.hpp"
 #include "WaveSolverBaseFields.hpp"
 #include "WaveSolverUtils.hpp"
 
@@ -222,12 +221,12 @@ struct MassMatrixKernel
       constexpr localIndex numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
 
       real32 const invC2 = 1.0 / ( velocity[e] * velocity[e] );
-      real64 xLocal[ numNodesPerElem ][ 3 ];
-      for( localIndex a = 0; a < numNodesPerElem; ++a )
+      real64 xLocal[ 8 ][ 3 ];
+      for( localIndex a = 0; a < 8; ++a )
       {
         for( localIndex i = 0; i < 3; ++i )
         {
-          xLocal[a][i] = nodeCoords( elemsToNodes( e, a ), i );
+          xLocal[a][i] = nodeCoords( elemsToNodes( e, FE_TYPE::meshIndexToLocalIndex3D( a ) ), i );
         }
       }
 
@@ -324,12 +323,12 @@ struct DampingMatrixKernel
           }
 
           constexpr localIndex numNodesPerFace = FE_TYPE::numNodesPerFace;
-          real64 xLocal[ numNodesPerFace ][ 3 ];
-          for( localIndex a = 0; a < numNodesPerFace; ++a )
+          real64 xLocal[ 4 ][ 3 ];
+          for( localIndex a = 0; a <4numNodesPerFace; ++a )
           {
             for( localIndex d = 0; d < 3; ++d )
             {
-              xLocal[a][d] = nodeCoords( facesToNodes( f, a ), d );
+              xLocal[a][d] = nodeCoords( facesToNodes( f, FE_TYPE::meshIndexToLinearIndex2D( a ) ), d );
             }
           }
 
@@ -380,16 +379,20 @@ struct DampingMatrixKernel
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
           typename FE_TYPE >
-class ExplicitAcousticVTISEM : public finiteElement::WaveSolverKernelBase< SUBREGION_TYPE,
-                                                                           CONSTITUTIVE_TYPE,
-                                                                           FE_TYPE >
+class ExplicitAcousticVTISEM : public finiteElement::KernelBase< SUBREGION_TYPE,
+                                                                 CONSTITUTIVE_TYPE,
+                                                                 FE_TYPE,
+                                                                 1,
+                                                                 1 >
 {
 public:
 
   /// Alias for the base class;
-  using Base = finiteElement::WaveSolverKernelBase< SUBREGION_TYPE,
-                                                    CONSTITUTIVE_TYPE,
-                                                    FE_TYPE >;
+  using Base = finiteElement::KernelBase< SUBREGION_TYPE,
+                                          CONSTITUTIVE_TYPE,
+                                          FE_TYPE,
+                                          1,
+                                          1 >;
 
   /// Maximum number of nodes per element, which is equal to the maxNumTestSupportPointPerElem and
   /// maxNumTrialSupportPointPerElem by definition. When the FE_TYPE is not a Virtual Element, this
@@ -452,7 +455,6 @@ public:
 public:
     GEOS_HOST_DEVICE
     StackVariables():
-      Base::StackVariables(),
       xLocal(),
       stiffnessVectorLocal_p(),
       stiffnessVectorLocal_q()
@@ -507,14 +509,14 @@ public:
    * Calculates stiffness vector
    *
    */
-  template< localIndex q >
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
-  void quadraturePointKernel( localIndex const k,
+  void quadraturePointKernel( localIndex const q,
+                              localIndex const k,
                               StackVariables & stack ) const
   {
     // Pseudo Stiffness xy
-    m_finiteElementSpace.template computeStiffnessxyTerm< q >( stack.xLocal, [&] ( int i, int j, real64 val )
+    m_finiteElementSpace.template computeStiffnessxyTerm( q, stack.xLocal, [&] ( int i, int j, real64 val )
     {
       real32 const localIncrement_p = val*(-1-2*m_epsilon[k])*m_p_n[m_elemsToNodes[k][j]];
       stack.stiffnessVectorLocal_p[ i ] += localIncrement_p;
@@ -524,7 +526,7 @@ public:
 
     // Pseudo-Stiffness z
 
-    m_finiteElementSpace.template computeStiffnesszTerm< q >( stack.xLocal, [&] ( int i, int j, real64 val )
+    m_finiteElementSpace.template computeStiffnesszTerm( q, stack.xLocal, [&] ( int i, int j, real64 val )
     {
       real32 const localIncrement_p = val*((m_vti_f[k]-1)*m_p_n[m_elemsToNodes[k][j]] - m_vti_f[k]*m_q_n[m_elemsToNodes[k][j]]);
       stack.stiffnessVectorLocal_p[ i ] += localIncrement_p;

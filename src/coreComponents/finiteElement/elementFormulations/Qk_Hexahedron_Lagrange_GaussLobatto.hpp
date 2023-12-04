@@ -65,11 +65,11 @@ public:
   // Constexpr quantities for optimization 
   //
   
-  // Indices for 3D tensor-product bases
+  // Indices for 2D and 3D tensor-product bases
 
   GEOS_HOST_DEVICE 
   GEOS_FORCE_INLINE
-  constexpr static localIndex index3D( const localIndex q, const int i )
+  constexpr static localIndex index3DVal( const localIndex q, const int i )
   {
     switch( i )
     {
@@ -84,20 +84,133 @@ public:
     }
   }
 
+  struct index3DStruct
+  {
+    localIndex v[num3dNodes][3];
+  };
+
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
+  constexpr static auto index3D()
+  {
+    index3DStruct i3D{};
+    for(int q = 0; q < num3dNodes; q++)
+    {
+      for(int i=0; i<3; i++)
+      {
+        i3D.v[q][i] = index3DVal( q, i );
+      }
+    }
+    return i3D;
+  }
+
   GEOS_HOST_DEVICE 
   GEOS_FORCE_INLINE
-  constexpr static localIndex linearIndex3D( const localIndex qa, localIndex const qb, localIndex const qc )
+  constexpr static localIndex linearIndex3DVal( const localIndex qa, localIndex const qb, localIndex const qc )
   {
     return qa + qb * num1dNodes + qc * num2dNodes;
   }
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
-  constexpr static localIndex meshIndexToLinearIndex3D( localIndex k )
+  constexpr static localIndex meshIndexToLinearIndex3D( localIndex const k )
   {
-    return linearIndex3D( ( num1dNodes - 1 ) * ( ( k % 4 ) % 2 ), 
-                          ( num1dNodes - 1 ) * ( ( k % 4 ) / 2 ), 
-                          ( num1dNodes - 1 ) * ( k / 4 ) ); 
+    return linearIndex3DVal( ( num1dNodes - 1 ) * ( ( k % 4 ) % 2 ), 
+                             ( num1dNodes - 1 ) * ( ( k % 4 ) / 2 ), 
+                             ( num1dNodes - 1 ) * ( k / 4 ) ); 
   }                                                     
+
+  struct linearIndex3DStruct
+  {
+    localIndex v[num1dNodes][num1dNodes][num1dNodes];
+  };
+
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
+  constexpr static auto linearIndex3D()
+  {
+    linearIndex3DStruct li3D{};
+    for(int qa = 0; qa < num1dNodes; qa++)
+    {
+      for(int qb = 0; qb < num1dNodes; qb++)
+      {
+        for(int qc = 0; qc < num1dNodes; qc++)
+        {
+          li3D.v[qa][qb][qc] = linearIndex3DVal( qa, qb, qc );
+        }
+      }
+    }
+    return li3D;
+  }
+
+
+  GEOS_HOST_DEVICE 
+  GEOS_FORCE_INLINE
+  constexpr static localIndex index2DVal( const localIndex q, const int i )
+  {
+    switch( i )
+    {
+      case 0:
+        return (q % num1dNodes );
+      case 1:
+        return (q / num2dNodes );
+      default:
+        return -1;
+    }
+  }
+
+  struct index2DStruct
+  {
+    localIndex v[num2dNodes][3];
+  };
+
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
+  constexpr static auto index2D()
+  {
+    index3DStruct i2D{};
+    for(int q = 0; q < num2dNodes; q++)
+    {
+      for(int i=0; i<2; i++)
+      {
+        i2D.v[q][i] = index2DVal( q, i );
+      }
+    }
+    return i2D;
+  }
+
+  GEOS_HOST_DEVICE 
+  GEOS_FORCE_INLINE
+  constexpr static localIndex linearIndex2DVal( const localIndex qa, localIndex const qb )
+  {
+    return qa + qb * num1dNodes;
+  }
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
+  constexpr static localIndex meshIndexToLinearIndex2D( localIndex const k )
+  {
+    return linearIndex2DVal( ( num1dNodes - 1 ) * ( k % 2 ), 
+                             ( num1dNodes - 1 ) * ( k / 2 ) ); 
+  }                                                     
+
+  struct linearIndex2DStruct
+  {
+    localIndex v[num1dNodes][num1dNodes];
+  };
+
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
+  constexpr static auto linearIndex2D()
+  {
+    linearIndex3DStruct li2D{};
+    for(int qa = 0; qa < num1dNodes; qa++)
+    {
+      for(int qb = 0; qb < num1dNodes; qb++)
+      {
+        li2D.v[qa][qb] = linearIndex2DVal( qa, qb );
+      }
+    }
+    return li2D;
+  }
 
   
   // Specific values of basis functions at quadrature points
@@ -108,12 +221,52 @@ public:
   {
     return GL_BASIS::value( q, GL_BASIS::parentSupportCoord( p ) );
   }
+
+  struct basisValueStruct
+  {
+    real64 v[num1dNodes][num1dNodes];
+  };
+
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
+  constexpr static auto basisValue()
+  {
+    basisValueStruct bv{};
+    for(int qa = 0; qa < num1dNodes; qa++)
+    {
+      for(int qb = 0; qb < num1dNodes; qb++)
+      {
+         bv.v[qa][qb] = basisValueAtQ( qa, qb );
+      }
+    }
+    return bv;
+  }
  
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
   constexpr static real64 basisGradientAtQ( const localIndex q, const localIndex p)
   {
     return GL_BASIS::gradient( q, GL_BASIS::parentSupportCoord( p ) );
+  }
+
+  struct basisGradientStruct
+  {
+    real64 v[num1dNodes][num1dNodes];
+  };
+
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
+  constexpr static auto basisGradient()
+  {
+    basisGradientStruct bg{};
+    for(int qa = 0; qa < num1dNodes; qa++)
+    {
+      for(int qb = 0; qb < num1dNodes; qb++)
+      {
+         bg.v[qa][qb] = basisGradientAtQ( qa, qb );
+      }
+    }
+    return bg;
   }
 
   GEOS_HOST_DEVICE
@@ -135,15 +288,16 @@ public:
   GEOS_FORCE_INLINE
   constexpr static real64 basis3DValueAtQ( const localIndex q, const localIndex pa, const localIndex pb, const localIndex pc )
   {
-    return basis3DValueAtQ( index3D( q, 0 ), index3D( q, 1 ), index3D( q, 2 ), pa, pb, pc );
+    return basis3DValueAtQ( index3DVal( q, 0 ), index3DVal( q, 1 ), index3DVal( q, 2 ), pa, pb, pc );
   }
 
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
   constexpr static real64 basis3DValueAtQ( const localIndex q, const localIndex p)
   {
-    return basis3DValueAtQ( q, index3D( p, 0 ), index3D( p, 1 ), index3D( p, 2 ) );
+    return basis3DValueAtQ( q, index3DVal( p, 0 ), index3DVal( p, 1 ), index3DVal( p, 2 ) );
   }
+
 
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
@@ -166,38 +320,67 @@ public:
   GEOS_FORCE_INLINE
   constexpr static real64 basis3DGradientAtQ( const localIndex q, const localIndex pa, const localIndex pb, const localIndex pc, const int i)
   {
-    return basis3DGradientAtQ( index3D( q, 0 ), index3D( q, 1 ), index3D( q, 2 ), pa, pb, pc, i );
+    return basis3DGradientAtQ( index3DVal( q, 0 ), index3DVal( q, 1 ), index3DVal( q, 2 ), pa, pb, pc, i );
   }
 
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
   constexpr static real64 basis3DGradientAtQ( const localIndex q, const localIndex p, const int i )
   {
-    return basis3DGradientAtQ( q, index3D( p, 0 ), index3D( p, 1 ), index3D( p, 2 ), i );
+    return basis3DGradientAtQ( q, index3DVal( p, 0 ), index3DVal( p, 1 ), index3DVal( p, 2 ), i );
   }
 
-  // aggregate used to compute gradient values at compile-time
-  // we cannot use a std::array since its bracket accessors are not defined on device
-  struct gradArray
-  {
-    real64 data[num1dNodes][num1dNodes];
-  };
 
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
-  constexpr static auto gradientArray()
+  constexpr static real64 basis2DValueAtQ( const localIndex qa, const localIndex qb, const localIndex pa, const localIndex pb )
   {
-    gradArray grad{};
-    for( int i=0; i<num1dNodes; i++ )
-    {
-      for( int j=0; j<num1dNodes; j++ )
-      {
-        grad.data[i][j] = basisGradientAtQ( i, j );
-      }
-    }
-    return grad;
+    return basisValueAtQ( qa, pa ) * basisValueAtQ( qb, pb );
   }
 
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
+  constexpr static real64 basis2DValueAtQ( const localIndex q, const localIndex pa, const localIndex pb )
+  {
+    return basis2DValueAtQ( index2DVal( q, 0 ), index2DVal( q, 1 ), pa, pb );
+  }
+
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
+  constexpr static real64 basis2DValueAtQ( const localIndex q, const localIndex p)
+  {
+    return basis2DValueAtQ( q, index2DVal( p, 0 ), index2DVal( p, 1 ) );
+  }
+
+
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
+  constexpr static real64 basis2DGradientAtQ( const localIndex qa, const localIndex qb, const localIndex pa, const localIndex pb, const int i )
+  {
+    switch( i )
+    {
+      case 0:
+        return basisGradientAtQ( qa, pa ) * basisValueAtQ( qb, pb );
+      case 1:
+        return basisValueAtQ( qa, pa ) * basisGradientAtQ( qb, pb );
+      default:
+        return 0;
+    }
+  }
+  
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
+  constexpr static real64 basis2DGradientAtQ( const localIndex q, const localIndex pa, const localIndex pb, const int i)
+  {
+    return basis2DGradientAtQ( index2DVal( q, 0 ), index2DVal( q, 1 ), pa, pb, i );
+  }
+
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
+  constexpr static real64 basis2DGradientAtQ( const localIndex q, const localIndex p, const int i )
+  {
+    return basis2DGradientAtQ( q, index2DVal( p, 0 ), index2DVal( p, 1 ), i );
+  }
 
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
@@ -210,7 +393,55 @@ public:
   GEOS_FORCE_INLINE
   constexpr static real64 basis3DWeightAtQ( const localIndex q )
   {
-    return basis3DWeightAtQ( index3D( q, 0 ), index3D( q, 1 ), index3D( q, 2 ) );
+    return basis3DWeightAtQ( index3DVal( q, 0 ), index3DVal( q, 1 ), index3DVal( q, 2 ) );
+  }
+
+  struct basis3DWeightStruct
+  {
+    real64 v[num3dNodes];
+  };
+
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
+  constexpr static auto basis3DWeight()
+  {
+    basis3DWeightStruct w3D{};
+    for(int q = 0; q < num3dNodes; q++)
+    {
+      w3D.v[q] = basis3DWeightAtQ( q );
+    }
+    return w3D;
+  }
+
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
+  constexpr static real64 basis2DWeightAtQ( const localIndex qa, const localIndex qb )
+  {
+    return basisWeightAtQ( qa ) * basisWeightAtQ( qb );
+  }
+
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
+  constexpr static real64 basis2DWeightAtQ( const localIndex q )
+  {
+    return basis2DWeightAtQ( index2DVal( q, 0 ), index2DVal( q, 1 ) );
+  }
+
+  struct basis2DWeightStruct
+  {
+    real64 v[num2dNodes];
+  };
+
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
+  constexpr static auto basis2DWeight()
+  {
+    basis3DWeightStruct w2D{};
+    for(int q = 0; q < num2dNodes; q++)
+    {
+      w2D.v[q] = basis2DWeightAtQ( q );
+    }
+    return w2D;
   }
 
 
@@ -228,27 +459,52 @@ public:
     real64 const gamma = ( GL_BASIS::parentSupportCoord( qc ) + 1.0 ) / 2.0;
     switch( k )
     {
-    case 0:
-      return ( 1.0 - alpha ) * ( 1.0 - beta ) * ( 1.0 - gamma );
-    case 1:
-      return alpha * ( 1.0 - beta ) * ( 1.0 - gamma );
-    case 2:
-      return ( 1.0 - alpha ) * beta * ( 1.0 - gamma );
-    case 3:
-      return alpha * beta * ( 1.0 - gamma );
-     case 4:
-      return ( 1.0 - alpha ) * ( 1.0 - beta ) * gamma;
-    case 5:
-      return alpha * ( 1.0 - beta ) * gamma;
-    case 6:
-      return ( 1.0 - alpha ) * beta * gamma;
-    case 7:
-      return alpha * beta * gamma;
+      case 0:
+        return ( 1.0 - alpha ) * ( 1.0 - beta ) * ( 1.0 - gamma );
+      case 1:
+        return alpha * ( 1.0 - beta ) * ( 1.0 - gamma );
+      case 2:
+        return ( 1.0 - alpha ) * beta * ( 1.0 - gamma );
+      case 3:
+        return alpha * beta * ( 1.0 - gamma );
+       case 4:
+        return ( 1.0 - alpha ) * ( 1.0 - beta ) * gamma;
+      case 5:
+        return alpha * ( 1.0 - beta ) * gamma;
+      case 6:
+        return ( 1.0 - alpha ) * beta * gamma;
+      case 7:
+        return alpha * beta * gamma;
+      default:
+        return 0;
+    }
+  }
+
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
+  constexpr static real64 interpolationCoordinate2D( const int k,
+                                                     const localIndex qa,
+                                                     const localIndex qb )
+  {
+    real64 const alpha = ( GL_BASIS::parentSupportCoord( qa ) + 1.0 ) / 2.0;
+    real64 const beta = ( GL_BASIS::parentSupportCoord( qb ) + 1.0 ) / 2.0;
+    switch( k )
+    {
+      case 0:
+        return ( 1.0 - alpha ) * ( 1.0 - beta );
+      case 1:
+        return alpha * ( 1.0 - beta ); 
+      case 2:
+        return ( 1.0 - alpha ) * beta;
+      case 3:
+        return alpha * beta;
+      default:
+        return 0;
     }
   }
 
   /**
-   * Pre-computed coefficients c(q, k, j) of the 8 mesh vertices int 3D and 2D jacobians.
+   * Pre-computed coefficients c(q, k, j) of the 8 mesh vertices in 3D jacobians.
    * The jacobian matrix at q is then expressed (for any polynomial order) as
    * J_{i,j}(q) = sum_{k=0}^7 c(q, k, j) * X_k(i)
    * @param q from 0 to num3dNodes-1, the node at which the jacobian is computed
@@ -257,7 +513,7 @@ public:
    */ 
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
-  constexpr static real64 jacobian3DCoefficient( const localIndex q, const int k, const int j )
+  constexpr static real64 jacobian3DCoefficientVal( const localIndex q, const int k, const int j )
   {
     real64 coeff = 0;
     for( int c=0; c<num1dNodes; ++c )
@@ -273,23 +529,128 @@ public:
     return coeff; 
   } 
 
-  // static for loops 
-  
-  template< localIndex... q, typename FUNC >
+  struct jacobian3DCoefficientSingleStruct
+  {
+    real64 coeff[8][3];
+  };
+
+  struct jacobian3DCoefficientStruct
+  {
+   jacobian3DCoefficientSingleStruct v[num3dNodes];
+  };
+
+
+//  GEOS_HOST_DEVICE
+//  GEOS_FORCE_INLINE
+//  constexpr static auto jacobian3DCoefficient()
+//  {
+//    jacobian3DCoefficientStruct j3D{};
+//    for(int q = 0; q < num3dNodes; q++)
+//    {
+//      for( int k = 0; k< 8; k++ )
+//      {
+//        for( int i = 0; i < 3; i++ )
+//        {
+//          j3D.v[q][k][i] = jacobian3DCoefficientVal( q, k, i );
+//        }
+//      }
+//    }
+//    return j3D;
+//  }
+
+
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
-  constexpr static void constForOnCell( std::integer_sequence< localIndex, q... >, FUNC && f )
+  constexpr static auto jacobian3DCoefficient(const int q)
   {
-    ( f( std::integral_constant< localIndex, q>{} ), ... );
+    jacobian3DCoefficientSingleStruct j3D{};
+    for( int k = 0; k< 8; k++ )
+    {
+      for( int i = 0; i < 3; i++ )
+      {
+        j3D.coeff[k][i] = jacobian3DCoefficientVal( q, k, i );
+      }                                                                                                                                                                                      
+    }
+    return j3D;
+  } 
+
+//  GEOS_HOST_DEVICE
+//  GEOS_FORCE_INLINE
+//  constexpr void copyJac(double (&a)[8][3], const double (&b)[8][3] )
+//  {
+//    for( int k = 0; k< 8; k++ )
+//    {
+//      for( int i = 0; i < 3; i++ )
+//      {
+//        a[k][i] = b[k][i];
+//      }
+//    }
+//  }
+
+  template< localIndex... q > 
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
+  constexpr static auto computeJacobian3DCoefficient(std::integer_sequence< localIndex, q... >)
+  {
+    jacobian3DCoefficientStruct j3D{};
+    ( ( j3D.v[q] = jacobian3DCoefficient( q ) ), ...);                                                                                                                                                                                     
+    return j3D;
+  }
+ 
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
+  constexpr static auto jacobian3DCoefficient()
+  {
+    return computeJacobian3DCoefficient(std::make_integer_sequence< localIndex, num3dNodes >());
+  }
+ 
+
+  /**
+   * Pre-computed coefficients c(q, k, j) of the 4 mesh vertices in 2D jacobians.
+   * The jacobian matrix at q is then expressed (for any polynomial order) as
+   * J_{i,j}(q) = sum_{k=0}^7 c(q, k, j) * X_k(i)
+   * @param q from 0 to num3dNodes-1, the node at which the jacobian is computed
+   * @param k from 0 to 7, the mesh vertex
+   * @param j from 0 to 2, the coordinate 
+   */ 
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
+  constexpr static real64 jacobian2DCoefficientVal( const localIndex q, const int k, const int j )
+  {
+    real64 coeff = 0;
+    for( int b=0; b<num1dNodes; ++b )
+    {
+      for( int a=0; a<num1dNodes; ++a )
+      {
+        coeff += basis2DGradientAtQ( q, a, b, j ) * interpolationCoordinate2D( k, a, b ); 
+      } 
+    } 
+    return coeff; 
+  } 
+
+  struct jacobian2DCoefficientStruct
+  {
+    real64 v[num2dNodes][4][3];
+  };
+
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
+  constexpr static auto jacobian2DCoefficient()
+  {
+    jacobian2DCoefficientStruct j2D{};
+    for(int q = 0; q < num2dNodes; q++)
+    {
+      for( int k = 0; k< 4; k++ )
+      {
+        for( int i = 0; i < 3; i++ )
+        {
+          j2D.v[q][k][i] = jacobian2DCoefficientVal( q, k, i );
+        }
+      }
+    }
+    return j2D;
   }
 
-  template< typename FUNC >
-  GEOS_HOST_DEVICE
-  GEOS_FORCE_INLINE
-  constexpr static void constForOnCell( FUNC && f )
-  {
-    constForOnCell( std::make_integer_sequence< localIndex, num3dNodes >(), f );
-  }
 
   /** @cond Doxygen_Suppress */
   USING_FINITEELEMENTBASE
@@ -367,13 +728,23 @@ public:
   static void calcN( localIndex const q,
                      real64 (& N)[numNodes] )
   {
-    int qa, qb, qc;
-    GL_BASIS::TensorProduct3D::multiIndex( q, qa, qb, qc );
-    real64 const qCoords[3] = { GL_BASIS::parentSupportCoord( qa ),
-                                GL_BASIS::parentSupportCoord( qb ),
-                                GL_BASIS::parentSupportCoord( qc ) };
-
-    GL_BASIS::TensorProduct3D::value( qCoords, N );
+    constexpr auto li3D = linearIndex3D(); 
+    constexpr auto i3D = index3D(); 
+    constexpr auto bv = basisValue();
+    auto qa = i3D.v[q][0];
+    auto qb = i3D.v[q][1];
+    auto qc = i3D.v[q][2];
+    for( int a=0; a<num1dNodes; ++a )
+    {
+      for( int b=0; b<num1dNodes; ++b )
+      {
+        for( int c=0; c<num1dNodes; ++c )
+        {
+          const int lindex = LagrangeBasis1::TensorProduct3D::linearIndex( a, b, c );
+          N[ li3D.v[a][b][c] ] = bv.v[a][qa] * bv.v[b][qb] * bv.v[b][qc];
+        }
+      }
+    }
   }
 
   /**
@@ -398,14 +769,14 @@ public:
    * @brief Calculate the shape functions derivatives wrt the physical
    *   coordinates.
    * @param q Index of the quadrature point.
-   * @param X Array containing the coordinates of the support points.
+   * @param X Array containing the coordinates of the mesh support points.
    * @param gradN Array to contain the shape function derivatives for all
    *   support points at the coordinates of the quadrature point @p q.
    * @return The determinant of the parent/physical transformation matrix.
    */
   GEOS_HOST_DEVICE
   static real64 calcGradN( localIndex const q,
-                           real64 const (&X)[numNodes][3],
+                           real64 const (&X)[8][3],
                            real64 ( &gradN )[numNodes][3] );
 
   /**
@@ -426,7 +797,7 @@ public:
    * @brief Calculate the shape functions derivatives wrt the physical
    *   coordinates.
    * @param q Index of the quadrature point.
-   * @param X Array containing the coordinates of the support points.
+   * @param X Array containing the coordinates of the mesh support points.
    * @param stack Variables allocated on the stack as filled by @ref setupStack.
    * @param gradN Array to contain the shape function derivatives for all
    *   support points at the coordinates of the quadrature point @p q.
@@ -435,7 +806,7 @@ public:
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
   static real64 calcGradN( localIndex const q,
-                           real64 const (&X)[numNodes][3],
+                           real64 const (&X)[8][3],
                            StackVariables const & stack,
                            real64 ( &gradN )[numNodes][3] );
 
@@ -455,13 +826,12 @@ public:
    *   matrix/mapping from the parent space to the physical space on a 2D domain (face).
    * @param qa The 1d quadrature point index in xi0 direction (0,1)
    * @param qb The 1d quadrature point index in xi1 direction (0,1)
-   * @param X Array containing the coordinates of the support points.
+   * @param X Array containing the coordinates of the mesh support points.
    * @param J Array to store the Jacobian transformation.
    */
   GEOS_HOST_DEVICE
-  static void jacobianTransformation2d( int const qa,
-                                        int const qb,
-                                        real64 const (&X)[numNodesPerFace][3],
+  static void jacobianTransformation2d( int const q,
+                                        real64 const (&X)[4][3],
                                         real64 ( &J )[3][2] );
 
 
@@ -469,18 +839,16 @@ public:
    * @brief Calculates the isoparametric "Jacobian" transformation
    *   matrix/mapping from the parent space to the physical space.
    * @param q The quadrature point index in 3d space.
-   * @param X Array containing the coordinates of the support points.
+   * @param X Array containing the coordinates of the mesh support points.
    * @param J Array to store the Jacobian transformation.
    * @return The determinant of the Jacobian transformation matrix.
    */
   GEOS_HOST_DEVICE
   static real64 invJacobianTransformation( int const q,
-                                           real64 const (&X)[numNodes][3],
+                                           real64 const (&X)[8][3],
                                            real64 ( & J )[3][3] )
   {
-    int qa, qb, qc;
-    GL_BASIS::TensorProduct3D::multiIndex( q, qa, qb, qc );
-    jacobianTransformation( qa, qb, qc, X, J );
+    jacobianTransformation( q, X, J );
     return LvArray::tensorOps::invert< 3 >( J );
   }
 
@@ -554,26 +922,12 @@ public:
    * @param qa The 1d quadrature point index in xi0 direction (0,1)
    * @param qb The 1d quadrature point index in xi1 direction (0,1)
    * @param qc The 1d quadrature point index in xi2 direction (0,1)
-   * @param X Array containing the coordinates of the support points.
+   * @param X Array containing the coordinates of the mesh support points.
    * @param J Array to store the Jacobian transformation.
    */
   GEOS_HOST_DEVICE
-  static void jacobianTransformation( int const qa,
-                                      int const qb,
-                                      int const qc,
-                                      real64 const (&X)[numNodes][3],
-                                      real64 ( &J )[3][3] );
-
-  /**
-   * @brief Calculates the isoparametric "Jacobian" transformation
-   *   matrix/mapping from the parent space to the physical space.
-   * @param q The 3d quadrature point index
-   * @param X Array containing the coordinates of the support points.
-   * @param J Array to store the Jacobian transformation.
-   */
-  template< localIndex q >
-  GEOS_HOST_DEVICE
-  static void jacobianTransformation( real64 const (&X)[8][3],
+  static void jacobianTransformation( int const q,
+                                      real64 const (&X)[8][3],
                                       real64 ( &J )[3][3] );
 
   /**
@@ -618,13 +972,13 @@ public:
    * @brief computes the non-zero contributions of the d.o.f. indexd by q to the
    *   mass matrix M, i.e., the superposition matrix of the shape functions.
    * @param q The quadrature point index
-   * @param X Array containing the coordinates of the support points.
+   * @param X Array containing the coordinates of the mesh support points.
    * @return The diagonal mass term associated to q
    */
   GEOS_HOST_DEVICE
   static real64
-  computeMassTerm( int q,
-                   real64 const (&X)[numNodes][3] );
+  computeMassTerm( localIndex const q,
+                   real64 const (&X)[8][3] );
 
   /**
    * @brief computes the non-zero contributions of the d.o.f. indexd by q to the
@@ -636,8 +990,8 @@ public:
    */
   GEOS_HOST_DEVICE
   static real64
-  computeDampingTerm( int q,
-                      real64 const (&X)[numNodesPerFace][3] );
+  computeDampingTerm( localIndex const q,
+                      real64 const (&X)[4][3] );
 
   /**
    * @brief computes the matrix B, defined as J^{-T}J^{-1}/det(J), where J is the Jacobian matrix,
@@ -647,10 +1001,10 @@ public:
    * @param J Array to store the Jacobian
    * @param B Array to store the matrix B, in Voigt notation
    */
-  template< localIndex q >
   GEOS_HOST_DEVICE
   static void
-    computeBMatrix( real64 const (&X)[8][3],
+    computeBMatrix( localIndex const q,
+                    real64 const (&X)[8][3],
                     real64 ( &J )[3][3],
                     real64 ( &B )[6] );
 
@@ -662,10 +1016,11 @@ public:
    * @param X Array containing the coordinates of the support points.
    * @param func Callback function accepting three parameters: i, j and R_ij
    */
-  template< localIndex q, typename FUNC >
+  template< typename FUNC >
   GEOS_HOST_DEVICE
   static void
-  computeStiffnessTerm( real64 const (&X)[8][3],
+  computeStiffnessTerm( localIndex const q,
+                        real64 const (&X)[8][3],
                         FUNC && func );
 
   /**
@@ -676,10 +1031,10 @@ public:
    * @param J Array to store the Jacobian
    * @param B Array to store the matrix B, in Voigt notation
    */
-  template< localIndex q >
   GEOS_HOST_DEVICE
   static void
-    computeBxyMatrix( real64 const (&X)[8][3],
+    computeBxyMatrix( localIndex const q,
+                      real64 const (&X)[8][3],
                       real64 ( &J )[3][3],
                       real64 ( &B )[6] );
 
@@ -691,10 +1046,11 @@ public:
    * @param X Array containing the coordinates of the support points.
    * @param func Callback function accepting three parameters: i, j and R_ij
    */
-  template< localIndex q, typename FUNC >
+  template< typename FUNC >
   GEOS_HOST_DEVICE
   static void
-  computeStiffnessxyTerm( real64 const (&X)[8][3],
+  computeStiffnessxyTerm( localIndex const q,
+                          real64 const (&X)[8][3],
                           FUNC && func );
 
   /**
@@ -705,10 +1061,10 @@ public:
    * @param J Array to store the Jacobian
    * @param B Array to store the matrix B, in Voigt notation
    */
-  template< localIndex q >
   GEOS_HOST_DEVICE
   static void
-    computeBzMatrix( real64 const (&X)[8][3],
+    computeBzMatrix( localIndex const q,
+                     real64 const (&X)[8][3],
                      real64 ( &J )[3][3],
                      real64 ( &B )[6] );
 
@@ -720,10 +1076,11 @@ public:
    * @param X Array containing the coordinates of the support points.
    * @param func Callback function accepting three parameters: i, j and R_ij
    */
-  template< localIndex q, typename FUNC >
+  template< typename FUNC >
   GEOS_HOST_DEVICE
   static void
-  computeStiffnesszTerm( real64 const (&X)[8][3],
+  computeStiffnesszTerm( localIndex const q,
+                         real64 const (&X)[8][3],
                          FUNC && func );
 
 /**
@@ -733,10 +1090,11 @@ public:
  * @param B Array of the B matrix, in Voigt notation
  * @param func Callback function accepting three parameters: i, j and R_ij
  */
-  template< localIndex q, typename FUNC >
+  template< typename FUNC >
   GEOS_HOST_DEVICE
   static void
-  computeGradPhiBGradPhi( real64 const (&B)[6],
+  computeGradPhiBGradPhi( localIndex const q,
+                          real64 const (&B)[6],
                           FUNC && func );
 
   /**
@@ -747,10 +1105,11 @@ public:
    * @param X Array containing the coordinates of the support points.
    * @param func Callback function accepting three parameters: i, j and R_ij
    */
-  template< localIndex q, typename FUNC >
+  template< typename FUNC >
   GEOS_HOST_DEVICE
   static void
-  computeFirstOrderStiffnessTermX( real64 const (&X)[8][3],
+  computeFirstOrderStiffnessTermX( localIndex const q,
+                                   real64 const (&X)[8][3],
                                    FUNC && func );
   /**
    * @brief computes the non-zero contributions of the d.o.f. indexd by q to the
@@ -760,10 +1119,11 @@ public:
    * @param X Array containing the coordinates of the support points.
    * @param func Callback function accepting three parameters: i, j and R_ij
    */
-  template< localIndex q, typename FUNC >
+  template< typename FUNC >
   GEOS_HOST_DEVICE
   static void
-  computeFirstOrderStiffnessTermY( real64 const (&X)[8][3],
+  computeFirstOrderStiffnessTermY( localIndex const q,
+                                   real64 const (&X)[8][3],
                                    FUNC && func );
   /**
    * @brief computes the non-zero contributions of the d.o.f. indexd by q to the
@@ -773,10 +1133,11 @@ public:
    * @param X Array containing the coordinates of the support points.
    * @param func Callback function accepting three parameters: i, j and R_ij
    */
-  template< localIndex q, typename FUNC >
+  template< typename FUNC >
   GEOS_HOST_DEVICE
   static void
-  computeFirstOrderStiffnessTermZ( real64 const (&X)[8][3],
+  computeFirstOrderStiffnessTermZ( localIndex const q,
+                                   real64 const (&X)[8][3],
                                    FUNC && func );
   /**
    * @brief computes the non-zero contributions of the d.o.f. indexd by q to the
@@ -787,10 +1148,11 @@ public:
    * @param X Array containing the coordinates of the support points.
    * @param stiffnessVal Callback function accepting three parameters: i, j and R_ij
    */
-  template< localIndex q, typename FUNC >
+  template< typename FUNC >
   GEOS_HOST_DEVICE
   static void
-  computeFirstOrderStiffnessTerm( real64 const (&X)[8][3],
+  computeFirstOrderStiffnessTerm( localIndex const q,
+                                  real64 const (&X)[8][3],
                                   FUNC && stiffnessVal );
 
 
@@ -798,18 +1160,14 @@ public:
    * @brief Apply a Jacobian transformation matrix from the parent space to the
    *   physical space on the parent shape function derivatives, producing the
    *   shape function derivatives in the physical space.
-   * @param qa The 1d quadrature point index in xi0 direction (0,1)
-   * @param qb The 1d quadrature point index in xi1 direction (0,1)
-   * @param qc The 1d quadrature point index in xi2 direction (0,1)
+   * @param q The quadrature point index
    * @param invJ The Jacobian transformation from parent->physical space.
    * @param gradN Array to contain the shape function derivatives for all
    *   support points at the coordinates of the quadrature point @p q.
    */
   GEOS_HOST_DEVICE
   static void
-    applyTransformationToParentGradients( int const qa,
-                                          int const qb,
-                                          int const qc,
+    applyTransformationToParentGradients( localIndex const q,
                                           real64 const ( &invJ )[3][3],
                                           real64 ( &gradN )[numNodes][3] );
 
@@ -835,25 +1193,6 @@ private:
 
   /// The volume of the element in the parent configuration.
   constexpr static real64 parentVolume = parentLength*parentLength*parentLength;
-
-  /**
-   * @brief Applies a function inside a generic loop in over the tensor product
-   *   indices.
-   * @tparam FUNC The type of function to call within the support loop.
-   * @tparam PARAMS The parameter pack types to pass through to @p FUNC.
-   * @param qa The 1d quadrature point index in xi0 direction (0,1)
-   * @param qb The 1d quadrature point index in xi1 direction (0,1)
-   * @param qc The 1d quadrature point index in xi2 direction (0,1)
-   * @param func The function to call within the support loop.
-   * @param params The parameters to pass to @p func.
-   */
-  template< typename FUNC, typename ... PARAMS >
-  GEOS_HOST_DEVICE
-  static void supportLoop( int const qa,
-                           int const qb,
-                           int const qc,
-                           FUNC && func,
-                           PARAMS &&... params );
   /**
    * @brief Applies a function inside a generic loop in over the tensor product
    *   indices.
@@ -868,44 +1207,24 @@ private:
   static void supportLoop( real64 const (&coords)[3],
                            FUNC && func,
                            PARAMS &&... params );
-
   /**
    * @brief Applies a function inside a generic loop in over the tensor product
-   *   indices, over a 2d domain.
+   *   indices.
    * @tparam FUNC The type of function to call within the support loop.
    * @tparam PARAMS The parameter pack types to pass through to @p FUNC.
-   * @param qa The 1d quadrature point index in xi0 direction (0,1)
-   * @param qb The 1d quadrature point index in xi1 direction (0,1)
+   * @param q The quadrature node at which to evaluate the shape function value
    * @param func The function to call within the support loop.
    * @param params The parameters to pass to @p func.
    */
   template< typename FUNC, typename ... PARAMS >
   GEOS_HOST_DEVICE
-  static void supportLoop2d( int const qa,
-                             int const qb,
-                             FUNC && func,
-                             PARAMS &&... params );
+  static void supportLoop( localIndex const q,
+                           FUNC && func,
+                           PARAMS &&... params );
+
 };
 
 /// @cond Doxygen_Suppress
-
-template< typename GL_BASIS >
-template< typename FUNC, typename ... PARAMS >
-GEOS_HOST_DEVICE 
-GEOS_FORCE_INLINE 
-void
-Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::supportLoop( int const qa,
-                                                              int const qb,
-                                                              int const qc,
-                                                              FUNC && func,
-                                                              PARAMS &&... params )
-{
-
-  real64 const qCoords[3] = { GL_BASIS::parentSupportCoord( qa ),
-                              GL_BASIS::parentSupportCoord( qb ),
-                              GL_BASIS::parentSupportCoord( qc ) };
-  supportLoop( qCoords, std::forward< FUNC >( func ), std::forward< PARAMS >( params )... );
-}
 
 
 template< typename GL_BASIS >
@@ -946,26 +1265,34 @@ template< typename FUNC, typename ... PARAMS >
 GEOS_HOST_DEVICE 
 GEOS_FORCE_INLINE 
 void
-Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::supportLoop2d( int const qa,
-                                                                int const qb,
-                                                                FUNC && func,
-                                                                PARAMS &&... params )
+Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::supportLoop( localIndex const q,
+                                                              FUNC && func,
+                                                              PARAMS &&... params )
 {
-
-  real64 const qCoords[2] = { GL_BASIS::parentSupportCoord( qa ),
-                              GL_BASIS::parentSupportCoord( qb ) };
-
-  for( int b=0; b<num1dNodes; ++b )
+  constexpr auto bv = basisValue();
+  constexpr auto bg = basisGradient();
+  constexpr auto i3D = index3D();
+  auto qa = i3D.v[q][0];
+  auto qb = i3D.v[q][1];
+  auto qc = i3D.v[q][2];
+  for( int c=0; c<num1dNodes; ++c )
   {
-    for( int a=0; a<num1dNodes; ++a )
+    for( int b=0; b<num1dNodes; ++b )
     {
-      real64 const dNdXi[2] = { GL_BASIS::gradient( a, qCoords[0] )*
-                                GL_BASIS::value( b, qCoords[1] ),
-                                GL_BASIS::value( a, qCoords[0] )*
-                                GL_BASIS::gradient( b, qCoords[1] ) };
+      for( int a=0; a<num1dNodes; ++a )
+      {
+        real64 const dNdXi[3] = { bg.v[a][qa] *
+                                  bv.v[b][qb] *
+                                  bv.v[c][qc],
+                                  bv.v[a][qa] *
+                                  bg.v[b][qb] *
+                                  bv.v[c][qc], 
+                                  bv.v[a][qa] *
+                                  bv.v[b][qb] *
+                                  bg.v[c][qc] };
 
-      localIndex nodeIndex = GL_BASIS::TensorProduct2D::linearIndex( a, b );
-      func( dNdXi, nodeIndex, std::forward< PARAMS >( params )... );
+        func( dNdXi, q, std::forward< PARAMS >( params )... );
+      }
     }
   }
 }
@@ -976,19 +1303,16 @@ GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
 real64
 Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::calcGradN( localIndex const q,
-                                                            real64 const (&X)[numNodes][3],
+                                                            real64 const (&X)[8][3],
                                                             real64 (& gradN)[numNodes][3] )
 {
   real64 J[3][3] = {{0}};
 
-  int qa, qb, qc;
-  GL_BASIS::TensorProduct3D::multiIndex( q, qa, qb, qc );
-
-  jacobianTransformation( qa, qb, qc, X, J );
+  jacobianTransformation( q, X, J );
 
   real64 const detJ = LvArray::tensorOps::invert< 3 >( J );
 
-  applyTransformationToParentGradients( qa, qb, qc, J, gradN );
+  applyTransformationToParentGradients( q, J, gradN );
 
   return detJ;
 }
@@ -1017,7 +1341,7 @@ GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
 real64 Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
 calcGradN( localIndex const q,
-           real64 const (&X)[numNodes][3],
+           real64 const (&X)[8][3],
            StackVariables const & GEOS_UNUSED_PARAM( stack ),
            real64 ( & gradN )[numNodes][3] )
 {
@@ -1035,59 +1359,19 @@ GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
 void
 Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
-jacobianTransformation( int const qa,
-                        int const qb,
-                        int const qc,
-                        real64 const (&X)[numNodes][3],
+jacobianTransformation( localIndex const q,
+                        real64 const (&X)[8][3],
                         real64 ( & J )[3][3] )
 {
-  supportLoop( qa, qb, qc, [] GEOS_HOST_DEVICE ( real64 const (&dNdXi)[3],
-                                                 int const nodeIndex,
-                                                 real64 const (&X)[numNodes][3],
-                                                 real64 (& J)[3][3] )
-  {
-    real64 const * const GEOS_RESTRICT Xnode = X[nodeIndex];
-    for( int i = 0; i < 3; ++i )
-    {
-      for( int j = 0; j < 3; ++j )
-      {
-        J[i][j] = J[i][j] + dNdXi[ j ] * Xnode[i];
-      }
-    }
-
-  }, X, J );
-}
-
-template< typename GL_BASIS >
-template < localIndex q >
-GEOS_HOST_DEVICE
-GEOS_FORCE_INLINE
-void
-Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
-jacobianTransformation( real64 const (&X)[8][3],
-                        real64 ( & J )[3][3] )
-{
-  // compile-time evaluation of jacobian coefficient (costly to do at run-time)
-  constexpr double coeff[8][3] = 
-      { 
-          { jacobian3DCoefficient( q,0,0),jacobian3DCoefficient( q,0,1),jacobian3DCoefficient( q,0,2)},
-          { jacobian3DCoefficient( q,1,0),jacobian3DCoefficient( q,1,1),jacobian3DCoefficient( q,1,2)},
-          { jacobian3DCoefficient( q,2,0),jacobian3DCoefficient( q,2,1),jacobian3DCoefficient( q,2,2)},
-          { jacobian3DCoefficient( q,3,0),jacobian3DCoefficient( q,3,1),jacobian3DCoefficient( q,3,2)},
-          { jacobian3DCoefficient( q,4,0),jacobian3DCoefficient( q,4,1),jacobian3DCoefficient( q,4,2)},
-          { jacobian3DCoefficient( q,5,0),jacobian3DCoefficient( q,5,1),jacobian3DCoefficient( q,5,2)},
-          { jacobian3DCoefficient( q,6,0),jacobian3DCoefficient( q,6,1),jacobian3DCoefficient( q,6,2)},
-          { jacobian3DCoefficient( q,7,0),jacobian3DCoefficient( q,7,1),jacobian3DCoefficient( q,7,2)},
-      };
+  constexpr auto jac = jacobian3DCoefficient();
  
   for(int k = 0; k < 8; k++)
   { 
-      for(int i = 0; i < 3; i++)
+    for(int i = 0; i < 3; i++)
+    { 
+      for(int j = 0; j < 3; j++)
       { 
-          for(int j = 0; j < 3; j++)
-       { 
-          J[i][j] +=  coeff[k][j]* X[k][i];
-          
+        J[i][j] +=  jac.v[q].coeff[k][j]* X[k][i];
       }
     }
   }
@@ -1167,25 +1451,21 @@ GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
 void
 Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
-jacobianTransformation2d( int const qa,
-                          int const qb,
-                          real64 const (&X)[numNodesPerFace][3],
+jacobianTransformation2d( int const q,
+                          real64 const (&X)[4][3],
                           real64 ( & J )[3][2] )
 {
-  supportLoop2d( qa, qb, [] GEOS_HOST_DEVICE ( real64 const (&dNdXi)[2],
-                                               int const nodeIndex,
-                                               real64 const (&X)[numNodesPerFace][3],
-                                               real64 ( & J)[3][2] )
-  {
-    real64 const * const GEOS_RESTRICT Xnode = X[nodeIndex];
-    for( int i = 0; i < 3; ++i )
-    {
-      for( int j = 0; j < 2; ++j )
-      {
-        J[i][j] = J[i][j] + dNdXi[ j ] * Xnode[i];
+  constexpr auto jac = jacobian2DCoefficient();
+  for(int k = 0; k < 4; k++)
+  { 
+    for(int i = 0; i < 3; i++)
+    { 
+      for(int j = 0; j < 2; j++)
+      { 
+        J[i][j] +=  jac.v[q][k][j]* X[k][i];
       }
     }
-  }, X, J );
+  }
 }
 
 template< typename GL_BASIS >
@@ -1193,14 +1473,13 @@ GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
 real64
 Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
-computeMassTerm( int q,
-                 real64 const (&X)[numNodes][3] )
+computeMassTerm( localIndex const q,
+                 real64 const (&X)[8][3] )
 {
+  constexpr auto w3D = basis3DWeight();
   real64 J[3][3] = {{0}};
-  int qa, qb, qc;
-  GL_BASIS::TensorProduct3D::multiIndex( q, qa, qb, qc );
-  jacobianTransformation( qa, qb, qc, X, J );
-  return LvArray::math::abs( LvArray::tensorOps::determinant< 3 >( J ) )*GL_BASIS::weight( qa )*GL_BASIS::weight( qb )*GL_BASIS::weight( qc );
+  jacobianTransformation( q, X, J );
+  return LvArray::math::abs( LvArray::tensorOps::determinant< 3 >( J ) )*w3D.v[q];
 }
 
 template< typename GL_BASIS >
@@ -1208,32 +1487,31 @@ GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
 real64
 Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
-computeDampingTerm( int q,
-                    real64 const (&X)[numNodesPerFace][3] )
+computeDampingTerm( localIndex const q,
+                    real64 const (&X)[4][3] )
 {
+  constexpr auto w2D = basis2DWeight();
   real64 B[3];
   real64 J[3][2] = {{0}};
-  int qa, qb;
-  GL_BASIS::TensorProduct2D::multiIndex( q, qa, qb );
-  jacobianTransformation2d( qa, qb, X, J );
+  jacobianTransformation2d( q, X, J );
   // compute J^T.J, using Voigt notation for B
   B[0] = J[0][0]*J[0][0]+J[1][0]*J[1][0]+J[2][0]*J[2][0];
   B[1] = J[0][1]*J[0][1]+J[1][1]*J[1][1]+J[2][1]*J[2][1];
   B[2] = J[0][0]*J[0][1]+J[1][0]*J[1][1]+J[2][0]*J[2][1];
-  return sqrt( LvArray::math::abs( LvArray::tensorOps::symDeterminant< 2 >( B ) ) )*GL_BASIS::weight( qa )*GL_BASIS::weight( qb );
+  return sqrt( LvArray::math::abs( LvArray::tensorOps::symDeterminant< 2 >( B ) ) )*w2D.v[q];
 }
 
 template< typename GL_BASIS >
-template< localIndex q >
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
 void
 Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
-computeBMatrix( real64 const (&X)[8][3],
+computeBMatrix( localIndex const q,
+                real64 const (&X)[8][3],
                 real64 (& J)[3][3],
                 real64 (& B)[6] )
 {
-  jacobianTransformation< q >( X, J );
+  jacobianTransformation( q, X, J );
   real64 const detJ = LvArray::tensorOps::determinant< 3 >( J );
 
   // compute J^T.J/det(J), using Voigt notation for B
@@ -1249,16 +1527,16 @@ computeBMatrix( real64 const (&X)[8][3],
 }
 
 template< typename GL_BASIS >
-template< localIndex q >
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
 void
 Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
-computeBzMatrix( real64 const (&X)[8][3],
+computeBzMatrix( localIndex const q,
+                 real64 const (&X)[8][3],
                  real64 (& J)[3][3],
                  real64 (& B)[6] )
 {
-  jacobianTransformation< q > ( X, J );
+  jacobianTransformation( q, X, J );
   real64 const detJ = LvArray::tensorOps::determinant< 3 >( J );
 
   real64 Jinv[3][3] = {{0}};
@@ -1274,16 +1552,16 @@ computeBzMatrix( real64 const (&X)[8][3],
 }
 
 template< typename GL_BASIS >
-template< localIndex q >
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
 void
 Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
-computeBxyMatrix( real64 const (&X)[8][3],
+computeBxyMatrix( localIndex const q,
+                  real64 const (&X)[8][3],
                   real64 (& J)[3][3],
                   real64 (& B)[6] )
 {
-  jacobianTransformation< q >( X, J );
+  jacobianTransformation( q, X, J );
   real64 const detJ = LvArray::tensorOps::determinant< 3 >( J );
 
   real64 Jinv[3][3] = {{0}};
@@ -1299,41 +1577,39 @@ computeBxyMatrix( real64 const (&X)[8][3],
 }
 
 template< typename GL_BASIS >
-template< localIndex q, typename FUNC >
+template< typename FUNC >
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
 void
 Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
-computeGradPhiBGradPhi( real64 const (&B)[6],
+computeGradPhiBGradPhi( localIndex const q,
+                        real64 const (&B)[6],
                         FUNC && func )
 {
-  constexpr auto w = basis3DWeightAtQ( q );
-  constexpr auto qa = index3D( q, 0 );
-  constexpr auto qb = index3D( q, 1 );
-  constexpr auto qc = index3D( q, 2 );
-  constexpr auto grad = gradientArray();
+  constexpr auto w3D = basis3DWeight();
+  constexpr auto i3D = index3D();
+  constexpr auto li3D = linearIndex3D();
+  constexpr auto bg = basisGradient();
+  auto w = w3D.v[q];
+  auto qa = i3D.v[q][0];
+  auto qb = i3D.v[q][1];
+  auto qc = i3D.v[q][2];
   for( int i=0; i<num1dNodes; i++ )
   {
     for( int j=0; j<num1dNodes; j++ )
     {
-    }
-  }
-  for( int i=0; i<num1dNodes; i++ )
-  {
-    for( int j=0; j<num1dNodes; j++ )
-    {
-      auto ibc = linearIndex3D( i, qb, qc );
-      auto jbc = linearIndex3D( j, qb, qc );
-      auto aic = linearIndex3D( qa, i, qc );
-      auto ajc = linearIndex3D( qa, j, qc );
-      auto abi = linearIndex3D( qa, qb, i );
-      auto abj = linearIndex3D( qa, qb, j );
-      auto gia = grad.data[ i ][ qa ]; 
-      auto gja = grad.data[ j ][ qa ]; 
-      auto gib = grad.data[ i ][ qb ]; 
-      auto gjb = grad.data[ j ][ qb ]; 
-      auto gic = grad.data[ i ][ qc ]; 
-      auto gjc = grad.data[ j ][ qc ]; 
+      auto ibc = li3D.v[i][qb][qc];
+      auto jbc = li3D.v[j][qb][qc];
+      auto aic = li3D.v[qa][i][qc];
+      auto ajc = li3D.v[qa][j][qc];
+      auto abi = li3D.v[qa][qb][i];
+      auto abj = li3D.v[qa][qb][j];
+      auto gia = bg.v[ i ][ qa ]; 
+      auto gja = bg.v[ j ][ qa ]; 
+      auto gib = bg.v[ i ][ qb ]; 
+      auto gjb = bg.v[ j ][ qb ]; 
+      auto gic = bg.v[ i ][ qc ]; 
+      auto gjc = bg.v[ j ][ qc ]; 
       // diagonal terms
       auto w0 = w * gia * gja;
       func( ibc, jbc, w0 * B[0] );
@@ -1356,83 +1632,90 @@ computeGradPhiBGradPhi( real64 const (&B)[6],
 }
 
 template< typename GL_BASIS >
-template< localIndex q, typename FUNC >
+template< typename FUNC >
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
 void
 Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
-computeStiffnessxyTerm( real64 const (&X)[8][3],
+computeStiffnessxyTerm( localIndex const q,
+                        real64 const (&X)[8][3],
                         FUNC && func )
 {
   real64 B[6] = {0};
   real64 J[3][3] = {{0}};
-  computeBxyMatrix< q >( X, J, B ); // The only change!
-  computeGradPhiBGradPhi< q > ( B, func );
+  computeBxyMatrix( q, X, J, B ); // The only change!
+  computeGradPhiBGradPhi( q, B, func );
 }
 
 template< typename GL_BASIS >
-template< localIndex q, typename FUNC >
+template< typename FUNC >
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
 void
 Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
-computeStiffnesszTerm( real64 const (&X)[8][3],
+computeStiffnesszTerm( localIndex const q,
+                       real64 const (&X)[8][3],
                        FUNC && func )
 {
   real64 B[6] = {0};
   real64 J[3][3] = {{0}};
-  computeBzMatrix< q > ( X, J, B ); // The only change!
-  computeGradPhiBGradPhi< q >( B, func );
+  computeBzMatrix( q, X, J, B ); // The only change!
+  computeGradPhiBGradPhi( q, B, func );
 }
 
 template< typename GL_BASIS >
-template< localIndex q, typename FUNC >
+template< typename FUNC >
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
 void
 Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
-computeStiffnessTerm( real64 const (&X)[8][3],
+computeStiffnessTerm( localIndex const q,
+                      real64 const (&X)[8][3],
                       FUNC && func )
 {
   real64 B[6] = {0};
   real64 J[3][3] = {{0}};
-  computeBMatrix< q >( X, J, B );
-  computeGradPhiBGradPhi< q >( B, func );
+  computeBMatrix( q, X, J, B );
+  computeGradPhiBGradPhi( q, B, func );
 }
 
 template< typename GL_BASIS >
-template< localIndex q, typename FUNC >
+template< typename FUNC >
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
 void
 Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
-computeFirstOrderStiffnessTerm( real64 const (&X)[8][3],
+computeFirstOrderStiffnessTerm( localIndex const q,
+                                real64 const (&X)[8][3],
                                 FUNC && func )
 {
   real64 J[3][3] = {{0}};
-  jacobianTransformation< q >( X, J );
+  jacobianTransformation( q, X, J );
   real64 const detJ = LvArray::tensorOps::invert< 3 >( J );
-  constexpr auto w = basis3DWeightAtQ( q );
-  constexpr auto qa = index3D( q, 0 );
-  constexpr auto qb = index3D( q, 1 );
-  constexpr auto qc = index3D( q, 2 );
-  constexpr auto grad = gradientArray();
+  constexpr auto w3D = basis3DWeight();
+  constexpr auto i3D = index3D();
+  constexpr auto li3D = linearIndex3D();
+  constexpr auto bg = basisGradient();
+  auto w = w3D.v[q];
+  auto qa = i3D[q][0];
+  auto qb = i3D[q][1];
+  auto qc = i3D[q][2];
   for( int i=0; i<num1dNodes; i++ )
   {
     for( int j=0; j<num1dNodes; j++ )
     {
-      auto ibc = linearIndex3D( i, qb, qc );
-      auto jbc = linearIndex3D( j, qb, qc );
-      auto aic = linearIndex3D( qa, i, qc );
-      auto ajc = linearIndex3D( qa, j, qc );
-      auto abi = linearIndex3D( qa, qb, i );
-      auto abj = linearIndex3D( qa, qb, j );
-      auto gia = grad.data[ i ][ qa ]; 
-      auto gja = grad.data[ j ][ qa ]; 
-      auto gib = grad.data[ i ][ qb ]; 
-      auto gjb = grad.data[ j ][ qb ]; 
-      auto gic = grad.data[ i ][ qc ]; 
-      auto gjc = grad.data[ j ][ qc ]; 
+      auto ibc = li3D.v[i][qb][qc];
+      auto jbc = li3D.v[j][qb][qc];
+      auto aic = li3D.v[qa][i][qc];
+      auto ajc = li3D.v[qa][j][qc];
+      auto abi = li3D.v[qa][qb][i];
+      auto abj = li3D.v[qa][qb][j];
+      auto gia = bg.v[ i ][ qa ]; 
+      auto gja = bg.v[ j ][ qa ]; 
+      auto gib = bg.v[ i ][ qb ]; 
+      auto gjb = bg.v[ j ][ qb ]; 
+      auto gic = bg.v[ i ][ qc ]; 
+      auto gjc = bg.v[ j ][ qc ]; 
       // diagonal terms
       auto w00 = w * gia * gja;
       func( ibc, jbc, w00 * detJ, J, 0, 0 );
@@ -1455,78 +1738,90 @@ computeFirstOrderStiffnessTerm( real64 const (&X)[8][3],
 }
 
 template< typename GL_BASIS >
-template< localIndex q, typename FUNC >
+template< typename FUNC >
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
 void
 Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
-computeFirstOrderStiffnessTermX( real64 const (&X)[8][3],
+computeFirstOrderStiffnessTermX( localIndex const q,
+                                 real64 const (&X)[8][3],
                                  FUNC && func )
 {
   real64 J[3][3] = {{0}};
-  jacobianTransformation< q >( X, J );
+  jacobianTransformation( q, X, J );
   real64 const detJ = LvArray::tensorOps::invert< 3 >( J );
-  constexpr auto w = basis3DWeightAtQ( q );
-  constexpr auto qa = index3D( q, 0 );
-  constexpr auto qb = index3D( q, 1 );
-  constexpr auto qc = index3D( q, 2 );
-  constexpr auto grad = gradientArray();
+  constexpr auto w3D = basis3DWeight();
+  constexpr auto i3D = index3D();
+  constexpr auto li3D = linearIndex3D();
+  constexpr auto bg = basisGradient();
+  auto w = w3D.w[q];
+  auto qa = i3D.v[q][0];
+  auto qb = i3D.v[q][1];
+  auto qc = i3D.v[q][2];
 
   for( int i1 = 0; i1 < num1dNodes; ++i1 )
   {
-    auto val = w * grad.data[ i1 ][ qa ];
-    func( linearIndex3D( i1, qb, qc ), q, detJ*J[0][0]*val, detJ*J[0][1]*val, detJ*J[0][2]*val ); 
+    auto val = w * bg.v[ i1 ][ qa ];
+    func( li3D.v[i1][qb][qc], q, detJ*J[0][0]*val, detJ*J[0][1]*val, detJ*J[0][2]*val ); 
   }
 
 }
 
 template< typename GL_BASIS >
-template< localIndex q, typename FUNC >
+template< typename FUNC >
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
 void
 Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
-computeFirstOrderStiffnessTermY( real64 const (&X)[8][3],
+computeFirstOrderStiffnessTermY( localIndex const q,
+                                 real64 const (&X)[8][3],
                                  FUNC && func )
 {
   real64 J[3][3] = {{0}};
-  jacobianTransformation< q >( X, J );
+  jacobianTransformation( q, X, J );
   real64 const detJ = LvArray::tensorOps::invert< 3 >( J );
-  constexpr auto w = basis3DWeightAtQ( q );
-  constexpr auto qa = index3D( q, 0 );
-  constexpr auto qb = index3D( q, 1 );
-  constexpr auto qc = index3D( q, 2 );
-  constexpr auto grad = gradientArray();
+  constexpr auto w3D = basis3DWeight();
+  constexpr auto i3D = index3D();
+  constexpr auto li3D = linearIndex3D();
+  constexpr auto bg = basisGradient();
+  auto w = w3D.w[q];
+  auto qa = i3D.v[q][0];
+  auto qb = i3D.v[q][1];
+  auto qc = i3D.v[q][2];
 
   for( int i2 = 0; i2 < num1dNodes; ++i2 )
   {
-    auto val = w * grad.data[ i2 ][ qb ];
-    func( linearIndex3D( qa, i2, qc ), q, detJ*J[1][0]*val, detJ*J[1][1]*val, detJ*J[1][2]*val );
+    auto val = w * bg.v[ i2 ][ qb ];
+    func( li3D.v[qa][i2][qc], q, detJ*J[1][0]*val, detJ*J[1][1]*val, detJ*J[1][2]*val );
   }
 }
 
 template< typename GL_BASIS >
-template< localIndex q, typename FUNC >
+template< typename FUNC >
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
 void
 Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
-computeFirstOrderStiffnessTermZ( real64 const (&X)[8][3],
+computeFirstOrderStiffnessTermZ( localIndex const q,
+                                 real64 const (&X)[8][3],
                                  FUNC && func )
 {
   real64 J[3][3] = {{0}};
-  jacobianTransformation< q >( X, J );
+  jacobianTransformation( q, X, J );
   real64 const detJ = LvArray::tensorOps::invert< 3 >( J );
-  constexpr auto w = basis3DWeightAtQ( q );
-  constexpr auto qa = index3D( q, 0 );
-  constexpr auto qb = index3D( q, 1 );
-  constexpr auto qc = index3D( q, 2 );
-  constexpr auto grad = gradientArray();
+  constexpr auto w3D = basis3DWeight();
+  constexpr auto i3D = index3D();
+  constexpr auto li3D = linearIndex3D();
+  constexpr auto bg = basisGradient();
+  auto w = w3D.w[q];
+  auto qa = i3D.v[q][0];
+  auto qb = i3D.v[q][1];
+  auto qc = i3D.v[q][2];
 
   for( int i3 = 0; i3 < num1dNodes; ++i3 )
   {
-    auto val = w * grad.data[ i3 ][ qc ];
-    func( linearIndex3D( qa, qb, i3 ), q, detJ*J[2][0]*val, detJ*J[2][1]*val, detJ*J[2][2]*val );
+    auto val = w * bg.v[ i3 ][ qc ];
+    func( li3D.v[qa][qb][i3], q, detJ*J[2][0]*val, detJ*J[2][1]*val, detJ*J[2][2]*val );
   }
 }
 
@@ -1536,16 +1831,15 @@ GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
 void
 Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
-applyTransformationToParentGradients( int const qa,
-                                      int const qb,
-                                      int const qc,
+applyTransformationToParentGradients( localIndex const q,
                                       real64 const ( &invJ )[3][3],
                                       real64 (& gradN)[numNodes][3] )
 {
-  supportLoop( qa, qb, qc, [] GEOS_HOST_DEVICE ( real64 const (&dNdXi)[3],
-                                                 int const nodeIndex,
-                                                 real64 const (&invJ)[3][3],
-                                                 real64 (& gradN)[numNodes][3] )
+
+  supportLoop( q, [] GEOS_HOST_DEVICE ( real64 const (&dNdXi)[3],
+                                        int const nodeIndex,
+                                        real64 const (&invJ)[3][3],
+                                        real64 (& gradN)[numNodes][3] )
   {
     // smaller register footprint by manually unrolling the for loops.
     gradN[nodeIndex][0] = dNdXi[0] * invJ[0][0] + dNdXi[1] * invJ[1][0] + dNdXi[2] * invJ[2][0];
@@ -1587,10 +1881,7 @@ transformedQuadratureWeight( localIndex const q,
 {
   real64 J[3][3] = {{0}};
 
-  int qa, qb, qc;
-  GL_BASIS::TensorProduct3D::multiIndex( q, qa, qb, qc );
-
-  jacobianTransformation( qa, qb, qc, X, J );
+  jacobianTransformation( q, X, J );
 
   return LvArray::tensorOps::determinant< 3 >( J );
 }
@@ -1606,14 +1897,11 @@ symmetricGradient( int const q,
                    real64 const (&var)[numNodes][3],
                    real64 (& grad)[6] )
 {
-  int qa, qb, qc;
-  GL_BASIS::TensorProduct3D::multiIndex( q, qa, qb, qc );
-
-  supportLoop( qa, qb, qc, [] GEOS_HOST_DEVICE ( real64 const (&dNdXi)[3],
-                                                 int const nodeIndex,
-                                                 real64 const (&invJ)[3][3],
-                                                 real64 const (&var)[numNodes][3],
-                                                 real64 (& grad)[6] )
+  supportLoop( q, [] GEOS_HOST_DEVICE ( real64 const (&dNdXi)[3],
+                                              int const nodeIndex,
+                                              real64 const (&invJ)[3][3],
+                                              real64 const (&var)[numNodes][3],
+                                              real64 (& grad)[6] )
   {
 
     real64 gradN[3] = {0, 0, 0};
@@ -1643,10 +1931,7 @@ plusGradNajAij( int const q,
                 real64 const (&var)[6],
                 real64 (& R)[numNodes][3] )
 {
-  int qa, qb, qc;
-  GL_BASIS::TensorProduct3D::multiIndex( q, qa, qb, qc );
-
-  supportLoop( qa, qb, qc,
+  supportLoop( q,
                [] GEOS_HOST_DEVICE
                  ( real64 const (&dNdXi)[3],
                  int const nodeIndex,
@@ -1680,10 +1965,7 @@ gradient( int const q,
           real64 const (&var)[numNodes][3],
           real64 (& grad)[3][3] )
 {
-  int qa, qb, qc;
-  GL_BASIS::TensorProduct3D::multiIndex( q, qa, qb, qc );
-
-  supportLoop( qa, qb, qc, [] GEOS_HOST_DEVICE ( real64 const (&dNdXi)[3],
+  supportLoop( q, [] GEOS_HOST_DEVICE ( real64 const (&dNdXi)[3],
                                                  int const nodeIndex,
                                                  real64 const (&invJ)[3][3],
                                                  real64 const (&var)[numNodes][3],

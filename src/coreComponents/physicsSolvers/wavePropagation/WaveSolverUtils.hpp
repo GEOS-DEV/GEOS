@@ -305,13 +305,14 @@ struct WaveSolverUtils
                                         real64 (& coordsOnRefElem)[3] )
   {
     real64 xLocal[FE_TYPE::numNodes][3]{};
+    real64 xLocalMesh[8][3]{};
     for( localIndex a = 0; a < FE_TYPE::numNodes; ++a )
     {
-      LvArray::tensorOps::copy< 3 >( xLocal[a], nodeCoords[ elemsToNodes[a] ] );
+      LvArray::tensorOps::copy< 3 >( xLocalMesh[a], nodeCoords[ elemsToNodes[ FE_TYPE::meshIndexToLinearIndex3D( a )] ] );
     }
     // coordsOnRefElem = invJ*(coords-coordsNode_0)
     real64 invJ[3][3]{};
-    FE_TYPE::invJacobianTransformation( 0, xLocal, invJ );
+    FE_TYPE::invJacobianTransformation( 0, xLocalMesh, invJ );
     for( localIndex i = 0; i < 3; ++i )
     {
       // init at (-1,-1,-1) as the origin of the referential elem
