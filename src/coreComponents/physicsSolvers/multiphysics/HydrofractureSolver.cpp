@@ -185,6 +185,32 @@ real64 HydrofractureSolver< POROMECHANICS_SOLVER >::fullyCoupledSolverStep( real
   /// THIS is a hack to force variables in the fractures to be initialized since they are created after initialization occurs.
   if( cycleNumber == 0 && time_n <= 0 )
   {
+    FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
+
+    forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                  MeshLevel & mesh,
+                                                                  arrayView1d< string const > const & )
+    {
+      fsManager.apply< ElementSubRegionBase >( time_n + dt,
+                                               mesh,
+                                               fields::flow::wellBoreVolume::key(),
+                                               [&]( FieldSpecificationBase const & fs,
+                                                    string const & setName,
+                                                    SortedArrayView< localIndex const > const & lset,
+                                                    ElementSubRegionBase & subRegion,
+                                                    string const & )
+      {
+        GEOS_UNUSED_VAR( setName );
+        
+        // Specify the bc value of the field
+        fs.applyFieldValue< FieldSpecificationEqual,
+                            parallelDevicePolicy<> >( lset,
+                                                      time_n + dt,
+                                                      subRegion,
+                                                      fields::flow::wellBoreVolume::key() );
+      } );
+    } );
+    
     flowSolver()->initializePostInitialConditionsPreSubGroups();
   }
 
