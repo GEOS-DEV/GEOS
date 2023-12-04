@@ -457,7 +457,7 @@ void SinglePhasePoromechanics< FLOW_SOLVER >::mapSolutionBetweenSolvers( DomainP
   if( solverType == static_cast< integer >( SolverType::Flow ) )
   {
     // save pressure and temperature at the end of this iteration
-    flowSolver()->saveIterationState( domain );
+    flowSolver()->saveSequentialIterationState( domain );
 
     this->template forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                                 MeshLevel & mesh,

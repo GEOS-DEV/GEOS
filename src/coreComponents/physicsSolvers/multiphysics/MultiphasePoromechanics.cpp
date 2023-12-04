@@ -334,6 +334,8 @@ void MultiphasePoromechanics< FLOW_SOLVER >::updateState( DomainPartition & doma
     } );
   } );
 
+  maxDeltaPhaseVolFrac = MpiWrapper::max( maxDeltaPhaseVolFrac );
+
   GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "        {}: Max phase volume fraction change: {}", this->getName(), fmt::format( "{:.{}f}", maxDeltaPhaseVolFrac, 2 ) ) );
 }
 
@@ -498,7 +500,7 @@ void MultiphasePoromechanics< FLOW_SOLVER >::mapSolutionBetweenSolvers( DomainPa
   if( solverType == static_cast< integer >( SolverType::Flow ) )
   {
     // save pressure and temperature at the end of this iteration
-    flowSolver()->saveIterationState( domain );
+    //flowSolver()->saveSequentialIterationState( domain );
 
     this->template forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                                 MeshLevel & mesh,

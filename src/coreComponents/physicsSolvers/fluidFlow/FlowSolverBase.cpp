@@ -121,16 +121,22 @@ FlowSolverBase::FlowSolverBase( string const & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Flag indicating whether the problem is thermal or not." );
 
+  this->registerWrapper( viewKeyStruct::allowNegativePressureString(), &m_allowNegativePressure ).
+    setApplyDefaultValue( 1 ). // negative pressure is allowed by default
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Flag indicating if negative pressure is allowed" );
+
   this->registerWrapper( viewKeyStruct::maxAbsolutePresChangeString(), &m_maxAbsolutePresChange ).
     setSizedFromParent( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( -1.0 ).       // disabled by default
     setDescription( "Maximum (absolute) pressure change in a Newton iteration" );
 
-  this->registerWrapper( viewKeyStruct::allowNegativePressureString(), &m_allowNegativePressure ).
-    setApplyDefaultValue( 1 ). // negative pressure is allowed by default
+  this->registerWrapper( viewKeyStruct::maxSequentialPresChangeString(), &m_maxSequentialPresChange ).
+    setSizedFromParent( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Flag indicating if negative pressure is allowed" );
+    setApplyDefaultValue( 1e5 ).           // 0.1 bar = 1e5 Pa
+    setDescription( "Maximum (absolute) pressure change in a sequential iteration, used for outer loop convergence check" );
 
   // allow the user to select a norm
   getNonlinearSolverParameters().getWrapper< solverBaseKernels::NormType >( NonlinearSolverParameters::viewKeysStruct::normTypeString() ).setInputFlag( InputFlags::OPTIONAL );
@@ -228,7 +234,7 @@ void FlowSolverBase::saveConvergedState( ElementSubRegionBase & subRegion ) cons
   }
 }
 
-void FlowSolverBase::saveIterationState( ElementSubRegionBase & subRegion ) const
+void FlowSolverBase::saveSequentialIterationState( ElementSubRegionBase & subRegion ) const
 {
   if( !( subRegion.hasField< fields::flow::pressure_k >() &&
          subRegion.hasField< fields::flow::temperature_k >() ) )
@@ -244,7 +250,7 @@ void FlowSolverBase::saveIterationState( ElementSubRegionBase & subRegion ) cons
   temp_k.setValues< parallelDevicePolicy<> >( temp );
 }
 
-void FlowSolverBase::saveIterationState( DomainPartition & domain ) const
+void FlowSolverBase::saveSequentialIterationState( DomainPartition & domain ) const
 {
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel & mesh,
@@ -254,7 +260,7 @@ void FlowSolverBase::saveIterationState( DomainPartition & domain ) const
                                                 [&]( localIndex const,
                                                      ElementSubRegionBase & subRegion )
     {
-      saveIterationState( subRegion );
+      saveSequentialIterationState( subRegion );
     } );
   } );
 }
@@ -770,6 +776,44 @@ void FlowSolverBase::updateStencilWeights( DomainPartition & domain ) const
       flowSolverBaseKernels::stencilWeightsUpdateKernel< STENCILWRAPPER_TYPE >::updateStencilWeights( stencilWrapper, hydraulicAperture.toNestedViewConst() );
     } );
   } );
+}
+
+bool FlowSolverBase::checkSequentialSolutionIncrements( DomainPartition & domain ) const
+{
+  real64 maxPresChange = 0.0;
+  forDiscretizationOnMeshTargets ( domain.getMeshBodies(), [&]( string const &,
+                                                                MeshLevel & mesh,
+                                                                arrayView1d< string const > const & regionNames )
+  {
+    mesh.getElemManager().forElementSubRegions ( regionNames,
+                                                 [&]( localIndex const,
+                                                      ElementSubRegionBase & subRegion )
+    {
+      arrayView1d< integer const > const ghostRank = subRegion.ghostRank();
+
+      arrayView1d< real64 const > const pres = subRegion.getField< fields::flow::pressure >();
+      arrayView1d< real64 const > const pres_k = subRegion.getField< fields::flow::pressure_k >();
+
+      RAJA::ReduceMax< parallelDeviceReduce, real64 > subRegionMaxPresChange( 0.0 );
+
+      forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const ei )
+      {
+        if( ghostRank[ei] < 0 )
+        {
+          subRegionMaxPresChange.max( LvArray::math::abs( pres[ei] - pres_k[ei] ) );
+        }
+      } );
+
+      maxPresChange = LvArray::math::max( maxPresChange, subRegionMaxPresChange.get() );
+    } );
+  } );
+
+  maxPresChange = MpiWrapper::max( maxPresChange );
+
+  GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "    {}: Max pressure change during outer iteration: {} Pa",
+                                      getName(), fmt::format( "{:.{}f}", maxPresChange, 3 ) ) );
+
+  return maxPresChange < m_maxSequentialPresChange;
 }
 
 } // namespace geos

@@ -89,7 +89,7 @@ public:
 
   void enableFixedStressPoromechanicsUpdate() { flowSolver()->enableFixedStressPoromechanicsUpdate(); }
 
-  void saveIterationState( DomainPartition & domain ) const { flowSolver()->saveIterationState( domain ); }
+  void saveSequentialIterationState( DomainPartition & domain ) const { flowSolver()->saveSequentialIterationState( domain ); }
 
 protected:
 

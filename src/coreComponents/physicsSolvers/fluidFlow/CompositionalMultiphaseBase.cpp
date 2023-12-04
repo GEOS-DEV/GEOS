@@ -610,8 +610,6 @@ real64 CompositionalMultiphaseBase::updatePhaseVolumeFraction( ObjectManagerBase
                                                  dataGroup,
                                                  fluid );
 
-  maxDeltaPhaseVolFrac = MpiWrapper::max( maxDeltaPhaseVolFrac );
-
   return maxDeltaPhaseVolFrac;
 }
 
@@ -2198,14 +2196,14 @@ void CompositionalMultiphaseBase::saveConvergedState( ElementSubRegionBase & sub
   compDens_n.setValues< parallelDevicePolicy<> >( compDens );
 }
 
-void CompositionalMultiphaseBase::saveIterationState( DomainPartition & domain ) const
+void CompositionalMultiphaseBase::saveSequentialIterationState( DomainPartition & domain ) const
 {
-  FlowSolverBase::saveIterationState( domain );
+  FlowSolverBase::saveSequentialIterationState( domain );
 }
 
-void CompositionalMultiphaseBase::saveIterationState( ElementSubRegionBase & subRegion ) const
+void CompositionalMultiphaseBase::saveSequentialIterationState( ElementSubRegionBase & subRegion ) const
 {
-  FlowSolverBase::saveIterationState( subRegion );
+  FlowSolverBase::saveSequentialIterationState( subRegion );
 
   if( !subRegion.hasField< fields::flow::globalCompDensity_k >() )
   {
@@ -2220,6 +2218,8 @@ void CompositionalMultiphaseBase::saveIterationState( ElementSubRegionBase & sub
 
 void CompositionalMultiphaseBase::updateState( DomainPartition & domain )
 {
+  GEOS_MARK_FUNCTION;
+
   real64 maxDeltaPhaseVolFrac = 0.0;
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel & mesh,
@@ -2241,6 +2241,8 @@ void CompositionalMultiphaseBase::updateState( DomainPartition & domain )
       }
     } );
   } );
+
+  maxDeltaPhaseVolFrac = MpiWrapper::max( maxDeltaPhaseVolFrac );
 
   GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "        {}: Max phase volume fraction change = {}", getName(), maxDeltaPhaseVolFrac ) );
 }
