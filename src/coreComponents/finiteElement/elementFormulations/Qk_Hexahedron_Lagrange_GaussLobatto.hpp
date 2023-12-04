@@ -806,7 +806,7 @@ public:
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
   static real64 calcGradN( localIndex const q,
-                           real64 const (&X)[8][3],
+                           real64 const (&X)[numNodes][3],
                            StackVariables const & stack,
                            real64 ( &gradN )[numNodes][3] );
 
@@ -1350,7 +1350,7 @@ GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
 real64 Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
 calcGradN( localIndex const q,
-           real64 const (&X)[8][3],
+           real64 const (&X)[numNodes][3],
            StackVariables const & GEOS_UNUSED_PARAM( stack ),
            real64 ( & gradN )[numNodes][3] )
 {
