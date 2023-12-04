@@ -253,7 +253,7 @@ CO2SolubilityUpdate::compute( real64 const & pressure,
   // Convert the solubility to mole/mole
   co2Solubility *= m_componentMolarWeight[m_waterIndex];
   watSolubility *= m_componentMolarWeight[m_CO2Index];
-  for( integer ic = 0; ic < 2; ++ic )
+  for( integer const ic : {Deriv::dP, Deriv::dT} )
   {
     co2SolubilityDeriv[ic] *= m_componentMolarWeight[m_waterIndex];
     watSolubilityDeriv[ic] *= m_componentMolarWeight[m_CO2Index];
@@ -263,19 +263,18 @@ CO2SolubilityUpdate::compute( real64 const & pressure,
   real64 const z_wat = compFraction[m_waterIndex];
 
   real64 const determinant = 1.0 - co2Solubility*watSolubility;
+
+  GEOS_THROW_IF_LT_MSG ( LvArray::math::abs( determinant ), minForDivision,
+                         GEOS_FMT( "Failed to calculate solubility at pressure {} Pa and temperature {} C.", pressure, temperature ),
+                         SimulationError );
+
   real64 invDeterminant = 0.0;
   real64 invDeterminantDeriv[] = { 0.0, 0.0 };
-  if( minForDivision < LvArray::math::abs( determinant ) )
+
+  invDeterminant = 1.0 / determinant;
+  for( integer const ic : {Deriv::dP, Deriv::dT} )
   {
-    invDeterminant = 1.0 / determinant;
-    for( integer ic = 0; ic < 2; ic++ )
-    {
-      invDeterminantDeriv[ic] = invDeterminant*invDeterminant*(co2Solubility*watSolubilityDeriv[ic] + watSolubility*co2SolubilityDeriv[ic]);
-    }
-  }
-  else
-  {
-    invDeterminant = 1.0 / minForDivision;
+    invDeterminantDeriv[ic] = invDeterminant*invDeterminant*(co2Solubility*watSolubilityDeriv[ic] + watSolubility*co2SolubilityDeriv[ic]);
   }
 
   real64 x_co2 = co2Solubility * (z_wat - watSolubility * z_co2) * invDeterminant;
@@ -283,15 +282,15 @@ CO2SolubilityUpdate::compute( real64 const & pressure,
   if( minForDivision < x_co2 )
   {
     // Pressure and temperature derivatives
-    for( integer ic = 0; ic < 2; ic++ )
+    for( integer const ic : {Deriv::dP, Deriv::dT} )
     {
       x_co2Deriv[ic] = co2SolubilityDeriv[ic] * (z_wat - watSolubility * z_co2) * invDeterminant
                        - co2Solubility * watSolubilityDeriv[ic] * z_co2 * invDeterminant
                        + co2Solubility * (z_wat - watSolubility * z_co2) * invDeterminantDeriv[ic];
     }
     // Composition derivatives
-    x_co2Deriv[2+m_CO2Index] = -co2Solubility * watSolubility * invDeterminant;
-    x_co2Deriv[2+m_waterIndex] = co2Solubility * invDeterminant;
+    x_co2Deriv[Deriv::dC+m_CO2Index] = -co2Solubility * watSolubility * invDeterminant;
+    x_co2Deriv[Deriv::dC+m_waterIndex] = co2Solubility * invDeterminant;
   }
   else
   {
@@ -303,13 +302,13 @@ CO2SolubilityUpdate::compute( real64 const & pressure,
   if( minForDivision < y_wat )
   {
     // Pressure and temperature derivatives
-    for( integer ic = 0; ic < 2; ic++ )
+    for( integer const ic : {Deriv::dP, Deriv::dT} )
     {
       y_watDeriv[ic] = watSolubilityDeriv[ic] * (z_co2 - x_co2) - watSolubility * x_co2Deriv[ic];
     }
     // Composition derivatives
-    y_watDeriv[2+m_CO2Index] = watSolubility*(1.0 - x_co2Deriv[2+m_CO2Index]);
-    y_watDeriv[2+m_waterIndex] = -watSolubility * x_co2Deriv[2+m_waterIndex];
+    y_watDeriv[Deriv::dC+m_CO2Index] = watSolubility*(1.0 - x_co2Deriv[Deriv::dC+m_CO2Index]);
+    y_watDeriv[Deriv::dC+m_waterIndex] = -watSolubility * x_co2Deriv[Deriv::dC+m_waterIndex];
   }
   else
   {
@@ -326,15 +325,15 @@ CO2SolubilityUpdate::compute( real64 const & pressure,
 
     // 1) Compute phase fractions and derivatives
 
-    real64 const dL_dP = x_co2Deriv[0] - y_watDeriv[0];
-    real64 const dL_dT = x_co2Deriv[1] - y_watDeriv[1];
-    real64 const dL_dzco2 = x_co2Deriv[2+m_CO2Index] - y_watDeriv[2+m_CO2Index];
-    real64 const dL_dzwat = x_co2Deriv[2+m_waterIndex] + 1.0 - y_watDeriv[2+m_waterIndex];
+    real64 const dL_dP = x_co2Deriv[Deriv::dP] - y_watDeriv[Deriv::dP];
+    real64 const dL_dT = x_co2Deriv[Deriv::dT] - y_watDeriv[Deriv::dT];
+    real64 const dL_dzco2 = x_co2Deriv[Deriv::dC+m_CO2Index] - y_watDeriv[Deriv::dC+m_CO2Index];
+    real64 const dL_dzwat = x_co2Deriv[Deriv::dC+m_waterIndex] + 1.0 - y_watDeriv[Deriv::dC+m_waterIndex];
 
-    real64 const dV_dP = y_watDeriv[0] - x_co2Deriv[0];
-    real64 const dV_dT = y_watDeriv[1] - x_co2Deriv[1];
-    real64 const dV_dzco2 = y_watDeriv[2+m_CO2Index] + 1.0 - x_co2Deriv[2+m_CO2Index];
-    real64 const dV_dzwat = y_watDeriv[2+m_waterIndex] - x_co2Deriv[2+m_waterIndex];
+    real64 const dV_dP = y_watDeriv[Deriv::dP] - x_co2Deriv[Deriv::dP];
+    real64 const dV_dT = y_watDeriv[Deriv::dT] - x_co2Deriv[Deriv::dT];
+    real64 const dV_dzco2 = y_watDeriv[Deriv::dC+m_CO2Index] + 1.0 - x_co2Deriv[Deriv::dC+m_CO2Index];
+    real64 const dV_dzwat = y_watDeriv[Deriv::dC+m_waterIndex] - x_co2Deriv[Deriv::dC+m_waterIndex];
 
     phaseFraction.value[m_phaseLiquidIndex] = L;
 
@@ -351,32 +350,38 @@ CO2SolubilityUpdate::compute( real64 const & pressure,
     phaseFraction.derivs[m_phaseGasIndex][Deriv::dC+m_waterIndex] = dV_dzwat;
 
     // 2) Compute phase component fractions and derivatives
-    real64 const invL2 = 1.0 / (L*L);
-    real64 const invV2 = 1.0 / (V*V);
 
-    phaseCompFraction.value[m_phaseLiquidIndex][m_CO2Index] = x_co2 / L;
-    phaseCompFraction.derivs[m_phaseLiquidIndex][m_CO2Index][Deriv::dP] = (x_co2Deriv[0]*L - x_co2*dL_dP)*invL2;
-    phaseCompFraction.derivs[m_phaseLiquidIndex][m_CO2Index][Deriv::dT] = (x_co2Deriv[1]*L - x_co2*dL_dT)*invL2;
-    phaseCompFraction.derivs[m_phaseLiquidIndex][m_CO2Index][Deriv::dC+m_CO2Index] = (x_co2Deriv[2+m_CO2Index]*L - x_co2*dL_dzco2)*invL2;
-    phaseCompFraction.derivs[m_phaseLiquidIndex][m_CO2Index][Deriv::dC+m_waterIndex] = (x_co2Deriv[2+m_waterIndex]*L - x_co2*dL_dzwat)*invL2;
+    // 2.1) Assigning the number of moles in each phase
+    phaseCompFraction.value[m_phaseLiquidIndex][m_CO2Index] = x_co2;
+    phaseCompFraction.value[m_phaseLiquidIndex][m_waterIndex] = z_wat - y_wat;
+    phaseCompFraction.value[m_phaseGasIndex][m_CO2Index] = z_co2 - x_co2;
+    phaseCompFraction.value[m_phaseGasIndex][m_waterIndex] = y_wat;
 
-    phaseCompFraction.value[m_phaseLiquidIndex][m_waterIndex] = (z_wat - y_wat) / L;
-    phaseCompFraction.derivs[m_phaseLiquidIndex][m_waterIndex][Deriv::dP] = (-y_watDeriv[0]*L - (z_wat - y_wat)*dL_dP)*invL2;
-    phaseCompFraction.derivs[m_phaseLiquidIndex][m_waterIndex][Deriv::dT] = (-y_watDeriv[1]*L - (z_wat - y_wat)*dL_dT)*invL2;
-    phaseCompFraction.derivs[m_phaseLiquidIndex][m_waterIndex][Deriv::dC+m_CO2Index] = (-y_watDeriv[2+m_CO2Index]*L - (z_wat - y_wat)*dL_dzco2)*invL2;
-    phaseCompFraction.derivs[m_phaseLiquidIndex][m_waterIndex][Deriv::dC+m_waterIndex] = ( (1.0-y_watDeriv[2+m_waterIndex])*L - (z_wat - y_wat)*dL_dzwat)*invL2;
+    for( integer const kc : {Deriv::dP, Deriv::dT, Deriv::dC+m_CO2Index, Deriv::dC+m_waterIndex} )
+    {
+      phaseCompFraction.derivs[m_phaseLiquidIndex][m_CO2Index][kc] = x_co2Deriv[kc];
+      phaseCompFraction.derivs[m_phaseLiquidIndex][m_waterIndex][kc] = -y_watDeriv[kc];
+      phaseCompFraction.derivs[m_phaseGasIndex][m_CO2Index][kc] = -x_co2Deriv[kc];
+      phaseCompFraction.derivs[m_phaseGasIndex][m_waterIndex][kc] = y_watDeriv[kc];
+    }
+    phaseCompFraction.derivs[m_phaseLiquidIndex][m_waterIndex][Deriv::dC+m_waterIndex] += 1.0;
+    phaseCompFraction.derivs[m_phaseGasIndex][m_CO2Index][Deriv::dC+m_CO2Index] += 1.0;
 
-    phaseCompFraction.value[m_phaseGasIndex][m_CO2Index] = (z_co2 - x_co2) / V;
-    phaseCompFraction.derivs[m_phaseGasIndex][m_CO2Index][Deriv::dP] = (-x_co2Deriv[0]*V - (z_co2 - x_co2)*dV_dP)*invV2;
-    phaseCompFraction.derivs[m_phaseGasIndex][m_CO2Index][Deriv::dT] = (-x_co2Deriv[1]*V - (z_co2 - x_co2)*dV_dT)*invV2;
-    phaseCompFraction.derivs[m_phaseGasIndex][m_CO2Index][Deriv::dC+m_CO2Index] = ((1.0-x_co2Deriv[2+m_CO2Index])*V - (z_co2 - x_co2)*dV_dzco2)*invV2;
-    phaseCompFraction.derivs[m_phaseGasIndex][m_CO2Index][Deriv::dC+m_waterIndex] = (-x_co2Deriv[2+m_waterIndex]*V - (z_co2 - x_co2)*dV_dzwat)*invV2;
-
-    phaseCompFraction.value[m_phaseGasIndex][m_waterIndex] = y_wat / V;
-    phaseCompFraction.derivs[m_phaseGasIndex][m_waterIndex][Deriv::dP] = (y_watDeriv[0]*V - y_wat*dV_dP)*invV2;
-    phaseCompFraction.derivs[m_phaseGasIndex][m_waterIndex][Deriv::dT] = (y_watDeriv[1]*V - y_wat*dV_dT)*invV2;
-    phaseCompFraction.derivs[m_phaseGasIndex][m_waterIndex][Deriv::dC+m_CO2Index] = (y_watDeriv[2+m_CO2Index]*V - y_wat*dV_dzco2)*invV2;
-    phaseCompFraction.derivs[m_phaseGasIndex][m_waterIndex][Deriv::dC+m_waterIndex] = (y_watDeriv[2+m_waterIndex]*V - y_wat*dV_dzwat)*invV2;
+    // 2.2) Divide by the number of moles in the phase to get the phase mole fraction
+    // Update: phaseCompFraction[ip][jc] <- phaseCompFraction[ip][jc] / phaseFraction[ip]
+    for( integer const ip : {m_phaseLiquidIndex, m_phaseGasIndex} )
+    {
+      real64 const invFractionSqr = 1.0 / (phaseFraction.value[ip] * phaseFraction.value[ip]);
+      for( integer const jc : {m_CO2Index, m_waterIndex} )
+      {
+        for( integer const kc : {Deriv::dP, Deriv::dT, Deriv::dC+m_CO2Index, Deriv::dC+m_waterIndex} )
+        {
+          phaseCompFraction.derivs[ip][jc][kc] = ( phaseCompFraction.derivs[ip][jc][kc]*phaseFraction.value[ip]
+                                                   - phaseCompFraction.value[ip][jc]*phaseFraction.derivs[ip][kc])*invFractionSqr;
+        }
+        phaseCompFraction.value[ip][jc] /= phaseFraction.value[ip];
+      }
+    }
   }
   else
   {

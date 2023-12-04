@@ -246,7 +246,7 @@ TableFunction const * makeSolubilityTable( string_array const & inputParams,
   array1d< real64 > values( tableCoords.nPressures() * tableCoords.nTemperatures() );
   calculateCO2Solubility( functionName, tolerance, tableCoords, salinity, values );
 
-  string const tableName = functionName + "_table";
+  string const tableName = functionName + "_co2Dissolution_table";
   if( functionManager.hasGroup< TableFunction >( tableName ) )
   {
     return functionManager.getGroupPointer< TableFunction >( tableName );
