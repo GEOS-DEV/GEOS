@@ -144,7 +144,7 @@ public:
 
     while( ( currentError > newtonTolerance ) && ( newtonIteration < maxNewtonIterations ) )
     {
-      real64 const deltaNewton = -funcNewton / evaluateDerivative( kValues, feed, presentComponentIds, newtonValue );
+      real64 deltaNewton = -funcNewton / evaluateDerivative( kValues, feed, presentComponentIds, newtonValue );
 
       // test if we are stepping out of the [xMin;xMax] interval
       if( newtonValue + deltaNewton < xMin )
@@ -153,21 +153,10 @@ public:
       }
       else if( newtonValue + deltaNewton > xMax )
       {
-        deltaNewton = 0.5 * ( xMax - NewtonValue );
+        deltaNewton = 0.5 * ( xMax - newtonValue );
       }
-       
+
       newtonValue = newtonValue + deltaNewton;
-      {
-        newtonValue = 0.5 * ( newtonValue + xMin );
-      }
-      else if( newtonValue + deltaNewton > xMax )
-      {
-        newtonValue = 0.5 * ( newtonValue + xMax );
-      }
-      else
-      {
-        newtonValue = newtonValue + deltaNewton;
-      }
 
       funcNewton = evaluate( kValues, feed, presentComponentIds, newtonValue );
 
