@@ -68,6 +68,12 @@ public:
   ElementType getElementType() const override
   { return m_elementType; }
 
+  string_view getRegionName() const override
+  { return m_regionName; }
+
+  void setRegionName( string_view regionName ) override
+  { m_regionName = regionName; }
+
   localIndex numNodesPerElement() const override
   { return m_numNodesPerElement; }
 
@@ -248,6 +254,9 @@ private:
 
   /// Type of element in this block.
   ElementType m_elementType;
+
+  /// This cellBlock region name.
+  string m_regionName;
 
   std::list< dataRepository::WrapperBase const * > getExternalProperties() const override
   {

@@ -572,7 +572,7 @@ void InternalMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockMa
   int aa = 0;
   for( auto & cellBlockName : m_regionNames )
   {
-    CellBlock & cellBlock = cellBlockManager.registerCellBlock( cellBlockName );
+    CellBlock & cellBlock = cellBlockManager.registerCellBlock( cellBlockName, cellBlockName );
     cellBlock.setElementType( EnumStrings< ElementType >::fromString( m_elementType[aa++] ) );
   }
 

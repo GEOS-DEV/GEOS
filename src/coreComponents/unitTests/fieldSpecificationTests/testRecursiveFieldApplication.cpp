@@ -81,19 +81,19 @@ TEST( FieldSpecification, Recursive )
   {
     CellBlockManager & cellBlockManager = domain.registerGroup< CellBlockManager >( keys::cellManager );
 
-    CellBlock & reg0Hex = cellBlockManager.registerCellBlock( "reg0hex" );
+    CellBlock & reg0Hex = cellBlockManager.registerCellBlock( "region0", "reg0hex" );
     reg0Hex.setElementType( geos::ElementType::Hexahedron );
     reg0Hex.resize( nbHexReg0 );
 
-    CellBlock & reg0Tet = cellBlockManager.registerCellBlock( "reg0tet" );
+    CellBlock & reg0Tet = cellBlockManager.registerCellBlock( "region0", "reg0tet" );
     reg0Tet.setElementType( geos::ElementType::Tetrahedron );
     reg0Tet.resize( nbTetReg0 );
 
-    CellBlock & reg1Hex = cellBlockManager.registerCellBlock( "reg1hex" );
+    CellBlock & reg1Hex = cellBlockManager.registerCellBlock( "region1", "reg1hex" );
     reg1Hex.setElementType( geos::ElementType::Hexahedron );
     reg1Hex.resize( nbHexReg1 );
 
-    CellBlock & reg1Tet = cellBlockManager.registerCellBlock( "reg1tet" );
+    CellBlock & reg1Tet = cellBlockManager.registerCellBlock( "region1", "reg1tet" );
     reg1Tet.setElementType( geos::ElementType::Tetrahedron );
     reg1Tet.resize( nbTetReg1 );
 

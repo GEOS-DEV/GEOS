@@ -763,9 +763,12 @@ localIndex CellBlockManager::numEdges() const
   return m_numEdges;
 }
 
-CellBlock & CellBlockManager::registerCellBlock( string const & name )
+CellBlock & CellBlockManager::registerCellBlock( string const & regionName,
+                                                 string const & groupName )
 {
-  return this->getCellBlocks().registerGroup< CellBlock >( name );
+  CellBlock & cellBlock = this->getCellBlocks().registerGroup< CellBlock >( groupName );
+  cellBlock.setRegionName( regionName );
+  return cellBlock;
 }
 
 FaceBlock & CellBlockManager::registerFaceBlock( string const & name )
