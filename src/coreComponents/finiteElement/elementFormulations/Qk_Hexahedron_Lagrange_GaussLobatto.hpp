@@ -765,6 +765,7 @@ public:
     return calcN( q, N );
   }
 
+
   /**
    * @brief Calculate the shape functions derivatives wrt the physical
    *   coordinates.
@@ -776,9 +777,8 @@ public:
    */
   GEOS_HOST_DEVICE
   static real64 calcGradN( localIndex const q,
-                           real64 const (&X)[8][3],
+                           real64 const (&X)[numNodes][3],
                            real64 ( &gradN )[numNodes][3] );
-
   /**
    * @brief Calculate the shape functions derivatives wrt the physical
    *   coordinates at a single point.
@@ -1298,17 +1298,27 @@ Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::supportLoop( localIndex const q
 }
 
 //*************************************************************************************************
+
 template< typename GL_BASIS >
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
 real64
 Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::calcGradN( localIndex const q,
-                                                            real64 const (&X)[8][3],
+                                                            real64 const (&X)[numNodes][3],
                                                             real64 (& gradN)[numNodes][3] )
 {
+  real64 Xmesh[8][3] = {{0}};
+  for( int k = 0; k < 8; k++ )
+  {
+    const localIndex nodeIndex = meshIndexToLinearIndex3D( k );
+    for( int i = 0; i < 3; i++ )
+    {
+      Xmesh[ k ][ i ] = X[ nodeIndex ][ i ];
+    } 
+  } 
   real64 J[3][3] = {{0}};
 
-  jacobianTransformation( q, X, J );
+  jacobianTransformation( q, Xmesh, J );
 
   real64 const detJ = LvArray::tensorOps::invert< 3 >( J );
 
@@ -1316,7 +1326,6 @@ Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::calcGradN( localIndex const q,
 
   return detJ;
 }
-
 //*************************************************************************************************
 template< typename GL_BASIS >
 GEOS_HOST_DEVICE

@@ -160,13 +160,13 @@ void testKernelDriver()
                     [=] GEOS_HOST_DEVICE ( localIndex const )
   {
 
-    real64 xLocal[8][3];
+    real64 xLocal[numNodes][3];
 
-    for( localIndex a=0; a< 8; ++a )
+    for( localIndex a=0; a< numNodes; ++a )
     {
       for( localIndex i=0; i<3; ++i )
       {
-        xLocal[a][i] = xCoords[Q3_Hexahedron_Lagrange_GaussLobatto::meshIndexToLinearIndex3D( a )][i];
+        xLocal[a][i] = xCoords[a][i];
       }
     }
 
