@@ -6,6 +6,7 @@ Name                                        Type     Default     Description
 gravityVector                               R1Tensor {0,0,-9.81} Gravity vector used in the physics solvers             
 AcousticFirstOrderSEM                       node                 :ref:`XML_AcousticFirstOrderSEM`                       
 AcousticSEM                                 node                 :ref:`XML_AcousticSEM`                                 
+AcousticVTISEM                              node                 :ref:`XML_AcousticVTISEM`                              
 CompositionalMultiphaseFVM                  node                 :ref:`XML_CompositionalMultiphaseFVM`                  
 CompositionalMultiphaseHybridFVM            node                 :ref:`XML_CompositionalMultiphaseHybridFVM`            
 CompositionalMultiphaseReservoir            node                 :ref:`XML_CompositionalMultiphaseReservoir`            
@@ -35,6 +36,7 @@ SinglePhaseWell                             node                 :ref:`XML_Singl
 SolidMechanicsEmbeddedFractures             node                 :ref:`XML_SolidMechanicsEmbeddedFractures`             
 SolidMechanicsLagrangianSSLE                node                 :ref:`XML_SolidMechanicsLagrangianSSLE`                
 SolidMechanics_LagrangianFEM                node                 :ref:`XML_SolidMechanics_LagrangianFEM`                
+SolidMechanics_MPM                          node                 :ref:`XML_SolidMechanics_MPM`                          
 SurfaceGenerator                            node                 :ref:`XML_SurfaceGenerator`                            
 =========================================== ======== =========== ====================================================== 
 

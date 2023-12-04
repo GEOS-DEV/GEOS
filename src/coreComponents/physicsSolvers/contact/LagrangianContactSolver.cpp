@@ -61,6 +61,7 @@ LagrangianContactSolver::LagrangianContactSolver( const string & name,
   ContactSolverBase( name, parent )
 {
   registerWrapper( viewKeyStruct::stabilizationNameString(), &m_stabilizationName ).
+    setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Name of the stabilization to use in the lagrangian contact solver" );
 
@@ -258,8 +259,6 @@ void LagrangianContactSolver::implicitStepComplete( real64 const & time_n,
                                                          true );
 
   } );
-
-  GEOS_LOG_LEVEL_RANK_0( 1, " ***** ImplicitStepComplete *****" );
 }
 
 void LagrangianContactSolver::postProcessInput()
@@ -708,10 +707,14 @@ real64 LagrangianContactSolver::calculateResidualNorm( real64 const & GEOS_UNUSE
     // Add 0 just to match Matlab code results
     globalResidualNorm[2] /= (m_initialResidual[2]+1.0);
   }
-  GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "    ( Rdisplacement, Rtraction, Rtotal ) = ( {:15.6e}, {:15.6e}, {:15.6e} );",
-                                      globalResidualNorm[0],
-                                      globalResidualNorm[1],
-                                      globalResidualNorm[2] ) );
+  if( getLogLevel() >= 1 && logger::internal::rank == 0 )
+  {
+    std::cout<< GEOS_FMT(
+      "        ( Rdisplacement, Rtraction, Rtotal ) = ( {:15.6e}, {:15.6e}, {:15.6e} )",
+      globalResidualNorm[0],
+      globalResidualNorm[1],
+      globalResidualNorm[2] );
+  }
   return globalResidualNorm[2];
 }
 
