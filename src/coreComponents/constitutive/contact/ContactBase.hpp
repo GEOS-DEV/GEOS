@@ -52,7 +52,7 @@ public:
     m_useApertureModel( useApertureModel ),
     m_refNormalStress( refNormalStress )
   {
-    if( !m_useApertureModel )
+    if( m_useApertureModel == 0 )
     {
       m_apertureTable = apertureTable.createKernelWrapper();
     }
@@ -277,12 +277,23 @@ real64 ContactBaseUpdates::computeHydraulicAperture( real64 const aperture,
                                                      real64 const refAperture,
                                                      real64 & dHydraulicAperture_dAperture ) const
 {
-  if( m_useApertureModel )
+  if( m_useApertureModel == 1 )
   {
     real64 const penaltyNormalStress = -m_penaltyStiffness * aperture;
 
     real64 const hydraulicAperture = (aperture >= 0.0)? (aperture + refAperture) : refAperture / ( 1 + 9*penaltyNormalStress/m_refNormalStress );
     real64 const dHydraulicAperture_dNormalStress = -hydraulicAperture / ( 1 + 9*penaltyNormalStress/m_refNormalStress ) * 9/m_refNormalStress;
+
+    dHydraulicAperture_dAperture = (aperture >= 0.0)? 1.0:dHydraulicAperture_dNormalStress * -m_penaltyStiffness;
+
+    return hydraulicAperture;
+  }
+  else if( m_useApertureModel == 2 )
+  {
+    real64 const penaltyNormalStress = -m_penaltyStiffness * aperture;
+
+    real64 const hydraulicAperture = (aperture >= 0.0)? (aperture + refAperture) : refAperture * exp(-log(10)/m_refNormalStress*penaltyNormalStress);
+    real64 const dHydraulicAperture_dNormalStress = -log(10)/m_refNormalStress * hydraulicAperture;
 
     dHydraulicAperture_dAperture = (aperture >= 0.0)? 1.0:dHydraulicAperture_dNormalStress * -m_penaltyStiffness;
 

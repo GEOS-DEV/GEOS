@@ -63,7 +63,9 @@ ContactBase::ContactBase( string const & name,
 
   registerWrapper( viewKeyStruct::useApertureModelString(), &m_useApertureModel ).
     setApplyDefaultValue( 0 ).
-    setInputFlag( InputFlags::OPTIONAL );
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "The flag for using the nonlinear aperture model instead of the aperture model."
+                    "For now, 1 is for the Barton--Bandis model, and 2 is for the exponential model." );
 
   registerWrapper( viewKeyStruct::refNormalStressString(), &m_refNormalStress ).
     setApplyDefaultValue( 0.0 ).
@@ -81,7 +83,7 @@ void ContactBase::postProcessInput()
   GEOS_THROW_IF( m_apertureTableName.empty() && m_useApertureModel == 0,
                  getFullName() << ": the aperture table name " << m_apertureTableName << " is empty", InputError );
 
-  GEOS_THROW_IF( m_useApertureModel == 1 && m_refNormalStress <= 0.0,
+  GEOS_THROW_IF( m_useApertureModel >= 1 && m_refNormalStress <= 0.0,
                  getFullName() << ": the reference normal stress is not given or has a wrong value", InputError );
 
 }
