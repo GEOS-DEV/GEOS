@@ -46,7 +46,7 @@ class FunctionBaseUpdate
 {
 public:
   GEOS_HOST_DEVICE FunctionBaseUpdate(){}
-  GEOS_HOST_DEVICE FunctionBaseUpdate(FunctionBaseUpdate const &){}
+  GEOS_HOST_DEVICE FunctionBaseUpdate( FunctionBaseUpdate const & ){}
 
   /**
    * @brief Move the KernelWrapper to the given execution space, optionally touching it.
