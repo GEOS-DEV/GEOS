@@ -815,8 +815,8 @@ public:
    */
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
-  void quadraturePointKernel( localIndex const q,
-                              localIndex const k,
+  void quadraturePointKernel( localIndex const k,
+                              localIndex const q,
                               StackVariables & stack ) const
   {
     m_finiteElementSpace.template computeStiffnessTerm( q, stack.xLocal, [&] ( int i, int j, real64 val )
