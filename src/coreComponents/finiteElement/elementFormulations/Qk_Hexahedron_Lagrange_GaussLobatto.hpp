@@ -1706,9 +1706,9 @@ computeFirstOrderStiffnessTerm( localIndex const q,
   constexpr auto li3D = linearIndex3D();
   constexpr auto bg = basisGradient();
   auto w = w3D.v[q];
-  auto qa = i3D[q][0];
-  auto qb = i3D[q][1];
-  auto qc = i3D[q][2];
+  auto qa = i3D.v[q][0];
+  auto qb = i3D.v[q][1];
+  auto qc = i3D.v[q][2];
   for( int i=0; i<num1dNodes; i++ )
   {
     for( int j=0; j<num1dNodes; j++ )
