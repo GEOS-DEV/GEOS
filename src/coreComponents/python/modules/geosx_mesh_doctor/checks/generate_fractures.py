@@ -58,7 +58,6 @@ class Options:
     policy: FracturePolicy
     field: str
     field_values: FrozenSet[int]
-    split_on_domain_boundary: bool
     vtk_output: VtkOutput
     vtk_fracture_output: VtkOutput
 
@@ -99,6 +98,7 @@ def __build_fracture_info_from_fields(mesh: vtkUnstructuredGrid,
     # For each face of each cell, we search for the unique neighbor cell (if it exists).
     # Then, if the 2 values of the two cells match the field requirements,
     # we store the cell and its local face index: this is indeed part of the surface that we'll need to be split.
+    cell: vtkCell
     for cell_id in tqdm(range(mesh.GetNumberOfCells()), desc="Computing the cell to faces mapping"):
         if f[cell_id] not in field_values:  # No need to consider a cell if its field value is not in the target range.
             continue
@@ -114,7 +114,7 @@ def __build_fracture_info_from_fields(mesh: vtkUnstructuredGrid,
     face_nodes: List[Collection[int]] = list()
     face_nodes_hashes: Set[FrozenSet[int]] = set()  # A temporary not to add multiple times the same face.
     for cell_id, faces_ids in tqdm(cells_to_faces.items(), desc="Extracting the faces of the fractures"):
-        cell: vtkCell = mesh.GetCell(cell_id)
+        cell = mesh.GetCell(cell_id)
         for face_id in faces_ids:
             fn: Collection[int] = tuple(vtk_iter(cell.GetFace(face_id).GetPointIds()))
             fnh = frozenset(fn)

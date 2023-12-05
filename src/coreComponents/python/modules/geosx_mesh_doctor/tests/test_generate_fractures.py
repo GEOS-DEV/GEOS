@@ -72,8 +72,7 @@ def __build_test_case(xs: Tuple[numpy.ndarray, numpy.ndarray, numpy.ndarray],
                       field="attribute",
                       field_values=fv,
                       vtk_output=None,
-                      vtk_fracture_output=None,
-                      split_on_domain_boundary=True)
+                      vtk_fracture_output=None)
     return mesh, options
 
 

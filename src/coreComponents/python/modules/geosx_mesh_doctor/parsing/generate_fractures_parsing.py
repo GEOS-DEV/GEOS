@@ -12,8 +12,6 @@ __POLICIES = (__FIELD_POLICY, __INTERNAL_SURFACES_POLICY )
 __FIELD_NAME = "name"
 __FIELD_VALUES = "values"
 
-__SPLIT_ON_DOMAIN_BOUNDARY = "split_on_domain_boundary"
-
 __FRACTURE_PREFIX = "fracture"
 
 
@@ -40,11 +38,6 @@ def fill_subparser(subparsers) -> None:
                    required=True,
                    help=f"[string]: The criterion to define the surfaces that will be changed into fracture zones. "
                         f"Possible values are \"{', '.join(__POLICIES)}\"")
-    p.add_argument('--' + __SPLIT_ON_DOMAIN_BOUNDARY,
-                   type=bool,
-                   metavar="True",
-                   default=True,
-                   help=f"[bool]: Split policy if the fracture touches the boundary of the mesh. Defaults to true.")
     p.add_argument('--' + __FIELD_NAME,
                    type=str,
                    help=f"[string]: If the \"{__FIELD_POLICY}\" {__POLICY} is selected, defines which field will be considered to define the fractures. "
@@ -58,8 +51,6 @@ def fill_subparser(subparsers) -> None:
 
 def convert(parsed_options) -> Options:
     policy = parsed_options[__POLICY]
-    split_on_domain_boundary = parsed_options[__SPLIT_ON_DOMAIN_BOUNDARY]
-    assert policy in __POLICIES
     field = parsed_options[__FIELD_NAME]
     field_values = frozenset(map(int, parsed_options[__FIELD_VALUES].split(",")))
     vtk_output = vtk_output_parsing.convert(parsed_options)
@@ -68,8 +59,7 @@ def convert(parsed_options) -> Options:
                    field=field,
                    field_values=field_values,
                    vtk_output=vtk_output,
-                   vtk_fracture_output=vtk_fracture_output,
-                   split_on_domain_boundary=split_on_domain_boundary)
+                   vtk_fracture_output=vtk_fracture_output)
 
 
 def display_results(options: Options, result: Result):
