@@ -35,7 +35,6 @@ DispersionBase::DispersionBase( string const & name, Group * const parent )
     setDescription( "List of fluid phases" );
 
   registerField( fields::dispersion::dispersivity{}, &m_dispersivity );
-  registerField( fields::dispersion::phaseVelocity{}, &m_phaseVelocity );
 
 
 }
@@ -53,10 +52,6 @@ void DispersionBase::postProcessInput()
                         InputError );
 
   m_dispersivity.resize( 0, 0, 0 , 0);
-  m_phaseVelocity.resize( 0, 0, 0, 3 );
-  //and labels
-  getField< fields::dispersion::phaseVelocity >().
-    setDimLabels( 2, m_phaseNames );
 }
 
 void DispersionBase::allocateConstitutiveData( dataRepository::Group & parent,
@@ -64,8 +59,6 @@ void DispersionBase::allocateConstitutiveData( dataRepository::Group & parent,
 {
   // NOTE: enforcing 1 quadrature point
   m_dispersivity.resize( parent.size(), 1, numFluidPhases(), 3 );
-  m_phaseVelocity.resize( parent.size(), 1, numFluidPhases(), 3 );
-
   ConstitutiveBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 }
 

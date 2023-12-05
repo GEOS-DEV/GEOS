@@ -19,7 +19,6 @@
 #ifndef GEOS_CONSTITUTIVE_DISPERSION_LINEARISOTROPICDISPERSION_HPP_
 #define GEOS_CONSTITUTIVE_DISPERSION_LINEARISOTROPICDISPERSION_HPP_
 
-#include "constitutive/dispersion/Layout.hpp"
 #include "constitutive/ConstitutiveBase.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
 #include "common/DataLayouts.hpp"

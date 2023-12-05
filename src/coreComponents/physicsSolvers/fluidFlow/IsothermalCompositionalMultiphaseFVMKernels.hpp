@@ -293,7 +293,8 @@ public:
                       fields::flow::phaseVolumeFraction,
                       fields::flow::dPhaseVolumeFraction,
                       fields::flow::phaseMobility,
-                      fields::flow::dPhaseMobility >;
+                      fields::flow::dPhaseMobility,
+                      fields::flow::phaseVelocity >;
 
   using MultiFluidAccessors =
     StencilMaterialAccessors< MultiFluidBase,
@@ -315,8 +316,7 @@ public:
                               fields::permeability::dPerm_dPressure >;
 
   using DispersionAccessors = StencilMaterialAccessors< DispersionBase,
-                                                        fields::dispersion::dispersivity,
-                                                        fields::dispersion::phaseVelocity >;
+                                                        fields::dispersion::dispersivity >;
 
   /**
    * @brief Constructor for the kernel interface
@@ -329,12 +329,14 @@ public:
    * @param[inout] localMatrix the local CRS matrix
    * @param[inout] localRhs the local right-hand side vector
    */
-  FaceBasedAssemblyKernelBase(integer const numPhases, globalIndex const rankOffset,
+  FaceBasedAssemblyKernelBase(integer const numPhases,
+                              globalIndex const rankOffset,
                               DofNumberAccessor const & dofNumberAccessor,
                               GlobalCellDimAccessor const & globalDistanceAccessor,
                               CompFlowAccessors const & compFlowAccessors,
                               MultiFluidAccessors const & multiFluidAccessors,
-                              DispersionAccessors const & dispersionAccessors, real64 const & dt,
+                              DispersionAccessors const & dispersionAccessors,
+                              real64 const & dt,
                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
                               arrayView1d< real64 > const & localRhs );
 
@@ -372,7 +374,7 @@ protected:
   ElementViewConst< arrayView5d< real64 const, multifluid::USD_PHASE_COMP_DC > > const m_dPhaseCompFrac;
 
   /// Views on phase velocity
-  ElementRegionManager::ElementView< arrayView4d< real64, dispersion::USD_PHASE_VELOCITY > > const m_phaseVelocity;
+  ElementRegionManager::ElementView< arrayView4d< real64, compflow::USD_PHASE_VELOCITY > > const m_phaseVelocity;
 
 
   // Residual and jacobian
@@ -847,12 +849,19 @@ public:
    */
   template< typename POLICY, typename STENCILWRAPPER >
   static void
-  createAndLaunch( integer const numComps, integer const numPhases, globalIndex const rankOffset, string const & dofKey,
-                   integer const hasCapPressure, const integer hasVelocityCompute, string const & solverName,
-                   UpwindingParameters const & upwindingParams, ElementRegionManager const & elemManager,
+  createAndLaunch( integer const numComps,
+                   integer const numPhases,
+                   globalIndex const rankOffset,
+                   string const & dofKey,
+                   integer const hasCapPressure,
+                   const integer hasVelocityCompute,
+                   string const & solverName,
+                   UpwindingParameters const & upwindingParams,
+                   ElementRegionManager const & elemManager,
                    STENCILWRAPPER const & stencilWrapper,
                    real64 const & dt,
-                   CRSMatrixView< real64, globalIndex const > const & localMatrix, arrayView1d< real64 > const & localRhs )
+                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                   arrayView1d< real64 > const & localRhs )
   {
     isothermalCompositionalMultiphaseBaseKernels::internal::kernelLaunchSelectorCompSwitch( numComps, [&]( auto NC )
     {
@@ -947,8 +956,7 @@ public:
 
   using DispersionAccessors =
     StencilMaterialAccessors< DispersionBase,
-                              fields::dispersion::dispersivity,
-                              fields::dispersion::phaseVelocity >;
+                              fields::dispersion::dispersivity >;
 
   using PorosityAccessors =
     StencilMaterialAccessors< PorosityBase,

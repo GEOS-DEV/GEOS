@@ -22,7 +22,6 @@
 #include "common/DataLayouts.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
 #include "constitutive/ConstitutiveBase.hpp"
-#include "constitutive/dispersion/Layout.hpp"
 
 namespace geos
 {
@@ -112,13 +111,6 @@ public:
   arrayView4d< real64 const > dispersivity() const { return m_dispersivity; }
 
   /**
-   * @brief Getter for phase Velolcity in the subRegion
-   * @return an arrayView of the phase velocities
-   */
-  //TODO reduce gauss point dim
-  arrayView4d< real64 const > phaseVelocity() const { return m_phaseVelocity; }
-
-  /**
    * @brief Initialize the velocity state (needed because dispersion depends on total velocity)
    * @param[in] initialVelocity the initial velocity field after reservoir initialization
    *
@@ -152,8 +144,6 @@ protected:
 
   /// phase names read from input
   string_array m_phaseNames;
-  // misc
-  array4d< real64, dispersion::LAYOUT_PHASE_VELOCITY > m_phaseVelocity;
 
 };
 

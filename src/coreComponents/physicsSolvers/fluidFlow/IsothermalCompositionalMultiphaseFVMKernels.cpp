@@ -54,7 +54,7 @@ FaceBasedAssemblyKernelBase::FaceBasedAssemblyKernelBase(integer const numPhases
     m_dPhaseVolFrac( compFlowAccessors.get( fields::flow::dPhaseVolumeFraction {} ) ),
     m_phaseCompFrac( multiFluidAccessors.get( fields::multifluid::phaseCompFraction {} ) ),
     m_dPhaseCompFrac( multiFluidAccessors.get( fields::multifluid::dPhaseCompFraction {} ) ),
-    m_phaseVelocity( dispersionAccessors.get( fields::dispersion::phaseVelocity {} ) ),
+    m_phaseVelocity( compFlowAccessors.get( fields::flow::phaseVelocity {} ) ),
     m_localMatrix( localMatrix ),
     m_localRhs( localRhs )
 {}

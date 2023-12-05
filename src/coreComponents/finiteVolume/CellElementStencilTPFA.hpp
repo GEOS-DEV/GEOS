@@ -388,15 +388,14 @@ private:
 
     }
 
-GEOS_HOST_DEVICE
-inline void
-CellElementStencilTPFAWrapper::
-  computeVelocity( localIndex iconn,
-                   localIndex ip,
-                   const real64 (&phaseFlux),
-                   arraySlice1d< real64 const > const (&globalCellToFace)[2],
-                   ElementRegionManager::ElementView< arrayView4d< real64 > > const & phaseVelocity ) const
-{
+    GEOS_HOST_DEVICE
+    inline void
+    CellElementStencilTPFAWrapper::
+    computeVelocity(localIndex iconn,
+                    localIndex ip,
+                    const real64 (&phaseFlux),
+                    arraySlice1d<real64 const> const (&globalCellToFace)[2],
+                    ElementRegionManager::ElementView<arrayView4d<real64> > const &phaseVelocity) const {
 
   real64 surface[2];
 

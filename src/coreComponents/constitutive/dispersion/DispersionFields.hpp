@@ -20,7 +20,6 @@
 #define GEOS_CONSTITUTIVE_DISPERSION_DISPERSIONFIELDS_HPP_
 
 #include "mesh/MeshFields.hpp"
-#include "constitutive/dispersion/Layout.hpp"
 
 namespace geos
 {
@@ -31,9 +30,6 @@ namespace fields
 namespace dispersion
 {
 
-using array3dLayoutPhase = array3d< real64, constitutive::dispersion::LAYOUT_PHASE_VELOCITY_NORM >;
-using array4dLayoutPhase = array4d< real64, constitutive::dispersion::LAYOUT_PHASE_VELOCITY >;
-
 DECLARE_FIELD( dispersivity,
                "dispersivity",
                array4d< real64 >,
@@ -42,13 +38,6 @@ DECLARE_FIELD( dispersivity,
                WRITE_AND_READ,
                "Dispersivity" );
 
-DECLARE_FIELD( phaseVelocity,
-               "cellCenterPhaseVelocity",
-               array4dLayoutPhase,
-               1,
-               LEVEL_0,
-               WRITE_AND_READ,
-               "Molar/Mass weighted phase velocities reconstructed at cell center" );
 }
 
 }
