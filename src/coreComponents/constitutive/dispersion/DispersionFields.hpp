@@ -49,15 +49,6 @@ DECLARE_FIELD( phaseVelocity,
                LEVEL_0,
                WRITE_AND_READ,
                "Molar/Mass weighted phase velocities reconstructed at cell center" );
-
-DECLARE_FIELD( phaseVelocityNorm,
-               "cellCenterLaggedPhaseVelocityNorm",
-               array3dLayoutPhase,
-               1,
-               LEVEL_0,
-               WRITE_AND_READ,
-               "Lagged intersticial phase velocities norm at cell center" );
-
 }
 
 }

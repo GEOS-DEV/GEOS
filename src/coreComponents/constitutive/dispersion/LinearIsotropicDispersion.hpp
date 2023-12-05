@@ -44,11 +44,9 @@ public:
    * @param longitunidalDispersivity longitudinal dispersivity in the subregion
    */
   LinearIsotropicDispersionUpdate( arrayView4d< real64 > const & dispersivity,
-                                   real64 const & longitudinalDispersivity,
-                                   arrayView3d< real64 > const & phaseVelocityNorm )
+                                   real64 const & longitudinalDispersivity)
     : DispersionBaseUpdate( dispersivity ),
-    m_longitudinalDispersivity( longitudinalDispersivity ),
-    m_phaseVelocityNorm( phaseVelocityNorm )
+    m_longitudinalDispersivity( longitudinalDispersivity )
   {}
 
   GEOS_HOST_DEVICE
@@ -61,9 +59,8 @@ public:
     {
       for( int ip = 0; ip < laggedTotalVelocityComponents.size( 0 ); ++ip )
       {
-          m_dispersivity[k][q][ip][i] = m_longitudinalDispersivity;
-        real64 const velocityNorm = LvArray::tensorOps::l2Norm< 3 >( laggedTotalVelocityComponents[ip] );
-        m_phaseVelocityNorm[k][q][ip] = velocityNorm/phaseDensity[ip];
+          real64 const velocityNorm = LvArray::tensorOps::l2Norm< 3 >( laggedTotalVelocityComponents[ip] );
+          m_dispersivity[k][q][ip][i] = velocityNorm/phaseDensity[ip] * m_longitudinalDispersivity;
       }
     }
   }
@@ -72,8 +69,6 @@ protected:
 
   /// Longitudinal dispersivity
   real64 const m_longitudinalDispersivity;
-  arrayView3d< real64 > const m_phaseVelocityNorm;
-
 };
 
 /**
@@ -103,13 +98,6 @@ public:
 
   virtual void saveConvergedVelocityState( arrayView4d< real64 const > const & convergedVelocity, arrayView3d< real64 const > const & phaseDensity ) const override;
 
-  /**
-   * @brief Getter for phase Velolcity norm in the subRegion
-   * @return an arrayView of the phase velocities
-   * @note it is a *lagged* version of the velocities and not only the norm of it
-   */
-  arrayView3d< real64 const > phaseVelocityNorm() const { return m_phaseVelocityNorm; }
-
   /// Type of kernel wrapper for in-kernel update
   using KernelWrapper = LinearIsotropicDispersionUpdate;
 
@@ -120,8 +108,7 @@ public:
   KernelWrapper createKernelWrapper() const
   {
     return KernelWrapper( m_dispersivity,
-                          m_longitudinalDispersivity,
-                          m_phaseVelocityNorm );
+                          m_longitudinalDispersivity );
   }
 
   struct viewKeyStruct : public DispersionBase::viewKeyStruct
@@ -137,7 +124,6 @@ private:
 
   /// Longitudinal dispersivity
   real64 m_longitudinalDispersivity;
-  array3d< real64, dispersion::LAYOUT_PHASE_VELOCITY_NORM > m_phaseVelocityNorm;
 
 };
 
