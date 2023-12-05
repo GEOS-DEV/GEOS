@@ -320,7 +320,7 @@ void CompositionalMultiphaseBase::registerDataOnMesh( Group & meshBodies )
       {
         subRegion.registerField< globalCompDensity_k >( getName() ).
           setDimLabels( 1, fluid.componentNames() ).
-                   reference().resizeDimension< 1 >( m_numComponents );
+          reference().resizeDimension< 1 >( m_numComponents );
       }
 
       subRegion.registerField< globalCompFraction >( getName() ).
@@ -2246,45 +2246,45 @@ bool CompositionalMultiphaseBase::checkSequentialSolutionIncrements( DomainParti
   integer const numComp = m_numComponents;
 
   real64 maxCompDensChange = 0.0;
-    forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
-                                                                 MeshLevel & mesh,
-                                                                 arrayView1d< string const > const & regionNames )
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
+                                                               MeshLevel & mesh,
+                                                               arrayView1d< string const > const & regionNames )
+  {
+    mesh.getElemManager().forElementSubRegions( regionNames,
+                                                [&]( localIndex const,
+                                                     ElementSubRegionBase & subRegion )
     {
-      mesh.getElemManager().forElementSubRegions( regionNames,
-                                                  [&]( localIndex const,
-                                                       ElementSubRegionBase & subRegion )
+      arrayView1d< integer const > const ghostRank = subRegion.ghostRank();
+
+      arrayView2d< real64 const, compflow::USD_COMP >
+      const compDens = subRegion.getField< fields::flow::globalCompDensity >();
+      arrayView2d< real64 const, compflow::USD_COMP >
+      const compDens_k = subRegion.getField< fields::flow::globalCompDensity_k >();
+
+      RAJA::ReduceMax< parallelDeviceReduce, real64 > subRegionMaxCompDensChange( 0.0 );
+
+      forAll< parallelDevicePolicy<> >( subRegion.size(), [=]
+                                        GEOS_HOST_DEVICE ( localIndex
+                                                           const ei )
       {
-        arrayView1d< integer const > const ghostRank = subRegion.ghostRank();
-
-        arrayView2d< real64 const, compflow::USD_COMP >
-        const compDens = subRegion.getField< fields::flow::globalCompDensity >();
-        arrayView2d< real64 const, compflow::USD_COMP >
-        const compDens_k = subRegion.getField< fields::flow::globalCompDensity_k >();
-
-        RAJA::ReduceMax< parallelDeviceReduce, real64 > subRegionMaxCompDensChange( 0.0 );
-
-        forAll< parallelDevicePolicy<> >( subRegion.size(), [=]
-                                          GEOS_HOST_DEVICE ( localIndex
-                                                             const ei )
+        if( ghostRank[ei] < 0 )
         {
-          if( ghostRank[ei] < 0 )
+          for( integer ic = 0; ic < numComp; ++ic )
           {
-            for( integer ic = 0; ic < numComp; ++ic )
-            {
-              subRegionMaxCompDensChange.max( LvArray::math::abs( compDens[ei][ic] - compDens_k[ei][ic] ) );
-            }
+            subRegionMaxCompDensChange.max( LvArray::math::abs( compDens[ei][ic] - compDens_k[ei][ic] ) );
           }
-        } );
-
-        maxCompDensChange = LvArray::math::max( maxCompDensChange, subRegionMaxCompDensChange.get() );
+        }
       } );
-    } );
 
-    maxCompDensChange = MpiWrapper::max( maxCompDensChange );
+      maxCompDensChange = LvArray::math::max( maxCompDensChange, subRegionMaxCompDensChange.get() );
+    } );
+  } );
+
+  maxCompDensChange = MpiWrapper::max( maxCompDensChange );
 
   string const unit = m_useMass ? "kg/m3" : "mol/m3";
-    GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "    {}: Max component density change during outer iteration: {} {}",
-                                        getName(), fmt::format( "{:.{}f}", maxCompDensChange, 3 ), unit ) );
+  GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "    {}: Max component density change during outer iteration: {} {}",
+                                      getName(), fmt::format( "{:.{}f}", maxCompDensChange, 3 ), unit ) );
 
   return isConverged && (maxCompDensChange < m_maxSequentialCompDensChange);
 }

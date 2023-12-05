@@ -140,9 +140,9 @@ FlowSolverBase::FlowSolverBase( string const & name,
 
   this->registerWrapper( viewKeyStruct::maxSequentialTempChangeString(), &m_maxSequentialTempChange ).
     setSizedFromParent( 0 ).
-        setInputFlag( InputFlags::OPTIONAL ).
-        setApplyDefaultValue( 0.1 ).
-        setDescription( "Maximum (absolute) temperature change in a sequential iteration, used for outer loop convergence check" );
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( 0.1 ).
+    setDescription( "Maximum (absolute) temperature change in a sequential iteration, used for outer loop convergence check" );
 
   // allow the user to select a norm
   getNonlinearSolverParameters().getWrapper< solverBaseKernels::NormType >( NonlinearSolverParameters::viewKeysStruct::normTypeString() ).setInputFlag( InputFlags::OPTIONAL );
