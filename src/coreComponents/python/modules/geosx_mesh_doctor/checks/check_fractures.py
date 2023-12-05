@@ -71,7 +71,8 @@ def format_collocated_nodes(fracture_mesh: vtkUnstructuredGrid) -> Sequence[Iter
     collocated_nodes: numpy.ndarray = vtk_to_numpy(fracture_mesh.GetPointData().GetArray("collocated_nodes"))
     if len(collocated_nodes.shape) == 1:
         collocated_nodes: numpy.ndarray = collocated_nodes.reshape((collocated_nodes.shape[0], 1))
-    return tuple(map(lambda bucket: tuple(sorted(filter(lambda i: i != -1, bucket))), collocated_nodes))
+    generator = (tuple(sorted(bucket[bucket > -1])) for bucket in collocated_nodes)
+    return tuple(generator)
 
 
 def __check_collocated_nodes_positions(matrix_points: Sequence[Tuple[float, float, float]],
