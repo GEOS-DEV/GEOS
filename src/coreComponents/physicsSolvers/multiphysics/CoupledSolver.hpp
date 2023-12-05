@@ -150,10 +150,24 @@ public:
                      real64 const & dt,
                      DomainPartition & domain ) override
   {
+    Timestamp const meshModificationTimestamp = getMeshModificationTimestamp( domain );
+
     forEachArgInTuple( m_solvers, [&]( auto & solver,
                                        auto )
     {
+      // Only build the sparsity pattern if the mesh has changed
+      if( meshModificationTimestamp > solver->getSystemSetupTimestamp() )
+      {
+        solver->setupSystem( domain,
+                             solver->getDofManager(),
+                             solver->getLocalMatrix(),
+                             solver->getSystemRhs(),
+                             solver->getSystemSolution() );
+        solver->setSystemSetupTimestamp( meshModificationTimestamp );
+      }
+
       solver->implicitStepSetup( time_n, dt, domain );
+
     } );
   }
 
@@ -411,29 +425,7 @@ protected:
 
     real64 dtReturnTemporary;
 
-    Timestamp const meshModificationTimestamp = getMeshModificationTimestamp( domain );
-
-    // First call Coupled Solver setup  (important for poromechanics initialization for sequentially coupled)
     implicitStepSetup( time_n, dt, domain );
-
-    forEachArgInTuple( m_solvers, [&]( auto & solver,
-                                       auto )
-    {
-
-      // Only build the sparsity pattern if the mesh has changed
-      if( meshModificationTimestamp > solver->getSystemSetupTimestamp() )
-      {
-        solver->setupSystem( domain,
-                             solver->getDofManager(),
-                             solver->getLocalMatrix(),
-                             solver->getSystemRhs(),
-                             solver->getSystemSolution() );
-        solver->setSystemSetupTimestamp( meshModificationTimestamp );
-      }
-
-      solver->implicitStepSetup( time_n, dt, domain );
-
-    } );
 
     NonlinearSolverParameters & solverParams = getNonlinearSolverParameters();
     integer & iter = solverParams.m_numNewtonIterations;
