@@ -177,19 +177,20 @@ jobs:
           #   ENABLE_HYPRE: ON
           #   ENABLE_TRILINOS: OFF
 
-          # - name: Ubuntu (22.04, gcc 11.2.0, open-mpi 4.1.2)
-          #   DOCKER_REPOSITORY: geosx/ubuntu22.04-gcc11
-          #   CMAKE_BUILD_TYPE: Release
-          #   GCP_BUCKET: geosx/ubuntu22.04-gcc11
-          #   ENABLE_HYPRE: ON
-          #   ENABLE_TRILINOS: OFF
-
-          - name: Ubuntu (22.04, gcc 12.3.0, open-mpi 4.1.2)
-            DOCKER_REPOSITORY: geosx/ubuntu22.04-gcc12
+          - name: Ubuntu (22.04, gcc 11.2.0, open-mpi 4.1.2)
             CMAKE_BUILD_TYPE: Release
-            GCP_BUCKET: geosx/ubuntu22.04-gcc12
+            DOCKER_REPOSITORY: geosx/ubuntu22.04-gcc11
             ENABLE_HYPRE: ON
             ENABLE_TRILINOS: OFF
+            GCP_BUCKET: geosx/ubuntu22.04-gcc11
+
+          - name: Ubuntu (22.04, gcc 12.3.0, open-mpi 4.1.2)
+            BUILD_AND_TEST_CLI_ARGS: "--no-run-unit-tests"
+            CMAKE_BUILD_TYPE: Debug
+            DOCKER_REPOSITORY: geosx/ubuntu22.04-gcc12
+            ENABLE_HYPRE: ON
+            ENABLE_TRILINOS: OFF
+            GCP_BUCKET: geosx/ubuntu22.04-gcc12
     uses: ./.github/workflows/build_and_test.yml
     with:
       CMAKE_BUILD_TYPE: ${{ matrix.CMAKE_BUILD_TYPE }}
@@ -206,7 +207,7 @@ jobs:
     needs:
       - are_integrated_tests_requested
       - is_pull_request_a_draft
-      # - cpu_builds
+      - cpu_builds
     uses: ./.github/workflows/build_and_test.yml
     secrets: inherit
     with:
@@ -214,7 +215,7 @@ jobs:
       BUILD_TYPE: integrated_tests
       CMAKE_BUILD_TYPE: Release
       DOCKER_IMAGE_TAG: ${{ needs.is_pull_request_a_draft.outputs.DOCKER_IMAGE_TAG }}
-      DOCKER_REPOSITORY: geosx/ubuntu22.04-gcc12
+      DOCKER_REPOSITORY: geosx/ubuntu22.04-gcc11
       ENABLE_HYPRE: ON
       ENABLE_TRILINOS: OFF
       GCP_BUCKET: geosx/integratedTests
