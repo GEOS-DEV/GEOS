@@ -126,6 +126,7 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
 
   registerWrapper( "fTablePath", &m_fTablePath ).
     setInputFlag( InputFlags::OPTIONAL ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "Path to f-table" );
 
   registerWrapper( "fTableInterpType", &m_fTableInterpType ).

@@ -63,6 +63,7 @@ CompositionalMultiphaseWell::CompositionalMultiphaseWell( const string & name,
   m_useTotalMassEquation( 1 ),
   m_maxCompFracChange( 1.0 ),
   m_maxRelativePresChange( 0.2 ),
+  m_maxAbsolutePresChange( -1 ), // disabled by default
   m_minScalingFactor( 0.01 ),
   m_allowCompDensChopping( 1 ),
   m_targetPhaseIndex( -1 )
@@ -88,6 +89,12 @@ CompositionalMultiphaseWell::CompositionalMultiphaseWell( const string & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( 1.0 ).
     setDescription( "Maximum (relative) change in pressure between two Newton iterations (recommended with rate control)" );
+
+  this->registerWrapper( viewKeyStruct::maxAbsolutePresChangeString(), &m_maxAbsolutePresChange ).
+    setSizedFromParent( 0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( -1.0 ).       // disabled by default
+    setDescription( "Maximum (absolute) pressure change in a Newton iteration" );
 
   this->registerWrapper( viewKeyStruct::allowLocalCompDensChoppingString(), &m_allowCompDensChopping ).
     setSizedFromParent( 0 ).
@@ -1002,8 +1009,7 @@ void CompositionalMultiphaseWell::initializeWells( DomainPartition & domain )
   } );
 }
 
-void CompositionalMultiphaseWell::assembleFluxTerms( real64 const GEOS_UNUSED_PARAM( time_n ),
-                                                     real64 const dt,
+void CompositionalMultiphaseWell::assembleFluxTerms( real64 const dt,
                                                      DomainPartition const & domain,
                                                      DofManager const & dofManager,
                                                      CRSMatrixView< real64, globalIndex const > const & localMatrix,
@@ -1259,16 +1265,6 @@ CompositionalMultiphaseWell::scalingForSystemSolution( DomainPartition & domain,
 {
   GEOS_MARK_FUNCTION;
 
-  bool const skipCompFracDamping = m_maxCompFracChange >= 1.0;
-  bool const skipPresDamping = m_maxRelativePresChange >= 1.0;
-
-  // check if we want to rescale the Newton update
-  if( skipCompFracDamping && skipPresDamping )
-  {
-    // no rescaling wanted, we just return 1.0;
-    return 1.0;
-  }
-
   string const wellDofKey = dofManager.getKey( wellElementDofName() );
 
   real64 scalingFactor = 1.0;
@@ -1285,6 +1281,7 @@ CompositionalMultiphaseWell::scalingForSystemSolution( DomainPartition & domain,
         compositionalMultiphaseWellKernels::
           ScalingForSystemSolutionKernelFactory::
           createAndLaunch< parallelDevicePolicy<> >( m_maxRelativePresChange,
+                                                     m_maxAbsolutePresChange,
                                                      m_maxCompFracChange,
                                                      dofManager.rankOffset(),
                                                      m_numComponents,
@@ -1318,7 +1315,7 @@ CompositionalMultiphaseWell::checkSystemSolution( DomainPartition & domain,
                                                                         [&]( localIndex const,
                                                                              WellElementSubRegion & subRegion )
     {
-      integer const subRegionSolutionCheck =
+      auto const subRegionData =
         compositionalMultiphaseWellKernels::
           SolutionCheckKernelFactory::
           createAndLaunch< parallelDevicePolicy<> >( m_allowCompDensChopping,
@@ -1330,13 +1327,13 @@ CompositionalMultiphaseWell::checkSystemSolution( DomainPartition & domain,
                                                      subRegion,
                                                      localSolution );
 
-      if( !subRegionSolutionCheck )
+      if( !subRegionData.localMinVal )
       {
         GEOS_LOG_LEVEL( 1, "Solution is invalid in well " << subRegion.getName()
                                                           << " (either a negative pressure or a negative component density was found)." );
       }
 
-      localCheck = std::min( localCheck, subRegionSolutionCheck );
+      localCheck = std::min( localCheck, subRegionData.localMinVal );
     } );
   } );
 
@@ -1876,7 +1873,7 @@ void CompositionalMultiphaseWell::printRates( real64 const & time_n,
       {
         GEOS_LOG( GEOS_FMT( "{}: well is shut", wellControlsName ) );
         // print all zeros in the rates file
-        outputFile << "0.0,0.0,0.0";
+        outputFile << ",0.0,0.0,0.0";
         for( integer ip = 0; ip < numPhase; ++ip )
           outputFile << ",0.0";
         outputFile << std::endl;

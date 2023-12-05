@@ -239,6 +239,7 @@ public:
     static constexpr char const * maxForceString() { return "maxForce"; }
     static constexpr char const * elemsAttachedToSendOrReceiveNodesString() { return "elemsAttachedToSendOrReceiveNodes"; }
     static constexpr char const * elemsNotAttachedToSendOrReceiveNodesString() { return "elemsNotAttachedToSendOrReceiveNodes"; }
+    constexpr static char const * surfaceGeneratorNameString() { return "surfaceGeneratorName"; }
 
     static constexpr char const * sendOrReceiveNodesString() { return "sendOrReceiveNodes";}
     static constexpr char const * nonSendOrReceiveNodesString() { return "nonSendOrReceiveNodes";}
@@ -296,6 +297,9 @@ protected:
 
   /// Rigid body modes
   array1d< ParallelVector > m_rigidBodyModes;
+
+  SolverBase * m_surfaceGenerator;
+  string m_surfaceGeneratorName;
 
 private:
   virtual void setConstitutiveNames( ElementSubRegionBase & subRegion ) const override;

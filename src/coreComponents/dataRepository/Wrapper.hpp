@@ -74,7 +74,7 @@ public:
    */
   explicit Wrapper( string const & name,
                     Group & parent ):
-    WrapperBase( name, parent ),
+    WrapperBase( name, parent, rtTypes::getTypeName( typeid( T ) ) ),
     m_ownsData( true ),
     m_isClone( false ),
     m_data( new T() ),
@@ -97,7 +97,7 @@ public:
   explicit Wrapper( string const & name,
                     Group & parent,
                     std::unique_ptr< T > object ):
-    WrapperBase( name, parent ),
+    WrapperBase( name, parent, rtTypes::getTypeName( typeid( T ) ) ),
     m_ownsData( true ),
     m_isClone( false ),
     m_data( object.release() ),
@@ -120,7 +120,7 @@ public:
   explicit Wrapper( string const & name,
                     Group & parent,
                     T * object ):
-    WrapperBase( name, parent ),
+    WrapperBase( name, parent, rtTypes::getTypeName( typeid( T ) ) ),
     m_ownsData( false ),
     m_isClone( false ),
     m_data( object ),
@@ -517,8 +517,8 @@ public:
   { return wrapperHelpers::move( *m_data, space, touch ); }
 
   ///////////////////////////////////////////////////////////////////////////////////////////////////
-  virtual string typeRegex() const override
-  { return TypeRegex< T >::get(); }
+  virtual Regex const & getTypeRegex() const override
+  { return rtTypes::getTypeRegex< T >( m_rtTypeName ); }
 
   ///@}
 
@@ -676,6 +676,7 @@ public:
         {
           m_successfulReadFromInput = xmlWrapper::readAttributeAsType( reference(),
                                                                        getName(),
+                                                                       rtTypes::getTypeRegex< T >( getRTTypeName() ),
                                                                        targetNode,
                                                                        inputFlag == InputFlags::REQUIRED );
           GEOS_THROW_IF( !m_successfulReadFromInput,
@@ -690,13 +691,14 @@ public:
         {
           m_successfulReadFromInput = xmlWrapper::readAttributeAsType( reference(),
                                                                        getName(),
+                                                                       rtTypes::getTypeRegex< T >( getRTTypeName() ),
                                                                        targetNode,
                                                                        getDefaultValueStruct() );
         }
       }
       catch( std::exception const & ex )
       {
-        processInputException( ex, targetNode, nodePos );
+        xmlWrapper::processInputException( ex, getName(), targetNode, nodePos );
       }
 
       if( m_successfulReadFromInput )
@@ -851,6 +853,15 @@ public:
   Wrapper< T > & setRegisteringObjects( string const & objectName )
   {
     WrapperBase::setRegisteringObjects( objectName );
+    return *this;
+  }
+
+  /**
+   * @copydoc WrapperBase::setRTTypeName(string_view)
+   */
+  Wrapper< T > & setRTTypeName( string_view rtTypeName )
+  {
+    WrapperBase::setRTTypeName( rtTypeName );
     return *this;
   }
 

@@ -49,14 +49,14 @@ set( common_sources
 set( dependencyList ${parallelDeps} lvarray pugixml::pugixml RAJA chai conduit::conduit fmt::fmt )
 
 if ( ENABLE_MKL )
-  set( dependencyList ${dependencyList} mkl )
+  list( APPEND dependencyList mkl )
 endif()
 
 if( ENABLE_CALIPER )
   set( dependencyList ${dependencyList} caliper )
 
   if (TARGET adiak)
-    set( dependencyList ${dependencyList} adiak )
+    list( APPEND dependencyList adiak )
   endif()
 endif()
 
