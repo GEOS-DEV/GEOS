@@ -37,23 +37,14 @@ def __generate_generate_fractures_parsing_test_data() -> Iterator[TestCase]:
     fracture_mesh: str = "fracture.vtu"
 
     cli_gen: str = f"generate_fractures --policy {{}} --name {field} --values 0,1 --output {main_mesh} --fracture-output {fracture_mesh}"
-
-    cli_args: Sequence[str] = cli_gen.format("field").split()
-    options: Options = Options(policy=FracturePolicy.FIELD, field=field, field_values=frozenset((0, 1)),
-                               vtk_output=VtkOutput(output=main_mesh, is_data_mode_binary=True),
-                               vtk_fracture_output=VtkOutput(output=fracture_mesh, is_data_mode_binary=True))
-    yield TestCase(cli_args, options)
-
-    cli_args: Sequence[str] = cli_gen.format("internal_surfaces").split()
-    options: Options = Options(policy=FracturePolicy.INTERNAL_SURFACES, field=field, field_values=frozenset((0, 1)),
-                               vtk_output=VtkOutput(output=main_mesh, is_data_mode_binary=True),
-                               vtk_fracture_output=VtkOutput(output=fracture_mesh, is_data_mode_binary=True))
-    yield TestCase(cli_args, options)
-    cli_args: Sequence[str] = cli_gen.format("dummy").split()
-    options: Options = Options(policy=FracturePolicy.INTERNAL_SURFACES, field=field, field_values=frozenset((0, 1)),
-                               vtk_output=VtkOutput(output=main_mesh, is_data_mode_binary=True),
-                               vtk_fracture_output=VtkOutput(output=fracture_mesh, is_data_mode_binary=True))
-    yield TestCase(cli_args, options, True)
+    all_cli_args = cli_gen.format("field").split(), cli_gen.format("internal_surfaces").split(), cli_gen.format("dummy").split()
+    policies = FracturePolicy.FIELD, FracturePolicy.INTERNAL_SURFACES, FracturePolicy.FIELD
+    exceptions = False, False, True
+    for cli_args, policy, exception in zip(all_cli_args, policies, exceptions):
+        options: Options = Options(policy=policy, field=field, field_values=frozenset((0, 1)),
+                                   vtk_output=VtkOutput(output=main_mesh, is_data_mode_binary=True),
+                                   vtk_fracture_output=VtkOutput(output=fracture_mesh, is_data_mode_binary=True))
+        yield TestCase(cli_args, options, exception)
 
 
 def __f(test_case: TestCase):
