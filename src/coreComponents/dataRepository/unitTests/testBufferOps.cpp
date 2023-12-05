@@ -22,42 +22,42 @@ using namespace bufferOps;
 
 TEST( testGeosxTraits, test_is_host_packable_object )
 {
-  static_assert( is_host_packable_object< int >, "Should be true." );
-  static_assert( is_host_packable_object< double >, "Should be true." );
-  static_assert( is_host_packable_object< R1Tensor >, "Should be true." );
-  static_assert( is_host_packable_object< string >, "Should be true." );
+  static_assert( is_host_packable_object_v< int >, "Should be true." );
+  static_assert( is_host_packable_object_v< double >, "Should be true." );
+  static_assert( is_host_packable_object_v< R1Tensor >, "Should be true." );
+  static_assert( is_host_packable_object_v< string >, "Should be true." );
 
-  static_assert( !is_host_packable_object< void >, "Should be false." );
-  static_assert( !is_host_packable_object< array1d< double > >, "Should be false." );
-  static_assert( !is_host_packable_object< SortedArray< double > >, "Should be false." );
-  static_assert( !is_host_packable_object< map< string, int > >, "Should be false." );
-  static_assert( !is_host_packable_object< std::pair< string, int > >, "Should be false." );
+  static_assert( !is_host_packable_object_v< void >, "Should be false." );
+  static_assert( !is_host_packable_object_v< array1d< double > >, "Should be false." );
+  static_assert( !is_host_packable_object_v< SortedArray< double > >, "Should be false." );
+  static_assert( !is_host_packable_object_v< map< string, int > >, "Should be false." );
+  static_assert( !is_host_packable_object_v< std::pair< string, int > >, "Should be false." );
 }
 
 
 TEST( testGeosxTraits, test_is_array_packable )
 {
-  static_assert( is_host_packable_array< array2d< real64, RAJA::PERM_IJ > >, "Should be true." );
-  static_assert( is_host_packable_array< array2d< real64, RAJA::PERM_JI > >, "Should be true." );
+  static_assert( is_host_packable_array_v< array2d< real64, RAJA::PERM_IJ > >, "Should be true." );
+  static_assert( is_host_packable_array_v< array2d< real64, RAJA::PERM_JI > >, "Should be true." );
 
-  static_assert( !is_host_packable_array< int >, "Should be false." );
-  static_assert( !is_host_packable_array< double >, "Should be false." );
-  static_assert( !is_host_packable_array< void >, "Should be false." );
+  static_assert( !is_host_packable_array_v< int >, "Should be false." );
+  static_assert( !is_host_packable_array_v< double >, "Should be false." );
+  static_assert( !is_host_packable_array_v< void >, "Should be false." );
 }
 
 
 TEST( testGeosxTraits, test_is_host_packable_map )
 {
-  static_assert( is_host_packable_map< map< string, int > >, "Should be true." );
-  static_assert( is_host_packable_map< map< string, array1d< int > > >, "Should be true." );
-  static_assert( !is_host_packable_map< map< string, std::pair< int, int > > >, "Should be false" );
+  static_assert( is_host_packable_map_v< map< string, int > >, "Should be true." );
+  static_assert( is_host_packable_map_v< map< string, array1d< int > > >, "Should be true." );
+  static_assert( !is_host_packable_map_v< map< string, std::pair< int, int > > >, "Should be false" );
 }
 
 TEST( testGeosxTraits, test_is_host_packable_scalar )
 {
-  static_assert( is_host_packable_scalar< int >, "Should be true." );
-  static_assert( is_host_packable_scalar< double >, "Should be true." );
-  static_assert( !is_host_packable_scalar< R1Tensor >, "Should be false" );
-  static_assert( !is_host_packable_scalar< string >, "Should be false" );
-  static_assert( !is_host_packable_scalar< array1d< double > >, "Should be false." );
+  static_assert( is_host_packable_scalar_v< int >, "Should be true." );
+  static_assert( is_host_packable_scalar_v< double >, "Should be true." );
+  static_assert( !is_host_packable_scalar_v< R1Tensor >, "Should be false" );
+  static_assert( !is_host_packable_scalar_v< string >, "Should be false" );
+  static_assert( !is_host_packable_scalar_v< array1d< double > >, "Should be false." );
 }

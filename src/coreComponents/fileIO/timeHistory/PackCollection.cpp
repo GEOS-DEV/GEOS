@@ -68,7 +68,7 @@ HistoryMetadata PackCollection::getMetaData( DomainPartition const & domain, loc
   if( collectAll() )
   {
     // If we collect all the data, then we have a unique field: "all".
-    // So its safe to grab index 0.
+    // So it's safe to grab index 0.
     localIndex const packCount = m_setsIndices[0].size() == 0 ? targetField.size() : m_setsIndices[0].size();
     return targetField.getHistoryMetadata( packCount );
   }

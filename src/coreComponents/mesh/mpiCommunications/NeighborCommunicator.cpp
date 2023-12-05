@@ -271,6 +271,7 @@ void NeighborCommunicator::prepareAndSendGhosts( bool const GEOS_UNUSED_PARAM( c
                                     edgeManager, edgeAdjacencyList,
                                     faceManager, faceAdjacencyList,
                                     elemManager, elemAdjacencyList );
+  GEOS_LOG_RANK( GEOS_FMT( "m_neighborRank:{}, ghostsize {}", m_neighborRank, bufferSize ) );
 
   this->resizeSendBuffer( commID, bufferSize );
   this->postSizeSend( commID, mpiSendSizeRequest );
@@ -283,6 +284,7 @@ void NeighborCommunicator::prepareAndSendGhosts( bool const GEOS_UNUSED_PARAM( c
                                      edgeManager, edgeAdjacencyList,
                                      faceManager, faceAdjacencyList,
                                      elemManager, elemAdjacencyList );
+  GEOS_LOG_RANK( GEOS_FMT( "m_neighborRank:{}, packedSize {}", m_neighborRank, packedSize ) );
 
   GEOS_ERROR_IF_NE( bufferSize, packedSize );
 
@@ -335,6 +337,7 @@ void NeighborCommunicator::unpackGhosts( MeshLevel & mesh,
   unpackedSize += elemManager.unpack( receiveBufferPtr, elementAdjacencyReceiveList );
   waitAllDeviceEvents( events );
 
+  GEOS_LOG_RANK( GEOS_FMT( "m_neighborRank:{}, unpackedSize {}", m_neighborRank, unpackedSize ) );
   GEOS_ERROR_IF_NE( receiveBuff.size(), unpackedSize );
 
 }

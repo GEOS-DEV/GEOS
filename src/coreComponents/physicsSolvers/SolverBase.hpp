@@ -744,7 +744,7 @@ protected:
   static string getConstitutiveName( ElementSubRegionBase const & subRegion );
 
   template< typename CONSTITUTIVE_BASE_TYPE >
-  static string getConstitutiveName( ParticleSubRegionBase const & subRegion ); // particle overload
+  static string getConstitutiveName( ParticleSubRegionBase const & subRegion );
 
   /**
    * @brief This function sets constitutive name fields on an
@@ -753,8 +753,7 @@ protected:
    *  names set.
    */
   virtual void setConstitutiveNamesCallSuper( ElementSubRegionBase & subRegion ) const { GEOS_UNUSED_VAR( subRegion ); }
-  virtual void setConstitutiveNamesCallSuper( ParticleSubRegionBase & subRegion ) const { GEOS_UNUSED_VAR( subRegion ); } // particle
-                                                                                                                          // overload
+  virtual void setConstitutiveNamesCallSuper( ParticleSubRegionBase & subRegion ) const { GEOS_UNUSED_VAR( subRegion ); }
 
   template< typename BASETYPE = constitutive::ConstitutiveBase, typename LOOKUP_TYPE >
   static BASETYPE const & getConstitutiveModel( dataRepository::Group const & dataGroup, LOOKUP_TYPE const & key );
