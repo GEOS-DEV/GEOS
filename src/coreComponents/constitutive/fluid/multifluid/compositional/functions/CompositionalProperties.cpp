@@ -69,40 +69,33 @@ void CompositionalProperties::computeMolarDensity( integer const numComps,
                                                    arraySlice1d< real64 const > const & GEOS_UNUSED_PARAM ( composition ),
                                                    arraySlice1d< real64 const > const & volumeShift,
                                                    real64 const compressibilityFactor,
-                                                   real64 const dCompressibilityFactor_dp,
-                                                   real64 const dCompressibilityFactor_dt,
-                                                   arraySlice1d< real64 const > const & dCompressibilityFactor_dz,
+                                                   arraySlice1d< real64 const > const & compressibilityFactorDerivs,
                                                    real64 const molarDensity,
-                                                   real64 & dMolarDensity_dp,
-                                                   real64 & dMolarDensity_dt,
-                                                   arraySlice1d< real64 > const & dMolarDensity_dz )
+                                                   arraySlice1d< real64 > const & molarDensityDerivs )
 {
   if( molarDensity < MultiFluidConstants::epsilon )
   {
-    dMolarDensity_dp = 0.0;
-    dMolarDensity_dt = 0.0;
-    for( integer ic = 0; ic < numComps; ++ic )
-    {
-      dMolarDensity_dz[ic] = 0.0;
-    }
+    auto const setZero = []( real64 & val ){ val = 0.0; };
+    LvArray::forValuesInSlice( molarDensityDerivs, setZero );
     return;
   }
 
   real64 dvCorrected_dx = 0.0;
 
   // Pressure derivative
-  dvCorrected_dx = MultiFluidConstants::gasConstant * temperature * (dCompressibilityFactor_dp - compressibilityFactor / pressure) / pressure;
-  dMolarDensity_dp = -molarDensity * molarDensity * dvCorrected_dx;
+  dvCorrected_dx = MultiFluidConstants::gasConstant * temperature * (compressibilityFactorDerivs[Deriv::dP] - compressibilityFactor / pressure) / pressure;
+  molarDensityDerivs[Deriv::dP] = -molarDensity * molarDensity * dvCorrected_dx;
 
   // Temperature derivative
-  dvCorrected_dx = MultiFluidConstants::gasConstant * (temperature * dCompressibilityFactor_dt + compressibilityFactor) / pressure;
-  dMolarDensity_dt = -molarDensity * molarDensity * dvCorrected_dx;
+  dvCorrected_dx = MultiFluidConstants::gasConstant * (temperature * compressibilityFactorDerivs[Deriv::dT] + compressibilityFactor) / pressure;
+  molarDensityDerivs[Deriv::dT] = -molarDensity * molarDensity * dvCorrected_dx;
 
   // Composition derivative
   for( integer ic = 0; ic < numComps; ++ic )
   {
-    dvCorrected_dx = MultiFluidConstants::gasConstant * temperature * dCompressibilityFactor_dz[ic] / pressure + volumeShift[ic];
-    dMolarDensity_dz[ic] = -molarDensity * molarDensity * dvCorrected_dx;
+    integer const kc = Deriv::dC + ic;
+    dvCorrected_dx = MultiFluidConstants::gasConstant * temperature * compressibilityFactorDerivs[kc] / pressure + volumeShift[ic];
+    molarDensityDerivs[kc] = -molarDensity * molarDensity * dvCorrected_dx;
   }
 }
 
@@ -124,24 +117,21 @@ GEOS_HOST_DEVICE
 void CompositionalProperties::computeMassDensity( integer const numComps,
                                                   arraySlice1d< real64 const > const & molecularWeight,
                                                   real64 const molarDensity,
-                                                  real64 const dMolarDensity_dp,
-                                                  real64 const dMolarDensity_dt,
-                                                  arraySlice1d< real64 const > const dMolarDensity_dz,
+                                                  arraySlice1d< real64 const > const molarDensityDerivs,
                                                   real64 const massDensity,
-                                                  real64 & dMassDensity_dp,
-                                                  real64 & dMassDensity_dt,
-                                                  arraySlice1d< real64 > const & dMassDensity_dz )
+                                                  arraySlice1d< real64 > const & massDensityDerivs )
 {
-  // Pressure derivative
-  dMassDensity_dp = massDensity * dMolarDensity_dp / molarDensity;
-
-  // Temperature derivative
-  dMassDensity_dt = massDensity * dMolarDensity_dt / molarDensity;
+  // Pressure and temperature derivatives
+  for( integer const kc : {Deriv::dP, Deriv::dT} )
+  {
+    massDensityDerivs[kc] = massDensity * molarDensityDerivs[kc] / molarDensity;
+  }
 
   // Composition derivative
   for( integer ic = 0; ic < numComps; ++ic )
   {
-    dMassDensity_dz[ic] = massDensity * dMolarDensity_dz[ic] / molarDensity + molecularWeight[ic] * molarDensity;
+    integer const kc = Deriv::dC + ic;
+    massDensityDerivs[kc] = massDensity * molarDensityDerivs[kc] / molarDensity + molecularWeight[ic] * molarDensity;
   }
 }
 

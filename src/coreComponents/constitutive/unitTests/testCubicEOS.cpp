@@ -298,7 +298,6 @@ TEST( CubicEOSTest, testCubicEOSFourComponentsSRK )
   checkRelativeError( logFugacityCoefficients[1], expectedLogFugacityCoefficients[1], relTol );
   checkRelativeError( logFugacityCoefficients[2], expectedLogFugacityCoefficients[2], relTol );
   checkRelativeError( logFugacityCoefficients[3], expectedLogFugacityCoefficients[3], relTol );
-
 }
 
 // -----------------------------------------------------------------
@@ -352,6 +351,8 @@ class DerivativeTestFixture : public ::testing::TestWithParam< TestData< NC > >
 {
 public:
   static constexpr integer numComps = NC;
+  static constexpr integer numDof = NC + 2;
+  using Deriv = geos::constitutive::multifluid::DerivativeOffset;
   using ParamType = std::tuple< real64 const, real64 const, Feed< NC > const >;
 public:
   DerivativeTestFixture();
@@ -384,6 +385,8 @@ class MixCoeffDerivativeTestFixture : public DerivativeTestFixture< EOS, NC >
 {
 public:
   using DerivativeTestFixture< EOS, NC >::numComps;
+  using DerivativeTestFixture< EOS, NC >::numDof;
+  using Deriv = typename DerivativeTestFixture< EOS, NC >::Deriv;
   using ParamType = typename DerivativeTestFixture< EOS, NC >::ParamType;
 public:
   void testNumericalDerivatives( ParamType const & testData ) const
@@ -393,12 +396,8 @@ public:
     array1d< real64 > aPureCoefficient( numComps );
     array1d< real64 > bPureCoefficient( numComps );
 
-    real64 daMixtureCoefficient_dp = 0.0;
-    real64 dbMixtureCoefficient_dp = 0.0;
-    real64 daMixtureCoefficient_dt = 0.0;
-    real64 dbMixtureCoefficient_dt = 0.0;
-    array1d< real64 > daMixtureCoefficient_dz( numComps );
-    array1d< real64 > dbMixtureCoefficient_dz( numComps );
+    array1d< real64 > aMixtureCoefficientDerivs( numDof );
+    array1d< real64 > bMixtureCoefficientDerivs( numDof );
 
     array1d< real64 > composition;
     real64 const pressure = std::get< 0 >( testData );
@@ -433,23 +432,19 @@ public:
       bPureCoefficient,
       aMixtureCoefficient,
       bMixtureCoefficient,
-      daMixtureCoefficient_dp,
-      dbMixtureCoefficient_dp,
-      daMixtureCoefficient_dt,
-      dbMixtureCoefficient_dt,
-      daMixtureCoefficient_dz,
-      dbMixtureCoefficient_dz );
+      aMixtureCoefficientDerivs,
+      bMixtureCoefficientDerivs );
 
     // Compare against numerical derivatives
     // -- Pressure derivative
     real64 const dp = 1.0e-4 * pressure;
     geos::testing::internal::testNumericalDerivative(
-      pressure, dp, daMixtureCoefficient_dp,
+      pressure, dp, aMixtureCoefficientDerivs[Deriv::dP],
       [&]( real64 const p ) -> real64 {
       return computeCoefficients( p, temperature, composition ).first;
     } );
     geos::testing::internal::testNumericalDerivative(
-      pressure, dp, dbMixtureCoefficient_dp,
+      pressure, dp, bMixtureCoefficientDerivs[Deriv::dP],
       [&]( real64 const p ) -> real64 {
       return computeCoefficients( p, temperature, composition ).second;
     } );
@@ -457,12 +452,12 @@ public:
     // -- Temperature derivative
     real64 const dT = 1.0e-6 * temperature;
     geos::testing::internal::testNumericalDerivative(
-      temperature, dT, daMixtureCoefficient_dt,
+      temperature, dT, aMixtureCoefficientDerivs[Deriv::dT],
       [&]( real64 const t ) -> real64 {
       return computeCoefficients( pressure, t, composition ).first;
     } );
     geos::testing::internal::testNumericalDerivative(
-      temperature, dT, dbMixtureCoefficient_dt,
+      temperature, dT, bMixtureCoefficientDerivs[Deriv::dT],
       [&]( real64 const t ) -> real64 {
       return computeCoefficients( pressure, t, composition ).second;
     } );
@@ -478,12 +473,12 @@ public:
         return coefficients;
       };
       geos::testing::internal::testNumericalDerivative(
-        0.0, dz, daMixtureCoefficient_dz[ic],
+        0.0, dz, aMixtureCoefficientDerivs[Deriv::dC+ic],
         [&]( real64 const z ) -> real64 {
         return computeComponentCoefficients( z ).first;
       } );
       geos::testing::internal::testNumericalDerivative(
-        0.0, dz, dbMixtureCoefficient_dz[ic],
+        0.0, dz, bMixtureCoefficientDerivs[Deriv::dC+ic],
         [&]( real64 const z ) -> real64 {
         return computeComponentCoefficients( z ).second;
       } );
@@ -543,6 +538,8 @@ class CompressibilityDerivativeTestFixture : public DerivativeTestFixture< EOS, 
 {
 public:
   using DerivativeTestFixture< EOS, NC >::numComps;
+  using DerivativeTestFixture< EOS, NC >::numDof;
+  using Deriv = typename DerivativeTestFixture< EOS, NC >::Deriv;
   using ParamType = typename DerivativeTestFixture< EOS, NC >::ParamType;
 public:
   void testNumericalDerivatives( ParamType const & testData ) const
@@ -554,16 +551,10 @@ public:
     array1d< real64 > bPureCoefficient( numComps );
     real64 aMixtureCoefficient = 0.0;
     real64 bMixtureCoefficient = 0.0;
-    real64 daMixtureCoefficient_dp = 0.0;
-    real64 dbMixtureCoefficient_dp = 0.0;
-    real64 daMixtureCoefficient_dt = 0.0;
-    real64 dbMixtureCoefficient_dt = 0.0;
-    array1d< real64 > daMixtureCoefficient_dz( numComps );
-    array1d< real64 > dbMixtureCoefficient_dz( numComps );
+    array1d< real64 > aMixtureCoefficientDerivs( numDof );
+    array1d< real64 > bMixtureCoefficientDerivs( numDof );
 
-    real64 dCompressibilityFactor_dp = 0.0;
-    real64 dCompressibilityFactor_dt = 0.0;
-    array1d< real64 > dCompressibilityFactor_dz( numComps );
+    array1d< real64 > compressibilityFactorDerivs( numDof );
 
     array1d< real64 > composition;
     real64 const pressure = std::get< 0 >( testData );
@@ -606,32 +597,22 @@ public:
       bPureCoefficient,
       aMixtureCoefficient,
       bMixtureCoefficient,
-      daMixtureCoefficient_dp,
-      dbMixtureCoefficient_dp,
-      daMixtureCoefficient_dt,
-      dbMixtureCoefficient_dt,
-      daMixtureCoefficient_dz,
-      dbMixtureCoefficient_dz );
+      aMixtureCoefficientDerivs,
+      bMixtureCoefficientDerivs );
     CubicEOSPhaseModel< EOS >::computeCompressibilityFactor(
       numComps,
       aMixtureCoefficient,
       bMixtureCoefficient,
       compressibilityFactor,
-      daMixtureCoefficient_dp,
-      dbMixtureCoefficient_dp,
-      daMixtureCoefficient_dt,
-      dbMixtureCoefficient_dt,
-      daMixtureCoefficient_dz,
-      dbMixtureCoefficient_dz,
-      dCompressibilityFactor_dp,
-      dCompressibilityFactor_dt,
-      dCompressibilityFactor_dz );
+      aMixtureCoefficientDerivs,
+      bMixtureCoefficientDerivs,
+      compressibilityFactorDerivs );
 
     // Compare against numerical derivatives
     // -- Pressure derivative
     real64 const dp = 1.0e-4 * pressure;
     geos::testing::internal::testNumericalDerivative(
-      pressure, dp, dCompressibilityFactor_dp,
+      pressure, dp, compressibilityFactorDerivs[Deriv::dP],
       [&]( real64 const p ) -> real64 {
       return computeCompressibilityFactor( p, temperature, composition );
     } );
@@ -639,7 +620,7 @@ public:
     // -- Temperature derivative
     real64 const dT = 1.0e-6 * temperature;
     geos::testing::internal::testNumericalDerivative(
-      temperature, dT, dCompressibilityFactor_dt,
+      temperature, dT, compressibilityFactorDerivs[Deriv::dT],
       [&]( real64 const t ) -> real64 {
       return computeCompressibilityFactor( pressure, t, composition );
     } );
@@ -649,7 +630,7 @@ public:
     for( integer ic = 0; ic < numComps; ++ic )
     {
       geos::testing::internal::testNumericalDerivative(
-        0.0, dz, dCompressibilityFactor_dz[ic],
+        0.0, dz, compressibilityFactorDerivs[Deriv::dC+ic],
         [&]( real64 const z ) -> real64 {
         composition[ic] += z;
         real64 const compressibility = computeCompressibilityFactor( pressure, temperature, composition );
