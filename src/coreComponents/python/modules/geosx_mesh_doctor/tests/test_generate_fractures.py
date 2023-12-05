@@ -13,8 +13,9 @@ import pytest
 
 from vtkmodules.vtkCommonDataModel import (
     vtkUnstructuredGrid,
-    VTK_POLYHEDRON,
     VTK_HEXAHEDRON,
+    VTK_POLYHEDRON,
+    VTK_QUAD,
 )
 from vtkmodules.util.numpy_support import (
     numpy_to_vtk,
@@ -40,13 +41,15 @@ class TestCase:
 
 def __build_test_case(xs: Tuple[numpy.ndarray, numpy.ndarray, numpy.ndarray],
                       attribute: Iterable[int],
-                      field_values: Iterable[int] = None):
+                      field_values: Iterable[int] = None,
+                      policy: FracturePolicy = FracturePolicy.FIELD):
     xyz = XYZ(*xs)
 
     mesh: vtkUnstructuredGrid = build_rectilinear_blocks_mesh((xyz, ))
 
     ref = numpy.array(attribute, dtype=int)
-    assert len(ref) == mesh.GetNumberOfCells()
+    if policy == FracturePolicy.FIELD:
+        assert len(ref) == mesh.GetNumberOfCells()
     attr = numpy_to_vtk(ref)
     attr.SetName("attribute")
     mesh.GetCellData().AddArray(attr)
@@ -56,7 +59,7 @@ def __build_test_case(xs: Tuple[numpy.ndarray, numpy.ndarray, numpy.ndarray],
     else:
         fv = frozenset(field_values)
 
-    options = Options(policy=FracturePolicy.FIELD,
+    options = Options(policy=policy,
                       field="attribute",
                       field_values=fv,
                       vtk_output=None,
@@ -221,6 +224,21 @@ def __generate_test_data() -> Iterator[TestCase]:
 
     yield TestCase(input_mesh=polyhedron_mesh, options=options, collocated_nodes=collocated_nodes,
                    result=(4 * 4, 2, 4, 1))
+
+    # Split in 2 using the internal fracture description
+    inc = Incrementor(3 * 2 * 2)
+    collocated_nodes: Sequence[Sequence[int]] = (
+        (1, *inc.next(1)),
+        (1 + 3, *inc.next(1)),
+        (1 + 6, *inc.next(1)),
+        (1 + 9, *inc.next(1)),
+    )
+    mesh, options = __build_test_case((three_nodes, two_nodes, two_nodes), attribute=(0, 0, 0), field_values=(0,),
+                                      policy=FracturePolicy.INTERNAL_SURFACES)
+    mesh.InsertNextCell(VTK_QUAD, to_vtk_id_list((1, 4, 7, 10)))  # Add a fracture on the fly
+    yield TestCase(input_mesh=mesh, options=options,
+                   collocated_nodes=collocated_nodes,
+                   result=(4 * 4, 3, 4, 1))
 
 
 @pytest.mark.parametrize("expected", __generate_test_data())
