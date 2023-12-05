@@ -173,7 +173,7 @@ void WellSolverBase::assembleSystem( real64 const time,
   assembleAccumulationTerms( domain, dofManager, localMatrix, localRhs );
 
   // then assemble the flux terms in the mass balance equations
-  assembleFluxTerms( time, dt, domain, dofManager, localMatrix, localRhs );
+  assembleFluxTerms( dt, domain, dofManager, localMatrix, localRhs );
 
   // then assemble the volume balance equations
   assembleVolumeBalanceTerms( domain, dofManager, localMatrix, localRhs );

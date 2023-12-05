@@ -62,6 +62,8 @@ public:
                                                       real64 const & temperature_k,
                                                       real64 const & temperature_n ) const override final
   {
+    updateBiotCoefficientAndAssignBulkModulus( k );
+
     m_porosityUpdate.updateFromPressureAndTemperature( k, q,
                                                        pressure, pressure_k, pressure_n,
                                                        temperature, temperature_k, temperature_n );
@@ -205,12 +207,12 @@ private:
 
   GEOS_HOST_DEVICE
   inline
-  void updateBiotCoefficient( localIndex const k ) const
+  void updateBiotCoefficientAndAssignBulkModulus( localIndex const k ) const
   {
     // This call is not general like this.
     real64 const bulkModulus = m_solidUpdate.getBulkModulus( k );
 
-    m_porosityUpdate.updateBiotCoefficient( k, bulkModulus );
+    m_porosityUpdate.updateBiotCoefficientAndAssignBulkModulus( k, bulkModulus );
   }
 
   GEOS_HOST_DEVICE
@@ -269,7 +271,7 @@ private:
                                      totalStress, // first effective stress increment accumulated
                                      stiffness );
 
-    updateBiotCoefficient( k );
+    updateBiotCoefficientAndAssignBulkModulus( k );
 
     // Add the contributions of pressure and temperature to the total stress
     real64 const biotCoefficient = m_porosityUpdate.getBiotCoefficient( k );

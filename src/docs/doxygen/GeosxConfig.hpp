@@ -41,6 +41,9 @@
 /// Enables use of HIP (CMake option ENABLE_HIP)
 /* #undef GEOS_USE_HIP */
 
+/// Workaround for FMT compilation issue on some NVCC/PowerPC machines (CMake option ENABLE_FMT_CONST_FORMATTER_WORKAROUND)
+/* #undef GEOS_USE_FMT_CONST_FORMATTER_WORKAROUND */
+
 /// Enables use of PVTPackage (CMake option ENABLE_PVTPackage)
 #define GEOSX_USE_PVTPackage
 
@@ -69,7 +72,7 @@
   /// Parsed hypre version information
   #define HYPRE_VERSION_MAJOR 2
   /// Parsed hypre version information
-  #define HYPRE_VERSION_MINOR 29
+  #define HYPRE_VERSION_MINOR 30
   /// Parsed hypre version information
   #define HYPRE_VERSION_PATCH 0
 #endif

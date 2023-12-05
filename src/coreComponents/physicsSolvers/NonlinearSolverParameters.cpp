@@ -60,6 +60,11 @@ NonlinearSolverParameters::NonlinearSolverParameters( string const & name,
     setDescription( "Norm used by the flow solver to check nonlinear convergence. "
                     "Valid options:\n* " + EnumStrings< solverBaseKernels::NormType >::concat( "\n* " ) );
 
+  registerWrapper( viewKeysStruct::minNormalizerString(), &m_minNormalizer ).
+    setInputFlag( dataRepository::InputFlags::OPTIONAL ).
+    setApplyDefaultValue( 1e-12 ).
+    setDescription( "Value used to make sure that residual normalizers are not too small when computing residual norm." );
+
   registerWrapper( viewKeysStruct::newtonTolString(), &m_newtonTol ).
     setApplyDefaultValue( 1.0e-6 ).
     setInputFlag( InputFlags::OPTIONAL ).
