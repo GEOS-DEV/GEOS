@@ -137,7 +137,7 @@ public:
 
 
 
-    ///@}
+  ///@}
 
   /**
    * @brief Struct to serve as a container for variable strings and keys.

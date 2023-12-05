@@ -330,9 +330,9 @@ public:
                                             FaceManager const & faceManager ) override;
 
 /// fonction used in velocity reconstruction
-  void calculateCellDimension(ElementRegionManager const & elemManager,
-                              FaceManager const & faceManager,
-                              NodeManager const& nodeManager ) override;
+  void calculateCellDimension( ElementRegionManager const & elemManager,
+                               FaceManager const & faceManager,
+                               NodeManager const & nodeManager ) override;
 
 private:
 

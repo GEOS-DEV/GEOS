@@ -125,9 +125,9 @@ public:
   void calculateElementGeometricQuantities( arrayView2d< real64 const > const intersectionPoints,
                                             localIndex k );
 
-  virtual void calculateCellDimension(ElementRegionManager const & elemManager, FaceManager const & faceManager, NodeManager const& nodeManager ) override
+  virtual void calculateCellDimension( ElementRegionManager const & elemManager, FaceManager const & faceManager, NodeManager const & nodeManager ) override
   {
-        GEOS_UNUSED_VAR(elemManager,faceManager,nodeManager);
+    GEOS_UNUSED_VAR( elemManager, faceManager, nodeManager );
   }
 
   /**

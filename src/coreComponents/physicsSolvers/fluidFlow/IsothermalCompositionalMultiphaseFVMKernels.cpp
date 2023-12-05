@@ -33,30 +33,30 @@ namespace isothermalCompositionalMultiphaseFVMKernels
 
 /******************************** FaceBasedAssemblyKernel ********************************/
 
-FaceBasedAssemblyKernelBase::FaceBasedAssemblyKernelBase(integer const numPhases, globalIndex const rankOffset,
-                                                         DofNumberAccessor const & dofNumberAccessor,
-                                                         GlobalCellDimAccessor const & globalDistanceAccessor,
-                                                         CompFlowAccessors const & compFlowAccessors,
-                                                         MultiFluidAccessors const & multiFluidAccessors,
-                                                         DispersionAccessors const & dispersionAccessors,
-                                                         real64 const & dt,
-                                                         CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                                         arrayView1d< real64 > const & localRhs )
+FaceBasedAssemblyKernelBase::FaceBasedAssemblyKernelBase( integer const numPhases, globalIndex const rankOffset,
+                                                          DofNumberAccessor const & dofNumberAccessor,
+                                                          GlobalCellDimAccessor const & globalDistanceAccessor,
+                                                          CompFlowAccessors const & compFlowAccessors,
+                                                          MultiFluidAccessors const & multiFluidAccessors,
+                                                          DispersionAccessors const & dispersionAccessors,
+                                                          real64 const & dt,
+                                                          CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                          arrayView1d< real64 > const & localRhs )
   : m_numPhases( numPhases ),
-    m_rankOffset( rankOffset ),
-    m_dt( dt ),
-    m_dofNumber( dofNumberAccessor.toNestedViewConst() ),
-    m_globalCellDimAccessor(globalDistanceAccessor.toNestedViewConst()),
-    m_ghostRank( compFlowAccessors.get( fields::ghostRank {} ) ),
-    m_gravCoef( compFlowAccessors.get( fields::flow::gravityCoefficient {} ) ),
-    m_pres( compFlowAccessors.get( fields::flow::pressure {} ) ),
-    m_dCompFrac_dCompDens( compFlowAccessors.get( fields::flow::dGlobalCompFraction_dGlobalCompDensity {} ) ),
-    m_dPhaseVolFrac( compFlowAccessors.get( fields::flow::dPhaseVolumeFraction {} ) ),
-    m_phaseCompFrac( multiFluidAccessors.get( fields::multifluid::phaseCompFraction {} ) ),
-    m_dPhaseCompFrac( multiFluidAccessors.get( fields::multifluid::dPhaseCompFraction {} ) ),
-    m_phaseVelocity( compFlowAccessors.get( fields::flow::phaseVelocity {} ) ),
-    m_localMatrix( localMatrix ),
-    m_localRhs( localRhs )
+  m_rankOffset( rankOffset ),
+  m_dt( dt ),
+  m_dofNumber( dofNumberAccessor.toNestedViewConst() ),
+  m_globalCellDimAccessor( globalDistanceAccessor.toNestedViewConst()),
+  m_ghostRank( compFlowAccessors.get( fields::ghostRank {} ) ),
+  m_gravCoef( compFlowAccessors.get( fields::flow::gravityCoefficient {} ) ),
+  m_pres( compFlowAccessors.get( fields::flow::pressure {} ) ),
+  m_dCompFrac_dCompDens( compFlowAccessors.get( fields::flow::dGlobalCompFraction_dGlobalCompDensity {} ) ),
+  m_dPhaseVolFrac( compFlowAccessors.get( fields::flow::dPhaseVolumeFraction {} ) ),
+  m_phaseCompFrac( multiFluidAccessors.get( fields::multifluid::phaseCompFraction {} ) ),
+  m_dPhaseCompFrac( multiFluidAccessors.get( fields::multifluid::dPhaseCompFraction {} ) ),
+  m_phaseVelocity( compFlowAccessors.get( fields::flow::phaseVelocity {} ) ),
+  m_localMatrix( localMatrix ),
+  m_localRhs( localRhs )
 {}
 
 /******************************** CFLFluxKernel ********************************/

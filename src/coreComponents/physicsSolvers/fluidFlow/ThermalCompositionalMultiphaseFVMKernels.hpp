@@ -242,35 +242,35 @@ public:
    * @param[inout] localMatrix the local CRS matrix
    * @param[inout] localRhs the local right-hand side vector
    */
-  FaceBasedAssemblyKernel(integer const numPhases, globalIndex const rankOffset, integer const hasCapPressure,
-                          integer const hasVelocityCompute, STENCILWRAPPER const & stencilWrapper,
-                          DofNumberAccessor const & dofNumberAccessor,
-                          GlobalCellDimAccessor const & globalCellDimAccessor,
-                          CompFlowAccessors const & compFlowAccessors,
-                          ThermalCompFlowAccessors const & thermalCompFlowAccessors,
-                          MultiFluidAccessors const & multiFluidAccessors,
-                          DispersionAccessors const & dispersionAccessors,
-                          ThermalMultiFluidAccessors const & thermalMultiFluidAccessors,
-                          CapPressureAccessors const & capPressureAccessors,
-                          PermeabilityAccessors const & permeabilityAccessors,
-                          ThermalConductivityAccessors const & thermalConductivityAccessors, real64 const & dt,
-                          CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                          arrayView1d< real64 > const & localRhs )
-    : Base(numPhases,
-           rankOffset,
-           hasCapPressure,
-           hasVelocityCompute,
-           stencilWrapper,
-           dofNumberAccessor,
-           globalCellDimAccessor,
-           compFlowAccessors,
-           multiFluidAccessors,
-           dispersionAccessors,
-           capPressureAccessors,
-           permeabilityAccessors,
-           dt,
-           localMatrix,
-           localRhs ),
+  FaceBasedAssemblyKernel( integer const numPhases, globalIndex const rankOffset, integer const hasCapPressure,
+                           integer const hasVelocityCompute, STENCILWRAPPER const & stencilWrapper,
+                           DofNumberAccessor const & dofNumberAccessor,
+                           GlobalCellDimAccessor const & globalCellDimAccessor,
+                           CompFlowAccessors const & compFlowAccessors,
+                           ThermalCompFlowAccessors const & thermalCompFlowAccessors,
+                           MultiFluidAccessors const & multiFluidAccessors,
+                           DispersionAccessors const & dispersionAccessors,
+                           ThermalMultiFluidAccessors const & thermalMultiFluidAccessors,
+                           CapPressureAccessors const & capPressureAccessors,
+                           PermeabilityAccessors const & permeabilityAccessors,
+                           ThermalConductivityAccessors const & thermalConductivityAccessors, real64 const & dt,
+                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                           arrayView1d< real64 > const & localRhs )
+    : Base( numPhases,
+            rankOffset,
+            hasCapPressure,
+            hasVelocityCompute,
+            stencilWrapper,
+            dofNumberAccessor,
+            globalCellDimAccessor,
+            compFlowAccessors,
+            multiFluidAccessors,
+            dispersionAccessors,
+            capPressureAccessors,
+            permeabilityAccessors,
+            dt,
+            localMatrix,
+            localRhs ),
     m_temp( thermalCompFlowAccessors.get( fields::flow::temperature {} ) ),
     m_phaseEnthalpy( thermalMultiFluidAccessors.get( fields::multifluid::phaseEnthalpy {} ) ),
     m_dPhaseEnthalpy( thermalMultiFluidAccessors.get( fields::multifluid::dPhaseEnthalpy {} ) ),
@@ -645,9 +645,9 @@ public:
         elemManager.constructArrayViewAccessor< globalIndex, 1 >( dofKey );
       dofNumberAccessor.setName( solverName + "/accessors/" + dofKey );
 
-        ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > const globalCellDimAccessor =
-                elemManager.constructArrayViewAccessor< real64 , 2 >(
-                        CellElementSubRegion::viewKeyStruct::globalCellDimString() );
+      ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > const globalCellDimAccessor =
+        elemManager.constructArrayViewAccessor< real64, 2 >(
+          CellElementSubRegion::viewKeyStruct::globalCellDimString() );
 
 
 
@@ -661,10 +661,10 @@ public:
       typename KernelType::ThermalConductivityAccessors thermalConductivityAccessors( elemManager, solverName );
       typename KernelType::DispersionAccessors dispersionAccessors( elemManager, solverName );
 
-      KernelType kernel(numPhases, rankOffset, hasCapPressure, hasVelocityCompute, stencilWrapper, dofNumberAccessor, globalCellDimAccessor,
-                        compFlowAccessors, thermalCompFlowAccessors, multiFluidAccessors, dispersionAccessors, thermalMultiFluidAccessors,
-                        capPressureAccessors, permeabilityAccessors, thermalConductivityAccessors,
-                        dt, localMatrix, localRhs );
+      KernelType kernel( numPhases, rankOffset, hasCapPressure, hasVelocityCompute, stencilWrapper, dofNumberAccessor, globalCellDimAccessor,
+                         compFlowAccessors, thermalCompFlowAccessors, multiFluidAccessors, dispersionAccessors, thermalMultiFluidAccessors,
+                         capPressureAccessors, permeabilityAccessors, thermalConductivityAccessors,
+                         dt, localMatrix, localRhs );
       KernelType::template launch< POLICY >( stencilWrapper.size(), kernel );
     } );
   }
@@ -732,32 +732,32 @@ public:
    * @param[inout] localMatrix the local CRS matrix
    * @param[inout] localRhs the local right-hand side vector
    */
-  DiffusionDispersionFaceBasedAssemblyKernel(integer const numPhases,
-                                             globalIndex const rankOffset,
-                                             STENCILWRAPPER const & stencilWrapper,
-                                             DofNumberAccessor const & dofNumberAccessor,
-                                             GlobalCellDimAccessor const & globalCellDimAccessor,
-                                             CompFlowAccessors const & compFlowAccessors,
-                                             MultiFluidAccessors const & multiFluidAccessors,
-                                             DiffusionAccessors const & diffusionAccessors,
-                                             DispersionAccessors const & dispersionAccessors,
-                                             PorosityAccessors const & porosityAccessors,
-                                             real64 const & dt,
-                                             CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                             arrayView1d< real64 > const & localRhs )
-    : Base(numPhases,
-           rankOffset,
-           stencilWrapper,
-           dofNumberAccessor,
-           globalCellDimAccessor,
-           compFlowAccessors,
-           multiFluidAccessors,
-           diffusionAccessors,
-           dispersionAccessors,
-           porosityAccessors,
-           dt,
-           localMatrix,
-           localRhs )
+  DiffusionDispersionFaceBasedAssemblyKernel( integer const numPhases,
+                                              globalIndex const rankOffset,
+                                              STENCILWRAPPER const & stencilWrapper,
+                                              DofNumberAccessor const & dofNumberAccessor,
+                                              GlobalCellDimAccessor const & globalCellDimAccessor,
+                                              CompFlowAccessors const & compFlowAccessors,
+                                              MultiFluidAccessors const & multiFluidAccessors,
+                                              DiffusionAccessors const & diffusionAccessors,
+                                              DispersionAccessors const & dispersionAccessors,
+                                              PorosityAccessors const & porosityAccessors,
+                                              real64 const & dt,
+                                              CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                              arrayView1d< real64 > const & localRhs )
+    : Base( numPhases,
+            rankOffset,
+            stencilWrapper,
+            dofNumberAccessor,
+            globalCellDimAccessor,
+            compFlowAccessors,
+            multiFluidAccessors,
+            diffusionAccessors,
+            dispersionAccessors,
+            porosityAccessors,
+            dt,
+            localMatrix,
+            localRhs )
   {}
 
   struct StackVariables : public Base::StackVariables
@@ -963,9 +963,9 @@ public:
         elemManager.constructArrayViewAccessor< globalIndex, 1 >( dofKey );
       dofNumberAccessor.setName( solverName + "/accessors/" + dofKey );
 
-        ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > const globalCellDimAccessor =
-                elemManager.constructArrayViewAccessor< real64 , 2 >(
-                        CellElementSubRegion::viewKeyStruct::globalCellDimString() );
+      ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > const globalCellDimAccessor =
+        elemManager.constructArrayViewAccessor< real64, 2 >(
+          CellElementSubRegion::viewKeyStruct::globalCellDimString() );
 
       using kernelType = DiffusionDispersionFaceBasedAssemblyKernel< NUM_COMP, NUM_DOF, STENCILWRAPPER >;
       typename kernelType::CompFlowAccessors compFlowAccessors( elemManager, solverName );
@@ -974,11 +974,11 @@ public:
       typename kernelType::DispersionAccessors dispersionAccessors( elemManager, solverName );
       typename kernelType::PorosityAccessors porosityAccessors( elemManager, solverName );
 
-      kernelType kernel(numPhases, rankOffset, stencilWrapper,
-                        dofNumberAccessor, globalCellDimAccessor,
-                        compFlowAccessors, multiFluidAccessors,
-                        diffusionAccessors, dispersionAccessors, porosityAccessors,
-                        dt, localMatrix, localRhs );
+      kernelType kernel( numPhases, rankOffset, stencilWrapper,
+                         dofNumberAccessor, globalCellDimAccessor,
+                         compFlowAccessors, multiFluidAccessors,
+                         diffusionAccessors, dispersionAccessors, porosityAccessors,
+                         dt, localMatrix, localRhs );
       kernelType::template launch< POLICY >( stencilWrapper.size(),
                                              hasDiffusion, hasDispersion,
                                              kernel );
@@ -1079,38 +1079,38 @@ public:
    * @param[inout] localMatrix the local CRS matrix
    * @param[inout] localRhs the local right-hand side vector
    */
-  DirichletFaceBasedAssemblyKernel(integer const numPhases, globalIndex const rankOffset,
-                                   integer const hasCapPressure, integer const hasVelocityCompute,
-                                   FaceManager const & faceManager, BoundaryStencilWrapper const & stencilWrapper,
-                                   FLUIDWRAPPER const & fluidWrapper, DofNumberAccessor const & dofNumberAccessor,
-                                   GlobalCellDimAccessor const & globalCellDimAccessor,
-                                   CompFlowAccessors const & compFlowAccessors,
-                                   ThermalCompFlowAccessors const & thermalCompFlowAccessors,
-                                   MultiFluidAccessors const & multiFluidAccessors,
-                                   DispersionAccessors const & dispersionAccessors,
-                                   ThermalMultiFluidAccessors const & thermalMultiFluidAccessors,
-                                   CapPressureAccessors const & capPressureAccessors,
-                                   PermeabilityAccessors const & permeabilityAccessors,
-                                   ThermalConductivityAccessors const & thermalConductivityAccessors, real64 const & dt,
-                                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                   arrayView1d< real64 > const & localRhs )
-    : Base(numPhases,
-           rankOffset,
-           hasCapPressure,
-           hasVelocityCompute,
-           faceManager,
-           stencilWrapper,
-           fluidWrapper,
-           dofNumberAccessor,
-           globalCellDimAccessor,
-           compFlowAccessors,
-           multiFluidAccessors,
-           dispersionAccessors,
-           capPressureAccessors,
-           permeabilityAccessors,
-           dt,
-           localMatrix,
-           localRhs ),
+  DirichletFaceBasedAssemblyKernel( integer const numPhases, globalIndex const rankOffset,
+                                    integer const hasCapPressure, integer const hasVelocityCompute,
+                                    FaceManager const & faceManager, BoundaryStencilWrapper const & stencilWrapper,
+                                    FLUIDWRAPPER const & fluidWrapper, DofNumberAccessor const & dofNumberAccessor,
+                                    GlobalCellDimAccessor const & globalCellDimAccessor,
+                                    CompFlowAccessors const & compFlowAccessors,
+                                    ThermalCompFlowAccessors const & thermalCompFlowAccessors,
+                                    MultiFluidAccessors const & multiFluidAccessors,
+                                    DispersionAccessors const & dispersionAccessors,
+                                    ThermalMultiFluidAccessors const & thermalMultiFluidAccessors,
+                                    CapPressureAccessors const & capPressureAccessors,
+                                    PermeabilityAccessors const & permeabilityAccessors,
+                                    ThermalConductivityAccessors const & thermalConductivityAccessors, real64 const & dt,
+                                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                    arrayView1d< real64 > const & localRhs )
+    : Base( numPhases,
+            rankOffset,
+            hasCapPressure,
+            hasVelocityCompute,
+            faceManager,
+            stencilWrapper,
+            fluidWrapper,
+            dofNumberAccessor,
+            globalCellDimAccessor,
+            compFlowAccessors,
+            multiFluidAccessors,
+            dispersionAccessors,
+            capPressureAccessors,
+            permeabilityAccessors,
+            dt,
+            localMatrix,
+            localRhs ),
     m_temp( thermalCompFlowAccessors.get( fields::flow::temperature {} ) ),
     m_phaseEnthalpy( thermalMultiFluidAccessors.get( fields::multifluid::phaseEnthalpy {} ) ),
     m_dPhaseEnthalpy( thermalMultiFluidAccessors.get( fields::multifluid::dPhaseEnthalpy {} ) ),
@@ -1414,9 +1414,9 @@ public:
           elemManager.constructArrayViewAccessor< globalIndex, 1 >( dofKey );
         dofNumberAccessor.setName( solverName + "/accessors/" + dofKey );
 
-          ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > const globalCellDimAccessor =
-                  elemManager.constructArrayViewAccessor< real64, 2 >(
-                          CellElementSubRegion::viewKeyStruct::globalCellDimString() );
+        ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > const globalCellDimAccessor =
+          elemManager.constructArrayViewAccessor< real64, 2 >(
+            CellElementSubRegion::viewKeyStruct::globalCellDimString() );
 
 
         using KernelType = DirichletFaceBasedAssemblyKernel< NUM_COMP, NUM_DOF, typename FluidType::KernelWrapper >;
@@ -1433,11 +1433,11 @@ public:
         bool const hasCapPressure = false;
         bool const hasVelocityCompute = false;
 
-        KernelType kernel(numPhases, rankOffset, hasCapPressure, hasVelocityCompute, faceManager, stencilWrapper, fluidWrapper,
-                          dofNumberAccessor, globalCellDimAccessor,
-                          compFlowAccessors, thermalCompFlowAccessors, multiFluidAccessors, dispersionAccessors,
-                          thermalMultiFluidAccessors, capPressureAccessors, permeabilityAccessors, thermalConductivityAccessors,
-                          dt, localMatrix, localRhs );
+        KernelType kernel( numPhases, rankOffset, hasCapPressure, hasVelocityCompute, faceManager, stencilWrapper, fluidWrapper,
+                           dofNumberAccessor, globalCellDimAccessor,
+                           compFlowAccessors, thermalCompFlowAccessors, multiFluidAccessors, dispersionAccessors,
+                           thermalMultiFluidAccessors, capPressureAccessors, permeabilityAccessors, thermalConductivityAccessors,
+                           dt, localMatrix, localRhs );
         KernelType::template launch< POLICY >( stencilWrapper.size(), kernel );
       } );
     } );

@@ -102,7 +102,7 @@ public:
   }
 
   GEOS_HOST_DEVICE
-  void initVelocity( localIndex iconn, localIndex ip, ElementRegionManager::ElementView< arrayView4d< real64 > > const & phaseVelocity ) const
+  void initVelocity( localIndex iconn, localIndex ip, ElementRegionManager::ElementView< arrayView3d< real64 > > const & phaseVelocity ) const
   { GEOS_UNUSED_VAR( iconn, ip, phaseVelocity );};
   /**
    * @brief Compute approximate cell-centered velocity field
@@ -117,7 +117,7 @@ public:
                         localIndex ip,
                         real64 const ( &phaseFlux ),
                         arraySlice1d< real64 const > const (&globalCellToFace)[2],
-                        ElementRegionManager::ElementView< arrayView4d< real64 > > const & phaseVelocity ) const
+                        ElementRegionManager::ElementView< arrayView3d< real64 > > const & phaseVelocity ) const
   { GEOS_UNUSED_VAR( iconn, ip, phaseFlux, globalCellToFace, phaseVelocity );};
 
 

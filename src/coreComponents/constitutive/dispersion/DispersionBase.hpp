@@ -116,7 +116,7 @@ public:
    *
    * Note: this is needed because for now, the velocity field is treated **explicitly** in the dispersion tensor
    */
-  virtual void initializeVelocityState( arrayView4d< real64 const > const & initialVelocity, arrayView3d< real64 const > const & phaseDensity ) const
+  virtual void initializeVelocityState( arrayView3d< real64 const > const & initialVelocity, arrayView3d< real64 const > const & phaseDensity ) const
   { GEOS_UNUSED_VAR( initialVelocity ); }
 
   /**
@@ -125,7 +125,7 @@ public:
    *
    * Note: this is needed because for now, the velocity is treated **explicitly** in the dispersion tensor
    */
-  virtual void saveConvergedVelocityState( arrayView4d< real64 const > const & convergedVelocity, arrayView3d< real64 const > const & phaseDensity ) const
+  virtual void saveConvergedVelocityState( arrayView3d< real64 const > const & convergedVelocity, arrayView3d< real64 const > const & phaseDensity ) const
   { GEOS_UNUSED_VAR( convergedVelocity ); }
 
 

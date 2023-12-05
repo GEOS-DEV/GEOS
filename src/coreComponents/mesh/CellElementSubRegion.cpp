@@ -44,9 +44,9 @@ CellElementSubRegion::CellElementSubRegion( string const & name, Group * const p
 
   registerWrapper( viewKeyStruct::fracturedCellsString(), &m_fracturedCells ).setSizedFromParent( 1 );
 
-  registerWrapper(viewKeyStruct::globalCellDimString(), &m_globalCellDimension).
-            setSizedFromParent(1).
-            reference().resizeDimension< 1 >( 3 );
+  registerWrapper( viewKeyStruct::globalCellDimString(), &m_globalCellDimension ).
+    setSizedFromParent( 1 ).
+    reference().resizeDimension< 1 >( 3 );
 
   excludeWrappersFromPacking( { viewKeyStruct::nodeListString(),
                                 viewKeyStruct::edgeListString(),
@@ -424,51 +424,54 @@ void CellElementSubRegion::setupRelatedObjectsInRelations( MeshLevel const & mes
   this->m_toFacesRelation.setRelatedObject( mesh.getFaceManager() );
 }
 
-void CellElementSubRegion::calculateCellDimension(ElementRegionManager const & elemManager, FaceManager const & faceManager, NodeManager const & nodeManager)
+void CellElementSubRegion::calculateCellDimension( ElementRegionManager const & elemManager, FaceManager const & faceManager, NodeManager const & nodeManager )
 {
 
-    arrayView2d<localIndex const> const & elemRegionList = faceManager.elementRegionList();
-    arrayView2d<localIndex const> const & elemSubRegionList = faceManager.elementSubRegionList();
-    arrayView2d< localIndex const > const & elemList = faceManager.elementList();
+  arrayView2d< localIndex const > const & elemRegionList = faceManager.elementRegionList();
+  arrayView2d< localIndex const > const & elemSubRegionList = faceManager.elementSubRegionList();
+  arrayView2d< localIndex const > const & elemList = faceManager.elementList();
 
-    ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > const elemCenter =
-        elemManager.constructArrayViewAccessor< real64, 2 >( CellElementSubRegion::viewKeyStruct::elementCenterString() );
+  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > const elemCenter =
+    elemManager.constructArrayViewAccessor< real64, 2 >( CellElementSubRegion::viewKeyStruct::elementCenterString() );
 
-    arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X = nodeManager.referencePosition();
+  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X = nodeManager.referencePosition();
 
-    ElementRegionManager::ElementViewAccessor< arrayView1d< integer const > > const elemGhostRank =
-            elemManager.constructArrayViewAccessor< integer, 1 >( ObjectManagerBase::viewKeyStruct::ghostRankString() );
+  ElementRegionManager::ElementViewAccessor< arrayView1d< integer const > > const elemGhostRank =
+    elemManager.constructArrayViewAccessor< integer, 1 >( ObjectManagerBase::viewKeyStruct::ghostRankString() );
 
-    ArrayOfArraysView< localIndex const > const faceToNodes = faceManager.nodeList().toViewConst();
+  ArrayOfArraysView< localIndex const > const faceToNodes = faceManager.nodeList().toViewConst();
 
-    forAll< serialPolicy >( faceManager.size(), [=]( localIndex const kf ) {
+  forAll< serialPolicy >( faceManager.size(), [=]( localIndex const kf ) {
 
-        real64 faceCenter[ 3 ], faceNormal[ 3 ], cellToFaceVec[2][ 3 ];
-        real64 const areaTolerance = 1e-12;//dummy
-        real64 const faceArea = computationalGeometry::centroid_3DPolygon( faceToNodes[kf], X, faceCenter, faceNormal, areaTolerance );
+    real64 faceCenter[ 3 ], faceNormal[ 3 ], cellToFaceVec[2][ 3 ];
+    real64 const areaTolerance = 1e-12;    //dummy
+    real64 const faceArea = computationalGeometry::centroid_3DPolygon( faceToNodes[kf], X, faceCenter, faceNormal, areaTolerance );
 
-     for( localIndex ke = 0; ke < 2; ++ke ) {
+    for( localIndex ke = 0; ke < 2; ++ke )
+    {
 
-         localIndex const er  = elemRegionList[kf][ke];
-         localIndex const esr = elemSubRegionList[kf][ke];
-         localIndex const ei  = elemList[kf][ke];
+      localIndex const er  = elemRegionList[kf][ke];
+      localIndex const esr = elemSubRegionList[kf][ke];
+      localIndex const ei  = elemList[kf][ke];
 
-         // Filter out out-bound neighbors due to boundary faces
-         // Filter out faces where neither cell is locally owned
-         if ( !(ei < 0) && elemGhostRank[er][esr][ei] < 0 ) {
+      // Filter out out-bound neighbors due to boundary faces
+      // Filter out faces where neither cell is locally owned
+      if( !(ei < 0) && elemGhostRank[er][esr][ei] < 0 )
+      {
 
-             LvArray::tensorOps::copy<3>(cellToFaceVec[ke], faceCenter);
-             LvArray::tensorOps::subtract<3>(cellToFaceVec[ke], elemCenter[er][esr][ei]);
+        LvArray::tensorOps::copy< 3 >( cellToFaceVec[ke], faceCenter );
+        LvArray::tensorOps::subtract< 3 >( cellToFaceVec[ke], elemCenter[er][esr][ei] );
 
-             //cumulating signed distance to from face to cell center to form denom in cell-wise linear interpolation
+        //cumulating signed distance to from face to cell center to form denom in cell-wise linear interpolation
 //         GEOS_LOG_RANK(GEOS_FMT("cellToFace {},{}: {}\n",ke, elemList[kf][ke], cellToFaceVec[ke]));
-             for (int dir = 0; dir < 3; ++dir) {
-                 m_globalCellDimension[ei][dir] += LvArray::math::abs(cellToFaceVec[ke][dir]);
-             }
-         }
+        for( int dir = 0; dir < 3; ++dir )
+        {
+          m_globalCellDimension[ei][dir] += LvArray::math::abs( cellToFaceVec[ke][dir] );
+        }
+      }
 
-     }
-    });
+    }
+  } );
 
 }
 

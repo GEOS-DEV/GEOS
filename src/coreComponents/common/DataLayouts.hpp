@@ -225,7 +225,7 @@ using LAYOUT_OBL_OPERATOR_VALUES = RAJA::PERM_JI;
 using LAYOUT_OBL_OPERATOR_DERIVATIVES = RAJA::PERM_JKI;
 
 /// phase velocity used in dispersion layout
-using LAYOUT_PHASE_VELOCITY = RAJA::PERM_JKIL;
+using LAYOUT_PHASE_VELOCITY = RAJA::PERM_JKI;
 #else
 
 /// Component global density/fraction array layout
@@ -253,7 +253,7 @@ using LAYOUT_OBL_OPERATOR_VALUES = RAJA::PERM_IJ;
 using LAYOUT_OBL_OPERATOR_DERIVATIVES = RAJA::PERM_IJK;
 
 /// phase velocity used in dispersion layout
-using LAYOUT_PHASE_VELOCITY = RAJA::PERM_IJKL;
+using LAYOUT_PHASE_VELOCITY = RAJA::PERM_IJK;
 #endif
 
 /// Component global density/fraction unit stride dimension
@@ -281,7 +281,7 @@ static constexpr int USD_OBL_VAL = LvArray::typeManipulation::getStrideOneDimens
 static constexpr int USD_OBL_DER = LvArray::typeManipulation::getStrideOneDimension( LAYOUT_OBL_OPERATOR_DERIVATIVES{} );
 
 /// Phase velocity used in dispersion
-static constexpr int USD_PHASE_VELOCITY = LvArray::typeManipulation::getStrideOneDimension(LAYOUT_PHASE_VELOCITY{} );
+static constexpr int USD_PHASE_VELOCITY = LvArray::typeManipulation::getStrideOneDimension( LAYOUT_PHASE_VELOCITY{} );
 } // namespace compflow
 
 } // namespace geos

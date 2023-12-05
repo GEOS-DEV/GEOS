@@ -120,7 +120,7 @@ public:
    */
   FaceBasedAssemblyKernel( integer const numPhases, globalIndex const rankOffset, integer const hasCapPressure,
                            integer const hasVelocityCompute, STENCILWRAPPER const & stencilWrapper,
-                           DofNumberAccessor const & dofNumberAccessor, const GlobalCellDimAccessor& globalCellDimAccessor,
+                           DofNumberAccessor const & dofNumberAccessor, const GlobalCellDimAccessor & globalCellDimAccessor,
                            CompFlowAccessors const & compFlowAccessors,
                            StabCompFlowAccessors const & stabCompFlowAccessors,
                            MultiFluidAccessors const & multiFluidAccessors,
@@ -131,21 +131,21 @@ public:
                            RelPermAccessors const & relPermAccessors, real64 const & dt,
                            CRSMatrixView< real64, globalIndex const > const & localMatrix,
                            arrayView1d< real64 > const & localRhs )
-    : Base(numPhases,
-           rankOffset,
-           hasCapPressure,
-           hasVelocityCompute,
-           stencilWrapper,
-           dofNumberAccessor,
-           globalCellDimAccessor,
-           compFlowAccessors,
-           multiFluidAccessors,
-           dispersionAccessors,
-           capPressureAccessors,
-           permeabilityAccessors,
-           dt,
-           localMatrix,
-           localRhs ),
+    : Base( numPhases,
+            rankOffset,
+            hasCapPressure,
+            hasVelocityCompute,
+            stencilWrapper,
+            dofNumberAccessor,
+            globalCellDimAccessor,
+            compFlowAccessors,
+            multiFluidAccessors,
+            dispersionAccessors,
+            capPressureAccessors,
+            permeabilityAccessors,
+            dt,
+            localMatrix,
+            localRhs ),
     m_pres_n( stabCompFlowAccessors.get( fields::flow::pressure_n {} ) ),
     m_phaseDens_n( stabMultiFluidAccessors.get( fields::multifluid::phaseDensity_n {} ) ),
     m_phaseCompFrac_n( stabMultiFluidAccessors.get( fields::multifluid::phaseCompFraction_n {} ) ),
@@ -341,7 +341,7 @@ public:
       dofNumberAccessor.setName( solverName + "/accessors/" + dofKey );
 
       ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > const globalCellDimAccessor =
-        elemManager.constructArrayViewAccessor< real64, 2 >(CellElementSubRegion::viewKeyStruct::globalCellDimString() );
+        elemManager.constructArrayViewAccessor< real64, 2 >( CellElementSubRegion::viewKeyStruct::globalCellDimString() );
 
 
       using KERNEL_TYPE = FaceBasedAssemblyKernel< NUM_COMP, NUM_DOF, STENCILWRAPPER >;
@@ -354,12 +354,12 @@ public:
       typename KERNEL_TYPE::RelPermAccessors relPermAccessors( elemManager, solverName );
       typename KERNEL_TYPE::DispersionAccessors dispersionAccessors( elemManager, solverName );
 
-      KERNEL_TYPE kernel(numPhases, rankOffset, hasCapPressure, hasVelocityCompute, stencilWrapper, dofNumberAccessor,
-                         globalCellDimAccessor,
-                         compFlowAccessors, stabCompFlowAccessors, multiFluidAccessors, dispersionAccessors,
-                         stabMultiFluidAccessors,
-                         capPressureAccessors, permeabilityAccessors, relPermAccessors,
-                         dt, localMatrix, localRhs );
+      KERNEL_TYPE kernel( numPhases, rankOffset, hasCapPressure, hasVelocityCompute, stencilWrapper, dofNumberAccessor,
+                          globalCellDimAccessor,
+                          compFlowAccessors, stabCompFlowAccessors, multiFluidAccessors, dispersionAccessors,
+                          stabMultiFluidAccessors,
+                          capPressureAccessors, permeabilityAccessors, relPermAccessors,
+                          dt, localMatrix, localRhs );
       KERNEL_TYPE::template launch< POLICY >( stencilWrapper.size(), kernel );
     } );
   }

@@ -51,7 +51,7 @@ void DispersionBase::postProcessInput()
                         GEOS_FMT( "{}: invalid number of phases", getFullName() ),
                         InputError );
 
-  m_dispersivity.resize( 0, 0, 0 , 0);
+  m_dispersivity.resize( 0, 0, 0, 0 );
 }
 
 void DispersionBase::allocateConstitutiveData( dataRepository::Group & parent,

@@ -90,14 +90,14 @@ public:
     return maxNumPointsInFlux;
   }
 
-    GEOS_HOST_DEVICE
-    void computeWeights( localIndex const iconn,
-                               localIndex const ip,
-                               CoefficientAccessor< arrayView4d< real64 const > > const & coefficient,
-                               CoefficientAccessor< arrayView4d< real64 const > > const & dCoeff_dVar,
-                               real64 ( &weight )[maxNumConnections][2],
-                               real64 ( &dWeight_dVar )[maxNumConnections][2] ) const
-    { GEOS_UNUSED_VAR(iconn,ip,coefficient,dCoeff_dVar,weight,dWeight_dVar); };
+  GEOS_HOST_DEVICE
+  void computeWeights( localIndex const iconn,
+                       localIndex const ip,
+                       CoefficientAccessor< arrayView4d< real64 const > > const & coefficient,
+                       CoefficientAccessor< arrayView4d< real64 const > > const & dCoeff_dVar,
+                       real64 ( & weight )[maxNumConnections][2],
+                       real64 ( & dWeight_dVar )[maxNumConnections][2] ) const
+  { GEOS_UNUSED_VAR( iconn, ip, coefficient, dCoeff_dVar, weight, dWeight_dVar ); };
 
   /**
    * @brief Compute weigths and derivatives w.r.t to one variable.
@@ -151,7 +151,7 @@ public:
    */
   GEOS_HOST_DEVICE
   inline void
-  initVelocity( localIndex iconn, localIndex ip, ElementRegionManager::ElementView< arrayView4d< real64 > > const & phaseVelocity ) const
+  initVelocity( localIndex iconn, localIndex ip, ElementRegionManager::ElementView< arrayView3d< real64 > > const & phaseVelocity ) const
   {
     GEOS_UNUSED_VAR( iconn, ip, phaseVelocity );
   };
@@ -168,7 +168,7 @@ public:
                    localIndex ip,
                    const real64 (&phaseFlux),
                    arraySlice1d< real64 const > const (&globalCellToFace)[2],
-                   ElementRegionManager::ElementView< arrayView4d< real64 > > const & phaseVelocity ) const
+                   ElementRegionManager::ElementView< arrayView3d< real64 > > const & phaseVelocity ) const
   {
     GEOS_UNUSED_VAR( iconn, ip, phaseFlux, phaseVelocity );
   };

@@ -91,10 +91,10 @@ public:
                                                     FaceManager const & ) override
   {}
 
-    virtual void calculateCellDimension(ElementRegionManager const & elemManager, FaceManager const & faceManager, NodeManager const& nodeManager ) override
-    {
-        GEOS_UNUSED_VAR(elemManager,faceManager,nodeManager);
-    }
+  virtual void calculateCellDimension( ElementRegionManager const & elemManager, FaceManager const & faceManager, NodeManager const & nodeManager ) override
+  {
+    GEOS_UNUSED_VAR( elemManager, faceManager, nodeManager );
+  }
 
   virtual void setupRelatedObjectsInRelations( MeshLevel const & mesh ) override;
 
