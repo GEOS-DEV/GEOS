@@ -141,6 +141,18 @@ inline string formatValue( real64 value, Unit unit )
 }
 
 
+/**
+ * @brief Provide a standard and clear way to show a duration to the user (milliseconds to year scale).
+ * @param duration The duration to stringify.
+ * @return A string representing the number of years, days, hours, minutes, seconds, and
+ * fraction of seconds.
+ *
+ * @todo 1. Use it everywhere needed (sim timesteps, delta times...),
+ * 2. Review the outputs with users (add raw seconds at some places?).
+ */
+string formatLongDuration( std::chrono::system_clock::duration duration );
+
+
 } // end namespace units
 
 } // end namespace geos
