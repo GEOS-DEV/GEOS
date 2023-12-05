@@ -206,7 +206,7 @@ jobs:
     needs:
       - are_integrated_tests_requested
       - is_pull_request_a_draft
-      - cpu_builds
+      # - cpu_builds
     uses: ./.github/workflows/build_and_test.yml
     secrets: inherit
     with:
