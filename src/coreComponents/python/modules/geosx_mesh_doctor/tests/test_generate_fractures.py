@@ -250,14 +250,14 @@ def __generate_test_data() -> Iterator[TestCase]:
                    result=TestResult(4 * 4, 3, 4, 1))
 
 
-@pytest.mark.parametrize("expected", __generate_test_data())
-def test_generate_fracture(expected: TestCase):
-    main_mesh, fracture_mesh = __split_mesh_on_fracture(expected.input_mesh, expected.options)
-    assert main_mesh.GetNumberOfPoints() == expected.result.main_mesh_num_points
-    assert main_mesh.GetNumberOfCells() == expected.result.main_mesh_num_cells
-    assert fracture_mesh.GetNumberOfPoints() == expected.result.fracture_mesh_num_points
-    assert fracture_mesh.GetNumberOfCells() == expected.result.fracture_mesh_num_cells
+@pytest.mark.parametrize("test_case", __generate_test_data())
+def test_generate_fracture(test_case: TestCase):
+    main_mesh, fracture_mesh = __split_mesh_on_fracture(test_case.input_mesh, test_case.options)
+    assert main_mesh.GetNumberOfPoints() == test_case.result.main_mesh_num_points
+    assert main_mesh.GetNumberOfCells() == test_case.result.main_mesh_num_cells
+    assert fracture_mesh.GetNumberOfPoints() == test_case.result.fracture_mesh_num_points
+    assert fracture_mesh.GetNumberOfCells() == test_case.result.fracture_mesh_num_cells
 
     res = format_collocated_nodes(fracture_mesh)
-    assert res == expected.collocated_nodes
-    assert len(res) == expected.result.fracture_mesh_num_points
+    assert res == test_case.collocated_nodes
+    assert len(res) == test_case.result.fracture_mesh_num_points
