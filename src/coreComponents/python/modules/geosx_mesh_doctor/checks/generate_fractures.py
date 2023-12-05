@@ -13,6 +13,7 @@ from typing import (
     Sequence,
     Tuple,
 )
+from enum import Enum
 
 from tqdm import tqdm
 import networkx
@@ -47,11 +48,15 @@ from .vtk_polyhedron import (
 )
 
 
+class FracturePolicy(Enum):
+    FIELD = 0
+    INTERNAL_SURFACES = 1
+
+
 @dataclass(frozen=True)
 class Options:
-    policy: str
+    policy: FracturePolicy
     field: str
-    field_type: str
     field_values: FrozenSet[int]
     split_on_domain_boundary: bool
     vtk_output: VtkOutput
@@ -87,6 +92,66 @@ def build_node_to_cells(mesh: vtkUnstructuredGrid,
     return node_to_cells
 
 
+def __build_fracture_info_from_fields(mesh: vtkUnstructuredGrid,
+                                      f: Sequence[int],
+                                      field_values: FrozenSet[int]) -> FractureInfo:
+    cells_to_faces: Dict[int, List[int]] = defaultdict(list)
+    # For each face of each cell, we search for the unique neighbor cell (if it exists).
+    # Then, if the 2 values of the two cells match the field requirements,
+    # we store the cell and its local face index: this is indeed part of the surface that we'll need to be split.
+    for cell_id in tqdm(range(mesh.GetNumberOfCells()), desc="Computing the cell to faces mapping"):
+        if f[cell_id] not in field_values:  # No need to consider a cell if its field value is not in the target range.
+            continue
+        cell = mesh.GetCell(cell_id)
+        for i in range(cell.GetNumberOfFaces()):
+            neighbor_cell_ids = vtkIdList()
+            mesh.GetCellNeighbors(cell_id, cell.GetFace(i).GetPointIds(), neighbor_cell_ids)
+            assert neighbor_cell_ids.GetNumberOfIds() < 2
+            for j in range(neighbor_cell_ids.GetNumberOfIds()):    # It's 0 or 1...
+                neighbor_cell_id = neighbor_cell_ids.GetId(j)
+                if f[neighbor_cell_id] != f[cell_id] and f[neighbor_cell_id] in field_values:
+                    cells_to_faces[cell_id].append(i)  # TODO add this (cell_is, face_id) information to the fracture_info?
+    face_nodes: List[Collection[int]] = list()
+    face_nodes_hashes: Set[FrozenSet[int]] = set()  # A temporary not to add multiple times the same face.
+    for cell_id, faces_ids in tqdm(cells_to_faces.items(), desc="Extracting the faces of the fractures"):
+        cell: vtkCell = mesh.GetCell(cell_id)
+        for face_id in faces_ids:
+            fn: Collection[int] = tuple(vtk_iter(cell.GetFace(face_id).GetPointIds()))
+            fnh = frozenset(fn)
+            if fnh not in face_nodes_hashes:
+                face_nodes_hashes.add(fnh)
+                face_nodes.append(fn)
+    node_to_cells: Mapping[int, Iterable[int]] = build_node_to_cells(mesh, face_nodes)
+
+    return FractureInfo(node_to_cells=node_to_cells, face_nodes=face_nodes)
+
+
+def __build_fracture_info_from_internal_surfaces(mesh: vtkUnstructuredGrid,
+                                                 f: Sequence[int],
+                                                 field_values: FrozenSet[int]) -> FractureInfo:
+    node_to_cells: Dict[int, List[int]] = {}
+    face_nodes: List[Collection[int]] = []
+    for cell_id in tqdm(range(mesh.GetNumberOfCells()), desc="Computing the face to nodes mapping"):
+        cell = mesh.GetCell(cell_id)
+        if cell.GetCellDimension() == 2:
+            if f[cell_id] in field_values:
+                nodes = []
+                for v in range(cell.GetNumberOfPoints()):
+                    point_id: int = cell.GetPointId(v)
+                    node_to_cells[point_id] = []
+                    nodes.append(point_id)
+                face_nodes.append(tuple(nodes))
+
+    for cell_id in tqdm(range(mesh.GetNumberOfCells()), desc="Computing the node to cells mapping"):
+        cell = mesh.GetCell(cell_id)
+        if cell.GetCellDimension() == 3:
+            for v in range(cell.GetNumberOfPoints()):
+                if cell.GetPointId(v) in node_to_cells:
+                    node_to_cells[cell.GetPointId(v)].append(cell_id)
+
+    return FractureInfo(node_to_cells=node_to_cells, face_nodes=face_nodes)
+
+
 def build_fracture_info(mesh: vtkUnstructuredGrid,
                         options: Options) -> FractureInfo:
     field = options.field
@@ -96,58 +161,11 @@ def build_fracture_info(mesh: vtkUnstructuredGrid,
         f = vtk_to_numpy(cell_data.GetArray(field))
     else:
         raise ValueError(f"Cell field {field} does not exist in mesh, nothing done")
-    if options.policy == "field":
-        cells_to_faces: Dict[int, List[int]] = defaultdict(list)
-        # For each face of each cell, we search for the unique neighbor cell (if it exists).
-        # Then, if the 2 values of the two cells match the field requirements,
-        # we store the cell and its local face index: this is indeed part of the surface that we'll need to be split.
-        for cell_id in tqdm(range(mesh.GetNumberOfCells()), desc="Computing the cell to faces mapping"):
-            if f[cell_id] not in field_values:  # No need to consider a cell if its field value is not in the target range.
-                continue
-            cell = mesh.GetCell(cell_id)
-            for i in range(cell.GetNumberOfFaces()):
-                neighbor_cell_ids = vtkIdList()
-                mesh.GetCellNeighbors(cell_id, cell.GetFace(i).GetPointIds(), neighbor_cell_ids)
-                assert neighbor_cell_ids.GetNumberOfIds() < 2
-                for j in range(neighbor_cell_ids.GetNumberOfIds()):    # It's 0 or 1...
-                    neighbor_cell_id = neighbor_cell_ids.GetId(j)
-                    if f[neighbor_cell_id] != f[cell_id] and f[neighbor_cell_id] in field_values:
-                        cells_to_faces[cell_id].append(i)  # TODO add this (cell_is, face_id) information to the fracture_info?
-        face_nodes: List[Collection[int]] = list()
-        face_nodes_hashes: Set[FrozenSet[int]] = set()  # A temporary not to add multiple times the same face.
-        for cell_id, faces_ids in tqdm(cells_to_faces.items(), desc="Extracting the faces of the fractures"):
-            cell: vtkCell = mesh.GetCell(cell_id)
-            for face_id in faces_ids:
-                fn: Collection[int] = tuple(vtk_iter(cell.GetFace(face_id).GetPointIds()))
-                fnh = frozenset(fn)
-                if fnh not in face_nodes_hashes:
-                    face_nodes_hashes.add(fnh)
-                    face_nodes.append(fn)
-        node_to_cells: Mapping[int, Iterable[int]] = build_node_to_cells(mesh, face_nodes)
-    
-    if options.policy == "internal_surfaces":
-        node_to_cells: Dict[int, List[int]] = {}
-        face_nodes: List[Collection[int]] = []
-        for cell_id in tqdm(range(mesh.GetNumberOfCells()), desc="Computing the face to nodes mapping"):
-            cell = mesh.GetCell(cell_id)
-            if cell.GetCellDimension() == 2:
-                if f[cell_id] in field_values:
-                    nodes = []
-                    for v in range(cell.GetNumberOfPoints()):
-                        point_id: int = cell.GetPointId(v)
-                        node_to_cells[point_id] = []
-                        nodes.append(point_id)
-                    face_nodes.append(tuple(nodes))
 
-        for cell_id in tqdm(range(mesh.GetNumberOfCells()), desc="Computing the node to cells mapping"):
-            cell = mesh.GetCell(cell_id)
-            if cell.GetCellDimension() == 3:
-                for v in range(cell.GetNumberOfPoints()):
-                    if cell.GetPointId(v) in node_to_cells:
-                        node_to_cells[cell.GetPointId(v)].append(cell_id)
-
-
-    return FractureInfo(node_to_cells=node_to_cells, face_nodes=face_nodes)
+    if options.policy == FracturePolicy.FIELD:
+        return __build_fracture_info_from_fields(mesh, f, field_values)
+    elif options.policy == FracturePolicy.INTERNAL_SURFACES:
+        return __build_fracture_info_from_internal_surfaces(mesh, f, field_values)
 
 
 def build_cell_to_cell_graph(mesh: vtkUnstructuredGrid,

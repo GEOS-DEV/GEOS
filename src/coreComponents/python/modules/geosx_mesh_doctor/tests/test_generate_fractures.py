@@ -4,6 +4,7 @@ from typing import (
     Tuple,
     Iterable,
     Iterator,
+    Sequence,
 )
 
 import numpy
@@ -25,7 +26,7 @@ from checks.vtk_utils import (
 
 from checks.check_fractures import format_collocated_nodes
 from checks.generate_cube import build_rectilinear_blocks_mesh, XYZ
-from checks.generate_fractures import __split_mesh_on_fracture, Options
+from checks.generate_fractures import __split_mesh_on_fracture, Options, FracturePolicy
 
 
 @dataclass(frozen=True)
@@ -33,8 +34,8 @@ class TestCase:
     __test__ = False
     input_mesh: vtkUnstructuredGrid
     options: Options
-    collocated_nodes: Tuple[Tuple[int, ...], ...]
-    result: Tuple[int, ...]
+    collocated_nodes: Sequence[Sequence[int]]
+    result: Tuple[int, int, int, int]
 
 
 def __build_test_case(xs: Tuple[numpy.ndarray, numpy.ndarray, numpy.ndarray],
@@ -53,11 +54,10 @@ def __build_test_case(xs: Tuple[numpy.ndarray, numpy.ndarray, numpy.ndarray],
     if field_values is None:
         fv = frozenset(attribute)
     else:
-        fv = field_values
+        fv = frozenset(field_values)
 
-    options = Options(policy="field",
+    options = Options(policy=FracturePolicy.FIELD,
                       field="attribute",
-                      field_type="cells",
                       field_values=fv,
                       vtk_output=None,
                       vtk_fracture_output=None,
@@ -75,7 +75,7 @@ class Incrementor:
         return range(self.__val - num, self.__val)
 
 
-def __generate_test_data() -> Iterator[Tuple[vtkUnstructuredGrid, Options]]:
+def __generate_test_data() -> Iterator[TestCase]:
     two_nodes = numpy.arange(2, dtype=float)
     three_nodes = numpy.arange(3, dtype=float)
     four_nodes = numpy.arange(4, dtype=float)
@@ -88,7 +88,7 @@ def __generate_test_data() -> Iterator[Tuple[vtkUnstructuredGrid, Options]]:
 
     # Split in 3
     inc = Incrementor(27)
-    collocated_nodes = (
+    collocated_nodes: Sequence[Sequence[int]] = (
         (1, *inc.next(1)),
         (3, *inc.next(1)),
         (4, *inc.next(2)),
@@ -108,7 +108,7 @@ def __generate_test_data() -> Iterator[Tuple[vtkUnstructuredGrid, Options]]:
 
     # Split in 8
     inc = Incrementor(27)
-    collocated_nodes = (
+    collocated_nodes: Sequence[Sequence[int]] = (
         (1, *inc.next(1)),
         (3, *inc.next(1)),
         (4, *inc.next(3)),
@@ -135,7 +135,7 @@ def __generate_test_data() -> Iterator[Tuple[vtkUnstructuredGrid, Options]]:
 
     # Straight notch
     inc = Incrementor(27)
-    collocated_nodes = (
+    collocated_nodes: Sequence[Sequence[int]] = (
         (1, *inc.next(1)),
         (4,),
         (1 + 9, *inc.next(1)),
@@ -149,7 +149,7 @@ def __generate_test_data() -> Iterator[Tuple[vtkUnstructuredGrid, Options]]:
 
     # L-shaped notch
     inc = Incrementor(27)
-    collocated_nodes = (
+    collocated_nodes: Sequence[Sequence[int]] = (
         (1, *inc.next(1)),
         (4, *inc.next(1)),
         (7, *inc.next(1)),
@@ -165,7 +165,7 @@ def __generate_test_data() -> Iterator[Tuple[vtkUnstructuredGrid, Options]]:
 
     # 3x1x1 split
     inc = Incrementor(2 * 2 * 4)
-    collocated_nodes = (
+    collocated_nodes: Sequence[Sequence[int]] = (
         (1, *inc.next(1)),
         (2, *inc.next(1)),
         (5, *inc.next(1)),
@@ -180,14 +180,14 @@ def __generate_test_data() -> Iterator[Tuple[vtkUnstructuredGrid, Options]]:
                    result=(6 * 4, 3, 2 * 4, 2))
 
     # Discarded fracture element if no node duplication.
-    collocated_nodes = ()
+    collocated_nodes: Sequence[Sequence[int]] = ()
     mesh, options = __build_test_case((three_nodes, four_nodes, four_nodes), [0, ] * 8 + [1, 2] + [0, ] * 8, field_values=(1, 2))
     yield TestCase(input_mesh=mesh, options=options, collocated_nodes=collocated_nodes,
                    result=(3 * 4 * 4, 2 * 3 * 3, 0, 0))
 
     # Fracture on a corner
     inc = Incrementor(3 * 4 * 4)
-    collocated_nodes = (
+    collocated_nodes: Sequence[Sequence[int]] = (
         (1 + 12,),
         (4 + 12,),
         (7 + 12,),
@@ -204,7 +204,7 @@ def __generate_test_data() -> Iterator[Tuple[vtkUnstructuredGrid, Options]]:
 
     # Generate mesh with 2 hexs, one being a standard hex, the other a 42 hex.
     inc = Incrementor(3 * 2 * 2)
-    collocated_nodes = (
+    collocated_nodes: Sequence[Sequence[int]] = (
         (1, *inc.next(1)),
         (1 + 3, *inc.next(1)),
         (1 + 6, *inc.next(1)),
