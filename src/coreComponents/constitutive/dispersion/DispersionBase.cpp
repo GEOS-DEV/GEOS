@@ -52,7 +52,7 @@ void DispersionBase::postProcessInput()
                         GEOS_FMT( "{}: invalid number of phases", getFullName() ),
                         InputError );
 
-  m_dispersivity.resize( 0, 0, 0 );
+  m_dispersivity.resize( 0, 0, 0 , 0);
   m_phaseVelocity.resize( 0, 0, 0, 3 );
   //and labels
   getField< fields::dispersion::phaseVelocity >().
@@ -63,7 +63,7 @@ void DispersionBase::allocateConstitutiveData( dataRepository::Group & parent,
                                                localIndex const numConstitutivePointsPerParentIndex )
 {
   // NOTE: enforcing 1 quadrature point
-  m_dispersivity.resize( parent.size(), 1, 3 );
+  m_dispersivity.resize( parent.size(), 1, numFluidPhases(), 3 );
   m_phaseVelocity.resize( parent.size(), 1, numFluidPhases(), 3 );
 
   ConstitutiveBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );

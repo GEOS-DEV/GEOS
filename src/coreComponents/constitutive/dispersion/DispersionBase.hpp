@@ -57,12 +57,12 @@ protected:
    * @brief Constructor for the class performing the dispersion updates
    * @param dispersivity the array of cell-wise dispersion in the subregion
    */
-  DispersionBaseUpdate( arrayView3d< real64 > const & dispersivity )
+  DispersionBaseUpdate( arrayView4d< real64 > const & dispersivity )
     : m_dispersivity( dispersivity )
   {}
 
   /// View on the cell-wise dispersivity
-  arrayView3d< real64 > const m_dispersivity;
+  arrayView4d< real64 > const m_dispersivity;
 
 private:
 
@@ -109,7 +109,7 @@ public:
    * @brief Getter for the dispersivities in the subRegion
    * @return an arrayView of dispersivities
    */
-  arrayView3d< real64 const > dispersivity() const { return m_dispersivity; }
+  arrayView4d< real64 const > dispersivity() const { return m_dispersivity; }
 
   /**
    * @brief Getter for phase Velolcity in the subRegion
@@ -148,7 +148,7 @@ protected:
 
   /// cell-wise dispersivity in the subregion
   /// TODO: support full tensor if linear isotropic diffusion is no longer enough
-  array3d< real64 > m_dispersivity;
+  array4d< real64 > m_dispersivity;
 
   /// phase names read from input
   string_array m_phaseNames;

@@ -1248,19 +1248,7 @@ public:
     localIndex k[numFluxSupportPoints]{};
     localIndex connectionIndex = 0;
 
-    // first, compute the transmissibilities at this face
-    // note that the dispersion tensor is lagged in iteration
-    m_stencilWrapper.computeWeights( iconn,
-                                     m_dispersivity,
-                                     m_dispersivity,     // this is just to pass something, but the resulting
-                                     // derivative won't be
-                                     // used
-                                     stack.transmissibility,
-                                     stack.dTrans_dTemp );     // will not be used
 
-
-    real64 const trans[numFluxSupportPoints] = { stack.transmissibility[connectionIndex][0],
-                                                 stack.transmissibility[connectionIndex][1] };
 
 
     for( k[0] = 0; k[0] < stack.numConnectedElems; ++k[0] )
@@ -1283,6 +1271,18 @@ public:
         for( integer ip = 0; ip < m_numPhases; ++ip )
         {
 
+            // first, compute the transmissibilities at this face
+            // note that the dispersion tensor is lagged in iteration
+            m_stencilWrapper.computeWeights(iconn,
+                                            ip,
+                                            m_dispersivity,
+                                            m_dispersivity,
+                                            stack.transmissibility,
+                                            stack.dTrans_dTemp);     // will not be used
+
+
+            real64 const trans[numFluxSupportPoints] = { stack.transmissibility[connectionIndex][0],
+                                                         stack.transmissibility[connectionIndex][1] };
           // loop over components
           for( integer ic = 0; ic < numComp; ++ic )
           {
@@ -1543,7 +1543,7 @@ protected:
   ElementViewConst< arrayView3d< real64 const > > const m_phaseDiffusivityMultiplier;
 
   /// Views on dispersivity
-  ElementViewConst< arrayView3d< real64 const > > const m_dispersivity;
+  ElementViewConst< arrayView4d< real64 const > > const m_dispersivity;
   ElementViewConst< arrayView3d< real64 const > > const m_phaseMultiplier;
 
   /// View on the reference porosity
