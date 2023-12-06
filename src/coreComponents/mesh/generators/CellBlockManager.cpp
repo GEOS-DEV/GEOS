@@ -258,7 +258,8 @@ struct FaceBuilder
     };
   }
 
-  /// A map from the lowest node index in each face to a list of duplicate faces.
+  /// An array of size numNodes that lists for each node the (possibly duplicate)
+  /// faces for which the node has lowest index.
   ArrayOfArrays< NodesAndElementOfFace > lowestNodeToFaces;
 
   /// Contains the entire node list of each duplicate face.
@@ -267,7 +268,7 @@ struct FaceBuilder
 
 /**
  * @brief Fills the face to nodes map and face to element maps
- * @param [in] lowestNodeToFaces and array of size numNodes of arrays of NodesAndElementOfFace associated with each node.
+ * @param [in] lowestNodeToFaces an array of size numNodes of arrays of NodesAndElementOfFace associated with each node.
  * @param [in] uniqueFaceOffsets an array containing the unique ID of the first face associated with each node.
  * @param [inout] faceToCells the face to element map.
  * @param [inout] faceToNodes the face to node map.
@@ -292,8 +293,7 @@ void populateFaceMaps( Group const & cellBlocks,
   GEOS_ERROR_IF_NE( faceToBlocks.size( 1 ), 2 );
 
   // loop over all the nodes.
-  forAll< parallelHostPolicy >( numNodes, [ numNodes,
-                                            uniqueFaceOffsets,
+  forAll< parallelHostPolicy >( numNodes, [ uniqueFaceOffsets,
                                             lowestNodeToFaces,
                                             faceToNodes,
                                             faceToCells,
@@ -309,8 +309,6 @@ void populateFaceMaps( Group const & cellBlocks,
       NodesAndElementOfFace const & f0 = *first;
       CellBlock const & cb = cellBlocks.getGroup< CellBlock >( f0.blockIndex );
       localIndex const numNodesInFace = cb.getFaceNodes( f0.cellIndex, f0.faceNumber, nodesInFace );
-//      GEOS_ASSERT_EQ( numNodesInFace, numNodes );
-      GEOS_UNUSED_VAR( numNodes );
 
       for( localIndex i = 0; i < numNodesInFace; ++i )
       {
@@ -341,7 +339,7 @@ void populateFaceMaps( Group const & cellBlocks,
 
 /**
  * @brief Resize the face maps
- * @param [in] lowestNodeToFaces and array of size numNodes of arrays of NodesAndElementOfFace associated with each node.
+ * @param [in] lowestNodeToFaces an array of size numNodes of arrays of NodesAndElementOfFace associated with each node.
  * @param [in] uniqueFaceOffsets an containing the unique face IDs for each node in lowestNodeToFaces.
  * @param [out] faceToNodeMap the map from faces to nodes. This function resizes the array appropriately.
  * @param [out] faceToCellMap the map from faces to elements. This function resizes the array appropriately.
@@ -386,7 +384,7 @@ void resizeFaceMaps( FaceBuilder const & faceBuilder,
 
 /**
  * @brief Populate the lowestNodeToFaces map.
- * @param [in] numNodes Number of nodes
+ * @param [in] numNodes Number of nodes on the partition.
  * @param [in] cellBlocks The cell blocks on which we need to operate.
  *
  * For each face of each element of each cell blocks,
@@ -395,6 +393,14 @@ void resizeFaceMaps( FaceBuilder const & faceBuilder,
  * The key of this mapping is the lowest node index of the face.
  * E.g. faces {3, 5, 6, 2} and {4, 2, 9, 7} will both be stored in "bucket" of node 2.
  * Also, bucket of faces information are sorted (@see NodesAndElementOfFace) to make specific computations possible.
+ *
+ * If we note \a count the number of faces for which a given node is
+ * the node of lowest index, at the end, \a lowestNodeToFaces is an
+ * array of size \p numNodes of arrays of variable sizes \a count.
+ *
+ * \remark Faces at the interface of two elements are duplicated and
+ * stored from each element with a unique \a duplicateFaceIndex index.
+ *
  */
 FaceBuilder createLowestNodeToFaces( localIndex const numNodes, const Group & cellBlocks )
 {
@@ -448,13 +454,23 @@ FaceBuilder createLowestNodeToFaces( localIndex const numNodes, const Group & ce
         localIndex nodesInFace[ CellBlockManager::maxNodesPerFace() ];
         for( localIndex faceNum = 0; faceNum < numFacesPerElement; ++faceNum )
         {
+          // Computation of a unique face index for each face
+          // (including the duplicate faces at the interface of 2
+          // elements)
           localIndex const duplicateFaceIndex = prevFaceOffset + elemID * numFacesPerElement + faceNum;
 
+          // Get indices of the nodes on the face and sort theses indices
           localIndex const numNodesInFace = cb.getFaceNodes( elemID, faceNum, nodesInFace );
           std::sort( nodesInFace, nodesInFace + numNodesInFace );
 
+          // Add the current face to the array of the duplicate faces
+          // (list of all the element faces so a boundary face is
+          // listed once, a face at the interface of 2 elements is
+          // added twice, once from each elemennt to which the face
+          // belongs)
           duplicateFaces.appendToArray( duplicateFaceIndex, nodesInFace, nodesInFace + numNodesInFace );
 
+          // Add the face to the array of faces of its lowest node (\a nodesInFace[0])
           lowestNodeToFaces.emplaceBackAtomic< parallelHostAtomic >( nodesInFace[ 0 ],
                                                                      duplicateFaceIndex,
                                                                      elemID,
@@ -508,7 +524,7 @@ FaceBuilder createLowestNodeToFaces( localIndex const numNodes, const Group & ce
 
 /**
  * @brief Filling the elements to faces maps in the cell blocks.
- * @param lowestNodeToFaces The lowest node to faces information array.
+ * @param lowestNodeToFaces The array of size numNodes of arrays of (duplicate) faces for which the node has lowest index.
  * @param uniqueFaceOffsets The unique face offsets.
  * @param cellBlocks The cell blocks for which we need to compute the element to faces mappings.
  *

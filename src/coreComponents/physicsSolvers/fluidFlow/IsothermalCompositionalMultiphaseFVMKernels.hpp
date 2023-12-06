@@ -57,6 +57,22 @@ namespace isothermalCompositionalMultiphaseFVMKernels
 
 using namespace constitutive;
 
+enum class FaceBasedAssemblyKernelFlags
+{
+  /// Flag to specify whether capillary pressure is used or not
+  CapPressure = 1 << 0, // 1
+  /// Flag indicating whether total mass equation is formed or not
+  TotalMassEquation = 1 << 1, // 2
+  /// Flag indicating whether C1-PPU is used or not
+  C1PPU = 1 << 2, // 4
+  /// Add more flags like that if needed:
+  // Flag4 = 1 << 3, // 8
+  // Flag5 = 1 << 4, // 16
+  // Flag6 = 1 << 5, // 32
+  // Flag7 = 1 << 6, // 64
+  // Flag8 = 1 << 7  //128
+};
+
 /******************************** PhaseMobilityKernel ********************************/
 
 /**
@@ -328,6 +344,7 @@ public:
    * @param[in] dt time step size
    * @param[inout] localMatrix the local CRS matrix
    * @param[inout] localRhs the local right-hand side vector
+   * @param[in] kernelFlags flags packed all together
    */
   FaceBasedAssemblyKernelBase( integer const numPhases,
                                globalIndex const rankOffset,
@@ -336,9 +353,10 @@ public:
                                CompFlowAccessors const & compFlowAccessors,
                                MultiFluidAccessors const & multiFluidAccessors,
                                DispersionAccessors const & dispersionAccessors,
-                               real64 const & dt,
+                               real64 const dt,
                                CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                               arrayView1d< real64 > const & localRhs );
+                               arrayView1d< real64 > const & localRhs,
+                               BitFlags< FaceBasedAssemblyKernelFlags > kernelFlags );
 
 protected:
 
@@ -384,6 +402,7 @@ protected:
   /// View on the local RHS
   arrayView1d< real64 > const m_localRhs;
 
+  BitFlags< FaceBasedAssemblyKernelFlags > const m_kernelFlags;
 };
 
 /**
@@ -391,10 +410,9 @@ protected:
  * @tparam NUM_COMP number of fluid components
  * @tparam NUM_DOF number of degrees of freedom
  * @tparam STENCILWRAPPER the type of the stencil wrapper
- * @tparam PHASE_FLUX_COMPUTE the method employed to compute the flux
  * @brief Define the interface for the assembly kernel in charge of flux terms
  */
-template< integer NUM_COMP, integer NUM_DOF, typename STENCILWRAPPER, typename PHASE_FLUX_COMPUTE = isothermalCompositionalMultiphaseFVMKernelUtilities::PPUPhaseFlux >
+template< integer NUM_COMP, integer NUM_DOF, typename STENCILWRAPPER >
 class FaceBasedAssemblyKernel : public FaceBasedAssemblyKernelBase
 {
 public:
@@ -424,7 +442,6 @@ public:
    * @brief Constructor for the kernel interface
    * @param[in] numPhases the number of fluid phases
    * @param[in] rankOffset the offset of my MPI rank
-   * @param[in] hasCapPressure flag specifying whether capillary pressure is used or not
    * @param[in] stencilWrapper reference to the stencil wrapper
    * @param[in] dofNumberAccessor
    * @param[in] compFlowAccessors
@@ -434,19 +451,23 @@ public:
    * @param[in] dt time step size
    * @param[inout] localMatrix the local CRS matrix
    * @param[inout] localRhs the local right-hand side vector
+   * @param[in] kernelFlags flags packed together
    */
-  FaceBasedAssemblyKernel( const integer numPhases, const globalIndex rankOffset, const integer hasCapPressure,
-                           const integer hasVelocityCompute, const STENCILWRAPPER & stencilWrapper,
-                           const DofNumberAccessor & dofNumberAccessor,
+  FaceBasedAssemblyKernel( integer const numPhases,
+                           globalIndex const rankOffset,
+                           const integer hasVelocityCompute,
+                           STENCILWRAPPER const & stencilWrapper,
+                           DofNumberAccessor const & dofNumberAccessor,
                            const GlobalCellDimAccessor & globalCellDimAccessor,
-                           const CompFlowAccessors & compFlowAccessors,
-                           const MultiFluidAccessors & multiFluidAccessors,
+                           CompFlowAccessors const & compFlowAccessors,
+                           MultiFluidAccessors const & multiFluidAccessors,
                            const DispersionAccessors & dispersionAccessors,
-                           const CapPressureAccessors & capPressureAccessors,
-                           const PermeabilityAccessors & permeabilityAccessors,
-                           const real64 & dt,
-                           const CRSMatrixView< real64, globalIndex const > & localMatrix,
-                           const arrayView1d< real64 > & localRhs )
+                           CapPressureAccessors const & capPressureAccessors,
+                           PermeabilityAccessors const & permeabilityAccessors,
+                           real64 const dt,
+                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                           arrayView1d< real64 > const & localRhs,
+                           BitFlags< FaceBasedAssemblyKernelFlags > kernelFlags )
     : FaceBasedAssemblyKernelBase( numPhases,
                                    rankOffset,
                                    dofNumberAccessor,
@@ -456,9 +477,9 @@ public:
                                    dispersionAccessors,
                                    dt,
                                    localMatrix,
-                                   localRhs ),
-    m_hasCapPressure( hasCapPressure ),
-    m_hasVelocityCompute( hasVelocityCompute ),
+                                   localRhs,
+                                   kernelFlags ),
+                                   m_hasVelocityCompute( hasVelocityCompute ),
     m_permeability( permeabilityAccessors.get( fields::permeability::permeability {} ) ),
     m_dPerm_dPres( permeabilityAccessors.get( fields::permeability::dPerm_dPressure {} ) ),
     m_phaseMob( compFlowAccessors.get( fields::flow::phaseMobility {} ) ),
@@ -631,25 +652,51 @@ public:
 
           localIndex k_up = -1;
 
-          PHASE_FLUX_COMPUTE::template compute< numComp, numFluxSupportPoints >
-            ( m_numPhases,
-            ip,
-            m_hasCapPressure,
-            seri, sesri, sei,
-            trans,
-            dTrans_dPres,
-            m_pres,
-            m_gravCoef,
-            m_phaseMob, m_dPhaseMob,
-            m_dPhaseVolFrac,
-            m_dCompFrac_dCompDens,
-            m_phaseMassDens, m_dPhaseMassDens,
-            m_phaseCapPressure, m_dPhaseCapPressure_dPhaseVolFrac,
-            k_up,
-            potGrad,
-            phaseFlux,
-            dPhaseFlux_dP,
-            dPhaseFlux_dC );
+          //TODO look there wtf
+          if( m_kernelFlags.isSet( FaceBasedAssemblyKernelFlags::C1PPU ))
+          {
+            isothermalCompositionalMultiphaseFVMKernelUtilities::C1PPUPhaseFlux::compute< numComp, numFluxSupportPoints >
+              ( m_numPhases,
+              ip,
+              m_kernelFlags.isSet( FaceBasedAssemblyKernelFlags::CapPressure ),
+              seri, sesri, sei,
+              trans,
+              dTrans_dPres,
+              m_pres,
+              m_gravCoef,
+              m_phaseMob, m_dPhaseMob,
+              m_dPhaseVolFrac,
+              m_dCompFrac_dCompDens,
+              m_phaseMassDens, m_dPhaseMassDens,
+              m_phaseCapPressure, m_dPhaseCapPressure_dPhaseVolFrac,
+              k_up,
+              potGrad,
+              phaseFlux,
+              dPhaseFlux_dP,
+              dPhaseFlux_dC );
+          }
+          else
+          {
+            isothermalCompositionalMultiphaseFVMKernelUtilities::PPUPhaseFlux::compute< numComp, numFluxSupportPoints >
+              ( m_numPhases,
+              ip,
+              m_kernelFlags.isSet( FaceBasedAssemblyKernelFlags::CapPressure ),
+              seri, sesri, sei,
+              trans,
+              dTrans_dPres,
+              m_pres,
+              m_gravCoef,
+              m_phaseMob, m_dPhaseMob,
+              m_dPhaseVolFrac,
+              m_dCompFrac_dCompDens,
+              m_phaseMassDens, m_dPhaseMassDens,
+              m_phaseCapPressure, m_dPhaseCapPressure_dPhaseVolFrac,
+              k_up,
+              potGrad,
+              phaseFlux,
+              dPhaseFlux_dP,
+              dPhaseFlux_dC );
+          }
 
           if( m_hasVelocityCompute )
           {
@@ -726,12 +773,15 @@ public:
   {
     using namespace compositionalMultiphaseUtilities;
 
-    // Apply equation/variable change transformation(s)
-    stackArray1d< real64, maxStencilSize * numDof > work( stack.stencilSize * numDof );
-    shiftBlockRowsAheadByOneAndReplaceFirstRowWithColumnSum( numComp, numEqn, numDof*stack.stencilSize, stack.numConnectedElems,
-                                                             stack.localFluxJacobian, work );
-    shiftBlockElementsAheadByOneAndReplaceFirstElementWithSum( numComp, numEqn, stack.numConnectedElems,
-                                                               stack.localFlux );
+    if( m_kernelFlags.isSet( FaceBasedAssemblyKernelFlags::TotalMassEquation ) )
+    {
+      // Apply equation/variable change transformation(s)
+      stackArray1d< real64, maxStencilSize * numDof > work( stack.stencilSize * numDof );
+      shiftBlockRowsAheadByOneAndReplaceFirstRowWithColumnSum( numComp, numEqn, numDof * stack.stencilSize, stack.numConnectedElems,
+                                                               stack.localFluxJacobian, work );
+      shiftBlockElementsAheadByOneAndReplaceFirstElementWithSum( numComp, numEqn, stack.numConnectedElems,
+                                                                 stack.localFlux );
+    }
 
     // add contribution to residual and jacobian into:
     // - the component mass balance equations (i = 0 to i = numComp-1)
@@ -790,7 +840,6 @@ public:
 protected:
 
   /// Flag to specify whether capillary pressure is used or not
-  integer const m_hasCapPressure;
   integer const m_hasVelocityCompute;
 
   /// Views on permeability
@@ -855,11 +904,12 @@ public:
                    string const & dofKey,
                    integer const hasCapPressure,
                    const integer hasVelocityCompute,
+                   integer const useTotalMassEquation,
+                   UpwindingParameters upwindingParams,
                    string const & solverName,
-                   UpwindingParameters const & upwindingParams,
                    ElementRegionManager const & elemManager,
                    STENCILWRAPPER const & stencilWrapper,
-                   real64 const & dt,
+                   real64 const dt,
                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
                    arrayView1d< real64 > const & localRhs )
   {
@@ -872,40 +922,25 @@ public:
         elemManager.constructArrayViewAccessor< globalIndex, 1 >( dofKey );
       dofNumberAccessor.setName( solverName + "/accessors/" + dofKey );
 
-      ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > globalCellDimAccessor =
-        elemManager.constructArrayViewAccessor< real64, 2 >(
-          CellElementSubRegion::viewKeyStruct::globalCellDimString() );
-
+      BitFlags< FaceBasedAssemblyKernelFlags > kernelFlags;
+      if( hasCapPressure )
+        kernelFlags.set( FaceBasedAssemblyKernelFlags::CapPressure );
+      if( useTotalMassEquation )
+        kernelFlags.set( FaceBasedAssemblyKernelFlags::TotalMassEquation );
       if( upwindingParams.upwindingScheme == UpwindingScheme::C1PPU &&
           isothermalCompositionalMultiphaseFVMKernelUtilities::epsC1PPU > 0 )
-      {
-        using kernelType =
-          FaceBasedAssemblyKernel< NUM_COMP, NUM_DOF, STENCILWRAPPER, isothermalCompositionalMultiphaseFVMKernelUtilities::C1PPUPhaseFlux >;
-        typename kernelType::CompFlowAccessors compFlowAccessors( elemManager, solverName );
-        typename kernelType::MultiFluidAccessors multiFluidAccessors( elemManager, solverName );
-        typename kernelType::CapPressureAccessors capPressureAccessors( elemManager, solverName );
-        typename kernelType::PermeabilityAccessors permeabilityAccessors( elemManager, solverName );
-        typename kernelType::DispersionAccessors dispersionAccessors( elemManager, solverName );
+        kernelFlags.set( FaceBasedAssemblyKernelFlags::C1PPU );
 
-        kernelType kernel( numPhases, rankOffset, hasCapPressure, hasVelocityCompute, stencilWrapper, dofNumberAccessor, globalCellDimAccessor,
-                           compFlowAccessors, multiFluidAccessors, dispersionAccessors, capPressureAccessors, permeabilityAccessors,
-                           dt, localMatrix, localRhs );
-        kernelType::template launch< POLICY >( stencilWrapper.size(), kernel );
-      }
-      else
-      {
-        using kernelType = FaceBasedAssemblyKernel< NUM_COMP, NUM_DOF, STENCILWRAPPER >;
-        typename kernelType::CompFlowAccessors compFlowAccessors( elemManager, solverName );
-        typename kernelType::MultiFluidAccessors multiFluidAccessors( elemManager, solverName );
-        typename kernelType::CapPressureAccessors capPressureAccessors( elemManager, solverName );
-        typename kernelType::PermeabilityAccessors permeabilityAccessors( elemManager, solverName );
-        typename kernelType::DispersionAccessors dispersionAccessors( elemManager, solverName );
+      using kernelType = FaceBasedAssemblyKernel< NUM_COMP, NUM_DOF, STENCILWRAPPER >;
+      typename kernelType::CompFlowAccessors compFlowAccessors( elemManager, solverName );
+      typename kernelType::MultiFluidAccessors multiFluidAccessors( elemManager, solverName );
+      typename kernelType::CapPressureAccessors capPressureAccessors( elemManager, solverName );
+      typename kernelType::PermeabilityAccessors permeabilityAccessors( elemManager, solverName );
 
-        kernelType kernel( numPhases, rankOffset, hasCapPressure, hasVelocityCompute, stencilWrapper, dofNumberAccessor, globalCellDimAccessor,
-                           compFlowAccessors, multiFluidAccessors, dispersionAccessors, capPressureAccessors, permeabilityAccessors,
-                           dt, localMatrix, localRhs );
-        kernelType::template launch< POLICY >( stencilWrapper.size(), kernel );
-      }
+      kernelType kernel( numPhases, rankOffset, stencilWrapper, dofNumberAccessor,
+                         compFlowAccessors, multiFluidAccessors, capPressureAccessors, permeabilityAccessors,
+                         dt, localMatrix, localRhs, kernelFlags );
+      kernelType::template launch< POLICY >( stencilWrapper.size(), kernel );
     } );
   }
 };
@@ -947,6 +982,7 @@ public:
 
   using AbstractBase = isothermalCompositionalMultiphaseFVMKernels::FaceBasedAssemblyKernelBase;
   using AbstractBase::m_dPhaseVolFrac;
+  using AbstractBase::m_kernelFlags;
 
   using DiffusionAccessors =
     StencilMaterialAccessors< DiffusionBase,
@@ -976,6 +1012,7 @@ public:
    * @param[in] dt time step size
    * @param[inout] localMatrix the local CRS matrix
    * @param[inout] localRhs the local right-hand side vector
+   * @param[in] kernelFlags flags packed together
    */
   DiffusionDispersionFaceBasedAssemblyKernel( integer const numPhases, globalIndex const rankOffset,
                                               STENCILWRAPPER const & stencilWrapper,
@@ -985,9 +1022,10 @@ public:
                                               MultiFluidAccessors const & multiFluidAccessors,
                                               DiffusionAccessors const & diffusionAccessors,
                                               DispersionAccessors const & dispersionAccessors,
-                                              PorosityAccessors const & porosityAccessors, real64 const & dt,
+                                              PorosityAccessors const & porosityAccessors, real64 const dt,
                                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                              arrayView1d< real64 > const & localRhs )
+                                              arrayView1d< real64 > const & localRhs,
+                                              BitFlags< FaceBasedAssemblyKernelFlags > kernelFlags )
     : FaceBasedAssemblyKernelBase( numPhases,
                                    rankOffset,
                                    dofNumberAccessor,
@@ -997,7 +1035,8 @@ public:
                                    dispersionAccessors,
                                    dt,
                                    localMatrix,
-                                   localRhs ),
+                                   localRhs,
+                                   kernelFlags ),
     m_phaseVolFrac( compFlowAccessors.get( fields::flow::phaseVolumeFraction {} ) ),
     m_phaseDens( multiFluidAccessors.get( fields::multifluid::phaseDensity {} ) ),
     m_dPhaseDens( multiFluidAccessors.get( fields::multifluid::dPhaseDensity {} ) ),
@@ -1462,12 +1501,15 @@ public:
   {
     using namespace compositionalMultiphaseUtilities;
 
-    // Apply equation/variable change transformation(s)
-    stackArray1d< real64, maxStencilSize * numDof > work( stack.stencilSize * numDof );
-    shiftBlockRowsAheadByOneAndReplaceFirstRowWithColumnSum( numComp, numEqn, numDof*stack.stencilSize, stack.numConnectedElems,
-                                                             stack.localFluxJacobian, work );
-    shiftBlockElementsAheadByOneAndReplaceFirstElementWithSum( numComp, numEqn, stack.numConnectedElems,
-                                                               stack.localFlux );
+    if( m_kernelFlags.isSet( FaceBasedAssemblyKernelFlags::TotalMassEquation ) )
+    {
+      // Apply equation/variable change transformation(s)
+      stackArray1d< real64, maxStencilSize * numDof > work( stack.stencilSize * numDof );
+      shiftBlockRowsAheadByOneAndReplaceFirstRowWithColumnSum( numComp, numEqn, numDof*stack.stencilSize, stack.numConnectedElems,
+                                                               stack.localFluxJacobian, work );
+      shiftBlockElementsAheadByOneAndReplaceFirstElementWithSum( numComp, numEqn, stack.numConnectedElems,
+                                                                 stack.localFlux );
+    }
 
     // add contribution to residual and jacobian into:
     // - the component mass balance equations (i = 0 to i = numComp-1)
@@ -1507,8 +1549,8 @@ public:
   template< typename POLICY, typename KERNEL_TYPE >
   static void
   launch( localIndex const numConnections,
-          integer const & hasDiffusion,
-          integer const & hasDispersion,
+          integer const hasDiffusion,
+          integer const hasDispersion,
           KERNEL_TYPE const & kernelComponent )
   {
     GEOS_MARK_FUNCTION;
@@ -1592,12 +1634,13 @@ public:
                    integer const numPhases,
                    globalIndex const rankOffset,
                    string const & dofKey,
-                   integer const & hasDiffusion,
-                   integer const & hasDispersion,
+                   integer const hasDiffusion,
+                   integer const hasDispersion,
+                   integer const useTotalMassEquation,
                    string const & solverName,
                    ElementRegionManager const & elemManager,
                    STENCILWRAPPER const & stencilWrapper,
-                   real64 const & dt,
+                   real64 const dt,
                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
                    arrayView1d< real64 > const & localRhs )
   {
@@ -1609,6 +1652,10 @@ public:
       ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > > dofNumberAccessor =
         elemManager.constructArrayViewAccessor< globalIndex, 1 >( dofKey );
       dofNumberAccessor.setName( solverName + "/accessors/" + dofKey );
+
+      BitFlags< FaceBasedAssemblyKernelFlags > kernelFlags;
+      if( useTotalMassEquation )
+        kernelFlags.set( FaceBasedAssemblyKernelFlags::TotalMassEquation );
 
 //      ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > > const globalIndexAccessor =
 //        elemManager.constructArrayViewAccessor< globalIndex, 1 >( ObjectManagerBase::viewKeyStruct::localToGlobalMapString());
@@ -1629,7 +1676,7 @@ public:
                          dofNumberAccessor, globalCellDimAccessor,
                          compFlowAccessors, multiFluidAccessors,
                          diffusionAccessors, dispersionAccessors,
-                         porosityAccessors, dt, localMatrix, localRhs );
+                         porosityAccessors, dt, localMatrix, localRhs, kernelFlags );
       kernelType::template launch< POLICY >( stencilWrapper.size(),
                                              hasDiffusion, hasDispersion,
                                              kernel );
@@ -1684,6 +1731,7 @@ public:
   using AbstractBase::m_dCompFrac_dCompDens;
   using AbstractBase::m_localMatrix;
   using AbstractBase::m_localRhs;
+  using AbstractBase::m_kernelFlags;
 
   using Base = isothermalCompositionalMultiphaseFVMKernels::FaceBasedAssemblyKernel< NUM_COMP, NUM_DOF, BoundaryStencilWrapper >;
   using Base::numComp;
@@ -1704,7 +1752,6 @@ public:
    * @brief Constructor for the kernel interface
    * @param[in] numPhases the number of fluid phases
    * @param[in] rankOffset the offset of my MPI rank
-   * @param[in] hasCapPressure flag specifying whether capillary pressure is used or not
    * @param[in] faceManager the face manager
    * @param[in] stencilWrapper reference to the stencil wrapper
    * @param[in] fluidWrapper reference to the fluid wrapper
@@ -1716,6 +1763,7 @@ public:
    * @param[in] dt time step size
    * @param[inout] localMatrix the local CRS matrix
    * @param[inout] localRhs the local right-hand side vector
+   * @param[in] kernelFlags flags packed together
    */
   DirichletFaceBasedAssemblyKernel( integer const numPhases, globalIndex const rankOffset,
                                     integer const hasCapPressure, integer const hasVelocityCompute,
@@ -1726,9 +1774,10 @@ public:
                                     MultiFluidAccessors const & multiFluidAccessors,
                                     DispersionAccessors const & dispersionAccessors,
                                     CapPressureAccessors const & capPressureAccessors,
-                                    PermeabilityAccessors const & permeabilityAccessors, real64 const & dt,
+                                    PermeabilityAccessors const & permeabilityAccessors, real64 const dt,
                                     CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                    arrayView1d< real64 > const & localRhs )
+                                    arrayView1d< real64 > const & localRhs,
+                                    BitFlags< FaceBasedAssemblyKernelFlags > kernelFlags )
     : Base( numPhases,
             rankOffset,
             hasCapPressure,
@@ -1743,7 +1792,8 @@ public:
             permeabilityAccessors,
             dt,
             localMatrix,
-            localRhs ),
+            localRhs,
+            kernelFlags ),
     m_facePres( faceManager.getField< fields::flow::facePressure >() ),
     m_faceTemp( faceManager.getField< fields::flow::faceTemperature >() ),
     m_faceCompFrac( faceManager.getField< fields::flow::faceGlobalCompFraction >() ),
@@ -1853,7 +1903,7 @@ public:
     StackArray< real64, 3, constitutive::MultiFluidBase::MAX_NUM_PHASES, multifluid::LAYOUT_PHASE > facePhaseVisc( 1, 1, m_numPhases );
     StackArray< real64, 3, constitutive::MultiFluidBase::MAX_NUM_PHASES, multifluid::LAYOUT_PHASE > facePhaseEnthalpy( 1, 1, m_numPhases );
     StackArray< real64, 3, constitutive::MultiFluidBase::MAX_NUM_PHASES, multifluid::LAYOUT_PHASE > facePhaseInternalEnergy( 1, 1, m_numPhases );
-    StackArray< real64, 4, constitutive::MultiFluidBase::MAX_NUM_PHASES *NUM_COMP,
+    StackArray< real64, 4, constitutive::MultiFluidBase::MAX_NUM_PHASES * NUM_COMP,
                 multifluid::LAYOUT_PHASE_COMP > facePhaseCompFrac( 1, 1, m_numPhases, NUM_COMP );
     real64 faceTotalDens = 0.0;
 
@@ -2031,10 +2081,13 @@ public:
     using namespace compositionalMultiphaseUtilities;
     using Order = BoundaryStencil::Order;
 
-    // Apply equation/variable change transformation(s)
-    real64 work[numDof]{};
-    shiftRowsAheadByOneAndReplaceFirstRowWithColumnSum( numComp, numDof, stack.localFluxJacobian, work );
-    shiftElementsAheadByOneAndReplaceFirstElementWithSum( numComp, stack.localFlux );
+    if( AbstractBase::m_kernelFlags.isSet( FaceBasedAssemblyKernelFlags::TotalMassEquation ) )
+    {
+      // Apply equation/variable change transformation(s)
+      real64 work[numDof]{};
+      shiftRowsAheadByOneAndReplaceFirstRowWithColumnSum( numComp, numDof, stack.localFluxJacobian, work );
+      shiftElementsAheadByOneAndReplaceFirstElementWithSum( numComp, stack.localFlux );
+    }
 
     // add contribution to residual and jacobian into:
     // - the component mass balance equations (i = 0 to i = numComp-1)
@@ -2105,13 +2158,14 @@ public:
   createAndLaunch( integer const numComps,
                    integer const numPhases,
                    globalIndex const rankOffset,
+                   integer const useTotalMassEquation,
                    string const & dofKey,
                    string const & solverName,
                    FaceManager const & faceManager,
                    ElementRegionManager const & elemManager,
                    BoundaryStencilWrapper const & stencilWrapper,
                    MultiFluidBase & fluidBase,
-                   real64 const & dt,
+                   real64 const dt,
                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
                    arrayView1d< real64 > const & localRhs )
   {
@@ -2128,6 +2182,11 @@ public:
         ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > > dofNumberAccessor =
           elemManager.constructArrayViewAccessor< globalIndex, 1 >( dofKey );
         dofNumberAccessor.setName( solverName + "/accessors/" + dofKey );
+
+        // for now, we neglect capillary pressure in the kernel
+        BitFlags< FaceBasedAssemblyKernelFlags > kernelFlags;
+        if( useTotalMassEquation )
+          kernelFlags.set( FaceBasedAssemblyKernelFlags::TotalMassEquation );
 
         ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > globalCellDimAccessor =
           elemManager.constructArrayViewAccessor< real64, 2 >(
@@ -2204,7 +2263,7 @@ struct CFLFluxKernel
   static void
   compute( integer const numPhases,
            localIndex const stencilSize,
-           real64 const & dt,
+           real64 const dt,
            arraySlice1d< localIndex const > const seri,
            arraySlice1d< localIndex const > const sesri,
            arraySlice1d< localIndex const > const sei,
@@ -2223,7 +2282,7 @@ struct CFLFluxKernel
   template< integer NC, typename STENCILWRAPPER_TYPE >
   static void
   launch( integer const numPhases,
-          real64 const & dt,
+          real64 const dt,
           STENCILWRAPPER_TYPE const & stencil,
           ElementViewConst< arrayView1d< real64 const > > const & pres,
           ElementViewConst< arrayView1d< real64 const > > const & gravCoef,
@@ -2254,7 +2313,7 @@ struct CFLKernel
   GEOS_HOST_DEVICE
   inline
   static void
-  computePhaseCFL( real64 const & poreVol,
+  computePhaseCFL( real64 const poreVol,
                    arraySlice1d< real64 const, compflow::USD_PHASE - 1 > phaseVolFrac,
                    arraySlice1d< real64 const, relperm::USD_RELPERM - 2 > phaseRelPerm,
                    arraySlice2d< real64 const, relperm::USD_RELPERM_DS - 2 > dPhaseRelPerm_dPhaseVolFrac,
@@ -2266,7 +2325,7 @@ struct CFLKernel
   GEOS_HOST_DEVICE
   inline
   static void
-  computeCompCFL( real64 const & poreVol,
+  computeCompCFL( real64 const poreVol,
                   arraySlice1d< real64 const, compflow::USD_COMP - 1 > compDens,
                   arraySlice1d< real64 const, compflow::USD_COMP - 1 > compFrac,
                   arraySlice1d< real64 const, compflow::USD_COMP - 1 > compOutflux,
@@ -2332,9 +2391,9 @@ struct AquiferBCKernel
     compute( integer const numPhases,
              integer const ipWater,
              bool const allowAllPhasesIntoAquifer,
-             real64 const & aquiferVolFlux,
-             real64 const & dAquiferVolFlux_dPres,
-             real64 const & aquiferWaterPhaseDens,
+             real64 const aquiferVolFlux,
+             real64 const dAquiferVolFlux_dPres,
+             real64 const aquiferWaterPhaseDens,
              arrayView1d< real64 const > const & aquiferWaterPhaseCompFrac,
              arraySlice1d< real64 const, multifluid::USD_PHASE - 2 > phaseDens,
              arraySlice2d< real64 const, multifluid::USD_PHASE_DC - 2 > dPhaseDens,
@@ -2343,7 +2402,7 @@ struct AquiferBCKernel
              arraySlice2d< real64 const, multifluid::USD_PHASE_COMP - 2 > phaseCompFrac,
              arraySlice3d< real64 const, multifluid::USD_PHASE_COMP_DC - 2 > dPhaseCompFrac,
              arraySlice2d< real64 const, compflow::USD_COMP_DC - 1 > dCompFrac_dCompDens,
-             real64 const & dt,
+             real64 const dt,
              real64 ( &localFlux )[NC],
              real64 ( &localFluxJacobian )[NC][NC+1] );
 
@@ -2352,11 +2411,12 @@ struct AquiferBCKernel
   launch( integer const numPhases,
           integer const ipWater,
           bool const allowAllPhasesIntoAquifer,
+          integer const useTotalMassEquation,
           BoundaryStencil const & stencil,
           globalIndex const rankOffset,
           ElementViewConst< arrayView1d< globalIndex const > > const & dofNumber,
           AquiferBoundaryCondition::KernelWrapper const & aquiferBCWrapper,
-          real64 const & aquiferWaterPhaseDens,
+          real64 const aquiferWaterPhaseDens,
           arrayView1d< real64 const > const & aquiferWaterPhaseCompFrac,
           ElementViewConst< arrayView1d< integer const > > const & ghostRank,
           ElementViewConst< arrayView1d< real64 const > > const & pres,
@@ -2369,8 +2429,8 @@ struct AquiferBCKernel
           ElementViewConst< arrayView4d< real64 const, multifluid::USD_PHASE_DC > > const & dPhaseDens,
           ElementViewConst< arrayView4d< real64 const, multifluid::USD_PHASE_COMP > > const & phaseCompFrac,
           ElementViewConst< arrayView5d< real64 const, multifluid::USD_PHASE_COMP_DC > > const & dPhaseCompFrac,
-          real64 const & timeAtBeginningOfStep,
-          real64 const & dt,
+          real64 const timeAtBeginningOfStep,
+          real64 const dt,
           CRSMatrixView< real64, globalIndex const > const & localMatrix,
           arrayView1d< real64 > const & localRhs );
 
