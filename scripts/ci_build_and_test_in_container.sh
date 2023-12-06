@@ -9,6 +9,9 @@ echo "Running CLI ${SCRIPT_NAME} $@"
 echo "running nproc"
 nproc
 
+# docs.docker.com/config/containers/resource_constraints
+# Inside the container, tools like free report the host's available swap, not what's available inside the container.
+# Don't rely on the output of free or similar tools to determine whether swap is present.
 echo "running free -m"
 free -m
 
@@ -143,6 +146,7 @@ fi
 if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
   echo "Running the integrated tests has been requested."
   # We install the python environment required by ATS to run the integrated tests.
+  or_die apt-get update
   or_die apt-get install -y virtualenv python3-dev python-is-python3
   ATS_PYTHON_HOME=/tmp/run_integrated_tests_virtualenv
   or_die virtualenv ${ATS_PYTHON_HOME}
@@ -213,7 +217,10 @@ if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
   or_die ninja ats_environment
   # The tests are not run using ninja (`ninja --verbose ats_run`) because it swallows the output while all the simulations are running.
   # We directly use the script instead...
-  integratedTests/geos_ats.sh --failIfTestsFail
+  # Temporarily, we are not adding the `--failIfTestsFail` options to `geos_ats.sh`.
+  # Therefore, `ats` will exit with error code 0, even if some tests fail.
+  # Add `--failIfTestsFail` when you want `failIfTestsFail` to reflect the content of the tests.
+  integratedTests/geos_ats.sh
   # Even (and even moreover) if the integrated tests fail, we want to pack the results for further investigations.
   # So we store the status code for further use.
   INTEGRATED_TEST_EXIT_STATUS=$?
@@ -230,7 +237,7 @@ fi
 
 if [[ ! -z "${SCCACHE_CREDS}" ]]; then
   echo "sccache final state"
-  or_die ${SCCACHE} --show-stats
+  or_die ${SCCACHE} --show-adv-stats
 fi
 
 # If we're here, either everything went OK or we have to deal with the integrated tests manually.

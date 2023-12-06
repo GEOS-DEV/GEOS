@@ -151,6 +151,15 @@ public:
 
   struct viewKeyStruct : CompositionalMultiphaseBase::viewKeyStruct
   {
+    // DBC parameters
+    static constexpr char const * useDBCString()                  { return "useDBC"; }
+    static constexpr char const * omegaDBCString()                { return "omegaDBC"; }
+    static constexpr char const * continuationDBCString()         { return "continuationDBC"; }
+
+    static constexpr char const * miscibleDBCString()             { return "miscibleDBC"; }
+    static constexpr char const * kappaminDBCString()             { return "kappaminDBC"; }
+    static constexpr char const * contMultiplierDBCString()       { return "contMultiplierDBC"; }
+
     // nonlinear solver parameters
     static constexpr char const * scalingTypeString()               { return "scalingType"; }
   };
@@ -178,6 +187,24 @@ protected:
    */
   void
   computeCFLNumbers( real64 const & dt, DomainPartition & domain );
+
+  struct DBCParameters
+  {
+    /// Flag to enable Dissipation Based Continuation Method
+    integer useDBC;
+    /// Factor by which the DBC flux is multiplied
+    real64 omega;
+    /// Factor by which the DBC flux is diminished every Newton
+    real64 kappa;
+    /// Flag to enable continuation for DBC Method
+    integer continuation;
+    /// Flag to enable DBC formulation
+    integer miscible;
+    /// Factor that controls how much dissipation is kept in the system when continuation is used
+    real64 kappamin;
+    /// Factor by which continuation parameter is changed every newton when DBC is used
+    real64 contMultiplier;
+  } m_dbcParams;
 
   /// Solution scaling type
   ScalingType m_scalingType;

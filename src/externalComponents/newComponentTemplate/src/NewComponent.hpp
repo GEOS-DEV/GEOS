@@ -29,7 +29,7 @@ class Group;
 }
 class DomainPartition;
 
-class NewComponent : public SolverBase
+class NewComponent final : public SolverBase
 {
 public:
   NewComponent( string const & name,
@@ -42,7 +42,7 @@ public:
   virtual real64 SolverStep( real64 const & time_n,
                              real64 const & dt,
                              integer const cycleNumber,
-                             DomainPartition * domain ) override;
+                             DomainPartition & domain ) override;
 
 private:
   NewComponent() = delete;
