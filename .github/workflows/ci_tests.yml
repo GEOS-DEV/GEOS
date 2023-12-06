@@ -163,8 +163,7 @@ jobs:
             GCP_BUCKET: geosx/ubuntu22.04-gcc11
 
           - name: Ubuntu debug (22.04, gcc 12.3.0, open-mpi 4.1.2)
-            BUILD_AND_TEST_CLI_ARGS: --no-run-unit-tests
-            CMAKE_BUILD_TYPE: Debug
+            CMAKE_BUILD_TYPE: Release
             DOCKER_REPOSITORY: geosx/ubuntu22.04-gcc12
             ENABLE_HYPRE: ON
             ENABLE_TRILINOS: OFF
