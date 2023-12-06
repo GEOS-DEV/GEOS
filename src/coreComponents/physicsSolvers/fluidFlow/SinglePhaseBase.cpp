@@ -615,12 +615,6 @@ void SinglePhaseBase::implicitStepSetup( real64 const & GEOS_UNUSED_PARAM( time_
     mesh.getElemManager().forElementSubRegions< CellElementSubRegion, SurfaceElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                                                    auto & subRegion )
     {
-      arrayView1d< real64 const > const & pres = subRegion.template getField< fields::flow::pressure >();
-      arrayView1d< real64 const > const & initPres = subRegion.template getField< fields::flow::initialPressure >();
-      arrayView1d< real64 > const & deltaPres = subRegion.template getField< fields::flow::deltaPressure >();
-
-      singlePhaseBaseKernels::StatisticsKernel::
-        saveDeltaPressure( subRegion.size(), pres, initPres, deltaPres );
       saveConvergedState( subRegion );
 
       arrayView1d< real64 > const & dVol = subRegion.template getField< fields::flow::deltaVolume >();

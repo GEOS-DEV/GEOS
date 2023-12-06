@@ -1217,14 +1217,6 @@ CompositionalMultiphaseBase::implicitStepSetup( real64 const & GEOS_UNUSED_PARAM
                                                                            [&]( localIndex const,
                                                                                 auto & subRegion )
     {
-      arrayView1d< real64 const > const & pres =
-        subRegion.template getField< fields::flow::pressure >();
-      arrayView1d< real64 const > const & initPres =
-        subRegion.template getField< fields::flow::initialPressure >();
-      arrayView1d< real64 > const & deltaPres =
-        subRegion.template getField< fields::flow::deltaPressure >();
-      isothermalCompositionalMultiphaseBaseKernels::StatisticsKernel::
-        saveDeltaPressure< parallelDevicePolicy<> >( subRegion.size(), pres, initPres, deltaPres );
       saveConvergedState( subRegion );
 
       // update porosity, permeability
