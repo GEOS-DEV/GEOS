@@ -1,11 +1,11 @@
 
 
-============== ======= ======== =========================================== 
-Name           Type    Default  Description                                 
-============== ======= ======== =========================================== 
-flowSolverName string  required Name of the flow solver                     
-logLevel       integer 0        Log level                                   
-name           string  required A name is required for any non-unique nodes 
-============== ======= ======== =========================================== 
+============== ============ ======== =========================================== 
+Name           Type         Default  Description                                 
+============== ============ ======== =========================================== 
+flowSolverName groupNameRef required Name of the flow solver                     
+logLevel       integer      0        Log level                                   
+name           groupName    required A name is required for any non-unique nodes 
+============== ============ ======== =========================================== 
 
 
