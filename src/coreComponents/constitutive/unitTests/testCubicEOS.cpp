@@ -686,3 +686,140 @@ INSTANTIATE_TEST_SUITE_P(
   CompressibilityDerivativeSRK4TestFixture,
   ::testing::ValuesIn( generateTestData< 4 >())
   );
+
+template< typename EOS, int NC >
+class FugacityDerivativeTestFixture : public DerivativeTestFixture< EOS, NC >
+{
+public:
+  using DerivativeTestFixture< EOS, NC >::numComps;
+  using DerivativeTestFixture< EOS, NC >::numDof;
+  using Deriv = typename DerivativeTestFixture< EOS, NC >::Deriv;
+  using ParamType = typename DerivativeTestFixture< EOS, NC >::ParamType;
+public:
+  void testNumericalDerivatives( ParamType const & testData ) const
+  {
+    auto const componentProperties = this->m_fluid->createKernelWrapper();
+
+    array1d< real64 > logFugacityCoefficients( numComps );
+    array2d< real64 > logFugacityCoefficientDerivs( numComps, numDof );
+
+    array1d< real64 > composition;
+    real64 const pressure = std::get< 0 >( testData );
+    real64 const temperature = std::get< 1 >( testData );
+    TestFluid< NC >::createArray( composition, std::get< 2 >( testData ));
+
+    auto const calculateLogFugacityCoefficients = [&]( integer const ic, real64 const p, real64 const t, auto const & zmf ) -> real64 {
+      stackArray1d< real64, numComps > displacedLogFugacityCoefficients( numComps );
+      CubicEOSPhaseModel< EOS >::computeLogFugacityCoefficients( numComps,
+                                                                 p,
+                                                                 t,
+                                                                 zmf,
+                                                                 componentProperties,
+                                                                 displacedLogFugacityCoefficients );
+      return displacedLogFugacityCoefficients[ic];
+    };
+
+    // Calculate values
+    CubicEOSPhaseModel< EOS >::computeLogFugacityCoefficients( numComps,
+                                                               pressure,
+                                                               temperature,
+                                                               composition,
+                                                               componentProperties,
+                                                               logFugacityCoefficients );
+
+    // Calculate derivatives
+    CubicEOSPhaseModel< EOS >::computeLogFugacityCoefficients( numComps,
+                                                               pressure,
+                                                               temperature,
+                                                               composition,
+                                                               componentProperties,
+                                                               logFugacityCoefficients,
+                                                               logFugacityCoefficientDerivs );
+
+    // Compare against numerical derivatives
+    // -- Pressure derivative
+    real64 const dp = 1.0e-4 * pressure;
+    for( integer ic = 0; ic < numComps; ++ic )
+    {
+      geos::testing::internal::testNumericalDerivative(
+        pressure, dp, logFugacityCoefficientDerivs( ic, Deriv::dP ),
+        [&]( real64 const p ) -> real64 {
+        return calculateLogFugacityCoefficients( ic, p, temperature, composition );
+      } );
+    }
+
+    // -- Temperature derivative
+    real64 const dT = 1.0e-6 * temperature;
+    for( integer ic = 0; ic < numComps; ++ic )
+    {
+      geos::testing::internal::testNumericalDerivative(
+        temperature, dT, logFugacityCoefficientDerivs( ic, Deriv::dT ),
+        [&]( real64 const t ) -> real64 {
+        return calculateLogFugacityCoefficients( ic, pressure, t, composition );
+      } );
+    }
+
+    // -- Composition derivatives
+    real64 const dz = 1.0e-7;
+    for( integer ic = 0; ic < numComps; ++ic )
+    {
+      for( integer jc = 0; jc < numComps; ++jc )
+      {
+        geos::testing::internal::testNumericalDerivative(
+          0.0, dz, logFugacityCoefficientDerivs( ic, Deriv::dC + jc ),
+          [&]( real64 const z ) -> real64 {
+          composition[jc] += z;
+          real64 const logFugacityCoefficient = calculateLogFugacityCoefficients( ic, pressure, temperature, composition );
+          composition[jc] -= z;
+          return logFugacityCoefficient;
+        }, 1.0e-6 );
+      }
+    }
+  }
+};
+
+using FugacityDerivativePR2TestFixture = FugacityDerivativeTestFixture< PengRobinsonEOS, 2 >;
+using FugacityDerivativePR4TestFixture = FugacityDerivativeTestFixture< PengRobinsonEOS, 4 >;
+using FugacityDerivativeSRK2TestFixture = FugacityDerivativeTestFixture< SoaveRedlichKwongEOS, 2 >;
+using FugacityDerivativeSRK4TestFixture = FugacityDerivativeTestFixture< SoaveRedlichKwongEOS, 4 >;
+
+TEST_P( FugacityDerivativePR2TestFixture, testNumericalDerivatives )
+{
+  testNumericalDerivatives( GetParam() );
+}
+TEST_P( FugacityDerivativePR4TestFixture, testNumericalDerivatives )
+{
+  testNumericalDerivatives( GetParam() );
+}
+TEST_P( FugacityDerivativeSRK2TestFixture, testNumericalDerivatives )
+{
+  testNumericalDerivatives( GetParam() );
+}
+TEST_P( FugacityDerivativeSRK4TestFixture, testNumericalDerivatives )
+{
+  testNumericalDerivatives( GetParam() );
+}
+
+// 2-component fluid test
+INSTANTIATE_TEST_SUITE_P(
+  CubicEOSTest,
+  FugacityDerivativePR2TestFixture,
+  ::testing::ValuesIn( generateTestData< 2 >())
+  );
+INSTANTIATE_TEST_SUITE_P(
+  CubicEOSTest,
+  FugacityDerivativeSRK2TestFixture,
+  ::testing::ValuesIn( generateTestData< 2 >())
+  );
+
+// 4-component fluid test
+INSTANTIATE_TEST_SUITE_P(
+  CubicEOSTest,
+  FugacityDerivativePR4TestFixture,
+  ::testing::ValuesIn( generateTestData< 4 >())
+  );
+INSTANTIATE_TEST_SUITE_P(
+  CubicEOSTest,
+  FugacityDerivativeSRK4TestFixture,
+  ::testing::ValuesIn( generateTestData< 4 >())
+  );
