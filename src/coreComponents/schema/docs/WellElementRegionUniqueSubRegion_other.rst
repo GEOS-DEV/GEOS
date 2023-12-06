@@ -19,7 +19,7 @@ numNodesPerElement         integer                                              
 radius                     real64_array                                                                                               (no description available)                                
 topRank                    integer                                                                                                    (no description available)                                
 topWellElementIndex        integer                                                                                                    (no description available)                                
-wellControlsName           string                                                                                                     (no description available)                                
+wellControlsName           groupNameRef                                                                                               (no description available)                                
 ConstitutiveModels         node                                                                                                       :ref:`DATASTRUCTURE_ConstitutiveModels`                   
 neighborData               node                                                                                                       :ref:`DATASTRUCTURE_neighborData`                         
 sets                       node                                                                                                       :ref:`DATASTRUCTURE_sets`                                 
