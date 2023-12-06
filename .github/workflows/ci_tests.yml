@@ -162,7 +162,7 @@ jobs:
             ENABLE_TRILINOS: OFF
             GCP_BUCKET: geosx/ubuntu22.04-gcc11
 
-          - name: Ubuntu (22.04, gcc 12.3.0, open-mpi 4.1.2)
+          - name: Ubuntu debug (22.04, gcc 12.3.0, open-mpi 4.1.2)
             BUILD_AND_TEST_CLI_ARGS: --no-run-unit-tests
             CMAKE_BUILD_TYPE: Debug
             DOCKER_REPOSITORY: geosx/ubuntu22.04-gcc12
