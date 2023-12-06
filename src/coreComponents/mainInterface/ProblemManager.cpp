@@ -48,7 +48,7 @@
 #include "schema/schemaUtilities.hpp"
 
 #if defined(GEOS_USE_CONTROLLED_INPUT)
-#include "ControlledInput.hpp"
+#include "controlledInput/ControlledInput.hpp"
 #endif
 
 // System includes

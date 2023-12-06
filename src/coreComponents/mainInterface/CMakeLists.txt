@@ -1,29 +1,24 @@
-#
 # Specify all headers
-#
 set( mainInterface_headers
      GeosxState.hpp
      ProblemManager.hpp
      initialization.hpp
      version.hpp
-     ControlledInput.hpp
    )
 
-#
 # Specify all sources
-#
 set( mainInterface_sources
      GeosxState.cpp
      ProblemManager.cpp
      initialization.cpp
      version.cpp
-     ControlledInput.cpp
    )
 
 set( dependencyList ${parallelDeps} physicsSolvers discretizationMethods fieldSpecification linearAlgebra dataRepository events fileIO optionparser )
 
 if( ENABLE_CONTROLLED_INPUT )
-  set( dependencyList ${dependencyList} yaml-cpp )
+  add_subdirectory( controlledInput )
+  list( APPEND dependencyList controlledInput )
 endif()
 
 blt_add_library( NAME       mainInterface

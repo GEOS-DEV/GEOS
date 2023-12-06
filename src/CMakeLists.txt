@@ -25,15 +25,6 @@ set( CMAKE_ENABLE_EXPORTS ON )
 # populated by `geos_add_test` (private list of all geos tests, keep in sync with the macro definition)
 set_property( GLOBAL PROPERTY geos_tests_exe_list )
 
-if( ENABLE_CONTROLLED_INPUT )
-  include( FetchContent )
-  FetchContent_Declare( yaml-cpp
-                        GIT_REPOSITORY https://github.com/jbeder/yaml-cpp
-                        GIT_TAG 0.8.0
-  )
-  FetchContent_MakeAvailable( yaml-cpp )
-endif()
-
 ################################
 # Include blt
 ################################
