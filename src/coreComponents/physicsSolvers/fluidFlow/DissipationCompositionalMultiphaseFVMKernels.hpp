@@ -60,10 +60,12 @@ public:
 
   using AbstractBase = isothermalCompositionalMultiphaseFVMKernels::FaceBasedAssemblyKernelBase;
   using DofNumberAccessor = AbstractBase::DofNumberAccessor;
+  using GlobalCellDimAccessor = AbstractBase::GlobalCellDimAccessor;
   using CompFlowAccessors = AbstractBase::CompFlowAccessors;
   using MultiFluidAccessors = AbstractBase::MultiFluidAccessors;
   using CapPressureAccessors = AbstractBase::CapPressureAccessors;
   using PermeabilityAccessors = AbstractBase::PermeabilityAccessors;
+  using DispersionAccessors = AbstractBase::DispersionAccessors;
 
   using AbstractBase::m_dt;
   using AbstractBase::m_gravCoef;
@@ -115,9 +117,11 @@ public:
                            globalIndex const rankOffset,
                            STENCILWRAPPER const & stencilWrapper,
                            DofNumberAccessor const & dofNumberAccessor,
+                           GlobalCellDimAccessor const & globalCellDimAccessor,
                            CompFlowAccessors const & compFlowAccessors,
                            DissCompFlowAccessors const & dissCompFlowAccessors,
                            MultiFluidAccessors const & multiFluidAccessors,
+                           DispersionAccessors const & dispersionAccessors,
                            CapPressureAccessors const & capPressureAccessors,
                            PermeabilityAccessors const & permeabilityAccessors,
                            PorosityAccessors const & porosityAccessors,
@@ -135,8 +139,10 @@ public:
             rankOffset,
             stencilWrapper,
             dofNumberAccessor,
+            globalCellDimAccessor,
             compFlowAccessors,
             multiFluidAccessors,
+            dispersionAccessors,
             capPressureAccessors,
             permeabilityAccessors,
             dt,
@@ -373,6 +379,9 @@ public:
         elemManager.constructArrayViewAccessor< globalIndex, 1 >( dofKey );
       dofNumberAccessor.setName( solverName + "/accessors/" + dofKey );
 
+      ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > globalCellDimAccessor =
+        elemManager.constructArrayViewAccessor< real64, 2 >( CellElementSubRegion::viewKeyStruct::globalCellDimString() );
+
       BitFlags< isothermalCompositionalMultiphaseFVMKernels::FaceBasedAssemblyKernelFlags > kernelFlags;
       if( hasCapPressure )
         kernelFlags.set( isothermalCompositionalMultiphaseFVMKernels::FaceBasedAssemblyKernelFlags::CapPressure );
@@ -386,9 +395,11 @@ public:
       typename KERNEL_TYPE::PermeabilityAccessors permeabilityAccessors( elemManager, solverName );
       typename KERNEL_TYPE::PorosityAccessors porosityAccessors( elemManager, solverName );
       typename KERNEL_TYPE::DissCompFlowAccessors dissCompFlowAccessors( elemManager, solverName );
+      typename KERNEL_TYPE::DispersionAccessors dispersionAccessors( elemManager, solverName );
 
-      KERNEL_TYPE kernel( numPhases, rankOffset, stencilWrapper, dofNumberAccessor, compFlowAccessors, dissCompFlowAccessors,
-                          multiFluidAccessors, capPressureAccessors, permeabilityAccessors, porosityAccessors,
+      KERNEL_TYPE kernel( numPhases, rankOffset, stencilWrapper, dofNumberAccessor, globalCellDimAccessor,
+                          compFlowAccessors, dissCompFlowAccessors,
+                          multiFluidAccessors, dispersionAccessors, capPressureAccessors, permeabilityAccessors, porosityAccessors,
                           dt, localMatrix, localRhs, kernelFlags, omega, curNewton, continuation, miscible, kappamin, contMultiplier );
       KERNEL_TYPE::template launch< POLICY >( stencilWrapper.size(), kernel );
     } );

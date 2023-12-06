@@ -66,7 +66,7 @@ enum class FaceBasedAssemblyKernelFlags
   /// Flag indicating whether C1-PPU is used or not
   C1PPU = 1 << 2, // 4
   /// Add more flags like that if needed:
-  // Flag4 = 1 << 3, // 8
+  computeVelocity = 1 << 3, // 8
   // Flag5 = 1 << 4, // 16
   // Flag6 = 1 << 5, // 32
   // Flag7 = 1 << 6, // 64
@@ -455,13 +455,12 @@ public:
    */
   FaceBasedAssemblyKernel( integer const numPhases,
                            globalIndex const rankOffset,
-                           const integer hasVelocityCompute,
                            STENCILWRAPPER const & stencilWrapper,
                            DofNumberAccessor const & dofNumberAccessor,
-                           const GlobalCellDimAccessor & globalCellDimAccessor,
+                           GlobalCellDimAccessor const & globalCellDimAccessor,
                            CompFlowAccessors const & compFlowAccessors,
                            MultiFluidAccessors const & multiFluidAccessors,
-                           const DispersionAccessors & dispersionAccessors,
+                           DispersionAccessors const & dispersionAccessors,
                            CapPressureAccessors const & capPressureAccessors,
                            PermeabilityAccessors const & permeabilityAccessors,
                            real64 const dt,
@@ -479,7 +478,6 @@ public:
                                    localMatrix,
                                    localRhs,
                                    kernelFlags ),
-                                   m_hasVelocityCompute( hasVelocityCompute ),
     m_permeability( permeabilityAccessors.get( fields::permeability::permeability {} ) ),
     m_dPerm_dPres( permeabilityAccessors.get( fields::permeability::dPerm_dPressure {} ) ),
     m_phaseMob( compFlowAccessors.get( fields::flow::phaseMobility {} ) ),
@@ -698,7 +696,7 @@ public:
               dPhaseFlux_dC );
           }
 
-          if( m_hasVelocityCompute )
+          if( m_kernelFlags.isSet( FaceBasedAssemblyKernelFlags::computeVelocity ) )
           {
             //TODO (jacques) move it to Dispersion kernel
 //              GEOS_LOG_RANK(GEOS_FMT("Distance : {} \n\t {}\n",
@@ -839,9 +837,6 @@ public:
 
 protected:
 
-  /// Flag to specify whether capillary pressure is used or not
-  integer const m_hasVelocityCompute;
-
   /// Views on permeability
   ElementViewConst< arrayView3d< real64 const > > const m_permeability;
   ElementViewConst< arrayView3d< real64 const > > const m_dPerm_dPres;
@@ -903,7 +898,7 @@ public:
                    globalIndex const rankOffset,
                    string const & dofKey,
                    integer const hasCapPressure,
-                   const integer hasVelocityCompute,
+                   integer const hasVelocityCompute,
                    integer const useTotalMassEquation,
                    UpwindingParameters upwindingParams,
                    string const & solverName,
@@ -922,6 +917,10 @@ public:
         elemManager.constructArrayViewAccessor< globalIndex, 1 >( dofKey );
       dofNumberAccessor.setName( solverName + "/accessors/" + dofKey );
 
+      ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > globalCellDimAccessor =
+        elemManager.constructArrayViewAccessor< real64, 2 >(
+          CellElementSubRegion::viewKeyStruct::globalCellDimString() );
+
       BitFlags< FaceBasedAssemblyKernelFlags > kernelFlags;
       if( hasCapPressure )
         kernelFlags.set( FaceBasedAssemblyKernelFlags::CapPressure );
@@ -930,16 +929,19 @@ public:
       if( upwindingParams.upwindingScheme == UpwindingScheme::C1PPU &&
           isothermalCompositionalMultiphaseFVMKernelUtilities::epsC1PPU > 0 )
         kernelFlags.set( FaceBasedAssemblyKernelFlags::C1PPU );
+      if( hasVelocityCompute )
+        kernelFlags.set( FaceBasedAssemblyKernelFlags::computeVelocity );
 
       using kernelType = FaceBasedAssemblyKernel< NUM_COMP, NUM_DOF, STENCILWRAPPER >;
       typename kernelType::CompFlowAccessors compFlowAccessors( elemManager, solverName );
       typename kernelType::MultiFluidAccessors multiFluidAccessors( elemManager, solverName );
       typename kernelType::CapPressureAccessors capPressureAccessors( elemManager, solverName );
       typename kernelType::PermeabilityAccessors permeabilityAccessors( elemManager, solverName );
+      typename kernelType::DispersionAccessors dispersionAccessors( elemManager, solverName );
 
-      kernelType kernel( numPhases, rankOffset, stencilWrapper, dofNumberAccessor,
-                         compFlowAccessors, multiFluidAccessors, capPressureAccessors, permeabilityAccessors,
-                         dt, localMatrix, localRhs, kernelFlags );
+      kernelType kernel( numPhases, rankOffset, stencilWrapper, dofNumberAccessor, globalCellDimAccessor,
+                         compFlowAccessors, multiFluidAccessors, dispersionAccessors, capPressureAccessors,
+                         permeabilityAccessors, dt, localMatrix, localRhs, kernelFlags );
       kernelType::template launch< POLICY >( stencilWrapper.size(), kernel );
     } );
   }
@@ -1765,23 +1767,24 @@ public:
    * @param[inout] localRhs the local right-hand side vector
    * @param[in] kernelFlags flags packed together
    */
-  DirichletFaceBasedAssemblyKernel( integer const numPhases, globalIndex const rankOffset,
-                                    integer const hasCapPressure, integer const hasVelocityCompute,
-                                    FaceManager const & faceManager, BoundaryStencilWrapper const & stencilWrapper,
-                                    FLUIDWRAPPER const & fluidWrapper, DofNumberAccessor const & dofNumberAccessor,
+  DirichletFaceBasedAssemblyKernel( integer const numPhases,
+                                    globalIndex const rankOffset,
+                                    FaceManager const & faceManager,
+                                    BoundaryStencilWrapper const & stencilWrapper,
+                                    FLUIDWRAPPER const & fluidWrapper,
+                                    DofNumberAccessor const & dofNumberAccessor,
                                     GlobalCellDimAccessor const & globalCellDimAccessor,
                                     CompFlowAccessors const & compFlowAccessors,
                                     MultiFluidAccessors const & multiFluidAccessors,
                                     DispersionAccessors const & dispersionAccessors,
                                     CapPressureAccessors const & capPressureAccessors,
-                                    PermeabilityAccessors const & permeabilityAccessors, real64 const dt,
+                                    PermeabilityAccessors const & permeabilityAccessors,
+                                    real64 const dt,
                                     CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                     arrayView1d< real64 > const & localRhs,
                                     BitFlags< FaceBasedAssemblyKernelFlags > kernelFlags )
     : Base( numPhases,
             rankOffset,
-            hasCapPressure,
-            hasVelocityCompute,
             stencilWrapper,
             dofNumberAccessor,
             globalCellDimAccessor,
@@ -2187,6 +2190,7 @@ public:
         BitFlags< FaceBasedAssemblyKernelFlags > kernelFlags;
         if( useTotalMassEquation )
           kernelFlags.set( FaceBasedAssemblyKernelFlags::TotalMassEquation );
+        //here hasCapPressure and hasVelocityCompute defaulted to false
 
         ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > globalCellDimAccessor =
           elemManager.constructArrayViewAccessor< real64, 2 >(
@@ -2199,14 +2203,11 @@ public:
         typename kernelType::PermeabilityAccessors permeabilityAccessors( elemManager, solverName );
         typename kernelType::DispersionAccessors dispersionAccessors( elemManager, solverName );
 
-        // for now, we neglect capillary pressure in the kernel
-        bool const hasCapPressure = false;
-        bool const hasVelocityCompute = false;
-
-        kernelType kernel( numPhases, rankOffset, hasCapPressure, hasVelocityCompute, faceManager, stencilWrapper, fluidWrapper,
+        kernelType kernel( numPhases, rankOffset, faceManager, stencilWrapper, fluidWrapper,
                            dofNumberAccessor, globalCellDimAccessor, compFlowAccessors,
-                           multiFluidAccessors, dispersionAccessors, capPressureAccessors, permeabilityAccessors,
-                           dt, localMatrix, localRhs );
+                           multiFluidAccessors, dispersionAccessors, capPressureAccessors,
+                           permeabilityAccessors,
+                           dt, localMatrix, localRhs, kernelFlags );
         kernelType::template launch< POLICY >( stencilWrapper.size(), kernel );
       } );
     } );

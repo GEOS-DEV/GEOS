@@ -214,7 +214,7 @@ public:
    * @brief get the upwinding parameters.
    * @return upwinding parameters structure.
    */
-  UpwindingParameters const & getUpwindingParams() const { return m_upwindingParams; }
+  UpwindingParameters const & upwindingParams() const { return m_upwindingParams; }
 
 protected:
 

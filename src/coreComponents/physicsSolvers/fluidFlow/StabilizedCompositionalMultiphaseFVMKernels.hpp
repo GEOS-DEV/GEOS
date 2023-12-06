@@ -120,9 +120,11 @@ public:
    * @param[in] kernelFlags flags packed together
    */
 
-  FaceBasedAssemblyKernel( integer const numPhases, globalIndex const rankOffset, integer const hasCapPressure,
-                           integer const hasVelocityCompute, STENCILWRAPPER const & stencilWrapper,
-                           DofNumberAccessor const & dofNumberAccessor, const GlobalCellDimAccessor & globalCellDimAccessor,
+  FaceBasedAssemblyKernel( integer const numPhases,
+                           globalIndex const rankOffset,
+                           STENCILWRAPPER const & stencilWrapper,
+                           DofNumberAccessor const & dofNumberAccessor,
+                           GlobalCellDimAccessor const & globalCellDimAccessor,
                            CompFlowAccessors const & compFlowAccessors,
                            StabCompFlowAccessors const & stabCompFlowAccessors,
                            MultiFluidAccessors const & multiFluidAccessors,
@@ -131,14 +133,12 @@ public:
                            CapPressureAccessors const & capPressureAccessors,
                            PermeabilityAccessors const & permeabilityAccessors,
                            RelPermAccessors const & relPermAccessors,
-                           real64 const & dt,
+                           real64 const dt,
                            CRSMatrixView< real64, globalIndex const > const & localMatrix,
                            arrayView1d< real64 > const & localRhs,
                            BitFlags< isothermalCompositionalMultiphaseFVMKernels::FaceBasedAssemblyKernelFlags > kernelFlags )
     : Base( numPhases,
             rankOffset,
-            hasCapPressure,
-            hasVelocityCompute,
             stencilWrapper,
             dofNumberAccessor,
             globalCellDimAccessor,
@@ -338,8 +338,10 @@ public:
                    integer const useTotalMassEquation,
                    string const & solverName,
                    ElementRegionManager const & elemManager,
-                   STENCILWRAPPER const & stencilWrapper, real64 const dt,
-                   CRSMatrixView< real64, globalIndex const > const & localMatrix, arrayView1d< real64 > const & localRhs )
+                   STENCILWRAPPER const & stencilWrapper,
+                   real64 const dt,
+                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                   arrayView1d< real64 > const & localRhs )
   {
     isothermalCompositionalMultiphaseBaseKernels::
       internal::kernelLaunchSelectorCompSwitch( numComps, [&]( auto NC )
@@ -360,7 +362,8 @@ public:
         kernelFlags.set( isothermalCompositionalMultiphaseFVMKernels::FaceBasedAssemblyKernelFlags::CapPressure );
       if( useTotalMassEquation )
         kernelFlags.set( isothermalCompositionalMultiphaseFVMKernels::FaceBasedAssemblyKernelFlags::TotalMassEquation );
-      //TODO add hasVelocity compute under flags
+      if( hasVelocityCompute )
+        kernelFlags.set( isothermalCompositionalMultiphaseFVMKernels::FaceBasedAssemblyKernelFlags::computeVelocity );
 
       using KERNEL_TYPE = FaceBasedAssemblyKernel< NUM_COMP, NUM_DOF, STENCILWRAPPER >;
       typename KERNEL_TYPE::CompFlowAccessors compFlowAccessors( elemManager, solverName );
@@ -372,10 +375,10 @@ public:
       typename KERNEL_TYPE::RelPermAccessors relPermAccessors( elemManager, solverName );
       typename KERNEL_TYPE::DispersionAccessors dispersionAccessors( elemManager, solverName );
 
-      KERNEL_TYPE kernel( numPhases, rankOffset, stencilWrapper, dofNumberAccessor,
-                          compFlowAccessors, stabCompFlowAccessors, multiFluidAccessors, stabMultiFluidAccessors,
-                          capPressureAccessors, permeabilityAccessors, relPermAccessors,
-                          dt, localMatrix, localRhs );
+      KERNEL_TYPE kernel( numPhases, rankOffset, stencilWrapper, dofNumberAccessor, globalCellDimAccessor,
+                          compFlowAccessors, stabCompFlowAccessors, multiFluidAccessors, dispersionAccessors,
+                          stabMultiFluidAccessors, capPressureAccessors, permeabilityAccessors, relPermAccessors,
+                          dt, localMatrix, localRhs, kernelFlags );
       KERNEL_TYPE::template launch< POLICY >( stencilWrapper.size(), kernel );
     } );
   }
