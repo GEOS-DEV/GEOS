@@ -175,11 +175,11 @@ void TableRelativePermeabilityHysteresis::postProcessInput()
 
   m_phaseHasHysteresis.resize( 2 );
 
-    //initialize STONE-II only used var to avoid discrepancies in baselines
-    m_waterOilMaxRelPerm = 1.;
+  //initialize STONE-II only used var to avoid discrepancies in baselines
+  m_waterOilMaxRelPerm = 1.;
 
 
-    if( numPhases == 2 )
+  if( numPhases == 2 )
   {
     GEOS_THROW_IF( m_drainageWettingNonWettingRelPermTableNames.empty(),
                    GEOS_FMT( "{}: for a two-phase flow simulation, we must use {} to specify the relative permeability tables "

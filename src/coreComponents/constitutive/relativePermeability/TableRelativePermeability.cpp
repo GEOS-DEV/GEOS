@@ -149,8 +149,8 @@ void TableRelativePermeability::initializePreSubGroups()
   real64 phaseMaxVolFrac = 0.0;
   real64 phaseRelPermEndPoint = 0.0;
 
-    //initialize STONE-II only used var to avoid discrepancies in baselines
-    m_waterOilMaxRelPerm = 1.0;
+  //initialize STONE-II only used var to avoid discrepancies in baselines
+  m_waterOilMaxRelPerm = 1.0;
 
   FunctionManager const & functionManager = FunctionManager::getInstance();
 

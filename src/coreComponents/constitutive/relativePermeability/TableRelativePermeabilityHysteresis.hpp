@@ -565,10 +565,10 @@ private:
   array2d< real64, compflow::LAYOUT_PHASE > m_phaseMaxHistoricalVolFraction;
 
   /// Max krwo value (unique as krwo and krgo are considred non hysteretical in our implementation)
-  real64  m_waterOilMaxRelPerm;
+  real64 m_waterOilMaxRelPerm;
 
   /// enum class to dispatch interpolator (Baker/Eclipse,StoneII)
-    ThreePhaseInterpolator m_threePhaseInterpolator;
+  ThreePhaseInterpolator m_threePhaseInterpolator;
 
 };
 
