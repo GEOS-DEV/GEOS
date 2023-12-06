@@ -172,6 +172,8 @@ jobs:
       RUNS_ON: ubuntu-22.04
     secrets: inherit
 
+  # If the 'ci: run integrated tests' PR label is found, the integrated tests will be run immediately after the cpu jobs.
+  # Note: The integrated tests are optional and are (for the moment) run for convenience only.
   run_integrated_tests:
     needs:
       - is_pull_request_a_draft
