@@ -73,8 +73,6 @@ jobs:
   are_integrated_tests_requested:
     needs: [is_pull_request_a_draft]
     runs-on: ubuntu-22.04
-    # Temporarily deactivate
-    if: ${{ ! always() }}
     steps:
     - name: Check if running the integrated tests is requested
       run: |
@@ -146,45 +144,55 @@ jobs:
       matrix:
         include:
           - name: Ubuntu (20.04, gcc 9.3.0, open-mpi 4.0.3)
-            DOCKER_REPOSITORY: geosx/ubuntu20.04-gcc9
             CMAKE_BUILD_TYPE: Release
+            DOCKER_REPOSITORY: geosx/ubuntu20.04-gcc9
 
           - name: Ubuntu debug (20.04, gcc 10.3.0, open-mpi 4.0.3) - github codespaces
-            DOCKER_REPOSITORY: geosx/ubuntu20.04-gcc10
             CMAKE_BUILD_TYPE: Debug
+            DOCKER_REPOSITORY: geosx/ubuntu20.04-gcc10
 
           - name: Ubuntu (20.04, gcc 10.3.0, open-mpi 4.0.3) - github codespaces
+            CMAKE_BUILD_TYPE: Release
             DOCKER_REPOSITORY: geosx/ubuntu20.04-gcc10
-            CMAKE_BUILD_TYPE: Release
 
-          # Below this line, jobs that deploy to Google Cloud.
-          - name: Pecan CPU (centos 7.7, gcc 8.2.0, open-mpi 4.0.1, mkl 2019.5)
-            DOCKER_REPOSITORY: geosx/pecan-cpu-gcc8.2.0-openmpi4.0.1-mkl2019.5
+          - name: Ubuntu (22.04, gcc 11.2.0, open-mpi 4.1.2)
             CMAKE_BUILD_TYPE: Release
+            DOCKER_REPOSITORY: geosx/ubuntu22.04-gcc11
+            ENABLE_HYPRE: ON
+            ENABLE_TRILINOS: OFF
+            GCP_BUCKET: geosx/ubuntu22.04-gcc11
+
+          - name: Ubuntu debug (22.04, gcc 12.3.0, open-mpi 4.1.2)
+            BUILD_AND_TEST_CLI_ARGS: --no-run-unit-tests
+            CMAKE_BUILD_TYPE: Debug
+            DOCKER_REPOSITORY: geosx/ubuntu22.04-gcc12
+            ENABLE_HYPRE: ON
+            ENABLE_TRILINOS: OFF
+
+          - name: Pecan CPU (centos 7.7, gcc 8.2.0, open-mpi 4.0.1, mkl 2019.5)
+            CMAKE_BUILD_TYPE: Release
+            DOCKER_REPOSITORY: geosx/pecan-cpu-gcc8.2.0-openmpi4.0.1-mkl2019.5
             HOST_CONFIG: host-configs/TOTAL/pecan-CPU.cmake
             GCP_BUCKET: geosx/Pecan-CPU
 
           - name: Pangea 2 (centos 7.6, gcc 8.3.0, open-mpi 2.1.5, mkl 2019.3)
-            DOCKER_REPOSITORY: geosx/pangea2-gcc8.3.0-openmpi2.1.5-mkl2019.3
             CMAKE_BUILD_TYPE: Release
-            GCP_BUCKET: geosx/Pangea2
+            DOCKER_REPOSITORY: geosx/pangea2-gcc8.3.0-openmpi2.1.5-mkl2019.3
             ENABLE_HYPRE: ON
             ENABLE_TRILINOS: OFF
+            GCP_BUCKET: geosx/Pangea2
 
           - name: Sherlock CPU (centos 7.9.2009, gcc 10.1.0, open-mpi 4.1.2, openblas 0.3.10)
-            DOCKER_REPOSITORY: geosx/sherlock-gcc10.1.0-openmpi4.1.2-openblas0.3.10-zlib1.2.11
             CMAKE_BUILD_TYPE: Release
-            HOST_CONFIG: host-configs/Stanford/sherlock-gcc10-ompi4.1.2-openblas0.3.10.cmake
-            GCP_BUCKET: geosx/Sherlock-CPU
+            DOCKER_REPOSITORY: geosx/sherlock-gcc10.1.0-openmpi4.1.2-openblas0.3.10-zlib1.2.11
             ENABLE_HYPRE: ON
             ENABLE_TRILINOS: OFF
+            HOST_CONFIG: host-configs/Stanford/sherlock-gcc10-ompi4.1.2-openblas0.3.10.cmake
+            GCP_BUCKET: geosx/Sherlock-CPU
 
-          - name: Ubuntu (22.04, gcc 11.2.0, open-mpi 4.1.2)
-            DOCKER_REPOSITORY: geosx/ubuntu22.04-gcc11
-            CMAKE_BUILD_TYPE: Release
-            GCP_BUCKET: geosx/ubuntu22.04-gcc11
     uses: ./.github/workflows/build_and_test.yml
     with:
+      BUILD_AND_TEST_CLI_ARGS: ${{ matrix.BUILD_AND_TEST_CLI_ARGS }}
       CMAKE_BUILD_TYPE: ${{ matrix.CMAKE_BUILD_TYPE }}
       DOCKER_IMAGE_TAG: ${{ needs.is_pull_request_a_draft.outputs.DOCKER_IMAGE_TAG }}
       DOCKER_REPOSITORY: ${{ matrix.DOCKER_REPOSITORY }}
@@ -208,6 +216,8 @@ jobs:
       CMAKE_BUILD_TYPE: Release
       DOCKER_IMAGE_TAG: ${{ needs.is_pull_request_a_draft.outputs.DOCKER_IMAGE_TAG }}
       DOCKER_REPOSITORY: geosx/ubuntu22.04-gcc11
+      ENABLE_HYPRE: ON
+      ENABLE_TRILINOS: OFF
       GCP_BUCKET: geosx/integratedTests
       RUNS_ON: ubuntu-22.04
 
