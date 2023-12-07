@@ -124,7 +124,6 @@ jobs:
         docker_args+=(-e ENABLE_HYPRE=${ENABLE_HYPRE:-OFF})
         docker_args+=(-e ENABLE_HYPRE_DEVICE=${ENABLE_HYPRE_DEVICE:-CPU})
         docker_args+=(-e ENABLE_TRILINOS=${ENABLE_TRILINOS:-ON})
-        docker_args+=(-e GOOGLE_CLOUD_GCP=${secrets.GOOGLE_CLOUD_GCP})
 
         docker_args+=(--cap-add=SYS_PTRACE)
 
