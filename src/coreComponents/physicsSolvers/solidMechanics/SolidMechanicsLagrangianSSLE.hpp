@@ -38,6 +38,10 @@ public:
   virtual ~SolidMechanicsLagrangianSSLE() override;
 
   static string catalogName() { return "SolidMechanicsLagrangianSSLE"; }
+  /**
+   * @copydoc SolverBase::getCatalogName()
+   */
+  string getCatalogName() const override { return catalogName(); }
 
 
 };
