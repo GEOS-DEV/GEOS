@@ -53,6 +53,11 @@ public:
 
   static string catalogName() { return "SolverBase"; }
 
+  /**
+   * @return Get the final class Catalog name
+   */
+  virtual string getCatalogName() const = 0;
+
 
   virtual void registerDataOnMesh( Group & MeshBodies ) override;
 
