@@ -224,7 +224,7 @@ jobs:
             BUILD_AND_TEST_CLI_ARGS: "--no-run-unit-tests --no-install-schema --disable-schema-deployment"
             CMAKE_BUILD_TYPE: Release
             DOCKER_REPOSITORY: geosx/centos7.7-gcc8.3.1-cuda11.8.89
-            RUNS_ON: streak
+            OS: streak
             DOCKER_RUN_ARGS: "--cpus=8 --memory=16g"
 
           # Below this line, jobs that deploy to Google Cloud.
