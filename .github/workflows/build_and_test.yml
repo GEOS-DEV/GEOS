@@ -130,12 +130,12 @@ jobs:
         script_args+=(--cmake-build-type ${{ inputs.CMAKE_BUILD_TYPE }})
         script_args+=(${{ inputs.BUILD_AND_TEST_CLI_ARGS }})
 
-        #SPLIT_DOCKER_REPOSITORY=(${DOCKER_REPOSITORY//// })
-        #CONTAINER_NAME=geosx_build_${SPLIT_DOCKER_REPOSITORY[1]}_${GITHUB_SHA:0:7}
-        # if [ "$(docker ps -aq -f name=${CONTAINER_NAME})" ]; then
-        #   docker rm -f ${CONTAINER_NAME}
-        # fi
-        #echo ${CONTAINER_NAME}
+        SPLIT_DOCKER_REPOSITORY=(${DOCKER_REPOSITORY//// })
+        CONTAINER_NAME=geosx_build_${SPLIT_DOCKER_REPOSITORY[1]}_${GITHUB_SHA:0:7}
+        if [ "$(docker ps -aq -f name=${CONTAINER_NAME})" ]; then
+          docker rm -f ${CONTAINER_NAME}
+        fi
+        echo ${CONTAINER_NAME}
 
         # In case of integrated tests run, we still want to send the results to the cloud for inspection.
         # While for standard build (if even possible), pushing a failed build would be pointless.
