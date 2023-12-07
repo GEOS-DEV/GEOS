@@ -221,7 +221,7 @@ jobs:
           #   RUNS_ON: Runner_4core_16GB
 
           - name: Centos (7.7, gcc 8.3.1, open-mpi 1.10.7, cuda 11.8.89)
-            BUILD_AND_TEST_CLI_ARGS: "--no-run-unit-tests --no-install-schema --disable-schema-deployment"
+            BUILD_AND_TEST_CLI_ARGS: "--no-run-unit-tests --no-install-schema"
             CMAKE_BUILD_TYPE: Release
             DOCKER_REPOSITORY: geosx/centos7.7-gcc8.3.1-cuda11.8.89
             OS: streak
