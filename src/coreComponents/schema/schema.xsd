@@ -1484,6 +1484,8 @@ stress - traction is applied to the faces as specified by the inner product of i
 	<xsd:complexType name="PerforationType">
 		<!--distanceFromHead => Linear distance from well head to the perforation-->
 		<xsd:attribute name="distanceFromHead" type="real64" use="required" />
+		<!--skinFactor => Perforation skin factor-->
+		<xsd:attribute name="skinFactor" type="real64" default="0" />
 		<!--transmissibility => Perforation transmissibility-->
 		<xsd:attribute name="transmissibility" type="real64" default="-1" />
 		<!--name => A name is required for any non-unique nodes-->
@@ -2344,22 +2346,22 @@ the relative residual norm satisfies:
 		<!--logLevel => Log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--reservoirAndWellsSolverName => Name of the reservoirAndWells solver used by the coupled solver-->
-		<xsd:attribute name="reservoirAndWellsSolverName" type="string" use="required" />
+		<xsd:attribute name="reservoirAndWellsSolverName" type="groupNameRef" use="required" />
 		<!--solidSolverName => Name of the solid solver used by the coupled solver-->
-		<xsd:attribute name="solidSolverName" type="string" use="required" />
+		<xsd:attribute name="solidSolverName" type="groupNameRef" use="required" />
 		<!--stabilizationMultiplier => Constant multiplier of stabilization strength.-->
 		<xsd:attribute name="stabilizationMultiplier" type="real64" default="1" />
 		<!--stabilizationRegionNames => Regions where stabilization is applied.-->
-		<xsd:attribute name="stabilizationRegionNames" type="string_array" default="{}" />
+		<xsd:attribute name="stabilizationRegionNames" type="groupNameRef_array" default="{}" />
 		<!--stabilizationType => Stabilization type. Options are:
 None - Add no stabilization to mass equation,
 Global - Add stabilization to all faces,
 Local - Add stabilization only to interiors of macro elements.-->
 		<xsd:attribute name="stabilizationType" type="geos_stabilization_StabilizationType" default="None" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
-		<xsd:attribute name="targetRegions" type="string_array" use="required" />
+		<xsd:attribute name="targetRegions" type="groupNameRef_array" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
+		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:simpleType name="geos_stabilization_StabilizationType">
 		<xsd:restriction base="xsd:string">
@@ -3077,13 +3079,13 @@ Local - Add stabilization only to interiors of macro elements.-->
 		<!--logLevel => Log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--reservoirAndWellsSolverName => Name of the reservoirAndWells solver used by the coupled solver-->
-		<xsd:attribute name="reservoirAndWellsSolverName" type="string" use="required" />
+		<xsd:attribute name="reservoirAndWellsSolverName" type="groupNameRef" use="required" />
 		<!--solidSolverName => Name of the solid solver used by the coupled solver-->
-		<xsd:attribute name="solidSolverName" type="string" use="required" />
+		<xsd:attribute name="solidSolverName" type="groupNameRef" use="required" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
-		<xsd:attribute name="targetRegions" type="string_array" use="required" />
+		<xsd:attribute name="targetRegions" type="groupNameRef_array" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
+		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="SinglePhaseWellType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -3328,9 +3330,9 @@ Local - Add stabilization only to interiors of macro elements.-->
 		<!--performStressInitialization => Flag to indicate that the solver is going to perform stress initialization-->
 		<xsd:attribute name="performStressInitialization" type="integer" use="required" />
 		<!--poromechanicsSolverName => Name of the poromechanics solver-->
-		<xsd:attribute name="poromechanicsSolverName" type="string" use="required" />
+		<xsd:attribute name="poromechanicsSolverName" type="groupNameRef" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
+		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="CompositionalMultiphaseStatisticsType">
 		<!--computeCFLNumbers => Flag to decide whether CFL numbers are computed or not-->
@@ -3444,9 +3446,9 @@ Local - Add stabilization only to interiors of macro elements.-->
 		<!--performStressInitialization => Flag to indicate that the solver is going to perform stress initialization-->
 		<xsd:attribute name="performStressInitialization" type="integer" use="required" />
 		<!--poromechanicsSolverName => Name of the poromechanics solver-->
-		<xsd:attribute name="poromechanicsSolverName" type="string" use="required" />
+		<xsd:attribute name="poromechanicsSolverName" type="groupNameRef" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
+		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="SinglePhaseStatisticsType">
 		<!--flowSolverName => Name of the flow solver-->
@@ -4407,6 +4409,8 @@ If you want to do a three-phase simulation, please use instead wettingIntermedia
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="ParallelPlatesPermeabilityType">
+		<!--transversalPermeability => Default value of the permeability normal to the surface. If not specified the permeability is updated using the cubic law. -->
+		<xsd:attribute name="transversalPermeability" type="real64" default="-1" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
