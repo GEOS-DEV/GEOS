@@ -3,6 +3,19 @@
 namespace geos::input::solvers
 {
 
+struct Variable
+{
+public:
+  string functional_space;  // TOD Use an enum here?
+  int fe_order;
+};
+
+struct NamedVariable: public Variable
+{
+public:
+  string name;
+};
+
 class Laplace : public Solver
 {
 public:
@@ -46,7 +59,7 @@ void operator>>( const YAML::Node & node,
     }
     else
     {
-      GEOS_WARNING( "Discarded output \"" << solverType << "\"" );
+      GEOS_WARNING( "Discarded solver \"" << solverType << "\"" );
     }
   }
 }

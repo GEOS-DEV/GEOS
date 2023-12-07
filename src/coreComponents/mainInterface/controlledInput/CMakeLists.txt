@@ -7,11 +7,19 @@ FetchContent_MakeAvailable( yaml-cpp )
 
 set( controlledInput_headers
      ControlledInput.hpp
+     Events.hpp
+     Mesh.hpp
+     Misc.hpp
+     Outputs.hpp
      Solvers.hpp
 )
 
 set( controlledInput_sources
      ControlledInput.cpp
+     Events.cpp
+     Mesh.cpp
+     Misc.cpp
+     Outputs.cpp
      Solvers.cpp
 )
 

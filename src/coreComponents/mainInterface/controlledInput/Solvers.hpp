@@ -15,20 +15,6 @@ class Solver
 
 };
 
-class Variable
-{
-public:
-  string functional_space;  // TOD Use an enum here?
-  int fe_order;
-
-};
-
-class NamedVariable: public Variable
-{
-public:
-  string name;
-};
-
 void operator>>( const YAML::Node & node,
                  std::vector< std::shared_ptr< Solver > > & solvers );
 
