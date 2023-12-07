@@ -516,7 +516,7 @@ protected:
       }
     }
 
-    implicitStepComplete( time_n, dt, domain );
+    implicitStepComplete( time_n, stepDt, domain );
 
     return stepDt;
   }
