@@ -7,10 +7,12 @@ FetchContent_MakeAvailable( yaml-cpp )
 
 set( controlledInput_headers
      ControlledInput.hpp
+     Solvers.hpp
 )
 
 set( controlledInput_sources
      ControlledInput.cpp
+     Solvers.cpp
 )
 
 set( dependencyList dataRepository yaml-cpp )

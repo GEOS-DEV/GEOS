@@ -1,5 +1,7 @@
 #include "ControlledInput.hpp"
 
+#include "Solvers.hpp"
+
 #include "dataRepository/xmlWrapper.hpp"
 
 #include "codingUtilities/StringUtilities.hpp"
@@ -114,6 +116,11 @@ public:
     m_end = end;
   }
 
+  void setSolver( std::vector< std::shared_ptr< solvers::Solver > > const & solver )
+  {
+    m_solver = solver;
+  }
+
   void fillEventsXmlNode( xml_node & eventsNode ) const
   {
     eventsNode.append_attribute( "minTime" ) = convertTime( m_begin );
@@ -123,6 +130,7 @@ public:
 private:
   string m_begin;
   string m_end;
+  std::vector< std::shared_ptr< solvers::Solver > > m_solver;
 };
 
 class Event
@@ -378,6 +386,11 @@ void operator>>( const YAML::Node & node,
 {
   simulation.setBegin( node["begin"].as< string >() );
   simulation.setEnd( node["end"].as< string >() );
+
+  std::vector< std::shared_ptr< solvers::Solver > > solvers;
+  // TODO check solver or solvers
+  node["solver"] >> solvers;
+  simulation.setSolver( solvers );
 }
 
 void operator>>( const YAML::Node & node,

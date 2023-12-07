@@ -15,6 +15,168 @@ mesh:
     fractures:
       block_name: fracture
 
+
+simulation:
+  begin: 0
+  end: 2 s
+  solver:
+    laplace:
+      formulation:
+        variable:
+          name: temperature
+          functional_space: h1
+          fe_order: 1
+  numerical_strategies:
+    time_integration: steady_state
+    coupling_strategies: FIM / SIM / SE
+      ....
+    linear_solver:
+      - params: ...
+    non_linear_solvers:
+      - params: ...
+
+simulation:
+  begin: 0
+  end: 2 s
+  solvers:
+    - laplace:
+        name: laplace1
+        on: [domain1, domain3]
+        formulation:
+          variable:
+            name: temperature
+            functional_space: h1
+            fe_order: 1
+    - laplace:
+        name: laplace2
+        on: domain2
+        formulation:
+          variable:
+            name: temperature
+            functional_space: h1
+            fe_order: 2
+  numerical_strategies:
+    time_integration: steady_state
+    coupling_strategies:
+      type: SIM
+      order:
+        - laplace1:
+            linear_solver:
+              params: ...
+            non_linear_solvers:
+              - params: ...
+        - laplace2:
+            linear_solver:
+              params: ...
+            non_linear_solvers:
+              - params: ...
+
+  numerical_strategies:
+    time_integration: steady_state
+    coupling_strategies:
+      type: FIM
+      linear_solver:
+        params: ...
+      non_linear_solvers:
+        - params: ...
+
+solvers:
+  - laplace:
+      on:
+        - reservoir
+      formulation:
+        - variable:
+            name: temperature
+            functional_space: l2
+            fe_order: 0
+  - laplace:
+      on:
+        - overburden
+      formulation:
+        - variable:
+            name: temperature
+            functional_space: h1
+            fe_order: 1
+
+num_strategies:
+  linear_solver:
+    type: serial_direct
+  non_linear_solver:
+    type: 'direct
+
+
+solver:-
+  laplace:
+    formulation:
+      - variable:
+          name: temperature
+          functional_space: l2
+          fv_order: 0
+          numerical_flux_approximation: tpfa
+
+solver:
+  laplace:
+    formulation:
+      - variable:
+          name: temperature
+          functional_space: h1
+          ve_order: 1
+
+solver:
+  laplace:
+    formulation:
+      variable:
+        name: temperature
+        functional_space: l2
+        fe_order: 0
+      flux:
+        name: heat_flux
+        functional_space: h(div)
+        rt_order: 0
+
+solver:
+  compositional:
+    formulation:
+      pressure:
+        functional_space: h1
+        fe_order: 1
+      component_densities:
+        num: 2
+        functional_space: h1
+        fe_order: 1
+
+solvers:
+  - type: linear_elasticity
+    params: ...
+  - type: single_phase_flow
+    params: ...
+  - type: laplace
+    params: ...
+
+solver:
+  single_phase_poromechanics:
+#    linear_momentum_balance:
+      formulation:
+        - displacement:
+            functional_space: h1
+            fe_order: 1
+        - pressure:
+            functional_space: h1
+            fe_order: 1
+        - pressure_bis:
+            functional_space: l2
+            fv_order: 0
+            numerical_flux_approximation: tpfa
+#    mass_balance:
+#      displacement:
+#        fe_space: h1
+#        fe_order: 1
+    time_integration: backward_euler
+    linear_solvers:
+      - params: ...
+    non_linear_solvers:
+      - params: ...
+
 #mesh:
 #  internal:
 #    element_type: hexahedra

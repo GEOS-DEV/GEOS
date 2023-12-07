@@ -1,6 +1,13 @@
 simulation:
   begin: 0
   end: 2 s
+  solver:
+    laplace:
+      formulation:
+        variable:
+          name: temperature
+          functional_space: h1
+          fe_order: 1
 
 mesh:
   internal:
