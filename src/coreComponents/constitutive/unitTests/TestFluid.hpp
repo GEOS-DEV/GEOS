@@ -44,12 +44,12 @@ struct Fluid
   static constexpr integer C8  =  9;
   static constexpr integer C10 = 10;
 
-  static constexpr integer Pc = 0;
-  static constexpr integer Tc = 1;
-  static constexpr integer Vc = 2;
-  static constexpr integer Ac = 3;
-  static constexpr integer Mw = 4;
-  static constexpr integer Vs = 5;
+  static constexpr integer Pc = 0;    // Critical pressure
+  static constexpr integer Tc = 1;    // Critical temperature
+  static constexpr integer Vc = 2;    // Critical colume
+  static constexpr integer Ac = 3;    // Accentric factor
+  static constexpr integer Mw = 4;    // Molecular weight
+  static constexpr integer Vs = 5;    // Volume shift
 
   static std::array< real64, 66 > data;
 };

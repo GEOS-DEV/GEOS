@@ -21,6 +21,7 @@
 
 #include "common/DataTypes.hpp"
 #include "constitutive/fluid/multifluid/MultiFluidConstants.hpp"
+#include "constitutive/fluid/multifluid/Layouts.hpp"
 
 namespace geos
 {
@@ -31,6 +32,7 @@ namespace constitutive
 struct RachfordRice
 {
 public:
+  using Deriv = multifluid::DerivativeOffset;
   /// Tolerance of the SSI loop
   static constexpr real64 SSITolerance = MultiFluidConstants::SSITolerance;
   /// Tolerance of the Newton loop
@@ -44,7 +46,7 @@ public:
 
   /**
    * @brief Function solving the Rachford-Rice equation
-   * @input[in] kValues the array fo K-values
+   * @input[in] kValues the array of K-values
    * @input[in] feed the component fractions
    * @input[in] presentComponentIds the indices of components with a non-zero fractions
    * @return the gas mole fraction
@@ -59,21 +61,8 @@ public:
     real64 gasPhaseMoleFraction = 0;
 
     // min and max Kvalues for non-zero composition
-    real64 maxK = 0.0;
-    real64 minK = 1 / epsilon;
-
-    for( integer i = 0; i < presentComponentIds.size(); ++i )
-    {
-      integer const ic = presentComponentIds[i];
-      if( kValues[ic] > maxK )
-      {
-        maxK = kValues[ic];
-      }
-      if( kValues[ic] < minK )
-      {
-        minK = kValues[ic];
-      }
-    }
+    real64 minK, maxK;
+    findKValueRange( kValues, presentComponentIds, minK, maxK );
 
     // check for trivial solutions.
     // this corresponds to bad Kvalues
@@ -117,12 +106,11 @@ public:
         funcXMax = evaluate( kValues, feed, presentComponentIds, xMax );
       }
       funcXMid = evaluate( kValues, feed, presentComponentIds, xMid );
-
       if( ( funcXMin < 0 ) && ( funcXMax < 0 ) )
       {
         return gasPhaseMoleFraction = 0.0;
       }
-      else if( ( funcXMin > 1 ) && ( funcXMax > 1 ) )
+      else if( ( funcXMin > 0 ) && ( funcXMax > 0 ) )
       {
         return gasPhaseMoleFraction = 1.0;
       }
@@ -178,6 +166,72 @@ public:
     return gasPhaseMoleFraction = newtonValue;
   }
 
+  /**
+   * @brief Compute derivatives after solving the Rachford-Rice equation
+   * @input[in] kValues the array of K-values
+   * @input[in] kValueDerivs derivatives of the K-values
+   * @input[in] feed the component fractions
+   * @input[in] presentComponentIds the indices of components with a non-zero fractions
+   * @input[in] vapourFraction the calculated vapour fraction
+   * @input[out] vapourFractionDerivs derivatives of the vapour fraction
+   * @return the gas mole fraction
+   **/
+  GEOS_HOST_DEVICE
+  void
+  static
+  computeDerivatives( arraySlice1d< real64 const > const kValues,
+                      arraySlice2d< real64 const > const kValueDerivs,
+                      arraySlice1d< real64 const > const feed,
+                      arraySlice1d< integer const > const presentComponentIds,
+                      real64 const vapourFraction,
+                      arraySlice1d< real64 > const vapourFractionDerivs )
+  {
+    integer const numComps = feed.size();
+    LvArray::forValuesInSlice( vapourFractionDerivs, []( real64 & val ){ val = 0.0; } );
+
+    // Look for trivial solutions
+    real64 minK, maxK;
+    findKValueRange( kValues, presentComponentIds, minK, maxK );
+    if( maxK < 1.0 || 1.0 < minK )
+    {
+      return;
+    }
+
+    for( integer const kc : {Deriv::dP, Deriv::dT} )
+    {
+      real64 numerator = 0.0;
+      real64 denominator = 0.0;
+      for( integer const ic : presentComponentIds )
+      {
+        real64 const k = ( kValues[ic] - 1.0 );
+        real64 const dk = 1.0 / ( 1.0 + vapourFraction * k );
+        numerator += feed[ic] * kValueDerivs( ic, kc ) * dk * (1.0 - k * vapourFraction * dk);
+        denominator += feed[ic] * k * k * dk * dk;
+      }
+      vapourFractionDerivs[kc] = numerator / denominator;
+    }
+
+    for( integer jc = 0; jc < numComps; ++jc )
+    {
+      integer const kc = Deriv::dC + jc;
+
+      real64 numerator = 0.0;
+      real64 denominator = 0.0;
+
+      for( integer const ic : presentComponentIds )
+      {
+        real64 const k = ( kValues[ic] - 1.0 );
+        real64 const dk = 1.0 / ( 1.0 + vapourFraction * k );
+        numerator += feed[ic] * kValueDerivs( ic, kc ) * dk * (1.0 - k * vapourFraction * dk);
+        denominator += feed[ic] * k * k * dk * dk;
+      }
+      real64 const k = ( kValues[jc] - 1.0 );
+      real64 const dk = 1.0 / ( 1.0 + vapourFraction * k );
+      numerator += k * dk;
+      vapourFractionDerivs[kc] = numerator / denominator;
+    }
+  }
+
 private:
 
   /**
@@ -231,6 +285,37 @@ private:
       value -= feed[ic] * r * r;
     }
     return value;
+  }
+
+  /**
+   * @brief Calculate the minimum and maximum k-value
+   * @input[in] kValues the array fo K-values
+   * @input[in] presentComponentIds the indices of components with a non-zero fractions
+   * @input[out] minK the minimum k-value for non-zero components
+   * @input[out] maxK the maximum k-value for non-zero components
+   **/
+  GEOS_FORCE_INLINE
+  GEOS_HOST_DEVICE
+  void
+  static
+  findKValueRange( arraySlice1d< real64 const > const kValues,
+                   arraySlice1d< integer const > const presentComponentIds,
+                   real64 & minK,
+                   real64 & maxK )
+  {
+    minK = 1.0 / epsilon;
+    maxK = 0.0;
+    for( integer const ic : presentComponentIds )
+    {
+      if( kValues[ic] > maxK )
+      {
+        maxK = kValues[ic];
+      }
+      if( kValues[ic] < minK )
+      {
+        minK = kValues[ic];
+      }
+    }
   }
 
 };
