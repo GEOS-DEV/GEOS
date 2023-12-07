@@ -421,16 +421,13 @@ protected:
   {
     GEOS_MARK_FUNCTION;
 
-    real64 dtReturn = dt;
-
-    real64 dtReturnTemporary;
-
     implicitStepSetup( time_n, dt, domain );
 
     NonlinearSolverParameters & solverParams = getNonlinearSolverParameters();
     integer & iter = solverParams.m_numNewtonIterations;
     iter = 0;
     bool isConverged = false;
+    real64 dtReturn = dt;
     /// Sequential coupling loop
     while( iter < solverParams.m_maxIterNewton )
     {
@@ -451,6 +448,7 @@ protected:
       m_solverStatistics.logNonlinearIteration( 0 );
 
       // Solve the subproblems nonlinearly
+      real64 dtReturnTemporary;
       forEachArgInTuple( m_solvers, [&]( auto & solver,
                                          auto idx )
       {
@@ -495,7 +493,7 @@ protected:
 
     GEOS_ERROR_IF( !isConverged, getDataContext() << ": sequentiallyCoupledSolverStep did not converge!" );
 
-    implicitStepComplete( time_n, dt, domain );
+    implicitStepComplete( time_n, dtReturn, domain );
 
     return dtReturn;
   }
