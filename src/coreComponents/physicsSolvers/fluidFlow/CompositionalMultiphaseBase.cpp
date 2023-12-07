@@ -540,11 +540,11 @@ void CompositionalMultiphaseBase::validateConstitutiveModels( DomainPartition co
       {
         bool const isFluidModelThermal = castedFluid.isThermal();
         GEOS_THROW_IF( m_isThermal && !isFluidModelThermal,
-                       GEOS_FMT( "CompositionalMultiphaseBase {}: the thermal option is enabled in the solver, but the fluid model `{}` is incompatible with the thermal option",
+                       GEOS_FMT( "CompositionalMultiphaseBase {}: the thermal option is enabled in the solver, but the fluid model {} is incompatible with the thermal option",
                                  getDataContext(), fluid.getDataContext() ),
                        InputError );
         GEOS_THROW_IF( !m_isThermal && isFluidModelThermal,
-                       GEOS_FMT( "CompositionalMultiphaseBase {}: the thermal option is enabled in fluid model `{}`, but the solver options are incompatible with the thermal option",
+                       GEOS_FMT( "CompositionalMultiphaseBase {}: the thermal option is enabled in fluid model {}, but the solver options are incompatible with the thermal option",
                                  getDataContext(), fluid.getDataContext() ),
                        InputError );
       } );
@@ -930,7 +930,7 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium()
 
     // check that the gravity vector is aligned with the z-axis
     GEOS_THROW_IF( !isZero( gravVector[0] ) || !isZero( gravVector[1] ),
-                   catalogName() << " " << getDataContext() <<
+                   getCatalogName() << " " << getDataContext() <<
                    ": the gravity vector specified in this simulation (" << gravVector[0] << " " << gravVector[1] << " " << gravVector[2] <<
                    ") is not aligned with the z-axis. \n"
                    "This is incompatible with the " << EquilibriumInitialCondition::catalogName() << " " << bc.getDataContext() <<
@@ -994,7 +994,7 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium()
 
       real64 const eps = 0.1 * (maxElevation - minElevation); // we add a small buffer to only log in the pathological cases
       GEOS_LOG_RANK_0_IF( ( (datumElevation > globalMaxElevation[equilIndex]+eps)  || (datumElevation < globalMinElevation[equilIndex]-eps) ),
-                          CompositionalMultiphaseBase::catalogName() << " " << getDataContext() <<
+                          getCatalogName() << " " << getDataContext() <<
                           ": By looking at the elevation of the cell centers in this model, GEOS found that " <<
                           "the min elevation is " << globalMinElevation[equilIndex] << " and the max elevation is " <<
                           globalMaxElevation[equilIndex] << "\nBut, a datum elevation of " << datumElevation <<
@@ -1053,7 +1053,7 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium()
       arrayView1d< string const > phaseNames = fluid.phaseNames();
       auto const itPhaseNames = std::find( std::begin( phaseNames ), std::end( phaseNames ), initPhaseName );
       GEOS_THROW_IF( itPhaseNames == std::end( phaseNames ),
-                     CompositionalMultiphaseBase::catalogName() << " " << getDataContext() << ": phase name " <<
+                     getCatalogName() << " " << getDataContext() << ": phase name " <<
                      initPhaseName << " not found in the phases of " << fluid.getDataContext(),
                      InputError );
       integer const ipInit = std::distance( std::begin( phaseNames ), itPhaseNames );
@@ -1087,14 +1087,14 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium()
                                                pressureValues.toView() );
 
         GEOS_THROW_IF( returnValue ==  isothermalCompositionalMultiphaseBaseKernels::HydrostaticPressureKernel::ReturnType::FAILED_TO_CONVERGE,
-                       CompositionalMultiphaseBase::catalogName() << " " << getDataContext() <<
+                       getCatalogName() << " " << getDataContext() <<
                        ": hydrostatic pressure initialization failed to converge in region " << region.getName() << "! \n" <<
                        "Try to loosen the equilibration tolerance, or increase the number of equilibration iterations. \n" <<
                        "If nothing works, something may be wrong in the fluid model, see <Constitutive> ",
                        std::runtime_error );
 
         GEOS_LOG_RANK_0_IF( returnValue == isothermalCompositionalMultiphaseBaseKernels::HydrostaticPressureKernel::ReturnType::DETECTED_MULTIPHASE_FLOW,
-                            CompositionalMultiphaseBase::catalogName() << " " << getDataContext() <<
+                            getCatalogName() << " " << getDataContext() <<
                             ": currently, GEOS assumes that there is only one mobile phase when computing the hydrostatic pressure. \n" <<
                             "We detected multiple phases using the provided datum pressure, temperature, and component fractions. \n" <<
                             "Please make sure that only one phase is mobile at the beginning of the simulation. \n" <<
@@ -2023,15 +2023,15 @@ real64 CompositionalMultiphaseBase::setNextDtBasedOnStateChange( real64 const & 
   maxAbsolutePhaseVolFracChange = MpiWrapper::max( maxAbsolutePhaseVolFracChange );
 
   GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "{}: Max relative pressure change during time step: {} %",
-                                      getName(), fmt::format( "{:.{}f}", 100*maxRelativePresChange, 3 ) ) );
+                                      getName(), GEOS_FMT( "{:.{}f}", 100*maxRelativePresChange, 3 ) ) );
   GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "{}: Max absolute phase volume fraction change during time step: {}",
-                                      getName(), fmt::format( "{:.{}f}", maxAbsolutePhaseVolFracChange, 3 ) ) );
+                                      getName(), GEOS_FMT( "{:.{}f}", maxAbsolutePhaseVolFracChange, 3 ) ) );
 
   if( m_isThermal )
   {
     maxRelativeTempChange = MpiWrapper::max( maxRelativeTempChange );
     GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "{}: Max relative temperature change during time step: {} %",
-                                        getName(), fmt::format( "{:.{}f}", 100*maxRelativeTempChange, 3 ) ) );
+                                        getName(), GEOS_FMT( "{:.{}f}", 100*maxRelativeTempChange, 3 ) ) );
   }
 
   real64 const eps = LvArray::NumericLimits< real64 >::epsilon;
