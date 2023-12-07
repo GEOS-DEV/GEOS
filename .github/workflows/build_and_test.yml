@@ -135,7 +135,7 @@ jobs:
         if [ "$(docker ps -aq -f name=${CONTAINER_NAME})" ]; then
           docker rm -f ${CONTAINER_NAME}
         fi
-        echo ${CONTAINER_NAME}
+        echo CONTAINER_NAME = ${CONTAINER_NAME}
 
         # In case of integrated tests run, we still want to send the results to the cloud for inspection.
         # While for standard build (if even possible), pushing a failed build would be pointless.
