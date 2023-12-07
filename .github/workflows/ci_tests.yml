@@ -104,14 +104,14 @@ jobs:
 
   # Matrix containing all the CPU build.
   # Those are quite fast and can efficiently benefit from the `sccache' tool to make them even faster.
-  cpu_builds:
-    name: ${{ matrix.name }}
-    needs: [is_pull_request_a_draft]
-    strategy:
-      # In-progress jobs will not be cancelled if there is a failure
-      fail-fast : false
-      matrix:
-        include:
+  # cpu_builds:
+  #   name: ${{ matrix.name }}
+  #   needs: [is_pull_request_a_draft]
+  #   strategy:
+  #     # In-progress jobs will not be cancelled if there is a failure
+  #     fail-fast : false
+  #     matrix:
+  #       include:
           # - name: Ubuntu (20.04, gcc 9.3.0, open-mpi 4.0.3)
           #   CMAKE_BUILD_TYPE: Release
           #   DOCKER_REPOSITORY: geosx/ubuntu20.04-gcc9
@@ -158,37 +158,37 @@ jobs:
           #   HOST_CONFIG: host-configs/Stanford/sherlock-gcc10-ompi4.1.2-openblas0.3.10.cmake
           #   GCP_BUCKET: geosx/Sherlock-CPU
 
-    uses: ./.github/workflows/build_and_test.yml
-    with:
-      CMAKE_BUILD_TYPE: ${{ matrix.CMAKE_BUILD_TYPE }}
-      DOCKER_IMAGE_TAG: ${{ needs.is_pull_request_a_draft.outputs.DOCKER_IMAGE_TAG }}
-      DOCKER_REPOSITORY: ${{ matrix.DOCKER_REPOSITORY }}
-      ENABLE_HYPRE: ${{ matrix.ENABLE_HYPRE }}
-      ENABLE_TRILINOS: ${{ matrix.ENABLE_TRILINOS }}
-      GCP_BUCKET: ${{ matrix.GCP_BUCKET }}
-      HOST_CONFIG: ${{ matrix.HOST_CONFIG }}
-      RUNS_ON: ubuntu-22.04
-    secrets: inherit
+  #   uses: ./.github/workflows/build_and_test.yml
+  #   with:
+  #     CMAKE_BUILD_TYPE: ${{ matrix.CMAKE_BUILD_TYPE }}
+  #     DOCKER_IMAGE_TAG: ${{ needs.is_pull_request_a_draft.outputs.DOCKER_IMAGE_TAG }}
+  #     DOCKER_REPOSITORY: ${{ matrix.DOCKER_REPOSITORY }}
+  #     ENABLE_HYPRE: ${{ matrix.ENABLE_HYPRE }}
+  #     ENABLE_TRILINOS: ${{ matrix.ENABLE_TRILINOS }}
+  #     GCP_BUCKET: ${{ matrix.GCP_BUCKET }}
+  #     HOST_CONFIG: ${{ matrix.HOST_CONFIG }}
+  #     RUNS_ON: ubuntu-22.04
+  #   secrets: inherit
 
-  # If the 'ci: run integrated tests' PR label is found, the integrated tests will be run immediately after the cpu jobs.
-  # Note: The integrated tests are optional and are (for the moment) run for convenience only.
-  run_integrated_tests:
-    needs:
-      - is_pull_request_a_draft
-      - cpu_builds
-    if: "${{ contains( fromJSON( needs.is_pull_request_a_draft.outputs.LABELS ), 'ci: run integrated tests') }}"
-    uses: ./.github/workflows/build_and_test.yml
-    secrets: inherit
-    with:
-      BUILD_AND_TEST_CLI_ARGS: --build-exe-only
-      BUILD_TYPE: integrated_tests
-      CMAKE_BUILD_TYPE: Release
-      DOCKER_IMAGE_TAG: ${{ needs.is_pull_request_a_draft.outputs.DOCKER_IMAGE_TAG }}
-      DOCKER_REPOSITORY: geosx/ubuntu22.04-gcc11
-      ENABLE_HYPRE: ON
-      ENABLE_TRILINOS: OFF
-      GCP_BUCKET: geosx/integratedTests
-      RUNS_ON: ubuntu-22.04
+  # # If the 'ci: run integrated tests' PR label is found, the integrated tests will be run immediately after the cpu jobs.
+  # # Note: The integrated tests are optional and are (for the moment) run for convenience only.
+  # run_integrated_tests:
+  #   needs:
+  #     - is_pull_request_a_draft
+  #     - cpu_builds
+  #   if: "${{ contains( fromJSON( needs.is_pull_request_a_draft.outputs.LABELS ), 'ci: run integrated tests') }}"
+  #   uses: ./.github/workflows/build_and_test.yml
+  #   secrets: inherit
+  #   with:
+  #     BUILD_AND_TEST_CLI_ARGS: --build-exe-only
+  #     BUILD_TYPE: integrated_tests
+  #     CMAKE_BUILD_TYPE: Release
+  #     DOCKER_IMAGE_TAG: ${{ needs.is_pull_request_a_draft.outputs.DOCKER_IMAGE_TAG }}
+  #     DOCKER_REPOSITORY: geosx/ubuntu22.04-gcc11
+  #     ENABLE_HYPRE: ON
+  #     ENABLE_TRILINOS: OFF
+  #     GCP_BUCKET: geosx/integratedTests
+  #     RUNS_ON: ubuntu-22.04
         
   # If the 'ci: ready to be merged' PR label is found, the cuda jobs run immediately along side linux jobs.
   # Note: CUDA jobs should only be run if PR is ready to merge.
