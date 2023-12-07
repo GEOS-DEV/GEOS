@@ -23,6 +23,7 @@
 #include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
 #include "physicsSolvers/multiphysics/PoromechanicsFields.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsFields.hpp"
+#include "finiteElement/BilinearFormUtilities.hpp"
 
 namespace geos
 {
@@ -133,6 +134,10 @@ quadraturePointKernel( localIndex const k,
 
   FE_TYPE::symmetricGradient( dNdX, stack.uhat_local, strainInc );
 
+  real64 porosity = 0.0;
+  real64 porosity_n = 0.0;
+  real64 dPorosity_dVolStrain = 0.0;
+
   // Evaluate total stress and its derivatives
   // TODO: allow for a customization of the kernel to pass the average pressure to the small strain update (to account for cap pressure
   // later)
@@ -145,7 +150,10 @@ quadraturePointKernel( localIndex const k,
                                                                   m_temperature[k],
                                                                   strainInc,
                                                                   totalStress,
-                                                                  stiffness );
+                                                                  stiffness,
+                                                                  porosity,
+                                                                  porosity_n,
+                                                                  dPorosity_dVolStrain);
 
   for( localIndex i=0; i<6; ++i )
   {
@@ -172,7 +180,26 @@ quadraturePointKernel( localIndex const k,
                                                                          stack.uhat_local,
                                                                          reinterpret_cast< real64 (&)[numNodesPerElem][3] >(stack.localResidual),
                                                                          -stabilizationScaling );
-  stiffness.template upperBTDB< numNodesPerElem >( dNdX, -detJxW, stack.localJacobian );
+  //stiffness.template upperBTDB< numNodesPerElem >( dNdX, -detJxW, stack.localJacobian );
+  stiffness.template BTDB< numNodesPerElem >( dNdX, -detJxW, stack.localJacobian );
+
+  using namespace PDEUtilities;
+
+  constexpr FunctionSpace displacementTrialSpace = FE_TYPE::template getFunctionSpace< numDofPerTrialSupportPoint >();
+  constexpr FunctionSpace displacementTestSpace = displacementTrialSpace;
+  constexpr FunctionSpace pressureTrialSpace = FunctionSpace::P0;
+
+//  BilinearFormUtilities::compute< displacementTestSpace,
+//    displacementTrialSpace,
+//    DifferentialOperator::Identity,
+//    DifferentialOperator::Divergence >
+//    (
+//      stack.localJacobian,
+//      N,
+//      stack.dBodyForce_dVolStrainIncrement,
+//      dNdX,
+//      detJxW );
+
 }
 
 template< typename SUBREGION_TYPE,
@@ -188,7 +215,7 @@ complete( localIndex const k,
   real64 maxForce = 0;
 
   // TODO: Does this work if BTDB is non-symmetric?
-  CONSTITUTIVE_TYPE::KernelWrapper::DiscretizationOps::template fillLowerBTDB< numNodesPerElem >( stack.localJacobian );
+  //CONSTITUTIVE_TYPE::KernelWrapper::DiscretizationOps::template fillLowerBTDB< numNodesPerElem >( stack.localJacobian );
   localIndex const numSupportPoints =
     m_finiteElementSpace.template numSupportPoints< FE_TYPE >( stack.feStack );
   for( int localNode = 0; localNode < numSupportPoints; ++localNode )

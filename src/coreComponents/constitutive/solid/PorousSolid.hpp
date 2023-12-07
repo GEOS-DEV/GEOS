@@ -130,7 +130,10 @@ public:
                                                   real64 const & temperature,
                                                   real64 const ( &strainIncrement )[6],
                                                   real64 ( & totalStress )[6],
-                                                  DiscretizationOps & stiffness ) const
+                                                  DiscretizationOps & stiffness,
+                                                  real64 & porosity,
+                                                  real64 & porosity_n,
+                                                  real64 & dPorosity_dVolStrain) const
   {
     real64 dTotalStress_dPressure[6]{};
     real64 dTotalStress_dTemperature[6]{};
@@ -152,6 +155,22 @@ public:
     real64 const bulkModulus = m_solidUpdate.getBulkModulus( k );
     real64 const meanEffectiveStressIncrement = bulkModulus * ( strainIncrement[0] + strainIncrement[1] + strainIncrement[2] );
     m_porosityUpdate.updateMeanEffectiveStressIncrement( k, q, meanEffectiveStressIncrement );
+
+    // Compute porosity and its derivatives
+    real64 const deltaPressure = pressure - pressure_n;
+    real64 const deltaTemperature = temperature - temperature_n;
+    real64 porosityInit, dPorosity_dPressure, dPorosity_dTemperature;
+    computePorosity( k,
+                     q,
+                     deltaPressure,
+                     deltaTemperature,
+                     strainIncrement,
+                     porosity,
+                     porosity_n,
+                     porosityInit,
+                     dPorosity_dVolStrain,
+                     dPorosity_dPressure,
+                     dPorosity_dTemperature );
   }
 
   /**
