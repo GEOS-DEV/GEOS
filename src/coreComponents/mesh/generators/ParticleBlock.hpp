@@ -190,6 +190,26 @@ public:
   bool hasRVectors() const override
   { return m_hasRVectors; }
 
+  array2d< real64 > getParticleInitialSurfaceNormal() const override
+  { return m_particleInitialSurfaceNormal; }
+
+  /**
+   * @brief Set the list of surface normals in this subregion.
+   * @param particleInitialSurfaceNormal The input list of initial normals
+   */
+  void setParticleInitialSurfaceNormal( array2d< real64 > const particleInitialSurfaceNormal )
+  { m_particleInitialSurfaceNormal = particleInitialSurfaceNormal; }
+
+  array2d< real64 > getParticleSurfaceNormal() const override
+  { return m_particleSurfaceNormal; }
+
+  /**
+   * @brief Set the list of surface normals in this subregion.
+   * @param particleSurfaceNormal The input list of normals
+   */
+  void setParticleSurfaceNormal( array2d< real64 > const particleSurfaceNormal )
+  { m_particleSurfaceNormal = particleSurfaceNormal; }
+
   localIndex numParticles() const override
   { return size(); }
 
@@ -267,6 +287,12 @@ private:
 
   /// R-vectors
   array3d< real64 > m_particleRVectors;
+
+  /// Member level field for the particle initial surface normal.
+  array2d< real64 > m_particleInitialSurfaceNormal;
+
+  /// Member level field for the particle surface normal.
+  array2d< real64 > m_particleSurfaceNormal;
 
   std::list< dataRepository::WrapperBase * > getExternalProperties() override
   {

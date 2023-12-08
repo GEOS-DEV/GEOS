@@ -225,6 +225,7 @@ void ParticleMeshGenerator::generateMesh( DomainPartition & domain )
     array1d< real64 > particleVolume( npInBlock );
     array1d< real64 > particleStrengthScale( npInBlock );
     array3d< real64 > particleRVectors( npInBlock, 3, 3 ); // TODO: Flatten the r-vector array into a 1x9 for each particle
+    array2d< real64 > particleSurfaceNormal( npInBlock, 3); // TODO:: read from file eventually
 
     // Assign particle data to the appropriate block.
     std::vector< int > & indices = indexMap[particleBlockName];
@@ -306,6 +307,12 @@ void ParticleMeshGenerator::generateMesh( DomainPartition & domain )
         GEOS_ERROR( "Invalid particle type specification! Cannot determine particle volume, aborting." );
       }
 
+      // Surface Normal ( currently only works assuming that particles are formatted for CPDI data)
+      // CC: TODO eventually include header in particle file for column data
+      particleSurfaceNormal[index][0] = particleData[particleType][i][24];
+      particleSurfaceNormal[index][1] = particleData[particleType][i][25];
+      particleSurfaceNormal[index][2] = particleData[particleType][i][26];
+
       // Increment index
       index++;
     }
@@ -320,6 +327,8 @@ void ParticleMeshGenerator::generateMesh( DomainPartition & domain )
     particleBlock.setParticleStrengthScale( particleStrengthScale );
     particleBlock.setParticleVolume( particleVolume );
     particleBlock.setParticleRVectors( particleRVectors );
+    particleBlock.setParticleInitialSurfaceNormal( particleSurfaceNormal );
+    particleBlock.setParticleSurfaceNormal( particleSurfaceNormal );
   } // loop over particle blocks
 
   // Resize particle regions
