@@ -58,9 +58,9 @@ int main( int argc, char *argv[] )
     std::chrono::system_clock::duration totalTime = endTime - startTime;
 
     GEOS_LOG_RANK_0( GEOS_FMT( "Finished at {:%Y-%m-%d %H:%M:%S}", endTime ) );
-    GEOS_LOG_RANK_0( GEOS_FMT( "total time            {}", units::formatLongDuration( totalTime ) ) );
-    GEOS_LOG_RANK_0( GEOS_FMT( "initialization time   {}", units::formatLongDuration( initTime ) ) );
-    GEOS_LOG_RANK_0( GEOS_FMT( "run time              {}", units::formatLongDuration( runTime ) ) );
+    GEOS_LOG_RANK_0( GEOS_FMT( "total time            {}", units::TimeFormatInfo::fromDuration( totalTime ) ) );
+    GEOS_LOG_RANK_0( GEOS_FMT( "initialization time   {}", units::TimeFormatInfo::fromDuration( initTime ) ) );
+    GEOS_LOG_RANK_0( GEOS_FMT( "run time              {}", units::TimeFormatInfo::fromDuration( runTime ) ) );
 
     return 0;
   }
