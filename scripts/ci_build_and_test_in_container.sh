@@ -140,10 +140,6 @@ EOT
   SCCACHE_CMAKE_ARGS="-DCMAKE_CXX_COMPILER_LAUNCHER=${SCCACHE} -DCMAKE_CUDA_COMPILER_LAUNCHER=${SCCACHE}"
 
   DOCKER_CERTS_DIR=/usr/local/share/ca-certificates
-  for cert in ${GEOS_SRC_DIR}/certificates/*.crt.pem; do
-    cp ${cert} /usr/local/share/ca-certificates/
-
-
   for file in "${GEOS_SRC_DIR}"/certificates/*.crt.pem; do
     if [ -f "$file" ]; then
       filename=$(basename -- "$file")
