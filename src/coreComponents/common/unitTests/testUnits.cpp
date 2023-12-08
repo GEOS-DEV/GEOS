@@ -69,11 +69,11 @@ TEST( Units, SystemDurationFormatTest )
       Days( 20 ) + hours( 12 ) + seconds( 145 ) + milliseconds( 16 ) ),
 
     DurationCase(
-      "1y, 00h00m00s (31556952 s)",
-      Years( 1 ) + hours( 12 ) ),
+      "1y, 0d, 00h00m00s (31556952 s)",
+      Years( 1 ) ),
 
     DurationCase(
-      "1y, 12h00m00s (31600152 s)",
+      "1y, 0d, 12h00m00s (31600152 s)",
       Years( 1 ) + hours( 12 ) ),
 
     DurationCase(
@@ -93,11 +93,11 @@ TEST( Units, SystemDurationFormatTest )
       Years( 14 ) - minutes( 1 ) ),
 
     DurationCase(
-      "14y, 00h00m00s (441797328 s)",
+      "14y, 0d, 00h00m00s (441797328 s)",
       Years( 14 ) ),
 
     DurationCase(
-      "14y, 12h00m00s (441840528 s)",
+      "14y, 0d, 12h00m00s (441840528 s)",
       Years( 14 ) + hours( 12 ) ),
 
     DurationCase(
