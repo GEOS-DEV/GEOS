@@ -169,7 +169,7 @@ struct TimeFormatInfo
 
   TimeFormatInfo( double totalSeconds, int years, int days, int hours, int minutes, int seconds );
   static TimeFormatInfo fromSeconds( double const seconds );
-  template< typename Duration > static TimeFormatInfo fromDuration( Duration duration );
+  template< typename DURATION > static TimeFormatInfo fromDuration( DURATION duration );
 
   friend std::ostream & operator<<( std::ostream & os, TimeFormatInfo const & ctx );
 

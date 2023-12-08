@@ -57,8 +57,8 @@ std::ostream & operator<<( std::ostream & os, TimeFormatInfo const & info )
 }
 
 
-template< typename Duration >
-TimeFormatInfo TimeFormatInfo::fromDuration( Duration const value )
+template< typename DURATION >
+TimeFormatInfo TimeFormatInfo::fromDuration( DURATION const value )
 {
   using namespace std::chrono;
 

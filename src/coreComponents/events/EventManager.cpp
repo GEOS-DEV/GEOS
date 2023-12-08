@@ -228,14 +228,13 @@ void EventManager::outputTime() const
 {
   // The formating here is a work in progress.
   GEOS_LOG_RANK_0( GEOS_FMT( "\n"
-                             "-----------------------------------------------------------"
                              "-------------------- TIMESTEP START -----------------------"
                              "    - Time:       {}"
                              "    - Delta Time: {}"
                              "    - Cycle:      {}"
                              "-----------------------------------------------------------\n",
-                             units::TimeFormatInfo::fromSeconds( m_time ), 
-                             units::TimeFormatInfo::fromSeconds( m_dt ), 
+                             units::TimeFormatInfo::fromSeconds( m_time ),
+                             units::TimeFormatInfo::fromSeconds( m_dt ),
                              m_cycle ));
 
   // We are keeping the old outputs to keep compatibility with current log reading scripts.
