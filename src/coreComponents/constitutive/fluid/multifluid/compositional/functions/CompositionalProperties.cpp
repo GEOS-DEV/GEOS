@@ -117,7 +117,7 @@ GEOS_HOST_DEVICE
 void CompositionalProperties::computeMassDensity( integer const numComps,
                                                   arraySlice1d< real64 const > const & molecularWeight,
                                                   real64 const molarDensity,
-                                                  arraySlice1d< real64 const > const molarDensityDerivs,
+                                                  arraySlice1d< real64 const > const & molarDensityDerivs,
                                                   real64 const massDensity,
                                                   arraySlice1d< real64 > const & massDensityDerivs )
 {

@@ -49,7 +49,7 @@ public:
                                 real64 const pressure,
                                 real64 const temperature,
                                 ComponentProperties::KernelWrapper const & componentProperties,
-                                arraySlice1d< real64 > const kValues )
+                                arraySlice1d< real64 > const & kValues )
   {
     arrayView1d< real64 const > const & criticalPressure = componentProperties.m_componentCriticalPressure;
     arrayView1d< real64 const > const & criticalTemperature = componentProperties.m_componentCriticalTemperature;

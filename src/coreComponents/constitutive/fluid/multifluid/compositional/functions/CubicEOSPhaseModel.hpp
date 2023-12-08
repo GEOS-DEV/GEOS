@@ -97,9 +97,9 @@ public:
   computeLogFugacityCoefficients( integer const numComps,
                                   real64 const & pressure,
                                   real64 const & temperature,
-                                  arrayView1d< real64 const > const composition,
+                                  arraySlice1d< real64 const > const & composition,
                                   ComponentProperties::KernelWrapper const & componentProperties,
-                                  arraySlice1d< real64 > const logFugacityCoefficients );
+                                  arraySlice1d< real64 > const & logFugacityCoefficients );
 
   /**
    * @brief Secondary entry point of the cubic EOS model
@@ -118,10 +118,10 @@ public:
   computeLogFugacityCoefficients( integer const numComps,
                                   real64 const & pressure,
                                   real64 const & temperature,
-                                  arrayView1d< real64 const > const composition,
+                                  arraySlice1d< real64 const > const & composition,
                                   ComponentProperties::KernelWrapper const & componentProperties,
-                                  arraySlice1d< real64 const > const logFugacityCoefficients,
-                                  arraySlice2d< real64 > const logFugacityCoefficientDerivs );
+                                  arraySlice1d< real64 const > const & logFugacityCoefficients,
+                                  arraySlice2d< real64 > const & logFugacityCoefficientDerivs );
   /**
    * @brief Compute the mixture coefficients using pressure, temperature, composition and input
    * @param[in] numComps number of components
@@ -140,10 +140,10 @@ public:
   computeMixtureCoefficients( integer const numComps,
                               real64 const & pressure,
                               real64 const & temperature,
-                              arrayView1d< real64 const > const composition,
+                              arraySlice1d< real64 const > const & composition,
                               ComponentProperties::KernelWrapper const & componentProperties,
-                              arraySlice1d< real64 > const aPureCoefficient,
-                              arraySlice1d< real64 > const bPureCoefficient,
+                              arraySlice1d< real64 > const & aPureCoefficient,
+                              arraySlice1d< real64 > const & bPureCoefficient,
                               real64 & aMixtureCoefficient,
                               real64 & bMixtureCoefficient );
 
@@ -168,14 +168,14 @@ public:
   computeMixtureCoefficients( integer const numComps,
                               real64 const & pressure,
                               real64 const & temperature,
-                              arrayView1d< real64 const > const composition,
+                              arraySlice1d< real64 const > const & composition,
                               ComponentProperties::KernelWrapper const & componentProperties,
-                              arraySlice1d< real64 const > const aPureCoefficient,
-                              arraySlice1d< real64 const > const bPureCoefficient,
+                              arraySlice1d< real64 const > const & aPureCoefficient,
+                              arraySlice1d< real64 const > const & bPureCoefficient,
                               real64 const aMixtureCoefficient,
                               real64 const bMixtureCoefficient,
-                              arraySlice1d< real64 > const aMixtureCoefficientDerivs,
-                              arraySlice1d< real64 > const bMixtureCoefficientDerivs );
+                              arraySlice1d< real64 > const & aMixtureCoefficientDerivs,
+                              arraySlice1d< real64 > const & bMixtureCoefficientDerivs );
 
   /**
    * @brief Compute the compressibility factor using compositions, BICs, and mixture coefficients
@@ -192,10 +192,10 @@ public:
   GEOS_FORCE_INLINE
   static void
   computeCompressibilityFactor( integer const numComps,
-                                arrayView1d< real64 const > const composition,
-                                arrayView2d< real64 const > const binaryInteractionCoefficients,
-                                arraySlice1d< real64 const > const aPureCoefficient,
-                                arraySlice1d< real64 const > const bPureCoefficient,
+                                arraySlice1d< real64 const > const & composition,
+                                arraySlice2d< real64 const > const & binaryInteractionCoefficients,
+                                arraySlice1d< real64 const > const & aPureCoefficient,
+                                arraySlice1d< real64 const > const & bPureCoefficient,
                                 real64 const & aMixtureCoefficient,
                                 real64 const & bMixtureCoefficient,
                                 real64 & compressibilityFactor );
@@ -218,9 +218,9 @@ public:
                                 real64 const & aMixtureCoefficient,
                                 real64 const & bMixtureCoefficient,
                                 real64 const & compressibilityFactor,
-                                arraySlice1d< real64 const > const aMixtureCoefficientDerivs,
-                                arraySlice1d< real64 const > const bMixtureCoefficientDerivs,
-                                arraySlice1d< real64 > const compressibilityFactorDerivs );
+                                arraySlice1d< real64 const > const & aMixtureCoefficientDerivs,
+                                arraySlice1d< real64 const > const & bMixtureCoefficientDerivs,
+                                arraySlice1d< real64 > const & compressibilityFactorDerivs );
 
   /**
    * @brief Compute the log of the fugacity coefficients using compositions, BICs, compressibility factor and mixture coefficients
@@ -238,14 +238,14 @@ public:
   GEOS_FORCE_INLINE
   static void
   computeLogFugacityCoefficients( integer const numComps,
-                                  arrayView1d< real64 const > const composition,
-                                  arrayView2d< real64 const > const binaryInteractionCoefficients,
+                                  arraySlice1d< real64 const > const & composition,
+                                  arraySlice2d< real64 const > const & binaryInteractionCoefficients,
                                   real64 const & compressibilityFactor,
-                                  arraySlice1d< real64 const > const aPureCoefficient,
-                                  arraySlice1d< real64 const > const bPureCoefficient,
+                                  arraySlice1d< real64 const > const & aPureCoefficient,
+                                  arraySlice1d< real64 const > const & bPureCoefficient,
                                   real64 const & aMixtureCoefficient,
                                   real64 const & bMixtureCoefficient,
-                                  arraySlice1d< real64 > const logFugacityCoefficients );
+                                  arraySlice1d< real64 > const & logFugacityCoefficients );
 
   /**
    * @brief Helper functions solving a cubic equation using trigonometry
@@ -276,9 +276,9 @@ CubicEOSPhaseModel< EOS_TYPE >::
 computeLogFugacityCoefficients( integer const numComps,
                                 real64 const & pressure,
                                 real64 const & temperature,
-                                arrayView1d< real64 const > const composition,
+                                arraySlice1d< real64 const > const & composition,
                                 ComponentProperties::KernelWrapper const & componentProperties,
-                                arraySlice1d< real64 > const logFugacityCoefficients )
+                                arraySlice1d< real64 > const & logFugacityCoefficients )
 {
   // step 0: allocate the stack memory needed for the update
   stackArray1d< real64, MultiFluidConstants::MAX_NUM_COMPONENTS > aPureCoefficient( numComps );
@@ -287,7 +287,7 @@ computeLogFugacityCoefficients( integer const numComps,
   real64 bMixtureCoefficient = 0.0;
   real64 compressibilityFactor = 0.0;
 
-  arrayView2d< real64 const > const & binaryInteractionCoefficients = componentProperties.m_componentBinaryCoeff;
+  arraySlice2d< real64 const > const & binaryInteractionCoefficients = componentProperties.m_componentBinaryCoeff;
 
   // step 1: compute the mixture coefficients aPureCoefficient, bPureCoefficient, aMixtureCoefficient, bMixtureCoefficient
   computeMixtureCoefficients( numComps, // number of components
@@ -329,12 +329,12 @@ CubicEOSPhaseModel< EOS_TYPE >::
 computeLogFugacityCoefficients( integer const numComps,
                                 real64 const & pressure,
                                 real64 const & temperature,
-                                arrayView1d< real64 const > const composition,
+                                arraySlice1d< real64 const > const & composition,
                                 ComponentProperties::KernelWrapper const & componentProperties,
-                                arraySlice1d< real64 const > const logFugacityCoefficients,
-                                arraySlice2d< real64 > const logFugacityCoefficientDerivs )
+                                arraySlice1d< real64 const > const & logFugacityCoefficients,
+                                arraySlice2d< real64 > const & logFugacityCoefficientDerivs )
 {
-  array1d< real64 > displacedComposition( numComps );
+  stackArray1d< real64, MultiFluidConstants::MAX_NUM_COMPONENTS > displacedComposition( numComps );
   stackArray1d< real64, MultiFluidConstants::MAX_NUM_COMPONENTS > displacedLogFugacityCoefficients( numComps );
 
   // Pressure derivative
@@ -375,7 +375,7 @@ computeLogFugacityCoefficients( integer const numComps,
     computeLogFugacityCoefficients( numComps,
                                     pressure,
                                     temperature,
-                                    displacedComposition.toViewConst(),
+                                    displacedComposition.toSliceConst(),
                                     componentProperties,
                                     displacedLogFugacityCoefficients );
     for( integer ic = 0; ic < numComps; ++ic )
@@ -393,17 +393,17 @@ CubicEOSPhaseModel< EOS_TYPE >::
 computeMixtureCoefficients( integer const numComps,
                             real64 const & pressure,
                             real64 const & temperature,
-                            arrayView1d< real64 const > const composition,
+                            arraySlice1d< real64 const > const & composition,
                             ComponentProperties::KernelWrapper const & componentProperties,
-                            arraySlice1d< real64 > const aPureCoefficient,
-                            arraySlice1d< real64 > const bPureCoefficient,
+                            arraySlice1d< real64 > const & aPureCoefficient,
+                            arraySlice1d< real64 > const & bPureCoefficient,
                             real64 & aMixtureCoefficient,
                             real64 & bMixtureCoefficient )
 {
-  arrayView1d< real64 const > const & criticalPressure = componentProperties.m_componentCriticalPressure;
-  arrayView1d< real64 const > const & criticalTemperature = componentProperties.m_componentCriticalTemperature;
-  arrayView1d< real64 const > const & acentricFactor = componentProperties.m_componentAcentricFactor;
-  arrayView2d< real64 const > const & binaryInteractionCoefficients = componentProperties.m_componentBinaryCoeff;
+  arraySlice1d< real64 const > const & criticalPressure = componentProperties.m_componentCriticalPressure;
+  arraySlice1d< real64 const > const & criticalTemperature = componentProperties.m_componentCriticalTemperature;
+  arraySlice1d< real64 const > const & acentricFactor = componentProperties.m_componentAcentricFactor;
+  arraySlice2d< real64 const > const & binaryInteractionCoefficients = componentProperties.m_componentBinaryCoeff;
 
   // mixture coefficients
   for( integer ic = 0; ic < numComps; ++ic )
@@ -434,18 +434,18 @@ CubicEOSPhaseModel< EOS_TYPE >::
 computeMixtureCoefficients( integer const numComps,
                             real64 const & pressure,
                             real64 const & temperature,
-                            arrayView1d< real64 const > const composition,
+                            arraySlice1d< real64 const > const & composition,
                             ComponentProperties::KernelWrapper const & componentProperties,
-                            arraySlice1d< real64 const > const aPureCoefficient,
-                            arraySlice1d< real64 const > const bPureCoefficient,
+                            arraySlice1d< real64 const > const & aPureCoefficient,
+                            arraySlice1d< real64 const > const & bPureCoefficient,
                             real64 const aMixtureCoefficient,
                             real64 const bMixtureCoefficient,
-                            arraySlice1d< real64 > const aMixtureCoefficientDerivs,
-                            arraySlice1d< real64 > const bMixtureCoefficientDerivs )
+                            arraySlice1d< real64 > const & aMixtureCoefficientDerivs,
+                            arraySlice1d< real64 > const & bMixtureCoefficientDerivs )
 {
-  arrayView1d< real64 const > const & criticalTemperature = componentProperties.m_componentCriticalTemperature;
-  arrayView1d< real64 const > const & acentricFactor = componentProperties.m_componentAcentricFactor;
-  arrayView2d< real64 const > const & binaryInteractionCoefficients = componentProperties.m_componentBinaryCoeff;
+  arraySlice1d< real64 const > const & criticalTemperature = componentProperties.m_componentCriticalTemperature;
+  arraySlice1d< real64 const > const & acentricFactor = componentProperties.m_componentAcentricFactor;
+  arraySlice2d< real64 const > const & binaryInteractionCoefficients = componentProperties.m_componentBinaryCoeff;
 
   stackArray1d< real64, MultiFluidConstants::MAX_NUM_COMPONENTS > daPureCoefficient_dx( numComps );
 
@@ -496,10 +496,10 @@ GEOS_HOST_DEVICE
 void
 CubicEOSPhaseModel< EOS_TYPE >::
 computeCompressibilityFactor( integer const numComps,
-                              arrayView1d< real64 const > const composition,
-                              arrayView2d< real64 const > const binaryInteractionCoefficients,
-                              arraySlice1d< real64 const > const aPureCoefficient,
-                              arraySlice1d< real64 const > const bPureCoefficient,
+                              arraySlice1d< real64 const > const & composition,
+                              arraySlice2d< real64 const > const & binaryInteractionCoefficients,
+                              arraySlice1d< real64 const > const & aPureCoefficient,
+                              arraySlice1d< real64 const > const & bPureCoefficient,
                               real64 const & aMixtureCoefficient,
                               real64 const & bMixtureCoefficient,
                               real64 & compressibilityFactor )
@@ -568,9 +568,9 @@ computeCompressibilityFactor( integer const numComps,
                               real64 const & aMixtureCoefficient,
                               real64 const & bMixtureCoefficient,
                               real64 const & compressibilityFactor,
-                              arraySlice1d< real64 const > const aMixtureCoefficientDerivs,
-                              arraySlice1d< real64 const > const bMixtureCoefficientDerivs,
-                              arraySlice1d< real64 > const compressibilityFactorDerivs )
+                              arraySlice1d< real64 const > const & aMixtureCoefficientDerivs,
+                              arraySlice1d< real64 const > const & bMixtureCoefficientDerivs,
+                              arraySlice1d< real64 > const & compressibilityFactorDerivs )
 {
   constexpr real64 d1pd2 = EOS_TYPE::delta1 + EOS_TYPE::delta2;
   constexpr real64 d1xd2 = EOS_TYPE::delta1 * EOS_TYPE::delta2;
@@ -616,14 +616,14 @@ GEOS_HOST_DEVICE
 void
 CubicEOSPhaseModel< EOS_TYPE >::
 computeLogFugacityCoefficients( integer const numComps,
-                                arrayView1d< real64 const > const composition,
-                                arrayView2d< real64 const > const binaryInteractionCoefficients,
+                                arraySlice1d< real64 const > const & composition,
+                                arraySlice2d< real64 const > const & binaryInteractionCoefficients,
                                 real64 const & compressibilityFactor,
-                                arraySlice1d< real64 const > const aPureCoefficient,
-                                arraySlice1d< real64 const > const bPureCoefficient,
+                                arraySlice1d< real64 const > const & aPureCoefficient,
+                                arraySlice1d< real64 const > const & bPureCoefficient,
                                 real64 const & aMixtureCoefficient,
                                 real64 const & bMixtureCoefficient,
-                                arraySlice1d< real64 > const logFugacityCoefficients )
+                                arraySlice1d< real64 > const & logFugacityCoefficients )
 {
   stackArray1d< real64, MultiFluidConstants::MAX_NUM_COMPONENTS > ki( numComps );
 

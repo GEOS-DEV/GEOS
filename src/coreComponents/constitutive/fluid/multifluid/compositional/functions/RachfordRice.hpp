@@ -54,9 +54,9 @@ public:
   GEOS_HOST_DEVICE
   real64
   static
-  solve( arraySlice1d< real64 const > const kValues,
-         arraySlice1d< real64 const > const feed,
-         arraySlice1d< integer const > const presentComponentIds )
+  solve( arraySlice1d< real64 const > const & kValues,
+         arraySlice1d< real64 const > const & feed,
+         arraySlice1d< integer const > const & presentComponentIds )
   {
     real64 gasPhaseMoleFraction = 0;
 
@@ -179,12 +179,12 @@ public:
   GEOS_HOST_DEVICE
   void
   static
-  computeDerivatives( arraySlice1d< real64 const > const kValues,
-                      arraySlice2d< real64 const > const kValueDerivs,
-                      arraySlice1d< real64 const > const feed,
-                      arraySlice1d< integer const > const presentComponentIds,
+  computeDerivatives( arraySlice1d< real64 const > const & kValues,
+                      arraySlice2d< real64 const > const & kValueDerivs,
+                      arraySlice1d< real64 const > const & feed,
+                      arraySlice1d< integer const > const & presentComponentIds,
                       real64 const vapourFraction,
-                      arraySlice1d< real64 > const vapourFractionDerivs )
+                      arraySlice1d< real64 > const & vapourFractionDerivs )
   {
     integer const numComps = feed.size();
     LvArray::forValuesInSlice( vapourFractionDerivs, []( real64 & val ){ val = 0.0; } );
@@ -245,9 +245,9 @@ private:
   GEOS_HOST_DEVICE
   real64
   static
-  evaluate( arraySlice1d< real64 const > const kValues,
-            arraySlice1d< real64 const > const feed,
-            arraySlice1d< integer const > const presentComponentIds,
+  evaluate( arraySlice1d< real64 const > const & kValues,
+            arraySlice1d< real64 const > const & feed,
+            arraySlice1d< integer const > const & presentComponentIds,
             real64 const & x )
   {
     real64 value = 0.0;
@@ -271,9 +271,9 @@ private:
   GEOS_HOST_DEVICE
   real64
   static
-  evaluateDerivative( arraySlice1d< real64 const > const kValues,
-                      arraySlice1d< real64 const > const feed,
-                      arraySlice1d< integer const > const presentComponentIds,
+  evaluateDerivative( arraySlice1d< real64 const > const & kValues,
+                      arraySlice1d< real64 const > const & feed,
+                      arraySlice1d< integer const > const & presentComponentIds,
                       real64 const & x )
   {
     real64 value = 0.0;
@@ -298,8 +298,8 @@ private:
   GEOS_HOST_DEVICE
   void
   static
-  findKValueRange( arraySlice1d< real64 const > const kValues,
-                   arraySlice1d< integer const > const presentComponentIds,
+  findKValueRange( arraySlice1d< real64 const > const & kValues,
+                   arraySlice1d< integer const > const & presentComponentIds,
                    real64 & minK,
                    real64 & maxK )
   {
