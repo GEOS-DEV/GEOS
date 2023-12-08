@@ -111,20 +111,16 @@ jobs:
           script_args+=(--sccache-credentials $(basename ${GOOGLE_GHA_CREDS_PATH}))
         fi
 
-        cp /etc/pki/ca-trust/source/anchors/*.crt* ${GITHUB_WORKSPACE}
-        ls -l ${GITHUB_WORKSPACE}
-        echo GITHUB_WORKSPACE = ${GITHUB_WORKSPACE}
+
+        RUNNER_CERTIFICATES_DIR=/etc/pki/ca-trust/source/anchors/
+        mkdir -p ${GITHUB_WORKSPACE}/certificates
+        cp ${RUNNER_CERTIFICATES_DIR}/*.crt* ${GITHUB_WORKSPACE}
+
 
         # We need to know where the code folder is mounted inside the container so we can run the script at the proper location!
         # Since this information is repeated twice, we use a variable.
         GITHUB_WORKSPACE_MOUNT_POINT=/tmp/geos
         docker_args+=(--volume=${GITHUB_WORKSPACE}:${GITHUB_WORKSPACE_MOUNT_POINT})
-
-        # The certificates are mounted in the container to allow the build to access the GCP.
-        # CERTIFICATES_DIR=/etc/pki/ca-trust/source/anchors/
-        # CERTIFICATES_MOUNT_POINT=/tmp/certificates
-        # docker_args+=(--volume=${CERTIFICATES_DIR}:${CERTIFICATES_MOUNT_POINT})
-
         script_args+=(--repository ${GITHUB_WORKSPACE_MOUNT_POINT})
         
         # The linear algebra environment variables (ENABLE_HYPRE, ENABLE_HYPRE_DEVICE & ENABLE_TRILINOS)
@@ -147,7 +143,8 @@ jobs:
         if [ "$(docker ps -aq -f name=${CONTAINER_NAME})" ]; then
           docker rm -f ${CONTAINER_NAME}
         fi
-        echo CONTAINER_NAME = ${CONTAINER_NAME}
+        docker_args+=(--name ${CONTAINER_NAME})
+
 
         # In case of integrated tests run, we still want to send the results to the cloud for inspection.
         # While for standard build (if even possible), pushing a failed build would be pointless.

@@ -139,17 +139,32 @@ EOT
   # The path to the `sccache` executable is available through the SCCACHE environment variable.
   SCCACHE_CMAKE_ARGS="-DCMAKE_CXX_COMPILER_LAUNCHER=${SCCACHE} -DCMAKE_CUDA_COMPILER_LAUNCHER=${SCCACHE}"
 
-  cp ${GEOS_SRC_DIR}/ADPKI_LLNLROOT.crt.pem                     /usr/local/share/ca-certificates/ADPKI_LLNLROOT.crt
-  cp ${GEOS_SRC_DIR}/ADPKI-11.the-lab.llnl.gov_ADPKI-11.crt.pem /usr/local/share/ca-certificates/ADPKI-11.the-lab.llnl.gov_ADPKI-11.crt
-  cp ${GEOS_SRC_DIR}/ADPKI-12.the-lab.llnl.gov_ADPKI-12.crt.pem /usr/local/share/ca-certificates/ADPKI-12.the-lab.llnl.gov_ADPKI-12.crt
-  cp ${GEOS_SRC_DIR}/ADPKI-13.the-lab.llnl.gov_ADPKI-13.crt.pem /usr/local/share/ca-certificates/ADPKI-13.the-lab.llnl.gov_ADPKI-13.crt
-  cp ${GEOS_SRC_DIR}/ADPKI-14.the-lab.llnl.gov_ADPKI-14.crt.pem /usr/local/share/ca-certificates/ADPKI-14.the-lab.llnl.gov_ADPKI-14.crt
-  cp ${GEOS_SRC_DIR}/ADPKI-15.the-lab.llnl.gov_ADPKI-15.crt.pem /usr/local/share/ca-certificates/ADPKI-15.the-lab.llnl.gov_ADPKI-15.crt
-  cp ${GEOS_SRC_DIR}/ADPKI-16.the-lab.llnl.gov_ADPKI-16.crt.pem /usr/local/share/ca-certificates/ADPKI-16.the-lab.llnl.gov_ADPKI-16.crt
-  cp ${GEOS_SRC_DIR}/DigiCertGlobalCAG2.crt.pem                 /usr/local/share/ca-certificates/DigiCertGlobalCAG2.crt
-  cp ${GEOS_SRC_DIR}/cspca.crt.pem                              /usr/local/share/ca-certificates/cspca.crt
-  ls ${GEOS_SRC_DIR}
-  ls -l /usr/local/share/ca-certificates/
+  DOCKER_CERTS_DIR=/usr/local/share/ca-certificates
+  for cert in ${GEOS_SRC_DIR}/certificates/*.crt.pem; do
+    cp ${cert} /usr/local/share/ca-certificates/
+
+
+  for file in "${GEOS_SRC_DIR}"/certificates/*.crt.pem; do
+    if [ -f "$file" ]; then
+      filename=$(basename -- "$file")
+      filename_no_ext="${filename%.*}"
+      new_filename="${DOCKER_CERTS_DIR}/${filename_no_ext}.crt"
+      cp "$file" "$new_filename"
+      echo "Copied $filename to $new_filename"
+    fi
+  done
+
+  # cp ${GEOS_SRC_DIR}/certificates/ADPKI_LLNLROOT.crt.pem                     /usr/local/share/ca-certificates/ADPKI_LLNLROOT.crt
+  # cp ${GEOS_SRC_DIR}/certificates/ADPKI-11.the-lab.llnl.gov_ADPKI-11.crt.pem /usr/local/share/ca-certificates/ADPKI-11.the-lab.llnl.gov_ADPKI-11.crt
+  # cp ${GEOS_SRC_DIR}/certificates/ADPKI-12.the-lab.llnl.gov_ADPKI-12.crt.pem /usr/local/share/ca-certificates/ADPKI-12.the-lab.llnl.gov_ADPKI-12.crt
+  # cp ${GEOS_SRC_DIR}/certificates/ADPKI-13.the-lab.llnl.gov_ADPKI-13.crt.pem /usr/local/share/ca-certificates/ADPKI-13.the-lab.llnl.gov_ADPKI-13.crt
+  # cp ${GEOS_SRC_DIR}/certificates/ADPKI-14.the-lab.llnl.gov_ADPKI-14.crt.pem /usr/local/share/ca-certificates/ADPKI-14.the-lab.llnl.gov_ADPKI-14.crt
+  # cp ${GEOS_SRC_DIR}/certificates/ADPKI-15.the-lab.llnl.gov_ADPKI-15.crt.pem /usr/local/share/ca-certificates/ADPKI-15.the-lab.llnl.gov_ADPKI-15.crt
+  # cp ${GEOS_SRC_DIR}/certificates/ADPKI-16.the-lab.llnl.gov_ADPKI-16.crt.pem /usr/local/share/ca-certificates/ADPKI-16.the-lab.llnl.gov_ADPKI-16.crt
+  # cp ${GEOS_SRC_DIR}/certificates/DigiCertGlobalCAG2.crt.pem                 /usr/local/share/ca-certificates/DigiCertGlobalCAG2.crt
+  # cp ${GEOS_SRC_DIR}/certificates/cspca.crt.pem                              /usr/local/share/ca-certificates/cspca.crt
+  # ls ${GEOS_SRC_DIR}
+  # ls -l /usr/local/share/ca-certificates/
   update-ca-certificates 
 
   echo "sccache initial state"
