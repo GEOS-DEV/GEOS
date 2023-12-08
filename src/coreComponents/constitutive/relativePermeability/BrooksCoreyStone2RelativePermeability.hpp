@@ -13,11 +13,11 @@
  */
 
 /**
- * @file BrooksCoreyBakerRelativePermeability.hpp
+ * @file BrooksCoreyStone2RelativePermeability.hpp
  */
 
-#ifndef GEOS_CONSTITUTIVE_RELPERM_BROOKSCOREYBAKERRELATIVEPERMEABILITY_HPP
-#define GEOS_CONSTITUTIVE_RELPERM_BROOKSCOREYBAKERRELATIVEPERMEABILITY_HPP
+#ifndef GEOS_CONSTITUTIVE_RELPERM_BROOKSCOREYSTONE2RELATIVEPERMEABILITY_HPP
+#define GEOS_CONSTITUTIVE_RELPERM_BROOKSCOREYSTONE2RELATIVEPERMEABILITY_HPP
 
 #include "constitutive/relativePermeability/RelativePermeabilityBase.hpp"
 #include "constitutive/relativePermeability/RelativePermeabilityInterpolators.hpp"
@@ -27,21 +27,21 @@ namespace geos
 namespace constitutive
 {
 
-class BrooksCoreyBakerRelativePermeabilityUpdate final : public RelativePermeabilityBaseUpdate
+class BrooksCoreyStone2RelativePermeabilityUpdate final : public RelativePermeabilityBaseUpdate
 {
 public:
 
-  BrooksCoreyBakerRelativePermeabilityUpdate( arrayView1d< real64 const > const & phaseMinVolumeFraction,
-                                              arrayView1d< real64 const > const & waterOilRelPermExponent,
-                                              arrayView1d< real64 const > const & waterOilRelPermMaxValue,
-                                              arrayView1d< real64 const > const & gasOilRelPermExponent,
-                                              arrayView1d< real64 const > const & gasOilRelPermMaxValue,
-                                              real64 const volFracScale,
-                                              arrayView1d< integer const > const & phaseTypes,
-                                              arrayView1d< integer const > const & phaseOrder,
-                                              arrayView3d< real64, relperm::USD_RELPERM > const & phaseRelPerm,
-                                              arrayView4d< real64, relperm::USD_RELPERM_DS > const & dPhaseRelPerm_dPhaseVolFrac,
-                                              arrayView3d< real64, relperm::USD_RELPERM > const & phaseTrappedVolFrac )
+  BrooksCoreyStone2RelativePermeabilityUpdate( arrayView1d< real64 const > const & phaseMinVolumeFraction,
+                                               arrayView1d< real64 const > const & waterOilRelPermExponent,
+                                               arrayView1d< real64 const > const & waterOilRelPermMaxValue,
+                                               arrayView1d< real64 const > const & gasOilRelPermExponent,
+                                               arrayView1d< real64 const > const & gasOilRelPermMaxValue,
+                                               real64 const volFracScale,
+                                               arrayView1d< integer const > const & phaseTypes,
+                                               arrayView1d< integer const > const & phaseOrder,
+                                               arrayView3d< real64, relperm::USD_RELPERM > const & phaseRelPerm,
+                                               arrayView4d< real64, relperm::USD_RELPERM_DS > const & dPhaseRelPerm_dPhaseVolFrac,
+                                               arrayView3d< real64, relperm::USD_RELPERM > const & phaseTrappedVolFrac )
     : RelativePermeabilityBaseUpdate( phaseTypes,
                                       phaseOrder,
                                       phaseRelPerm,
@@ -88,7 +88,7 @@ private:
    * Reference: Eclipse technical description and Petrowiki
    */
   GEOS_HOST_DEVICE
-  GEOS_FORCE_INLINE
+  inline
   static void
   evaluateBrooksCoreyFunction( real64 const & scaledVolFrac,
                                real64 const & dScaledVolFrac_dVolFrac,
@@ -108,19 +108,18 @@ private:
   real64 m_volFracScale;
 };
 
-//template< class INTERPOLATOR>
-class BrooksCoreyBakerRelativePermeability : public RelativePermeabilityBase
+class BrooksCoreyStone2RelativePermeability : public RelativePermeabilityBase
 {
 public:
 
-  BrooksCoreyBakerRelativePermeability( string const & name, dataRepository::Group * const parent );
+  BrooksCoreyStone2RelativePermeability( string const & name, dataRepository::Group * const parent );
 
-  static string catalogName() { return "BrooksCoreyBakerRelativePermeability"; }
+  static string catalogName() { return "BrooksCoreyStone2RelativePermeability"; }
 
   virtual string getCatalogName() const override { return catalogName(); }
 
   /// Type of kernel wrapper for in-kernel update
-  using KernelWrapper = BrooksCoreyBakerRelativePermeabilityUpdate;
+  using KernelWrapper = BrooksCoreyStone2RelativePermeabilityUpdate;
 
   /**
    * @brief Create an update kernel wrapper.
@@ -137,7 +136,6 @@ public:
     static constexpr char const * gasOilRelPermMaxValueString() { return "gasOilRelPermMaxValue"; }
     static constexpr char const * volFracScaleString() { return "volFracScale"; }
   };
-
 
   arrayView1d< real64 const > getPhaseMinVolumeFraction() const override { return m_phaseMinVolumeFraction; };
 
@@ -161,7 +159,7 @@ protected:
 
 GEOS_HOST_DEVICE
 inline void
-BrooksCoreyBakerRelativePermeabilityUpdate::
+BrooksCoreyStone2RelativePermeabilityUpdate::
   compute( arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseVolFraction,
            arraySlice1d< real64, relperm::USD_RELPERM - 2 > const & phaseTrappedVolFrac,
            arraySlice1d< real64, relperm::USD_RELPERM - 2 > const & phaseRelPerm,
@@ -264,31 +262,20 @@ BrooksCoreyBakerRelativePermeabilityUpdate::
     real64 const shiftedWaterVolFrac = (phaseVolFraction[ipWater] - m_phaseMinVolumeFraction[ipWater]);
 
     // TODO: change name of the class and add template to choose interpolation
-    relpermInterpolators::Baker::compute( shiftedWaterVolFrac,
-                                          phaseVolFraction[ipGas],
-                                          m_phaseOrder,
-                                          oilRelPerm_wo,
-                                          dOilRelPerm_wo_dOilVolFrac,
-                                          oilRelPerm_go,
-                                          dOilRelPerm_go_dOilVolFrac,
-                                          phaseRelPerm[ipOil],
-                                          dPhaseRelPerm_dPhaseVolFrac[ipOil] );
-//    relpermInterpolators::Stone2::compute(shiftedWaterVolFrac,
-//                                          phaseVolFraction[ipGas],
-//                                          m_phaseOrder,
-//                                          m_waterOilRelPermMaxValue[ipOil],
-//                                          oilRelPerm_wo,
-//                                          dOilRelPerm_wo_dOilVolFrac,
-//                                          oilRelPerm_go,
-//                                          dOilRelPerm_go_dOilVolFrac,
-//                                          phaseRelPerm[ipWater],
-//                                          dPhaseRelPerm_dPhaseVolFrac[ipWater][ipWater],
-//                                          phaseRelPerm[ipGas],
-//                                          dPhaseRelPerm_dPhaseVolFrac[ipGas][ipGas],
-//                                          phaseRelPerm[ipOil],
-//                                          dPhaseRelPerm_dPhaseVolFrac[ipOil] );
-//    INTERPOLATOR::compute(...);
-
+    relpermInterpolators::Stone2::compute( shiftedWaterVolFrac,
+                                           phaseVolFraction[ipGas],
+                                           m_phaseOrder,
+                                           m_waterOilRelPermMaxValue[ipOil],
+                                           oilRelPerm_wo,
+                                           dOilRelPerm_wo_dOilVolFrac,
+                                           oilRelPerm_go,
+                                           dOilRelPerm_go_dOilVolFrac,
+                                           phaseRelPerm[ipWater],
+                                           dPhaseRelPerm_dPhaseVolFrac[ipWater][ipWater],
+                                           phaseRelPerm[ipGas],
+                                           dPhaseRelPerm_dPhaseVolFrac[ipGas][ipGas],
+                                           phaseRelPerm[ipOil],
+                                           dPhaseRelPerm_dPhaseVolFrac[ipOil] );
   }
 
   // update trapped phase volume fraction
@@ -308,9 +295,9 @@ BrooksCoreyBakerRelativePermeabilityUpdate::
 }
 
 GEOS_HOST_DEVICE
-GEOS_FORCE_INLINE
+inline
 void
-BrooksCoreyBakerRelativePermeabilityUpdate::
+BrooksCoreyStone2RelativePermeabilityUpdate::
   evaluateBrooksCoreyFunction( real64 const & scaledVolFrac,
                                real64 const & dScaledVolFrac_dVolFrac,
                                real64 const & exponent,
@@ -339,4 +326,4 @@ BrooksCoreyBakerRelativePermeabilityUpdate::
 
 } // namespace geos
 
-#endif //GEOS_CONSTITUTIVE_RELPERM_BROOKSCOREYBAKERRELATIVEPERMEABILITY_HPP
+#endif //GEOS_CONSTITUTIVE_RELPERM_BROOKSCOREYSTONE2RELATIVEPERMEABILITY_HPP
