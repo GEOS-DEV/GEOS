@@ -17,6 +17,7 @@
 #include "constitutive/fluid/multifluid/compositional/functions/NegativeTwoPhaseFlash.hpp"
 #include "constitutive/fluid/multifluid/compositional/functions/CubicEOSPhaseModel.hpp"
 #include "TestFluid.hpp"
+#include "TestFluidUtilities.hpp"
 
 using namespace geos::constitutive::compositional;
 
@@ -64,6 +65,8 @@ class NegativeTwoPhaseFlashTestFixture :  public ::testing::TestWithParam< Flash
   static constexpr real64 relTol = 1.0e-5;
   static constexpr real64 absTol = 1.0e-7;
   static constexpr int numComps = NC;
+  static constexpr int numDofs = NC + 2;
+  using Deriv = geos::constitutive::multifluid::DerivativeOffset;
 public:
   NegativeTwoPhaseFlashTestFixture()
     : m_fluid( FluidData< NC >::createFluid() )
@@ -77,20 +80,20 @@ public:
 
     real64 const pressure = std::get< 0 >( data );
     real64 const temperature = std::get< 1 >( data );
-    array1d< real64 > composition;
+    stackArray1d< real64, numComps > composition;
     TestFluid< NC >::createArray( composition, std::get< 2 >( data ));
 
     bool const expectedStatus = std::get< 3 >( data );
     real64 const expectedVapourFraction = std::get< 4 >( data );
 
-    stackArray1d< real64, NC > expectedLiquidComposition;
+    stackArray1d< real64, numComps > expectedLiquidComposition;
     TestFluid< NC >::createArray( expectedLiquidComposition, std::get< 5 >( data ));
-    stackArray1d< real64, NC > expectedVapourComposition;
+    stackArray1d< real64, numComps > expectedVapourComposition;
     TestFluid< NC >::createArray( expectedVapourComposition, std::get< 6 >( data ));
 
     real64 vapourFraction = -1.0;
-    array1d< real64 > liquidComposition( numComps );
-    array1d< real64 > vapourComposition( numComps );
+    stackArray1d< real64, numComps > liquidComposition( numComps );
+    stackArray1d< real64, numComps > vapourComposition( numComps );
 
     bool status = NegativeTwoPhaseFlash::compute< EOS_TYPE, EOS_TYPE >(
       numComps,
@@ -132,6 +135,119 @@ public:
     }
   }
 
+  void testFlashDerivatives( FlashData< NC > const & data )
+  {
+    // Number of output values from each flash calculation
+    constexpr integer numValues = 1 + 2*numComps;
+
+    auto componentProperties = this->m_fluid->createKernelWrapper();
+
+    bool const expectedStatus = std::get< 3 >( data );
+    if( !expectedStatus ) return;
+
+    real64 const pressure = std::get< 0 >( data );
+    real64 const temperature = std::get< 1 >( data );
+    stackArray1d< real64, numComps > composition;
+    TestFluid< NC >::createArray( composition, std::get< 2 >( data ));
+
+    real64 vapourFraction = -1.0;
+    stackArray1d< real64, numComps > liquidComposition( numComps );
+    stackArray1d< real64, numComps > vapourComposition( numComps );
+
+    stackArray1d< real64, numDofs > vapourFractionDerivs( numDofs );
+    stackArray2d< real64, numComps * numDofs > liquidCompositionDerivs( numComps, numDofs );
+    stackArray2d< real64, numComps * numDofs > vapourCompositionDerivs( numComps, numDofs );
+    stackArray1d< real64, numValues > derivatives( numValues );
+
+    // Combine values and derivatives into a single output
+    auto const concatDerivatives = []( integer const kc, auto & derivs, auto const & v, auto const & xmf, auto const & ymf ){
+      derivs[0] = v[kc];
+      for( integer ic = 0; ic < numComps; ++ic )
+      {
+        derivs[1+ic] = xmf( ic, kc );
+        derivs[1+ic+numComps] = ymf( ic, kc );
+      }
+    };
+
+    auto const evaluateFlash = [&]( real64 const p, real64 const t, auto const & zmf, auto & values ){
+      stackArray1d< real64, numComps > displacedLiquidComposition( numComps );
+      stackArray1d< real64, numComps > displacedVapourComposition( numComps );
+
+      NegativeTwoPhaseFlash::compute< EOS_TYPE, EOS_TYPE >(
+        numComps,
+        p,
+        t,
+        zmf,
+        componentProperties,
+        values[0],
+        displacedLiquidComposition,
+        displacedVapourComposition );
+      for( integer ic = 0; ic < numComps; ++ic )
+      {
+        values[1+ic] = displacedLiquidComposition[ic];
+        values[1+ic+numComps] = displacedVapourComposition[ic];
+      }
+    };
+
+    NegativeTwoPhaseFlash::compute< EOS_TYPE, EOS_TYPE >(
+      numComps,
+      pressure,
+      temperature,
+      composition,
+      componentProperties,
+      vapourFraction,
+      liquidComposition,
+      vapourComposition );
+
+    NegativeTwoPhaseFlash::computeDerivatives< EOS_TYPE, EOS_TYPE >(
+      numComps,
+      pressure,
+      temperature,
+      composition,
+      componentProperties,
+      vapourFraction,
+      liquidComposition,
+      vapourComposition,
+      vapourFractionDerivs,
+      liquidCompositionDerivs,
+      vapourCompositionDerivs );
+
+    // Test against numerically calculated values
+    // --- Pressure derivatives ---
+    concatDerivatives( Deriv::dP, derivatives, vapourFractionDerivs, liquidCompositionDerivs, vapourCompositionDerivs );
+    real64 const dp = 1.0e-4 * pressure;
+    geos::testing::internal::testNumericalDerivative< numValues >(
+      pressure, dp, derivatives,
+      [&]( real64 const p, auto & values ) {
+      evaluateFlash( p, temperature, composition, values );
+    } );
+
+    // --- Temperature derivatives ---
+    concatDerivatives( Deriv::dT, derivatives, vapourFractionDerivs, liquidCompositionDerivs, vapourCompositionDerivs );
+    real64 const dT = 1.0e-6 * temperature;
+    geos::testing::internal::testNumericalDerivative< numValues >(
+      temperature, dT, derivatives,
+      [&]( real64 const t, auto & values ) {
+      evaluateFlash( pressure, t, composition, values );
+    } );
+
+    // --- Composition derivatives ---
+    real64 constexpr dz = 1.0e-7;
+    for( integer jc = 0; jc < numComps; ++jc )
+    {
+      integer const kc = Deriv::dC + jc;
+      concatDerivatives( kc, derivatives, vapourFractionDerivs, liquidCompositionDerivs, vapourCompositionDerivs );
+      geos::testing::internal::testNumericalDerivative< numValues >(
+        0.0, dz, derivatives,
+        [&]( real64 const z, auto & values ) {
+        real64 const originalFraction = composition[jc];
+        composition[jc] += z;
+        evaluateFlash( pressure, temperature, composition, values );
+        composition[jc] = originalFraction;
+      } );
+    }
+  }
+
 protected:
   std::unique_ptr< TestFluid< NC > > m_fluid{};
 };
@@ -159,6 +275,26 @@ TEST_P( NegativeTwoPhaseFlash4CompPR, testNegativeFlash )
 TEST_P( NegativeTwoPhaseFlash4CompSRK, testNegativeFlash )
 {
   testFlash( GetParam() );
+}
+
+TEST_P( NegativeTwoPhaseFlash2CompPR, testNegativeFlashDerivatives )
+{
+  testFlashDerivatives( GetParam() );
+}
+
+TEST_P( NegativeTwoPhaseFlash2CompSRK, testNegativeFlashDerivatives )
+{
+  testFlashDerivatives( GetParam() );
+}
+
+TEST_P( NegativeTwoPhaseFlash4CompPR, testNegativeFlashDerivatives )
+{
+  testFlashDerivatives( GetParam() );
+}
+
+TEST_P( NegativeTwoPhaseFlash4CompSRK, testNegativeFlashDerivatives )
+{
+  testFlashDerivatives( GetParam() );
 }
 
 //-------------------------------------------------------------------------------

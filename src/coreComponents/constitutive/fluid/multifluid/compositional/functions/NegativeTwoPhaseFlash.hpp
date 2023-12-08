@@ -36,6 +36,7 @@ namespace compositional
 
 struct NegativeTwoPhaseFlash
 {
+  using Deriv = geos::constitutive::multifluid::DerivativeOffset;
 public:
   /**
    * @brief Perform negative two-phase EOS flash
@@ -194,21 +195,76 @@ public:
                                   arraySlice2d< real64 > const & liquidCompositionDerivs,
                                   arraySlice2d< real64 > const & vapourCompositionDerivs )
   {
-//constexpr integer maxNumComps = MultiFluidConstants::MAX_NUM_COMPONENTS;
-//    stackArray1d< real64, maxNumComps > logLiquidFugacity( numComps );
-    GEOS_UNUSED_VAR( numComps );
-    GEOS_UNUSED_VAR( pressure );
-    GEOS_UNUSED_VAR( temperature );
-    GEOS_UNUSED_VAR( composition );
-    GEOS_UNUSED_VAR( componentProperties );
-    GEOS_UNUSED_VAR( vapourFraction );
-    GEOS_UNUSED_VAR( liquidComposition );
-    GEOS_UNUSED_VAR( vapourComposition );
-    GEOS_UNUSED_VAR( vapourFractionDerivs );
-    GEOS_UNUSED_VAR( liquidCompositionDerivs );
-    GEOS_UNUSED_VAR( vapourCompositionDerivs );
+    constexpr integer maxNumComps = MultiFluidConstants::MAX_NUM_COMPONENTS;
+    real64 displacedVapourFraction = -1.0;
+    stackArray1d< real64, maxNumComps > displacedLiquidComposition( numComps );
+    stackArray1d< real64, maxNumComps > displacedVapourComposition( numComps );
 
+    // Pressure derivatives
+    real64 const dp = 1.0e-4 * pressure;
+    compute< EOS_TYPE_LIQUID, EOS_TYPE_VAPOUR >( numComps,
+                                                 pressure + dp,
+                                                 temperature,
+                                                 composition,
+                                                 componentProperties,
+                                                 displacedVapourFraction,
+                                                 displacedLiquidComposition,
+                                                 displacedVapourComposition );
 
+    vapourFractionDerivs[Deriv::dP] = (displacedVapourFraction - vapourFraction) / dp;
+    for( integer ic = 0; ic < numComps; ++ic )
+    {
+      liquidCompositionDerivs( ic, Deriv::dP ) = (displacedLiquidComposition[ic] - liquidComposition[ic]) / dp;
+      vapourCompositionDerivs( ic, Deriv::dP ) = (displacedVapourComposition[ic] - vapourComposition[ic]) / dp;
+    }
+
+    // Temperature derivatives
+    real64 const dT = 1.0e-6 * temperature;
+    compute< EOS_TYPE_LIQUID, EOS_TYPE_VAPOUR >( numComps,
+                                                 pressure,
+                                                 temperature + dT,
+                                                 composition,
+                                                 componentProperties,
+                                                 displacedVapourFraction,
+                                                 displacedLiquidComposition,
+                                                 displacedVapourComposition );
+
+    vapourFractionDerivs[Deriv::dT] = (displacedVapourFraction - vapourFraction) / dT;
+    for( integer ic = 0; ic < numComps; ++ic )
+    {
+      liquidCompositionDerivs( ic, Deriv::dT ) = (displacedLiquidComposition[ic] - liquidComposition[ic]) / dT;
+      vapourCompositionDerivs( ic, Deriv::dT ) = (displacedVapourComposition[ic] - vapourComposition[ic]) / dT;
+    }
+
+    // Composition derivatives
+    real64 constexpr dz = 1.0e-7;
+    stackArray1d< real64, maxNumComps > displacedComposition( numComps );
+    for( integer ic = 0; ic < numComps; ++ic )
+    {
+      displacedComposition[ic] = composition[ic];
+    }
+
+    for( integer jc = 0; jc < numComps; ++jc )
+    {
+      displacedComposition[jc] += dz;
+      compute< EOS_TYPE_LIQUID, EOS_TYPE_VAPOUR >( numComps,
+                                                   pressure,
+                                                   temperature,
+                                                   displacedComposition,
+                                                   componentProperties,
+                                                   displacedVapourFraction,
+                                                   displacedLiquidComposition,
+                                                   displacedVapourComposition );
+      displacedComposition[jc] = composition[jc];
+
+      integer const kc = Deriv::dC + jc;
+      vapourFractionDerivs[kc] = (displacedVapourFraction - vapourFraction) / dz;
+      for( integer ic = 0; ic < numComps; ++ic )
+      {
+        liquidCompositionDerivs( ic, kc ) = (displacedLiquidComposition[ic] - liquidComposition[ic]) / dz;
+        vapourCompositionDerivs( ic, kc ) = (displacedVapourComposition[ic] - vapourComposition[ic]) / dz;
+      }
+    }
   }
 
 private:
