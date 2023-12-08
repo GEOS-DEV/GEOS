@@ -122,6 +122,18 @@ if [[ -z "${GEOSX_DIR}" ]]; then
   GEOSX_DIR=/dev/null
 fi
 
+#cp /mnt/pki/ca-trust/source/anchors/ADPKI_LLNLROOT.crt.pem /usr/local/share/ca-certificates/ADPKI_LLNLROOT.crt
+#cp /mnt/pki/ca-trust/source/anchors/ADPKI-11.the-lab.llnl.gov_ADPKI-11.crt.pem /usr/local/share/ca-certificates/ADPKI-11.the-lab.llnl.gov_ADPKI-11.crt
+#cp /mnt/pki/ca-trust/source/anchors/ADPKI-12.the-lab.llnl.gov_ADPKI-12.crt.pem /usr/local/share/ca-certificates/ADPKI-12.the-lab.llnl.gov_ADPKI-12.crt
+#cp /mnt/pki/ca-trust/source/anchors/ADPKI-13.the-lab.llnl.gov_ADPKI-13.crt.pem /usr/local/share/ca-certificates/ADPKI-13.the-lab.llnl.gov_ADPKI-13.crt
+#cp /mnt/pki/ca-trust/source/anchors/ADPKI-14.the-lab.llnl.gov_ADPKI-14.crt.pem /usr/local/share/ca-certificates/ADPKI-14.the-lab.llnl.gov_ADPKI-14.crt
+#cp /mnt/pki/ca-trust/source/anchors/ADPKI-15.the-lab.llnl.gov_ADPKI-15.crt.pem /usr/local/share/ca-certificates/ADPKI-15.the-lab.llnl.gov_ADPKI-15.crt
+#cp /mnt/pki/ca-trust/source/anchors/ADPKI-16.the-lab.llnl.gov_ADPKI-16.crt.pem /usr/local/share/ca-certificates/ADPKI-16.the-lab.llnl.gov_ADPKI-16.crt
+#cp /mnt/pki/ca-trust/source/anchors/DigiCertGlobalCAG2.crt.pem /usr/local/share/ca-certificates/DigiCertGlobalCAG2.crt
+#cp /mnt/pki/ca-trust/source/anchors/cspca.crt.pem /usr/local/share/ca-certificates/cspca.crt
+#update-ca-certificates 
+
+
 if [[ ! -z "${SCCACHE_CREDS}" ]]; then
   # The credential json file is available at the root of the geos repository.
   # We hereafter create the config file that points to it.

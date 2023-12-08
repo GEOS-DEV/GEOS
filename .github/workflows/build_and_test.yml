@@ -109,6 +109,8 @@ jobs:
           script_args+=(--sccache-credentials $(basename ${GOOGLE_GHA_CREDS_PATH}))
         fi
 
+
+        echo GITHUB_WORKSPACE = ${GITHUB_WORKSPACE}
         # We need to know where the code folder is mounted inside the container so we can run the script at the proper location!
         # Since this information is repeated twice, we use a variable.
         GITHUB_WORKSPACE_MOUNT_POINT=/tmp/geos

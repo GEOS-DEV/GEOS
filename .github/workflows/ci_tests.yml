@@ -225,7 +225,8 @@ jobs:
             CMAKE_BUILD_TYPE: Release
             DOCKER_REPOSITORY: geosx/centos7.7-gcc8.3.1-cuda11.8.89
             RUNS_ON: streak
-#            DOCKER_RUN_ARGS: "--cpus=8 --memory=16g"
+#            USE_SCCACHE: false
+            DOCKER_RUN_ARGS: "--cpus=8 --memory=16g"
 
           # Below this line, jobs that deploy to Google Cloud.
           # - name: Pecan GPU (centos 7.7, gcc 8.2.0, open-mpi 4.0.1, mkl 2019.5, cuda 11.5.119)
@@ -240,7 +241,7 @@ jobs:
       CMAKE_BUILD_TYPE: ${{ matrix.CMAKE_BUILD_TYPE }}
       DOCKER_IMAGE_TAG: ${{ needs.is_pull_request_a_draft.outputs.DOCKER_IMAGE_TAG }}
       DOCKER_REPOSITORY: ${{ matrix.DOCKER_REPOSITORY }}
-#      DOCKER_RUN_ARGS: ${{ matrix.DOCKER_RUN_ARGS }}
+      DOCKER_RUN_ARGS: ${{ matrix.DOCKER_RUN_ARGS }}
       ENABLE_HYPRE_DEVICE: ${{ matrix.ENABLE_HYPRE_DEVICE }}
       ENABLE_HYPRE: ${{ matrix.ENABLE_HYPRE }}
       ENABLE_TRILINOS: ${{ matrix.ENABLE_TRILINOS }}
