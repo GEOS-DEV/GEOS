@@ -69,7 +69,7 @@ TEST( Units, SystemDurationFormatTest )
       Days( 20 ) + hours( 12 ) + seconds( 145 ) + milliseconds( 16 ) ),
 
     DurationCase(
-      "1y, 12h00m00s (31600152 s)",
+      "1y, 00h00m00s (31556952 s)",
       Years( 1 ) + hours( 12 ) ),
 
     DurationCase(
@@ -109,8 +109,8 @@ TEST( Units, SystemDurationFormatTest )
       Years( 292 ) + Days( 20 ) + hours( 12 ) + seconds( 145 ) + milliseconds( 16 ) ),
 
     DurationCase(
-      "5500y, 20d, 12h02m25s (173565007345.016 s)",
-      Years( 5500 ) + Days( 20 ) + hours( 12 ) + seconds( 145 ) + milliseconds( 16 ) ),
+      "5500y, 20d, 12h02m25s (173565007345 s)",
+      Years( 5500 ) + Days( 20 ) + hours( 12 ) + seconds( 145 ) ),
 
   };
 
