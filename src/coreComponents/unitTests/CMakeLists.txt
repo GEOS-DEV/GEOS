@@ -1,3 +1,4 @@
+add_subdirectory( toolchain )
 add_subdirectory( xmlTests )
 add_subdirectory( virtualElementTests )
 add_subdirectory( linearAlgebraTests )

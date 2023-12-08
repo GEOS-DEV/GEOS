@@ -23,12 +23,29 @@
 #include "constitutive/ConstitutiveBase.hpp"
 #include "constitutive/relativePermeability/layouts.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
+#include "codingUtilities/EnumStrings.hpp"
 
 namespace geos
 {
 
 namespace constitutive
 {
+
+/**
+ * @brief enum to dispatch thress phase interpolation
+ */
+enum class ThreePhaseInterpolator : integer
+{
+  BAKER,
+  STONEII
+};
+
+/**
+ * @brief stringify enum to dispatch three phase interpolators
+ */
+ENUM_STRINGS( ThreePhaseInterpolator,
+              "BAKER",
+              "STONEII" );
 
 class RelativePermeabilityBaseUpdate
 {
@@ -92,6 +109,7 @@ private:
                        localIndex const q,
                        arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseVolFraction ) const = 0;
 };
+
 
 class RelativePermeabilityBase : public ConstitutiveBase
 {
