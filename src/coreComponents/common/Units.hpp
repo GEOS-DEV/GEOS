@@ -141,20 +141,63 @@ inline string formatValue( real64 value, Unit unit )
 }
 
 
-/**
- * @brief Provide a standard and clear way to show a duration to the user (milliseconds to year scale).
- * @param duration The duration to stringify.
- * @return A string representing the number of years, days, hours, minutes, seconds, and
- * fraction of seconds.
- *
- * @todo 1. Use it everywhere needed (sim timesteps, delta times...),
- * 2. Review the outputs with users (add raw seconds at some places?).
- */
-string formatLongDuration( std::chrono::system_clock::duration duration );
+using SystemClock = std::chrono::system_clock;
+
+// One year = 365.2425 days (= 146097 / 400).
+using YearDaysRatio = std::ratio< 146097, 400 >;
+// C++20 equivalent types
+using Days = std::chrono::duration< int64_t, std::ratio_multiply< std::ratio< 24 >, std::chrono::hours::period > >;
+using Years = std::chrono::duration< int64_t, std::ratio_multiply< YearDaysRatio, Days::period > >;
+
+static constexpr double YearDays = ( double )YearDaysRatio::num / YearDaysRatio::den;
+static constexpr double MinuteSeconds = 60.0;
+static constexpr double HourSeconds = 60.0 * MinuteSeconds;
+static constexpr double DaySeconds = 24.0 * HourSeconds;
+static constexpr double YearSeconds = YearDays * DaySeconds;
+
+
+
+struct TimeFormatInfo
+{
+  double m_totalSeconds = 0.0;
+  int m_years = 0;
+  int m_days = 0;
+  int m_hours = 0;
+  int m_minutes = 0;
+  int m_seconds = 0;
+
+
+  TimeFormatInfo( double totalSeconds, int years, int days, int hours, int minutes, int seconds );
+  static TimeFormatInfo fromSeconds( double const seconds );
+  template< typename Duration > static TimeFormatInfo fromDuration( Duration duration );
+
+  friend std::ostream & operator<<( std::ostream & os, TimeFormatInfo const & ctx );
+
+  string toString() const;
+};
 
 
 } // end namespace units
 
 } // end namespace geos
+
+
+/**
+ * @brief Formatter to be able to directly use a DurationInfo as a GEOS_FMT() argument.
+ */
+template<>
+struct GEOS_FMT_NS::formatter< geos::units::TimeFormatInfo > : GEOS_FMT_NS::formatter< std::string >
+{
+  /**
+   * @brief Format the specified TimeFormatInfo to a string.
+   * @param durationData the TimeFormatInfo object to format
+   * @param ctx formatting state consisting of the formatting arguments and the output iterator
+   * @return iterator to the output buffer
+   */
+  auto format( geos::units::TimeFormatInfo const & durationData, format_context & ctx )
+  {
+    return GEOS_FMT_NS::formatter< std::string >::format( durationData.toString(), ctx );
+  }
+};
 
 #endif //GEOS_MATH_PHYSICSCONSTANTS_HPP_

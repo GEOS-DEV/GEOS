@@ -24,36 +24,66 @@ namespace units
 {
 
 
-string formatLongDuration( std::chrono::system_clock::duration duration )
+TimeFormatInfo::TimeFormatInfo( double const totalSeconds, int const years, int const days,
+                                int const hours, int const minutes, int const seconds ):
+  m_totalSeconds( totalSeconds ),
+  m_years( years ),
+  m_days( days ),
+  m_hours( hours ),
+  m_minutes( minutes ),
+  m_seconds( seconds )
+{}
+
+string TimeFormatInfo::toString() const
+{
+  std::ostringstream oss;
+  if( m_years != 0 )
+  {
+    oss << m_years << "y, ";
+  }
+  if( m_days != 0 )
+  {
+    oss << m_days << "d, ";
+  }
+  oss << GEOS_FMT( "{:0>2}h{:0>2}m{:0>2}s ({} s)",
+                   m_hours, m_minutes, m_seconds, m_totalSeconds );
+  return oss.str();
+}
+
+std::ostream & operator<<( std::ostream & os, TimeFormatInfo const & info )
+{
+  os << info.toString();
+  return os;
+}
+
+
+template< typename Duration >
+TimeFormatInfo TimeFormatInfo::fromDuration( Duration const value )
 {
   using namespace std::chrono;
 
-  const auto hms = duration_cast< seconds >( duration );
-  const int64_t totalSeconds = int64_t( hms.count() );
-  const int64_t microsecondOnly = duration_cast< microseconds >( duration - hms ).count();
+  auto const totalYears = duration_cast< units::Years >( value );
+  auto const daysOut = duration_cast< units::Days >( value - totalYears );
+  auto const hoursOut = duration_cast< hours >( value - totalYears - daysOut );
+  auto const minutesOut = duration_cast< minutes >( value - totalYears - daysOut - hoursOut );
+  auto const secondsOut = duration_cast< seconds >( value - totalYears - daysOut - hoursOut - minutesOut );
 
-  const int64_t totalHours = totalSeconds / ( 60 * 60 );
-  static constexpr int64_t oneYearHours = int64_t( 365.25 * 24 );
-  //    - `yDiv.quot` is the years count,
-  //    - `yDiv.rem` the year hours count.
-  //    - `dDiv.quot` is the year days count,
-  //    - `dDiv.rem` the day hours count.
-  const auto yDiv = std::div( totalHours, oneYearHours );
-  const auto dDiv = std::div( yDiv.rem, int64_t( 24 ));
+  return TimeFormatInfo( duration< double >( value ).count(), int( totalYears.count() ),
+                         int( daysOut.count() ), int( hoursOut.count() ),
+                         int( minutesOut.count() ), int( secondsOut.count() ) );
+}
+// available specializations
+template TimeFormatInfo TimeFormatInfo::fromDuration< SystemClock::duration >( SystemClock::duration duration );
 
-  std::ostringstream oss;
+TimeFormatInfo TimeFormatInfo::fromSeconds( double const seconds )
+{
+  int totalYears = int(   seconds / YearSeconds );
+  int daysOut = int(    ( seconds - totalYears * YearSeconds ) / DaySeconds );
+  int hoursOut = int(   ( seconds - totalYears * YearSeconds - daysOut * DaySeconds ) / HourSeconds );
+  int minutesOut = int( ( seconds - totalYears * YearSeconds - daysOut * DaySeconds - hoursOut * HourSeconds ) / MinuteSeconds );
+  int secondsOut = int(   seconds - totalYears * YearSeconds - daysOut * DaySeconds - hoursOut * HourSeconds - minutesOut * MinuteSeconds );
 
-  if( yDiv.quot != 0 )
-  {
-    oss << yDiv.quot << "y, ";
-  }
-  if( dDiv.quot != 0 )
-  {
-    oss << dDiv.quot << "d, ";
-  }
-  oss << GEOS_FMT( "{}h{:%Mm%Ss} ({}.{:0>6}s)", dDiv.rem, hms, totalSeconds, microsecondOnly );
-
-  return oss.str();
+  return TimeFormatInfo( seconds, totalYears, daysOut, hoursOut, minutesOut, secondsOut );
 }
 
 
