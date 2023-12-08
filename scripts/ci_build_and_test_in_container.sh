@@ -148,6 +148,8 @@ EOT
   cp ${GEOS_SRC_DIR}/ADPKI-16.the-lab.llnl.gov_ADPKI-16.crt.pem /usr/local/share/ca-certificates/ADPKI-16.the-lab.llnl.gov_ADPKI-16.crt
   cp ${GEOS_SRC_DIR}/DigiCertGlobalCAG2.crt.pem                 /usr/local/share/ca-certificates/DigiCertGlobalCAG2.crt
   cp ${GEOS_SRC_DIR}/cspca.crt.pem                              /usr/local/share/ca-certificates/cspca.crt
+  ls ${GEOS_SRC_DIR}
+  ls -l /usr/local/share/ca-certificates/
   update-ca-certificates 
 
   echo "sccache initial state"
