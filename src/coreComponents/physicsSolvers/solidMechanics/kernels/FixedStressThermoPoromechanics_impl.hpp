@@ -67,11 +67,13 @@ FixedStressThermoPoromechanics( NodeManager const & nodeManager,
   m_gravityVector{ inputGravityVector[0], inputGravityVector[1], inputGravityVector[2] },
   m_totalFluidDensity( elementSubRegion.template getField< fields::poromechanics::totalFluidDensity >() ),
   m_solidDensity( inputConstitutiveType.getDensity() ),
-  m_pressure_n( elementSubRegion.template getField< fields::flow::pressure_n >() ),
   m_pressure( elementSubRegion.template getField< fields::flow::pressure >() ),
+  m_pressure_k( elementSubRegion.template getField< fields::flow::pressure_k >() ),
+  m_pressure_n( elementSubRegion.template getField< fields::flow::pressure_n >() ),
   m_initialTemperature( elementSubRegion.template getField< fields::flow::initialTemperature >() ),
-  m_temperature_n( elementSubRegion.template getField< fields::flow::temperature_n >() ),
-  m_temperature( elementSubRegion.template getField< fields::flow::temperature >() )
+  m_temperature( elementSubRegion.template getField< fields::flow::temperature >() ),
+  m_temperature_k( elementSubRegion.template getField< fields::flow::temperature_k >() ),
+  m_temperature_n( elementSubRegion.template getField< fields::flow::temperature_n >() )
 {}
 
 template< typename SUBREGION_TYPE,
@@ -136,24 +138,23 @@ quadraturePointKernel( localIndex const k,
   FE_TYPE::symmetricGradient( dNdX, stack.uhat_local, strainInc );
 
   real64 porosity = 0.0;
-  real64 porosity_n = 0.0;
   real64 dPorosity_dVolStrain = 0.0;
 
   // Evaluate total stress and its derivatives (and also porosity and derivatives)
   // TODO: allow for a customization of the kernel to pass the average pressure to the small strain update (to account for cap pressure
   // later)
-  m_constitutiveUpdate.smallStrainUpdatePoromechanicsFixedStress( k,
-                                                                  q,
-                                                                  m_pressure_n[k],
-                                                                  m_pressure[k],
+  m_constitutiveUpdate.smallStrainUpdatePoromechanicsFixedStress( k, q,
                                                                   m_dt,
-                                                                  m_temperature_n[k],
+                                                                  m_pressure[k],
+                                                                  m_pressure_k[k],
+                                                                  m_pressure_n[k],
                                                                   m_temperature[k],
+                                                                  m_temperature_k[k],
+                                                                  m_temperature_n[k],
                                                                   strainInc,
                                                                   totalStress,
                                                                   stiffness,
                                                                   porosity,
-                                                                  porosity_n,
                                                                   dPorosity_dVolStrain );
 
   for( localIndex i=0; i<6; ++i )

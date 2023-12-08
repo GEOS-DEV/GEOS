@@ -113,6 +113,7 @@ public:
                                    real64 & porosity,
                                    real64 & dPorosity_dPressure,
                                    real64 & dPorosity_dTemperature,
+                                   real64 & dPorosity_dVolStrain,
                                    real64 const & biotCoefficient,
                                    real64 const & thermalExpansionCoefficient,
                                    real64 const & meanEffectiveStressIncrement_k,
@@ -130,6 +131,7 @@ public:
                - porosityThermalExpansion * deltaTemperatureFromBeginningOfTimeStep; // change due to temperature increment
     dPorosity_dPressure = biotSkeletonModulusInverse;
     dPorosity_dTemperature = -porosityThermalExpansion;
+    dPorosity_dVolStrain = biotCoefficient / bulkModulus; // ???
 
     // Fixed-stress part
     porosity += fixedStressPressureCoefficient * deltaPressureFromLastIteration   // fixed-stress pressure term
@@ -146,7 +148,8 @@ public:
                                   real64 const & pressure_n,                // last time step
                                   real64 const & temperature,
                                   real64 const & temperature_k,
-                                  real64 const & temperature_n ) const
+                                  real64 const & temperature_n,
+                                  real64 & dPorosity_dVolStrain ) const
   {
     real64 const deltaPressureFromBeginningOfTimeStep = pressure - pressure_n;
     real64 const deltaPressureFromLastIteration = pressure - pressure_k;
@@ -162,6 +165,7 @@ public:
                                 m_newPorosity[k][q],
                                 m_dPorosity_dPressure[k][q],
                                 m_dPorosity_dTemperature[k][q],
+                                dPorosity_dVolStrain,
                                 m_biotCoefficient[k],
                                 m_thermalExpansionCoefficient[k],
                                 m_averageMeanEffectiveStressIncrement_k[k],
