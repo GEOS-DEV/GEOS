@@ -39,9 +39,9 @@ string TimeFormatInfo::toString() const
   std::ostringstream oss;
   if( m_years != 0 )
   {
-    oss << m_years << "y, ";
+    oss << m_years << "y, " << m_days << "d, ";
   }
-  if( m_days != 0 )
+  else if( m_days != 0 )
   {
     oss << m_days << "d, ";
   }
