@@ -114,7 +114,7 @@ jobs:
 
         RUNNER_CERTIFICATES_DIR=/etc/pki/ca-trust/source/anchors/
         mkdir -p ${GITHUB_WORKSPACE}/certificates
-        cp ${RUNNER_CERTIFICATES_DIR}/*.crt* ${GITHUB_WORKSPACE}
+        cp ${RUNNER_CERTIFICATES_DIR}/*.crt* ${GITHUB_WORKSPACE}/certificates
 
 
         # We need to know where the code folder is mounted inside the container so we can run the script at the proper location!
