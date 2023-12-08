@@ -133,7 +133,7 @@ public:
                                                   DiscretizationOps & stiffness,
                                                   real64 & porosity,
                                                   real64 & porosity_n,
-                                                  real64 & dPorosity_dVolStrain) const
+                                                  real64 & dPorosity_dVolStrain ) const
   {
     real64 dTotalStress_dPressure[6]{};
     real64 dTotalStress_dTemperature[6]{};

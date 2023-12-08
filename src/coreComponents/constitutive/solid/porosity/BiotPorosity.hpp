@@ -104,19 +104,19 @@ public:
   }
 
   GEOS_HOST_DEVICE
-  void computePorosity( real64 const & deltaPressureFromBeginningOfTimeStep,
-                        real64 const & deltaPressureFromLastIteration,
-                        real64 const & deltaTemperatureFromBeginningOfTimeStep,
-                        real64 const & deltaTemperatureFromLastIteration,
-                        real64 const & porosity_n,
-                        real64 const & referencePorosity,
-                        real64 & porosity,
-                        real64 & dPorosity_dPressure,
-                        real64 & dPorosity_dTemperature,
-                        real64 const & biotCoefficient,
-                        real64 const & thermalExpansionCoefficient,
-                        real64 const & meanEffectiveStressIncrement_k,
-                        real64 const & bulkModulus ) const
+  void computePorosityFixedStress( real64 const & deltaPressureFromBeginningOfTimeStep,
+                                   real64 const & deltaPressureFromLastIteration,
+                                   real64 const & deltaTemperatureFromBeginningOfTimeStep,
+                                   real64 const & deltaTemperatureFromLastIteration,
+                                   real64 const & porosity_n,
+                                   real64 const & referencePorosity,
+                                   real64 & porosity,
+                                   real64 & dPorosity_dPressure,
+                                   real64 & dPorosity_dTemperature,
+                                   real64 const & biotCoefficient,
+                                   real64 const & thermalExpansionCoefficient,
+                                   real64 const & meanEffectiveStressIncrement_k,
+                                   real64 const & bulkModulus ) const
   {
     real64 const biotSkeletonModulusInverse = (biotCoefficient - referencePorosity) / m_grainBulkModulus;
     real64 const porosityThermalExpansion = 3 * thermalExpansionCoefficient * ( biotCoefficient - referencePorosity );
@@ -153,19 +153,19 @@ public:
     real64 const deltaTemperatureFromBeginningOfTimeStep = temperature - temperature_n;
     real64 const deltaTemperatureFromLastIteration = temperature - temperature_k;
 
-    computePorosity( deltaPressureFromBeginningOfTimeStep,
-                     deltaPressureFromLastIteration,
-                     deltaTemperatureFromBeginningOfTimeStep,
-                     deltaTemperatureFromLastIteration,
-                     m_porosity_n[k][q],
-                     m_referencePorosity[k],
-                     m_newPorosity[k][q],
-                     m_dPorosity_dPressure[k][q],
-                     m_dPorosity_dTemperature[k][q],
-                     m_biotCoefficient[k],
-                     m_thermalExpansionCoefficient[k],
-                     m_averageMeanEffectiveStressIncrement_k[k],
-                     m_bulkModulus[k] );
+    computePorosityFixedStress( deltaPressureFromBeginningOfTimeStep,
+                                deltaPressureFromLastIteration,
+                                deltaTemperatureFromBeginningOfTimeStep,
+                                deltaTemperatureFromLastIteration,
+                                m_porosity_n[k][q],
+                                m_referencePorosity[k],
+                                m_newPorosity[k][q],
+                                m_dPorosity_dPressure[k][q],
+                                m_dPorosity_dTemperature[k][q],
+                                m_biotCoefficient[k],
+                                m_thermalExpansionCoefficient[k],
+                                m_averageMeanEffectiveStressIncrement_k[k],
+                                m_bulkModulus[k] );
   }
 
   GEOS_HOST_DEVICE

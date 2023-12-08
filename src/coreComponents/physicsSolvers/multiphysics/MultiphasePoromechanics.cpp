@@ -158,9 +158,9 @@ void MultiphasePoromechanics< FLOW_SOLVER >::registerDataOnMesh( Group & meshBod
 
       if( this->getNonlinearSolverParameters().m_couplingType == NonlinearSolverParameters::CouplingType::Sequential )
       {
-        // register the bulk density for use in the solid mechanics solver
+        // register the total fluid density for use in the solid mechanics solver
         // ideally we would resize it here as well, but the solid model name is not available yet (see below)
-        subRegion.registerField< fields::poromechanics::bulkDensity >( this->getName() );
+        subRegion.registerField< fields::poromechanics::totalFluidDensity >( this->getName() );
       }
     } );
   } );
@@ -412,11 +412,11 @@ void MultiphasePoromechanics< FLOW_SOLVER >::initializePreSubGroups()
       GEOS_ERROR_IF( porousName.empty(), GEOS_FMT( "{}: Solid model not found on subregion {}",
                                                    this->getDataContext(), subRegion.getName() ) );
 
-      if( subRegion.hasField< fields::poromechanics::bulkDensity >() )
+      if( subRegion.hasField< fields::poromechanics::totalFluidDensity >() )
       {
-        // get the solid model to know the number of quadrature points and resize the bulk density
+        // get the solid model to know the number of quadrature points and resize the total fluid density
         CoupledSolidBase const & solid = this->template getConstitutiveModel< CoupledSolidBase >( subRegion, porousName );
-        subRegion.getField< fields::poromechanics::bulkDensity >().resizeDimension< 1 >( solid.getDensity().size( 1 ) );
+        subRegion.getField< fields::poromechanics::totalFluidDensity >().resizeDimension< 1 >( solid.getDensity().size( 1 ) );
       }
     } );
   } );
@@ -511,10 +511,8 @@ void MultiphasePoromechanics< FLOW_SOLVER >::mapSolutionBetweenSolvers( DomainPa
       mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                             auto & subRegion )
       {
-        // update the bulk density
-        // TODO: ideally, we would not recompute the bulk density, but a more general "rhs" containing the body force and the
-        // pressure/temperature terms
-        updateBulkDensity( subRegion );
+        // update the total fluid density
+        updateTotalFluidDensity( subRegion );
       } );
     } );
   }
@@ -542,7 +540,7 @@ void MultiphasePoromechanics< FLOW_SOLVER >::mapSolutionBetweenSolvers( DomainPa
 }
 
 template< typename FLOW_SOLVER >
-void MultiphasePoromechanics< FLOW_SOLVER >::updateBulkDensity( ElementSubRegionBase & subRegion )
+void MultiphasePoromechanics< FLOW_SOLVER >::updateTotalFluidDensity( ElementSubRegionBase & subRegion )
 {
   // get the fluid model (to access fluid density)
   string const fluidName = subRegion.getReference< string >( FlowSolverBase::viewKeyStruct::fluidNamesString() );
@@ -552,9 +550,9 @@ void MultiphasePoromechanics< FLOW_SOLVER >::updateBulkDensity( ElementSubRegion
   string const solidName = subRegion.getReference< string >( viewKeyStruct::porousMaterialNamesString() );
   CoupledSolidBase const & solid = this->template getConstitutiveModel< CoupledSolidBase >( subRegion, solidName );
 
-  // update the bulk density
+  // update the total fluid density
   poromechanicsKernels::
-    MultiphaseBulkDensityKernelFactory::
+    MultiphaseTotalFluidDensityKernelFactory::
     createAndLaunch< parallelDevicePolicy<> >( flowSolver()->numFluidPhases(),
                                                fluid,
                                                solid,

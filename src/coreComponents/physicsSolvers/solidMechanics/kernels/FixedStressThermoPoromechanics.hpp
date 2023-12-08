@@ -188,8 +188,11 @@ protected:
   /// The gravity vector.
   real64 const m_gravityVector[3];
 
-  /// The rank global bulk densities
-  arrayView2d< real64 const > const m_bulkDensity;
+  /// The rank global total fluid density
+  arrayView2d< real64 const > const m_totalFluidDensity;
+
+  /// The rank global density
+  arrayView2d< real64 const > m_solidDensity;
 
   /// The rank-global fluid pressure arrays.
   arrayView1d< real64 const > const m_pressure_n;
