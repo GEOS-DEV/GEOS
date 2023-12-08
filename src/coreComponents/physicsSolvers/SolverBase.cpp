@@ -53,7 +53,7 @@ SolverBase::SolverBase( string const & name,
   this->setTimesteppingBehavior( ExecutableGroup::TimesteppingBehavior::DeterminesTimeStepSize );
 
   registerWrapper( viewKeyStruct::cflFactorString(), &m_cflFactor ).
-    setApplyDefaultValue( -1.0 ).
+    setApplyDefaultValue( 0.5 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_"
                     " when calculating the maximum allowable time step. Values should be in the interval (0,1] " );
