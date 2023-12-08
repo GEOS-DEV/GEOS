@@ -128,20 +128,6 @@ public:
     return m_initialPorosity[k][q];
   }
 
-  GEOS_HOST_DEVICE
-  virtual void updateFromPressureAndTemperature( localIndex const k,
-                                                 localIndex const q,
-                                                 real64 const & pressure,
-                                                 real64 const & pressure_k,
-                                                 real64 const & pressure_n,
-                                                 real64 const & temperature,
-                                                 real64 const & temperature_k,
-                                                 real64 const & temperature_n ) const
-  {
-    GEOS_UNUSED_VAR( k, q, pressure, pressure_k, pressure_n, temperature, temperature_k, temperature_n );
-    GEOS_ERROR( "updateFromPressureAndTemperature is not implemented for porosityBase." );
-  }
-
 protected:
 
   /// New value of porosity

@@ -54,15 +54,9 @@ public:
   virtual void updateStateFromPressureAndTemperature( localIndex const k,
                                                       localIndex const q,
                                                       real64 const & pressure,
-                                                      real64 const & pressure_n,
-                                                      real64 const & pressure_k,
-                                                      real64 const & temperature,
-                                                      real64 const & temperature_k,
-                                                      real64 const & temperature_n ) const override final
+                                                      real64 const & temperature ) const override final
   {
-    m_porosityUpdate.updateFromPressureAndTemperature( k, q,
-                                                       pressure, pressure_k, pressure_n,
-                                                       temperature, temperature_k, temperature_n );
+    m_porosityUpdate.updateFromPressureAndTemperature( k, q, pressure, temperature );
     real64 const porosity = m_porosityUpdate.getPorosity( k, q );
     m_permUpdate.updateFromPorosity( k, q, porosity );
   }
@@ -74,15 +68,9 @@ public:
                                            real64 const & oldHydraulicAperture,
                                            real64 const & newHydraulicAperture ) const
   {
-    real64 const pressure_k = 0;
-    real64 const pressure_n = 0;
     real64 const temperature = 0;
-    real64 const temperature_k = 0;
-    real64 const temperature_n = 0;
     real64 const dHydraulicAperture_dNormalJump = 1.0;
-    m_porosityUpdate.updateFromPressureAndTemperature( k, q,
-                                                       pressure, pressure_k, pressure_n,
-                                                       temperature, temperature_k, temperature_n );
+    m_porosityUpdate.updateFromPressureAndTemperature( k, q, pressure, temperature );
     m_permUpdate.updateFromAperture( k, q, oldHydraulicAperture, newHydraulicAperture, dHydraulicAperture_dNormalJump );
   }
 
@@ -96,7 +84,7 @@ public:
                                                        real64 const ( &dispJump )[3],
                                                        real64 const ( &traction )[3] ) const
   {
-    m_porosityUpdate.updateFromPressureAndTemperature( k, q, pressure, 0.0, 0.0, 0.0, 0.0, 0.0 );
+    m_porosityUpdate.updateFromPressureAndTemperature( k, q, pressure, 0.0 );
     m_permUpdate.updateFromApertureAndShearDisplacement( k, q, oldHydraulicAperture, newHydraulicAperture, dHydraulicAperture_dNormalJump, pressure, dispJump, traction );
   }
 
