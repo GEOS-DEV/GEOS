@@ -36,13 +36,14 @@ ParticleSubRegionBase::ParticleSubRegionBase( string const & name, Group * const
   m_particleDamage(),
   m_particleStrengthScale(),
   m_particleCenter(),
-  m_particleDisplacement(),
   m_particleVelocity(),
   m_particleInitialMaterialDirection(),
   m_particleMaterialDirection(),
   m_particleVolume(),
   m_particleType(),
-  m_particleRVectors()
+  m_particleRVectors(),
+  m_particleInitialSurfaceNormal(),
+  m_particleSurfaceNormal()
 {
   registerGroup( groupKeyStruct::constitutiveModelsString(), &m_constitutiveModels ).
     setSizedFromParent( 1 );
@@ -69,10 +70,6 @@ ParticleSubRegionBase::ParticleSubRegionBase( string const & name, Group * const
     setPlotLevel( PlotLevel::LEVEL_1 ).
     reference().resizeDimension< 1 >( 3 );
 
-  registerWrapper( viewKeyStruct::particleDisplacementString(), &m_particleDisplacement ).
-    setPlotLevel( PlotLevel::LEVEL_1 ).
-    reference().resizeDimension< 1 >( 3 );
-
   registerWrapper( viewKeyStruct::particleVelocityString(), &m_particleVelocity ).
     setPlotLevel( PlotLevel::LEVEL_1 ).
     reference().resizeDimension< 1 >( 3 );
@@ -91,6 +88,14 @@ ParticleSubRegionBase::ParticleSubRegionBase( string const & name, Group * const
   registerWrapper( viewKeyStruct::particleRVectorsString(), &m_particleRVectors ).
     setPlotLevel( PlotLevel::NOPLOT ).
     reference().resizeDimension< 1, 2 >( 3, 3 );
+
+  registerWrapper( viewKeyStruct::particleInitialSurfaceNormalString(), &m_particleInitialSurfaceNormal ).
+    setPlotLevel( PlotLevel::LEVEL_1 ).
+    reference().resizeDimension< 1 >( 3 );
+
+  registerWrapper( viewKeyStruct::particleSurfaceNormalString(), &m_particleSurfaceNormal ).
+    setPlotLevel( PlotLevel::LEVEL_1 ).
+    reference().resizeDimension< 1 >( 3 );
 }
 
 ParticleSubRegionBase::~ParticleSubRegionBase()
