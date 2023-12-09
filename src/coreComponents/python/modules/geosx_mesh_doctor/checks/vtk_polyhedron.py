@@ -1,6 +1,14 @@
 from collections import defaultdict
 from dataclasses import dataclass
-from typing import List, Tuple, Iterator, Sequence, Iterable, FrozenSet
+from typing import (
+    Collection,
+    Dict,
+    FrozenSet,
+    Iterable,
+    List,
+    Sequence,
+    Tuple,
+)
 
 from vtkmodules.vtkCommonCore import (
     vtkIdList,
@@ -23,7 +31,7 @@ class Result:
     dummy: float
 
 
-def parse_face_stream(ids: vtkIdList) -> Tuple[Tuple[int, ...], ...]:
+def parse_face_stream(ids: vtkIdList) -> Sequence[Sequence[int]]:
     """
     Parses the face stream raw information and converts it into a tuple of tuple of integers,
     each tuple of integer being the nodes of a face.
@@ -52,11 +60,11 @@ class FaceStream:
     """
     Helper class to manipulate the vtk face streams.
     """
-    def __init__(self, data: Tuple[Tuple[int, ...], ...]):
+    def __init__(self, data: Sequence[Sequence[int]]):
         # self.__data contains the list of faces nodes, like it appears in vtk face streams.
         # Except that the additional size information is removed
         # in favor of the __len__ of the containers.
-        self.__data = data
+        self.__data: Sequence[Sequence[int]] = data
 
     @staticmethod
     def build_from_vtk_id_list(ids: vtkIdList):
@@ -84,12 +92,12 @@ class FaceStream:
         return len(self.__data)
 
     @property
-    def support_point_ids(self) -> Iterable[int]:
+    def support_point_ids(self) -> Collection[int]:
         """
         The list of all (unique) support points of the face stream, in no specific order.
         :return: The set of all the point ids.
         """
-        tmp = []
+        tmp: List[int] = []
         for nodes in self.face_nodes:
             tmp += nodes
         return frozenset(tmp)
@@ -102,7 +110,7 @@ class FaceStream:
         """
         return len(self.support_point_ids)
 
-    def __getitem__(self, face_index) -> Tuple[int, ...]:
+    def __getitem__(self, face_index) -> Sequence[int]:
         """
         The support point ids for the `face_index` face.
         :param face_index: The face index (within the face stream).
@@ -153,9 +161,10 @@ def build_face_to_face_connectivity_through_edges(face_stream: FaceStream, add_c
     :return: A graph which nodes are actually the faces of the polyhedron.
         Two nodes of the graph are connected if they share an edge.
     """
-    edges_to_face_indices = defaultdict(list)
+    edges_to_face_indices: Dict[FrozenSet[int], List[int]] = defaultdict(list)
     for face_index, face_nodes in enumerate(face_stream.face_nodes):
         # Each edge is defined by two nodes. We do a small trick to loop on consecutive points.
+        face_indices: Tuple[int, int]
         for face_indices in zip(face_nodes, face_nodes[1:] + (face_nodes[0], )):
             edges_to_face_indices[frozenset(face_indices)].append(face_index)
     # We are doing here some small validations w.r.t. the connections of the faces
@@ -165,7 +174,7 @@ def build_face_to_face_connectivity_through_edges(face_stream: FaceStream, add_c
     for face_indices in edges_to_face_indices.values():
         assert len(face_indices) == 2
     # Computing the graph degree for validation
-    degrees = defaultdict(int)
+    degrees: Dict[int, int] = defaultdict(int)
     for face_indices in edges_to_face_indices.values():
         for face_index in face_indices:
             degrees[face_index] += 1
@@ -190,7 +199,8 @@ def build_face_to_face_connectivity_through_edges(face_stream: FaceStream, add_c
         node_0, node_1 = edge
         order_0 = 1 if face_nodes_0[face_nodes_0.index(node_0) + 1] == node_1 else -1
         order_1 = 1 if face_nodes_1[face_nodes_1.index(node_0) + 1] == node_1 else -1
-        # Same order of nodes means that the normals of the faces are not both in the same "direction" (inward or outward).
+        # Same order of nodes means that the normals of the faces
+        # are _not_ both in the same "direction" (inward or outward).
         if order_0 * order_1 == 1:
             if add_compatibility:
                 graph.add_edge(face_index_0, face_index_1, compatible="-")
