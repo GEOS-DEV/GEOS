@@ -158,7 +158,7 @@ public:
    * @brief Prints the data hierarchy recursively.
    * @param[in] indent The level of indentation to add to this level of output.
    */
-  void printDataHierarchy( integer indent = 0 );
+  void printDataHierarchy( integer indent = 0 ) const;
 
   /**
    * @brief @return a table formatted string containing all input options.
