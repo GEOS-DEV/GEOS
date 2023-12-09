@@ -19,6 +19,7 @@
 #include "mainInterface/initialization.hpp"
 #include "mainInterface/ProblemManager.hpp"
 #include "mainInterface/GeosxState.hpp"
+#include "mainInterface/version.hpp"
 
 
 using namespace geos;
@@ -31,6 +32,8 @@ int main( int argc, char *argv[] )
     std::chrono::system_clock::time_point startTime = std::chrono::system_clock::now();
 
     std::unique_ptr< CommandLineOptions > commandLineOptions = basicSetup( argc, argv, true );
+
+    outputVersionInfo();
 
     GEOS_LOG_RANK_0( GEOS_FMT( "Started at {:%Y-%m-%d %H:%M:%S}", startTime ) );
 

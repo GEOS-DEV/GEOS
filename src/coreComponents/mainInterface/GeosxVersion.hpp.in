@@ -8,20 +8,25 @@
 #ifndef GEOS_MAININTERFACE_VERSION_HPP_
 #define GEOS_MAININTERFACE_VERSION_HPP_
 
-/// GEOSX major version number
+/// GEOS major version number
 #define GEOSX_VERSION_MAJOR @GEOSX_VERSION_MAJOR@
-/// GEOSX minor version number
+
+/// GEOS minor version number
 #define GEOSX_VERSION_MINOR @GEOSX_VERSION_MINOR@
-/// GEOSX patch version number
+
+/// GEOS patch version number
 #define GEOSX_VERSION_PATCH @GEOSX_VERSION_PATCH@
-/// GEOSX full version number string
+
+/// GEOS full version number string
 #define GEOSX_VERSION_FULL  "@GEOSX_VERSION_FULL@"
 
-/// GEOSX development branch string
+/// GEOS development branch string
 #cmakedefine GEOSX_GIT_BRANCH "@GEOSX_GIT_BRANCH@"
-/// GEOSX development branch string
+
+/// GEOS development branch string
 #cmakedefine GEOSX_GIT_HASH "@GEOSX_GIT_HASH@"
-/// GEOSX development branch string
+
+/// GEOS development branch string
 #cmakedefine GEOSX_GIT_TAG "@GEOSX_GIT_TAG@"
 
 #endif  /* GEOS_MAININTERFACE_VERSION_HPP_ */

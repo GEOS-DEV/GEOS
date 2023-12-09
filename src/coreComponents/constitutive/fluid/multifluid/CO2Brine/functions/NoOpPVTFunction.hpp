@@ -38,17 +38,6 @@ public:
     : PVTFunctionBaseUpdate( componentMolarWeight )
   {}
 
-  template< int USD1 >
-  GEOS_HOST_DEVICE
-  void compute( real64 const & pressure,
-                real64 const & temperature,
-                arraySlice1d< real64 const, USD1 > const & phaseComposition,
-                real64 & value,
-                bool useMass ) const
-  {
-    GEOS_UNUSED_VAR( pressure, temperature, phaseComposition, value, useMass );
-  }
-
   template< int USD1, int USD2, int USD3 >
   GEOS_HOST_DEVICE
   void compute( real64 const & pressure,
