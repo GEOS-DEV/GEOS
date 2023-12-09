@@ -57,14 +57,6 @@ public:
     m_coef2( coef2 )
   {}
 
-  template< int USD1 >
-  GEOS_HOST_DEVICE
-  void compute( real64 const & pressure,
-                real64 const & temperature,
-                arraySlice1d< real64 const, USD1 > const & phaseComposition,
-                real64 & value,
-                bool useMass ) const;
-
   template< int USD1, int USD2, int USD3 >
   GEOS_HOST_DEVICE
   void compute( real64 const & pressure,
@@ -167,31 +159,6 @@ private:
   real64 m_coef2;
 
 };
-
-template< int USD1 >
-GEOS_HOST_DEVICE
-void EzrokhiBrineDensityUpdate::compute( real64 const & pressure,
-                                         real64 const & temperature,
-                                         arraySlice1d< real64 const, USD1 > const & phaseComposition,
-                                         real64 & value,
-                                         bool useMass ) const
-{
-  GEOS_UNUSED_VAR( pressure );
-  real64 const waterSatDensity = m_waterSatDensityTable.compute( &temperature );
-  real64 const waterSatPressure = m_waterSatPressureTable.compute( &temperature );
-
-  real64 const waterDensity = waterSatDensity * exp( m_waterCompressibility * ( pressure - waterSatPressure ) );
-  // we have to convert molar component phase fraction (phaseComposition[m_CO2Index]) to mass fraction
-  real64 const massPhaseCompositionCO2 = phaseComposition[m_CO2Index] * m_componentMolarWeight[m_CO2Index] /
-                                         ( phaseComposition[m_CO2Index] * m_componentMolarWeight[m_CO2Index] + phaseComposition[m_waterIndex] * m_componentMolarWeight[m_waterIndex]);
-
-  value = ( m_coef0  + temperature * ( m_coef1 + m_coef2 * temperature ) ) * massPhaseCompositionCO2;
-  value = waterDensity * pow( 10, value );
-  if( !useMass )
-  {
-    value /= m_componentMolarWeight[m_waterIndex];
-  }
-}
 
 template< int USD1, int USD2, int USD3 >
 GEOS_HOST_DEVICE
