@@ -94,6 +94,13 @@ Element: BrooksCoreyRelativePermeability
 .. include:: ../../coreComponents/schema/docs/BrooksCoreyRelativePermeability.rst
 
 
+.. _XML_BrooksCoreyStone2RelativePermeability:
+
+Element: BrooksCoreyStone2RelativePermeability
+==============================================
+.. include:: ../../coreComponents/schema/docs/BrooksCoreyStone2RelativePermeability.rst
+
+
 .. _XML_CO2BrineEzrokhiFluid:
 
 Element: CO2BrineEzrokhiFluid
@@ -1277,6 +1284,13 @@ Element: VanGenuchtenCapillaryPressure
 .. include:: ../../coreComponents/schema/docs/VanGenuchtenCapillaryPressure.rst
 
 
+.. _XML_VanGenuchtenStone2RelativePermeability:
+
+Element: VanGenuchtenStone2RelativePermeability
+===============================================
+.. include:: ../../coreComponents/schema/docs/VanGenuchtenStone2RelativePermeability.rst
+
+
 .. _XML_ViscoDruckerPrager:
 
 Element: ViscoDruckerPrager
@@ -1426,6 +1440,13 @@ Datastructure: BrooksCoreyCapillaryPressure
 Datastructure: BrooksCoreyRelativePermeability
 ==============================================
 .. include:: ../../coreComponents/schema/docs/BrooksCoreyRelativePermeability_other.rst
+
+
+.. _DATASTRUCTURE_BrooksCoreyStone2RelativePermeability:
+
+Datastructure: BrooksCoreyStone2RelativePermeability
+====================================================
+.. include:: ../../coreComponents/schema/docs/BrooksCoreyStone2RelativePermeability_other.rst
 
 
 .. _DATASTRUCTURE_CO2BrineEzrokhiFluid:
@@ -2637,6 +2658,13 @@ Datastructure: VanGenuchtenBakerRelativePermeability
 Datastructure: VanGenuchtenCapillaryPressure
 ============================================
 .. include:: ../../coreComponents/schema/docs/VanGenuchtenCapillaryPressure_other.rst
+
+
+.. _DATASTRUCTURE_VanGenuchtenStone2RelativePermeability:
+
+Datastructure: VanGenuchtenStone2RelativePermeability
+=====================================================
+.. include:: ../../coreComponents/schema/docs/VanGenuchtenStone2RelativePermeability_other.rst
 
 
 .. _DATASTRUCTURE_ViscoDruckerPrager:

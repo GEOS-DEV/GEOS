@@ -4,19 +4,19 @@ if ( Python3_EXECUTABLE )
      # Select the version of python to target
      if( ENABLE_PYGEOSX )
           set( PYTHON_POST_EXECUTABLE ${CMAKE_BINARY_DIR}/lib/PYGEOSX/bin/python CACHE PATH "" FORCE )
+
+          # Check for the virtualenv package
+          execute_process(
+              COMMAND ${Python3_EXECUTABLE} -c "import virtualenv"
+              RESULT_VARIABLE VIRTUALENV_AVAILABLE
+          )
+
+          if (NOT ${VIRTUALENV_AVAILABLE} EQUAL 0)
+              message(FATAL_ERROR "To build the PYGEOSX interface, the \"virtualenv\" package should be installed in the target python environment.  Please install it (i.e.: \"${Python3_EXECUTABLE} -m pip install virtualenv\") or use a different python distribution.")
+          endif()
+
      else()
           set( PYTHON_POST_EXECUTABLE ${Python3_EXECUTABLE} CACHE PATH "" FORCE )
-     endif()
-
-     # Check for the virtualenv package
-     execute_process(
-         COMMAND ${Python3_EXECUTABLE} -c "import virtualenv"
-         RESULT_VARIABLE VIRTUALENV_AVAILABLE
-     )
-
-     if (NOT ${VIRTUALENV_AVAILABLE} EQUAL 0)
-         message(WARNING "To build the PYGEOSX and/or the GEOSX python tools, \"virtualenv\" should be installed in the target python.")
-         message(STATUS "To install virtualenv, try running ${PYTHON_POST_EXECUTABLE} -m pip install virtualenv")
      endif()
 
      # Build targets
@@ -30,8 +30,13 @@ if ( Python3_EXECUTABLE )
                          WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
                        )
 
-     add_custom_target( geosx_python_tools
-                        DEPENDS ${GEOSX_PYTHON_TOOLS_BINS} )
+     if( ENABLE_PYGEOSX )
+          add_custom_target( geosx_python_tools
+                             DEPENDS pygeosx ${GEOSX_PYTHON_TOOLS_BINS} )
+     else()
+          add_custom_target( geosx_python_tools
+                             DEPENDS ${GEOSX_PYTHON_TOOLS_BINS} )
+     endif()
 
      add_custom_target( geosx_python_tools_test
                         COMMAND ${CMAKE_BINARY_DIR}/python/geosx/bin/test_geosx_xml_tools
