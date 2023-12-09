@@ -44,14 +44,6 @@ public:
     m_CO2ViscosityTable( CO2ViscosityTable.createKernelWrapper() )
   {}
 
-  template< int USD1 >
-  GEOS_HOST_DEVICE
-  void compute( real64 const & pressure,
-                real64 const & temperature,
-                arraySlice1d< real64 const, USD1 > const & phaseComposition,
-                real64 & value,
-                bool useMass ) const;
-
   template< int USD1, int USD2, int USD3 >
   GEOS_HOST_DEVICE
   void compute( real64 const & pressure,
@@ -115,21 +107,6 @@ private:
   TableFunction const * m_CO2ViscosityTable;
 
 };
-
-template< int USD1 >
-GEOS_HOST_DEVICE
-GEOS_FORCE_INLINE
-void FenghourCO2ViscosityUpdate::compute( real64 const & pressure,
-                                          real64 const & temperature,
-                                          arraySlice1d< real64 const, USD1 > const & phaseComposition,
-                                          real64 & value,
-                                          bool useMass ) const
-{
-  GEOS_UNUSED_VAR( phaseComposition, useMass );
-
-  real64 const input[2] = { pressure, temperature };
-  value = m_CO2ViscosityTable.compute( input );
-}
 
 template< int USD1, int USD2, int USD3 >
 GEOS_HOST_DEVICE

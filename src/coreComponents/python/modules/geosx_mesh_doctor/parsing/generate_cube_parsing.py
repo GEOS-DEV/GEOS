@@ -66,7 +66,7 @@ def fill_subparser(subparsers) -> None:
                    help="[list of integers]: Number of elements in the X direction.")
     p.add_argument('--' + __NY,
                    type=lambda s: tuple(map(int, s.split(":"))),
-                   metavar="1;1",
+                   metavar="1:1",
                    help="[list of integers]: Number of elements in the Y direction.")
     p.add_argument('--' + __NZ,
                    type=lambda s: tuple(map(int, s.split(":"))),
