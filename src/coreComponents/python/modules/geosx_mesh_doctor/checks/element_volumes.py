@@ -56,7 +56,7 @@ def __check(mesh, options: Options) -> Result:
         mq.SetWedgeQualityMeasureToVolume()
         SUPPORTED_TYPES.append(VTK_WEDGE)
     else:
-        logging.debug("Your \"pyvtk\" version does not bring pyramid not wedge support with vtkMeshQuality. Using the fallback solution.")
+        logging.warning("Your \"pyvtk\" version does not bring pyramid nor wedge support with vtkMeshQuality. Using the fallback solution.")
 
     mq.SetInputData(mesh)
     mq.Update()
