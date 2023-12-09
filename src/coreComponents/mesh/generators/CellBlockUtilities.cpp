@@ -308,7 +308,7 @@ localIndex getFaceNodes( ElementType const elementType,
     }
     default:
     {
-      GEOS_ERROR( "Invalid element type " << elementType << " at face index " << faceNumber << "." << generalMeshErrorAdvice );
+      GEOS_ERROR( "Invalid element type " << elementType << " at face index " << faceNumber << ".\n" << generalMeshErrorAdvice );
     }
   }
   return 0;
