@@ -46,14 +46,6 @@ public:
     m_CO2Index( CO2Index )
   {}
 
-  template< int USD1 >
-  GEOS_HOST_DEVICE
-  void compute( real64 const & pressure,
-                real64 const & temperature,
-                arraySlice1d< real64 const, USD1 > const & phaseComposition,
-                real64 & value,
-                bool useMass ) const;
-
   template< int USD1, int USD2, int USD3 >
   GEOS_HOST_DEVICE
   void compute( real64 const & pressure,
@@ -128,26 +120,6 @@ private:
   localIndex m_CO2Index;
 
 };
-
-template< int USD1 >
-GEOS_HOST_DEVICE
-GEOS_FORCE_INLINE
-void SpanWagnerCO2DensityUpdate::compute( real64 const & pressure,
-                                          real64 const & temperature,
-                                          arraySlice1d< real64 const, USD1 > const & phaseComposition,
-                                          real64 & value,
-                                          bool useMass ) const
-{
-  GEOS_UNUSED_VAR( phaseComposition );
-
-  real64 const input[2] = { pressure, temperature };
-  value = m_CO2DensityTable.compute( input );
-
-  if( !useMass )
-  {
-    value /= m_componentMolarWeight[m_CO2Index];
-  }
-}
 
 template< int USD1, int USD2, int USD3 >
 GEOS_HOST_DEVICE

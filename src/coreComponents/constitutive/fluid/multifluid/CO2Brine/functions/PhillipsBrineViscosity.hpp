@@ -47,14 +47,6 @@ public:
     m_coef1( coef1 )
   {}
 
-  template< int USD1 >
-  GEOS_HOST_DEVICE
-  void compute( real64 const & pressure,
-                real64 const & temperature,
-                arraySlice1d< real64 const, USD1 > const & phaseComposition,
-                real64 & value,
-                bool useMass ) const;
-
   template< int USD1, int USD2, int USD3 >
   GEOS_HOST_DEVICE
   void compute( real64 const & pressure,
@@ -130,24 +122,6 @@ private:
   real64 m_coef1;
 
 };
-
-template< int USD1 >
-GEOS_HOST_DEVICE
-GEOS_FORCE_INLINE
-void PhillipsBrineViscosityUpdate::compute( real64 const & pressure,
-                                            real64 const & temperature,
-                                            arraySlice1d< real64 const, USD1 > const & phaseComposition,
-                                            real64 & value,
-                                            bool useMass ) const
-{
-  GEOS_UNUSED_VAR( pressure, phaseComposition, useMass );
-
-  // compute the viscosity of pure water as a function of temperature
-  real64 const pureWaterVisc = m_waterViscosityTable.compute( &temperature );
-
-  // then compute the brine viscosity, accounting for the presence of salt
-  value = pureWaterVisc * ( m_coef0 + m_coef1 * temperature );
-}
 
 template< int USD1, int USD2, int USD3 >
 GEOS_HOST_DEVICE
