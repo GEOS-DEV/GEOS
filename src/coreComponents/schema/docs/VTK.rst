@@ -4,10 +4,15 @@
 Name                        Type                    Default  Description                                                                                                                                                                              
 =========================== ======================= ======== ======================================================================================================================================================================================== 
 childDirectory              string                           Child directory path                                                                                                                                                                     
-fieldNames                  string_array            {}       Names of the fields to output. If this attribute is specified, GEOSX outputs all the fields specified by the user, regardless of their `plotLevel`                                       
+fieldNames                  groupNameRef_array      {}       Names of the fields to output. If this attribute is specified, GEOSX outputs all the fields specified by the user, regardless of their `plotLevel`                                       
 format                      geos_vtk_VTKOutputMode  binary   Output data format.  Valid options: ``binary``, ``ascii``                                                                                                                                
+<<<<<<< HEAD
 levelNames                  string_array            {}       Names of the mesh levels to output. By default (empty array) all levels are used.                                                                                                        
 name                        string                  required A name is required for any non-unique nodes                                                                                                                                              
+=======
+logLevel                    integer                 0        Log level                                                                                                                                                                                
+name                        groupName               required A name is required for any non-unique nodes                                                                                                                                              
+>>>>>>> develop
 onlyPlotSpecifiedFieldNames integer                 0        If this flag is equal to 1, then we only plot the fields listed in `fieldNames`. Otherwise, we plot all the fields with the required `plotLevel`, plus the fields listed in `fieldNames` 
 outputRegionType            geos_vtk_VTKRegionTypes all      Output region types.  Valid options: ``cell``, ``well``, ``surface``, ``particle``, ``all``                                                                                              
 parallelThreads             integer                 1        Number of plot files.                                                                                                                                                                    
