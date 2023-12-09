@@ -160,7 +160,7 @@
 
   <Outputs>
     <VTK
-      name="mech_vtkOutput"
+      name="vtkOutput"
       plotLevel="2"
       format="ascii"/>
       
