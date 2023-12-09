@@ -95,16 +95,6 @@ public:
   GEOS_FORCE_INLINE
   virtual void compute( real64 const pressure,
                         real64 & density,
-                        real64 & viscosity ) const override
-  {
-    m_densRelation.compute( pressure, density );
-    m_viscRelation.compute( pressure, viscosity );
-  }
-
-  GEOS_HOST_DEVICE
-  GEOS_FORCE_INLINE
-  virtual void compute( real64 const pressure,
-                        real64 & density,
                         real64 & dDensity_dPressure,
                         real64 & viscosity,
                         real64 & dViscosity_dPressure ) const override

@@ -48,14 +48,6 @@ public:
     m_waterIndex( waterIndex )
   {}
 
-  template< int USD1 >
-  GEOS_HOST_DEVICE
-  void compute( real64 const & pressure,
-                real64 const & temperature,
-                arraySlice1d< real64 const, USD1 > const & phaseComposition,
-                real64 & value,
-                bool useMass ) const;
-
   template< int USD1, int USD2, int USD3 >
   GEOS_HOST_DEVICE
   void compute( real64 const & pressure,
@@ -130,54 +122,6 @@ private:
   integer m_waterIndex;
 
 };
-
-template< int USD1 >
-GEOS_HOST_DEVICE
-GEOS_FORCE_INLINE
-void PhillipsBrineDensityUpdate::compute( real64 const & pressure,
-                                          real64 const & temperature,
-                                          arraySlice1d< real64 const, USD1 > const & phaseComposition,
-                                          real64 & value,
-                                          bool useMass ) const
-{
-  // this method implements the method proposed by E. Garcia (2001)
-
-  // these coefficients come from equation (2) from Garcia (2001)
-  constexpr real64 a = 37.51;
-  constexpr real64 b = -9.585e-2;
-  constexpr real64 c = 8.740e-4;
-  constexpr real64 d = -5.044e-7;
-
-  real64 const input[2] = { pressure, temperature };
-  real64 const density = m_brineDensityTable.compute( input );
-
-  // equation (2) from Garcia (2001)
-  real64 const squaredTemp = temperature * temperature;
-  real64 const V = (  a
-                      + b * temperature
-                      + c * squaredTemp
-                      + d * squaredTemp * temperature ) * 1e-6;
-
-  // CO2 concentration
-  real64 const wMwInv = 1.0 / m_componentMolarWeight[m_waterIndex];
-  real64 const oneMinusCO2PhaseCompInv = 1.0 / ( 1.0 - phaseComposition[m_CO2Index] );
-  real64 const coef = wMwInv * phaseComposition[m_CO2Index] * oneMinusCO2PhaseCompInv;
-  real64 const conc = coef * density;
-
-  // CO2 concentration times density times vol
-  real64 const concDensVol = conc * density * V;
-
-  // Brine density
-  // equation (1) from Garcia (2001)
-  if( useMass )
-  {
-    value = density + m_componentMolarWeight[m_CO2Index] * conc - concDensVol;
-  }
-  else
-  {
-    value = density / m_componentMolarWeight[m_waterIndex] + conc - concDensVol / m_componentMolarWeight[m_waterIndex];
-  }
-}
 
 template< int USD1, int USD2, int USD3 >
 GEOS_HOST_DEVICE

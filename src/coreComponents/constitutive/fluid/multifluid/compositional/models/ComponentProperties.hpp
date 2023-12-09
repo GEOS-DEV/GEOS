@@ -62,7 +62,7 @@ public:
    * @brief Get the number of components
    * @return The number of components
    */
-  integer getNumberOfComponents() const { return m_componentMolarWeight.size( 0 ); }
+  integer getNumberOfComponents() const { return m_componentNames.size( 0 ); }
 
   struct KernelWrapper
   {
