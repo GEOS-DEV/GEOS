@@ -85,7 +85,7 @@ class BoundaryMesh:
         for ic in range(num_cells):
             self.__is_underlying_cell_type_a_polyhedron[ic] = mesh.GetCell(self.__original_cells.GetValue(ic)).GetCellType() == VTK_POLYHEDRON
         # Precomputing the normals
-        self.__normals = numpy.empty((num_cells, 3), dtype=numpy.double, order='C')  # Do not modify the storage layout
+        self.__normals: numpy.ndarray = numpy.empty((num_cells, 3), dtype=numpy.double, order='C')  # Do not modify the storage layout
         for ic in range(num_cells):
             if self.__is_underlying_cell_type_a_polyhedron[ic]:
                 self.__normals[ic, :] = re_normals.GetTuple3(ic)
@@ -141,7 +141,7 @@ class BoundaryMesh:
         """
         return self.re_boundary_mesh.GetNumberOfPoints()
 
-    def bounds(self, i) -> vtkBoundingBox:
+    def bounds(self, i) -> Tuple[float, float, float, float, float, float]:
         """
         The boundrary box of cell `i`.
         :param i: The boundary cell index.
@@ -149,7 +149,7 @@ class BoundaryMesh:
         """
         return self.re_boundary_mesh.GetCell(i).GetBounds()
 
-    def normals(self, i) -> numpy.array:
+    def normals(self, i) -> numpy.ndarray:
         """
         The normal of cell `i`. This normal will be directed outwards
         :param i: The boundary cell index.
