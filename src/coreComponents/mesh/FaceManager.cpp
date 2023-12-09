@@ -265,15 +265,17 @@ void FaceManager::sortAllFaceNodes( NodeManager const & nodeManager,
   ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > elemCenter =
     elemManager.constructArrayViewAccessor< real64, 2 >( ElementSubRegionBase::viewKeyStruct::elementCenterString() );
 
-  forAll< parallelHostPolicy >( size(), [=, elemCenter = elemCenter.toNestedViewConst(), &elemManager]( localIndex const faceIndex )
+  forAll< parallelHostPolicy >( size(), [=, elemCenter = elemCenter.toNestedViewConst()]( localIndex const faceIndex )
   {
     // The face should be connected to at least one element.
     if( facesToElements( faceIndex, 0 ) < 0 && facesToElements( faceIndex, 1 ) < 0 )
     {
-      GEOS_ERROR( getDataContext() << ": Face " << faceIndex << " is not connected to any cell." <<
-                  "You might have forgotten one cell type in the " <<
-                  elemManager.getWrapperDataContext( CellElementRegion::viewKeyStruct::sourceCellBlockNamesString() ) <<
-                  ", or your mesh might be invalid" );
+      GEOS_ERROR( getDataContext() << ": Face " << faceIndex <<
+                  " is not connected to any cell.\n"
+                  "You might have:\n"
+                  "- an invalid mesh,\n"
+                  "- not enough CellElementRegions to describe your input mesh (all regions, simulated or not, must be listed),\n"
+                  "- forgotten one cell type in an existing \"" << CellElementRegion::viewKeyStruct::sourceCellBlockNamesString() << "\'." );
     }
 
     // Take the first defined face-to-(elt/region/sub region) to sorting direction.

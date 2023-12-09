@@ -141,7 +141,7 @@ void InternalMeshGenerator::postProcessInput()
     }
     if( failFlag )
     {
-      GEOS_ERROR( getDataContext() << ": vertex/element mismatch." << generalMeshErrorAdvice );
+      GEOS_ERROR( getDataContext() << ": vertex/element mismatch.\n" << generalMeshErrorAdvice );
     }
 
     // If specified, check to make sure bias values have the correct length
@@ -154,7 +154,7 @@ void InternalMeshGenerator::postProcessInput()
     }
     if( failFlag )
     {
-      GEOS_ERROR( getDataContext() << ": element/bias mismatch." << generalMeshErrorAdvice );
+      GEOS_ERROR( getDataContext() << ": element/bias mismatch.\n" << generalMeshErrorAdvice );
     }
   }
 
@@ -170,7 +170,7 @@ void InternalMeshGenerator::postProcessInput()
     else
     {
       GEOS_ERROR( getDataContext() << ": InternalMeshGenerator: The number of element types is inconsistent" <<
-                  " with the number of total cell blocks." << generalMeshErrorAdvice );
+                  " with the number of total cell blocks.\n" << generalMeshErrorAdvice );
     }
   }
 
@@ -536,7 +536,7 @@ static void getElemToNodesRelationInBox( ElementType const elementType,
     }
     default:
     {
-      GEOS_ERROR( "InternalMeshGenerator: unsupported element type " << elementType << "." << generalMeshErrorAdvice );
+      GEOS_ERROR( "InternalMeshGenerator: unsupported element type " << elementType << ".\n" << generalMeshErrorAdvice );
     }
   }
 }
