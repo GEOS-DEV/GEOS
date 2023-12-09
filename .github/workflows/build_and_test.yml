@@ -80,6 +80,10 @@ jobs:
         docker_args=()
         script_args=()
 
+
+
+        docker_args+=(${{ inputs.DOCKER_RUN_ARGS }})
+
         COMMIT=${{ github.event.pull_request.head.sha }}
         SHORT_COMMIT=${COMMIT:0:7}
         script_args+=(--install-dir-basename GEOSX-${SHORT_COMMIT})
@@ -162,7 +166,7 @@ jobs:
         
         echo DATA_EXCHANGE_DIR = ${DATA_EXCHANGE_DIR}
         echo DATA_BASENAME = ${DATA_BASENAME}
-        echo inputs.GCP_BUCKET = ${inputs.GCP_BUCKET}
+        echo GCP_BUCKET = ${{inputs.GCP_BUCKET}}
 
 
         # Send to the bucket and print the download link when it makes sense.
