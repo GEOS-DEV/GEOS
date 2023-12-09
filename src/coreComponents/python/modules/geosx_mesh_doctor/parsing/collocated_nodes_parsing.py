@@ -1,5 +1,10 @@
 import logging
 
+from typing import (
+    FrozenSet,
+    List,
+)
+
 from checks.collocated_nodes import Options, Result
 
 from . import COLLOCATES_NODES
@@ -21,16 +26,16 @@ def fill_subparser(subparsers) -> None:
 
 
 def display_results(options: Options, result: Result):
-    all_duplicated_nodes = []
+    all_collocated_nodes: List[int] = []
     for bucket in result.nodes_buckets:
         for node in bucket:
-            all_duplicated_nodes.append(node)
-    all_duplicated_nodes = set(all_duplicated_nodes)    # Surely useless
-    if all_duplicated_nodes:
-        logging.error(f"You have {len(all_duplicated_nodes)} collocated nodes (tolerance = {options.tolerance}).")
+            all_collocated_nodes.append(node)
+    all_collocated_nodes: FrozenSet[int] = frozenset(all_collocated_nodes)    # Surely useless
+    if all_collocated_nodes:
+        logging.error(f"You have {len(all_collocated_nodes)} collocated nodes (tolerance = {options.tolerance}).")
 
         logging.info("Here are all the buckets of collocated nodes.")
-        tmp = []
+        tmp: List[str] = []
         for bucket in result.nodes_buckets:
             tmp.append(f"({', '.join(map(str, bucket))})")
         logging.info(f"({', '.join(tmp)})")
@@ -38,7 +43,7 @@ def display_results(options: Options, result: Result):
         logging.error(f"You have no collocated node (tolerance = {options.tolerance}).")
 
     if result.wrong_support_elements:
-        tmp = ", ".join(map(str, result.wrong_support_elements))
+        tmp: str = ", ".join(map(str, result.wrong_support_elements))
         logging.error(f"You have {len(result.wrong_support_elements)} elements with duplicated support nodes.\n" + tmp)
     else:
         logging.error("You have no element with duplicated support nodes.")

@@ -25,8 +25,8 @@ def __div_clamp(num: float, den :float) -> float:
         return tmp
 
 
-def distance_between_two_segments(x0: numpy.array, d0: numpy.array,
-                                  x1: numpy.array, d1: numpy.array) -> Tuple[numpy.array, numpy.array]:
+def distance_between_two_segments(x0: numpy.ndarray, d0: numpy.ndarray,
+                                  x1: numpy.ndarray, d1: numpy.ndarray) -> Tuple[numpy.ndarray, numpy.ndarray]:
     """
     Compute the minimum distance between two segments.
     :param x0: First point of segment 0.
@@ -40,7 +40,7 @@ def distance_between_two_segments(x0: numpy.array, d0: numpy.array,
     # Information Processing Letters, Vol. 21, number 2, pages 55-61, 08/16/1985.
 
     # In the reference, the indices start at 1, while in this implementation, they start at 0.
-    tmp: numpy.array = x1 - x0
+    tmp: numpy.ndarray = x1 - x0
     D0: float = numpy.dot(d0, d0)  # As such, this is D1 in the reference paper.
     D1: float = numpy.dot(d1, d1)
     R: float = numpy.dot(d0, d1)
@@ -60,14 +60,14 @@ def distance_between_two_segments(x0: numpy.array, d0: numpy.array,
 
     # Step 3: compute t1 for point on line 1 closest to point at t0.
     t1: float = __div_clamp(t0 * R - S1, D1)  # Eq (10, right)
-    sol_1: numpy.array = x1 + t1 * d1            # Eq (3)
+    sol_1: numpy.ndarray = x1 + t1 * d1            # Eq (3)
     t0: float = __div_clamp(t1 * R + S0, D0)  # Eq (10, left)
-    sol_0: numpy.array = x0 + t0 * d0            # Eq (4)
+    sol_0: numpy.ndarray = x0 + t0 * d0            # Eq (4)
 
     return sol_0, sol_1
 
 
-def __compute_nodes_to_triangle_distance(tri_0, edges_0, tri_1) -> Tuple[Union[float, None], Union[numpy.array, None], Union[numpy.array, None], bool]:
+def __compute_nodes_to_triangle_distance(tri_0, edges_0, tri_1) -> Tuple[Union[float, None], Union[numpy.ndarray, None], Union[numpy.ndarray, None], bool]:
     """
     Computes the distance from nodes of `tri_1` points onto `tri_0`.
     :param tri_0: First triangle.
@@ -78,7 +78,7 @@ def __compute_nodes_to_triangle_distance(tri_0, edges_0, tri_1) -> Tuple[Union[f
     then the first three arguments are None. The boolean being still defined.
     """
     are_disjoint: bool = False
-    tri_0_normal: numpy.array = numpy.cross(edges_0[0], edges_0[1])
+    tri_0_normal: numpy.ndarray = numpy.cross(edges_0[0], edges_0[1])
     tri_0_normal_norm: float = numpy.dot(tri_0_normal, tri_0_normal)
 
     # Forget about degenerate cases.
@@ -112,8 +112,8 @@ def __compute_nodes_to_triangle_distance(tri_0, edges_0, tri_1) -> Tuple[Union[f
     return None, None, None, are_disjoint
 
 
-def distance_between_two_triangles(tri_0: numpy.array,
-                                   tri_1: numpy.array) -> Tuple[float, numpy.array, numpy.array]:
+def distance_between_two_triangles(tri_0: numpy.ndarray,
+                                   tri_1: numpy.ndarray) -> Tuple[float, numpy.ndarray, numpy.ndarray]:
     """
     Returns the minimum distance between two triangles, and the two points where this minimum occurs.
     If the two triangles touch, then distance is exactly 0.
