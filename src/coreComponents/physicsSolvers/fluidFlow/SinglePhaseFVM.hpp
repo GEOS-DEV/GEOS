@@ -113,6 +113,11 @@ public:
   }
 
   /**
+   * @copydoc SolverBase::getCatalogName()
+   */
+  string getCatalogName() const override { return catalogName(); }
+
+  /**
    * @defgroup Solver Interface Function
    *
    * This function provides the primary interface that is required for derived classes
