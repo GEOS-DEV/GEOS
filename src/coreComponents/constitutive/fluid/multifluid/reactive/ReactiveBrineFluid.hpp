@@ -71,20 +71,6 @@ public:
   class KernelWrapper final : public ReactiveMultiFluid::KernelWrapper
   {
 public:
-
-    GEOS_HOST_DEVICE
-    virtual void compute( real64 const pressure,
-                          real64 const temperature,
-                          arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & composition,
-                          arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & phaseFraction,
-                          arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & phaseDensity,
-                          arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & phaseMassDensity,
-                          arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & phaseViscosity,
-                          arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & phaseEnthalpy,
-                          arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & phaseInternalEnergy,
-                          arraySlice2d< real64, multifluid::USD_PHASE_COMP-2 > const & phaseCompFraction,
-                          real64 & totalDensity ) const override;
-
     GEOS_HOST_DEVICE
     virtual void compute( real64 const pressure,
                           real64 const temperature,
@@ -188,80 +174,6 @@ using ReactiveBrine =
   ReactiveBrineFluid< PhaseModel< PVTProps::WaterDensity, PVTProps::PhillipsBrineViscosity, PVTProps::NoOpPVTFunction > >;
 using ReactiveBrineThermal =
   ReactiveBrineFluid< PhaseModel< PVTProps::WaterDensity, PVTProps::PhillipsBrineViscosity, PVTProps::BrineEnthalpy > >;
-
-template< typename PHASE >
-GEOS_HOST_DEVICE
-inline void
-ReactiveBrineFluid< PHASE >::KernelWrapper::
-  compute( real64 pressure,
-           real64 temperature,
-           arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & composition,
-           arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & phaseFraction,
-           arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & phaseDensity,
-           arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & phaseMassDensity,
-           arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & phaseViscosity,
-           arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & phaseEnthalpy,
-           arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & phaseInternalEnergy,
-           arraySlice2d< real64, multifluid::USD_PHASE_COMP-2 > const & phaseCompFraction,
-           real64 & totalDensity ) const
-{
-  integer constexpr numComp = chemicalReactions::ReactionsBase::maxNumPrimarySpecies;
-  integer constexpr numPhase = 1;
-
-  // 1. We perform a sort of single phase flash
-  stackArray1d< real64, numComp > compMoleFrac( composition.size() );
-  phaseFraction[0] = 1.0; // it's a single phase system
-  for( integer ic = 0; ic < composition.size(); ++ic )
-  {
-    compMoleFrac[ic] = composition[ic];
-    phaseCompFraction[0][ic] = composition[ic];
-  }
-
-  // 2. Compute phase fractions and phase component fractions
-  real64 const temperatureInCelsius = units::convertKToC( temperature );
-
-  // 3. Compute phase density and phase viscoisty
-  m_phase.density.compute( pressure,
-                           temperatureInCelsius,
-                           phaseCompFraction[0].toSliceConst(),
-                           phaseDensity[0],
-                           m_useMass );
-  m_phase.viscosity.compute( pressure,
-                             temperatureInCelsius,
-                             phaseCompFraction[0].toSliceConst(),
-                             phaseViscosity[0],
-                             m_useMass );
-
-  // for now, we have to compute the phase mass density here
-  m_phase.density.compute( pressure,
-                           temperatureInCelsius,
-                           phaseCompFraction[0].toSliceConst(),
-                           phaseMassDensity[0],
-                           true );
-
-  // 4. Compute enthalpy and internal energy
-  if( m_isThermal )
-  {
-
-    m_phase.enthalpy.compute( pressure,
-                              temperatureInCelsius,
-                              phaseCompFraction[0].toSliceConst(),
-                              phaseEnthalpy[0],
-                              m_useMass );
-
-    computeInternalEnergy< numComp, numPhase >( pressure,
-                                                phaseFraction,
-                                                phaseMassDensity,
-                                                phaseEnthalpy,
-                                                phaseInternalEnergy );
-
-  }
-
-  // 6. Compute total fluid mass/molar density
-  computeTotalDensity< numComp, numPhase >( phaseFraction,
-                                            phaseDensity,
-                                            totalDensity );
-}
 
 template< typename PHASE >
 GEOS_HOST_DEVICE

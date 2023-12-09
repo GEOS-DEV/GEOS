@@ -757,7 +757,10 @@ struct HydrostaticPressureKernel
 
     real64 dens = 0.0;
     real64 visc = 0.0;
-    fluidWrapper.compute( pres0, dens, visc );
+    constitutive::SingleFluidBaseUpdate::computeValues( fluidWrapper,
+                                                        pres0,
+                                                        dens,
+                                                        visc );
     pres1 = refPres - 0.5 * ( refDens + dens ) * gravCoef;
 
     // Step 3: fixed-point iteration until convergence
@@ -777,7 +780,10 @@ struct HydrostaticPressureKernel
       }
 
       // compute the density at this elevation using the previous pressure, and compute the new pressure
-      fluidWrapper.compute( pres0, dens, visc );
+      constitutive::SingleFluidBaseUpdate::computeValues( fluidWrapper,
+                                                          pres0,
+                                                          dens,
+                                                          visc );
       pres1 = refPres - 0.5 * ( refDens + dens ) * gravCoef;
     }
 
@@ -811,9 +817,10 @@ struct HydrostaticPressureKernel
     real64 datumDens = 0.0;
     real64 datumVisc = 0.0;
 
-    fluidWrapper.compute( datumPres,
-                          datumDens,
-                          datumVisc );
+    constitutive::SingleFluidBaseUpdate::computeValues( fluidWrapper,
+                                                        datumPres,
+                                                        datumDens,
+                                                        datumVisc );
 
     // Step 2: find the closest elevation to datumElevation
 

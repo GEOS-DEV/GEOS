@@ -103,20 +103,35 @@ protected:
   arrayView2d< real64 > m_dVisc_dPres;
 
 //END_SPHINX_INCLUDE_01
-//START_SPHINX_INCLUDE_02
-private:
 
+public:
   /**
-   * @brief Compute fluid properties at a single point.
+   * @brief Compute function to update properties in a cell without returning derivatives.
+   * @details This delegates the call to the fluid wrapper using the value and derivative function.
+   *          This is used for initialisation and boundary conditions.
+   * @param[in] fluidWrapper the actual fluid kernel
    * @param[in]  pressure the target pressure value
    * @param[out] density fluid density
    * @param[out] viscosity fluid viscosity
    */
+  template< typename FLUIDWRAPPER >
   GEOS_HOST_DEVICE
-  virtual void compute( real64 const pressure,
-                        real64 & density,
-                        real64 & viscosity ) const = 0;
+  static void computeValues( FLUIDWRAPPER const fluidWrapper,
+                             real64 const pressure,
+                             real64 & density,
+                             real64 & viscosity )
+  {
+    real64 dDensity_dPressure = 0.0;
+    real64 dViscosity_dPressure = 0.0;
+    fluidWrapper.compute( pressure,
+                          density,
+                          dDensity_dPressure,
+                          viscosity,
+                          dViscosity_dPressure );
+  }
 
+//START_SPHINX_INCLUDE_02
+private:
   /**
    * @brief Compute fluid properties and derivatives at a single point.
    * @param[in]  pressure the target pressure value
