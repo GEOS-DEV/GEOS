@@ -50,6 +50,10 @@ public:
   static string coupledSolverAttributePrefix() { return "acoustic"; }
 
   static string catalogName() { return "AcousticSEM"; }
+  /**
+   * @copydoc SolverBase::getCatalogName()
+   */
+  string getCatalogName() const override { return catalogName(); }
 
   virtual void initializePreSubGroups() override;
 

@@ -55,6 +55,10 @@ public:
   static string coupledSolverAttributePrefix() { return "elastic"; }
 
   static string catalogName() { return "ElasticSEM"; }
+  /**
+   * @copydoc SolverBase::getCatalogName()
+   */
+  string getCatalogName() const override { return catalogName(); }
 
   virtual void initializePreSubGroups() override;
 

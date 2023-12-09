@@ -333,6 +333,10 @@
 					<xsd:selector xpath="CompositionalMultiphaseReservoir" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
+				<xsd:unique name="SolversCompositionalMultiphaseReservoirPoromechanicsUniqueName">
+					<xsd:selector xpath="CompositionalMultiphaseReservoirPoromechanics" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
 				<xsd:unique name="SolversCompositionalMultiphaseWellUniqueName">
 					<xsd:selector xpath="CompositionalMultiphaseWell" />
 					<xsd:field xpath="@name" />
@@ -421,6 +425,10 @@
 					<xsd:selector xpath="SinglePhaseReservoir" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
+				<xsd:unique name="SolversSinglePhaseReservoirPoromechanicsUniqueName">
+					<xsd:selector xpath="SinglePhaseReservoirPoromechanics" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
 				<xsd:unique name="SolversSinglePhaseWellUniqueName">
 					<xsd:selector xpath="SinglePhaseWell" />
 					<xsd:field xpath="@name" />
@@ -447,6 +455,10 @@
 				</xsd:unique>
 			</xsd:element>
 			<xsd:element name="Tasks" type="TasksType" maxOccurs="1">
+				<xsd:unique name="TasksCompositionalMultiphaseReservoirPoromechanicsInitializationUniqueName">
+					<xsd:selector xpath="CompositionalMultiphaseReservoirPoromechanicsInitialization" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
 				<xsd:unique name="TasksCompositionalMultiphaseStatisticsUniqueName">
 					<xsd:selector xpath="CompositionalMultiphaseStatistics" />
 					<xsd:field xpath="@name" />
@@ -473,6 +485,10 @@
 				</xsd:unique>
 				<xsd:unique name="TasksSinglePhasePoromechanicsInitializationUniqueName">
 					<xsd:selector xpath="SinglePhasePoromechanicsInitialization" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
+				<xsd:unique name="TasksSinglePhaseReservoirPoromechanicsInitializationUniqueName">
+					<xsd:selector xpath="SinglePhaseReservoirPoromechanicsInitialization" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
 				<xsd:unique name="TasksSinglePhaseStatisticsUniqueName">
@@ -511,6 +527,10 @@
 				</xsd:unique>
 				<xsd:unique name="domainConstitutiveBrooksCoreyRelativePermeabilityUniqueName">
 					<xsd:selector xpath="BrooksCoreyRelativePermeability" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
+				<xsd:unique name="domainConstitutiveBrooksCoreyStone2RelativePermeabilityUniqueName">
+					<xsd:selector xpath="BrooksCoreyStone2RelativePermeability" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
 				<xsd:unique name="domainConstitutiveCO2BrineEzrokhiFluidUniqueName">
@@ -771,6 +791,10 @@
 				</xsd:unique>
 				<xsd:unique name="domainConstitutiveVanGenuchtenCapillaryPressureUniqueName">
 					<xsd:selector xpath="VanGenuchtenCapillaryPressure" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
+				<xsd:unique name="domainConstitutiveVanGenuchtenStone2RelativePermeabilityUniqueName">
+					<xsd:selector xpath="VanGenuchtenStone2RelativePermeability" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
 				<xsd:unique name="domainConstitutiveViscoDruckerPragerUniqueName">
@@ -1468,6 +1492,8 @@ stress - traction is applied to the faces as specified by the inner product of i
 	<xsd:complexType name="PerforationType">
 		<!--distanceFromHead => Linear distance from well head to the perforation-->
 		<xsd:attribute name="distanceFromHead" type="real64" use="required" />
+		<!--skinFactor => Perforation skin factor-->
+		<xsd:attribute name="skinFactor" type="real64" default="0" />
 		<!--transmissibility => Perforation transmissibility-->
 		<xsd:attribute name="transmissibility" type="real64" default="-1" />
 		<!--name => A name is required for any non-unique nodes-->
@@ -1955,6 +1981,8 @@ the relative residual norm satisfies:
 		<xsd:attribute name="fieldNames" type="groupNameRef_array" default="{}" />
 		<!--format => Output data format.  Valid options: ``binary``, ``ascii``-->
 		<xsd:attribute name="format" type="geos_vtk_VTKOutputMode" default="binary" />
+		<!--logLevel => Log level-->
+		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--onlyPlotSpecifiedFieldNames => If this flag is equal to 1, then we only plot the fields listed in `fieldNames`. Otherwise, we plot all the fields with the required `plotLevel`, plus the fields listed in `fieldNames`-->
 		<xsd:attribute name="onlyPlotSpecifiedFieldNames" type="integer" default="0" />
 		<!--outputRegionType => Output region types.  Valid options: ``cell``, ``well``, ``surface``, ``particle``, ``all``-->
@@ -1990,6 +2018,7 @@ the relative residual norm satisfies:
 			<xsd:element name="CompositionalMultiphaseFVM" type="CompositionalMultiphaseFVMType" />
 			<xsd:element name="CompositionalMultiphaseHybridFVM" type="CompositionalMultiphaseHybridFVMType" />
 			<xsd:element name="CompositionalMultiphaseReservoir" type="CompositionalMultiphaseReservoirType" />
+			<xsd:element name="CompositionalMultiphaseReservoirPoromechanics" type="CompositionalMultiphaseReservoirPoromechanicsType" />
 			<xsd:element name="CompositionalMultiphaseWell" type="CompositionalMultiphaseWellType">
 				<xsd:unique name="SolversCompositionalMultiphaseWellWellControlsUniqueName">
 					<xsd:selector xpath="WellControls" />
@@ -2017,6 +2046,7 @@ the relative residual norm satisfies:
 			<xsd:element name="SinglePhasePoromechanicsReservoir" type="SinglePhasePoromechanicsReservoirType" />
 			<xsd:element name="SinglePhaseProppantFVM" type="SinglePhaseProppantFVMType" />
 			<xsd:element name="SinglePhaseReservoir" type="SinglePhaseReservoirType" />
+			<xsd:element name="SinglePhaseReservoirPoromechanics" type="SinglePhaseReservoirPoromechanicsType" />
 			<xsd:element name="SinglePhaseWell" type="SinglePhaseWellType">
 				<xsd:unique name="SolversSinglePhaseWellWellControlsUniqueName">
 					<xsd:selector xpath="WellControls" />
@@ -2183,24 +2213,38 @@ the relative residual norm satisfies:
 		</xsd:choice>
 		<!--allowLocalCompDensityChopping => Flag indicating whether local (cell-wise) chopping of negative compositions is allowed-->
 		<xsd:attribute name="allowLocalCompDensityChopping" type="integer" default="1" />
+		<!--allowNegativePressure => Flag indicating if negative pressure is allowed-->
+		<xsd:attribute name="allowNegativePressure" type="integer" default="1" />
 		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
 		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
+		<!--contMultiplierDBC => Factor by which continuation parameter is changed every newton when DBC is used-->
+		<xsd:attribute name="contMultiplierDBC" type="real64" default="0.5" />
+		<!--continuationDBC => Flag for enabling continuation parameter-->
+		<xsd:attribute name="continuationDBC" type="integer" default="1" />
 		<!--discretization => Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` discretization should be specified.-->
 		<xsd:attribute name="discretization" type="groupNameRef" use="required" />
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
 		<!--isThermal => Flag indicating whether the problem is thermal or not.-->
 		<xsd:attribute name="isThermal" type="integer" default="0" />
+		<!--kappaminDBC => Factor that controls how much dissipation is kept in the system when continuation is used-->
+		<xsd:attribute name="kappaminDBC" type="real64" default="1e-20" />
 		<!--logLevel => Log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
+		<!--maxAbsolutePressureChange => Maximum (absolute) pressure change in a Newton iteration-->
+		<xsd:attribute name="maxAbsolutePressureChange" type="real64" default="-1" />
 		<!--maxCompFractionChange => Maximum (absolute) change in a component fraction in a Newton iteration-->
 		<xsd:attribute name="maxCompFractionChange" type="real64" default="0.5" />
-		<!--maxRelativePressureChange => Maximum (relative) change in pressure in a Newton iteration (expected value between 0 and 1)-->
+		<!--maxRelativePressureChange => Maximum (relative) change in pressure in a Newton iteration-->
 		<xsd:attribute name="maxRelativePressureChange" type="real64" default="0.5" />
-		<!--maxRelativeTemperatureChange => Maximum (relative) change in temperature in a Newton iteration (expected value between 0 and 1)-->
+		<!--maxRelativeTemperatureChange => Maximum (relative) change in temperature in a Newton iteration-->
 		<xsd:attribute name="maxRelativeTemperatureChange" type="real64" default="0.5" />
 		<!--minCompDens => Minimum allowed global component density-->
 		<xsd:attribute name="minCompDens" type="real64" default="1e-10" />
+		<!--miscibleDBC => Flag for enabling DBC formulation with/without miscibility-->
+		<xsd:attribute name="miscibleDBC" type="integer" default="0" />
+		<!--omegaDBC => Factor by which DBC flux is multiplied-->
+		<xsd:attribute name="omegaDBC" type="real64" default="1" />
 		<!--scalingType => Solution scaling type.Valid options:
 * Global
 * Local-->
@@ -2217,6 +2261,8 @@ the relative residual norm satisfies:
 		<xsd:attribute name="targetRelativeTemperatureChangeInTimeStep" type="real64" default="0.2" />
 		<!--temperature => Temperature-->
 		<xsd:attribute name="temperature" type="real64" use="required" />
+		<!--useDBC => Enable Dissipation-based continuation flux-->
+		<xsd:attribute name="useDBC" type="integer" default="0" />
 		<!--useMass => Use mass formulation instead of molar-->
 		<xsd:attribute name="useMass" type="integer" default="0" />
 		<!--useSimpleAccumulation => Flag indicating whether simple accumulation form is used-->
@@ -2243,6 +2289,8 @@ the relative residual norm satisfies:
 		</xsd:choice>
 		<!--allowLocalCompDensityChopping => Flag indicating whether local (cell-wise) chopping of negative compositions is allowed-->
 		<xsd:attribute name="allowLocalCompDensityChopping" type="integer" default="1" />
+		<!--allowNegativePressure => Flag indicating if negative pressure is allowed-->
+		<xsd:attribute name="allowNegativePressure" type="integer" default="1" />
 		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
 		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
 		<!--discretization => Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` discretization should be specified.-->
@@ -2253,11 +2301,13 @@ the relative residual norm satisfies:
 		<xsd:attribute name="isThermal" type="integer" default="0" />
 		<!--logLevel => Log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
+		<!--maxAbsolutePressureChange => Maximum (absolute) pressure change in a Newton iteration-->
+		<xsd:attribute name="maxAbsolutePressureChange" type="real64" default="-1" />
 		<!--maxCompFractionChange => Maximum (absolute) change in a component fraction in a Newton iteration-->
 		<xsd:attribute name="maxCompFractionChange" type="real64" default="0.5" />
-		<!--maxRelativePressureChange => Maximum (relative) change in pressure in a Newton iteration (expected value between 0 and 1)-->
+		<!--maxRelativePressureChange => Maximum (relative) change in pressure in a Newton iteration-->
 		<xsd:attribute name="maxRelativePressureChange" type="real64" default="0.5" />
-		<!--maxRelativeTemperatureChange => Maximum (relative) change in temperature in a Newton iteration (expected value between 0 and 1)-->
+		<!--maxRelativeTemperatureChange => Maximum (relative) change in temperature in a Newton iteration-->
 		<xsd:attribute name="maxRelativeTemperatureChange" type="real64" default="0.5" />
 		<!--minCompDens => Minimum allowed global component density-->
 		<xsd:attribute name="minCompDens" type="real64" default="1e-10" />
@@ -2302,6 +2352,42 @@ the relative residual norm satisfies:
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
+	<xsd:complexType name="CompositionalMultiphaseReservoirPoromechanicsType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
+			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />
+		</xsd:choice>
+		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
+		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
+		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
+		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
+		<!--isThermal => Flag indicating whether the problem is thermal or not. Set isThermal="1" to enable the thermal coupling-->
+		<xsd:attribute name="isThermal" type="integer" default="0" />
+		<!--logLevel => Log level-->
+		<xsd:attribute name="logLevel" type="integer" default="0" />
+		<!--reservoirAndWellsSolverName => Name of the reservoirAndWells solver used by the coupled solver-->
+		<xsd:attribute name="reservoirAndWellsSolverName" type="groupNameRef" use="required" />
+		<!--solidSolverName => Name of the solid solver used by the coupled solver-->
+		<xsd:attribute name="solidSolverName" type="groupNameRef" use="required" />
+		<!--stabilizationMultiplier => Constant multiplier of stabilization strength.-->
+		<xsd:attribute name="stabilizationMultiplier" type="real64" default="1" />
+		<!--stabilizationRegionNames => Regions where stabilization is applied.-->
+		<xsd:attribute name="stabilizationRegionNames" type="groupNameRef_array" default="{}" />
+		<!--stabilizationType => Stabilization type. Options are:
+None - Add no stabilization to mass equation,
+Global - Add stabilization to all faces,
+Local - Add stabilization only to interiors of macro elements.-->
+		<xsd:attribute name="stabilizationType" type="geos_stabilization_StabilizationType" default="None" />
+		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
+		<xsd:attribute name="targetRegions" type="groupNameRef_array" use="required" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="groupName" use="required" />
+	</xsd:complexType>
+	<xsd:simpleType name="geos_stabilization_StabilizationType">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value=".*[\[\]`$].*|None|Global|Local" />
+		</xsd:restriction>
+	</xsd:simpleType>
 	<xsd:complexType name="CompositionalMultiphaseWellType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
@@ -2316,6 +2402,8 @@ the relative residual norm satisfies:
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
 		<!--logLevel => Log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
+		<!--maxAbsolutePressureChange => Maximum (absolute) pressure change in a Newton iteration-->
+		<xsd:attribute name="maxAbsolutePressureChange" type="real64" default="-1" />
 		<!--maxCompFractionChange => Maximum (absolute) change in a component fraction between two Newton iterations-->
 		<xsd:attribute name="maxCompFractionChange" type="real64" default="1" />
 		<!--maxRelativePressureChange => Maximum (relative) change in pressure between two Newton iterations (recommended with rate control)-->
@@ -2645,17 +2733,12 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 None - Add no stabilization to mass equation,
 Global - Add stabilization to all faces,
 Local - Add stabilization only to interiors of macro elements.-->
-		<xsd:attribute name="stabilizationType" type="geos_MultiphasePoromechanics_StabilizationType" default="None" />
+		<xsd:attribute name="stabilizationType" type="geos_stabilization_StabilizationType" default="None" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="groupNameRef_array" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
-	<xsd:simpleType name="geos_MultiphasePoromechanics_StabilizationType">
-		<xsd:restriction base="xsd:string">
-			<xsd:pattern value=".*[\[\]`$].*|None|Global|Local" />
-		</xsd:restriction>
-	</xsd:simpleType>
 	<xsd:complexType name="MultiphasePoromechanicsReservoirType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
@@ -2739,6 +2822,8 @@ Local - Add stabilization only to interiors of macro elements.-->
 			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
 			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />
 		</xsd:choice>
+		<!--allowNegativePressure => Flag indicating if negative pressure is allowed-->
+		<xsd:attribute name="allowNegativePressure" type="integer" default="1" />
 		<!--bridgingFactor => Bridging factor used for bridging/screen-out calculation-->
 		<xsd:attribute name="bridgingFactor" type="real64" default="0" />
 		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
@@ -2755,6 +2840,8 @@ Local - Add stabilization only to interiors of macro elements.-->
 		<xsd:attribute name="isThermal" type="integer" default="0" />
 		<!--logLevel => Log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
+		<!--maxAbsolutePressureChange => Maximum (absolute) pressure change in a Newton iteration-->
+		<xsd:attribute name="maxAbsolutePressureChange" type="real64" default="-1" />
 		<!--maxProppantConcentration => Maximum proppant concentration-->
 		<xsd:attribute name="maxProppantConcentration" type="real64" default="0.6" />
 		<!--proppantDensity => Proppant density-->
@@ -2777,6 +2864,8 @@ Local - Add stabilization only to interiors of macro elements.-->
 		<xsd:attribute name="OBLOperatorsTableFile" type="path" use="required" />
 		<!--allowLocalOBLChopping => Allow keeping solution within OBL limits-->
 		<xsd:attribute name="allowLocalOBLChopping" type="integer" default="1" />
+		<!--allowNegativePressure => Flag indicating if negative pressure is allowed-->
+		<xsd:attribute name="allowNegativePressure" type="integer" default="1" />
 		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
 		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
 		<!--componentNames => List of component names-->
@@ -2791,6 +2880,8 @@ Local - Add stabilization only to interiors of macro elements.-->
 		<xsd:attribute name="isThermal" type="integer" default="0" />
 		<!--logLevel => Log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
+		<!--maxAbsolutePressureChange => Maximum (absolute) pressure change in a Newton iteration-->
+		<xsd:attribute name="maxAbsolutePressureChange" type="real64" default="-1" />
 		<!--maxCompFractionChange => Maximum (absolute) change in a component fraction between two Newton iterations-->
 		<xsd:attribute name="maxCompFractionChange" type="real64" default="1" />
 		<!--numComponents => Number of components-->
@@ -2825,8 +2916,8 @@ Local - Add stabilization only to interiors of macro elements.-->
 		<xsd:attribute name="isThermal" type="integer" default="0" />
 		<!--logLevel => Log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
-		<!--maxPressureChange => Maximum (absolute) pressure change in a Newton iteration-->
-		<xsd:attribute name="maxPressureChange" type="real64" default="-1" />
+		<!--maxAbsolutePressureChange => Maximum (absolute) pressure change in a Newton iteration-->
+		<xsd:attribute name="maxAbsolutePressureChange" type="real64" default="-1" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="groupNameRef_array" use="required" />
 		<!--temperature => Temperature-->
@@ -2851,8 +2942,8 @@ Local - Add stabilization only to interiors of macro elements.-->
 		<xsd:attribute name="isThermal" type="integer" default="0" />
 		<!--logLevel => Log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
-		<!--maxPressureChange => Maximum (absolute) pressure change in a Newton iteration-->
-		<xsd:attribute name="maxPressureChange" type="real64" default="-1" />
+		<!--maxAbsolutePressureChange => Maximum (absolute) pressure change in a Newton iteration-->
+		<xsd:attribute name="maxAbsolutePressureChange" type="real64" default="-1" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="groupNameRef_array" use="required" />
 		<!--temperature => Temperature-->
@@ -2965,8 +3056,8 @@ Local - Add stabilization only to interiors of macro elements.-->
 		<xsd:attribute name="isThermal" type="integer" default="0" />
 		<!--logLevel => Log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
-		<!--maxPressureChange => Maximum (absolute) pressure change in a Newton iteration-->
-		<xsd:attribute name="maxPressureChange" type="real64" default="-1" />
+		<!--maxAbsolutePressureChange => Maximum (absolute) pressure change in a Newton iteration-->
+		<xsd:attribute name="maxAbsolutePressureChange" type="real64" default="-1" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="groupNameRef_array" use="required" />
 		<!--temperature => Temperature-->
@@ -2991,6 +3082,28 @@ Local - Add stabilization only to interiors of macro elements.-->
 		<xsd:attribute name="targetRegions" type="groupNameRef_array" use="required" />
 		<!--wellSolverName => Name of the well solver used by the coupled solver-->
 		<xsd:attribute name="wellSolverName" type="groupNameRef" use="required" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="groupName" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="SinglePhaseReservoirPoromechanicsType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
+			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />
+		</xsd:choice>
+		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
+		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
+		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
+		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
+		<!--isThermal => Flag indicating whether the problem is thermal or not. Set isThermal="1" to enable the thermal coupling-->
+		<xsd:attribute name="isThermal" type="integer" default="0" />
+		<!--logLevel => Log level-->
+		<xsd:attribute name="logLevel" type="integer" default="0" />
+		<!--reservoirAndWellsSolverName => Name of the reservoirAndWells solver used by the coupled solver-->
+		<xsd:attribute name="reservoirAndWellsSolverName" type="groupNameRef" use="required" />
+		<!--solidSolverName => Name of the solid solver used by the coupled solver-->
+		<xsd:attribute name="solidSolverName" type="groupNameRef" use="required" />
+		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
+		<xsd:attribute name="targetRegions" type="groupNameRef_array" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -3064,6 +3177,8 @@ Local - Add stabilization only to interiors of macro elements.-->
  0 - Infinitesimal Strain 
  1 - Finite Strain-->
 		<xsd:attribute name="strainTheory" type="integer" default="0" />
+		<!--surfaceGeneratorName => Name of the surface generator to use-->
+		<xsd:attribute name="surfaceGeneratorName" type="string" default="" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="groupNameRef_array" use="required" />
 		<!--timeIntegrationOption => Time integration method. Options are:
@@ -3108,6 +3223,8 @@ Local - Add stabilization only to interiors of macro elements.-->
  0 - Infinitesimal Strain 
  1 - Finite Strain-->
 		<xsd:attribute name="strainTheory" type="integer" default="0" />
+		<!--surfaceGeneratorName => Name of the surface generator to use-->
+		<xsd:attribute name="surfaceGeneratorName" type="string" default="" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="groupNameRef_array" use="required" />
 		<!--timeIntegrationOption => Time integration method. Options are:
@@ -3212,6 +3329,7 @@ Local - Add stabilization only to interiors of macro elements.-->
 	</xsd:complexType>
 	<xsd:complexType name="TasksType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="CompositionalMultiphaseReservoirPoromechanicsInitialization" type="CompositionalMultiphaseReservoirPoromechanicsInitializationType" />
 			<xsd:element name="CompositionalMultiphaseStatistics" type="CompositionalMultiphaseStatisticsType" />
 			<xsd:element name="MultiphasePoromechanicsInitialization" type="MultiphasePoromechanicsInitializationType" />
 			<xsd:element name="PVTDriver" type="PVTDriverType" />
@@ -3219,11 +3337,22 @@ Local - Add stabilization only to interiors of macro elements.-->
 			<xsd:element name="ReactiveFluidDriver" type="ReactiveFluidDriverType" />
 			<xsd:element name="RelpermDriver" type="RelpermDriverType" />
 			<xsd:element name="SinglePhasePoromechanicsInitialization" type="SinglePhasePoromechanicsInitializationType" />
+			<xsd:element name="SinglePhaseReservoirPoromechanicsInitialization" type="SinglePhaseReservoirPoromechanicsInitializationType" />
 			<xsd:element name="SinglePhaseStatistics" type="SinglePhaseStatisticsType" />
 			<xsd:element name="SolidMechanicsStateReset" type="SolidMechanicsStateResetType" />
 			<xsd:element name="SolidMechanicsStatistics" type="SolidMechanicsStatisticsType" />
 			<xsd:element name="TriaxialDriver" type="TriaxialDriverType" />
 		</xsd:choice>
+	</xsd:complexType>
+	<xsd:complexType name="CompositionalMultiphaseReservoirPoromechanicsInitializationType">
+		<!--logLevel => Log level-->
+		<xsd:attribute name="logLevel" type="integer" default="0" />
+		<!--performStressInitialization => Flag to indicate that the solver is going to perform stress initialization-->
+		<xsd:attribute name="performStressInitialization" type="integer" use="required" />
+		<!--poromechanicsSolverName => Name of the poromechanics solver-->
+		<xsd:attribute name="poromechanicsSolverName" type="groupNameRef" use="required" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="CompositionalMultiphaseStatisticsType">
 		<!--computeCFLNumbers => Flag to decide whether CFL numbers are computed or not-->
@@ -3331,6 +3460,16 @@ Local - Add stabilization only to interiors of macro elements.-->
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
+	<xsd:complexType name="SinglePhaseReservoirPoromechanicsInitializationType">
+		<!--logLevel => Log level-->
+		<xsd:attribute name="logLevel" type="integer" default="0" />
+		<!--performStressInitialization => Flag to indicate that the solver is going to perform stress initialization-->
+		<xsd:attribute name="performStressInitialization" type="integer" use="required" />
+		<!--poromechanicsSolverName => Name of the poromechanics solver-->
+		<xsd:attribute name="poromechanicsSolverName" type="groupNameRef" use="required" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="groupName" use="required" />
+	</xsd:complexType>
 	<xsd:complexType name="SinglePhaseStatisticsType">
 		<!--flowSolverName => Name of the flow solver-->
 		<xsd:attribute name="flowSolverName" type="groupNameRef" use="required" />
@@ -3393,6 +3532,7 @@ Local - Add stabilization only to interiors of macro elements.-->
 			<xsd:element name="BrooksCoreyBakerRelativePermeability" type="BrooksCoreyBakerRelativePermeabilityType" />
 			<xsd:element name="BrooksCoreyCapillaryPressure" type="BrooksCoreyCapillaryPressureType" />
 			<xsd:element name="BrooksCoreyRelativePermeability" type="BrooksCoreyRelativePermeabilityType" />
+			<xsd:element name="BrooksCoreyStone2RelativePermeability" type="BrooksCoreyStone2RelativePermeabilityType" />
 			<xsd:element name="CO2BrineEzrokhiFluid" type="CO2BrineEzrokhiFluidType" />
 			<xsd:element name="CO2BrineEzrokhiThermalFluid" type="CO2BrineEzrokhiThermalFluidType" />
 			<xsd:element name="CO2BrinePhillipsFluid" type="CO2BrinePhillipsFluidType" />
@@ -3458,6 +3598,7 @@ Local - Add stabilization only to interiors of macro elements.-->
 			<xsd:element name="ThermalCompressibleSinglePhaseFluid" type="ThermalCompressibleSinglePhaseFluidType" />
 			<xsd:element name="VanGenuchtenBakerRelativePermeability" type="VanGenuchtenBakerRelativePermeabilityType" />
 			<xsd:element name="VanGenuchtenCapillaryPressure" type="VanGenuchtenCapillaryPressureType" />
+			<xsd:element name="VanGenuchtenStone2RelativePermeability" type="VanGenuchtenStone2RelativePermeabilityType" />
 			<xsd:element name="ViscoDruckerPrager" type="ViscoDruckerPragerType" />
 			<xsd:element name="ViscoExtendedDruckerPrager" type="ViscoExtendedDruckerPragerType" />
 			<xsd:element name="ViscoModifiedCamClay" type="ViscoModifiedCamClayType" />
@@ -3549,6 +3690,26 @@ The expected format is "{ waterMax, oilMax }", in that order-->
 		<xsd:attribute name="phaseRelPermExponent" type="real64_array" default="{1}" />
 		<!--phaseRelPermMaxValue => Maximum relative permeability value for each phase-->
 		<xsd:attribute name="phaseRelPermMaxValue" type="real64_array" default="{0}" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="groupName" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="BrooksCoreyStone2RelativePermeabilityType">
+		<!--gasOilRelPermExponent => Rel perm power law exponent for the pair (gas phase, oil phase) at residual water saturation
+The expected format is "{ gasExp, oilExp }", in that order-->
+		<xsd:attribute name="gasOilRelPermExponent" type="real64_array" default="{1}" />
+		<!--gasOilRelPermMaxValue => Maximum rel perm value for the pair (gas phase, oil phase) at residual water saturation
+The expected format is "{ gasMax, oilMax }", in that order-->
+		<xsd:attribute name="gasOilRelPermMaxValue" type="real64_array" default="{0}" />
+		<!--phaseMinVolumeFraction => Minimum volume fraction value for each phase-->
+		<xsd:attribute name="phaseMinVolumeFraction" type="real64_array" default="{0}" />
+		<!--phaseNames => List of fluid phases-->
+		<xsd:attribute name="phaseNames" type="groupNameRef_array" use="required" />
+		<!--waterOilRelPermExponent => Rel perm power law exponent for the pair (water phase, oil phase) at residual gas saturation
+The expected format is "{ waterExp, oilExp }", in that order-->
+		<xsd:attribute name="waterOilRelPermExponent" type="real64_array" default="{1}" />
+		<!--waterOilRelPermMaxValue => Maximum rel perm value for the pair (water phase, oil phase) at residual gas saturation
+The expected format is "{ waterMax, oilMax }", in that order-->
+		<xsd:attribute name="waterOilRelPermMaxValue" type="real64_array" default="{0}" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -4290,6 +4451,8 @@ If you want to do a three-phase simulation, please use instead wettingIntermedia
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="ParallelPlatesPermeabilityType">
+		<!--transversalPermeability => Default value of the permeability normal to the surface. If not specified the permeability is updated using the cubic law. -->
+		<xsd:attribute name="transversalPermeability" type="real64" default="-1" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -4579,6 +4742,10 @@ If you want to do a two-phase simulation, please use instead wettingNonWettingRe
 		<xsd:attribute name="nonWettingIntermediateRelPermTableNames" type="groupNameRef_array" default="{}" />
 		<!--phaseNames => List of fluid phases-->
 		<xsd:attribute name="phaseNames" type="groupNameRef_array" use="required" />
+		<!--threePhaseInterpolator => Type of Three phase interpolator.Valid options 
+* BAKER
+* STONEII-->
+		<xsd:attribute name="threePhaseInterpolator" type="geos_constitutive_ThreePhaseInterpolator" default="BAKER" />
 		<!--wettingIntermediateRelPermTableNames => List of relative permeability tables for the pair (wetting phase, intermediate phase)
 The expected format is "{ wettingPhaseRelPermTableName, intermediatePhaseRelPermTableName }", in that order
 Note that this input is only used for three-phase flow.
@@ -4592,6 +4759,11 @@ If you want to do a three-phase simulation, please use instead wettingIntermedia
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
+	<xsd:simpleType name="geos_constitutive_ThreePhaseInterpolator">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value=".*[\[\]`$].*|BAKER|STONEII" />
+		</xsd:restriction>
+	</xsd:simpleType>
 	<xsd:complexType name="TableRelativePermeabilityHysteresisType">
 		<!--drainageNonWettingIntermediateRelPermTableNames => List of drainage relative permeability tables for the pair (non-wetting phase, intermediate phase)
 The expected format is "{ nonWettingPhaseRelPermTableName, intermediatePhaseRelPermTableName }", in that order
@@ -4622,6 +4794,10 @@ To neglect hysteresis on this phase, just use the same table name for the draina
 		<xsd:attribute name="killoughCurvatureParameter" type="real64" default="1" />
 		<!--phaseNames => List of fluid phases-->
 		<xsd:attribute name="phaseNames" type="groupNameRef_array" use="required" />
+		<!--threePhaseInterpolator => Type of Three phase interpolator.Valid options 
+* BAKER
+* STONEII-->
+		<xsd:attribute name="threePhaseInterpolator" type="geos_constitutive_ThreePhaseInterpolator" default="BAKER" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -4697,6 +4873,26 @@ The expected format is "{ waterMax, oilMax }", in that order-->
 		<xsd:attribute name="phaseMinVolumeFraction" type="real64_array" default="{0}" />
 		<!--phaseNames => List of fluid phases-->
 		<xsd:attribute name="phaseNames" type="groupNameRef_array" use="required" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="groupName" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="VanGenuchtenStone2RelativePermeabilityType">
+		<!--gasOilRelPermExponentInv => Rel perm power law exponent inverse for the pair (gas phase, oil phase) at residual water saturation
+The expected format is "{ gasExp, oilExp }", in that order-->
+		<xsd:attribute name="gasOilRelPermExponentInv" type="real64_array" default="{0.5}" />
+		<!--gasOilRelPermMaxValue => Maximum rel perm value for the pair (gas phase, oil phase) at residual water saturation
+The expected format is "{ gasMax, oilMax }", in that order-->
+		<xsd:attribute name="gasOilRelPermMaxValue" type="real64_array" default="{0}" />
+		<!--phaseMinVolumeFraction => Minimum volume fraction value for each phase-->
+		<xsd:attribute name="phaseMinVolumeFraction" type="real64_array" default="{0}" />
+		<!--phaseNames => List of fluid phases-->
+		<xsd:attribute name="phaseNames" type="groupNameRef_array" use="required" />
+		<!--waterOilRelPermExponentInv => Rel perm power law exponent inverse for the pair (water phase, oil phase) at residual gas saturation
+The expected format is "{ waterExp, oilExp }", in that order-->
+		<xsd:attribute name="waterOilRelPermExponentInv" type="real64_array" default="{0.5}" />
+		<!--waterOilRelPermMaxValue => Maximum rel perm value for the pair (water phase, oil phase) at residual gas saturation
+The expected format is "{ waterMax, oilMax }", in that order-->
+		<xsd:attribute name="waterOilRelPermMaxValue" type="real64_array" default="{0}" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
