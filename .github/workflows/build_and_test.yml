@@ -160,6 +160,9 @@ jobs:
         echo "Received exit status ${EXIT_STATUS} from the build process."
         set -e
         
+        apt-get install -y pip
+        pip install pip_system_certs
+
         # Send to the bucket and print the download link when it makes sense.
         if [[ ! -z "${{ inputs.GCP_BUCKET }}" ]]; then
           if [[ "${{ inputs.BUILD_TYPE }}" = "integrated_tests" || ${EXIT_STATUS} -eq 0 ]]; then
