@@ -68,15 +68,6 @@
 /// Enables use of Hypre library (CMake option ENABLE_HYPRE)
 #cmakedefine GEOSX_USE_HYPRE
 
-#if defined( GEOSX_USE_HYPRE )
-  /// Parsed hypre version information
-  #define HYPRE_VERSION_MAJOR @HYPRE_VERSION_MAJOR@
-  /// Parsed hypre version information
-  #define HYPRE_VERSION_MINOR @HYPRE_VERSION_MINOR@
-  /// Parsed hypre version information
-  #define HYPRE_VERSION_PATCH @HYPRE_VERSION_PATCH@
-#endif
-
 /// Denotes HYPRE using CPU
 #define GEOS_USE_HYPRE_CPU 0
 /// Denotes HYPRE using CUDA
@@ -150,10 +141,10 @@
 #cmakedefine caliper_VERSION @caliper_VERSION@
 
 /// Version information for Metis
-#cmakedefine METIS_VERSION @METIS_VERSION@
+#cmakedefine metis_VERSION @metis_VERSION@
 
 /// Version information for ParMetis
-#cmakedefine PARAMETIS_VERSION @PARAMETIS_VERSION@
+#cmakedefine parmetis_VERSION @parmetis_VERSION@
 
 /// Version information for scotch
 #cmakedefine scotch_VERSION @scotch_VERSION@
@@ -163,6 +154,15 @@
 
 /// Version information for suitesparse
 #cmakedefine suitesparse_VERSION @suitesparse_VERSION@
+
+/// Version information for hypre
+#cmakedefine hypre_VERSION @hypre_VERSION@
+
+/// Version information for trilinos
+#cmakedefine trilinos_VERSION @trilinos_VERSION@
+
+/// Version information for petsc
+#cmakedefine petsc_VERSION @petsc_VERSION@
 
 /// Version information for VTK
 #cmakedefine VTK_VERSION @VTK_VERSION@
