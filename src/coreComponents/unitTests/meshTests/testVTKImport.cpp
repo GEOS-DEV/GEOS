@@ -21,6 +21,7 @@
 #include "mesh/MeshManager.hpp"
 #include "mesh/generators/CellBlockManagerABC.hpp"
 #include "mesh/generators/CellBlockABC.hpp"
+#include "mesh/generators/VTKUtilities.hpp"
 
 // special CMake-generated include
 #include "tests/meshDirName.hpp"
@@ -455,18 +456,17 @@ TEST( VTKImport, supportedElements )
     // 11 elements types x 11 regions = 121 sub-groups
     ASSERT_EQ( cellBlockManager.getCellBlocks().numSubGroups(), 121 );
 
-    // FIXME How to get the CellBlock as a function of the region, without knowing the naming pattern.
-    CellBlockABC const & zone0 = cellBlockManager.getCellBlocks().getGroup< CellBlockABC >( "0_tetrahedra" );
-    CellBlockABC const & zone1 = cellBlockManager.getCellBlocks().getGroup< CellBlockABC >( "1_pyramids" );
-    CellBlockABC const & zone2 = cellBlockManager.getCellBlocks().getGroup< CellBlockABC >( "2_wedges" );
-    CellBlockABC const & zone3 = cellBlockManager.getCellBlocks().getGroup< CellBlockABC >( "3_hexahedra" );
-    CellBlockABC const & zone4 = cellBlockManager.getCellBlocks().getGroup< CellBlockABC >( "4_pentagonalPrisms" );
-    CellBlockABC const & zone5 = cellBlockManager.getCellBlocks().getGroup< CellBlockABC >( "5_hexagonalPrisms" );
-    CellBlockABC const & zone6 = cellBlockManager.getCellBlocks().getGroup< CellBlockABC >( "6_heptagonalPrisms" );
-    CellBlockABC const & zone7 = cellBlockManager.getCellBlocks().getGroup< CellBlockABC >( "7_octagonalPrisms" );
-    CellBlockABC const & zone8 = cellBlockManager.getCellBlocks().getGroup< CellBlockABC >( "8_nonagonalPrisms" );
-    CellBlockABC const & zone9 = cellBlockManager.getCellBlocks().getGroup< CellBlockABC >( "9_decagonalPrisms" );
-    CellBlockABC const & zone10 = cellBlockManager.getCellBlocks().getGroup< CellBlockABC >( "10_hendecagonalPrisms" );
+    CellBlockABC const & tetraBlock = cellBlockManager.getCellBlocks().getGroup< CellBlockABC >( geos::vtk::buildCellBlockName( ElementType::Tetrahedron, 0 ) );
+    CellBlockABC const & pyramidBlock = cellBlockManager.getCellBlocks().getGroup< CellBlockABC >( geos::vtk::buildCellBlockName( ElementType::Pyramid, 1 ) );
+    CellBlockABC const & wedgeBlock = cellBlockManager.getCellBlocks().getGroup< CellBlockABC >( geos::vtk::buildCellBlockName( ElementType::Wedge, 2 ) );
+    CellBlockABC const & hexaBlock = cellBlockManager.getCellBlocks().getGroup< CellBlockABC >( geos::vtk::buildCellBlockName( ElementType::Hexahedron, 3 ) );
+    CellBlockABC const & prism5Block = cellBlockManager.getCellBlocks().getGroup< CellBlockABC >( geos::vtk::buildCellBlockName( ElementType::Prism5, 4 ) );
+    CellBlockABC const & prism6Block = cellBlockManager.getCellBlocks().getGroup< CellBlockABC >( geos::vtk::buildCellBlockName( ElementType::Prism6, 5 ) );
+    CellBlockABC const & prism7Block = cellBlockManager.getCellBlocks().getGroup< CellBlockABC >( geos::vtk::buildCellBlockName( ElementType::Prism7, 6 ) );
+    CellBlockABC const & prism8Block = cellBlockManager.getCellBlocks().getGroup< CellBlockABC >( geos::vtk::buildCellBlockName( ElementType::Prism8, 7 ) );
+    CellBlockABC const & prism9Block = cellBlockManager.getCellBlocks().getGroup< CellBlockABC >( geos::vtk::buildCellBlockName( ElementType::Prism9, 8 ) );
+    CellBlockABC const & prism10Block = cellBlockManager.getCellBlocks().getGroup< CellBlockABC >( geos::vtk::buildCellBlockName( ElementType::Prism10, 9 ) );
+    CellBlockABC const & prism11Block = cellBlockManager.getCellBlocks().getGroup< CellBlockABC >( geos::vtk::buildCellBlockName( ElementType::Prism11, 10 ) );
 
     std::vector< string > const elementNames{ "tetrahedra",
                                               "pyramids",
@@ -498,20 +498,20 @@ TEST( VTKImport, supportedElements )
     }
 
     // Tetrahedron
-    auto elementToNodes = zone0.getElemToNodes();
+    auto elementToNodes = tetraBlock.getElemToNodes();
     ASSERT_EQ( elementToNodes.size( 1 ), 4 );
-    ASSERT_EQ( zone0.getElemToEdges().size( 1 ), 6 );
-    ASSERT_EQ( zone0.getElemToFaces().size( 1 ), 4 );
+    ASSERT_EQ( tetraBlock.getElemToEdges().size( 1 ), 6 );
+    ASSERT_EQ( tetraBlock.getElemToFaces().size( 1 ), 4 );
     EXPECT_EQ( elementToNodes( 0, 0 ), 0 );
     EXPECT_EQ( elementToNodes( 0, 1 ), 1 );
     EXPECT_EQ( elementToNodes( 0, 2 ), 2 );
     EXPECT_EQ( elementToNodes( 0, 3 ), 3 );
 
     // Pyramid
-    elementToNodes = zone1.getElemToNodes();
+    elementToNodes = pyramidBlock.getElemToNodes();
     ASSERT_EQ( elementToNodes.size( 1 ), 5 );
-    ASSERT_EQ( zone1.getElemToEdges().size( 1 ), 8 );
-    ASSERT_EQ( zone1.getElemToFaces().size( 1 ), 5 );
+    ASSERT_EQ( pyramidBlock.getElemToEdges().size( 1 ), 8 );
+    ASSERT_EQ( pyramidBlock.getElemToFaces().size( 1 ), 5 );
     EXPECT_EQ( elementToNodes( 0, 0 ), 4 );
     EXPECT_EQ( elementToNodes( 0, 1 ), 5 );
     EXPECT_EQ( elementToNodes( 0, 2 ), 7 );
@@ -519,10 +519,10 @@ TEST( VTKImport, supportedElements )
     EXPECT_EQ( elementToNodes( 0, 4 ), 8 );
 
     // Wedges
-    elementToNodes = zone2.getElemToNodes();
+    elementToNodes = wedgeBlock.getElemToNodes();
     ASSERT_EQ( elementToNodes.size( 1 ), 6 );
-    ASSERT_EQ( zone2.getElemToEdges().size( 1 ), 9 );
-    ASSERT_EQ( zone2.getElemToFaces().size( 1 ), 5 );
+    ASSERT_EQ( wedgeBlock.getElemToEdges().size( 1 ), 9 );
+    ASSERT_EQ( wedgeBlock.getElemToFaces().size( 1 ), 5 );
     EXPECT_EQ( elementToNodes( 0, 0 ), 9 );
     EXPECT_EQ( elementToNodes( 0, 1 ), 12 );
     EXPECT_EQ( elementToNodes( 0, 2 ), 11 );
@@ -531,10 +531,10 @@ TEST( VTKImport, supportedElements )
     EXPECT_EQ( elementToNodes( 0, 5 ), 13 );
 
     // Hexahedron (from VTK_VOXEL and VTK_HEXAHEDRON or corresponding VTK_POLYHEDRON)
-    elementToNodes = zone3.getElemToNodes();
+    elementToNodes = hexaBlock.getElemToNodes();
     ASSERT_EQ( elementToNodes.size( 1 ), 8 );
-    ASSERT_EQ( zone3.getElemToEdges().size( 1 ), 12 );
-    ASSERT_EQ( zone3.getElemToFaces().size( 1 ), 6 );
+    ASSERT_EQ( hexaBlock.getElemToEdges().size( 1 ), 12 );
+    ASSERT_EQ( hexaBlock.getElemToFaces().size( 1 ), 6 );
 
     EXPECT_EQ( elementToNodes( 0, 0 ), 15 );
     EXPECT_EQ( elementToNodes( 0, 1 ), 16 );
@@ -555,76 +555,76 @@ TEST( VTKImport, supportedElements )
     EXPECT_EQ( elementToNodes( 1, 7 ), 29 );
 
     // Pentagonal prism
-    elementToNodes = zone4.getElemToNodes();
+    elementToNodes = prism5Block.getElemToNodes();
     ASSERT_EQ( elementToNodes.size( 1 ), 10 );
-    ASSERT_EQ( zone4.getElemToEdges().size( 1 ), 15 );
-    ASSERT_EQ( zone4.getElemToFaces().size( 1 ), 7 );
+    ASSERT_EQ( prism5Block.getElemToEdges().size( 1 ), 15 );
+    ASSERT_EQ( prism5Block.getElemToFaces().size( 1 ), 7 );
     for( int i=0; i < elementToNodes.size( 1 ); ++i )
     {
       EXPECT_EQ( elementToNodes( 0, i ), 31+i );
     }
 
     // Hexagonal prism
-    elementToNodes = zone5.getElemToNodes();
+    elementToNodes = prism6Block.getElemToNodes();
     ASSERT_EQ( elementToNodes.size( 1 ), 12 );
-    ASSERT_EQ( zone5.getElemToEdges().size( 1 ), 18 );
-    ASSERT_EQ( zone5.getElemToFaces().size( 1 ), 8 );
+    ASSERT_EQ( prism6Block.getElemToEdges().size( 1 ), 18 );
+    ASSERT_EQ( prism6Block.getElemToFaces().size( 1 ), 8 );
     for( int i=0; i < elementToNodes.size( 1 ); ++i )
     {
       EXPECT_EQ( elementToNodes( 0, i ), 41+i );
     }
 
     // Heptagonal prism
-    elementToNodes = zone6.getElemToNodes();
+    elementToNodes = prism7Block.getElemToNodes();
     ASSERT_EQ( elementToNodes.size( 1 ), 14 );
-    ASSERT_EQ( zone6.getElemToEdges().size( 1 ), 21 );
-    ASSERT_EQ( zone6.getElemToFaces().size( 1 ), 9 );
+    ASSERT_EQ( prism7Block.getElemToEdges().size( 1 ), 21 );
+    ASSERT_EQ( prism7Block.getElemToFaces().size( 1 ), 9 );
     for( int i=0; i < elementToNodes.size( 1 ); ++i )
     {
       EXPECT_EQ( elementToNodes( 0, i ), 53+i );
     }
 
     // Octagonal prism
-    elementToNodes = zone7.getElemToNodes();
+    elementToNodes = prism8Block.getElemToNodes();
     ASSERT_EQ( elementToNodes.size( 1 ), 16 );
-    ASSERT_EQ( zone7.getElemToEdges().size( 1 ), 24 );
-    ASSERT_EQ( zone7.getElemToFaces().size( 1 ), 10 );
+    ASSERT_EQ( prism8Block.getElemToEdges().size( 1 ), 24 );
+    ASSERT_EQ( prism8Block.getElemToFaces().size( 1 ), 10 );
     for( int i=0; i < elementToNodes.size( 1 ); ++i )
     {
       EXPECT_EQ( elementToNodes( 0, i ), 67+i );
     }
 
     // Nonagonal prism
-    elementToNodes = zone8.getElemToNodes();
+    elementToNodes = prism9Block.getElemToNodes();
     ASSERT_EQ( elementToNodes.size( 1 ), 18 );
-    ASSERT_EQ( zone8.getElemToEdges().size( 1 ), 27 );
-    ASSERT_EQ( zone8.getElemToFaces().size( 1 ), 11 );
+    ASSERT_EQ( prism9Block.getElemToEdges().size( 1 ), 27 );
+    ASSERT_EQ( prism9Block.getElemToFaces().size( 1 ), 11 );
     for( int i=0; i < elementToNodes.size( 1 ); ++i )
     {
       EXPECT_EQ( elementToNodes( 0, i ), 83+i );
     }
 
     // Decagonal prism
-    elementToNodes = zone9.getElemToNodes();
+    elementToNodes = prism10Block.getElemToNodes();
     ASSERT_EQ( elementToNodes.size( 1 ), 20 );
-    ASSERT_EQ( zone9.getElemToEdges().size( 1 ), 30 );
-    ASSERT_EQ( zone9.getElemToFaces().size( 1 ), 12 );
+    ASSERT_EQ( prism10Block.getElemToEdges().size( 1 ), 30 );
+    ASSERT_EQ( prism10Block.getElemToFaces().size( 1 ), 12 );
     for( int i=0; i < elementToNodes.size( 1 ); ++i )
     {
       EXPECT_EQ( elementToNodes( 0, i ), 101+i );
     }
 
     // Hendecagonal prism
-    elementToNodes = zone10.getElemToNodes();
+    elementToNodes = prism11Block.getElemToNodes();
     ASSERT_EQ( elementToNodes.size( 1 ), 22 );
-    ASSERT_EQ( zone10.getElemToEdges().size( 1 ), 33 );
-    ASSERT_EQ( zone10.getElemToFaces().size( 1 ), 13 );
+    ASSERT_EQ( prism11Block.getElemToEdges().size( 1 ), 33 );
+    ASSERT_EQ( prism11Block.getElemToFaces().size( 1 ), 13 );
     for( int i=0; i < elementToNodes.size( 1 ); ++i )
     {
       EXPECT_EQ( elementToNodes( 0, i ), 121+i );
     }
 
-    for( auto const & z: { &zone0, &zone1, &zone2, &zone4, &zone5, &zone6, &zone7, &zone8, &zone9, &zone10 } )
+    for( auto const & z: { &tetraBlock, &pyramidBlock, &wedgeBlock, &prism5Block, &prism6Block, &prism7Block, &prism8Block, &prism9Block, &prism10Block, &prism11Block } )
     {
       ASSERT_EQ( z->size(), 1 );
       ASSERT_EQ( z->getElemToNodes().size( 0 ), 1 );
@@ -632,10 +632,10 @@ TEST( VTKImport, supportedElements )
       ASSERT_EQ( z->getElemToFaces().size( 0 ), 1 );
     }
 
-    ASSERT_EQ( zone3.size(), 2 );
-    ASSERT_EQ( zone3.getElemToNodes().size( 0 ), 2 );
-    ASSERT_EQ( zone3.getElemToEdges().size( 0 ), 2 );
-    ASSERT_EQ( zone3.getElemToFaces().size( 0 ), 2 );
+    ASSERT_EQ( hexaBlock.size(), 2 );
+    ASSERT_EQ( hexaBlock.getElemToNodes().size( 0 ), 2 );
+    ASSERT_EQ( hexaBlock.getElemToEdges().size( 0 ), 2 );
+    ASSERT_EQ( hexaBlock.getElemToFaces().size( 0 ), 2 );
   };
 
   string const medleyVTK = testMeshDir + "/supportedElements.vtk";
