@@ -602,6 +602,10 @@
 					<xsd:selector xpath="JFunctionCapillaryPressure" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
+				<xsd:unique name="domainConstitutiveLayeredElasticIsotropicDruckerPragerUniqueName">
+					<xsd:selector xpath="LayeredElasticIsotropicDruckerPrager" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
 				<xsd:unique name="domainConstitutiveModifiedCamClayUniqueName">
 					<xsd:selector xpath="ModifiedCamClay" />
 					<xsd:field xpath="@name" />
@@ -3172,6 +3176,7 @@ Local - Add stabilization only to interiors of macro elements.-->
 			<xsd:element name="ExtendedDruckerPrager" type="ExtendedDruckerPragerType" />
 			<xsd:element name="FrictionlessContact" type="FrictionlessContactType" />
 			<xsd:element name="JFunctionCapillaryPressure" type="JFunctionCapillaryPressureType" />
+			<xsd:element name="LayeredElasticIsotropicDruckerPrager" type="LayeredElasticIsotropicDruckerPragerType" />
 			<xsd:element name="ModifiedCamClay" type="ModifiedCamClayType" />
 			<xsd:element name="MultiPhaseConstantThermalConductivity" type="MultiPhaseConstantThermalConductivityType" />
 			<xsd:element name="MultiPhaseVolumeWeightedThermalConductivity" type="MultiPhaseVolumeWeightedThermalConductivityType" />
@@ -3887,6 +3892,18 @@ If you want to do a three-phase simulation, please use instead wettingIntermedia
 			<xsd:pattern value=".*[\[\]`$].*|XY|X|Y|Z" />
 		</xsd:restriction>
 	</xsd:simpleType>
+	<xsd:complexType name="LayeredElasticIsotropicDruckerPragerType">
+		<!--defaultDensity => Default Material Density-->
+		<xsd:attribute name="defaultDensity" type="real64" use="required" />
+		<!--defaultThermalExpansionCoefficient => Default Linear Thermal Expansion Coefficient of the Solid Rock Frame-->
+		<xsd:attribute name="defaultThermalExpansionCoefficient" type="real64" default="0" />
+		<!--solidModelNameLayer1 => Name of the solid model of layer 1.-->
+		<xsd:attribute name="solidModelNameLayer1" type="string" use="required" />
+		<!--solidModelNameLayer2 => Name of the solid model of layer 2.-->
+		<xsd:attribute name="solidModelNameLayer2" type="string" use="required" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="string" use="required" />
+	</xsd:complexType>
 	<xsd:complexType name="ModifiedCamClayType">
 		<!--defaultCslSlope => Slope of the critical state line-->
 		<xsd:attribute name="defaultCslSlope" type="real64" default="1" />

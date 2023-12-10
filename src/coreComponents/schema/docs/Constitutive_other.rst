@@ -37,6 +37,7 @@ ExponentialDecayPermeability                  node :ref:`DATASTRUCTURE_Exponenti
 ExtendedDruckerPrager                         node :ref:`DATASTRUCTURE_ExtendedDruckerPrager`                         
 FrictionlessContact                           node :ref:`DATASTRUCTURE_FrictionlessContact`                           
 JFunctionCapillaryPressure                    node :ref:`DATASTRUCTURE_JFunctionCapillaryPressure`                    
+LayeredElasticIsotropicDruckerPrager          node :ref:`DATASTRUCTURE_LayeredElasticIsotropicDruckerPrager`          
 ModifiedCamClay                               node :ref:`DATASTRUCTURE_ModifiedCamClay`                               
 MultiPhaseConstantThermalConductivity         node :ref:`DATASTRUCTURE_MultiPhaseConstantThermalConductivity`         
 MultiPhaseVolumeWeightedThermalConductivity   node :ref:`DATASTRUCTURE_MultiPhaseVolumeWeightedThermalConductivity`   

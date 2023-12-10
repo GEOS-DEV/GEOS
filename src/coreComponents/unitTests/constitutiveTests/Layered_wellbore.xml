@@ -1,0 +1,192 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <!-- SPHINX_DP_WELLBORE_TABLE -->
+  <Functions>
+    <TableFunction
+      name="timeFunction"
+      inputVarNames="{ time }"
+      coordinates="{ 0.0, 1.0 }"
+      values="{ 1.0, 0.1778 }"/>
+  </Functions>
+
+  <!-- SPHINX_DP_WELLBORE_TABLE_END -->
+
+  <!-- SPHINX_DP_WELLBORE_MATERIAL -->
+  <Constitutive>
+    <LayeredElasticIsotropicDruckerPrager
+      name="rock"
+      defaultDensity="2700"
+      solidModelNameLayer1="layer1"
+      solidModelNameLayer2="layer2"/>
+
+    <ElasticIsotropic
+      name="layer1"
+      defaultDensity="2700"
+      defaultBulkModulus="500"
+      defaultShearModulus="300" />
+
+    <DruckerPrager
+      name="layer2"
+      defaultCohesion="0.0"
+      defaultDensity="2700"
+      defaultBulkModulus="500"
+      defaultShearModulus="300"/>
+
+  </Constitutive>
+
+  <!-- SPHINX_DP_WELLBORE_MATERIAL_END -->
+  <!--Assign material to geometry parts-->
+  <ElementRegions>
+    <CellElementRegion
+      name="Omega"
+      cellBlocks="{ cb1 }"
+      materialList="{ rock }"/>
+  </ElementRegions>
+
+  <!-- SPHINX_DP_WELLBORE_BC -->
+  <FieldSpecifications>
+    <FieldSpecification
+      name="stressXX"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Omega/cb1"
+      fieldName="rock_stress"
+      component="0"
+      scale="-11250000.0"/>
+
+    <FieldSpecification
+      name="stressYY"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Omega/cb1"
+      fieldName="rock_stress"
+      component="1"
+      scale="-11250000.0"/>
+
+    <FieldSpecification
+      name="stressZZ"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Omega/cb1"
+      fieldName="rock_stress"
+      component="2"
+      scale="-15000000.0"/>
+
+    <Traction
+      name="ExternalLoad"
+      setNames="{ rneg }"
+      objectPath="faceManager"
+      scale="-11.25e6"
+      tractionType="normal"
+      functionName="timeFunction"/>
+
+    <FieldSpecification
+      name="xconstraint"
+      objectPath="nodeManager"
+      fieldName="TotalDisplacement"
+      component="0"
+      scale="0.0"
+      setNames="{ xneg, xpos }"/>
+
+    <FieldSpecification
+      name="yconstraint"
+      objectPath="nodeManager"
+      fieldName="TotalDisplacement"
+      component="1"
+      scale="0.0"
+      setNames="{ tneg, tpos, ypos }"/>
+
+    <FieldSpecification
+      name="zconstraint"
+      objectPath="nodeManager"
+      fieldName="TotalDisplacement"
+      component="2"
+      scale="0.0"
+      setNames="{ zneg, zpos }"/>
+  </FieldSpecifications>
+
+  <!-- SPHINX_DP_WELLBORE_BC_END -->
+  <!--Output-->
+  <Outputs>
+    <Silo 
+      name="siloOutput"
+      parallelThreads="1"
+      plotFileRoot="plot"
+    />
+    <Restart
+      name="restartOutput"/>
+  </Outputs>
+
+  <!-- SPHINX_DP_WELLBORE_SOLVER -->
+  <Solvers
+    gravityVector="{ 0.0, 0.0, 0.0 }">
+    <SolidMechanics_LagrangianFEM
+      name="mechanicsSolver"
+      timeIntegrationOption="QuasiStatic"
+      logLevel="1"
+      discretization="FE1"
+      targetRegions="{ Omega }"
+      >
+      <LinearSolverParameters
+        directParallel="0"/>
+      <NonlinearSolverParameters
+        newtonTol="1.0e-5"
+        newtonMaxIter="15"/>
+    </SolidMechanics_LagrangianFEM>
+  </Solvers>
+
+  <!-- SPHINX_DP_WELLBORE_SOLVER_END -->
+
+  <NumericalMethods>
+    <FiniteElements>
+      <FiniteElementSpace
+        name="FE1"
+        order="1"/>
+    </FiniteElements>
+  </NumericalMethods>
+</Problem>
+ 41 changes: 41 additions & 0 deletions41  
+src/coreComponents/constitutive/unitTests/ExtendedDruckerPragerWellbore_benchmark.xml
+@@ -0,0 +1,41 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <Included>
+    <File name="./ExtendedDruckerPragerWellbore_base.xml"/>
+  </Included>
+
+  <!-- SPHINX_DP_WELLBORE_MESH -->
+  <Mesh>
+    <InternalWellbore
+      name="mesh1"
+      elementTypes="{ C3D8 }"
+      radius="{ 0.1, 5.0 }"
+      theta="{ 0, 180 }"
+      zCoords="{ -1, 1 }"
+      nr="{ 40 }"
+      nt="{ 80 }"
+      nz="{ 2 }"
+      trajectory="{ { 0.0, 0.0, -1.0 },
+                    { 0.0, 0.0, 1.0 } }"
+      autoSpaceRadialElems="{ 1 }"
+      useCartesianOuterBoundary="0"
+      cellBlockNames="{ cb1 }"/>
+  </Mesh>
+
+  <!-- SPHINX_DP_WELLBORE_MESH_END -->
+
+  <!--Solver application-->
+  <Events
+    maxTime="1.0">
+    <PeriodicEvent
+      name="solverApplications"
+      timeFrequency="0.02"
+      target="/Solvers/mechanicsSolver"/>
+
+    <PeriodicEvent
+      name="outputs"
+      target="/Outputs/siloOutput"/>
+  </Events>
+
+</Problem>

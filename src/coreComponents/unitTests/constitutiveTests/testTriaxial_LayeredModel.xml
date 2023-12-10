@@ -1,0 +1,80 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <Tasks>
+    <TriaxialDriver
+      name="triaxialDriver"
+      material="layered"
+      mode="mixedControl"
+      axialControl="strainFunction"
+      radialControl="stressFunction"
+      initialStress="-1.0"
+      steps="40"
+      output="LayeredElasticDruckerPrager_results.txt"
+      logLevel="0"/>
+  </Tasks>
+
+  <Events
+    maxTime="1">
+    <SoloEvent
+      name="triaxialDriver"
+      target="/Tasks/triaxialDriver"/>
+  </Events>
+
+  <Constitutive>
+    <LayeredElasticIsotropicDruckerPrager
+      name="layered"
+      defaultDensity="2700"
+      solidModelNameLayer1="layer1"
+      solidModelNameLayer2="layer2"/>
+
+      <ElasticIsotropic
+       name="layer1"
+       defaultDensity="2700"
+       defaultBulkModulus="500"
+       defaultShearModulus="300" />
+
+       <DruckerPrager
+        name="layer2"
+        defaultCohesion="0.0"
+        defaultDensity="2700"
+        defaultBulkModulus="500"
+        defaultShearModulus="300"/>
+
+  </Constitutive>
+
+  <Functions>
+    <TableFunction
+      name="strainFunction"
+      inputVarNames="{ time }"
+      coordinates="{ 0.0, 3.0, 4.0, 7.0, 8.0 }"
+      values="{ 0, -0.003, -0.002, -0.005, -0.004 }"/>
+
+    <TableFunction
+      name="stressFunction"
+      inputVarNames="{ time }"
+      coordinates="{ 0.0, 8.0 }"
+      values="{ -1.0, -1.0 }"/>
+  </Functions>
+
+  <!-- Mesh is not used, but GEOSX throws an error without one.  Will resolve soon-->
+  <Mesh>
+    <InternalMesh
+      name="mesh1"
+      elementTypes="{ C3D8 }"
+      xCoords="{ 0, 1 }"
+      yCoords="{ 0, 1 }"
+      zCoords="{ 0, 1 }"
+      nx="{ 1 }"
+      ny="{ 1 }"
+      nz="{ 1 }"
+      cellBlockNames="{ cellBlock01 }"/>
+  </Mesh>
+
+  <ElementRegions>
+    <CellElementRegion
+      name="dummy"
+      cellBlocks="{ cellBlock01 }"
+      materialList="{ dummy }"/>
+  </ElementRegions>
+</Problem>

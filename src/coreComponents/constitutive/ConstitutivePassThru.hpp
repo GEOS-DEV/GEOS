@@ -28,6 +28,7 @@
 #include "solid/DruckerPragerExtended.hpp"
 #include "solid/ModifiedCamClay.hpp"
 #include "solid/DelftEgg.hpp"
+#include "solid/LayeredModel.hpp"
 #include "solid/DuvautLionsSolid.hpp"
 #include "solid/ElasticIsotropic.hpp"
 #include "solid/ElasticIsotropicPressureDependent.hpp"
@@ -100,6 +101,7 @@ struct ConstitutivePassThru< SolidBase >
     ConstitutivePassThruHandler< DamageSpectral< ElasticIsotropic >,
                                  DamageVolDev< ElasticIsotropic >,
                                  Damage< ElasticIsotropic >,
+                                 LayeredModel< ElasticIsotropic , DruckerPrager >,
                                  DruckerPragerExtended,
                                  ModifiedCamClay,
                                  DelftEgg,
@@ -139,6 +141,7 @@ struct ConstitutivePassThruTriaxialDriver< SolidBase >
     ConstitutivePassThruHandler< DamageSpectral< ElasticIsotropic >,
                                  DamageVolDev< ElasticIsotropic >,
                                  Damage< ElasticIsotropic >,
+                                 LayeredModel< ElasticIsotropic , DruckerPrager >,
                                  DuvautLionsSolid< DruckerPrager >,
                                  DuvautLionsSolid< DruckerPragerExtended >,
                                  DuvautLionsSolid< ModifiedCamClay >,
@@ -243,7 +246,19 @@ struct ConstitutivePassThru< PorousSolidBase >
                                                                                        std::forward< LAMBDA >( lambda ) );
   }
 };
-
+/**
+ * Specialization for the LayeredModel models.
+ */
+template<>
+struct ConstitutivePassThru< LayeredModelBase >
+{
+  template< typename LAMBDA >
+  static void execute( ConstitutiveBase & constitutiveRelation, LAMBDA && lambda )
+  {
+    ConstitutivePassThruHandler< LayeredModel< ElasticIsotropic , DruckerPrager > >::execute( constitutiveRelation,
+                                                                                              std::forward< LAMBDA >( lambda ) );
+  }
+};
 /**
  * Specialization for the CompressibleSolid models.
  */

@@ -100,6 +100,7 @@ set( constitutive_headers
      solid/ProppantSolid.hpp
      solid/CoupledSolidBase.hpp
      solid/CoupledSolid.hpp
+     solid/LayeredModel.hpp
      solid/DuvautLionsSolid.hpp
      solid/Damage.hpp
      solid/DamageSpectral.hpp
@@ -220,6 +221,7 @@ set( constitutive_sources
      solid/CompressibleSolid.cpp
      solid/CoupledSolidBase.cpp
      solid/ProppantSolid.cpp
+     solid/LayeredModel.cpp
      solid/DuvautLionsSolid.cpp
      solid/Damage.cpp
      solid/DamageSpectral.cpp

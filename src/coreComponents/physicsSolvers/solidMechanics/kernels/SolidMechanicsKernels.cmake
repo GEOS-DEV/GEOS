@@ -20,6 +20,7 @@ set( subregionList CellElementSubRegion )
 set( solidBaseDispatch DamageSpectral<ElasticIsotropic>
                        DamageVolDev<ElasticIsotropic>
                        Damage<ElasticIsotropic>
+                       LayeredModel<ElasticIsotropic,DruckerPrager>
                        DruckerPragerExtended
                        ModifiedCamClay
                        DelftEgg

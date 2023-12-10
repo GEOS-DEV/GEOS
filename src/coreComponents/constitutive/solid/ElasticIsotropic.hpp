@@ -319,6 +319,7 @@ void ElasticIsotropicUpdates::smallStrainUpdate( localIndex const k,
   smallStrainUpdate_StressOnly( k, q, timeIncrement, strainIncrement, stress );
   stiffness.m_bulkModulus = m_bulkModulus[k];
   stiffness.m_shearModulus = m_shearModulus[k];
+  std::cout<<"m_newStress size in ElasticIsotropic = "<<m_newStress.size(0)<<std::endl;
 }
 
 GEOS_HOST_DEVICE

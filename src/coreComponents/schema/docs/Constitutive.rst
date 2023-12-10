@@ -37,6 +37,7 @@ ExponentialDecayPermeability                  node         :ref:`XML_Exponential
 ExtendedDruckerPrager                         node         :ref:`XML_ExtendedDruckerPrager`                         
 FrictionlessContact                           node         :ref:`XML_FrictionlessContact`                           
 JFunctionCapillaryPressure                    node         :ref:`XML_JFunctionCapillaryPressure`                    
+LayeredElasticIsotropicDruckerPrager          node         :ref:`XML_LayeredElasticIsotropicDruckerPrager`          
 ModifiedCamClay                               node         :ref:`XML_ModifiedCamClay`                               
 MultiPhaseConstantThermalConductivity         node         :ref:`XML_MultiPhaseConstantThermalConductivity`         
 MultiPhaseVolumeWeightedThermalConductivity   node         :ref:`XML_MultiPhaseVolumeWeightedThermalConductivity`   

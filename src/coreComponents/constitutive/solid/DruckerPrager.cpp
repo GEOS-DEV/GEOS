@@ -92,6 +92,8 @@ void DruckerPrager::allocateConstitutiveData( dataRepository::Group & parent,
 {
   m_newCohesion.resize( 0, numConstitutivePointsPerParentIndex );
   m_oldCohesion.resize( 0, numConstitutivePointsPerParentIndex );
+  
+  std::cout<<"I'm in DruckerPrager::allocateConstitutive data!"<<std::endl;
 
   ElasticIsotropic::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 }
