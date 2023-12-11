@@ -728,7 +728,7 @@ int SurfaceGenerator::separationDriver( DomainPartition & domain,
 
   GEOS_LOG_LEVEL_RANK_0( 3, "rupture rate is " << ruptureRate );
   if( ruptureRate > 0 )
-    m_nextDt = ruptureRate < 1e99 ? ( m_cflFactor>0 ? m_cflFactor: 0.5 ) / ruptureRate : 1e99;
+    m_nextDt = ruptureRate < 1e99 ? m_cflFactor / ruptureRate : 1e99;
 
 
 //  if( rval>0 )
