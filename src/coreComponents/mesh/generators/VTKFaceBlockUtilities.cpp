@@ -425,6 +425,10 @@ Elem2dTo3dInfo buildElem2dTo3dElemAndFaces( vtkSmartPointer< vtkDataSet > faceMe
   for( vtkIdType i = 0; i < boundary->GetNumberOfCells(); ++i )
   {
     vtkIdType const cellId = boundaryCells->GetValue( i );
+    if( mesh->GetCell( cellId )->GetCellDimension() != 3 )
+    {
+      continue;
+    }
     vtkIdList * pointIds = boundary->GetCell( i )->GetPointIds();
     for( int j = 0; j < pointIds->GetNumberOfIds(); ++j )
     {
