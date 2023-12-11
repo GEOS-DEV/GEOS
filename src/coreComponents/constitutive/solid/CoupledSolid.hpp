@@ -87,7 +87,7 @@ public:
                                                       real64 const & temperature ) const
   {
     GEOS_UNUSED_VAR( k, q, pressure, temperature );
-    GEOS_ERROR( "CoupledSolidUpdates::updateStateFromPressureAndTemperature called! Must be overridden." );
+    // the fact that this function is empty is really tricky, but somehow works
   }
 
   GEOS_HOST_DEVICE

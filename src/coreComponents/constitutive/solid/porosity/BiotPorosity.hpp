@@ -131,7 +131,7 @@ public:
                - porosityThermalExpansion * deltaTemperatureFromBeginningOfTimeStep; // change due to temperature increment
     dPorosity_dPressure = biotSkeletonModulusInverse;
     dPorosity_dTemperature = -porosityThermalExpansion;
-    dPorosity_dVolStrain = biotCoefficient / bulkModulus; // ???
+    dPorosity_dVolStrain = biotCoefficient;
 
     // Fixed-stress part
     porosity += fixedStressPressureCoefficient * deltaPressureFromLastIteration   // fixed-stress pressure term
@@ -140,6 +140,43 @@ public:
     dPorosity_dTemperature += fixedStressTemperatureCoefficient;
   }
 
+  // this function is used in mechanics solver
+  // it uses meanEffectiveStressIncrement at gauss point
+  GEOS_HOST_DEVICE
+  virtual void updateFixedStress( localIndex const k,
+                                  localIndex const q,
+                                  real64 const & pressure,                // current
+                                  real64 const & pressure_k,                // last iteration (for sequential)
+                                  real64 const & pressure_n,                // last time step
+                                  real64 const & temperature,
+                                  real64 const & temperature_k,
+                                  real64 const & temperature_n,
+                                  real64 const & meanEffectiveStressIncrement,
+                                  real64 & dPorosity_dVolStrain ) const
+  {
+    real64 const deltaPressureFromBeginningOfTimeStep = pressure - pressure_n;
+    real64 const deltaPressureFromLastIteration = pressure - pressure_k;
+    real64 const deltaTemperatureFromBeginningOfTimeStep = temperature - temperature_n;
+    real64 const deltaTemperatureFromLastIteration = temperature - temperature_k;
+
+    computePorosityFixedStress( deltaPressureFromBeginningOfTimeStep,
+                                deltaPressureFromLastIteration,
+                                deltaTemperatureFromBeginningOfTimeStep,
+                                deltaTemperatureFromLastIteration,
+                                m_porosity_n[k][q],
+                                m_referencePorosity[k],
+                                m_newPorosity[k][q],
+                                m_dPorosity_dPressure[k][q],
+                                m_dPorosity_dTemperature[k][q],
+                                dPorosity_dVolStrain,
+                                m_biotCoefficient[k],
+                                m_thermalExpansionCoefficient[k],
+                                meanEffectiveStressIncrement,
+                                m_bulkModulus[k] );
+  }
+
+  // this function is used in flow solver
+  // it uses average stress increment (element-based)
   GEOS_HOST_DEVICE
   virtual void updateFixedStress( localIndex const k,
                                   localIndex const q,

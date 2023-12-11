@@ -486,7 +486,7 @@ void FlowSolverBase::updatePorosityAndPermeability( CellElementSubRegion & subRe
   {
     typename TYPEOFREF( castedPorousSolid ) ::KernelWrapper porousWrapper = castedPorousSolid.createKernelUpdates();
 
-    if( m_isFixedStressPoromechanicsUpdate )// for sequential simulations
+    if( m_isFixedStressPoromechanicsUpdate ) // for sequential simulations
     {
       arrayView1d< real64 const > const & pressure_k = subRegion.getField< fields::flow::pressure_k >();
       arrayView1d< real64 const > const & temperature_k = subRegion.getField< fields::flow::temperature_k >();

@@ -1153,7 +1153,6 @@ void CompositionalMultiphaseBase::initializePostInitialConditionsPreSubGroups()
 
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
 
-  // set mass fraction flag on fluid models
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel & mesh,
                                                                arrayView1d< string const > const & regionNames )
@@ -1169,16 +1168,17 @@ void CompositionalMultiphaseBase::initializePostInitialConditionsPreSubGroups()
                                                                                                  [&]( localIndex const,
                                                                                                       auto & subRegion )
     {
+      // set mass fraction flag on fluid models
       string const & fluidName = subRegion.template getReference< string >( viewKeyStruct::fluidNamesString() );
       MultiFluidBase & fluid = getConstitutiveModel< MultiFluidBase >( subRegion, fluidName );
       fluid.setMassFlag( m_useMass );
 
-      CoupledSolidBase const & porousSolid =
-        getConstitutiveModel< CoupledSolidBase >( subRegion,
-                                                  subRegion.template getReference< string >( viewKeyStruct::solidNamesString() ) );
       saveConvergedState( subRegion ); // necessary for a meaningful porosity update in sequential schemes
       updatePorosityAndPermeability( subRegion );
 
+      CoupledSolidBase const & porousSolid =
+        getConstitutiveModel< CoupledSolidBase >( subRegion,
+                                                  subRegion.template getReference< string >( viewKeyStruct::solidNamesString() ) );
       porousSolid.initializeState();
     } );
 
