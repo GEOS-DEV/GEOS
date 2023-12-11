@@ -141,25 +141,25 @@ inline string formatValue( real64 value, Unit unit )
 }
 
 
-// Clock in use in GEOS to manipulate system times.
+/// Clock in use in GEOS to manipulate system times.
 using SystemClock = std::chrono::system_clock;
 
-// One year = 365.2425 days (= 146097 / 400) following the Gregorian calendar and the C++ convention.
+/// One year = 365.2425 days (= 146097 / 400) following the Gregorian calendar and the C++ convention.
 using YearDaysRatio = std::ratio< 146097, 400 >;
-// Day helper duration type, equivalent to C++20 std::chrono::days.
+/// Day helper duration type, equivalent to C++20 std::chrono::days.
 using Days = std::chrono::duration< int64_t, std::ratio_multiply< std::ratio< 24 >, std::chrono::hours::period > >;
-// Year helper duration type, equivalent to C++20 std::chrono::years.
+/// Year helper duration type, equivalent to C++20 std::chrono::years.
 using Years = std::chrono::duration< int64_t, std::ratio_multiply< YearDaysRatio, Days::period > >;
 
-// Days in one year (following the Gregorian calendar and the C++ convention) = 365.2425 days (= 146097 / 400).
+/// Days in one year (following the Gregorian calendar and the C++ convention) = 365.2425 days (= 146097 / 400).
 static constexpr double YearDays = ( double )YearDaysRatio::num / YearDaysRatio::den;
-// Seconds in a minute
+/// Seconds in a minute
 static constexpr double MinuteSeconds = 60.0;
-// Seconds in a hour
+/// Seconds in a hour
 static constexpr double HourSeconds = 60.0 * MinuteSeconds;
-// Seconds in a day
+/// Seconds in a day
 static constexpr double DaySeconds = 24.0 * HourSeconds;
-// Seconds in a year
+/// Seconds in a year
 static constexpr double YearSeconds = YearDays * DaySeconds;
 
 
@@ -168,17 +168,17 @@ static constexpr double YearSeconds = YearDays * DaySeconds;
  */
 struct TimeFormatInfo
 { 
-  // Total time (including the decimal part) this instance represents in seconds
+  /// Total time (including the decimal part) this instance represents in seconds
   double m_totalSeconds = 0.0;
-  // Number of integral years to show
+  /// Number of integral years to show
   int m_years = 0;
-  // Number of integral days to show
+  /// Number of integral days to show
   int m_days = 0;
-  // Number of integral hours to show
+  /// Number of integral hours to show
   int m_hours = 0;
-  // Number of integral minutes to show
+  /// Number of integral minutes to show
   int m_minutes = 0;
-  // Number of integral seconds to show
+  /// Number of integral seconds to show
   int m_seconds = 0;
 
 
