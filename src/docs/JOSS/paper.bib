@@ -1,4 +1,4 @@
-@article{Beckingsale2019,
+@article{Beckingsale:2019,
 abstract = {Modern high-performance computing systems are diverse, with hardware designs ranging from homogeneous multi- core CPUs to GPU or FPGA accelerated systems. Achieving desir- able application performance often requires choosing a program- ming model best suited to a particular platform. For large codes used daily in production that are under continual development, architecture-specific ports are untenable. Maintainability re- quires single-source application code that is performance portable across a range of architectures and programming models. In this paper we describe RAJA, a portability layer that enables C++ applications to leverage various programming models, and thus architectures, with a single-source codebase. We describe preliminary results using RAJA in three large production codes at Lawrence Livermore National Laboratory, observing 17×, 13× and 12× speedup on GPU-only over CPU- only nodes with single-source application code in each case.},
 author = {Beckingsale, David A. and Scogland, Thomas R.W. and Burmark, Jason and Hornung, Rich and Jones, Holger and Killian, William and Kunen, Adam J. and Pearce, Olga and Robinson, Peter and Ryujin, Brian S.},
 doi = {10.1109/P3HPC49587.2019.00012},
@@ -10,14 +10,15 @@ title = {{RAJA: Portable Performance for Large-Scale Scientific Applications}},
 year = {2019}
 }
 
-@misc{CHAI2023,
+@misc{CHAI:2023,
   title = {CHAI},
+  year = {2023},
   publisher = {GitHub},
   journal = {GitHub repository},
-  howpublished = {\url{https://github.com/LLNL/chai}}
+  url = {https://github.com/LLNL/chai}
 }
 
-@article{Beckingsale2020,
+@article{Beckingsale:2020,
 abstract = {Advanced architectures like Sierra provide a wide range of memory resources that must often be carefully controlled by the user. These resources have varying capacities, access timing rules, and visibility to different compute resources. Applications must intelligently allocate data in these spaces, and depending on the total amount of memory required, applications may also be forced to move data between different parts of the memory hierarchy. Finally, applications using multiple packages must coordinate effectively to ensure that each package can use the memory resources it needs. To address these challenges, we present Umpire, an application-oriented library for managing memory resources. Specifically, Umpire provides support for querying memory resources, provisioning and allocating memory, and memory introspection. It allows computer scientists and computational physicists to efficiently program the memory hierarchies of current and future high-performance computing architectures, without tying their application to specific hardware or software. In this article, we describe the design and implementation of Umpire and present case studies from the integration of Umpire into applications that are currently running on Sierra.},
 author = {Beckingsale, D. A. and McFadden, M. J. and Dahm, J. P.S. and Pankajakshan, R. and Hornung, R. D.},
 doi = {10.1147/JRD.2019.2954403},

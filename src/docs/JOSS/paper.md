@@ -61,29 +61,10 @@ bibliography: paper.bib
 
 GEOS is an open-source simulation framework focused on implementing tightly-coupled multi-physics problems with an emphasis subsurface reservoir applications.
 The C++ infrastructure of GEOS provides facilities to assist in the implementation of constraint equations such as a discrete mesh data structure, MPI communications tools, degree-of-freedom management, IO facilities, etc.
-The performance portability strategy applies LLNL's suite of portablity tools RAJA[@Beckingsale:2019], CHAI[@CHAI:2023], and Umpire[@Beckingsale:2020].
-
-The Python interface of GEOS allows for the integration of the 
-
-GEOS provides infrastructure to manage 
- flow, transport, and geomechanics in the subsurface. 
-The code provides advanced solvers for a number of target applications, including
-
-carbon sequestration,
-geothermal energy,
-and similar systems.
-A key focus of the project is achieving scalable performance on current and next-generation high performance computing systems. We do this through a portable programming model and research into scalable algorithms.
-
-
-The forces on stars, galaxies, and dark matter under external gravitational
-fields lead to the dynamical evolution of structures in the universe. The orbits
-of these bodies are therefore key to understanding the formation, history, and
-future state of galaxies. The field of "galactic dynamics," which aims to model
-the gravitating components of galaxies to study their structure and evolution,
-is now well-established, commonly taught, and frequently used in astronomy.
-Aside from toy problems and demonstrations, the majority of problems require
-efficient numerical tools, many of which require the same base code (e.g., for
-performing numerical orbit integration).
+The performance portability strategy applies LLNL's suite of portability tools RAJA[@Beckingsale:2019], CHAI[@CHAI:2023], and Umpire[@Beckingsale:2020].
+Through this strategy GEOS has been successfully run on platforms ranging from GPU-based Exa-scale systems down to CPU-based laptops.
+The code provides implementations for a number of target applications, including, carbon sequestration, geothermal energy, hydrogen storage, and similar systems.
+The Python interface of GEOS allows for the integration of the computational simulation capabilities in GEOS into complex python workflows involving other tools.
 
 # Statement of need
 
@@ -149,7 +130,11 @@ Figure sizes can be customized by adding an optional second parameter:
 
 # Acknowledgements
 
-We acknowledge contributions from Brigitta Sipocz, Syrtis Major, and Semyeong
-Oh, and support from Kathryn Johnston during the genesis of this project.
+
+This work performed under the auspices of the U.S. Department of Energy by Lawrence Livermore National Laboratory under Contract DE-AC52-07NA27344
+
+This research was supported by the Exascale Computing Project (ECP), Project Number: 17-SC-20-SC, a collaborative effort of two DOE organizations - the Office of Science and the National Nuclear Security Administration, responsible for the planning and preparation of a capable exascale ecosystem, including software, applications, hardware, advanced system engineering and early testbed platforms, to support the nation's exascale computing imperative.
+
+FC-MAELSTROM statement...
 
 # References
