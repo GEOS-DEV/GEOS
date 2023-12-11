@@ -184,9 +184,8 @@ CO2SolubilityUpdate::compute( real64 const & pressure,
 
   real64 const determinant = 1.0 - co2Solubility*watSolubility;
 
-  GEOS_THROW_IF_LT_MSG ( LvArray::math::abs( determinant ), minForDivision,
-                         GEOS_FMT( "Failed to calculate solubility at pressure {} Pa and temperature {} C.", pressure, temperature ),
-                         SimulationError );
+  GEOS_ERROR_IF_LT_MSG ( LvArray::math::abs( determinant ), minForDivision,
+                         GEOS_FMT( "Failed to calculate solubility at pressure {} Pa and temperature {} C.", pressure, temperature ) );
 
   real64 invDeterminant = 0.0;
   real64 invDeterminantDeriv[] = { 0.0, 0.0 };
