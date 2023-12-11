@@ -1,5 +1,12 @@
 import logging
-from typing import List, Tuple, Dict, FrozenSet, Iterator
+from typing import (
+    Dict,
+    FrozenSet,
+    Iterator,
+    List,
+    Tuple,
+)
+
 import numpy
 
 from tqdm import tqdm
@@ -99,7 +106,7 @@ def __select_and_flip_faces(mesh_points: vtkPoints,
         color_to_nodes[color] += connected_components_indices
     # This implementation works even if there is one unique color.
     # Admittedly, there will be one face stream that won't be flipped.
-    fs = face_stream.flip_faces(color_to_nodes[0]), face_stream.flip_faces(color_to_nodes[1])
+    fs: Tuple[FaceStream, FaceStream] = face_stream.flip_faces(color_to_nodes[0]), face_stream.flip_faces(color_to_nodes[1])
     volumes = __compute_volume(mesh_points, fs[0]), __compute_volume(mesh_points, fs[1])
     # We keep the flipped element for which the volume is largest
     # (i.e. positive, since they should be the opposite of each other).
