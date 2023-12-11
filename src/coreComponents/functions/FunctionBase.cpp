@@ -33,6 +33,7 @@ FunctionBase::FunctionBase( const string & name,
   setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
 
   registerWrapper( keys::inputVarNames, &m_inputVarNames ).
+    setRTTypeName( rtTypes::CustomTypes::groupNameRefArray ).
     setInputFlag( InputFlags::OPTIONAL ).
     setSizedFromParent( 0 ).
     setDescription( "Name of fields are input to function." );
