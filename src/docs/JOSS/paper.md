@@ -1,43 +1,79 @@
 ---
-title: 'Gala: A Python package for galactic dynamics'
+title: 'GEOS: A portable multi-physics simulation framework'
 tags:
-  - Python
-  - astronomy
-  - dynamics
-  - galactic dynamics
-  - milky way
+  - reservoir simulations
+  - computational mechanics
+  - multiphase flow
+  - c++
 authors:
-  - name: Adrian M. Price-Whelan
-    orcid: 0000-0000-0000-0000
-    equal-contrib: true
-    affiliation: "1, 2" # (Multiple affiliations must be quoted)
-  - name: Author Without ORCID
-    equal-contrib: true # (This is how you can denote equal contributions between multiple authors)
+  - name: Randolph R. Settgast
+    orcid: 0000-0002-2536-7867
+    corresponding: true
+    affiliation: 1
+  - name: Benjamin C. Corbett
+    affiliation: 1
+  - name: Francois Hamon
     affiliation: 2
-  - name: Author with no affiliation
-    corresponding: true # (This is how to denote the corresponding author)
+  - name: Thomas Gazzola
+    affiliation: 2
+  - name: Matteo Cusini
+    affiliation: 1
+  - name: Chris S. Sherman
+    affiliation: 1
+  - name: Sergey Klevzoff
     affiliation: 3
-  - given-names: Ludwig
-    dropping-particle: van
-    surname: Beethoven
-    affiliation: 3
+  - name: Nicola Castelletto
+    affiliation: 1
+  - name: Arturo Vargas
+    affiliation: 1
+  - name: Joshua White
+    affiliation: 1
+  - name: William R. Tobin
+    affiliation: 1
+  - name: Brian M. Han
+    affiliation: 1
+  - name: Herve Gross
+    affiliation: 2
+  - name: Stefan Framba
+    affiliation: 2
+  - name: Aurilian Citrain
+    affiliation: 2
+  - name: Andrea Franceschini
+    affiliation: 2
+  - name: Andrea Borio
+    affiliation: 4
+  - Jian Huang
+    affiliation: 2
 affiliations:
- - name: Lyman Spitzer, Jr. Fellow, Princeton University, USA
+ - name: Lawrence Livermore National Laboratory, USA
    index: 1
- - name: Institution Name, Country
+ - name: TotalEnergies E&P Research & Technology, USA
    index: 2
- - name: Independent Researcher, Country
+ - name: Stanford University, USA
    index: 3
-date: 13 August 2017
+ - name: Politecnico di Torino, Italy
+date: 15 December 2023
 bibliography: paper.bib
 
-# Optional fields if submitting to a AAS journal too, see this blog post:
-# https://blog.joss.theoj.org/2018/12/a-new-collaboration-with-aas-publishing
-aas-doi: 10.3847/xxxxx <- update this with the DOI from AAS once you know it.
-aas-journal: Astrophysical Journal <- The name of the AAS journal.
 ---
 
 # Summary
+
+GEOS is an open-source simulation framework focused on implementing tightly-coupled multi-physics problems with an emphasis subsurface reservoir applications.
+The C++ infrastructure of GEOS provides facilities to assist in the implementation of constraint equations such as a discrete mesh data structure, MPI communications tools, degree-of-freedom management, IO facilities, etc.
+The performance portability strategy applies LLNL's suite of portablity tools RAJA[@Beckingsale:2019], CHAI[@CHAI:2023], and Umpire[@Beckingsale:2020]
+
+The Python interface of GEOS allows for the integration of the 
+
+GEOS provides infrastructure to manage 
+ flow, transport, and geomechanics in the subsurface. 
+The code provides advanced solvers for a number of target applications, including
+
+carbon sequestration,
+geothermal energy,
+and similar systems.
+A key focus of the project is achieving scalable performance on current and next-generation high performance computing systems. We do this through a portable programming model and research into scalable algorithms.
+
 
 The forces on stars, galaxies, and dark matter under external gravitational
 fields lead to the dynamical evolution of structures in the universe. The orbits
@@ -71,7 +107,7 @@ design, and support for Astropy functionality in `Gala` will enable exciting
 scientific explorations of forthcoming data releases from the *Gaia* mission
 [@gaia] by students and experts alike.
 
-# Mathematics
+# Infrastructure Components 
 
 Single dollars ($) are required for inline mathematics e.g. $f(x) = e^{\pi/x}$
 
