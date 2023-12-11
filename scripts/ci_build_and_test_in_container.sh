@@ -215,6 +215,7 @@ fi
 if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
   # We split the process in two steps. First installing the environment, then running the tests.
   or_die ninja ats_environment
+  echo $PWD
   # The tests are not run using ninja (`ninja --verbose ats_run`) because it swallows the output while all the simulations are running.
   # We directly use the script instead...
   # Temporarily, we are not adding the `--failIfTestsFail` options to `geos_ats.sh`.
