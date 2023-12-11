@@ -62,37 +62,6 @@ jobs:
         echo "There are ${{ needs.is_pull_request_a_draft.outputs.NUM_ASSIGNEES }} on this PR."
         ${{ needs.is_pull_request_a_draft.outputs.NUM_ASSIGNEES > 0 }}
 
-  # This job will fail if running the integrated tests has not been requested.
-  # (Add the 'ci: run integrated tests' to the PR to do so).
-  # This job acts like a gate to the integrated tests.
-  # If this job fails, the workflow will not be validated.
-  # Note: I did not manage to make this job a step of the matrix 'cpu_builds'.
-  #       This would allow to collapse the "gate" and the main jobs,
-  #       reducing the complexity of the workflow.
-  #       Also, the current situation maintains a symmetry with the CUDA jobs.
-  are_integrated_tests_requested:
-    needs: [is_pull_request_a_draft]
-    runs-on: ubuntu-22.04
-    # Temporarily deactivate
-    if: ${{ ! always() }}
-    steps:
-    - name: Check if running the integrated tests is requested
-      run: |
-        echo 'Labels are ${{ needs.is_pull_request_a_draft.outputs.LABELS }}'
-        ${{ contains( fromJSON( needs.is_pull_request_a_draft.outputs.LABELS ), 'ci: run integrated tests') }}
-
-  # Same behavior than job 'are_integrated_tests_requested', but for CUDA builds.
-  # Use the flag 'ci: ready to be merged' instead.
-  # Note: Label should only be added if PR is in merge queue.
-  are_cuda_builds_requested:
-    needs: [is_pull_request_a_draft]
-    runs-on: ubuntu-22.04
-    steps:
-    - name: Check that the PR is ready to be merged
-      run: |
-        echo 'Labels are ${{ needs.is_pull_request_a_draft.outputs.LABELS }}'
-        ${{ contains( fromJSON( needs.is_pull_request_a_draft.outputs.LABELS ), 'ci: ready to be merged') }}
-
   # Validates that the PR is still pointing to the HEAD of the main branch of the submodules repositories.
   # (There are exceptions, read the script about those).
   are_submodules_in_sync:
@@ -139,50 +108,56 @@ jobs:
     name: ${{ matrix.name }}
     needs: [is_pull_request_a_draft]
     strategy:
-
       # In-progress jobs will not be cancelled if there is a failure
       fail-fast : false
-
       matrix:
         include:
           - name: Ubuntu (20.04, gcc 9.3.0, open-mpi 4.0.3)
-            DOCKER_REPOSITORY: geosx/ubuntu20.04-gcc9
             CMAKE_BUILD_TYPE: Release
+            DOCKER_REPOSITORY: geosx/ubuntu20.04-gcc9
 
           - name: Ubuntu debug (20.04, gcc 10.3.0, open-mpi 4.0.3) - github codespaces
-            DOCKER_REPOSITORY: geosx/ubuntu20.04-gcc10
             CMAKE_BUILD_TYPE: Debug
+            DOCKER_REPOSITORY: geosx/ubuntu20.04-gcc10
 
           - name: Ubuntu (20.04, gcc 10.3.0, open-mpi 4.0.3) - github codespaces
+            CMAKE_BUILD_TYPE: Release
             DOCKER_REPOSITORY: geosx/ubuntu20.04-gcc10
-            CMAKE_BUILD_TYPE: Release
 
-          # Below this line, jobs that deploy to Google Cloud.
-          - name: Pecan CPU (centos 7.7, gcc 8.2.0, open-mpi 4.0.1, mkl 2019.5)
-            DOCKER_REPOSITORY: geosx/pecan-cpu-gcc8.2.0-openmpi4.0.1-mkl2019.5
+          - name: Ubuntu (22.04, gcc 11.2.0, open-mpi 4.1.2)
             CMAKE_BUILD_TYPE: Release
+            DOCKER_REPOSITORY: geosx/ubuntu22.04-gcc11
+            ENABLE_HYPRE: ON
+            ENABLE_TRILINOS: OFF
+            GCP_BUCKET: geosx/ubuntu22.04-gcc11
+
+          - name: Ubuntu (22.04, gcc 12.3.0, open-mpi 4.1.2)
+            CMAKE_BUILD_TYPE: Release
+            DOCKER_REPOSITORY: geosx/ubuntu22.04-gcc12
+            ENABLE_HYPRE: ON
+            ENABLE_TRILINOS: OFF
+
+          - name: Pecan CPU (centos 7.7, gcc 8.2.0, open-mpi 4.0.1, mkl 2019.5)
+            CMAKE_BUILD_TYPE: Release
+            DOCKER_REPOSITORY: geosx/pecan-cpu-gcc8.2.0-openmpi4.0.1-mkl2019.5
             HOST_CONFIG: host-configs/TOTAL/pecan-CPU.cmake
             GCP_BUCKET: geosx/Pecan-CPU
 
           - name: Pangea 2 (centos 7.6, gcc 8.3.0, open-mpi 2.1.5, mkl 2019.3)
-            DOCKER_REPOSITORY: geosx/pangea2-gcc8.3.0-openmpi2.1.5-mkl2019.3
             CMAKE_BUILD_TYPE: Release
-            GCP_BUCKET: geosx/Pangea2
+            DOCKER_REPOSITORY: geosx/pangea2-gcc8.3.0-openmpi2.1.5-mkl2019.3
             ENABLE_HYPRE: ON
             ENABLE_TRILINOS: OFF
+            GCP_BUCKET: geosx/Pangea2
 
           - name: Sherlock CPU (centos 7.9.2009, gcc 10.1.0, open-mpi 4.1.2, openblas 0.3.10)
-            DOCKER_REPOSITORY: geosx/sherlock-gcc10.1.0-openmpi4.1.2-openblas0.3.10-zlib1.2.11
             CMAKE_BUILD_TYPE: Release
-            HOST_CONFIG: host-configs/Stanford/sherlock-gcc10-ompi4.1.2-openblas0.3.10.cmake
-            GCP_BUCKET: geosx/Sherlock-CPU
+            DOCKER_REPOSITORY: geosx/sherlock-gcc10.1.0-openmpi4.1.2-openblas0.3.10-zlib1.2.11
             ENABLE_HYPRE: ON
             ENABLE_TRILINOS: OFF
+            HOST_CONFIG: host-configs/Stanford/sherlock-gcc10-ompi4.1.2-openblas0.3.10.cmake
+            GCP_BUCKET: geosx/Sherlock-CPU
 
-          - name: Ubuntu (22.04, gcc 11.2.0, open-mpi 4.1.2)
-            DOCKER_REPOSITORY: geosx/ubuntu22.04-gcc11
-            CMAKE_BUILD_TYPE: Release
-            GCP_BUCKET: geosx/ubuntu22.04-gcc11
     uses: ./.github/workflows/build_and_test.yml
     with:
       CMAKE_BUILD_TYPE: ${{ matrix.CMAKE_BUILD_TYPE }}
@@ -195,11 +170,13 @@ jobs:
       RUNS_ON: ubuntu-22.04
     secrets: inherit
 
+  # If the 'ci: run integrated tests' PR label is found, the integrated tests will be run immediately after the cpu jobs.
+  # Note: The integrated tests are optional and are (for the moment) run for convenience only.
   run_integrated_tests:
     needs:
-      - are_integrated_tests_requested
       - is_pull_request_a_draft
       - cpu_builds
+    if: "${{ contains( fromJSON( needs.is_pull_request_a_draft.outputs.LABELS ), 'ci: run integrated tests') }}"
     uses: ./.github/workflows/build_and_test.yml
     secrets: inherit
     with:
@@ -208,18 +185,19 @@ jobs:
       CMAKE_BUILD_TYPE: Release
       DOCKER_IMAGE_TAG: ${{ needs.is_pull_request_a_draft.outputs.DOCKER_IMAGE_TAG }}
       DOCKER_REPOSITORY: geosx/ubuntu22.04-gcc11
+      ENABLE_HYPRE: ON
+      ENABLE_TRILINOS: OFF
       GCP_BUCKET: geosx/integratedTests
       RUNS_ON: ubuntu-22.04
-
+        
   # If the 'ci: ready to be merged' PR label is found, the cuda jobs run immediately along side linux jobs.
   # Note: CUDA jobs should only be run if PR is ready to merge.
   cuda_builds:
     name: ${{ matrix.name }}
     needs:
-    - is_pull_request_a_draft
-    - are_cuda_builds_requested
+      - is_pull_request_a_draft
+    if: "${{ contains( fromJSON( needs.is_pull_request_a_draft.outputs.LABELS ), 'ci: ready to be merged') }}"
     strategy:
-
       # In-progress jobs will not be cancelled if there is a failure
       fail-fast : false
       matrix:
@@ -231,7 +209,7 @@ jobs:
             ENABLE_HYPRE_DEVICE: CUDA
             ENABLE_HYPRE: ON
             ENABLE_TRILINOS: OFF
-            RUNS_ON: Runner_4core_16GB
+            RUNS_ON: Runner_8core_32GB
 
           - name: Ubuntu CUDA (20.04, clang 10.0.0 + gcc 9.4.0, open-mpi 4.0.3, cuda-11.8.89)
             BUILD_AND_TEST_CLI_ARGS: "--no-run-unit-tests --no-install-schema"
