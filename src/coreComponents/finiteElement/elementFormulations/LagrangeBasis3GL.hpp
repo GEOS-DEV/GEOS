@@ -276,6 +276,60 @@ public:
   }
 
   /**
+   * @brief The gradient of the basis function for a support point evaluated at
+   *   a given support point. By symmetry, p is assumed to be in 0, ..., (N-1)/2  
+   * @param q The index of the basis function 
+   * @param p The index of the support point 
+   * @return The gradient of basis function.
+   */
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
+  constexpr static real64 gradientAt( const int q, 
+                                      const int p )
+  {
+    switch( q )
+    {
+      case 0:
+	return p == 0 ? -3.0 : -0.80901699437494742410;
+      case 1:
+	return p == 0 ? 4.0450849718747371205 : 0.0;
+      case 2:
+	return p == 0 ? -1.5450849718747371205 : 1.1180339887498948482; 
+      case 3:
+	return p == 0 ? 0.5 : -0.30901699437494742410;
+      default:
+	return 0;
+    }
+  }
+
+  /**
+   * @brief Pre-computed term used in the jacobian. Corresponds to
+   * sum_{a=0}^{N-1} gradientAt( q, a ) * interpolation(a)
+   * where "interpolation" is the normalized position (between 0 and 1) 
+   * of the parent support coordinate in the support interval.
+   * @param q The index of the basis function 
+   * @return The precomputed jacobian term 
+   */
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
+  constexpr static real64 jacobianTerm( const int q );
+  {
+    switch( q )
+    {
+      case 0:
+	return -3.5
+      case 1:
+	return 3.7360679774997896964;
+      case 2:
+	return -0.73606797749978969641; 
+      case 3: 
+	return 0.5;
+      default:
+	return 0.0;
+    }
+  }
+
+  /**
    * @class TensorProduct2D
    *
    *                                                                  _____________________________
