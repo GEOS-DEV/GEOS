@@ -48,6 +48,7 @@ public:
       using SolverType = TYPEOFPTR( solver );
       string const key = SolverType::coupledSolverAttributePrefix() + "SolverName";
       registerWrapper( key, &m_names[idx()] ).
+        setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
         setInputFlag( dataRepository::InputFlags::REQUIRED ).
         setDescription( "Name of the " + SolverType::coupledSolverAttributePrefix() + " solver used by the coupled solver" );
     } );
@@ -66,7 +67,7 @@ public:
   CoupledWaveSolver & operator=( CoupledWaveSolver && ) = delete;
 
   virtual void
-  postProcessInput() override
+  postProcessInput() override final
   {
     SolverBase::postProcessInput();
 
@@ -131,6 +132,11 @@ public:
    * @return string that contains the catalog name to generate a new AcousticElasticWaveEquationSEM object through the object catalog.
    */
   static string catalogName() { return "AcousticElasticSEM"; }
+
+  /**
+   * @copydoc SolverBase::getCatalogName()
+   */
+  string getCatalogName() const override { return catalogName(); }
 
   /**
    * @brief accessor for the pointer to the solid mechanics solver
