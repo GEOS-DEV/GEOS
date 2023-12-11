@@ -60,14 +60,6 @@ public:
     m_phaseLiquidIndex( phaseLiquidIndex )
   {}
 
-  template< int USD1, int USD2, int USD3 >
-  GEOS_HOST_DEVICE
-  void compute( real64 const & pressure,
-                real64 const & temperature,
-                arraySlice1d< real64 const, USD1 > const & compFraction,
-                arraySlice1d< real64, USD2 > const & phaseFraction,
-                arraySlice2d< real64, USD3 > const & phaseCompFraction ) const;
-
   template< int USD1 >
   GEOS_HOST_DEVICE
   void compute( real64 const & pressure,
@@ -156,78 +148,6 @@ private:
   /// Index of the liquid phase
   integer m_phaseLiquidIndex;
 };
-
-template< int USD1, int USD2, int USD3 >
-GEOS_HOST_DEVICE
-GEOS_FORCE_INLINE
-void
-CO2SolubilityUpdate::compute( real64 const & pressure,
-                              real64 const & temperature,
-                              arraySlice1d< real64 const, USD1 > const & compFraction,
-                              arraySlice1d< real64, USD2 > const & phaseFraction,
-                              arraySlice2d< real64, USD3 > const & phaseCompFraction ) const
-{
-  // solubility mol/kg(water)  X = Csat/W
-  real64 const input[2] = { pressure, temperature };
-  real64 solubility = m_CO2SolubilityTable.compute( input );
-  solubility *= m_componentMolarWeight[m_waterIndex];
-
-  // Y = C/W = z/(1-z)
-  real64 Y;
-
-  if( compFraction[m_CO2Index] > 1.0 - minForDivision )
-  {
-    Y = compFraction[m_CO2Index] / minForDivision;
-  }
-  else
-  {
-    real64 const oneMinusCompFracInv = 1.0 / (1.0 - compFraction[m_CO2Index]);
-    Y = compFraction[m_CO2Index] * oneMinusCompFracInv;
-  }
-
-  if( Y < solubility )
-  {
-    // liquid phase only
-
-    // 1) Compute phase fractions
-
-    phaseFraction[m_phaseLiquidIndex] = 1.0;
-    phaseFraction[m_phaseGasIndex] = 0.0;
-
-    // 2) Compute phase component fractions
-
-    for( localIndex ic = 0; ic < 2; ++ic )
-    {
-      phaseCompFraction[m_phaseLiquidIndex][ic] = compFraction[ic];
-      // the two following lines are not present in Yue's code, unclear if this will have some consequences
-      phaseCompFraction[m_phaseGasIndex][m_CO2Index] = 1.0;
-      phaseCompFraction[m_phaseGasIndex][m_waterIndex] = 0.0;
-    }
-  }
-  else
-  {
-    // two-phase flow
-
-    // 1) Compute phase fractions
-
-    // liquid phase fraction = (Csat + W) / (C + W) = (Csat/W + 1) / (C/W + 1)
-    real64 const onePlusYInv = 1.0 / ( 1.0 + Y );
-    phaseFraction[m_phaseLiquidIndex] = (solubility + 1.0) * onePlusYInv;
-    phaseFraction[m_phaseGasIndex] = 1.0 - phaseFraction[m_phaseLiquidIndex];
-
-    // 2) Compute phase component fractions
-
-    // liquid phase composition  CO2 = Csat / (Csat + W) = (Csat/W) / (Csat/W + 1)
-    real64 const onePlusSolubilityInv = 1.0 / ( 1.0 + solubility );
-    phaseCompFraction[m_phaseLiquidIndex][m_CO2Index] = solubility * onePlusSolubilityInv;
-
-    phaseCompFraction[m_phaseLiquidIndex][m_waterIndex] = 1.0 - phaseCompFraction[m_phaseLiquidIndex][m_CO2Index];
-
-    // gas phase composition  CO2 = 1.0
-    phaseCompFraction[m_phaseGasIndex][m_CO2Index] = 1.0;
-    phaseCompFraction[m_phaseGasIndex][m_waterIndex] = 0.0;
-  }
-}
 
 template< int USD1 >
 GEOS_HOST_DEVICE
