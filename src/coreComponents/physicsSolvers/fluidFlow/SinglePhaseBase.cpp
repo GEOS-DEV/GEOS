@@ -188,11 +188,11 @@ void SinglePhaseBase::validateConstitutiveModels( DomainPartition & domain ) con
       {
         string const fluidModelName = castedFluid.catalogName();
         GEOS_THROW_IF( m_isThermal && (fluidModelName != "ThermalCompressibleSinglePhaseFluid"),
-                       GEOS_FMT( "SingleFluidBase {}: the thermal option is enabled in the solver, but the fluid model `{}` is not for thermal fluid",
+                       GEOS_FMT( "SingleFluidBase {}: the thermal option is enabled in the solver, but the fluid model {} is not for thermal fluid",
                                  getDataContext(), fluid.getDataContext() ),
                        InputError );
         GEOS_THROW_IF( !m_isThermal && (fluidModelName == "ThermalCompressibleSinglePhaseFluid"),
-                       GEOS_FMT( "SingleFluidBase {}: the fluid model is for thermal fluid `{}`, but the solver option is incompatible with the fluid model",
+                       GEOS_FMT( "SingleFluidBase {}: the fluid model is for thermal fluid {}, but the solver option is incompatible with the fluid model",
                                  getDataContext(), fluid.getDataContext() ),
                        InputError );
       } );
@@ -466,7 +466,7 @@ void SinglePhaseBase::computeHydrostaticEquilibrium()
 
     // check that the gravity vector is aligned with the z-axis
     GEOS_THROW_IF( !isZero( gravVector[0] ) || !isZero( gravVector[1] ),
-                   catalogName() << " " << getDataContext() <<
+                   getCatalogName() << " " << getDataContext() <<
                    ": the gravity vector specified in this simulation (" << gravVector[0] << " " << gravVector[1] << " " << gravVector[2] <<
                    ") is not aligned with the z-axis. \n"
                    "This is incompatible with the " << EquilibriumInitialCondition::catalogName() << " " << bc.getDataContext() <<
@@ -528,7 +528,7 @@ void SinglePhaseBase::computeHydrostaticEquilibrium()
 
     real64 const eps = 0.1 * (maxElevation - minElevation); // we add a small buffer to only log in the pathological cases
     GEOS_LOG_RANK_0_IF( ( (datumElevation > globalMaxElevation[equilIndex]+eps)  || (datumElevation < globalMinElevation[equilIndex]-eps) ),
-                        SinglePhaseBase::catalogName() << " " << getDataContext() <<
+                        getCatalogName() << " " << getDataContext() <<
                         ": By looking at the elevation of the cell centers in this model, GEOS found that " <<
                         "the min elevation is " << globalMinElevation[equilIndex] << " and the max elevation is " <<
                         globalMaxElevation[equilIndex] << "\nBut, a datum elevation of " << datumElevation <<
@@ -585,7 +585,7 @@ void SinglePhaseBase::computeHydrostaticEquilibrium()
                                            pressureValues.toView() );
 
       GEOS_THROW_IF( !equilHasConverged,
-                     SinglePhaseBase::catalogName() << " " << getDataContext() <<
+                     getCatalogName() << " " << getDataContext() <<
                      ": hydrostatic pressure initialization failed to converge in region " << region.getName() << "!",
                      std::runtime_error );
     } );
@@ -596,8 +596,8 @@ void SinglePhaseBase::computeHydrostaticEquilibrium()
 
     string const tableName = fs.getName() + "_" + subRegion.getName() + "_table";
     TableFunction * const presTable = dynamicCast< TableFunction * >( functionManager.createChild( TableFunction::catalogName(), tableName ) );
-    presTable->setTableCoordinates( elevationValues );
-    presTable->setTableValues( pressureValues );
+    presTable->setTableCoordinates( elevationValues, { units::Distance } );
+    presTable->setTableValues( pressureValues, units::Pressure );
     presTable->setInterpolationMethod( TableFunction::InterpolationType::Linear );
     TableFunction::KernelWrapper presTableWrapper = presTable->createKernelWrapper();
 
@@ -768,7 +768,7 @@ void SinglePhaseBase::implicitStepComplete( real64 const & time,
 }
 
 
-void SinglePhaseBase::assembleSystem( real64 const time_n,
+void SinglePhaseBase::assembleSystem( real64 const GEOS_UNUSED_PARAM( time_n ),
                                       real64 const dt,
                                       DomainPartition & domain,
                                       DofManager const & dofManager,
@@ -782,8 +782,7 @@ void SinglePhaseBase::assembleSystem( real64 const time_n,
                              localMatrix,
                              localRhs );
 
-  assembleFluxTerms( time_n,
-                     dt,
+  assembleFluxTerms( dt,
                      domain,
                      dofManager,
                      localMatrix,
@@ -1255,6 +1254,88 @@ void SinglePhaseBase::resetStateToBeginningOfStep( DomainPartition & domain )
       }
     } );
   } );
+}
+
+real64 SinglePhaseBase::scalingForSystemSolution( DomainPartition & domain,
+                                                  DofManager const & dofManager,
+                                                  arrayView1d< real64 const > const & localSolution )
+{
+  GEOS_MARK_FUNCTION;
+
+  string const dofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
+  real64 scalingFactor = 1.0;
+  real64 maxDeltaPres = 0.0;
+
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
+                                                               MeshLevel & mesh,
+                                                               arrayView1d< string const > const & regionNames )
+  {
+    mesh.getElemManager().forElementSubRegions( regionNames,
+                                                [&]( localIndex const,
+                                                     ElementSubRegionBase & subRegion )
+    {
+      globalIndex const rankOffset = dofManager.rankOffset();
+      arrayView1d< globalIndex const > const dofNumber = subRegion.getReference< array1d< globalIndex > >( dofKey );
+      arrayView1d< integer const > const ghostRank = subRegion.ghostRank();
+
+      auto const subRegionData =
+        singlePhaseBaseKernels::ScalingForSystemSolutionKernel::
+          launch< parallelDevicePolicy<> >( localSolution, rankOffset, dofNumber, ghostRank, m_maxAbsolutePresChange );
+
+      scalingFactor = std::min( scalingFactor, subRegionData.first );
+      maxDeltaPres  = std::max( maxDeltaPres, subRegionData.second );
+    } );
+  } );
+
+  scalingFactor = MpiWrapper::min( scalingFactor );
+  maxDeltaPres  = MpiWrapper::max( maxDeltaPres );
+
+  GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "        {}: Max pressure change: {} Pa (before scaling)",
+                                      getName(), fmt::format( "{:.{}f}", maxDeltaPres, 3 ) ) );
+
+  return scalingFactor;
+}
+
+bool SinglePhaseBase::checkSystemSolution( DomainPartition & domain,
+                                           DofManager const & dofManager,
+                                           arrayView1d< real64 const > const & localSolution,
+                                           real64 const scalingFactor )
+{
+  GEOS_MARK_FUNCTION;
+
+  string const dofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
+  integer numNegativePressures = 0;
+  real64 minPressure = 0.0;
+
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
+                                                               MeshLevel & mesh,
+                                                               arrayView1d< string const > const & regionNames )
+  {
+    mesh.getElemManager().forElementSubRegions( regionNames,
+                                                [&]( localIndex const,
+                                                     ElementSubRegionBase & subRegion )
+    {
+      globalIndex const rankOffset = dofManager.rankOffset();
+      arrayView1d< globalIndex const > const dofNumber = subRegion.getReference< array1d< globalIndex > >( dofKey );
+      arrayView1d< integer const > const ghostRank = subRegion.ghostRank();
+      arrayView1d< real64 const > const pres = subRegion.getField< fields::flow::pressure >();
+
+      auto const statistics =
+        singlePhaseBaseKernels::SolutionCheckKernel::
+          launch< parallelDevicePolicy<> >( localSolution, rankOffset, dofNumber, ghostRank, pres, scalingFactor );
+
+      numNegativePressures += statistics.first;
+      minPressure = std::min( minPressure, statistics.second );
+    } );
+  } );
+
+  numNegativePressures = MpiWrapper::sum( numNegativePressures );
+
+  if( numNegativePressures > 0 )
+    GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "        {}: Number of negative pressure values: {}, minimum value: {} Pa",
+                                        getName(), numNegativePressures, fmt::format( "{:.{}f}", minPressure, 3 ) ) );
+
+  return (m_allowNegativePressure || numNegativePressures == 0) ?  1 : 0;
 }
 
 } /* namespace geos */

@@ -26,6 +26,8 @@ set( common_headers
      FixedSizeDeque.hpp
      FixedSizeDequeWithMutexes.hpp
      MultiMutexesLock.hpp
+     PhysicsConstants.hpp
+     Units.hpp
    )
 
 if ( ENABLE_CUDA )
@@ -47,22 +49,22 @@ set( common_sources
 set( dependencyList ${parallelDeps} lvarray pugixml::pugixml RAJA chai conduit::conduit fmt::fmt )
 
 if ( ENABLE_MKL )
-  set( dependencyList ${dependencyList} mkl )
+  list( APPEND dependencyList mkl )
 endif()
 
 if( ENABLE_CALIPER )
-  set( dependencyList ${dependencyList} caliper )
+  list( APPEND dependencyList caliper )
 endif()
 
 if( ENABLE_CALIPER )
-  set( dependencyList ${dependencyList} caliper )
+  list( APPEND dependencyList caliper )
 
   if (TARGET adiak::adiak)
-    set( dependencyList ${dependencyList} adiak::adiak )
+    list( APPEND dependencyList adiak::adiak )
   endif()
 
   if (TARGET adiak)
-    set( dependencyList ${dependencyList} adiak )
+    list( APPEND dependencyList adiak )
   endif()
 endif()
 

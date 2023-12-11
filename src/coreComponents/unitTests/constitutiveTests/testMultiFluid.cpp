@@ -393,7 +393,7 @@ void testValuesAgainstPreviousImplementation( CO2BrinePhillipsFluid::KernelWrapp
 
 MultiFluidBase & makeCompositionalFluid( string const & name, Group & parent )
 {
-  CompositionalMultiphaseFluid & fluid = parent.registerGroup< CompositionalMultiphaseFluid >( name );
+  CompositionalMultiphaseFluidPVTPackage & fluid = parent.registerGroup< CompositionalMultiphaseFluidPVTPackage >( name );
 
   // TODO we should actually create a fake XML node with data, but this seemed easier...
 
@@ -409,19 +409,19 @@ MultiFluidBase & makeCompositionalFluid( string const & name, Group & parent )
   phaseNames.resize( 2 );
   phaseNames[0] = "oil"; phaseNames[1] = "gas";
 
-  auto & eqnOfState = fluid.getReference< string_array >( CompositionalMultiphaseFluid::viewKeyStruct::equationsOfStateString() );
+  auto & eqnOfState = fluid.getReference< string_array >( CompositionalMultiphaseFluidPVTPackage::viewKeyStruct::equationsOfStateString() );
   eqnOfState.resize( 2 );
   eqnOfState[0] = "PR"; eqnOfState[1] = "PR";
 
-  auto & critPres = fluid.getReference< array1d< real64 > >( CompositionalMultiphaseFluid::viewKeyStruct::componentCriticalPressureString() );
+  auto & critPres = fluid.getReference< array1d< real64 > >( CompositionalMultiphaseFluidPVTPackage::viewKeyStruct::componentCriticalPressureString() );
   critPres.resize( 4 );
   critPres[0] = 34e5; critPres[1] = 25.3e5; critPres[2] = 14.6e5; critPres[3] = 220.5e5;
 
-  auto & critTemp = fluid.getReference< array1d< real64 > >( CompositionalMultiphaseFluid::viewKeyStruct::componentCriticalTemperatureString() );
+  auto & critTemp = fluid.getReference< array1d< real64 > >( CompositionalMultiphaseFluidPVTPackage::viewKeyStruct::componentCriticalTemperatureString() );
   critTemp.resize( 4 );
   critTemp[0] = 126.2; critTemp[1] = 622.0; critTemp[2] = 782.0; critTemp[3] = 647.0;
 
-  auto & acFactor = fluid.getReference< array1d< real64 > >( CompositionalMultiphaseFluid::viewKeyStruct::componentAcentricFactorString() );
+  auto & acFactor = fluid.getReference< array1d< real64 > >( CompositionalMultiphaseFluidPVTPackage::viewKeyStruct::componentAcentricFactorString() );
   acFactor.resize( 4 );
   acFactor[0] = 0.04; acFactor[1] = 0.443; acFactor[2] = 0.816; acFactor[3] = 0.344;
 
@@ -601,26 +601,26 @@ MultiFluidBase & makeDeadOilFluidFromTable( string const & name, Group * parent 
   coordinatesPVDG[0][12] = 53000000; valuesPVDG_Bg[12] = 0.003868; valuesPVDG_visc[12] = 0.00002935;
 
   TableFunction & tablePVDO_Bo = dynamicCast< TableFunction & >( *functionManager.createChild( "TableFunction", "PVDO_Bo" ) );
-  tablePVDO_Bo.setTableCoordinates( coordinatesPVDO );
-  tablePVDO_Bo.setTableValues( valuesPVDO_Bo );
+  tablePVDO_Bo.setTableCoordinates( coordinatesPVDO, { units::Pressure } );
+  tablePVDO_Bo.setTableValues( valuesPVDO_Bo, units::Dimensionless );
   tablePVDO_Bo.reInitializeFunction();
   tablePVDO_Bo.setInterpolationMethod( TableFunction::InterpolationType::Linear );
 
   TableFunction & tablePVDO_visc = dynamicCast< TableFunction & >( *functionManager.createChild( "TableFunction", "PVDO_visc" ) );
-  tablePVDO_visc.setTableCoordinates( coordinatesPVDO );
-  tablePVDO_visc.setTableValues( valuesPVDO_visc );
+  tablePVDO_visc.setTableCoordinates( coordinatesPVDO, { units::Pressure } );
+  tablePVDO_visc.setTableValues( valuesPVDO_visc, units::Viscosity );
   tablePVDO_visc.reInitializeFunction();
   tablePVDO_visc.setInterpolationMethod( TableFunction::InterpolationType::Linear );
 
   TableFunction & tablePVDG_Bg = dynamicCast< TableFunction & >( *functionManager.createChild( "TableFunction", "PVDG_Bg" ) );
-  tablePVDG_Bg.setTableCoordinates( coordinatesPVDG );
-  tablePVDG_Bg.setTableValues( valuesPVDG_Bg );
+  tablePVDG_Bg.setTableCoordinates( coordinatesPVDG, { units::Pressure } );
+  tablePVDG_Bg.setTableValues( valuesPVDG_Bg, units::Dimensionless );
   tablePVDG_Bg.reInitializeFunction();
   tablePVDG_Bg.setInterpolationMethod( TableFunction::InterpolationType::Linear );
 
   TableFunction & tablePVDG_visc = dynamicCast< TableFunction & >( *functionManager.createChild( "TableFunction", "PVDG_visc" ) );
-  tablePVDG_visc.setTableCoordinates( coordinatesPVDG );
-  tablePVDG_visc.setTableValues( valuesPVDG_visc );
+  tablePVDG_visc.setTableCoordinates( coordinatesPVDG, { units::Pressure } );
+  tablePVDG_visc.setTableValues( valuesPVDG_visc, units::Viscosity );
   tablePVDG_visc.reInitializeFunction();
   tablePVDG_visc.setInterpolationMethod( TableFunction::InterpolationType::Linear );
 

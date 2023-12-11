@@ -306,7 +306,6 @@ struct PPUPhaseFlux
   compute( integer const numPhase,
            integer const ip,
            integer const hasCapPressure,
-           //real64 const GEOS_UNUSED_PARAM( epsC1PPU ),
            localIndex const ( &seri )[numFluxSupportPoints],
            localIndex const ( &sesri )[numFluxSupportPoints],
            localIndex const ( &sei )[numFluxSupportPoints],

@@ -12,5 +12,3 @@ upwindingScheme     geos_UpwindingScheme PPU      | Type of upwinding scheme. Va
                                                   | * IHU                                                           
 usePEDFM            integer              0        (no description available)                                      
 =================== ==================== ======== =============================================================== 
-
-

@@ -67,7 +67,10 @@ CompositionalMultiphaseBase::CompositionalMultiphaseBase( const string & name,
   m_hasDispersion( 0 ),
   m_keepFlowVariablesConstantDuringInitStep( 0 ),
   m_minScalingFactor( 0.01 ),
-  m_allowCompDensChopping( 1 )
+  m_allowCompDensChopping( 1 ),
+  m_useTotalMassEquation( 1 ),
+  m_useSimpleAccumulation( 0 ),
+  m_minCompDens( isothermalCompositionalMultiphaseBaseKernels::minDensForDivision )
 {
 //START_SPHINX_INCLUDE_00
   this->registerWrapper( viewKeyStruct::inputTemperatureString(), &m_inputTemperature ).
@@ -109,18 +112,36 @@ CompositionalMultiphaseBase::CompositionalMultiphaseBase( const string & name,
     setSizedFromParent( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( 0.5 ).
-    setDescription( "Maximum (relative) change in pressure in a Newton iteration (expected value between 0 and 1)" );
+    setDescription( "Maximum (relative) change in pressure in a Newton iteration" );
   this->registerWrapper( viewKeyStruct::maxRelativeTempChangeString(), &m_maxRelativeTempChange ).
     setSizedFromParent( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( 0.5 ).
-    setDescription( "Maximum (relative) change in temperature in a Newton iteration (expected value between 0 and 1)" );
+    setDescription( "Maximum (relative) change in temperature in a Newton iteration" );
 
   this->registerWrapper( viewKeyStruct::allowLocalCompDensChoppingString(), &m_allowCompDensChopping ).
     setSizedFromParent( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( 1 ).
     setDescription( "Flag indicating whether local (cell-wise) chopping of negative compositions is allowed" );
+
+  this->registerWrapper( viewKeyStruct::useTotalMassEquationString(), &m_useTotalMassEquation ).
+    setSizedFromParent( 0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( 1 ).
+    setDescription( "Flag indicating whether total mass equation is used" );
+
+  this->registerWrapper( viewKeyStruct::useSimpleAccumulationString(), &m_useSimpleAccumulation ).
+    setSizedFromParent( 0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( 0 ).
+    setDescription( "Flag indicating whether simple accumulation form is used" );
+
+  this->registerWrapper( viewKeyStruct::minCompDensString(), &m_minCompDens ).
+    setSizedFromParent( 0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( isothermalCompositionalMultiphaseBaseKernels::minDensForDivision ).
+    setDescription( "Minimum allowed global component density" );
 
 }
 
@@ -134,19 +155,12 @@ void CompositionalMultiphaseBase::postProcessInput()
   GEOS_ERROR_IF_LE_MSG( m_maxCompFracChange, 0.0,
                         getWrapperDataContext( viewKeyStruct::maxCompFracChangeString() ) <<
                         ": The maximum absolute change in component fraction in a Newton iteration must be larger than 0.0" );
-  GEOS_ERROR_IF_GT_MSG( m_maxRelativePresChange, 1.0,
-                        getWrapperDataContext( viewKeyStruct::maxRelativePresChangeString() ) <<
-                        ": The maximum relative change in pressure in a Newton iteration must be smaller or equal to 1.0 (i.e., 100 percent change)" );
   GEOS_ERROR_IF_LE_MSG( m_maxRelativePresChange, 0.0,
                         getWrapperDataContext( viewKeyStruct::maxRelativePresChangeString() ) <<
                         ": The maximum relative change in pressure in a Newton iteration must be larger than 0.0" );
-  GEOS_ERROR_IF_GT_MSG( m_maxRelativeTempChange, 1.0,
-                        getWrapperDataContext( viewKeyStruct::maxRelativeTempChangeString() ) <<
-                        ": The maximum relative change in temperature in a Newton iteration must be smaller or equal to 1.0 (i.e., 100 percent change)" );
   GEOS_ERROR_IF_LE_MSG( m_maxRelativeTempChange, 0.0,
                         getWrapperDataContext( viewKeyStruct::maxRelativeTempChangeString() ) <<
                         ": The maximum relative change in temperature in a Newton iteration must be larger than 0.0" );
-
   GEOS_ERROR_IF_LE_MSG( m_targetRelativePresChange, 0.0,
                         getWrapperDataContext( viewKeyStruct::targetRelativePresChangeString() ) <<
                         ": The target relative change in pressure in a time step must be larger than 0.0" );
@@ -222,6 +236,7 @@ void CompositionalMultiphaseBase::registerDataOnMesh( Group & meshBodies )
     m_numPhases = referenceFluid.numFluidPhases();
     m_numComponents = referenceFluid.numFluidComponents();
   }
+
   // n_c components + one pressure ( + one temperature if needed )
   m_numDofPerCell = m_isThermal ? m_numComponents + 2 : m_numComponents + 1;
 
@@ -525,11 +540,11 @@ void CompositionalMultiphaseBase::validateConstitutiveModels( DomainPartition co
       {
         bool const isFluidModelThermal = castedFluid.isThermal();
         GEOS_THROW_IF( m_isThermal && !isFluidModelThermal,
-                       GEOS_FMT( "CompositionalMultiphaseBase {}: the thermal option is enabled in the solver, but the fluid model `{}` is incompatible with the thermal option",
+                       GEOS_FMT( "CompositionalMultiphaseBase {}: the thermal option is enabled in the solver, but the fluid model {} is incompatible with the thermal option",
                                  getDataContext(), fluid.getDataContext() ),
                        InputError );
         GEOS_THROW_IF( !m_isThermal && isFluidModelThermal,
-                       GEOS_FMT( "CompositionalMultiphaseBase {}: the thermal option is enabled in fluid model `{}`, but the solver options are incompatible with the thermal option",
+                       GEOS_FMT( "CompositionalMultiphaseBase {}: the thermal option is enabled in fluid model {}, but the solver options are incompatible with the thermal option",
                                  getDataContext(), fluid.getDataContext() ),
                        InputError );
       } );
@@ -915,7 +930,7 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium()
 
     // check that the gravity vector is aligned with the z-axis
     GEOS_THROW_IF( !isZero( gravVector[0] ) || !isZero( gravVector[1] ),
-                   catalogName() << " " << getDataContext() <<
+                   getCatalogName() << " " << getDataContext() <<
                    ": the gravity vector specified in this simulation (" << gravVector[0] << " " << gravVector[1] << " " << gravVector[2] <<
                    ") is not aligned with the z-axis. \n"
                    "This is incompatible with the " << EquilibriumInitialCondition::catalogName() << " " << bc.getDataContext() <<
@@ -979,7 +994,7 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium()
 
       real64 const eps = 0.1 * (maxElevation - minElevation); // we add a small buffer to only log in the pathological cases
       GEOS_LOG_RANK_0_IF( ( (datumElevation > globalMaxElevation[equilIndex]+eps)  || (datumElevation < globalMinElevation[equilIndex]-eps) ),
-                          CompositionalMultiphaseBase::catalogName() << " " << getDataContext() <<
+                          getCatalogName() << " " << getDataContext() <<
                           ": By looking at the elevation of the cell centers in this model, GEOS found that " <<
                           "the min elevation is " << globalMinElevation[equilIndex] << " and the max elevation is " <<
                           globalMaxElevation[equilIndex] << "\nBut, a datum elevation of " << datumElevation <<
@@ -1038,7 +1053,7 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium()
       arrayView1d< string const > phaseNames = fluid.phaseNames();
       auto const itPhaseNames = std::find( std::begin( phaseNames ), std::end( phaseNames ), initPhaseName );
       GEOS_THROW_IF( itPhaseNames == std::end( phaseNames ),
-                     CompositionalMultiphaseBase::catalogName() << " " << getDataContext() << ": phase name " <<
+                     getCatalogName() << " " << getDataContext() << ": phase name " <<
                      initPhaseName << " not found in the phases of " << fluid.getDataContext(),
                      InputError );
       integer const ipInit = std::distance( std::begin( phaseNames ), itPhaseNames );
@@ -1072,14 +1087,14 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium()
                                                pressureValues.toView() );
 
         GEOS_THROW_IF( returnValue ==  isothermalCompositionalMultiphaseBaseKernels::HydrostaticPressureKernel::ReturnType::FAILED_TO_CONVERGE,
-                       CompositionalMultiphaseBase::catalogName() << " " << getDataContext() <<
+                       getCatalogName() << " " << getDataContext() <<
                        ": hydrostatic pressure initialization failed to converge in region " << region.getName() << "! \n" <<
                        "Try to loosen the equilibration tolerance, or increase the number of equilibration iterations. \n" <<
                        "If nothing works, something may be wrong in the fluid model, see <Constitutive> ",
                        std::runtime_error );
 
         GEOS_LOG_RANK_0_IF( returnValue == isothermalCompositionalMultiphaseBaseKernels::HydrostaticPressureKernel::ReturnType::DETECTED_MULTIPHASE_FLOW,
-                            CompositionalMultiphaseBase::catalogName() << " " << getDataContext() <<
+                            getCatalogName() << " " << getDataContext() <<
                             ": currently, GEOS assumes that there is only one mobile phase when computing the hydrostatic pressure. \n" <<
                             "We detected multiple phases using the provided datum pressure, temperature, and component fractions. \n" <<
                             "Please make sure that only one phase is mobile at the beginning of the simulation. \n" <<
@@ -1091,8 +1106,8 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium()
 
       string const tableName = fs.getName() + "_" + subRegion.getName() + "_" + phaseNames[ipInit] + "_table";
       TableFunction * const presTable = dynamicCast< TableFunction * >( functionManager.createChild( TableFunction::catalogName(), tableName ) );
-      presTable->setTableCoordinates( elevationValues );
-      presTable->setTableValues( pressureValues );
+      presTable->setTableCoordinates( elevationValues, { units::Distance } );
+      presTable->setTableValues( pressureValues, units::Pressure );
       presTable->setInterpolationMethod( TableFunction::InterpolationType::Linear );
       TableFunction::KernelWrapper presTableWrapper = presTable->createKernelWrapper();
 
@@ -1300,6 +1315,8 @@ void CompositionalMultiphaseBase::assembleAccumulationAndVolumeBalanceTerms( Dom
           createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
                                                      m_numPhases,
                                                      dofManager.rankOffset(),
+                                                     m_useTotalMassEquation,
+                                                     m_useSimpleAccumulation,
                                                      dofKey,
                                                      subRegion,
                                                      fluid,
@@ -1314,6 +1331,8 @@ void CompositionalMultiphaseBase::assembleAccumulationAndVolumeBalanceTerms( Dom
           createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
                                                      m_numPhases,
                                                      dofManager.rankOffset(),
+                                                     m_useTotalMassEquation,
+                                                     m_useSimpleAccumulation,
                                                      dofKey,
                                                      subRegion,
                                                      fluid,
@@ -1469,12 +1488,14 @@ void CompositionalMultiphaseBase::applySourceFluxBC( real64 const time,
 
       integer const fluidComponentId = fs.getComponent();
       integer const numFluidComponents = m_numComponents;
+      integer const useTotalMassEquation = m_useTotalMassEquation;
       forAll< parallelDevicePolicy<> >( targetSet.size(), [sizeScalingFactor,
                                                            targetSet,
                                                            rankOffset,
                                                            ghostRank,
                                                            fluidComponentId,
                                                            numFluidComponents,
+                                                           useTotalMassEquation,
                                                            dofNumber,
                                                            rhsContributionArrayView,
                                                            localRhs] GEOS_HOST_DEVICE ( localIndex const a )
@@ -1486,15 +1507,23 @@ void CompositionalMultiphaseBase::applySourceFluxBC( real64 const time,
           return;
         }
 
-        // for all "fluid components", we add the value to the total mass balance equation
-        globalIndex const totalMassBalanceRow = dofNumber[ei] - rankOffset;
-        localRhs[totalMassBalanceRow] += rhsContributionArrayView[a] / sizeScalingFactor; // scale the contribution by the sizeScalingFactor
-                                                                                          // here
-
-        // for all "fluid components" except the last one, we add the value to the component mass balance equation (shifted appropriately)
-        if( fluidComponentId < numFluidComponents - 1 )
+        if( useTotalMassEquation > 0 )
         {
-          globalIndex const compMassBalanceRow = totalMassBalanceRow + fluidComponentId + 1; // component mass bal equations are shifted
+          // for all "fluid components", we add the value to the total mass balance equation
+          globalIndex const totalMassBalanceRow = dofNumber[ei] - rankOffset;
+          localRhs[totalMassBalanceRow] += rhsContributionArrayView[a] / sizeScalingFactor; // scale the contribution by the
+                                                                                            // sizeScalingFactor
+                                                                                            // here
+          if( fluidComponentId < numFluidComponents - 1 )
+          {
+            globalIndex const compMassBalanceRow = totalMassBalanceRow + fluidComponentId + 1; // component mass bal equations are shifted
+            localRhs[compMassBalanceRow] += rhsContributionArrayView[a] / sizeScalingFactor; // scale the contribution by the
+                                                                                             // sizeScalingFactor here
+          }
+        }
+        else
+        {
+          globalIndex const compMassBalanceRow = dofNumber[ei] - rankOffset + fluidComponentId;
           localRhs[compMassBalanceRow] += rhsContributionArrayView[a] / sizeScalingFactor; // scale the contribution by the
                                                                                            // sizeScalingFactor here
         }
@@ -1919,9 +1948,9 @@ void CompositionalMultiphaseBase::chopNegativeDensities( DomainPartition & domai
         {
           for( integer ic = 0; ic < numComp; ++ic )
           {
-            if( compDens[ei][ic] < minDensForDivision )
+            if( compDens[ei][ic] < m_minCompDens )
             {
-              compDens[ei][ic] = minDensForDivision;
+              compDens[ei][ic] = m_minCompDens;
             }
           }
         }
@@ -1993,15 +2022,15 @@ real64 CompositionalMultiphaseBase::setNextDtBasedOnStateChange( real64 const & 
   maxAbsolutePhaseVolFracChange = MpiWrapper::max( maxAbsolutePhaseVolFracChange );
 
   GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "{}: Max relative pressure change during time step: {} %",
-                                      getName(), fmt::format( "{:.{}f}", 100*maxRelativePresChange, 3 ) ) );
+                                      getName(), GEOS_FMT( "{:.{}f}", 100*maxRelativePresChange, 3 ) ) );
   GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "{}: Max absolute phase volume fraction change during time step: {}",
-                                      getName(), fmt::format( "{:.{}f}", maxAbsolutePhaseVolFracChange, 3 ) ) );
+                                      getName(), GEOS_FMT( "{:.{}f}", maxAbsolutePhaseVolFracChange, 3 ) ) );
 
   if( m_isThermal )
   {
     maxRelativeTempChange = MpiWrapper::max( maxRelativeTempChange );
     GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "{}: Max relative temperature change during time step: {} %",
-                                        getName(), fmt::format( "{:.{}f}", 100*maxRelativeTempChange, 3 ) ) );
+                                        getName(), GEOS_FMT( "{:.{}f}", 100*maxRelativeTempChange, 3 ) ) );
   }
 
   real64 const eps = LvArray::NumericLimits< real64 >::epsilon;
@@ -2191,6 +2220,7 @@ void CompositionalMultiphaseBase::saveIterationState( ElementSubRegionBase & sub
 
 void CompositionalMultiphaseBase::updateState( DomainPartition & domain )
 {
+  real64 maxDeltaPhaseVolFrac = 0.0;
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel & mesh,
                                                                arrayView1d< string const > const & regionNames )
@@ -2202,7 +2232,8 @@ void CompositionalMultiphaseBase::updateState( DomainPartition & domain )
       // update porosity, permeability, and solid internal energy
       updatePorosityAndPermeability( subRegion );
       // update all fluid properties
-      updateFluidState( subRegion );
+      real64 const deltaPhaseVolFrac = updateFluidState( subRegion );
+      maxDeltaPhaseVolFrac = LvArray::math::max( maxDeltaPhaseVolFrac, deltaPhaseVolFrac );
       // for thermal, update solid internal energy
       if( m_isThermal )
       {
@@ -2210,6 +2241,8 @@ void CompositionalMultiphaseBase::updateState( DomainPartition & domain )
       }
     } );
   } );
+
+  GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "        {}: Max phase volume fraction change = {}", getName(), maxDeltaPhaseVolFrac ) );
 }
 
 } // namespace geos
