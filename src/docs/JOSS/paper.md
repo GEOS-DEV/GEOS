@@ -42,7 +42,7 @@ authors:
     affiliation: 2
   - name: Andrea Borio
     affiliation: 4
-  - Jian Huang
+  - name: Jian Huang
     affiliation: 2
 affiliations:
  - name: Lawrence Livermore National Laboratory, USA
@@ -61,7 +61,7 @@ bibliography: paper.bib
 
 GEOS is an open-source simulation framework focused on implementing tightly-coupled multi-physics problems with an emphasis subsurface reservoir applications.
 The C++ infrastructure of GEOS provides facilities to assist in the implementation of constraint equations such as a discrete mesh data structure, MPI communications tools, degree-of-freedom management, IO facilities, etc.
-The performance portability strategy applies LLNL's suite of portablity tools RAJA[@Beckingsale:2019], CHAI[@CHAI:2023], and Umpire[@Beckingsale:2020]
+The performance portability strategy applies LLNL's suite of portablity tools RAJA[@Beckingsale:2019], CHAI[@CHAI:2023], and Umpire[@Beckingsale:2020].
 
 The Python interface of GEOS allows for the integration of the 
 
