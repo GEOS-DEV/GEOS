@@ -167,7 +167,7 @@ static constexpr double YearSeconds = YearDays * DaySeconds;
  * @brief Stores information that is useful to duration strings. Based on the geos::units time constants
  */
 struct TimeFormatInfo
-{ 
+{
   /// Total time (including the decimal part) this instance represents in seconds
   double m_totalSeconds = 0.0;
   /// Number of integral years to show
