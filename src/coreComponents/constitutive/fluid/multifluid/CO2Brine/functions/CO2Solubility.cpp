@@ -20,7 +20,6 @@
 
 #include "constitutive/fluid/multifluid/CO2Brine/functions/CO2EOSSolver.hpp"
 #include "constitutive/fluid/multifluid/CO2Brine/functions/PVTFunctionHelpers.hpp"
-#include "constitutive/fluid/multifluid/MultiFluidConstants.hpp"
 
 #include "functions/FunctionManager.hpp"
 #include "common/Units.hpp"
@@ -42,7 +41,7 @@ namespace
 constexpr real64 P_Pa_f = 1e+5;
 constexpr real64 P_c    = 73.773 * P_Pa_f;
 constexpr real64 T_c    = 304.1282;
-constexpr real64 Rgas   = MultiFluidConstants::gasConstant;
+constexpr real64 Rgas   = constants::gasConstant;
 constexpr real64 V_c    = Rgas*T_c/P_c;
 
 // these coefficients are in Table (A1) of Duan and Sun (2003)

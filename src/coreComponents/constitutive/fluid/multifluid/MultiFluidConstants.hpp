@@ -20,6 +20,7 @@
 #define GEOS_CONSTITUTIVE_FLUID_MULTIFLUID_MULTIFLUIDCONSTANTS_HPP_
 
 #include "LvArray/src/Macros.hpp"
+#include "common/PhysicsConstants.hpp"
 
 namespace geos
 {
@@ -39,16 +40,6 @@ struct MultiFluidConstants
    * @note This puts an upper bound on memory use, allowing to optimize code better
    */
   static constexpr integer MAX_NUM_PHASES = 4;
-
-  /**
-   * @brief Shorthand for pi
-   */
-  static constexpr real64 pi = 3.141592653589793238;
-
-  /**
-   * @brief Universal gas constant
-   */
-  static constexpr real64 gasConstant = 8.31446261815324;
 
   /**
    * @brief Epsilon used in the calculations to check against zero
