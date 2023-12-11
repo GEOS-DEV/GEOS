@@ -33,12 +33,14 @@ namespace units
  * @return the input Kelvin degrees converted in Celsius
  * @param kelvin degrees input
  */
+GEOS_HOST_DEVICE
 inline constexpr double convertKToC( double kelvin )
 { return kelvin - constants::zeroDegreesCelsiusInKelvin; }
 /**
  * @return the input Celsius degrees converted in Kelvin
  * @param celsius degrees input
  */
+GEOS_HOST_DEVICE
 inline constexpr double convertCToK( double celsius )
 { return celsius + constants::zeroDegreesCelsiusInKelvin; }
 
