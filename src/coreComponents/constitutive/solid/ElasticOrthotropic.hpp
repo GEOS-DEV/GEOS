@@ -158,7 +158,7 @@ public:
   GEOS_HOST_DEVICE
   virtual real64 getShearModulus( localIndex const k ) const override final
   {
-    return std::max( std::max( m_c44[k], m_c55[k] ), m_c66[k] );
+    return LvArray::math::max( LvArray::math::max( m_c44[k], m_c55[k] ), m_c66[k] );
   }
 
 private:
