@@ -34,7 +34,7 @@ string getCppCompilerIdString()
   #if defined(__clang__)
   oss<<"clang " <<__clang_major__<<"."<<__clang_minor__<<"."<<__clang_patchlevel__;
 #if defined(__apple_build_version__)
-  oss<<" ( apple version " <<__apple_build_version__<<" )";
+  oss<<" ( Apple version " <<__apple_build_version__<<" )";
 #endif
 #if defined(__ibmxl_vrm__)
   oss<<"IBMXL "
@@ -57,7 +57,13 @@ string getGpuCompilerIdString()
   std::ostringstream oss;
 
 #if defined( GEOS_USE_CUDA )
-  oss<<"  - cuda compiler version: " <<CUDA_VERSION/1000<<"."<<CUDA_VERSION/10%100;
+  oss<<"  - CUDA compiler version: " <<CUDA_VERSION/1000<<"."<<CUDA_VERSION/10%100;
+
+#elif defined( GEOS_USE_HIP )
+  oss<<"  - HIP compiler version: "
+     <<HIP_VERSION_MAJOR<<"."
+     <<HIP_VERSION_MINOR<<"."
+     <<HIP_VERSION_PATCH;
 #endif
   return oss.str();
 }
@@ -65,16 +71,16 @@ string getGpuCompilerIdString()
 void outputVersionInfo()
 {
 
-  GEOS_LOG_RANK_0( "GEOSX version: " << getVersion() );
+  GEOS_LOG_RANK_0( "GEOS version: " << getVersion() );
 
-  GEOS_LOG_RANK_0( "  - c++ compiler: "<<getCppCompilerIdString() );
+  GEOS_LOG_RANK_0( "  - C++ compiler: "<<getCppCompilerIdString() );
 
   string const gpuCompilerIdString = getGpuCompilerIdString();
   GEOS_LOG_RANK_0_IF( !gpuCompilerIdString.empty(), gpuCompilerIdString );
 
 
 #if defined(_OPENMP)
-  GEOS_LOG_RANK_0( "  - openmp version: "<<_OPENMP );
+  GEOS_LOG_RANK_0( "  - OpenMP version: "<<_OPENMP );
 #endif
 
 #if defined(GEOSX_USE_MPI)
@@ -102,18 +108,18 @@ void outputVersionInfo()
   GEOS_LOG_RANK_0( "  - RAJA version: " << STRINGIZE( RAJA_VERSION ) );
 #endif
 #if defined(umpire_VERSION)
-  GEOS_LOG_RANK_0( "  - umpire version: " << STRINGIZE( umpire_VERSION ) );
+  GEOS_LOG_RANK_0( "  - Umpire version: " << STRINGIZE( umpire_VERSION ) );
 #endif
 #if defined(chai_VERSION)
-  GEOS_LOG_RANK_0( "  - chai version: " << STRINGIZE( chai_VERSION ) );
+  GEOS_LOG_RANK_0( "  - CHAI version: " << STRINGIZE( chai_VERSION ) );
 #endif
 
 #if defined(adiak_VERSION)
-  GEOS_LOG_RANK_0( "  -  adiak version: " << STRINGIZE( adiak_VERSION ) );
+  GEOS_LOG_RANK_0( "  - Adiak version: " << STRINGIZE( adiak_VERSION ) );
 #endif
 
 #if defined(caliper_VERSION)
-  GEOS_LOG_RANK_0( "  - caliper version: " << STRINGIZE( caliper_VERSION ) );
+  GEOS_LOG_RANK_0( "  - Caliper version: " << STRINGIZE( caliper_VERSION ) );
 #endif
 
 #if defined(METIS_VERSION)
@@ -121,19 +127,19 @@ void outputVersionInfo()
 #endif
 
 #if defined(PARAMETIS_VERSION)
-  GEOS_LOG_RANK_0( "  - PARAMETIS version: " << STRINGIZE( PARAMETIS_VERSION ) );
+  GEOS_LOG_RANK_0( "  - PARMETIS version: " << STRINGIZE( PARAMETIS_VERSION ) );
 #endif
 
 #if defined(scotch_VERSION)
-  GEOS_LOG_RANK_0( "  - scotch version: " << STRINGIZE( scotch_VERSION ) );
+  GEOS_LOG_RANK_0( "  - Scotch version: " << STRINGIZE( scotch_VERSION ) );
 #endif
 
 #if defined(superlu_dist_VERSION)
-  GEOS_LOG_RANK_0( "  - superlu_dist version: " << STRINGIZE( superlu_dist_VERSION ) );
+  GEOS_LOG_RANK_0( "  - SuperLU_Dist version: " << STRINGIZE( superlu_dist_VERSION ) );
 #endif
 
 #if defined(suitesparse_VERSION)
-  GEOS_LOG_RANK_0( "  - suitesparse version: " << STRINGIZE( suitesparse_VERSION ) );
+  GEOS_LOG_RANK_0( "  - SuiteSparse version: " << STRINGIZE( suitesparse_VERSION ) );
 #endif
 
 #if defined(Python3_VERSION)
