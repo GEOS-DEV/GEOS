@@ -35,10 +35,10 @@ NewComponent::~NewComponent()
 
 
 
-real64 NewComponent::SolverStep( real64 const & /*time_n*/,
+real64 NewComponent::solverStep( real64 const & /*time_n*/,
                real64 const & /*dt*/,
                integer const /*cycleNumber*/,
-               DomainPartition * /*domain*/ )
+               DomainPartition & /*domain*/ )
 {
   return 0;
 }
