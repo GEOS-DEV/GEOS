@@ -304,15 +304,14 @@ struct WaveSolverUtils
                                         arrayView2d< wsCoordType const, nodes::REFERENCE_POSITION_USD > const nodeCoords,
                                         real64 (& coordsOnRefElem)[3] )
   {
-    real64 xLocal[FE_TYPE::numNodes][3]{};
-    real64 xLocalMesh[8][3]{};
-    for( localIndex a = 0; a < FE_TYPE::numNodes; ++a )
+    real64 xLocal[8][3]{};
+    for( localIndex a = 0; a < 8; ++a )
     {
-      LvArray::tensorOps::copy< 3 >( xLocalMesh[a], nodeCoords[ elemsToNodes[ FE_TYPE::meshIndexToLinearIndex3D( a )] ] );
+      LvArray::tensorOps::copy< 3 >( xLocal[a], nodeCoords[ elemsToNodes[ FE_TYPE::meshIndexToLinearIndex3D( a )] ] );
     }
     // coordsOnRefElem = invJ*(coords-coordsNode_0)
     real64 invJ[3][3]{};
-    FE_TYPE::invJacobianTransformation( 0, xLocalMesh, invJ );
+    FE_TYPE::invJacobianTransformation( 0, xLocal, invJ );
     for( localIndex i = 0; i < 3; ++i )
     {
       // init at (-1,-1,-1) as the origin of the referential elem

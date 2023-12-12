@@ -73,7 +73,7 @@ public:
   GEOS_FORCE_INLINE	
   constexpr static localIndex meshIndexToLinearIndex3D( localIndex const k )	
   {	
-    return linearIndex3DVal( ( num1dNodes - 1 ) * ( ( k % 4 ) % 2 ), 	
+    return linearIndex3DVal( ( num1dNodes - 1 ) * ( k % 2 ), 	
                              ( num1dNodes - 1 ) * ( ( k % 4 ) / 2 ), 	
                              ( num1dNodes - 1 ) * ( k / 4 ) ); 	
   }
@@ -623,8 +623,8 @@ public:
   GEOS_HOST_DEVICE
   static void
   computeGradPhiBGradPhi( int const qa, 
-		          int const qb, 
-			  int const qc,  
+		                    int const qb, 
+			                 int const qc,  
                           real64 const (&B)[6],
                           FUNC && func );
 
@@ -1061,7 +1061,7 @@ computeBMatrix( int const qa,
 {
   jacobianTransformation( qa, qb, qc, X, J );
   real64 const detJ = LvArray::tensorOps::determinant< 3 >( J );
-
+ 
   // compute J^T.J/det(J), using Voigt notation for B
   B[0] = (J[0][0]*J[0][0]+J[1][0]*J[1][0]+J[2][0]*J[2][0])/detJ;
   B[1] = (J[0][1]*J[0][1]+J[1][1]*J[1][1]+J[2][1]*J[2][1])/detJ;

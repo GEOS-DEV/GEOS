@@ -227,9 +227,10 @@ struct MassMatrixKernel
       real64 xLocal[ 8 ][ 3 ];
       for( localIndex a = 0; a < 8; ++a )
       {
+        localIndex const nodeIndex = elemsToNodes( k, FE_TYPE::meshIndexToLinearIndex3D( a ) );
         for( localIndex i = 0; i < 3; ++i )
         {
-          xLocal[a][i] = nodeCoords( elemsToNodes( k, FE_TYPE::meshIndexToLinearIndex3D( a ) ), i );
+          xLocal[a][i] = nodeCoords( nodeIndex, i );
         }
       }
 
@@ -295,9 +296,10 @@ struct DampingMatrixKernel
           real64 xLocal[ 4 ][ 3 ];
           for( localIndex a = 0; a < 4; ++a )
           {
+            localIndex const nodeIndex = facesToNodes( f, FE_TYPE::meshIndexToLinearIndex2D( a ) );
             for( localIndex d = 0; d < 3; ++d )
             {
-              xLocal[a][d] = nodeCoords( facesToNodes( f, FE_TYPE::meshIndexToLinearIndex2D( a ) ), d );
+              xLocal[a][d] = nodeCoords( nodeIndex, d );
             }
           }
 
@@ -368,20 +370,13 @@ struct StressComputation
     {
       constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
       constexpr localIndex numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
-      real64 xLocal[numNodesPerElem][3];
-      real64 xLocalMesh[8][3];
-      for( localIndex a=0; a< numNodesPerElem; ++a )
-      {
-        for( localIndex i=0; i<3; ++i )
-        {
-          xLocal[a][i] = nodeCoords( elemsToNodes( k, a ), i );
-        }
-      }
+      real64 xLocal[8][3];
       for( localIndex a=0; a< 8; ++a )
       {
+        localIndex const nodeIndex = elemsToNodes( k, FE_TYPE::meshIndexToLinearIndex3D( a ) );
         for( localIndex i=0; i<3; ++i )
         {
-          xLocalMesh[a][i] = nodeCoords( elemsToNodes( k, FE_TYPE::meshIndexToLinearIndex3D( a ) ), i );
+          xLocal[a][i] = nodeCoords( nodeIndex, i );
         }
       }
 
@@ -405,7 +400,7 @@ struct StressComputation
       //Pre-multiplication by mass matrix
       for( localIndex i = 0; i < numNodesPerElem; ++i )
       {
-        real32 massLoc = m_finiteElement.computeMassTerm( i, xLocalMesh );
+        real32 massLoc = m_finiteElement.computeMassTerm( i, xLocal );
         uelemxx[i] = massLoc*stressxx[k][i];
         uelemyy[i] = massLoc*stressyy[k][i];
         uelemzz[i] = massLoc*stresszz[k][i];
@@ -418,7 +413,7 @@ struct StressComputation
       {
 
         //Volume integral
-        m_finiteElement.template computeFirstOrderStiffnessTermX( q, xLocalMesh, [&] ( int i, int j, real32 dfx1, real32 dfx2, real32 dfx3 )
+        m_finiteElement.template computeFirstOrderStiffnessTermX( q, xLocal, [&] ( int i, int j, real32 dfx1, real32 dfx2, real32 dfx3 )
         {
           auxx[j]+= dfx1*ux_np1[elemsToNodes[k][i]];
           auyy[j]+= dfx2*uy_np1[elemsToNodes[k][i]];
@@ -429,7 +424,7 @@ struct StressComputation
 
         } );
 
-        m_finiteElement.template computeFirstOrderStiffnessTermY( q, xLocalMesh, [&] ( int i, int j, real32 dfy1, real32 dfy2, real32 dfy3 )
+        m_finiteElement.template computeFirstOrderStiffnessTermY( q, xLocal, [&] ( int i, int j, real32 dfy1, real32 dfy2, real32 dfy3 )
         {
           auxx[j]+= dfy1*ux_np1[elemsToNodes[k][i]];
           auyy[j]+= dfy2*uy_np1[elemsToNodes[k][i]];
@@ -440,7 +435,7 @@ struct StressComputation
 
         } );
 
-        m_finiteElement.template computeFirstOrderStiffnessTermZ( q, xLocalMesh, [&] ( int i, int j, real32 dfz1, real32 dfz2, real32 dfz3 )
+        m_finiteElement.template computeFirstOrderStiffnessTermZ( q, xLocal, [&] ( int i, int j, real32 dfz1, real32 dfz2, real32 dfz3 )
         {
           auxx[j]+= dfz1*ux_np1[elemsToNodes[k][i]];
           auyy[j]+= dfz2*uy_np1[elemsToNodes[k][i]];
@@ -467,7 +462,7 @@ struct StressComputation
       // Multiplication by inverse mass matrix
       for( localIndex i = 0; i < numNodesPerElem; ++i )
       {
-        real32 massLoc = m_finiteElement.computeMassTerm( i, xLocalMesh );
+        real32 massLoc = m_finiteElement.computeMassTerm( i, xLocal );
         stressxx[k][i] = uelemxx[i]/massLoc;
         stressyy[k][i] = uelemyy[i]/massLoc;
         stresszz[k][i] = uelemzz[i]/massLoc;
@@ -486,7 +481,7 @@ struct StressComputation
           {
             for( localIndex i = 0; i < numNodesPerElem; ++i )
             {
-              real32 massLoc = m_finiteElement.computeMassTerm( i, xLocalMesh );
+              real32 massLoc = m_finiteElement.computeMassTerm( i, xLocal );
               real32 const localIncrement = dt*(sourceConstants[isrc][i]*sourceValue[cycleNumber][isrc])/massLoc;
               RAJA::atomicAdd< ATOMIC_POLICY >( &stressxx[k][i], localIncrement );
               RAJA::atomicAdd< ATOMIC_POLICY >( &stressyy[k][i], localIncrement );
@@ -556,10 +551,10 @@ struct VelocityComputation
       real64 xLocal[8][3];
       for( localIndex a=0; a< 8; ++a )
       {
-        localIndex const nodeIndex = FE_TYPE::meshIndexToLinearIndex3D( a );
+        localIndex const nodeIndex = elemsToNodes( k, FE_TYPE::meshIndexToLinearIndex3D( a ) );
         for( localIndex i=0; i<3; ++i )
         {
-          xLocal[a][i] = nodeCoords( elemsToNodes( k, nodeIndex ), i );
+          xLocal[a][i] = nodeCoords( nodeIndex, i );
         }
       }
 
