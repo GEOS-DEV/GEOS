@@ -100,6 +100,10 @@ constexpr inline std::string_view getDescription( Unit unit )
     case TemperatureInC:  return "temperature [C]";
     case Distance:        return "distance [m]";
     case Time:            return "time [s]";
+    case Viscosity:       return "viscosity [Pa*s]";
+    case Enthalpy:        return "enthalpy [J/kg]";
+    case Density:         return "density [kg/m3]";
+    case Solubility:      return "solubility [g/L]";
   }
 }
 
