@@ -312,20 +312,20 @@ public:
    */
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
-  constexpr static real64 jacobianTerm( const int q );
+  constexpr static real64 jacobianTerm( const int q )
   {
     switch( q )
     {
       case 0:
-	return -3.5
+	     return -3.5;
       case 1:
-	return 3.7360679774997896964;
+	     return 3.7360679774997896964;
       case 2:
-	return -0.73606797749978969641; 
+	     return -0.73606797749978969641; 
       case 3: 
-	return 0.5;
+	     return 0.5;
       default:
-	return 0.0;
+	     return 0.0;
     }
   }
 

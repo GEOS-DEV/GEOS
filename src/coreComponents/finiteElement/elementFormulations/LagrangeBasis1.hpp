@@ -178,7 +178,7 @@ public:
    */
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
-  constexpr static real64 jacobianTerm( const int q );
+  constexpr static real64 jacobianTerm( const int q )
   {
     return q == 0 ? -1.0/2.0 : 1.0/2.0; 
   }

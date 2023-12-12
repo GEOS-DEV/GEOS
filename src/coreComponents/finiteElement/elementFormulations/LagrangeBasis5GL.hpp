@@ -520,7 +520,7 @@ public:
    */
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
-  constexpr static real64 jacobianTerm( const int q );
+  constexpr static real64 jacobianTerm( const int q )
   {
     switch( q )
     {

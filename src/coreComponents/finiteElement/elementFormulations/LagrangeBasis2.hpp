@@ -225,7 +225,7 @@ public:
       case 0:
 	return p == 0 ? -3.0/2.0 : -1.0/2.0; 
       case 1:
-	return p == 0 ? 2.0 : 0.0 
+	return p == 0 ? 2.0 : 0.0; 
       case 2:
 	return p == 0 ? -1.0/2.0 : 1.0/2.0; 
       default:
@@ -243,14 +243,14 @@ public:
    */
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
-  constexpr static real64 jacobianTerm( const int q );
+  constexpr static real64 jacobianTerm( const int q )
   {
     switch( q )
     {
       case 0:
 	return -7.0/4.0;
       case 1:
-	return 2.0 
+	return 2.0; 
       case 2:
 	return -1.0/4.0;
       default:
