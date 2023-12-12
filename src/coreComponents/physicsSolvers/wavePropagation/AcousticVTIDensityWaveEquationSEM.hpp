@@ -39,6 +39,12 @@ public:
                                      Group * const parent );
 
   static string catalogName() { return "AcousticVTIDensitySEM"; }
+  
+  /**
+  * @copydoc SolverBase::getCatalogName()
+  */
+  string getCatalogName() const override { return catalogName(); }
+
 
   virtual void initializePreSubGroups() override;
 
