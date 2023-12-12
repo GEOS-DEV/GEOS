@@ -53,6 +53,14 @@ void HypreInterface::initialize()
 #endif
   HYPRE_SetMemoryLocation( hypre::memoryLocation );
 
+#if defined(HYPRE_USING_UMPIRE)
+   /* Setup Umpire pools */
+   HYPRE_SetUmpireDevicePoolName("HYPRE_DEVICE");
+   HYPRE_SetUmpireUMPoolName("HYPRE_UM");
+   HYPRE_SetUmpireHostPoolName("HYPRE_HOST");
+   HYPRE_SetUmpirePinnedPoolName("HYPRE_PINNED");
+#endif
+
   // Hypre version info
 #if defined(HYPRE_DEVELOP_STRING)
 #if defined(HYPRE_BRANCH_NAME)
