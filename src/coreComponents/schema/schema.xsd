@@ -529,6 +529,10 @@
 					<xsd:selector xpath="BrooksCoreyRelativePermeability" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
+				<xsd:unique name="domainConstitutiveBrooksCoreyStone2RelativePermeabilityUniqueName">
+					<xsd:selector xpath="BrooksCoreyStone2RelativePermeability" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
 				<xsd:unique name="domainConstitutiveCO2BrineEzrokhiFluidUniqueName">
 					<xsd:selector xpath="CO2BrineEzrokhiFluid" />
 					<xsd:field xpath="@name" />
@@ -787,6 +791,10 @@
 				</xsd:unique>
 				<xsd:unique name="domainConstitutiveVanGenuchtenCapillaryPressureUniqueName">
 					<xsd:selector xpath="VanGenuchtenCapillaryPressure" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
+				<xsd:unique name="domainConstitutiveVanGenuchtenStone2RelativePermeabilityUniqueName">
+					<xsd:selector xpath="VanGenuchtenStone2RelativePermeability" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
 				<xsd:unique name="domainConstitutiveViscoDruckerPragerUniqueName">
@@ -1973,6 +1981,8 @@ the relative residual norm satisfies:
 		<xsd:attribute name="fieldNames" type="groupNameRef_array" default="{}" />
 		<!--format => Output data format.  Valid options: ``binary``, ``ascii``-->
 		<xsd:attribute name="format" type="geos_vtk_VTKOutputMode" default="binary" />
+		<!--levelNames => Names of mesh levels to output.-->
+		<xsd:attribute name="levelNames" type="string_array" default="{}" />
 		<!--logLevel => Log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--onlyPlotSpecifiedFieldNames => If this flag is equal to 1, then we only plot the fields listed in `fieldNames`. Otherwise, we plot all the fields with the required `plotLevel`, plus the fields listed in `fieldNames`-->
@@ -3524,6 +3534,7 @@ Local - Add stabilization only to interiors of macro elements.-->
 			<xsd:element name="BrooksCoreyBakerRelativePermeability" type="BrooksCoreyBakerRelativePermeabilityType" />
 			<xsd:element name="BrooksCoreyCapillaryPressure" type="BrooksCoreyCapillaryPressureType" />
 			<xsd:element name="BrooksCoreyRelativePermeability" type="BrooksCoreyRelativePermeabilityType" />
+			<xsd:element name="BrooksCoreyStone2RelativePermeability" type="BrooksCoreyStone2RelativePermeabilityType" />
 			<xsd:element name="CO2BrineEzrokhiFluid" type="CO2BrineEzrokhiFluidType" />
 			<xsd:element name="CO2BrineEzrokhiThermalFluid" type="CO2BrineEzrokhiThermalFluidType" />
 			<xsd:element name="CO2BrinePhillipsFluid" type="CO2BrinePhillipsFluidType" />
@@ -3589,6 +3600,7 @@ Local - Add stabilization only to interiors of macro elements.-->
 			<xsd:element name="ThermalCompressibleSinglePhaseFluid" type="ThermalCompressibleSinglePhaseFluidType" />
 			<xsd:element name="VanGenuchtenBakerRelativePermeability" type="VanGenuchtenBakerRelativePermeabilityType" />
 			<xsd:element name="VanGenuchtenCapillaryPressure" type="VanGenuchtenCapillaryPressureType" />
+			<xsd:element name="VanGenuchtenStone2RelativePermeability" type="VanGenuchtenStone2RelativePermeabilityType" />
 			<xsd:element name="ViscoDruckerPrager" type="ViscoDruckerPragerType" />
 			<xsd:element name="ViscoExtendedDruckerPrager" type="ViscoExtendedDruckerPragerType" />
 			<xsd:element name="ViscoModifiedCamClay" type="ViscoModifiedCamClayType" />
@@ -3683,6 +3695,26 @@ The expected format is "{ waterMax, oilMax }", in that order-->
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
+	<xsd:complexType name="BrooksCoreyStone2RelativePermeabilityType">
+		<!--gasOilRelPermExponent => Rel perm power law exponent for the pair (gas phase, oil phase) at residual water saturation
+The expected format is "{ gasExp, oilExp }", in that order-->
+		<xsd:attribute name="gasOilRelPermExponent" type="real64_array" default="{1}" />
+		<!--gasOilRelPermMaxValue => Maximum rel perm value for the pair (gas phase, oil phase) at residual water saturation
+The expected format is "{ gasMax, oilMax }", in that order-->
+		<xsd:attribute name="gasOilRelPermMaxValue" type="real64_array" default="{0}" />
+		<!--phaseMinVolumeFraction => Minimum volume fraction value for each phase-->
+		<xsd:attribute name="phaseMinVolumeFraction" type="real64_array" default="{0}" />
+		<!--phaseNames => List of fluid phases-->
+		<xsd:attribute name="phaseNames" type="groupNameRef_array" use="required" />
+		<!--waterOilRelPermExponent => Rel perm power law exponent for the pair (water phase, oil phase) at residual gas saturation
+The expected format is "{ waterExp, oilExp }", in that order-->
+		<xsd:attribute name="waterOilRelPermExponent" type="real64_array" default="{1}" />
+		<!--waterOilRelPermMaxValue => Maximum rel perm value for the pair (water phase, oil phase) at residual gas saturation
+The expected format is "{ waterMax, oilMax }", in that order-->
+		<xsd:attribute name="waterOilRelPermMaxValue" type="real64_array" default="{0}" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="groupName" use="required" />
+	</xsd:complexType>
 	<xsd:complexType name="CO2BrineEzrokhiFluidType">
 		<!--checkPVTTablesRanges => Enable (1) or disable (0) an error when the input pressure or temperature of the PVT tables is out of range.-->
 		<xsd:attribute name="checkPVTTablesRanges" type="integer" default="1" />
@@ -3692,6 +3724,8 @@ The expected format is "{ waterMax, oilMax }", in that order-->
 		<xsd:attribute name="componentNames" type="string_array" default="{}" />
 		<!--flashModelParaFile => Name of the file defining the parameters of the flash model-->
 		<xsd:attribute name="flashModelParaFile" type="path" use="required" />
+		<!--logLevel => Log level-->
+		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--phaseNames => List of fluid phases-->
 		<xsd:attribute name="phaseNames" type="groupNameRef_array" default="{}" />
 		<!--phasePVTParaFiles => Names of the files defining the parameters of the viscosity and density models-->
@@ -3708,6 +3742,8 @@ The expected format is "{ waterMax, oilMax }", in that order-->
 		<xsd:attribute name="componentNames" type="string_array" default="{}" />
 		<!--flashModelParaFile => Name of the file defining the parameters of the flash model-->
 		<xsd:attribute name="flashModelParaFile" type="path" use="required" />
+		<!--logLevel => Log level-->
+		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--phaseNames => List of fluid phases-->
 		<xsd:attribute name="phaseNames" type="groupNameRef_array" default="{}" />
 		<!--phasePVTParaFiles => Names of the files defining the parameters of the viscosity and density models-->
@@ -3724,6 +3760,8 @@ The expected format is "{ waterMax, oilMax }", in that order-->
 		<xsd:attribute name="componentNames" type="string_array" default="{}" />
 		<!--flashModelParaFile => Name of the file defining the parameters of the flash model-->
 		<xsd:attribute name="flashModelParaFile" type="path" use="required" />
+		<!--logLevel => Log level-->
+		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--phaseNames => List of fluid phases-->
 		<xsd:attribute name="phaseNames" type="groupNameRef_array" default="{}" />
 		<!--phasePVTParaFiles => Names of the files defining the parameters of the viscosity and density models-->
@@ -3740,6 +3778,8 @@ The expected format is "{ waterMax, oilMax }", in that order-->
 		<xsd:attribute name="componentNames" type="string_array" default="{}" />
 		<!--flashModelParaFile => Name of the file defining the parameters of the flash model-->
 		<xsd:attribute name="flashModelParaFile" type="path" use="required" />
+		<!--logLevel => Log level-->
+		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--phaseNames => List of fluid phases-->
 		<xsd:attribute name="phaseNames" type="groupNameRef_array" default="{}" />
 		<!--phasePVTParaFiles => Names of the files defining the parameters of the viscosity and density models-->
@@ -4712,6 +4752,10 @@ If you want to do a two-phase simulation, please use instead wettingNonWettingRe
 		<xsd:attribute name="nonWettingIntermediateRelPermTableNames" type="groupNameRef_array" default="{}" />
 		<!--phaseNames => List of fluid phases-->
 		<xsd:attribute name="phaseNames" type="groupNameRef_array" use="required" />
+		<!--threePhaseInterpolator => Type of Three phase interpolator.Valid options 
+* BAKER
+* STONEII-->
+		<xsd:attribute name="threePhaseInterpolator" type="geos_constitutive_ThreePhaseInterpolator" default="BAKER" />
 		<!--wettingIntermediateRelPermTableNames => List of relative permeability tables for the pair (wetting phase, intermediate phase)
 The expected format is "{ wettingPhaseRelPermTableName, intermediatePhaseRelPermTableName }", in that order
 Note that this input is only used for three-phase flow.
@@ -4725,6 +4769,11 @@ If you want to do a three-phase simulation, please use instead wettingIntermedia
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
+	<xsd:simpleType name="geos_constitutive_ThreePhaseInterpolator">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value=".*[\[\]`$].*|BAKER|STONEII" />
+		</xsd:restriction>
+	</xsd:simpleType>
 	<xsd:complexType name="TableRelativePermeabilityHysteresisType">
 		<!--drainageNonWettingIntermediateRelPermTableNames => List of drainage relative permeability tables for the pair (non-wetting phase, intermediate phase)
 The expected format is "{ nonWettingPhaseRelPermTableName, intermediatePhaseRelPermTableName }", in that order
@@ -4755,6 +4804,10 @@ To neglect hysteresis on this phase, just use the same table name for the draina
 		<xsd:attribute name="killoughCurvatureParameter" type="real64" default="1" />
 		<!--phaseNames => List of fluid phases-->
 		<xsd:attribute name="phaseNames" type="groupNameRef_array" use="required" />
+		<!--threePhaseInterpolator => Type of Three phase interpolator.Valid options 
+* BAKER
+* STONEII-->
+		<xsd:attribute name="threePhaseInterpolator" type="geos_constitutive_ThreePhaseInterpolator" default="BAKER" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -4830,6 +4883,26 @@ The expected format is "{ waterMax, oilMax }", in that order-->
 		<xsd:attribute name="phaseMinVolumeFraction" type="real64_array" default="{0}" />
 		<!--phaseNames => List of fluid phases-->
 		<xsd:attribute name="phaseNames" type="groupNameRef_array" use="required" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="groupName" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="VanGenuchtenStone2RelativePermeabilityType">
+		<!--gasOilRelPermExponentInv => Rel perm power law exponent inverse for the pair (gas phase, oil phase) at residual water saturation
+The expected format is "{ gasExp, oilExp }", in that order-->
+		<xsd:attribute name="gasOilRelPermExponentInv" type="real64_array" default="{0.5}" />
+		<!--gasOilRelPermMaxValue => Maximum rel perm value for the pair (gas phase, oil phase) at residual water saturation
+The expected format is "{ gasMax, oilMax }", in that order-->
+		<xsd:attribute name="gasOilRelPermMaxValue" type="real64_array" default="{0}" />
+		<!--phaseMinVolumeFraction => Minimum volume fraction value for each phase-->
+		<xsd:attribute name="phaseMinVolumeFraction" type="real64_array" default="{0}" />
+		<!--phaseNames => List of fluid phases-->
+		<xsd:attribute name="phaseNames" type="groupNameRef_array" use="required" />
+		<!--waterOilRelPermExponentInv => Rel perm power law exponent inverse for the pair (water phase, oil phase) at residual gas saturation
+The expected format is "{ waterExp, oilExp }", in that order-->
+		<xsd:attribute name="waterOilRelPermExponentInv" type="real64_array" default="{0.5}" />
+		<!--waterOilRelPermMaxValue => Maximum rel perm value for the pair (water phase, oil phase) at residual gas saturation
+The expected format is "{ waterMax, oilMax }", in that order-->
+		<xsd:attribute name="waterOilRelPermMaxValue" type="real64_array" default="{0}" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
