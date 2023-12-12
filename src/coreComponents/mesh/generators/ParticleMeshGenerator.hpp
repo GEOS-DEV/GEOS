@@ -37,6 +37,42 @@ class ParticleMeshGenerator : public MeshGeneratorBase
 public:
 
   /**
+   * @enum ParticleColumnHeaders
+   *
+   * Particle column header names
+   */
+  enum class ParticleColumnHeaders : integer
+  {
+    ID,
+    PositionX,
+    PositionY,
+    PositionZ,
+    VelocityX,
+    VelocityY,
+    VelocityZ,
+    MaterialType,
+    ContactGroup,
+    SurfaceFlag,
+    Damage,
+    StrengthScale,
+    RVectorXX,
+    RVectorXY,
+    RVectorXZ,
+    RVectorYX,
+    RVectorYY,
+    RVectorYZ,
+    RVectorZX,
+    RVectorZY,
+    RVectorZZ,
+    MaterialDirectionX,
+    MaterialDirectionY,
+    MaterialDirectionZ,
+    SurfaceNormalX,
+    SurfaceNormalY,
+    SurfaceNormalZ
+  };
+
+  /**
    * @brief Main constructor for ParticleMeshGenerator.
    * @param[in] name of the ParticleMeshGenerator
    * @param[in] parent point to the parent Group of the ParticleMeshGenerator
@@ -107,6 +143,35 @@ private:
 public:
 
 };
+
+ENUM_STRINGS( ParticleMeshGenerator::ParticleColumnHeaders,
+              "ID",
+              "PositionX",
+              "PositionY",
+              "PositionZ",
+              "VelocityX",
+              "VelocityY",
+              "VelocityZ",
+              "MaterialType",
+              "ContactGroup",
+              "SurfaceFlag",
+              "Damage",
+              "StrengthScale",
+              "RVectorXX",
+              "RVectorXY",
+              "RVectorXZ",
+              "RVectorYX",
+              "RVectorYY",
+              "RVectorYZ",
+              "RVectorZX",
+              "RVectorZY",
+              "RVectorZZ",
+              "MaterialDirectionX",
+              "MaterialDirectionY",
+              "MaterialDirectionZ",
+              "SurfaceNormalX",
+              "SurfaceNormalY",
+              "SurfaceNormalZ" );
 
 } /* namespace geos */
 
