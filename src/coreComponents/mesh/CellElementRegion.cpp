@@ -25,8 +25,18 @@ CellElementRegion::CellElementRegion( string const & name, Group * const parent 
 {
   registerWrapper( viewKeyStruct::sourceCellBlockNamesString(), &m_cellBlockNames ).
     setRTTypeName( rtTypes::CustomTypes::groupNameRefArray ).
-    setInputFlag( InputFlags::REQUIRED );
+    setInputFlag( InputFlags::REQUIRED ).
+    setDescription( GEOS_FMT( "The list of cell-blocks this {} contains.\n"
+                              "If the source mesh has a data array named as the VTKMesh::regionAttribute value, the list can contain:\n"
+                              "  - a list of sub-region(s) (= cell-blocks), each refered as \"regionAttribute_elementType\" (ie: \"1_tetrahedra\"),\n"
+                              "  - a list of region(s), each refered as \"regionAttribute\",\n"
+                              "  - all ellement of the mesh at once, refered with \"all\".\n"
+                              "If the source mesh has no \"regionAttribute\" data array, the list can contain:\n"
+                              "  - a list of sub-region(s) (= cell-blocks), each refered as \"elementType\" (ie: \"tetrahedra\"),\n"
+                              "  - all ellement of the mesh at once, refered with \"all\".\n",
+                              catalogName() ) );
 
+  //TODO: add documentation ?
   registerWrapper( viewKeyStruct::coarseningRatioString(), &m_coarseningRatio ).
     setInputFlag( InputFlags::OPTIONAL );
 }

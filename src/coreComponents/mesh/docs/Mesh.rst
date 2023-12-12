@@ -32,14 +32,14 @@ The following is an example XML ``<mesh>`` block, which will generate a vertical
 
   <Mesh>
     <InternalMesh name="mesh"
-                  elementTypes="C3D8"
-                  xCoords="0, 1"
-                  yCoords="0, 1"
-                  zCoords="0, 2, 6"
-                  nx="1"
-                  ny="1"
-                  nz="2, 4"
-                  cellBlockNames="cb1 cb2"/>
+                  elementTypes="{ C3D8 }"
+                  xCoords="{ 0, 1 }"
+                  yCoords="{ 0, 1 }"
+                  zCoords="{ 0, 2, 6 }"
+                  nx="{ 1 }"
+                  ny="{ 1 }"
+                  nz="{ 2, 4 }"
+                  cellBlockNames="{ cb1, cb2 }"/>
   </Mesh>
 
 - ``name`` the name of the mesh body
@@ -164,7 +164,7 @@ The supported mesh elements for volume elements consist of the following:
 The mesh can be divided in several regions.
 These regions are intended to support different physics
 or to define different constitutive properties.
-We usually use the ``attribute`` field is usually considered to define the regions.
+By default, we use the ``attribute`` field to define the regions.
 
 .. _ImportingExternalMesh:
 
@@ -175,7 +175,7 @@ Importing regions
 *****************
 
 Several blocks are involved to import an external mesh into GEOS, defined in the XML input file.
-These are the ``<Mesh>`` block and the ``<ElementRegions>`` block.
+These are the ``<Mesh>`` block and the ``<CellElementRegions>`` block.
 
 The mesh block has the following syntax:
 
@@ -188,62 +188,82 @@ The mesh block has the following syntax:
       file="/path/to/the/mesh/file.vtk"/>
   </Mesh>
 
-We advise users to use absolute path to the mesh file, and strongly recommend the use of a logLevel
-of 1 or more to obtain some information about the mesh import. This information contains for 
-example the list of regions that are imported with their names, which is particularly useful to 
-fill the ``cellBlocks`` field of the ``ElementRegions`` block (see below). Some information about the 
-imported surfaces is also provided.
+..note::
+  We advise users to use absolute path to the mesh file, and recommend the use of a ``logLevel``
+  of 1 or more to obtain some information about the mesh import, including the list of regions that
+  are imported with their names, which is particularly useful to fill the ``cellBlocks`` field of the
+  ``CellElementRegions`` block (see below). Some information about the imported surfaces is also provided.
 
-GEOS uses ``ElementRegions`` to support different physics
-or to define different constitutive properties.
-The ``ElementRegions`` block can contain several ``CellElementRegion`` blocks. A ``CellElementRegion`` is defined as a set of ``CellBlocks``.
-A ``CellBlock`` is an ensemble of elements with the same element geometry.
+GEOS uses ``ElementRegions`` to support different physics or to define different constitutive properties.
+The ``ElementRegions`` block can contain several ``CellElementRegion`` blocks. A ``CellElementRegion``
+is defined as a set of cell-blocks. A cell-block is an ensemble of elements with the same element
+geometry.
 
-The naming of the imported ``cellBlocks`` depends on whether the data array called ``regionAttribute`` is
-present in the vtu file or not. This data array is used to define regions in the vtu file and
-assign the cells to a given region. The ``regionAttribute`` is a integer and not a string
-(unfortunately).
+The naming of the imported cell-blocks depends on if mesh contains a data array which has the
+same value as the ``regionAttribute`` of the ``VTKMesh`` (which is ``attribute`` by default).
+This attribute is used to define regions in the vtu file and assign the cells to a given region.
+The ``regionAttribute`` is a integer and not a string (for now).
 
 .. figure:: mesh_multi.png
    :align: center
    :width: 500
 
-In the example presented above, the mesh is is composed of two regions (*Top* and *Bot*).
-Each region contains 4 ``cellBlocks``.
+In the example presented above, the mesh is is composed of two regions (that we will name *Top* and *Bot*
+in GEOS).
+Each region contains 4 cell-blocks.
 
-- If the vtu file does not contain ``regionAttribute``, then all the cells are grouped in a single
-  region, and the cell block names are just constructed from the cell types (hexahedra, wedges,
-  tetrahedra, etc). Then in the exemple above, the ``ElementRegions`` can be defined as bellow:
+- If the vtu file contains an attribute equals to the ``regionAttribute`` of the ``VTKMesh``,
+  then the cells are grouped by regions based on their individual ``regionAttribute``. In that
+  case, all cell-blocks of a region can be referenced by their ``regionAttribute`` or 
+  by each cell-block ``regionAttribute_elementType``. Let's assume that
+  the top region of the exemple above is identified by the ``regionAttribute`` 1, and that the bottom
+  region is identified with 2,
 
-.. code-block:: xml
-
-  <ElementRegions>
-    <CellElementRegion
-      name="cellRegion"
-      cellBlocks="{ hexahedra, wedges, tetrahedra, pyramids }"
-      materialList="{ water, rock }" />
-  </ElementRegions>
-
-- If the vtu file contains ``regionAttribute``, then the cells are grouped by regions based on their
-  individual (numeric) ``regionAttribute``. In that case, the naming convention for the ``cellBlocks`` is
-  ``regionAttribute_elementType``. Let's assume that the top region of the exemple above is identified
-  by the ``regionAttribute`` 1, and that the bottom region is identified with 2,
-  
   * If we want the ``CellElementRegion`` to contain all the cells, we write:
 
   ..  code-block:: xml
 
+    <!-- Exemple one: Use all cellBlocks by their regionAttribute. -->
     <ElementRegions>
       <CellElementRegion
         name="cellRegion"
-        cellBlocks="{ 1_hexahedra, 1_wedges, 1_tetrahedra, 1_pyramids, 3_hexahedra, 3_wedges, 3_tetrahedra, 3_pyramids }"
+        cellBlocks="{ 1, 2 }", 
         materialList="{ water, rock }" />
     </ElementRegions>
 
-  * If we want two CellElementRegion with the top and bottom regions separated, we write:
+    <!-- Exemple two: Use all cellBlocks by manually naming them. -->
+    <ElementRegions>
+      <CellElementRegion
+        name="cellRegion"
+        cellBlocks="{ 1_hexahedra, 1_wedges, 1_tetrahedra, 1_pyramids, 2_hexahedra, 2_wedges, 2_tetrahedra, 2_pyramids }"
+        materialList="{ water, rock }" />
+    </ElementRegions>
+
+    <!-- Exemple three: Use all cellBlocks automatically with the 'all' keyword. -->
+    <ElementRegions>
+      <CellElementRegion
+        name="cellRegion"
+        cellBlocks="{ all }"
+        materialList="{ water, rock }" />
+    </ElementRegions>
+
+  * If we want two ``CellElementRegion`` with the top and bottom regions separated, we write:
 
   .. code-block:: xml
 
+    <!-- Exemple one: Use all region '1' cellBlocks on 'Top' region, and all region '2' cellBlocks on 'Bot' region. -->
+    <ElementRegions>
+      <CellElementRegion
+        name="Top"
+        cellBlocks="{ 1 }"
+        materialList="{ water, rock }"/>
+      <CellElementRegion
+        name="Bot"
+        cellBlocks="{ 2 }"
+        materialList="{ water, rock }" />
+    </ElementRegions>
+
+    <!-- Exemple two: Use cellBlocks by manually naming them. -->
     <ElementRegions>
       <CellElementRegion
         name="Top"
@@ -251,9 +271,39 @@ Each region contains 4 ``cellBlocks``.
         materialList="{ water, rock }"/>
       <CellElementRegion
         name="Bot"
-        cellBlocks="{ 3_hexahedra, 3_wedges, 3_tetrahedra, 3_pyramids }"
+        cellBlocks="{ 2_hexahedra, 2_wedges, 2_tetrahedra, 2_pyramids }"
         materialList="{ water, rock }" />
     </ElementRegions>
+
+- If the vtu file does not contain any region attribute field, then all the cells are grouped in a single
+  region, and the cell block names are just constructed from the cell types (hexahedra, wedges,
+  tetrahedra, etc). Then in the exemple above, the ``ElementRegions`` can be defined as bellow:
+
+.. code-block:: xml
+
+  <!-- Exemple one: Use all cellBlocs automatically with the 'all' keyword. -->
+  <ElementRegions>
+    <CellElementRegion
+      name="cellRegion"
+      cellBlocks="{ all }"
+      materialList="{ water, rock }" />
+  </ElementRegions>
+
+  <!-- Exemple two: Use all cellBlocs by manually naming them. -->
+  <ElementRegions>
+    <CellElementRegion
+      name="cellRegion"
+      cellBlocks="{ hexahedra, wedges, tetrahedra, pyramids }"
+      materialList="{ water, rock }" />
+  </ElementRegions>
+
+  <!-- Exemple three: Use only the tetrahedric cellBlocs on this region (see the warning below) -->
+  <ElementRegions>
+    <CellElementRegion
+      name="cellRegion"
+      cellBlocks="{ tetrahedra }"
+      materialList="{ water, rock }" />
+  </ElementRegions>
 
 .. warning::
 
@@ -282,22 +332,26 @@ An example of a ``vtk`` file with all the physical regions defined is used in :r
 Importing surfaces
 ******************
 
-Surfaces are imported through point sets in GEOS. This feature is supported using only the ``vtk`` file format.
+Surfaces are imported through point sets in GEOS. This feature is only supported using the ``vtk`` file format.
 In the same way than the regions, the surfaces of interests can be defined using the `physical entity names`_.
-The surfaces are automatically import in GEOS if they exist in the ``vtk`` file.
+The surfaces are automatically imported in GEOS if they exist in the ``vtk`` file.
 Within GEOS, the point set will have the same name than the one given in the file. This name can be used
-again to impose boundary condition. For instance, if a surface is named "Bottom" and the user wants to
-impose a Dirichlet boundary condition of 0 on it, it can be easily done using this syntax.
+again to impose boundary condition.
+
+For instance, if a surface is named "Bottom" and the user wants to
+impose a Dirichlet boundary condition of 0 on it, it can be easily done using this syntax:
 
 .. code-block:: xml
 
-  <FieldSpecification
-    name="zconstraint"
-    objectPath="nodeManager"
-    fieldName="Velocity"
-    component="2"
-    scale="0.0"
-    setNames="{ Bottom }"/>
+  <FieldSpecifications>
+    <FieldSpecification
+      name="zconstraint"
+      objectPath="nodeManager"
+      fieldName="Velocity"
+      component="2"
+      scale="0.0"
+      setNames="{ Bottom }"/>
+  </FieldSpecifications>
 
 The name of the surface of interest appears under the keyword ``setNames``. Again, an example of a ``vtk`` file
 with the surfaces fully defined is available within :ref:`TutorialFieldCase` or :ref:`ExampleIsothermalHystInjection`.

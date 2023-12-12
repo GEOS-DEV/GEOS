@@ -49,7 +49,7 @@ A typical ``<Constitutive>`` and ``<ElementRegions>`` block will look like:
       <!--Add water to the material list for region 1-->
       <CellElementRegion
          name="region1"
-         cellBlocks="{ hexahedra, wedges, tetrahedra, pyramids }"
+         cellBlocks="{ all }"
          materialList="{ water }"/>
 
     </ElementRegions>
