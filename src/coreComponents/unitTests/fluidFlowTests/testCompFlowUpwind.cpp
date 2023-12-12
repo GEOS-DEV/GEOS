@@ -492,7 +492,6 @@ void testCompositionalUpwindHU( CompositionalMultiphaseFVM & solver,
         auto const & seri = stencil.getElementRegionIndices();
         auto const & sesri = stencil.getElementSubRegionIndices();
         auto const & sei = stencil.getElementIndices();
-//        localIndex constexpr numFluxSupportPoints = 2;
         localIndex constexpr maxNumConn = 1;
 
         real64 trans[maxNumConn][numFluxSupportPoints]{};

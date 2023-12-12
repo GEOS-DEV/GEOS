@@ -56,7 +56,7 @@ ENUM_STRINGS( UpwindingScheme,
  */
 struct UpwindingParameters
 {
-  /// PPU or C1-PPU
+  /// PPU or C1-PPU or IHU
   UpwindingScheme upwindingScheme;
 
   /// C1-PPU smoothing tolerance

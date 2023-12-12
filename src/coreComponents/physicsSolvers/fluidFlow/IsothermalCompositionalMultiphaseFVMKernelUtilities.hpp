@@ -33,7 +33,7 @@ namespace isothermalCompositionalMultiphaseFVMKernelUtilities
 {
 
 // TODO make input parameter
-static constexpr real64 epsC1PPU = 5000;
+static constexpr real64 epsC1PPU = 50;
 
 template< typename VIEWTYPE >
 using ElementViewConst = ElementRegionManager::ElementViewConst< VIEWTYPE >;
@@ -420,7 +420,6 @@ struct C1PPUPhaseFlux
   compute( integer const numPhase,
            integer const ip,
            integer const hasCapPressure,
-           //real64 const epsC1PPU,
            localIndex const ( &seri )[numFluxSupportPoints],
            localIndex const ( &sesri )[numFluxSupportPoints],
            localIndex const ( &sei )[numFluxSupportPoints],
@@ -1807,8 +1806,7 @@ public:
                                   localIndex const (&sei)[numFluxSupportPoints],
                                   real64 const (&transmissibility)[2],
                                   real64 const (&dTrans_dPres)[2],
-                                  real64 const totFlux,                     //in fine should be a ElemnetViewConst once seq form are in
-                                                                            // place
+                                  real64 const totFlux,
                                   ElementViewConst< arrayView1d< real64 const > > const & pres,
                                   ElementViewConst< arrayView1d< real64 const > > const & gravCoef,
                                   ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & phaseMob,
@@ -1847,7 +1845,7 @@ public:
                                                                                pot );
 
     //all definition has been changed to fit pot>0 => first cell is upstream
-    upwindDir = (pot > 0) ? 0 : 1;
+    upwindDir = (pot >= 0) ? 0 : 1;
   }
 
 
@@ -1900,7 +1898,7 @@ public:
                                                                                  pot );
 
     //all definition has been changed to fit pot>0 => first cell is upstream
-    upwindDir = (pot > 0) ? 0 : 1;
+    upwindDir = (pot >= 0) ? 0 : 1;
   }
 
 
@@ -2342,7 +2340,7 @@ struct IHUPhaseFlux
                                  phaseCompFrac, dPhaseCompFrac, dCompFrac_dCompDens,
                                  viscousPhaseFlux, dViscousPhaseFlux_dP, dViscousPhaseFlux_dC,
                                  compFlux, dCompFlux_dP, dCompFlux_dC );
-    ;
+
     // accumulate in the flux and its derivatives
     phaseFlux += viscousPhaseFlux;
     for( localIndex ke = 0; ke < numFluxSupportPoints; ++ke )
@@ -2391,8 +2389,7 @@ struct IHUPhaseFlux
       k_up_og,
       gravitationalPhaseFlux,
       gravitationalPhaseFlux_dP,
-      gravitationalPhaseFlux_dC
-      );
+      gravitationalPhaseFlux_dC );
 
 
 
@@ -2453,8 +2450,7 @@ struct IHUPhaseFlux
         k_up_opc,
         capillaryPhaseFlux,
         capillaryPhaseFlux_dP,
-        capillaryPhaseFlux_dC
-        );
+        capillaryPhaseFlux_dC );
 
       //distribute on phaseComponentFlux here
       PhaseComponentFlux::compute( ip, k_up_pc,
