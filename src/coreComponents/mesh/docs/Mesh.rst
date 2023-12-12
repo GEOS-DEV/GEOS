@@ -227,7 +227,7 @@ Each region contains 4 cell-blocks.
     <ElementRegions>
       <CellElementRegion
         name="cellRegion"
-        cellBlocks="{ 1, 2 }", 
+        cellBlocks="{ 1, 2 }"
         materialList="{ water, rock }" />
     </ElementRegions>
 
@@ -307,7 +307,7 @@ Each region contains 4 cell-blocks.
 
 .. warning::
 
-  We remind the user that **all** the imported ``cellBlocks`` must be included in one of the
+  We (and GEOS also) remind the user that **all** the imported ``cellBlocks`` must be included in one of the
   ``CellElementRegion``. Even if some cells are meant to be inactive during the simulation,
   they still have to be included in a ``CellElementRegion`` (this ``CellElementRegion`` should
   simply not be included as a targetRegion of any of the solvers involved in the simulation).

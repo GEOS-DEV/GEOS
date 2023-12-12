@@ -226,7 +226,7 @@
   <ElementRegions>
     <CellElementRegion
       name="reservoir"
-      cellBlocks="{ hexahedra }"
+      cellBlocks="{ all }"
       materialList="{ fluid, rock, relperm }"/>
 
     <WellElementRegion
