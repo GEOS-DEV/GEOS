@@ -65,7 +65,7 @@
 #if !defined( GEOS_USE_HIP )
 #define VEM_TYPES VEM_1_TYPES, VEM_2_TYPES
 #else
-#define VEM_TYPES VEM_1_TYPES
+#define VEM_TYPES finiteElement::H1_Tetrahedron_VEM_Gauss1
 #endif
 
 #define BASE_FE_TYPES FE_1_TYPES, VEM_TYPES
