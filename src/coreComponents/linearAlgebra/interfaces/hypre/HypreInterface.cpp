@@ -39,7 +39,14 @@ namespace geos
 
 void HypreInterface::initialize()
 {
+#if defined(HYPRE_USING_GPU) && (HYPRE_RELEASE_NUMBER > 23000 ||\
+    defined(HYPRE_DEVELOP_NUMBER) && HYPRE_DEVELOP_NUMBER > 16)
+  HYPRE_Initialize();
+  HYPRE_DeviceInitialize();
+#else
   HYPRE_Init();
+#endif
+
 #if GEOS_USE_HYPRE_DEVICE == GEOS_USE_HYPRE_CUDA || GEOS_USE_HYPRE_DEVICE == GEOS_USE_HYPRE_HIP
   hypre_HandleDefaultExecPolicy( hypre_handle() ) = HYPRE_EXEC_DEVICE;
   hypre_HandleSpgemmUseVendor( hypre_handle() ) = 0;
