@@ -265,7 +265,7 @@ void FaceManager::sortAllFaceNodes( NodeManager const & nodeManager,
   ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > elemCenter =
     elemManager.constructArrayViewAccessor< real64, 2 >( ElementSubRegionBase::viewKeyStruct::elementCenterString() );
 
-  forAll< parallelHostPolicy >( size(), [=, elemCenter = elemCenter.toNestedViewConst(), &elemManager]( localIndex const faceIndex )
+  forAll< parallelHostPolicy >( size(), [=, elemCenter = elemCenter.toNestedViewConst()]( localIndex const faceIndex )
   {
     // The face should be connected to at least one element.
     if( facesToElements( faceIndex, 0 ) < 0 && facesToElements( faceIndex, 1 ) < 0 )
