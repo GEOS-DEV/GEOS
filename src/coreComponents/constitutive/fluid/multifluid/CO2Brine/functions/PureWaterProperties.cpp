@@ -36,9 +36,10 @@ PureWaterProperties::makeSaturationViscosityTable( string const & functionName,
   array1d< array1d< real64 > > temperatures;
   array1d< real64 > viscosities;
 
+  integer const nValues = 26;
   temperatures.resize( 1 );
-  temperatures[0].resize( 26 );
-  viscosities.resize( 26 );
+  temperatures[0].resize( nValues );
+  viscosities.resize( nValues );
 
   temperatures[0][0] = 0.01;
   temperatures[0][1] = 10;
@@ -116,9 +117,10 @@ PureWaterProperties::makeSaturationDensityTable( string const & functionName,
   array1d< array1d< real64 > > temperatures;
   array1d< real64 > densities;
 
+  integer const nValues = 26;
   temperatures.resize( 1 );
-  temperatures[0].resize( 26 );
-  densities.resize( 26 );
+  temperatures[0].resize( nValues );
+  densities.resize( nValues );
 
   temperatures[0][0] = 0.01;
   temperatures[0][1] = 10;
@@ -196,9 +198,10 @@ PureWaterProperties::makeSaturationPressureTable( string const & functionName,
   array1d< array1d< real64 > > temperatures;
   array1d< real64 > pressures;
 
+  integer const nValues = 26;
   temperatures.resize( 1 );
-  temperatures[0].resize( 26 );
-  pressures.resize( 26 );
+  temperatures[0].resize( nValues );
+  pressures.resize( nValues );
 
   temperatures[0][0] = 0.01;
   temperatures[0][1] = 10;
