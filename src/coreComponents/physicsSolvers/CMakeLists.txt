@@ -1,6 +1,4 @@
-#
 # Specify solver headers
-#
 set( physicsSolvers_headers
      LinearSolverParameters.hpp
      NonlinearSolverParameters.hpp
@@ -144,9 +142,7 @@ set( physicsSolvers_headers
      wavePropagation/AcousticVTIDensityWaveEquationSEMKernel.hpp
    )
 
-#
 # Specify solver sources
-#
 set( physicsSolvers_sources
      LinearSolverParameters.cpp
      NonlinearSolverParameters.cpp
@@ -227,8 +223,7 @@ blt_add_library( NAME       physicsSolvers
                  SOURCES    ${physicsSolvers_sources}
                  HEADERS    ${physicsSolvers_headers}
                  DEPENDS_ON ${dependencyList} ${externalComponentDeps}
-                 OBJECT     ${GEOSX_BUILD_OBJ_LIBS}
-               )
+                 OBJECT     ${GEOSX_BUILD_OBJ_LIBS} )
 
 target_include_directories( physicsSolvers PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents )
 if( externalComponentDeps )
