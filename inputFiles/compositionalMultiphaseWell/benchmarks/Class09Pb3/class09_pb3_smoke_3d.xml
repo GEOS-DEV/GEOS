@@ -16,7 +16,7 @@
       nx="{ 5 }"
       ny="{ 5 }"
       nz="{ 5 }"
-      cellBlockNames="{ 1_hexahedra }">
+      cellBlockNames="{ reservoirCells }">
       <InternalWell
         name="wellInjector1"
         wellRegionName="wellRegion"

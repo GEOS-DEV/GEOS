@@ -223,11 +223,19 @@ Each region contains 4 cell-blocks.
 
   ..  code-block:: xml
 
-    <!-- Exemple one: Use all cellBlocks by their regionAttribute. -->
+    <!-- Exemple one: Use all cells by their regionAttribute. -->
     <ElementRegions>
       <CellElementRegion
         name="cellRegion"
         cellBlocks="{ 1, 2 }"
+        materialList="{ water, rock }" />
+    </ElementRegions>
+    
+    <!-- Exemple three: Use all cells automatically with the 'all' keyword. -->
+    <ElementRegions>
+      <CellElementRegion
+        name="cellRegion"
+        cellBlocks="{ all }"
         materialList="{ water, rock }" />
     </ElementRegions>
 
@@ -236,14 +244,6 @@ Each region contains 4 cell-blocks.
       <CellElementRegion
         name="cellRegion"
         cellBlocks="{ 1_hexahedra, 1_wedges, 1_tetrahedra, 1_pyramids, 2_hexahedra, 2_wedges, 2_tetrahedra, 2_pyramids }"
-        materialList="{ water, rock }" />
-    </ElementRegions>
-
-    <!-- Exemple three: Use all cellBlocks automatically with the 'all' keyword. -->
-    <ElementRegions>
-      <CellElementRegion
-        name="cellRegion"
-        cellBlocks="{ all }"
         materialList="{ water, rock }" />
     </ElementRegions>
 
@@ -281,7 +281,7 @@ Each region contains 4 cell-blocks.
 
 .. code-block:: xml
 
-  <!-- Exemple one: Use all cellBlocs automatically with the 'all' keyword. -->
+  <!-- Exemple one: include all cells with the 'all' keyword. -->
   <ElementRegions>
     <CellElementRegion
       name="cellRegion"
