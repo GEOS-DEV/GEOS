@@ -143,38 +143,96 @@ void ParticleMeshGenerator::generateMesh( DomainPartition & domain )
     particleTypes[i] = particleType;
   }
 
-  // Read in particle data
-  for( size_t i=0; i<particleTypes.size(); i++ )
+  // Read column headers for particle data
+  int numColumnHeaders = 0;
+  std::map< int, int > columnHeaderMap;
   {
-    for( int j=0; j<particleTypeMap[particleTypes[i]]; j++ )
+    std::getline( particleFile, line );
+    std::string token;
+  
+    std::istringstream lineStream( line );
+    while( std::getline( lineStream, token, '\t') )
+    {
+      columnHeaderMap.insert( std::pair< int, int >( static_cast< int >( EnumStrings< ParticleColumnHeaders >::fromString( token ) ), numColumnHeaders ) );
+      numColumnHeaders++;
+    }
+  }
+
+  // Read in particle data
+  int lineNumber = 1; // Since colum header takes one line
+  for( size_t i=0; i < particleTypes.size(); i++ )
+  {
+    for( int j=0; j < particleTypeMap[particleTypes[i]]; j++ )
     {
       std::getline( particleFile, line );
-      std::vector< double > lineData; // TODO: Not great because we cast all input as doubles, but it all gets re-cast later so maybe it's
-                                      // fine.
       std::istringstream lineStream( line );
 
+      std::vector< double > lineData; // TODO: Not great because we cast all input as doubles, but it all gets re-cast later so maybe it's fine.
+
+      // Read line from particle file and parse columns
       double value;
-      int column = 0; // column of the particle file being currently read in
-      bool inPartition = true;
+      int numColumns = 0;
       while( lineStream >> value )
       {
         lineData.push_back( value );
-        if( 1<=column && column<4 ) // 0th column is global ID. Columns 1, 2 and 3 are the particle position components - check for
-                                    // partition membership
-        { // TODO: This is super obfuscated and hard to read, make it better
-          inPartition = inPartition && partition.isCoordInPartition( value, column-1 );
-          if( !inPartition ) // if the current particle is outside this partition, we can ignore the rest of its data and go to the next
-                             // line
-          {
-            break;
-          }
-        }
-        column++;
+        numColumns++;
       }
-      if( inPartition )
+
+      GEOS_ERROR_IF( numColumns != numColumnHeaders, "Particle file line " << lineNumber << " has a different number of terms than the column headers!" );
+
+      lineNumber++;
+
+      // If particle is inside partition add to particleData otherwise ignore and continue parsing file
+      bool inPartition = partition.isCoordInPartition( lineData[ columnHeaderMap[ static_cast< int >( ParticleColumnHeaders::PositionX ) ] ], 0 ) && 
+                         partition.isCoordInPartition( lineData[ columnHeaderMap[ static_cast< int >( ParticleColumnHeaders::PositionY ) ] ], 1 ) && 
+                         partition.isCoordInPartition( lineData[ columnHeaderMap[ static_cast< int >( ParticleColumnHeaders::PositionZ ) ] ], 2 );
+      if( !inPartition )
       {
-        particleData[particleTypes[i]].push_back( lineData );
+        continue;
       }
+
+      // Reformat particle data and apply defaults to fields not specified
+      std::vector< double > lineDataInside;
+      // CC: TODO: Can you get the number of options from the enum directly?
+      for(int c = 0; c < 27; c++)
+      {
+        if( columnHeaderMap.find( c ) != columnHeaderMap.end() )
+        {
+          lineDataInside.push_back( lineData[ columnHeaderMap[ c ] ] );
+          continue;
+        }
+        
+        // Apply default value
+        double defaultValue;
+        switch( static_cast< ParticleColumnHeaders >( c ) )
+        {
+          case ParticleColumnHeaders::StrengthScale:
+          case ParticleColumnHeaders::MaterialDirectionX:
+          case ParticleColumnHeaders::SurfaceNormalX:
+            defaultValue = 1.0;
+            break;
+          case ParticleColumnHeaders::MaterialType:
+          case ParticleColumnHeaders::ContactGroup:
+          case ParticleColumnHeaders::VelocityX:
+          case ParticleColumnHeaders::VelocityY:
+          case ParticleColumnHeaders::VelocityZ:
+          case ParticleColumnHeaders::MaterialDirectionY:
+          case ParticleColumnHeaders::MaterialDirectionZ:
+          case ParticleColumnHeaders::SurfaceNormalY:
+          case ParticleColumnHeaders::SurfaceNormalZ:
+          case ParticleColumnHeaders::Damage:
+            defaultValue = 0.0;
+            break;
+          default:
+            GEOS_ERROR( EnumStrings< ParticleColumnHeaders >::toString( static_cast< ParticleColumnHeaders >( c ) ) << " must be specified in particle file!" );
+            break;
+        }
+
+        lineDataInside.push_back( defaultValue );
+      }
+
+      particleData[particleTypes[i]].push_back( lineDataInside );
+
     }
   }
 
