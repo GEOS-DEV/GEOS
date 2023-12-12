@@ -220,7 +220,8 @@
 
     <VTK
       name="vtkOutput"
-    plotLevel="3"/>
+      levelNames="{ FE1 }"
+      plotLevel="3"/>
 
     <!-- output the displacement values to a file named displacement_history.hdf5  -->
     <TimeHistory
