@@ -35,13 +35,16 @@ namespace PVTProps
 WaterDensity::WaterDensity( string const & name,
                             string_array const & inputParams,
                             string_array const & componentNames,
-                            array1d< real64 > const & componentMolarWeight ):
+                            array1d< real64 > const & componentMolarWeight,
+                            bool const printTable ):
   PVTFunctionBase( name,
                    componentNames,
                    componentMolarWeight )
 {
   GEOS_UNUSED_VAR( inputParams );
   m_waterDensityTable = PureWaterProperties::makeSaturationDensityTable( m_functionName, FunctionManager::getInstance() );
+  if( printTable )
+    m_waterDensityTable->print( m_waterDensityTable->getName() );
 }
 
 void WaterDensity::checkTablesParameters( real64 const pressure,
@@ -58,7 +61,7 @@ WaterDensity::createKernelWrapper() const
                         *m_waterDensityTable );
 }
 
-REGISTER_CATALOG_ENTRY( PVTFunctionBase, WaterDensity, string const &, string_array const &, string_array const &, array1d< real64 > const & )
+REGISTER_CATALOG_ENTRY( PVTFunctionBase, WaterDensity, string const &, string_array const &, string_array const &, array1d< real64 > const &, bool const )
 
 } // namespace PVTProps
 

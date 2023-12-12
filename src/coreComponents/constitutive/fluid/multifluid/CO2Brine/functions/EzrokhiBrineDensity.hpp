@@ -107,7 +107,8 @@ public:
   EzrokhiBrineDensity( string const & name,
                        string_array const & inputPara,
                        string_array const & componentNames,
-                       array1d< real64 > const & componentMolarWeight );
+                       array1d< real64 > const & componentMolarWeight,
+                       bool const printTable );
 
   virtual ~EzrokhiBrineDensity() override = default;
 
@@ -201,20 +202,23 @@ void EzrokhiBrineDensityUpdate::compute( real64 const & pressure,
   // compute only common part of derivatives w.r.t. CO2 and water phase compositions
   // later to be multiplied by (phaseComposition[m_waterIndex]) and ( -phaseComposition[m_CO2Index] ) respectively
   real64 const exponent_dPhaseComp = coefPhaseComposition * m_componentMolarWeight[m_CO2Index] * m_componentMolarWeight[m_waterIndex] * waterMWInv * waterMWInv;
-  real64 const exponentPowered = useMass ? pow( 10, exponent ) : pow( 10, exponent ) / m_componentMolarWeight[m_waterIndex];
+  real64 exponentPowered = pow( 10, exponent );
 
   value = waterDensity * exponentPowered;
 
   real64 const dValueCoef = LvArray::math::log( 10 ) * value;
-
-  real64 const dValue_dPhaseComp = dValueCoef * exponent_dPhaseComp;
   dValue[Deriv::dP] = dValueCoef * exponent_dPressure + waterDensity_dPressure * exponentPowered;
   dValue[Deriv::dT] = dValueCoef * exponent_dTemperature + waterDensity_dTemperature * exponentPowered;
 
   // here, we multiply common part of derivatives by specific coefficients
+  real64 const dValue_dPhaseComp = dValueCoef * exponent_dPhaseComp;
   dValue[Deriv::dC+m_CO2Index] = dValue_dPhaseComp * phaseComposition[m_waterIndex] * dPhaseComposition[m_CO2Index][Deriv::dC+m_CO2Index];
   dValue[Deriv::dC+m_waterIndex] = dValue_dPhaseComp * ( -phaseComposition[m_CO2Index] ) * dPhaseComposition[m_waterIndex][Deriv::dC+m_waterIndex];
 
+  if( !useMass )
+  {
+    divideByPhaseMolarWeight( phaseComposition, dPhaseComposition, value, dValue );
+  }
 }
 
 } // end namespace PVTProps

@@ -57,19 +57,23 @@ struct PhaseModel
   PhaseModel( string const & phaseModelName,
               array1d< array1d< string > > const & inputParams,
               string_array const & componentNames,
-              array1d< real64 > const & componentMolarWeight )
+              array1d< real64 > const & componentMolarWeight,
+              bool const printTable )
     : density( phaseModelName + "_" + Density::catalogName(),
                inputParams[InputParamOrder::DENSITY],
                componentNames,
-               componentMolarWeight ),
+               componentMolarWeight,
+               printTable ),
     viscosity( phaseModelName + "_" + Viscosity::catalogName(),
                inputParams[InputParamOrder::VISCOSITY],
                componentNames,
-               componentMolarWeight ),
+               componentMolarWeight,
+               printTable ),
     enthalpy( phaseModelName + "_" + Enthalpy::catalogName(),
               inputParams[InputParamOrder::ENTHALPY],
               componentNames,
-              componentMolarWeight )
+              componentMolarWeight,
+              printTable )
   {}
 
   /// The phase density model

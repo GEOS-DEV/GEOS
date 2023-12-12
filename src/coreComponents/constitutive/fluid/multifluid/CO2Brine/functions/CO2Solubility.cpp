@@ -267,7 +267,8 @@ CO2Solubility::CO2Solubility( string const & name,
                               string_array const & inputParams,
                               string_array const & phaseNames,
                               string_array const & componentNames,
-                              array1d< real64 > const & componentMolarWeight ):
+                              array1d< real64 > const & componentMolarWeight,
+                              bool const printTable ):
   FlashModelBase( name,
                   componentNames,
                   componentMolarWeight )
@@ -292,6 +293,8 @@ CO2Solubility::CO2Solubility( string const & name,
   m_phaseLiquidIndex = PVTFunctionHelpers::findName( phaseNames, expectedWaterPhaseNames, "phaseNames" );
 
   m_CO2SolubilityTable = makeSolubilityTable( inputParams, m_modelName, FunctionManager::getInstance() );
+  if( printTable )
+    m_CO2SolubilityTable->print( m_CO2SolubilityTable->getName() );
 }
 
 void CO2Solubility::checkTablesParameters( real64 const pressure,
@@ -311,7 +314,7 @@ CO2Solubility::KernelWrapper CO2Solubility::createKernelWrapper() const
                         m_phaseLiquidIndex );
 }
 
-REGISTER_CATALOG_ENTRY( FlashModelBase, CO2Solubility, string const &, string_array const &, string_array const &, string_array const &, array1d< real64 > const & )
+REGISTER_CATALOG_ENTRY( FlashModelBase, CO2Solubility, string const &, string_array const &, string_array const &, string_array const &, array1d< real64 > const &, bool const )
 
 } // end namespace PVTProps
 

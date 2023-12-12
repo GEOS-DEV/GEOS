@@ -113,6 +113,7 @@
 
     <CO2BrinePhillipsThermalFluid
       name="fluid"
+      logLevel="1"
       phaseNames="{ gas, water }"
       componentNames="{ co2, water }"
       componentMolarWeight="{ 44e-3, 18e-3 }"

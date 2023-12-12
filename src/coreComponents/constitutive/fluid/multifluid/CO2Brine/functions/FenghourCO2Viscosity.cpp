@@ -34,9 +34,8 @@ namespace PVTProps
 namespace
 {
 
-void fenghourCO2ViscosityFunction( real64 const & temperatureCent,
-                                   real64 const & density,
-                                   real64 & viscosity )
+real64 fenghourCO2ViscosityFunction( real64 const & temperatureCent,
+                                     real64 const & density )
 {
   constexpr real64 espar = 251.196;
   constexpr real64 esparInv = 1.0 / espar;
@@ -67,7 +66,7 @@ void fenghourCO2ViscosityFunction( real64 const & temperatureCent,
   real64 const vxcess = density * (d11 + density * (d21 + d2*d2*(d64 / (Tred*Tred*Tred) + d2*(d81 + d82/Tred))));
 
   // equation (1) of Fenghour and Wakeham (1998)
-  viscosity = 1e-6 * (vlimit + vxcess + vcrit);
+  return 1e-6 * (vlimit + vxcess + vcrit);
 }
 
 void calculateCO2Viscosity( PTTableCoordinates const & tableCoords,
@@ -82,9 +81,8 @@ void calculateCO2Viscosity( PTTableCoordinates const & tableCoords,
   {
     for( localIndex j = 0; j < nTemperatures; ++j )
     {
-      fenghourCO2ViscosityFunction( tableCoords.getTemperature( j ),
-                                    densities[j*nPressures+i],
-                                    viscosities[j*nPressures+i] );
+      real64 const T = tableCoords.getTemperature( j );
+      viscosities[j*nPressures+i] = fenghourCO2ViscosityFunction( T, densities[j*nPressures+i] );
     }
   }
 }
@@ -137,12 +135,15 @@ TableFunction const * makeViscosityTable( string_array const & inputParams,
 FenghourCO2Viscosity::FenghourCO2Viscosity( string const & name,
                                             string_array const & inputParams,
                                             string_array const & componentNames,
-                                            array1d< real64 > const & componentMolarWeight )
+                                            array1d< real64 > const & componentMolarWeight,
+                                            bool const printTable )
   : PVTFunctionBase( name,
                      componentNames,
                      componentMolarWeight )
 {
   m_CO2ViscosityTable = makeViscosityTable( inputParams, m_functionName, FunctionManager::getInstance() );
+  if( printTable )
+    m_CO2ViscosityTable->print( m_CO2ViscosityTable->getName() );
 }
 
 void FenghourCO2Viscosity::checkTablesParameters( real64 const pressure,
@@ -159,7 +160,7 @@ FenghourCO2Viscosity::createKernelWrapper() const
                         *m_CO2ViscosityTable );
 }
 
-REGISTER_CATALOG_ENTRY( PVTFunctionBase, FenghourCO2Viscosity, string const &, string_array const &, string_array const &, array1d< real64 > const & )
+REGISTER_CATALOG_ENTRY( PVTFunctionBase, FenghourCO2Viscosity, string const &, string_array const &, string_array const &, array1d< real64 > const &, bool const )
 
 } // end namespace PVTProps
 

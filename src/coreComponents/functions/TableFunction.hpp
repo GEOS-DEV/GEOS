@@ -300,6 +300,12 @@ private:
   void setTableValues( real64_array values, units::Unit unit = units::Unknown );
 
   /**
+   * @brief Print table into a CSV file (only 1d and 2d tables are supported)
+   * @param filename Filename for output
+   */
+  void print( std::string const & filename ) const;
+
+  /**
    * @brief Create an instance of the kernel wrapper
    * @return the kernel wrapper
    */
