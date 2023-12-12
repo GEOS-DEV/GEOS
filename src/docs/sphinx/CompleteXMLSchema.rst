@@ -94,6 +94,13 @@ Element: BrooksCoreyRelativePermeability
 .. include:: ../../coreComponents/schema/docs/BrooksCoreyRelativePermeability.rst
 
 
+.. _XML_BrooksCoreyStone2RelativePermeability:
+
+Element: BrooksCoreyStone2RelativePermeability
+==============================================
+.. include:: ../../coreComponents/schema/docs/BrooksCoreyStone2RelativePermeability.rst
+
+
 .. _XML_CO2BrineEzrokhiFluid:
 
 Element: CO2BrineEzrokhiFluid
@@ -183,6 +190,20 @@ Element: CompositionalMultiphaseHybridFVM
 Element: CompositionalMultiphaseReservoir
 =========================================
 .. include:: ../../coreComponents/schema/docs/CompositionalMultiphaseReservoir.rst
+
+
+.. _XML_CompositionalMultiphaseReservoirPoromechanics:
+
+Element: CompositionalMultiphaseReservoirPoromechanics
+======================================================
+.. include:: ../../coreComponents/schema/docs/CompositionalMultiphaseReservoirPoromechanics.rst
+
+
+.. _XML_CompositionalMultiphaseReservoirPoromechanicsInitialization:
+
+Element: CompositionalMultiphaseReservoirPoromechanicsInitialization
+====================================================================
+.. include:: ../../coreComponents/schema/docs/CompositionalMultiphaseReservoirPoromechanicsInitialization.rst
 
 
 .. _XML_CompositionalMultiphaseStatistics:
@@ -1032,6 +1053,20 @@ Element: SinglePhaseReservoir
 .. include:: ../../coreComponents/schema/docs/SinglePhaseReservoir.rst
 
 
+.. _XML_SinglePhaseReservoirPoromechanics:
+
+Element: SinglePhaseReservoirPoromechanics
+==========================================
+.. include:: ../../coreComponents/schema/docs/SinglePhaseReservoirPoromechanics.rst
+
+
+.. _XML_SinglePhaseReservoirPoromechanicsInitialization:
+
+Element: SinglePhaseReservoirPoromechanicsInitialization
+========================================================
+.. include:: ../../coreComponents/schema/docs/SinglePhaseReservoirPoromechanicsInitialization.rst
+
+
 .. _XML_SinglePhaseStatistics:
 
 Element: SinglePhaseStatistics
@@ -1249,6 +1284,13 @@ Element: VanGenuchtenCapillaryPressure
 .. include:: ../../coreComponents/schema/docs/VanGenuchtenCapillaryPressure.rst
 
 
+.. _XML_VanGenuchtenStone2RelativePermeability:
+
+Element: VanGenuchtenStone2RelativePermeability
+===============================================
+.. include:: ../../coreComponents/schema/docs/VanGenuchtenStone2RelativePermeability.rst
+
+
 .. _XML_ViscoDruckerPrager:
 
 Element: ViscoDruckerPrager
@@ -1400,6 +1442,13 @@ Datastructure: BrooksCoreyRelativePermeability
 .. include:: ../../coreComponents/schema/docs/BrooksCoreyRelativePermeability_other.rst
 
 
+.. _DATASTRUCTURE_BrooksCoreyStone2RelativePermeability:
+
+Datastructure: BrooksCoreyStone2RelativePermeability
+====================================================
+.. include:: ../../coreComponents/schema/docs/BrooksCoreyStone2RelativePermeability_other.rst
+
+
 .. _DATASTRUCTURE_CO2BrineEzrokhiFluid:
 
 Datastructure: CO2BrineEzrokhiFluid
@@ -1489,6 +1538,20 @@ Datastructure: CompositionalMultiphaseHybridFVM
 Datastructure: CompositionalMultiphaseReservoir
 ===============================================
 .. include:: ../../coreComponents/schema/docs/CompositionalMultiphaseReservoir_other.rst
+
+
+.. _DATASTRUCTURE_CompositionalMultiphaseReservoirPoromechanics:
+
+Datastructure: CompositionalMultiphaseReservoirPoromechanics
+============================================================
+.. include:: ../../coreComponents/schema/docs/CompositionalMultiphaseReservoirPoromechanics_other.rst
+
+
+.. _DATASTRUCTURE_CompositionalMultiphaseReservoirPoromechanicsInitialization:
+
+Datastructure: CompositionalMultiphaseReservoirPoromechanicsInitialization
+==========================================================================
+.. include:: ../../coreComponents/schema/docs/CompositionalMultiphaseReservoirPoromechanicsInitialization_other.rst
 
 
 .. _DATASTRUCTURE_CompositionalMultiphaseStatistics:
@@ -2359,6 +2422,20 @@ Datastructure: SinglePhaseReservoir
 .. include:: ../../coreComponents/schema/docs/SinglePhaseReservoir_other.rst
 
 
+.. _DATASTRUCTURE_SinglePhaseReservoirPoromechanics:
+
+Datastructure: SinglePhaseReservoirPoromechanics
+================================================
+.. include:: ../../coreComponents/schema/docs/SinglePhaseReservoirPoromechanics_other.rst
+
+
+.. _DATASTRUCTURE_SinglePhaseReservoirPoromechanicsInitialization:
+
+Datastructure: SinglePhaseReservoirPoromechanicsInitialization
+==============================================================
+.. include:: ../../coreComponents/schema/docs/SinglePhaseReservoirPoromechanicsInitialization_other.rst
+
+
 .. _DATASTRUCTURE_SinglePhaseStatistics:
 
 Datastructure: SinglePhaseStatistics
@@ -2581,6 +2658,13 @@ Datastructure: VanGenuchtenBakerRelativePermeability
 Datastructure: VanGenuchtenCapillaryPressure
 ============================================
 .. include:: ../../coreComponents/schema/docs/VanGenuchtenCapillaryPressure_other.rst
+
+
+.. _DATASTRUCTURE_VanGenuchtenStone2RelativePermeability:
+
+Datastructure: VanGenuchtenStone2RelativePermeability
+=====================================================
+.. include:: ../../coreComponents/schema/docs/VanGenuchtenStone2RelativePermeability_other.rst
 
 
 .. _DATASTRUCTURE_ViscoDruckerPrager:
