@@ -44,7 +44,7 @@ void CompositionalProperties::computeMolarDensity( integer const numComps,
                                                    real64 & molarDensity )
 {
 
-  real64 vEos = MultiFluidConstants::gasConstant * temperature * compressibilityFactor / pressure;
+  real64 vEos = constants::gasConstant * temperature * compressibilityFactor / pressure;
   real64 vCorrected = vEos;
 
   for( integer ic = 0; ic < numComps; ++ic )
