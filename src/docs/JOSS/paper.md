@@ -59,36 +59,41 @@ bibliography: paper.bib
 
 # Summary
 
-GEOS is an open-source simulation framework focused on implementing tightly-coupled multi-physics problems with an emphasis subsurface reservoir applications.
-The C++ infrastructure of GEOS provides facilities to assist in the implementation of constraint equations such as a discrete mesh data structure, MPI communications tools, degree-of-freedom management, IO facilities, etc.
-The performance portability strategy applies LLNL's suite of portability tools RAJA[@Beckingsale:2019], CHAI[@CHAI:2023], and Umpire[@Beckingsale:2020].
-Through this strategy GEOS has been successfully run on platforms ranging from GPU-based Exa-scale systems down to CPU-based laptops.
-The code provides implementations for a number of target applications, including, carbon sequestration, geothermal energy, hydrogen storage, and similar systems.
-The Python interface of GEOS allows for the integration of the computational simulation capabilities in GEOS into complex python workflows involving other tools.
+GEOS is a simulation framework focused on implementing tightly-coupled multi-physics problems with an initial emphasis subsurface reservoir applications.
+Specifically, GEOS provides implementations for studying carbon sequestration, geothermal energy, hydrogen storage, and similar problems, and allows developers to easily extend or add new formulations to the suite of capabilities.
+The unique aspect of GEOS that differentiates it from existing reservoir simulators is the ability to provide tightly-coupled compositional flow, poromechanics, faults and fractures, and thermal effects.
 
 # Statement of need
 
-`Gala` is an Astropy-affiliated Python package for galactic dynamics. Python
-enables wrapping low-level languages (e.g., C) for speed without losing
-flexibility or ease-of-use in the user-interface. The API for `Gala` was
-designed to provide a class-based and user-friendly interface to fast (C or
-Cython-optimized) implementations of common operations such as gravitational
-potential and force evaluation, orbit integration, dynamical transformations,
-and chaos indicators for nonlinear dynamics. `Gala` also relies heavily on and
-interfaces well with the implementations of physical units and astronomical
-coordinate systems in the `Astropy` package [@astropy] (`astropy.units` and
-`astropy.coordinates`).
-
-`Gala` was designed to be used by both astronomical researchers and by
-students in courses on gravitational dynamics or astronomy. It has already been
-used in a number of scientific publications [@Pearson:2017] and has also been
-used in graduate courses on Galactic dynamics to, e.g., provide interactive
-visualizations of textbook material [@Binney:2008]. The combination of speed,
-design, and support for Astropy functionality in `Gala` will enable exciting
-scientific explorations of forthcoming data releases from the *Gaia* mission
-[@gaia] by students and experts alike.
+The increasing threat of climate change has resulted in an increased focus on mitigating carbon emissions into the atmosphere.
+Carbon Capture and Storage (CCS) of generated CO2 in subsurface reservoirs and saline aquifers is one of the most important technologies required to meet global climate goals. 
+Given the 2050 net-zero GHG goals, CO2 storage capacities required to offset emissions is orders of magnitude greater than current levels.(reference needed)
+One factor in the evaluation of CO2 storage sites are the risks associated with the injection of liquefied CO2 in the subsurface.
+GEOS seeks to provide the community with an open-source tool that is capable of simulating the complex coupled physics that occurs when liquefied CO2 is injected into a subsurface reservoir. 
+Thus, GEOS is a freely available tool that may be used to evaluate reservoir integrity through various failure mechanisms such as caprock failure, fault leakage, and wellbore failure.
+Additionally GEOS provides the potential to estimate seismic events induced by CO2 injection.
 
 # Infrastructure Components 
+
+The computational core of GEOS is written in c++17, and includes a Python3 interface that allows for the integration of the simulation capabilities into complex python workflows 
+The c++ infrastructure provides components to isolate the domain science developer from the majority of common computer science tasks. 
+The components of the infrastructure includes a data hierarchy, a discrete mesh data structure, a physics package interface, MPI communications tools, degree-of-freedom management, IO facilities, etc.
+The data repository defines a `Wrapper` class to hold anything from data arrays to arbitrary objects, and a `Group` class 
+The Group class 
+
+The  similar to a standard folder/file hieararchy in that the
+assist in the implementation of methods to solve constraint equations on complex unstructured grids.
+
+
+that incorporate other tools such as machine learning components or geological modeling tools.
+
+
+ such as a discrete mesh data structure, MPI communications tools, degree-of-freedom management, IO facilities, etc.
+
+The performance portability strategy applies LLNL's suite of portability tools RAJA[@Beckingsale:2019], CHAI[@CHAI:2023], and Umpire[@Beckingsale:2020].
+Through this strategy GEOS has been successfully run on platforms ranging from GPU-based Exa-scale systems such as ORNL/Frontier down to CPU-based laptops.
+Additionally GEOS may be executed on HPC cloud resources.
+
 
 Single dollars ($) are required for inline mathematics e.g. $f(x) = e^{\pi/x}$
 
