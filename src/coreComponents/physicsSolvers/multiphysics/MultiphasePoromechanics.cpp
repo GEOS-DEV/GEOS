@@ -345,20 +345,19 @@ void MultiphasePoromechanics< FLOW_SOLVER >::initializePostInitialConditionsPreS
 
   arrayView1d< string const > const & poromechanicsTargetRegionNames =
     this->template getReference< array1d< string > >( SolverBase::viewKeyStruct::targetRegionsString() );
-//  arrayView1d< string const > const & solidMechanicsTargetRegionNames =
-//    solidMechanicsSolver()->template getReference< array1d< string > >( SolverBase::viewKeyStruct::targetRegionsString() );
+  arrayView1d< string const > const & solidMechanicsTargetRegionNames =
+    solidMechanicsSolver()->template getReference< array1d< string > >( SolverBase::viewKeyStruct::targetRegionsString() );
   arrayView1d< string const > const & flowTargetRegionNames =
     flowSolver()->template getReference< array1d< string > >( SolverBase::viewKeyStruct::targetRegionsString() );
   for( integer i = 0; i < poromechanicsTargetRegionNames.size(); ++i )
   {
-// Pavel: disabled to avoid false triggering for well regions
-//    GEOS_THROW_IF( std::find( solidMechanicsTargetRegionNames.begin(), solidMechanicsTargetRegionNames.end(),
-//                              poromechanicsTargetRegionNames[i] )
-//                   == solidMechanicsTargetRegionNames.end(),
-//                   GEOS_FMT( "{} {}: region {} must be a target region of {}",
-//                             getCatalogName(), getDataContext(), poromechanicsTargetRegionNames[i],
-// solidMechanicsSolver()->getDataContext() ),
-//                   InputError );
+    GEOS_THROW_IF( std::find( solidMechanicsTargetRegionNames.begin(), solidMechanicsTargetRegionNames.end(),
+                              poromechanicsTargetRegionNames[i] )
+                   == solidMechanicsTargetRegionNames.end(),
+                   GEOS_FMT( "{} {}: region {} must be a target region of {}",
+                             getCatalogName(), this->getDataContext(), poromechanicsTargetRegionNames[i],
+                             solidMechanicsSolver()->getDataContext() ),
+                   InputError );
     GEOS_THROW_IF( std::find( flowTargetRegionNames.begin(), flowTargetRegionNames.end(), poromechanicsTargetRegionNames[i] )
                    == flowTargetRegionNames.end(),
                    GEOS_FMT( "{} {}: region `{}` must be a target region of `{}`",
