@@ -510,38 +510,6 @@ public:
     return 0;
   }
 
-  /**
-   * @brief Pre-computed term used in the jacobian. Corresponds to
-   * sum_{a=0}^{N-1} gradientAt( q, a ) * interpolation(a)
-   * where "interpolation" is the normalized position (between 0 and 1) 
-   * of the parent support coordinate in the support interval.
-   * @param q The index of the basis function 
-   * @return The precomputed jacobian term 
-   */
-  GEOS_HOST_DEVICE
-  GEOS_FORCE_INLINE
-  constexpr static real64 jacobianTerm( const int q )
-  {
-    switch( q )
-    {
-      case 0:
-	return -8.8333333333333333333;
-      case 1:
-	return 9.2395668237905077753;
-      case 2:
-	return -2.3002489003291568430;
-      case 3: 
-	return 2.0573300485548391922;
-      case 4: 
-	return -0.66331463868285679116;
-      case 5: 
-	return 0.50000000000000000000;
-      default:
-	return 0.0;
-    }
-  }
-
-
   /* UNCRUSTIFY-OFF */
 
   /**

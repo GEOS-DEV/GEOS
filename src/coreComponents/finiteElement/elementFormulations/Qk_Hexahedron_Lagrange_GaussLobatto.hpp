@@ -158,15 +158,15 @@ public:
 
   /**
    * @brief Compute the interpolation coefficients of the q-th quadrature point in a given direction
-   * @param k the index of the interval endpoint (0 or 1) 
    * @param q the index of the quadrature point in 1D
+   * @param k the index of the interval endpoint (0 or 1) 
    */
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
-  constexpr static real64 interpolationCoord( const int k, const int q )
+  constexpr static real64 interpolationCoord( const int q, const int k )
   {
     const real64 alpha = ( GL_BASIS::parentSupportCoord( q ) + 1.0 ) / 2.0;
-    return k == 0 ? ( 1.0 - alpha ) : alpha ;    
+    return k == 0 ? ( 1.0 - alpha ) : alpha;    
   }
 
 
@@ -186,21 +186,6 @@ public:
 
   /**
    * @brief Compute the 1D factor of the coefficient of the jacobian on the q-th quadrature point,
-   * with respect to the k-th interval endpoint (0 or 1), The computation is done for the case where
-   * the position in the basis tensor product of this term is the same as the direction in which 
-   * the gradient is being computed
-   * @param q the index of the quadrature point in 1D
-   * @param k the index of the interval endpoint (0 or 1) 
-   */
-  GEOS_HOST_DEVICE
-  GEOS_FORCE_INLINE
-  constexpr static real64 jacobianParallel( const int q, const int k )
-  {
-    return k == 0 ? GL_BASIS::jacobianTerm( q ) : -GL_BASIS::jacobianTerm( GL_BASIS::numSupportPoints - 1 - q ); 
-  }
-
-  /**
-   * @brief Compute the 1D factor of the coefficient of the jacobian on the q-th quadrature point,
    * with respect to the k-th interval endpoint (0 or 1). The computation depends on the position
    * in the basis tensor product of this term (i, equal to 0, 1 or 2) and on the direction in which
    * the gradient is being computed (dir, from 0 to 2) 
@@ -211,547 +196,554 @@ public:
    */
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
-  constexpr static real64 jacobianCoefficient1D( const int q, const int i, const int k, const int dir )
+constexpr static real64 jacobianCoefficient1D( const int q, const int i, const int k, const int dir )
+{
+  if( i == dir )
   {
-    return i == dir ? jacobianParallel( q, k ) : interpolationCoord( k, q ); 
-  }
-
-  /**
-   * @brief Calculate shape functions values for each support point at a
-   *   quadrature point.
-   * @param q Index of the quadrature point.
-   * @param N An array to pass back the shape function values for each support
-   *   point.
-   */
-  GEOS_HOST_DEVICE
-  GEOS_FORCE_INLINE
-  static void calcN( localIndex const q,
-                     real64 (& N)[numNodes] )
+    return  k== 0 ? - 1.0/2.0 : 1.0/2.0;
+  } 
+  else
   {
-    for( int a=0; a<num3dNodes; ++a )
-    {
-      N[ a ] = 0;
-    }
-    N[ q ] = 1.0;
+    return interpolationCoord( q, k ); 
   }
-
-  /**
-   * @brief Calculate shape functions values for each support point at a
-   *   quadrature point.
-   * @param q Index of the quadrature point.
-   * @param stack Variables allocated on the stack as filled by @ref setupStack.
-   * @param N An array to pass back the shape function values for each support
-   *   point.
-   */
-  GEOS_HOST_DEVICE
-  GEOS_FORCE_INLINE
-  static void calcN( localIndex const q,
-                     StackVariables const & stack,
-                     real64 ( & N )[numNodes] )
-  {
-    GEOS_UNUSED_VAR( stack );
-    return calcN( q, N );
-  }
-
-
-  /**
-   * @brief Calculate the shape functions derivatives wrt the physical
-   *   coordinates.
-   * @param q Index of the quadrature point.
-   * @param X Array containing the coordinates of the mesh support points.
-   * @param gradN Array to contain the shape function derivatives for all
-   *   support points at the coordinates of the quadrature point @p q.
-   * @return The determinant of the parent/physical transformation matrix.
-   */
-  GEOS_HOST_DEVICE
-  static real64 calcGradN( localIndex const q,
-                           real64 const (&X)[numNodes][3],
-                           real64 ( &gradN )[numNodes][3] );
-  /**
-   * @brief Calculate the shape functions derivatives wrt the physical
-   *   coordinates at a single point.
-   * @param[in] coords The parent coordinates at which to evaluate the shape function value
-   * @param[in] X Array containing the coordinates of the support points.
-   * @param[out] gradN Array to contain the shape function derivatives for all
-   *   support points at the coordinates of the quadrature point @p q.
-   * @return The determinant of the parent/physical transformation matrix.
-   */
-  GEOS_HOST_DEVICE
-  static real64 calcGradN( real64 const (&coords)[3],
-                           real64 const (&X)[numNodes][3],
-                           real64 ( &gradN )[numNodes][3] );
-
-  /**
-   * @brief Calculate the shape functions derivatives wrt the physical
-   *   coordinates.
-   * @param q Index of the quadrature point.
-   * @param X Array containing the coordinates of the mesh support points.
-   * @param stack Variables allocated on the stack as filled by @ref setupStack.
-   * @param gradN Array to contain the shape function derivatives for all
-   *   support points at the coordinates of the quadrature point @p q.
-   * @return The determinant of the parent/physical transformation matrix.
-   */
-  GEOS_HOST_DEVICE
-  GEOS_FORCE_INLINE
-  static real64 calcGradN( localIndex const q,
-                           real64 const (&X)[numNodes][3],
-                           StackVariables const & stack,
-                           real64 ( &gradN )[numNodes][3] );
-
-  /**
-   * @brief Calculate the integration weights for a quadrature point.
-   * @param q Index of the quadrature point.
-   * @param X Array containing the coordinates of the support points.
-   * @return The product of the quadrature rule weight and the determinate of
-   *   the parent/physical transformation matrix.
-   */
-  GEOS_HOST_DEVICE
-  static real64 transformedQuadratureWeight( localIndex const q,
-                                             real64 const (&X)[numNodes][3] );
-
-  /**
-   * @brief Calculates the isoparametric "Jacobian" transformation
-   *   matrix/mapping from the parent space to the physical space on a 2D domain (face).
-   * @param qa The 1d quadrature point index in xi0 direction (0,1)
-   * @param qb The 1d quadrature point index in xi1 direction (0,1)
-   * @param X Array containing the coordinates of the mesh support points.
-   * @param J Array to store the Jacobian transformation.
-   */
-  GEOS_HOST_DEVICE
-  static void jacobianTransformation2d( int const qa,
-		                        int const qb,
-                                        real64 const (&X)[4][3],
-                                        real64 ( &J )[3][2] );
-
-
-  /**
-   * @brief Calculates the isoparametric "Jacobian" transformation
-   *   matrix/mapping from the parent space to the physical space.
-   * @param qa The 1d quadrature point index in xi0 direction (0,1)
-   * @param qb The 1d quadrature point index in xi1 direction (0,1)
-   * @param qc The 1d quadrature point index in xi2 direction (0,1)
-   * @param X Array containing the coordinates of the mesh support points.
-   * @param J Array to store the Jacobian transformation.
-   * @return The determinant of the Jacobian transformation matrix.
-   */
-  GEOS_HOST_DEVICE
-  static real64 invJacobianTransformation( int const qa,
-		                                     int const qb,
-					                            int const qc,
-                                           real64 const (&X)[8][3],
-                                           real64 ( & J )[3][3] )
-  {
-    jacobianTransformation( qa, qb, qc, X, J );
-    return LvArray::tensorOps::invert< 3 >( J );
-  }
-
-  /**
-   * @brief Calculates the isoparametric "Jacobian" transformation
-   *   matrix/mapping from the parent space to the physical space.
-   * @param q The quadrature point index
-   * @param X Array containing the coordinates of the mesh support points.
-   * @param J Array to store the Jacobian transformation.
-   * @return The determinant of the Jacobian transformation matrix.
-   */
-  GEOS_HOST_DEVICE
-  static real64 invJacobianTransformation( int const q,
-                                           real64 const (&X)[8][3],
-                                           real64 ( & J )[3][3] )
-  {
-    int qa, qb, qc;
-    GL_BASIS::TensorProduct3D::multiIndex( q, qa, qb, qc );
-    return invJacobianTransformation( qa, qb, qc, X, J );
-  }
-
-
-  /**
-   * @brief Calculate the symmetric gradient of a vector valued support field
-   *   at a quadrature point using the stored inverse of the Jacobian
-   *   transformation matrix.
-   * @param q The quadrature point index
-   * @param invJ The inverse of the Jacobian transformation matrix.
-   * @param var The vector valued support field to apply the gradient
-   *   operator on.
-   * @param grad The symmetric gradient in Voigt notation.
-   */
-  GEOS_HOST_DEVICE
-  static void symmetricGradient( int const q,
-                                 real64 const (&invJ)[3][3],
-                                 real64 const (&var)[numNodes][3],
-                                 real64 ( &grad )[6] );
-
-
-
-  /**
-   * @brief Calculate the gradient of a vector valued support field at a point
-   *   using the stored basis function gradients for all support points.
-   * @param q The quadrature point index
-   * @param invJ The inverse of the Jacobian transformation matrix.
-   * @param var The vector valued support field to apply the gradient
-   *   operator on.
-   * @param grad The gradient.
-   *
-   * More precisely, the operator is defined as:
-   * \f[
-   * grad_{ij}  = \sum_a^{nSupport} \left ( \frac{\partial N_a}{\partial X_j} var_{ai}\right ),
-   * \f]
-   *
-   */
-  GEOS_HOST_DEVICE
-  static void gradient( int const q,
-                        real64 const (&invJ)[3][3],
-                        real64 const (&var)[numNodes][3],
-                        real64 ( &grad )[3][3] );
-
-
-  /**
-   * @brief Inner product of all basis function gradients and a rank-2
-   *   symmetric tensor evaluated at a quadrature point.
-   * @param qa The 1d quadrature point index in xi0 direction (0,1)
-   * @param qb The 1d quadrature point index in xi1 direction (0,1)
-   * @param qc The 1d quadrature point index in xi2 direction (0,1)
-   * @param invJ The inverse of the Jacobian transformation matrix.
-   * @param var The rank-2 symmetric tensor at @p q.
-   * @param R The vector resulting from the tensor contraction.
-   *
-   * More precisely, the operator is defined as:
-   * \f[
-   * R_i = \sum_a^{nSupport} \left( \frac{\partial N_a}{\partial X_j} var_{ij} \right),
-   * \f]
-   * where \f$\frac{\partial N_a}{\partial X_j}\f$ is the basis function gradient,
-   *   \f$var_{ij}\f$ is the rank-2 symmetric tensor.
-   */
-  GEOS_HOST_DEVICE
-  static void plusGradNajAij( int const q,
-                              real64 const (&invJ)[3][3],
-                              real64 const (&var)[6],
-                              real64 ( &R )[numNodes][3] );
-
-
-
-  /**
-   * @brief Calculates the isoparametric "Jacobian" transformation
-   *   matrix/mapping from the parent space to the physical space.
-   * @param qa The 1d quadrature point index in xi0 direction (0,1)
-   * @param qb The 1d quadrature point index in xi1 direction (0,1)
-   * @param qc The 1d quadrature point index in xi2 direction (0,1)
-   * @param X Array containing the coordinates of the mesh support points.
-   * @param J Array to store the Jacobian transformation.
-   */
-  GEOS_HOST_DEVICE
-  static void jacobianTransformation( int const qa,
-		                      int const qb,
-				      int const qc,
-                                      real64 const (&X)[8][3],
-                                      real64 ( &J )[3][3] );
-
-  /**
-   * @brief Calculates the isoparametric "Jacobian" transformation
-   *   matrix/mapping from the parent space to the physical space at a single point.
-   * @param coords The parent coordinates at which to evaluate the shape function value
-   * @param X Array containing the coordinates of the support points.
-   * @param J Array to store the Jacobian transformation.
-   */
-  GEOS_HOST_DEVICE
-  static void jacobianTransformation( real64 const (&coords)[3],
-                                      real64 const (&X)[numNodes][3],
-                                      real64 ( &J )[3][3] );
-  /**
-   * @brief performs a trilinear interpolation to determine the real-world coordinates of a
-   *   vertex
-   * @param[in] alpha Interpolation coefficient in [0,1] for the first coordinate
-   * @param[in] beta Interpolation coefficient in [0,1] for the second coordinate
-   * @param[in] gamma Interpolation coefficient in [0,1] for the third coordinate
-   * @param[in] X Real-world coordinates of the cell corners
-   * @param[out] coords Real-world coordinates of the interpolated point
-   */
-  GEOS_HOST_DEVICE
-  static void
-    trilinearInterp( real64 const alpha,
-                     real64 const beta,
-                     real64 const gamma,
-                     real64 const (&X)[8][3],
-                     real64 ( &coords )[3] );
-
-  /**
-   * @brief computes the real-world coordinates of the support nodes
-   * @param[in] Xmesh Array containing the coordinates of the corners of the mesh element
-   * @param[out] X Array containing the coordinates of the support points.
-   */
-  GEOS_HOST_DEVICE
-  static void
-  computeLocalCoords( real64 const (&Xmesh)[8][3],
-                      real64 const (&X)[numNodes][3] );
-
-  /**
-   * @brief computes the non-zero contributions of the d.o.f. indexd by q to the
-   *   mass matrix M, i.e., the superposition matrix of the shape functions.
-   * @param q The quadrature point index
-   * @param X Array containing the coordinates of the mesh support points.
-   * @return The diagonal mass term associated to q
-   */
-  GEOS_HOST_DEVICE
-  static real64
-  computeMassTerm( localIndex const q,
-                   real64 const (&X)[8][3] );
-
-  /**
-   * @brief computes the non-zero contributions of the d.o.f. indexd by q to the
-   *   damping matrix M, i.e., the superposition matrix of the shape functions
-   *   integrated over a face.
-   * @param q The quadrature point index
-   * @param X Array containing the coordinates of the support points.
-   * @return The diagonal damping term associated to q
-   */
-  GEOS_HOST_DEVICE
-  static real64
-  computeDampingTerm( localIndex const q,
-                      real64 const (&X)[4][3] );
-
-  /**
-   * @brief computes the matrix B, defined as J^{-T}J^{-1}/det(J), where J is the Jacobian matrix,
-   *   at the given Gauss-Lobatto point.
-   * @param qa The 1d quadrature point index in xi0 direction (0,1)
-   * @param qb The 1d quadrature point index in xi1 direction (0,1)
-   * @param qc The 1d quadrature point index in xi2 direction (0,1)
-   * @param X Array containing the coordinates of the support points.
-   * @param J Array to store the Jacobian
-   * @param B Array to store the matrix B, in Voigt notation
-   */
-  GEOS_HOST_DEVICE
-  static void
-    computeBMatrix( int const qa,
-                    int const qb,
-		    int const qc,
-		    real64 const (&X)[8][3],
-                    real64 ( &J )[3][3],
-                    real64 ( &B )[6] );
-
-  /**
-   * @brief computes the non-zero contributions of the d.o.f. indexed by q to the
-   *   stiffness matrix R, i.e., the superposition matrix of first derivatives
-   *   of the shape functions.
-   * @param q The quadrature point index
-   * @param X Array containing the coordinates of the support points.
-   * @param func Callback function accepting three parameters: i, j and R_ij
-   */
-  template< typename FUNC >
-  GEOS_HOST_DEVICE
-  static void
-  computeStiffnessTerm( localIndex const q,
-                        real64 const (&X)[8][3],
-                        FUNC && func );
-
-  /**
-   * @brief computes the matrix B in the case of quasi-stiffness (e.g. for pseudo-acoustic case), defined as J^{-T}A_xy J^{-1}/det(J), where
-   * J is the Jacobian matrix, and A_xy is a zero matrix except on A_xy(1,1) = 1 and A_xy(2,2) = 1.
-   * @param qa The 1d quadrature point index in xi0 direction (0,1)
-   * @param qb The 1d quadrature point index in xi1 direction (0,1)
-   * @param qc The 1d quadrature point index in xi2 direction (0,1)
-   * @param X Array containing the coordinates of the support points.
-   * @param J Array to store the Jacobian
-   * @param B Array to store the matrix B, in Voigt notation
-   */
-  GEOS_HOST_DEVICE
-  static void
-    computeBxyMatrix( int const qa,
-		      int const qb,
-		      int const qc, 
-                      real64 const (&X)[8][3],
-                      real64 ( &J )[3][3],
-                      real64 ( &B )[6] );
-
-  /**
-   * @brief computes the non-zero contributions of the d.o.f. indexed by q to the
-   *   partial-stiffness matrix R, i.e., the superposition matrix of first derivatives in x and y
-   *   of the shape functions. Warning, the matrix B is obtained by computeBxyMatrix instead of usual one.
-   * @param q The quadrature point index
-   * @param X Array containing the coordinates of the support points.
-   * @param func Callback function accepting three parameters: i, j and R_ij
-   */
-  template< typename FUNC >
-  GEOS_HOST_DEVICE
-  static void
-  computeStiffnessxyTerm( localIndex const q,
-                          real64 const (&X)[8][3],
-                          FUNC && func );
-
-  /**
-   * @brief computes the matrix B in the case of quasi-stiffness (e.g. for pseudo-acoustic case), defined as J^{-T}A_z J^{-1}/det(J), where
-   * J is the Jacobian matrix, and A_z is a zero matrix except on A_z(3,3) = 1.
-   * @param qa The 1d quadrature point index in xi0 direction (0,1)
-   * @param qb The 1d quadrature point index in xi1 direction (0,1)
-   * @param qc The 1d quadrature point index in xi2 direction (0,1)
-   * @param X Array containing the coordinates of the support points.
-   * @param J Array to store the Jacobian
-   * @param B Array to store the matrix B, in Voigt notation
-   */
-  GEOS_HOST_DEVICE
-  static void
-    computeBzMatrix( int const qa,
-		     int const qb,
-		     int const qc, 
-                     real64 const (&X)[8][3],
-                     real64 ( &J )[3][3],
-                     real64 ( &B )[6] );
-
-  /**
-   * @brief computes the non-zero contributions of the d.o.f. indexed by q to the
-   *   partial-stiffness matrix R, i.e., the superposition matrix of first derivatives in z only
-   *   of the shape functions. Warning, the matrix B is obtained by computeBzMatrix instead of usual one.
-   * @param q The quadrature point index
-   * @param X Array containing the coordinates of the support points.
-   * @param func Callback function accepting three parameters: i, j and R_ij
-   */
-  template< typename FUNC >
-  GEOS_HOST_DEVICE
-  static void
-  computeStiffnesszTerm( localIndex const q,
-                         real64 const (&X)[8][3],
-                         FUNC && func );
+}
 
 /**
- * @brief Computes the "Grad(Phi)*B*Grad(Phi)" coefficient of the stiffness term. The matrix B must be provided and Phi denotes a basis
- * function.
- * @param qa The 1d quadrature point index in xi0 direction (0,1)
- * @param qb The 1d quadrature point index in xi1 direction (0,1)
- * @param qc The 1d quadrature point index in xi2 direction (0,1)
- * @param B Array of the B matrix, in Voigt notation
- * @param func Callback function accepting three parameters: i, j and R_ij
- */
-  template< typename FUNC >
-  GEOS_HOST_DEVICE
-  static void
-  computeGradPhiBGradPhi( int const qa, 
-		                    int const qb, 
-			                 int const qc,  
-                          real64 const (&B)[6],
-                          FUNC && func );
+* @brief Calculate shape functions values for each support point at a
+*   quadrature point.
+* @param q Index of the quadrature point.
+* @param N An array to pass back the shape function values for each support
+*   point.
+*/
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
+static void calcN( localIndex const q,
+                  real64 (& N)[numNodes] )
+{
+ for( int a=0; a<num3dNodes; ++a )
+ {
+   N[ a ] = 0;
+ }
+ N[ q ] = 1.0;
+}
 
-  /**
-   * @brief computes the non-zero contributions of the d.o.f. indexd by q to the
-   *   x-part of the first order stiffness matrix R, i.e., the matrix composed of the
-   *   the product of first derivatives of one shape function i and the shape function j itself.
-   * @param q The quadrature point index
-   * @param X Array containing the coordinates of the support points.
-   * @param func Callback function accepting three parameters: i, j and R_ij
-   */
-  template< typename FUNC >
-  GEOS_HOST_DEVICE
-  static void
-  computeFirstOrderStiffnessTermX( localIndex const q,
+/**
+* @brief Calculate shape functions values for each support point at a
+*   quadrature point.
+* @param q Index of the quadrature point.
+* @param stack Variables allocated on the stack as filled by @ref setupStack.
+* @param N An array to pass back the shape function values for each support
+*   point.
+*/
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
+static void calcN( localIndex const q,
+                  StackVariables const & stack,
+                  real64 ( & N )[numNodes] )
+{
+ GEOS_UNUSED_VAR( stack );
+ return calcN( q, N );
+}
+
+
+/**
+* @brief Calculate the shape functions derivatives wrt the physical
+*   coordinates.
+* @param q Index of the quadrature point.
+* @param X Array containing the coordinates of the mesh support points.
+* @param gradN Array to contain the shape function derivatives for all
+*   support points at the coordinates of the quadrature point @p q.
+* @return The determinant of the parent/physical transformation matrix.
+*/
+GEOS_HOST_DEVICE
+static real64 calcGradN( localIndex const q,
+                        real64 const (&X)[numNodes][3],
+                        real64 ( &gradN )[numNodes][3] );
+/**
+* @brief Calculate the shape functions derivatives wrt the physical
+*   coordinates at a single point.
+* @param[in] coords The parent coordinates at which to evaluate the shape function value
+* @param[in] X Array containing the coordinates of the support points.
+* @param[out] gradN Array to contain the shape function derivatives for all
+*   support points at the coordinates of the quadrature point @p q.
+* @return The determinant of the parent/physical transformation matrix.
+*/
+GEOS_HOST_DEVICE
+static real64 calcGradN( real64 const (&coords)[3],
+                        real64 const (&X)[numNodes][3],
+                        real64 ( &gradN )[numNodes][3] );
+
+/**
+* @brief Calculate the shape functions derivatives wrt the physical
+*   coordinates.
+* @param q Index of the quadrature point.
+* @param X Array containing the coordinates of the mesh support points.
+* @param stack Variables allocated on the stack as filled by @ref setupStack.
+* @param gradN Array to contain the shape function derivatives for all
+*   support points at the coordinates of the quadrature point @p q.
+* @return The determinant of the parent/physical transformation matrix.
+*/
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
+static real64 calcGradN( localIndex const q,
+                        real64 const (&X)[numNodes][3],
+                        StackVariables const & stack,
+                        real64 ( &gradN )[numNodes][3] );
+
+/**
+* @brief Calculate the integration weights for a quadrature point.
+* @param q Index of the quadrature point.
+* @param X Array containing the coordinates of the support points.
+* @return The product of the quadrature rule weight and the determinate of
+*   the parent/physical transformation matrix.
+*/
+GEOS_HOST_DEVICE
+static real64 transformedQuadratureWeight( localIndex const q,
+                                          real64 const (&X)[numNodes][3] );
+
+/**
+* @brief Calculates the isoparametric "Jacobian" transformation
+*   matrix/mapping from the parent space to the physical space on a 2D domain (face).
+* @param qa The 1d quadrature point index in xi0 direction (0,1)
+* @param qb The 1d quadrature point index in xi1 direction (0,1)
+* @param X Array containing the coordinates of the mesh support points.
+* @param J Array to store the Jacobian transformation.
+*/
+GEOS_HOST_DEVICE
+static void jacobianTransformation2d( int const qa,
+                           int const qb,
+                                     real64 const (&X)[4][3],
+                                     real64 ( &J )[3][2] );
+
+
+/**
+* @brief Calculates the isoparametric "Jacobian" transformation
+*   matrix/mapping from the parent space to the physical space.
+* @param qa The 1d quadrature point index in xi0 direction (0,1)
+* @param qb The 1d quadrature point index in xi1 direction (0,1)
+* @param qc The 1d quadrature point index in xi2 direction (0,1)
+* @param X Array containing the coordinates of the mesh support points.
+* @param J Array to store the Jacobian transformation.
+* @return The determinant of the Jacobian transformation matrix.
+*/
+GEOS_HOST_DEVICE
+static real64 invJacobianTransformation( int const qa,
+                                        int const qb,
+                                        int const qc,
+                                        real64 const (&X)[8][3],
+                                        real64 ( & J )[3][3] )
+{
+ jacobianTransformation( qa, qb, qc, X, J );
+ return LvArray::tensorOps::invert< 3 >( J );
+}
+
+/**
+* @brief Calculates the isoparametric "Jacobian" transformation
+*   matrix/mapping from the parent space to the physical space.
+* @param q The quadrature point index
+* @param X Array containing the coordinates of the mesh support points.
+* @param J Array to store the Jacobian transformation.
+* @return The determinant of the Jacobian transformation matrix.
+*/
+GEOS_HOST_DEVICE
+static real64 invJacobianTransformation( int const q,
+                                        real64 const (&X)[8][3],
+                                        real64 ( & J )[3][3] )
+{
+ int qa, qb, qc;
+ GL_BASIS::TensorProduct3D::multiIndex( q, qa, qb, qc );
+ return invJacobianTransformation( qa, qb, qc, X, J );
+}
+
+
+/**
+* @brief Calculate the symmetric gradient of a vector valued support field
+*   at a quadrature point using the stored inverse of the Jacobian
+*   transformation matrix.
+* @param q The quadrature point index
+* @param invJ The inverse of the Jacobian transformation matrix.
+* @param var The vector valued support field to apply the gradient
+*   operator on.
+* @param grad The symmetric gradient in Voigt notation.
+*/
+GEOS_HOST_DEVICE
+static void symmetricGradient( int const q,
+                              real64 const (&invJ)[3][3],
+                              real64 const (&var)[numNodes][3],
+                              real64 ( &grad )[6] );
+
+
+
+/**
+* @brief Calculate the gradient of a vector valued support field at a point
+*   using the stored basis function gradients for all support points.
+* @param q The quadrature point index
+* @param invJ The inverse of the Jacobian transformation matrix.
+* @param var The vector valued support field to apply the gradient
+*   operator on.
+* @param grad The gradient.
+*
+* More precisely, the operator is defined as:
+* \f[
+* grad_{ij}  = \sum_a^{nSupport} \left ( \frac{\partial N_a}{\partial X_j} var_{ai}\right ),
+* \f]
+*
+*/
+GEOS_HOST_DEVICE
+static void gradient( int const q,
+                     real64 const (&invJ)[3][3],
+                     real64 const (&var)[numNodes][3],
+                     real64 ( &grad )[3][3] );
+
+
+/**
+* @brief Inner product of all basis function gradients and a rank-2
+*   symmetric tensor evaluated at a quadrature point.
+* @param qa The 1d quadrature point index in xi0 direction (0,1)
+* @param qb The 1d quadrature point index in xi1 direction (0,1)
+* @param qc The 1d quadrature point index in xi2 direction (0,1)
+* @param invJ The inverse of the Jacobian transformation matrix.
+* @param var The rank-2 symmetric tensor at @p q.
+* @param R The vector resulting from the tensor contraction.
+*
+* More precisely, the operator is defined as:
+* \f[
+* R_i = \sum_a^{nSupport} \left( \frac{\partial N_a}{\partial X_j} var_{ij} \right),
+* \f]
+* where \f$\frac{\partial N_a}{\partial X_j}\f$ is the basis function gradient,
+*   \f$var_{ij}\f$ is the rank-2 symmetric tensor.
+*/
+GEOS_HOST_DEVICE
+static void plusGradNajAij( int const q,
+                           real64 const (&invJ)[3][3],
+                           real64 const (&var)[6],
+                           real64 ( &R )[numNodes][3] );
+
+
+
+/**
+* @brief Calculates the isoparametric "Jacobian" transformation
+*   matrix/mapping from the parent space to the physical space.
+* @param qa The 1d quadrature point index in xi0 direction (0,1)
+* @param qb The 1d quadrature point index in xi1 direction (0,1)
+* @param qc The 1d quadrature point index in xi2 direction (0,1)
+* @param X Array containing the coordinates of the mesh support points.
+* @param J Array to store the Jacobian transformation.
+*/
+GEOS_HOST_DEVICE
+static void jacobianTransformation( int const qa,
+                                   int const qb,
+                                   int const qc,
                                    real64 const (&X)[8][3],
-                                   FUNC && func );
-  /**
-   * @brief computes the non-zero contributions of the d.o.f. indexd by q to the
-   *   y-part of the first order stiffness matrix R, i.e., the matrix composed of the
-   *   the product of first derivatives of one shape function i and the shape function j itself.
-   * @param q The quadrature point index
-   * @param X Array containing the coordinates of the support points.
-   * @param func Callback function accepting three parameters: i, j and R_ij
-   */
-  template< typename FUNC >
-  GEOS_HOST_DEVICE
-  static void
-  computeFirstOrderStiffnessTermY( localIndex const q,
-                                   real64 const (&X)[8][3],
-                                   FUNC && func );
-  /**
-   * @brief computes the non-zero contributions of the d.o.f. indexd by q to the
-   *   z-part of the first order stiffness matrix R, i.e., the matrix composed of the
-   *   the product of first derivatives of one shape function i and the shape function j itself.
-   * @param q The quadrature point index
-   * @param X Array containing the coordinates of the support points.
-   * @param func Callback function accepting three parameters: i, j and R_ij
-   */
-  template< typename FUNC >
-  GEOS_HOST_DEVICE
-  static void
-  computeFirstOrderStiffnessTermZ( localIndex const q,
-                                   real64 const (&X)[8][3],
-                                   FUNC && func );
-  /**
-   * @brief computes the non-zero contributions of the d.o.f. indexd by q to the
-   *   stiffness matrix R for the elastic case, i.e., the superposition matrix of first derivatives
-   *   of the shape functions. This callback returns the two indices indices i and j of matrix R and the value
-   *   R[i][j] associated to those two indices.
-   * @param q The quadrature point index
-   * @param X Array containing the coordinates of the support points.
-   * @param stiffnessVal Callback function accepting three parameters: i, j and R_ij
-   */
-  template< typename FUNC >
-  GEOS_HOST_DEVICE
-  static void
-  computeFirstOrderStiffnessTerm( localIndex const q,
-                                  real64 const (&X)[8][3],
-                                  FUNC && stiffnessVal );
+                                   real64 ( &J )[3][3] );
+
+/**
+* @brief Calculates the isoparametric "Jacobian" transformation
+*   matrix/mapping from the parent space to the physical space at a single point.
+* @param coords The parent coordinates at which to evaluate the shape function value
+* @param X Array containing the coordinates of the support points.
+* @param J Array to store the Jacobian transformation.
+*/
+GEOS_HOST_DEVICE
+static void jacobianTransformation( real64 const (&coords)[3],
+                                   real64 const (&X)[numNodes][3],
+                                   real64 ( &J )[3][3] );
+/**
+* @brief performs a trilinear interpolation to determine the real-world coordinates of a
+*   vertex
+* @param[in] alpha Interpolation coefficient in [0,1] for the first coordinate
+* @param[in] beta Interpolation coefficient in [0,1] for the second coordinate
+* @param[in] gamma Interpolation coefficient in [0,1] for the third coordinate
+* @param[in] X Real-world coordinates of the cell corners
+* @param[out] coords Real-world coordinates of the interpolated point
+*/
+GEOS_HOST_DEVICE
+static void
+ trilinearInterp( real64 const alpha,
+                  real64 const beta,
+                  real64 const gamma,
+                  real64 const (&X)[8][3],
+                  real64 ( &coords )[3] );
+
+/**
+* @brief computes the real-world coordinates of the support nodes
+* @param[in] Xmesh Array containing the coordinates of the corners of the mesh element
+* @param[out] X Array containing the coordinates of the support points.
+*/
+GEOS_HOST_DEVICE
+static void
+computeLocalCoords( real64 const (&Xmesh)[8][3],
+                   real64 const (&X)[numNodes][3] );
+
+/**
+* @brief computes the non-zero contributions of the d.o.f. indexd by q to the
+*   mass matrix M, i.e., the superposition matrix of the shape functions.
+* @param q The quadrature point index
+* @param X Array containing the coordinates of the mesh support points.
+* @return The diagonal mass term associated to q
+*/
+GEOS_HOST_DEVICE
+static real64
+computeMassTerm( localIndex const q,
+                real64 const (&X)[8][3] );
+
+/**
+* @brief computes the non-zero contributions of the d.o.f. indexd by q to the
+*   damping matrix M, i.e., the superposition matrix of the shape functions
+*   integrated over a face.
+* @param q The quadrature point index
+* @param X Array containing the coordinates of the support points.
+* @return The diagonal damping term associated to q
+*/
+GEOS_HOST_DEVICE
+static real64
+computeDampingTerm( localIndex const q,
+                   real64 const (&X)[4][3] );
+
+/**
+* @brief computes the matrix B, defined as J^{-T}J^{-1}/det(J), where J is the Jacobian matrix,
+*   at the given Gauss-Lobatto point.
+* @param qa The 1d quadrature point index in xi0 direction (0,1)
+* @param qb The 1d quadrature point index in xi1 direction (0,1)
+* @param qc The 1d quadrature point index in xi2 direction (0,1)
+* @param X Array containing the coordinates of the support points.
+* @param J Array to store the Jacobian
+* @param B Array to store the matrix B, in Voigt notation
+*/
+GEOS_HOST_DEVICE
+static void
+ computeBMatrix( int const qa,
+                 int const qb,
+       int const qc,
+       real64 const (&X)[8][3],
+                 real64 ( &J )[3][3],
+                 real64 ( &B )[6] );
+
+/**
+* @brief computes the non-zero contributions of the d.o.f. indexed by q to the
+*   stiffness matrix R, i.e., the superposition matrix of first derivatives
+*   of the shape functions.
+* @param q The quadrature point index
+* @param X Array containing the coordinates of the support points.
+* @param func Callback function accepting three parameters: i, j and R_ij
+*/
+template< typename FUNC >
+GEOS_HOST_DEVICE
+static void
+computeStiffnessTerm( localIndex const q,
+                     real64 const (&X)[8][3],
+                     FUNC && func );
+
+/**
+* @brief computes the matrix B in the case of quasi-stiffness (e.g. for pseudo-acoustic case), defined as J^{-T}A_xy J^{-1}/det(J), where
+* J is the Jacobian matrix, and A_xy is a zero matrix except on A_xy(1,1) = 1 and A_xy(2,2) = 1.
+* @param qa The 1d quadrature point index in xi0 direction (0,1)
+* @param qb The 1d quadrature point index in xi1 direction (0,1)
+* @param qc The 1d quadrature point index in xi2 direction (0,1)
+* @param X Array containing the coordinates of the support points.
+* @param J Array to store the Jacobian
+* @param B Array to store the matrix B, in Voigt notation
+*/
+GEOS_HOST_DEVICE
+static void
+ computeBxyMatrix( int const qa,
+         int const qb,
+         int const qc, 
+                   real64 const (&X)[8][3],
+                   real64 ( &J )[3][3],
+                   real64 ( &B )[6] );
+
+/**
+* @brief computes the non-zero contributions of the d.o.f. indexed by q to the
+*   partial-stiffness matrix R, i.e., the superposition matrix of first derivatives in x and y
+*   of the shape functions. Warning, the matrix B is obtained by computeBxyMatrix instead of usual one.
+* @param q The quadrature point index
+* @param X Array containing the coordinates of the support points.
+* @param func Callback function accepting three parameters: i, j and R_ij
+*/
+template< typename FUNC >
+GEOS_HOST_DEVICE
+static void
+computeStiffnessxyTerm( localIndex const q,
+                       real64 const (&X)[8][3],
+                       FUNC && func );
+
+/**
+* @brief computes the matrix B in the case of quasi-stiffness (e.g. for pseudo-acoustic case), defined as J^{-T}A_z J^{-1}/det(J), where
+* J is the Jacobian matrix, and A_z is a zero matrix except on A_z(3,3) = 1.
+* @param qa The 1d quadrature point index in xi0 direction (0,1)
+* @param qb The 1d quadrature point index in xi1 direction (0,1)
+* @param qc The 1d quadrature point index in xi2 direction (0,1)
+* @param X Array containing the coordinates of the support points.
+* @param J Array to store the Jacobian
+* @param B Array to store the matrix B, in Voigt notation
+*/
+GEOS_HOST_DEVICE
+static void
+ computeBzMatrix( int const qa,
+        int const qb,
+        int const qc, 
+                  real64 const (&X)[8][3],
+                  real64 ( &J )[3][3],
+                  real64 ( &B )[6] );
+
+/**
+* @brief computes the non-zero contributions of the d.o.f. indexed by q to the
+*   partial-stiffness matrix R, i.e., the superposition matrix of first derivatives in z only
+*   of the shape functions. Warning, the matrix B is obtained by computeBzMatrix instead of usual one.
+* @param q The quadrature point index
+* @param X Array containing the coordinates of the support points.
+* @param func Callback function accepting three parameters: i, j and R_ij
+*/
+template< typename FUNC >
+GEOS_HOST_DEVICE
+static void
+computeStiffnesszTerm( localIndex const q,
+                      real64 const (&X)[8][3],
+                      FUNC && func );
+
+/**
+* @brief Computes the "Grad(Phi)*B*Grad(Phi)" coefficient of the stiffness term. The matrix B must be provided and Phi denotes a basis
+* function.
+* @param qa The 1d quadrature point index in xi0 direction (0,1)
+* @param qb The 1d quadrature point index in xi1 direction (0,1)
+* @param qc The 1d quadrature point index in xi2 direction (0,1)
+* @param B Array of the B matrix, in Voigt notation
+* @param func Callback function accepting three parameters: i, j and R_ij
+*/
+template< typename FUNC >
+GEOS_HOST_DEVICE
+static void
+computeGradPhiBGradPhi( int const qa, 
+                       int const qb, 
+                       int const qc,  
+                       real64 const (&B)[6],
+                       FUNC && func );
+
+/**
+* @brief computes the non-zero contributions of the d.o.f. indexd by q to the
+*   x-part of the first order stiffness matrix R, i.e., the matrix composed of the
+*   the product of first derivatives of one shape function i and the shape function j itself.
+* @param q The quadrature point index
+* @param X Array containing the coordinates of the support points.
+* @param func Callback function accepting three parameters: i, j and R_ij
+*/
+template< typename FUNC >
+GEOS_HOST_DEVICE
+static void
+computeFirstOrderStiffnessTermX( localIndex const q,
+                                real64 const (&X)[8][3],
+                                FUNC && func );
+/**
+* @brief computes the non-zero contributions of the d.o.f. indexd by q to the
+*   y-part of the first order stiffness matrix R, i.e., the matrix composed of the
+*   the product of first derivatives of one shape function i and the shape function j itself.
+* @param q The quadrature point index
+* @param X Array containing the coordinates of the support points.
+* @param func Callback function accepting three parameters: i, j and R_ij
+*/
+template< typename FUNC >
+GEOS_HOST_DEVICE
+static void
+computeFirstOrderStiffnessTermY( localIndex const q,
+                                real64 const (&X)[8][3],
+                                FUNC && func );
+/**
+* @brief computes the non-zero contributions of the d.o.f. indexd by q to the
+*   z-part of the first order stiffness matrix R, i.e., the matrix composed of the
+*   the product of first derivatives of one shape function i and the shape function j itself.
+* @param q The quadrature point index
+* @param X Array containing the coordinates of the support points.
+* @param func Callback function accepting three parameters: i, j and R_ij
+*/
+template< typename FUNC >
+GEOS_HOST_DEVICE
+static void
+computeFirstOrderStiffnessTermZ( localIndex const q,
+                                real64 const (&X)[8][3],
+                                FUNC && func );
+/**
+* @brief computes the non-zero contributions of the d.o.f. indexd by q to the
+*   stiffness matrix R for the elastic case, i.e., the superposition matrix of first derivatives
+*   of the shape functions. This callback returns the two indices indices i and j of matrix R and the value
+*   R[i][j] associated to those two indices.
+* @param q The quadrature point index
+* @param X Array containing the coordinates of the support points.
+* @param stiffnessVal Callback function accepting three parameters: i, j and R_ij
+*/
+template< typename FUNC >
+GEOS_HOST_DEVICE
+static void
+computeFirstOrderStiffnessTerm( localIndex const q,
+                               real64 const (&X)[8][3],
+                               FUNC && stiffnessVal );
 
 
-  /**
-   * @brief Apply a Jacobian transformation matrix from the parent space to the
-   *   physical space on the parent shape function derivatives, producing the
-   *   shape function derivatives in the physical space.
-   * @param qa The quadrature point index
-   * @param invJ The Jacobian transformation from parent->physical space.
-   * @param gradN Array to contain the shape function derivatives for all
-   *   support points at the coordinates of the quadrature point @p q.
-   */
-  GEOS_HOST_DEVICE
-  static void
-    applyTransformationToParentGradients( int const q,
-                                          real64 const ( &invJ )[3][3],
-                                          real64 ( &gradN )[numNodes][3] );
+/**
+* @brief Apply a Jacobian transformation matrix from the parent space to the
+*   physical space on the parent shape function derivatives, producing the
+*   shape function derivatives in the physical space.
+* @param qa The quadrature point index
+* @param invJ The Jacobian transformation from parent->physical space.
+* @param gradN Array to contain the shape function derivatives for all
+*   support points at the coordinates of the quadrature point @p q.
+*/
+GEOS_HOST_DEVICE
+static void
+ applyTransformationToParentGradients( int const q,
+                                       real64 const ( &invJ )[3][3],
+                                       real64 ( &gradN )[numNodes][3] );
 
-  /**
-   * @brief Apply a Jacobian transformation matrix from the parent space to the
-   *   physical space on the parent shape function derivatives, producing the
-   *   shape function derivatives in the physical space at a single point.
-   * @param coords The parent coordinates at which to apply the transformation
-   * @param invJ The Jacobian transformation from parent->physical space.
-   * @param gradN Array to contain the shape function derivatives for all
-   *   support points at the coordinates of the quadrature point @p q.
-   */
-  GEOS_HOST_DEVICE
-  static void
-    applyTransformationToParentGradients( real64 const (&coords)[3],
-                                          real64 const ( &invJ )[3][3],
-                                          real64 ( &gradN )[numNodes][3] );
+/**
+* @brief Apply a Jacobian transformation matrix from the parent space to the
+*   physical space on the parent shape function derivatives, producing the
+*   shape function derivatives in the physical space at a single point.
+* @param coords The parent coordinates at which to apply the transformation
+* @param invJ The Jacobian transformation from parent->physical space.
+* @param gradN Array to contain the shape function derivatives for all
+*   support points at the coordinates of the quadrature point @p q.
+*/
+GEOS_HOST_DEVICE
+static void
+ applyTransformationToParentGradients( real64 const (&coords)[3],
+                                       real64 const ( &invJ )[3][3],
+                                       real64 ( &gradN )[numNodes][3] );
 
 
 private:
-  /// The length of one dimension of the parent element.
-  constexpr static real64 parentLength = GL_BASIS::parentSupportCoord( 1 ) - GL_BASIS::parentSupportCoord( 0 );
+/// The length of one dimension of the parent element.
+constexpr static real64 parentLength = GL_BASIS::parentSupportCoord( 1 ) - GL_BASIS::parentSupportCoord( 0 );
 
-  /// The volume of the element in the parent configuration.
-  constexpr static real64 parentVolume = parentLength*parentLength*parentLength;
-  /**
-   * @brief Applies a function inside a generic loop in over the tensor product
-   *   indices.
-   * @tparam FUNC The type of function to call within the support loop.
-   * @tparam PARAMS The parameter pack types to pass through to @p FUNC.
-   * @param coords The parent coordinates at which to evaluate the shape function value
-   * @param func The function to call within the support loop.
-   * @param params The parameters to pass to @p func.
-   */
-  template< typename FUNC, typename ... PARAMS >
-  GEOS_HOST_DEVICE
-  static void supportLoop( real64 const (&coords)[3],
-                           FUNC && func,
-                           PARAMS &&... params );
-  /**
-   * @brief Applies a function inside a generic loop in over the tensor product
-   *   indices.
-   * @tparam FUNC The type of function to call within the support loop.
-   * @tparam PARAMS The parameter pack types to pass through to @p FUNC.
-   * @param q The quadrature node at which to evaluate the shape function value
-   * @param func The function to call within the support loop.
-   * @param params The parameters to pass to @p func.
-   */
-  template< typename FUNC, typename ... PARAMS >
-  GEOS_HOST_DEVICE
-  static void supportLoop( localIndex const q,
-                           FUNC && func,
-                           PARAMS &&... params );
+/// The volume of the element in the parent configuration.
+constexpr static real64 parentVolume = parentLength*parentLength*parentLength;
+/**
+* @brief Applies a function inside a generic loop in over the tensor product
+*   indices.
+* @tparam FUNC The type of function to call within the support loop.
+* @tparam PARAMS The parameter pack types to pass through to @p FUNC.
+* @param coords The parent coordinates at which to evaluate the shape function value
+* @param func The function to call within the support loop.
+* @param params The parameters to pass to @p func.
+*/
+template< typename FUNC, typename ... PARAMS >
+GEOS_HOST_DEVICE
+static void supportLoop( real64 const (&coords)[3],
+                        FUNC && func,
+                        PARAMS &&... params );
+/**
+* @brief Applies a function inside a generic loop in over the tensor product
+*   indices.
+* @tparam FUNC The type of function to call within the support loop.
+* @tparam PARAMS The parameter pack types to pass through to @p FUNC.
+* @param q The quadrature node at which to evaluate the shape function value
+* @param func The function to call within the support loop.
+* @param params The parameters to pass to @p func.
+*/
+template< typename FUNC, typename ... PARAMS >
+GEOS_HOST_DEVICE
+static void supportLoop( localIndex const q,
+                        FUNC && func,
+                        PARAMS &&... params );
 
 };
 
@@ -764,31 +756,31 @@ GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE 
 void
 Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::supportLoop( real64 const (&coords)[3],
-                                                              FUNC && func,
-                                                              PARAMS &&... params )
+                                                           FUNC && func,
+                                                           PARAMS &&... params )
 {
-  for( int c=0; c<num1dNodes; ++c )
-  {
-    for( int b=0; b<num1dNodes; ++b )
-    {
-      for( int a=0; a<num1dNodes; ++a )
-      {
-        real64 const dNdXi[3] = { GL_BASIS::gradient( a, coords[0] )*
-                                  GL_BASIS::value( b, coords[1] )*
-                                  GL_BASIS::value( c, coords[2] ),
-                                  GL_BASIS::value( a, coords[0] )*
-                                  GL_BASIS::gradient( b, coords[1] )*
-                                  GL_BASIS::value( c, coords[2] ),
-                                  GL_BASIS::value( a, coords[0] )*
-                                  GL_BASIS::value( b, coords[1] )*
-                                  GL_BASIS::gradient( c, coords[2] )};
+for( int c=0; c<num1dNodes; ++c )
+{
+ for( int b=0; b<num1dNodes; ++b )
+ {
+   for( int a=0; a<num1dNodes; ++a )
+   {
+     real64 const dNdXi[3] = { GL_BASIS::gradient( a, coords[0] )*
+                               GL_BASIS::value( b, coords[1] )*
+                               GL_BASIS::value( c, coords[2] ),
+                               GL_BASIS::value( a, coords[0] )*
+                               GL_BASIS::gradient( b, coords[1] )*
+                               GL_BASIS::value( c, coords[2] ),
+                               GL_BASIS::value( a, coords[0] )*
+                               GL_BASIS::value( b, coords[1] )*
+                               GL_BASIS::gradient( c, coords[2] )};
 
-        localIndex const nodeIndex = GL_BASIS::TensorProduct3D::linearIndex( a, b, c );
+     localIndex const nodeIndex = GL_BASIS::TensorProduct3D::linearIndex( a, b, c );
 
-        func( dNdXi, nodeIndex, std::forward< PARAMS >( params )... );
-      }
-    }
-  }
+     func( dNdXi, nodeIndex, std::forward< PARAMS >( params )... );
+   }
+ }
+}
 }
 
 template< typename GL_BASIS >
@@ -797,25 +789,25 @@ GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE 
 void
 Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::supportLoop( localIndex const q,
-                                                              FUNC && func,
-                                                              PARAMS &&... params )
+                                                           FUNC && func,
+                                                           PARAMS &&... params )
 {
-  int qa, qb, qc;
-  GL_BASIS::TensorProduct3D::multiIndex( q, qa, qb, qc );
-  for( int c=0; c<num1dNodes; ++c )
-  {
-    for( int b=0; b<num1dNodes; ++b )
-    {
-      for( int a=0; a<num1dNodes; ++a )
-      {
-        real64 const dNdXi[3] = { (b == qb && c == qc ) ? basisGradientAt( a, qa ) : 0,
-                                  (a == qa && c == qc ) ? basisGradientAt( b, qb ) : 0,
-				  (a == qa && b == qb ) ? basisGradientAt( c, qc ) : 0 };
+int qa, qb, qc;
+GL_BASIS::TensorProduct3D::multiIndex( q, qa, qb, qc );
+for( int c=0; c<num1dNodes; ++c )
+{
+ for( int b=0; b<num1dNodes; ++b )
+ {
+   for( int a=0; a<num1dNodes; ++a )
+   {
+     real64 const dNdXi[3] = { (b == qb && c == qc ) ? basisGradientAt( a, qa ) : 0,
+                               (a == qa && c == qc ) ? basisGradientAt( b, qb ) : 0,
+           (a == qa && b == qb ) ? basisGradientAt( c, qc ) : 0 };
 
-        func( dNdXi, q, std::forward< PARAMS >( params )... );
-      }
-    }
-  }
+     func( dNdXi, q, std::forward< PARAMS >( params )... );
+   }
+ }
+}
 }
 
 //*************************************************************************************************
@@ -825,29 +817,29 @@ GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
 real64
 Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::calcGradN( localIndex const q,
-                                                            real64 const (&X)[numNodes][3],
-                                                            real64 (& gradN)[numNodes][3] )
+                                                         real64 const (&X)[numNodes][3],
+                                                         real64 (& gradN)[numNodes][3] )
 {
-  int qa, qb, qc;
-  GL_BASIS::TensorProduct3D::multiIndex( q, qa, qb, qc );
-  real64 Xmesh[8][3] = {{0}};
-  for( int k = 0; k < 8; k++ )
-  {
-    const localIndex nodeIndex = meshIndexToLinearIndex3D( k );
-    for( int i = 0; i < 3; i++ )
-    {
-      Xmesh[ k ][ i ] = X[ nodeIndex ][ i ];
-    } 
-  } 
-  real64 J[3][3] = {{0}};
+int qa, qb, qc;
+GL_BASIS::TensorProduct3D::multiIndex( q, qa, qb, qc );
+real64 Xmesh[8][3] = {{0}};
+for( int k = 0; k < 8; k++ )
+{
+ const localIndex nodeIndex = meshIndexToLinearIndex3D( k );
+ for( int i = 0; i < 3; i++ )
+ {
+   Xmesh[ k ][ i ] = X[ nodeIndex ][ i ];
+ } 
+} 
+real64 J[3][3] = {{0}};
 
-  jacobianTransformation( qa, qb, qc, Xmesh, J );
+jacobianTransformation( qa, qb, qc, Xmesh, J );
 
-  real64 const detJ = LvArray::tensorOps::invert< 3 >( J );
+real64 const detJ = LvArray::tensorOps::invert< 3 >( J );
 
-  applyTransformationToParentGradients( q, J, gradN );
+applyTransformationToParentGradients( q, J, gradN );
 
-  return detJ;
+return detJ;
 }
 //*************************************************************************************************
 template< typename GL_BASIS >
@@ -855,29 +847,29 @@ GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
 real64
 Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::calcGradN( real64 const (&coords)[3],
-                                                            real64 const (&X)[numNodes][3],
-                                                            real64 (& gradN)[numNodes][3] )
+                                                         real64 const (&X)[numNodes][3],
+                                                         real64 (& gradN)[numNodes][3] )
 {
-  real64 J[3][3] = {{0}};
+real64 J[3][3] = {{0}};
 
-  jacobianTransformation( coords, X, J );
+jacobianTransformation( coords, X, J );
 
-  real64 const detJ = LvArray::tensorOps::invert< 3 >( J );
+real64 const detJ = LvArray::tensorOps::invert< 3 >( J );
 
-  applyTransformationToParentGradients( coords, J, gradN );
+applyTransformationToParentGradients( coords, J, gradN );
 
-  return detJ;
+return detJ;
 }
 template< typename GL_BASIS >
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
 real64 Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
 calcGradN( localIndex const q,
-           real64 const (&X)[numNodes][3],
-           StackVariables const & GEOS_UNUSED_PARAM( stack ),
-           real64 ( & gradN )[numNodes][3] )
+        real64 const (&X)[numNodes][3],
+        StackVariables const & GEOS_UNUSED_PARAM( stack ),
+        real64 ( & gradN )[numNodes][3] )
 {
-  return calcGradN( q, X, gradN );
+return calcGradN( q, X, gradN );
 }
 
 //*************************************************************************************************
@@ -892,16 +884,16 @@ GEOS_FORCE_INLINE
 void
 Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
 jacobianTransformation( int const qa,
-	                     int const qb,
-		                  int const qc,	
+                        int const qb,
+                        int const qc,	
                         real64 const (&X)[8][3],
                         real64 ( & J )[3][3] )
 {
   for(int k = 0; k < 8; k++)
   {
-    int ka = k % 2;
-    int kb = ( k % 4 ) / 2;
-    int kc = k / 4; 
+    const int ka = k % 2;
+    const int kb = ( k % 4 ) / 2;
+    const int kc = k / 4; 
     for(int j = 0; j < 3; j++)
     { 
       real64 jacCoeff = jacobianCoefficient1D( qa, 0, ka, j ) *
