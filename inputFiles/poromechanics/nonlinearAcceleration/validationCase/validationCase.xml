@@ -8,14 +8,14 @@
       solidSolverName="linearElasticity"
       flowSolverName="singlePhaseFlow"
       logLevel="1"
-      targetRegions="{ reservoir, extendedRegion }"
-      useNonlinearAcceleration="1">
+      targetRegions="{ reservoir, extendedRegion }">
       <NonlinearSolverParameters
         newtonMaxIter="200"
         newtonTol="1.0e-6"
         couplingType="Sequential"
         lineSearchAction="None"
-        subcycling="1"/>
+        subcycling="1"
+        nonlinearAccelerationType="Aitken"/>
       <LinearSolverParameters
         solverType="gmres"
         preconditionerType="mgr"

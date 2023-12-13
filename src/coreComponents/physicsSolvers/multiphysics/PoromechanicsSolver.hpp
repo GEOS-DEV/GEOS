@@ -59,18 +59,7 @@ public:
   PoromechanicsSolver( const string & name,
                        dataRepository::Group * const parent )
     : Base( name, parent )
-  {
-    this->registerWrapper( viewKeyStruct::useNAString(), &m_useNA ).
-      setApplyDefaultValue( 0 ).
-      setInputFlag( dataRepository::InputFlags::OPTIONAL ).
-      setDescription( "Flag to indicate that the solver is going to use nonlinear acceleration" );
-  }
-
-  struct viewKeyStruct : SolverBase::viewKeyStruct
-  {
-    /// Flag to indicate that the solver is going to use nonlinear acceleration
-    constexpr static char const * useNAString() { return "useNonlinearAcceleration"; }
-  };
+  {}
 
 protected:
 
@@ -158,7 +147,7 @@ protected:
   void startSequentialIteration( integer const & iter,
                                  DomainPartition & domain ) override
   {
-    if( m_useNA )
+    if( this->getNonlinearSolverParameters().m_nonlinearAccelerationType == NonlinearSolverParameters::NonlinearAccelerationType::Aitken )
     {
       if( iter == 0 )
       {
@@ -177,7 +166,7 @@ protected:
   void finishSequentialIteration( integer const & iter,
                                   DomainPartition & domain ) override
   {
-    if( m_useNA )
+    if( this->getNonlinearSolverParameters().m_nonlinearAccelerationType == NonlinearSolverParameters::NonlinearAccelerationType::Aitken )
     {
       if( iter == 0 )
       {
@@ -195,25 +184,22 @@ protected:
 
   virtual void mapSolutionBetweenSolvers( DomainPartition & domain, integer const solverType ) override
   {
-    if( m_useNA && solverType == static_cast< integer >( SolverType::SolidMechanics ) )
+    if( solverType == static_cast< integer >( SolverType::SolidMechanics ) &&
+        this->getNonlinearSolverParameters().m_nonlinearAccelerationType== NonlinearSolverParameters::NonlinearAccelerationType::Aitken )
     {
       recordAverageMeanTotalStressIncrement( domain, m_s2_tilde );
     }
   }
 
-  virtual void
-  postProcessInput() override
+  virtual void validateNonlinearAcceleration() override
   {
-    Base::postProcessInput();
-
-    if( m_useNA && MpiWrapper::commSize( MPI_COMM_GEOSX ) > 1 )
+    if( MpiWrapper::commSize( MPI_COMM_GEOSX ) > 1 )
     {
       GEOS_ERROR( "Nonlinear acceleration is not implemented for MPI runs" );
     }
   }
 
   /// Member variables needed for Nonlinear Acceleration ( Aitken ). Naming convention follows ( Jiang & Tchelepi, 2019 )
-  integer m_useNA;
   array1d< real64 > m_s0; // Accelerated averageMeanTotalStresIncrement @ outer iteration v ( two iterations ago )
   array1d< real64 > m_s1; // Accelerated averageMeanTotalStresIncrement @ outer iteration v + 1 ( previous iteration )
   array1d< real64 > m_s1_tilde; // Unaccelerated averageMeanTotalStresIncrement @ outer iteration v + 1 ( previous iteration )

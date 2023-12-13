@@ -574,6 +574,18 @@ protected:
                              NonlinearSolverParameters::viewKeysStruct::lineSearchActionString(),
                              EnumStrings< NonlinearSolverParameters::LineSearchAction >::toString( NonlinearSolverParameters::LineSearchAction::None ) ),
                    InputError );
+
+    if (m_nonlinearSolverParameters.m_nonlinearAccelerationType != NonlinearSolverParameters::NonlinearAccelerationType::None)
+      validateNonlinearAcceleration();
+  }
+
+  virtual void validateNonlinearAcceleration()
+  {
+    GEOS_THROW ( GEOS_FMT( "{}: Nonlinear acceleration {} is not supported by {} solver '{}'",
+                              getWrapperDataContext( NonlinearSolverParameters::viewKeysStruct::nonlinearAccelerationTypeString() ),
+                              EnumStrings< NonlinearSolverParameters::NonlinearAccelerationType >::toString( m_nonlinearSolverParameters.m_nonlinearAccelerationType ),
+                              getCatalogName(), getName()),
+                    InputError );
   }
 
   void
