@@ -262,9 +262,9 @@ void SinglePhasePoromechanicsConformingFracturesVEM::assembleCouplingTerms( real
                                                                 MeshLevel const & mesh,
                                                                 arrayView1d< string const > const & regionNames )
   {
-    /// 3. assemble Force Residual w.r.t. pressure and Fluix mass residual w.r.t. displacement
-    assembleForceResidualDerivativeWrtPressure( mesh, regionNames, dofManager, localMatrix, localRhs );
-    assembleFluidMassResidualDerivativeWrtDisplacement( mesh, regionNames, dofManager, localMatrix, localRhs );
+    /// 3. assemble Force Residual w.r.t. pressure and Fluid mass residual w.r.t. displacement
+    assembleForceResidualDerivativeWrtPressure( mesh, regionNames, dofManager, localMatrix, localRhs ); // here, pressure means fracture pressure (see A.2c )
+    assembleFluidMassResidualDerivativeWrtDisplacement( mesh, regionNames, dofManager, localMatrix, localRhs ); // (see A.2j)
   } );
 }
 
@@ -440,6 +440,7 @@ void SinglePhasePoromechanicsConformingFracturesVEM::
         // A fracture connector has to be an edge shared by two faces
         if( numFluxElems == 2 )
         {
+          // fracture flow
           typename SurfaceElementStencil::IndexContainerViewConstType const & sei = stencil.getElementIndices();
 
           // First index: face element. Second index: node
