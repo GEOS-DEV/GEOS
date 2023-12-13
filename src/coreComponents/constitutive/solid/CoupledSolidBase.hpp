@@ -180,7 +180,8 @@ public:
   }
 
   /**
-   * @brief Const/non-mutable accessor for the mean total stress increment at the previous sequential iteration
+   * @brief Const/non-mutable accessor for the mean total stress increment
+   * (with respect to the previous converged time level) at the previous sequential iteration
    * @return Accessor
    */
   arrayView2d< real64 const > const getMeanTotalStressIncrement_k() const
