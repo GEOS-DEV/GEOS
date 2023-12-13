@@ -4,7 +4,9 @@
 Name              Type               Default  Description                                                                                             
 ================= ================== ======== ======================================================================================================= 
 cellBlockNames    groupNameRef_array required Names of each mesh block                                                                                
-elementTypes      string_array       required Element types of each mesh block                                                                        
+elementTypes      string_array       required Use "C3D8" for linear brick element. Possible values are: Vertex, BEAM, C2D3, C2D4, Polygon, C3D4,      
+                                              C3D5, C3D6, C3D8, PentagonalPrism, HexagonalPrism, HeptagonalPrism, OctagonalPrism, NonagonalPrism,     
+                                              DecagonalPrism, HendecagonalPrism, Polyhedron.                                                          
 name              groupName          required A name is required for any non-unique nodes                                                             
 nx                integer_array      required Number of elements in the x-direction within each mesh block                                            
 ny                integer_array      required Number of elements in the y-direction within each mesh block                                            
