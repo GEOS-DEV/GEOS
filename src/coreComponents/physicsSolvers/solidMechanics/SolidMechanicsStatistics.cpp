@@ -22,6 +22,7 @@
 #include "mainInterface/ProblemManager.hpp"
 #include "physicsSolvers/PhysicsSolverManager.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
+#include "fileIO/Outputs/OutputBase.hpp"
 
 namespace geos
 {
@@ -33,7 +34,7 @@ using namespace fields;
 SolidMechanicsStatistics::SolidMechanicsStatistics( const string & name,
                                                     Group * const parent ):
   Base( name, parent ),
-  m_outputDir( name )
+  m_outputDir( joinPath( OutputBase::getOutputDirectory(), name ) )
 {}
 
 void SolidMechanicsStatistics::postProcessInput()
