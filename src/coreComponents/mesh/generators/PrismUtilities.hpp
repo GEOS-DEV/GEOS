@@ -39,7 +39,7 @@ localIndex getFaceNodesPrism( localIndex const faceNum,
 {
   static_assert( N > 4,
                  "Function getFaceNodePrism can be called for a prism with N-sided polygon base where N > 5." );
-  static constexpr auto nodeCountError = "Not enough nodes for {} element (face index = {}).";
+  static constexpr auto nodeCountError = "Not enough nodes for {} element (face index = {}).\n";
 
   if( faceNum == 0 )
   {
@@ -89,8 +89,8 @@ localIndex getFaceNodesPrism( localIndex const faceNum,
   }
   else
   {
-    GEOS_ERROR( GEOS_FMT( "Local face index out of range for Prism{} element: face index = {}.",
-                          N, faceNum ) << generalMeshErrorAdvice );
+    GEOS_ERROR( GEOS_FMT( "Local face index out of range for Prism{} element: face index = {}.\n{}",
+                          N, faceNum, generalMeshErrorAdvice ) );
     return 0;
   }
 

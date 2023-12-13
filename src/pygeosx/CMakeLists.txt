@@ -1,9 +1,7 @@
 
-set( python_headers pygeosx.hpp
-		    )
+set( python_headers pygeosx.hpp )
 
-set( python_sources pygeosx.cpp
-		    )
+set( python_sources pygeosx.cpp )
 
 set( dependencyList ${extraComponentsLinkList} ${externalComponentsLinkList} Python3::Python )
 

@@ -1,8 +1,10 @@
 from collections import defaultdict
 from dataclasses import dataclass
 import logging
-from typing import List
-
+from typing import (
+    Collection,
+    Iterable,
+)
 import numpy
 
 from vtkmodules.vtkCommonCore import (
@@ -22,8 +24,8 @@ class Options:
 
 @dataclass(frozen=True)
 class Result:
-    nodes_buckets: List[List[int]]  # Each bucket contains the duplicated node indices.
-    wrong_support_elements: List[int]  # Element indices with support node indices appearing more than once.
+    nodes_buckets: Iterable[Iterable[int]]  # Each bucket contains the duplicated node indices.
+    wrong_support_elements: Collection[int]  # Element indices with support node indices appearing more than once.
 
 
 def __check(mesh, options: Options) -> Result:
