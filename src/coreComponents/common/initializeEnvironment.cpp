@@ -313,6 +313,12 @@ static void addUmpireHighWaterMarks()
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void setupEnvironment( int argc, char * argv[] )
 {
+  // Explicitly initialize HIP before MPI; otherwise, GEOS may encounter a
+  // segmentation fault during MPI_Init or during other HIP calls
+#if defined( GEOS_USE_HIP )
+  GEOS_ERROR_IF_NE( hipSuccess, hipInit( 0 ) );
+#endif
+
   setupMPI( argc, argv );
   setupLogger();
   setupLvArray();
