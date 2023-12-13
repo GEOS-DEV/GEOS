@@ -24,6 +24,7 @@
 #include "KValueInitialization.hpp"
 #include "constitutive/fluid/multifluid/MultiFluidConstants.hpp"
 #include "constitutive/fluid/multifluid/compositional/models/ComponentProperties.hpp"
+#include "denseLinearAlgebra/interfaces/blaslapack/BlasLapackLA.hpp"
 
 namespace geos
 {
@@ -66,7 +67,7 @@ public:
     stackArray1d< real64, maxNumComps > logVapourFugacity( numComps );
     stackArray1d< real64, maxNumComps > kVapourLiquid( numComps );
     stackArray1d< real64, maxNumComps > fugacityRatios( numComps );
-    stackArray1d< integer, maxNumComps > presentComponentIds( numComps );
+    stackArray1d< integer, maxNumComps > presentComponents( numComps );
 
     // Initialise compositions to feed composition
     for( integer ic = 0; ic < numComps; ++ic )
@@ -75,7 +76,7 @@ public:
       vapourComposition[ic] = composition[ic];
     }
 
-    calculatePresentComponents( numComps, composition, presentComponentIds );
+    calculatePresentComponents( numComps, composition, presentComponents );
 
     KValueInitialization::computeWilsonGasLiquidKvalue( numComps,
                                                         pressure,
@@ -87,10 +88,10 @@ public:
     for( localIndex iterationCount = 0; iterationCount < MultiFluidConstants::maxSSIIterations; ++iterationCount )
     {
       // Solve Rachford-Rice Equation
-      vapourPhaseMoleFraction = RachfordRice::solve( kVapourLiquid, composition, presentComponentIds );
+      vapourPhaseMoleFraction = RachfordRice::solve( kVapourLiquid, composition, presentComponents );
 
       // Assign phase compositions
-      for( integer const ic : presentComponentIds )
+      for( integer const ic : presentComponents )
       {
         liquidComposition[ic] = composition[ic] / ( 1.0 + vapourPhaseMoleFraction * ( kVapourLiquid[ic] - 1.0 ) );
         vapourComposition[ic] = kVapourLiquid[ic] * liquidComposition[ic];
@@ -116,7 +117,7 @@ public:
       // Compute fugacity ratios and check convergence
       converged = true;
 
-      for( integer const ic : presentComponentIds )
+      for( integer const ic : presentComponents )
       {
         fugacityRatios[ic] = exp( logLiquidFugacity[ic] - logVapourFugacity[ic] ) * liquidComposition[ic] / vapourComposition[ic];
         if( MultiFluidConstants::fugacityTolerance < LvArray::math::abs( fugacityRatios[ic] - 1.0 ) )
@@ -131,7 +132,7 @@ public:
       }
 
       // Update K-values
-      for( integer const ic : presentComponentIds )
+      for( integer const ic : presentComponents )
       {
         kVapourLiquid[ic] *= fugacityRatios[ic];
       }
@@ -214,7 +215,7 @@ public:
     else
     {
       stackArray1d< integer, maxNumComps > presentComponents( numComps );
-      calculatePresentComponents( numComps, composition, presentComponents );
+      integer const numPresentComponents = calculatePresentComponents( numComps, composition, presentComponents );
 
       // Calculate the liquid and vapour fugacities and derivatives
       stackArray1d< real64, maxNumComps > logLiquidFugacity( numComps );
@@ -240,7 +241,6 @@ public:
                                                        componentProperties,
                                                        logLiquidFugacity,
                                                        logLiquidFugacityDerivs );
-
       EOS_TYPE_VAPOUR::computeLogFugacityCoefficients( numComps,
                                                        pressure,
                                                        temperature,
@@ -249,40 +249,75 @@ public:
                                                        logVapourFugacity,
                                                        logVapourFugacityDerivs );
 
-      // Calculate kValues and derivatives
+      // Calculate kValues
       stackArray1d< real64, maxNumComps > kValues( numComps );
-      stackArray2d< real64, maxNumComps * maxNumDofs > kValueDerivs( numComps, numDofs );
-      kValues.zero();
-      kValueDerivs.zero();
       for( integer const ic : presentComponents )
       {
-        kValues[ic] = vapourComposition[ic] / liquidComposition[ic];
-        std::cout << "K******* " << exp( logLiquidFugacity[ic] - logVapourFugacity[ic] ) << " " << kValues[ic] << std::endl;
+        kValues[ic] = exp( logLiquidFugacity[ic] - logVapourFugacity[ic] );
+      }
+
+      constexpr integer maxNumVals = 2*MultiFluidConstants::MAX_NUM_COMPONENTS;
+      integer const numVals = 2*numPresentComponents;
+      stackArray1d< real64, maxNumVals > b( numVals + 1 );
+      stackArray1d< real64, maxNumVals > x( numVals + 1 );
+      stackArray2d< real64, maxNumVals * maxNumVals > A( numVals + 1, numVals + 1 );
+
+      b.zero();
+      A.zero();
+      for( integer i = 0; i < numPresentComponents; ++i )
+      {
+        integer const ic = presentComponents[i];
+        integer const e = i;
+        integer const xi = i;
+        integer const ki = i + numPresentComponents;
+        integer const vi = numVals;
+
+        real64 const M = kValues[ic] - 1.0;
+        real64 const k = 1.0 / (1.0 + M*vapourFraction);
+
+        A( e, xi ) = 1.0 + (kValues[ic] - 1.0)*vapourFraction;
+        A( e, ki ) = vapourFraction*liquidComposition[ic];
+        A( e, vi ) = (kValues[ic] - 1.0)*liquidComposition[ic];
+
+        A( numVals, ki ) = composition[ic] * k * k;
+        A( numVals, numVals ) -= composition[ic] * M * M * k * k;
       }
       for( integer const kc : {Deriv::dP, Deriv::dT} )
       {
-        for( integer const ic : presentComponents )
+        for( integer i = 0; i < numPresentComponents; ++i )
         {
-          kValueDerivs( ic, kc ) = (logLiquidFugacityDerivs( ic, kc )-logVapourFugacityDerivs( ic, kc )) * kValues[ic];
-          std::cout << "<<<****>>> " << kValueDerivs( ic, kc ) << std::endl;
+          integer const ic = presentComponents[i];
+          integer const e = i + numPresentComponents;
+          integer const ki = i + numPresentComponents;
+          for( integer j = 0; j < numPresentComponents; ++j )
+          {
+            integer const jc = presentComponents[j];
+            integer const xj = j;
+            integer const kj = j + numPresentComponents;
+            real64 const dPhiLdx = logLiquidFugacityDerivs( ic, Deriv::dC+jc );
+            real64 const dPhiVdy = logVapourFugacityDerivs( ic, Deriv::dC+jc );
+            A( e, xj ) = -kValues[ic] * (dPhiLdx - kValues[jc] * dPhiVdy);
+            A( e, kj ) =  kValues[ic] * liquidComposition[jc] * dPhiVdy;
+          }
+          A( e, ki ) += 1.0;
+          b( e ) = kValues[ic]*(logLiquidFugacityDerivs( ic, kc )-logVapourFugacityDerivs( ic, kc ));
         }
+        BlasLapackLA::solveLinearSystem( A, b, x );
+        for( integer i = 0; i < numPresentComponents; ++i )
+        {
+          integer const ic = presentComponents[i];
+          real64 const dKdQ = x( i+numPresentComponents );  // Derivative of k-value
+          liquidCompositionDerivs( ic, kc ) = x( i );
+          vapourCompositionDerivs( ic, kc ) = kValues[ic] * x( i ) + dKdQ * liquidComposition[ic];
+        }
+        vapourFractionDerivs( kc ) = x( numVals );
       }
-      // Calculate vapour fraction derivatives
-      RachfordRice::computeDerivatives( kValues,
-                                        kValueDerivs,
-                                        composition,
-                                        presentComponents,
-                                        vapourFraction,
-                                        vapourFractionDerivs );
-      std::cout << "<<<****>>> dP = " << vapourFractionDerivs( Deriv::dP ) << std::endl;
-      std::cout << "<<<****>>> dT = " << vapourFractionDerivs( Deriv::dT ) << std::endl;
     }
-
 
     real64 displacedVapourFraction = -1.0;
     stackArray1d< real64, maxNumComps > displacedLiquidComposition( numComps );
     stackArray1d< real64, maxNumComps > displacedVapourComposition( numComps );
-
+/**
     // Pressure derivatives
     real64 const dp = 1.0e-4 * pressure;
     compute< EOS_TYPE_LIQUID, EOS_TYPE_VAPOUR >( numComps,
@@ -295,11 +330,11 @@ public:
                                                  displacedVapourComposition );
 
     //vapourFractionDerivs[Deriv::dP] = (displacedVapourFraction - vapourFraction) / dp;
-    for( integer ic = 0; ic < numComps; ++ic )
-    {
-      liquidCompositionDerivs( ic, Deriv::dP ) = (displacedLiquidComposition[ic] - liquidComposition[ic]) / dp;
-      vapourCompositionDerivs( ic, Deriv::dP ) = (displacedVapourComposition[ic] - vapourComposition[ic]) / dp;
-    }
+    //for( integer ic = 0; ic < numComps; ++ic )
+    //{
+      //liquidCompositionDerivs( ic, Deriv::dP ) = (displacedLiquidComposition[ic] - liquidComposition[ic]) / dp;
+      //vapourCompositionDerivs( ic, Deriv::dP ) = (displacedVapourComposition[ic] - vapourComposition[ic]) / dp;
+    //}
 
     // Temperature derivatives
     real64 const dT = 1.0e-6 * temperature;
@@ -312,13 +347,13 @@ public:
                                                  displacedLiquidComposition,
                                                  displacedVapourComposition );
 
-    //vapourFractionDerivs[Deriv::dT] = (displacedVapourFraction - vapourFraction) / dT;
+    vapourFractionDerivs[Deriv::dT] = (displacedVapourFraction - vapourFraction) / dT;
     for( integer ic = 0; ic < numComps; ++ic )
     {
       liquidCompositionDerivs( ic, Deriv::dT ) = (displacedLiquidComposition[ic] - liquidComposition[ic]) / dT;
       vapourCompositionDerivs( ic, Deriv::dT ) = (displacedVapourComposition[ic] - vapourComposition[ic]) / dT;
     }
-
+ */
     // Composition derivatives
     real64 constexpr dz = 1.0e-7;
     stackArray1d< real64, maxNumComps > displacedComposition( numComps );

@@ -83,18 +83,18 @@ void CompositionalProperties::computeMolarDensity( integer const numComps,
   real64 dvCorrected_dx = 0.0;
 
   // Pressure derivative
-  dvCorrected_dx = MultiFluidConstants::gasConstant * temperature * (compressibilityFactorDerivs[Deriv::dP] - compressibilityFactor / pressure) / pressure;
+  dvCorrected_dx = constants::gasConstant * temperature * (compressibilityFactorDerivs[Deriv::dP] - compressibilityFactor / pressure) / pressure;
   molarDensityDerivs[Deriv::dP] = -molarDensity * molarDensity * dvCorrected_dx;
 
   // Temperature derivative
-  dvCorrected_dx = MultiFluidConstants::gasConstant * (temperature * compressibilityFactorDerivs[Deriv::dT] + compressibilityFactor) / pressure;
+  dvCorrected_dx = constants::gasConstant * (temperature * compressibilityFactorDerivs[Deriv::dT] + compressibilityFactor) / pressure;
   molarDensityDerivs[Deriv::dT] = -molarDensity * molarDensity * dvCorrected_dx;
 
   // Composition derivative
   for( integer ic = 0; ic < numComps; ++ic )
   {
     integer const kc = Deriv::dC + ic;
-    dvCorrected_dx = MultiFluidConstants::gasConstant * temperature * compressibilityFactorDerivs[kc] / pressure + volumeShift[ic];
+    dvCorrected_dx = constants::gasConstant * temperature * compressibilityFactorDerivs[kc] / pressure + volumeShift[ic];
     molarDensityDerivs[kc] = -molarDensity * molarDensity * dvCorrected_dx;
   }
 }
