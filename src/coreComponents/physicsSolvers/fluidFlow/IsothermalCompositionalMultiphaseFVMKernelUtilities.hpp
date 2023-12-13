@@ -33,7 +33,7 @@ namespace isothermalCompositionalMultiphaseFVMKernelUtilities
 {
 
 // TODO make input parameter
-static constexpr real64 epsC1PPU = 50;
+static constexpr real64 epsC1PPU = 5000;
 
 template< typename VIEWTYPE >
 using ElementViewConst = ElementRegionManager::ElementViewConst< VIEWTYPE >;
