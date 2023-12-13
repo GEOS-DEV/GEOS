@@ -85,7 +85,10 @@ The `Wrapper` can be thought of as a "File" as it contains the relevant data tha
 The mesh interface is built on top of the data repository as a collection of managers for each mesh object type. \autoref{fig:meshHierarchy}
 A physical body is 
 
-![UML diagram of the mesh interface hierarchy.\label{fig:meshHierarchy}](MeshHierarchy.png)
+![UML diagram of the mesh interface hierarchy.\label{fig:meshHierarchy}](MeshHierarchy.png){ width=20% }
+
+
+![UML diagram of the mesh interface hierarchy.\label{fig:meshHierarchy2}](MeshHierarchy.svg){ width=20% }
 
 
 assist in the implementation of methods to solve constraint equations on complex unstructured grids.
