@@ -1982,6 +1982,8 @@ the relative residual norm satisfies:
 		<xsd:attribute name="fieldNames" type="groupNameRef_array" default="{}" />
 		<!--format => Output data format.  Valid options: ``binary``, ``ascii``-->
 		<xsd:attribute name="format" type="geos_vtk_VTKOutputMode" default="binary" />
+		<!--levelNames => Names of mesh levels to output.-->
+		<xsd:attribute name="levelNames" type="string_array" default="{}" />
 		<!--logLevel => Log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--onlyPlotSpecifiedFieldNames => If this flag is equal to 1, then we only plot the fields listed in `fieldNames`. Otherwise, we plot all the fields with the required `plotLevel`, plus the fields listed in `fieldNames`-->
@@ -3723,6 +3725,8 @@ The expected format is "{ waterMax, oilMax }", in that order-->
 		<xsd:attribute name="componentNames" type="string_array" default="{}" />
 		<!--flashModelParaFile => Name of the file defining the parameters of the flash model-->
 		<xsd:attribute name="flashModelParaFile" type="path" use="required" />
+		<!--logLevel => Log level-->
+		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--phaseNames => List of fluid phases-->
 		<xsd:attribute name="phaseNames" type="groupNameRef_array" default="{}" />
 		<!--phasePVTParaFiles => Names of the files defining the parameters of the viscosity and density models-->
@@ -3739,6 +3743,8 @@ The expected format is "{ waterMax, oilMax }", in that order-->
 		<xsd:attribute name="componentNames" type="string_array" default="{}" />
 		<!--flashModelParaFile => Name of the file defining the parameters of the flash model-->
 		<xsd:attribute name="flashModelParaFile" type="path" use="required" />
+		<!--logLevel => Log level-->
+		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--phaseNames => List of fluid phases-->
 		<xsd:attribute name="phaseNames" type="groupNameRef_array" default="{}" />
 		<!--phasePVTParaFiles => Names of the files defining the parameters of the viscosity and density models-->
@@ -3755,6 +3761,8 @@ The expected format is "{ waterMax, oilMax }", in that order-->
 		<xsd:attribute name="componentNames" type="string_array" default="{}" />
 		<!--flashModelParaFile => Name of the file defining the parameters of the flash model-->
 		<xsd:attribute name="flashModelParaFile" type="path" use="required" />
+		<!--logLevel => Log level-->
+		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--phaseNames => List of fluid phases-->
 		<xsd:attribute name="phaseNames" type="groupNameRef_array" default="{}" />
 		<!--phasePVTParaFiles => Names of the files defining the parameters of the viscosity and density models-->
@@ -3771,6 +3779,8 @@ The expected format is "{ waterMax, oilMax }", in that order-->
 		<xsd:attribute name="componentNames" type="string_array" default="{}" />
 		<!--flashModelParaFile => Name of the file defining the parameters of the flash model-->
 		<xsd:attribute name="flashModelParaFile" type="path" use="required" />
+		<!--logLevel => Log level-->
+		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--phaseNames => List of fluid phases-->
 		<xsd:attribute name="phaseNames" type="groupNameRef_array" default="{}" />
 		<!--phasePVTParaFiles => Names of the files defining the parameters of the viscosity and density models-->
