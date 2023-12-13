@@ -85,7 +85,7 @@ The `Wrapper` can be thought of as a "File" as it contains the relevant data tha
 The mesh interface is built on top of the data repository as a collection of managers for each mesh object type. 
 A physical body is 
 
-![Caption for example figure.](MeshHierarchy.svg){ width=20% }
+![Caption for example figure.](MeshHierarchy.png){ width=20% }
 
 
 
