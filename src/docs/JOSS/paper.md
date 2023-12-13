@@ -78,10 +78,17 @@ Additionally GEOS provides the potential to estimate seismic events induced by C
 The computational core of GEOS is written in c++17, and includes a Python3 interface that allows for the integration of the simulation capabilities into complex python workflows 
 The c++ infrastructure provides components to isolate the domain science developer from the majority of common computer science tasks. 
 The components of the infrastructure includes a data hierarchy, a discrete mesh data structure, a physics package interface, MPI communications tools, degree-of-freedom management, IO facilities, etc.
-The data repository defines a `Wrapper` class to hold anything from data arrays to arbitrary objects, and a `Group` class 
-The Group class 
+The data repository defines a `Wrapper` class to hold anything from data arrays to arbitrary objects, and a `Group` class that serves as a container to form a hierarchy.
+Drawing an analogy with a standard folder/file hierarchy, the `Group` class can be thought of as a "Folder" as it holds other `Group`'s as well as a collection of `Wrapper` objects. 
+The `Wrapper` can be thought of as a "File" as it contains the relevant data that is stored in the repository.
 
-The  similar to a standard folder/file hieararchy in that the
+The mesh interface is built on top of the data repository as a collection of managers for each mesh object type. 
+A physical body is 
+
+![Caption for example figure.](MeshHierarchy.svg){ width=20% }
+
+
+
 assist in the implementation of methods to solve constraint equations on complex unstructured grids.
 
 
