@@ -113,6 +113,12 @@ void setupOpenMP()
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void setupMPI( int argc, char * argv[] )
 {
+  // Explicitly initialize HIP before MPI; otherwise, GEOS may encounter a
+  // segmentation fault during MPI_Init or during other HIP calls
+#if defined( GEOS_USE_HIP )
+  GEOS_ERROR_IF_NE( hipSuccess, hipInit( 0 ) );
+#endif
+
   if( !MpiWrapper::initialized() )
   {
     MpiWrapper::init( &argc, &argv );
@@ -218,10 +224,10 @@ void setupCaliper( cali::ConfigManager & caliperManager,
   // HIP info
   int hipRuntimeVersion = 0;
   int hipDriverVersion = 0;
-#if defined( GESOX_USE_HIP )
+#if defined( GEOS_USE_HIP )
   adiak::value( "HIP", "On" )
-  GEOSX_ERROR_IF_NE( hipSuccess, hipRuntimeGetVersion( &hipRuntimeVersion ) );
-  GEOSX_ERROR_IF_NE( hipSuccess, hipDriverGetVersion( &hipDriverVersion ) );
+  GEOS_ERROR_IF_NE( hipSuccess, hipRuntimeGetVersion( &hipRuntimeVersion ) );
+  GEOS_ERROR_IF_NE( hipSuccess, hipDriverGetVersion( &hipDriverVersion ) );
 #else
   adiak::value( "HIP", "Off" );
 #endif
