@@ -158,7 +158,7 @@ public:
    * @brief Prints the data hierarchy recursively.
    * @param[in] indent The level of indentation to add to this level of output.
    */
-  void printDataHierarchy( integer indent = 0 );
+  void printDataHierarchy( integer indent = 0 ) const;
 
   /**
    * @brief @return a table formatted string containing all input options.
@@ -762,11 +762,21 @@ public:
    * @brief Recursively read values using ProcessInputFile() from the input
    * file and put them into the wrapped values for this group.
    * Also add the includes content to the xmlDocument when `Include` nodes are encountered.
-   * @param[in] xmlDocument the XML document that contains the targetNode
+   * @param[in] xmlDocument the XML document that contains the targetNode.
    * @param[in] targetNode the XML node that to extract input values from.
    */
   void processInputFileRecursive( xmlWrapper::xmlDocument & xmlDocument,
                                   xmlWrapper::xmlNode & targetNode );
+  /**
+   * @brief Same as processInputFileRecursive(xmlWrapper::xmlDocument &, xmlWrapper::xmlNode &)
+   * but allow to reuse an existing xmlNodePos.
+   * @param[in] xmlDocument the XML document that contains the targetNode.
+   * @param[in] targetNode the XML node that to extract input values from.
+   * @param[in] nodePos the target node position, typically obtained with xmlDocument::getNodePosition().
+   */
+  void processInputFileRecursive( xmlWrapper::xmlDocument & xmlDocument,
+                                  xmlWrapper::xmlNode & targetNode,
+                                  xmlWrapper::xmlNodePos const & nodePos );
 
   /**
    * @brief Recursively call postProcessInput() to apply post processing after
@@ -1453,6 +1463,12 @@ public:
   /// Enable verbosity input for object
   void enableLogLevelInput();
 
+  /**
+   * @brief Set verbosity level
+   * @param logLevel new verbosity level value
+   */
+  void setLogLevel( integer const logLevel ) { m_logLevel = logLevel; }
+
   /// @return The verbosity level
   integer getLogLevel() const { return m_logLevel; }
   ///@}
@@ -1524,10 +1540,12 @@ private:
   /**
    * @brief Read values from the input file and put them into the
    *   wrapped values for this group.
-   * @param[in] targetNode the XML node that to extract input values from.
+   * @param[in] xmlDocument the XML document that contains the targetNode
+   * @param[in] targetNode the XML node that to extract input values from
+   * @param[in] nodePos the target node position, typically obtained with xmlDocument::getNodePosition()
    */
-  virtual void processInputFile( xmlWrapper::xmlDocument const & xmlDocument,
-                                 xmlWrapper::xmlNode const & targetNode );
+  virtual void processInputFile( xmlWrapper::xmlNode const & targetNode,
+                                 xmlWrapper::xmlNodePos const & nodePos );
 
   Group const & getBaseGroupByPath( string const & path ) const;
 
