@@ -67,7 +67,7 @@
       name="rockPorosity"
       defaultReferencePorosity="0.001"
       grainBulkModulus="23.5e9"
-      defaultThermalExpansionCoefficient="4e-5"/>
+      defaultPorosityTEC="4e-5"/>
     <!-- SPHINX_PoroElasticPropertiesEnd -->
 
     <!-- SPHINX_HeatCapacityProperties -->
@@ -110,7 +110,7 @@
       defaultDensity="2700"
       defaultBulkModulus="20.7e9"
       defaultShearModulus="12.4e9"
-      defaultThermalExpansionCoefficient="4e-5"/>
+      defaultDrainedLinearTEC="4e-5"/>
     <!-- SPHINX_ThermoElasticPropertiesEnd -->
     
   </Constitutive>
