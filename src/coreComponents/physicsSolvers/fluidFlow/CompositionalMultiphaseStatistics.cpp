@@ -31,6 +31,7 @@
 #include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
 #include "physicsSolvers/fluidFlow/IsothermalCompositionalMultiphaseBaseKernels.hpp"
 #include "physicsSolvers/fluidFlow/IsothermalCompositionalMultiphaseFVMKernels.hpp"
+#include "fileIO/Outputs/OutputBase.hpp"
 
 
 namespace geos
@@ -44,7 +45,7 @@ CompositionalMultiphaseStatistics::CompositionalMultiphaseStatistics( const stri
   Base( name, parent ),
   m_computeCFLNumbers( 0 ),
   m_computeRegionStatistics( 1 ),
-  m_outputDir( name )
+  m_outputDir( joinPath( OutputBase::getOutputDirectory(), name ) )
 {
   registerWrapper( viewKeyStruct::computeCFLNumbersString(), &m_computeCFLNumbers ).
     setApplyDefaultValue( 0 ).

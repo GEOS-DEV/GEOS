@@ -26,6 +26,7 @@
 #include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellControls.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellSolverBaseFields.hpp"
+#include "fileIO/Outputs/OutputBase.hpp"
 
 namespace geos
 {
@@ -38,7 +39,7 @@ WellSolverBase::WellSolverBase( string const & name,
   : SolverBase( name, parent ),
   m_numDofPerWellElement( 0 ),
   m_numDofPerResElement( 0 ),
-  m_ratesOutputDir( name + "_rates" )
+  m_ratesOutputDir( joinPath( OutputBase::getOutputDirectory(), name + "_rates" ) )
 {
   this->getWrapper< string >( viewKeyStruct::discretizationString() ).
     setInputFlag( InputFlags::FALSE );
