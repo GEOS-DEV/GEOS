@@ -129,14 +129,14 @@ protected:
                                         array1d< real64 > const & s2_tilde,
                                         real64 const omega0 )
   {
-    array1d< real64 > r1 = addTwoVecs( s1_tilde, s0, -1.0 );
-    array1d< real64 > r2 = addTwoVecs( s2_tilde, s1, -1.0 );
+    array1d< real64 > r1 = axpy( s1_tilde, s0, -1.0 );
+    array1d< real64 > r2 = axpy( s2_tilde, s1, -1.0 );
 
     // diff = r2 - r1
-    array1d< real64 > diff = addTwoVecs( r2, r1, -1.0 );
+    array1d< real64 > diff = axpy( r2, r1, -1.0 );
 
-    real64 const denom = dotTwoVecs( diff, diff );
-    real64 const numer = dotTwoVecs( r1, diff );
+    real64 const denom = dot( diff, diff );
+    real64 const numer = dot( r1, diff );
 
     real64 omega1 = 1.0;
     if( !isZero( denom ))
@@ -150,9 +150,9 @@ protected:
                                    array1d< real64 > const & s2_tilde,
                                    real64 const omega1 )
   {
-    return addTwoVecs( scalarMultiplyAVec( s1, 1.0 - omega1 ),
-                       scalarMultiplyAVec( s2_tilde, omega1 ),
-                       1.0 );
+    return axpy( scale( s1, 1.0 - omega1 ),
+                 scale( s2_tilde, omega1 ),
+                 1.0 );
   }
 
   void startSequentialIteration( integer const & iter,

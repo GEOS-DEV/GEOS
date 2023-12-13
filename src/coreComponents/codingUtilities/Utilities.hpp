@@ -416,9 +416,9 @@ private:
 };
 
 template< typename VECTOR_TYPE, typename SCALAR_TYPE >
-VECTOR_TYPE addTwoVecs( VECTOR_TYPE const & vec1,
-                        VECTOR_TYPE const & vec2,
-                        SCALAR_TYPE const sign )
+VECTOR_TYPE axpy( VECTOR_TYPE const & vec1,
+                  VECTOR_TYPE const & vec2,
+                  SCALAR_TYPE const alpha )
 {
   GEOS_ASSERT( vec1.size() == vec2.size() );
   const localIndex N = vec1.size();
@@ -426,14 +426,14 @@ VECTOR_TYPE addTwoVecs( VECTOR_TYPE const & vec1,
   RAJA::forall< parallelHostPolicy >( RAJA::TypedRangeSegment< localIndex >( 0, N ),
                                       [&] GEOS_HOST_DEVICE ( localIndex const i )
   {
-    result[i] = vec1[i] + sign * vec2[i];
+    result[i] = vec1[i] + alpha * vec2[i];
   } );
   return result;
 }
 
 template< typename VECTOR_TYPE, typename SCALAR_TYPE >
-VECTOR_TYPE scalarMultiplyAVec( VECTOR_TYPE const & vec,
-                                SCALAR_TYPE const scalarMult )
+VECTOR_TYPE scale( VECTOR_TYPE const & vec,
+                   SCALAR_TYPE const scalarMult )
 {
   const localIndex N = vec.size();
   VECTOR_TYPE result( N );
@@ -446,8 +446,8 @@ VECTOR_TYPE scalarMultiplyAVec( VECTOR_TYPE const & vec,
 }
 
 template< typename VECTOR_TYPE >
-real64 dotTwoVecs( VECTOR_TYPE const & vec1,
-                   VECTOR_TYPE const & vec2 )
+real64 dot( VECTOR_TYPE const & vec1,
+            VECTOR_TYPE const & vec2 )
 {
   GEOS_ASSERT( vec1.size() == vec2.size());
   RAJA::ReduceSum< parallelHostReduce, real64 > result( 0.0 );
