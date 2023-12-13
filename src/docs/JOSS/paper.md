@@ -82,11 +82,10 @@ The data repository defines a `Wrapper` class to hold anything from data arrays 
 Drawing an analogy with a standard folder/file hierarchy, the `Group` class can be thought of as a "Folder" as it holds other `Group`'s as well as a collection of `Wrapper` objects. 
 The `Wrapper` can be thought of as a "File" as it contains the relevant data that is stored in the repository.
 
-The mesh interface is built on top of the data repository as a collection of managers for each mesh object type. 
+The mesh interface is built on top of the data repository as a collection of managers for each mesh object type. \autoref{fig:meshHierarchy}
 A physical body is 
 
-![Caption for example figure.](MeshHierarchy.png){ width=20% }
-
+![UML diagram of the mesh interface hierarchy.\label{fig:meshHierarchy}](MeshHierarchy.png)
 
 
 assist in the implementation of methods to solve constraint equations on complex unstructured grids.
