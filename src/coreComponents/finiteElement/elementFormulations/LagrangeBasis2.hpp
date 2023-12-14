@@ -223,11 +223,11 @@ public:
     switch( q )
     {
       case 0:
-	return p == 0 ? -3.0/2.0 : -1.0/2.0; 
+	     return p == 0 ? -1.5 : -0.5; 
       case 1:
-	return p == 0 ? 2.0 : 0.0; 
+	     return p == 0 ? 2.0 : 0.0; 
       case 2:
-	return p == 0 ? -1.0/2.0 : 1.0/2.0; 
+	     return p == 0 ? -0.5 : 0.5; 
       default:
 	return 0;
     }

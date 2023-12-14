@@ -48,6 +48,7 @@ public:
   constexpr static localIndex num1dNodes = GL_BASIS::numSupportPoints;
   constexpr static localIndex num2dNodes = num1dNodes * num1dNodes;
   constexpr static localIndex num3dNodes = num1dNodes * num1dNodes * num1dNodes;
+  constexpr static localIndex halfNodes = ( GL_BASIS::numSupportPoints - 1 )/ 2;
 
   /// The number of nodes/support points per element.
   constexpr static localIndex numNodes = GL_BASIS::TensorProduct3D::numSupportPoints;
@@ -179,9 +180,14 @@ public:
   GEOS_FORCE_INLINE
   constexpr static real64 basisGradientAt( const int q, const int p )
   {
-    return p <= ( GL_BASIS::numSupportPoints - 1 )/ 2 ? 
-	          GL_BASIS::gradientAt( q, p ) : 
-		  -GL_BASIS::gradientAt( GL_BASIS::numSupportPoints - 1 - q, GL_BASIS::numSupportPoints - 1 - p ); 
+    if( p <= halfNodes )
+    {
+      return  GL_BASIS::gradientAt( q, p );
+    }
+    else
+    {
+		return -GL_BASIS::gradientAt( GL_BASIS::numSupportPoints - 1 - q, GL_BASIS::numSupportPoints - 1 - p ); 
+    } 
   }
 
   /**
@@ -1135,19 +1141,19 @@ computeGradPhiBGradPhi( int const qa,
   const real64 w = GL_BASIS::weight( qa )*GL_BASIS::weight( qb )*GL_BASIS::weight( qc );
   for( int i=0; i<num1dNodes; i++ )
   {
+    const int ibc = GL_BASIS::TensorProduct3D::linearIndex( i, qb, qc );
+    const int aic = GL_BASIS::TensorProduct3D::linearIndex( qa, i, qc );
+    const int abi = GL_BASIS::TensorProduct3D::linearIndex( qa, qb, i );
+    const real64 gia = basisGradientAt( i, qa ); 
+    const real64 gib = basisGradientAt( i, qb ); 
+    const real64 gic = basisGradientAt( i, qc ); 
     for( int j=0; j<num1dNodes; j++ )
     {
-      const int ibc = GL_BASIS::TensorProduct3D::linearIndex( i, qb, qc );
       const int jbc = GL_BASIS::TensorProduct3D::linearIndex( j, qb, qc );
-      const int aic = GL_BASIS::TensorProduct3D::linearIndex( qa, i, qc );
       const int ajc = GL_BASIS::TensorProduct3D::linearIndex( qa, j, qc );
-      const int abi = GL_BASIS::TensorProduct3D::linearIndex( qa, qb, i );
       const int abj = GL_BASIS::TensorProduct3D::linearIndex( qa, qb, j );
-      const real64 gia = basisGradientAt( i, qa ); 
       const real64 gja = basisGradientAt( j, qa ); 
-      const real64 gib = basisGradientAt( i, qb ); 
       const real64 gjb = basisGradientAt( j, qb ); 
-      const real64 gic = basisGradientAt( i, qc ); 
       const real64 gjc = basisGradientAt( j, qc ); 
       // diagonal terms
       const real64 w0 = w * gia * gja;
@@ -1242,19 +1248,19 @@ computeFirstOrderStiffnessTerm( localIndex const q,
   const real64 w = GL_BASIS::weight( qa )*GL_BASIS::weight( qb )*GL_BASIS::weight( qc );  
   for( int i=0; i<num1dNodes; i++ )
   {
+    const int  ibc = GL_BASIS::TensorProduct3D::linearIndex( i, qb, qc );
+    const int  aic = GL_BASIS::TensorProduct3D::linearIndex( qa, i, qc );
+    const int  abi = GL_BASIS::TensorProduct3D::linearIndex( qa, qb, i );
+    const real64 gia = basisGradientAt( i, qa ); 
+    const real64 gib = basisGradientAt( i, qb ); 
+    const real64 gic = basisGradientAt( i, qc ); 
     for( int j=0; j<num1dNodes; j++ )
     {
-      const int  ibc = GL_BASIS::TensorProduct3D::linearIndex( i, qb, qc );
       const int  jbc = GL_BASIS::TensorProduct3D::linearIndex( j, qb, qc );
-      const int  aic = GL_BASIS::TensorProduct3D::linearIndex( qa, i, qc );
       const int  ajc = GL_BASIS::TensorProduct3D::linearIndex( qa, j, qc );
-      const int  abi = GL_BASIS::TensorProduct3D::linearIndex( qa, qb, i );
       const int  abj = GL_BASIS::TensorProduct3D::linearIndex( qa, qb, j );
-      const real64 gia = basisGradientAt( i, qa ); 
       const real64 gja = basisGradientAt( j, qa ); 
-      const real64 gib = basisGradientAt( i, qb ); 
       const real64 gjb = basisGradientAt( j, qb ); 
-      const real64 gic = basisGradientAt( i, qc ); 
       const real64 gjc = basisGradientAt( j, qc ); 
       // diagonal terms
       const real64 w00 = w * gia * gja;

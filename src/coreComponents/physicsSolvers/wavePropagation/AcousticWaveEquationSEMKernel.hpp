@@ -765,7 +765,8 @@ public:
 
     /// C-array stack storage for element local the nodal positions.
     real64 xLocal[ 8 ][ 3 ];
-    real32 stiffnessVectorLocal[ numNodesPerElem ]{}; 
+    real32 stiffnessVectorLocal[ numNodesPerElem ]{};
+    real32 invDensity;
   };
   //***************************************************************************
 
@@ -779,7 +780,8 @@ public:
   inline
   void setup( localIndex const k,
               StackVariables & stack ) const
-  {
+  {                   
+    invDensity = 1./m_density[k]; 
     for( localIndex a=0; a< 8; a++ )
     {
       localIndex const nodeIndex =  m_elemsToNodes( k, FE_TYPE::meshIndexToLinearIndex3D( a ) );
@@ -820,10 +822,10 @@ public:
                               localIndex const q,
                               StackVariables & stack ) const
   {
-    m_finiteElementSpace.template computeStiffnessTerm( q, stack.xLocal, [&] ( int i, int j, real64 val )
+    
+    m_finiteElementSpace.template computeStiffnessTerm( q, stack.xLocal, [&] ( const int i, const int j, const real64 val )
     {
-      real32 invDensity = 1./m_density[k];
-      real32 const localIncrement = invDensity*val*m_p_n[m_elemsToNodes[k][j]];
+      real32 const localIncrement = stack.invDensity*val*m_p_n[m_elemsToNodes[k][j]];
       stack.stiffnessVectorLocal[ i ] += localIncrement;
     } );
   }

@@ -165,7 +165,7 @@ public:
   constexpr static real64 gradientAt( const int q, 
                                       const int p )
   {
-    return q == 0 ? -1.0/2.0 : 1.0/2.0; 
+    return q == 0 ? -0.5 : 0.5;
   }
 
   /**

@@ -465,47 +465,47 @@ public:
     switch( q )
     {
       case 0:
-	switch( p )
-	{
+	     switch( p )
+	     {
           case 0: return -7.5000000000000000000;
-	  case 1: return -1.7863649483390948939;
-	  case 2: return 0.48495104785356916930;
-	}
+	       case 1: return -1.7863649483390948939;
+	       case 2: return 0.48495104785356916930;
+	     }
       case 1:
-	switch( p )
-	{
+	     switch( p )
+	     {
           case 0: return 10.14141593631966928023;
-	  case 1: return 0.0;
-	  case 2: return -1.72125695283023338321;
-	}
+          case 1: return 0.0;
+	       case 2: return -1.72125695283023338321;
+	     }
       case 2:
-	switch( p )
-	{
+	     switch( p )
+	     {
           case 0: return -4.03618727030534800527;
-	  case 1: return 2.5234267774294554319088;
-	  case 2: return 0.0; 
-	}
+	       case 1: return 2.5234267774294554319088;
+	       case 2: return 0.0; 
+	     }
       case 3:
-	switch( p )
-	{
+	     switch( p )
+	     {
           case 0: return 2.2446846481761668242712;
-	  case 1: return -1.1528281585359293413318;
-	  case 2: return 1.7529619663678659788775;
-	}
+	       case 1: return -1.1528281585359293413318;
+	       case 2: return 1.7529619663678659788775;
+	     }
       case 4:
-	switch( p )
-	{
+	     switch( p )
+	     {
           case 0: return -1.3499133141904880992312;
-	  case 1: return 0.6535475074298001672007;
-	  case 2: return -0.7863566722232407374395;
-	}
+	       case 1: return 0.6535475074298001672007;
+	       case 2: return -0.7863566722232407374395;
+	     }
       case 5:
-	switch( p )
-	{
+	     switch( p )
+	     {
           case 0: return 0.500000000000000000000;
-	  case 1: return -0.2377811779842313638052;
-	  case 2: return 0.2697006108320389724720;
-	}
+	       case 1: return -0.2377811779842313638052;
+	       case 2: return 0.2697006108320389724720;
+	     }
     }
     return 0;
   }
