@@ -415,8 +415,8 @@ private:
 
 };
 
-// Temporary functions (axpy, scale, dot) used in Aitken's acceleration. Will be removed once the nonlinear 
-// acceleration implementation scheme will use LAI vectors. See issue #2891 
+// Temporary functions (axpy, scale, dot) used in Aitken's acceleration. Will be removed once the nonlinear
+// acceleration implementation scheme will use LAI vectors. See issue #2891
 // (https://github.com/GEOS-DEV/GEOS/issues/2891)
 
 template< typename VECTOR_TYPE, typename SCALAR_TYPE >
