@@ -1027,22 +1027,29 @@ void SolidMechanicsLagrangianFEM::assembleSystem( real64 const GEOS_UNUSED_PARAM
 
   if( m_isFixedStressPoromechanicsUpdate )
   {
-    //GEOS_UNUSED_VAR( dt );
     assemblyLaunch< constitutive::PorousSolid< ElasticIsotropic >, // TODO: change once there is a cmake solution
                     solidMechanicsLagrangianFEMKernels::FixedStressThermoPoromechanicsFactory >( domain,
                                                                                                  dofManager,
+                                                                                                 FlowSolverBase::viewKeyStruct::solidNamesString(),
                                                                                                  localMatrix,
                                                                                                  localRhs,
                                                                                                  dt );
+    assemblyLaunch< constitutive::SolidBase,
+                    solidMechanicsLagrangianFEMKernels::QuasiStaticFactory >( domain,
+                                                                              dofManager,
+                                                                              viewKeyStruct::solidMaterialNamesString(),
+                                                                              localMatrix,
+                                                                              localRhs,
+                                                                              dt );
   }
   else
   {
     if( m_timeIntegrationOption == TimeIntegrationOption::QuasiStatic )
     {
-      //GEOS_UNUSED_VAR( dt );
       assemblyLaunch< constitutive::SolidBase,
                       solidMechanicsLagrangianFEMKernels::QuasiStaticFactory >( domain,
                                                                                 dofManager,
+                                                                                viewKeyStruct::solidMaterialNamesString(),
                                                                                 localMatrix,
                                                                                 localRhs,
                                                                                 dt );
@@ -1052,6 +1059,7 @@ void SolidMechanicsLagrangianFEM::assembleSystem( real64 const GEOS_UNUSED_PARAM
       assemblyLaunch< constitutive::SolidBase,
                       solidMechanicsLagrangianFEMKernels::ImplicitNewmarkFactory >( domain,
                                                                                     dofManager,
+                                                                                    viewKeyStruct::solidMaterialNamesString(),
                                                                                     localMatrix,
                                                                                     localRhs,
                                                                                     dt,

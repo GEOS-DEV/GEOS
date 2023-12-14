@@ -230,9 +230,9 @@ struct ConstitutivePassThru< PorousSolid< ElasticIsotropic > >
     }
     else
     {
-      GEOS_ERROR( "ConstitutivePassThru< PorousSolid< ElasticIsotropic > >::execute failed on constitutive relation "
-                  << constitutiveRelation.getDataContext() << " with type "
-                  << LvArray::system::demangleType( constitutiveRelation ) );
+      GEOS_WARNING( "ConstitutivePassThru< PorousSolid< ElasticIsotropic > >::execute failed on constitutive relation "
+                    << constitutiveRelation.getDataContext() << " with type "
+                    << LvArray::system::demangleType( constitutiveRelation ) );
     }
   }
 };

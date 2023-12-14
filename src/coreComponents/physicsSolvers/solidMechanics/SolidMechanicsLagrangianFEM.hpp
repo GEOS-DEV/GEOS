@@ -177,6 +177,7 @@ public:
             typename ... PARAMS >
   void assemblyLaunch( DomainPartition & domain,
                        DofManager const & dofManager,
+                       string const & materialNamesString,
                        CRSMatrixView< real64, globalIndex const > const & localMatrix,
                        arrayView1d< real64 > const & localRhs,
                        real64 const dt,
@@ -324,6 +325,7 @@ template< typename CONSTITUTIVE_BASE,
           typename ... PARAMS >
 void SolidMechanicsLagrangianFEM::assemblyLaunch( DomainPartition & domain,
                                                   DofManager const & dofManager,
+                                                  string const & materialNamesString,
                                                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                   arrayView1d< real64 > const & localRhs,
                                                   real64 const dt,
@@ -335,6 +337,27 @@ void SolidMechanicsLagrangianFEM::assemblyLaunch( DomainPartition & domain,
                                                                 MeshLevel & mesh,
                                                                 arrayView1d< string const > const & regionNames )
   {
+    // collect the target regions that match materialNamesString
+    array1d< string > filteredRegionNames;
+    filteredRegionNames.reserve( regionNames.size() );
+    ElementRegionManager const & elementRegionManager = mesh.getElemManager();
+    elementRegionManager.forElementSubRegions< CellElementSubRegion >( regionNames,
+                                                                       [&]
+                                                                         ( localIndex const regionIndex, auto & elementSubRegion )
+    {
+      if( elementSubRegion.template hasWrapper< string >( materialNamesString ) )
+      {
+        filteredRegionNames.emplace_back( regionNames[regionIndex] );
+        return;
+      }
+    } );
+
+    // if the array is empty, there is nothing to do
+    if( filteredRegionNames.empty() )
+    {
+      return;
+    }
+
     NodeManager const & nodeManager = mesh.getNodeManager();
 
     string const dofKey = dofManager.getKey( fields::solidMechanics::totalDisplacement::key() );
@@ -350,28 +373,14 @@ void SolidMechanicsLagrangianFEM::assemblyLaunch( DomainPartition & domain,
                                   gravityVectorData,
                                   std::forward< PARAMS >( params )... );
 
-    if( m_isFixedStressPoromechanicsUpdate )
-    {
-      m_maxForce = finiteElement::
-                     regionBasedKernelApplication< parallelDevicePolicy< >,
-                                                   CONSTITUTIVE_BASE,
-                                                   CellElementSubRegion >( mesh,
-                                                                           regionNames,
-                                                                           this->getDiscretizationName(),
-                                                                           FlowSolverBase::viewKeyStruct::solidNamesString(),
-                                                                           kernelWrapper );
-    }
-    else
-    {
-      m_maxForce = finiteElement::
-                     regionBasedKernelApplication< parallelDevicePolicy< >,
-                                                   CONSTITUTIVE_BASE,
-                                                   CellElementSubRegion >( mesh,
-                                                                           regionNames,
-                                                                           this->getDiscretizationName(),
-                                                                           viewKeyStruct::solidMaterialNamesString(),
-                                                                           kernelWrapper );
-    }
+    m_maxForce = finiteElement::
+                   regionBasedKernelApplication< parallelDevicePolicy< >,
+                                                 CONSTITUTIVE_BASE,
+                                                 CellElementSubRegion >( mesh,
+                                                                         filteredRegionNames,
+                                                                         this->getDiscretizationName(),
+                                                                         materialNamesString,
+                                                                         kernelWrapper );
   } );
 
   applyContactConstraint( dofManager, domain, localMatrix, localRhs );
