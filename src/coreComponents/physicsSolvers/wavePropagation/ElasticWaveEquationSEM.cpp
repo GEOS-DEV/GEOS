@@ -182,11 +182,9 @@ void ElasticWaveEquationSEM::postProcessInput()
   }
   localIndex const nsamples = int( maxTime / dt ) + 1;
 
-  localIndex const numSourcesGlobal = m_sourceCoordinates.size( 0 );
-  m_sourceIsAccessible.resize( numSourcesGlobal );
-
   localIndex const numReceiversGlobal = m_receiverCoordinates.size( 0 );
   localIndex const numSourcesGlobal = m_sourceCoordinates.size( 0 );
+  m_sourceIsAccessible.resize( numSourcesGlobal );
 
   m_displacementXNp1AtReceivers.resize( m_nsamplesSeismoTrace, numReceiversGlobal + 1 );
   m_displacementYNp1AtReceivers.resize( m_nsamplesSeismoTrace, numReceiversGlobal + 1 );
