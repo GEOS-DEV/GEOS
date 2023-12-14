@@ -398,10 +398,6 @@ void MultiphasePoromechanics< FLOW_SOLVER >::initializePreSubGroups()
                                                                        [&]( localIndex const,
                                                                             ElementSubRegionBase & subRegion )
     {
-      // skip the wells
-      if( subRegion.getCatalogName() == "wellElementSubRegion" )
-        return;
-
       string & porousName = subRegion.getReference< string >( viewKeyStruct::porousMaterialNamesString() );
       porousName = this->template getConstitutiveName< CoupledSolidBase >( subRegion );
       GEOS_ERROR_IF( porousName.empty(), GEOS_FMT( "{}: Solid model not found on subregion {}",
