@@ -1452,6 +1452,15 @@ void CompositionalMultiphaseBase::applySourceFluxBC( real64 const time,
       {
         return;
       }
+      if( !subRegion.hasWrapper( dofKey ) )
+      {
+        if( fs.getLogLevel() >= 1 )
+        {
+          GEOS_LOG_RANK( GEOS_FMT( "{}: trying to apply SourceFlux, but its targetSet named '{}' intersects with non-simulated region named '{}'.",
+                                   getDataContext(), setName, subRegion.getName() ) );
+        }
+        return;
+      }
 
       arrayView1d< globalIndex const > const dofNumber = subRegion.getReference< array1d< globalIndex > >( dofKey );
       arrayView1d< integer const > const ghostRank = subRegion.ghostRank();
