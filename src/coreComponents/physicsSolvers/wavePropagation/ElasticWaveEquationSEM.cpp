@@ -88,49 +88,6 @@ ElasticWaveEquationSEM::~ElasticWaveEquationSEM()
   // TODO Auto-generated destructor stub
 }
 
-localIndex ElasticWaveEquationSEM::getNumNodesPerElem()
-{
-  DomainPartition & domain = getGroupByPath< DomainPartition >( "/Problem/domain" );
-
-  NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
-
-  FiniteElementDiscretizationManager const &
-  feDiscretizationManager = numericalMethodManager.getFiniteElementDiscretizationManager();
-
-  FiniteElementDiscretization const * const
-  feDiscretization = feDiscretizationManager.getGroupPointer< FiniteElementDiscretization >( m_discretizationName );
-  GEOS_THROW_IF( feDiscretization == nullptr,
-                 getDataContext() << ": FE discretization not found: " << m_discretizationName,
-                 InputError );
-
-  localIndex numNodesPerElem = 0;
-  forDiscretizationOnMeshTargets( domain.getMeshBodies(),
-                                  [&]( string const &,
-                                       MeshLevel const & mesh,
-                                       arrayView1d< string const > const & regionNames )
-  {
-    ElementRegionManager const & elemManager = mesh.getElemManager();
-    elemManager.forElementRegions( regionNames,
-                                   [&] ( localIndex const,
-                                         ElementRegionBase const & elemRegion )
-    {
-      elemRegion.forElementSubRegions( [&]( ElementSubRegionBase const & elementSubRegion )
-      {
-        finiteElement::FiniteElementBase const &
-        fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
-        localIndex const numSupportPoints = fe.getNumSupportPoints();
-        if( numSupportPoints > numNodesPerElem )
-        {
-          numNodesPerElem = numSupportPoints;
-        }
-      } );
-    } );
-
-
-  } );
-  return numNodesPerElem;
-}
-
 void ElasticWaveEquationSEM::initializePreSubGroups()
 {
 
@@ -224,6 +181,10 @@ void ElasticWaveEquationSEM::postProcessInput()
     m_nsamplesSeismoTrace = 0;
   }
   localIndex const nsamples = int( maxTime / dt ) + 1;
+
+  localIndex const numSourcesGlobal = m_sourceCoordinates.size( 0 );
+  m_sourceIsAccessible.resize( numSourcesGlobal );
+
   localIndex const numReceiversGlobal = m_receiverCoordinates.size( 0 );
   localIndex const numSourcesGlobal = m_sourceCoordinates.size( 0 );
 
@@ -338,9 +299,9 @@ void ElasticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh, 
   } );
 }
 
-void ElasticWaveEquationSEM::computeDAS ( arrayView2d< real32 > const xCompRcv,
-                                          arrayView2d< real32 > const yCompRcv,
-                                          arrayView2d< real32 > const zCompRcv )
+void ElasticWaveEquationSEM::computeDAS( arrayView2d< real32 > const xCompRcv,
+                                         arrayView2d< real32 > const yCompRcv,
+                                         arrayView2d< real32 > const zCompRcv )
 {
 
   arrayView2d< real64 const > const linearDASGeometry = m_linearDASGeometry.toViewConst();
@@ -384,9 +345,9 @@ void ElasticWaveEquationSEM::computeDAS ( arrayView2d< real32 > const xCompRcv,
         {
           // store strain data in the z-component of the receiver (copied to x after resize)
           zCompRcv[iSample][ircv] =
-            cd * ca * ( xCompRcv[iSample][numReceiversGlobal+ircv] - xCompRcv[iSample][ircv] )
-            + cd * sa * ( yCompRcv[iSample][numReceiversGlobal+ircv] - yCompRcv[iSample][ircv] )
-            + sd * ( zCompRcv[iSample][numReceiversGlobal+ircv] - zCompRcv[iSample][ircv] );
+            cd * ca * ( xCompRcv[iSample][numReceiversGlobal+ircv] - xCompRcv[iSample][ircv] ) +
+            cd * sa * ( yCompRcv[iSample][numReceiversGlobal+ircv] - yCompRcv[iSample][ircv] ) +
+            sd * ( zCompRcv[iSample][numReceiversGlobal+ircv] - zCompRcv[iSample][ircv] );
           zCompRcv[iSample][ircv] /= linearDASGeometry[ircv][2];
 
         }
@@ -530,8 +491,8 @@ void ElasticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
     } );
   } );
 
-  WaveSolverUtils::initTrace( "seismoTraceReceiver", getName(), m_receiverConstants.size( 0 ), m_receiverIsLocal );
-  WaveSolverUtils::initTrace( "dasTraceReceiver", getName(), m_linearDASGeometry.size( 0 ), m_receiverIsLocal );
+  WaveSolverUtils::initTrace( "seismoTraceReceiver", getName(), m_outputSeismoTrace, m_receiverConstants.size( 0 ), m_receiverIsLocal );
+  WaveSolverUtils::initTrace( "dasTraceReceiver", getName(), m_outputSeismoTrace, m_linearDASGeometry.size( 0 ), m_receiverIsLocal );
 }
 
 

@@ -321,7 +321,7 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
     } );
   } );
 
-  WaveSolverUtils::initTrace( "seismoTraceReceiver", getName(), m_receiverConstants.size( 0 ), m_receiverIsLocal );
+  WaveSolverUtils::initTrace( "seismoTraceReceiver", getName(), m_outputSeismoTrace, m_receiverConstants.size( 0 ), m_receiverIsLocal );
 }
 
 
@@ -611,15 +611,15 @@ void AcousticWaveEquationSEM::initializePML()
     /// add safeguards when PML thickness is negative or too small
     for( integer i=0; i<3; ++i )
     {
-      if( param.thicknessMinXYZPML[i]<=minThicknessPML )
+      if( param.thicknessMinXYZPML[i] <= minThicknessPML )
       {
-        param.thicknessMinXYZPML[i]=LvArray::NumericLimits< real32 >::max;
-        param.waveSpeedMinXYZPML[i]=0;
+        param.thicknessMinXYZPML[i] = LvArray::NumericLimits< real32 >::max;
+        param.waveSpeedMinXYZPML[i] = 0;
       }
       if( param.thicknessMaxXYZPML[i]<=minThicknessPML )
       {
-        param.thicknessMaxXYZPML[i]=LvArray::NumericLimits< real32 >::max;
-        param.waveSpeedMaxXYZPML[i]=0;
+        param.thicknessMaxXYZPML[i] = LvArray::NumericLimits< real32 >::max;
+        param.waveSpeedMaxXYZPML[i] = 0;
       }
     }
 
@@ -983,10 +983,10 @@ void AcousticWaveEquationSEM::computeUnknowns( real64 const & time_n,
       if( freeSurfaceNodeIndicator[a] != 1 )
       {
         p_np1[a] = p_n[a];
-        p_np1[a] *= 2.0*mass[a];
-        p_np1[a] -= (mass[a]-0.5*dt*damping[a])*p_nm1[a];
-        p_np1[a] += dt2*(rhs[a]-stiffnessVector[a]);
-        p_np1[a] /= mass[a]+0.5*dt*damping[a];
+        p_np1[a] *= 2.0 * mass[a];
+        p_np1[a] -= (mass[a] - 0.5 * dt * damping[a]) * p_nm1[a];
+        p_np1[a] += dt2 * (rhs[a] - stiffnessVector[a]);
+        p_np1[a] /= mass[a] + 0.5 * dt * damping[a];
       }
     } );
   }
@@ -1000,12 +1000,12 @@ void AcousticWaveEquationSEM::computeUnknowns( real64 const & time_n,
     arrayView2d< wsCoordType const, nodes::REFERENCE_POSITION_USD > const
     nodeCoords32 = nodeManager.getField< fields::referencePosition32 >().toViewConst();
 
-    real32 const xMin[ 3 ] = {param.xMinPML[0], param.xMinPML[1], param.xMinPML[2]};
-    real32 const xMax[ 3 ] = {param.xMaxPML[0], param.xMaxPML[1], param.xMaxPML[2]};
-    real32 const dMin[ 3 ] = {param.thicknessMinXYZPML[0], param.thicknessMinXYZPML[1], param.thicknessMinXYZPML[2]};
-    real32 const dMax[ 3 ] = {param.thicknessMaxXYZPML[0], param.thicknessMaxXYZPML[1], param.thicknessMaxXYZPML[2]};
-    real32 const cMin[ 3 ] = {param.waveSpeedMinXYZPML[0], param.waveSpeedMinXYZPML[1], param.waveSpeedMinXYZPML[2]};
-    real32 const cMax[ 3 ] = {param.waveSpeedMaxXYZPML[0], param.waveSpeedMaxXYZPML[1], param.waveSpeedMaxXYZPML[2]};
+    real32 const xMin[3] = {param.xMinPML[0], param.xMinPML[1], param.xMinPML[2]};
+    real32 const xMax[3] = {param.xMaxPML[0], param.xMaxPML[1], param.xMaxPML[2]};
+    real32 const dMin[3] = {param.thicknessMinXYZPML[0], param.thicknessMinXYZPML[1], param.thicknessMinXYZPML[2]};
+    real32 const dMax[3] = {param.thicknessMaxXYZPML[0], param.thicknessMaxXYZPML[1], param.thicknessMaxXYZPML[2]};
+    real32 const cMin[3] = {param.waveSpeedMinXYZPML[0], param.waveSpeedMinXYZPML[1], param.waveSpeedMinXYZPML[2]};
+    real32 const cMax[3] = {param.waveSpeedMaxXYZPML[0], param.waveSpeedMaxXYZPML[1], param.waveSpeedMaxXYZPML[2]};
     real32 const r = param.reflectivityPML;
 
     /// apply the main function to update some of the PML auxiliary variables
@@ -1039,17 +1039,16 @@ void AcousticWaveEquationSEM::computeUnknowns( real64 const & time_n,
 
         real32 const alpha = sigma[0] + sigma[1] + sigma[2];
 
-        p_np1[a] = dt2*( (rhs[a] - stiffnessVector[a])/mass[a] - divV_n[a])
-                   - (1 - 0.5*alpha*dt)*p_nm1[a]
-                   + 2*p_n[a];
+        p_np1[a] = dt2 * ((rhs[a] - stiffnessVector[a]) / mass[a] - divV_n[a]) -
+                   (1 - 0.5*alpha*dt)*p_nm1[a] + 2 * p_n[a];
 
-        p_np1[a] = p_np1[a] / (1 + 0.5*alpha*dt);
+        p_np1[a] = p_np1[a] / (1 + 0.5 * alpha * dt);
 
         for( integer i=0; i<3; ++i )
         {
-          v_n[a][i] = (1 - dt*sigma[i])*v_n[a][i] - dt*grad_n[a][i];
+          v_n[a][i] = (1 - dt * sigma[i]) * v_n[a][i] - dt * grad_n[a][i];
         }
-        u_n[a] += dt*p_n[a];
+        u_n[a] += dt * p_n[a];
       }
     } );
   }

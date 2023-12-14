@@ -189,8 +189,6 @@ private:
    */
   virtual void applyPML( real64 const time, DomainPartition & domain ) override;
 
-  localIndex getNumNodesPerElem();
-
   /// Constant part of the source for the nodes listed in m_sourceNodeIds in x-direction
   array2d< real64 > m_sourceConstantsx;
 
