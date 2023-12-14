@@ -3,7 +3,7 @@
 
 # Configuration
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
-PACKAGE_DIR=$SCRIPT_DIR/../src/coreComponents/python/modules
+PACKAGE_DIR=$(mktemp -d)
 declare -a TARGET_PACKAGES=("$PACKAGE_DIR/geosx_mesh_tools_package"
                             "$PACKAGE_DIR/geosx_xml_tools_package"
                             "$PACKAGE_DIR/hdf5_wrapper_package"
@@ -67,6 +67,11 @@ case $key in
 esac
 shift # past argument or value
 done
+
+
+# Clone the package directory
+echo "Cloning the GEOS python package repository..."
+git clone --depth 1 --branch main https://github.com/GEOS-DEV/geosPythonPackages.git $PACKAGE_DIR
 
 
 # Check to make sure that the python target exists
@@ -188,6 +193,11 @@ then
         ln -s $SCRIPT_DIR/pygeosx_preprocess.py $BIN_DIR/pygeosx_preprocess.py
     fi
 fi
+
+
+echo "Cleaning up..."
+rm -rf $PACKAGE_DIR
+
 
 echo "Done!"
 
