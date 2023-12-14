@@ -108,7 +108,8 @@ public:
                  string_array const & inputParams,
                  string_array const & phaseNames,
                  string_array const & componentNames,
-                 array1d< real64 > const & componentMolarWeight );
+                 array1d< real64 > const & componentMolarWeight,
+                 bool const printTable );
 
   static string catalogName() { return "CO2Solubility"; }
 
