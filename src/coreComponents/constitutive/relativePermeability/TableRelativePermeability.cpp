@@ -33,6 +33,7 @@ TableRelativePermeability::TableRelativePermeability( std::string const & name,
   : RelativePermeabilityBase( name, parent )
 {
   registerWrapper( viewKeyStruct::wettingNonWettingRelPermTableNamesString(), &m_wettingNonWettingRelPermTableNames ).
+    setRTTypeName( rtTypes::CustomTypes::groupNameRefArray ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "List of relative permeability tables for the pair (wetting phase, non-wetting phase)\n"
                     "The expected format is \"{ wettingPhaseRelPermTableName, nonWettingPhaseRelPermTableName }\", in that order\n"
@@ -44,6 +45,7 @@ TableRelativePermeability::TableRelativePermeability( std::string const & name,
                     " to specify the table names" );
 
   registerWrapper( viewKeyStruct::wettingIntermediateRelPermTableNamesString(), &m_wettingIntermediateRelPermTableNames ).
+    setRTTypeName( rtTypes::CustomTypes::groupNameRefArray ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "List of relative permeability tables for the pair (wetting phase, intermediate phase)\n"
                     "The expected format is \"{ wettingPhaseRelPermTableName, intermediatePhaseRelPermTableName }\", in that order\n"
@@ -53,6 +55,7 @@ TableRelativePermeability::TableRelativePermeability( std::string const & name,
                     " to specify the table names" );
 
   registerWrapper( viewKeyStruct::nonWettingIntermediateRelPermTableNamesString(), &m_nonWettingIntermediateRelPermTableNames ).
+    setRTTypeName( rtTypes::CustomTypes::groupNameRefArray ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "List of relative permeability tables for the pair (non-wetting phase, intermediate phase)\n"
                     "The expected format is \"{ nonWettingPhaseRelPermTableName, intermediatePhaseRelPermTableName }\", in that order\n"
@@ -65,9 +68,20 @@ TableRelativePermeability::TableRelativePermeability( std::string const & name,
     setInputFlag( InputFlags::FALSE ). // will be deduced from tables
     setSizedFromParent( 0 );
 
+  registerWrapper( viewKeyStruct::waterOilMaxRelPermString(), &m_waterOilMaxRelPerm ).
+    setInputFlag( InputFlags::FALSE ). // will be deduced from tables
+    setApplyDefaultValue( 0.0 ).
+    setSizedFromParent( 0 );
+
   registerWrapper( viewKeyStruct::relPermKernelWrappersString(), &m_relPermKernelWrappers ).
     setSizedFromParent( 0 ).
     setRestartFlags( RestartFlags::NO_WRITE );
+
+  registerWrapper( viewKeyStruct::threePhaseInterpolatorString(), &m_threePhaseInterpolator ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( ThreePhaseInterpolator::BAKER ).
+    setDescription( "Type of Three phase interpolator."
+                    "Valid options \n* " + EnumStrings< ThreePhaseInterpolator >::concat( "\n* " ) );
 }
 
 void TableRelativePermeability::postProcessInput()
@@ -129,11 +143,15 @@ void TableRelativePermeability::initializePreSubGroups()
   integer const numPhases = m_phaseNames.size();
   m_phaseMinVolumeFraction.resize( MAX_NUM_PHASES );
 
+
   string const fullName = getFullName();
   real64 phaseMinVolFrac = 0.0;
   real64 phaseMaxVolFrac = 0.0;
   real64 phaseRelPermMinEndPoint = 0.0;
   real64 phaseRelPermMaxEndPoint = 0.0;
+
+  //initialize STONE-II only used var to avoid discrepancies in baselines
+  m_waterOilMaxRelPerm = 1.0;
 
   FunctionManager const & functionManager = FunctionManager::getInstance();
 
@@ -184,6 +202,8 @@ void TableRelativePermeability::initializePreSubGroups()
                                            phaseRelPermMinEndPoint,
                                            phaseRelPermMaxEndPoint );
 
+
+
       if( ip == 0 ) // wetting phase is water
       {
         m_phaseMinVolumeFraction[m_phaseOrder[PhaseType::WATER]] = phaseMinVolFrac;
@@ -191,6 +211,7 @@ void TableRelativePermeability::initializePreSubGroups()
       else if( ip == 1 ) // intermediate phase is oil
       {
         m_phaseMinVolumeFraction[m_phaseOrder[PhaseType::OIL]] = phaseMinVolFrac;
+        m_waterOilMaxRelPerm = phaseRelPermEndPoint;
       }
     }
     for( integer ip = 0; ip < m_nonWettingIntermediateRelPermTableNames.size(); ++ip )
@@ -256,8 +277,10 @@ void TableRelativePermeability::createAllTableKernelWrappers()
 TableRelativePermeability::KernelWrapper::
   KernelWrapper( arrayView1d< TableFunction::KernelWrapper const > const & relPermKernelWrappers,
                  arrayView1d< real64 const > const & phaseMinVolumeFraction,
+                 real64 const & waterPhaseMaxVolumeFraction,
                  arrayView1d< integer const > const & phaseTypes,
                  arrayView1d< integer const > const & phaseOrder,
+                 ThreePhaseInterpolator const & threePhaseInterpolator,
                  arrayView3d< real64, relperm::USD_RELPERM > const & phaseRelPerm,
                  arrayView4d< real64, relperm::USD_RELPERM_DS > const & dPhaseRelPerm_dPhaseVolFrac,
                  arrayView3d< real64, relperm::USD_RELPERM > const & phaseTrappedVolFrac )
@@ -266,9 +289,10 @@ TableRelativePermeability::KernelWrapper::
                                     phaseRelPerm,
                                     dPhaseRelPerm_dPhaseVolFrac,
                                     phaseTrappedVolFrac ),
+  m_relPermKernelWrappers( relPermKernelWrappers ),
   m_phaseMinVolumeFraction( phaseMinVolumeFraction ),
-  m_relPermKernelWrappers( relPermKernelWrappers )
-{}
+  m_waterOilRelPermMaxValue( waterPhaseMaxVolumeFraction ),
+  m_threePhaseInterpolator( threePhaseInterpolator ) {}
 
 TableRelativePermeability::KernelWrapper
 TableRelativePermeability::createKernelWrapper()
@@ -280,8 +304,10 @@ TableRelativePermeability::createKernelWrapper()
   // then we create the actual TableRelativePermeability::KernelWrapper
   return KernelWrapper( m_relPermKernelWrappers,
                         m_phaseMinVolumeFraction,
+                        m_waterOilMaxRelPerm,
                         m_phaseTypes,
                         m_phaseOrder,
+                        m_threePhaseInterpolator,
                         m_phaseRelPerm,
                         m_dPhaseRelPerm_dPhaseVolFrac,
                         m_phaseTrappedVolFrac );

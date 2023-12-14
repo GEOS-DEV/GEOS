@@ -48,6 +48,10 @@ public:
 
 
   static string catalogName() { return "AcousticSEM"; }
+  /**
+   * @copydoc SolverBase::getCatalogName()
+   */
+  string getCatalogName() const override { return catalogName(); }
 
   virtual void initializePreSubGroups() override;
 
@@ -81,21 +85,6 @@ public:
    */
   virtual void addSourceToRightHandSide( integer const & cycleNumber, arrayView1d< real32 > const rhs );
 
-  /**
-   * TODO: move implementation into WaveSolverBase
-   * @brief Computes the traces on all receivers (see @computeSeismoTraces) up to time_n+dt
-   * @param time_n the time corresponding to the field values pressure_n
-   * @param dt the simulation timestep
-   * @param var_np1 the field values at time_n + dt
-   * @param var_n the field values at time_n
-   * @param varAtReceivers the array holding the trace values, where the output is written
-   */
-  virtual void computeAllSeismoTraces( real64 const time_n,
-                                       real64 const dt,
-                                       arrayView1d< real32 const > const var_np1,
-                                       arrayView1d< real32 const > const var_n,
-                                       arrayView2d< real32 > varAtReceivers );
-
 
   /**
    * @brief Initialize Perfectly Matched Layer (PML) information
@@ -110,14 +99,6 @@ public:
 
   struct viewKeyStruct : WaveSolverBase::viewKeyStruct
   {
-    static constexpr char const * sourceNodeIdsString() { return "sourceNodeIds"; }
-    static constexpr char const * sourceConstantsString() { return "sourceConstants"; }
-    static constexpr char const * sourceIsAccessibleString() { return "sourceIsAccessible"; }
-
-    static constexpr char const * receiverNodeIdsString() { return "receiverNodeIds"; }
-    static constexpr char const * receiverConstantsString() {return "receiverConstants"; }
-    static constexpr char const * receiverIsLocalString() { return "receiverIsLocal"; }
-
     static constexpr char const * pressureNp1AtReceiversString() { return "pressureNp1AtReceivers"; }
 
   } waveEquationViewKeys;
@@ -229,6 +210,14 @@ DECLARE_FIELD( MediumVelocity,
                NOPLOT,
                WRITE_AND_READ,
                "Medium velocity of the cell" );
+
+DECLARE_FIELD( MediumDensity,
+               "mediumDensity",
+               array1d< real32 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Medium density of the cell" );
 
 DECLARE_FIELD( StiffnessVector,
                "stiffnessVector",

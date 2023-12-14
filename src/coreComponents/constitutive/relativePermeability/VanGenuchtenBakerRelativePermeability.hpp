@@ -283,6 +283,21 @@ VanGenuchtenBakerRelativePermeabilityUpdate::
                                           dOilRelPerm_go_dOilVolFrac,
                                           phaseRelPerm[ipOil],
                                           dPhaseRelPerm_dPhaseVolFrac[ipOil] );
+
+//      relpermInterpolators::Stone2::compute(shiftedWaterVolFrac,
+//                                            phaseVolFraction[ipGas],
+//                                            m_phaseOrder,
+//                                            m_waterOilRelPermMaxValue[ipOil],
+//                                            oilRelPerm_wo,
+//                                            dOilRelPerm_wo_dOilVolFrac,
+//                                            oilRelPerm_go,
+//                                            dOilRelPerm_go_dOilVolFrac,
+//                                            phaseRelPerm[ipWater],
+//                                            dPhaseRelPerm_dPhaseVolFrac[ipWater][ipWater],
+//                                            phaseRelPerm[ipGas],
+//                                            dPhaseRelPerm_dPhaseVolFrac[ipGas][ipGas],
+//                                            phaseRelPerm[ipOil],
+//                                            dPhaseRelPerm_dPhaseVolFrac[ipOil] );
   }
 
   // update trapped phase volume fraction

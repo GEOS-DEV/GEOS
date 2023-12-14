@@ -68,10 +68,12 @@ EmbeddedSurfaceGenerator::EmbeddedSurfaceGenerator( const string & name,
   m_mpiCommOrder( 0 )
 {
   registerWrapper( viewKeyStruct::fractureRegionNameString(), &m_fractureRegionName ).
+    setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
     setInputFlag( dataRepository::InputFlags::OPTIONAL ).
     setApplyDefaultValue( "FractureRegion" );
 
   registerWrapper( viewKeyStruct::targetObjectsNameString(), &m_targetObjectsName ).
+    setRTTypeName( rtTypes::CustomTypes::groupNameRefArray ).
     setInputFlag( dataRepository::InputFlags::REQUIRED ).
     setDescription( "List of geometric objects that will be used to initialized the embedded surfaces/fractures." );
 
@@ -224,7 +226,7 @@ void EmbeddedSurfaceGenerator::initializePostSubGroups()
 
       using KERNEL_TYPE = decltype( kernel );
 
-      KERNEL_TYPE::template launchCIComputationKernel< parallelDevicePolicy< 32 >, KERNEL_TYPE >( kernel );
+      KERNEL_TYPE::template launchCIComputationKernel< parallelDevicePolicy< >, KERNEL_TYPE >( kernel );
     } );
   } );
 

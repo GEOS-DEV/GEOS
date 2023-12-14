@@ -71,6 +71,10 @@ public:
    * @return string that contains the catalog name to generate a new object through the object catalog.
    */
   static string catalogName() { return "CompositionalMultiphaseFVM"; }
+  /**
+   * @copydoc SolverBase::getCatalogName()
+   */
+  string getCatalogName() const override { return catalogName(); }
 //END_SPHINX_INCLUDE_01
 
   /**
@@ -100,12 +104,12 @@ public:
                          arrayView1d< real64 const > const & localRhs ) override;
 
   virtual real64
-  scalingForSystemSolution( DomainPartition const & domain,
+  scalingForSystemSolution( DomainPartition & domain,
                             DofManager const & dofManager,
                             arrayView1d< real64 const > const & localSolution ) override;
 
   virtual bool
-  checkSystemSolution( DomainPartition const & domain,
+  checkSystemSolution( DomainPartition & domain,
                        DofManager const & dofManager,
                        arrayView1d< real64 const > const & localSolution,
                        real64 const scalingFactor ) override;
@@ -114,6 +118,7 @@ public:
   applySystemSolution( DofManager const & dofManager,
                        arrayView1d< real64 const > const & localSolution,
                        real64 const scalingFactor,
+                       real64 const dt,
                        DomainPartition & domain ) override;
 
   /**@}*/
@@ -144,7 +149,33 @@ public:
                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
                   arrayView1d< real64 > const & localRhs ) const override;
 
+  struct viewKeyStruct : CompositionalMultiphaseBase::viewKeyStruct
+  {
+    // DBC parameters
+    static constexpr char const * useDBCString()                  { return "useDBC"; }
+    static constexpr char const * omegaDBCString()                { return "omegaDBC"; }
+    static constexpr char const * continuationDBCString()         { return "continuationDBC"; }
+
+    static constexpr char const * miscibleDBCString()             { return "miscibleDBC"; }
+    static constexpr char const * kappaminDBCString()             { return "kappaminDBC"; }
+    static constexpr char const * contMultiplierDBCString()       { return "contMultiplierDBC"; }
+
+    // nonlinear solver parameters
+    static constexpr char const * scalingTypeString()               { return "scalingType"; }
+  };
+
+  /**
+   * @brief Solution scaling type
+   */
+  enum class ScalingType : integer
+  {
+    Global,         ///< Scale the Newton update with a unique scaling factor
+    Local            ///< Scale the Newton update locally (modifies the Newton direction)
+  };
+
 protected:
+
+  virtual void postProcessInput() override;
 
   virtual void
   initializePreSubGroups() override;
@@ -156,6 +187,27 @@ protected:
    */
   void
   computeCFLNumbers( real64 const & dt, DomainPartition & domain );
+
+  struct DBCParameters
+  {
+    /// Flag to enable Dissipation Based Continuation Method
+    integer useDBC;
+    /// Factor by which the DBC flux is multiplied
+    real64 omega;
+    /// Factor by which the DBC flux is diminished every Newton
+    real64 kappa;
+    /// Flag to enable continuation for DBC Method
+    integer continuation;
+    /// Flag to enable DBC formulation
+    integer miscible;
+    /// Factor that controls how much dissipation is kept in the system when continuation is used
+    real64 kappamin;
+    /// Factor by which continuation parameter is changed every newton when DBC is used
+    real64 contMultiplier;
+  } m_dbcParams;
+
+  /// Solution scaling type
+  ScalingType m_scalingType;
 
 private:
 
@@ -187,6 +239,9 @@ private:
 
 };
 
+ENUM_STRINGS( CompositionalMultiphaseFVM::ScalingType,
+              "Global",
+              "Local" );
 
 } // namespace geos
 

@@ -33,10 +33,12 @@ ElementRegionBase::ElementRegionBase( string const & name, Group * const parent 
   this->registerGroup( viewKeyStruct::elementSubRegions() );
 
   registerWrapper( viewKeyStruct::materialListString(), &m_materialList ).
+    setRTTypeName( rtTypes::CustomTypes::groupNameRefArray ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "List of materials present in this region" );
 
   registerWrapper( viewKeyStruct::meshBodyString(), &m_meshBody ).
+    setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( "" ).
     setDescription( "Mesh body that contains this region" );
@@ -54,6 +56,9 @@ string ElementRegionBase::verifyMeshBodyName( Group const & meshBodies,
   string meshBodyName = meshBodyBlockName;
   localIndex const numberOfMeshBodies = meshBodies.numSubGroups();
 
+  GEOS_THROW_IF( numberOfMeshBodies == 0,
+                 "No MeshBodies found in this problem, please check if correct input file is provided", InputError );
+
   if( numberOfMeshBodies == 1 )
   {
     string const & onlyMeshBodyName = meshBodies.getGroup( 0 ).getName();
@@ -62,9 +67,10 @@ string ElementRegionBase::verifyMeshBodyName( Group const & meshBodies,
     {
       meshBodyName = onlyMeshBodyName;
     }
-    GEOS_ERROR_IF_NE_MSG( onlyMeshBodyName,
+    GEOS_THROW_IF_NE_MSG( onlyMeshBodyName,
                           meshBodyName,
-                          "MeshBody specified does not match MeshBody in hierarchy." );
+                          "MeshBody specified does not match MeshBody in hierarchy.",
+                          InputError );
   }
   else
   {
@@ -76,9 +82,10 @@ string ElementRegionBase::verifyMeshBodyName( Group const & meshBodies,
         meshBodyFound = true;
       }
     } );
-    GEOS_ERROR_IF( !meshBodyFound,
+    GEOS_THROW_IF( !meshBodyFound,
                    "There are multiple MeshBodies in this problem, but the "
-                   "specified MeshBody name "<<meshBodyName<<" was not found" );
+                   "specified MeshBody name "<<meshBodyName<<" was not found",
+                   InputError );
   }
 
   return meshBodyName;

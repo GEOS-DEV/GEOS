@@ -61,29 +61,43 @@ endmacro(find_and_register)
 
 
 macro(extract_version_from_header)
-    set(singleValueArgs NAME PACKAGE_NAME
-                        PATH HEADER
+    set(singleValueArgs NAME
+                        HEADER
+                        VERSION_STRING
                         MAJOR_VERSION_STRING
                         MINOR_VERSION_STRING
-                        SUBMINOR_VERSION_STRING )
+                        PATCH_VERSION_STRING )
 
     cmake_parse_arguments(arg
-    "${options}" "${singleValueArgs}" "${multiValueArgs}" ${ARGN})
+      "${options}" "${singleValueArgs}" "${multiValueArgs}" ${ARGN})
 
-    file(READ ${arg_HEADER} header_file )
+    file(READ ${arg_HEADER} header_file)
 
-    string(REGEX MATCH "${arg_MAJOR_VERSION_STRING} *([0-9]+)" _ ${header_file})
-    set(ver_major ${CMAKE_MATCH_1})
+    if(DEFINED arg_VERSION_STRING)
 
-    string(REGEX MATCH "${arg_MINOR_VERSION_STRING} *([0-9]*)" _ ${header_file})
-    set(ver_minor ".${CMAKE_MATCH_1}")
+        if(DEFINED arg_VERSION_STRING AND "${header_file}" MATCHES "${arg_VERSION_STRING} *\"([^\"]*)\"")
+            set(${arg_NAME}_VERSION "${CMAKE_MATCH_1}" CACHE STRING "" FORCE)
+        endif()
 
-    string(REGEX MATCH "${arg_SUBMINOR_VERSION_STRING} *([0-9]*)" _ ${header_file})
-    set(ver_patch ".${CMAKE_MATCH_1}")
+    else()
 
-    set( ${arg_NAME}_VERSION "${ver_major}${ver_minor}${ver_patch}" CACHE STRING "" FORCE  )
+        if(DEFINED arg_MAJOR_VERSION_STRING AND "${header_file}" MATCHES "${arg_MAJOR_VERSION_STRING} *([0-9]+)")
+            set(ver_major "${CMAKE_MATCH_1}")
+        endif()
 
-    message( " ----> ${arg_NAME}_VERSION = ${${arg_NAME}_VERSION}")
+        if(DEFINED arg_MINOR_VERSION_STRING AND "${header_file}" MATCHES "${arg_MINOR_VERSION_STRING} *([0-9]+)")
+            set(ver_minor ".${CMAKE_MATCH_1}")
+        endif()
+
+        if(DEFINED arg_PATCH_VERSION_STRING AND "${header_file}" MATCHES "${arg_PATCH_VERSION_STRING} *([0-9]+)")
+            set(ver_patch ".${CMAKE_MATCH_1}")
+        endif()
+
+        set(${arg_NAME}_VERSION "${ver_major}${ver_minor}${ver_patch}" CACHE STRING "" FORCE)
+
+    endif()
+
+    message(" ----> ${arg_NAME}_VERSION = ${${arg_NAME}_VERSION}")
 
 endmacro( extract_version_from_header)
 
@@ -230,16 +244,14 @@ endif()
 if(DEFINED PUGIXML_DIR)
     message(STATUS "PUGIXML_DIR = ${PUGIXML_DIR}")
 
-    find_and_register( NAME pugixml
-                       INCLUDE_DIRECTORIES ${PUGIXML_DIR}/include
-                       LIBRARY_DIRECTORIES ${PUGIXML_DIR}/lib64 ${PUGIXML_DIR}/lib
-                       HEADER pugixml.hpp
-                       LIBRARIES pugixml )
+    find_package(pugixml REQUIRED
+                 PATHS ${PUGIXML_DIR}
+                 NO_DEFAULT_PATH)
 
     message( " ----> pugixml_VERSION = ${pugixml_VERSION}")
 
     set(ENABLE_PUGIXML ON CACHE BOOL "")
-    set(thirdPartyLibs ${thirdPartyLibs} pugixml)
+    set(thirdPartyLibs ${thirdPartyLibs} pugixml )
 else()
     message(FATAL_ERROR "GEOSX requires pugixml, set PUGIXML_DIR to the pugixml installation directory.")
 endif()
@@ -266,7 +278,7 @@ if(DEFINED RAJA_DIR)
                  PATHS ${RAJA_DIR}
                  NO_DEFAULT_PATH)
 
-    message( " ----> RAJA_VERSION=${RAJA_VERSION}")
+    message( " ----> RAJA_VERSION = ${RAJA_VERSION}")
 
     get_target_property(RAJA_INCLUDE_DIRS RAJA INTERFACE_INCLUDE_DIRECTORIES)
     set_target_properties(RAJA PROPERTIES INTERFACE_SYSTEM_INCLUDE_DIRECTORIES "${RAJA_INCLUDE_DIRS}")
@@ -299,7 +311,7 @@ if(DEFINED UMPIRE_DIR)
                  PATHS ${UMPIRE_DIR}
                  NO_DEFAULT_PATH)
 
-    message( " ----> umpire_VERSION=${umpire_VERSION}")
+    message( " ----> umpire_VERSION = ${umpire_VERSION}")
 
     set(ENABLE_UMPIRE ON CACHE BOOL "")
     set(thirdPartyLibs ${thirdPartyLibs} umpire)
@@ -318,7 +330,7 @@ if(DEFINED CHAI_DIR)
                  PATHS ${CHAI_DIR}
                  NO_DEFAULT_PATH)
 
-    message( " ----> chai_VERSION=${chai_VERSION}")
+    message( " ----> chai_VERSION = ${chai_VERSION}")
 
     get_target_property(CHAI_INCLUDE_DIRS chai INTERFACE_INCLUDE_DIRECTORIES)
     set_target_properties(chai
@@ -383,7 +395,7 @@ if(DEFINED CALIPER_DIR)
                                  HEADER "${CALIPER_DIR}/include/caliper/caliper-config.h"
                                  MAJOR_VERSION_STRING "CALIPER_MAJOR_VERSION"
                                  MINOR_VERSION_STRING "CALIPER_MINOR_VERSION"
-                                 SUBMINOR_VERSION_STRING "CALIPER_PATCH_VERSION")
+                                 PATCH_VERSION_STRING "CALIPER_PATCH_VERSION")
 
     set_property(TARGET caliper
                  APPEND PROPERTY INTERFACE_SYSTEM_INCLUDE_DIRECTORIES
@@ -439,11 +451,11 @@ if(DEFINED METIS_DIR)
                       HEADER metis.h
                       LIBRARIES metis)
 
-    extract_version_from_header( NAME METIS
+    extract_version_from_header( NAME metis
                                  HEADER "${METIS_DIR}/include/metis.h"
                                  MAJOR_VERSION_STRING "METIS_VER_MAJOR"
                                  MINOR_VERSION_STRING "METIS_VER_MINOR"
-                                 SUBMINOR_VERSION_STRING "METIS_VER_SUBMINOR")
+                                 PATCH_VERSION_STRING "METIS_VER_PATCH")
 
 
     set(ENABLE_METIS ON CACHE BOOL "")
@@ -470,11 +482,11 @@ if(DEFINED PARMETIS_DIR)
                       LIBRARIES parmetis
                       DEPENDS metis)
 
-    extract_version_from_header( NAME PARAMETIS
+    extract_version_from_header( NAME parmetis
                                  HEADER "${PARMETIS_DIR}/include/parmetis.h"
                                  MAJOR_VERSION_STRING "PARMETIS_MAJOR_VERSION"
                                  MINOR_VERSION_STRING "PARMETIS_MINOR_VERSION"
-                                 SUBMINOR_VERSION_STRING "PARMETIS_SUBMINOR_VERSION")
+                                 PATCH_VERSION_STRING "PARMETIS_PATCH_VERSION")
 
     set(ENABLE_PARMETIS ON CACHE BOOL "")
     set(thirdPartyLibs ${thirdPartyLibs} parmetis)
@@ -510,7 +522,7 @@ if(DEFINED SCOTCH_DIR)
                                  HEADER "${SCOTCH_DIR}/include/scotch.h"
                                  MAJOR_VERSION_STRING "SCOTCH_VERSION"
                                  MINOR_VERSION_STRING "SCOTCH_RELEASE"
-                                 SUBMINOR_VERSION_STRING "SCOTCH_PATCHLEVEL")
+                                 PATCH_VERSION_STRING "SCOTCH_PATCHLEVEL")
 
     set(ENABLE_SCOTCH ON CACHE BOOL "")
     set(thirdPartyLibs ${thirdPartyLibs} scotch ptscotch)
@@ -541,7 +553,7 @@ if(DEFINED SUPERLU_DIST_DIR)
                                  HEADER "${SUPERLU_DIST_DIR}/include/superlu_defs.h"
                                  MAJOR_VERSION_STRING "SUPERLU_DIST_MAJOR_VERSION"
                                  MINOR_VERSION_STRING "SUPERLU_DIST_MINOR_VERSION"
-                                 SUBMINOR_VERSION_STRING "SUPERLU_DIST_PATCH_VERSION")
+                                 PATCH_VERSION_STRING "SUPERLU_DIST_PATCH_VERSION")
 
     set(ENABLE_SUPERLU_DIST ON CACHE BOOL "")
     set(thirdPartyLibs ${thirdPartyLibs} superlu_dist)
@@ -571,7 +583,7 @@ if(DEFINED SUITESPARSE_DIR)
                                  HEADER "${SUITESPARSE_DIR}/include/umfpack.h"
                                  MAJOR_VERSION_STRING "UMFPACK_MAIN_VERSION"
                                  MINOR_VERSION_STRING "UMFPACK_SUB_VERSION"
-                                 SUBMINOR_VERSION_STRING "UMFPACK_SUBSUB_VERSION")
+                                 PATCH_VERSION_STRING "UMFPACK_SUBSUB_VERSION")
 
     set(ENABLE_SUITESPARSE ON CACHE BOOL "")
     set(thirdPartyLibs ${thirdPartyLibs} suitesparse)
@@ -612,18 +624,25 @@ if(DEFINED HYPRE_DIR AND ENABLE_HYPRE)
                       EXTRA_LIBRARIES ${EXTRA_LIBS}
                       DEPENDS ${HYPRE_DEPENDS})
 
+    extract_version_from_header( NAME hypre
+                                 HEADER "${HYPRE_DIR}/include/HYPRE_config.h"
+                                 VERSION_STRING "HYPRE_RELEASE_VERSION" )
+
+    # Extract some additional information about development version of hypre
+    file(READ ${HYPRE_DIR}/include/HYPRE_config.h header_file)
+    if("${header_file}" MATCHES "HYPRE_DEVELOP_STRING *\"([^\"]*)\"")
+        set(hypre_dev_string "${CMAKE_MATCH_1}")
+        if("${header_file}" MATCHES "HYPRE_BRANCH_NAME *\"([^\"]*)\"")
+            set(hypre_dev_branch "${CMAKE_MATCH_1}")
+        endif()
+        set(hypre_VERSION "${hypre_dev_string} (${hypre_dev_branch})" CACHE STRING "" FORCE)
+        message(" ----> hypre_VERSION = ${hypre_VERSION}")
+    endif()
 
     # Prepend Hypre to link flags, fix for Umpire appearing before Hypre on the link line
     # if (NOT CMAKE_HOST_APPLE)
     #   blt_add_target_link_flags (TO hypre FLAGS "-Wl,--whole-archive ${HYPRE_DIR}/lib/libHYPRE.a -Wl,--no-whole-archive")
     # endif()
-
-    file(READ ${HYPRE_DIR}/include/HYPRE_config.h hypre_config)
-    string(REGEX MATCH "HYPRE_RELEASE_VERSION \"([0-9]*).([0-9]*).([0-9]*)\"" hypre_version ${hypre_config} )
-    set( HYPRE_VERSION_MAJOR ${CMAKE_MATCH_1} )
-    set( HYPRE_VERSION_MINOR ${CMAKE_MATCH_2} )
-    set( HYPRE_VERSION_PATCH ${CMAKE_MATCH_3} )
-    message(STATUS "Hypre version parsed as: ${HYPRE_VERSION_MAJOR}.${HYPRE_VERSION_MINOR}.${HYPRE_VERSION_PATCH}" )
 
     # if( ENABLE_CUDA AND ( NOT ${ENABLE_HYPRE_DEVICE} STREQUAL "CUDA" ) )
     #   set(ENABLE_HYPRE OFF CACHE BOOL "" FORCE)
@@ -657,10 +676,14 @@ if(DEFINED TRILINOS_DIR AND ENABLE_TRILINOS)
     list(REMOVE_DUPLICATES Trilinos_LIBRARIES)
 
     blt_import_library(NAME trilinos
-                         DEPENDS_ON ${TRILINOS_DEPENDS}
-                         INCLUDES ${Trilinos_INCLUDE_DIRS}
-                         LIBRARIES ${Trilinos_LIBRARIES}
-                         TREAT_INCLUDES_AS_SYSTEM ON)
+                       DEPENDS_ON ${TRILINOS_DEPENDS}
+                       INCLUDES ${Trilinos_INCLUDE_DIRS}
+                       LIBRARIES ${Trilinos_LIBRARIES}
+                       TREAT_INCLUDES_AS_SYSTEM ON)
+
+    extract_version_from_header( NAME trilinos
+                                 HEADER "${TRILINOS_DIR}/include/Trilinos_version.h"
+                                 VERSION_STRING "TRILINOS_VERSION_STRING" )
 
     # This conditional is due to the lack of mixedInt support on hypre GPU.
     # This can be removed when support is added into hypre.
@@ -694,6 +717,12 @@ if(DEFINED PETSC_DIR AND ENABLE_PETSC)
                       HEADER petscvec.h
                       LIBRARIES petsc
                       DEPENDS ${PETSC_DEPENDS})
+
+    extract_version_from_header( NAME petsc
+                                 HEADER "${PETSC_DIR}/include/petscversion.h"
+                                 MAJOR_VERSION_STRING "PETSC_VERSION_MAJOR"
+                                 MINOR_VERSION_STRING "PETSC_VERSION_MINOR"
+                                 PATCH_VERSION_STRING "PETSC_VERSION_SUBMINOR")
 
     set(ENABLE_PETSC ON CACHE BOOL "")
     set(thirdPartyLibs ${thirdPartyLibs} petsc)

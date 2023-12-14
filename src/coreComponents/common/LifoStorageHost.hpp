@@ -153,7 +153,11 @@ public:
    * @param maxNumberOfBuffers Maximum number of buffers to store in the LIFO storage
    * @return The maximum number of buffer to allocate to fit in the percentage of the available memory.
    */
-  static int computeNumberOfBufferOnDevice( int percent, size_t bufferSize, int maxNumberOfBuffers ) { return 0; }
+  static int computeNumberOfBufferOnDevice( int percent, size_t bufferSize, int maxNumberOfBuffers )
+  {
+    GEOS_UNUSED_VAR( percent, bufferSize, maxNumberOfBuffers );
+    return 0;
+  }
 
 private:
 
