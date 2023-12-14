@@ -21,7 +21,7 @@
 
 #include "common/DataLayouts.hpp"
 #include "constitutive/ConstitutiveBase.hpp"
-#include "constitutive/relativePermeability/layouts.hpp"
+#include "constitutive/relativePermeability/Layouts.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
 #include "codingUtilities/EnumStrings.hpp"
 
@@ -161,8 +161,12 @@ public:
   arrayView3d< real64 const, relperm::USD_RELPERM > phaseRelPerm() const { return m_phaseRelPerm; }
   arrayView4d< real64 const, relperm::USD_RELPERM_DS > dPhaseRelPerm_dPhaseVolFraction() const { return m_dPhaseRelPerm_dPhaseVolFrac; }
 
+  static std::tuple< integer, integer > phaseIndex( arrayView1d< integer const > const & phaseOrder );
   arrayView1d< integer const > getPhaseOrder() const { return m_phaseOrder; }
-  virtual arrayView1d< real64 const > getPhaseMinVolumeFraction() const = 0;
+
+  virtual real64 getWettingPhaseMinVolumeFraction() const = 0;
+
+  virtual real64 getNonWettingMinVolumeFraction() const = 0;
 
   std::tuple< integer, integer > wettingAndNonWettingPhaseIndices() const;
   /**
@@ -218,6 +222,45 @@ protected:
   array3d< real64, relperm::LAYOUT_RELPERM > m_phaseTrappedVolFrac;
 
 };
+
+
+/// for use in RelpermDriver to browse the drainage curves
+/// by setting the MaxHistoricalNonWettingSat to Snwmin and MinWettingSat to Sw
+inline std::tuple< integer, integer > RelativePermeabilityBase::phaseIndex( arrayView1d< integer const > const & phaseOrder )
+{
+  using PT = PhaseType;
+  integer const ipWater = phaseOrder[PT::WATER];
+  integer const ipOil = phaseOrder[PT::OIL];
+  integer const ipGas = phaseOrder[PT::GAS];
+
+  integer ipWetting = -1, ipNonWetting = -1;
+
+  if( ipWater >= 0 && ipOil >= 0 && ipGas >= 0 )
+  {
+    ipWetting = ipWater;
+    ipNonWetting = ipGas;
+  }
+  else if( ipWater < 0 )
+  {
+    ipWetting = ipOil;
+    ipNonWetting = ipGas;
+  }
+  else if( ipOil < 0 )
+  {
+    ipWetting = ipWater;
+    ipNonWetting = ipGas;
+  }
+  else if( ipGas < 0 )
+  {
+    ipWetting = ipWater;
+    ipNonWetting = ipOil;
+  }
+
+  //maybe a bit too pythonic
+  return std::make_tuple( ipWetting, ipNonWetting );
+}
+
+
 
 } // namespace constitutive
 

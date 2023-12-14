@@ -21,8 +21,8 @@
 
 #include "common/DataLayouts.hpp"
 #include "constitutive/fluid/multifluid/Layouts.hpp"
-#include "constitutive/relativePermeability/layouts.hpp"
-#include "constitutive/capillaryPressure/layouts.hpp"
+#include "constitutive/relativePermeability/Layouts.hpp"
+#include "constitutive/capillaryPressure/Layouts.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBase.hpp"
 

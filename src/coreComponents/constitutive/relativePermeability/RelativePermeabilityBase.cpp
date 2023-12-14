@@ -155,7 +155,6 @@ std::tuple< integer, integer > RelativePermeabilityBase::wettingAndNonWettingPha
     ipNonWetting = ipOil;
   }
 
-  //maybe a bit too pythonic
   return std::make_tuple( ipWetting, ipNonWetting );
 }
 

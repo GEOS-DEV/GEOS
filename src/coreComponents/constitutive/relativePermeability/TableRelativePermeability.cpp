@@ -147,7 +147,8 @@ void TableRelativePermeability::initializePreSubGroups()
   string const fullName = getFullName();
   real64 phaseMinVolFrac = 0.0;
   real64 phaseMaxVolFrac = 0.0;
-  real64 phaseRelPermEndPoint = 0.0;
+  real64 phaseRelPermMinEndPoint = 0.0;
+  real64 phaseRelPermMaxEndPoint = 0.0;
 
   //initialize STONE-II only used var to avoid discrepancies in baselines
   m_waterOilMaxRelPerm = 1.0;
@@ -169,7 +170,8 @@ void TableRelativePermeability::initializePreSubGroups()
                                            fullName,
                                            phaseMinVolFrac, // output
                                            phaseMaxVolFrac,
-                                           phaseRelPermEndPoint );
+                                           phaseRelPermMinEndPoint,
+                                           phaseRelPermMaxEndPoint );
       if( ip == 0 ) // wetting phase is either water, or oil (for two-phase oil-gas systems)
       {
         integer const ipWetting = ( m_phaseOrder[PhaseType::WATER] >= 0 ) ? m_phaseOrder[PhaseType::WATER] : m_phaseOrder[PhaseType::OIL];
@@ -197,18 +199,16 @@ void TableRelativePermeability::initializePreSubGroups()
                                            fullName,
                                            phaseMinVolFrac, // output
                                            phaseMaxVolFrac,
-                                           phaseRelPermEndPoint );
+                                           phaseRelPermMinEndPoint,
+                                           phaseRelPermMaxEndPoint );
 
-
-
-      if( ip == 0 ) // wetting phase is water
+     if( ip == 0 ) // wetting phase is water
       {
         m_phaseMinVolumeFraction[m_phaseOrder[PhaseType::WATER]] = phaseMinVolFrac;
       }
       else if( ip == 1 ) // intermediate phase is oil
       {
         m_phaseMinVolumeFraction[m_phaseOrder[PhaseType::OIL]] = phaseMinVolFrac;
-        m_waterOilMaxRelPerm = phaseRelPermEndPoint;
       }
     }
     for( integer ip = 0; ip < m_nonWettingIntermediateRelPermTableNames.size(); ++ip )
@@ -224,7 +224,8 @@ void TableRelativePermeability::initializePreSubGroups()
                                            fullName,
                                            phaseMinVolFrac, // output
                                            phaseMaxVolFrac,
-                                           phaseRelPermEndPoint );
+                                           phaseRelPermMinEndPoint,
+                                           phaseRelPermMaxEndPoint );
 
       if( ip == 0 ) // non-wetting phase is gas
       {

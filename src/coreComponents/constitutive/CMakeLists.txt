@@ -15,8 +15,8 @@ set( constitutive_headers
      capillaryPressure/TableCapillaryPressure.hpp
      capillaryPressure/TableCapillaryPressureHelpers.hpp
      capillaryPressure/VanGenuchtenCapillaryPressure.hpp
-     capillaryPressure/capillaryPressureSelector.hpp
-     capillaryPressure/layouts.hpp
+     capillaryPressure/CapillaryPressureSelector.hpp
+     capillaryPressure/Layouts.hpp
      contact/ContactBase.hpp
      contact/CoulombContact.hpp
      contact/ContactSelector.hpp
@@ -102,20 +102,21 @@ set( constitutive_headers
      permeability/ProppantPermeability.hpp
      permeability/SlipDependentPermeability.hpp
      permeability/WillisRichardsPermeability.hpp
-     relativePermeability/RelpermDriver.hpp
-     relativePermeability/RelpermDriverRunTest.hpp
      relativePermeability/BrooksCoreyBakerRelativePermeability.hpp
      relativePermeability/BrooksCoreyStone2RelativePermeability.hpp
      relativePermeability/BrooksCoreyRelativePermeability.hpp
+     relativePermeability/KilloughHysteresis.hpp     
      relativePermeability/RelativePermeabilityBase.hpp
      relativePermeability/RelativePermeabilityFields.hpp
      relativePermeability/RelativePermeabilityInterpolators.hpp
+     relativePermeability/RelpermDriver.hpp
+     relativePermeability/RelpermDriverRunTest.hpp
      relativePermeability/TableRelativePermeability.hpp
      relativePermeability/TableRelativePermeabilityHelpers.hpp
      relativePermeability/TableRelativePermeabilityHysteresis.hpp
      relativePermeability/VanGenuchtenBakerRelativePermeability.hpp
      relativePermeability/VanGenuchtenStone2RelativePermeability.hpp
-     relativePermeability/layouts.hpp
+     relativePermeability/Layouts.hpp
      relativePermeability/RelativePermeabilitySelector.hpp
      solid/CompressibleSolid.hpp
      solid/ProppantSolid.hpp
@@ -241,6 +242,7 @@ set( constitutive_sources
      relativePermeability/BrooksCoreyBakerRelativePermeability.cpp
      relativePermeability/BrooksCoreyStone2RelativePermeability.cpp
      relativePermeability/BrooksCoreyRelativePermeability.cpp
+     relativePermeability/KilloughHysteresis.cpp     
      relativePermeability/RelativePermeabilityBase.cpp
      relativePermeability/TableRelativePermeability.cpp
      relativePermeability/TableRelativePermeabilityHelpers.cpp
@@ -249,12 +251,16 @@ set( constitutive_sources
      relativePermeability/VanGenuchtenStone2RelativePermeability.cpp
      relativePermeability/RelpermDriver.cpp
      relativePermeability/RelpermDriverBrooksCoreyBakerRunTest.cpp
-        relativePermeability/RelpermDriverBrooksCoreyStone2RunTest.cpp
+     relativePermeability/RelpermDriverBrooksCoreyStone2RunTest.cpp
      relativePermeability/RelpermDriverBrooksCoreyRunTest.cpp
      relativePermeability/RelpermDriverVanGenuchtenBakerRunTest.cpp
-        relativePermeability/RelpermDriverVanGenuchtenStone2RunTest.cpp
+     relativePermeability/RelpermDriverVanGenuchtenStone2RunTest.cpp
      relativePermeability/RelpermDriverTableRelativeRunTest.cpp
      relativePermeability/RelpermDriverTableRelativeHysteresisRunTest.cpp
+     relativePermeability/TableRelativePermeability.cpp
+     relativePermeability/TableRelativePermeabilityHelpers.cpp
+     relativePermeability/TableRelativePermeabilityHysteresis.cpp
+     relativePermeability/VanGenuchtenBakerRelativePermeability.cpp
      solid/CompressibleSolid.cpp
      solid/CoupledSolidBase.cpp
      solid/ProppantSolid.cpp
