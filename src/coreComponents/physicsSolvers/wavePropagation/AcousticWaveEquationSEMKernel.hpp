@@ -781,7 +781,7 @@ public:
   void setup( localIndex const k,
               StackVariables & stack ) const
   {                   
-    invDensity = 1./m_density[k]; 
+    stack.invDensity = 1./m_density[k]; 
     for( localIndex a=0; a< 8; a++ )
     {
       localIndex const nodeIndex =  m_elemsToNodes( k, FE_TYPE::meshIndexToLinearIndex3D( a ) );
