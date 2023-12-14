@@ -202,16 +202,13 @@ void TableRelativePermeability::initializePreSubGroups()
                                            phaseRelPermMinEndPoint,
                                            phaseRelPermMaxEndPoint );
 
-
-
-      if( ip == 0 ) // wetting phase is water
+     if( ip == 0 ) // wetting phase is water
       {
         m_phaseMinVolumeFraction[m_phaseOrder[PhaseType::WATER]] = phaseMinVolFrac;
       }
       else if( ip == 1 ) // intermediate phase is oil
       {
         m_phaseMinVolumeFraction[m_phaseOrder[PhaseType::OIL]] = phaseMinVolFrac;
-        m_waterOilMaxRelPerm = phaseRelPermEndPoint;
       }
     }
     for( integer ip = 0; ip < m_nonWettingIntermediateRelPermTableNames.size(); ++ip )

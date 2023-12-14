@@ -447,19 +447,17 @@ private:
   /// Maximum historical phase volume fraction for each phase
   array2d< real64, compflow::LAYOUT_PHASE > m_phaseMaxHistoricalVolFraction;
 
-    << << <<< HEAD
     /// The wetting phase hysteretic curve
     KilloughHysteresis::HysteresisCurve m_wettingCurve;
 
   /// The non-wetting phase hysteretic curve
   KilloughHysteresis::HysteresisCurve m_nonWettingCurve;
-  =======
+
     /// Max krwo value (unique as krwo and krgo are considred non hysteretical in our implementation)
     real64 m_waterOilMaxRelPerm;
 
   /// enum class to dispatch interpolator (Baker/Eclipse,StoneII)
   ThreePhaseInterpolator m_threePhaseInterpolator;
-  >> >> >>> origin/develop
 
 };
 
