@@ -428,7 +428,7 @@ VECTOR_TYPE axpy( VECTOR_TYPE const & vec1,
   const localIndex N = vec1.size();
   VECTOR_TYPE result( N );
   RAJA::forall< parallelHostPolicy >( RAJA::TypedRangeSegment< localIndex >( 0, N ),
-                                      [&] GEOS_HOST_DEVICE ( localIndex const i )
+                                      [=] GEOS_HOST_DEVICE ( localIndex const i )
   {
     result[i] = vec1[i] + alpha * vec2[i];
   } );
@@ -442,7 +442,7 @@ VECTOR_TYPE scale( VECTOR_TYPE const & vec,
   const localIndex N = vec.size();
   VECTOR_TYPE result( N );
   RAJA::forall< parallelHostPolicy >( RAJA::TypedRangeSegment< localIndex >( 0, N ),
-                                      [&] GEOS_HOST_DEVICE ( localIndex const i )
+                                      [=] GEOS_HOST_DEVICE ( localIndex const i )
   {
     result[i] = scalarMult * vec[i];
   } );
@@ -457,7 +457,7 @@ real64 dot( VECTOR_TYPE const & vec1,
   RAJA::ReduceSum< parallelHostReduce, real64 > result( 0.0 );
   const localIndex N = vec1.size();
   RAJA::forall< parallelHostPolicy >( RAJA::TypedRangeSegment< localIndex >( 0, N ),
-                                      [&] GEOS_HOST_DEVICE ( localIndex const i )
+                                      [=] GEOS_HOST_DEVICE ( localIndex const i )
   {
     result += vec1[i] * vec2[i];
   } );
