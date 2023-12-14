@@ -4541,14 +4541,14 @@ void SolidMechanicsMPM::particleKinematicUpdate( ParticleManager & particleManag
       bool flaggedForDeletion = false; 
       if( detF <= m_minParticleJacobian || detF >= m_maxParticleJacobian )
       {
-        printf( "Flagging particle with unreasonable Jacobian (J<%.2f or J>%.2f) for deletion! Global particle ID: %lld", m_minParticleJacobian, m_maxParticleJacobian, particleID[p] );
+        // printf( "Flagging particle with unreasonable Jacobian (J<%.2f or J>%.2f) for deletion! Global particle ID: %lld", m_minParticleJacobian, m_maxParticleJacobian, particleID[p] );
         flaggedForDeletion = true;
       }
 
       real64 particleSpeedSquared = LvArray::tensorOps::l2NormSquared< 3 >( particleVelocity[p] );
       if(particleSpeedSquared > m_maxParticleVelocitySquared )
       {
-        printf( "Flagging particle with unreasonable velocity (v > %.2f) for deletion! Global particle ID: %lld", m_maxParticleVelocity, particleID[p] );
+        // printf( "Flagging particle with unreasonable velocity (v > %.2f) for deletion! Global particle ID: %lld", m_maxParticleVelocity, particleID[p] );
         flaggedForDeletion = true;
       }
 
@@ -4583,6 +4583,15 @@ void SolidMechanicsMPM::particleKinematicUpdate( ParticleManager & particleManag
         LvArray::tensorOps::copy< 3, 3 >( particleRVectors[p], particleInitialRVectors[p] );
       }
     } );
+  
+    for( int pp = 0; pp < activeParticleIndices.size(); pp++ )
+    {
+      localIndex const p = activeParticleIndices[pp];
+      if( isBad[p] == 1 ){
+        real64 detF = LvArray::tensorOps::determinant< 3 >( particleDeformationGradient[p] );
+        GEOS_LOG( "Global particle ID " << particleID[p] << " flagged for deletion due to unreasonable jacobian or velocity! J=" << detF << ", v={" << particleVelocity[p][0] << ", " << particleVelocity[p][1] << ", " << particleVelocity[p][2] << "}"  );
+      }
+    }
   } );
 
   // Compute particles R vectors
