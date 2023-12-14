@@ -244,20 +244,17 @@ set( constitutive_sources
      relativePermeability/BrooksCoreyRelativePermeability.cpp
      relativePermeability/KilloughHysteresis.cpp     
      relativePermeability/RelativePermeabilityBase.cpp
-<<<<<<< HEAD
-=======
      relativePermeability/TableRelativePermeability.cpp
      relativePermeability/TableRelativePermeabilityHelpers.cpp
      relativePermeability/TableRelativePermeabilityHysteresis.cpp
      relativePermeability/VanGenuchtenBakerRelativePermeability.cpp
      relativePermeability/VanGenuchtenStone2RelativePermeability.cpp
->>>>>>> origin/develop
      relativePermeability/RelpermDriver.cpp
      relativePermeability/RelpermDriverBrooksCoreyBakerRunTest.cpp
-        relativePermeability/RelpermDriverBrooksCoreyStone2RunTest.cpp
+     relativePermeability/RelpermDriverBrooksCoreyStone2RunTest.cpp
      relativePermeability/RelpermDriverBrooksCoreyRunTest.cpp
      relativePermeability/RelpermDriverVanGenuchtenBakerRunTest.cpp
-        relativePermeability/RelpermDriverVanGenuchtenStone2RunTest.cpp
+     relativePermeability/RelpermDriverVanGenuchtenStone2RunTest.cpp
      relativePermeability/RelpermDriverTableRelativeRunTest.cpp
      relativePermeability/RelpermDriverTableRelativeHysteresisRunTest.cpp
      relativePermeability/TableRelativePermeability.cpp
