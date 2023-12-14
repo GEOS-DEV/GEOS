@@ -1475,6 +1475,15 @@ void CompositionalMultiphaseBase::applySourceFluxBC( real64 const time,
       {
         return;
       }
+      if( !subRegion.hasWrapper( dofKey ) )
+      {
+        if( fs.getLogLevel() >= 1 )
+        {
+          GEOS_LOG_RANK( GEOS_FMT( "{}: trying to apply SourceFlux, but its targetSet named '{}' intersects with non-simulated region named '{}'.",
+                                   getDataContext(), setName, subRegion.getName() ) );
+        }
+        return;
+      }
 
       arrayView1d< globalIndex const > const dofNumber = subRegion.getReference< array1d< globalIndex > >( dofKey );
       arrayView1d< integer const > const ghostRank = subRegion.ghostRank();
@@ -2431,7 +2440,7 @@ void CompositionalMultiphaseBase::updateState( DomainPartition & domain )
     } );
   } );
 
-  GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "        {}: Max phase volume fraction change = {}", getName(), maxDeltaPhaseVolFrac ) );
+  GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "        {}: Max phase volume fraction change = {}", getName(), fmt::format( "{:.{}f}", maxDeltaPhaseVolFrac, 4 ) ) );
 }
 
 real64 CompositionalMultiphaseBase::setNextDt( const geos::real64 & currentDt, geos::DomainPartition & domain )
