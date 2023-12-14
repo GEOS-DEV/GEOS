@@ -62,7 +62,6 @@ struct PrecomputeSourceAndReceiverKernel
   static void
   launch( localIndex const size,
           localIndex const regionIndex,
-          localIndex const numNodesPerElem,
           localIndex const numFacesPerElem,
           arrayView2d< WaveSolverBase::wsCoordType const, nodes::REFERENCE_POSITION_USD > const nodeCoords,
           arrayView1d< integer const > const elemGhostRank,
@@ -89,6 +88,7 @@ struct PrecomputeSourceAndReceiverKernel
           real32 const timeSourceDelay,
           localIndex const rickerOrder )
   {
+    constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
 
     forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const k )
     {
@@ -126,7 +126,7 @@ struct PrecomputeSourceAndReceiverKernel
             sourceIsAccessible[isrc] = 1;
             sourceElem[isrc] = k;
             sourceRegion[isrc] = regionIndex;
-            real64 Ntest[FE_TYPE::numNodes];
+            real64 Ntest[numNodesPerElem];
             FE_TYPE::calcN( coordsOnRefElem, Ntest );
 
             for( localIndex a = 0; a < numNodesPerElem; ++a )
@@ -174,7 +174,7 @@ struct PrecomputeSourceAndReceiverKernel
             rcvElem[ircv] = k;
             receiverRegion[ircv] = regionIndex;
 
-            real64 Ntest[FE_TYPE::numNodes];
+            real64 Ntest[numNodesPerElem];
             FE_TYPE::calcN( coordsOnRefElem, Ntest );
 
             for( localIndex a = 0; a < numNodesPerElem; ++a )
@@ -377,8 +377,8 @@ struct StressComputation
         }
       }
 
-      mu[k] = density[k] * velocityVs[k] * velocityVs[k];
-      lambda[k] = density[k] * velocityVp[k] * velocityVp[k] - 2.0*mu[k];
+      mu[k] = density[k] * pow( velocityVs[k], 2 );
+      lambda[k] = density[k] * pow( velocityVp[k], 2 ) - 2.0*mu[k];
 
       real32 uelemxx[numNodesPerElem] = {0.0};
       real32 uelemyy[numNodesPerElem] = {0.0};
