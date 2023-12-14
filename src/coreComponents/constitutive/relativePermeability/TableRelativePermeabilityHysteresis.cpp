@@ -51,35 +51,35 @@ TableRelativePermeabilityHysteresis::TableRelativePermeabilityHysteresis( std::s
                     string( viewKeyStruct::drainageNonWettingIntermediateRelPermTableNamesString() ) +
                     " to specify the table names" );
 
-<<<<<<< HEAD
-  registerWrapper( viewKeyStruct::drainageWettingIntermediateRelPermTableNamesString(),
-                   &m_drainageWettingIntermediateRelPermTableNames ).
-=======
-  registerWrapper( viewKeyStruct::drainageWettingIntermediateRelPermTableNamesString(), &m_drainageWettingIntermediateRelPermTableNames ).
-    setRTTypeName( rtTypes::CustomTypes::groupNameRefArray ).
->>>>>>> origin/develop
-    setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "List of drainage relative permeability tables for the pair (wetting phase, intermediate phase)\n"
-                    "The expected format is \"{ wettingPhaseRelPermTableName, intermediatePhaseRelPermTableName }\", in that order\n"
-                    "Note that this input is only used for three-phase flow.\n"
-                    "If you want to do a two-phase simulation, please use instead " +
-                    string( viewKeyStruct::drainageWettingNonWettingRelPermTableNamesString() ) +
-                    " to specify the table names" );
+    << << <<< HEAD
+    registerWrapper( viewKeyStruct::drainageWettingIntermediateRelPermTableNamesString(),
+                     &m_drainageWettingIntermediateRelPermTableNames ).
+    =======
+      registerWrapper( viewKeyStruct::drainageWettingIntermediateRelPermTableNamesString(), &m_drainageWettingIntermediateRelPermTableNames ).
+      setRTTypeName( rtTypes::CustomTypes::groupNameRefArray ).
+      >> >> >>> origin/develop
+      setInputFlag( InputFlags::OPTIONAL ).
+      setDescription( "List of drainage relative permeability tables for the pair (wetting phase, intermediate phase)\n"
+                      "The expected format is \"{ wettingPhaseRelPermTableName, intermediatePhaseRelPermTableName }\", in that order\n"
+                      "Note that this input is only used for three-phase flow.\n"
+                      "If you want to do a two-phase simulation, please use instead " +
+                      string( viewKeyStruct::drainageWettingNonWettingRelPermTableNamesString() ) +
+                      " to specify the table names" );
 
-<<<<<<< HEAD
-  registerWrapper( viewKeyStruct::drainageNonWettingIntermediateRelPermTableNamesString(),
-                   &m_drainageNonWettingIntermediateRelPermTableNames ).
-=======
-  registerWrapper( viewKeyStruct::drainageNonWettingIntermediateRelPermTableNamesString(), &m_drainageNonWettingIntermediateRelPermTableNames ).
-    setRTTypeName( rtTypes::CustomTypes::groupNameRefArray ).
->>>>>>> origin/develop
-    setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "List of drainage relative permeability tables for the pair (non-wetting phase, intermediate phase)\n"
-                    "The expected format is \"{ nonWettingPhaseRelPermTableName, intermediatePhaseRelPermTableName }\", in that order\n"
-                    "Note that this input is only used for three-phase flow.\n"
-                    "If you want to do a two-phase simulation, please use instead " +
-                    string( viewKeyStruct::drainageWettingNonWettingRelPermTableNamesString() ) +
-                    " to specify the table names" );
+    << << <<< HEAD
+    registerWrapper( viewKeyStruct::drainageNonWettingIntermediateRelPermTableNamesString(),
+                     &m_drainageNonWettingIntermediateRelPermTableNames ).
+    =======
+      registerWrapper( viewKeyStruct::drainageNonWettingIntermediateRelPermTableNamesString(), &m_drainageNonWettingIntermediateRelPermTableNames ).
+      setRTTypeName( rtTypes::CustomTypes::groupNameRefArray ).
+      >> >> >>> origin/develop
+      setInputFlag( InputFlags::OPTIONAL ).
+      setDescription( "List of drainage relative permeability tables for the pair (non-wetting phase, intermediate phase)\n"
+                      "The expected format is \"{ nonWettingPhaseRelPermTableName, intermediatePhaseRelPermTableName }\", in that order\n"
+                      "Note that this input is only used for three-phase flow.\n"
+                      "If you want to do a two-phase simulation, please use instead " +
+                      string( viewKeyStruct::drainageWettingNonWettingRelPermTableNamesString() ) +
+                      " to specify the table names" );
 
   // imbibition table names
   registerWrapper( viewKeyStruct::imbibitionWettingRelPermTableNameString(), &m_imbibitionWettingRelPermTableName ).
@@ -89,17 +89,17 @@ TableRelativePermeabilityHysteresis::TableRelativePermeabilityHysteresis( std::s
     setDescription( "Imbibition relative permeability table name for the wetting phase.\n"
                     "To neglect hysteresis on this phase, just use the same table name for the drainage and imbibition curves" );
 
-<<<<<<< HEAD
-  registerWrapper( viewKeyStruct::imbibitionNonWettingRelPermTableNameString(),
-                   &m_imbibitionNonWettingRelPermTableName ).
-=======
-  registerWrapper( viewKeyStruct::imbibitionNonWettingRelPermTableNameString(), &m_imbibitionNonWettingRelPermTableName ).
-    setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
->>>>>>> origin/develop
-    setInputFlag( InputFlags::OPTIONAL ).
-    setApplyDefaultValue( "" ).
-    setDescription( "Imbibition relative permeability table name for the non-wetting phase.\n"
-                    "To neglect hysteresis on this phase, just use the same table name for the drainage and imbibition curves" );
+    << << <<< HEAD
+    registerWrapper( viewKeyStruct::imbibitionNonWettingRelPermTableNameString(),
+                     &m_imbibitionNonWettingRelPermTableName ).
+    =======
+      registerWrapper( viewKeyStruct::imbibitionNonWettingRelPermTableNameString(), &m_imbibitionNonWettingRelPermTableName ).
+      setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
+      >> >> >>> origin/develop
+      setInputFlag( InputFlags::OPTIONAL ).
+      setApplyDefaultValue( "" ).
+      setDescription( "Imbibition relative permeability table name for the non-wetting phase.\n"
+                      "To neglect hysteresis on this phase, just use the same table name for the drainage and imbibition curves" );
 
   // hysteresis input parameters
   registerWrapper( viewKeyStruct::phaseHasHysteresisString(), &m_phaseHasHysteresis ).
@@ -148,16 +148,16 @@ TableRelativePermeabilityHysteresis::TableRelativePermeabilityHysteresis( std::s
     setSizedFromParent( 0 ).
     setRestartFlags( RestartFlags::NO_WRITE );
 
-<<<<<<< HEAD
-  // register fields
-  registerField( fields::relperm::phaseMaxHistoricalVolFraction{},
-                 &m_phaseMaxHistoricalVolFraction );
+    << << <<< HEAD
+    // register fields
+    registerField( fields::relperm::phaseMaxHistoricalVolFraction{},
+                   &m_phaseMaxHistoricalVolFraction );
   registerField( fields::relperm::phaseMinHistoricalVolFraction{},
                  &m_phaseMinHistoricalVolFraction );
-=======
-  registerWrapper( viewKeyStruct::waterOilMaxRelPermString(), &m_waterOilMaxRelPerm ).
-    setInputFlag( InputFlags::FALSE ). // will be deduced from tables
-    setSizedFromParent( 0 );
+  =======
+    registerWrapper( viewKeyStruct::waterOilMaxRelPermString(), &m_waterOilMaxRelPerm ).
+      setInputFlag( InputFlags::FALSE ). // will be deduced from tables
+      setSizedFromParent( 0 );
 
 
   registerWrapper( viewKeyStruct::threePhaseInterpolatorString(), &m_threePhaseInterpolator ).
@@ -165,7 +165,7 @@ TableRelativePermeabilityHysteresis::TableRelativePermeabilityHysteresis( std::s
     setApplyDefaultValue( ThreePhaseInterpolator::BAKER ).
     setDescription( "Type of Three phase interpolator."
                     "Valid options \n* " + EnumStrings< ThreePhaseInterpolator >::concat( "\n* " ) );
->>>>>>> origin/develop
+  >> >> >>> origin/develop
 
 }
 
@@ -293,404 +293,404 @@ void TableRelativePermeabilityHysteresis::checkExistenceAndValidateWettingRelPer
                                          drainagePhaseRelPermMinEndPoint,
                                          drainagePhaseRelPermMaxEndPoint );
 
-<<<<<<< HEAD
-=======
-  else if( numPhases == 3 )
-  {
-    for( integer ip = 0; ip < m_drainageWettingIntermediateRelPermTableNames.size(); ++ip )
-    {
-      if( ip == 0 ) // wetting phase is water
+    << << <<< HEAD
+    =======
+      else if( numPhases == 3 )
       {
-        checkExistenceAndValidateRelPermTable( m_drainageWettingIntermediateRelPermTableNames[ip], // input
-                                               m_drainagePhaseMinVolFraction[m_phaseOrder[PhaseType::WATER]], // output
-                                               m_drainagePhaseMaxVolFraction[m_phaseOrder[PhaseType::WATER]],
-                                               m_drainagePhaseRelPermEndPoint[m_phaseOrder[PhaseType::WATER]] );
-      }
-      else if( ip == 1 ) // intermediate phase is oil
+      for( integer ip = 0; ip < m_drainageWettingIntermediateRelPermTableNames.size(); ++ip )
       {
-        checkExistenceAndValidateRelPermTable( m_drainageWettingIntermediateRelPermTableNames[ip], // input
-                                               m_drainagePhaseMinVolFraction[m_phaseOrder[PhaseType::OIL]], // output
-                                               m_drainagePhaseMaxVolFraction[m_phaseOrder[PhaseType::OIL]],
-                                               m_drainagePhaseRelPermEndPoint[m_phaseOrder[PhaseType::OIL]] );
+        if( ip == 0 ) // wetting phase is water
+        {
+          checkExistenceAndValidateRelPermTable( m_drainageWettingIntermediateRelPermTableNames[ip], // input
+                                                 m_drainagePhaseMinVolFraction[m_phaseOrder[PhaseType::WATER]], // output
+                                                 m_drainagePhaseMaxVolFraction[m_phaseOrder[PhaseType::WATER]],
+                                                 m_drainagePhaseRelPermEndPoint[m_phaseOrder[PhaseType::WATER]] );
+        }
+        else if( ip == 1 ) // intermediate phase is oil
+        {
+          checkExistenceAndValidateRelPermTable( m_drainageWettingIntermediateRelPermTableNames[ip], // input
+                                                 m_drainagePhaseMinVolFraction[m_phaseOrder[PhaseType::OIL]], // output
+                                                 m_drainagePhaseMaxVolFraction[m_phaseOrder[PhaseType::OIL]],
+                                                 m_drainagePhaseRelPermEndPoint[m_phaseOrder[PhaseType::OIL]] );
 
-        //store the two extemum values
-        m_waterOilMaxRelPerm = m_drainagePhaseRelPermEndPoint[m_phaseOrder[PhaseType::OIL]];
+          //store the two extemum values
+          m_waterOilMaxRelPerm = m_drainagePhaseRelPermEndPoint[m_phaseOrder[PhaseType::OIL]];
+        }
       }
-    }
->>>>>>> origin/develop
+      >> >> >>> origin/develop
 
-  // imbibition if provided
-  real64 imbibitionPhaseMinVolFraction = drainagePhaseMinVolFraction; // output
-  real64 imbibitionPhaseMaxVolFraction = drainagePhaseMaxVolFraction;
-  real64 imbibitionPhaseRelPermMinEndPoint = drainagePhaseRelPermMinEndPoint;
-  real64 imbibitionPhaseRelPermMaxEndPoint = drainagePhaseRelPermMaxEndPoint;
+      // imbibition if provided
+      real64 imbibitionPhaseMinVolFraction = drainagePhaseMinVolFraction; // output
+      real64 imbibitionPhaseMaxVolFraction = drainagePhaseMaxVolFraction;
+      real64 imbibitionPhaseRelPermMinEndPoint = drainagePhaseRelPermMinEndPoint;
+      real64 imbibitionPhaseRelPermMaxEndPoint = drainagePhaseRelPermMaxEndPoint;
 
-  if( m_phaseHasHysteresis[IPT::WETTING] )
-  {
-    checkExistenceAndValidateRelPermTable( m_imbibitionWettingRelPermTableName, // input
-                                           imbibitionPhaseMinVolFraction, // output
-                                           imbibitionPhaseMaxVolFraction,
-                                           imbibitionPhaseRelPermMinEndPoint,
-                                           imbibitionPhaseRelPermMaxEndPoint );
+      if( m_phaseHasHysteresis[IPT::WETTING] )
+      {
+        checkExistenceAndValidateRelPermTable( m_imbibitionWettingRelPermTableName, // input
+                                               imbibitionPhaseMinVolFraction, // output
+                                               imbibitionPhaseMaxVolFraction,
+                                               imbibitionPhaseRelPermMinEndPoint,
+                                               imbibitionPhaseRelPermMaxEndPoint );
 
-    GEOS_THROW_IF( !isZero( imbibitionPhaseMinVolFraction - drainagePhaseMinVolFraction ),
-                   GEOS_FMT( "{}: the critical wetting-phase volume fraction (saturation) must be the same in drainage and imbibition.\n"
-                             "However, we found that the drainage critical wetting-phase volume fraction is {}, "
-                             "whereas the imbibition critical wetting-phase volume fraction is {}",
-                             getFullName(),
-                             drainagePhaseMinVolFraction, imbibitionPhaseMinVolFraction ),
-                   InputError );
+        GEOS_THROW_IF( !isZero( imbibitionPhaseMinVolFraction - drainagePhaseMinVolFraction ),
+                       GEOS_FMT( "{}: the critical wetting-phase volume fraction (saturation) must be the same in drainage and imbibition.\n"
+                                 "However, we found that the drainage critical wetting-phase volume fraction is {}, "
+                                 "whereas the imbibition critical wetting-phase volume fraction is {}",
+                                 getFullName(),
+                                 drainagePhaseMinVolFraction, imbibitionPhaseMinVolFraction ),
+                       InputError );
 
-    GEOS_THROW_IF( imbibitionPhaseMaxVolFraction > drainagePhaseMaxVolFraction,
-                   GEOS_FMT( "{}: the maximum wetting-phase volume fraction (saturation) must be smaller in imbibition (compared to the drainage value).\n"
-                             "However, we found that the drainage maximum wetting-phase volume fraction is {}, "
-                             "whereas the imbibition maximum wetting-phase volume fraction is {}",
-                             getFullName(),
-                             drainagePhaseMaxVolFraction, imbibitionPhaseMaxVolFraction ),
-                   InputError );
+        GEOS_THROW_IF( imbibitionPhaseMaxVolFraction > drainagePhaseMaxVolFraction,
+                       GEOS_FMT( "{}: the maximum wetting-phase volume fraction (saturation) must be smaller in imbibition (compared to the drainage value).\n"
+                                 "However, we found that the drainage maximum wetting-phase volume fraction is {}, "
+                                 "whereas the imbibition maximum wetting-phase volume fraction is {}",
+                                 getFullName(),
+                                 drainagePhaseMaxVolFraction, imbibitionPhaseMaxVolFraction ),
+                       InputError );
 
-    GEOS_THROW_IF( imbibitionPhaseRelPermMaxEndPoint > drainagePhaseRelPermMaxEndPoint,
-                   GEOS_FMT( "{}: the maximum wetting-phase relperm must be smaller in imbibition (compared to the drainage value).\n"
-                             "However, we found that the drainage maximum wetting-phase relperm is {}, "
-                             "whereas the imbibition maximum wetting-phase relperm is {}",
-                             getFullName(),
-                             drainagePhaseRelPermMaxEndPoint, imbibitionPhaseRelPermMaxEndPoint ),
-                   InputError );
+        GEOS_THROW_IF( imbibitionPhaseRelPermMaxEndPoint > drainagePhaseRelPermMaxEndPoint,
+                       GEOS_FMT( "{}: the maximum wetting-phase relperm must be smaller in imbibition (compared to the drainage value).\n"
+                                 "However, we found that the drainage maximum wetting-phase relperm is {}, "
+                                 "whereas the imbibition maximum wetting-phase relperm is {}",
+                                 getFullName(),
+                                 drainagePhaseRelPermMaxEndPoint, imbibitionPhaseRelPermMaxEndPoint ),
+                       InputError );
 
-  }
+      }
 
-  m_wettingCurve.setPoints( drainagePhaseMinVolFraction, drainagePhaseRelPermMinEndPoint,   // same as imbibition min
-                            imbibitionPhaseMaxVolFraction, imbibitionPhaseRelPermMaxEndPoint,
-                            drainagePhaseMaxVolFraction, drainagePhaseRelPermMaxEndPoint );
-}
-
-void TableRelativePermeabilityHysteresis::checkExistenceAndValidateNonWettingRelPermTables()
-{
-  using IPT = TableRelativePermeabilityHysteresis::ImbibitionPhasePairPhaseType;
-
-  integer const numPhases = m_phaseNames.size();
-  integer ipWetting = -1, ipNonWetting = -1;
-  std::tie( ipWetting, ipNonWetting ) = RelativePermeabilityBase::phaseIndex( m_phaseOrder );
-
-  // treat drainage
-  real64 drainagePhaseMinVolFraction = -1; // output
-  real64 drainagePhaseMaxVolFraction = -1;
-  real64 drainagePhaseRelPermMinEndPoint = -1;
-  real64 drainagePhaseRelPermMaxEndPoint = -1;
-
-  // Step 1: Read the drainage for the non wetting phase
-  string const tableName = ( numPhases == 2 ) ? m_drainageWettingNonWettingRelPermTableNames[1] :
-                           m_drainageNonWettingIntermediateRelPermTableNames[0];
-  checkExistenceAndValidateRelPermTable( tableName,       // input
-                                         drainagePhaseMinVolFraction,      // output
-                                         drainagePhaseMaxVolFraction,
-                                         drainagePhaseRelPermMinEndPoint,
-                                         drainagePhaseRelPermMaxEndPoint );
-
-  // Step 2: validate non-wetting-phase imbibition relative permeability table
-  real64 imbibitionPhaseMinVolFraction = drainagePhaseMinVolFraction; // output
-  real64 imbibitionPhaseMaxVolFraction = drainagePhaseMaxVolFraction;
-  real64 imbibitionPhaseRelPermMinEndPoint = drainagePhaseRelPermMinEndPoint;
-  real64 imbibitionPhaseRelPermMaxEndPoint = drainagePhaseRelPermMaxEndPoint;
-
-  if( m_phaseHasHysteresis[IPT::NONWETTING] )
-  {
-
-    checkExistenceAndValidateRelPermTable( m_imbibitionNonWettingRelPermTableName,  // input
-                                           imbibitionPhaseMinVolFraction,  // output
-                                           imbibitionPhaseMaxVolFraction,
-                                           imbibitionPhaseRelPermMinEndPoint,
-                                           imbibitionPhaseRelPermMaxEndPoint );
-
-    GEOS_THROW_IF( !isZero ( imbibitionPhaseMaxVolFraction - drainagePhaseMaxVolFraction ),
-                   GEOS_FMT( string( "{}: the maximum non-wetting-phase volume fraction (saturation) must be the same in drainage and imbibition.\n" )
-                             + string( "However, we found that the drainage maximum wetting-phase volume fraction is {}, " )
-                             + string( "whereas the imbibition maximum wetting-phase volume fraction is {}" ),
-                             getFullName(),
-                             drainagePhaseMaxVolFraction, imbibitionPhaseMaxVolFraction ),
-                   InputError );
-
-    GEOS_THROW_IF( !isZero ( imbibitionPhaseRelPermMaxEndPoint - drainagePhaseRelPermMaxEndPoint ),
-                   GEOS_FMT( string( "{}: the non-wetting-phase relperm endpoint must be the same in drainage and imbibition.\n" )
-                             + string( "However, we found that the drainage endpoint wetting-phase relperm is {}, " )
-                             + string( "whereas the imbibition endpoint wetting-phase relperm is {}" ),
-                             getFullName(),
-                             drainagePhaseRelPermMaxEndPoint, imbibitionPhaseRelPermMaxEndPoint ),
-                   InputError );
-
-    GEOS_THROW_IF( imbibitionPhaseMinVolFraction < drainagePhaseMinVolFraction,
-                   GEOS_FMT( string( "{}: the critical wetting-phase volume fraction (saturation) must be larger in imbibition (compared to the drainage value).\n" )
-                             + string( "However, we found that the drainage critical wetting-phase volume fraction is {}, " )
-                             + string( "whereas the imbibition critical wetting-phase volume fraction is {}" ),
-                             getFullName(),
-                             drainagePhaseMinVolFraction, imbibitionPhaseMinVolFraction ),
-                   InputError );
-
-
-  }
-
-  m_nonWettingCurve.setPoints( drainagePhaseMaxVolFraction, drainagePhaseRelPermMaxEndPoint,   // same as imbibition max
-                               imbibitionPhaseMinVolFraction, imbibitionPhaseRelPermMinEndPoint,
-                               drainagePhaseMinVolFraction, drainagePhaseRelPermMinEndPoint );
-
-}
-
-void TableRelativePermeabilityHysteresis::checkExistenceAndValidateIntermediateRelPermTables()
-{
-
-  if( m_phaseNames.size() == 3 )
-  {
-    real64 drainagePhaseMinVolFraction,
-           drainagePhaseMaxVolFraction,
-           drainagePhaseRelPermMinEndPoint,
-           drainagePhaseRelPermMaxEndPoint;
-
-
-    // intermediate drainage from wetting
-    checkExistenceAndValidateRelPermTable( m_drainageWettingIntermediateRelPermTableNames[1],    // input
-                                           drainagePhaseMinVolFraction,    // output
-                                           drainagePhaseMaxVolFraction,
-                                           drainagePhaseRelPermMinEndPoint,
-                                           drainagePhaseRelPermMaxEndPoint );
-
-    checkExistenceAndValidateRelPermTable( m_drainageNonWettingIntermediateRelPermTableNames[1],    // input
-                                           drainagePhaseMinVolFraction,
-                                           drainagePhaseMaxVolFraction,
-                                           drainagePhaseRelPermMinEndPoint,
-                                           drainagePhaseRelPermMaxEndPoint );
-  }
-}
-
-
-void TableRelativePermeabilityHysteresis::checkExistenceAndValidateRelPermTable( string const & relPermTableName,
-                                                                                 real64 & phaseMinVolFrac,
-                                                                                 real64 & phaseMaxVolFrac,
-                                                                                 real64 & phaseRelPermMinEndPoint,
-                                                                                 real64 & phaseRelPermMaxEndPoint ) const
-{
-  FunctionManager const & functionManager = FunctionManager::getInstance();
-
-  // check if the table actually exists
-  GEOS_THROW_IF( !functionManager.hasGroup( relPermTableName ),
-                 GEOS_FMT( "{}: the table function named {} could not be found",
-                           getFullName(),
-                           relPermTableName ),
-                 InputError );
-  TableFunction const & relPermTable = functionManager.getGroup< TableFunction >( relPermTableName );
-
-  // read the table, check monotonicity, and return the min/max saturation and the endpoint
-  string const fullName = getFullName();
-  TableRelativePermeabilityHelpers::validateRelativePermeabilityTable( relPermTable,  // input
-                                                                       fullName,
-                                                                       phaseMinVolFrac,  // output
-                                                                       phaseMaxVolFrac,
-                                                                       phaseRelPermMinEndPoint,
-                                                                       phaseRelPermMaxEndPoint );
-}
-
-void TableRelativePermeabilityHysteresis::computeLandCoefficient()
-{
-  // For now, we keep two separate Land parameters for the wetting and non-wetting phases
-  // For two-phase flow, we make sure that they are equal
-  m_landParam.resize( 2 );
-
-  // Note: for simplicity, the notations are taken from IX documentation (although this breaks our phaseVolFrac naming convention)
-  using IPT = TableRelativePermeabilityHysteresis::ImbibitionPhasePairPhaseType;
-
-  KilloughHysteresis::computeLandCoefficient( m_wettingCurve, m_landParam[IPT::WETTING] );
-  KilloughHysteresis::computeLandCoefficient( m_nonWettingCurve, m_landParam[IPT::NONWETTING] );
-}
-
-void TableRelativePermeabilityHysteresis::createAllTableKernelWrappers()
-{
-  using IPT = TableRelativePermeabilityHysteresis::ImbibitionPhasePairPhaseType;
-
-  FunctionManager const & functionManager = FunctionManager::getInstance();
-
-  integer const numPhases = m_phaseNames.size();
-
-  // we want to make sure that the wrappers are always up-to-date, so we recreate them everytime
-
-  m_drainageRelPermKernelWrappers.clear();
-  m_imbibitionRelPermKernelWrappers.clear();
-
-  if( numPhases == 2 )
-  {
-    for( integer ip = 0; ip < m_drainageWettingNonWettingRelPermTableNames.size(); ++ip )
-    {
-      TableFunction const & drainageRelPermTable = functionManager.getGroup< TableFunction >( m_drainageWettingNonWettingRelPermTableNames[ip] );
-      m_drainageRelPermKernelWrappers.emplace_back( drainageRelPermTable.createKernelWrapper() );
+      m_wettingCurve.setPoints( drainagePhaseMinVolFraction, drainagePhaseRelPermMinEndPoint, // same as imbibition min
+                                imbibitionPhaseMaxVolFraction, imbibitionPhaseRelPermMaxEndPoint,
+                                drainagePhaseMaxVolFraction, drainagePhaseRelPermMaxEndPoint );
     }
 
-    TableFunction const & imbibitionWettingRelPermTable = m_phaseHasHysteresis[IPT::WETTING]
+    void TableRelativePermeabilityHysteresis::checkExistenceAndValidateNonWettingRelPermTables()
+      {
+      using IPT = TableRelativePermeabilityHysteresis::ImbibitionPhasePairPhaseType;
+
+      integer const numPhases = m_phaseNames.size();
+      integer ipWetting = -1, ipNonWetting = -1;
+      std::tie( ipWetting, ipNonWetting ) = RelativePermeabilityBase::phaseIndex( m_phaseOrder );
+
+      // treat drainage
+      real64 drainagePhaseMinVolFraction = -1; // output
+      real64 drainagePhaseMaxVolFraction = -1;
+      real64 drainagePhaseRelPermMinEndPoint = -1;
+      real64 drainagePhaseRelPermMaxEndPoint = -1;
+
+      // Step 1: Read the drainage for the non wetting phase
+      string const tableName = ( numPhases == 2 ) ? m_drainageWettingNonWettingRelPermTableNames[1] :
+                               m_drainageNonWettingIntermediateRelPermTableNames[0];
+      checkExistenceAndValidateRelPermTable( tableName,   // input
+                                             drainagePhaseMinVolFraction,  // output
+                                             drainagePhaseMaxVolFraction,
+                                             drainagePhaseRelPermMinEndPoint,
+                                             drainagePhaseRelPermMaxEndPoint );
+
+      // Step 2: validate non-wetting-phase imbibition relative permeability table
+      real64 imbibitionPhaseMinVolFraction = drainagePhaseMinVolFraction; // output
+      real64 imbibitionPhaseMaxVolFraction = drainagePhaseMaxVolFraction;
+      real64 imbibitionPhaseRelPermMinEndPoint = drainagePhaseRelPermMinEndPoint;
+      real64 imbibitionPhaseRelPermMaxEndPoint = drainagePhaseRelPermMaxEndPoint;
+
+      if( m_phaseHasHysteresis[IPT::NONWETTING] )
+      {
+
+        checkExistenceAndValidateRelPermTable( m_imbibitionNonWettingRelPermTableName, // input
+                                               imbibitionPhaseMinVolFraction, // output
+                                               imbibitionPhaseMaxVolFraction,
+                                               imbibitionPhaseRelPermMinEndPoint,
+                                               imbibitionPhaseRelPermMaxEndPoint );
+
+        GEOS_THROW_IF( !isZero ( imbibitionPhaseMaxVolFraction - drainagePhaseMaxVolFraction ),
+                       GEOS_FMT( string( "{}: the maximum non-wetting-phase volume fraction (saturation) must be the same in drainage and imbibition.\n" )
+                                 + string( "However, we found that the drainage maximum wetting-phase volume fraction is {}, " )
+                                 + string( "whereas the imbibition maximum wetting-phase volume fraction is {}" ),
+                                 getFullName(),
+                                 drainagePhaseMaxVolFraction, imbibitionPhaseMaxVolFraction ),
+                       InputError );
+
+        GEOS_THROW_IF( !isZero ( imbibitionPhaseRelPermMaxEndPoint - drainagePhaseRelPermMaxEndPoint ),
+                       GEOS_FMT( string( "{}: the non-wetting-phase relperm endpoint must be the same in drainage and imbibition.\n" )
+                                 + string( "However, we found that the drainage endpoint wetting-phase relperm is {}, " )
+                                 + string( "whereas the imbibition endpoint wetting-phase relperm is {}" ),
+                                 getFullName(),
+                                 drainagePhaseRelPermMaxEndPoint, imbibitionPhaseRelPermMaxEndPoint ),
+                       InputError );
+
+        GEOS_THROW_IF( imbibitionPhaseMinVolFraction < drainagePhaseMinVolFraction,
+                       GEOS_FMT( string( "{}: the critical wetting-phase volume fraction (saturation) must be larger in imbibition (compared to the drainage value).\n" )
+                                 + string( "However, we found that the drainage critical wetting-phase volume fraction is {}, " )
+                                 + string( "whereas the imbibition critical wetting-phase volume fraction is {}" ),
+                                 getFullName(),
+                                 drainagePhaseMinVolFraction, imbibitionPhaseMinVolFraction ),
+                       InputError );
+
+
+      }
+
+      m_nonWettingCurve.setPoints( drainagePhaseMaxVolFraction, drainagePhaseRelPermMaxEndPoint, // same as imbibition max
+                                   imbibitionPhaseMinVolFraction, imbibitionPhaseRelPermMinEndPoint,
+                                   drainagePhaseMinVolFraction, drainagePhaseRelPermMinEndPoint );
+
+    }
+
+    void TableRelativePermeabilityHysteresis::checkExistenceAndValidateIntermediateRelPermTables()
+      {
+
+      if( m_phaseNames.size() == 3 )
+      {
+        real64 drainagePhaseMinVolFraction,
+               drainagePhaseMaxVolFraction,
+               drainagePhaseRelPermMinEndPoint,
+               drainagePhaseRelPermMaxEndPoint;
+
+
+        // intermediate drainage from wetting
+        checkExistenceAndValidateRelPermTable( m_drainageWettingIntermediateRelPermTableNames[1], // input
+                                               drainagePhaseMinVolFraction, // output
+                                               drainagePhaseMaxVolFraction,
+                                               drainagePhaseRelPermMinEndPoint,
+                                               drainagePhaseRelPermMaxEndPoint );
+
+        checkExistenceAndValidateRelPermTable( m_drainageNonWettingIntermediateRelPermTableNames[1], // input
+                                               drainagePhaseMinVolFraction,
+                                               drainagePhaseMaxVolFraction,
+                                               drainagePhaseRelPermMinEndPoint,
+                                               drainagePhaseRelPermMaxEndPoint );
+      }
+    }
+
+
+    void TableRelativePermeabilityHysteresis::checkExistenceAndValidateRelPermTable( string const & relPermTableName,
+                                                                                     real64 & phaseMinVolFrac,
+                                                                                     real64 & phaseMaxVolFrac,
+                                                                                     real64 & phaseRelPermMinEndPoint,
+                                                                                     real64 & phaseRelPermMaxEndPoint ) const
+      {
+      FunctionManager const & functionManager = FunctionManager::getInstance();
+
+      // check if the table actually exists
+      GEOS_THROW_IF( !functionManager.hasGroup( relPermTableName ),
+                     GEOS_FMT( "{}: the table function named {} could not be found",
+                               getFullName(),
+                               relPermTableName ),
+                     InputError );
+      TableFunction const & relPermTable = functionManager.getGroup< TableFunction >( relPermTableName );
+
+      // read the table, check monotonicity, and return the min/max saturation and the endpoint
+      string const fullName = getFullName();
+      TableRelativePermeabilityHelpers::validateRelativePermeabilityTable( relPermTable, // input
+                                                                           fullName,
+                                                                           phaseMinVolFrac, // output
+                                                                           phaseMaxVolFrac,
+                                                                           phaseRelPermMinEndPoint,
+                                                                           phaseRelPermMaxEndPoint );
+    }
+
+    void TableRelativePermeabilityHysteresis::computeLandCoefficient()
+      {
+      // For now, we keep two separate Land parameters for the wetting and non-wetting phases
+      // For two-phase flow, we make sure that they are equal
+      m_landParam.resize( 2 );
+
+      // Note: for simplicity, the notations are taken from IX documentation (although this breaks our phaseVolFrac naming convention)
+      using IPT = TableRelativePermeabilityHysteresis::ImbibitionPhasePairPhaseType;
+
+      KilloughHysteresis::computeLandCoefficient( m_wettingCurve, m_landParam[IPT::WETTING] );
+      KilloughHysteresis::computeLandCoefficient( m_nonWettingCurve, m_landParam[IPT::NONWETTING] );
+    }
+
+    void TableRelativePermeabilityHysteresis::createAllTableKernelWrappers()
+      {
+      using IPT = TableRelativePermeabilityHysteresis::ImbibitionPhasePairPhaseType;
+
+      FunctionManager const & functionManager = FunctionManager::getInstance();
+
+      integer const numPhases = m_phaseNames.size();
+
+      // we want to make sure that the wrappers are always up-to-date, so we recreate them everytime
+
+      m_drainageRelPermKernelWrappers.clear();
+      m_imbibitionRelPermKernelWrappers.clear();
+
+      if( numPhases == 2 )
+      {
+        for( integer ip = 0; ip < m_drainageWettingNonWettingRelPermTableNames.size(); ++ip )
+        {
+          TableFunction const & drainageRelPermTable = functionManager.getGroup< TableFunction >( m_drainageWettingNonWettingRelPermTableNames[ip] );
+          m_drainageRelPermKernelWrappers.emplace_back( drainageRelPermTable.createKernelWrapper() );
+        }
+
+        TableFunction const & imbibitionWettingRelPermTable = m_phaseHasHysteresis[IPT::WETTING]
       ? functionManager.getGroup< TableFunction >( m_imbibitionWettingRelPermTableName )
       : functionManager.getGroup< TableFunction >( m_drainageWettingNonWettingRelPermTableNames[0] );
-    m_imbibitionRelPermKernelWrappers.emplace_back( imbibitionWettingRelPermTable.createKernelWrapper() );
+        m_imbibitionRelPermKernelWrappers.emplace_back( imbibitionWettingRelPermTable.createKernelWrapper() );
 
-    TableFunction const & imbibitionNonWettingRelPermTable = m_phaseHasHysteresis[IPT::NONWETTING]
+        TableFunction const & imbibitionNonWettingRelPermTable = m_phaseHasHysteresis[IPT::NONWETTING]
       ? functionManager.getGroup< TableFunction >( m_imbibitionNonWettingRelPermTableName )
       : functionManager.getGroup< TableFunction >( m_drainageWettingNonWettingRelPermTableNames[1] );
-    m_imbibitionRelPermKernelWrappers.emplace_back( imbibitionNonWettingRelPermTable.createKernelWrapper() );
+        m_imbibitionRelPermKernelWrappers.emplace_back( imbibitionNonWettingRelPermTable.createKernelWrapper() );
 
-  }
-  else if( numPhases == 3 )
-  {
-    for( integer ip = 0; ip < m_drainageWettingIntermediateRelPermTableNames.size(); ++ip )
-    {
-      TableFunction const & drainageRelPermTable = functionManager.getGroup< TableFunction >( m_drainageWettingIntermediateRelPermTableNames[ip] );
-      m_drainageRelPermKernelWrappers.emplace_back( drainageRelPermTable.createKernelWrapper() );
-    }
-    for( integer ip = 0; ip < m_drainageNonWettingIntermediateRelPermTableNames.size(); ++ip )
-    {
-      TableFunction const & drainageRelPermTable = functionManager.getGroup< TableFunction >( m_drainageNonWettingIntermediateRelPermTableNames[ip] );
-      m_drainageRelPermKernelWrappers.emplace_back( drainageRelPermTable.createKernelWrapper() );
-    }
+      }
+      else if( numPhases == 3 )
+      {
+        for( integer ip = 0; ip < m_drainageWettingIntermediateRelPermTableNames.size(); ++ip )
+        {
+          TableFunction const & drainageRelPermTable = functionManager.getGroup< TableFunction >( m_drainageWettingIntermediateRelPermTableNames[ip] );
+          m_drainageRelPermKernelWrappers.emplace_back( drainageRelPermTable.createKernelWrapper() );
+        }
+        for( integer ip = 0; ip < m_drainageNonWettingIntermediateRelPermTableNames.size(); ++ip )
+        {
+          TableFunction const & drainageRelPermTable = functionManager.getGroup< TableFunction >( m_drainageNonWettingIntermediateRelPermTableNames[ip] );
+          m_drainageRelPermKernelWrappers.emplace_back( drainageRelPermTable.createKernelWrapper() );
+        }
 
-    TableFunction const & imbibitionWettingRelPermTable = m_phaseHasHysteresis[IPT::WETTING]
+        TableFunction const & imbibitionWettingRelPermTable = m_phaseHasHysteresis[IPT::WETTING]
       ? functionManager.getGroup< TableFunction >( m_imbibitionWettingRelPermTableName )
       : functionManager.getGroup< TableFunction >( m_drainageWettingIntermediateRelPermTableNames[0] );
-    m_imbibitionRelPermKernelWrappers.emplace_back( imbibitionWettingRelPermTable.createKernelWrapper() );
+        m_imbibitionRelPermKernelWrappers.emplace_back( imbibitionWettingRelPermTable.createKernelWrapper() );
 
-    TableFunction const & imbibitionNonWettingRelPermTable = m_phaseHasHysteresis[IPT::NONWETTING]
+        TableFunction const & imbibitionNonWettingRelPermTable = m_phaseHasHysteresis[IPT::NONWETTING]
       ? functionManager.getGroup< TableFunction >( m_imbibitionNonWettingRelPermTableName )
       : functionManager.getGroup< TableFunction >( m_drainageNonWettingIntermediateRelPermTableNames[0] );
-    m_imbibitionRelPermKernelWrappers.emplace_back( imbibitionNonWettingRelPermTable.createKernelWrapper() );
+        m_imbibitionRelPermKernelWrappers.emplace_back( imbibitionNonWettingRelPermTable.createKernelWrapper() );
+      }
+
+      }
+
+  TableRelativePermeabilityHysteresis::KernelWrapper
+  TableRelativePermeabilityHysteresis::createKernelWrapper()
+  {
+
+    // we want to make sure that the wrappers are always up-to-date, so we recreate them everytime
+    createAllTableKernelWrappers();
+
+    // then we create the actual TableRelativePermeabilityHysteresis::KernelWrapper
+    return KernelWrapper( m_drainageRelPermKernelWrappers,
+                          m_imbibitionRelPermKernelWrappers,
+                          m_phaseHasHysteresis,
+                          m_landParam,
+                          m_jerauldParam_a,
+                          m_jerauldParam_b,
+                          m_killoughCurvatureParamRelPerm,
+                          m_wettingCurve,
+                          m_nonWettingCurve,
+                          m_phaseTypes,
+                          m_phaseOrder,
+                          m_threePhaseInterpolator,
+                          m_waterOilMaxRelPerm,
+                          m_phaseMinHistoricalVolFraction,
+                          m_phaseMaxHistoricalVolFraction,
+                          m_phaseTrappedVolFrac,
+                          m_phaseRelPerm,
+                          m_dPhaseRelPerm_dPhaseVolFrac );
   }
 
-}
-
-TableRelativePermeabilityHysteresis::KernelWrapper
-TableRelativePermeabilityHysteresis::createKernelWrapper()
-{
-
-  // we want to make sure that the wrappers are always up-to-date, so we recreate them everytime
-  createAllTableKernelWrappers();
-
-  // then we create the actual TableRelativePermeabilityHysteresis::KernelWrapper
-  return KernelWrapper( m_drainageRelPermKernelWrappers,
-                        m_imbibitionRelPermKernelWrappers,
-                        m_phaseHasHysteresis,
-                        m_landParam,
-                        m_jerauldParam_a,
-                        m_jerauldParam_b,
-                        m_killoughCurvatureParamRelPerm,
-                        m_wettingCurve,
-                        m_nonWettingCurve,
-                        m_phaseTypes,
-                        m_phaseOrder,
-                        m_threePhaseInterpolator,
-                        m_waterOilMaxRelPerm,
-                        m_phaseMinHistoricalVolFraction,
-                        m_phaseMaxHistoricalVolFraction,
-                        m_phaseTrappedVolFrac,
-                        m_phaseRelPerm,
-                        m_dPhaseRelPerm_dPhaseVolFrac );
-}
-
-void TableRelativePermeabilityHysteresis::resizeFields( localIndex const size, localIndex const numPts )
-{
-  RelativePermeabilityBase::resizeFields( size, numPts );
-
-  integer const numPhases = numFluidPhases();
-
-  m_phaseMaxHistoricalVolFraction.resize( size, numPhases );
-  m_phaseMinHistoricalVolFraction.resize( size, numPhases );
-  m_phaseMaxHistoricalVolFraction.setValues< parallelDevicePolicy<> >( 0.0 );
-  m_phaseMinHistoricalVolFraction.setValues< parallelDevicePolicy<> >( 1.0 );
-}
-
-void TableRelativePermeabilityHysteresis::saveConvergedPhaseVolFractionState( arrayView2d< real64 const, compflow::USD_PHASE > const & phaseVolFraction ) const
-{
-  RelativePermeabilityBase::saveConvergedState();
-
-  arrayView2d< real64, compflow::USD_PHASE > phaseMaxHistoricalVolFraction = m_phaseMaxHistoricalVolFraction.toView();
-  arrayView2d< real64, compflow::USD_PHASE > phaseMinHistoricalVolFraction = m_phaseMinHistoricalVolFraction.toView();
-
-  localIndex const numElems = phaseVolFraction.size( 0 );
-  integer const numPhases = numFluidPhases();
-
-  forAll< parallelDevicePolicy<> >( numElems, [=] GEOS_HOST_DEVICE ( localIndex const ei )
+  void TableRelativePermeabilityHysteresis::resizeFields( localIndex const size, localIndex const numPts )
   {
-    for( integer ip = 0; ip < numPhases; ++ip )
+    RelativePermeabilityBase::resizeFields( size, numPts );
+
+    integer const numPhases = numFluidPhases();
+
+    m_phaseMaxHistoricalVolFraction.resize( size, numPhases );
+    m_phaseMinHistoricalVolFraction.resize( size, numPhases );
+    m_phaseMaxHistoricalVolFraction.setValues< parallelDevicePolicy<> >( 0.0 );
+    m_phaseMinHistoricalVolFraction.setValues< parallelDevicePolicy<> >( 1.0 );
+  }
+
+  void TableRelativePermeabilityHysteresis::saveConvergedPhaseVolFractionState( arrayView2d< real64 const, compflow::USD_PHASE > const & phaseVolFraction ) const
+  {
+    RelativePermeabilityBase::saveConvergedState();
+
+    arrayView2d< real64, compflow::USD_PHASE > phaseMaxHistoricalVolFraction = m_phaseMaxHistoricalVolFraction.toView();
+    arrayView2d< real64, compflow::USD_PHASE > phaseMinHistoricalVolFraction = m_phaseMinHistoricalVolFraction.toView();
+
+    localIndex const numElems = phaseVolFraction.size( 0 );
+    integer const numPhases = numFluidPhases();
+
+    forAll< parallelDevicePolicy<> >( numElems, [=] GEOS_HOST_DEVICE ( localIndex const ei )
     {
-      phaseMaxHistoricalVolFraction[ei][ip] = LvArray::math::max( phaseVolFraction[ei][ip], phaseMaxHistoricalVolFraction[ei][ip] );
-      phaseMinHistoricalVolFraction[ei][ip] = LvArray::math::min( phaseVolFraction[ei][ip], phaseMinHistoricalVolFraction[ei][ip] );
-    }
-  } );
+      for( integer ip = 0; ip < numPhases; ++ip )
+      {
+        phaseMaxHistoricalVolFraction[ei][ip] = LvArray::math::max( phaseVolFraction[ei][ip], phaseMaxHistoricalVolFraction[ei][ip] );
+        phaseMinHistoricalVolFraction[ei][ip] = LvArray::math::min( phaseVolFraction[ei][ip], phaseMinHistoricalVolFraction[ei][ip] );
+      }
+    } );
 
-}
+  }
 
-<<<<<<< HEAD
-TableRelativePermeabilityHysteresis::KernelWrapper::KernelWrapper( arrayView1d< TableFunction::KernelWrapper const > const & drainageRelPermKernelWrappers,
-                                                                   arrayView1d< TableFunction::KernelWrapper const > const & imbibitionRelPermKernelWrappers,
-                                                                   arrayView1d< integer const > const & phaseHasHysteresis,
-                                                                   arrayView1d< real64 const > const & landParam,
-                                                                   real64 const & jerauldParam_a,
-                                                                   real64 const & jerauldParam_b,
-                                                                   real64 const & killoughCurvatureParamRelPerm,
-                                                                   KilloughHysteresis::HysteresisCurve const & wettingCurve,
-                                                                   KilloughHysteresis::HysteresisCurve const & nonWettingCurve,
-                                                                   arrayView1d< integer const > const & phaseTypes,
-                                                                   arrayView1d< integer const > const & phaseOrder,
-                                                                   arrayView2d< real64 const, compflow::USD_PHASE > const & phaseMinHistoricalVolFraction,
-                                                                   arrayView2d< real64 const, compflow::USD_PHASE > const & phaseMaxHistoricalVolFraction,
-                                                                   arrayView3d< real64, relperm::USD_RELPERM > const & phaseTrappedVolFrac,
-                                                                   arrayView3d< real64, relperm::USD_RELPERM > const & phaseRelPerm,
-                                                                   arrayView4d< real64, relperm::USD_RELPERM_DS > const & dPhaseRelPerm_dPhaseVolFrac )
-  :
-  RelativePermeabilityBaseUpdate( phaseTypes,
-                                  phaseOrder,
-                                  phaseRelPerm,
-                                  dPhaseRelPerm_dPhaseVolFrac,
-                                  phaseTrappedVolFrac ),
-=======
-TableRelativePermeabilityHysteresis::KernelWrapper::
-  KernelWrapper( arrayView1d< TableFunction::KernelWrapper const > const & drainageRelPermKernelWrappers,
-                 arrayView1d< TableFunction::KernelWrapper const > const & imbibitionRelPermKernelWrappers,
-                 real64 const & jerauldParam_a,
-                 real64 const & jerauldParam_b,
-                 real64 const & killoughCurvatureParam,
-                 arrayView1d< integer const > const & phaseHasHysteresis,
-                 arrayView1d< real64 const > const & landParam,
-                 arrayView1d< real64 const > const & drainagePhaseMinVolFraction,
-                 arrayView1d< real64 const > const & imbibitionPhaseMinVolFraction,
-                 arrayView1d< real64 const > const & drainagePhaseMaxVolFraction,
-                 arrayView1d< real64 const > const & imbibitionPhaseMaxVolFraction,
-                 arrayView1d< real64 const > const & drainagePhaseRelPermEndPoint,
-                 arrayView1d< real64 const > const & imbibitionPhaseRelPermEndPoint,
-                 arrayView1d< integer const > const & phaseTypes,
-                 arrayView1d< integer const > const & phaseOrder,
-                 ThreePhaseInterpolator const & threePhaseInterpolator,
-                 real64 const & waterOilRelPermMaxValue,
-                 arrayView2d< real64 const, compflow::USD_PHASE > const & phaseMinHistoricalVolFraction,
-                 arrayView2d< real64 const, compflow::USD_PHASE > const & phaseMaxHistoricalVolFraction,
-                 arrayView3d< real64, relperm::USD_RELPERM > const & phaseTrappedVolFrac,
-                 arrayView3d< real64, relperm::USD_RELPERM > const & phaseRelPerm,
-                 arrayView4d< real64, relperm::USD_RELPERM_DS > const & dPhaseRelPerm_dPhaseVolFrac )
-  : RelativePermeabilityBaseUpdate( phaseTypes,
-                                    phaseOrder,
-                                    phaseRelPerm,
-                                    dPhaseRelPerm_dPhaseVolFrac,
-                                    phaseTrappedVolFrac ),
->>>>>>> origin/develop
-  m_drainageRelPermKernelWrappers( drainageRelPermKernelWrappers ),
-  m_imbibitionRelPermKernelWrappers( imbibitionRelPermKernelWrappers ),
-  m_phaseHasHysteresis( phaseHasHysteresis ),
-  m_landParam( landParam ),
-  m_jerauldParam_a( jerauldParam_a ),
-  m_jerauldParam_b( jerauldParam_b ),
-  m_killoughCurvatureParamRelPerm( killoughCurvatureParamRelPerm ),
-  m_wettingCurve( wettingCurve ),
-  m_nonWettingCurve( nonWettingCurve ),
-  m_phaseMinHistoricalVolFraction( phaseMinHistoricalVolFraction ),
-  m_phaseMaxHistoricalVolFraction( phaseMaxHistoricalVolFraction ),
-  m_waterOilRelPermMaxValue( waterOilRelPermMaxValue ),
-  m_threePhaseInterpolator( threePhaseInterpolator )
-{}
+    << << <<< HEAD
+    TableRelativePermeabilityHysteresis::KernelWrapper::KernelWrapper( arrayView1d< TableFunction::KernelWrapper const > const & drainageRelPermKernelWrappers,
+                                                                       arrayView1d< TableFunction::KernelWrapper const > const & imbibitionRelPermKernelWrappers,
+                                                                       arrayView1d< integer const > const & phaseHasHysteresis,
+                                                                       arrayView1d< real64 const > const & landParam,
+                                                                       real64 const & jerauldParam_a,
+                                                                       real64 const & jerauldParam_b,
+                                                                       real64 const & killoughCurvatureParamRelPerm,
+                                                                       KilloughHysteresis::HysteresisCurve const & wettingCurve,
+                                                                       KilloughHysteresis::HysteresisCurve const & nonWettingCurve,
+                                                                       arrayView1d< integer const > const & phaseTypes,
+                                                                       arrayView1d< integer const > const & phaseOrder,
+                                                                       arrayView2d< real64 const, compflow::USD_PHASE > const & phaseMinHistoricalVolFraction,
+                                                                       arrayView2d< real64 const, compflow::USD_PHASE > const & phaseMaxHistoricalVolFraction,
+                                                                       arrayView3d< real64, relperm::USD_RELPERM > const & phaseTrappedVolFrac,
+                                                                       arrayView3d< real64, relperm::USD_RELPERM > const & phaseRelPerm,
+                                                                       arrayView4d< real64, relperm::USD_RELPERM_DS > const & dPhaseRelPerm_dPhaseVolFrac )
+      :
+      RelativePermeabilityBaseUpdate( phaseTypes,
+                                      phaseOrder,
+                                      phaseRelPerm,
+                                      dPhaseRelPerm_dPhaseVolFrac,
+                                      phaseTrappedVolFrac ),
+      =======
+        TableRelativePermeabilityHysteresis::KernelWrapper::
+        KernelWrapper( arrayView1d< TableFunction::KernelWrapper const > const & drainageRelPermKernelWrappers,
+                       arrayView1d< TableFunction::KernelWrapper const > const & imbibitionRelPermKernelWrappers,
+                       real64 const & jerauldParam_a,
+                       real64 const & jerauldParam_b,
+                       real64 const & killoughCurvatureParam,
+                       arrayView1d< integer const > const & phaseHasHysteresis,
+                       arrayView1d< real64 const > const & landParam,
+                       arrayView1d< real64 const > const & drainagePhaseMinVolFraction,
+                       arrayView1d< real64 const > const & imbibitionPhaseMinVolFraction,
+                       arrayView1d< real64 const > const & drainagePhaseMaxVolFraction,
+                       arrayView1d< real64 const > const & imbibitionPhaseMaxVolFraction,
+                       arrayView1d< real64 const > const & drainagePhaseRelPermEndPoint,
+                       arrayView1d< real64 const > const & imbibitionPhaseRelPermEndPoint,
+                       arrayView1d< integer const > const & phaseTypes,
+                       arrayView1d< integer const > const & phaseOrder,
+                       ThreePhaseInterpolator const & threePhaseInterpolator,
+                       real64 const & waterOilRelPermMaxValue,
+                       arrayView2d< real64 const, compflow::USD_PHASE > const & phaseMinHistoricalVolFraction,
+                       arrayView2d< real64 const, compflow::USD_PHASE > const & phaseMaxHistoricalVolFraction,
+                       arrayView3d< real64, relperm::USD_RELPERM > const & phaseTrappedVolFrac,
+                       arrayView3d< real64, relperm::USD_RELPERM > const & phaseRelPerm,
+                       arrayView4d< real64, relperm::USD_RELPERM_DS > const & dPhaseRelPerm_dPhaseVolFrac )
+          : RelativePermeabilityBaseUpdate( phaseTypes,
+                                            phaseOrder,
+                                            phaseRelPerm,
+                                            dPhaseRelPerm_dPhaseVolFrac,
+                                            phaseTrappedVolFrac ),
+          >> >> >>> origin/develop
+          m_drainageRelPermKernelWrappers( drainageRelPermKernelWrappers ),
+          m_imbibitionRelPermKernelWrappers( imbibitionRelPermKernelWrappers ),
+          m_phaseHasHysteresis( phaseHasHysteresis ),
+          m_landParam( landParam ),
+          m_jerauldParam_a( jerauldParam_a ),
+          m_jerauldParam_b( jerauldParam_b ),
+          m_killoughCurvatureParamRelPerm( killoughCurvatureParamRelPerm ),
+          m_wettingCurve( wettingCurve ),
+          m_nonWettingCurve( nonWettingCurve ),
+          m_phaseMinHistoricalVolFraction( phaseMinHistoricalVolFraction ),
+          m_phaseMaxHistoricalVolFraction( phaseMaxHistoricalVolFraction ),
+          m_waterOilRelPermMaxValue( waterOilRelPermMaxValue ),
+          m_threePhaseInterpolator( threePhaseInterpolator )
+      {}
 
 
 
-REGISTER_CATALOG_ENTRY( ConstitutiveBase, TableRelativePermeabilityHysteresis, std::string const &, Group * const )
+    REGISTER_CATALOG_ENTRY( ConstitutiveBase, TableRelativePermeabilityHysteresis, std::string const &, Group * const )
 
 } // namespace constitutive
 
