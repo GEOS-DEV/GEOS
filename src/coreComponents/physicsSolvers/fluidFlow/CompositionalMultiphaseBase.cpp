@@ -1960,6 +1960,7 @@ void CompositionalMultiphaseBase::chopNegativeDensities( DomainPartition & domai
   using namespace isothermalCompositionalMultiphaseBaseKernels;
 
   integer const numComp = m_numComponents;
+  real64 const minCompDens = m_minCompDens;
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel & mesh,
@@ -1980,9 +1981,9 @@ void CompositionalMultiphaseBase::chopNegativeDensities( DomainPartition & domai
         {
           for( integer ic = 0; ic < numComp; ++ic )
           {
-            if( compDens[ei][ic] < m_minCompDens )
+            if( compDens[ei][ic] < minCompDens )
             {
-              compDens[ei][ic] = m_minCompDens;
+              compDens[ei][ic] = minCompDens;
             }
           }
         }
