@@ -22,7 +22,7 @@
 #include "ReactionsBase.hpp"
 
 #include "constitutive/fluid/multifluid/Layouts.hpp"
-#include "constitutive/fluid/multifluid/MultiFluidConstants.hpp"
+#include "common/PhysicsConstants.hpp"
 
 namespace geos
 {
@@ -43,7 +43,7 @@ public:
   {
 public:
 
-    static constexpr real64 RConst = MultiFluidConstants::gasConstant;
+    static constexpr real64 RConst = constants::gasConstant;
 
     KernelWrapper( integer const numPrimarySpecies,
                    integer const numSecondarySpecies,
