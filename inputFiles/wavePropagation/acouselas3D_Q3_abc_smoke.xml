@@ -1,3 +1,4 @@
+<?xml version="1.0" ?>
 <!--
 # Reference
   Komatitsch, Dimitri / Barnes, Christophe / Tromp, Jeroen 
@@ -11,7 +12,6 @@
   hexahedral mesh generated internally by GEOSX
   6400x1600x4800m domain
 -->
-<?xml version="1.0" ?>
 
 <Problem>
   <Solvers>

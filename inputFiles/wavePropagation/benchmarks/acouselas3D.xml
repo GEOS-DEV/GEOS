@@ -1,3 +1,4 @@
+<?xml version="1.0" ?>
 <!--
 # Reference
   Komatitsch, Dimitri / Barnes, Christophe / Tromp, Jeroen 
@@ -80,7 +81,6 @@
   9.6334225e9 9.633155e9 2500. μˢ, λˢ and ρˢ
   ```
 -->
-<?xml version="1.0" ?>
 
 <Problem>
   <Solvers>
