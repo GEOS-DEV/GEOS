@@ -429,7 +429,7 @@ CellElementStencilTPFAWrapper::
     LvArray::tensorOps::hadamardProduct< 3 >( velocityNorm, faceNormal, m_cellToFaceVec[iconn][i] );
     for( int dir = 0; dir < 3; ++dir )
     {
-      invDist[dir] = ( LvArray::math::abs(globalCellToFace[i][dir]) > LvArray::NumericLimits< real64 >::epsilon ) ? 1./globalCellToFace[i][dir] : LvArray::NumericLimits< real64 >::epsilon;
+      invDist[dir] = ( LvArray::math::abs( globalCellToFace[i][dir] ) > LvArray::NumericLimits< real64 >::epsilon ) ? 1./globalCellToFace[i][dir] : LvArray::NumericLimits< real64 >::epsilon;
     }
     LvArray::tensorOps::hadamardProduct< 3 >( phaseVel, velocityNorm, invDist );
     LvArray::tensorOps::add< 3 >( phaseVelocity[er][esr][ei][ip], phaseVel );

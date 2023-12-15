@@ -1016,7 +1016,8 @@ public:
    * @param[inout] localRhs the local right-hand side vector
    * @param[in] kernelFlags flags packed together
    */
-  DiffusionDispersionFaceBasedAssemblyKernel( integer const numPhases, globalIndex const rankOffset,
+  DiffusionDispersionFaceBasedAssemblyKernel( integer const numPhases,
+                                              globalIndex const rankOffset,
                                               STENCILWRAPPER const & stencilWrapper,
                                               DofNumberAccessor const & dofNumberAccessor,
                                               GlobalCellDimAccessor const & globalCellDimAccessor,
@@ -1658,9 +1659,6 @@ public:
       BitFlags< FaceBasedAssemblyKernelFlags > kernelFlags;
       if( useTotalMassEquation )
         kernelFlags.set( FaceBasedAssemblyKernelFlags::TotalMassEquation );
-
-//      ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > > const globalIndexAccessor =
-//        elemManager.constructArrayViewAccessor< globalIndex, 1 >( ObjectManagerBase::viewKeyStruct::localToGlobalMapString());
 
       ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > globalCellDimAccessor =
         elemManager.constructArrayViewAccessor< real64, 2 >(
