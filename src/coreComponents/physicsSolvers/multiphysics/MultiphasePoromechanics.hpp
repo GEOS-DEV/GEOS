@@ -182,10 +182,10 @@ protected:
 private:
 
   /**
-   * @brief Helper function to recompute the bulk density
+   * @brief Helper function to recompute the total fluid density
    * @param[in] subRegion the element subRegion
    */
-  void updateBulkDensity( ElementSubRegionBase & subRegion );
+  void updateTotalFluidDensity( ElementSubRegionBase & subRegion );
 
   /**
    * @brief Helper function to average the mean stress increment over quadrature points

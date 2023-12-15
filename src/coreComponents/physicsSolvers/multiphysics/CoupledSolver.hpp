@@ -42,9 +42,11 @@ public:
                  Group * const parent )
     : SolverBase( name, parent )
   {
-    forEachArgInTuple( m_solvers, [&]( auto solver, auto idx )
+    forEachArgInTuple( m_solvers, [&]( auto solver,
+                                       auto idx )
     {
-      using SolverType = TYPEOFPTR( solver );
+      using SolverType =
+        TYPEOFPTR( solver );
       string const key = SolverType::coupledSolverAttributePrefix() + "SolverName";
       registerWrapper( key, &m_names[idx()] ).
         setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
@@ -75,10 +77,13 @@ public:
   void
   setSubSolvers()
   {
-    forEachArgInTuple( m_solvers, [&]( auto & solver, auto idx )
+    forEachArgInTuple( m_solvers, [&]( auto & solver,
+                                       auto idx )
     {
-      using SolverPtr = TYPEOFREF( solver );
-      using SolverType = TYPEOFPTR( SolverPtr {} );
+      using SolverPtr =
+        TYPEOFREF( solver );
+      using SolverType =
+        TYPEOFPTR( SolverPtr {} );
       auto const & solverName = m_names[idx()];
       auto const & solverType = LvArray::system::demangleType< SolverType >();
       solver = this->getParent().template getGroupPointer< SolverType >( solverName );
@@ -131,7 +136,8 @@ public:
   setupDofs( DomainPartition const & domain,
              DofManager & dofManager ) const override
   {
-    forEachArgInTuple( m_solvers, [&]( auto & solver, auto )
+    forEachArgInTuple( m_solvers, [&]( auto & solver,
+                                       auto )
     {
       solver->setupDofs( domain, dofManager );
     } );
@@ -144,9 +150,24 @@ public:
                      real64 const & dt,
                      DomainPartition & domain ) override
   {
-    forEachArgInTuple( m_solvers, [&]( auto & solver, auto )
+    Timestamp const meshModificationTimestamp = getMeshModificationTimestamp( domain );
+
+    forEachArgInTuple( m_solvers, [&]( auto & solver,
+                                       auto )
     {
+      // Only build the sparsity pattern if the mesh has changed
+      if( meshModificationTimestamp > solver->getSystemSetupTimestamp() )
+      {
+        solver->setupSystem( domain,
+                             solver->getDofManager(),
+                             solver->getLocalMatrix(),
+                             solver->getSystemRhs(),
+                             solver->getSystemSolution() );
+        solver->setSystemSetupTimestamp( meshModificationTimestamp );
+      }
+
       solver->implicitStepSetup( time_n, dt, domain );
+
     } );
   }
 
@@ -155,7 +176,8 @@ public:
                         real64 const & dt,
                         DomainPartition & domain ) override
   {
-    forEachArgInTuple( m_solvers, [&]( auto & solver, auto )
+    forEachArgInTuple( m_solvers, [&]( auto & solver,
+                                       auto )
     {
       solver->implicitStepComplete( time_n, dt, domain );
     } );
@@ -177,7 +199,8 @@ public:
     synchronizeNonLinearParameters();
 
     // 2. Assemble matrix blocks of each individual solver
-    forEachArgInTuple( m_solvers, [&]( auto & solver, auto )
+    forEachArgInTuple( m_solvers, [&]( auto & solver,
+                                       auto )
     {
       solver->assembleSystem( time_n, dt, domain, dofManager, localMatrix, localRhs );
     } );
@@ -193,7 +216,8 @@ public:
                        real64 const dt,
                        DomainPartition & domain ) override
   {
-    forEachArgInTuple( m_solvers, [&]( auto & solver, auto )
+    forEachArgInTuple( m_solvers, [&]( auto & solver,
+                                       auto )
     {
       solver->applySystemSolution( dofManager, localSolution, scalingFactor, dt, domain );
     } );
@@ -202,7 +226,8 @@ public:
   virtual void
   updateState( DomainPartition & domain ) override
   {
-    forEachArgInTuple( m_solvers, [&]( auto & solver, auto )
+    forEachArgInTuple( m_solvers, [&]( auto & solver,
+                                       auto )
     {
       solver->updateState( domain );
     } );
@@ -211,7 +236,8 @@ public:
   virtual void
   resetStateToBeginningOfStep( DomainPartition & domain ) override
   {
-    forEachArgInTuple( m_solvers, [&]( auto & solver, auto )
+    forEachArgInTuple( m_solvers, [&]( auto & solver,
+                                       auto )
     {
       solver->resetStateToBeginningOfStep( domain );
     } );
@@ -252,7 +278,8 @@ public:
                          arrayView1d< real64 const > const & localRhs ) override
   {
     real64 norm = 0.0;
-    forEachArgInTuple( m_solvers, [&]( auto & solver, auto )
+    forEachArgInTuple( m_solvers, [&]( auto & solver,
+                                       auto )
     {
       real64 const singlePhysicsNorm = solver->calculateResidualNorm( time_n, dt, domain, dofManager, localRhs );
       norm += singlePhysicsNorm * singlePhysicsNorm;
@@ -269,7 +296,8 @@ public:
                            CRSMatrixView< real64, globalIndex const > const & localMatrix,
                            arrayView1d< real64 > const & localRhs ) override
   {
-    forEachArgInTuple( m_solvers, [&]( auto & solver, auto )
+    forEachArgInTuple( m_solvers, [&]( auto & solver,
+                                       auto )
     {
       solver->applyBoundaryConditions( time_n, dt, domain, dofManager, localMatrix, localRhs );
     } );
@@ -282,7 +310,8 @@ public:
                        real64 const scalingFactor ) override
   {
     bool validSolution = true;
-    forEachArgInTuple( m_solvers, [&]( auto & solver, auto )
+    forEachArgInTuple( m_solvers, [&]( auto & solver,
+                                       auto )
     {
       bool const validSinglePhysicsSolution = solver->checkSystemSolution( domain, dofManager, localSolution, scalingFactor );
       validSolution = validSolution && validSinglePhysicsSolution;
@@ -296,7 +325,8 @@ public:
                             arrayView1d< real64 const > const & localSolution ) override
   {
     real64 scalingFactor = 1e9;
-    forEachArgInTuple( m_solvers, [&]( auto & solver, auto )
+    forEachArgInTuple( m_solvers, [&]( auto & solver,
+                                       auto )
     {
       real64 const singlePhysicsScalingFactor = solver->scalingForSystemSolution( domain, dofManager, localSolution );
       scalingFactor = LvArray::math::min( scalingFactor, singlePhysicsScalingFactor );
@@ -309,7 +339,8 @@ public:
                                DomainPartition & domain ) override
   {
     real64 nextDt = LvArray::NumericLimits< real64 >::max;
-    forEachArgInTuple( m_solvers, [&]( auto & solver, auto )
+    forEachArgInTuple( m_solvers, [&]( auto & solver,
+                                       auto )
     {
       real64 const singlePhysicsNextDt =
         solver->setNextDtBasedOnStateChange( currentDt, domain );
@@ -324,7 +355,8 @@ public:
                         real64 const eventProgress,
                         DomainPartition & domain ) override
   {
-    forEachArgInTuple( m_solvers, [&]( auto & solver, auto )
+    forEachArgInTuple( m_solvers, [&]( auto & solver,
+                                       auto )
     {
       solver->cleanup( time_n, cycleNumber, eventCounter, eventProgress, domain );
     } );
@@ -332,6 +364,26 @@ public:
   }
 
   /**@}*/
+
+  virtual bool checkSequentialSolutionIncrements( DomainPartition & domain ) const override
+  {
+    bool isConverged = true;
+    forEachArgInTuple( m_solvers, [&]( auto & solver,
+                                       auto )
+    {
+      isConverged &= solver->checkSequentialSolutionIncrements( domain );
+    } );
+    return isConverged;
+  }
+
+  virtual void saveSequentialIterationState( DomainPartition & domain ) const override
+  {
+    forEachArgInTuple( m_solvers, [&]( auto & solver,
+                                       auto )
+    {
+      solver->saveSequentialIterationState( domain );
+    } );
+  }
 
 protected:
 
@@ -369,44 +421,21 @@ protected:
   {
     GEOS_MARK_FUNCTION;
 
-    real64 dtReturn = dt;
-
-    real64 dtReturnTemporary;
-
-    Timestamp const meshModificationTimestamp = getMeshModificationTimestamp( domain );
-
-    // First call Coupled Solver setup  (important for poromechanics initialization for sequentially coupled)
     implicitStepSetup( time_n, dt, domain );
-
-    forEachArgInTuple( m_solvers, [&]( auto & solver, auto )
-    {
-
-      // Only build the sparsity pattern if the mesh has changed
-      if( meshModificationTimestamp > solver->getSystemSetupTimestamp() )
-      {
-        solver->setupSystem( domain,
-                             solver->getDofManager(),
-                             solver->getLocalMatrix(),
-                             solver->getSystemRhs(),
-                             solver->getSystemSolution() );
-        solver->setSystemSetupTimestamp( meshModificationTimestamp );
-      }
-
-      solver->implicitStepSetup( time_n, dt, domain );
-
-    } );
 
     NonlinearSolverParameters & solverParams = getNonlinearSolverParameters();
     integer & iter = solverParams.m_numNewtonIterations;
     iter = 0;
     bool isConverged = false;
+    real64 dtReturn = dt;
     /// Sequential coupling loop
     while( iter < solverParams.m_maxIterNewton )
     {
       if( iter == 0 )
       {
         // Reset the states of all solvers if any of them had to restart
-        forEachArgInTuple( m_solvers, [&]( auto & solver, auto )
+        forEachArgInTuple( m_solvers, [&]( auto & solver,
+                                           auto )
         {
           solver->resetStateToBeginningOfStep( domain );
           solver->getSolverStatistics().initializeTimeStepStatistics(); // initialize counters for subsolvers
@@ -419,9 +448,11 @@ protected:
       m_solverStatistics.logNonlinearIteration( 0 );
 
       // Solve the subproblems nonlinearly
-      forEachArgInTuple( m_solvers, [&]( auto & solver, auto idx )
+      real64 dtReturnTemporary;
+      forEachArgInTuple( m_solvers, [&]( auto & solver,
+                                         auto idx )
       {
-        GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "  Iteration {:2}: {}", iter+1, solver->getName() ) );
+        GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "  Iteration {:2}: {}", iter + 1, solver->getName() ) );
         dtReturnTemporary = solver->nonlinearImplicitStep( time_n,
                                                            dtReturn,
                                                            cycleNumber,
@@ -442,22 +473,27 @@ protected:
                                                 dtReturn,
                                                 domain );
 
+      // save fields (e.g. pressure and temperature) at the end of this iteration
+      saveSequentialIterationState( domain );
+
       if( isConverged )
       {
         // Save Time step statistics for the subsolvers
-        forEachArgInTuple( m_solvers, [&]( auto & solver, auto )
+        forEachArgInTuple( m_solvers, [&]( auto & solver,
+                                           auto )
         {
           solver->getSolverStatistics().saveTimeStepStatistics();
         } );
         break;
       }
+
       // Add convergence check:
       ++iter;
     }
 
     GEOS_ERROR_IF( !isConverged, getDataContext() << ": sequentiallyCoupledSolverStep did not converge!" );
 
-    implicitStepComplete( time_n, dt, domain );
+    implicitStepComplete( time_n, dtReturn, domain );
 
     return dtReturn;
   }
@@ -468,7 +504,8 @@ protected:
    * @param domain the domain partition
    * @param solverType the index of the solver withing this coupled solver.
    */
-  virtual void mapSolutionBetweenSolvers( DomainPartition & domain, integer const solverType )
+  virtual void mapSolutionBetweenSolvers( DomainPartition & domain,
+                                          integer const solverType )
   {
     GEOS_UNUSED_VAR( domain, solverType );
   }
@@ -476,7 +513,7 @@ protected:
   bool checkSequentialConvergence( int const & iter,
                                    real64 const & time_n,
                                    real64 const & dt,
-                                   DomainPartition & domain ) const
+                                   DomainPartition & domain )
   {
     NonlinearSolverParameters const & params = getNonlinearSolverParameters();
     bool isConverged = true;
@@ -487,13 +524,15 @@ protected:
     }
     else
     {
+      GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "  Iteration {:2}: outer-loop convergence check", iter + 1 ) );
+
       if( params.sequentialConvergenceCriterion() == NonlinearSolverParameters::SequentialConvergenceCriterion::ResidualNorm )
       {
-        GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "  Iteration {:2}: outer-loop convergence check", iter+1 ) );
         real64 residualNorm = 0;
 
         // loop over all the single-physics solvers
-        forEachArgInTuple( m_solvers, [&]( auto & solver, auto )
+        forEachArgInTuple( m_solvers, [&]( auto & solver,
+                                           auto )
         {
 
           solver->getLocalMatrix().toViewConstSizes().zero();
@@ -533,7 +572,9 @@ protected:
       }
       else if( params.sequentialConvergenceCriterion() == NonlinearSolverParameters::SequentialConvergenceCriterion::NumberOfNonlinearIterations )
       {
-        forEachArgInTuple( m_solvers, [&]( auto & solver, auto )
+        // TODO also make recursive?
+        forEachArgInTuple( m_solvers, [&]( auto & solver,
+                                           auto )
         {
           NonlinearSolverParameters const & singlePhysicsParams = solver->getNonlinearSolverParameters();
           if( singlePhysicsParams.m_numNewtonIterations > singlePhysicsParams.m_minIterNewton )
@@ -541,6 +582,10 @@ protected:
             isConverged = false;
           }
         } );
+      }
+      else if( params.sequentialConvergenceCriterion() == NonlinearSolverParameters::SequentialConvergenceCriterion::SolutionIncrements )
+      {
+        isConverged = checkSequentialSolutionIncrements( domain );
       }
       else
       {

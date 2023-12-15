@@ -175,13 +175,14 @@ public:
   template< typename CONSTITUTIVE_BASE,
             typename KERNEL_WRAPPER,
             typename ... PARAMS >
-  void assemblyLaunch( DomainPartition & domain,
-                       DofManager const & dofManager,
-                       string const & materialNamesString,
-                       CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                       arrayView1d< real64 > const & localRhs,
-                       real64 const dt,
-                       PARAMS && ... params );
+  real64 assemblyLaunch( MeshLevel & mesh,
+                         DofManager const & dofManager,
+                         arrayView1d< string const > const & regionNames,
+                         string const & materialNamesString,
+                         CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                         arrayView1d< real64 > const & localRhs,
+                         real64 const dt,
+                         PARAMS && ... params );
 
 
   template< typename ... PARAMS >
@@ -323,67 +324,41 @@ ENUM_STRINGS( SolidMechanicsLagrangianFEM::TimeIntegrationOption,
 template< typename CONSTITUTIVE_BASE,
           typename KERNEL_WRAPPER,
           typename ... PARAMS >
-void SolidMechanicsLagrangianFEM::assemblyLaunch( DomainPartition & domain,
-                                                  DofManager const & dofManager,
-                                                  string const & materialNamesString,
-                                                  CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                                  arrayView1d< real64 > const & localRhs,
-                                                  real64 const dt,
-                                                  PARAMS && ... params )
+real64 SolidMechanicsLagrangianFEM::assemblyLaunch( MeshLevel & mesh,
+                                                    DofManager const & dofManager,
+                                                    arrayView1d< string const > const & regionNames,
+                                                    string const & materialNamesString,
+                                                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                    arrayView1d< real64 > const & localRhs,
+                                                    real64 const dt,
+                                                    PARAMS && ... params )
 {
   GEOS_MARK_FUNCTION;
 
-  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                                MeshLevel & mesh,
-                                                                arrayView1d< string const > const & regionNames )
-  {
-    // collect the target regions that match materialNamesString
-    array1d< string > filteredRegionNames;
-    filteredRegionNames.reserve( regionNames.size() );
-    ElementRegionManager const & elementRegionManager = mesh.getElemManager();
-    elementRegionManager.forElementSubRegions< CellElementSubRegion >( regionNames,
-                                                                       [&]
-                                                                         ( localIndex const regionIndex, auto & elementSubRegion )
-    {
-      if( elementSubRegion.template hasWrapper< string >( materialNamesString ) )
-      {
-        filteredRegionNames.emplace_back( regionNames[regionIndex] );
-        return;
-      }
-    } );
+  NodeManager const & nodeManager = mesh.getNodeManager();
 
-    // if the array is empty, there is nothing to do
-    if( filteredRegionNames.empty() )
-    {
-      return;
-    }
+  string const dofKey = dofManager.getKey( fields::solidMechanics::totalDisplacement::key() );
+  arrayView1d< globalIndex const > const & dofNumber = nodeManager.getReference< globalIndex_array >( dofKey );
 
-    NodeManager const & nodeManager = mesh.getNodeManager();
+  real64 const gravityVectorData[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( gravityVector() );
 
-    string const dofKey = dofManager.getKey( fields::solidMechanics::totalDisplacement::key() );
-    arrayView1d< globalIndex const > const & dofNumber = nodeManager.getReference< globalIndex_array >( dofKey );
+  KERNEL_WRAPPER kernelWrapper( dofNumber,
+                                dofManager.rankOffset(),
+                                localMatrix,
+                                localRhs,
+                                dt,
+                                gravityVectorData,
+                                std::forward< PARAMS >( params )... );
 
-    real64 const gravityVectorData[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( gravityVector() );
+  return finiteElement::
+           regionBasedKernelApplication< parallelDevicePolicy< >,
+                                         CONSTITUTIVE_BASE,
+                                         CellElementSubRegion >( mesh,
+                                                                 regionNames,
+                                                                 this->getDiscretizationName(),
+                                                                 materialNamesString,
+                                                                 kernelWrapper );
 
-    KERNEL_WRAPPER kernelWrapper( dofNumber,
-                                  dofManager.rankOffset(),
-                                  localMatrix,
-                                  localRhs,
-                                  dt,
-                                  gravityVectorData,
-                                  std::forward< PARAMS >( params )... );
-
-    m_maxForce = finiteElement::
-                   regionBasedKernelApplication< parallelDevicePolicy< >,
-                                                 CONSTITUTIVE_BASE,
-                                                 CellElementSubRegion >( mesh,
-                                                                         filteredRegionNames,
-                                                                         this->getDiscretizationName(),
-                                                                         materialNamesString,
-                                                                         kernelWrapper );
-  } );
-
-  applyContactConstraint( dofManager, domain, localMatrix, localRhs );
 }
 
 } /* namespace geos */

@@ -80,26 +80,7 @@ void SinglePhaseBase::registerDataOnMesh( Group & meshBodies )
                                                               [&]( localIndex const,
                                                                    ElementSubRegionBase & subRegion )
     {
-      subRegion.registerField< pressure >( getName() );
-      subRegion.registerField< pressure_n >( getName() );
-      subRegion.registerField< initialPressure >( getName() );
-      subRegion.registerField< deltaPressure >( getName() ); // for reporting/stats purposes
-      subRegion.registerField< bcPressure >( getName() ); // needed for the application of boundary conditions
-      if( m_isFixedStressPoromechanicsUpdate )
-      {
-        subRegion.registerField< pressure_k >( getName() ); // needed for the fixed-stress porosity update
-      }
-
       subRegion.registerField< deltaVolume >( getName() );
-
-      subRegion.registerField< temperature >( getName() );
-      subRegion.registerField< temperature_n >( getName() );
-      subRegion.registerField< initialTemperature >( getName() );
-      subRegion.registerField< bcTemperature >( getName() ); // needed for the application of boundary conditions
-      if( m_isFixedStressPoromechanicsUpdate )
-      {
-        subRegion.registerField< temperature_k >( getName() ); // needed for the fixed-stress porosity update
-      }
 
       subRegion.registerField< mobility >( getName() );
       subRegion.registerField< dMobility_dPressure >( getName() );
@@ -634,12 +615,6 @@ void SinglePhaseBase::implicitStepSetup( real64 const & GEOS_UNUSED_PARAM( time_
     mesh.getElemManager().forElementSubRegions< CellElementSubRegion, SurfaceElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                                                    auto & subRegion )
     {
-      arrayView1d< real64 const > const & pres = subRegion.template getField< fields::flow::pressure >();
-      arrayView1d< real64 const > const & initPres = subRegion.template getField< fields::flow::initialPressure >();
-      arrayView1d< real64 > const & deltaPres = subRegion.template getField< fields::flow::deltaPressure >();
-
-      singlePhaseBaseKernels::StatisticsKernel::
-        saveDeltaPressure( subRegion.size(), pres, initPres, deltaPres );
       saveConvergedState( subRegion );
 
       arrayView1d< real64 > const & dVol = subRegion.template getField< fields::flow::deltaVolume >();
@@ -680,9 +655,6 @@ void SinglePhaseBase::implicitStepSetup( real64 const & GEOS_UNUSED_PARAM( time_
 
     } );
   } );
-
-
-
 }
 
 void SinglePhaseBase::implicitStepComplete( real64 const & time,
@@ -1213,8 +1185,8 @@ void SinglePhaseBase::keepFlowVariablesConstantDuringInitStep( real64 const time
 
 void SinglePhaseBase::updateState( DomainPartition & domain )
 {
+  GEOS_MARK_FUNCTION;
 
-// set mass fraction flag on fluid models
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel & mesh,
                                                                arrayView1d< string const > const & regionNames )
@@ -1235,7 +1207,6 @@ void SinglePhaseBase::updateState( DomainPartition & domain )
 
 void SinglePhaseBase::resetStateToBeginningOfStep( DomainPartition & domain )
 {
-  // set mass fraction flag on fluid models
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel & mesh,
                                                                arrayView1d< string const > const & regionNames )

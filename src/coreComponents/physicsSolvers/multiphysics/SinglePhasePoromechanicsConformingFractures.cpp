@@ -733,6 +733,7 @@ void SinglePhasePoromechanicsConformingFractures::
 
 void SinglePhasePoromechanicsConformingFractures::updateState( DomainPartition & domain )
 {
+  GEOS_MARK_FUNCTION;
 
   Base::updateState( domain );
 

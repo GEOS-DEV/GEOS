@@ -32,13 +32,13 @@ namespace fields
 namespace poromechanics
 {
 
-DECLARE_FIELD( bulkDensity,
-               "bulkDensity",
+DECLARE_FIELD( totalFluidDensity,
+               "totalFluidDensity",
                array2d< real64 >,
                0,
                NOPLOT,
                WRITE_AND_READ,
-               "Bulk density" );
+               "Total fluid (mass) density" );
 
 }
 

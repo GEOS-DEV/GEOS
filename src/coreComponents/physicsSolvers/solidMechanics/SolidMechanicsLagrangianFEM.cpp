@@ -1025,52 +1025,97 @@ void SolidMechanicsLagrangianFEM::assembleSystem( real64 const GEOS_UNUSED_PARAM
   localMatrix.zero();
   localRhs.zero();
 
-  if( m_isFixedStressPoromechanicsUpdate )
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                MeshLevel & mesh,
+                                                                arrayView1d< string const > const & regionNames )
   {
-    // first pass for coupled poromechanics regions
-    assemblyLaunch< constitutive::PorousSolid< ElasticIsotropic >, // TODO: change once there is a cmake solution
-                    solidMechanicsLagrangianFEMKernels::FixedStressThermoPoromechanicsFactory >( domain,
-                                                                                                 dofManager,
-                                                                                                 FlowSolverBase::viewKeyStruct::solidNamesString(),
-                                                                                                 localMatrix,
-                                                                                                 localRhs,
-                                                                                                 dt );
-    // second pass for pure mechanics regions
-    assemblyLaunch< constitutive::SolidBase,
-                    solidMechanicsLagrangianFEMKernels::QuasiStaticFactory >( domain,
-                                                                              dofManager,
-                                                                              viewKeyStruct::solidMaterialNamesString(),
-                                                                              localMatrix,
-                                                                              localRhs,
-                                                                              dt );
-  }
-  else
-  {
-    if( m_timeIntegrationOption == TimeIntegrationOption::QuasiStatic )
+    if( m_isFixedStressPoromechanicsUpdate )
     {
-      assemblyLaunch< constitutive::SolidBase,
-                      solidMechanicsLagrangianFEMKernels::QuasiStaticFactory >( domain,
-                                                                                dofManager,
-                                                                                viewKeyStruct::solidMaterialNamesString(),
-                                                                                localMatrix,
-                                                                                localRhs,
-                                                                                dt );
+      set< string > poromechanicsRegions;
+      set< string > mechanicsRegions;
+      ElementRegionManager const & elementRegionManager = mesh.getElemManager();
+      elementRegionManager.forElementSubRegions< CellElementSubRegion >( regionNames,
+                                                                         [&]
+                                                                           ( localIndex const regionIndex, auto & elementSubRegion )
+      {
+        if( elementSubRegion.template hasWrapper< string >( FlowSolverBase::viewKeyStruct::solidNamesString() ) )
+        {
+          poromechanicsRegions.insert( regionNames[regionIndex] );
+        }
+        else
+        {
+          mechanicsRegions.insert( regionNames[regionIndex] );
+        }
+      } );
+
+      array1d< string > poromechanicsRegionNames;
+      poromechanicsRegionNames.reserve( poromechanicsRegions.size());
+      for( auto const & region : poromechanicsRegions )
+      {
+        poromechanicsRegionNames.emplace_back( region );
+      }
+      array1d< string > mechanicsRegionNames;
+      mechanicsRegionNames.reserve( mechanicsRegions.size());
+      for( auto const & region : mechanicsRegions )
+      {
+        mechanicsRegionNames.emplace_back( region );
+      }
+
+      // first pass for coupled poromechanics regions
+      real64 const poromechanicsMaxForce= assemblyLaunch< constitutive::PorousSolid< ElasticIsotropic >, // TODO: change once there is a
+                                                                                                         // cmake solution
+                                                          solidMechanicsLagrangianFEMKernels::FixedStressThermoPoromechanicsFactory >( mesh,
+                                                                                                                                       dofManager,
+                                                                                                                                       poromechanicsRegionNames,
+                                                                                                                                       FlowSolverBase::viewKeyStruct::solidNamesString(),
+                                                                                                                                       localMatrix,
+                                                                                                                                       localRhs,
+                                                                                                                                       dt );
+      // second pass for pure mechanics regions
+      real64 const mechanicsMaxForce = assemblyLaunch< constitutive::SolidBase,
+                                                       solidMechanicsLagrangianFEMKernels::QuasiStaticFactory >( mesh,
+                                                                                                                 dofManager,
+                                                                                                                 mechanicsRegionNames,
+                                                                                                                 viewKeyStruct::solidMaterialNamesString(),
+                                                                                                                 localMatrix,
+                                                                                                                 localRhs,
+                                                                                                                 dt );
+
+      m_maxForce = LvArray::math::max( mechanicsMaxForce, poromechanicsMaxForce );
     }
-    else if( m_timeIntegrationOption == TimeIntegrationOption::ImplicitDynamic )
+    else
     {
-      assemblyLaunch< constitutive::SolidBase,
-                      solidMechanicsLagrangianFEMKernels::ImplicitNewmarkFactory >( domain,
-                                                                                    dofManager,
-                                                                                    viewKeyStruct::solidMaterialNamesString(),
-                                                                                    localMatrix,
-                                                                                    localRhs,
-                                                                                    dt,
-                                                                                    m_newmarkGamma,
-                                                                                    m_newmarkBeta,
-                                                                                    m_massDamping,
-                                                                                    m_stiffnessDamping );
+      if( m_timeIntegrationOption == TimeIntegrationOption::QuasiStatic )
+      {
+        m_maxForce = assemblyLaunch< constitutive::SolidBase,
+                                     solidMechanicsLagrangianFEMKernels::QuasiStaticFactory >( mesh,
+                                                                                               dofManager,
+                                                                                               regionNames,
+                                                                                               viewKeyStruct::solidMaterialNamesString(),
+                                                                                               localMatrix,
+                                                                                               localRhs,
+                                                                                               dt );
+      }
+      else if( m_timeIntegrationOption == TimeIntegrationOption::ImplicitDynamic )
+      {
+        m_maxForce = assemblyLaunch< constitutive::SolidBase,
+                                     solidMechanicsLagrangianFEMKernels::ImplicitNewmarkFactory >( mesh,
+                                                                                                   dofManager,
+                                                                                                   regionNames,
+                                                                                                   viewKeyStruct::solidMaterialNamesString(),
+                                                                                                   localMatrix,
+                                                                                                   localRhs,
+                                                                                                   dt,
+                                                                                                   m_newmarkGamma,
+                                                                                                   m_newmarkBeta,
+                                                                                                   m_massDamping,
+                                                                                                   m_stiffnessDamping );
+      }
     }
-  }
+  } );
+
+  applyContactConstraint( dofManager, domain, localMatrix, localRhs );
+
 }
 
 void
@@ -1170,7 +1215,7 @@ SolidMechanicsLagrangianFEM::
         }
       }
     } );
-    real64 const localResidualNorm[2] = { localSum.get(), this->m_maxForce };
+    real64 const localResidualNorm[2] = { localSum.get(), m_maxForce };
 
     // globalResidualNorm[0]: the sum of all the local sum(rhs^2).
     // globalResidualNorm[1]: max of max force of each rank. Basically max force globally

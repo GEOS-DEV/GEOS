@@ -23,6 +23,7 @@
 #include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
 #include "physicsSolvers/multiphysics/PoromechanicsFields.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsFields.hpp"
+#include "finiteElement/BilinearFormUtilities.hpp"
 
 namespace geos
 {
@@ -64,12 +65,15 @@ FixedStressThermoPoromechanics( NodeManager const & nodeManager,
   m_disp( nodeManager.getField< fields::solidMechanics::totalDisplacement >() ),
   m_uhat( nodeManager.getField< fields::solidMechanics::incrementalDisplacement >() ),
   m_gravityVector{ inputGravityVector[0], inputGravityVector[1], inputGravityVector[2] },
-  m_bulkDensity( elementSubRegion.template getField< fields::poromechanics::bulkDensity >() ),
-  m_pressure_n( elementSubRegion.template getField< fields::flow::pressure_n >() ),
+  m_totalFluidDensity( elementSubRegion.template getField< fields::poromechanics::totalFluidDensity >() ),
+  m_solidDensity( inputConstitutiveType.getDensity() ),
   m_pressure( elementSubRegion.template getField< fields::flow::pressure >() ),
+  m_pressure_k( elementSubRegion.template getField< fields::flow::pressure_k >() ),
+  m_pressure_n( elementSubRegion.template getField< fields::flow::pressure_n >() ),
   m_initialTemperature( elementSubRegion.template getField< fields::flow::initialTemperature >() ),
-  m_temperature_n( elementSubRegion.template getField< fields::flow::temperature_n >() ),
-  m_temperature( elementSubRegion.template getField< fields::flow::temperature >() )
+  m_temperature( elementSubRegion.template getField< fields::flow::temperature >() ),
+  m_temperature_k( elementSubRegion.template getField< fields::flow::temperature_k >() ),
+  m_temperature_n( elementSubRegion.template getField< fields::flow::temperature_n >() )
 {}
 
 template< typename SUBREGION_TYPE,
@@ -133,37 +137,44 @@ quadraturePointKernel( localIndex const k,
 
   FE_TYPE::symmetricGradient( dNdX, stack.uhat_local, strainInc );
 
-  // Evaluate total stress and its derivatives
+  real64 porosity = 0.0;
+  real64 dPorosity_dVolStrain = 0.0;
+
+  // Evaluate total stress and its derivatives (and also porosity and derivatives)
   // TODO: allow for a customization of the kernel to pass the average pressure to the small strain update (to account for cap pressure
   // later)
-  m_constitutiveUpdate.smallStrainUpdatePoromechanicsFixedStress( k,
-                                                                  q,
-                                                                  m_pressure_n[k],
-                                                                  m_pressure[k],
+  m_constitutiveUpdate.smallStrainUpdatePoromechanicsFixedStress( k, q,
                                                                   m_dt,
-                                                                  m_temperature_n[k],
+                                                                  m_pressure[k],
+                                                                  m_pressure_k[k],
+                                                                  m_pressure_n[k],
                                                                   m_temperature[k],
+                                                                  m_temperature_k[k],
+                                                                  m_temperature_n[k],
                                                                   strainInc,
                                                                   totalStress,
-                                                                  stiffness );
+                                                                  stiffness,
+                                                                  porosity,
+                                                                  dPorosity_dVolStrain );
 
   for( localIndex i=0; i<6; ++i )
   {
     totalStress[i] *= -detJxW;
   }
 
-  // Here we consider the bodyForce is purely from the solid
-  // Warning: here, we lag (in iteration) the displacement dependence of bulkDensity
-  real64 const gravityForce[3] = { m_gravityVector[0] * m_bulkDensity( k, q )* detJxW,
-                                   m_gravityVector[1] * m_bulkDensity( k, q )* detJxW,
-                                   m_gravityVector[2] * m_bulkDensity( k, q )* detJxW };
+  // body force value
+  real64 const totalMassDensity = m_totalFluidDensity( k, q );
+  real64 const mixtureDensity = ( 1.0 - porosity ) * m_solidDensity( k, q ) + porosity * totalMassDensity;
+  real64 const bodyForce[3] = { m_gravityVector[0] * mixtureDensity * detJxW,
+                                m_gravityVector[1] * mixtureDensity * detJxW,
+                                m_gravityVector[2] * mixtureDensity * detJxW };
 
   real64 N[numNodesPerElem];
   FE_TYPE::calcN( q, stack.feStack, N );
   FE_TYPE::plusGradNajAijPlusNaFi( dNdX,
                                    totalStress,
                                    N,
-                                   gravityForce,
+                                   bodyForce,
                                    reinterpret_cast< real64 (&)[numNodesPerElem][3] >(stack.localResidual) );
   real64 const stabilizationScaling = computeStabilizationScaling( k );
   m_finiteElementSpace.template
@@ -172,7 +183,32 @@ quadraturePointKernel( localIndex const k,
                                                                          stack.uhat_local,
                                                                          reinterpret_cast< real64 (&)[numNodesPerElem][3] >(stack.localResidual),
                                                                          -stabilizationScaling );
-  stiffness.template upperBTDB< numNodesPerElem >( dNdX, -detJxW, stack.localJacobian );
+  stiffness.template BTDB< numNodesPerElem >( dNdX, -detJxW, stack.localJacobian );
+
+  // body force derivatives
+  {
+    using namespace PDEUtilities;
+
+    constexpr
+    FunctionSpace displacementTrialSpace = FE_TYPE::template getFunctionSpace< numDofPerTrialSupportPoint >();
+    constexpr
+    FunctionSpace displacementTestSpace = displacementTrialSpace;
+
+    real64 dBodyForce_dVolStrainIncrement[3]{};
+    real64 const dMixtureDens_dVolStrainIncrement = dPorosity_dVolStrain * ( -m_solidDensity( k, q ) + totalMassDensity );
+    LvArray::tensorOps::scaledCopy< 3 >( dBodyForce_dVolStrainIncrement, m_gravityVector, dMixtureDens_dVolStrainIncrement );
+
+    BilinearFormUtilities::compute< displacementTestSpace,
+                                    displacementTrialSpace,
+                                    DifferentialOperator::Identity,
+                                    DifferentialOperator::Divergence >
+    (
+      stack.localJacobian,
+      N,
+      dBodyForce_dVolStrainIncrement,
+      dNdX,
+      detJxW );
+  }
 }
 
 template< typename SUBREGION_TYPE,
@@ -187,8 +223,6 @@ complete( localIndex const k,
   GEOS_UNUSED_VAR( k );
   real64 maxForce = 0;
 
-  // TODO: Does this work if BTDB is non-symmetric?
-  CONSTITUTIVE_TYPE::KernelWrapper::DiscretizationOps::template fillLowerBTDB< numNodesPerElem >( stack.localJacobian );
   localIndex const numSupportPoints =
     m_finiteElementSpace.template numSupportPoints< FE_TYPE >( stack.feStack );
   for( int localNode = 0; localNode < numSupportPoints; ++localNode )
