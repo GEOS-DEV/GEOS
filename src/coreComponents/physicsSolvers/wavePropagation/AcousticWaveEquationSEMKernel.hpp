@@ -688,10 +688,10 @@ template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
           typename FE_TYPE >
 class ExplicitAcousticSEM : public finiteElement::KernelBase< SUBREGION_TYPE,
-                                                                        CONSTITUTIVE_TYPE,
-                                                                        FE_TYPE,
-                                                                        1, 
-                                                                        1 >
+                                                              CONSTITUTIVE_TYPE,
+                                                              FE_TYPE,
+                                                              1,
+                                                              1 >
 {
 public:
 
@@ -780,8 +780,8 @@ public:
   inline
   void setup( localIndex const k,
               StackVariables & stack ) const
-  {                   
-    stack.invDensity = 1./m_density[k]; 
+  {
+    stack.invDensity = 1./m_density[k];
     for( localIndex a=0; a< 8; a++ )
     {
       localIndex const nodeIndex =  m_elemsToNodes( k, FE_TYPE::meshIndexToLinearIndex3D( a ) );
@@ -801,7 +801,7 @@ public:
                    StackVariables & stack ) const
   {
     constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
-    for(int i=0;i<numNodesPerElem;i++)
+    for( int i=0; i<numNodesPerElem; i++ )
     {
       RAJA::atomicAdd< parallelDeviceAtomic >( &m_stiffnessVector[m_elemsToNodes( k, i )], stack.stiffnessVectorLocal[i] );
     }
@@ -822,7 +822,7 @@ public:
                               localIndex const q,
                               StackVariables & stack ) const
   {
-    
+
     m_finiteElementSpace.template computeStiffnessTerm( q, stack.xLocal, [&] ( const int i, const int j, const real64 val )
     {
       real32 const localIncrement = stack.invDensity*val*m_p_n[m_elemsToNodes( k, j )];

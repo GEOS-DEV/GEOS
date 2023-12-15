@@ -311,53 +311,53 @@ public:
 
   /**
    * @brief The gradient of the basis function for a support point evaluated at
-   *   a given support point. By symmetry, p is assumed to be in 0, ..., (N-1)/2  
-   * @param q The index of the basis function 
-   * @param p The index of the support point 
+   *   a given support point. By symmetry, p is assumed to be in 0, ..., (N-1)/2
+   * @param q The index of the basis function
+   * @param p The index of the support point
    * @return The gradient of basis function.
    */
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
-  constexpr static real64 gradientAt( const int q, 
+  constexpr static real64 gradientAt( const int q,
                                       const int p )
   {
     switch( q )
     {
       case 0:
-	     switch( p )
-	     {
+        switch( p )
+        {
           case 0: return -5.0000000000000000000;
-	       case 1: return -1.2409902530309828578;
-	       case 2: return 0.37500000000000000000;
-	     }
+          case 1: return -1.2409902530309828578;
+          case 2: return 0.37500000000000000000;
+        }
       case 1:
-	     switch( p )
-	     {
+        switch( p )
+        {
           case 0: return 6.7565024887242400038;
-	       case 1: return 0.0; 
-	       case 2: return -1.3365845776954533353;
-	     }
+          case 1: return 0.0;
+          case 2: return -1.3365845776954533353;
+        }
       case 2:
-	     switch( p )
-	     {
+        switch( p )
+        {
           case 0: return -2.6666666666666666667;
-	       case 1: return 1.7457431218879390501;
-	       case 2: return 0.0;
-	     }
+          case 1: return 1.7457431218879390501;
+          case 2: return 0.0;
+        }
       case 3:
-	     switch( p )
-	     {
+        switch( p )
+        {
           case 0: return -2.6666666666666666667;
-	       case 1: return 1.7457431218879390501;
-	       case 2: return 0.0;
-	     }
+          case 1: return 1.7457431218879390501;
+          case 2: return 0.0;
+        }
       case 4:
-	     switch( p )
-	     {
+        switch( p )
+        {
           case 0: return -0.50000000000000000000;
-	       case 1: return 0.25900974696901714215;
-	       case 2: return -0.37500000000000000000;
-	     }
+          case 1: return 0.25900974696901714215;
+          case 2: return -0.37500000000000000000;
+        }
     }
     return 0;
   }

@@ -155,15 +155,15 @@ public:
 
   /**
    * @brief The gradient of the basis function for a support point evaluated at
-   *   a given support point. By symmetry, p is assumed to be in 0, ..., (N-1)/2  
-   * @param q The index of the basis function 
-   * @param p The index of the support point 
+   *   a given support point. By symmetry, p is assumed to be in 0, ..., (N-1)/2
+   * @param q The index of the basis function
+   * @param p The index of the support point
    * @return The gradient of basis function.
    */
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
-  constexpr static real64 gradientAt( const int q, 
-                                      const int p )
+  constexpr static real64 gradientAt( const int q,
+                                      const int )
   {
     return q == 0 ? -0.5 : 0.5;
   }

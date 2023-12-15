@@ -453,9 +453,9 @@ public:
     {}
     /// C-array stack storage for element local the nodal positions.
     real64 xLocal[ 8 ][ 3 ]{};
-    real32 stiffnessVectorxLocal[ numNodesPerElem ]; 
-    real32 stiffnessVectoryLocal[ numNodesPerElem ]; 
-    real32 stiffnessVectorzLocal[ numNodesPerElem ]; 
+    real32 stiffnessVectorxLocal[ numNodesPerElem ];
+    real32 stiffnessVectoryLocal[ numNodesPerElem ];
+    real32 stiffnessVectorzLocal[ numNodesPerElem ];
     real32 mu=0;
     real32 lambda=0;
   };
@@ -493,7 +493,7 @@ public:
                    StackVariables & stack ) const
   {
     constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
-    for(int i=0;i<numNodesPerElem;i++)
+    for( int i=0; i<numNodesPerElem; i++ )
     {
       const localIndex nodeIndex = m_elemsToNodes( k, i );
       RAJA::atomicAdd< parallelDeviceAtomic >( &m_stiffnessVectorx[ nodeIndex ], stack.stiffnessVectorxLocal[ i ] );

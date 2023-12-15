@@ -388,7 +388,7 @@ struct VelocityComputation
         uelemz[i] = massLoc*velocity_z[k][i];
       }
 
-      for (localIndex q = 0; q < numNodesPerElem; q++ )
+      for( localIndex q = 0; q < numNodesPerElem; q++ )
       {
 
         m_finiteElement.template computeFirstOrderStiffnessTermX( q, xLocal, [&] ( int i, int j, real32 dfx1, real32 dfx2, real32 dfx3 )
@@ -514,7 +514,7 @@ struct PressureComputation
 
 
       // Volume integration
-      for(localIndex q=0; q < numNodesPerElem; q++)
+      for( localIndex q=0; q < numNodesPerElem; q++ )
       {
 
 
