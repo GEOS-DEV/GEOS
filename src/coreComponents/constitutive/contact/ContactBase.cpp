@@ -58,6 +58,7 @@ ContactBase::ContactBase( string const & name,
 
 
   registerWrapper( viewKeyStruct::apertureTableNameString(), &m_apertureTableName ).
+    setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Name of the aperture table" );
 

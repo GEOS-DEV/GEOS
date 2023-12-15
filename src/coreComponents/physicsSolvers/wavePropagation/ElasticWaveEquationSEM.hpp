@@ -53,6 +53,10 @@ public:
 
 
   static string catalogName() { return "ElasticSEM"; }
+  /**
+   * @copydoc SolverBase::getCatalogName()
+   */
+  string getCatalogName() const override { return catalogName(); }
 
   virtual void initializePreSubGroups() override;
 
@@ -88,21 +92,6 @@ public:
   void addSourceToRightHandSide( integer const & cycleNumber, arrayView1d< real32 > const rhsx, arrayView1d< real32 > const rhsy, arrayView1d< real32 > const rhsz );
 
   /**
-   * TODO: move implementation into WaveSolverBase
-   * @brief Computes the traces on all receivers (see @computeSeismoTraces) up to time_n+dt
-   * @param time_n the time corresponding to the field values at iteration n
-   * @param dt the simulation timestep
-   * @param var_np1 the field values at time_n + dt
-   * @param var_n the field values at time_n
-   * @param varAtreceivers the array holding the trace values, where the output is written
-   */
-  virtual void computeAllSeismoTraces( real64 const time_n,
-                                       real64 const dt,
-                                       arrayView1d< real32 const > const var_np1,
-                                       arrayView1d< real32 const > const var_n,
-                                       arrayView2d< real32 > varAtReceivers );
-
-  /**
    * TODO: move implementation into WaveSolverBase once 'm_receiverIsLocal' is also moved
    * @brief Compute DAS data from the appropriate three-component receiver pairs
    * @param xCompRcv the array holding the x-component of pairs of receivers
@@ -123,16 +112,8 @@ public:
                         real64 const eventProgress,
                         DomainPartition & domain ) override;
 
-  struct viewKeyStruct : SolverBase::viewKeyStruct
+  struct viewKeyStruct : WaveSolverBase::viewKeyStruct
   {
-    static constexpr char const * sourceNodeIdsString() { return "sourceNodeIds"; }
-    static constexpr char const * sourceConstantsString() { return "sourceConstants"; }
-    static constexpr char const * sourceIsAccessibleString() { return "sourceIsAccessible"; }
-
-    static constexpr char const * receiverNodeIdsString() { return "receiverNodeIds"; }
-    static constexpr char const * receiverConstantsString() {return "receiverConstants"; }
-    static constexpr char const * receiverIsLocalString() { return "receiverIsLocal"; }
-
     static constexpr char const * displacementXNp1AtReceiversString() { return "displacementXNp1AtReceivers"; }
     static constexpr char const * displacementYNp1AtReceiversString() { return "displacementYNp1AtReceivers"; }
     static constexpr char const * displacementZNp1AtReceiversString() { return "displacementZNp1AtReceivers"; }
@@ -190,11 +171,6 @@ private:
    */
   virtual void applyPML( real64 const time, DomainPartition & domain ) override;
 
-  localIndex getNumNodesPerElem();
-
-  /// Indices of the nodes (in the right order) for each source point
-  array2d< localIndex > m_sourceNodeIds;
-
   /// Constant part of the source for the nodes listed in m_sourceNodeIds in x-direction
   array2d< real64 > m_sourceConstantsx;
 
@@ -203,18 +179,6 @@ private:
 
   /// Constant part of the source for the nodes listed in m_sourceNodeIds in x-direction
   array2d< real64 > m_sourceConstantsz;
-
-  /// Flag that indicates whether the source is accessible or not to the MPI rank
-  array1d< localIndex > m_sourceIsAccessible;
-
-  /// Indices of the element nodes (in the right order) for each receiver point
-  array2d< localIndex > m_receiverNodeIds;
-
-  /// Basis function evaluated at the receiver for the nodes listed in m_receiverNodeIds
-  array2d< real64 > m_receiverConstants;
-
-  /// Flag that indicates whether the receiver is local or not to the MPI rank
-  array1d< localIndex > m_receiverIsLocal;
 
   /// Displacement_np1 at the receiver location for each time step for each receiver (x-component)
   array2d< real32 > m_displacementXNp1AtReceivers;

@@ -86,15 +86,6 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
   m_frictionCoefficient( 0.0 ),
   m_planeStrain( 0 ),
   m_numDims( 3 ),
-  m_hEl{ DBL_MAX, DBL_MAX, DBL_MAX },
-  m_xLocalMin{ DBL_MAX, DBL_MAX, DBL_MAX },
-  m_xLocalMax{ -DBL_MAX, -DBL_MAX, -DBL_MAX },
-  m_xLocalMinNoGhost{ 0.0, 0.0, 0.0 },
-  m_xLocalMaxNoGhost{ 0.0, 0.0, 0.0 },
-  m_xGlobalMin{ 0.0, 0.0, 0.0 },
-  m_xGlobalMax{ 0.0, 0.0, 0.0 },
-  m_partitionExtent{ 0.0, 0.0, 0.0 },
-  m_nEl{ 0, 0, 0 },
   m_ijkMap()
 {
   registerWrapper( "solverProfiling", &m_solverProfiling ).
@@ -135,6 +126,7 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
 
   registerWrapper( "fTablePath", &m_fTablePath ).
     setInputFlag( InputFlags::OPTIONAL ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "Path to f-table" );
 
   registerWrapper( "fTableInterpType", &m_fTableInterpType ).
@@ -235,6 +227,66 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
   registerWrapper( "m_ijkMap", &m_ijkMap ).
     setInputFlag( InputFlags::FALSE ).
     setDescription( "Map from indices in each spatial dimension to local node ID" );
+
+  registerWrapper( "elementSize", &m_hEl ).
+    setInputFlag( InputFlags::FALSE ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
+    setDescription( "Minimum element size in x, y and z" );
+
+  registerWrapper( "localMinimum", &m_xLocalMin ).
+    setInputFlag( InputFlags::FALSE ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
+    setDescription( "local minimum" );
+
+  registerWrapper( "localMaximum", &m_xLocalMax ).
+    setInputFlag( InputFlags::FALSE ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
+    setDescription( "local maximum" );
+
+  registerWrapper( "localMinimumNoGhost", &m_xLocalMinNoGhost ).
+    setInputFlag( InputFlags::FALSE ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
+    setDescription( "local minimum without ghost cells" );
+
+  registerWrapper( "localMaximumNoGhost", &m_xLocalMaxNoGhost ).
+    setInputFlag( InputFlags::FALSE ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
+    setDescription( "local maximum without ghost cells" );
+
+  registerWrapper( "globalMinimum", &m_xGlobalMin ).
+    setInputFlag( InputFlags::FALSE ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
+    setDescription( "global minimum" );
+
+  registerWrapper( "globalMaximum", &m_xGlobalMax ).
+    setInputFlag( InputFlags::FALSE ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
+    setDescription( "global maximum" );
+
+  registerWrapper( "partitionExtent", &m_partitionExtent ).
+    setInputFlag( InputFlags::FALSE ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
+    setDescription( "parititon extent" );
+
+  registerWrapper( "domainExtent", &m_domainExtent ).
+    setInputFlag( InputFlags::FALSE ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
+    setDescription( "domain extent" );
+
+  registerWrapper( "domainF", &m_domainF ).
+    setInputFlag( InputFlags::FALSE ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
+    setDescription( "domain deformation gradient" );
+
+  registerWrapper( "domainL", &m_domainL ).
+    setInputFlag( InputFlags::FALSE ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
+    setDescription( "domain L" );
+
+  registerWrapper( "numElements", &m_nEl ).
+    setInputFlag( InputFlags::FALSE ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
+    setDescription( "number of elements along partition directions" );
 }
 
 void SolidMechanicsMPM::postProcessInput()
@@ -541,12 +593,10 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
 
   // Initialize domain F and L, then read and distribute F table
   m_domainF.resize( 3 );
+  LvArray::tensorOps::fill< 3 >( m_domainF, 1.0 );
   m_domainL.resize( 3 );
-  for( int i=0; i<3; i++ )
-  {
-    m_domainF[i] = 1.0;
-    m_domainL[i] = 0.0;
-  }
+  LvArray::tensorOps::fill< 3 >( m_domainF, 0.0 );
+
   if( m_prescribedBoundaryFTable == 1 )
   {
     int rank = MpiWrapper::commRank( MPI_COMM_GEOSX );
@@ -587,6 +637,13 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const gridPosition = nodeManager.referencePosition();
 
   // Get local domain extent
+  m_xLocalMin.resize( 3 );
+  LvArray::tensorOps::fill< 3 >( m_xLocalMin, DBL_MAX );
+  m_xLocalMax.resize( 3 );
+  LvArray::tensorOps::fill< 3 >( m_xLocalMax, -DBL_MAX );
+  m_xLocalMinNoGhost.resize( 3 );
+  m_xLocalMaxNoGhost.resize( 3 );
+  m_partitionExtent.resize( 3 );
   for( int g=0; g<numNodes; g++ )
   {
     for( int i=0; i<3; i++ )
@@ -603,6 +660,8 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
   }
 
   // Get element size
+  m_hEl.resize( 3 );
+  LvArray::tensorOps::fill< 3 >( m_hEl, DBL_MAX );
   for( int g=0; g<numNodes; g++ )
   {
     for( int i=0; i<3; i++ )
@@ -631,6 +690,9 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
   }
 
   // Get global domain extent excluding buffer nodes
+  m_xGlobalMin.resize( 3 );
+  m_xGlobalMax.resize( 3 );
+  m_domainExtent.resize( 3 );
   for( int i=0; i<3; i++ )
   {
     m_xGlobalMin[i] = partition.getGlobalMin()[i] + m_hEl[i];
@@ -639,6 +701,7 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
   }
 
   // Get number of elements in each direction
+  m_nEl.resize( 3 );
   for( int i=0; i<3; i++ )
   {
     m_nEl[i] = std::round( m_partitionExtent[i] / m_hEl[i] );
@@ -936,6 +999,7 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
     subRegion.setActiveParticleIndices();
   } );
 
+
   //#######################################################################################
   solverProfilingIf( "Construct neighbor list", m_needsNeighborList == 1 );
   //#######################################################################################
@@ -1120,20 +1184,24 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
     computeAndWriteBoxAverage( time_n, dt, particleManager );
   }
 
+
   //#######################################################################################
   solverProfiling( "Calculate stable time step" );
   //#######################################################################################
   real64 dtReturn = getStableTimeStep( particleManager );
+
 
   //#######################################################################################
   solverProfiling( "Flag out-of-range particles" );
   //#######################################################################################
   flagOutOfRangeParticles( particleManager );
 
+
   //#######################################################################################
   solverProfiling( "Delete bad particles" );
   //#######################################################################################
   deleteBadParticles( particleManager );
+
 
   //#######################################################################################
   solverProfilingIf( "Particle repartitioning", MpiWrapper::commSize( MPI_COMM_GEOSX ) > 1 );
@@ -1149,6 +1217,7 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
       partition.repartitionMasterParticles( subRegion, m_iComm );
     } );
   }
+
 
   //#######################################################################################
   solverProfilingIf( "Resize grid based on F-table", m_prescribedBoundaryFTable == 1 );

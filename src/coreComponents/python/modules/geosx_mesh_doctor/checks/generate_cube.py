@@ -54,9 +54,9 @@ class Options:
 
 @dataclass(frozen=True)
 class XYZ:
-    x: numpy.array
-    y: numpy.array
-    z: numpy.array
+    x: numpy.ndarray
+    y: numpy.ndarray
+    z: numpy.ndarray
 
 
 def build_rectilinear_blocks_mesh(xyzs: Iterable[XYZ]) -> vtkUnstructuredGrid:

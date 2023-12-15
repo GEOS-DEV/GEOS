@@ -592,7 +592,7 @@ struct SolutionCheckKernel
                                               real64 const scalingFactor )
   {
     RAJA::ReduceSum< ReducePolicy< POLICY >, integer > numNegativePressures( 0 );
-    RAJA::ReduceMin< ReducePolicy< POLICY >, integer > minValue( 0 );
+    RAJA::ReduceMin< ReducePolicy< POLICY >, real64 > minPres( 0.0 );
 
     forAll< POLICY >( dofNumber.size(), [=] GEOS_HOST_DEVICE ( localIndex const ei )
     {
@@ -604,13 +604,13 @@ struct SolutionCheckKernel
         if( newPres < 0.0 )
         {
           numNegativePressures += 1;
-          minValue.min( newPres );
+          minPres.min( newPres );
         }
       }
 
     } );
 
-    return { numNegativePressures.get(), minValue.get() };
+    return { numNegativePressures.get(), minPres.get() };
   }
 
 };
@@ -624,7 +624,7 @@ struct ScalingForSystemSolutionKernel
                                              globalIndex const rankOffset,
                                              arrayView1d< globalIndex const > const & dofNumber,
                                              arrayView1d< integer const > const & ghostRank,
-                                             real64 const maxAllowedPressureChange )
+                                             real64 const maxAbsolutePresChange )
   {
     RAJA::ReduceMin< ReducePolicy< POLICY >, real64 > scalingFactor( 1.0 );
     RAJA::ReduceMax< ReducePolicy< POLICY >, real64 > maxDeltaPres( 0.0 );
@@ -639,10 +639,10 @@ struct ScalingForSystemSolutionKernel
         real64 const absPresChange = LvArray::math::abs( localSolution[lid] );
         maxDeltaPres.max( absPresChange );
 
-        // maxAllowedPressureChange <= 0.0 means that scaling is disabled, and we are only collecting maxDeltaPres in this kernel
-        if( maxAllowedPressureChange > 0.0 && absPresChange > maxAllowedPressureChange )
+        // maxAbsolutePresChange <= 0.0 means that scaling is disabled, and we are only collecting maxDeltaPres in this kernel
+        if( maxAbsolutePresChange > 0.0 && absPresChange > maxAbsolutePresChange )
         {
-          real64 const presScalingFactor = maxAllowedPressureChange / absPresChange;
+          real64 const presScalingFactor = maxAbsolutePresChange / absPresChange;
           scalingFactor.min( presScalingFactor );
         }
       }
@@ -759,7 +759,10 @@ struct HydrostaticPressureKernel
 
     real64 dens = 0.0;
     real64 visc = 0.0;
-    fluidWrapper.compute( pres0, dens, visc );
+    constitutive::SingleFluidBaseUpdate::computeValues( fluidWrapper,
+                                                        pres0,
+                                                        dens,
+                                                        visc );
     pres1 = refPres - 0.5 * ( refDens + dens ) * gravCoef;
 
     // Step 3: fixed-point iteration until convergence
@@ -779,7 +782,10 @@ struct HydrostaticPressureKernel
       }
 
       // compute the density at this elevation using the previous pressure, and compute the new pressure
-      fluidWrapper.compute( pres0, dens, visc );
+      constitutive::SingleFluidBaseUpdate::computeValues( fluidWrapper,
+                                                          pres0,
+                                                          dens,
+                                                          visc );
       pres1 = refPres - 0.5 * ( refDens + dens ) * gravCoef;
     }
 
@@ -813,9 +819,10 @@ struct HydrostaticPressureKernel
     real64 datumDens = 0.0;
     real64 datumVisc = 0.0;
 
-    fluidWrapper.compute( datumPres,
-                          datumDens,
-                          datumVisc );
+    constitutive::SingleFluidBaseUpdate::computeValues( fluidWrapper,
+                                                        datumPres,
+                                                        datumDens,
+                                                        datumVisc );
 
     // Step 2: find the closest elevation to datumElevation
 

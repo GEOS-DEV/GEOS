@@ -23,11 +23,24 @@
 namespace geos
 {
 
+
+/**
+ * @brief error message to output when the number the number of node is insufficient for a given
+ * face of a primitive.
+ */
+static const string nodeCountError = "Not enough nodes for {} element (face index = {}).\n" + string( generalMeshErrorAdvice );
+/**
+ * @brief error message to output when the number the number of node is insufficient for a given
+ * face of a primitive.
+ */
+static const string faceIndexError = "Local face index out of range for {} element: face index = {}.\n" + string( generalMeshErrorAdvice );
+
+
 static localIndex getFaceNodesHex( localIndex const faceNum,
                                    arraySlice1d< localIndex const, cells::NODE_MAP_USD-1 > const & elemNodes,
                                    Span< localIndex > const faceNodes )
 {
-  GEOS_ERROR_IF_LT( faceNodes.size(), 4 );
+  GEOS_ERROR_IF_LT_MSG( faceNodes.size(), 4, GEOS_FMT( nodeCountError, "Hexahedron", faceNum ) );
   switch( faceNum )
   {
     case 0:
@@ -80,7 +93,7 @@ static localIndex getFaceNodesHex( localIndex const faceNum,
     }
     default:
     {
-      GEOS_ERROR( "Invalid local face index for element of type Hexahedron: " << faceNum );
+      GEOS_ERROR( GEOS_FMT( faceIndexError, "Hexahedron", faceNum ) );
     }
   }
   return 4;
@@ -94,7 +107,7 @@ static localIndex getFaceNodesWedge( localIndex const faceNum,
   {
     case 0:
     {
-      GEOS_ERROR_IF_LT( faceNodes.size(), 4 );
+      GEOS_ERROR_IF_LT_MSG( faceNodes.size(), 4, GEOS_FMT( nodeCountError, "Wedge", faceNum ) );
       faceNodes[0] = elemNodes[0];
       faceNodes[1] = elemNodes[1];
       faceNodes[2] = elemNodes[5];
@@ -103,7 +116,7 @@ static localIndex getFaceNodesWedge( localIndex const faceNum,
     }
     case 1:
     {
-      GEOS_ERROR_IF_LT( faceNodes.size(), 4 );
+      GEOS_ERROR_IF_LT_MSG( faceNodes.size(), 4, GEOS_FMT( nodeCountError, "Wedge", faceNum ) );
       faceNodes[0] = elemNodes[0];
       faceNodes[1] = elemNodes[2];
       faceNodes[2] = elemNodes[3];
@@ -112,7 +125,7 @@ static localIndex getFaceNodesWedge( localIndex const faceNum,
     }
     case 2:
     {
-      GEOS_ERROR_IF_LT( faceNodes.size(), 3 );
+      GEOS_ERROR_IF_LT_MSG( faceNodes.size(), 3, GEOS_FMT( nodeCountError, "Wedge", faceNum ) );
       faceNodes[0] = elemNodes[0];
       faceNodes[1] = elemNodes[4];
       faceNodes[2] = elemNodes[2];
@@ -120,7 +133,7 @@ static localIndex getFaceNodesWedge( localIndex const faceNum,
     }
     case 3:
     {
-      GEOS_ERROR_IF_LT( faceNodes.size(), 3 );
+      GEOS_ERROR_IF_LT_MSG( faceNodes.size(), 3, GEOS_FMT( nodeCountError, "Wedge", faceNum ) );
       faceNodes[0] = elemNodes[1];
       faceNodes[1] = elemNodes[3];
       faceNodes[2] = elemNodes[5];
@@ -128,7 +141,7 @@ static localIndex getFaceNodesWedge( localIndex const faceNum,
     }
     case 4:
     {
-      GEOS_ERROR_IF_LT( faceNodes.size(), 4 );
+      GEOS_ERROR_IF_LT_MSG( faceNodes.size(), 4, GEOS_FMT( nodeCountError, "Wedge", faceNum ) );
       faceNodes[0] = elemNodes[2];
       faceNodes[1] = elemNodes[4];
       faceNodes[2] = elemNodes[5];
@@ -137,7 +150,7 @@ static localIndex getFaceNodesWedge( localIndex const faceNum,
     }
     default:
     {
-      GEOS_ERROR( "Invalid local face index for element of type Wedge: " << faceNum );
+      GEOS_ERROR( GEOS_FMT( faceIndexError, "Wedge", faceNum ) );
       return 0;
     }
   }
@@ -147,7 +160,7 @@ static localIndex getFaceNodesTet( localIndex const faceNum,
                                    arraySlice1d< localIndex const, cells::NODE_MAP_USD-1 > const & elemNodes,
                                    Span< localIndex > const faceNodes )
 {
-  GEOS_ERROR_IF_LT( faceNodes.size(), 3 );
+  GEOS_ERROR_IF_LT_MSG( faceNodes.size(), 3, GEOS_FMT( nodeCountError, "Tetrahedron", faceNum ) );
   switch( faceNum )
   {
     case 0:
@@ -180,7 +193,7 @@ static localIndex getFaceNodesTet( localIndex const faceNum,
     }
     default:
     {
-      GEOS_ERROR( "Invalid local face index for element of type Tetrahedron: " << faceNum );
+      GEOS_ERROR( GEOS_FMT( faceIndexError, "Tetrahedron", faceNum ) );
     }
   }
   return 3;
@@ -194,7 +207,7 @@ static localIndex getFaceNodesPyramid( localIndex const faceNum,
   {
     case 0:
     {
-      GEOS_ERROR_IF_LT( faceNodes.size(), 3 );
+      GEOS_ERROR_IF_LT_MSG( faceNodes.size(), 3, GEOS_FMT( nodeCountError, "Pyramid", faceNum ) );
       faceNodes[0] = elemNodes[0];
       faceNodes[1] = elemNodes[1];
       faceNodes[2] = elemNodes[4];
@@ -202,7 +215,7 @@ static localIndex getFaceNodesPyramid( localIndex const faceNum,
     }
     case 1:
     {
-      GEOS_ERROR_IF_LT( faceNodes.size(), 4 );
+      GEOS_ERROR_IF_LT_MSG( faceNodes.size(), 4, GEOS_FMT( nodeCountError, "Pyramid", faceNum ) );
       faceNodes[0] = elemNodes[0];
       faceNodes[1] = elemNodes[2];
       faceNodes[2] = elemNodes[3];
@@ -211,7 +224,7 @@ static localIndex getFaceNodesPyramid( localIndex const faceNum,
     }
     case 2:
     {
-      GEOS_ERROR_IF_LT( faceNodes.size(), 3 );
+      GEOS_ERROR_IF_LT_MSG( faceNodes.size(), 3, GEOS_FMT( nodeCountError, "Pyramid", faceNum ) );
       faceNodes[0] = elemNodes[0];
       faceNodes[1] = elemNodes[4];
       faceNodes[2] = elemNodes[2];
@@ -219,7 +232,7 @@ static localIndex getFaceNodesPyramid( localIndex const faceNum,
     }
     case 3:
     {
-      GEOS_ERROR_IF_LT( faceNodes.size(), 3 );
+      GEOS_ERROR_IF_LT_MSG( faceNodes.size(), 3, GEOS_FMT( nodeCountError, "Pyramid", faceNum ) );
       faceNodes[0] = elemNodes[1];
       faceNodes[1] = elemNodes[3];
       faceNodes[2] = elemNodes[4];
@@ -227,7 +240,7 @@ static localIndex getFaceNodesPyramid( localIndex const faceNum,
     }
     case 4:
     {
-      GEOS_ERROR_IF_LT( faceNodes.size(), 3 );
+      GEOS_ERROR_IF_LT_MSG( faceNodes.size(), 3, GEOS_FMT( nodeCountError, "Pyramid", faceNum ) );
       faceNodes[0] = elemNodes[2];
       faceNodes[1] = elemNodes[4];
       faceNodes[2] = elemNodes[3];
@@ -235,7 +248,7 @@ static localIndex getFaceNodesPyramid( localIndex const faceNum,
     }
     default:
     {
-      GEOS_ERROR( "Invalid local face index for element of type Pyramid: " << faceNum );
+      GEOS_ERROR( GEOS_FMT( faceIndexError, "Pyramid", faceNum ) );
       return 0;
     }
   }
@@ -295,7 +308,7 @@ localIndex getFaceNodes( ElementType const elementType,
     }
     default:
     {
-      GEOS_ERROR( "Invalid element type: " << elementType );
+      GEOS_ERROR( "Invalid element type " << elementType << " at face index " << faceNumber << ".\n" << generalMeshErrorAdvice );
     }
   }
   return 0;

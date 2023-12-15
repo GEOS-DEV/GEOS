@@ -47,6 +47,7 @@ public:
       using SolverType = TYPEOFPTR( solver );
       string const key = SolverType::coupledSolverAttributePrefix() + "SolverName";
       registerWrapper( key, &m_names[idx()] ).
+        setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
         setInputFlag( dataRepository::InputFlags::REQUIRED ).
         setDescription( "Name of the " + SolverType::coupledSolverAttributePrefix() + " solver used by the coupled solver" );
     } );
@@ -576,8 +577,7 @@ protected:
   {
     forEachArgInTuple( m_solvers, [&]( auto & solver, auto )
     {
-      solver->getNonlinearSolverParameters().m_numNewtonIterations =
-        m_nonlinearSolverParameters.m_numNewtonIterations;
+      solver->getNonlinearSolverParameters() = m_nonlinearSolverParameters;
     } );
   }
 

@@ -47,16 +47,17 @@ public:
   GEOS_HOST_DEVICE
   void compute( real64 const & oldHydraulicAperture,
                 real64 const & newHydraulicAperture,
+                real64 const & dHydraulicAperture_dNormalJump,
                 arraySlice1d< real64 > const & permeability,
                 arraySlice2d< real64 > const & dPerm_dDispJump,
                 integer const timeLagFlag ) const
 {
     real64 perm = 0.0; 
-    real64 dPerm = 0.0; 
+    real64 dPerm_dHydraulicAperture = 0.0; 
     
     if( timeLagFlag )
     {
-      GEOS_UNUSED_VAR( newHydraulicAperture, dPerm );
+      GEOS_UNUSED_VAR( newHydraulicAperture, dPerm_dHydraulicAperture );
 
       perm  = oldHydraulicAperture*oldHydraulicAperture / 12.0;
     }
@@ -65,13 +66,13 @@ public:
       GEOS_UNUSED_VAR( oldHydraulicAperture );
 
       perm  = newHydraulicAperture*newHydraulicAperture / 12.0;
-      dPerm = newHydraulicAperture / 6.0;
+      dPerm_dHydraulicAperture = newHydraulicAperture / 6.0;
     }
 
     for( int dim=0; dim < m_numDimensionsToUpdate; dim++ )
     {
       permeability[dim]        = perm;
-      dPerm_dDispJump[dim][0]  = dPerm;
+      dPerm_dDispJump[dim][0]  = dPerm_dHydraulicAperture * dHydraulicAperture_dNormalJump;
       dPerm_dDispJump[dim][1]  = 0.0;
       dPerm_dDispJump[dim][2]  = 0.0;
     }
@@ -81,12 +82,14 @@ public:
   virtual void updateFromAperture( localIndex const k,
                                    localIndex const q,
                                    real64 const & oldHydraulicAperture,
-                                   real64 const & newHydraulicAperture ) const override final
+                                   real64 const & newHydraulicAperture,
+                                   real64 const & dHydraulicAperture_dNormalJump ) const override final
   {
     GEOS_UNUSED_VAR( q );
 
     compute( oldHydraulicAperture,
              newHydraulicAperture,
+             dHydraulicAperture_dNormalJump,
              m_permeability[k][0],
              m_dPerm_dDispJump[k][0],
              m_timeLagFlag );
@@ -97,13 +100,14 @@ public:
                                                        localIndex const q,
                                                        real64 const & oldHydraulicAperture,
                                                        real64 const & newHydraulicAperture,
+                                                       real64 const & dHydraulicAperture_dNormalJump,
                                                        real64 const & pressure,
                                                        real64 const ( &dispJump )[3],
                                                        real64 const ( &traction )[3] ) const override final
   {
     GEOS_UNUSED_VAR( dispJump, traction, pressure );
 
-    updateFromAperture( k, q, oldHydraulicAperture, newHydraulicAperture );
+    updateFromAperture( k, q, oldHydraulicAperture, newHydraulicAperture, dHydraulicAperture_dNormalJump );
   }
 
 private:
@@ -153,10 +157,10 @@ public:
 
   struct viewKeyStruct : public PermeabilityBase::viewKeyStruct
   {
-   /// string/key for the flag to use time lagging computation of permeability 
+    /// string/key for the flag to use time lagging computation of permeability 
     constexpr static char const * timeLagFlagString() { return "timeLagFlag"; }
    
-   static constexpr char const * transversalPermeabilityString() { return "transversalPermeability"; }
+    static constexpr char const * transversalPermeabilityString() { return "transversalPermeability"; }
   } viewKeys;
 
 private:

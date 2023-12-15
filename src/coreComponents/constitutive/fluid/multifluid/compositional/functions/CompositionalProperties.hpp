@@ -27,6 +27,9 @@ namespace geos
 namespace constitutive
 {
 
+namespace compositional
+{
+
 struct CompositionalProperties
 {
 public:
@@ -121,6 +124,8 @@ public:
                                   real64 & dMassDensity_dt,
                                   arraySlice1d< real64 > const & dMassDensity_dz );
 };
+
+} //namespace compositional
 
 } // namespace constitutive
 

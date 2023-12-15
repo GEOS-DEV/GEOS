@@ -19,19 +19,19 @@
 #ifndef GEOS_PHYSICSSOLVERS_MULTIPHYSICS_SINGLEPHASEPOROMECHANICS_HPP_
 #define GEOS_PHYSICSSOLVERS_MULTIPHYSICS_SINGLEPHASEPOROMECHANICS_HPP_
 
-#include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
 #include "physicsSolvers/multiphysics/CoupledSolver.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
 
 namespace geos
 {
 
-class SinglePhasePoromechanics : public CoupledSolver< SinglePhaseBase,
+template< typename FLOW_SOLVER >
+class SinglePhasePoromechanics : public CoupledSolver< FLOW_SOLVER,
                                                        SolidMechanicsLagrangianFEM >
 {
 public:
 
-  using Base = CoupledSolver< SinglePhaseBase, SolidMechanicsLagrangianFEM >;
+  using Base = CoupledSolver< FLOW_SOLVER, SolidMechanicsLagrangianFEM >;
   using Base::m_solvers;
   using Base::m_dofManager;
   using Base::m_localMatrix;
@@ -53,7 +53,7 @@ public:
    * @param parent the parent group of this instantiation of SinglePhasePoromechanics
    */
   SinglePhasePoromechanics( const string & name,
-                            Group * const parent );
+                            dataRepository::Group * const parent );
 
   /// Destructor for the class
   ~SinglePhasePoromechanics() override {}
@@ -62,7 +62,11 @@ public:
    * @brief name of the node manager in the object catalog
    * @return string that contains the catalog name to generate a new SinglePhasePoromechanics object through the object catalog.
    */
-  static string catalogName() { return "SinglePhasePoromechanics"; }
+  static string catalogName();
+  /**
+   * @copydoc SolverBase::getCatalogName()
+   */
+  string getCatalogName() const override { return catalogName(); }
 
   /**
    * @brief accessor for the pointer to the solid mechanics solver
@@ -77,7 +81,7 @@ public:
    * @brief accessor for the pointer to the flow solver
    * @return a pointer to the flow solver
    */
-  SinglePhaseBase * flowSolver() const
+  FLOW_SOLVER * flowSolver() const
   {
     return std::get< toUnderlying( SolverType::Flow ) >( m_solvers );
   }
@@ -89,7 +93,9 @@ public:
    */
   /**@{*/
 
-  virtual void registerDataOnMesh( Group & MeshBodies ) override;
+  virtual void postProcessInput() override;
+
+  virtual void registerDataOnMesh( dataRepository::Group & MeshBodies ) override;
 
   virtual void setupCoupling( DomainPartition const & domain,
                               DofManager & dofManager ) const override;
@@ -189,17 +195,18 @@ private:
                          PARAMS && ... params );
 };
 
+template< typename FLOW_SOLVER >
 template< typename CONSTITUTIVE_BASE,
           typename KERNEL_WRAPPER,
           typename ... PARAMS >
-real64 SinglePhasePoromechanics::assemblyLaunch( MeshLevel & mesh,
-                                                 DofManager const & dofManager,
-                                                 arrayView1d< string const > const & regionNames,
-                                                 string const & materialNamesString,
-                                                 CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                                 arrayView1d< real64 > const & localRhs,
-                                                 real64 const dt,
-                                                 PARAMS && ... params )
+real64 SinglePhasePoromechanics< FLOW_SOLVER >::assemblyLaunch( MeshLevel & mesh,
+                                                                DofManager const & dofManager,
+                                                                arrayView1d< string const > const & regionNames,
+                                                                string const & materialNamesString,
+                                                                CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                                arrayView1d< real64 > const & localRhs,
+                                                                real64 const dt,
+                                                                PARAMS && ... params )
 {
   GEOS_MARK_FUNCTION;
 
@@ -208,7 +215,7 @@ real64 SinglePhasePoromechanics::assemblyLaunch( MeshLevel & mesh,
   string const dofKey = dofManager.getKey( fields::solidMechanics::totalDisplacement::key() );
   arrayView1d< globalIndex const > const & dofNumber = nodeManager.getReference< globalIndex_array >( dofKey );
 
-  real64 const gravityVectorData[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( gravityVector() );
+  real64 const gravityVectorData[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( SolverBase::gravityVector() );
 
   KERNEL_WRAPPER kernelWrapper( dofNumber,
                                 dofManager.rankOffset(),

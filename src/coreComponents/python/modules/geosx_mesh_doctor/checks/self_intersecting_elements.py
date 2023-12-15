@@ -1,6 +1,9 @@
 from dataclasses import dataclass
 import logging
-from typing import List
+from typing import (
+    Collection,
+    List,
+)
 
 from vtkmodules.vtkFiltersGeneral import (
     vtkCellValidator
@@ -23,12 +26,12 @@ class Options:
 
 @dataclass(frozen=True)
 class Result:
-    wrong_number_of_points_elements: List[int]
-    intersecting_edges_elements: List[int]
-    intersecting_faces_elements: List[int]
-    non_contiguous_edges_elements: List[int]
-    non_convex_elements: List[int]
-    faces_are_oriented_incorrectly_elements: List[int]
+    wrong_number_of_points_elements: Collection[int]
+    intersecting_edges_elements: Collection[int]
+    intersecting_faces_elements: Collection[int]
+    non_contiguous_edges_elements: Collection[int]
+    non_convex_elements: Collection[int]
+    faces_are_oriented_incorrectly_elements: Collection[int]
 
 
 def __check(mesh, options: Options) -> Result:
