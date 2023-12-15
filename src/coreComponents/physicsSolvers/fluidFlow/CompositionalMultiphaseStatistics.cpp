@@ -399,9 +399,21 @@ void CompositionalMultiphaseStatistics::computeRegionStatistics( real64 const ti
       }
     }
     regionStatistics.averagePressure = MpiWrapper::sum( regionStatistics.averagePressure );
-    regionStatistics.averagePressure /= regionStatistics.totalUncompactedPoreVolume;
     regionStatistics.averageTemperature = MpiWrapper::sum( regionStatistics.averageTemperature );
-    regionStatistics.averageTemperature /= regionStatistics.totalUncompactedPoreVolume;
+    if( regionStatistics.totalUncompactedPoreVolume > 0 )
+    {
+      float invTotalUncompactedPoreVolume = 1.0 / regionStatistics.totalUncompactedPoreVolume;
+      regionStatistics.averagePressure *= invTotalUncompactedPoreVolume;
+      regionStatistics.averageTemperature *= invTotalUncompactedPoreVolume;
+    }
+    else
+    {
+      regionStatistics.averagePressure = 0.0;
+      regionStatistics.averageTemperature = 0.0;
+      GEOS_LOG_LEVEL_RANK_0( 1, getName() << ", " << regionNames[i]
+                                          << ": Cannot compute average pressure because region pore volume is zero." );
+    }
+
 
     // helpers to report statistics
     array1d< real64 > nonTrappedPhaseMass( numPhases );
