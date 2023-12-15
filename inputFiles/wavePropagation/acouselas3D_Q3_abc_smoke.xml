@@ -1,3 +1,16 @@
+<!--
+# Reference
+  Komatitsch, Dimitri / Barnes, Christophe / Tromp, Jeroen 
+  Wave propagation near a fluid-solid interface: A spectral-element approach 
+  2000
+  Geophysics , Vol. 65, No. 2 
+  Society of Exploration Geophysicists 
+  p. 623-631
+
+# Discretization
+  hexahedral mesh generated internally by GEOSX
+  6400x1600x4800m domain
+-->
 <?xml version="1.0" ?>
 
 <Problem>
@@ -33,45 +46,6 @@
       elasticSolverName="elasticSolver"/>
   </Solvers>
 
-  <!--
-  hexahedral mesh generated internally by GEOSX
-  6400x1600x4800m domain
-  # R1-Q5 (pseudo-2D)
-  sourceCoordinates="{ { 1500, 20, 2900 } }"
-  yCoords="{ 0, 40 }"
-  nx="{ 160 }"
-  ny="{ 1 }"
-  nz="{ 60, 60 }"
-  # R2-Q2 (pseudo-2D)
-  sourceCoordinates="{ { 1500, 10, 2900 } }"
-  yCoords="{ 0, 20 }"
-  nx="{ 320 }"
-  ny="{ 1 }"
-  nz="{ 120, 120 }"
-  # R5-Q1 (pseudo-2D)
-  sourceCoordinates="{ { 1500, 4, 2900 } }"
-  yCoords="{ 0, 8 }"
-  nx="{ 800 }"
-  ny="{ 1 }"
-  nz="{ 300, 300 }"
-  NOTES:
-    nx="{ 320 }"
-    ny="{ 240 }"
-    nz="{ 120, 120 }
-    => local threshold for local builds 3D Q1 Δt=1e-4 (18e6 elems, 10Gb per 1 GPU)
-    -> Q4 180 procs / GPU 16h
-    -> Q1 180 procs / GPU 1h40min
-    -> Q3 gar6more results
-    nx="{ 160 }"
-    ny="{ 120 }"
-    nz="{ 60, 60 }
-    => local threshold for local builds 3D Q2 Δt=1e-4 (2e6 elems, 4Gb per 1 GPU)
-    -> Q3 swaps
-    nx="{ 80 }"
-    ny="{ 60 }"
-    nz="{ 30, 30 }
-    => coarse 10 min frontal run 3D Q5 Δt=1e-3 (288e3 elems, 8Gb per 6 GPU)
-  -->
   <Mesh>
     <InternalMesh
       name="mesh"
@@ -79,9 +53,9 @@
       xCoords="{ 0, 6400 }"
       yCoords="{ 0, 4800.0001 }"
       zCoords="{ 0, 2400, 4800 }"
-      nx="{ 320 }"
-      ny="{ 240 }"
-      nz="{ 120, 120 }"
+      nx="{ 40 }"
+      ny="{ 15 }"
+      nz="{ 15, 15 }"
       cellBlockNames="{ solid, fluid }"/>
   </Mesh>
 
@@ -95,23 +69,7 @@
   </NumericalMethods>
 
   <Events
-    maxTime="2">
-    <PeriodicEvent
-      name="outputs"
-      timeFrequency="5e-2"
-      targetExactTimestep="0">
-      <PeriodicEvent name="outputs_vtk" target="/Outputs/vtkOutput"/>
-      <!--
-      <PeriodicEvent name="tsk_ux_np1" target="/Tasks/displacementxCollection"/>
-      <PeriodicEvent name="out_ux_np1" target="/Outputs/timeHistoryOutputx"/>
-      <PeriodicEvent name="tsk_uy_np1" target="/Tasks/displacementyCollection"/>
-      <PeriodicEvent name="out_uy_np1" target="/Outputs/timeHistoryOutputy"/>
-      <PeriodicEvent name="tsk_uz_np1" target="/Tasks/displacementzCollection"/>
-      <PeriodicEvent name="out_uz_np1" target="/Outputs/timeHistoryOutputz"/>
-      <PeriodicEvent name="tsk_p_np1" target="/Tasks/pressureCollection"/>
-      <PeriodicEvent name="out_p_np1" target="/Outputs/timeHistoryOutput"/>
-      -->
-    </PeriodicEvent>
+    maxTime="0.05">
     <!-- control the timestepping here with forceDt -->
     <PeriodicEvent
       name="solidfluidSolverApplications"
@@ -185,46 +143,4 @@
       setNames="{ all }"/>
   </FieldSpecifications>
 
-  <Tasks>
-    <PackCollection
-      name="pressureCollection"
-      objectPath="mesh/FE1/nodeManager"
-      fieldName="pressure_np1"/>
-    <PackCollection
-      name="displacementxCollection"
-      objectPath="mesh/FE1/nodeManager"
-      fieldName="displacementx_np1"/>
-    <PackCollection
-      disableCoordCollection="1"
-      name="displacementyCollection"
-      objectPath="mesh/FE1/nodeManager"
-      fieldName="displacementy_np1"/>
-    <PackCollection
-      disableCoordCollection="1"
-      name="displacementzCollection"
-      objectPath="mesh/FE1/nodeManager"
-      fieldName="displacementz_np1"/>
-  </Tasks>
-
-  <Outputs>
-    <VTK
-      name="vtkOutput"
-      plotLevel="0"/>
-    <TimeHistory
-      name="timeHistoryOutput"
-      sources="{ /Tasks/pressureCollection }"
-      filename="pressure_history"/>
-    <TimeHistory
-      name="timeHistoryOutputx"
-      sources="{ /Tasks/displacementxCollection }"
-      filename="displacementx_history"/>
-    <TimeHistory
-      name="timeHistoryOutputy"
-      sources="{ /Tasks/displacementyCollection }"
-      filename="displacementy_history"/>
-    <TimeHistory
-      name="timeHistoryOutputz"
-      sources="{ /Tasks/displacementzCollection }"
-      filename="displacementz_history"/>
-  </Outputs>
 </Problem>
