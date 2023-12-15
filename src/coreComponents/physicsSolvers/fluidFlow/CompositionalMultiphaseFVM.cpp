@@ -159,10 +159,6 @@ void CompositionalMultiphaseFVM::assembleFluxTerms( real64 const dt,
     NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
     FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
     FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( m_discretizationName );
-    arrayView2d< real64 const > const & globalDistance {};//= fluxApprox.getGlobalCellToFace();
-    ElementRegionManager const & elemManager = mesh.getElemManager();
-//    ElementRegionManager::ElementViewAccessor< arrayView2d<real64 const> > const globalDistance =
-//            elemManager.constructArrayViewAccessor< real64,2 >( CellElementSubRegion::viewKeyStruct::globalCellToFaceString() );
 
     string const & elemDofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
 
