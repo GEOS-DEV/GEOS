@@ -471,6 +471,7 @@ public:
           case 1: return -1.7863649483390948939;
           case 2: return 0.48495104785356916930;
         }
+        break;
       case 1:
         switch( p )
         {
@@ -478,6 +479,7 @@ public:
           case 1: return 0.0;
           case 2: return -1.72125695283023338321;
         }
+        break;
       case 2:
         switch( p )
         {
@@ -485,6 +487,7 @@ public:
           case 1: return 2.5234267774294554319088;
           case 2: return 0.0;
         }
+        break;
       case 3:
         switch( p )
         {
@@ -492,6 +495,7 @@ public:
           case 1: return -1.1528281585359293413318;
           case 2: return 1.7529619663678659788775;
         }
+        break;
       case 4:
         switch( p )
         {
@@ -499,6 +503,7 @@ public:
           case 1: return 0.6535475074298001672007;
           case 2: return -0.7863566722232407374395;
         }
+        break;
       case 5:
         switch( p )
         {
@@ -506,6 +511,7 @@ public:
           case 1: return -0.2377811779842313638052;
           case 2: return 0.2697006108320389724720;
         }
+        break;
     }
     return 0;
   }

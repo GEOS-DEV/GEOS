@@ -330,12 +330,14 @@ public:
           case 1: return -1.2409902530309828578;
           case 2: return 0.37500000000000000000;
         }
+        break;
       case 1:
         switch( p )
         {
           case 0: return 6.7565024887242400038;
           case 1: return 0.0;
           case 2: return -1.3365845776954533353;
+        break;
         }
       case 2:
         switch( p )
@@ -344,6 +346,7 @@ public:
           case 1: return 1.7457431218879390501;
           case 2: return 0.0;
         }
+        break;
       case 3:
         switch( p )
         {
@@ -351,6 +354,7 @@ public:
           case 1: return 1.7457431218879390501;
           case 2: return 0.0;
         }
+        break;
       case 4:
         switch( p )
         {
@@ -358,6 +362,7 @@ public:
           case 1: return 0.25900974696901714215;
           case 2: return -0.37500000000000000000;
         }
+        break;
     }
     return 0;
   }

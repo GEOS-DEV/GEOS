@@ -243,7 +243,6 @@ struct MassMatrixKernel
     forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const e )
     {
 
-      constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
       constexpr localIndex numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
 
       real64 xLocal[ 8 ][ 3 ];
@@ -492,7 +491,6 @@ public:
   real64 complete( localIndex const k,
                    StackVariables & stack ) const
   {
-    constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
     for( int i=0; i<numNodesPerElem; i++ )
     {
       const localIndex nodeIndex = m_elemsToNodes( k, i );

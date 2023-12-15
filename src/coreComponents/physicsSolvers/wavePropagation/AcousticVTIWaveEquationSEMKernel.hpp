@@ -216,7 +216,6 @@ struct MassMatrixKernel
     forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const e )
     {
 
-      constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
       constexpr localIndex numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
 
       real32 const invC2 = 1.0 / pow( velocity[e], 2 );
@@ -495,7 +494,6 @@ public:
   real64 complete( localIndex const k,
                    StackVariables & stack ) const
   {
-    constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
     for( int i=0; i<numNodesPerElem; i++ )
     {
       RAJA::atomicAdd< parallelDeviceAtomic >( &m_stiffnessVector_p[m_elemsToNodes[k][i]], stack.stiffnessVectorLocal_p[i] );
