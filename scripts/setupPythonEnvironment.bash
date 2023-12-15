@@ -20,7 +20,7 @@ declare -a LINK_SCRIPTS=("preprocess_xml"
 
 
 # Read input arguments
-PYTHON_TARGET=
+PYTHON_TARGET="$(which python)"
 BIN_DIR=
 PIP_CMD="pip --disable-pip-version-check"
 
