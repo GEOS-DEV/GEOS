@@ -188,7 +188,16 @@ void SinglePhaseStatistics::computeRegionStatistics( MeshLevel & mesh,
     regionStatistics.totalUncompactedPoreVolume = MpiWrapper::sum( regionStatistics.totalUncompactedPoreVolume );
     regionStatistics.totalPoreVolume = MpiWrapper::sum( regionStatistics.totalPoreVolume );
     regionStatistics.averagePressure = MpiWrapper::sum( regionStatistics.averagePressure );
-    regionStatistics.averagePressure /= regionStatistics.totalUncompactedPoreVolume;
+    if( regionStatistics.totalUncompactedPoreVolume > 0 )
+    {
+      regionStatistics.averagePressure /= regionStatistics.totalUncompactedPoreVolume;
+    }
+    else
+    {
+      regionStatistics.averagePressure = 0.0;
+      GEOS_LOG_LEVEL_RANK_0( 1, getName() << ", " << regionNames[i]
+                                          << ": Cannot compute average pressure because region pore volume is zero." );
+    }
 
     GEOS_LOG_LEVEL_RANK_0( 1, getName() << ", " << regionNames[i]
                                         << ": Pressure (min, average, max): "
