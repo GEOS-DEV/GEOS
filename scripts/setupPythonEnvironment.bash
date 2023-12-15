@@ -5,6 +5,7 @@
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 PACKAGE_DIR=$(mktemp -d)
 declare -a TARGET_PACKAGES=("$PACKAGE_DIR/geosx_mesh_tools_package"
+                            "$PACKAGE_DIR/geosx_mesh_doctor"
                             "$PACKAGE_DIR/geosx_xml_tools_package"
                             "$PACKAGE_DIR/hdf5_wrapper_package"
                             "$PACKAGE_DIR/pygeosx_tools_package"
