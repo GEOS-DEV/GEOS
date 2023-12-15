@@ -46,8 +46,6 @@ public:
 
   /// The number of nodes/support points per element per dimension.
   constexpr static localIndex num1dNodes = GL_BASIS::numSupportPoints;
-  constexpr static localIndex num2dNodes = num1dNodes * num1dNodes;
-  constexpr static localIndex num3dNodes = num1dNodes * num1dNodes * num1dNodes;
   constexpr static localIndex halfNodes = ( GL_BASIS::numSupportPoints - 1 )/ 2;
 
   /// The number of nodes/support points per element.
@@ -67,7 +65,7 @@ public:
   GEOS_FORCE_INLINE
   constexpr static localIndex linearIndex3DVal( const localIndex qa, localIndex const qb, localIndex const qc )
   {
-    return qa + qb * num1dNodes + qc * num2dNodes;
+    return qa + qb * num1dNodes + qc * numNodesPerFace;
   }
 
   GEOS_HOST_DEVICE
@@ -226,7 +224,7 @@ public:
   static void calcN( localIndex const q,
                      real64 (& N)[numNodes] )
   {
-    for( int a=0; a<num3dNodes; ++a )
+    for( int a=0; a < numNodes; ++a )
     {
       N[ a ] = 0;
     }
