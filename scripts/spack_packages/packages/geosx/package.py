@@ -84,6 +84,9 @@ class Geosx(CMakePackage, CudaPackage):
     # SPHINX_BEGIN_DEPENDS
 
     depends_on('cmake@3.23:', type='build')
+
+    depends_on('blt')
+
     #
     # Virtual packages
     #

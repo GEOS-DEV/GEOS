@@ -68,6 +68,9 @@ spack:
         blas: [intel-oneapi-mkl]
         lapack: [intel-oneapi-mkl]
 
+    blt:
+      require: "@git.5a792c1775e7a7628d84dcde31652a689f1df7b5=develop"
+
    # Lock down which MPI we are using
     mvapich2:
       buildable: False
