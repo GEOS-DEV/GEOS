@@ -51,10 +51,10 @@ public:
                 arraySlice1d< real64 > const & permeability,
                 arraySlice2d< real64 > const & dPerm_dDispJump,
                 integer const timeLagFlag ) const
-{
-    real64 perm = 0.0; 
-    real64 dPerm_dHydraulicAperture = 0.0; 
-    
+  {
+    real64 perm = 0.0;
+    real64 dPerm_dHydraulicAperture = 0.0;
+
     if( timeLagFlag )
     {
       GEOS_UNUSED_VAR( newHydraulicAperture, dPerm_dHydraulicAperture );
@@ -113,9 +113,9 @@ public:
 private:
 
   arrayView4d< real64 > m_dPerm_dDispJump;
-  
-  integer m_timeLagFlag; 
-  
+
+  integer m_timeLagFlag;
+
   int m_numDimensionsToUpdate;
 };
 
@@ -157,9 +157,9 @@ public:
 
   struct viewKeyStruct : public PermeabilityBase::viewKeyStruct
   {
-    /// string/key for the flag to use time lagging computation of permeability 
+    /// string/key for the flag to use time lagging computation of permeability
     constexpr static char const * timeLagFlagString() { return "timeLagFlag"; }
-   
+
     static constexpr char const * transversalPermeabilityString() { return "transversalPermeability"; }
   } viewKeys;
 
@@ -170,9 +170,9 @@ private:
   /// Derivative of fracture permeability w.r.t. displacement jump
   array4d< real64 > m_dPerm_dDispJump;
 
-  /// Flag to turn on time lagging computation of permeability  
-  integer m_timeLagFlag; 
-  
+  /// Flag to turn on time lagging computation of permeability
+  integer m_timeLagFlag;
+
   real64 m_transversalPermeability;
 
   bool m_updateTransversalComponent;

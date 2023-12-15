@@ -533,9 +533,9 @@ real64 SurfaceGenerator::solverStep( real64 const & time_n,
       PermeabilityBase & permModel = getConstitutiveModel< PermeabilityBase >( fractureSubRegion, permModelName );
       permModel.initializeState();
     }
-    
+
     if( cycleNumber == 0 && time_n + dt <= 0 )
-    { 
+    {
       /// THIS is a hack to force variables in the fractures to be initialized since they are created after initialization occurs.
       FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();;
       fsManager.applyInitialConditions( meshLevel );

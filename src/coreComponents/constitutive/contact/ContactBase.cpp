@@ -103,8 +103,8 @@ void ContactBase::allocateConstitutiveData( Group & parent,
     FunctionManager & functionManager = FunctionManager::getInstance();
 
     GEOS_THROW_IF( !functionManager.hasGroup( m_apertureTableName ),
-                  getFullName() << ": the aperture table named " << m_apertureTableName << " could not be found",
-                  InputError );
+                   getFullName() << ": the aperture table named " << m_apertureTableName << " could not be found",
+                   InputError );
 
     TableFunction & apertureTable = functionManager.getGroup< TableFunction >( m_apertureTableName );
     validateApertureTable( apertureTable );

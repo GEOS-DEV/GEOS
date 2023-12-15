@@ -203,7 +203,7 @@ real64 HydrofractureSolver< POROMECHANICS_SOLVER >::fullyCoupledSolverStep( real
                                                     string const & )
       {
         GEOS_UNUSED_VAR( setName );
-        
+
         // Specify the bc value of the field
         fs.applyFieldValue< FieldSpecificationEqual,
                             parallelDevicePolicy<> >( lset,
@@ -212,7 +212,7 @@ real64 HydrofractureSolver< POROMECHANICS_SOLVER >::fullyCoupledSolverStep( real
                                                       fields::flow::wellBoreVolume::key() );
       } );
     } );
-    
+
     flowSolver()->initializePostInitialConditionsPreSubGroups();
   }
 
@@ -743,16 +743,16 @@ assembleForceResidualDerivativeWrtPressure( DomainPartition & domain,
   arrayView1d< globalIndex const > const & dispDofNumber = nodeManager.getReference< globalIndex_array >( dispDofKey );
 
   ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > const bulkModulus =
-      elemManager.constructMaterialViewAccessor< ElasticIsotropic, array1d< real64 >, arrayView1d< real64 const > >( ElasticIsotropic::viewKeyStruct::bulkModulusString() );
+    elemManager.constructMaterialViewAccessor< ElasticIsotropic, array1d< real64 >, arrayView1d< real64 const > >( ElasticIsotropic::viewKeyStruct::bulkModulusString() );
 
   ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > const thermalExpansionCoefficient =
-      elemManager.constructMaterialViewAccessor< SolidBase, array1d< real64 >, arrayView1d< real64 const > >( SolidBase::viewKeyStruct::thermalExpansionCoefficientString() );
+    elemManager.constructMaterialViewAccessor< SolidBase, array1d< real64 >, arrayView1d< real64 const > >( SolidBase::viewKeyStruct::thermalExpansionCoefficientString() );
 
   ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > const temp_n =
-      elemManager.constructViewAccessor< array1d< real64 >, arrayView1d< real64 const > >( fields::flow::temperature_n::key() );
+    elemManager.constructViewAccessor< array1d< real64 >, arrayView1d< real64 const > >( fields::flow::temperature_n::key() );
 
   ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > const initTemp =
-      elemManager.constructViewAccessor< array1d< real64 >, arrayView1d< real64 const > >( fields::flow::initialTemperature::key() );
+    elemManager.constructViewAccessor< array1d< real64 >, arrayView1d< real64 const > >( fields::flow::initialTemperature::key() );
 
   elemManager.forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion const & subRegion )
   {
@@ -798,7 +798,7 @@ assembleForceResidualDerivativeWrtPressure( DomainPartition & domain,
         {
           localIndex const kf1 = elemsToFaces[kfe][1];
 
-          real64 thermalStress0, thermalStress1; 
+          real64 thermalStress0, thermalStress1;
 
           for( localIndex k=0; k<faceToRegionMap.size( 1 ); ++k )
           {
@@ -815,7 +815,7 @@ assembleForceResidualDerivativeWrtPressure( DomainPartition & domain,
               real64 const K = bulkModulus[er0][esr0][ei0];
               real64 const alphaTemp = thermalExpansionCoefficient[er0][esr0][ei0];
 
-              thermalStress0 = ( temp_n[er0][esr0][ei0]- initTemp[er0][esr0][ei0] ) * alphaTemp * K; 
+              thermalStress0 = ( temp_n[er0][esr0][ei0]- initTemp[er0][esr0][ei0] ) * alphaTemp * K;
             }
 
             if( er1 != -1 &&  esr1 != -1 && ei1 != -1 )
@@ -823,13 +823,13 @@ assembleForceResidualDerivativeWrtPressure( DomainPartition & domain,
               real64 const K = bulkModulus[er1][esr1][ei1];
               real64 const alphaTemp = thermalExpansionCoefficient[er1][esr1][ei1];
 
-              thermalStress1 = ( temp_n[er1][esr1][ei1] - initTemp[er1][esr1][ei1] ) * alphaTemp * K; 
+              thermalStress1 = ( temp_n[er1][esr1][ei1] - initTemp[er1][esr1][ei1] ) * alphaTemp * K;
             }
           }
 
-          real64 const thermalStress = ( thermalStress0 + thermalStress1 )/2.; 
+          real64 const thermalStress = ( thermalStress0 + thermalStress1 )/2.;
 
-          nodalForceMag -= thermalStress; 
+          nodalForceMag -= thermalStress;
         }
 
         real64 nodalForce[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( Nbar );

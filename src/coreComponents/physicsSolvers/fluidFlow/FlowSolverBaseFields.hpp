@@ -230,7 +230,7 @@ DECLARE_FIELD( wellBoreVolume,
                0,
                LEVEL_0,
                NO_WRITE,
-               "Extra volume to mimic wellbore volume when using dirichlet or neumann b.c." );                 
+               "Extra volume to mimic wellbore volume when using dirichlet or neumann b.c." );
 DECLARE_FIELD( pressureScalingFactor,
                "pressureScalingFactor",
                array1d< real64 >,

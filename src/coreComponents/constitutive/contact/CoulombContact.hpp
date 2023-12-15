@@ -40,7 +40,7 @@ public:
                          real64 const & shearStiffness,
                          real64 const & displacementJumpThreshold,
                          TableFunction const & apertureTable,
-                         integer const useApertureModel, 
+                         integer const useApertureModel,
                          real64 const & refNormalStress,
                          real64 const & cohesion,
                          real64 const & frictionCoefficient,

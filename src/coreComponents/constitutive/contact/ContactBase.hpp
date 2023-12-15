@@ -48,7 +48,7 @@ public:
     : m_penaltyStiffness( penaltyStiffness ),
     m_shearStiffness( shearStiffness ),
     m_displacementJumpThreshold( displacementJumpThreshold ),
-    m_apertureTable(), 
+    m_apertureTable(),
     m_useApertureModel( useApertureModel ),
     m_refNormalStress( refNormalStress )
   {
@@ -82,7 +82,7 @@ public:
    */
   GEOS_HOST_DEVICE
   virtual real64 computeHydraulicAperture( real64 const aperture,
-                                           real64 const refAperture, 
+                                           real64 const refAperture,
                                            real64 & dHydraulicAperture_dAperture ) const;
 
 
@@ -156,11 +156,11 @@ protected:
   /// The aperture table function wrapper
   TableFunction::KernelWrapper m_apertureTable;
 
-  /// The flag for using nonlinear aperture model instead of the aperture table 
+  /// The flag for using nonlinear aperture model instead of the aperture table
   integer m_useApertureModel;
 
-  /// The reference contact normal stress for the nonlinear aperture model 
-  real64 m_refNormalStress; 
+  /// The reference contact normal stress for the nonlinear aperture model
+  real64 m_refNormalStress;
 };
 
 
@@ -227,10 +227,10 @@ public:
     /// string/key for aperture table name
     static constexpr char const * apertureTableNameString() { return "apertureTableName"; }
 
-    /// string/key for the flag to use nonlinear aperture model 
+    /// string/key for the flag to use nonlinear aperture model
     constexpr static char const * useApertureModelString() { return "useApertureModel"; }
 
-    /// string/key for the reference normal stress in the aperture model 
+    /// string/key for the reference normal stress in the aperture model
     constexpr static char const * refNormalStressString() { return "refNormalStress"; }
   };
 
@@ -264,11 +264,11 @@ protected:
   /// Pointer to the function that limits the model aperture to a physically admissible value.
   TableFunction const * m_apertureTable;
 
-  /// The flag for using nonlinear aperture model instead of the aperture table 
+  /// The flag for using nonlinear aperture model instead of the aperture table
   integer m_useApertureModel;
 
-  /// The reference contact normal stress for the nonlinear aperture model 
-  real64 m_refNormalStress; 
+  /// The reference contact normal stress for the nonlinear aperture model
+  real64 m_refNormalStress;
 };
 
 GEOS_HOST_DEVICE
@@ -292,8 +292,8 @@ real64 ContactBaseUpdates::computeHydraulicAperture( real64 const aperture,
   {
     real64 const penaltyNormalStress = -m_penaltyStiffness * aperture;
 
-    real64 const hydraulicAperture = (aperture >= 0.0)? (aperture + refAperture) : refAperture * exp(-log(10)/m_refNormalStress*penaltyNormalStress);
-    real64 const dHydraulicAperture_dNormalStress = -log(10)/m_refNormalStress * hydraulicAperture;
+    real64 const hydraulicAperture = (aperture >= 0.0)? (aperture + refAperture) : refAperture * exp( -log( 10 )/m_refNormalStress*penaltyNormalStress );
+    real64 const dHydraulicAperture_dNormalStress = -log( 10 )/m_refNormalStress * hydraulicAperture;
 
     dHydraulicAperture_dAperture = (aperture >= 0.0)? 1.0:dHydraulicAperture_dNormalStress * -m_penaltyStiffness;
 

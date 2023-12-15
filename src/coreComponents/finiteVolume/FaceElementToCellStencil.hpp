@@ -305,7 +305,7 @@ FaceElementToCellStencilWrapper
 
   // real64 const sumOfTrans = t0+t1;
   // real64 const value = m_transMultiplier[iconn]*t0*t1/sumOfTrans;
-  real64 const value = m_transMultiplier[iconn]*t0; 
+  real64 const value = m_transMultiplier[iconn]*t0;
 
   weight[0][0] = value;
   weight[0][1] = -value;
@@ -360,8 +360,8 @@ FaceElementToCellStencilWrapper::
   // dWeight_dVar2[0][0] = ( dt0_dVar2 * t1 * sumOfTrans - dt0_dVar2 * t0 * t1 ) / ( sumOfTrans * sumOfTrans );
   // dWeight_dVar2[0][1] = ( t0 * dt1_dVar2 * sumOfTrans - dt1_dVar2 * t0 * t1 ) / ( sumOfTrans * sumOfTrans );
 
-  GEOS_UNUSED_VAR( dCoeff_dVar1, dCoeff_dVar2 ); 
-  
+  GEOS_UNUSED_VAR( dCoeff_dVar1, dCoeff_dVar2 );
+
   dWeight_dVar1[0][0] = 0.0;
   dWeight_dVar1[0][1] = 0.0;
 

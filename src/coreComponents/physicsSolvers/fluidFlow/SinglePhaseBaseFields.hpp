@@ -54,7 +54,7 @@ DECLARE_FIELD( dMobility_dTemperature,
                0,
                NOPLOT,
                NO_WRITE,
-               "Derivative of mobility with respect to temperature" );             
+               "Derivative of mobility with respect to temperature" );
 
 }
 
