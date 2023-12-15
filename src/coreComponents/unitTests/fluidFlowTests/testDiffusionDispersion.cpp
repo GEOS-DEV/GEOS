@@ -23,6 +23,8 @@
 #include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
 #include "unitTests/fluidFlowTests/testCompFlowUtils.hpp"
 
+#include "physicsSolvers/fluidFlow/IsothermalCompositionalMultiphaseFVMKernels.hpp"
+
 using namespace geos;
 using namespace geos::dataRepository;
 using namespace geos::constitutive;
@@ -99,6 +101,16 @@ char const * xmlInput =
                                        phaseRelPermMaxValue="{0.8, 0.9}"/>
     <ConstantPermeability name="rockPerm"
                           permeabilityComponents="{2.0e-16, 2.0e-16, 2.0e-16}"/>
+    <ConstantDiffusion
+      name="diffusion"
+      phaseNames="{ oil, gas }"
+      defaultPhaseDiffusivityMultipliers="{ 1, 1 }"
+      diffusivityComponents="{ 1e-5, 1e-5, 1e-5 }"/>
+
+    <LinearIsotropicDispersion
+      name="dispersion"
+      phaseNames="{ oil, gas }"
+      longitudinalDispersivity="1e-5" />
     </Constitutive>
     <FieldSpecifications>
       <FieldSpecification name="initialPressure"
@@ -146,5 +158,125 @@ char const * xmlInput =
   </Problem>
   )xml";
 
+class CompositionalMultiphaseFlowTest : public ::testing::Test
+{
+public:
+
+  CompositionalMultiphaseFlowTest():
+    state( std::make_unique< CommandLineOptions >( g_commandLineOptions ) )
+  {}
+
+protected:
+
+  void SetUp() override
+  {
+    setupProblemFromXML( state.getProblemManager(), xmlInput );
+    solver = &state.getProblemManager().getPhysicsSolverManager().getGroup< CompositionalMultiphaseFVM >( "compflow" );
+
+    DomainPartition & domain = state.getProblemManager().getDomainPartition();
+
+    FluxApproximationBase const & fluxApprox = domain.getNumericalMethodManager().getFiniteVolumeManager().getFluxApproximation( "fluidTPFA" );
+
+    solver->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
+                                                                         MeshLevel const & mesh,
+                                                                         arrayView1d< string const > const & ) {
+      fluxApprox.forAllStencils( mesh, [&] ( auto & stencil )
+      {
+        typename TYPEOFREF( stencil ) ::KernelWrapper stencilWrapper = stencil.createKernelWrapper();
 
 
+        using kernelType = isothermalCompositionalMultiphaseFVMKernels::DiffusionDispersionFaceBasedAssemblyKernel< 4, 5, typename TYPEOFREF( stencil ) ::KernelWrapper >;
+        typename kernelType::CompFlowAccessors compFlowAccessors( mesh.getElemManager(), solver->getName() );
+        typename kernelType::MultiFluidAccessors multiFluidAccessors( mesh.getElemManager(), solver->getName() );
+        typename kernelType::DiffusionAccessors diffusionAccessors( mesh.getElemManager(), solver->getName() );
+        typename kernelType::DispersionAccessors dispersionAccessors( mesh.getElemManager(), solver->getName() );
+        typename kernelType::PorosityAccessors porosityAccessors( mesh.getElemManager(), solver->getName() );
+        ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > > dofNumberAccessor =
+          mesh.getElemManager().constructArrayViewAccessor< globalIndex, 1 >( CompositionalMultiphaseBase::viewKeyStruct::elemDofFieldString() );
+        dofNumberAccessor.setName( solver->getName() + "/accessors/" + solver->getDofManager().getKey( CompositionalMultiphaseBase::viewKeyStruct::elemDofFieldString()) );
+
+        ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > globalCellDimAccessor =
+          mesh.getElemManager().constructArrayViewAccessor< real64, 2 >( CellElementSubRegion::viewKeyStruct::globalCellDimString() );
+
+
+        BitFlags< isothermalCompositionalMultiphaseFVMKernels::FaceBasedAssemblyKernelFlags > kernelFlags;
+
+        CRSMatrix< real64, globalIndex > const & jacobian = solver->getLocalMatrix();
+        array1d< real64 > residual( jacobian.numRows() );
+
+        kernelType kernel(
+          2,
+          solver->getDofManager().rankOffset(),
+          stencilWrapper,
+          dofNumberAccessor,
+          globalCellDimAccessor,
+          compFlowAccessors,
+          multiFluidAccessors,
+          diffusionAccessors,
+          dispersionAccessors,
+          porosityAccessors,
+          dt,
+          jacobian.toViewConstSizes(),
+          residual.toView(),
+          kernelFlags
+          );
+
+        forAll< parallelDevicePolicy<> >( stencilWrapper.size(), [=] GEOS_HOST_DEVICE ( localIndex const iconn ) {
+          typename kernelType::StackVariables stack( kernel.stencilSize( iconn ),
+                                                     kernel.numPointsInFlux( iconn ));
+          kernel.setup( iconn, stack );
+          kernel.computeDiffusionFlux( iconn, stack );
+          real64 diffusiveFlux[4], diffusiveAndDispersiveFlux[4];
+
+          for( int k = 0; k < stack.numConnectedElems; ++k )
+          {
+
+            for( int ic = 0; ic < 4; ++ic )
+            {
+              integer const eqIndex0 = k * 4 + ic;
+              diffusiveFlux[ic]  = stack.localFlux[eqIndex0]*dt;
+            }
+          }
+
+          kernel.computeDispersionFlux( iconn, stack );
+          for( int k = 0; k < stack.numConnectedElems; ++k )
+          {
+            for( int ic = 0; ic < 4; ++ic )
+            {
+              integer const eqIndex0 = k * 4 + ic;
+              diffusiveAndDispersiveFlux[ic] = stack.localFlux[eqIndex0] * dt;
+
+              EXPECT_EQ( diffusiveFlux[ic], diffusiveAndDispersiveFlux[ic] -
+                         diffusiveFlux[ic] );                       //expect equality under these conditions
+            }
+          }
+
+
+          kernel.complete( iconn, stack );
+
+        } );
+      } );
+    } );
+  }
+
+  static real64 constexpr time = 0.0;
+  static real64 constexpr dt = 1e4;
+  static real64 constexpr eps = std::numeric_limits< real64 >::epsilon();
+
+  GeosxState state;
+  CompositionalMultiphaseFVM * solver;
+};
+
+//TEST_F( DispersionDiffusionFVMTest, sameDispersionTest)
+//{
+//
+//}
+
+int main( int argc, char * * argv )
+{
+  ::testing::InitGoogleTest( &argc, argv );
+  g_commandLineOptions = *geos::basicSetup( argc, argv );
+  int const result = RUN_ALL_TESTS();
+  geos::basicCleanup();
+  return result;
+}
