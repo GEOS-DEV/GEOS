@@ -174,127 +174,127 @@ char const *xmlInput =
 // Useful macro
 #ifndef DEFINE_CAPB_FIELDS
 #define DEFINE_CAP_FIELDS( active ) \
-  int const capPressureFlag = active; \
-  auto phaseCapPressureView = getElementAccessor< true, 3, real64 >( &cap, \
-                                                                     fields::cappres::phaseCapPressure::key(), \
-                                                                     numFluxSupportPoints, \
-                                                                     seri[iconn], \
-                                                                     sesri[iconn], \
-                                                                     sei[iconn], \
-                                                                     1, \
-                                                                     numPhase ); \
-  auto dPhaseCapPressure_dPhaseVolFracView = getElementAccessor< true, 4, real64 >( &cap,                     \
-                                                                                    fields::cappres::dPhaseCapPressure_dPhaseVolFraction::key(), \
-                                                                                    numFluxSupportPoints, \
-                                                                                    seri[iconn], \
-                                                                                    sesri[iconn], \
-                                                                                    sei[iconn], \
-                                                                                    1, \
-                                                                                    numPhase, \
-                                                                                    numPhase );
+  integer const capPressureFlag = active; \
+  auto phaseCapPressureView = getElementAccessor< true, 3, real64, constitutive::cappres::LAYOUT_CAPPRES >( &cap, \
+                                                                                                            fields::cappres::phaseCapPressure::key(), \
+                                                                                                            numFluxSupportPoints, \
+                                                                                                            seri[iconn], \
+                                                                                                            sesri[iconn], \
+                                                                                                            sei[iconn], \
+                                                                                                            1, \
+                                                                                                            numPhase ); \
+  auto dPhaseCapPressure_dPhaseVolFracView = getElementAccessor< true, 4, real64, constitutive::cappres::LAYOUT_CAPPRES_DS >( &cap,                     \
+                                                                                                                              fields::cappres::dPhaseCapPressure_dPhaseVolFraction::key(), \
+                                                                                                                              numFluxSupportPoints, \
+                                                                                                                              seri[iconn], \
+                                                                                                                              sesri[iconn], \
+                                                                                                                              sei[iconn], \
+                                                                                                                              1, \
+                                                                                                                              numPhase, \
+                                                                                                                              numPhase );
 #endif
 
 
 #ifndef DEFINE_FLUID_FIELDS
 #define DEFINE_FLUID_FIELDS() \
-  auto phaseMassDensView = getElementAccessor< true, 3, real64 >( &fluid, \
-                                                                  fields::multifluid::phaseMassDensity::key(), \
-                                                                  numFluxSupportPoints, \
-                                                                  seri[iconn], \
-                                                                  sesri[iconn], \
-                                                                  sei[iconn], 1, \
-                                                                  numPhase ); \
-  auto dPhaseMassDensView = getElementAccessor< true, 4, real64 >( &fluid, \
-                                                                   fields::multifluid::dPhaseMassDensity::key(), \
-                                                                   numFluxSupportPoints, \
-                                                                   seri[iconn], \
-                                                                   sesri[iconn], \
-                                                                   sei[iconn], \
-                                                                   1, \
-                                                                   numPhase, numComp+2 ); \
+  auto phaseMassDensView = getElementAccessor< true, 3, real64, constitutive::multifluid::LAYOUT_PHASE >( &fluid, \
+                                                                                                          fields::multifluid::phaseMassDensity::key(), \
+                                                                                                          numFluxSupportPoints, \
+                                                                                                          seri[iconn], \
+                                                                                                          sesri[iconn], \
+                                                                                                          sei[iconn], 1, \
+                                                                                                          numPhase ); \
+  auto dPhaseMassDensView = getElementAccessor< true, 4, real64, constitutive::multifluid::LAYOUT_PHASE_DC >( &fluid, \
+                                                                                                              fields::multifluid::dPhaseMassDensity::key(), \
+                                                                                                              numFluxSupportPoints, \
+                                                                                                              seri[iconn], \
+                                                                                                              sesri[iconn], \
+                                                                                                              sei[iconn], \
+                                                                                                              1, \
+                                                                                                              numPhase, numComp+2 ); \
   auto \
-    phaseCompFracView = getElementAccessor< true, 4, real64 >( &fluid, \
-                                                               fields::multifluid::phaseCompFraction::key(), \
-                                                               numFluxSupportPoints, \
-                                                               seri[iconn], \
-                                                               sesri[iconn], \
-                                                               sei[iconn],        \
-                                                               1, \
-                                                               numPhase, \
-                                                               numComp ); \
+    phaseCompFracView = getElementAccessor< true, 4, real64, constitutive::multifluid::LAYOUT_PHASE_COMP >( &fluid, \
+                                                                                                            fields::multifluid::phaseCompFraction::key(), \
+                                                                                                            numFluxSupportPoints, \
+                                                                                                            seri[iconn], \
+                                                                                                            sesri[iconn], \
+                                                                                                            sei[iconn],        \
+                                                                                                            1, \
+                                                                                                            numPhase, \
+                                                                                                            numComp ); \
   auto \
-    dPhaseCompFracView = getElementAccessor< true, 5, real64 >( &fluid, \
-                                                                fields::multifluid::dPhaseCompFraction::key(), \
-                                                                numFluxSupportPoints, \
-                                                                seri[iconn], \
-                                                                sesri[iconn], \
-                                                                sei[iconn],        \
-                                                                1, \
-                                                                numPhase, \
-                                                                numComp, \
-                                                                numComp+2 );
+    dPhaseCompFracView = getElementAccessor< true, 5, real64, constitutive::multifluid::LAYOUT_PHASE_COMP_DC >( &fluid, \
+                                                                                                                fields::multifluid::dPhaseCompFraction::key(), \
+                                                                                                                numFluxSupportPoints, \
+                                                                                                                seri[iconn], \
+                                                                                                                sesri[iconn], \
+                                                                                                                sei[iconn],        \
+                                                                                                                1, \
+                                                                                                                numPhase, \
+                                                                                                                numComp, \
+                                                                                                                numComp+2 );
 #endif
 
 #ifndef DEFINE_SUBR_FIELDS
 #define DEFINE_SUBR_FIELDS( A ) \
-  auto presView = getElementAccessor< true, 1, real64 >( &subRegion, \
-                                                         fields::flow::pressure::key(), \
-                                                         numFluxSupportPoints, \
-                                                         seri[iconn], \
-                                                         sesri[iconn], \
-                                                         sei[iconn] ); \
-  Array< Array< Array< double, 1 >, 1 >, 1 > gravCoefView; \
+  auto presView = getElementAccessor< true, 1, real64, RAJA::PERM_I >( &subRegion, \
+                                                                       fields::flow::pressure::key(), \
+                                                                       numFluxSupportPoints, \
+                                                                       seri[iconn], \
+                                                                       sesri[iconn], \
+                                                                       sei[iconn] ); \
+  Array< Array< Array< double, 1, RAJA::PERM_I >, 1 >, 1 > gravCoefView; \
   if( A ) \
   { \
-    gravCoefView = getElementAccessor< true, 1, real64 >( &subRegion, \
-                                                          fields::flow::gravityCoefficient::key(), \
-                                                          numFluxSupportPoints, \
-                                                          seri[iconn], \
-                                                          sesri[iconn], \
-                                                          sei[iconn] ); \
+    gravCoefView = getElementAccessor< true, 1, real64, RAJA::PERM_I >( &subRegion, \
+                                                                        fields::flow::gravityCoefficient::key(), \
+                                                                        numFluxSupportPoints, \
+                                                                        seri[iconn], \
+                                                                        sesri[iconn], \
+                                                                        sei[iconn] ); \
   } \
   else \
   { \
     real64 const temp[1] = {0.0}; \
-    gravCoefView = AccessorHelper< true >::template makeElementAccessor< 1 >( &(temp[0]), \
-                                                                              numFluxSupportPoints, \
-                                                                              seri[iconn], \
-                                                                              sesri[iconn], \
-                                                                              sei[iconn] ); \
+    gravCoefView = AccessorHelper< true >::template makeElementAccessor< 1, real64, RAJA::PERM_I >( &(temp[0]), \
+                                                                                                    numFluxSupportPoints, \
+                                                                                                    seri[iconn], \
+                                                                                                    sesri[iconn], \
+                                                                                                    sei[iconn] ); \
   } \
-  auto phaseMobView = getElementAccessor< true, 2, real64 >( &subRegion, \
-                                                             fields::flow::phaseMobility::key(), \
-                                                             numFluxSupportPoints, \
-                                                             seri[iconn], \
-                                                             sesri[iconn], \
-                                                             sei[iconn], numPhase ); \
-  auto dPhaseMobView = getElementAccessor< true, 3, real64 >( &subRegion, \
-                                                              fields::flow::dPhaseMobility::key(), \
-                                                              numFluxSupportPoints, \
-                                                              seri[iconn], \
-                                                              sesri[iconn], \
-                                                              sei[iconn], \
-                                                              numPhase, numComp+2 ); \
+  auto phaseMobView = getElementAccessor< true, 2, real64, compflow::LAYOUT_PHASE >( &subRegion, \
+                                                                                     fields::flow::phaseMobility::key(), \
+                                                                                     numFluxSupportPoints, \
+                                                                                     seri[iconn], \
+                                                                                     sesri[iconn], \
+                                                                                     sei[iconn], numPhase ); \
+  auto dPhaseMobView = getElementAccessor< true, 3, real64, compflow::LAYOUT_PHASE_DC >( &subRegion, \
+                                                                                         fields::flow::dPhaseMobility::key(), \
+                                                                                         numFluxSupportPoints, \
+                                                                                         seri[iconn], \
+                                                                                         sesri[iconn], \
+                                                                                         sei[iconn], \
+                                                                                         numPhase, numComp+2 ); \
   auto \
-    dCompFrac_dCompDensView = getElementAccessor< true, 3, real64 >( &subRegion, \
-                                                                     fields::flow::dGlobalCompFraction_dGlobalCompDensity::key(), \
-                                                                     numFluxSupportPoints, \
-                                                                     seri[iconn], \
-                                                                     sesri[iconn], \
-                                                                     sei[iconn], \
-                                                                     numComp, \
-                                                                     numComp ); \
-  auto dPhaseVolFracView = getElementAccessor< true, 3, real64 >( &subRegion, \
-                                                                  fields::flow::dPhaseVolumeFraction::key(), \
-                                                                  numFluxSupportPoints, \
-                                                                  seri[iconn], \
-                                                                  sesri[iconn], \
-                                                                  sei[iconn],        \
-                                                                  numPhase, numComp+2 );
+    dCompFrac_dCompDensView = getElementAccessor< true, 3, real64, compflow::LAYOUT_COMP_DC >( &subRegion, \
+                                                                                               fields::flow::dGlobalCompFraction_dGlobalCompDensity::key(), \
+                                                                                               numFluxSupportPoints, \
+                                                                                               seri[iconn], \
+                                                                                               sesri[iconn], \
+                                                                                               sei[iconn], \
+                                                                                               numComp, \
+                                                                                               numComp ); \
+  auto dPhaseVolFracView = getElementAccessor< true, 3, real64, compflow::LAYOUT_PHASE_DC >( &subRegion, \
+                                                                                             fields::flow::dPhaseVolumeFraction::key(), \
+                                                                                             numFluxSupportPoints, \
+                                                                                             seri[iconn], \
+                                                                                             sesri[iconn], \
+                                                                                             sei[iconn],        \
+                                                                                             numPhase, numComp+2 );
 #endif
 
 //// Sphinx end before input XML
-template< bool FULL, localIndex N, typename T, typename ... DIMS >
+template< bool FULL, localIndex N, typename T, typename PERM, typename ... DIMS >
 auto getElementAccessor( Group const * const group,
                          std::string const & key,
                          localIndex const stencilSize,
@@ -304,27 +304,27 @@ auto getElementAccessor( Group const * const group,
                          DIMS... otherDims )
 {
 
-  ArrayView< T const, N > data;
+  ArrayView< T const, N, LvArray::typeManipulation::getStrideOneDimension( PERM{} ) > data;
   if( ElementSubRegionBase const * const subRegion = dynamicCast< ElementSubRegionBase const * const >( group ))
   {
-    data = subRegion->getReference< Array< T, N > >( key );
+    data = subRegion->getReference< Array< T, N, PERM > >( key );
   }
   else if( MultiFluidBase const * const fluid = dynamicCast< MultiFluidBase const * const >( group ))
   {
-    data = fluid->getReference< Array< T, N > >( key );
+    data = fluid->getReference< Array< T, N, PERM > >( key );
   }
   else if( CapillaryPressureBase const * const cap = dynamicCast< CapillaryPressureBase const * const >( group ))
   {
-    data = cap->getReference< Array< T, N > >( key );
+    data = cap->getReference< Array< T, N, PERM > >( key );
   }
 
   data.move( LvArray::MemorySpace::host, false );
-  auto view = AccessorHelper< FULL >::template makeElementAccessor< N, T >( data.data() + stencilElemIndices[0],
-                                                                            stencilSize,
-                                                                            stencilRegIndices,
-                                                                            stencilSubRegIndices,
-                                                                            stencilElemIndices,
-                                                                            otherDims ... );
+  auto view = AccessorHelper< FULL >::template makeElementAccessor< N, T, PERM >( data.data() + stencilElemIndices[0],
+                                                                                  stencilSize,
+                                                                                  stencilRegIndices,
+                                                                                  stencilSubRegIndices,
+                                                                                  stencilElemIndices,
+                                                                                  otherDims ... );
   return view;
 
 }
@@ -336,7 +336,7 @@ using PermeabilityAccessors =
                             fields::permeability::permeability,
                             fields::permeability::dPerm_dPressure >;
 
-template< localIndex numComp, localIndex numPhase, localIndex numFluxSupportPoints >
+template< localIndex numComp, integer numPhase, localIndex numFluxSupportPoints >
 void testCompositionalStandardUpwind( CompositionalMultiphaseFVM & solver,
                                       DomainPartition & domain )
 {
@@ -370,10 +370,10 @@ void testCompositionalStandardUpwind( CompositionalMultiphaseFVM & solver,
       fluxApprox.forStencils< CellElementStencilTPFA >( mesh,
                                                         [&]( auto const & stencil ) {
 
-        auto const & seri = stencil.getElementRegionIndices();
-        auto const & sesri = stencil.getElementSubRegionIndices();
-        auto const & sei = stencil.getElementIndices();
-//        localIndex constexpr numFluxSupportPoints = 2;
+        CellElementStencilTPFA::IndexContainerViewConstType const & seri = stencil.getElementRegionIndices();
+        CellElementStencilTPFA::IndexContainerViewConstType const & sesri = stencil.getElementSubRegionIndices();
+        CellElementStencilTPFA::IndexContainerViewConstType const & sei = stencil.getElementIndices();
+
         localIndex constexpr maxNumConn = 1;
         real64 trans[maxNumConn][numFluxSupportPoints]{};
         real64 dTrans_dP[maxNumConn][numFluxSupportPoints]{};
@@ -414,7 +414,7 @@ void testCompositionalStandardUpwind( CompositionalMultiphaseFVM & solver,
 
           localIndex k_up_expected[numPhase]{0, 1};
           //classical mass balance equation way of computing potential and finding upwinding direction
-          for( localIndex ip = 0; ip < numPhase; ++ip )
+          for( integer ip = 0; ip < numPhase; ++ip )
           {
 
             PPUPhaseFlux::compute< numComp, numFluxSupportPoints >(
@@ -457,7 +457,7 @@ void testCompositionalStandardUpwind( CompositionalMultiphaseFVM & solver,
 
 }//EOfunc
 
-template< localIndex numComp, localIndex numPhase, localIndex numFluxSupportPoints >
+template< integer numComp, integer numPhase, integer numFluxSupportPoints >
 void testCompositionalUpwindHU( CompositionalMultiphaseFVM & solver,
                                 DomainPartition & domain )
 {
@@ -549,7 +549,7 @@ void testCompositionalUpwindHU( CompositionalMultiphaseFVM & solver,
           real64 const dTrans_[2] = {dTrans_dP[iconn][0], dTrans_dP[iconn][1]};
 
           //classical mass balance equation way of computing potential and finding upwinding direction
-          for( localIndex ip = 0; ip < numPhase; ++ip )
+          for( integer ip = 0; ip < numPhase; ++ip )
           {
             PPUPhaseFlux::compute< numComp, numFluxSupportPoints >(
               numPhase,
@@ -607,7 +607,7 @@ void testCompositionalUpwindHU( CompositionalMultiphaseFVM & solver,
           localIndex k_exp_hu_g[numPhase] = {0, 1};
           localIndex k_exp_hu_pc[numPhase] = {1, 0};
 
-          for( localIndex ip = 0; ip < numPhase; ++ip )
+          for( integer ip = 0; ip < numPhase; ++ip )
           {
 
             UpwindHelpers::computeFractionalFlowViscous< numComp, numFluxSupportPoints,
@@ -767,7 +767,7 @@ void testCompositionalUpwindHU( CompositionalMultiphaseFVM & solver,
           real64 const dTrans_[2] = {dTrans_dP[iconn][0], dTrans_dP[iconn][1]};
 
           //classical mass balance equation way of computing potential and finding upwinding direction
-          for( localIndex ip = 0; ip < numPhase; ++ip )
+          for( integer ip = 0; ip < numPhase; ++ip )
           {
 
             IHUPhaseFlux::compute< numComp, numFluxSupportPoints >(
