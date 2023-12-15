@@ -1027,6 +1027,7 @@ void SolidMechanicsLagrangianFEM::assembleSystem( real64 const GEOS_UNUSED_PARAM
 
   if( m_isFixedStressPoromechanicsUpdate )
   {
+    // first pass for coupled poromechanics regions
     assemblyLaunch< constitutive::PorousSolid< ElasticIsotropic >, // TODO: change once there is a cmake solution
                     solidMechanicsLagrangianFEMKernels::FixedStressThermoPoromechanicsFactory >( domain,
                                                                                                  dofManager,
@@ -1034,6 +1035,7 @@ void SolidMechanicsLagrangianFEM::assembleSystem( real64 const GEOS_UNUSED_PARAM
                                                                                                  localMatrix,
                                                                                                  localRhs,
                                                                                                  dt );
+    // second pass for pure mechanics regions
     assemblyLaunch< constitutive::SolidBase,
                     solidMechanicsLagrangianFEMKernels::QuasiStaticFactory >( domain,
                                                                               dofManager,
