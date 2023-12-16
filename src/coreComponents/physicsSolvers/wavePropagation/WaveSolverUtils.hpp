@@ -80,9 +80,12 @@ struct WaveSolverUtils
    */
   static void initTrace( char const * prefix,
                          string const & name,
+                         bool const outputSeismoTrace,
                          localIndex const nReceivers,
                          arrayView1d< localIndex const > const receiverIsLocal )
   {
+    if( !outputSeismoTrace ) return;
+
     string const outputDir = OutputBase::getOutputDirectory();
     RAJA::ReduceSum< ReducePolicy< serialPolicy >, localIndex > count( 0 );
 
@@ -101,7 +104,7 @@ struct WaveSolverUtils
   }
 
   /**
-   * @brief Convenient helper for 3D vectors calling 3 times the scalar version.
+   * @brief Convenient helper for 3D vectors calling 3 times the scalar version with only the sampled variable argument changed.
    */
   static void writeSeismoTraceVector( char const * prefix,
                                       string const & name,
@@ -140,6 +143,7 @@ struct WaveSolverUtils
         std::ofstream f( fn, std::ios::app );
         if( f )
         {
+          GEOS_LOG_RANK( GEOS_FMT( "Append to seismo trace file {}", fn ) );
           for( localIndex iSample = 0; iSample < nsamplesSeismoTrace; ++iSample )
           {
             // index - time - value
@@ -208,7 +212,7 @@ struct WaveSolverUtils
                                             arrayView2d< real32 const > const var_n,
                                             arrayView2d< real32 > varAtReceivers )
   {
-    real64 const time_np1 = time_n+dt;
+    real64 const time_np1 = time_n + dt;
 
     real32 const a1 = dt < epsilonLoc ? 1.0 : (time_np1 - timeSeismo) / dt;
     real32 const a2 = 1.0 - a1;
