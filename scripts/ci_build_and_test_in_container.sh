@@ -8,6 +8,7 @@ echo "Running CLI ${SCRIPT_NAME} $@"
 
 echo "running nproc"
 nproc
+$(nproc)/2
 
 # docs.docker.com/config/containers/resource_constraints
 # Inside the container, tools like free report the host's available swap, not what's available inside the container.
@@ -247,12 +248,18 @@ if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
   or_die tar cfM ${DATA_EXCHANGE_DIR}/${DATA_BASENAME_WE}.tar --directory ${GEOS_SRC_DIR}    --transform "s/^integratedTests/${DATA_BASENAME_WE}\/repo/" integratedTests
   or_die tar rfM ${DATA_EXCHANGE_DIR}/${DATA_BASENAME_WE}.tar --directory ${GEOSX_BUILD_DIR} --transform "s/^integratedTests/${DATA_BASENAME_WE}\/logs/" integratedTests
   or_die gzip ${DATA_EXCHANGE_DIR}/${DATA_BASENAME_WE}.tar
+
+  # want to clean the integrated tests folder to avoid polluting the next build.
+  or_die integratedTests/geos_ats.sh -a clean
 fi
 
 if [[ ! -z "${SCCACHE_CREDS}" ]]; then
   echo "sccache final state"
   or_die ${SCCACHE} --show-adv-stats
 fi
+
+# Cleaning the build directory.
+or_die ninja clean
 
 # If we're here, either everything went OK or we have to deal with the integrated tests manually.
 if [[ ! -z "${INTEGRATED_TEST_EXIT_STATUS+x}" ]]; then
