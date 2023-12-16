@@ -214,22 +214,24 @@ jobs:
           #   ENABLE_TRILINOS: OFF
           #   RUNS_ON: Runner_8core_32GB
 
-          # - name: Ubuntu CUDA (20.04, clang 10.0.0 + gcc 9.4.0, open-mpi 4.0.3, cuda-11.8.89)
-          #   BUILD_AND_TEST_CLI_ARGS: "--no-run-unit-tests --no-install-schema"
-          #   CMAKE_BUILD_TYPE: Release
-          #   DOCKER_REPOSITORY: geosx/ubuntu20.04-clang10.0.0-cuda11.8.89
-          #   ENABLE_HYPRE_DEVICE: CUDA
-          #   ENABLE_HYPRE: ON
-          #   ENABLE_TRILINOS: OFF
-          #   RUNS_ON: Runner_4core_16GB
-
-          - name: Centos (7.7, gcc 8.3.1, open-mpi 1.10.7, cuda 11.8.89)
+          - name: Ubuntu CUDA (20.04, clang 10.0.0 + gcc 9.4.0, open-mpi 4.0.3, cuda-11.8.89)
             BUILD_AND_TEST_CLI_ARGS: "--no-run-unit-tests --no-install-schema"
             CMAKE_BUILD_TYPE: Release
-            DOCKER_REPOSITORY: geosx/centos7.7-gcc8.3.1-cuda11.8.89
+            DOCKER_REPOSITORY: geosx/ubuntu20.04-clang10.0.0-cuda11.8.89
+            ENABLE_HYPRE_DEVICE: CUDA
+            ENABLE_HYPRE: ON
+            ENABLE_TRILINOS: OFF
             RUNS_ON: streak
-#            USE_SCCACHE: false
             DOCKER_RUN_ARGS: "--cpus=4 --memory=16g"
+
+
+          # - name: Centos (7.7, gcc 8.3.1, open-mpi 1.10.7, cuda 11.8.89)
+          #   BUILD_AND_TEST_CLI_ARGS: "--no-run-unit-tests --no-install-schema"
+          #   CMAKE_BUILD_TYPE: Release
+          #   DOCKER_REPOSITORY: geosx/centos7.7-gcc8.3.1-cuda11.8.89
+          #   RUNS_ON: streak
+#            USE_SCCACHE: false
+            # DOCKER_RUN_ARGS: "--cpus=4 --memory=16g"
 
           # Below this line, jobs that deploy to Google Cloud.
           # - name: Pecan GPU (centos 7.7, gcc 8.2.0, open-mpi 4.0.1, mkl 2019.5, cuda 11.5.119)
