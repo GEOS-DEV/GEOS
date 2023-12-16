@@ -194,7 +194,7 @@
   </Functions>   
 
   <Events
-      minTime="-1e11"
+      minTime="0"
       maxTime="8640000">
    
     <PeriodicEvent
@@ -221,6 +221,11 @@
       timeFrequency="1728000"
       targetExactTimestep="0"
       target="/Outputs/timeHistoryOutput"/>
+
+    <PeriodicEvent
+      name="restarts"
+      timeFrequency="4320000"
+      target="/Outputs/restartOutput"/>
 
   </Events>
 
