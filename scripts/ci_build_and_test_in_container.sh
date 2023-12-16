@@ -149,19 +149,9 @@ EOT
       echo "Copied $filename to $new_filename"
     fi
   done
-
-  # cp ${GEOS_SRC_DIR}/certificates/ADPKI_LLNLROOT.crt.pem                     /usr/local/share/ca-certificates/ADPKI_LLNLROOT.crt
-  # cp ${GEOS_SRC_DIR}/certificates/ADPKI-11.the-lab.llnl.gov_ADPKI-11.crt.pem /usr/local/share/ca-certificates/ADPKI-11.the-lab.llnl.gov_ADPKI-11.crt
-  # cp ${GEOS_SRC_DIR}/certificates/ADPKI-12.the-lab.llnl.gov_ADPKI-12.crt.pem /usr/local/share/ca-certificates/ADPKI-12.the-lab.llnl.gov_ADPKI-12.crt
-  # cp ${GEOS_SRC_DIR}/certificates/ADPKI-13.the-lab.llnl.gov_ADPKI-13.crt.pem /usr/local/share/ca-certificates/ADPKI-13.the-lab.llnl.gov_ADPKI-13.crt
-  # cp ${GEOS_SRC_DIR}/certificates/ADPKI-14.the-lab.llnl.gov_ADPKI-14.crt.pem /usr/local/share/ca-certificates/ADPKI-14.the-lab.llnl.gov_ADPKI-14.crt
-  # cp ${GEOS_SRC_DIR}/certificates/ADPKI-15.the-lab.llnl.gov_ADPKI-15.crt.pem /usr/local/share/ca-certificates/ADPKI-15.the-lab.llnl.gov_ADPKI-15.crt
-  # cp ${GEOS_SRC_DIR}/certificates/ADPKI-16.the-lab.llnl.gov_ADPKI-16.crt.pem /usr/local/share/ca-certificates/ADPKI-16.the-lab.llnl.gov_ADPKI-16.crt
-  # cp ${GEOS_SRC_DIR}/certificates/DigiCertGlobalCAG2.crt.pem                 /usr/local/share/ca-certificates/DigiCertGlobalCAG2.crt
-  # cp ${GEOS_SRC_DIR}/certificates/cspca.crt.pem                              /usr/local/share/ca-certificates/cspca.crt
-  # ls ${GEOS_SRC_DIR}
-  # ls -l /usr/local/share/ca-certificates/
   update-ca-certificates 
+  # gcloud config set core/custom_ca_certs_file cert.pem
+
 
   echo "sccache initial state"
   ${SCCACHE} --show-stats
