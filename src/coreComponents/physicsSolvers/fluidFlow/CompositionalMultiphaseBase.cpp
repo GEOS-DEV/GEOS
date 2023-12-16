@@ -1452,6 +1452,15 @@ void CompositionalMultiphaseBase::applySourceFluxBC( real64 const time,
       {
         return;
       }
+      if( !subRegion.hasWrapper( dofKey ) )
+      {
+        if( fs.getLogLevel() >= 1 )
+        {
+          GEOS_LOG_RANK( GEOS_FMT( "{}: trying to apply SourceFlux, but its targetSet named '{}' intersects with non-simulated region named '{}'.",
+                                   getDataContext(), setName, subRegion.getName() ) );
+        }
+        return;
+      }
 
       arrayView1d< globalIndex const > const dofNumber = subRegion.getReference< array1d< globalIndex > >( dofKey );
       arrayView1d< integer const > const ghostRank = subRegion.ghostRank();
@@ -1928,6 +1937,7 @@ void CompositionalMultiphaseBase::chopNegativeDensities( DomainPartition & domai
   using namespace isothermalCompositionalMultiphaseBaseKernels;
 
   integer const numComp = m_numComponents;
+  real64 const minCompDens = m_minCompDens;
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel & mesh,
@@ -1948,9 +1958,9 @@ void CompositionalMultiphaseBase::chopNegativeDensities( DomainPartition & domai
         {
           for( integer ic = 0; ic < numComp; ++ic )
           {
-            if( compDens[ei][ic] < m_minCompDens )
+            if( compDens[ei][ic] < minCompDens )
             {
-              compDens[ei][ic] = m_minCompDens;
+              compDens[ei][ic] = minCompDens;
             }
           }
         }
@@ -2242,7 +2252,7 @@ void CompositionalMultiphaseBase::updateState( DomainPartition & domain )
     } );
   } );
 
-  GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "        {}: Max phase volume fraction change = {}", getName(), maxDeltaPhaseVolFrac ) );
+  GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "        {}: Max phase volume fraction change = {}", getName(), fmt::format( "{:.{}f}", maxDeltaPhaseVolFrac, 4 ) ) );
 }
 
 } // namespace geos

@@ -33,12 +33,14 @@ namespace units
  * @return the input Kelvin degrees converted in Celsius
  * @param kelvin degrees input
  */
+GEOS_HOST_DEVICE
 inline constexpr double convertKToC( double kelvin )
 { return kelvin - constants::zeroDegreesCelsiusInKelvin; }
 /**
  * @return the input Celsius degrees converted in Kelvin
  * @param celsius degrees input
  */
+GEOS_HOST_DEVICE
 inline constexpr double convertCToK( double celsius )
 { return celsius + constants::zeroDegreesCelsiusInKelvin; }
 
@@ -98,6 +100,10 @@ constexpr inline std::string_view getDescription( Unit unit )
     case TemperatureInC:  return "temperature [C]";
     case Distance:        return "distance [m]";
     case Time:            return "time [s]";
+    case Viscosity:       return "viscosity [Pa*s]";
+    case Enthalpy:        return "enthalpy [J/kg]";
+    case Density:         return "density [kg/m3]";
+    case Solubility:      return "solubility [g/L]";
   }
 }
 
