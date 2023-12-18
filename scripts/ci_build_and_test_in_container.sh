@@ -232,7 +232,9 @@ if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
   # in two different folder with meaningful names when unpacking.
   # Also, to make the bundle lighted, we only pack the `.err` and `.data` files,
   # which should be enough for first understanding of any discrepancy
-  or_die tar cfM ${DATA_EXCHANGE_DIR}/${DATA_BASENAME_WE}.tar --directory ${GEOS_SRC_DIR}    --transform "s/^integratedTests/${DATA_BASENAME_WE}\/repo/" integratedTests/**/*.{err,data}
+  set +f
+  or_die tar cfM ${DATA_EXCHANGEDIR}/${DATA_BASENAME_WE}.tar --directory ${GEOS_SRC_DIR}    --transform "s/^integratedTests/${DATA_BASENAME_WE}\/repo/" integratedTests/**/*.{err,data}
+  set -f
   or_die tar rfM ${DATA_EXCHANGE_DIR}/${DATA_BASENAME_WE}.tar --directory ${GEOSX_BUILD_DIR} --transform "s/^integratedTests/${DATA_BASENAME_WE}\/logs/" integratedTests
   or_die gzip ${DATA_EXCHANGE_DIR}/${DATA_BASENAME_WE}.tar
 fi
