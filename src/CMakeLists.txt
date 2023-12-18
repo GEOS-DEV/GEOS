@@ -233,6 +233,12 @@ install( FILES ${CMAKE_BINARY_DIR}/schema.xsd
 # Add python environment setup
 ################################
 if ( Python3_EXECUTABLE )
+    message(STATUS "Found python version ${Python3_VERSION}")
+    if (${Python3_VERSION} VERSION_LESS "3.7.0")
+      message(STATUS "Note: try setting Python3_ROOT_DIR and/or Python3_EXECUTABLE in your host config to the appropriate version.")
+      message( FATAL_ERROR "Building the GEOSX python tools requires Python >= 3.7." )
+    endif()
+
     # Select the version of python to target
     if( ENABLE_PYGEOSX )
         set( PYTHON_POST_EXECUTABLE ${CMAKE_BINARY_DIR}/lib/PYGEOSX/bin/python CACHE PATH "" FORCE )

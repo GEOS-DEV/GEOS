@@ -3,28 +3,14 @@
 
 # Configuration
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
-PACKAGE_DIR=$(mktemp -d)
-declare -a TARGET_PACKAGES=("$PACKAGE_DIR/geosx_mesh_tools_package"
-                            "$PACKAGE_DIR/geosx_mesh_doctor"
-                            "$PACKAGE_DIR/geosx_xml_tools_package"
-                            "$PACKAGE_DIR/hdf5_wrapper_package"
-                            "$PACKAGE_DIR/pygeosx_tools_package"
-                            "$SCRIPT_DIR/../integratedTests/scripts/geos_ats_package")
-declare -a LINK_SCRIPTS=("preprocess_xml"
-                         "format_xml"
-                         "convert_abaqus"
-                         "run_geos_ats"
-                         "setup_ats_environment"
-                         "activate"
-                         "python")
-
-
-# Read input arguments
-PYTHON_TARGET="$(which python)"
+PYTHON_TARGET=
 BIN_DIR=
+PACKAGE_DIR=
+TMP_CLONE_DIR=
 PIP_CMD="pip --disable-pip-version-check"
 
 
+# Read input arguments
 if [[ -z "${VERBOSE}" ]]
 then
     VERBOSE=false
@@ -46,6 +32,10 @@ case $key in
     BIN_DIR="$2"
     shift # past argument
     ;;
+    -d|--pkg-dir)
+    PACKAGE_DIR="$2"
+    shift # past argument
+    ;;
     -v|--verbose)
     VERBOSE=true
     shift # past argument
@@ -55,6 +45,7 @@ case $key in
     echo "Python environment setup options:"
     echo "-p/--python-target \"Target parent python bin\""
     echo "-b/--bin-dir \"Directory to link new scripts\""
+    echo "-d/--pkg-dir \"Directory containing target python packages\""
     echo "-v/--verbose \"Increase verbosity level\""
     echo ""
     exit
@@ -68,11 +59,6 @@ case $key in
 esac
 shift # past argument or value
 done
-
-
-# Clone the package directory
-echo "Cloning the GEOS python package repository..."
-git clone --depth 1 --branch main https://github.com/GEOS-DEV/geosPythonPackages.git $PACKAGE_DIR
 
 
 # Check to make sure that the python target exists
@@ -90,6 +76,38 @@ then
 fi
 
 
+# Check for a predefined package directory
+echo "Checking for python packages..."
+if [[ -z "${PACKAGE_DIR}" ]]
+then
+    echo "Cloning the GEOS python package repository..."
+    TMP_CLONE_DIR=$(mktemp -d)
+    PACKAGE_DIR=$TMP_CLONE_DIR/geosPythonPackages
+    git clone --depth 1 --branch main --single-branch https://github.com/GEOS-DEV/geosPythonPackages.git $PACKAGE_DIR
+elif [ ! -d "${PACKAGE_DIR}/geosx_xml_tools_package" ]
+then
+    echo "The specified package directory does not contain the expected targets."
+    echo "The path specified with -d/--pkg-dir should point to a copy of the geosPythonPackages repository."
+    exit 1
+fi
+
+
+# Setup targets
+declare -a TARGET_PACKAGES=("$PACKAGE_DIR/geosx_mesh_tools_package"
+                            "$PACKAGE_DIR/geosx_mesh_doctor"
+                            "$PACKAGE_DIR/geosx_xml_tools_package"
+                            "$PACKAGE_DIR/hdf5_wrapper_package"
+                            "$PACKAGE_DIR/pygeosx_tools_package"
+                            "$SCRIPT_DIR/../integratedTests/scripts/geos_ats_package")
+declare -a LINK_SCRIPTS=("preprocess_xml"
+                         "format_xml"
+                         "convert_abaqus"
+                         "run_geos_ats"
+                         "setup_ats_environment"
+                         "activate"
+                         "python")
+
+
 # Install packages
 echo "Installing python packages..."
 for p in "${TARGET_PACKAGES[@]}"
@@ -97,6 +115,8 @@ do
     if [ -d "$p" ]
     then
         echo "  $p"
+
+        # Try installing the package
         if $VERBOSE
             INSTALL_MSG=$($PYTHON_TARGET -m $PIP_CMD install $p)
             INSTALL_RC=$?
@@ -196,8 +216,10 @@ then
 fi
 
 
-echo "Cleaning up..."
-rm -rf $PACKAGE_DIR
+if [[ ! -z "${TMP_CLONE_DIR}" ]]
+then
+    rm -rf $TMP_CLONE_DIR
+fi
 
 
 echo "Done!"
