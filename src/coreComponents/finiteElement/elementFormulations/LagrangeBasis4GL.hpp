@@ -337,8 +337,8 @@ public:
           case 0: return 6.7565024887242400038;
           case 1: return 0.0;
           case 2: return -1.3365845776954533353;
-            break;
         }
+        break;
       case 2:
         switch( p )
         {
