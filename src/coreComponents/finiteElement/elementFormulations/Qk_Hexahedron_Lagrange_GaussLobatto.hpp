@@ -834,7 +834,9 @@ Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::supportLoop( localIndex const q
                                   (a == qa && c == qc ) ? basisGradientAt( b, qb ) : 0,
                                   (a == qa && b == qb ) ? basisGradientAt( c, qc ) : 0 };
 
-        func( dNdXi, q, std::forward< PARAMS >( params )... );
+        localIndex const nodeIndex = GL_BASIS::TensorProduct3D::linearIndex( a, b, c );
+
+        func( dNdXi, nodeIndex, std::forward< PARAMS >( params )... );
       }
     }
   }
