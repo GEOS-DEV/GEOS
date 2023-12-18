@@ -229,8 +229,10 @@ if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
   # Whatever the result of the integrated tests, we want to pack both the logs and the computed results.
   # They are not in the same folder, so we do it in 2 steps.
   # The `--transform` parameter is here to separate the two informations (originally in a folder with the same name)
-  # in two different folder with meaningful names when unpacking. 
-  or_die tar cfM ${DATA_EXCHANGE_DIR}/${DATA_BASENAME_WE}.tar --directory ${GEOS_SRC_DIR}    --transform "s/^integratedTests/${DATA_BASENAME_WE}\/repo/" integratedTests
+  # in two different folder with meaningful names when unpacking.
+  # Also, to make the bundle lighted, we only pack the `.err` and `.data` files,
+  # which should be enough for first understanding of any discrepancy
+  or_die tar cfM ${DATA_EXCHANGE_DIR}/${DATA_BASENAME_WE}.tar --directory ${GEOS_SRC_DIR}    --transform "s/^integratedTests/${DATA_BASENAME_WE}\/repo/" integratedTests/**/*.{err,data}
   or_die tar rfM ${DATA_EXCHANGE_DIR}/${DATA_BASENAME_WE}.tar --directory ${GEOSX_BUILD_DIR} --transform "s/^integratedTests/${DATA_BASENAME_WE}\/logs/" integratedTests
   or_die gzip ${DATA_EXCHANGE_DIR}/${DATA_BASENAME_WE}.tar
 fi
