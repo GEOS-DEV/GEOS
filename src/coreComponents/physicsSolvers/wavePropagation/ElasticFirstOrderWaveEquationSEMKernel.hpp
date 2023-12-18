@@ -368,7 +368,7 @@ struct StressComputation
     forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const k )
     {
       constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
-      
+
       real64 xLocal[8][3];
       for( localIndex a=0; a< 8; ++a )
       {
