@@ -46,6 +46,8 @@ public:
 
   /// The number of nodes/support points per element per dimension.
   constexpr static localIndex num1dNodes = GL_BASIS::numSupportPoints;
+
+  /// Half the number of support points, rounded down. Precomputed for efficiency
   constexpr static localIndex halfNodes = ( GL_BASIS::numSupportPoints - 1 )/ 2;
 
   /// The number of nodes/support points per element.
@@ -60,7 +62,13 @@ public:
   /// The number of quadrature points per element.
   constexpr static localIndex numQuadraturePoints = numNodes;
 
-
+  /**
+   * @brief The linear index associated to the given one-dimensional indices in the three directions
+   * @param qa The index in the first direction
+   * @param qb The index in the second direction
+   * @param qc The index in the third direction
+   * @return The linear index in 3D
+   */
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
   constexpr static localIndex linearIndex3DVal( const localIndex qa, localIndex const qb, localIndex const qc )
@@ -68,6 +76,11 @@ public:
     return qa + qb * num1dNodes + qc * numNodesPerFace;
   }
 
+  /**
+   * @brief Converts from the index of the point in the mesh and the linear 3D index of the corresponding dof.
+   * @param k The index of the mesh vertex, from 0 to 7
+   * @return The linear index in 3D
+   */
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
   constexpr static localIndex meshIndexToLinearIndex3D( localIndex const k )
@@ -78,12 +91,24 @@ public:
   }
 
 
+  /**
+   * @brief The linear index associated to the given one-dimensional indices in the two directions
+   * @param qa The index in the first direction
+   * @param qb The index in the second direction
+   * @return The linear index in 2D
+   */
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
-  constexpr static localIndex linearIndex2DVal( const localIndex qa, localIndex const qb )
+  constexpr static localIndex linearIndex2DVal( const localIndex qa, const localIndex qb )
   {
     return qa + qb * num1dNodes;
   }
+
+  /**
+   * @brief Converts from the index of the point in the mesh and the linear 2D index of the corresponding dof.
+   * @param k The index of the mesh vertex, from 0 to 3
+   * @return The linear index in 2D
+   */
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
   constexpr static localIndex meshIndexToLinearIndex2D( localIndex const k )
@@ -159,6 +184,7 @@ public:
    * @brief Compute the interpolation coefficients of the q-th quadrature point in a given direction
    * @param q the index of the quadrature point in 1D
    * @param k the index of the interval endpoint (0 or 1)
+   * @return The interpolation coefficient
    */
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
@@ -173,6 +199,7 @@ public:
    * @brief Compute the 1st derivative of the q-th 1D basis function at quadrature point p
    * @param q the index of the 1D basis funcion
    * @param p the index of the 1D quadrature point
+   * @return The derivative value
    */
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
@@ -193,10 +220,11 @@ public:
    * with respect to the k-th interval endpoint (0 or 1). The computation depends on the position
    * in the basis tensor product of this term (i, equal to 0, 1 or 2) and on the direction in which
    * the gradient is being computed (dir, from 0 to 2)
-   * @param q the index of the quadrature point in 1D
-   * @param i the index of the position in the tensor product
-   * @param k the index of the interval endpoint (0 or 1)
-   * @param dir the direction in which the derivatives are being computed
+   * @param q The index of the quadrature point in 1D
+   * @param i The index of the position in the tensor product
+   * @param k The index of the interval endpoint (0 or 1)
+   * @param dir The direction in which the derivatives are being computed
+   * @return The value of the jacobian factor
    */
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
@@ -403,9 +431,7 @@ public:
 /**
  * @brief Inner product of all basis function gradients and a rank-2
  *   symmetric tensor evaluated at a quadrature point.
- * @param qa The 1d quadrature point index in xi0 direction (0,1)
- * @param qb The 1d quadrature point index in xi1 direction (0,1)
- * @param qc The 1d quadrature point index in xi2 direction (0,1)
+ * @param q The 3d quadrature point index
  * @param invJ The inverse of the Jacobian transformation matrix.
  * @param var The rank-2 symmetric tensor at @p q.
  * @param R The vector resulting from the tensor contraction.
@@ -687,7 +713,7 @@ public:
  * @brief Apply a Jacobian transformation matrix from the parent space to the
  *   physical space on the parent shape function derivatives, producing the
  *   shape function derivatives in the physical space.
- * @param qa The quadrature point index
+ * @param q The quadrature point index
  * @param invJ The Jacobian transformation from parent->physical space.
  * @param gradN Array to contain the shape function derivatives for all
  *   support points at the coordinates of the quadrature point @p q.

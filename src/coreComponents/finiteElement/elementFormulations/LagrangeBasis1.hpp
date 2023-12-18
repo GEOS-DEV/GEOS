@@ -155,9 +155,9 @@ public:
 
   /**
    * @brief The gradient of the basis function for a support point evaluated at
-   *   a given support point. By symmetry, p is assumed to be in 0, ..., (N-1)/2
+   *   a given support point. By symmetry, p is assumed to be in 0, ..., (N-1)/2.
+   *   in the case of the first-order basis, this value is independent of p.
    * @param q The index of the basis function
-   * @param p The index of the support point
    * @return The gradient of basis function.
    */
   GEOS_HOST_DEVICE
