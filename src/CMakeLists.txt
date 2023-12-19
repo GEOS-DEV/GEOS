@@ -234,9 +234,9 @@ install( FILES ${CMAKE_BINARY_DIR}/schema.xsd
 ################################
 if ( Python3_EXECUTABLE )
     message(STATUS "Found python version ${Python3_VERSION}")
-    if (${Python3_VERSION} VERSION_LESS "3.7.0")
+    if (${Python3_VERSION} VERSION_LESS "3.6.0")
       message(STATUS "Note: try setting Python3_ROOT_DIR and/or Python3_EXECUTABLE in your host config to the appropriate version.")
-      message( FATAL_ERROR "Building the GEOSX python tools requires Python >= 3.7." )
+      message( FATAL_ERROR "Building the GEOSX python tools requires Python >= 3.6." )
     endif()
 
     # Select the version of python to target
@@ -283,7 +283,7 @@ if ( Python3_EXECUTABLE )
                      )
 
 else()
-    message(WARNING "Building the GEOSX python tools requires Python >= 3.7.")
+    message(WARNING "Building the GEOSX python tools requires Python >= 3.6.")
     message(STATUS "If you need these, try setting Python3_ROOT_DIR and/or Python3_EXECUTABLE in your host config.")
 endif()
 
