@@ -87,47 +87,37 @@ public:
     real64 currentError = 1 / epsilon;
 
     // step 2: start the SSI loop
-    real64 funcXMin = 0.0;
+    // Evaluate at the bounds
+    real64 funcXMin = evaluate( kValues, feed, presentComponentIds, xMin );
+    real64 funcXMax = evaluate( kValues, feed, presentComponentIds, xMax );
     real64 funcXMid = 0.0;
-    real64 funcXMax = 0.0;
-    bool recomputeMin = true;
-    bool recomputeMax = true;
+
+    // If the bound values are the same sign then we have a trivial solution
+    if( 0.0 < funcXMin * funcXMax )
+    {
+      gasPhaseMoleFraction = (0.0 < funcXMin) ? 1.0 : 0.0;
+      return gasPhaseMoleFraction;
+    }
+
     integer SSIIteration = 0;
 
     while( ( currentError > SSITolerance ) && ( SSIIteration < maxSSIIterations ) )
     {
       real64 const xMid = 0.5 * ( xMin + xMax );
-      if( recomputeMin )
-      {
-        funcXMin = evaluate( kValues, feed, presentComponentIds, xMin );
-      }
-      if( recomputeMax )
-      {
-        funcXMax = evaluate( kValues, feed, presentComponentIds, xMax );
-      }
       funcXMid = evaluate( kValues, feed, presentComponentIds, xMid );
-      if( ( funcXMin < 0 ) && ( funcXMax < 0 ) )
-      {
-        return gasPhaseMoleFraction = 0.0;
-      }
-      else if( ( funcXMin > 0 ) && ( funcXMax > 0 ) )
-      {
-        return gasPhaseMoleFraction = 1.0;
-      }
-      else if( funcXMin * funcXMid < 0.0 )
+
+      if( 0.0 < funcXMax * funcXMid )
       {
         xMax = xMid;
-        recomputeMax = true;
-        recomputeMin = false;
+        funcXMax = funcXMid;
       }
-      else if( funcXMax * funcXMid < 0.0 )
+      else if( 0.0 < funcXMin * funcXMid )
       {
         xMin = xMid;
-        recomputeMax = false;
-        recomputeMin = true;
+        funcXMin = funcXMid;
       }
 
-      currentError = LvArray::math::min( LvArray::math::abs( funcXMax - funcXMin ),
+      currentError = LvArray::math::min( LvArray::math::abs( funcXMid ),
                                          LvArray::math::abs( xMax - xMin ) );
       SSIIteration++;
 
@@ -139,26 +129,28 @@ public:
     // step 3: start the Newton loop
     integer newtonIteration = 0;
     real64 newtonValue = gasPhaseMoleFraction;
+    real64 funcNewton = evaluate( kValues, feed, presentComponentIds, newtonValue );
 
     while( ( currentError > newtonTolerance ) && ( newtonIteration < maxNewtonIterations ) )
     {
-      real64 const deltaNewton = -evaluate( kValues, feed, presentComponentIds, newtonValue )
-                                 / evaluateDerivative( kValues, feed, presentComponentIds, newtonValue );
-      currentError = LvArray::math::abs( deltaNewton ) / LvArray::math::abs( newtonValue );
+      real64 deltaNewton = -funcNewton / evaluateDerivative( kValues, feed, presentComponentIds, newtonValue );
 
       // test if we are stepping out of the [xMin;xMax] interval
       if( newtonValue + deltaNewton < xMin )
       {
-        newtonValue = 0.5 * ( newtonValue + xMin );
+        deltaNewton = 0.5 * ( xMin - newtonValue );
       }
       else if( newtonValue + deltaNewton > xMax )
       {
-        newtonValue = 0.5 * ( newtonValue + xMax );
+        deltaNewton = 0.5 * ( xMax - newtonValue );
       }
-      else
-      {
-        newtonValue = newtonValue + deltaNewton;
-      }
+
+      newtonValue = newtonValue + deltaNewton;
+
+      funcNewton = evaluate( kValues, feed, presentComponentIds, newtonValue );
+
+      currentError = LvArray::math::min( LvArray::math::abs( funcNewton ),
+                                         LvArray::math::abs( deltaNewton ) );
       newtonIteration++;
 
       // TODO: add warning if max number of Newton iterations is reached
