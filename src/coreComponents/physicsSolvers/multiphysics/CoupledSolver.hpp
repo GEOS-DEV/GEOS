@@ -428,24 +428,23 @@ protected:
     iter = 0;
     bool isConverged = false;
     real64 dtReturn = dt;
+
+    // Reset the states of all solvers if any of them had to restart
+    forEachArgInTuple( m_solvers, [&]( auto & solver, auto )
+    {
+      solver->resetStateToBeginningOfStep( domain );
+      solver->getSolverStatistics().initializeTimeStepStatistics();     // initialize counters for subsolvers
+    } );
+    resetStateToBeginningOfStep( domain );
+
     /// Sequential coupling loop
     while( iter < solverParams.m_maxIterNewton )
     {
-      if( iter == 0 )
-      {
-        // Reset the states of all solvers if any of them had to restart
-        forEachArgInTuple( m_solvers, [&]( auto & solver,
-                                           auto )
-        {
-          solver->resetStateToBeginningOfStep( domain );
-          solver->getSolverStatistics().initializeTimeStepStatistics(); // initialize counters for subsolvers
-        } );
-        resetStateToBeginningOfStep( domain );
-      }
-
       // Increment the solver statistics for reporting purposes
       // Pass a "0" as argument (0 linear iteration) to skip the output of linear iteration stats at the end
       m_solverStatistics.logNonlinearIteration( 0 );
+
+      startSequentialIteration( iter, domain );
 
       // Solve the subproblems nonlinearly
       real64 dtReturnTemporary;
@@ -486,8 +485,11 @@ protected:
         } );
         break;
       }
+      else
+      {
+        finishSequentialIteration( iter, domain );
+      }
 
-      // Add convergence check:
       ++iter;
     }
 
@@ -615,6 +617,18 @@ protected:
                              NonlinearSolverParameters::viewKeysStruct::lineSearchActionString(),
                              EnumStrings< NonlinearSolverParameters::LineSearchAction >::toString( NonlinearSolverParameters::LineSearchAction::None ) ),
                    InputError );
+
+    if( m_nonlinearSolverParameters.m_nonlinearAccelerationType != NonlinearSolverParameters::NonlinearAccelerationType::None )
+      validateNonlinearAcceleration();
+  }
+
+  virtual void validateNonlinearAcceleration()
+  {
+    GEOS_THROW ( GEOS_FMT( "{}: Nonlinear acceleration {} is not supported by {} solver '{}'",
+                           getWrapperDataContext( NonlinearSolverParameters::viewKeysStruct::nonlinearAccelerationTypeString() ),
+                           EnumStrings< NonlinearSolverParameters::NonlinearAccelerationType >::toString( m_nonlinearSolverParameters.m_nonlinearAccelerationType ),
+                           getCatalogName(), getName()),
+                 InputError );
   }
 
   void
@@ -624,6 +638,18 @@ protected:
     {
       solver->getNonlinearSolverParameters() = m_nonlinearSolverParameters;
     } );
+  }
+
+  virtual void startSequentialIteration( integer const & iter,
+                                         DomainPartition & domain )
+  {
+    GEOS_UNUSED_VAR( iter, domain );
+  }
+
+  virtual void finishSequentialIteration( integer const & iter,
+                                          DomainPartition & domain )
+  {
+    GEOS_UNUSED_VAR( iter, domain );
   }
 
 protected:
