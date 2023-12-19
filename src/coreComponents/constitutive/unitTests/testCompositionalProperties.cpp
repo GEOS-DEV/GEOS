@@ -169,9 +169,10 @@ public:
       internal::testNumericalDerivative(
         0.0, dz, massDensityDerivs[Deriv::dC + ic],
         [this, & p=pressure, & t=temperature, & zmf=composition, ic]( real64 const z ) -> real64 {
+        real64 const z0 = zmf[ic];
         zmf[ic] += z;
         real64 const density = computeMassDensity( p, t, zmf );
-        zmf[ic] -= z;
+        zmf[ic] = z0;
         return density;
       } );
     }
@@ -191,45 +192,9 @@ private:
   real64 computeMolarDensity( real64 const pressure, real64 const temperature,
                               arrayView1d< real64 const > const & composition ) const
   {
-    auto const componentProperties = this->m_fluid->createKernelWrapper();
-    auto const binaryInteractionCoefficients = componentProperties.m_componentBinaryCoeff;
-    auto const volumeShift = componentProperties.m_componentVolumeShift;
-
-    real64 compressibilityFactor = 0.0;
     real64 molarDensity = 0.0;
-    array1d< real64 > aPureCoefficient( numComps );
-    array1d< real64 > bPureCoefficient( numComps );
-    real64 aMixtureCoefficient = 0.0;
-    real64 bMixtureCoefficient = 0.0;
-
-    CubicEOSPhaseModel< EOS_TYPE >::
-    computeMixtureCoefficients( numComps,
-                                pressure,
-                                temperature,
-                                composition,
-                                componentProperties,
-                                aPureCoefficient,
-                                bPureCoefficient,
-                                aMixtureCoefficient,
-                                bMixtureCoefficient );
-
-    CubicEOSPhaseModel< EOS_TYPE >::
-    computeCompressibilityFactor( numComps,
-                                  composition,
-                                  binaryInteractionCoefficients,
-                                  aPureCoefficient,
-                                  bPureCoefficient,
-                                  aMixtureCoefficient,
-                                  bMixtureCoefficient,
-                                  compressibilityFactor );
-
-    CompositionalProperties::computeMolarDensity( numComps,
-                                                  pressure,
-                                                  temperature,
-                                                  composition,
-                                                  volumeShift,
-                                                  compressibilityFactor,
-                                                  molarDensity );
+    array1d< real64 > molarDensityDerivs( numDof );
+    computeMolarDensity( pressure, temperature, composition, molarDensity, molarDensityDerivs );
     return molarDensity;
   }
 
@@ -303,15 +268,6 @@ private:
                            composition,
                            volumeShift,
                            compressibilityFactor,
-                           molarDensity );
-
-    CompositionalProperties::
-      computeMolarDensity( numComps,
-                           pressure,
-                           temperature,
-                           composition,
-                           volumeShift,
-                           compressibilityFactor,
                            compressibilityFactorDerivs,
                            molarDensity,
                            molarDensityDerivs );
@@ -320,17 +276,9 @@ private:
   real64 computeMassDensity( real64 const pressure, real64 const temperature,
                              arrayView1d< real64 const > const & composition ) const
   {
-    auto const componentProperties = this->m_fluid->createKernelWrapper();
-    auto const molecularWeight = componentProperties.m_componentMolarWeight;
-
-    real64 const molarDensity = computeMolarDensity( pressure, temperature, composition );
     real64 massDensity = 0.0;
-    CompositionalProperties::
-      computeMassDensity( numComps,
-                          composition,
-                          molecularWeight,
-                          molarDensity,
-                          massDensity );
+    array1d< real64 > massDensityDerivs( numDof );
+    computeMassDensity( pressure, temperature, composition, massDensity, massDensityDerivs );
     return massDensity;
   }
 
@@ -354,6 +302,7 @@ private:
 
     CompositionalProperties::
       computeMassDensity( numComps,
+                          composition,
                           molecularWeight,
                           molarDensity,
                           molarDensityDerivs,

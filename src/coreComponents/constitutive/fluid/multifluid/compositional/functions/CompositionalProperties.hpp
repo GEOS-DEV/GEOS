@@ -36,27 +36,7 @@ struct CompositionalProperties
   using Deriv = geos::constitutive::multifluid::DerivativeOffset;
 public:
   /**
-   * @brief Compute the molar density of a mixture from the composition and the compressibility factor
-   * @param[in] numComps number of components
-   * @param[in] pressure pressure
-   * @param[in] temperature temperature
-   * @param[in] composition composition of the mixture
-   * @param[in] volumeShift dimensional volume shift parameters
-   * @param[in] compressibilityFactor compressibility factor (z-factor)
-   * @param[out] molarDensity the calculated molar density
-   * @note The volume shifts can result in a negative molar density which will be truncated to zero
-   */
-  GEOS_HOST_DEVICE
-  static void computeMolarDensity( integer const numComps,
-                                   real64 const pressure,
-                                   real64 const temperature,
-                                   arraySlice1d< real64 const > const & composition,
-                                   arraySlice1d< real64 const > const & volumeShift,
-                                   real64 const compressibilityFactor,
-                                   real64 & molarDensity );
-
-  /**
-   * @brief Compute the molar density derivatives
+   * @brief Compute the molar density and derivatives
    * @param[in] numComps number of components
    * @param[in] pressure pressure
    * @param[in] temperature temperature
@@ -64,7 +44,7 @@ public:
    * @param[in] volumeShift dimensional volume shift parameters
    * @param[in] compressibilityFactor compressibility factor (z-factor)
    * @param[in] compressibilityFactorDerivs derivatives of the compressibility factor (z-factor)
-   * @param[in] molarDensity the calculated molar density
+   * @param[out] molarDensity the calculated molar density
    * @param[out] molarDensityDerivs derivatives of the molar density
    */
   GEOS_HOST_DEVICE
@@ -75,39 +55,26 @@ public:
                                    arraySlice1d< real64 const > const & volumeShift,
                                    real64 const compressibilityFactor,
                                    arraySlice1d< real64 const > const & compressibilityFactorDerivs,
-                                   real64 const molarDensity,
+                                   real64 & molarDensity,
                                    arraySlice1d< real64 > const & molarDensityDerivs );
 
   /**
-   * @brief Compute the mass density of a mixture from the composition and the molar density
+   * @brief Compute the mass density and derivatives
    * @param[in] numComps number of components
    * @param[in] composition composition of the mixture
    * @param[in] molecularWeight the component molecular weights
    * @param[in] molarDensity the mixture molar density
-   * @param[out] massDensity the calculated mass density
+   * @param[in] molarDensityDerivs derivatives of the molar density
+   * @param[out] massDensity mass density
+   * @param[out] massDensityDerivs derivatives of the mass density
    */
   GEOS_HOST_DEVICE
   static void computeMassDensity( integer const numComps,
                                   arraySlice1d< real64 const > const & composition,
                                   arraySlice1d< real64 const > const & molecularWeight,
                                   real64 const molarDensity,
-                                  real64 & massDensity );
-
-  /**
-   * @brief Compute the mass density derivatives
-   * @param[in] numComps number of components
-   * @param[in] molecularWeight the component molecular weights
-   * @param[in] molarDensity the mixture molar density
-   * @param[in] molarDensityDerivs derivatives of the molar density
-   * @param[in] massDensity mass density
-   * @param[out] massDensityDerivs derivatives of the mass density
-   */
-  GEOS_HOST_DEVICE
-  static void computeMassDensity( integer const numComps,
-                                  arraySlice1d< real64 const > const & molecularWeight,
-                                  real64 const molarDensity,
                                   arraySlice1d< real64 const > const & molarDensityDerivs,
-                                  real64 const massDensity,
+                                  real64 & massDensity,
                                   arraySlice1d< real64 > const & massDensityDerivs );
 };
 
