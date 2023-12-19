@@ -32,7 +32,6 @@ namespace testing
 {
 
 using namespace geos::constitutive;
-using namespace geos::constitutive::multifluid;
 
 void checkDerivative( real64 const valueEps,
                       real64 const value,

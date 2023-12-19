@@ -77,10 +77,10 @@ public:
   {
     using Deriv = multifluid::DerivativeOffset;
 
-    arraySlice1d< real64 const, multifluid::USD_PHASE - 2 > const phaseDens = m_phaseDens[ei][0];
-    arraySlice2d< real64 const, multifluid::USD_PHASE_DC - 2 > const dPhaseDens = m_dPhaseDens[ei][0];
-    arraySlice1d< real64 const, multifluid::USD_PHASE - 2 > const phaseVisc = m_phaseVisc[ei][0];
-    arraySlice2d< real64 const, multifluid::USD_PHASE_DC - 2 > const dPhaseVisc = m_dPhaseVisc[ei][0];
+    multifluid::ArraySlice< real64 const, 1 > const phaseDens = m_phaseDens[ei][0];
+    multifluid::ArraySlice< real64 const, 2 > const dPhaseDens = m_dPhaseDens[ei][0];
+    multifluid::ArraySlice< real64 const, 1 > const phaseVisc = m_phaseVisc[ei][0];
+    multifluid::ArraySlice< real64 const, 2 > const dPhaseVisc = m_dPhaseVisc[ei][0];
     arraySlice2d< real64 const, relperm::USD_RELPERM_DS - 2 > const dPhaseRelPerm_dPhaseVolFrac = m_dPhaseRelPerm_dPhaseVolFrac[ei][0];
     arraySlice2d< real64 const, compflow::USD_PHASE_DC - 1 > const dPhaseVolFrac = m_dPhaseVolFrac[ei];
 
@@ -415,9 +415,9 @@ public:
       // Step 3.2: compute the derivative of component flux wrt temperature
 
       // slice some constitutive arrays to avoid too much indexing in component loop
-      arraySlice1d< real64 const, multifluid::USD_PHASE_COMP - 3 > phaseCompFracSub =
+      multifluid::ArraySlice< real64 const, 1 > phaseCompFracSub =
         m_phaseCompFrac[er_up][esr_up][ei_up][0][ip];
-      arraySlice2d< real64 const, multifluid::USD_PHASE_COMP_DC - 3 > dPhaseCompFracSub =
+      multifluid::ArraySlice< real64 const, 2 > dPhaseCompFracSub =
         m_dPhaseCompFrac[er_up][esr_up][ei_up][0][ip];
 
       for( integer ic = 0; ic < numComp; ++ic )
@@ -587,8 +587,8 @@ protected:
   ElementViewConst< arrayView1d< real64 const > > const m_temp;
 
   /// Views on phase enthalpies
-  ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const m_phaseEnthalpy;
-  ElementViewConst< arrayView4d< real64 const, multifluid::USD_PHASE_DC > > const m_dPhaseEnthalpy;
+  ElementViewConst< multifluid::ArrayView< real64 const, 3 > > const m_phaseEnthalpy;
+  ElementViewConst< multifluid::ArrayView< real64 const, 4 > > const m_dPhaseEnthalpy;
 
   /// View on thermal conductivity
   ElementViewConst< arrayView3d< real64 const > > const m_thermalConductivity;
@@ -1176,8 +1176,8 @@ public:
                                            localIndex const kf,
                                            real64 const f, // potGrad times trans
                                            real64 const facePhaseMob,
-                                           arraySlice1d< const real64, multifluid::USD_PHASE - 2 > const & facePhaseEnthalpy,
-                                           arraySlice2d< const real64, multifluid::USD_PHASE_COMP-2 > const & facePhaseCompFrac,
+                                           multifluid::ArraySlice< const real64, 1 > const & facePhaseEnthalpy,
+                                           multifluid::ArraySlice< const real64, 2 > const & facePhaseCompFrac,
                                            real64 const phaseFlux,
                                            real64 const dPhaseFlux_dP,
                                            real64 const (&dPhaseFlux_dC)[numComp] )
@@ -1210,9 +1210,9 @@ public:
         // Step 3.2.a: compute the derivative of component flux wrt temperature
 
         // slice some constitutive arrays to avoid too much indexing in component loop
-        arraySlice1d< real64 const, multifluid::USD_PHASE_COMP - 3 > phaseCompFracSub =
+        multifluid::ArraySlice< real64 const, 1 > phaseCompFracSub =
           m_phaseCompFrac[er][esr][ei][0][ip];
-        arraySlice2d< real64 const, multifluid::USD_PHASE_COMP_DC - 3 > dPhaseCompFracSub =
+        multifluid::ArraySlice< real64 const, 2 > dPhaseCompFracSub =
           m_dPhaseCompFrac[er][esr][ei][0][ip];
 
         for( integer ic = 0; ic < numComp; ++ic )
@@ -1345,8 +1345,8 @@ protected:
   ElementViewConst< arrayView1d< real64 const > > const m_temp;
 
   /// Views on phase enthalpies
-  ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const m_phaseEnthalpy;
-  ElementViewConst< arrayView4d< real64 const, multifluid::USD_PHASE_DC > > const m_dPhaseEnthalpy;
+  ElementViewConst< multifluid::ArrayView< real64 const, 3 > > const m_phaseEnthalpy;
+  ElementViewConst< multifluid::ArrayView< real64 const, 4 > > const m_dPhaseEnthalpy;
 
   /// View on thermal conductivity
   ElementViewConst< arrayView3d< real64 const > > const m_thermalConductivity;

@@ -136,7 +136,7 @@ private:
     void computeDensitiesViscosities( bool const needDerivs,
                                       real64 const pressure,
                                       real64 const composition[NC_BO],
-                                      arraySlice1d< real64 const, multifluid::USD_PHASE - 2 > const & phaseFrac,
+                                      multifluid::ArraySlice< real64 const, 1 > const & phaseFrac,
                                       PhaseProp::SliceType const & phaseDens,
                                       PhaseProp::SliceType const & phaseMassDens,
                                       PhaseProp::SliceType const & phaseVisc,
@@ -247,7 +247,7 @@ private:
                                  real64 const dBo_dPres,
                                  real64 const dBo_dComp[HNC_BO],
                                  real64 & dens,
-                                 arraySlice1d< real64, multifluid::USD_PHASE_DC - 3 > const & dDens ) const;
+                                 multifluid::ArraySlice< real64, 1 > const & dDens ) const;
 
     /// Data needed to update the oil phase properties
     PVTOData::KernelWrapper m_PVTOView;
@@ -555,7 +555,7 @@ BlackOilFluid::KernelWrapper::
   computeDensitiesViscosities( bool const needDerivs,
                                real64 const pressure,
                                real64 const composition[NC_BO],
-                               arraySlice1d< real64 const, multifluid::USD_PHASE - 2 > const & phaseFrac,
+                               multifluid::ArraySlice< real64 const, 1 > const & phaseFrac,
                                PhaseProp::SliceType const & phaseDens,
                                PhaseProp::SliceType const & phaseMassDens,
                                PhaseProp::SliceType const & phaseVisc,
@@ -897,7 +897,7 @@ BlackOilFluid::KernelWrapper::
                           real64 const dBo_dPres,
                           real64 const dBo_dComp[HNC_BO],
                           real64 & dens,
-                          arraySlice1d< real64, multifluid::USD_PHASE_DC - 3 > const & dDens ) const
+                          multifluid::ArraySlice< real64, 1 > const & dDens ) const
 {
   using Deriv = multifluid::DerivativeOffset;
   using PT = BlackOilFluid::PhaseType;

@@ -314,9 +314,9 @@ public:
 protected:
 
   /// Views on phase internal energy
-  arrayView3d< real64 const, constitutive::multifluid::USD_PHASE > m_fluidPhaseInternalEnergy_n;
-  arrayView3d< real64 const, constitutive::multifluid::USD_PHASE > m_fluidPhaseInternalEnergy;
-  arrayView4d< real64 const, constitutive::multifluid::USD_PHASE_DC > m_dFluidPhaseInternalEnergy;
+  multifluid::ArrayView< real64 const, 3 > m_fluidPhaseInternalEnergy_n;
+  multifluid::ArrayView< real64 const, 3 > m_fluidPhaseInternalEnergy;
+  multifluid::ArrayView< real64 const, 4 > m_dFluidPhaseInternalEnergy;
 
   /// Views on rock internal energy
   arrayView2d< real64 const > const m_rockInternalEnergy_n;

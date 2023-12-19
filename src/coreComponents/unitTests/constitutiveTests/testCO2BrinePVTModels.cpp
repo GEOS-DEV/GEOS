@@ -37,7 +37,6 @@ using namespace geos::constitutive;
 using namespace geos::dataRepository;
 using namespace geos::stringutilities;
 using namespace geos::constitutive::PVTProps;
-using namespace geos::constitutive::multifluid;
 
 /// Input tables written into temporary files during testing
 
@@ -100,15 +99,13 @@ void testValuesAgainstPreviousImplementation( FLASH_WRAPPER const & flashModelWr
   integer constexpr numComp  = 2;
   integer constexpr numDof   = numComp + 2;
 
-  StackArray< real64, 3, numPhase, LAYOUT_PHASE > phaseFrac( 1, 1, numPhase );
-  StackArray< real64, 4, numDof *numPhase, LAYOUT_PHASE_DC > dPhaseFrac( 1, 1, numPhase, numDof );
-  MultiFluidVarSlice< real64, 1, USD_PHASE - 2, USD_PHASE_DC - 2 >
-  phaseFracAndDeriv { phaseFrac[0][0], dPhaseFrac[0][0] };
+  multifluid::StackArray< real64, 3, numPhase > phaseFrac( 1, 1, numPhase );
+  multifluid::StackArray< real64, 4, numDof * numPhase > dPhaseFrac( 1, 1, numPhase, numDof );
+  MultiFluidVarSlice< real64, 1 >  phaseFracAndDeriv { phaseFrac[0][0], dPhaseFrac[0][0] };
 
-  StackArray< real64, 4, numComp *numPhase, LAYOUT_PHASE_COMP > phaseCompFrac( 1, 1, numPhase, numComp );
-  StackArray< real64, 5, numDof *numComp *numPhase, LAYOUT_PHASE_COMP_DC > dPhaseCompFrac( 1, 1, numPhase, numComp, numDof );
-  MultiFluidVarSlice< real64, 2, USD_PHASE_COMP - 2, USD_PHASE_COMP_DC - 2 >
-  phaseCompFracAndDeriv { phaseCompFrac[0][0], dPhaseCompFrac[0][0] };
+  multifluid::StackArray< real64, 4, numComp * numPhase > phaseCompFrac( 1, 1, numPhase, numComp );
+  multifluid::StackArray< real64, 5, numDof * numComp * numPhase > dPhaseCompFrac( 1, 1, numPhase, numComp, numDof );
+  MultiFluidVarSlice< real64, 2 >  phaseCompFracAndDeriv { phaseCompFrac[0][0], dPhaseCompFrac[0][0] };
 
   flashModelWrapper.compute( pressure,
                              temperature,
@@ -227,15 +224,13 @@ void testNumericalDerivatives( FLASH_WRAPPER const & flashModelWrapper,
 
   // 1) First compute the unperturbed pressure
 
-  StackArray< real64, 3, numPhase, LAYOUT_PHASE > phaseFrac( 1, 1, numPhase );
-  StackArray< real64, 4, numDof *numPhase, LAYOUT_PHASE_DC > dPhaseFrac( 1, 1, numPhase, numDof );
-  MultiFluidVarSlice< real64, 1, USD_PHASE - 2, USD_PHASE_DC - 2 >
-  phaseFracAndDeriv { phaseFrac[0][0], dPhaseFrac[0][0] };
+  multifluid::StackArray< real64, 3, numPhase > phaseFrac( 1, 1, numPhase );
+  multifluid::StackArray< real64, 4, numDof * numPhase > dPhaseFrac( 1, 1, numPhase, numDof );
+  MultiFluidVarSlice< real64, 1>  phaseFracAndDeriv { phaseFrac[0][0], dPhaseFrac[0][0] };
 
-  StackArray< real64, 4, numComp *numPhase, LAYOUT_PHASE_COMP > phaseCompFrac( 1, 1, numPhase, numComp );
-  StackArray< real64, 5, numDof *numComp *numPhase, LAYOUT_PHASE_COMP_DC > dPhaseCompFrac( 1, 1, numPhase, numComp, numDof );
-  MultiFluidVarSlice< real64, 2, USD_PHASE_COMP - 2, USD_PHASE_COMP_DC - 2 >
-  phaseCompFracAndDeriv { phaseCompFrac[0][0], dPhaseCompFrac[0][0] };
+  multifluid::StackArray< real64, 4, numComp * numPhase > phaseCompFrac( 1, 1, numPhase, numComp );
+  multifluid::StackArray< real64, 5, numDof * numComp * numPhase > dPhaseCompFrac( 1, 1, numPhase, numComp, numDof );
+  MultiFluidVarSlice< real64, 2 > phaseCompFracAndDeriv { phaseCompFrac[0][0], dPhaseCompFrac[0][0] };
 
   flashModelWrapper.compute( pressure,
                              temperature,
@@ -243,15 +238,13 @@ void testNumericalDerivatives( FLASH_WRAPPER const & flashModelWrapper,
                              phaseFracAndDeriv,
                              phaseCompFracAndDeriv );
 
-  StackArray< real64, 3, numPhase, LAYOUT_PHASE > perturbedPhaseFrac( 1, 1, numPhase );
-  StackArray< real64, 4, numDof *numPhase, LAYOUT_PHASE_DC > dPerturbedPhaseFrac( 1, 1, numPhase, numDof );
-  MultiFluidVarSlice< real64, 1, USD_PHASE - 2, USD_PHASE_DC - 2 >
-  perturbedPhaseFracAndDeriv { perturbedPhaseFrac[0][0], dPerturbedPhaseFrac[0][0] };
+  multifluid::StackArray< real64, 3, numPhase > perturbedPhaseFrac( 1, 1, numPhase );
+  multifluid::StackArray< real64, 4, numDof * numPhase > dPerturbedPhaseFrac( 1, 1, numPhase, numDof );
+  MultiFluidVarSlice< real64, 1 >  perturbedPhaseFracAndDeriv { perturbedPhaseFrac[0][0], dPerturbedPhaseFrac[0][0] };
 
-  StackArray< real64, 4, numComp *numPhase, LAYOUT_PHASE_COMP > perturbedPhaseCompFrac( 1, 1, numPhase, numComp );
-  StackArray< real64, 5, numDof *numComp *numPhase, LAYOUT_PHASE_COMP_DC > dPerturbedPhaseCompFrac( 1, 1, numPhase, numComp, numDof );
-  MultiFluidVarSlice< real64, 2, USD_PHASE_COMP - 2, USD_PHASE_COMP_DC - 2 >
-  perturbedPhaseCompFracAndDeriv { perturbedPhaseCompFrac[0][0], dPerturbedPhaseCompFrac[0][0] };
+  multifluid::StackArray< real64, 4, numComp * numPhase > perturbedPhaseCompFrac( 1, 1, numPhase, numComp );
+  multifluid::StackArray< real64, 5, numDof * numComp * numPhase > dPerturbedPhaseCompFrac( 1, 1, numPhase, numComp, numDof );
+  MultiFluidVarSlice< real64, 2>  perturbedPhaseCompFracAndDeriv { perturbedPhaseCompFrac[0][0], dPerturbedPhaseCompFrac[0][0] };
 
   // 2) Check derivative with respect to pressure
   real64 const dP = perturbParameter * (pressure + perturbParameter);

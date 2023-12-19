@@ -206,11 +206,11 @@ void MultiFluidBase::saveConvergedState() const
   PhaseProp::ViewTypeConst const phaseInternalEnergy = m_phaseInternalEnergy.toViewConst();
   PhaseComp::ViewTypeConst const phaseCompFraction = m_phaseCompFraction.toViewConst();
 
-  arrayView2d< real64, multifluid::USD_FLUID > const totalDensity_n = m_totalDensity_n.toView();
-  arrayView3d< real64, multifluid::USD_PHASE > const phaseDensity_n = m_phaseDensity_n.toView();
-  arrayView3d< real64, multifluid::USD_PHASE > const phaseEnthalpy_n = m_phaseEnthalpy_n.toView();
-  arrayView3d< real64, multifluid::USD_PHASE > const phaseInternalEnergy_n = m_phaseInternalEnergy_n.toView();
-  arrayView4d< real64, multifluid::USD_PHASE_COMP > const phaseCompFraction_n = m_phaseCompFraction_n.toView();
+  multifluid::ArrayView< real64, 2 > const totalDensity_n = m_totalDensity_n.toView();
+  multifluid::ArrayView< real64, 3 > const phaseDensity_n = m_phaseDensity_n.toView();
+  multifluid::ArrayView< real64, 3 > const phaseEnthalpy_n = m_phaseEnthalpy_n.toView();
+  multifluid::ArrayView< real64, 3 > const phaseInternalEnergy_n = m_phaseInternalEnergy_n.toView();
+  multifluid::ArrayView< real64, 4 > const phaseCompFraction_n = m_phaseCompFraction_n.toView();
 
   forAll< parallelDevicePolicy<> >( numElem, [=] GEOS_HOST_DEVICE ( localIndex const k )
   {

@@ -19,6 +19,7 @@
 #define GEOS_CONSTITUTIVE_FLUID_MULTIFLUID_MULTIFLUIDUTILS_HPP_
 
 #include "common/DataTypes.hpp"
+#include "constitutive/fluid/multifluid/Layouts.hpp"
 
 namespace geos
 {

@@ -259,8 +259,8 @@ void CompositionalMultiphaseStatistics::computeRegionStatistics( real64 const ti
 
     string const & fluidName = subRegion.getReference< string >( CompositionalMultiphaseBase::viewKeyStruct::fluidNamesString() );
     MultiFluidBase const & fluid = constitutiveModels.getGroup< MultiFluidBase >( fluidName );
-    arrayView3d< real64 const, multifluid::USD_PHASE > const phaseDensity = fluid.phaseDensity();
-    arrayView4d< real64 const, multifluid::USD_PHASE_COMP > const phaseCompFraction = fluid.phaseCompFraction();
+    multifluid::ArrayView< real64 const, 3 > const phaseDensity = fluid.phaseDensity();
+    multifluid::ArrayView< real64 const, 4 > const phaseCompFraction = fluid.phaseCompFraction();
 
 
     //get min vol fraction for each phase to dispactche immobile/mobile mass
@@ -587,7 +587,7 @@ void CompositionalMultiphaseStatistics::computeCFLNumbers( real64 const time,
 
       string const & fluidName = subRegion.getReference< string >( CompositionalMultiphaseBase::viewKeyStruct::fluidNamesString() );
       MultiFluidBase const & fluid = constitutiveModels.getGroup< MultiFluidBase >( fluidName );
-      arrayView3d< real64 const, multifluid::USD_PHASE > const & phaseVisc = fluid.phaseViscosity();
+      multifluid::ArrayView< real64 const, 3 > const & phaseVisc = fluid.phaseViscosity();
 
       string const & relpermName = subRegion.getReference< string >( CompositionalMultiphaseBase::viewKeyStruct::relPermNamesString() );
       RelativePermeabilityBase const & relperm = constitutiveModels.getGroup< RelativePermeabilityBase >( relpermName );

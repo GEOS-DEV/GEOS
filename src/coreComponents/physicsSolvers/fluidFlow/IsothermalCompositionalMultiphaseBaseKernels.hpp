@@ -299,10 +299,10 @@ public:
 
     arraySlice1d< real64 const, compflow::USD_COMP - 1 > const compDens = m_compDens[ei];
     arraySlice2d< real64 const, compflow::USD_COMP_DC - 1 > const dCompFrac_dCompDens = m_dCompFrac_dCompDens[ei];
-    arraySlice1d< real64 const, multifluid::USD_PHASE - 2 > const phaseDens = m_phaseDens[ei][0];
-    arraySlice2d< real64 const, multifluid::USD_PHASE_DC - 2 > const dPhaseDens = m_dPhaseDens[ei][0];
-    arraySlice1d< real64 const, multifluid::USD_PHASE - 2 > const phaseFrac = m_phaseFrac[ei][0];
-    arraySlice2d< real64 const, multifluid::USD_PHASE_DC - 2 > const dPhaseFrac = m_dPhaseFrac[ei][0];
+    multifluid::ArraySlice< real64 const, 1 > const phaseDens = m_phaseDens[ei][0];
+    multifluid::ArraySlice< real64 const, 2 > const dPhaseDens = m_dPhaseDens[ei][0];
+    multifluid::ArraySlice< real64 const, 1 > const phaseFrac = m_phaseFrac[ei][0];
+    multifluid::ArraySlice< real64 const, 2 > const dPhaseFrac = m_dPhaseFrac[ei][0];
     arraySlice1d< real64, compflow::USD_PHASE - 1 > const phaseVolFrac = m_phaseVolFrac[ei];
     arraySlice2d< real64, compflow::USD_PHASE_DC - 1 > const dPhaseVolFrac = m_dPhaseVolFrac[ei];
 
@@ -413,12 +413,12 @@ protected:
   arrayView3d< real64 const, compflow::USD_COMP_DC > m_dCompFrac_dCompDens;
 
   /// Views on phase fractions
-  arrayView3d< real64 const, multifluid::USD_PHASE > m_phaseFrac;
-  arrayView4d< real64 const, multifluid::USD_PHASE_DC > m_dPhaseFrac;
+  multifluid::ArrayView< real64 const, 3 > m_phaseFrac;
+  multifluid::ArrayView< real64 const, 4 > m_dPhaseFrac;
 
   /// Views on phase densities
-  arrayView3d< real64 const, multifluid::USD_PHASE > m_phaseDens;
-  arrayView4d< real64 const, multifluid::USD_PHASE_DC > m_dPhaseDens;
+  multifluid::ArrayView< real64 const, 3 > m_phaseDens;
+  multifluid::ArrayView< real64 const, 4 > m_dPhaseDens;
 
 };
 
@@ -702,13 +702,13 @@ public:
     arraySlice1d< real64 const, compflow::USD_PHASE - 1 > phaseVolFrac = m_phaseVolFrac[ei];
     arraySlice2d< real64 const, compflow::USD_PHASE_DC - 1 > dPhaseVolFrac = m_dPhaseVolFrac[ei];
 
-    arraySlice1d< real64 const, multifluid::USD_PHASE - 2 > phaseDens_n = m_phaseDens_n[ei][0];
-    arraySlice1d< real64 const, multifluid::USD_PHASE - 2 > phaseDens = m_phaseDens[ei][0];
-    arraySlice2d< real64 const, multifluid::USD_PHASE_DC - 2 > dPhaseDens = m_dPhaseDens[ei][0];
+    multifluid::ArraySlice< real64 const, 1 > phaseDens_n = m_phaseDens_n[ei][0];
+    multifluid::ArraySlice< real64 const, 1 > phaseDens = m_phaseDens[ei][0];
+    multifluid::ArraySlice< real64 const, 2 > dPhaseDens = m_dPhaseDens[ei][0];
 
-    arraySlice2d< real64 const, multifluid::USD_PHASE_COMP - 2 > phaseCompFrac_n = m_phaseCompFrac_n[ei][0];
-    arraySlice2d< real64 const, multifluid::USD_PHASE_COMP - 2 > phaseCompFrac = m_phaseCompFrac[ei][0];
-    arraySlice3d< real64 const, multifluid::USD_PHASE_COMP_DC - 2 > dPhaseCompFrac = m_dPhaseCompFrac[ei][0];
+    multifluid::ArraySlice< real64 const, 2 > phaseCompFrac_n = m_phaseCompFrac_n[ei][0];
+    multifluid::ArraySlice< real64 const, 2 > phaseCompFrac = m_phaseCompFrac[ei][0];
+    multifluid::ArraySlice< real64 const, 3 > dPhaseCompFrac = m_dPhaseCompFrac[ei][0];
 
     // temporary work arrays
     real64 dPhaseAmount_dC[numComp]{};
@@ -942,14 +942,14 @@ protected:
   arrayView3d< real64 const, compflow::USD_PHASE_DC > const m_dPhaseVolFrac;
 
   /// Views on the phase densities
-  arrayView3d< real64 const, multifluid::USD_PHASE > const m_phaseDens_n;
-  arrayView3d< real64 const, multifluid::USD_PHASE > const m_phaseDens;
-  arrayView4d< real64 const, multifluid::USD_PHASE_DC > const m_dPhaseDens;
+  multifluid::ArrayView< real64 const, 3 > const m_phaseDens_n;
+  multifluid::ArrayView< real64 const, 3 > const m_phaseDens;
+  multifluid::ArrayView< real64 const, 4 > const m_dPhaseDens;
 
   /// Views on the phase component fraction
-  arrayView4d< real64 const, multifluid::USD_PHASE_COMP > const m_phaseCompFrac_n;
-  arrayView4d< real64 const, multifluid::USD_PHASE_COMP > const m_phaseCompFrac;
-  arrayView5d< real64 const, multifluid::USD_PHASE_COMP_DC > const m_dPhaseCompFrac;
+  multifluid::ArrayView< real64 const, 4 > const m_phaseCompFrac_n;
+  multifluid::ArrayView< real64 const, 4 > const m_phaseCompFrac;
+  multifluid::ArrayView< real64 const, 5 > const m_dPhaseCompFrac;
 
   // Views on component densities
   arrayView2d< real64 const, compflow::USD_COMP > m_compDens;
@@ -1887,7 +1887,7 @@ protected:
   arrayView2d< real64 const > const m_porosity_n;
 
   /// View on total mass/molar density at the previous converged time step
-  arrayView2d< real64 const, multifluid::USD_FLUID > const m_totalDens_n;
+  multifluid::ArrayView< real64 const, 2 > const m_totalDens_n;
 
 };
 
@@ -1972,8 +1972,8 @@ struct StatisticsKernel
           arrayView1d< real64 const > const & temp,
           arrayView1d< real64 const > const & refPorosity,
           arrayView2d< real64 const > const & porosity,
-          arrayView3d< real64 const, multifluid::USD_PHASE > const & phaseDensity,
-          arrayView4d< real64 const, multifluid::USD_PHASE_COMP > const & phaseCompFraction,
+          multifluid::ArrayView< real64 const, 3 > const & phaseDensity,
+          multifluid::ArrayView< real64 const, 4 > const & phaseCompFraction,
           arrayView2d< real64 const, compflow::USD_PHASE > const & phaseVolFrac,
           arrayView3d< real64 const, relperm::USD_RELPERM > const & phaseTrappedVolFrac,
           arrayView3d< real64 const, relperm::USD_RELPERM > const & phaseRelperm,
@@ -2131,13 +2131,13 @@ struct HydrostaticPressureKernel
   {
     // fluid properties at this elevation
     StackArray< real64, 2, constitutive::MultiFluidBase::MAX_NUM_COMPONENTS, compflow::LAYOUT_COMP > compFrac( 1, numComps );
-    StackArray< real64, 3, constitutive::MultiFluidBase::MAX_NUM_PHASES, multifluid::LAYOUT_PHASE > phaseFrac( 1, 1, numPhases );
-    StackArray< real64, 3, constitutive::MultiFluidBase::MAX_NUM_PHASES, multifluid::LAYOUT_PHASE > phaseDens( 1, 1, numPhases );
-    StackArray< real64, 3, constitutive::MultiFluidBase::MAX_NUM_PHASES, multifluid::LAYOUT_PHASE > phaseMassDens( 1, 1, numPhases );
-    StackArray< real64, 3, constitutive::MultiFluidBase::MAX_NUM_PHASES, multifluid::LAYOUT_PHASE > phaseVisc( 1, 1, numPhases );
-    StackArray< real64, 3, constitutive::MultiFluidBase::MAX_NUM_PHASES, multifluid::LAYOUT_PHASE > phaseEnthalpy( 1, 1, numPhases );
-    StackArray< real64, 3, constitutive::MultiFluidBase::MAX_NUM_PHASES, multifluid::LAYOUT_PHASE > phaseInternalEnergy( 1, 1, numPhases );
-    StackArray< real64, 4, constitutive::MultiFluidBase::MAX_NUM_PHASES *constitutive::MultiFluidBase::MAX_NUM_COMPONENTS,                 multifluid::LAYOUT_PHASE_COMP > phaseCompFrac( 1, 1, numPhases, numComps );
+    multifluid::StackArray< real64, 3, constitutive::MultiFluidBase::MAX_NUM_PHASES > phaseFrac( 1, 1, numPhases );
+    multifluid::StackArray< real64, 3, constitutive::MultiFluidBase::MAX_NUM_PHASES > phaseDens( 1, 1, numPhases );
+    multifluid::StackArray< real64, 3, constitutive::MultiFluidBase::MAX_NUM_PHASES > phaseMassDens( 1, 1, numPhases );
+    multifluid::StackArray< real64, 3, constitutive::MultiFluidBase::MAX_NUM_PHASES > phaseVisc( 1, 1, numPhases );
+    multifluid::StackArray< real64, 3, constitutive::MultiFluidBase::MAX_NUM_PHASES > phaseEnthalpy( 1, 1, numPhases );
+    multifluid::StackArray< real64, 3, constitutive::MultiFluidBase::MAX_NUM_PHASES > phaseInternalEnergy( 1, 1, numPhases );
+    multifluid::StackArray< real64, 4, constitutive::MultiFluidBase::MAX_NUM_PHASES*constitutive::MultiFluidBase::MAX_NUM_COMPONENTS > phaseCompFrac( 1, 1, numPhases, numComps );
     real64 totalDens = 0.0;
 
     bool isSinglePhaseFlow = true;
@@ -2267,13 +2267,13 @@ struct HydrostaticPressureKernel
 
     // datum fluid properties
     array2d< real64, compflow::LAYOUT_COMP > datumCompFrac( 1, numComps );
-    array3d< real64, multifluid::LAYOUT_PHASE > datumPhaseFrac( 1, 1, numPhases );
-    array3d< real64, multifluid::LAYOUT_PHASE > datumPhaseDens( 1, 1, numPhases );
-    array3d< real64, multifluid::LAYOUT_PHASE > datumPhaseMassDens( 1, 1, numPhases );
-    array3d< real64, multifluid::LAYOUT_PHASE > datumPhaseVisc( 1, 1, numPhases );
-    array3d< real64, multifluid::LAYOUT_PHASE > datumPhaseEnthalpy( 1, 1, numPhases );
-    array3d< real64, multifluid::LAYOUT_PHASE > datumPhaseInternalEnergy( 1, 1, numPhases );
-    array4d< real64, multifluid::LAYOUT_PHASE_COMP > datumPhaseCompFrac( 1, 1, numPhases, numComps );
+    multifluid::Array< real64, 3 > datumPhaseFrac( 1, 1, numPhases );
+    multifluid::Array< real64, 3 > datumPhaseDens( 1, 1, numPhases );
+    multifluid::Array< real64, 3 > datumPhaseMassDens( 1, 1, numPhases );
+    multifluid::Array< real64, 3 > datumPhaseVisc( 1, 1, numPhases );
+    multifluid::Array< real64, 3 > datumPhaseEnthalpy( 1, 1, numPhases );
+    multifluid::Array< real64, 3 > datumPhaseInternalEnergy( 1, 1, numPhases );
+    multifluid::Array< real64, 4 > datumPhaseCompFrac( 1, 1, numPhases, numComps );
     real64 datumTotalDens = 0.0;
 
     real64 const datumTemp = tempTableWrapper.compute( &datumElevation );

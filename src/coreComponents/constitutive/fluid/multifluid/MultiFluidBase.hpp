@@ -21,7 +21,6 @@
 
 #include "common/DataLayouts.hpp"
 #include "constitutive/ConstitutiveBase.hpp"
-#include "constitutive/fluid/multifluid/Layouts.hpp"
 #include "constitutive/fluid/multifluid/MultiFluidConstants.hpp"
 #include "constitutive/fluid/multifluid/MultiFluidUtils.hpp"
 
@@ -113,67 +112,67 @@ public:
    */
   void setMassFlag( bool const flag ) { m_useMass = flag; }
 
-  arrayView3d< real64 const, multifluid::USD_PHASE > phaseFraction() const
+  multifluid::ArrayView< real64 const, 3 > phaseFraction() const
   { return m_phaseFraction.value; }
 
-  arrayView4d< real64 const, multifluid::USD_PHASE_DC > dPhaseFraction() const
+  multifluid::ArrayView< real64 const, 4 > dPhaseFraction() const
   { return m_phaseFraction.derivs; }
 
-  arrayView3d< real64 const, multifluid::USD_PHASE > phaseDensity() const
+  multifluid::ArrayView< real64 const, 3 > phaseDensity() const
   { return m_phaseDensity.value; }
 
-  arrayView3d< real64 const, multifluid::USD_PHASE > phaseDensity_n() const
+  multifluid::ArrayView< real64 const, 3 > phaseDensity_n() const
   { return m_phaseDensity_n; }
 
-  arrayView4d< real64 const, multifluid::USD_PHASE_DC > dPhaseDensity() const
+  multifluid::ArrayView< real64 const, 4 > dPhaseDensity() const
   { return m_phaseDensity.derivs; }
 
-  arrayView3d< real64 const, multifluid::USD_PHASE > phaseMassDensity() const
+  multifluid::ArrayView< real64 const, 3 > phaseMassDensity() const
   { return m_phaseMassDensity.value; }
 
-  arrayView4d< real64 const, multifluid::USD_PHASE_DC > dPhaseMassDensity() const
+  multifluid::ArrayView< real64 const, 4 > dPhaseMassDensity() const
   { return m_phaseMassDensity.derivs; }
 
-  arrayView3d< real64 const, multifluid::USD_PHASE > phaseViscosity() const
+  multifluid::ArrayView< real64 const, 3 > phaseViscosity() const
   { return m_phaseViscosity.value; }
 
-  arrayView4d< real64 const, multifluid::USD_PHASE_DC > dPhaseViscosity() const
+  multifluid::ArrayView< real64 const, 4 > dPhaseViscosity() const
   { return m_phaseViscosity.derivs; }
 
-  arrayView4d< real64 const, multifluid::USD_PHASE_COMP > phaseCompFraction() const
+  multifluid::ArrayView< real64 const, 4 > phaseCompFraction() const
   { return m_phaseCompFraction.value; }
 
-  arrayView4d< real64 const, multifluid::USD_PHASE_COMP > phaseCompFraction_n() const
+  multifluid::ArrayView< real64 const, 4 > phaseCompFraction_n() const
   { return m_phaseCompFraction_n; }
 
-  arrayView5d< real64 const, multifluid::USD_PHASE_COMP_DC > dPhaseCompFraction() const
+  multifluid::ArrayView< real64 const, 5 > dPhaseCompFraction() const
   { return m_phaseCompFraction.derivs; }
 
-  arrayView2d< real64 const, multifluid::USD_FLUID > totalDensity() const
+  multifluid::ArrayView< real64 const, 2 > totalDensity() const
   { return m_totalDensity.value; }
 
-  arrayView2d< real64 const, multifluid::USD_FLUID > totalDensity_n() const
+  multifluid::ArrayView< real64 const, 2 > totalDensity_n() const
   { return m_totalDensity_n; }
 
-  arrayView3d< real64 const, multifluid::USD_FLUID_DC > dTotalDensity() const
+  multifluid::ArrayView< real64 const, 3 > dTotalDensity() const
   { return m_totalDensity.derivs; }
 
-  arrayView3d< real64 const, multifluid::USD_PHASE > phaseEnthalpy() const
+  multifluid::ArrayView< real64 const, 3 > phaseEnthalpy() const
   { return m_phaseEnthalpy.value; }
 
-  arrayView3d< real64 const, multifluid::USD_PHASE > phaseEnthalpy_n() const
+  multifluid::ArrayView< real64 const, 3 > phaseEnthalpy_n() const
   { return m_phaseEnthalpy_n; }
 
-  arrayView4d< real64 const, multifluid::USD_PHASE_DC > dPhaseEnthalpy() const
+  multifluid::ArrayView< real64 const, 4 > dPhaseEnthalpy() const
   { return m_phaseEnthalpy.derivs; }
 
-  arrayView3d< real64 const, multifluid::USD_PHASE > phaseInternalEnergy() const
+  multifluid::ArrayView< real64 const, 3 > phaseInternalEnergy() const
   { return m_phaseInternalEnergy.value; }
 
-  arrayView3d< real64 const, multifluid::USD_PHASE > phaseInternalEnergy_n() const
+  multifluid::ArrayView< real64 const, 3 > phaseInternalEnergy_n() const
   { return m_phaseInternalEnergy_n; }
 
-  arrayView4d< real64 const, multifluid::USD_PHASE_DC > dPhaseInternalEnergy() const
+  multifluid::ArrayView< real64 const, 4 > dPhaseInternalEnergy() const
   { return m_phaseInternalEnergy.derivs; }
 
   /**
@@ -207,9 +206,9 @@ public:
 
 public:
 
-  using PhaseProp = MultiFluidVar< real64, 3, multifluid::LAYOUT_PHASE, multifluid::LAYOUT_PHASE_DC >;
-  using PhaseComp = MultiFluidVar< real64, 4, multifluid::LAYOUT_PHASE_COMP, multifluid::LAYOUT_PHASE_COMP_DC >;
-  using FluidProp = MultiFluidVar< real64, 2, multifluid::LAYOUT_FLUID, multifluid::LAYOUT_FLUID_DC >;
+  using PhaseProp = MultiFluidVar< real64, 3 >;
+  using PhaseComp = MultiFluidVar< real64, 4 >;
+  using FluidProp = MultiFluidVar< real64, 2 >;
 
 public:
   class KernelWrapper
@@ -256,28 +255,28 @@ public:
     GEOS_FORCE_INLINE
     integer numPhases() const { return LvArray::integerConversion< integer >( m_phaseFraction.value.size( 2 ) ); }
 
-    GEOS_HOST_DEVICE arrayView3d< real64 const, multifluid::USD_PHASE > phaseFraction() const
+    GEOS_HOST_DEVICE multifluid::ArrayView< real64 const, 3 > phaseFraction() const
     { return m_phaseFraction.value; }
 
-    GEOS_HOST_DEVICE arrayView3d< real64 const, multifluid::USD_PHASE > phaseDensity() const
+    GEOS_HOST_DEVICE multifluid::ArrayView< real64 const, 3 > phaseDensity() const
     { return m_phaseDensity.value; }
 
-    GEOS_HOST_DEVICE arrayView3d< real64 const, multifluid::USD_PHASE > phaseMassDensity() const
+    GEOS_HOST_DEVICE multifluid::ArrayView< real64 const, 3 > phaseMassDensity() const
     { return m_phaseMassDensity.value; }
 
-    GEOS_HOST_DEVICE arrayView3d< real64 const, multifluid::USD_PHASE > phaseViscosity() const
+    GEOS_HOST_DEVICE multifluid::ArrayView< real64 const, 3 > phaseViscosity() const
     { return m_phaseViscosity.value; }
 
-    GEOS_HOST_DEVICE arrayView4d< real64 const, multifluid::USD_PHASE_COMP > phaseCompFraction() const
+    GEOS_HOST_DEVICE multifluid::ArrayView< real64 const, 4 > phaseCompFraction() const
     { return m_phaseCompFraction.value; }
 
-    GEOS_HOST_DEVICE arrayView2d< real64 const, multifluid::USD_FLUID > totalDensity() const
+    GEOS_HOST_DEVICE multifluid::ArrayView< real64 const, 2 > totalDensity() const
     { return m_totalDensity.value; }
 
-    GEOS_HOST_DEVICE arrayView3d< real64 const, multifluid::USD_PHASE > phaseEnthalpy() const
+    GEOS_HOST_DEVICE multifluid::ArrayView< real64 const, 3 > phaseEnthalpy() const
     { return m_phaseEnthalpy.value; }
 
-    GEOS_HOST_DEVICE arrayView3d< real64 const, multifluid::USD_PHASE > phaseInternalEnergy() const
+    GEOS_HOST_DEVICE multifluid::ArrayView< real64 const, 3 > phaseInternalEnergy() const
     { return m_phaseInternalEnergy.value; }
 
     /**
@@ -303,13 +302,13 @@ public:
                                real64 const pressure,
                                real64 const temperature,
                                arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & composition,
-                               arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & phaseFraction,
-                               arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & phaseDensity,
-                               arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & phaseMassDensity,
-                               arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & phaseViscosity,
-                               arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & phaseEnthalpy,
-                               arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & phaseInternalEnergy,
-                               arraySlice2d< real64, multifluid::USD_PHASE_COMP-2 > const & phaseCompFraction,
+                               multifluid::ArraySlice< real64, 1 > const & phaseFraction,
+                               multifluid::ArraySlice< real64, 1 > const & phaseDensity,
+                               multifluid::ArraySlice< real64, 1 > const & phaseMassDensity,
+                               multifluid::ArraySlice< real64, 1 > const & phaseViscosity,
+                               multifluid::ArraySlice< real64, 1 > const & phaseEnthalpy,
+                               multifluid::ArraySlice< real64, 1 > const & phaseInternalEnergy,
+                               multifluid::ArraySlice< real64, 2 > const & phaseCompFraction,
                                real64 & totalDensity );
 
 protected:
@@ -389,8 +388,8 @@ protected:
     template< integer maxNumComp, integer maxNumPhase >
     GEOS_HOST_DEVICE
     void convertToMassFractions( real64 const (&phaseMolecularWeight)[maxNumPhase],
-                                 arraySlice1d< real64, multifluid::USD_PHASE - 2 > const phaseFrac,
-                                 arraySlice2d< real64, multifluid::USD_PHASE_COMP - 2 > const phaseCompFrac ) const;
+                                 multifluid::ArraySlice< real64, 1 > const phaseFrac,
+                                 multifluid::ArraySlice< real64, 2 > const phaseCompFrac ) const;
 
     /**
      * @brief Utility function to convert mole fractions to mass fractions and keep derivatives
@@ -417,10 +416,10 @@ protected:
                                  real64 const (&dPhaseMolecularWeight)[maxNumPhase][maxNumComp+2],
                                  PhaseProp::SliceType const phaseFrac,
                                  PhaseComp::SliceType const phaseCompFrac,
-                                 arraySlice2d< real64, multifluid::USD_PHASE_DC - 2 > const dPhaseDens,
-                                 arraySlice2d< real64, multifluid::USD_PHASE_DC - 2 > const dPhaseVisc,
-                                 arraySlice2d< real64, multifluid::USD_PHASE_DC - 2 > const dPhaseEnthalpy,
-                                 arraySlice2d< real64, multifluid::USD_PHASE_DC - 2 > const dPhaseInternalEnergy ) const;
+                                 multifluid::ArraySlice< real64, 2 > const dPhaseDens,
+                                 multifluid::ArraySlice< real64, 2 > const dPhaseVisc,
+                                 multifluid::ArraySlice< real64, 2 > const dPhaseEnthalpy,
+                                 multifluid::ArraySlice< real64, 2 > const dPhaseInternalEnergy ) const;
 
     /**
      * @brief Utility function to compute the internal energy from pressure, enthalpy, and density
@@ -435,10 +434,10 @@ protected:
     template< integer maxNumComp, integer maxNumPhase >
     GEOS_HOST_DEVICE
     void computeInternalEnergy( real64 const & pressure,
-                                arraySlice1d< real64, multifluid::USD_PHASE - 2 > const phaseFrac,
-                                arraySlice1d< real64, multifluid::USD_PHASE - 2 > const phaseMassDens,
-                                arraySlice1d< real64, multifluid::USD_PHASE - 2 > const phaseEnthalpy,
-                                arraySlice1d< real64, multifluid::USD_PHASE - 2 > const phaseInternalEnergy ) const;
+                                multifluid::ArraySlice< real64, 1 > const phaseFrac,
+                                multifluid::ArraySlice< real64, 1 > const phaseMassDens,
+                                multifluid::ArraySlice< real64, 1 > const phaseEnthalpy,
+                                multifluid::ArraySlice< real64, 1 > const phaseInternalEnergy ) const;
 
     /**
      * @brief Utility function to compute the internal energy from pressure, enthalpy, and density and keep derivatives
@@ -465,8 +464,8 @@ protected:
      */
     template< integer maxNumComp, integer maxNumPhase >
     GEOS_HOST_DEVICE
-    void computeTotalDensity( arraySlice1d< real64, multifluid::USD_PHASE - 2 > const phaseFrac,
-                              arraySlice1d< real64, multifluid::USD_PHASE - 2 > const phaseDens,
+    void computeTotalDensity( multifluid::ArraySlice< real64, 1 > const phaseFrac,
+                              multifluid::ArraySlice< real64, 1 > const phaseDens,
                               real64 & totalDens ) const;
 
     /**
@@ -585,10 +584,10 @@ private:
     void computeDerivativesWrtMassFractions( real64 const (&dCompMoleFrac_dCompMassFrac)[maxNumComp][maxNumComp],
                                              PhaseProp::SliceType const phaseFrac,
                                              PhaseComp::SliceType const phaseCompFrac,
-                                             arraySlice2d< real64, multifluid::USD_PHASE_DC - 2 > const dPhaseDens,
-                                             arraySlice2d< real64, multifluid::USD_PHASE_DC - 2 > const dPhaseVisc,
-                                             arraySlice2d< real64, multifluid::USD_PHASE_DC - 2 > const dPhaseEnthalpy,
-                                             arraySlice2d< real64, multifluid::USD_PHASE_DC - 2 > const dPhaseInternalEnergy ) const;
+                                             multifluid::ArraySlice< real64, 2 > const dPhaseDens,
+                                             multifluid::ArraySlice< real64, 2 > const dPhaseVisc,
+                                             multifluid::ArraySlice< real64, 2 > const dPhaseEnthalpy,
+                                             multifluid::ArraySlice< real64, 2 > const dPhaseInternalEnergy ) const;
 
     /**
      * @brief Main compute function to update properties in a cell with derivatives (used in Newton iterations)
@@ -678,11 +677,11 @@ protected:
 
   // backup data
 
-  array3d< real64, multifluid::LAYOUT_PHASE > m_phaseDensity_n;
-  array3d< real64, multifluid::LAYOUT_PHASE > m_phaseEnthalpy_n;
-  array3d< real64, multifluid::LAYOUT_PHASE > m_phaseInternalEnergy_n;
-  array4d< real64, multifluid::LAYOUT_PHASE_COMP > m_phaseCompFraction_n;
-  array2d< real64, multifluid::LAYOUT_FLUID > m_totalDensity_n;
+  multifluid::Array< real64, 3 > m_phaseDensity_n;
+  multifluid::Array< real64, 3 > m_phaseEnthalpy_n;
+  multifluid::Array< real64, 3 > m_phaseInternalEnergy_n;
+  multifluid::Array< real64, 4 > m_phaseCompFraction_n;
+  multifluid::Array< real64, 2 > m_totalDensity_n;
 
 };
 
@@ -693,13 +692,13 @@ MultiFluidBase::KernelWrapper::computeValues( FLUIDWRAPPER const fluidWrapper,
                                               real64 const pressure,
                                               real64 const temperature,
                                               arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & composition,
-                                              arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & phaseFraction,
-                                              arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & phaseDensity,
-                                              arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & phaseMassDensity,
-                                              arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & phaseViscosity,
-                                              arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & phaseEnthalpy,
-                                              arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & phaseInternalEnergy,
-                                              arraySlice2d< real64, multifluid::USD_PHASE_COMP-2 > const & phaseCompFraction,
+                                              multifluid::ArraySlice< real64, 1 > const & phaseFraction,
+                                              multifluid::ArraySlice< real64, 1 > const & phaseDensity,
+                                              multifluid::ArraySlice< real64, 1 > const & phaseMassDensity,
+                                              multifluid::ArraySlice< real64, 1 > const & phaseViscosity,
+                                              multifluid::ArraySlice< real64, 1 > const & phaseEnthalpy,
+                                              multifluid::ArraySlice< real64, 1 > const & phaseInternalEnergy,
+                                              multifluid::ArraySlice< real64, 2 > const & phaseCompFraction,
                                               real64 & totalDensity )
 {
   integer constexpr maxNumPhase = MAX_NUM_PHASES;
@@ -711,9 +710,9 @@ MultiFluidBase::KernelWrapper::computeValues( FLUIDWRAPPER const fluidWrapper,
   // Allocate data for derivatives. All properties of the same type will use the same memory
   // space for the derivatives. The derivatives returned will clearly be garbage but the values
   // should be correct.
-  StackArray< real64, 4, maxNumDof * maxNumPhase, multifluid::LAYOUT_PHASE_DC > dPhaseProp( 1, 1, numPhase, numComp+2 );
-  StackArray< real64, 5, maxNumDof * maxNumComp * maxNumPhase, multifluid::LAYOUT_PHASE_COMP_DC > dPhaseComp( 1, 1, numPhase, numComp, numComp+2 );
-  StackArray< real64, 3, maxNumDof, multifluid::LAYOUT_FLUID_DC > dFluidProp( 1, 1, numComp+2 );
+  multifluid::StackArray< real64, 4, maxNumDof*maxNumPhase > dPhaseProp( 1, 1, numPhase, numComp+2 );
+  multifluid::StackArray< real64, 5, maxNumDof*maxNumComp*maxNumPhase > dPhaseComp( 1, 1, numPhase, numComp, numComp+2 );
+  multifluid::StackArray< real64, 3, maxNumDof > dFluidProp( 1, 1, numComp+2 );
 
   // Wrap the output in multi variable objects
   PhaseProp::SliceType phaseFractionWrapper { phaseFraction, dPhaseProp[0][0] };
@@ -793,8 +792,8 @@ GEOS_FORCE_INLINE
 void
 MultiFluidBase::KernelWrapper::
   convertToMassFractions( real64 const (&phaseMolecularWeight)[maxNumPhase],
-                          arraySlice1d< real64, multifluid::USD_PHASE - 2 > const phaseFrac,
-                          arraySlice2d< real64, multifluid::USD_PHASE_COMP - 2 > const phaseCompFrac ) const
+                          multifluid::ArraySlice< real64, 1 > const phaseFrac,
+                          multifluid::ArraySlice< real64, 2 > const phaseCompFrac ) const
 {
   integer constexpr maxNumDof = maxNumComp + 2;
   integer const numPhase = numPhases();
@@ -803,18 +802,18 @@ MultiFluidBase::KernelWrapper::
   real64 dCompMoleFrac_dCompMassFrac[maxNumComp][maxNumComp]{};
   real64 dPhaseMolecularWeight[maxNumPhase][maxNumDof]{};
 
-  StackArray< real64, 4, maxNumDof *maxNumPhase, multifluid::LAYOUT_PHASE_DC > dPhaseFrac( 1, 1, numPhase, numComp+2 );
-  MultiFluidVarSlice< real64, 1, USD_PHASE - 2, multifluid::USD_PHASE_DC - 2 >
+  multifluid::StackArray< real64, 4, maxNumDof*maxNumPhase > dPhaseFrac( 1, 1, numPhase, numComp+2 );
+  MultiFluidVarSlice< real64, 1 >
   phaseFracAndDeriv { phaseFrac, dPhaseFrac[0][0] };
 
-  StackArray< real64, 5, maxNumDof *maxNumComp *maxNumPhase, multifluid::LAYOUT_PHASE_COMP_DC > dPhaseCompFrac( 1, 1, numPhase, numComp, numComp+2 );
-  MultiFluidVarSlice< real64, 2, USD_PHASE_COMP - 2, multifluid::USD_PHASE_COMP_DC - 2 >
+  multifluid::StackArray< real64, 5, maxNumDof*maxNumComp*maxNumPhase > dPhaseCompFrac( 1, 1, numPhase, numComp, numComp+2 );
+  MultiFluidVarSlice< real64, 2 >
   phaseCompFracAndDeriv { phaseCompFrac, dPhaseCompFrac[0][0] };
 
-  StackArray< real64, 4, maxNumDof *maxNumPhase, multifluid::LAYOUT_PHASE_DC > dPhaseDens( 1, 1, numPhase, numComp+2 );
-  StackArray< real64, 4, maxNumDof *maxNumPhase, multifluid::LAYOUT_PHASE_DC > dPhaseVisc( 1, 1, numPhase, numComp+2 );
-  StackArray< real64, 4, maxNumDof *maxNumPhase, multifluid::LAYOUT_PHASE_DC > dPhaseEnthalpy( 1, 1, numPhase, numComp+2 );
-  StackArray< real64, 4, maxNumDof *maxNumPhase, multifluid::LAYOUT_PHASE_DC > dPhaseInternalEnergy( 1, 1, numPhase, numComp+2 );
+  multifluid::StackArray< real64, 4, maxNumDof*maxNumPhase > dPhaseDens( 1, 1, numPhase, numComp+2 );
+  multifluid::StackArray< real64, 4, maxNumDof*maxNumPhase > dPhaseVisc( 1, 1, numPhase, numComp+2 );
+  multifluid::StackArray< real64, 4, maxNumDof*maxNumPhase > dPhaseEnthalpy( 1, 1, numPhase, numComp+2 );
+  multifluid::StackArray< real64, 4, maxNumDof*maxNumPhase > dPhaseInternalEnergy( 1, 1, numPhase, numComp+2 );
 
   convertToMassFractions( dCompMoleFrac_dCompMassFrac,
                           phaseMolecularWeight,
@@ -837,10 +836,10 @@ MultiFluidBase::KernelWrapper::
                           real64 const (&dPhaseMolecularWeight)[maxNumPhase][maxNumComp+2],
                           PhaseProp::SliceType const phaseFrac,
                           PhaseComp::SliceType const phaseCompFrac,
-                          arraySlice2d< real64, multifluid::USD_PHASE_DC - 2 > const dPhaseDens,
-                          arraySlice2d< real64, multifluid::USD_PHASE_DC - 2 > const dPhaseVisc,
-                          arraySlice2d< real64, multifluid::USD_PHASE_DC - 2 > const dPhaseEnthalpy,
-                          arraySlice2d< real64, multifluid::USD_PHASE_DC - 2 > const dPhaseInternalEnergy ) const
+                          multifluid::ArraySlice< real64, 2 > const dPhaseDens,
+                          multifluid::ArraySlice< real64, 2 > const dPhaseVisc,
+                          multifluid::ArraySlice< real64, 2 > const dPhaseEnthalpy,
+                          multifluid::ArraySlice< real64, 2 > const dPhaseInternalEnergy ) const
 {
   convertToPhaseMassFractions( phaseMolecularWeight,
                                dPhaseMolecularWeight,
@@ -968,10 +967,10 @@ MultiFluidBase::KernelWrapper::
   computeDerivativesWrtMassFractions( real64 const (&dCompMoleFrac_dCompMassFrac)[maxNumComp][maxNumComp],
                                       PhaseProp::SliceType const phaseFrac,
                                       PhaseComp::SliceType const phaseCompFrac,
-                                      arraySlice2d< real64, multifluid::USD_PHASE_DC - 2 > const dPhaseDens,
-                                      arraySlice2d< real64, multifluid::USD_PHASE_DC - 2 > const dPhaseVisc,
-                                      arraySlice2d< real64, multifluid::USD_PHASE_DC - 2 > const dPhaseEnthalpy,
-                                      arraySlice2d< real64, multifluid::USD_PHASE_DC - 2 > const dPhaseInternalEnergy ) const
+                                      multifluid::ArraySlice< real64, 2 > const dPhaseDens,
+                                      multifluid::ArraySlice< real64, 2 > const dPhaseVisc,
+                                      multifluid::ArraySlice< real64, 2 > const dPhaseEnthalpy,
+                                      multifluid::ArraySlice< real64, 2 > const dPhaseInternalEnergy ) const
 {
   using Deriv = multifluid::DerivativeOffset;
 
@@ -1000,29 +999,29 @@ GEOS_FORCE_INLINE
 void
 MultiFluidBase::KernelWrapper::
   computeInternalEnergy( real64 const & pressure,
-                         arraySlice1d< real64, multifluid::USD_PHASE - 2 > const phaseFrac,
-                         arraySlice1d< real64, multifluid::USD_PHASE - 2 > const phaseMassDens,
-                         arraySlice1d< real64, multifluid::USD_PHASE - 2 > const phaseEnthalpy,
-                         arraySlice1d< real64, multifluid::USD_PHASE - 2 > const phaseInternalEnergy ) const
+                         multifluid::ArraySlice< real64, 1 > const phaseFrac,
+                         multifluid::ArraySlice< real64, 1 > const phaseMassDens,
+                         multifluid::ArraySlice< real64, 1 > const phaseEnthalpy,
+                         multifluid::ArraySlice< real64, 1 > const phaseInternalEnergy ) const
 {
   integer constexpr maxNumDof = maxNumComp + 2;
   integer const numPhase = numPhases();
   integer const numComp = numComponents();
 
-  StackArray< real64, 4, maxNumDof *maxNumPhase, multifluid::LAYOUT_PHASE_DC > dPhaseFrac( 1, 1, numPhase, numComp+2 );
-  MultiFluidVarSlice< real64, 1, USD_PHASE - 2, multifluid::USD_PHASE_DC - 2 >
+  multifluid::StackArray< real64, 4, maxNumDof*maxNumPhase > dPhaseFrac( 1, 1, numPhase, numComp+2 );
+  MultiFluidVarSlice< real64, 1 >
   phaseFracAndDeriv { phaseFrac, dPhaseFrac[0][0] };
 
-  StackArray< real64, 4, maxNumDof *maxNumPhase, multifluid::LAYOUT_PHASE_DC > dPhaseMassDens( 1, 1, numPhase, numComp+2 );
-  MultiFluidVarSlice< real64, 1, USD_PHASE - 2, multifluid::USD_PHASE_DC - 2 >
+  multifluid::StackArray< real64, 4, maxNumDof*maxNumPhase > dPhaseMassDens( 1, 1, numPhase, numComp+2 );
+  MultiFluidVarSlice< real64, 1 >
   phaseMassDensAndDeriv { phaseMassDens, dPhaseMassDens[0][0] };
 
-  StackArray< real64, 4, maxNumDof *maxNumPhase, multifluid::LAYOUT_PHASE_DC > dPhaseEnthalpy( 1, 1, numPhase, numComp+2 );
-  MultiFluidVarSlice< real64, 1, USD_PHASE - 2, multifluid::USD_PHASE_DC - 2 >
+  multifluid::StackArray< real64, 4, maxNumDof*maxNumPhase > dPhaseEnthalpy( 1, 1, numPhase, numComp+2 );
+  MultiFluidVarSlice< real64, 1 >
   phaseEnthalpyAndDeriv { phaseEnthalpy, dPhaseEnthalpy[0][0] };
 
-  StackArray< real64, 4, maxNumDof *maxNumPhase, multifluid::LAYOUT_PHASE_DC > dPhaseInternalEnergy( 1, 1, numPhase, numComp+2 );
-  MultiFluidVarSlice< real64, 1, USD_PHASE - 2, multifluid::USD_PHASE_DC - 2 >
+  multifluid::StackArray< real64, 4, maxNumDof*maxNumPhase > dPhaseInternalEnergy( 1, 1, numPhase, numComp+2 );
+  MultiFluidVarSlice< real64, 1 >
   phaseInternalEnergyAndDeriv { phaseInternalEnergy, dPhaseInternalEnergy[0][0] };
 
   computeInternalEnergy( pressure,
@@ -1067,22 +1066,22 @@ template< integer maxNumComp, integer maxNumPhase >
 GEOS_HOST_DEVICE
 inline void
 MultiFluidBase::KernelWrapper::
-  computeTotalDensity( arraySlice1d< real64, multifluid::USD_PHASE - 2 > const phaseFrac,
-                       arraySlice1d< real64, multifluid::USD_PHASE - 2 > const phaseDens,
+  computeTotalDensity( multifluid::ArraySlice< real64, 1 > const phaseFrac,
+                       multifluid::ArraySlice< real64, 1 > const phaseDens,
                        real64 & totalDens ) const
 {
   integer constexpr maxNumDof = maxNumComp + 2;
   integer const numPhase = numPhases();
   integer const numComp = numComponents();
 
-  StackArray< real64, 3, maxNumDof, multifluid::LAYOUT_FLUID_DC > dTotalDens( 1, 1, numComp+2 );
-  MultiFluidVarSlice< real64, 0, USD_FLUID - 2, multifluid::USD_FLUID_DC - 2 > totalDensAndDeriv { totalDens, dTotalDens[0][0] };
+  multifluid::StackArray< real64, 3, maxNumDof > dTotalDens( 1, 1, numComp+2 );
+  MultiFluidVarSlice< real64, 0 > totalDensAndDeriv { totalDens, dTotalDens[0][0] };
 
-  StackArray< real64, 4, maxNumDof *maxNumPhase, multifluid::LAYOUT_PHASE_DC > dPhaseFrac( 1, 1, numPhase, numComp+2 );
-  MultiFluidVarSlice< real64, 1, USD_PHASE - 2, multifluid::USD_PHASE_DC - 2 > phaseFracAndDeriv { phaseFrac, dPhaseFrac[0][0] };
+  multifluid::StackArray< real64, 4, maxNumDof*maxNumPhase > dPhaseFrac( 1, 1, numPhase, numComp+2 );
+  MultiFluidVarSlice< real64, 1 > phaseFracAndDeriv { phaseFrac, dPhaseFrac[0][0] };
 
-  StackArray< real64, 4, maxNumDof *maxNumPhase, multifluid::LAYOUT_PHASE_DC > dPhaseDens( 1, 1, numPhase, numComp+2 );
-  MultiFluidVarSlice< real64, 1, USD_PHASE - 2, multifluid::USD_PHASE_DC - 2 > phaseDensAndDeriv { phaseDens, dPhaseDens[0][0] };
+  multifluid::StackArray< real64, 4, maxNumDof*maxNumPhase > dPhaseDens( 1, 1, numPhase, numComp+2 );
+  MultiFluidVarSlice< real64, 1 > phaseDensAndDeriv { phaseDens, dPhaseDens[0][0] };
 
   computeTotalDensity( phaseFracAndDeriv,
                        phaseDensAndDeriv,

@@ -746,7 +746,7 @@ void CompositionalMultiphaseBase::initializeFluidState( MeshLevel & mesh,
     // in order to initialize the primary solution variables
     string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
     MultiFluidBase const & fluid = getConstitutiveModel< MultiFluidBase >( subRegion, fluidName );
-    arrayView2d< real64 const, multifluid::USD_FLUID > const totalDens = fluid.totalDensity();
+    multifluid::ArrayView< real64 const, 2 > const totalDens = fluid.totalDensity();
 
     arrayView2d< real64 const, compflow::USD_COMP > const compFrac =
       subRegion.getField< fields::flow::globalCompFraction >();
@@ -1765,7 +1765,7 @@ void CompositionalMultiphaseBase::applyDirichletBC( real64 const time_n,
         subRegion.getReference< array1d< real64 > >( fields::flow::pressure::key() );
       arrayView2d< real64 const, compflow::USD_COMP > const compDens =
         subRegion.getReference< array2d< real64, compflow::LAYOUT_COMP > >( fields::flow::globalCompDensity::key() );
-      arrayView2d< real64 const, multifluid::USD_FLUID > const totalDens = fluid.totalDensity();
+      multifluid::ArrayView< real64 const, 2 > const totalDens = fluid.totalDensity();
 
       integer const numComp = m_numComponents;
       forAll< parallelDevicePolicy<> >( targetSet.size(), [=] GEOS_HOST_DEVICE ( localIndex const a )

@@ -188,13 +188,13 @@ protected:
 
   std::unique_ptr< chemicalReactions::KineticReactions > m_kineticReactions;
 
-  array2d< real64, multifluid::LAYOUT_FLUID >  m_primarySpeciesConcentration;
+  multifluid::Array< real64, 2 >  m_primarySpeciesConcentration;
 
-  array2d< real64, multifluid::LAYOUT_FLUID >  m_secondarySpeciesConcentration;
+  multifluid::Array< real64, 2 >  m_secondarySpeciesConcentration;
 
-  array2d< real64, multifluid::LAYOUT_FLUID >  m_primarySpeciesTotalConcentration;
+  multifluid::Array< real64, 2 >  m_primarySpeciesTotalConcentration;
 
-  array2d< real64, multifluid::LAYOUT_FLUID >  m_kineticReactionRates;
+  multifluid::Array< real64, 2 >  m_kineticReactionRates;
 };
 
 inline void

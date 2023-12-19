@@ -650,14 +650,14 @@ void CompositionalMultiphaseWell::updateVolRatesForConstraint( WellElementSubReg
   string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
   MultiFluidBase & fluid = subRegion.getConstitutiveModel< MultiFluidBase >( fluidName );
 
-  arrayView3d< real64 const, multifluid::USD_PHASE > const & phaseFrac = fluid.phaseFraction();
-  arrayView4d< real64 const, multifluid::USD_PHASE_DC > const & dPhaseFrac = fluid.dPhaseFraction();
+  multifluid::ArrayView< real64 const, 3 > const & phaseFrac = fluid.phaseFraction();
+  multifluid::ArrayView< real64 const, 4 > const & dPhaseFrac = fluid.dPhaseFraction();
 
-  arrayView2d< real64 const, multifluid::USD_FLUID > const & totalDens = fluid.totalDensity();
-  arrayView3d< real64 const, multifluid::USD_FLUID_DC > const & dTotalDens = fluid.dTotalDensity();
+  multifluid::ArrayView< real64 const, 2 > const & totalDens = fluid.totalDensity();
+  multifluid::ArrayView< real64 const, 3 > const & dTotalDens = fluid.dTotalDensity();
 
-  arrayView3d< real64 const, multifluid::USD_PHASE > const & phaseDens = fluid.phaseDensity();
-  arrayView4d< real64 const, multifluid::USD_PHASE_DC > const & dPhaseDens = fluid.dPhaseDensity();
+  multifluid::ArrayView< real64 const, 3 > const & phaseDens = fluid.phaseDensity();
+  multifluid::ArrayView< real64 const, 4 > const & dPhaseDens = fluid.dPhaseDensity();
 
   // control data
 
@@ -975,8 +975,8 @@ void CompositionalMultiphaseWell::initializeWells( DomainPartition & domain )
       // get well secondary variables on well elements
       string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
       MultiFluidBase & fluid = getConstitutiveModel< MultiFluidBase >( subRegion, fluidName );
-      arrayView3d< real64 const, multifluid::USD_PHASE > const & wellElemPhaseDens = fluid.phaseDensity();
-      arrayView2d< real64 const, multifluid::USD_FLUID > const & wellElemTotalDens = fluid.totalDensity();
+      multifluid::ArrayView< real64 const, 3 > const & wellElemPhaseDens = fluid.phaseDensity();
+      multifluid::ArrayView< real64 const, 2 > const & wellElemTotalDens = fluid.totalDensity();
 
       // 4) Back calculate component densities
       constitutive::constitutiveUpdatePassThru( fluid, [&] ( auto & castedFluid )
@@ -1112,12 +1112,12 @@ void CompositionalMultiphaseWell::assembleAccumulationTerms( DomainPartition con
 
       string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
       MultiFluidBase const & fluid = subRegion.getConstitutiveModel< MultiFluidBase >( fluidName );
-      arrayView3d< real64 const, multifluid::USD_PHASE > const & wellElemPhaseDens = fluid.phaseDensity();
-      arrayView4d< real64 const, multifluid::USD_PHASE_DC > const & dWellElemPhaseDens = fluid.dPhaseDensity();
-      arrayView4d< real64 const, multifluid::USD_PHASE_COMP > const & wellElemPhaseCompFrac = fluid.phaseCompFraction();
-      arrayView5d< real64 const, multifluid::USD_PHASE_COMP_DC > const & dWellElemPhaseCompFrac = fluid.dPhaseCompFraction();
-      arrayView3d< real64 const, multifluid::USD_PHASE > const & wellElemPhaseDens_n = fluid.phaseDensity_n();
-      arrayView4d< real64 const, multifluid::USD_PHASE_COMP > const & wellElemPhaseCompFrac_n = fluid.phaseCompFraction_n();
+      multifluid::ArrayView< real64 const, 3 > const & wellElemPhaseDens = fluid.phaseDensity();
+      multifluid::ArrayView< real64 const, 4 > const & dWellElemPhaseDens = fluid.dPhaseDensity();
+      multifluid::ArrayView< real64 const, 4 > const & wellElemPhaseCompFrac = fluid.phaseCompFraction();
+      multifluid::ArrayView< real64 const, 5 > const & dWellElemPhaseCompFrac = fluid.dPhaseCompFraction();
+      multifluid::ArrayView< real64 const, 3 > const & wellElemPhaseDens_n = fluid.phaseDensity_n();
+      multifluid::ArrayView< real64 const, 4 > const & wellElemPhaseCompFrac_n = fluid.phaseCompFraction_n();
 
       isothermalCompositionalMultiphaseBaseKernels::
         KernelLaunchSelector1< AccumulationKernel >( numFluidComponents(),

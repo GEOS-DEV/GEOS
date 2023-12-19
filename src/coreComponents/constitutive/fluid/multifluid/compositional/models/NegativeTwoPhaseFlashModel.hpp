@@ -39,8 +39,8 @@ class NegativeTwoPhaseFlashModelUpdate final : public FunctionBaseUpdate
 {
 public:
 
-  using PhaseProp = MultiFluidVar< real64, 3, multifluid::LAYOUT_PHASE, multifluid::LAYOUT_PHASE_DC >;
-  using PhaseComp = MultiFluidVar< real64, 4, multifluid::LAYOUT_PHASE_COMP, multifluid::LAYOUT_PHASE_COMP_DC >;
+  using PhaseProp = MultiFluidVar< real64, 3 >;
+  using PhaseComp = MultiFluidVar< real64, 4 >;
 
   explicit NegativeTwoPhaseFlashModelUpdate( integer const numComponents );
 
