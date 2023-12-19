@@ -252,29 +252,39 @@ public:
   }
 
   /**
-   * @brief Const/non-mutable accessor for the mean stress increment at the previous sequential iteration
+   * @brief Const/non-mutable accessor for the mean total stress increment at the previous sequential iteration
    * @return Accessor
    */
-  virtual arrayView2d< real64 const > const getMeanEffectiveStressIncrement_k() const
+  virtual arrayView2d< real64 const > const getMeanTotalStressIncrement_k() const
   {
-    GEOS_ERROR( "getMeanEffectiveStressIncrement_k() not implemented for this model" );
+    GEOS_ERROR( "getMeanTotalStressIncrement_k() not implemented for this model" );
 
     array2d< real64 > out;
     return out.toViewConst();
   }
 
   /**
-   * @brief Non-const accessor for the mean stress increment at the previous sequential iteration
+   * @brief Non-const accessor for the average mean total stress increment at the previous sequential iteration
    * @return Accessor
    */
-  virtual arrayView1d< real64 > const getAverageMeanEffectiveStressIncrement_k()
+  virtual arrayView1d< real64 > const getAverageMeanTotalStressIncrement_k()
   {
-    GEOS_ERROR( "getAverageMeanEffectiveStressIncrement_k() not implemented for this model" );
+    GEOS_ERROR( "getAverageMeanTotalStressIncrement_k() not implemented for this model" );
 
     array1d< real64 > out;
     return out.toView();
   }
 
+  GEOS_HOST_DEVICE
+  inline
+  void savePorosity( localIndex const k,
+                     localIndex const q,
+                     real64 const & porosity,
+                     real64 const & dPorosity_dPressure ) const
+  {
+    m_newPorosity[k][q] = porosity;
+    m_dPorosity_dPressure[k][q] = dPorosity_dPressure;
+  }
 
   using KernelWrapper = PorosityBaseUpdates;
 

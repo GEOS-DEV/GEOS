@@ -52,8 +52,8 @@ public:
                        arrayView1d< real64 > const & referencePorosity,
                        arrayView1d< real64 > const & biotCoefficient,
                        arrayView1d< real64 > const & thermalExpansionCoefficient,
-                       arrayView2d< real64 > const & meanEffectiveStressIncrement_k,
-                       arrayView1d< real64 const > const & averageMeanEffectiveStressIncrement_k,
+                       arrayView2d< real64 > const & meanTotalStressIncrement_k,
+                       arrayView1d< real64 > const & averageMeanTotalStressIncrement_k,
                        arrayView1d< real64 > const & bulkModulus,
                        real64 const & grainBulkModulus ): PorosityBaseUpdates( newPorosity,
                                                                                porosity_n,
@@ -65,8 +65,8 @@ public:
     m_thermalExpansionCoefficient( thermalExpansionCoefficient ),
     m_biotCoefficient( biotCoefficient ),
     m_bulkModulus( bulkModulus ),
-    m_meanEffectiveStressIncrement_k( meanEffectiveStressIncrement_k ),
-    m_averageMeanEffectiveStressIncrement_k( averageMeanEffectiveStressIncrement_k )
+    m_meanTotalStressIncrement_k( meanTotalStressIncrement_k ),
+    m_averageMeanTotalStressIncrement_k( averageMeanTotalStressIncrement_k )
   {}
 
   GEOS_HOST_DEVICE
@@ -105,9 +105,7 @@ public:
 
   GEOS_HOST_DEVICE
   void computePorosityFixedStress( real64 const & deltaPressureFromBeginningOfTimeStep,
-                                   real64 const & deltaPressureFromLastIteration,
                                    real64 const & deltaTemperatureFromBeginningOfTimeStep,
-                                   real64 const & deltaTemperatureFromLastIteration,
                                    real64 const & porosity_n,
                                    real64 const & referencePorosity,
                                    real64 & porosity,
@@ -116,7 +114,7 @@ public:
                                    real64 & dPorosity_dVolStrain,
                                    real64 const & biotCoefficient,
                                    real64 const & thermalExpansionCoefficient,
-                                   real64 const & meanEffectiveStressIncrement_k,
+                                   real64 const & averageMeanTotalStressIncrement_k,
                                    real64 const & bulkModulus ) const
   {
     real64 const biotSkeletonModulusInverse = (biotCoefficient - referencePorosity) / m_grainBulkModulus;
@@ -124,9 +122,10 @@ public:
     real64 const fixedStressPressureCoefficient = biotCoefficient * biotCoefficient / bulkModulus;
     real64 const fixedStressTemperatureCoefficient = 3 * biotCoefficient * thermalExpansionCoefficient;
 
+    // total stress formulation for porosity update
     porosity = porosity_n
-               + biotCoefficient * meanEffectiveStressIncrement_k / bulkModulus // change due to stress increment (at the previous
-                                                                                // sequential iteration)
+               + biotCoefficient * averageMeanTotalStressIncrement_k / bulkModulus // change due to stress increment (at the previous
+                                                                                   // sequential iteration)
                + biotSkeletonModulusInverse * deltaPressureFromBeginningOfTimeStep // change due to pressure increment
                - porosityThermalExpansion * deltaTemperatureFromBeginningOfTimeStep; // change due to temperature increment
     dPorosity_dPressure = biotSkeletonModulusInverse;
@@ -134,35 +133,31 @@ public:
     dPorosity_dVolStrain = biotCoefficient;
 
     // Fixed-stress part
-    porosity += fixedStressPressureCoefficient * deltaPressureFromLastIteration   // fixed-stress pressure term
-                + fixedStressTemperatureCoefficient * deltaTemperatureFromLastIteration;   // fixed-stress temperature term
+    porosity += fixedStressPressureCoefficient * deltaPressureFromBeginningOfTimeStep // fixed-stress pressure term
+                + fixedStressTemperatureCoefficient * deltaTemperatureFromBeginningOfTimeStep; // fixed-stress temperature term
     dPorosity_dPressure += fixedStressPressureCoefficient;
     dPorosity_dTemperature += fixedStressTemperatureCoefficient;
   }
 
   // this function is used in mechanics solver
-  // it uses meanEffectiveStressIncrement at gauss point
+  // it uses meanTotalStressIncrement at gauss point
   GEOS_HOST_DEVICE
   virtual void updateFixedStress( localIndex const k,
                                   localIndex const q,
                                   real64 const & pressure,                // current
-                                  real64 const & pressure_k,                // last iteration (for sequential)
+                                  real64 const & GEOS_UNUSED_PARAM( pressure_k ),                // last iteration (for sequential)
                                   real64 const & pressure_n,                // last time step
                                   real64 const & temperature,
-                                  real64 const & temperature_k,
+                                  real64 const & GEOS_UNUSED_PARAM( temperature_k ),
                                   real64 const & temperature_n,
-                                  real64 const & meanEffectiveStressIncrement,
+                                  real64 const & meanTotalStressIncrement,
                                   real64 & dPorosity_dVolStrain ) const
   {
     real64 const deltaPressureFromBeginningOfTimeStep = pressure - pressure_n;
-    real64 const deltaPressureFromLastIteration = pressure - pressure_k;
     real64 const deltaTemperatureFromBeginningOfTimeStep = temperature - temperature_n;
-    real64 const deltaTemperatureFromLastIteration = temperature - temperature_k;
 
     computePorosityFixedStress( deltaPressureFromBeginningOfTimeStep,
-                                deltaPressureFromLastIteration,
                                 deltaTemperatureFromBeginningOfTimeStep,
-                                deltaTemperatureFromLastIteration,
                                 m_porosity_n[k][q],
                                 m_referencePorosity[k],
                                 m_newPorosity[k][q],
@@ -171,7 +166,7 @@ public:
                                 dPorosity_dVolStrain,
                                 m_biotCoefficient[k],
                                 m_thermalExpansionCoefficient[k],
-                                meanEffectiveStressIncrement,
+                                meanTotalStressIncrement,
                                 m_bulkModulus[k] );
   }
 
@@ -189,14 +184,10 @@ public:
                                   real64 & dPorosity_dVolStrain ) const
   {
     real64 const deltaPressureFromBeginningOfTimeStep = pressure - pressure_n;
-    real64 const deltaPressureFromLastIteration = pressure - pressure_k;
     real64 const deltaTemperatureFromBeginningOfTimeStep = temperature - temperature_n;
-    real64 const deltaTemperatureFromLastIteration = temperature - temperature_k;
 
     computePorosityFixedStress( deltaPressureFromBeginningOfTimeStep,
-                                deltaPressureFromLastIteration,
                                 deltaTemperatureFromBeginningOfTimeStep,
-                                deltaTemperatureFromLastIteration,
                                 m_porosity_n[k][q],
                                 m_referencePorosity[k],
                                 m_newPorosity[k][q],
@@ -205,7 +196,7 @@ public:
                                 dPorosity_dVolStrain,
                                 m_biotCoefficient[k],
                                 m_thermalExpansionCoefficient[k],
-                                m_averageMeanEffectiveStressIncrement_k[k],
+                                m_averageMeanTotalStressIncrement_k[k],
                                 m_bulkModulus[k] );
   }
 
@@ -218,11 +209,11 @@ public:
   }
 
   GEOS_HOST_DEVICE
-  void updateMeanEffectiveStressIncrement( localIndex const k,
-                                           localIndex const q,
-                                           real64 const & meanEffectiveStressIncrement ) const
+  void updateMeanTotalStressIncrement( localIndex const k,
+                                       localIndex const q,
+                                       real64 const & meanTotalStressIncrement ) const
   {
-    m_meanEffectiveStressIncrement_k[k][q] = meanEffectiveStressIncrement;
+    m_meanTotalStressIncrement_k[k][q] = meanTotalStressIncrement;
   }
 
 protected:
@@ -239,11 +230,11 @@ protected:
   /// View on the bulk modulus (updated by PorousSolid)
   arrayView1d< real64 > const m_bulkModulus;
 
-  /// View on the mean stress increment at quadrature points (updated by PorousSolid)
-  arrayView2d< real64 > const m_meanEffectiveStressIncrement_k;
+  /// View on the mean total stress increment at quadrature points (updated by PorousSolid)
+  arrayView2d< real64 > const m_meanTotalStressIncrement_k;
 
-  /// View on the average mean stress increment
-  arrayView1d< real64 const > const m_averageMeanEffectiveStressIncrement_k;
+  /// View on the average mean total stress increment
+  arrayView1d< real64 > const m_averageMeanTotalStressIncrement_k;
 
 };
 
@@ -263,9 +254,9 @@ public:
   {
     static constexpr char const *grainBulkModulusString() { return "grainBulkModulus"; }
 
-    static constexpr char const *meanEffectiveStressIncrementString() { return "meanEffectiveStressIncrement"; }
+    static constexpr char const *meanTotalStressIncrementString() { return "meanTotalStressIncrement"; }
 
-    static constexpr char const *averageMeanEffectiveStressIncrementString() { return "averageMeanEffectiveStressIncrement"; }
+    static constexpr char const *averageMeanTotalStressIncrementString() { return "averageMeanTotalStressIncrement"; }
 
     static constexpr char const *solidBulkModulusString() { return "solidBulkModulus"; }
 
@@ -283,14 +274,21 @@ public:
     return m_biotCoefficient.toViewConst();
   }
 
-  virtual arrayView1d< real64 > const getAverageMeanEffectiveStressIncrement_k() override final
+  virtual arrayView1d< real64 > const getAverageMeanTotalStressIncrement_k() override final
   {
-    return m_averageMeanEffectiveStressIncrement_k.toView();
+    return m_averageMeanTotalStressIncrement_k.toView();
   }
 
-  virtual arrayView2d< real64 const > const getMeanEffectiveStressIncrement_k() const override final
+  virtual arrayView2d< real64 const > const getMeanTotalStressIncrement_k() const override final
   {
-    return m_meanEffectiveStressIncrement_k.toViewConst();
+    return m_meanTotalStressIncrement_k.toViewConst();
+  }
+
+  GEOS_HOST_DEVICE
+  void updateAverageMeanTotalStressIncrement( localIndex const k,
+                                              real64 const & averageMeanTotalStressIncrement ) const
+  {
+    m_averageMeanTotalStressIncrement_k[ k ] = averageMeanTotalStressIncrement;
   }
 
   using KernelWrapper = BiotPorosityUpdates;
@@ -309,8 +307,8 @@ public:
                           m_referencePorosity,
                           m_biotCoefficient,
                           m_thermalExpansionCoefficient,
-                          m_meanEffectiveStressIncrement_k,
-                          m_averageMeanEffectiveStressIncrement_k,
+                          m_meanTotalStressIncrement_k,
+                          m_averageMeanTotalStressIncrement_k,
                           m_bulkModulus,
                           m_grainBulkModulus );
   }
@@ -331,11 +329,11 @@ protected:
   /// Bulk modulus (updated in the update class, not read in input)
   array1d< real64 > m_bulkModulus;
 
-  /// Mean stress increment (updated in the update class, not read in input)
-  array2d< real64 > m_meanEffectiveStressIncrement_k;
+  /// Mean total stress increment (updated in the update class, not read in input)
+  array2d< real64 > m_meanTotalStressIncrement_k;
 
-  /// Average mean stress increment (not read in input)
-  array1d< real64 > m_averageMeanEffectiveStressIncrement_k;
+  /// Average mean total stress increment (not read in input)
+  array1d< real64 > m_averageMeanTotalStressIncrement_k;
 
   /// Grain bulk modulus (read from XML)
   real64 m_grainBulkModulus;
