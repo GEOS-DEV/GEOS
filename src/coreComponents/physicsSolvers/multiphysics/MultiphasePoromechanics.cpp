@@ -25,6 +25,7 @@
 #include "mesh/utilities/AverageOverQuadraturePointsKernel.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseBase.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
+#include "physicsSolvers/multiphysics/CompositionalMultiphaseReservoirAndWells.hpp"
 #include "physicsSolvers/multiphysics/poromechanicsKernels/MultiphasePoromechanics.hpp"
 #include "physicsSolvers/multiphysics/poromechanicsKernels/ThermalMultiphasePoromechanics.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsFields.hpp"
@@ -492,7 +493,7 @@ void MultiphasePoromechanics< FLOW_SOLVER >::mapSolutionBetweenSolvers( DomainPa
   GEOS_MARK_FUNCTION;
 
   /// After the flow solver
-  if( solverType == static_cast< integer >( SolverType::Flow ) )
+  if( solverType == static_cast< integer >( Base::SolverType::Flow ) )
   {
     // save pressure and temperature at the end of this iteration
     flowSolver()->saveIterationState( domain );
@@ -514,10 +515,10 @@ void MultiphasePoromechanics< FLOW_SOLVER >::mapSolutionBetweenSolvers( DomainPa
   }
 
   /// After the solid mechanics solver
-  if( solverType == static_cast< integer >( SolverType::SolidMechanics ) )
+  if( solverType == static_cast< integer >( Base::SolverType::SolidMechanics ) )
   {
-    // compute the average of the mean stress increment over quadrature points
-    averageMeanStressIncrement( domain );
+    // compute the average of the mean total stress increment over quadrature points
+    averageMeanTotalStressIncrement( domain );
 
     this->template forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                                 MeshLevel & mesh,
@@ -533,6 +534,8 @@ void MultiphasePoromechanics< FLOW_SOLVER >::mapSolutionBetweenSolvers( DomainPa
       } );
     } );
   }
+  // call base method (needed to perform nonlinear acceleration)
+  Base::mapSolutionBetweenSolvers( domain, solverType );
 }
 
 template< typename FLOW_SOLVER >
@@ -556,7 +559,7 @@ void MultiphasePoromechanics< FLOW_SOLVER >::updateBulkDensity( ElementSubRegion
 }
 
 template< typename FLOW_SOLVER >
-void MultiphasePoromechanics< FLOW_SOLVER >::averageMeanStressIncrement( DomainPartition & domain )
+void MultiphasePoromechanics< FLOW_SOLVER >::averageMeanTotalStressIncrement( DomainPartition & domain )
 {
   this->template forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                               MeshLevel & mesh,
@@ -569,8 +572,8 @@ void MultiphasePoromechanics< FLOW_SOLVER >::averageMeanStressIncrement( DomainP
       string const solidName = subRegion.template getReference< string >( viewKeyStruct::porousMaterialNamesString() );
       CoupledSolidBase & solid = this->template getConstitutiveModel< CoupledSolidBase >( subRegion, solidName );
 
-      arrayView2d< real64 const > const meanStressIncrement_k = solid.getMeanEffectiveStressIncrement_k();
-      arrayView1d< real64 > const averageMeanStressIncrement_k = solid.getAverageMeanEffectiveStressIncrement_k();
+      arrayView2d< real64 const > const meanTotalStressIncrement_k = solid.getMeanTotalStressIncrement_k();
+      arrayView1d< real64 > const averageMeanTotalStressIncrement_k = solid.getAverageMeanTotalStressIncrement_k();
 
       finiteElement::FiniteElementBase & subRegionFE =
         subRegion.template getReference< finiteElement::FiniteElementBase >( solidMechanicsSolver()->getDiscretizationName() );
@@ -590,8 +593,8 @@ void MultiphasePoromechanics< FLOW_SOLVER >::averageMeanStressIncrement( DomainP
                                                      mesh.getFaceManager(),
                                                      subRegion,
                                                      finiteElement,
-                                                     meanStressIncrement_k,
-                                                     averageMeanStressIncrement_k );
+                                                     meanTotalStressIncrement_k,
+                                                     averageMeanTotalStressIncrement_k );
       } );
     } );
   } );
