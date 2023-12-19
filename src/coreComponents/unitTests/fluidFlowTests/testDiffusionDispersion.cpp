@@ -69,7 +69,7 @@ char const * xmlInput =
       </FiniteVolume>
     </NumericalMethods>
     <ElementRegions>
-      <CellElementRegion name="region" cellBlocks="{cb1}" materialList="{fluid, rock, relperm, cappressure}" />
+      <CellElementRegion name="region" cellBlocks="{cb1}" materialList="{fluid, rock, relperm}" />
     </ElementRegions>
     <Constitutive>
       <CompositionalMultiphaseFluid name="fluid"
@@ -173,90 +173,28 @@ protected:
     setupProblemFromXML( state.getProblemManager(), xmlInput );
     solver = &state.getProblemManager().getPhysicsSolverManager().getGroup< CompositionalMultiphaseFVM >( "compflow" );
 
+
     DomainPartition & domain = state.getProblemManager().getDomainPartition();
 
-    FluxApproximationBase const & fluxApprox = domain.getNumericalMethodManager().getFiniteVolumeManager().getFluxApproximation( "fluidTPFA" );
+    //a bit ugly but good enough for now
+    auto & meshBodies = domain.getMeshBodies();
+    MeshBody & meshBody = meshBodies.getGroup< MeshBody >( "mesh" );
+    const char * lvl = "Level0";
+    MeshLevel & meshLevel = meshBody.getMeshLevel( lvl );
+    ElementRegionManager & elemRegionManager = meshLevel.getElemManager();
+    ElementRegionBase & elemRegion = elemRegionManager.getRegion( "region" );
+    ElementSubRegionBase & elemSubRegion = elemRegion.getSubRegion( "cb1" );
+    domain.getConstitutiveManager().hangConstitutiveRelation( "diffusion", &elemSubRegion, 1 );
+    domain.getConstitutiveManager().hangConstitutiveRelation( "dispersion", &elemSubRegion, 1 );
 
-    solver->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
-                                                                         MeshLevel const & mesh,
-                                                                         arrayView1d< string const > const & ) {
-      fluxApprox.forAllStencils( mesh, [&] ( auto & stencil )
-      {
-        typename TYPEOFREF( stencil ) ::KernelWrapper stencilWrapper = stencil.createKernelWrapper();
+    solver->setupSystem( domain,
+                         solver->getDofManager(),
+                         solver->getLocalMatrix(),
+                         solver->getSystemRhs(),
+                         solver->getSystemSolution() );
 
+    solver->implicitStepSetup( time, dt, domain );
 
-        using kernelType = isothermalCompositionalMultiphaseFVMKernels::DiffusionDispersionFaceBasedAssemblyKernel< 4, 5, typename TYPEOFREF( stencil ) ::KernelWrapper >;
-        typename kernelType::CompFlowAccessors compFlowAccessors( mesh.getElemManager(), solver->getName() );
-        typename kernelType::MultiFluidAccessors multiFluidAccessors( mesh.getElemManager(), solver->getName() );
-        typename kernelType::DiffusionAccessors diffusionAccessors( mesh.getElemManager(), solver->getName() );
-        typename kernelType::DispersionAccessors dispersionAccessors( mesh.getElemManager(), solver->getName() );
-        typename kernelType::PorosityAccessors porosityAccessors( mesh.getElemManager(), solver->getName() );
-        ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > > dofNumberAccessor =
-          mesh.getElemManager().constructArrayViewAccessor< globalIndex, 1 >( CompositionalMultiphaseBase::viewKeyStruct::elemDofFieldString() );
-        dofNumberAccessor.setName( solver->getName() + "/accessors/" + solver->getDofManager().getKey( CompositionalMultiphaseBase::viewKeyStruct::elemDofFieldString()) );
-
-        ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > globalCellDimAccessor =
-          mesh.getElemManager().constructArrayViewAccessor< real64, 2 >( CellElementSubRegion::viewKeyStruct::globalCellDimString() );
-
-
-        BitFlags< isothermalCompositionalMultiphaseFVMKernels::FaceBasedAssemblyKernelFlags > kernelFlags;
-
-        CRSMatrix< real64, globalIndex > const & jacobian = solver->getLocalMatrix();
-        array1d< real64 > residual( jacobian.numRows() );
-
-        kernelType kernel(
-          2,
-          solver->getDofManager().rankOffset(),
-          stencilWrapper,
-          dofNumberAccessor,
-          globalCellDimAccessor,
-          compFlowAccessors,
-          multiFluidAccessors,
-          diffusionAccessors,
-          dispersionAccessors,
-          porosityAccessors,
-          dt,
-          jacobian.toViewConstSizes(),
-          residual.toView(),
-          kernelFlags
-          );
-
-        forAll< parallelDevicePolicy<> >( stencilWrapper.size(), [=] GEOS_HOST_DEVICE ( localIndex const iconn ) {
-          typename kernelType::StackVariables stack( kernel.stencilSize( iconn ),
-                                                     kernel.numPointsInFlux( iconn ));
-          kernel.setup( iconn, stack );
-          kernel.computeDiffusionFlux( iconn, stack );
-          real64 diffusiveFlux[4], diffusiveAndDispersiveFlux[4];
-
-          for( int k = 0; k < stack.numConnectedElems; ++k )
-          {
-
-            for( int ic = 0; ic < 4; ++ic )
-            {
-              integer const eqIndex0 = k * 4 + ic;
-              diffusiveFlux[ic]  = stack.localFlux[eqIndex0]*dt;
-            }
-          }
-
-          kernel.computeDispersionFlux( iconn, stack );
-          for( int k = 0; k < stack.numConnectedElems; ++k )
-          {
-            for( int ic = 0; ic < 4; ++ic )
-            {
-              integer const eqIndex0 = k * 4 + ic;
-              diffusiveAndDispersiveFlux[ic] = stack.localFlux[eqIndex0] * dt;
-
-              EXPECT_EQ( diffusiveFlux[ic], diffusiveAndDispersiveFlux[ic] -
-                         diffusiveFlux[ic] );                       //expect equality under these conditions
-            }
-          }
-
-
-          kernel.complete( iconn, stack );
-
-        } );
-      } );
-    } );
   }
 
   static real64 constexpr time = 0.0;
@@ -267,10 +205,114 @@ protected:
   CompositionalMultiphaseFVM * solver;
 };
 
-//TEST_F( DispersionDiffusionFVMTest, sameDispersionTest)
-//{
-//
-//}
+real64 constexpr CompositionalMultiphaseFlowTest::time;
+real64 constexpr CompositionalMultiphaseFlowTest::dt;
+real64 constexpr CompositionalMultiphaseFlowTest::eps;
+
+
+
+TEST_F( CompositionalMultiphaseFlowTest, sameDispersionTest )
+{
+  DomainPartition & domain = state.getProblemManager().getDomainPartition();
+  FluxApproximationBase const & fluxApprox = domain.getNumericalMethodManager().getFiniteVolumeManager().getFluxApproximation( "fluidTPFA" );
+  string const & elemDofKey = solver->getDofManager().getKey( CompositionalMultiphaseBase::viewKeyStruct::elemDofFieldString() );
+
+  solver->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
+                                                                       MeshLevel const & mesh,
+                                                                       arrayView1d< string const > const & ) {
+    fluxApprox.forAllStencils( mesh, [&] ( auto & stencil )
+    {
+      typename TYPEOFREF( stencil ) ::KernelWrapper stencilWrapper = stencil.createKernelWrapper();
+
+
+      using kernelType = isothermalCompositionalMultiphaseFVMKernels::DiffusionDispersionFaceBasedAssemblyKernel< 4, 5, typename TYPEOFREF( stencil ) ::KernelWrapper >;
+      typename kernelType::CompFlowAccessors compFlowAccessors( mesh.getElemManager(), solver->getName() );
+      typename kernelType::MultiFluidAccessors multiFluidAccessors( mesh.getElemManager(), solver->getName() );
+      typename kernelType::DiffusionAccessors diffusionAccessors( mesh.getElemManager(), solver->getName() );
+      typename kernelType::DispersionAccessors dispersionAccessors( mesh.getElemManager(), solver->getName() );
+      typename kernelType::PorosityAccessors porosityAccessors( mesh.getElemManager(), solver->getName() );
+      ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > > dofNumberAccessor =
+        mesh.getElemManager().constructArrayViewAccessor< globalIndex, 1 >( elemDofKey );
+      dofNumberAccessor.setName( solver->getName() + "/accessors/" + elemDofKey );
+
+      ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > globalCellDimAccessor =
+        mesh.getElemManager().constructArrayViewAccessor< real64, 2 >( CellElementSubRegion::viewKeyStruct::globalCellDimString() );
+
+
+      BitFlags< isothermalCompositionalMultiphaseFVMKernels::FaceBasedAssemblyKernelFlags > kernelFlags;
+
+      CRSMatrix< real64, globalIndex > const & jacobian = solver->getLocalMatrix();
+      array1d< real64 > residual( jacobian.numRows() );
+
+      kernelType kernel(
+        2,
+        solver->getDofManager().rankOffset(),
+        stencilWrapper,
+        dofNumberAccessor,
+        globalCellDimAccessor,
+        compFlowAccessors,
+        multiFluidAccessors,
+        diffusionAccessors,
+        dispersionAccessors,
+        porosityAccessors,
+        dt,
+        jacobian.toViewConstSizes(),
+        residual.toView(),
+        kernelFlags
+        );
+
+      forAll< parallelDevicePolicy<> >( stencilWrapper.size(), [=] GEOS_HOST_DEVICE ( localIndex const iconn ) {
+        typename kernelType::StackVariables stack( kernel.stencilSize( iconn ),
+                                                   kernel.numPointsInFlux( iconn ));
+        kernel.setup( iconn, stack );
+        kernel.computeDiffusionFlux( iconn, stack );
+        real64 diffusiveFlux[4], dispersiveFlux[4];
+        real64 xp_diffusiveFlux[2][2][4] = { {{ 0.0032541334546537454, -0.00094419582575865383, -0.0018912528276302915, -1.4646839777785416e-06 },
+          { -0.0032541334546537454, 0.00094419582575865383, 0.0018912528276302915, 1.4646839777785416e-06 }},
+          {{ 0.0028595396719695945, -0.00079184397572525838, -0.0015861104962527795, -2.0324312559781912e-07},
+            { -0.0028595396719695945, 0.00079184397572525838, 0.0015861104962527795, 2.0324312559781912e-07} }};
+
+        real64 xp_dispersiveFlux[2][2][4] = {{{ 0.16156107701739061, -0.053505727994398372, -0.10720112367369174, 3.2864329379105197e-05 },
+          { -0.15505281010808311, 0.051617336342881071, 0.10341861801843115, -3.5793697334662278e-05 }},
+          {{ 0.16176374826400264, -0.053509594669204075, -0.10740925205848552, 0.00021669857431804405},
+            {-0.15604466892006347, 0.051925906717753559, 0.10423703106597997, -0.00021710506056923972}} };                                           //assuming
+                                                                                                                                                     // initial
+                                                                                                                                                     // velocity
+                                                                                                                                                     // of
+                                                                                                                                                     // 1
+
+        for( int k = 0; k < stack.numConnectedElems; ++k )
+        {
+
+          for( int ic = 0; ic < 4; ++ic )
+          {
+            integer const eqIndex0 = k * 4 + ic;
+            diffusiveFlux[ic]  = stack.localFlux[eqIndex0];
+            EXPECT_EQ( diffusiveFlux[ic], xp_diffusiveFlux[iconn][k][ic] );                                  //expect equality under these
+                                                                                                             // conditions
+          }
+        }
+        //do something with velocity or access saturation
+
+        kernel.computeDispersionFlux( iconn, stack );
+        for( int k = 0; k < stack.numConnectedElems; ++k )
+        {
+          for( int ic = 0; ic < 4; ++ic )
+          {
+            integer const eqIndex0 = k * 4 + ic;
+            dispersiveFlux[ic] = stack.localFlux[eqIndex0] - diffusiveFlux[ic];
+            EXPECT_EQ( dispersiveFlux[ic], xp_dispersiveFlux[iconn][k][ic] );                                  //expect equality under these
+                                                                                                               // conditions
+          }
+        }
+
+
+        kernel.complete( iconn, stack );
+
+      } );
+    } );
+  } );
+}
 
 int main( int argc, char * * argv )
 {
