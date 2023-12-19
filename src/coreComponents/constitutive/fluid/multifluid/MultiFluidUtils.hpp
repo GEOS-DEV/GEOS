@@ -26,52 +26,29 @@ namespace geos
 namespace constitutive
 {
 
-namespace internal
-{
-
-template< typename T, int DIM, int USD >
-struct ArraySliceOrRefHelper
-{
-  using type = ArraySlice< T, DIM, USD >;
-};
-
-// an array slice of DIM=0 decays to a reference to scalar
-template< typename T, int USD >
-struct ArraySliceOrRefHelper< T, 0, USD >
-{
-  using type = T &;
-};
-
-template< typename T, int DIM, int USD=DIM-1 >
-using ArraySliceOrRef = typename ArraySliceOrRefHelper< T, DIM, USD >::type;
-
-} // namespace internal
-
 /**
  * @brief Helper struct used to represent a variable and its compositional derivatives
  * @tparam DIM number of dimensions
  */
-template< typename T, int DIM, int USD, int USD_DC >
+template< typename T, int DIM >
 struct MultiFluidVarSlice
 {
   GEOS_HOST_DEVICE
-  MultiFluidVarSlice( internal::ArraySliceOrRef< T, DIM, USD > inputValue,
-                      internal::ArraySliceOrRef< T, DIM+1, USD_DC > inputDerivs ):
+  MultiFluidVarSlice( multifluid::ArraySlice< T, DIM > inputValue,
+                      multifluid::ArraySlice< T, DIM+1 > inputDerivs ):
     value( inputValue ),
     derivs( inputDerivs )
   {}
 
-  internal::ArraySliceOrRef< T, DIM, USD > value;        /// variable value
-  internal::ArraySliceOrRef< T, DIM + 1, USD_DC > derivs; /// derivative w.r.t. pressure, temperature, compositions
+  multifluid::ArraySlice< T, DIM > value;        /// variable value
+  multifluid::ArraySlice< T, DIM + 1 > derivs; /// derivative w.r.t. pressure, temperature, compositions
 };
 
 /**
  * @brief Struct holding views into fluid data, used to simplify parameter passing in kernel wrapper constructors.
  * @tparam NDIM number of dimensions
- * @tparam USD unit-stride-dim of primary property
- * @tparam USD_DC unit-stride-dim of derivatives
  */
-template< typename T, int NDIM, int USD, int USD_DC >
+template< typename T, int NDIM >
 struct MultiFluidVarView
 {
   MultiFluidVarView() = default;
@@ -83,16 +60,16 @@ struct MultiFluidVarView
   {}
 
   GEOS_HOST_DEVICE
-  MultiFluidVarView ( ArrayView< T, NDIM, USD > const & valueSrc,
-                      ArrayView< T, NDIM + 1, USD_DC > const & derivsSrc ):
+  MultiFluidVarView ( multifluid::ArrayView< T, NDIM > const & valueSrc,
+                      multifluid::ArrayView< T, NDIM + 1 > const & derivsSrc ):
     value( valueSrc ),
     derivs( derivsSrc )
   {};
 
-  ArrayView< T, NDIM, USD > value;        ///< View into property values
-  ArrayView< T, NDIM + 1, USD_DC > derivs; ///< View into property derivatives w.r.t. pressure, temperature, compositions
+  multifluid::ArrayView< T, NDIM > value;       ///< View into property values
+  multifluid::ArrayView< T, NDIM + 1 > derivs;  ///< View into property derivatives w.r.t. pressure, temperature, compositions
 
-  using SliceType = MultiFluidVarSlice< T, NDIM - 2, USD - 2, USD_DC - 2 >;
+  using SliceType = MultiFluidVarSlice< T, NDIM - 2 >;
 
   GEOS_HOST_DEVICE
   SliceType operator()( localIndex const k, localIndex const q ) const
@@ -104,17 +81,15 @@ struct MultiFluidVarView
 /**
  * @brief Struct holding views into fluid data, used to simplify parameter passing in kernel wrapper constructors.
  * @tparam NDIM number of dimensions
- * @tparam PERM unit-stride-dim of primary property
- * @tparam PERM_DC unit-stride-dim of derivatives
  */
-template< typename T, int NDIM, typename PERM, typename PERM_DC >
+template< typename T, int NDIM >
 struct MultiFluidVar
 {
-  Array< real64, NDIM, PERM > value;         ///< Property values
-  Array< real64, NDIM + 1, PERM_DC > derivs; ///< Property derivatives w.r.t. pressure, temperature, compositions
+  multifluid::Array< real64, NDIM > value;      ///< Property values
+  multifluid::Array< real64, NDIM + 1 > derivs; ///< Property derivatives w.r.t. pressure, temperature, compositions
 
-  using ViewType = MultiFluidVarView< T, NDIM, getUSD< PERM >, getUSD< PERM_DC > >;
-  using ViewTypeConst = MultiFluidVarView< T const, NDIM, getUSD< PERM >, getUSD< PERM_DC > >;
+  using ViewType = MultiFluidVarView< T, NDIM >;
+  using ViewTypeConst = MultiFluidVarView< T const, NDIM >;
 
   using SliceType = typename ViewType::SliceType;
   using SliceTypeConst = typename ViewTypeConst::SliceType;
@@ -170,4 +145,4 @@ void convertToMoleFractions( integer numComponents,
 
 } // namespace geos
 
-#endif //GEOS_CONSTITUTIVE_FLUID_MULTIFLUIDUTILS_HPP_
+#endif //GEOS_CONSTITUTIVE_FLUID_MULTIFLUID_MULTIFLUIDUTILS_HPP_
