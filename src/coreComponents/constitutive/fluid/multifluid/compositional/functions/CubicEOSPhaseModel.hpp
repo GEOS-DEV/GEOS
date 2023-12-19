@@ -334,8 +334,10 @@ computeLogFugacityCoefficients( integer const numComps,
                                 arraySlice1d< real64 const > const & logFugacityCoefficients,
                                 arraySlice2d< real64 > const & logFugacityCoefficientDerivs )
 {
+  GEOS_UNUSED_VAR( logFugacityCoefficients );
   stackArray1d< real64, MultiFluidConstants::MAX_NUM_COMPONENTS > displacedComposition( numComps );
-  stackArray1d< real64, MultiFluidConstants::MAX_NUM_COMPONENTS > displacedLogFugacityCoefficients( numComps );
+  stackArray1d< real64, MultiFluidConstants::MAX_NUM_COMPONENTS > hiLogFugacityCoefficients( numComps );
+  stackArray1d< real64, MultiFluidConstants::MAX_NUM_COMPONENTS > loLogFugacityCoefficients( numComps );
 
   // Pressure derivative
   real64 const dp = 1.0e-4 * pressure;
@@ -344,10 +346,16 @@ computeLogFugacityCoefficients( integer const numComps,
                                   temperature,
                                   composition,
                                   componentProperties,
-                                  displacedLogFugacityCoefficients );
+                                  hiLogFugacityCoefficients );
+  computeLogFugacityCoefficients( numComps,
+                                  pressure - dp,
+                                  temperature,
+                                  composition,
+                                  componentProperties,
+                                  loLogFugacityCoefficients );
   for( integer ic = 0; ic < numComps; ++ic )
   {
-    logFugacityCoefficientDerivs( ic, Deriv::dP ) = (displacedLogFugacityCoefficients[ic] - logFugacityCoefficients[ic]) / dp;
+    logFugacityCoefficientDerivs( ic, Deriv::dP ) = 0.5*(hiLogFugacityCoefficients[ic] - loLogFugacityCoefficients[ic]) / dp;
   }
 
   // Temperature derivative
@@ -357,32 +365,46 @@ computeLogFugacityCoefficients( integer const numComps,
                                   temperature + dT,
                                   composition,
                                   componentProperties,
-                                  displacedLogFugacityCoefficients );
+                                  hiLogFugacityCoefficients );
+  computeLogFugacityCoefficients( numComps,
+                                  pressure,
+                                  temperature - dT,
+                                  composition,
+                                  componentProperties,
+                                  loLogFugacityCoefficients );
   for( integer ic = 0; ic < numComps; ++ic )
   {
-    logFugacityCoefficientDerivs( ic, Deriv::dT ) = (displacedLogFugacityCoefficients[ic] - logFugacityCoefficients[ic]) / dT;
+    logFugacityCoefficientDerivs( ic, Deriv::dT ) = 0.5*(hiLogFugacityCoefficients[ic] - loLogFugacityCoefficients[ic]) / dT;
   }
 
   // Composition derivatives
-  real64 const dz = 1.0e-6;
+  real64 const dz = 1.0e-7;
   for( integer ic = 0; ic < numComps; ++ic )
   {
     displacedComposition[ic] = composition[ic];
   }
   for( integer jc = 0; jc < numComps; ++jc )
   {
-    displacedComposition[jc] = composition[jc] + dz;
+    real64 const z = composition[jc];
+    displacedComposition[jc] = z + dz;
     computeLogFugacityCoefficients( numComps,
                                     pressure,
                                     temperature,
                                     displacedComposition.toSliceConst(),
                                     componentProperties,
-                                    displacedLogFugacityCoefficients );
+                                    hiLogFugacityCoefficients );
+    displacedComposition[jc] = z - dz;
+    computeLogFugacityCoefficients( numComps,
+                                    pressure,
+                                    temperature,
+                                    displacedComposition.toSliceConst(),
+                                    componentProperties,
+                                    loLogFugacityCoefficients );
     for( integer ic = 0; ic < numComps; ++ic )
     {
-      logFugacityCoefficientDerivs( ic, Deriv::dC + jc ) = (displacedLogFugacityCoefficients[ic] - logFugacityCoefficients[ic]) / dz;
+      logFugacityCoefficientDerivs( ic, Deriv::dC + jc ) = 0.5*(hiLogFugacityCoefficients[ic] - loLogFugacityCoefficients[ic]) / dz;
     }
-    displacedComposition[jc] = composition[jc];
+    displacedComposition[jc] = z;
   }
 }
 
