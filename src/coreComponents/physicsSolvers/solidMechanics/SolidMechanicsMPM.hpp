@@ -19,6 +19,9 @@
 #ifndef GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_MPM_HPP_
 #define GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_MPM_HPP_
 
+#include "MPMBase.hpp"
+// #include "physicsSolvers/SolverBase.hpp"
+
 #include "codingUtilities/EnumStrings.hpp"
 #include "common/TimingMacros.hpp"
 #include "kernels/SolidMechanicsLagrangianFEMKernels.hpp"
@@ -26,47 +29,24 @@
 #include "mesh/MeshForLoopInterface.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "mesh/mpiCommunications/MPI_iCommData.hpp"
-#include "physicsSolvers/SolverBase.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsFields.hpp"
-#include "MPMSolverFields.hpp"
+// #include "MPMSolverFields.hpp"
+
 
 namespace geos
 {
 
 class SpatialPartition;
-
+// using MPMBase = SolverBase;
 
 /**
  * @class SolidMechanicsMPM
  *
  * This class implements a material point method solution to the equations of motion.
  */
-class SolidMechanicsMPM : public SolverBase
+class SolidMechanicsMPM : public MPMBase
 {
 public:
-
-  /**
-   * @enum TimeIntegrationOption
-   *
-   * The options for time integration
-   */
-  enum class TimeIntegrationOption : integer
-  {
-    QuasiStatic,      //!< QuasiStatic
-    ImplicitDynamic,  //!< ImplicitDynamic
-    ExplicitDynamic   //!< ExplicitDynamic
-  };
-
-  /**
-   * @enum BoundaryConditionOption
-   *
-   * The options for essential boundary conditions
-   */
-  enum struct BoundaryConditionOption : integer
-  {
-    OUTFLOW,    //!<Outflow
-    SYMMETRY    //!<Symmetry
-  };
 
   /**
    * Constructor
@@ -92,10 +72,6 @@ public:
    * @return The string that may be used to generate a new instance from the SolverBase::CatalogInterface::CatalogType
    */
   static string catalogName() { return "SolidMechanics_MPM"; }
-
-  virtual void initializePreSubGroups() override;
-
-  virtual void registerDataOnMesh( Group & meshBodies ) override final;
 
   void updateIntrinsicNodalData( DomainPartition * const domain );
 
@@ -164,27 +140,10 @@ public:
    * @param solution the solution vector
    */
 
-  struct viewKeyStruct : SolverBase::viewKeyStruct
+  struct viewKeyStruct : MPMBase::viewKeyStruct
   {
     static constexpr char const * cflFactorString() { return "cflFactor"; }
-    static constexpr char const * timeIntegrationOptionString() { return "timeIntegrationOption"; }
-    static constexpr char const * solidMaterialNamesString() { return "solidMaterialNames"; }
-    static constexpr char const * forceExternalString() { return "externalForce"; }
-    static constexpr char const * forceInternalString() { return "internalForce"; }
-    static constexpr char const * massString() { return "mass"; }
-    static constexpr char const * velocityString() { return "velocity"; }
-    static constexpr char const * momentumString() { return "momentum"; }
-    static constexpr char const * accelerationString() { return "acceleration"; }
-    static constexpr char const * forceContactString() { return "contactForce"; }
-    static constexpr char const * damageString() { return "damage"; }
-    static constexpr char const * damageGradientString() { return "damageGradient"; }
-    static constexpr char const * maxDamageString() { return "maxDamage"; }
-    static constexpr char const * surfaceNormalString() { return "surfaceNormal"; }
-    static constexpr char const * materialPositionString() { return "materialPosition"; }
-
-    static constexpr char const * boundaryNodesString() { return "boundaryNodes"; }
-    static constexpr char const * bufferNodesString() { return "bufferNodes"; }
-
+    static constexpr char const * timeIntegrationOptionString() { return "timeIntegrationOption"; }                             
     dataRepository::ViewKey timeIntegrationOption = { timeIntegrationOptionString() };
   } solidMechanicsViewKeys;
 
@@ -368,9 +327,6 @@ public:
                                                     real64 shapeFunctionGradientValues[][3]);
 
 protected:
-  virtual void postProcessInput() override final;
-
-  virtual void setConstitutiveNamesCallSuper( ParticleSubRegionBase & subRegion ) const override;
 
   std::vector< array2d< localIndex > > m_mappedNodes; // mappedNodes[subregion index][particle index][node index]. dims = {# of subregions,
                                                       // # of particles, # of nodes a particle on the subregion maps to}
@@ -380,15 +336,13 @@ protected:
                                                                   // value][direction]. dims = {# of subregions, # of particles, # of nodes
                                                                   // a particle on the subregion maps to, 3}
 
-  int m_solverProfiling;
-  std::vector< real64 > m_profilingTimes;
-  std::vector< std::string > m_profilingLabels;
+
+  int m_shuffleOption; // p2g bin sorting options aren't necessarily random
 
   TimeIntegrationOption m_timeIntegrationOption;
   MPI_iCommData m_iComm;
 
   int m_prescribedBcTable;
-  array1d< int > m_boundaryConditionTypes; // TODO: Surely there's a way to have just one variable here
   array2d< real64 > m_bcTable;
 
   int m_prescribedBoundaryFTable;
@@ -405,7 +359,6 @@ protected:
   real64 m_reactionWriteInterval;
   real64 m_nextReactionWriteTime;
 
-  int m_needsNeighborList;
   real64 m_neighborRadius;
   int m_binSizeMultiplier;
 
@@ -418,14 +371,8 @@ protected:
   int m_numContactGroups, m_numContactFlags, m_numVelocityFields;
   real64 m_separabilityMinDamage;
   int m_treatFullyDamagedAsSingleField;
-  int m_surfaceDetection;
-  int m_damageFieldPartitioning;
   int m_contactGapCorrection;
-  // int m_directionalOverlapCorrection;
   real64 m_frictionCoefficient;
-
-  int m_planeStrain;
-  int m_numDims;
 
   real64 m_hEl[3];                // Grid spacing in x-y-z
   real64 m_xLocalMin[3];          // Minimum local grid coordinate including ghost nodes
@@ -440,6 +387,8 @@ protected:
   array3d< int > m_ijkMap;        // Map from indices in each spatial dimension to local node ID
 
 private:
+  // localIndex P2GSorting( );  // p2g bin sorting options aren't necessarily random
+
   struct BinKey
   {
     localIndex regionIndex;
@@ -468,17 +417,8 @@ private:
     }
   };
 
-  virtual void setConstitutiveNames( ParticleSubRegionBase & subRegion ) const override;
 };
 
-ENUM_STRINGS( SolidMechanicsMPM::TimeIntegrationOption,
-              "QuasiStatic",
-              "ImplicitDynamic",
-              "ExplicitDynamic" );
-
-ENUM_STRINGS( SolidMechanicsMPM::BoundaryConditionOption,
-              "Outflow",
-              "Symmetry" );
 
 //**********************************************************************************************************************
 //**********************************************************************************************************************
@@ -487,4 +427,4 @@ ENUM_STRINGS( SolidMechanicsMPM::BoundaryConditionOption,
 
 } /* namespace geos */
 
-#endif /* GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_SOLIDMECHANICSLAGRANGIANFEM_HPP_ */
+#endif /* GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_SOLIDMECHANICSMPM_HPP_ */

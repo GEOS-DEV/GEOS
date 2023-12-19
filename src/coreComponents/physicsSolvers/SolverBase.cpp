@@ -32,7 +32,7 @@ using namespace dataRepository;
 
 SolverBase::SolverBase( string const & name,
                         Group * const parent )
-  :
+:
   ExecutableGroup( name, parent ),
   m_cflFactor(),
   m_maxStableDt{ 1e99 },

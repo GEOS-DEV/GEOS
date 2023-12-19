@@ -33,7 +33,7 @@
 #define GEOSX_USE_OPENMP
 
 /// Enables use of CUDA (CMake option ENABLE_CUDA)
-#define GEOS_USE_CUDA
+/* #undef GEOS_USE_CUDA */
 
 /// Enables use of CUDA NVToolsExt (CMake option ENABLE_CUDA_NVTOOLSEXT)
 /* #undef GEOS_USE_CUDA_NVTOOLSEXT */
@@ -69,7 +69,7 @@
   /// Parsed hypre version information
   #define HYPRE_VERSION_MAJOR 2
   /// Parsed hypre version information
-  #define HYPRE_VERSION_MINOR 27
+  #define HYPRE_VERSION_MINOR 28
   /// Parsed hypre version information
   #define HYPRE_VERSION_PATCH 0
 #endif
@@ -81,7 +81,7 @@
 /// Denotes HYPRE using HIP
 #define GEOS_USE_HYPRE_HIP 2
 /// Macro determining what parellel interface hypre is using
-#define GEOS_USE_HYPRE_DEVICE GEOS_USE_HYPRE_CUDA
+#define GEOS_USE_HYPRE_DEVICE GEOS_USE_HYPRE_CPU
 
 /// Enables use of SuperLU_dist library through HYPRE (CMake option ENABLE_SUPERLU_DIST)
 #define GEOSX_USE_SUPERLU_DIST

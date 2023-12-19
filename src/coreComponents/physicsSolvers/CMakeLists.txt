@@ -101,6 +101,7 @@ set( physicsSolvers_headers
      solidMechanics/SolidMechanicsLagrangianFEM.hpp
      solidMechanics/SolidMechanicsLagrangianSSLE.hpp
      solidMechanics/kernels/SolidMechanicsLagrangianFEMKernels.hpp
+     solidMechanics/MPMBase.hpp
      solidMechanics/SolidMechanicsMPM.hpp
      solidMechanics/MPMSolverFields.hpp
      solidMechanics/kernels/ExplicitFiniteStrain.hpp
@@ -184,6 +185,7 @@ set( physicsSolvers_sources
      simplePDE/PhaseFieldDamageFEM.cpp
      solidMechanics/SolidMechanicsLagrangianFEM.cpp
      solidMechanics/SolidMechanicsLagrangianSSLE.cpp
+     solidMechanics/MPMBase.cpp
      solidMechanics/SolidMechanicsMPM.cpp
      solidMechanics/SolidMechanicsStateReset.cpp
      solidMechanics/SolidMechanicsStatistics.cpp

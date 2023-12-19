@@ -53,7 +53,6 @@ public:
 
   static string catalogName() { return "SolverBase"; }
 
-
   virtual void registerDataOnMesh( Group & MeshBodies ) override;
 
   virtual void initialize_postMeshGeneration() override;

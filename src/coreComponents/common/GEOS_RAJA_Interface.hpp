@@ -229,6 +229,18 @@ RAJA_INLINE void forRange( INDEX const begin, INDEX const end, LAMBDA && body )
   RAJA::forall< POLICY >( RAJA::TypedRangeSegment< INDEX >( begin, end ), std::forward< LAMBDA >( body ) );
 }
 
+// TODO: JMA RAJA::forall variants that use RAJA::TypedListSegment
+// Note that a RAJA::TypedListSegment constructor can take a pointer to an array
+// of indices and an array length. If the indices are in a container, such as 
+// std::vector that provides begin(), end(), and size() methods, the container 
+// can be passed to the constructor and the length argument is not required.
+
+template< typename POLICY, typename INDEX, typename LAMBDA >
+RAJA_INLINE void forAll( std::vector< INDEX > idxList, LAMBDA && body )   
+{
+  RAJA::forall< POLICY >( RAJA::TypedListSegment< INDEX >( idxList ), std::forward< LAMBDA >( body ) );
+}
+
 } // namespace geos
 
 #endif // GEOS_RAJAINTERFACE_RAJAINTERFACE_HPP
