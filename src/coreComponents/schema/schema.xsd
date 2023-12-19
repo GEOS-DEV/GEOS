@@ -1807,6 +1807,8 @@ the relative residual norm satisfies:
 		<xsd:attribute name="newtonMinIter" type="integer" default="1" />
 		<!--newtonTol => The required tolerance in order to exit the Newton iteration loop.-->
 		<xsd:attribute name="newtonTol" type="real64" default="1e-06" />
+		<!--nonlinearAccelerationType => Nonlinear acceleration type for sequential solver.-->
+		<xsd:attribute name="nonlinearAccelerationType" type="geos_NonlinearSolverParameters_NonlinearAccelerationType" default="None" />
 		<!--sequentialConvergenceCriterion => Criterion used to check outer-loop convergence in sequential schemes. Valid options:
 * ResidualNorm
 * NumberOfNonlinearIterations-->
@@ -1841,6 +1843,11 @@ the relative residual norm satisfies:
 	<xsd:simpleType name="geos_NonlinearSolverParameters_LineSearchInterpolationType">
 		<xsd:restriction base="xsd:string">
 			<xsd:pattern value=".*[\[\]`$].*|Linear|Parabolic" />
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="geos_NonlinearSolverParameters_NonlinearAccelerationType">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value=".*[\[\]`$].*|None|Aitken" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="geos_NonlinearSolverParameters_SequentialConvergenceCriterion">
