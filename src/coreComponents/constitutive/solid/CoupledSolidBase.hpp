@@ -180,21 +180,22 @@ public:
   }
 
   /**
-   * @brief Const/non-mutable accessor for the mean stress increment at the previous sequential iteration
+   * @brief Const/non-mutable accessor for the mean total stress increment
+   * (with respect to the previous converged time level) at the previous sequential iteration
    * @return Accessor
    */
-  arrayView2d< real64 const > const getMeanEffectiveStressIncrement_k() const
+  arrayView2d< real64 const > const getMeanTotalStressIncrement_k() const
   {
-    return getBasePorosityModel().getMeanEffectiveStressIncrement_k();
+    return getBasePorosityModel().getMeanTotalStressIncrement_k();
   }
 
   /**
-   * @brief Non-const accessor for the mean stress increment at the previous sequential iteration
+   * @brief Non-const accessor for the mean total stress increment at the previous sequential iteration
    * @return Accessor
    */
-  arrayView1d< real64 > const getAverageMeanEffectiveStressIncrement_k()
+  arrayView1d< real64 > const getAverageMeanTotalStressIncrement_k()
   {
-    return getBasePorosityModel().getAverageMeanEffectiveStressIncrement_k();
+    return getBasePorosityModel().getAverageMeanTotalStressIncrement_k();
   }
 
 
@@ -232,6 +233,20 @@ public:
   SolidInternalEnergy const & getSolidInternalEnergyModel() const
   { return this->getParent().template getGroup< SolidInternalEnergy >( m_solidInternalEnergyModelName ); }
 
+  /**
+   * @brief get a PorosityBase constant reference to the porosity model
+   * return a constant PorosityBase reference to the porosity model
+   */
+  PorosityBase const & getBasePorosityModel() const
+  { return this->getParent().template getGroup< PorosityBase >( m_porosityModelName ); }
+
+  /**
+   * @brief get a PorosityBase reference to the porosity model
+   * return a PorosityBase reference to the porosity model
+   */
+  PorosityBase & getBasePorosityModel()
+  { return this->getParent().template getGroup< PorosityBase >( m_porosityModelName ); }
+
 protected:
 
   /// the name of the solid model
@@ -247,21 +262,6 @@ protected:
   string m_solidInternalEnergyModelName;
 
 private:
-
-  /**
-   * @brief get a PorosityBase constant reference to the porosity model
-   * return a constant PorosityBase reference to the porosity model
-   */
-  PorosityBase const & getBasePorosityModel() const
-  { return this->getParent().template getGroup< PorosityBase >( m_porosityModelName ); }
-
-  /**
-   * @brief get a PorosityBase reference to the porosity model
-   * return a PorosityBase reference to the porosity model
-   */
-  PorosityBase & getBasePorosityModel()
-  { return this->getParent().template getGroup< PorosityBase >( m_porosityModelName ); }
-
 
   /**
    * @brief get a Permeability base constant reference to the permeability model
