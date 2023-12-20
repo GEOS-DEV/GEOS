@@ -437,9 +437,10 @@ protected:
         // Pass a "0" as argument (0 linear iteration) to skip the output of linear iteration stats at the end
         m_solverStatistics.logNonlinearIteration( 0 );
 
+        startSequentialIteration( iter, domain );
+
         // Solve the subproblems nonlinearly
-        forEachArgInTuple( m_solvers, [&]( auto & solver,
-                                           auto idx )
+        forEachArgInTuple( m_solvers, [&]( auto & solver, auto idx )
         {
           GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "  Iteration {:2}: {}", iter + 1, solver->getName() ) );
           real64 solverDt = solver->nonlinearImplicitStep( time_n,
