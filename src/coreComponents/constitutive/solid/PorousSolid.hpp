@@ -56,18 +56,16 @@ public:
   virtual void updateStateFixedStress( localIndex const k,
                                        localIndex const q,
                                        real64 const & pressure,
-                                       real64 const & pressure_k,
                                        real64 const & pressure_n,
                                        real64 const & temperature,
-                                       real64 const & temperature_k,
                                        real64 const & temperature_n ) const override final
   {
     updateBiotCoefficientAndAssignBulkModulus( k );
 
     real64 dPorosity_dVolStrain;
     m_porosityUpdate.updateFixedStress( k, q,
-                                        pressure, pressure_k, pressure_n,
-                                        temperature, temperature_k, temperature_n,
+                                        pressure, pressure_n,
+                                        temperature, temperature_n,
                                         dPorosity_dVolStrain );
   }
 
@@ -127,10 +125,8 @@ public:
                                                   localIndex const q,
                                                   real64 const & timeIncrement,
                                                   real64 const & pressure,
-                                                  real64 const & pressure_k,
                                                   real64 const & pressure_n,
                                                   real64 const & temperature,
-                                                  real64 const & temperature_k,
                                                   real64 const & temperature_n,
                                                   real64 const ( &strainIncrement )[6],
                                                   real64 ( & totalStress )[6],
@@ -166,10 +162,8 @@ public:
     // Compute porosity and its derivatives
     computePorosityFixedStress( k, q,
                                 pressure,
-                                pressure_k,
                                 pressure_n,
                                 temperature,
-                                temperature_k,
                                 temperature_n,
                                 meanTotalStressIncrement,
                                 porosity,
@@ -276,10 +270,8 @@ private:
   void computePorosityFixedStress( localIndex const k,
                                    localIndex const q,
                                    real64 const & pressure,
-                                   real64 const & pressure_k,
                                    real64 const & pressure_n,
                                    real64 const & temperature,
-                                   real64 const & temperature_k,
                                    real64 const & temperature_n,
                                    real64 const & meanTotalStressIncrement,
                                    real64 & porosity,
@@ -287,10 +279,8 @@ private:
   {
     m_porosityUpdate.updateFixedStress( k, q,
                                         pressure,
-                                        pressure_k,
                                         pressure_n,
                                         temperature,
-                                        temperature_k,
                                         temperature_n,
                                         meanTotalStressIncrement,
                                         dPorosity_dVolStrain );

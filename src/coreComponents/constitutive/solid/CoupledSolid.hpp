@@ -94,15 +94,13 @@ public:
   virtual void updateStateFixedStress( localIndex const k,
                                        localIndex const q,
                                        real64 const & pressure,
-                                       real64 const & pressure_k,
                                        real64 const & pressure_n,
                                        real64 const & temperature,
-                                       real64 const & temperature_k,
                                        real64 const & temperature_n ) const
   {
     GEOS_UNUSED_VAR( k, q,
-                     pressure, pressure_k, pressure_n,
-                     temperature, temperature_k, temperature_n );
+                     pressure, pressure_n,
+                     temperature, temperature_n );
     GEOS_ERROR( "CoupledSolidUpdates::updateStateFixedStress called! Must be overridden." );
   }
 
