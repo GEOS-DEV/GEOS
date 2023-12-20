@@ -318,6 +318,13 @@ void MultiphasePoromechanics::initializePostInitialConditionsPreSubGroups()
   {
     m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::thermalMultiphasePoromechanics;
   }
+  else
+  {
+    if( flowSolver()->getLinearSolverParameters().mgr.strategy == LinearSolverParameters::MGR::StrategyType::compositionalMultiphaseHybridFVM )
+    {
+      m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::hybridMultiphasePoromechanics;
+    }
+  }
 }
 
 void MultiphasePoromechanics::initializePreSubGroups()

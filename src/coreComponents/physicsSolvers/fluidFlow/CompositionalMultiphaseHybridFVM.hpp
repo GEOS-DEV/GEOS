@@ -152,6 +152,15 @@ public:
                              real64 const & dt,
                              DomainPartition & domain ) override;
 
+  virtual void
+  keepFlowVariablesConstantDuringInitStep( real64 const time,
+                                           real64 const dt,
+                                           DofManager const & dofManager,
+                                           DomainPartition & domain,
+                                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                           arrayView1d< real64 > const & localRhs ) const override;
+
+
   /**@}*/
 
   struct viewKeyStruct : CompositionalMultiphaseBase::viewKeyStruct
