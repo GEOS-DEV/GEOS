@@ -239,6 +239,55 @@ DECLARE_FIELD( particleReferencePorosity,
                LEVEL_1,
                WRITE_AND_READ,
                "ParticleReferencePorosity" );
+
+DECLARE_FIELD( particleCohesiveNormalForce,
+               "particleCohesiveNormalForce",
+               array2d< real64 >,
+               0,
+               LEVEL_1,
+               WRITE_AND_READ,
+               "ParticleCohesiveNormalForce" );
+
+DECLARE_FIELD( particleCohesiveShearForce,
+               "particleCohesiveShearForce",
+               array2d< real64 >,
+               0,
+               LEVEL_1,
+               WRITE_AND_READ,
+               "ParticleCohesiveShearForce" );
+
+DECLARE_FIELD( particleCohesiveZoneFlag, 
+               "particleCohesiveZoneFlag", 
+               array1d< int >,
+               0,
+               LEVEL_1,
+               WRITE_AND_READ,
+               "ParticleCohesiveZoneFlag" );
+
+DECLARE_FIELD( particleInitialMappedNodes, 
+               "particleInitialMappedNodes", 
+               array2d< globalIndex >,
+               0,
+               LEVEL_1,
+               WRITE_AND_READ,
+               "ParticleInitialMappedNodes" );
+
+DECLARE_FIELD( particleInitialShapeFunctionValues, 
+               "particleInitialShapeFunctionValues", 
+               array2d< real64 >,
+               0,
+               LEVEL_1,
+               WRITE_AND_READ,
+               "ParticleInitialShapeFunctionValues" );
+
+DECLARE_FIELD( particleInitialShapeFunctionGradientValues, 
+               "particleInitialShapeFunctionGradientValues", 
+               array3d< real64 >,
+               0,
+               LEVEL_1,
+               WRITE_AND_READ,
+               "ParticleInitialShapeFunctionGradientValues" );
+
 }
 
 }
