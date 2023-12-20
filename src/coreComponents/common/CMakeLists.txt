@@ -44,6 +44,7 @@ set( common_sources
      MpiWrapper.cpp
      Path.cpp
      initializeEnvironment.cpp
+     Units.cpp
    )
 
 set( dependencyList ${parallelDeps} lvarray pugixml::pugixml RAJA chai conduit::conduit fmt::fmt )
