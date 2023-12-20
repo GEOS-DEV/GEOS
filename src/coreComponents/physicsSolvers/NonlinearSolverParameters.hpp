@@ -128,6 +128,7 @@ public:
     static constexpr char const * couplingTypeString()                   { return "couplingType"; }
     static constexpr char const * sequentialConvergenceCriterionString() { return "sequentialConvergenceCriterion"; }
     static constexpr char const * subcyclingOptionString()               { return "subcycling"; }
+    static constexpr char const * nonlinearAccelerationTypeString() { return "nonlinearAccelerationType"; }
   } viewKeys;
 
   /**
@@ -165,6 +166,15 @@ public:
   {
     ResidualNorm, ///< convergence achieved when the residual drops below a given norm
     NumberOfNonlinearIterations ///< convergence achieved when the subproblems convergence is achieved in less than minNewtonIteration
+  };
+
+  /**
+   * @brief Nonlinear acceleration type
+   */
+  enum class NonlinearAccelerationType : integer
+  {
+    None, ///< no acceleration
+    Aitken ///< Aitken acceleration
   };
 
   /**
@@ -305,6 +315,9 @@ public:
   /// Flag to specify whether subcycling is allowed or not in sequential schemes
   integer m_subcyclingOption;
 
+  /// Type of nonlinear acceleration for sequential solver
+  NonlinearAccelerationType m_nonlinearAccelerationType;
+
   /// Value used to make sure that residual normalizers are not too small when computing residual norm
   real64 m_minNormalizer = 1e-12;
 };
@@ -325,6 +338,10 @@ ENUM_STRINGS( NonlinearSolverParameters::CouplingType,
 ENUM_STRINGS( NonlinearSolverParameters::SequentialConvergenceCriterion,
               "ResidualNorm",
               "NumberOfNonlinearIterations" );
+
+ENUM_STRINGS( NonlinearSolverParameters::NonlinearAccelerationType,
+              "None",
+              "Aitken" );
 
 } /* namespace geos */
 
