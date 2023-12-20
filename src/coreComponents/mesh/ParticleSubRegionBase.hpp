@@ -184,26 +184,6 @@ public:
   void setParticleCenter( array2d< real64 > particleCenter )
   { m_particleCenter = particleCenter; }
 
-/**
-   * @brief Get the displacement of each particle in this subregion.
-   * @return an arrayView1d of const particle displacements
-   */
-  arrayView2d< real64 const > getParticleDisplacement() const
-  { return m_particleDisplacement; }
-
-  /**
-   * @copydoc getParticleDisplacement() const
-   */
-  arrayView2d< real64 > getParticleDisplacement()
-  { return m_particleDisplacement; }
-
-  /**
-   * @brief Set the displacement of each particle in this subregion.
-   * @param particleDisplacement the list of coordinates to be used as particle displacements
-   */
-  void setParticleDisplacement( array2d< real64 > particleDisplacement )
-  { m_particleDisplacement = particleDisplacement; }
-
   /**
    * @brief Get the velocity of each particle in this subregion.
    * @return an arrayView1d of const particle velocities
@@ -269,6 +249,32 @@ public:
    */
   arrayView3d< real64 > getParticleRVectors()
   { return m_particleRVectors; }
+
+  /**
+   * @brief Get the initial surface normal of each particle in this subregion.
+   * @return an arrayView1d of const particle initial surface normal
+   */
+  arrayView2d< real64 const > getParticleInitialSurfaceNormal() const
+  { return m_particleInitialSurfaceNormal; }
+
+  /**
+   * @copydoc getParticleInitialSurfaceNormal() const
+   */
+  arrayView2d< real64 > getParticleInitialSurfaceNormal()
+  { return m_particleInitialSurfaceNormal; }
+
+  /**
+   * @brief Get the surface normal of each particle in this subregion.
+   * @return an arrayView1d of const particle surface normal
+   */
+  arrayView2d< real64 const > getParticleSurfaceNormal() const
+  { return m_particleSurfaceNormal; }
+
+  /**
+   * @copydoc getParticleSurfaceNormal() const
+   */
+  arrayView2d< real64 > getParticleSurfaceNormal()
+  { return m_particleSurfaceNormal; }
 
   /**
    * @brief Get the group in which the constitutive models of this subregion are registered.
@@ -390,9 +396,6 @@ public:
     /// @return String key for the member level field for the particle center.
     static constexpr char const * particleCenterString() { return "particleCenter"; }
 
-    /// @return String key for the member level field for the particle displacement.
-    static constexpr char const * particleDisplacementString() { return "particleDisplacement"; }
-
     /// @return String key for the member level field for the particle velocity.
     static constexpr char const * particleVelocityString() { return "particleVelocity"; }
 
@@ -407,6 +410,12 @@ public:
 
     /// @return String key for the member level field for the particle volume.
     static constexpr char const * particleRVectorsString() { return "particleRVectors"; }
+
+    /// @return String key for the member level field for the particle initial surface normal.
+    static constexpr char const * particleInitialSurfaceNormalString() { return "particleInitialSurfaceNormal"; }
+  
+    /// @return String key for the member level field for the particle surface normal.
+    static constexpr char const * particleSurfaceNormalString() { return "particleSurfaceNormal"; }
   };
 
   /**
@@ -506,9 +515,6 @@ protected:
   /// Member level field for the particle center.
   array2d< real64 > m_particleCenter;
 
-  /// Member level field for the particle displacement
-  array2d< real64 > m_particleDisplacement;
-
   /// Member level field for the particle velocity.
   array2d< real64 > m_particleVelocity;
 
@@ -526,6 +532,12 @@ protected:
 
   /// current half-R-vectors (center to face)
   array3d< real64 > m_particleRVectors;
+
+  /// Member level field for the particle initial surface normal.
+  array2d< real64 > m_particleInitialSurfaceNormal;
+
+  /// Member level field for the particle surface normal.
+  array2d< real64 > m_particleSurfaceNormal;
 
   /// Indices of particles that are not ghosts
   SortedArray< localIndex > m_activeParticleIndices;

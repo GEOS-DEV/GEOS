@@ -83,6 +83,31 @@ public:
   };
 
   /**
+   * @enum SurfaceFlag
+   * 
+   * The flags associated with different surface types
+  */
+  enum struct SurfaceFlag : integer
+  {
+    Interior,
+    FullyDamaged,
+    Surface,
+    Cohesive    
+  };
+
+  /**
+   * @enum InterpolationOption
+   * 
+   * The options for interpolating tables
+  */
+  enum struct InterpolationOption : integer
+  {
+    Linear,
+    Cosine,
+    Smoothstep
+  };
+
+  /**
    * Constructor
    * @param name The name of the solver instance
    * @param parent the parent group of the solver
@@ -185,6 +210,11 @@ public:
     static constexpr char const * solidMaterialNamesString() { return "solidMaterialNames"; }
     static constexpr char const * forceExternalString() { return "externalForce"; }
     static constexpr char const * forceInternalString() { return "internalForce"; }
+    static constexpr char const * initialPositionString() { return "initialPosition"; }
+    static constexpr char const * displacementString() { return "displacement"; }
+    static constexpr char const * particleSurfaceNormalString() { return "particleSurfaceNormal"; }
+    static constexpr char const * cohesiveNormalForceString() { return "cohesiveNormalForce"; }
+    static constexpr char const * cohesiveShearForceString() { return "cohesiveShearForce"; }
     static constexpr char const * massString() { return "mass"; }
     static constexpr char const * materialVolumeString() { return "materialVolume"; }
     static constexpr char const * velocityString() { return "velocity"; }
@@ -199,6 +229,7 @@ public:
     static constexpr char const * materialPositionString() { return "materialPosition"; }
     static constexpr char const * normalStressString() { return "normalStress"; }
     static constexpr char const * massWeightedDamageString() { return "massWeightedDamage"; }
+    static constexpr char const * cohesiveNodeString() { return "cohesiveNode"; }
 
     static constexpr char const * boundaryNodesString() { return "boundaryNodes"; }
     static constexpr char const * bufferNodesString() { return "bufferNodes"; }
@@ -370,6 +401,25 @@ public:
 
   void boundaryConditionUpdate( real64 dt, real64 time_n );
 
+  void locateCohesiveInterfaces( DomainPartition & domain,
+                                 ParticleManager& particleManager,
+                                 NodeManager & nodeManager,
+                                 MeshLevel & mesh );
+
+  void enforceCohesiveLaw(  ParticleManager & particleManager,
+                            NodeManager & nodeManager );
+
+  void computeCohesiveTraction( real64 mA,
+                                real64 mB,
+                                arraySlice1d< real64 const > const dA,
+                                arraySlice1d< real64 const > const dB,
+                                real64 sA,
+                                real64 sB,
+                                arraySlice1d< real64 const > const nA,
+                                arraySlice1d< real64 const > const nB, 
+                                arraySlice1d< real64 > const tA,
+                                arraySlice1d< real64 > const tB  );
+
   void particleToGrid( real64 const time_n,
                        integer const cycleNumber,
                        ParticleManager & particleManager,
@@ -383,6 +433,12 @@ public:
                        ParticleManager & particleManager,
                        NodeManager & nodeManager,
                        MeshLevel & mesh );
+
+void interpolateTable( real64 x, 
+                       real64 dx,
+                       array2d< real64 > table,
+                       arrayView1d< real64 > output,
+                       SolidMechanicsMPM::InterpolationOption interpolationType );
 
   void interpolateFTable( real64 dt, real64 time_n );
 
@@ -448,6 +504,29 @@ public:
   void populateMappingArrays( ParticleManager & particleManager,
                               NodeManager & nodeManager ); //,
                                               //  SpatialPartition & partition  );
+
+GEOS_FORCE_INLINE
+GEOS_HOST_DEVICE
+void computeSinglePointShapeFunctions( arrayView2d< real64 const > const gridPosition,
+                                       arraySlice1d< real64 const > const particlePosition,
+                                       arrayView3d< int const > const ijkMap,
+                                       real64 const (& xLocalMin)[3],
+                                       real64 const (&hEl)[3],
+                                       arraySlice1d< int > const mappedNodes,
+                                       arraySlice1d< real64 > const shapeFunctionValues,
+                                       arraySlice2d< real64 > const shapeFunctionGradientValues );
+
+GEOS_FORCE_INLINE
+GEOS_HOST_DEVICE
+void computeCPDIShapeFunctions( arrayView2d< real64 const > const gridPosition,
+                                arraySlice1d< real64 const > const particlePosition,
+                                arraySlice2d< real64 const > const particleRVectors,
+                                arrayView3d< int const > const ijkMap,
+                                real64 const (& xLocalMin)[3],
+                                real64 const (&hEl)[3],
+                                arraySlice1d< int > const mappedNodes,
+                                arraySlice1d< real64 > const shapeFunctionValues,
+                                arraySlice2d< real64 > const shapeFunctionGradientValues );
 
   void computeBodyForce( ParticleManager & particleManager );
   
@@ -525,7 +604,7 @@ protected:
 
   int m_prescribedFTable;
   int m_prescribedBoundaryFTable;
-  int m_fTableInterpType;
+  InterpolationOption m_fTableInterpType;
   array2d< real64 > m_fTable;
   array1d< real64 > m_domainF;
   array1d< real64 > m_domainL;
@@ -535,7 +614,7 @@ protected:
   array1d< real64 > m_bodyForce;
 
   array1d< int > m_stressControl;
-  int m_stressTableInterpType;
+  InterpolationOption m_stressTableInterpType;
   array2d< real64 > m_stressTable;
   real64 m_stressControlKp;
   real64 m_stressControlKi;
@@ -553,6 +632,14 @@ protected:
   int m_reactionHistory;
   real64 m_reactionWriteInterval;
   real64 m_nextReactionWriteTime;
+
+  // Cohesive law variables
+  SortedArray< globalIndex >  m_cohesiveNodeGlobalIndices;
+  int m_enableCohesiveLaws;
+  real64 m_maxCohesiveNormalStress;
+  real64 m_maxCohesiveShearStress;
+  real64 m_characteristicNormalDisplacement;
+  real64 m_characteristicTransverseDisplacement;
 
   int m_needsNeighborList;
   real64 m_neighborRadius;
@@ -618,6 +705,11 @@ protected:
   array1d< real64 > m_domainExtent;       // Length of each edge of global domain excluding buffer cells
   array1d< int > m_nEl;                   // Number of elements in each grid direction including buffer and ghost cells
 
+  // //Initial grid parameters
+  // array1d< real64 > m_hEl0;
+  // array1d< real64 > m_xLocalMin0;
+  // array1d< real64 > m_xLocalMax0;
+
   array3d< int > m_ijkMap;        // Map from indices in each spatial dimension to local node ID
 
   int m_useEvents;                   // Events flag
@@ -678,6 +770,11 @@ ENUM_STRINGS( SolidMechanicsMPM::UpdateMethodOption,
 ENUM_STRINGS( SolidMechanicsMPM::BoundaryConditionOption,
               "Outflow",
               "Symmetry" );
+
+ENUM_STRINGS( SolidMechanicsMPM::InterpolationOption,
+              "Linear",
+              "Cosine",
+              "Smoothstep" );
 
 //**********************************************************************************************************************
 //**********************************************************************************************************************

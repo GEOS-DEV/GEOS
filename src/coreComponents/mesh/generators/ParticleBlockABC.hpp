@@ -128,6 +128,18 @@ public:
   virtual bool hasRVectors() const = 0;
 
   /**
+   * @brief Get the list of particle initial surface normal in this subregion.
+   * @return the list of particle initial surface normal in this subregion.
+   */
+  virtual array2d< real64 > getParticleInitialSurfaceNormal() const = 0;
+
+  /**
+   * @brief Get the list of particle surface normal in this subregion.
+   * @return the list of particle surface normal in this subregion.
+   */
+  virtual array2d< real64 > getParticleSurfaceNormal() const = 0;
+
+  /**
    * @brief Get the number of particles.
    * @return number of particles in the particle block
    */
