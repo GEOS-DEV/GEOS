@@ -444,10 +444,8 @@ CellElementStencilTPFAWrapper::initVelocity( localIndex iconn, localIndex ip, El
   {
     localIndex const er = m_elementRegionIndices[iconn][i];
     localIndex const esr = m_elementSubRegionIndices[iconn][i];
-    localIndex const ei = m_elementIndices[iconn][i];
 
-    real64 zero[3] = {0, 0, 0};
-    LvArray::tensorOps::copy< 3 >( phaseVelocity[er][esr][ei][ip], zero );
+ phaseVelocity[er][esr].zero();
 
   }
 }

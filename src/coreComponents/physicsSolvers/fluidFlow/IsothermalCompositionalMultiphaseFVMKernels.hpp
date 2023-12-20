@@ -696,9 +696,9 @@ public:
               dPhaseFlux_dC );
           }
 
-          if( m_kernelFlags.isSet( FaceBasedAssemblyKernelFlags::computeVelocity ) )
-          {
-            //TODO (jacques) move it to Dispersion kernel
+            if( m_kernelFlags.isSet( FaceBasedAssemblyKernelFlags::computeVelocity ) )
+            {
+                //TODO (jacques) move it to Dispersion kernel
 //              GEOS_LOG_RANK(GEOS_FMT("Distance : {} \n\t {}\n",
 //                                     m_globalCellDimAccessor[seri[0]][sesri[0]][sei[0]],
 //                                     m_globalCellDimAccessor[seri[1]][sesri[1]][sei[1]]));
@@ -822,12 +822,15 @@ public:
           KERNEL_TYPE const & kernelComponent )
   {
     GEOS_MARK_FUNCTION;
+      forAll< POLICY >( numConnections, [=] GEOS_HOST_DEVICE ( localIndex const iconn ) {
+          kernelComponent.initVelocity(iconn);
+      } );
+
     forAll< POLICY >( numConnections, [=] GEOS_HOST_DEVICE ( localIndex const iconn )
     {
       typename KERNEL_TYPE::StackVariables stack( kernelComponent.stencilSize( iconn ),
                                                   kernelComponent.numPointsInFlux( iconn ) );
 
-      kernelComponent.initVelocity( iconn );
 
       kernelComponent.setup( iconn, stack );
       kernelComponent.computeFlux( iconn, stack );
