@@ -537,8 +537,6 @@ void CompositionalMultiphaseHybridFVM::keepFlowVariablesConstantDuringInitStep( 
   CompositionalMultiphaseBase::
     keepFlowVariablesConstantDuringInitStep( time, dt, dofManager, domain, localMatrix, localRhs );
 
-  GEOS_UNUSED_VAR( time, dt );
-
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel const & mesh,
                                                                arrayView1d< string const > const & )
@@ -556,7 +554,7 @@ void CompositionalMultiphaseHybridFVM::keepFlowVariablesConstantDuringInitStep( 
 
     forAll< parallelDevicePolicy<> >( faceManager.size(), [=] GEOS_HOST_DEVICE ( localIndex const iface )
     {
-      if( faceGhostRank[iface] >= 0 )
+      if( faceGhostRank[iface] >= 0 || faceDofNumber[iface] < 0 )
       {
         return;
       }
@@ -572,6 +570,7 @@ void CompositionalMultiphaseHybridFVM::keepFlowVariablesConstantDuringInitStep( 
                                                   rhsValue,
                                                   facePressure[iface],   // freeze the current pressure value
                                                   facePressure[iface] );
+
       localRhs[localRow] = rhsValue;
     } );
   } );
