@@ -628,7 +628,6 @@ void SinglePhaseBase::implicitStepSetup( real64 const & GEOS_UNUSED_PARAM( time_
       {
         updateSolidInternalEnergyModel( subRegion );
         updateThermalConductivity( subRegion );
-
       }
 
     } );
@@ -674,6 +673,13 @@ void SinglePhaseBase::implicitStepComplete( real64 const & time,
     mesh.getElemManager().forElementSubRegions( regionNames, [&]( localIndex const,
                                                                   ElementSubRegionBase & subRegion )
     {
+      // update deltaPressure
+      arrayView1d< real64 const > const pres = subRegion.getField< fields::flow::pressure >();
+      arrayView1d< real64 const > const initPres = subRegion.getField< fields::flow::initialPressure >();
+      arrayView1d< real64 > const deltaPres = subRegion.getField< fields::flow::deltaPressure >();
+      singlePhaseBaseKernels::StatisticsKernel::
+        saveDeltaPressure( subRegion.size(), pres, initPres, deltaPres );
+
       arrayView1d< real64 const > const dVol = subRegion.getField< fields::flow::deltaVolume >();
       arrayView1d< real64 > const vol = subRegion.getReference< array1d< real64 > >( CellElementSubRegion::viewKeyStruct::elementVolumeString() );
 

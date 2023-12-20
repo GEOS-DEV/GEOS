@@ -2292,6 +2292,12 @@ void CompositionalMultiphaseBase::implicitStepComplete( real64 const & time,
                                                 [&]( localIndex const,
                                                      ElementSubRegionBase & subRegion )
     {
+      // update deltaPressure
+      arrayView1d< real64 const > const pres = subRegion.getField< fields::flow::pressure >();
+      arrayView1d< real64 const > const initPres = subRegion.getField< fields::flow::initialPressure >();
+      arrayView1d< real64 > const deltaPres = subRegion.getField< fields::flow::deltaPressure >();
+      isothermalCompositionalMultiphaseBaseKernels::StatisticsKernel::
+        saveDeltaPressure< parallelDevicePolicy<> >( subRegion.size(), pres, initPres, deltaPres );
 
       // Step 2: save the converged fluid state
       string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );

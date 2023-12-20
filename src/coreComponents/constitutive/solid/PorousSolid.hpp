@@ -153,10 +153,15 @@ public:
                         dTotalStress_dTemperature, // To pass something here
                         stiffness );
 
-    // Compute effective stress increment for the porosity
+    // Compute total stress increment for the porosity update
+    GEOS_UNUSED_VAR( pressure_n, temperature_n );
     real64 const bulkModulus = m_solidUpdate.getBulkModulus( k );
     real64 const meanEffectiveStressIncrement = bulkModulus * ( strainIncrement[0] + strainIncrement[1] + strainIncrement[2] );
-    m_porosityUpdate.updateMeanEffectiveStressIncrement( k, q, meanEffectiveStressIncrement );
+    real64 const biotCoefficient = m_porosityUpdate.getBiotCoefficient( k );
+    real64 const thermalExpansionCoefficient = m_solidUpdate.getThermalExpansionCoefficient( k );
+    real64 const meanTotalStressIncrement = meanEffectiveStressIncrement - biotCoefficient * ( pressure - pressure_n )
+                                            - 3 * thermalExpansionCoefficient * bulkModulus * ( temperature - temperature_n );
+    m_porosityUpdate.updateMeanTotalStressIncrement( k, q, meanTotalStressIncrement );
 
     // Compute porosity and its derivatives
     computePorosityFixedStress( k, q,
@@ -166,7 +171,7 @@ public:
                                 temperature,
                                 temperature_k,
                                 temperature_n,
-                                meanEffectiveStressIncrement,
+                                meanTotalStressIncrement,
                                 porosity,
                                 dPorosity_dVolStrain );
   }
@@ -276,7 +281,7 @@ private:
                                    real64 const & temperature,
                                    real64 const & temperature_k,
                                    real64 const & temperature_n,
-                                   real64 const & meanEffectiveStressIncrement,
+                                   real64 const & meanTotalStressIncrement,
                                    real64 & porosity,
                                    real64 & dPorosity_dVolStrain ) const
   {
@@ -287,7 +292,7 @@ private:
                                         temperature,
                                         temperature_k,
                                         temperature_n,
-                                        meanEffectiveStressIncrement,
+                                        meanTotalStressIncrement,
                                         dPorosity_dVolStrain );
 
     porosity = m_porosityUpdate.getPorosity( k, q );
