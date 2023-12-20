@@ -36,6 +36,7 @@ WellControls::WellControls( string const & name, Group * const parent )
   m_targetBHP( 0.0 ),
   m_targetTotalRate( 0.0 ),
   m_targetPhaseRate( 0.0 ),
+  m_targetMassRate(0.0),
   m_useSurfaceConditions( 0 ),
   m_surfacePres( 0.0 ),
   m_surfaceTemp( 0.0 ),
@@ -78,6 +79,11 @@ WellControls::WellControls( string const & name, Group * const parent )
     setDefaultValue( 0.0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Target phase volumetric rate (if useSurfaceConditions: [surface m^3/s]; else [reservoir m^3/s])" );
+
+  registerWrapper( viewKeyStruct::targetMassRateString(), &m_targetMassRate ).
+    setDefaultValue( 0.0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Target Mass Rate rate ( [kg^3/s])" );
 
   registerWrapper( viewKeyStruct::targetPhaseNameString(), &m_targetPhaseName ).
     setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
@@ -146,6 +152,11 @@ WellControls::WellControls( string const & name, Group * const parent )
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Name of the phase rate table when the rate is a time dependent function" );
 
+  registerWrapper( viewKeyStruct::targetMassRateTableNameString(), &m_targetMassRateTableName ).
+    setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Name of the mass rate table when the rate is a time dependent function" );
+
   registerWrapper( viewKeyStruct::statusTableNameString(), &m_statusTableName ).
     setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -173,6 +184,12 @@ void WellControls::switchToPhaseRateControl( real64 const & val )
 {
   m_currentControl = Control::PHASEVOLRATE;
   m_targetPhaseRate = val;
+}
+
+void WellControls::switchToMassRateControl( real64 const & val )
+{
+  m_currentControl = Control::MASSRATE;
+  m_targetMassRate = val;
 }
 
 namespace
@@ -228,6 +245,10 @@ void WellControls::postProcessInput()
                  getWrapperDataContext( viewKeyStruct::targetPhaseRateString() ) << ": Target oil rate is negative",
                  InputError );
 
+  GEOS_THROW_IF( m_targetMassRate < 0,
+                 getWrapperDataContext( viewKeyStruct::targetPhaseRateString() ) << ": Target mass rate is negative",
+                 InputError );
+
   GEOS_THROW_IF( (m_injectionStream.empty()  && m_injectionTemperature >= 0) ||
                  (!m_injectionStream.empty() && m_injectionTemperature < 0),
                  "WellControls " << getDataContext() << ": Both "
@@ -267,14 +288,18 @@ void WellControls::postProcessInput()
 
   // 4) check that at least one rate constraint has been defined
   GEOS_THROW_IF( ((m_targetPhaseRate <= 0.0 && m_targetPhaseRateTableName.empty()) &&
+                  (m_targetMassRate <= 0.0 && m_targetMassRateTableName.empty()) &&
                   (m_targetTotalRate <= 0.0 && m_targetTotalRateTableName.empty())),
-                 "WellControls " << getDataContext() << ": You need to specify a phase rate constraint or a total rate constraint. \n" <<
+                 "WellControls " << getDataContext() << ": You need to specify a phase, mass, or total rate constraint. \n" <<
                  "The phase rate constraint can be specified using " <<
                  "either " << viewKeyStruct::targetPhaseRateString() <<
                  " or " << viewKeyStruct::targetPhaseRateTableNameString() << ".\n" <<
                  "The total rate constraint can be specified using " <<
                  "either " << viewKeyStruct::targetTotalRateString() <<
-                 " or " << viewKeyStruct::targetTotalRateTableNameString(),
+                 " or " << viewKeyStruct::targetTotalRateTableNameString()<<
+                 "The mass rate constraint can be specified using " <<
+                 "either " << viewKeyStruct::targetMassRateString() <<
+                 " or " << viewKeyStruct::targetMassRateTableNameString(),
                  InputError );
 
   // 5) check whether redundant information has been provided
@@ -291,6 +316,11 @@ void WellControls::postProcessInput()
   GEOS_THROW_IF( ((m_targetBHP > 0.0 && !m_targetBHPTableName.empty())),
                  "WellControls " << getDataContext() << ": You have provided redundant information for well BHP." <<
                  " The keywords " << viewKeyStruct::targetBHPString() << " and " << viewKeyStruct::targetBHPTableNameString() << " cannot be specified together",
+                 InputError );
+
+  GEOS_THROW_IF( ((m_targetMassRate > 0.0 && !m_targetMassRateTableName.empty())),
+                 "WellControls " << getDataContext() << ": You have provided redundant information for well mass rate." <<
+                 " The keywords " << viewKeyStruct::targetMassRateString() << " and " << viewKeyStruct::targetMassRateTableNameString() << " cannot be specified together",
                  InputError );
 
   // 6.1) If the well is under BHP control then the BHP must be specified.
@@ -315,6 +345,12 @@ void WellControls::postProcessInput()
   GEOS_THROW_IF( (isInjector() && (m_inputControl == Control::PHASEVOLRATE)),
                  "WellControls " << getDataContext() << ": You have to control an injector with "
                                  << EnumStrings< Control >::toString( Control::TOTALVOLRATE ),
+                 InputError );
+
+  // An injector must be controlled by TotalVolRate
+  GEOS_THROW_IF( (isProducer() && (m_inputControl == Control::MASSRATE)),
+                 "WellControls " << getDataContext() << ": You have to control an injector with "
+                                 << EnumStrings< Control >::toString( Control::MASSRATE ),
                  InputError );
 
   // 7) Make sure that the flag disabling crossflow is not used for producers
@@ -380,7 +416,22 @@ void WellControls::postProcessInput()
                                    << m_targetPhaseRateTable->getName() << " should be TableFunction::InterpolationType::Lower",
                    InputError );
   }
+  // Create time-dependent mass rate table
+  if( m_targetMassRateTableName.empty() )
+  {
+    m_targetMassRateTableName = getName()+"_ConstantMassRate_table";
+    m_targetMassRateTable = createWellTable( m_targetMassRateTableName, m_targetMassRate );
+  }
+  else
+  {
+    FunctionManager & functionManager = FunctionManager::getInstance();
+    m_targetMassRateTable = &(functionManager.getGroup< TableFunction const >( m_targetMassRateTableName ));
 
+    GEOS_THROW_IF( m_targetMassRateTable->getInterpolationMethod() != TableFunction::InterpolationType::Lower,
+                   "WellControls " << getDataContext() << ": The interpolation method for the time-dependent mass rate table "
+                                   << m_targetMassRateTable->getName() << " should be TableFunction::InterpolationType::Lower",
+                   InputError );
+  }
   // 12) Create the time-dependent well status table
   if( m_statusTableName.empty())
   {
@@ -408,7 +459,8 @@ void WellControls::postProcessInput()
 bool WellControls::isWellOpen( real64 const & currentTime ) const
 {
   bool isOpen = true;
-  if( isZero( getTargetTotalRate( currentTime ) ) && isZero( getTargetPhaseRate( currentTime ) ) )
+  if( isZero( getTargetTotalRate( currentTime ) ) && isZero( getTargetPhaseRate( currentTime ) ) 
+            && isZero( getTargetMassRate( currentTime ) ))
   {
     isOpen = false;
   }

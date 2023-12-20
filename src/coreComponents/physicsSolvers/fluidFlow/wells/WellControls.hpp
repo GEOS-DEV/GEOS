@@ -61,6 +61,7 @@ public:
     BHP,  /**< The well operates at a specified bottom hole pressure (BHP) */
     PHASEVOLRATE, /**< The well operates at a specified phase volumetric flow rate */
     TOTALVOLRATE, /**< The well operates at a specified total volumetric flow rate */
+    MASSRATE, /**<The well operates at a specified mass rate */
     UNINITIALIZED, /**< This is the current well control before postProcessInput (needed to restart from file properly) */
   };
 
@@ -130,6 +131,12 @@ public:
   void switchToTotalRateControl( real64 const & val );
 
   /**
+   * @brief Set the control type to mass rate and set a numerical value for the control.
+   * @param[in] val value for the mass rate
+   */
+  void switchToMassRateControl( real64 const & val );
+
+  /**
    * @brief Set the control type to phase rate and set a numerical value for the control.
    * @param[in] val value for the phase volumetric rate
    */
@@ -190,6 +197,16 @@ public:
    * @return the target phase name
    */
   const string & getTargetPhaseName() const { return m_targetPhaseName; }
+
+ /**
+   * @brief Get the target mass rate
+   * @return the target mass rate 
+   */
+  real64 getTargetMassRate(real64 const & currentTime) const 
+  { 
+        return m_rateSign * m_targetMassRateTable->evaluate( &currentTime);
+  }
+
 
   /**
    * @brief Const accessor for the composition of the injection stream
@@ -276,6 +293,8 @@ public:
     static constexpr char const * targetPhaseRateString() { return "targetPhaseRate"; }
     /// String key for the well target phase name
     static constexpr char const * targetPhaseNameString() { return "targetPhaseName"; }
+        /// String key for the well target phase name
+    static constexpr char const * targetMassRateString() { return "targetMassRate"; }
     /// String key for the well injection stream
     static constexpr char const * injectionStreamString() { return "injectionStream"; }
     /// String key for the well injection temperature
@@ -290,6 +309,8 @@ public:
     static constexpr char const * targetTotalRateTableNameString() { return "targetTotalRateTableName"; }
     /// string key for phase rate table name
     static constexpr char const * targetPhaseRateTableNameString() { return "targetPhaseRateTableName"; }
+    /// string key for mass rate table name
+    static constexpr char const * targetMassRateTableNameString() { return "targetMassRateTableName"; }
     /// string key for BHP table name
     static constexpr char const * targetBHPTableNameString() { return "targetBHPTableName"; }
     /// string key for status table name
@@ -336,6 +357,9 @@ private:
   /// Name of the targeted phase
   string m_targetPhaseName;
 
+  /// Target MassRate
+  real64 m_targetMassRate;
+
   /// Vector with global component fractions at the injector
   array1d< real64 > m_injectionStream;
 
@@ -356,6 +380,9 @@ private:
 
   /// Phase rate table name
   string m_targetPhaseRateTableName;
+
+  /// Mass rate table name
+  string m_targetMassRateTableName;
 
   /// BHP table name
   string m_targetBHPTableName;
@@ -378,6 +405,9 @@ private:
   /// Phase rate table
   TableFunction const * m_targetPhaseRateTable;
 
+  /// Mass rate table
+  TableFunction const * m_targetMassRateTable;
+
   /// BHP table
   TableFunction const * m_targetBHPTable;
 
@@ -393,6 +423,7 @@ ENUM_STRINGS( WellControls::Control,
               "BHP",
               "phaseVolRate",
               "totalVolRate",
+              "massRate",
               "uninitialized" );
 
 

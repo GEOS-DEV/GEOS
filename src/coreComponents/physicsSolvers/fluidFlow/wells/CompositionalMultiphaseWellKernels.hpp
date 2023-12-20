@@ -92,6 +92,7 @@ struct ControlEquationHelper
                  real64 const & targetBHP,
                  real64 const & targetPhaseRate,
                  real64 const & targetTotalRate,
+                 real64 const & targetMassRate,
                  real64 const & currentBHP,
                  arrayView1d< real64 const > const & currentPhaseVolRate,
                  real64 const & currentTotalVolRate,
@@ -107,6 +108,7 @@ struct ControlEquationHelper
            real64 const & targetBHP,
            real64 const & targetPhaseRate,
            real64 const & targetTotalRate,
+           real64 const & targetMassRate,
            real64 const & currentBHP,
            real64 const & dCurrentBHP_dPres,
            arrayView1d< real64 const > const & dCurrentBHP_dCompDens,
@@ -118,6 +120,7 @@ struct ControlEquationHelper
            real64 const & dCurrentTotalVolRate_dPres,
            arrayView1d< real64 const > const & dCurrentTotalVolRate_dCompDens,
            real64 const & dCurrentTotalVolRate_dRate,
+           real64 const & massDensity,
            globalIndex const dofNumber,
            CRSMatrixView< real64, globalIndex const > const & localMatrix,
            arrayView1d< real64 > const & localRhs );
@@ -692,6 +695,7 @@ public:
     m_targetBHP( wellControls.getTargetBHP( timeAtEndOfStep ) ),
     m_targetTotalRate( wellControls.getTargetTotalRate( timeAtEndOfStep ) ),
     m_targetPhaseRate( wellControls.getTargetPhaseRate( timeAtEndOfStep ) ),
+    m_targetMassRate( wellControls.getTargetMassRate( timeAtEndOfStep ) ),
     m_volume( subRegion.getElementVolume() ),
     m_phaseDens_n( fluid.phaseDensity_n() ),
     m_totalDens_n( fluid.totalDensity_n() )
@@ -731,6 +735,11 @@ public:
             // the residual entry is in volume / time units
             normalizer = LvArray::math::max( LvArray::math::abs( m_targetPhaseRate ), m_minNormalizer );
           }
+          else if( m_currentControl == WellControls::Control::MASSRATE )
+          {
+            // the residual entry is in volume / time units
+            normalizer = LvArray::math::max( LvArray::math::abs( m_targetMassRate ), m_minNormalizer );
+          }
         }
         // for the pressure difference equation, always normalize by the BHP
         else
@@ -748,8 +757,16 @@ public:
         }
         else // Type::INJECTOR, only TOTALVOLRATE is supported for now
         {
-          // the residual is in mass units
-          normalizer = m_dt * LvArray::math::abs( m_targetTotalRate ) * m_totalDens_n[iwelem][0];
+           if( m_currentControl == WellControls::Control::MASSRATE )
+           {    
+              normalizer = m_dt * LvArray::math::abs( m_targetMassRate ) ;
+           }
+           else
+           {
+              // the residual is in mass units
+              normalizer = m_dt * LvArray::math::abs( m_targetTotalRate ) * m_totalDens_n[iwelem][0];
+           }
+
         }
 
         // to make sure that everything still works well if the rate is zero, we add this check
@@ -765,7 +782,15 @@ public:
         }
         else // Type::INJECTOR, only TOTALVOLRATE is supported for now
         {
-          normalizer = m_dt * LvArray::math::abs( m_targetTotalRate );
+          if(  m_currentControl == WellControls::Control::MASSRATE )
+          {
+            normalizer = m_dt * LvArray::math::abs( m_targetMassRate/  m_totalDens_n[iwelem][0] );
+          }
+          else
+          {
+            normalizer = m_dt * LvArray::math::abs( m_targetTotalRate );
+          }
+          
         }
 
         // to make sure that everything still works well if the rate is zero, we add this check
@@ -819,6 +844,7 @@ protected:
   real64 const m_targetBHP;
   real64 const m_targetTotalRate;
   real64 const m_targetPhaseRate;
+  real64 const m_targetMassRate;
 
   /// View on the volume
   arrayView1d< real64 const > const m_volume;

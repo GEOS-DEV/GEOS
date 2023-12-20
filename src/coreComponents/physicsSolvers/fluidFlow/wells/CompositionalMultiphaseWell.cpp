@@ -240,6 +240,7 @@ void CompositionalMultiphaseWell::registerDataOnMesh( Group & meshBodies )
         reference().resizeDimension< 0 >( m_numPhases );
 
       wellControls.registerWrapper< real64 >( viewKeyStruct::currentTotalVolRateString() );
+      wellControls.registerWrapper< real64 >( viewKeyStruct::massDensityString() );
       wellControls.registerWrapper< real64 >( viewKeyStruct::dCurrentTotalVolRate_dPresString() ).
         setRestartFlags( RestartFlags::NO_WRITE );
       wellControls.registerWrapper< array1d< real64 > >( viewKeyStruct::dCurrentTotalVolRate_dCompDensString() ).
@@ -687,7 +688,8 @@ void CompositionalMultiphaseWell::updateVolRatesForConstraint( WellElementSubReg
     wellControls.getReference< array1d< real64 > >( CompositionalMultiphaseWell::viewKeyStruct::dCurrentTotalVolRate_dCompDensString() );
   real64 & dCurrentTotalVolRate_dRate =
     wellControls.getReference< real64 >( CompositionalMultiphaseWell::viewKeyStruct::dCurrentTotalVolRate_dRateString() );
-
+  real64 & massDensity =
+    wellControls.getReference< real64 >( CompositionalMultiphaseWell::viewKeyStruct::massDensityString() );
   constitutive::constitutiveUpdatePassThru( fluid, [&] ( auto & castedFluid )
   {
     typename TYPEOFREF( castedFluid ) ::KernelWrapper fluidWrapper = castedFluid.createKernelWrapper();
@@ -721,7 +723,8 @@ void CompositionalMultiphaseWell::updateVolRatesForConstraint( WellElementSubReg
                                 &iwelemRef,
                                 &logLevel,
                                 &wellControlsName,
-                                &massUnit] ( localIndex const )
+                                &massUnit,
+                                &massDensity] ( localIndex const )
     {
       GEOS_UNUSED_VAR( massUnit );
       using Deriv = multifluid::DerivativeOffset;
@@ -757,7 +760,7 @@ void CompositionalMultiphaseWell::updateVolRatesForConstraint( WellElementSubReg
       real64 const currentTotalRate = connRate[iwelemRef];
 
       // Step 2.1: compute the inverse of the total density and derivatives
-
+      massDensity =totalDens[iwelemRef][0]; // need to verify this is surface dens
       real64 const totalDensInv = 1.0 / totalDens[iwelemRef][0];
       real64 const dTotalDensInv_dPres = -dTotalDens[iwelemRef][0][Deriv::dP] * totalDensInv * totalDensInv;
       stackArray1d< real64, maxNumComp > dTotalDensInv_dCompDens( numComp );
