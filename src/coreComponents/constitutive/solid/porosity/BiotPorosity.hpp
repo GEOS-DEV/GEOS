@@ -145,10 +145,8 @@ public:
   virtual void updateFixedStress( localIndex const k,
                                   localIndex const q,
                                   real64 const & pressure, // current
-                                  real64 const & GEOS_UNUSED_PARAM( pressure_k ), // last iteration (for sequential)
                                   real64 const & pressure_n, // last time step
                                   real64 const & temperature,
-                                  real64 const & GEOS_UNUSED_PARAM( temperature_k ),
                                   real64 const & temperature_n,
                                   real64 const & meanTotalStressIncrement,
                                   real64 & dPorosity_dVolStrain ) const
@@ -176,10 +174,8 @@ public:
   virtual void updateFixedStress( localIndex const k,
                                   localIndex const q,
                                   real64 const & pressure,                // current
-                                  real64 const & pressure_k,                // last iteration (for sequential)
                                   real64 const & pressure_n,                // last time step
                                   real64 const & temperature,
-                                  real64 const & temperature_k,
                                   real64 const & temperature_n,
                                   real64 & dPorosity_dVolStrain ) const
   {
