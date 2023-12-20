@@ -3,7 +3,8 @@ set( gtest_geosx_tests
      testDataTypes.cpp
      testFixedSizeDeque.cpp
      testTypeDispatch.cpp
-     testLifoStorage.cpp )
+     testLifoStorage.cpp
+     testUnits.cpp )
 
 if ( ENABLE_CALIPER )
   list( APPEND gtest_geosx_tests
