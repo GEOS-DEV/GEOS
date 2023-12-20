@@ -2,12 +2,12 @@ from dataclasses import dataclass
 import logging
 
 from typing import (
-    Sequence,
     Collection,
-    Iterable,
-    Tuple,
-    Set,
     FrozenSet,
+    Iterable,
+    Sequence,
+    Set,
+    Tuple,
 )
 
 from tqdm import tqdm
@@ -18,7 +18,6 @@ from vtkmodules.vtkCommonDataModel import (
     vtkCell,
 )
 from vtkmodules.vtkCommonCore import (
-    vtkIdTypeArray,
     vtkPoints,
 )
 from vtkmodules.vtkIOXML import (
@@ -27,14 +26,9 @@ from vtkmodules.vtkIOXML import (
 from vtkmodules.util.numpy_support import (
     vtk_to_numpy,
 )
-# from . import vtk_utils
-import vtk_utils
 from vtk_utils import (
     vtk_iter,
 )
-
-# from vtk import *
-# from vtk import vtkCell
 
 
 @dataclass(frozen=True)
@@ -42,7 +36,7 @@ class Options:
     tolerance: float
     matrix_name: str
     fracture_name: str
-    duplicated_nodes_field_name: str
+    collocated_nodes_field_name: str
 
 
 @dataclass(frozen=True)
@@ -53,7 +47,7 @@ class Result:
     errors: Sequence[tuple[int, int, int]]
 
 
-def __read_multiblock(vtk_input_file: str, matrix_name: str, fracture_name: str) -> (vtkUnstructuredGrid, vtkUnstructuredGrid):
+def __read_multiblock(vtk_input_file: str, matrix_name: str, fracture_name: str) -> Tuple[vtkUnstructuredGrid, vtkUnstructuredGrid]:
     reader = vtkXMLMultiBlockDataReader()
     reader.SetFileName(vtk_input_file)
     reader.Update()
@@ -68,12 +62,17 @@ def __read_multiblock(vtk_input_file: str, matrix_name: str, fracture_name: str)
     return matrix, fracture
 
 
-# TODO copy paste
-def __format_collocated_nodes(fracture_mesh: vtkUnstructuredGrid) -> Iterable[Iterable[int]]:
+def format_collocated_nodes(fracture_mesh: vtkUnstructuredGrid) -> Sequence[Iterable[int]]:
+    """
+    Extract the collocated nodes information from the mesh and formats it in a python way.
+    :param fracture_mesh: The mesh of the fracture (with 2d cells).
+    :return: An iterable over all the buckets of collocated nodes.
+    """
     collocated_nodes: numpy.ndarray = vtk_to_numpy(fracture_mesh.GetPointData().GetArray("collocated_nodes"))
     if len(collocated_nodes.shape) == 1:
         collocated_nodes: numpy.ndarray = collocated_nodes.reshape((collocated_nodes.shape[0], 1))
-    return tuple(map(lambda bucket: tuple(sorted(filter(lambda i: i != -1, bucket))), collocated_nodes))
+    generator = (tuple(sorted(bucket[bucket > -1])) for bucket in collocated_nodes)
+    return tuple(generator)
 
 
 def __check_collocated_nodes_positions(matrix_points: Sequence[Tuple[float, float, float]],
@@ -85,7 +84,7 @@ def __check_collocated_nodes_positions(matrix_points: Sequence[Tuple[float, floa
         matrix_nodes = (fracture_points[li], ) + tuple(map(lambda gi: matrix_points[g2l[gi]], bucket))
         m = numpy.array(matrix_nodes)
         rank: int = numpy.linalg.matrix_rank(m)
-        if rank not in (0, 1):
+        if rank > 1:
             issues.append((li, bucket, tuple(map(lambda gi: matrix_points[g2l[gi]], bucket))))
     return issues
 
@@ -108,7 +107,9 @@ def __check_neighbors(matrix: vtkUnstructuredGrid,
     for bucket in collocated_nodes:
         for gi in bucket:
             fracture_nodes.add(g2l[gi])
-    # Building the cells
+    # For each face of each cell,
+    # if all the points of the face are "made" of collocated nodes,
+    # then this is a fracture face.
     fracture_faces: Set[FrozenSet[int]] = set()
     for c in range(matrix.GetNumberOfCells()):
         cell: vtkCell = matrix.GetCell(c)
@@ -117,13 +118,11 @@ def __check_neighbors(matrix: vtkUnstructuredGrid,
             point_ids = frozenset(vtk_iter(face.GetPointIds()))
             if point_ids <= fracture_nodes:
                 fracture_faces.add(point_ids)
-    print(len(fracture_faces))
     # Finding the cells
     for c in tqdm(range(fracture.GetNumberOfCells()), desc="Finding neighbor cell pairs"):
         cell: vtkCell = fracture.GetCell(c)
         cns: Set[FrozenSet[int]] = set()  # subset of collocated_nodes
         point_ids = frozenset(vtk_iter(cell.GetPointIds()))
-        # cns = tuple(map(g2l.__getitem__, map(collocated_nodes.__getitem__, point_ids)))
         for point_id in point_ids:
             bucket = collocated_nodes[point_id]
             local_bucket = frozenset(map(g2l.__getitem__, bucket))
@@ -135,8 +134,7 @@ def __check_neighbors(matrix: vtkUnstructuredGrid,
             if f in fracture_faces:
                 found += 1
         if found != 2:
-            print("HELL WORLD", found, cns)
-    pass
+            logging.warning(f"Something went wrong since we should have found 2 fractures faces (we found {found}) for collocated nodes {cns}.")
 
 
 def __check(vtk_input_file: str, options: Options) -> Result:
@@ -144,7 +142,7 @@ def __check(vtk_input_file: str, options: Options) -> Result:
     matrix_points: vtkPoints = matrix.GetPoints()
     fracture_points: vtkPoints = fracture.GetPoints()
 
-    collocated_nodes: Iterable[Iterable[int]] = __format_collocated_nodes(fracture)  # TODO convert to local_collocated_nodes
+    collocated_nodes: Sequence[Iterable[int]] = format_collocated_nodes(fracture)
     assert matrix.GetPointData().GetGlobalIds() and matrix.GetCellData().GetGlobalIds() and \
            fracture.GetPointData().GetGlobalIds() and fracture.GetCellData().GetGlobalIds()
 
@@ -152,10 +150,12 @@ def __check(vtk_input_file: str, options: Options) -> Result:
     g2l = numpy.ones(len(point_ids), dtype=int) * -1
     for loc, glo in enumerate(point_ids):
         g2l[glo] = loc
+    g2l.flags.writeable = False
 
     issues = __check_collocated_nodes_positions(vtk_to_numpy(matrix.GetPoints().GetData()),
                                                 vtk_to_numpy(fracture.GetPoints().GetData()),
-                                                g2l, collocated_nodes)
+                                                g2l,
+                                                collocated_nodes)
     assert len(issues) == 0
 
     __check_neighbors(matrix, fracture, g2l, collocated_nodes)
@@ -176,8 +176,3 @@ def check(vtk_input_file: str, options: Options) -> Result:
     except BaseException as e:
         logging.error(e)
         return Result(errors=())
-
-
-if __name__ == '__main__':
-    opt = Options(tolerance=1.e-10, matrix_name="main", fracture_name="fracture", duplicated_nodes_field_name="collocated_nodes")
-    check("/Users/j0436735/CLionProjects/GEOS/inputFiles/tmp_buffer/NL/main.vtm", opt)

@@ -71,6 +71,10 @@ public:
    */
   static string catalogName()
   { return "SinglePhaseHybridFVM"; }
+  /**
+   * @copydoc SolverBase::getCatalogName()
+   */
+  string getCatalogName() const override { return catalogName(); }
 
   virtual void registerDataOnMesh( Group & meshBodies ) override;
 

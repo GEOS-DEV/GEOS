@@ -53,6 +53,11 @@ public:
 
   static string catalogName() { return "SolverBase"; }
 
+  /**
+   * @return Get the final class Catalog name
+   */
+  virtual string getCatalogName() const = 0;
+
 
   virtual void registerDataOnMesh( Group & MeshBodies ) override;
 
@@ -158,6 +163,17 @@ public:
    */
   virtual real64 setNextDtBasedOnStateChange( real64 const & currentDt,
                                               DomainPartition & domain );
+
+  /**
+   * @brief function to set the next dt based on state change
+   * @param [in]  currentDt the current time step size
+   * @param[in] domain the domain object
+   * @return the prescribed time step size
+   */
+  virtual real64 setNextDtBasedOnCFL( real64 const & currentDt,
+                                      DomainPartition & domain );
+
+
 
   /**
    * @brief Entry function for an explicit time integration step

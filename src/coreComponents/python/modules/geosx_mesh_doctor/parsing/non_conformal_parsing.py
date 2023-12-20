@@ -1,5 +1,10 @@
 import logging
 
+from typing import (
+   FrozenSet,
+   List,
+)
+
 from checks.non_conformal import Options, Result
 
 from . import NON_CONFORMAL
@@ -36,8 +41,8 @@ def fill_subparser(subparsers) -> None:
 
 
 def display_results(options: Options, result: Result):
-    non_conformal_cells = []
+    non_conformal_cells: List[int] = []
     for i, j in result.non_conformal_cells:
         non_conformal_cells += i, j
-    non_conformal_cells = set(non_conformal_cells)
+    non_conformal_cells: FrozenSet[int] = frozenset(non_conformal_cells)
     logging.error(f"You have {len(non_conformal_cells)} non conformal cells.\n{', '.join(map(str, sorted(non_conformal_cells)))}")
