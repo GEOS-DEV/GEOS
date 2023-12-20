@@ -32,7 +32,7 @@ namespace geos
 
 auto const hostMemorySpace = LvArray::MemorySpace::host;
 
-using serialPolicy = RAJA::loop_exec;
+using serialPolicy = RAJA::seq_exec;
 using serialAtomic = RAJA::seq_atomic;
 using serialReduce = RAJA::seq_reduce;
 
