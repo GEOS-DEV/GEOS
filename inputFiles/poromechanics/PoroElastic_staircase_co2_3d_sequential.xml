@@ -13,7 +13,7 @@
       solidSolverName="linearElasticity"
       reservoirAndWellsSolverName="reservoirAndWells"
       logLevel="1"
-      targetRegions="{ channel, barrier, wellRegion1, wellRegion2 }">
+      targetRegions="{ channel, barrier }">
       <NonlinearSolverParameters
         couplingType="Sequential"
         subcycling="1"
