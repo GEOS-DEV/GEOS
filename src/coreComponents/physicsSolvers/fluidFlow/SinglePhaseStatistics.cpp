@@ -110,13 +110,7 @@ void SinglePhaseStatistics::computeRegionStatistics( MeshLevel & mesh,
     arrayView1d< integer const > const elemGhostRank = subRegion.ghostRank();
     arrayView1d< real64 const > const volume = subRegion.getElementVolume();
     arrayView1d< real64 const > const pres = subRegion.getField< fields::flow::pressure >();
-    // update deltaPressure
     arrayView1d< real64 > const deltaPres = subRegion.getField< fields::flow::deltaPressure >();
-    {
-      arrayView1d< real64 const > const initPres = subRegion.getField< fields::flow::initialPressure >();
-      singlePhaseBaseKernels::StatisticsKernel::
-        saveDeltaPressure( subRegion.size(), pres, initPres, deltaPres );
-    }
 
     string const & solidName = subRegion.getReference< string >( SinglePhaseBase::viewKeyStruct::solidNamesString() );
     Group const & constitutiveModels = subRegion.getGroup( ElementSubRegionBase::groupKeyStruct::constitutiveModelsString() );
