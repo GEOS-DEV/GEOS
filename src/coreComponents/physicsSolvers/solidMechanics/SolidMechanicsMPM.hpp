@@ -210,11 +210,8 @@ public:
     static constexpr char const * solidMaterialNamesString() { return "solidMaterialNames"; }
     static constexpr char const * forceExternalString() { return "externalForce"; }
     static constexpr char const * forceInternalString() { return "internalForce"; }
-    static constexpr char const * initialPositionString() { return "initialPosition"; }
     static constexpr char const * displacementString() { return "displacement"; }
     static constexpr char const * particleSurfaceNormalString() { return "particleSurfaceNormal"; }
-    static constexpr char const * cohesiveNormalForceString() { return "cohesiveNormalForce"; }
-    static constexpr char const * cohesiveShearForceString() { return "cohesiveShearForce"; }
     static constexpr char const * massString() { return "mass"; }
     static constexpr char const * materialVolumeString() { return "materialVolume"; }
     static constexpr char const * velocityString() { return "velocity"; }
@@ -229,7 +226,6 @@ public:
     static constexpr char const * materialPositionString() { return "materialPosition"; }
     static constexpr char const * normalStressString() { return "normalStress"; }
     static constexpr char const * massWeightedDamageString() { return "massWeightedDamage"; }
-    static constexpr char const * cohesiveNodeString() { return "cohesiveNode"; }
 
     static constexpr char const * boundaryNodesString() { return "boundaryNodes"; }
     static constexpr char const * bufferNodesString() { return "bufferNodes"; }
@@ -400,25 +396,6 @@ public:
   void initializeGridFields( NodeManager & nodeManager );
 
   void boundaryConditionUpdate( real64 dt, real64 time_n );
-
-  void locateCohesiveInterfaces( DomainPartition & domain,
-                                 ParticleManager& particleManager,
-                                 NodeManager & nodeManager,
-                                 MeshLevel & mesh );
-
-  void enforceCohesiveLaw(  ParticleManager & particleManager,
-                            NodeManager & nodeManager );
-
-  void computeCohesiveTraction( real64 mA,
-                                real64 mB,
-                                arraySlice1d< real64 const > const dA,
-                                arraySlice1d< real64 const > const dB,
-                                real64 sA,
-                                real64 sB,
-                                arraySlice1d< real64 const > const nA,
-                                arraySlice1d< real64 const > const nB, 
-                                arraySlice1d< real64 > const tA,
-                                arraySlice1d< real64 > const tB  );
 
   void particleToGrid( real64 const time_n,
                        integer const cycleNumber,
@@ -632,14 +609,6 @@ protected:
   int m_reactionHistory;
   real64 m_reactionWriteInterval;
   real64 m_nextReactionWriteTime;
-
-  // Cohesive law variables
-  SortedArray< globalIndex >  m_cohesiveNodeGlobalIndices;
-  int m_enableCohesiveLaws;
-  real64 m_maxCohesiveNormalStress;
-  real64 m_maxCohesiveShearStress;
-  real64 m_characteristicNormalDisplacement;
-  real64 m_characteristicTransverseDisplacement;
 
   int m_needsNeighborList;
   real64 m_neighborRadius;
