@@ -2016,8 +2016,9 @@ real64 CompositionalMultiphaseBase::setNextDtBasedOnStateChange( real64 const & 
       {
         if( ghostRank[ei] < 0 )
         {
-          subRegionMaxPresChange.max( LvArray::math::abs( pres[ei] - pres_n[ei] ) / LvArray::math::max( pres_n[ei], LvArray::NumericLimits< real64 >::epsilon ) );
-          subRegionMaxTempChange.max( LvArray::math::abs( temp[ei] - temp_n[ei] ) / LvArray::math::max( temp_n[ei], LvArray::NumericLimits< real64 >::epsilon ) );
+          // switch from relative to absolute when pressure less than 1
+          subRegionMaxPresChange.max( LvArray::math::abs( pres[ei] - pres_n[ei] ) / LvArray::math::max( LvArray::math::abs( pres_n[ei] ), 1.0 ) );
+          subRegionMaxTempChange.max( LvArray::math::abs( temp[ei] - temp_n[ei] ) / LvArray::math::max( LvArray::math::abs( temp_n[ei] ), 1.0 ) );
           for( integer ip = 0; ip < numPhase; ++ip )
           {
             subRegionMaxPhaseVolFracChange.max( LvArray::math::abs( phaseVolFrac[ei][ip] - phaseVolFrac_n[ei][ip] ) );
