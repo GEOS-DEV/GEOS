@@ -445,7 +445,7 @@ void CellElementSubRegion::calculateCellDimension( ElementRegionManager const & 
 
     real64 faceCenter[ 3 ], faceNormal[ 3 ], cellToFaceVec[2][ 3 ];
     real64 const areaTolerance = 1e-12;    //dummy
-    real64 const faceArea = computationalGeometry::centroid_3DPolygon( faceToNodes[kf], X, faceCenter, faceNormal, areaTolerance );
+    computationalGeometry::centroid_3DPolygon( faceToNodes[kf], X, faceCenter, faceNormal, areaTolerance );
 
     for( localIndex ke = 0; ke < 2; ++ke )
     {
