@@ -440,6 +440,7 @@ GEOS_HOST_DEVICE
 inline void
 CellElementStencilTPFAWrapper::initVelocity( localIndex iconn, localIndex ip, ElementRegionManager::ElementView< arrayView3d< real64 > > const & phaseVelocity ) const
 {
+  GEOS_UNUSED_PARAM( ip );
   for( localIndex i = 0; i < 2; i++ )
   {
     localIndex const er = m_elementRegionIndices[iconn][i];
