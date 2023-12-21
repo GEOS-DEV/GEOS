@@ -38,7 +38,6 @@ FaceBasedAssemblyKernelBase::FaceBasedAssemblyKernelBase( integer const numPhase
                                                           GlobalCellDimAccessor const & globalDistanceAccessor,
                                                           CompFlowAccessors const & compFlowAccessors,
                                                           MultiFluidAccessors const & multiFluidAccessors,
-                                                          DispersionAccessors const & dispersionAccessors,
                                                           real64 const dt,
                                                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                           arrayView1d< real64 > const & localRhs,

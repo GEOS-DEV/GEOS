@@ -294,8 +294,6 @@ void CompositionalMultiphaseFVM::assembleStabilizedFluxTerms( real64 const dt,
     FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
     FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( m_discretizationName );
 
-    arrayView2d< real64 const > const & globalDistance = {};// fluxApprox.getGlobalCellToFace();
-
     string const & elemDofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
     ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > > elemDofNumber =
       mesh.getElemManager().constructArrayViewAccessor< globalIndex, 1 >( elemDofKey );
@@ -927,8 +925,6 @@ void CompositionalMultiphaseFVM::applyFaceDirichletBC( real64 const time_n,
   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
   FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
   FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( m_discretizationName );
-
-  arrayView2d< real64 const > const & globalDistance{};// = fluxApprox.getGlobalCellToFace();
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,

@@ -331,8 +331,7 @@ public:
                               fields::permeability::permeability,
                               fields::permeability::dPerm_dPressure >;
 
-  using DispersionAccessors = StencilMaterialAccessors< DispersionBase,
-                                                        fields::dispersion::dispersivity >;
+
 
   /**
    * @brief Constructor for the kernel interface
@@ -352,7 +351,6 @@ public:
                                GlobalCellDimAccessor const & globalDistanceAccessor,
                                CompFlowAccessors const & compFlowAccessors,
                                MultiFluidAccessors const & multiFluidAccessors,
-                               DispersionAccessors const & dispersionAccessors,
                                real64 const dt,
                                CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                arrayView1d< real64 > const & localRhs,
@@ -460,7 +458,6 @@ public:
                            GlobalCellDimAccessor const & globalCellDimAccessor,
                            CompFlowAccessors const & compFlowAccessors,
                            MultiFluidAccessors const & multiFluidAccessors,
-                           DispersionAccessors const & dispersionAccessors,
                            CapPressureAccessors const & capPressureAccessors,
                            PermeabilityAccessors const & permeabilityAccessors,
                            real64 const dt,
@@ -473,7 +470,6 @@ public:
                                    globalCellDimAccessor,
                                    compFlowAccessors,
                                    multiFluidAccessors,
-                                   dispersionAccessors,
                                    dt,
                                    localMatrix,
                                    localRhs,
@@ -940,10 +936,9 @@ public:
       typename kernelType::MultiFluidAccessors multiFluidAccessors( elemManager, solverName );
       typename kernelType::CapPressureAccessors capPressureAccessors( elemManager, solverName );
       typename kernelType::PermeabilityAccessors permeabilityAccessors( elemManager, solverName );
-      typename kernelType::DispersionAccessors dispersionAccessors( elemManager, solverName );
 
       kernelType kernel( numPhases, rankOffset, stencilWrapper, dofNumberAccessor, globalCellDimAccessor,
-                         compFlowAccessors, multiFluidAccessors, dispersionAccessors, capPressureAccessors,
+                         compFlowAccessors, multiFluidAccessors, capPressureAccessors,
                          permeabilityAccessors, dt, localMatrix, localRhs, kernelFlags );
       kernelType::template launch< POLICY >( stencilWrapper.size(), kernel );
     } );
@@ -1038,7 +1033,6 @@ public:
                                    globalCellDimAccessor,
                                    compFlowAccessors,
                                    multiFluidAccessors,
-                                   dispersionAccessors,
                                    dt,
                                    localMatrix,
                                    localRhs,
@@ -1720,7 +1714,6 @@ public:
   using MultiFluidAccessors = AbstractBase::MultiFluidAccessors;
   using CapPressureAccessors = AbstractBase::CapPressureAccessors;
   using PermeabilityAccessors = AbstractBase::PermeabilityAccessors;
-  using DispersionAccessors = AbstractBase::DispersionAccessors;
 
   using AbstractBase::m_dt;
   using AbstractBase::m_numPhases;
@@ -1777,7 +1770,6 @@ public:
                                     GlobalCellDimAccessor const & globalCellDimAccessor,
                                     CompFlowAccessors const & compFlowAccessors,
                                     MultiFluidAccessors const & multiFluidAccessors,
-                                    DispersionAccessors const & dispersionAccessors,
                                     CapPressureAccessors const & capPressureAccessors,
                                     PermeabilityAccessors const & permeabilityAccessors,
                                     real64 const dt,
@@ -1791,7 +1783,6 @@ public:
             globalCellDimAccessor,
             compFlowAccessors,
             multiFluidAccessors,
-            dispersionAccessors,
             capPressureAccessors,
             permeabilityAccessors,
             dt,
@@ -2203,11 +2194,10 @@ public:
         typename kernelType::MultiFluidAccessors multiFluidAccessors( elemManager, solverName );
         typename kernelType::CapPressureAccessors capPressureAccessors( elemManager, solverName );
         typename kernelType::PermeabilityAccessors permeabilityAccessors( elemManager, solverName );
-        typename kernelType::DispersionAccessors dispersionAccessors( elemManager, solverName );
 
         kernelType kernel( numPhases, rankOffset, faceManager, stencilWrapper, fluidWrapper,
                            dofNumberAccessor, globalCellDimAccessor, compFlowAccessors,
-                           multiFluidAccessors, dispersionAccessors, capPressureAccessors,
+                           multiFluidAccessors, capPressureAccessors,
                            permeabilityAccessors,
                            dt, localMatrix, localRhs, kernelFlags );
         kernelType::template launch< POLICY >( stencilWrapper.size(), kernel );

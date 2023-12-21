@@ -181,7 +181,6 @@ public:
   using MultiFluidAccessors = AbstractBase::MultiFluidAccessors;
   using CapPressureAccessors = AbstractBase::CapPressureAccessors;
   using PermeabilityAccessors = AbstractBase::PermeabilityAccessors;
-  using DispersionAccessors = AbstractBase::DispersionAccessors;
 
   using AbstractBase::m_dt;
   using AbstractBase::m_numPhases;
@@ -249,7 +248,6 @@ public:
                            CompFlowAccessors const & compFlowAccessors,
                            ThermalCompFlowAccessors const & thermalCompFlowAccessors,
                            MultiFluidAccessors const & multiFluidAccessors,
-                           DispersionAccessors const & dispersionAccessors,
                            ThermalMultiFluidAccessors const & thermalMultiFluidAccessors,
                            CapPressureAccessors const & capPressureAccessors,
                            PermeabilityAccessors const & permeabilityAccessors,
@@ -265,7 +263,6 @@ public:
             globalCellDimAccessor,
             compFlowAccessors,
             multiFluidAccessors,
-            dispersionAccessors,
             capPressureAccessors,
             permeabilityAccessors,
             dt,
@@ -517,7 +514,6 @@ public:
     // Step 1: compute the thermal transmissibilities at this face
     // Below, the thermal conductivity used to compute (explicitly) the thermal conducivity
     // To avoid modifying the signature of the "computeWeights" function for now, we pass m_thermalConductivity twice
-    // TODO: modify computeWeights to accomodate explicit coefficients
     m_stencilWrapper.computeWeights( iconn,
                                      m_thermalConductivity,
                                      m_thermalConductivity,            // we have to pass something here, so we just use thermal
@@ -688,12 +684,10 @@ public:
       typename KernelType::PermeabilityAccessors permeabilityAccessors( elemManager, solverName );
       typename KernelType::ThermalConductivityAccessors thermalConductivityAccessors( elemManager,
                                                                                       solverName );
-      typename KernelType::DispersionAccessors dispersionAccessors( elemManager, solverName );
 
-      //TODO add hasVelocityCompute to flags
       KernelType kernel( numPhases, rankOffset, stencilWrapper, dofNumberAccessor, globalCellDimAccessor,
                          compFlowAccessors, thermalCompFlowAccessors, multiFluidAccessors,
-                         dispersionAccessors, thermalMultiFluidAccessors,
+                         thermalMultiFluidAccessors,
                          capPressureAccessors, permeabilityAccessors, thermalConductivityAccessors,
                          dt, localMatrix, localRhs, kernelFlags );
       KernelType::template launch< POLICY >( stencilWrapper.size(), kernel );
@@ -1058,7 +1052,6 @@ public:
   using MultiFluidAccessors = AbstractBase::MultiFluidAccessors;
   using CapPressureAccessors = AbstractBase::CapPressureAccessors;
   using PermeabilityAccessors = AbstractBase::PermeabilityAccessors;
-  using DispersionAccessors = AbstractBase::DispersionAccessors;
 
   using AbstractBase::m_dt;
   using AbstractBase::m_numPhases;
@@ -1128,7 +1121,6 @@ public:
                                     CompFlowAccessors const & compFlowAccessors,
                                     ThermalCompFlowAccessors const & thermalCompFlowAccessors,
                                     MultiFluidAccessors const & multiFluidAccessors,
-                                    DispersionAccessors const & dispersionAccessors,
                                     ThermalMultiFluidAccessors const & thermalMultiFluidAccessors,
                                     CapPressureAccessors const & capPressureAccessors,
                                     PermeabilityAccessors const & permeabilityAccessors,
@@ -1146,7 +1138,6 @@ public:
             globalCellDimAccessor,
             compFlowAccessors,
             multiFluidAccessors,
-            dispersionAccessors,
             capPressureAccessors,
             permeabilityAccessors,
             dt,
@@ -1483,12 +1474,11 @@ public:
         typename KernelType::PermeabilityAccessors permeabilityAccessors( elemManager, solverName );
         typename KernelType::ThermalConductivityAccessors thermalConductivityAccessors( elemManager,
                                                                                         solverName );
-        typename KernelType::DispersionAccessors dispersionAccessors( elemManager, solverName );
 
         // for now, we neglect capillary pressure in the kernel
         KernelType kernel( numPhases, rankOffset, faceManager, stencilWrapper, fluidWrapper,
                            dofNumberAccessor, globalCellDimAccessor, compFlowAccessors,
-                           thermalCompFlowAccessors, multiFluidAccessors, dispersionAccessors,
+                           thermalCompFlowAccessors, multiFluidAccessors,
                            thermalMultiFluidAccessors, capPressureAccessors, permeabilityAccessors, thermalConductivityAccessors,
                            dt, localMatrix, localRhs, kernelFlags );
         KernelType::template launch< POLICY >( stencilWrapper.size(), kernel );

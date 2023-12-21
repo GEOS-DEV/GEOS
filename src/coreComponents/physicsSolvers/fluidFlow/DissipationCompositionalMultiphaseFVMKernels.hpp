@@ -65,7 +65,6 @@ public:
   using MultiFluidAccessors = AbstractBase::MultiFluidAccessors;
   using CapPressureAccessors = AbstractBase::CapPressureAccessors;
   using PermeabilityAccessors = AbstractBase::PermeabilityAccessors;
-  using DispersionAccessors = AbstractBase::DispersionAccessors;
 
   using AbstractBase::m_dt;
   using AbstractBase::m_gravCoef;
@@ -121,7 +120,6 @@ public:
                            CompFlowAccessors const & compFlowAccessors,
                            DissCompFlowAccessors const & dissCompFlowAccessors,
                            MultiFluidAccessors const & multiFluidAccessors,
-                           DispersionAccessors const & dispersionAccessors,
                            CapPressureAccessors const & capPressureAccessors,
                            PermeabilityAccessors const & permeabilityAccessors,
                            PorosityAccessors const & porosityAccessors,
@@ -142,7 +140,6 @@ public:
             globalCellDimAccessor,
             compFlowAccessors,
             multiFluidAccessors,
-            dispersionAccessors,
             capPressureAccessors,
             permeabilityAccessors,
             dt,
@@ -395,11 +392,10 @@ public:
       typename KERNEL_TYPE::PermeabilityAccessors permeabilityAccessors( elemManager, solverName );
       typename KERNEL_TYPE::PorosityAccessors porosityAccessors( elemManager, solverName );
       typename KERNEL_TYPE::DissCompFlowAccessors dissCompFlowAccessors( elemManager, solverName );
-      typename KERNEL_TYPE::DispersionAccessors dispersionAccessors( elemManager, solverName );
 
       KERNEL_TYPE kernel( numPhases, rankOffset, stencilWrapper, dofNumberAccessor, globalCellDimAccessor,
                           compFlowAccessors, dissCompFlowAccessors,
-                          multiFluidAccessors, dispersionAccessors, capPressureAccessors, permeabilityAccessors, porosityAccessors,
+                          multiFluidAccessors, capPressureAccessors, permeabilityAccessors, porosityAccessors,
                           dt, localMatrix, localRhs, kernelFlags, omega, curNewton, continuation, miscible, kappamin, contMultiplier );
       KERNEL_TYPE::template launch< POLICY >( stencilWrapper.size(), kernel );
     } );

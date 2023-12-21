@@ -33,7 +33,6 @@
 #include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
 
 #include "LvArray/src/tensorOps.hpp"
-#include "FluxApproximationBase.hpp"
 
 #if defined( __INTEL_COMPILER )
 #pragma GCC optimize "O0"
@@ -193,16 +192,6 @@ void TwoPointFluxApproximation::computeCellStencil( MeshLevel & mesh ) const
       LvArray::tensorOps::copy< 3 >( cellToFaceVec[ke], faceCenter );
       LvArray::tensorOps::subtract< 3 >( cellToFaceVec[ke], elemCenter[er][esr][ei] );
 
-      //cumulating signed distance to from face to cell center to form denom in cell-wise linear interpolation
-//      real64 absCellToFaceVec[3];
-//      for( int dir = 0; dir < 3; ++dir )
-//      {
-//        absCellToFaceVec[dir] = LvArray::math::abs( cellToFaceVec[ke][dir] );
-//        globalCellToFace[stencilCellsGlobalIndex[ke]][dir] += absCellToFaceVec[dir];
-//      }
-
-
-//      real64 const c2fDistance = LvArray::tensorOps::normalize< 3 >( cellToFaceVec[ke] );
       real64 const c2fDistance = LvArray::tensorOps::l2Norm< 3 >( cellToFaceVec[ke] );
 
       stencilWeights[ke] = faceArea / c2fDistance;
