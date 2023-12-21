@@ -335,7 +335,7 @@ void MultiphasePoromechanics< FLOW_SOLVER >::updateState( DomainPartition & doma
     } );
   } );
 
-  GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "        {}: Max phase volume fraction change: {}",
+  GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "        {}: Max phase volume fraction change = {}",
                                       this->getName(), GEOS_FMT( "{:.{}f}", maxDeltaPhaseVolFrac, 4 ) ) );
 }
 
@@ -346,20 +346,19 @@ void MultiphasePoromechanics< FLOW_SOLVER >::initializePostInitialConditionsPreS
 
   arrayView1d< string const > const & poromechanicsTargetRegionNames =
     this->template getReference< array1d< string > >( SolverBase::viewKeyStruct::targetRegionsString() );
-//  arrayView1d< string const > const & solidMechanicsTargetRegionNames =
-//    solidMechanicsSolver()->template getReference< array1d< string > >( SolverBase::viewKeyStruct::targetRegionsString() );
+  arrayView1d< string const > const & solidMechanicsTargetRegionNames =
+    solidMechanicsSolver()->template getReference< array1d< string > >( SolverBase::viewKeyStruct::targetRegionsString() );
   arrayView1d< string const > const & flowTargetRegionNames =
     flowSolver()->template getReference< array1d< string > >( SolverBase::viewKeyStruct::targetRegionsString() );
   for( integer i = 0; i < poromechanicsTargetRegionNames.size(); ++i )
   {
-// Pavel: disabled to avoid false triggering for well regions
-//    GEOS_THROW_IF( std::find( solidMechanicsTargetRegionNames.begin(), solidMechanicsTargetRegionNames.end(),
-//                              poromechanicsTargetRegionNames[i] )
-//                   == solidMechanicsTargetRegionNames.end(),
-//                   GEOS_FMT( "{} {}: region {} must be a target region of {}",
-//                             getCatalogName(), getDataContext(), poromechanicsTargetRegionNames[i],
-// solidMechanicsSolver()->getDataContext() ),
-//                   InputError );
+    GEOS_THROW_IF( std::find( solidMechanicsTargetRegionNames.begin(), solidMechanicsTargetRegionNames.end(),
+                              poromechanicsTargetRegionNames[i] )
+                   == solidMechanicsTargetRegionNames.end(),
+                   GEOS_FMT( "{} {}: region {} must be a target region of {}",
+                             getCatalogName(), this->getDataContext(), poromechanicsTargetRegionNames[i],
+                             solidMechanicsSolver()->getDataContext() ),
+                   InputError );
     GEOS_THROW_IF( std::find( flowTargetRegionNames.begin(), flowTargetRegionNames.end(), poromechanicsTargetRegionNames[i] )
                    == flowTargetRegionNames.end(),
                    GEOS_FMT( "{} {}: region `{}` must be a target region of `{}`",
@@ -400,10 +399,6 @@ void MultiphasePoromechanics< FLOW_SOLVER >::initializePreSubGroups()
                                                                        [&]( localIndex const,
                                                                             ElementSubRegionBase & subRegion )
     {
-      // skip the wells
-      if( subRegion.getCatalogName() == "wellElementSubRegion" )
-        return;
-
       string & porousName = subRegion.getReference< string >( viewKeyStruct::porousMaterialNamesString() );
       porousName = this->template getConstitutiveName< CoupledSolidBase >( subRegion );
       GEOS_ERROR_IF( porousName.empty(), GEOS_FMT( "{}: Solid model not found on subregion {}",
