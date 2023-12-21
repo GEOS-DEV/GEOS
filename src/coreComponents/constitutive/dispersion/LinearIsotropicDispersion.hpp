@@ -59,10 +59,10 @@ public:
       for( int ip = 0; ip < laggedTotalVelocityComponents.size( 0 ); ++ip )
       {
         real64 const velocityNorm = LvArray::tensorOps::l2Norm< 3 >( laggedTotalVelocityComponents[ip] );
-        if (phaseDensity[ip] > LvArray::NumericLimits< real64 >::epsilon )
-            m_dispersivity[k][q][ip][i] = velocityNorm/phaseDensity[ip] * m_longitudinalDispersivity;
+        if( phaseDensity[ip] > LvArray::NumericLimits< real64 >::epsilon )
+          m_dispersivity[k][q][ip][i] = velocityNorm/phaseDensity[ip] * m_longitudinalDispersivity;
         else
-            m_dispersivity[k][q][ip][i] = 0.;
+          m_dispersivity[k][q][ip][i] = 0.;
       }
     }
   }

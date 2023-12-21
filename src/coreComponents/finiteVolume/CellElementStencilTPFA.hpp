@@ -112,7 +112,7 @@ public:
 
 
   GEOS_HOST_DEVICE
-  void initVelocity( localIndex iconn, localIndex ip, ElementRegionManager::ElementView< arrayView3d< real64 > > const & phaseVelocity ) const;
+  void initVelocity( localIndex iconn, ElementRegionManager::ElementView< arrayView3d< real64 > > const & phaseVelocity ) const;
   /**
    * @brief Compute approximate cell-centered velocity field
    * @param[in] iconn connection index
@@ -438,9 +438,8 @@ CellElementStencilTPFAWrapper::
 
 GEOS_HOST_DEVICE
 inline void
-CellElementStencilTPFAWrapper::initVelocity( localIndex iconn, localIndex ip, ElementRegionManager::ElementView< arrayView3d< real64 > > const & phaseVelocity ) const
+CellElementStencilTPFAWrapper::initVelocity( localIndex iconn, ElementRegionManager::ElementView< arrayView3d< real64 > > const & phaseVelocity ) const
 {
-  ip = ip + 0; //ugly trick to be clean up once PR ready
   for( localIndex i = 0; i < 2; i++ )
   {
     localIndex const er = m_elementRegionIndices[iconn][i];

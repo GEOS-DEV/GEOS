@@ -102,8 +102,8 @@ public:
   }
 
   GEOS_HOST_DEVICE
-  void initVelocity( localIndex iconn, localIndex ip, ElementRegionManager::ElementView< arrayView3d< real64 > > const & phaseVelocity ) const
-  { GEOS_UNUSED_VAR( iconn, ip, phaseVelocity );};
+  void initVelocity( localIndex iconn, ElementRegionManager::ElementView< arrayView3d< real64 > > const & phaseVelocity ) const
+  { GEOS_UNUSED_VAR( iconn, phaseVelocity );};
   /**
    * @brief Compute approximate cell-centered velocity field
    * @param[in] iconn connection index

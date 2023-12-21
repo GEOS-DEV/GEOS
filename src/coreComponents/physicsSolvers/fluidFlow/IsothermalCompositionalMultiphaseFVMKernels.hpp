@@ -584,10 +584,7 @@ public:
   inline
   void initVelocity( localIndex const iconn ) const
   {
-    for( integer ip = 0; ip < m_numPhases; ++ip )
-    {
-      m_stencilWrapper.initVelocity( iconn, ip, m_phaseVelocity );
-    }
+    m_stencilWrapper.initVelocity( iconn, m_phaseVelocity );
   }
 
   /**
