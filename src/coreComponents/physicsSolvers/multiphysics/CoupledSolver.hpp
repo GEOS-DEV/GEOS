@@ -494,6 +494,9 @@ protected:
                                                   stepDt,
                                                   domain );
 
+        // save fields (e.g. pressure and temperature) at the end of this iteration
+        saveSequentialIterationState( domain );
+
         if( isConverged )
         {
           // Save Time step statistics for the subsolvers
@@ -512,12 +515,9 @@ protected:
         ++iter;
       }
 
-      // save fields (e.g. pressure and temperature) at the end of this iteration
-      saveSequentialIterationState( domain );
-
       if( isConverged )
       {
-        // get out of time loop
+        // get out of the time loop
         break;
       }
       else
