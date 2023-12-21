@@ -117,7 +117,7 @@ public:
    * Note: this is needed because for now, the velocity field is treated **explicitly** in the dispersion tensor
    */
   virtual void initializeVelocityState( arrayView3d< real64 const > const & initialVelocity, arrayView3d< real64 const > const & phaseDensity ) const
-  { GEOS_UNUSED_VAR( initialVelocity ); }
+  { GEOS_UNUSED_VAR( initialVelocity, phaseDensity ); }
 
   /**
    * @brief Save the velocity state (needed because dispersion depends on total velocity)
@@ -126,7 +126,7 @@ public:
    * Note: this is needed because for now, the velocity is treated **explicitly** in the dispersion tensor
    */
   virtual void saveConvergedVelocityState( arrayView3d< real64 const > const & convergedVelocity, arrayView3d< real64 const > const & phaseDensity ) const
-  { GEOS_UNUSED_VAR( convergedVelocity ); }
+  { GEOS_UNUSED_VAR( convergedVelocity, phaseDensity ); }
 
 
   struct viewKeyStruct : public ConstitutiveBase::viewKeyStruct
