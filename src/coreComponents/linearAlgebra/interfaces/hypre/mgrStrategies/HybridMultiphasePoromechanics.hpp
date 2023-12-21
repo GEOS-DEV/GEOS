@@ -105,6 +105,8 @@ public:
 
 
     // ILU smoothing for the system made of pressure and densities (except the last one)
+    m_levelSmoothType[2]  = 0;
+    m_levelSmoothIters[2] = 1;
     m_levelSmoothType[3]  = 1;
     m_levelSmoothIters[3] = 1;
   }
