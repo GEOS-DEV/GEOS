@@ -221,7 +221,6 @@ struct MassMatrixKernel
     forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const k )
     {
 
-      constexpr localIndex numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
 
       real64 xLocal[ 8 ][ 3 ];
       for( localIndex a = 0; a < 8; ++a )
@@ -233,6 +232,7 @@ struct MassMatrixKernel
         }
       }
 
+      constexpr localIndex numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
       for( localIndex q = 0; q < numQuadraturePointsPerElem; ++q )
       {
         real32 const localIncrement = density[k] * m_finiteElement.computeMassTerm( q, xLocal );
@@ -291,7 +291,6 @@ struct DampingMatrixKernel
         // face on the domain boundary and not on free surface
         if( facesDomainBoundaryIndicator[f] == 1 && freeSurfaceFaceIndicator[f] != 1 )
         {
-          constexpr localIndex numNodesPerFace = FE_TYPE::numNodesPerFace;
           real64 xLocal[ 4 ][ 3 ];
           for( localIndex a = 0; a < 4; ++a )
           {
@@ -303,6 +302,7 @@ struct DampingMatrixKernel
           }
 
           real32 const nx = faceNormal( f, 0 ), ny = faceNormal( f, 1 ), nz = faceNormal( f, 2 );
+          constexpr localIndex numNodesPerFace = FE_TYPE::numNodesPerFace;
           for( localIndex q = 0; q < numNodesPerFace; ++q )
           {
             real32 const aux = density[e] * m_finiteElement.computeDampingTerm( q, xLocal );
@@ -367,7 +367,6 @@ struct StressComputation
   {
     forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const k )
     {
-      constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
 
       real64 xLocal[8][3];
       for( localIndex a=0; a< 8; ++a )
@@ -382,6 +381,7 @@ struct StressComputation
       mu[k] = density[k] * pow( velocityVs[k], 2 );
       lambda[k] = density[k] * pow( velocityVp[k], 2 ) - 2.0*mu[k];
 
+      constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
       real32 uelemxx[numNodesPerElem] = {0.0};
       real32 uelemyy[numNodesPerElem] = {0.0};
       real32 uelemzz[numNodesPerElem] = {0.0};
@@ -544,7 +544,6 @@ struct VelocityComputation
     forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const k )
     {
 
-      constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
 
       real64 xLocal[8][3];
       for( localIndex a=0; a< 8; ++a )
@@ -556,6 +555,7 @@ struct VelocityComputation
         }
       }
 
+      constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
       real32 uelemx[numNodesPerElem] = {0.0};
       real32 uelemy[numNodesPerElem] = {0.0};
       real32 uelemz[numNodesPerElem] = {0.0};

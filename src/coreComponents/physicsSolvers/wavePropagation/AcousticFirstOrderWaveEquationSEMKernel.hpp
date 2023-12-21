@@ -229,7 +229,6 @@ struct MassMatrixKernel
     forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const e )
     {
 
-      constexpr localIndex numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
 
       real32 const invC2 = 1.0 / ( density[e] * pow( velocity[e], 2 ) );
       real64 xLocal[ 8 ][ 3 ];
@@ -242,6 +241,7 @@ struct MassMatrixKernel
         }
       }
 
+      constexpr localIndex numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
       for( localIndex q = 0; q < numQuadraturePointsPerElem; ++q )
       {
         real32 const localIncrement = invC2 * m_finiteElement.computeMassTerm( q, xLocal );
@@ -295,7 +295,6 @@ struct DampingMatrixKernel
         // face on the domain boundary and not on free surface
         if( facesDomainBoundaryIndicator[f] == 1 && freeSurfaceFaceIndicator[f] != 1 )
         {
-          constexpr localIndex numNodesPerFace = FE_TYPE::numNodesPerFace;
           real64 xLocal[ 4 ][ 3 ];
           for( localIndex a = 0; a < 4; ++a )
           {
@@ -307,6 +306,7 @@ struct DampingMatrixKernel
           }
 
           real32 const alpha = 1.0 / velocity[e];
+          constexpr localIndex numNodesPerFace = FE_TYPE::numNodesPerFace;
           for( localIndex q = 0; q < numNodesPerFace; ++q )
           {
             real32 const localIncrement = alpha * m_finiteElement.computeDampingTerm( q, xLocal );
@@ -359,7 +359,6 @@ struct VelocityComputation
   {
     forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const k )
     {
-      constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
 
       real64 xLocal[8][3];
       for( localIndex a=0; a< 8; ++a )
@@ -371,6 +370,7 @@ struct VelocityComputation
         }
       }
 
+      constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
       real32 uelemx[numNodesPerElem] = {0.0};
       real32 uelemy[numNodesPerElem] = {0.0};
       real32 uelemz[numNodesPerElem] = {0.0};
@@ -492,7 +492,6 @@ struct PressureComputation
 
     forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const k )
     {
-      constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
 
       real64 xLocal[8][3];
       for( localIndex a=0; a< 8; ++a )
@@ -504,6 +503,7 @@ struct PressureComputation
         }
       }
 
+      constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
       real32 auxx[numNodesPerElem]  = {0.0};
       real32 auyy[numNodesPerElem]  = {0.0};
       real32 auzz[numNodesPerElem]  = {0.0};

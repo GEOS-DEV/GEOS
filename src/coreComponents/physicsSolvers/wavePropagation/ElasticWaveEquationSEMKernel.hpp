@@ -243,7 +243,6 @@ struct MassMatrixKernel
     forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const e )
     {
 
-      constexpr localIndex numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
 
       real64 xLocal[ 8 ][ 3 ];
       for( localIndex a = 0; a < 8; ++a )
@@ -255,6 +254,7 @@ struct MassMatrixKernel
         }
       }
 
+      constexpr localIndex numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
       for( localIndex q = 0; q < numQuadraturePointsPerElem; ++q )
       {
         real32 const localIncrement = density[e] * m_finiteElement.computeMassTerm( q, xLocal );
@@ -314,7 +314,6 @@ struct DampingMatrixKernel
         // face on the domain boundary and not on free surface
         if( facesDomainBoundaryIndicator[f] == 1 && freeSurfaceFaceIndicator[f] != 1 )
         {
-          constexpr localIndex numNodesPerFace = FE_TYPE::numNodesPerFace;
           real64 xLocal[ 4 ][ 3 ];
           for( localIndex a = 0; a < 4; ++a )
           {
@@ -326,6 +325,7 @@ struct DampingMatrixKernel
           }
 
           real32 const nx = faceNormal( f, 0 ), ny = faceNormal( f, 1 ), nz = faceNormal( f, 2 );
+          constexpr localIndex numNodesPerFace = FE_TYPE::numNodesPerFace;
           for( localIndex q = 0; q < numNodesPerFace; ++q )
           {
             real32 const aux = density[e] * m_finiteElement.computeDampingTerm( q, xLocal );
