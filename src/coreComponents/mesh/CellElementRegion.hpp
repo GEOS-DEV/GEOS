@@ -137,7 +137,7 @@ private:
   string_array m_cellBlockNames;
 
   // Coarsening ratio
-  real64 m_coarseningRatio = 0.0;
+  real64 m_coarseningRatio;
 
 };
 
