@@ -100,6 +100,7 @@ void SinglePhaseStatistics::computeRegionStatistics( MeshLevel & mesh,
 
     regionStatistics.totalPoreVolume = 0.0;
     regionStatistics.totalUncompactedPoreVolume = 0.0;
+    regionStatistics.totalMass = 0.0;
   }
 
   // Step 2: increment the average/min/max quantities for all the subRegions
@@ -118,6 +119,10 @@ void SinglePhaseStatistics::computeRegionStatistics( MeshLevel & mesh,
     arrayView1d< real64 const > const refPorosity = solid.getReferencePorosity();
     arrayView2d< real64 const > const porosity = solid.getPorosity();
 
+    string const & fluidName = subRegion.template getReference< string >( FlowSolverBase::viewKeyStruct::fluidNamesString() );
+    SingleFluidBase const & fluid = constitutiveModels.getGroup< SingleFluidBase >( fluidName );
+    arrayView2d< real64 const > const densities = fluid.density();
+
     real64 subRegionAvgPresNumerator = 0.0;
     real64 subRegionMinPres = 0.0;
     real64 subRegionMaxPres = 0.0;
@@ -125,6 +130,7 @@ void SinglePhaseStatistics::computeRegionStatistics( MeshLevel & mesh,
     real64 subRegionMaxDeltaPres = 0.0;
     real64 subRegionTotalUncompactedPoreVol = 0.0;
     real64 subRegionTotalPoreVol = 0.0;
+    real64 subRegionTotalMass = 0.0;
 
     singlePhaseBaseKernels::StatisticsKernel::
       launch( subRegion.size(),
@@ -134,13 +140,15 @@ void SinglePhaseStatistics::computeRegionStatistics( MeshLevel & mesh,
               deltaPres,
               refPorosity,
               porosity,
+              densities,
               subRegionMinPres,
               subRegionAvgPresNumerator,
               subRegionMaxPres,
               subRegionMinDeltaPres,
               subRegionMaxDeltaPres,
               subRegionTotalUncompactedPoreVol,
-              subRegionTotalPoreVol );
+              subRegionTotalPoreVol,
+              subRegionTotalMass );
 
     ElementRegionBase & region = elemManager.getRegion( subRegion.getParent().getParent().getName() );
     RegionStatistics & regionStatistics = region.getReference< RegionStatistics >( viewKeyStruct::regionStatisticsString() );
@@ -167,6 +175,7 @@ void SinglePhaseStatistics::computeRegionStatistics( MeshLevel & mesh,
 
     regionStatistics.totalUncompactedPoreVolume += subRegionTotalUncompactedPoreVol;
     regionStatistics.totalPoreVolume += subRegionTotalPoreVol;
+    regionStatistics.totalMass += subRegionTotalMass;
   } );
 
   // Step 3: synchronize the results over the MPI ranks
@@ -182,6 +191,7 @@ void SinglePhaseStatistics::computeRegionStatistics( MeshLevel & mesh,
     regionStatistics.totalUncompactedPoreVolume = MpiWrapper::sum( regionStatistics.totalUncompactedPoreVolume );
     regionStatistics.totalPoreVolume = MpiWrapper::sum( regionStatistics.totalPoreVolume );
     regionStatistics.averagePressure = MpiWrapper::sum( regionStatistics.averagePressure );
+    regionStatistics.totalMass = MpiWrapper::sum( regionStatistics.totalMass );
     if( regionStatistics.totalUncompactedPoreVolume > 0 )
     {
       regionStatistics.averagePressure /= regionStatistics.totalUncompactedPoreVolume;
@@ -201,6 +211,8 @@ void SinglePhaseStatistics::computeRegionStatistics( MeshLevel & mesh,
                                         << regionStatistics.minDeltaPressure << ", " << regionStatistics.maxDeltaPressure << " Pa" );
     GEOS_LOG_LEVEL_RANK_0( 1, getName() << ", " << regionNames[i]
                                         << ": Total dynamic pore volume: " << regionStatistics.totalPoreVolume << " rm^3" );
+    GEOS_LOG_LEVEL_RANK_0( 1, getName() << ", " << regionNames[i]
+                                        << ": Total fluid mass: " << regionStatistics.totalMass << " kg" );
 
   }
 }
