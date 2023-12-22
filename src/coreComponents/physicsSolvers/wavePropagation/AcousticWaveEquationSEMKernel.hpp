@@ -395,8 +395,6 @@ struct ComputeTimeStep
 
     lambdaNew = dotProductPPaux/normP;
 
-    //lambdaNew = LvArray::tensorOps::AiBi<sizeNode>(p,pAux)/LvArray::tensorOps::AiBi<sizeNode>(pAux,pAux);
-
     real64 normPaux = 0.0;
     WaveSolverUtils::dotProduct( sizeNode, pAuxView, pAuxView, normPaux );
     forAll< EXEC_POLICY >( sizeNode, [=] GEOS_HOST_DEVICE ( localIndex const a )

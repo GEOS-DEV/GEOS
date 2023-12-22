@@ -340,26 +340,25 @@ void AcousticFirstOrderWaveEquationSEM::initializePostInitialConditionsPreSubGro
                                                                velocity,
                                                                damping );
         //This portion of code work asd follow: compute the time-step then exit the code to let you put it inside the XML
-        if(m_preComputeDt==1)
-
+        if( m_preComputeDt==1 )
         {
           acousticFirstOrderWaveEquationSEMKernels::ComputeTimeStep< FE_TYPE > kernelT( finiteElement );
-  
+
           dtCompute = kernelT.template launch< EXEC_POLICY, ATOMIC_POLICY >( elementSubRegion.size(),
                                                                              nodeManager.size(),
                                                                              X,
                                                                              elemsToNodes,
                                                                              density,
-                                                                             mass);
-  
-        
-          real64 globaldt = MpiWrapper::min(dtCompute);      
+                                                                             mass );
 
-          printf("dt=%f\n",globaldt);
 
-          exit(2);                                                        
+          real64 globaldt = MpiWrapper::min( dtCompute );
 
-        }  
+          printf( "dt=%f\n", globaldt );
+
+          exit( 2 );
+
+        }
 
 
       } );
@@ -369,7 +368,7 @@ void AcousticFirstOrderWaveEquationSEM::initializePostInitialConditionsPreSubGro
   WaveSolverUtils::initTrace( "seismoTraceReceiver", getName(), m_outputSeismoTrace, m_receiverConstants.size( 0 ), m_receiverIsLocal );
 }
 
-real64 AcousticFirstOrderWaveEquationSEM::computeTimeStep(real64 & dtOut)
+real64 AcousticFirstOrderWaveEquationSEM::computeTimeStep( real64 & dtOut )
 {
   GEOS_ERROR( getDataContext() << ":  Time-Step computation for the first order acoustic wave propagator not yet implemented" );
   return dtOut;

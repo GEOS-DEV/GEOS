@@ -501,8 +501,7 @@ void ElasticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
                                                                dampingz );
 
         //This portion of code work asd follow: compute the time-step then exit the code to let you put it inside the XML
-        if(m_preComputeDt==1)
-
+        if( m_preComputeDt==1 )
         {
           elasticWaveEquationSEMKernels::ComputeTimeStep< FE_TYPE > kernelT( finiteElement );
 
@@ -513,14 +512,14 @@ void ElasticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
                                                                              velocityVp,
                                                                              velocityVs,
                                                                              elemsToNodes,
-                                                                             mass);
+                                                                             mass );
 
 
-          real64 globaldt = MpiWrapper::min(dtCompute);
+          real64 globaldt = MpiWrapper::min( dtCompute );
 
-          printf("dt=%f\n",globaldt);
+          printf( "dt=%f\n", globaldt );
 
-          exit(2);
+          exit( 2 );
 
         }
 
@@ -533,7 +532,7 @@ void ElasticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
   WaveSolverUtils::initTrace( "dasTraceReceiver", getName(), m_outputSeismoTrace, m_linearDASGeometry.size( 0 ), m_receiverIsLocal );
 }
 
-real64 ElasticWaveEquationSEM::computeTimeStep(real64 & dtOut)
+real64 ElasticWaveEquationSEM::computeTimeStep( real64 & dtOut )
 {
 
   DomainPartition & domain = getGroupByPath< DomainPartition >( "/Problem/domain" );
@@ -578,10 +577,10 @@ real64 ElasticWaveEquationSEM::computeTimeStep(real64 & dtOut)
                                                                            velocityVp,
                                                                            velocityVs,
                                                                            elemsToNodes,
-                                                                           mass);
+                                                                           mass );
 
 
-      dtOut = MpiWrapper::min(dtCompute);
+        dtOut = MpiWrapper::min( dtCompute );
 
 
       } );

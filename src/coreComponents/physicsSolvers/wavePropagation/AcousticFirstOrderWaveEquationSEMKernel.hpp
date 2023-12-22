@@ -353,9 +353,9 @@ struct ComputeTimeStep
 
     array1d< real32 > const p( sizeNode );
     array1d< real32 > const pAux( sizeNode );
-    array2d< real32 > const ux(sizeElem,numNodesPerElem);
-    array2d< real32 > const uy(sizeElem,numNodesPerElem);
-    array2d< real32 > const uz(sizeElem,numNodesPerElem);
+    array2d< real32 > const ux( sizeElem, numNodesPerElem );
+    array2d< real32 > const uy( sizeElem, numNodesPerElem );
+    array2d< real32 > const uz( sizeElem, numNodesPerElem );
 
     arrayView1d< real32 > const pView = p;
     arrayView1d< real32 > const pAuxView = pAux;
@@ -382,7 +382,7 @@ struct ComputeTimeStep
 
     forAll< EXEC_POLICY >( sizeElem, [=] GEOS_HOST_DEVICE ( localIndex const k )
     {
-      
+
       real64 xLocal[numNodesPerElem][3];
       for( localIndex a=0; a< numNodesPerElem; ++a )
       {
@@ -515,7 +515,7 @@ struct ComputeTimeStep
 
       forAll< EXEC_POLICY >( sizeElem, [=] GEOS_HOST_DEVICE ( localIndex const k )
       {
-        
+
         real64 xLocal[numNodesPerElem][3];
         for( localIndex a=0; a< numNodesPerElem; ++a )
         {
@@ -524,53 +524,53 @@ struct ComputeTimeStep
             xLocal[a][i] = X( elemsToNodes( k, a ), i );
           }
         }
-  
+
         real32 flowx[numNodesPerElem] = {0.0};
         real32 flowy[numNodesPerElem] = {0.0};
         real32 flowz[numNodesPerElem] = {0.0};
-  
+
         for( localIndex q=0; q<numQuadraturePointsPerElem; ++q )
         {
-  
+
           m_finiteElement.computeFirstOrderStiffnessTermX( q, xLocal, [&] ( int i, int j, real32 dfx1, real32 dfx2, real32 dfx3 )
           {
             flowx[j] += dfx1*pView[elemsToNodes[k][i]];
             flowy[j] += dfx2*pView[elemsToNodes[k][i]];
             flowz[j] += dfx3*pView[elemsToNodes[k][i]];
           } );
-  
+
           m_finiteElement.computeFirstOrderStiffnessTermY( q, xLocal, [&] ( int i, int j, real32 dfy1, real32 dfy2, real32 dfy3 )
           {
             flowx[j] += dfy1*pView[elemsToNodes[k][i]];
             flowy[j] += dfy2*pView[elemsToNodes[k][i]];
             flowz[j] += dfy3*pView[elemsToNodes[k][i]];
           } );
-  
+
           m_finiteElement.computeFirstOrderStiffnessTermZ( q, xLocal, [&] ( int i, int j, real32 dfz1, real32 dfz2, real32 dfz3 )
           {
             flowx[j] += dfz1*pView[elemsToNodes[k][i]];
             flowy[j] += dfz2*pView[elemsToNodes[k][i]];
             flowz[j] += dfz3*pView[elemsToNodes[k][i]];
-  
+
           } );
-  
+
         }
         for( localIndex i = 0; i < numNodesPerElem; ++i )
         {
           real32 massLoc = m_finiteElement.computeMassTerm( i, xLocal );
-  
+
           uxView[k][i] = flowx[i]/(massLoc*density[k]);
           uyView[k][i] = flowy[i]/(massLoc*density[k]);
           uzView[k][i] = flowz[i]/(massLoc*density[k]);
         }
       } );
-  
-  
+
+
       //Step 2: Initial iteration of (M^{-1}K)p
       pAuxView.zero();
       forAll< EXEC_POLICY >( sizeElem, [=] GEOS_HOST_DEVICE ( localIndex const k )
       {
-  
+
         real64 xLocal[numNodesPerElem][3];
         for( localIndex a=0; a< numNodesPerElem; ++a )
         {
@@ -579,53 +579,53 @@ struct ComputeTimeStep
             xLocal[a][i] = X( elemsToNodes( k, a ), i );
           }
         }
-  
+
         real32 auxx[numNodesPerElem]  = {0.0};
         real32 auyy[numNodesPerElem]  = {0.0};
         real32 auzz[numNodesPerElem]  = {0.0};
         real32 uelemx[numNodesPerElem] = {0.0};
-  
-  
+
+
         // Volume integration
         for( localIndex q=0; q<numQuadraturePointsPerElem; ++q )
         {
-  
+
           m_finiteElement.computeFirstOrderStiffnessTermX( q, xLocal, [&] ( int i, int j, real32 dfx1, real32 dfx2, real32 dfx3 )
           {
             auxx[i] -= dfx1*uxView[k][j];
             auyy[i] -= dfx2*uyView[k][j];
             auzz[i] -= dfx3*uzView[k][j];
           } );
-  
+
           m_finiteElement.computeFirstOrderStiffnessTermY( q, xLocal, [&] ( int i, int j, real32 dfy1, real32 dfy2, real32 dfy3 )
           {
             auxx[i] -= dfy1*uxView[k][j];
             auyy[i] -= dfy2*uyView[k][j];
             auzz[i] -= dfy3*uzView[k][j];
           } );
-  
+
           m_finiteElement.computeFirstOrderStiffnessTermZ( q, xLocal, [&] ( int i, int j, real32 dfz1, real32 dfz2, real32 dfz3 )
           {
             auxx[i] -= dfz1*uxView[k][j];
             auyy[i] -= dfz2*uyView[k][j];
             auzz[i] -= dfz3*uzView[k][j];
           } );
-  
+
         }
-  
+
         //Time update + multiplication by inverse of the mass matrix
         for( localIndex i = 0; i < numNodesPerElem; ++i )
         {
           real32 diag=(auxx[i]+auyy[i]+auzz[i]);
           uelemx[i]+=diag;
-  
+
           real32 const localIncrement = uelemx[i]/mass[elemsToNodes[k][i]];
           RAJA::atomicAdd< ATOMIC_POLICY >( &pAuxView[elemsToNodes[k][i]], localIncrement );
         }
-  
+
       } );
 
-    
+
 
       lambdaOld = lambdaNew;
 

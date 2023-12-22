@@ -149,7 +149,7 @@ private:
 
   /**
    */
-  virtual real64 computeTimeStep(real64 & dtOut) override;
+  virtual real64 computeTimeStep( real64 & dtOut ) override;
 
   /// Pressure_np1 at the receiver location for each time step for each receiver
   array2d< real32 > m_pressureNp1AtReceivers;

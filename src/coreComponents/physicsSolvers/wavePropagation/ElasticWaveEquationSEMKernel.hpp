@@ -359,8 +359,6 @@ struct ComputeTimeStep
 
     lambdaNew = dotProductUtotUtotAux/normUtot;
 
-    //lambdaNew = LvArray::tensorOps::AiBi<sizeNode>(p,pAux)/LvArray::tensorOps::AiBi<sizeNode>(pAux,pAux);
-
     real64 normUxaux = 0.0;
     real64 normUyaux = 0.0;
     real64 normUzaux = 0.0;
@@ -454,8 +452,6 @@ struct ComputeTimeStep
 
 
       lambdaNew = dotProductUtotUtotAux/normUtot;
-
-      //lambdaNew = LvArray::tensorOps::AiBi<sizeNode>(p,pAux)/LvArray::tensorOps::AiBi<sizeNode>(pAux,pAux);
 
       normUxaux = 0.0;
       normUyaux = 0.0;

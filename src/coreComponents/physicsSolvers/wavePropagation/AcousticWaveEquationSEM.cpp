@@ -321,21 +321,21 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
                                                                  damping );
         }
 
-        if(m_preComputeDt==1)
+        if( m_preComputeDt==1 )
         {
           acousticWaveEquationSEMKernels::ComputeTimeStep< FE_TYPE > kernelT( finiteElement );
-  
+
           dtCompute = kernelT.template launch< EXEC_POLICY, ATOMIC_POLICY >( elementSubRegion.size(),
                                                                              nodeManager.size(),
                                                                              nodeCoords,
                                                                              elemsToNodes,
                                                                              mass );
-  
-          real64 globaldt = MpiWrapper::min(dtCompute);
 
-          printf("dt=%f\n",globaldt);
+          real64 globaldt = MpiWrapper::min( dtCompute );
 
-          exit(2);
+          printf( "dt=%f\n", globaldt );
+
+          exit( 2 );
 
         }
 
@@ -346,9 +346,10 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
   WaveSolverUtils::initTrace( "seismoTraceReceiver", getName(), m_outputSeismoTrace, m_receiverConstants.size( 0 ), m_receiverIsLocal );
 }
 
-//This function is only to give an easy accesss to the computation of the time-step for Pygeosx interface and avoid to exit the code when using Pygeosx
+//This function is only to give an easy accesss to the computation of the time-step for Pygeosx interface and avoid to exit the code when
+// using Pygeosx
 
-real64 AcousticWaveEquationSEM::computeTimeStep(real64 & dtOut)
+real64 AcousticWaveEquationSEM::computeTimeStep( real64 & dtOut )
 {
 
   DomainPartition & domain = getGroupByPath< DomainPartition >( "/Problem/domain" );
@@ -389,9 +390,9 @@ real64 AcousticWaveEquationSEM::computeTimeStep(real64 & dtOut)
                                                                            elemsToNodes,
                                                                            mass );
 
-        dtOut = MpiWrapper::min(dtCompute);
+        dtOut = MpiWrapper::min( dtCompute );
 
-        
+
 
       } );
     } );

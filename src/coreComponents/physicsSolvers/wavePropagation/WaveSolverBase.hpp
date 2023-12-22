@@ -147,7 +147,7 @@ protected:
 
   /**
    */
-  virtual real64 computeTimeStep(real64 & dtOut) = 0;
+  virtual real64 computeTimeStep( real64 & dtOut ) = 0;
 
   /**
    * @brief Initialize DAS fiber geometry. This will duplicate the number of point receivers to be modeled
@@ -286,7 +286,7 @@ protected:
   integer m_usePML;
 
   /// Flag to precompute the time-step
-  /// usage:  the time-step is computed then the code exit and you can 
+  /// usage:  the time-step is computed then the code exit and you can
   /// copy paste the time-step inside the XML then deactivate the option
   integer m_preComputeDt;
 
