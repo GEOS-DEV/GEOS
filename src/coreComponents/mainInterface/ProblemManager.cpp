@@ -925,7 +925,7 @@ map< std::tuple< string, string, string, string >, localIndex > ProblemManager::
 
             if( feDiscretization != nullptr )
             {
-              elemRegion.forElementSubRegions< CellElementSubRegion, FaceElementSubRegion >( [&]( auto & subRegion )
+              elemRegion.forElementSubRegions< CellElementSubRegion >( [&]( auto & subRegion )
               {
                 std::unique_ptr< finiteElement::FiniteElementBase > newFE = feDiscretization->factory( subRegion.getElementType() );
 
@@ -960,6 +960,20 @@ map< std::tuple< string, string, string, string >, localIndex > ProblemManager::
 
                   numQuadraturePointsInList = std::max( numQuadraturePointsInList, numQuadraturePoints );
                 } );
+              } );
+
+              // For now FaceElementSubRegions do not have a FE type associated with them. They don't need one for now and
+              // it would have to be a heterogeneous one coz they are usually heterogeneous subregions.
+              elemRegion.forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion const & subRegion )
+              {
+                localIndex & numQuadraturePointsInList = regionQuadrature[ std::make_tuple( meshBodyName,
+                                                                                            meshLevel.getName(),
+                                                                                            regionName,
+                                                                                            subRegion.getName() ) ];
+
+                localIndex const numQuadraturePoints = 1;
+
+                numQuadraturePointsInList = std::max( numQuadraturePointsInList, numQuadraturePoints );
               } );
             }
             else   //if( fvFluxApprox != nullptr )
