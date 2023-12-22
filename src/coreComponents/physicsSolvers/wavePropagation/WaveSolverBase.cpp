@@ -166,6 +166,10 @@ WaveSolverBase::WaveSolverBase( const std::string & name,
     setSizedFromParent( 0 ).
     setDescription( "Flag that indicates whether the receiver is local to this MPI rank" );
 
+  registerWrapper( viewKeyStruct::preComputeDtString(), &m_preComputeDt ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( 0 ).
+    setDescription( "Set to 1 to precompute the time-step using the power iteration method " );
   registerWrapper( viewKeyStruct::receiverRegionString(), &m_receiverRegion ).
     setInputFlag( InputFlags::FALSE ).
     setSizedFromParent( 0 ).

@@ -366,11 +366,15 @@ void ElasticFirstOrderWaveEquationSEM::initializePostInitialConditionsPreSubGrou
                                                                                           CellElementSubRegion & elementSubRegion )
     {
 
+      real64 dtCompute=0.0;
+
       arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemsToNodes = elementSubRegion.nodeList();
       arrayView2d< localIndex const > const elemsToFaces = elementSubRegion.faceList();
-      arrayView1d< real32 > const density = elementSubRegion.getField< wavesolverfields::MediumDensity >();
-      arrayView1d< real32 > const velocityVp = elementSubRegion.getField< wavesolverfields::MediumVelocityVp >();
-      arrayView1d< real32 > const velocityVs = elementSubRegion.getField< wavesolverfields::MediumVelocityVs >();
+      arrayView1d< real32 const > const density = elementSubRegion.getField< wavesolverfields::MediumDensity >();
+      arrayView1d< real32 const > const velocityVp = elementSubRegion.getField< wavesolverfields::MediumVelocityVp >();
+      arrayView1d< real32 const > const velocityVs = elementSubRegion.getField< wavesolverfields::MediumVelocityVs >();
+      arrayView1d< real32 > const lambda = elementSubRegion.getField< wavesolverfields::Lambda >();
+      arrayView1d< real32 > const mu = elementSubRegion.getField< wavesolverfields::Mu >();
 
       finiteElement::FiniteElementBase const &
       fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
@@ -404,11 +408,40 @@ void ElasticFirstOrderWaveEquationSEM::initializePostInitialConditionsPreSubGrou
                                                                dampingx,
                                                                dampingy,
                                                                dampingz );
+
+        if( m_preComputeDt==1 )
+        {
+          elasticFirstOrderWaveEquationSEMKernels::ComputeTimeStep< FE_TYPE > kernelT( finiteElement );
+
+          dtCompute = kernelT.template launch< EXEC_POLICY, ATOMIC_POLICY >( elementSubRegion.size(),
+                                                                             nodeManager.size(),
+                                                                             X,
+                                                                             elemsToNodes,
+                                                                             velocityVp,
+                                                                             velocityVs,
+                                                                             density,
+                                                                             lambda,
+                                                                             mu,
+                                                                             mass );
+
+
+          real64 globaldt = MpiWrapper::min( dtCompute );
+
+          printf( "dt=%f\n", globaldt );
+
+          exit( 2 );
+
+        }
       } );
     } );
   } );
 }
 
+real64 ElasticFirstOrderWaveEquationSEM::computeTimeStep( real64 & dtOut )
+{
+  GEOS_ERROR( getDataContext() << ":  Time-Step computation for the first order elastic wave propagator not yet implemented" );
+  return dtOut;
+}
 
 void ElasticFirstOrderWaveEquationSEM::applyFreeSurfaceBC( real64 const time, DomainPartition & domain )
 {

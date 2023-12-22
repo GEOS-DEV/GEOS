@@ -291,7 +291,10 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
 
       /// Partial gradient if gradient as to be computed
       arrayView1d< real32 > grad = elementSubRegion.getField< fields::PartialGradient >();
+
       grad.zero();
+
+      real64 dtCompute=0.0;
 
       finiteElement::FiniteElementDispatchHandler< SEM_FE_TYPES >::dispatch3D( fe, [&] ( auto const finiteElement )
       {
@@ -317,12 +320,86 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
                                                                  density,
                                                                  damping );
         }
+
+        if( m_preComputeDt==1 )
+        {
+          acousticWaveEquationSEMKernels::ComputeTimeStep< FE_TYPE > kernelT( finiteElement );
+
+          dtCompute = kernelT.template launch< EXEC_POLICY, ATOMIC_POLICY >( elementSubRegion.size(),
+                                                                             nodeManager.size(),
+                                                                             nodeCoords,
+                                                                             elemsToNodes,
+                                                                             mass );
+
+          real64 globaldt = MpiWrapper::min( dtCompute );
+
+          printf( "dt=%f\n", globaldt );
+
+          exit( 2 );
+
+        }
+
       } );
     } );
   } );
 
   WaveSolverUtils::initTrace( "seismoTraceReceiver", getName(), m_outputSeismoTrace, m_receiverConstants.size( 0 ), m_receiverIsLocal );
 }
+
+//This function is only to give an easy accesss to the computation of the time-step for Pygeosx interface and avoid to exit the code when
+// using Pygeosx
+
+real64 AcousticWaveEquationSEM::computeTimeStep( real64 & dtOut )
+{
+
+  DomainPartition & domain = getGroupByPath< DomainPartition >( "/Problem/domain" );
+
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                MeshLevel & mesh,
+                                                                arrayView1d< string const > const & regionNames )
+  {
+
+    NodeManager & nodeManager = mesh.getNodeManager();
+    ElementRegionManager & elemManager = mesh.getElemManager();
+
+    /// get the array of indicators: 1 if the face is on the boundary; 0 otherwise
+    arrayView2d< wsCoordType const, nodes::REFERENCE_POSITION_USD > const nodeCoords = nodeManager.getField< fields::referencePosition32 >().toViewConst();
+
+    // mass matrix to be computed in this function
+    arrayView1d< real32 > const mass = nodeManager.getField< fields::MassVector >();
+
+    elemManager.forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
+                                                                                CellElementSubRegion & elementSubRegion )
+    {
+      finiteElement::FiniteElementBase const &
+      fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
+
+      arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemsToNodes = elementSubRegion.nodeList();
+
+      real64 dtCompute=0.0;
+
+      finiteElement::FiniteElementDispatchHandler< SEM_FE_TYPES >::dispatch3D( fe, [&] ( auto const finiteElement )
+      {
+        using FE_TYPE = TYPEOFREF( finiteElement );
+
+        acousticWaveEquationSEMKernels::ComputeTimeStep< FE_TYPE > kernelT( finiteElement );
+
+        dtCompute = kernelT.template launch< EXEC_POLICY, ATOMIC_POLICY >( elementSubRegion.size(),
+                                                                           nodeManager.size(),
+                                                                           nodeCoords,
+                                                                           elemsToNodes,
+                                                                           mass );
+
+        dtOut = MpiWrapper::min( dtCompute );
+
+
+
+      } );
+    } );
+  } );
+  return dtOut;
+}
+
 
 
 void AcousticWaveEquationSEM::applyFreeSurfaceBC( real64 time, DomainPartition & domain )

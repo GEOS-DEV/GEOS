@@ -117,6 +117,9 @@ public:
     static constexpr char const * receiverElemString() { return "rcvElem"; }
     static constexpr char const * receiverRegionString() { return "receiverRegion"; }
     static constexpr char const * freeSurfaceString() { return "FreeSurface"; }
+
+    static constexpr char const * preComputeDtString() { return "preComputeDt"; }
+
   };
 
   /**
@@ -141,6 +144,10 @@ protected:
    * @param domain the partition domain
    */
   virtual void applyFreeSurfaceBC( real64 const time, DomainPartition & domain ) = 0;
+
+  /**
+   */
+  virtual real64 computeTimeStep( real64 & dtOut ) = 0;
 
   /**
    * @brief Initialize DAS fiber geometry. This will duplicate the number of point receivers to be modeled
@@ -277,6 +284,11 @@ protected:
 
   /// Flag to apply PML
   integer m_usePML;
+
+  /// Flag to precompute the time-step
+  /// usage:  the time-step is computed then the code exit and you can
+  /// copy paste the time-step inside the XML then deactivate the option
+  integer m_preComputeDt;
 
   /// Indices of the nodes (in the right order) for each source point
   array2d< localIndex > m_sourceNodeIds;
