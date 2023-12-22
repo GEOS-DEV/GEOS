@@ -69,7 +69,7 @@ void PVTDriver::runTest( FLUID_TYPE & fluid, arrayView2d< real64 > const & table
   using ExecPolicy = typename FLUID_TYPE::exec_policy;
   forAll< ExecPolicy >( composition.size( 0 ),
                         [ outputCompressibility, outputPhaseComposition, numPhases, numComponents, numSteps, kernelWrapper,
-                         table, composition]
+                          table, composition]
                         GEOS_HOST_DEVICE ( localIndex const i )
   {
     // Index for start of phase properties
