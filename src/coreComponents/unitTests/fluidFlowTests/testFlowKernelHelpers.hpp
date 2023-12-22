@@ -190,9 +190,9 @@ struct AccessorHelper< true >
     for( int i = 0; i < stencilSize; ++i )
     {
       detail::setArrayElement( acc[stencilRegIndices[i]][stencilSubRegIndices[i]][matIndex],
-                                                stencilElemIndices[i],
-                                                i,
-                                                data );
+                               stencilElemIndices[i],
+                               i,
+                               data );
     }
 
     return acc;
