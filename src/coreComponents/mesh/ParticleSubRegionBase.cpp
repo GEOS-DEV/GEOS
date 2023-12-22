@@ -43,7 +43,9 @@ ParticleSubRegionBase::ParticleSubRegionBase( string const & name, Group * const
   m_particleType(),
   m_particleRVectors(),
   m_particleInitialSurfaceNormal(),
-  m_particleSurfaceNormal()
+  m_particleSurfaceNormal(),
+  m_particleInitialSurfacePosition(),
+  m_particleSurfacePosition()
 {
   registerGroup( groupKeyStruct::constitutiveModelsString(), &m_constitutiveModels ).
     setSizedFromParent( 1 );
@@ -94,6 +96,14 @@ ParticleSubRegionBase::ParticleSubRegionBase( string const & name, Group * const
     reference().resizeDimension< 1 >( 3 );
 
   registerWrapper( viewKeyStruct::particleSurfaceNormalString(), &m_particleSurfaceNormal ).
+    setPlotLevel( PlotLevel::LEVEL_1 ).
+    reference().resizeDimension< 1 >( 3 );
+
+  registerWrapper( viewKeyStruct::particleInitialSurfacePositionString(), &m_particleInitialSurfacePosition ).
+    setPlotLevel( PlotLevel::LEVEL_1 ).
+    reference().resizeDimension< 1 >( 3 );
+
+  registerWrapper( viewKeyStruct::particleSurfacePositionString(), &m_particleSurfacePosition ).
     setPlotLevel( PlotLevel::LEVEL_1 ).
     reference().resizeDimension< 1 >( 3 );
 }

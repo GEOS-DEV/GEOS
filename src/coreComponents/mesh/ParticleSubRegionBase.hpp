@@ -277,6 +277,32 @@ public:
   { return m_particleSurfaceNormal; }
 
   /**
+   * @brief Get the initial surface normal of each particle in this subregion.
+   * @return an arrayView1d of const particle initial surface normal
+   */
+  arrayView2d< real64 const > getParticleInitialSurfacePosition() const
+  { return m_particleInitialSurfacePosition; }
+
+  /**
+   * @copydoc getParticleInitialSurfacePosition() const
+   */
+  arrayView2d< real64 > getParticleInitialSurfacePosition()
+  { return m_particleInitialSurfacePosition; }
+
+  /**
+   * @brief Get the surface normal of each particle in this subregion.
+   * @return an arrayView1d of const particle surface normal
+   */
+  arrayView2d< real64 const > getParticleSurfacePosition() const
+  { return m_particleSurfacePosition; }
+
+  /**
+   * @copydoc getParticleSurfacePosition() const
+   */
+  arrayView2d< real64 > getParticleSurfacePosition()
+  { return m_particleSurfacePosition; }
+
+  /**
    * @brief Get the group in which the constitutive models of this subregion are registered.
    * @return a pointer to the const group in which the constitutive models are registered
    */
@@ -416,6 +442,12 @@ public:
   
     /// @return String key for the member level field for the particle surface normal.
     static constexpr char const * particleSurfaceNormalString() { return "particleSurfaceNormal"; }
+
+    /// @return String key for the member level field for the particle initial surface position.
+    static constexpr char const * particleInitialSurfacePositionString() { return "particleInitialSurfacePosition"; }
+  
+    /// @return String key for the member level field for the particle surface normal.
+    static constexpr char const * particleSurfacePositionString() { return "particleSurfacePosition"; }
   };
 
   /**
@@ -538,6 +570,12 @@ protected:
 
   /// Member level field for the particle surface normal.
   array2d< real64 > m_particleSurfaceNormal;
+
+  /// Member level field for the particle initial surface position.
+  array2d< real64 > m_particleInitialSurfacePosition;
+
+  /// Member level field for the particle surface position.
+  array2d< real64 > m_particleSurfacePosition;
 
   /// Indices of particles that are not ghosts
   SortedArray< localIndex > m_activeParticleIndices;

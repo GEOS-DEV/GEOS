@@ -69,7 +69,10 @@ public:
     MaterialDirectionZ,
     SurfaceNormalX,
     SurfaceNormalY,
-    SurfaceNormalZ
+    SurfaceNormalZ,
+    SurfacePositionX,
+    SurfacePositionY,
+    SurfacePositionZ
   };
 
   /**
@@ -171,7 +174,10 @@ ENUM_STRINGS( ParticleMeshGenerator::ParticleColumnHeaders,
               "MaterialDirectionZ",
               "SurfaceNormalX",
               "SurfaceNormalY",
-              "SurfaceNormalZ" );
+              "SurfaceNormalZ",
+              "SurfacePositionX",
+              "SurfacePositionY",
+              "SurfacePositionZ" );
 
 } /* namespace geos */
 

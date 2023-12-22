@@ -194,14 +194,14 @@ void ParticleMeshGenerator::generateMesh( DomainPartition & domain )
       // Reformat particle data and apply defaults to fields not specified
       std::vector< double > lineDataInside;
       // CC: TODO: Can you get the number of options from the enum directly?
-      for(int c = 0; c < 27; c++)
+      for(int c = 0; c < 30; c++)
       {
         if( columnHeaderMap.find( c ) != columnHeaderMap.end() )
         {
           lineDataInside.push_back( lineData[ columnHeaderMap[ c ] ] );
           continue;
         }
-        
+
         // Apply default value
         double defaultValue;
         switch( static_cast< ParticleColumnHeaders >( c ) )
@@ -220,6 +220,9 @@ void ParticleMeshGenerator::generateMesh( DomainPartition & domain )
           case ParticleColumnHeaders::MaterialDirectionZ:
           case ParticleColumnHeaders::SurfaceNormalY:
           case ParticleColumnHeaders::SurfaceNormalZ:
+          case ParticleColumnHeaders::SurfacePositionX:
+          case ParticleColumnHeaders::SurfacePositionY:
+          case ParticleColumnHeaders::SurfacePositionZ:
           case ParticleColumnHeaders::Damage:
             defaultValue = 0.0;
             break;
@@ -284,6 +287,7 @@ void ParticleMeshGenerator::generateMesh( DomainPartition & domain )
     array1d< real64 > particleStrengthScale( npInBlock );
     array3d< real64 > particleRVectors( npInBlock, 3, 3 ); // TODO: Flatten the r-vector array into a 1x9 for each particle
     array2d< real64 > particleSurfaceNormal( npInBlock, 3); // TODO:: read from file eventually
+    array2d< real64 > particleSurfacePosition( npInBlock, 3 );
 
     // Assign particle data to the appropriate block.
     std::vector< int > & indices = indexMap[particleBlockName];
@@ -365,11 +369,13 @@ void ParticleMeshGenerator::generateMesh( DomainPartition & domain )
         GEOS_ERROR( "Invalid particle type specification! Cannot determine particle volume, aborting." );
       }
 
-      // Surface Normal ( currently only works assuming that particles are formatted for CPDI data)
-      // CC: TODO eventually include header in particle file for column data
       particleSurfaceNormal[index][0] = particleData[particleType][i][24];
       particleSurfaceNormal[index][1] = particleData[particleType][i][25];
       particleSurfaceNormal[index][2] = particleData[particleType][i][26];
+
+      particleSurfacePosition[index][0] = particleData[particleType][i][27];
+      particleSurfacePosition[index][1] = particleData[particleType][i][28];
+      particleSurfacePosition[index][2] = particleData[particleType][i][29];
 
       // Increment index
       index++;
@@ -387,6 +393,8 @@ void ParticleMeshGenerator::generateMesh( DomainPartition & domain )
     particleBlock.setParticleRVectors( particleRVectors );
     particleBlock.setParticleInitialSurfaceNormal( particleSurfaceNormal );
     particleBlock.setParticleSurfaceNormal( particleSurfaceNormal );
+    particleBlock.setParticleInitialSurfacePosition( particleSurfacePosition );
+    particleBlock.setParticleSurfacePosition( particleSurfacePosition );
   } // loop over particle blocks
 
   // Resize particle regions

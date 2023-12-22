@@ -210,6 +210,28 @@ public:
   void setParticleSurfaceNormal( array2d< real64 > const particleSurfaceNormal )
   { m_particleSurfaceNormal = particleSurfaceNormal; }
 
+  array2d< real64 > getParticleInitialSurfacePosition() const override
+  { return m_particleInitialSurfacePosition; }
+
+  /**
+   * @brief Set the list of surface positions in this subregion.
+   * @param particleInitialSurfacePosition The input list of initial positions
+   */
+  void setParticleInitialSurfacePosition( array2d< real64 > const particleInitialSurfacePosition )
+  { m_particleInitialSurfacePosition = particleInitialSurfacePosition; }
+
+  array2d< real64 > getParticleSurfacePosition() const override
+  { return m_particleSurfacePosition; }
+
+  /**
+   * @brief Set the list of surface positions in this subregion.
+   * @param particleSurfacePosition The input list of positions
+   */
+  void setParticleSurfacePosition( array2d< real64 > const particleSurfacePosition )
+  { m_particleSurfacePosition = particleSurfacePosition; }
+
+//
+
   localIndex numParticles() const override
   { return size(); }
 
@@ -293,6 +315,12 @@ private:
 
   /// Member level field for the particle surface normal.
   array2d< real64 > m_particleSurfaceNormal;
+
+  /// Member level field for the particle initial surface position.
+  array2d< real64 > m_particleInitialSurfacePosition;
+
+  /// Member level field for the particle surface position.
+  array2d< real64 > m_particleSurfacePosition;
 
   std::list< dataRepository::WrapperBase * > getExternalProperties() override
   {

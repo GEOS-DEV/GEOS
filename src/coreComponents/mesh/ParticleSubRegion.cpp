@@ -64,6 +64,8 @@ void ParticleSubRegion::copyFromParticleBlock( ParticleBlockABC & particleBlock 
   m_hasRVectors = particleBlock.hasRVectors();
   m_particleInitialSurfaceNormal = particleBlock.getParticleInitialSurfaceNormal();
   m_particleSurfaceNormal = particleBlock.getParticleSurfaceNormal();
+  m_particleInitialSurfacePosition = particleBlock.getParticleInitialSurfacePosition();
+  m_particleSurfacePosition = particleBlock.getParticleSurfacePosition();
 
   // We call the `resize` member function of the cell to (nodes, edges, faces) relations,
   // before calling the `ParticleSubRegion::resize` in order to keep the first dimension.
@@ -101,6 +103,8 @@ void ParticleSubRegion::copyFromParticleSubRegion( ParticleSubRegion & particleS
   m_hasRVectors = particleSubRegion.hasRVectors();
   m_particleInitialSurfaceNormal = particleSubRegion.getParticleInitialSurfaceNormal();
   m_particleSurfaceNormal = particleSubRegion.getParticleSurfaceNormal();
+  m_particleInitialSurfacePosition = particleSubRegion.getParticleInitialSurfacePosition();
+  m_particleSurfacePosition = particleSubRegion.getParticleSurfacePosition();
 
   // We call the `resize` member function of the cell to (nodes, edges, faces) relations,
   // before calling the `ParticleSubRegion::resize` in order to keep the first dimension.
