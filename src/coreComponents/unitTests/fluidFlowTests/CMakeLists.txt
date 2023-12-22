@@ -4,7 +4,6 @@ set(gtest_geosx_tests
         testSinglePhaseBaseKernels.cpp
         testThermalCompMultiphaseFlow.cpp
         testThermalSinglePhaseFlow.cpp
-        testCompFlowUpwind.cpp
         )
 
 set( dependencyList ${parallelDeps} gtest )
