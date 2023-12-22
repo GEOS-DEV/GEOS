@@ -41,9 +41,9 @@ BiotPorosity::BiotPorosity( string const & name, Group * const parent ):
     setDescription( "Default thermal expansion coefficient" );
 
   registerWrapper( viewKeyStruct::useUniaxialFixedStressString(), &m_useUniaxialFixedStress ).
-                                                                                                                       setApplyDefaultValue( 0 ).
-                                                                                                                       setInputFlag( InputFlags::OPTIONAL ).
-                                                                                                                       setDescription( "Flag enabling uniaxial approximation in fixed stress update" );
+    setApplyDefaultValue( 0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Flag enabling uniaxial approximation in fixed stress update" );
 
   registerField( fields::porosity::biotCoefficient{}, &m_biotCoefficient ).
     setApplyDefaultValue( 1.0 ); // this is useful for sequential simulations, for the first flow solve
@@ -60,8 +60,8 @@ BiotPorosity::BiotPorosity( string const & name, Group * const parent ):
     setDescription( "Solid bulk modulus" );
 
   registerWrapper( viewKeyStruct::solidShearModulusString(), &m_shearModulus ).
-                                                                              setApplyDefaultValue( 1e-6 ).
-                                                                              setDescription( "Solid shear modulus" );
+    setApplyDefaultValue( 1e-6 ).
+    setDescription( "Solid shear modulus" );
 }
 
 void BiotPorosity::allocateConstitutiveData( dataRepository::Group & parent,

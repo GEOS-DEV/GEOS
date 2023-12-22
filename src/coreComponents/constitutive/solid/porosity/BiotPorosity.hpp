@@ -58,11 +58,11 @@ public:
                        arrayView1d< real64 > const & shearModulus,
                        real64 const & grainBulkModulus,
                        integer const useUniaxialFixedStress ): PorosityBaseUpdates( newPorosity,
-                                                                               porosity_n,
-                                                                               dPorosity_dPressure,
-                                                                               dPorosity_dTemperature,
-                                                                               initialPorosity,
-                                                                               referencePorosity ),
+                                                                                    porosity_n,
+                                                                                    dPorosity_dPressure,
+                                                                                    dPorosity_dTemperature,
+                                                                                    initialPorosity,
+                                                                                    referencePorosity ),
     m_grainBulkModulus( grainBulkModulus ),
     m_thermalExpansionCoefficient( thermalExpansionCoefficient ),
     m_biotCoefficient( biotCoefficient ),
@@ -215,7 +215,7 @@ public:
 
   GEOS_HOST_DEVICE
   void updateBiotCoefficientAndAssignModuli( localIndex const k,
-                                                  real64 const bulkModulus, real64 const shearModulus ) const
+                                             real64 const bulkModulus, real64 const shearModulus ) const
   {
     m_bulkModulus[k] = bulkModulus;
     m_shearModulus[k] = shearModulus;
