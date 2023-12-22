@@ -210,7 +210,6 @@ public:
     static constexpr char const * solidMaterialNamesString() { return "solidMaterialNames"; }
     static constexpr char const * forceExternalString() { return "externalForce"; }
     static constexpr char const * forceInternalString() { return "internalForce"; }
-    static constexpr char const * initialPositionString() { return "initialPosition"; }
     static constexpr char const * displacementString() { return "displacement"; }
     static constexpr char const * particleSurfaceNormalString() { return "particleSurfaceNormal"; }
     static constexpr char const * cohesiveNormalForceString() { return "cohesiveNormalForce"; }
@@ -230,6 +229,8 @@ public:
     static constexpr char const * normalStressString() { return "normalStress"; }
     static constexpr char const * massWeightedDamageString() { return "massWeightedDamage"; }
     static constexpr char const * cohesiveNodeString() { return "cohesiveNode"; }
+    static constexpr char const * initialAreaVectorString() { return "initialAreaVector"; }
+    static constexpr char const * initialSurfacePositionString() { return "initialSurfacePosition"; }
 
     static constexpr char const * boundaryNodesString() { return "boundaryNodes"; }
     static constexpr char const * bufferNodesString() { return "bufferNodes"; }
@@ -409,16 +410,20 @@ public:
   void enforceCohesiveLaw(  ParticleManager & particleManager,
                             NodeManager & nodeManager );
 
+  void computeDistanceToParticleSurface( real64 (& normal)[3],
+                                         arraySlice2d< real64 const > const rVectors,
+                                         real64 distanceToSurface );
+
   void computeCohesiveTraction( real64 mA,
                                 real64 mB,
                                 arraySlice1d< real64 const > const dA,
                                 arraySlice1d< real64 const > const dB,
-                                real64 sA,
-                                real64 sB,
+                                real64 const (& aA )[3],
+                                real64 const (& aB )[3],
                                 arraySlice1d< real64 const > const nA,
                                 arraySlice1d< real64 const > const nB, 
                                 arraySlice1d< real64 > const tA,
-                                arraySlice1d< real64 > const tB  );
+                                arraySlice1d< real64 > const tB );
 
   void particleToGrid( real64 const time_n,
                        integer const cycleNumber,
@@ -636,6 +641,9 @@ protected:
   // Cohesive law variables
   SortedArray< globalIndex >  m_cohesiveNodeGlobalIndices;
   int m_enableCohesiveLaws;
+  array2d< real64 > m_initialCohesiveGridNodePositions;
+  array2d< real64 > m_initialCohesiveGridNodeAreas;
+  array3d< real64 > m_initialCohesiveGridNodeSurfaceNormals;
   real64 m_maxCohesiveNormalStress;
   real64 m_maxCohesiveShearStress;
   real64 m_characteristicNormalDisplacement;
