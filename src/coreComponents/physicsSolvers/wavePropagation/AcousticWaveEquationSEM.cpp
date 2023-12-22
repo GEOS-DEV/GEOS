@@ -172,7 +172,6 @@ void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh,
     {
       using FE_TYPE = TYPEOFREF( finiteElement );
 
-      constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
       localIndex const numFacesPerElem = elementSubRegion.numFacesPerElement();
 
       {
@@ -181,7 +180,6 @@ void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh,
           PrecomputeSourceAndReceiverKernel::
           launch< EXEC_POLICY, FE_TYPE >
           ( elementSubRegion.size(),
-          numNodesPerElem,
           numFacesPerElem,
           X32,
           elemGhostRank,
@@ -345,7 +343,7 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
     } );
   } );
 
-  WaveSolverUtils::initTrace( "seismoTraceReceiver", getName(), m_receiverConstants.size( 0 ), m_receiverIsLocal );
+  WaveSolverUtils::initTrace( "seismoTraceReceiver", getName(), m_outputSeismoTrace, m_receiverConstants.size( 0 ), m_receiverIsLocal );
 }
 
 //This function is only to give an easy accesss to the computation of the time-step for Pygeosx interface and avoid to exit the code when using Pygeosx
@@ -929,7 +927,7 @@ real64 AcousticWaveEquationSEM::explicitStepBackward( real64 const & time_n,
 
     EventManager const & event = getGroupByPath< EventManager >( "/Problem/Events" );
     real64 const & maxTime = event.getReference< real64 >( EventManager::viewKeyStruct::maxTimeString() );
-    int const maxCycle = int(round( maxTime/dt ));
+    int const maxCycle = int(round( maxTime / dt ));
 
     if( computeGradient && cycleNumber < maxCycle )
     {
@@ -1038,8 +1036,8 @@ real64 AcousticWaveEquationSEM::explicitStepInternal( real64 const & time_n,
 
     EventManager const & event = getGroupByPath< EventManager >( "/Problem/Events" );
     real64 const & minTime = event.getReference< real64 >( EventManager::viewKeyStruct::minTimeString() );
-    integer const cycleForSource = int(round( -minTime/dt + cycleNumber ));
-    //std::cout<<"cycle GEOSX = "<<cycleForSource<<std::endl;
+    integer const cycleForSource = int(round( -minTime / dt + cycleNumber ));
+
     addSourceToRightHandSide( cycleForSource, rhs );
 
     /// calculate your time integrators
