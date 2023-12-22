@@ -103,7 +103,7 @@ ControlEquationHelper::
     }
     else
     {
-      if ( targetMassRate == 0.0 ) 
+      if ( isZero(targetMassRate) ) 
       {
         newControl = ( currentControl == WellControls::Control::BHP )
                   ? WellControls::Control::TOTALVOLRATE
@@ -1790,7 +1790,7 @@ RateInitializationKernel::
       }
       else
       {
-        if ( targetMassRate == 0.0 )
+        if ( isZero(targetMassRate) )
         {
           connRate[iwelem] = LvArray::math::min( 0.1 * targetTotalRate * totalDens[iwelem][0], 1e3 );
         }
