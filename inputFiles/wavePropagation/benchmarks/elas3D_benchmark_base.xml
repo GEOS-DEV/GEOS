@@ -118,7 +118,7 @@
       name="initialdisplacementnx"
       initialCondition="1"
       setNames="{ all }"
-      objectPath="nodeManager"
+      objectPath="mesh/FE1/nodeManager"
       fieldName="displacementx_n"
       scale="0.0"/>
 
@@ -126,7 +126,7 @@
       name="initialdisplacementny"
       initialCondition="1"
       setNames="{ all }"
-      objectPath="nodeManager"
+      objectPath="mesh/FE1/nodeManager"
       fieldName="displacementy_n"
       scale="0.0"/>
 
@@ -134,7 +134,7 @@
       name="initialdisplacementnz"
       initialCondition="1"
       setNames="{ all }"
-      objectPath="nodeManager"
+      objectPath="mesh/FE1/nodeManager"
       fieldName="displacementz_n"
       scale="0.0"/>
 
@@ -142,7 +142,7 @@
       name="initialdisplacementnm1x"
       initialCondition="1"
       setNames="{ all }"
-      objectPath="nodeManager"
+      objectPath="mesh/FE1/nodeManager"
       fieldName="displacementx_nm1"
       scale="0.0"/>
 
@@ -150,7 +150,7 @@
       name="initialdisplacementnm1y"
       initialCondition="1"
       setNames="{ all }"
-      objectPath="nodeManager"
+      objectPath="mesh/FE1/nodeManager"
       fieldName="displacementy_nm1"
       scale="0.0"/>
 
@@ -158,7 +158,7 @@
       name="initialdisplacementnm1z"
       initialCondition="1"
       setNames="{ all }"
-      objectPath="nodeManager"
+      objectPath="mesh/FE1/nodeManager"
       fieldName="displacementz_nm1"
       scale="0.0"/>
 
@@ -167,7 +167,7 @@
     <FieldSpecification
       name="cellVelocityVp"
       initialCondition="1"
-      objectPath="ElementRegions/Region/cb"
+      objectPath="mesh/FE1/ElementRegions/Region/cb"
       fieldName="mediumVelocityVp"
       scale="2000"
       setNames="{ all }"/>
@@ -175,7 +175,7 @@
     <FieldSpecification
       name="cellVelocityVs"
       initialCondition="1"
-      objectPath="ElementRegions/Region/cb"
+      objectPath="mesh/FE1/ElementRegions/Region/cb"
       fieldName="mediumVelocityVs"
       scale="1155"
       setNames="{ all }"/>
@@ -183,7 +183,7 @@
     <FieldSpecification
       name="cellDensity"
       initialCondition="1"
-      objectPath="ElementRegions/Region/cb"
+      objectPath="mesh/FE1/ElementRegions/Region/cb"
       fieldName="mediumDensity"
       scale="1"
       setNames="{ all }"/>
