@@ -33,25 +33,8 @@ using namespace fields;
 
 SolidMechanicsStatistics::SolidMechanicsStatistics( const string & name,
                                                     Group * const parent ):
-  Base( name, parent ),
-  m_outputDir( joinPath( OutputBase::getOutputDirectory(), name ) )
+  Base( name, parent )
 {}
-
-void SolidMechanicsStatistics::postProcessInput()
-{
-  Base::postProcessInput();
-
-  // create dir for output
-  if( getLogLevel() > 0 )
-  {
-    if( MpiWrapper::commRank() == 0 )
-    {
-      makeDirsForPath( m_outputDir );
-    }
-    // wait till the dir is created by rank 0
-    MPI_Barrier( MPI_COMM_WORLD );
-  }
-}
 
 void SolidMechanicsStatistics::registerDataOnMesh( Group & meshBodies )
 {

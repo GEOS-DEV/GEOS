@@ -23,6 +23,7 @@
 #include "physicsSolvers/PhysicsSolverManager.hpp"
 #include "mainInterface/ProblemManager.hpp"
 #include "mesh/MeshLevel.hpp"
+#include "fileIO/Outputs/OutputBase.hpp"
 
 namespace geos
 {
@@ -45,7 +46,8 @@ public:
   FieldStatisticsBase( const string & name,
                        Group * const parent )
     : TaskBase( name, parent ),
-    m_solver( nullptr )
+    m_solver( nullptr ),
+    m_outputDir( joinPath( OutputBase::getOutputDirectory(), name ) )
   {
     enableLogLevelInput();
 
@@ -85,10 +87,24 @@ protected:
                              getDataContext(),
                              m_solverName, LvArray::system::demangleType< SOLVER >() ),
                    InputError );
+
+    // create dir for output
+    if( getLogLevel() > 0 )
+    {
+      if( MpiWrapper::commRank() == 0 )
+      {
+        makeDirsForPath( m_outputDir );
+      }
+      // wait till the dir is created by rank 0
+      MPI_Barrier( MPI_COMM_WORLD );
+    }
   }
 
   /// Pointer to the physics solver
   SOLVER * m_solver;
+
+  // Output directory
+  string const m_outputDir;
 
 private:
 
