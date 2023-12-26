@@ -69,8 +69,8 @@ public:
   {
     using Deriv = multifluid::DerivativeOffset;
 
-    arraySlice2d< real64 const, multifluid::USD_PHASE_DC - 2 > const dPhaseDens = m_dPhaseDens[ei][0];
-    arraySlice2d< real64 const, multifluid::USD_PHASE_DC - 2 > const dPhaseFrac = m_dPhaseFrac[ei][0];
+    multifluid::ArraySlice< real64 const, 2 > const dPhaseDens = m_dPhaseDens[ei][0];
+    multifluid::ArraySlice< real64 const, 2 > const dPhaseFrac = m_dPhaseFrac[ei][0];
 
     arraySlice2d< real64, compflow::USD_PHASE_DC - 1 > const dPhaseVolFrac = m_dPhaseVolFrac[ei];
 
@@ -298,13 +298,13 @@ public:
       arraySlice2d< real64 const, compflow::USD_COMP_DC - 1 > dCompFrac_dCompDens = m_dCompFrac_dCompDens[ei];
       arraySlice1d< real64 const, compflow::USD_PHASE - 1 > phaseVolFrac = m_phaseVolFrac[ei];
       arraySlice2d< real64 const, compflow::USD_PHASE_DC - 1 > dPhaseVolFrac = m_dPhaseVolFrac[ei];
-      arraySlice1d< real64 const, multifluid::USD_PHASE - 2 > phaseDens = m_phaseDens[ei][0];
-      arraySlice2d< real64 const, multifluid::USD_PHASE_DC - 2 > dPhaseDens = m_dPhaseDens[ei][0];
-      arraySlice2d< real64 const, multifluid::USD_PHASE_COMP - 2 > phaseCompFrac = m_phaseCompFrac[ei][0];
-      arraySlice3d< real64 const, multifluid::USD_PHASE_COMP_DC - 2 > dPhaseCompFrac = m_dPhaseCompFrac[ei][0];
-      arraySlice1d< real64 const, multifluid::USD_PHASE - 2 > phaseInternalEnergy_n = m_phaseInternalEnergy_n[ei][0];
-      arraySlice1d< real64 const, multifluid::USD_PHASE - 2 > phaseInternalEnergy = m_phaseInternalEnergy[ei][0];
-      arraySlice2d< real64 const, multifluid::USD_PHASE_DC - 2 > dPhaseInternalEnergy = m_dPhaseInternalEnergy[ei][0];
+      multifluid::ArraySlice< real64 const, 1 > phaseDens = m_phaseDens[ei][0];
+      multifluid::ArraySlice< real64 const, 2 > dPhaseDens = m_dPhaseDens[ei][0];
+      multifluid::ArraySlice< real64 const, 2 > phaseCompFrac = m_phaseCompFrac[ei][0];
+      multifluid::ArraySlice< real64 const, 3 > dPhaseCompFrac = m_dPhaseCompFrac[ei][0];
+      multifluid::ArraySlice< real64 const, 1 > phaseInternalEnergy_n = m_phaseInternalEnergy_n[ei][0];
+      multifluid::ArraySlice< real64 const, 1 > phaseInternalEnergy = m_phaseInternalEnergy[ei][0];
+      multifluid::ArraySlice< real64 const, 2 > dPhaseInternalEnergy = m_dPhaseInternalEnergy[ei][0];
 
       // Step 1: assemble the derivatives of the component mass balance equations with respect to temperature
 
@@ -396,9 +396,9 @@ protected:
   arrayView2d< real64 const > const m_dPoro_dTemp;
 
   /// Views on phase internal energy
-  arrayView3d< real64 const, multifluid::USD_PHASE > m_phaseInternalEnergy_n;
-  arrayView3d< real64 const, multifluid::USD_PHASE > m_phaseInternalEnergy;
-  arrayView4d< real64 const, multifluid::USD_PHASE_DC > m_dPhaseInternalEnergy;
+  multifluid::ArrayView< real64 const, 3 > m_phaseInternalEnergy_n;
+  multifluid::ArrayView< real64 const, 3 > m_phaseInternalEnergy;
+  multifluid::ArrayView< real64 const, 4 > m_dPhaseInternalEnergy;
 
   /// Views on rock internal energy
   arrayView2d< real64 const > m_rockInternalEnergy_n;
@@ -978,9 +978,9 @@ protected:
 
   /// View on phase properties at the previous converged time step
   arrayView2d< real64 const, compflow::USD_PHASE > const m_phaseVolFrac_n;
-  arrayView2d< real64 const, multifluid::USD_FLUID > const m_totalDens_n;
-  arrayView3d< real64 const, multifluid::USD_PHASE > const m_phaseDens_n;
-  arrayView3d< real64 const, multifluid::USD_PHASE > const m_phaseInternalEnergy_n;
+  multifluid::ArrayView< real64 const, 2 > const m_totalDens_n;
+  multifluid::ArrayView< real64 const, 3 > const m_phaseDens_n;
+  multifluid::ArrayView< real64 const, 3 > const m_phaseInternalEnergy_n;
 
   /// View on solid properties at the previous converged time step
   arrayView2d< real64 const > const m_solidInternalEnergy_n;

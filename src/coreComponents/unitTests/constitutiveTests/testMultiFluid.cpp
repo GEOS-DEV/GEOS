@@ -30,7 +30,6 @@
 using namespace geos;
 using namespace geos::testing;
 using namespace geos::constitutive;
-using namespace geos::constitutive::multifluid;
 using namespace geos::dataRepository;
 using namespace geos::constitutive::PVTProps;
 
@@ -148,27 +147,27 @@ void testNumericalDerivatives( MultiFluidBase & fluid,
   #define GET_FLUID_DATA( FLUID, TRAIT ) \
     FLUID.getReference< TRAIT::type >( TRAIT::key() )[0][0]
 
-  MultiFluidVarSlice< real64, 1, USD_PHASE - 2, USD_PHASE_DC - 2 > phaseFrac {
+  MultiFluidVarSlice< real64, 1 > phaseFrac {
     GET_FLUID_DATA( fluid, fields::multifluid::phaseFraction ),
     GET_FLUID_DATA( fluid, fields::multifluid::dPhaseFraction )
   };
 
-  MultiFluidVarSlice< real64, 1, USD_PHASE - 2, USD_PHASE_DC - 2 > phaseDens {
+  MultiFluidVarSlice< real64, 1 > phaseDens {
     GET_FLUID_DATA( fluid, fields::multifluid::phaseDensity ),
     GET_FLUID_DATA( fluid, fields::multifluid::dPhaseDensity )
   };
 
-  MultiFluidVarSlice< real64, 1, USD_PHASE - 2, USD_PHASE_DC - 2 > phaseVisc {
+  MultiFluidVarSlice< real64, 1 > phaseVisc {
     GET_FLUID_DATA( fluid, fields::multifluid::phaseViscosity ),
     GET_FLUID_DATA( fluid, fields::multifluid::dPhaseViscosity )
   };
 
-  MultiFluidVarSlice< real64, 2, USD_PHASE_COMP - 2, USD_PHASE_COMP_DC - 2 > phaseCompFrac {
+  MultiFluidVarSlice< real64, 2 > phaseCompFrac {
     GET_FLUID_DATA( fluid, fields::multifluid::phaseCompFraction ),
     GET_FLUID_DATA( fluid, fields::multifluid::dPhaseCompFraction )
   };
 
-  MultiFluidVarSlice< real64, 0, USD_FLUID - 2, USD_FLUID_DC - 2 > totalDens {
+  MultiFluidVarSlice< real64, 0 > totalDens {
     GET_FLUID_DATA( fluid, fields::multifluid::totalDensity ),
     GET_FLUID_DATA( fluid, fields::multifluid::dTotalDensity )
   };
@@ -313,22 +312,22 @@ void testValuesAgainstPreviousImplementation( CO2BrinePhillipsFluid::KernelWrapp
   }
   arraySlice1d< real64 const, compflow::USD_COMP - 1 > const composition = compositionValues[0];
 
-  StackArray< real64, 3, numPhase, LAYOUT_PHASE > phaseFraction( 1, 1, numPhase );
-  StackArray< real64, 4, numDof *numPhase, LAYOUT_PHASE_DC > dPhaseFraction( 1, 1, numPhase, numDof );
-  StackArray< real64, 3, numPhase, LAYOUT_PHASE > phaseDensity( 1, 1, numPhase );
-  StackArray< real64, 4, numDof *numPhase, LAYOUT_PHASE_DC > dPhaseDensity( 1, 1, numPhase, numDof );
-  StackArray< real64, 3, numPhase, LAYOUT_PHASE > phaseMassDensity( 1, 1, numPhase );
-  StackArray< real64, 4, numDof *numPhase, LAYOUT_PHASE_DC > dPhaseMassDensity( 1, 1, numPhase, numDof );
-  StackArray< real64, 3, numPhase, LAYOUT_PHASE > phaseViscosity( 1, 1, numPhase );
-  StackArray< real64, 4, numDof *numPhase, LAYOUT_PHASE_DC > dPhaseViscosity( 1, 1, numPhase, numDof );
-  StackArray< real64, 3, numPhase, LAYOUT_PHASE > phaseEnthalpy( 1, 1, numPhase );
-  StackArray< real64, 4, numDof *numPhase, LAYOUT_PHASE_DC > dPhaseEnthalpy( 1, 1, numPhase, numDof );
-  StackArray< real64, 3, numPhase, LAYOUT_PHASE > phaseInternalEnergy( 1, 1, numPhase );
-  StackArray< real64, 4, numDof *numPhase, LAYOUT_PHASE_DC > dPhaseInternalEnergy( 1, 1, numPhase, numDof );
-  StackArray< real64, 4, numComp *numPhase, LAYOUT_PHASE_COMP > phaseCompFraction( 1, 1, numPhase, numComp );
-  StackArray< real64, 5, numDof *numComp *numPhase, LAYOUT_PHASE_COMP_DC > dPhaseCompFraction( 1, 1, numPhase, numComp, numDof );
-  StackArray< real64, 2, 1, LAYOUT_FLUID > totalDensity( 1, 1 );
-  StackArray< real64, 3, numDof, LAYOUT_FLUID_DC >  dTotalDensity( 1, 1, numDof );
+  multifluid::StackArray< real64, 3, numPhase > phaseFraction( 1, 1, numPhase );
+  multifluid::StackArray< real64, 4, numDof * numPhase > dPhaseFraction( 1, 1, numPhase, numDof );
+  multifluid::StackArray< real64, 3, numPhase > phaseDensity( 1, 1, numPhase );
+  multifluid::StackArray< real64, 4, numDof * numPhase > dPhaseDensity( 1, 1, numPhase, numDof );
+  multifluid::StackArray< real64, 3, numPhase > phaseMassDensity( 1, 1, numPhase );
+  multifluid::StackArray< real64, 4, numDof * numPhase > dPhaseMassDensity( 1, 1, numPhase, numDof );
+  multifluid::StackArray< real64, 3, numPhase > phaseViscosity( 1, 1, numPhase );
+  multifluid::StackArray< real64, 4, numDof * numPhase > dPhaseViscosity( 1, 1, numPhase, numDof );
+  multifluid::StackArray< real64, 3, numPhase > phaseEnthalpy( 1, 1, numPhase );
+  multifluid::StackArray< real64, 4, numDof * numPhase > dPhaseEnthalpy( 1, 1, numPhase, numDof );
+  multifluid::StackArray< real64, 3, numPhase > phaseInternalEnergy( 1, 1, numPhase );
+  multifluid::StackArray< real64, 4, numDof * numPhase > dPhaseInternalEnergy( 1, 1, numPhase, numDof );
+  multifluid::StackArray< real64, 4, numComp * numPhase > phaseCompFraction( 1, 1, numPhase, numComp );
+  multifluid::StackArray< real64, 5, numDof * numComp * numPhase > dPhaseCompFraction( 1, 1, numPhase, numComp, numDof );
+  multifluid::StackArray< real64, 2, 1 > totalDensity( 1, 1 );
+  multifluid::StackArray< real64, 3, numDof >  dTotalDensity( 1, 1, numDof );
 
   wrapper.compute( P, T, composition,
   {

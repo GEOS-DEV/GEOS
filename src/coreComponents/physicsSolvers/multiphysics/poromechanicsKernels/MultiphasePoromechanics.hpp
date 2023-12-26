@@ -20,12 +20,15 @@
 #define GEOS_PHYSICSSOLVERS_MULTIPHYSICS_POROMECHANICSKERNELS_MULTIPHASEPOROMECHANICS_HPP_
 
 #include "codingUtilities/Utilities.hpp"
+#include "constitutive/fluid/multifluid/Layouts.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseBaseFields.hpp"
 #include "physicsSolvers/multiphysics/PoromechanicsFields.hpp"
 #include "physicsSolvers/multiphysics/poromechanicsKernels/PoromechanicsBase.hpp"
 
 namespace geos
 {
+
+using namespace constitutive;
 
 namespace poromechanicsKernels
 {
@@ -317,18 +320,18 @@ public:
 protected:
 
   /// Views on phase densities and derivatives
-  arrayView3d< real64 const, constitutive::multifluid::USD_PHASE > m_fluidPhaseDensity;
-  arrayView3d< real64 const, constitutive::multifluid::USD_PHASE > m_fluidPhaseDensity_n;
-  arrayView4d< real64 const, constitutive::multifluid::USD_PHASE_DC > m_dFluidPhaseDensity;
+  multifluid::ArrayView< real64 const, 3 > m_fluidPhaseDensity;
+  multifluid::ArrayView< real64 const, 3 > m_fluidPhaseDensity_n;
+  multifluid::ArrayView< real64 const, 4 > m_dFluidPhaseDensity;
 
   /// Views on phase component fractions and derivatives
-  arrayView4d< real64 const, constitutive::multifluid::USD_PHASE_COMP > m_fluidPhaseCompFrac;
-  arrayView4d< real64 const, constitutive::multifluid::USD_PHASE_COMP > m_fluidPhaseCompFrac_n;
-  arrayView5d< real64 const, constitutive::multifluid::USD_PHASE_COMP_DC > m_dFluidPhaseCompFrac;
+  multifluid::ArrayView< real64 const, 4 > m_fluidPhaseCompFrac;
+  multifluid::ArrayView< real64 const, 4 > m_fluidPhaseCompFrac_n;
+  multifluid::ArrayView< real64 const, 5 > m_dFluidPhaseCompFrac;
 
   /// Views on phase mass densities
-  arrayView3d< real64 const, constitutive::multifluid::USD_PHASE > m_fluidPhaseMassDensity;
-  arrayView4d< real64 const, constitutive::multifluid::USD_PHASE_DC > m_dFluidPhaseMassDensity;
+  multifluid::ArrayView< real64 const, 3 > m_fluidPhaseMassDensity;
+  multifluid::ArrayView< real64 const, 4 > m_dFluidPhaseMassDensity;
 
   /// Views on phase volume fraction (saturation)
   arrayView2d< real64 const, compflow::USD_PHASE > const m_fluidPhaseVolFrac;
@@ -445,7 +448,7 @@ protected:
   arrayView2d< real64 const > const m_rockDensity;
 
   // the fluid density
-  arrayView3d< real64 const, constitutive::multifluid::USD_PHASE > const m_fluidPhaseDensity;
+  multifluid::ArrayView< real64 const, 3 > const m_fluidPhaseDensity;
 
   // the porosity
   arrayView2d< real64 const > const m_porosity;

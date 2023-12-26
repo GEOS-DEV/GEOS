@@ -287,8 +287,8 @@ protected:
 
   /// Views on flow properties at the previous converged time step
   ElementViewConst< arrayView1d< real64 const > > const m_pres_n;
-  ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const m_phaseDens_n;
-  ElementViewConst< arrayView4d< real64 const, multifluid::USD_PHASE_COMP > > const m_phaseCompFrac_n;
+  ElementViewConst< multifluid::ArrayView< real64 const, 3 > > const m_phaseDens_n;
+  ElementViewConst< multifluid::ArrayView< real64 const, 4 > > const m_phaseCompFrac_n;
   ElementViewConst< arrayView3d< real64 const, relperm::USD_RELPERM > > const m_phaseRelPerm_n;
 
   /// Views on the macroelement indices and stab constant

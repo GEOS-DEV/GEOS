@@ -20,6 +20,7 @@
 #define GEOS_CONSTITUTIVE_FLUID_MULTIFLUIDFIELDS_HPP_
 
 #include "constitutive/fluid/multifluid/Layouts.hpp"
+#include "constitutive/fluid/multifluid/MultiFluidUtils.hpp"
 #include "mesh/MeshFields.hpp"
 
 namespace geos
@@ -31,16 +32,14 @@ namespace fields
 namespace multifluid
 {
 
-using array2dLayoutFluid = array2d< real64, constitutive::multifluid::LAYOUT_FLUID >;
-using array3dLayoutFluid_dC = array3d< real64, constitutive::multifluid::LAYOUT_FLUID_DC >;
-using array3dLayoutPhase = array3d< real64, constitutive::multifluid::LAYOUT_PHASE >;
-using array4dLayoutPhase_dC = array4d< real64, constitutive::multifluid::LAYOUT_PHASE_DC >;
-using array4dLayoutPhaseComp = array4d< real64, constitutive::multifluid::LAYOUT_PHASE_COMP >;
-using array5dLayoutPhaseComp_dC = array5d< real64, constitutive::multifluid::LAYOUT_PHASE_COMP_DC >;
+using array2dLayout = Array< real64, 2 >;
+using array3dLayout = Array< real64, 3 >;
+using array4dLayout = Array< real64, 4 >;
+using array5dLayout = Array< real64, 5 >;
 
 DECLARE_FIELD( phaseFraction,
                "phaseFraction",
-               array3dLayoutPhase,
+               array3dLayout,
                0,
                LEVEL_0,
                WRITE_AND_READ,
@@ -48,7 +47,7 @@ DECLARE_FIELD( phaseFraction,
 
 DECLARE_FIELD( dPhaseFraction,
                "dPhaseFraction",
-               array4dLayoutPhase_dC,
+               array4dLayout,
                0,
                NOPLOT,
                NO_WRITE,
@@ -56,7 +55,7 @@ DECLARE_FIELD( dPhaseFraction,
 
 DECLARE_FIELD( phaseDensity,
                "phaseDensity",
-               array3dLayoutPhase,
+               array3dLayout,
                0,
                LEVEL_0,
                WRITE_AND_READ,
@@ -64,7 +63,7 @@ DECLARE_FIELD( phaseDensity,
 
 DECLARE_FIELD( phaseDensity_n,
                "phaseDensity_n",
-               array3dLayoutPhase,
+               array3dLayout,
                0,
                NOPLOT,
                WRITE_AND_READ,
@@ -72,7 +71,7 @@ DECLARE_FIELD( phaseDensity_n,
 
 DECLARE_FIELD( dPhaseDensity,
                "dPhaseDensity",
-               array4dLayoutPhase_dC,
+               array4dLayout,
                0,
                NOPLOT,
                NO_WRITE,
@@ -80,7 +79,7 @@ DECLARE_FIELD( dPhaseDensity,
 
 DECLARE_FIELD( phaseMassDensity,
                "phaseMassDensity",
-               array3dLayoutPhase,
+               array3dLayout,
                0,
                LEVEL_0,
                WRITE_AND_READ,
@@ -88,7 +87,7 @@ DECLARE_FIELD( phaseMassDensity,
 
 DECLARE_FIELD( dPhaseMassDensity,
                "dPhaseMassDensity",
-               array4dLayoutPhase_dC,
+               array4dLayout,
                0,
                NOPLOT,
                NO_WRITE,
@@ -96,7 +95,7 @@ DECLARE_FIELD( dPhaseMassDensity,
 
 DECLARE_FIELD( phaseViscosity,
                "phaseViscosity",
-               array3dLayoutPhase,
+               array3dLayout,
                0,
                LEVEL_0,
                WRITE_AND_READ,
@@ -104,7 +103,7 @@ DECLARE_FIELD( phaseViscosity,
 
 DECLARE_FIELD( dPhaseViscosity,
                "dPhaseViscosity",
-               array4dLayoutPhase_dC,
+               array4dLayout,
                0,
                NOPLOT,
                NO_WRITE,
@@ -112,7 +111,7 @@ DECLARE_FIELD( dPhaseViscosity,
 
 DECLARE_FIELD( phaseEnthalpy,
                "phaseEnthalpy",
-               array3dLayoutPhase,
+               array3dLayout,
                0,
                NOPLOT, // default behavior overridden by thermal models
                NO_WRITE,
@@ -120,7 +119,7 @@ DECLARE_FIELD( phaseEnthalpy,
 
 DECLARE_FIELD( phaseEnthalpy_n,
                "phaseEnthalpy_n",
-               array3dLayoutPhase,
+               array3dLayout,
                0,
                NOPLOT,
                WRITE_AND_READ,
@@ -128,7 +127,7 @@ DECLARE_FIELD( phaseEnthalpy_n,
 
 DECLARE_FIELD( dPhaseEnthalpy,
                "dPhaseEnthalpy",
-               array4dLayoutPhase_dC,
+               array4dLayout,
                0,
                NOPLOT,
                NO_WRITE,
@@ -136,7 +135,7 @@ DECLARE_FIELD( dPhaseEnthalpy,
 
 DECLARE_FIELD( phaseInternalEnergy,
                "phaseInternalEnergy",
-               array3dLayoutPhase,
+               array3dLayout,
                0,
                NOPLOT, // default behavior overridden by thermal models
                NO_WRITE,
@@ -144,7 +143,7 @@ DECLARE_FIELD( phaseInternalEnergy,
 
 DECLARE_FIELD( phaseInternalEnergy_n,
                "phaseInternalEnergy_n",
-               array3dLayoutPhase,
+               array3dLayout,
                0,
                NOPLOT,
                WRITE_AND_READ,
@@ -152,7 +151,7 @@ DECLARE_FIELD( phaseInternalEnergy_n,
 
 DECLARE_FIELD( dPhaseInternalEnergy,
                "dPhaseInternalEnergy",
-               array4dLayoutPhase_dC,
+               array4dLayout,
                0,
                NOPLOT,
                NO_WRITE,
@@ -160,7 +159,7 @@ DECLARE_FIELD( dPhaseInternalEnergy,
 
 DECLARE_FIELD( phaseCompFraction,
                "phaseCompFraction",
-               array4dLayoutPhaseComp,
+               array4dLayout,
                0,
                LEVEL_0,
                WRITE_AND_READ,
@@ -168,7 +167,7 @@ DECLARE_FIELD( phaseCompFraction,
 
 DECLARE_FIELD( phaseCompFraction_n,
                "phaseCompFraction_n",
-               array4dLayoutPhaseComp,
+               array4dLayout,
                0,
                NOPLOT,
                WRITE_AND_READ,
@@ -176,7 +175,7 @@ DECLARE_FIELD( phaseCompFraction_n,
 
 DECLARE_FIELD( dPhaseCompFraction,
                "dPhaseCompFraction",
-               array5dLayoutPhaseComp_dC,
+               array5dLayout,
                0,
                NOPLOT,
                NO_WRITE,
@@ -184,7 +183,7 @@ DECLARE_FIELD( dPhaseCompFraction,
 
 DECLARE_FIELD( totalDensity,
                "totalDensity",
-               array2dLayoutFluid,
+               array2dLayout,
                0,
                LEVEL_0,
                WRITE_AND_READ,
@@ -192,7 +191,7 @@ DECLARE_FIELD( totalDensity,
 
 DECLARE_FIELD( totalDensity_n,
                "totalDensity_n",
-               array2dLayoutFluid,
+               array2dLayout,
                0,
                NOPLOT,
                WRITE_AND_READ,
@@ -200,7 +199,7 @@ DECLARE_FIELD( totalDensity_n,
 
 DECLARE_FIELD( dTotalDensity,
                "dTotalDensity",
-               array3dLayoutFluid_dC,
+               array3dLayout,
                0,
                NOPLOT,
                NO_WRITE,

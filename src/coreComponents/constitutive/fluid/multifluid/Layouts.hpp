@@ -22,7 +22,6 @@
 #include "common/DataTypes.hpp"
 #include "common/GeosxConfig.hpp"
 
-#include "LvArray/src/typeManipulation.hpp"
 #include "RAJA/RAJA.hpp"
 
 namespace geos
@@ -32,7 +31,7 @@ namespace constitutive
 namespace multifluid
 {
 
-/// indices of pressure, temperature, and composition derivatives
+/// Indices of pressure, temperature, and composition derivatives
 struct DerivativeOffset
 {
   /// index of derivative wrt pressure
@@ -43,56 +42,85 @@ struct DerivativeOffset
   static integer constexpr dC = 2;
 };
 
+// Data layout depends on the number of dimensions of the data
+template< int NDIM >
+struct Layout
+{
+  using PERM = RAJA::PERM_I;
+};
+
 #if defined( GEOS_USE_DEVICE )
 
-/// Constitutive model phase property array layout
-using LAYOUT_PHASE = RAJA::PERM_JKI;
-/// Constitutive model phase property compositional derivative array layout
-using LAYOUT_PHASE_DC = RAJA::PERM_JKLI;
-
-/// Constitutive model phase composition array layout
-using LAYOUT_PHASE_COMP = RAJA::PERM_JKLI;
-/// Constitutive model phase composition compositional derivative array layout
-using LAYOUT_PHASE_COMP_DC = RAJA::PERM_JKLMI;
-
-/// Constitutive model fluid property array layout
-using LAYOUT_FLUID = RAJA::PERM_JI;
-/// Constitutive model fluid property compositional derivative array layout
-using LAYOUT_FLUID_DC = RAJA::PERM_JKI;
+template<> struct Layout< 2 >
+{
+  using PERM = RAJA::PERM_JI;
+};
+template<> struct Layout< 3 >
+{
+  using PERM = RAJA::PERM_JKI;
+};
+template<> struct Layout< 4 >
+{
+  using PERM = RAJA::PERM_JKLI;
+};
+template<> struct Layout< 5 >
+{
+  using PERM = RAJA::PERM_JKLMI;
+};
 
 #else
 
-/// Constitutive model phase property array layout
-using LAYOUT_PHASE = RAJA::PERM_IJK;
-/// Constitutive model phase property compositional derivative array layout
-using LAYOUT_PHASE_DC = RAJA::PERM_IJKL;
-
-/// Constitutive model phase composition array layout
-using LAYOUT_PHASE_COMP = RAJA::PERM_IJKL;
-/// Constitutive model phase composition compositional derivative array layout
-using LAYOUT_PHASE_COMP_DC = RAJA::PERM_IJKLM;
-
-/// Constitutive model fluid property array layout
-using LAYOUT_FLUID = RAJA::PERM_IJ;
-/// Constitutive model fluid property compositional derivative array layout
-using LAYOUT_FLUID_DC = RAJA::PERM_IJK;
+template<> struct Layout< 2 >
+{
+  using PERM = RAJA::PERM_IJ;
+};
+template<> struct Layout< 3 >
+{
+  using PERM = RAJA::PERM_IJK;
+};
+template<> struct Layout< 4 >
+{
+  using PERM = RAJA::PERM_IJKL;
+};
+template<> struct Layout< 5 >
+{
+  using PERM = RAJA::PERM_IJKLM;
+};
 
 #endif
 
-/// Constitutive model phase property unit stride dimension
-static constexpr int USD_PHASE = LvArray::typeManipulation::getStrideOneDimension( LAYOUT_PHASE{} );
-/// Constitutive model phase property compositional derivative unit stride dimension
-static constexpr int USD_PHASE_DC = LvArray::typeManipulation::getStrideOneDimension( LAYOUT_PHASE_DC{} );
+namespace internal
+{
 
-/// Constitutive model phase composition unit stride dimension
-static constexpr int USD_PHASE_COMP = LvArray::typeManipulation::getStrideOneDimension( LAYOUT_PHASE_COMP{} );
-/// Constitutive model phase composition compositional derivative unit stride dimension
-static constexpr int USD_PHASE_COMP_DC = LvArray::typeManipulation::getStrideOneDimension( LAYOUT_PHASE_COMP_DC{} );
+template< typename T, int DIM, int USD >
+struct ArraySliceOrRefHelper
+{
+  using type = geos::ArraySlice< T, DIM, USD >;
+};
 
-/// Constitutive model fluid property unit stride dimension
-static constexpr int USD_FLUID = LvArray::typeManipulation::getStrideOneDimension( LAYOUT_FLUID{} );
-/// Constitutive model fluid property compositional derivative unit stride dimension
-static constexpr int USD_FLUID_DC = LvArray::typeManipulation::getStrideOneDimension( LAYOUT_FLUID_DC{} );
+// an array slice of DIM=0 decays to a reference to scalar
+template< typename T, int USD >
+struct ArraySliceOrRefHelper< T, 0, USD >
+{
+  using type = T &;
+};
+
+template< typename T, int DIM, int USD=DIM-1 >
+using ArraySliceOrRef = typename ArraySliceOrRefHelper< T, DIM, USD >::type;
+
+} // namespace internal
+
+template< typename T, int NDIM >
+using Array = geos::Array< T, NDIM, typename Layout< NDIM >::PERM >;
+
+template< typename T, int NDIM, localIndex CAPACITY >
+using StackArray = geos::StackArray< T, NDIM, CAPACITY, typename Layout< NDIM >::PERM >;
+
+template< typename T, int NDIM >
+using ArrayView = geos::ArrayView< T, NDIM, getUSD< typename Layout< NDIM >::PERM > >;
+
+template< typename T, int NDIM >
+using ArraySlice = internal::ArraySliceOrRef< T, NDIM, getUSD< typename Layout< NDIM >::PERM > >;
 
 } // namespace multifluid
 } // namespace constitutive

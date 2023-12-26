@@ -29,6 +29,8 @@
 namespace geos
 {
 
+using namespace constitutive;
+
 namespace isothermalCompositionalMultiphaseFVMKernelUtilities
 {
 
@@ -38,7 +40,7 @@ static constexpr real64 epsC1PPU = 5000;
 template< typename VIEWTYPE >
 using ElementViewConst = ElementRegionManager::ElementViewConst< VIEWTYPE >;
 
-using Deriv = constitutive::multifluid::DerivativeOffset;
+using Deriv = multifluid::DerivativeOffset;
 
 struct PotGrad
 {
@@ -57,8 +59,8 @@ struct PotGrad
             ElementViewConst< arrayView1d< real64 const > > const & gravCoef,
             ElementViewConst< arrayView3d< real64 const, compflow::USD_PHASE_DC > > const & dPhaseVolFrac,
             ElementViewConst< arrayView3d< real64 const, compflow::USD_COMP_DC > > const & dCompFrac_dCompDens,
-            ElementViewConst< arrayView3d< real64 const, constitutive::multifluid::USD_PHASE > > const & phaseMassDens,
-            ElementViewConst< arrayView4d< real64 const, constitutive::multifluid::USD_PHASE_DC > > const & dPhaseMassDens,
+            ElementViewConst< multifluid::ArrayView< real64 const, 3 > > const & phaseMassDens,
+            ElementViewConst< multifluid::ArrayView< real64 const, 4 > > const & dPhaseMassDens,
             ElementViewConst< arrayView3d< real64 const, constitutive::cappres::USD_CAPPRES > > const & phaseCapPressure,
             ElementViewConst< arrayView4d< real64 const, constitutive::cappres::USD_CAPPRES_DS > > const & dPhaseCapPressure_dPhaseVolFrac,
             real64 & potGrad,
@@ -229,8 +231,8 @@ struct PPUPhaseFlux
            ElementViewConst< arrayView3d< real64 const, compflow::USD_PHASE_DC > > const & dPhaseMob,
            ElementViewConst< arrayView3d< real64 const, compflow::USD_PHASE_DC > > const & dPhaseVolFrac,
            ElementViewConst< arrayView3d< real64 const, compflow::USD_COMP_DC > > const & dCompFrac_dCompDens,
-           ElementViewConst< arrayView3d< real64 const, constitutive::multifluid::USD_PHASE > > const & phaseMassDens,
-           ElementViewConst< arrayView4d< real64 const, constitutive::multifluid::USD_PHASE_DC > > const & dPhaseMassDens,
+           ElementViewConst< multifluid::ArrayView< real64 const, 3 > > const & phaseMassDens,
+           ElementViewConst< multifluid::ArrayView< real64 const, 4 > > const & dPhaseMassDens,
            ElementViewConst< arrayView3d< real64 const, constitutive::cappres::USD_CAPPRES > > const & phaseCapPressure,
            ElementViewConst< arrayView4d< real64 const, constitutive::cappres::USD_CAPPRES_DS > > const & dPhaseCapPressure_dPhaseVolFrac,
            localIndex & k_up,
@@ -334,8 +336,8 @@ struct C1PPUPhaseFlux
            ElementViewConst< arrayView3d< real64 const, compflow::USD_PHASE_DC > > const & dPhaseMob,
            ElementViewConst< arrayView3d< real64 const, compflow::USD_PHASE_DC > > const & dPhaseVolFrac,
            ElementViewConst< arrayView3d< real64 const, compflow::USD_COMP_DC > > const & dCompFrac_dCompDens,
-           ElementViewConst< arrayView3d< real64 const, constitutive::multifluid::USD_PHASE > > const & phaseMassDens,
-           ElementViewConst< arrayView4d< real64 const, constitutive::multifluid::USD_PHASE_DC > > const & dPhaseMassDens,
+           ElementViewConst< multifluid::ArrayView< real64 const, 3 > > const & phaseMassDens,
+           ElementViewConst< multifluid::ArrayView< real64 const, 4 > > const & dPhaseMassDens,
            ElementViewConst< arrayView3d< real64 const, constitutive::cappres::USD_CAPPRES > > const & phaseCapPressure,
            ElementViewConst< arrayView4d< real64 const, constitutive::cappres::USD_CAPPRES_DS > > const & dPhaseCapPressure_dPhaseVolFrac,
            localIndex & k_up,
@@ -484,8 +486,8 @@ struct PhaseComponentFlux
            localIndex const ( &seri )[numFluxSupportPoints],
            localIndex const ( &sesri )[numFluxSupportPoints],
            localIndex const ( &sei )[numFluxSupportPoints],
-           ElementViewConst< arrayView4d< real64 const, constitutive::multifluid::USD_PHASE_COMP > > const & phaseCompFrac,
-           ElementViewConst< arrayView5d< real64 const, constitutive::multifluid::USD_PHASE_COMP_DC > > const & dPhaseCompFrac,
+           ElementViewConst< multifluid::ArrayView< real64 const, 4 > > const & phaseCompFrac,
+           ElementViewConst< multifluid::ArrayView< real64 const, 5 > > const & dPhaseCompFrac,
            ElementViewConst< arrayView3d< real64 const, compflow::USD_COMP_DC > > const & dCompFrac_dCompDens,
            real64 const & phaseFlux,
            real64 const ( &dPhaseFlux_dP )[numFluxSupportPoints],
@@ -501,9 +503,9 @@ struct PhaseComponentFlux
     real64 dProp_dC[numComp]{};
 
     // slice some constitutive arrays to avoid too much indexing in component loop
-    arraySlice1d< real64 const, constitutive::multifluid::USD_PHASE_COMP-3 > phaseCompFracSub =
+    multifluid::ArraySlice< real64 const, 1 > phaseCompFracSub =
       phaseCompFrac[er_up][esr_up][ei_up][0][ip];
-    arraySlice2d< real64 const, constitutive::multifluid::USD_PHASE_COMP_DC-3 > dPhaseCompFracSub =
+    multifluid::ArraySlice< real64 const, 2 > dPhaseCompFracSub =
       dPhaseCompFrac[er_up][esr_up][ei_up][0][ip];
 
     // compute component fluxes and derivatives using upstream cell composition
