@@ -20,7 +20,7 @@
 #define GEOS_CONSTITUTIVE_DIFFUSION_DIFFUSIONSELECTOR_HPP_
 
 #include "constitutive/ConstitutivePassThruHandler.hpp"
-#include "constitutive/diffusion/ConstantPhaseBasedDiffusion.hpp"
+#include "constitutive/diffusion/ConstantDiffusion.hpp"
 
 namespace geos
 {
@@ -32,14 +32,14 @@ template< typename LAMBDA >
 void constitutiveUpdatePassThru( DiffusionBase const & diffusion,
                                  LAMBDA && lambda )
 {
-  ConstitutivePassThruHandler< ConstantPhaseBasedDiffusion >::execute( diffusion, std::forward< LAMBDA >( lambda ) );
+  ConstitutivePassThruHandler< ConstantDiffusion >::execute( diffusion, std::forward< LAMBDA >( lambda ) );
 }
 
 template< typename LAMBDA >
 void constitutiveUpdatePassThru( DiffusionBase & diffusion,
                                  LAMBDA && lambda )
 {
-  ConstitutivePassThruHandler< ConstantPhaseBasedDiffusion >::execute( diffusion, std::forward< LAMBDA >( lambda ) );
+  ConstitutivePassThruHandler< ConstantDiffusion >::execute( diffusion, std::forward< LAMBDA >( lambda ) );
 }
 
 } // namespace constitutive

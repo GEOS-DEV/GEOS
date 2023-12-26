@@ -19,6 +19,7 @@
 
 #include "constitutive/fluid/multifluid/MultiFluidFields.hpp"
 #include "constitutive/fluid/multifluid/CO2Brine/functions/PVTFunctionHelpers.hpp"
+#include "common/Units.hpp"
 
 namespace geos
 {
@@ -192,7 +193,30 @@ void ReactiveBrineFluid< PHASE > ::createPVTModels()
                  InputError );
 
   // then, we are ready to instantiate the phase models
-  m_phase = std::make_unique< PHASE >( getName() + "_phaseModel1", phase1InputParams, m_componentNames, m_componentMolarWeight );
+  m_phase = std::make_unique< PHASE >( getName() + "_phaseModel1", phase1InputParams, m_componentNames, m_componentMolarWeight,
+                                       getLogLevel() > 0 && logger::internal::rank==0 );
+}
+
+template< typename PHASE >
+void ReactiveBrineFluid< PHASE >::checkTablesParameters( real64 const pressure,
+                                                         real64 const temperature ) const
+{
+  if( !m_checkPVTTablesRanges )
+  {
+    return;
+  }
+
+  real64 const temperatureInCelsius = units::convertKToC( temperature );
+  try
+  {
+    m_phase->density.checkTablesParameters( pressure, temperatureInCelsius );
+    m_phase->viscosity.checkTablesParameters( pressure, temperatureInCelsius );
+    m_phase->enthalpy.checkTablesParameters( pressure, temperatureInCelsius );
+  } catch( SimulationError const & ex )
+  {
+    string const errorMsg = GEOS_FMT( "{}: Table input error.\n", getDataContext() );
+    throw SimulationError( ex, errorMsg );
+  }
 }
 
 template< typename PHASE >

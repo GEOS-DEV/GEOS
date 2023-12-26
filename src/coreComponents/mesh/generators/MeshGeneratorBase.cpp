@@ -14,6 +14,7 @@
 
 #include "MeshGeneratorBase.hpp"
 #include "mesh/generators/CellBlockManager.hpp"
+#include "mesh/generators/ParticleBlockManager.hpp"
 
 namespace geos
 {
@@ -47,15 +48,26 @@ MeshGeneratorBase::CatalogInterface::CatalogType & MeshGeneratorBase::getCatalog
   return catalog;
 }
 
-CellBlockManagerABC & MeshGeneratorBase::generateMesh( Group & parent, array1d< int > const & partition )
+void MeshGeneratorBase::generateMesh( Group & parent, SpatialPartition & partition )
 {
-  CellBlockManager & cellBlockManager = parent.registerGroup< CellBlockManager >( keys::cellManager );
+  MeshBody & meshBody = dynamic_cast< MeshBody & >( parent );
+  if( meshBody.hasParticles() )
+  {
+    ParticleBlockManager & particleBlockManager = parent.registerGroup< ParticleBlockManager >( keys::particleManager );
 
-  fillCellBlockManager( cellBlockManager, partition );
+    MeshLevel & meshLevel0 = meshBody.getBaseDiscretization();
+    ParticleManager & particleManager = meshLevel0.getParticleManager();
 
-  this->attachWellInfo( cellBlockManager );
+    fillParticleBlockManager( particleBlockManager, particleManager, partition );
+  }
+  else
+  {
+    CellBlockManager & cellBlockManager = parent.registerGroup< CellBlockManager >( keys::cellManager );
 
-  return cellBlockManager;
+    fillCellBlockManager( cellBlockManager, partition );
+
+    this->attachWellInfo( cellBlockManager );
+  }
 }
 
 void MeshGeneratorBase::attachWellInfo( CellBlockManager & cellBlockManager )
@@ -75,6 +87,7 @@ void MeshGeneratorBase::attachWellInfo( CellBlockManager & cellBlockManager )
     lb.setNumPerforations( wellGen.numPerforations() );
     lb.setPerfCoords( wellGen.getPerfCoords() );
     lb.setPerfTransmissibility( wellGen.getPerfTransmissibility() );
+    lb.setPerfSkinFactor( wellGen.getPerfSkinFactor() );
     lb.setPerfElemIndex( wellGen.getPerfElemIndex() );
     lb.setWellControlsName( wellGen.getWellControlsName() );
     lb.setWellGeneratorName( wellGen.getName() );

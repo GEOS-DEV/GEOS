@@ -51,6 +51,7 @@ public:
 
     string const key = SOLVER::coupledSolverAttributePrefix() + "SolverName";
     registerWrapper( key, &m_solverName ).
+      setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
       setInputFlag( dataRepository::InputFlags::REQUIRED ).
       setDescription( "Name of the " + SOLVER::coupledSolverAttributePrefix() + " solver" );
   }
@@ -80,7 +81,8 @@ protected:
 
     m_solver = physicsSolverManager.getGroupPointer< SOLVER >( m_solverName );
     GEOS_THROW_IF( m_solver == nullptr,
-                   GEOS_FMT( "Could not find solver '{}' of type {}",
+                   GEOS_FMT( "{}: Could not find solver '{}' of type {}",
+                             getDataContext(),
                              m_solverName, LvArray::system::demangleType< SOLVER >() ),
                    InputError );
   }

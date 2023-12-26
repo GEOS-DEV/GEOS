@@ -46,14 +46,6 @@ public:
     m_CO2Index( CO2Index )
   {}
 
-  template< int USD1 >
-  GEOS_HOST_DEVICE
-  void compute( real64 const & pressure,
-                real64 const & temperature,
-                arraySlice1d< real64 const, USD1 > const & phaseComposition,
-                real64 & value,
-                bool useMass ) const;
-
   template< int USD1, int USD2, int USD3 >
   GEOS_HOST_DEVICE
   void compute( real64 const & pressure,
@@ -86,11 +78,17 @@ public:
   CO2Enthalpy( string const & name,
                string_array const & inputParams,
                string_array const & componentNames,
-               array1d< real64 > const & componentMolarWeight );
+               array1d< real64 > const & componentMolarWeight,
+               bool const printTable );
 
   static string catalogName() { return "CO2Enthalpy"; }
 
   virtual string getCatalogName() const final { return catalogName(); }
+
+  /**
+   * @copydoc PVTFunctionBase::checkTablesParameters( real64 pressure, real64 temperature )
+   */
+  void checkTablesParameters( real64 pressure, real64 temperature ) const override final;
 
   virtual PVTFunctionType functionType() const override
   {
@@ -120,27 +118,6 @@ private:
   integer m_CO2Index;
 };
 
-template< int USD1 >
-GEOS_HOST_DEVICE
-void CO2EnthalpyUpdate::compute( real64 const & pressure,
-                                 real64 const & temperature,
-                                 arraySlice1d< real64 const, USD1 > const & phaseComposition,
-                                 real64 & value,
-                                 bool useMass ) const
-{
-  GEOS_UNUSED_VAR( phaseComposition );
-  real64 const input[2] = { pressure, temperature };
-
-  real64 const referenceEnthalpy = 5.0584e5;
-
-  value = m_CO2EnthalpyTable.compute( input ) + referenceEnthalpy;
-
-  if( !useMass )
-  {
-    value /= m_componentMolarWeight[m_CO2Index];
-  }
-}
-
 template< int USD1, int USD2, int USD3 >
 GEOS_HOST_DEVICE
 void CO2EnthalpyUpdate::compute( real64 const & pressure,
@@ -158,9 +135,7 @@ void CO2EnthalpyUpdate::compute( real64 const & pressure,
   real64 const input[2] = { pressure, temperature };
   real64 CO2EnthalpyDeriv[2]{};
 
-  real64 const referenceEnthalpy = 5.0584e5;
-
-  value = m_CO2EnthalpyTable.compute( input, CO2EnthalpyDeriv ) + referenceEnthalpy;
+  value = m_CO2EnthalpyTable.compute( input, CO2EnthalpyDeriv );
 
   LvArray::forValuesInSlice( dValue, []( real64 & val ){ val = 0.0; } );
   dValue[Deriv::dP] = CO2EnthalpyDeriv[0];

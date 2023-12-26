@@ -50,14 +50,6 @@ public:
     m_waterIndex( waterIndex )
   {}
 
-  template< int USD1 >
-  GEOS_HOST_DEVICE
-  void compute( real64 const & pressure,
-                real64 const & temperature,
-                arraySlice1d< real64 const, USD1 > const & phaseComposition,
-                real64 & value,
-                bool useMass ) const;
-
   template< int USD1, int USD2, int USD3 >
   GEOS_HOST_DEVICE
   void compute( real64 const & pressure,
@@ -98,11 +90,17 @@ public:
   BrineEnthalpy( string const & name,
                  string_array const & inputParams,
                  string_array const & componentNames,
-                 array1d< real64 > const & componentMolarWeight );
+                 array1d< real64 > const & componentMolarWeight,
+                 bool const printTable );
 
   static string catalogName() { return "BrineEnthalpy"; }
 
   virtual string getCatalogName() const final { return catalogName(); }
+
+  /**
+   * @copydoc PVTFunctionBase::checkTablesParameters( real64 pressure, real64 temperature )
+   */
+  void checkTablesParameters( real64 pressure, real64 temperature ) const override final;
 
   virtual PVTFunctionType functionType() const override
   {
@@ -135,38 +133,6 @@ private:
 
 };
 
-template< int USD1 >
-GEOS_HOST_DEVICE
-void BrineEnthalpyUpdate::compute( real64 const & pressure,
-                                   real64 const & temperature,
-                                   arraySlice1d< real64 const, USD1 > const & phaseComposition,
-                                   real64 & value,
-                                   bool useMass ) const
-{
-  real64 const input[2] = { pressure, temperature };
-
-  real64 const referenceEnthalpy = 5.0584e5;
-  real64 const brineEnthalpy = m_brineEnthalpyTable.compute( &temperature );
-  real64 const CO2Enthalpy = m_CO2EnthalpyTable.compute( input ) + referenceEnthalpy;
-
-
-  //assume there are only CO2 and brine here.
-
-  real64 const C = phaseComposition[m_waterIndex];
-
-  real64 const waterMW = m_componentMolarWeight[m_waterIndex];
-  real64 const CO2MW = m_componentMolarWeight[m_CO2Index];
-
-  if( useMass )
-  {
-    value = (1.0 - C ) * CO2Enthalpy + C * brineEnthalpy;
-  }
-  else
-  {
-    value = (1.0 - C ) * CO2Enthalpy / CO2MW + C * brineEnthalpy / waterMW;
-  }
-}
-
 template< int USD1, int USD2, int USD3 >
 GEOS_HOST_DEVICE
 void BrineEnthalpyUpdate::compute( real64 const & pressure,
@@ -183,9 +149,9 @@ void BrineEnthalpyUpdate::compute( real64 const & pressure,
   real64 brineEnthalpy_dTemperature = 0.0;
   real64 dvalue_dC = 0.0;
   real64 CO2EnthalpyDeriv[2]{};
-  real64 const referenceEnthalpy = 5.0584e5;
+
   real64 const brineEnthalpy = m_brineEnthalpyTable.compute( &temperature, &brineEnthalpy_dTemperature );
-  real64 const CO2Enthalpy = m_CO2EnthalpyTable.compute( input, CO2EnthalpyDeriv ) + referenceEnthalpy;
+  real64 const CO2Enthalpy = m_CO2EnthalpyTable.compute( input, CO2EnthalpyDeriv );
 
   //assume there are only CO2 and brine here.
 
@@ -199,9 +165,11 @@ void BrineEnthalpyUpdate::compute( real64 const & pressure,
     dvalue_dC = brineEnthalpy - CO2Enthalpy;
     dValue[Deriv::dP] = (1.0 - C ) * CO2EnthalpyDeriv[0]
                         + dvalue_dC * dPhaseComposition[m_waterIndex][Deriv::dP];
-    dValue[Deriv::dT] = (1.0 - C ) * CO2EnthalpyDeriv[1]
-                        + C * brineEnthalpy_dTemperature
-                        + dvalue_dC * dPhaseComposition[m_waterIndex][Deriv::dT];
+    dValue[Deriv::dT] =
+      LvArray::math::max( 0.0,
+                          (1.0 - C ) * CO2EnthalpyDeriv[1]
+                          + C * brineEnthalpy_dTemperature
+                          + dvalue_dC * dPhaseComposition[m_waterIndex][Deriv::dT] );
   }
   else
   {
@@ -213,9 +181,11 @@ void BrineEnthalpyUpdate::compute( real64 const & pressure,
     dvalue_dC = brineEnthalpy * waterMWInv - CO2Enthalpy * CO2MWInv;
     dValue[Deriv::dP] = (1.0 - C ) * CO2EnthalpyDeriv[0] * CO2MWInv
                         + dvalue_dC * dPhaseComposition[m_waterIndex][Deriv::dP];
-    dValue[Deriv::dT] = (1.0 - C ) * CO2EnthalpyDeriv[1] * CO2MWInv
-                        + C * brineEnthalpy_dTemperature * waterMWInv
-                        + dvalue_dC * dPhaseComposition[m_waterIndex][Deriv::dT];
+    dValue[Deriv::dT] =
+      LvArray::math::max( 0.0,
+                          (1.0 - C ) * CO2EnthalpyDeriv[1] * CO2MWInv
+                          + C * brineEnthalpy_dTemperature * waterMWInv
+                          + dvalue_dC * dPhaseComposition[m_waterIndex][Deriv::dT] );
   }
 
   dValue[Deriv::dC+m_CO2Index]   = dvalue_dC * dPhaseComposition[m_waterIndex][Deriv::dC+m_CO2Index];
