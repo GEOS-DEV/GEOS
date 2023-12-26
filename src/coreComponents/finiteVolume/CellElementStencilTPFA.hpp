@@ -117,7 +117,7 @@ public:
    * @brief Compute approximate cell-centered velocity field
    * @param[in] iconn connection index
    * @param[in] ip phase index
-   * @param[in] globalCellToFace pair of globalCellId ordered distance of connection to neighboring cells
+   * @param[in] cellCartDim pair of globalCellId ordered distance of connection to neighboring cells
    * @param[in] phaseFlux flux for a specific phase ip and connection iconn
    * @param[out] phaseVelocity slice of the cell-wise global 3-vector to be
    */
@@ -125,7 +125,8 @@ public:
   void computeVelocity( localIndex iconn,
                         localIndex ip,
                         real64 const ( &phaseFlux ),
-                        arraySlice1d< real64 const > const (&globalCellToFace)[2],
+                        arraySlice1d< real64 const > const (&cellCartDim)[2],
+                        localIndex const (&ghostRank)[2],
                         ElementRegionManager::ElementView< arrayView3d< real64 > > const & phaseVelocity ) const;
 
   /**
@@ -402,7 +403,8 @@ CellElementStencilTPFAWrapper::
   computeVelocity( localIndex iconn,
                    localIndex ip,
                    const real64 (&phaseFlux),
-                   arraySlice1d< real64 const > const (&globalCellToFace)[2],
+                   arraySlice1d< real64 const > const (&cellCartDim)[2],
+                   localIndex const (&ghostRank)[2],
                    ElementRegionManager::ElementView< arrayView3d< real64 > > const & phaseVelocity ) const
 {
 
@@ -414,25 +416,29 @@ CellElementStencilTPFAWrapper::
     localIndex const esr = m_elementSubRegionIndices[iconn][i];
     localIndex const ei = m_elementIndices[iconn][i];
 
-    //halfWeight is d(Cell,Face)/area, we want area
-    real64 const halfWeight = m_weights[iconn][i];
-    real64 c2fVec[3];
-    LvArray::tensorOps::copy< 3 >( c2fVec, m_cellToFaceVec[iconn][i] );
-    real64 const c2fDistance = LvArray::tensorOps::normalize< 3 >( c2fVec );
-
-    surface[i] = c2fDistance*halfWeight;
-
-    real64 faceNormal[3], invDist[3], velocityNorm[3], phaseVel[3];
-    LvArray::tensorOps::copy< 3 >( faceNormal, m_faceNormal[iconn] );
-
-    LvArray::tensorOps::scale< 3 >( faceNormal, phaseFlux/surface[i] );
-    LvArray::tensorOps::hadamardProduct< 3 >( velocityNorm, faceNormal, m_cellToFaceVec[iconn][i] );
-    for( int dir = 0; dir < 3; ++dir )
+    if( ghostRank[i] < 0 )
     {
-      invDist[dir] = ( LvArray::math::abs( globalCellToFace[i][dir] ) > LvArray::NumericLimits< real64 >::epsilon ) ? 1./globalCellToFace[i][dir] : LvArray::NumericLimits< real64 >::epsilon;
+      //halfWeight is d(Cell,Face)/area, we want area
+      real64 const halfWeight = m_weights[iconn][i];
+      real64 c2fVec[3];
+      LvArray::tensorOps::copy< 3 >( c2fVec, m_cellToFaceVec[iconn][i] );
+      real64 const c2fDistance = LvArray::tensorOps::normalize< 3 >( c2fVec );
+
+      surface[i] = c2fDistance * halfWeight;
+
+      real64 faceNormal[3], invDist[3], velocityNorm[3], phaseVel[3];
+      LvArray::tensorOps::copy< 3 >( faceNormal, m_faceNormal[iconn] );
+
+      LvArray::tensorOps::scale< 3 >( faceNormal, phaseFlux / surface[i] );
+      LvArray::tensorOps::hadamardProduct< 3 >( velocityNorm, faceNormal, m_cellToFaceVec[iconn][i] );
+      for( int dir = 0; dir < 3; ++dir )
+      {
+        invDist[dir] = (LvArray::math::abs( cellCartDim[i][dir] ) > LvArray::NumericLimits< real64 >::epsilon) ?
+                       1. / cellCartDim[i][dir] : LvArray::NumericLimits< real64 >::epsilon;
+      }
+      LvArray::tensorOps::hadamardProduct< 3 >( phaseVel, velocityNorm, invDist );
+      LvArray::tensorOps::add< 3 >( phaseVelocity[er][esr][ei][ip], phaseVel );
     }
-    LvArray::tensorOps::hadamardProduct< 3 >( phaseVel, velocityNorm, invDist );
-    LvArray::tensorOps::add< 3 >( phaseVelocity[er][esr][ei][ip], phaseVel );
   }
 }
 

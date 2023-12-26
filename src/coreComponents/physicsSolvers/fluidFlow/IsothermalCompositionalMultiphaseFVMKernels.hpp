@@ -688,9 +688,10 @@ public:
               dPhaseFlux_dP,
               dPhaseFlux_dC );
           }
-
           if( m_kernelFlags.isSet( FaceBasedAssemblyKernelFlags::computeVelocity ) )
           {
+
+
             //TODO (jacques) move it to Dispersion kernel
 //              GEOS_LOG_RANK(GEOS_FMT("Distance : {} \n\t {}\n",
 //                                     m_globalCellDimAccessor[seri[0]][sesri[0]][sei[0]],
@@ -700,6 +701,8 @@ public:
                                               phaseFlux,
                                               {m_globalCellDimAccessor[seri[0]][sesri[0]][sei[0]],
                                                m_globalCellDimAccessor[seri[1]][sesri[1]][sei[1]] },
+                                              {m_ghostRank[seri[0]][sesri[0]][sei[0]],
+                                               m_ghostRank[seri[1]][sesri[1]][sei[1]] },
                                               m_phaseVelocity );
           }
 
@@ -913,9 +916,9 @@ public:
         elemManager.constructArrayViewAccessor< globalIndex, 1 >( dofKey );
       dofNumberAccessor.setName( solverName + "/accessors/" + dofKey );
 
-      ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > globalCellDimAccessor =
+      ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > cellCartDimAccessor =
         elemManager.constructArrayViewAccessor< real64, 2 >(
-          CellElementSubRegion::viewKeyStruct::globalCellDimString() );
+          CellElementSubRegion::viewKeyStruct::cellCartesianDimString() );
 
       BitFlags< FaceBasedAssemblyKernelFlags > kernelFlags;
       if( hasCapPressure )
@@ -934,7 +937,7 @@ public:
       typename kernelType::CapPressureAccessors capPressureAccessors( elemManager, solverName );
       typename kernelType::PermeabilityAccessors permeabilityAccessors( elemManager, solverName );
 
-      kernelType kernel( numPhases, rankOffset, stencilWrapper, dofNumberAccessor, globalCellDimAccessor,
+      kernelType kernel( numPhases, rankOffset, stencilWrapper, dofNumberAccessor, cellCartDimAccessor,
                          compFlowAccessors, multiFluidAccessors, capPressureAccessors,
                          permeabilityAccessors, dt, localMatrix, localRhs, kernelFlags );
       kernelType::template launch< POLICY >( stencilWrapper.size(), kernel );
@@ -1654,9 +1657,9 @@ public:
       if( useTotalMassEquation )
         kernelFlags.set( FaceBasedAssemblyKernelFlags::TotalMassEquation );
 
-      ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > globalCellDimAccessor =
+      ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > cellCartDimAccessor =
         elemManager.constructArrayViewAccessor< real64, 2 >(
-          CellElementSubRegion::viewKeyStruct::globalCellDimString() );
+          CellElementSubRegion::viewKeyStruct::cellCartesianDimString() );
 
 
       using kernelType = DiffusionDispersionFaceBasedAssemblyKernel< NUM_COMP, NUM_DOF, STENCILWRAPPER >;
@@ -1667,7 +1670,7 @@ public:
       typename kernelType::PorosityAccessors porosityAccessors( elemManager, solverName );
 
       kernelType kernel( numPhases, rankOffset, stencilWrapper,
-                         dofNumberAccessor, globalCellDimAccessor,
+                         dofNumberAccessor, cellCartDimAccessor,
                          compFlowAccessors, multiFluidAccessors,
                          diffusionAccessors, dispersionAccessors,
                          porosityAccessors, dt, localMatrix, localRhs, kernelFlags );
@@ -2182,9 +2185,9 @@ public:
           kernelFlags.set( FaceBasedAssemblyKernelFlags::TotalMassEquation );
         //here hasCapPressure and hasVelocityCompute defaulted to false
 
-        ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > globalCellDimAccessor =
+        ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > cellCartDimAccessor =
           elemManager.constructArrayViewAccessor< real64, 2 >(
-            CellElementSubRegion::viewKeyStruct::globalCellDimString() );
+            CellElementSubRegion::viewKeyStruct::cellCartesianDimString() );
 
         using kernelType = DirichletFaceBasedAssemblyKernel< NUM_COMP, NUM_DOF, typename FluidType::KernelWrapper >;
         typename kernelType::CompFlowAccessors compFlowAccessors( elemManager, solverName );
@@ -2193,7 +2196,7 @@ public:
         typename kernelType::PermeabilityAccessors permeabilityAccessors( elemManager, solverName );
 
         kernelType kernel( numPhases, rankOffset, faceManager, stencilWrapper, fluidWrapper,
-                           dofNumberAccessor, globalCellDimAccessor, compFlowAccessors,
+                           dofNumberAccessor, cellCartDimAccessor, compFlowAccessors,
                            multiFluidAccessors, capPressureAccessors,
                            permeabilityAccessors,
                            dt, localMatrix, localRhs, kernelFlags );

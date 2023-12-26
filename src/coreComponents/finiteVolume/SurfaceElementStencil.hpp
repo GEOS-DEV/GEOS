@@ -227,9 +227,10 @@ public:
                    localIndex ip,
                    const real64 (&phaseFlux),
                    arraySlice1d< real64 const > const (&globalCellToFace)[2],
+                   localIndex const (&ghostRank)[2],
                    ElementRegionManager::ElementView< arrayView3d< real64 > > const & phaseVelocity ) const
   {
-    GEOS_UNUSED_VAR( iconn, ip, phaseFlux, globalCellToFace, phaseVelocity );
+    GEOS_UNUSED_VAR( iconn, ip, phaseFlux, globalCellToFace, ghostRank, phaseVelocity );
   };
   /**
    * @brief Compute the stabilization weights

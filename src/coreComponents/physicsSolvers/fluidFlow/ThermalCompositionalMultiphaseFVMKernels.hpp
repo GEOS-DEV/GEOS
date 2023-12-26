@@ -658,9 +658,9 @@ public:
         elemManager.constructArrayViewAccessor< globalIndex, 1 >( dofKey );
       dofNumberAccessor.setName( solverName + "/accessors/" + dofKey );
 
-      ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > const globalCellDimAccessor =
+      ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > const cellCartDimAccessor =
         elemManager.constructArrayViewAccessor< real64, 2 >(
-          CellElementSubRegion::viewKeyStruct::globalCellDimString());
+          CellElementSubRegion::viewKeyStruct::cellCartesianDimString());
 
 
       BitFlags< isothermalCompositionalMultiphaseFVMKernels::FaceBasedAssemblyKernelFlags > kernelFlags;
@@ -685,7 +685,7 @@ public:
       typename KernelType::ThermalConductivityAccessors thermalConductivityAccessors( elemManager,
                                                                                       solverName );
 
-      KernelType kernel( numPhases, rankOffset, stencilWrapper, dofNumberAccessor, globalCellDimAccessor,
+      KernelType kernel( numPhases, rankOffset, stencilWrapper, dofNumberAccessor, cellCartDimAccessor,
                          compFlowAccessors, thermalCompFlowAccessors, multiFluidAccessors,
                          thermalMultiFluidAccessors,
                          capPressureAccessors, permeabilityAccessors, thermalConductivityAccessors,
@@ -996,9 +996,9 @@ public:
         kernelFlags.set(
           isothermalCompositionalMultiphaseFVMKernels::FaceBasedAssemblyKernelFlags::TotalMassEquation );
 
-      ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > const globalCellDimAccessor =
+      ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > const cellCartDimAccessor =
         elemManager.constructArrayViewAccessor< real64, 2 >(
-          CellElementSubRegion::viewKeyStruct::globalCellDimString());
+          CellElementSubRegion::viewKeyStruct::cellCartesianDimString());
 
       using kernelType = DiffusionDispersionFaceBasedAssemblyKernel< NUM_COMP, NUM_DOF, STENCILWRAPPER >;
       typename kernelType::CompFlowAccessors compFlowAccessors( elemManager, solverName );
@@ -1008,7 +1008,7 @@ public:
       typename kernelType::PorosityAccessors porosityAccessors( elemManager, solverName );
 
       kernelType kernel( numPhases, rankOffset, stencilWrapper,
-                         dofNumberAccessor, globalCellDimAccessor,
+                         dofNumberAccessor, cellCartDimAccessor,
                          compFlowAccessors, multiFluidAccessors,
                          diffusionAccessors, dispersionAccessors, porosityAccessors,
                          dt, localMatrix, localRhs, kernelFlags );
@@ -1453,9 +1453,9 @@ public:
           elemManager.constructArrayViewAccessor< globalIndex, 1 >( dofKey );
         dofNumberAccessor.setName( solverName + "/accessors/" + dofKey );
 
-        ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > const globalCellDimAccessor =
+        ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > const cellCartDimAccessor =
           elemManager.constructArrayViewAccessor< real64, 2 >(
-            CellElementSubRegion::viewKeyStruct::globalCellDimString());
+            CellElementSubRegion::viewKeyStruct::cellCartesianDimString());
 
 
         // for now, we neglect capillary pressure in the kernel
@@ -1477,7 +1477,7 @@ public:
 
         // for now, we neglect capillary pressure in the kernel
         KernelType kernel( numPhases, rankOffset, faceManager, stencilWrapper, fluidWrapper,
-                           dofNumberAccessor, globalCellDimAccessor, compFlowAccessors,
+                           dofNumberAccessor, cellCartDimAccessor, compFlowAccessors,
                            thermalCompFlowAccessors, multiFluidAccessors,
                            thermalMultiFluidAccessors, capPressureAccessors, permeabilityAccessors, thermalConductivityAccessors,
                            dt, localMatrix, localRhs, kernelFlags );

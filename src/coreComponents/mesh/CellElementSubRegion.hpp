@@ -192,7 +192,7 @@ public:
     /// @return String key to fracturedCells
     static constexpr char const * fracturedCellsString() { return "fracturedCells"; }
 
-    static constexpr char const * globalCellDimString() { return "globalCellDim";}
+    static constexpr char const * cellCartesianDimString() { return "cellCartesianDim";}
 
     /// ViewKey for the constitutive grouping
     dataRepository::ViewKey constitutiveGrouping  = { constitutiveGroupingString() };
@@ -388,7 +388,7 @@ private:
   EmbSurfMapType m_toEmbeddedSurfaces;
 
   /// container used to store cell-wise distance to faces (for interpolation)
-  array2d< real64 > m_globalCellDimension;
+  array2d< real64 > m_cellCartesianDimension;
 
   /**
    * @brief Pack element-to-node and element-to-face maps

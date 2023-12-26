@@ -44,8 +44,8 @@ CellElementSubRegion::CellElementSubRegion( string const & name, Group * const p
 
   registerWrapper( viewKeyStruct::fracturedCellsString(), &m_fracturedCells ).setSizedFromParent( 1 );
 
-  registerWrapper( viewKeyStruct::globalCellDimString(), &m_globalCellDimension ).
-    setSizedFromParent( 1 ).
+  registerWrapper( viewKeyStruct::cellCartesianDimString(), &m_cellCartesianDimension ).
+    setPlotLevel( PlotLevel::LEVEL_1 ).
     reference().resizeDimension< 1 >( 3 );
 
   excludeWrappersFromPacking( { viewKeyStruct::nodeListString(),
@@ -53,7 +53,7 @@ CellElementSubRegion::CellElementSubRegion( string const & name, Group * const p
                                 viewKeyStruct::faceListString(),
                                 viewKeyStruct::fracturedCellsString(),
                                 viewKeyStruct::toEmbSurfString(),
-                                viewKeyStruct::globalCellDimString() } );
+                                viewKeyStruct::cellCartesianDimString() } );
 }
 
 
@@ -87,6 +87,7 @@ void CellElementSubRegion::copyFromCellBlock( CellBlockABC const & cellBlock )
   m_toEdgesRelation.resize( this->size(), m_numEdgesPerElement );
   m_toFacesRelation.resize( this->size(), m_numFacesPerElement );
   this->resize( cellBlock.numElements() );
+  this->m_cellCartesianDimension.resizeDimension< 0 >( cellBlock.numElements() );
 
   this->nodeList() = cellBlock.getElemToNodes();
   this->edgeList() = cellBlock.getElemToEdges();
@@ -427,10 +428,6 @@ void CellElementSubRegion::setupRelatedObjectsInRelations( MeshLevel const & mes
 void CellElementSubRegion::calculateCellDimension( ElementRegionManager const & elemManager, FaceManager const & faceManager, NodeManager const & nodeManager )
 {
 
-  arrayView2d< localIndex const > const & elemRegionList = faceManager.elementRegionList();
-  arrayView2d< localIndex const > const & elemSubRegionList = faceManager.elementSubRegionList();
-  arrayView2d< localIndex const > const & elemList = faceManager.elementList();
-
   ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > const elemCenter =
     elemManager.constructArrayViewAccessor< real64, 2 >( CellElementSubRegion::viewKeyStruct::elementCenterString() );
 
@@ -441,36 +438,24 @@ void CellElementSubRegion::calculateCellDimension( ElementRegionManager const & 
 
   ArrayOfArraysView< localIndex const > const faceToNodes = faceManager.nodeList().toViewConst();
 
-  forAll< serialPolicy >( faceManager.size(), [=]( localIndex const kf ) {
+  forAll< parallelHostPolicy >( this->size(), [=]( localIndex const ke ) {
 
-    real64 faceCenter[ 3 ], faceNormal[ 3 ], cellToFaceVec[2][ 3 ];
     real64 const areaTolerance = 1e-12;    //dummy
-    computationalGeometry::centroid_3DPolygon( faceToNodes[kf], X, faceCenter, faceNormal, areaTolerance );
-
-    for( localIndex ke = 0; ke < 2; ++ke )
+    for( int lkf = 0; lkf < m_numFacesPerElement; ++lkf )
     {
 
-      localIndex const er  = elemRegionList[kf][ke];
-      localIndex const esr = elemSubRegionList[kf][ke];
-      localIndex const ei  = elemList[kf][ke];
+      real64 faceCenter[ 3 ], faceNormal[ 3 ], cellToFaceVec[3];
+      localIndex kf = m_toFacesRelation( ke, lkf );
+      computationalGeometry::centroid_3DPolygon( faceToNodes[kf], X, faceCenter, faceNormal, areaTolerance );
+      LvArray::tensorOps::copy< 3 >( cellToFaceVec, faceCenter );
+      LvArray::tensorOps::subtract< 3 >( cellToFaceVec, m_elementCenter[ke] );
 
-      // Filter out out-bound neighbors due to boundary faces
-      // Filter out faces where neither cell is locally owned
-      if( !(ei < 0) && elemGhostRank[er][esr][ei] < 0 )
+      for( int dir = 0; dir < 3; ++dir )
       {
-
-        LvArray::tensorOps::copy< 3 >( cellToFaceVec[ke], faceCenter );
-        LvArray::tensorOps::subtract< 3 >( cellToFaceVec[ke], elemCenter[er][esr][ei] );
-
-        //cumulating signed distance to from face to cell center to form denom in cell-wise linear interpolation
-//         GEOS_LOG_RANK(GEOS_FMT("cellToFace {},{}: {}\n",ke, elemList[kf][ke], cellToFaceVec[ke]));
-        for( int dir = 0; dir < 3; ++dir )
-        {
-          m_globalCellDimension[ei][dir] += LvArray::math::abs( cellToFaceVec[ke][dir] );
-        }
+        m_cellCartesianDimension[ke][dir] += LvArray::math::abs( cellToFaceVec[dir] );
       }
-
     }
+
   } );
 
 }

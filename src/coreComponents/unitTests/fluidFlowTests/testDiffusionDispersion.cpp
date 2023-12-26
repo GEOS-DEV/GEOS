@@ -235,8 +235,9 @@ TEST_F( CompositionalMultiphaseFlowTest, sameDispersionTest )
         mesh.getElemManager().constructArrayViewAccessor< globalIndex, 1 >( elemDofKey );
       dofNumberAccessor.setName( solver->getName() + "/accessors/" + elemDofKey );
 
-      ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > globalCellDimAccessor =
-        mesh.getElemManager().constructArrayViewAccessor< real64, 2 >( CellElementSubRegion::viewKeyStruct::globalCellDimString() );
+      ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > cellCartDimAccessor =
+        mesh.getElemManager().constructArrayViewAccessor< real64, 2 >(
+          CellElementSubRegion::viewKeyStruct::cellCartesianDimString() );
 
 
       BitFlags< isothermalCompositionalMultiphaseFVMKernels::FaceBasedAssemblyKernelFlags > kernelFlags;
@@ -249,7 +250,7 @@ TEST_F( CompositionalMultiphaseFlowTest, sameDispersionTest )
         solver->getDofManager().rankOffset(),
         stencilWrapper,
         dofNumberAccessor,
-        globalCellDimAccessor,
+        cellCartDimAccessor,
         compFlowAccessors,
         multiFluidAccessors,
         diffusionAccessors,

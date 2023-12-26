@@ -350,8 +350,9 @@ public:
         elemManager.constructArrayViewAccessor< globalIndex, 1 >( dofKey );
       dofNumberAccessor.setName( solverName + "/accessors/" + dofKey );
 
-      ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > const globalCellDimAccessor =
-        elemManager.constructArrayViewAccessor< real64, 2 >( CellElementSubRegion::viewKeyStruct::globalCellDimString() );
+      ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > const cellCartDimAccessor =
+        elemManager.constructArrayViewAccessor< real64, 2 >(
+          CellElementSubRegion::viewKeyStruct::cellCartesianDimString() );
 
 
       BitFlags< isothermalCompositionalMultiphaseFVMKernels::FaceBasedAssemblyKernelFlags > kernelFlags;
@@ -371,7 +372,7 @@ public:
       typename KERNEL_TYPE::PermeabilityAccessors permeabilityAccessors( elemManager, solverName );
       typename KERNEL_TYPE::RelPermAccessors relPermAccessors( elemManager, solverName );
 
-      KERNEL_TYPE kernel( numPhases, rankOffset, stencilWrapper, dofNumberAccessor, globalCellDimAccessor,
+      KERNEL_TYPE kernel( numPhases, rankOffset, stencilWrapper, dofNumberAccessor, cellCartDimAccessor,
                           compFlowAccessors, stabCompFlowAccessors, multiFluidAccessors,
                           stabMultiFluidAccessors, capPressureAccessors, permeabilityAccessors, relPermAccessors,
                           dt, localMatrix, localRhs, kernelFlags );

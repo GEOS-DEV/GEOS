@@ -115,7 +115,7 @@ void TwoPointFluxApproximation::computeCellStencil( MeshLevel & mesh ) const
 
   ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > const globalCellToFace =
     elemManager.constructArrayViewAccessor< real64, 2 >(
-      CellElementSubRegion::viewKeyStruct::globalCellDimString() );
+      CellElementSubRegion::viewKeyStruct::cellCartesianDimString() );
 
   ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > > const elemGlobalIndex =
     elemManager.constructArrayViewAccessor< globalIndex, 1 >( ObjectManagerBase::viewKeyStruct::localToGlobalMapString() );
