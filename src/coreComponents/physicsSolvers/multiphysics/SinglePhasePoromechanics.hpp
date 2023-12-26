@@ -122,6 +122,8 @@ public:
 
   /**@}*/
 
+  virtual void resetStateToBeginningOfStep( DomainPartition & domain ) override;
+
   virtual void mapSolutionBetweenSolvers( DomainPartition & Domain, integer const idx ) override final;
 
   struct viewKeyStruct : Base::viewKeyStruct
@@ -151,6 +153,9 @@ protected:
   /// flag to determine whether or not this is a thermal simulation
   integer m_isThermal;
 
+  /// Flag to indicate that the solver is going to perform stress initialization
+  integer m_performStressInitialization;
+
 private:
 
   /**
@@ -178,9 +183,6 @@ private:
                          arrayView1d< real64 > const & localRhs,
                          real64 const dt,
                          PARAMS && ... params );
-
-  /// Flag to indicate that the solver is going to perform stress initialization
-  integer m_performStressInitialization;
 };
 
 template< typename FLOW_SOLVER >

@@ -445,6 +445,14 @@ void SinglePhasePoromechanics< FLOW_SOLVER >::updateState( DomainPartition & dom
 }
 
 template< typename FLOW_SOLVER >
+void SinglePhasePoromechanics< FLOW_SOLVER >::resetStateToBeginningOfStep( DomainPartition & domain )
+{
+  Base::resetStateToBeginningOfStep( domain );
+
+  flowSolver()->keepFlowVariablesConstantDuringInitStep( m_performStressInitialization );
+}
+
+template< typename FLOW_SOLVER >
 void SinglePhasePoromechanics< FLOW_SOLVER >::mapSolutionBetweenSolvers( DomainPartition & domain, integer const solverType )
 {
   GEOS_MARK_FUNCTION;

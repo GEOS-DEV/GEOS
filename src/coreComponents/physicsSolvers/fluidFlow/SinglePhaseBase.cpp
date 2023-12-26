@@ -109,6 +109,8 @@ void SinglePhaseBase::registerDataOnMesh( Group & meshBodies )
         subRegion.registerField< dMobility_dTemperature >( getName() );
       }
 
+      subRegion.registerField< wellBoreVolume >( getName() );
+
     } );
 
     FaceManager & faceManager = mesh.getFaceManager();

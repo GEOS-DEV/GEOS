@@ -148,7 +148,7 @@ DECLARE_FIELD( aperture0,
                "aperture_n",
                array1d< real64 >,
                0,
-               NOPLOT,
+               LEVEL_0,
                WRITE_AND_READ,
                "Initial aperture" );
 
@@ -224,6 +224,13 @@ DECLARE_FIELD( transMultiplier,
                WRITE_AND_READ,
                "Permeability transmissibility multipliers" );
 
+DECLARE_FIELD( wellBoreVolume,
+               "wellBoreVolume",
+               array1d< real64 >,
+               0,
+               LEVEL_0,
+               NO_WRITE,
+               "Extra volume to mimic wellbore volume when using dirichlet or neumann b.c." );
 DECLARE_FIELD( pressureScalingFactor,
                "pressureScalingFactor",
                array1d< real64 >,

@@ -463,6 +463,10 @@
 					<xsd:selector xpath="CompositionalMultiphaseStatistics" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
+				<xsd:unique name="TasksHydrofractureInitializationUniqueName">
+					<xsd:selector xpath="HydrofractureInitialization" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
 				<xsd:unique name="TasksMultiphasePoromechanicsInitializationUniqueName">
 					<xsd:selector xpath="MultiphasePoromechanicsInitialization" />
 					<xsd:field xpath="@name" />
@@ -3344,6 +3348,7 @@ Local - Add stabilization only to interiors of macro elements.-->
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="CompositionalMultiphaseReservoirPoromechanicsInitialization" type="CompositionalMultiphaseReservoirPoromechanicsInitializationType" />
 			<xsd:element name="CompositionalMultiphaseStatistics" type="CompositionalMultiphaseStatisticsType" />
+			<xsd:element name="HydrofractureInitialization" type="HydrofractureInitializationType" />
 			<xsd:element name="MultiphasePoromechanicsInitialization" type="MultiphasePoromechanicsInitializationType" />
 			<xsd:element name="PVTDriver" type="PVTDriverType" />
 			<xsd:element name="PackCollection" type="PackCollectionType" />
@@ -3363,7 +3368,7 @@ Local - Add stabilization only to interiors of macro elements.-->
 		<!--performStressInitialization => Flag to indicate that the solver is going to perform stress initialization-->
 		<xsd:attribute name="performStressInitialization" type="integer" use="required" />
 		<!--poromechanicsSolverName => Name of the poromechanics solver-->
-		<xsd:attribute name="poromechanicsSolverName" type="groupNameRef" use="required" />
+		<xsd:attribute name="poromechanicsSolverName" type="string" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -3381,13 +3386,23 @@ Local - Add stabilization only to interiors of macro elements.-->
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
+	<xsd:complexType name="HydrofractureInitializationType">
+		<!--logLevel => Log level-->
+		<xsd:attribute name="logLevel" type="integer" default="0" />
+		<!--performStressInitialization => Flag to indicate that the solver is going to perform stress initialization-->
+		<xsd:attribute name="performStressInitialization" type="integer" use="required" />
+		<!--poromechanicsSolverName => Name of the poromechanics solver-->
+		<xsd:attribute name="poromechanicsSolverName" type="string" use="required" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="groupName" use="required" />
+	</xsd:complexType>
 	<xsd:complexType name="MultiphasePoromechanicsInitializationType">
 		<!--logLevel => Log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--performStressInitialization => Flag to indicate that the solver is going to perform stress initialization-->
 		<xsd:attribute name="performStressInitialization" type="integer" use="required" />
 		<!--poromechanicsSolverName => Name of the poromechanics solver-->
-		<xsd:attribute name="poromechanicsSolverName" type="groupNameRef" use="required" />
+		<xsd:attribute name="poromechanicsSolverName" type="string" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -3469,7 +3484,7 @@ Local - Add stabilization only to interiors of macro elements.-->
 		<!--performStressInitialization => Flag to indicate that the solver is going to perform stress initialization-->
 		<xsd:attribute name="performStressInitialization" type="integer" use="required" />
 		<!--poromechanicsSolverName => Name of the poromechanics solver-->
-		<xsd:attribute name="poromechanicsSolverName" type="groupNameRef" use="required" />
+		<xsd:attribute name="poromechanicsSolverName" type="string" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -3479,7 +3494,7 @@ Local - Add stabilization only to interiors of macro elements.-->
 		<!--performStressInitialization => Flag to indicate that the solver is going to perform stress initialization-->
 		<xsd:attribute name="performStressInitialization" type="integer" use="required" />
 		<!--poromechanicsSolverName => Name of the poromechanics solver-->
-		<xsd:attribute name="poromechanicsSolverName" type="groupNameRef" use="required" />
+		<xsd:attribute name="poromechanicsSolverName" type="string" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -4020,14 +4035,18 @@ The expected format is "{ waterMax, oilMax }", in that order-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="ConstantPermeabilityType">
+		<!--defaultReferencePressure => Default reference pressure-->
+		<xsd:attribute name="defaultReferencePressure" type="real64" default="0" />
 		<!--permeabilityComponents => xx, yy and zz components of a diagonal permeability tensor.-->
 		<xsd:attribute name="permeabilityComponents" type="R1Tensor" use="required" />
+		<!--pressureDependenceConstant => Pressure dependence constant for the permeability.-->
+		<xsd:attribute name="pressureDependenceConstant" type="real64" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="CoulombType">
 		<!--apertureTableName => Name of the aperture table-->
-		<xsd:attribute name="apertureTableName" type="groupNameRef" use="required" />
+		<xsd:attribute name="apertureTableName" type="groupNameRef" default="" />
 		<!--apertureTolerance => Value to be used to avoid floating point errors in expressions involving aperture. For example in the case of dividing by the actual aperture (not the effective aperture that results from the aperture function) this value may be used to avoid the 1/0 error. Note that this value may have some physical significance in its usage, as it may be used to smooth out highly nonlinear behavior associated with 1/0 in addition to avoiding the 1/0 error.-->
 		<xsd:attribute name="apertureTolerance" type="real64" default="1e-09" />
 		<!--cohesion => Cohesion-->
@@ -4038,8 +4057,12 @@ The expected format is "{ waterMax, oilMax }", in that order-->
 		<xsd:attribute name="frictionCoefficient" type="real64" use="required" />
 		<!--penaltyStiffness => Value of the penetration penalty stiffness. Units of Pressure/length-->
 		<xsd:attribute name="penaltyStiffness" type="real64" default="0" />
+		<!--refNormalStress => Value of the reference normal stress in the aperture model.-->
+		<xsd:attribute name="refNormalStress" type="real64" default="0" />
 		<!--shearStiffness => Value of the shear elastic stiffness. Units of Pressure/length-->
 		<xsd:attribute name="shearStiffness" type="real64" default="0" />
+		<!--useApertureModel => The flag for using the nonlinear aperture model instead of the aperture model.For now, 1 is for the Barton- -Bandis model, and 2 is for the exponential model.-->
+		<xsd:attribute name="useApertureModel" type="integer" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -4361,15 +4384,19 @@ For instance, if "oil" is before "gas" in "phaseNames", the table order should b
 	</xsd:complexType>
 	<xsd:complexType name="FrictionlessContactType">
 		<!--apertureTableName => Name of the aperture table-->
-		<xsd:attribute name="apertureTableName" type="groupNameRef" use="required" />
+		<xsd:attribute name="apertureTableName" type="groupNameRef" default="" />
 		<!--apertureTolerance => Value to be used to avoid floating point errors in expressions involving aperture. For example in the case of dividing by the actual aperture (not the effective aperture that results from the aperture function) this value may be used to avoid the 1/0 error. Note that this value may have some physical significance in its usage, as it may be used to smooth out highly nonlinear behavior associated with 1/0 in addition to avoiding the 1/0 error.-->
 		<xsd:attribute name="apertureTolerance" type="real64" default="1e-09" />
 		<!--displacementJumpThreshold => A threshold valued to determine whether a fracture is open or not.-->
 		<xsd:attribute name="displacementJumpThreshold" type="real64" default="2.22045e-16" />
 		<!--penaltyStiffness => Value of the penetration penalty stiffness. Units of Pressure/length-->
 		<xsd:attribute name="penaltyStiffness" type="real64" default="0" />
+		<!--refNormalStress => Value of the reference normal stress in the aperture model.-->
+		<xsd:attribute name="refNormalStress" type="real64" default="0" />
 		<!--shearStiffness => Value of the shear elastic stiffness. Units of Pressure/length-->
 		<xsd:attribute name="shearStiffness" type="real64" default="0" />
+		<!--useApertureModel => The flag for using the nonlinear aperture model instead of the aperture model.For now, 1 is for the Barton- -Bandis model, and 2 is for the exponential model.-->
+		<xsd:attribute name="useApertureModel" type="integer" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -4472,6 +4499,8 @@ If you want to do a three-phase simulation, please use instead wettingIntermedia
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="ParallelPlatesPermeabilityType">
+		<!--timeLagFlag => (no description available)-->
+		<xsd:attribute name="timeLagFlag" type="integer" default="0" />
 		<!--transversalPermeability => Default value of the permeability normal to the surface. If not specified the permeability is updated using the cubic law. -->
 		<xsd:attribute name="transversalPermeability" type="real64" default="-1" />
 		<!--name => A name is required for any non-unique nodes-->

@@ -19,6 +19,7 @@
 #include "PoromechanicsInitialization.hpp"
 
 #include "physicsSolvers/PhysicsSolverManager.hpp"
+#include "physicsSolvers/multiphysics/HydrofractureSolver.hpp"
 #include "physicsSolvers/multiphysics/MultiphasePoromechanics.hpp"
 #include "physicsSolvers/multiphysics/SinglePhasePoromechanics.hpp"
 #include "mainInterface/ProblemManager.hpp"
@@ -43,6 +44,12 @@ template<> class PoromechanicsCatalogNames< SinglePhasePoromechanics< SinglePhas
 {
 public:
   static string name() { return SinglePhasePoromechanics< SinglePhaseBase >::catalogName() + "Initialization"; }
+};
+// Class specialization for a POROMECHANICS_SOLVER set to HydrofractureSolver
+template<> class PoromechanicsCatalogNames< HydrofractureSolver< SinglePhasePoromechanics< SinglePhaseBase > > >
+{
+public:
+  static string name() { return "HydrofractureInitialization"; }
 };
 template<> class PoromechanicsCatalogNames< SinglePhasePoromechanics< SinglePhaseReservoirAndWells< SinglePhaseBase > > >
 {
@@ -83,7 +90,6 @@ PoromechanicsInitialization( const string & name,
   enableLogLevelInput();
 
   registerWrapper( viewKeyStruct::poromechanicsSolverNameString(), &m_poromechanicsSolverName ).
-    setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Name of the poromechanics solver" );
 
@@ -148,10 +154,12 @@ execute( real64 const time_n,
 
 namespace
 {
+typedef PoromechanicsInitialization< HydrofractureSolver< SinglePhasePoromechanics< SinglePhaseBase > > > HydrofractureInitialization;
 typedef PoromechanicsInitialization< MultiphasePoromechanics< CompositionalMultiphaseBase > > MultiphasePoromechanicsInitialization;
 typedef PoromechanicsInitialization< MultiphasePoromechanics< CompositionalMultiphaseReservoirAndWells< CompositionalMultiphaseBase > > > MultiphaseReservoirPoromechanicsInitialization;
 typedef PoromechanicsInitialization< SinglePhasePoromechanics< SinglePhaseBase > > SinglePhasePoromechanicsInitialization;
 typedef PoromechanicsInitialization< SinglePhasePoromechanics< SinglePhaseReservoirAndWells< SinglePhaseBase > > > SinglePhaseReservoirPoromechanicsInitialization;
+REGISTER_CATALOG_ENTRY( TaskBase, HydrofractureInitialization, string const &, Group * const )
 REGISTER_CATALOG_ENTRY( TaskBase, MultiphasePoromechanicsInitialization, string const &, Group * const )
 REGISTER_CATALOG_ENTRY( TaskBase, MultiphaseReservoirPoromechanicsInitialization, string const &, Group * const )
 REGISTER_CATALOG_ENTRY( TaskBase, SinglePhasePoromechanicsInitialization, string const &, Group * const )
