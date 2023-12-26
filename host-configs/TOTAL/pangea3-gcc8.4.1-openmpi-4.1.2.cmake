@@ -104,7 +104,7 @@ set(PETSC_OMP_DIR ${GEOSX_TPL_ROOT_DIR}/omp-links-for-petsc CACHE STRING "")
 set(ENABLE_PETSC OFF CACHE BOOL "")
 
 set(ENABLE_HYPRE ON CACHE BOOL "")
-set(ENABLE_HYPRE_DEVICE "CPU" CACHE BOOL "")
+set(ENABLE_HYPRE_DEVICE "CUDA" CACHE BOOL "")
 
 # disable benchmarks, they are incompatible with P3's nvcc version (cuda 11.5.0)
 set(ENABLE_BENCHMARKS OFF CACHE BOOL "")
