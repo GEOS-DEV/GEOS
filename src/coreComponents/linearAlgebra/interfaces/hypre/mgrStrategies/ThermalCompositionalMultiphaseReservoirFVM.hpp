@@ -52,29 +52,26 @@ public:
 
     setupLabels();
 
-    m_levelFRelaxMethod[0] = MGRFRelaxationMethod::singleLevel; //default, i.e. Jacobi
     m_levelFRelaxType[0] = MGRFRelaxationType::gsElimWInverse; // gaussian elimination for the well block
     m_levelInterpType[0] = MGRInterpolationType::blockJacobi;
     m_levelRestrictType[0] = MGRRestrictionType::injection;
     m_levelCoarseGridMethod[0] = MGRCoarseGridMethod::galerkin;
 
-    m_levelFRelaxMethod[1] = MGRFRelaxationMethod::singleLevel; //default, i.e. Jacobi
     m_levelInterpType[1] = MGRInterpolationType::jacobi; // Diagonal scaling (Jacobi)
     m_levelRestrictType[1] = MGRRestrictionType::injection;
     m_levelCoarseGridMethod[1] = MGRCoarseGridMethod::galerkin; // Standard Galerkin
 
-    m_levelFRelaxMethod[2] = MGRFRelaxationMethod::singleLevel; //default, i.e. Jacobi
     m_levelInterpType[2] = MGRInterpolationType::injection; // Injection
     m_levelRestrictType[2] = MGRRestrictionType::injection;
     m_levelCoarseGridMethod[2] = MGRCoarseGridMethod::cprLikeBlockDiag; // Non-Galerkin Quasi-IMPES CPR
 
     // Block Jacobi for the system made of pressure, temperature, and densities
-    m_levelSmoothType[1] = 0;
-    m_levelSmoothIters[1] = 1;
+    m_levelGlobalSmootherType[1] = MGRGlobalSmootherType::blockGaussSeidel;
+    m_levelGlobalSmootherIters[1] = 1;
 #if GEOS_USE_HYPRE_DEVICE != GEOS_USE_HYPRE_HIP
     // ILU smoothing for the system made of pressure, temperature, and densities (except the last one)
-    m_levelSmoothType[2] = 16;
-    m_levelSmoothIters[2] = 1;
+    m_levelGlobalSmootherType[2] = MGRGlobalSmootherType::ilu0;
+    m_levelGlobalSmootherIters[2] = 1;
 #endif
   }
 
@@ -92,8 +89,8 @@ public:
     GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetLevelRestrictType( precond.ptr, toUnderlyingPtr( m_levelRestrictType ) ) );
     GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetCoarseGridMethod( precond.ptr, toUnderlyingPtr( m_levelCoarseGridMethod ) ) );
     GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetNonCpointsToFpoints( precond.ptr, 1 ) );
-    GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetLevelSmoothType( precond.ptr, m_levelSmoothType ) );
-    GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetLevelSmoothIters( precond.ptr, m_levelSmoothIters ) );
+    GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetLevelSmoothType( precond.ptr, toUnderlyingPtr( m_levelGlobalSmootherType ) ));
+    GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetLevelSmoothIters( precond.ptr, m_levelGlobalSmootherIters ));
     // if the wells are shut, using Gaussian elimination as F-relaxation for the well block is an overkill
     // in that case, we just use Jacobi
     if( mgrParams.areWellsShut )
