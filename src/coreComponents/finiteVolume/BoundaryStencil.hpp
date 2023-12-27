@@ -124,10 +124,10 @@ public:
   void computeVelocity( localIndex iconn,
                         localIndex ip,
                         real64 const ( &phaseFlux ),
-                        arraySlice1d< real64 const > const (&globalCellToFace)[2],
+                        arraySlice1d< real64 const > const (&cellCartDim)[2],
                         localIndex const (&ghostRank)[2],
                         ElementRegionManager::ElementView< arrayView3d< real64 > > const & phaseVelocity ) const
-  { GEOS_UNUSED_VAR( iconn, ip, phaseFlux, globalCellToFace, ghostRank, phaseVelocity );};
+  { GEOS_UNUSED_VAR( iconn, ip, phaseFlux, cellCartDim, ghostRank, phaseVelocity );};
 
 
 private:

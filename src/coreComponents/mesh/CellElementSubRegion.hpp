@@ -192,6 +192,7 @@ public:
     /// @return String key to fracturedCells
     static constexpr char const * fracturedCellsString() { return "fracturedCells"; }
 
+    /// @return String key to cell x-y-z dimensions
     static constexpr char const * cellCartesianDimString() { return "cellCartesianDim";}
 
     /// ViewKey for the constitutive grouping

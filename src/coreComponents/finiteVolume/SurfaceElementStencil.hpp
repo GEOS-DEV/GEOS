@@ -116,6 +116,7 @@ public:
   /**
    * @brief Compute weights and derivatives w.r.t to one variable.
    * @param[in] iconn connection index
+   * @param[in] ip phase index
    * @param[in] coefficient view accessor to the coefficient used to compute the weights
    * @param[in] dCoeff_dVar view accessor to the derivative of the coefficient w.r.t to the variable
    * @param[out] weight view weights
@@ -130,6 +131,14 @@ public:
                        real64 ( & dWeight_dVar )[maxNumConnections][2] ) const
   { GEOS_UNUSED_VAR( iconn, ip, coefficient, dCoeff_dVar, weight, dWeight_dVar ); };
 
+  /**
+   * @brief Compute weigths and derivatives w.r.t to one variable.
+   * @param[in] iconn connection index
+   * @param[in] coefficient view accessor to the coefficient used to compute the weights
+   * @param[in] dCoeff_dVar view accessor to the derivative of the coefficient w.r.t to the variable
+   * @param[out] weight view weights
+   * @param[out] dWeight_dVar derivative of the weigths w.r.t to the variable
+   */
   GEOS_HOST_DEVICE
   void computeWeights( localIndex iconn,
                        CoefficientAccessor< arrayView3d< real64 const > > const & coefficient,
@@ -230,11 +239,11 @@ public:
   computeVelocity( localIndex iconn,
                    localIndex ip,
                    const real64 (&phaseFlux),
-                   arraySlice1d< real64 const > const (&globalCellToFace)[2],
+                   arraySlice1d< real64 const > const (&cellCartDim)[2],
                    localIndex const (&ghostRank)[2],
                    ElementRegionManager::ElementView< arrayView3d< real64 > > const & phaseVelocity ) const
   {
-    GEOS_UNUSED_VAR( iconn, ip, phaseFlux, globalCellToFace, ghostRank, phaseVelocity );
+    GEOS_UNUSED_VAR( iconn, ip, phaseFlux, cellCartDim, ghostRank, phaseVelocity );
   };
   /**
    * @brief Compute the stabilization weights
