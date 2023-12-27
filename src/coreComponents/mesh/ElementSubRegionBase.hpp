@@ -81,7 +81,13 @@ public:
                                                     FaceManager const & faceManager ) = 0;
 
 
-
+  /**
+   * @brief function used to compute roughly cell dimension used in linear
+   * interpolation in velocity field reconstruction
+   * @param elemManager handling all element data access
+   * @param faceManager handling all face data access
+   * @param nodeManager handling all node data access
+   */
   virtual void calculateCellDimension( ElementRegionManager const & elemManager,
                                        FaceManager const & faceManager,
                                        NodeManager const & nodeManager ) = 0;

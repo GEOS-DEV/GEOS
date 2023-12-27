@@ -85,6 +85,7 @@ public:
   /**
    * @brief Compute weigths and derivatives w.r.t to one variable.
    * @param[in] iconn connection index
+   * @param[in] ip phase index
    * @param[in] coefficient view accessor to the coefficient used to compute the weights
    * @param[in] dCoeff_dVar view accessor to the derivative of the coefficient w.r.t to the variable
    * @param[out] weight view weights
@@ -140,7 +141,9 @@ public:
                        real64 ( &dWeight_dVar1 )[1][2],
                        real64 ( &dWeight_dVar2 )[1][2] ) const;
   /**
-   * @copydoc CellElementStencilTPFA::initVelocity
+   * @brief init the phaseVelocity container
+   * @param iconn connexion index
+   * @param phaseVelocity arrayView of the phase velocity container
    */
   GEOS_HOST_DEVICE
   inline void
@@ -150,7 +153,13 @@ public:
   };
 
   /**
-   * @copydoc CellElementStencilTPFA::computeVelocity
+   * @brief Compute approximate cell-centered velocity field
+   * @param[in] iconn connection index
+   * @param[in] ip phase index
+   * @param[in] cellCartDim pair of globalCellId ordered distance of connection to neighboring cells
+   * @param[in] ghostRank ghost status of connexion's neighbooring cells
+   * @param[in] phaseFlux flux for a specific phase ip and connection iconn
+   * @param[out] phaseVelocity slice of the cell-wise global 3-vector to be
    */
   GEOS_HOST_DEVICE
   inline void

@@ -329,7 +329,9 @@ public:
   void calculateElementGeometricQuantities( NodeManager const & nodeManager,
                                             FaceManager const & faceManager ) override;
 
-/// fonction used in velocity reconstruction
+  /**
+   * @copydoc ElementSubRegionBase::calculateCellDimension
+   */
   void calculateCellDimension( ElementRegionManager const & elemManager,
                                FaceManager const & faceManager,
                                NodeManager const & nodeManager ) override;

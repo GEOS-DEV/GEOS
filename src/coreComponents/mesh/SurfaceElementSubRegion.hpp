@@ -92,7 +92,13 @@ public:
   {
     ElementSubRegionBase::calculateElementCenters( m_toNodesRelation, X );
   }
-
+  /**
+   * @copydoc ElementSubRegionBase::calculateCellDimension
+   */
+  virtual void calculateCellDimension( ElementRegionManager const & elemManager, FaceManager const & faceManager, NodeManager const & nodeManager ) override
+  {
+    GEOS_UNUSED_VAR( elemManager, faceManager, nodeManager );
+  }
   ///@}
 
   /**

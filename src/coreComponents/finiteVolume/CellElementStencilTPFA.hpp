@@ -59,6 +59,7 @@ public:
   /**
    * @brief Compute weights and derivatives w.r.t to one variable based on phase sliced tensor (e.g. diffusion, dispersion)
    * @param[in] iconn connection index
+   * @param[in] ip phase index
    * @param[in] coefficient view accessor to the coefficient used to compute the weights
    * @param[in] dCoeff_dVar view accessor to the derivative of the coefficient w.r.t to the variable
    * @param[out] weight view weights

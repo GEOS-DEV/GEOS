@@ -206,7 +206,9 @@ public:
                        real64 ( &weight2 )[maxNumPointsInFlux],
                        real64 ( &geometricWeight )[maxNumPointsInFlux] ) const;
   /**
-   * @copydoc CellElementStencilTPFA::initVelocity
+   * @brief init the phaseVelocity container
+   * @param iconn connexion index
+   * @param phaseVelocity arrayView of the phase velocity container
    */
   GEOS_HOST_DEVICE
   inline void
@@ -215,7 +217,13 @@ public:
     GEOS_UNUSED_VAR( iconn, phaseVelocity );
   };
   /**
-   * @copydoc CellElementStencilTPFA::computeVelocity
+   * @brief Compute approximate cell-centered velocity field
+   * @param[in] iconn connection index
+   * @param[in] ip phase index
+   * @param[in] cellCartDim pair of globalCellId ordered distance of connection to neighboring cells
+   * @param[in] ghostRank ghost status of connexion's neighbooring cells
+   * @param[in] phaseFlux flux for a specific phase ip and connection iconn
+   * @param[out] phaseVelocity slice of the cell-wise global 3-vector to be
    */
   GEOS_HOST_DEVICE
   inline void
