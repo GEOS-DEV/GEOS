@@ -110,7 +110,11 @@ public:
   void computeStabilizationWeights( localIndex iconn,
                                     real64 ( &stabilizationWeight )[1][2] ) const;
 
-
+/**
+ * @brief init the phaseVelocity container
+ * @param iconn connexion index
+ * @param phaseVelocity arrayView of the phase velocity container
+ */
   GEOS_HOST_DEVICE
   void initVelocity( localIndex iconn, ElementRegionManager::ElementView< arrayView3d< real64 > > const & phaseVelocity ) const;
   /**
@@ -118,6 +122,7 @@ public:
    * @param[in] iconn connection index
    * @param[in] ip phase index
    * @param[in] cellCartDim pair of globalCellId ordered distance of connection to neighboring cells
+   * @param[in] ghostRank ghost status of connexion's neighbooring cells
    * @param[in] phaseFlux flux for a specific phase ip and connection iconn
    * @param[out] phaseVelocity slice of the cell-wise global 3-vector to be
    */

@@ -206,7 +206,7 @@ public:
                        real64 ( &weight2 )[maxNumPointsInFlux],
                        real64 ( &geometricWeight )[maxNumPointsInFlux] ) const;
   /**
-   *
+   * @copydoc CellElementStencilTPFA::initVelocity
    */
   GEOS_HOST_DEVICE
   inline void
@@ -215,11 +215,7 @@ public:
     GEOS_UNUSED_VAR( iconn, phaseVelocity );
   };
   /**
-   * Pass through for CellTPFA cell-centered velocity reconstruction
-   * @param iconn
-   * @param ip
-   * @param phaseFlux
-   * @param phaseVelocity
+   * @copydoc CellElementStencilTPFA::computeVelocity
    */
   GEOS_HOST_DEVICE
   inline void

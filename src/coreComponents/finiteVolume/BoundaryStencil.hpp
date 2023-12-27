@@ -101,24 +101,25 @@ public:
     return maxNumPointsInFlux;
   }
 
+
+  /**
+   * @copydoc CellElementStencilTPFA::initVelocity
+   */
   GEOS_HOST_DEVICE
   void initVelocity( localIndex iconn, ElementRegionManager::ElementView< arrayView3d< real64 > > const & phaseVelocity ) const
   { GEOS_UNUSED_VAR( iconn, phaseVelocity );};
+
   /**
-   * @brief Compute approximate cell-centered velocity field
-   * @param[in] iconn connection index
-   * @param[in] ip phase index
-   * @param[in] globalCellToFace pair of globalCellId ordered distance of connection to neighboring cells
-   * @param[in] phaseFlux flux for a specific phase ip and connection iconn
-   * @param[out] phaseVelocity slice of the cell-wise global 3-vector to be
+   * @copydoc CellElementStencilTPFA::computeVelocity
    */
   GEOS_HOST_DEVICE
   void computeVelocity( localIndex iconn,
                         localIndex ip,
                         real64 const ( &phaseFlux ),
                         arraySlice1d< real64 const > const (&globalCellToFace)[2],
+                        localIndex const (&ghostRank)[2],
                         ElementRegionManager::ElementView< arrayView3d< real64 > > const & phaseVelocity ) const
-  { GEOS_UNUSED_VAR( iconn, ip, phaseFlux, globalCellToFace, phaseVelocity );};
+  { GEOS_UNUSED_VAR( iconn, ip, phaseFlux, globalCellToFace, ghostRank, phaseVelocity );};
 
 
 private:

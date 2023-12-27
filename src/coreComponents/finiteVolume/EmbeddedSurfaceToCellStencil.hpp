@@ -140,7 +140,7 @@ public:
                        real64 ( &dWeight_dVar1 )[1][2],
                        real64 ( &dWeight_dVar2 )[1][2] ) const;
   /**
-   *
+   * @copydoc CellElementStencilTPFA::initVelocity
    */
   GEOS_HOST_DEVICE
   inline void
@@ -150,11 +150,7 @@ public:
   };
 
   /**
-   * Pass through for CellTPFA cell-centered velocity reconstruction
-   * @param iconn
-   * @param ip
-   * @param phaseFlux
-   * @param phaseVelocity
+   * @copydoc CellElementStencilTPFA::computeVelocity
    */
   GEOS_HOST_DEVICE
   inline void
