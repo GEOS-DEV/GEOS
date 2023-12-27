@@ -59,8 +59,8 @@ set( constitutive_headers
      fluid/multifluid/CO2Brine/functions/CO2EOSSolver.hpp
      fluid/multifluid/CO2Brine/functions/PureWaterProperties.hpp
      fluid/multifluid/CO2Brine/functions/WaterDensity.hpp
-     fluid/multifluid/compositional/functions/CompositionalProperties.hpp
-     fluid/multifluid/compositional/functions/CubicEOSPhaseModel.hpp
+     fluid/multifluid/compositional/functions/CompositionalProperties.hpp     
+     fluid/multifluid/compositional/functions/CubicEOSPhaseModel.hpp     
      fluid/multifluid/compositional/functions/KValueInitialization.hpp
      fluid/multifluid/compositional/functions/NegativeTwoPhaseFlash.hpp
      fluid/multifluid/compositional/functions/RachfordRice.hpp
@@ -135,7 +135,7 @@ set( constitutive_headers
      solid/ElasticTransverseIsotropic.hpp
      solid/ElasticOrthotropic.hpp
      solid/InvariantDecompositions.hpp
-     solid/PerfectlyPlastic.hpp
+     solid/PerfectlyPlastic.hpp     
      solid/PorousSolid.hpp
      solid/PropertyConversions.hpp
      solid/SolidBase.hpp

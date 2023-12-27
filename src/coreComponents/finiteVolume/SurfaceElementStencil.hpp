@@ -122,6 +122,15 @@ public:
    * @param[out] dWeight_dVar derivative of the weights w.r.t to the variable
    */
   GEOS_HOST_DEVICE
+  void computeWeights( localIndex const iconn,
+                       localIndex const ip,
+                       CoefficientAccessor< arrayView4d< real64 const > > const & coefficient,
+                       CoefficientAccessor< arrayView4d< real64 const > > const & dCoeff_dVar,
+                       real64 ( & weight )[maxNumConnections][2],
+                       real64 ( & dWeight_dVar )[maxNumConnections][2] ) const
+  { GEOS_UNUSED_VAR( iconn, ip, coefficient, dCoeff_dVar, weight, dWeight_dVar ); };
+
+  GEOS_HOST_DEVICE
   void computeWeights( localIndex iconn,
                        CoefficientAccessor< arrayView3d< real64 const > > const & coefficient,
                        CoefficientAccessor< arrayView3d< real64 const > > const & dCoeff_dVar,
@@ -196,7 +205,29 @@ public:
                        real64 ( &weight1 )[maxNumPointsInFlux],
                        real64 ( &weight2 )[maxNumPointsInFlux],
                        real64 ( &geometricWeight )[maxNumPointsInFlux] ) const;
-
+  /**
+   * @copydoc CellElementStencilTPFA::initVelocity
+   */
+  GEOS_HOST_DEVICE
+  inline void
+  initVelocity( localIndex iconn, ElementRegionManager::ElementView< arrayView3d< real64 > > const & phaseVelocity ) const
+  {
+    GEOS_UNUSED_VAR( iconn, phaseVelocity );
+  };
+  /**
+   * @copydoc CellElementStencilTPFA::computeVelocity
+   */
+  GEOS_HOST_DEVICE
+  inline void
+  computeVelocity( localIndex iconn,
+                   localIndex ip,
+                   const real64 (&phaseFlux),
+                   arraySlice1d< real64 const > const (&globalCellToFace)[2],
+                   localIndex const (&ghostRank)[2],
+                   ElementRegionManager::ElementView< arrayView3d< real64 > > const & phaseVelocity ) const
+  {
+    GEOS_UNUSED_VAR( iconn, ip, phaseFlux, globalCellToFace, ghostRank, phaseVelocity );
+  };
   /**
    * @brief Compute the stabilization weights
    * @param[in] iconn connection index

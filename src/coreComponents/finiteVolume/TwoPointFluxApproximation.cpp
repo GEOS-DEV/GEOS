@@ -113,6 +113,10 @@ void TwoPointFluxApproximation::computeCellStencil( MeshLevel & mesh ) const
   ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > const elemCenter =
     elemManager.constructArrayViewAccessor< real64, 2 >( CellElementSubRegion::viewKeyStruct::elementCenterString() );
 
+  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > const globalCellToFace =
+    elemManager.constructArrayViewAccessor< real64, 2 >(
+      CellElementSubRegion::viewKeyStruct::cellCartesianDimString() );
+
   ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > > const elemGlobalIndex =
     elemManager.constructArrayViewAccessor< globalIndex, 1 >( ObjectManagerBase::viewKeyStruct::localToGlobalMapString() );
 
@@ -184,10 +188,11 @@ void TwoPointFluxApproximation::computeCellStencil( MeshLevel & mesh ) const
       elementIndex[ke] = ei;
       stencilCellsGlobalIndex[ke] = elemGlobalIndex[er][esr][ei];
 
+
       LvArray::tensorOps::copy< 3 >( cellToFaceVec[ke], faceCenter );
       LvArray::tensorOps::subtract< 3 >( cellToFaceVec[ke], elemCenter[er][esr][ei] );
 
-      real64 const c2fDistance = LvArray::tensorOps::normalize< 3 >( cellToFaceVec[ke] );
+      real64 const c2fDistance = LvArray::tensorOps::l2Norm< 3 >( cellToFaceVec[ke] );
 
       stencilWeights[ke] = faceArea / c2fDistance;
       stencilStabilizationWeights[ke] = faceArea * c2fDistance;

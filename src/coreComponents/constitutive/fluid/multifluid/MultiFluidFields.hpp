@@ -205,7 +205,6 @@ DECLARE_FIELD( dTotalDensity,
                NOPLOT,
                NO_WRITE,
                "Derivative of total density with respect to pressure, temperature, and global component fractions" );
-
 }
 
 }

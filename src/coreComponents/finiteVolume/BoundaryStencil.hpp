@@ -101,6 +101,27 @@ public:
     return maxNumPointsInFlux;
   }
 
+
+  /**
+   * @copydoc CellElementStencilTPFA::initVelocity
+   */
+  GEOS_HOST_DEVICE
+  void initVelocity( localIndex iconn, ElementRegionManager::ElementView< arrayView3d< real64 > > const & phaseVelocity ) const
+  { GEOS_UNUSED_VAR( iconn, phaseVelocity );};
+
+  /**
+   * @copydoc CellElementStencilTPFA::computeVelocity
+   */
+  GEOS_HOST_DEVICE
+  void computeVelocity( localIndex iconn,
+                        localIndex ip,
+                        real64 const ( &phaseFlux ),
+                        arraySlice1d< real64 const > const (&globalCellToFace)[2],
+                        localIndex const (&ghostRank)[2],
+                        ElementRegionManager::ElementView< arrayView3d< real64 > > const & phaseVelocity ) const
+  { GEOS_UNUSED_VAR( iconn, ip, phaseFlux, globalCellToFace, ghostRank, phaseVelocity );};
+
+
 private:
 
   arrayView2d< real64, nodes::REFERENCE_POSITION_USD > m_faceNormal;

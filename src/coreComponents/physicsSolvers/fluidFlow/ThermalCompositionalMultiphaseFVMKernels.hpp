@@ -41,7 +41,8 @@ using namespace constitutive;
  * @brief Define the interface for the property kernel in charge of computing the phase mobilities
  */
 template< integer NUM_COMP, integer NUM_PHASE >
-class PhaseMobilityKernel : public isothermalCompositionalMultiphaseFVMKernels::PhaseMobilityKernel< NUM_COMP, NUM_PHASE >
+class PhaseMobilityKernel
+  : public isothermalCompositionalMultiphaseFVMKernels::PhaseMobilityKernel< NUM_COMP, NUM_PHASE >
 {
 public:
 
@@ -64,8 +65,7 @@ public:
   PhaseMobilityKernel( ObjectManagerBase & subRegion,
                        MultiFluidBase const & fluid,
                        RelativePermeabilityBase const & relperm )
-    : Base( subRegion, fluid, relperm )
-  {}
+    : Base( subRegion, fluid, relperm ) {}
 
   /**
    * @brief Compute the phase mobilities in an element
@@ -81,13 +81,13 @@ public:
     arraySlice2d< real64 const, multifluid::USD_PHASE_DC - 2 > const dPhaseDens = m_dPhaseDens[ei][0];
     arraySlice1d< real64 const, multifluid::USD_PHASE - 2 > const phaseVisc = m_phaseVisc[ei][0];
     arraySlice2d< real64 const, multifluid::USD_PHASE_DC - 2 > const dPhaseVisc = m_dPhaseVisc[ei][0];
-    arraySlice2d< real64 const, relperm::USD_RELPERM_DS - 2 > const dPhaseRelPerm_dPhaseVolFrac = m_dPhaseRelPerm_dPhaseVolFrac[ei][0];
+    arraySlice2d< real64 const, relperm::USD_RELPERM_DS -
+                  2 > const dPhaseRelPerm_dPhaseVolFrac = m_dPhaseRelPerm_dPhaseVolFrac[ei][0];
     arraySlice2d< real64 const, compflow::USD_PHASE_DC - 1 > const dPhaseVolFrac = m_dPhaseVolFrac[ei];
 
-    Base::compute( ei, [&] ( localIndex const ip,
-                             real64 const & phaseMob,
-                             arraySlice1d< real64, compflow::USD_PHASE_DC - 2 > const & dPhaseMob )
-    {
+    Base::compute( ei, [&]( localIndex const ip,
+                            real64 const & phaseMob,
+                            arraySlice1d< real64, compflow::USD_PHASE_DC - 2 > const & dPhaseMob ) {
       // Step 1: compute the derivative of relPerm[ip] wrt temperature
       real64 dRelPerm_dT = 0.0;
       for( integer jp = 0; jp < numPhase; ++jp )
@@ -97,7 +97,8 @@ public:
 
       // Step 2: compute the derivative of phaseMob[ip] wrt temperature
       dPhaseMob[Deriv::dT] = dRelPerm_dT * phaseDens[ip] / phaseVisc[ip]
-                             + phaseMob * (dPhaseDens[ip][Deriv::dT] / phaseDens[ip] - dPhaseVisc[ip][Deriv::dT] / phaseVisc[ip] );
+                             + phaseMob * (dPhaseDens[ip][Deriv::dT] / phaseDens[ip] -
+                                           dPhaseVisc[ip][Deriv::dT] / phaseVisc[ip]);
     } );
   }
 
@@ -130,8 +131,7 @@ public:
     if( numPhase == 2 )
     {
       isothermalCompositionalMultiphaseBaseKernels::
-        internal::kernelLaunchSelectorCompSwitch( numComp, [&] ( auto NC )
-      {
+        internal::kernelLaunchSelectorCompSwitch( numComp, [&]( auto NC ) {
         integer constexpr NUM_COMP = NC();
         PhaseMobilityKernel< NUM_COMP, 2 > kernel( subRegion, fluid, relperm );
         PhaseMobilityKernel< NUM_COMP, 2 >::template launch< POLICY >( subRegion.size(), kernel );
@@ -140,8 +140,7 @@ public:
     else if( numPhase == 3 )
     {
       isothermalCompositionalMultiphaseBaseKernels::
-        internal::kernelLaunchSelectorCompSwitch( numComp, [&] ( auto NC )
-      {
+        internal::kernelLaunchSelectorCompSwitch( numComp, [&]( auto NC ) {
         integer constexpr NUM_COMP = NC();
         PhaseMobilityKernel< NUM_COMP, 3 > kernel( subRegion, fluid, relperm );
         PhaseMobilityKernel< NUM_COMP, 3 >::template launch< POLICY >( subRegion.size(), kernel );
@@ -161,7 +160,8 @@ public:
  * @brief Define the interface for the assembly kernel in charge of flux terms
  */
 template< integer NUM_COMP, integer NUM_DOF, typename STENCILWRAPPER >
-class FaceBasedAssemblyKernel : public isothermalCompositionalMultiphaseFVMKernels::FaceBasedAssemblyKernel< NUM_COMP, NUM_DOF, STENCILWRAPPER >
+class FaceBasedAssemblyKernel
+  : public isothermalCompositionalMultiphaseFVMKernels::FaceBasedAssemblyKernel< NUM_COMP, NUM_DOF, STENCILWRAPPER >
 {
 public:
 
@@ -176,6 +176,7 @@ public:
 
   using AbstractBase = isothermalCompositionalMultiphaseFVMKernels::FaceBasedAssemblyKernelBase;
   using DofNumberAccessor = AbstractBase::DofNumberAccessor;
+  using GlobalCellDimAccessor = AbstractBase::GlobalCellDimAccessor;
   using CompFlowAccessors = AbstractBase::CompFlowAccessors;
   using MultiFluidAccessors = AbstractBase::MultiFluidAccessors;
   using CapPressureAccessors = AbstractBase::CapPressureAccessors;
@@ -243,6 +244,7 @@ public:
                            globalIndex const rankOffset,
                            STENCILWRAPPER const & stencilWrapper,
                            DofNumberAccessor const & dofNumberAccessor,
+                           GlobalCellDimAccessor const & globalCellDimAccessor,
                            CompFlowAccessors const & compFlowAccessors,
                            ThermalCompFlowAccessors const & thermalCompFlowAccessors,
                            MultiFluidAccessors const & multiFluidAccessors,
@@ -258,6 +260,7 @@ public:
             rankOffset,
             stencilWrapper,
             dofNumberAccessor,
+            globalCellDimAccessor,
             compFlowAccessors,
             multiFluidAccessors,
             capPressureAccessors,
@@ -266,11 +269,11 @@ public:
             localMatrix,
             localRhs,
             kernelFlags ),
-    m_temp( thermalCompFlowAccessors.get( fields::flow::temperature {} ) ),
-    m_phaseEnthalpy( thermalMultiFluidAccessors.get( fields::multifluid::phaseEnthalpy {} ) ),
-    m_dPhaseEnthalpy( thermalMultiFluidAccessors.get( fields::multifluid::dPhaseEnthalpy {} ) ),
-    m_thermalConductivity( thermalConductivityAccessors.get( fields::thermalconductivity::effectiveConductivity {} ) )
-  {}
+    m_temp( thermalCompFlowAccessors.get( fields::flow::temperature {} )),
+    m_phaseEnthalpy( thermalMultiFluidAccessors.get( fields::multifluid::phaseEnthalpy {} )),
+    m_dPhaseEnthalpy( thermalMultiFluidAccessors.get( fields::multifluid::dPhaseEnthalpy {} )),
+    m_thermalConductivity(
+      thermalConductivityAccessors.get( fields::thermalconductivity::effectiveConductivity {} )) {}
 
   struct StackVariables : public Base::StackVariables
   {
@@ -278,8 +281,7 @@ public:
 
     GEOS_HOST_DEVICE
     StackVariables( localIndex const size, localIndex numElems )
-      : Base::StackVariables( size, numElems )
-    {}
+      : Base::StackVariables( size, numElems ) {}
 
     using Base::StackVariables::stencilSize;
     using Base::StackVariables::numConnectedElems;
@@ -314,29 +316,28 @@ public:
     // Computing dCompFlux_dT and the enthalpy flux requires quantities already computed in the base computeFlux,
     // such as potGrad, phaseFlux, and the indices of the upwind cell
     // We use the lambda below (called **inside** the phase loop of the base computeFlux) to access these variables
-    Base::computeFlux( iconn, stack, [&] ( integer const ip,
-                                           localIndex const (&k)[2],
-                                           localIndex const (&seri)[2],
-                                           localIndex const (&sesri)[2],
-                                           localIndex const (&sei)[2],
-                                           localIndex const connectionIndex,
-                                           localIndex const k_up,
-                                           localIndex const er_up,
-                                           localIndex const esr_up,
-                                           localIndex const ei_up,
-                                           real64 const potGrad,
-                                           real64 const phaseFlux,
-                                           real64 const (&dPhaseFlux_dP)[2],
-                                           real64 const (&dPhaseFlux_dC)[2][numComp] )
-    {
+    Base::computeFlux( iconn, stack, [&]( integer const ip,
+                                          localIndex const (&k)[2],
+                                          localIndex const (&seri)[2],
+                                          localIndex const (&sesri)[2],
+                                          localIndex const (&sei)[2],
+                                          localIndex const connectionIndex,
+                                          localIndex const k_up,
+                                          localIndex const er_up,
+                                          localIndex const esr_up,
+                                          localIndex const ei_up,
+                                          real64 const potGrad,
+                                          real64 const phaseFlux,
+                                          real64 const (&dPhaseFlux_dP)[2],
+                                          real64 const (&dPhaseFlux_dC)[2][numComp] ) {
       // We are in the loop over phases, ip provides the current phase index.
 
       // Step 1: compute the derivatives of the mean density at the interface wrt temperature
 
       real64 dDensMean_dT[numFluxSupportPoints]{};
 
-      real64 const trans[numFluxSupportPoints] = { stack.transmissibility[connectionIndex][0],
-                                                   stack.transmissibility[connectionIndex][1] };
+      real64 const trans[numFluxSupportPoints] = {stack.transmissibility[connectionIndex][0],
+                                                  stack.transmissibility[connectionIndex][1]};
 
       real64 convectiveEnergyFlux = 0.0;
       real64 dConvectiveEnergyFlux_dP[numFluxSupportPoints]{};
@@ -346,9 +347,9 @@ public:
 
       for( integer i = 0; i < numFluxSupportPoints; ++i )
       {
-        localIndex const er  = seri[i];
+        localIndex const er = seri[i];
         localIndex const esr = sesri[i];
-        localIndex const ei  = sei[i];
+        localIndex const ei = sei[i];
 
         real64 const dDens_dT = m_dPhaseMassDens[er][esr][ei][0][ip][Deriv::dT];
         dDensMean_dT[i] = 0.5 * dDens_dT;
@@ -363,13 +364,14 @@ public:
       // compute potential difference MPFA-style
       for( integer i = 0; i < numFluxSupportPoints; ++i )
       {
-        localIndex const er  = seri[i];
+        localIndex const er = seri[i];
         localIndex const esr = sesri[i];
-        localIndex const ei  = sei[i];
+        localIndex const ei = sei[i];
 
         // Step 2.1: compute derivative of capillary pressure wrt temperature
         real64 dCapPressure_dT = 0.0;
-        if( AbstractBase::m_kernelFlags.isSet( isothermalCompositionalMultiphaseFVMKernels::FaceBasedAssemblyKernelFlags::CapPressure ) )
+        if( AbstractBase::m_kernelFlags.isSet(
+              isothermalCompositionalMultiphaseFVMKernels::FaceBasedAssemblyKernelFlags::CapPressure ))
         {
           for( integer jp = 0; jp < m_numPhases; ++jp )
           {
@@ -433,8 +435,8 @@ public:
       // Step 4: add dCompFlux_dTemp to localFluxJacobian
       for( integer ic = 0; ic < numComp; ++ic )
       {
-        integer const eqIndex0 = k[0]* numEqn + ic;
-        integer const eqIndex1 = k[1]* numEqn + ic;
+        integer const eqIndex0 = k[0] * numEqn + ic;
+        integer const eqIndex1 = k[1] * numEqn + ic;
         for( integer ke = 0; ke < numFluxSupportPoints; ++ke )
         {
           integer const localDofIndexTemp = k[ke] * numDof + numDof - 1;
@@ -458,8 +460,10 @@ public:
         }
       }
 
-      dConvectiveEnergyFlux_dP[k_up] += phaseFlux * m_dPhaseEnthalpy[er_up][esr_up][ei_up][0][ip][Deriv::dP];
-      dConvectiveEnergyFlux_dT[k_up] += phaseFlux * m_dPhaseEnthalpy[er_up][esr_up][ei_up][0][ip][Deriv::dT];
+      dConvectiveEnergyFlux_dP[k_up] +=
+        phaseFlux * m_dPhaseEnthalpy[er_up][esr_up][ei_up][0][ip][Deriv::dP];
+      dConvectiveEnergyFlux_dT[k_up] +=
+        phaseFlux * m_dPhaseEnthalpy[er_up][esr_up][ei_up][0][ip][Deriv::dT];
 
       real64 dProp_dC[numComp]{};
       applyChainRule( numComp,
@@ -475,23 +479,29 @@ public:
       // Step 6: add convectiveFlux and its derivatives to localFlux and localFluxJacobian
       integer const localRowIndexEnergy0 = k[0] * numEqn + numEqn - 1;
       integer const localRowIndexEnergy1 = k[1] * numEqn + numEqn - 1;
-      stack.localFlux[localRowIndexEnergy0] +=  m_dt * convectiveEnergyFlux;
-      stack.localFlux[localRowIndexEnergy1] -=  m_dt * convectiveEnergyFlux;
+      stack.localFlux[localRowIndexEnergy0] += m_dt * convectiveEnergyFlux;
+      stack.localFlux[localRowIndexEnergy1] -= m_dt * convectiveEnergyFlux;
 
       for( integer ke = 0; ke < numFluxSupportPoints; ++ke )
       {
         integer const localDofIndexPres = k[ke] * numDof;
-        stack.localFluxJacobian[localRowIndexEnergy0][localDofIndexPres] += m_dt * dConvectiveEnergyFlux_dP[ke];
-        stack.localFluxJacobian[localRowIndexEnergy1][localDofIndexPres] -= m_dt * dConvectiveEnergyFlux_dP[ke];
+        stack.localFluxJacobian[localRowIndexEnergy0][localDofIndexPres] +=
+          m_dt * dConvectiveEnergyFlux_dP[ke];
+        stack.localFluxJacobian[localRowIndexEnergy1][localDofIndexPres] -=
+          m_dt * dConvectiveEnergyFlux_dP[ke];
         integer const localDofIndexTemp = localDofIndexPres + numDof - 1;
-        stack.localFluxJacobian[localRowIndexEnergy0][localDofIndexTemp] +=  m_dt * dConvectiveEnergyFlux_dT[ke];
-        stack.localFluxJacobian[localRowIndexEnergy1][localDofIndexTemp] -=  m_dt * dConvectiveEnergyFlux_dT[ke];
+        stack.localFluxJacobian[localRowIndexEnergy0][localDofIndexTemp] +=
+          m_dt * dConvectiveEnergyFlux_dT[ke];
+        stack.localFluxJacobian[localRowIndexEnergy1][localDofIndexTemp] -=
+          m_dt * dConvectiveEnergyFlux_dT[ke];
 
         for( integer jc = 0; jc < numComp; ++jc )
         {
           integer const localDofIndexComp = localDofIndexPres + jc + 1;
-          stack.localFluxJacobian[localRowIndexEnergy0][localDofIndexComp] += m_dt * dConvectiveEnergyFlux_dC[ke][jc];
-          stack.localFluxJacobian[localRowIndexEnergy1][localDofIndexComp] -= m_dt * dConvectiveEnergyFlux_dC[ke][jc];
+          stack.localFluxJacobian[localRowIndexEnergy0][localDofIndexComp] +=
+            m_dt * dConvectiveEnergyFlux_dC[ke][jc];
+          stack.localFluxJacobian[localRowIndexEnergy1][localDofIndexComp] -=
+            m_dt * dConvectiveEnergyFlux_dC[ke][jc];
         }
       }
     } );
@@ -507,9 +517,10 @@ public:
     // TODO: modify computeWeights to accomodate explicit coefficients
     m_stencilWrapper.computeWeights( iconn,
                                      m_thermalConductivity,
-                                     m_thermalConductivity, // we have to pass something here, so we just use thermal conductivity
+                                     m_thermalConductivity,            // we have to pass something here, so we just use thermal
+                                                                       // conductivity
                                      stack.thermalTransmissibility,
-                                     stack.dTrans_dPres ); // again, we have to pass something here, but this is unused for now
+                                     stack.dTrans_dPres );           // again, we have to pass something here, but this is unused for now
 
 
 
@@ -520,10 +531,11 @@ public:
     {
       for( k[1] = k[0] + 1; k[1] < stack.numConnectedElems; ++k[1] )
       {
-        real64 const thermalTrans[2] = { stack.thermalTransmissibility[connectionIndex][0], stack.thermalTransmissibility[connectionIndex][1] };
-        localIndex const seri[2]  = {m_seri( iconn, k[0] ), m_seri( iconn, k[1] )};
+        real64 const thermalTrans[2] = {stack.thermalTransmissibility[connectionIndex][0],
+                                        stack.thermalTransmissibility[connectionIndex][1]};
+        localIndex const seri[2] = {m_seri( iconn, k[0] ), m_seri( iconn, k[1] )};
         localIndex const sesri[2] = {m_sesri( iconn, k[0] ), m_sesri( iconn, k[1] )};
-        localIndex const sei[2]   = {m_sei( iconn, k[0] ), m_sei( iconn, k[1] )};
+        localIndex const sei[2] = {m_sei( iconn, k[0] ), m_sei( iconn, k[1] )};
 
         real64 conductiveEnergyFlux = 0.0;
         real64 dConductiveEnergyFlux_dT[numFluxSupportPoints]{};
@@ -531,9 +543,9 @@ public:
         // Step 2: compute temperature difference at the interface
         for( integer ke = 0; ke < numFluxSupportPoints; ++ke )
         {
-          localIndex const er  = seri[ke];
+          localIndex const er = seri[ke];
           localIndex const esr = sesri[ke];
-          localIndex const ei  = sei[ke];
+          localIndex const ei = sei[ke];
 
           conductiveEnergyFlux += thermalTrans[ke] * m_temp[er][esr][ei];
           dConductiveEnergyFlux_dT[ke] += thermalTrans[ke];
@@ -542,14 +554,16 @@ public:
         // Step 3: add conductiveFlux and its derivatives to localFlux and localFluxJacobian
         integer const localRowIndexEnergy0 = k[0] * numEqn + numEqn - 1;
         integer const localRowIndexEnergy1 = k[1] * numEqn + numEqn - 1;
-        stack.localFlux[localRowIndexEnergy0] +=  m_dt * conductiveEnergyFlux;
-        stack.localFlux[localRowIndexEnergy1] -=  m_dt * conductiveEnergyFlux;
+        stack.localFlux[localRowIndexEnergy0] += m_dt * conductiveEnergyFlux;
+        stack.localFlux[localRowIndexEnergy1] -= m_dt * conductiveEnergyFlux;
 
         for( integer ke = 0; ke < numFluxSupportPoints; ++ke )
         {
           integer const localDofIndexTemp = k[ke] * numDof + numDof - 1;
-          stack.localFluxJacobian[localRowIndexEnergy0][localDofIndexTemp] +=  m_dt * dConductiveEnergyFlux_dT[ke];
-          stack.localFluxJacobian[localRowIndexEnergy1][localDofIndexTemp] -=  m_dt * dConductiveEnergyFlux_dT[ke];
+          stack.localFluxJacobian[localRowIndexEnergy0][localDofIndexTemp] +=
+            m_dt * dConductiveEnergyFlux_dT[ke];
+          stack.localFluxJacobian[localRowIndexEnergy1][localDofIndexTemp] -=
+            m_dt * dConductiveEnergyFlux_dT[ke];
         }
       }
     }
@@ -567,15 +581,15 @@ public:
   {
     // Call Case::complete to assemble the component mass balance equations (i = 0 to i = numDof-2)
     // In the lambda, add contribution to residual and jacobian into the energy balance equation
-    Base::complete( iconn, stack, [&] ( integer const i,
-                                        localIndex const localRow )
-    {
+    Base::complete( iconn, stack, [&]( integer const i,
+                                       localIndex const localRow ) {
       // beware, there is  volume balance eqn in m_localRhs and m_localMatrix!
-      RAJA::atomicAdd( parallelDeviceAtomic{}, &AbstractBase::m_localRhs[localRow + numEqn], stack.localFlux[i * numEqn + numEqn-1] );
+      RAJA::atomicAdd( parallelDeviceAtomic{}, &AbstractBase::m_localRhs[localRow + numEqn],
+                       stack.localFlux[i * numEqn + numEqn - 1] );
       AbstractBase::m_localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >
         ( localRow + numEqn,
         stack.dofColIndices.data(),
-        stack.localFluxJacobian[i * numEqn + numEqn-1].dataIfContiguous(),
+        stack.localFluxJacobian[i * numEqn + numEqn - 1].dataIfContiguous(),
         stack.stencilSize * numDof );
 
     } );
@@ -626,6 +640,7 @@ public:
                    globalIndex const rankOffset,
                    string const & dofKey,
                    integer const hasCapPressure,
+                   integer const hasVelocityCompute,
                    integer const useTotalMassEquation,
                    string const & solverName,
                    ElementRegionManager const & elemManager,
@@ -634,9 +649,9 @@ public:
                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
                    arrayView1d< real64 > const & localRhs )
   {
+
     isothermalCompositionalMultiphaseBaseKernels::
-      internal::kernelLaunchSelectorCompSwitch( numComps, [&]( auto NC )
-    {
+      internal::kernelLaunchSelectorCompSwitch( numComps, [&]( auto NC ) {
       integer constexpr NUM_COMP = NC();
       integer constexpr NUM_DOF = NC() + 2;
 
@@ -644,11 +659,22 @@ public:
         elemManager.constructArrayViewAccessor< globalIndex, 1 >( dofKey );
       dofNumberAccessor.setName( solverName + "/accessors/" + dofKey );
 
+      ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > const cellCartDimAccessor =
+        elemManager.constructArrayViewAccessor< real64, 2 >(
+          CellElementSubRegion::viewKeyStruct::cellCartesianDimString());
+
+
       BitFlags< isothermalCompositionalMultiphaseFVMKernels::FaceBasedAssemblyKernelFlags > kernelFlags;
       if( hasCapPressure )
-        kernelFlags.set( isothermalCompositionalMultiphaseFVMKernels::FaceBasedAssemblyKernelFlags::CapPressure );
+        kernelFlags.set(
+          isothermalCompositionalMultiphaseFVMKernels::FaceBasedAssemblyKernelFlags::CapPressure );
       if( useTotalMassEquation )
-        kernelFlags.set( isothermalCompositionalMultiphaseFVMKernels::FaceBasedAssemblyKernelFlags::TotalMassEquation );
+        kernelFlags.set(
+          isothermalCompositionalMultiphaseFVMKernels::FaceBasedAssemblyKernelFlags::TotalMassEquation );
+      if( hasVelocityCompute )
+        kernelFlags.set(
+          isothermalCompositionalMultiphaseFVMKernels::FaceBasedAssemblyKernelFlags::computeVelocity );
+
 
       using KernelType = FaceBasedAssemblyKernel< NUM_COMP, NUM_DOF, STENCILWRAPPER >;
       typename KernelType::CompFlowAccessors compFlowAccessors( elemManager, solverName );
@@ -657,10 +683,12 @@ public:
       typename KernelType::ThermalMultiFluidAccessors thermalMultiFluidAccessors( elemManager, solverName );
       typename KernelType::CapPressureAccessors capPressureAccessors( elemManager, solverName );
       typename KernelType::PermeabilityAccessors permeabilityAccessors( elemManager, solverName );
-      typename KernelType::ThermalConductivityAccessors thermalConductivityAccessors( elemManager, solverName );
+      typename KernelType::ThermalConductivityAccessors thermalConductivityAccessors( elemManager,
+                                                                                      solverName );
 
-      KernelType kernel( numPhases, rankOffset, stencilWrapper, dofNumberAccessor,
-                         compFlowAccessors, thermalCompFlowAccessors, multiFluidAccessors, thermalMultiFluidAccessors,
+      KernelType kernel( numPhases, rankOffset, stencilWrapper, dofNumberAccessor, cellCartDimAccessor,
+                         compFlowAccessors, thermalCompFlowAccessors, multiFluidAccessors,
+                         thermalMultiFluidAccessors,
                          capPressureAccessors, permeabilityAccessors, thermalConductivityAccessors,
                          dt, localMatrix, localRhs, kernelFlags );
       KernelType::template launch< POLICY >( stencilWrapper.size(), kernel );
@@ -694,6 +722,7 @@ public:
 
   using AbstractBase = isothermalCompositionalMultiphaseFVMKernels::FaceBasedAssemblyKernelBase;
   using DofNumberAccessor = AbstractBase::DofNumberAccessor;
+  using GlobalCellDimAccessor = AbstractBase::GlobalCellDimAccessor;
   using CompFlowAccessors = AbstractBase::CompFlowAccessors;
   using MultiFluidAccessors = AbstractBase::MultiFluidAccessors;
   using AbstractBase::m_dt;
@@ -734,6 +763,7 @@ public:
                                               globalIndex const rankOffset,
                                               STENCILWRAPPER const & stencilWrapper,
                                               DofNumberAccessor const & dofNumberAccessor,
+                                              GlobalCellDimAccessor const & globalCellDimAccessor,
                                               CompFlowAccessors const & compFlowAccessors,
                                               MultiFluidAccessors const & multiFluidAccessors,
                                               DiffusionAccessors const & diffusionAccessors,
@@ -747,6 +777,7 @@ public:
             rankOffset,
             stencilWrapper,
             dofNumberAccessor,
+            globalCellDimAccessor,
             compFlowAccessors,
             multiFluidAccessors,
             diffusionAccessors,
@@ -755,8 +786,7 @@ public:
             dt,
             localMatrix,
             localRhs,
-            kernelFlags )
-  {}
+            kernelFlags ) {}
 
   struct StackVariables : public Base::StackVariables
   {
@@ -764,8 +794,7 @@ public:
 
     GEOS_HOST_DEVICE
     StackVariables( localIndex const size, localIndex numElems )
-      : Base::StackVariables( size, numElems )
-    {}
+      : Base::StackVariables( size, numElems ) {}
 
     using Base::StackVariables::transmissibility;
     using Base::StackVariables::localFlux;
@@ -789,20 +818,19 @@ public:
     // First, we call the base computeFlux to compute the diffusionFlux and its derivatives (including derivatives wrt temperature),
     //
     // We use the lambda below (called **inside** the phase loop of the base computeFlux) to access these variables
-    Base::computeDiffusionFlux( iconn, stack, [&] ( integer const ip,
-                                                    integer const ic,
-                                                    localIndex const (&k)[2],
-                                                    localIndex const (&seri)[2],
-                                                    localIndex const (&sesri)[2],
-                                                    localIndex const (&sei)[2],
-                                                    localIndex const connectionIndex,
-                                                    localIndex const k_up,
-                                                    localIndex const er_up,
-                                                    localIndex const esr_up,
-                                                    localIndex const ei_up,
-                                                    real64 const compFracGrad,
-                                                    real64 const upwindCoefficient )
-    {
+    Base::computeDiffusionFlux( iconn, stack, [&]( integer const ip,
+                                                   integer const ic,
+                                                   localIndex const (&k)[2],
+                                                   localIndex const (&seri)[2],
+                                                   localIndex const (&sesri)[2],
+                                                   localIndex const (&sei)[2],
+                                                   localIndex const connectionIndex,
+                                                   localIndex const k_up,
+                                                   localIndex const er_up,
+                                                   localIndex const esr_up,
+                                                   localIndex const ei_up,
+                                                   real64 const compFracGrad,
+                                                   real64 const upwindCoefficient ) {
       // We are in the loop over phases and components, ip provides the current phase index.
 
       real64 dCompFracGrad_dT[numFluxSupportPoints]{};
@@ -811,11 +839,12 @@ public:
       /// compute the TPFA component difference
       for( integer i = 0; i < numFluxSupportPoints; i++ )
       {
-        localIndex const er  = seri[i];
+        localIndex const er = seri[i];
         localIndex const esr = sesri[i];
-        localIndex const ei  = sei[i];
+        localIndex const ei = sei[i];
 
-        dCompFracGrad_dT[i] += stack.transmissibility[connectionIndex][i] * m_dPhaseCompFrac[er][esr][ei][0][ip][ic][Deriv::dT];
+        dCompFracGrad_dT[i] += stack.transmissibility[connectionIndex][i] *
+                               m_dPhaseCompFrac[er][esr][ei][0][ip][ic][Deriv::dT];
       }
 
       // add contributions of the derivatives of component fractions wrt pressure/component fractions
@@ -828,8 +857,10 @@ public:
       real64 const dUpwindCoefficient_dT =
         m_referencePorosity[er_up][esr_up][ei_up] *
         m_phaseDiffusivityMultiplier[er_up][esr_up][ei_up][0][ip] *
-        ( m_dPhaseDens[er_up][esr_up][ei_up][0][ip][Deriv::dT] * m_phaseVolFrac[er_up][esr_up][ei_up][ip]
-          + m_phaseDens[er_up][esr_up][ei_up][0][ip] * m_dPhaseVolFrac[er_up][esr_up][ei_up][ip][Deriv::dT] );
+        (m_dPhaseDens[er_up][esr_up][ei_up][0][ip][Deriv::dT] *
+         m_phaseVolFrac[er_up][esr_up][ei_up][ip]
+         + m_phaseDens[er_up][esr_up][ei_up][0][ip] *
+         m_dPhaseVolFrac[er_up][esr_up][ei_up][ip][Deriv::dT]);
       dDiffusionFlux_dT[k_up] += dUpwindCoefficient_dT * compFracGrad;
 
       // finally, increment local flux and local Jacobian
@@ -861,19 +892,18 @@ public:
     // First, we call the base computeFlux to compute the dispersionFlux and its derivatives (including derivatives wrt temperature),
     //
     // We use the lambda below (called **inside** the phase loop of the base computeFlux) to access these variables
-    Base::computeDispersionFlux( iconn, stack, [&] ( integer const ip,
-                                                     integer const ic,
-                                                     localIndex const (&k)[2],
-                                                     localIndex const (&seri)[2],
-                                                     localIndex const (&sesri)[2],
-                                                     localIndex const (&sei)[2],
-                                                     localIndex const connectionIndex,
-                                                     localIndex const k_up,
-                                                     localIndex const er_up,
-                                                     localIndex const esr_up,
-                                                     localIndex const ei_up,
-                                                     real64 const compFracGrad )
-    {
+    Base::computeDispersionFlux( iconn, stack, [&]( integer const ip,
+                                                    integer const ic,
+                                                    localIndex const (&k)[2],
+                                                    localIndex const (&seri)[2],
+                                                    localIndex const (&sesri)[2],
+                                                    localIndex const (&sei)[2],
+                                                    localIndex const connectionIndex,
+                                                    localIndex const k_up,
+                                                    localIndex const er_up,
+                                                    localIndex const esr_up,
+                                                    localIndex const ei_up,
+                                                    real64 const compFracGrad ) {
       // We are in the loop over phases and components, ip provides the current phase index.
 
       real64 dCompFracGrad_dT[numFluxSupportPoints]{};
@@ -882,11 +912,12 @@ public:
       /// compute the TPFA component difference
       for( integer i = 0; i < numFluxSupportPoints; i++ )
       {
-        localIndex const er  = seri[i];
+        localIndex const er = seri[i];
         localIndex const esr = sesri[i];
-        localIndex const ei  = sei[i];
+        localIndex const ei = sei[i];
 
-        dCompFracGrad_dT[i] += stack.transmissibility[connectionIndex][i] * m_dPhaseCompFrac[er][esr][ei][0][ip][ic][Deriv::dT];
+        dCompFracGrad_dT[i] += stack.transmissibility[connectionIndex][i] *
+                               m_dPhaseCompFrac[er][esr][ei][0][ip][ic][Deriv::dT];
       }
 
       // add contributions of the derivatives of component fractions wrt pressure/component fractions
@@ -953,8 +984,7 @@ public:
                    arrayView1d< real64 > const & localRhs )
   {
     isothermalCompositionalMultiphaseBaseKernels::
-      internal::kernelLaunchSelectorCompSwitch( numComps, [&]( auto NC )
-    {
+      internal::kernelLaunchSelectorCompSwitch( numComps, [&]( auto NC ) {
       integer constexpr NUM_COMP = NC();
       integer constexpr NUM_DOF = NC() + 2;
 
@@ -964,7 +994,12 @@ public:
 
       BitFlags< isothermalCompositionalMultiphaseFVMKernels::FaceBasedAssemblyKernelFlags > kernelFlags;
       if( useTotalMassEquation )
-        kernelFlags.set( isothermalCompositionalMultiphaseFVMKernels::FaceBasedAssemblyKernelFlags::TotalMassEquation );
+        kernelFlags.set(
+          isothermalCompositionalMultiphaseFVMKernels::FaceBasedAssemblyKernelFlags::TotalMassEquation );
+
+      ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > const cellCartDimAccessor =
+        elemManager.constructArrayViewAccessor< real64, 2 >(
+          CellElementSubRegion::viewKeyStruct::cellCartesianDimString());
 
       using kernelType = DiffusionDispersionFaceBasedAssemblyKernel< NUM_COMP, NUM_DOF, STENCILWRAPPER >;
       typename kernelType::CompFlowAccessors compFlowAccessors( elemManager, solverName );
@@ -974,7 +1009,8 @@ public:
       typename kernelType::PorosityAccessors porosityAccessors( elemManager, solverName );
 
       kernelType kernel( numPhases, rankOffset, stencilWrapper,
-                         dofNumberAccessor, compFlowAccessors, multiFluidAccessors,
+                         dofNumberAccessor, cellCartDimAccessor,
+                         compFlowAccessors, multiFluidAccessors,
                          diffusionAccessors, dispersionAccessors, porosityAccessors,
                          dt, localMatrix, localRhs, kernelFlags );
       kernelType::template launch< POLICY >( stencilWrapper.size(),
@@ -994,9 +1030,10 @@ public:
  * @brief Define the interface for the assembly kernel in charge of Dirichlet face flux terms
  */
 template< integer NUM_COMP, integer NUM_DOF, typename FLUIDWRAPPER >
-class DirichletFaceBasedAssemblyKernel : public isothermalCompositionalMultiphaseFVMKernels::DirichletFaceBasedAssemblyKernel< NUM_COMP,
-                                                                                                                               NUM_DOF,
-                                                                                                                               FLUIDWRAPPER >
+class DirichletFaceBasedAssemblyKernel
+  : public isothermalCompositionalMultiphaseFVMKernels::DirichletFaceBasedAssemblyKernel< NUM_COMP,
+                                                                                          NUM_DOF,
+                                                                                          FLUIDWRAPPER >
 {
 public:
 
@@ -1011,6 +1048,7 @@ public:
 
   using AbstractBase = isothermalCompositionalMultiphaseFVMKernels::FaceBasedAssemblyKernelBase;
   using DofNumberAccessor = AbstractBase::DofNumberAccessor;
+  using GlobalCellDimAccessor = AbstractBase::GlobalCellDimAccessor;
   using CompFlowAccessors = AbstractBase::CompFlowAccessors;
   using MultiFluidAccessors = AbstractBase::MultiFluidAccessors;
   using CapPressureAccessors = AbstractBase::CapPressureAccessors;
@@ -1080,6 +1118,7 @@ public:
                                     BoundaryStencilWrapper const & stencilWrapper,
                                     FLUIDWRAPPER const & fluidWrapper,
                                     DofNumberAccessor const & dofNumberAccessor,
+                                    GlobalCellDimAccessor const & globalCellDimAccessor,
                                     CompFlowAccessors const & compFlowAccessors,
                                     ThermalCompFlowAccessors const & thermalCompFlowAccessors,
                                     MultiFluidAccessors const & multiFluidAccessors,
@@ -1097,6 +1136,7 @@ public:
             stencilWrapper,
             fluidWrapper,
             dofNumberAccessor,
+            globalCellDimAccessor,
             compFlowAccessors,
             multiFluidAccessors,
             capPressureAccessors,
@@ -1105,11 +1145,11 @@ public:
             localMatrix,
             localRhs,
             kernelFlags ),
-    m_temp( thermalCompFlowAccessors.get( fields::flow::temperature {} ) ),
-    m_phaseEnthalpy( thermalMultiFluidAccessors.get( fields::multifluid::phaseEnthalpy {} ) ),
-    m_dPhaseEnthalpy( thermalMultiFluidAccessors.get( fields::multifluid::dPhaseEnthalpy {} ) ),
-    m_thermalConductivity( thermalConductivityAccessors.get( fields::thermalconductivity::effectiveConductivity {} ) )
-  {}
+    m_temp( thermalCompFlowAccessors.get( fields::flow::temperature {} )),
+    m_phaseEnthalpy( thermalMultiFluidAccessors.get( fields::multifluid::phaseEnthalpy {} )),
+    m_dPhaseEnthalpy( thermalMultiFluidAccessors.get( fields::multifluid::dPhaseEnthalpy {} )),
+    m_thermalConductivity(
+      thermalConductivityAccessors.get( fields::thermalconductivity::effectiveConductivity {} )) {}
 
   struct StackVariables : public Base::StackVariables
   {
@@ -1122,8 +1162,7 @@ public:
      */
     GEOS_HOST_DEVICE
     StackVariables( localIndex const size, localIndex numElems )
-      : Base::StackVariables( size, numElems )
-    {}
+      : Base::StackVariables( size, numElems ) {}
 
     using Base::StackVariables::transmissibility;
     using Base::StackVariables::dofColIndices;
@@ -1169,19 +1208,20 @@ public:
     // Computing dCompFlux_dT and the enthalpy flux requires quantities already computed in the base computeFlux,
     // such as potGrad, phaseFlux, and the indices of the upwind cell
     // We use the lambda below (called **inside** the phase loop of the base computeFlux) to access these variables
-    Base::computeFlux( iconn, stack, [&] ( integer const ip,
-                                           localIndex const er,
-                                           localIndex const esr,
-                                           localIndex const ei,
-                                           localIndex const kf,
-                                           real64 const f, // potGrad times trans
-                                           real64 const facePhaseMob,
-                                           arraySlice1d< const real64, multifluid::USD_PHASE - 2 > const & facePhaseEnthalpy,
-                                           arraySlice2d< const real64, multifluid::USD_PHASE_COMP-2 > const & facePhaseCompFrac,
-                                           real64 const phaseFlux,
-                                           real64 const dPhaseFlux_dP,
-                                           real64 const (&dPhaseFlux_dC)[numComp] )
-    {
+    Base::computeFlux( iconn, stack, [&]( integer const ip,
+                                          localIndex const er,
+                                          localIndex const esr,
+                                          localIndex const ei,
+                                          localIndex const kf,
+                                          real64 const f,           // potGrad times trans
+                                          real64 const facePhaseMob,
+                                          arraySlice1d< const real64,
+                                                        multifluid::USD_PHASE - 2 > const & facePhaseEnthalpy,
+                                          arraySlice2d< const real64,
+                                                        multifluid::USD_PHASE_COMP - 2 > const & facePhaseCompFrac,
+                                          real64 const phaseFlux,
+                                          real64 const dPhaseFlux_dP,
+                                          real64 const (&dPhaseFlux_dC)[numComp] ) {
       // We are in the loop over phases, ip provides the current phase index.
 
       // Step 1: compute the derivatives of the mean density at the interface wrt temperature
@@ -1191,7 +1231,8 @@ public:
       // Step 2: compute the derivatives of the phase potential difference wrt temperature
       //***** calculation of flux *****
 
-      real64 const dF_dT = -stack.transmissibility * dDensMean_dT * ( m_gravCoef[er][esr][ei] - m_faceGravCoef[kf] );
+      real64 const dF_dT =
+        -stack.transmissibility * dDensMean_dT * (m_gravCoef[er][esr][ei] - m_faceGravCoef[kf]);
 
       // Step 3: compute the derivatives of the (upwinded) compFlux wrt temperature
       // *** upwinding ***
@@ -1201,11 +1242,12 @@ public:
       // It is easier to hard-code the if/else because it is difficult to address elem and face variables in a uniform way
 
 
-      if( f >= 0 ) // the element is upstream
+      if( f >= 0 )              // the element is upstream
       {
 
         // Step 3.1.a: compute the derivative of phase flux wrt temperature
-        real64 const dPhaseFlux_dT = m_phaseMob[er][esr][ei][ip] * dF_dT + m_dPhaseMob[er][esr][ei][ip][Deriv::dT] * f;
+        real64 const dPhaseFlux_dT =
+          m_phaseMob[er][esr][ei][ip] * dF_dT + m_dPhaseMob[er][esr][ei][ip][Deriv::dT] * f;
 
         // Step 3.2.a: compute the derivative of component flux wrt temperature
 
@@ -1218,15 +1260,18 @@ public:
         for( integer ic = 0; ic < numComp; ++ic )
         {
           real64 const ycp = phaseCompFracSub[ic];
-          stack.dCompFlux_dT[ic] += dPhaseFlux_dT * ycp + phaseFlux * dPhaseCompFracSub[ic][Deriv::dT];
+          stack.dCompFlux_dT[ic] +=
+            dPhaseFlux_dT * ycp + phaseFlux * dPhaseCompFracSub[ic][Deriv::dT];
         }
 
         // Step 3.3.a: compute the enthalpy flux
 
         real64 const enthalpy = m_phaseEnthalpy[er][esr][ei][0][ip];
         stack.energyFlux += phaseFlux * enthalpy;
-        stack.dEnergyFlux_dP += dPhaseFlux_dP * enthalpy + phaseFlux * m_dPhaseEnthalpy[er][esr][ei][0][ip][Deriv::dP];
-        stack.dEnergyFlux_dT += dPhaseFlux_dT * enthalpy + phaseFlux * m_dPhaseEnthalpy[er][esr][ei][0][ip][Deriv::dT];
+        stack.dEnergyFlux_dP +=
+          dPhaseFlux_dP * enthalpy + phaseFlux * m_dPhaseEnthalpy[er][esr][ei][0][ip][Deriv::dP];
+        stack.dEnergyFlux_dT +=
+          dPhaseFlux_dT * enthalpy + phaseFlux * m_dPhaseEnthalpy[er][esr][ei][0][ip][Deriv::dT];
 
         real64 dProp_dC[numComp]{};
         applyChainRule( numComp,
@@ -1240,7 +1285,7 @@ public:
         }
 
       }
-      else // the face is upstream
+      else                 // the face is upstream
       {
 
         // Step 3.1.b: compute the derivative of phase flux wrt temperature
@@ -1279,7 +1324,7 @@ public:
     // To avoid modifying the signature of the "computeWeights" function for now, we pass m_thermalConductivity twice
     // TODO: modify computeWeights to accomodate explicit coefficients
     real64 thermalTrans = 0.0;
-    real64 dThermalTrans_dPerm[3]{}; // not used
+    real64 dThermalTrans_dPerm[3]{};             // not used
     m_stencilWrapper.computeWeights( iconn,
                                      m_thermalConductivity,
                                      thermalTrans,
@@ -1287,7 +1332,9 @@ public:
 
     // Step 2: compute temperature difference at the interface
     stack.energyFlux += thermalTrans
-                        * ( m_temp[m_seri( iconn, Order::ELEM )][m_sesri( iconn, Order::ELEM )][m_sei( iconn, Order::ELEM )] - m_faceTemp[m_sei( iconn, Order::FACE )] );
+                        * (m_temp[m_seri( iconn, Order::ELEM )][m_sesri( iconn, Order::ELEM )][m_sei( iconn,
+                                                                                                      Order::ELEM )] -
+                           m_faceTemp[m_sei( iconn, Order::FACE )]);
     stack.dEnergyFlux_dT += thermalTrans;
 
 
@@ -1300,18 +1347,18 @@ public:
     // Step 1: add dCompFlux_dTemp to localFluxJacobian
     for( integer ic = 0; ic < numComp; ++ic )
     {
-      stack.localFluxJacobian[ic][numDof-1] =  m_dt * stack.dCompFlux_dT[ic];
+      stack.localFluxJacobian[ic][numDof - 1] = m_dt * stack.dCompFlux_dT[ic];
     }
 
     // Step 2: add energyFlux and its derivatives to localFlux and localFluxJacobian
-    integer const localRowIndexEnergy = numEqn-1;
-    stack.localFlux[localRowIndexEnergy] =  m_dt * stack.energyFlux;
+    integer const localRowIndexEnergy = numEqn - 1;
+    stack.localFlux[localRowIndexEnergy] = m_dt * stack.energyFlux;
 
-    stack.localFluxJacobian[localRowIndexEnergy][0] =  m_dt * stack.dEnergyFlux_dP;
-    stack.localFluxJacobian[localRowIndexEnergy][numDof-1] =  m_dt * stack.dEnergyFlux_dT;
+    stack.localFluxJacobian[localRowIndexEnergy][0] = m_dt * stack.dEnergyFlux_dP;
+    stack.localFluxJacobian[localRowIndexEnergy][numDof - 1] = m_dt * stack.dEnergyFlux_dT;
     for( integer jc = 0; jc < numComp; ++jc )
     {
-      stack.localFluxJacobian[localRowIndexEnergy][jc+1] =  m_dt * stack.dEnergyFlux_dC[jc];
+      stack.localFluxJacobian[localRowIndexEnergy][jc + 1] = m_dt * stack.dEnergyFlux_dC[jc];
     }
   }
 
@@ -1326,14 +1373,14 @@ public:
   {
     // Call Case::complete to assemble the component mass balance equations (i = 0 to i = numDof-2)
     // In the lambda, add contribution to residual and jacobian into the energy balance equation
-    Base::complete( iconn, stack, [&] ( localIndex const localRow )
-    {
+    Base::complete( iconn, stack, [&]( localIndex const localRow ) {
       // beware, there is  volume balance eqn in m_localRhs and m_localMatrix!
-      RAJA::atomicAdd( parallelDeviceAtomic{}, &AbstractBase::m_localRhs[localRow + numEqn], stack.localFlux[numEqn-1] );
+      RAJA::atomicAdd( parallelDeviceAtomic{}, &AbstractBase::m_localRhs[localRow + numEqn],
+                       stack.localFlux[numEqn - 1] );
       AbstractBase::m_localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >
         ( localRow + numEqn,
         stack.dofColIndices,
-        stack.localFluxJacobian[numEqn-1],
+        stack.localFluxJacobian[numEqn - 1],
         numDof );
 
     } );
@@ -1394,14 +1441,12 @@ public:
                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
                    arrayView1d< real64 > const & localRhs )
   {
-    constitutive::constitutiveUpdatePassThru( fluidBase, [&]( auto & fluid )
-    {
+    constitutive::constitutiveUpdatePassThru( fluidBase, [&]( auto & fluid ) {
       using FluidType = TYPEOFREF( fluid );
       typename FluidType::KernelWrapper const fluidWrapper = fluid.createKernelWrapper();
 
       isothermalCompositionalMultiphaseBaseKernels::
-        internal::kernelLaunchSelectorCompSwitch( numComps, [&]( auto NC )
-      {
+        internal::kernelLaunchSelectorCompSwitch( numComps, [&]( auto NC ) {
         integer constexpr NUM_COMP = NC();
         integer constexpr NUM_DOF = NC() + 2;
 
@@ -1409,23 +1454,33 @@ public:
           elemManager.constructArrayViewAccessor< globalIndex, 1 >( dofKey );
         dofNumberAccessor.setName( solverName + "/accessors/" + dofKey );
 
+        ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > const cellCartDimAccessor =
+          elemManager.constructArrayViewAccessor< real64, 2 >(
+            CellElementSubRegion::viewKeyStruct::cellCartesianDimString());
+
+
         // for now, we neglect capillary pressure in the kernel
         BitFlags< isothermalCompositionalMultiphaseFVMKernels::FaceBasedAssemblyKernelFlags > kernelFlags;
         if( useTotalMassEquation )
-          kernelFlags.set( isothermalCompositionalMultiphaseFVMKernels::FaceBasedAssemblyKernelFlags::TotalMassEquation );
+          kernelFlags.set(
+            isothermalCompositionalMultiphaseFVMKernels::FaceBasedAssemblyKernelFlags::TotalMassEquation );
 
         using KernelType = DirichletFaceBasedAssemblyKernel< NUM_COMP, NUM_DOF, typename FluidType::KernelWrapper >;
         typename KernelType::CompFlowAccessors compFlowAccessors( elemManager, solverName );
         typename KernelType::ThermalCompFlowAccessors thermalCompFlowAccessors( elemManager, solverName );
         typename KernelType::MultiFluidAccessors multiFluidAccessors( elemManager, solverName );
-        typename KernelType::ThermalMultiFluidAccessors thermalMultiFluidAccessors( elemManager, solverName );
+        typename KernelType::ThermalMultiFluidAccessors thermalMultiFluidAccessors( elemManager,
+                                                                                    solverName );
         typename KernelType::CapPressureAccessors capPressureAccessors( elemManager, solverName );
         typename KernelType::PermeabilityAccessors permeabilityAccessors( elemManager, solverName );
-        typename KernelType::ThermalConductivityAccessors thermalConductivityAccessors( elemManager, solverName );
+        typename KernelType::ThermalConductivityAccessors thermalConductivityAccessors( elemManager,
+                                                                                        solverName );
 
+        // for now, we neglect capillary pressure in the kernel
         KernelType kernel( numPhases, rankOffset, faceManager, stencilWrapper, fluidWrapper,
-                           dofNumberAccessor, compFlowAccessors, thermalCompFlowAccessors, multiFluidAccessors, thermalMultiFluidAccessors,
-                           capPressureAccessors, permeabilityAccessors, thermalConductivityAccessors,
+                           dofNumberAccessor, cellCartDimAccessor, compFlowAccessors,
+                           thermalCompFlowAccessors, multiFluidAccessors,
+                           thermalMultiFluidAccessors, capPressureAccessors, permeabilityAccessors, thermalConductivityAccessors,
                            dt, localMatrix, localRhs, kernelFlags );
         KernelType::template launch< POLICY >( stencilWrapper.size(), kernel );
       } );
@@ -1434,7 +1489,7 @@ public:
 };
 
 
-} // namespace thermalCompositionalMultiphaseFVMKernels
+}     // namespace thermalCompositionalMultiphaseFVMKernels
 
 } // namespace geos
 

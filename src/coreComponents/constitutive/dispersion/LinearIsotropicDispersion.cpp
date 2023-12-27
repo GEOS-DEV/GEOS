@@ -17,6 +17,7 @@
  */
 
 #include "LinearIsotropicDispersion.hpp"
+#include "constitutive/dispersion/DispersionFields.hpp"
 
 namespace geos
 {
@@ -42,6 +43,25 @@ LinearIsotropicDispersion::deliverClone( string const & name,
   return DispersionBase::deliverClone( name, parent );
 }
 
+void LinearIsotropicDispersion::allocateConstitutiveData( dataRepository::Group & parent,
+                                                          const geos::localIndex numConstitutivePointsPerParentIndex )
+{
+  DispersionBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
+  for( int ei = 0; ei < parent.size(); ++ei )
+  {
+    for( int q = 0; q < 1; ++q )
+    {
+      for( int ip = 0; ip < m_dispersivity.size( 2 ); ++ip )
+      {
+        m_dispersivity[ei][q][ip][0] = m_longitudinalDispersivity;
+        m_dispersivity[ei][q][ip][1] = m_longitudinalDispersivity;
+        m_dispersivity[ei][q][ip][2] = m_longitudinalDispersivity;
+      }
+    }
+
+  }
+}
+
 void LinearIsotropicDispersion::postProcessInput()
 {
   GEOS_THROW_IF( m_longitudinalDispersivity < 0,
@@ -50,12 +70,12 @@ void LinearIsotropicDispersion::postProcessInput()
                  InputError );
 }
 
-void LinearIsotropicDispersion::initializeVelocityState( arrayView2d< real64 const > const & initialVelocity ) const
+void LinearIsotropicDispersion::initializeVelocityState( arrayView3d< real64 const > const & initialVelocity, arrayView3d< real64 const > const & phaseDensity ) const
 {
-  saveConvergedVelocityState( initialVelocity );
+  saveConvergedVelocityState( initialVelocity, phaseDensity );
 }
 
-void LinearIsotropicDispersion::saveConvergedVelocityState( arrayView2d< real64 const > const & convergedVelocity ) const
+void LinearIsotropicDispersion::saveConvergedVelocityState( arrayView3d< real64 const > const & convergedVelocity, arrayView3d< real64 const > const & phaseDensity ) const
 {
   // note that the update function is called here, and not in the solver, because total velocity is treated explicitly
   KernelWrapper dispersionWrapper = createKernelWrapper();
@@ -64,7 +84,7 @@ void LinearIsotropicDispersion::saveConvergedVelocityState( arrayView2d< real64 
   {
     for( localIndex q = 0; q < dispersionWrapper.numGauss(); ++q )
     {
-      dispersionWrapper.update( k, q, convergedVelocity[k] );
+      dispersionWrapper.update( k, q, convergedVelocity[k], phaseDensity[k][q] );
     }
   } );
 }

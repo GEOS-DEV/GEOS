@@ -176,6 +176,7 @@ void CompositionalMultiphaseFVM::assembleFluxTerms( real64 const dt,
                                                      dofManager.rankOffset(),
                                                      elemDofKey,
                                                      m_hasCapPressure,
+                                                     m_hasDispersion,
                                                      m_useTotalMassEquation,
                                                      getName(),
                                                      mesh.getElemManager(),
@@ -218,6 +219,7 @@ void CompositionalMultiphaseFVM::assembleFluxTerms( real64 const dt,
                                                        dofManager.rankOffset(),
                                                        elemDofKey,
                                                        m_hasCapPressure,
+                                                       m_hasDispersion,
                                                        m_useTotalMassEquation,
                                                        fluxApprox.upwindingParams(),
                                                        getName(),
@@ -227,6 +229,7 @@ void CompositionalMultiphaseFVM::assembleFluxTerms( real64 const dt,
                                                        localMatrix.toViewConstSizes(),
                                                        localRhs.toView() );
         }
+
       }
 
       // Diffusive and dispersive flux
@@ -262,42 +265,6 @@ void CompositionalMultiphaseFVM::assembleFluxTerms( real64 const dt,
                                                        m_hasDiffusion,
                                                        m_hasDispersion,
                                                        m_useTotalMassEquation,
-                                                       getName(),
-                                                       mesh.getElemManager(),
-                                                       stencilWrapper,
-                                                       dt,
-                                                       localMatrix.toViewConstSizes(),
-                                                       localRhs.toView() );
-        }
-      }
-
-      // Diffusive and dispersive flux
-      if( m_hasDiffusion || m_hasDispersion )
-      {
-
-        if( m_isThermal )
-        {
-          thermalCompositionalMultiphaseFVMKernels::
-            DiffusionDispersionFaceBasedAssemblyKernelFactory::
-            createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
-                                                       m_numPhases,
-                                                       dofManager.rankOffset(),
-                                                       elemDofKey,
-                                                       getName(),
-                                                       mesh.getElemManager(),
-                                                       stencilWrapper,
-                                                       dt,
-                                                       localMatrix.toViewConstSizes(),
-                                                       localRhs.toView() );
-        }
-        else
-        {
-          isothermalCompositionalMultiphaseFVMKernels::
-            DiffusionDispersionFaceBasedAssemblyKernelFactory::
-            createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
-                                                       m_numPhases,
-                                                       dofManager.rankOffset(),
-                                                       elemDofKey,
                                                        getName(),
                                                        mesh.getElemManager(),
                                                        stencilWrapper,
@@ -345,6 +312,7 @@ void CompositionalMultiphaseFVM::assembleStabilizedFluxTerms( real64 const dt,
                                                    dofManager.rankOffset(),
                                                    elemDofKey,
                                                    m_hasCapPressure,
+                                                   m_hasDispersion,
                                                    m_useTotalMassEquation,
                                                    getName(),
                                                    mesh.getElemManager(),
