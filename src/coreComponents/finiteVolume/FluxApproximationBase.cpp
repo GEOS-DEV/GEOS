@@ -17,16 +17,23 @@
  *
  */
 
+#include "LvArray/src/tensorOps.hpp"
+#include "mesh/utilities/ComputationalGeometry.hpp"
+#include "finiteVolume/ProjectionEDFMHelper.hpp"
+#include "common/MpiWrapper.hpp"
 #include "FluxApproximationBase.hpp"
 
 #include "fieldSpecification/FieldSpecificationManager.hpp"
 #include "fieldSpecification/AquiferBoundaryCondition.hpp"
-#include "mesh/mpiCommunications/CommunicationTools.hpp"
+
+
 
 namespace geos
 {
 
 using namespace dataRepository;
+
+
 
 FluxApproximationBase::FluxApproximationBase( string const & name, Group * const parent )
   : Group( name, parent ),
@@ -63,6 +70,8 @@ FluxApproximationBase::FluxApproximationBase( string const & name, Group * const
 //    setApplyDefaultValue( 1e-10 ).
 //    setInputFlag( InputFlags::OPTIONAL ).
 //    setDescription( "Tolerance for C1-PPU smoothing" );
+
+
 }
 
 FluxApproximationBase::CatalogInterface::CatalogType &

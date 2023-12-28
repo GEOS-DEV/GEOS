@@ -56,12 +56,12 @@ protected:
    * @brief Constructor for the class performing the dispersion updates
    * @param dispersivity the array of cell-wise dispersion in the subregion
    */
-  DispersionBaseUpdate( arrayView3d< real64 > const & dispersivity )
+  DispersionBaseUpdate( arrayView4d< real64 > const & dispersivity )
     : m_dispersivity( dispersivity )
   {}
 
   /// View on the cell-wise dispersivity
-  arrayView3d< real64 > const m_dispersivity;
+  arrayView4d< real64 > const m_dispersivity;
 
 private:
 
@@ -74,7 +74,8 @@ private:
   GEOS_HOST_DEVICE
   virtual void update( localIndex const k,
                        localIndex const q,
-                       arraySlice1d< real64 const > const & laggedTotalVelocityComponents ) const = 0;
+                       arraySlice2d< real64 const > const & laggedTotalVelocityComponents,
+                       arraySlice1d< real64 const > const & phaseDensity ) const = 0;
 };
 
 /**
@@ -83,6 +84,9 @@ private:
 class DispersionBase : public ConstitutiveBase
 {
 public:
+
+  /// Max number of phases allowed in the class
+  static constexpr integer MAX_NUM_PHASES = 3;
 
   /**
    * @brief Constructor for the abstract base class
@@ -95,10 +99,16 @@ public:
                                          localIndex const numConstitutivePointsPerParentIndex ) override;
 
   /**
+   * @brief Getter for the number of fluid phases
+   * @return the number of fluid phases
+   */
+  integer numFluidPhases() const { return LvArray::integerConversion< integer >( m_phaseNames.size() ); }
+
+  /**
    * @brief Getter for the dispersivities in the subRegion
    * @return an arrayView of dispersivities
    */
-  arrayView3d< real64 const > dispersivity() const { return m_dispersivity; }
+  arrayView4d< real64 const > dispersivity() const { return m_dispersivity; }
 
   /**
    * @brief Initialize the velocity state (needed because dispersion depends on total velocity)
@@ -106,8 +116,8 @@ public:
    *
    * Note: this is needed because for now, the velocity field is treated **explicitly** in the dispersion tensor
    */
-  virtual void initializeVelocityState( arrayView2d< real64 const > const & initialVelocity ) const
-  { GEOS_UNUSED_VAR( initialVelocity ); }
+  virtual void initializeVelocityState( arrayView3d< real64 const > const & initialVelocity, arrayView3d< real64 const > const & phaseDensity ) const
+  { GEOS_UNUSED_VAR( initialVelocity, phaseDensity ); }
 
   /**
    * @brief Save the velocity state (needed because dispersion depends on total velocity)
@@ -115,17 +125,14 @@ public:
    *
    * Note: this is needed because for now, the velocity is treated **explicitly** in the dispersion tensor
    */
-  virtual void saveConvergedVelocityState( arrayView2d< real64 const > const & convergedVelocity ) const
-  { GEOS_UNUSED_VAR( convergedVelocity ); }
+  virtual void saveConvergedVelocityState( arrayView3d< real64 const > const & convergedVelocity, arrayView3d< real64 const > const & phaseDensity ) const
+  { GEOS_UNUSED_VAR( convergedVelocity, phaseDensity ); }
 
-private:
 
-  /**
-   * @brief Function called internally to resize member arrays
-   * @param size primary dimension (e.g. number of cells)
-   * @param numPts secondary dimension (e.g. number of gauss points per cell)
-   */
-  void resizeFields( localIndex const size, localIndex const numPts );
+  struct viewKeyStruct : public ConstitutiveBase::viewKeyStruct
+  {
+    static constexpr char const * phaseNamesString() { return "phaseNames"; }
+  };
 
 protected:
 
@@ -133,7 +140,10 @@ protected:
 
   /// cell-wise dispersivity in the subregion
   /// TODO: support full tensor if linear isotropic diffusion is no longer enough
-  array3d< real64 > m_dispersivity;
+  array4d< real64 > m_dispersivity;
+
+  /// phase names read from input
+  string_array m_phaseNames;
 
 };
 

@@ -1,6 +1,7 @@
 # Specify list of tests
 set( gtest_geosx_tests
-     testMimeticInnerProducts.cpp )
+     testMimeticInnerProducts.cpp
+   )
 
 set( dependencyList ${parallelDeps} gtest )
 

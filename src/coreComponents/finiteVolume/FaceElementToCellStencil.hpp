@@ -89,6 +89,23 @@ public:
     GEOS_UNUSED_VAR( index );
     return maxNumPointsInFlux;
   }
+  /**
+   * @brief Compute weigths and derivatives w.r.t to one variable.
+   * @param[in] iconn connection index
+   * @param[in] ip phase index
+   * @param[in] coefficient view accessor to the coefficient used to compute the weights
+   * @param[in] dCoeff_dVar view accessor to the derivative of the coefficient w.r.t to the variable
+   * @param[out] weight view weights
+   * @param[out] dWeight_dVar derivative of the weigths w.r.t to the variable
+   */
+  GEOS_HOST_DEVICE
+  void computeWeights( localIndex const iconn,
+                       localIndex const ip,
+                       CoefficientAccessor< arrayView4d< real64 const > > const & coefficient,
+                       CoefficientAccessor< arrayView4d< real64 const > > const & dCoeff_dVar,
+                       real64 ( & weight )[maxNumConnections][2],
+                       real64 ( & dWeight_dVar )[maxNumConnections][2] ) const
+  { GEOS_UNUSED_VAR( iconn, ip, coefficient, dCoeff_dVar, weight, dWeight_dVar ); };
 
   /**
    * @brief Compute weigths and derivatives w.r.t to one variable.
@@ -136,7 +153,38 @@ public:
                        real64 ( &weight )[1][2],
                        real64 ( &dWeight_dVar1 )[1][2],
                        real64 ( &dWeight_dVar2 )[1][2] ) const;
+/**
+ * @brief init the phaseVelocity container
+ * @param iconn connexion index
+ * @param phaseVelocity arrayView of the phase velocity container
+ */
+  GEOS_HOST_DEVICE
+  inline void
+  initVelocity( localIndex iconn, ElementRegionManager::ElementView< arrayView3d< real64 > > const & phaseVelocity ) const
+  {
+    GEOS_UNUSED_VAR( iconn, phaseVelocity );
+  };
 
+  /**
+   * @brief Compute approximate cell-centered velocity field
+   * @param[in] iconn connection index
+   * @param[in] ip phase index
+   * @param[in] cellCartDim pair of globalCellId ordered distance of connection to neighboring cells
+   * @param[in] ghostRank ghost status of connexion's neighbooring cells
+   * @param[in] phaseFlux flux for a specific phase ip and connection iconn
+   * @param[out] phaseVelocity slice of the cell-wise global 3-vector to be
+   */
+  GEOS_HOST_DEVICE
+  inline void
+  computeVelocity( localIndex iconn,
+                   localIndex ip,
+                   const real64 (&phaseFlux),
+                   arraySlice1d< real64 const > const (&cellCartDim)[2],
+                   localIndex const (&ghostRank)[2],
+                   ElementRegionManager::ElementView< arrayView3d< real64 > > const & phaseVelocity ) const
+  {
+    GEOS_UNUSED_VAR( iconn, ip, phaseFlux, cellCartDim, ghostRank, phaseVelocity );
+  };
   /**
    * @brief Compute the stabilization weights
    * @param[in] iconn connection index

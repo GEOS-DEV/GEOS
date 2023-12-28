@@ -19,7 +19,11 @@
 #ifndef GEOS_CONSTITUTIVE_DISPERSION_LINEARISOTROPICDISPERSION_HPP_
 #define GEOS_CONSTITUTIVE_DISPERSION_LINEARISOTROPICDISPERSION_HPP_
 
+#include "constitutive/ConstitutiveBase.hpp"
+#include "common/GEOS_RAJA_Interface.hpp"
+#include "common/DataLayouts.hpp"
 #include "constitutive/dispersion/DispersionBase.hpp"
+#include "LvArray/src/tensorOps.hpp"
 
 namespace geos
 {
@@ -38,7 +42,7 @@ public:
    * @param dispersivity the array of cell-wise dispersivities in the subregion
    * @param longitunidalDispersivity longitudinal dispersivity in the subregion
    */
-  LinearIsotropicDispersionUpdate( arrayView3d< real64 > const & dispersivity,
+  LinearIsotropicDispersionUpdate( arrayView4d< real64 > const & dispersivity,
                                    real64 const & longitudinalDispersivity )
     : DispersionBaseUpdate( dispersivity ),
     m_longitudinalDispersivity( longitudinalDispersivity )
@@ -47,15 +51,19 @@ public:
   GEOS_HOST_DEVICE
   virtual void update( localIndex const k,
                        localIndex const q,
-                       arraySlice1d< real64 const > const & laggedTotalVelocityComponents ) const override
+                       arraySlice2d< real64 const > const & laggedTotalVelocityComponents,
+                       arraySlice1d< real64 const > const & phaseDensity ) const override
   {
-    real64 const velocityNorm =
-      sqrt( laggedTotalVelocityComponents[0]*laggedTotalVelocityComponents[0]
-            + laggedTotalVelocityComponents[1]*laggedTotalVelocityComponents[1]
-            + laggedTotalVelocityComponents[2]*laggedTotalVelocityComponents[2] );
     for( integer i = 0; i < 3; ++i )
     {
-      m_dispersivity[k][q][i] = m_longitudinalDispersivity * velocityNorm;
+      for( int ip = 0; ip < laggedTotalVelocityComponents.size( 0 ); ++ip )
+      {
+        real64 const velocityNorm = LvArray::tensorOps::l2Norm< 3 >( laggedTotalVelocityComponents[ip] );
+        if( phaseDensity[ip] > LvArray::NumericLimits< real64 >::epsilon )
+          m_dispersivity[k][q][ip][i] = velocityNorm/phaseDensity[ip] * m_longitudinalDispersivity;
+        else
+          m_dispersivity[k][q][ip][i] = 0.;
+      }
     }
   }
 
@@ -63,7 +71,6 @@ protected:
 
   /// Longitudinal dispersivity
   real64 const m_longitudinalDispersivity;
-
 };
 
 /**
@@ -85,11 +92,13 @@ public:
 
   static string catalogName() { return "LinearIsotropicDispersion"; }
 
+  virtual void allocateConstitutiveData( dataRepository::Group & parent, const geos::localIndex numConstitutivePointsPerParentIndex ) override;
+
   virtual string getCatalogName() const override { return catalogName(); }
 
-  virtual void initializeVelocityState( arrayView2d< real64 const > const & initialVelocity ) const override;
+  virtual void initializeVelocityState( arrayView3d< real64 const > const & initialVelocity, arrayView3d< real64 const > const & phaseDensity ) const override;
 
-  virtual void saveConvergedVelocityState( arrayView2d< real64 const > const & convergedVelocity ) const override;
+  virtual void saveConvergedVelocityState( arrayView3d< real64 const > const & convergedVelocity, arrayView3d< real64 const > const & phaseDensity ) const override;
 
   /// Type of kernel wrapper for in-kernel update
   using KernelWrapper = LinearIsotropicDispersionUpdate;

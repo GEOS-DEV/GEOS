@@ -44,11 +44,16 @@ CellElementSubRegion::CellElementSubRegion( string const & name, Group * const p
 
   registerWrapper( viewKeyStruct::fracturedCellsString(), &m_fracturedCells ).setSizedFromParent( 1 );
 
+  registerWrapper( viewKeyStruct::cellCartesianDimString(), &m_cellCartesianDimension ).
+    setPlotLevel( PlotLevel::LEVEL_1 ).
+    reference().resizeDimension< 1 >( 3 );
+
   excludeWrappersFromPacking( { viewKeyStruct::nodeListString(),
                                 viewKeyStruct::edgeListString(),
                                 viewKeyStruct::faceListString(),
                                 viewKeyStruct::fracturedCellsString(),
-                                viewKeyStruct::toEmbSurfString() } );
+                                viewKeyStruct::toEmbSurfString(),
+                                viewKeyStruct::cellCartesianDimString() } );
 }
 
 
@@ -82,6 +87,7 @@ void CellElementSubRegion::copyFromCellBlock( CellBlockABC const & cellBlock )
   m_toEdgesRelation.resize( this->size(), m_numEdgesPerElement );
   m_toFacesRelation.resize( this->size(), m_numFacesPerElement );
   this->resize( cellBlock.numElements() );
+  this->m_cellCartesianDimension.resizeDimension< 0 >( cellBlock.numElements() );
 
   this->nodeList() = cellBlock.getElemToNodes();
   this->edgeList() = cellBlock.getElemToEdges();
@@ -417,6 +423,41 @@ void CellElementSubRegion::setupRelatedObjectsInRelations( MeshLevel const & mes
   this->m_toNodesRelation.setRelatedObject( mesh.getNodeManager() );
   this->m_toEdgesRelation.setRelatedObject( mesh.getEdgeManager() );
   this->m_toFacesRelation.setRelatedObject( mesh.getFaceManager() );
+}
+
+void CellElementSubRegion::calculateCellDimension( ElementRegionManager const & elemManager, FaceManager const & faceManager, NodeManager const & nodeManager )
+{
+
+  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > const elemCenter =
+    elemManager.constructArrayViewAccessor< real64, 2 >( CellElementSubRegion::viewKeyStruct::elementCenterString() );
+
+  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X = nodeManager.referencePosition();
+
+  ElementRegionManager::ElementViewAccessor< arrayView1d< integer const > > const elemGhostRank =
+    elemManager.constructArrayViewAccessor< integer, 1 >( ObjectManagerBase::viewKeyStruct::ghostRankString() );
+
+  ArrayOfArraysView< localIndex const > const faceToNodes = faceManager.nodeList().toViewConst();
+
+  forAll< parallelHostPolicy >( this->size(), [=]( localIndex const ke ) {
+
+    real64 const areaTolerance = 1e-12;    //dummy
+    for( int lkf = 0; lkf < m_numFacesPerElement; ++lkf )
+    {
+
+      real64 faceCenter[ 3 ], faceNormal[ 3 ], cellToFaceVec[3];
+      localIndex kf = m_toFacesRelation( ke, lkf );
+      computationalGeometry::centroid_3DPolygon( faceToNodes[kf], X, faceCenter, faceNormal, areaTolerance );
+      LvArray::tensorOps::copy< 3 >( cellToFaceVec, faceCenter );
+      LvArray::tensorOps::subtract< 3 >( cellToFaceVec, m_elementCenter[ke] );
+
+      for( int dir = 0; dir < 3; ++dir )
+      {
+        m_cellCartesianDimension[ke][dir] += LvArray::math::abs( cellToFaceVec[dir] );
+      }
+    }
+
+  } );
+
 }
 
 REGISTER_CATALOG_ENTRY( ObjectManagerBase, CellElementSubRegion, string const &, Group * const )
