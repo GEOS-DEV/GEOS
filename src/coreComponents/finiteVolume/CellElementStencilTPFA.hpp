@@ -55,6 +55,25 @@ public:
                                  arrayView1d< real64 > const & transMultiplier,
                                  arrayView1d< real64 > const & geometricStabilizationCoef );
 
+
+  /**
+   * @brief Compute weights and derivatives w.r.t to one variable based on phase sliced tensor (e.g. diffusion, dispersion)
+   * @param[in] iconn connection index
+   * @param[in] ip phase index
+   * @param[in] coefficient view accessor to the coefficient used to compute the weights
+   * @param[in] dCoeff_dVar view accessor to the derivative of the coefficient w.r.t to the variable
+   * @param[out] weight view weights
+   * @param[out] dWeight_dVar derivative of the weights w.r.t to the variable
+   */
+
+  GEOS_HOST_DEVICE
+  void computeWeights( localIndex const iconn,
+                       localIndex const ip,
+                       CoefficientAccessor< arrayView4d< real64 const > > const &coefficient,
+                       CoefficientAccessor< arrayView4d< real64 const > > const &dCoeff_dVar,
+                       real64 ( &weight )[1][2],
+                       real64 ( &dWeight_dVar )[1][2] ) const;
+
   /**
    * @brief Compute weights and derivatives w.r.t to one variable.
    * @param[in] iconn connection index
@@ -133,6 +152,20 @@ private:
   arrayView3d< real64 > m_cellToFaceVec;
   arrayView1d< real64 > m_transMultiplier;
   arrayView1d< real64 > m_geometricStabilizationCoef;
+
+  GEOS_HOST_DEVICE
+  void
+    averageWeights( const localIndex iconn, real64 ( &weight )[1][2], real64 ( &dWeight_dVar )[1][2],
+                    const real64 ( &halfWeight )[2] ) const;
+
+  GEOS_HOST_DEVICE
+  void
+  computeWeightsBase( localIndex const iconn,
+                      localIndex const icell,
+                      real64 & halfWeight,
+                      arraySlice3d< real64 const > const & coefficient ) const;
+
+
 };
 
 
@@ -214,51 +247,54 @@ GEOS_HOST_DEVICE
 inline void
 CellElementStencilTPFAWrapper::
   computeWeights( localIndex const iconn,
-                  CoefficientAccessor< arrayView3d< real64 const > > const & coefficient,
-                  CoefficientAccessor< arrayView3d< real64 const > > const & dCoeff_dVar,
+                  localIndex const ip,
+                  CoefficientAccessor< arrayView4d< real64 const > > const & coefficient,
+                  CoefficientAccessor< arrayView4d< real64 const > > const & dCoeff_dVar,
                   real64 (& weight)[1][2],
                   real64 (& dWeight_dVar )[1][2] ) const
 {
+
   GEOS_UNUSED_VAR( dCoeff_dVar );
 
   real64 halfWeight[2];
+
 
   // real64 const tolerance = 1e-30 * lengthTolerance; // TODO: choice of constant based on physics?
 
   for( localIndex i = 0; i < 2; ++i )
   {
-    localIndex const er  = m_elementRegionIndices[iconn][i];
+    localIndex const er = m_elementRegionIndices[iconn][i];
     localIndex const esr = m_elementSubRegionIndices[iconn][i];
-    localIndex const ei  = m_elementIndices[iconn][i];
 
-    halfWeight[i] = m_weights[iconn][i];
+    //TODO replace as Sergey LvArray gets merged
+    // We are swapping ip phase index and direction to be able to slice properly
+    auto coeffNested = coefficient[er][esr];
 
-    // Proper computation
-    real64 faceNormal[3];
-    LvArray::tensorOps::copy< 3 >( faceNormal, m_faceNormal[iconn] );
-    if( LvArray::tensorOps::AiBi< 3 >( m_cellToFaceVec[iconn][i], faceNormal ) < 0.0 )
-    {
-      LvArray::tensorOps::scale< 3 >( faceNormal, -1 );
-    }
+    LvArray::typeManipulation::CArray< localIndex, 4 > dims, strides;
+    dims[0] = coeffNested.dims()[2]; strides[0] = coeffNested.strides()[2];        //swap phase for cell
+    dims[1] = coeffNested.dims()[0]; strides[1] = coeffNested.strides()[0];        //increment cell to 2nd pos
+    dims[2] = coeffNested.dims()[1]; strides[2] = coeffNested.strides()[1];        //then shift gauss point as well
+    dims[3] = coeffNested.dims()[3]; strides[3] = coeffNested.strides()[3];        //direction remain last pos
+    ArrayView< real64 const, 4 > coeffSwapped( dims, strides, 0, coeffNested.dataBuffer());
 
-    real64 faceConormal[3];
-    LvArray::tensorOps::hadamardProduct< 3 >( faceConormal, coefficient[er][esr][ei][0], faceNormal );
-    halfWeight[i] *= LvArray::tensorOps::AiBi< 3 >( m_cellToFaceVec[iconn][i], faceConormal );
+    computeWeightsBase( iconn, i, halfWeight[i], coeffSwapped[ip] );
 
-    // correct negative weight issue arising from non-K-orthogonal grids
-    if( halfWeight[i] < 0.0 )
-    {
-      LvArray::tensorOps::hadamardProduct< 3 >( faceConormal,
-                                                coefficient[er][esr][ei][0],
-                                                m_cellToFaceVec[iconn][i] );
-      halfWeight[i] = m_weights[iconn][i];
-      halfWeight[i] *= LvArray::tensorOps::AiBi< 3 >( m_cellToFaceVec[iconn][i], faceConormal );
-    }
   }
 
   // Do harmonic and arithmetic averaging
-  real64 const product = halfWeight[0]*halfWeight[1];
-  real64 const sum = halfWeight[0]+halfWeight[1];
+  averageWeights( iconn, weight, dWeight_dVar, halfWeight );
+
+}
+
+GEOS_HOST_DEVICE
+inline void
+CellElementStencilTPFAWrapper::averageWeights( const localIndex iconn,
+                                               real64 (& weight)[1][2],
+                                               real64 (& dWeight_dVar)[1][2],
+                                               const real64 (& halfWeight)[2] ) const
+{
+  real64 const product = halfWeight[0] * halfWeight[1];
+  real64 const sum = halfWeight[0] + halfWeight[1];
 
   real64 const harmonicWeight   = sum > 0 ? product / sum : 0.0;
   real64 const arithmeticWeight = sum / 2;
@@ -277,6 +313,74 @@ CellElementStencilTPFAWrapper::
 
 GEOS_HOST_DEVICE
 inline void
+CellElementStencilTPFAWrapper::computeWeightsBase( localIndex const iconn,
+                                                   localIndex const icell,
+                                                   real64 & halfWeight,
+                                                   arraySlice3d< real64 const > const & coefficient ) const
+{
+
+  localIndex const ei = m_elementIndices[iconn][icell];
+
+  halfWeight = m_weights[iconn][icell];
+
+  // Proper computation
+  real64 faceNormal[3], cellToFaceVec[3];
+  // previously was normalized in container
+  LvArray::tensorOps::copy< 3 >( cellToFaceVec, m_cellToFaceVec[iconn][icell] );
+  LvArray::tensorOps::normalize< 3 >( cellToFaceVec );
+
+  LvArray::tensorOps::copy< 3 >( faceNormal, m_faceNormal[iconn] );
+  if( LvArray::tensorOps::AiBi< 3 >( cellToFaceVec, faceNormal ) < 0.0 )
+  {
+    LvArray::tensorOps::scale< 3 >( faceNormal, -1 );
+  }
+
+  real64 faceConormal[3];
+  LvArray::tensorOps::hadamardProduct< 3 >( faceConormal, coefficient[ei][0], faceNormal );
+  halfWeight *= LvArray::tensorOps::AiBi< 3 >( cellToFaceVec, faceConormal );
+
+  // correct negative weight issue arising from non-K-orthogonal grids
+  if( halfWeight < 0.0 )
+  {
+    LvArray::tensorOps::hadamardProduct< 3 >( faceConormal,
+                                              coefficient[ei][0],
+                                              cellToFaceVec );
+    halfWeight = m_weights[iconn][icell];
+    halfWeight *= LvArray::tensorOps::AiBi< 3 >( cellToFaceVec, faceConormal );
+  }
+
+}
+
+GEOS_HOST_DEVICE
+inline void
+CellElementStencilTPFAWrapper::
+  computeWeights( localIndex const iconn,
+                  CoefficientAccessor< arrayView3d< real64 const > > const & coefficient,
+                  CoefficientAccessor< arrayView3d< real64 const > > const & dCoeff_dVar,
+                  real64 (& weight)[1][2],
+                  real64 (& dWeight_dVar )[1][2] ) const
+{
+  GEOS_UNUSED_VAR( dCoeff_dVar );
+
+  real64 halfWeight[2];
+
+  // real64 const tolerance = 1e-30 * lengthTolerance; // TODO: choice of constant based on physics?
+
+  for( localIndex i = 0; i < 2; ++i )
+  {
+    localIndex const er = m_elementRegionIndices[iconn][i];
+    localIndex const esr = m_elementSubRegionIndices[iconn][i];
+
+    computeWeightsBase( iconn, i, halfWeight[i], coefficient[er][esr] );
+
+  }
+
+  averageWeights( iconn, weight, dWeight_dVar, halfWeight );
+
+}
+
+GEOS_HOST_DEVICE
+inline void
 CellElementStencilTPFAWrapper::
   computeWeights( localIndex iconn,
                   real64 (& weight)[1][2],
@@ -291,42 +395,31 @@ CellElementStencilTPFAWrapper::
     halfWeight[i] = m_weights[iconn][i];
 
     // Proper computation
-    real64 faceNormal[3];
+    real64 faceNormal[3], cellToFaceVec[3];
+    // previously was normalized in container
+    LvArray::tensorOps::copy< 3 >( cellToFaceVec, m_cellToFaceVec[iconn][i] );
+    LvArray::tensorOps::normalize< 3 >( cellToFaceVec );
 
     LvArray::tensorOps::copy< 3 >( faceNormal, m_faceNormal[iconn] );
 
-    if( LvArray::tensorOps::AiBi< 3 >( m_cellToFaceVec[iconn][i], faceNormal ) < 0.0 )
+    if( LvArray::tensorOps::AiBi< 3 >( cellToFaceVec, faceNormal ) < 0.0 )
     {
       LvArray::tensorOps::scale< 3 >( faceNormal, -1 );
     }
 
-    halfWeight[i] *= LvArray::tensorOps::AiBi< 3 >( m_cellToFaceVec[iconn][i], faceNormal );
+    halfWeight[i] *= LvArray::tensorOps::AiBi< 3 >( cellToFaceVec, faceNormal );
 
     // correct negative weight issue arising from non-K-orthogonal grids
     if( halfWeight[i] < 0.0 )
     {
       halfWeight[i] = m_weights[iconn][i];
-      halfWeight[i] *= LvArray::tensorOps::AiBi< 3 >( m_cellToFaceVec[iconn][i], m_cellToFaceVec[iconn][i] );
+//      halfWeight[i] *= LvArray::tensorOps::AiBi< 3 >( m_cellToFaceVec[iconn][i], m_cellToFaceVec[iconn][i] ); //useless as normalized
+// vector it should be 1 always
     }
   }
 
-  // Do harmonic and arithmetic averaging
-  real64 const product = halfWeight[0]*halfWeight[1];
-  real64 const sum = halfWeight[0]+halfWeight[1];
+  averageWeights( iconn, weight, dWeight_dVar, halfWeight );
 
-  real64 const harmonicWeight   = sum > 0 ? product / sum : 0.0;
-  real64 const arithmeticWeight = sum / 2;
-
-  real64 const meanPermCoeff = 1.0; //TODO make it a member if it is really necessary
-
-  real64 const value = meanPermCoeff * harmonicWeight + (1 - meanPermCoeff) * arithmeticWeight;
-  for( localIndex ke = 0; ke < 2; ++ke )
-  {
-    weight[0][ke] = m_transMultiplier[iconn] * value * (ke == 0 ? 1 : -1);
-  }
-
-  dWeight_dVar[0][0] = 0.0;
-  dWeight_dVar[0][1] = 0.0;
 }
 
 GEOS_HOST_DEVICE

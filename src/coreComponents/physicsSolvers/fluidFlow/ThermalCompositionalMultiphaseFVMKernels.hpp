@@ -712,7 +712,6 @@ public:
   using Base::m_phaseVolFrac;
   using Base::m_phaseDens;
   using Base::m_dPhaseDens;
-  using Base::m_phaseDiffusivityMultiplier;
 
   /**
    * @brief Constructor for the kernel interface
@@ -827,7 +826,6 @@ public:
       // add contributions of the derivatives of upwind coefficient wrt temperature
       real64 const dUpwindCoefficient_dT =
         m_referencePorosity[er_up][esr_up][ei_up] *
-        m_phaseDiffusivityMultiplier[er_up][esr_up][ei_up][0][ip] *
         ( m_dPhaseDens[er_up][esr_up][ei_up][0][ip][Deriv::dT] * m_phaseVolFrac[er_up][esr_up][ei_up][ip]
           + m_phaseDens[er_up][esr_up][ei_up][0][ip] * m_dPhaseVolFrac[er_up][esr_up][ei_up][ip][Deriv::dT] );
       dDiffusionFlux_dT[k_up] += dUpwindCoefficient_dT * compFracGrad;

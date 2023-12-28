@@ -986,7 +986,6 @@ public:
     m_dPhaseDens( multiFluidAccessors.get( fields::multifluid::dPhaseDensity {} ) ),
     m_diffusivity( diffusionAccessors.get( fields::diffusion::diffusivity {} ) ),
     m_dDiffusivity_dTemp( diffusionAccessors.get( fields::diffusion::dDiffusivity_dTemperature {} ) ),
-    m_phaseDiffusivityMultiplier( diffusionAccessors.get( fields::diffusion::phaseDiffusivityMultiplier {} ) ),
     m_dispersivity( dispersionAccessors.get( fields::dispersion::dispersivity {} ) ),
     m_referencePorosity( porosityAccessors.get( fields::porosity::referencePorosity {} ) ),
     m_stencilWrapper( stencilWrapper ),
@@ -1100,20 +1099,14 @@ public:
   {
     using Deriv = multifluid::DerivativeOffset;
 
-    // first, compute the transmissibilities at this face
-    m_stencilWrapper.computeWeights( iconn,
-                                     m_diffusivity,
-                                     m_dDiffusivity_dTemp,
-                                     stack.transmissibility,
-                                     stack.dTrans_dTemp );
-
-
     localIndex k[numFluxSupportPoints]{};
     localIndex connectionIndex = 0;
     for( k[0] = 0; k[0] < stack.numConnectedElems; ++k[0] )
     {
       for( k[1] = k[0] + 1; k[1] < stack.numConnectedElems; ++k[1] )
       {
+
+
         /// cell indices
         localIndex const seri[numFluxSupportPoints]  = {m_seri( iconn, k[0] ), m_seri( iconn, k[1] )};
         localIndex const sesri[numFluxSupportPoints] = {m_sesri( iconn, k[0] ), m_sesri( iconn, k[1] )};
@@ -1125,14 +1118,22 @@ public:
         real64 dDiffusionFlux_dC[numFluxSupportPoints][numComp][numComp]{};
         real64 dDens_dC[numComp]{};
 
-        real64 const trans[numFluxSupportPoints] = { stack.transmissibility[connectionIndex][0],
-                                                     stack.transmissibility[connectionIndex][1] };
-
         //***** calculation of flux *****
         // loop over phases, compute and upwind phase flux and sum contributions to each component's flux
         for( integer ip = 0; ip < m_numPhases; ++ip )
         {
+          // first, compute the transmissibilities at this face
+          // note that the dispersion tensor is lagged in iteration
+          m_stencilWrapper.computeWeights( iconn,
+                                           ip,
+                                           m_diffusivity,
+                                           m_dDiffusivity_dTemp,
+                                           stack.transmissibility,
+                                           stack.dTrans_dTemp );       // will not be used
 
+
+          real64 const trans[numFluxSupportPoints] = { stack.transmissibility[connectionIndex][0],
+                                                       stack.transmissibility[connectionIndex][1] };
           // loop over components
           for( integer ic = 0; ic < numComp; ++ic )
           {
@@ -1159,7 +1160,6 @@ public:
             // computation of the upwinded mass flux
             real64 const upwindCoefficient =
               m_referencePorosity[er_up][esr_up][ei_up] *
-              m_phaseDiffusivityMultiplier[er_up][esr_up][ei_up][0][ip] *
               m_phaseDens[er_up][esr_up][ei_up][0][ip] * m_phaseVolFrac[er_up][esr_up][ei_up][ip];
             diffusionFlux[ic] += upwindCoefficient * compFracGrad;
 
@@ -1176,7 +1176,6 @@ public:
             // add contributions of the derivatives of upwind coefficient wrt pressure/component fractions
             real64 const dUpwindCoefficient_dP =
               m_referencePorosity[er_up][esr_up][ei_up] *
-              m_phaseDiffusivityMultiplier[er_up][esr_up][ei_up][0][ip] *
               ( m_dPhaseDens[er_up][esr_up][ei_up][0][ip][Deriv::dP] * m_phaseVolFrac[er_up][esr_up][ei_up][ip]
                 + m_phaseDens[er_up][esr_up][ei_up][0][ip] * m_dPhaseVolFrac[er_up][esr_up][ei_up][ip][Deriv::dP] );
             dDiffusionFlux_dP[k_up][ic] += dUpwindCoefficient_dP * compFracGrad;
@@ -1190,7 +1189,6 @@ public:
             {
               real64 const dUpwindCoefficient_dC =
                 m_referencePorosity[er_up][esr_up][ei_up] *
-                m_phaseDiffusivityMultiplier[er_up][esr_up][ei_up][0][ip] *
                 ( dDens_dC[jc] * m_phaseVolFrac[er_up][esr_up][ei_up][ip]
                   + m_phaseDens[er_up][esr_up][ei_up][0][ip] * m_dPhaseVolFrac[er_up][esr_up][ei_up][ip][Deriv::dC+jc] );
               dDiffusionFlux_dC[k_up][ic][jc] += dUpwindCoefficient_dC * compFracGrad;
@@ -1523,9 +1521,8 @@ protected:
   ElementViewConst< arrayView4d< real64 const, multifluid::USD_PHASE_DC > > const m_dPhaseDens;
 
   /// Views on diffusivity
-  ElementViewConst< arrayView3d< real64 const > > const m_diffusivity;
-  ElementViewConst< arrayView3d< real64 const > > const m_dDiffusivity_dTemp;
-  ElementViewConst< arrayView3d< real64 const > > const m_phaseDiffusivityMultiplier;
+  ElementViewConst< arrayView4d< real64 const > > const m_diffusivity;
+  ElementViewConst< arrayView4d< real64 const > > const m_dDiffusivity_dTemp;
 
   /// Views on dispersivity
   ElementViewConst< arrayView3d< real64 const > > const m_dispersivity;
