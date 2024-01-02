@@ -93,7 +93,12 @@ TableFunction const * makeCO2EnthalpyTable( string_array const & inputParams,
 
   if( functionManager.hasGroup< TableFunction >( tableName ) )
   {
-    return functionManager.getGroupPointer< TableFunction >( tableName );
+    TableFunction * const enthalpyTable = functionManager.getGroupPointer< TableFunction >( tableName );
+    enthalpyTable->initializeFunction();
+    enthalpyTable->setDimUnits( PTTableCoordinates::coordsUnits );
+    enthalpyTable->setValueUnits( units::Enthalpy );
+    enthalpyTable->setInterpolationMethod( TableFunction::InterpolationType::Linear );
+    return enthalpyTable;
   }
   else
   {
@@ -118,7 +123,6 @@ TableFunction const * makeCO2EnthalpyTable( string_array const & inputParams,
     array1d< real64 > densities( tableCoords.nPressures() * tableCoords.nTemperatures() );
     array1d< real64 > enthalpies( tableCoords.nPressures() * tableCoords.nTemperatures() );
 
-
     SpanWagnerCO2Density::calculateCO2Density( functionName, tolerance, tableCoords, densities );
 
     CO2Enthalpy::calculateCO2Enthalpy( tableCoords, densities, enthalpies );
@@ -139,7 +143,12 @@ TableFunction const * makeBrineEnthalpyTable( string_array const & inputParams,
 
   if( functionManager.hasGroup< TableFunction >( tableName ) )
   {
-    return functionManager.getGroupPointer< TableFunction >( tableName );
+    TableFunction * const enthalpyTable = functionManager.getGroupPointer< TableFunction >( tableName );
+    enthalpyTable->initializeFunction();
+    enthalpyTable->setDimUnits( { PTTableCoordinates::coordsUnits[1] } );
+    enthalpyTable->setValueUnits( units::Enthalpy );
+    enthalpyTable->setInterpolationMethod( TableFunction::InterpolationType::Linear );
+    return enthalpyTable;
   }
   else
   {

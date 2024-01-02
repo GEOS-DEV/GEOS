@@ -248,7 +248,12 @@ TableFunction const * makeSolubilityTable( string_array const & inputParams,
   string const tableName = functionName + "_co2Dissolution_table";
   if( functionManager.hasGroup< TableFunction >( tableName ) )
   {
-    return functionManager.getGroupPointer< TableFunction >( tableName );
+    TableFunction * const solubilityTable = functionManager.getGroupPointer< TableFunction >( tableName );
+    solubilityTable->initializeFunction();
+    solubilityTable->setDimUnits( { units::Pressure, units::TemperatureInC } );
+    solubilityTable->setValueUnits( units::Solubility );
+    solubilityTable->setInterpolationMethod( TableFunction::InterpolationType::Linear );
+    return solubilityTable;
   }
   else
   {
@@ -265,22 +270,27 @@ TableFunction const * makeVapourisationTable( string_array const & inputParams,
                                               string const & functionName,
                                               FunctionManager & functionManager )
 {
-  // initialize the (p,T) coordinates
-  PTTableCoordinates tableCoords;
-  PVTFunctionHelpers::initializePropertyTable( inputParams, tableCoords );
-
-  // Currently initialise to all zeros
-
-  array1d< real64 > values( tableCoords.nPressures() * tableCoords.nTemperatures() );
-  values.zero();
-
   string const tableName = functionName + "_waterVaporization_table";
+
   if( functionManager.hasGroup< TableFunction >( tableName ) )
   {
-    return functionManager.getGroupPointer< TableFunction >( tableName );
+    TableFunction * const vapourisationTable = functionManager.getGroupPointer< TableFunction >( tableName );
+    vapourisationTable->initializeFunction();
+    vapourisationTable->setDimUnits( { units::Pressure, units::TemperatureInC } );
+    vapourisationTable->setValueUnits( units::Solubility );
+    vapourisationTable->setInterpolationMethod( TableFunction::InterpolationType::Linear );
+    return vapourisationTable;
   }
   else
   {
+    // initialize the (p,T) coordinates
+    PTTableCoordinates tableCoords;
+    PVTFunctionHelpers::initializePropertyTable( inputParams, tableCoords );
+
+    // Currently initialise to all zeros
+    array1d< real64 > values( tableCoords.nPressures() * tableCoords.nTemperatures() );
+    values.zero();
+
     TableFunction * const vapourisationTable = dynamicCast< TableFunction * >( functionManager.createChild( "TableFunction", tableName ) );
     vapourisationTable->setTableCoordinates( tableCoords.getCoords(),
                                              { units::Pressure, units::TemperatureInC } );

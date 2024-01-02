@@ -113,49 +113,55 @@ TableFunction const * makeDensityTable( string_array const & inputParams,
                                         string const & functionName,
                                         FunctionManager & functionManager )
 {
-  GEOS_THROW_IF_LT_MSG( inputParams.size(), 9,
-                        GEOS_FMT( "{}: insufficient number of model parameters", functionName ),
-                        InputError );
-
-  // initialize the (p,T) coordinates
-  PTTableCoordinates tableCoords;
-  PVTFunctionHelpers::initializePropertyTable( inputParams, tableCoords );
-
-  // initialize salinity
-  real64 salinity;
-  try
-  {
-    salinity = stod( inputParams[8] );
-  }
-  catch( std::invalid_argument const & e )
-  {
-    GEOS_THROW( GEOS_FMT( "{}: invalid model parameter value: {}", functionName, e.what() ), InputError );
-  }
-
-  array1d< real64 > densities( tableCoords.nPressures() * tableCoords.nTemperatures() );
-  if( !isZero( salinity ) )
-  {
-    // if we are in the range of validity of the Phillips method, everything is good
-    // if we are not, we issue a warning message
-    calculateBrineDensity( tableCoords, salinity, densities );
-    GEOS_LOG_RANK_0_IF( salinity < 0.25,
-                        GEOS_FMT( "{}: Warning! The salinity value of {} is below the range of validity of the Phillips model, results may be inaccurate",
-                                  functionName, salinity ) );
-  }
-  else
-  {
-    // the Phillips correlation is inaccurate in the absence of salinity.
-    // since this is a very frequent case, we implement an alternate (more accurate) method below
-    calculatePureWaterDensity( tableCoords, functionName, densities );
-  }
-
   string const tableName = functionName + "_table";
+
   if( functionManager.hasGroup< TableFunction >( tableName ) )
   {
-    return functionManager.getGroupPointer< TableFunction >( tableName );
+    TableFunction * const densityTable = functionManager.getGroupPointer< TableFunction >( tableName );
+    densityTable->initializeFunction();
+    densityTable->setDimUnits( { units::Pressure, units::TemperatureInC } );
+    densityTable->setValueUnits( units::Density );
+    densityTable->setInterpolationMethod( TableFunction::InterpolationType::Linear );
+    return densityTable;
   }
   else
   {
+    GEOS_THROW_IF_LT_MSG( inputParams.size(), 9,
+                          GEOS_FMT( "{}: insufficient number of model parameters", functionName ),
+                          InputError );
+
+    // initialize the (p,T) coordinates
+    PTTableCoordinates tableCoords;
+    PVTFunctionHelpers::initializePropertyTable( inputParams, tableCoords );
+
+    // initialize salinity
+    real64 salinity;
+    try
+    {
+      salinity = stod( inputParams[8] );
+    }
+    catch( std::invalid_argument const & e )
+    {
+      GEOS_THROW( GEOS_FMT( "{}: invalid model parameter value: {}", functionName, e.what() ), InputError );
+    }
+
+    array1d< real64 > densities( tableCoords.nPressures() * tableCoords.nTemperatures() );
+    if( !isZero( salinity ) )
+    {
+      // if we are in the range of validity of the Phillips method, everything is good
+      // if we are not, we issue a warning message
+      calculateBrineDensity( tableCoords, salinity, densities );
+      GEOS_LOG_RANK_0_IF( salinity < 0.25,
+                          GEOS_FMT( "{}: Warning! The salinity value of {} is below the range of validity of the Phillips model, results may be inaccurate",
+                                    functionName, salinity ) );
+    }
+    else
+    {
+      // the Phillips correlation is inaccurate in the absence of salinity.
+      // since this is a very frequent case, we implement an alternate (more accurate) method below
+      calculatePureWaterDensity( tableCoords, functionName, densities );
+    }
+
     TableFunction * const densityTable = dynamicCast< TableFunction * >( functionManager.createChild( "TableFunction", tableName ) );
     densityTable->setTableCoordinates( tableCoords.getCoords(),
                                        { units::Pressure, units::TemperatureInC } );
