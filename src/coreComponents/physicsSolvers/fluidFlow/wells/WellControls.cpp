@@ -246,7 +246,7 @@ void WellControls::postProcessInput()
                  InputError );
 
   GEOS_THROW_IF( m_targetMassRate < 0,
-                 getWrapperDataContext( viewKeyStruct::targetPhaseRateString() ) << ": Target mass rate is negative",
+                 getWrapperDataContext( viewKeyStruct::targetMassRateString() ) << ": Target mass rate is negative",
                  InputError );
 
   GEOS_THROW_IF( (m_injectionStream.empty()  && m_injectionTemperature >= 0) ||
@@ -321,6 +321,10 @@ void WellControls::postProcessInput()
   GEOS_THROW_IF( ((m_targetMassRate > 0.0 && !m_targetMassRateTableName.empty())),
                  "WellControls " << getDataContext() << ": You have provided redundant information for well mass rate." <<
                  " The keywords " << viewKeyStruct::targetMassRateString() << " and " << viewKeyStruct::targetMassRateTableNameString() << " cannot be specified together",
+                 InputError );
+
+  GEOS_THROW_IF( ((m_targetMassRate > 0.0 &&  m_useSurfaceConditions)),
+                "WellControls " << getDataContext() << ": Option only valid if useSurfaceConditions set to 1",
                  InputError );
 
   // 6.1) If the well is under BHP control then the BHP must be specified.
