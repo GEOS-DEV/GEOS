@@ -188,11 +188,11 @@ void SinglePhaseBase::validateConstitutiveModels( DomainPartition & domain ) con
       {
         string const fluidModelName = castedFluid.catalogName();
         GEOS_THROW_IF( m_isThermal && (fluidModelName != "ThermalCompressibleSinglePhaseFluid"),
-                       GEOS_FMT( "SingleFluidBase {}: the thermal option is enabled in the solver, but the fluid model `{}` is not for thermal fluid",
+                       GEOS_FMT( "SingleFluidBase {}: the thermal option is enabled in the solver, but the fluid model {} is not for thermal fluid",
                                  getDataContext(), fluid.getDataContext() ),
                        InputError );
         GEOS_THROW_IF( !m_isThermal && (fluidModelName == "ThermalCompressibleSinglePhaseFluid"),
-                       GEOS_FMT( "SingleFluidBase {}: the fluid model is for thermal fluid `{}`, but the solver option is incompatible with the fluid model",
+                       GEOS_FMT( "SingleFluidBase {}: the fluid model is for thermal fluid {}, but the solver option is incompatible with the fluid model",
                                  getDataContext(), fluid.getDataContext() ),
                        InputError );
       } );
@@ -466,7 +466,7 @@ void SinglePhaseBase::computeHydrostaticEquilibrium()
 
     // check that the gravity vector is aligned with the z-axis
     GEOS_THROW_IF( !isZero( gravVector[0] ) || !isZero( gravVector[1] ),
-                   catalogName() << " " << getDataContext() <<
+                   getCatalogName() << " " << getDataContext() <<
                    ": the gravity vector specified in this simulation (" << gravVector[0] << " " << gravVector[1] << " " << gravVector[2] <<
                    ") is not aligned with the z-axis. \n"
                    "This is incompatible with the " << EquilibriumInitialCondition::catalogName() << " " << bc.getDataContext() <<
@@ -528,7 +528,7 @@ void SinglePhaseBase::computeHydrostaticEquilibrium()
 
     real64 const eps = 0.1 * (maxElevation - minElevation); // we add a small buffer to only log in the pathological cases
     GEOS_LOG_RANK_0_IF( ( (datumElevation > globalMaxElevation[equilIndex]+eps)  || (datumElevation < globalMinElevation[equilIndex]-eps) ),
-                        SinglePhaseBase::catalogName() << " " << getDataContext() <<
+                        getCatalogName() << " " << getDataContext() <<
                         ": By looking at the elevation of the cell centers in this model, GEOS found that " <<
                         "the min elevation is " << globalMinElevation[equilIndex] << " and the max elevation is " <<
                         globalMaxElevation[equilIndex] << "\nBut, a datum elevation of " << datumElevation <<
@@ -585,7 +585,7 @@ void SinglePhaseBase::computeHydrostaticEquilibrium()
                                            pressureValues.toView() );
 
       GEOS_THROW_IF( !equilHasConverged,
-                     SinglePhaseBase::catalogName() << " " << getDataContext() <<
+                     getCatalogName() << " " << getDataContext() <<
                      ": hydrostatic pressure initialization failed to converge in region " << region.getName() << "!",
                      std::runtime_error );
     } );
@@ -1026,6 +1026,15 @@ void SinglePhaseBase::applySourceFluxBC( real64 const time_n,
 
       if( targetSet.size() == 0 )
       {
+        return;
+      }
+      if( !subRegion.hasWrapper( dofKey ) )
+      {
+        if( fs.getLogLevel() >= 1 )
+        {
+          GEOS_LOG_RANK( GEOS_FMT( "{}: trying to apply SourceFlux, but its targetSet named '{}' intersects with non-simulated region named '{}'.",
+                                   getDataContext(), setName, subRegion.getName() ) );
+        }
         return;
       }
 

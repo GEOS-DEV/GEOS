@@ -22,8 +22,7 @@
 #include "physicsSolvers/multiphysics/CoupledSolver.hpp"
 #include "constitutive/solid/CoupledSolidBase.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseBase.hpp"
-#include "physicsSolvers/multiphysics/CompositionalMultiphaseReservoirAndWells.hpp"
-#include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
+#include "physicsSolvers/multiphysics/PoromechanicsSolver.hpp"
 
 
 namespace geos
@@ -45,25 +44,16 @@ ENUM_STRINGS( StabilizationType,
 }
 
 template< typename FLOW_SOLVER >
-class MultiphasePoromechanics : public CoupledSolver< FLOW_SOLVER, SolidMechanicsLagrangianFEM >
+class MultiphasePoromechanics : public PoromechanicsSolver< FLOW_SOLVER >
 {
 public:
 
-  using Base = CoupledSolver< FLOW_SOLVER, SolidMechanicsLagrangianFEM >;
+  using Base = PoromechanicsSolver< FLOW_SOLVER >;
   using Base::m_solvers;
   using Base::m_dofManager;
   using Base::m_localMatrix;
   using Base::m_rhs;
   using Base::m_solution;
-
-  enum class SolverType : integer
-  {
-    Flow = 0,
-    SolidMechanics = 1
-  };
-
-  /// String used to form the solverName used to register solvers in CoupledSolver
-  static string coupledSolverAttributePrefix() { return "poromechanics"; }
 
   /**
    * @brief main constructor for MultiphasePoromechanics Objects
@@ -81,6 +71,10 @@ public:
    * @return string that contains the catalog name to generate a new MultiphasePoromechanics object through the object catalog.
    */
   static string catalogName();
+  /**
+   * @copydoc SolverBase::getCatalogName()
+   */
+  string getCatalogName() const override { return catalogName(); }
 
   /**
    * @brief accessor for the pointer to the solid mechanics solver
@@ -88,7 +82,7 @@ public:
    */
   SolidMechanicsLagrangianFEM * solidMechanicsSolver() const
   {
-    return std::get< toUnderlying( SolverType::SolidMechanics ) >( m_solvers );
+    return std::get< toUnderlying( Base::SolverType::SolidMechanics ) >( m_solvers );
   }
 
   /**
@@ -97,7 +91,7 @@ public:
    */
   FLOW_SOLVER * flowSolver() const
   {
-    return std::get< toUnderlying( SolverType::Flow ) >( m_solvers );
+    return std::get< toUnderlying( Base::SolverType::Flow ) >( m_solvers );
   }
 
   /**
@@ -184,10 +178,10 @@ private:
   void updateBulkDensity( ElementSubRegionBase & subRegion );
 
   /**
-   * @brief Helper function to average the mean stress increment over quadrature points
+   * @brief Helper function to average the mean total stress increment over quadrature points
    * @param[in] domain the domain partition
    */
-  void averageMeanStressIncrement( DomainPartition & domain );
+  void averageMeanTotalStressIncrement( DomainPartition & domain );
 
   template< typename CONSTITUTIVE_BASE,
             typename KERNEL_WRAPPER,

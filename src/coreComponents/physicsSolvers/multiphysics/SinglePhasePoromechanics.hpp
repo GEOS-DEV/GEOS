@@ -19,33 +19,23 @@
 #ifndef GEOS_PHYSICSSOLVERS_MULTIPHYSICS_SINGLEPHASEPOROMECHANICS_HPP_
 #define GEOS_PHYSICSSOLVERS_MULTIPHYSICS_SINGLEPHASEPOROMECHANICS_HPP_
 
-#include "physicsSolvers/multiphysics/CoupledSolver.hpp"
-#include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
+#include "physicsSolvers/multiphysics/PoromechanicsSolver.hpp"
+
 
 namespace geos
 {
 
 template< typename FLOW_SOLVER >
-class SinglePhasePoromechanics : public CoupledSolver< FLOW_SOLVER,
-                                                       SolidMechanicsLagrangianFEM >
+class SinglePhasePoromechanics : public PoromechanicsSolver< FLOW_SOLVER >
 {
 public:
 
-  using Base = CoupledSolver< FLOW_SOLVER, SolidMechanicsLagrangianFEM >;
+  using Base = PoromechanicsSolver< FLOW_SOLVER >;
   using Base::m_solvers;
   using Base::m_dofManager;
   using Base::m_localMatrix;
   using Base::m_rhs;
   using Base::m_solution;
-
-  enum class SolverType : integer
-  {
-    Flow = 0,
-    SolidMechanics = 1
-  };
-
-  /// String used to form the solverName used to register solvers in CoupledSolver
-  static string coupledSolverAttributePrefix() { return "poromechanics"; }
 
   /**
    * @brief main constructor for SinglePhasePoromechanics objects
@@ -63,6 +53,10 @@ public:
    * @return string that contains the catalog name to generate a new SinglePhasePoromechanics object through the object catalog.
    */
   static string catalogName();
+  /**
+   * @copydoc SolverBase::getCatalogName()
+   */
+  string getCatalogName() const override { return catalogName(); }
 
   /**
    * @brief accessor for the pointer to the solid mechanics solver
@@ -70,7 +64,7 @@ public:
    */
   SolidMechanicsLagrangianFEM * solidMechanicsSolver() const
   {
-    return std::get< toUnderlying( SolverType::SolidMechanics ) >( m_solvers );
+    return std::get< toUnderlying( Base::SolverType::SolidMechanics ) >( m_solvers );
   }
 
   /**
@@ -79,7 +73,7 @@ public:
    */
   FLOW_SOLVER * flowSolver() const
   {
-    return std::get< toUnderlying( SolverType::Flow ) >( m_solvers );
+    return std::get< toUnderlying( Base::SolverType::Flow ) >( m_solvers );
   }
 
   /**
@@ -169,7 +163,7 @@ private:
    * @brief Helper function to average the mean stress increment
    * @param[in] domain the domain partition
    */
-  void averageMeanStressIncrement( DomainPartition & domain );
+  void averageMeanTotalStressIncrement( DomainPartition & domain );
 
   void createPreconditioner();
 
