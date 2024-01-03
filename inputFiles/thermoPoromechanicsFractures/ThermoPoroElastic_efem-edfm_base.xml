@@ -15,13 +15,15 @@
       fracturesSolverName="fractureMechSolver"
       flowSolverName="flowSolver"
       solidSolverName="matrixMechSolver"
-      logLevel="1"
+      logLevel="3"
       isThermal="1">
       <NonlinearSolverParameters
+        logLevel="3"
         newtonTol="1.0e-2"
         newtonMaxIter="15"
         maxTimeStepCuts="4"/>
       <LinearSolverParameters
+        logLevel="3"
         directParallel="0"
         solverType="direct"/>
     </SinglePhasePoromechanicsEmbeddedFractures>

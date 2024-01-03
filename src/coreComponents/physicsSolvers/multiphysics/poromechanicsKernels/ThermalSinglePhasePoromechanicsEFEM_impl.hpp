@@ -91,6 +91,8 @@ ThermalSinglePhasePoromechanicsEFEM< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE 
 kernelLaunch( localIndex const numElems,
               KERNEL_TYPE const & kernelComponent )
 {
+  GEOS_LOG_RANK( "ThermalSinglePhasePoromechanicsEFEM< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::kernelLaunch::prekernelLaunch" );
+  GEOS_LOG_RANK( GEOS_FMT( "numElems == {}", numElems ) );
   return Base::template kernelLaunch< POLICY >( numElems, kernelComponent );
 }
 //END_kernelLauncher

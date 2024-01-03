@@ -41,6 +41,7 @@
       target="/Outputs/vtkOutput"/>
 
     <PeriodicEvent
+      logLevel="3"
       name="solverApplication0"
       forceDt="1e5"
       target="/Solvers/poroSolver"/>
@@ -50,7 +51,7 @@
       timeFrequency="5e5"
       target="/Outputs/restartOutput"/>
   </Events>
-  
+
   <FieldSpecifications>
     <FieldSpecification
       name="fracPorosity"

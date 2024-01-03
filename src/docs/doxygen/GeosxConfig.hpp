@@ -72,7 +72,7 @@
   /// Parsed hypre version information
   #define HYPRE_VERSION_MAJOR 2
   /// Parsed hypre version information
-  #define HYPRE_VERSION_MINOR 30
+  #define HYPRE_VERSION_MINOR 29
   /// Parsed hypre version information
   #define HYPRE_VERSION_PATCH 0
 #endif

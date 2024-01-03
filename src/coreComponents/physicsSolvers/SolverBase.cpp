@@ -744,12 +744,12 @@ real64 SolverBase::nonlinearImplicitStep( real64 const & time_n,
     {
 
       outputConfigurationStatistics( domain );
-
+      GEOS_LOG_RANK( "pre solveNonlinearSystem" );
       bool const isNewtonConverged = solveNonlinearSystem( time_n,
                                                            stepDt,
                                                            cycleNumber,
                                                            domain );
-
+      GEOS_LOG_RANK( "post solveNonlinearSystem" );
       if( isNewtonConverged )
       {
         isConfigurationLoopConverged = updateConfiguration( domain );
@@ -840,14 +840,19 @@ bool SolverBase::solveNonlinearSystem( real64 const & time_n,
     GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "    Attempt: {:2}, ConfigurationIter: {:2}, NewtonIter: {:2}", dtAttempt, configurationLoopIter, newtonIter ) );
 
     {
-      Timer timer( m_timers["assemble"] );
+      GEOS_LOG_RANK( GEOS_FMT( "m_localMatrix.nonZeroCapacity() == {}, m_rhs.localSize() == {}", m_localMatrix.nonZeroCapacity(), m_rhs.localSize() ) );
 
+      Timer timer( m_timers["assemble"] );
+      GEOS_LOG_RANK( "SolverBase::solveNonlinearSystem::prezero" );
       // zero out matrix/rhs before assembly
       m_localMatrix.zero();
       m_rhs.zero();
+      GEOS_LOG_RANK( "SolverBase::solveNonlinearSystem::postzero" );
+
 
       arrayView1d< real64 > const localRhs = m_rhs.open();
 
+      GEOS_LOG_RANK( "SolverBase::solveNonlinearSystem::preassemble" );
       // call assemble to fill the matrix and the rhs
       assembleSystem( time_n,
                       stepDt,
@@ -855,7 +860,7 @@ bool SolverBase::solveNonlinearSystem( real64 const & time_n,
                       m_dofManager,
                       m_localMatrix.toViewConstSizes(),
                       localRhs );
-
+      GEOS_LOG_RANK( "SolverBase::solveNonlinearSystem::postassemble/preapplybc" );
       // apply boundary conditions to system
       applyBoundaryConditions( time_n,
                                stepDt,
@@ -863,6 +868,7 @@ bool SolverBase::solveNonlinearSystem( real64 const & time_n,
                                m_dofManager,
                                m_localMatrix.toViewConstSizes(),
                                localRhs );
+      GEOS_LOG_RANK( "SolverBase::solveNonlinearSystem::postapplybc" );
 
       m_rhs.close();
 

@@ -438,6 +438,7 @@ real64 regionBasedKernelApplication( MeshLevel & mesh,
                                                                                      numElems,
                                                                                      &castedConstitutiveRelation] ( auto const finiteElement )
       {
+        GEOS_LOG_RANK( "regionBasedKernelApplication::precreateKernel" );
         auto kernel = kernelFactory.createKernel( nodeManager,
                                                   edgeManager,
                                                   faceManager,
@@ -448,10 +449,13 @@ real64 regionBasedKernelApplication( MeshLevel & mesh,
 
         using KERNEL_TYPE = decltype( kernel );
 
+        GEOS_LOG_RANK( "regionBasedKernelApplication::postcreateKernel/preKernelLaunch" );
+
         // Call the kernelLaunch function, and store the maximum contribution to the residual.
         maxResidualContribution =
           std::max( maxResidualContribution,
                     KERNEL_TYPE::template kernelLaunch< POLICY, KERNEL_TYPE >( numElems, kernel ) );
+        GEOS_LOG_RANK( "regionBasedKernelApplication::postKernelLaunch" );
       } );
     } );
 

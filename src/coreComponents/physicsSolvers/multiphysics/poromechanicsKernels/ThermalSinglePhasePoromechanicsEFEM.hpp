@@ -108,7 +108,7 @@ public:
     GEOS_HOST_DEVICE
     StackVariables():
       Base::StackVariables(),
-            dFluidMassIncrement_dTemperature( 0.0 ),
+      dFluidMassIncrement_dTemperature( 0.0 ),
       energyIncrement( 0.0 ),
       dEnergyIncrement_dJump( 0.0 ),
       dEnergyIncrement_dPressure( 0.0 ),
