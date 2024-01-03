@@ -543,12 +543,12 @@ void CompositionalMultiphaseWell::initializePostInitialConditionsPreSubGroups()
   } );
 }
 
-void CompositionalMultiphaseWell::updateComponentFraction( WellElementSubRegion & subRegion ) const
+void CompositionalMultiphaseWell::updateGlobalComponentFraction( WellElementSubRegion & subRegion ) const
 {
   GEOS_MARK_FUNCTION;
 
   isothermalCompositionalMultiphaseBaseKernels::
-    ComponentFractionKernelFactory::
+    GlobalComponentFractionKernelFactory::
     createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
                                                subRegion );
 
