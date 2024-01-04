@@ -252,7 +252,6 @@ TableFunction const * makeSolubilityTable( string_array const & inputParams,
     solubilityTable->initializeFunction();
     solubilityTable->setDimUnits( { units::Pressure, units::TemperatureInC } );
     solubilityTable->setValueUnits( units::Solubility );
-    solubilityTable->setInterpolationMethod( TableFunction::InterpolationType::Linear );
     return solubilityTable;
   }
   else
@@ -278,7 +277,6 @@ TableFunction const * makeVapourisationTable( string_array const & inputParams,
     vapourisationTable->initializeFunction();
     vapourisationTable->setDimUnits( { units::Pressure, units::TemperatureInC } );
     vapourisationTable->setValueUnits( units::Solubility );
-    vapourisationTable->setInterpolationMethod( TableFunction::InterpolationType::Linear );
     return vapourisationTable;
   }
   else

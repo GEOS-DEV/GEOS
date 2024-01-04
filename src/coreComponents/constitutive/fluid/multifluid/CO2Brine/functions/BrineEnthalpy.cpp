@@ -97,7 +97,6 @@ TableFunction const * makeCO2EnthalpyTable( string_array const & inputParams,
     enthalpyTable->initializeFunction();
     enthalpyTable->setDimUnits( PTTableCoordinates::coordsUnits );
     enthalpyTable->setValueUnits( units::Enthalpy );
-    enthalpyTable->setInterpolationMethod( TableFunction::InterpolationType::Linear );
     return enthalpyTable;
   }
   else
@@ -147,7 +146,6 @@ TableFunction const * makeBrineEnthalpyTable( string_array const & inputParams,
     enthalpyTable->initializeFunction();
     enthalpyTable->setDimUnits( { PTTableCoordinates::coordsUnits[1] } );
     enthalpyTable->setValueUnits( units::Enthalpy );
-    enthalpyTable->setInterpolationMethod( TableFunction::InterpolationType::Linear );
     return enthalpyTable;
   }
   else

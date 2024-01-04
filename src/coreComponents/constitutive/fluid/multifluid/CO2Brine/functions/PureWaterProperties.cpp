@@ -41,7 +41,6 @@ PureWaterProperties::makeSaturationViscosityTable( string const & functionName,
     viscosityTable->initializeFunction();
     viscosityTable->setDimUnits( { units::TemperatureInC } );
     viscosityTable->setValueUnits( units::Viscosity );
-    viscosityTable->setInterpolationMethod( TableFunction::InterpolationType::Linear );
     return viscosityTable;
   }
   else
@@ -128,7 +127,6 @@ PureWaterProperties::makeSaturationDensityTable( string const & functionName,
     densityTable->initializeFunction();
     densityTable->setDimUnits( { units::TemperatureInC } );
     densityTable->setValueUnits( units::Density );
-    densityTable->setInterpolationMethod( TableFunction::InterpolationType::Linear );
     return densityTable;
   }
   else
@@ -215,7 +213,6 @@ PureWaterProperties::makeSaturationPressureTable( string const & functionName,
     pressureTable->initializeFunction();
     pressureTable->setDimUnits( { units::TemperatureInC } );
     pressureTable->setValueUnits( units::Pressure );
-    pressureTable->setInterpolationMethod( TableFunction::InterpolationType::Linear );
     return pressureTable;
   }
   else

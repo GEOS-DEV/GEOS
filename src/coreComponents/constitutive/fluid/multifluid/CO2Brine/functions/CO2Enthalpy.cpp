@@ -211,7 +211,6 @@ TableFunction const * makeCO2EnthalpyTable( string_array const & inputParams,
     enthalpyTable->initializeFunction();
     enthalpyTable->setDimUnits( { units::Pressure, units::TemperatureInC } );
     enthalpyTable->setValueUnits( units::Enthalpy );
-    enthalpyTable->setInterpolationMethod( TableFunction::InterpolationType::Linear );
     return enthalpyTable;
   }
   else

@@ -219,7 +219,6 @@ TableFunction const * makeDensityTable( string_array const & inputParams,
     densityTable->initializeFunction();
     densityTable->setDimUnits( PTTableCoordinates::coordsUnits );
     densityTable->setValueUnits( units::Density );
-    densityTable->setInterpolationMethod( TableFunction::InterpolationType::Linear );
     return densityTable;
   }
   else

@@ -121,7 +121,6 @@ TableFunction const * makeDensityTable( string_array const & inputParams,
     densityTable->initializeFunction();
     densityTable->setDimUnits( { units::Pressure, units::TemperatureInC } );
     densityTable->setValueUnits( units::Density );
-    densityTable->setInterpolationMethod( TableFunction::InterpolationType::Linear );
     return densityTable;
   }
   else

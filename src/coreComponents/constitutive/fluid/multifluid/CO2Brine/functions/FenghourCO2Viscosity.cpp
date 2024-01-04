@@ -99,7 +99,6 @@ TableFunction const * makeViscosityTable( string_array const & inputParams,
     viscosityTable->initializeFunction();
     viscosityTable->setDimUnits( { units::Pressure, units::TemperatureInC } );
     viscosityTable->setValueUnits( units::Viscosity );
-    viscosityTable->setInterpolationMethod( TableFunction::InterpolationType::Linear );
     return viscosityTable;
   }
   else
