@@ -32,7 +32,6 @@ namespace constitutive
 struct RachfordRice
 {
 public:
-  using Deriv = multifluid::DerivativeOffset;
   /// Tolerance of the SSI loop
   static constexpr real64 SSITolerance = MultiFluidConstants::SSITolerance;
   /// Tolerance of the Newton loop
