@@ -20,14 +20,21 @@
 #ifndef GEOS_PHYSICSSOLVERS_WAVEPROPAGATION_WAVESOLVERUTILS_HPP_
 #define GEOS_PHYSICSSOLVERS_WAVEPROPAGATION_WAVESOLVERUTILS_HPP_
 
+#include "mesh/utilities/ComputationalGeometry.hpp"
 #include "fileIO/Outputs/OutputBase.hpp"
-#include "WaveSolverBase.hpp"
+#include "LvArray/src/tensorOps.hpp"
 
 namespace geos
 {
 
 struct WaveSolverUtils
 {
+  static constexpr real64 epsilonLoc = 1e-8;
+  static constexpr real64 eps64 = std::numeric_limits< real64 >::epsilon();
+  static constexpr real32 eps32 = std::numeric_limits< real32 >::epsilon();
+
+  using EXEC_POLICY = parallelDevicePolicy< >;
+  using wsCoordType = real32;
 
   GEOS_HOST_DEVICE
   static real32 evaluateRicker( real64 const time_n, real32 const f0, real32 const t0, localIndex const order )
@@ -68,78 +75,128 @@ struct WaveSolverUtils
     return pulse;
   }
 
-  static void writeSeismoTrace( localIndex iSeismo,
-                                arrayView2d< real64 const > const receiverConstants,
-                                arrayView1d< localIndex const > const receiverIsLocal,
-                                localIndex const nsamplesSeismoTrace,
-                                localIndex const outputSeismoTrace,
-                                arrayView2d< real32 > varAtReceivers )
+  /**
+   * @brief Initialize (clear) the trace file.
+   */
+  static void initTrace( char const * prefix,
+                         string const & name,
+                         bool const outputSeismoTrace,
+                         localIndex const nReceivers,
+                         arrayView1d< localIndex const > const receiverIsLocal )
   {
-    if( iSeismo == nsamplesSeismoTrace - 1 )
+    if( !outputSeismoTrace ) return;
+
+    string const outputDir = OutputBase::getOutputDirectory();
+    RAJA::ReduceSum< ReducePolicy< serialPolicy >, localIndex > count( 0 );
+
+    forAll< serialPolicy >( nReceivers, [=] ( localIndex const ircv )
     {
-      string const outputDir = OutputBase::getOutputDirectory();
-      forAll< serialPolicy >( receiverConstants.size( 0 ), [=] ( localIndex const ircv )
+      if( receiverIsLocal[ircv] == 1 )
       {
-        if( outputSeismoTrace == 1 )
-        {
-          if( receiverIsLocal[ircv] == 1 )
-          {
-            string const fn = joinPath( outputDir, GEOS_FMT( "seismoTraceReceiver{:03}.txt", ircv ) );
-            std::ofstream f( fn, std::ios::app );
-            if( !f )
-            {
-              GEOS_WARNING( GEOS_FMT( "Failed to open output file {}", fn ) );
-              return;
-            }
-            for( localIndex iSample = 0; iSample < nsamplesSeismoTrace; ++iSample )
-            {
-              f << iSample << " " << varAtReceivers[iSample][ircv] << std::endl;
-            }
-            f.close();
-          }
-        }
-      } );
-    }
+        count += 1;
+        string const fn = joinPath( outputDir, GEOS_FMT( "{}_{}_{:03}.txt", prefix, name, ircv ) );
+        std::ofstream f( fn, std::ios::out | std::ios::trunc );
+      }
+    } );
+
+    localIndex const total = MpiWrapper::sum( count.get() );
+    GEOS_ERROR_IF( nReceivers != total, GEOS_FMT( ": Invalid distribution of receivers: nReceivers={} != MPI::sum={}.", nReceivers, total ) );
   }
 
+  /**
+   * @brief Convenient helper for 3D vectors calling 3 times the scalar version with only the sampled variable argument changed.
+   */
+  static void writeSeismoTraceVector( char const * prefix,
+                                      string const & name,
+                                      bool const outputSeismoTrace,
+                                      localIndex const nReceivers,
+                                      arrayView1d< localIndex const > const receiverIsLocal,
+                                      localIndex const nsamplesSeismoTrace,
+                                      arrayView2d< real32 const > const varAtReceiversx,
+                                      arrayView2d< real32 const > const varAtReceiversy,
+                                      arrayView2d< real32 const > const varAtReceiversz )
+  {
+    writeSeismoTrace( prefix, name, outputSeismoTrace, nReceivers, receiverIsLocal, nsamplesSeismoTrace, varAtReceiversx );
+    writeSeismoTrace( prefix, name, outputSeismoTrace, nReceivers, receiverIsLocal, nsamplesSeismoTrace, varAtReceiversy );
+    writeSeismoTrace( prefix, name, outputSeismoTrace, nReceivers, receiverIsLocal, nsamplesSeismoTrace, varAtReceiversz );
+  }
+
+  /**
+   * @brief Write the seismo traces to a file.
+   */
+  static void writeSeismoTrace( char const * prefix,
+                                string const & name,
+                                bool const outputSeismoTrace,
+                                localIndex const nReceivers,
+                                arrayView1d< localIndex const > const receiverIsLocal,
+                                localIndex const nsamplesSeismoTrace,
+                                arrayView2d< real32 const > const varAtReceivers )
+  {
+    if( !outputSeismoTrace ) return;
+
+    string const outputDir = OutputBase::getOutputDirectory();
+    forAll< serialPolicy >( nReceivers, [=] ( localIndex const ircv )
+    {
+      if( receiverIsLocal[ircv] == 1 )
+      {
+        string const fn = joinPath( outputDir, GEOS_FMT( "{}_{}_{:03}.txt", prefix, name, ircv ) );
+        std::ofstream f( fn, std::ios::app );
+        if( f )
+        {
+          GEOS_LOG_RANK( GEOS_FMT( "Append to seismo trace file {}", fn ) );
+          for( localIndex iSample = 0; iSample < nsamplesSeismoTrace; ++iSample )
+          {
+            // index - time - value
+            f << iSample << " " << varAtReceivers[iSample][nReceivers] << " " << varAtReceivers[iSample][ircv] << std::endl;
+          }
+          f.close();
+        }
+        else
+        {
+          GEOS_WARNING( GEOS_FMT( "Failed to open output file {}", fn ) );
+        }
+      }
+    } );
+  }
+
+  /**
+   * @brief Compute the seismo traces.
+   */
   static void computeSeismoTrace( real64 const time_n,
                                   real64 const dt,
                                   real64 const timeSeismo,
-                                  localIndex iSeismo,
+                                  localIndex const iSeismo,
                                   arrayView2d< localIndex const > const receiverNodeIds,
                                   arrayView2d< real64 const > const receiverConstants,
                                   arrayView1d< localIndex const > const receiverIsLocal,
-                                  localIndex const nsamplesSeismoTrace,
-                                  localIndex const outputSeismoTrace,
                                   arrayView1d< real32 const > const var_np1,
                                   arrayView1d< real32 const > const var_n,
                                   arrayView2d< real32 > varAtReceivers )
   {
     real64 const time_np1 = time_n + dt;
 
-    real32 const a1 = (LvArray::math::abs( dt ) < WaveSolverBase::epsilonLoc ) ? 1.0 : (time_np1 - timeSeismo)/dt;
+    real32 const a1 = abs( dt ) < epsilonLoc ? 1.0 : (time_np1 - timeSeismo) / dt;
     real32 const a2 = 1.0 - a1;
 
-    if( nsamplesSeismoTrace > 0 )
-    {
-      forAll< WaveSolverBase::EXEC_POLICY >( receiverConstants.size( 0 ), [=] GEOS_HOST_DEVICE ( localIndex const ircv )
-      {
-        if( receiverIsLocal[ircv] == 1 )
-        {
-          varAtReceivers[iSeismo][ircv] = 0.0;
-          real32 vtmp_np1 = 0.0, vtmp_n = 0.0;
-          for( localIndex inode = 0; inode < receiverConstants.size( 1 ); ++inode )
-          {
-            vtmp_np1 += var_np1[receiverNodeIds[ircv][inode]] * receiverConstants[ircv][inode];
-            vtmp_n += var_n[receiverNodeIds[ircv][inode]] * receiverConstants[ircv][inode];
-          }
-          // linear interpolation between the pressure value at time_n and time_(n+1)
-          varAtReceivers[iSeismo][ircv] = a1*vtmp_n + a2*vtmp_np1;
-        }
-      } );
-    }
+    localIndex const nReceivers = receiverConstants.size( 0 );
 
-    writeSeismoTrace( iSeismo, receiverConstants, receiverIsLocal, nsamplesSeismoTrace, outputSeismoTrace, varAtReceivers );
+    forAll< EXEC_POLICY >( nReceivers, [=] GEOS_HOST_DEVICE ( localIndex const ircv )
+    {
+      if( receiverIsLocal[ircv] == 1 )
+      {
+        real32 vtmp_np1 = 0.0, vtmp_n = 0.0;
+        for( localIndex inode = 0; inode < receiverConstants.size( 1 ); ++inode )
+        {
+          vtmp_np1 += var_np1[receiverNodeIds( ircv, inode )] * receiverConstants( ircv, inode );
+          vtmp_n += var_n[receiverNodeIds( ircv, inode )] * receiverConstants( ircv, inode );
+        }
+        // linear interpolation between the pressure value at time_n and time_{n+1}
+        varAtReceivers( iSeismo, ircv ) = a1 * vtmp_n + a2 * vtmp_np1;
+        // NOTE: varAtReceivers has size(1) = numReceiversGlobal + 1, this does not OOB
+        // left in the forAll loop for sync issues since the following does not depend on `ircv`
+        varAtReceivers( iSeismo, nReceivers ) = a1 * time_n + a2 * time_np1;
+      }
+    } );
   }
 
   static void compute2dVariableSeismoTrace( real64 const time_n,
@@ -147,49 +204,42 @@ struct WaveSolverUtils
                                             localIndex const regionIndex,
                                             arrayView1d< localIndex const > const receiverRegion,
                                             real64 const timeSeismo,
-                                            localIndex iSeismo,
+                                            localIndex const iSeismo,
                                             arrayView1d< localIndex const > const rcvElem,
                                             arrayView2d< real64 const > const receiverConstants,
                                             arrayView1d< localIndex const > const receiverIsLocal,
-                                            localIndex const nsamplesSeismoTrace,
-                                            localIndex const outputSeismoTrace,
                                             arrayView2d< real32 const > const var_np1,
                                             arrayView2d< real32 const > const var_n,
                                             arrayView2d< real32 > varAtReceivers )
   {
-    real64 const time_np1 = time_n+dt;
+    real64 const time_np1 = time_n + dt;
 
-    real32 const a1 = (dt < WaveSolverBase::epsilonLoc) ? 1.0 : (time_np1 - timeSeismo)/dt;
+    real32 const a1 = dt < epsilonLoc ? 1.0 : (time_np1 - timeSeismo) / dt;
     real32 const a2 = 1.0 - a1;
 
-    if( nsamplesSeismoTrace > 0 )
+    localIndex const nReceivers = receiverConstants.size( 0 );
+
+    forAll< EXEC_POLICY >( nReceivers, [=] GEOS_HOST_DEVICE ( localIndex const ircv )
     {
-      forAll< WaveSolverBase::EXEC_POLICY >( receiverConstants.size( 0 ), [=] GEOS_HOST_DEVICE ( localIndex const ircv )
+      if( receiverIsLocal[ircv] == 1 )
       {
-        if( receiverIsLocal[ircv] == 1 )
+        if( receiverRegion[ircv] == regionIndex )
         {
-          if( receiverRegion[ircv] == regionIndex )
+          real32 vtmp_np1 = 0.0, vtmp_n = 0.0;
+          for( localIndex inode = 0; inode < receiverConstants.size( 1 ); ++inode )
           {
-            varAtReceivers[iSeismo][ircv] = 0.0;
-            real32 vtmp_np1 = 0.0, vtmp_n = 0.0;
-            for( localIndex inode = 0; inode < receiverConstants.size( 1 ); ++inode )
-            {
-              vtmp_np1 += var_np1[rcvElem[ircv]][inode] * receiverConstants[ircv][inode];
-              vtmp_n += var_n[rcvElem[ircv]][inode] * receiverConstants[ircv][inode];
-            }
-            // linear interpolation between the pressure value at time_n and time_(n+1)
-            varAtReceivers[iSeismo][ircv] = a1*vtmp_n + a2*vtmp_np1;
+            vtmp_np1 += var_np1( rcvElem[ircv], inode ) * receiverConstants( ircv, inode );
+            vtmp_n += var_n( rcvElem[ircv], inode ) * receiverConstants( ircv, inode );
           }
+          // linear interpolation between the pressure value at time_n and time_{n+1}
+          varAtReceivers( iSeismo, ircv ) = a1 * vtmp_n + a2 * vtmp_np1;
+          // NOTE: varAtReceivers has size(1) = numReceiversGlobal + 1, this does not OOB
+          // left in the forAll loop for sync issues since the following does not depend on `ircv`
+          varAtReceivers( iSeismo, nReceivers ) = a1 * time_n + a2 * time_np1;
         }
-      } );
-    }
-
-    writeSeismoTrace( iSeismo, receiverConstants, receiverIsLocal, nsamplesSeismoTrace, outputSeismoTrace, varAtReceivers );
+      }
+    } );
   }
-
-  /**
-   * @brief Check if the source point is inside an element or not
-   */
 
   /**
    * @brief Check if the source point is inside an element or not
@@ -201,7 +251,6 @@ struct WaveSolverUtils
    * @param coords coordinate of the point
    * @return true if coords is inside the element
    */
-
   GEOS_HOST_DEVICE
   static bool
   locateSourceElement( real64 const numFacesPerElem,
@@ -237,35 +286,32 @@ struct WaveSolverUtils
       localIndex const s = computationalGeometry::sign( LvArray::tensorOps::AiBi< 3 >( faceNormalOnFace, faceCenterOnFace ));
 
       // all dot products should be non-negative (we enforce outward normals)
-      if( s < 0 )
-      {
-        return false;
-      }
+      if( s < 0 ) return false;
 
     }
     return true;
   }
 
-/**
- * @brief Convert a mesh element point coordinate into a coordinate on the reference element
- * @tparam FE_TYPE finite element type
- * @param[in] coords coordinate of the point
- * @param[in] elemsToNodes map to obtaint global nodes from element index
- * @param[in] X array of mesh nodes coordinates
- * @param[out] coordsOnRefElem to contain the coordinate computed in the reference element
- */
+  /**
+   * @brief Convert a mesh element point coordinate into a coordinate on the reference element
+   * @tparam FE_TYPE finite element type
+   * @param[in] coords coordinate of the point
+   * @param[in] elemsToNodes map to obtaint global nodes from element index
+   * @param[in] nodeCoords array of mesh nodes coordinates
+   * @param[out] coordsOnRefElem to contain the coordinate computed in the reference element
+   */
   template< typename FE_TYPE >
   GEOS_HOST_DEVICE
   static void
   computeCoordinatesOnReferenceElement( real64 const (&coords)[3],
                                         arraySlice1d< localIndex const, cells::NODE_MAP_USD - 1 > const elemsToNodes,
-                                        arrayView2d< WaveSolverBase::wsCoordType const, nodes::REFERENCE_POSITION_USD > const X,
+                                        arrayView2d< wsCoordType const, nodes::REFERENCE_POSITION_USD > const nodeCoords,
                                         real64 (& coordsOnRefElem)[3] )
   {
     real64 xLocal[FE_TYPE::numNodes][3]{};
     for( localIndex a = 0; a < FE_TYPE::numNodes; ++a )
     {
-      LvArray::tensorOps::copy< 3 >( xLocal[a], X[ elemsToNodes[a] ] );
+      LvArray::tensorOps::copy< 3 >( xLocal[a], nodeCoords[ elemsToNodes[a] ] );
     }
     // coordsOnRefElem = invJ*(coords-coordsNode_0)
     real64 invJ[3][3]{};

@@ -99,11 +99,10 @@ struct PrecomputeSourceAndReceiverKernel
           R1Tensor const sourceForce,
           R2SymTensor const sourceMoment )
   {
+    constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
 
     forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const k )
     {
-
-      constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
 
       real64 const center[3] = { elemCenter[k][0],
                                  elemCenter[k][1],
@@ -150,8 +149,8 @@ struct PrecomputeSourceAndReceiverKernel
                                                                               coordsOnRefElem );
             sourceIsAccessible[isrc] = 1;
 
-            real64 N[FE_TYPE::numNodes];
-            real64 gradN[FE_TYPE::numNodes][3];
+            real64 N[numNodesPerElem];
+            real64 gradN[numNodesPerElem][3];
             FE_TYPE::calcN( coordsOnRefElem, N );
             FE_TYPE::calcGradN( coordsOnRefElem, xLocal, gradN );
             R2SymTensor moment = sourceMoment;
@@ -177,7 +176,6 @@ struct PrecomputeSourceAndReceiverKernel
           }
         }
       } // end loop over all sources
-
 
       // Step 2: locate the receivers, and precompute the receiver term
 
@@ -218,8 +216,8 @@ struct PrecomputeSourceAndReceiverKernel
                                                                               coordsOnRefElem );
             receiverIsLocal[ircv] = 1;
 
-            real64 N[FE_TYPE::numNodes];
-            real64 gradN[FE_TYPE::numNodes][3];
+            real64 N[FE_TYPE::numNodesPerElem];
+            real64 gradN[FE_TYPE::numNodesPerElem][3];
             FE_TYPE::calcN( coordsOnRefElem, N );
             FE_TYPE::calcGradN( coordsOnRefElem, xLocal, gradN );
 
@@ -506,8 +504,8 @@ public:
         stack.xLocal[ a ][ i ] = m_nodeCoords[ nodeIndex ][ i ];
       }
     }
-    stack.mu = m_density[k] * m_velocityVs[k] * m_velocityVs[k];
-    stack.lambda = m_density[k] *m_velocityVp[k] * m_velocityVp[k] - 2.0*stack.mu;
+    stack.mu = m_density[k] * pow( m_velocityVs[k], 2 );
+    stack.lambda = m_density[k] * pow( m_velocityVp[k], 2 ) - 2.0 * stack.mu;
   }
 
   /**
@@ -536,13 +534,13 @@ public:
       real32 const Ryz_ij = val*(stack.lambda*J[p][1]*J[r][2]+stack.mu*J[p][2]*J[r][1]);
       real32 const Rzy_ij = val*(stack.mu*J[p][1]*J[r][2]+stack.lambda*J[p][2]*J[r][1]);
 
-      real32 const localIncrementx = (Rxx_ij * m_ux_n[m_elemsToNodes[k][j]] + Rxy_ij*m_uy_n[m_elemsToNodes[k][j]] + Rxz_ij*m_uz_n[m_elemsToNodes[k][j]]);
-      real32 const localIncrementy = (Ryx_ij * m_ux_n[m_elemsToNodes[k][j]] + Ryy_ij*m_uy_n[m_elemsToNodes[k][j]] + Ryz_ij*m_uz_n[m_elemsToNodes[k][j]]);
-      real32 const localIncrementz = (Rzx_ij * m_ux_n[m_elemsToNodes[k][j]] + Rzy_ij*m_uy_n[m_elemsToNodes[k][j]] + Rzz_ij*m_uz_n[m_elemsToNodes[k][j]]);
+      real32 const localIncrementx = (Rxx_ij * m_ux_n[m_elemsToNodes( k, j )] + Rxy_ij*m_uy_n[m_elemsToNodes( k, j )] + Rxz_ij*m_uz_n[m_elemsToNodes( k, j )]);
+      real32 const localIncrementy = (Ryx_ij * m_ux_n[m_elemsToNodes( k, j )] + Ryy_ij*m_uy_n[m_elemsToNodes( k, j )] + Ryz_ij*m_uz_n[m_elemsToNodes( k, j )]);
+      real32 const localIncrementz = (Rzx_ij * m_ux_n[m_elemsToNodes( k, j )] + Rzy_ij*m_uy_n[m_elemsToNodes( k, j )] + Rzz_ij*m_uz_n[m_elemsToNodes( k, j )]);
 
-      RAJA::atomicAdd< parallelDeviceAtomic >( &m_stiffnessVectorx[m_elemsToNodes[k][i]], localIncrementx );
-      RAJA::atomicAdd< parallelDeviceAtomic >( &m_stiffnessVectory[m_elemsToNodes[k][i]], localIncrementy );
-      RAJA::atomicAdd< parallelDeviceAtomic >( &m_stiffnessVectorz[m_elemsToNodes[k][i]], localIncrementz );
+      RAJA::atomicAdd< parallelDeviceAtomic >( &m_stiffnessVectorx[m_elemsToNodes( k, i )], localIncrementx );
+      RAJA::atomicAdd< parallelDeviceAtomic >( &m_stiffnessVectory[m_elemsToNodes( k, i )], localIncrementy );
+      RAJA::atomicAdd< parallelDeviceAtomic >( &m_stiffnessVectorz[m_elemsToNodes( k, i )], localIncrementz );
     } );
   }
 

@@ -56,6 +56,7 @@ EventBase::EventBase( const string & name,
   enableLogLevelInput();
 
   registerWrapper( viewKeyStruct::eventTargetString(), &m_eventTarget ).
+    setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Name of the object to be executed when the event criteria are met." );
 
