@@ -290,8 +290,6 @@ private:
     auto const componentProperties = this->m_fluid->createKernelWrapper();
     auto const molecularWeight = componentProperties.m_componentMolarWeight;
 
-    massDensity = computeMassDensity( pressure, temperature, composition );
-
     real64 molarDensity = 0.0;
     array1d< real64 > molarDensityDerivs( numDof );
 
