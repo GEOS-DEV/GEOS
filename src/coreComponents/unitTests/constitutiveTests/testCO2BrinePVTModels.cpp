@@ -365,7 +365,8 @@ std::unique_ptr< MODEL > makePVTFunction( string const & filename,
       pvtFunction = std::make_unique< MODEL >( strs[1],
                                                strs,
                                                componentNames,
-                                               componentMolarWeight );
+                                               componentMolarWeight,
+                                               true ); // print PVT tables
     }
   }
   GEOS_ERROR_IF( pvtFunction == nullptr,
@@ -406,7 +407,8 @@ std::unique_ptr< MODEL > makeFlashModel( string const & filename,
                                               strs,
                                               phaseNames,
                                               componentNames,
-                                              componentMolarWeight );
+                                              componentMolarWeight,
+                                              true ); // print PVT tables
     }
   }
   GEOS_ERROR_IF( flashModel == nullptr,

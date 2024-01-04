@@ -42,6 +42,7 @@ SinglePhasePoromechanicsEmbeddedFractures::SinglePhasePoromechanicsEmbeddedFract
   m_fracturesSolverName()
 {
   registerWrapper( viewKeyStruct::fracturesSolverNameString(), &m_fracturesSolverName ).
+    setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Name of the fractures solver to use in the fractured poroelastic solver" );
 
@@ -601,8 +602,7 @@ void SinglePhasePoromechanicsEmbeddedFractures::updateState( DomainPartition & d
 
       // update the stencil weights using the updated hydraulic aperture
       flowSolver()->updateStencilWeights( domain );
-
-      // update fracture's permeability and porosity
+      // update fracture's porosity from pressure and temperature
       flowSolver()->updatePorosityAndPermeability( subRegion );
       // update fluid model
       flowSolver()->updateFluidState( subRegion );

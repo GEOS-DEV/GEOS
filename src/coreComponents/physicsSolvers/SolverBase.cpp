@@ -64,6 +64,7 @@ SolverBase::SolverBase( string const & name,
     setDescription( "Value of the Maximum Stable Timestep for this solver." );
 
   this->registerWrapper( viewKeyStruct::discretizationString(), &m_discretizationName ).
+    setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this "
                     "solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` "
@@ -71,6 +72,7 @@ SolverBase::SolverBase( string const & name,
                     "discretization should be specified." );
 
   registerWrapper( viewKeyStruct::targetRegionsString(), &m_targetRegionNames ).
+    setRTTypeName( rtTypes::CustomTypes::groupNameRefArray ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Allowable regions that the solver may be applied to. Note that this does not indicate that "
                     "the solver will be applied to these regions, only that allocation will occur such that the "
@@ -271,7 +273,7 @@ bool SolverBase::execute( real64 const time_n,
 
     if( getLogLevel() >= 1 && dtRemaining > 0.0 )
     {
-      GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "{}: sub-step = {}, accepted dt = {}, remaining dt = {}", getName(), subStep, dtAccepted, dtRemaining ) );
+      GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "{}: sub-step = {}, accepted dt = {}, next dt = {}, remaining dt = {}", getName(), subStep, dtAccepted, nextDt, dtRemaining ) );
     }
   }
 
@@ -290,32 +292,34 @@ real64 SolverBase::setNextDt( real64 const & currentDt,
   real64 const nextDtNewton = setNextDtBasedOnNewtonIter( currentDt );
   real64 const nextDtStateChange = setNextDtBasedOnStateChange( currentDt, domain );
 
-  if( nextDtNewton < nextDtStateChange ) // time step size decided based on convergence
+  if( nextDtNewton < nextDtStateChange )      // time step size decided based on convergence
   {
     integer const iterDecreaseLimit = m_nonlinearSolverParameters.timeStepDecreaseIterLimit();
     integer const iterIncreaseLimit = m_nonlinearSolverParameters.timeStepIncreaseIterLimit();
     if( nextDtNewton > currentDt )
     {
-      GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "{}: Newton solver converged in less than {} iterations, time-step required will be increased.",
-                                          getName(), iterIncreaseLimit ) );
+      GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT(
+                               "{}: Newton solver converged in less than {} iterations, time-step required will be increased.",
+                               getName(), iterIncreaseLimit ));
     }
     else if( nextDtNewton < currentDt )
     {
-      GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "{}: Newton solver converged in more than {} iterations, time-step required will be decreased.",
-                                          getName(), iterDecreaseLimit ) );
+      GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT(
+                               "{}: Newton solver converged in more than {} iterations, time-step required will be decreased.",
+                               getName(), iterDecreaseLimit ));
     }
   }
-  else // time step size decided based on state change
+  else         // time step size decided based on state change
   {
     if( nextDtStateChange > currentDt )
     {
       GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "{}: Time-step required will be increased based on state change.",
-                                          getName() ) );
+                                          getName()));
     }
     else if( nextDtStateChange < currentDt )
     {
       GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "{}: Time-step required will be decreased based on state change.",
-                                          getName() ) );
+                                          getName()));
     }
   }
 
@@ -352,6 +356,15 @@ real64 SolverBase::setNextDtBasedOnNewtonIter( real64 const & currentDt )
   }
   return nextDt;
 }
+
+
+real64 SolverBase::setNextDtBasedOnCFL( const geos::real64 & currentDt, geos::DomainPartition & domain )
+{
+  GEOS_UNUSED_VAR( currentDt, domain );
+  return LvArray::NumericLimits< real64 >::max;       // i.e., not implemented
+}
+
+
 
 real64 SolverBase::linearImplicitStep( real64 const & time_n,
                                        real64 const & dt,
@@ -807,7 +820,7 @@ real64 SolverBase::nonlinearImplicitStep( real64 const & time_n,
     }
     else
     {
-      GEOS_ERROR( getDataContext() << ": Nonconverged solutions not allowed. Terminating..." );
+      GEOS_ERROR( "Nonconverged solutions not allowed. Terminating..." );
     }
   }
 

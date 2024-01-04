@@ -16,9 +16,11 @@
 #include "common/DataTypes.hpp"
 #include "common/Format.hpp"
 #include "common/TimingMacros.hpp"
+#include "common/Units.hpp"
 #include "mainInterface/initialization.hpp"
 #include "mainInterface/ProblemManager.hpp"
 #include "mainInterface/GeosxState.hpp"
+#include "mainInterface/version.hpp"
 
 
 using namespace geos;
@@ -31,6 +33,8 @@ int main( int argc, char *argv[] )
     std::chrono::system_clock::time_point startTime = std::chrono::system_clock::now();
 
     std::unique_ptr< CommandLineOptions > commandLineOptions = basicSetup( argc, argv, true );
+
+    outputVersionInfo();
 
     GEOS_LOG_RANK_0( GEOS_FMT( "Started at {:%Y-%m-%d %H:%M:%S}", startTime ) );
 
@@ -57,9 +61,9 @@ int main( int argc, char *argv[] )
     std::chrono::system_clock::duration totalTime = endTime - startTime;
 
     GEOS_LOG_RANK_0( GEOS_FMT( "Finished at {:%Y-%m-%d %H:%M:%S}", endTime ) );
-    GEOS_LOG_RANK_0( GEOS_FMT( "total time            {:%H:%M:%S}", totalTime ) );
-    GEOS_LOG_RANK_0( GEOS_FMT( "initialization time   {:%H:%M:%S}", initTime ) );
-    GEOS_LOG_RANK_0( GEOS_FMT( "run time              {:%H:%M:%S}", runTime ) );
+    GEOS_LOG_RANK_0( GEOS_FMT( "total time            {}", units::TimeFormatInfo::fromDuration( totalTime ) ) );
+    GEOS_LOG_RANK_0( GEOS_FMT( "initialization time   {}", units::TimeFormatInfo::fromDuration( initTime ) ) );
+    GEOS_LOG_RANK_0( GEOS_FMT( "run time              {}", units::TimeFormatInfo::fromDuration( runTime ) ) );
 
     return 0;
   }

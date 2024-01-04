@@ -21,7 +21,6 @@
 #include "constitutive/fluid/multifluid/CO2Brine/functions/CO2SolubilitySpycherPruess.hpp"
 #include "constitutive/fluid/multifluid/CO2Brine/functions/CO2EOSSolver.hpp"
 #include "constitutive/fluid/multifluid/CO2Brine/functions/PVTFunctionHelpers.hpp"
-#include "constitutive/fluid/multifluid/MultiFluidConstants.hpp"
 
 #include "functions/FunctionManager.hpp"
 #include "common/Units.hpp"
@@ -43,7 +42,7 @@ namespace
 constexpr real64 P_Pa_f = 1e+5;
 constexpr real64 P_c    = 73.773 * P_Pa_f;
 constexpr real64 T_c    = 304.1282;
-constexpr real64 Rgas   = MultiFluidConstants::gasConstant;
+constexpr real64 Rgas   = constants::gasConstant;
 constexpr real64 V_c    = Rgas*T_c/P_c;
 
 // these coefficients are in Table (A1) of Duan and Sun (2003)
@@ -247,7 +246,7 @@ TableFunction const * makeSolubilityTable( string_array const & inputParams,
   array1d< real64 > values( tableCoords.nPressures() * tableCoords.nTemperatures() );
   calculateCO2Solubility( functionName, tolerance, tableCoords, salinity, values );
 
-  string const tableName = functionName + "_table";
+  string const tableName = functionName + "_co2Dissolution_table";
   if( functionManager.hasGroup< TableFunction >( tableName ) )
   {
     return functionManager.getGroupPointer< TableFunction >( tableName );
@@ -298,7 +297,8 @@ CO2Solubility::CO2Solubility( string const & name,
                               string_array const & inputParams,
                               string_array const & phaseNames,
                               string_array const & componentNames,
-                              array1d< real64 > const & componentMolarWeight ):
+                              array1d< real64 > const & componentMolarWeight,
+                              bool const printTable ):
   FlashModelBase( name,
                   componentNames,
                   componentMolarWeight )
@@ -322,25 +322,12 @@ CO2Solubility::CO2Solubility( string const & name,
   string const expectedWaterPhaseNames[] = { "Water", "water", "Liquid", "liquid" };
   m_phaseLiquidIndex = PVTFunctionHelpers::findName( phaseNames, expectedWaterPhaseNames, "phaseNames" );
 
-  string const solubilityModel = 10 < inputParams.size() ? inputParams[10] : "DuanSun";
-  FunctionManager & functionManager = FunctionManager::getInstance();
-  if( solubilityModel == "SpycherPruess" )
+  m_CO2SolubilityTable = makeSolubilityTable( inputParams, m_modelName, FunctionManager::getInstance() );
+  m_WaterVapourisationTable = makeVapourisationTable( inputParams, m_modelName, FunctionManager::getInstance() );
+  if( printTable )
   {
-    std::pair< TableFunction const *, TableFunction const * > tables =
-      CO2SolubilitySpycherPruess::makeSolubilityTables( inputParams, m_modelName, functionManager );
-    m_CO2SolubilityTable = tables.first;
-    m_WaterVapourisationTable = tables.second;
-  }
-  else if( solubilityModel == "DuanSun" )
-  {
-    m_CO2SolubilityTable = makeSolubilityTable( inputParams, m_modelName, functionManager );
-    m_WaterVapourisationTable = makeVapourisationTable( inputParams, m_modelName, functionManager );
-  }
-  else
-  {
-    GEOS_THROW( GEOS_FMT( "The CO2Solubility model {} is not known."
-                          " This should be either 'DuanSun' or 'SpycherPruess'.", solubilityModel ),
-                InputError );
+    m_CO2SolubilityTable->print( m_CO2SolubilityTable->getName() );
+    m_WaterVapourisationTable->print( m_WaterVapourisationTable->getName() );
   }
 }
 
@@ -364,7 +351,7 @@ CO2Solubility::KernelWrapper CO2Solubility::createKernelWrapper() const
                         m_phaseLiquidIndex );
 }
 
-REGISTER_CATALOG_ENTRY( FlashModelBase, CO2Solubility, string const &, string_array const &, string_array const &, string_array const &, array1d< real64 > const & )
+REGISTER_CATALOG_ENTRY( FlashModelBase, CO2Solubility, string const &, string_array const &, string_array const &, string_array const &, array1d< real64 > const &, bool const )
 
 } // end namespace PVTProps
 
