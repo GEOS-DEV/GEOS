@@ -206,7 +206,7 @@ struct PrecomputeSourceAndReceiverKernel
             {
               for( localIndex i=0; i<3; ++i )
               {
-                xLocal[a][i] = X( elemsToNodes( k, a ), i );
+                xLocal[a][i] = nodeCoords( elemsToNodes( k, a ), i );
               }
             }
 
@@ -216,8 +216,8 @@ struct PrecomputeSourceAndReceiverKernel
                                                                               coordsOnRefElem );
             receiverIsLocal[ircv] = 1;
 
-            real64 N[FE_TYPE::numNodesPerElem];
-            real64 gradN[FE_TYPE::numNodesPerElem][3];
+            real64 N[numNodesPerElem];
+            real64 gradN[numNodesPerElem][3];
             FE_TYPE::calcN( coordsOnRefElem, N );
             FE_TYPE::calcGradN( coordsOnRefElem, xLocal, gradN );
 
