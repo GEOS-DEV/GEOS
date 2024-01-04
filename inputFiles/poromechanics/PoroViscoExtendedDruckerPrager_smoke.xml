@@ -31,7 +31,7 @@
   name="outputs"
   timeFrequency="80"
   targetExactTimestep="1"
-  target="/Outputs/siloOutput"
+  target="/Outputs/vtkOutput"
 />
 
 <PeriodicEvent
