@@ -489,6 +489,12 @@ void SinglePhasePoromechanicsEmbeddedFractures::implicitStepComplete( real64 con
 {
   m_fracturesSolver->implicitStepComplete( time_n, dt, domain );
   flowSolver()->implicitStepComplete( time_n, dt, domain );
+
+  // remove the contribution of the hydraulic aperture from the stencil weights
+  flowSolver()->prepareStencilWeights( domain );
+
+  // update the stencil weights using the updated hydraulic aperture
+  flowSolver()->updateStencilWeights( domain );
 }
 
 void SinglePhasePoromechanicsEmbeddedFractures::resetStateToBeginningOfStep( DomainPartition & domain )
@@ -531,9 +537,6 @@ void SinglePhasePoromechanicsEmbeddedFractures::updateState( DomainPartition & d
 {
   /// 1. update the reservoir
   SinglePhasePoromechanics::updateState( domain );
-
-  // remove the contribution of the hydraulic aperture from the stencil weights
-  flowSolver()->prepareStencilWeights( domain );
 
   /// 2. update the fractures
   m_fracturesSolver->updateState( domain );
@@ -600,8 +603,6 @@ void SinglePhasePoromechanicsEmbeddedFractures::updateState( DomainPartition & d
 
       } );
 
-      // update the stencil weights using the updated hydraulic aperture
-      flowSolver()->updateStencilWeights( domain );
       // update fracture's porosity from pressure and temperature
       flowSolver()->updatePorosityAndPermeability( subRegion );
       // update fluid model

@@ -736,13 +736,7 @@ void SinglePhasePoromechanicsConformingFractures::updateState( DomainPartition &
 
   Base::updateState( domain );
 
-  // remove the contribution of the hydraulic aperture from the stencil weights
-  poromechanicsSolver()->flowSolver()->prepareStencilWeights( domain );
-
   updateHydraulicApertureAndFracturePermeability( domain );
-
-  // update the stencil weights using the updated hydraulic aperture
-  poromechanicsSolver()->flowSolver()->updateStencilWeights( domain );
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
@@ -763,6 +757,20 @@ void SinglePhasePoromechanicsConformingFractures::updateState( DomainPartition &
       }
     } );
   } );
+}
+
+void SinglePhasePoromechanicsConformingFractures::implicitStepComplete( real64 const & time_n,
+                                                                        real64 const & dt,
+                                                                        DomainPartition & domain )
+{
+  Base::implicitStepComplete( time_n, dt, domain );
+
+  // remove the contribution of the hydraulic aperture from the stencil weights
+  poromechanicsSolver()->flowSolver()->prepareStencilWeights( domain );
+
+  // update the stencil weights using the updated hydraulic aperture
+  poromechanicsSolver()->flowSolver()->updateStencilWeights( domain );
+
 }
 
 void SinglePhasePoromechanicsConformingFractures::updateHydraulicApertureAndFracturePermeability( DomainPartition & domain )
