@@ -69,7 +69,7 @@ class Geosx(CMakePackage, CudaPackage):
             description='Linear algebra interface.',
             values=('trilinos', 'hypre', 'petsc'),
             multi=False)
-    variant('pygeosx', default=True, description='Add path to the python interface.')
+    variant('pygeosx', default=True, description='Enable pygeosx.')
 
     # SPHINX_END_VARIANTS
 
@@ -158,7 +158,7 @@ class Geosx(CMakePackage, CudaPackage):
     #
     # Python
     #
-    depends_on('python', when='+pygeosx')
+    depends_on('python')
 
 
     #
@@ -463,10 +463,12 @@ class Geosx(CMakePackage, CudaPackage):
             cfg.write('#{0}\n'.format('-' * 80))
             cfg.write('# Python\n')
             cfg.write('#{0}\n\n'.format('-' * 80))
+
+            cfg.write(cmake_cache_entry('Python3_ROOT_DIR', os.path.join(spec['python'].prefix)))
+            cfg.write(cmake_cache_entry('Python3_EXECUTABLE', os.path.join(spec['python'].prefix.bin, 'python3')))
+
             if '+pygeosx' in spec:
                 cfg.write(cmake_cache_option('ENABLE_PYGEOSX', True))
-                cfg.write(cmake_cache_entry('Python3_ROOT_DIR', os.path.join(spec['python'].prefix)))
-                cfg.write(cmake_cache_entry('Python3_EXECUTABLE', os.path.join(spec['python'].prefix.bin, 'python3')))
             else:
                 cfg.write(cmake_cache_option('ENABLE_PYGEOSX', False))
 
