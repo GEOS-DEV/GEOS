@@ -231,59 +231,7 @@ public:
       [&]( real64 const t, auto & values ) {
       evaluateFlash( pressure, t, composition, values );
     } );
-#ifdef HAHAHA
-    real64 constexpr dzs = 1.0e-4;
-    for( integer jc = 0; jc < numComps; ++jc )
-    {
-      stackArray1d< real64, numValues > valuesL( numValues );
-      stackArray1d< real64, numValues > valuesC( numValues );
-      stackArray1d< real64, numValues > valuesR( numValues );
-      real64 const z = composition[jc];
-      composition[jc] = z - dzs;
-      evaluateFlash( pressure, temperature, composition, valuesL );
-      composition[jc] = z;
-      evaluateFlash( pressure, temperature, composition, valuesC );
-      composition[jc] = z + dzs;
-      evaluateFlash( pressure, temperature, composition, valuesR );
-      composition[jc] = z;
-      for( integer ic = 0; ic < numComps; ++ic )
-      {
-        real64 xL = valuesL[1+ic];
-        real64 xC = valuesC[1+ic];
-        real64 xR = valuesR[1+ic];
-        real64 dXL =     (xC - xL)/dzs;
-        real64 dXC = 0.5*(xR - xL)/dzs;
-        real64 dXR =     (xR - xC)/dzs;
-        std::cout << "X" << ic << " "
-                  << std::setw( 15 ) << dXL << " "
-                  << std::setw( 15 ) << dXC << " "
-                  << std::setw( 15 ) << dXR << " ";
-        std::cout << "\n";
-      }
-      for( integer ic = 0; ic < numComps; ++ic )
-      {
-        real64 kVL = valuesL[1+numComps+ic] / valuesL[1+ic];
-        real64 kVC = valuesC[1+numComps+ic] / valuesC[1+ic];
-        real64 kVR = valuesR[1+numComps+ic] / valuesR[1+ic];
-        real64 dKL =     (kVC - kVL)/dzs;
-        real64 dKC = 0.5*(kVR - kVL)/dzs;
-        real64 dKR =     (kVR - kVC)/dzs;
-        std::cout << "K" << ic << " "
-                  << std::setw( 15 ) << dKL << " "
-                  << std::setw( 15 ) << dKC << " "
-                  << std::setw( 15 ) << dKR << " ";
-        std::cout << "\n";
-      }
-      real64 dVL =     (valuesC[0] - valuesL[0])/dzs;
-      real64 dVC = 0.5*(valuesR[0] - valuesL[0])/dzs;
-      real64 dVR =     (valuesR[0] - valuesC[0])/dzs;
-      std::cout << "V" << "  "
-                << std::setw( 15 ) << dVL << " "
-                << std::setw( 15 ) << dVC << " "
-                << std::setw( 15 ) << dVR << " ";
-      std::cout << "\n";
-    }
-#endif
+
     // --- Composition derivatives ---
     real64 constexpr dz = 1.0e-7;
     for( integer jc = 0; jc < numComps; ++jc )
