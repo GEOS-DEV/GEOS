@@ -257,24 +257,6 @@ public:
       stackArray1d< real64, maxNumVals > x( numVals + 1 );
       stackArray2d< real64, maxNumVals * maxNumVals > A( numVals + 1, numVals + 1 );
 
-      auto printSystem = [&](){
-        std::cout << "--------------------------------------------------------------------------------\n";
-        for( integer row = 0; row <= numVals; row++ )
-        {
-          for( integer col = 0; col <= numVals; col++ )
-          {
-            std::cout << std::setw( 15 ) << A( row, col ) << " ";
-          }
-          std::cout << "| ";
-          std::cout << std::setw( 15 ) << x( row ) << " ";
-          std::cout << "| ";
-          std::cout << std::setw( 15 ) << b( row ) << " ";
-          std::cout << "\n";
-        }
-        std::cout << "--------------------------------------------------------------------------------\n";
-      };
-      std::cout << std::scientific << std::setprecision( 8 );
-
       b.zero();
       A.zero();
       for( integer ic = 0; ic < numComps; ++ic )
@@ -320,7 +302,6 @@ public:
         }
         b( numVals ) = 0.0;
         BlasLapackLA::solveLinearSystem( A, b, x );
-        printSystem();
         for( integer ic = 0; ic < numComps; ++ic )
         {
           liquidCompositionDerivs( ic, pc ) = x( ic );
@@ -341,7 +322,6 @@ public:
         b( kc ) += 1.0;
         b( numVals ) = 0.0;
         BlasLapackLA::solveLinearSystem( A, b, x );
-        printSystem();
         for( integer ic = 0; ic < numComps; ++ic )
         {
           liquidCompositionDerivs( ic, pc ) = x( ic );
@@ -350,78 +330,6 @@ public:
         vapourFractionDerivs( pc ) = x( numVals );
       }
     }
-
-    //real64 displacedVapourFraction = -1.0;
-    //stackArray1d< real64, maxNumComps > displacedLiquidComposition( numComps );
-    //stackArray1d< real64, maxNumComps > displacedVapourComposition( numComps );
-
-/****
-    // Pressure derivatives
-    real64 const dp = 1.0e-4 * pressure;
-    compute< EOS_TYPE_LIQUID, EOS_TYPE_VAPOUR >( numComps,
-                                                 pressure + dp,
-                                                 temperature,
-                                                 composition,
-                                                 componentProperties,
-                                                 displacedVapourFraction,
-                                                 displacedLiquidComposition,
-                                                 displacedVapourComposition );
-
-    //vapourFractionDerivs[Deriv::dP] = (displacedVapourFraction - vapourFraction) / dp;
-    for( integer ic = 0; ic < numComps; ++ic )
-    {
-      liquidCompositionDerivs( ic, Deriv::dP ) = (displacedLiquidComposition[ic] - liquidComposition[ic]) / dp;
-      vapourCompositionDerivs( ic, Deriv::dP ) = (displacedVapourComposition[ic] - vapourComposition[ic]) / dp;
-    }
-
-    // Temperature derivatives
-    real64 const dT = 1.0e-6 * temperature;
-    compute< EOS_TYPE_LIQUID, EOS_TYPE_VAPOUR >( numComps,
-                                                 pressure,
-                                                 temperature + dT,
-                                                 composition,
-                                                 componentProperties,
-                                                 displacedVapourFraction,
-                                                 displacedLiquidComposition,
-                                                 displacedVapourComposition );
-
-    //vapourFractionDerivs[Deriv::dT] = (displacedVapourFraction - vapourFraction) / dT;
-    for( integer ic = 0; ic < numComps; ++ic )
-    {
-      liquidCompositionDerivs( ic, Deriv::dT ) = (displacedLiquidComposition[ic] - liquidComposition[ic]) / dT;
-      vapourCompositionDerivs( ic, Deriv::dT ) = (displacedVapourComposition[ic] - vapourComposition[ic]) / dT;
-    }
-
-    // Composition derivatives
-    real64 constexpr dz = 1.0e-7;
-    stackArray1d< real64, maxNumComps > displacedComposition( numComps );
-    for( integer ic = 0; ic < numComps; ++ic )
-    {
-      displacedComposition[ic] = composition[ic];
-    }
-
-    for( integer jc = 0; jc < numComps; ++jc )
-    {
-      displacedComposition[jc] += dz;
-      compute< EOS_TYPE_LIQUID, EOS_TYPE_VAPOUR >( numComps,
-                                                   pressure,
-                                                   temperature,
-                                                   displacedComposition,
-                                                   componentProperties,
-                                                   displacedVapourFraction,
-                                                   displacedLiquidComposition,
-                                                   displacedVapourComposition );
-      displacedComposition[jc] = composition[jc];
-
-      integer const kc = Deriv::dC + jc;
-      vapourFractionDerivs[kc] = (displacedVapourFraction - vapourFraction) / dz;
-      for( integer ic = 0; ic < numComps; ++ic )
-      {
-        liquidCompositionDerivs( ic, kc ) = (displacedLiquidComposition[ic] - liquidComposition[ic]) / dz;
-        vapourCompositionDerivs( ic, kc ) = (displacedVapourComposition[ic] - vapourComposition[ic]) / dz;
-      }
-    }
- */
   }
 
 private:
