@@ -13,20 +13,19 @@
  */
 
 // Source includes
-#include "codingUtilities/UnitTestUtilities.hpp"
 #include "common/DataTypes.hpp"
 #include "constitutive/fluid/multifluid/compositional/functions/CubicEOSPhaseModel.hpp"
 #include "TestFluid.hpp"
+#include "TestFluidUtilities.hpp"
 
 // TPL includes
 #include <gtest/gtest.h>
 
 using namespace geos;
 using namespace geos::testing;
-using namespace geos::constitutive;
+using namespace geos::constitutive::compositional;
 
 static constexpr real64 relTol = 1.0e-5;
-static constexpr real64 absTol = 1.0e-8;
 
 TEST( CubicEOSTest, testCubicEOSTwoComponentsSRK )
 {
@@ -34,10 +33,7 @@ TEST( CubicEOSTest, testCubicEOSTwoComponentsSRK )
 
   auto fluid = TestFluid< numComps >::create( {Fluid::C1, Fluid::C5} );
 
-  auto criticalPressure = fluid->getCriticalPressure();
-  auto criticalTemperature = fluid->getCriticalTemperature();
-  auto omega = fluid->getAcentricFactor();
-  real64 binaryInteractionCoefficients = 0.0; // not implemented yet
+  auto componentProperties = fluid->createKernelWrapper();
 
   real64 pressure = 0.0;
   real64 temperature = 0.0;
@@ -56,10 +52,10 @@ TEST( CubicEOSTest, testCubicEOSTwoComponentsSRK )
   expectedLogFugacityCoefficients[1] = -0.00820777;
 
   CubicEOSPhaseModel< SoaveRedlichKwongEOS >::
-  compute( numComps,
-           pressure, temperature, composition,
-           criticalPressure, criticalTemperature, omega, binaryInteractionCoefficients,
-           logFugacityCoefficients );
+  computeLogFugacityCoefficients( numComps,
+                                  pressure, temperature, composition,
+                                  componentProperties,
+                                  logFugacityCoefficients );
 
   checkRelativeError( logFugacityCoefficients[0], expectedLogFugacityCoefficients[0], relTol );
   checkRelativeError( logFugacityCoefficients[1], expectedLogFugacityCoefficients[1], relTol );
@@ -75,10 +71,10 @@ TEST( CubicEOSTest, testCubicEOSTwoComponentsSRK )
   expectedLogFugacityCoefficients[1] = -0.0701117;
 
   CubicEOSPhaseModel< SoaveRedlichKwongEOS >::
-  compute( numComps,
-           pressure, temperature, composition,
-           criticalPressure, criticalTemperature, omega, binaryInteractionCoefficients,
-           logFugacityCoefficients );
+  computeLogFugacityCoefficients( numComps,
+                                  pressure, temperature, composition,
+                                  componentProperties,
+                                  logFugacityCoefficients );
 
   checkRelativeError( logFugacityCoefficients[0], expectedLogFugacityCoefficients[0], relTol );
   checkRelativeError( logFugacityCoefficients[1], expectedLogFugacityCoefficients[1], relTol );
@@ -94,10 +90,10 @@ TEST( CubicEOSTest, testCubicEOSTwoComponentsSRK )
   expectedLogFugacityCoefficients[1] = -0.00589892;
 
   CubicEOSPhaseModel< SoaveRedlichKwongEOS >::
-  compute( numComps,
-           pressure, temperature, composition,
-           criticalPressure, criticalTemperature, omega, binaryInteractionCoefficients,
-           logFugacityCoefficients );
+  computeLogFugacityCoefficients( numComps,
+                                  pressure, temperature, composition,
+                                  componentProperties,
+                                  logFugacityCoefficients );
 
   checkRelativeError( logFugacityCoefficients[0], expectedLogFugacityCoefficients[0], relTol );
   checkRelativeError( logFugacityCoefficients[1], expectedLogFugacityCoefficients[1], relTol );
@@ -113,10 +109,10 @@ TEST( CubicEOSTest, testCubicEOSTwoComponentsSRK )
   expectedLogFugacityCoefficients[1] = -0.00629384;
 
   CubicEOSPhaseModel< SoaveRedlichKwongEOS >::
-  compute( numComps,
-           pressure, temperature, composition,
-           criticalPressure, criticalTemperature, omega, binaryInteractionCoefficients,
-           logFugacityCoefficients );
+  computeLogFugacityCoefficients( numComps,
+                                  pressure, temperature, composition,
+                                  componentProperties,
+                                  logFugacityCoefficients );
 
   checkRelativeError( logFugacityCoefficients[0], expectedLogFugacityCoefficients[0], relTol );
   checkRelativeError( logFugacityCoefficients[1], expectedLogFugacityCoefficients[1], relTol );
@@ -129,10 +125,7 @@ TEST( CubicEOSTest, testCubicEOSFourComponentsPR )
 
   auto fluid = TestFluid< numComps >::create( {Fluid::N2, Fluid::C8, Fluid::C10, Fluid::H2O} );
 
-  auto criticalPressure = fluid->getCriticalPressure();
-  auto criticalTemperature = fluid->getCriticalTemperature();
-  auto omega = fluid->getAcentricFactor();
-  real64 binaryInteractionCoefficients = 0.0; // not implemented yet
+  auto componentProperties = fluid->createKernelWrapper();
 
   real64 pressure = 0.0;
   real64 temperature = 0.0;
@@ -155,10 +148,10 @@ TEST( CubicEOSTest, testCubicEOSFourComponentsPR )
   expectedLogFugacityCoefficients[3] = -5.33003;
 
   CubicEOSPhaseModel< PengRobinsonEOS >::
-  compute( numComps,
-           pressure, temperature, composition,
-           criticalPressure, criticalTemperature, omega, binaryInteractionCoefficients,
-           logFugacityCoefficients );
+  computeLogFugacityCoefficients( numComps,
+                                  pressure, temperature, composition,
+                                  componentProperties,
+                                  logFugacityCoefficients );
 
   checkRelativeError( logFugacityCoefficients[0], expectedLogFugacityCoefficients[0], relTol );
   checkRelativeError( logFugacityCoefficients[1], expectedLogFugacityCoefficients[1], relTol );
@@ -180,10 +173,10 @@ TEST( CubicEOSTest, testCubicEOSFourComponentsPR )
   expectedLogFugacityCoefficients[3] = 0.361984;
 
   CubicEOSPhaseModel< PengRobinsonEOS >::
-  compute( numComps,
-           pressure, temperature, composition,
-           criticalPressure, criticalTemperature, omega, binaryInteractionCoefficients,
-           logFugacityCoefficients );
+  computeLogFugacityCoefficients( numComps,
+                                  pressure, temperature, composition,
+                                  componentProperties,
+                                  logFugacityCoefficients );
 
   checkRelativeError( logFugacityCoefficients[0], expectedLogFugacityCoefficients[0], relTol );
   checkRelativeError( logFugacityCoefficients[1], expectedLogFugacityCoefficients[1], relTol );
@@ -205,10 +198,10 @@ TEST( CubicEOSTest, testCubicEOSFourComponentsPR )
   expectedLogFugacityCoefficients[3] = -3.42481;
 
   CubicEOSPhaseModel< PengRobinsonEOS >::
-  compute( numComps,
-           pressure, temperature, composition,
-           criticalPressure, criticalTemperature, omega, binaryInteractionCoefficients,
-           logFugacityCoefficients );
+  computeLogFugacityCoefficients( numComps,
+                                  pressure, temperature, composition,
+                                  componentProperties,
+                                  logFugacityCoefficients );
 
   checkRelativeError( logFugacityCoefficients[0], expectedLogFugacityCoefficients[0], relTol );
   checkRelativeError( logFugacityCoefficients[1], expectedLogFugacityCoefficients[1], relTol );
@@ -223,10 +216,7 @@ TEST( CubicEOSTest, testCubicEOSFourComponentsSRK )
 
   auto fluid = TestFluid< numComps >::create( {Fluid::N2, Fluid::C8, Fluid::C10, Fluid::H2O} );
 
-  auto criticalPressure = fluid->getCriticalPressure();
-  auto criticalTemperature = fluid->getCriticalTemperature();
-  auto omega = fluid->getAcentricFactor();
-  real64 binaryInteractionCoefficients = 0.0; // not implemented yet
+  auto componentProperties = fluid->createKernelWrapper();
 
   real64 pressure = 0.0;
   real64 temperature = 0.0;
@@ -249,10 +239,10 @@ TEST( CubicEOSTest, testCubicEOSFourComponentsSRK )
   expectedLogFugacityCoefficients[3] = -0.618972;
 
   CubicEOSPhaseModel< SoaveRedlichKwongEOS >::
-  compute( numComps,
-           pressure, temperature, composition,
-           criticalPressure, criticalTemperature, omega, binaryInteractionCoefficients,
-           logFugacityCoefficients );
+  computeLogFugacityCoefficients( numComps,
+                                  pressure, temperature, composition,
+                                  componentProperties,
+                                  logFugacityCoefficients );
 
   checkRelativeError( logFugacityCoefficients[0], expectedLogFugacityCoefficients[0], relTol );
   checkRelativeError( logFugacityCoefficients[1], expectedLogFugacityCoefficients[1], relTol );
@@ -274,10 +264,10 @@ TEST( CubicEOSTest, testCubicEOSFourComponentsSRK )
   expectedLogFugacityCoefficients[3] = -0.00664411;
 
   CubicEOSPhaseModel< SoaveRedlichKwongEOS >::
-  compute( numComps,
-           pressure, temperature, composition,
-           criticalPressure, criticalTemperature, omega, binaryInteractionCoefficients,
-           logFugacityCoefficients );
+  computeLogFugacityCoefficients( numComps,
+                                  pressure, temperature, composition,
+                                  componentProperties,
+                                  logFugacityCoefficients );
 
   checkRelativeError( logFugacityCoefficients[0], expectedLogFugacityCoefficients[0], relTol );
   checkRelativeError( logFugacityCoefficients[1], expectedLogFugacityCoefficients[1], relTol );
@@ -299,10 +289,10 @@ TEST( CubicEOSTest, testCubicEOSFourComponentsSRK )
   expectedLogFugacityCoefficients[3] = -2.69792;
 
   CubicEOSPhaseModel< SoaveRedlichKwongEOS >::
-  compute( numComps,
-           pressure, temperature, composition,
-           criticalPressure, criticalTemperature, omega, binaryInteractionCoefficients,
-           logFugacityCoefficients );
+  computeLogFugacityCoefficients( numComps,
+                                  pressure, temperature, composition,
+                                  componentProperties,
+                                  logFugacityCoefficients );
 
   checkRelativeError( logFugacityCoefficients[0], expectedLogFugacityCoefficients[0], relTol );
   checkRelativeError( logFugacityCoefficients[1], expectedLogFugacityCoefficients[1], relTol );
@@ -368,11 +358,6 @@ public:
   ~DerivativeTestFixture() = default;
 
 protected:
-  void checkDerivative( real64 const a, real64 const b, string const & name ) const
-  {
-    checkRelativeError( a, b, relTol, absTol, name );
-  }
-
   std::unique_ptr< TestFluid< NC > > m_fluid;
 };
 
@@ -403,18 +388,10 @@ public:
 public:
   void testNumericalDerivatives( ParamType const & testData ) const
   {
-    auto criticalPressure = this->m_fluid->getCriticalPressure();
-    auto criticalTemperature = this->m_fluid->getCriticalTemperature();
-    auto omega = this->m_fluid->getAcentricFactor();
-    real64 binaryInteractionCoefficients = 0.0; // not implemented yet
+    auto componentProperties = this->m_fluid->createKernelWrapper();
 
     array1d< real64 > aPureCoefficient( numComps );
     array1d< real64 > bPureCoefficient( numComps );
-    real64 aMixtureCoefficient = 0.0;
-    real64 bMixtureCoefficient = 0.0;
-    real64 currentAMixtureCoefficient = 0.0;
-    real64 currentBMixtureCoefficient = 0.0;
-    real64 fdDerivative = 0.0;
 
     real64 daMixtureCoefficient_dp = 0.0;
     real64 dbMixtureCoefficient_dp = 0.0;
@@ -428,30 +405,30 @@ public:
     real64 const temperature = std::get< 1 >( testData );
     TestFluid< NC >::createArray( composition, std::get< 2 >( testData ));
 
-    auto computeCoefficients = [&]( real64 const p, real64 const t, auto const & zmf, real64 & a, real64 & b ){
+    auto computeCoefficients = [&]( real64 const p, real64 const t, auto const & zmf ) -> std::pair< real64 const, real64 const > {
+      real64 a = 0.0;
+      real64 b = 0.0;
       CubicEOSPhaseModel< EOS >::computeMixtureCoefficients(
         numComps,
         p, t, zmf,
-        criticalPressure, criticalTemperature, omega,
-        binaryInteractionCoefficients,
+        componentProperties,
         aPureCoefficient,
         bPureCoefficient,
         a, b
         );
+      return {a, b};
     };
 
     // Calculate values
-    computeCoefficients( pressure, temperature, composition, aMixtureCoefficient, bMixtureCoefficient );
+    auto [aMixtureCoefficient, bMixtureCoefficient] = computeCoefficients( pressure, temperature, composition );
+
     // Calculate derivatives
     CubicEOSPhaseModel< EOS >::computeMixtureCoefficients(
       numComps,
       pressure,
       temperature,
       composition,
-      criticalPressure,
-      criticalTemperature,
-      omega,
-      binaryInteractionCoefficients,
+      componentProperties,
       aPureCoefficient,
       bPureCoefficient,
       aMixtureCoefficient,
@@ -462,48 +439,54 @@ public:
       dbMixtureCoefficient_dt,
       daMixtureCoefficient_dz,
       dbMixtureCoefficient_dz );
+
     // Compare against numerical derivatives
     // -- Pressure derivative
     real64 const dp = 1.0e-4 * pressure;
-    computeCoefficients( pressure-dp, temperature, composition, currentAMixtureCoefficient, currentBMixtureCoefficient );
-    fdDerivative = -(currentAMixtureCoefficient - aMixtureCoefficient) / dp;
-    this->checkDerivative( daMixtureCoefficient_dp, fdDerivative, "Mixing Coeff A left pressure derivative" );
-    fdDerivative = -(currentBMixtureCoefficient - bMixtureCoefficient) / dp;
-    this->checkDerivative( dbMixtureCoefficient_dp, fdDerivative, "Mixing Coeff B left pressure derivative" );
-    computeCoefficients( pressure+dp, temperature, composition, currentAMixtureCoefficient, currentBMixtureCoefficient );
-    fdDerivative = (currentAMixtureCoefficient - aMixtureCoefficient) / dp;
-    this->checkDerivative( daMixtureCoefficient_dp, fdDerivative, "Mixing Coeff A right pressure derivative" );
-    fdDerivative = (currentBMixtureCoefficient - bMixtureCoefficient) / dp;
-    this->checkDerivative( dbMixtureCoefficient_dp, fdDerivative, "Mixing Coeff B right pressure derivative" );
+    geos::testing::internal::testNumericalDerivative(
+      pressure, dp, daMixtureCoefficient_dp,
+      [&]( real64 const p ) -> real64 {
+      return computeCoefficients( p, temperature, composition ).first;
+    } );
+    geos::testing::internal::testNumericalDerivative(
+      pressure, dp, dbMixtureCoefficient_dp,
+      [&]( real64 const p ) -> real64 {
+      return computeCoefficients( p, temperature, composition ).second;
+    } );
+
     // -- Temperature derivative
-    real64 const dt = 1.0e-6 * temperature;
-    computeCoefficients( pressure, temperature-dt, composition, currentAMixtureCoefficient, currentBMixtureCoefficient );
-    fdDerivative = -(currentAMixtureCoefficient - aMixtureCoefficient) / dt;
-    this->checkDerivative( daMixtureCoefficient_dt, fdDerivative, "Mixing Coeff A left temperature derivative" );
-    fdDerivative = -(currentBMixtureCoefficient - bMixtureCoefficient) / dt;
-    this->checkDerivative( dbMixtureCoefficient_dt, fdDerivative, "Mixing Coeff B left temperature derivative" );
-    computeCoefficients( pressure, temperature+dt, composition, currentAMixtureCoefficient, currentBMixtureCoefficient );
-    fdDerivative = (currentAMixtureCoefficient - aMixtureCoefficient) / dt;
-    this->checkDerivative( daMixtureCoefficient_dt, fdDerivative, "Mixing Coeff A right temperature derivative" );
-    fdDerivative = (currentBMixtureCoefficient - bMixtureCoefficient) / dt;
-    this->checkDerivative( dbMixtureCoefficient_dt, fdDerivative, "Mixing Coeff B right temperature derivative" );
+    real64 const dT = 1.0e-6 * temperature;
+    geos::testing::internal::testNumericalDerivative(
+      temperature, dT, daMixtureCoefficient_dt,
+      [&]( real64 const t ) -> real64 {
+      return computeCoefficients( pressure, t, composition ).first;
+    } );
+    geos::testing::internal::testNumericalDerivative(
+      temperature, dT, dbMixtureCoefficient_dt,
+      [&]( real64 const t ) -> real64 {
+      return computeCoefficients( pressure, t, composition ).second;
+    } );
+
     // -- Composition derivatives derivative
     real64 const dz = 1.0e-7;
     for( integer ic = 0; ic < numComps; ++ic )
     {
-      composition[ic] -= dz;
-      computeCoefficients( pressure, temperature, composition, currentAMixtureCoefficient, currentBMixtureCoefficient );
-      fdDerivative = -(currentAMixtureCoefficient - aMixtureCoefficient) / dz;
-      this->checkDerivative( daMixtureCoefficient_dz[ic], fdDerivative, "Mixing Coeff A left composition derivative" );
-      fdDerivative = -(currentBMixtureCoefficient - bMixtureCoefficient) / dz;
-      this->checkDerivative( dbMixtureCoefficient_dz[ic], fdDerivative, "Mixing Coeff B left composition derivative" );
-      composition[ic] += 2.0*dz;
-      computeCoefficients( pressure, temperature, composition, currentAMixtureCoefficient, currentBMixtureCoefficient );
-      fdDerivative = (currentAMixtureCoefficient - aMixtureCoefficient) / dz;
-      this->checkDerivative( daMixtureCoefficient_dz[ic], fdDerivative, "Mixing Coeff A right composition derivative" );
-      fdDerivative = (currentBMixtureCoefficient - bMixtureCoefficient) / dz;
-      this->checkDerivative( dbMixtureCoefficient_dz[ic], fdDerivative, "Mixing Coeff B right composition derivative" );
-      composition[ic] -= dz;
+      auto computeComponentCoefficients = [&]( real64 const z ) {
+        composition[ic] += z;
+        auto const coefficients =  computeCoefficients( pressure, temperature, composition );
+        composition[ic] -= z;
+        return coefficients;
+      };
+      geos::testing::internal::testNumericalDerivative(
+        0.0, dz, daMixtureCoefficient_dz[ic],
+        [&]( real64 const z ) -> real64 {
+        return computeComponentCoefficients( z ).first;
+      } );
+      geos::testing::internal::testNumericalDerivative(
+        0.0, dz, dbMixtureCoefficient_dz[ic],
+        [&]( real64 const z ) -> real64 {
+        return computeComponentCoefficients( z ).second;
+      } );
     }
   }
 };
@@ -564,10 +547,8 @@ public:
 public:
   void testNumericalDerivatives( ParamType const & testData ) const
   {
-    auto criticalPressure = this->m_fluid->getCriticalPressure();
-    auto criticalTemperature = this->m_fluid->getCriticalTemperature();
-    auto omega = this->m_fluid->getAcentricFactor();
-    real64 binaryInteractionCoefficients = 0.0; // not implemented yet
+    auto const componentProperties = this->m_fluid->createKernelWrapper();
+    auto const binaryInteractionCoefficients = componentProperties.m_componentBinaryCoeff;
 
     array1d< real64 > aPureCoefficient( numComps );
     array1d< real64 > bPureCoefficient( numComps );
@@ -580,25 +561,21 @@ public:
     array1d< real64 > daMixtureCoefficient_dz( numComps );
     array1d< real64 > dbMixtureCoefficient_dz( numComps );
 
-    real64 compressibilityFactor = 0.0;
     real64 dCompressibilityFactor_dp = 0.0;
     real64 dCompressibilityFactor_dt = 0.0;
     array1d< real64 > dCompressibilityFactor_dz( numComps );
-
-    real64 currentCompressibilityFactor = 0.0;
-    real64 fdDerivative = 0.0;
 
     array1d< real64 > composition;
     real64 const pressure = std::get< 0 >( testData );
     real64 const temperature = std::get< 1 >( testData );
     TestFluid< NC >::createArray( composition, std::get< 2 >( testData ));
 
-    auto computeCompressibilityFactor = [&]( real64 const p, real64 const t, auto const & zmf, real64 & z ){
+    auto computeCompressibilityFactor = [&]( real64 const p, real64 const t, auto const & zmf ) -> real64 {
+      real64 z = 0.0;
       CubicEOSPhaseModel< EOS >::computeMixtureCoefficients(
         numComps,
         p, t, zmf,
-        criticalPressure, criticalTemperature, omega,
-        binaryInteractionCoefficients,
+        componentProperties,
         aPureCoefficient,
         bPureCoefficient,
         aMixtureCoefficient, bMixtureCoefficient
@@ -612,20 +589,19 @@ public:
         aMixtureCoefficient,
         bMixtureCoefficient,
         z );
+      return z;
     };
 
     // Calculate values
-    computeCompressibilityFactor( pressure, temperature, composition, compressibilityFactor );
+    real64 const compressibilityFactor = computeCompressibilityFactor( pressure, temperature, composition );
+
     // Calculate derivatives
     CubicEOSPhaseModel< EOS >::computeMixtureCoefficients(
       numComps,
       pressure,
       temperature,
       composition,
-      criticalPressure,
-      criticalTemperature,
-      omega,
-      binaryInteractionCoefficients,
+      componentProperties,
       aPureCoefficient,
       bPureCoefficient,
       aMixtureCoefficient,
@@ -650,36 +626,36 @@ public:
       dCompressibilityFactor_dp,
       dCompressibilityFactor_dt,
       dCompressibilityFactor_dz );
+
     // Compare against numerical derivatives
     // -- Pressure derivative
     real64 const dp = 1.0e-4 * pressure;
-    computeCompressibilityFactor( pressure-dp, temperature, composition, currentCompressibilityFactor );
-    fdDerivative = -(currentCompressibilityFactor - compressibilityFactor) / dp;
-    this->checkDerivative( dCompressibilityFactor_dp, fdDerivative, "Compressibility factor left pressure derivative" );
-    computeCompressibilityFactor( pressure+dp, temperature, composition, currentCompressibilityFactor );
-    fdDerivative = (currentCompressibilityFactor - compressibilityFactor) / dp;
-    this->checkDerivative( dCompressibilityFactor_dp, fdDerivative, "Compressibility factor right pressure derivative" );
+    geos::testing::internal::testNumericalDerivative(
+      pressure, dp, dCompressibilityFactor_dp,
+      [&]( real64 const p ) -> real64 {
+      return computeCompressibilityFactor( p, temperature, composition );
+    } );
+
     // -- Temperature derivative
-    real64 const dt = 1.0e-6 * temperature;
-    computeCompressibilityFactor( pressure, temperature-dt, composition, currentCompressibilityFactor );
-    fdDerivative = -(currentCompressibilityFactor - compressibilityFactor) / dt;
-    this->checkDerivative( dCompressibilityFactor_dt, fdDerivative, "Compressibility factor left temperature derivative" );
-    computeCompressibilityFactor( pressure, temperature+dt, composition, currentCompressibilityFactor );
-    fdDerivative = (currentCompressibilityFactor - compressibilityFactor) / dt;
-    this->checkDerivative( dCompressibilityFactor_dt, fdDerivative, "Compressibility factor right temperature derivative" );
+    real64 const dT = 1.0e-6 * temperature;
+    geos::testing::internal::testNumericalDerivative(
+      temperature, dT, dCompressibilityFactor_dt,
+      [&]( real64 const t ) -> real64 {
+      return computeCompressibilityFactor( pressure, t, composition );
+    } );
+
     // -- Composition derivatives derivative
     real64 const dz = 1.0e-7;
     for( integer ic = 0; ic < numComps; ++ic )
     {
-      composition[ic] -= dz;
-      computeCompressibilityFactor( pressure, temperature, composition, currentCompressibilityFactor );
-      fdDerivative = -(currentCompressibilityFactor - compressibilityFactor) / dz;
-      this->checkDerivative( dCompressibilityFactor_dz[ic], fdDerivative, "Compressibility factor left composition derivative" );
-      composition[ic] += 2.0*dz;
-      computeCompressibilityFactor( pressure, temperature, composition, currentCompressibilityFactor );
-      fdDerivative = (currentCompressibilityFactor - compressibilityFactor) / dz;
-      this->checkDerivative( dCompressibilityFactor_dz[ic], fdDerivative, "Compressibility factor right composition derivative" );
-      composition[ic] -= dz;
+      geos::testing::internal::testNumericalDerivative(
+        0.0, dz, dCompressibilityFactor_dz[ic],
+        [&]( real64 const z ) -> real64 {
+        composition[ic] += z;
+        real64 const compressibility = computeCompressibilityFactor( pressure, temperature, composition );
+        composition[ic] -= z;
+        return compressibility;
+      } );
     }
   }
 };

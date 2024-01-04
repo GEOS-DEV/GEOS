@@ -21,11 +21,12 @@
 
 #include "physicsSolvers/multiphysics/SinglePhasePoromechanics.hpp"
 #include "physicsSolvers/contact/SolidMechanicsEmbeddedFractures.hpp"
+#include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
 
 namespace geos
 {
 
-class SinglePhasePoromechanicsEmbeddedFractures : public SinglePhasePoromechanics
+class SinglePhasePoromechanicsEmbeddedFractures : public SinglePhasePoromechanics< SinglePhaseBase >
 {
 public:
   SinglePhasePoromechanicsEmbeddedFractures( const std::string & name,
@@ -38,6 +39,10 @@ public:
    * catalog.
    */
   static string catalogName() { return "SinglePhasePoromechanicsEmbeddedFractures"; }
+  /**
+   * @copydoc SolverBase::getCatalogName()
+   */
+  string getCatalogName() const override { return catalogName(); }
 
   virtual void registerDataOnMesh( dataRepository::Group & meshBodies ) override final;
 

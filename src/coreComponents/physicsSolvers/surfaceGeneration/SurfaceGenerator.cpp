@@ -196,6 +196,7 @@ SurfaceGenerator::SurfaceGenerator( const string & name,
     setDescription( "Flag to enable MPI consistent communication ordering" );
 
   registerWrapper( viewKeyStruct::fractureRegionNameString(), &m_fractureRegionName ).
+    setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
     setInputFlag( dataRepository::InputFlags::OPTIONAL ).
     setApplyDefaultValue( "Fracture" );
 
@@ -1704,15 +1705,14 @@ void SurfaceGenerator::performFracture( const localIndex nodeID,
 
   // Split the node into two, using the original index, and a new one.
   localIndex newNodeIndex;
-  if( getLogLevel() )
+  if( getLogLevel() > 0 )
   {
-    GEOS_LOG_RANK( "" );
-    std::cout<<"Splitting node "<<nodeID<<" along separation plane faces: ";
+    std::ostringstream s;
     for( std::set< localIndex >::const_iterator i=separationPathFaces.begin(); i!=separationPathFaces.end(); ++i )
     {
-      std::cout<<*i<<", ";
+      s << *i << " ";
     }
-    std::cout<<std::endl;
+    GEOS_LOG_RANK( GEOS_FMT( "Splitting node {} along separation plane faces: {}", nodeID, s.str() ) );
   }
 
 
@@ -1752,8 +1752,10 @@ void SurfaceGenerator::performFracture( const localIndex nodeID,
 //  usedFacesNew = usedFaces[nodeID];
 
 
-  if( getLogLevel() )
-    std::cout<<"Done splitting node "<<nodeID<<" into nodes "<<nodeID<<" and "<<newNodeIndex<<std::endl;
+  if( getLogLevel() > 0 )
+  {
+    GEOS_LOG_RANK( GEOS_FMT( "Done splitting node {} into nodes {} and {}", nodeID, nodeID, newNodeIndex ) );
+  }
 
   // split edges
   map< localIndex, localIndex > splitEdges;
@@ -1774,10 +1776,9 @@ void SurfaceGenerator::performFracture( const localIndex nodeID,
 
       edgeToFaceMap.clearSet( newEdgeIndex );
 
-      if( getLogLevel() )
+      if( getLogLevel() > 0 )
       {
-        GEOS_LOG_RANK( "" );
-        std::cout<<"  Split edge "<<parentEdgeIndex<<" into edges "<<parentEdgeIndex<<" and "<<newEdgeIndex<<std::endl;
+        GEOS_LOG_RANK( GEOS_FMT ( "Split edge {} into edges {} and {}", parentEdgeIndex, parentEdgeIndex, newEdgeIndex ) );
       }
 
       splitEdges[parentEdgeIndex] = newEdgeIndex;
@@ -1835,10 +1836,9 @@ void SurfaceGenerator::performFracture( const localIndex nodeID,
       if( faceManager.splitObject( faceIndex, rank, newFaceIndex ) )
       {
 
-        if( getLogLevel() )
+        if( getLogLevel() > 0 )
         {
-          GEOS_LOG_RANK( "" );
-          std::cout<<"  Split face "<<faceIndex<<" into faces "<<faceIndex<<" and "<<newFaceIndex<<std::endl;
+          GEOS_LOG_RANK( GEOS_FMT ( "Split face {} into faces {} and {}", faceIndex, faceIndex, newFaceIndex ) );
         }
 
         splitFaces[faceIndex] = newFaceIndex;
@@ -2926,7 +2926,7 @@ void SurfaceGenerator::calculateNodeAndFaceSif( DomainPartition const & domain,
       }
     }
 
-    if( unpinchedNodeID.size() < 3 )
+    if( unpinchedNodeID.size() < 2 || (unpinchedNodeID.size() == 2 && tipEdgesID.size() < 2) )
     {
       for( localIndex const nodeIndex : pinchedNodeID )
       {
@@ -3226,7 +3226,10 @@ void SurfaceGenerator::calculateNodeAndFaceSif( DomainPartition const & domain,
   {
     if( isNodeGhost[nodeIndex] < 0 )
     {
-      SIFNode[nodeIndex] = *min_element( SIFNode_All[nodeIndex].begin(), SIFNode_All[nodeIndex].end());
+      if( SIFNode_All[nodeIndex].size() >= 1 )
+      {
+        SIFNode[nodeIndex] = *min_element( SIFNode_All[nodeIndex].begin(), SIFNode_All[nodeIndex].end());
+      }
 
       for( localIndex const edgeIndex: m_tipEdges )
       {
@@ -3236,7 +3239,10 @@ void SurfaceGenerator::calculateNodeAndFaceSif( DomainPartition const & domain,
           {
             if( m_tipFaces.contains( faceIndex ))
             {
-              SIFonFace[faceIndex] = *max_element( SIFonFace_All[faceIndex].begin(), SIFonFace_All[faceIndex].end());
+              if( SIFonFace_All[faceIndex].size() >= 1 )
+              {
+                SIFonFace[faceIndex] = *max_element( SIFonFace_All[faceIndex].begin(), SIFonFace_All[faceIndex].end());
+              }
             }
           }
         }

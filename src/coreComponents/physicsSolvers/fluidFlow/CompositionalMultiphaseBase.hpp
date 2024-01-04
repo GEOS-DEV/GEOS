@@ -221,8 +221,6 @@ public:
                                DofManager const & dofManager,
                                CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                arrayView1d< real64 > const & localRhs ) const = 0;
-
-
   /**@}*/
 
   struct viewKeyStruct : FlowSolverBase::viewKeyStruct
@@ -236,6 +234,8 @@ public:
     static constexpr char const * relPermNamesString() { return "relPermNames"; }
     static constexpr char const * capPressureNamesString() { return "capPressureNames"; }
     static constexpr char const * thermalConductivityNamesString() { return "thermalConductivityNames"; }
+    static constexpr char const * diffusionNamesString() { return "diffusionNames"; }
+    static constexpr char const * dispersionNamesString() { return "dispersionNames"; }
 
 
     // time stepping controls
@@ -244,6 +244,8 @@ public:
     static constexpr char const * targetRelativePresChangeString() { return "targetRelativePressureChangeInTimeStep"; }
     static constexpr char const * targetRelativeTempChangeString() { return "targetRelativeTemperatureChangeInTimeStep"; }
     static constexpr char const * targetPhaseVolFracChangeString() { return "targetPhaseVolFractionChangeInTimeStep"; }
+    static constexpr char const * targetFlowCFLString() { return "targetFlowCFL"; }
+
 
     // nonlinear solver parameters
 
@@ -251,6 +253,9 @@ public:
     static constexpr char const * maxRelativePresChangeString() { return "maxRelativePressureChange"; }
     static constexpr char const * maxRelativeTempChangeString() { return "maxRelativeTemperatureChange"; }
     static constexpr char const * allowLocalCompDensChoppingString() { return "allowLocalCompDensityChopping"; }
+    static constexpr char const * useTotalMassEquationString() { return "useTotalMassEquation"; }
+    static constexpr char const * useSimpleAccumulationString() { return "useSimpleAccumulation"; }
+    static constexpr char const * minCompDensString() { return "minCompDens"; }
 
   };
 
@@ -353,13 +358,30 @@ public:
   virtual real64 setNextDtBasedOnStateChange( real64 const & currentDt,
                                               DomainPartition & domain ) override;
 
+  void computeCFLNumbers( DomainPartition & domain, real64 const & dt, real64 & maxPhaseCFL, real64 & maxCompCFL );
+
+  /**
+   * @brief function to set the next time step size
+   * @param[in] currentDt the current time step size
+   * @param[in] domain the domain object
+   * @return the prescribed time step size
+   */
+  real64 setNextDt( real64 const & currentDt,
+                    DomainPartition & domain ) override;
+
+  virtual real64 setNextDtBasedOnCFL( real64 const & currentDt,
+                                      DomainPartition & domain ) override;
+
   virtual void initializePostInitialConditionsPreSubGroups() override;
+
+  integer useTotalMassEquation() const { return m_useTotalMassEquation; }
 
 protected:
 
   virtual void postProcessInput() override;
 
   virtual void initializePreSubGroups() override;
+
 
   /**
    * @brief Utility function that checks the consistency of the constitutive models
@@ -407,6 +429,12 @@ protected:
   /// flag to determine whether or not to apply capillary pressure
   integer m_hasCapPressure;
 
+  /// flag to determine whether or not to apply diffusion
+  integer m_hasDiffusion;
+
+  /// flag to determine whether or not to apply dispersion
+  integer m_hasDispersion;
+
   /// flag to freeze the initial state during initialization in coupled problems
   integer m_keepFlowVariablesConstantDuringInitStep;
 
@@ -437,8 +465,20 @@ protected:
   /// flag indicating whether local (cell-wise) chopping of negative compositions is allowed
   integer m_allowCompDensChopping;
 
+  /// flag indicating whether total mass equation is used
+  integer m_useTotalMassEquation;
+
+  /// flag indicating whether simple accumulation form is used
+  integer m_useSimpleAccumulation;
+
+  /// minimum allowed global component density
+  real64 m_minCompDens;
+
   /// name of the fluid constitutive model used as a reference for component/phase description
   string m_referenceFluidModelName;
+
+  /// the targeted CFL for timestep
+  real64 m_targetFlowCFL;
 
 private:
 

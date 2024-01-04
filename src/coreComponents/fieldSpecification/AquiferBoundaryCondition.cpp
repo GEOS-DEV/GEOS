@@ -92,6 +92,7 @@ AquiferBoundaryCondition::AquiferBoundaryCondition( string const & name, Group *
     setDescription( "Angle subtended by the aquifer boundary from the center of the reservoir [degress]" );
 
   registerWrapper( viewKeyStruct::pressureInfluenceFunctionNameString(), &m_pressureInfluenceFunctionName ).
+    setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Name of the table describing the pressure influence function\n. "
                     "If not provided, we use a default pressure influence function" );
@@ -260,8 +261,8 @@ void AquiferBoundaryCondition::setupDefaultPressureInfluenceFunction()
   m_pressureInfluenceFunctionName = getName() + "_pressureInfluence_table";
   TableFunction * const pressureInfluenceTable =
     dynamicCast< TableFunction * >( functionManager.createChild( TableFunction::catalogName(), m_pressureInfluenceFunctionName ) );
-  pressureInfluenceTable->setTableCoordinates( dimensionlessTime );
-  pressureInfluenceTable->setTableValues( pressureInfluence );
+  pressureInfluenceTable->setTableCoordinates( dimensionlessTime, { units::Dimensionless } );
+  pressureInfluenceTable->setTableValues( pressureInfluence, units::Dimensionless );
   pressureInfluenceTable->setInterpolationMethod( TableFunction::InterpolationType::Linear );
 
 }

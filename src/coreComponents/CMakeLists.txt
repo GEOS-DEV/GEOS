@@ -17,10 +17,9 @@ set( subdirs
      physicsSolvers
      events
      mainInterface
-     python
-   )
+     python )
 
-set( parallelDeps "" )
+unset( parallelDeps )
 
 if ( ENABLE_OPENMP )
   list( APPEND parallelDeps openmp )
@@ -76,8 +75,7 @@ if( GEOSX_BUILD_SHARED_LIBS AND GEOSX_BUILD_OBJ_LIBS )
   blt_add_library ( NAME geosx_core
                     SOURCES dummy.cpp
                     DEPENDS_ON  mainInterface physicsSolvers
-                    SHARED TRUE
-                  )
+                    SHARED TRUE )
 
 elseif( GEOSX_BUILD_SHARED_LIBS AND NOT GEOSX_BUILD_OBJ_LIBS )
   message( "Building shared geosx_core library with static coreComponents, executables link to geosx_core" )
@@ -85,8 +83,7 @@ elseif( GEOSX_BUILD_SHARED_LIBS AND NOT GEOSX_BUILD_OBJ_LIBS )
                                 SOURCE_LIBS   ${coreLibs}
                                 LIB_TYPE      SHARED
                                 LINK_PREPEND  ${GEOSX_LINK_PREPEND_FLAG}
-                                LINK_POSTPEND ${GEOSX_LINK_POSTPEND_FLAG}
-                              )
+                                LINK_POSTPEND ${GEOSX_LINK_POSTPEND_FLAG} )
 
 elseif( NOT GEOSX_BUILD_SHARED_LIBS AND GEOSX_BUILD_OBJ_LIBS )
   message( "Building object coreComponents, executables link to coreComponents" )

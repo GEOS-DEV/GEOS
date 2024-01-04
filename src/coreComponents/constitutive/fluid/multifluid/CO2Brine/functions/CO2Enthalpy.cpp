@@ -20,6 +20,7 @@
 
 #include "functions/FunctionManager.hpp"
 #include "constitutive/fluid/multifluid/CO2Brine/functions/SpanWagnerCO2Density.hpp"
+#include "common/Units.hpp"
 
 namespace geos
 {
@@ -35,7 +36,7 @@ namespace PVTProps
 namespace
 {
 
-real64 HelmholtzCO2Enthalpy( real64 const & T,
+real64 helmholtzCO2Enthalpy( real64 const & T,
                              real64 const & rho )
 {
   static const real64 dc = 467.6;
@@ -134,7 +135,7 @@ real64 HelmholtzCO2Enthalpy( real64 const & T,
 
   real64 theta, delta, R, deltard;
 
-  Tkelvin = T + 273.15;
+  Tkelvin = units::convertCToK( T );
   rd=rho/dc;
   rt=Tc/Tkelvin;
 
@@ -237,8 +238,9 @@ TableFunction const * makeCO2EnthalpyTable( string_array const & inputParams,
     CO2Enthalpy::calculateCO2Enthalpy( tableCoords, densities, enthalpies );
 
     TableFunction * const enthalpyTable = dynamicCast< TableFunction * >( functionManager.createChild( TableFunction::catalogName(), tableName ) );
-    enthalpyTable->setTableCoordinates( tableCoords.getCoords() );
-    enthalpyTable->setTableValues( enthalpies );
+    enthalpyTable->setTableCoordinates( tableCoords.getCoords(),
+                                        { units::Pressure, units::TemperatureInC } );
+    enthalpyTable->setTableValues( enthalpies, units::Enthalpy );
     enthalpyTable->setInterpolationMethod( TableFunction::InterpolationType::Linear );
     return enthalpyTable;
   }
@@ -249,7 +251,8 @@ TableFunction const * makeCO2EnthalpyTable( string_array const & inputParams,
 CO2Enthalpy::CO2Enthalpy( string const & name,
                           string_array const & inputParams,
                           string_array const & componentNames,
-                          array1d< real64 > const & componentMolarWeight ):
+                          array1d< real64 > const & componentMolarWeight,
+                          bool const printTable ):
   PVTFunctionBase( name,
                    componentNames,
                    componentMolarWeight )
@@ -258,6 +261,8 @@ CO2Enthalpy::CO2Enthalpy( string const & name,
   m_CO2Index = PVTFunctionHelpers::findName( componentNames, expectedCO2ComponentNames, "componentNames" );
 
   m_CO2EnthalpyTable = makeCO2EnthalpyTable( inputParams, m_functionName, FunctionManager::getInstance() );
+  if( printTable )
+    m_CO2EnthalpyTable->print( m_CO2EnthalpyTable->getName() );
 }
 
 
@@ -269,14 +274,25 @@ CO2Enthalpy::calculateCO2Enthalpy( PTTableCoordinates const & tableCoords,
   localIndex const nPressures = tableCoords.nPressures();
   localIndex const nTemperatures = tableCoords.nTemperatures();
 
+  // Note that the enthalpy values given in Span and Wagner assume a reference enthalphy defined as: h_0 = 0 J/kg at T_0 = 298.15 K
+  // Therefore, the enthalpy computed using the Span and Wagner methid must be shifted by the enthalpy at 298.15 K
+  real64 const referenceEnthalpy = 5.0584e5; // J/kg
+
   for( localIndex i = 0; i < nPressures; ++i )
   {
     for( localIndex j = 0; j < nTemperatures; ++j )
     {
       real64 const TC = tableCoords.getTemperature( j );
-      enthalpies[j*nPressures+i] = HelmholtzCO2Enthalpy( TC, densities[j*nPressures+i] );
+      enthalpies[j*nPressures+i] = helmholtzCO2Enthalpy( TC, densities[j*nPressures+i] ) + referenceEnthalpy;
     }
   }
+}
+
+void CO2Enthalpy::checkTablesParameters( real64 const pressure,
+                                         real64 const temperature ) const
+{
+  m_CO2EnthalpyTable->checkCoord( pressure, 0 );
+  m_CO2EnthalpyTable->checkCoord( temperature, 1 );
 }
 
 
@@ -288,7 +304,7 @@ CO2Enthalpy::createKernelWrapper() const
                         m_CO2Index );
 }
 
-REGISTER_CATALOG_ENTRY( PVTFunctionBase, CO2Enthalpy, string const &, string_array const &, string_array const &, array1d< real64 > const & )
+REGISTER_CATALOG_ENTRY( PVTFunctionBase, CO2Enthalpy, string const &, string_array const &, string_array const &, array1d< real64 > const &, bool const )
 
 } // namespace PVTProps
 

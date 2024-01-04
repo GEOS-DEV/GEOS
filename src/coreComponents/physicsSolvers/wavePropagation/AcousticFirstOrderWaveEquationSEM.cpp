@@ -65,21 +65,10 @@ AcousticFirstOrderWaveEquationSEM::AcousticFirstOrderWaveEquationSEM( const std:
     setSizedFromParent( 0 ).
     setDescription( "Element containing the sources" );
 
-  registerWrapper( viewKeyStruct::receiverElemString(), &m_rcvElem ).
-    setInputFlag( InputFlags::FALSE ).
-    setSizedFromParent( 0 ).
-    setDescription( "Element containing the receivers" );
-
   registerWrapper( viewKeyStruct::sourceRegionString(), &m_sourceRegion ).
     setInputFlag( InputFlags::FALSE ).
     setSizedFromParent( 0 ).
     setDescription( "Region containing the sources" );
-
-  registerWrapper( viewKeyStruct::receiverRegionString(), &m_receiverRegion ).
-    setInputFlag( InputFlags::FALSE ).
-    setSizedFromParent( 0 ).
-    setDescription( "Region containing the receivers" );
-
 }
 
 AcousticFirstOrderWaveEquationSEM::~AcousticFirstOrderWaveEquationSEM()
@@ -109,21 +98,21 @@ void AcousticFirstOrderWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
                                wavesolverfields::ForcingRHS,
                                wavesolverfields::MassVector,
                                wavesolverfields::DampingVector,
-                               wavesolverfields::FreeSurfaceNodeIndicator >( this->getName() );
+                               wavesolverfields::FreeSurfaceNodeIndicator >( getName() );
 
     FaceManager & faceManager = mesh.getFaceManager();
-    faceManager.registerField< wavesolverfields::FreeSurfaceFaceIndicator >( this->getName() );
+    faceManager.registerField< wavesolverfields::FreeSurfaceFaceIndicator >( getName() );
 
     ElementRegionManager & elemManager = mesh.getElemManager();
 
     elemManager.forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion & subRegion )
     {
-      subRegion.registerField< wavesolverfields::MediumVelocity >( this->getName() );
-      subRegion.registerField< wavesolverfields::MediumDensity >( this->getName() );
+      subRegion.registerField< wavesolverfields::MediumVelocity >( getName() );
+      subRegion.registerField< wavesolverfields::MediumDensity >( getName() );
 
-      subRegion.registerField< wavesolverfields::Velocity_x >( this->getName() );
-      subRegion.registerField< wavesolverfields::Velocity_y >( this->getName() );
-      subRegion.registerField< wavesolverfields::Velocity_z >( this->getName() );
+      subRegion.registerField< wavesolverfields::Velocity_x >( getName() );
+      subRegion.registerField< wavesolverfields::Velocity_y >( getName() );
+      subRegion.registerField< wavesolverfields::Velocity_z >( getName() );
 
       finiteElement::FiniteElementBase const & fe = subRegion.getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
 
@@ -151,10 +140,10 @@ void AcousticFirstOrderWaveEquationSEM::postProcessInput()
 
   localIndex const numSourcesGlobal = m_sourceCoordinates.size( 0 );
   localIndex const numReceiversGlobal = m_receiverCoordinates.size( 0 );
-  m_pressureNp1AtReceivers.resize( m_nsamplesSeismoTrace, numReceiversGlobal );
-  m_uxNp1AtReceivers.resize( m_nsamplesSeismoTrace, numReceiversGlobal );
-  m_uyNp1AtReceivers.resize( m_nsamplesSeismoTrace, numReceiversGlobal );
-  m_uzNp1AtReceivers.resize( m_nsamplesSeismoTrace, numReceiversGlobal );
+  m_pressureNp1AtReceivers.resize( m_nsamplesSeismoTrace, numReceiversGlobal + 1 );
+  m_uxNp1AtReceivers.resize( m_nsamplesSeismoTrace, numReceiversGlobal + 1 );
+  m_uyNp1AtReceivers.resize( m_nsamplesSeismoTrace, numReceiversGlobal + 1 );
+  m_uzNp1AtReceivers.resize( m_nsamplesSeismoTrace, numReceiversGlobal + 1 );
   m_sourceElem.resize( numSourcesGlobal );
   m_sourceRegion.resize( numSourcesGlobal );
   m_rcvElem.resize( numReceiversGlobal );
@@ -191,15 +180,13 @@ void AcousticFirstOrderWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLev
   receiverConstants.setValues< EXEC_POLICY >( -1 );
   receiverIsLocal.zero();
 
-  real32 const timeSourceFrequency = this->m_timeSourceFrequency;
-  localIndex const rickerOrder = this->m_rickerOrder;
   arrayView2d< real32 > const sourceValue = m_sourceValue.toView();
   real64 dt = 0;
-  EventManager const & event = this->getGroupByPath< EventManager >( "/Problem/Events" );
+  EventManager const & event = getGroupByPath< EventManager >( "/Problem/Events" );
   for( localIndex numSubEvent = 0; numSubEvent < event.numSubGroups(); ++numSubEvent )
   {
     EventBase const * subEvent = static_cast< EventBase const * >( event.getSubGroups()[numSubEvent] );
-    if( subEvent->getEventName() == "/Solvers/" + this->getName() )
+    if( subEvent->getEventName() == "/Solvers/" + getName() )
     {
       dt = subEvent->getReference< real64 >( EventBase::viewKeyStruct::forceDtString() );
     }
@@ -223,7 +210,6 @@ void AcousticFirstOrderWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLev
     {
       using FE_TYPE = TYPEOFREF( finiteElement );
 
-      constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
       localIndex const numFacesPerElem = elementSubRegion.numFacesPerElement();
 
       acousticFirstOrderWaveEquationSEMKernels::
@@ -231,7 +217,6 @@ void AcousticFirstOrderWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLev
         launch< EXEC_POLICY, FE_TYPE >
         ( elementSubRegion.size(),
         regionIndex,
-        numNodesPerElem,
         numFacesPerElem,
         X,
         elemGhostRank,
@@ -254,8 +239,9 @@ void AcousticFirstOrderWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLev
         receiverRegion,
         sourceValue,
         dt,
-        timeSourceFrequency,
-        rickerOrder );
+        m_timeSourceFrequency,
+        m_timeSourceDelay,
+        m_rickerOrder );
     } );
   } );
 
@@ -287,10 +273,9 @@ void AcousticFirstOrderWaveEquationSEM::initializePostInitialConditionsPreSubGro
 {
   WaveSolverBase::initializePostInitialConditionsPreSubGroups();
 
-  DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
+  DomainPartition & domain = getGroupByPath< DomainPartition >( "/Problem/domain" );
 
-  real64 const time = 0.0;
-  applyFreeSurfaceBC( time, domain );
+  applyFreeSurfaceBC( 0.0, domain );
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
@@ -323,7 +308,7 @@ void AcousticFirstOrderWaveEquationSEM::initializePostInitialConditionsPreSubGro
                                                                                           CellElementSubRegion & elementSubRegion )
     {
       arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemsToNodes = elementSubRegion.nodeList();
-      arrayView2d< localIndex const > const facesToElements = faceManager.elementList();
+      arrayView2d< localIndex const > const elemsToFaces = elementSubRegion.faceList();
       arrayView1d< real32 const > const velocity = elementSubRegion.getField< wavesolverfields::MediumVelocity >();
       arrayView1d< real32 const > const density = elementSubRegion.getField< wavesolverfields::MediumDensity >();
 
@@ -344,9 +329,9 @@ void AcousticFirstOrderWaveEquationSEM::initializePostInitialConditionsPreSubGro
 
         acousticFirstOrderWaveEquationSEMKernels::DampingMatrixKernel< FE_TYPE > kernelD( finiteElement );
 
-        kernelD.template launch< EXEC_POLICY, ATOMIC_POLICY >( faceManager.size(),
+        kernelD.template launch< EXEC_POLICY, ATOMIC_POLICY >( elementSubRegion.size(),
                                                                X,
-                                                               facesToElements,
+                                                               elemsToFaces,
                                                                facesToNodes,
                                                                facesDomainBoundaryIndicator,
                                                                freeSurfaceFaceIndicator,
@@ -355,6 +340,8 @@ void AcousticFirstOrderWaveEquationSEM::initializePostInitialConditionsPreSubGro
       } );
     } );
   } );
+
+  WaveSolverUtils::initTrace( "seismoTraceReceiver", getName(), m_outputSeismoTrace, m_receiverConstants.size( 0 ), m_receiverIsLocal );
 }
 
 
@@ -382,7 +369,7 @@ void AcousticFirstOrderWaveEquationSEM::applyFreeSurfaceBC( real64 const time, D
 
   fsManager.apply< FaceManager >( time,
                                   domain.getMeshBody( 0 ).getMeshLevel( m_discretizationName ),
-                                  string( "FreeSurface" ),
+                                  WaveSolverBase::viewKeyStruct::freeSurfaceString(),
                                   [&]( FieldSpecificationBase const & bc,
                                        string const &,
                                        SortedArrayView< localIndex const > const & targetSet,
@@ -525,9 +512,9 @@ real64 AcousticFirstOrderWaveEquationSEM::explicitStepInternal( real64 const & t
           cycleNumber,
           p_np1 );
       } );
-      arrayView2d< real32 > const uxReceivers   = m_uxNp1AtReceivers.toView();
-      arrayView2d< real32 > const uyReceivers   = m_uyNp1AtReceivers.toView();
-      arrayView2d< real32 > const uzReceivers   = m_uzNp1AtReceivers.toView();
+      arrayView2d< real32 > const uxReceivers = m_uxNp1AtReceivers.toView();
+      arrayView2d< real32 > const uyReceivers = m_uyNp1AtReceivers.toView();
+      arrayView2d< real32 > const uzReceivers = m_uzNp1AtReceivers.toView();
 
       compute2dVariableAllSeismoTraces( regionIndex, time_n, dt, velocity_x, velocity_x, uxReceivers );
       compute2dVariableAllSeismoTraces( regionIndex, time_n, dt, velocity_y, velocity_y, uyReceivers );
@@ -546,16 +533,12 @@ real64 AcousticFirstOrderWaveEquationSEM::explicitStepInternal( real64 const & t
                                   true );
 
     // compute the seismic traces since last step.
-    arrayView2d< real32 > const pReceivers   = m_pressureNp1AtReceivers.toView();
+    arrayView2d< real32 > const pReceivers = m_pressureNp1AtReceivers.toView();
     computeAllSeismoTraces( time_n, dt, p_np1, p_np1, pReceivers );
 
-    // increment m_indexSeismoTrace
-    while( (m_dtSeismoTrace*m_indexSeismoTrace) <= (time_n + epsilonLoc) && m_indexSeismoTrace < m_nsamplesSeismoTrace )
-    {
-      m_indexSeismoTrace++;
-    }
-
+    incrementIndexSeismoTrace( time_n );
   } );
+
   return dt;
 }
 
@@ -575,61 +558,25 @@ void AcousticFirstOrderWaveEquationSEM::cleanup( real64 const time_n, integer co
       arrayView2d< real32 > const velocity_y = elementSubRegion.getField< wavesolverfields::Velocity_y >();
       arrayView2d< real32 > const velocity_z = elementSubRegion.getField< wavesolverfields::Velocity_z >();
 
-      arrayView2d< real32 > const uxReceivers   = m_uxNp1AtReceivers.toView();
-      arrayView2d< real32 > const uyReceivers   = m_uyNp1AtReceivers.toView();
-      arrayView2d< real32 > const uzReceivers   = m_uzNp1AtReceivers.toView();
+      arrayView2d< real32 > const uxReceivers = m_uxNp1AtReceivers.toView();
+      arrayView2d< real32 > const uyReceivers = m_uyNp1AtReceivers.toView();
+      arrayView2d< real32 > const uzReceivers = m_uzNp1AtReceivers.toView();
 
-      compute2dVariableAllSeismoTraces( regionIndex, time_n, 0, velocity_x, velocity_x, uxReceivers );
-      compute2dVariableAllSeismoTraces( regionIndex, time_n, 0, velocity_y, velocity_y, uyReceivers );
-      compute2dVariableAllSeismoTraces( regionIndex, time_n, 0, velocity_z, velocity_z, uzReceivers );
+      compute2dVariableAllSeismoTraces( regionIndex, time_n, 0.0, velocity_x, velocity_x, uxReceivers );
+      compute2dVariableAllSeismoTraces( regionIndex, time_n, 0.0, velocity_y, velocity_y, uyReceivers );
+      compute2dVariableAllSeismoTraces( regionIndex, time_n, 0.0, velocity_z, velocity_z, uzReceivers );
+
+      WaveSolverUtils::writeSeismoTraceVector( "seismoTraceReceiver", getName(), m_outputSeismoTrace, m_receiverConstants.size( 0 ),
+                                               m_receiverIsLocal, m_nsamplesSeismoTrace, uxReceivers, uyReceivers, uzReceivers );
 
     } );
-    arrayView2d< real32 > const pReceivers   = m_pressureNp1AtReceivers.toView();
-    computeAllSeismoTraces( time_n, 0, p_np1, p_np1, pReceivers );
+    arrayView2d< real32 > const pReceivers = m_pressureNp1AtReceivers.toView();
+    computeAllSeismoTraces( time_n, 0.0, p_np1, p_np1, pReceivers );
+    WaveSolverUtils::writeSeismoTrace( "seismoTraceReceiver", getName(), m_outputSeismoTrace, m_receiverConstants.size( 0 ),
+                                       m_receiverIsLocal, m_nsamplesSeismoTrace, pReceivers );
+
   } );
-
-  // increment m_indexSeismoTrace
-  while( (m_dtSeismoTrace*m_indexSeismoTrace) <= (time_n + epsilonLoc) && m_indexSeismoTrace < m_nsamplesSeismoTrace )
-  {
-    m_indexSeismoTrace++;
-  }
 }
-
-void AcousticFirstOrderWaveEquationSEM::computeAllSeismoTraces( real64 const time_n,
-                                                                real64 const dt,
-                                                                arrayView1d< real32 const > const var_np1,
-                                                                arrayView1d< real32 const > const var_n,
-                                                                arrayView2d< real32 > varAtReceivers )
-{
-  localIndex indexSeismoTrace = m_indexSeismoTrace;
-  for( real64 timeSeismo;
-       (timeSeismo = m_dtSeismoTrace*indexSeismoTrace) <= (time_n + epsilonLoc) && indexSeismoTrace < m_nsamplesSeismoTrace;
-       indexSeismoTrace++ )
-  {
-    WaveSolverUtils::computeSeismoTrace( time_n, dt, timeSeismo, indexSeismoTrace, m_receiverNodeIds, m_receiverConstants, m_receiverIsLocal, m_nsamplesSeismoTrace,
-                                         m_outputSeismoTrace,
-                                         var_np1, var_n, varAtReceivers );
-  }
-}
-
-void AcousticFirstOrderWaveEquationSEM::compute2dVariableAllSeismoTraces( localIndex const regionIndex,
-                                                                          real64 const time_n,
-                                                                          real64 const dt,
-                                                                          arrayView2d< real32 const > const var_np1,
-                                                                          arrayView2d< real32 const > const var_n,
-                                                                          arrayView2d< real32 > varAtReceivers )
-{
-  localIndex indexSeismoTrace = m_indexSeismoTrace;
-  for( real64 timeSeismo;
-       (timeSeismo = m_dtSeismoTrace*indexSeismoTrace) <= (time_n + epsilonLoc) && indexSeismoTrace < m_nsamplesSeismoTrace;
-       indexSeismoTrace++ )
-  {
-    WaveSolverUtils::compute2dVariableSeismoTrace( time_n, dt, regionIndex, m_receiverRegion, timeSeismo, indexSeismoTrace, m_rcvElem, m_receiverConstants, m_receiverIsLocal, m_nsamplesSeismoTrace,
-                                                   m_outputSeismoTrace,
-                                                   var_np1, var_n, varAtReceivers );
-  }
-}
-
 
 void AcousticFirstOrderWaveEquationSEM::initializePML()
 {

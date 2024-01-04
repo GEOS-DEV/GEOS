@@ -60,8 +60,10 @@ CompositionalMultiphaseWell::CompositionalMultiphaseWell( const string & name,
   m_numPhases( 0 ),
   m_numComponents( 0 ),
   m_useMass( false ),
+  m_useTotalMassEquation( 1 ),
   m_maxCompFracChange( 1.0 ),
   m_maxRelativePresChange( 0.2 ),
+  m_maxAbsolutePresChange( -1 ), // disabled by default
   m_minScalingFactor( 0.01 ),
   m_allowCompDensChopping( 1 ),
   m_targetPhaseIndex( -1 )
@@ -70,6 +72,11 @@ CompositionalMultiphaseWell::CompositionalMultiphaseWell( const string & name,
     setApplyDefaultValue( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Use mass formulation instead of molar" );
+
+  this->registerWrapper( viewKeyStruct::useMassFlagString(), &m_useTotalMassEquation ).
+    setApplyDefaultValue( 0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Use total mass equation" );
 
   this->registerWrapper( viewKeyStruct::maxCompFracChangeString(), &m_maxCompFracChange ).
     setSizedFromParent( 0 ).
@@ -82,6 +89,12 @@ CompositionalMultiphaseWell::CompositionalMultiphaseWell( const string & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( 1.0 ).
     setDescription( "Maximum (relative) change in pressure between two Newton iterations (recommended with rate control)" );
+
+  this->registerWrapper( viewKeyStruct::maxAbsolutePresChangeString(), &m_maxAbsolutePresChange ).
+    setSizedFromParent( 0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( -1.0 ).       // disabled by default
+    setDescription( "Maximum (absolute) pressure change in a Newton iteration" );
 
   this->registerWrapper( viewKeyStruct::allowLocalCompDensChoppingString(), &m_allowCompDensChopping ).
     setSizedFromParent( 0 ).
@@ -235,6 +248,25 @@ void CompositionalMultiphaseWell::registerDataOnMesh( Group & meshBodies )
         reference().resizeDimension< 0 >( m_numComponents );
       wellControls.registerWrapper< real64 >( viewKeyStruct::dCurrentTotalVolRate_dRateString() ).
         setRestartFlags( RestartFlags::NO_WRITE );
+
+      // write rates output header
+      // the rank that owns the reference well element is responsible
+      if( getLogLevel() > 0 && subRegion.isLocallyOwned() )
+      {
+        string const wellControlsName = wellControls.getName();
+        string const massUnit = m_useMass ? "kg" : "mol";
+        integer const useSurfaceConditions = wellControls.useSurfaceConditions();
+        string const conditionKey = useSurfaceConditions ? "surface" : "reservoir";
+        string const unitKey = useSurfaceConditions ? "s" : "r";
+        integer const numPhase = m_numPhases;
+        // format: time,bhp,total_rate,total_vol_rate,phase0_vol_rate,phase1_vol_rate,...
+        std::ofstream outputFile( m_ratesOutputDir + "/" + wellControlsName + ".csv" );
+        outputFile << "Time [s],BHP [Pa],Total rate [" << massUnit << "/s],Total " << conditionKey << " Volumetric rate [" << unitKey << "m3/s]";
+        for( integer ip = 0; ip < numPhase; ++ip )
+          outputFile << ",Phase" << ip << " " << conditionKey << " volumetric rate [" << unitKey << "m3/s]";
+        outputFile << std::endl;
+        outputFile.close();
+      }
     } );
   } );
 
@@ -304,6 +336,28 @@ void compareMulticomponentModels( MODEL1_TYPE const & lhs, MODEL2_TYPE const & r
 
 }
 
+/**
+ * @brief Checks if the WellControls parameters are within the fluid tables ranges
+ * @param fluid the fluid to check
+ */
+void CompositionalMultiphaseWell::validateWellControlsForFluid( WellControls const & wellControls,
+                                                                MultiFluidBase const & fluid ) const
+{
+  if( wellControls.useSurfaceConditions() )
+  {
+    try
+    {
+      real64 const & surfaceTemp = wellControls.getSurfaceTemperature();
+      real64 const & surfacePres = wellControls.getSurfacePressure();
+      fluid.checkTablesParameters( surfacePres, surfaceTemp );
+    } catch( SimulationError const & ex )
+    {
+      string const errorMsg = GEOS_FMT( "{}: wrong surface pressure / temperature.\n", getDataContext() );
+      throw SimulationError( ex, errorMsg );
+    }
+  }
+}
+
 void CompositionalMultiphaseWell::validateConstitutiveModels( DomainPartition const & domain ) const
 {
   GEOS_MARK_FUNCTION;
@@ -329,6 +383,9 @@ void CompositionalMultiphaseWell::validateConstitutiveModels( DomainPartition co
       string const & relpermName = subRegion.getReference< string >( viewKeyStruct::relPermNamesString() );
       RelativePermeabilityBase const & relPerm = getConstitutiveModel< RelativePermeabilityBase >( subRegion, relpermName );
       compareMultiphaseModels( relPerm, referenceFluid );
+
+      WellControls const & wellControls = getWellControls( subRegion );
+      validateWellControlsForFluid( wellControls, fluid );
     } );
 
   } );
@@ -384,8 +441,6 @@ void CompositionalMultiphaseWell::validateWellConstraints( real64 const & time_n
   WellControls::Control const currentControl = wellControls.getControl();
   real64 const & targetTotalRate = wellControls.getTargetTotalRate( time_n + dt );
   real64 const & targetPhaseRate = wellControls.getTargetPhaseRate( time_n + dt );
-  integer const useSurfaceConditions = wellControls.useSurfaceConditions();
-  real64 const & surfaceTemp = wellControls.getSurfaceTemperature();
 
   GEOS_THROW_IF( wellControls.isInjector() && currentControl == WellControls::Control::PHASEVOLRATE,
                  "WellControls " << wellControls.getDataContext() <<
@@ -413,11 +468,6 @@ void CompositionalMultiphaseWell::validateWellConstraints( real64 const & time_n
   GEOS_THROW_IF( wellControls.isProducer() && !isZero( targetTotalRate ),
                  "WellControls " << wellControls.getDataContext() <<
                  ": Target total rate cannot be used for producers",
-                 InputError );
-
-  GEOS_THROW_IF( useSurfaceConditions && surfaceTemp <= 0,
-                 "WellControls " << wellControls.getDataContext() <<
-                 ": Surface temperature must be set to a strictly positive value",
                  InputError );
 
   // Find target phase index for phase rate constraint
@@ -465,6 +515,7 @@ void CompositionalMultiphaseWell::initializePostSubGroups()
                      InputError );
 
       validateInjectionStreams( subRegion );
+
       validateWellConstraints( 0, 0, subRegion );
 
     } );
@@ -966,8 +1017,7 @@ void CompositionalMultiphaseWell::initializeWells( DomainPartition & domain )
   } );
 }
 
-void CompositionalMultiphaseWell::assembleFluxTerms( real64 const GEOS_UNUSED_PARAM( time_n ),
-                                                     real64 const dt,
+void CompositionalMultiphaseWell::assembleFluxTerms( real64 const dt,
                                                      DomainPartition const & domain,
                                                      DofManager const & dofManager,
                                                      CRSMatrixView< real64, globalIndex const > const & localMatrix,
@@ -1006,6 +1056,7 @@ void CompositionalMultiphaseWell::assembleFluxTerms( real64 const GEOS_UNUSED_PA
         KernelLaunchSelector1< FluxKernel >( numFluidComponents(),
                                              subRegion.size(),
                                              dofManager.rankOffset(),
+                                             m_useTotalMassEquation,
                                              wellControls,
                                              wellElemDofNumber,
                                              nextWellElemIndex,
@@ -1073,6 +1124,7 @@ void CompositionalMultiphaseWell::assembleAccumulationTerms( DomainPartition con
                                                      subRegion.size(),
                                                      numFluidPhases(),
                                                      dofManager.rankOffset(),
+                                                     m_useTotalMassEquation,
                                                      wellElemDofNumber,
                                                      wellElemGhostRank,
                                                      wellElemVolume,
@@ -1190,6 +1242,7 @@ CompositionalMultiphaseWell::calculateResidualNorm( real64 const & time_n,
                                                    wellControls,
                                                    time_n + dt,
                                                    dt,
+                                                   m_nonlinearSolverParameters.m_minNormalizer,
                                                    subRegionResidualNorm );
 
       // step 2: reduction across meshBodies/regions/subRegions
@@ -1208,7 +1261,7 @@ CompositionalMultiphaseWell::calculateResidualNorm( real64 const & time_n,
 
   if( getLogLevel() >= 1 && logger::internal::rank == 0 )
   {
-    std::cout << GEOS_FMT( "    ( R{} ) = ( {:4.2e} ) ; ", coupledSolverAttributePrefix(), residualNorm );
+    std::cout << GEOS_FMT( "        ( R{} ) = ( {:4.2e} )", coupledSolverAttributePrefix(), residualNorm );
   }
   return residualNorm;
 }
@@ -1219,16 +1272,6 @@ CompositionalMultiphaseWell::scalingForSystemSolution( DomainPartition & domain,
                                                        arrayView1d< real64 const > const & localSolution )
 {
   GEOS_MARK_FUNCTION;
-
-  bool const skipCompFracDamping = m_maxCompFracChange >= 1.0;
-  bool const skipPresDamping = m_maxRelativePresChange >= 1.0;
-
-  // check if we want to rescale the Newton update
-  if( skipCompFracDamping && skipPresDamping )
-  {
-    // no rescaling wanted, we just return 1.0;
-    return 1.0;
-  }
 
   string const wellDofKey = dofManager.getKey( wellElementDofName() );
 
@@ -1246,6 +1289,7 @@ CompositionalMultiphaseWell::scalingForSystemSolution( DomainPartition & domain,
         compositionalMultiphaseWellKernels::
           ScalingForSystemSolutionKernelFactory::
           createAndLaunch< parallelDevicePolicy<> >( m_maxRelativePresChange,
+                                                     m_maxAbsolutePresChange,
                                                      m_maxCompFracChange,
                                                      dofManager.rankOffset(),
                                                      m_numComponents,
@@ -1279,7 +1323,7 @@ CompositionalMultiphaseWell::checkSystemSolution( DomainPartition & domain,
                                                                         [&]( localIndex const,
                                                                              WellElementSubRegion & subRegion )
     {
-      integer const subRegionSolutionCheck =
+      auto const subRegionData =
         compositionalMultiphaseWellKernels::
           SolutionCheckKernelFactory::
           createAndLaunch< parallelDevicePolicy<> >( m_allowCompDensChopping,
@@ -1291,13 +1335,13 @@ CompositionalMultiphaseWell::checkSystemSolution( DomainPartition & domain,
                                                      subRegion,
                                                      localSolution );
 
-      if( !subRegionSolutionCheck )
+      if( !subRegionData.localMinVal )
       {
         GEOS_LOG_LEVEL( 1, "Solution is invalid in well " << subRegion.getName()
                                                           << " (either a negative pressure or a negative component density was found)." );
       }
 
-      localCheck = std::min( localCheck, subRegionSolutionCheck );
+      localCheck = std::min( localCheck, subRegionData.localMinVal );
     } );
   } );
 
@@ -1794,6 +1838,16 @@ void CompositionalMultiphaseWell::implicitStepComplete( real64 const & time_n,
 {
   WellSolverBase::implicitStepComplete( time_n, dt, domain );
 
+  if( getLogLevel() > 0 )
+  {
+    printRates( time_n, dt, domain );
+  }
+}
+
+void CompositionalMultiphaseWell::printRates( real64 const & time_n,
+                                              real64 const & dt,
+                                              DomainPartition & domain )
+{
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
                                                                 arrayView1d< string const > const & regionNames )
@@ -1813,6 +1867,28 @@ void CompositionalMultiphaseWell::implicitStepComplete( real64 const & time_n,
       }
 
       integer const numPhase = m_numPhases;
+
+      // control data
+
+      WellControls const & wellControls = getWellControls( subRegion );
+      string const wellControlsName = wellControls.getName();
+
+      // format: time,total_rate,total_vol_rate,phase0_vol_rate,phase1_vol_rate,...
+      std::ofstream outputFile( m_ratesOutputDir + "/" + wellControlsName + ".csv", std::ios_base::app );
+
+      outputFile << time_n + dt;
+
+      if( !wellControls.isWellOpen( time_n + dt ) )
+      {
+        GEOS_LOG( GEOS_FMT( "{}: well is shut", wellControlsName ) );
+        // print all zeros in the rates file
+        outputFile << ",0.0,0.0,0.0";
+        for( integer ip = 0; ip < numPhase; ++ip )
+          outputFile << ",0.0";
+        outputFile << std::endl;
+        return;
+      }
+
       localIndex const iwelemRef = subRegion.getTopWellElementIndex();
       string const massUnit = m_useMass ? "kg" : "mol";
 
@@ -1820,21 +1896,6 @@ void CompositionalMultiphaseWell::implicitStepComplete( real64 const & time_n,
 
       arrayView1d< real64 const > const & connRate =
         subRegion.getField< fields::well::mixtureConnectionRate >();
-
-      // control data
-
-      WellControls const & wellControls = getWellControls( subRegion );
-      string const wellControlsName = wellControls.getName();
-
-      if( wellControls.getLogLevel() == 0 )
-      {
-        return;
-      }
-      if( !wellControls.isWellOpen( time_n + dt ) )
-      {
-        GEOS_LOG( GEOS_FMT( "{}: well is shut", wellControlsName ) );
-        return;
-      }
 
       integer const useSurfaceConditions = wellControls.useSurfaceConditions();
 
@@ -1854,7 +1915,8 @@ void CompositionalMultiphaseWell::implicitStepComplete( real64 const & time_n,
                                   currentPhaseVolRate,
                                   &iwelemRef,
                                   &wellControlsName,
-                                  &massUnit] ( localIndex const )
+                                  &massUnit,
+                                  &outputFile] ( localIndex const )
       {
         string const conditionKey = useSurfaceConditions ? "surface" : "reservoir";
         string const unitKey = useSurfaceConditions ? "s" : "r";
@@ -1862,15 +1924,19 @@ void CompositionalMultiphaseWell::implicitStepComplete( real64 const & time_n,
         real64 const currentTotalRate = connRate[iwelemRef];
         GEOS_LOG( GEOS_FMT( "{}: BHP (at the specified reference elevation): {} Pa",
                             wellControlsName, currentBHP ) );
+        outputFile << "," << currentBHP;
         GEOS_LOG( GEOS_FMT( "{}: Total rate: {} {}/s; total {} volumetric rate: {} {}m3/s",
                             wellControlsName, currentTotalRate, massUnit, conditionKey, currentTotalVolRate, unitKey ) );
+        outputFile << "," << currentTotalRate << "," << currentTotalVolRate;
         for( integer ip = 0; ip < numPhase; ++ip )
         {
           GEOS_LOG( GEOS_FMT( "{}: Phase {} {} volumetric rate: {} {}m3/s",
                               wellControlsName, ip, conditionKey, currentPhaseVolRate[ip], unitKey ) );
+          outputFile << "," << currentPhaseVolRate[ip];
         }
-
+        outputFile << std::endl;
       } );
+      outputFile.close();
     } );
   } );
 }

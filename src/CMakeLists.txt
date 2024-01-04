@@ -22,7 +22,8 @@ else()
 endif()
 set( CMAKE_ENABLE_EXPORTS ON )
 
-#set_property(GLOBAL PROPERTY RULE_LAUNCH_COMPILE "${CMAKE_COMMAND} -E time")
+# populated by `geos_add_test` (private list of all geos tests, keep in sync with the macro definition)
+set_property( GLOBAL PROPERTY geos_tests_exe_list )
 
 ################################
 # Include blt
@@ -32,27 +33,27 @@ include( cmake/blt/SetupBLT.cmake )
 set( BLT_SOURCE_DIR ${PROJECT_SOURCE_DIR}/cmake/blt/ )
 
 # use, i.e. don't skip the full RPATH for the build tree
-set(CMAKE_SKIP_BUILD_RPATH  FALSE)
+set( CMAKE_SKIP_BUILD_RPATH FALSE )
 
 # when building, don't use the install RPATH already
 # (but later on when installing)
-set(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)
-set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
-set(CMAKE_INSTALL_NAME_DIR "${CMAKE_INSTALL_PREFIX}/lib")
+set( CMAKE_BUILD_WITH_INSTALL_RPATH FALSE )
+set( CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib" )
+set( CMAKE_INSTALL_NAME_DIR "${CMAKE_INSTALL_PREFIX}/lib" )
 
 # add the automatically determined parts of the RPATH
 # which point to directories outside the build tree to the install RPATH
-set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
+set( CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE )
 
 # the RPATH to be used when installing, but only if it's not a system directory
 list(FIND CMAKE_PLATFORM_IMPLICIT_LINK_DIRECTORIES "${CMAKE_INSTALL_PREFIX}/lib" isSystemDir)
 if("${isSystemDir}" STREQUAL "-1")
-  set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
+  set( CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib" )
 endif()
 
 # Removes -pthread from BLT CUDA libraries lists
 if( ENABLE_CUDA )
-  set( _cuda_libraries )
+  unset( _cuda_libraries )
   foreach( _lib ${BLT_CUDA_LIBRARIES} )
     if( "${_lib}" STREQUAL "-pthread" )
       list( APPEND _cuda_libraries "-lpthread" )
@@ -81,7 +82,7 @@ add_subdirectory( thirdparty )
 ################################
 # Add components
 ################################
-set( externalComponentsLinkList "" )
+unset( externalComponentsLinkList )
 add_subdirectory( coreComponents )
 add_subdirectory( externalComponents )
 add_subdirectory( main )
@@ -116,7 +117,7 @@ include( cmake/GeosxConfig.cmake )
 ################################
 # Add main
 ################################
-set( extraComponentsLinkList "" )
+unset( extraComponentsLinkList )
 
 if( ENABLE_OPENMP )
   list( APPEND extraComponentsLinkList openmp )
@@ -220,7 +221,7 @@ add_custom_target( geosx_generate_install_schema
          COMMENT "Generating XML schema to install"
          )
 
-if (NOT GEOSX_INSTALL_SCHEMA)
+if( NOT GEOSX_INSTALL_SCHEMA )
   set_target_properties(geosx_generate_install_schema PROPERTIES EXCLUDE_FROM_ALL 1 EXCLUDE_FROM_DEFAULT_BUILD 1)
 endif()
 
@@ -236,3 +237,10 @@ if( EXISTS "${CMAKE_SOURCE_DIR}/../integratedTests/CMakeLists.txt")
 else()
   message( "Could not find the integratedTests submodule" )
 endif()
+
+# the following adds a `build_test` CMake target such that running `$ make build_test test`
+# builds the unit tests before running them
+get_property( tmp GLOBAL PROPERTY geos_tests_exe_list )
+add_custom_target( build_test COMMAND ${CMAKE_CTEST_COMMAND} DEPENDS ${tmp} )
+
+message( DEBUG "geos_tests: ${tmp} " )

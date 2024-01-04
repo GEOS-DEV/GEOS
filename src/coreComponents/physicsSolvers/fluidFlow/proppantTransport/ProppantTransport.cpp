@@ -489,11 +489,10 @@ void ProppantTransport::implicitStepComplete( real64 const & GEOS_UNUSED_PARAM( 
 void ProppantTransport::setupDofs( DomainPartition const & GEOS_UNUSED_PARAM( domain ),
                                    DofManager & dofManager ) const
 {
-
-  for( auto const & meshTarget : getMeshTargets() )
+  for( auto const & meshTarget: getMeshTargets())
   {
-    printf( "(%s,%s):", meshTarget.first.first.c_str(), meshTarget.first.second.c_str() );
-    std::cout<<meshTarget.second<<std::endl;
+    GEOS_LOG_RANK_0( GEOS_FMT( "{}: MeshBody = ({},{}) - target region = {}",
+                               getName(), meshTarget.first.first.c_str(), meshTarget.first.second.c_str(), meshTarget.second ));
   }
 
   dofManager.addField( fields::proppant::proppantConcentration::key(),
@@ -507,7 +506,7 @@ void ProppantTransport::setupDofs( DomainPartition const & GEOS_UNUSED_PARAM( do
 }
 
 
-void ProppantTransport::assembleSystem( real64 const time,
+void ProppantTransport::assembleSystem( real64 const GEOS_UNUSED_PARAM( time ),
                                         real64 const dt,
                                         DomainPartition & domain,
                                         DofManager const & dofManager,
@@ -522,8 +521,7 @@ void ProppantTransport::assembleSystem( real64 const time,
                              localMatrix,
                              localRhs );
 
-  assembleFluxTerms( time,
-                     dt,
+  assembleFluxTerms( dt,
                      domain,
                      dofManager,
                      localMatrix,
@@ -589,8 +587,7 @@ void ProppantTransport::assembleAccumulationTerms( real64 const dt,
 }
 
 
-void ProppantTransport::assembleFluxTerms( real64 const GEOS_UNUSED_PARAM( time_n ),
-                                           real64 const dt,
+void ProppantTransport::assembleFluxTerms( real64 const dt,
                                            DomainPartition const & domain,
                                            DofManager const & dofManager,
                                            CRSMatrixView< real64, globalIndex const > const & localMatrix,
@@ -861,6 +858,7 @@ ProppantTransport::calculateResidualNorm( real64 const & GEOS_UNUSED_PARAM( time
                                                    dofKey,
                                                    localRhs,
                                                    subRegion,
+                                                   m_nonlinearSolverParameters.m_minNormalizer,
                                                    subRegionResidualNorm,
                                                    subRegionResidualNormalizer );
 
@@ -895,7 +893,7 @@ ProppantTransport::calculateResidualNorm( real64 const & GEOS_UNUSED_PARAM( time
 
   if( getLogLevel() >= 1 && logger::internal::rank == 0 )
   {
-    std::cout << GEOS_FMT( "    ( R{} ) = ( {:4.2e} ) ; ", ProppantTransport::coupledSolverAttributePrefix(), residualNorm );
+    std::cout << GEOS_FMT( "        ( R{} ) = ( {:4.2e} )", ProppantTransport::coupledSolverAttributePrefix(), residualNorm );
   }
 
   return residualNorm;

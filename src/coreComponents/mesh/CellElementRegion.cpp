@@ -24,7 +24,8 @@ CellElementRegion::CellElementRegion( string const & name, Group * const parent 
   ElementRegionBase( name, parent )
 {
   registerWrapper( viewKeyStruct::sourceCellBlockNamesString(), &m_cellBlockNames ).
-    setInputFlag( InputFlags::OPTIONAL );
+    setRTTypeName( rtTypes::CustomTypes::groupNameRefArray ).
+    setInputFlag( InputFlags::REQUIRED );
 
   registerWrapper( viewKeyStruct::coarseningRatioString(), &m_coarseningRatio ).
     setInputFlag( InputFlags::OPTIONAL );
