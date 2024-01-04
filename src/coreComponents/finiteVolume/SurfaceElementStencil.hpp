@@ -87,8 +87,7 @@ public:
    */
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
-  localIndex size() const
-  { return m_elementRegionIndices.size(); }
+  localIndex size() const { return m_elementRegionIndices.size(); }
 
   /**
    * @brief Give the number of stencil entries for the provided index.
@@ -97,8 +96,7 @@ public:
    */
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
-  localIndex stencilSize( localIndex index ) const
-  { return m_elementRegionIndices.sizeOfArray( index ); }
+  localIndex stencilSize( localIndex index ) const { return m_elementRegionIndices.sizeOfArray( index ); }
 
 
   /**
@@ -114,39 +112,6 @@ public:
   }
 
   /**
-   * @brief Compute weights and derivatives w.r.t to one variable.
-   * @param[in] iconn connection index
-   * @param[in] ip phase index
-   * @param[in] coefficient view accessor to the coefficient used to compute the weights
-   * @param[in] dCoeff_dVar view accessor to the derivative of the coefficient w.r.t to the variable
-   * @param[out] weight view weights
-   * @param[out] dWeight_dVar derivative of the weights w.r.t to the variable
-   */
-  GEOS_HOST_DEVICE
-  void computeWeights( localIndex const iconn,
-                       localIndex const ip,
-                       CoefficientAccessor< arrayView4d< real64 const > > const & coefficient,
-                       CoefficientAccessor< arrayView4d< real64 const > > const & dCoeff_dVar,
-                       real64 ( & weight )[maxNumConnections][2],
-                       real64 ( & dWeight_dVar )[maxNumConnections][2] ) const
-  { GEOS_UNUSED_VAR( iconn, ip, coefficient, dCoeff_dVar, weight, dWeight_dVar ); };
-
-  /**
-   * @brief Compute weigths and derivatives w.r.t to one variable.
-   * @param[in] iconn connection index
-   * @param[in] coefficient view accessor to the coefficient used to compute the weights
-   * @param[in] dCoeff_dVar view accessor to the derivative of the coefficient w.r.t to the variable
-   * @param[out] weight view weights
-   * @param[out] dWeight_dVar derivative of the weigths w.r.t to the variable
-   */
-  GEOS_HOST_DEVICE
-  void computeWeights( localIndex iconn,
-                       CoefficientAccessor< arrayView3d< real64 const > > const & coefficient,
-                       CoefficientAccessor< arrayView3d< real64 const > > const & dCoeff_dVar,
-                       real64 ( &weight )[maxNumConnections][2],
-                       real64 ( &dWeight_dVar )[maxNumConnections][2] ) const;
-
-  /**
    * @brief Compute weights and derivatives w.r.t to one variable without coefficient
    * Used in ReactiveCompositionalMultiphaseOBL solver for thermal transmissibility computation:
    * here, conductivity is a part of operator and connot be used directly as a coefficient
@@ -158,6 +123,39 @@ public:
   void computeWeights( localIndex iconn,
                        real64 ( &weight )[maxNumConnections][2],
                        real64 ( &dWeight_dVar )[maxNumConnections][2] ) const;
+
+  /**
+   * @brief Compute weigths and derivatives w.r.t to one variable.
+   * @param[in] iconn connection index
+   * @param[in] coefficient view accessor to the coefficient used to compute the weights
+   * @param[in] dCoeff_dVar view accessor to the derivative of the coefficient w.r.t to the variable
+   * @param[out] weight view weights
+   * @param[out] dWeight_dVar derivative of the weigths w.r.t to the variable
+   */
+  GEOS_HOST_DEVICE
+  void computeWeights( localIndex iconn,
+                       CoefficientAccessor< arrayView3d< real64 const > > const &coefficient,
+                       CoefficientAccessor< arrayView3d< real64 const > > const &dCoeff_dVar,
+                       real64 ( &weight )[maxNumConnections][2],
+                       real64 ( &dWeight_dVar )[maxNumConnections][2] ) const;
+
+  /**
+   * @brief Compute weights and derivatives w.r.t to one variable.
+   * @param[in] iconn connection index
+   * @param[in] ip phase index
+   * @param[in] coefficient view accessor to the coefficient used to compute the weights
+   * @param[in] dCoeff_dVar view accessor to the derivative of the coefficient w.r.t to the variable
+   * @param[out] weight view weights
+   * @param[out] dWeight_dVar derivative of the weights w.r.t to the variable
+   */
+  GEOS_HOST_DEVICE
+  void computeWeights( localIndex const iconn,
+                       localIndex const ip,
+                       CoefficientAccessor< arrayView4d< real64 const > > const &coefficient,
+                       CoefficientAccessor< arrayView4d< real64 const > > const &dCoeff_dVar,
+                       real64 ( &weight )[maxNumConnections][2],
+                       real64 ( &dWeight_dVar )[maxNumConnections][2] ) const;
+
 
 
   /**
@@ -172,9 +170,9 @@ public:
    */
   GEOS_HOST_DEVICE
   void computeWeights( localIndex iconn,
-                       CoefficientAccessor< arrayView3d< real64 const > > const & coefficient,
-                       CoefficientAccessor< arrayView3d< real64 const > > const & dCoeff_dVar1,
-                       CoefficientAccessor< arrayView4d< real64 const > > const & dCoeff_dVar2,
+                       CoefficientAccessor< arrayView3d< real64 const > > const &coefficient,
+                       CoefficientAccessor< arrayView3d< real64 const > > const &dCoeff_dVar1,
+                       CoefficientAccessor< arrayView4d< real64 const > > const &dCoeff_dVar2,
                        real64 ( &weight )[maxNumConnections][2],
                        real64 ( &dWeight_dVar1 )[maxNumConnections][2],
                        real64 ( &dWeight_dVar2 )[maxNumConnections][2][3] ) const;
@@ -189,9 +187,9 @@ public:
    */
   GEOS_HOST_DEVICE
   void computeWeights( localIndex iconn,
-                       CoefficientAccessor< arrayView3d< real64 const > > const & coefficient,
-                       CoefficientAccessor< arrayView3d< real64 const > > const & coefficientMultiplier,
-                       R1Tensor const & gravityVector,
+                       CoefficientAccessor< arrayView3d< real64 const > > const &coefficient,
+                       CoefficientAccessor< arrayView3d< real64 const > > const &coefficientMultiplier,
+                       R1Tensor const &gravityVector,
                        real64 ( &weight )[maxNumConnections][2] ) const;
 
   /**
@@ -207,10 +205,10 @@ public:
    */
   GEOS_HOST_DEVICE
   void computeWeights( localIndex iconn,
-                       CoefficientAccessor< arrayView3d< real64 const > > const &  coefficient1,
-                       CoefficientAccessor< arrayView3d< real64 const > > const &  coefficient1Multiplier,
-                       CoefficientAccessor< arrayView1d< real64 const > > const &  coefficient2,
-                       R1Tensor const & gravityVector,
+                       CoefficientAccessor< arrayView3d< real64 const > > const &coefficient1,
+                       CoefficientAccessor< arrayView3d< real64 const > > const &coefficient1Multiplier,
+                       CoefficientAccessor< arrayView1d< real64 const > > const &coefficient2,
+                       R1Tensor const &gravityVector,
                        real64 ( &weight1 )[maxNumPointsInFlux],
                        real64 ( &weight2 )[maxNumPointsInFlux],
                        real64 ( &geometricWeight )[maxNumPointsInFlux] ) const;
@@ -223,14 +221,16 @@ public:
   GEOS_HOST_DEVICE
   void computeStabilizationWeights( localIndex iconn,
                                     real64 ( & stabilizationWeight )[maxNumConnections][2] ) const
-  { GEOS_UNUSED_VAR( iconn, stabilizationWeight ); }
+  {
+    GEOS_UNUSED_VAR( iconn, stabilizationWeight );
+  }
 
   /**
    * @brief Accessor to the CellCenterToEdgeCenter vector
    * @return the view const to the CellCenterToEdgeCenter vector
    */
-  ArrayOfArraysView< R1Tensor const > getCellCenterToEdgeCenters() const
-  { return m_cellCenterToEdgeCenters.toViewConst(); }
+  ArrayOfArraysView< R1Tensor const >
+  getCellCenterToEdgeCenters() const { return m_cellCenterToEdgeCenters.toViewConst(); }
 
   /**
    * @brief Remove the contribution of the aperture from the weight in the stencil (done before aperture update)
@@ -239,7 +239,8 @@ public:
    * @param hydraulicAperture hydraulic apertures of the fractures
    */
   GEOS_HOST_DEVICE
-  void removeHydraulicApertureContribution( localIndex const iconn, ElementRegionManager::ElementViewConst< arrayView1d< real64 const > > hydraulicAperture ) const;
+  void removeHydraulicApertureContribution( localIndex const iconn,
+                                            ElementRegionManager::ElementViewConst< arrayView1d< real64 const > > hydraulicAperture ) const;
 
   /**
    * @brief Add the contribution of the aperture to the weight in the stencil (done after aperture update)
@@ -248,7 +249,8 @@ public:
    * @param hydraulicAperture hydraulic apertures of the fractures
    */
   GEOS_HOST_DEVICE
-  void addHydraulicApertureContribution( localIndex const iconn, ElementRegionManager::ElementViewConst< arrayView1d< real64 const > > hydraulicAperture ) const;
+  void addHydraulicApertureContribution( localIndex const iconn,
+                                         ElementRegionManager::ElementViewConst< arrayView1d< real64 const > > hydraulicAperture ) const;
 
 private:
 
@@ -257,6 +259,48 @@ private:
 
   /// Mean permeability coefficient
   real64 m_meanPermCoefficient;
+
+
+  GEOS_HOST_DEVICE
+  void
+    averageWeights( const localIndex iconn,
+                    const localIndex connexionIndex,
+                    const real64 ( &halfWeight )[2],
+                    const real64 ( &dHalfWeight_dVar )[2][2],
+                    real64 ( &weight )[maxNumConnections][2],
+                    real64 ( &dWeight_dVar1 )[maxNumConnections][2],
+                    real64 ( &dWeight_dVar2 )[maxNumConnections][2][3] ) const;
+
+  GEOS_HOST_DEVICE
+  void
+    averageWeights( const localIndex iconn,
+                    const localIndex connexionIndex,
+                    const real64 ( &halfWeight )[2],
+                    const real64 ( &dHalfWeight_dVar )[2],
+                    real64 ( &weight )[maxNumConnections][2],
+                    real64 ( &dWeight_dVar )[maxNumConnections][2] ) const;
+
+  GEOS_HOST_DEVICE
+  void
+  computeWeightsBase( localIndex const iconn,
+                      localIndex const (&k)[2],
+                      localIndex const ielem,
+                      arraySlice3d< real64 const > const & coefficient,
+                      arraySlice3d< real64 const > const & dCoeff_dVar,
+                      real64 & halfWeight,
+                      real64 & dHalfWeight_dVar ) const;
+
+
+  GEOS_HOST_DEVICE
+  void
+    computeWeightsBase( const localIndex iconn,
+                        localIndex const (&k)[2],
+                        const localIndex ielem,
+                        const arraySlice3d< const real64, 2 > & coefficient,
+                        const arraySlice3d< const real64, 2 > & dCoeff_dVar1,
+                        const arraySlice4d< const real64, 3 > & dCoeff_dVar2,
+                        real64 &halfWeight,
+                        real64 ( &dHalfWeight_dVar )[2] ) const;
 };
 
 /**
@@ -345,59 +389,104 @@ SurfaceElementStencilWrapper::
                   real64 ( & weight )[maxNumConnections][2],
                   real64 ( & dWeight_dVar )[maxNumConnections][2] ) const
 {
-
-  real64 sumOfTrans = 0.0;
-  for( localIndex k=0; k<numPointsInFlux( iconn ); ++k )
-  {
-    localIndex const er  =  m_elementRegionIndices[iconn][k];
-    localIndex const esr =  m_elementSubRegionIndices[iconn][k];
-    localIndex const ei  =  m_elementIndices[iconn][k];
-
-    sumOfTrans += coefficient[er][esr][ei][0][0] * m_weights[iconn][k];
-  }
-
   localIndex k[2];
   localIndex connectionIndex = 0;
   for( k[0]=0; k[0]<numPointsInFlux( iconn ); ++k[0] )
   {
     for( k[1]=k[0]+1; k[1]<numPointsInFlux( iconn ); ++k[1] )
     {
-      localIndex const er0  =  m_elementRegionIndices[iconn][k[0]];
-      localIndex const esr0 =  m_elementSubRegionIndices[iconn][k[0]];
-      localIndex const ei0  =  m_elementIndices[iconn][k[0]];
+      real64 halfWeight[2];
+      real64 dHalfWeight_dVar[2];
+      const localIndex elem[2] = {k[0], k[1]};
+      for( localIndex ielem=0; ielem < 2; ++ielem )
+      {
 
-      localIndex const er1  =  m_elementRegionIndices[iconn][k[1]];
-      localIndex const esr1 =  m_elementSubRegionIndices[iconn][k[1]];
-      localIndex const ei1  =  m_elementIndices[iconn][k[1]];
+        localIndex const er  =  m_elementRegionIndices[iconn][elem[ielem]];
+        localIndex const esr =  m_elementSubRegionIndices[iconn][elem[ielem]];
 
-      real64 const t0 = m_weights[iconn][0] * coefficient[er0][esr0][ei0][0][0]; // this is a bit insane to access perm
-      real64 const t1 = m_weights[iconn][1] * coefficient[er1][esr1][ei1][0][0];
+        computeWeightsBase( iconn, elem, ielem,
+                            coefficient[er][esr], dCoeff_dVar[er][esr],
+                            halfWeight[ielem], dHalfWeight_dVar[ielem] );
 
-      real64 const harmonicWeight   = t0*t1 / sumOfTrans;
-      real64 const arithmeticWeight = 0.25 * (t0+t1);
+      }
 
-      real64 const value = m_meanPermCoefficient * harmonicWeight + (1 - m_meanPermCoefficient) * arithmeticWeight;
-
-      weight[connectionIndex][0] = value;
-      weight[connectionIndex][1] = -value;
-
-      real64 const dt0 = m_weights[iconn][0] * dCoeff_dVar[er0][esr0][ei0][0][0];
-      real64 const dt1 = m_weights[iconn][1] * dCoeff_dVar[er1][esr1][ei1][0][0];
-
-      real64 dHarmonic[2];
-      dHarmonic[0] = ( dt0 * t1 * sumOfTrans - dt0 * t0 * t1 ) / ( sumOfTrans * sumOfTrans );
-      dHarmonic[1] = ( t0 * dt1 * sumOfTrans - dt1 * t0 * t1 ) / ( sumOfTrans * sumOfTrans );
-
-      real64 dArithmetic[2];
-      dArithmetic[0] = 0.25 * dt0;
-      dArithmetic[1] = 0.25 * dt1;
-
-      dWeight_dVar[connectionIndex][0] = m_meanPermCoefficient * dHarmonic[0] + (1 - m_meanPermCoefficient) * dArithmetic[0];
-      dWeight_dVar[connectionIndex][1] = -( m_meanPermCoefficient * dHarmonic[1] + (1 - m_meanPermCoefficient) * dArithmetic[1] );
-
+      averageWeights( iconn, connectionIndex, halfWeight, dHalfWeight_dVar, weight, dWeight_dVar );
       connectionIndex++;
+
     }
   }
+}
+
+    GEOS_HOST_DEVICE
+    inline void
+    SurfaceElementStencilWrapper::
+    computeWeights( localIndex iconn,
+                    localIndex ip,
+                    CoefficientAccessor< arrayView4d< real64 const > > const & coefficient,
+                    CoefficientAccessor< arrayView4d< real64 const > > const & dCoeff_dVar,
+                    real64 ( & weight )[maxNumConnections][2],
+                    real64 ( & dWeight_dVar )[maxNumConnections][2] ) const
+    {
+        localIndex k[2];
+        localIndex connectionIndex = 0;
+        for( k[0]=0; k[0]<numPointsInFlux( iconn ); ++k[0] )
+        {
+            for( k[1]=k[0]+1; k[1]<numPointsInFlux( iconn ); ++k[1] )
+            {
+                real64 halfWeight[2];
+                real64 dHalfWeight_dVar[2];
+                const localIndex elem[2] = {k[0], k[1]};
+                for( localIndex ielem=0; ielem < 2; ++ielem )
+                {
+
+                    localIndex const er  =  m_elementRegionIndices[iconn][elem[ielem]];
+                    localIndex const esr =  m_elementSubRegionIndices[iconn][elem[ielem]];
+                        //TODO replace as Sergey LvArray gets merged
+    // We are swapping ip phase index and direction to be able to slice properly
+    auto coeffNested = coefficient[er][esr];
+    auto dCoeffNested_dVar = dCoeff_dVar[er][esr];
+    LvArray::typeManipulation::CArray< localIndex, 4 > dims, strides;
+    dims[0] = coeffNested.dims()[2];
+    strides[0] = coeffNested.strides()[2];                //swap phase for cell
+    dims[1] = coeffNested.dims()[0];
+    strides[1] = coeffNested.strides()[0];                //increment cell to 2nd pos
+    dims[2] = coeffNested.dims()[1];
+    strides[2] = coeffNested.strides()[1];                //then shift gauss point as well
+    dims[3] = coeffNested.dims()[3];
+    strides[3] = coeffNested.strides()[3];                //direction remain last pos
+    ArrayView< real64 const, 4 > coeffSwapped( dims, strides, 0, coeffNested.dataBuffer());
+    ArrayView< real64 const, 4 > dCoeffSwapped_dVar1( dims, strides, 0, dCoeffNested_dVar.dataBuffer());
+
+
+
+                    computeWeightsBase( iconn, elem, ielem,
+                                        coeffSwapped[ip], dCoeffSwapped_dVar1[ip],
+                                        halfWeight[ielem], dHalfWeight_dVar[ielem] );
+
+                }
+
+                averageWeights( iconn, connectionIndex, halfWeight, dHalfWeight_dVar, weight, dWeight_dVar );
+                connectionIndex++;
+
+            }
+        }
+    }
+
+GEOS_HOST_DEVICE
+inline void
+SurfaceElementStencilWrapper::computeWeightsBase( const geos::localIndex iconn,
+                                                  const geos::localIndex (& k)[2],
+                                                  const localIndex ielem,
+                                                  const arraySlice3d< const geos::real64 > & coefficient,
+                                                  const arraySlice3d< const geos::real64 > & dCoeff_dVar,
+                                                  geos::real64 & halfWeight,
+                                                  geos::real64 & dHalfWeight_dVar ) const
+{
+
+  localIndex const ei  =  m_elementIndices[iconn][k[ielem]];
+  halfWeight = m_weights[iconn][ielem] * coefficient[ei][0][0];
+  dHalfWeight_dVar = m_weights[iconn][ielem] * dCoeff_dVar[ei][0][0];
+
 }
 
 GEOS_HOST_DEVICE
@@ -463,72 +552,58 @@ SurfaceElementStencilWrapper::
                   real64 (& dWeight_dVar1 )[maxNumConnections][2],
                   real64 (& dWeight_dVar2 )[maxNumConnections][2][3] ) const
 {
-  real64 sumOfTrans = 0.0;
-  for( localIndex k=0; k<numPointsInFlux( iconn ); ++k )
-  {
-    localIndex const er  =  m_elementRegionIndices[iconn][k];
-    localIndex const esr =  m_elementSubRegionIndices[iconn][k];
-    localIndex const ei  =  m_elementIndices[iconn][k];
-
-    sumOfTrans += coefficient[er][esr][ei][0][0] * m_weights[iconn][k];
-  }
-
   localIndex k[2];
   localIndex connectionIndex = 0;
   for( k[0]=0; k[0]<numPointsInFlux( iconn ); ++k[0] )
   {
     for( k[1]=k[0]+1; k[1]<numPointsInFlux( iconn ); ++k[1] )
     {
-      localIndex const er0  =  m_elementRegionIndices[iconn][k[0]];
-      localIndex const esr0 =  m_elementSubRegionIndices[iconn][k[0]];
-      localIndex const ei0  =  m_elementIndices[iconn][k[0]];
 
-      localIndex const er1  =  m_elementRegionIndices[iconn][k[1]];
-      localIndex const esr1 =  m_elementSubRegionIndices[iconn][k[1]];
-      localIndex const ei1  =  m_elementIndices[iconn][k[1]];
+      real64 halfWeight[2];
+      real64 dHalfWeight_dVar[2][2];
+      const localIndex elem[2] =  {k[0], k[1]};
+      for( localIndex ielem = 0; ielem < 2; ++ielem )
+      {
 
-      real64 const t0 = m_weights[iconn][0] * coefficient[er0][esr0][ei0][0][0]; // this is a bit insane to access perm
-      real64 const t1 = m_weights[iconn][1] * coefficient[er1][esr1][ei1][0][0];
+        localIndex const er = m_elementRegionIndices[iconn][k[ielem]];
+        localIndex const esr = m_elementSubRegionIndices[iconn][k[ielem]];
+        computeWeightsBase( iconn,
+                            elem,
+                            ielem,
+                            coefficient[er][esr],
+                            dCoeff_dVar1[er][esr], dCoeff_dVar2[er][esr],
+                            halfWeight[ielem], dHalfWeight_dVar[ielem] );
 
-      real64 const harmonicWeight   = t0*t1 / sumOfTrans;
-      real64 const arithmeticWeight = 0.25 * (t0+t1);
+      }
 
-      real64 const value = m_meanPermCoefficient * harmonicWeight + (1 - m_meanPermCoefficient) * arithmeticWeight;
-
-      weight[connectionIndex][0] = value;
-      weight[connectionIndex][1] = -value;
-
-      real64 const dt0_dvar1 = m_weights[iconn][0] * dCoeff_dVar1[er0][esr0][ei0][0][0];
-      real64 const dt1_dvar1 = m_weights[iconn][1] * dCoeff_dVar1[er1][esr1][ei1][0][0];
-
-      real64 dHarmonic_dvar1[2];
-      dHarmonic_dvar1[0] = ( dt0_dvar1 * t1 * sumOfTrans - dt0_dvar1 * t0 * t1 ) / ( sumOfTrans * sumOfTrans );
-      dHarmonic_dvar1[1] = ( dt0_dvar1 * t1 * sumOfTrans - dt0_dvar1 * t0 * t1 ) / ( sumOfTrans * sumOfTrans );
-
-      real64 dArithmetic_dvar1[2];
-      dArithmetic_dvar1[0] = 0.25 * dt0_dvar1;
-      dArithmetic_dvar1[1] = 0.25 * dt1_dvar1;
-
-      dWeight_dVar1[connectionIndex][0] =    m_meanPermCoefficient * dHarmonic_dvar1[0] + (1 - m_meanPermCoefficient) * dArithmetic_dvar1[0];
-      dWeight_dVar1[connectionIndex][1] = -( m_meanPermCoefficient * dHarmonic_dvar1[1] + (1 - m_meanPermCoefficient) * dArithmetic_dvar1[1] );
-
-      real64 const dt0_dvar2 = m_weights[iconn][0] * dCoeff_dVar2[er0][esr0][ei0][0][0][0];
-      real64 const dt1_dvar2 = m_weights[iconn][1] * dCoeff_dVar2[er1][esr1][ei1][0][0][0];
-
-      real64 dHarmonic_dvar2[2];
-      dHarmonic_dvar2[0] = ( dt0_dvar2 * t1 * sumOfTrans - dt0_dvar2 * t0 * t1 ) / ( sumOfTrans * sumOfTrans );
-      dHarmonic_dvar2[1] = ( t0 * dt1_dvar2 * sumOfTrans - dt1_dvar2 * t0 * t1 ) / ( sumOfTrans * sumOfTrans );
-
-      real64 dArithmetic_dvar2[2];
-      dArithmetic_dvar2[0] = 0.25 * dt0_dvar2;
-      dArithmetic_dvar2[1] = 0.25 * dt1_dvar2;
-
-      dWeight_dVar2[connectionIndex][0][0] =   ( m_meanPermCoefficient * dHarmonic_dvar2[0] + (1 - m_meanPermCoefficient) * dArithmetic_dvar2[0] );
-      dWeight_dVar2[connectionIndex][1][0] = -( m_meanPermCoefficient * dHarmonic_dvar2[1] + (1 - m_meanPermCoefficient) * dArithmetic_dvar2[1] );
+      averageWeights( iconn, connectionIndex,
+                      halfWeight, dHalfWeight_dVar,
+                      weight, dWeight_dVar1, dWeight_dVar2 );
 
       connectionIndex++;
     }
   }
+}
+
+GEOS_HOST_DEVICE
+inline void
+SurfaceElementStencilWrapper::
+  computeWeightsBase( const geos::localIndex iconn,
+                      const geos::localIndex (& k)[2],
+                      const geos::localIndex ielem,
+                      const arraySlice3d< const geos::real64 > & coefficient,
+                      const arraySlice3d< const geos::real64 > & dCoeff_dVar1,
+                      const arraySlice4d< const geos::real64 > & dCoeff_dVar2,
+                      geos::real64 & halfWeight,
+                      geos::real64 (& dHalfWeight_dVar) [2] ) const
+{
+
+  localIndex const ei  =  m_elementIndices[iconn][k[ielem]];
+  halfWeight =
+    m_weights[iconn][ielem] * coefficient[ei][0][0];         // this is a bit insane to access perm
+
+  dHalfWeight_dVar[0] = m_weights[iconn][ielem] * dCoeff_dVar1[ei][0][0];
+  dHalfWeight_dVar[1] = m_weights[iconn][ielem] * dCoeff_dVar2[ei][0][0][0];
 }
 
 GEOS_HOST_DEVICE
@@ -577,17 +652,97 @@ SurfaceElementStencilWrapper::
       real64 const t0 = mult0 * m_weights[iconn][0] * coefficient[er0][esr0][ei0][0][0];
       real64 const t1 = mult1 * m_weights[iconn][1] * coefficient[er1][esr1][ei1][0][0];
 
-      real64 const harmonicWeight   = t0*t1 / sumOfTrans;
-      real64 const arithmeticWeight = 0.25 * (t0+t1);
 
-      real64 const value = m_meanPermCoefficient * harmonicWeight + (1 - m_meanPermCoefficient) * arithmeticWeight;
-
-      weight[connectionIndex][0] = value;
-      weight[connectionIndex][1] = -value;
 
       connectionIndex++;
     }
   }
+}
+
+GEOS_HOST_DEVICE
+inline void
+SurfaceElementStencilWrapper::averageWeights( const geos::localIndex iconn,
+                                              const geos::localIndex connexionIndex,
+                                              const geos::real64 (& halfWeight)[2],
+                                              const geos::real64 (& dHalfWeight_dVar)[2],
+                                              geos::real64 (& weight)[maxNumConnections][2],
+                                              geos::real64 (& dWeight_dVar)[maxNumConnections][2] ) const
+{
+  real64 sumOfTrans = 0.0;
+  for( localIndex k=0; k<numPointsInFlux( iconn ); ++k )
+  {
+    //TODO check that
+    sumOfTrans += halfWeight[k];
+  }
+
+  real64 const arithmeticWeight = 0.25 * (halfWeight[0]+halfWeight[1]);
+  real64 const harmonicWeight   = halfWeight[0]*halfWeight[1] / sumOfTrans;
+  real64 const value = m_meanPermCoefficient * harmonicWeight + (1 - m_meanPermCoefficient) * arithmeticWeight;
+
+  weight[connexionIndex][0] = value;
+  weight[connexionIndex][1] = -value;
+
+  real64 dHarmonic[2];
+  dHarmonic[0] = ( dHalfWeight_dVar[0] * halfWeight[1] * sumOfTrans - dHalfWeight_dVar[0] * halfWeight[0] * halfWeight[1] ) / ( sumOfTrans * sumOfTrans );
+  dHarmonic[1] = ( dHalfWeight_dVar[1] * halfWeight[0] * sumOfTrans - dHalfWeight_dVar[1] * halfWeight[0] * halfWeight[1] ) / ( sumOfTrans * sumOfTrans );
+
+  real64 dArithmetic[2];
+  dArithmetic[0] = 0.25 * dHalfWeight_dVar[0];
+  dArithmetic[1] = 0.25 * dHalfWeight_dVar[1];
+
+  dWeight_dVar[connexionIndex][0] =   ( m_meanPermCoefficient * dHarmonic[0] + (1 - m_meanPermCoefficient) * dArithmetic[0] );
+  dWeight_dVar[connexionIndex][1] = -( m_meanPermCoefficient * dHarmonic[1] + (1 - m_meanPermCoefficient) * dArithmetic[1] );
+
+
+}
+
+GEOS_HOST_DEVICE
+inline void
+SurfaceElementStencilWrapper::averageWeights( const localIndex iconn,
+                                              const localIndex connexionIndex,
+                                              const real64 (& halfWeight)[2],
+                                              const real64 (& dHalfWeight_dVar)[2][2],
+                                              real64 (& weight)[maxNumConnections][2],
+                                              real64 (& dWeight_dVar1)[maxNumConnections][2],
+                                              real64 (& dWeight_dVar2)[maxNumConnections][2][3] ) const
+{
+
+  real64 sumOfTrans = 0.0;
+  for( localIndex k=0; k<numPointsInFlux( iconn ); ++k )
+  {
+    //TODO check that
+    sumOfTrans += halfWeight[k];
+  }
+
+  real64 const arithmeticWeight = 0.25 * (halfWeight[0]+halfWeight[1]);
+  real64 const harmonicWeight   = halfWeight[0]*halfWeight[1] / sumOfTrans;
+  real64 const value = m_meanPermCoefficient * harmonicWeight + (1 - m_meanPermCoefficient) * arithmeticWeight;
+
+  weight[connexionIndex][0] = value;
+  weight[connexionIndex][1] = -value;
+
+  real64 dHarmonic_dvar1[2];
+  dHarmonic_dvar1[0] = ( dHalfWeight_dVar[0][0] * halfWeight[0] * sumOfTrans - dHalfWeight_dVar[0][0] * halfWeight[0] * halfWeight[1] ) / ( sumOfTrans * sumOfTrans );
+  dHarmonic_dvar1[1] = ( dHalfWeight_dVar[0][0] * halfWeight[1] * sumOfTrans - dHalfWeight_dVar[0][0] * halfWeight[0] * halfWeight[1] ) / ( sumOfTrans * sumOfTrans );
+
+  real64 dArithmetic_dvar1[2];
+  dArithmetic_dvar1[0] = 0.25 * dHarmonic_dvar1[0];
+  dArithmetic_dvar1[1] = 0.25 * dHarmonic_dvar1[1];
+
+  dWeight_dVar1[connexionIndex][0] =    m_meanPermCoefficient * dHarmonic_dvar1[0] + (1 - m_meanPermCoefficient) * dArithmetic_dvar1[0];
+  dWeight_dVar1[connexionIndex][1] = -( m_meanPermCoefficient * dHarmonic_dvar1[1] + (1 - m_meanPermCoefficient) * dArithmetic_dvar1[1] );
+
+  real64 dHarmonic_dvar2[2];
+  dHarmonic_dvar2[0] = ( dHalfWeight_dVar[0][1] * halfWeight[1] * sumOfTrans - dHalfWeight_dVar[0][1] * halfWeight[0] * halfWeight[1] ) / ( sumOfTrans * sumOfTrans );
+  dHarmonic_dvar2[1] = ( halfWeight[0] * dHalfWeight_dVar[1][1] * sumOfTrans - dHalfWeight_dVar[1][1] * halfWeight[0] * halfWeight[1] ) / ( sumOfTrans * sumOfTrans );
+
+  real64 dArithmetic_dvar2[2];
+  dArithmetic_dvar2[0] = 0.25 * dHalfWeight_dVar[0][1];
+  dArithmetic_dvar2[1] = 0.25 * dHalfWeight_dVar[1][1];
+
+  dWeight_dVar2[connexionIndex][0][0] =   ( m_meanPermCoefficient * dHarmonic_dvar2[0] + (1 - m_meanPermCoefficient) * dArithmetic_dvar2[0] );
+  dWeight_dVar2[connexionIndex][1][0] = -( m_meanPermCoefficient * dHarmonic_dvar2[1] + (1 - m_meanPermCoefficient) * dArithmetic_dvar2[1] );
+
 }
 
 GEOS_HOST_DEVICE

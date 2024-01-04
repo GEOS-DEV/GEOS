@@ -155,15 +155,13 @@ private:
 
   GEOS_HOST_DEVICE
   void
-    averageWeights( const localIndex iconn, real64 ( &weight )[1][2], real64 ( &dWeight_dVar )[1][2],
-                    const real64 ( &halfWeight )[2] ) const;
+    averageWeights( localIndex const iconn, const real64 ( &halfWeight )[2], real64 ( &weight )[1][2], real64 ( &dWeight_dVar )[1][2] ) const;
 
   GEOS_HOST_DEVICE
   void
-  computeWeightsBase( localIndex const iconn,
-                      localIndex const icell,
-                      real64 & halfWeight,
-                      arraySlice3d< real64 const > const & coefficient ) const;
+  computeWeightsBase( localIndex const iconn, localIndex const icell,
+                      arraySlice3d< real64 const > const & coefficient,
+                      real64 & halfWeight ) const;
 
 
 };
@@ -277,21 +275,22 @@ CellElementStencilTPFAWrapper::
     dims[3] = coeffNested.dims()[3]; strides[3] = coeffNested.strides()[3];        //direction remain last pos
     ArrayView< real64 const, 4 > coeffSwapped( dims, strides, 0, coeffNested.dataBuffer());
 
-    computeWeightsBase( iconn, i, halfWeight[i], coeffSwapped[ip] );
+    computeWeightsBase( iconn, i, coeffSwapped[ip], halfWeight[i] );
 
   }
 
   // Do harmonic and arithmetic averaging
-  averageWeights( iconn, weight, dWeight_dVar, halfWeight );
+  averageWeights( iconn, halfWeight, weight, dWeight_dVar );
 
 }
 
 GEOS_HOST_DEVICE
 inline void
-CellElementStencilTPFAWrapper::averageWeights( const localIndex iconn,
+CellElementStencilTPFAWrapper::averageWeights( localIndex const iconn,
+                                               const real64 (& halfWeight)[2],
                                                real64 (& weight)[1][2],
-                                               real64 (& dWeight_dVar)[1][2],
-                                               const real64 (& halfWeight)[2] ) const
+                                               real64 (& dWeight_dVar)[1][2]
+                                               ) const
 {
   real64 const product = halfWeight[0] * halfWeight[1];
   real64 const sum = halfWeight[0] + halfWeight[1];
@@ -313,10 +312,9 @@ CellElementStencilTPFAWrapper::averageWeights( const localIndex iconn,
 
 GEOS_HOST_DEVICE
 inline void
-CellElementStencilTPFAWrapper::computeWeightsBase( localIndex const iconn,
-                                                   localIndex const icell,
-                                                   real64 & halfWeight,
-                                                   arraySlice3d< real64 const > const & coefficient ) const
+CellElementStencilTPFAWrapper::computeWeightsBase( localIndex const iconn, localIndex const icell,
+                                                   arraySlice3d< real64 const > const & coefficient,
+                                                   real64 & halfWeight ) const
 {
 
   localIndex const ei = m_elementIndices[iconn][icell];
@@ -371,11 +369,11 @@ CellElementStencilTPFAWrapper::
     localIndex const er = m_elementRegionIndices[iconn][i];
     localIndex const esr = m_elementSubRegionIndices[iconn][i];
 
-    computeWeightsBase( iconn, i, halfWeight[i], coefficient[er][esr] );
+    computeWeightsBase( iconn, i, coefficient[er][esr], halfWeight[i] );
 
   }
 
-  averageWeights( iconn, weight, dWeight_dVar, halfWeight );
+  averageWeights( iconn, halfWeight, weight, dWeight_dVar );
 
 }
 
@@ -418,7 +416,7 @@ CellElementStencilTPFAWrapper::
     }
   }
 
-  averageWeights( iconn, weight, dWeight_dVar, halfWeight );
+  averageWeights( iconn, halfWeight, weight, dWeight_dVar );
 
 }
 
