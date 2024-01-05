@@ -152,37 +152,6 @@ public:
     dPorosity_dTemperature += fixedStressTemperatureCoefficient;
   }
 
-  // this function is used in mechanics solver
-  // it uses meanTotalStressIncrement at gauss point
-  GEOS_HOST_DEVICE
-  virtual void updateFixedStress( localIndex const k,
-                                  localIndex const q,
-                                  real64 const & pressure,
-                                  real64 const & pressure_k,
-                                  real64 const & pressure_n,
-                                  real64 const & temperature,
-                                  real64 const & temperature_k,
-                                  real64 const & temperature_n,
-                                  real64 const & meanTotalStressIncrement,
-                                  real64 & dPorosity_dVolStrain ) const
-  {
-    real64 const fixedStressModulus = m_useUniaxialFixedStress ? (m_bulkModulus[k] + 4 * m_shearModulus[k] / 3) : m_bulkModulus[k];
-
-    computePorosityFixedStress( pressure, pressure_k, pressure_n,
-                                temperature, temperature_k, temperature_n,
-                                m_porosity_n[k][q],
-                                m_referencePorosity[k],
-                                m_newPorosity[k][q],
-                                m_dPorosity_dPressure[k][q],
-                                m_dPorosity_dTemperature[k][q],
-                                dPorosity_dVolStrain,
-                                m_biotCoefficient[k],
-                                m_thermalExpansionCoefficient[k],
-                                meanTotalStressIncrement,
-                                m_bulkModulus[k],
-                                fixedStressModulus );
-  }
-
   // this function is used in flow solver
   // it uses average stress increment (element-based)
   GEOS_HOST_DEVICE
