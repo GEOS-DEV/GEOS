@@ -886,7 +886,7 @@ void CompositionalMultiphaseWell::updateTotalMassDensity( WellElementSubRegion &
 void CompositionalMultiphaseWell::updateSubRegionState( WellElementSubRegion & subRegion )
 {
   // update properties
-  updateComponentFraction( subRegion );
+  updateGlobalComponentFraction( subRegion );
 
   // update volumetric rates for the well constraints
   // note: this must be called before updateFluidModel
