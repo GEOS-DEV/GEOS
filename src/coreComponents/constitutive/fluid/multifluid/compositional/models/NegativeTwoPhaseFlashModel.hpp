@@ -24,6 +24,7 @@
 #include "constitutive/fluid/multifluid/Layouts.hpp"
 #include "constitutive/fluid/multifluid/MultiFluidUtils.hpp"
 #include "constitutive/fluid/multifluid/compositional/functions/CubicEOSPhaseModel.hpp"
+#include "constitutive/fluid/multifluid/compositional/functions/NegativeTwoPhaseFlash.hpp"
 
 namespace geos
 {
@@ -42,31 +43,13 @@ public:
   using PhaseProp = MultiFluidVar< real64, 3, multifluid::LAYOUT_PHASE, multifluid::LAYOUT_PHASE_DC >;
   using PhaseComp = MultiFluidVar< real64, 4, multifluid::LAYOUT_PHASE_COMP, multifluid::LAYOUT_PHASE_COMP_DC >;
 
-  explicit NegativeTwoPhaseFlashModelUpdate( integer const numComponents );
+  NegativeTwoPhaseFlashModelUpdate( integer const numComponents,
+                                    integer const liquidIndex,
+                                    integer const vapourIndex );
 
   // Mark as a 2-phase flash
   GEOS_HOST_DEVICE
   static constexpr integer getNumberOfPhases() { return 2; }
-
-  template< int USD1, int USD2, int USD3 >
-  GEOS_HOST_DEVICE
-  void compute( ComponentProperties::KernelWrapper const & componentProperties,
-                real64 const & pressure,
-                real64 const & temperature,
-                arraySlice1d< real64 const, USD1 > const & compFraction,
-                arraySlice1d< real64, USD2 > const & phaseFraction,
-                arraySlice2d< real64, USD3 > const & phaseCompFraction ) const
-  {
-    GEOS_UNUSED_VAR( componentProperties, pressure, temperature );
-    // TODO: Constant values for now. To be linked with the static function call
-    phaseFraction[m_liquidIndex] = 0.5;
-    phaseFraction[m_vapourIndex] = 0.5;
-    for( integer ic = 0; ic < m_numComponents; ++ic )
-    {
-      phaseCompFraction[m_liquidIndex][ic] = compFraction[ic];
-      phaseCompFraction[m_vapourIndex][ic] = compFraction[ic];
-    }
-  }
 
   template< int USD1 >
   GEOS_HOST_DEVICE
@@ -77,19 +60,39 @@ public:
                 PhaseProp::SliceType const phaseFraction,
                 PhaseComp::SliceType const phaseCompFraction ) const
   {
-    GEOS_UNUSED_VAR( componentProperties, pressure, temperature );
+    integer const numDofs = 2 + m_numComponents;
 
-    // TODO: Constant values for now. To be linked with the static function call
-    phaseFraction.value[m_liquidIndex] = 0.5;
-    phaseFraction.value[m_vapourIndex] = 0.5;
-    for( integer ic = 0; ic < m_numComponents; ++ic )
+    // Iterative solve to converge flash
+    NegativeTwoPhaseFlash::compute< EOS_TYPE_LIQUID, EOS_TYPE_VAPOUR >(
+      m_numComponents,
+      pressure,
+      temperature,
+      compFraction,
+      componentProperties,
+      phaseFraction.value[m_vapourIndex],
+      phaseCompFraction.value[m_liquidIndex],
+      phaseCompFraction.value[m_vapourIndex] );
+
+    // Calculate derivatives
+    NegativeTwoPhaseFlash::computeDerivatives< EOS_TYPE_LIQUID, EOS_TYPE_VAPOUR >(
+      m_numComponents,
+      pressure,
+      temperature,
+      compFraction,
+      componentProperties,
+      phaseFraction.value[m_vapourIndex],
+      phaseCompFraction.value[m_liquidIndex],
+      phaseCompFraction.value[m_vapourIndex],
+      phaseFraction.derivs[m_vapourIndex],
+      phaseCompFraction.derivs[m_liquidIndex],
+      phaseCompFraction.derivs[m_vapourIndex] );
+
+    // Complete by calculating liquid phase fraction
+    phaseFraction.value[m_liquidIndex] = 1.0 - phaseFraction.value[m_vapourIndex];
+    for( integer ic = 0; ic < numDofs; ic++ )
     {
-      phaseCompFraction.value[m_liquidIndex][ic] = compFraction[ic];
-      phaseCompFraction.value[m_vapourIndex][ic] = compFraction[ic];
+      phaseFraction.derivs[m_liquidIndex][ic] = -phaseFraction.derivs[m_vapourIndex][ic];
     }
-
-    LvArray::forValuesInSlice( phaseFraction.derivs, setZero );
-    LvArray::forValuesInSlice( phaseCompFraction.derivs, setZero );
   }
 
 private:

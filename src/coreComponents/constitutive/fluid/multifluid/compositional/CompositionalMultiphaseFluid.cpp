@@ -157,7 +157,6 @@ template< typename FLASH, typename PHASE1, typename PHASE2, typename PHASE3 >
 typename CompositionalMultiphaseFluid< FLASH, PHASE1, PHASE2, PHASE3 >::KernelWrapper
 CompositionalMultiphaseFluid< FLASH, PHASE1, PHASE2, PHASE3 >::createKernelWrapper()
 {
-  //auto phaseModels = std::make_tuple((m_phases)...);
   return KernelWrapper( *m_componentProperties,
                         *m_flash,
                         *m_phase1,
