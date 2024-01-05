@@ -1360,8 +1360,8 @@
 		</xsd:choice>
 	</xsd:complexType>
 	<xsd:complexType name="BiotPorosityType">
-		<!--averageMeanEffectiveStressIncrement_k => Mean effective stress increment averaged over quadrature points at the previous sequential iteration-->
-		<xsd:attribute name="averageMeanEffectiveStressIncrement_k" type="real64_array" />
+		<!--averageMeanTotalStressIncrement_k => Mean total stress increment averaged over quadrature points at the previous sequential iteration-->
+		<xsd:attribute name="averageMeanTotalStressIncrement_k" type="real64_array" />
 		<!--biotCoefficient => Biot coefficient-->
 		<xsd:attribute name="biotCoefficient" type="real64_array" />
 		<!--dPorosity_dPressure => Derivative of rock porosity with respect to pressure-->
@@ -1370,8 +1370,8 @@
 		<xsd:attribute name="dPorosity_dTemperature" type="real64_array2d" />
 		<!--initialPorosity => Initial porosity-->
 		<xsd:attribute name="initialPorosity" type="real64_array2d" />
-		<!--meanEffectiveStressIncrement_k => Mean effective stress increment at quadrature points at the previous sequential iteration-->
-		<xsd:attribute name="meanEffectiveStressIncrement_k" type="real64_array2d" />
+		<!--meanTotalStressIncrement_k => Mean total stress increment at quadrature points at the previous sequential iteration-->
+		<xsd:attribute name="meanTotalStressIncrement_k" type="real64_array2d" />
 		<!--porosity => Rock porosity-->
 		<xsd:attribute name="porosity" type="real64_array2d" />
 		<!--porosity_n => Rock porosity at the previous converged time step-->
