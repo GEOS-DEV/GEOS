@@ -71,7 +71,7 @@
       compressibility="5e-10"
       thermalExpansionCoeff="3e-4"
       viscosibility="0.0"
-      volumetricHeatCapacity="1"
+      heatCapacity="1"
       referenceInternalEnergy="0.99"/>
 	<!-- SPHINX_ThermalCompressibleSinglePhaseFluidEnd -->
 

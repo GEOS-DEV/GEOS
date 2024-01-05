@@ -4834,6 +4834,8 @@ To neglect hysteresis on this phase, just use the same table name for the draina
 * linear
 * quadratic-->
 		<xsd:attribute name="densityModelType" type="geos_constitutive_ExponentApproximationType" default="linear" />
+		<!--heatCapacity => Fluid heat capacity. Unit: J/kg/K-->
+		<xsd:attribute name="heatCapacity" type="real64" default="0" />
 		<!--internalEnergyModelType => Type of internal energy model. Valid options:
 * exponential
 * linear
@@ -4858,8 +4860,6 @@ To neglect hysteresis on this phase, just use the same table name for the draina
 * linear
 * quadratic-->
 		<xsd:attribute name="viscosityModelType" type="geos_constitutive_ExponentApproximationType" default="linear" />
-		<!--volumetricHeatCapacity => Fluid volumetric heat capacity. Unit: J/kg/K-->
-		<xsd:attribute name="volumetricHeatCapacity" type="real64" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>

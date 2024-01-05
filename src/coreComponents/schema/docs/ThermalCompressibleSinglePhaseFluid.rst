@@ -10,6 +10,7 @@ densityModelType        geos_constitutive_ExponentApproximationType linear   | T
                                                                              | * exponential                                                                       
                                                                              | * linear                                                                            
                                                                              | * quadratic                                                                         
+heatCapacity            real64                                      0        Fluid heat capacity. Unit: J/kg/K                                                   
 internalEnergyModelType geos_constitutive_ExponentApproximationType linear   | Type of internal energy model. Valid options:                                       
                                                                              | * exponential                                                                       
                                                                              | * linear                                                                            
@@ -26,7 +27,6 @@ viscosityModelType      geos_constitutive_ExponentApproximationType linear   | T
                                                                              | * exponential                                                                       
                                                                              | * linear                                                                            
                                                                              | * quadratic                                                                         
-volumetricHeatCapacity  real64                                      0        Fluid volumetric heat capacity. Unit: J/kg/K                                        
 ======================= =========================================== ======== =================================================================================== 
 
 
