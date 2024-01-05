@@ -153,6 +153,11 @@ if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
   ATS_CMAKE_ARGS="-DATS_ARGUMENTS=\"--machine openmpi --ats openmpi_mpirun=/usr/bin/mpirun --ats openmpi_args=--allow-run-as-root --ats openmpi_procspernode=2 --ats openmpi_maxprocs=2\" -DPython3_ROOT_DIR=${ATS_PYTHON_HOME}"
 fi
 
+
+if [[ "$*" == *--code-coverage* ]]; then
+  apt-get install -y lcov
+fi
+
 # The -DBLT_MPI_COMMAND_APPEND="--allow-run-as-root;--oversubscribe" option is added for OpenMPI.
 #
 # OpenMPI prevents from running as `root` user by default.
@@ -175,7 +180,7 @@ or_die python3 scripts/config-build.py \
                --ninja \
                -DBLT_MPI_COMMAND_APPEND='"--allow-run-as-root;--oversubscribe"' \
                -DGEOSX_INSTALL_SCHEMA=$([[ "$*" == *--disable-schema-deployment* ]] && echo 0 || echo 1) \
-               -DENABLE_COV=$([[ "$*" == *--test-coverage* ]] && echo 1 || echo 0) \
+               -DENABLE_COVERAGE=$([[ "$*" == *--code-coverage* ]] && echo 1 || echo 0) \
                ${SCCACHE_CMAKE_ARGS} \
                ${ATS_CMAKE_ARGS}
 

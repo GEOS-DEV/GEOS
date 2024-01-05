@@ -102,7 +102,7 @@ jobs:
       RUNS_ON: ubuntu-22.04
       USE_SCCACHE: false
 
-  coverage:
+  code_coverage:
     needs: [check_pull_request_is_not_a_draft]
     runs-on: ubuntu-22.04
     steps:
@@ -111,16 +111,18 @@ jobs:
       with:
         submodules: true
         lfs: false
-    - name: Check documentation
+    - name: run code coverage
       env:
         DOCKER_REPOSITORY: geosx/ubuntu20.04-gcc9
         CMAKE_BUILD_TYPE: Release
-        BUILD_AND_TEST_ARGS: --test-coverage
+        BUILD_AND_TEST_ARGS: --code-coverage
       run: ./scripts/ci_build_and_test.sh
     - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v4-beta
+      uses: codecov/codecov-action@v3
       env:
-        CODECOV_TOKEN: ${{ secrets.CODECOV_ORG_TOKEN }}
+        CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+    secrets: inherit
+
 
   # Matrix containing all the CPU build.
   # Those are quite fast and can efficiently benefit from the `sccache' tool to make them even faster.
