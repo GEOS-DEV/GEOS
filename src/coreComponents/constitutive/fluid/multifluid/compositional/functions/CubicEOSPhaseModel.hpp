@@ -122,6 +122,55 @@ public:
                                   ComponentProperties::KernelWrapper const & componentProperties,
                                   arraySlice1d< real64 const > const & logFugacityCoefficients,
                                   arraySlice2d< real64 > const & logFugacityCoefficientDerivs );
+
+  /**
+   * @brief Calculate the pure coefficients
+   * @details Computes the pure coefficients
+   * @param[in] ic Component index
+   * @param[in] pressure pressure
+   * @param[in] temperature temperature
+   * @param[in] componentProperties The compositional component properties
+   * @param[out] aCoefficient pure coefficient (A)
+   * @param[out] bCoefficient pure coefficient (B)
+   */
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
+  static void
+  computePureCoefficients( integer const ic,
+                           real64 const & pressure,
+                           real64 const & temperature,
+                           ComponentProperties::KernelWrapper const & componentProperties,
+                           real64 & aCoefficient,
+                           real64 & bCoefficient );
+
+  /**
+   * @brief Calculate the pure coefficients derivatives
+   * @details Computes the pure coefficients derivatives
+   * @param[in] ic Component index
+   * @param[in] pressure pressure
+   * @param[in] temperature temperature
+   * @param[in] componentProperties The compositional component properties
+   * @param[out] aCoefficient pure coefficient (A)
+   * @param[out] bCoefficient pure coefficient (B)
+   * @param[out] daCoefficient_dp pure coefficient (A) derivative w.r.t. pressure
+   * @param[out] dbCoefficient_dp pure coefficient (B) derivative w.r.t. pressure
+   * @param[out] daCoefficient_dt pure coefficient (A) derivative w.r.t. temperature
+   * @param[out] dbCoefficient_dt pure coefficient (B) derivative w.r.t. temperature
+   */
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
+  static void
+  computePureCoefficients( integer const ic,
+                           real64 const & pressure,
+                           real64 const & temperature,
+                           ComponentProperties::KernelWrapper const & componentProperties,
+                           real64 & aCoefficient,
+                           real64 & bCoefficient,
+                           real64 & daCoefficient_dp,
+                           real64 & dbCoefficient_dp,
+                           real64 & daCoefficient_dt,
+                           real64 & dbCoefficient_dt );
+
   /**
    * @brief Compute the mixture coefficients using pressure, temperature, composition and input
    * @param[in] numComps number of components
@@ -334,78 +383,210 @@ computeLogFugacityCoefficients( integer const numComps,
                                 arraySlice1d< real64 const > const & logFugacityCoefficients,
                                 arraySlice2d< real64 > const & logFugacityCoefficientDerivs )
 {
+  integer constexpr numMaxComps = MultiFluidConstants::MAX_NUM_COMPONENTS;
+  integer constexpr numMaxDofs = MultiFluidConstants::MAX_NUM_COMPONENTS + 2;
+  integer const numDofs = 2 + numComps;
+
   GEOS_UNUSED_VAR( logFugacityCoefficients );
-  stackArray1d< real64, MultiFluidConstants::MAX_NUM_COMPONENTS > displacedComposition( numComps );
-  stackArray1d< real64, MultiFluidConstants::MAX_NUM_COMPONENTS > hiLogFugacityCoefficients( numComps );
-  stackArray1d< real64, MultiFluidConstants::MAX_NUM_COMPONENTS > loLogFugacityCoefficients( numComps );
 
-  // Pressure derivative
-  real64 const dp = 1.0e-4 * pressure;
-  computeLogFugacityCoefficients( numComps,
-                                  pressure + dp,
-                                  temperature,
-                                  composition,
-                                  componentProperties,
-                                  hiLogFugacityCoefficients );
-  computeLogFugacityCoefficients( numComps,
-                                  pressure - dp,
-                                  temperature,
-                                  composition,
-                                  componentProperties,
-                                  loLogFugacityCoefficients );
+  stackArray1d< real64, numMaxComps > aPureCoefficient( numComps );
+  stackArray1d< real64, numMaxComps > bPureCoefficient( numComps );
+  stackArray2d< real64, 2*numMaxComps > aPureCoefficientDerivs( numComps, 2 );
+  stackArray2d< real64, 2*numMaxComps > bPureCoefficientDerivs( numComps, 2 );
+  real64 aMixtureCoefficient = 0.0;
+  real64 bMixtureCoefficient = 0.0;
+  real64 compressibilityFactor = 0.0;
+  stackArray1d< real64, numMaxDofs > aMixtureCoefficientDerivs( numDofs );
+  stackArray1d< real64, numMaxDofs > bMixtureCoefficientDerivs( numDofs );
+  stackArray1d< real64, numMaxDofs > compressibilityFactorDerivs( numDofs );
+
+  arraySlice2d< real64 const > const & binaryInteractionCoefficients = componentProperties.m_componentBinaryCoeff;
+
+  // 1.1: Compute the pure and mixture coefficients
+  computeMixtureCoefficients( numComps, // number of components
+                              pressure, // cell input
+                              temperature,
+                              composition,
+                              componentProperties, // user input,
+                              aPureCoefficient, // output
+                              bPureCoefficient,
+                              aMixtureCoefficient,
+                              bMixtureCoefficient );
+
+  // 1.2: Compute pure coefficient derivatives
   for( integer ic = 0; ic < numComps; ++ic )
   {
-    logFugacityCoefficientDerivs( ic, Deriv::dP ) = 0.5*(hiLogFugacityCoefficients[ic] - loLogFugacityCoefficients[ic]) / dp;
+    computePureCoefficients( ic,
+                             pressure,
+                             temperature,
+                             componentProperties,
+                             aPureCoefficient[ic],
+                             bPureCoefficient[ic],
+                             aPureCoefficientDerivs( ic, Deriv::dP ),
+                             bPureCoefficientDerivs( ic, Deriv::dP ),
+                             aPureCoefficientDerivs( ic, Deriv::dT ),
+                             bPureCoefficientDerivs( ic, Deriv::dT ));
   }
 
-  // Temperature derivative
-  real64 const dT = 1.0e-6 * temperature;
-  computeLogFugacityCoefficients( numComps,
-                                  pressure,
-                                  temperature + dT,
-                                  composition,
-                                  componentProperties,
-                                  hiLogFugacityCoefficients );
-  computeLogFugacityCoefficients( numComps,
-                                  pressure,
-                                  temperature - dT,
-                                  composition,
-                                  componentProperties,
-                                  loLogFugacityCoefficients );
+  // 1.3: Compute mixture coefficient derivatives
+  computeMixtureCoefficients( numComps,
+                              pressure,
+                              temperature,
+                              composition,
+                              componentProperties,
+                              aPureCoefficient,
+                              bPureCoefficient,
+                              aMixtureCoefficient,
+                              bMixtureCoefficient,
+                              aMixtureCoefficientDerivs,
+                              bMixtureCoefficientDerivs );
+
+  // 2.1: Update the compressibility factor
+  computeCompressibilityFactor( numComps, // number of components
+                                composition, // cell input
+                                binaryInteractionCoefficients, // user input
+                                aPureCoefficient, // computed by computeMixtureCoefficients
+                                bPureCoefficient,
+                                aMixtureCoefficient,
+                                bMixtureCoefficient,
+                                compressibilityFactor ); // output
+  // 2.2: Update the compressibility factor derivatives
+  computeCompressibilityFactor( numComps,
+                                aMixtureCoefficient,
+                                bMixtureCoefficient,
+                                compressibilityFactor,
+                                aMixtureCoefficientDerivs,
+                                bMixtureCoefficientDerivs,
+                                compressibilityFactorDerivs );
+
+  // 3. Calculate derivatives of the logarithm of the fugacity coefficients
+  stackArray1d< real64, numMaxComps > ki( numComps );
+  stackArray2d< real64, numMaxComps * numMaxDofs > dki( numComps, numDofs );
+
+  // ki
   for( integer ic = 0; ic < numComps; ++ic )
   {
-    logFugacityCoefficientDerivs( ic, Deriv::dT ) = 0.5*(hiLogFugacityCoefficients[ic] - loLogFugacityCoefficients[ic]) / dT;
+    ki[ic] = 0.0;
+    dki( ic, Deriv::dP ) = 0.0;
+    dki( ic, Deriv::dT ) = 0.0;
+    for( integer jc = 0; jc < numComps; ++jc )
+    {
+      real64 const aCoeffI = sqrt( aPureCoefficient[ic] );
+      real64 const aCoeffJ = sqrt( aPureCoefficient[jc] );
+      real64 const kij = ( 1.0 - binaryInteractionCoefficients( ic, jc ) ) * aCoeffI * aCoeffJ;
+      ki[ic] += composition[jc] * kij;
+      dki( ic, Deriv::dC + jc ) = kij;
+      dki( ic, Deriv::dP ) += 0.5 * composition[jc] * kij * ( aPureCoefficientDerivs( ic, Deriv::dP )/aPureCoefficient[ic] + aPureCoefficientDerivs( jc, Deriv::dP )/aPureCoefficient[jc] );
+      dki( ic, Deriv::dT ) += 0.5 * composition[jc] * kij * ( aPureCoefficientDerivs( ic, Deriv::dT )/aPureCoefficient[ic] + aPureCoefficientDerivs( jc, Deriv::dT )/aPureCoefficient[jc] );
+    }
   }
 
-  // Composition derivatives
-  real64 const dz = 1.0e-7;
-  for( integer ic = 0; ic < numComps; ++ic )
-  {
-    displacedComposition[ic] = composition[ic];
-  }
-  for( integer jc = 0; jc < numComps; ++jc )
-  {
-    real64 const z = composition[jc];
-    displacedComposition[jc] = z + dz;
-    computeLogFugacityCoefficients( numComps,
-                                    pressure,
-                                    temperature,
-                                    displacedComposition.toSliceConst(),
-                                    componentProperties,
-                                    hiLogFugacityCoefficients );
-    displacedComposition[jc] = z - dz;
-    computeLogFugacityCoefficients( numComps,
-                                    pressure,
-                                    temperature,
-                                    displacedComposition.toSliceConst(),
-                                    componentProperties,
-                                    loLogFugacityCoefficients );
+  auto const calculateDerivatives = [&]( integer const kc ){
+    real64 const E = log( compressibilityFactor + EOS_TYPE::delta1 * bMixtureCoefficient )
+                     - log( compressibilityFactor + EOS_TYPE::delta2 * bMixtureCoefficient );
+
+    real64 const dE_dX = (compressibilityFactorDerivs[kc] + EOS_TYPE::delta1*bMixtureCoefficientDerivs[kc])/( compressibilityFactor + EOS_TYPE::delta1 * bMixtureCoefficient )
+                         -(compressibilityFactorDerivs[kc] + EOS_TYPE::delta2*bMixtureCoefficientDerivs[kc])/( compressibilityFactor + EOS_TYPE::delta2 * bMixtureCoefficient );
+
+    //real64 const F = log( compressibilityFactor - bMixtureCoefficient );
+    real64 const dF_dX = (compressibilityFactorDerivs[kc] - bMixtureCoefficientDerivs[kc])/(compressibilityFactor - bMixtureCoefficient);
+
+    real64 const G = 1.0 / ( ( EOS_TYPE::delta1 - EOS_TYPE::delta2 ) * bMixtureCoefficient );
+    real64 const dG_dX = -G * bMixtureCoefficientDerivs[kc] / bMixtureCoefficient;
+
+    real64 const A = aMixtureCoefficient;
+    real64 const dA_dX = aMixtureCoefficientDerivs[kc];
+
     for( integer ic = 0; ic < numComps; ++ic )
     {
-      logFugacityCoefficientDerivs( ic, Deriv::dC + jc ) = 0.5*(hiLogFugacityCoefficients[ic] - loLogFugacityCoefficients[ic]) / dz;
+      real64 const B = bPureCoefficient[ic] / bMixtureCoefficient;
+      real64 dB_dX = -B*bMixtureCoefficientDerivs[kc] / bMixtureCoefficient;
+      if( kc < Deriv::dC )
+      {
+        dB_dX += bPureCoefficientDerivs( ic, kc ) / bMixtureCoefficient;
+      }
+
+      // lnPhi = ( compressibilityFactor - 1 ) * B - F - G * ( 2 * ki[ic] - A * B ) * E;
+      logFugacityCoefficientDerivs( ic, kc ) =
+        compressibilityFactorDerivs[kc]*B + ( compressibilityFactor - 1 ) * dB_dX
+        - dF_dX
+        - dG_dX * ( 2 * ki[ic] - A * B ) * E
+        - G * ( 2 * dki( ic, kc ) - dA_dX * B - A * dB_dX ) * E
+        - G * ( 2 * ki[ic] - A * B ) * dE_dX;
     }
-    displacedComposition[jc] = z;
+  };
+
+  calculateDerivatives( Deriv::dP );
+  calculateDerivatives( Deriv::dT );
+
+  for( integer jc = 0; jc < numComps; ++jc )
+  {
+    calculateDerivatives( Deriv::dC+jc );
   }
+}
+
+template< typename EOS_TYPE >
+GEOS_HOST_DEVICE
+void
+CubicEOSPhaseModel< EOS_TYPE >::
+computePureCoefficients( integer const ic,
+                         real64 const & pressure,
+                         real64 const & temperature,
+                         ComponentProperties::KernelWrapper const & componentProperties,
+                         real64 & aCoefficient,
+                         real64 & bCoefficient )
+{
+  real64 daCoefficient_dp = 0.0;
+  real64 dbCoefficient_dp = 0.0;
+  real64 daCoefficient_dt = 0.0;
+  real64 dbCoefficient_dt  = 0.0;
+  computePureCoefficients( ic,
+                           pressure,
+                           temperature,
+                           componentProperties,
+                           aCoefficient,
+                           bCoefficient,
+                           daCoefficient_dp,
+                           dbCoefficient_dp,
+                           daCoefficient_dt,
+                           dbCoefficient_dt );
+}
+
+
+template< typename EOS_TYPE >
+GEOS_HOST_DEVICE
+void
+CubicEOSPhaseModel< EOS_TYPE >::
+computePureCoefficients( integer const ic,
+                         real64 const & pressure,
+                         real64 const & temperature,
+                         ComponentProperties::KernelWrapper const & componentProperties,
+                         real64 & aCoefficient,
+                         real64 & bCoefficient,
+                         real64 & daCoefficient_dp,
+                         real64 & dbCoefficient_dp,
+                         real64 & daCoefficient_dt,
+                         real64 & dbCoefficient_dt )
+{
+  arraySlice1d< real64 const > const & criticalPressure = componentProperties.m_componentCriticalPressure;
+  arraySlice1d< real64 const > const & criticalTemperature = componentProperties.m_componentCriticalTemperature;
+  arraySlice1d< real64 const > const & acentricFactor = componentProperties.m_componentAcentricFactor;
+
+  real64 const m = EOS_TYPE::evaluate( acentricFactor[ic] );
+  real64 const pr = pressure / criticalPressure[ic];
+  real64 const tr = temperature / criticalTemperature[ic];
+
+  real64 const sqrtTr = sqrt( tr );
+  real64 const mt = 1.0 + m * (1.0 - sqrtTr);
+
+  aCoefficient = EOS_TYPE::omegaA * pr / (tr*tr) * mt * mt;
+  bCoefficient = EOS_TYPE::omegaB * pr / tr;
+
+  daCoefficient_dp = aCoefficient / pressure;
+  dbCoefficient_dp = bCoefficient / pressure;
+
+  daCoefficient_dt = -aCoefficient * (2.0/temperature + m/(mt * sqrtTr * criticalTemperature[ic]));
+  dbCoefficient_dt = -bCoefficient / temperature;
 }
 
 template< typename EOS_TYPE >
@@ -422,19 +603,12 @@ computeMixtureCoefficients( integer const numComps,
                             real64 & aMixtureCoefficient,
                             real64 & bMixtureCoefficient )
 {
-  arraySlice1d< real64 const > const & criticalPressure = componentProperties.m_componentCriticalPressure;
-  arraySlice1d< real64 const > const & criticalTemperature = componentProperties.m_componentCriticalTemperature;
-  arraySlice1d< real64 const > const & acentricFactor = componentProperties.m_componentAcentricFactor;
   arraySlice2d< real64 const > const & binaryInteractionCoefficients = componentProperties.m_componentBinaryCoeff;
 
   // mixture coefficients
   for( integer ic = 0; ic < numComps; ++ic )
   {
-    real64 const m = EOS_TYPE::evaluate( acentricFactor[ic] );
-    real64 const pr = pressure / criticalPressure[ic];
-    real64 const tr = temperature / criticalTemperature[ic];
-    aPureCoefficient[ic] = EOS_TYPE::omegaA * pr / (tr*tr) * pow( 1.0 + m * ( 1.0 - sqrt( tr ) ), 2.0 );
-    bPureCoefficient[ic] = EOS_TYPE::omegaB * pr / tr;
+    computePureCoefficients( ic, pressure, temperature, componentProperties, aPureCoefficient[ic], bPureCoefficient[ic] );
   }
 
   aMixtureCoefficient = 0.0;
@@ -465,23 +639,21 @@ computeMixtureCoefficients( integer const numComps,
                             arraySlice1d< real64 > const & aMixtureCoefficientDerivs,
                             arraySlice1d< real64 > const & bMixtureCoefficientDerivs )
 {
-  arraySlice1d< real64 const > const & criticalTemperature = componentProperties.m_componentCriticalTemperature;
-  arraySlice1d< real64 const > const & acentricFactor = componentProperties.m_componentAcentricFactor;
   arraySlice2d< real64 const > const & binaryInteractionCoefficients = componentProperties.m_componentBinaryCoeff;
-
-  stackArray1d< real64, MultiFluidConstants::MAX_NUM_COMPONENTS > daPureCoefficient_dx( numComps );
 
   // Calculate pressure derivatives
   aMixtureCoefficientDerivs[Deriv::dP] = aMixtureCoefficient / pressure;
   bMixtureCoefficientDerivs[Deriv::dP] = bMixtureCoefficient / pressure;
 
   // Calculate temperature derivatives
+  real64 aCoefficient = 0.0;
+  real64 bCoefficient = 0.0;
+  real64 dummy = 0.0;
+  stackArray1d< real64, MultiFluidConstants::MAX_NUM_COMPONENTS > daPureCoefficient_dt( numComps );
   for( integer ic = 0; ic < numComps; ++ic )
   {
-    real64 const m = EOS_TYPE::evaluate( acentricFactor[ic] );
-    real64 const sqrtTr = sqrt( temperature / criticalTemperature[ic] );
-    real64 const mt = 1.0 + m * (1.0 - sqrtTr);
-    daPureCoefficient_dx[ic] = -aPureCoefficient[ic] * (2.0/temperature + m/(mt*sqrtTr*criticalTemperature[ic]));
+    computePureCoefficients( ic, pressure, temperature, componentProperties,
+                             aCoefficient, bCoefficient, dummy, dummy, daPureCoefficient_dt[ic], dummy );
   }
   aMixtureCoefficientDerivs[Deriv::dT] = 0.0;
   bMixtureCoefficientDerivs[Deriv::dT] = -bMixtureCoefficient / temperature;
@@ -491,7 +663,7 @@ computeMixtureCoefficients( integer const numComps,
     for( integer jc = 0; jc < numComps; ++jc )
     {
       real64 const coeff = composition[ic] * composition[jc] * ( 1.0 - binaryInteractionCoefficients( ic, jc ) ) / sqrt( aPureCoefficient[ic] * aPureCoefficient[jc] );
-      aMixtureCoefficientDerivs[Deriv::dT] += 0.5 * coeff * (daPureCoefficient_dx[ic]*aPureCoefficient[jc] + daPureCoefficient_dx[jc]*aPureCoefficient[ic]);
+      aMixtureCoefficientDerivs[Deriv::dT] += 0.5 * coeff * (daPureCoefficient_dt[ic]*aPureCoefficient[jc] + daPureCoefficient_dt[jc]*aPureCoefficient[ic]);
     }
   }
 
@@ -659,8 +831,8 @@ computeLogFugacityCoefficients( integer const numComps,
   }
 
   // E
-  real64 const E = log( ( compressibilityFactor + EOS_TYPE::delta1 * bMixtureCoefficient )
-                        / ( compressibilityFactor + EOS_TYPE::delta2 * bMixtureCoefficient ) );
+  real64 const E = log( compressibilityFactor + EOS_TYPE::delta1 * bMixtureCoefficient )
+                   -log( compressibilityFactor + EOS_TYPE::delta2 * bMixtureCoefficient );
   real64 const F = log( compressibilityFactor - bMixtureCoefficient );
   real64 const G = 1.0 / ( ( EOS_TYPE::delta1 - EOS_TYPE::delta2 ) * bMixtureCoefficient );
   real64 const A = aMixtureCoefficient;
