@@ -307,7 +307,6 @@ void CompositionalMultiphaseBase::registerDataOnMesh( Group & meshBodies )
       {
         subRegion.registerField< fields::flow::phaseOutflux >( getName() ).
           reference().resizeDimension< 1 >( m_numPhases );
-
         subRegion.registerField< fields::flow::componentOutflux >( getName() ).
           reference().resizeDimension< 1 >( m_numComponents );
         subRegion.registerField< fields::flow::phaseCFLNumber >( getName() );
