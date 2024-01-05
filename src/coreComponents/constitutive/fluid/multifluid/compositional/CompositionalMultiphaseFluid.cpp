@@ -81,7 +81,7 @@ template<> struct PhaseName< 3 > { static constexpr char const * catalogName() {
 template< typename FLASH, typename PHASE1, typename PHASE2, typename PHASE3 >
 string CompositionalMultiphaseFluid< FLASH, PHASE1, PHASE2, PHASE3 >::catalogName()
 {
-  return GEOS_FMT( "Compositonal{}Fluid{}{}",
+  return GEOS_FMT( "Compositional{}Fluid{}{}",
                    compositional::PhaseName< FLASH::KernelWrapper::getNumberOfPhases() >::catalogName(),
                    FLASH::catalogName(),
                    PHASE1::Viscosity::catalogName() );
@@ -133,6 +133,30 @@ void CompositionalMultiphaseFluid< FLASH, PHASE1, PHASE2, PHASE3 >::postProcessI
     m_componentBinaryCoeff.zero();
   }
   checkInputSize( m_componentBinaryCoeff, NC * NC, viewKeyStruct::componentBinaryCoeffString() );
+
+  // Binary interaction coefficients should be symmetric and have zero diagonal
+  GEOS_THROW_IF_NE_MSG( m_componentBinaryCoeff.size( 0 ), NC,
+                        GEOS_FMT( "{}: invalid number of values in attribute '{}'", getFullName(), viewKeyStruct::componentBinaryCoeffString() ),
+                        InputError );
+  GEOS_THROW_IF_NE_MSG( m_componentBinaryCoeff.size( 1 ), NC,
+                        GEOS_FMT( "{}: invalid number of values in attribute '{}'", getFullName(), viewKeyStruct::componentBinaryCoeffString() ),
+                        InputError );
+  for( integer ic = 0; ic < NC; ++ic )
+  {
+    GEOS_THROW_IF_GT_MSG( LvArray::math::abs( m_componentBinaryCoeff( ic, ic )), MultiFluidConstants::epsilon,
+                          GEOS_FMT( "{}: {} entry at ({},{}) is {}: should be zero", getFullName(), viewKeyStruct::componentBinaryCoeffString(),
+                                    ic, ic, m_componentBinaryCoeff( ic, ic ) ),
+                          InputError );
+    for( integer jc = ic + 1; jc < NC; ++jc )
+    {
+      real64 const difference = LvArray::math::abs( m_componentBinaryCoeff( ic, jc )-m_componentBinaryCoeff( jc, ic ));
+      GEOS_THROW_IF_GT_MSG( difference, MultiFluidConstants::epsilon,
+                            GEOS_FMT( "{}: {} entry at ({},{}) is {} and is different from entry at ({},{}) which is {}",
+                                      getFullName(), viewKeyStruct::componentBinaryCoeffString(),
+                                      ic, jc, m_componentBinaryCoeff( ic, jc ), jc, ic, m_componentBinaryCoeff( jc, ic ) ),
+                            InputError );
+    }
+  }
 }
 
 template< typename FLASH, typename PHASE1, typename PHASE2, typename PHASE3 >

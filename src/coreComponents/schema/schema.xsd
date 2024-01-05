@@ -561,12 +561,12 @@
 					<xsd:selector xpath="CompositionalMultiphaseFluid" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
-				<xsd:unique name="domainConstitutiveCompositonalTwoPhaseFluidPengRobinsonUniqueName">
-					<xsd:selector xpath="CompositonalTwoPhaseFluidPengRobinson" />
+				<xsd:unique name="domainConstitutiveCompositionalTwoPhaseFluidPengRobinsonUniqueName">
+					<xsd:selector xpath="CompositionalTwoPhaseFluidPengRobinson" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
-				<xsd:unique name="domainConstitutiveCompositonalTwoPhaseFluidSoaveRedlichKwongUniqueName">
-					<xsd:selector xpath="CompositonalTwoPhaseFluidSoaveRedlichKwong" />
+				<xsd:unique name="domainConstitutiveCompositionalTwoPhaseFluidSoaveRedlichKwongUniqueName">
+					<xsd:selector xpath="CompositionalTwoPhaseFluidSoaveRedlichKwong" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
 				<xsd:unique name="domainConstitutiveCompressibleSinglePhaseFluidUniqueName">
@@ -3553,8 +3553,8 @@ Local - Add stabilization only to interiors of macro elements.-->
 			<xsd:element name="CarmanKozenyPermeability" type="CarmanKozenyPermeabilityType" />
 			<xsd:element name="CeramicDamage" type="CeramicDamageType" />
 			<xsd:element name="CompositionalMultiphaseFluid" type="CompositionalMultiphaseFluidType" />
-			<xsd:element name="CompositonalTwoPhaseFluidPengRobinson" type="CompositonalTwoPhaseFluidPengRobinsonType" />
-			<xsd:element name="CompositonalTwoPhaseFluidSoaveRedlichKwong" type="CompositonalTwoPhaseFluidSoaveRedlichKwongType" />
+			<xsd:element name="CompositionalTwoPhaseFluidPengRobinson" type="CompositionalTwoPhaseFluidPengRobinsonType" />
+			<xsd:element name="CompositionalTwoPhaseFluidSoaveRedlichKwong" type="CompositionalTwoPhaseFluidSoaveRedlichKwongType" />
 			<xsd:element name="CompressibleSinglePhaseFluid" type="CompressibleSinglePhaseFluidType" />
 			<xsd:element name="CompressibleSolidCarmanKozenyPermeability" type="CompressibleSolidCarmanKozenyPermeabilityType" />
 			<xsd:element name="CompressibleSolidConstantPermeability" type="CompressibleSolidConstantPermeabilityType" />
@@ -3856,7 +3856,7 @@ The expected format is "{ waterMax, oilMax }", in that order-->
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
-	<xsd:complexType name="CompositonalTwoPhaseFluidPengRobinsonType">
+	<xsd:complexType name="CompositionalTwoPhaseFluidPengRobinsonType">
 		<!--checkPVTTablesRanges => Enable (1) or disable (0) an error when the input pressure or temperature of the PVT tables is out of range.-->
 		<xsd:attribute name="checkPVTTablesRanges" type="integer" default="1" />
 		<!--componentAcentricFactor => Component acentric factors-->
@@ -3880,7 +3880,7 @@ The expected format is "{ waterMax, oilMax }", in that order-->
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
-	<xsd:complexType name="CompositonalTwoPhaseFluidSoaveRedlichKwongType">
+	<xsd:complexType name="CompositionalTwoPhaseFluidSoaveRedlichKwongType">
 		<!--checkPVTTablesRanges => Enable (1) or disable (0) an error when the input pressure or temperature of the PVT tables is out of range.-->
 		<xsd:attribute name="checkPVTTablesRanges" type="integer" default="1" />
 		<!--componentAcentricFactor => Component acentric factors-->

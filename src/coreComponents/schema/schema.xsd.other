@@ -1292,8 +1292,8 @@
 			<xsd:element name="CarmanKozenyPermeability" type="CarmanKozenyPermeabilityType" />
 			<xsd:element name="CeramicDamage" type="CeramicDamageType" />
 			<xsd:element name="CompositionalMultiphaseFluid" type="CompositionalMultiphaseFluidType" />
-			<xsd:element name="CompositonalTwoPhaseFluidPengRobinson" type="CompositonalTwoPhaseFluidPengRobinsonType" />
-			<xsd:element name="CompositonalTwoPhaseFluidSoaveRedlichKwong" type="CompositonalTwoPhaseFluidSoaveRedlichKwongType" />
+			<xsd:element name="CompositionalTwoPhaseFluidPengRobinson" type="CompositionalTwoPhaseFluidPengRobinsonType" />
+			<xsd:element name="CompositionalTwoPhaseFluidSoaveRedlichKwong" type="CompositionalTwoPhaseFluidSoaveRedlichKwongType" />
 			<xsd:element name="CompressibleSinglePhaseFluid" type="CompressibleSinglePhaseFluidType" />
 			<xsd:element name="CompressibleSolidCarmanKozenyPermeability" type="CompressibleSolidCarmanKozenyPermeabilityType" />
 			<xsd:element name="CompressibleSolidConstantPermeability" type="CompressibleSolidConstantPermeabilityType" />
@@ -1757,7 +1757,7 @@
 		<!--useMass => (no description available)-->
 		<xsd:attribute name="useMass" type="integer" />
 	</xsd:complexType>
-	<xsd:complexType name="CompositonalTwoPhaseFluidPengRobinsonType">
+	<xsd:complexType name="CompositionalTwoPhaseFluidPengRobinsonType">
 		<!--dPhaseCompFraction => Derivative of phase component fraction with respect to pressure, temperature, and global component fractions-->
 		<xsd:attribute name="dPhaseCompFraction" type="LvArray_Array&lt;double, 5, camp_int_seq&lt;long, 0l, 1l, 2l, 3l, 4l>, int, LvArray_ChaiBuffer>" />
 		<!--dPhaseDensity => Derivative of phase density with respect to pressure, temperature, and global component fractions-->
@@ -1803,7 +1803,7 @@
 		<!--useMass => (no description available)-->
 		<xsd:attribute name="useMass" type="integer" />
 	</xsd:complexType>
-	<xsd:complexType name="CompositonalTwoPhaseFluidSoaveRedlichKwongType">
+	<xsd:complexType name="CompositionalTwoPhaseFluidSoaveRedlichKwongType">
 		<!--dPhaseCompFraction => Derivative of phase component fraction with respect to pressure, temperature, and global component fractions-->
 		<xsd:attribute name="dPhaseCompFraction" type="LvArray_Array&lt;double, 5, camp_int_seq&lt;long, 0l, 1l, 2l, 3l, 4l>, int, LvArray_ChaiBuffer>" />
 		<!--dPhaseDensity => Derivative of phase density with respect to pressure, temperature, and global component fractions-->

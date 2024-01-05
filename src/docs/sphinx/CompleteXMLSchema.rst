@@ -220,18 +220,18 @@ Element: CompositionalMultiphaseWell
 .. include:: ../../coreComponents/schema/docs/CompositionalMultiphaseWell.rst
 
 
-.. _XML_CompositonalTwoPhaseFluidPengRobinson:
+.. _XML_CompositionalTwoPhaseFluidPengRobinson:
 
-Element: CompositonalTwoPhaseFluidPengRobinson
-==============================================
-.. include:: ../../coreComponents/schema/docs/CompositonalTwoPhaseFluidPengRobinson.rst
+Element: CompositionalTwoPhaseFluidPengRobinson
+===============================================
+.. include:: ../../coreComponents/schema/docs/CompositionalTwoPhaseFluidPengRobinson.rst
 
 
-.. _XML_CompositonalTwoPhaseFluidSoaveRedlichKwong:
+.. _XML_CompositionalTwoPhaseFluidSoaveRedlichKwong:
 
-Element: CompositonalTwoPhaseFluidSoaveRedlichKwong
-===================================================
-.. include:: ../../coreComponents/schema/docs/CompositonalTwoPhaseFluidSoaveRedlichKwong.rst
+Element: CompositionalTwoPhaseFluidSoaveRedlichKwong
+====================================================
+.. include:: ../../coreComponents/schema/docs/CompositionalTwoPhaseFluidSoaveRedlichKwong.rst
 
 
 .. _XML_CompressibleSinglePhaseFluid:
@@ -1568,18 +1568,18 @@ Datastructure: CompositionalMultiphaseWell
 .. include:: ../../coreComponents/schema/docs/CompositionalMultiphaseWell_other.rst
 
 
-.. _DATASTRUCTURE_CompositonalTwoPhaseFluidPengRobinson:
+.. _DATASTRUCTURE_CompositionalTwoPhaseFluidPengRobinson:
 
-Datastructure: CompositonalTwoPhaseFluidPengRobinson
-====================================================
-.. include:: ../../coreComponents/schema/docs/CompositonalTwoPhaseFluidPengRobinson_other.rst
+Datastructure: CompositionalTwoPhaseFluidPengRobinson
+=====================================================
+.. include:: ../../coreComponents/schema/docs/CompositionalTwoPhaseFluidPengRobinson_other.rst
 
 
-.. _DATASTRUCTURE_CompositonalTwoPhaseFluidSoaveRedlichKwong:
+.. _DATASTRUCTURE_CompositionalTwoPhaseFluidSoaveRedlichKwong:
 
-Datastructure: CompositonalTwoPhaseFluidSoaveRedlichKwong
-=========================================================
-.. include:: ../../coreComponents/schema/docs/CompositonalTwoPhaseFluidSoaveRedlichKwong_other.rst
+Datastructure: CompositionalTwoPhaseFluidSoaveRedlichKwong
+==========================================================
+.. include:: ../../coreComponents/schema/docs/CompositionalTwoPhaseFluidSoaveRedlichKwong_other.rst
 
 
 .. _DATASTRUCTURE_CompressibleSinglePhaseFluid:

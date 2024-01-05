@@ -16,8 +16,8 @@ CO2BrinePhillipsThermalFluid                  node         :ref:`XML_CO2BrinePhi
 CarmanKozenyPermeability                      node         :ref:`XML_CarmanKozenyPermeability`                      
 CeramicDamage                                 node         :ref:`XML_CeramicDamage`                                 
 CompositionalMultiphaseFluid                  node         :ref:`XML_CompositionalMultiphaseFluid`                  
-CompositonalTwoPhaseFluidPengRobinson         node         :ref:`XML_CompositonalTwoPhaseFluidPengRobinson`         
-CompositonalTwoPhaseFluidSoaveRedlichKwong    node         :ref:`XML_CompositonalTwoPhaseFluidSoaveRedlichKwong`    
+CompositionalTwoPhaseFluidPengRobinson        node         :ref:`XML_CompositionalTwoPhaseFluidPengRobinson`        
+CompositionalTwoPhaseFluidSoaveRedlichKwong   node         :ref:`XML_CompositionalTwoPhaseFluidSoaveRedlichKwong`   
 CompressibleSinglePhaseFluid                  node         :ref:`XML_CompressibleSinglePhaseFluid`                  
 CompressibleSolidCarmanKozenyPermeability     node         :ref:`XML_CompressibleSolidCarmanKozenyPermeability`     
 CompressibleSolidConstantPermeability         node         :ref:`XML_CompressibleSolidConstantPermeability`         
