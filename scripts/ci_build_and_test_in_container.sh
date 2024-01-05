@@ -213,6 +213,12 @@ else
   fi
 fi
 
+if [[ "$*" == *--code-coverage* ]]; then
+  or_die make -j $(nproc) VERBOSE=1
+  or_die make coreComponents_coverage
+  cp -r ${GEOSX_BUILD_DIR}/coreComponents_coverage.info.cleaned /tmp/Shiva/geos_coverage.info.cleaned
+fi
+
 # Run the unit tests (excluding previously ran checks).
 if [[ "${RUN_UNIT_TESTS}" = true ]]; then
   or_die ctest --output-on-failure -E "testUncrustifyCheck|testDoxygenCheck"
