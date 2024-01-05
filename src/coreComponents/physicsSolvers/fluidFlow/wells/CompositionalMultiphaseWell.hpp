@@ -133,10 +133,10 @@ public:
   /**@}*/
 
   /**
-   * @brief Recompute component fractions from primary variables (component densities)
+   * @brief Recompute global component fractions from primary variables (component densities)
    * @param subRegion the well subregion containing all the primary and dependent fields
    */
-  void updateComponentFraction( WellElementSubRegion & subRegion ) const;
+  void updateGlobalComponentFraction( WellElementSubRegion & subRegion ) const;
 
   /**
    * @brief Recompute the volumetric rates that are used in the well constraints

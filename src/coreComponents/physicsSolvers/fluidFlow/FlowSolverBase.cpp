@@ -242,6 +242,8 @@ void FlowSolverBase::saveConvergedState( ElementSubRegionBase & subRegion ) cons
 
 void FlowSolverBase::saveSequentialIterationState( ElementSubRegionBase & subRegion ) const
 {
+  GEOS_ASSERT( m_isFixedStressPoromechanicsUpdate );
+
   arrayView1d< real64 const > const pres = subRegion.template getField< fields::flow::pressure >();
   arrayView1d< real64 const > const temp = subRegion.template getField< fields::flow::temperature >();
   arrayView1d< real64 > const pres_k = subRegion.template getField< fields::flow::pressure_k >();
