@@ -160,19 +160,14 @@ public:
     m_porosityUpdate.updateMeanTotalStressIncrement( k, q, meanTotalStressIncrement );
 
     // Compute porosity and its derivatives
-    real64 const deltaPressure = pressure - pressure_n;
-    real64 const deltaTemperature = temperature - temperature_n;
-    real64 porosity_n, porosityInit, dPorosity_dPressure, dPorosity_dTemperature; // not used
-    computePorosity( k, q,
-                     deltaPressure,
-                     deltaTemperature,
-                     strainIncrement,
-                     porosity,
-                     porosity_n,
-                     porosityInit,
-                     dPorosity_dVolStrain,
-                     dPorosity_dPressure,
-                     dPorosity_dTemperature );
+    computePorosityFixedStress( k, q,
+                                pressure,
+                                pressure_n,
+                                temperature,
+                                temperature_n,
+                                meanTotalStressIncrement,
+                                porosity,
+                                dPorosity_dVolStrain );
   }
 
   /**
@@ -269,6 +264,28 @@ private:
     porosity = m_porosityUpdate.getPorosity( k, q );
     porosity_n = m_porosityUpdate.getPorosity_n( k, q );
     porosityInit = m_porosityUpdate.getInitialPorosity( k, q );
+  }
+
+  GEOS_HOST_DEVICE
+  void computePorosityFixedStress( localIndex const k,
+                                   localIndex const q,
+                                   real64 const & pressure,
+                                   real64 const & pressure_n,
+                                   real64 const & temperature,
+                                   real64 const & temperature_n,
+                                   real64 const & meanTotalStressIncrement,
+                                   real64 & porosity,
+                                   real64 & dPorosity_dVolStrain ) const
+  {
+    m_porosityUpdate.updateFixedStress( k, q,
+                                        pressure,
+                                        pressure_n,
+                                        temperature,
+                                        temperature_n,
+                                        meanTotalStressIncrement,
+                                        dPorosity_dVolStrain );
+
+    porosity = m_porosityUpdate.getPorosity( k, q );
   }
 
   GEOS_HOST_DEVICE
