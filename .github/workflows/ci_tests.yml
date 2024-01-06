@@ -192,9 +192,9 @@ jobs:
       RUNS_ON: ubuntu-22.04
 
   code_coverage:
-    needs:
-    - is_pull_request_a_draft
-    - cpu_builds
+    # needs:
+    # - is_pull_request_a_draft
+    # - cpu_builds
     runs-on: ubuntu-22.04
     steps:
     - name: Checkout Repository
