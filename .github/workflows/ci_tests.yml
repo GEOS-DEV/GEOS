@@ -103,7 +103,6 @@ jobs:
       USE_SCCACHE: false
 
   code_coverage:
-    needs: [check_pull_request_is_not_a_draft]
     runs-on: ubuntu-22.04
     steps:
     - name: Checkout Repository
