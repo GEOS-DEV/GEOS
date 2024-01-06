@@ -105,7 +105,6 @@ jobs:
   code_coverage:
     needs: [check_pull_request_is_not_a_draft]
     runs-on: ubuntu-22.04
-    secrets: inherit
     steps:
     - name: Checkout Repository
       uses: actions/checkout@v3
@@ -113,14 +112,14 @@ jobs:
         submodules: true
         lfs: false
     - name: run code coverage
-      env:
+      uses: ./.github/workflows/build_and_test.yml
+      with:
         DOCKER_REPOSITORY: geosx/ubuntu22.04-gcc11
         CMAKE_BUILD_TYPE: Release
         BUILD_AND_TEST_ARGS: --code-coverage
         ENABLE_HYPRE: ON
         ENABLE_TRILINOS: OFF
         GCP_BUCKET: geosx/ubuntu22.04-gcc11
-      uses: ./.github/workflows/build_and_test.yml
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v3
       with:
