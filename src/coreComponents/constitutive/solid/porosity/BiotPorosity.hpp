@@ -139,42 +139,13 @@ public:
     dPorosity_dTemperature += fixedStressTemperatureCoefficient;
   }
 
-  // this function is used in mechanics solver
-  // it uses meanTotalStressIncrement at gauss point
-  GEOS_HOST_DEVICE
-  virtual void updateFixedStress( localIndex const k,
-                                  localIndex const q,
-                                  real64 const & pressure, // current
-                                  real64 const & pressure_n, // last time step
-                                  real64 const & temperature,
-                                  real64 const & temperature_n,
-                                  real64 const & meanTotalStressIncrement,
-                                  real64 & dPorosity_dVolStrain ) const
-  {
-    real64 const deltaPressureFromBeginningOfTimeStep = pressure - pressure_n;
-    real64 const deltaTemperatureFromBeginningOfTimeStep = temperature - temperature_n;
-
-    computePorosityFixedStress( deltaPressureFromBeginningOfTimeStep,
-                                deltaTemperatureFromBeginningOfTimeStep,
-                                m_porosity_n[k][q],
-                                m_referencePorosity[k],
-                                m_newPorosity[k][q],
-                                m_dPorosity_dPressure[k][q],
-                                m_dPorosity_dTemperature[k][q],
-                                dPorosity_dVolStrain,
-                                m_biotCoefficient[k],
-                                m_thermalExpansionCoefficient[k],
-                                meanTotalStressIncrement,
-                                m_bulkModulus[k] );
-  }
-
   // this function is used in flow solver
   // it uses average stress increment (element-based)
   GEOS_HOST_DEVICE
   virtual void updateFixedStress( localIndex const k,
                                   localIndex const q,
                                   real64 const & pressure,                // current
-                                  real64 const & pressure_n,                // last time step
+                                  real64 const & pressure_n,              // last time step
                                   real64 const & temperature,
                                   real64 const & temperature_n,
                                   real64 & dPorosity_dVolStrain ) const
