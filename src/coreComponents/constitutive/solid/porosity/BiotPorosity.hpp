@@ -157,18 +157,19 @@ public:
   GEOS_HOST_DEVICE
   virtual void updateFixedStress( localIndex const k,
                                   localIndex const q,
-                                  real64 const & pressure, // current
-                                  real64 const & pressure_n, // last time step
+                                  real64 const & pressure,
+                                  real64 const & pressure_k,
+                                  real64 const & pressure_n,
                                   real64 const & temperature,
+                                  real64 const & temperature_k,
                                   real64 const & temperature_n,
                                   real64 const & meanTotalStressIncrement,
                                   real64 & dPorosity_dVolStrain ) const
   {
-    real64 const deltaPressureFromBeginningOfTimeStep = pressure - pressure_n;
-    real64 const deltaTemperatureFromBeginningOfTimeStep = temperature - temperature_n;
+    real64 const fixedStressModulus = m_useUniaxialFixedStress ? (m_bulkModulus[k] + 4 * m_shearModulus[k] / 3) : m_bulkModulus[k];
 
-    computePorosityFixedStress( deltaPressureFromBeginningOfTimeStep,
-                                deltaTemperatureFromBeginningOfTimeStep,
+    computePorosityFixedStress( pressure, pressure_k, pressure_n,
+                                temperature, temperature_k, temperature_n,
                                 m_porosity_n[k][q],
                                 m_referencePorosity[k],
                                 m_newPorosity[k][q],
@@ -178,7 +179,8 @@ public:
                                 m_biotCoefficient[k],
                                 m_thermalExpansionCoefficient[k],
                                 meanTotalStressIncrement,
-                                m_bulkModulus[k] );
+                                m_bulkModulus[k],
+                                fixedStressModulus );
   }
 
   // this function is used in flow solver
