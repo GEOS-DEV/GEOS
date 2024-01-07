@@ -57,17 +57,6 @@ public:
    */
   BlockOperator( BlockOperator const & rhs );
 
-  /**
-   * @brief Move constructor.
-   * @param rhs the block operator to move from
-   */
-  BlockOperator( BlockOperator && rhs );
-
-  /**
-   * @brief Destructor.
-   */
-  virtual ~BlockOperator() override = default;
-
 private:
 
   void setPointers();
@@ -102,14 +91,6 @@ template< typename VECTOR, typename OPERATOR >
 BlockOperator< VECTOR, OPERATOR >::BlockOperator( BlockOperator const & rhs )
   : Base( rhs ),
   m_operatorStorage( rhs.m_operatorStorage )
-{
-  setPointers();
-}
-
-template< typename VECTOR, typename OPERATOR >
-BlockOperator< VECTOR, OPERATOR >::BlockOperator( BlockOperator && rhs )
-  : Base( std::move( rhs ) ),
-  m_operatorStorage( std::move( rhs.m_operatorStorage ) )
 {
   setPointers();
 }

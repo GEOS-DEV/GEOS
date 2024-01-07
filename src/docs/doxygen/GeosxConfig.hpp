@@ -83,6 +83,12 @@
 /// Enables use of PETSc library (CMake option ENABLE_PETSC)
 #define GEOSX_USE_PETSC
 
+///  Enables use of METIS library (CMake option ENABLE_METIS)
+#define GEOSX_USE_METIS
+
+///  Enables use of ParMETIS library (CMake option ENABLE_PARMETIS)
+#define GEOSX_USE_PARMETIS
+
 /// Enables use of Scotch library (CMake option ENABLE_SCOTCH)
 #define GEOSX_USE_SCOTCH
 

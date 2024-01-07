@@ -22,6 +22,8 @@
 #include "common/Span.hpp"
 #include "mesh/ElementType.hpp"
 
+#include <numeric>
+
 #if defined(GEOSX_USE_MPI)
   #include <mpi.h>
 #define MPI_PARAM( x ) x
@@ -343,6 +345,11 @@ public:
                         array1d< T > & recvbuf,
                         MPI_Comm comm = MPI_COMM_GEOSX );
 
+  template< typename T >
+  static int allGatherv( arrayView1d< T const > const & sendbuf,
+                         array1d< T > & recvbuf,
+                         MPI_Comm comm = MPI_COMM_GEOSX );
+
   /**
    * @brief Strongly typed wrapper around MPI_Allreduce.
    * @param[in] sendbuf The pointer to the sending buffer.
@@ -521,6 +528,22 @@ public:
                     int tag,
                     MPI_Comm comm,
                     MPI_Request * request );
+
+  /**
+   * @brief Strongly typed wrapper around MPI_Send()
+   * @param[in] buf The pointer to the buffer that contains the data to be sent.
+   * @param[in] count The number of elements in \p buf.
+   * @param[in] dest The rank of the destination process within \p comm.
+   * @param[in] tag The message tag that is be used to distinguish different types of messages.
+   * @param[in] comm The handle to the MPI_Comm.
+   * @return
+   */
+  template< typename T >
+  static int send( T const * const buf,
+                   int count,
+                   int dest,
+                   int tag,
+                   MPI_Comm comm );
 
   /**
    * @brief Strongly typed wrapper around MPI_Isend()
@@ -743,6 +766,38 @@ int MpiWrapper::allGather( arrayView1d< T const > const & sendValues,
                         sendSize,
                         internal::getMpiType< T >(),
                         comm );
+
+#else
+  allValues.resize( sendSize );
+  for( localIndex a=0; a<sendSize; ++a )
+  {
+    allValues[a] = sendValues[a];
+  }
+  return 0;
+#endif
+}
+
+template< typename T >
+int MpiWrapper::allGatherv( arrayView1d< T const > const & sendValues,
+                            array1d< T > & allValues,
+                            MPI_Comm MPI_PARAM( comm ) )
+{
+  int const sendSize = LvArray::integerConversion< int >( sendValues.size() );
+#ifdef GEOSX_USE_MPI
+  int const mpiSize = commSize( comm );
+  array1d< int > counts;
+  allGather( sendSize, counts, comm );
+  array1d< int > displs( mpiSize + 1 );
+  std::partial_sum( counts.begin(), counts.end(), displs.begin() + 1 );
+  allValues.resize( displs.back() );
+  return MPI_Allgatherv( sendValues.data(),
+                         sendSize,
+                         internal::getMpiType< T >(),
+                         allValues.data(),
+                         counts.data(),
+                         displs.data(),
+                         internal::getMpiType< T >(),
+                         comm );
 
 #else
   allValues.resize( sendSize );
@@ -986,6 +1041,20 @@ int MpiWrapper::iSend( arrayView1d< T > const & buf,
 #else
   GEOS_ERROR( "Not implemented." );
   return MPI_SUCCESS;
+#endif
+}
+
+template< typename T >
+int MpiWrapper::send( T const * const buf,
+                      int count,
+                      int dest,
+                      int tag,
+                      MPI_Comm comm )
+{
+#ifdef GEOSX_USE_MPI
+  return MPI_Send( buf, count, internal::getMpiType< T >(), dest, tag, comm );
+#else
+  GEOS_ERROR( "Not implemented without MPI" );
 #endif
 }
 

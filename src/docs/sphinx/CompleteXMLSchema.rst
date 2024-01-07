@@ -59,6 +59,13 @@ Element: BlackOilFluid
 .. include:: ../../coreComponents/schema/docs/BlackOilFluid.rst
 
 
+.. _XML_Block:
+
+Element: Block
+==============
+.. include:: ../../coreComponents/schema/docs/Block.rst
+
+
 .. _XML_Blueprint:
 
 Element: Blueprint
@@ -1405,6 +1412,13 @@ Datastructure: BiotPorosity
 Datastructure: BlackOilFluid
 ============================
 .. include:: ../../coreComponents/schema/docs/BlackOilFluid_other.rst
+
+
+.. _DATASTRUCTURE_Block:
+
+Datastructure: Block
+====================
+.. include:: ../../coreComponents/schema/docs/Block_other.rst
 
 
 .. _DATASTRUCTURE_Blueprint:

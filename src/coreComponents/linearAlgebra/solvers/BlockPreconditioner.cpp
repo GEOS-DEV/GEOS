@@ -27,13 +27,9 @@ namespace geos
 {
 
 template< typename LAI >
-BlockPreconditioner< LAI >::BlockPreconditioner( BlockShapeOption const shapeOption,
-                                                 SchurComplementOption const schurOption,
-                                                 BlockScalingOption const scalingOption )
+BlockPreconditioner< LAI >::BlockPreconditioner( LinearSolverParameters::Block params )
   : Base(),
-  m_shapeOption( shapeOption ),
-  m_schurOption( schurOption ),
-  m_scalingOption( scalingOption ),
+  m_params( params ),
   m_matBlocks( 2, 2 ),
   m_solvers{},
   m_scaling{ 1.0, 1.0 },
@@ -42,24 +38,26 @@ BlockPreconditioner< LAI >::BlockPreconditioner( BlockShapeOption const shapeOpt
 {}
 
 template< typename LAI >
-BlockPreconditioner< LAI >::~BlockPreconditioner() = default;
-
-template< typename LAI >
-void BlockPreconditioner< LAI >::reinitialize( Matrix const & mat, DofManager const & dofManager )
+void BlockPreconditioner< LAI >::reinitialize( Matrix const & mat )
 {
   MPI_Comm const & comm = mat.comm();
 
   if( m_blockDofs[1].empty() )
   {
-    m_blockDofs[1] = dofManager.filterDofs( m_blockDofs[0] );
+    GEOS_LAI_ASSERT( mat.dofManager() != nullptr );
+    m_blockDofs[1] = mat.dofManager()->filterDofs( m_blockDofs[0] );
   }
 
   for( localIndex i = 0; i < 2; ++i )
   {
-    dofManager.makeRestrictor( m_blockDofs[i], comm, false, m_restrictors[i] );
-    dofManager.makeRestrictor( m_blockDofs[i], comm, true, m_prolongators[i] );
-    m_rhs( i ).create( m_restrictors[i].numLocalRows(), comm );
-    m_sol( i ).create( m_restrictors[i].numLocalRows(), comm );
+    if( m_prolongators[i] == nullptr )
+    {
+      GEOS_LAI_ASSERT( mat.dofManager() != nullptr );
+      mat.dofManager()->makeRestrictor( m_blockDofs[i], comm, true, m_prolongatorsOwned[i] );
+      m_prolongators[i] = &m_prolongatorsOwned[i];
+    }
+    m_rhs( i ).create( m_prolongators[i]->numLocalCols(), comm );
+    m_sol( i ).create( m_prolongators[i]->numLocalCols(), comm );
   }
 }
 
@@ -75,16 +73,44 @@ void BlockPreconditioner< LAI >::setupBlock( localIndex const blockIndex,
   GEOS_LAI_ASSERT_GT( scaling, 0.0 );
 
   m_blockDofs[blockIndex] = std::move( blockDofs );
-  m_solvers[blockIndex] = std::move( solver );
+  m_solversOwned[blockIndex] = std::move( solver );
+  m_solvers[blockIndex] = m_solversOwned[blockIndex].get();
   m_scaling[blockIndex] = scaling;
+}
+
+template< typename LAI >
+void BlockPreconditioner< LAI >::setupBlock( localIndex const blockIndex,
+                                             std::vector< DofManager::SubComponent > blockDofs,
+                                             PreconditionerBase< LAI > * const solver,
+                                             real64 const scaling )
+{
+  GEOS_LAI_ASSERT_GT( 2, blockIndex );
+  GEOS_LAI_ASSERT( solver );
+  GEOS_LAI_ASSERT( !blockDofs.empty() );
+  GEOS_LAI_ASSERT_GT( scaling, 0.0 );
+
+  m_blockDofs[blockIndex] = std::move( blockDofs );
+  m_solversOwned[blockIndex].reset();
+  m_solvers[blockIndex] = solver;
+  m_scaling[blockIndex] = scaling;
+}
+
+template< typename LAI >
+void BlockPreconditioner< LAI >::setProlongation( localIndex const blockIndex,
+                                                  Matrix const & P )
+{
+  GEOS_LAI_ASSERT_GT( 2, blockIndex );
+
+  m_prolongatorsOwned[blockIndex].reset();
+  m_prolongators[blockIndex] = &P;
 }
 
 template< typename LAI >
 void BlockPreconditioner< LAI >::applyBlockScaling()
 {
-  if( m_scalingOption != BlockScalingOption::None )
+  if( m_params.scaling != LinearSolverParameters::Block::Scaling::None )
   {
-    if( m_scalingOption == BlockScalingOption::FrobeniusNorm )
+    if( m_params.scaling == LinearSolverParameters::Block::Scaling::FrobeniusNorm )
     {
       real64 const norms[2] = { m_matBlocks( 0, 0 ).normFrobenius(), m_matBlocks( 1, 1 ).normFrobenius() };
       m_scaling[0] = std::min( norms[1] / norms[0], 1.0 );
@@ -104,14 +130,14 @@ void BlockPreconditioner< LAI >::applyBlockScaling()
 template< typename LAI >
 void BlockPreconditioner< LAI >::computeSchurComplement()
 {
-  switch( m_schurOption )
+  switch( m_params.schurType )
   {
-    case SchurComplementOption::None:
+    case LinearSolverParameters::Block::SchurType::None:
     {
       // nothing to do
       break;
     }
-    case SchurComplementOption::FirstBlockDiagonal:
+    case LinearSolverParameters::Block::SchurType::FirstBlockDiagonal:
     {
       m_matBlocks( 0, 0 ).extractDiagonal( m_rhs( 0 ) );
       m_rhs( 0 ).reciprocal();
@@ -124,7 +150,7 @@ void BlockPreconditioner< LAI >::computeSchurComplement()
       m_matBlocks( 0, 1 ).leftScale( m_rhs( 0 ) );
       break;
     }
-    case SchurComplementOption::RowsumDiagonalProbing:
+    case LinearSolverParameters::Block::SchurType::RowsumDiagonalProbing:
     {
       m_sol( 1 ).set( -1.0 );
       m_matBlocks( 0, 1 ).apply( m_sol( 1 ), m_rhs( 0 ) );
@@ -133,7 +159,7 @@ void BlockPreconditioner< LAI >::computeSchurComplement()
       m_matBlocks( 1, 1 ).addDiagonal( m_rhs( 1 ), 1.0 );
       break;
     }
-    case SchurComplementOption::FirstBlockUserDefined:
+    case LinearSolverParameters::Block::SchurType::FirstBlockUserDefined:
     {
       Matrix const & prec00 = m_solvers[0]->preconditionerMatrix();
       Matrix mat11;
@@ -151,9 +177,6 @@ void BlockPreconditioner< LAI >::computeSchurComplement()
 template< typename LAI >
 void BlockPreconditioner< LAI >::setup( Matrix const & mat )
 {
-  // Check that DofManager is available
-  GEOS_LAI_ASSERT_MSG( mat.dofManager() != nullptr, "BlockPreconditioner requires a DofManager" );
-
   // Check that user has set block solvers
   GEOS_LAI_ASSERT( m_solvers[0] != nullptr );
   GEOS_LAI_ASSERT( m_solvers[1] != nullptr );
@@ -170,18 +193,25 @@ void BlockPreconditioner< LAI >::setup( Matrix const & mat )
   // If the matrix size/structure has changed, need to resize internal LA objects and recompute restrictors.
   if( newSize )
   {
-    reinitialize( mat, *mat.dofManager() );
+    reinitialize( mat );
   }
 
   // Extract diagonal blocks
-  mat.multiplyPtAP( m_prolongators[0], m_matBlocks( 0, 0 ) );
-  mat.multiplyPtAP( m_prolongators[1], m_matBlocks( 1, 1 ) );
+  mat.multiplyPtAP( *m_prolongators[0], m_matBlocks( 0, 0 ) );
+  mat.multiplyPtAP( *m_prolongators[1], m_matBlocks( 1, 1 ) );
+
+  // HACK: a coupled DofManager is technically not compatible with diagonal blocks.
+  // We can create "reduced" managers using DofManager::setupFrom(), but it can be a waste of time,
+  // Instead, we expect block solvers to not rely on global information and instead query by field.
+  m_matBlocks( 0, 0 ).setDofManager( mat.dofManager() );
+  m_matBlocks( 1, 1 ).setDofManager( mat.dofManager() );
 
   // Extract off-diagonal blocks only if used
-  if( m_schurOption != SchurComplementOption::None && m_shapeOption != BlockShapeOption::Diagonal )
+  if( m_params.schurType != LinearSolverParameters::Block::SchurType::None
+      || m_params.shape != LinearSolverParameters::Block::Shape::Diagonal )
   {
-    mat.multiplyRAP( m_restrictors[0], m_prolongators[1], m_matBlocks( 0, 1 ) );
-    mat.multiplyRAP( m_restrictors[1], m_prolongators[0], m_matBlocks( 1, 0 ) );
+    mat.multiplyPtAP( *m_prolongators[0], *m_prolongators[1], m_matBlocks( 0, 1 ) );
+    mat.multiplyPtAP( *m_prolongators[1], *m_prolongators[0], m_matBlocks( 1, 0 ) );
   }
 
   applyBlockScaling();
@@ -194,36 +224,41 @@ template< typename LAI >
 void BlockPreconditioner< LAI >::apply( Vector const & src,
                                         Vector & dst ) const
 {
-  m_restrictors[0].apply( src, m_rhs( 0 ) );
-  m_restrictors[1].apply( src, m_rhs( 1 ) );
+  using Shape = LinearSolverParameters::Block::Shape;
+
+  m_prolongators[0]->applyTranspose( src, m_rhs( 0 ) );
+  m_prolongators[1]->applyTranspose( src, m_rhs( 1 ) );
 
   for( localIndex i = 0; i < 2; ++i )
   {
     m_rhs( i ).scale( m_scaling[i] );
   }
 
-  // Perform a predictor step by solving (0,0) block and subtracting from 1-block rhs
-  if( m_shapeOption == BlockShapeOption::LowerUpperTriangular )
+  if( m_params.shape == Shape::LowerUpperTriangular || m_params.shape == Shape::LowerTriangular )
   {
+    // Solve the (0,0)-block and update (1,1)-block rhs
     m_solvers[0]->apply( m_rhs( 0 ), m_sol( 0 ) );
     m_matBlocks( 1, 0 ).residual( m_sol( 0 ), m_rhs( 1 ), m_rhs( 1 ) );
   }
 
-  // Solve the (1,1) block modified via Schur complement
+  // Solve the (1,1)-block modified via Schur complement
   m_solvers[1]->apply( m_rhs( 1 ), m_sol( 1 ) );
 
-  // Update the 0-block rhs
-  if( m_shapeOption != BlockShapeOption::Diagonal )
+  if( m_params.shape != Shape::LowerTriangular )
   {
-    m_matBlocks( 0, 1 ).residual( m_sol( 1 ), m_rhs( 0 ), m_rhs( 0 ) );
+    if( m_params.shape != Shape::Diagonal )
+    {
+      // Update the 0-block rhs
+      m_matBlocks( 0, 1 ).residual( m_sol( 1 ), m_rhs( 0 ), m_rhs( 0 ) );
+    }
+
+    // Solve the (0,0) block with the current rhs
+    m_solvers[0]->apply( m_rhs( 0 ), m_sol( 0 ) );
   }
 
-  // Solve the (0,0) block with the current rhs
-  m_solvers[0]->apply( m_rhs( 0 ), m_sol( 0 ) );
-
   // Combine block solutions into global solution vector
-  m_prolongators[0].apply( m_sol( 0 ), dst );
-  m_prolongators[1].gemv( 1.0, m_sol( 1 ), 1.0, dst );
+  m_prolongators[0]->apply( m_sol( 0 ), dst );
+  m_prolongators[1]->gemv( 1.0, m_sol( 1 ), 1.0, dst );
 }
 
 template< typename LAI >
@@ -232,8 +267,8 @@ void BlockPreconditioner< LAI >::clear()
   Base::clear();
   for( localIndex i = 0; i < 2; ++i )
   {
-    m_restrictors[i].reset();
-    m_prolongators[i].reset();
+    m_prolongatorsOwned[i].reset();
+    m_prolongators[i] = nullptr;
     m_solvers[i]->clear();
     m_rhs( i ).reset();
     m_sol( i ).reset();
