@@ -323,7 +323,7 @@ void WellControls::postProcessInput()
                  " The keywords " << viewKeyStruct::targetMassRateString() << " and " << viewKeyStruct::targetMassRateTableNameString() << " cannot be specified together",
                  InputError );
 
-  GEOS_THROW_IF( ((m_targetMassRate > 0.0 &&  m_useSurfaceConditions)),
+  GEOS_THROW_IF( ((m_targetMassRate > 0.0 &&  m_useSurfaceConditions==0)),
                  "WellControls " << getDataContext() << ": Option only valid if useSurfaceConditions set to 1",
                  InputError );
 
