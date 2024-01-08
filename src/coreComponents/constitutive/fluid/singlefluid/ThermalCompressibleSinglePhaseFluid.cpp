@@ -39,7 +39,7 @@ ThermalCompressibleSinglePhaseFluid::ThermalCompressibleSinglePhaseFluid( string
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Fluid thermal expansion coefficient. Unit: 1/K" );
 
-  registerWrapper( viewKeyStruct::heatCapacityString(), &m_heatCapacity ).
+  registerWrapper( viewKeyStruct::specificHeatCapacityString(), &m_specificHeatCapacity ).
     setApplyDefaultValue( 0.0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Fluid heat capacity. Unit: J/kg/K" );
@@ -83,7 +83,7 @@ void ThermalCompressibleSinglePhaseFluid::postProcessInput()
   };
 
   checkNonnegative( m_thermalExpansionCoeff, viewKeyStruct::thermalExpansionCoeffString() );
-  checkNonnegative( m_heatCapacity, viewKeyStruct::heatCapacityString() );
+  checkNonnegative( m_specificHeatCapacity, viewKeyStruct::specificHeatCapacityString() );
   checkNonnegative( m_referenceInternalEnergy, viewKeyStruct::referenceInternalEnergyString() );
 
   // Due to the way update wrapper is currently implemented, we can only support one model type
@@ -101,7 +101,7 @@ ThermalCompressibleSinglePhaseFluid::createKernelWrapper()
 {
   return KernelWrapper( KernelWrapper::DensRelationType( m_referencePressure, m_referenceTemperature, m_referenceDensity, m_compressibility, -m_thermalExpansionCoeff ),
                         KernelWrapper::ViscRelationType( m_referencePressure, m_referenceViscosity, m_viscosibility ),
-                        KernelWrapper::IntEnergyRelationType( m_referenceTemperature, m_referenceInternalEnergy, m_heatCapacity/m_referenceInternalEnergy ),
+                        KernelWrapper::IntEnergyRelationType( m_referenceTemperature, m_referenceInternalEnergy, m_specificHeatCapacity/m_referenceInternalEnergy ),
                         m_density,
                         m_dDensity_dPressure,
                         m_dDensity_dTemperature,

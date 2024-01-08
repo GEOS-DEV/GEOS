@@ -57,7 +57,7 @@
        compressibility="1.0e-10"
        thermalExpansionCoeff="0.0"
        viscosibility="0.0"
-       heatCapacity="4.2e6"
+       specificHeatCapacity="4.2e6"
        referenceInternalEnergy="0.99"/>
 
      <SinglePhaseConstantThermalConductivity

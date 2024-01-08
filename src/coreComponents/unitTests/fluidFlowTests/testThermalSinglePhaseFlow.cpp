@@ -107,7 +107,7 @@ char const * xmlInput =
                                            compressibility="5e-10"
                                            thermalExpansionCoeff="7e-4"
                                            viscosibility="0.0"
-                                           heatCapacity="4.5e3" />
+                                           specificHeatCapacity="4.5e3" />
       <SinglePhaseConstantThermalConductivity name="thermalCond"
                                               thermalConductivityComponents="{ 0.6, 0.6, 0.6 }" />
     </Constitutive>

@@ -10,7 +10,6 @@ densityModelType        geos_constitutive_ExponentApproximationType linear   | T
                                                                              | * exponential                                                                       
                                                                              | * linear                                                                            
                                                                              | * quadratic                                                                         
-heatCapacity            real64                                      0        Fluid heat capacity. Unit: J/kg/K                                                   
 internalEnergyModelType geos_constitutive_ExponentApproximationType linear   | Type of internal energy model. Valid options:                                       
                                                                              | * exponential                                                                       
                                                                              | * linear                                                                            
@@ -21,6 +20,7 @@ referenceInternalEnergy real64                                      0.001    Ref
 referencePressure       real64                                      0        Reference pressure                                                                  
 referenceTemperature    real64                                      0        Reference temperature                                                               
 referenceViscosity      real64                                      0.001    Reference fluid viscosity                                                           
+specificHeatCapacity    real64                                      0        Fluid heat capacity. Unit: J/kg/K                                                   
 thermalExpansionCoeff   real64                                      0        Fluid thermal expansion coefficient. Unit: 1/K                                      
 viscosibility           real64                                      0        Fluid viscosity exponential coefficient                                             
 viscosityModelType      geos_constitutive_ExponentApproximationType linear   | Type of viscosity model. Valid options:                                             
