@@ -369,14 +369,6 @@ public:
     return isConverged;
   }
 
-  virtual void saveSequentialIterationState( DomainPartition & domain ) const override
-  {
-    forEachArgInTuple( m_solvers, [&]( auto & solver, auto )
-    {
-      solver->saveSequentialIterationState( domain );
-    } );
-  }
-
 protected:
 
   /**
@@ -459,6 +451,9 @@ protected:
                                                            cycleNumber,
                                                            domain );
 
+          // save fields (e.g. pressure and temperature) after inner solve
+          solver->saveSequentialIterationState( domain );
+
           mapSolutionBetweenSolvers( domain, idx() );
 
           if( solverDt < stepDt ) // subsolver had to cut the time step
@@ -473,9 +468,6 @@ protected:
                                                   time_n,
                                                   stepDt,
                                                   domain );
-
-        // save fields (e.g. pressure and temperature) at the end of this iteration
-        saveSequentialIterationState( domain );
 
         if( isConverged )
         {

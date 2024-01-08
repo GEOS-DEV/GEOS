@@ -2385,20 +2385,50 @@ void CompositionalMultiphaseBase::saveConvergedState( ElementSubRegionBase & sub
   }
 }
 
-void CompositionalMultiphaseBase::saveSequentialIterationState( DomainPartition & domain ) const
+void CompositionalMultiphaseBase::saveSequentialIterationState( DomainPartition & domain )
 {
   FlowSolverBase::saveSequentialIterationState( domain );
+
+  integer const numComp = m_numComponents;
+
+  real64 maxCompDensChange = 0.0;
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
+                                                               MeshLevel & mesh,
+                                                               arrayView1d< string const > const & regionNames )
+  {
+    mesh.getElemManager().forElementSubRegions( regionNames,
+                                                [&]( localIndex const,
+                                                     ElementSubRegionBase & subRegion )
+    {
+      arrayView1d< integer const > const ghostRank = subRegion.ghostRank();
+
+      arrayView2d< real64 const, compflow::USD_COMP >
+      const compDens = subRegion.getField< fields::flow::globalCompDensity >();
+      arrayView2d< real64, compflow::USD_COMP >
+      const compDens_k = subRegion.getField< fields::flow::globalCompDensity_k >();
+
+      RAJA::ReduceMax< parallelDeviceReduce, real64 > subRegionMaxCompDensChange( 0.0 );
+
+      forAll< parallelDevicePolicy<> >( subRegion.size(), [=]
+                                        GEOS_HOST_DEVICE ( localIndex
+                                                           const ei )
+      {
+        if( ghostRank[ei] < 0 )
+        {
+          for( integer ic = 0; ic < numComp; ++ic )
+          {
+            subRegionMaxCompDensChange.max( LvArray::math::abs( compDens[ei][ic] - compDens_k[ei][ic] ) );
+            compDens_k[ei][ic] = compDens[ei][ic];
+          }
+        }
+      } );
+
+      maxCompDensChange = LvArray::math::max( maxCompDensChange, subRegionMaxCompDensChange.get() );
+    } );
+  } );
+
+  m_sequentialCompDensChange = MpiWrapper::max( maxCompDensChange ); // store to be later used for convergence check
 }
-
-void CompositionalMultiphaseBase::saveSequentialIterationState( ElementSubRegionBase & subRegion ) const
-{
-  FlowSolverBase::saveSequentialIterationState( subRegion );
-
-  arrayView2d< real64 const, compflow::USD_COMP > const compDens = subRegion.template getField< fields::flow::globalCompDensity >();
-  arrayView2d< real64, compflow::USD_COMP > const compDens_k = subRegion.template getField< fields::flow::globalCompDensity_k >();
-  compDens_k.setValues< parallelDevicePolicy<> >( compDens );
-}
-
 
 void CompositionalMultiphaseBase::updateState( DomainPartition & domain )
 {
@@ -2435,50 +2465,11 @@ bool CompositionalMultiphaseBase::checkSequentialSolutionIncrements( DomainParti
 {
   bool isConverged = FlowSolverBase::checkSequentialSolutionIncrements( domain );
 
-  integer const numComp = m_numComponents;
-
-  real64 maxCompDensChange = 0.0;
-  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
-                                                               MeshLevel & mesh,
-                                                               arrayView1d< string const > const & regionNames )
-  {
-    mesh.getElemManager().forElementSubRegions( regionNames,
-                                                [&]( localIndex const,
-                                                     ElementSubRegionBase & subRegion )
-    {
-      arrayView1d< integer const > const ghostRank = subRegion.ghostRank();
-
-      arrayView2d< real64 const, compflow::USD_COMP >
-      const compDens = subRegion.getField< fields::flow::globalCompDensity >();
-      arrayView2d< real64 const, compflow::USD_COMP >
-      const compDens_k = subRegion.getField< fields::flow::globalCompDensity_k >();
-
-      RAJA::ReduceMax< parallelDeviceReduce, real64 > subRegionMaxCompDensChange( 0.0 );
-
-      forAll< parallelDevicePolicy<> >( subRegion.size(), [=]
-                                        GEOS_HOST_DEVICE ( localIndex
-                                                           const ei )
-      {
-        if( ghostRank[ei] < 0 )
-        {
-          for( integer ic = 0; ic < numComp; ++ic )
-          {
-            subRegionMaxCompDensChange.max( LvArray::math::abs( compDens[ei][ic] - compDens_k[ei][ic] ) );
-          }
-        }
-      } );
-
-      maxCompDensChange = LvArray::math::max( maxCompDensChange, subRegionMaxCompDensChange.get() );
-    } );
-  } );
-
-  maxCompDensChange = MpiWrapper::max( maxCompDensChange );
-
   string const unit = m_useMass ? "kg/m3" : "mol/m3";
   GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "    {}: Max component density change during outer iteration: {} {}",
-                                      getName(), fmt::format( "{:.{}f}", maxCompDensChange, 3 ), unit ) );
+                                      getName(), fmt::format( "{:.{}f}", m_sequentialCompDensChange, 3 ), unit ) );
 
-  return isConverged && (maxCompDensChange < m_maxSequentialCompDensChange);
+  return isConverged && (m_sequentialCompDensChange < m_maxSequentialCompDensChange);
 }
 
 real64 CompositionalMultiphaseBase::setNextDt( const geos::real64 & currentDt, geos::DomainPartition & domain )
