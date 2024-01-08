@@ -112,7 +112,7 @@ void CompositionalMultiphaseStatistics::registerDataOnMesh( Group & meshBodies )
         regionStatistics.componentMass.resizeDimension< 0, 1 >( numPhases, numComps );
 
         // write output header
-        if( getLogLevel() > 0 && MpiWrapper::commRank() == 0 )
+        if( m_writeCSV > 0 && MpiWrapper::commRank() == 0 )
         {
           std::ofstream outputFile( m_outputDir + "/" + regionNames[i] + ".csv" );
           integer const useMass = m_solver->getReference< integer >( CompositionalMultiphaseBase::viewKeyStruct::useMassFlagString() );
@@ -436,7 +436,7 @@ void CompositionalMultiphaseStatistics::computeRegionStatistics( real64 const ti
     GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "{}, {} (time {} s): Component mass: {} {}",
                                         getName(), regionNames[i], time, regionStatistics.componentMass, massUnit ) );
 
-    if( getLogLevel() > 0 && MpiWrapper::commRank() == 0 )
+    if( m_writeCSV > 0 && MpiWrapper::commRank() == 0 )
     {
       std::ofstream outputFile( m_outputDir + "/" + regionNames[i] + ".csv", std::ios_base::app );
       outputFile << time << "," << regionStatistics.minPressure << "," << regionStatistics.averagePressure << "," << regionStatistics.maxPressure << "," <<

@@ -61,7 +61,7 @@ void SolidMechanicsStatistics::registerDataOnMesh( Group & meshBodies )
     nodeStatistics.maxDisplacement.resizeDimension< 0 >( 3 );
 
     // write output header
-    if( getLogLevel() > 0 && MpiWrapper::commRank() == 0 )
+    if( m_writeCSV > 0 && MpiWrapper::commRank() == 0 )
     {
       std::ofstream outputFile( m_outputDir + "/" + mesh.getName() + "_node_statistics" + ".csv" );
       outputFile << "Time [s],Min displacement X [m],Min displacement Y [m],Min displacement Z [m],"
@@ -157,7 +157,7 @@ void SolidMechanicsStatistics::computeNodeStatistics( MeshLevel & mesh, real64 c
                                       getName(), time, nodeStatistics.maxDisplacement[0],
                                       nodeStatistics.maxDisplacement[1], nodeStatistics.maxDisplacement[2] ) );
 
-  if( getLogLevel() > 0 && MpiWrapper::commRank() == 0 )
+  if( m_writeCSV > 0 && MpiWrapper::commRank() == 0 )
   {
     std::ofstream outputFile( m_outputDir + "/" + mesh.getName() + "_node_statistics" + ".csv", std::ios_base::app );
     outputFile << time;

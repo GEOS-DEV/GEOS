@@ -61,7 +61,7 @@ void SinglePhaseStatistics::registerDataOnMesh( Group & meshBodies )
       region.excludeWrappersFromPacking( { viewKeyStruct::regionStatisticsString() } );
 
       // write output header
-      if( getLogLevel() > 0 && MpiWrapper::commRank() == 0 )
+      if( m_writeCSV > 0 && MpiWrapper::commRank() == 0 )
       {
         std::ofstream outputFile( m_outputDir + "/" + regionNames[i] + ".csv" );
         outputFile <<
@@ -257,7 +257,7 @@ void SinglePhaseStatistics::computeRegionStatistics( real64 const time,
     GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "{}, {} (time {} s): Total fluid mass: {} kg",
                                         getName(), regionNames[i], time, regionStatistics.totalMass ) );
 
-    if( getLogLevel() > 0 && MpiWrapper::commRank() == 0 )
+    if( m_writeCSV > 0 && MpiWrapper::commRank() == 0 )
     {
       std::ofstream outputFile( m_outputDir + "/" + regionNames[i] + ".csv", std::ios_base::app );
       outputFile << time << "," << regionStatistics.minPressure << "," << regionStatistics.averagePressure << "," << regionStatistics.maxPressure << "," <<

@@ -56,6 +56,11 @@ public:
       setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
       setInputFlag( dataRepository::InputFlags::REQUIRED ).
       setDescription( "Name of the " + SOLVER::coupledSolverAttributePrefix() + " solver" );
+
+    this->registerWrapper( viewKeyStruct::writeCSVFlagString(), &m_writeCSV ).
+      setApplyDefaultValue( 0 ).
+      setInputFlag( dataRepository::InputFlags::OPTIONAL ).
+      setDescription( "Write statistics into a CSV file" );
   }
 
   /**
@@ -89,7 +94,7 @@ protected:
                    InputError );
 
     // create dir for output
-    if( getLogLevel() > 0 )
+    if( m_writeCSV > 0 )
     {
       if( MpiWrapper::commRank() == 0 )
       {
@@ -100,11 +105,19 @@ protected:
     }
   }
 
+  struct viewKeyStruct
+  {
+    static constexpr char const * writeCSVFlagString() { return "writeCSV"; }
+  };
+
   /// Pointer to the physics solver
   SOLVER * m_solver;
 
   // Output directory
   string const m_outputDir;
+
+  // Flag to enable writing CSV output
+  integer m_writeCSV;
 
 private:
 
