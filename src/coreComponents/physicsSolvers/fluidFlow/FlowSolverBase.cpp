@@ -286,10 +286,7 @@ void FlowSolverBase::saveSequentialIterationState( DomainPartition & domain )
 
   // store to be later used in convergence check
   m_sequentialPresChange = MpiWrapper::max( maxPresChange );
-  if( m_isThermal )
-  {
-    m_sequentialTempChange = MpiWrapper::max( maxTempChange );
-  }
+  m_sequentialTempChange = m_isThermal ? MpiWrapper::max( maxTempChange ) : 0.0;
 }
 
 void FlowSolverBase::enableFixedStressPoromechanicsUpdate()
