@@ -498,7 +498,8 @@ enum class MGRRestrictionType : HYPRE_Int
   jacobi = 2,              //!< Diagonal scaling
   approximateInverse = 3,  //!< Approximate inverse
   blockJacobi = 12,        //!< Block-Jacobi
-  cprLike = 13             //!< CPR-like restriction
+  cprLike = 13,            //!< CPR-like restriction
+  blockColsum = 14         //!< Block column sum approximation
 };
 
 /**
@@ -507,15 +508,16 @@ enum class MGRRestrictionType : HYPRE_Int
  */
 enum class MGRCoarseGridMethod : HYPRE_Int
 {
-  galerkin = 0,          //!< Galerkin coarse grid computation using RAP
-  nonGalerkin = 1,       //!< Non-Galerkin coarse grid computation with dropping strategy: inv(A_FF) approximated by its (block) diagonal
-                         //!< inverse
-  cprLikeDiag = 2,       //!< Non-Galerkin coarse grid computation with dropping strategy: CPR-like approximation with inv(A_FF)
-                         //!< approximated by its diagonal inverse
-  cprLikeBlockDiag = 3,  //!< Non-Galerkin coarse grid computation with dropping strategy: CPR-like approximation with inv(A_FF)
-                         //!< approximated by its block diagonal inverse
-  approximateInverse = 4 //!< Non-Galerkin coarse grid computation with dropping strategy: inv(A_FF) approximated by sparse approximate
-                         //!< inverse
+  galerkin = 0,           //!< Galerkin coarse grid computation using RAP
+  nonGalerkin = 1,        //!< Non-Galerkin coarse grid computation with dropping strategy: inv(A_FF) approximated by its (block) diagonal
+                          //!< inverse
+  cprLikeDiag = 2,        //!< Non-Galerkin coarse grid computation with dropping strategy: CPR-like approximation with inv(A_FF)
+                          //!< approximated by its diagonal inverse
+  cprLikeBlockDiag = 3,   //!< Non-Galerkin coarse grid computation with dropping strategy: CPR-like approximation with inv(A_FF)
+                          //!< approximated by its block diagonal inverse
+  approximateInverse = 4, //!< Non-Galerkin coarse grid computation with dropping strategy: inv(A_FF) approximated by sparse approximate
+                          //!< inverse
+  nonGalerkinRAI = 5      //!< Non-Galerkin coarse grid computation with arbitrary classical restriction and injective prolongation
 };
 
 /**
