@@ -17,7 +17,7 @@ free -m
 
 # The or_die function run the passed command line and
 # exits the program in case of non zero error code
-or_die () {
+function or_die () {
     "$@"
     local status=$?
 
