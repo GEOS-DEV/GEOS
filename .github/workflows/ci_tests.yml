@@ -195,7 +195,8 @@ jobs:
       uses: ./.github/workflows/build_and_test.yml
       with:
         DOCKER_REPOSITORY: geosx/ubuntu22.04-gcc11
-        CMAKE_BUILD_TYPE: Release
+        CMAKE_BUILD_TYPE: Debug
+        DOCKER_IMAGE_TAG: ${{ needs.is_pull_request_a_draft.outputs.DOCKER_IMAGE_TAG }}
         BUILD_AND_TEST_ARGS: --code-coverage
         ENABLE_HYPRE: ON
         ENABLE_TRILINOS: OFF
