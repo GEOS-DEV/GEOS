@@ -140,14 +140,11 @@ CompositionalMultiphaseFluidUpdates< FLASH, PHASE1, PHASE2, PHASE3 >::compute(
   MultiFluidBase::PhaseComp::SliceType const phaseCompFrac,
   MultiFluidBase::FluidProp::SliceType const totalDensity ) const
 {
-  GEOS_UNUSED_VAR( phaseEnthalpy, phaseInternalEnergy );
-
-  using Deriv = multifluid::DerivativeOffset;
-
   integer constexpr maxNumComp = MultiFluidBase::MAX_NUM_COMPONENTS;
   integer constexpr maxNumPhase = MultiFluidBase::MAX_NUM_PHASES;
   integer const numComp = numComponents();
   integer const numPhase = numPhases();
+  integer const numDof = numComp + 2;
 
   // 1. Convert input mass fractions to mole fractions and keep derivatives
 
@@ -253,17 +250,28 @@ CompositionalMultiphaseFluidUpdates< FLASH, PHASE1, PHASE2, PHASE3 >::compute(
     real64 phaseMolecularWeight[maxNumPhase]{};
     real64 dPhaseMolecularWeight[maxNumPhase][maxNumComp+2]{};
 
+    arrayView1d< real64 const > const & componentMolarWeight = m_componentProperties.m_componentMolarWeight;
+
     for( integer ip = 0; ip < numPhase; ++ip )
     {
-      phaseMolecularWeight[ip] = 1.0;
-      dPhaseMolecularWeight[ip][Deriv::dP] = 0.0;
-      dPhaseMolecularWeight[ip][Deriv::dT] = 0.0;
+      phaseMolecularWeight[ip] = 0.0;
+      for( integer kc = 0; kc < numDof; ++kc )
+      {
+        dPhaseMolecularWeight[ip][kc] = 0.0;
+      }
+
+      auto const & phaseComposition = phaseCompFrac.value[ip].toSliceConst();
+      auto const & dPhaseComposition = phaseCompFrac.derivs[ip].toSliceConst();
+
       for( integer ic = 0; ic < numComp; ++ic )
       {
-        dPhaseMolecularWeight[ip][Deriv::dC+ic] = 0.0;
+        phaseMolecularWeight[ip] += phaseComposition[ic] * componentMolarWeight[ic];
+        for( integer kc = 0; kc < numDof; ++kc )
+        {
+          dPhaseMolecularWeight[ip][kc] += dPhaseComposition( ic, kc ) * componentMolarWeight[ic];;
+        }
       }
     }
-
     convertToMassFractions( dCompMoleFrac_dCompMassFrac,
                             phaseMolecularWeight,
                             dPhaseMolecularWeight,

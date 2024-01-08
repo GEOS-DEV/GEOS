@@ -617,7 +617,7 @@ computeMixtureCoefficients( integer const numComps,
   {
     for( integer jc = 0; jc < numComps; ++jc )
     {
-      aMixtureCoefficient += ( composition[ic] * composition[jc] * ( 1.0 - binaryInteractionCoefficients( ic, jc ) ) * sqrt( aPureCoefficient[ic] * aPureCoefficient[jc] ) );
+      aMixtureCoefficient += composition[ic] * composition[jc] * ( 1.0 - binaryInteractionCoefficients( ic, jc ) ) * sqrt( aPureCoefficient[ic] * aPureCoefficient[jc] );
     }
     bMixtureCoefficient += composition[ic] * bPureCoefficient[ic];
   }
@@ -766,42 +766,33 @@ computeCompressibilityFactor( integer const numComps,
                               arraySlice1d< real64 const > const & bMixtureCoefficientDerivs,
                               arraySlice1d< real64 > const & compressibilityFactorDerivs )
 {
-  constexpr real64 d1pd2 = EOS_TYPE::delta1 + EOS_TYPE::delta2;
-  constexpr real64 d1xd2 = EOS_TYPE::delta1 * EOS_TYPE::delta2;
+  real64 constexpr d1pd2 = EOS_TYPE::delta1 + EOS_TYPE::delta2;
+  real64 constexpr d1xd2 = EOS_TYPE::delta1 * EOS_TYPE::delta2;
 
-  constexpr real64 a = 1.0;
+  real64 constexpr a = 1.0;
   real64 const b = ( d1pd2 - 1.0 ) * bMixtureCoefficient - 1.0;
   real64 const c = aMixtureCoefficient + d1xd2 * bMixtureCoefficient * bMixtureCoefficient
                    - d1pd2 * bMixtureCoefficient * ( bMixtureCoefficient + 1.0 );
 
   // Implicit differentiation scale
   real64 const denominator = (3.0*a*compressibilityFactor + 2.0*b)*compressibilityFactor + c;
-  constexpr real64 epsilon = MultiFluidConstants::epsilon;
-  real64 const scalingFactor = fabs( denominator ) < epsilon ? 0.0 : -1.0 / denominator;
+  real64 const scalingFactor = LvArray::math::abs( denominator ) < MultiFluidConstants::epsilon ? 0.0 : -1.0 / denominator;
 
-  // Given derivative of the mixture parameters a and b w.r.t. variable X, calculate the derivative of the
-  // compressibility factor (z-factor) w.r.t. X
-  auto const calculateDerivative = [&]( real64 const da_dX, real64 const db_dX ) -> real64 {
+  integer const numDofs = numComps + 2;
+
+  for( integer kc = 0; kc < numDofs; ++kc )
+  {
+    // Given derivative of the mixture parameters a and b w.r.t. variable X, calculate the derivative of the
+    // compressibility factor (z-factor) w.r.t. X
+    real64 const da_dX = aMixtureCoefficientDerivs[kc];
+    real64 const db_dX = bMixtureCoefficientDerivs[kc];
     // a Z3 + b Z2 + cZ + d = 0
     // Derivatives for a,b,c,d
     real64 const dbdx = ( d1pd2 - 1.0 ) * db_dX;
     real64 const dcdx = da_dX + ( 2.0*(d1xd2-d1pd2) * bMixtureCoefficient - d1pd2 )*db_dX;
     real64 const dddx = -(aMixtureCoefficient*db_dX + da_dX*bMixtureCoefficient
                           + d1xd2*((3.0*bMixtureCoefficient+2.0)*bMixtureCoefficient*db_dX));
-    return (((dbdx*compressibilityFactor) + dcdx)*compressibilityFactor + dddx) * scalingFactor;
-  };
-
-  // Pressure and temperature derivatives
-  for( integer const kc : {Deriv::dP, Deriv::dT} )
-  {
-    compressibilityFactorDerivs[kc] = calculateDerivative( aMixtureCoefficientDerivs[kc], bMixtureCoefficientDerivs[kc] );
-  }
-
-  // Composition derivatives
-  for( integer ic = 0; ic < numComps; ++ic )
-  {
-    integer const kc = Deriv::dC+ic;
-    compressibilityFactorDerivs[kc] = calculateDerivative( aMixtureCoefficientDerivs[kc], bMixtureCoefficientDerivs[kc] );
+    compressibilityFactorDerivs[kc] = (((dbdx*compressibilityFactor) + dcdx)*compressibilityFactor + dddx) * scalingFactor;
   }
 }
 
@@ -824,6 +815,7 @@ computeLogFugacityCoefficients( integer const numComps,
   // ki
   for( integer ic = 0; ic < numComps; ++ic )
   {
+    ki[ic] = 0.0;
     for( integer jc = 0; jc < numComps; ++jc )
     {
       ki[ic] += composition[jc] * ( 1.0 - binaryInteractionCoefficients( ic, jc ) ) * sqrt( aPureCoefficient[ic] * aPureCoefficient[jc] );
