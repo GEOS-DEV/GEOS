@@ -84,6 +84,8 @@ CO2BrineFluid< PHASE1, PHASE2, FLASH >::
 CO2BrineFluid( string const & name, Group * const parent ):
   MultiFluidBase( name, parent )
 {
+  enableLogLevelInput();
+
   registerWrapper( viewKeyStruct::phasePVTParaFilesString(), &m_phasePVTParaFiles ).
     setInputFlag( InputFlags::REQUIRED ).
     setRestartFlags( RestartFlags::NO_WRITE ).
@@ -311,8 +313,10 @@ void CO2BrineFluid< PHASE1, PHASE2, FLASH >::createPVTModels()
                  InputError );
 
   // then, we are ready to instantiate the phase models
-  m_phase1 = std::make_unique< PHASE1 >( getName() + "_phaseModel1", phase1InputParams, m_componentNames, m_componentMolarWeight );
-  m_phase2 = std::make_unique< PHASE2 >( getName() + "_phaseModel2", phase2InputParams, m_componentNames, m_componentMolarWeight );
+  m_phase1 = std::make_unique< PHASE1 >( getName() + "_phaseModel1", phase1InputParams, m_componentNames, m_componentMolarWeight,
+                                         getLogLevel() > 0 && logger::internal::rank==0 );
+  m_phase2 = std::make_unique< PHASE2 >( getName() + "_phaseModel2", phase2InputParams, m_componentNames, m_componentMolarWeight,
+                                         getLogLevel() > 0 && logger::internal::rank==0 );
 
   // 2) Create the flash model
   {
@@ -336,7 +340,8 @@ void CO2BrineFluid< PHASE1, PHASE2, FLASH >::createPVTModels()
                                                  strs,
                                                  m_phaseNames,
                                                  m_componentNames,
-                                                 m_componentMolarWeight );
+                                                 m_componentMolarWeight,
+                                                 getLogLevel() > 0 && logger::internal::rank==0 );
           }
         }
         else

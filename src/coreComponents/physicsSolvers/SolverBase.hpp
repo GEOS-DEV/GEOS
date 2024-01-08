@@ -153,7 +153,7 @@ public:
    * @param[in] currentDt the current time step size
    * @return the prescribed time step size
    */
-  real64 setNextDtBasedOnNewtonIter( real64 const & currentDt );
+  virtual real64 setNextDtBasedOnNewtonIter( real64 const & currentDt );
 
   /**
    * @brief function to set the next dt based on state change
@@ -163,6 +163,17 @@ public:
    */
   virtual real64 setNextDtBasedOnStateChange( real64 const & currentDt,
                                               DomainPartition & domain );
+
+  /**
+   * @brief function to set the next dt based on state change
+   * @param [in]  currentDt the current time step size
+   * @param[in] domain the domain object
+   * @return the prescribed time step size
+   */
+  virtual real64 setNextDtBasedOnCFL( real64 const & currentDt,
+                                      DomainPartition & domain );
+
+
 
   /**
    * @brief Entry function for an explicit time integration step

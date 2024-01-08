@@ -154,6 +154,11 @@ NonlinearSolverParameters::NonlinearSolverParameters( string const & name,
     setApplyDefaultValue( 0 ).
     setDescription( "Flag to decide whether to iterate between sequentially coupled solvers or not." );
 
+  this->registerWrapper( viewKeysStruct::nonlinearAccelerationTypeString(), &m_nonlinearAccelerationType ).
+    setApplyDefaultValue( NonlinearAccelerationType::None ).
+    setInputFlag( dataRepository::InputFlags::OPTIONAL ).
+    setDescription( "Nonlinear acceleration type for sequential solver." );
+
 }
 
 void NonlinearSolverParameters::postProcessInput()
