@@ -192,17 +192,6 @@ jobs:
       RUNS_ON: ubuntu-22.04
 
   code_coverage:
-    # needs:
-    # - is_pull_request_a_draft
-    # - cpu_builds
-    runs-on: ubuntu-22.04
-    steps:
-    - name: Checkout Repository
-      uses: actions/checkout@v3
-      with:
-        submodules: true
-        lfs: false
-    - name: run code coverage
       uses: ./.github/workflows/build_and_test.yml
       with:
         DOCKER_REPOSITORY: geosx/ubuntu22.04-gcc11
@@ -211,13 +200,8 @@ jobs:
         ENABLE_HYPRE: ON
         ENABLE_TRILINOS: OFF
         GCP_BUCKET: geosx/ubuntu22.04-gcc11
-    - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v3
-      with:
-        files: geos_coverage.info.cleaned
-        fail_ci_if_error: true
-      env:
-        CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+        RUNS_ON: ubuntu-22.04
+      secrets: inherit
 
   # If the 'ci: ready to be merged' PR label is found, the cuda jobs run immediately along side linux jobs.
   # Note: CUDA jobs should only be run if PR is ready to merge.

@@ -12,6 +12,10 @@ on:
       CMAKE_BUILD_TYPE:
         required: true
         type: string
+      CODE_COVERAGE:
+        required: false
+        type: boolean
+        default: false
       DOCKER_IMAGE_TAG:
         required: true
         type: string
@@ -150,3 +154,11 @@ jobs:
         fi
         
         exit ${EXIT_STATUS}
+    - name: Upload coverage to Codecov
+      if: inputs.CODE_COVERAGE
+      uses: codecov/codecov-action@v3
+      with:
+        files: geos_coverage.info.cleaned
+        fail_ci_if_error: true
+      env:
+        CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
