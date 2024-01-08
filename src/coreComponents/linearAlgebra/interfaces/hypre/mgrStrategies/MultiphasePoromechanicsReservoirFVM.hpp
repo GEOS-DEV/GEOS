@@ -110,8 +110,8 @@ public:
     m_levelFRelaxType[2]          = MGRFRelaxationType::jacobi; //default, i.e. Jacobi
     m_levelFRelaxIters[2]         = 1;
     m_levelInterpType[3]          = MGRInterpolationType::injection;
-    m_levelRestrictType[3]        = MGRRestrictionType::injection;
-    m_levelCoarseGridMethod[3]    = MGRCoarseGridMethod::cprLikeBlockDiag;
+    m_levelRestrictType[3]        = MGRRestrictionType::blockColsum;
+    m_levelCoarseGridMethod[3]    = MGRCoarseGridMethod::nonGalerkinRAI;
     m_levelGlobalSmootherType[3]  = MGRGlobalSmootherType::ilu0;
     m_levelGlobalSmootherIters[3] = 1;
   }
