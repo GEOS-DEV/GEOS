@@ -198,13 +198,13 @@ public:
    */
   const string & getTargetPhaseName() const { return m_targetPhaseName; }
 
- /**
+  /**
    * @brief Get the target mass rate
-   * @return the target mass rate 
+   * @return the target mass rate
    */
-  real64 getTargetMassRate(real64 const & currentTime) const 
-  { 
-        return m_rateSign * m_targetMassRateTable->evaluate( &currentTime);
+  real64 getTargetMassRate( real64 const & currentTime ) const
+  {
+    return m_rateSign * m_targetMassRateTable->evaluate( &currentTime );
   }
 
 
@@ -293,7 +293,7 @@ public:
     static constexpr char const * targetPhaseRateString() { return "targetPhaseRate"; }
     /// String key for the well target phase name
     static constexpr char const * targetPhaseNameString() { return "targetPhaseName"; }
-        /// String key for the well target phase name
+    /// String key for the well target phase name
     static constexpr char const * targetMassRateString() { return "targetMassRate"; }
     /// String key for the well injection stream
     static constexpr char const * injectionStreamString() { return "injectionStream"; }

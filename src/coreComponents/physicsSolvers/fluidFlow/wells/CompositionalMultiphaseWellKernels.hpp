@@ -757,15 +757,15 @@ public:
         }
         else // Type::INJECTOR, only TOTALVOLRATE is supported for now
         {
-           if( m_currentControl == WellControls::Control::MASSRATE )
-           {    
-              normalizer = m_dt * LvArray::math::abs( m_targetMassRate ) ;
-           }
-           else
-           {
-              // the residual is in mass units
-              normalizer = m_dt * LvArray::math::abs( m_targetTotalRate ) * m_totalDens_n[iwelem][0];
-           }
+          if( m_currentControl == WellControls::Control::MASSRATE )
+          {
+            normalizer = m_dt * LvArray::math::abs( m_targetMassRate );
+          }
+          else
+          {
+            // the residual is in mass units
+            normalizer = m_dt * LvArray::math::abs( m_targetTotalRate ) * m_totalDens_n[iwelem][0];
+          }
 
         }
 
@@ -782,7 +782,7 @@ public:
         }
         else // Type::INJECTOR, only TOTALVOLRATE is supported for now
         {
-          if(  m_currentControl == WellControls::Control::MASSRATE )
+          if( m_currentControl == WellControls::Control::MASSRATE )
           {
             normalizer = m_dt * LvArray::math::abs( m_targetMassRate/  m_totalDens_n[iwelem][0] );
           }
@@ -790,7 +790,7 @@ public:
           {
             normalizer = m_dt * LvArray::math::abs( m_targetTotalRate );
           }
-          
+
         }
 
         // to make sure that everything still works well if the rate is zero, we add this check

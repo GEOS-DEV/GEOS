@@ -36,7 +36,7 @@ WellControls::WellControls( string const & name, Group * const parent )
   m_targetBHP( 0.0 ),
   m_targetTotalRate( 0.0 ),
   m_targetPhaseRate( 0.0 ),
-  m_targetMassRate(0.0),
+  m_targetMassRate( 0.0 ),
   m_useSurfaceConditions( 0 ),
   m_surfacePres( 0.0 ),
   m_surfaceTemp( 0.0 ),
@@ -324,7 +324,7 @@ void WellControls::postProcessInput()
                  InputError );
 
   GEOS_THROW_IF( ((m_targetMassRate > 0.0 &&  m_useSurfaceConditions)),
-                "WellControls " << getDataContext() << ": Option only valid if useSurfaceConditions set to 1",
+                 "WellControls " << getDataContext() << ": Option only valid if useSurfaceConditions set to 1",
                  InputError );
 
   // 6.1) If the well is under BHP control then the BHP must be specified.
@@ -463,8 +463,8 @@ void WellControls::postProcessInput()
 bool WellControls::isWellOpen( real64 const & currentTime ) const
 {
   bool isOpen = true;
-  if( isZero( getTargetTotalRate( currentTime ) ) && isZero( getTargetPhaseRate( currentTime ) ) 
-            && isZero( getTargetMassRate( currentTime ) ))
+  if( isZero( getTargetTotalRate( currentTime ) ) && isZero( getTargetPhaseRate( currentTime ) )
+      && isZero( getTargetMassRate( currentTime ) ))
   {
     isOpen = false;
   }

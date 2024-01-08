@@ -103,17 +103,17 @@ ControlEquationHelper::
     }
     else
     {
-      if ( isZero(targetMassRate) ) 
+      if( isZero( targetMassRate ) )
       {
         newControl = ( currentControl == WellControls::Control::BHP )
                   ? WellControls::Control::TOTALVOLRATE
                   : WellControls::Control::BHP;
-      } 
+      }
       else
       {
         newControl = ( currentControl == WellControls::Control::BHP )
                   ? WellControls::Control::MASSRATE
-                  : WellControls::Control::BHP;        
+                  : WellControls::Control::BHP;
       }
     }
   }
@@ -191,7 +191,7 @@ ControlEquationHelper::
     }
   }
   // Total volumetric rate control
-  else if( currentControl == WellControls::Control::TOTALVOLRATE   )
+  else if( currentControl == WellControls::Control::TOTALVOLRATE )
   {
     controlEqn = currentTotalVolRate - targetTotalRate;
     dControlEqn_dPres = dCurrentTotalVolRate_dPres;
@@ -201,7 +201,7 @@ ControlEquationHelper::
       dControlEqn_dComp[ic] = dCurrentTotalVolRate_dCompDens[ic];
     }
   }
-    // Total mass rate control
+  // Total mass rate control
   else if( currentControl == WellControls::Control::MASSRATE )
   {
     controlEqn = massDensity*currentTotalVolRate - targetMassRate;
@@ -1790,7 +1790,7 @@ RateInitializationKernel::
       }
       else
       {
-        if ( isZero(targetMassRate) )
+        if( isZero( targetMassRate ) )
         {
           connRate[iwelem] = LvArray::math::min( 0.1 * targetTotalRate * totalDens[iwelem][0], 1e3 );
         }
@@ -1798,7 +1798,7 @@ RateInitializationKernel::
         {
           connRate[iwelem] = targetMassRate;
         }
-         
+
       }
     }
     else if( control == WellControls::Control::MASSRATE )
@@ -1806,7 +1806,7 @@ RateInitializationKernel::
       connRate[iwelem] = targetMassRate;
       connRate[iwelem] = targetMassRate* totalDens[iwelem][0];
     }
-    else 
+    else
     {
       if( isProducer )
       {
