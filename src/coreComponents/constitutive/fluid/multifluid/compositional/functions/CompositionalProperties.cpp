@@ -50,7 +50,7 @@ void CompositionalProperties::computeMolarDensity( integer const numComps,
 
   for( integer ic = 0; ic < numComps; ++ic )
   {
-    vCorrected += composition[ic] * volumeShift[ic];
+    vCorrected -= composition[ic] * volumeShift[ic];
   }
 
   if( MultiFluidConstants::epsilon < vCorrected )
@@ -79,7 +79,7 @@ void CompositionalProperties::computeMolarDensity( integer const numComps,
   for( integer ic = 0; ic < numComps; ++ic )
   {
     integer const kc = Deriv::dC + ic;
-    dvCorrected_dx = constants::gasConstant * temperature * compressibilityFactorDerivs[kc] / pressure + volumeShift[ic];
+    dvCorrected_dx = constants::gasConstant * temperature * compressibilityFactorDerivs[kc] / pressure - volumeShift[ic];
     molarDensityDerivs[kc] = -molarDensity * molarDensity * dvCorrected_dx;
   }
 }
