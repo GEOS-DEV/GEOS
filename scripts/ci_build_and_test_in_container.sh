@@ -214,7 +214,6 @@ else
 fi
 
 if [[ "$*" == *--code-coverage* ]]; then
-  or_die ninja -j $(nproc)
   or_die ninja coreComponents_coverage
   cp -r ${GEOSX_BUILD_DIR}/coreComponents_coverage.info.cleaned /tmp/geos/geos_coverage.info.cleaned
 fi

@@ -196,8 +196,9 @@ jobs:
     uses: ./.github/workflows/build_and_test.yml
     secrets: inherit
     with:
-      BUILD_AND_TEST_CLI_ARGS: --code-coverage
+      BUILD_AND_TEST_CLI_ARGS: "--code-coverage --no-run-unit-tests"
       CMAKE_BUILD_TYPE: Debug
+      CODE_COVERAGE: true
       DOCKER_IMAGE_TAG: ${{ needs.is_pull_request_a_draft.outputs.DOCKER_IMAGE_TAG }}
       DOCKER_REPOSITORY: geosx/ubuntu22.04-gcc11
       ENABLE_HYPRE: ON

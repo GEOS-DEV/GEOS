@@ -152,8 +152,8 @@ jobs:
             echo "Download the bundle at https://storage.googleapis.com/${{ inputs.GCP_BUCKET }}/${DATA_BASENAME}"
           fi
         fi
-        
         exit ${EXIT_STATUS}
+
     - name: Upload coverage to Codecov
       if: inputs.CODE_COVERAGE
       uses: codecov/codecov-action@v3
