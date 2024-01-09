@@ -268,7 +268,7 @@ CompositionalMultiphaseFluidUpdates< FLASH, PHASE1, PHASE2, PHASE3 >::compute(
         phaseMolecularWeight[ip] += phaseComposition[ic] * componentMolarWeight[ic];
         for( integer kc = 0; kc < numDof; ++kc )
         {
-          dPhaseMolecularWeight[ip][kc] += dPhaseComposition( ic, kc ) * componentMolarWeight[ic];;
+          dPhaseMolecularWeight[ip][kc] += dPhaseComposition( ic, kc ) * componentMolarWeight[ic];
         }
       }
     }

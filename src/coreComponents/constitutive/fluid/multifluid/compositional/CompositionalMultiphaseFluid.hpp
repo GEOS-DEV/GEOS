@@ -139,14 +139,14 @@ private:
   array2d< real64 > m_componentBinaryCoeff;
 };
 
-using CompositionalTwoPhasePengRobinsonConstantViscosity =  CompositionalMultiphaseFluid<
+using CompositionalTwoPhasePengRobinsonConstantViscosity = CompositionalMultiphaseFluid<
   compositional::NegativeTwoPhaseFlashPRPR,
-  compositional::PhaseModel< compositional::CompositionalDensity, compositional::ConstantViscosity, compositional::NullModel >,
-  compositional::PhaseModel< compositional::CompositionalDensity, compositional::ConstantViscosity, compositional::NullModel > >;
-using CompositionalTwoPhaseSoaveRedlichKwongConstantViscosity =  CompositionalMultiphaseFluid<
+  compositional::PhaseModel< compositional::CompositionalDensity< compositional::CubicEOSPR >, compositional::ConstantViscosity, compositional::NullModel >,
+  compositional::PhaseModel< compositional::CompositionalDensity< compositional::CubicEOSPR >, compositional::ConstantViscosity, compositional::NullModel > >;
+using CompositionalTwoPhaseSoaveRedlichKwongConstantViscosity = CompositionalMultiphaseFluid<
   compositional::NegativeTwoPhaseFlashSRKSRK,
-  compositional::PhaseModel< compositional::CompositionalDensity, compositional::ConstantViscosity, compositional::NullModel >,
-  compositional::PhaseModel< compositional::CompositionalDensity, compositional::ConstantViscosity, compositional::NullModel > >;
+  compositional::PhaseModel< compositional::CompositionalDensity< compositional::CubicEOSSRK >, compositional::ConstantViscosity, compositional::NullModel >,
+  compositional::PhaseModel< compositional::CompositionalDensity< compositional::CubicEOSSRK >, compositional::ConstantViscosity, compositional::NullModel > >;
 
 } /* namespace constitutive */
 

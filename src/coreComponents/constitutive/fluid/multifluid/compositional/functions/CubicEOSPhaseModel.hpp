@@ -124,6 +124,40 @@ public:
                                   arraySlice2d< real64 > const & logFugacityCoefficientDerivs );
 
   /**
+   * @brief Compute compressibility factor for the cubic EOS model
+   * @details Computes the compressibility factor (z-factor) for the cubic EOS model including derivatives
+   * @param[in] numComps number of components
+   * @param[in] pressure pressure
+   * @param[in] temperature temperature
+   * @param[in] composition composition of the phase
+   * @param[in] componentProperties The compositional component properties
+   * @param[out] compressibilityFactor the current compressibility factor
+   * @param[out] compressibilityFactorDerivs derivatives of the compressibility factor
+   */
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
+  static void
+  computeCompressibilityFactor( integer const numComps,
+                                real64 const & pressure,
+                                real64 const & temperature,
+                                arraySlice1d< real64 const > const & composition,
+                                ComponentProperties::KernelWrapper const & componentProperties,
+                                real64 & compressibilityFactor,
+                                arraySlice1d< real64 > const & compressibilityFactorDerivs );
+
+  /**
+   * @brief Calculate the dimensional volume shift
+   * @details Computes the dimensional form of the volume shifts given the user defined non-dimensional form.
+   * @param[in] numComps The number of components
+   * @param[in] componentProperties The compositional model properties
+   * @param[out] dimensionalVolumeShift The calculated dimensional volume shifts
+   */
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
+  static void calculateDimensionalVolumeShift( ComponentProperties const & componentProperties,
+                                               arraySlice1d< real64 > const & dimensionalVolumeShift );
+
+  /**
    * @brief Calculate the pure coefficients
    * @details Computes the pure coefficients
    * @param[in] ic Component index
@@ -529,6 +563,95 @@ template< typename EOS_TYPE >
 GEOS_HOST_DEVICE
 void
 CubicEOSPhaseModel< EOS_TYPE >::
+computeCompressibilityFactor( integer const numComps,
+                              real64 const & pressure,
+                              real64 const & temperature,
+                              arraySlice1d< real64 const > const & composition,
+                              ComponentProperties::KernelWrapper const & componentProperties,
+                              real64 & compressibilityFactor,
+                              arraySlice1d< real64 > const & compressibilityFactorDerivs )
+{
+  // step 0: allocate the stack memory needed for the update
+  integer constexpr numMaxComps = MultiFluidConstants::MAX_NUM_COMPONENTS;
+  integer constexpr numMaxDofs = MultiFluidConstants::MAX_NUM_COMPONENTS + 2;
+  integer const numDofs = 2 + numComps;
+
+  stackArray1d< real64, numMaxComps > aPureCoefficient( numComps );
+  stackArray1d< real64, numMaxComps > bPureCoefficient( numComps );
+  real64 aMixtureCoefficient = 0.0;
+  real64 bMixtureCoefficient = 0.0;
+  stackArray1d< real64, numMaxDofs > aMixtureCoefficientDerivs( numDofs );
+  stackArray1d< real64, numMaxDofs > bMixtureCoefficientDerivs( numDofs );
+
+  arraySlice2d< real64 const > const & binaryInteractionCoefficients = componentProperties.m_componentBinaryCoeff;
+
+  // step 1: compute the mixture coefficients aPureCoefficient, bPureCoefficient, aMixtureCoefficient, bMixtureCoefficient
+  // 1.1: Compute the pure and mixture coefficients
+  computeMixtureCoefficients( numComps, // number of components
+                              pressure, // cell input
+                              temperature,
+                              composition,
+                              componentProperties, // user input,
+                              aPureCoefficient, // output
+                              bPureCoefficient,
+                              aMixtureCoefficient,
+                              bMixtureCoefficient );
+
+  // 1.2: Compute mixture coefficient derivatives
+  computeMixtureCoefficients( numComps,
+                              pressure,
+                              temperature,
+                              composition,
+                              componentProperties,
+                              aPureCoefficient,
+                              bPureCoefficient,
+                              aMixtureCoefficient,
+                              bMixtureCoefficient,
+                              aMixtureCoefficientDerivs,
+                              bMixtureCoefficientDerivs );
+
+  // 2.1: Update the compressibility factor
+  computeCompressibilityFactor( numComps, // number of components
+                                composition, // cell input
+                                binaryInteractionCoefficients, // user input
+                                aPureCoefficient, // computed by computeMixtureCoefficients
+                                bPureCoefficient,
+                                aMixtureCoefficient,
+                                bMixtureCoefficient,
+                                compressibilityFactor ); // output
+
+  // 2.2: Update the compressibility factor derivatives
+  computeCompressibilityFactor( numComps,
+                                aMixtureCoefficient,
+                                bMixtureCoefficient,
+                                compressibilityFactor,
+                                aMixtureCoefficientDerivs,
+                                bMixtureCoefficientDerivs,
+                                compressibilityFactorDerivs );
+}
+
+template< typename EOS_TYPE >
+GEOS_HOST_DEVICE
+void
+CubicEOSPhaseModel< EOS_TYPE >::
+calculateDimensionalVolumeShift( ComponentProperties const & componentProperties,
+                                 arraySlice1d< real64 > const & dimensionalVolumeShift )
+{
+  integer const numComps = componentProperties.getNumberOfComponents();
+  for( integer ic = 0; ic < numComps; ++ic )
+  {
+    real64 const Vs = componentProperties.getComponentVolumeShift()[ic];
+    real64 const Pc = componentProperties.getComponentCriticalPressure()[ic];
+    real64 const Tc = componentProperties.getComponentCriticalTemperature()[ic];
+    real64 constexpr omegaB = EOS_TYPE::omegaB;
+    dimensionalVolumeShift[ic] = constants::gasConstant * Vs * omegaB * Tc / Pc;
+  }
+}
+
+template< typename EOS_TYPE >
+GEOS_HOST_DEVICE
+void
+CubicEOSPhaseModel< EOS_TYPE >::
 computePureCoefficients( integer const ic,
                          real64 const & pressure,
                          real64 const & temperature,
@@ -539,7 +662,7 @@ computePureCoefficients( integer const ic,
   real64 daCoefficient_dp = 0.0;
   real64 dbCoefficient_dp = 0.0;
   real64 daCoefficient_dt = 0.0;
-  real64 dbCoefficient_dt  = 0.0;
+  real64 dbCoefficient_dt = 0.0;
   computePureCoefficients( ic,
                            pressure,
                            temperature,
@@ -880,6 +1003,9 @@ solveCubicPolynomial( real64 const & m3,
     numRoots = 1;
   }
 }
+
+using CubicEOSPR = CubicEOSPhaseModel< PengRobinsonEOS >;
+using CubicEOSSRK = CubicEOSPhaseModel< SoaveRedlichKwongEOS >;
 
 } // namespace compositional
 
