@@ -156,10 +156,10 @@ fi
 
 if [[ "$*" == *--code-coverage* ]]; then
   apt-get install -y lcov
-  BUILD_COMMAND="make"
+  CMAKE_MAKE_PROGRAM="make"
   NINJA_FLAG=""
 else
-  BUILD_COMMAND="ninja"
+  CMAKE_MAKE_PROGRAM="ninja"
   NINJA_FLAG="--ninja"
 fi
 
@@ -208,10 +208,10 @@ fi
 
 # Performing the requested build.
 if [[ "${BUILD_EXE_ONLY}" = true ]]; then
-  or_die ${BUILD_COMMAND} -j $(nproc) geosx
+  or_die ${CMAKE_MAKE_PROGRAM} -j $(nproc) geosx
 else
-  or_die ${BUILD_COMMAND} -j $(nproc)
-  or_die ${BUILD_COMMAND} install
+  or_die ${CMAKE_MAKE_PROGRAM} -j $(nproc)
+  or_die ${CMAKE_MAKE_PROGRAM} install
 
   if [[ ! -z "${DATA_BASENAME_WE}" ]]; then
     # Here we pack the installation.
@@ -221,7 +221,7 @@ else
 fi
 
 if [[ "$*" == *--code-coverage* ]]; then
-  or_die ${BUILD_COMMAND} coreComponents_coverage
+  or_die ${CMAKE_MAKE_PROGRAM} coreComponents_coverage
   cp -r ${GEOSX_BUILD_DIR}/coreComponents_coverage.info.cleaned /tmp/geos/geos_coverage.info.cleaned
 fi
 
@@ -232,7 +232,7 @@ fi
 
 if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
   # We split the process in two steps. First installing the environment, then running the tests.
-  or_die ${BUILD_COMMAND} ats_environment
+  or_die ${CMAKE_MAKE_PROGRAM} ats_environment
   # The tests are not run using ninja (`ninja --verbose ats_run`) because it swallows the output while all the simulations are running.
   # We directly use the script instead...
   # Temporarily, we are not adding the `--failIfTestsFail` options to `geos_ats.sh`.
