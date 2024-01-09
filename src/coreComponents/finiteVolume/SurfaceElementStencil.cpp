@@ -17,6 +17,7 @@
  */
 
 #include "SurfaceElementStencil.hpp"
+#include "StencilBase.hpp"
 
 namespace geos
 {
@@ -110,8 +111,7 @@ SurfaceElementStencilWrapper::
                         elementSubRegionIndices,
                         elementIndices,
                         weights ),
-  m_cellCenterToEdgeCenters( cellCenterToEdgeCenters.toView() ),
-  m_meanPermCoefficient( meanPermCoefficient )
+  m_cellCenterToEdgeCenters( cellCenterToEdgeCenters.toView() )
 {}
 
 } /* namespace geos */

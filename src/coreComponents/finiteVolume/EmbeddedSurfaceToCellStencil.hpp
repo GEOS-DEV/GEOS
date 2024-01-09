@@ -32,8 +32,8 @@ class EmbeddedSurfaceToCellStencilWrapper : public StencilWrapperBase< TwoPointS
 public:
 
   /// Coefficient view accessory type
-  template< typename VIEWTYPE >
-  using CoefficientAccessor = ElementRegionManager::ElementViewConst< VIEWTYPE >;
+//  template< typename VIEWTYPE >
+//  using CoefficientAccessor = ElementRegionManager::ElementViewConst< VIEWTYPE >;
 
   /**
    * @brief Constructor
@@ -82,8 +82,6 @@ public:
     return maxNumPointsInFlux;
   }
 
-
-
   /**
    * @brief Compute weigths and derivatives w.r.t to one variable.
    * @param[in] iconn connection index
@@ -94,13 +92,13 @@ public:
    * @param[out] dWeight_dVar derivative of the weigths w.r.t to the variable
    */
 
-  GEOS_HOST_DEVICE
+/*  GEOS_HOST_DEVICE
   void computeWeights( localIndex const iconn,
                        localIndex const ip,
                        CoefficientAccessor< arrayView4d< real64 const > > const & coefficient,
                        CoefficientAccessor< arrayView4d< real64 const > > const & dCoeff_dVar,
                        real64 ( &weight )[1][2],
-                       real64 ( &dWeight_dVar )[1][2] ) const;
+                       real64 ( &dWeight_dVar )[1][2] ) const;*/
 
   /**
    * @brief Compute weigths and derivatives w.r.t to one variable.
@@ -110,12 +108,15 @@ public:
    * @param[out] weight view weights
    * @param[out] dWeight_dVar derivative of the weigths w.r.t to the variable
    */
-  GEOS_HOST_DEVICE
+/*  GEOS_HOST_DEVICE
   void computeWeights( localIndex const iconn,
                        CoefficientAccessor< arrayView3d< real64 const > > const & coefficient,
                        CoefficientAccessor< arrayView3d< real64 const > > const & dCoeff_dVar,
                        real64 ( &weight )[1][2],
-                       real64 ( &dWeight_dVar )[1][2] ) const;
+                       real64 ( &dWeight_dVar )[1][2] ) const;*/
+
+    using StencilWrapperBase<TwoPointStencilTraits>::computeWeights;
+
   /**
    * @brief Compute weigths and derivatives w.r.t to one variable without coefficient
    * Used in ReactiveCompositionalMultiphaseOBL solver for thermal transmissibility computation:
@@ -199,22 +200,22 @@ public:
 
 private:
 
-  GEOS_HOST_DEVICE
+/*  GEOS_HOST_DEVICE
   inline void
-    averageWeights( localIndex const iconn,
+    averageWeights2(localIndex const iconn,
                     real64 const ( &halfWeight )[2],
                     real64 const ( &dHalfWeight_dVar )[2][2],
                     real64 ( &weight )[1][2],
                     real64 ( &dWeight_dVar1 )[1][2],
-                    real64 ( &dWeight_dVar2 )[1][2] ) const;
+                    real64 ( &dWeight_dVar2 )[1][2] ) const;*/
 
-  GEOS_HOST_DEVICE
+/*  GEOS_HOST_DEVICE
   inline void
     averageWeights( localIndex const iconn,
                     real64 const ( &halfWeight )[2],
                     real64 const ( &dHalfWeight_dVar )[2],
                     real64 ( &weight )[1][2],
-                    real64 ( &dWeight_dVar )[1][2] ) const;
+                    real64 ( &dWeight_dVar )[1][2] ) const;*/
 
   GEOS_HOST_DEVICE
   inline void
@@ -229,11 +230,12 @@ private:
   GEOS_HOST_DEVICE
   inline void
     computeWeightsBase( localIndex const iconn,
+                        localIndex const (&k)[2],
                         localIndex const ielem,
                         arraySlice3d< real64 const >  const & coefficient,
                         arraySlice3d< real64 const >  const & dCoeff_dVar,
                         real64 &halfWeight,
-                        real64 ( &dHalfWeight_dVar ) ) const;
+                        real64 &dHalfWeight_dVar ) const override;
 };
 
 /**
@@ -279,11 +281,11 @@ public:
     return maxStencilSize;
   }
 
-private:
+
 
 };
 
-GEOS_HOST_DEVICE
+/*GEOS_HOST_DEVICE
 inline void
 EmbeddedSurfaceToCellStencilWrapper::
   computeWeights( localIndex iconn,
@@ -303,10 +305,10 @@ EmbeddedSurfaceToCellStencilWrapper::
     computeWeightsBase( iconn, ielem, coefficient[er][esr], dCoeff_dVar[er][esr], halfWeight[ielem], dHalfWeight_dVar[ielem] );
   }
 
-  averageWeights( iconn, halfWeight, dHalfWeight_dVar, weight, dWeight_dVar );
-}
+    averageWeights(iconn, 0*//*connexionIndex*//*, halfWeight, dHalfWeight_dVar, weight, dWeight_dVar, 1.0 *//*avgCoeff*//* );
+}*/
 
-GEOS_HOST_DEVICE
+/*GEOS_HOST_DEVICE
 inline void
 EmbeddedSurfaceToCellStencilWrapper::computeWeights( const geos::localIndex iconn, const geos::localIndex ip,
                                                      const CoefficientAccessor< arrayView4d< const geos::real64 > > & coefficient,
@@ -345,8 +347,8 @@ EmbeddedSurfaceToCellStencilWrapper::computeWeights( const geos::localIndex icon
 
   }
 
-  averageWeights( iconn, halfWeight, dHalfWeight_dVar, weight, dWeight_dVar );
-}
+    averageWeights(iconn, 0*//*connexionIndex*//*,halfWeight, dHalfWeight_dVar, weight, dWeight_dVar, 1.*//*avgCoeff*//*);
+}*/
 
 GEOS_HOST_DEVICE
 inline void
@@ -413,7 +415,7 @@ EmbeddedSurfaceToCellStencilWrapper::
 
   }
 
-  averageWeights( iconn, halfWeight, dHalfWeight_dVar, weight, dWeight_dVar1, dWeight_dVar2 );
+    averageWeights(iconn,0/*connexionIndex*/, halfWeight, dHalfWeight_dVar, weight, dWeight_dVar1, dWeight_dVar2, 1.0/*avgCoeff*/);
 
 }
 
@@ -440,7 +442,7 @@ EmbeddedSurfaceToCellStencilWrapper::
     computeWeightsBase( iconn, ielem, coefficient[er][esr], dCoeff_dVar1[er][esr], dCoeff_dVar2[er][esr], halfWeight[ielem], dHalfWeight_dVar[ielem] );
   }
 
-  averageWeights( iconn, halfWeight, dHalfWeight_dVar, weight, dWeight_dVar1, dWeight_dVar2 );
+    averageWeights(iconn,/*connexionIndex*/ 0, halfWeight, dHalfWeight_dVar, weight, dWeight_dVar1, dWeight_dVar2, 1.0 /*avgCoeff*/);
 }
 
 GEOS_HOST_DEVICE
@@ -477,11 +479,12 @@ EmbeddedSurfaceToCellStencilWrapper::computeWeightsBase( localIndex const iconn,
 GEOS_HOST_DEVICE
 inline void
 EmbeddedSurfaceToCellStencilWrapper::computeWeightsBase( localIndex const iconn,
+                                                         localIndex const (&k)[2],
                                                          localIndex const ielem,
                                                          arraySlice3d< real64 const > const & coefficient,
                                                          arraySlice3d< real64 const > const & dCoeff_dVar,
                                                          real64 & halfWeight,
-                                                         real64 (&dHalfWeight_dVar) ) const
+                                                         real64 &dHalfWeight_dVar ) const
 {
 
 
@@ -503,9 +506,9 @@ EmbeddedSurfaceToCellStencilWrapper::computeWeightsBase( localIndex const iconn,
 }
 
 
-GEOS_HOST_DEVICE
+/*GEOS_HOST_DEVICE
 inline void
-EmbeddedSurfaceToCellStencilWrapper::averageWeights( localIndex const iconn,
+EmbeddedSurfaceToCellStencilWrapper::averageWeights2(localIndex const iconn,
                                                      real64 const ( &halfWeight )[2],
                                                      real64 const ( &dHalfWeight_dVar )[2][2],
                                                      real64 ( & weight )[1][2],
@@ -529,8 +532,9 @@ EmbeddedSurfaceToCellStencilWrapper::averageWeights( localIndex const iconn,
 
   dWeight_dVar2[0][0] = ( dHalfWeight_dVar[0][1] * halfWeight[1] * sumOfTrans - dHalfWeight_dVar[0][1] * halfWeight[0] * halfWeight[1] ) / ( sumOfTrans * sumOfTrans );
   dWeight_dVar2[0][1] = ( halfWeight[0] * dHalfWeight_dVar[1][1] * sumOfTrans - dHalfWeight_dVar[1][1] * halfWeight[0] * halfWeight[1] ) / ( sumOfTrans * sumOfTrans );
-}
+}*/
 
+/*
 GEOS_HOST_DEVICE
 inline void
 EmbeddedSurfaceToCellStencilWrapper::averageWeights( localIndex const iconn,
@@ -555,6 +559,7 @@ EmbeddedSurfaceToCellStencilWrapper::averageWeights( localIndex const iconn,
   dWeight_dVar[0][1] = ( halfWeight[0] * dHalfWeight_dVar[1] * sumOfTrans - dHalfWeight_dVar[1] * halfWeight[0] * halfWeight[1] ) / ( sumOfTrans * sumOfTrans );
 
 }
+*/
 
 GEOS_HOST_DEVICE
 inline void

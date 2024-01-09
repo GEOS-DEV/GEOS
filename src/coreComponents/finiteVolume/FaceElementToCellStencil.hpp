@@ -32,8 +32,8 @@ class FaceElementToCellStencilWrapper : public StencilWrapperBase< TwoPointStenc
 public:
 
   /// Coefficient view accessory type
-  template< typename VIEWTYPE >
-  using CoefficientAccessor = ElementRegionManager::ElementViewConst< VIEWTYPE >;
+//  template< typename VIEWTYPE >
+//  using CoefficientAccessor = ElementRegionManager::ElementViewConst< VIEWTYPE >;
 
   /**
    * @brief Constructor
@@ -216,32 +216,24 @@ private:
   /// Transmissibility multiplier
   arrayView1d< real64 > m_transMultiplier;
 
-
-  GEOS_HOST_DEVICE
+/*  GEOS_HOST_DEVICE
   void
-    averageWeights( localIndex const iconn, const real64 ( &halfWeight )[2],
+    averageWeights( localIndex const iconn,
+                    const real64 ( &halfWeight )[2],
                     const real64 ( &dHalfWeight_dVar )[2],
                     real64 ( &weight )[1][2],
-                    real64 ( &dWeight_dVar )[1][2] ) const;
+                    real64 ( &dWeight_dVar )[1][2] ) const;*/
 
-  GEOS_HOST_DEVICE
-  inline void
-    averageWeights( localIndex const iconn,
-                    real64 const (&halfWeight)[2],
-                    real64 const (&dHalfWeight_dVar)[2][2],
-                    real64 ( &weight )[1][2],
-                    real64 ( &dWeight_dVar1 )[1][2],
-                    real64 ( &dWeight_dVar2 )[1][2]
-                    ) const;
 
   GEOS_HOST_DEVICE
   void
   computeWeightsBase( localIndex const iconn,
+                      localIndex const (&k)[2],
                       localIndex const icell,
                       arraySlice3d< real64 const > const & coefficient,
                       arraySlice3d< real64 const > const & dCoeff_dVar,
                       real64 & halfWeight,
-                      real64 & dHalfWeight_dVar ) const;
+                      real64 & dHalfWeight_dVar ) const override;
 
   GEOS_HOST_DEVICE
   void
@@ -331,6 +323,7 @@ private:
 GEOS_HOST_DEVICE
 inline void
 FaceElementToCellStencilWrapper::computeWeightsBase( localIndex const iconn,
+                                                     localIndex const (&k)[2],
                                                      localIndex const ielem,
                                                      arraySlice3d< real64 const > const & coefficient,
                                                      arraySlice3d< real64 const > const & dCoeff_dVar,
@@ -373,27 +366,26 @@ FaceElementToCellStencilWrapper::computeWeightsBase( localIndex const iconn,
 
 
   localIndex const ei = m_elementIndices[iconn][ielem];
-
   if( ielem == 0 )
   {
     real64 faceConormal[3];
     LvArray::tensorOps::hadamardProduct< 3 >( faceConormal, coefficient[ei][0], m_faceNormal[iconn] );
     // Will change when implementing collocation points. Will use fracture normal to project the permeability
-    halfWeight = m_weights[iconn][0] * LvArray::tensorOps::AiBi< 3 >( m_cellToFaceVec[iconn], faceConormal );
-    dHalfWeight_dVar[0] = m_weights[iconn][0] * dCoeff_dVar1[ei][0][0];
-    dHalfWeight_dVar[1] = m_weights[iconn][0] * dCoeff_dVar2[ei][0][0];
+    halfWeight =m_transMultiplier[iconn] * m_weights[iconn][0] * LvArray::tensorOps::AiBi< 3 >( m_cellToFaceVec[iconn], faceConormal );
+    dHalfWeight_dVar[0] = m_transMultiplier[iconn] * m_weights[iconn][0] * dCoeff_dVar1[ei][0][0];
+    dHalfWeight_dVar[1] = m_transMultiplier[iconn] * m_weights[iconn][0] * dCoeff_dVar2[ei][0][0];
   }
   else
   {
     // We consider the 3rd component of the permeability which is the normal one.
-    halfWeight = m_weights[iconn][1] * coefficient[ei][0][2];
-    dHalfWeight_dVar[0] = m_weights[iconn][0] * dCoeff_dVar1[ei][0][2];
-    dHalfWeight_dVar[1] = m_weights[iconn][0] * dCoeff_dVar2[ei][0][2];
+    halfWeight = m_transMultiplier[iconn] * m_weights[iconn][1] * coefficient[ei][0][2];
+    dHalfWeight_dVar[0] = m_transMultiplier[iconn] * m_weights[iconn][0] * dCoeff_dVar1[ei][0][2];
+    dHalfWeight_dVar[1] = m_transMultiplier[iconn] * m_weights[iconn][0] * dCoeff_dVar2[ei][0][2];
   }
 
 }
 
-GEOS_HOST_DEVICE
+/*GEOS_HOST_DEVICE
 inline void
 FaceElementToCellStencilWrapper::averageWeights( localIndex const iconn,
                                                  real64 const (&halfWeight)[2],
@@ -403,50 +395,21 @@ FaceElementToCellStencilWrapper::averageWeights( localIndex const iconn,
 {
 
   real64 const sumOfTrans = halfWeight[0] + halfWeight[1];
-  real64 const value = m_transMultiplier[iconn] * halfWeight[0] * halfWeight[1] / sumOfTrans;
+  real64 const value = halfWeight[0] * halfWeight[1] / sumOfTrans;
 
   weight[0][0] = value;
   weight[0][1] = -value;
-
 
   dWeight_dVar[0][0] =
     (dHalfWeight_dVar[0] * halfWeight[1] * sumOfTrans - dHalfWeight_dVar[0] * halfWeight[0] * halfWeight[1]) / (sumOfTrans * sumOfTrans);
   dWeight_dVar[0][1] =
     (halfWeight[0] * dHalfWeight_dVar[1] * sumOfTrans - dHalfWeight_dVar[1] * halfWeight[0] * halfWeight[1]) / (sumOfTrans * sumOfTrans);
-}
-GEOS_HOST_DEVICE
+}*/
+
+
+    GEOS_HOST_DEVICE
 inline void
-FaceElementToCellStencilWrapper::averageWeights( localIndex const iconn,
-                                                 real64 const (&halfWeight)[2],
-                                                 real64 const (&dHalfWeight_dVar)[2][2],
-                                                 real64 (& weight)[1][2],
-                                                 real64 (& dWeight_dVar1)[1][2],
-                                                 real64 (& dWeight_dVar2)[1][2]
-                                                 ) const
-{
-
-  real64 const sumOfTrans = halfWeight[0] + halfWeight[1];
-  real64 const value = m_transMultiplier[iconn] * halfWeight[0] * halfWeight[1] / sumOfTrans;
-
-  weight[0][0] = value;
-  weight[0][1] = -value;
-
-
-  dWeight_dVar1[0][0] =
-    (dHalfWeight_dVar[0][0] * halfWeight[1] * sumOfTrans - dHalfWeight_dVar[0][0] * halfWeight[0] * halfWeight[1]) / (sumOfTrans * sumOfTrans);
-  dWeight_dVar1[0][1] =
-    (halfWeight[0] * dHalfWeight_dVar[1][0] * sumOfTrans - dHalfWeight_dVar[1][0] * halfWeight[0] * halfWeight[1]) / (sumOfTrans * sumOfTrans);
-
-  dWeight_dVar2[0][0] =
-    (dHalfWeight_dVar[0][1] * halfWeight[1] * sumOfTrans - dHalfWeight_dVar[0][1] * halfWeight[0] * halfWeight[1]) / (sumOfTrans * sumOfTrans);
-  dWeight_dVar2[0][1] =
-    (halfWeight[0] * dHalfWeight_dVar[1][1] * sumOfTrans - dHalfWeight_dVar[1][1] * halfWeight[0] * halfWeight[1]) / (sumOfTrans * sumOfTrans);
-}
-
-GEOS_HOST_DEVICE
-inline void
-FaceElementToCellStencilWrapper
-  ::computeWeights( localIndex iconn,
+FaceElementToCellStencilWrapper::computeWeights( localIndex iconn,
                     real64 ( & weight )[1][2],
                     real64 ( & dWeight_dVar )[1][2] ) const
 {
@@ -464,6 +427,7 @@ FaceElementToCellStencilWrapper
   dWeight_dVar[0][0] = 0.0;
   dWeight_dVar[0][1] = 0.0;
 }
+
 GEOS_HOST_DEVICE
 inline void FaceElementToCellStencilWrapper::
   computeWeights( localIndex const iconn,
@@ -481,10 +445,11 @@ inline void FaceElementToCellStencilWrapper::
 
     localIndex const er = m_elementRegionIndices[iconn][ielem];
     localIndex const esr = m_elementSubRegionIndices[iconn][ielem];
-    computeWeightsBase( iconn, ielem, coefficient[er][esr], dCoeff_dVar[er][esr], halfWeight[ielem], dHalfWeight_dVar[ielem] );
+    computeWeightsBase( iconn,{0,1}, ielem, coefficient[er][esr], dCoeff_dVar[er][esr], halfWeight[ielem], dHalfWeight_dVar[ielem] );
   }
 
-  averageWeights( iconn, halfWeight, dHalfWeight_dVar, weight, dWeight_dVar );
+    averageWeights(iconn, 0/*connexionIndex*/, halfWeight, dHalfWeight_dVar, weight, dWeight_dVar,
+                    0.5/*avgCoeff*/ );
 
 }
 
@@ -510,7 +475,7 @@ FaceElementToCellStencilWrapper::
                         halfWeight[ielem], dHalfWeight_dVar[ielem] );
   }
 
-  averageWeights( iconn, halfWeight, dHalfWeight_dVar, weight, dWeight_dVar1, dWeight_dVar2 );
+    averageWeights(iconn, 0/*connexionIndex*/, halfWeight, dHalfWeight_dVar, weight, dWeight_dVar1, dWeight_dVar2, 1 /*avgCoeff*/);
 }
 
 GEOS_HOST_DEVICE
@@ -548,11 +513,11 @@ FaceElementToCellStencilWrapper::computeWeights( const localIndex iconn,
     ArrayView< real64 const, 4 > coeffSwapped( dims, strides, 0, coeffNested.dataBuffer());
     ArrayView< real64 const, 4 > dCoeffSwapped_dVar1( dims, strides, 0, dCoeffNested_dVar.dataBuffer());
 
-    computeWeightsBase( iconn, ielem, coeffSwapped[ip], dCoeffSwapped_dVar1[ip], halfWeight[ielem], dHalfWeight_dVar[ielem] );
+    computeWeightsBase( iconn, {0,1},  ielem, coeffSwapped[ip], dCoeffSwapped_dVar1[ip], halfWeight[ielem], dHalfWeight_dVar[ielem] );
 
   }
 
-  averageWeights( iconn, halfWeight, dHalfWeight_dVar, weight, dWeight_dVar1 );
+    averageWeights(iconn, 0/*connexionIndex*/, halfWeight, dHalfWeight_dVar, weight, dWeight_dVar1, 0.5/*avgCoeff*/);
 
 }
 
@@ -599,7 +564,10 @@ FaceElementToCellStencilWrapper::computeWeights( const localIndex iconn,
 
   }
 
-  averageWeights( iconn, halfWeight, dHalfWeight_dVar, weight, dWeight_dVar1, dWeight_dVar2 );
+    averageWeights(iconn,/*connexionIndex*/0,
+                   halfWeight, dHalfWeight_dVar,
+                   weight, dWeight_dVar1, dWeight_dVar2,
+                   /*avgCoeff*/1.0);
 
 }
 

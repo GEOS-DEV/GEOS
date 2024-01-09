@@ -32,8 +32,8 @@ class BoundaryStencilWrapper : public StencilWrapperBase< TwoPointStencilTraits 
 public:
 
   /// Coefficient view accessory type
-  template< typename VIEWTYPE >
-  using CoefficientAccessor = ElementRegionManager::ElementViewConst< VIEWTYPE >;
+//  template< typename VIEWTYPE >
+//  using CoefficientAccessor = ElementRegionManager::ElementViewConst< VIEWTYPE >;
 
   /**
    * @brief Constructor
@@ -106,6 +106,22 @@ private:
   arrayView2d< real64, nodes::REFERENCE_POSITION_USD > m_faceNormal;
   arrayView2d< real64, nodes::REFERENCE_POSITION_USD > m_cellToFaceVec;
   arrayView1d< real64 > m_weightMultiplier;
+
+  GEOS_HOST_DEVICE
+  virtual void
+  computeWeightsBase( localIndex const iconn,
+                        localIndex const (& k)[2],
+                        localIndex const icell,
+                        arraySlice3d< real64 const > const & coefficient,
+                        arraySlice3d< real64 const >  const & dCoeff_dVar,
+                        real64 & halfWeight,
+                        real64 & dHalfWeight_dVar ) const override
+  {
+      //not using the refactor for now - TODO find a way to fit in the API
+      GEOS_UNUSED_VAR(iconn,k,icell,coefficient,dCoeff_dVar,halfWeight,dHalfWeight_dVar);
+  };
+
+
 };
 
 /**

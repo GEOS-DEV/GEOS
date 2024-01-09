@@ -32,8 +32,8 @@ class CellElementStencilTPFAWrapper : public StencilWrapperBase< TwoPointStencil
 public:
 
   /// Coefficient view accessory type
-  template< typename VIEWTYPE >
-  using CoefficientAccessor = ElementRegionManager::ElementViewConst< VIEWTYPE >;
+//  template< typename VIEWTYPE >
+//  using CoefficientAccessor = ElementRegionManager::ElementViewConst< VIEWTYPE >;
 
   /**
    * @brief Constructor
@@ -65,14 +65,14 @@ public:
    * @param[out] weight view weights
    * @param[out] dWeight_dVar derivative of the weights w.r.t to the variable
    */
-
+/*
   GEOS_HOST_DEVICE
   void computeWeights( localIndex const iconn,
                        localIndex const ip,
                        CoefficientAccessor< arrayView4d< real64 const > > const &coefficient,
                        CoefficientAccessor< arrayView4d< real64 const > > const &dCoeff_dVar,
                        real64 ( &weight )[1][2],
-                       real64 ( &dWeight_dVar )[1][2] ) const;
+                       real64 ( &dWeight_dVar )[1][2] ) const;*/
 
   /**
    * @brief Compute weights and derivatives w.r.t to one variable.
@@ -82,12 +82,15 @@ public:
    * @param[out] weight view weights
    * @param[out] dWeight_dVar derivative of the weights w.r.t to the variable
    */
-  GEOS_HOST_DEVICE
+/*  GEOS_HOST_DEVICE
   void computeWeights( localIndex const iconn,
                        CoefficientAccessor< arrayView3d< real64 const > > const & coefficient,
                        CoefficientAccessor< arrayView3d< real64 const > > const & dCoeff_dVar,
                        real64 ( &weight )[1][2],
-                       real64 ( &dWeight_dVar )[1][2] ) const;
+                       real64 ( &dWeight_dVar )[1][2] ) const;*/
+
+  using StencilWrapperBase<TwoPointStencilTraits>::computeWeights;
+
 
   /**
    * @brief Compute weights and derivatives w.r.t to one variable without coefficient
@@ -146,22 +149,32 @@ public:
     return maxNumPointsInFlux;
   }
 
+protected:
+
+    GEOS_HOST_DEVICE
+    void
+    computeWeightsBase( localIndex const iconn,
+                        localIndex const (& k)[2],
+                        localIndex const icell,
+                        arraySlice3d< real64 const > const & coefficient,
+                        arraySlice3d< real64 const > const & dCoeff_dVar,
+                        real64 & halfWeight,
+                        real64 & dHalfWeight_dVar ) const override;
+
+
 private:
 
   arrayView2d< real64 > m_faceNormal;
   arrayView3d< real64 > m_cellToFaceVec;
   arrayView1d< real64 > m_transMultiplier;
   arrayView1d< real64 > m_geometricStabilizationCoef;
-
+/*
   GEOS_HOST_DEVICE
   void
-    averageWeights( localIndex const iconn, const real64 ( &halfWeight )[2], real64 ( &weight )[1][2], real64 ( &dWeight_dVar )[1][2] ) const;
-
-  GEOS_HOST_DEVICE
-  void
-  computeWeightsBase( localIndex const iconn, localIndex const icell,
-                      arraySlice3d< real64 const > const & coefficient,
-                      real64 & halfWeight ) const;
+    averageWeights( localIndex const iconn,
+                    const real64 ( &halfWeight )[2],
+                    real64 ( &weight )[1][2],
+                    real64 ( &dWeight_dVar )[1][2] ) const;*/
 
 
 };
@@ -241,6 +254,7 @@ private:
   array1d< real64 > m_geometricStabilizationCoef;
 };
 
+/*
 GEOS_HOST_DEVICE
 inline void
 CellElementStencilTPFAWrapper::
@@ -255,6 +269,7 @@ CellElementStencilTPFAWrapper::
   GEOS_UNUSED_VAR( dCoeff_dVar );
 
   real64 halfWeight[2];
+  real64 dHalfWeight[2];
 
 
   // real64 const tolerance = 1e-30 * lengthTolerance; // TODO: choice of constant based on physics?
@@ -275,16 +290,25 @@ CellElementStencilTPFAWrapper::
     dims[3] = coeffNested.dims()[3]; strides[3] = coeffNested.strides()[3];        //direction remain last pos
     ArrayView< real64 const, 4 > coeffSwapped( dims, strides, 0, coeffNested.dataBuffer());
 
-    computeWeightsBase( iconn, i, coeffSwapped[ip], halfWeight[i] );
+    //passing twice coeffSwapped as dCoeff_dVar is for now not implemented and dHalfWeight dropped
+    computeWeightsBase( iconn, {0,1}, i, coeffSwapped[ip], coeffSwapped[ip], halfWeight[i], dHalfWeight[i] );
 
   }
 
   // Do harmonic and arithmetic averaging
-  averageWeights( iconn, halfWeight, weight, dWeight_dVar );
+  averageWeights( iconn, 0*/
+/*connexionIndex*//*
+, halfWeight, dHalfWeight, weight, dWeight_dVar, 0.5*/
+/*avgCoeff*//*
+ );
+  // explicitly unused those
+  dWeight_dVar[0][0] = 0;
+  dWeight_dVar[0][1] = 0;
 
 }
+*/
 
-GEOS_HOST_DEVICE
+/*GEOS_HOST_DEVICE
 inline void
 CellElementStencilTPFAWrapper::averageWeights( localIndex const iconn,
                                                const real64 (& halfWeight)[2],
@@ -308,14 +332,19 @@ CellElementStencilTPFAWrapper::averageWeights( localIndex const iconn,
 
   dWeight_dVar[0][0] = 0.0;
   dWeight_dVar[0][1] = 0.0;
-}
+}*/
 
 GEOS_HOST_DEVICE
 inline void
-CellElementStencilTPFAWrapper::computeWeightsBase( localIndex const iconn, localIndex const icell,
+CellElementStencilTPFAWrapper::computeWeightsBase( localIndex const iconn,
+                                                   localIndex const (& k)[2],
+                                                   localIndex const icell,
                                                    arraySlice3d< real64 const > const & coefficient,
-                                                   real64 & halfWeight ) const
+                                                   arraySlice3d< real64 const > const & dCoeff_dVar,
+                                                   real64 & halfWeight,
+                                                   real64 & dHalfWeight_dVar ) const
 {
+    GEOS_UNUSED_VAR(dCoeff_dVar,dHalfWeight_dVar);
 
   localIndex const ei = m_elementIndices[iconn][icell];
 
@@ -349,7 +378,7 @@ CellElementStencilTPFAWrapper::computeWeightsBase( localIndex const iconn, local
 
 }
 
-GEOS_HOST_DEVICE
+/*GEOS_HOST_DEVICE
 inline void
 CellElementStencilTPFAWrapper::
   computeWeights( localIndex const iconn,
@@ -361,6 +390,7 @@ CellElementStencilTPFAWrapper::
   GEOS_UNUSED_VAR( dCoeff_dVar );
 
   real64 halfWeight[2];
+  real64 dHalfWeight_dVar[2];
 
   // real64 const tolerance = 1e-30 * lengthTolerance; // TODO: choice of constant based on physics?
 
@@ -373,9 +403,9 @@ CellElementStencilTPFAWrapper::
 
   }
 
-  averageWeights( iconn, halfWeight, weight, dWeight_dVar );
+  averageWeights( iconn,0*//*connexionIndex*//*,  halfWeight, dHalfWeight_dVar, weight, dWeight_dVar, 0.5*//*avgCoeff*//* );
 
-}
+}*/
 
 GEOS_HOST_DEVICE
 inline void
@@ -385,6 +415,7 @@ CellElementStencilTPFAWrapper::
                   real64 (& dWeight_dVar )[1][2] ) const
 {
   real64 halfWeight[2];
+  real64 dHalfWeight_dVar[2];
 
   // real64 const tolerance = 1e-30 * lengthTolerance; // TODO: choice of constant based on physics?
 
@@ -416,7 +447,7 @@ CellElementStencilTPFAWrapper::
     }
   }
 
-  averageWeights( iconn, halfWeight, weight, dWeight_dVar );
+  averageWeights( iconn, 0/*connexionIndex*/,halfWeight, dHalfWeight_dVar, weight, dWeight_dVar, 0.5/*avgCoeff*/ );
 
 }
 

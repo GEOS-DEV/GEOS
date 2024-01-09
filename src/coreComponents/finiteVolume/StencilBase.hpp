@@ -13,7 +13,7 @@
  */
 
 /**
- * @file CellElementStencilTPFA.hpp
+ * @file StencilBase.hpp
  */
 
 #ifndef GEOS_FINITEVOLUME_STENCILBASE_HPP_
@@ -78,7 +78,12 @@ using TwoPointStencilTraits = StencilTraits< array2d, 2, 2, 1 >;
 template< typename TRAITS >
 class StencilWrapperBase : public TRAITS
 {
+
 public:
+
+    /// Coefficient view accessory type
+    template< typename VIEWTYPE >
+    using CoefficientAccessor = ElementRegionManager::ElementViewConst< VIEWTYPE >;
 
   /**
    * @brief Constructor
@@ -94,7 +99,8 @@ public:
     m_elementRegionIndices( elementRegionIndices.toViewConst() ),
     m_elementSubRegionIndices( elementSubRegionIndices.toViewConst() ),
     m_elementIndices( elementIndices.toViewConst() ),
-    m_weights( weights.toView() )
+    m_weights( weights.toView() ),
+    m_meanPermCoefficient( 1.0 )//as needed in CellElementStencilTPFA and EmbeddedElementStencil
   {};
 
   /**
@@ -125,6 +131,39 @@ public:
   typename TRAITS::WeightContainerViewConstType
   getWeights() const { return m_weights; }
 
+ /**
+   * @brief Compute weights and derivatives w.r.t to one variable.
+   * @param[in] iconn connection index
+   * @param[in] coefficient view accessor to the coefficient used to compute the weights
+   * @param[in] dCoeff_dVar view accessor to the derivative of the coefficient w.r.t to the variable
+   * @param[out] weight view weights
+   * @param[out] dWeight_dVar derivative of the weights w.r.t to the variable
+   */
+  GEOS_HOST_DEVICE
+    inline void
+    computeWeights( localIndex const iconn,
+                    CoefficientAccessor< arrayView3d< real64 const > > const & coefficient,
+                    CoefficientAccessor< arrayView3d< real64 const > > const & dCoeff_dVar,
+                    real64 (& weight)[TRAITS::maxNumConnections][2],
+                    real64 (& dWeight_dVar )[TRAITS::maxNumConnections][2] ) const;
+
+    /**
+   * @brief Compute weights and derivatives w.r.t to one variable based on phase sliced tensor (e.g. diffusion, dispersion)
+   * @param[in] iconn connection index
+   * @param[in] ip phase index
+   * @param[in] coefficient view accessor to the coefficient used to compute the weights
+   * @param[in] dCoeff_dVar view accessor to the derivative of the coefficient w.r.t to the variable
+   * @param[out] weight view weights
+   * @param[out] dWeight_dVar derivative of the weights w.r.t to the variable
+   */
+
+    GEOS_HOST_DEVICE
+    void computeWeights( localIndex const iconn,
+                         localIndex const ip,
+                         CoefficientAccessor< arrayView4d< real64 const > > const &coefficient,
+                         CoefficientAccessor< arrayView4d< real64 const > > const &dCoeff_dVar,
+                         real64 ( &weight )[TRAITS::maxNumConnections][2],
+                         real64 ( &dWeight_dVar )[TRAITS::maxNumConnections][2] ) const;
 protected:
 
   /// The container for the element region indices for each point in each stencil
@@ -138,9 +177,190 @@ protected:
 
   /// The container for the weights for each point in each stencil
   typename TRAITS::WeightContainerViewType m_weights;
+
+  /// Mean permeability coefficient
+  real64 m_meanPermCoefficient;
+
+  GEOS_HOST_DEVICE
+  void
+    averageWeights( localIndex const iconn,
+                    localIndex const connexionIndex,
+                    real64 const ( &halfWeight )[2],
+                    real64 const ( &dHalfWeight_dVar )[2],
+                    real64 ( &weight )[TRAITS::maxNumConnections][2],
+                    real64 ( &dWeight_dVar )[TRAITS::maxNumConnections][2],
+                    real64 const avgCoeff) const;
+
+    GEOS_HOST_DEVICE
+    inline void
+      averageWeights( localIndex const iconn,
+                      localIndex const connexionIndex,
+                      real64 const (&halfWeight)[2],
+                      real64 const (&dHalfWeight_dVar)[2][2],
+                      real64 ( &weight )[TRAITS::maxNumConnections][2],
+                      real64 ( &dWeight_dVar1 )[TRAITS::maxNumConnections][2],
+                      real64 ( &dWeight_dVar2 )[TRAITS::maxNumConnections][2],
+                      real64 const avgCoeff ) const;
+
+    GEOS_HOST_DEVICE
+    virtual void
+     computeWeightsBase( localIndex const iconn,
+                        localIndex const (& k)[2],
+                        localIndex const icell,
+                        arraySlice3d< real64 const > const & coefficient,
+                        arraySlice3d< real64 const >  const & dCoeff_dVar,
+                        real64 & halfWeight,
+                        real64 & dHalfWeight_dVar ) const = 0;
+
+
+
 };
 
+GEOS_HOST_DEVICE
+template< typename TRAITS >
+inline void
+StencilWrapperBase< TRAITS >::averageWeights( const geos::localIndex iconn,
+                                              const geos::localIndex connexionIndex,
+                                              const geos::real64 (& halfWeight)[2],
+                                              const geos::real64 (& dHalfWeight_dVar)[2],
+                                              geos::real64 (& weight)[TRAITS::maxNumConnections][2],
+                                              geos::real64 (& dWeight_dVar)[TRAITS::maxNumConnections][2],
+                                              real64 const avgCoeff ) const
+{
 
+  real64 sumOfTrans = 0.0;
+  for( localIndex k=0; k < 2; ++k )//TODO review hardcoded 2
+  {
+    //TODO check that
+    sumOfTrans += halfWeight[k];
+  }
+
+  real64 const arithmeticWeight = avgCoeff * (halfWeight[0]+halfWeight[1]);
+  real64 const harmonicWeight   = halfWeight[0]*halfWeight[1] / sumOfTrans;
+  real64 const value = m_meanPermCoefficient * harmonicWeight + (1 - m_meanPermCoefficient) * arithmeticWeight;
+
+  weight[connexionIndex][0] = value;
+  weight[connexionIndex][1] = -value;
+
+  real64 dHarmonic[2];
+  dHarmonic[0] = ( dHalfWeight_dVar[0] * halfWeight[1] * sumOfTrans - dHalfWeight_dVar[0] * halfWeight[0] * halfWeight[1] ) / ( sumOfTrans * sumOfTrans );
+  dHarmonic[1] = ( dHalfWeight_dVar[1] * halfWeight[0] * sumOfTrans - dHalfWeight_dVar[1] * halfWeight[0] * halfWeight[1] ) / ( sumOfTrans * sumOfTrans );
+
+  real64 dArithmetic[2];
+  dArithmetic[0] = avgCoeff * dHalfWeight_dVar[0];
+  dArithmetic[1] = avgCoeff * dHalfWeight_dVar[1];
+
+  dWeight_dVar[connexionIndex][0] =   ( m_meanPermCoefficient * dHarmonic[0] + (1 - m_meanPermCoefficient) * dArithmetic[0] );
+  dWeight_dVar[connexionIndex][1] = - ( m_meanPermCoefficient * dHarmonic[1] + (1 - m_meanPermCoefficient) * dArithmetic[1] );
+
+}
+
+GEOS_HOST_DEVICE
+template< typename TRAITS >
+inline void
+StencilWrapperBase<TRAITS>::averageWeights(localIndex const iconn,
+                                                     localIndex const connexionIndex,
+                                                     real64 const ( &halfWeight )[2],
+                                                     real64 const ( &dHalfWeight_dVar )[2][2],
+                                                     real64 ( & weight )[TRAITS::maxNumConnections][2],
+                                                     real64 ( & dWeight_dVar1 )[TRAITS::maxNumConnections][2],
+                                                     real64 ( & dWeight_dVar2 )[TRAITS::maxNumConnections][2],
+                                                     real64 const avgCoeff ) const
+{
+
+  //might be used if split differently kept for consistency between wrappers
+  GEOS_UNUSED_VAR( iconn );
+
+  real64 const sumOfTrans = avgCoeff*(halfWeight[0]+halfWeight[1]);
+  real64 const value = halfWeight[0]*halfWeight[1]/sumOfTrans;
+
+  weight[connexionIndex][0] = value;
+  weight[connexionIndex][1] = -value;
+
+  // We consider the 3rd component of the permeability which is the normal one.
+
+  dWeight_dVar1[connexionIndex][0] = ( dHalfWeight_dVar[0][0] * halfWeight[1] * sumOfTrans - dHalfWeight_dVar[0][0] * halfWeight[0] * halfWeight[1] ) / ( sumOfTrans * sumOfTrans );
+  dWeight_dVar1[connexionIndex][1] = ( halfWeight[0] * dHalfWeight_dVar[1][0] * sumOfTrans - dHalfWeight_dVar[1][0] * halfWeight[0] * halfWeight[1] ) / ( sumOfTrans * sumOfTrans );
+
+  dWeight_dVar2[connexionIndex][0] = ( dHalfWeight_dVar[0][1] * halfWeight[1] * sumOfTrans - dHalfWeight_dVar[0][1] * halfWeight[0] * halfWeight[1] ) / ( sumOfTrans * sumOfTrans );
+  dWeight_dVar2[connexionIndex][1] = ( halfWeight[0] * dHalfWeight_dVar[1][1] * sumOfTrans - dHalfWeight_dVar[1][1] * halfWeight[0] * halfWeight[1] ) / ( sumOfTrans * sumOfTrans );
+}
+
+GEOS_HOST_DEVICE
+template< typename TRAITS >
+inline void
+StencilWrapperBase<TRAITS>::computeWeights( localIndex const iconn,
+                                            CoefficientAccessor< arrayView3d< real64 const > > const & coefficient,
+                                            CoefficientAccessor< arrayView3d< real64 const > > const & dCoeff_dVar,
+                                            real64 (& weight)[TRAITS::maxNumConnections][2],
+                                            real64 (& dWeight_dVar )[TRAITS::maxNumConnections][2] ) const
+{
+    GEOS_UNUSED_VAR( dCoeff_dVar );
+    localIndex k[2];
+ //TODO check ordering of k[0] k[1] loops for CellStencil
+    real64 halfWeight[2];
+    real64 dHalfWeight_dVar[2];
+    const localIndex elem[2] = {k[0], k[1]};
+
+    // real64 const tolerance = 1e-30 * lengthTolerance; // TODO: choice of constant based on physics?
+
+    for( localIndex i = 0; i < 2; ++i )
+    {
+        localIndex const er = m_elementRegionIndices[iconn][i];
+        localIndex const esr = m_elementSubRegionIndices[iconn][i];
+
+        computeWeightsBase( iconn, k, i, coefficient[er][esr], dCoeff_dVar[er][esr], halfWeight[i], dHalfWeight_dVar[i] );
+
+    }
+
+    averageWeights( iconn,0/*connexionIndex*/,  halfWeight, dHalfWeight_dVar, weight, dWeight_dVar, 0.5/*avgCoeff*/ );
+
+}
+
+GEOS_HOST_DEVICE
+template< typename TRAITS >
+inline void
+StencilWrapperBase<TRAITS>::computeWeights( localIndex const iconn,
+                  localIndex const ip,
+                  CoefficientAccessor< arrayView4d< real64 const > > const & coefficient,
+                  CoefficientAccessor< arrayView4d< real64 const > > const & dCoeff_dVar,
+                  real64 (& weight)[TRAITS::maxNumConnections][2],
+                  real64 (& dWeight_dVar )[TRAITS::maxNumConnections][2] ) const
+{
+
+
+  real64 halfWeight[2];
+  real64 dHalfWeight[2];
+
+
+  // real64 const tolerance = 1e-30 * lengthTolerance; // TODO: choice of constant based on physics?
+
+  for( localIndex i = 0; i < 2; ++i )
+  {
+    localIndex const er = m_elementRegionIndices[iconn][i];
+    localIndex const esr = m_elementSubRegionIndices[iconn][i];
+
+    //TODO replace as Sergey LvArray gets merged
+    // We are swapping ip phase index and direction to be able to slice properly
+    auto coeffNested = coefficient[er][esr];
+    auto dCoeffNested_dVar = dCoeff_dVar[er][esr];
+
+    LvArray::typeManipulation::CArray< localIndex, 4 > dims, strides;
+    dims[0] = coeffNested.dims()[2]; strides[0] = coeffNested.strides()[2];        //swap phase for cell
+    dims[1] = coeffNested.dims()[0]; strides[1] = coeffNested.strides()[0];        //increment cell to 2nd pos
+    dims[2] = coeffNested.dims()[1]; strides[2] = coeffNested.strides()[1];        //then shift gauss point as well
+    dims[3] = coeffNested.dims()[3]; strides[3] = coeffNested.strides()[3];        //direction remain last pos
+    ArrayView< real64 const, 4 > coeffSwapped( dims, strides, 0, coeffNested.dataBuffer());
+    ArrayView< real64 const, 4 > dCoeffSwapped_dVar( dims, strides, 0, dCoeffNested_dVar.dataBuffer());
+
+    computeWeightsBase( iconn, {0,1}, i, coeffSwapped[ip], dCoeffSwapped_dVar[ip], halfWeight[i], dHalfWeight[i]);
+
+  }
+
+  // Do harmonic and arithmetic averaging
+  averageWeights( iconn, 0/*connexionIndex*/, halfWeight, dHalfWeight, weight, dWeight_dVar, 0.5/*avgCoeff*/ );
+
+}
 /**
  * @brief Provides management of the interior stencil points when using Two-Point flux approximation.
  * @tparam TRAITS the traits class describing properties of the stencil

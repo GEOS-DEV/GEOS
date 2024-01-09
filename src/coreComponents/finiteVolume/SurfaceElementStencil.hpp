@@ -62,8 +62,8 @@ public:
   static constexpr real64 MULTIPLIER_THRESHOLD = 1e-10;
 
   /// Coefficient view accessory type
-  template< typename VIEWTYPE >
-  using CoefficientAccessor = ElementRegionManager::ElementViewConst< VIEWTYPE >;
+//  template< typename VIEWTYPE >
+//  using CoefficientAccessor = ElementRegionManager::ElementViewConst< VIEWTYPE >;
 
   /**
    * @brief Constructor
@@ -89,27 +89,26 @@ public:
   GEOS_FORCE_INLINE
   localIndex size() const { return m_elementRegionIndices.size(); }
 
-  /**
-   * @brief Give the number of stencil entries for the provided index.
-   * @param[in] index the index of which the stencil size is request
-   * @return The number of stencil entries for the provided index
-   */
-  GEOS_HOST_DEVICE
-  GEOS_FORCE_INLINE
-  localIndex stencilSize( localIndex index ) const { return m_elementRegionIndices.sizeOfArray( index ); }
 
+    /**
+     * @brief Give the number of stencil entries for the provided index.
+     * @param[in] index the index of which the stencil size is request
+     * @return The number of stencil entries for the provided index
+     */
+    GEOS_HOST_DEVICE
+    localIndex stencilSize( localIndex index ) const
+    { return m_elementRegionIndices.sizeOfArray( index ); }
 
-  /**
-   * @brief Give the number of points between which the flux is.
-   * @param[in] index of the stencil entry for which to query the size
-   * @return the number of points.
-   */
-  GEOS_HOST_DEVICE
-  GEOS_FORCE_INLINE
-  localIndex numPointsInFlux( localIndex index ) const
-  {
-    return stencilSize( index );
-  }
+    /**
+     * @brief Give the number of points between which the flux is.
+     * @param[in] index of the stencil entry for which to query the size
+     * @return the number of points.
+     */
+    GEOS_HOST_DEVICE
+    localIndex numPointsInFlux( localIndex index ) const
+    {
+        return stencilSize( index );
+    }
 
   /**
    * @brief Compute weights and derivatives w.r.t to one variable without coefficient
@@ -257,13 +256,10 @@ private:
   /// Cell center to Edge center vector
   ArrayOfArraysView< R1Tensor > m_cellCenterToEdgeCenters;
 
-  /// Mean permeability coefficient
-  real64 m_meanPermCoefficient;
-
 
   GEOS_HOST_DEVICE
   void
-    averageWeights( const localIndex iconn,
+    averageWeights2(const localIndex iconn,
                     const localIndex connexionIndex,
                     const real64 ( &halfWeight )[2],
                     const real64 ( &dHalfWeight_dVar )[2][2],
@@ -271,14 +267,14 @@ private:
                     real64 ( &dWeight_dVar1 )[maxNumConnections][2],
                     real64 ( &dWeight_dVar2 )[maxNumConnections][2][3] ) const;
 
-  GEOS_HOST_DEVICE
+/*  GEOS_HOST_DEVICE
   void
     averageWeights( const localIndex iconn,
                     const localIndex connexionIndex,
                     const real64 ( &halfWeight )[2],
                     const real64 ( &dHalfWeight_dVar )[2],
                     real64 ( &weight )[maxNumConnections][2],
-                    real64 ( &dWeight_dVar )[maxNumConnections][2] ) const;
+                    real64 ( &dWeight_dVar )[maxNumConnections][2] ) const;*/
 
   GEOS_HOST_DEVICE
   void
@@ -288,7 +284,7 @@ private:
                       arraySlice3d< real64 const > const & coefficient,
                       arraySlice3d< real64 const > const & dCoeff_dVar,
                       real64 & halfWeight,
-                      real64 & dHalfWeight_dVar ) const;
+                      real64 & dHalfWeight_dVar ) const override;
 
 
   GEOS_HOST_DEVICE
@@ -410,67 +406,67 @@ SurfaceElementStencilWrapper::
 
       }
 
-      averageWeights( iconn, connectionIndex, halfWeight, dHalfWeight_dVar, weight, dWeight_dVar );
+        averageWeights(iconn, connectionIndex, halfWeight, dHalfWeight_dVar, weight, dWeight_dVar, 0.25);
       connectionIndex++;
 
     }
   }
 }
 
-    GEOS_HOST_DEVICE
-    inline void
-    SurfaceElementStencilWrapper::
-    computeWeights( localIndex iconn,
-                    localIndex ip,
-                    CoefficientAccessor< arrayView4d< real64 const > > const & coefficient,
-                    CoefficientAccessor< arrayView4d< real64 const > > const & dCoeff_dVar,
-                    real64 ( & weight )[maxNumConnections][2],
-                    real64 ( & dWeight_dVar )[maxNumConnections][2] ) const
+GEOS_HOST_DEVICE
+inline void
+SurfaceElementStencilWrapper::
+  computeWeights( localIndex iconn,
+                  localIndex ip,
+                  CoefficientAccessor< arrayView4d< real64 const > > const & coefficient,
+                  CoefficientAccessor< arrayView4d< real64 const > > const & dCoeff_dVar,
+                  real64 ( & weight )[maxNumConnections][2],
+                  real64 ( & dWeight_dVar )[maxNumConnections][2] ) const
+{
+  localIndex k[2];
+  localIndex connectionIndex = 0;
+  for( k[0]=0; k[0]<numPointsInFlux( iconn ); ++k[0] )
+  {
+    for( k[1]=k[0]+1; k[1]<numPointsInFlux( iconn ); ++k[1] )
     {
-        localIndex k[2];
-        localIndex connectionIndex = 0;
-        for( k[0]=0; k[0]<numPointsInFlux( iconn ); ++k[0] )
-        {
-            for( k[1]=k[0]+1; k[1]<numPointsInFlux( iconn ); ++k[1] )
-            {
-                real64 halfWeight[2];
-                real64 dHalfWeight_dVar[2];
-                const localIndex elem[2] = {k[0], k[1]};
-                for( localIndex ielem=0; ielem < 2; ++ielem )
-                {
+      real64 halfWeight[2];
+      real64 dHalfWeight_dVar[2];
+      const localIndex elem[2] = {k[0], k[1]};
+      for( localIndex ielem=0; ielem < 2; ++ielem )
+      {
 
-                    localIndex const er  =  m_elementRegionIndices[iconn][elem[ielem]];
-                    localIndex const esr =  m_elementSubRegionIndices[iconn][elem[ielem]];
-                        //TODO replace as Sergey LvArray gets merged
-    // We are swapping ip phase index and direction to be able to slice properly
-    auto coeffNested = coefficient[er][esr];
-    auto dCoeffNested_dVar = dCoeff_dVar[er][esr];
-    LvArray::typeManipulation::CArray< localIndex, 4 > dims, strides;
-    dims[0] = coeffNested.dims()[2];
-    strides[0] = coeffNested.strides()[2];                //swap phase for cell
-    dims[1] = coeffNested.dims()[0];
-    strides[1] = coeffNested.strides()[0];                //increment cell to 2nd pos
-    dims[2] = coeffNested.dims()[1];
-    strides[2] = coeffNested.strides()[1];                //then shift gauss point as well
-    dims[3] = coeffNested.dims()[3];
-    strides[3] = coeffNested.strides()[3];                //direction remain last pos
-    ArrayView< real64 const, 4 > coeffSwapped( dims, strides, 0, coeffNested.dataBuffer());
-    ArrayView< real64 const, 4 > dCoeffSwapped_dVar1( dims, strides, 0, dCoeffNested_dVar.dataBuffer());
+        localIndex const er  =  m_elementRegionIndices[iconn][elem[ielem]];
+        localIndex const esr =  m_elementSubRegionIndices[iconn][elem[ielem]];
+        //TODO replace as Sergey LvArray gets merged
+        // We are swapping ip phase index and direction to be able to slice properly
+        auto coeffNested = coefficient[er][esr];
+        auto dCoeffNested_dVar = dCoeff_dVar[er][esr];
+        LvArray::typeManipulation::CArray< localIndex, 4 > dims, strides;
+        dims[0] = coeffNested.dims()[2];
+        strides[0] = coeffNested.strides()[2];            //swap phase for cell
+        dims[1] = coeffNested.dims()[0];
+        strides[1] = coeffNested.strides()[0];            //increment cell to 2nd pos
+        dims[2] = coeffNested.dims()[1];
+        strides[2] = coeffNested.strides()[1];            //then shift gauss point as well
+        dims[3] = coeffNested.dims()[3];
+        strides[3] = coeffNested.strides()[3];            //direction remain last pos
+        ArrayView< real64 const, 4 > coeffSwapped( dims, strides, 0, coeffNested.dataBuffer());
+        ArrayView< real64 const, 4 > dCoeffSwapped_dVar1( dims, strides, 0, dCoeffNested_dVar.dataBuffer());
 
 
 
-                    computeWeightsBase( iconn, elem, ielem,
-                                        coeffSwapped[ip], dCoeffSwapped_dVar1[ip],
-                                        halfWeight[ielem], dHalfWeight_dVar[ielem] );
+        computeWeightsBase( iconn, elem, ielem,
+                            coeffSwapped[ip], dCoeffSwapped_dVar1[ip],
+                            halfWeight[ielem], dHalfWeight_dVar[ielem] );
 
-                }
+      }
 
-                averageWeights( iconn, connectionIndex, halfWeight, dHalfWeight_dVar, weight, dWeight_dVar );
-                connectionIndex++;
+        averageWeights(iconn, connectionIndex, halfWeight, dHalfWeight_dVar, weight, dWeight_dVar, 0.25);
+      connectionIndex++;
 
-            }
-        }
     }
+  }
+}
 
 GEOS_HOST_DEVICE
 inline void
@@ -576,9 +572,9 @@ SurfaceElementStencilWrapper::
 
       }
 
-      averageWeights( iconn, connectionIndex,
-                      halfWeight, dHalfWeight_dVar,
-                      weight, dWeight_dVar1, dWeight_dVar2 );
+        averageWeights2(iconn, connectionIndex,
+                        halfWeight, dHalfWeight_dVar,
+                        weight, dWeight_dVar1, dWeight_dVar2);
 
       connectionIndex++;
     }
@@ -659,6 +655,7 @@ SurfaceElementStencilWrapper::
   }
 }
 
+/*
 GEOS_HOST_DEVICE
 inline void
 SurfaceElementStencilWrapper::averageWeights( const geos::localIndex iconn,
@@ -696,9 +693,10 @@ SurfaceElementStencilWrapper::averageWeights( const geos::localIndex iconn,
 
 }
 
+*/
 GEOS_HOST_DEVICE
 inline void
-SurfaceElementStencilWrapper::averageWeights( const localIndex iconn,
+SurfaceElementStencilWrapper::averageWeights2(const localIndex iconn,
                                               const localIndex connexionIndex,
                                               const real64 (& halfWeight)[2],
                                               const real64 (& dHalfWeight_dVar)[2][2],
