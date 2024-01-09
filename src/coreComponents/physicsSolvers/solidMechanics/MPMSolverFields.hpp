@@ -288,6 +288,30 @@ DECLARE_FIELD( particleInitialShapeFunctionGradientValues,
                WRITE_AND_READ,
                "ParticleInitialShapeFunctionGradientValues" );
 
+DECLARE_FIELD( particleCohesiveTraction,
+               "particleCohesiveTraction",
+               array2d< real64 >,
+               0,
+               LEVEL_1,
+               WRITE_AND_READ,
+               "ParticleCohesiveTraction" );
+
+DECLARE_FIELD( particleAreaFromGrid, 
+               "particleAreaFromGrid",
+               array1d< real64 >,
+               0,
+               LEVEL_1,
+               WRITE_AND_READ,
+               "ParticleAreaFromGrid" );
+
+// DECLARE_FIELD( particleProjectedArea,
+//                "particelProjectedArea",
+//                array1d< real64 >,
+//                0,
+//                LEVEL_1,
+//                WRITE_AND_READ,
+//                "ParticleProjectedArea" );-
+
 }
 
 }

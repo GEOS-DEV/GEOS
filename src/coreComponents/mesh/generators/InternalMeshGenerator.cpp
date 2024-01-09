@@ -801,6 +801,9 @@ void InternalMeshGenerator::generateMesh( DomainPartition & domain )
     }
   }
 
+  // CC: debug
+  GEOS_LOG_RANK( xnegNodes.size() << ", " << xposNodes.size() << ", " << ynegNodes.size() << ", " << yposNodes.size() << ", " << znegNodes.size() << ", " << zposNodes.size() );
+
   {
     array1d< integer > numElements;
     array1d< string > elementRegionNames;
