@@ -212,6 +212,7 @@ public:
     static constexpr char const * forceInternalString() { return "internalForce"; }
     static constexpr char const * displacementString() { return "displacement"; }
     static constexpr char const * particleSurfaceNormalString() { return "particleSurfaceNormal"; }
+    static constexpr char const * cohesiveTractionString() { return "cohesiveTraction"; }
     static constexpr char const * cohesiveNormalForceString() { return "cohesiveNormalForce"; }
     static constexpr char const * cohesiveShearForceString() { return "cohesiveShearForce"; }
     static constexpr char const * massString() { return "mass"; }
@@ -295,6 +296,7 @@ public:
                                     arrayView3d< real64 > const & gridSurfaceNormal );
 
   void computeContactForces( real64 const dt,
+                             NodeManager & nodeManager,
                              arrayView2d< real64 const > const & gridMass,
                              arrayView2d< real64 const > const & gridMaterialVolume,
                              arrayView2d< real64 const > const & gridDamage,
@@ -407,6 +409,16 @@ public:
                                  NodeManager & nodeManager,
                                  MeshLevel & mesh );
 
+  bool interiorToParticleProjectedArea( ParticleManager & particleManager,
+                                        globalIndex const GEOS_UNUSED_PARAM( gridIndex ),
+                                        int const gridFieldIndex,
+                                        real64 const (& gridSurfaceNormal)[3],
+                                        real64 const (& gridSurfacePoint)[3] );
+
+  void projectToPlane( real64 const (& vector)[3],
+                       real64 const (& normal)[3],
+                       real64 (& projection)[3] );
+
   void enforceCohesiveLaw(  ParticleManager & particleManager,
                             NodeManager & nodeManager );
 
@@ -414,7 +426,10 @@ public:
                                          arraySlice2d< real64 const > const rVectors,
                                          real64 distanceToSurface );
 
-  void computeCohesiveTraction( real64 mA,
+  void computeCohesiveTraction( int g,
+                                int a,
+                                int b, 
+                                real64 mA,
                                 real64 mB,
                                 arraySlice1d< real64 const > const dA,
                                 arraySlice1d< real64 const > const dB,
@@ -641,13 +656,18 @@ protected:
   // Cohesive law variables
   SortedArray< globalIndex >  m_cohesiveNodeGlobalIndices;
   int m_enableCohesiveLaws;
+  int m_enableCohesiveFailure;
   array2d< real64 > m_initialCohesiveGridNodePositions;
   array2d< real64 > m_initialCohesiveGridNodeAreas;
   array3d< real64 > m_initialCohesiveGridNodeSurfaceNormals;
+  array3d< real64 > m_maxCohesiveGridNodeNormalDisplacement;
+  array3d< real64 > m_maxCohesiveGridNodeShearDisplacement;
   real64 m_maxCohesiveNormalStress;
   real64 m_maxCohesiveShearStress;
   real64 m_characteristicNormalDisplacement;
   real64 m_characteristicTransverseDisplacement;
+  real64 m_maxCohesiveNormalDisplacement;
+  real64 m_maxCohesiveShearDisplacement;
 
   int m_needsNeighborList;
   real64 m_neighborRadius;
