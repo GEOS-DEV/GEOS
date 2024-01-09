@@ -215,7 +215,7 @@ public:
 
   /**
    * @brief Set the list of surface positions in this subregion.
-   * @param particleInitialSurfacePosition The input list of initial positions
+   * @param particleInitialSurfacePosition The input list of initial surface positions
    */
   void setParticleInitialSurfacePosition( array2d< real64 > const particleInitialSurfacePosition )
   { m_particleInitialSurfacePosition = particleInitialSurfacePosition; }
@@ -225,12 +225,30 @@ public:
 
   /**
    * @brief Set the list of surface positions in this subregion.
-   * @param particleSurfacePosition The input list of positions
+   * @param particleSurfacePosition The input list of surface positions
    */
   void setParticleSurfacePosition( array2d< real64 > const particleSurfacePosition )
   { m_particleSurfacePosition = particleSurfacePosition; }
 
-//
+  array2d< real64 > getParticleInitialProjectedSurfaceArea() const override
+  { return m_particleInitialProjectedSurfaceArea; }
+
+  /**
+   * @brief Set the list of initial projected surface area in this subregion.
+   * @param ParticleInitialProjectedSurfaceArea The input list of initial projected surface areas
+   */
+  void setParticleInitialProjectedSurfaceArea( array2d< real64 > const particleInitialProjectedSurfaceArea )
+  { m_particleInitialProjectedSurfaceArea = particleInitialProjectedSurfaceArea; }
+
+  array2d< real64 > getParticleProjectedSurfaceArea() const override
+  { return m_particleProjectedSurfaceArea; }
+
+  /**
+   * @brief Set the list of projected surface area in this subregion.
+   * @param particleProjectedSurfaceArea The input list of projected surface areas
+   */
+  void setParticleProjectedSurfaceArea( array2d< real64 > const particleProjectedSurfaceArea )
+  { m_particleProjectedSurfaceArea = particleProjectedSurfaceArea; }
 
   localIndex numParticles() const override
   { return size(); }
@@ -321,6 +339,12 @@ private:
 
   /// Member level field for the particle surface position.
   array2d< real64 > m_particleSurfacePosition;
+
+  /// Member level field for the particle initial projected surface area.
+  array2d< real64 > m_particleInitialProjectedSurfaceArea;
+
+  /// Member level field for the particle projected surface area.
+  array2d< real64 > m_particleProjectedSurfaceArea;
 
   std::list< dataRepository::WrapperBase * > getExternalProperties() override
   {
