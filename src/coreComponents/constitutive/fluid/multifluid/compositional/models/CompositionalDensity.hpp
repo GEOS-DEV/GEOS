@@ -143,7 +143,6 @@ compute( ComponentProperties::KernelWrapper const & componentProperties,
                                                dMolarDensity,
                                                massDensity,
                                                dMassDensity );
-  std::cout << molarDensity << " " << massDensity << "\n";
 }
 
 } // end namespace compositional

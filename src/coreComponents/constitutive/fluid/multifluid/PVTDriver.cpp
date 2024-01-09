@@ -61,6 +61,11 @@ PVTDriver::PVTDriver( const string & name,
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Function controlling temperature time history" );
 
+  registerWrapper( viewKeyStruct::outputMassDensityString(), &m_outputMassDensity ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( 0 ).
+    setDescription( "Flag to indicate that the mass density of each phase should be output" );
+
   registerWrapper( viewKeyStruct::outputCompressibilityString(), &m_outputCompressibility ).
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( 0 ).
@@ -90,6 +95,10 @@ PVTDriver::PVTDriver( const string & name,
 void PVTDriver::postProcessInput()
 {
   // Validate some inputs
+  GEOS_ERROR_IF( m_outputMassDensity != 0 && m_outputMassDensity != 1,
+                 getWrapperDataContext( viewKeyStruct::outputMassDensityString() ) <<
+                 ": option can be either 0 (false) or 1 (true)" );
+
   GEOS_ERROR_IF( m_outputCompressibility != 0 && m_outputCompressibility != 1,
                  getWrapperDataContext( viewKeyStruct::outputCompressibilityString() ) <<
                  ": option can be either 0 (false) or 1 (true)" );
@@ -111,6 +120,12 @@ void PVTDriver::postProcessInput()
   // Number of columns depends on options
   // Default column order = time, pressure, temp, totalDensity, phaseFraction_{1:NP}, phaseDensity_{1:NP}, phaseViscosity_{1:NP}
   integer numCols = 3*m_numPhases+4;
+
+  // If the mass density is requested then add NP columns
+  if( m_outputMassDensity != 0 )
+  {
+    numCols += m_numPhases;
+  }
 
   // If the total compressibility is requested then add a column
   if( m_outputCompressibility != 0 )
@@ -185,6 +200,7 @@ bool PVTDriver::execute( real64 const GEOS_UNUSED_PARAM( time_n ),
     GEOS_LOG_RANK_0( "  Steps .................. " << m_numSteps );
     GEOS_LOG_RANK_0( "  Output ................. " << m_outputFile );
     GEOS_LOG_RANK_0( "  Baseline ............... " << m_baselineFile );
+    GEOS_LOG_RANK_0( "  Output Mass Density .... " << m_outputMassDensity );
     GEOS_LOG_RANK_0( "  Output Compressibility . " << m_outputCompressibility );
     GEOS_LOG_RANK_0( "  Output Phase Comp. ..... " << m_outputPhaseComposition );
   }
@@ -248,6 +264,11 @@ void PVTDriver::outputResults()
   columnIndex += m_numPhases;
   fprintf( fp, "# columns %d-%d = phase densities\n", columnIndex+1, columnIndex + m_numPhases );
   columnIndex += m_numPhases;
+  if( m_outputMassDensity != 0 )
+  {
+    fprintf( fp, "# columns %d-%d = phase mass densities\n", columnIndex+1, columnIndex + m_numPhases );
+    columnIndex += m_numPhases;
+  }
   fprintf( fp, "# columns %d-%d = phase viscosities\n", columnIndex+1, columnIndex + m_numPhases );
   columnIndex += m_numPhases;
 
