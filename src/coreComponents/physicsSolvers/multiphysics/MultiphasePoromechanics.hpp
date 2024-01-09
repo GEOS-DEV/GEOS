@@ -188,7 +188,7 @@ private:
             typename ... PARAMS >
   real64 assemblyLaunch( MeshLevel & mesh,
                          DofManager const & dofManager,
-                         arrayView1d< string const > const & regionNames,
+                         string_array const & regionNames,
                          string const & materialNamesString,
                          CRSMatrixView< real64, globalIndex const > const & localMatrix,
                          arrayView1d< real64 > const & localRhs,
@@ -199,7 +199,7 @@ private:
   stabilization::StabilizationType m_stabilizationType;
 
   /// Names of the regions where the stabilization is applied
-  array1d< string > m_stabilizationRegionNames;
+  string_array m_stabilizationRegionNames;
 
   /// Multiplier on stabilization constant
   real64 m_stabilizationMultiplier;
@@ -218,7 +218,7 @@ template< typename CONSTITUTIVE_BASE,
           typename ... PARAMS >
 real64 MultiphasePoromechanics< FLOW_SOLVER >::assemblyLaunch( MeshLevel & mesh,
                                                                DofManager const & dofManager,
-                                                               arrayView1d< string const > const & regionNames,
+                                                               string_array const & regionNames,
                                                                string const & materialNamesString,
                                                                CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                                arrayView1d< real64 > const & localRhs,

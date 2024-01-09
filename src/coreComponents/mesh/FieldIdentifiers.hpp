@@ -74,9 +74,9 @@ public:
 /**
  * @brief Get the Fields object which is the map containing the fields existing for each location.
  *
- * @return std::map< string, array1d< string > > const&
+ * @return std::map< string, string_array > const&
  */
-  std::map< string, array1d< string > > const & getFields() const
+  std::map< string, string_array > const & getFields() const
   {
     return m_fields;
   }
@@ -125,7 +125,7 @@ public:
 
 private:
   ///
-  std::map< string, array1d< string > > m_fields;
+  std::map< string, string_array > m_fields;
 
   struct keysStruct
   {

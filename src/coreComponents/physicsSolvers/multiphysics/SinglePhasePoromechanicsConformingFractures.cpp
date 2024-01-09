@@ -206,7 +206,7 @@ void SinglePhasePoromechanicsConformingFractures::assembleCellBasedContributions
   /// 3. assemble Force Residual w.r.t. pressure and Fluix mass residual w.r.t. displacement
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
-                                                                arrayView1d< string const > const & regionNames )
+                                                                string_array const & regionNames )
   {
     string const flowDofKey = dofManager.getKey( SinglePhaseBase::viewKeyStruct::elemDofFieldString() );
     if( m_isThermal )
@@ -262,7 +262,7 @@ void SinglePhasePoromechanicsConformingFractures::assembleCouplingTerms( real64 
   // These 2 steps need to occur after the fluxes are assembled because that's when DerivativeFluxResidual_dAperture is filled.
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel const & mesh,
-                                                                arrayView1d< string const > const & regionNames )
+                                                                string_array const & regionNames )
   {
     /// 3. assemble Force Residual w.r.t. pressure and Fluix mass residual w.r.t. displacement
     assembleForceResidualDerivativeWrtPressure( mesh, regionNames, dofManager, localMatrix, localRhs );
@@ -277,7 +277,7 @@ void SinglePhasePoromechanicsConformingFractures::
 {
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel const & mesh,
-                                                                arrayView1d< string const > const & regionNames )
+                                                                string_array const & regionNames )
   {
     std::unique_ptr< CRSMatrix< real64, localIndex > > & derivativeFluxResidual_dAperture = this->getRefDerivativeFluxResidual_dAperture();
 
@@ -338,7 +338,7 @@ void SinglePhasePoromechanicsConformingFractures::
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &, //  meshBodyName,
                                                                 MeshLevel const & mesh,
-                                                                arrayView1d< string const > const & ) // regionNames
+                                                                string_array const & ) // regionNames
   {
     ElementRegionManager const & elemManager = mesh.getElemManager();
 
@@ -400,7 +400,7 @@ void SinglePhasePoromechanicsConformingFractures::
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel const & mesh,
-                                                                arrayView1d< string const > const & )
+                                                                string_array const & )
   {
     FaceManager const & faceManager = mesh.getFaceManager();
     NodeManager const & nodeManager = mesh.getNodeManager();
@@ -486,7 +486,7 @@ void SinglePhasePoromechanicsConformingFractures::
 
 void SinglePhasePoromechanicsConformingFractures::
   assembleForceResidualDerivativeWrtPressure( MeshLevel const & mesh,
-                                              arrayView1d< string const > const & regionNames,
+                                              string_array const & regionNames,
                                               DofManager const & dofManager,
                                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                               arrayView1d< real64 > const & localRhs )
@@ -581,7 +581,7 @@ void SinglePhasePoromechanicsConformingFractures::
 
 void SinglePhasePoromechanicsConformingFractures::
   assembleFluidMassResidualDerivativeWrtDisplacement( MeshLevel const & mesh,
-                                                      arrayView1d< string const > const & regionNames,
+                                                      string_array const & regionNames,
                                                       DofManager const & dofManager,
                                                       CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                       arrayView1d< real64 > const & GEOS_UNUSED_PARAM( localRhs ) )
@@ -746,7 +746,7 @@ void SinglePhasePoromechanicsConformingFractures::updateState( DomainPartition &
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
-                                                                arrayView1d< string const > const & regionNames )
+                                                                string_array const & regionNames )
   {
     ElementRegionManager & elemManager = mesh.getElemManager();
 
@@ -769,7 +769,7 @@ void SinglePhasePoromechanicsConformingFractures::updateHydraulicApertureAndFrac
 {
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
-                                                                arrayView1d< string const > const & regionNames )
+                                                                string_array const & regionNames )
   {
     ElementRegionManager & elemManager = mesh.getElemManager();
 

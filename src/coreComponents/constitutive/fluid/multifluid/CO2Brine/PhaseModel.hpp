@@ -55,7 +55,7 @@ struct PhaseModel
    * @param[in] componentMolarWeight molar weights of the components
    */
   PhaseModel( string const & phaseModelName,
-              array1d< array1d< string > > const & inputParams,
+              array1d< string_array > const & inputParams,
               string_array const & componentNames,
               array1d< real64 > const & componentMolarWeight,
               bool const printTable )

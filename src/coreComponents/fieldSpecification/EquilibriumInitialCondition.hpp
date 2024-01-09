@@ -94,7 +94,7 @@ public:
    * @brief Getter for the component names
    * @return an array storing the component names
    */
-  arrayView1d< string const > getComponentNames() const { return m_componentNames.toViewConst(); }
+  string_array const &getComponentNames() const { return m_componentNames.toViewConst(); }
 
   /**
    * @brief Getter for the name of the phase initially saturating the reservoir
@@ -106,7 +106,7 @@ public:
    * @brief Getter for the component fraction table names
    * @return the component fraction table names
    */
-  arrayView1d< string const > getComponentFractionVsElevationTableNames() const { return m_componentFractionVsElevationTableNames.toViewConst(); }
+  string_array const &getComponentFractionVsElevationTableNames() const { return m_componentFractionVsElevationTableNames.toViewConst(); }
 
   /**
    * @brief Getter for the temperature table name
@@ -187,10 +187,10 @@ private:
   string m_initPhaseName;
 
   /// Array of component names
-  array1d< string > m_componentNames;
+  string_array m_componentNames;
 
   /// Array of table names for component fraction vs elevation
-  array1d< string > m_componentFractionVsElevationTableNames;
+  string_array m_componentFractionVsElevationTableNames;
 
   /// Table name for temperature vs elevation
   string m_temperatureVsElevationTableName;

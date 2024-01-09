@@ -49,7 +49,7 @@ void SinglePhaseStatistics::registerDataOnMesh( Group & meshBodies )
 
   m_solver->forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
                                                               MeshLevel & mesh,
-                                                              arrayView1d< string const > const & regionNames )
+                                                              string_array const & regionNames )
   {
     ElementRegionManager & elemManager = mesh.getElemManager();
 
@@ -72,7 +72,7 @@ bool SinglePhaseStatistics::execute( real64 const GEOS_UNUSED_PARAM( time_n ),
 {
   m_solver->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                           MeshLevel & mesh,
-                                                                          arrayView1d< string const > const & regionNames )
+                                                                          string_array const & regionNames )
   {
     computeRegionStatistics( mesh, regionNames );
   } );
@@ -80,7 +80,7 @@ bool SinglePhaseStatistics::execute( real64 const GEOS_UNUSED_PARAM( time_n ),
 }
 
 void SinglePhaseStatistics::computeRegionStatistics( MeshLevel & mesh,
-                                                     arrayView1d< string const > const & regionNames ) const
+                                                     string_array const & regionNames ) const
 {
   GEOS_MARK_FUNCTION;
 

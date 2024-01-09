@@ -99,7 +99,7 @@ void CompositionalMultiphaseStatistics::registerDataOnMesh( Group & meshBodies )
 
   m_solver->forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
                                                               MeshLevel & mesh,
-                                                              arrayView1d< string const > const & regionNames )
+                                                              string_array const & regionNames )
   {
     ElementRegionManager & elemManager = mesh.getElemManager();
 
@@ -182,7 +182,7 @@ bool CompositionalMultiphaseStatistics::execute( real64 const time_n,
 {
   m_solver->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                           MeshLevel & mesh,
-                                                                          arrayView1d< string const > const & regionNames )
+                                                                          string_array const & regionNames )
   {
     if( m_computeRegionStatistics )
     {
@@ -202,7 +202,7 @@ bool CompositionalMultiphaseStatistics::execute( real64 const time_n,
 
 void CompositionalMultiphaseStatistics::computeRegionStatistics( real64 const time,
                                                                  MeshLevel & mesh,
-                                                                 arrayView1d< string const > const & regionNames ) const
+                                                                 string_array const & regionNames ) const
 {
   GEOS_MARK_FUNCTION;
 

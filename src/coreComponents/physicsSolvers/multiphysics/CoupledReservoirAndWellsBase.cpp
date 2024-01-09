@@ -37,7 +37,7 @@ addCouplingNumNonzeros( SolverBase const * const solver,
 {
   solver->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                         MeshLevel const & meshLevel,
-                                                                        arrayView1d< string const > const & regionNames )
+                                                                        string_array const & regionNames )
   {
     ElementRegionManager const & elemManager = meshLevel.getElemManager();
 
@@ -116,12 +116,12 @@ bool validateWellPerforations( SolverBase const * const reservoirSolver,
 {
   std::pair< string, string > badPerforation;
 
-  arrayView1d< string const > const flowTargetRegionNames =
-    reservoirSolver->getReference< array1d< string > >( SolverBase::viewKeyStruct::targetRegionsString() );
+  string_array const &const flowTargetRegionNames =
+    reservoirSolver->getReference< string_array >( SolverBase::viewKeyStruct::targetRegionsString() );
 
   wellSolver->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                             MeshLevel const & meshLevel,
-                                                                            arrayView1d< string const > const & regionNames )
+                                                                            string_array const & regionNames )
   {
     ElementRegionManager const & elemManager = meshLevel.getElemManager();
     elemManager.forElementSubRegions< WellElementSubRegion >( regionNames, [&]( localIndex const, WellElementSubRegion const & subRegion )

@@ -145,7 +145,7 @@ private:
             typename EFEM_KERNEL_WRAPPER >
   real64 assemblyLaunch( MeshLevel & mesh,
                          DofManager const & dofManager,
-                         arrayView1d< string const > const & regionNames,
+                         string_array const & regionNames,
                          string const & materialNamesString,
                          CRSMatrixView< real64, globalIndex const > const & localMatrix,
                          arrayView1d< real64 > const & localRhs,
@@ -163,7 +163,7 @@ template< typename CONSTITUTIVE_BASE,
           typename EFEM_KERNEL_WRAPPER >
 real64 SinglePhasePoromechanicsEmbeddedFractures::assemblyLaunch( MeshLevel & mesh,
                                                                   DofManager const & dofManager,
-                                                                  arrayView1d< string const > const & regionNames,
+                                                                  string_array const & regionNames,
                                                                   string const & materialNamesString,
                                                                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                                   arrayView1d< real64 > const & localRhs,

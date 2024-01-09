@@ -369,7 +369,7 @@ template< typename POLICY,
           typename KERNEL_FACTORY >
 static
 real64 regionBasedKernelApplication( MeshLevel & mesh,
-                                     arrayView1d< string const > const & targetRegions,
+                                     string_array const & targetRegions,
                                      string const & finiteElementName,
                                      string const & constitutiveStringName,
                                      KERNEL_FACTORY & kernelFactory )

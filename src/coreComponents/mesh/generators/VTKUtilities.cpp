@@ -545,7 +545,7 @@ loadMesh( Path const & filePath,
 
 AllMeshes loadAllMeshes( Path const & filePath,
                          string const & mainBlockName,
-                         array1d< string > const & faceBlockNames )
+                         string_array const & faceBlockNames )
 {
   int const lastRank = MpiWrapper::commSize() - 1;
   vtkSmartPointer< vtkDataSet > main = loadMesh( filePath, mainBlockName );

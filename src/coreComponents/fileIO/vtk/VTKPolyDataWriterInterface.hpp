@@ -143,7 +143,7 @@ public:
    * @brief Set the names of the fields to output
    * @param[in] fieldNames the fields to output
    */
-  void setFieldNames( arrayView1d< string const > const & fieldNames )
+  void setFieldNames( string_array const & fieldNames )
   {
     m_fieldNames.insert( fieldNames.begin(), fieldNames.end() );
   }
@@ -152,7 +152,7 @@ public:
    * @brief Set the names of the mesh levels to output
    * @param[in] levelNames the mesh levels to output (an empty array means all levels are saved)
    */
-  void setLevelNames( arrayView1d< string const > const & levelNames )
+  void setLevelNames( string_array const & levelNames )
   {
     m_levelNames.insert( levelNames.begin(), levelNames.end() );
   }

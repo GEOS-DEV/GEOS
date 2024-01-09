@@ -138,7 +138,7 @@ private:
  */
 AllMeshes loadAllMeshes( Path const & filePath,
                          string const & mainBlockName,
-                         array1d< string > const & faceBlockNames );
+                         string_array const & faceBlockNames );
 
 /**
  * @brief Compute the rank neighbor candidate list.

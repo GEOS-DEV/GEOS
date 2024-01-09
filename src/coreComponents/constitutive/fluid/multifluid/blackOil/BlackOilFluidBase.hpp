@@ -184,10 +184,10 @@ protected:
   // Fluid data
 
   /// Names of the formation volume factor tables
-  array1d< string > m_formationVolFactorTableNames;
+  string_array m_formationVolFactorTableNames;
 
   /// Names of the viscosity tables
-  array1d< string > m_viscosityTableNames;
+  string_array m_viscosityTableNames;
 
   /// Surface densities
   array1d< real64 > m_surfacePhaseMassDensity;

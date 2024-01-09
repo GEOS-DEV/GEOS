@@ -283,7 +283,7 @@ template< typename REGION_TYPE,
                     typename FE_TYPE > class KERNEL_TEMPLATE >
 static
 real64 fillSparsity( MeshLevel & mesh,
-                     arrayView1d< string const > const & targetRegions,
+                     string_array const & targetRegions,
                      string const & discretizationName,
                      arrayView1d< globalIndex const > const & inputDofNumber,
                      globalIndex const rankOffset,

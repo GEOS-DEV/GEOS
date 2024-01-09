@@ -65,7 +65,7 @@ public:
    * @brief Getter for the fluid component names
    * @return an array storing the component names
    */
-  arrayView1d< string const > componentNames() const { return m_componentNames; }
+  string_array const & componentNames() const { return m_componentNames; }
 
   /**
    * @brief Getter for the fluid component molar weights
@@ -82,7 +82,7 @@ public:
    * @brief Getter for the fluid phase names
    * @return an array storing the phase names
    */
-  arrayView1d< string const > phaseNames() const { return m_phaseNames; }
+  string_array const & phaseNames() const { return m_phaseNames; }
 
   /**
    * @brief Getter for the water phase index
@@ -661,9 +661,9 @@ protected:
 
   // general fluid composition information
 
-  array1d< string > m_componentNames;
+  string_array m_componentNames;
   array1d< real64 > m_componentMolarWeight;
-  array1d< string > m_phaseNames;
+  string_array m_phaseNames;
 
   // constitutive data
 

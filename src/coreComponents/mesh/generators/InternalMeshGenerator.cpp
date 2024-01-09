@@ -796,7 +796,7 @@ void InternalMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockMa
 
   {
     array1d< integer > numElements;
-    array1d< string > elementRegionNames;
+    string_array elementRegionNames;
     std::map< string, localIndex > localElemIndexInRegion;
 
     for( auto const & numElemsInRegion : numElemsInRegions )

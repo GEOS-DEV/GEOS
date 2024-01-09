@@ -178,12 +178,12 @@ public:
   /**
    * @copydoc addField(string const &, FieldLocation, integer, std::vector< FieldSupport > const &)
    *
-   * Overload for  map< string, array1d< string > > bodyFieldSupport used by physics solvers.
+   * Overload for  map< string, string_array > bodyFieldSupport used by physics solvers.
    */
   void addField( string const & fieldName,
                  FieldLocation location,
                  integer components,
-                 map< std::pair< string, string >, array1d< string > > const & regions );
+                 map< std::pair< string, string >, string_array > const & regions );
 
   /**
    * @brief Set the local reodering of the dof numbers
@@ -243,7 +243,7 @@ public:
   void addCoupling( string const & rowFieldName,
                     string const & colFieldName,
                     Connector connectivity,
-                    map< std::pair< string, string >, array1d< string > > const & regions,
+                    map< std::pair< string, string >, string_array > const & regions,
                     bool symmetric = true );
 
   /**

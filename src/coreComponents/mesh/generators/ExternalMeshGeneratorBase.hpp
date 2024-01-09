@@ -66,16 +66,16 @@ protected:
   R1Tensor m_scale;
 
   /// Names of the fields to be copied from an external reader into GEOSX data structure
-  array1d< string > m_volumicFieldsToImport;
+  string_array m_volumicFieldsToImport;
 
   /// String array of the GEOSX user declared volumic fields
-  array1d< string > m_volumicFieldsInGEOSX;
+  string_array m_volumicFieldsInGEOSX;
 
   /// Names of the surfacic fields to be copied from an external reader into GEOSX data structure
-  array1d< string > m_surfacicFieldsToImport;
+  string_array m_surfacicFieldsToImport;
 
   /// String array of the GEOSX user declared surfacic fields
-  array1d< string > m_surfacicFieldsInGEOSX;
+  string_array m_surfacicFieldsInGEOSX;
 };
 
 } // namespace geos

@@ -190,7 +190,7 @@ private:
    * @brief Getter for the aquifer water phase component names
    * @return an array storing the water phase component names
    */
-  arrayView1d< string const > getWaterPhaseComponentNames() const { return m_phaseComponentNames.toViewConst(); }
+  string_array const &getWaterPhaseComponentNames() const { return m_phaseComponentNames.toViewConst(); }
 
   /**
    * @brief Flag to allow all phases to flow into the aquifer
@@ -314,7 +314,7 @@ private:
   array1d< real64 > m_phaseComponentFraction;
 
   /// Water phase component names
-  array1d< string > m_phaseComponentNames;
+  string_array m_phaseComponentNames;
 
   /// Total compressibility (rock + water)
   real64 m_totalCompressibility;

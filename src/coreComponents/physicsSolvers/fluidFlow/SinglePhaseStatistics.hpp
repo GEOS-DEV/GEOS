@@ -101,7 +101,7 @@ private:
    * @param[in] regionNames the array of target region names
    */
   void computeRegionStatistics( MeshLevel & mesh,
-                                arrayView1d< string const > const & regionNames ) const;
+                                string_array const & regionNames ) const;
 
 
   void registerDataOnMesh( Group & meshBodies ) override;

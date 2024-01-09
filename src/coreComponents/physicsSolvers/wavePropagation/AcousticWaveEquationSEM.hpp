@@ -130,7 +130,7 @@ private:
    * corresponding elements nodes.
    * @param mesh mesh of the computational domain
    */
-  virtual void precomputeSourceAndReceiverTerm( MeshLevel & mesh, arrayView1d< string const > const & regionNames ) override;
+  virtual void precomputeSourceAndReceiverTerm( MeshLevel & mesh, string_array const & regionNames ) override;
 
   /**
    * @brief Apply free surface condition to the face define in the geometry box from the xml

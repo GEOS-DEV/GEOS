@@ -226,9 +226,9 @@ void CO2BrineFluid< PHASE1, PHASE2, FLASH >::createPVTModels()
 
   // TODO: get rid of these external files and move into XML, this is too error prone
   // For now, to support the legacy input, we read all the input parameters at once in the arrays below, and then we create the models
-  array1d< array1d< string > > phase1InputParams;
+  array1d< string_array > phase1InputParams;
   phase1InputParams.resize( 3 );
-  array1d< array1d< string > > phase2InputParams;
+  array1d< string_array > phase2InputParams;
   phase2InputParams.resize( 3 );
 
   // 1) Create the viscosity, density, enthalpy models
@@ -238,7 +238,7 @@ void CO2BrineFluid< PHASE1, PHASE2, FLASH >::createPVTModels()
     string str;
     while( std::getline( is, str ) )
     {
-      array1d< string > const strs = stringutilities::tokenizeBySpaces< array1d >( str );
+      string_array const strs = stringutilities::tokenizeBySpaces< array1d >( str );
 
       if( !strs.empty() )
       {
@@ -324,7 +324,7 @@ void CO2BrineFluid< PHASE1, PHASE2, FLASH >::createPVTModels()
     string str;
     while( std::getline( is, str ) )
     {
-      array1d< string > const strs = stringutilities::tokenizeBySpaces< array1d >( str );
+      string_array const strs = stringutilities::tokenizeBySpaces< array1d >( str );
 
       if( !strs.empty() )
       {

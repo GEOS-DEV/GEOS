@@ -87,7 +87,7 @@ void SolidMechanicsEmbeddedFractures::registerDataOnMesh( dataRepository::Group 
 
   forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
                                                     MeshLevel & mesh,
-                                                    arrayView1d< string const > const & regionNames )
+                                                    string_array const & regionNames )
   {
     ElementRegionManager & elemManager = mesh.getElemManager();
     elemManager.forElementSubRegions< EmbeddedSurfaceSubRegion >( regionNames, [&] ( localIndex const, EmbeddedSurfaceSubRegion & subRegion )
@@ -111,7 +111,7 @@ void SolidMechanicsEmbeddedFractures::resetStateToBeginningOfStep( DomainPartiti
   // reset displacementJump
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
-                                                                arrayView1d< string const > const & regionNames )
+                                                                string_array const & regionNames )
   {
     ElementRegionManager & elemManager = mesh.getElemManager();
 
@@ -157,7 +157,7 @@ void SolidMechanicsEmbeddedFractures::implicitStepComplete( real64 const & time_
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
-                                                                arrayView1d< string const > const & )
+                                                                string_array const & )
   {
 
     ElementRegionManager & elemManager = mesh.getElemManager();
@@ -183,12 +183,12 @@ void SolidMechanicsEmbeddedFractures::setupDofs( DomainPartition const & domain,
 
   if( !m_useStaticCondensation )
   {
-    map< std::pair< string, string >, array1d< string > > meshTargets;
+    map< std::pair< string, string >, string_array > meshTargets;
     forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const & meshBodyName,
                                                                   MeshLevel const & meshLevel,
-                                                                  arrayView1d< string const > const & regionNames )
+                                                                  string_array const & regionNames )
     {
-      array1d< string > regions;
+      string_array regions;
       ElementRegionManager const & elementRegionManager = meshLevel.getElemManager();
       elementRegionManager.forElementRegions< SurfaceElementRegion >( regionNames,
                                                                       [&]( localIndex const,
@@ -292,7 +292,7 @@ void SolidMechanicsEmbeddedFractures::assembleSystem( real64 const time,
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
-                                                                arrayView1d< string const > const & regionNames )
+                                                                string_array const & regionNames )
   {
     NodeManager const & nodeManager = mesh.getNodeManager();
     ElementRegionManager & elemManager = mesh.getElemManager();
@@ -365,7 +365,7 @@ void SolidMechanicsEmbeddedFractures::addCouplingNumNonzeros( DomainPartition & 
 {
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel const & mesh,
-                                                                arrayView1d< string const > const & regionNames )
+                                                                string_array const & regionNames )
   {
     NodeManager const & nodeManager          = mesh.getNodeManager();
     ElementRegionManager const & elemManager = mesh.getElemManager();
@@ -433,7 +433,7 @@ void SolidMechanicsEmbeddedFractures::addCouplingSparsityPattern( DomainPartitio
 {
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel const & mesh,
-                                                                arrayView1d< string const > const & regionNames )
+                                                                string_array const & regionNames )
   {
     NodeManager const & nodeManager          = mesh.getNodeManager();
     ElementRegionManager const & elemManager = mesh.getElemManager();
@@ -528,7 +528,7 @@ void SolidMechanicsEmbeddedFractures::applyTractionBC( real64 const time_n,
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel & mesh,
-                                                               arrayView1d< string const > const & )
+                                                               string_array const & )
   {
 
     fsManager.apply< ElementSubRegionBase >( time_n+ dt,
@@ -575,7 +575,7 @@ real64 SolidMechanicsEmbeddedFractures::calculateResidualNorm( real64 const & ti
     // Fracture residual
     forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                   MeshLevel const & mesh,
-                                                                  arrayView1d< string const > const & regionNames )
+                                                                  string_array const & regionNames )
     {
       mesh.getElemManager().forElementSubRegions< EmbeddedSurfaceSubRegion >( regionNames, [&]( localIndex const,
                                                                                                 EmbeddedSurfaceSubRegion const & subRegion )
@@ -670,7 +670,7 @@ void SolidMechanicsEmbeddedFractures::applySystemSolution( DofManager const & do
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
-                                                                arrayView1d< string const > const & )
+                                                                string_array const & )
   {
     FieldIdentifiers fieldsToBeSync;
 
@@ -691,7 +691,7 @@ void SolidMechanicsEmbeddedFractures::updateJump( DofManager const & dofManager,
 {
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
-                                                                arrayView1d< string const > const & regionNames )
+                                                                string_array const & regionNames )
   {
     NodeManager const & nodeManager = mesh.getNodeManager();
     ElementRegionManager & elemManager = mesh.getElemManager();
@@ -734,7 +734,7 @@ void SolidMechanicsEmbeddedFractures::updateState( DomainPartition & domain )
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
-                                                                arrayView1d< string const > const & regionNames )
+                                                                string_array const & regionNames )
   {
 
     ElementRegionManager & elemManager = mesh.getElemManager();
@@ -781,7 +781,7 @@ bool SolidMechanicsEmbeddedFractures::updateConfiguration( DomainPartition & dom
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
-                                                                arrayView1d< string const > const & regionNames )
+                                                                string_array const & regionNames )
   {
     ElementRegionManager & elemManager = mesh.getElemManager();
 

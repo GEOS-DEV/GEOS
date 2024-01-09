@@ -87,9 +87,9 @@ public:
    * @brief Getter for m_cellBlockNames
    * @return The array of cell block names.
    */
-  arrayView1d< string const > getCellBlockNames() const
+  string_array const & getCellBlockNames() const
   {
-    return m_cellBlockNames.toViewConst();
+    return m_cellBlockNames;
   }
 
   /**
@@ -105,7 +105,7 @@ public:
    * @brief Add an array cellBlockRegion name to the list.
    * @param cellBlockNames array of string containing the cell block region names.
    */
-  void addCellBlockNames( arrayView1d< string const > const & cellBlockNames )
+  void addCellBlockNames( string_array const & cellBlockNames )
   {
     for( auto const & name: cellBlockNames )
     {

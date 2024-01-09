@@ -189,7 +189,7 @@ void checkStringArrayView( Wrapper< string_array > const & view, const int sfp, 
 {
   EXPECT_EQ( view.sizedFromParent(), sfp );
   EXPECT_EQ( view.size(), arr.size() );
-  arrayView1d< string const > const & view_data = view.reference();
+  string_array const & view_data = view.reference();
   for( int i = 0; i < view.size(); i++ )
   {
     EXPECT_EQ( view_data[i], arr[i] );

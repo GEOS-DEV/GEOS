@@ -100,7 +100,7 @@ void LaplaceFEM::setupSystem( DomainPartition & domain,
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
-                                                                arrayView1d< string const > const & regionNames )
+                                                                string_array const & regionNames )
   {
     NodeManager const & nodeManager = mesh.getNodeManager();
     string const dofKey = dofManager.getKey( m_fieldName );
@@ -151,7 +151,7 @@ void LaplaceFEM::assembleSystem( real64 const GEOS_UNUSED_PARAM( time_n ),
 {
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
-                                                                arrayView1d< string const > const & regionNames )
+                                                                string_array const & regionNames )
   {
     NodeManager & nodeManager = mesh.getNodeManager();
     string const dofKey = dofManager.getKey( m_fieldName );

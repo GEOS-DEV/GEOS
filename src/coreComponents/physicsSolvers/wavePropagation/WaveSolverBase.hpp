@@ -194,7 +194,7 @@ protected:
    * corresponding elements nodes.
    * @param mesh mesh of the computational domain
    */
-  virtual void precomputeSourceAndReceiverTerm( MeshLevel & mesh, arrayView1d< string const > const & regionNames ) = 0;
+  virtual void precomputeSourceAndReceiverTerm( MeshLevel & mesh, string_array const & regionNames ) = 0;
 
   /**
    * @brief Perform forward explicit step

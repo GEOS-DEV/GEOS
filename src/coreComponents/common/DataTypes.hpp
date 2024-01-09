@@ -429,7 +429,8 @@ using real32_array = array1d< real32 >;
 using real64_array = array1d< real64 >;
 
 /// A 1-dimensional array of geos::string types.
-using string_array = array1d< string >;
+//using string_array = string_array;
+using string_array = std::vector< string >;
 
 /// A 1-dimensional array of geos::Path types
 using path_array = array1d< Path >;

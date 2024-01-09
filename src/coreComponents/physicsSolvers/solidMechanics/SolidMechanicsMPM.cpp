@@ -329,7 +329,7 @@ void SolidMechanicsMPM::registerDataOnMesh( Group & meshBodies )
 
   forDiscretizationOnMeshTargets( meshBodies, [&] ( string const & meshBodyName,
                                                     MeshLevel & meshLevel,
-                                                    arrayView1d< string const > const & regionNames )
+                                                    string_array const & regionNames )
   {
     ParticleManager & particleManager = meshLevel.getParticleManager();
 
@@ -351,7 +351,7 @@ void SolidMechanicsMPM::registerDataOnMesh( Group & meshBodies )
 
   forDiscretizationOnMeshTargets( meshBodies, [&] ( string const & meshBodyName,
                                                     MeshLevel & meshLevel,
-                                                    arrayView1d< string const > const & regionNames )
+                                                    string_array const & regionNames )
   {
     MeshBody const & meshBody = meshBodies.getGroup< MeshBody >( meshBodyName );
     if( meshBody.hasParticles() ) // Particle field registration? TODO: What goes here?
@@ -475,7 +475,7 @@ void SolidMechanicsMPM::initializePreSubGroups()
 
   forDiscretizationOnMeshTargets( meshBodies, [&] ( string const & meshBodyName,
                                                     MeshLevel & meshLevel,
-                                                    arrayView1d< string const > const & regionNames )
+                                                    string_array const & regionNames )
   {
     MeshBody const & meshBody = meshBodies.getGroup< MeshBody >( meshBodyName );
 

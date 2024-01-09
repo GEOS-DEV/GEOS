@@ -436,7 +436,7 @@ RelativePermeabilityBase & makeTableRelPermTwoPhase( string const & name, Group 
   phaseNames.resize( 2 );
   phaseNames[0] = "water"; phaseNames[1] = "gas";
 
-  auto & waterOilTableNames = relPerm.getReference< array1d< string > >( TableRelativePermeability::viewKeyStruct::wettingNonWettingRelPermTableNamesString() );
+  auto & waterOilTableNames = relPerm.getReference< string_array >( TableRelativePermeability::viewKeyStruct::wettingNonWettingRelPermTableNamesString() );
   waterOilTableNames.resize( 2 );
   waterOilTableNames[0] = "water_swg"; waterOilTableNames[1] = "gas_swg";
 
@@ -740,7 +740,7 @@ RelativePermeabilityBase & makeTableRelPermHysteresisTwoPhase( string const & na
 
   using keys = TableRelativePermeabilityHysteresis::viewKeyStruct;
 
-  auto & drainageWaterGasTableNames = relPerm.getReference< array1d< string > >( keys::drainageWettingNonWettingRelPermTableNamesString() );
+  auto & drainageWaterGasTableNames = relPerm.getReference< string_array >( keys::drainageWettingNonWettingRelPermTableNamesString() );
   drainageWaterGasTableNames.resize( 2 );
   drainageWaterGasTableNames[0] = "drainageWater_swg"; drainageWaterGasTableNames[1] = "drainageGas_swg";
 
@@ -824,11 +824,11 @@ RelativePermeabilityBase & makeTableRelPermThreePhase( string const & name, Grou
   phaseNames.resize( 3 );
   phaseNames[0] = "oil"; phaseNames[1] = "water"; phaseNames[2] = "gas";
 
-  auto & waterOilTableNames = relPerm.getReference< array1d< string > >( TableRelativePermeability::viewKeyStruct::wettingIntermediateRelPermTableNamesString() );
+  auto & waterOilTableNames = relPerm.getReference< string_array >( TableRelativePermeability::viewKeyStruct::wettingIntermediateRelPermTableNamesString() );
   waterOilTableNames.resize( 2 );
   waterOilTableNames[0] = "water_swof"; waterOilTableNames[1] = "oil_swof";
 
-  auto & gasOilTableNames = relPerm.getReference< array1d< string > >( TableRelativePermeability::viewKeyStruct::nonWettingIntermediateRelPermTableNamesString() );
+  auto & gasOilTableNames = relPerm.getReference< string_array >( TableRelativePermeability::viewKeyStruct::nonWettingIntermediateRelPermTableNamesString() );
   gasOilTableNames.resize( 2 );
   gasOilTableNames[0] = "gas_sgof"; gasOilTableNames[1] = "oil_sgof";
 

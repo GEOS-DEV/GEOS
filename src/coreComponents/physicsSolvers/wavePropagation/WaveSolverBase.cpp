@@ -193,7 +193,7 @@ void WaveSolverBase::registerDataOnMesh( Group & meshBodies )
 {
   forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
                                                     MeshLevel & mesh,
-                                                    arrayView1d< string const > const & )
+                                                    string_array const & )
   {
     NodeManager & nodeManager = mesh.getNodeManager();
 
@@ -376,7 +376,7 @@ localIndex WaveSolverBase::getNumNodesPerElem()
   forDiscretizationOnMeshTargets( domain.getMeshBodies(),
                                   [&]( string const &,
                                        MeshLevel const & mesh,
-                                       arrayView1d< string const > const & regionNames )
+                                       string_array const & regionNames )
   {
     ElementRegionManager const & elemManager = mesh.getElemManager();
     elemManager.forElementRegions( regionNames,

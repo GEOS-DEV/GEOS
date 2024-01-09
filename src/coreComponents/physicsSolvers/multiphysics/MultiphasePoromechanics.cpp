@@ -137,7 +137,7 @@ void MultiphasePoromechanics< FLOW_SOLVER >::registerDataOnMesh( Group & meshBod
 
   this->template forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
                                                                    MeshLevel & mesh,
-                                                                   arrayView1d< string const > const & regionNames )
+                                                                   string_array const & regionNames )
   {
     ElementRegionManager & elemManager = mesh.getElemManager();
 
@@ -209,7 +209,7 @@ void MultiphasePoromechanics< FLOW_SOLVER >::assembleSystem( real64 const GEOS_U
 
   this->template forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                                MeshLevel & mesh,
-                                                                               arrayView1d< string const > const & regionNames )
+                                                                               string_array const & regionNames )
   {
     poromechanicsRegionNames.insert( regionNames.begin(), regionNames.end() );
 
@@ -255,11 +255,11 @@ void MultiphasePoromechanics< FLOW_SOLVER >::assembleSystem( real64 const GEOS_U
 
   solidMechanicsSolver()->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                                         MeshLevel & mesh,
-                                                                                        arrayView1d< string const > const & regionNames )
+                                                                                        string_array const & regionNames )
   {
 
     // collect the target region of the mechanics solver not included in the poromechanics target regions
-    array1d< string > filteredRegionNames;
+    string_array filteredRegionNames;
     filteredRegionNames.reserve( regionNames.size() );
     for( string const & regionName : regionNames )
     {
@@ -319,7 +319,7 @@ void MultiphasePoromechanics< FLOW_SOLVER >::updateState( DomainPartition & doma
   real64 maxDeltaPhaseVolFrac = 0.0;
   this->template forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                                MeshLevel & mesh,
-                                                                               arrayView1d< string const > const & regionNames )
+                                                                               string_array const & regionNames )
   {
     ElementRegionManager & elemManager = mesh.getElemManager();
     elemManager.forElementSubRegions< CellElementSubRegion >( regionNames,
@@ -344,12 +344,12 @@ void MultiphasePoromechanics< FLOW_SOLVER >::initializePostInitialConditionsPreS
 {
   SolverBase::initializePostInitialConditionsPreSubGroups();
 
-  arrayView1d< string const > const & poromechanicsTargetRegionNames =
-    this->template getReference< array1d< string > >( SolverBase::viewKeyStruct::targetRegionsString() );
-  arrayView1d< string const > const & solidMechanicsTargetRegionNames =
-    solidMechanicsSolver()->template getReference< array1d< string > >( SolverBase::viewKeyStruct::targetRegionsString() );
-  arrayView1d< string const > const & flowTargetRegionNames =
-    flowSolver()->template getReference< array1d< string > >( SolverBase::viewKeyStruct::targetRegionsString() );
+  string_array const & poromechanicsTargetRegionNames =
+    this->template getReference< string_array >( SolverBase::viewKeyStruct::targetRegionsString() );
+  string_array const & solidMechanicsTargetRegionNames =
+    solidMechanicsSolver()->template getReference< string_array >( SolverBase::viewKeyStruct::targetRegionsString() );
+  string_array const & flowTargetRegionNames =
+    flowSolver()->template getReference< string_array >( SolverBase::viewKeyStruct::targetRegionsString() );
   for( integer i = 0; i < poromechanicsTargetRegionNames.size(); ++i )
   {
     GEOS_THROW_IF( std::find( solidMechanicsTargetRegionNames.begin(), solidMechanicsTargetRegionNames.end(),
@@ -392,7 +392,7 @@ void MultiphasePoromechanics< FLOW_SOLVER >::initializePreSubGroups()
 
   this->template forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                                MeshLevel & mesh,
-                                                                               arrayView1d< string const > const & regionNames )
+                                                                               string_array const & regionNames )
   {
     ElementRegionManager & elementRegionManager = mesh.getElemManager();
     elementRegionManager.forElementSubRegions< ElementSubRegionBase >( regionNames,
@@ -437,10 +437,10 @@ void MultiphasePoromechanics< FLOW_SOLVER >::updateStabilizationParameters( Doma
   // Step 2: loop over the target regions of the solver, and tag the elements belonging to stabilization regions
   this->template forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                                MeshLevel & mesh,
-                                                                               arrayView1d< string const > const & targetRegionNames )
+                                                                               string_array const & targetRegionNames )
   {
     // keep only the target regions that are in the filter
-    array1d< string > filteredTargetRegionNames;
+    string_array filteredTargetRegionNames;
     filteredTargetRegionNames.reserve( targetRegionNames.size() );
 
     for( string const & targetRegionName : targetRegionNames )
@@ -500,7 +500,7 @@ void MultiphasePoromechanics< FLOW_SOLVER >::mapSolutionBetweenSolvers( DomainPa
 
     this->template forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                                 MeshLevel & mesh,
-                                                                                arrayView1d< string const > const & regionNames )
+                                                                                string_array const & regionNames )
     {
 
       mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
@@ -522,7 +522,7 @@ void MultiphasePoromechanics< FLOW_SOLVER >::mapSolutionBetweenSolvers( DomainPa
 
     this->template forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                                 MeshLevel & mesh,
-                                                                                arrayView1d< string const > const & regionNames )
+                                                                                string_array const & regionNames )
     {
 
       mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
@@ -563,7 +563,7 @@ void MultiphasePoromechanics< FLOW_SOLVER >::averageMeanTotalStressIncrement( Do
 {
   this->template forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                               MeshLevel & mesh,
-                                                                              arrayView1d< string const > const & regionNames )
+                                                                              string_array const & regionNames )
   {
     mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                           auto & subRegion )

@@ -99,7 +99,7 @@ private:
   integer m_onlyPlotSpecifiedFieldNames;
 
   /// array of names of the fields to output
-  array1d< string > m_fieldNames;
+  string_array m_fieldNames;
 
 };
 

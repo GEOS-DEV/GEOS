@@ -142,7 +142,7 @@ void FlowSolverBase::registerDataOnMesh( Group & meshBodies )
 
   forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
                                                     MeshLevel & mesh,
-                                                    arrayView1d< string const > const & regionNames )
+                                                    string_array const & regionNames )
   {
 
     ElementRegionManager & elemManager = mesh.getElemManager();
@@ -248,7 +248,7 @@ void FlowSolverBase::saveIterationState( DomainPartition & domain ) const
 {
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel & mesh,
-                                                               arrayView1d< string const > const & regionNames )
+                                                               string_array const & regionNames )
   {
     mesh.getElemManager().forElementSubRegions( regionNames,
                                                 [&]( localIndex const,
@@ -331,9 +331,9 @@ void FlowSolverBase::initializePreSubGroups()
 
     forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const & meshBodyName,
                                                                   MeshLevel &,
-                                                                  arrayView1d< string const > const & regionNames )
+                                                                  string_array const & regionNames )
     {
-      array1d< string > & stencilTargetRegions = fluxApprox.targetRegions( meshBodyName );
+      string_array & stencilTargetRegions = fluxApprox.targetRegions( meshBodyName );
       std::set< string > stencilTargetRegionsSet( stencilTargetRegions.begin(), stencilTargetRegions.end() );
       stencilTargetRegionsSet.insert( regionNames.begin(), regionNames.end() );
       stencilTargetRegions.clear();
@@ -354,7 +354,7 @@ void FlowSolverBase::validatePoreVolumes( DomainPartition const & domain ) const
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel const & mesh,
-                                                                arrayView1d< string const > const & regionNames )
+                                                                string_array const & regionNames )
   {
     mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                           CellElementSubRegion const & subRegion )
@@ -420,14 +420,14 @@ void FlowSolverBase::initializePostInitialConditionsPreSubGroups()
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
-                                                                arrayView1d< string const > const & regionNames )
+                                                                string_array const & regionNames )
   {
     precomputeData( mesh, regionNames );
   } );
 }
 
 void FlowSolverBase::precomputeData( MeshLevel & mesh,
-                                     arrayView1d< string const > const & regionNames )
+                                     string_array const & regionNames )
 {
   FaceManager & faceManager = mesh.getFaceManager();
   real64 const gravVector[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( gravityVector() );
@@ -587,7 +587,7 @@ void FlowSolverBase::computeSourceFluxSizeScalingFactor( real64 const & time,
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel & mesh,
-                                                               arrayView1d< string const > const & )
+                                                               string_array const & )
   {
     fsManager.apply< ElementSubRegionBase,
                      SourceFluxBoundaryCondition >( time + dt,
@@ -730,7 +730,7 @@ void FlowSolverBase::prepareStencilWeights( DomainPartition & domain ) const
 {
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
-                                                                arrayView1d< string const > const & )
+                                                                string_array const & )
   {
     NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
     FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
@@ -753,7 +753,7 @@ void FlowSolverBase::updateStencilWeights( DomainPartition & domain ) const
 {
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
-                                                                arrayView1d< string const > const & )
+                                                                string_array const & )
   {
     NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
     FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();

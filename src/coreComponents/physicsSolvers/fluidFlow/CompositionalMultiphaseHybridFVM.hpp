@@ -171,7 +171,7 @@ public:
 protected:
 
   /// precompute the minGravityCoefficient for the buoyancy term
-  void precomputeData( MeshLevel & mesh, arrayView1d< string const > const & regionNames ) override;
+  void precomputeData( MeshLevel & mesh, string_array const & regionNames ) override;
 
 private:
 
