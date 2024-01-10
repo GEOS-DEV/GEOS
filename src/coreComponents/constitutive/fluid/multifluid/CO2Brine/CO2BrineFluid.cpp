@@ -157,7 +157,8 @@ void CO2BrineFluid< PHASE1, PHASE2, FLASH >::checkTablesParameters( real64 const
     m_phase1->enthalpy.checkTablesParameters( pressure, temperatureInCelsius );
   } catch( SimulationError const & ex )
   {
-    string const errorMsg = GEOS_FMT( "{}: Table input error for phase no. 1.\n", getDataContext() );
+    string const errorMsg = GEOS_FMT( "Table input error for {} phase (in table from \"{}\").\n",
+                                      m_phaseNames[0], m_phasePVTParaFiles[0] );
     throw SimulationError( ex, errorMsg );
   }
 
@@ -168,7 +169,8 @@ void CO2BrineFluid< PHASE1, PHASE2, FLASH >::checkTablesParameters( real64 const
     m_phase2->enthalpy.checkTablesParameters( pressure, temperatureInCelsius );
   } catch( SimulationError const & ex )
   {
-    string const errorMsg = GEOS_FMT( "{}: Table input error for phase no. 2.\n", getDataContext() );
+    string const errorMsg = GEOS_FMT( "Table input error for {} phase (in table from \"{}\").\n",
+                                      m_phaseNames[1], m_phasePVTParaFiles[1] );
     throw SimulationError( ex, errorMsg );
   }
 
@@ -177,7 +179,8 @@ void CO2BrineFluid< PHASE1, PHASE2, FLASH >::checkTablesParameters( real64 const
     m_flash->checkTablesParameters( pressure, temperatureInCelsius );
   } catch( SimulationError const & ex )
   {
-    string const errorMsg = GEOS_FMT( "{}: Table input error for flash phase.\n", getDataContext() );
+    string const errorMsg = GEOS_FMT( "Table input error for flash phase (in table from \"{}\").\n",
+                                      m_flashModelParaFile );
     throw SimulationError( ex, errorMsg );
   }
 }
