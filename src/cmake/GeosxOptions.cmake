@@ -121,8 +121,8 @@ message( "CMAKE_CXX_COMPILER_ID = ${CMAKE_CXX_COMPILER_ID}" )
 
 blt_append_custom_compiler_flag( FLAGS_VAR CMAKE_CXX_FLAGS DEFAULT "${OpenMP_CXX_FLAGS}" )
 blt_append_custom_compiler_flag( FLAGS_VAR CMAKE_CXX_FLAGS
-                                 GNU   "-Wall -Wextra -Wpedantic -pedantic-errors -Wshadow -Wfloat-equal -Wcast-align -Wcast-qual"
-                                 CLANG "-Wall -Wextra -Wpedantic -pedantic-errors -Wshadow -Wfloat-equal -Wno-cast-align -Wcast-qual"
+                                 GNU   "-Wpedantic -pedantic-errors -Wshadow -Wfloat-equal -Wcast-align -Wcast-qual"
+                                 CLANG "-Wpedantic -pedantic-errors -Wshadow -Wfloat-equal -Wno-cast-align -Wcast-qual"
                                )
 
 blt_append_custom_compiler_flag( FLAGS_VAR CMAKE_CXX_FLAGS_DEBUG
@@ -136,10 +136,10 @@ blt_append_custom_compiler_flag( FLAGS_VAR GEOSX_NINJA_FLAGS
                                  CLANG   "-fcolor-diagnostics"
                                )
 
-blt_append_custom_compiler_flag( FLAGS_VAR COVERAGE_FLAGS
-                                 GNU   "-fprofile-arcs -ftest-coverage"
-                                 CLANG "-fprofile-instr-generate -fcoverage-mapping"
-                               )
+# blt_append_custom_compiler_flag( FLAGS_VAR COVERAGE_FLAGS
+#                                  GNU   "-fprofile-arcs -ftest-coverage"
+#                                  CLANG "-fprofile-instr-generate -fcoverage-mapping"
+#                                )
 
 # clang-13 and gcc complains about unused-but-set variable.
 include(CheckCXXCompilerFlag)

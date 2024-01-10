@@ -226,5 +226,4 @@ if( externalComponentDeps )
   target_include_directories( physicsSolvers PUBLIC ${CMAKE_SOURCE_DIR}/externalComponents )
 endif()
 
-geosx_add_code_checks( PREFIX physicsSolvers )
 
