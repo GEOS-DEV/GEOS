@@ -204,7 +204,7 @@ jobs:
       ENABLE_HYPRE: ON
       ENABLE_TRILINOS: OFF
 #      GCP_BUCKET: geosx/ubuntu22.04-gcc11-ccov
-      RUNS_ON: streak
+      RUNS_ON: ubuntu-22.04
       USE_SCCACHE: false
 
 
