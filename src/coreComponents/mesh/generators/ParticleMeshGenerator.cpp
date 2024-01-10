@@ -303,29 +303,24 @@ void ParticleMeshGenerator::generateMesh( DomainPartition & domain )
       particleVelocity[index][1] = particleData[particleType][i][5];
       particleVelocity[index][2] = particleData[particleType][i][6];
 
-      // Material Direction
-      particleMaterialDirection[index][0] = particleData[particleType][i][7];
-      particleMaterialDirection[index][1] = particleData[particleType][i][8];
-      particleMaterialDirection[index][2] = particleData[particleType][i][9];
-
-      // Material (set above) is [10]
+      // Material (set above) is [7]
 
       // Group
-      particleGroup[index] = particleData[particleType][i][11];
+      particleGroup[index] = particleData[particleType][i][8];
 
       // surfaceFlag
-      particleSurfaceFlag[index] = particleData[particleType][i][12];
+      particleSurfaceFlag[index] = particleData[particleType][i][9];
 
       // Damage
-      particleDamage[index] = particleData[particleType][i][13];
+      particleDamage[index] = particleData[particleType][i][10];
 
       // strengthScale
-      particleStrengthScale[index] = particleData[particleType][i][14];
+      particleStrengthScale[index] = particleData[particleType][i][11];
 
       // Volume and R-Vectors
       if( particleType == "SinglePoint" )
       {
-        particleVolume[index] = particleData[particleType][i][15];
+        particleVolume[index] = particleData[particleType][i][12];
         double a = std::pow( particleVolume[index], 1.0/3.0 );
         particleRVectors[index][0][0] = a;
         particleRVectors[index][0][1] = 0.0;
@@ -340,15 +335,15 @@ void ParticleMeshGenerator::generateMesh( DomainPartition & domain )
       else if( particleType == "CPDI" )
       {
         double x1, y1, z1, x2, y2, z2, x3, y3, z3;
-        x1 = particleData[particleType][i][15];
-        y1 = particleData[particleType][i][16];
-        z1 = particleData[particleType][i][17];
-        x2 = particleData[particleType][i][18];
-        y2 = particleData[particleType][i][19];
-        z2 = particleData[particleType][i][20];
-        x3 = particleData[particleType][i][21];
-        y3 = particleData[particleType][i][22];
-        z3 = particleData[particleType][i][23];
+        x1 = particleData[particleType][i][12];
+        y1 = particleData[particleType][i][13];
+        z1 = particleData[particleType][i][14];
+        x2 = particleData[particleType][i][15];
+        y2 = particleData[particleType][i][16];
+        z2 = particleData[particleType][i][17];
+        x3 = particleData[particleType][i][18];
+        y3 = particleData[particleType][i][19];
+        z3 = particleData[particleType][i][20];
         particleRVectors[index][0][0] = x1;
         particleRVectors[index][0][1] = y1;
         particleRVectors[index][0][2] = z1;
@@ -364,6 +359,11 @@ void ParticleMeshGenerator::generateMesh( DomainPartition & domain )
       {
         GEOS_ERROR( "Invalid particle type specification! Cannot determine particle volume, aborting." );
       }
+
+      // Material Direction
+      particleMaterialDirection[index][0] = particleData[particleType][i][21];
+      particleMaterialDirection[index][1] = particleData[particleType][i][22];
+      particleMaterialDirection[index][2] = particleData[particleType][i][23];
 
       // Surface Normal ( currently only works assuming that particles are formatted for CPDI data)
       // CC: TODO eventually include header in particle file for column data
