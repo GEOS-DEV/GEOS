@@ -1,6 +1,15 @@
 ####################################
+#
 # 3rd Party Dependencies
+#
+# Setup all GEOS TPL
+#
 ####################################
+
+
+################################
+# Helper macros & functions
+################################
 
 macro(find_and_register)
     set(singleValueArgs NAME HEADER)
@@ -101,7 +110,21 @@ macro(extract_version_from_header)
 
 endmacro( extract_version_from_header)
 
+
+macro(mandatory_tpl_doesnt_exist
+      CURRENT_TPL_NAME
+      CURRENT_TPL_DIR_VAR)
+
+    message(FATAL_ERROR
+            "GEOSX requires ${CURRENT_TPL_NAME}, either :\n"
+            "  - Verify that you provided a valid TPL installation directory (GEOSX_TPL_DIR = \"${GEOSX_TPL_DIR}\"),\n"
+            "  - Or set ${CURRENT_TPL_DIR_VAR} to the ${CURRENT_TPL_NAME} installation directory (${CURRENT_TPL_DIR_VAR} = \"${${CURRENT_TPL_DIR_VAR}}\").\n")
+
+endmacro(mandatory_tpl_doesnt_exist)
+
+
 set(thirdPartyLibs "")
+
 
 ################################
 # BLAS/LAPACK
@@ -184,7 +207,7 @@ if(DEFINED CONDUIT_DIR)
 
     set(thirdPartyLibs ${thirdPartyLibs} conduit::conduit)
 else()
-    message(FATAL_ERROR "GEOSX requires conduit, set CONDUIT_DIR to the conduit installation directory.")
+    mandatory_tpl_doesnt_exist("Conduit" CONDUIT_DIR)
 endif()
 
 ################################
@@ -215,7 +238,7 @@ if(DEFINED HDF5_DIR)
     set(ENABLE_HDF5 ON CACHE BOOL "")
     set(thirdPartyLibs ${thirdPartyLibs} hdf5)
 else()
-    message(FATAL_ERROR "GEOSX requires hdf5, set HDF5_DIR to the hdf5 installation directory.")
+    mandatory_tpl_doesnt_exist("hdf5" HDF5_DIR)
 endif()
 
 ################################
@@ -253,7 +276,7 @@ if(DEFINED PUGIXML_DIR)
     set(ENABLE_PUGIXML ON CACHE BOOL "")
     set(thirdPartyLibs ${thirdPartyLibs} pugixml )
 else()
-    message(FATAL_ERROR "GEOSX requires pugixml, set PUGIXML_DIR to the pugixml installation directory.")
+    mandatory_tpl_doesnt_exist("pugixml" PUGIXML_DIR)
 endif()
 
 ################################
@@ -285,7 +308,7 @@ if(DEFINED RAJA_DIR)
     set(ENABLE_RAJA ON CACHE BOOL "")
     set(thirdPartyLibs ${thirdPartyLibs} RAJA )
 else()
-    message(FATAL_ERROR "GEOSX requires RAJA, set RAJA_DIR to the RAJA installation directory.")
+    mandatory_tpl_doesnt_exist("RAJA" RAJA_DIR)
 endif()
 
 ################################
@@ -316,7 +339,7 @@ if(DEFINED UMPIRE_DIR)
     set(ENABLE_UMPIRE ON CACHE BOOL "")
     set(thirdPartyLibs ${thirdPartyLibs} umpire)
 else()
-    message(FATAL_ERROR "GEOSX requires Umpire, set UMPIRE_DIR to the Umpire installation directory.")
+    mandatory_tpl_doesnt_exist("Umpire" UMPIRE_DIR)
 endif()
 
 
@@ -339,7 +362,7 @@ if(DEFINED CHAI_DIR)
     set(ENABLE_CHAI ON CACHE BOOL "")
     set(thirdPartyLibs ${thirdPartyLibs} chai)
 else()
-    message(FATAL_ERROR "GEOSX requires CHAI, set CHAI_DIR to the CHAI installation directory.")
+    mandatory_tpl_doesnt_exist("CHAI" CHAI_DIR)
 endif()
 
 ################################
@@ -794,7 +817,7 @@ if(DEFINED FMT_DIR)
 
     set(thirdPartyLibs ${thirdPartyLibs} fmt::fmt )
 else()
-    message(FATAL_ERROR "GEOSX requires {fmt}, set FMT_DIR to the {fmt} installation directory.")
+    mandatory_tpl_doesnt_exist("{fmt}" FMT_DIR)
 endif()
 
 ################################
