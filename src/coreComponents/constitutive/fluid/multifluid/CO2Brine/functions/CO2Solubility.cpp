@@ -20,7 +20,6 @@
 
 #include "constitutive/fluid/multifluid/CO2Brine/functions/CO2EOSSolver.hpp"
 #include "constitutive/fluid/multifluid/CO2Brine/functions/PVTFunctionHelpers.hpp"
-#include "constitutive/fluid/multifluid/MultiFluidConstants.hpp"
 
 #include "functions/FunctionManager.hpp"
 #include "common/Units.hpp"
@@ -42,7 +41,7 @@ namespace
 constexpr real64 P_Pa_f = 1e+5;
 constexpr real64 P_c    = 73.773 * P_Pa_f;
 constexpr real64 T_c    = 304.1282;
-constexpr real64 Rgas   = MultiFluidConstants::gasConstant;
+constexpr real64 Rgas   = constants::gasConstant;
 constexpr real64 V_c    = Rgas*T_c/P_c;
 
 // these coefficients are in Table (A1) of Duan and Sun (2003)
@@ -246,7 +245,7 @@ TableFunction const * makeSolubilityTable( string_array const & inputParams,
   array1d< real64 > values( tableCoords.nPressures() * tableCoords.nTemperatures() );
   calculateCO2Solubility( functionName, tolerance, tableCoords, salinity, values );
 
-  string const tableName = functionName + "_table";
+  string const tableName = functionName + "_co2Dissolution_table";
   if( functionManager.hasGroup< TableFunction >( tableName ) )
   {
     return functionManager.getGroupPointer< TableFunction >( tableName );
@@ -262,13 +261,43 @@ TableFunction const * makeSolubilityTable( string_array const & inputParams,
   }
 }
 
+TableFunction const * makeVapourisationTable( string_array const & inputParams,
+                                              string const & functionName,
+                                              FunctionManager & functionManager )
+{
+  // initialize the (p,T) coordinates
+  PTTableCoordinates tableCoords;
+  PVTFunctionHelpers::initializePropertyTable( inputParams, tableCoords );
+
+  // Currently initialise to all zeros
+
+  array1d< real64 > values( tableCoords.nPressures() * tableCoords.nTemperatures() );
+  values.zero();
+
+  string const tableName = functionName + "_waterVaporization_table";
+  if( functionManager.hasGroup< TableFunction >( tableName ) )
+  {
+    return functionManager.getGroupPointer< TableFunction >( tableName );
+  }
+  else
+  {
+    TableFunction * const vapourisationTable = dynamicCast< TableFunction * >( functionManager.createChild( "TableFunction", tableName ) );
+    vapourisationTable->setTableCoordinates( tableCoords.getCoords(),
+                                             { units::Pressure, units::TemperatureInC } );
+    vapourisationTable->setTableValues( values, units::Solubility );
+    vapourisationTable->setInterpolationMethod( TableFunction::InterpolationType::Linear );
+    return vapourisationTable;
+  }
+}
+
 } // namespace
 
 CO2Solubility::CO2Solubility( string const & name,
                               string_array const & inputParams,
                               string_array const & phaseNames,
                               string_array const & componentNames,
-                              array1d< real64 > const & componentMolarWeight ):
+                              array1d< real64 > const & componentMolarWeight,
+                              bool const printTable ):
   FlashModelBase( name,
                   componentNames,
                   componentMolarWeight )
@@ -293,6 +322,12 @@ CO2Solubility::CO2Solubility( string const & name,
   m_phaseLiquidIndex = PVTFunctionHelpers::findName( phaseNames, expectedWaterPhaseNames, "phaseNames" );
 
   m_CO2SolubilityTable = makeSolubilityTable( inputParams, m_modelName, FunctionManager::getInstance() );
+  m_WaterVapourisationTable = makeVapourisationTable( inputParams, m_modelName, FunctionManager::getInstance() );
+  if( printTable )
+  {
+    m_CO2SolubilityTable->print( m_CO2SolubilityTable->getName() );
+    m_WaterVapourisationTable->print( m_WaterVapourisationTable->getName() );
+  }
 }
 
 void CO2Solubility::checkTablesParameters( real64 const pressure,
@@ -300,19 +335,22 @@ void CO2Solubility::checkTablesParameters( real64 const pressure,
 {
   m_CO2SolubilityTable->checkCoord( pressure, 0 );
   m_CO2SolubilityTable->checkCoord( temperature, 1 );
+  m_WaterVapourisationTable->checkCoord( pressure, 0 );
+  m_WaterVapourisationTable->checkCoord( temperature, 1 );
 }
 
 CO2Solubility::KernelWrapper CO2Solubility::createKernelWrapper() const
 {
   return KernelWrapper( m_componentMolarWeight,
                         *m_CO2SolubilityTable,
+                        *m_WaterVapourisationTable,
                         m_CO2Index,
                         m_waterIndex,
                         m_phaseGasIndex,
                         m_phaseLiquidIndex );
 }
 
-REGISTER_CATALOG_ENTRY( FlashModelBase, CO2Solubility, string const &, string_array const &, string_array const &, string_array const &, array1d< real64 > const & )
+REGISTER_CATALOG_ENTRY( FlashModelBase, CO2Solubility, string const &, string_array const &, string_array const &, string_array const &, array1d< real64 > const &, bool const )
 
 } // end namespace PVTProps
 

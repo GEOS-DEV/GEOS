@@ -261,9 +261,9 @@ void CompositionalMultiphaseWell::registerDataOnMesh( Group & meshBodies )
         integer const numPhase = m_numPhases;
         // format: time,bhp,total_rate,total_vol_rate,phase0_vol_rate,phase1_vol_rate,...
         std::ofstream outputFile( m_ratesOutputDir + "/" + wellControlsName + ".csv" );
-        outputFile << "time [s],bhp [Pa],total rate [" << massUnit << "/s],total " << conditionKey << " volumetric rate [" << unitKey << "m3/s]";
+        outputFile << "Time [s],BHP [Pa],Total rate [" << massUnit << "/s],Total " << conditionKey << " Volumetric rate [" << unitKey << "m3/s]";
         for( integer ip = 0; ip < numPhase; ++ip )
-          outputFile << ",phase" << ip << " " << conditionKey << " volumetric rate [" << unitKey << "m3/s]";
+          outputFile << ",Phase" << ip << " " << conditionKey << " volumetric rate [" << unitKey << "m3/s]";
         outputFile << std::endl;
         outputFile.close();
       }
@@ -336,6 +336,28 @@ void compareMulticomponentModels( MODEL1_TYPE const & lhs, MODEL2_TYPE const & r
 
 }
 
+/**
+ * @brief Checks if the WellControls parameters are within the fluid tables ranges
+ * @param fluid the fluid to check
+ */
+void CompositionalMultiphaseWell::validateWellControlsForFluid( WellControls const & wellControls,
+                                                                MultiFluidBase const & fluid ) const
+{
+  if( wellControls.useSurfaceConditions() )
+  {
+    try
+    {
+      real64 const & surfaceTemp = wellControls.getSurfaceTemperature();
+      real64 const & surfacePres = wellControls.getSurfacePressure();
+      fluid.checkTablesParameters( surfacePres, surfaceTemp );
+    } catch( SimulationError const & ex )
+    {
+      string const errorMsg = GEOS_FMT( "{}: wrong surface pressure / temperature.\n", getDataContext() );
+      throw SimulationError( ex, errorMsg );
+    }
+  }
+}
+
 void CompositionalMultiphaseWell::validateConstitutiveModels( DomainPartition const & domain ) const
 {
   GEOS_MARK_FUNCTION;
@@ -361,6 +383,9 @@ void CompositionalMultiphaseWell::validateConstitutiveModels( DomainPartition co
       string const & relpermName = subRegion.getReference< string >( viewKeyStruct::relPermNamesString() );
       RelativePermeabilityBase const & relPerm = getConstitutiveModel< RelativePermeabilityBase >( subRegion, relpermName );
       compareMultiphaseModels( relPerm, referenceFluid );
+
+      WellControls const & wellControls = getWellControls( subRegion );
+      validateWellControlsForFluid( wellControls, fluid );
     } );
 
   } );
@@ -416,8 +441,6 @@ void CompositionalMultiphaseWell::validateWellConstraints( real64 const & time_n
   WellControls::Control const currentControl = wellControls.getControl();
   real64 const & targetTotalRate = wellControls.getTargetTotalRate( time_n + dt );
   real64 const & targetPhaseRate = wellControls.getTargetPhaseRate( time_n + dt );
-  integer const useSurfaceConditions = wellControls.useSurfaceConditions();
-  real64 const & surfaceTemp = wellControls.getSurfaceTemperature();
 
   GEOS_THROW_IF( wellControls.isInjector() && currentControl == WellControls::Control::PHASEVOLRATE,
                  "WellControls " << wellControls.getDataContext() <<
@@ -445,11 +468,6 @@ void CompositionalMultiphaseWell::validateWellConstraints( real64 const & time_n
   GEOS_THROW_IF( wellControls.isProducer() && !isZero( targetTotalRate ),
                  "WellControls " << wellControls.getDataContext() <<
                  ": Target total rate cannot be used for producers",
-                 InputError );
-
-  GEOS_THROW_IF( useSurfaceConditions && surfaceTemp <= 0,
-                 "WellControls " << wellControls.getDataContext() <<
-                 ": Surface temperature must be set to a strictly positive value",
                  InputError );
 
   // Find target phase index for phase rate constraint
@@ -497,6 +515,7 @@ void CompositionalMultiphaseWell::initializePostSubGroups()
                      InputError );
 
       validateInjectionStreams( subRegion );
+
       validateWellConstraints( 0, 0, subRegion );
 
     } );
@@ -671,17 +690,6 @@ void CompositionalMultiphaseWell::updateVolRatesForConstraint( WellElementSubReg
 
   constitutive::constitutiveUpdatePassThru( fluid, [&] ( auto & castedFluid )
   {
-    try
-    {
-      castedFluid.checkTablesParameters( surfacePres, surfaceTemp );
-    } catch( SimulationError const & ex )
-    {
-      string const errorMsg = GEOS_FMT( "{}: wrong surface pressure / temperature.\n", getDataContext() );
-      GEOS_WARNING( errorMsg );
-      GEOS_UNUSED_VAR( ex );
-      // throw SimulationError( ex, errorMsg );
-    }
-
     typename TYPEOFREF( castedFluid ) ::KernelWrapper fluidWrapper = castedFluid.createKernelWrapper();
 
     // bring everything back to host, capture the scalars by reference

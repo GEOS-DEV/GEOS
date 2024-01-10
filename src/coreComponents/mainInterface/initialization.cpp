@@ -284,9 +284,6 @@ std::unique_ptr< CommandLineOptions > parseCommandLineOptions( int argc, char * 
 std::unique_ptr< CommandLineOptions > basicSetup( int argc, char * argv[], bool const parseCommandLine )
 {
   setupEnvironment( argc, argv );
-
-  outputVersionInfo();
-
   setupLAI();
 
   if( parseCommandLine )
