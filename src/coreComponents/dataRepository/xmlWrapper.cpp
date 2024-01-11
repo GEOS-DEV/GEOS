@@ -150,7 +150,7 @@ void xmlDocument::addIncludedXML( xmlNode & targetNode, int const level )
   GEOS_THROW_IF( level > 100, "XML include level limit reached, please check input for include loops", InputError );
 
   string const currentFilePath = targetNode.attribute( filePathString ).value();
-
+  
   // Schema currently allows a single unique <Included>, but a non-validating file may include multiple
   for( xmlNode includedNode : targetNode.children( includedListTag ) )
   {
@@ -169,6 +169,8 @@ void xmlDocument::addIncludedXML( xmlNode & targetNode, int const level )
                        InputError );
         return isAbsolutePath( fileName ) ? fileName : joinPath( splitPath( currentFilePath ).first, fileName );
       }();
+
+      GEOS_LOG_RANK_0( "Included additionnal XML file: " << getAbsolutePath( includedFilePath ) );
 
       xmlDocument includedXmlDocument;
       xmlResult const result = includedXmlDocument.loadFile( includedFilePath, hasNodeFileInfo() );
