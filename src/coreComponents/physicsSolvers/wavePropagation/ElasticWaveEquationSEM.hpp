@@ -51,6 +51,8 @@ public:
   ElasticWaveEquationSEM & operator=( ElasticWaveEquationSEM const & ) = delete;
   ElasticWaveEquationSEM & operator=( ElasticWaveEquationSEM && ) = delete;
 
+  /// String used to form the solverName used to register solvers in CoupledSolver
+  static string coupledSolverAttributePrefix() { return "elastic"; }
 
   static string catalogName() { return "ElasticSEM"; }
   /**
@@ -136,6 +138,22 @@ public:
                                real64 const & dt,
                                integer const cycleNumber,
                                DomainPartition & domain );
+
+  void computeUnknowns( real64 const & time_n,
+                        real64 const & dt,
+                        integer const cycleNumber,
+                        DomainPartition & domain,
+                        MeshLevel & mesh,
+                        arrayView1d< string const > const & regionNames );
+
+  void synchronizeUnknowns( real64 const & time_n,
+                            real64 const & dt,
+                            integer const cycleNumber,
+                            DomainPartition & domain,
+                            MeshLevel & mesh,
+                            arrayView1d< string const > const & regionNames );
+
+  void prepareNextTimestep( MeshLevel & mesh );
 protected:
 
   virtual void postProcessInput() override final;
@@ -174,10 +192,10 @@ private:
   /// Constant part of the source for the nodes listed in m_sourceNodeIds in x-direction
   array2d< real64 > m_sourceConstantsx;
 
-  /// Constant part of the source for the nodes listed in m_sourceNodeIds in x-direction
+  /// Constant part of the source for the nodes listed in m_sourceNodeIds in y-direction
   array2d< real64 > m_sourceConstantsy;
 
-  /// Constant part of the source for the nodes listed in m_sourceNodeIds in x-direction
+  /// Constant part of the source for the nodes listed in m_sourceNodeIds in z-direction
   array2d< real64 > m_sourceConstantsz;
 
   /// Displacement_np1 at the receiver location for each time step for each receiver (x-component)
@@ -297,8 +315,8 @@ DECLARE_FIELD( ForcingRHSz,
                WRITE_AND_READ,
                "RHS for z-direction" );
 
-DECLARE_FIELD( MassVector,
-               "massVector",
+DECLARE_FIELD( ElasticMassVector,
+               "elasticMassVector",
                array1d< real32 >,
                0,
                NOPLOT,
@@ -353,40 +371,40 @@ DECLARE_FIELD( StiffnessVectorz,
                WRITE_AND_READ,
                "z-component of stiffness vector." );
 
-DECLARE_FIELD( MediumVelocityVp,
-               "mediumVelocityVp",
+DECLARE_FIELD( ElasticVelocityVp,
+               "elasticVelocityVp",
                array1d< real32 >,
                0,
                NOPLOT,
                WRITE_AND_READ,
                "P-waves speed in the cell" );
 
-DECLARE_FIELD( MediumVelocityVs,
-               "mediumVelocityVs",
+DECLARE_FIELD( ElasticVelocityVs,
+               "elasticVelocityVs",
                array1d< real32 >,
                0,
                NOPLOT,
                WRITE_AND_READ,
                "S-waves speed in the cell" );
 
-DECLARE_FIELD( MediumDensity,
-               "mediumDensity",
+DECLARE_FIELD( ElasticDensity,
+               "elasticDensity",
                array1d< real32 >,
                0,
                NOPLOT,
                WRITE_AND_READ,
                "Medium density of the cell" );
 
-DECLARE_FIELD( FreeSurfaceFaceIndicator,
-               "freeSurfaceFaceIndicator",
+DECLARE_FIELD( ElasticFreeSurfaceFaceIndicator,
+               "elasticFreeSurfaceFaceIndicator",
                array1d< localIndex >,
                0,
                NOPLOT,
                WRITE_AND_READ,
                "Free surface indicator, 1 if a face is on free surface 0 otherwise." );
 
-DECLARE_FIELD( FreeSurfaceNodeIndicator,
-               "freeSurfaceNodeIndicator",
+DECLARE_FIELD( ElasticFreeSurfaceNodeIndicator,
+               "elasticFreeSurfaceNodeIndicator",
                array1d< localIndex >,
                0,
                NOPLOT,

@@ -181,7 +181,7 @@
       name="cellVelocity1"
       initialCondition="1"
       objectPath="ElementRegions/interiorDomain"
-      fieldName="mediumVelocity"
+      fieldName="acousticVelocity"
       scale="2000"
       setNames="{ all }"/>
 
@@ -189,7 +189,7 @@
       name="cellDensity1"
       initialCondition="1"
       objectPath="ElementRegions/interiorDomain"
-      fieldName="mediumDensity"
+      fieldName="acousticDensity"
       scale="1"
       setNames="{ all }"/>
 
@@ -198,7 +198,7 @@
       name="cellVelocity2"
       initialCondition="1"
       objectPath="ElementRegions/pmlDomain"
-      fieldName="mediumVelocity"
+      fieldName="acousticVelocity"
       scale="2000"
       setNames="{ all }"/>
 
@@ -206,7 +206,7 @@
       name="cellDensity2"
       initialCondition="1"
       objectPath="ElementRegions/pmlDomain"
-      fieldName="mediumDensity"
+      fieldName="acousticDensity"
       scale="1"
       setNames="{ all }"/>
 
