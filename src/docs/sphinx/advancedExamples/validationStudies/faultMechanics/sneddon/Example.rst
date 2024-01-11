@@ -84,7 +84,7 @@ verbosity levels, target regions, and other solver-specific attributes.
 
 Additionally, we need to specify another solver of type, ``EmbeddedSurfaceGenerator``, which is used to discretize the fracture planes.
 
-.. literalinclude:: ../../../../../../../inputFiles/efemFractureMechanics/Sneddon_embeddedFrac_base.xml
+.. literalinclude:: ../../../../../../../inputFiles/efemFractureMechanics/Sneddon_embeddedFrac_verification.xml
   :language: xml
   :start-after: <!-- SPHINX_SNEDDON_SOLVER -->
   :end-before: <!-- SPHINX_SNEDDON_SOLVER_END -->
@@ -234,7 +234,7 @@ In this example, a task is specified to output fracture aperture (normal opening
 
 - The test case with EmbeddedFractures solver:
 
-.. literalinclude:: ../../../../../../../inputFiles/efemFractureMechanics/Sneddon_embeddedFrac_verification.xml
+.. literalinclude:: ../../../../../../../inputFiles/efemFractureMechanics/Sneddon_embeddedFrac_base.xml
   :language: xml
   :start-after: <!-- SPHINX_SNEDDON_TASK -->
   :end-before: <!-- SPHINX_SNEDDON_TASK_END -->
