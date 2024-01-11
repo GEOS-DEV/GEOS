@@ -331,9 +331,6 @@ protected:
     /// After the flow solver
     if( solverType == static_cast< integer >( SolverType::Flow ) )
     {
-      // save pressure and temperature at the end of this iteration
-      flowSolver()->saveIterationState( domain );
-
       this->template forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                                   MeshLevel & mesh,
                                                                                   arrayView1d< string const > const & regionNames )
