@@ -181,8 +181,8 @@ class Geosx(CMakePackage, CudaPackage):
     conflicts('~hypre lai=hypre', msg='To use HYPRE as the Linear Algebra Interface you must build it.')
     conflicts('~petsc lai=petsc', msg='To use PETSc as the Linear Algebra Interface you must build it.')
 
-    # Only phase necessary for building dependencies
-    phases = ['hostconfig']
+    # Only phases necessary for building dependencies and generate host configs
+    phases = ['geos_hostconfig', 'lvarray_hostconfig']
     #phases = ['hostconfig', 'cmake', 'build', 'install']
 
     @run_after('build')
@@ -208,19 +208,23 @@ class Geosx(CMakePackage, CudaPackage):
             sys_type = env["SYS_TYPE"]
         return sys_type
 
-    def _get_host_config_path(self, spec):
+    def _get_host_config_path(self, spec, lvarray=False):
         var = ''
         if '+cuda' in spec:
             var = '-'.join([var, 'cuda'])
 
         hostname = socket.gethostname().rstrip('1234567890')
+
+        if lvarray:
+            hostname = "lvarray-" + hostname
+
         host_config_path = "%s-%s-%s%s.cmake" % (hostname, self._get_sys_type(spec), (str(spec.compiler)).replace('=',''), var)
 
         dest_dir = self.stage.source_path
         host_config_path = os.path.abspath(pjoin(dest_dir, host_config_path))
         return host_config_path
 
-    def hostconfig(self, spec, prefix, py_site_pkgs_dir=None):
+    def geos_hostconfig(self, spec, prefix, py_site_pkgs_dir=None):
         """
         This method creates a 'host-config' file that specifies
         all of the options used to configure and build GEOSX.
@@ -516,6 +520,164 @@ class Geosx(CMakePackage, CudaPackage):
             # Quartz
             if sys_type in ('toss_4_x86_64_ib'):
                 cfg.write(cmake_cache_string('ATS_ARGUMENTS', '--machine slurm36'))
+
+    def lvarray_hostconfig(self, spec, prefix, py_site_pkgs_dir=None):
+        """
+        This method creates a 'host-config' file that specifies
+        all of the options used to configure and build LvArray.
+
+        Note:
+          The `py_site_pkgs_dir` arg exists to allow a package that
+          subclasses this package provide a specific site packages
+          dir when calling this function. `py_site_pkgs_dir` should
+          be an absolute path or `None`.
+
+          This is necessary because the spack `site_packages_dir`
+          var will not exist in the base class. For more details
+          on this issue see: https://github.com/spack/spack/issues/6261
+        """
+
+        #######################
+        # Compiler Info
+        #######################
+        c_compiler = env["SPACK_CC"]
+        cpp_compiler = env["SPACK_CXX"]
+
+        #######################################################################
+        # By directly fetching the names of the actual compilers we appear
+        # to doing something evil here, but this is necessary to create a
+        # 'host config' file that works outside of the spack install env.
+        #######################################################################
+
+        sys_type = self._get_sys_type(spec)
+
+        ##############################################
+        # Find and record what CMake is used
+        ##############################################
+
+        cmake_exe = spec['cmake'].command.path
+        cmake_exe = os.path.realpath(cmake_exe)
+
+        host_config_path = self._get_host_config_path(spec, lvarray=True)
+        with open(host_config_path, "w") as cfg:
+            cfg.write("#{0}\n".format("#" * 80))
+            cfg.write("# Generated host-config - Edit at own risk!\n")
+            cfg.write("#{0}\n".format("#" * 80))
+
+            cfg.write("#{0}\n".format("-" * 80))
+            cfg.write("# SYS_TYPE: {0}\n".format(sys_type))
+            cfg.write("# Compiler Spec: {0}\n".format(spec.compiler))
+            cfg.write("# CMake executable path: %s\n" % cmake_exe)
+            cfg.write("#{0}\n\n".format("-" * 80))
+
+            #######################
+            # Compiler Settings
+            #######################
+
+            cfg.write("#{0}\n".format("-" * 80))
+            cfg.write("# Compilers\n")
+            cfg.write("#{0}\n\n".format("-" * 80))
+            cfg.write(cmake_cache_entry("CMAKE_C_COMPILER", c_compiler))
+            cflags = ' '.join(spec.compiler_flags['cflags'])
+            if cflags:
+                cfg.write(cmake_cache_entry("CMAKE_C_FLAGS", cflags))
+
+            cfg.write(cmake_cache_entry("CMAKE_CXX_COMPILER", cpp_compiler))
+            cxxflags = ' '.join(spec.compiler_flags['cxxflags'])
+            if cxxflags:
+                cfg.write(cmake_cache_entry("CMAKE_CXX_FLAGS", cxxflags))
+
+            release_flags = "-O3 -DNDEBUG"
+            cfg.write(cmake_cache_string("CMAKE_CXX_FLAGS_RELEASE", release_flags))
+            reldebinf_flags = "-O3 -g -DNDEBUG"
+            cfg.write(cmake_cache_string("CMAKE_CXX_FLAGS_RELWITHDEBINFO", reldebinf_flags))
+            debug_flags = "-O0 -g"
+            cfg.write(cmake_cache_string("CMAKE_CXX_FLAGS_DEBUG", debug_flags))
+
+            if "%clang arch=linux-rhel7-ppc64le" in spec:
+                cfg.write(cmake_cache_entry("CMAKE_EXE_LINKER_FLAGS", "-Wl,--no-toc-optimize"))
+
+            cfg.write('#{0}\n'.format('-' * 80))
+            cfg.write('# Cuda\n')
+            cfg.write('#{0}\n\n'.format('-' * 80))
+            if '+cuda' in spec:
+                cfg.write(cmake_cache_option('ENABLE_CUDA', True))
+                cfg.write(cmake_cache_entry('CMAKE_CUDA_STANDARD', 17))
+
+                cudatoolkitdir = spec['cuda'].prefix
+                cfg.write(cmake_cache_entry('CUDA_TOOLKIT_ROOT_DIR', cudatoolkitdir))
+                cudacompiler = '${CUDA_TOOLKIT_ROOT_DIR}/bin/nvcc'
+                cfg.write(cmake_cache_entry('CMAKE_CUDA_COMPILER', cudacompiler))
+
+                cmake_cuda_flags = ('-restrict --expt-extended-lambda -Werror '
+                                    'cross-execution-space-call,reorder,'
+                                    'deprecated-declarations')
+
+                archSpecifiers = ('-mtune', '-mcpu', '-march', '-qtune', '-qarch')
+                for archSpecifier in archSpecifiers:
+                    for compilerArg in spec.compiler_flags['cxxflags']:
+                        if compilerArg.startswith(archSpecifier):
+                            cmake_cuda_flags += ' -Xcompiler ' + compilerArg
+
+                if not spec.satisfies('cuda_arch=none'):
+                    cuda_arch = spec.variants['cuda_arch'].value
+                    cmake_cuda_flags += ' -arch sm_{0}'.format(cuda_arch[0])
+                    cfg.write(cmake_cache_string('CMAKE_CUDA_ARCHITECTURES', cuda_arch[0]))
+
+                cfg.write(cmake_cache_string('CMAKE_CUDA_FLAGS', cmake_cuda_flags))
+
+                cfg.write(cmake_cache_string('CMAKE_CUDA_FLAGS_RELEASE', '-O3 -DNDEBUG -Xcompiler -DNDEBUG -Xcompiler -O3 -Xcompiler -mcpu=powerpc64le -Xcompiler -mtune=powerpc64le'))
+                cfg.write(cmake_cache_string('CMAKE_CUDA_FLAGS_RELWITHDEBINFO', '-g -lineinfo ${CMAKE_CUDA_FLAGS_RELEASE}'))
+                cfg.write(cmake_cache_string('CMAKE_CUDA_FLAGS_DEBUG', '-g -G -O0 -Xcompiler -O0'))
+
+            else:
+                cfg.write(cmake_cache_option('ENABLE_CUDA', False))
+
+            cfg.write('#{0}\n'.format('-' * 80))
+            cfg.write('# Performance Portability TPLs\n')
+            cfg.write('#{0}\n\n'.format('-' * 80))
+
+            cfg.write(cmake_cache_option('ENABLE_CHAI', True))
+            cfg.write(cmake_cache_entry('CHAI_DIR', spec['chai'].prefix))
+
+            cfg.write(cmake_cache_entry('RAJA_DIR', spec['raja'].prefix))
+
+            cfg.write(cmake_cache_option('ENABLE_UMPIRE', True))
+            cfg.write(cmake_cache_entry('UMPIRE_DIR', spec['umpire'].prefix))
+
+            cfg.write(cmake_cache_entry('CAMP_DIR', spec['camp'].prefix))
+
+            cfg.write('#{0}\n'.format('-' * 80))
+            cfg.write('# IO TPLs\n')
+            cfg.write('#{0}\n\n'.format('-' * 80))
+
+            if '+caliper' in spec:
+                cfg.write(cmake_cache_option('ENABLE_CALIPER', True))
+                cfg.write(cmake_cache_entry('CALIPER_DIR', spec['caliper'].prefix))
+                cfg.write(cmake_cache_entry('adiak_DIR', spec['adiak'].prefix + '/lib/cmake/adiak'))
+
+            cfg.write('#{0}\n'.format('-' * 80))
+            cfg.write('# Documentation\n')
+            cfg.write('#{0}\n\n'.format('-' * 80))
+            if '+docs' in spec:
+                sphinx_bin_dir = spec['py-sphinx'].prefix.bin
+                cfg.write(cmake_cache_entry('SPHINX_EXECUTABLE', os.path.join(sphinx_bin_dir, 'sphinx-build')))
+
+                doxygen_bin_dir = spec['doxygen'].prefix.bin
+                cfg.write(cmake_cache_entry('DOXYGEN_EXECUTABLE', os.path.join(doxygen_bin_dir, 'doxygen')))
+            else:
+                cfg.write(cmake_cache_option('ENABLE_DOXYGEN', False))
+                cfg.write(cmake_cache_option('ENABLE_SPHINX', False))
+
+            cfg.write('#{0}\n'.format('-' * 80))
+            cfg.write('# Development tools\n')
+            cfg.write('#{0}\n\n'.format('-' * 80))
+
+            if '+addr2line' in spec:
+                cfg.write('#{0}\n'.format('-' * 80))
+                cfg.write('# addr2line\n')
+                cfg.write('#{0}\n\n'.format('-' * 80))
+                cfg.write(cmake_cache_option('ENABLE_ADDR2LINE', True))
 
     def cmake_args(self):
         pass
