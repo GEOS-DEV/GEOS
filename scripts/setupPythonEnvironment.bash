@@ -111,7 +111,7 @@ fi
 echo "Installing python packages..."
 for p in "${TARGET_PACKAGES[@]}"
 do
-    if [ -d "$p" ]
+    if [ -d "$PACKAGE_DIR/$p" ]
     then
         echo "  $p"
 
