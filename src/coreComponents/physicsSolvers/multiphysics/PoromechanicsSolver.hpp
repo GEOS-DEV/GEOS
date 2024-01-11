@@ -21,8 +21,11 @@
 #define GEOS_PHYSICSSOLVERS_MULTIPHYSICS_POROMECHANICSSOLVER_HPP_
 
 #include "physicsSolvers/multiphysics/CoupledSolver.hpp"
+#include "physicsSolvers/multiphysics/PoromechanicsFields.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
+#include "constitutive/solid/CoupledSolidBase.hpp"
 #include "constitutive/solid/PorousSolid.hpp"
+#include "mesh/utilities/AverageOverQuadraturePointsKernel.hpp"
 #include "codingUtilities/Utilities.hpp"
 
 namespace geos
@@ -58,8 +61,147 @@ public:
    */
   PoromechanicsSolver( const string & name,
                        dataRepository::Group * const parent )
-    : Base( name, parent )
-  {}
+    : Base( name, parent ),
+    m_isThermal( 0 )
+  {
+    this->registerWrapper( viewKeyStruct::isThermalString(), &m_isThermal ).
+      setApplyDefaultValue( 0 ).
+      setInputFlag( dataRepository::InputFlags::OPTIONAL ).
+      setDescription( "Flag indicating whether the problem is thermal or not. Set isThermal=\"1\" to enable the thermal coupling" );
+
+    this->registerWrapper( viewKeyStruct::performStressInitializationString(), &m_performStressInitialization ).
+      setApplyDefaultValue( false ).
+      setInputFlag( dataRepository::InputFlags::FALSE ).
+      setDescription( "Flag to indicate that the solver is going to perform stress initialization" );
+  }
+
+  virtual void initializePreSubGroups() override
+  {
+    Base::initializePreSubGroups();
+
+    DomainPartition & domain = this->template getGroupByPath< DomainPartition >( "/Problem/domain" );
+
+    this->template forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                                 MeshLevel & mesh,
+                                                                                 arrayView1d< string const > const & regionNames )
+    {
+      ElementRegionManager & elementRegionManager = mesh.getElemManager();
+      elementRegionManager.forElementSubRegions< ElementSubRegionBase >( regionNames,
+                                                                         [&]( localIndex const,
+                                                                              ElementSubRegionBase & subRegion )
+      {
+        string & porousName = subRegion.getReference< string >( viewKeyStruct::porousMaterialNamesString() );
+        porousName = this->template getConstitutiveName< constitutive::CoupledSolidBase >( subRegion );
+        GEOS_THROW_IF( porousName.empty(),
+                       GEOS_FMT( "{} {} : Solid model not found on subregion {}",
+                                 this->getCatalogName(), this->getDataContext().toString(), subRegion.getName() ),
+                       InputError );
+
+        if( subRegion.hasField< fields::poromechanics::bulkDensity >() )
+        {
+          // get the solid model to know the number of quadrature points and resize the bulk density
+          constitutive::CoupledSolidBase const & solid = this->template getConstitutiveModel< constitutive::CoupledSolidBase >( subRegion, porousName );
+          subRegion.getField< fields::poromechanics::bulkDensity >().resizeDimension< 1 >( solid.getDensity().size( 1 ) );
+        }
+      } );
+    } );
+  }
+
+  virtual void registerDataOnMesh( dataRepository::Group & meshBodies ) override
+  {
+    SolverBase::registerDataOnMesh( meshBodies );
+
+    if( this->getNonlinearSolverParameters().m_couplingType == NonlinearSolverParameters::CouplingType::Sequential )
+    {
+      // to let the solid mechanics solver that there is a pressure and temperature RHS in the mechanics solve
+      solidMechanicsSolver()->enableFixedStressPoromechanicsUpdate();
+      // to let the flow solver that saving pressure_k and temperature_k is necessary (for the fixed-stress porosity terms)
+      flowSolver()->enableFixedStressPoromechanicsUpdate();
+    }
+
+    SolverBase::forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
+                                                                  MeshLevel & mesh,
+                                                                  arrayView1d< string const > const & regionNames )
+    {
+      ElementRegionManager & elemManager = mesh.getElemManager();
+
+      elemManager.forElementSubRegions< ElementSubRegionBase >( regionNames,
+                                                                [&]( localIndex const,
+                                                                     ElementSubRegionBase & subRegion )
+      {
+        subRegion.registerWrapper< string >( viewKeyStruct::porousMaterialNamesString() ).
+          setPlotLevel( dataRepository::PlotLevel::NOPLOT ).
+          setRestartFlags( dataRepository::RestartFlags::NO_WRITE ).
+          setSizedFromParent( 0 );
+
+        if( this->getNonlinearSolverParameters().m_couplingType == NonlinearSolverParameters::CouplingType::Sequential )
+        {
+          // register the bulk density for use in the solid mechanics solver
+          // ideally we would resize it here as well, but the solid model name is not available yet (see below)
+          subRegion.registerField< fields::poromechanics::bulkDensity >( this->getName() );
+        }
+      } );
+    } );
+  }
+
+  virtual void implicitStepSetup( real64 const & time_n,
+                                  real64 const & dt,
+                                  DomainPartition & domain ) override
+  {
+    flowSolver()->keepFlowVariablesConstantDuringInitStep( m_performStressInitialization );
+    Base::implicitStepSetup( time_n, dt, domain );
+  }
+
+  virtual void setupDofs( DomainPartition const & domain,
+                          DofManager & dofManager ) const override
+  {
+    // note that the order of operations matters a lot here (for instance for the MGR labels)
+    // we must set up dofs for solid mechanics first, and then for flow
+    // that's the reason why this function is here and not in CoupledSolvers.hpp
+    solidMechanicsSolver()->setupDofs( domain, dofManager );
+    flowSolver()->setupDofs( domain, dofManager );
+
+    this->setupCoupling( domain, dofManager );
+  }
+
+  /**
+   * @brief accessor for the pointer to the solid mechanics solver
+   * @return a pointer to the solid mechanics solver
+   */
+  SolidMechanicsLagrangianFEM * solidMechanicsSolver() const
+  {
+    return std::get< toUnderlying( SolverType::SolidMechanics ) >( m_solvers );
+  }
+
+  /**
+   * @brief accessor for the pointer to the flow solver
+   * @return a pointer to the flow solver
+   */
+  FLOW_SOLVER * flowSolver() const
+  {
+    return std::get< toUnderlying( SolverType::Flow ) >( m_solvers );
+  }
+
+  /*
+   * @brief Utility function to set the stress initialization flag
+   * @param[in] performStressInitialization true if the solver has to initialize stress, false otherwise
+   */
+  void setStressInitialization( integer const performStressInitialization )
+  {
+    m_performStressInitialization = performStressInitialization;
+  }
+
+  struct viewKeyStruct : Base::viewKeyStruct
+  {
+    /// Names of the porous materials
+    constexpr static char const * porousMaterialNamesString() { return "porousMaterialNames"; }
+
+    /// Flag to indicate that the simulation is thermal
+    constexpr static char const * isThermalString() { return "isThermal"; }
+
+    /// Flag to indicate that the solver is going to perform stress initialization
+    constexpr static char const * performStressInitializationString() { return "performStressInitialization"; }
+  };
 
 protected:
 
@@ -76,7 +218,7 @@ protected:
                                                                                             auto & subRegion ) {
         // get the solid model (to access stress increment)
         string const solidName = subRegion.template getReference< string >( "porousMaterialNames" );
-        geos::constitutive::CoupledSolidBase & solid = SolverBase::getConstitutiveModel< geos::constitutive::CoupledSolidBase >(
+        constitutive::CoupledSolidBase & solid = SolverBase::getConstitutiveModel< constitutive::CoupledSolidBase >(
           subRegion, solidName );
 
         arrayView1d< const real64 > const & averageMeanTotalStressIncrement_k = solid.getAverageMeanTotalStressIncrement_k();
@@ -99,9 +241,9 @@ protected:
                                                                                             auto & subRegion ) {
         // get the solid model (to access stress increment)
         string const solidName = subRegion.template getReference< string >( "porousMaterialNames" );
-        geos::constitutive::CoupledSolidBase & solid = SolverBase::getConstitutiveModel< geos::constitutive::CoupledSolidBase >(
+        constitutive::CoupledSolidBase & solid = SolverBase::getConstitutiveModel< constitutive::CoupledSolidBase >(
           subRegion, solidName );
-        auto & porosityModel = dynamic_cast< geos::constitutive::BiotPorosity const & >( solid.getBasePorosityModel());
+        auto & porosityModel = dynamic_cast< constitutive::BiotPorosity const & >( solid.getBasePorosityModel());
         arrayView1d< real64 > const & averageMeanTotalStressIncrement_k = solid.getAverageMeanTotalStressIncrement_k();
         for( localIndex k = 0; k < localIndex( averageMeanTotalStressIncrement_k.size()); k++ )
         {
@@ -184,12 +326,105 @@ protected:
 
   virtual void mapSolutionBetweenSolvers( DomainPartition & domain, integer const solverType ) override
   {
+    GEOS_MARK_FUNCTION;
+
+    /// After the flow solver
+    if( solverType == static_cast< integer >( SolverType::Flow ) )
+    {
+      // save pressure and temperature at the end of this iteration
+      flowSolver()->saveIterationState( domain );
+
+      this->template forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
+                                                                                  MeshLevel & mesh,
+                                                                                  arrayView1d< string const > const & regionNames )
+      {
+
+        mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
+                                                                                              auto & subRegion )
+        {
+          // update the bulk density
+          // TODO: ideally, we would not recompute the bulk density, but a more general "rhs" containing the body force and the
+          // pressure/temperature terms
+          updateBulkDensity( subRegion );
+        } );
+      } );
+    }
+
+    /// After the solid mechanics solver
+    if( solverType == static_cast< integer >( SolverType::SolidMechanics ) )
+    {
+      // compute the average of the mean total stress increment over quadrature points
+      averageMeanTotalStressIncrement( domain );
+
+      this->template forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
+                                                                                  MeshLevel & mesh,
+                                                                                  arrayView1d< string const > const & regionNames )
+      {
+
+        mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
+                                                                                              auto & subRegion )
+        {
+          // update the porosity after a change in displacement (after mechanics solve)
+          // or a change in pressure/temperature (after a flow solve)
+          flowSolver()->updatePorosityAndPermeability( subRegion );
+        } );
+      } );
+    }
+
+    // needed to perform nonlinear acceleration
     if( solverType == static_cast< integer >( SolverType::SolidMechanics ) &&
         this->getNonlinearSolverParameters().m_nonlinearAccelerationType== NonlinearSolverParameters::NonlinearAccelerationType::Aitken )
     {
       recordAverageMeanTotalStressIncrement( domain, m_s2_tilde );
     }
   }
+
+  /**
+   * @brief Helper function to average the mean total stress increment over quadrature points
+   * @param[in] domain the domain partition
+   */
+  void averageMeanTotalStressIncrement( DomainPartition & domain )
+  {
+    this->template forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
+                                                                                MeshLevel & mesh,
+                                                                                arrayView1d< string const > const & regionNames )
+    {
+      mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
+                                                                                            auto & subRegion )
+      {
+        // get the solid model (to access stress increment)
+        string const solidName = subRegion.template getReference< string >( viewKeyStruct::porousMaterialNamesString() );
+        constitutive::CoupledSolidBase & solid = this->template getConstitutiveModel< constitutive::CoupledSolidBase >( subRegion, solidName );
+
+        arrayView2d< real64 const > const meanTotalStressIncrement_k = solid.getMeanTotalStressIncrement_k();
+        arrayView1d< real64 > const averageMeanTotalStressIncrement_k = solid.getAverageMeanTotalStressIncrement_k();
+
+        finiteElement::FiniteElementBase & subRegionFE =
+          subRegion.template getReference< finiteElement::FiniteElementBase >( solidMechanicsSolver()->getDiscretizationName() );
+
+        // determine the finite element type
+        finiteElement::FiniteElementDispatchHandler< BASE_FE_TYPES >::
+        dispatch3D( subRegionFE, [&] ( auto const finiteElement )
+        {
+          using FE_TYPE = decltype( finiteElement );
+
+          // call the factory and launch the kernel
+          AverageOverQuadraturePoints1DKernelFactory::
+            createAndLaunch< CellElementSubRegion,
+                             FE_TYPE,
+                             parallelDevicePolicy<> >( mesh.getNodeManager(),
+                                                       mesh.getEdgeManager(),
+                                                       mesh.getFaceManager(),
+                                                       subRegion,
+                                                       finiteElement,
+                                                       meanTotalStressIncrement_k,
+                                                       averageMeanTotalStressIncrement_k );
+        } );
+      } );
+    } );
+  }
+
+  virtual void updateBulkDensity( ElementSubRegionBase & subRegion ) = 0;
 
   virtual void validateNonlinearAcceleration() override
   {
@@ -198,6 +433,12 @@ protected:
       GEOS_ERROR( "Nonlinear acceleration is not implemented for MPI runs" );
     }
   }
+
+  /// Flag to determine whether or not this is a thermal simulation
+  integer m_isThermal;
+
+  /// Flag to indicate that the solver is going to perform stress initialization
+  integer m_performStressInitialization;
 
   /// Member variables needed for Nonlinear Acceleration ( Aitken ). Naming convention follows ( Jiang & Tchelepi, 2019 )
   array1d< real64 > m_s0; // Accelerated averageMeanTotalStresIncrement @ outer iteration v ( two iterations ago )
