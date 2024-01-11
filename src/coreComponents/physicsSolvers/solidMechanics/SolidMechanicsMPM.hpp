@@ -232,6 +232,7 @@ public:
     static constexpr char const * cohesiveNodeString() { return "cohesiveNode"; }
     static constexpr char const * initialAreaVectorString() { return "initialAreaVector"; }
     static constexpr char const * initialSurfacePositionString() { return "initialSurfacePosition"; }
+    static constexpr char const * initialMaterialVolumeString() { return "initialMaterialVolume"; }
 
     static constexpr char const * boundaryNodesString() { return "boundaryNodes"; }
     static constexpr char const * bufferNodesString() { return "bufferNodes"; }
