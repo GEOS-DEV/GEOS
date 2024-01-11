@@ -118,14 +118,14 @@ char const * xmlInput =
         name="cellVelocity"
         initialCondition="1"
         objectPath="ElementRegions/Region/cb"
-        fieldName="mediumVelocity"
+        fieldName="acousticVelocity"
         scale="1500"
         setNames="{ all }"/>
       <FieldSpecification
         name="cellDensity"
         initialCondition="1"
         objectPath="ElementRegions/Region/cb"
-        fieldName="mediumDensity"
+        fieldName="acousticDensity"
         scale="1"
         setNames="{ all }"/>
     </FieldSpecifications>
