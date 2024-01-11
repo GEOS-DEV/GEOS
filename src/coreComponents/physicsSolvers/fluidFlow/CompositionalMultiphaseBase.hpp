@@ -108,10 +108,10 @@ public:
                         DomainPartition & domain ) override;
 
   /**
-   * @brief Recompute component fractions from primary variables (component densities)
+   * @brief Recompute global component fractions from primary variables (component densities)
    * @param dataGroup the group storing the required fields
    */
-  void updateComponentFraction( ObjectManagerBase & dataGroup ) const;
+  void updateGlobalComponentFraction( ObjectManagerBase & dataGroup ) const;
 
   /**
    * @brief Recompute phase volume fractions (saturations) from constitutive and primary variables
