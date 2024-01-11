@@ -180,14 +180,6 @@ protected:
   virtual void
   initializePreSubGroups() override;
 
-  /**
-   * @brief Compute the largest CFL number in the domain
-   * @param dt the time step size
-   * @param domain the domain containing the mesh and fields
-   */
-  void
-  computeCFLNumbers( real64 const & dt, DomainPartition & domain );
-
   struct DBCParameters
   {
     /// Flag to enable Dissipation Based Continuation Method
