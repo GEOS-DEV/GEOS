@@ -256,67 +256,61 @@ void CompositionalMultiphaseBase::registerDataOnMesh( Group & meshBodies )
                                                 [&]( localIndex const,
                                                      ElementSubRegionBase & subRegion )
     {
+      if( m_hasCapPressure )
       {
+        subRegion.registerWrapper< string >( viewKeyStruct::capPressureNamesString() ).
+          setPlotLevel( PlotLevel::NOPLOT ).
+          setRestartFlags( RestartFlags::NO_WRITE ).
+          setSizedFromParent( 0 ).
+          setDescription( "Name of the capillary pressure constitutive model to use" ).
+          reference();
 
-        if( m_hasCapPressure )
-        {
+        string & capPresName = subRegion.getReference< string >( viewKeyStruct::capPressureNamesString() );
+        capPresName = getConstitutiveName< CapillaryPressureBase >( subRegion );
+        GEOS_THROW_IF( capPresName.empty(),
+                       GEOS_FMT( "{}: Capillary pressure model not found on subregion {}",
+                                 getDataContext(), subRegion.getDataContext() ),
+                       InputError );
+      }
 
-          subRegion.registerWrapper< string >( viewKeyStruct::capPressureNamesString() ).
-            setPlotLevel( PlotLevel::NOPLOT ).
-            setRestartFlags( RestartFlags::NO_WRITE ).
-            setSizedFromParent( 0 ).
-            setDescription( "Name of the capillary pressure constitutive model to use" ).
-            reference();
+      if( m_hasDiffusion )
+      {
+        subRegion.registerWrapper< string >( viewKeyStruct::diffusionNamesString() ).
+          setPlotLevel( PlotLevel::NOPLOT ).
+          setRestartFlags( RestartFlags::NO_WRITE ).
+          setSizedFromParent( 0 ).
+          setDescription( "Name of the diffusion constitutive model to use" );
 
-          string & capPresName = subRegion.getReference< string >( viewKeyStruct::capPressureNamesString() );
-          capPresName = getConstitutiveName< CapillaryPressureBase >( subRegion );
-          GEOS_THROW_IF( capPresName.empty(),
-                         GEOS_FMT( "{}: Capillary pressure model not found on subregion {}",
-                                   getDataContext(), subRegion.getDataContext() ),
-                         InputError );
-        }
-        if( m_hasDiffusion )
-        {
-          subRegion.registerWrapper< string >( viewKeyStruct::diffusionNamesString() ).
-            setPlotLevel( PlotLevel::NOPLOT ).
-            setRestartFlags( RestartFlags::NO_WRITE ).
-            setSizedFromParent( 0 ).
-            setDescription( "Name of the diffusion constitutive model to use" );
+        string & diffusionName = subRegion.getReference< string >( viewKeyStruct::diffusionNamesString() );
+        diffusionName = getConstitutiveName< DiffusionBase >( subRegion );
+        GEOS_THROW_IF( diffusionName.empty(),
+                       GEOS_FMT( "Diffusion model not found on subregion {}", subRegion.getName() ),
+                       InputError );
+      }
 
-          string & diffusionName = subRegion.getReference< string >( viewKeyStruct::diffusionNamesString() );
-          diffusionName = getConstitutiveName< DiffusionBase >( subRegion );
-          GEOS_THROW_IF( diffusionName.empty(),
-                         GEOS_FMT( "Diffusion model not found on subregion {}", subRegion.getName() ),
-                         InputError );
-        }
-        if( m_hasDispersion )
-        {
-          subRegion.registerWrapper< string >( viewKeyStruct::dispersionNamesString() ).
-            setPlotLevel( PlotLevel::NOPLOT ).
-            setRestartFlags( RestartFlags::NO_WRITE ).
-            setSizedFromParent( 0 ).
-            setDescription( "Name of the dispersion constitutive model to use" );
+      if( m_hasDispersion )
+      {
+        subRegion.registerWrapper< string >( viewKeyStruct::dispersionNamesString() ).
+          setPlotLevel( PlotLevel::NOPLOT ).
+          setRestartFlags( RestartFlags::NO_WRITE ).
+          setSizedFromParent( 0 ).
+          setDescription( "Name of the dispersion constitutive model to use" );
 
-          string & dispersionName = subRegion.getReference< string >( viewKeyStruct::dispersionNamesString() );
-          dispersionName = getConstitutiveName< DispersionBase >( subRegion );
-          GEOS_THROW_IF( dispersionName.empty(),
-                         GEOS_FMT( "Dispersion model not found on subregion {}", subRegion.getName() ),
-                         InputError );
-        }
+        string & dispersionName = subRegion.getReference< string >( viewKeyStruct::dispersionNamesString() );
+        dispersionName = getConstitutiveName< DispersionBase >( subRegion );
+        GEOS_THROW_IF( dispersionName.empty(),
+                       GEOS_FMT( "Dispersion model not found on subregion {}", subRegion.getName() ),
+                       InputError );
+      }
 
-
-        if( m_targetFlowCFL > 0 )
-        {
-
-          subRegion.registerField< fields::flow::phaseOutflux >( getName() ).
-            reference().resizeDimension< 1 >( m_numPhases );
-
-          subRegion.registerField< fields::flow::componentOutflux >( getName() ).
-            reference().resizeDimension< 1 >( m_numComponents );
-          subRegion.registerField< fields::flow::phaseCFLNumber >( getName() );
-          subRegion.registerField< fields::flow::componentCFLNumber >( getName() );
-        }
-
+      if( m_targetFlowCFL > 0 )
+      {
+        subRegion.registerField< fields::flow::phaseOutflux >( getName() ).
+          reference().resizeDimension< 1 >( m_numPhases );
+        subRegion.registerField< fields::flow::componentOutflux >( getName() ).
+          reference().resizeDimension< 1 >( m_numComponents );
+        subRegion.registerField< fields::flow::phaseCFLNumber >( getName() );
+        subRegion.registerField< fields::flow::componentCFLNumber >( getName() );
       }
 
       string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
@@ -600,12 +594,12 @@ void CompositionalMultiphaseBase::validateConstitutiveModels( DomainPartition co
   } );
 }
 
-void CompositionalMultiphaseBase::updateComponentFraction( ObjectManagerBase & dataGroup ) const
+void CompositionalMultiphaseBase::updateGlobalComponentFraction( ObjectManagerBase & dataGroup ) const
 {
   GEOS_MARK_FUNCTION;
 
   isothermalCompositionalMultiphaseBaseKernels::
-    ComponentFractionKernelFactory::
+    GlobalComponentFractionKernelFactory::
     createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
                                                dataGroup );
 
@@ -735,7 +729,7 @@ real64 CompositionalMultiphaseBase::updateFluidState( ObjectManagerBase & subReg
 {
   GEOS_MARK_FUNCTION;
 
-  updateComponentFraction( subRegion );
+  updateGlobalComponentFraction( subRegion );
   updateFluidModel( subRegion );
   real64 const maxDeltaPhaseVolFrac = updatePhaseVolumeFraction( subRegion );
   updateRelPermModel( subRegion );

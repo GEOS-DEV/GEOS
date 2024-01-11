@@ -212,14 +212,7 @@ void FlowSolverBase::saveConvergedState( ElementSubRegionBase & subRegion ) cons
   arrayView1d< real64 > const temp_n = subRegion.template getField< fields::flow::temperature_n >();
   temp_n.setValues< parallelDevicePolicy<> >( temp );
 
-  GEOS_THROW_IF( subRegion.hasField< fields::flow::pressure_k >() !=
-                 subRegion.hasField< fields::flow::temperature_k >(),
-                 GEOS_FMT( "`{}` and `{}` must be either both existing or both non-existing on subregion {}",
-                           fields::flow::pressure_k::key(), fields::flow::temperature_k::key(), subRegion.getName() ),
-                 std::runtime_error );
-
-  if( subRegion.hasField< fields::flow::pressure_k >() &&
-      subRegion.hasField< fields::flow::temperature_k >() )
+  if( m_isFixedStressPoromechanicsUpdate )
   {
     arrayView1d< real64 > const pres_k = subRegion.template getField< fields::flow::pressure_k >();
     arrayView1d< real64 > const temp_k = subRegion.template getField< fields::flow::temperature_k >();
@@ -230,11 +223,8 @@ void FlowSolverBase::saveConvergedState( ElementSubRegionBase & subRegion ) cons
 
 void FlowSolverBase::saveIterationState( ElementSubRegionBase & subRegion ) const
 {
-  if( !( subRegion.hasField< fields::flow::pressure_k >() &&
-         subRegion.hasField< fields::flow::temperature_k >() ) )
-  {
+  if( !m_isFixedStressPoromechanicsUpdate )
     return;
-  }
 
   arrayView1d< real64 const > const pres = subRegion.template getField< fields::flow::pressure >();
   arrayView1d< real64 const > const temp = subRegion.template getField< fields::flow::temperature >();
@@ -472,18 +462,11 @@ void FlowSolverBase::updatePorosityAndPermeability( CellElementSubRegion & subRe
   string const & solidName = subRegion.getReference< string >( viewKeyStruct::solidNamesString() );
   CoupledSolidBase & porousSolid = subRegion.template getConstitutiveModel< CoupledSolidBase >( solidName );
 
-  GEOS_THROW_IF( subRegion.hasField< fields::flow::pressure_k >() !=
-                 subRegion.hasField< fields::flow::temperature_k >(),
-                 GEOS_FMT( "`{}` and `{}` must be either both existing or both non-existing on subregion {}",
-                           fields::flow::pressure_k::key(), fields::flow::temperature_k::key(), subRegion.getName() ),
-                 std::runtime_error );
-
   constitutive::ConstitutivePassThru< CoupledSolidBase >::execute( porousSolid, [=, &subRegion] ( auto & castedPorousSolid )
   {
     typename TYPEOFREF( castedPorousSolid ) ::KernelWrapper porousWrapper = castedPorousSolid.createKernelUpdates();
 
-    if( subRegion.hasField< fields::flow::pressure_k >() && // for sequential simulations
-        subRegion.hasField< fields::flow::temperature_k >() )
+    if( m_isFixedStressPoromechanicsUpdate ) // for sequential simulations
     {
       arrayView1d< real64 const > const & pressure_k = subRegion.getField< fields::flow::pressure_k >();
       arrayView1d< real64 const > const & temperature_k = subRegion.getField< fields::flow::temperature_k >();
