@@ -97,11 +97,11 @@ public:
                                  this->getCatalogName(), this->getDataContext().toString(), subRegion.getName() ),
                        InputError );
 
-        if( subRegion.hasField< fields::poromechanics::bulkDensity >() )
+        if( subRegion.hasField< fields::poromechanics::totalFluidDensity >() )
         {
-          // get the solid model to know the number of quadrature points and resize the bulk density
+          // get the solid model to know the number of quadrature points and resize the total fluid density
           constitutive::CoupledSolidBase const & solid = this->template getConstitutiveModel< constitutive::CoupledSolidBase >( subRegion, porousName );
-          subRegion.getField< fields::poromechanics::bulkDensity >().resizeDimension< 1 >( solid.getDensity().size( 1 ) );
+          subRegion.getField< fields::poromechanics::totalFluidDensity >().resizeDimension< 1 >( solid.getDensity().size( 1 ) );
         }
       } );
     } );
@@ -136,9 +136,9 @@ public:
 
         if( this->getNonlinearSolverParameters().m_couplingType == NonlinearSolverParameters::CouplingType::Sequential )
         {
-          // register the bulk density for use in the solid mechanics solver
+          // register the total fluid density for use in the solid mechanics solver
           // ideally we would resize it here as well, but the solid model name is not available yet (see below)
-          subRegion.registerField< fields::poromechanics::bulkDensity >( this->getName() );
+          subRegion.registerField< fields::poromechanics::totalFluidDensity >( this->getName() );
         }
       } );
     } );
@@ -339,10 +339,8 @@ protected:
         mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                               auto & subRegion )
         {
-          // update the bulk density
-          // TODO: ideally, we would not recompute the bulk density, but a more general "rhs" containing the body force and the
-          // pressure/temperature terms
-          updateBulkDensity( subRegion );
+          // update total fluid density
+          updateTotalFluidDensity( subRegion );
         } );
       } );
     }
@@ -421,7 +419,7 @@ protected:
     } );
   }
 
-  virtual void updateBulkDensity( ElementSubRegionBase & subRegion ) = 0;
+  virtual void updateTotalFluidDensity( ElementSubRegionBase & subRegion ) = 0;
 
   virtual void validateNonlinearAcceleration() override
   {
