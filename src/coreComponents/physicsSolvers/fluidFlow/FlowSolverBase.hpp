@@ -63,8 +63,6 @@ public:
 
   virtual void registerDataOnMesh( Group & MeshBodies ) override;
 
-  localIndex numDofPerCell() const { return m_numDofPerCell; }
-
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
     // misc inputs
