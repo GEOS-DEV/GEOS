@@ -5,7 +5,6 @@ message( "CMAKE_HOST_APPLE = ${CMAKE_HOST_APPLE}" )
 
 ### OPTIONS ###
 option( GEOS_ENABLE_TESTS "" ON )
-option( ENABLE_COV "Enables code coverage" OFF )  # NOTE: ENABLE_COVERAGE is a blt option
 option( ENABLE_CALIPER "Enables Caliper instrumentation" OFF )
 
 option( ENABLE_MATHPRESSO "" ON )

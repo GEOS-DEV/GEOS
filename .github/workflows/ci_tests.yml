@@ -203,7 +203,7 @@ jobs:
       DOCKER_REPOSITORY: geosx/ubuntu22.04-gcc11
       ENABLE_HYPRE: ON
       ENABLE_TRILINOS: OFF
-#      GCP_BUCKET: geosx/ubuntu22.04-gcc11-ccov
+      GCP_BUCKET: geosx/ubuntu22.04-gcc11
       RUNS_ON: ubuntu-22.04
       USE_SCCACHE: false
 
