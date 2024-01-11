@@ -185,7 +185,14 @@ void ProblemManager::parseCommandLineInput()
   outputDirectory = opts.outputDirectory;
   OutputBase::setOutputDirectory( outputDirectory );
 
-  string & inputFileName = commandLine.getReference< string >( viewKeys.inputFileName );
+  string &inputFileName = commandLine.getReference<string>(viewKeys.inputFileName);
+
+  for( string xmlFile : opts.inputFileNames )
+  {
+    Path::pathPrefix() = getAbsolutePath(xmlFile);
+    GEOS_LOG_RANK_0( "Opened XML file: " << Path::pathPrefix() );
+  }
+  
   inputFileName = xmlWrapper::buildMultipleInputXML( opts.inputFileNames, outputDirectory );
 
   string & schemaName = commandLine.getReference< string >( viewKeys.schemaFileName );
