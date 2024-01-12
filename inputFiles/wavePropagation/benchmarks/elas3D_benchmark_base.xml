@@ -168,7 +168,7 @@
       name="cellVelocityVp"
       initialCondition="1"
       objectPath="mesh/FE1/ElementRegions/Region/cb"
-      fieldName="mediumVelocityVp"
+      fieldName="elasticVelocityVp"
       scale="2000"
       setNames="{ all }"/>
 
@@ -176,7 +176,7 @@
       name="cellVelocityVs"
       initialCondition="1"
       objectPath="mesh/FE1/ElementRegions/Region/cb"
-      fieldName="mediumVelocityVs"
+      fieldName="elasticVelocityVs"
       scale="1155"
       setNames="{ all }"/>
 
@@ -184,7 +184,7 @@
       name="cellDensity"
       initialCondition="1"
       objectPath="mesh/FE1/ElementRegions/Region/cb"
-      fieldName="mediumDensity"
+      fieldName="elasticDensity"
       scale="1"
       setNames="{ all }"/>
 

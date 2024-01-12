@@ -273,8 +273,8 @@ void testCompositionNumericalDerivatives( CompositionalMultiphaseFVM & solver,
           compDens[ei][jc] += dRho;
         } );
 
-        // recompute component fractions
-        solver.updateComponentFraction( subRegion );
+        // recompute global component fractions
+        solver.updateGlobalComponentFraction( subRegion );
 
         // check values in each cell
         forAll< serialPolicy >( subRegion.size(), [=] ( localIndex const ei )

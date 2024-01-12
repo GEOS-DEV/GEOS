@@ -101,7 +101,7 @@
       name="cellVelocity"
       initialCondition="1"
       objectPath="mesh/FE1/ElementRegions/Region/cb"
-      fieldName="mediumVelocity"
+      fieldName="acousticVelocity"
       scale="1500"
       setNames="{ all }"/>
 
