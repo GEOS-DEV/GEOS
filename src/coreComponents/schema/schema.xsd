@@ -1807,6 +1807,8 @@ the relative residual norm satisfies:
 		<xsd:attribute name="newtonMinIter" type="integer" default="1" />
 		<!--newtonTol => The required tolerance in order to exit the Newton iteration loop.-->
 		<xsd:attribute name="newtonTol" type="real64" default="1e-06" />
+		<!--nonlinearAccelerationType => Nonlinear acceleration type for sequential solver.-->
+		<xsd:attribute name="nonlinearAccelerationType" type="geos_NonlinearSolverParameters_NonlinearAccelerationType" default="None" />
 		<!--sequentialConvergenceCriterion => Criterion used to check outer-loop convergence in sequential schemes. Valid options:
 * ResidualNorm
 * NumberOfNonlinearIterations-->
@@ -1841,6 +1843,11 @@ the relative residual norm satisfies:
 	<xsd:simpleType name="geos_NonlinearSolverParameters_LineSearchInterpolationType">
 		<xsd:restriction base="xsd:string">
 			<xsd:pattern value=".*[\[\]`$].*|Linear|Parabolic" />
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="geos_NonlinearSolverParameters_NonlinearAccelerationType">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value=".*[\[\]`$].*|None|Aitken" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="geos_NonlinearSolverParameters_SequentialConvergenceCriterion">
@@ -2253,6 +2260,8 @@ the relative residual norm satisfies:
 		<xsd:attribute name="scalingType" type="geos_CompositionalMultiphaseFVM_ScalingType" default="Global" />
 		<!--solutionChangeScalingFactor => Damping factor for solution change targets-->
 		<xsd:attribute name="solutionChangeScalingFactor" type="real64" default="0.5" />
+		<!--targetFlowCFL => Target CFL condition `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_when computing the next timestep.-->
+		<xsd:attribute name="targetFlowCFL" type="real64" default="-1" />
 		<!--targetPhaseVolFractionChangeInTimeStep => Target (absolute) change in phase volume fraction in a time step-->
 		<xsd:attribute name="targetPhaseVolFractionChangeInTimeStep" type="real64" default="0.2" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
@@ -2315,6 +2324,8 @@ the relative residual norm satisfies:
 		<xsd:attribute name="minCompDens" type="real64" default="1e-10" />
 		<!--solutionChangeScalingFactor => Damping factor for solution change targets-->
 		<xsd:attribute name="solutionChangeScalingFactor" type="real64" default="0.5" />
+		<!--targetFlowCFL => Target CFL condition `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_when computing the next timestep.-->
+		<xsd:attribute name="targetFlowCFL" type="real64" default="-1" />
 		<!--targetPhaseVolFractionChangeInTimeStep => Target (absolute) change in phase volume fraction in a time step-->
 		<xsd:attribute name="targetPhaseVolFractionChangeInTimeStep" type="real64" default="0.2" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
