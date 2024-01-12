@@ -677,7 +677,7 @@ struct StatisticsKernel
           arrayView1d< real64 const > const & temp,
           arrayView1d< real64 const > const & refPorosity,
           arrayView2d< real64 const > const & porosity,
-          arrayView2d< real64 const > const & densities,
+          arrayView2d< real64 const > const & density,
           real64 & minPres,
           real64 & avgPresNumerator,
           real64 & maxPres,
@@ -729,7 +729,7 @@ struct StatisticsKernel
 
       subRegionTotalUncompactedPoreVol += uncompactedPoreVol;
       subRegionTotalPoreVol += dynamicPoreVol;
-      subRegionTotalMass += dynamicPoreVol * densities[ei][0];
+      subRegionTotalMass += dynamicPoreVol * density[ei][0];
     } );
 
     minPres = subRegionMinPres.get();
