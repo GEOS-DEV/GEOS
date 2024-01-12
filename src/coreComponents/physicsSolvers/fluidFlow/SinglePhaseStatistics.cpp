@@ -246,7 +246,7 @@ void SinglePhaseStatistics::computeRegionStatistics( MeshLevel & mesh,
     GEOS_LOG_LEVEL_RANK_0( 1, getName() << ", " << regionNames[i]
                                         << ": Total dynamic pore volume: " << regionStatistics.totalPoreVolume << " rm^3" );
     GEOS_LOG_LEVEL_RANK_0( 1, getName() << ", " << regionNames[i]
-                                        << ": Total fluid mass: " << GEOS_FMT("{:.20}",regionStatistics.totalMass) << " kg" );
+                                        << ": Total fluid mass: " << regionStatistics.totalMass << " kg" );
 
   }
 }
