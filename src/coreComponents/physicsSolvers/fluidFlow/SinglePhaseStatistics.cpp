@@ -243,7 +243,7 @@ void SinglePhaseStatistics::computeRegionStatistics( real64 const time,
     {
       regionStatistics.averagePressure = 0.0;
       regionStatistics.averageTemperature = 0.0;
-      GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "{}, {}: Cannot compute average pressure & temperature because region pore volume is zero.", getName(), regionNames[i] ) );
+      GEOS_WARNING( GEOS_FMT( "{}, {}: Cannot compute average pressure & temperature because region pore volume is zero.", getName(), regionNames[i] ) );
     }
 
     GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "{}, {} (time {} s): Pressure (min, average, max): {}, {}, {} Pa",
