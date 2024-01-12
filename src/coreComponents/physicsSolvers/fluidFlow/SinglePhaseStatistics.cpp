@@ -230,8 +230,8 @@ void SinglePhaseStatistics::computeRegionStatistics( MeshLevel & mesh,
     {
       regionStatistics.averagePressure = 0.0;
       regionStatistics.averageTemperature = 0.0;
-      GEOS_LOG_LEVEL_RANK_0( 1, getName() << ", " << regionNames[i]
-                                          << ": Cannot compute average pressure & temperature because region pore volume is zero." );
+      GEOS_WARNING( 1, getName() << ", " << regionNames[i]
+                                 << ": Cannot compute average pressure, temperature and total mass because region pore volume is zero." );
     }
 
     GEOS_LOG_LEVEL_RANK_0( 1, getName() << ", " << regionNames[i]
