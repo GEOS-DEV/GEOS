@@ -1064,10 +1064,13 @@ void SinglePhaseBase::applySourceFluxBC( real64 const time_n,
         return 0.0;
       } );
 
-      GEOS_LOG( "SourceFlux "<< fs.getName() << "\n" <<
-                "  - targetSet elem count = "<< targetSet.size() << "\n" <<
-                "  - contribs = {"<< stringutilities::join( rhsContributionArray, ", " ) <<"}" );
-      GEOS_LOG( LvArray::system::stackTrace( true ));
+      if( fs.getLogLevel()>=3 )
+      {
+        GEOS_LOG( "SourceFlux "<< fs.getName() << "\n" <<
+                  "  - targetSet elem count = "<< targetSet.size() << "\n" <<
+                  "  - contribs = {"<< stringutilities::join( rhsContributionArray, ", " ) <<"}" );
+        GEOS_LOG( LvArray::system::stackTrace( true ));
+      }
 
 
       // Step 3.2: we are ready to add the right-hand side contributions, taking into account our equation layout
@@ -1155,8 +1158,19 @@ void SinglePhaseBase::applySourceFluxBC( real64 const time_n,
           sum+=scaledContrib;
         } );
         sum = MpiWrapper::sum( sum );
-        GEOS_LOG_RANK_0( "Adds : { "<<strt.str()<<" }" );
-        GEOS_LOG_RANK_0( " = "<<sum );
+        if( fs.getLogLevel()>=2 )
+        {
+          GEOS_LOG_RANK_0( fs.getName() << ", " << subRegion.getName() <<
+                           " adds : { "<<strt.str()<<" }" );
+        }
+        if( fs.getLogLevel()>=1 )
+        {
+          double effectiveRate = sum / dt;
+          GEOS_LOG_RANK_0( fs.getName() << ", " << subRegion.getName() <<
+                           ": Produced mass: " << sum << " kg" );
+          GEOS_LOG_RANK_0( fs.getName() << ", " << subRegion.getName() <<
+                           ": Mean rate: " << effectiveRate << " kg/s" );
+        }
       }
     } );
   } );
