@@ -213,8 +213,7 @@ public:
     static constexpr char const * displacementString() { return "displacement"; }
     static constexpr char const * particleSurfaceNormalString() { return "particleSurfaceNormal"; }
     static constexpr char const * cohesiveTractionString() { return "cohesiveTraction"; }
-    static constexpr char const * cohesiveNormalForceString() { return "cohesiveNormalForce"; }
-    static constexpr char const * cohesiveShearForceString() { return "cohesiveShearForce"; }
+    static constexpr char const * cohesiveForceString() { return "cohesiveForce"; }
     static constexpr char const * massString() { return "mass"; }
     static constexpr char const * materialVolumeString() { return "materialVolume"; }
     static constexpr char const * velocityString() { return "velocity"; }
@@ -655,20 +654,21 @@ protected:
   real64 m_nextReactionWriteTime;
 
   // Cohesive law variables
-  SortedArray< globalIndex >  m_cohesiveNodeGlobalIndices;
   int m_enableCohesiveLaws;
   int m_enableCohesiveFailure;
-  array2d< real64 > m_initialCohesiveGridNodePositions;
-  array2d< real64 > m_initialCohesiveGridNodeAreas;
-  array3d< real64 > m_initialCohesiveGridNodeSurfaceNormals;
-  array3d< real64 > m_maxCohesiveGridNodeNormalDisplacement;
-  array3d< real64 > m_maxCohesiveGridNodeShearDisplacement;
+  real64 m_numSurfaceIntegrationPoints;
   real64 m_maxCohesiveNormalStress;
   real64 m_maxCohesiveShearStress;
   real64 m_characteristicNormalDisplacement;
-  real64 m_characteristicTransverseDisplacement;
+  real64 m_characteristicTangentialDisplacement;
   real64 m_maxCohesiveNormalDisplacement;
-  real64 m_maxCohesiveShearDisplacement;
+  real64 m_maxCohesiveTangentialDisplacement;
+  SortedArray< globalIndex >  m_cohesiveNodeGlobalIndices;
+  array2d< real64 > m_initialCohesiveGridNodeAreas;
+  array2d< real64 > m_initialCohesiveGridNodePositions;
+  array3d< real64 > m_initialCohesiveGridNodeSurfaceNormals;
+  array3d< real64 > m_maxCohesiveGridNodeNormalDisplacement;
+  array3d< real64 > m_maxCohesiveGridNodeTangentialDisplacement;
 
   int m_needsNeighborList;
   real64 m_neighborRadius;

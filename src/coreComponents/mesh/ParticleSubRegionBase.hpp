@@ -302,35 +302,6 @@ public:
   arrayView2d< real64 > getParticleSurfacePosition()
   { return m_particleSurfacePosition; }
 
-////
- /**
-   * @brief Get the initial projected surface area of each particle in this subregion.
-   * @return an arrayView1d of const particle initial projected surface area
-   */
-  arrayView2d< real64 const > getParticleInitialProjectedSurfaceArea() const
-  { return m_particleInitialProjectedSurfaceArea; }
-
-  /**
-   * @copydoc getParticleInitialProjectedSurfaceArea() const
-   */
-  arrayView2d< real64 > getParticleInitialProjectedSurfaceArea()
-  { return m_particleInitialProjectedSurfaceArea; }
-
-  /**
-   * @brief Get the projected surface area of each particle in this subregion.
-   * @return an arrayView1d of const particle projected surface area
-   */
-  arrayView2d< real64 const > getParticleProjectedSurfaceArea() const
-  { return m_particleProjectedSurfaceArea; }
-
-  /**
-   * @copydoc getParticleProjectedSurfaceArea() const
-   */
-  arrayView2d< real64 > getParticleProjectedSurfaceArea()
-  { return m_particleProjectedSurfaceArea; }
-
-////
-
   /**
    * @brief Get the group in which the constitutive models of this subregion are registered.
    * @return a pointer to the const group in which the constitutive models are registered
@@ -477,12 +448,6 @@ public:
   
     /// @return String key for the member level field for the particle surface normal.
     static constexpr char const * particleSurfacePositionString() { return "particleSurfacePosition"; }
-
-    /// @return String key for the member level field for the particle initial projected surface area.
-    static constexpr char const * particleInitialProjectedSurfaceAreaString() { return "particleInitialProjectedSurfaceArea"; }
-  
-    /// @return String key for the member level field for the particle projected surface area.
-    static constexpr char const * particleProjectedSurfaceAreaString() { return "particleProjectedSurfaceArea"; }
   };
 
   /**
@@ -611,12 +576,6 @@ protected:
 
   /// Member level field for the particle surface position.
   array2d< real64 > m_particleSurfacePosition;
-
-  /// Member level field for the particle initial projected surface area.
-  array2d< real64 > m_particleInitialProjectedSurfaceArea;
-
-  /// Member level field for the particle projected surface area.
-  array2d< real64 > m_particleProjectedSurfaceArea;
 
   /// Indices of particles that are not ghosts
   SortedArray< localIndex > m_activeParticleIndices;

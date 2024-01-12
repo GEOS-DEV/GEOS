@@ -240,21 +240,13 @@ DECLARE_FIELD( particleReferencePorosity,
                WRITE_AND_READ,
                "ParticleReferencePorosity" );
 
-DECLARE_FIELD( particleCohesiveNormalForce,
-               "particleCohesiveNormalForce",
+DECLARE_FIELD( particleCohesiveForce,
+               "particleCohesiveForce",
                array2d< real64 >,
                0,
                LEVEL_1,
                WRITE_AND_READ,
-               "ParticleCohesiveNormalForce" );
-
-DECLARE_FIELD( particleCohesiveShearForce,
-               "particleCohesiveShearForce",
-               array2d< real64 >,
-               0,
-               LEVEL_1,
-               WRITE_AND_READ,
-               "ParticleCohesiveShearForce" );
+               "ParticleCohesiveForce" );
 
 DECLARE_FIELD( particleCohesiveZoneFlag, 
                "particleCohesiveZoneFlag", 
@@ -287,30 +279,6 @@ DECLARE_FIELD( particleInitialShapeFunctionGradientValues,
                LEVEL_1,
                WRITE_AND_READ,
                "ParticleInitialShapeFunctionGradientValues" );
-
-DECLARE_FIELD( particleCohesiveTraction,
-               "particleCohesiveTraction",
-               array2d< real64 >,
-               0,
-               LEVEL_1,
-               WRITE_AND_READ,
-               "ParticleCohesiveTraction" );
-
-DECLARE_FIELD( particleAreaFromGrid, 
-               "particleAreaFromGrid",
-               array1d< real64 >,
-               0,
-               LEVEL_1,
-               WRITE_AND_READ,
-               "ParticleAreaFromGrid" );
-
-// DECLARE_FIELD( particleProjectedArea,
-//                "particelProjectedArea",
-//                array1d< real64 >,
-//                0,
-//                LEVEL_1,
-//                WRITE_AND_READ,
-//                "ParticleProjectedArea" );-
 
 }
 
