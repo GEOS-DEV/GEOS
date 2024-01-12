@@ -99,17 +99,17 @@
 
     <PeriodicEvent
       name="timeHistoryCollectionx"
-      timeFrequency="0.0005"
+      timeFrequency="0.001"
       targetExactTimestep="1"
       target="/Tasks/displacementxCollection"/>
     <PeriodicEvent
       name="timeHistoryCollectiony"
-      timeFrequency="0.0005"
+      timeFrequency="0.001"
       targetExactTimestep="1"
       target="/Tasks/displacementyCollection"/>
     <PeriodicEvent
       name="timeHistoryCollectionz"
-      timeFrequency="0.0005"
+      timeFrequency="0.001"
       targetExactTimestep="1"
       target="/Tasks/displacementzCollection"/>
     <PeriodicEvent
