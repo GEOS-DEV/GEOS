@@ -72,7 +72,7 @@
       initialCondition="1"
       objectPath="mesh/FE2/ElementRegions/Region/cb"
       fieldName="acousticDensity"
-      scale="1500"
+      scale="1"
       setNames="{ all }"/>
 
     <!-- 3) The free surface condition the domain -->
@@ -96,7 +96,7 @@
     <!-- two events to output pressure in an hdf5 file -->
     <PeriodicEvent
       name="timeHistoryCollection"
-      timeFrequency="0.0005"
+      timeFrequency="0.001"
       target="/Tasks/pressureCollection"/>
 
     <PeriodicEvent
