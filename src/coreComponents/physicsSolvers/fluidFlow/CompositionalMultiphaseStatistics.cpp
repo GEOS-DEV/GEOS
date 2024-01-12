@@ -248,7 +248,7 @@ void CompositionalMultiphaseStatistics::computeRegionStatistics( real64 const ti
     arrayView1d< real64 const > const temp = subRegion.getField< fields::flow::temperature >();
     arrayView2d< real64 const, compflow::USD_PHASE > const phaseVolFrac =
       subRegion.getField< fields::flow::phaseVolumeFraction >();
-    arrayView1d< real64 > const deltaPres = subRegion.getField< fields::flow::deltaPressure >();
+    arrayView1d< real64 const > const deltaPres = subRegion.getField< fields::flow::deltaPressure >();
 
     Group const & constitutiveModels = subRegion.getGroup( ElementSubRegionBase::groupKeyStruct::constitutiveModelsString() );
 
