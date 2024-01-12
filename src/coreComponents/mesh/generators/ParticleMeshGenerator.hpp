@@ -72,10 +72,7 @@ public:
     SurfaceNormalZ,
     SurfacePositionX,
     SurfacePositionY,
-    SurfacePositionZ,
-    ProjectedSurfaceAreaX,
-    ProjectedSurfaceAreaY,
-    ProjectedSurfaceAreaZ
+    SurfacePositionZ
   };
 
   /**
@@ -180,10 +177,7 @@ ENUM_STRINGS( ParticleMeshGenerator::ParticleColumnHeaders,
               "SurfaceNormalZ",
               "SurfacePositionX",
               "SurfacePositionY",
-              "SurfacePositionZ",
-              "ProjectedSurfaceAreaX",
-              "ProjectedSurfaceAreaY",
-              "ProjectedSurfaceAreaZ" );
+              "SurfacePositionZ" );
 
 } /* namespace geos */
 

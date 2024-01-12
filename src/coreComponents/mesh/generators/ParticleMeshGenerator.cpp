@@ -194,7 +194,7 @@ void ParticleMeshGenerator::generateMesh( DomainPartition & domain )
       // Reformat particle data and apply defaults to fields not specified
       std::vector< double > lineDataInside;
       // CC: TODO: Can you get the number of options from the enum directly?
-      for(int c = 0; c < 33; c++)
+      for(int c = 0; c < 30; c++)
       {
         if( columnHeaderMap.find( c ) != columnHeaderMap.end() )
         {
@@ -213,6 +213,7 @@ void ParticleMeshGenerator::generateMesh( DomainPartition & domain )
             break;
           case ParticleColumnHeaders::MaterialType:
           case ParticleColumnHeaders::ContactGroup:
+          case ParticleColumnHeaders::Damage:
           case ParticleColumnHeaders::VelocityX:
           case ParticleColumnHeaders::VelocityY:
           case ParticleColumnHeaders::VelocityZ:
@@ -223,10 +224,6 @@ void ParticleMeshGenerator::generateMesh( DomainPartition & domain )
           case ParticleColumnHeaders::SurfacePositionX:
           case ParticleColumnHeaders::SurfacePositionY:
           case ParticleColumnHeaders::SurfacePositionZ:
-          case ParticleColumnHeaders::ProjectedSurfaceAreaX:
-          case ParticleColumnHeaders::ProjectedSurfaceAreaY:
-          case ParticleColumnHeaders::ProjectedSurfaceAreaZ:
-          case ParticleColumnHeaders::Damage:
             defaultValue = 0.0;
             break;
           default:
@@ -291,7 +288,6 @@ void ParticleMeshGenerator::generateMesh( DomainPartition & domain )
     array3d< real64 > particleRVectors( npInBlock, 3, 3 ); // TODO: Flatten the r-vector array into a 1x9 for each particle
     array2d< real64 > particleSurfaceNormal( npInBlock, 3); // TODO:: read from file eventually
     array2d< real64 > particleSurfacePosition( npInBlock, 3 );
-    array2d< real64 > particleProjectedSurfaceArea( npInBlock, 3 );
 
     // Assign particle data to the appropriate block.
     std::vector< int > & indices = indexMap[particleBlockName];
@@ -381,10 +377,6 @@ void ParticleMeshGenerator::generateMesh( DomainPartition & domain )
       particleSurfacePosition[index][1] = particleData[particleType][i][28];
       particleSurfacePosition[index][2] = particleData[particleType][i][29];
 
-      particleProjectedSurfaceArea[index][0] = particleData[particleType][i][30];
-      particleProjectedSurfaceArea[index][1] = particleData[particleType][i][31];
-      particleProjectedSurfaceArea[index][2] = particleData[particleType][i][32];
-
       // Increment index
       index++;
     }
@@ -403,8 +395,6 @@ void ParticleMeshGenerator::generateMesh( DomainPartition & domain )
     particleBlock.setParticleSurfaceNormal( particleSurfaceNormal );
     particleBlock.setParticleInitialSurfacePosition( particleSurfacePosition );
     particleBlock.setParticleSurfacePosition( particleSurfacePosition );
-    particleBlock.setParticleInitialProjectedSurfaceArea( particleProjectedSurfaceArea );
-    particleBlock.setParticleProjectedSurfaceArea( particleProjectedSurfaceArea );
   } // loop over particle blocks
 
   // Resize particle regions

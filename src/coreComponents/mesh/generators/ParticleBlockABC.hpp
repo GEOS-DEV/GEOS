@@ -152,18 +152,6 @@ public:
   virtual array2d< real64 > getParticleSurfacePosition() const = 0;
 
   /**
-   * @brief Get the list of particle initial projected surface area in this subregion.
-   * @return the list of particle initial projected surface area in this subregion.
-   */
-  virtual array2d< real64 > getParticleInitialProjectedSurfaceArea() const = 0;
-
-  /**
-   * @brief Get the list of particle projected surface area in this subregion.
-   * @return the list of particle projected surface area in this subregion.
-   */
-  virtual array2d< real64 > getParticleProjectedSurfaceArea() const = 0;
-
-  /**
    * @brief Get the number of particles.
    * @return number of particles in the particle block
    */
