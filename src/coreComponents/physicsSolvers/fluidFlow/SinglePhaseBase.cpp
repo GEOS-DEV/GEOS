@@ -1064,6 +1064,12 @@ void SinglePhaseBase::applySourceFluxBC( real64 const time_n,
         return 0.0;
       } );
 
+      GEOS_LOG( "SourceFlux "<< fs.getName() << "\n" <<
+                "  - targetSet elem count = "<< targetSet.size() << "\n" <<
+                "  - contribs = {"<< stringutilities::join( rhsContributionArray, ", " ) <<"}" );
+      GEOS_LOG( LvArray::system::stackTrace( true ));
+
+
       // Step 3.2: we are ready to add the right-hand side contributions, taking into account our equation layout
 
       // get the normalizer
@@ -1121,13 +1127,17 @@ void SinglePhaseBase::applySourceFluxBC( real64 const time_n,
       }
       else
       {
+        real64 sum=0.0;
+        std::ostringstream strt;
         forAll< parallelDevicePolicy<> >( targetSet.size(), [sizeScalingFactor,
                                                              targetSet,
                                                              rankOffset,
                                                              ghostRank,
                                                              dofNumber,
                                                              rhsContributionArrayView,
-                                                             localRhs] GEOS_HOST_DEVICE ( localIndex const a )
+                                                             localRhs,
+                                                             &sum,
+                                                             &strt] GEOS_HOST_DEVICE ( localIndex const a )
         {
           // we need to filter out ghosts here, because targetSet may contain them
           localIndex const ei = targetSet[a];
@@ -1138,8 +1148,15 @@ void SinglePhaseBase::applySourceFluxBC( real64 const time_n,
 
           // add the value to the mass balance equation
           globalIndex const rowIndex = dofNumber[ei] - rankOffset;
-          localRhs[rowIndex] += rhsContributionArrayView[a] / sizeScalingFactor; // scale the contribution by the sizeScalingFactor here!
+          real64 const scaledContrib = rhsContributionArrayView[a] / sizeScalingFactor; // scale the contribution by the sizeScalingFactor
+                                                                                        // here!
+          strt<<localRhs[rowIndex]<<"+="<<scaledContrib<<"  ;  ";
+          localRhs[rowIndex] += scaledContrib;
+          sum+=scaledContrib;
         } );
+        sum = MpiWrapper::sum( sum );
+        GEOS_LOG_RANK_0( "Adds : { "<<strt.str()<<" }" );
+        GEOS_LOG_RANK_0( " = "<<sum );
       }
     } );
   } );
