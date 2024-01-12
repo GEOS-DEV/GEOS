@@ -106,14 +106,6 @@ ParticleSubRegionBase::ParticleSubRegionBase( string const & name, Group * const
   registerWrapper( viewKeyStruct::particleSurfacePositionString(), &m_particleSurfacePosition ).
     setPlotLevel( PlotLevel::LEVEL_1 ).
     reference().resizeDimension< 1 >( 3 );
-
-  registerWrapper( viewKeyStruct::particleInitialProjectedSurfaceAreaString(), &m_particleInitialProjectedSurfaceArea ).
-    setPlotLevel( PlotLevel::LEVEL_1 ).
-    reference().resizeDimension< 1 >( 3 );
-
-  registerWrapper( viewKeyStruct::particleProjectedSurfaceAreaString(), &m_particleProjectedSurfaceArea ).
-    setPlotLevel( PlotLevel::LEVEL_1 ).
-    reference().resizeDimension< 1 >( 3 );
 }
 
 ParticleSubRegionBase::~ParticleSubRegionBase()
