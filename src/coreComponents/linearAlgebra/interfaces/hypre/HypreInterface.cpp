@@ -48,29 +48,18 @@ void HypreInterface::initialize()
 #endif
 
 #if GEOS_USE_HYPRE_DEVICE == GEOS_USE_HYPRE_CUDA || GEOS_USE_HYPRE_DEVICE == GEOS_USE_HYPRE_HIP
-  hypre_HandleDefaultExecPolicy( hypre_handle() ) = HYPRE_EXEC_DEVICE;
-  hypre_HandleSpgemmUseVendor( hypre_handle() ) = 0;
+  HYPRE_SetExecutionPolicy( HYPRE_EXEC_DEVICE );
+  HYPRE_SetSpGemmUseVendor( 0 );
+  HYPRE_DeviceInitialize();
 #endif
   HYPRE_SetMemoryLocation( hypre::memoryLocation );
 
 #if defined(HYPRE_USING_UMPIRE)
-   /* Setup Umpire pools */
-   HYPRE_SetUmpireDevicePoolName("HYPRE_DEVICE");
-   HYPRE_SetUmpireUMPoolName("HYPRE_UM");
-   HYPRE_SetUmpireHostPoolName("HYPRE_HOST");
-   HYPRE_SetUmpirePinnedPoolName("HYPRE_PINNED");
-#endif
-
-  // Hypre version info
-#if defined(HYPRE_DEVELOP_STRING)
-#if defined(HYPRE_BRANCH_NAME)
-  GEOS_LOG_RANK_0( "  - hypre development version: " << HYPRE_DEVELOP_STRING <<
-                   " (" << HYPRE_BRANCH_NAME << ")" );
-#else
-  GEOS_LOG_RANK_0( "  - hypre development version: " << HYPRE_DEVELOP_STRING );
-#endif
-#elif defined(HYPRE_RELEASE_VERSION)
-  GEOS_LOG_RANK_0( "  - hypre release version: " << HYPRE_RELEASE_VERSION );
+  /* Setup Umpire pool names */
+  HYPRE_SetUmpireDevicePoolName( "HYPRE_DEVICE" );
+  HYPRE_SetUmpireUMPoolName( "HYPRE_UM" );
+  HYPRE_SetUmpireHostPoolName( "HYPRE_HOST" );
+  HYPRE_SetUmpirePinnedPoolName( "HYPRE_PINNED" );
 #endif
 }
 

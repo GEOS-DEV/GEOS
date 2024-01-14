@@ -12,13 +12,14 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#include "version.hpp"
+#include "common/GeosxConfig.hpp"
+#include "common/Logger.hpp"
 #include "mainInterface/GeosxVersion.hpp"
 
 namespace geos
 {
 
-string getVersion()
+std::string getVersion()
 {
 #if defined(GEOSX_GIT_BRANCH) && defined(GEOSX_GIT_HASH)
   return GEOSX_VERSION_FULL " (" GEOSX_GIT_BRANCH ", sha1: " GEOSX_GIT_HASH ")";
@@ -27,43 +28,43 @@ string getVersion()
 #endif
 }
 
-string getCppCompilerIdString()
+static std::string getCppCompilerIdString()
 {
   std::ostringstream oss;
 
   #if defined(__clang__)
-  oss<<"clang " <<__clang_major__<<"."<<__clang_minor__<<"."<<__clang_patchlevel__;
+  oss << "clang " << __clang_major__ << "." << __clang_minor__ << "." << __clang_patchlevel__;
 #if defined(__apple_build_version__)
-  oss<<" ( Apple version " <<__apple_build_version__<<" )";
+  oss << " (apple version " << __apple_build_version__ << ")";
 #endif
 #if defined(__ibmxl_vrm__)
-  oss<<"IBMXL "
-     <<__ibmxl_version__<<"."
-     <<__ibmxl_release__<<"."
-     <<__ibmxl_modification__<<"."
-     <<__ibmxl_ptf_fix_level__;
+  oss << "IBMXL "
+      << __ibmxl_version__ << "."
+      << __ibmxl_release__ << "."
+      << __ibmxl_modification__ << "."
+      << __ibmxl_ptf_fix_level__;
 #endif
 #elif defined(__GNUC__)
-  oss<<"gcc "
-     <<__GNUC__<<"."
-     <<__GNUC_MINOR__<<"."
-     <<__GNUC_PATCHLEVEL__;
+  oss << "gcc "
+      << __GNUC__ << "."
+      << __GNUC_MINOR__ << "."
+      << __GNUC_PATCHLEVEL__;
 #endif
   return oss.str();
 }
 
-string getGpuCompilerIdString()
+static std::string getGpuCompilerIdString()
 {
   std::ostringstream oss;
 
 #if defined( GEOS_USE_CUDA )
-  oss<<"  - CUDA compiler version: " <<CUDA_VERSION/1000<<"."<<CUDA_VERSION/10%100;
+  oss << "  - CUDA compiler version: " << CUDA_VERSION/1000 << "." << CUDA_VERSION/10%100;
 
 #elif defined( GEOS_USE_HIP )
-  oss<<"  - HIP compiler version: "
-     <<HIP_VERSION_MAJOR<<"."
-     <<HIP_VERSION_MINOR<<"."
-     <<HIP_VERSION_PATCH;
+  oss << "  - HIP compiler version: "
+      << HIP_VERSION_MAJOR << "."
+      << HIP_VERSION_MINOR << "."
+      << HIP_VERSION_PATCH;
 #endif
   return oss.str();
 }
@@ -75,9 +76,8 @@ void outputVersionInfo()
 
   GEOS_LOG_RANK_0( "  - C++ compiler: "<<getCppCompilerIdString() );
 
-  string const gpuCompilerIdString = getGpuCompilerIdString();
+  std::string const gpuCompilerIdString = getGpuCompilerIdString();
   GEOS_LOG_RANK_0_IF( !gpuCompilerIdString.empty(), gpuCompilerIdString );
-
 
 #if defined(_OPENMP)
   GEOS_LOG_RANK_0( "  - OpenMP version: "<<_OPENMP );
@@ -107,9 +107,11 @@ void outputVersionInfo()
 #if defined(RAJA_VERSION)
   GEOS_LOG_RANK_0( "  - RAJA version: " << STRINGIZE( RAJA_VERSION ) );
 #endif
+
 #if defined(umpire_VERSION)
   GEOS_LOG_RANK_0( "  - Umpire version: " << STRINGIZE( umpire_VERSION ) );
 #endif
+
 #if defined(chai_VERSION)
   GEOS_LOG_RANK_0( "  - CHAI version: " << STRINGIZE( chai_VERSION ) );
 #endif
@@ -122,7 +124,7 @@ void outputVersionInfo()
   GEOS_LOG_RANK_0( "  - Caliper version: " << STRINGIZE( caliper_VERSION ) );
 #endif
 
-#if defined(METIS_VERSION)
+#if defined(metis_VERSION)
   GEOS_LOG_RANK_0( "  - METIS version: " << STRINGIZE( METIS_VERSION ) );
 #endif
 
@@ -140,6 +142,18 @@ void outputVersionInfo()
 
 #if defined(suitesparse_VERSION)
   GEOS_LOG_RANK_0( "  - SuiteSparse version: " << STRINGIZE( suitesparse_VERSION ) );
+#endif
+
+#if defined(hypre_VERSION)
+  GEOS_LOG_RANK_0( "  - hypre version: " << STRINGIZE( hypre_VERSION ) );
+#endif
+
+#if defined(trilinos_VERSION)
+  GEOS_LOG_RANK_0( "  - trilinos version: " << STRINGIZE( trilinos_VERSION ) );
+#endif
+
+#if defined(petsc_VERSION)
+  GEOS_LOG_RANK_0( "  - petsc version: " << STRINGIZE( petsc_VERSION ) );
 #endif
 
 #if defined(Python3_VERSION)

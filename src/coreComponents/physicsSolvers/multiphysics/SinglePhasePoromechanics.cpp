@@ -184,15 +184,11 @@ void SinglePhasePoromechanics< FLOW_SOLVER >::initializePreSubGroups()
                                                                        [&]( localIndex const,
                                                                             ElementSubRegionBase & subRegion )
     {
-      // skip the wells
-      if( subRegion.getCatalogName() == "wellElementSubRegion" )
-        return;
-
       string & porousName = subRegion.getReference< string >( viewKeyStruct::porousMaterialNamesString() );
       porousName = this->template getConstitutiveName< CoupledSolidBase >( subRegion );
       GEOS_THROW_IF( porousName.empty(),
                      GEOS_FMT( "{} {} : Solid model not found on subregion {}",
-                               catalogName(), this->getDataContext().toString(), subRegion.getName() ),
+                               getCatalogName(), this->getDataContext().toString(), subRegion.getName() ),
                      InputError );
 
       if( subRegion.hasField< fields::poromechanics::bulkDensity >() )
@@ -252,15 +248,15 @@ void SinglePhasePoromechanics< FLOW_SOLVER >::initializePostInitialConditionsPre
     GEOS_THROW_IF( std::find( flowTargetRegionNames.begin(), flowTargetRegionNames.end(), poromechanicsTargetRegionNames[i] )
                    == flowTargetRegionNames.end(),
                    GEOS_FMT( "{} {}: region `{}` must be a target region of `{}`",
-                             catalogName(), this->getName(), poromechanicsTargetRegionNames[i], flowSolver()->getName() ),
+                             getCatalogName(), this->getDataContext(), poromechanicsTargetRegionNames[i], flowSolver()->getDataContext() ),
                    InputError );
   }
 
   integer & isFlowThermal = flowSolver()->isThermal();
   GEOS_LOG_RANK_0_IF( m_isThermal && !isFlowThermal,
                       GEOS_FMT( "{} {}: The attribute `{}` of the flow solver `{}` is set to 1 since the poromechanics solver is thermal",
-                                catalogName(), this->getDataContext().toString(),
-                                FlowSolverBase::viewKeyStruct::isThermalString(), flowSolver()->getName() ) );
+                                getCatalogName(), this->getName(),
+                                FlowSolverBase::viewKeyStruct::isThermalString(), flowSolver()->getDataContext() ) );
   isFlowThermal = m_isThermal;
 
   if( m_isThermal )
@@ -454,7 +450,7 @@ void SinglePhasePoromechanics< FLOW_SOLVER >::mapSolutionBetweenSolvers( DomainP
   GEOS_MARK_FUNCTION;
 
   /// After the flow solver
-  if( solverType == static_cast< integer >( SolverType::Flow ) )
+  if( solverType == static_cast< integer >( Base::SolverType::Flow ) )
   {
     // save pressure and temperature at the end of this iteration
     flowSolver()->saveIterationState( domain );
@@ -477,10 +473,10 @@ void SinglePhasePoromechanics< FLOW_SOLVER >::mapSolutionBetweenSolvers( DomainP
   }
 
   /// After the solid mechanics solver
-  if( solverType == static_cast< integer >( SolverType::SolidMechanics ) )
+  if( solverType == static_cast< integer >( Base::SolverType::SolidMechanics ) )
   {
-    // compute the average of the mean stress increment over quadrature points
-    averageMeanStressIncrement( domain );
+    // compute the average of the mean total stress increment over quadrature points
+    averageMeanTotalStressIncrement( domain );
 
     this->template forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                                 MeshLevel & mesh,
@@ -496,6 +492,8 @@ void SinglePhasePoromechanics< FLOW_SOLVER >::mapSolutionBetweenSolvers( DomainP
       } );
     } );
   }
+  // call base method (needed to perform nonlinear acceleration)
+  Base::mapSolutionBetweenSolvers( domain, solverType );
 }
 
 template< typename FLOW_SOLVER >
@@ -518,7 +516,7 @@ void SinglePhasePoromechanics< FLOW_SOLVER >::updateBulkDensity( ElementSubRegio
 }
 
 template< typename FLOW_SOLVER >
-void SinglePhasePoromechanics< FLOW_SOLVER >::averageMeanStressIncrement( DomainPartition & domain )
+void SinglePhasePoromechanics< FLOW_SOLVER >::averageMeanTotalStressIncrement( DomainPartition & domain )
 {
   this->template forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                               MeshLevel & mesh,
@@ -531,8 +529,8 @@ void SinglePhasePoromechanics< FLOW_SOLVER >::averageMeanStressIncrement( Domain
       string const solidName = subRegion.template getReference< string >( viewKeyStruct::porousMaterialNamesString() );
       CoupledSolidBase & solid = this->template getConstitutiveModel< CoupledSolidBase >( subRegion, solidName );
 
-      arrayView2d< real64 const > const meanStressIncrement_k = solid.getMeanEffectiveStressIncrement_k();
-      arrayView1d< real64 > const averageMeanStressIncrement_k = solid.getAverageMeanEffectiveStressIncrement_k();
+      arrayView2d< real64 const > const meanTotalStressIncrement_k = solid.getMeanTotalStressIncrement_k();
+      arrayView1d< real64 > const averageMeanTotalStressIncrement_k = solid.getAverageMeanTotalStressIncrement_k();
 
       finiteElement::FiniteElementBase & subRegionFE =
         subRegion.template getReference< finiteElement::FiniteElementBase >( solidMechanicsSolver()->getDiscretizationName() );
@@ -552,8 +550,8 @@ void SinglePhasePoromechanics< FLOW_SOLVER >::averageMeanStressIncrement( Domain
                                                      mesh.getFaceManager(),
                                                      subRegion,
                                                      finiteElement,
-                                                     meanStressIncrement_k,
-                                                     averageMeanStressIncrement_k );
+                                                     meanTotalStressIncrement_k,
+                                                     averageMeanTotalStressIncrement_k );
       } );
     } );
   } );

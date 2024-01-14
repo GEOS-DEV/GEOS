@@ -57,8 +57,13 @@ void hypre::mgr::createMGR( LinearSolverParameters const & params,
   // Hypre's parameters to use MGR as a preconditioner
   GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetTol( precond.ptr, 0.0 ) );
   GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetMaxIter( precond.ptr, 1 ) );
+
+  // Disabling Option 2 (0x2): In this context, we use MGR as a preconditioner for a Krylov method (e.g., GMRES),
+  // and our interest lies in the Krylov method's convergence history, not MGR's. Hence, we turn off the second bit
+  // (0x2) of logLevel. For detailed logLevel codes, see HYPRE_MGRSetPrintLevel documentation. Additionally,
+  // we subtract one from the input logLevel value because "1" is reserved in GEOS for setup and solve time logging.
   HYPRE_Int logLevel = LvArray::math::max( LvArray::integerConversion< HYPRE_Int >( params.logLevel - 1 ), LvArray::integerConversion< HYPRE_Int >( 0 ) );
-  logLevel &= ~0x2; // Disable preconditioner iteration (MGRCycle) output
+  logLevel &= ~0x2;
   GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetPrintLevel( precond.ptr, logLevel ) );
 
   array1d< int > const numComponentsPerField = dofManager->numComponentsPerField();
