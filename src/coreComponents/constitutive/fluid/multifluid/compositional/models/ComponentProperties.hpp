@@ -127,7 +127,7 @@ public:
 
 private:
   // Standard compositional input
-  string_array const & m_componentNames;
+  GEOS_MAYBE_UNUSED string_array const & m_componentNames;
   array1d< real64 > const & m_componentMolarWeight;
   array1d< real64 > const & m_componentCriticalPressure;
   array1d< real64 > const & m_componentCriticalTemperature;
