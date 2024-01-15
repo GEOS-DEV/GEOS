@@ -393,10 +393,10 @@ void HyprePreconditioner::setup( Matrix const & mat )
     if( m_precond->setup )
     {
       auto const ierr = m_precond->setup( m_precond->ptr, precondMat.unwrapped(), nullptr, nullptr );
-      if(ierr != 0)
+      if( ierr != 0 )
       {
-        HYPRE_PrintErrorMessages(mat.comm());
-        GEOS_ERROR("HyprePreconditioner setup failed");
+        HYPRE_PrintErrorMessages( precondMat.comm());
+        GEOS_ERROR( "HyprePreconditioner setup failed" );
       }
     }
     else if( m_params.preconditionerType == LinearSolverParameters::PreconditionerType::direct )
