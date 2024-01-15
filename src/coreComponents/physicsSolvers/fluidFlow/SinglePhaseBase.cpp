@@ -1014,6 +1014,7 @@ void SinglePhaseBase::applySourceFluxBC( real64 const time_n,
 
         if( isThermal )
         {
+          // message à supprimer / résumer
           char const msg[] = "SinglePhaseBase {} with isThermal = 1. At time {}s, "
                              "the <{}> source flux boundary condition '{}' will be applied with the following behavior"
                              "\n - negative value (injection): the mass balance equation is modified to considered the additional source term"
@@ -1064,6 +1065,7 @@ void SinglePhaseBase::applySourceFluxBC( real64 const time_n,
         return 0.0;
       } );
 
+      // à suppr.
       if( fs.getLogLevel()>=3 )
       {
         GEOS_LOG( "SourceFlux "<< fs.getName() << "\n" <<
@@ -1158,11 +1160,13 @@ void SinglePhaseBase::applySourceFluxBC( real64 const time_n,
           sum+=scaledContrib;
         } );
         sum = MpiWrapper::sum( sum );
+        // à suppr.
         if( fs.getLogLevel()>=2 )
         {
           GEOS_LOG_RANK_0( fs.getName() << ", " << subRegion.getName() <<
                            " adds : { "<<strt.str()<<" }" );
         }
+        // à ne sortir qu'une fois !
         if( fs.getLogLevel()>=1 )
         {
           double effectiveRate = sum / dt;
