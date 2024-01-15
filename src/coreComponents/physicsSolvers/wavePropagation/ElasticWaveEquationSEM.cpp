@@ -317,14 +317,15 @@ void ElasticWaveEquationSEM::computeDAS( arrayView2d< real32 > const xCompRcv,
                                          arrayView2d< real32 > const yCompRcv,
                                          arrayView2d< real32 > const zCompRcv )
 {
-
   arrayView2d< real64 const > const linearDASGeometry = m_linearDASGeometry.toViewConst();
   arrayView1d< localIndex const > const receiverIsLocal = m_receiverIsLocal.toViewConst();
 
-  localIndex const numReceiversGlobal = linearDASGeometry.size( 0 );
+  localIndex const numReceiversGlobal = m_receiverIsLocal.size();
+  localIndex const numDAS = linearDASGeometry.size( 0 );
   localIndex const nsamplesSeismoTrace = m_nsamplesSeismoTrace;
   localIndex const nlinearDASSamples = m_linearDASSamples;
   localIndex const useDAS = m_useDAS;
+   
 
   array1d< real64 > const samplePointIntegrationConstantsA( m_linearDASSamples );
   /// for displacement difference DAS (m_useDAS==2), take the difference of the pair of geophones
@@ -350,26 +351,36 @@ void ElasticWaveEquationSEM::computeDAS( arrayView2d< real32 > const xCompRcv,
 
   if( m_nsamplesSeismoTrace > 0 )
   {
+    // set time column to zero on two components, to avoid summing them in the following MPI reduce
+    if( MpiWrapper::commRank( MPI_COMM_GEOSX ) != 0)
+    {
+      for( localIndex iTimeSample = 0; iTimeSample < nsamplesSeismoTrace; ++iTimeSample )
+      {
+        xCompRcv( iTimeSample, numReceiversGlobal ) = 0;
+        yCompRcv( iTimeSample, numReceiversGlobal ) = 0;
+        zCompRcv( iTimeSample, numReceiversGlobal ) = 0;
+      }
+    }
     /// synchronize receivers across MPI ranks
     MpiWrapper::allReduce( xCompRcv.data(),
                            xCompRcv.data(),
-                           m_linearDASSamples*numReceiversGlobal*m_nsamplesSeismoTrace,
+                           (numReceiversGlobal + 1)*nsamplesSeismoTrace,
                            MpiWrapper::getMpiOp( MpiWrapper::Reduction::Sum ),
                            MPI_COMM_GEOSX );
 
     MpiWrapper::allReduce( yCompRcv.data(),
                            yCompRcv.data(),
-                           m_linearDASSamples*numReceiversGlobal*m_nsamplesSeismoTrace,
+                           (numReceiversGlobal + 1)*nsamplesSeismoTrace,
                            MpiWrapper::getMpiOp( MpiWrapper::Reduction::Sum ),
                            MPI_COMM_GEOSX );
 
     MpiWrapper::allReduce( zCompRcv.data(),
                            zCompRcv.data(),
-                           m_linearDASSamples*numReceiversGlobal*m_nsamplesSeismoTrace,
+                           (numReceiversGlobal + 1)*nsamplesSeismoTrace,
                            MpiWrapper::getMpiOp( MpiWrapper::Reduction::Sum ),
                            MPI_COMM_GEOSX );
-
-    forAll< EXEC_POLICY >( numReceiversGlobal, [=] GEOS_HOST_DEVICE ( localIndex const ircv )
+    localIndex const myrank = MpiWrapper::commRank( MPI_COMM_GEOSX );
+    forAll< EXEC_POLICY >( numDAS, [=] GEOS_HOST_DEVICE ( localIndex const ircv )
     {
       if( receiverIsLocal[ ircv ] == 1 )
       {
@@ -382,15 +393,20 @@ void ElasticWaveEquationSEM::computeDAS( arrayView2d< real32 > const xCompRcv,
           for( localIndex iSample = 0; iSample < nlinearDASSamples; ++iSample )
           {
             // store strain data in the z-component of the receiver (copied to x after resize)
-            das += ( dasVector[ 0 ] * xCompRcv[ iTimeSample ][ iSample*numReceiversGlobal+ircv ]
-                     + dasVector[ 1 ] * yCompRcv[ iTimeSample ][ iSample*numReceiversGlobal+ircv ]
-                     + dasVector[ 2 ] * zCompRcv[ iTimeSample ][ iSample*numReceiversGlobal+ircv ] ) * samplePointIntegrationConstants[ iSample ];
+            das += ( dasVector[ 0 ] * xCompRcv( iTimeSample, iSample*numDAS+ircv )
+                     + dasVector[ 1 ] * yCompRcv( iTimeSample, iSample*numDAS+ircv )
+                     + dasVector[ 2 ] * zCompRcv( iTimeSample, iSample*numDAS+ircv ) ) * samplePointIntegrationConstants[ iSample ];
           }
           if( useDAS == 2 )
           {
             das /= linearDASGeometry[ ircv ][ 2 ];
           }
-          zCompRcv[ iTimeSample ][ ircv ] = das;
+          zCompRcv( iTimeSample, ircv ) = das;
+          // also copy the last receiver, which contains the seismogram time
+          if( ircv == 0 )
+          {
+            zCompRcv( iTimeSample, numDAS ) = zCompRcv( iTimeSample, numReceiversGlobal );
+          }
         }
       }
     } );
@@ -398,9 +414,9 @@ void ElasticWaveEquationSEM::computeDAS( arrayView2d< real32 > const xCompRcv,
 
   /// resize the receiver arrays by dropping the extra data to avoid confusion
   /// the remaining x-component contains DAS data, the other components are set to zero
-  m_displacementXNp1AtReceivers.resize( m_nsamplesSeismoTrace, numReceiversGlobal + 1 );
+  m_displacementXNp1AtReceivers.resize( m_nsamplesSeismoTrace, numDAS + 1 );
   arrayView2d< real32 > const dasReceiver = m_displacementXNp1AtReceivers.toView();
-  forAll< EXEC_POLICY >( numReceiversGlobal, [=] GEOS_HOST_DEVICE ( localIndex const ircv )
+  forAll< EXEC_POLICY >( numDAS, [=] GEOS_HOST_DEVICE ( localIndex const ircv )
   {
     if( receiverIsLocal[ ircv ] == 1 )
     {
@@ -408,14 +424,18 @@ void ElasticWaveEquationSEM::computeDAS( arrayView2d< real32 > const xCompRcv,
       for( localIndex iTimeSample = 0; iTimeSample < nsamplesSeismoTrace; ++iTimeSample )
       {
         // store strain data in the z-component of the receiver (copied to x after resize)
-        dasReceiver[ iTimeSample ][ ircv ] = zCompRcv[ iTimeSample ][ ircv ];
+        dasReceiver( iTimeSample, ircv ) = zCompRcv( iTimeSample, ircv );
+        if( ircv == 0 )
+        {
+          dasReceiver( iTimeSample, numDAS ) = zCompRcv( iTimeSample, numDAS );
+        }
       }
     }
   } );
   /// set the y and z components to zero to avoid any confusion
-  m_displacementYNp1AtReceivers.resize( m_nsamplesSeismoTrace, numReceiversGlobal + 1 );
+  m_displacementYNp1AtReceivers.resize( m_nsamplesSeismoTrace, numDAS + 1 );
   m_displacementYNp1AtReceivers.zero();
-  m_displacementZNp1AtReceivers.resize( m_nsamplesSeismoTrace, numReceiversGlobal + 1 );
+  m_displacementZNp1AtReceivers.resize( m_nsamplesSeismoTrace, numDAS + 1 );
   m_displacementZNp1AtReceivers.zero();
 }
 
@@ -785,8 +805,11 @@ void ElasticWaveEquationSEM::cleanup( real64 const time_n,
     computeAllSeismoTraces( time_n, 0.0, uy_np1, uy_n, uYReceivers );
     computeAllSeismoTraces( time_n, 0.0, uz_np1, uz_n, uZReceivers );
 
-    WaveSolverUtils::writeSeismoTraceVector( "seismoTraceReceiver", getName(), m_outputSeismoTrace, m_receiverConstants.size( 0 ),
-                                             m_receiverIsLocal, m_nsamplesSeismoTrace, uXReceivers, uYReceivers, uZReceivers );
+    if( m_useDAS <= 0 )
+    {
+      WaveSolverUtils::writeSeismoTraceVector( "seismoTraceReceiver", getName(), m_outputSeismoTrace, m_receiverConstants.size( 0 ),
+                                               m_receiverIsLocal, m_nsamplesSeismoTrace, uXReceivers, uYReceivers, uZReceivers );
+    }
 
     /// Compute DAS data if requested
     /// Pairs or sets of receivers are assumed to be modeled ( see WaveSolverBase::initializeDAS() )
@@ -794,7 +817,7 @@ void ElasticWaveEquationSEM::cleanup( real64 const time_n,
     {
       computeDAS( uXReceivers, uYReceivers, uZReceivers );
       WaveSolverUtils::writeSeismoTrace( "dasTraceReceiver", getName(), m_outputSeismoTrace, m_linearDASGeometry.size( 0 ),
-                                         m_receiverIsLocal, m_nsamplesSeismoTrace, uZReceivers );
+                                         m_receiverIsLocal, m_nsamplesSeismoTrace, uXReceivers );
     }
   } );
 }
