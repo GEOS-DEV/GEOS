@@ -392,7 +392,12 @@ void HyprePreconditioner::setup( Matrix const & mat )
     // Perform setup of the main solver, if needed
     if( m_precond->setup )
     {
-      GEOS_LAI_CHECK_ERROR( m_precond->setup( m_precond->ptr, precondMat.unwrapped(), nullptr, nullptr ) );
+      auto const ierr = m_precond->setup( m_precond->ptr, precondMat.unwrapped(), nullptr, nullptr );
+      if(ierr != 0)
+      {
+        HYPRE_PrintErrorMessages(mat.comm());
+        GEOS_ERROR("HyprePreconditioner setup failed");
+      }
     }
     else if( m_params.preconditionerType == LinearSolverParameters::PreconditionerType::direct )
     {
