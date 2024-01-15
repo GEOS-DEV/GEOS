@@ -125,6 +125,12 @@ public:
    */
   void reinit() override final;
 
+  SortedArray< localIndex > const & getSolverNodesSet() { return m_solverTargetNodesSet; }
+
+  void computeTargetNodeSet( arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes,
+                             localIndex const subRegionSize,
+                             localIndex const numQuadraturePointsPerElem );
+
 protected:
 
   virtual void postProcessInput() override;
@@ -320,6 +326,9 @@ protected:
 
   /// LIFO to store p_dt2
   std::unique_ptr< LifoStorage< real32, localIndex > > m_lifo;
+
+  /// A set of target nodes IDs that will be handled by the current solver
+  SortedArray< localIndex > m_solverTargetNodesSet;
 
   struct parametersPML
   {

@@ -157,7 +157,7 @@ struct PrecomputeSourceAndReceiverKernel
             for( localIndex q=0; q< numNodesPerElem; ++q )
             {
               real64 inc[3] = { 0, 0, 0 };
-              sourceNodeIds[isrc][q] = elemsToNodes[k][q];
+              sourceNodeIds[isrc][q] = elemsToNodes( k, q );
               inc[0] += sourceForce[0] * N[q];
               inc[1] += sourceForce[1] * N[q];
               inc[2] += sourceForce[2] * N[q];
@@ -224,7 +224,7 @@ struct PrecomputeSourceAndReceiverKernel
             R1Tensor receiverVector = WaveSolverUtils::computeDASVector( linearDASGeometry[ircv/linearDASSamples][0], linearDASGeometry[ircv/linearDASSamples][1] );
             for( localIndex a = 0; a < numNodesPerElem; ++a )
             {
-              receiverNodeIds[ircv][a] = elemsToNodes[k][a];
+              receiverNodeIds[ircv][a] = elemsToNodes( k, a );
               if( useDAS == 1 )
               {
                 receiverConstants[ircv][a] = gradN[a][0] * receiverVector[0] + gradN[a][1] * receiverVector[1] + gradN[a][2] * receiverVector[2];
@@ -451,9 +451,9 @@ public:
     m_stiffnessVectorx( nodeManager.getField< fields::StiffnessVectorx >() ),
     m_stiffnessVectory( nodeManager.getField< fields::StiffnessVectory >() ),
     m_stiffnessVectorz( nodeManager.getField< fields::StiffnessVectorz >() ),
-    m_density( elementSubRegion.template getField< fields::MediumDensity >() ),
-    m_velocityVp( elementSubRegion.template getField< fields::MediumVelocityVp >() ),
-    m_velocityVs( elementSubRegion.template getField< fields::MediumVelocityVs >() ),
+    m_density( elementSubRegion.template getField< fields::ElasticDensity >() ),
+    m_velocityVp( elementSubRegion.template getField< fields::ElasticVelocityVp >() ),
+    m_velocityVs( elementSubRegion.template getField< fields::ElasticVelocityVs >() ),
     m_dt( dt )
   {
     GEOS_UNUSED_VAR( edgeManager );
@@ -558,13 +558,13 @@ protected:
   /// The array containing the nodal displacement array in z direction.
   arrayView1d< real32 > const m_uz_n;
 
-  /// The array containing the product of the stiffness matrix and the nodal pressure.
+  /// The array containing the product of the stiffness matrix and the nodal displacement.
   arrayView1d< real32 > const m_stiffnessVectorx;
 
-  /// The array containing the product of the stiffness matrix and the nodal pressure.
+  /// The array containing the product of the stiffness matrix and the nodal displacement.
   arrayView1d< real32 > const m_stiffnessVectory;
 
-  /// The array containing the product of the stiffness matrix and the nodal pressure.
+  /// The array containing the product of the stiffness matrix and the nodal displacement.
   arrayView1d< real32 > const m_stiffnessVectorz;
 
   /// The array containing the density of the medium
