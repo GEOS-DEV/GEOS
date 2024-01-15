@@ -22,7 +22,7 @@ The xml input files for the case with EmbeddedFractures solver are located at:
 .. code-block:: console
 
   inputFiles/efemFractureMechanics/Sneddon_embeddedFrac_base.xml
-  inputFiles/efemFractureMechanics/Sneddon_embeddedFrac_benchmark.xml
+  inputFiles/efemFractureMechanics/Sneddon_embeddedFrac_verification.xml
 
 
 The xml input files for the case with LagrangianContact solver are located at:
@@ -84,7 +84,7 @@ verbosity levels, target regions, and other solver-specific attributes.
 
 Additionally, we need to specify another solver of type, ``EmbeddedSurfaceGenerator``, which is used to discretize the fracture planes.
 
-.. literalinclude:: ../../../../../../../inputFiles/efemFractureMechanics/Sneddon_embeddedFrac_base.xml
+.. literalinclude:: ../../../../../../../inputFiles/efemFractureMechanics/Sneddon_embeddedFrac_verification.xml
   :language: xml
   :start-after: <!-- SPHINX_SNEDDON_SOLVER -->
   :end-before: <!-- SPHINX_SNEDDON_SOLVER_END -->
@@ -129,7 +129,7 @@ For the case with EmbeddedFractures solver, we add multiple events defining solv
 - a periodic event specifying the execution of the embedded fractures solver.
 - three periodic events specifying the output of simulations results.
 
-.. literalinclude:: ../../../../../../../inputFiles/efemFractureMechanics/Sneddon_embeddedFrac_benchmark.xml
+.. literalinclude:: ../../../../../../../inputFiles/efemFractureMechanics/Sneddon_embeddedFrac_verification.xml
   :language: xml
   :start-after: <!-- SPHINX_SNEDDON_EVENTS -->
   :end-before: <!-- SPHINX_SNEDDON_EVENTS_END -->
@@ -146,7 +146,7 @@ We use the internal mesh generator to create a large domain
 along the Z axes, 121 elements along the X axis and 921 elements along the Y axis.
 
 
-.. literalinclude:: ../../../../../../../inputFiles/efemFractureMechanics/Sneddon_embeddedFrac_benchmark.xml
+.. literalinclude:: ../../../../../../../inputFiles/efemFractureMechanics/Sneddon_embeddedFrac_verification.xml
    :language: xml
    :start-after: <!-- SPHINX_SNEDDON_MESH -->
    :end-before: <!-- SPHINX_SNEDDON_MESH_END -->
@@ -201,7 +201,7 @@ The static fracture is defined by a nodeset occupying a small region within the 
 
 - The test case with EmbeddedFractures solver:
 
-.. literalinclude:: ../../../../../../../inputFiles/efemFractureMechanics/Sneddon_embeddedFrac_base.xml
+.. literalinclude:: ../../../../../../../inputFiles/efemFractureMechanics/Sneddon_embeddedFrac_verification.xml
   :language: xml
   :start-after: <!-- SPHINX_SNEDDON_GEOMETRY -->
   :end-before: <!-- SPHINX_SNEDDON_GEOMETRY_END -->
@@ -269,7 +269,7 @@ Running GEOS
 
 To run these three cases, use the following commands:
 
-``path/to/geos -i inputFiles/efemFractureMechanics/Sneddon_embeddedFrac_benchmark.xml``
+``path/to/geos -i inputFiles/efemFractureMechanics/Sneddon_embeddedFrac_verification.xml``
 
 ``path/to/geos -i inputFiles/lagrangianContactMechanics/Sneddon_contactMechanics_benchmark.xml``
 

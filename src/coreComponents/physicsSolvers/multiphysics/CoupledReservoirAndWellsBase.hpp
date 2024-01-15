@@ -87,6 +87,9 @@ public:
     Well = 1
   };
 
+  /// String used to form the solverName used to register solvers in CoupledSolver
+  static string coupledSolverAttributePrefix() { return "reservoirAndWells"; }
+
   /**
    * @brief main constructor for ManagedGroup Objects
    * @param name the name of this instantiation of ManagedGroup in the repository
@@ -312,8 +315,15 @@ private:
           arrayView1d< localIndex const > const resElemIndex =
             perforationData.getField< fields::perforation::reservoirElementIndex >();
 
+          GEOS_UNUSED_VAR( perfLocation ); // unused if geos_error_if is nulld
+          GEOS_UNUSED_VAR( perfTrans ); // unused if geos_error_if is nulld
+          GEOS_UNUSED_VAR( resElemRegion ); // unused if geos_error_if is nulld
+          GEOS_UNUSED_VAR( resElemSubRegion ); // unused if geos_error_if is nulld
+          GEOS_UNUSED_VAR( resElemIndex ); // unused if geos_error_if is nulld
+
           forAll< serialPolicy >( perforationData.size(), [=] ( localIndex const iperf )
           {
+            GEOS_UNUSED_VAR( iperf ); // unused if geos_error_if is nulld
             GEOS_LOG_RANK( GEOS_FMT( "Perforation at ({},{},{}); perforated element center: ({},{},{}); transmissibility: {} Pa.s.rm^3/s/Pa",
                                      perfLocation[iperf][0], perfLocation[iperf][1], perfLocation[iperf][2],
                                      elemCenter[resElemRegion[iperf]][resElemSubRegion[iperf]][resElemIndex[iperf]][0],

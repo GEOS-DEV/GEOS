@@ -60,6 +60,11 @@ NonlinearSolverParameters::NonlinearSolverParameters( string const & name,
     setDescription( "Norm used by the flow solver to check nonlinear convergence. "
                     "Valid options:\n* " + EnumStrings< solverBaseKernels::NormType >::concat( "\n* " ) );
 
+  registerWrapper( viewKeysStruct::minNormalizerString(), &m_minNormalizer ).
+    setInputFlag( dataRepository::InputFlags::OPTIONAL ).
+    setApplyDefaultValue( 1e-12 ).
+    setDescription( "Value used to make sure that residual normalizers are not too small when computing residual norm." );
+
   registerWrapper( viewKeysStruct::newtonTolString(), &m_newtonTol ).
     setApplyDefaultValue( 1.0e-6 ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -149,14 +154,18 @@ NonlinearSolverParameters::NonlinearSolverParameters( string const & name,
     setApplyDefaultValue( 0 ).
     setDescription( "Flag to decide whether to iterate between sequentially coupled solvers or not." );
 
+  this->registerWrapper( viewKeysStruct::nonlinearAccelerationTypeString(), &m_nonlinearAccelerationType ).
+    setApplyDefaultValue( NonlinearAccelerationType::None ).
+    setInputFlag( dataRepository::InputFlags::OPTIONAL ).
+    setDescription( "Nonlinear acceleration type for sequential solver." );
+
 }
 
 void NonlinearSolverParameters::postProcessInput()
 {
-  if( m_timeStepDecreaseIterLimit <= m_timeStepIncreaseIterLimit )
-  {
-    GEOS_ERROR( " timeStepIncreaseIterLimit should be smaller than timeStepDecreaseIterLimit!!" );
-  }
+  GEOS_ERROR_IF_LE_MSG( m_timeStepDecreaseIterLimit, m_timeStepIncreaseIterLimit,
+                        getWrapperDataContext( viewKeysStruct::timeStepIncreaseIterLimString() ) <<
+                        ": should be smaller than " << viewKeysStruct::timeStepDecreaseIterLimString() );
 }
 
 

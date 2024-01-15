@@ -92,12 +92,12 @@ void CellElementSubRegion::copyFromCellBlock( CellBlockABC const & cellBlock )
   this->constructGlobalToLocalMap();
   cellBlock.forExternalProperties( [&]( WrapperBase const & wrapper )
   {
-    types::dispatch( types::StandardArrays{}, wrapper.getTypeId(), true, [&]( auto array )
+    types::dispatch( types::ListofTypeList< types::StandardArrays >{}, [&]( auto tupleOfTypes )
     {
-      using ArrayType = decltype( array );
+      using ArrayType = camp::first< decltype( tupleOfTypes ) >;
       auto const src = Wrapper< ArrayType >::cast( wrapper ).reference().toViewConst();
       this->registerWrapper( wrapper.getName(), std::make_unique< ArrayType >( &src ) );
-    } );
+    }, wrapper );
   } );
 }
 
@@ -390,13 +390,13 @@ void CellElementSubRegion::
     default:
     {
       GEOS_ERROR( GEOS_FMT( "Volume calculation not supported for element type {} in subregion {}",
-                            m_elementType, getName() ) );
+                            m_elementType, getDataContext() ) );
     }
   }
 
   GEOS_ERROR_IF( m_elementVolume[k] <= 0.0,
                  GEOS_FMT( "Negative volume for element {} type {} in subregion {}",
-                           k, m_elementType, getName() ) );
+                           k, m_elementType, getDataContext() ) );
 }
 
 void CellElementSubRegion::calculateElementGeometricQuantities( NodeManager const & nodeManager,

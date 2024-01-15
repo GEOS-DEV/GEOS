@@ -4,6 +4,7 @@ set( PREPROCESSOR_DEFINES ARRAY_BOUNDS_CHECK
                           CUDA
                           CUDA_NVTOOLSEXT
                           HIP
+			  FMT_CONST_FORMATTER_WORKAROUND
                           FORTRAN_MANGLE_NO_UNDERSCORE
                           FPE
                           HYPRE
@@ -57,30 +58,3 @@ configure_file( ${CMAKE_SOURCE_DIR}/coreComponents/common/GeosxConfig.hpp.in
 
 install( FILES ${CMAKE_BINARY_DIR}/include/common/GeosxConfig.hpp
          DESTINATION ${CMAKE_INSTALL_PREFIX}/include/common )
-
-
-function( make_full_config_file
-          PREPROCESSOR_VARS )
-    foreach( DEP in ${PREPROCESSOR_VARS} )
-        set( USE_${DEP} TRUE )
-        set( GEOSX_USE_${DEP} TRUE )
-        set( ${DEP} TRUE )
-    endforeach()
-
-    # Fix some options to avoid changes in committed config for doxygen
-    set( GEOSX_CMAKE_BUILD_TYPE "\"Release\"" )
-    set( GEOSX_LOCALINDEX_TYPE "std::ptrdiff_t" )
-    set( GEOSX_LOCALINDEX_TYPE_FLAG "3" )
-    set( GEOSX_GLOBALINDEX_TYPE "long long int" )
-    set( GEOSX_GLOBALINDEX_TYPE_FLAG "2" )
-    set( GEOSX_LA_INTERFACE "Hypre" )
-    set( GEOSX_LA_INTERFACE_HYPRE ON )
-    set( GEOSX_LA_INTERFACE_TRILINOS OFF )
-    set( GEOSX_LA_INTERFACE_PETSC OFF )
-
-    configure_file( ${CMAKE_SOURCE_DIR}/coreComponents/common/GeosxConfig.hpp.in
-                    ${CMAKE_SOURCE_DIR}/docs/doxygen/GeosxConfig.hpp )
-endfunction()
-
-
-make_full_config_file( "${PREPROCESSOR_DEFINES}" )

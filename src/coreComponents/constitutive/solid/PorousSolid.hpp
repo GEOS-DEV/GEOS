@@ -62,6 +62,8 @@ public:
                                                       real64 const & temperature_k,
                                                       real64 const & temperature_n ) const override final
   {
+    updateBiotCoefficientAndAssignBulkModulus( k );
+
     m_porosityUpdate.updateFromPressureAndTemperature( k, q,
                                                        pressure, pressure_k, pressure_n,
                                                        temperature, temperature_k, temperature_n );
@@ -145,11 +147,15 @@ public:
                         dTotalStress_dTemperature, // To pass something here
                         stiffness );
 
-    // Compute effective stress increment for the porosity
+    // Compute total stress increment for the porosity update
     GEOS_UNUSED_VAR( pressure_n, temperature_n );
     real64 const bulkModulus = m_solidUpdate.getBulkModulus( k );
     real64 const meanEffectiveStressIncrement = bulkModulus * ( strainIncrement[0] + strainIncrement[1] + strainIncrement[2] );
-    m_porosityUpdate.updateMeanEffectiveStressIncrement( k, q, meanEffectiveStressIncrement );
+    real64 const biotCoefficient = m_porosityUpdate.getBiotCoefficient( k );
+    real64 const thermalExpansionCoefficient = m_solidUpdate.getThermalExpansionCoefficient( k );
+    real64 const meanTotalStressIncrement = meanEffectiveStressIncrement - biotCoefficient * ( pressure - pressure_n )
+                                            - 3 * thermalExpansionCoefficient * bulkModulus * ( temperature - temperature_n );
+    m_porosityUpdate.updateMeanTotalStressIncrement( k, q, meanTotalStressIncrement );
   }
 
   /**
@@ -170,6 +176,32 @@ public:
     m_solidUpdate.getElasticStiffness( k, q, stiffness );
   }
 
+  /**
+   * @brief Return the stiffness at a given element (small-strain interface)
+   *
+   * @param [in] k the element number
+   * @param [out] biotCefficient the biot-coefficient
+   */
+  GEOS_HOST_DEVICE
+  inline
+  void getBiotCoefficient( localIndex const k, real64 & biotCoefficient ) const
+  {
+    biotCoefficient = m_porosityUpdate.getBiotCoefficient( k );
+  }
+
+  /**
+   * @brief Return the stiffness at a given element (small-strain interface)
+   *
+   * @param [in] k the element number
+   * @param [out] thermalExpansionCoefficient the thermal expansion coefficient
+   */
+  GEOS_HOST_DEVICE
+  inline
+  void getThermalExpansionCoefficient( localIndex const k, real64 & thermalExpansionCoefficient ) const
+  {
+    thermalExpansionCoefficient = m_solidUpdate.getThermalExpansionCoefficient( k );
+  }
+
 private:
 
   using CoupledSolidUpdates< SOLID_TYPE, BiotPorosity, ConstantPermeability >::m_solidUpdate;
@@ -179,12 +211,12 @@ private:
 
   GEOS_HOST_DEVICE
   inline
-  void updateBiotCoefficient( localIndex const k ) const
+  void updateBiotCoefficientAndAssignBulkModulus( localIndex const k ) const
   {
     // This call is not general like this.
     real64 const bulkModulus = m_solidUpdate.getBulkModulus( k );
 
-    m_porosityUpdate.updateBiotCoefficient( k, bulkModulus );
+    m_porosityUpdate.updateBiotCoefficientAndAssignBulkModulus( k, bulkModulus );
   }
 
   GEOS_HOST_DEVICE
@@ -243,7 +275,7 @@ private:
                                      totalStress, // first effective stress increment accumulated
                                      stiffness );
 
-    updateBiotCoefficient( k );
+    updateBiotCoefficientAndAssignBulkModulus( k );
 
     // Add the contributions of pressure and temperature to the total stress
     real64 const biotCoefficient = m_porosityUpdate.getBiotCoefficient( k );

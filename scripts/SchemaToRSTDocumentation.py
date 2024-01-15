@@ -17,7 +17,7 @@ def writeTableRST(file_name, values):
     L = [[len(x) for x in row] for row in values]
     #  M = tuple(np.amax(np.array(L), axis=0))
 
-    # np isn't in the docker images for travisCI
+    # np isn't in the docker images for our CI
     MAX = [None] * len(L[0])
     for ii in range(0, len(L[0])):
         MAX[ii] = 0
@@ -258,13 +258,14 @@ touched_files = []
 # Build documentation tables
 with open('%s.rst' % (complete_output), 'w') as output_handle:
     # Write the file header
-    output_handle.write('======================\n')
+    output_handle.write('######################\n')
     output_handle.write('Datastructure Index\n')
-    output_handle.write('======================\n\n')
+    output_handle.write('######################\n\n')
 
     # Parse the input schema definitions
+    output_handle.write('**************************\n\n')
     output_handle.write('Input Schema Definitions\n')
-    output_handle.write('========================\n\n')
+    output_handle.write('**************************\n\n')
 
     output_handle.write(':download:`XML Schema <%s/../schema.xsd>`\n\n' % (sphinx_path))
 

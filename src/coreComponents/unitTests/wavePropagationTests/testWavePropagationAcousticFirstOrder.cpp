@@ -118,14 +118,14 @@ char const * xmlInput =
         name="cellVelocity"
         initialCondition="1"
         objectPath="ElementRegions/Region/cb"
-        fieldName="mediumVelocity"
+        fieldName="acousticVelocity"
         scale="1500"
         setNames="{ all }"/>
       <FieldSpecification
         name="cellDensity"
         initialCondition="1"
         objectPath="ElementRegions/Region/cb"
-        fieldName="mediumDensity"
+        fieldName="acousticDensity"
         scale="1"
         setNames="{ all }"/>
     </FieldSpecifications>
@@ -204,22 +204,20 @@ TEST_F( AcousticFirstOrderWaveEquationSEMTest, SeismoTrace )
   uyReceivers.move( LvArray::MemorySpace::host, false );
   uzReceivers.move( LvArray::MemorySpace::host, false );
 
-
-
   // check number of seismos and trace length
-  ASSERT_EQ( pReceivers.size( 1 ), 9 );
+  ASSERT_EQ( pReceivers.size( 1 ), 10 );
   ASSERT_EQ( pReceivers.size( 0 ), 21 );
-  ASSERT_EQ( uxReceivers.size( 1 ), 9 );
+  ASSERT_EQ( uxReceivers.size( 1 ), 10 );
   ASSERT_EQ( uxReceivers.size( 0 ), 21 );
-  ASSERT_EQ( uyReceivers.size( 1 ), 9 );
+  ASSERT_EQ( uyReceivers.size( 1 ), 10 );
   ASSERT_EQ( uyReceivers.size( 0 ), 21 );
-  ASSERT_EQ( uzReceivers.size( 1 ), 9 );
+  ASSERT_EQ( uzReceivers.size( 1 ), 10 );
   ASSERT_EQ( uzReceivers.size( 0 ), 21 );
 
   // check seismo content. The pressure and velocity values cannot be directly checked as the problem is too small.
   // Since the basis is linear, check that the seismograms are nonzero (for t>0) and the seismogram at the center is equal
   // to the average of the others.
-  for( int i=0; i<21; i++ )
+  for( int i = 0; i < 21; i++ )
   {
     if( i > 0 )
     {
@@ -239,10 +237,10 @@ TEST_F( AcousticFirstOrderWaveEquationSEMTest, SeismoTrace )
       avgUy += uyReceivers[i][r];
       avgUz += uzReceivers[i][r];
     }
-    avgP /=8.0;
-    avgUx /=8.0;
-    avgUy /=8.0;
-    avgUz /=8.0;
+    avgP /= 8.0;
+    avgUx /= 8.0;
+    avgUy /= 8.0;
+    avgUz /= 8.0;
     ASSERT_TRUE( std::abs( pReceivers[i][8] - avgP ) < 0.00001 );
     ASSERT_TRUE( std::abs( uxReceivers[i][8] - avgUx ) < 0.00001 );
     ASSERT_TRUE( std::abs( uyReceivers[i][8] - avgUy ) < 0.00001 );

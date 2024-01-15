@@ -75,6 +75,7 @@ public:
   using Base::m_elemsToNodes;
   using Base::m_constitutiveUpdate;
   using Base::m_finiteElementSpace;
+  using Base::m_dt;
 
 
   SinglePhasePoromechanicsEFEM( NodeManager const & nodeManager,
@@ -91,6 +92,7 @@ public:
                                 globalIndex const rankOffset,
                                 CRSMatrixView< real64, globalIndex const > const inputMatrix,
                                 arrayView1d< real64 > const inputRhs,
+                                real64 const inputDt,
                                 real64 const (&inputGravityVector)[3],
                                 string const fluidModelKey );
 
@@ -302,6 +304,7 @@ using SinglePhaseKernelFactory = finiteElement::KernelFactory< SinglePhasePorome
                                                                globalIndex const,
                                                                CRSMatrixView< real64, globalIndex const > const,
                                                                arrayView1d< real64 > const,
+                                                               real64 const,
                                                                real64 const (&)[3],
                                                                string const >;
 
@@ -348,9 +351,9 @@ struct StateUpdateKernel
       // update aperture to be equal to the normal displacement jump
       aperture[k] = dispJump[k][0]; // the first component of the jump is the normal one.
 
-      real64 dHydraulicAperture_dAperture = 0;
+      real64 dHydraulicAperture_dNormalJump = 0;
       hydraulicAperture[k] = contactWrapper.computeHydraulicAperture( aperture[k],
-                                                                      dHydraulicAperture_dAperture );
+                                                                      dHydraulicAperture_dNormalJump );
 
       deltaVolume[k] = hydraulicAperture[k] * area[k] - volume[k];
 
@@ -364,6 +367,7 @@ struct StateUpdateKernel
 
       porousMaterialWrapper.updateStateFromPressureApertureJumpAndTraction( k, 0, pressure[k],
                                                                             oldHydraulicAperture[k], hydraulicAperture[k],
+                                                                            dHydraulicAperture_dNormalJump,
                                                                             jump, traction );
 
     } );
