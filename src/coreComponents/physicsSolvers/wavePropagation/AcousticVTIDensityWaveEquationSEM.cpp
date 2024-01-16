@@ -90,10 +90,10 @@ void AcousticVTIDensityWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
 
     elemManager.forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion & subRegion )
     {
-      subRegion.registerField< fields::wavesolverfields::MediumDelta >( getName() );
-      subRegion.registerField< fields::wavesolverfields::MediumEpsilon >( getName() );
-      subRegion.registerField< fields::wavesolverfields::MediumVelocity >( getName() );
-      subRegion.registerField< fields::wavesolverfields::MediumDensity >( getName() );
+      subRegion.registerField< fields::wavesolverfields::AcousticDelta >( getName() );
+      subRegion.registerField< fields::wavesolverfields::AcousticEpsilon >( getName() );
+      subRegion.registerField< fields::wavesolverfields::AcousticVelocity >( getName() );
+      subRegion.registerField< fields::wavesolverfields::AcousticDensity >( getName() );
     } );
   } );
 }
@@ -273,10 +273,10 @@ void AcousticVTIDensityWaveEquationSEM::initializePostInitialConditionsPreSubGro
 
       arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemsToNodes = elementSubRegion.nodeList();
       arrayView2d< localIndex const > const elemsToFaces = elementSubRegion.faceList();
-      arrayView1d< real32 const > const velocity = elementSubRegion.getField< fields::wavesolverfields::MediumVelocity >();
-      arrayView1d< real32 const > const density = elementSubRegion.getField< fields::wavesolverfields::MediumDensity >();
-      arrayView1d< real32 const > const vti_epsilon  = elementSubRegion.getField< fields::wavesolverfields::MediumEpsilon >();
-      arrayView1d< real32 const > const vti_delta    = elementSubRegion.getField< fields::wavesolverfields::MediumDelta >();
+      arrayView1d< real32 const > const velocity = elementSubRegion.getField< fields::wavesolverfields::AcousticVelocity >();
+      arrayView1d< real32 const > const density = elementSubRegion.getField< fields::wavesolverfields::AcousticDensity >();
+      arrayView1d< real32 const > const vti_epsilon  = elementSubRegion.getField< fields::wavesolverfields::AcousticEpsilon >();
+      arrayView1d< real32 const > const vti_delta    = elementSubRegion.getField< fields::wavesolverfields::AcousticDelta >();
 
       finiteElement::FiniteElementBase const &
       fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
