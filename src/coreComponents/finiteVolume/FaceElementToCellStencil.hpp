@@ -31,9 +31,7 @@ class FaceElementToCellStencilWrapper : public StencilWrapperBase< TwoPointStenc
 {
 public:
 
-  /// Coefficient view accessory type
-//  template< typename VIEWTYPE >
-//  using CoefficientAccessor = ElementRegionManager::ElementViewConst< VIEWTYPE >;
+  static constexpr real64 avgWeights = 1.0;
 
   /**
    * @brief Constructor
@@ -71,75 +69,13 @@ public:
    */
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
-  constexpr localIndex stencilSize( localIndex index ) const
+  localIndex stencilSize( localIndex index ) const override
   {
     GEOS_UNUSED_VAR( index );
     return maxStencilSize;
   }
 
-  /**
-   * @brief Give the number of points between which the flux is.
-   * @param[in] index of the stencil entry for which to query the size
-   * @return the number of points.
-   */
-  GEOS_HOST_DEVICE
-  GEOS_FORCE_INLINE
-  constexpr localIndex numPointsInFlux( localIndex index ) const
-  {
-    GEOS_UNUSED_VAR( index );
-    return maxNumPointsInFlux;
-  }
-  /**
-   * @brief Compute weigths and derivatives w.r.t to one variable.
-   * @param[in] iconn connection index
-   * @param[in] ip phase index
-   * @param[in] coefficient view accessor to the coefficient used to compute the weights
-   * @param[in] dCoeff_dVar view accessor to the derivative of the coefficient w.r.t to the variable
-   * @param[out] weight view weights
-   * @param[out] dWeight_dVar derivative of the weigths w.r.t to the variable
-   */
-  GEOS_HOST_DEVICE
-  void computeWeights( localIndex const iconn,
-                       localIndex const ip,
-                       CoefficientAccessor< arrayView4d< real64 const > > const &coefficient,
-                       CoefficientAccessor< arrayView4d< real64 const > > const &dCoeff_dVar,
-                       real64 ( &weight )[1][2],
-                       real64 ( &dWeight_dVar )[1][2] ) const;
-  /**
-   * @brief Compute weigths and derivatives w.r.t to one variable.
-   * @param[in] iconn connection index
-   * @param[in] ip phase index
-   * @param[in] coefficient view accessor to the coefficient used to compute the weights
-   * @param[in] dCoeff_dVar1 view accessor to the derivative of the coefficient w.r.t to the variable 1
-   * @param[in] dCoeff_dVar2 view accessor to the derivative of the coefficient w.r.t to the variable 2
-   * @param[out] weight view weights
-   * @param[out] dWeight_dVar1 derivative of the weigths w.r.t to the variable 1
-   * @param[out] dWeight_dVar2 derivative of the weigths w.r.t to the variable 2
-   */
-  GEOS_HOST_DEVICE
-  void computeWeights( localIndex const iconn,
-                       localIndex const ip,
-                       CoefficientAccessor< arrayView4d< real64 const > > const &coefficient,
-                       CoefficientAccessor< arrayView4d< real64 const > > const &dCoeff_dVar1,
-                       CoefficientAccessor< arrayView4d< real64 const > > const &dCoeff_dVar2,
-                       real64 ( &weight )[1][2],
-                       real64 ( &dWeight_dVar1 )[1][2],
-                       real64 ( &dWeight_dVar2 )[1][2] ) const;
-
-  /**
-   * @brief Compute weigths and derivatives w.r.t to one variable.
-   * @param[in] iconn connection index
-   * @param[in] coefficient view accessor to the coefficient used to compute the weights
-   * @param[in] dCoeff_dVar view accessor to the derivative of the coefficient w.r.t to the variable
-   * @param[out] weight view weights
-   * @param[out] dWeight_dVar derivative of the weigths w.r.t to the variable
-   */
-  GEOS_HOST_DEVICE
-  void computeWeights( localIndex iconn,
-                       CoefficientAccessor< arrayView3d< real64 const > > const &coefficient,
-                       CoefficientAccessor< arrayView3d< real64 const > > const &dCoeff_dVar,
-                       real64 ( &weight )[1][2],
-                       real64 ( &dWeight_dVar )[1][2] ) const;
+  using StencilWrapperBase< TwoPointStencilTraits >::computeWeights;
 
   /**
    * @brief Compute weigths and derivatives w.r.t to one variable without coefficient
@@ -154,24 +90,6 @@ public:
                        real64 ( &weight )[1][2],
                        real64 ( &dWeight_dVar )[1][2] ) const;
 
-  /**
-   * @brief Compute weigths and derivatives w.r.t to one variable.
-   * @param[in] iconn connection index
-   * @param[in] coefficient view accessor to the coefficient used to compute the weights
-   * @param[in] dCoeff_dVar1 view accessor to the derivative of the coefficient w.r.t to the variable 1
-   * @param[in] dCoeff_dVar2 view accessor to the derivative of the coefficient w.r.t to the variable 2
-   * @param[out] weight view weights
-   * @param[out] dWeight_dVar1 derivative of the weigths w.r.t to the variable 1
-   * @param[out] dWeight_dVar2 derivative of the weigths w.r.t to the variable 2
-   */
-  GEOS_HOST_DEVICE
-  void computeWeights( localIndex iconn,
-                       CoefficientAccessor< arrayView3d< real64 const > > const &coefficient,
-                       CoefficientAccessor< arrayView3d< real64 const > > const &dCoeff_dVar1,
-                       CoefficientAccessor< arrayView3d< real64 const > > const &dCoeff_dVar2,
-                       real64 ( &weight )[1][2],
-                       real64 ( &dWeight_dVar1 )[1][2],
-                       real64 ( &dWeight_dVar2 )[1][2] ) const;
 
   /**
    * @brief Compute the stabilization weights
@@ -216,14 +134,6 @@ private:
   /// Transmissibility multiplier
   arrayView1d< real64 > m_transMultiplier;
 
-/*  GEOS_HOST_DEVICE
-  void
-    averageWeights( localIndex const iconn,
-                    const real64 ( &halfWeight )[2],
-                    const real64 ( &dHalfWeight_dVar )[2],
-                    real64 ( &weight )[1][2],
-                    real64 ( &dWeight_dVar )[1][2] ) const;*/
-
 
   GEOS_HOST_DEVICE
   void
@@ -238,12 +148,26 @@ private:
   GEOS_HOST_DEVICE
   void
     computeWeightsBase( localIndex const iconn,
+                        localIndex const (&k)[2],
                         localIndex const icell,
                         arraySlice3d< real64 const > const & coefficient,
                         arraySlice3d< real64 const > const & dCoeff_dVar1,
                         arraySlice3d< real64 const > const & dCoeff_dVar2,
                         real64 & halfWeight,
-                        real64 ( &dHalfWeight_dVar )[2] ) const;
+                        real64 ( &dHalfWeight_dVar )[2] ) const override;
+
+
+  GEOS_HOST_DEVICE
+  void
+  computeWeightsBase( const geos::localIndex iconn,
+                      const geos::localIndex ( & k )[2],
+                      const geos::localIndex ielem,
+                      const arraySlice3d< const geos::real64 > & coefficient,
+                      const arraySlice3d< const geos::real64 > & dCoeff_dVar1,
+                      const arraySlice4d< const geos::real64 > & dCoeff_dVar2,
+                      real64 & halfWeight,
+                      real64 ( & dHalfWeight_dVar ) [2] ) const override
+  { GEOS_UNUSED_VAR( iconn, k, ielem, coefficient, dCoeff_dVar1, dCoeff_dVar2, halfWeight, dHalfWeight_dVar ); }
 
 };
 
@@ -331,6 +255,7 @@ FaceElementToCellStencilWrapper::computeWeightsBase( localIndex const iconn,
                                                      real64 & dHalfWeight_dVar ) const
 {
 
+  GEOS_UNUSED_VAR( k );
 
   localIndex const ei = m_elementIndices[iconn][ielem];
 
@@ -356,6 +281,7 @@ FaceElementToCellStencilWrapper::computeWeightsBase( localIndex const iconn,
 GEOS_HOST_DEVICE
 inline void
 FaceElementToCellStencilWrapper::computeWeightsBase( localIndex const iconn,
+                                                     localIndex const (&k)[2],
                                                      localIndex const ielem,
                                                      arraySlice3d< real64 const > const & coefficient,
                                                      arraySlice3d< real64 const > const & dCoeff_dVar1,
@@ -363,8 +289,7 @@ FaceElementToCellStencilWrapper::computeWeightsBase( localIndex const iconn,
                                                      real64 & halfWeight,
                                                      real64 (& dHalfWeight_dVar)[2] ) const
 {
-
-
+  GEOS_UNUSED_VAR( k );
   localIndex const ei = m_elementIndices[iconn][ielem];
   if( ielem == 0 )
   {
@@ -385,33 +310,11 @@ FaceElementToCellStencilWrapper::computeWeightsBase( localIndex const iconn,
 
 }
 
-/*GEOS_HOST_DEVICE
-inline void
-FaceElementToCellStencilWrapper::averageWeights( localIndex const iconn,
-                                                 real64 const (&halfWeight)[2],
-                                                 real64 const (&dHalfWeight_dVar)[2],
-                                                 real64 (& weight)[1][2],
-                                                 real64 (& dWeight_dVar)[1][2] ) const
-{
-
-  real64 const sumOfTrans = halfWeight[0] + halfWeight[1];
-  real64 const value = halfWeight[0] * halfWeight[1] / sumOfTrans;
-
-  weight[0][0] = value;
-  weight[0][1] = -value;
-
-  dWeight_dVar[0][0] =
-    (dHalfWeight_dVar[0] * halfWeight[1] * sumOfTrans - dHalfWeight_dVar[0] * halfWeight[0] * halfWeight[1]) / (sumOfTrans * sumOfTrans);
-  dWeight_dVar[0][1] =
-    (halfWeight[0] * dHalfWeight_dVar[1] * sumOfTrans - dHalfWeight_dVar[1] * halfWeight[0] * halfWeight[1]) / (sumOfTrans * sumOfTrans);
-}*/
-
-
-    GEOS_HOST_DEVICE
+GEOS_HOST_DEVICE
 inline void
 FaceElementToCellStencilWrapper::computeWeights( localIndex iconn,
-                    real64 ( & weight )[1][2],
-                    real64 ( & dWeight_dVar )[1][2] ) const
+                                                 real64 ( & weight )[1][2],
+                                                 real64 ( & dWeight_dVar )[1][2] ) const
 {
   // Will change when implementing collocation points.
   real64 const t0 =
@@ -426,149 +329,6 @@ FaceElementToCellStencilWrapper::computeWeights( localIndex iconn,
 
   dWeight_dVar[0][0] = 0.0;
   dWeight_dVar[0][1] = 0.0;
-}
-
-GEOS_HOST_DEVICE
-inline void FaceElementToCellStencilWrapper::
-  computeWeights( localIndex const iconn,
-                  CoefficientAccessor< arrayView3d< real64 const > > const & coefficient,
-                  CoefficientAccessor< arrayView3d< real64 const > > const & dCoeff_dVar,
-                  real64 ( & weight )[1][2],
-                  real64 ( & dWeight_dVar )[1][2] ) const
-{
-
-  real64 halfWeight[2];
-  real64 dHalfWeight_dVar[2];
-
-  for( int ielem = 0; ielem < 2; ++ielem )
-  {
-
-    localIndex const er = m_elementRegionIndices[iconn][ielem];
-    localIndex const esr = m_elementSubRegionIndices[iconn][ielem];
-    computeWeightsBase( iconn,{0,1}, ielem, coefficient[er][esr], dCoeff_dVar[er][esr], halfWeight[ielem], dHalfWeight_dVar[ielem] );
-  }
-
-    averageWeights(iconn, 0/*connexionIndex*/, halfWeight, dHalfWeight_dVar, weight, dWeight_dVar,
-                    0.5/*avgCoeff*/ );
-
-}
-
-GEOS_HOST_DEVICE
-inline void
-FaceElementToCellStencilWrapper::
-  computeWeights( localIndex const iconn,
-                  CoefficientAccessor< arrayView3d< real64 const > > const & coefficient,
-                  CoefficientAccessor< arrayView3d< real64 const > > const & dCoeff_dVar1,
-                  CoefficientAccessor< arrayView3d< real64 const > > const & dCoeff_dVar2,
-                  real64 (& weight)[1][2],
-                  real64 (& dWeight_dVar1 )[1][2],
-                  real64 (& dWeight_dVar2 )[1][2] ) const
-{
-  real64 halfWeight[2];
-  real64 dHalfWeight_dVar[2][2];
-  for( int ielem = 0; ielem < 2; ++ielem )
-  {
-
-    localIndex const er = m_elementRegionIndices[iconn][ielem];
-    localIndex const esr = m_elementSubRegionIndices[iconn][ielem];
-    computeWeightsBase( iconn, ielem, coefficient[er][esr], dCoeff_dVar1[er][esr], dCoeff_dVar2[er][esr],
-                        halfWeight[ielem], dHalfWeight_dVar[ielem] );
-  }
-
-    averageWeights(iconn, 0/*connexionIndex*/, halfWeight, dHalfWeight_dVar, weight, dWeight_dVar1, dWeight_dVar2, 1 /*avgCoeff*/);
-}
-
-GEOS_HOST_DEVICE
-inline void
-FaceElementToCellStencilWrapper::computeWeights( const localIndex iconn,
-                                                 const localIndex ip,
-                                                 const CoefficientAccessor< arrayView4d< const real64 > > & coefficient,
-                                                 const CoefficientAccessor< arrayView4d< const real64 > > & dCoeff_dVar,
-                                                 real64 (& weight)[1][2],
-                                                 real64 (& dWeight_dVar1)[1][2] ) const
-{
-  real64 halfWeight[2];
-  real64 dHalfWeight_dVar[2];
-
-
-  for( int ielem = 0; ielem < 2; ++ielem )
-  {
-
-    // real64 const tolerance = 1e-30 * lengthTolerance; // TODO: choice of constant based on physics?
-    localIndex const er = m_elementRegionIndices[iconn][ielem];
-    localIndex const esr = m_elementSubRegionIndices[iconn][ielem];
-    //TODO replace as Sergey LvArray gets merged
-    // We are swapping ip phase index and direction to be able to slice properly
-    auto coeffNested = coefficient[er][esr];
-    auto dCoeffNested_dVar = dCoeff_dVar[er][esr];
-    LvArray::typeManipulation::CArray< localIndex, 4 > dims, strides;
-    dims[0] = coeffNested.dims()[2];
-    strides[0] = coeffNested.strides()[2];                    //swap phase for cell
-    dims[1] = coeffNested.dims()[0];
-    strides[1] = coeffNested.strides()[0];                    //increment cell to 2nd pos
-    dims[2] = coeffNested.dims()[1];
-    strides[2] = coeffNested.strides()[1];                    //then shift gauss point as well
-    dims[3] = coeffNested.dims()[3];
-    strides[3] = coeffNested.strides()[3];                    //direction remain last pos
-    ArrayView< real64 const, 4 > coeffSwapped( dims, strides, 0, coeffNested.dataBuffer());
-    ArrayView< real64 const, 4 > dCoeffSwapped_dVar1( dims, strides, 0, dCoeffNested_dVar.dataBuffer());
-
-    computeWeightsBase( iconn, {0,1},  ielem, coeffSwapped[ip], dCoeffSwapped_dVar1[ip], halfWeight[ielem], dHalfWeight_dVar[ielem] );
-
-  }
-
-    averageWeights(iconn, 0/*connexionIndex*/, halfWeight, dHalfWeight_dVar, weight, dWeight_dVar1, 0.5/*avgCoeff*/);
-
-}
-
-GEOS_HOST_DEVICE
-inline void
-FaceElementToCellStencilWrapper::computeWeights( const localIndex iconn,
-                                                 const localIndex ip,
-                                                 const CoefficientAccessor< arrayView4d< const real64 > > & coefficient,
-                                                 const CoefficientAccessor< arrayView4d< const real64 > > & dCoeff_dVar1,
-                                                 const CoefficientAccessor< arrayView4d< const real64 > > & dCoeff_dVar2,
-                                                 real64 (& weight)[1][2],
-                                                 real64 (& dWeight_dVar1)[1][2],
-                                                 real64 (& dWeight_dVar2)[1][2] ) const
-{
-  real64 halfWeight[2];
-  real64 dHalfWeight_dVar[2][2];
-
-
-  for( int ielem = 0; ielem < 2; ++ielem )
-  {
-
-    // real64 const tolerance = 1e-30 * lengthTolerance; // TODO: choice of constant based on physics?
-    localIndex const er = m_elementRegionIndices[iconn][ielem];
-    localIndex const esr = m_elementSubRegionIndices[iconn][ielem];
-    //TODO replace as Sergey LvArray gets merged
-    // We are swapping ip phase index and direction to be able to slice properly
-    auto coeffNested = coefficient[er][esr];
-    auto dCoeffNested_dVar1 = dCoeff_dVar1[er][esr];
-    auto dCoeffNested_dVar2 = dCoeff_dVar2[er][esr];
-    LvArray::typeManipulation::CArray< localIndex, 4 > dims, strides;
-    dims[0] = coeffNested.dims()[2];
-    strides[0] = coeffNested.strides()[2];                //swap phase for cell
-    dims[1] = coeffNested.dims()[0];
-    strides[1] = coeffNested.strides()[0];                //increment cell to 2nd pos
-    dims[2] = coeffNested.dims()[1];
-    strides[2] = coeffNested.strides()[1];                //then shift gauss point as well
-    dims[3] = coeffNested.dims()[3];
-    strides[3] = coeffNested.strides()[3];                //direction remain last pos
-    ArrayView< real64 const, 4 > coeffSwapped( dims, strides, 0, coeffNested.dataBuffer());
-    ArrayView< real64 const, 4 > dCoeffSwapped_dVar1( dims, strides, 0, dCoeffNested_dVar1.dataBuffer());
-    ArrayView< real64 const, 4 > dCoeffSwapped_dVar2( dims, strides, 0, dCoeffNested_dVar2.dataBuffer());
-
-    computeWeightsBase( iconn, ielem, coeffSwapped[ip], dCoeffSwapped_dVar1[ip], dCoeffSwapped_dVar2[ip], halfWeight[ielem], dHalfWeight_dVar[ielem] );
-
-  }
-
-    averageWeights(iconn,/*connexionIndex*/0,
-                   halfWeight, dHalfWeight_dVar,
-                   weight, dWeight_dVar1, dWeight_dVar2,
-                   /*avgCoeff*/1.0);
-
 }
 
 GEOS_HOST_DEVICE

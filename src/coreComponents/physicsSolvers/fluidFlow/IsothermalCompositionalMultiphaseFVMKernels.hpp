@@ -581,6 +581,7 @@ public:
   {
     // first, compute the transmissibilities at this face
     m_stencilWrapper.computeWeights( iconn,
+                                     decltype(m_stencilWrapper)::avgWeights,
                                      m_permeability,
                                      m_dPerm_dPres,
                                      stack.transmissibility,
@@ -1126,6 +1127,7 @@ public:
           // note that the dispersion tensor is lagged in iteration
           m_stencilWrapper.computeWeights( iconn,
                                            ip,
+                                           decltype(m_stencilWrapper)::avgWeights,
                                            m_diffusivity,
                                            m_dDiffusivity_dTemp,
                                            stack.transmissibility,
@@ -1234,6 +1236,7 @@ public:
     // first, compute the transmissibilities at this face
     // note that the dispersion tensor is lagged in iteration
     m_stencilWrapper.computeWeights( iconn,
+                                     decltype(m_stencilWrapper)::avgWeights,
                                      m_dispersivity,
                                      m_dispersivity, // this is just to pass something, but the resulting derivative won't be used
                                      stack.transmissibility,

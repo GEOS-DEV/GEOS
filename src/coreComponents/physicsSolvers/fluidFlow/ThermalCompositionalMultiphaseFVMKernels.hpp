@@ -506,6 +506,7 @@ public:
     // To avoid modifying the signature of the "computeWeights" function for now, we pass m_thermalConductivity twice
     // TODO: modify computeWeights to accomodate explicit coefficients
     m_stencilWrapper.computeWeights( iconn,
+                                     decltype(m_stencilWrapper)::avgWeights,
                                      m_thermalConductivity,
                                      m_thermalConductivity, // we have to pass something here, so we just use thermal conductivity
                                      stack.thermalTransmissibility,

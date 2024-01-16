@@ -31,10 +31,6 @@ class BoundaryStencilWrapper : public StencilWrapperBase< TwoPointStencilTraits 
 {
 public:
 
-  /// Coefficient view accessory type
-//  template< typename VIEWTYPE >
-//  using CoefficientAccessor = ElementRegionManager::ElementViewConst< VIEWTYPE >;
-
   /**
    * @brief Constructor
    * @param elementRegionIndices The container for the element region indices for each point in each stencil
@@ -82,23 +78,10 @@ public:
    */
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
-  constexpr localIndex stencilSize( localIndex const index ) const
+  localIndex stencilSize( localIndex index ) const override
   {
     GEOS_UNUSED_VAR( index );
     return maxStencilSize;
-  }
-
-  /**
-   * @brief Give the number of points between which the flux is.
-   * @param[in] index of the stencil entry for which to query the size
-   * @return the number of points.
-   */
-  GEOS_HOST_DEVICE
-  GEOS_FORCE_INLINE
-  constexpr localIndex numPointsInFlux( localIndex const index ) const
-  {
-    GEOS_UNUSED_VAR( index );
-    return maxNumPointsInFlux;
   }
 
 private:
@@ -110,17 +93,43 @@ private:
   GEOS_HOST_DEVICE
   virtual void
   computeWeightsBase( localIndex const iconn,
-                        localIndex const (& k)[2],
-                        localIndex const icell,
-                        arraySlice3d< real64 const > const & coefficient,
-                        arraySlice3d< real64 const >  const & dCoeff_dVar,
-                        real64 & halfWeight,
-                        real64 & dHalfWeight_dVar ) const override
+                      localIndex const (&k)[2],
+                      localIndex const icell,
+                      arraySlice3d< real64 const > const & coefficient,
+                      arraySlice3d< real64 const >  const & dCoeff_dVar,
+                      real64 & halfWeight,
+                      real64 & dHalfWeight_dVar ) const override
   {
-      //not using the refactor for now - TODO find a way to fit in the API
-      GEOS_UNUSED_VAR(iconn,k,icell,coefficient,dCoeff_dVar,halfWeight,dHalfWeight_dVar);
+    //not using the refactor for now - TODO find a way to fit in the API
+    GEOS_UNUSED_VAR( iconn, k, icell, coefficient, dCoeff_dVar, halfWeight, dHalfWeight_dVar );
   };
 
+  GEOS_HOST_DEVICE
+  void
+  computeWeightsBase( localIndex const iconn,
+                      localIndex const (&k)[2],
+                      localIndex const ielem,
+                      arraySlice3d< real64 const >  const & coefficient,
+                      arraySlice3d< real64 const >  const & dCoeff_dVar1,
+                      arraySlice3d< real64 const >  const & dCoeff_dVar2,
+                      real64 & halfWeight,
+                      real64 ( & dHalfWeight_dVar )[2] ) const override
+  {
+    GEOS_UNUSED_VAR( iconn, k, ielem, coefficient, dCoeff_dVar1, dCoeff_dVar2, halfWeight, dHalfWeight_dVar );
+  }
+
+
+  GEOS_HOST_DEVICE
+  void
+  computeWeightsBase( const geos::localIndex iconn,
+                      const geos::localIndex ( & k )[2],
+                      const geos::localIndex ielem,
+                      const arraySlice3d< const geos::real64 > & coefficient,
+                      const arraySlice3d< const geos::real64 > & dCoeff_dVar1,
+                      const arraySlice4d< const geos::real64 > & dCoeff_dVar2,
+                      real64 & halfWeight,
+                      real64 ( & dHalfWeight_dVar ) [2] ) const override
+  { GEOS_UNUSED_VAR( iconn, k, ielem, coefficient, dCoeff_dVar1, dCoeff_dVar2, halfWeight, dHalfWeight_dVar ); }
 
 };
 
