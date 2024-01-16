@@ -21,8 +21,8 @@ set( physicsSolvers_headers
      fluidFlow/IsothermalCompositionalMultiphaseBaseKernels.hpp
      fluidFlow/ThermalCompositionalMultiphaseBaseKernels.hpp
      fluidFlow/CompositionalMultiphaseFVM.hpp
-     fluidFlow/IsothermalCompositionalMultiphaseFVMKernels.hpp 
-     fluidFlow/IsothermalCompositionalMultiphaseFVMKernelUtilities.hpp    
+     fluidFlow/IsothermalCompositionalMultiphaseFVMKernels.hpp
+     fluidFlow/IsothermalCompositionalMultiphaseFVMKernelUtilities.hpp
      fluidFlow/ThermalCompositionalMultiphaseFVMKernels.hpp
      fluidFlow/CompositionalMultiphaseHybridFVM.hpp
      fluidFlow/CompositionalMultiphaseHybridFVMKernels.hpp
@@ -32,7 +32,7 @@ set( physicsSolvers_headers
      fluidFlow/ReactiveCompositionalMultiphaseOBLKernels.hpp
      fluidFlow/FlowSolverBase.hpp
      fluidFlow/FlowSolverBaseFields.hpp
-     fluidFlow/FlowSolverBaseKernels.hpp     
+     fluidFlow/FlowSolverBaseKernels.hpp
      fluidFlow/FluxKernelsHelper.hpp
      fluidFlow/HybridFVMHelperKernels.hpp
      fluidFlow/proppantTransport/ProppantTransport.hpp
@@ -80,11 +80,11 @@ set( physicsSolvers_headers
      multiphysics/poromechanicsKernels/PoromechanicsBase.hpp
      multiphysics/poromechanicsKernels/SinglePhasePoromechanics.hpp
      multiphysics/poromechanicsKernels/SinglePhasePoromechanics_impl.hpp
-     multiphysics/poromechanicsKernels/SinglePhasePoromechanicsConformingFractures.hpp     
+     multiphysics/poromechanicsKernels/SinglePhasePoromechanicsConformingFractures.hpp
      multiphysics/poromechanicsKernels/SinglePhasePoromechanicsEFEM.hpp
      multiphysics/poromechanicsKernels/SinglePhasePoromechanicsEFEM_impl.hpp
      multiphysics/poromechanicsKernels/SinglePhasePoromechanicsFractures.hpp
-     multiphysics/poromechanicsKernels/SinglePhasePoromechanicsEmbeddedFractures.hpp     
+     multiphysics/poromechanicsKernels/SinglePhasePoromechanicsEmbeddedFractures.hpp
      multiphysics/poromechanicsKernels/ThermalMultiphasePoromechanics.hpp
      multiphysics/poromechanicsKernels/ThermalMultiphasePoromechanics_impl.hpp
      multiphysics/poromechanicsKernels/ThermalSinglePhasePoromechanics.hpp
@@ -141,7 +141,9 @@ set( physicsSolvers_headers
      wavePropagation/AcousticVTIWaveEquationSEMKernel.hpp
      wavePropagation/AcousticVTIDensityWaveEquationSEM.hpp
      wavePropagation/AcousticVTIDensityWaveEquationSEMKernel.hpp
-   )
+     wavePropagation/AcousticElasticWaveEquationSEM.hpp
+     wavePropagation/AcousticElasticWaveEquationSEMKernel.hpp
+     )
 
 # Specify solver sources
 set( physicsSolvers_sources
@@ -205,7 +207,8 @@ set( physicsSolvers_sources
      wavePropagation/AcousticFirstOrderWaveEquationSEM.cpp
      wavePropagation/AcousticVTIWaveEquationSEM.cpp
      wavePropagation/AcousticVTIDensityWaveEquationSEM.cpp
-   )
+     wavePropagation/AcousticElasticWaveEquationSEM.cpp
+     )
 
   include( solidMechanics/kernels/SolidMechanicsKernels.cmake)
   include( multiphysics/poromechanicsKernels/PoromechanicsKernels.cmake)
