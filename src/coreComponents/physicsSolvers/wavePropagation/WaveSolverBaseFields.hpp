@@ -160,8 +160,8 @@ DECLARE_FIELD( ForcingRHS,
                WRITE_AND_READ,
                "RHS" );
 
-DECLARE_FIELD( MassVector,
-               "massVector",
+DECLARE_FIELD( AcousticMassVector,
+               "acousticMassVector",
                array1d< real32 >,
                0,
                NOPLOT,
@@ -208,32 +208,32 @@ DECLARE_FIELD( DampingVector_qp,
                WRITE_AND_READ,
                "Diagonal of the Damping Matrix for p terms in q equation." );
 
-DECLARE_FIELD( MediumVelocity,
-               "mediumVelocity",
+DECLARE_FIELD( AcousticVelocity,
+               "acousticVelocity",
                array1d< real32 >,
                0,
                NOPLOT,
                WRITE_AND_READ,
                "Medium velocity of the cell" );
 
-DECLARE_FIELD( MediumDensity,
-               "mediumDensity",
+DECLARE_FIELD( AcousticDensity,
+               "acousticDensity",
                array1d< real32 >,
                0,
                NOPLOT,
                WRITE_AND_READ,
                "Medium density of the cell" );
 
-DECLARE_FIELD( FreeSurfaceFaceIndicator,
-               "freeSurfaceFaceIndicator",
+DECLARE_FIELD( AcousticFreeSurfaceFaceIndicator,
+               "acousticFreeSurfaceFaceIndicator",
                array1d< localIndex >,
                0,
                NOPLOT,
                WRITE_AND_READ,
                "Free surface indicator, 1 if a face is on free surface 0 otherwise." );
 
-DECLARE_FIELD( FreeSurfaceNodeIndicator,
-               "freeSurfaceNodeIndicator",
+DECLARE_FIELD( AcousticFreeSurfaceNodeIndicator,
+               "acousticFreeSurfaceNodeIndicator",
                array1d< localIndex >,
                0,
                NOPLOT,
@@ -271,6 +271,14 @@ DECLARE_FIELD( BottomSurfaceNodeIndicator,
                NOPLOT,
                WRITE_AND_READ,
                "Bottom surface indicator, 1 if a face is on the bottom surface 0 otherwise." );
+
+DECLARE_FIELD( ElasticMassVector,
+               "elasticMassVector",
+               array1d< real32 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Diagonal of the Mass Matrix." );
 
 DECLARE_FIELD( Displacementx_np1,
                "displacementx_np1",
@@ -368,21 +376,45 @@ DECLARE_FIELD( DampingVectorz,
                WRITE_AND_READ,
                "Diagonal Damping Matrix in z-direction." );
 
-DECLARE_FIELD( MediumVelocityVp,
-               "mediumVelocityVp",
+DECLARE_FIELD( ElasticVelocityVp,
+               "elasticVelocityVp",
                array1d< real32 >,
                0,
                NOPLOT,
                WRITE_AND_READ,
                "P-waves speed in the cell" );
 
-DECLARE_FIELD( MediumVelocityVs,
-               "mediumVelocityVs",
+DECLARE_FIELD( ElasticVelocityVs,
+               "elasticVelocityVs",
                array1d< real32 >,
                0,
                NOPLOT,
                WRITE_AND_READ,
                "S-waves speed in the cell" );
+
+DECLARE_FIELD( ElasticDensity,
+               "elasticDensity",
+               array1d< real32 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Medium density of the cell" );
+
+DECLARE_FIELD( ElasticFreeSurfaceFaceIndicator,
+               "elasticFreeSurfaceFaceIndicator",
+               array1d< localIndex >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Free surface indicator, 1 if a face is on free surface 0 otherwise." );
+
+DECLARE_FIELD( ElasticFreeSurfaceNodeIndicator,
+               "elasticFreeSurfaceNodeIndicator",
+               array1d< localIndex >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Free surface indicator, 1 if a node is on free surface 0 otherwise." );
 
 DECLARE_FIELD( Lambda,
                "lambda",
