@@ -1121,13 +1121,15 @@ void SinglePhaseBase::applySourceFluxBC( real64 const time_n,
       }
       else
       {
+        real64 sum=0.0;
         forAll< parallelDevicePolicy<> >( targetSet.size(), [sizeScalingFactor,
                                                              targetSet,
                                                              rankOffset,
                                                              ghostRank,
                                                              dofNumber,
                                                              rhsContributionArrayView,
-                                                             localRhs] GEOS_HOST_DEVICE ( localIndex const a )
+                                                             localRhs,
+                                                             &sum] GEOS_HOST_DEVICE ( localIndex const a )
         {
           // we need to filter out ghosts here, because targetSet may contain them
           localIndex const ei = targetSet[a];
@@ -1138,8 +1140,26 @@ void SinglePhaseBase::applySourceFluxBC( real64 const time_n,
 
           // add the value to the mass balance equation
           globalIndex const rowIndex = dofNumber[ei] - rankOffset;
-          localRhs[rowIndex] += rhsContributionArrayView[a] / sizeScalingFactor; // scale the contribution by the sizeScalingFactor here!
+          real64 const scaledContrib = rhsContributionArrayView[a] / sizeScalingFactor;
+          localRhs[rowIndex] += scaledContrib;
+          sum += scaledContrib;
         } );
+        // Output the flux rate in the console.
+        // TODO: 1. Maintain the folowing PR to base on the following "TODO" :
+        // https://github.com/GEOS-DEV/GEOS/compare/develop...feature/untereiner/export_stats
+        // TODO: 2. Create a dedicated SourceFluxStatistics class, send the logging part of this code in it, and do so for every flow solver
+        sum = MpiWrapper::sum( sum );
+        if( fs.getLogLevel() >= 1 && logger::internal::rank == 0 )
+        {
+          double effectiveRate = sum / dt;
+
+          GEOS_LOG_RANK_0( GEOS_FMT( "{}: applied on {} elements in region {}",
+                                     fs.getName(), ???, subRegion.getName() ) );
+          GEOS_LOG_RANK_0( GEOS_FMT( "{}: Produced mass = {} kg",
+                                     fs.getName(), sum ) );
+          GEOS_LOG_RANK_0( GEOS_FMT( "{}: Production rate = {} kg/s",
+                                     fs.getName(), effectiveRate ) );
+        }
       }
     } );
   } );
