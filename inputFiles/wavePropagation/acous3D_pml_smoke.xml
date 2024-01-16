@@ -82,7 +82,7 @@
       name="solverApplications"
       forceDt="0.0025"
       target="/Solvers/acousticSolver"/>
-    
+
     <!-- two events to output pressure in an hdf5 file -->
     <PeriodicEvent
       name="timeHistoryCollection"
@@ -99,7 +99,7 @@
       name="restarts"
       timeFrequency="0.05"
       target="/Outputs/restartOutput"/>
-    
+
   </Events>
 
   <NumericalMethods>
@@ -168,7 +168,7 @@
                   right,
                   front,
                   back}"/>
-    
+
     <!-- The PML field specification assigned to the corresponding region -->
     <PML
       name="pml"
@@ -181,20 +181,37 @@
       name="cellVelocity1"
       initialCondition="1"
       objectPath="ElementRegions/interiorDomain"
-      fieldName="mediumVelocity"
+      fieldName="acousticVelocity"
       scale="2000"
       setNames="{ all }"/>
+
+    <FieldSpecification
+      name="cellDensity1"
+      initialCondition="1"
+      objectPath="ElementRegions/interiorDomain"
+      fieldName="acousticDensity"
+      scale="1"
+      setNames="{ all }"/>
+
 
     <FieldSpecification
       name="cellVelocity2"
       initialCondition="1"
       objectPath="ElementRegions/pmlDomain"
-      fieldName="mediumVelocity"
+      fieldName="acousticVelocity"
       scale="2000"
       setNames="{ all }"/>
 
+    <FieldSpecification
+      name="cellDensity2"
+      initialCondition="1"
+      objectPath="ElementRegions/pmlDomain"
+      fieldName="acousticDensity"
+      scale="1"
+      setNames="{ all }"/>
+
   </FieldSpecifications>
-  
+
   <!-- collect the pressure values at the nodes -->
   <Tasks>
     <PackCollection
@@ -214,7 +231,7 @@
 
     <Restart
       name="restartOutput"/>
-    
+
   </Outputs>
 
 </Problem>

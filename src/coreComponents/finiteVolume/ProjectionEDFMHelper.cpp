@@ -33,7 +33,7 @@ void ProjectionEDFMHelper::addNonNeighboringConnections() const
   EmbeddedSurfaceSubRegion const & fractureSubRegion = fractureRegion.getUniqueSubRegion< EmbeddedSurfaceSubRegion >();
 
   arrayView1d< integer const > const ghostRank = fractureSubRegion.ghostRank();
-  FixedToManyElementRelation const & surfaceElementsToCells = fractureSubRegion.getToCellRelation();
+  OrderedVariableToManyElementRelation const & surfaceElementsToCells = fractureSubRegion.getToCellRelation();
 
   for( localIndex fracElement = 0; fracElement < fractureSubRegion.size(); fracElement++ )
   {

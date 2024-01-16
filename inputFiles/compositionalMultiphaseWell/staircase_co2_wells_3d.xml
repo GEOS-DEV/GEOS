@@ -121,7 +121,7 @@
     <CellElementRegion
       name="Channel"
       cellBlocks="{ b08, b00, b01, b05, b06, b14, b15, b11 }"
-      materialList="{ fluid1, rock, relperm, cappres }"/>
+      materialList="{ fluid1, rock, relperm, cappres, diffusion }"/>
 
     <CellElementRegion
       name="Barrier"
@@ -182,6 +182,13 @@
     <ConstantPermeability
       name="rockPerm"
       permeabilityComponents="{ 2.0e-16, 2.0e-16, 2.0e-16 }"/>
+
+    <ConstantDiffusion
+      name="diffusion"
+      phaseNames="{ gas, water }"
+      defaultPhaseDiffusivityMultipliers="{ 20, 1 }"
+      diffusivityComponents="{ 1e-9, 1e-9, 1e-9 }"/>
+    
   </Constitutive>
 
   <FieldSpecifications>

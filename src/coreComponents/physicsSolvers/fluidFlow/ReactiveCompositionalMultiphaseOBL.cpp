@@ -111,6 +111,7 @@ ReactiveCompositionalMultiphaseOBL::ReactiveCompositionalMultiphaseOBL( const st
     setDescription( "List of component names" );
 
   this->registerWrapper( viewKeyStruct::phaseNamesString(), &m_phaseNames ).
+    setRTTypeName( rtTypes::CustomTypes::groupNameRefArray ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "List of fluid phases" );
 
@@ -189,10 +190,12 @@ void ReactiveCompositionalMultiphaseOBL::postProcessInput()
   SolverBase::postProcessInput();
 
   GEOS_THROW_IF_GT_MSG( m_maxCompFracChange, 1.0,
-                        GEOS_FMT( "The maximum absolute change in component fraction is set to {}, while it must not be greater than 1.0", m_maxCompFracChange ),
+                        GEOS_FMT( "{}: The maximum absolute change in component fraction is set to {}, while it must not be greater than 1.0",
+                                  getWrapperDataContext( viewKeyStruct::maxCompFracChangeString() ), m_maxCompFracChange ),
                         InputError );
   GEOS_THROW_IF_LT_MSG( m_maxCompFracChange, 0.0,
-                        GEOS_FMT( "The maximum absolute change in component fraction is set to {}, while it must not be lesser than 0.0", m_maxCompFracChange ),
+                        GEOS_FMT( "{}: The maximum absolute change in component fraction is set to {}, while it must not be lesser than 0.0",
+                                  getWrapperDataContext( viewKeyStruct::maxCompFracChangeString() ), m_maxCompFracChange ),
                         InputError );
 
   m_OBLOperatorsTable = makeOBLOperatorsTable( m_OBLOperatorsTableFile, FunctionManager::getInstance());
@@ -204,11 +207,19 @@ void ReactiveCompositionalMultiphaseOBL::postProcessInput()
   m_numOBLOperators = COMPUTE_NUM_OPS( m_numPhases, m_numComponents, m_enableEnergyBalance );
 
   GEOS_THROW_IF_NE_MSG( m_numDofPerCell, m_OBLOperatorsTable->numDims(),
-                        GEOS_FMT( "The number of degrees of freedom per element used in solver - {} - and in operator table - {} - should match", m_numDofPerCell, m_OBLOperatorsTable->numDims()),
+                        GEOS_FMT( "The number of degrees of freedom per cell used in the solver (at {}) has a value of {}, "
+                                  "whereas it as a value of {} in the operator table (at {}).",
+                                  getWrapperDataContext( viewKeyStruct::elemDofFieldString() ),
+                                  m_numDofPerCell, m_OBLOperatorsTable->numDims(),
+                                  m_OBLOperatorsTableFile ),
                         InputError );
 
   GEOS_THROW_IF_NE_MSG( m_numOBLOperators, m_OBLOperatorsTable->numOps(),
-                        GEOS_FMT( "The number of operators per element used in solver - {} - and in operator table - {} - should match", m_numOBLOperators, m_OBLOperatorsTable->numOps()),
+                        GEOS_FMT( "The number of operators per cell used in the solver (at {}) has a value of {}, "
+                                  "whereas it as a value of {} in the operator table (at {}).",
+                                  getWrapperDataContext( viewKeyStruct::elemDofFieldString() ),
+                                  m_numDofPerCell, m_OBLOperatorsTable->numDims(),
+                                  m_OBLOperatorsTableFile ),
                         InputError );
 
 }
@@ -354,13 +365,16 @@ real64 ReactiveCompositionalMultiphaseOBL::calculateResidualNorm( real64 const &
 
   real64 const residual = m_useDARTSL2Norm ? MpiWrapper::max( localResidualNorm ) : std::sqrt( MpiWrapper::sum( localResidualNorm ) );
 
-  GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "    ( Rflow ) = ( {:4.2e} ) ;", residual ) );
+  if( getLogLevel() >= 1 && logger::internal::rank==0 )
+  {
+    std::cout << GEOS_FMT( "        ( Rflow ) = ( {:4.2e} )", residual );
+  }
 
   return residual;
 }
 
 
-real64 ReactiveCompositionalMultiphaseOBL::scalingForSystemSolution( DomainPartition const & domain,
+real64 ReactiveCompositionalMultiphaseOBL::scalingForSystemSolution( DomainPartition & domain,
                                                                      DofManager const & dofManager,
                                                                      arrayView1d< real64 const > const & localSolution )
 {
@@ -433,7 +447,7 @@ real64 ReactiveCompositionalMultiphaseOBL::scalingForSystemSolution( DomainParti
   return LvArray::math::max( MpiWrapper::min( scalingFactor, MPI_COMM_GEOSX ), m_minScalingFactor );
 }
 
-bool ReactiveCompositionalMultiphaseOBL::checkSystemSolution( DomainPartition const & domain,
+bool ReactiveCompositionalMultiphaseOBL::checkSystemSolution( DomainPartition & domain,
                                                               DofManager const & dofManager,
                                                               arrayView1d< real64 const > const & localSolution,
                                                               real64 const scalingFactor )
@@ -444,12 +458,12 @@ bool ReactiveCompositionalMultiphaseOBL::checkSystemSolution( DomainPartition co
   localIndex localCheck = 1;
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
-                                                               MeshLevel const & mesh,
+                                                               MeshLevel & mesh,
                                                                arrayView1d< string const > const & regionNames )
   {
     mesh.getElemManager().forElementSubRegions( regionNames,
                                                 [&]( localIndex const,
-                                                     ElementSubRegionBase const & subRegion )
+                                                     ElementSubRegionBase & subRegion )
     {
       arrayView1d< globalIndex const > const & dofNumber = subRegion.getReference< array1d< globalIndex > >( dofKey );
       arrayView1d< integer const > const & elemGhostRank = subRegion.ghostRank();
@@ -484,8 +498,10 @@ bool ReactiveCompositionalMultiphaseOBL::checkSystemSolution( DomainPartition co
 void ReactiveCompositionalMultiphaseOBL::applySystemSolution( DofManager const & dofManager,
                                                               arrayView1d< real64 const > const & localSolution,
                                                               real64 const scalingFactor,
+                                                              real64 const dt,
                                                               DomainPartition & domain )
 {
+  GEOS_UNUSED_VAR( dt );
   GEOS_MARK_FUNCTION;
 
   DofManager::CompMask pressureMask( m_numDofPerCell, 0, 1 );
@@ -1042,7 +1058,7 @@ void ReactiveCompositionalMultiphaseOBL::applyDirichletBC( real64 const time,
   if( m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
   {
     bool const bcConsistent = validateDirichletBC( domain, time + dt );
-    GEOS_ERROR_IF( !bcConsistent, GEOS_FMT( "CompositionalMultiphaseBase {}: inconsistent boundary conditions", getName() ) );
+    GEOS_ERROR_IF( !bcConsistent, GEOS_FMT( "CompositionalMultiphaseBase {}: inconsistent boundary conditions", getDataContext() ) );
   }
 
   FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();

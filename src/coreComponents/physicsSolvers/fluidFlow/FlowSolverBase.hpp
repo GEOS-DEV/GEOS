@@ -63,8 +63,6 @@ public:
 
   virtual void registerDataOnMesh( Group & MeshBodies ) override;
 
-  localIndex numDofPerCell() const { return m_numDofPerCell; }
-
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
     // misc inputs
@@ -73,7 +71,23 @@ public:
     static constexpr char const * permeabilityNamesString() { return "permeabilityNames"; }
     static constexpr char const * isThermalString() { return "isThermal"; }
     static constexpr char const * solidInternalEnergyNamesString() { return "solidInternalEnergyNames"; }
+    static constexpr char const * allowNegativePressureString() { return "allowNegativePressure"; }
+    static constexpr char const * maxAbsolutePresChangeString() { return "maxAbsolutePressureChange"; }
   };
+
+  /**
+   * @brief Prepare the stencil weights by removing the contribution of the hydraulic aperture before
+   * the aperture is updated
+   * @param[in] domain the domain partition
+   */
+  void prepareStencilWeights( DomainPartition & domain ) const;
+
+  /**
+   * @brief Update the stencil weights by adding the contribution of the hydraulic aperture after
+   * the aperture is updated
+   * @param[in] domain the domain partition
+   */
+  void updateStencilWeights( DomainPartition & domain ) const;
 
   void enableFixedStressPoromechanicsUpdate();
 
@@ -113,6 +127,12 @@ public:
                                            std::map< string, localIndex > const & bcNameToBcId,
                                            arrayView1d< globalIndex > const & bcAllSetsSize ) const;
 
+  integer & isThermal() { return m_isThermal; }
+
+  /**
+   * @brief Function to activate the flag allowing negative pressure
+   */
+  void allowNegativePressure() { m_allowNegativePressure = 1; }
 
 protected:
 
@@ -164,6 +184,12 @@ protected:
 
   /// enable the fixed stress poromechanics update of porosity
   bool m_isFixedStressPoromechanicsUpdate;
+
+  /// maximum (absolute) pressure change in a Newton iteration
+  real64 m_maxAbsolutePresChange;
+
+  /// flag if negative pressure is allowed
+  integer m_allowNegativePressure;
 
 private:
   virtual void setConstitutiveNames( ElementSubRegionBase & subRegion ) const override;
