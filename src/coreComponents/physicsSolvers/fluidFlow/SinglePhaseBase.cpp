@@ -58,6 +58,13 @@ SinglePhaseBase::SinglePhaseBase( const string & name,
     setApplyDefaultValue( 0.0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Temperature" );
+
+  getWrapper( viewKeyStruct::isThermalString() ).
+    setDescription( GEOS_FMT( "\nSourceFluxes application if {} is enabled :\n"
+                              "- negative value (injection): the mass balance equation is modified to considered the additional source term,\n"
+                              "- positive value (production): both the mass balance and the energy balance equations are modified to considered the additional source term.\n"
+                              "For the energy balance equation, the mass flux is multipied by the enthalpy in the cell from which the fluid is being produced.",
+                              viewKeyStruct::isThermalString() ) );
 }
 
 
@@ -1011,18 +1018,6 @@ void SinglePhaseBase::applySourceFluxBC( real64 const time_n,
         GEOS_LOG_RANK_0( GEOS_FMT( bcLogMessage,
                                    getName(), time_n+dt, SourceFluxBoundaryCondition::catalogName(),
                                    fs.getName(), setName, subRegion.getName(), fs.getScale(), numTargetElems ) );
-
-        if( isThermal )
-        {
-          // message à supprimer / résumer
-          char const msg[] = "SinglePhaseBase {} with isThermal = 1. At time {}s, "
-                             "the <{}> source flux boundary condition '{}' will be applied with the following behavior"
-                             "\n - negative value (injection): the mass balance equation is modified to considered the additional source term"
-                             "\n - positive value (production): both the mass balance and the energy balance equations are modified to considered the additional source term. " \
-                             "\n For the energy balance equation, the mass flux is multipied by the enthalpy in the cell from which the fluid is being produced.";
-          GEOS_LOG_RANK_0( GEOS_FMT( msg,
-                                     getName(), time_n+dt, SourceFluxBoundaryCondition::catalogName(), fs.getName() ) );
-        }
       }
 
       if( targetSet.size() == 0 )
@@ -1064,16 +1059,6 @@ void SinglePhaseBase::applySourceFluxBC( real64 const time_n,
       {
         return 0.0;
       } );
-
-      // à suppr.
-      if( fs.getLogLevel()>=3 )
-      {
-        GEOS_LOG( "SourceFlux "<< fs.getName() << "\n" <<
-                  "  - targetSet elem count = "<< targetSet.size() << "\n" <<
-                  "  - contribs = {"<< stringutilities::join( rhsContributionArray, ", " ) <<"}" );
-        GEOS_LOG( LvArray::system::stackTrace( true ));
-      }
-
 
       // Step 3.2: we are ready to add the right-hand side contributions, taking into account our equation layout
 
@@ -1133,7 +1118,6 @@ void SinglePhaseBase::applySourceFluxBC( real64 const time_n,
       else
       {
         real64 sum=0.0;
-        std::ostringstream strt;
         forAll< parallelDevicePolicy<> >( targetSet.size(), [sizeScalingFactor,
                                                              targetSet,
                                                              rankOffset,
@@ -1155,25 +1139,24 @@ void SinglePhaseBase::applySourceFluxBC( real64 const time_n,
           globalIndex const rowIndex = dofNumber[ei] - rankOffset;
           real64 const scaledContrib = rhsContributionArrayView[a] / sizeScalingFactor; // scale the contribution by the sizeScalingFactor
                                                                                         // here!
-          strt<<localRhs[rowIndex]<<"+="<<scaledContrib<<"  ;  ";
           localRhs[rowIndex] += scaledContrib;
           sum+=scaledContrib;
         } );
+
+        // Output the flux rate in the console.
+        // TODO: 1. Maintain the folowing PR to base on the following "TODO" :
+        // https://github.com/GEOS-DEV/GEOS/compare/develop...feature/untereiner/export_stats
+        // TODO: 2. Create a dedicated SourceFluxStatistics class
+        //
         sum = MpiWrapper::sum( sum );
-        // à suppr.
-        if( fs.getLogLevel()>=2 )
-        {
-          GEOS_LOG_RANK_0( fs.getName() << ", " << subRegion.getName() <<
-                           " adds : { "<<strt.str()<<" }" );
-        }
-        // à ne sortir qu'une fois !
-        if( fs.getLogLevel()>=1 )
+        if( fs.getLogLevel() >= 1 )
         {
           double effectiveRate = sum / dt;
-          GEOS_LOG_RANK_0( fs.getName() << ", " << subRegion.getName() <<
+
+          GEOS_LOG_RANK_0( fs.getName() << ", " << setName << ", " << subRegion.getName() <<
                            ": Produced mass: " << sum << " kg" );
-          GEOS_LOG_RANK_0( fs.getName() << ", " << subRegion.getName() <<
-                           ": Mean rate: " << effectiveRate << " kg/s" );
+          GEOS_LOG_RANK_0( fs.getName() << ", " << setName << ", " << subRegion.getName() <<
+                           ": Production rate: " << effectiveRate << " kg/s" );
         }
       }
     } );
