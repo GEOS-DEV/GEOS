@@ -156,6 +156,11 @@ fi
 
 if [[ "$*" == *--code-coverage* ]]; then
   apt-get install -y lcov make
+  BUILD_COMMAND="make"
+  NINJA_FLAG=""
+else
+  BUILD_COMMAND="ninja"
+  NINJA_FLAG="--ninja"
 fi
 
 
@@ -179,7 +184,7 @@ or_die python3 scripts/config-build.py \
                -bt ${CMAKE_BUILD_TYPE} \
                -bp ${GEOSX_BUILD_DIR} \
                -ip ${GEOSX_DIR} \
-               --ninja \
+               ${NINJA_FLAG} \
                -DBLT_MPI_COMMAND_APPEND='"--allow-run-as-root;--oversubscribe"' \
                -DGEOSX_INSTALL_SCHEMA=$([[ "$*" == *--disable-schema-deployment* ]] && echo 0 || echo 1) \
                -DENABLE_COVERAGE=$([[ "$*" == *--code-coverage* ]] && echo 1 || echo 0) \
@@ -191,7 +196,7 @@ or_die cd ${GEOSX_BUILD_DIR}
 
 # Code style check
 if [[ "${TEST_CODE_STYLE}" = true ]]; then
-  or_die ctest --output-on-failure -VV -R "testUncrustifyCheck"
+  or_die ctest --output-on-failure -R "testUncrustifyCheck"
   exit 0
 fi
 
@@ -203,10 +208,10 @@ fi
 
 # Performing the requested build.
 if [[ "${BUILD_EXE_ONLY}" = true ]]; then
-  or_die ninja -j $(nproc) geosx
+  or_die ${BUILD_COMMAND} -j $(nproc) geosx
 else
-  or_die ninja -j $(nproc)
-  or_die ninja install
+  or_die ${BUILD_COMMAND} -j $(nproc)
+  or_die ${BUILD_COMMAND} install
 
   if [[ ! -z "${DATA_BASENAME_WE}" ]]; then
     # Here we pack the installation.
@@ -216,7 +221,7 @@ else
 fi
 
 if [[ "$*" == *--code-coverage* ]]; then
-  or_die ninja -j $(nproc) coreComponents_coverage
+  or_die ${BUILD_COMMAND} coreComponents_coverage
   cp -r ${GEOSX_BUILD_DIR}/coreComponents_coverage.info.cleaned /tmp/geos/geos_coverage.info.cleaned
 fi
 
@@ -227,7 +232,7 @@ fi
 
 if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
   # We split the process in two steps. First installing the environment, then running the tests.
-  or_die ninja ats_environment
+  or_die ${BUILD_COMMAND} ats_environment
   # The tests are not run using ninja (`ninja --verbose ats_run`) because it swallows the output while all the simulations are running.
   # We directly use the script instead...
   # Temporarily, we are not adding the `--failIfTestsFail` options to `geos_ats.sh`.

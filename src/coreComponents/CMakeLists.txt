@@ -107,11 +107,12 @@ if ( TARGET geosx_core )
 endif()
 
 geosx_add_code_checks( PREFIX coreComponents
-                       EXCLUDES cmake )
+                       EXCLUDES cmake
+                                constitutive/PVTPackage )
 
 if( ENABLE_UNCRUSTIFY )
   add_test( NAME testUncrustifyCheck
-            COMMAND sh -c "${CMAKE_MAKE_PROGRAM} coreComponents_uncrustify_check main_uncrustify_check"
+            COMMAND sh -c "${CMAKE_MAKE_PROGRAM} coreComponents_uncrustify_check main_uncrustify_check 2>&1 >/dev/null"
             WORKING_DIRECTORY ${CMAKE_BINARY_DIR} )
 endif()
 
