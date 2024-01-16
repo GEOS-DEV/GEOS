@@ -529,8 +529,8 @@ BlackOilFluid::KernelWrapper::
     phaseFraction.value[ipWater] = zw;
 
     // oil
-    phaseCompFraction.value[ipOil][icOil] = zo / ( zo + zg );
-    phaseCompFraction.value[ipOil][icGas] = zg / ( zo + zg );
+    phaseCompFraction.value[ipOil][icOil] = zo / ( 1 - zw );
+    phaseCompFraction.value[ipOil][icGas] = zg / ( 1 - zw );
     phaseCompFraction.value[ipOil][icWater] = 0.0;
 
     // gas
@@ -542,10 +542,10 @@ BlackOilFluid::KernelWrapper::
     {
       phaseFraction.derivs[ipOil][Deriv::dC+icWater] = -1.0;
       phaseFraction.derivs[ipWater][Deriv::dC+icWater] = 1.0;
-      phaseCompFraction.derivs[ipOil][icOil][Deriv::dC+icOil] = zg / (( zo + zg )*( zo + zg ));
-      phaseCompFraction.derivs[ipOil][icOil][Deriv::dC+icGas] = -zo / (( zo + zg )*( zo + zg ));
-      phaseCompFraction.derivs[ipOil][icGas][Deriv::dC+icOil] = -zg / (( zo + zg )*( zo + zg ));
-      phaseCompFraction.derivs[ipOil][icGas][Deriv::dC+icGas] = zo / (( zo + zg )*( zo + zg ));
+      phaseCompFraction.derivs[ipOil][icOil][Deriv::dC+icOil] = 1 / ( 1 - zw );
+      phaseCompFraction.derivs[ipOil][icOil][Deriv::dC+icWater] = zo / (( 1 - zw )*( 1 - zw ));
+      phaseCompFraction.derivs[ipOil][icGas][Deriv::dC+icGas] = 1 / ( 1 - zw );
+      phaseCompFraction.derivs[ipOil][icGas][Deriv::dC+icWater] = zg / (( 1 - zw )*( 1 - zw ));
     }
   }
 }
