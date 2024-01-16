@@ -340,7 +340,7 @@ BlackOilFluid::KernelWrapper::
   real64 phaseMolecularWeight[NP_BO]{};
   real64 dPhaseMolecularWeight[NP_BO][NC_BO+2]{};
 
-  // 1. Convert to mass if necessary
+  // 1. Convert to moles if necessary
 
   if( m_useMass )
   {
@@ -529,8 +529,8 @@ BlackOilFluid::KernelWrapper::
     phaseFraction.value[ipWater] = zw;
 
     // oil
-    phaseCompFraction.value[ipOil][icOil] = zo;
-    phaseCompFraction.value[ipOil][icGas] = zg;
+    phaseCompFraction.value[ipOil][icOil] = zo / ( zo + zg );
+    phaseCompFraction.value[ipOil][icGas] = zg / ( zo + zg );
     phaseCompFraction.value[ipOil][icWater] = 0.0;
 
     // gas
@@ -542,8 +542,10 @@ BlackOilFluid::KernelWrapper::
     {
       phaseFraction.derivs[ipOil][Deriv::dC+icWater] = -1.0;
       phaseFraction.derivs[ipWater][Deriv::dC+icWater] = 1.0;
-      phaseCompFraction.derivs[ipOil][icOil][Deriv::dC+icOil] = 1.0;
-      phaseCompFraction.derivs[ipOil][icGas][Deriv::dC+icGas] = 1.0;
+      phaseCompFraction.derivs[ipOil][icOil][Deriv::dC+icOil] = zg / (( zo + zg )*( zo + zg ));
+      phaseCompFraction.derivs[ipOil][icOil][Deriv::dC+icGas] = -zo / (( zo + zg )*( zo + zg ));
+      phaseCompFraction.derivs[ipOil][icGas][Deriv::dC+icOil] = -zg / (( zo + zg )*( zo + zg ));
+      phaseCompFraction.derivs[ipOil][icGas][Deriv::dC+icGas] = zo / (( zo + zg )*( zo + zg ));
     }
   }
 }
@@ -677,11 +679,6 @@ BlackOilFluid::KernelWrapper::
     else
     {
 
-      // compute Rs as a function of composition
-      real64 const densRatio = m_PVTOView.m_surfaceMoleDensity[PT::OIL] / m_PVTOView.m_surfaceMoleDensity[PT::GAS];
-      Rs = densRatio * composition[icGas] / composition[icOil];
-      dRs_dC[PT::OIL] = -densRatio * composition[icGas] / (composition[icOil] * composition[icOil]);
-      dRs_dC[PT::GAS] =  densRatio  / composition[icOil];
 
       // compute undersaturated properties (Bo, viscosity) by two-step interpolation in undersaturated tables
       // this part returns numerical derivatives
