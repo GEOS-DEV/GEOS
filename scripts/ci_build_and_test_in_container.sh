@@ -191,7 +191,7 @@ or_die cd ${GEOSX_BUILD_DIR}
 
 # Code style check
 if [[ "${TEST_CODE_STYLE}" = true ]]; then
-  or_die ctest --output-on-failure -R "testUncrustifyCheck"
+  or_die ctest --output-on-failure -VV -R "testUncrustifyCheck"
   exit 0
 fi
 
