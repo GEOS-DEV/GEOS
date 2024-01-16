@@ -201,12 +201,12 @@ void WaveSolverBase::registerDataOnMesh( Group & meshBodies )
     arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X = nodeManager.referencePosition().toViewConst();
 
     nodeManager.getField< fields::referencePosition32 >().resizeDimension< 1 >( X.size( 1 ) );
-    arrayView2d< wsCoordType, nodes::REFERENCE_POSITION_USD > const X32  = nodeManager.getField< fields::referencePosition32 >();
+    arrayView2d< wsCoordType, nodes::REFERENCE_POSITION_USD > const nodeCoords32 = nodeManager.getField< fields::referencePosition32 >();
     for( int i = 0; i < X.size( 0 ); i++ )
     {
       for( int j = 0; j < X.size( 1 ); j++ )
       {
-        X32[i][j] = X[i][j];
+        nodeCoords32[i][j] = X[i][j];
       }
     }
   } );
@@ -398,6 +398,24 @@ localIndex WaveSolverBase::getNumNodesPerElem()
 
   } );
   return numNodesPerElem;
+}
+
+void WaveSolverBase::computeTargetNodeSet( arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes,
+                                           localIndex const subRegionSize,
+                                           localIndex const numQuadraturePointsPerElem )
+{
+  array1d< localIndex > scratch( subRegionSize * numQuadraturePointsPerElem );
+  localIndex i = 0;
+  for( localIndex e = 0; e < subRegionSize; ++e )
+  {
+    for( localIndex q = 0; q < numQuadraturePointsPerElem; ++q )
+    {
+      scratch[i++] = elemsToNodes( e, q );
+    }
+  }
+  std::ptrdiff_t const numUniqueValues = LvArray::sortedArrayManipulation::makeSortedUnique( scratch.begin(), scratch.end() );
+
+  m_solverTargetNodesSet.insert( scratch.begin(), scratch.begin() + numUniqueValues );
 }
 
 void WaveSolverBase::incrementIndexSeismoTrace( real64 const time_n )
