@@ -332,7 +332,7 @@ struct DampingMatrixKernel
           if( bottomSurfaceFaceIndicator[f] == 1 )
           {
             // ABC coefficients updated to fit horizontal velocity
-            real32 alpha = 1.0 / (velocity[e] *sqrt( 1+2*vti_delta[e] ) * density[e]);
+            real32 alpha = 1.0 / (velocity[e] * density[e]);
             // VTI coefficients
             real32 vti_pq_z = sqrt( 1+2*vti_delta[e] );
             real32 vti_q_z  = 1;
@@ -433,9 +433,9 @@ public:
     m_q_n( nodeManager.getField< fields::wavesolverfields::Pressure_q_n >() ),
     m_stiffnessVector_p( nodeManager.getField< fields::wavesolverfields::StiffnessVector_p >() ),
     m_stiffnessVector_q( nodeManager.getField< fields::wavesolverfields::StiffnessVector_q >() ),
+    m_density( elementSubRegion.template getField< fields::wavesolverfields::MediumDensity >() ),
     m_vti_epsilon( elementSubRegion.template getField< fields::wavesolverfields::MediumEpsilon >() ),
     m_vti_delta( elementSubRegion.template getField< fields::wavesolverfields::MediumDelta >() ),
-    m_density( elementSubRegion.template getField< fields::wavesolverfields::MediumDensity >() ),
     m_dt( dt )
   {
     GEOS_UNUSED_VAR( edgeManager );
@@ -535,14 +535,14 @@ protected:
   /// The array containing the product of the stiffness matrix and the nodal pressure for the equation in q.
   arrayView1d< real32 > const m_stiffnessVector_q;
 
+  /// The array containing the medium density.
+  arrayView1d< real32 const > const m_density;
+
   /// The array containing the epsilon Thomsen parameter.
   arrayView1d< real32 const > const m_vti_epsilon;
 
   /// The array containing the delta Thomsen parameter.
   arrayView1d< real32 const > const m_vti_delta;
-
-  /// The array containing the medium density.
-  arrayView1d< real32 const > const m_density;
 
   /// The time increment for this time integration step.
   real64 const m_dt;

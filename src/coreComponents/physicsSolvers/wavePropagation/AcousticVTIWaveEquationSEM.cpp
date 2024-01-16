@@ -94,6 +94,7 @@ void AcousticVTIWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
       subRegion.registerField< fields::wavesolverfields::MediumEpsilon >( getName() );
       subRegion.registerField< fields::wavesolverfields::MediumSigma >( getName() );
       subRegion.registerField< fields::wavesolverfields::MediumVelocity >( getName() );
+      subRegion.registerField< fields::wavesolverfields::MediumDensity >( getName() );
     } );
   } );
 }
@@ -272,6 +273,7 @@ void AcousticVTIWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
       arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemsToNodes = elementSubRegion.nodeList();
       arrayView2d< localIndex const > const elemsToFaces = elementSubRegion.faceList();
       arrayView1d< real32 const > const velocity = elementSubRegion.getField< fields::wavesolverfields::MediumVelocity >();
+      arrayView1d< real32 const > const density  = elementSubRegion.getField< fields::wavesolverfields::MediumDensity >();
       arrayView1d< real32 const > const vti_epsilon  = elementSubRegion.getField< fields::wavesolverfields::MediumEpsilon >();
       arrayView1d< real32 const > const vti_delta    = elementSubRegion.getField< fields::wavesolverfields::MediumDelta >();
       arrayView1d< real32 const > const vti_sigma    = elementSubRegion.getField< fields::wavesolverfields::MediumSigma >();
@@ -288,6 +290,7 @@ void AcousticVTIWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
                                                                nodeCoords,
                                                                elemsToNodes,
                                                                velocity,
+                                                               density,
                                                                mass );
 
         acousticVTIWaveEquationSEMKernels::DampingMatrixKernel< FE_TYPE > kernelD( finiteElement );
@@ -301,6 +304,7 @@ void AcousticVTIWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
                                                                lateralSurfaceFaceIndicator,
                                                                bottomSurfaceFaceIndicator,
                                                                velocity,
+                                                               density,
                                                                vti_epsilon,
                                                                vti_delta,
                                                                vti_sigma,

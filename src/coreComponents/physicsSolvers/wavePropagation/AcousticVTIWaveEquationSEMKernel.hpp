@@ -202,6 +202,7 @@ struct MassMatrixKernel
    * @param[in] nodeCoords coordinates of the nodes
    * @param[in] elemsToNodes map from element to nodes
    * @param[in] velocity cell-wise velocity
+   * @param[in] density cell-wise density
    * @param[out] mass diagonal of the mass matrix
    */
   template< typename EXEC_POLICY, typename ATOMIC_POLICY >
@@ -210,6 +211,7 @@ struct MassMatrixKernel
           arrayView2d< WaveSolverBase::wsCoordType const, nodes::REFERENCE_POSITION_USD > const nodeCoords,
           arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemsToNodes,
           arrayView1d< real32 const > const velocity,
+          arrayView1d< real32 const > const density,
           arrayView1d< real32 > const mass )
 
   {
@@ -219,7 +221,7 @@ struct MassMatrixKernel
       constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
       constexpr localIndex numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
 
-      real32 const invC2 = 1.0 / pow( velocity[e], 2 );
+      real32 const invC2 = 1.0 / pow( velocity[e], 2 ) / density[e];
       real64 xLocal[ numNodesPerElem ][ 3 ];
       for( localIndex a = 0; a < numNodesPerElem; ++a )
       {
@@ -263,6 +265,7 @@ struct DampingMatrixKernel
    * @param[in] lateralSurfaceFaceIndicator flag equal to 1 if the face is on a lateral surface, and to 0 otherwise
    * @param[in] bottomSurfaceFaceIndicator flag equal to 1 if the face is on the bottom surface, and to 0 otherwise
    * @param[in] velocity cell-wise velocity
+   * @param[in] density cell-wise density
    * @param[in] vti_epsilon cell-wise Thomsen epsilon parameter
    * @param[in] vti_delta cell-wise Thomsen delta parameter
    * @param[in] vti_sigma cell-wise sigma parameter in Fletcher's equation
@@ -282,6 +285,7 @@ struct DampingMatrixKernel
           arrayView1d< localIndex const > const lateralSurfaceFaceIndicator,
           arrayView1d< localIndex const > const bottomSurfaceFaceIndicator,
           arrayView1d< real32 const > const velocity,
+          arrayView1d< real32 const > const density,
           arrayView1d< real32 const > const vti_epsilon,
           arrayView1d< real32 const > const vti_delta,
           arrayView1d< real32 const > const vti_sigma,
@@ -311,7 +315,7 @@ struct DampingMatrixKernel
           if( lateralSurfaceFaceIndicator[f] == 1 )
           {
             // ABC coefficients
-            real32 alpha = 1.0 / (velocity[e] * sqrt( 1+2*vti_epsilon[e] ));
+            real32 alpha = 1.0 / (velocity[e] * density[e] * sqrt( 1+2*vti_epsilon[e] ));
             // VTI coefficients
             real32 vti_p_xy = 0;
             real32 vti_q_xy = 0;
@@ -336,7 +340,7 @@ struct DampingMatrixKernel
           if( bottomSurfaceFaceIndicator[f] == 1 )
           {
             // ABC coefficients updated to fit horizontal velocity
-            real32 alpha = 1.0 / (velocity[e] * sqrt( 1+2*vti_delta[e] ));
+            real32 alpha = 1.0 / (velocity[e] * density[e]);
             // VTI coefficients
             real32 vti_p_z  = 0;
             real32 vti_pq_z = 0;
@@ -443,6 +447,7 @@ public:
     m_q_n( nodeManager.getField< fields::wavesolverfields::Pressure_q_n >() ),
     m_stiffnessVector_p( nodeManager.getField< fields::wavesolverfields::StiffnessVector_p >() ),
     m_stiffnessVector_q( nodeManager.getField< fields::wavesolverfields::StiffnessVector_q >() ),
+    m_density( elementSubRegion.template getField< fields::wavesolverfields::MediumDensity >() ),
     m_vti_epsilon( elementSubRegion.template getField< fields::wavesolverfields::MediumEpsilon >() ),
     m_vti_delta( elementSubRegion.template getField< fields::wavesolverfields::MediumDelta >() ),
     m_vti_sigma( elementSubRegion.template getField< fields::wavesolverfields::MediumSigma >() ),
@@ -512,9 +517,9 @@ public:
     m_finiteElementSpace.template computeStiffnessxyTerm( q, stack.xLocal, [&] ( int i, int j, real64 val )
     {
       real32 vti_f = 1 - (m_vti_epsilon[k] - m_vti_delta[k]) / m_vti_sigma[k];
-      real32 const localIncrement_p = val*(-1-2*m_vti_epsilon[k])*m_p_n[m_elemsToNodes[k][j]];
+      real32 const localIncrement_p = val / m_density[k] *(-1-2*m_vti_epsilon[k])*m_p_n[m_elemsToNodes[k][j]];
       RAJA::atomicAdd< parallelDeviceAtomic >( &m_stiffnessVector_p[m_elemsToNodes[k][i]], localIncrement_p );
-      real32 const localIncrement_q = val*((-2*m_vti_delta[k]-vti_f)*m_p_n[m_elemsToNodes[k][j]] +(vti_f-1)*m_q_n[m_elemsToNodes[k][j]]);
+      real32 const localIncrement_q = val / m_density[k] * ((-2*m_vti_delta[k]-vti_f)*m_p_n[m_elemsToNodes[k][j]] +(vti_f-1)*m_q_n[m_elemsToNodes[k][j]]);
       RAJA::atomicAdd< parallelDeviceAtomic >( &m_stiffnessVector_q[m_elemsToNodes[k][i]], localIncrement_q );
     } );
 
@@ -523,10 +528,10 @@ public:
     m_finiteElementSpace.template computeStiffnesszTerm( q, stack.xLocal, [&] ( int i, int j, real64 val )
     {
       real32 vti_f = 1 - (m_vti_epsilon[k] - m_vti_delta[k]) / m_vti_sigma[k];
-      real32 const localIncrement_p = val*((vti_f-1)*m_p_n[m_elemsToNodes[k][j]] - vti_f*m_q_n[m_elemsToNodes[k][j]]);
+      real32 const localIncrement_p = val / m_density[k] * ((vti_f-1)*m_p_n[m_elemsToNodes[k][j]] - vti_f*m_q_n[m_elemsToNodes[k][j]]);
       RAJA::atomicAdd< parallelDeviceAtomic >( &m_stiffnessVector_p[m_elemsToNodes[k][i]], localIncrement_p );
 
-      real32 const localIncrement_q = -val*m_q_n[m_elemsToNodes[k][j]];
+      real32 const localIncrement_q = -val  / m_density[k] * m_q_n[m_elemsToNodes[k][j]];
       RAJA::atomicAdd< parallelDeviceAtomic >( &m_stiffnessVector_q[m_elemsToNodes[k][i]], localIncrement_q );
     } );
   }
@@ -546,6 +551,9 @@ protected:
 
   /// The array containing the product of the stiffness matrix and the nodal pressure for the equation in q.
   arrayView1d< real32 > const m_stiffnessVector_q;
+
+  /// The array containing the density parameter.
+  arrayView1d< real32 const > const m_density;
 
   /// The array containing the epsilon Thomsen parameter.
   arrayView1d< real32 const > const m_vti_epsilon;
