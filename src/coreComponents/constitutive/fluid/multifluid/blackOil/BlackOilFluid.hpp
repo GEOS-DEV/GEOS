@@ -679,6 +679,11 @@ BlackOilFluid::KernelWrapper::
     else
     {
 
+      // compute Rs as a function of composition
+      real64 const densRatio = m_PVTOView.m_surfaceMoleDensity[PT::OIL] / m_PVTOView.m_surfaceMoleDensity[PT::GAS];
+      Rs = densRatio * composition[icGas] / composition[icOil];
+      dRs_dC[PT::OIL] = -densRatio * composition[icGas] / (composition[icOil] * composition[icOil]);
+      dRs_dC[PT::GAS] =  densRatio  / composition[icOil];
 
       // compute undersaturated properties (Bo, viscosity) by two-step interpolation in undersaturated tables
       // this part returns numerical derivatives
