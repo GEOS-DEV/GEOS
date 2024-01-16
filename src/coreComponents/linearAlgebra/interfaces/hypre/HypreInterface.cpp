@@ -75,6 +75,11 @@ HypreInterface::createSolver( LinearSolverParameters params )
   {
     return std::make_unique< HypreSolver >( std::move( params ) );
   }
+
+  if( params.logLevel > 0 )
+  {
+    HYPRE_SetPrintErrorMode( 1 );
+  }
 }
 
 std::unique_ptr< PreconditionerBase< HypreInterface > >
