@@ -12,23 +12,22 @@
 
 <!-- SPHINX_WELLBORE_MATERIAL -->
 <Constitutive>
-  <PorousViscoExtendedDruckerPrager
+  <PorousViscoDruckerPrager
     name="porousRock"
     solidModelName="rock"
     porosityModelName="rockPorosity"
     permeabilityModelName="rockPerm"
   />
-  <ViscoExtendedDruckerPrager 
+  <ViscoDruckerPrager 
     name="rock"
     defaultDensity="2700"
     defaultBulkModulus="1.1111e10"
     defaultShearModulus="8.3333e9"
     defaultCohesion="1.0e6"
-    defaultInitialFrictionAngle="15.27"
-    defaultResidualFrictionAngle="23.05"
-    defaultDilationRatio="1.0"
-    defaultHardening="0.01"
-    relaxationTime="0.01"
+    defaultFrictionAngle="6.0"
+    defaultDilationAngle="3.0"
+    defaultHardeningRate="0.5e9"
+    relaxationTime="0.1"
   />
   <CompressibleSinglePhaseFluid 
     name="water"

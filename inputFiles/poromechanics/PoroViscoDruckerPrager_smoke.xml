@@ -2,7 +2,7 @@
 
 <Problem>
 <Included>
-  <File name="./PoroViscoExtendedDruckerPrager_base.xml"/>
+  <File name="./PoroViscoDruckerPrager_base.xml"/>
 </Included>
 
 <!-- SPHINX_WELLBORE_MESH -->
