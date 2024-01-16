@@ -158,7 +158,7 @@ struct PrecomputeSourceAndReceiverKernel
           {
             WaveSolverUtils::computeCoordinatesOnReferenceElement< FE_TYPE >( coords,
                                                                               elemsToNodes[k],
-                                                                              X,
+                                                                              nodeCoords,
                                                                               coordsOnRefElem );
 
             receiverIsLocal[ircv] = 1;
@@ -193,8 +193,7 @@ struct PrecomputeSourceAndReceiverKernelForModifiedEquation
    * @tparam EXEC_POLICY execution policy
    * @tparam FE_TYPE finite element type
    * @param[in] size the number of cells in the subRegion
-   * @param[in] numNodesPerElem number of nodes per element
-   * @param[in] X coordinates of the nodes
+   * @param[in] nodeCoords coordinates of the nodes
    * @param[in] elemsToNodes map from element to nodes
    * @param[in] elemsToFaces map from element to faces
    * @param[in] facesToNodes map from faces to nodes
@@ -211,9 +210,8 @@ struct PrecomputeSourceAndReceiverKernelForModifiedEquation
   template< typename EXEC_POLICY, typename FE_TYPE >
   static void
   launch( localIndex const size,
-          localIndex const numNodesPerElem,
           localIndex const numFacesPerElem,
-          arrayView2d< WaveSolverBase::wsCoordType const, nodes::REFERENCE_POSITION_USD > const X,
+          arrayView2d< WaveSolverBase::wsCoordType const, nodes::REFERENCE_POSITION_USD > const nodeCoords,
           arrayView1d< integer const > const elemGhostRank,
           arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes,
           arrayView2d< localIndex const > const elemsToFaces,
@@ -232,9 +230,11 @@ struct PrecomputeSourceAndReceiverKernelForModifiedEquation
           arrayView2d< real32 > const sourceValueSecondDerivativeRicker,
           real64 const dt,
           real32 const timeSourceFrequency,
+	  real32 const timeSourceDelay,
           localIndex const rickerOrder )
   {
-
+    constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
+    
     forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const k )
     {
       real64 const center[3] = { elemCenter[k][0],
@@ -266,7 +266,7 @@ struct PrecomputeSourceAndReceiverKernelForModifiedEquation
 
             WaveSolverUtils::computeCoordinatesOnReferenceElement< FE_TYPE >( coords,
                                                                               elemsToNodes[k],
-                                                                              X,
+                                                                              nodeCoords,
                                                                               coordsOnRefElem );
 
             sourceIsAccessible[isrc] = 1;

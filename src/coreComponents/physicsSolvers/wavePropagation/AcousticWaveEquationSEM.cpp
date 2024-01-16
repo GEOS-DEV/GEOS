@@ -224,9 +224,9 @@ void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh,
           PrecomputeSourceAndReceiverKernelForModifiedEquation::
           launch< EXEC_POLICY, FE_TYPE >
           ( elementSubRegion.size(),
-          numNodesPerElem,
+	    //numNodesPerElem,
           numFacesPerElem,
-          X32,
+          nodeCoords32,
           elemGhostRank,
           elemsToNodes,
           elemsToFaces,
@@ -244,8 +244,9 @@ void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh,
           sourceValue,
           sourceValueSecondDerivativeRicker,
           dt,
-          timeSourceFrequency,
-          rickerOrder );
+          m_timeSourceFrequency,
+	  m_timeSourceDelay,
+          m_rickerOrder );
       }
       else
       {
@@ -1114,7 +1115,7 @@ void AcousticWaveEquationSEM::computeUnknowns( real64 const & time_n,
   arrayView1d< real32 > const stiffnessVector = nodeManager.getField< fields::StiffnessVector >();
   arrayView1d< real32 > const rhs = nodeManager.getField< fields::ForcingRHS >();
 
-  bool const usePML = m_usePML;
+  //bool const usePML = m_usePML;
 
   if( !useRKN || useModeq )
   {
@@ -1404,7 +1405,7 @@ void AcousticWaveEquationSEM::synchronizeUnknowns( real64 const & time_n,
   /// synchronize pressure fields
   FieldIdentifiers fieldsToBeSync;
   fieldsToBeSync.addFields( FieldLocation::Node, { fields::Pressure_np1::key() } );
-  if( useRKN )
+  if( m_useRKN )
   {
     fieldsToBeSync.addFields( FieldLocation::Node, { fields::Pressure_prime_np1::key() } );
   }
