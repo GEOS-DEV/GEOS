@@ -70,7 +70,7 @@
   <Mesh>
     <VTKMesh
       name="mesh"
-      file="../../../GEOSXDATA/DataSets/Egg/egg_withBurdens_small.vts"
+      file="../../../GEOSDATA/DataSets/Egg/egg_withBurdens_small.vts"
       regionAttribute="elementRegionMarker"
       fieldsToImport="{ PERM }"
       fieldNamesInGEOSX="{ rockPermeability_permeability }"/>

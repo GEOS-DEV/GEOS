@@ -64,14 +64,16 @@ void PVTDriver::runTest( FLUID_TYPE & fluid, arrayView2d< real64 > const & table
   // note: column indexing should be kept consistent with output file header below.
 
   integer const numSteps = m_numSteps;
+  integer const outputCompressibility = m_outputCompressibility;
+  integer const outputPhaseComposition = m_outputPhaseComposition;
   using ExecPolicy = typename FLUID_TYPE::exec_policy;
   forAll< ExecPolicy >( composition.size( 0 ),
-                        [this, numPhases, numComponents, numSteps, kernelWrapper,
-                         table, composition]
+                        [ outputCompressibility, outputPhaseComposition, numPhases, numComponents, numSteps, kernelWrapper,
+                          table, composition]
                         GEOS_HOST_DEVICE ( localIndex const i )
   {
     // Index for start of phase properties
-    integer const PHASE = m_outputCompressibility != 0 ? TEMP + 3 : TEMP + 2;
+    integer const PHASE = outputCompressibility != 0 ? TEMP + 3 : TEMP + 2;
 
     // Temporary space for phase mole fractions
     stackArray1d< real64, constitutive::MultiFluidBase::MAX_NUM_COMPONENTS > phaseComposition( numComponents );
@@ -81,7 +83,7 @@ void PVTDriver::runTest( FLUID_TYPE & fluid, arrayView2d< real64 > const & table
       kernelWrapper.update( i, 0, table( n, PRES ), table( n, TEMP ), composition[i] );
       table( n, TEMP + 1 ) = kernelWrapper.totalDensity()( i, 0 );
 
-      if( m_outputCompressibility != 0 )
+      if( outputCompressibility != 0 )
       {
         table( n, TEMP + 2 ) = kernelWrapper.totalCompressibility( i, 0 );
       }
@@ -92,7 +94,7 @@ void PVTDriver::runTest( FLUID_TYPE & fluid, arrayView2d< real64 > const & table
         table( n, PHASE + p + numPhases ) = kernelWrapper.phaseDensity()( i, 0, p );
         table( n, PHASE + p + 2 * numPhases ) = kernelWrapper.phaseViscosity()( i, 0, p );
       }
-      if( m_outputPhaseComposition != 0 )
+      if( outputPhaseComposition != 0 )
       {
         for( integer p = 0; p < numPhases; ++p )
         {
