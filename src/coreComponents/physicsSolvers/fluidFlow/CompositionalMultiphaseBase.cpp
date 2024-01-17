@@ -1349,7 +1349,8 @@ void CompositionalMultiphaseBase::assembleAccumulationAndVolumeBalanceTerms( Dom
                                                      m_numPhases,
                                                      dofManager.rankOffset(),
                                                      m_useTotalMassEquation,
-                                                     m_useSimpleAccumulation && !m_isThermal, // useSimpleAccumulation is not yet compatible with thermal
+                                                     m_useSimpleAccumulation && !m_isThermal, // useSimpleAccumulation is not yet compatible
+                                                                                              // with thermal
                                                      dofKey,
                                                      subRegion,
                                                      fluid,
