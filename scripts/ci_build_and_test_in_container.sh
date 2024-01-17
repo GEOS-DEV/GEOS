@@ -76,7 +76,7 @@ RUN_UNIT_TESTS=true
 RUN_INTEGRATED_TESTS=false
 TEST_CODE_STYLE=false
 TEST_DOCUMENTATION=false
-CODE_COVERAGE=0
+CODE_COVERAGE=false
 
 eval set -- ${args}
 while :
@@ -186,7 +186,7 @@ or_die python3 scripts/config-build.py \
                -ip ${GEOSX_DIR} \
                --ninja \
                -DBLT_MPI_COMMAND_APPEND='"--allow-run-as-root;--oversubscribe"' \
-               -DGEOSX_INSTALL_SCHEMA=$([[ "$*" == *--disable-schema-deployment* ]] && echo 0 || echo 1) \
+               -DGEOSX_INSTALL_SCHEMA=${GEOSX_INSTALL_SCHEMA} \
                -DENABLE_COVERAGE=$([[ "${CODE_COVERAGE}" = true ]] && echo 1 || echo 0) \
                ${SCCACHE_CMAKE_ARGS} \
                ${ATS_CMAKE_ARGS}
