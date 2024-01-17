@@ -181,13 +181,16 @@ The *pvtgas.txt* and *pvtliquid.txt* files define the models used to compute the
 
 .. code:: 
 
-        DensityFun SpanWagnerCO2Density 1e6 1.5e7 5e4 94 96 1
-        ViscosityFun FenghourCO2Viscosity 1e6 1.5e7 5e4 94 96 
+        DensityFun SpanWagnerCO2Density 1.0e5 7.5e7 1e5 285.15 395.15 5
+        ViscosityFun FenghourCO2Viscosity 1.0e5 7.5e7 1e5 285.15 395.15 5 
 
 .. code::
   
-        DensityFun PhillipsBrineDensity 1e6 1.5e7 5e4 94 96 1 0
+        DensityFun PhillipsBrineDensity 1.0e5 7.5e7 1e5 285.15 395.15 5 0
         ViscosityFun PhillipsBrineViscosity 0
+
+.. warning::
+    The values located in *pvtgas.txt*, *pvtliquid.txt* and *co2flash.txt* serve as examples and are used to make examples work,they are not as representative values. 
 
 In these files, the first keyword of each line is an identifier for the model type (either a density or a viscosity model).
 It is followed by the model name.
