@@ -240,7 +240,7 @@ DECLARE_FIELD( AcousticFreeSurfaceNodeIndicator,
                WRITE_AND_READ,
                "Free surface indicator, 1 if a node is on free surface 0 otherwise." );
 
-DECLARE_FIELD( LateralSurfaceFaceIndicator,
+DECLARE_FIELD( AcousticLateralSurfaceFaceIndicator,
                "lateralSurfaceFaceIndicator",
                array1d< localIndex >,
                0,
@@ -248,7 +248,7 @@ DECLARE_FIELD( LateralSurfaceFaceIndicator,
                WRITE_AND_READ,
                "Free surface indicator, 1 if a face is on a lateral surface 0 otherwise." );
 
-DECLARE_FIELD( LateralSurfaceNodeIndicator,
+DECLARE_FIELD( AcousticLateralSurfaceNodeIndicator,
                "lateralSurfaceNodeIndicator",
                array1d< localIndex >,
                0,
@@ -256,7 +256,7 @@ DECLARE_FIELD( LateralSurfaceNodeIndicator,
                WRITE_AND_READ,
                "Lateral surface indicator, 1 if a face is on a lateral surface 0 otherwise." );
 
-DECLARE_FIELD( BottomSurfaceFaceIndicator,
+DECLARE_FIELD( AcousticBottomSurfaceFaceIndicator,
                "bottomSurfaceFaceIndicator",
                array1d< localIndex >,
                0,
@@ -264,7 +264,7 @@ DECLARE_FIELD( BottomSurfaceFaceIndicator,
                WRITE_AND_READ,
                "Bottom surface indicator, 1 if a face is on the bottom surface 0 otherwise." );
 
-DECLARE_FIELD( BottomSurfaceNodeIndicator,
+DECLARE_FIELD( AcousticBottomSurfaceNodeIndicator,
                "bottomSurfaceNodeIndicator",
                array1d< localIndex >,
                0,

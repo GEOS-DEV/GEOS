@@ -69,22 +69,22 @@ void AcousticVTIDensityWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
                                fields::wavesolverfields::Pressure_q_n,
                                fields::wavesolverfields::Pressure_q_np1,
                                fields::wavesolverfields::ForcingRHS,
-                               fields::wavesolverfields::MassVector,
+                               fields::wavesolverfields::AcousticMassVector,
                                fields::wavesolverfields::DampingVector_p,
                                fields::wavesolverfields::DampingVector_pq,
                                fields::wavesolverfields::DampingVector_q,
                                fields::wavesolverfields::DampingVector_qp,
                                fields::wavesolverfields::StiffnessVector_p,
                                fields::wavesolverfields::StiffnessVector_q,
-                               fields::wavesolverfields::FreeSurfaceNodeIndicator,
-                               fields::wavesolverfields::LateralSurfaceNodeIndicator,
-                               fields::wavesolverfields::BottomSurfaceNodeIndicator >( getName() );
+                               fields::wavesolverfields::AcousticFreeSurfaceNodeIndicator,
+                               fields::wavesolverfields::AcousticLateralSurfaceNodeIndicator,
+                               fields::wavesolverfields::AcousticBottomSurfaceNodeIndicator >( getName() );
 
 
     FaceManager & faceManager = mesh.getFaceManager();
-    faceManager.registerField< fields::wavesolverfields::FreeSurfaceFaceIndicator >( getName() );
-    faceManager.registerField< fields::wavesolverfields::LateralSurfaceFaceIndicator >( getName() );
-    faceManager.registerField< fields::wavesolverfields::BottomSurfaceFaceIndicator >( getName() );
+    faceManager.registerField< fields::wavesolverfields::AcousticFreeSurfaceFaceIndicator >( getName() );
+    faceManager.registerField< fields::wavesolverfields::AcousticLateralSurfaceFaceIndicator >( getName() );
+    faceManager.registerField< fields::wavesolverfields::AcousticBottomSurfaceFaceIndicator >( getName() );
 
     ElementRegionManager & elemManager = mesh.getElemManager();
 
@@ -250,7 +250,7 @@ void AcousticVTIDensityWaveEquationSEM::initializePostInitialConditionsPreSubGro
     ArrayOfArraysView< localIndex const > const facesToNodes = faceManager.nodeList().toViewConst();
 
     // mass matrix to be computed in this function
-    arrayView1d< real32 > const mass = nodeManager.getField< fields::wavesolverfields::MassVector >();
+    arrayView1d< real32 > const mass = nodeManager.getField< fields::wavesolverfields::AcousticMassVector >();
     mass.zero();
     /// damping matrices to be computed for each dof in the boundary of the mesh
     arrayView1d< real32 > const damping_p  = nodeManager.getField< fields::wavesolverfields::DampingVector_p >();
@@ -263,9 +263,9 @@ void AcousticVTIDensityWaveEquationSEM::initializePostInitialConditionsPreSubGro
     damping_qp.zero();
 
     /// get array of indicators: 1 if face is on the free surface; 0 otherwise
-    arrayView1d< localIndex const > const freeSurfaceFaceIndicator = faceManager.getField< fields::wavesolverfields::FreeSurfaceFaceIndicator >();
-    arrayView1d< localIndex const > const lateralSurfaceFaceIndicator = faceManager.getField< fields::wavesolverfields::LateralSurfaceFaceIndicator >();
-    arrayView1d< localIndex const > const bottomSurfaceFaceIndicator = faceManager.getField< fields::wavesolverfields::BottomSurfaceFaceIndicator >();
+    arrayView1d< localIndex const > const freeSurfaceFaceIndicator = faceManager.getField< fields::wavesolverfields::AcousticFreeSurfaceFaceIndicator >();
+    arrayView1d< localIndex const > const lateralSurfaceFaceIndicator = faceManager.getField< fields::wavesolverfields::AcousticLateralSurfaceFaceIndicator >();
+    arrayView1d< localIndex const > const bottomSurfaceFaceIndicator = faceManager.getField< fields::wavesolverfields::AcousticBottomSurfaceFaceIndicator >();
 
     mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                           CellElementSubRegion & elementSubRegion )
@@ -330,14 +330,14 @@ void AcousticVTIDensityWaveEquationSEM::precomputeSurfaceFieldIndicator( DomainP
   ArrayOfArraysView< localIndex const > const faceToNodeMap = faceManager.nodeList().toViewConst();
 
   /// array of indicators: 1 if a face is on on lateral surface; 0 otherwise
-  arrayView1d< localIndex > const lateralSurfaceFaceIndicator = faceManager.getField< fields::wavesolverfields::LateralSurfaceFaceIndicator >();
+  arrayView1d< localIndex > const lateralSurfaceFaceIndicator = faceManager.getField< fields::wavesolverfields::AcousticLateralSurfaceFaceIndicator >();
   /// array of indicators: 1 if a node is on on lateral surface; 0 otherwise
-  arrayView1d< localIndex > const lateralSurfaceNodeIndicator = nodeManager.getField< fields::wavesolverfields::LateralSurfaceNodeIndicator >();
+  arrayView1d< localIndex > const lateralSurfaceNodeIndicator = nodeManager.getField< fields::wavesolverfields::AcousticLateralSurfaceNodeIndicator >();
 
   /// array of indicators: 1 if a face is on on bottom surface; 0 otherwise
-  arrayView1d< localIndex > const bottomSurfaceFaceIndicator = faceManager.getField< fields::wavesolverfields::BottomSurfaceFaceIndicator >();
+  arrayView1d< localIndex > const bottomSurfaceFaceIndicator = faceManager.getField< fields::wavesolverfields::AcousticBottomSurfaceFaceIndicator >();
   /// array of indicators: 1 if a node is on on bottom surface; 0 otherwise
-  arrayView1d< localIndex > const bottomSurfaceNodeIndicator = nodeManager.getField< fields::wavesolverfields::BottomSurfaceNodeIndicator >();
+  arrayView1d< localIndex > const bottomSurfaceNodeIndicator = nodeManager.getField< fields::wavesolverfields::AcousticBottomSurfaceNodeIndicator >();
 
   // Lateral surfaces
   fsManager.apply< FaceManager >( time,
@@ -425,10 +425,10 @@ void AcousticVTIDensityWaveEquationSEM::applyFreeSurfaceBC( real64 time, DomainP
   ArrayOfArraysView< localIndex const > const faceToNodeMap = faceManager.nodeList().toViewConst();
 
   /// array of indicators: 1 if a face is on on free surface; 0 otherwise
-  arrayView1d< localIndex > const freeSurfaceFaceIndicator = faceManager.getField< fields::wavesolverfields::FreeSurfaceFaceIndicator >();
+  arrayView1d< localIndex > const freeSurfaceFaceIndicator = faceManager.getField< fields::wavesolverfields::AcousticFreeSurfaceFaceIndicator >();
 
   /// array of indicators: 1 if a node is on on free surface; 0 otherwise
-  arrayView1d< localIndex > const freeSurfaceNodeIndicator = nodeManager.getField< fields::wavesolverfields::FreeSurfaceNodeIndicator >();
+  arrayView1d< localIndex > const freeSurfaceNodeIndicator = nodeManager.getField< fields::wavesolverfields::AcousticFreeSurfaceNodeIndicator >();
 
   fsManager.apply< FaceManager >( time,
                                   domain.getMeshBody( 0 ).getMeshLevel( m_discretizationName ),
@@ -554,7 +554,7 @@ real64 AcousticVTIDensityWaveEquationSEM::explicitStepInternal( real64 const & t
   {
     NodeManager & nodeManager = mesh.getNodeManager();
 
-    arrayView1d< real32 const > const mass = nodeManager.getField< fields::wavesolverfields::MassVector >();
+    arrayView1d< real32 const > const mass = nodeManager.getField< fields::wavesolverfields::AcousticMassVector >();
     arrayView1d< real32 const > const damping_p = nodeManager.getField< fields::wavesolverfields::DampingVector_p >();
     arrayView1d< real32 const > const damping_q = nodeManager.getField< fields::wavesolverfields::DampingVector_q >();
     arrayView1d< real32 const > const damping_pq = nodeManager.getField< fields::wavesolverfields::DampingVector_pq >();
@@ -568,9 +568,9 @@ real64 AcousticVTIDensityWaveEquationSEM::explicitStepInternal( real64 const & t
     arrayView1d< real32 > const q_n = nodeManager.getField< fields::wavesolverfields::Pressure_q_n >();
     arrayView1d< real32 > const q_np1 = nodeManager.getField< fields::wavesolverfields::Pressure_q_np1 >();
 
-    arrayView1d< localIndex const > const freeSurfaceNodeIndicator = nodeManager.getField< fields::wavesolverfields::FreeSurfaceNodeIndicator >();
-    arrayView1d< localIndex const > const lateralSurfaceNodeIndicator = nodeManager.getField< fields::wavesolverfields::LateralSurfaceNodeIndicator >();
-    arrayView1d< localIndex const > const bottomSurfaceNodeIndicator = nodeManager.getField< fields::wavesolverfields::BottomSurfaceNodeIndicator >();
+    arrayView1d< localIndex const > const freeSurfaceNodeIndicator = nodeManager.getField< fields::wavesolverfields::AcousticFreeSurfaceNodeIndicator >();
+    arrayView1d< localIndex const > const lateralSurfaceNodeIndicator = nodeManager.getField< fields::wavesolverfields::AcousticLateralSurfaceNodeIndicator >();
+    arrayView1d< localIndex const > const bottomSurfaceNodeIndicator = nodeManager.getField< fields::wavesolverfields::AcousticBottomSurfaceNodeIndicator >();
     arrayView1d< real32 > const stiffnessVector_p = nodeManager.getField< fields::wavesolverfields::StiffnessVector_p >();
     arrayView1d< real32 > const stiffnessVector_q = nodeManager.getField< fields::wavesolverfields::StiffnessVector_q >();
     arrayView1d< real32 > const rhs = nodeManager.getField< fields::wavesolverfields::ForcingRHS >();
