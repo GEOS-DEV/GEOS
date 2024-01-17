@@ -25,6 +25,7 @@
 namespace geos
 {
 using namespace dataRepository;
+using namespace fields;
 
 void AcousticElasticWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
 {
@@ -137,26 +138,26 @@ real64 AcousticElasticWaveEquationSEM::solverStep( real64 const & time_n,
   {
     NodeManager & nodeManager = mesh.getNodeManager();
 
-    arrayView1d< real32 const > const acousticMass = nodeManager.getField< fields::AcousticMassVector >();
-    arrayView1d< real32 const > const elasticMass = nodeManager.getField< fields::ElasticMassVector >();
-    arrayView1d< localIndex > const acousticFSNodeIndicator = nodeManager.getField< fields::AcousticFreeSurfaceNodeIndicator >();
-    arrayView1d< localIndex > const elasticFSNodeIndicator = nodeManager.getField< fields::ElasticFreeSurfaceNodeIndicator >();
+    arrayView1d< real32 const > const acousticMass = nodeManager.getField< acousticsecondorderfields::AcousticMassVector >();
+    arrayView1d< real32 const > const elasticMass = nodeManager.getField< elasticsecondorderfields::ElasticMassVector >();
+    arrayView1d< localIndex > const acousticFSNodeIndicator = nodeManager.getField< acousticsecondorderfields::AcousticFreeSurfaceNodeIndicator >();
+    arrayView1d< localIndex > const elasticFSNodeIndicator = nodeManager.getField< elasticsecondorderfields::ElasticFreeSurfaceNodeIndicator >();
 
-    arrayView1d< real32 const > const p_n    = nodeManager.getField< fields::Pressure_n >();
-    arrayView1d< real32 const > const ux_nm1 = nodeManager.getField< fields::Displacementx_nm1 >();
-    arrayView1d< real32 const > const uy_nm1 = nodeManager.getField< fields::Displacementy_nm1 >();
-    arrayView1d< real32 const > const uz_nm1 = nodeManager.getField< fields::Displacementz_nm1 >();
-    arrayView1d< real32 const > const ux_n   = nodeManager.getField< fields::Displacementx_n >();
-    arrayView1d< real32 const > const uy_n   = nodeManager.getField< fields::Displacementy_n >();
-    arrayView1d< real32 const > const uz_n   = nodeManager.getField< fields::Displacementz_n >();
+    arrayView1d< real32 const > const p_n    = nodeManager.getField< acousticsecondorderfields::Pressure_n >();
+    arrayView1d< real32 const > const ux_nm1 = nodeManager.getField< elasticsecondorderfields::Displacementx_nm1 >();
+    arrayView1d< real32 const > const uy_nm1 = nodeManager.getField< elasticsecondorderfields::Displacementy_nm1 >();
+    arrayView1d< real32 const > const uz_nm1 = nodeManager.getField< elasticsecondorderfields::Displacementz_nm1 >();
+    arrayView1d< real32 const > const ux_n   = nodeManager.getField< elasticsecondorderfields::Displacementx_n >();
+    arrayView1d< real32 const > const uy_n   = nodeManager.getField< elasticsecondorderfields::Displacementy_n >();
+    arrayView1d< real32 const > const uz_n   = nodeManager.getField< elasticsecondorderfields::Displacementz_n >();
     arrayView1d< real32 const > const atoex  = nodeManager.getField< fields::CouplingVectorx >();
     arrayView1d< real32 const > const atoey  = nodeManager.getField< fields::CouplingVectory >();
     arrayView1d< real32 const > const atoez  = nodeManager.getField< fields::CouplingVectorz >();
 
-    arrayView1d< real32 > const p_np1  = nodeManager.getField< fields::Pressure_np1 >();
-    arrayView1d< real32 > const ux_np1 = nodeManager.getField< fields::Displacementx_np1 >();
-    arrayView1d< real32 > const uy_np1 = nodeManager.getField< fields::Displacementy_np1 >();
-    arrayView1d< real32 > const uz_np1 = nodeManager.getField< fields::Displacementz_np1 >();
+    arrayView1d< real32 > const p_np1  = nodeManager.getField< acousticsecondorderfields::Pressure_np1 >();
+    arrayView1d< real32 > const ux_np1 = nodeManager.getField< elasticsecondorderfields::Displacementx_np1 >();
+    arrayView1d< real32 > const uy_np1 = nodeManager.getField< elasticsecondorderfields::Displacementy_np1 >();
+    arrayView1d< real32 > const uz_np1 = nodeManager.getField< elasticsecondorderfields::Displacementz_np1 >();
 
     real32 const dt2 = pow( dt, 2 );
 

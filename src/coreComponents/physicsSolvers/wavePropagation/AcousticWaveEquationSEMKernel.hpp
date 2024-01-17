@@ -24,9 +24,12 @@
 #if !defined( GEOS_USE_HIP )
 #include "finiteElement/elementFormulations/Qk_Hexahedron_Lagrange_GaussLobatto.hpp"
 #endif
+#include "WaveSolverBaseFields.hpp"
 
 namespace geos
 {
+
+using namespace fields;
 
 /// Namespace to contain the acoustic wave kernels.
 namespace acousticWaveEquationSEMKernels
@@ -735,9 +738,9 @@ public:
           finiteElementSpace,
           inputConstitutiveType ),
     m_nodeCoords( nodeManager.getField< fields::referencePosition32 >() ),
-    m_p_n( nodeManager.getField< fields::Pressure_n >() ),
-    m_stiffnessVector( nodeManager.getField< fields::StiffnessVector >() ),
-    m_density( elementSubRegion.template getField< fields::AcousticDensity >() ),
+    m_p_n( nodeManager.getField< acousticsecondorderfields::Pressure_n >() ),
+    m_stiffnessVector( nodeManager.getField< acousticsecondorderfields::StiffnessVector >() ),
+    m_density( elementSubRegion.template getField< acousticsecondorderfields::AcousticDensity >() ),
     m_dt( dt )
   {
     GEOS_UNUSED_VAR( edgeManager );
