@@ -165,7 +165,7 @@
       compressibility="5e-10"
       thermalExpansionCoeff="1e-10"
       viscosibility="0.0"
-      volumetricHeatCapacity="1"
+      specificHeatCapacity="1"
       referenceInternalEnergy="1"/>
     <!-- SPHINX_FluidPropertiesEnd -->
 
