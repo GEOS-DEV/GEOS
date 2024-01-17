@@ -85,6 +85,7 @@ public:
   /**
    * @brief Set the path prefix of the file
    * @details The path prefix is usually a folder path in which the XML file is located
+   * @param p Path prefix to be set.
    */
   static void setPathPrefix( std::string_view p )
   {
@@ -122,6 +123,9 @@ public:
 
 private:
 
+  /**
+   * @brief @return the reference of global variable of the path prefix
+   */
   static std::string & pathPrefix()
   {
     static std::string s_pathPrefix = "";
