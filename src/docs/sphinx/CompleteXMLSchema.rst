@@ -227,11 +227,25 @@ Element: CompositionalTwoPhaseFluidPengRobinson
 .. include:: ../../coreComponents/schema/docs/CompositionalTwoPhaseFluidPengRobinson.rst
 
 
+.. _XML_CompositionalTwoPhaseFluidPengRobinsonLBC:
+
+Element: CompositionalTwoPhaseFluidPengRobinsonLBC
+==================================================
+.. include:: ../../coreComponents/schema/docs/CompositionalTwoPhaseFluidPengRobinsonLBC.rst
+
+
 .. _XML_CompositionalTwoPhaseFluidSoaveRedlichKwong:
 
 Element: CompositionalTwoPhaseFluidSoaveRedlichKwong
 ====================================================
 .. include:: ../../coreComponents/schema/docs/CompositionalTwoPhaseFluidSoaveRedlichKwong.rst
+
+
+.. _XML_CompositionalTwoPhaseFluidSoaveRedlichKwongLBC:
+
+Element: CompositionalTwoPhaseFluidSoaveRedlichKwongLBC
+=======================================================
+.. include:: ../../coreComponents/schema/docs/CompositionalTwoPhaseFluidSoaveRedlichKwongLBC.rst
 
 
 .. _XML_CompressibleSinglePhaseFluid:
@@ -1575,11 +1589,25 @@ Datastructure: CompositionalTwoPhaseFluidPengRobinson
 .. include:: ../../coreComponents/schema/docs/CompositionalTwoPhaseFluidPengRobinson_other.rst
 
 
+.. _DATASTRUCTURE_CompositionalTwoPhaseFluidPengRobinsonLBC:
+
+Datastructure: CompositionalTwoPhaseFluidPengRobinsonLBC
+========================================================
+.. include:: ../../coreComponents/schema/docs/CompositionalTwoPhaseFluidPengRobinsonLBC_other.rst
+
+
 .. _DATASTRUCTURE_CompositionalTwoPhaseFluidSoaveRedlichKwong:
 
 Datastructure: CompositionalTwoPhaseFluidSoaveRedlichKwong
 ==========================================================
 .. include:: ../../coreComponents/schema/docs/CompositionalTwoPhaseFluidSoaveRedlichKwong_other.rst
+
+
+.. _DATASTRUCTURE_CompositionalTwoPhaseFluidSoaveRedlichKwongLBC:
+
+Datastructure: CompositionalTwoPhaseFluidSoaveRedlichKwongLBC
+=============================================================
+.. include:: ../../coreComponents/schema/docs/CompositionalTwoPhaseFluidSoaveRedlichKwongLBC_other.rst
 
 
 .. _DATASTRUCTURE_CompressibleSinglePhaseFluid:

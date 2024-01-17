@@ -247,6 +247,14 @@ template class CompositionalMultiphaseFluid<
     compositional::NegativeTwoPhaseFlashSRKSRK,
     compositional::PhaseModel< compositional::CompositionalDensity< compositional::CubicEOSSRK >, compositional::ConstantViscosity, compositional::NullModel >,
     compositional::PhaseModel< compositional::CompositionalDensity< compositional::CubicEOSSRK >, compositional::ConstantViscosity, compositional::NullModel > >;
+template class CompositionalMultiphaseFluid<
+    compositional::NegativeTwoPhaseFlashPRPR,
+    compositional::PhaseModel< compositional::CompositionalDensity< compositional::CubicEOSPR >, compositional::LohrenzBrayClarkViscosity, compositional::NullModel >,
+    compositional::PhaseModel< compositional::CompositionalDensity< compositional::CubicEOSPR >, compositional::LohrenzBrayClarkViscosity, compositional::NullModel > >;
+template class CompositionalMultiphaseFluid<
+    compositional::NegativeTwoPhaseFlashSRKSRK,
+    compositional::PhaseModel< compositional::CompositionalDensity< compositional::CubicEOSSRK >, compositional::LohrenzBrayClarkViscosity, compositional::NullModel >,
+    compositional::PhaseModel< compositional::CompositionalDensity< compositional::CubicEOSSRK >, compositional::LohrenzBrayClarkViscosity, compositional::NullModel > >;
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase,
                         CompositionalTwoPhasePengRobinsonConstantViscosity,
@@ -255,6 +263,16 @@ REGISTER_CATALOG_ENTRY( ConstitutiveBase,
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase,
                         CompositionalTwoPhaseSoaveRedlichKwongConstantViscosity,
+                        string const &,
+                        dataRepository::Group * const )
+
+REGISTER_CATALOG_ENTRY( ConstitutiveBase,
+                        CompositionalTwoPhasePengRobinsonLBCViscosity,
+                        string const &,
+                        dataRepository::Group * const )
+
+REGISTER_CATALOG_ENTRY( ConstitutiveBase,
+                        CompositionalTwoPhaseSoaveRedlichKwongLBCViscosity,
                         string const &,
                         dataRepository::Group * const )
 

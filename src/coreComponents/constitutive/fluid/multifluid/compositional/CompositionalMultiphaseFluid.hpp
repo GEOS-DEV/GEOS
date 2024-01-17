@@ -22,6 +22,7 @@
 #include "constitutive/fluid/multifluid/compositional/CompositionalMultiphaseFluidUpdates.hpp"
 #include "constitutive/fluid/multifluid/compositional/models/ConstantViscosity.hpp"
 #include "constitutive/fluid/multifluid/compositional/models/CompositionalDensity.hpp"
+#include "constitutive/fluid/multifluid/compositional/models/LohrenzBrayClarkViscosity.hpp"
 #include "constitutive/fluid/multifluid/compositional/models/NegativeTwoPhaseFlashModel.hpp"
 #include "constitutive/fluid/multifluid/compositional/models/NullModel.hpp"
 #include "constitutive/fluid/multifluid/compositional/models/PhaseModel.hpp"
@@ -147,6 +148,14 @@ using CompositionalTwoPhaseSoaveRedlichKwongConstantViscosity = CompositionalMul
   compositional::NegativeTwoPhaseFlashSRKSRK,
   compositional::PhaseModel< compositional::CompositionalDensity< compositional::CubicEOSSRK >, compositional::ConstantViscosity, compositional::NullModel >,
   compositional::PhaseModel< compositional::CompositionalDensity< compositional::CubicEOSSRK >, compositional::ConstantViscosity, compositional::NullModel > >;
+using CompositionalTwoPhasePengRobinsonLBCViscosity = CompositionalMultiphaseFluid<
+  compositional::NegativeTwoPhaseFlashPRPR,
+  compositional::PhaseModel< compositional::CompositionalDensity< compositional::CubicEOSPR >, compositional::LohrenzBrayClarkViscosity, compositional::NullModel >,
+  compositional::PhaseModel< compositional::CompositionalDensity< compositional::CubicEOSPR >, compositional::LohrenzBrayClarkViscosity, compositional::NullModel > >;
+using CompositionalTwoPhaseSoaveRedlichKwongLBCViscosity = CompositionalMultiphaseFluid<
+  compositional::NegativeTwoPhaseFlashSRKSRK,
+  compositional::PhaseModel< compositional::CompositionalDensity< compositional::CubicEOSSRK >, compositional::LohrenzBrayClarkViscosity, compositional::NullModel >,
+  compositional::PhaseModel< compositional::CompositionalDensity< compositional::CubicEOSSRK >, compositional::LohrenzBrayClarkViscosity, compositional::NullModel > >;
 
 } /* namespace constitutive */
 

@@ -1,10 +1,12 @@
 # Specify list of tests
 set( gtest_geosx_tests
+     testCompositionalDensity.cpp
      testCompositionalProperties.cpp
      testDamageUtilities.cpp
      testDruckerPrager.cpp
      testElasticIsotropic.cpp
      testKValueInitialization.cpp
+     testLohrenzBrayClarkViscosity.cpp
      testModifiedCamClay.cpp
      testNegativeTwoPhaseFlash.cpp
      testParticleFluidEnums.cpp

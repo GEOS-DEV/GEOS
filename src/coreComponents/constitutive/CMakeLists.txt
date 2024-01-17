@@ -68,6 +68,7 @@ set( constitutive_headers
      fluid/multifluid/compositional/models/CompositionalDensity.hpp
      fluid/multifluid/compositional/models/ConstantViscosity.hpp
      fluid/multifluid/compositional/models/FunctionBase.hpp
+     fluid/multifluid/compositional/models/LohrenzBrayClarkViscosity.hpp
      fluid/multifluid/compositional/models/NegativeTwoPhaseFlashModel.hpp
      fluid/multifluid/compositional/models/NullModel.hpp
      fluid/multifluid/compositional/models/PhaseModel.hpp
@@ -213,6 +214,7 @@ set( constitutive_sources
      fluid/multifluid/compositional/functions/CompositionalProperties.cpp
      fluid/multifluid/compositional/models/CompositionalDensity.cpp
      fluid/multifluid/compositional/models/ConstantViscosity.cpp
+     fluid/multifluid/compositional/models/LohrenzBrayClarkViscosity.cpp
      fluid/multifluid/compositional/models/NegativeTwoPhaseFlashModel.cpp
      fluid/multifluid/compositional/CompositionalMultiphaseFluid.cpp
      fluid/multifluid/compositional/CompositionalMultiphaseFluidUpdates.cpp

@@ -31,4 +31,8 @@ template void PVTDriver::runTest< constitutive::CompositionalTwoPhasePengRobinso
   constitutive::CompositionalTwoPhasePengRobinsonConstantViscosity &, arrayView2d< real64 > const & );
 template void PVTDriver::runTest< constitutive::CompositionalTwoPhaseSoaveRedlichKwongConstantViscosity >(
   constitutive::CompositionalTwoPhaseSoaveRedlichKwongConstantViscosity &, arrayView2d< real64 > const & );
+template void PVTDriver::runTest< constitutive::CompositionalTwoPhasePengRobinsonLBCViscosity >(
+  constitutive::CompositionalTwoPhasePengRobinsonLBCViscosity &, arrayView2d< real64 > const & );
+template void PVTDriver::runTest< constitutive::CompositionalTwoPhaseSoaveRedlichKwongLBCViscosity >(
+  constitutive::CompositionalTwoPhaseSoaveRedlichKwongLBCViscosity &, arrayView2d< real64 > const & );
 }
