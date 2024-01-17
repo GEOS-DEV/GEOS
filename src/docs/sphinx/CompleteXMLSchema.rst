@@ -864,6 +864,27 @@ Element: PorousModifiedCamClay
 .. include:: ../../coreComponents/schema/docs/PorousModifiedCamClay.rst
 
 
+.. _XML_PorousViscoDruckerPrager:
+
+Element: PorousViscoDruckerPrager
+==============================
+.. include:: ../../coreComponents/schema/docs/PorousViscoDruckerPrager.rst
+
+
+.. _XML_PorousViscoExtendedDruckerPrager:
+
+Element: PorousViscoExtendedDruckerPrager
+==============================
+.. include:: ../../coreComponents/schema/docs/PorousViscoExtendedDruckerPrager.rst
+
+
+.. _XML_PorousViscoModifiedCamClay:
+
+Element: PorousViscoModifiedCamClay
+==============================
+.. include:: ../../coreComponents/schema/docs/PorousViscoModifiedCamClay.rst
+
+
 .. _XML_PressurePorosity:
 
 Element: PressurePorosity
@@ -2231,6 +2252,27 @@ Datastructure: PorousExtendedDruckerPrager
 Datastructure: PorousModifiedCamClay
 ====================================
 .. include:: ../../coreComponents/schema/docs/PorousModifiedCamClay_other.rst
+
+
+.. _DATASTRUCTURE_PorousViscoDruckerPrager:
+
+Datastructure: PorousViscoDruckerPrager
+====================================
+.. include:: ../../coreComponents/schema/docs/PorousViscoDruckerPrager_other.rst
+
+
+.. _DATASTRUCTURE_PorousViscoExtendedDruckerPrager:
+
+Datastructure: PorousViscoExtendedDruckerPrager
+====================================
+.. include:: ../../coreComponents/schema/docs/PorousViscoExtendedDruckerPrager_other.rst
+
+
+.. _DATASTRUCTURE_PorousViscoModifiedCamClay:
+
+Datastructure: PorousViscoModifiedCamClay
+====================================
+.. include:: ../../coreComponents/schema/docs/PorousViscoModifiedCamClay_other.rst
 
 
 .. _DATASTRUCTURE_PressurePorosity:
