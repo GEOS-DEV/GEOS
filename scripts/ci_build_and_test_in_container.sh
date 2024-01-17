@@ -219,6 +219,11 @@ else
   fi
 fi
 
+if [[ ! -z "${SCCACHE_CREDS}" ]]; then
+  echo "sccache post-build state"
+  or_die ${SCCACHE} --show-adv-stats
+fi
+
 if [[ "${CODE_COVERAGE}" = true ]]; then
   or_die ninja coreComponents_coverage
   cp -r ${GEOSX_BUILD_DIR}/coreComponents_coverage.info.cleaned /tmp/geos/geos_coverage.info.cleaned
