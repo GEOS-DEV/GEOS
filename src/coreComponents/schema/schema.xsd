@@ -4900,6 +4900,8 @@ To neglect hysteresis on this phase, just use the same table name for the draina
 		<xsd:attribute name="referenceTemperature" type="real64" default="0" />
 		<!--referenceViscosity => Reference fluid viscosity-->
 		<xsd:attribute name="referenceViscosity" type="real64" default="0.001" />
+		<!--specificHeatCapacity => Fluid heat capacity. Unit: J/kg/K-->
+		<xsd:attribute name="specificHeatCapacity" type="real64" default="0" />
 		<!--thermalExpansionCoeff => Fluid thermal expansion coefficient. Unit: 1/K-->
 		<xsd:attribute name="thermalExpansionCoeff" type="real64" default="0" />
 		<!--viscosibility => Fluid viscosity exponential coefficient-->
@@ -4909,8 +4911,6 @@ To neglect hysteresis on this phase, just use the same table name for the draina
 * linear
 * quadratic-->
 		<xsd:attribute name="viscosityModelType" type="geos_constitutive_ExponentApproximationType" default="linear" />
-		<!--volumetricHeatCapacity => Fluid volumetric heat capacity. Unit: J/kg/K-->
-		<xsd:attribute name="volumetricHeatCapacity" type="real64" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
