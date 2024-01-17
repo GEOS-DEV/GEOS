@@ -42,7 +42,7 @@ Usage: $0
       Folder to share data with outside of the container.
   --host-config host-config/my_config.cmake
       The host-config. Path is relative to the root of the repository.
-  --install-dir-basename
+  --install-dir-basename GEOS-e42ffc1
       GEOS installation basename.
   --no-install-schema
       Do not install the xsd schema.
@@ -256,11 +256,6 @@ if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
   or_die tar cfM ${DATA_EXCHANGE_DIR}/${DATA_BASENAME_WE}.tar --directory ${GEOS_SRC_DIR}    --transform "s/^integratedTests/${DATA_BASENAME_WE}\/repo/" integratedTests
   or_die tar rfM ${DATA_EXCHANGE_DIR}/${DATA_BASENAME_WE}.tar --directory ${GEOSX_BUILD_DIR} --transform "s/^integratedTests/${DATA_BASENAME_WE}\/logs/" integratedTests
   or_die gzip ${DATA_EXCHANGE_DIR}/${DATA_BASENAME_WE}.tar
-fi
-
-if [[ ! -z "${SCCACHE_CREDS}" ]]; then
-  echo "sccache final state"
-  or_die ${SCCACHE} --show-adv-stats
 fi
 
 # If we're here, either everything went OK or we have to deal with the integrated tests manually.
