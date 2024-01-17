@@ -499,7 +499,7 @@ enum class MGRRestrictionType : HYPRE_Int
   approximateInverse = 3,  //!< Approximate inverse
   blockJacobi = 12,        //!< Block-Jacobi
   cprLike = 13,            //!< CPR-like restriction
-  blockColsum = 14         //!< Block column sum approximation
+  blockColLumped = 14      //!< Block column-lumped approximation
 };
 
 /**
@@ -517,7 +517,7 @@ enum class MGRCoarseGridMethod : HYPRE_Int
                           //!< approximated by its block diagonal inverse
   approximateInverse = 4, //!< Non-Galerkin coarse grid computation with dropping strategy: inv(A_FF) approximated by sparse approximate
                           //!< inverse
-  nonGalerkinRAI = 5      //!< Non-Galerkin coarse grid computation with arbitrary classical restriction and injective prolongation
+  galerkinRAI = 5         //!< Galerkin coarse grid computation with arbitrary classical restriction and injective prolongation
 };
 
 /**
