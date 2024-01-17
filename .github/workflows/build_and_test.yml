@@ -131,6 +131,10 @@ jobs:
         script_args+=(--cmake-build-type ${{ inputs.CMAKE_BUILD_TYPE }})
         script_args+=(${{ inputs.BUILD_AND_TEST_CLI_ARGS }})
 
+        if ${{ inputs.CODE_COVERAGE }} == 'true'; then
+          script_args+=(--code-coverage)
+        fi
+
         # In case of integrated tests run, we still want to send the results to the cloud for inspection.
         # While for standard build (if even possible), pushing a failed build would be pointless.
         # GHA set `-e` to bash scripts by default to fail asap,

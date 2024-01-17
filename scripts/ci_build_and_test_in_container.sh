@@ -34,6 +34,8 @@ Usage: $0
       Request for the build of geos only.
   --cmake-build-type ...
       One of Debug, Release, RelWithDebInfo and MinSizeRel. Forwarded to CMAKE_BUILD_TYPE.
+  --code-coverage
+      run a code build and test
   --data-basename output.tar.gz
       If some data needs to be extracted from the build, the argument will define the tarball. Has to be a `tar.gz`.
   --exchange-dir /path/to/exchange
@@ -74,6 +76,7 @@ RUN_UNIT_TESTS=true
 RUN_INTEGRATED_TESTS=false
 TEST_CODE_STYLE=false
 TEST_DOCUMENTATION=false
+CODE_COVERAGE=false
 
 eval set -- ${args}
 while :
@@ -101,6 +104,7 @@ do
     --no-run-unit-tests)     RUN_UNIT_TESTS=false;       shift;;
     --repository)            GEOS_SRC_DIR=$2;            shift 2;;
     --run-integrated-tests)  RUN_INTEGRATED_TESTS=true;  shift;;
+    --code-coverage)         CODE_COVERAGE=true;         shift;;
     --sccache-credentials)   SCCACHE_CREDS=$2;           shift 2;;
     --test-code-style)       TEST_CODE_STYLE=true;       shift;;
     --test-documentation)    TEST_DOCUMENTATION=true;    shift;;
@@ -154,7 +158,7 @@ if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
 fi
 
 
-if [[ "$*" == *--code-coverage* ]]; then
+if [[ "${CODE_COVERAGE}" = true ]]; then
   apt-get install -y lcov make
   BUILD_COMMAND="make"
   NINJA_FLAG=""
@@ -187,7 +191,7 @@ or_die python3 scripts/config-build.py \
                ${NINJA_FLAG} \
                -DBLT_MPI_COMMAND_APPEND='"--allow-run-as-root;--oversubscribe"' \
                -DGEOSX_INSTALL_SCHEMA=$([[ "$*" == *--disable-schema-deployment* ]] && echo 0 || echo 1) \
-               -DENABLE_COVERAGE=$([[ "$*" == *--code-coverage* ]] && echo 1 || echo 0) \
+               -DENABLE_COVERAGE=$([[ "${CODE_COVERAGE}" = true ]] && echo 1 || echo 0) \
                ${SCCACHE_CMAKE_ARGS} \
                ${ATS_CMAKE_ARGS}
 
@@ -220,7 +224,7 @@ else
   fi
 fi
 
-if [[ "$*" == *--code-coverage* ]]; then
+if [[ "${CODE_COVERAGE}" = true ]]; then
   or_die ${BUILD_COMMAND} coreComponents_coverage
   cp -r ${GEOSX_BUILD_DIR}/coreComponents_coverage.info.cleaned /tmp/geos/geos_coverage.info.cleaned
 fi
