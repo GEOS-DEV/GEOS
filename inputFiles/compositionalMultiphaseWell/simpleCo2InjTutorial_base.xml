@@ -146,7 +146,7 @@
       fieldName="rockPerm_permeability"
       scale="3e-15"
       functionName="permzFunc"/>
-
+     <!-- SPHINX_FIELD_CASE_INIT_PRESSURE -->
     <FieldSpecification
       name="initialPressure"
       initialCondition="1"
@@ -154,7 +154,7 @@
       objectPath="ElementRegions/reservoir"
       fieldName="pressure"
       scale="1.25e7"/>
-
+    <!-- SPHINX_FIELD_CASE_INIT_PRESSURE_END -->
     <FieldSpecification
       name="initialComposition_co2"
       initialCondition="1"
