@@ -220,12 +220,7 @@ Here, these fields are homogeneous, except for the permeability field that is ta
 
 .. warning::
     This is an example XML input file, its purpose is not to model a physical reality, nor to produce a stable simulation. 
-    For example, initialPressure regulates pressure homogeneously, so we don't have hydrostatic equilibrium at the start of the simulation :
-
-    .. literalinclude:: ../../../../../inputFiles/compositionalMultiphaseWell/simpleCo2InjTutorial_base.xml
-    :language: xml
-    :start-after: <!-- SPHINX_FIELD_CASE_INIT_PRESSURE -->
-    :end-before: <!-- SPHINX_FIELD_CASE_INIT_PRESSURE_END -->
+    For instance, ``initialPressure`` regulates pressure homogeneously, therefore we don't have hydrostatic equilibrium at the start of the simulation.
 
 ------
 Output
