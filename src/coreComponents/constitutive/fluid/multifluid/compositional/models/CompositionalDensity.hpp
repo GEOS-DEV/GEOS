@@ -55,14 +55,6 @@ public:
                 bool useMass ) const;
 
 private:
-  // Convert derivatives from phase mole fraction to total mole fraction
-  GEOS_HOST_DEVICE
-  void convertDerivativesToTotalMoleFraction( integer const numComps,
-                                              arraySlice2d< real64 const > const & dPhaseComposition,
-                                              arraySlice1d< real64 > const & dProperty,
-                                              arraySlice1d< real64 > const & workSpace ) const;
-
-private:
   arrayView1d< real64 const > m_componentDimensionalVolumeShift;
 };
 
@@ -154,33 +146,6 @@ compute( ComponentProperties::KernelWrapper const & componentProperties,
   // Convert derivatives from phase to total composition
   convertDerivativesToTotalMoleFraction( numComps, dPhaseComposition, dMolarDensity, tempDerivs );
   convertDerivativesToTotalMoleFraction( numComps, dPhaseComposition, dMassDensity, tempDerivs );
-}
-
-template< typename EOS_TYPE >
-GEOS_HOST_DEVICE
-void CompositionalDensityUpdate< EOS_TYPE >::
-convertDerivativesToTotalMoleFraction( integer const numComps,
-                                       arraySlice2d< real64 const > const & dPhaseComposition,
-                                       arraySlice1d< real64 > const & dProperty,
-                                       arraySlice1d< real64 > const & workSpace ) const
-{
-  using Deriv = multifluid::DerivativeOffset;
-  integer const numDofs = numComps + 2;
-  for( integer kc = 0; kc < numDofs; ++kc )
-  {
-    workSpace[kc] = dProperty[kc];
-  }
-  for( integer ic = 0; ic < numComps; ++ic )
-  {
-    dProperty[Deriv::dC+ic] = 0.0;
-  }
-  for( integer kc = 0; kc < numDofs; ++kc )
-  {
-    for( integer ic = 0; ic < numComps; ++ic )
-    {
-      dProperty[kc] += (dPhaseComposition( ic, kc ) * workSpace[Deriv::dC+ic]);
-    }
-  }
 }
 
 } // end namespace compositional

@@ -64,6 +64,14 @@ protected:
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
   static void setZero( real64 & val ){ val = 0.0; }
+
+
+  // Convert derivatives from phase mole fraction to total mole fraction
+  GEOS_HOST_DEVICE
+  static void convertDerivativesToTotalMoleFraction( integer const numComps,
+                                                     arraySlice2d< real64 const > const & dPhaseComposition,
+                                                     arraySlice1d< real64 > const & dProperty,
+                                                     arraySlice1d< real64 > const & workSpace );
 };
 
 class FunctionBase
