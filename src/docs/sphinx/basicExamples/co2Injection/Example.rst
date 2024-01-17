@@ -219,8 +219,8 @@ Here, these fields are homogeneous, except for the permeability field that is ta
 .. _Outputs_tag_co2_field_case:
 
 .. warning::
-    This is an example XML input file, its purpose is not to model a physical reality, nor to produce a stable simulation. 
-    For instance, ``initialPressure`` regulates pressure homogeneously, therefore we don't have hydrostatic equilibrium at the start of the simulation.
+  This XML file example does not take into account elevation when imposing the intial pressure with ``initialPressure``. 
+  Consider using a "HydrostraticEquilibrium" for a closer answer to modeled physical processes.
 
 ------
 Output
