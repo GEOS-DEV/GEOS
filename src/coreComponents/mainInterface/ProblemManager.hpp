@@ -38,6 +38,7 @@ class FunctionManager;
 class FieldSpecificationManager;
 struct CommandLineOptions;
 class CellBlockManagerABC;
+class ParticleBlockManagerABC;
 
 /**
  * @class ProblemManager
@@ -343,6 +344,10 @@ private:
                           CellBlockManagerABC const & cellBlockManager,
                           Group const * const discretization,
                           arrayView1d< string const > const & targetRegions );
+
+  void generateMeshLevel( MeshLevel & meshLevel,
+                          ParticleBlockManagerABC & particleBlockManager,
+                          arrayView1d< string const > const & );
 
   /**
    * @brief Allocate constitutive relations on each subregion with appropriate

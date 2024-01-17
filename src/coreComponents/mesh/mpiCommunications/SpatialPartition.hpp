@@ -17,6 +17,8 @@
 
 
 #include "PartitionBase.hpp"
+#include "mesh/DomainPartition.hpp"
+
 
 #include <map>
 
@@ -34,16 +36,71 @@ public:
 
   ~SpatialPartition() override;
 
-  bool isCoordInPartition( const real64 & coord, const int dir ) override;
+  bool isCoordInPartition( const real64 & coord, const int dir ) const override;
+
+  bool isCoordInPartitionBoundingBox( const R1Tensor & elemCenter,
+                                      const real64 & boundaryRadius ) const;
+
+  void updateSizes( arrayView1d< real64 > const domainL,
+                    real64 const dt );
 
   void setSizes( real64 const ( &min )[ 3 ],
                  real64 const ( &max )[ 3 ] ) override;
+
+  real64 * getLocalMin()
+  {
+    return m_min;
+  }
+
+  real64 * getLocalMax()
+  {
+    return m_max;
+  }
+
+  real64 * getGlobalMin()
+  {
+    return m_gridMin;
+  }
+
+  real64 * getGlobalMax()
+  {
+    return m_gridMax;
+  }
 
   void setPartitions( unsigned int xPartitions,
                       unsigned int yPartitions,
                       unsigned int zPartitions ) override;
 
   int getColor() override;
+
+  void repartitionMasterParticles( ParticleSubRegion & subRegion,
+                                   MPI_iCommData & commData );
+
+  void getGhostParticlesFromNeighboringPartitions( DomainPartition & domain,
+                                                   MPI_iCommData & commData,
+                                                   const real64 & boundaryRadius );
+
+  /**
+   * @brief Send coordinates to neighbors as part of repartition.
+   * @param[in] particleCoordinatesSendingToNeighbors Single list of coordinates sent to all neighbors
+   * @param[in] commData Solver's MPI communicator
+   * @param[in] particleCoordinatesReceivedFromNeighbors List of lists of coordinates received from each neighbor
+   */
+  void sendCoordinateListToNeighbors( arrayView1d< R1Tensor > const & particleCoordinatesSendingToNeighbors,
+                                      MPI_iCommData & commData,
+                                      std::vector< array1d< R1Tensor > > & particleCoordinatesReceivedFromNeighbors
+                                      );
+
+  template< typename indexType >
+  void sendListOfIndicesToNeighbors( std::vector< array1d< indexType > > & listSendingToEachNeighbor,
+                                     MPI_iCommData & commData,
+                                     std::vector< array1d< indexType > > & listReceivedFromEachNeighbor );
+
+  void sendParticlesToNeighbor( ParticleSubRegionBase & subRegion,
+                                std::vector< int > const & newParticleStartingIndices,
+                                std::vector< int > const & numberOfIncomingParticles,
+                                MPI_iCommData & commData,
+                                std::vector< array1d< localIndex > > const & particleLocalIndicesToSendToEachNeighbor );
 
   /**
    * @brief Get the metis neighbors indices, const version. @see DomainPartition#m_metisNeighborList

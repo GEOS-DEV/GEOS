@@ -81,6 +81,10 @@ public:
    * @return The string that may be used to generate a new instance from the SolverBase::CatalogInterface::CatalogType
    */
   static string catalogName() { return "SolidMechanics_LagrangianFEM"; }
+  /**
+   * @copydoc SolverBase::getCatalogName()
+   */
+  string getCatalogName() const override { return catalogName(); }
 
   virtual void initializePreSubGroups() override;
 
@@ -217,7 +221,7 @@ public:
                                arrayView1d< real64 > const & localRhs );
 
   virtual real64
-  scalingForSystemSolution( DomainPartition const & domain,
+  scalingForSystemSolution( DomainPartition & domain,
                             DofManager const & dofManager,
                             arrayView1d< real64 const > const & localSolution ) override;
 
@@ -239,6 +243,7 @@ public:
     static constexpr char const * maxForceString() { return "maxForce"; }
     static constexpr char const * elemsAttachedToSendOrReceiveNodesString() { return "elemsAttachedToSendOrReceiveNodes"; }
     static constexpr char const * elemsNotAttachedToSendOrReceiveNodesString() { return "elemsNotAttachedToSendOrReceiveNodes"; }
+    constexpr static char const * surfaceGeneratorNameString() { return "surfaceGeneratorName"; }
 
     static constexpr char const * sendOrReceiveNodesString() { return "sendOrReceiveNodes";}
     static constexpr char const * nonSendOrReceiveNodesString() { return "nonSendOrReceiveNodes";}
@@ -295,6 +300,9 @@ protected:
 
   /// Rigid body modes
   array1d< ParallelVector > m_rigidBodyModes;
+
+  SolverBase * m_surfaceGenerator;
+  string m_surfaceGeneratorName;
 
 private:
   virtual void setConstitutiveNames( ElementSubRegionBase & subRegion ) const override;

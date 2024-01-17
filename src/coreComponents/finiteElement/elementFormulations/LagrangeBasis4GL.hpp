@@ -50,7 +50,7 @@ public:
    * @return The value of the weight
    */
   GEOS_HOST_DEVICE
-  inline
+  GEOS_FORCE_INLINE
   constexpr static real64 weight( const int q )
   {
     switch( q )
@@ -73,7 +73,7 @@ public:
    * @return parent coordinate in the xi0 direction.
    */
   GEOS_HOST_DEVICE
-  inline
+  GEOS_FORCE_INLINE
   // depending on the supportPointIndex value
   //Switch case
   constexpr static real64 parentSupportCoord( const localIndex supportPointIndex )
@@ -113,7 +113,7 @@ public:
    * @return The value of basis function.
    */
   GEOS_HOST_DEVICE
-  inline
+  GEOS_FORCE_INLINE
   constexpr static real64 value( const int index,
                                  const real64 xi )
   {
@@ -150,7 +150,7 @@ public:
    * @return The value of the basis.
    */
   GEOS_HOST_DEVICE
-  inline
+  GEOS_FORCE_INLINE
   //MODFI4 : Implemented new base functions and their derivative for Q3
   constexpr static real64 value0( const real64 xi )
   {
@@ -163,7 +163,7 @@ public:
    * @return The value of the basis.
    */
   GEOS_HOST_DEVICE
-  inline
+  GEOS_FORCE_INLINE
   constexpr static real64 value1( const real64 xi )
   {
     return (49.0/24.0)*(sqrt3_7-xi)*xi*(-1.0+xi*xi);
@@ -175,7 +175,7 @@ public:
    * @return The value of the basis.
    */
   GEOS_HOST_DEVICE
-  inline
+  GEOS_FORCE_INLINE
   constexpr static real64 value2( const real64 xi )
   {
     return (1.0/3.0)*(3.0-10.0*xi*xi+7.0*xi*xi*xi*xi);
@@ -187,7 +187,7 @@ public:
    * @return The value of the basis.
    */
   GEOS_HOST_DEVICE
-  inline
+  GEOS_FORCE_INLINE
   constexpr static real64 value3( const real64 xi )
   {
     return -(49.0/24.0)*(sqrt3_7+xi)*xi*(-1.0+xi*xi);
@@ -199,7 +199,7 @@ public:
    * @return The value of the basis.
    */
   GEOS_HOST_DEVICE
-  inline
+  GEOS_FORCE_INLINE
   constexpr static real64 value4( const real64 xi )
   {
     return (1.0/8.0)*(1.0+xi)*xi*(-3.0+7.0*xi*xi);
@@ -214,7 +214,7 @@ public:
    * @return The value of basis function.
    */
   GEOS_HOST_DEVICE
-  inline
+  GEOS_FORCE_INLINE
   constexpr static real64 gradient( const int index,
                                     const real64 xi )
   {
@@ -251,7 +251,7 @@ public:
    * @return The gradient of basis function
    */
   GEOS_HOST_DEVICE
-  inline
+  GEOS_FORCE_INLINE
   constexpr static real64 gradient0( const real64 xi )
   {
     return (1.0/8.0)*(3.0+xi*(-6.0+7.0*xi*(-3.0+4.0*xi)));
@@ -264,7 +264,7 @@ public:
    * @return The gradient of basis function
    */
   GEOS_HOST_DEVICE
-  inline
+  GEOS_FORCE_INLINE
   constexpr static real64 gradient1( const real64 xi )
   {
     return (49.0/24.0)*(-sqrt3_7+xi*(2.0+3.0*sqrt3_7*xi-4.0*xi*xi));
@@ -277,7 +277,7 @@ public:
    * @return The gradient of basis function
    */
   GEOS_HOST_DEVICE
-  inline
+  GEOS_FORCE_INLINE
   constexpr static real64 gradient2( const real64 xi )
   {
     return (4.0/3.0)*xi*(-5.0+7.0*xi*xi);
@@ -290,7 +290,7 @@ public:
    * @return The gradient of basis function
    */
   GEOS_HOST_DEVICE
-  inline
+  GEOS_FORCE_INLINE
   constexpr static real64 gradient3( const real64 xi )
   {
     return (49.0/24.0)*(sqrt3_7+xi*(2.0-3.0*sqrt3_7*xi-4.0*xi*xi));
@@ -303,10 +303,68 @@ public:
    * @return The gradient of basis function
    */
   GEOS_HOST_DEVICE
-  inline
+  GEOS_FORCE_INLINE
   constexpr static real64 gradient4( const real64 xi )
   {
     return (1.0/8.0)*(-3.0+xi*(-6.0+7.0*xi*(3.0+4.0*xi)));
+  }
+
+  /**
+   * @brief The gradient of the basis function for a support point evaluated at
+   *   a given support point. By symmetry, p is assumed to be in 0, ..., (N-1)/2
+   * @param q The index of the basis function
+   * @param p The index of the support point
+   * @return The gradient of basis function.
+   */
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
+  constexpr static real64 gradientAt( const int q,
+                                      const int p )
+  {
+    switch( q )
+    {
+      case 0:
+        switch( p )
+        {
+          case 0: return -5.0000000000000000000;
+          case 1: return -1.2409902530309828578;
+          case 2: return 0.37500000000000000000;
+        }
+        break;
+      case 1:
+        switch( p )
+        {
+          case 0: return 6.7565024887242400038;
+          case 1: return 0.0;
+          case 2: return -1.3365845776954533353;
+        }
+        break;
+      case 2:
+        switch( p )
+        {
+          case 0: return -2.6666666666666666667;
+          case 1: return 1.7457431218879390501;
+          case 2: return 0.0;
+        }
+        break;
+      case 3:
+        switch( p )
+        {
+          case 0: return -2.6666666666666666667;
+          case 1: return 1.7457431218879390501;
+          case 2: return 0.0;
+        }
+        break;
+      case 4:
+        switch( p )
+        {
+          case 0: return -0.50000000000000000000;
+          case 1: return 0.25900974696901714215;
+          case 2: return -0.37500000000000000000;
+        }
+        break;
+    }
+    return 0;
   }
 
   /**
@@ -347,7 +405,7 @@ public:
      * @return The linear index of the support/quadrature point (0-15)
      */
     GEOS_HOST_DEVICE
-    inline
+    GEOS_FORCE_INLINE
     constexpr static int linearIndex( const int i,
                                       const int j )
     {
@@ -364,7 +422,7 @@ public:
      * @param i1 The Cartesian index of the support point in the xi1 direction.
      */
     GEOS_HOST_DEVICE
-    inline
+    GEOS_FORCE_INLINE
     constexpr static void multiIndex( int const linearIndex,
                                       int & i0,
                                       int & i1 )
@@ -385,7 +443,7 @@ public:
      * @param N Array to hold the value of the basis functions at each support point.
      */
     GEOS_HOST_DEVICE
-    inline
+    GEOS_FORCE_INLINE
     static void value( const real64 (& coords)[2],
                        real64 (& N)[numSupportPoints] )
     {
@@ -450,7 +508,7 @@ public:
      * @return The linear index of the support/quadrature point (0-124)
      */
     GEOS_HOST_DEVICE
-    inline
+    GEOS_FORCE_INLINE
     constexpr static int linearIndex( const int i,
                                       const int j,
                                       const int k )
@@ -469,7 +527,7 @@ public:
      * @param i2 The Cartesian index of the support point in the xi2 direction.
      */
     GEOS_HOST_DEVICE
-    inline
+    GEOS_FORCE_INLINE
     constexpr static void multiIndex( int const linearIndex,
                                       int & i0,
                                       int & i1,
@@ -493,7 +551,7 @@ public:
      * @param N Array to hold the value of the basis functions at each support point.
      */
     GEOS_HOST_DEVICE
-    inline
+    GEOS_FORCE_INLINE
     static void value( const real64 (& coords)[3],
                        real64 (& N)[numSupportPoints] )
     {
