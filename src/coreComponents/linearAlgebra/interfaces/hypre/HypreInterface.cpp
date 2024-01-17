@@ -45,6 +45,7 @@ void HypreInterface::initialize()
   hypre_HandleSpgemmUseVendor( hypre_handle() ) = 0;
 #endif
   HYPRE_SetMemoryLocation( hypre::memoryLocation );
+  HYPRE_SetPrintErrorMode( 1 );
 }
 
 void HypreInterface::finalize()
@@ -74,11 +75,6 @@ HypreInterface::createSolver( LinearSolverParameters params )
   else
   {
     return std::make_unique< HypreSolver >( std::move( params ) );
-  }
-
-  if( params.logLevel > 0 )
-  {
-    HYPRE_SetPrintErrorMode( 1 );
   }
 }
 
