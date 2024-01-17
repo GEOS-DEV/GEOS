@@ -392,7 +392,7 @@ void HyprePreconditioner::setup( Matrix const & mat )
     // Perform setup of the main solver, if needed
     if( m_precond->setup )
     {
-      auto const ierr = m_precond->setup( m_precond->ptr, precondMat.unwrapped(), nullptr, nullptr );
+      HYPRE_Int const ierr = m_precond->setup( m_precond->ptr, precondMat.unwrapped(), nullptr, nullptr );
       if( ierr != 0 )
       {
         if( m_params.logLevel > 0 )
