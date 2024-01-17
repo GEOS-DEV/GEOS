@@ -66,7 +66,7 @@ exit 1
 or_die cd $(dirname $0)/..
 
 # Parsing using getopt
-args=$(or_die getopt -a -o h --long build-exe-only,cmake-build-type:,data-basename:,exchange-dir:,host-config:,install-dir-basename:,no-install-schema,no-run-unit-tests,repository:,run-integrated-tests,code-coverage,sccache-credentials:,test-code-style,test-documentation,help -- "$@")
+args=$(or_die getopt -a -o h --long build-exe-only,cmake-build-type:,code-coverage,data-basename:,exchange-dir:,host-config:,install-dir-basename:,no-install-schema,no-run-unit-tests,repository:,run-integrated-tests,sccache-credentials:,test-code-style,test-documentation,help -- "$@")
 
 # Variables with default values
 BUILD_EXE_ONLY=false
@@ -76,7 +76,7 @@ RUN_UNIT_TESTS=true
 RUN_INTEGRATED_TESTS=false
 TEST_CODE_STYLE=false
 TEST_DOCUMENTATION=false
-CODE_COVERAGE=false
+CODE_COVERAGE=0
 
 eval set -- ${args}
 while :
@@ -159,7 +159,8 @@ fi
 
 
 if [[ "${CODE_COVERAGE}" = true ]]; then
-  apt-get install -y lcov
+  or_die apt-get update
+  or_die apt-get install -y lcov
 fi
 
 
@@ -226,7 +227,7 @@ fi
 
 if [[ "${CODE_COVERAGE}" = true ]]; then
   or_die ninja coreComponents_coverage
-  cp -r ${GEOSX_BUILD_DIR}/coreComponents_coverage.info.cleaned /tmp/geos/geos_coverage.info.cleaned
+  cp -r ${GEOSX_BUILD_DIR}/coreComponents_coverage.info.cleaned ${GEOS_SRC_DIR}/geos_coverage.info.cleaned
 fi
 
 # Run the unit tests (excluding previously ran checks).

@@ -135,11 +135,6 @@ blt_append_custom_compiler_flag( FLAGS_VAR GEOSX_NINJA_FLAGS
                                  CLANG   "-fcolor-diagnostics"
                                )
 
-# blt_append_custom_compiler_flag( FLAGS_VAR COVERAGE_FLAGS
-#                                  GNU   "-fprofile-arcs -ftest-coverage"
-#                                  CLANG "-fprofile-instr-generate -fcoverage-mapping"
-#                                )
-
 # clang-13 and gcc complains about unused-but-set variable.
 include(CheckCXXCompilerFlag)
 CHECK_CXX_COMPILER_FLAG("-Wunused-but-set-variable" CXX_UNUSED_BUT_SET_VAR)
