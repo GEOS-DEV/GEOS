@@ -65,7 +65,7 @@ jobs:
     - name: Check that the PR is assigned
       run: |
         echo "There are ${{ needs.is_pull_request_a_draft.outputs.NUM_ASSIGNEES }} on this PR."
-        ${{ needs.is_pull_request_a_draft.outputs.NUM_ASSIGNEES > 0 }}
+        ${{ needs.is_pull_request_a_draft.outputs.NUM_ASSIGNEES > 0 || github.event_name != 'pull_request' }}
 
   # Validates that the PR is still pointing to the HEAD of the main branch of the submodules repositories.
   # (There are exceptions, read the script about those).
@@ -209,7 +209,7 @@ jobs:
       ENABLE_HYPRE: ON
       ENABLE_TRILINOS: OFF
       GCP_BUCKET: geosx/ubuntu22.04-gcc11
-      RUNS_ON: ubuntu-22.04
+      RUNS_ON: Runner_4core_16GB
 
   # If the 'ci: ready to be merged' PR label is found, the cuda jobs run immediately along side linux jobs.
   # Note: CUDA jobs should only be run if PR is ready to merge.
