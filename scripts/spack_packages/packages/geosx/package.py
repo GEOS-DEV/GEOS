@@ -97,13 +97,13 @@ class Geosx(CMakePackage, CudaPackage):
     #
     # Performance portability
     #
-    depends_on('raja@2023.06.1 +openmp~examples~exercises~shared')
+    depends_on('raja +openmp~examples~exercises~shared')
 
-    depends_on('umpire@2023.06.0 +c+openmp~examples+fortran~device_alloc~shared')
+    depends_on('umpire +c+openmp~examples+fortran~device_alloc~shared')
 
     depends_on('chai@2023.06.0 +raja+openmp~examples~shared')
 
-    depends_on('camp@2023.06.0')
+    depends_on('camp')
 
     with when('+cuda'):
         for sm_ in CudaPackage.cuda_arch_values:
@@ -135,7 +135,7 @@ class Geosx(CMakePackage, CudaPackage):
     #
     depends_on('parmetis@4.0.3+int64')
 
-    depends_on('superlu-dist@6.3.1geosx+int64+openmp')
+    depends_on('superlu-dist +int64+openmp')
 
     depends_on('scotch@7.0.3 +mpi +int64', when='+scotch')
 
@@ -145,9 +145,9 @@ class Geosx(CMakePackage, CudaPackage):
     trilinos_packages = '+aztec+stratimikos~amesos2~anasazi~belos~ifpack2~muelu~sacado+thyra'
     depends_on('trilinos@13.4.1 ' + trilinos_build_options + trilinos_packages, when='+trilinos')
 
-    depends_on('hypre@2.30.0geosx+superlu-dist+mixedint+mpi+openmp', when='+hypre~cuda')
+    depends_on("hypre +superlu-dist+mixedint+mpi+openmp", when='+hypre~cuda')
 
-    depends_on('hypre@2.30.0geosx+cuda+superlu-dist+mixedint+mpi+openmp+umpire+unified-memory', when='+hypre+cuda')
+    depends_on("hypre +cuda+superlu-dist+mixedint+mpi+openmp+umpire+unified-memory cxxflags='-fPIC'", when='+hypre+cuda')
     with when('+cuda'):
         for sm_ in CudaPackage.cuda_arch_values:
             depends_on('hypre+cuda cuda_arch={0}'.format(sm_), when='cuda_arch={0}'.format(sm_))
@@ -164,7 +164,7 @@ class Geosx(CMakePackage, CudaPackage):
     #
     # Dev tools
     #
-    depends_on('uncrustify@0.70geosx', when='+uncrustify')
+    depends_on('uncrustify', when='+uncrustify')
 
     #
     # Documentation

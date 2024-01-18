@@ -71,6 +71,24 @@ spack:
     blt:
       require: "@git.5a792c1775e7a7628d84dcde31652a689f1df7b5=develop"
 
+    hypre:
+      require: "@git.57bfb26e268ddf003668c5d0b5938ae258922a83"
+
+    umpire:
+      require: "@git.4bd9b2ded81d3216b3f62e2aad62d0e34fe2c256=develop"
+
+    raja:
+      require: "@git.e330b2560747d5417cd7bd265fab3fb91d32ecbd=develop"
+
+    camp:
+      require: "@git.ac34c25b722a06b138bc045d38bfa5e8fa3ec9c5=main"
+
+    uncrustify:
+      require: "@git.401a4098bce9dcc47e024987403f2d59d9ba7bd2"
+
+    superlu-dist:
+      require: "@git.0f6efc377df2440c235452d13d28d2c717f832a1"
+
    # Lock down which MPI we are using
     mvapich2:
       buildable: False
