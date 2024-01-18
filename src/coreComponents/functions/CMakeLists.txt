@@ -45,4 +45,3 @@ target_include_directories( functions PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents 
 if( GEOS_ENABLE_TESTS )
   add_subdirectory( unitTests )
 endif()
-geosx_add_code_checks( PREFIX functions )
