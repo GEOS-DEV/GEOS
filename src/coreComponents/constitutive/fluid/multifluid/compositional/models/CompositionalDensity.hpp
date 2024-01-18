@@ -47,7 +47,6 @@ public:
                 real64 const & pressure,
                 real64 const & temperature,
                 arraySlice1d< real64 const > const & phaseComposition,
-                arraySlice2d< real64 const > const & dPhaseComposition,
                 real64 & molarDensity,
                 arraySlice1d< real64 > const & dMolarDensity,
                 real64 & massDensity,
@@ -102,7 +101,6 @@ compute( ComponentProperties::KernelWrapper const & componentProperties,
          real64 const & pressure,
          real64 const & temperature,
          arraySlice1d< real64 const > const & phaseComposition,
-         arraySlice2d< real64 const > const & dPhaseComposition,
          real64 & molarDensity,
          arraySlice1d< real64 > const & dMolarDensity,
          real64 & massDensity,
@@ -110,7 +108,6 @@ compute( ComponentProperties::KernelWrapper const & componentProperties,
          bool useMass ) const
 {
   GEOS_UNUSED_VAR( useMass );
-  GEOS_UNUSED_VAR( dPhaseComposition );
 
   integer const numComps = componentProperties.m_componentMolarWeight.size();
   integer const numDofs = 2 + numComps;

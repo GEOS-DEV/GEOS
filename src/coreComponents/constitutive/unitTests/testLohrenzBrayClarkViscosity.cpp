@@ -85,7 +85,6 @@ public:
     real64 molarDensity = 0.0;
     real64 massDensity = 0.0;
     real64 viscosity = 0.0;
-    stackArray2d< real64, numComps *numDofs > dPhaseComposition( numComps, numDofs );
     stackArray1d< real64, numDofs > tempDerivs( numDofs );
 
     auto componentProperties = m_fluid->createKernelWrapper();
@@ -98,7 +97,6 @@ public:
                                   pressure,
                                   temperature,
                                   phaseComposition,
-                                  dPhaseComposition,
                                   molarDensity,
                                   tempDerivs,
                                   massDensity,
@@ -109,7 +107,6 @@ public:
                                     pressure,
                                     temperature,
                                     phaseComposition,
-                                    dPhaseComposition,
                                     massDensity,
                                     tempDerivs,
                                     viscosity,
@@ -139,13 +136,11 @@ public:
     stackArray1d< real64, numDofs > molarDensityDerivs( numDofs );
     stackArray1d< real64, numDofs > massDensityDerivs( numDofs );
     stackArray1d< real64, numDofs > viscosityDerivs( numDofs );
-    stackArray2d< real64, numComps *numDofs > dPhaseComposition( numComps, numDofs );
 
     densityKernelWrapper.compute( componentProperties,
                                   pressure,
                                   temperature,
                                   phaseComposition,
-                                  dPhaseComposition,
                                   molarDensity,
                                   molarDensityDerivs,
                                   massDensity,
@@ -156,7 +151,6 @@ public:
                                     pressure,
                                     temperature,
                                     phaseComposition,
-                                    dPhaseComposition,
                                     massDensity,
                                     massDensityDerivs,
                                     viscosity,
@@ -168,9 +162,9 @@ public:
       real64 densityMass = 0.0;
       real64 phaseViscosity = 0.0;
       stackArray1d< real64, numDofs > tempDerivs( numDofs );
-      densityKernelWrapper.compute( componentProperties, p, t, zmf, dPhaseComposition,
+      densityKernelWrapper.compute( componentProperties, p, t, zmf,
                                     densityMolar, tempDerivs, densityMass, tempDerivs, false );
-      viscosityKernelWrapper.compute( componentProperties, p, t, zmf, dPhaseComposition,
+      viscosityKernelWrapper.compute( componentProperties, p, t, zmf,
                                       densityMass, tempDerivs, phaseViscosity, tempDerivs, false );
       return phaseViscosity;
     };

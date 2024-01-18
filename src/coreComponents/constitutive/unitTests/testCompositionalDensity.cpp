@@ -85,14 +85,12 @@ public:
 
     real64 molarDensity = 0.0;
     real64 massDensity = 0.0;
-    stackArray2d< real64, numComps *numDofs > dPhaseComposition( numComps, numDofs );
     stackArray1d< real64, numDofs > tempDerivs( numDofs );
 
     kernelWrapper.compute( componentProperties,
                            pressure,
                            temperature,
                            phaseComposition,
-                           dPhaseComposition,
                            molarDensity,
                            tempDerivs,
                            massDensity,
@@ -117,13 +115,11 @@ public:
     real64 massDensity = 0.0;
     stackArray1d< real64, numDofs > molarDensityDerivs( numDofs );
     stackArray1d< real64, numDofs > massDensityDerivs( numDofs );
-    stackArray2d< real64, numComps *numDofs > dPhaseComposition( numComps, numDofs );
 
     kernelWrapper.compute( componentProperties,
                            pressure,
                            temperature,
                            phaseComposition,
-                           dPhaseComposition,
                            molarDensity,
                            molarDensityDerivs,
                            massDensity,
@@ -135,7 +131,7 @@ public:
       real64 densityMass = 0.0;
       stackArray1d< real64, numDofs > tempDerivs( numDofs );
       kernelWrapper.compute( componentProperties, p, t,
-                             zmf, dPhaseComposition,
+                             zmf,
                              densityMolar, tempDerivs, densityMass, tempDerivs, false );
       return {densityMolar, densityMass};
     };

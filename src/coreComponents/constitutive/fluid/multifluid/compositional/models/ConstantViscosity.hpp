@@ -40,7 +40,6 @@ public:
                 real64 const & pressure,
                 real64 const & temperature,
                 arraySlice1d< real64 const > const & phaseComposition,
-                arraySlice2d< real64 const > const & dPhaseComposition,
                 real64 const & density,
                 arraySlice1d< real64 const > const & dDensity,
                 real64 & viscosity,
@@ -77,7 +76,6 @@ void ConstantViscosityUpdate::compute( ComponentProperties::KernelWrapper const 
                                        real64 const & pressure,
                                        real64 const & temperature,
                                        arraySlice1d< real64 const > const & phaseComposition,
-                                       arraySlice2d< real64 const > const & dPhaseComposition,
                                        real64 const & density,
                                        arraySlice1d< real64 const > const & dDensity,
                                        real64 & viscosity,
@@ -85,7 +83,7 @@ void ConstantViscosityUpdate::compute( ComponentProperties::KernelWrapper const 
                                        bool useMass ) const
 {
   GEOS_UNUSED_VAR( componentProperties, pressure, temperature, useMass );
-  GEOS_UNUSED_VAR( phaseComposition, dPhaseComposition );
+  GEOS_UNUSED_VAR( phaseComposition );
   GEOS_UNUSED_VAR( density, dDensity );
 
   viscosity = 0.001;

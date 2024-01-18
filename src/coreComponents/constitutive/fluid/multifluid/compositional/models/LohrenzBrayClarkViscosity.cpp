@@ -51,7 +51,6 @@ void LohrenzBrayClarkViscosityUpdate::compute( ComponentProperties::KernelWrappe
                                                real64 const & pressure,
                                                real64 const & temperature,
                                                arraySlice1d< real64 const > const & phaseComposition,
-                                               arraySlice2d< real64 const > const & dPhaseComposition,
                                                real64 const & density,
                                                arraySlice1d< real64 const > const & dDensity,
                                                real64 & viscosity,
@@ -59,7 +58,6 @@ void LohrenzBrayClarkViscosityUpdate::compute( ComponentProperties::KernelWrappe
                                                bool useMass ) const
 {
   GEOS_UNUSED_VAR( pressure );   // No-direct pressure dependence (instead through density)
-  GEOS_UNUSED_VAR( dPhaseComposition );
   GEOS_UNUSED_VAR( useMass );
 
   integer constexpr maxNumComps = MultiFluidConstants::MAX_NUM_COMPONENTS;

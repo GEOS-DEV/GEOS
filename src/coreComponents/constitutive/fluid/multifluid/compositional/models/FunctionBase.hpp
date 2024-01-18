@@ -60,23 +60,6 @@ public:
     GEOS_UNUSED_VAR( space, touch );
   }
 
-  /**
-   * @brief Convert derivatives from phase mole fraction to total mole fraction
-   * @details Given property derivatives @c dProperty where composition derivatives are with
-   *          respect to a phase compositions, this will transform that properties so that
-   *          they the composition derivatives are with respect to total composition. The derivatives
-   *          of the phase composition should be provided in @c dPhaseComposition.
-   * @param[in] numComps The number of components
-   * @param[in] dPhaseComposition Derivatives of the phase composition
-   * @param[in,out] dProperty The derivatives of the property
-   * @param[in] workSpace Temporary workspace
-   */
-  GEOS_HOST_DEVICE
-  static void convertDerivativesToTotalMoleFraction( integer const numComps,
-                                                     arraySlice2d< real64 const > const & dPhaseComposition,
-                                                     arraySlice1d< real64 > const & dProperty,
-                                                     arraySlice1d< real64 > const & workSpace );
-
 protected:
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
