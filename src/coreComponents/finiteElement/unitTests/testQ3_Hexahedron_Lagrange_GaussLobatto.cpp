@@ -180,11 +180,11 @@ void testKernelDriver()
       viewDetJ[q] = Q3_Hexahedron_Lagrange_GaussLobatto::calcGradN( xLocal[ q ],
                                                                     xLocal,
                                                                     dNdXcheck );
-      
+
       viewDetJ[q] = Q3_Hexahedron_Lagrange_GaussLobatto::calcGradN( q,
                                                                     xLocal,
                                                                     dNdX );
-     
+
 
       for( localIndex a=0; a<numNodes; ++a )
       {
@@ -220,7 +220,7 @@ void testKernelDriver()
       {
         for( int i = 0; i < 3; ++i )
         {
-          EXPECT_NEAR( viewdNdXcheck( q, a, i ), viewdNdX(q, a, i ), 1e-9 );
+          EXPECT_NEAR( viewdNdXcheck( q, a, i ), viewdNdX( q, a, i ), 1e-9 );
         }
         EXPECT_FLOAT_EQ( gradNxtest[a][q], viewdNdX( q, a, 0 ) );
         EXPECT_FLOAT_EQ( gradNytest[a][q], viewdNdX( q, a, 1 ) );

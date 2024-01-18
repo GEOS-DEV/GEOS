@@ -207,10 +207,10 @@ void testKernelDriver()
 
       real64 dNdX[numNodes][3] = {{0}};
       real64 dNdXcheck[numNodes][3] = {{0}};
-       // check the explicit calculation of gradient values
+      // check the explicit calculation of gradient values
       viewDetJ[q] = Q5_Hexahedron_Lagrange_GaussLobatto::calcGradN( xLocal[ q ],
                                                                     xLocal,
-                                                                    dNdXcheck );         
+                                                                    dNdXcheck );
       viewDetJ[q] = Q5_Hexahedron_Lagrange_GaussLobatto::calcGradN( q,
                                                                     xLocal,
                                                                     dNdX );
@@ -256,7 +256,7 @@ void testKernelDriver()
       {
         for( int i = 0; i < 3; ++i )
         {
-          EXPECT_NEAR( viewdNdXcheck( q, a, i ), viewdNdX(q, a, i ), 1e-9 );
+          EXPECT_NEAR( viewdNdXcheck( q, a, i ), viewdNdX( q, a, i ), 1e-9 );
         }
         EXPECT_FLOAT_EQ( gradNxtest[a][q], viewdNdX( q, a, 0 ) );
         EXPECT_FLOAT_EQ( gradNytest[a][q], viewdNdX( q, a, 1 ) );
