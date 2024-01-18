@@ -162,4 +162,3 @@ if( GEOS_ENABLE_TESTS )
   add_subdirectory( unitTests )
 endif( )
 
-geosx_add_code_checks( PREFIX linearAlgebra )
