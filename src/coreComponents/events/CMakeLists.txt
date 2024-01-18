@@ -20,6 +20,7 @@ set( events_headers
      mpmEvents/FrictionCoefficientSwapMPMEvent.hpp
      mpmEvents/BodyForceUpdateMPMEvent.hpp
      mpmEvents/DeformationUpdateMPMEvent.hpp
+     mpmEvents/CohesiveZoneReferenceMPMEvent.hpp
    )
 
 #
@@ -44,6 +45,7 @@ set( events_sources
      mpmEvents/FrictionCoefficientSwapMPMEvent.cpp
      mpmEvents/BodyForceUpdateMPMEvent.cpp
      mpmEvents/DeformationUpdateMPMEvent.cpp
+     mpmEvents/CohesiveZoneReferenceMPMEvent.cpp
    )
 
 set( dependencyList ${parallelDeps} common fileIO dataRepository )
