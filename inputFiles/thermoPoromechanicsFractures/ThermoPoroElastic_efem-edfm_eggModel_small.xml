@@ -240,7 +240,7 @@
       compressibility="1.0e-10"
       thermalExpansionCoeff="0.0"
       viscosibility="0.0"
-      volumetricHeatCapacity="1.672e2"
+      specificHeatCapacity="1.672e2"
       referenceInternalEnergy="0.001"/> 
 
     <SinglePhaseConstantThermalConductivity
