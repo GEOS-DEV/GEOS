@@ -304,11 +304,10 @@ struct DampingMatrixKernel
           real32 const nx = faceNormal( f, 0 ), ny = faceNormal( f, 1 ), nz = faceNormal( f, 2 );
           for( localIndex q = 0; q < numNodesPerFace; ++q )
           {
-            using namespace LvArray::math; // should use abs and sqrt from their
             real32 const aux = density[e] * m_finiteElement.computeDampingTerm( q, xLocal );
-            real32 const localIncrementx = density[e] * (velocityVp[e] * abs( nx ) + velocityVs[e] * sqrt( pow( ny, 2 ) + pow( nz, 2 ) ) ) * aux;
-            real32 const localIncrementy = density[e] * (velocityVp[e] * abs( ny ) + velocityVs[e] * sqrt( pow( nx, 2 ) + pow( nz, 2 ) ) ) * aux;
-            real32 const localIncrementz = density[e] * (velocityVp[e] * abs( nz ) + velocityVs[e] * sqrt( pow( nx, 2 ) + pow( ny, 2 ) ) ) * aux;
+            real32 const localIncrementx = density[e] * (velocityVp[e] * LvArray::math::abs( nx ) + velocityVs[e] * LvArray::math::sqrt( pow( ny, 2 ) + pow( nz, 2 ) ) ) * aux;
+            real32 const localIncrementy = density[e] * (velocityVp[e] * LvArray::math::abs( ny ) + velocityVs[e] * LvArray::math::sqrt( pow( nx, 2 ) + pow( nz, 2 ) ) ) * aux;
+            real32 const localIncrementz = density[e] * (velocityVp[e] * LvArray::math::abs( nz ) + velocityVs[e] * LvArray::math::sqrt( pow( nx, 2 ) + pow( ny, 2 ) ) ) * aux;
 
             RAJA::atomicAdd< ATOMIC_POLICY >( &dampingx[facesToNodes( f, q )], localIncrementx );
             RAJA::atomicAdd< ATOMIC_POLICY >( &dampingy[facesToNodes( f, q )], localIncrementy );
