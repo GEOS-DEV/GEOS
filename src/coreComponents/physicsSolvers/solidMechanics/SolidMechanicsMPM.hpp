@@ -229,9 +229,12 @@ public:
     static constexpr char const * normalStressString() { return "normalStress"; }
     static constexpr char const * massWeightedDamageString() { return "massWeightedDamage"; }
     static constexpr char const * cohesiveNodeString() { return "cohesiveNode"; }
-    static constexpr char const * initialAreaVectorString() { return "initialAreaVector"; }
-    static constexpr char const * initialSurfacePositionString() { return "initialSurfacePosition"; }
-    static constexpr char const * initialMaterialVolumeString() { return "initialMaterialVolume"; }
+    static constexpr char const * referenceAreaVectorString() { return "referenceAreaVector"; }
+    static constexpr char const * referenceSurfacePositionString() { return "referenceSurfacePosition"; }
+    static constexpr char const * referenceMaterialVolumeString() { return "referenceMaterialVolume"; }
+
+    static constexpr char const * partitioningMassString() { return "partitioningMassString"; }
+    static constexpr char const * partitioningNormalString() { return "partitioningNormalString"; }
 
     static constexpr char const * boundaryNodesString() { return "boundaryNodes"; }
     static constexpr char const * bufferNodesString() { return "bufferNodes"; }
@@ -404,10 +407,13 @@ public:
 
   void boundaryConditionUpdate( real64 dt, real64 time_n );
 
-  void locateCohesiveInterfaces( DomainPartition & domain,
-                                 ParticleManager& particleManager,
-                                 NodeManager & nodeManager,
-                                 MeshLevel & mesh );
+  void projectNormals( ParticleManager & particleManager,
+                       NodeManager & nodeManager );
+
+  void initializeCohesiveReferenceConfiguration( DomainPartition & domain,
+                                                 ParticleManager& particleManager,
+                                                 NodeManager & nodeManager,
+                                                 MeshLevel & mesh );
 
   bool interiorToParticleProjectedArea( ParticleManager & particleManager,
                                         globalIndex const GEOS_UNUSED_PARAM( gridIndex ),
@@ -439,6 +445,20 @@ public:
                                 arraySlice1d< real64 const > const nB, 
                                 arraySlice1d< real64 > const tA,
                                 arraySlice1d< real64 > const tB );
+
+void needlemanXuCohesiveLaw( int g,
+                             int A,
+                             int B,
+                             real64 mA,
+                             real64 mB,
+                             arraySlice1d< real64 const > const dA,
+                             arraySlice1d< real64 const > const dB,
+                             real64 const (& sA )[3], // rename this to something other than s, to be consistent with other nomenclature
+                             real64 const (& sB )[3], // Particle surface area along surface normal
+                             arraySlice1d< real64 const > const nA,
+                             arraySlice1d< real64 const > const nB, 
+                             arraySlice1d< real64 > const tA,
+                             arraySlice1d< real64 > const tB );
 
   void particleToGrid( real64 const time_n,
                        integer const cycleNumber,
@@ -654,6 +674,7 @@ protected:
   real64 m_nextReactionWriteTime;
 
   // Cohesive law variables
+  int m_referenceCohesiveZone;
   int m_enableCohesiveLaws;
   int m_enableCohesiveFailure;
   real64 m_numSurfaceIntegrationPoints;
@@ -664,9 +685,9 @@ protected:
   real64 m_maxCohesiveNormalDisplacement;
   real64 m_maxCohesiveTangentialDisplacement;
   SortedArray< globalIndex >  m_cohesiveNodeGlobalIndices;
-  array2d< real64 > m_initialCohesiveGridNodeAreas;
-  array2d< real64 > m_initialCohesiveGridNodePositions;
-  array3d< real64 > m_initialCohesiveGridNodeSurfaceNormals;
+  array2d< real64 > m_referenceCohesiveGridNodeAreas;
+  array2d< real64 > m_referenceCohesiveGridNodePositions;
+  array3d< real64 > m_referenceCohesiveGridNodeSurfaceNormals;
   array3d< real64 > m_maxCohesiveGridNodeNormalDisplacement;
   array3d< real64 > m_maxCohesiveGridNodeTangentialDisplacement;
 
