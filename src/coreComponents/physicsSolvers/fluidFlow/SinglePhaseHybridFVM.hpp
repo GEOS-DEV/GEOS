@@ -176,13 +176,6 @@ public:
 
   /**@}*/
 
-
-  struct viewKeyStruct : SinglePhaseBase::viewKeyStruct
-  {
-    // primary face-based field
-    static constexpr char const * deltaFacePressureString() { return "deltaFacePressure"; }
-  };
-
   virtual void initializePreSubGroups() override;
 
   virtual void initializePostInitialConditionsPreSubGroups() override;
