@@ -59,6 +59,7 @@ void LohrenzBrayClarkViscosityUpdate::compute( ComponentProperties::KernelWrappe
                                                bool useMass ) const
 {
   GEOS_UNUSED_VAR( pressure );   // No-direct pressure dependence (instead through density)
+  GEOS_UNUSED_VAR( dPhaseComposition );
   GEOS_UNUSED_VAR( useMass );
 
   integer constexpr maxNumComps = MultiFluidConstants::MAX_NUM_COMPONENTS;
@@ -66,7 +67,7 @@ void LohrenzBrayClarkViscosityUpdate::compute( ComponentProperties::KernelWrappe
   integer const numComponents = componentProperties.m_componentMolarWeight.size();
   integer const numDofs = numComponents + 2;
 
-  // Space for temporary derivatives
+  // Space for temporary variable derivatives
   stackArray1d< real64, maxNumDofs > tempDerivs( numDofs );
 
   // Estimate pure component properties at dilute-gas conditions (pressure near atmospheric) using
@@ -122,7 +123,6 @@ void LohrenzBrayClarkViscosityUpdate::compute( ComponentProperties::KernelWrappe
 
   // Estimate phase viscosity at given (P,T) conditions using LBC [1964] correlation.
   // This is an additional term added to the dilute gas estimate above.
-
   computePhaseViscosity_LohrenzBrayClark( numComponents,
                                           componentProperties,
                                           phaseComposition,
@@ -130,9 +130,6 @@ void LohrenzBrayClarkViscosityUpdate::compute( ComponentProperties::KernelWrappe
                                           dDensity,
                                           viscosity,
                                           dViscosity );
-
-  // Convert derivatives from phase to total composition
-  convertDerivativesToTotalMoleFraction( numComponents, dPhaseComposition, dViscosity, tempDerivs );
 
   // Scale centipoise to pascal.seconds
   viscosity *= CP_TO_PAS;
@@ -210,7 +207,9 @@ void LohrenzBrayClarkViscosityUpdate::computePhaseDiluteViscosity_HerningZippere
   for( integer ic = 0; ic < numComponents; ++ic )
   {
     real64 const sqrtMolarWeight = sqrt( componentProperties.m_componentMolarWeight[ic] );
-    dPhaseViscosity[Deriv::dC+ic] = sqrtMolarWeight * componentDiluteViscosity[ic] / B - A * sqrtMolarWeight / (B * B);
+    real64 const dA_dxi = sqrtMolarWeight * componentDiluteViscosity[ic];
+    real64 const dB_dxi = sqrtMolarWeight;
+    dPhaseViscosity[Deriv::dC+ic] = dA_dxi / B - A * dB_dxi / (B * B);
   }
 }
 
@@ -416,7 +415,10 @@ void LohrenzBrayClarkViscosityUpdate::computePhaseViscosity_LohrenzBrayClark( in
   // and inversePhaseChi is a function of composition.
   // these derivatives are *added* to the ones already present from the dilute terms above.
 
-  real64 dPolynomialOne_dReducedDensity = 0.023364 + 0.117066*reducedDensity - 0.122274*pow( reducedDensity, 2 ) + 0.0373296*pow( reducedDensity, 3 );
+  real64 dPolynomialOne_dReducedDensity =  0.0233640
+                                          + 0.1170660*reducedDensity
+                                          - 0.1222740*pow( reducedDensity, 2 )
+                                          + 0.0373296*pow( reducedDensity, 3 );
   real64 dPolynomialTwo_dReducedDensity = 4.0 * pow( polynomialOne, 3.0 ) * dPolynomialOne_dReducedDensity;
 
   real64 dViscosity_dDensity       = dPolynomialTwo_dReducedDensity * inversePhaseChi * phaseCriticalVolume / phaseMolarWeight;

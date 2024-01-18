@@ -59,6 +59,12 @@ public:
                 arraySlice1d< real64 > const & dViscosity,
                 bool useMass ) const;
 
+  GEOS_HOST_DEVICE
+  void setMixingType( MixingType const mixing_type )
+  {
+    m_mixing_type = mixing_type;
+  }
+
 private:
   /**
    * @brief Estimate pure component properties at dilute-gas conditions

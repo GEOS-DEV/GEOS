@@ -51,28 +51,6 @@ struct FluidData< 9 >
     fluid->setBinaryCoefficients( bics );
     return fluid;
   }
-  static std::vector< DensityData< 9 > > generateTestData()
-  {
-    std::array< real64 const, 2 > pressures( {1.83959e+06, 1.83959e+08} );
-    std::array< real64 const, 2 > temperatures( {2.97150e+02, 3.63000e+02} );
-    std::array< Feed< 9 > const, 3 > feeds( {
-          Feed< 9 >{0.00900, 0.00300, 0.53470, 0.11460, 0.08790, 0.04560, 0.02090, 0.01510, 0.16920},
-          Feed< 9 >{0.00826, 0.00544, 0.77032, 0.10456, 0.06177, 0.02459, 0.00884, 0.00472, 0.01149},
-          Feed< 9 >{0.00899, 0.00299, 0.53281, 0.11447, 0.08791, 0.04566, 0.02095, 0.01516, 0.17107}
-        } );
-    std::vector< DensityData< 9 > > testData;
-    for( const real64 pressure : pressures )
-    {
-      for( const real64 temperature : temperatures )
-      {
-        for( const auto & composition : feeds )
-        {
-          testData.emplace_back( pressure, temperature, composition, 0.0, 0.0 );
-        }
-      }
-    }
-    return testData;
-  }
 };
 
 template< int NC, typename EOS_TYPE >
@@ -97,8 +75,8 @@ public:
   {
     real64 const pressure = std::get< 0 >( data );
     real64 const temperature = std::get< 1 >( data );
-    stackArray1d< real64, numComps > composition;
-    TestFluid< NC >::createArray( composition, std::get< 2 >( data ));
+    stackArray1d< real64, numComps > phaseComposition;
+    TestFluid< NC >::createArray( phaseComposition, std::get< 2 >( data ));
     real64 const expectedMolarDensity = std::get< 3 >( data );
     real64 const expectedMassDensity = std::get< 4 >( data );
 
@@ -107,14 +85,14 @@ public:
 
     real64 molarDensity = 0.0;
     real64 massDensity = 0.0;
-    stackArray2d< real64, numComps *numDofs > dComposition( numComps, numDofs );
+    stackArray2d< real64, numComps *numDofs > dPhaseComposition( numComps, numDofs );
     stackArray1d< real64, numDofs > tempDerivs( numDofs );
 
     kernelWrapper.compute( componentProperties,
                            pressure,
                            temperature,
-                           composition,
-                           dComposition,
+                           phaseComposition,
+                           dPhaseComposition,
                            molarDensity,
                            tempDerivs,
                            massDensity,
@@ -129,28 +107,23 @@ public:
   {
     real64 const pressure = std::get< 0 >( data );
     real64 const temperature = std::get< 1 >( data );
-    stackArray1d< real64, numComps > composition;
-    TestFluid< NC >::createArray( composition, std::get< 2 >( data ));
+    stackArray1d< real64, numComps > phaseComposition;
+    TestFluid< NC >::createArray( phaseComposition, std::get< 2 >( data ));
 
     auto componentProperties = m_fluid->createKernelWrapper();
-    auto kernelWrapper = this->m_density->createKernelWrapper();
+    auto kernelWrapper = m_density->createKernelWrapper();
 
     real64 molarDensity = 0.0;
     real64 massDensity = 0.0;
     stackArray1d< real64, numDofs > molarDensityDerivs( numDofs );
     stackArray1d< real64, numDofs > massDensityDerivs( numDofs );
-    stackArray1d< real64, numComps > liquidComposition( numComps );
-    stackArray2d< real64, numComps *numDofs > dLiquidComposition( numComps, numDofs );
-    calculatePhaseComposition( pressure,
-                               temperature,
-                               composition,
-                               liquidComposition,
-                               dLiquidComposition );
+    stackArray2d< real64, numComps *numDofs > dPhaseComposition( numComps, numDofs );
+
     kernelWrapper.compute( componentProperties,
                            pressure,
                            temperature,
-                           liquidComposition,
-                           dLiquidComposition,
+                           phaseComposition,
+                           dPhaseComposition,
                            molarDensity,
                            molarDensityDerivs,
                            massDensity,
@@ -158,16 +131,11 @@ public:
                            false );
 
     auto calculateDensity = [&]( real64 const p, real64 const t, auto const & zmf ) -> std::pair< real64, real64 > {
-      stackArray1d< real64, numComps > xmf( numComps );
-      stackArray2d< real64, numComps *numDofs > dxmf( numComps, numDofs );
-
-      this->calculatePhaseComposition( p, t, zmf, xmf, dxmf );
-
       real64 densityMolar = 0.0;
       real64 densityMass = 0.0;
       stackArray1d< real64, numDofs > tempDerivs( numDofs );
       kernelWrapper.compute( componentProperties, p, t,
-                             xmf, dxmf,
+                             zmf, dPhaseComposition,
                              densityMolar, tempDerivs, densityMass, tempDerivs, false );
       return {densityMolar, densityMass};
     };
@@ -178,12 +146,12 @@ public:
     internal::testNumericalDerivative(
       pressure, dp, molarDensityDerivs[Deriv::dP],
       [&]( real64 const p ) -> real64 {
-      return calculateDensity( p, temperature, composition ).first;
+      return calculateDensity( p, temperature, phaseComposition ).first;
     } );
     internal::testNumericalDerivative(
       pressure, dp, massDensityDerivs[Deriv::dP],
       [&]( real64 const p ) -> real64 {
-      return calculateDensity( p, temperature, composition ).second;
+      return calculateDensity( p, temperature, phaseComposition ).second;
     } );
 
     // -- Temperature derivative
@@ -191,12 +159,12 @@ public:
     internal::testNumericalDerivative(
       temperature, dT, molarDensityDerivs[Deriv::dT],
       [&]( real64 const t ) -> real64 {
-      return calculateDensity( pressure, t, composition ).first;
+      return calculateDensity( pressure, t, phaseComposition ).first;
     } );
     internal::testNumericalDerivative(
       temperature, dT, massDensityDerivs[Deriv::dT],
       [&]( real64 const t ) -> real64 {
-      return calculateDensity( pressure, t, composition ).second;
+      return calculateDensity( pressure, t, phaseComposition ).second;
     } );
 
     // -- Composition derivatives derivative
@@ -209,7 +177,7 @@ public:
         stackArray1d< real64, numComps > zmf( numComps );
         for( integer jc = 0; jc < numComps; ++jc )
         {
-          zmf[jc] = composition[jc];
+          zmf[jc] = phaseComposition[jc];
         }
         zmf[ic] += z;
         return calculateDensity( pressure, temperature, zmf ).first;
@@ -220,7 +188,7 @@ public:
         stackArray1d< real64, numComps > zmf( numComps );
         for( integer jc = 0; jc < numComps; ++jc )
         {
-          zmf[jc] = composition[jc];
+          zmf[jc] = phaseComposition[jc];
         }
         zmf[ic] += z;
         return calculateDensity( pressure, temperature, zmf ).second;
@@ -228,66 +196,10 @@ public:
     }
   }
 
-private:
-  void calculatePhaseComposition( real64 const pressure,
-                                  real64 const temperature,
-                                  arraySlice1d< real64 const > const & totalComposition,
-                                  arraySlice1d< real64 > const & phaseComposition,
-                                  arraySlice2d< real64 > const & dPhaseComposition ) const;
-
 protected:
   std::unique_ptr< CompositionalDensity< EOS_TYPE > > m_density{};
   std::unique_ptr< TestFluid< NC > > m_fluid{};
 };
-
-template< int NC, typename EOS_TYPE >
-void
-CompositionalDensityTestFixture< NC, EOS_TYPE >::
-calculatePhaseComposition( real64 const pressure,
-                           real64 const temperature,
-                           arraySlice1d< real64 const > const & totalComposition,
-                           arraySlice1d< real64 > const & phaseComposition,
-                           arraySlice2d< real64 > const & dPhaseComposition ) const
-{
-  real64 constexpr V = 0.25;
-  real64 constexpr PRef = 1.5e7;
-  real64 constexpr TRef = 323.15;
-  real64 constexpr cP = 5.0e-10;
-  real64 constexpr cT = 6.0e-3;
-  real64 sum = 0.0;
-  stackArray1d< real64, numDofs > sumDerivs( numDofs );
-  sumDerivs.zero();
-  for( integer ic = 0; ic < numComps; ic++ )
-  {
-    real64 const d = 1.0 - 2.0*(ic + 0.5)/numComps;
-    real64 const k = exp( cT*d*(temperature + TRef))*exp( cP*d*(pressure - PRef));
-    real64 const dk_dP = cP*d*k;
-    real64 const dk_dT = cT*d*k;
-    real64 const m = 1.0 / (1.0 - V + k*V);
-    real64 const xi = totalComposition[ic] * m;
-    phaseComposition[ic] = xi;
-    dPhaseComposition( ic, Deriv::dP ) = -totalComposition[ic]*V*dk_dP*m*m;
-    dPhaseComposition( ic, Deriv::dT ) = -totalComposition[ic]*V*dk_dT*m*m;
-    dPhaseComposition( ic, Deriv::dC+ic ) = m;
-
-    sum += xi;
-    for( integer kc = 0; kc < numDofs; kc++ )
-    {
-      sumDerivs[kc] += dPhaseComposition( ic, kc );
-    }
-  }
-  real64 const oneOverSum = 1.0 / sum;
-  for( integer ic = 0; ic < numComps; ic++ )
-  {
-    real64 const xi = phaseComposition[ic];
-    phaseComposition[ic] *= oneOverSum;
-    for( integer kc = 0; kc < numDofs; kc++ )
-    {
-      dPhaseComposition( ic, kc ) = (dPhaseComposition( ic, kc )*sum - sumDerivs[kc]*xi)*oneOverSum*oneOverSum;
-    }
-  }
-}
-
 
 using CompositionalDensity9CompPR = CompositionalDensityTestFixture< 9, CubicEOSPhaseModel< PengRobinsonEOS > >;
 using CompositionalDensity9CompSRK = CompositionalDensityTestFixture< 9, CubicEOSPhaseModel< SoaveRedlichKwongEOS > >;

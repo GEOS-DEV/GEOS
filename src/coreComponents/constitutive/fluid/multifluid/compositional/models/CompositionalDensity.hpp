@@ -110,6 +110,7 @@ compute( ComponentProperties::KernelWrapper const & componentProperties,
          bool useMass ) const
 {
   GEOS_UNUSED_VAR( useMass );
+  GEOS_UNUSED_VAR( dPhaseComposition );
 
   integer const numComps = componentProperties.m_componentMolarWeight.size();
   integer const numDofs = 2 + numComps;
@@ -142,10 +143,6 @@ compute( ComponentProperties::KernelWrapper const & componentProperties,
                                                dMolarDensity,
                                                massDensity,
                                                dMassDensity );
-
-  // Convert derivatives from phase to total composition
-  convertDerivativesToTotalMoleFraction( numComps, dPhaseComposition, dMolarDensity, tempDerivs );
-  convertDerivativesToTotalMoleFraction( numComps, dPhaseComposition, dMassDensity, tempDerivs );
 }
 
 } // end namespace compositional
