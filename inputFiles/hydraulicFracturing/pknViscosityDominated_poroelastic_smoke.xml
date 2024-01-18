@@ -14,7 +14,7 @@
       flowSolverName="SinglePhaseFlow"
       surfaceGeneratorName="SurfaceGen"
       logLevel="1"
-      targetRegions="{ Fracture }"
+      targetRegions="{ Domain, Fracture }"
       contactRelationName="fractureContact"
       maxNumResolves="5"
       initialDt="0.1">

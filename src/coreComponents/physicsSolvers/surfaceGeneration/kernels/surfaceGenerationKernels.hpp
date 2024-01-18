@@ -177,23 +177,6 @@ void kernelSelector( ElementRegionManager const & elemManager,
 
 }
 
-// Alternative if we want to avoid another lambda.
-// auto createKernel( ElementRegionManager const & elemManager,
-//                           constitutive::ConstitutiveManager const & constitutiveManager,
-//                           string const solidMaterialKey,
-//                           bool const isPoroelastic ) -> std::unique_ptr<surfaceGenerationKernels::NodalForceKernel>
-// {
-//   if( isPoroelastic )
-//   {
-//     return std::make_unique< NodalForceKernel >( elemManager, constitutiveManager, solidMaterialKey );
-//   }
-//   else
-//   {
-//     string const porosityModelKey = constitutive::CoupledSolidBase::viewKeyStruct::porosityModelNameString();
-//     return std::make_unique< PoroElasticNodalForceKernel >( elemManager, constitutiveManager, solidMaterialKey, porosityModelKey  );
-//   }
-// }
-
 } // namespace solidMechanicsLagrangianFEMKernels
 
 } // namespace geos
