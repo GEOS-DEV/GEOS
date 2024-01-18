@@ -256,7 +256,7 @@ DECLARE_FIELD( particleCohesiveZoneFlag,
                WRITE_AND_READ,
                "ParticleCohesiveZoneFlag" );
 
-DECLARE_FIELD( particleInitialMappedNodes, 
+DECLARE_FIELD( particleReferenceMappedNodes, 
                "particleInitialMappedNodes", 
                array2d< globalIndex >,
                0,
@@ -264,7 +264,7 @@ DECLARE_FIELD( particleInitialMappedNodes,
                WRITE_AND_READ,
                "ParticleInitialMappedNodes" );
 
-DECLARE_FIELD( particleInitialShapeFunctionValues, 
+DECLARE_FIELD( particleReferenceShapeFunctionValues, 
                "particleInitialShapeFunctionValues", 
                array2d< real64 >,
                0,
@@ -272,13 +272,22 @@ DECLARE_FIELD( particleInitialShapeFunctionValues,
                WRITE_AND_READ,
                "ParticleInitialShapeFunctionValues" );
 
-DECLARE_FIELD( particleInitialShapeFunctionGradientValues, 
+DECLARE_FIELD( particleReferenceShapeFunctionGradientValues, 
                "particleInitialShapeFunctionGradientValues", 
                array3d< real64 >,
                0,
                LEVEL_1,
                WRITE_AND_READ,
                "ParticleInitialShapeFunctionGradientValues" );
+
+
+DECLARE_FIELD( particleReferenceSurfaceNormal, 
+               "particleReferenceSurfaceNormal", 
+               array2d< real64 >,
+               0,
+               LEVEL_1,
+               WRITE_AND_READ,
+               "ParticleReferenceSurfaceNormal" );
 
 }
 
