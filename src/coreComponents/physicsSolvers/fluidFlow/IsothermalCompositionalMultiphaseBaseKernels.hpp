@@ -690,9 +690,26 @@ public:
     if( m_kernelFlags.isSet( ElementBasedAssemblyKernelFlags::SimpleAccumulation ) )
     {
       computeAccumulationSimple( ei, stack );
-      return;
+    }
+    else
+    {
+      computeAccumulationClassic( ei, stack, phaseAmountKernelOp );
     }
 
+    // check zero diagonal (works only in debug)
+    for( integer ic = 0; ic < numComp; ++ic )
+    {
+      GEOS_ASSERT_MSG( LvArray::math::abs( stack.localJacobian[ic][ic] ) > minDensForDivision,
+                       GEOS_FMT( "Zero diagonal in Jacobian: equation {}, value = {}", ic, stack.localJacobian[ic][ic] ) );
+    }
+  }
+
+  template< typename FUNC = NoOpFunc >
+  GEOS_HOST_DEVICE
+  void computeAccumulationClassic( localIndex const ei,
+                                   StackVariables & stack,
+                                   FUNC && phaseAmountKernelOp = NoOpFunc{} ) const
+  {
     using Deriv = multifluid::DerivativeOffset;
 
     // construct the slices for variables accessed multiple times
@@ -729,7 +746,7 @@ public:
       for( integer jc = 0; jc < numComp; ++jc )
       {
         dPhaseAmount_dC[jc] = dPhaseAmount_dC[jc] * phaseVolFrac[ip]
-                              + phaseDens[ip] * dPhaseVolFrac[ip][Deriv::dC+jc];
+                              + phaseDens[ip] * dPhaseVolFrac[ip][Deriv::dC + jc];
         dPhaseAmount_dC[jc] *= stack.poreVolume;
       }
 
@@ -765,13 +782,6 @@ public:
       phaseAmountKernelOp( ip, phaseAmount, phaseAmount_n, dPhaseAmount_dP, dPhaseAmount_dC );
 
     }
-
-    // check zero diagonal (works only in debug)
-    for( integer ic = 0; ic < numComp; ++ic )
-    {
-      GEOS_ASSERT_MSG ( LvArray::math::abs( stack.localJacobian[ic][ic] ) > minDensForDivision,
-                        GEOS_FMT( "Zero diagonal in Jacobian: equation {}, value = {}", ic, stack.localJacobian[ic][ic] ) );
-    }
   }
 
   template< typename FUNC = NoOpFunc >
@@ -791,13 +801,9 @@ public:
       // Pavel: commented below is some experiment, needs to be re-tested
       //real64 const compDens = (ic == 0 && m_compDens[ei][ic] < 1e-6) ? 1e-3 : m_compDens[ei][ic];
       real64 const dCompAmount_dP = stack.dPoreVolume_dPres * m_compDens[ei][ic];
-      GEOS_ASSERT_MSG( !(ic == 0 && LvArray::math::abs( dCompAmount_dP ) < minDensForDivision),
-                       GEOS_FMT( "Zero diagonal in Jacobian: equation {}, value = {}", ic, dCompAmount_dP ) );
       stack.localJacobian[ic][0] += dCompAmount_dP;
 
       real64 const dCompAmount_dC = stack.poreVolume;
-      GEOS_ASSERT_MSG( !(ic == ic + 1 && LvArray::math::abs( dCompAmount_dC ) < minDensForDivision),
-                       GEOS_FMT( "Zero diagonal in Jacobian: equation {}, value = {}", ic, dCompAmount_dC ) );
       stack.localJacobian[ic][ic + 1] += dCompAmount_dC;
     }
   }
