@@ -230,6 +230,65 @@ install( FILES ${CMAKE_BINARY_DIR}/schema.xsd
 
 
 ################################
+# Add python environment setup
+################################
+if ( Python3_EXECUTABLE )
+    message(STATUS "Found python version ${Python3_VERSION}")
+    if (${Python3_VERSION} VERSION_LESS "3.6.0")
+      message(STATUS "Note: try setting Python3_ROOT_DIR and/or Python3_EXECUTABLE in your host config to the appropriate version.")
+      message( FATAL_ERROR "Building the GEOSX python tools requires Python >= 3.6." )
+    endif()
+
+    # Select the version of python to target
+    if( ENABLE_PYGEOSX )
+        set( PYTHON_POST_EXECUTABLE ${CMAKE_BINARY_DIR}/lib/PYGEOSX/bin/python CACHE PATH "" FORCE )
+    else()
+        set( PYTHON_POST_EXECUTABLE ${Python3_EXECUTABLE} CACHE PATH "" FORCE )
+    endif()
+
+    # Check for the virtualenv package
+    execute_process(
+        COMMAND ${Python3_EXECUTABLE} -c "import virtualenv"
+        RESULT_VARIABLE VIRTUALENV_AVAILABLE
+    )
+
+    if (NOT ${VIRTUALENV_AVAILABLE} EQUAL 0)
+        message(WARNING "The \"virtualenv\" package was not found in the target python environment (${Python3_EXECUTABLE}).  This package may be required to build PYGEOSX or the python development environment.")
+    endif()
+
+    # Build targets
+    set( GEOSX_PYTHON_TOOLS_BINS
+         "${CMAKE_BINARY_DIR}/bin/preprocess_xml"
+         "${CMAKE_BINARY_DIR}/bin/format_xml" )
+
+    add_custom_command( OUTPUT ${GEOSX_PYTHON_TOOLS_BINS}
+                        COMMAND bash ${CMAKE_SOURCE_DIR}/../scripts/setupPythonEnvironment.bash -p ${PYTHON_POST_EXECUTABLE} -b ${CMAKE_BINARY_DIR}/bin
+                        WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+                      )
+
+    add_custom_target( geosx_python_tools
+                       DEPENDS ${GEOSX_PYTHON_TOOLS_BINS} )
+
+    add_custom_target( geosx_python_tools_test
+                       COMMAND ${CMAKE_BINARY_DIR}/python/geosx/bin/test_geosx_xml_tools
+                       COMMAND rm -r ${CMAKE_BINARY_DIR}/python/geosx_xml_tools_tests*
+                       WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/python
+                       DEPENDS geosx_python_tools
+                     )
+
+    add_custom_target( geosx_format_all_xml_files
+                       COMMAND bash ${CMAKE_SOURCE_DIR}/../scripts/formatXMLFiles.bash -g ${CMAKE_BINARY_DIR}/bin/format_xml ${CMAKE_SOURCE_DIR} ${CMAKE_SOURCE_DIR}/../examples
+                       WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+                       DEPENDS geosx_xml_tools
+                     )
+
+else()
+    message(WARNING "Building the GEOSX python tools requires Python >= 3.6.")
+    message(STATUS "If you need these, try setting Python3_ROOT_DIR and/or Python3_EXECUTABLE in your host config.")
+endif()
+
+
+################################
 # Add integratedTests
 ################################
 if( EXISTS "${CMAKE_SOURCE_DIR}/../integratedTests/CMakeLists.txt")
