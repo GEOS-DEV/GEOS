@@ -73,8 +73,8 @@ Option                          Default   Explanation
 ``ENABLE_WARNINGS_AS_ERRORS``   ``ON``    Treat all warnings as errors
 ``ENABLE_PVTPackage``           ``ON``    Enable PVTPackage library (required for compositional flow runs)
 ``ENABLE_TOTALVIEW_OUTPUT``     ``OFF``   Enables TotalView debugger custom view of GEOS data structures
+``ENABLE_COV``                  ``OFF``   Enables code coverage
 ``GEOS_ENABLE_TESTS``           ``ON``    Enables unit testing targets
-``GEOSX_ENABLE_FPE``            ``ON``    Enable floating point exception trapping
 ``GEOSX_LA_INTERFACE``          ``Hypre`` Choiсe of Linear Algebra backend (Hypre/Petsc/Trilinos)
 ``GEOSX_BUILD_OBJ_LIBS``        ``ON``    Use CMake Object Libraries build
 ``GEOSX_BUILD_SHARED_LIBS``     ``OFF``   Build ``geosx_core`` as a shared library instead of static

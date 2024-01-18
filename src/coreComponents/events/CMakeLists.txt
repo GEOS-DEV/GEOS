@@ -35,4 +35,3 @@ blt_add_library( NAME       events
 
 target_include_directories( events PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents )
 
-geosx_add_code_checks( PREFIX events )
