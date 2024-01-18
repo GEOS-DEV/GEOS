@@ -89,7 +89,7 @@ The main repository of interest is obviously GEOS itself: `GEOS <https://github.
 
 We also rely on two types of dependencies: first-party and third-party.
 First-party dependencies are projects directly associated with the GEOS effort, but kept in separate repositories because they form stand-alone tools.
-For example, there is an equation-of-state package called `PVTPackage <https://github.com/GEOS-DEV/PVTPackage>`_ or the streamlined CMake-based foundation  `BTL <https://github.com/LLNL/blt`_.
+For example, there is an equation-of-state package called `PVTPackage <https://github.com/GEOS-DEV/PVTPackage>`_ or the streamlined CMake-based foundation `BLT <https://github.com/LLNL/blt>`_ .
 These packages are handled as `Git Submodules <https://git-scm.com/book/en/v2/Git-Tools-Submodules>`_, which provides a transparent way of coordinating multiple code development projects.
 Most users will never have to worry that these modules are in fact separate projects from GEOS.
 
