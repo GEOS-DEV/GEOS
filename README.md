@@ -1,5 +1,4 @@
 [![DOI](https://zenodo.org/badge/131810578.svg)](https://zenodo.org/badge/latestdoi/131810578)
-
 [![codecov](https://codecov.io/github/GEOS-DEV/GEOS/graph/badge.svg?token=0VTEHPQG58)](https://codecov.io/github/GEOS-DEV/GEOS)
 
 Welcome to the GEOS project!
