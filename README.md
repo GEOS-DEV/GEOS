@@ -1,5 +1,7 @@
 [![DOI](https://zenodo.org/badge/131810578.svg)](https://zenodo.org/badge/latestdoi/131810578)
 [![codecov](https://codecov.io/github/GEOS-DEV/GEOS/graph/badge.svg?token=0VTEHPQG58)](https://codecov.io/github/GEOS-DEV/GEOS)
+![CI](https://github.com/GEOS-DEV/GEOS/actions/workflows/ci_tests.yml/badge.svg)
+[![docs](https://readthedocs.com/projects/geosx-geosx/badge/?version=latest)](https://geosx-geosx.readthedocs-hosted.com/en/latest/)
 
 Welcome to the GEOS project!
 -----------------------------
