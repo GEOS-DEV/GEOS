@@ -185,6 +185,8 @@ void CompositionalMultiphaseBase::postProcessInput()
                         getWrapperDataContext( viewKeyStruct::solutionChangeScalingFactorString() ) <<
                         ": The solution change scaling factor must be smaller or equal to 1.0" );
 
+  if( m_isThermal )
+    m_useSimpleAccumulation = 0; // useSimpleAccumulation is not yet compatible with thermal
 }
 
 void CompositionalMultiphaseBase::registerDataOnMesh( Group & meshBodies )
@@ -1349,8 +1351,7 @@ void CompositionalMultiphaseBase::assembleAccumulationAndVolumeBalanceTerms( Dom
                                                      m_numPhases,
                                                      dofManager.rankOffset(),
                                                      m_useTotalMassEquation,
-                                                     m_useSimpleAccumulation && !m_isThermal, // useSimpleAccumulation is not yet compatible
-                                                                                              // with thermal
+                                                     m_useSimpleAccumulation,
                                                      dofKey,
                                                      subRegion,
                                                      fluid,
