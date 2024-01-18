@@ -796,7 +796,7 @@ public:
       stack.localJacobian[ic][0] += dCompAmount_dP;
 
       real64 const dCompAmount_dC = stack.poreVolume;
-      GEOS_ASSERT_MSG( !(ic == ic + 1 && LvArray::math::abs( dCompAmount_dC ) < minDensForDivision),
+      GEOS_ASSERT_MSG( !(ic > 0 && LvArray::math::abs( dCompAmount_dC ) < minDensForDivision),
                        GEOS_FMT( "Zero diagonal in Jacobian: equation {}, value = {}", ic, dCompAmount_dC ) );
       stack.localJacobian[ic][ic + 1] += dCompAmount_dC;
     }
