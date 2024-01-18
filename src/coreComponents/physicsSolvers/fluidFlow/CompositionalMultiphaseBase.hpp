@@ -108,10 +108,10 @@ public:
                         DomainPartition & domain ) override;
 
   /**
-   * @brief Recompute component fractions from primary variables (component densities)
+   * @brief Recompute global component fractions from primary variables (component densities)
    * @param dataGroup the group storing the required fields
    */
-  void updateComponentFraction( ObjectManagerBase & dataGroup ) const;
+  void updateGlobalComponentFraction( ObjectManagerBase & dataGroup ) const;
 
   /**
    * @brief Recompute phase volume fractions (saturations) from constitutive and primary variables
@@ -244,6 +244,8 @@ public:
     static constexpr char const * targetRelativePresChangeString() { return "targetRelativePressureChangeInTimeStep"; }
     static constexpr char const * targetRelativeTempChangeString() { return "targetRelativeTemperatureChangeInTimeStep"; }
     static constexpr char const * targetPhaseVolFracChangeString() { return "targetPhaseVolFractionChangeInTimeStep"; }
+    static constexpr char const * targetFlowCFLString() { return "targetFlowCFL"; }
+
 
     // nonlinear solver parameters
 
@@ -356,6 +358,20 @@ public:
   virtual real64 setNextDtBasedOnStateChange( real64 const & currentDt,
                                               DomainPartition & domain ) override;
 
+  void computeCFLNumbers( DomainPartition & domain, real64 const & dt, real64 & maxPhaseCFL, real64 & maxCompCFL );
+
+  /**
+   * @brief function to set the next time step size
+   * @param[in] currentDt the current time step size
+   * @param[in] domain the domain object
+   * @return the prescribed time step size
+   */
+  real64 setNextDt( real64 const & currentDt,
+                    DomainPartition & domain ) override;
+
+  virtual real64 setNextDtBasedOnCFL( real64 const & currentDt,
+                                      DomainPartition & domain ) override;
+
   virtual void initializePostInitialConditionsPreSubGroups() override;
 
   integer useTotalMassEquation() const { return m_useTotalMassEquation; }
@@ -365,6 +381,7 @@ protected:
   virtual void postProcessInput() override;
 
   virtual void initializePreSubGroups() override;
+
 
   /**
    * @brief Utility function that checks the consistency of the constitutive models
@@ -459,6 +476,9 @@ protected:
 
   /// name of the fluid constitutive model used as a reference for component/phase description
   string m_referenceFluidModelName;
+
+  /// the targeted CFL for timestep
+  real64 m_targetFlowCFL;
 
 private:
 

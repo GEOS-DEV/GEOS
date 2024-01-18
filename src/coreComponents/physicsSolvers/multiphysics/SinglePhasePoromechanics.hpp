@@ -19,33 +19,23 @@
 #ifndef GEOS_PHYSICSSOLVERS_MULTIPHYSICS_SINGLEPHASEPOROMECHANICS_HPP_
 #define GEOS_PHYSICSSOLVERS_MULTIPHYSICS_SINGLEPHASEPOROMECHANICS_HPP_
 
-#include "physicsSolvers/multiphysics/CoupledSolver.hpp"
-#include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
+#include "physicsSolvers/multiphysics/PoromechanicsSolver.hpp"
+
 
 namespace geos
 {
 
 template< typename FLOW_SOLVER >
-class SinglePhasePoromechanics : public CoupledSolver< FLOW_SOLVER,
-                                                       SolidMechanicsLagrangianFEM >
+class SinglePhasePoromechanics : public PoromechanicsSolver< FLOW_SOLVER >
 {
 public:
 
-  using Base = CoupledSolver< FLOW_SOLVER, SolidMechanicsLagrangianFEM >;
+  using Base = PoromechanicsSolver< FLOW_SOLVER >;
   using Base::m_solvers;
   using Base::m_dofManager;
   using Base::m_localMatrix;
   using Base::m_rhs;
   using Base::m_solution;
-
-  enum class SolverType : integer
-  {
-    Flow = 0,
-    SolidMechanics = 1
-  };
-
-  /// String used to form the solverName used to register solvers in CoupledSolver
-  static string coupledSolverAttributePrefix() { return "poromechanics"; }
 
   /**
    * @brief main constructor for SinglePhasePoromechanics objects
@@ -63,24 +53,10 @@ public:
    * @return string that contains the catalog name to generate a new SinglePhasePoromechanics object through the object catalog.
    */
   static string catalogName();
-
   /**
-   * @brief accessor for the pointer to the solid mechanics solver
-   * @return a pointer to the solid mechanics solver
+   * @copydoc SolverBase::getCatalogName()
    */
-  SolidMechanicsLagrangianFEM * solidMechanicsSolver() const
-  {
-    return std::get< toUnderlying( SolverType::SolidMechanics ) >( m_solvers );
-  }
-
-  /**
-   * @brief accessor for the pointer to the flow solver
-   * @return a pointer to the flow solver
-   */
-  FLOW_SOLVER * flowSolver() const
-  {
-    return std::get< toUnderlying( SolverType::Flow ) >( m_solvers );
-  }
+  string getCatalogName() const override { return catalogName(); }
 
   /**
    * @defgroup Solver Interface Functions
@@ -91,17 +67,8 @@ public:
 
   virtual void postProcessInput() override;
 
-  virtual void registerDataOnMesh( dataRepository::Group & MeshBodies ) override;
-
   virtual void setupCoupling( DomainPartition const & domain,
                               DofManager & dofManager ) const override;
-
-  virtual void setupDofs( DomainPartition const & domain,
-                          DofManager & dofManager ) const override;
-
-  virtual void implicitStepSetup( real64 const & time_n,
-                                  real64 const & dt,
-                                  DomainPartition & domain ) override;
 
   virtual void setupSystem( DomainPartition & domain,
                             DofManager & dofManager,
@@ -119,34 +86,16 @@ public:
 
   virtual void updateState( DomainPartition & domain ) override;
 
-  /*
-   * @brief Utility function to set the stress initialization flag
-   * @param[in] performStressInitialization true if the solver has to initialize stress, false otherwise
-   */
-  void setStressInitialization( integer const performStressInitialization )
-  { m_performStressInitialization = performStressInitialization; }
-
   /**@}*/
-
-  virtual void mapSolutionBetweenSolvers( DomainPartition & Domain, integer const idx ) override final;
 
   struct viewKeyStruct : Base::viewKeyStruct
   {
-    /// Names of the porous materials
-    constexpr static char const * porousMaterialNamesString() { return "porousMaterialNames"; }
-
-    /// Flag to indicate that the simulation is thermal
-    constexpr static char const * isThermalString() { return "isThermal"; }
-
-    /// Flag to indicate that the solver is going to perform stress initialization
-    constexpr static char const * performStressInitializationString() { return "performStressInitialization"; }
+    // nothing yet here
   };
 
 protected:
 
   virtual void initializePostInitialConditionsPreSubGroups() override;
-
-  virtual void initializePreSubGroups() override;
 
   void assembleElementBasedTerms( real64 const time_n,
                                   real64 const dt,
@@ -154,8 +103,6 @@ protected:
                                   DofManager const & dofManager,
                                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                   arrayView1d< real64 > const & localRhs );
-  /// flag to determine whether or not this is a thermal simulation
-  integer m_isThermal;
 
 private:
 
@@ -163,13 +110,7 @@ private:
    * @brief Helper function to recompute the bulk density
    * @param[in] subRegion the element subRegion
    */
-  void updateBulkDensity( ElementSubRegionBase & subRegion );
-
-  /**
-   * @brief Helper function to average the mean stress increment
-   * @param[in] domain the domain partition
-   */
-  void averageMeanStressIncrement( DomainPartition & domain );
+  virtual void updateBulkDensity( ElementSubRegionBase & subRegion ) override;
 
   void createPreconditioner();
 
@@ -185,8 +126,6 @@ private:
                          real64 const dt,
                          PARAMS && ... params );
 
-  /// Flag to indicate that the solver is going to perform stress initialization
-  integer m_performStressInitialization;
 };
 
 template< typename FLOW_SOLVER >
@@ -224,7 +163,7 @@ real64 SinglePhasePoromechanics< FLOW_SOLVER >::assemblyLaunch( MeshLevel & mesh
                                          CONSTITUTIVE_BASE,
                                          CellElementSubRegion >( mesh,
                                                                  regionNames,
-                                                                 solidMechanicsSolver()->getDiscretizationName(),
+                                                                 this->solidMechanicsSolver()->getDiscretizationName(),
                                                                  materialNamesString,
                                                                  kernelWrapper );
 }

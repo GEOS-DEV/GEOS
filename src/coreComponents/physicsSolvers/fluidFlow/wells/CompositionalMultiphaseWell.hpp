@@ -76,6 +76,10 @@ public:
    * @return string that contains the catalog name to generate a new NodeManager object through the object catalog.
    */
   static string catalogName() { return "CompositionalMultiphaseWell"; }
+  /**
+   * @copydoc SolverBase::getCatalogName()
+   */
+  string getCatalogName() const override { return catalogName(); }
 
   virtual void registerDataOnMesh( Group & meshBodies ) override;
 
@@ -129,10 +133,10 @@ public:
   /**@}*/
 
   /**
-   * @brief Recompute component fractions from primary variables (component densities)
+   * @brief Recompute global component fractions from primary variables (component densities)
    * @param subRegion the well subregion containing all the primary and dependent fields
    */
-  void updateComponentFraction( WellElementSubRegion & subRegion ) const;
+  void updateGlobalComponentFraction( WellElementSubRegion & subRegion ) const;
 
   /**
    * @brief Recompute the volumetric rates that are used in the well constraints
@@ -330,6 +334,13 @@ protected:
    * regions connected to that particular well.
    */
   void validateConstitutiveModels( DomainPartition const & domain ) const;
+
+  /**
+   * @brief Checks if the WellControls parameters are within the fluid tables ranges
+   * @param fluid the fluid to check
+   */
+  void validateWellControlsForFluid( WellControls const & wellControls,
+                                     constitutive::MultiFluidBase const & fluid ) const;
 
   /**
    * @brief Checks injection streams for validity (compositions sum to one)

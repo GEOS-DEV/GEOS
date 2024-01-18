@@ -139,15 +139,15 @@ void kernelLaunchSelectorCompSwitch( T value, LAMBDA && lambda )
 } // namespace internal
 
 
-/******************************** ComponentFractionKernel ********************************/
+/******************************** GlobalComponentFractionKernel ********************************/
 
 /**
- * @class ComponentFractionKernel
+ * @class GlobalComponentFractionKernel
  * @tparam NUM_COMP number of fluid components
  * @brief Define the interface for the update kernel in charge of computing the phase volume fractions
  */
 template< integer NUM_COMP >
-class ComponentFractionKernel : public PropertyKernelBase< NUM_COMP >
+class GlobalComponentFractionKernel : public PropertyKernelBase< NUM_COMP >
 {
 public:
 
@@ -159,7 +159,7 @@ public:
    * @param[in] subRegion the element subregion
    * @param[in] fluid the fluid model
    */
-  ComponentFractionKernel( ObjectManagerBase & subRegion )
+  GlobalComponentFractionKernel( ObjectManagerBase & subRegion )
     : Base(),
     m_compDens( subRegion.getField< fields::flow::globalCompDensity >() ),
     m_compFrac( subRegion.getField< fields::flow::globalCompFraction >() ),
@@ -219,9 +219,9 @@ protected:
 };
 
 /**
- * @class ComponentFractionKernelFactory
+ * @class GlobalComponentFractionKernelFactory
  */
-class ComponentFractionKernelFactory
+class GlobalComponentFractionKernelFactory
 {
 public:
 
@@ -240,8 +240,8 @@ public:
     internal::kernelLaunchSelectorCompSwitch( numComp, [&] ( auto NC )
     {
       integer constexpr NUM_COMP = NC();
-      ComponentFractionKernel< NUM_COMP > kernel( subRegion );
-      ComponentFractionKernel< NUM_COMP >::template launch< POLICY >( subRegion.size(), kernel );
+      GlobalComponentFractionKernel< NUM_COMP > kernel( subRegion );
+      GlobalComponentFractionKernel< NUM_COMP >::template launch< POLICY >( subRegion.size(), kernel );
     } );
   }
 
@@ -2159,17 +2159,18 @@ struct HydrostaticPressureKernel
 
     // Step 3: compute the mass density at this elevation using the guess, and update pressure
 
-    fluidWrapper.compute( pres0,
-                          temp,
-                          compFrac[0],
-                          phaseFrac[0][0],
-                          phaseDens[0][0],
-                          phaseMassDens[0][0],
-                          phaseVisc[0][0],
-                          phaseEnthalpy[0][0],
-                          phaseInternalEnergy[0][0],
-                          phaseCompFrac[0][0],
-                          totalDens );
+    MultiFluidBase::KernelWrapper::computeValues( fluidWrapper,
+                                                  pres0,
+                                                  temp,
+                                                  compFrac[0],
+                                                  phaseFrac[0][0],
+                                                  phaseDens[0][0],
+                                                  phaseMassDens[0][0],
+                                                  phaseVisc[0][0],
+                                                  phaseEnthalpy[0][0],
+                                                  phaseInternalEnergy[0][0],
+                                                  phaseCompFrac[0][0],
+                                                  totalDens );
     pres1 = refPres - 0.5 * ( refPhaseMassDens[ipInit] + phaseMassDens[0][0][ipInit] ) * gravCoef;
 
     // Step 4: fixed-point iteration until convergence
@@ -2204,17 +2205,18 @@ struct HydrostaticPressureKernel
       }
 
       // compute the mass density at this elevation using the previous pressure, and compute the new pressure
-      fluidWrapper.compute( pres0,
-                            temp,
-                            compFrac[0],
-                            phaseFrac[0][0],
-                            phaseDens[0][0],
-                            phaseMassDens[0][0],
-                            phaseVisc[0][0],
-                            phaseEnthalpy[0][0],
-                            phaseInternalEnergy[0][0],
-                            phaseCompFrac[0][0],
-                            totalDens );
+      MultiFluidBase::KernelWrapper::computeValues( fluidWrapper,
+                                                    pres0,
+                                                    temp,
+                                                    compFrac[0],
+                                                    phaseFrac[0][0],
+                                                    phaseDens[0][0],
+                                                    phaseMassDens[0][0],
+                                                    phaseVisc[0][0],
+                                                    phaseEnthalpy[0][0],
+                                                    phaseInternalEnergy[0][0],
+                                                    phaseCompFrac[0][0],
+                                                    totalDens );
       pres1 = refPres - 0.5 * ( refPhaseMassDens[ipInit] + phaseMassDens[0][0][ipInit] ) * gravCoef;
     }
 
@@ -2280,17 +2282,18 @@ struct HydrostaticPressureKernel
     {
       datumCompFrac[0][ic] = compFracTableWrappers[ic].compute( &datumElevation );
     }
-    fluidWrapper.compute( datumPres,
-                          datumTemp,
-                          datumCompFrac[0],
-                          datumPhaseFrac[0][0],
-                          datumPhaseDens[0][0],
-                          datumPhaseMassDens[0][0],
-                          datumPhaseVisc[0][0],
-                          datumPhaseEnthalpy[0][0],
-                          datumPhaseInternalEnergy[0][0],
-                          datumPhaseCompFrac[0][0],
-                          datumTotalDens );
+    MultiFluidBase::KernelWrapper::computeValues( fluidWrapper,
+                                                  datumPres,
+                                                  datumTemp,
+                                                  datumCompFrac[0],
+                                                  datumPhaseFrac[0][0],
+                                                  datumPhaseDens[0][0],
+                                                  datumPhaseMassDens[0][0],
+                                                  datumPhaseVisc[0][0],
+                                                  datumPhaseEnthalpy[0][0],
+                                                  datumPhaseInternalEnergy[0][0],
+                                                  datumPhaseCompFrac[0][0],
+                                                  datumTotalDens );
 
     // Step 2: find the closest elevation to datumElevation
 

@@ -71,6 +71,10 @@ public:
    */
   static string catalogName()
   { return "SinglePhaseHybridFVM"; }
+  /**
+   * @copydoc SolverBase::getCatalogName()
+   */
+  string getCatalogName() const override { return catalogName(); }
 
   virtual void registerDataOnMesh( Group & meshBodies ) override;
 
@@ -171,13 +175,6 @@ public:
                         arrayView1d< real64 > const & localRhs );
 
   /**@}*/
-
-
-  struct viewKeyStruct : SinglePhaseBase::viewKeyStruct
-  {
-    // primary face-based field
-    static constexpr char const * deltaFacePressureString() { return "deltaFacePressure"; }
-  };
 
   virtual void initializePreSubGroups() override;
 

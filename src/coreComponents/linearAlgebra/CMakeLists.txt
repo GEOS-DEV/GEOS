@@ -1,6 +1,4 @@
-#
 # Specify all headers
-#
 set( linearAlgebra_headers
      DofManager.hpp
      DofManagerHelpers.hpp
@@ -36,12 +34,9 @@ set( linearAlgebra_headers
      utilities/LinearSolverResult.hpp
      utilities/NormalOperator.hpp
      utilities/ReverseCutHillMcKeeOrdering.hpp
-     utilities/TransposeOperator.hpp
-   )
+     utilities/TransposeOperator.hpp )
 
-#
 # Specify all sources
-#
 set( linearAlgebra_sources
      DofManager.cpp
      solvers/BicgstabSolver.cpp
@@ -50,8 +45,7 @@ set( linearAlgebra_sources
      solvers/GmresSolver.cpp
      solvers/KrylovSolver.cpp
      solvers/SeparateComponentPreconditioner.cpp
-     utilities/ReverseCutHillMcKeeOrdering.cpp       
-   )
+     utilities/ReverseCutHillMcKeeOrdering.cpp )
 
 set( dependencyList ${parallelDeps} mesh denseLinearAlgebra )
 
@@ -115,8 +109,7 @@ if( ENABLE_HYPRE )
           interfaces/hypre/mgrStrategies/SolidMechanicsEmbeddedFractures.hpp
           interfaces/hypre/mgrStrategies/ThermalCompositionalMultiphaseFVM.hpp
           interfaces/hypre/mgrStrategies/ThermalMultiphasePoromechanics.hpp
-          interfaces/hypre/mgrStrategies/ThermalSinglePhasePoromechanics.hpp
-        )
+          interfaces/hypre/mgrStrategies/ThermalSinglePhasePoromechanics.hpp )
     list( APPEND linearAlgebra_sources
           interfaces/hypre/HypreExport.cpp
           interfaces/hypre/HypreInterface.cpp
@@ -126,8 +119,7 @@ if( ENABLE_HYPRE )
           interfaces/hypre/HyprePreconditioner.cpp
           interfaces/hypre/HypreSolver.cpp
           interfaces/hypre/HypreUtils.cpp
-          interfaces/hypre/HypreVector.cpp
-        )
+          interfaces/hypre/HypreVector.cpp )
 
     list( APPEND dependencyList hypre umpire )
 
@@ -142,8 +134,7 @@ if( ENABLE_PETSC )
           interfaces/petsc/PetscPreconditioner.hpp
           interfaces/petsc/PetscSolver.hpp
           interfaces/petsc/PetscUtils.hpp
-          interfaces/petsc/PetscVector.hpp
-        )
+          interfaces/petsc/PetscVector.hpp )
 
     list( APPEND linearAlgebra_sources
           interfaces/petsc/PetscExport.cpp
@@ -151,8 +142,7 @@ if( ENABLE_PETSC )
           interfaces/petsc/PetscMatrix.cpp
           interfaces/petsc/PetscPreconditioner.cpp
           interfaces/petsc/PetscSolver.cpp
-          interfaces/petsc/PetscVector.cpp
-        )
+          interfaces/petsc/PetscVector.cpp )
 
     list( APPEND dependencyList petsc )
 
