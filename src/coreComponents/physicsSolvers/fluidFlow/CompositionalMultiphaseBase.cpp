@@ -731,6 +731,7 @@ real64 CompositionalMultiphaseBase::updateFluidState( ObjectManagerBase & subReg
 }
 
 void CompositionalMultiphaseBase::initializeFluidState( MeshLevel & mesh,
+                                                        DomainPartition & domain,
                                                         arrayView1d< string const > const & regionNames )
 {
   GEOS_MARK_FUNCTION;
@@ -768,6 +769,9 @@ void CompositionalMultiphaseBase::initializeFluidState( MeshLevel & mesh,
     } );
 
   } );
+
+  // with initial component densities defined - check if they need to be corrected to avoid zero diags etc
+  chopNegativeDensities( domain );
 
   // for some reason CUDA does not want the host_device lambda to be defined inside the generic lambda
   // I need the exact type of the subRegion for updateSolidflowProperties to work well.
@@ -1200,7 +1204,7 @@ void CompositionalMultiphaseBase::initializePostInitialConditionsPreSubGroups()
     } );
 
     // Initialize primary variables from applied initial conditions
-    initializeFluidState( mesh, regionNames );
+    initializeFluidState( mesh, domain, regionNames );
 
     mesh.getElemManager().forElementRegions< SurfaceElementRegion >( regionNames,
                                                                      [&]( localIndex const,
