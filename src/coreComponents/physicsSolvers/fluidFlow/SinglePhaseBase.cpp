@@ -1152,9 +1152,10 @@ void SinglePhaseBase::applySourceFluxBC( real64 const time_n,
         if( fs.getLogLevel() >= 1 && logger::internal::rank == 0 )
         {
           double effectiveRate = sum / dt;
+          globalIndex const numTargetElems = MpiWrapper::sum< globalIndex >( targetSet.size() );
 
           GEOS_LOG_RANK_0( GEOS_FMT( "{}: applied on {} elements in region {}",
-                                     fs.getName(), ???, subRegion.getName() ) );
+                                     fs.getName(), numTargetElems, subRegion.getName() ) );
           GEOS_LOG_RANK_0( GEOS_FMT( "{}: Produced mass = {} kg",
                                      fs.getName(), sum ) );
           GEOS_LOG_RANK_0( GEOS_FMT( "{}: Production rate = {} kg/s",
