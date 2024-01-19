@@ -21,7 +21,7 @@
 #define SRC_CORECOMPONENTS_PHYSICSSOLVERS_WAVEPROPAGATION_ELASTICFIRSTORDERWAVEEQUATIONSEM_HPP_
 
 #include "mesh/MeshFields.hpp"
-#include "WaveSolverBaseFields.hpp"
+#include "ElasticFields.hpp"
 #include "WaveSolverBase.hpp"
 
 
