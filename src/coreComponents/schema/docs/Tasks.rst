@@ -15,6 +15,7 @@ SinglePhaseReservoirPoromechanicsInitialization             node         :ref:`X
 SinglePhaseStatistics                                       node         :ref:`XML_SinglePhaseStatistics`                                       
 SolidMechanicsStateReset                                    node         :ref:`XML_SolidMechanicsStateReset`                                    
 SolidMechanicsStatistics                                    node         :ref:`XML_SolidMechanicsStatistics`                                    
+SourceFluxStatistics                                        node         :ref:`XML_SourceFluxStatistics`                                        
 TriaxialDriver                                              node         :ref:`XML_TriaxialDriver`                                              
 =========================================================== ==== ======= ====================================================================== 
 
