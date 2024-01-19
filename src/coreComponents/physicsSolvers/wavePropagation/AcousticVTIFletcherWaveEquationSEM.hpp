@@ -14,11 +14,11 @@
 
 
 /**
- * @file AcousticVTIWaveEquationSEM.hpp
+ * @file AcousticVTIFletcherWaveEquationSEM.hpp
  */
 
-#ifndef GEOS_PHYSICSSOLVERS_WAVEPROPAGATION_ACOUSTICVTIWAVEEQUATIONSEM_HPP_
-#define GEOS_PHYSICSSOLVERS_WAVEPROPAGATION_ACOUSTICVTIWAVEEQUATIONSEM_HPP_
+#ifndef GEOS_PHYSICSSOLVERS_WAVEPROPAGATION_ACOUSTICVTIFLETCHERWAVEEQUATIONSEM_HPP_
+#define GEOS_PHYSICSSOLVERS_WAVEPROPAGATION_ACOUSTICVTIFLETCHERWAVEEQUATIONSEM_HPP_
 
 #include "mesh/MeshFields.hpp"
 #include "physicsSolvers/SolverBase.hpp"
@@ -28,17 +28,17 @@
 namespace geos
 {
 
-class AcousticVTIWaveEquationSEM : public WaveSolverBase
+class AcousticVTIFletcherWaveEquationSEM : public WaveSolverBase
 {
 public:
 
   using EXEC_POLICY = parallelDevicePolicy< 32 >;
   using ATOMIC_POLICY = AtomicPolicy< EXEC_POLICY >;
 
-  AcousticVTIWaveEquationSEM( const std::string & name,
+  AcousticVTIFletcherWaveEquationSEM( const std::string & name,
                               Group * const parent );
 
-  static string catalogName() { return "AcousticVTISEM"; }
+  static string catalogName() { return "AcousticVTIFletcherSEM"; }
   /**
    * @copydoc SolverBase::getCatalogName()
    */
@@ -149,4 +149,4 @@ private:
 
 } /* namespace geos */
 
-#endif /* GEOS_PHYSICSSOLVERS_WAVEPROPAGATION_AcousticVTIWaveEquationSEM_HPP_ */
+#endif /* GEOS_PHYSICSSOLVERS_WAVEPROPAGATION_AcousticVTIFletcherWaveEquationSEM_HPP_ */

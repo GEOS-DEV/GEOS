@@ -137,10 +137,10 @@ set( physicsSolvers_headers
      wavePropagation/ElasticFirstOrderWaveEquationSEMKernel.hpp
      wavePropagation/AcousticFirstOrderWaveEquationSEM.hpp
      wavePropagation/AcousticFirstOrderWaveEquationSEMKernel.hpp
-     wavePropagation/AcousticVTIWaveEquationSEM.hpp
-     wavePropagation/AcousticVTIWaveEquationSEMKernel.hpp
-     wavePropagation/AcousticVTIDensityWaveEquationSEM.hpp
-     wavePropagation/AcousticVTIDensityWaveEquationSEMKernel.hpp
+     wavePropagation/AcousticVTIFletcherWaveEquationSEM.hpp
+     wavePropagation/AcousticVTIFletcherWaveEquationSEMKernel.hpp
+     wavePropagation/AcousticVTIZhangWaveEquationSEM.hpp
+     wavePropagation/AcousticVTIZhangWaveEquationSEMKernel.hpp
      wavePropagation/AcousticElasticWaveEquationSEM.hpp
      wavePropagation/AcousticElasticWaveEquationSEMKernel.hpp
      )
@@ -205,9 +205,10 @@ set( physicsSolvers_sources
      wavePropagation/ElasticWaveEquationSEM.cpp
      wavePropagation/ElasticFirstOrderWaveEquationSEM.cpp
      wavePropagation/AcousticFirstOrderWaveEquationSEM.cpp
-     wavePropagation/AcousticVTIWaveEquationSEM.cpp
-     wavePropagation/AcousticVTIDensityWaveEquationSEM.cpp
+     wavePropagation/AcousticVTIFletcherWaveEquationSEM.cpp
+     wavePropagation/AcousticVTIZhangWaveEquationSEM.cpp
      wavePropagation/AcousticElasticWaveEquationSEM.cpp
+     wavePropagation/AcousticVTIFletcherNoDensityWaveEquationSEM.cpp
      )
 
   include( solidMechanics/kernels/SolidMechanicsKernels.cmake)

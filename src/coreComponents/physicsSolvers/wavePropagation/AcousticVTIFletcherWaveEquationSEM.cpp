@@ -14,11 +14,11 @@
 
 
 /**
- * @file AcousticVTIDensityWaveEquationSEM.cpp
+ * @file AcousticVTIFletcherWaveEquationSEM.cpp
  */
 
-#include "AcousticVTIDensityWaveEquationSEM.hpp"
-#include "AcousticVTIDensityWaveEquationSEMKernel.hpp"
+#include "AcousticVTIFletcherWaveEquationSEM.hpp"
+#include "AcousticVTIFletcherWaveEquationSEMKernel.hpp"
 
 #include "finiteElement/FiniteElementDiscretization.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
@@ -34,8 +34,8 @@ namespace geos
 
 using namespace dataRepository;
 
-AcousticVTIDensityWaveEquationSEM::AcousticVTIDensityWaveEquationSEM( const std::string & name,
-                                                                      Group * const parent ):
+AcousticVTIFletcherWaveEquationSEM::AcousticVTIFletcherWaveEquationSEM( const std::string & name,
+                                                        Group * const parent ):
   WaveSolverBase( name,
                   parent )
 {
@@ -46,13 +46,13 @@ AcousticVTIDensityWaveEquationSEM::AcousticVTIDensityWaveEquationSEM( const std:
     setDescription( "Pressure value at each receiver for each timestep" );
 }
 
-void AcousticVTIDensityWaveEquationSEM::initializePreSubGroups()
+void AcousticVTIFletcherWaveEquationSEM::initializePreSubGroups()
 {
   WaveSolverBase::initializePreSubGroups();
 
 }
 
-void AcousticVTIDensityWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
+void AcousticVTIFletcherWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
 {
   WaveSolverBase::registerDataOnMesh( meshBodies );
 
@@ -92,6 +92,7 @@ void AcousticVTIDensityWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
     {
       subRegion.registerField< fields::wavesolverfields::AcousticDelta >( getName() );
       subRegion.registerField< fields::wavesolverfields::AcousticEpsilon >( getName() );
+      subRegion.registerField< fields::wavesolverfields::AcousticSigma >( getName() );
       subRegion.registerField< fields::wavesolverfields::AcousticVelocity >( getName() );
       subRegion.registerField< fields::wavesolverfields::AcousticDensity >( getName() );
     } );
@@ -99,23 +100,23 @@ void AcousticVTIDensityWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
 }
 
 
-void AcousticVTIDensityWaveEquationSEM::postProcessInput()
+void AcousticVTIFletcherWaveEquationSEM::postProcessInput()
 {
 
   WaveSolverBase::postProcessInput();
 
   localIndex const numReceiversGlobal = m_receiverCoordinates.size( 0 );
 
-  m_pressureNp1AtReceivers.resize( m_nsamplesSeismoTrace, numReceiversGlobal );
+  m_pressureNp1AtReceivers.resize( m_nsamplesSeismoTrace, numReceiversGlobal + 1 );
 }
 
-void AcousticVTIDensityWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh,
-                                                                         arrayView1d< string const > const & regionNames )
+void AcousticVTIFletcherWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh,
+                                                                  arrayView1d< string const > const & regionNames )
 {
   NodeManager const & nodeManager = mesh.getNodeManager();
   FaceManager const & faceManager = mesh.getFaceManager();
 
-  arrayView2d< wsCoordType const, nodes::REFERENCE_POSITION_USD > const X32 =
+  arrayView2d< wsCoordType const, nodes::REFERENCE_POSITION_USD > const nodeCoords32 =
     nodeManager.getField< fields::referencePosition32 >().toViewConst();
 
   arrayView2d< real64 const > const faceNormal  = faceManager.faceNormal();
@@ -168,16 +169,14 @@ void AcousticVTIDensityWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLev
     {
       using FE_TYPE = TYPEOFREF( finiteElement );
 
-      constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
       localIndex const numFacesPerElem = elementSubRegion.numFacesPerElement();
 
-      acousticVTIDensityWaveEquationSEMKernels::
+      acousticVTIFletcherWaveEquationSEMKernels::
         PrecomputeSourceAndReceiverKernel::
         launch< EXEC_POLICY, FE_TYPE >
         ( elementSubRegion.size(),
-        numNodesPerElem,
         numFacesPerElem,
-        X32,
+        nodeCoords32,
         elemGhostRank,
         elemsToNodes,
         elemsToFaces,
@@ -201,7 +200,7 @@ void AcousticVTIDensityWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLev
   } );
 }
 
-void AcousticVTIDensityWaveEquationSEM::addSourceToRightHandSide( integer const & cycleNumber, arrayView1d< real32 > const rhs )
+void AcousticVTIFletcherWaveEquationSEM::addSourceToRightHandSide( integer const & cycleNumber, arrayView1d< real32 > const rhs )
 {
   arrayView2d< localIndex const > const sourceNodeIds = m_sourceNodeIds.toViewConst();
   arrayView2d< real64 const > const sourceConstants   = m_sourceConstants.toViewConst();
@@ -222,7 +221,7 @@ void AcousticVTIDensityWaveEquationSEM::addSourceToRightHandSide( integer const 
   } );
 }
 
-void AcousticVTIDensityWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
+void AcousticVTIFletcherWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
 {
 
   WaveSolverBase::initializePostInitialConditionsPreSubGroups();
@@ -274,9 +273,10 @@ void AcousticVTIDensityWaveEquationSEM::initializePostInitialConditionsPreSubGro
       arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemsToNodes = elementSubRegion.nodeList();
       arrayView2d< localIndex const > const elemsToFaces = elementSubRegion.faceList();
       arrayView1d< real32 const > const velocity = elementSubRegion.getField< fields::wavesolverfields::AcousticVelocity >();
-      arrayView1d< real32 const > const density = elementSubRegion.getField< fields::wavesolverfields::AcousticDensity >();
+      arrayView1d< real32 const > const density  = elementSubRegion.getField< fields::wavesolverfields::AcousticDensity >();
       arrayView1d< real32 const > const vti_epsilon  = elementSubRegion.getField< fields::wavesolverfields::AcousticEpsilon >();
       arrayView1d< real32 const > const vti_delta    = elementSubRegion.getField< fields::wavesolverfields::AcousticDelta >();
+      arrayView1d< real32 const > const vti_sigma    = elementSubRegion.getField< fields::wavesolverfields::AcousticSigma >();
 
       finiteElement::FiniteElementBase const &
       fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
@@ -284,7 +284,7 @@ void AcousticVTIDensityWaveEquationSEM::initializePostInitialConditionsPreSubGro
       {
         using FE_TYPE = TYPEOFREF( finiteElement );
 
-        acousticVTIDensityWaveEquationSEMKernels::MassMatrixKernel< FE_TYPE > kernelM( finiteElement );
+        acousticVTIFletcherWaveEquationSEMKernels::MassMatrixKernel< FE_TYPE > kernelM( finiteElement );
 
         kernelM.template launch< EXEC_POLICY, ATOMIC_POLICY >( elementSubRegion.size(),
                                                                nodeCoords,
@@ -293,7 +293,7 @@ void AcousticVTIDensityWaveEquationSEM::initializePostInitialConditionsPreSubGro
                                                                density,
                                                                mass );
 
-        acousticVTIDensityWaveEquationSEMKernels::DampingMatrixKernel< FE_TYPE > kernelD( finiteElement );
+        acousticVTIFletcherWaveEquationSEMKernels::DampingMatrixKernel< FE_TYPE > kernelD( finiteElement );
 
         kernelD.template launch< EXEC_POLICY, ATOMIC_POLICY >( elementSubRegion.size(),
                                                                nodeCoords,
@@ -307,6 +307,7 @@ void AcousticVTIDensityWaveEquationSEM::initializePostInitialConditionsPreSubGro
                                                                density,
                                                                vti_epsilon,
                                                                vti_delta,
+                                                               vti_sigma,
                                                                damping_p,
                                                                damping_q,
                                                                damping_pq,
@@ -318,7 +319,7 @@ void AcousticVTIDensityWaveEquationSEM::initializePostInitialConditionsPreSubGro
   WaveSolverUtils::initTrace( "seismoTraceReceiver", getName(), m_outputSeismoTrace, m_receiverConstants.size( 0 ), m_receiverIsLocal );
 }
 
-void AcousticVTIDensityWaveEquationSEM::precomputeSurfaceFieldIndicator( DomainPartition & domain )
+void AcousticVTIFletcherWaveEquationSEM::precomputeSurfaceFieldIndicator( DomainPartition & domain )
 {
   real64 const time = 0.0;
   FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
@@ -406,7 +407,7 @@ void AcousticVTIDensityWaveEquationSEM::precomputeSurfaceFieldIndicator( DomainP
   } );
 }
 
-void AcousticVTIDensityWaveEquationSEM::applyFreeSurfaceBC( real64 time, DomainPartition & domain )
+void AcousticVTIFletcherWaveEquationSEM::applyFreeSurfaceBC( real64 time, DomainPartition & domain )
 {
   FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
   FunctionManager const & functionManager = FunctionManager::getInstance();
@@ -473,11 +474,11 @@ void AcousticVTIDensityWaveEquationSEM::applyFreeSurfaceBC( real64 time, DomainP
   } );
 }
 
-real64 AcousticVTIDensityWaveEquationSEM::explicitStepForward( real64 const & time_n,
-                                                               real64 const & dt,
-                                                               integer cycleNumber,
-                                                               DomainPartition & domain,
-                                                               bool computeGradient )
+real64 AcousticVTIFletcherWaveEquationSEM::explicitStepForward( real64 const & time_n,
+                                                        real64 const & dt,
+                                                        integer cycleNumber,
+                                                        DomainPartition & domain,
+                                                        bool computeGradient )
 {
   real64 dtOut = explicitStepInternal( time_n, dt, cycleNumber, domain );
 
@@ -515,33 +516,33 @@ real64 AcousticVTIDensityWaveEquationSEM::explicitStepForward( real64 const & ti
   return dtOut;
 }
 
-void AcousticVTIDensityWaveEquationSEM::initializePML()
+void AcousticVTIFletcherWaveEquationSEM::initializePML()
 {
   GEOS_ERROR( "This option is not supported yet" );
   return;
 }
 
-void AcousticVTIDensityWaveEquationSEM::applyPML( real64 const GEOS_UNUSED_PARAM( time ),
-                                                  DomainPartition & GEOS_UNUSED_PARAM( domain ))
+void AcousticVTIFletcherWaveEquationSEM::applyPML( real64 const GEOS_UNUSED_PARAM( time ),
+                                           DomainPartition & GEOS_UNUSED_PARAM( domain ))
 {
   GEOS_ERROR( "This option is not supported yet" );
   return;
 }
 
-real64 AcousticVTIDensityWaveEquationSEM::explicitStepBackward( real64 const & GEOS_UNUSED_PARAM( time_n ),
-                                                                real64 const & GEOS_UNUSED_PARAM( dt ),
-                                                                integer GEOS_UNUSED_PARAM( cycleNumber ),
-                                                                DomainPartition & GEOS_UNUSED_PARAM( domain ),
-                                                                bool GEOS_UNUSED_PARAM( computeGradient ) )
+real64 AcousticVTIFletcherWaveEquationSEM::explicitStepBackward( real64 const & GEOS_UNUSED_PARAM( time_n ),
+                                                         real64 const & GEOS_UNUSED_PARAM( dt ),
+                                                         integer GEOS_UNUSED_PARAM( cycleNumber ),
+                                                         DomainPartition & GEOS_UNUSED_PARAM( domain ),
+                                                         bool GEOS_UNUSED_PARAM( computeGradient ) )
 {
   GEOS_ERROR( "This option is not supported yet" );
   return -1;
 }
 
-real64 AcousticVTIDensityWaveEquationSEM::explicitStepInternal( real64 const & time_n,
-                                                                real64 const & dt,
-                                                                integer cycleNumber,
-                                                                DomainPartition & domain )
+real64 AcousticVTIFletcherWaveEquationSEM::explicitStepInternal( real64 const & time_n,
+                                                         real64 const & dt,
+                                                         integer cycleNumber,
+                                                         DomainPartition & domain )
 {
   GEOS_MARK_FUNCTION;
 
@@ -575,7 +576,7 @@ real64 AcousticVTIDensityWaveEquationSEM::explicitStepInternal( real64 const & t
     arrayView1d< real32 > const stiffnessVector_q = nodeManager.getField< fields::wavesolverfields::StiffnessVector_q >();
     arrayView1d< real32 > const rhs = nodeManager.getField< fields::wavesolverfields::ForcingRHS >();
 
-    auto kernelFactory = acousticVTIDensityWaveEquationSEMKernels::ExplicitAcousticVTIDensitySEMFactory( dt );
+    auto kernelFactory = acousticVTIFletcherWaveEquationSEMKernels::ExplicitAcousticVTIFletcherSEMFactory( dt );
 
     finiteElement::
       regionBasedKernelApplication< EXEC_POLICY,
@@ -650,7 +651,7 @@ real64 AcousticVTIDensityWaveEquationSEM::explicitStepInternal( real64 const & t
                                   true );
 
     // compute the seismic traces since last step.
-    arrayView2d< real32 > const pReceivers   = m_pressureNp1AtReceivers.toView();
+    arrayView2d< real32 > const pReceivers = m_pressureNp1AtReceivers.toView();
     computeAllSeismoTraces( time_n, dt, p_np1, p_n, pReceivers );
 
     incrementIndexSeismoTrace( time_n );
@@ -668,11 +669,11 @@ real64 AcousticVTIDensityWaveEquationSEM::explicitStepInternal( real64 const & t
   return dt;
 }
 
-void AcousticVTIDensityWaveEquationSEM::cleanup( real64 const time_n,
-                                                 integer const cycleNumber,
-                                                 integer const eventCounter,
-                                                 real64 const eventProgress,
-                                                 DomainPartition & domain )
+void AcousticVTIFletcherWaveEquationSEM::cleanup( real64 const time_n,
+                                          integer const cycleNumber,
+                                          integer const eventCounter,
+                                          real64 const eventProgress,
+                                          DomainPartition & domain )
 {
   // call the base class cleanup (for reporting purposes)
   SolverBase::cleanup( time_n, cycleNumber, eventCounter, eventProgress, domain );
@@ -693,6 +694,6 @@ void AcousticVTIDensityWaveEquationSEM::cleanup( real64 const time_n,
   } );
 }
 
-REGISTER_CATALOG_ENTRY( SolverBase, AcousticVTIDensityWaveEquationSEM, string const &, dataRepository::Group * const )
+REGISTER_CATALOG_ENTRY( SolverBase, AcousticVTIFletcherWaveEquationSEM, string const &, dataRepository::Group * const )
 
 } /* namespace geos */

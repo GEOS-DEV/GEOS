@@ -13,11 +13,11 @@
  */
 
 /**
- * @file AcousticVTIWaveEquationSEMKernel.hpp
+ * @file AcousticVTIZhangWaveEquationSEMKernel.hpp
  */
 
-#ifndef GEOS_PHYSICSSOLVERS_WAVEPROPAGATION_ACOUSTICVTIWAVEEQUATIONSEMKERNEL_HPP_
-#define GEOS_PHYSICSSOLVERS_WAVEPROPAGATION_ACOUSTICVTIWAVEEQUATIONSEMKERNEL_HPP_
+#ifndef GEOS_PHYSICSSOLVERS_WAVEPROPAGATION_ACOUSTICVTIZHANGWAVEEQUATIONSEMKERNEL_HPP_
+#define GEOS_PHYSICSSOLVERS_WAVEPROPAGATION_ACOUSTICVTIZHANGWAVEEQUATIONSEMKERNEL_HPP_
 
 #include "finiteElement/elementFormulations/Qk_Hexahedron_Lagrange_GaussLobatto.hpp"
 #include "finiteElement/kernelInterface/KernelBase.hpp"
@@ -28,8 +28,8 @@
 namespace geos
 {
 
-/// Namespace to contain the acoustic wave kernels.
-namespace acousticVTIWaveEquationSEMKernels
+/// Namespace to contain the Zhang's acoustic VTI Density wave kernels.
+namespace acousticVTIZhangWaveEquationSEMKernels
 {
 
 struct PrecomputeSourceAndReceiverKernel
@@ -39,6 +39,7 @@ struct PrecomputeSourceAndReceiverKernel
    * @tparam EXEC_POLICY execution policy
    * @tparam FE_TYPE finite element type
    * @param[in] size the number of cells in the subRegion
+   * @param[in] numNodesPerElem number of nodes per element
    * @param[in] numFacesPerElem number of faces per element
    * @param[in] nodeCoords coordinates of the nodes
    * @param[in] elemGhostRank the ghost ranks
@@ -63,6 +64,7 @@ struct PrecomputeSourceAndReceiverKernel
   template< typename EXEC_POLICY, typename FE_TYPE >
   static void
   launch( localIndex const size,
+          localIndex const numNodesPerElem,
           localIndex const numFacesPerElem,
           arrayView2d< WaveSolverBase::wsCoordType const, nodes::REFERENCE_POSITION_USD > const nodeCoords,
           arrayView1d< integer const > const elemGhostRank,
@@ -85,7 +87,6 @@ struct PrecomputeSourceAndReceiverKernel
           real32 const timeSourceDelay,
           localIndex const rickerOrder )
   {
-    constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
 
     forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const k )
     {
@@ -122,7 +123,7 @@ struct PrecomputeSourceAndReceiverKernel
                                                                               coordsOnRefElem );
 
             sourceIsAccessible[isrc] = 1;
-            real64 Ntest[numNodesPerElem];
+            real64 Ntest[FE_TYPE::numNodes];
             FE_TYPE::calcN( coordsOnRefElem, Ntest );
 
             for( localIndex a = 0; a < numNodesPerElem; ++a )
@@ -169,7 +170,7 @@ struct PrecomputeSourceAndReceiverKernel
 
             receiverIsLocal[ircv] = 1;
 
-            real64 Ntest[numNodesPerElem];
+            real64 Ntest[FE_TYPE::numNodes];
             FE_TYPE::calcN( coordsOnRefElem, Ntest );
 
             for( localIndex a = 0; a < numNodesPerElem; ++a )
@@ -221,7 +222,7 @@ struct MassMatrixKernel
       constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
       constexpr localIndex numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
 
-      real32 const invC2 = 1.0 / pow( velocity[e], 2 ) / density[e];
+      real32 const invC2 = 1.0 / ( velocity[e] * velocity[e] * density[e] );
       real64 xLocal[ numNodesPerElem ][ 3 ];
       for( localIndex a = 0; a < numNodesPerElem; ++a )
       {
@@ -268,7 +269,6 @@ struct DampingMatrixKernel
    * @param[in] density cell-wise density
    * @param[in] vti_epsilon cell-wise Thomsen epsilon parameter
    * @param[in] vti_delta cell-wise Thomsen delta parameter
-   * @param[in] vti_sigma cell-wise sigma parameter in Fletcher's equation
    * @param[out] damping_p diagonal of the damping matrix for quantities in p in p-equation
    * @param[out] damping_q diagonal of the damping matrix for quantities in q in q-equation
    * @param[out] damping_pq diagonal of the damping matrix for quantities in q in p-equation
@@ -288,7 +288,6 @@ struct DampingMatrixKernel
           arrayView1d< real32 const > const density,
           arrayView1d< real32 const > const vti_epsilon,
           arrayView1d< real32 const > const vti_delta,
-          arrayView1d< real32 const > const vti_sigma,
           arrayView1d< real32 > const damping_p,
           arrayView1d< real32 > const damping_q,
           arrayView1d< real32 > const damping_pq,
@@ -311,29 +310,22 @@ struct DampingMatrixKernel
               xLocal[a][d] = nodeCoords( facesToNodes( f, a ), d );
             }
           }
-          real32 vti_f = 1 - (vti_epsilon[e] - vti_delta[e]) / vti_sigma[e];
+
           if( lateralSurfaceFaceIndicator[f] == 1 )
           {
-            // ABC coefficients
-            real32 alpha = 1.0 / (velocity[e] * density[e] * sqrt( 1+2*vti_epsilon[e] ));
+            // ABC coefficients updated to fit horizontal velocity
+            real32 alpha = 1.0 / (velocity[e] *sqrt( 1+2*vti_epsilon[e] ) * density[e]);
             // VTI coefficients
-            real32 vti_p_xy = 0;
-            real32 vti_q_xy = 0;
-            real32 vti_qp_xy= 0;
+            real32 vti_p_xy  = (1+2*vti_epsilon[e]);
+            real32 vti_qp_xy = sqrt( 1+2*vti_delta[e] );
 
-            vti_p_xy  = (1+2*vti_epsilon[e]);
-            vti_q_xy  = -(vti_f - 1);
-            vti_qp_xy = (vti_f+2*vti_delta[e]);
             for( localIndex q = 0; q < numNodesPerFace; ++q )
             {
               real32 const aux = m_finiteElement.computeDampingTerm( q, xLocal );
-              real32 const localIncrement_p = alpha * vti_p_xy  * aux;
+              real32 const localIncrement_p = alpha* vti_p_xy  * aux;
               RAJA::atomicAdd< ATOMIC_POLICY >( &damping_p[facesToNodes( f, q )], localIncrement_p );
 
-              real32 const localIncrement_q = alpha*vti_q_xy * aux;
-              RAJA::atomicAdd< ATOMIC_POLICY >( &damping_q[facesToNodes( f, q )], localIncrement_q );
-
-              real32 const localIncrement_qp = alpha*vti_qp_xy * aux;
+              real32 const localIncrement_qp = alpha * vti_qp_xy * aux;
               RAJA::atomicAdd< ATOMIC_POLICY >( &damping_qp[facesToNodes( f, q )], localIncrement_qp );
             }
           }
@@ -342,19 +334,13 @@ struct DampingMatrixKernel
             // ABC coefficients updated to fit horizontal velocity
             real32 alpha = 1.0 / (velocity[e] * density[e]);
             // VTI coefficients
-            real32 vti_p_z  = 0;
-            real32 vti_pq_z = 0;
-            real32 vti_q_z  = 0;
-            vti_p_z  = -(vti_f - 1);
-            vti_pq_z = vti_f;
-            vti_q_z  = 1;
+            real32 vti_pq_z = sqrt( 1+2*vti_delta[e] );
+            real32 vti_q_z  = 1;
             for( localIndex q = 0; q < numNodesPerFace; ++q )
             {
               real32 const aux = m_finiteElement.computeDampingTerm( q, xLocal );
-              real32 const localIncrement_p = alpha * vti_p_z * aux;
-              RAJA::atomicAdd< ATOMIC_POLICY >( &damping_p[facesToNodes( f, q )], localIncrement_p );
 
-              real32 const localIncrement_pq = alpha*vti_pq_z * aux;
+              real32 const localIncrement_pq = alpha * vti_pq_z * aux;
               RAJA::atomicAdd< ATOMIC_POLICY >( &damping_pq[facesToNodes( f, q )], localIncrement_pq );
 
               real32 const localIncrement_q = alpha * vti_q_z * aux;
@@ -374,14 +360,14 @@ struct DampingMatrixKernel
 
 
 /**
- * @brief Implements kernels for solving the acoustic wave equations in a VTI medium
+ * @brief Implements kernels for solving the Zhang's acoustic wave equations in VTI medium with density
  *   explicit central FD method and SEM
  * @copydoc geos::finiteElement::KernelBase
  * @tparam SUBREGION_TYPE The type of subregion that the kernel will act on.
  *
- * ### AcousticVTIWaveEquationSEMKernel Description
+ * ### AcousticVTIZhangWaveEquationSEMKernel Description
  * Implements the KernelBase interface functions required for solving
- * the acoustic wave equations using the
+ * the Zhang's acoustic wave equations in a VTI medium using the
  * "finite element kernel application" functions such as
  * geos::finiteElement::RegionBasedKernelApplication.
  *
@@ -393,11 +379,11 @@ struct DampingMatrixKernel
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
           typename FE_TYPE >
-class ExplicitAcousticVTISEM : public finiteElement::KernelBase< SUBREGION_TYPE,
-                                                                 CONSTITUTIVE_TYPE,
-                                                                 FE_TYPE,
-                                                                 1,
-                                                                 1 >
+class ExplicitAcousticVTIZhangSEM : public finiteElement::KernelBase< SUBREGION_TYPE,
+                                                                        CONSTITUTIVE_TYPE,
+                                                                        FE_TYPE,
+                                                                        1,
+                                                                        1 >
 {
 public:
 
@@ -431,14 +417,14 @@ public:
    * @param dt The time interval for the step.
    *   elements to be processed during this kernel launch.
    */
-  ExplicitAcousticVTISEM( NodeManager & nodeManager,
-                          EdgeManager const & edgeManager,
-                          FaceManager const & faceManager,
-                          localIndex const targetRegionIndex,
-                          SUBREGION_TYPE const & elementSubRegion,
-                          FE_TYPE const & finiteElementSpace,
-                          CONSTITUTIVE_TYPE & inputConstitutiveType,
-                          real64 const dt ):
+  ExplicitAcousticVTIZhangSEM( NodeManager & nodeManager,
+                                 EdgeManager const & edgeManager,
+                                 FaceManager const & faceManager,
+                                 localIndex const targetRegionIndex,
+                                 SUBREGION_TYPE const & elementSubRegion,
+                                 FE_TYPE const & finiteElementSpace,
+                                 CONSTITUTIVE_TYPE & inputConstitutiveType,
+                                 real64 const dt ):
     Base( elementSubRegion,
           finiteElementSpace,
           inputConstitutiveType ),
@@ -450,7 +436,6 @@ public:
     m_density( elementSubRegion.template getField< fields::wavesolverfields::AcousticDensity >() ),
     m_vti_epsilon( elementSubRegion.template getField< fields::wavesolverfields::AcousticEpsilon >() ),
     m_vti_delta( elementSubRegion.template getField< fields::wavesolverfields::AcousticDelta >() ),
-    m_vti_sigma( elementSubRegion.template getField< fields::wavesolverfields::AcousticSigma >() ),
     m_dt( dt )
   {
     GEOS_UNUSED_VAR( edgeManager );
@@ -462,7 +447,7 @@ public:
   /**
    * @copydoc geos::finiteElement::KernelBase::StackVariables
    *
-   * ### ExplicitAcousticVTISEM Description
+   * ### ExplicitAcousticVTIZhangSEM Description
    * Adds a stack arrays for the nodal force, primary displacement variable, etc.
    */
   struct StackVariables : Base::StackVariables
@@ -503,8 +488,8 @@ public:
   /**
    * @copydoc geos::finiteElement::KernelBase::quadraturePointKernel
    *
-   * ### ExplicitAcousticVTISEM Description
-   * Calculates stiffness vector
+   * ### ExplicitAcousticVTIZhangSEM Description
+   * Calculates stiffness vectors
    *
    */
   GEOS_HOST_DEVICE
@@ -516,10 +501,9 @@ public:
     // Pseudo Stiffness xy
     m_finiteElementSpace.template computeStiffnessxyTerm( q, stack.xLocal, [&] ( int i, int j, real64 val )
     {
-      real32 vti_f = 1 - (m_vti_epsilon[k] - m_vti_delta[k]) / m_vti_sigma[k];
-      real32 const localIncrement_p = val / m_density[k] *(-1-2*m_vti_epsilon[k])*m_p_n[m_elemsToNodes[k][j]];
+      real32 const localIncrement_p = -val * ((1 + 2 * m_vti_epsilon[k]) / m_density[k]) * m_p_n[m_elemsToNodes[k][j]];
       RAJA::atomicAdd< parallelDeviceAtomic >( &m_stiffnessVector_p[m_elemsToNodes[k][i]], localIncrement_p );
-      real32 const localIncrement_q = val / m_density[k] * ((-2*m_vti_delta[k]-vti_f)*m_p_n[m_elemsToNodes[k][j]] +(vti_f-1)*m_q_n[m_elemsToNodes[k][j]]);
+      real32 const localIncrement_q = -val*((sqrt( 1 + 2 * m_vti_delta[k] )) / m_density[k]) * m_p_n[m_elemsToNodes[k][j]];
       RAJA::atomicAdd< parallelDeviceAtomic >( &m_stiffnessVector_q[m_elemsToNodes[k][i]], localIncrement_q );
     } );
 
@@ -527,11 +511,10 @@ public:
 
     m_finiteElementSpace.template computeStiffnesszTerm( q, stack.xLocal, [&] ( int i, int j, real64 val )
     {
-      real32 vti_f = 1 - (m_vti_epsilon[k] - m_vti_delta[k]) / m_vti_sigma[k];
-      real32 const localIncrement_p = val / m_density[k] * ((vti_f-1)*m_p_n[m_elemsToNodes[k][j]] - vti_f*m_q_n[m_elemsToNodes[k][j]]);
+      real32 const localIncrement_p = -val*(sqrt( 1 + 2 * m_vti_delta[k] ) / m_density[k]) * m_q_n[m_elemsToNodes[k][j]];
       RAJA::atomicAdd< parallelDeviceAtomic >( &m_stiffnessVector_p[m_elemsToNodes[k][i]], localIncrement_p );
 
-      real32 const localIncrement_q = -val  / m_density[k] * m_q_n[m_elemsToNodes[k][j]];
+      real32 const localIncrement_q = -val*(1 / m_density[k]) * m_q_n[m_elemsToNodes[k][j]];
       RAJA::atomicAdd< parallelDeviceAtomic >( &m_stiffnessVector_q[m_elemsToNodes[k][i]], localIncrement_q );
     } );
   }
@@ -552,7 +535,7 @@ protected:
   /// The array containing the product of the stiffness matrix and the nodal pressure for the equation in q.
   arrayView1d< real32 > const m_stiffnessVector_q;
 
-  /// The array containing the density parameter.
+  /// The array containing the medium density.
   arrayView1d< real32 const > const m_density;
 
   /// The array containing the epsilon Thomsen parameter.
@@ -560,9 +543,6 @@ protected:
 
   /// The array containing the delta Thomsen parameter.
   arrayView1d< real32 const > const m_vti_delta;
-
-  /// The array containing the sigma parameter.
-  arrayView1d< real32 const > const m_vti_sigma;
 
   /// The time increment for this time integration step.
   real64 const m_dt;
@@ -572,12 +552,12 @@ protected:
 
 
 
-/// The factory used to construct a ExplicitAcousticVTIWaveEquation kernel.
-using ExplicitAcousticVTISEMFactory = finiteElement::KernelFactory< ExplicitAcousticVTISEM,
-                                                                    real64 >;
+/// The factory used to construct a ExplicitAcousticVTIZhangWaveEquation kernel.
+using ExplicitAcousticVTIZhangSEMFactory = finiteElement::KernelFactory< ExplicitAcousticVTIZhangSEM,
+                                                                           real64 >;
 
-} // namespace acousticVTIWaveEquationSEMKernels
+} // namespace acousticVTIZhangWaveEquationSEMKernels
 
 } // namespace geos
 
-#endif //GEOS_PHYSICSSOLVERS_WAVEPROPAGATION_ACOUSTICVTIWAVEEQUATIONSEMKERNEL_HPP_
+#endif //GEOS_PHYSICSSOLVERS_WAVEPROPAGATION_ACOUSTICVTIZHANGWAVEEQUATIONSEMKERNEL_HPP_
