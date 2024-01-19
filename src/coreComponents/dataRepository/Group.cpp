@@ -648,8 +648,7 @@ void Group::enableLogLevelInput()
   registerWrapper( viewKeyStruct::logLevelString(), &m_logLevel ).
     setApplyDefaultValue( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Sets the level of information to write in the standard output (the console typically).\n"
-                    "A level of 0 outputs minimal information, higher levels require more." );
+    setDescription( "Log level" );
 }
 
 Group const & Group::getBaseGroupByPath( string const & path ) const
