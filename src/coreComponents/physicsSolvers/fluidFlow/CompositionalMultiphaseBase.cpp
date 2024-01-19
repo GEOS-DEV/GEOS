@@ -1342,7 +1342,6 @@ void CompositionalMultiphaseBase::assembleAccumulationAndVolumeBalanceTerms( Dom
                                                      m_numPhases,
                                                      dofManager.rankOffset(),
                                                      m_useTotalMassEquation,
-                                                     m_useSimpleAccumulation,
                                                      dofKey,
                                                      subRegion,
                                                      fluid,
