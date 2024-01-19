@@ -217,7 +217,8 @@ struct MassMatrixKernel
       real64 xLocal[ 8 ][ 3 ];
       for( localIndex a = 0; a < 8; ++a )
       {
-        localIndex const nodeIndex = elemsToNodes( e, FE_TYPE::meshIndexToLinearIndex3D( a ) );
+        //localIndex const nodeIndex = elemsToNodes( e, FE_TYPE::meshIndexToLinearIndex3D( a ) );
+        localIndex const nodeIndex = elemsToNodes( e, a );
         for( localIndex i = 0; i < 3; ++i )
         {
           xLocal[a][i] = nodeCoords( nodeIndex, i );
@@ -282,7 +283,8 @@ struct DampingMatrixKernel
           real64 xLocal[ 4 ][ 3 ];
           for( localIndex a = 0; a < 4; ++a )
           {
-            localIndex const nodeIndex = facesToNodes( f, FE_TYPE::meshIndexToLinearIndex2D( a ) );
+            //localIndex const nodeIndex = facesToNodes( f, FE_TYPE::meshIndexToLinearIndex2D( a ) );
+            localIndex const nodeIndex = facesToNodes( f, a );
             for( localIndex d = 0; d < 3; ++d )
             {
               xLocal[a][d] = nodeCoords( nodeIndex, d );
@@ -781,7 +783,8 @@ public:
     stack.invDensity = 1./m_density[k];
     for( localIndex a=0; a< 8; a++ )
     {
-      localIndex const nodeIndex =  m_elemsToNodes( k, FE_TYPE::meshIndexToLinearIndex3D( a ) );
+      //localIndex const nodeIndex =  m_elemsToNodes( k, FE_TYPE::meshIndexToLinearIndex3D( a ) );
+      localIndex const nodeIndex =  m_elemsToNodes( k, a );
       for( int i=0; i< 3; ++i )
       {
         stack.xLocal[ a ][ i ] = m_nodeCoords[ nodeIndex ][ i ];

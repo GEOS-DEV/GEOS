@@ -875,7 +875,8 @@ Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::calcGradN( localIndex const q,
   real64 Xmesh[8][3] = {{0}};
   for( int k = 0; k < 8; k++ )
   {
-    const localIndex nodeIndex = meshIndexToLinearIndex3D( k );
+    //const localIndex nodeIndex = meshIndexToLinearIndex3D( k );
+    const localIndex nodeIndex = k;
     for( int i = 0; i < 3; i++ )
     {
       Xmesh[ k ][ i ] = X[ nodeIndex ][ i ];
