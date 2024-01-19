@@ -69,7 +69,8 @@
       targetRegions="{ Domain }"
       nodeBasedSIF="1"      
       rockToughness="3.0e6"
-      mpiCommOrder="1"/>
+      mpiCommOrder="1"
+      isPoroelastic="1"/>
   <!-- SPHINX_SURFACEGENERATOR_END -->
   </Solvers>
  
