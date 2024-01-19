@@ -311,7 +311,8 @@ struct WaveSolverUtils
     real64 xLocal[8][3]{};
     for( localIndex a = 0; a < 8; ++a )
     {
-      LvArray::tensorOps::copy< 3 >( xLocal[a], nodeCoords[ elemsToNodes[ FE_TYPE::meshIndexToLinearIndex3D( a )] ] );
+      //LvArray::tensorOps::copy< 3 >( xLocal[a], nodeCoords[ elemsToNodes[ FE_TYPE::meshIndexToLinearIndex3D( a )] ] );
+      LvArray::tensorOps::copy< 3 >( xLocal[a], nodeCoords[ elemsToNodes[ a ] ] );
     }
     // coordsOnRefElem = invJ*(coords-coordsNode_0)
     real64 invJ[3][3]{};
