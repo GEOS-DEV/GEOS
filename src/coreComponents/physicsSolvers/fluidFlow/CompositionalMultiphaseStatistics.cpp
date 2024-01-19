@@ -31,7 +31,6 @@
 #include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
 #include "physicsSolvers/fluidFlow/IsothermalCompositionalMultiphaseBaseKernels.hpp"
 #include "physicsSolvers/fluidFlow/IsothermalCompositionalMultiphaseFVMKernels.hpp"
-#include "fileIO/Outputs/OutputBase.hpp"
 
 
 namespace geos
@@ -44,8 +43,7 @@ CompositionalMultiphaseStatistics::CompositionalMultiphaseStatistics( const stri
                                                                       Group * const parent ):
   Base( name, parent ),
   m_computeCFLNumbers( 0 ),
-  m_computeRegionStatistics( 1 ),
-  m_outputDir( joinPath( OutputBase::getOutputDirectory(), name ) )
+  m_computeRegionStatistics( 1 )
 {
   registerWrapper( viewKeyStruct::computeCFLNumbersString(), &m_computeCFLNumbers ).
     setApplyDefaultValue( 0 ).
@@ -72,17 +70,6 @@ void CompositionalMultiphaseStatistics::postProcessInput()
     GEOS_THROW( GEOS_FMT( "{} {}: the option to compute CFL numbers is incompatible with CompositionalMultiphaseHybridFVM",
                           catalogName(), getDataContext() ),
                 InputError );
-  }
-
-  // create dir for output
-  if( getLogLevel() > 0 )
-  {
-    if( MpiWrapper::commRank() == 0 )
-    {
-      makeDirsForPath( m_outputDir );
-    }
-    // wait till the dir is created by rank 0
-    MPI_Barrier( MPI_COMM_WORLD );
   }
 }
 
@@ -125,7 +112,7 @@ void CompositionalMultiphaseStatistics::registerDataOnMesh( Group & meshBodies )
         regionStatistics.componentMass.resizeDimension< 0, 1 >( numPhases, numComps );
 
         // write output header
-        if( getLogLevel() > 0 && MpiWrapper::commRank() == 0 )
+        if( m_writeCSV > 0 && MpiWrapper::commRank() == 0 )
         {
           std::ofstream outputFile( m_outputDir + "/" + regionNames[i] + ".csv" );
           integer const useMass = m_solver->getReference< integer >( CompositionalMultiphaseBase::viewKeyStruct::useMassFlagString() );
@@ -449,7 +436,7 @@ void CompositionalMultiphaseStatistics::computeRegionStatistics( real64 const ti
     GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "{}, {} (time {} s): Component mass: {} {}",
                                         getName(), regionNames[i], time, regionStatistics.componentMass, massUnit ) );
 
-    if( getLogLevel() > 0 && MpiWrapper::commRank() == 0 )
+    if( m_writeCSV > 0 && MpiWrapper::commRank() == 0 )
     {
       std::ofstream outputFile( m_outputDir + "/" + regionNames[i] + ".csv", std::ios_base::app );
       outputFile << time << "," << regionStatistics.minPressure << "," << regionStatistics.averagePressure << "," << regionStatistics.maxPressure << "," <<
