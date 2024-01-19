@@ -60,7 +60,7 @@ SinglePhaseBase::SinglePhaseBase( const string & name,
     setDescription( "Temperature" );
 
   this->getWrapper< integer >( string( viewKeyStruct::isThermalString() ) ).
-    setDescription( GEOS_FMT( "\nSourceFluxes application if {} is enabled :\n"
+    appendDescription( GEOS_FMT( "\nSourceFluxes application if {} is enabled :\n"
                               "- negative value (injection): the mass balance equation is modified to considered the additional source term,\n"
                               "- positive value (production): both the mass balance and the energy balance equations are modified to considered the additional source term.\n"
                               "For the energy balance equation, the mass flux is multipied by the enthalpy in the cell from which the fluid is being produced.",

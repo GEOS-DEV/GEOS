@@ -31,7 +31,7 @@ namespace geos
  *
  * Task class allowing for the computation of aggregate statistics of SourceFluxBoundaryCondition
  */
-class SourceFluxStatistics : public FieldStatisticsBase< SinglePhaseBase >
+class SourceFluxStatistics : public FieldStatisticsBase< FlowSolverBase >
 {
 public:
 
@@ -40,9 +40,9 @@ public:
    */
   struct Stats
   {
-    /// fluid mass produced by the flux(es) (kg)
+    /// fluid mass produced by the flux(es) (kg). Negative if injecting.
     real64 producedMass;
-    /// flux(es) production rate (kg/s)
+    /// flux(es) production rate (kg/s). Negative if injecting.
     real64 productionRate;
   };
 
