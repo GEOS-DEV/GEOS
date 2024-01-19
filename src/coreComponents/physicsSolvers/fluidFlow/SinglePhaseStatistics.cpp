@@ -266,7 +266,6 @@ void SinglePhaseStatistics::computeRegionStatistics( real64 const time,
         regionStatistics.totalPoreVolume << "," << regionStatistics.totalMass << std::endl;
       outputFile.close();
     }
-
   }
 }
 
