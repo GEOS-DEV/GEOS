@@ -185,8 +185,11 @@ void CompositionalMultiphaseBase::postProcessInput()
                         getWrapperDataContext( viewKeyStruct::solutionChangeScalingFactorString() ) <<
                         ": The solution change scaling factor must be smaller or equal to 1.0" );
 
-  if( m_isThermal )
-    m_useSimpleAccumulation = 0; // useSimpleAccumulation is not yet compatible with thermal
+  if( m_isThermal && m_useSimpleAccumulation == 1 ) // useSimpleAccumulation is not yet compatible with thermal
+  {
+    GEOS_LOG_RANK_0( "'useSimpleAccumulation' is not yet implemented for thermal simulation. Switched to phase sum accumulation." );
+    m_useSimpleAccumulation = 0;
+  }
 }
 
 void CompositionalMultiphaseBase::registerDataOnMesh( Group & meshBodies )
