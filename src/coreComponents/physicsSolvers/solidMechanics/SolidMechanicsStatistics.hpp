@@ -89,12 +89,8 @@ private:
     array1d< real64 > maxDisplacement;
   };
 
-  void postProcessInput() override;
-
   void registerDataOnMesh( Group & meshBodies ) override;
 
-  // Output directory
-  string const m_outputDir;
 };
 
 
