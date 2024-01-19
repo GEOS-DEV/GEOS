@@ -143,6 +143,8 @@ set( physicsSolvers_headers
      wavePropagation/AcousticVTIZhangWaveEquationSEMKernel.hpp
      wavePropagation/AcousticElasticWaveEquationSEM.hpp
      wavePropagation/AcousticElasticWaveEquationSEMKernel.hpp
+     wavePropagation/AcousticVTIFletcherNoDensityWaveEquationSEM.hpp
+     wavePropagation/AcousticVTIFletcherNoDensityWaveEquationSEMKernel.hpp
      )
 
 # Specify solver sources
