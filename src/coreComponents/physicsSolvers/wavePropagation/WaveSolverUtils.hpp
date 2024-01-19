@@ -171,7 +171,9 @@ struct WaveSolverUtils
                                   arrayView1d< localIndex const > const receiverIsLocal,
                                   arrayView1d< real32 const > const var_np1,
                                   arrayView1d< real32 const > const var_n,
-                                  arrayView2d< real32 > varAtReceivers )
+                                  arrayView2d< real32 > varAtReceivers,
+                                  arrayView1d< real32 > coeffs = {},
+                                  bool add = false )
   {
     real64 const time_np1 = time_n + dt;
 
@@ -182,7 +184,7 @@ struct WaveSolverUtils
 
     forAll< EXEC_POLICY >( nReceivers, [=] GEOS_HOST_DEVICE ( localIndex const ircv )
     {
-      if( receiverIsLocal[ircv] == 1 )
+      if( receiverIsLocal[ircv] > 0 )
       {
         real32 vtmp_np1 = 0.0, vtmp_n = 0.0;
         for( localIndex inode = 0; inode < receiverConstants.size( 1 ); ++inode )
@@ -191,7 +193,15 @@ struct WaveSolverUtils
           vtmp_n += var_n[receiverNodeIds( ircv, inode )] * receiverConstants( ircv, inode );
         }
         // linear interpolation between the pressure value at time_n and time_{n+1}
-        varAtReceivers( iSeismo, ircv ) = a1 * vtmp_n + a2 * vtmp_np1;
+        real32 rcvCoeff = coeffs.size( 0 ) == 0 ? 1.0 : coeffs( ircv );
+        if( add )
+        {
+          varAtReceivers( iSeismo, ircv ) += rcvCoeff * ( a1 * vtmp_n + a2 * vtmp_np1 );
+        }
+        else
+        {
+          varAtReceivers( iSeismo, ircv ) = rcvCoeff * ( a1 * vtmp_n + a2 * vtmp_np1 );
+        }
         // NOTE: varAtReceivers has size(1) = numReceiversGlobal + 1, this does not OOB
         // left in the forAll loop for sync issues since the following does not depend on `ircv`
         varAtReceivers( iSeismo, nReceivers ) = a1 * time_n + a2 * time_np1;

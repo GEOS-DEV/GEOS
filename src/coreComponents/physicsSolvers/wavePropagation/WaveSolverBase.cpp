@@ -142,6 +142,21 @@ WaveSolverBase::WaveSolverBase( const std::string & name,
     setSizedFromParent( 0 ).
     setDescription( "Geometry parameters for a linear DAS fiber (dip, azimuth, gauge length)" );
 
+  registerWrapper( viewKeyStruct::linearDASVectorXString(), &m_linearDASVectorX ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setSizedFromParent( 0 ).
+    setDescription( "X component of the linear DAS direction vector" );
+
+  registerWrapper( viewKeyStruct::linearDASVectorYString(), &m_linearDASVectorY ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setSizedFromParent( 0 ).
+    setDescription( "Y component of the linear DAS direction vector" );
+
+  registerWrapper( viewKeyStruct::linearDASVectorZString(), &m_linearDASVectorZ ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setSizedFromParent( 0 ).
+    setDescription( "Z component of the linear DAS direction vector" );
+
   registerWrapper( viewKeyStruct::sourceNodeIdsString(), &m_sourceNodeIds ).
     setInputFlag( InputFlags::FALSE ).
     setSizedFromParent( 0 ).
@@ -276,8 +291,22 @@ void WaveSolverBase::postProcessInput()
     GEOS_ERROR_IF( m_linearDASGeometry.size( 0 ) != m_receiverCoordinates.size( 0 ),
                    "Invalid number of geometry parameters instances for the linear DAS fiber. It should match the number of receivers." );
 
-    /// initialize DAS geometry by adding receiver locations along the DAS, as needed
-    initializeDAS();
+    m_linearDASVectorX.resize( m_linearDASGeometry.size( 0 ) );
+    m_linearDASVectorY.resize( m_linearDASGeometry.size( 0 ) );
+    m_linearDASVectorZ.resize( m_linearDASGeometry.size( 0 ) );
+    for( int ircv = 0; ircv < m_linearDASGeometry.size( 0 ); ircv++ )
+    {
+      R1Tensor dasVector = WaveSolverUtils::computeDASVector( m_linearDASGeometry[ ircv ][ 0 ], m_linearDASGeometry[ ircv ][ 1 ] );                              
+      m_linearDASVectorX( ircv ) = dasVector[ 0 ];
+      m_linearDASVectorY( ircv ) = dasVector[ 1 ];
+      m_linearDASVectorZ( ircv ) = dasVector[ 2 ];
+      if( m_useDAS == 2 )
+      {
+        m_linearDASVectorX( ircv ) /= m_linearDASGeometry[ ircv ][ 2 ];
+        m_linearDASVectorY( ircv ) /= m_linearDASGeometry[ ircv ][ 2 ];
+        m_linearDASVectorZ( ircv ) /= m_linearDASGeometry[ ircv ][ 2 ];
+      }
+    } 
   }
 
   GEOS_THROW_IF( m_sourceCoordinates.size( 0 ) > 0 && m_sourceCoordinates.size( 1 ) != 3,
@@ -316,44 +345,6 @@ void WaveSolverBase::postProcessInput()
   localIndex const numSourcesGlobal = m_sourceCoordinates.size( 0 );
   m_sourceValue.resize( nsamples, numSourcesGlobal );
 
-}
-
-void WaveSolverBase::initializeDAS()
-{
-  /// increase the number of receivers and modify their coordinates
-  /// so to have two correct number of receivers along each DAS channel
-  localIndex const numReceiversGlobal = m_receiverCoordinates.size( 0 );
-  m_receiverCoordinates.resize( m_linearDASSamples*numReceiversGlobal, 3 );
-
-  arrayView2d< real64 > const receiverCoordinates = m_receiverCoordinates.toView();
-  arrayView2d< real64 const > const linearDASGeometry = m_linearDASGeometry.toViewConst();
-
-  array1d< real64 > const samplePointLocationsA( m_linearDASSamples );
-  arrayView1d< real64 > const samplePointLocations = samplePointLocationsA.toView();
-  if( m_linearDASSamples == 1 )
-  {
-    samplePointLocations[ 0 ] = 0;
-  }
-  else
-  {
-    for( integer i = 0; i < m_linearDASSamples; ++i )
-    {
-      samplePointLocations[ i ] = -0.5 + (real64) i / ( m_linearDASSamples - 1 );
-    }
-  }
-
-  for( localIndex ircv = 0; ircv < numReceiversGlobal; ++ircv )
-  {
-    R1Tensor receiverCenter = { receiverCoordinates[ ircv ][ 0 ], receiverCoordinates[ ircv ][ 1 ], receiverCoordinates[ ircv ][ 2 ] };
-    for( integer i = 0; i < m_linearDASSamples; ++i )
-    {
-      /// updated xyz of sample receiver along DAS
-      R1Tensor dasVector = WaveSolverUtils::computeDASVector( linearDASGeometry[ ircv ][ 0 ], linearDASGeometry[ ircv ][ 1 ] );
-      receiverCoordinates[ i*numReceiversGlobal + ircv ][ 0 ] = receiverCenter[ 0 ] + dasVector[ 0 ] * linearDASGeometry[ ircv ][ 2 ] * samplePointLocations[ i ];
-      receiverCoordinates[ i*numReceiversGlobal + ircv ][ 1 ] = receiverCenter[ 1 ] + dasVector[ 1 ] * linearDASGeometry[ ircv ][ 2 ] * samplePointLocations[ i ];
-      receiverCoordinates[ i*numReceiversGlobal + ircv ][ 2 ] = receiverCenter[ 2 ] + dasVector[ 2 ] * linearDASGeometry[ ircv ][ 2 ] * samplePointLocations[ i ];
-    }
-  }
 }
 
 real64 WaveSolverBase::solverStep( real64 const & time_n,
@@ -452,7 +443,9 @@ void WaveSolverBase::computeAllSeismoTraces( real64 const time_n,
                                              real64 const dt,
                                              arrayView1d< real32 const > const var_np1,
                                              arrayView1d< real32 const > const var_n,
-                                             arrayView2d< real32 > varAtReceivers )
+                                             arrayView2d< real32 > varAtReceivers,
+                                             arrayView1d< real32 > coeffs,
+                                             bool add )
 {
   /*
    * In forward case we compute seismo if time_n + dt is the first time
@@ -477,7 +470,7 @@ void WaveSolverBase::computeAllSeismoTraces( real64 const time_n,
     if( dir * timeSeismo > dir * (time_n + epsilonLoc))
       break;
     WaveSolverUtils::computeSeismoTrace( time_n, dir * dt, timeSeismo, iSeismo, m_receiverNodeIds,
-                                         m_receiverConstants, m_receiverIsLocal, var_np1, var_n, varAtReceivers );
+                                         m_receiverConstants, m_receiverIsLocal, var_np1, var_n, varAtReceivers, coeffs, add );
   }
 }
 

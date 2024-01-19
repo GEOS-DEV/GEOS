@@ -179,25 +179,74 @@ struct PrecomputeSourceAndReceiverKernel
 
       // Step 2: locate the receivers, and precompute the receiver term
 
-      /// loop over all the receivers that haven't been found yet
+      // for geophones, we need only a point per receiver.
+      // for DAS, we need multiple points
+      
+      /// compute locations of samples along receiver
+      integer nsamples = useDAS <= 0 ? 1 : linearDASSamples;
+      array1d< real64 > const samplePointLocations( nsamples );
+      if( nsamples == 1 )
+      {
+        samplePointLocations[ 0 ] = 0;
+      }
+      else
+      {
+        for( integer i = 0; i < nsamples; ++i )
+        {
+          samplePointLocations[ i ] = -0.5 + (real64) i / ( linearDASSamples - 1 );
+        }
+      }
+
+      /// compute integration constants of samples
+      array1d< real64 > const sampleIntegrationConstants( nsamples );
+      /// for displacement difference DAS (m_useDAS==2), take the discrete derivative of the pair of geophones
+      if( useDAS == 2 )
+      {
+        sampleIntegrationConstants[ 0 ] = -1.0;
+        sampleIntegrationConstants[ 1 ] = 1.0;
+      }
+      /// for strain integration DAS (m_useDAS==1), take the average of strains to average strain data
+      else if( linearDASSamples == 1 )
+      {
+        sampleIntegrationConstants[ 0 ] = 1.0;
+      }
+      else
+      {
+        for( integer i = 0; i < linearDASSamples; i++ )
+        {
+          sampleIntegrationConstants[ i ] = 1.0 / nsamples;
+        }
+      }
+
+      /// loop over all the receivers
       for( localIndex ircv = 0; ircv < receiverCoordinates.size( 0 ); ++ircv )
       {
-        if( receiverIsLocal[ircv] == 0 )
+        R1Tensor receiverCenter = { receiverCoordinates[ ircv ][ 0 ], receiverCoordinates[ ircv ][ 1 ], receiverCoordinates[ ircv ][ 2 ] };
+        R1Tensor receiverVector;
+        if( useDAS <= 0 )
         {
-          real64 const coords[3] = { receiverCoordinates[ircv][0],
-                                     receiverCoordinates[ircv][1],
-                                     receiverCoordinates[ircv][2] };
-
-
-          bool const receiverFound =
+          receiverVector = { 0, 0, 0 };
+        }
+        else
+        {
+          receiverVector =  WaveSolverUtils::computeDASVector( linearDASGeometry[ ircv ][ 0 ], linearDASGeometry[ ircv ][ 1 ] );
+        }
+        real64 receiverLength = useDAS <= 0 ? 0 : linearDASGeometry[ ircv ][ 2 ];
+        /// loop over samples
+        for( integer i = 0; i < nsamples; ++i )
+        {
+          /// compute sample coordinates and locate the element containing it
+          real64 const coords[3] = { receiverCenter[ 0 ] + receiverVector[ 0 ] * receiverLength * samplePointLocations[ i ],
+                                     receiverCenter[ 1 ] + receiverVector[ 1 ] * receiverLength * samplePointLocations[ i ],
+                                     receiverCenter[ 2 ] + receiverVector[ 2 ] * receiverLength * samplePointLocations[ i ] };
+          bool const sampleFound =
             WaveSolverUtils::locateSourceElement( numFacesPerElem,
                                                   center,
                                                   faceNormal,
                                                   faceCenter,
                                                   elemsToFaces[k],
                                                   coords );
-
-          if( receiverFound && elemGhostRank[k] < 0 )
+          if( sampleFound && elemGhostRank[k] < 0 )
           {
             real64 coordsOnRefElem[3]{};
             real64 xLocal[numNodesPerElem][3];
@@ -214,27 +263,37 @@ struct PrecomputeSourceAndReceiverKernel
                                                                               elemsToNodes[k],
                                                                               nodeCoords,
                                                                               coordsOnRefElem );
-            receiverIsLocal[ircv] = 1;
-
             real64 N[numNodesPerElem];
             real64 gradN[numNodesPerElem][3];
             FE_TYPE::calcN( coordsOnRefElem, N );
             FE_TYPE::calcGradN( coordsOnRefElem, xLocal, gradN );
-
-            R1Tensor receiverVector = WaveSolverUtils::computeDASVector( linearDASGeometry[ircv/linearDASSamples][0], linearDASGeometry[ircv/linearDASSamples][1] );
             for( localIndex a = 0; a < numNodesPerElem; ++a )
             {
-              receiverNodeIds[ircv][a] = elemsToNodes( k, a );
+              receiverNodeIds[ircv][i * numNodesPerElem + a] = elemsToNodes( k, a );
               if( useDAS == 1 )
               {
-                receiverConstants[ircv][a] = gradN[a][0] * receiverVector[0] + gradN[a][1] * receiverVector[1] + gradN[a][2] * receiverVector[2];
+                receiverConstants[ircv][i * numNodesPerElem + a] += ( gradN[a][0] * receiverVector[0] + gradN[a][1] * receiverVector[1] + gradN[a][2] * receiverVector[2] ) * sampleIntegrationConstants[ i ];
               }
               else
               {
-                receiverConstants[ircv][a] = N[a];
+                receiverConstants[ircv][i * numNodesPerElem + a] += N[a] * sampleIntegrationConstants[ i ];
               }
             }
+            receiverIsLocal[ ircv ] = 2;
           }
+        } // end loop over samples
+        // determine if the current rank is the owner of this receiver 
+        real64 const coords[3] = { receiverCenter[ 0 ], receiverCenter[ 1 ], receiverCenter[ 2 ] };
+        bool const receiverFound =
+          WaveSolverUtils::locateSourceElement( numFacesPerElem,
+                                                center,
+                                                faceNormal,
+                                                faceCenter,
+                                                elemsToFaces[k],
+                                                coords );
+        if( receiverFound && elemGhostRank[k] < 0 )
+        {
+          receiverIsLocal[ ircv ] = 1;
         }
       } // end loop over receivers
     } );
