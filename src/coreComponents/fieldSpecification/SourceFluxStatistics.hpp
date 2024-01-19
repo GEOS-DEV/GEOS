@@ -13,13 +13,14 @@
  */
 
 /**
- * @file SinglePhaseStatistics.hpp
+ * @file SourceFluxStatistics.hpp
  */
 
-#ifndef SRC_CORECOMPONENTS_PHYSICSSOLVERS_FLUIDFLOW_SINGLEPHASESTATISTICS_HPP_
-#define SRC_CORECOMPONENTS_PHYSICSSOLVERS_FLUIDFLOW_SINGLEPHASESTATISTICS_HPP_
+#ifndef SRC_CORECOMPONENTS_PHYSICSSOLVERS_FLUIDFLOW_SOURCEFLUXSTATISTICS_HPP_
+#define SRC_CORECOMPONENTS_PHYSICSSOLVERS_FLUIDFLOW_SOURCEFLUXSTATISTICS_HPP_
 
 #include "physicsSolvers/FieldStatisticsBase.hpp"
+#include "physicsSolvers/fluidFlow/FlowSolverBase.hpp"
 
 class SourceFluxBoundaryCondition;
 
@@ -44,6 +45,8 @@ public:
     real64 producedMass;
     /// flux(es) production rate (kg/s). Negative if injecting.
     real64 productionRate;
+    /// Number of elements in which we are producing / injecting
+    integer elementCount;
   };
 
   /**
@@ -79,7 +82,7 @@ public:
   struct viewKeyStruct
   {
     /// @return The key for setName
-    constexpr static char const * setNamesString() { return "setNames"; }
+    constexpr static char const * fluxNamesString() { return "fluxNames"; }
   };
 
 protected:
@@ -87,12 +90,16 @@ protected:
   void postProcessInput() override;
 
 private:
-  using Base = FieldStatisticsBase< SinglePhaseBase >;
+  using Base = FieldStatisticsBase< FlowSolverBase >;
 
   /// the names of the SourceFlux(s) for which we want the statistics
   string_array m_fluxNames;
-  /// Internal array of the SourceFlux(s) for which we want the statistics
-  std::vector< SourceFluxBoundaryCondition * > m_fluxes;
+  /// internal array to keep track of the names of the wrappers that will store the Stat data on each 
+  /// region for this SourceFluxStatistics.
+  std::set< string > m_statWrapperNames;
+  //!\\ TODO : remove that ?
+  //!\\ /// Internal array of the SourceFlux(s) for which we want the statistics
+  //!\\ std::vector< SourceFluxBoundaryCondition * > m_fluxes;
 
   /**
    * @return a string used to name the wrapper that is added to each region that is simulated by
@@ -112,7 +119,7 @@ private:
   /**
    * @param Stats the statistics that must be output in the log
    */
-  static void logStats( Stats const & stats ) override;
+  static void writeStats( string_view aggregateName, Stats const & stats );
 
 };
 
@@ -124,4 +131,4 @@ struct SourceFluxStatisticsKernel
 
 } /* namespace geos */
 
-#endif /* SRC_CORECOMPONENTS_PHYSICSSOLVERS_FLUIDFLOW_SINGLEPHASESTATISTICS_HPP_ */
+#endif /* SRC_CORECOMPONENTS_PHYSICSSOLVERS_FLUIDFLOW_SOURCEFLUXSTATISTICS_HPP_ */

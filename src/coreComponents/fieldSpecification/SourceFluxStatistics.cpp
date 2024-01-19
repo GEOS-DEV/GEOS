@@ -31,17 +31,17 @@ SourceFluxStatistics::SourceFluxStatistics( const string & name,
                                             Group * const parent ):
   Base( name, parent )
 {
-  getWrapper< integer >( Group::viewKeyStruct::logLevelString ).
+  getWrapper< integer >( Group::viewKeyStruct::logLevelString() ).
     appendDescription( GEOS_FMT( "\n- Log Level 1 outputs the sum of all {0}(s) produced rate & mass,\n"
                                  "- Log Level 2 outputs detailed values for each {0}.",
                                  SourceFluxBoundaryCondition::catalogName() ) );
 
-  registerWrapper( viewKeyStruct::setNamesString(), &m_fluxNames ).
+  registerWrapper( viewKeyStruct::fluxNamesString(), &m_fluxNames ).
     setRTTypeName( rtTypes::CustomTypes::groupNameRefArray ).
     setInputFlag( InputFlags::REQUIRED ).
     setSizedFromParent( 0 ).
-    setDescription( GEOS_FMT( "Name(s) array of the {0}(s) for which we want the statistics."
-                              "Use \"{ all }\" to target all {0}.",
+    setDescription( GEOS_FMT( "Name(s) array of the {0}(s) for which we want the statistics. "
+                              "Use \"all\" to target all {0}.",
                               SourceFluxBoundaryCondition::catalogName() ) );
 }
 
@@ -53,24 +53,18 @@ void SourceFluxStatistics::postProcessInput()
     m_fluxNames.clear();
     fsManager.forSubGroups< SourceFluxBoundaryCondition >( [&]( SourceFluxBoundaryCondition & sourceFlux )
     {
-      m_set.push_back( &sourceFlux );
+      m_fluxNames.emplace_back( string( sourceFlux.getName() ) );
     } );
   }
   else
   {
     for( string const & fluxName : m_fluxNames )
     {
-      //TODO : test this error
       GEOS_ERROR_IF( !fsManager.hasGroup< SourceFluxBoundaryCondition >( fluxName ),
                      GEOS_FMT( "{}: No {} named {} was found in {}.",
                                getDataContext(), SourceFluxBoundaryCondition::catalogName(),
-                               fluxName, fs.getDataContext() ) );
+                               fluxName, fsManager.getDataContext() ) );
     }
-  }
-  //TODO : remove that
-  for( string const & flux : m_set )
-  {
-    GEOS_LOG( flux.getName());
   }
 }
 
@@ -85,29 +79,45 @@ void SourceFluxStatistics::registerDataOnMesh( Group & meshBodies )
     return;
   }
 
+  m_statWrapperNames.clear();
+  for( string const & fluxName : m_fluxNames )
+  {
+    m_statWrapperNames.insert( getRegionStatsName( fluxName ) );
+  }
+
   m_solver->forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
                                                               MeshLevel & mesh,
                                                               arrayView1d< string const > const & )
   {
-    mesh.getElemManager().forElementRegions( [&]( ElementRegionBase const & region )
+    // adding, on each reagion, a wrapper to hold the stats of each wrapper
+    mesh.getElemManager().forElementRegions( [&]( ElementRegionBase & region )
     {
-
-      WrapperBase & regionStats = region.registerWrapper< Stats >( getRegionStatsName() );
-      regionStats.setRestartFlags( RestartFlags::NO_WRITE );
-
-      region.excludeWrappersFromPacking( { getRegionStatsName() } );
+      for( string const & wrapperName : m_statWrapperNames )
+      {
+        Wrapper< Stats > & statsWrapper = region.registerWrapper< Stats >( wrapperName );
+        statsWrapper.setRestartFlags( RestartFlags::NO_WRITE );
+      }
+      region.excludeWrappersFromPacking( m_statWrapperNames );
     } );
   } );
 }
 
-void SourceFluxStatistics::writeStats( SourceFluxStatistics::Stats const & stats )
+void SourceFluxStatistics::writeStats( string_view aggregateName, Stats const & stats )
+{
+  GEOS_LOG_RANK_0( GEOS_FMT( "{}: applied on {} elements",
+                             aggregateName, stats.elementCount ) );
+  GEOS_LOG_RANK_0( GEOS_FMT( "{}: Produced mass = {} kg",
+                             aggregateName, stats.producedMass ) );
+  GEOS_LOG_RANK_0( GEOS_FMT( "{}: Production rate = {} kg/s",
+                             aggregateName, stats.productionRate ) );
+}
 
 bool SourceFluxStatistics::execute( real64 const GEOS_UNUSED_PARAM( time_n ),
                                     real64 const GEOS_UNUSED_PARAM( dt ),
                                     integer const GEOS_UNUSED_PARAM( cycleNumber ),
                                     integer const GEOS_UNUSED_PARAM( eventCounter ),
                                     real64 const GEOS_UNUSED_PARAM( eventProgress ),
-                                    DomainPartition & domain )
+                                    DomainPartition & GEOS_UNUSED_PARAM( domain ) )
 {
   if( getLogLevel() >= 1 )
   {
@@ -116,6 +126,8 @@ bool SourceFluxStatistics::execute( real64 const GEOS_UNUSED_PARAM( time_n ),
     //                                                                         arrayView1d< string const > const & regionNames )
     {
       //TODO : get back all regions info on sourceflux region stat wrappers
+      //TODO : mpi sum to rank 0
+      //TODO : writeStats() calls
       GEOS_LOG( GEOS_FMT( "{} {}: SourceFluxStatistics::execute::allFluxStats not yet implemented",
                           catalogName(), getName() ) );
       if( getLogLevel() >= 2 )
@@ -127,5 +139,9 @@ bool SourceFluxStatistics::execute( real64 const GEOS_UNUSED_PARAM( time_n ),
   }
   return false;
 }
+
+REGISTER_CATALOG_ENTRY( TaskBase,
+                        SourceFluxStatistics,
+                        string const &, dataRepository::Group * const )
 
 } /* namespace geos */

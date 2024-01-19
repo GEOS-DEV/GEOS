@@ -507,6 +507,10 @@
 					<xsd:selector xpath="SolidMechanicsStatistics" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
+				<xsd:unique name="TasksSourceFluxStatisticsUniqueName">
+					<xsd:selector xpath="SourceFluxStatistics" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
 				<xsd:unique name="TasksTriaxialDriverUniqueName">
 					<xsd:selector xpath="TriaxialDriver" />
 					<xsd:field xpath="@name" />
@@ -3405,6 +3409,7 @@ Local - Add stabilization only to interiors of macro elements.-->
 			<xsd:element name="SinglePhaseStatistics" type="SinglePhaseStatisticsType" />
 			<xsd:element name="SolidMechanicsStateReset" type="SolidMechanicsStateResetType" />
 			<xsd:element name="SolidMechanicsStatistics" type="SolidMechanicsStatisticsType" />
+			<xsd:element name="SourceFluxStatistics" type="SourceFluxStatisticsType" />
 			<xsd:element name="TriaxialDriver" type="TriaxialDriverType" />
 		</xsd:choice>
 	</xsd:complexType>
@@ -3559,6 +3564,18 @@ Local - Add stabilization only to interiors of macro elements.-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--solidSolverName => Name of the solid solver-->
 		<xsd:attribute name="solidSolverName" type="groupNameRef" use="required" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="groupName" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="SourceFluxStatisticsType">
+		<!--flowSolverName => Name of the flow solver-->
+		<xsd:attribute name="flowSolverName" type="groupNameRef" use="required" />
+		<!--fluxNames => Name(s) array of the SourceFlux(s) for which we want the statistics. Use "all" to target all SourceFlux.-->
+		<xsd:attribute name="fluxNames" type="groupNameRef_array" use="required" />
+		<!--logLevel => Log level
+- Log Level 1 outputs the sum of all SourceFlux(s) produced rate & mass,
+- Log Level 2 outputs detailed values for each SourceFlux.-->
+		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
