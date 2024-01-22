@@ -154,9 +154,6 @@ private:
   /// Threshold to decide whether a phase is considered "mobile" or not
   real64 m_relpermThreshold;
 
-  // Output directory
-  string const m_outputDir;
-
 };
 
 
