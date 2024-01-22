@@ -104,7 +104,7 @@ public:
                                  this->catalogName(), this->getDataContext().toString(), subRegion.getName() ),
                        InputError );
 
-        if( subRegion.hasField< fields::poromechanics::bulkDensity >() )
+        if( subRegion.hasField< fields::poromechanics::totalFluidDensity >() )
         {
           // get the solid model to know the number of quadrature points and resize the total fluid density
           constitutive::CoupledSolidBase const & solid = this->template getConstitutiveModel< constitutive::CoupledSolidBase >( subRegion, porousName );
