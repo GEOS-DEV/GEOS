@@ -273,6 +273,7 @@ public:
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
     static constexpr char const * fluidNamesString() { return "fluidNames"; }
+    static constexpr char const * writeCSVFlagString() { return "writeCSV"; }
   };
 
 private:
@@ -311,6 +312,7 @@ protected:
   /// the number of Degrees of Freedom per reservoir element
   integer m_numDofPerResElement;
 
+  integer m_writeCSV;
   string const m_ratesOutputDir;
 
 };
