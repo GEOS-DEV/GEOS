@@ -97,7 +97,14 @@ public:
                                  this->getCatalogName(), this->getDataContext().toString(), subRegion.getName() ),
                        InputError );
 
-        if( subRegion.hasField< fields::poromechanics::totalFluidDensity >() )
+        string & porosityModelName = subRegion.getReference< string >( constitutive::CoupledSolidBase::viewKeyStruct::porosityModelNameString() );
+        porosityModelName = this->template getConstitutiveName< constitutive::PorosityBase >( subRegion );
+        GEOS_THROW_IF( porosityModelName.empty(),
+                       GEOS_FMT( "{} {} : Porosity model not found on subregion {}",
+                                 this->catalogName(), this->getDataContext().toString(), subRegion.getName() ),
+                       InputError );
+
+        if( subRegion.hasField< fields::poromechanics::bulkDensity >() )
         {
           // get the solid model to know the number of quadrature points and resize the total fluid density
           constitutive::CoupledSolidBase const & solid = this->template getConstitutiveModel< constitutive::CoupledSolidBase >( subRegion, porousName );
@@ -130,6 +137,12 @@ public:
                                                                      ElementSubRegionBase & subRegion )
       {
         subRegion.registerWrapper< string >( viewKeyStruct::porousMaterialNamesString() ).
+          setPlotLevel( dataRepository::PlotLevel::NOPLOT ).
+          setRestartFlags( dataRepository::RestartFlags::NO_WRITE ).
+          setSizedFromParent( 0 );
+
+        // This is needed by the way the surface generator currently does things.
+        subRegion.registerWrapper< string >( constitutive::CoupledSolidBase::viewKeyStruct::porosityModelNameString() ).
           setPlotLevel( dataRepository::PlotLevel::NOPLOT ).
           setRestartFlags( dataRepository::RestartFlags::NO_WRITE ).
           setSizedFromParent( 0 );
