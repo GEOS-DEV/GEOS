@@ -16,8 +16,7 @@ set( subdirs
      fileIO
      physicsSolvers
      events
-     mainInterface
-     python )
+     mainInterface )
 
 unset( parallelDeps )
 
