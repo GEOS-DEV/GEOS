@@ -22,7 +22,6 @@ jobs:
     # to ensure maximum support of google cloud's sdk.
     runs-on: ubuntu-22.04
     outputs:
-      NUM_ASSIGNEES: ${{ steps.extract_pr_info.outputs.NUM_ASSIGNEES }}
       DOCKER_IMAGE_TAG: ${{ steps.extract_docker_image_tag.outputs.DOCKER_IMAGE_TAG }}
       LABELS: ${{ steps.extract_pr_info.outputs.LABELS }}
     steps:
@@ -39,7 +38,6 @@ jobs:
         if [[ $draft_status == true ]]; then exit 1 ; fi
         
         # If the workflow is meant to continue, we extract additional information for the json of the pr.
-        echo "NUM_ASSIGNEES=$(echo ${pr_json} | jq '.assignees | length')" >> "$GITHUB_OUTPUT"
         echo "LABELS=$(echo ${pr_json} | jq -crM '[.labels[].name]')" >> "$GITHUB_OUTPUT"
     # The TPL tag is contained in the codespaces configuration to avoid duplications.
     - name: Checkout .devcontainer/devcontainer.json
