@@ -68,6 +68,11 @@ ElasticWaveEquationSEM::ElasticWaveEquationSEM( const std::string & name,
     setSizedFromParent( 0 ).
     setDescription( "Displacement value at each receiver for each timestep (z-component)" );
 
+  registerWrapper( viewKeyStruct::dasSignalNp1AtReceiversString(), &m_dasSignalNp1AtReceivers ).
+    setInputFlag( InputFlags::FALSE ).
+    setSizedFromParent( 0 ).
+    setDescription( "DAS signal value at each receiver for each timestep" );
+
   registerWrapper( viewKeyStruct::sourceForceString(), &m_sourceForce ).
     setInputFlag( InputFlags::OPTIONAL ).
     setSizedFromParent( 0 ).
