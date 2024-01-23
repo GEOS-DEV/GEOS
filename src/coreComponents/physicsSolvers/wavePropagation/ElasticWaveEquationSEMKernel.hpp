@@ -100,6 +100,11 @@ struct PrecomputeSourceAndReceiverKernel
           R2SymTensor const sourceMoment )
   {
     constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
+    integer nsamples = useDAS <= 0 ? 1 : linearDASSamples;
+    array1d< real64 > const samplePointLocationsA( nsamples );
+    arrayView1d< real64 > const samplePointLocations = samplePointLocationsA.toView();
+    array1d< real64 > const sampleIntegrationConstantsA( nsamples );
+    arrayView1d< real64 > const sampleIntegrationConstants = sampleIntegrationConstantsA.toView();
 
     forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const k )
     {
@@ -183,8 +188,6 @@ struct PrecomputeSourceAndReceiverKernel
       // for DAS, we need multiple points
       
       /// compute locations of samples along receiver
-      integer nsamples = useDAS <= 0 ? 1 : linearDASSamples;
-      array1d< real64 > const samplePointLocations( nsamples );
       if( nsamples == 1 )
       {
         samplePointLocations[ 0 ] = 0;
@@ -198,7 +201,6 @@ struct PrecomputeSourceAndReceiverKernel
       }
 
       /// compute integration constants of samples
-      array1d< real64 > const sampleIntegrationConstants( nsamples );
       /// for displacement difference DAS (m_useDAS==2), take the discrete derivative of the pair of geophones
       if( useDAS == 2 )
       {

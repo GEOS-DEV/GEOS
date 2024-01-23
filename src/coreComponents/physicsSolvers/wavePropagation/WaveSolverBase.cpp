@@ -467,7 +467,7 @@ void WaveSolverBase::computeAllSeismoTraces( real64 const time_n,
   for( localIndex iSeismo = m_indexSeismoTrace; iSeismo < m_nsamplesSeismoTrace; iSeismo++ )
   {
     real64 const timeSeismo = m_dtSeismoTrace * (m_forward ? iSeismo : (m_nsamplesSeismoTrace - 1) - iSeismo);
-    if( dir * timeSeismo > dir * (time_n + epsilonLoc))
+    if( dir * timeSeismo > dir * (time_n + epsilonLoc) )
       break;
     WaveSolverUtils::computeSeismoTrace( time_n, dir * dt, timeSeismo, iSeismo, m_receiverNodeIds,
                                          m_receiverConstants, m_receiverIsLocal, var_np1, var_n, varAtReceivers, coeffs, add );

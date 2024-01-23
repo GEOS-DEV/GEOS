@@ -269,7 +269,6 @@ void ElasticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh, 
       using FE_TYPE = TYPEOFREF( finiteElement );
 
       localIndex const numFacesPerElem = elementSubRegion.numFacesPerElement();
-
       elasticWaveEquationSEMKernels::
         PrecomputeSourceAndReceiverKernel::
         launch< EXEC_POLICY, FE_TYPE >
