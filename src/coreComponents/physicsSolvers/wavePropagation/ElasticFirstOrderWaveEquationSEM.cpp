@@ -296,31 +296,6 @@ void ElasticFirstOrderWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLeve
   } );
 }
 
-
-void ElasticFirstOrderWaveEquationSEM::addSourceToRightHandSide( integer const & cycleNumber, arrayView1d< real32 > const rhs )
-{
-  arrayView2d< localIndex const > const sourceNodeIds = m_sourceNodeIds.toViewConst();
-  arrayView2d< real64 const > const sourceConstants   = m_sourceConstants.toViewConst();
-  arrayView1d< localIndex const > const sourceIsAccessible = m_sourceIsAccessible.toViewConst();
-  arrayView2d< real32 const > const sourceValue   = m_sourceValue.toViewConst();
-
-  GEOS_THROW_IF( cycleNumber > sourceValue.size( 0 ),
-                 getDataContext() << ": Too many steps compared to array size",
-                 std::runtime_error );
-
-  forAll< serialPolicy >( m_sourceConstants.size( 0 ), [=] ( localIndex const isrc )
-  {
-    if( sourceIsAccessible[isrc] == 1 )
-    {
-      for( localIndex inode = 0; inode < m_sourceConstants.size( 1 ); ++inode )
-      {
-        real32 const localIncrement = sourceConstants[isrc][inode] * sourceValue[cycleNumber][isrc];
-        RAJA::atomicAdd< ATOMIC_POLICY >( &rhs[sourceNodeIds[isrc][inode]], localIncrement );
-      }
-    }
-  } );
-}
-
 void ElasticFirstOrderWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
 {
 

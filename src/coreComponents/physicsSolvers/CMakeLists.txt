@@ -130,7 +130,6 @@ set( physicsSolvers_headers
      surfaceGeneration/kernels/surfaceGenerationKernelsHelpers.hpp
      wavePropagation/WaveSolverBase.hpp
      wavePropagation/WaveSolverUtils.hpp
-     #wavePropagation/WaveSolverBaseFields.hpp
      wavePropagation/AcousticFields.hpp
      wavePropagation/AcousticWaveEquationSEM.hpp
      wavePropagation/AcousticWaveEquationSEMKernel.hpp
@@ -144,6 +143,7 @@ set( physicsSolvers_headers
      wavePropagation/AcousticVTIFields.hpp
      wavePropagation/AcousticVTIWaveEquationSEM.hpp
      wavePropagation/AcousticVTIWaveEquationSEMKernel.hpp
+     wavePropagation/AcoustoElasticFields.hpp
      wavePropagation/AcousticElasticWaveEquationSEM.hpp
      wavePropagation/AcousticElasticWaveEquationSEMKernel.hpp )
 

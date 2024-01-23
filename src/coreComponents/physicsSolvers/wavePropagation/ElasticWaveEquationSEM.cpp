@@ -94,7 +94,7 @@ void ElasticWaveEquationSEM::initializePreSubGroups()
 
   WaveSolverBase::initializePreSubGroups();
 
-  localIndex const numNodesPerElem = getNumNodesPerElem();
+  localIndex const numNodesPerElem = WaveSolverBase::getNumNodesPerElem();
 
   localIndex const numSourcesGlobal = m_sourceCoordinates.size( 0 );
   m_sourceConstantsx.resize( numSourcesGlobal, numNodesPerElem );

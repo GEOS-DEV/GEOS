@@ -22,8 +22,6 @@
 
 #include "common/DataLayouts.hpp"
 #include "mesh/MeshFields.hpp"
-//#include "WaveSolverUtils.hpp"
-
 
 namespace geos
 {

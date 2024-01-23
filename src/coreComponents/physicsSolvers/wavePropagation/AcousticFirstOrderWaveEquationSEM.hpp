@@ -34,12 +34,6 @@ public:
   using EXEC_POLICY = parallelDevicePolicy< >;
   using ATOMIC_POLICY = parallelDeviceAtomic;
 
-
-  /**
-   * @brief Safeguard for timeStep. Used to avoid memory issue due to too small value.
-   */
-  static constexpr real64 epsilonLoc = 1e-8;
-
   AcousticFirstOrderWaveEquationSEM( const std::string & name,
                                      Group * const parent );
 
@@ -75,12 +69,12 @@ public:
                                        bool const computeGradient ) override;
   /**@}*/
 
-  /**
-   * @brief Multiply the precomputed term by the Ricker and add to the right-hand side
-   * @param cycleNumber the cycle number/step number of evaluation of the source
-   * @param rhs the right hand side vector to be computed
-   */
-  virtual void addSourceToRightHandSide( integer const & cycleNumber, arrayView1d< real32 > const rhs );
+  // /**
+  //  * @brief Multiply the precomputed term by the Ricker and add to the right-hand side
+  //  * @param cycleNumber the cycle number/step number of evaluation of the source
+  //  * @param rhs the right hand side vector to be computed
+  //  */
+  // virtual void addSourceToRightHandSide( integer const & cycleNumber, arrayView1d< real32 > const rhs );
 
 
   /**

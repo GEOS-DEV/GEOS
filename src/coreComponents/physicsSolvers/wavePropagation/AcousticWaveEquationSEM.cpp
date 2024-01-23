@@ -263,16 +263,12 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
 
     // mass matrix to be computed in this function
     arrayView1d< real32 > const mass = nodeManager.getField< acousticfields::AcousticMassVector >();
-    {
-      GEOS_MARK_SCOPE( mass_zero );
-      mass.zero();
-    }
+    mass.zero();
+
     /// damping matrix to be computed for each dof in the boundary of the mesh
     arrayView1d< real32 > const damping = nodeManager.getField< acousticfields::DampingVector >();
-    {
-      GEOS_MARK_SCOPE( damping_zero );
-      damping.zero();
-    }
+    damping.zero();
+
     /// get array of indicators: 1 if face is on the free surface; 0 otherwise
     arrayView1d< localIndex const > const freeSurfaceFaceIndicator = faceManager.getField< acousticfields::AcousticFreeSurfaceFaceIndicator >();
 
@@ -305,19 +301,18 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
                                                                velocity,
                                                                density,
                                                                mass );
-        {
-          GEOS_MARK_SCOPE( DampingMatrixKernel );
-          acousticWaveEquationSEMKernels::DampingMatrixKernel< FE_TYPE > kernelD( finiteElement );
-          kernelD.template launch< EXEC_POLICY, ATOMIC_POLICY >( elementSubRegion.size(),
-                                                                 nodeCoords,
-                                                                 elemsToFaces,
-                                                                 facesToNodes,
-                                                                 facesDomainBoundaryIndicator,
-                                                                 freeSurfaceFaceIndicator,
-                                                                 velocity,
-                                                                 density,
-                                                                 damping );
-        }
+
+        acousticWaveEquationSEMKernels::DampingMatrixKernel< FE_TYPE > kernelD( finiteElement );
+        kernelD.template launch< EXEC_POLICY, ATOMIC_POLICY >( elementSubRegion.size(),
+                                                               nodeCoords,
+                                                               elemsToFaces,
+                                                               facesToNodes,
+                                                               facesDomainBoundaryIndicator,
+                                                               freeSurfaceFaceIndicator,
+                                                               velocity,
+                                                               density,
+                                                               damping );
+
       } );
     } );
   } );
@@ -802,10 +797,6 @@ real64 AcousticWaveEquationSEM::explicitStepForward( real64 const & time_n,
           makeDirsForPath( dirName );
         }
 
-        //std::string fileName = GEOS_FMT( "pressuredt2_{:06}_{:08}_{:04}.dat", m_shotIndex, cycleNumber, rank );
-        //const int fileDesc = open( fileName.c_str(), O_CREAT | O_WRONLY | O_DIRECT | O_TRUNC, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP |
-        // S_IROTH | S_IWOTH );
-
         std::ofstream wf( fileName, std::ios::out | std::ios::binary );
         GEOS_THROW_IF( !wf,
                        getDataContext() << ": Could not open file "<< fileName << " for writing",
@@ -872,11 +863,7 @@ real64 AcousticWaveEquationSEM::explicitStepBackward( real64 const & time_n,
         GEOS_THROW_IF( !wf,
                        getDataContext() << ": Could not open file "<< fileName << " for reading",
                        InputError );
-        //std::string fileName = GEOS_FMT( "pressuredt2_{:06}_{:08}_{:04}.dat", m_shotIndex, cycleNumber, rank );
-        //const int fileDesc = open( fileName.c_str(), O_RDONLY | O_DIRECT );
-        //GEOS_ERROR_IF( fileDesc == -1,
-        //                "Could not open file "<< fileName << " for reading: " << strerror( errno ) );
-        // maybe better with registerTouch()
+
         p_dt2.move( MemorySpace::host, true );
         wf.read( (char *)&p_dt2[0], p_dt2.size()*sizeof( real32 ) );
         wf.close( );

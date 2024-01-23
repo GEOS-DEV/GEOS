@@ -21,8 +21,7 @@
 
 #include "finiteElement/kernelInterface/KernelBase.hpp"
 #include "WaveSolverUtils.hpp"
-#include "WaveSolverBaseFields.hpp"
-
+#include "ElasticFields.hpp"
 
 namespace geos
 {
