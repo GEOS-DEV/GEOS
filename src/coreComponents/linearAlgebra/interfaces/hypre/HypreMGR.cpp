@@ -57,7 +57,7 @@ void hypre::mgr::createMGR( LinearSolverParameters const & params,
   // Set MGR's print level
   HYPRE_Int logLevel = LvArray::integerConversion< HYPRE_Int >( params.logLevel );
 
-  // Update logLevel (first bit is reserved in GEOS to log execution times)
+  // Update logLevel (1 is reserved in GEOS to log execution times)
   logLevel = (logLevel > 0) ? ((logLevel - 1) & ~0x2) : 0;
 
   // Hypre's parameters to use MGR as a preconditioner
@@ -70,7 +70,11 @@ void hypre::mgr::createMGR( LinearSolverParameters const & params,
 
   if( params.logLevel >= 1 )
   {
-    GEOS_LOG_RANK_0( numComponentsPerField );
+    GEOS_LOG_RANK_0( GEOS_FMT( "        MGR preconditioner: numComponentsPerField = {}", numComponentsPerField ) );
+  }
+  if( params.logLevel >= 1024 )
+  {
+    GEOS_LOG_RANK( GEOS_FMT( "        MGR preconditioner: pointMarkers = {}", mgrData.pointMarkers ) );
   }
 
   switch( params.mgr.strategy )
