@@ -21,8 +21,6 @@
 
 #include "linearAlgebra/interfaces/hypre/HypreMGR.hpp"
 
-#define BRANCH_MGR_FSOLVER
-
 namespace geos
 {
 
