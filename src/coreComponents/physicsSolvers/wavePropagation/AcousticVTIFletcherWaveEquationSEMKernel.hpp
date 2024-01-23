@@ -513,13 +513,15 @@ public:
                               localIndex const q,
                               StackVariables & stack ) const
   {
+    // Precompute
+    real32 invDensity = 1./m_density[k];
+    real32 vti_f = 1 - (m_vti_epsilon[k] - m_vti_delta[k]) / m_vti_sigma[k];
     // Pseudo Stiffness xy
     m_finiteElementSpace.template computeStiffnessxyTerm( q, stack.xLocal, [&] ( int i, int j, real64 val )
     {
-      real32 vti_f = 1 - (m_vti_epsilon[k] - m_vti_delta[k]) / m_vti_sigma[k];
-      real32 const localIncrement_p = val / m_density[k] *(-1-2*m_vti_epsilon[k])*m_p_n[m_elemsToNodes[k][j]];
+      real32 const localIncrement_p = val * invDensity *(-1-2*m_vti_epsilon[k])*m_p_n[m_elemsToNodes[k][j]];
       RAJA::atomicAdd< parallelDeviceAtomic >( &m_stiffnessVector_p[m_elemsToNodes[k][i]], localIncrement_p );
-      real32 const localIncrement_q = val / m_density[k] * ((-2*m_vti_delta[k]-vti_f)*m_p_n[m_elemsToNodes[k][j]] +(vti_f-1)*m_q_n[m_elemsToNodes[k][j]]);
+      real32 const localIncrement_q = val * invDensity * ((-2*m_vti_delta[k]-vti_f)*m_p_n[m_elemsToNodes[k][j]] +(vti_f-1)*m_q_n[m_elemsToNodes[k][j]]);
       RAJA::atomicAdd< parallelDeviceAtomic >( &m_stiffnessVector_q[m_elemsToNodes[k][i]], localIncrement_q );
     } );
 
@@ -527,11 +529,10 @@ public:
 
     m_finiteElementSpace.template computeStiffnesszTerm( q, stack.xLocal, [&] ( int i, int j, real64 val )
     {
-      real32 vti_f = 1 - (m_vti_epsilon[k] - m_vti_delta[k]) / m_vti_sigma[k];
-      real32 const localIncrement_p = val / m_density[k] * ((vti_f-1)*m_p_n[m_elemsToNodes[k][j]] - vti_f*m_q_n[m_elemsToNodes[k][j]]);
+      real32 const localIncrement_p = val * invDensity * ((vti_f-1)*m_p_n[m_elemsToNodes[k][j]] - vti_f*m_q_n[m_elemsToNodes[k][j]]);
       RAJA::atomicAdd< parallelDeviceAtomic >( &m_stiffnessVector_p[m_elemsToNodes[k][i]], localIncrement_p );
 
-      real32 const localIncrement_q = -val  / m_density[k] * m_q_n[m_elemsToNodes[k][j]];
+      real32 const localIncrement_q = -val  * invDensity * m_q_n[m_elemsToNodes[k][j]];
       RAJA::atomicAdd< parallelDeviceAtomic >( &m_stiffnessVector_q[m_elemsToNodes[k][i]], localIncrement_q );
     } );
   }

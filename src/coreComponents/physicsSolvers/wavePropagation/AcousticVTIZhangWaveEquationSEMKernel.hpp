@@ -498,12 +498,23 @@ public:
                               localIndex const q,
                               StackVariables & stack ) const
   {
+    // Make sure delta < epsilon (for stability)
+    real32 epsi = abs(m_vti_epsilon[k]);
+    real32 delt = abs(m_vti_delta[k]);
+    if(abs(epsi) < 1e-5)
+      epsi = 0;
+    if(abs(delt) < 1e-5)
+      delt = 0;
+    if(delt > epsi)
+      delt = epsi;
+    real32 invDensity = 1./m_density[k];
+    real32 sqrtDelta = sqrt( 1 + 2 * delt);
     // Pseudo Stiffness xy
     m_finiteElementSpace.template computeStiffnessxyTerm( q, stack.xLocal, [&] ( int i, int j, real64 val )
     {
-      real32 const localIncrement_p = -val * ((1 + 2 * m_vti_epsilon[k]) / m_density[k]) * m_p_n[m_elemsToNodes[k][j]];
+      real32 const localIncrement_p = -val * invDensity * (1 + 2 * epsi) * m_p_n[m_elemsToNodes[k][j]];
       RAJA::atomicAdd< parallelDeviceAtomic >( &m_stiffnessVector_p[m_elemsToNodes[k][i]], localIncrement_p );
-      real32 const localIncrement_q = -val*((sqrt( 1 + 2 * m_vti_delta[k] )) / m_density[k]) * m_p_n[m_elemsToNodes[k][j]];
+      real32 const localIncrement_q = -val * invDensity * sqrtDelta * m_p_n[m_elemsToNodes[k][j]];
       RAJA::atomicAdd< parallelDeviceAtomic >( &m_stiffnessVector_q[m_elemsToNodes[k][i]], localIncrement_q );
     } );
 
@@ -511,10 +522,10 @@ public:
 
     m_finiteElementSpace.template computeStiffnesszTerm( q, stack.xLocal, [&] ( int i, int j, real64 val )
     {
-      real32 const localIncrement_p = -val*(sqrt( 1 + 2 * m_vti_delta[k] ) / m_density[k]) * m_q_n[m_elemsToNodes[k][j]];
+      real32 const localIncrement_p = -val * invDensity * sqrtDelta* m_q_n[m_elemsToNodes[k][j]];
       RAJA::atomicAdd< parallelDeviceAtomic >( &m_stiffnessVector_p[m_elemsToNodes[k][i]], localIncrement_p );
 
-      real32 const localIncrement_q = -val*(1 / m_density[k]) * m_q_n[m_elemsToNodes[k][j]];
+      real32 const localIncrement_q = -val * invDensity * m_q_n[m_elemsToNodes[k][j]];
       RAJA::atomicAdd< parallelDeviceAtomic >( &m_stiffnessVector_q[m_elemsToNodes[k][i]], localIncrement_q );
     } );
   }
