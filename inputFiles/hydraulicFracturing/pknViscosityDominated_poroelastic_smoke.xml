@@ -14,7 +14,7 @@
       flowSolverName="SinglePhaseFlow"
       surfaceGeneratorName="SurfaceGen"
       logLevel="1"
-      targetRegions="{ Fracture }"
+      targetRegions="{ Domain, Fracture }"
       contactRelationName="fractureContact"
       maxNumResolves="5"
       initialDt="0.1">
@@ -44,7 +44,8 @@
       targetRegions="{ Domain }"
       nodeBasedSIF="1"      
       rockToughness="0.1e6"
-      mpiCommOrder="1"/>
+      mpiCommOrder="1"
+      isPoroelastic="1"/>
   </Solvers>
 
   <Mesh>
