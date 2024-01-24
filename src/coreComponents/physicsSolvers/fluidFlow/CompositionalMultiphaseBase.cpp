@@ -707,21 +707,21 @@ void CompositionalMultiphaseBase::updateCompAmount( ElementSubRegionBase & subRe
   GEOS_MARK_FUNCTION;
 
   string const & solidName = subRegion.template getReference< string >( viewKeyStruct::solidNamesString() );
-CoupledSolidBase const & porousMaterial = getConstitutiveModel< CoupledSolidBase >( subRegion, solidName );
-arrayView2d< real64 const > const porosity = porousMaterial.getPorosity();
-arrayView1d< real64 const > const volume = subRegion.getElementVolume();
-arrayView2d< real64, compflow::USD_COMP > const compDens = subRegion.getField< fields::flow::globalCompDensity >();
-arrayView2d< real64, compflow::USD_COMP > compAmount = subRegion.getField< fields::flow::compAmount >();
+  CoupledSolidBase const & porousMaterial = getConstitutiveModel< CoupledSolidBase >( subRegion, solidName );
+  arrayView2d< real64 const > const porosity = porousMaterial.getPorosity();
+  arrayView1d< real64 const > const volume = subRegion.getElementVolume();
+  arrayView2d< real64, compflow::USD_COMP > const compDens = subRegion.getField< fields::flow::globalCompDensity >();
+  arrayView2d< real64, compflow::USD_COMP > compAmount = subRegion.getField< fields::flow::compAmount >();
 
-integer const numComp = m_numComponents;
+  integer const numComp = m_numComponents;
 
-forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const ei )
-{
-for( integer ic = 0; ic < numComp; ++ic )
-{
-compAmount[ei][ic] = porosity[ei][0] * volume[ei] * compDens[ei][ic];
-}
-} );
+  forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const ei )
+  {
+    for( integer ic = 0; ic < numComp; ++ic )
+    {
+      compAmount[ei][ic] = porosity[ei][0] * volume[ei] * compDens[ei][ic];
+    }
+  } );
 }
 
 void CompositionalMultiphaseBase::updateSolidInternalEnergyModel( ObjectManagerBase & dataGroup ) const

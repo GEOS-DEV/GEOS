@@ -138,9 +138,9 @@ public:
   void updateCapPressureModel( ObjectManagerBase & dataGroup ) const;
 
   /**
- * @brief Update components mass/moles
- * @param subRegion the subregion storing the required fields
- */
+   * @brief Update components mass/moles
+   * @param subRegion the subregion storing the required fields
+   */
   void updateCompAmount( ElementSubRegionBase & subRegion ) const;
 
   /**
