@@ -3433,6 +3433,8 @@ Local - Add stabilization only to interiors of macro elements.-->
 		<xsd:attribute name="fractureRegion" type="groupNameRef" default="Fracture" />
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
+		<!--isPoroelastic => Flag that defines whether the material is poroelastic or not.-->
+		<xsd:attribute name="isPoroelastic" type="integer" default="0" />
 		<!--logLevel => Log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--mpiCommOrder => Flag to enable MPI consistent communication ordering-->

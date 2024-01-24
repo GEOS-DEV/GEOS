@@ -24,6 +24,7 @@
 #include <vtkFieldData.h>
 #include <vtkCellData.h>
 #include <vtkPolyLine.h>
+#include <vtkCellArrayIterator.h>
 
 namespace geos
 {
@@ -73,22 +74,28 @@ void VTKWellGenerator::fillPolylineDataStructure( )
                                                                                 this->getName(), m_filePath ));
 
     // load edges
-    polyData->GetLines()->InitTraversal();
-    vtkNew< vtkIdList > idList;
-    polyData->GetLines()->GetNextCell( idList );
+    // polyData->GetLines()->InitTraversal();
+    // vtkNew< vtkIdList > idList;
+    // polyData->GetLines()->GetNextCell( idList );
 
     // vtkNew< vtkIdList > idList2;
-    // polyData->GetLines()->GetCell( 0, idList2 );    
+    // polyData->GetLines()->GetCell( 0, idList2 );
 
-    const globalIndex nbSegments = idList->GetNumberOfIds() - 1;
+    //newer version of vtk prefer local thread-safe iterator
+    //TODO deal with multiple lines and add a for loop to handle them instead of accessing line 0
+    vtkNew< vtkIdList > cellPts;
+    auto iter = ::vtk::TakeSmartPointer( polyData->GetLines()->NewIterator());
+    iter->GetCellAtId( 0, cellPts );
+
+    const globalIndex nbSegments = cellPts->GetNumberOfIds() - 1;
     m_segmentToPolyNodeMap.resizeDimension< 0 >( nbSegments );
     m_segmentToPolyNodeMap.resizeDimension< 1 >( m_numNodesPerElem );
 
     globalIndex iseg = 0;
     for( vtkIdType pointId = 0; pointId < nbSegments; ++pointId )
     {
-      m_segmentToPolyNodeMap[iseg][0] = idList->GetId( pointId );
-      m_segmentToPolyNodeMap[iseg][1] = idList->GetId( pointId + 1 );
+      m_segmentToPolyNodeMap[iseg][0] = cellPts->GetId( pointId );
+      m_segmentToPolyNodeMap[iseg][1] = cellPts->GetId( pointId + 1 );
       ++iseg;
     }
   }
