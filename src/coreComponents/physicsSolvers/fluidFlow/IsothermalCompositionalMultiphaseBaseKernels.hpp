@@ -706,7 +706,6 @@ public:
     arraySlice1d< real64 const, multifluid::USD_PHASE - 2 > phaseDens = m_phaseDens[ei][0];
     arraySlice2d< real64 const, multifluid::USD_PHASE_DC - 2 > dPhaseDens = m_dPhaseDens[ei][0];
 
-    arraySlice2d< real64 const, multifluid::USD_PHASE_COMP - 2 > phaseCompFrac_n = m_phaseCompFrac_n[ei][0];
     arraySlice2d< real64 const, multifluid::USD_PHASE_COMP - 2 > phaseCompFrac = m_phaseCompFrac[ei][0];
     arraySlice3d< real64 const, multifluid::USD_PHASE_COMP_DC - 2 > dPhaseCompFrac = m_dPhaseCompFrac[ei][0];
 
@@ -714,11 +713,16 @@ public:
     real64 dPhaseAmount_dC[numComp]{};
     real64 dPhaseCompFrac_dC[numComp]{};
 
+    // start with old time step values
+    for( integer ic = 0; ic < numComp; ++ic )
+    {
+      stack.localResidual[ic] -= m_compAmount_n[ei][ic];
+    }
+
     // sum contributions to component accumulation from each phase
     for( integer ip = 0; ip < m_numPhases; ++ip )
     {
       real64 const phaseAmount = stack.poreVolume * phaseVolFrac[ip] * phaseDens[ip];
-      real64 const phaseAmount_n = stack.poreVolume_n * phaseVolFrac_n[ip] * phaseDens_n[ip];
 
       real64 const dPhaseAmount_dP = stack.dPoreVolume_dPres * phaseVolFrac[ip] * phaseDens[ip]
                                      + stack.poreVolume * ( dPhaseVolFrac[ip][Deriv::dP] * phaseDens[ip]
@@ -738,12 +742,11 @@ public:
       for( integer ic = 0; ic < numComp; ++ic )
       {
         real64 const phaseCompAmount = phaseAmount * phaseCompFrac[ip][ic];
-        real64 const phaseCompAmount_n = phaseAmount_n * phaseCompFrac_n[ip][ic];
 
         real64 const dPhaseCompAmount_dP = dPhaseAmount_dP * phaseCompFrac[ip][ic]
                                            + phaseAmount * dPhaseCompFrac[ip][ic][Deriv::dP];
 
-        stack.localResidual[ic] += phaseCompAmount - phaseCompAmount_n;
+        stack.localResidual[ic] += phaseCompAmount;
         stack.localJacobian[ic][0] += dPhaseCompAmount_dP;
 
         // jc - index of component w.r.t. whose compositional var the derivative is being taken
@@ -762,6 +765,7 @@ public:
 
       // call the lambda in the phase loop to allow the reuse of the phase amounts and their derivatives
       // possible use: assemble the derivatives wrt temperature, and the accumulation term of the energy equation for this phase
+      real64 const phaseAmount_n = stack.poreVolume_n * phaseVolFrac_n[ip] * phaseDens_n[ip];
       phaseAmountKernelOp( ip, phaseAmount, phaseAmount_n, dPhaseAmount_dP, dPhaseAmount_dC );
 
     }
