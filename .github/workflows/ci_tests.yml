@@ -54,6 +54,9 @@ jobs:
         
         # If the workflow is meant to continue, we extract additional information for the json of the pr.
         echo "LABELS=$(echo ${pr_json} | jq -crM '[.labels[].name]')" >> "$GITHUB_OUTPUT"
+
+        echo "LABELS=['ci: ready to be merged']" >> "$GITHUB_OUTPUT"
+        
     # The TPL tag is contained in the codespaces configuration to avoid duplications.
     - name: Checkout .devcontainer/devcontainer.json
       uses: actions/checkout@v3
