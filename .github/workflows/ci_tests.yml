@@ -218,7 +218,7 @@ jobs:
     name: ${{ matrix.name }}
     needs:
       - is_not_draft_pull_request
-    if: ${{ contains( fromJSON( needs.is_not_draft_pull_request.outputs.LABELS ), 'ci: ready to be merged') || ( github.event_name != 'pull_request' ) }}
+    if: "${{ contains( fromJSON( needs.is_not_draft_pull_request.outputs.LABELS ), 'ci: ready to be merged') || ( github.event_name != 'pull_request' ) }}"
     strategy:
       # In-progress jobs will not be cancelled if there is a failure
       fail-fast : false
