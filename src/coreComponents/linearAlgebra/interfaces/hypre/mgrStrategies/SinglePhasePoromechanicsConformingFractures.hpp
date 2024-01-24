@@ -58,8 +58,6 @@ public:
     : MGRStrategyBase( 7 )
   {
 
-#if defined BRANCH_MGR_FSOLVER
-
     // we keep u and p
     m_labels[0].push_back( 0 );
     m_labels[0].push_back( 1 );
@@ -71,25 +69,23 @@ public:
     setupLabels();
 
     // Level 0
-    m_levelFRelaxMethod[0]     = MGRFRelaxationMethod::singleLevel; 
+    m_levelFRelaxType[0]          = MGRFRelaxationType::none; 
+    m_levelFRelaxIters[0]         = 0;
 
-    m_levelInterpType[0]       = MGRInterpolationType::blockJacobi;
-    m_levelRestrictType[0]     = MGRRestrictionType::injection;
-    m_levelCoarseGridMethod[0] = MGRCoarseGridMethod::galerkin;
+    m_levelGlobalSmootherType[0]  = MGRGlobalSmootherType::ilu0;
+    m_levelGlobalSmootherIters[0] = 1;
 
-    m_numRelaxSweeps = 1; // Skip F-relaxation if set to 0
-    m_globalSmoothType = MGRGlobalSmootherType::ilu0;
-    m_numGlobalSmoothSweeps = 1;
+    m_levelInterpType[0]          = MGRInterpolationType::blockJacobi;
+    m_levelRestrictType[0]        = MGRRestrictionType::injection;
+    m_levelCoarseGridMethod[0]    = MGRCoarseGridMethod::galerkin;
 
     // Level 1
-    m_levelFRelaxType[1]       = MGRFRelaxationType::amgVCycle;
-    m_levelInterpType[1]       = MGRInterpolationType::jacobi;
-    m_levelRestrictType[1]     = MGRRestrictionType::injection;
-    m_levelCoarseGridMethod[1] = MGRCoarseGridMethod::nonGalerkin;
-
-#else
-    GEOS_LAI_CHECK_ERROR(1);
-#endif
+    m_levelFRelaxType[1]         = MGRFRelaxationType::amgVCycle;
+    m_levelFRelaxIters[1]        = 1;
+    m_levelGlobalSmootherType[1] = MGRGlobalSmootherType::none;
+    m_levelInterpType[1]         = MGRInterpolationType::jacobi;
+    m_levelRestrictType[1]       = MGRRestrictionType::injection;
+    m_levelCoarseGridMethod[1]   = MGRCoarseGridMethod::nonGalerkin;
 
   }
 
@@ -102,35 +98,9 @@ public:
               HyprePrecWrapper & precond,
               HypreMGRData & mgrData )
   {
-
-    GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetCpointsByPointMarkerArray( precond.ptr,
-                                                                 m_numBlocks, numLevels,
-                                                                 m_numLabels, m_ptrLabels,
-                                                                 mgrData.pointMarkers.data() ) );
-
-
-    GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetLevelFRelaxType( precond.ptr, toUnderlyingPtr( m_levelFRelaxType ) ));
-    GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetLevelInterpType( precond.ptr, toUnderlyingPtr( m_levelInterpType ) ) );
-    GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetLevelRestrictType( precond.ptr, toUnderlyingPtr( m_levelRestrictType ) ) );
-    GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetCoarseGridMethod( precond.ptr, toUnderlyingPtr( m_levelCoarseGridMethod ) ) );
-    GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetNonCpointsToFpoints( precond.ptr, 1 ));
+    setReduction( precond, mgrData );
     GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetPMaxElmts( precond.ptr, 0 ));
-    GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetMaxGlobalSmoothIters( precond.ptr, m_numGlobalSmoothSweeps ) );
 
-    GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetNumRelaxSweeps( precond.ptr, m_numRelaxSweeps ) );
-    GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetGlobalSmoothType( precond.ptr, toUnderlying( m_globalSmoothType ) ) );
-
-    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGCreate( &mgrData.coarseSolver.ptr ) );
-    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetPrintLevel( mgrData.coarseSolver.ptr, 0 ) );
-    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetMaxIter( mgrData.coarseSolver.ptr, 1 ) );
-    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetTol( mgrData.coarseSolver.ptr, 0.0 ) );
-    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetRelaxOrder( mgrData.coarseSolver.ptr, 1 ) );
-
-    mgrData.coarseSolver.setup = HYPRE_BoomerAMGSetup;
-    mgrData.coarseSolver.solve = HYPRE_BoomerAMGSolve;
-    mgrData.coarseSolver.destroy = HYPRE_BoomerAMGDestroy;
-
-#if defined(BRANCH_MGR_FSOLVER)
     // Configure the BoomerAMG solver used as F-relaxation for the second level
     GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGCreate( &mgrData.mechSolver.ptr ) );
     GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetTol( mgrData.mechSolver.ptr, 0.0 ) );
@@ -147,11 +117,10 @@ public:
 #else
     GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetRelaxOrder( mgrData.mechSolver.ptr, 1 ) );
 #endif
+    GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetFSolverAtLevel(1, precond.ptr, mgrData.mechSolver.ptr) );
 
-    HYPRE_MGRSetFSolverAtLevel(1, precond.ptr, mgrData.mechSolver.ptr);
-#else
-    GEOS_LAI_CHECK_ERROR(1);
-#endif
+    // Configure the BoomerAMG solver used as mgr coarse solver for the pressure reduced system
+    setPressureAMG( mgrData.coarseSolver );
   }
 };
 
@@ -161,4 +130,4 @@ public:
 
 } // namespace geos
 
-#endif /*GEOS_LINEARALGEBRA_INTERFACES_HYPREMGRSINGLEPHASEPOROMECHANICSEMBEDDEDFRACTURES_HPP_*/
+#endif /*GEOS_LINEARALGEBRA_INTERFACES_HYPREMGRSINGLEPHASEPOROMECHANICSCONFORMINGFRACTURES_HPP_*/
