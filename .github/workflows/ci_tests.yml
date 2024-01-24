@@ -5,6 +5,7 @@ on:
     branches: 
       - develop
   pull_request:
+  workflow_dispatch:
 
 # Cancels in-progress workflows for a PR when updated
 concurrency:
@@ -22,7 +23,10 @@ jobs:
         run: |
           if [[ ${{github.event_name}} == 'pull_request' ]]; then 
             echo "This is a pull request." ;
-            exit 1 ; 
+            exit 0 ; 
+          else
+            echo "This is not a pull request." ;
+            exit 1 ;
           fi
 
 
