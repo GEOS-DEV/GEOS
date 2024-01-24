@@ -234,9 +234,10 @@ jobs:
     steps:
       - name: output conditional variables
         run: |
+          echo ${{github.event_name}}
           if [[ ${{github.event_name}} == 'pull_request' ]]; then 
             if [[ ${{ contains( fromJSON( needs.is_not_draft_pull_request.outputs.LABELS ), 'ci: ready to be merged') }} == true ]]; then
-              exit 0 ; 
+              exit 0 ;
             else
               exit 1 ;
             fi
