@@ -175,7 +175,7 @@ struct WaveSolverUtils
   {
     real64 const time_np1 = time_n + dt;
 
-    real32 const a1 = abs( dt ) < epsilonLoc ? 1.0 : (time_np1 - timeSeismo) / dt;
+    real32 const a1 = LvArray::math::abs( dt ) < epsilonLoc ? 1.0 : (time_np1 - timeSeismo) / dt;
     real32 const a2 = 1.0 - a1;
 
     localIndex const nReceivers = receiverConstants.size( 0 );
