@@ -14,13 +14,8 @@
         maxTimeStepCuts="1"
         newtonMaxIter="10"
         maxNumConfigurationAttempts="10"/>
-      <!--<LinearSolverParameters
-        directParallel="0"/>-->
       <LinearSolverParameters
-        solverType="gmres"
-        krylovTol="1e-6"
-        preconditionerType="mgr"
-        logLevel="2"/>        
+        directParallel="0"/>
     </SinglePhasePoromechanicsConformingFractures>
 
     <SinglePhasePoromechanics

@@ -20,10 +20,9 @@
         newtonTol="1e-3"
         maxAllowedResidualNorm="1e+15"/>
       <LinearSolverParameters
-        solverType="gmres"
+        solverType="direct"
         krylovTol="1e-6"
-        preconditionerType="mgr"
-        logLevel="2"/>        
+        preconditionerType="mgr"/>        
     </SinglePhasePoromechanicsEmbeddedFractures>
 
     <SolidMechanicsEmbeddedFractures
