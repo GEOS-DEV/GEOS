@@ -601,7 +601,7 @@ public:
     m_phaseCompFrac( fluid.phaseCompFraction() ),
     m_dPhaseCompFrac( fluid.dPhaseCompFraction() ),
     m_compDens( subRegion.getField< fields::flow::globalCompDensity >() ),
-    m_compDens_n( subRegion.getField< fields::flow::globalCompDensity_n >() ),
+    m_compAmount_n( subRegion.getField< fields::flow::compAmount_n >() ),
     m_localMatrix( localMatrix ),
     m_localRhs( localRhs ),
     m_kernelFlags( kernelFlags )
@@ -784,7 +784,7 @@ public:
     for( integer ic = 0; ic < numComp; ++ic )
     {
       real64 const compAmount = stack.poreVolume * m_compDens[ei][ic];
-      real64 const compAmount_n = stack.poreVolume_n * m_compDens_n[ei][ic];
+      real64 const compAmount_n = m_compAmount_n[ei][ic];
 
       stack.localResidual[ic] += compAmount - compAmount_n;
 
@@ -951,9 +951,11 @@ protected:
   arrayView4d< real64 const, multifluid::USD_PHASE_COMP > const m_phaseCompFrac;
   arrayView5d< real64 const, multifluid::USD_PHASE_COMP_DC > const m_dPhaseCompFrac;
 
-  // Views on component densities
+  // View on component densities
   arrayView2d< real64 const, compflow::USD_COMP > m_compDens;
-  arrayView2d< real64 const, compflow::USD_COMP > m_compDens_n;
+
+  // View on component amount (mass/moles) from previous time step
+  arrayView2d< real64 const, compflow::USD_COMP > m_compAmount_n;
 
   /// View on the local CRS matrix
   CRSMatrixView< real64, globalIndex const > const m_localMatrix;

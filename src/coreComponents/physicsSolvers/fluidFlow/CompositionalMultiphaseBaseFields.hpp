@@ -175,6 +175,22 @@ DECLARE_FIELD( globalCompDensityScalingFactor,
                NO_WRITE,
                "Scaling factors for global component densities" );
 
+DECLARE_FIELD( compAmount,
+               "compAmount",
+               array2dLayoutComp,
+               0,
+               LEVEL_0,
+               WRITE_AND_READ,
+               "Component amount" );
+
+DECLARE_FIELD( compAmount_n,
+               "compAmount_n",
+               array2dLayoutComp,
+               0,
+               LEVEL_0,
+               WRITE_AND_READ,
+               "Component amount at the previous converged time step" );
+
 }
 
 }
