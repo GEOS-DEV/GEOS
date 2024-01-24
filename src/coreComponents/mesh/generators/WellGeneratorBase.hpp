@@ -198,7 +198,7 @@ public:
    * @brief Get the skin factor at a perforation.
    * @return the skin factor at a perforation
    */
-  virtual arrayView1d< real64 const > getPerfSkinFactor() const = 0;
+  arrayView1d< real64 const > getPerfSkinFactor() const override { return m_perfSkinFactor; };
 
   /**
    * @brief Get the global indices of the well elements connected to each perforation.
@@ -400,6 +400,9 @@ protected:
   array1d< real64 > m_nodeDistFromHead;
 
   // Perforation data
+
+  /// Skin Factor at the perforation
+  array1d< real64 > m_perfSkinFactor;
 
   /// Physical location of the perforation wrt to well head
   array1d< real64 > m_perfDistFromHead;

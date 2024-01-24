@@ -19,6 +19,7 @@
 
 #include "VTKWellGenerator.hpp"
 
+#include "mesh/generators/VTKUtilities.hpp"
 #include <vtkPolyData.h>
 #include <vtkFieldData.h>
 #include <vtkCellData.h>
@@ -48,7 +49,8 @@ void VTKWellGenerator::fillPolylineDataStructure( )
   GEOS_LOG_RANK_0( GEOS_FMT( "{} '{}': reading well from {}", catalogName(), getName(), m_filePath ) );
   {
     GEOS_LOG_LEVEL_RANK_0( 2, "  reading the dataset..." );
-    vtkSmartPointer< vtkDataSet > loadedMesh = vtk::loadMesh( m_filePath, "main" );
+    vtk::AllMeshes allMeshes = vtk::loadAllMeshes( m_filePath, "main", array1d< string >());
+    vtkSmartPointer< vtkDataSet > loadedMesh = allMeshes.getMainMesh();
     controller->Broadcast( loadedMesh, 0 );
 
     vtkSmartPointer< vtkPolyData > polyData = vtkPolyData::SafeDownCast( loadedMesh );
@@ -74,6 +76,9 @@ void VTKWellGenerator::fillPolylineDataStructure( )
     polyData->GetLines()->InitTraversal();
     vtkNew< vtkIdList > idList;
     polyData->GetLines()->GetNextCell( idList );
+
+    // vtkNew< vtkIdList > idList2;
+    // polyData->GetLines()->GetCell( 0, idList2 );    
 
     const globalIndex nbSegments = idList->GetNumberOfIds() - 1;
     m_segmentToPolyNodeMap.resizeDimension< 0 >( nbSegments );

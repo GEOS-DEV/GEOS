@@ -10,6 +10,13 @@ Input Schema Definitions
 :download:`XML Schema <../../coreComponents/schema/docs/../schema.xsd>`
 
 
+.. _XML_AcousticElasticSEM:
+
+Element: AcousticElasticSEM
+===========================
+.. include:: ../../coreComponents/schema/docs/AcousticElasticSEM.rst
+
+
 .. _XML_AcousticFirstOrderSEM:
 
 Element: AcousticFirstOrderSEM
@@ -815,6 +822,27 @@ Element: PhaseFieldFracture
 .. include:: ../../coreComponents/schema/docs/PhaseFieldFracture.rst
 
 
+.. _XML_PorousDamageElasticIsotropic:
+
+Element: PorousDamageElasticIsotropic
+=====================================
+.. include:: ../../coreComponents/schema/docs/PorousDamageElasticIsotropic.rst
+
+
+.. _XML_PorousDamageSpectralElasticIsotropic:
+
+Element: PorousDamageSpectralElasticIsotropic
+=============================================
+.. include:: ../../coreComponents/schema/docs/PorousDamageSpectralElasticIsotropic.rst
+
+
+.. _XML_PorousDamageVolDevElasticIsotropic:
+
+Element: PorousDamageVolDevElasticIsotropic
+===========================================
+.. include:: ../../coreComponents/schema/docs/PorousDamageVolDevElasticIsotropic.rst
+
+
 .. _XML_PorousDelftEgg:
 
 Element: PorousDelftEgg
@@ -867,21 +895,21 @@ Element: PorousModifiedCamClay
 .. _XML_PorousViscoDruckerPrager:
 
 Element: PorousViscoDruckerPrager
-==============================
+=================================
 .. include:: ../../coreComponents/schema/docs/PorousViscoDruckerPrager.rst
 
 
 .. _XML_PorousViscoExtendedDruckerPrager:
 
 Element: PorousViscoExtendedDruckerPrager
-==============================
+=========================================
 .. include:: ../../coreComponents/schema/docs/PorousViscoExtendedDruckerPrager.rst
 
 
 .. _XML_PorousViscoModifiedCamClay:
 
 Element: PorousViscoModifiedCamClay
-==============================
+===================================
 .. include:: ../../coreComponents/schema/docs/PorousViscoModifiedCamClay.rst
 
 
@@ -1384,6 +1412,13 @@ Element: quartz
 ********************************
 Datastructure Definitions
 ********************************
+
+
+.. _DATASTRUCTURE_AcousticElasticSEM:
+
+Datastructure: AcousticElasticSEM
+=================================
+.. include:: ../../coreComponents/schema/docs/AcousticElasticSEM_other.rst
 
 
 .. _DATASTRUCTURE_AcousticFirstOrderSEM:
@@ -2212,6 +2247,27 @@ Datastructure: PhaseFieldFracture
 .. include:: ../../coreComponents/schema/docs/PhaseFieldFracture_other.rst
 
 
+.. _DATASTRUCTURE_PorousDamageElasticIsotropic:
+
+Datastructure: PorousDamageElasticIsotropic
+===========================================
+.. include:: ../../coreComponents/schema/docs/PorousDamageElasticIsotropic_other.rst
+
+
+.. _DATASTRUCTURE_PorousDamageSpectralElasticIsotropic:
+
+Datastructure: PorousDamageSpectralElasticIsotropic
+===================================================
+.. include:: ../../coreComponents/schema/docs/PorousDamageSpectralElasticIsotropic_other.rst
+
+
+.. _DATASTRUCTURE_PorousDamageVolDevElasticIsotropic:
+
+Datastructure: PorousDamageVolDevElasticIsotropic
+=================================================
+.. include:: ../../coreComponents/schema/docs/PorousDamageVolDevElasticIsotropic_other.rst
+
+
 .. _DATASTRUCTURE_PorousDelftEgg:
 
 Datastructure: PorousDelftEgg
@@ -2264,21 +2320,21 @@ Datastructure: PorousModifiedCamClay
 .. _DATASTRUCTURE_PorousViscoDruckerPrager:
 
 Datastructure: PorousViscoDruckerPrager
-====================================
+=======================================
 .. include:: ../../coreComponents/schema/docs/PorousViscoDruckerPrager_other.rst
 
 
 .. _DATASTRUCTURE_PorousViscoExtendedDruckerPrager:
 
 Datastructure: PorousViscoExtendedDruckerPrager
-====================================
+===============================================
 .. include:: ../../coreComponents/schema/docs/PorousViscoExtendedDruckerPrager_other.rst
 
 
 .. _DATASTRUCTURE_PorousViscoModifiedCamClay:
 
 Datastructure: PorousViscoModifiedCamClay
-====================================
+=========================================
 .. include:: ../../coreComponents/schema/docs/PorousViscoModifiedCamClay_other.rst
 
 

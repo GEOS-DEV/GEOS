@@ -384,7 +384,7 @@ protected:
                            [&] ( CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                  arrayView1d< real64 > const & localRhs )
     {
-      solver->wellSolver()->assembleFluxTerms( TIME, DT, domain, solver->getDofManager(), localMatrix, localRhs );
+      solver->wellSolver()->assembleFluxTerms( DT, domain, solver->getDofManager(), localMatrix, localRhs );
     } );
   }
 
@@ -487,7 +487,7 @@ TEST_F( SinglePhaseReservoirSolverInternalWellTest, jacobianNumericalCheck_Perfo
 
 TEST_F( SinglePhaseReservoirSolverInternalWellTest, jacobianNumericalCheck_Flux )
 {
-  real64 const perturb = std::sqrt( eps );
+  real64 const perturb = std::sqrt( EPS );
   real64 const tol = 1e-1; // 10% error margin
 
   DomainPartition & domain = state.getProblemManager().getDomainPartition();
@@ -496,7 +496,7 @@ TEST_F( SinglePhaseReservoirSolverInternalWellTest, jacobianNumericalCheck_Flux 
                          [&] ( CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                arrayView1d< real64 > const & localRhs )
   {
-    solver->wellSolver()->assembleFluxTerms( dt, domain, solver->getDofManager(), localMatrix, localRhs );
+    solver->wellSolver()->assembleFluxTerms( DT, domain, solver->getDofManager(), localMatrix, localRhs );
   } );
 }
 
