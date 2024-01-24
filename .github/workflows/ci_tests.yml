@@ -244,8 +244,6 @@ jobs:
           else
             exit 0 ;
           fi
-          echo "github.event_name != 'pull_request': ${{ github.event_name != 'pull_request' }}"
-          echo "${{ contains( fromJSON( needs.is_not_draft_pull_request.outputs.LABELS ), 'ci: ready to be merged') || ( github.event_name != 'pull_request' ) }}"
 
   # If the 'ci: ready to be merged' PR label is found, the cuda jobs run immediately along side linux jobs.
   # Note: CUDA jobs should only be run if PR is ready to merge.
