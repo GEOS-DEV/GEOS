@@ -31,9 +31,11 @@ namespace geos
 
 class DomainPartition;
 class ElementRegionBase;
+class ParticleRegionBase;
 class EmbeddedSurfaceNodeManager;
 class ElementRegionManager;
 class NodeManager;
+class ParticleManager;
 
 namespace vtk
 {
@@ -49,6 +51,7 @@ enum struct VTKRegionTypes
   CELL,
   WELL,
   SURFACE,
+  PARTICLE,
   ALL
 };
 
@@ -62,6 +65,7 @@ ENUM_STRINGS( VTKRegionTypes,
               "cell",
               "well",
               "surface",
+              "particle",
               "all" );
 
 /**
@@ -144,6 +148,14 @@ public:
     m_fieldNames.insert( fieldNames.begin(), fieldNames.end() );
   }
 
+  /**
+   * @brief Set the names of the mesh levels to output
+   * @param[in] levelNames the mesh levels to output (an empty array means all levels are saved)
+   */
+  void setLevelNames( arrayView1d< string const > const & levelNames )
+  {
+    m_levelNames.insert( levelNames.begin(), levelNames.end() );
+  }
 
   /**
    * @brief Main method of this class. Write all the files for one time step.
@@ -211,6 +223,10 @@ private:
                                 NodeManager const & nodeManager,
                                 string const & path ) const;
 
+  void writeParticleRegions( real64 const time,
+                             ParticleManager const & particleManager,
+                             string const & path ) const;
+
   /**
    * @brief Writes the files containing the well representation
    * @details There will be one file written per WellElementRegion and per rank
@@ -269,6 +285,9 @@ private:
   void writeElementFields( ElementRegionBase const & subRegion,
                            vtkCellData * cellData ) const;
 
+  void writeParticleFields( ParticleRegionBase const & region,
+                            vtkCellData * cellData ) const;
+
   /**
    * @brief Writes an unstructured grid
    * @details The unstructured grid is the last element in the hierarchy of the output,
@@ -306,6 +325,9 @@ private:
 
   /// Names of the fields to output
   std::set< string > m_fieldNames;
+
+  /// Names of the mesh levels to output (an empty array means all levels are saved)
+  std::set< string > m_levelNames;
 
   /// The previousCycle
   integer m_previousCycle;

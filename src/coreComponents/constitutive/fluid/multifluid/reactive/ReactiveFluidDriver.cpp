@@ -35,6 +35,7 @@ ReactiveFluidDriver::ReactiveFluidDriver( const string & name,
   enableLogLevelInput();
 
   registerWrapper( viewKeyStruct::fluidNameString(), &m_fluidName ).
+    setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Fluid to test" );
 
@@ -43,10 +44,12 @@ ReactiveFluidDriver::ReactiveFluidDriver( const string & name,
     setDescription( "Feed composition array: total concentration of the primary species " );
 
   registerWrapper( viewKeyStruct::pressureFunctionString(), &m_pressureFunctionName ).
+    setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Function controlling pressure time history" );
 
   registerWrapper( viewKeyStruct::temperatureFunctionString(), &m_temperatureFunctionName ).
+    setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Function controlling temperature time history" );
 

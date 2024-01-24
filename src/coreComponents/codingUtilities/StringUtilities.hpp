@@ -164,8 +164,15 @@ CONTAINER< string > tokenizeBySpaces( string const & str )
  * @param[in] charsToRemove the list of characters to remove
  * @return the trimmed string
  */
-string trim( string const & str,
-             string const & charsToRemove );
+string_view trim( string_view str,
+                  string_view charsToRemove );
+
+/**
+ * @brief Trim the string so it does not starts nor ends with any whitespaces
+ * @param[in] str the string to trim
+ * @return the trimmed string
+ */
+string_view trimSpaces( string_view str );
 
 /**
  * @brief Search for a string in the line, and return the line truncated before the string
@@ -224,6 +231,28 @@ constexpr size_t cstrlen( char const * const str )
   {
     return 0;
   }
+}
+
+/**
+ * @return true if the string starts with the prefix.
+ * @param str The string to compare
+ * @param prefix A prefix we want to know if the string starts with.
+ */
+constexpr bool startsWith( std::string_view str, std::string_view prefix )
+{
+  return str.size() >= prefix.size() &&
+         str.compare( 0, prefix.size(), prefix ) == 0;
+}
+
+/**
+ * @return true if the string ends with the suffix.
+ * @param str The string to compare
+ * @param suffix A suffix we want to know if the string ends with.
+ */
+constexpr bool endsWith( std::string_view str, std::string_view suffix )
+{
+  return str.size() >= suffix.size() &&
+         str.compare( str.size()-suffix.size(), suffix.size(), suffix ) == 0;
 }
 
 } // namespace stringutilities

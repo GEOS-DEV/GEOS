@@ -283,7 +283,7 @@ void SuiteSparse< LAI >::solve( Vector const & rhs,
 
   if( m_params.logLevel >= 1 )
   {
-    GEOS_LOG_RANK_0( "\t\tLinear Solver | " << m_result.status <<
+    GEOS_LOG_RANK_0( "        Linear Solver | " << m_result.status <<
                      " | Iterations: " << m_result.numIterations <<
                      " | Final Rel Res: " << m_result.residualReduction <<
                      " | Setup Time: " << m_result.setupTime << " s" <<

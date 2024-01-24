@@ -30,7 +30,8 @@ namespace constitutive
 
 MultiFluidBase::MultiFluidBase( string const & name, Group * const parent )
   : ConstitutiveBase( name, parent ),
-  m_useMass( false )
+  m_useMass( false ),
+  m_checkPVTTablesRanges( 1 )
 {
   // We make base inputs optional here, since derived classes may want to predefine/hardcode
   // components/phases. Models that do need these inputs should change input flags accordingly.
@@ -44,6 +45,7 @@ MultiFluidBase::MultiFluidBase( string const & name, Group * const parent )
     setDescription( "Component molar weights" );
 
   registerWrapper( viewKeyStruct::phaseNamesString(), &m_phaseNames ).
+    setRTTypeName( rtTypes::CustomTypes::groupNameRefArray ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "List of fluid phases" );
 
@@ -79,6 +81,12 @@ MultiFluidBase::MultiFluidBase( string const & name, Group * const parent )
   registerField( fields::multifluid::totalDensity_n{}, &m_totalDensity_n );
   registerField( fields::multifluid::dTotalDensity{}, &m_totalDensity.derivs );
 
+
+  registerWrapper( viewKeyStruct::checkPVTTablesRangesString(), &m_checkPVTTablesRanges ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setDescription( "Enable (1) or disable (0) an error when the input pressure or temperature of the PVT tables is out of range." ).
+    setDefaultValue( 1 );
 }
 
 void MultiFluidBase::resizeFields( localIndex const size, localIndex const numPts )

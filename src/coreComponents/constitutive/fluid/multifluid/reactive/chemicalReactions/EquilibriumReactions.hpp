@@ -22,6 +22,7 @@
 #include "ReactionsBase.hpp"
 
 #include "constitutive/fluid/multifluid/Layouts.hpp"
+#include "constitutive/fluid/multifluid/MultiFluidConstants.hpp"
 
 namespace geos
 {
@@ -108,8 +109,8 @@ private:
     void setInitialGuess( arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & primarySpeciesTotalConcentration,
                           arraySlice1d< real64, compflow::USD_COMP - 1 > const & primarySpeciesConcentration ) const;
 
-    integer m_maxNumIterations = 30;
-    real64 m_newtonTol = 1e-6;
+    static constexpr integer m_maxNumIterations = MultiFluidConstants::maxNewtonIterations;
+    static constexpr real64 m_newtonTol = 1e-6;
   };
 
 /**

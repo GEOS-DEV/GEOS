@@ -57,7 +57,7 @@ void hypre::mgr::createMGR( LinearSolverParameters const & params,
   // Hypre's parameters to use MGR as a preconditioner
   GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetTol( precond.ptr, 0.0 ) );
   GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetMaxIter( precond.ptr, 1 ) );
-  HYPRE_Int logLevel = LvArray::math::min( LvArray::integerConversion< HYPRE_Int >( params.logLevel - 1 ), LvArray::integerConversion< HYPRE_Int >( 0 ) );
+  HYPRE_Int logLevel = LvArray::math::max( LvArray::integerConversion< HYPRE_Int >( params.logLevel - 1 ), LvArray::integerConversion< HYPRE_Int >( 0 ) );
   GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetPrintLevel( precond.ptr, logLevel ) );
 
   array1d< int > const numComponentsPerField = dofManager->numComponentsPerField();
@@ -65,11 +65,11 @@ void hypre::mgr::createMGR( LinearSolverParameters const & params,
 
   if( params.logLevel >= 1 )
   {
-    GEOS_LOG_RANK_0( numComponentsPerField );
+    GEOS_LOG_RANK_0( GEOS_FMT( "        MGR preconditioner: numComponentsPerField = {}", numComponentsPerField ) );
   }
-  if( params.logLevel >= 4 )
+  if( params.logLevel >= 1024 )
   {
-    GEOS_LOG_RANK_VAR( mgrData.pointMarkers );
+    GEOS_LOG_RANK( GEOS_FMT( "        MGR preconditioner: pointMarkers = {}", mgrData.pointMarkers ) );
   }
 
   switch( params.mgr.strategy )

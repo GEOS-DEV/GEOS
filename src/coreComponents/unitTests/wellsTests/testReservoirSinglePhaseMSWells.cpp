@@ -487,7 +487,17 @@ TEST_F( SinglePhaseReservoirSolverInternalWellTest, jacobianNumericalCheck_Perfo
 
 TEST_F( SinglePhaseReservoirSolverInternalWellTest, jacobianNumericalCheck_Flux )
 {
-  TestAssembleFluxTerms();
+  real64 const perturb = std::sqrt( eps );
+  real64 const tol = 1e-1; // 10% error margin
+
+  DomainPartition & domain = state.getProblemManager().getDomainPartition();
+
+  testNumericalJacobian( *solver, domain, perturb, tol,
+                         [&] ( CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                               arrayView1d< real64 > const & localRhs )
+  {
+    solver->wellSolver()->assembleFluxTerms( dt, domain, solver->getDofManager(), localMatrix, localRhs );
+  } );
 }
 
 TEST_F( SinglePhaseReservoirSolverInternalWellTest, jacobianNumericalCheck_PressureRel )
