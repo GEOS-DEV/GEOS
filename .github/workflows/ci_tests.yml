@@ -5,6 +5,7 @@ on:
     branches: 
       - develop
   pull_request:
+  workflow_dispatch:
 
 # Cancels in-progress workflows for a PR when updated
 concurrency:
