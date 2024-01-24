@@ -27,8 +27,13 @@ protected:
 class PeriodicEvent : public Event
 {
 public:
+  /**
+   * @brief
+   * @param target
+   * @param every If empty, then `forceDt = 1.0` is added to the xml.
+   */
   PeriodicEvent( string const & target,
-                 string const & every )
+                 string const & every = "" )
     : Event( target ),
       m_every( every )
   { }

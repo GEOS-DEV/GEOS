@@ -1,7 +1,13 @@
+#include "Events.hpp"
+
 #include "Solvers.hpp"
+
+#include "Misc.hpp"
 
 namespace geos::input::solvers
 {
+
+using namespace pugi;
 
 struct Variable
 {
@@ -19,11 +25,32 @@ public:
 class Laplace : public Solver
 {
 public:
-  explicit Laplace( NamedVariable const & variable )
-    : m_variable( variable )
+  explicit Laplace( NamedVariable const & variable,
+                    std::vector< string > const & on ) // TODO move the `on` upper in the class hierarchy
+    : m_on( on ),
+      m_variable( variable )
   { }
 
+  void fillProblemXmlNode( xml_node & problemNode ) const override
+  {
+    xml_node solvers = problemNode.select_node( "Solvers" ).node();
+    xml_node laplaceFem = solvers.append_child( "LaplaceFEM" );
+    string const solverName = "__laplace";
+    laplaceFem.append_attribute( "name" ) = solverName.c_str();
+    laplaceFem.append_attribute( "discretization" ) = ( "FE" + std::to_string( m_variable.fe_order ) ).c_str();
+    laplaceFem.append_attribute( "fieldName" ) = m_variable.name.c_str();
+    laplaceFem.append_attribute( "targetRegions" ) = createGeosArray( m_on ).c_str();
+
+    xml_node events = problemNode.select_node( "Events" ).node();
+    events::PeriodicEvent pe = events::PeriodicEvent( "/Solvers/" + solverName );
+    pe.fillEventsXmlNode( events );
+
+    xml_node constitutive = problemNode.select_node( "Constitutive" ).node();
+    constitutive.append_child( "NullModel" ).append_attribute( "name" ).set_value( "nullModel" );
+  }
+
 private:
+  std::vector< string > m_on;
   NamedVariable m_variable;
 };
 
@@ -52,8 +79,10 @@ void operator>>( const YAML::Node & node,
     if( solverType == "laplace" )
     {
       NamedVariable nv;
+      std::vector< string > on = subNode["on"].as< std::vector< string >>( std::vector< string >{ "Domain" } );
       subNode["formulation"]["variable"] >> nv;
-      solvers.push_back( std::make_shared< Laplace >( nv ) );
+
+      solvers.push_back( std::make_shared< Laplace >( nv, on ) );
       std::cout << nv.name << std::endl;
       std::cout << nv.functional_space << std::endl;
     }

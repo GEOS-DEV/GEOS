@@ -43,10 +43,11 @@ simulation:
         name: laplace1
         on: [domain1, domain3]
         formulation:
+          method: FE
+          order: 1
           variable:
             name: temperature
             functional_space: h1
-            fe_order: 1
     - laplace:
         name: laplace2
         on: domain2

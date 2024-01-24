@@ -5,6 +5,8 @@
 
 #include <yaml-cpp/yaml.h>
 
+#include <pugixml.hpp>
+
 #include <vector>
 
 namespace geos::input::solvers
@@ -12,7 +14,10 @@ namespace geos::input::solvers
 
 class Solver
 {
+public:
+  virtual ~Solver() = default;
 
+  virtual void fillProblemXmlNode( pugi::xml_node & problemNode ) const = 0;
 };
 
 void operator>>( const YAML::Node & node,

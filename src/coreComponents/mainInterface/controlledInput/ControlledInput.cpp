@@ -35,13 +35,25 @@ public:
     m_solvers = solvers;
   }
 
+  void fillProblemXmlNode( xml_node & problemNode ) const
+  {
+    xml_node eventsNode = problemNode.select_node( "Events" ).node();
+    fillEventsXmlNode( eventsNode );
+
+    for( auto const & solver: m_solvers )
+    {
+      solver->fillProblemXmlNode( problemNode );
+    }
+  }
+
+private:
+
   void fillEventsXmlNode( xml_node & eventsNode ) const
   {
     eventsNode.append_attribute( "minTime" ) = convertTime( m_begin );
     eventsNode.append_attribute( "maxTime" ) = convertTime( m_end );
   }
 
-private:
   string m_begin;
   string m_end;
   std::vector< std::shared_ptr< solvers::Solver > > m_solvers;
@@ -68,11 +80,13 @@ public:
 
   void fillProblemXmlNode( xml_node & problemNode ) const
   {
-    xml_node xmlOutputs = problemNode.append_child( "Outputs" );
+    problemNode.append_child( "Constitutive" );
     xml_node xmlEvents = problemNode.append_child( "Events" );
     xml_node xmlMesh = problemNode.append_child( "Mesh" );
+    xml_node xmlOutputs = problemNode.append_child( "Outputs" );
+    problemNode.append_child( "Solvers" );
 
-    m_simulation.fillEventsXmlNode( xmlEvents );
+    m_simulation.fillProblemXmlNode( problemNode );
 
     for( std::shared_ptr< outputs::Output > output: m_outputs )
     {
@@ -130,29 +144,15 @@ void operator>>( const YAML::Node & node,
 
 void fillWithMissingXmlInfo( xml_node & problem )
 {
-  xml_node laplaceFem = problem.append_child( "Solvers" ).append_child( "LaplaceFEM" );
-  laplaceFem.append_attribute( "name" ) = "laplace";
-  laplaceFem.append_attribute( "discretization" ) = "FE1";
+  xml_node laplaceFem = problem.select_node( "Solvers/LaplaceFEM" ).node();
   laplaceFem.append_attribute( "timeIntegrationOption" ) = "SteadyState";
-  laplaceFem.append_attribute( "fieldName" ) = "Temperature";
-  laplaceFem.append_attribute( "targetRegions" ) = "{ Domain }";
   laplaceFem.append_child( "LinearSolverParameters" ).append_attribute( "directParallel" ).set_value( 0 );
-
-  xpath_node events = problem.select_node( "Events" );
-  {
-    xml_node pe = events.node().append_child( "PeriodicEvent" );
-    pe.append_attribute( "name" ) = "solverApplications";
-    pe.append_attribute( "forceDt" ) = "1.0";
-    pe.append_attribute( "target" ) = "/Solvers/laplace";
-  }
-
-  problem.append_child( "Constitutive" ).append_child( "NullModel" ).append_attribute( "name" ).set_value( "nullModel" );
 
   xml_node fieldSpecifications = problem.append_child( "FieldSpecifications" );
   {
     xml_node fs = fieldSpecifications.append_child( "FieldSpecification" );
     fs.append_attribute( "name" ) = "sourceTerm";
-    fs.append_attribute( "fieldName" ) = "Temperature";
+    fs.append_attribute( "fieldName" ) = "temperature";
     fs.append_attribute( "objectPath" ) = "nodeManager";
     fs.append_attribute( "functionName" ) = "DirichletTimeFunction";
     fs.append_attribute( "scale" ) = "1.0";
@@ -161,7 +161,7 @@ void fillWithMissingXmlInfo( xml_node & problem )
   {
     xml_node fs = fieldSpecifications.append_child( "FieldSpecification" );
     fs.append_attribute( "name" ) = "sinkTerm";
-    fs.append_attribute( "fieldName" ) = "Temperature";
+    fs.append_attribute( "fieldName" ) = "temperature";
     fs.append_attribute( "objectPath" ) = "nodeManager";
     fs.append_attribute( "scale" ) = "0.0";
     fs.append_attribute( "setNames" ) = "{ sink }";

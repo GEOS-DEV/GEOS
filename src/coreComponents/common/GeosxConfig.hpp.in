@@ -8,6 +8,9 @@
 #ifndef GEOS_COMMON_CONFIG_HPP
 #define GEOS_COMMON_CONFIG_HPP
 
+/// Enables use of controlled input files (yaml)
+#cmakedefine GEOS_USE_CONTROLLED_INPUT
+
 /// Enables floating point exceptions
 #cmakedefine GEOSX_USE_FPE
 
