@@ -232,13 +232,11 @@ jobs:
     needs:
       - is_not_draft_pull_request
     steps:
-      - name: Check if this is a Pull Request
+      - name: output conditional variables
         run: |
           echo "contains( fromJSON( needs.is_not_draft_pull_request.outputs.LABELS ), 'ci: ready to be merged'): ${{ contains( fromJSON( needs.is_not_draft_pull_request.outputs.LABELS ), 'ci: ready to be merged') }}"
-          echo "github.event_name != 'pull_request': ${{( github.event_name != 'pull_request' )}}"
+          echo "github.event_name != 'pull_request': ${{ github.event_name != 'pull_request' }}"
 
-
-    
   # If the 'ci: ready to be merged' PR label is found, the cuda jobs run immediately along side linux jobs.
   # Note: CUDA jobs should only be run if PR is ready to merge.
   cuda_builds:
