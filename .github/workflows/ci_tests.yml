@@ -218,7 +218,7 @@ jobs:
     name: ${{ matrix.name }}
     needs:
       - is_not_draft_pull_request
-    if: "${{ contains( fromJSON( needs.is_not_draft_pull_request.outputs.LABELS ), 'ci: ready to be merged') }}"
+    if: "${{ contains( fromJSON( needs.is_not_draft_pull_request.outputs.LABELS ), 'ci: ready to be merged') || ( github.event_name != 'pull_request' ) }}"
     strategy:
       # In-progress jobs will not be cancelled if there is a failure
       fail-fast : false
@@ -280,11 +280,6 @@ jobs:
     if: ${{ always() }}
     steps:
     - run: |
-        echo "if_not_unassigned_pull_request: ${{needs.if_not_unassigned_pull_request.result}}"
-        echo "are_submodules_in_sync: ${{needs.are_submodules_in_sync.result}}"
-        echo "check_code_style_and_documentation: ${{needs.check_code_style_and_documentation.result}}"
-        echo "cpu_builds: ${{needs.cpu_builds.result}}"
-        echo "cuda_builds: ${{needs.cuda_builds.result}}"
         ${{
           needs.if_not_unassigned_pull_request.result == 'success' &&
           needs.are_submodules_in_sync.result == 'success' &&
