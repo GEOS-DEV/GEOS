@@ -11,13 +11,29 @@ else()
   list( APPEND dependencyList ${geosx_core_libs} )
 endif()
 
+if (TARGET pugixml::pugixml)
+  list( APPEND dependencyList pugixml::pugixml )
+endif()
+
+if (TARGET pugixml)
+  list( APPEND dependencyList pugixml )
+endif()
+
+if (TARGET fmt::fmt)
+  list( APPEND dependencyList fmt::fmt )
+endif()
+
+if (TARGET fmt)
+  list( APPEND dependencyList fmt )
+endif()
+
 # Add gtest C++ based tests
 foreach(test ${gtest_geosx_tests})
     get_filename_component( test_name ${test} NAME_WE )
     blt_add_executable( NAME ${test_name}
                         SOURCES ${test}
                         OUTPUT_DIR ${TEST_OUTPUT_DIRECTORY}
-                        DEPENDS_ON ${dependencyList}  )
+                        DEPENDS_ON ${dependencyList} )
 
     # Guard to prevent GCC (version 8) from giving warnings due
     # to some sort of possible conversion from int to long unsigned.
