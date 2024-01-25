@@ -132,12 +132,12 @@ void SourceFluxStatsAggregator::writeStatData( integer minLogLevel, string_view 
 {
   if( getLogLevel() >= minLogLevel && logger::internal::rank == 0 )
   {
-    GEOS_LOG_RANK( GEOS_FMT( "{}, {}, {}: applied on {} elements",
-                             getName(), fluxName, subSetName, stats.m_elementCount ) );
-    GEOS_LOG_RANK( GEOS_FMT( "{}, {}, {}: Produced mass = {} kg",
-                             getName(), fluxName, subSetName, stats.m_producedMass ) );
-    GEOS_LOG_RANK( GEOS_FMT( "{}, {}, {}: Production rate = {} kg/s",
-                             getName(), fluxName, subSetName, stats.m_productionRate ) );
+    GEOS_LOG_RANK( GEOS_FMT( "{} ({}) of {} in {}: Producting on {} elements",
+                             catalogName(), getName(), fluxName, subSetName, stats.m_elementCount ) );
+    GEOS_LOG_RANK( GEOS_FMT( "{} ({}) of {} in {}: Produced mass = {} kg",
+                             catalogName(), getName(), fluxName, subSetName, stats.m_producedMass ) );
+    GEOS_LOG_RANK( GEOS_FMT( "{} ({}) of {} in {}: Production rate = {} kg/s",
+                             catalogName(), getName(), fluxName, subSetName, stats.m_productionRate ) );
   }
 }
 
@@ -227,7 +227,10 @@ SourceFluxStatsAggregator::StatData SourceFluxStatsAggregator::WrappedStats::fin
   real64 periodMass = m_currentTimeStepMass + m_pendingPeriodMass;
   StatData periodStats;
   periodStats.m_producedMass = periodMass;
-  periodStats.m_productionRate = periodMass / m_periodDeltaTime;
+  if( m_periodDeltaTime > 0.0 )
+  {
+    periodStats.m_productionRate = periodMass / m_periodDeltaTime;
+  }
   periodStats.m_elementCount = m_elementCount;
 
   m_currentTimeStepMass = 0.0;

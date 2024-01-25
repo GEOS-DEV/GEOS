@@ -123,7 +123,7 @@ private:
    * @param[in] parent the parent group of the task
    */
   SourceFluxStatsAggregator( const string & name,
-                                  Group * const parent );
+                             Group * const parent );
 
   /// Accessor for the catalog name
   static string catalogName() { return "SourceFluxStatistics"; }
@@ -220,8 +220,8 @@ private:
 
 template< typename LAMBDA >
 void SourceFluxStatsAggregator::forAllFluxStatData( Group & container,
-                                                         string_view fluxName,
-                                                         LAMBDA && lambda )
+                                                    string_view fluxName,
+                                                    LAMBDA && lambda )
 {
   container.forWrappers< WrappedStats >( [&]( dataRepository::Wrapper< WrappedStats > & statsWrapper )
   {
