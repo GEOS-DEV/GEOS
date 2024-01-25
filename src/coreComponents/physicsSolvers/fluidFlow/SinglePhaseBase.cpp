@@ -31,6 +31,7 @@
 #include "fieldSpecification/EquilibriumInitialCondition.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
 #include "fieldSpecification/SourceFluxBoundaryCondition.hpp"
+#include "fieldSpecification/SourceFluxStatistics.hpp"
 #include "finiteVolume/FiniteVolumeManager.hpp"
 #include "functions/TableFunction.hpp"
 #include "mainInterface/ProblemManager.hpp"
@@ -61,10 +62,10 @@ SinglePhaseBase::SinglePhaseBase( const string & name,
 
   this->getWrapper< integer >( string( viewKeyStruct::isThermalString() ) ).
     appendDescription( GEOS_FMT( "\nSourceFluxes application if {} is enabled :\n"
-                              "- negative value (injection): the mass balance equation is modified to considered the additional source term,\n"
-                              "- positive value (production): both the mass balance and the energy balance equations are modified to considered the additional source term.\n"
-                              "For the energy balance equation, the mass flux is multipied by the enthalpy in the cell from which the fluid is being produced.",
-                              viewKeyStruct::isThermalString() ) );
+                                 "- negative value (injection): the mass balance equation is modified to considered the additional source term,\n"
+                                 "- positive value (production): both the mass balance and the energy balance equations are modified to considered the additional source term.\n"
+                                 "For the energy balance equation, the mass flux is multipied by the enthalpy in the cell from which the fluid is being produced.",
+                                 viewKeyStruct::isThermalString() ) );
 }
 
 
@@ -845,14 +846,6 @@ void SinglePhaseBase::applyBoundaryConditions( real64 time_n,
 namespace
 {
 
-//!\\ TODO : remove this as the SourceFluxStatistics exist to output these info (and more)
-//!\\ char const bcLogMessage[] =
-//!\\   "SinglePhaseBase {}: at time {}s, "
-//!\\   "the <{}> boundary condition '{}' is applied to the element set '{}' in subRegion '{}'. "
-//!\\   "\nThe scale of this boundary condition is {} and multiplies the value of the provided function (if any). "
-//!\\   "\nThe total number of target elements (including ghost elements) is {}. "
-//!\\   "\nNote that if this number is equal to zero for all subRegions, the boundary condition will not be applied on this element set.";
-
 void applyAndSpecifyFieldValue( real64 const & time_n,
                                 real64 const & dt,
                                 MeshLevel & mesh,
@@ -876,15 +869,6 @@ void applyAndSpecifyFieldValue( real64 const & time_n,
                                                 ElementSubRegionBase & subRegion,
                                                 string const & )
   {
-    //!\\ TODO : remove this as the SourceFluxStatistics exist to output these info (and more)
-    //!\\ if( fs.getLogLevel() >= 1 && isFirstNonlinearIteration )
-    //!\\ {
-    //!\\   globalIndex const bcNumTargetElems = MpiWrapper::sum< globalIndex >( lset.size() );
-    //!\\   GEOS_LOG_RANK_0( GEOS_FMT( bcLogMessage,
-    //!\\                              solverName, time_n+dt, FieldSpecificationBase::catalogName(),
-    //!\\                              fs.getName(), setName, subRegion.getName(), fs.getScale(), bcNumTargetElems ) );
-    //!\\ }
-
     // Specify the bc value of the field
     fs.applyFieldValue< FieldSpecificationEqual,
                         parallelDevicePolicy<> >( lset,
@@ -1013,31 +997,6 @@ void SinglePhaseBase::applySourceFluxBC( real64 const time_n,
                                                                     ElementSubRegionBase & subRegion,
                                                                     string const & )
     {
-      //!\\ TODO : remove this as the SourceFluxStatistics exist to output these info (and more)
-      //!\\ if( fs.getLogLevel() >= 1 && m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
-      //!\\ {
-      //!\\   globalIndex const numTargetElems = MpiWrapper::sum< globalIndex >( targetSet.size() );
-      //!\\   GEOS_LOG_RANK_0( GEOS_FMT( bcLogMessage,
-      //!\\                              getName(), time_n+dt, SourceFluxBoundaryCondition::catalogName(),
-      //!\\                              fs.getName(), setName, subRegion.getName(), fs.getScale(), numTargetElems ) );
-
-      //!\\   if( isThermal )
-      //!\\   {
-      //!\\     char const msg[] = "SinglePhaseBase {} with isThermal = 1. At time {}s, "
-      //!\\                        "the <{}> source flux boundary condition '{}' will be applied with the following behavior"
-      //!\\                        "\n - negative value (injection): the mass balance equation is modified to considered the additional
-      //! source
-      //!\\ term"
-      //!\\                        "\n - positive value (production): both the mass balance and the energy balance equations are modified to
-      //!\\ considered the additional source term. "
-      //!\\                        "\n For the energy balance equation, the mass flux is multipied by the enthalpy in the cell from which
-      //! the
-      //!\\ fluid is being produced.";
-      //!\\     GEOS_LOG_RANK_0( GEOS_FMT( msg,
-      //!\\                                getName(), time_n+dt, SourceFluxBoundaryCondition::catalogName(), fs.getName() ) );
-      //!\\   }
-      //!\\ }
-
       if( targetSet.size() == 0 )
       {
         return;
@@ -1052,13 +1011,8 @@ void SinglePhaseBase::applySourceFluxBC( real64 const time_n,
         return;
       }
 
-      //!\\ TODO : store those values in a SourceFluxStatistics::Stats
-      //!\\ // init source flux statistics
-      //!\\ // TODO: extract those local variables in a dedicated class. Need to re-init them before ...
-      //!\\ real64 bcProducedMass = 0.0;
-      //!\\ globalIndex bcNumTargetElems = 0;
-      //!\\ // TODO: collect region names rather than sub-region names (need ElementSubRegionBase::getRegionName())
-      //!\\ std::set< string > bcRegions;
+      // production stats for this SourceFluxBoundaryCondition in this subRegion
+      real64 producedMass = 0.0;
 
       arrayView1d< globalIndex const > const dofNumber = subRegion.getReference< array1d< globalIndex > >( dofKey );
       arrayView1d< integer const > const ghostRank = subRegion.ghostRank();
@@ -1109,7 +1063,8 @@ void SinglePhaseBase::applySourceFluxBC( real64 const time_n,
                                                              dEnthalpy_dPressure,
                                                              rhsContributionArrayView,
                                                              localRhs,
-                                                             localMatrix] GEOS_HOST_DEVICE ( localIndex const a )
+                                                             localMatrix,
+                                                             &producedMass] GEOS_HOST_DEVICE ( localIndex const a )
         {
           // we need to filter out ghosts here, because targetSet may contain them
           localIndex const ei = targetSet[a];
@@ -1123,8 +1078,7 @@ void SinglePhaseBase::applySourceFluxBC( real64 const time_n,
           globalIndex const energyRowIndex = massRowIndex + 1;
           real64 const rhsValue = rhsContributionArrayView[a] / sizeScalingFactor; // scale the contribution by the sizeScalingFactor here!
           localRhs[massRowIndex] += rhsValue;
-          //!\\ TODO : store those values in a SourceFluxStatistics::Stats
-          //!\\ bcProducedMass += rhsValue;
+          producedMass += rhsValue;
           //add the value to the energey balance equation if the flux is positive (i.e., it's a producer)
           if( rhsContributionArrayView[a] > 0.0 )
           {
@@ -1151,7 +1105,8 @@ void SinglePhaseBase::applySourceFluxBC( real64 const time_n,
                                                              ghostRank,
                                                              dofNumber,
                                                              rhsContributionArrayView,
-                                                             localRhs] GEOS_HOST_DEVICE ( localIndex const a )
+                                                             localRhs,
+                                                             &producedMass] GEOS_HOST_DEVICE ( localIndex const a )
         {
           // we need to filter out ghosts here, because targetSet may contain them
           localIndex const ei = targetSet[a];
@@ -1164,34 +1119,17 @@ void SinglePhaseBase::applySourceFluxBC( real64 const time_n,
           globalIndex const rowIndex = dofNumber[ei] - rankOffset;
           real64 const rhsValue = rhsContributionArrayView[a] / sizeScalingFactor;
           localRhs[rowIndex] += rhsValue;
-          //!\\ TODO : store those values in a SourceFluxStatistics::Stats
-          //!\\ bcProducedMass += rhsValue;
+          producedMass += rhsValue;
         } );
       }
 
-      //!\\ TODO : store those values in a SourceFluxStatistics::Stats
-      //!\\ jjbcNumTargetElems += targetSet.size();
-      //!\\ jjbcRegions.insert( subRegion.getName() );
-
-      //!\\ // compile all stats from every ranks
-      //!\\ bcProducedMass = MpiWrapper::sum( bcProducedMass );
-      //!\\ bcNumTargetElems = MpiWrapper::sum( bcNumTargetElems );
-      //!\\ // Output the flux rate in the console.
-      //!\\ // TODO: 1. Create a dedicated SourceFluxStatistics class, send the logging part of this code in it, and do so for every flow
-      //!\\ solver
-      //!\\ // TODO: 2. Maintain the folowing PR to base SourceFluxStatistics on:
-      //!\\ // https://github.com/GEOS-DEV/GEOS/compare/develop...feature/untereiner/export_stats
-      //!\\ if( fs.getLogLevel() >= 1 && logger::internal::rank == 0 )
-      //!\\ {
-      //!\\   double effectiveRate = bcProducedMass / dt;
-
-      //!\\   GEOS_LOG_RANK_0( GEOS_FMT( "{}: applied on {} elements in sub-region {}",
-      //!\\                              fs.getName(), bcNumTargetElems, stringutilities::join( bcRegions, ", " ) ) );
-      //!\\   GEOS_LOG_RANK_0( GEOS_FMT( "{}: Produced mass = {} kg",
-      //!\\                              fs.getName(), bcProducedMass ) );
-      //!\\   GEOS_LOG_RANK_0( GEOS_FMT( "{}: Production rate = {} kg/s",
-      //!\\                              fs.getName(), effectiveRate ) );
-      //!\\ }
+      SourceFluxStatsAggregator::forAllFluxStatData( subRegion, fs.getName(),
+                                                          [&]( SourceFluxStatsAggregator::WrappedStats & wrapper )
+      {
+        // set the new sub-region statistics for this timestep
+        wrapper.setTimeStepStats( dt, producedMass, targetSet.size(),
+                                  m_nonlinearSolverParameters.m_numNewtonIterations != 0 );
+      } );
     } );
   } );
 }

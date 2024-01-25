@@ -214,6 +214,18 @@ public:
   template< typename CONSTITUTIVE_TYPE >
   string_array getConstitutiveNames() const;
 
+  /**
+   * @brief Get the parent region of a given sub-region
+   */
+  static ElementRegionBase & getParentRegion( ElementSubRegionBase & subRegion )
+  { return dynamicCast< ElementRegionBase & >( subRegion.getParent().getParent() ); }
+
+  /**
+   * @brief Get the parent region of a given sub-region
+   */
+  static ElementRegionBase const & getParentRegion( ElementSubRegionBase const & subRegion )
+  { return dynamicCast< ElementRegionBase const & >( subRegion.getParent().getParent() ); }
+
 
   ///@}
 

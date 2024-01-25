@@ -2980,7 +2980,11 @@ Local - Add stabilization only to interiors of macro elements.-->
 		<xsd:attribute name="discretization" type="groupNameRef" use="required" />
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
-		<!--isThermal => Flag indicating whether the problem is thermal or not.-->
+		<!--isThermal => Flag indicating whether the problem is thermal or not.
+SourceFluxes application if isThermal is enabled :
+- negative value (injection): the mass balance equation is modified to considered the additional source term,
+- positive value (production): both the mass balance and the energy balance equations are modified to considered the additional source term.
+For the energy balance equation, the mass flux is multipied by the enthalpy in the cell from which the fluid is being produced.-->
 		<xsd:attribute name="isThermal" type="integer" default="0" />
 		<!--logLevel => Log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
@@ -3006,7 +3010,11 @@ Local - Add stabilization only to interiors of macro elements.-->
 		<xsd:attribute name="discretization" type="groupNameRef" use="required" />
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
-		<!--isThermal => Flag indicating whether the problem is thermal or not.-->
+		<!--isThermal => Flag indicating whether the problem is thermal or not.
+SourceFluxes application if isThermal is enabled :
+- negative value (injection): the mass balance equation is modified to considered the additional source term,
+- positive value (production): both the mass balance and the energy balance equations are modified to considered the additional source term.
+For the energy balance equation, the mass flux is multipied by the enthalpy in the cell from which the fluid is being produced.-->
 		<xsd:attribute name="isThermal" type="integer" default="0" />
 		<!--logLevel => Log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
@@ -3120,7 +3128,11 @@ Local - Add stabilization only to interiors of macro elements.-->
 		<xsd:attribute name="discretization" type="groupNameRef" use="required" />
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
-		<!--isThermal => Flag indicating whether the problem is thermal or not.-->
+		<!--isThermal => Flag indicating whether the problem is thermal or not.
+SourceFluxes application if isThermal is enabled :
+- negative value (injection): the mass balance equation is modified to considered the additional source term,
+- positive value (production): both the mass balance and the energy balance equations are modified to considered the additional source term.
+For the energy balance equation, the mass flux is multipied by the enthalpy in the cell from which the fluid is being produced.-->
 		<xsd:attribute name="isThermal" type="integer" default="0" />
 		<!--logLevel => Log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
@@ -3574,7 +3586,9 @@ Local - Add stabilization only to interiors of macro elements.-->
 		<xsd:attribute name="fluxNames" type="groupNameRef_array" use="required" />
 		<!--logLevel => Log level
 - Log Level 1 outputs the sum of all SourceFlux(s) produced rate & mass,
-- Log Level 2 outputs detailed values for each SourceFlux.-->
+- Log Level 2 details values for each SourceFlux,
+- Log Level 3 details values for each region,
+- Log Level 4 details values for each sub-region.-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
