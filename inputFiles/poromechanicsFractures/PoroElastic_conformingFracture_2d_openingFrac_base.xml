@@ -16,6 +16,7 @@
         maxNumConfigurationAttempts="10"/>
       <LinearSolverParameters
         solverType="direct"
+        directParallel="0"/>
     </SinglePhasePoromechanicsConformingFractures>
 
     <SinglePhasePoromechanics
