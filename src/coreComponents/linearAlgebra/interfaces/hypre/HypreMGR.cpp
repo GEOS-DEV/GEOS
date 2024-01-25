@@ -55,12 +55,10 @@ void hypre::mgr::createMGR( LinearSolverParameters const & params,
 
   GEOS_LAI_CHECK_ERROR( HYPRE_MGRCreate( &precond.ptr ) );
 
-  // Set MGR's print level
-  HYPRE_Int logLevel = LvArray::integerConversion< HYPRE_Int >( params.logLevel );
-
   // Hypre's parameters to use MGR as a preconditioner
   GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetTol( precond.ptr, 0.0 ) );
   GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetMaxIter( precond.ptr, 1 ) );
+  HYPRE_Int logLevel = LvArray::math::max( LvArray::integerConversion< HYPRE_Int >( params.logLevel - 1 ), LvArray::integerConversion< HYPRE_Int >( 0 ) );
   GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetPrintLevel( precond.ptr, logLevel ) );
 
   array1d< int > const numComponentsPerField = dofManager->numComponentsPerField();
