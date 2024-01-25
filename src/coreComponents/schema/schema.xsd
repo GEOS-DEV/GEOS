@@ -729,6 +729,18 @@
 					<xsd:selector xpath="PorousModifiedCamClay" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
+				<xsd:unique name="domainConstitutivePorousViscoDruckerPragerUniqueName">
+					<xsd:selector xpath="PorousViscoDruckerPrager" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
+				<xsd:unique name="domainConstitutivePorousViscoExtendedDruckerPragerUniqueName">
+					<xsd:selector xpath="PorousViscoExtendedDruckerPrager" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
+				<xsd:unique name="domainConstitutivePorousViscoModifiedCamClayUniqueName">
+					<xsd:selector xpath="PorousViscoModifiedCamClay" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
 				<xsd:unique name="domainConstitutivePressurePorosityUniqueName">
 					<xsd:selector xpath="PressurePorosity" />
 					<xsd:field xpath="@name" />
@@ -1807,6 +1819,8 @@ the relative residual norm satisfies:
 		<xsd:attribute name="newtonMinIter" type="integer" default="1" />
 		<!--newtonTol => The required tolerance in order to exit the Newton iteration loop.-->
 		<xsd:attribute name="newtonTol" type="real64" default="1e-06" />
+		<!--nonlinearAccelerationType => Nonlinear acceleration type for sequential solver.-->
+		<xsd:attribute name="nonlinearAccelerationType" type="geos_NonlinearSolverParameters_NonlinearAccelerationType" default="None" />
 		<!--sequentialConvergenceCriterion => Criterion used to check outer-loop convergence in sequential schemes. Valid options:
 * ResidualNorm
 * NumberOfNonlinearIterations-->
@@ -1841,6 +1855,11 @@ the relative residual norm satisfies:
 	<xsd:simpleType name="geos_NonlinearSolverParameters_LineSearchInterpolationType">
 		<xsd:restriction base="xsd:string">
 			<xsd:pattern value=".*[\[\]`$].*|Linear|Parabolic" />
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="geos_NonlinearSolverParameters_NonlinearAccelerationType">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value=".*[\[\]`$].*|None|Aitken" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="geos_NonlinearSolverParameters_SequentialConvergenceCriterion">
@@ -2253,6 +2272,8 @@ the relative residual norm satisfies:
 		<xsd:attribute name="scalingType" type="geos_CompositionalMultiphaseFVM_ScalingType" default="Global" />
 		<!--solutionChangeScalingFactor => Damping factor for solution change targets-->
 		<xsd:attribute name="solutionChangeScalingFactor" type="real64" default="0.5" />
+		<!--targetFlowCFL => Target CFL condition `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_when computing the next timestep.-->
+		<xsd:attribute name="targetFlowCFL" type="real64" default="-1" />
 		<!--targetPhaseVolFractionChangeInTimeStep => Target (absolute) change in phase volume fraction in a time step-->
 		<xsd:attribute name="targetPhaseVolFractionChangeInTimeStep" type="real64" default="0.2" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
@@ -2315,6 +2336,8 @@ the relative residual norm satisfies:
 		<xsd:attribute name="minCompDens" type="real64" default="1e-10" />
 		<!--solutionChangeScalingFactor => Damping factor for solution change targets-->
 		<xsd:attribute name="solutionChangeScalingFactor" type="real64" default="0.5" />
+		<!--targetFlowCFL => Target CFL condition `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_when computing the next timestep.-->
+		<xsd:attribute name="targetFlowCFL" type="real64" default="-1" />
 		<!--targetPhaseVolFractionChangeInTimeStep => Target (absolute) change in phase volume fraction in a time step-->
 		<xsd:attribute name="targetPhaseVolFractionChangeInTimeStep" type="real64" default="0.2" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
@@ -2414,6 +2437,8 @@ Local - Add stabilization only to interiors of macro elements.-->
 		<xsd:attribute name="targetRegions" type="groupNameRef_array" use="required" />
 		<!--useMass => Use total mass equation-->
 		<xsd:attribute name="useMass" type="integer" default="0" />
+		<!--writeCSV => Write rates into a CSV file-->
+		<xsd:attribute name="writeCSV" type="integer" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -3123,6 +3148,8 @@ Local - Add stabilization only to interiors of macro elements.-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="groupNameRef_array" use="required" />
+		<!--writeCSV => Write rates into a CSV file-->
+		<xsd:attribute name="writeCSV" type="integer" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -3367,6 +3394,8 @@ Local - Add stabilization only to interiors of macro elements.-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--relpermThreshold => Flag to decide whether a phase is considered mobile (when the relperm is above the threshold) or immobile (when the relperm is below the threshold) in metric 2-->
 		<xsd:attribute name="relpermThreshold" type="real64" default="1e-06" />
+		<!--writeCSV => Write statistics into a CSV file-->
+		<xsd:attribute name="writeCSV" type="integer" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -3477,6 +3506,8 @@ Local - Add stabilization only to interiors of macro elements.-->
 		<xsd:attribute name="flowSolverName" type="groupNameRef" use="required" />
 		<!--logLevel => Log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
+		<!--writeCSV => Write statistics into a CSV file-->
+		<xsd:attribute name="writeCSV" type="integer" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -3497,6 +3528,8 @@ Local - Add stabilization only to interiors of macro elements.-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--solidSolverName => Name of the solid solver-->
 		<xsd:attribute name="solidSolverName" type="groupNameRef" use="required" />
+		<!--writeCSV => Write statistics into a CSV file-->
+		<xsd:attribute name="writeCSV" type="integer" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -3584,6 +3617,9 @@ Local - Add stabilization only to interiors of macro elements.-->
 			<xsd:element name="PorousElasticTransverseIsotropic" type="PorousElasticTransverseIsotropicType" />
 			<xsd:element name="PorousExtendedDruckerPrager" type="PorousExtendedDruckerPragerType" />
 			<xsd:element name="PorousModifiedCamClay" type="PorousModifiedCamClayType" />
+			<xsd:element name="PorousViscoDruckerPrager" type="PorousViscoDruckerPragerType" />
+			<xsd:element name="PorousViscoExtendedDruckerPrager" type="PorousViscoExtendedDruckerPragerType" />
+			<xsd:element name="PorousViscoModifiedCamClay" type="PorousViscoModifiedCamClayType" />
 			<xsd:element name="PressurePorosity" type="PressurePorosityType" />
 			<xsd:element name="ProppantPermeability" type="ProppantPermeabilityType" />
 			<xsd:element name="ProppantPorosity" type="ProppantPorosityType" />
@@ -4606,6 +4642,42 @@ If you want to do a three-phase simulation, please use instead wettingIntermedia
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
+	<xsd:complexType name="PorousViscoDruckerPragerType">
+		<!--permeabilityModelName => Name of the permeability model.-->
+		<xsd:attribute name="permeabilityModelName" type="string" use="required" />
+		<!--porosityModelName => Name of the porosity model.-->
+		<xsd:attribute name="porosityModelName" type="string" use="required" />
+		<!--solidInternalEnergyModelName => Name of the solid internal energy model.-->
+		<xsd:attribute name="solidInternalEnergyModelName" type="string" default="" />
+		<!--solidModelName => Name of the solid model.-->
+		<xsd:attribute name="solidModelName" type="string" use="required" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="string" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="PorousViscoExtendedDruckerPragerType">
+		<!--permeabilityModelName => Name of the permeability model.-->
+		<xsd:attribute name="permeabilityModelName" type="string" use="required" />
+		<!--porosityModelName => Name of the porosity model.-->
+		<xsd:attribute name="porosityModelName" type="string" use="required" />
+		<!--solidInternalEnergyModelName => Name of the solid internal energy model.-->
+		<xsd:attribute name="solidInternalEnergyModelName" type="string" default="" />
+		<!--solidModelName => Name of the solid model.-->
+		<xsd:attribute name="solidModelName" type="string" use="required" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="string" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="PorousViscoModifiedCamClayType">
+		<!--permeabilityModelName => Name of the permeability model.-->
+		<xsd:attribute name="permeabilityModelName" type="string" use="required" />
+		<!--porosityModelName => Name of the porosity model.-->
+		<xsd:attribute name="porosityModelName" type="string" use="required" />
+		<!--solidInternalEnergyModelName => Name of the solid internal energy model.-->
+		<xsd:attribute name="solidInternalEnergyModelName" type="string" default="" />
+		<!--solidModelName => Name of the solid model.-->
+		<xsd:attribute name="solidModelName" type="string" use="required" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="string" use="required" />
+	</xsd:complexType>
 	<xsd:complexType name="PressurePorosityType">
 		<!--compressibility => Solid compressibility-->
 		<xsd:attribute name="compressibility" type="real64" use="required" />
@@ -4838,6 +4910,8 @@ To neglect hysteresis on this phase, just use the same table name for the draina
 		<xsd:attribute name="referenceTemperature" type="real64" default="0" />
 		<!--referenceViscosity => Reference fluid viscosity-->
 		<xsd:attribute name="referenceViscosity" type="real64" default="0.001" />
+		<!--specificHeatCapacity => Fluid heat capacity. Unit: J/kg/K-->
+		<xsd:attribute name="specificHeatCapacity" type="real64" default="0" />
 		<!--thermalExpansionCoeff => Fluid thermal expansion coefficient. Unit: 1/K-->
 		<xsd:attribute name="thermalExpansionCoeff" type="real64" default="0" />
 		<!--viscosibility => Fluid viscosity exponential coefficient-->
@@ -4847,8 +4921,6 @@ To neglect hysteresis on this phase, just use the same table name for the draina
 * linear
 * quadratic-->
 		<xsd:attribute name="viscosityModelType" type="geos_constitutive_ExponentApproximationType" default="linear" />
-		<!--volumetricHeatCapacity => Fluid volumetric heat capacity. Unit: J/kg/K-->
-		<xsd:attribute name="volumetricHeatCapacity" type="real64" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>

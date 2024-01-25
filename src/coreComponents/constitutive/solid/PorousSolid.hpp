@@ -147,11 +147,15 @@ public:
                         dTotalStress_dTemperature, // To pass something here
                         stiffness );
 
-    // Compute effective stress increment for the porosity
+    // Compute total stress increment for the porosity update
     GEOS_UNUSED_VAR( pressure_n, temperature_n );
     real64 const bulkModulus = m_solidUpdate.getBulkModulus( k );
     real64 const meanEffectiveStressIncrement = bulkModulus * ( strainIncrement[0] + strainIncrement[1] + strainIncrement[2] );
-    m_porosityUpdate.updateMeanEffectiveStressIncrement( k, q, meanEffectiveStressIncrement );
+    real64 const biotCoefficient = m_porosityUpdate.getBiotCoefficient( k );
+    real64 const thermalExpansionCoefficient = m_solidUpdate.getThermalExpansionCoefficient( k );
+    real64 const meanTotalStressIncrement = meanEffectiveStressIncrement - biotCoefficient * ( pressure - pressure_n )
+                                            - 3 * thermalExpansionCoefficient * bulkModulus * ( temperature - temperature_n );
+    m_porosityUpdate.updateMeanTotalStressIncrement( k, q, meanTotalStressIncrement );
   }
 
   /**
@@ -333,7 +337,7 @@ public:
    * @brief Catalog name
    * @return Static catalog string
    */
-  static string catalogName() { return string( "Porous" ) + SOLID_TYPE::m_catalogNameString; }
+  static string catalogName() { return string( "Porous" ) + SOLID_TYPE::catalogName(); }
 
   /**
    * @brief Get catalog name
