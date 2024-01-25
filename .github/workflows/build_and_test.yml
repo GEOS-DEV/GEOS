@@ -44,7 +44,7 @@ on:
           required: false
           type: string
           default: Default
-      RUNS_ON_LABEL:
+      RUNS_ON_LABELS:
         required: true
         type: string
       USE_SCCACHE:
@@ -58,7 +58,7 @@ jobs:
   build_test_deploy:
     runs-on: 
       group: ${{ inputs.RUNS_ON_GROUP }}
-      label: ${{ inputs.RUNS_ON_LABEL }}
+      labels: ${{ inputs.RUNS_ON_LABELS }}
     steps:
     - name: Checkout Repository
       uses: actions/checkout@v3

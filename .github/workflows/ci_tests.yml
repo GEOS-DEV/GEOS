@@ -112,7 +112,7 @@ jobs:
       DOCKER_IMAGE_TAG: ${{ needs.is_not_draft_pull_request.outputs.DOCKER_IMAGE_TAG }}
       DOCKER_REPOSITORY: geosx/ubuntu20.04-gcc9
       RUNS_ON_GROUP: Default
-      RUNS_ON_LABEL: ubuntu-22.04
+      RUNS_ON_LABELS: ubuntu-22.04
       USE_SCCACHE: false
 
   # Matrix containing all the CPU build.
@@ -144,7 +144,7 @@ jobs:
             ENABLE_TRILINOS: OFF
             GCP_BUCKET: geosx/ubuntu22.04-gcc11
             RUNS_ON_GROUP: streak
-            RUNS_ON_LABEL: streak0
+            RUNS_ON_LABELS: streak0
             DOCKER_RUN_ARGS: "--cpus=4 --memory=128g"
 
 
@@ -185,7 +185,7 @@ jobs:
       GCP_BUCKET: ${{ matrix.GCP_BUCKET }}
       HOST_CONFIG: ${{ matrix.HOST_CONFIG }}
       RUNS_ON_GROUP: ${{ matrix.RUNS_ON_GROUP }}
-      RUNS_ON_LABEL: ${{ matrix.RUNS_ON_LABEL }}
+      RUNS_ON_LABELS: ${{ matrix.RUNS_ON_LABELS }}
     secrets: inherit
 
   # If the 'ci: run integrated tests' PR label is found, the integrated tests will be run immediately after the cpu jobs.
@@ -207,7 +207,7 @@ jobs:
       ENABLE_TRILINOS: OFF
       GCP_BUCKET: geosx/integratedTests
       RUNS_ON_GROUP: streak
-      RUNS_ON_LABEL: streak0
+      RUNS_ON_LABELS: streak0
       DOCKER_RUN_ARGS: "--cpus=4 --memory=128g"
 
   code_coverage:
@@ -225,7 +225,7 @@ jobs:
       ENABLE_TRILINOS: OFF
       GCP_BUCKET: geosx/ubuntu22.04-gcc11
       RUNS_ON_GROUP: Default
-      RUNS_ON_LABEL: ubuntu-22.04
+      RUNS_ON_LABELS: ubuntu-22.04
 
   # If the 'ci: ready to be merged' PR label is found, the cuda jobs run immediately along side linux jobs.
   # Note: CUDA jobs should only be run if PR is ready to merge.
@@ -247,7 +247,7 @@ jobs:
           #   ENABLE_HYPRE: ON
           #   ENABLE_TRILINOS: OFF
           #   RUNS_ON_GROUP: Default
-          #   RUNS_ON_LABEL: Runner_8core_32GB
+          #   RUNS_ON_LABELS: Runner_8core_32GB
 
           - name: Ubuntu CUDA (20.04, clang 10.0.0 + gcc 9.4.0, open-mpi 4.0.3, cuda-11.8.89)
             BUILD_AND_TEST_CLI_ARGS: "--no-install-schema"
@@ -257,7 +257,7 @@ jobs:
             ENABLE_HYPRE: ON
             ENABLE_TRILINOS: OFF
             RUNS_ON_GROUP: streak
-            RUNS_ON_LABEL: streak0
+            RUNS_ON_LABELS: streak0
             DOCKER_RUN_ARGS: "--cpus=4 --memory=128g --runtime=nvidia --gpus all"
 
 
@@ -266,7 +266,7 @@ jobs:
           #   CMAKE_BUILD_TYPE: Release
           #   DOCKER_REPOSITORY: geosx/centos7.7-gcc8.3.1-cuda11.8.89
           #   RUNS_ON_GROUP:
-          #   RUNS_ON_LABEL: streak
+          #   RUNS_ON_LABELS: streak
           #   USE_SCCACHE: false
             # DOCKER_RUN_ARGS: "--cpus=4 --memory=16g"
 
@@ -277,7 +277,7 @@ jobs:
           #   DOCKER_REPOSITORY: geosx/pecan-gpu-gcc8.2.0-openmpi4.0.1-mkl2019.5-cuda11.5.119
           #   HOST_CONFIG: host-configs/TOTAL/pecan-GPU.cmake
           #   RUNS_ON_GROUP: Default
-          #   RUNS_ON_LABEL: Runner_4core_16GB
+          #   RUNS_ON_LABELS: Runner_4core_16GB
     uses: ./.github/workflows/build_and_test.yml
     with:
       BUILD_AND_TEST_CLI_ARGS: ${{ matrix.BUILD_AND_TEST_CLI_ARGS }}
@@ -290,7 +290,7 @@ jobs:
       ENABLE_TRILINOS: ${{ matrix.ENABLE_TRILINOS }}
       HOST_CONFIG: ${{ matrix.HOST_CONFIG }}
       RUNS_ON_GROUP: ${{ matrix.RUNS_ON_GROUP }}
-      RUNS_ON_LABEL: ${{ matrix.RUNS_ON_LABEL }}
+      RUNS_ON_LABELS: ${{ matrix.RUNS_ON_LABELS }}
     secrets: inherit
 
   # Convenience job - passes when all other jobs have passed (must pass the CUDA jobs).
