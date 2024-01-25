@@ -233,8 +233,9 @@ public:
     static constexpr char const * referenceSurfacePositionString() { return "referenceSurfacePosition"; }
     static constexpr char const * referenceMaterialVolumeString() { return "referenceMaterialVolume"; }
 
-    static constexpr char const * partitioningMassString() { return "partitioningMassString"; }
-    static constexpr char const * partitioningNormalString() { return "partitioningNormalString"; }
+    static constexpr char const * cohesiveMassString() { return "cohesiveMass"; }
+    static constexpr char const * cohesiveSurfaceNormalString() { return "cohesiveSurfaceNormal"; }
+    static constexpr char const * cohesiveFieldFlagString() { return "cohesiveFieldFlag"; }
 
     static constexpr char const * boundaryNodesString() { return "boundaryNodes"; }
     static constexpr char const * bufferNodesString() { return "bufferNodes"; }
@@ -308,6 +309,7 @@ public:
                              arrayView3d< real64 const > const & gridMomentum,
                              arrayView3d< real64 const > const & gridSurfaceNormal,
                              arrayView3d< real64 const > const & gridMaterialPosition,
+                             arrayView2d< int const > const & gridCohesiveFieldFlag,
                              arrayView3d< real64 > const & gridContactForce );
 
   void initializeFrictionCoefficients();
@@ -407,8 +409,10 @@ public:
 
   void boundaryConditionUpdate( real64 dt, real64 time_n );
 
-  void projectNormals( ParticleManager & particleManager,
-                       NodeManager & nodeManager );
+  void projectCohesiveSurfaceNormalsToGrid( DomainPartition & domain,
+                                            ParticleManager& particleManager,
+                                            NodeManager & nodeManager,
+                                            MeshLevel & mesh  );
 
   void initializeCohesiveReferenceConfiguration( DomainPartition & domain,
                                                  ParticleManager& particleManager,
@@ -676,6 +680,7 @@ protected:
   // Cohesive law variables
   int m_referenceCohesiveZone;
   int m_enableCohesiveLaws;
+  int m_cohesiveFieldPartitioning;
   int m_enableCohesiveFailure;
   real64 m_numSurfaceIntegrationPoints;
   real64 m_maxCohesiveNormalStress;
@@ -685,6 +690,7 @@ protected:
   real64 m_maxCohesiveNormalDisplacement;
   real64 m_maxCohesiveTangentialDisplacement;
   SortedArray< globalIndex >  m_cohesiveNodeGlobalIndices;
+  array2d< real64 > m_referenceCohesiveGridNodePartitioningSurfaceNormals;
   array2d< real64 > m_referenceCohesiveGridNodeAreas;
   array2d< real64 > m_referenceCohesiveGridNodePositions;
   array3d< real64 > m_referenceCohesiveGridNodeSurfaceNormals;
