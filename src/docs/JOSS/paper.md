@@ -36,9 +36,9 @@ authors:
     affiliation: 1
   - name: Herve Gross
     affiliation: 2
-  - name: Stefano Framba
+  - name: Stefano Frambati
     affiliation: 2
-  - name: Aurilian Citrain
+  - name: Aurélien Citrain
     affiliation: 2
   - name: Andrea Franceschini
     affiliation: 2
