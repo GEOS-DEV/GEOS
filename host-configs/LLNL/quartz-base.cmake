@@ -58,5 +58,12 @@ set(MKL_LIBRARIES ${MKL_ROOT}/lib/intel64/libmkl_intel_lp64.so
 
 # ATS
 set(ATS_ARGUMENTS "--machine slurm36"  CACHE STRING "")
+set(USER $ENV{USER} CACHE STRING "")
+set(ATS_WORKING_DIR "/p/lustre2/${USER}/integratedTests/${CONFIG_NAME}"  CACHE PATH "")
+set(ATS_BASELINE_DIR "/p/lustre2/${USER}/integratedTests/baselines"  CACHE PATH "")
+
+# Temporary argument for python module change testing
+set(PYTHON_SETUP_XARGS "--python-pkg-branch feature/sherman/outOfPlaceATS" CACHE STRING "" FORCE)
+
 
 include(${CMAKE_CURRENT_LIST_DIR}/../tpls.cmake)

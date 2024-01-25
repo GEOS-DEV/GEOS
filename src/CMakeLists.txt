@@ -262,7 +262,7 @@ if ( Python3_EXECUTABLE )
          "${CMAKE_BINARY_DIR}/bin/format_xml" )
 
     add_custom_command( OUTPUT ${GEOSX_PYTHON_TOOLS_BINS}
-                        COMMAND bash ${CMAKE_SOURCE_DIR}/../scripts/setupPythonEnvironment.bash -p ${PYTHON_POST_EXECUTABLE} -b ${CMAKE_BINARY_DIR}/bin
+                        COMMAND bash ${CMAKE_SOURCE_DIR}/../scripts/setupPythonEnvironment.bash -p ${PYTHON_POST_EXECUTABLE} -b ${CMAKE_BINARY_DIR}/bin ${PYTHON_SETUP_XARGS}
                         WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
                       )
 
