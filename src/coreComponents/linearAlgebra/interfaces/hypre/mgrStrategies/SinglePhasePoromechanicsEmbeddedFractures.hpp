@@ -42,10 +42,11 @@ namespace mgr
  * dofLabel: 6 = pressure (cell elem + fracture elems)
  *
  * Ingredients:
- * 1. F-points displacement (0,1,2), C-points pressure (3)
- * 2. F-points smoother: BoomerAMG, single V-cycle
- * 3. C-points coarse-grid/Schur complement solver: BoomerAMG
- * 4. Global smoother: none
+ * 1. Level 1: F-points w (3,4,5), C-points pressure (0,1,2,6)
+ * 2. Level 2: F-points displacement (0,1,2), C-points pressure (6)
+ * 3. F-points smoother: BoomerAMG, single V-cycle
+ * 4. C-points coarse-grid/Schur complement solver: BoomerAMG
+ * 5. Global smoother: none
  */
 class SinglePhasePoromechanicsEmbeddedFractures : public MGRStrategyBase< 2 >
 {
