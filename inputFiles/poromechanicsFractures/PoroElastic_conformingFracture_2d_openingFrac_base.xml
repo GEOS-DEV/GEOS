@@ -16,8 +16,6 @@
         maxNumConfigurationAttempts="10"/>
       <LinearSolverParameters
         solverType="direct"
-        preconditionerType="mgr"
-        logLevel="1024"/>
     </SinglePhasePoromechanicsConformingFractures>
 
     <SinglePhasePoromechanics
