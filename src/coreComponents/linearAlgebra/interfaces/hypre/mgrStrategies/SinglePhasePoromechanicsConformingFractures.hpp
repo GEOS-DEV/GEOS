@@ -55,7 +55,7 @@ public:
    * @brief Constructor.
    */
   explicit SinglePhasePoromechanicsConformingFractures( arrayView1d< int const > const & )
-    : MGRStrategyBase( 7 )
+    : MGRStrategyBase( 5 )
   {
 
     // we keep u and p
