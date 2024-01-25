@@ -15,21 +15,6 @@ concurrency:
 # Please define `build.args.GEOS_TPL_TAG` in `.devcontainer/devcontainer.json`
 
 jobs:
-
-  is_pull_request:
-    runs-on: ubuntu-22.04
-    steps:
-      - name: Check if this is a Pull Request
-        run: |
-          if [[ ${{github.event_name}} == 'pull_request' ]]; then 
-            echo "This is a pull request." ;
-            exit 0 ; 
-          else
-            echo "This is not a pull request." ;
-            exit 1 ;
-          fi
-
-
   # Jobs will be cancelled if PR is a draft.
   # PR status must be "Open" to run CI.
   is_not_draft_pull_request:
