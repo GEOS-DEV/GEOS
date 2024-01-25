@@ -40,11 +40,7 @@ on:
       HOST_CONFIG:
         required: false
         type: string
-      RUNS_ON_GROUP:
-          required: false
-          type: string
-          default: Default
-      RUNS_ON_LABELS:
+      RUNS_ON:
         required: true
         type: string
       USE_SCCACHE:
@@ -56,9 +52,7 @@ on:
         required: false
 jobs:
   build_test_deploy:
-    runs-on: 
-      group: ${{ inputs.RUNS_ON_GROUP }}
-      labels: ${{ inputs.RUNS_ON_LABELS }}
+    runs-on: ${{ inputs.RUNS_ON }}
     steps:
     - name: Checkout Repository
       uses: actions/checkout@v3
