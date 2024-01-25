@@ -273,9 +273,9 @@ void FlowSolverBase::saveSequentialIterationState( DomainPartition & domain )
         if( ghostRank[ei] < 0 )
         {
           subRegionMaxPresChange.max( LvArray::math::abs( pres[ei] - pres_k[ei] ) );
-          pres_k[ei]=pres[ei];
+          pres_k[ei] = pres[ei];
           subRegionMaxTempChange.max( LvArray::math::abs( temp[ei] - temp_k[ei] ) );
-          temp_k[ei]=temp[ei];
+          temp_k[ei] = temp[ei];
         }
       } );
 
