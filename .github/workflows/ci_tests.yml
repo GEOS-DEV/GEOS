@@ -5,6 +5,7 @@ on:
     branches: 
       - develop
   pull_request:
+  workflow_dispatch:
 
 # Cancels in-progress workflows for a PR when updated
 concurrency:
@@ -14,7 +15,6 @@ concurrency:
 # Please define `build.args.GEOS_TPL_TAG` in `.devcontainer/devcontainer.json`
 
 jobs:
-
   # Jobs will be cancelled if PR is a draft.
   # PR status must be "Open" to run CI.
   is_not_draft_pull_request:
@@ -28,17 +28,23 @@ jobs:
     - name: Check that the PR is not a draft (cancel rest of jobs otherwise)
       id: extract_pr_info
       run: |
-        # We do not rely on the `github.event.pull_request.labels` information since it's cached at the job.
-        # Changing labels or assignee in the PR would not allow to simply re-run the job with a different outcome.
-        pr_json=$(curl -H "Accept: application/vnd.github+json" https://api.github.com/repos/${{ github.repository }}/pulls/${{ github.event.number }})
+        if [[ ${{github.event_name}} == 'pull_request' ]]; then 
+          # We do not rely on the `github.event.pull_request.labels` information since it's cached at the job.
+          # Changing labels or assignee in the PR would not allow to simply re-run the job with a different outcome.
+          pr_json=$(curl -H "Accept: application/vnd.github+json" https://api.github.com/repos/${{ github.repository }}/pulls/${{ github.event.number }})
+          
+          # We stop the workflow if the pr is draft
+          draft_status=$(echo ${pr_json} | jq '.draft')
+          echo "Draft status of PR is ${draft_status}."
+          if [[ $draft_status == true ]]; then exit 1 ; fi
+          
+          # If the workflow is meant to continue, we extract additional information for the json of the pr.
+          echo "LABELS=$(echo ${pr_json} | jq -crM '[.labels[].name]')" >> "$GITHUB_OUTPUT"
+        else
+          echo "LABELS=['ci: ready to be merged']" >> "$GITHUB_OUTPUT"
+        fi
+
         
-        # We stop the workflow if the pr is draft
-        draft_status=$(echo ${pr_json} | jq '.draft')
-        echo "Draft status of PR is ${draft_status}."
-        if [[ $draft_status == true ]]; then exit 1 ; fi
-        
-        # If the workflow is meant to continue, we extract additional information for the json of the pr.
-        echo "LABELS=$(echo ${pr_json} | jq -crM '[.labels[].name]')" >> "$GITHUB_OUTPUT"
     # The TPL tag is contained in the codespaces configuration to avoid duplications.
     - name: Checkout .devcontainer/devcontainer.json
       uses: actions/checkout@v3
@@ -280,6 +286,11 @@ jobs:
     if: ${{ always() }}
     steps:
     - run: |
+        echo "if_not_unassigned_pull_request: ${{needs.if_not_unassigned_pull_request.result}}"
+        echo "are_submodules_in_sync: ${{needs.are_submodules_in_sync.result}}"
+        echo "check_code_style_and_documentation: ${{needs.check_code_style_and_documentation.result}}"
+        echo "cpu_builds: ${{needs.cpu_builds.result}}"
+        echo "cuda_builds: ${{needs.cuda_builds.result}}"
         ${{
           needs.if_not_unassigned_pull_request.result == 'success' &&
           needs.are_submodules_in_sync.result == 'success' &&
