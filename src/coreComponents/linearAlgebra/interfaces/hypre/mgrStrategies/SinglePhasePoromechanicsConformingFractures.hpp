@@ -38,11 +38,15 @@ namespace mgr
  * dofLabel: 0 = displacement, x-component
  * dofLabel: 1 = displacement, y-component
  * dofLabel: 2 = displacement, z-component
- * dofLabel: 3 = pressure (face-centered lagrange multiplier) 
- * dofLabel: 4 = pressure (cell elem + fracture elems)
+ * dofLabel: 3 = pressure (cell elem + fracture elems)
+ * dofLabel: 4 = face-centered lagrange multiplier (tn)
+ * dofLabel: 5 = face-centered lagrange multiplier (tt1)
+ * dofLabel: 6 = face-centered lagrange multiplier (tt2)
+
  *
  * Ingredients:
- * 1. F-points displacement (0,1,2), C-points pressure (3)
+ * 1. Level 1: F-points displacement (4,5,6), C-points pressure (0,1,2,3)
+ * 2. Level 2: F-points displacement (0,1,2), C-points pressure (3)
  * 2. F-points smoother: BoomerAMG, single V-cycle
  * 3. C-points coarse-grid/Schur complement solver: BoomerAMG
  * 4. Global smoother: none
@@ -55,7 +59,7 @@ public:
    * @brief Constructor.
    */
   explicit SinglePhasePoromechanicsConformingFractures( arrayView1d< int const > const & )
-    : MGRStrategyBase( 5 )
+    : MGRStrategyBase( 7 )
   {
 
     // we keep u and p
@@ -69,7 +73,7 @@ public:
     setupLabels();
 
     // Level 0
-    m_levelFRelaxType[0]          = MGRFRelaxationType::none; 
+    m_levelFRelaxType[0]          = MGRFRelaxationType::none;
     m_levelFRelaxIters[0]         = 0;
 
     m_levelGlobalSmootherType[0]  = MGRGlobalSmootherType::ilu0;
@@ -117,7 +121,7 @@ public:
 #else
     GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetRelaxOrder( mgrData.mechSolver.ptr, 1 ) );
 #endif
-    GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetFSolverAtLevel(1, precond.ptr, mgrData.mechSolver.ptr) );
+    GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetFSolverAtLevel( 1, precond.ptr, mgrData.mechSolver.ptr ) );
 
     // Configure the BoomerAMG solver used as mgr coarse solver for the pressure reduced system
     setPressureAMG( mgrData.coarseSolver );

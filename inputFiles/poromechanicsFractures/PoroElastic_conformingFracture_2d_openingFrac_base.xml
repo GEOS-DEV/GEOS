@@ -15,7 +15,9 @@
         newtonMaxIter="10"
         maxNumConfigurationAttempts="10"/>
       <LinearSolverParameters
-        directParallel="0"/>
+        solverType="gmres"
+        preconditionerType="mgr"
+        logLevel="1024"/>
     </SinglePhasePoromechanicsConformingFractures>
 
     <SinglePhasePoromechanics
