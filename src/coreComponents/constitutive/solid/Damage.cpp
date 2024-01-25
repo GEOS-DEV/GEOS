@@ -36,15 +36,17 @@ Damage< BASE >::Damage( string const & name, Group * const parent ):
   m_volStrain(),
   m_extDrivingForce(),
   m_lengthScale(),
-  m_criticalFractureEnergy(),
+  m_defaultCriticalFractureEnergy(),
   m_criticalStrainEnergy(),
   m_degradationLowerLimit( 0.0 ),
   m_extDrivingForceFlag( 0 ),
-  m_tensileStrength(),
+  m_defaultTensileStrength(),
   m_compressStrength(),
   m_deltaCoefficient(),
   m_damagePressure(),
-  m_biotCoefficient()
+  m_biotCoefficient(),
+  m_criticalFractureEnergy(),
+  m_tensileStrength()
 {
   this->registerWrapper( viewKeyStruct::newDamageString(), &m_newDamage ).
     setApplyDefaultValue( 0.0 ).
@@ -80,8 +82,13 @@ Damage< BASE >::Damage( string const & name, Group * const parent ):
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Length scale l in the phase-field equation" );
 
-  this->registerWrapper( viewKeyStruct::criticalFractureEnergyString(), &m_criticalFractureEnergy ).
+  this->registerWrapper( viewKeyStruct::defaultCriticalFractureEnergyString(), &m_defaultCriticalFractureEnergy ).
     setInputFlag( InputFlags::REQUIRED ).
+    setDescription( "Default critical fracture energy" );
+
+  this->registerWrapper( viewKeyStruct::criticalFractureEnergyString(), &m_criticalFractureEnergy ).
+    setApplyDefaultValue( 0.0 ).
+    setPlotLevel( PlotLevel::LEVEL_0 ).
     setDescription( "Critical fracture energy" );
 
   this->registerWrapper( viewKeyStruct::criticalStrainEnergyString(), &m_criticalStrainEnergy ).
@@ -98,9 +105,14 @@ Damage< BASE >::Damage( string const & name, Group * const parent ):
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Whether to have external driving force. Can be 0 or 1" );
 
-  this->registerWrapper( viewKeyStruct::tensileStrengthString(), &m_tensileStrength ).
+  this->registerWrapper( viewKeyStruct::defaultTensileStrengthString(), &m_defaultTensileStrength ).
     setApplyDefaultValue( 0.0 ).
     setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Default tensile strength from the uniaxial tension test" );
+
+  this->registerWrapper( viewKeyStruct::tensileStrengthString(), &m_tensileStrength ).
+    setApplyDefaultValue( 0.0 ).
+    setPlotLevel( PlotLevel::LEVEL_0 ).
     setDescription( "Tensile strength from the uniaxial tension test" );
 
   this->registerWrapper( viewKeyStruct::compressStrengthString(), &m_compressStrength ).
@@ -133,7 +145,7 @@ void Damage< BASE >::postProcessInput()
   GEOS_ERROR_IF( m_extDrivingForceFlag != 0 && m_extDrivingForceFlag!= 1,
                  BASE::getDataContext() << ": invalid external driving force flag option - must"
                                            " be 0 or 1" );
-  GEOS_ERROR_IF( m_extDrivingForceFlag == 1 && m_tensileStrength <= 0.0,
+  GEOS_ERROR_IF( m_extDrivingForceFlag == 1 && m_defaultTensileStrength <= 0.0,
                  BASE::getDataContext() << ": tensile strength must be input and positive when the"
                                            " external driving force flag is turned on" );
   GEOS_ERROR_IF( m_extDrivingForceFlag == 1 && m_compressStrength <= 0.0,
@@ -142,6 +154,10 @@ void Damage< BASE >::postProcessInput()
   GEOS_ERROR_IF( m_extDrivingForceFlag == 1 && m_deltaCoefficient < 0.0,
                  BASE::getDataContext() << ": delta coefficient must be input and non-negative when the"
                                            " external driving force flag is turned on" );
+
+  // set results as array default values
+  this->template getWrapper< array1d< real64 > >( viewKeyStruct::criticalFractureEnergyString() ).
+    setApplyDefaultValue( m_defaultCriticalFractureEnergy );
 }
 
 template< typename BASE >
@@ -155,6 +171,8 @@ void Damage< BASE >::allocateConstitutiveData( dataRepository::Group & parent,
   m_volStrain.resize( 0, numConstitutivePointsPerParentIndex );
   m_extDrivingForce.resize( 0, numConstitutivePointsPerParentIndex );
   m_biotCoefficient.resize( parent.size() );
+  m_criticalFractureEnergy.resize( parent.size() );
+  m_tensileStrength.resize( parent.size() );
   BASE::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 }
 
