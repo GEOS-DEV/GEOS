@@ -280,7 +280,6 @@ DECLARE_FIELD( particleReferenceShapeFunctionGradientValues,
                WRITE_AND_READ,
                "ParticleInitialShapeFunctionGradientValues" );
 
-
 DECLARE_FIELD( particleReferenceSurfaceNormal, 
                "particleReferenceSurfaceNormal", 
                array2d< real64 >,
@@ -288,6 +287,14 @@ DECLARE_FIELD( particleReferenceSurfaceNormal,
                LEVEL_1,
                WRITE_AND_READ,
                "ParticleReferenceSurfaceNormal" );
+
+DECLARE_FIELD( particleCohesiveFieldMapping, 
+               "particleCohesiveFieldMapping", 
+               array2d< int >,
+               0,
+               LEVEL_1,
+               WRITE_AND_READ,
+               "particleCohesiveFieldMapping" );          
 
 }
 
