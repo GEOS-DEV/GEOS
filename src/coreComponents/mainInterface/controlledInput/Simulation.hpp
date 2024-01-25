@@ -1,6 +1,7 @@
 #ifndef GEOS_SIMULATION_HPP
 #define GEOS_SIMULATION_HPP
 
+#include "NumericalStrategies.hpp"
 #include "Solvers.hpp"
 
 #include "common/DataTypes.hpp"
@@ -21,6 +22,8 @@ public:
 
   void setSolver( std::vector< std::shared_ptr< solvers::Solver > > const & solvers );
 
+  void setNumericalStrategy( std::shared_ptr< numericalStrategies::NumericalStrategies > ns );
+
   void fillProblemXmlNode( pugi::xml_node & problemNode ) const;
 
 private:
@@ -30,6 +33,7 @@ private:
   string m_begin;
   string m_end;
   std::vector< std::shared_ptr< solvers::Solver > > m_solvers;
+  std::shared_ptr< numericalStrategies::NumericalStrategies > m_ns;
 };
 
 void operator>>( const YAML::Node & node,

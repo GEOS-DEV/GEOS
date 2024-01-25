@@ -22,6 +22,11 @@ void Simulation::setSolver( std::vector< std::shared_ptr< solvers::Solver > > co
   m_solvers = solvers;
 }
 
+void Simulation::setNumericalStrategy( std::shared_ptr< numericalStrategies::NumericalStrategies > ns )
+{
+  m_ns = ns;
+}
+
 void Simulation::fillProblemXmlNode( xml_node & problemNode ) const
 {
   xml_node eventsNode = problemNode.select_node( "Events" ).node();
@@ -31,6 +36,8 @@ void Simulation::fillProblemXmlNode( xml_node & problemNode ) const
   {
     solver->fillProblemXmlNode( problemNode );
   }
+
+  m_ns->fillProblemXmlNode( problemNode );
 }
 
 void Simulation::fillEventsXmlNode( xml_node & eventsNode ) const
@@ -49,6 +56,10 @@ void operator>>( const YAML::Node & node,
   // TODO check solver or solvers
   node["solver"] >> solvers;
   simulation.setSolver( solvers );
+
+  std::shared_ptr< numericalStrategies::NumericalStrategies > ns;
+  node["numerical_strategies"] >> ns;
+  simulation.setNumericalStrategy( ns );
 }
 
 }

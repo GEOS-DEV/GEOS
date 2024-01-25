@@ -92,10 +92,6 @@ void operator>>( const YAML::Node & node,
 
 void fillWithMissingXmlInfo( xml_node & problem )
 {
-  xml_node laplaceFem = problem.select_node( "Solvers/LaplaceFEM" ).node();
-  laplaceFem.append_attribute( "timeIntegrationOption" ) = "SteadyState";
-  laplaceFem.append_child( "LinearSolverParameters" ).append_attribute( "directParallel" ).set_value( 0 );
-
   xml_node fieldSpecifications = problem.append_child( "FieldSpecifications" );
   {
     xml_node fs = fieldSpecifications.append_child( "FieldSpecification" );

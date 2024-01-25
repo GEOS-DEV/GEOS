@@ -5,17 +5,21 @@
 
 #include <pugixml.hpp>
 
+#include <memory>
+
 namespace geos::input::numericalStrategies
 {
 
 class NumericalStrategies
 {
 public:
-  void fillProblemXmlNode( pugi::xml_node & problemNode ) const;
+  virtual ~NumericalStrategies() = default;
+
+  virtual void fillProblemXmlNode( pugi::xml_node & problemNode ) const = 0;
 };
 
 void operator>>( const YAML::Node & node,
-                 NumericalStrategies & numericalStrategy );
+                 std::shared_ptr< NumericalStrategies > & numericalStrategy );
 
 }
 
