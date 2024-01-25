@@ -103,7 +103,7 @@ num_strategies:
   linear_solver:
     type: serial_direct
   non_linear_solver:
-    type: 'direct
+    type: direct
 
 
 solver:-

@@ -8,6 +8,9 @@ simulation:
           name: temperature
           functional_space: h1
           fe_order: 1
+  numerical_strategies:
+    linear_solver:
+      type: serial_direct
 
 mesh:
   internal:

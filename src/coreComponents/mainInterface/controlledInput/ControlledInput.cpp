@@ -4,6 +4,7 @@
 #include "Mesh.hpp"
 #include "Outputs.hpp"
 #include "Solvers.hpp"
+#include "Simulation.hpp"
 
 #include "dataRepository/xmlWrapper.hpp"
 
@@ -15,49 +16,6 @@ namespace geos::input
 {
 
 using namespace pugi;
-
-class Simulation
-{
-public:
-
-  void setBegin( string const & begin )
-  {
-    m_begin = begin;
-  }
-
-  void setEnd( string const & end )
-  {
-    m_end = end;
-  }
-
-  void setSolver( std::vector< std::shared_ptr< solvers::Solver > > const & solvers )
-  {
-    m_solvers = solvers;
-  }
-
-  void fillProblemXmlNode( xml_node & problemNode ) const
-  {
-    xml_node eventsNode = problemNode.select_node( "Events" ).node();
-    fillEventsXmlNode( eventsNode );
-
-    for( auto const & solver: m_solvers )
-    {
-      solver->fillProblemXmlNode( problemNode );
-    }
-  }
-
-private:
-
-  void fillEventsXmlNode( xml_node & eventsNode ) const
-  {
-    eventsNode.append_attribute( "minTime" ) = convertTime( m_begin );
-    eventsNode.append_attribute( "maxTime" ) = convertTime( m_end );
-  }
-
-  string m_begin;
-  string m_end;
-  std::vector< std::shared_ptr< solvers::Solver > > m_solvers;
-};
 
 class Deck
 {
@@ -83,6 +41,7 @@ public:
     problemNode.append_child( "Constitutive" );
     xml_node xmlEvents = problemNode.append_child( "Events" );
     xml_node xmlMesh = problemNode.append_child( "Mesh" );
+    problemNode.append_child( "NumericalMethods" );
     xml_node xmlOutputs = problemNode.append_child( "Outputs" );
     problemNode.append_child( "Solvers" );
 
@@ -114,17 +73,6 @@ private:
   std::shared_ptr< meshes::Mesh > m_mesh;
 };
 
-void operator>>( const YAML::Node & node,
-                 Simulation & simulation )
-{
-  simulation.setBegin( node["begin"].as< string >() );
-  simulation.setEnd( node["end"].as< string >() );
-
-  std::vector< std::shared_ptr< solvers::Solver > > solvers;
-  // TODO check solver or solvers
-  node["solver"] >> solvers;
-  simulation.setSolver( solvers );
-}
 
 void operator>>( const YAML::Node & node,
                  Deck & deck )
@@ -191,10 +139,6 @@ void fillWithMissingXmlInfo( xml_node & problem )
   cesr.append_attribute( "name" ) = "Domain";
   cesr.append_attribute( "cellBlocks" ) = "{ cb1 }";
   cesr.append_attribute( "materialList" ) = "{ nullModel }";
-
-  xml_node fes = problem.append_child( "NumericalMethods" ).append_child( "FiniteElements" ).append_child( "FiniteElementSpace" );
-  fes.append_attribute( "name" ) = "FE1";
-  fes.append_attribute( "order" ) = 1;
 }
 
 void convert( string const & stableInputFileName,

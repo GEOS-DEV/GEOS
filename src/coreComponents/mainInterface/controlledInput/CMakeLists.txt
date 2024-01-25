@@ -9,8 +9,10 @@ set( controlledInput_headers
      ControlledInput.hpp
      Events.hpp
      Mesh.hpp
+     NumericalStrategies.hpp
      Misc.hpp
      Outputs.hpp
+     Simulation.hpp
      Solvers.hpp
 )
 
@@ -18,8 +20,10 @@ set( controlledInput_sources
      ControlledInput.cpp
      Events.cpp
      Mesh.cpp
+     NumericalStrategies.cpp
      Misc.cpp
      Outputs.cpp
+     Simulation.cpp
      Solvers.cpp
 )
 

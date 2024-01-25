@@ -1,12 +1,11 @@
 #ifndef GEOS_INPUT_SOLVERS_HPP
 #define GEOS_INPUT_SOLVERS_HPP
 
-#include "common/DataTypes.hpp"
-
 #include <yaml-cpp/yaml.h>
 
 #include <pugixml.hpp>
 
+#include <memory>
 #include <vector>
 
 namespace geos::input::solvers

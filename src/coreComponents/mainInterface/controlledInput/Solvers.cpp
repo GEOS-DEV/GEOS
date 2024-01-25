@@ -4,6 +4,9 @@
 
 #include "Misc.hpp"
 
+#include "common/DataTypes.hpp"
+
+
 namespace geos::input::solvers
 {
 
@@ -37,7 +40,8 @@ public:
     xml_node laplaceFem = solvers.append_child( "LaplaceFEM" );
     string const solverName = "__laplace";
     laplaceFem.append_attribute( "name" ) = solverName.c_str();
-    laplaceFem.append_attribute( "discretization" ) = ( "FE" + std::to_string( m_variable.fe_order ) ).c_str();
+    string const feSpaceName = "FE" + std::to_string( m_variable.fe_order );
+    laplaceFem.append_attribute( "discretization" ) = feSpaceName.c_str();
     laplaceFem.append_attribute( "fieldName" ) = m_variable.name.c_str();
     laplaceFem.append_attribute( "targetRegions" ) = createGeosArray( m_on ).c_str();
 
@@ -47,6 +51,11 @@ public:
 
     xml_node constitutive = problemNode.select_node( "Constitutive" ).node();
     constitutive.append_child( "NullModel" ).append_attribute( "name" ).set_value( "nullModel" );
+
+    xml_node numericalMethods = problemNode.select_node( "NumericalMethods" ).node();
+    xml_node feSpace = numericalMethods.append_child( "FiniteElements" ).append_child( "FiniteElementSpace" );
+    feSpace.append_attribute( "name" ) = feSpaceName.c_str();
+    feSpace.append_attribute( "order" ) = m_variable.fe_order;
   }
 
 private:
