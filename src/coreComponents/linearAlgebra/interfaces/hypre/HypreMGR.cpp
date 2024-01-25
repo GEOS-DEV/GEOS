@@ -58,9 +58,6 @@ void hypre::mgr::createMGR( LinearSolverParameters const & params,
   // Set MGR's print level
   HYPRE_Int logLevel = LvArray::integerConversion< HYPRE_Int >( params.logLevel );
 
-  // Update logLevel (1 is reserved in GEOS to log execution times)
-  logLevel = (logLevel > 0) ? ((logLevel - 1) & ~0x2) : 0;
-
   // Hypre's parameters to use MGR as a preconditioner
   GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetTol( precond.ptr, 0.0 ) );
   GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetMaxIter( precond.ptr, 1 ) );
