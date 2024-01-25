@@ -309,6 +309,10 @@
 				</xsd:unique>
 			</xsd:element>
 			<xsd:element name="Solvers" type="SolversType" minOccurs="1" maxOccurs="1">
+				<xsd:unique name="SolversAcousticElasticSEMUniqueName">
+					<xsd:selector xpath="AcousticElasticSEM" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
 				<xsd:unique name="SolversAcousticFirstOrderSEMUniqueName">
 					<xsd:selector xpath="AcousticFirstOrderSEM" />
 					<xsd:field xpath="@name" />
@@ -699,6 +703,18 @@
 				</xsd:unique>
 				<xsd:unique name="domainConstitutivePermeabilityBaseUniqueName">
 					<xsd:selector xpath="PermeabilityBase" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
+				<xsd:unique name="domainConstitutivePorousDamageElasticIsotropicUniqueName">
+					<xsd:selector xpath="PorousDamageElasticIsotropic" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
+				<xsd:unique name="domainConstitutivePorousDamageSpectralElasticIsotropicUniqueName">
+					<xsd:selector xpath="PorousDamageSpectralElasticIsotropic" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
+				<xsd:unique name="domainConstitutivePorousDamageVolDevElasticIsotropicUniqueName">
+					<xsd:selector xpath="PorousDamageVolDevElasticIsotropic" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
 				<xsd:unique name="domainConstitutivePorousDelftEggUniqueName">
@@ -2033,6 +2049,7 @@ the relative residual norm satisfies:
 	</xsd:simpleType>
 	<xsd:complexType name="SolversType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="AcousticElasticSEM" type="AcousticElasticSEMType" />
 			<xsd:element name="AcousticFirstOrderSEM" type="AcousticFirstOrderSEMType" />
 			<xsd:element name="AcousticSEM" type="AcousticSEMType" />
 			<xsd:element name="AcousticVTISEM" type="AcousticVTISEMType" />
@@ -2082,6 +2099,28 @@ the relative residual norm satisfies:
 		</xsd:choice>
 		<!--gravityVector => Gravity vector used in the physics solvers-->
 		<xsd:attribute name="gravityVector" type="R1Tensor" default="{0,0,-9.81}" />
+	</xsd:complexType>
+	<xsd:complexType name="AcousticElasticSEMType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
+			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />
+		</xsd:choice>
+		<!--acousticSolverName => Name of the acoustic solver used by the coupled solver-->
+		<xsd:attribute name="acousticSolverName" type="groupNameRef" use="required" />
+		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
+		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
+		<!--discretization => Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` discretization should be specified.-->
+		<xsd:attribute name="discretization" type="groupNameRef" use="required" />
+		<!--elasticSolverName => Name of the elastic solver used by the coupled solver-->
+		<xsd:attribute name="elasticSolverName" type="groupNameRef" use="required" />
+		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
+		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
+		<!--logLevel => Log level-->
+		<xsd:attribute name="logLevel" type="integer" default="0" />
+		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
+		<xsd:attribute name="targetRegions" type="groupNameRef_array" use="required" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="AcousticFirstOrderSEMType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -2289,7 +2328,7 @@ the relative residual norm satisfies:
 		<!--useMass => Use mass formulation instead of molar-->
 		<xsd:attribute name="useMass" type="integer" default="0" />
 		<!--useSimpleAccumulation => Flag indicating whether simple accumulation form is used-->
-		<xsd:attribute name="useSimpleAccumulation" type="integer" default="0" />
+		<xsd:attribute name="useSimpleAccumulation" type="integer" default="1" />
 		<!--useTotalMassEquation => Flag indicating whether total mass equation is used-->
 		<xsd:attribute name="useTotalMassEquation" type="integer" default="1" />
 		<!--name => A name is required for any non-unique nodes-->
@@ -2351,7 +2390,7 @@ the relative residual norm satisfies:
 		<!--useMass => Use mass formulation instead of molar-->
 		<xsd:attribute name="useMass" type="integer" default="0" />
 		<!--useSimpleAccumulation => Flag indicating whether simple accumulation form is used-->
-		<xsd:attribute name="useSimpleAccumulation" type="integer" default="0" />
+		<xsd:attribute name="useSimpleAccumulation" type="integer" default="1" />
 		<!--useTotalMassEquation => Flag indicating whether total mass equation is used-->
 		<xsd:attribute name="useTotalMassEquation" type="integer" default="1" />
 		<!--name => A name is required for any non-unique nodes-->
@@ -3343,6 +3382,8 @@ Local - Add stabilization only to interiors of macro elements.-->
 		<xsd:attribute name="fractureRegion" type="groupNameRef" default="Fracture" />
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
+		<!--isPoroelastic => Flag that defines whether the material is poroelastic or not.-->
+		<xsd:attribute name="isPoroelastic" type="integer" default="0" />
 		<!--logLevel => Log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--mpiCommOrder => Flag to enable MPI consistent communication ordering-->
@@ -3610,6 +3651,9 @@ Local - Add stabilization only to interiors of macro elements.-->
 			<xsd:element name="ParticleFluid" type="ParticleFluidType" />
 			<xsd:element name="PerfectlyPlastic" type="PerfectlyPlasticType" />
 			<xsd:element name="PermeabilityBase" type="PermeabilityBaseType" />
+			<xsd:element name="PorousDamageElasticIsotropic" type="PorousDamageElasticIsotropicType" />
+			<xsd:element name="PorousDamageSpectralElasticIsotropic" type="PorousDamageSpectralElasticIsotropicType" />
+			<xsd:element name="PorousDamageVolDevElasticIsotropic" type="PorousDamageVolDevElasticIsotropicType" />
 			<xsd:element name="PorousDelftEgg" type="PorousDelftEggType" />
 			<xsd:element name="PorousDruckerPrager" type="PorousDruckerPragerType" />
 			<xsd:element name="PorousElasticIsotropic" type="PorousElasticIsotropicType" />
@@ -4558,6 +4602,42 @@ If you want to do a three-phase simulation, please use instead wettingIntermedia
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
+	<xsd:complexType name="PorousDamageElasticIsotropicType">
+		<!--permeabilityModelName => Name of the permeability model.-->
+		<xsd:attribute name="permeabilityModelName" type="groupNameRef" use="required" />
+		<!--porosityModelName => Name of the porosity model.-->
+		<xsd:attribute name="porosityModelName" type="groupNameRef" use="required" />
+		<!--solidInternalEnergyModelName => Name of the solid internal energy model.-->
+		<xsd:attribute name="solidInternalEnergyModelName" type="groupNameRef" default="" />
+		<!--solidModelName => Name of the solid model.-->
+		<xsd:attribute name="solidModelName" type="groupNameRef" use="required" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="groupName" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="PorousDamageSpectralElasticIsotropicType">
+		<!--permeabilityModelName => Name of the permeability model.-->
+		<xsd:attribute name="permeabilityModelName" type="groupNameRef" use="required" />
+		<!--porosityModelName => Name of the porosity model.-->
+		<xsd:attribute name="porosityModelName" type="groupNameRef" use="required" />
+		<!--solidInternalEnergyModelName => Name of the solid internal energy model.-->
+		<xsd:attribute name="solidInternalEnergyModelName" type="groupNameRef" default="" />
+		<!--solidModelName => Name of the solid model.-->
+		<xsd:attribute name="solidModelName" type="groupNameRef" use="required" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="groupName" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="PorousDamageVolDevElasticIsotropicType">
+		<!--permeabilityModelName => Name of the permeability model.-->
+		<xsd:attribute name="permeabilityModelName" type="groupNameRef" use="required" />
+		<!--porosityModelName => Name of the porosity model.-->
+		<xsd:attribute name="porosityModelName" type="groupNameRef" use="required" />
+		<!--solidInternalEnergyModelName => Name of the solid internal energy model.-->
+		<xsd:attribute name="solidInternalEnergyModelName" type="groupNameRef" default="" />
+		<!--solidModelName => Name of the solid model.-->
+		<xsd:attribute name="solidModelName" type="groupNameRef" use="required" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="groupName" use="required" />
+	</xsd:complexType>
 	<xsd:complexType name="PorousDelftEggType">
 		<!--permeabilityModelName => Name of the permeability model.-->
 		<xsd:attribute name="permeabilityModelName" type="groupNameRef" use="required" />
@@ -4644,39 +4724,39 @@ If you want to do a three-phase simulation, please use instead wettingIntermedia
 	</xsd:complexType>
 	<xsd:complexType name="PorousViscoDruckerPragerType">
 		<!--permeabilityModelName => Name of the permeability model.-->
-		<xsd:attribute name="permeabilityModelName" type="string" use="required" />
+		<xsd:attribute name="permeabilityModelName" type="groupNameRef" use="required" />
 		<!--porosityModelName => Name of the porosity model.-->
-		<xsd:attribute name="porosityModelName" type="string" use="required" />
+		<xsd:attribute name="porosityModelName" type="groupNameRef" use="required" />
 		<!--solidInternalEnergyModelName => Name of the solid internal energy model.-->
-		<xsd:attribute name="solidInternalEnergyModelName" type="string" default="" />
+		<xsd:attribute name="solidInternalEnergyModelName" type="groupNameRef" default="" />
 		<!--solidModelName => Name of the solid model.-->
-		<xsd:attribute name="solidModelName" type="string" use="required" />
+		<xsd:attribute name="solidModelName" type="groupNameRef" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
+		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="PorousViscoExtendedDruckerPragerType">
 		<!--permeabilityModelName => Name of the permeability model.-->
-		<xsd:attribute name="permeabilityModelName" type="string" use="required" />
+		<xsd:attribute name="permeabilityModelName" type="groupNameRef" use="required" />
 		<!--porosityModelName => Name of the porosity model.-->
-		<xsd:attribute name="porosityModelName" type="string" use="required" />
+		<xsd:attribute name="porosityModelName" type="groupNameRef" use="required" />
 		<!--solidInternalEnergyModelName => Name of the solid internal energy model.-->
-		<xsd:attribute name="solidInternalEnergyModelName" type="string" default="" />
+		<xsd:attribute name="solidInternalEnergyModelName" type="groupNameRef" default="" />
 		<!--solidModelName => Name of the solid model.-->
-		<xsd:attribute name="solidModelName" type="string" use="required" />
+		<xsd:attribute name="solidModelName" type="groupNameRef" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
+		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="PorousViscoModifiedCamClayType">
 		<!--permeabilityModelName => Name of the permeability model.-->
-		<xsd:attribute name="permeabilityModelName" type="string" use="required" />
+		<xsd:attribute name="permeabilityModelName" type="groupNameRef" use="required" />
 		<!--porosityModelName => Name of the porosity model.-->
-		<xsd:attribute name="porosityModelName" type="string" use="required" />
+		<xsd:attribute name="porosityModelName" type="groupNameRef" use="required" />
 		<!--solidInternalEnergyModelName => Name of the solid internal energy model.-->
-		<xsd:attribute name="solidInternalEnergyModelName" type="string" default="" />
+		<xsd:attribute name="solidInternalEnergyModelName" type="groupNameRef" default="" />
 		<!--solidModelName => Name of the solid model.-->
-		<xsd:attribute name="solidModelName" type="string" use="required" />
+		<xsd:attribute name="solidModelName" type="groupNameRef" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
+		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="PressurePorosityType">
 		<!--compressibility => Solid compressibility-->

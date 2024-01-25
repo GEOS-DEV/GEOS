@@ -200,6 +200,7 @@ void MultiphasePoromechanics< FLOW_SOLVER >::assembleSystem( real64 const GEOS_U
                                                                                       flowDofKey,
                                                                                       this->flowSolver()->numFluidComponents(),
                                                                                       this->flowSolver()->numFluidPhases(),
+                                                                                      this->flowSolver()->useSimpleAccumulation(),
                                                                                       this->flowSolver()->useTotalMassEquation(),
                                                                                       FlowSolverBase::viewKeyStruct::fluidNamesString() );
     }

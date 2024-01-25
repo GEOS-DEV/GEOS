@@ -374,6 +374,8 @@ public:
 
   virtual void initializePostInitialConditionsPreSubGroups() override;
 
+  integer useSimpleAccumulation() const { return m_useSimpleAccumulation; }
+
   integer useTotalMassEquation() const { return m_useTotalMassEquation; }
 
 protected:
