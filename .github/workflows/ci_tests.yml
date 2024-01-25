@@ -218,24 +218,6 @@ jobs:
       GCP_BUCKET: geosx/ubuntu22.04-gcc11
       RUNS_ON: ubuntu-22.04
 
-  cuda_builds_check:
-    runs-on: ubuntu-22.04
-    needs:
-      - is_not_draft_pull_request
-    steps:
-      - name: output conditional variables
-        run: |
-          echo ${{github.event_name}}
-          if [[ ${{github.event_name}} == 'pull_request' ]]; then 
-            if [[ ${{ contains( fromJSON( needs.is_not_draft_pull_request.outputs.LABELS ), 'ci: ready to be merged') }} == true ]]; then
-              exit 0 ;
-            else
-              exit 1 ;
-            fi
-          else
-            exit 0 ;
-          fi
-
   # If the 'ci: ready to be merged' PR label is found, the cuda jobs run immediately along side linux jobs.
   # Note: CUDA jobs should only be run if PR is ready to merge.
   cuda_builds:
