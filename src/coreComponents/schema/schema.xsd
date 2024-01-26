@@ -1438,10 +1438,18 @@ stress - traction is applied to the faces as specified by the inner product of i
 					<xsd:selector xpath="InternalWell" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
+				<xsd:unique name="MeshInternalMeshVTKWellUniqueName">
+					<xsd:selector xpath="VTKWell" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
 			</xsd:element>
 			<xsd:element name="InternalWellbore" type="InternalWellboreType">
 				<xsd:unique name="MeshInternalWellboreInternalWellUniqueName">
 					<xsd:selector xpath="InternalWell" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
+				<xsd:unique name="MeshInternalWellboreVTKWellUniqueName">
+					<xsd:selector xpath="VTKWell" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
 			</xsd:element>
@@ -1451,6 +1459,10 @@ stress - traction is applied to the faces as specified by the inner product of i
 					<xsd:selector xpath="InternalWell" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
+				<xsd:unique name="MeshVTKMeshVTKWellUniqueName">
+					<xsd:selector xpath="VTKWell" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
 			</xsd:element>
 		</xsd:choice>
 	</xsd:complexType>
@@ -1458,6 +1470,12 @@ stress - traction is applied to the faces as specified by the inner product of i
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="InternalWell" type="InternalWellType">
 				<xsd:unique name="MeshInternalMeshInternalWellPerforationUniqueName">
+					<xsd:selector xpath="Perforation" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
+			</xsd:element>
+			<xsd:element name="VTKWell" type="VTKWellType">
+				<xsd:unique name="MeshInternalMeshVTKWellPerforationUniqueName">
 					<xsd:selector xpath="Perforation" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
@@ -1511,9 +1529,9 @@ stress - traction is applied to the faces as specified by the inner product of i
 		<!--radius => Radius of the well [m]-->
 		<xsd:attribute name="radius" type="real64" use="required" />
 		<!--wellControlsName => Name of the set of constraints associated with this well-->
-		<xsd:attribute name="wellControlsName" type="groupNameRef" use="required" />
+		<xsd:attribute name="wellControlsName" type="string" use="required" />
 		<!--wellRegionName => Name of the well element region-->
-		<xsd:attribute name="wellRegionName" type="groupNameRef" use="required" />
+		<xsd:attribute name="wellRegionName" type="string" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -1527,10 +1545,37 @@ stress - traction is applied to the faces as specified by the inner product of i
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
+	<xsd:complexType name="VTKWellType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="Perforation" type="PerforationType" />
+		</xsd:choice>
+		<!--file => Path to the well file-->
+		<xsd:attribute name="file" type="path" use="required" />
+		<!--minElementLength => Minimum length of a well element, computed as (segment length / number of elements per segment ) [m]-->
+		<xsd:attribute name="minElementLength" type="real64" default="0.001" />
+		<!--minSegmentLength => Minimum length of a well segment [m]-->
+		<xsd:attribute name="minSegmentLength" type="real64" default="0.01" />
+		<!--numElementsPerSegment => Number of well elements per polyline segment-->
+		<xsd:attribute name="numElementsPerSegment" type="integer" use="required" />
+		<!--radius => Radius of the well [m]-->
+		<xsd:attribute name="radius" type="real64" use="required" />
+		<!--wellControlsName => Name of the set of constraints associated with this well-->
+		<xsd:attribute name="wellControlsName" type="string" use="required" />
+		<!--wellRegionName => Name of the well element region-->
+		<xsd:attribute name="wellRegionName" type="string" use="required" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="groupName" use="required" />
+	</xsd:complexType>
 	<xsd:complexType name="InternalWellboreType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="InternalWell" type="InternalWellType">
 				<xsd:unique name="MeshInternalWellboreInternalWellPerforationUniqueName">
+					<xsd:selector xpath="Perforation" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
+			</xsd:element>
+			<xsd:element name="VTKWell" type="VTKWellType">
+				<xsd:unique name="MeshInternalWellboreVTKWellPerforationUniqueName">
 					<xsd:selector xpath="Perforation" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
@@ -1593,6 +1638,12 @@ stress - traction is applied to the faces as specified by the inner product of i
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="InternalWell" type="InternalWellType">
 				<xsd:unique name="MeshVTKMeshInternalWellPerforationUniqueName">
+					<xsd:selector xpath="Perforation" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
+			</xsd:element>
+			<xsd:element name="VTKWell" type="VTKWellType">
+				<xsd:unique name="MeshVTKMeshVTKWellPerforationUniqueName">
 					<xsd:selector xpath="Perforation" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
