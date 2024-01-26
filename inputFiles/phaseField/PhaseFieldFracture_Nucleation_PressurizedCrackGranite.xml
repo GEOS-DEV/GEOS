@@ -100,11 +100,6 @@
       name="Region1"
       cellBlocks="{ cb1 }"
       materialList="{ concrete }"/>
-
-    <SurfaceElementRegion
-      name="Fracture"
-      defaultAperture="0.0"
-      materialList="{ concrete }"/>
   </ElementRegions>
 
   <Constitutive>
@@ -114,17 +109,33 @@
       defaultBulkModulus="2.57e4"
       defaultShearModulus="1.64e4"
       lengthScale="1.0"
-      criticalFractureEnergy="10e-3"
+      defaultCriticalFractureEnergy="10e-3"
       criticalStrainEnergy="0"
       extDrivingForceFlag="1"
       degradationLowerLimit="1e-6"
-      tensileStrength="13.0"
+      defaultTensileStrength="13.0"
       compressiveStrength="120.0"
       deltaCoefficient="3.61"
       damagePressure="0.2906118338"/>
   </Constitutive>
 
   <FieldSpecifications>    
+    <FieldSpecification
+       name="Gc"
+       initialCondition="1"
+       setNames="{ all }"
+       objectPath="ElementRegions/Region1"
+       fieldName="concrete_criticalFractureEnergy"
+       scale="10e-3"/>
+
+    <FieldSpecification
+      name="tensileStrength"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Region1"
+      fieldName="concrete_tensileStrength"
+      scale="13.0"/>
+
     <FieldSpecification 
       name="initialDamage"
       setNames="{ fracture }"

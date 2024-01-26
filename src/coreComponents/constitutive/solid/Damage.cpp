@@ -158,6 +158,9 @@ void Damage< BASE >::postProcessInput()
   // set results as array default values
   this->template getWrapper< array1d< real64 > >( viewKeyStruct::criticalFractureEnergyString() ).
     setApplyDefaultValue( m_defaultCriticalFractureEnergy );
+
+  this->template getWrapper< array1d< real64 > >( viewKeyStruct::tensileStrengthString() ).
+    setApplyDefaultValue( m_defaultTensileStrength );
 }
 
 template< typename BASE >

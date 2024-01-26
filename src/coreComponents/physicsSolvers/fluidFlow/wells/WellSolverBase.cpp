@@ -26,6 +26,7 @@
 #include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellControls.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellSolverBaseFields.hpp"
+#include "fileIO/Outputs/OutputBase.hpp"
 
 namespace geos
 {
@@ -37,10 +38,16 @@ WellSolverBase::WellSolverBase( string const & name,
                                 Group * const parent )
   : SolverBase( name, parent ),
   m_numDofPerWellElement( 0 ),
-  m_numDofPerResElement( 0 )
+  m_numDofPerResElement( 0 ),
+  m_ratesOutputDir( joinPath( OutputBase::getOutputDirectory(), name + "_rates" ) )
 {
   this->getWrapper< string >( viewKeyStruct::discretizationString() ).
     setInputFlag( InputFlags::FALSE );
+
+  this->registerWrapper( viewKeyStruct::writeCSVFlagString(), &m_writeCSV ).
+    setApplyDefaultValue( 0 ).
+    setInputFlag( dataRepository::InputFlags::OPTIONAL ).
+    setDescription( "Write rates into a CSV file" );
 }
 
 Group * WellSolverBase::createChild( string const & childKey, string const & childName )
@@ -69,6 +76,17 @@ WellSolverBase::~WellSolverBase() = default;
 void WellSolverBase::postProcessInput()
 {
   SolverBase::postProcessInput();
+
+  // create dir for rates output
+  if( m_writeCSV > 0 )
+  {
+    if( MpiWrapper::commRank() == 0 )
+    {
+      makeDirsForPath( m_ratesOutputDir );
+    }
+    // wait till the dir is created by rank 0
+    MPI_Barrier( MPI_COMM_WORLD );
+  }
 }
 
 void WellSolverBase::registerDataOnMesh( Group & meshBodies )
@@ -161,7 +179,7 @@ void WellSolverBase::assembleSystem( real64 const time,
   assembleAccumulationTerms( domain, dofManager, localMatrix, localRhs );
 
   // then assemble the flux terms in the mass balance equations
-  assembleFluxTerms( time, dt, domain, dofManager, localMatrix, localRhs );
+  assembleFluxTerms( dt, domain, dofManager, localMatrix, localRhs );
 
   // then assemble the volume balance equations
   assembleVolumeBalanceTerms( domain, dofManager, localMatrix, localRhs );

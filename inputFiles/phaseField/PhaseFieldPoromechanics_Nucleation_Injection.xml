@@ -140,11 +140,11 @@
       defaultBulkModulus="16.666667e9"
       defaultShearModulus="12.5e9"
       lengthScale="1.0"
-      criticalFractureEnergy="100"
+      defaultCriticalFractureEnergy="100"
       criticalStrainEnergy="0"
       extDrivingForceFlag="1"
       degradationLowerLimit="1e-6"
-      tensileStrength="5.5e6"
+      defaultTensileStrength="5.5e6"
       compressiveStrength="40.0e6"
       deltaCoefficient="0.44"/>
 
@@ -195,6 +195,22 @@
       fieldName="rockSolid_stress"
       component="2"
       scale="0.0"/> -->
+
+    <FieldSpecification
+       name="Gc"
+       initialCondition="1"
+       setNames="{ all }"
+       objectPath="ElementRegions/Region1"
+       fieldName="rockSolid_criticalFractureEnergy"
+       scale="100"/>
+
+    <FieldSpecification
+      name="tensileStrength"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Region1"
+      fieldName="rockSolid_tensileStrength"
+      scale="5.5e6"/>
 
     <FieldSpecification 
       name="initialPressure"

@@ -144,12 +144,12 @@ private:
 
 
   GEOS_HOST_DEVICE
-  void updateBiotCoefficient( localIndex const k ) const
+  void updateBiotCoefficientAndAssignBulkModulus( localIndex const k ) const
   {
     // This call is not general like this.
     real64 const bulkModulus = m_solidUpdate.getBulkModulus( k );
 
-    m_porosityUpdate.updateBiotCoefficient( k, bulkModulus );
+    m_porosityUpdate.updateBiotCoefficientAndAssignBulkModulus( k, bulkModulus );
 
     // Update the Biot coefficient in the damage model
     real64 const biotCoefficient = m_porosityUpdate.getBiotCoefficient( k );
@@ -231,7 +231,7 @@ private:
                                      totalStress, // first effective stress increment accumulated
                                      stiffness );
 
-    updateBiotCoefficient( k );
+    updateBiotCoefficientAndAssignBulkModulus( k );
 
     // Add the contributions of pressure and temperature to the total stress
     real64 const biotCoefficient = m_porosityUpdate.getBiotCoefficient( k );

@@ -111,6 +111,7 @@ ReactiveCompositionalMultiphaseOBL::ReactiveCompositionalMultiphaseOBL( const st
     setDescription( "List of component names" );
 
   this->registerWrapper( viewKeyStruct::phaseNamesString(), &m_phaseNames ).
+    setRTTypeName( rtTypes::CustomTypes::groupNameRefArray ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "List of fluid phases" );
 
@@ -364,7 +365,10 @@ real64 ReactiveCompositionalMultiphaseOBL::calculateResidualNorm( real64 const &
 
   real64 const residual = m_useDARTSL2Norm ? MpiWrapper::max( localResidualNorm ) : std::sqrt( MpiWrapper::sum( localResidualNorm ) );
 
-  GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "    ( Rflow ) = ( {:4.2e} ) ;", residual ) );
+  if( getLogLevel() >= 1 && logger::internal::rank==0 )
+  {
+    std::cout << GEOS_FMT( "        ( Rflow ) = ( {:4.2e} )", residual );
+  }
 
   return residual;
 }

@@ -151,11 +151,11 @@
       defaultBulkModulus="1.67e4"
       defaultShearModulus="1.25e4"
       lengthScale="1.0"
-      criticalFractureEnergy="4e-3"
+      defaultCriticalFractureEnergy="4e-3"
       criticalStrainEnergy="0"
       extDrivingForceFlag="1"
       degradationLowerLimit="1e-6"
-      tensileStrength="5.5"
+      defaultTensileStrength="5.5"
       compressiveStrength="40.0"
       deltaCoefficient="3.28"/>
 
@@ -180,6 +180,22 @@
   </Constitutive>
 
   <FieldSpecifications>    
+    <FieldSpecification
+       name="Gc"
+       initialCondition="1"
+       setNames="{ all }"
+       objectPath="ElementRegions/Region1"
+       fieldName="concreteSolid_criticalFractureEnergy"
+       scale="4e-3"/>
+
+    <FieldSpecification
+      name="tensileStrength"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Region1"
+      fieldName="concreteSolid_tensileStrength"
+      scale="5.5"/>
+    
     <FieldSpecification 
       name="Sh"
       initialCondition="1"

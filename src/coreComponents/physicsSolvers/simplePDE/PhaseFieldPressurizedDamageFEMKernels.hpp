@@ -20,6 +20,7 @@
 #define GEOS_PHYSICSSOLVERS_SIMPLEPDE_PHASEFIELDPRESSURIZEDDAMAGEKERNELS_HPP_
 
 #include "finiteElement/kernelInterface/ImplicitKernelBase.hpp"
+#include "physicsSolvers/simplePDE/PhaseFieldDamageFEMKernels.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsFields.hpp"
 
 namespace geos
@@ -78,6 +79,7 @@ public:
   using Base::m_constitutiveUpdate;
   using Base::m_finiteElementSpace;
   using Base::m_dt;
+  using LocalDissipation = PhaseFieldDamageKernelLocalDissipation;
 
   /// Maximum number of nodes per element, which is equal to the maxNumTestSupportPointPerElem and
   /// maxNumTrialSupportPointPerElem by definition. When the FE_TYPE is not a Virtual Element, this
@@ -103,7 +105,7 @@ public:
                                      arrayView1d< real64 > const inputRhs,
                                      real64 const inputDt,
                                      string const fieldName,
-                                     int const localDissipationOption ):
+                                     LocalDissipation localDissipationOption ):
     Base( nodeManager,
           edgeManager,
           faceManager,
@@ -231,14 +233,14 @@ public:
 
     real64 D = 0;                                                                   //max between threshold and
                                                                                     // Elastic energy
-    if( m_localDissipationOption == 1 )
+    if( m_localDissipationOption == LocalDissipation::Linear )
     {
       D = fmax( threshold, strainEnergyDensity );
     }
 
     for( localIndex a = 0; a < numNodesPerElem; ++a )
     {
-      if( m_localDissipationOption == 1 )
+      if( m_localDissipationOption == LocalDissipation::Linear )
       {
         stack.localResidual[ a ] -= detJ * ( 3 * N[a] / 16
                                              + 0.375* ell * ell * LvArray::tensorOps::AiBi< 3 >( qp_grad_damage, dNdX[a] )
@@ -259,7 +261,7 @@ public:
 
       for( localIndex b = 0; b < numNodesPerElem; ++b )
       {
-        if( m_localDissipationOption == 1 )
+        if( m_localDissipationOption == LocalDissipation::Linear )
         {
           stack.localJacobian[ a ][ b ] -= detJ * ( 0.375* ell * ell * LvArray::tensorOps::AiBi< 3 >( dNdX[a], dNdX[b] )
                                                     + (0.5 * ell * D/Gc) * m_constitutiveUpdate.getDegradationSecondDerivative( k, qp_damage ) * N[a] * N[b] );
@@ -327,7 +329,7 @@ protected:
   /// The array containing the external driving force on each quadrature point of all elements
   arrayView2d< real64 const > const m_quadExtDrivingForce;
 
-  int const m_localDissipationOption;
+  PhaseFieldDamageKernelLocalDissipation m_localDissipationOption;
 
   arrayView1d< real64 const > const m_fluidPressure;
 
@@ -342,7 +344,7 @@ using PhaseFieldPressurizedDamageKernelFactory = finiteElement::KernelFactory< P
                                                                                arrayView1d< real64 > const,
                                                                                real64 const,
                                                                                string const,
-                                                                               int >;
+                                                                               PhaseFieldDamageKernelLocalDissipation >;
 
 } // namespace geos
 

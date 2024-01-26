@@ -23,15 +23,16 @@
 #include "physicsSolvers/multiphysics/CoupledSolver.hpp"
 #include "physicsSolvers/multiphysics/SinglePhasePoromechanics.hpp"
 #include "physicsSolvers/simplePDE/PhaseFieldDamageFEM.hpp"
+#include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
 
 namespace geos
 {
 
-class PhaseFieldPoromechanicsSolver : public CoupledSolver< SinglePhasePoromechanics, PhaseFieldDamageFEM >
+class PhaseFieldPoromechanicsSolver : public CoupledSolver< SinglePhasePoromechanics< SinglePhaseBase >, PhaseFieldDamageFEM >
 {
 public:
 
-  using Base = CoupledSolver< SinglePhasePoromechanics, PhaseFieldDamageFEM >;
+  using Base = CoupledSolver< SinglePhasePoromechanics< SinglePhaseBase >, PhaseFieldDamageFEM >;
   using Base::m_solvers;
   using Base::m_dofManager;
   using Base::m_localMatrix;
@@ -52,6 +53,8 @@ public:
     return "PhaseFieldPoromechanics";
   }
 
+  string getCatalogName() const override { return catalogName(); }
+
   /// String used to form the solverName used to register solvers in CoupledSolver
   static string coupledSolverAttributePrefix() { return "PhaseFieldPoromechanics"; }
 
@@ -69,7 +72,7 @@ public:
    * @brief accessor for the pointer to the poromechanics solver
    * @return a pointer to the poromechanics solver
    */
-  SinglePhasePoromechanics * poromechancisSolver() const
+  SinglePhasePoromechanics< SinglePhaseBase > * poromechancisSolver() const
   {
     return std::get< toUnderlying( SolverType::Poromechanics ) >( m_solvers );
   }
