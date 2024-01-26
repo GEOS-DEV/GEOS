@@ -51,6 +51,9 @@ ParallelPlatesPermeability                    node :ref:`DATASTRUCTURE_ParallelP
 ParticleFluid                                 node :ref:`DATASTRUCTURE_ParticleFluid`                                 
 PerfectlyPlastic                              node :ref:`DATASTRUCTURE_PerfectlyPlastic`                              
 PermeabilityBase                              node :ref:`DATASTRUCTURE_PermeabilityBase`                              
+PorousDamageElasticIsotropic                  node :ref:`DATASTRUCTURE_PorousDamageElasticIsotropic`                  
+PorousDamageSpectralElasticIsotropic          node :ref:`DATASTRUCTURE_PorousDamageSpectralElasticIsotropic`          
+PorousDamageVolDevElasticIsotropic            node :ref:`DATASTRUCTURE_PorousDamageVolDevElasticIsotropic`            
 PorousDelftEgg                                node :ref:`DATASTRUCTURE_PorousDelftEgg`                                
 PorousDruckerPrager                           node :ref:`DATASTRUCTURE_PorousDruckerPrager`                           
 PorousElasticIsotropic                        node :ref:`DATASTRUCTURE_PorousElasticIsotropic`                        
@@ -58,6 +61,9 @@ PorousElasticOrthotropic                      node :ref:`DATASTRUCTURE_PorousEla
 PorousElasticTransverseIsotropic              node :ref:`DATASTRUCTURE_PorousElasticTransverseIsotropic`              
 PorousExtendedDruckerPrager                   node :ref:`DATASTRUCTURE_PorousExtendedDruckerPrager`                   
 PorousModifiedCamClay                         node :ref:`DATASTRUCTURE_PorousModifiedCamClay`                         
+PorousViscoDruckerPrager                      node :ref:`DATASTRUCTURE_PorousViscoDruckerPrager`                      
+PorousViscoExtendedDruckerPrager              node :ref:`DATASTRUCTURE_PorousViscoExtendedDruckerPrager`              
+PorousViscoModifiedCamClay                    node :ref:`DATASTRUCTURE_PorousViscoModifiedCamClay`                    
 PressurePorosity                              node :ref:`DATASTRUCTURE_PressurePorosity`                              
 ProppantPermeability                          node :ref:`DATASTRUCTURE_ProppantPermeability`                          
 ProppantPorosity                              node :ref:`DATASTRUCTURE_ProppantPorosity`                              
