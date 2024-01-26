@@ -185,6 +185,12 @@
 					<xsd:field xpath="@name" />
 				</xsd:unique>
 			</xsd:element>
+			<xsd:element name="ExternalDataRepository" type="ExternalDataRepositoryType" minOccurs="1" maxOccurs="1">
+				<xsd:unique name="ExternalDataRepositoryVTKHierarchicalDataRepositoryUniqueName">
+					<xsd:selector xpath="VTKHierarchicalDataRepository" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
+			</xsd:element>
 			<xsd:element name="FieldSpecifications" type="FieldSpecificationsType" maxOccurs="1">
 				<xsd:unique name="FieldSpecificationsAquiferUniqueName">
 					<xsd:selector xpath="Aquifer" />
@@ -1059,6 +1065,25 @@
 			<xsd:pattern value=".*[\[\]`$].*|seconds|minutes|hours|days|years|full" />
 		</xsd:restriction>
 	</xsd:simpleType>
+	<xsd:complexType name="ExternalDataRepositoryType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="VTKHierarchicalDataRepository" type="VTKHierarchicalDataRepositoryType">
+				<xsd:unique name="ExternalDataRepositoryVTKHierarchicalDataRepositoryVTKHierarchicalDataRepositoryUniqueName">
+					<xsd:selector xpath="VTKHierarchicalDataRepository" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
+			</xsd:element>
+		</xsd:choice>
+	</xsd:complexType>
+	<xsd:complexType name="VTKHierarchicalDataRepositoryType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="VTKHierarchicalDataRepository" type="VTKHierarchicalDataRepositoryType" />
+		</xsd:choice>
+		<!--file => Path to the mesh file-->
+		<xsd:attribute name="file" type="groupNameRef" use="required" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="groupName" use="required" />
+	</xsd:complexType>
 	<xsd:complexType name="FieldSpecificationsType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="Aquifer" type="AquiferType" />
@@ -1696,11 +1721,13 @@ stress - traction is applied to the faces as specified by the inner product of i
 		<!--fieldsToImport => Volumic fields to be imported from the external mesh file-->
 		<xsd:attribute name="fieldsToImport" type="groupNameRef_array" default="{}" />
 		<!--file => Path to the mesh file-->
-		<xsd:attribute name="file" type="path" use="required" />
+		<xsd:attribute name="file" type="path" default="" />
 		<!--logLevel => Log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--mainBlockName => For multi-block files, name of the 3d mesh block.-->
 		<xsd:attribute name="mainBlockName" type="groupNameRef" default="main" />
+		<!--meshPath => path of the VTK mesh in the repository-->
+		<xsd:attribute name="meshPath" type="string" default="" />
 		<!--nodesetNames => Names of the VTK nodesets to import-->
 		<xsd:attribute name="nodesetNames" type="groupNameRef_array" default="{}" />
 		<!--partitionMethod => Method (library) used to partition the mesh-->
@@ -1709,6 +1736,8 @@ stress - traction is applied to the faces as specified by the inner product of i
 		<xsd:attribute name="partitionRefinement" type="integer" default="1" />
 		<!--regionAttribute => Name of the VTK cell attribute to use as region marker-->
 		<xsd:attribute name="regionAttribute" type="groupNameRef" default="attribute" />
+		<!--repositoryName => Name of the VTK Repository-->
+		<xsd:attribute name="repositoryName" type="string" default="" />
 		<!--scale => Scale the coordinates of the vertices by given scale factors (after translation)-->
 		<xsd:attribute name="scale" type="R1Tensor" default="{1,1,1}" />
 		<!--surfacicFieldsInGEOS => Names of the surfacic fields in GEOS to import into-->

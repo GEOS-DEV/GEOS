@@ -579,6 +579,25 @@ AllMeshes loadAllMeshes( Path const & filePath,
   return AllMeshes( main, faces );
 }
 
+//TODO handle more general cases: multiple partitions
+AllMeshes loadPartitions( vtkSmartPointer< vtkPartitionedDataSet > & partitions )
+{
+
+  if( MpiWrapper::commRank() == 0 )
+  {
+    std::map< string, vtkSmartPointer< vtkDataSet > > faces;
+
+    vtkDataObject * block = partitions->GetPartition( 0 );
+    if( block->IsA( "vtkDataSet" ) )
+    {
+      vtkSmartPointer< vtkDataSet > mesh = vtkDataSet::SafeDownCast( block );
+      return AllMeshes( mesh, faces );
+    }
+  }
+
+  return AllMeshes();
+}
+
 
 /**
  * @brief Redistributes the mesh using cell graphds methods (ParMETIS or PTScotch)

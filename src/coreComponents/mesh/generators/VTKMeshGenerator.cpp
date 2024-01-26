@@ -19,6 +19,7 @@
 
 #include "VTKMeshGenerator.hpp"
 
+#include "mesh/ExternalDataRepositoryManager.hpp"
 #include "mesh/generators/VTKFaceBlockUtilities.hpp"
 #include "mesh/generators/VTKMeshGeneratorTools.hpp"
 #include "mesh/generators/CellBlockManager.hpp"
@@ -33,8 +34,12 @@ using namespace dataRepository;
 
 VTKMeshGenerator::VTKMeshGenerator( string const & name,
                                     Group * const parent )
-  : ExternalMeshGeneratorBase( name, parent )
+  : ExternalMeshGeneratorBase( name, parent ),
+  m_repository( nullptr )
 {
+  getWrapperBase( ExternalMeshGeneratorBase::viewKeyStruct::filePathString()).
+    setInputFlag( InputFlags::OPTIONAL );
+
   registerWrapper( viewKeyStruct::regionAttributeString(), &m_attributeName ).
     setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -75,6 +80,40 @@ VTKMeshGenerator::VTKMeshGenerator( string const & name,
                     " If set to 0 (default value), the GlobalId arrays in the input mesh are used if available, and generated otherwise."
                     " If set to a negative value, the GlobalId arrays in the input mesh are not used, and generated global Ids are automatically generated."
                     " If set to a positive value, the GlobalId arrays in the input mesh are used and required, and the simulation aborts if they are not available" );
+
+  registerWrapper( viewKeyStruct::repositoryString(), &m_repositoryName ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Name of the VTK Repository" );
+
+  registerWrapper( viewKeyStruct::meshPathString(), &m_meshPath ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "path of the VTK mesh in the repository" );
+}
+
+void VTKMeshGenerator::postInputInitialization()
+{
+  GEOS_ERROR_IF( !this->m_filePath.empty() && (!m_repositoryName.empty() || !m_meshPath.empty()),
+                 getName() << ": Access to the mesh via file or repository are mutually exclusive. "
+                              "You can't set " << viewKeyStruct::repositoryString() << " or " << viewKeyStruct::meshPathString() << " and " <<
+                 ExternalMeshGeneratorBase::viewKeyStruct::filePathString() );
+
+  GEOS_ERROR_IF ( !m_repositoryName.empty() && m_meshPath.empty(),
+                  getName() << ": using the repository mode, you must supply a path in the repository for the mesh." );
+
+  GEOS_ERROR_IF ( m_repositoryName.empty() && !m_meshPath.empty(),
+                  getName() << ": using a path in the repository for the mesh, you must supply a repository mode." );
+
+  if( !m_repositoryName.empty())
+  {
+    ExternalDataRepositoryManager & externalDataManager = this->getGroupByPath< ExternalDataRepositoryManager >( "/Problem/ExternalDataRepository" );
+    // objectRepository.
+    m_repository = externalDataManager.getGroupPointer< VTKHierarchicalDataRepository >( m_repositoryName );
+
+    GEOS_THROW_IF( m_repository == nullptr,
+                   getName() << ": VTK Data Object Repository not found: " << m_repositoryName,
+                   InputError );
+  }
+
 }
 
 void VTKMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockManager, SpatialPartition & partition )
@@ -89,7 +128,20 @@ void VTKMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockManager
   GEOS_LOG_RANK_0( GEOS_FMT( "{} '{}': reading mesh from {}", catalogName(), getName(), m_filePath ) );
   {
     GEOS_LOG_LEVEL_RANK_0( 2, "  reading the dataset..." );
-    vtk::AllMeshes allMeshes = vtk::loadAllMeshes( m_filePath, m_mainBlockName, m_faceBlockNames );
+
+    vtk::AllMeshes allMeshes;
+
+    if( !m_filePath.empty())
+    {
+      allMeshes = vtk::loadAllMeshes( m_filePath, m_mainBlockName, m_faceBlockNames );
+    }
+    else if( !m_repositoryName.empty())
+    {
+      vtkSmartPointer< vtkPartitionedDataSet > partitions  = m_repository->search( m_meshPath );
+      allMeshes = vtk::loadPartitions( partitions );
+    }
+
+
     GEOS_LOG_LEVEL_RANK_0( 2, "  redistributing mesh..." );
     vtk::AllMeshes redistributedMeshes =
       vtk::redistributeMeshes( getLogLevel(), allMeshes.getMainMesh(), allMeshes.getFaceBlocks(), comm, m_partitionMethod, m_partitionRefinement, m_useGlobalIds );

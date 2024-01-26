@@ -9,6 +9,8 @@ set( mesh_headers
      ElementRegionManager.hpp
      ElementSubRegionBase.hpp
      ElementType.hpp
+     ExternalDataRepositoryBase.hpp
+     ExternalDataRepositoryManager.hpp
      EmbeddedSurfaceNodeManager.hpp
      EmbeddedSurfaceSubRegion.hpp
      MeshFields.hpp
@@ -95,6 +97,8 @@ set( mesh_sources
      ElementSubRegionBase.cpp
      EmbeddedSurfaceNodeManager.cpp
      EmbeddedSurfaceSubRegion.cpp
+     ExternalDataRepositoryBase.cpp
+     ExternalDataRepositoryManager.cpp
      FaceElementSubRegion.cpp
      FaceManager.cpp
      MeshBody.cpp
@@ -155,14 +159,16 @@ if( ENABLE_VTK )
     set( mesh_headers ${mesh_headers}
          generators/CollocatedNodes.hpp
          generators/VTKFaceBlockUtilities.hpp
+         generators/VTKHierarchicalDataRepository.hpp
          generators/VTKMeshGenerator.hpp
          generators/VTKMeshGeneratorTools.hpp
          generators/VTKWellGenerator.hpp
-         generators/VTKUtilities.hpp
+         generators/VTKUtilities.hpp         
          )
     set( mesh_sources ${mesh_sources}
          generators/CollocatedNodes.cpp
          generators/VTKFaceBlockUtilities.cpp
+         generators/VTKHierarchicalDataRepository.cpp
          generators/VTKMeshGenerator.cpp
          generators/VTKMeshGeneratorTools.cpp
          generators/VTKWellGenerator.cpp

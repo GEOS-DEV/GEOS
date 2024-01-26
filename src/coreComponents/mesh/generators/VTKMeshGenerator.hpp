@@ -22,6 +22,7 @@
 
 #include "mesh/generators/ExternalMeshGeneratorBase.hpp"
 #include "mesh/generators/VTKUtilities.hpp"
+#include "mesh/generators/VTKHierarchicalDataRepository.hpp"
 #include "mesh/mpiCommunications/SpatialPartition.hpp"
 
 #include <vtkDataSet.h>
@@ -88,7 +89,7 @@ public:
    * surfaces of interest, with triangles and/or quads holding an attribute value
    * of 1, 2 or 3, three node sets named "1", "2" and "3" will be instantiated by this method
    */
-  virtual void fillCellBlockManager( CellBlockManager & cellBlockManager, SpatialPartition & partition ) override;
+  void fillCellBlockManager( CellBlockManager & cellBlockManager, SpatialPartition & partition ) override;
 
   void importFieldOnArray( Block block,
                            string const & blockName,
@@ -96,7 +97,10 @@ public:
                            bool isMaterialField,
                            dataRepository::WrapperBase & wrapper ) const override;
 
-  virtual void freeResources() override;
+  void freeResources() override;
+
+protected:
+  void postInputInitialization() override;
 
 private:
 
@@ -110,6 +114,8 @@ private:
     constexpr static char const * partitionRefinementString() { return "partitionRefinement"; }
     constexpr static char const * partitionMethodString() { return "partitionMethod"; }
     constexpr static char const * useGlobalIdsString() { return "useGlobalIds"; }
+    constexpr static char const * repositoryString() { return "repositoryName"; }
+    constexpr static char const * meshPathString() { return "meshPath"; }
   };
   /// @endcond
 
@@ -155,6 +161,15 @@ private:
 
   /// Lists of VTK cell ids, organized by element type, then by region
   vtk::CellMapType m_cellMap;
+
+  /// Repository name
+  string m_repositoryName;
+
+  /// path to the mesh in the repository
+  string m_meshPath;
+
+  /// Repository of VTK objects
+  VTKHierarchicalDataRepository * m_repository;
 };
 
 } // namespace geos
