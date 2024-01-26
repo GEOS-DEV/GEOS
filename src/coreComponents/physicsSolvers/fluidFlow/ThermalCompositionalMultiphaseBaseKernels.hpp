@@ -433,7 +433,6 @@ public:
                    localIndex const numPhases,
                    globalIndex const rankOffset,
                    integer const useTotalMassEquation,
-                   integer const useSimpleAccumulation,
                    string const dofKey,
                    ElementSubRegionBase const & subRegion,
                    MultiFluidBase const & fluid,
@@ -450,8 +449,6 @@ public:
       BitFlags< isothermalCompositionalMultiphaseBaseKernels::ElementBasedAssemblyKernelFlags > kernelFlags;
       if( useTotalMassEquation )
         kernelFlags.set( isothermalCompositionalMultiphaseBaseKernels::ElementBasedAssemblyKernelFlags::TotalMassEquation );
-      if( useSimpleAccumulation )
-        kernelFlags.set( isothermalCompositionalMultiphaseBaseKernels::ElementBasedAssemblyKernelFlags::SimpleAccumulation );
 
       ElementBasedAssemblyKernel< NUM_COMP, NUM_DOF >
       kernel( numPhases, rankOffset, dofKey, subRegion, fluid, solid, localMatrix, localRhs, kernelFlags );
