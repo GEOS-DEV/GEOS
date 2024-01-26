@@ -52,7 +52,7 @@ on:
         required: false
 jobs:
   build_test_deploy:
-    runs-on: [${{ inputs.RUNS_ON }}]
+    runs-on: ${{ inputs.RUNS_ON }}
     steps:
     - name: Checkout Repository
       uses: actions/checkout@v4.1.1
