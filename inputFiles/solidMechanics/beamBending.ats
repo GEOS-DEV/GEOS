@@ -12,7 +12,7 @@ curvecheck_params = CurveCheckParameters(
 partitions = ((1, 1, 1), (2, 2, 2))
 
 decks = [
-    TestDeck(name="beamBending",
+    TestDeck(name="beamBending_smoke",
              description="Tests beam bending.",
              partitions=partitions,
              restart_step=0,

@@ -8,14 +8,14 @@ restartcheck_params['rtol'] = 1e-05
 
 decks = [
     TestDeck(
-        name='co2_thermal_2d',
+        name="co2_thermal_2d",
         description=
         'Thermal compositional co2-brine flow test (2D co2 injection, 2-phase co2-brine, Brooks-Corey relperm curves, thermal)',
         partitions=((1, 1, 1), (2, 2, 1)),
         restart_step=9,
         check_step=11,
         restartcheck_params=RestartcheckParameters(**restartcheck_params)),
-    TestDeck(name='co2_thermal_obl_3d',
+    TestDeck(name="co2_thermal_obl_3d",
              description='Smoke test for a co2-brine test (3D displacement, 2-phase co2-brine, thermal, OBL)',
              partitions=((1, 1, 1), (2, 2, 2)),
              restart_step=14,

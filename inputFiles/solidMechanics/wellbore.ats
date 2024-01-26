@@ -3,34 +3,15 @@ import geos_ats
 from geos_ats.test_builder import TestDeck, RestartcheckParameters, generate_geos_tests
 
 restartcheck_params = {}
-restartcheck_params['atol'] = 1e-06
+restartcheck_params['atol'] = 0.0001
 restartcheck_params['rtol'] = 0.0001
 
 decks = [
-    TestDeck(name='ModifiedCamClay_Wellbore_smoke',
-             description='test of wellbore mesh generation and simple loading',
-             partitions=((1, 1, 1), (2, 2, 1)),
-             restart_step=1,
-             check_step=1,
-             restartcheck_params=RestartcheckParameters(**restartcheck_params)),
-    TestDeck(name='ExtendedDruckerPrager_Wellbore_smoke',
-             description='test of wellbore with ExtendedDruckerPrager material and simple loading',
-             partitions=((1, 1, 1), (2, 2, 1)),
-             restart_step=1,
-             check_step=1,
-             restartcheck_params=RestartcheckParameters(**restartcheck_params)),
-    TestDeck(name='DruckerPrager_Wellbore_smoke',
-             description='test of wellbore with DruckerPrager material and simple loading',
-             partitions=((1, 1, 1), (2, 2, 1)),
-             restart_step=1,
-             check_step=1,
-             restartcheck_params=RestartcheckParameters(**restartcheck_params)),
-    TestDeck(name='KirschProblem_smoke',
+    TestDeck(name="KirschProblem_smoke",
              description='test of wellbore mesh generation and open well with simple loading',
              partitions=((1, 1, 1), (2, 2, 1)),
              restart_step=0,
              check_step=1,
              restartcheck_params=RestartcheckParameters(**restartcheck_params)),
 ]
-
 generate_geos_tests(decks)

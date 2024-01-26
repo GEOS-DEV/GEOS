@@ -14,7 +14,7 @@ curvecheck_params['curves'] = [['velocity', 'source']]
 partitions = ((1, 1, 1), (2, 2, 2), (3, 3, 3))
 
 decks = [
-    TestDeck(name="sedov",
+    TestDeck(name="sedov_finiteStrain_smoke",
              description="Test the basic sedov problem and restart capabilities",
              partitions=partitions,
              restart_step=50,

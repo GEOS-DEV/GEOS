@@ -74,7 +74,7 @@ def _build_poro_elastic_coupling_case(deck, cycles, partitions, description, res
 def _build_Terzaghi_cases():
     description = Description("Terzaghi's 1D Consolidation", "auto", "Nicola Castelletto", True)
     restartcheck_params = {"atol": 1.0e-8, "rtol": 2.0e-8}
-    return _build_poro_elastic_coupling_case("PoroElastic_Terzaghi_FIM.xml", (50, 91),
+    return _build_poro_elastic_coupling_case("PoroElastic_Terzaghi_smoke.xml", (50, 91),
                                              ((1, 1, 1), (2, 1, 1), (7, 1, 1)), description, restartcheck_params)
 
 
@@ -118,42 +118,42 @@ def _build_Deadoil_sequential_cases():
 def _build_PoroElasticWell_cases():
     description = Description("PoroElastic wellbore problem ", "auto", "Jian Huang", True)
     restartcheck_params = {"atol": 1.0e-8, "rtol": 2.0e-8}
-    return _build_poro_elastic_coupling_case("PoroElastic_Wellbore_smoke.xml", (2, 8), ((1, 1, 1), (2, 2, 1)),
+    return _build_poro_elastic_coupling_case("PoroElasticWellbore_smoke.xml", (2, 8), ((1, 1, 1), (2, 2, 1)),
                                              description, restartcheck_params)
 
 
 def _build_PoroDruckerPragerWell_cases():
     description = Description("PoroDruckerPrager wellbore problem", "auto", "Jian Huang", True)
     restartcheck_params = {"atol": 1.0e-8, "rtol": 2.0e-8}
-    return _build_poro_elastic_coupling_case("PoroDruckerPrager_Wellbore_smoke.xml", (2, 8), ((1, 1, 1), (2, 2, 1)),
+    return _build_poro_elastic_coupling_case("PoroDruckerPragerWellbore_smoke.xml", (2, 8), ((1, 1, 1), (2, 2, 1)),
                                              description, restartcheck_params)
 
 
 def _build_PoroDelftEggWell_cases():
     description = Description("PoroDelftEgg wellbore problem ", "auto", "Jian Huang", True)
     restartcheck_params = {"atol": 1.0e-8, "rtol": 2.0e-8}
-    return _build_poro_elastic_coupling_case("PoroDelftEgg_Wellbore_smoke.xml", (2, 8), ((1, 1, 1), (2, 2, 1)),
+    return _build_poro_elastic_coupling_case("PoroDelftEggWellbore_smoke.xml", (2, 8), ((1, 1, 1), (2, 2, 1)),
                                              description, restartcheck_params)
 
 
 def _build_PoroModifiedCamClayWell_cases():
     description = Description("PoroModifiedCamClay wellbore problem ", "auto", "Jian Huang", True)
     restartcheck_params = {"atol": 1.0e-8, "rtol": 2.0e-8}
-    return _build_poro_elastic_coupling_case("PoroModifiedCamClay_Wellbore_smoke.xml", (2, 8), ((1, 1, 1), (2, 2, 1)),
+    return _build_poro_elastic_coupling_case("PoroModifiedCamClayWellbore_smoke.xml", (2, 8), ((1, 1, 1), (2, 2, 1)),
                                              description, restartcheck_params)
 
 
 def _build_PoroImpermeableFault_cases():
     description = Description("Impermeable fault problem ", "auto", "Jian Huang", True)
     restartcheck_params = {"atol": 1.0e-5, "rtol": 2.0e-7}
-    return _build_poro_elastic_coupling_case("PoroElastic_impermeableFault_smoke.xml", (0, 1), ((1, 1, 1), (2, 2, 1)),
+    return _build_poro_elastic_coupling_case("impermeableFault_smoke.xml", (0, 1), ((1, 1, 1), (2, 2, 1)),
                                              description, restartcheck_params)
 
 
 def _build_PoroPermeableFault_cases():
     description = Description("Permeable fault problem ", "auto", "Jian Huang", True)
     restartcheck_params = {"atol": 1.0e-5, "rtol": 2.0e-7}
-    return _build_poro_elastic_coupling_case("PoroElastic_permeableFault_smoke.xml", (0, 1), ((1, 1, 1), (2, 2, 1)),
+    return _build_poro_elastic_coupling_case("permeableFault_smoke.xml", (0, 1), ((1, 1, 1), (2, 2, 1)),
                                              description, restartcheck_params)
 
 
@@ -227,7 +227,7 @@ def test_poro_elastic_coupling_cases():
         _build_PoroStaircaseCO2PeacemanWell_sequential_cases(),
         _build_PoroElasticPEBICO2FIM_cases(),
         _build_PoroElasticPEBICO2Sequential_cases(),
-        _build_PoroElasticGravity_cases(),
+        _build_PoroElasticGravity_cases()
     ]
 
     generate_geos_tests(deck_instances)
