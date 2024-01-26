@@ -23,7 +23,10 @@ set( porousSolidDispatch PorousSolid<DruckerPragerExtended>
                          PorousSolid<ElasticOrthotropic>
                          PorousSolid<DamageSpectral<ElasticIsotropic>>
                          PorousSolid<DamageVolDev<ElasticIsotropic>>
-                         PorousSolid<Damage<ElasticIsotropic>> )
+                         PorousSolid<Damage<ElasticIsotropic>> 
+                         PorousSolid<DuvautLionsSolid<DruckerPrager>>
+                         PorousSolid<DuvautLionsSolid<DruckerPragerExtended>>
+                         PorousSolid<DuvautLionsSolid<ModifiedCamClay>> )
 
 set( finiteElementDispatch H1_Hexahedron_Lagrange1_GaussLegendre2
                            H1_Wedge_Lagrange1_Gauss6

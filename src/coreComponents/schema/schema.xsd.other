@@ -494,6 +494,7 @@
 	<xsd:complexType name="ParameterType" />
 	<xsd:complexType name="SolversType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="AcousticElasticSEM" type="AcousticElasticSEMType" />
 			<xsd:element name="AcousticFirstOrderSEM" type="AcousticFirstOrderSEMType" />
 			<xsd:element name="AcousticSEM" type="AcousticSEMType" />
 			<xsd:element name="AcousticVTISEM" type="AcousticVTISEMType" />
@@ -531,6 +532,35 @@
 			<xsd:element name="SolidMechanics_MPM" type="SolidMechanics_MPMType" />
 			<xsd:element name="SurfaceGenerator" type="SurfaceGeneratorType" />
 		</xsd:choice>
+	</xsd:complexType>
+	<xsd:complexType name="AcousticElasticSEMType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
+			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />
+			<xsd:element name="SolverStatistics" type="SolverStatisticsType" />
+		</xsd:choice>
+		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
+		<xsd:attribute name="maxStableDt" type="real64" />
+		<!--meshTargets => MeshBody/Region combinations that the solver will be applied to.-->
+		<xsd:attribute name="meshTargets" type="geos_mapBase&lt;std_pair&lt;string, string >, LvArray_Array&lt;string, 1, camp_int_seq&lt;long, 0l>, int, LvArray_ChaiBuffer>, std_integral_constant&lt;bool, true> >" />
+	</xsd:complexType>
+	<xsd:complexType name="SolverStatisticsType">
+		<!--numDiscardedLinearIterations => Cumulative number of discarded linear iterations-->
+		<xsd:attribute name="numDiscardedLinearIterations" type="integer" />
+		<!--numDiscardedNonlinearIterations => Cumulative number of discarded nonlinear iterations-->
+		<xsd:attribute name="numDiscardedNonlinearIterations" type="integer" />
+		<!--numDiscardedOuterLoopIterations => Cumulative number of discarded outer loop iterations-->
+		<xsd:attribute name="numDiscardedOuterLoopIterations" type="integer" />
+		<!--numSuccessfulLinearIterations => Cumulative number of successful linear iterations-->
+		<xsd:attribute name="numSuccessfulLinearIterations" type="integer" />
+		<!--numSuccessfulNonlinearIterations => Cumulative number of successful nonlinear iterations-->
+		<xsd:attribute name="numSuccessfulNonlinearIterations" type="integer" />
+		<!--numSuccessfulOuterLoopIterations => Cumulative number of successful outer loop iterations-->
+		<xsd:attribute name="numSuccessfulOuterLoopIterations" type="integer" />
+		<!--numTimeStepCuts => Number of time step cuts-->
+		<xsd:attribute name="numTimeStepCuts" type="integer" />
+		<!--numTimeSteps => Number of time steps-->
+		<xsd:attribute name="numTimeSteps" type="integer" />
 	</xsd:complexType>
 	<xsd:complexType name="AcousticFirstOrderSEMType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -578,24 +608,6 @@
 		<xsd:attribute name="uyNp1AtReceivers" type="real32_array2d" />
 		<!--uzNp1AtReceivers => Uz value at each receiver for each timestep-->
 		<xsd:attribute name="uzNp1AtReceivers" type="real32_array2d" />
-	</xsd:complexType>
-	<xsd:complexType name="SolverStatisticsType">
-		<!--numDiscardedLinearIterations => Cumulative number of discarded linear iterations-->
-		<xsd:attribute name="numDiscardedLinearIterations" type="integer" />
-		<!--numDiscardedNonlinearIterations => Cumulative number of discarded nonlinear iterations-->
-		<xsd:attribute name="numDiscardedNonlinearIterations" type="integer" />
-		<!--numDiscardedOuterLoopIterations => Cumulative number of discarded outer loop iterations-->
-		<xsd:attribute name="numDiscardedOuterLoopIterations" type="integer" />
-		<!--numSuccessfulLinearIterations => Cumulative number of successful linear iterations-->
-		<xsd:attribute name="numSuccessfulLinearIterations" type="integer" />
-		<!--numSuccessfulNonlinearIterations => Cumulative number of successful nonlinear iterations-->
-		<xsd:attribute name="numSuccessfulNonlinearIterations" type="integer" />
-		<!--numSuccessfulOuterLoopIterations => Cumulative number of successful outer loop iterations-->
-		<xsd:attribute name="numSuccessfulOuterLoopIterations" type="integer" />
-		<!--numTimeStepCuts => Number of time step cuts-->
-		<xsd:attribute name="numTimeStepCuts" type="integer" />
-		<!--numTimeSteps => Number of time steps-->
-		<xsd:attribute name="numTimeSteps" type="integer" />
 	</xsd:complexType>
 	<xsd:complexType name="AcousticSEMType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -1327,6 +1339,9 @@
 			<xsd:element name="ParticleFluid" type="ParticleFluidType" />
 			<xsd:element name="PerfectlyPlastic" type="PerfectlyPlasticType" />
 			<xsd:element name="PermeabilityBase" type="PermeabilityBaseType" />
+			<xsd:element name="PorousDamageElasticIsotropic" type="PorousDamageElasticIsotropicType" />
+			<xsd:element name="PorousDamageSpectralElasticIsotropic" type="PorousDamageSpectralElasticIsotropicType" />
+			<xsd:element name="PorousDamageVolDevElasticIsotropic" type="PorousDamageVolDevElasticIsotropicType" />
 			<xsd:element name="PorousDelftEgg" type="PorousDelftEggType" />
 			<xsd:element name="PorousDruckerPrager" type="PorousDruckerPragerType" />
 			<xsd:element name="PorousElasticIsotropic" type="PorousElasticIsotropicType" />
@@ -1334,6 +1349,9 @@
 			<xsd:element name="PorousElasticTransverseIsotropic" type="PorousElasticTransverseIsotropicType" />
 			<xsd:element name="PorousExtendedDruckerPrager" type="PorousExtendedDruckerPragerType" />
 			<xsd:element name="PorousModifiedCamClay" type="PorousModifiedCamClayType" />
+			<xsd:element name="PorousViscoDruckerPrager" type="PorousViscoDruckerPragerType" />
+			<xsd:element name="PorousViscoExtendedDruckerPrager" type="PorousViscoExtendedDruckerPragerType" />
+			<xsd:element name="PorousViscoModifiedCamClay" type="PorousViscoModifiedCamClayType" />
 			<xsd:element name="PressurePorosity" type="PressurePorosityType" />
 			<xsd:element name="ProppantPermeability" type="ProppantPermeabilityType" />
 			<xsd:element name="ProppantPorosity" type="ProppantPorosityType" />
@@ -2293,6 +2311,9 @@
 		<!--permeability => Rock permeability-->
 		<xsd:attribute name="permeability" type="real64_array3d" />
 	</xsd:complexType>
+	<xsd:complexType name="PorousDamageElasticIsotropicType" />
+	<xsd:complexType name="PorousDamageSpectralElasticIsotropicType" />
+	<xsd:complexType name="PorousDamageVolDevElasticIsotropicType" />
 	<xsd:complexType name="PorousDelftEggType" />
 	<xsd:complexType name="PorousDruckerPragerType" />
 	<xsd:complexType name="PorousElasticIsotropicType" />
@@ -2300,6 +2321,9 @@
 	<xsd:complexType name="PorousElasticTransverseIsotropicType" />
 	<xsd:complexType name="PorousExtendedDruckerPragerType" />
 	<xsd:complexType name="PorousModifiedCamClayType" />
+	<xsd:complexType name="PorousViscoDruckerPragerType" />
+	<xsd:complexType name="PorousViscoExtendedDruckerPragerType" />
+	<xsd:complexType name="PorousViscoModifiedCamClayType" />
 	<xsd:complexType name="PressurePorosityType">
 		<!--dPorosity_dPressure => Derivative of rock porosity with respect to pressure-->
 		<xsd:attribute name="dPorosity_dPressure" type="real64_array2d" />

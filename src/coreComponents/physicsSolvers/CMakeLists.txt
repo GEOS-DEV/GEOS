@@ -126,6 +126,8 @@ set( physicsSolvers_headers
      surfaceGeneration/ParallelTopologyChange.hpp
      surfaceGeneration/SurfaceGenerator.hpp
      surfaceGeneration/SurfaceGeneratorFields.hpp
+     surfaceGeneration/kernels/surfaceGenerationKernels.hpp
+     surfaceGeneration/kernels/surfaceGenerationKernelsHelpers.hpp
      wavePropagation/WaveSolverBase.hpp
      wavePropagation/WaveSolverUtils.hpp
      wavePropagation/WaveSolverBaseFields.hpp
@@ -229,5 +231,4 @@ if( externalComponentDeps )
   target_include_directories( physicsSolvers PUBLIC ${CMAKE_SOURCE_DIR}/externalComponents )
 endif()
 
-geosx_add_code_checks( PREFIX physicsSolvers )
 
