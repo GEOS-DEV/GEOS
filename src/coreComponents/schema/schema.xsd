@@ -2379,7 +2379,7 @@ the relative residual norm satisfies:
 		<!--useMass => Use mass formulation instead of molar-->
 		<xsd:attribute name="useMass" type="integer" default="0" />
 		<!--useSimpleAccumulation => Flag indicating whether simple accumulation form is used-->
-		<xsd:attribute name="useSimpleAccumulation" type="integer" default="0" />
+		<xsd:attribute name="useSimpleAccumulation" type="integer" default="1" />
 		<!--useTotalMassEquation => Flag indicating whether total mass equation is used-->
 		<xsd:attribute name="useTotalMassEquation" type="integer" default="1" />
 		<!--name => A name is required for any non-unique nodes-->
@@ -2441,7 +2441,7 @@ the relative residual norm satisfies:
 		<!--useMass => Use mass formulation instead of molar-->
 		<xsd:attribute name="useMass" type="integer" default="0" />
 		<!--useSimpleAccumulation => Flag indicating whether simple accumulation form is used-->
-		<xsd:attribute name="useSimpleAccumulation" type="integer" default="0" />
+		<xsd:attribute name="useSimpleAccumulation" type="integer" default="1" />
 		<!--useTotalMassEquation => Flag indicating whether total mass equation is used-->
 		<xsd:attribute name="useTotalMassEquation" type="integer" default="1" />
 		<!--name => A name is required for any non-unique nodes-->
