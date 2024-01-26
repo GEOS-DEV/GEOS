@@ -69,6 +69,7 @@ ThermalMultiphasePoromechanics( NodeManager const & nodeManager,
         inputFlowDofKey,
         numComponents,
         numPhases,
+        false, // do not use simple accumulation form
         useTotalMassEquation,
         fluidModelKey ),
   m_rockInternalEnergy_n( inputConstitutiveType.getInternalEnergy_n() ),
