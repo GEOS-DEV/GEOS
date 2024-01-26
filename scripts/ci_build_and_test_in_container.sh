@@ -143,9 +143,6 @@ EOT
   # The path to the `sccache` executable is available through the SCCACHE environment variable.
   SCCACHE_CMAKE_ARGS="-DCMAKE_CXX_COMPILER_LAUNCHER=${SCCACHE} -DCMAKE_CUDA_COMPILER_LAUNCHER=${SCCACHE}"
 
-echo $HOSTNAME
-echo ${HOSTNAME}
-echo "${HOSTNAME}"
   if [[ ${HOSTNAME} == 'streak.llnl.gov' ]]; then
     DOCKER_CERTS_DIR=/usr/local/share/ca-certificates
     for file in "${GEOS_SRC_DIR}"/certificates/*.crt.pem; do
@@ -158,7 +155,11 @@ echo "${HOSTNAME}"
       fi
     done
     update-ca-certificates 
-    # gcloud config set core/custom_ca_certs_file cert.pem
+    # gcloud config set core/custom_ca_certs_file cert.pem'
+    
+    NPROC = 4
+  else
+    NPROC = $(nproc)
   fi
 
 
@@ -173,7 +174,7 @@ if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
   or_die apt-get install -y virtualenv python3-dev python-is-python3
   ATS_PYTHON_HOME=/tmp/run_integrated_tests_virtualenv
   or_die virtualenv ${ATS_PYTHON_HOME}
-  ATS_CMAKE_ARGS="-DATS_ARGUMENTS=\"--machine openmpi --ats openmpi_mpirun=/usr/bin/mpirun --ats openmpi_args=--allow-run-as-root --ats openmpi_procspernode=$(nproc) --ats openmpi_maxprocs=$(nproc)\" -DPython3_ROOT_DIR=${ATS_PYTHON_HOME}"
+  ATS_CMAKE_ARGS="-DATS_ARGUMENTS=\"--machine openmpi --ats openmpi_mpirun=/usr/bin/mpirun --ats openmpi_args=--allow-run-as-root --ats openmpi_procspernode=${NPROC} --ats openmpi_maxprocs=${NPROC}\" -DPython3_ROOT_DIR=${ATS_PYTHON_HOME}"
 fi
 
 
@@ -227,9 +228,9 @@ fi
 
 # Performing the requested build.
 if [[ "${BUILD_EXE_ONLY}" = true ]]; then
-  or_die ninja -j $(nproc) geosx
+  or_die ninja -j ${NPROC} geosx
 else
-  or_die ninja -j $(nproc)
+  or_die ninja -j ${NPROC}
   or_die ninja install
 
   if [[ ! -z "${DATA_BASENAME_WE}" ]]; then
