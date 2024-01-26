@@ -157,7 +157,7 @@ EOT
     update-ca-certificates 
     # gcloud config set core/custom_ca_certs_file cert.pem'
     
-    NPROC=4
+    NPROC=8
   else
     NPROC=$(nproc)
   fi
