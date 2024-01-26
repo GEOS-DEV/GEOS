@@ -280,10 +280,17 @@ public:
 
   /**
    * @brief Function to update all constitutive models
-   * @param dataGroup group that contains the fields
+   * @param subRegion subregion that contains the fields
    */
   virtual void
-  updateFluidModel( ElementSubRegionBase & dataGroup ) const;
+  updateFluidModel( ElementSubRegionBase & subRegion ) const;
+
+  /**
+   * @brief Function to update fluid mass
+   * @param subRegion subregion that contains the fields
+   */
+  void
+  updateMass( ElementSubRegionBase & dataGroup ) const;
 
   /**
    * @brief Update all relevant solid internal energy models using current values of temperature

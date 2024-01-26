@@ -262,6 +262,28 @@ void SinglePhaseBase::updateFluidModel( ElementSubRegionBase & subRegion ) const
   }
 }
 
+void SinglePhaseBase::updateMass( ElementSubRegionBase & subRegion ) const
+{
+  GEOS_MARK_FUNCTION;
+
+  arrayView1d< real64 > const mass = subRegion.getField< fields::flow::mass >();
+
+  CoupledSolidBase const & porousSolid =
+    getConstitutiveModel< CoupledSolidBase >( subRegion, subRegion.template getReference< string >( viewKeyStruct::solidNamesString() ) );
+  arrayView2d< real64 const > const porosity = porousSolid.getPorosity();
+
+  arrayView1d< real64 const > const volume = subRegion.getElementVolume();
+
+  SingleFluidBase & fluid =
+    getConstitutiveModel< SingleFluidBase >( subRegion, subRegion.getReference< string >( viewKeyStruct::fluidNamesString() ) );
+  arrayView2d< real64 const > const density = fluid.density();
+
+  forAll< parallelDevicePolicy<> >( subRegion.size(), [=]    GEOS_HOST_DEVICE ( localIndex const ei )
+  {
+    mass[ei] = porosity[ei][0] * volume[ei] * density[ei][0];
+  } );
+}
+
 void SinglePhaseBase::updateSolidInternalEnergyModel( ObjectManagerBase & dataGroup ) const
 {
   arrayView1d< real64 const > const temp = dataGroup.getField< fields::flow::temperature >();
@@ -292,6 +314,7 @@ void SinglePhaseBase::updateThermalConductivity( ElementSubRegionBase & subRegio
 void SinglePhaseBase::updateFluidState( ElementSubRegionBase & subRegion ) const
 {
   updateFluidModel( subRegion );
+  updateMass( subRegion );
   updateMobility( subRegion );
 }
 
