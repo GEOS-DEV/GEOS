@@ -181,7 +181,7 @@ jobs:
       ENABLE_TRILINOS: ${{ matrix.ENABLE_TRILINOS }}
       GCP_BUCKET: ${{ matrix.GCP_BUCKET }}
       HOST_CONFIG: ${{ matrix.HOST_CONFIG }}
-      RUNS_ON: "[streak0, streak1]"
+      RUNS_ON: streak0
     secrets: inherit
 
   # If the 'ci: run integrated tests' PR label is found, the integrated tests will be run immediately after the cpu jobs.
@@ -202,7 +202,7 @@ jobs:
       ENABLE_HYPRE: ON
       ENABLE_TRILINOS: OFF
       GCP_BUCKET: geosx/integratedTests
-      RUNS_ON: "[streak0, streak1]"
+      RUNS_ON: streak0
       DOCKER_RUN_ARGS: "--cpus=4 --memory=128g"
 
   code_coverage:
@@ -249,7 +249,7 @@ jobs:
             ENABLE_HYPRE_DEVICE: CUDA
             ENABLE_HYPRE: ON
             ENABLE_TRILINOS: OFF
-            RUNS_ON: "[streak0, streak1]"
+            RUNS_ON: streak0
             DOCKER_RUN_ARGS: "--cpus=4 --memory=128g --runtime=nvidia --gpus all"
 
 
@@ -257,7 +257,7 @@ jobs:
           #   BUILD_AND_TEST_CLI_ARGS: "--no-run-unit-tests --no-install-schema"
           #   CMAKE_BUILD_TYPE: Release
           #   DOCKER_REPOSITORY: geosx/centos7.7-gcc8.3.1-cuda11.8.89
-          #   RUNS_ON: "[streak0, streak1]"
+          #   RUNS_ON: streak0
 #            USE_SCCACHE: false
             # DOCKER_RUN_ARGS: "--cpus=4 --memory=16g"
 
