@@ -146,7 +146,7 @@ EOT
 echo $HOSTNAME
 echo ${HOSTNAME}
 echo "${HOSTNAME}"
-#  if [[ ${HOSTNAME} == "streak.llnl.gov" ]]; then
+  if [[ ${HOSTNAME} == 'streak.llnl.gov' ]]; then
     DOCKER_CERTS_DIR=/usr/local/share/ca-certificates
     for file in "${GEOS_SRC_DIR}"/certificates/*.crt.pem; do
       if [ -f "$file" ]; then
@@ -159,7 +159,7 @@ echo "${HOSTNAME}"
     done
     update-ca-certificates 
     # gcloud config set core/custom_ca_certs_file cert.pem
-#  fi
+  fi
 
 
   echo "sccache initial state"
