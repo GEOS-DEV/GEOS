@@ -373,6 +373,8 @@ public:
 
   virtual void initializePostInitialConditionsPreSubGroups() override;
 
+  integer useSimpleAccumulation() const { return m_useSimpleAccumulation; }
+
   integer useTotalMassEquation() const { return m_useTotalMassEquation; }
 
   virtual bool checkSequentialSolutionIncrements( DomainPartition & domain ) const override;
