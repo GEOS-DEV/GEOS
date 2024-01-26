@@ -8,7 +8,6 @@ echo "Running CLI ${SCRIPT_NAME} $@"
 
 echo "running nproc"
 nproc
-$(nproc)/2
 
 # docs.docker.com/config/containers/resource_constraints
 # Inside the container, tools like free report the host's available swap, not what's available inside the container.
@@ -144,18 +143,20 @@ EOT
   # The path to the `sccache` executable is available through the SCCACHE environment variable.
   SCCACHE_CMAKE_ARGS="-DCMAKE_CXX_COMPILER_LAUNCHER=${SCCACHE} -DCMAKE_CUDA_COMPILER_LAUNCHER=${SCCACHE}"
 
-  DOCKER_CERTS_DIR=/usr/local/share/ca-certificates
-  for file in "${GEOS_SRC_DIR}"/certificates/*.crt.pem; do
-    if [ -f "$file" ]; then
-      filename=$(basename -- "$file")
-      filename_no_ext="${filename%.*}"
-      new_filename="${DOCKER_CERTS_DIR}/${filename_no_ext}.crt"
-      cp "$file" "$new_filename"
-      echo "Copied $filename to $new_filename"
-    fi
-  done
-  update-ca-certificates 
-  # gcloud config set core/custom_ca_certs_file cert.pem
+  if[[ hostname=="streak.llnl.gov"]]; then
+    DOCKER_CERTS_DIR=/usr/local/share/ca-certificates
+    for file in "${GEOS_SRC_DIR}"/certificates/*.crt.pem; do
+      if [ -f "$file" ]; then
+        filename=$(basename -- "$file")
+        filename_no_ext="${filename%.*}"
+        new_filename="${DOCKER_CERTS_DIR}/${filename_no_ext}.crt"
+        cp "$file" "$new_filename"
+        echo "Copied $filename to $new_filename"
+      fi
+    done
+    update-ca-certificates 
+    # gcloud config set core/custom_ca_certs_file cert.pem
+  fi
 
 
   echo "sccache initial state"

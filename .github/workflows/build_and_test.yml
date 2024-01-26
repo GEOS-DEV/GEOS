@@ -119,12 +119,11 @@ jobs:
           script_args+=(--sccache-credentials $(basename ${GOOGLE_GHA_CREDS_PATH}))
         fi
 
-
-        RUNNER_CERTIFICATES_DIR=/etc/pki/ca-trust/source/anchors/
-        mkdir -p ${GITHUB_WORKSPACE}/certificates
-        cp ${RUNNER_CERTIFICATES_DIR}/*.crt* ${GITHUB_WORKSPACE}/certificates
-        #/etc/pki/ca-trust/extracted/openssl/ca-bundle.trust.crt
-
+        if [[${{ inputs.RUNS_ON }}=='self-hosted']]; then
+          RUNNER_CERTIFICATES_DIR=/etc/pki/ca-trust/source/anchors/
+          mkdir -p ${GITHUB_WORKSPACE}/certificates
+          cp ${RUNNER_CERTIFICATES_DIR}/*.crt* ${GITHUB_WORKSPACE}/certificates
+        fi
         # We need to know where the code folder is mounted inside the container so we can run the script at the proper location!
         # Since this information is repeated twice, we use a variable.
         GITHUB_WORKSPACE_MOUNT_POINT=/tmp/geos
@@ -165,6 +164,7 @@ jobs:
         set +e
         docker run \
           ${docker_args[@]} \
+          -h=`hostname` \
           ${{ inputs.DOCKER_REPOSITORY }}:${{ inputs.DOCKER_IMAGE_TAG }} \
           ${GITHUB_WORKSPACE_MOUNT_POINT}/scripts/ci_build_and_test_in_container.sh \
             ${script_args[@]}
@@ -172,11 +172,6 @@ jobs:
         echo "Received exit status ${EXIT_STATUS} from the build process."
         set -e
         
-        echo DATA_EXCHANGE_DIR = ${DATA_EXCHANGE_DIR}
-        echo DATA_BASENAME = ${DATA_BASENAME}
-        echo GCP_BUCKET = ${{inputs.GCP_BUCKET}}
-
-
         # Send to the bucket and print the download link when it makes sense.
         if [[ ! -z "${{ inputs.GCP_BUCKET }}" ]]; then
           if [[ "${{ inputs.BUILD_TYPE }}" = "integrated_tests" || ${EXIT_STATUS} -eq 0 ]]; then
