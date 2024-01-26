@@ -8,7 +8,7 @@ BIN_DIR=
 PACKAGE_DIR=
 TMP_CLONE_DIR=
 PIP_CMD="pip --disable-pip-version-check"
-PYTHON_PKG_BRANCH=main
+PACKAGE_BRANCH=main
 
 
 declare -a TARGET_PACKAGES=("geosx_mesh_tools_package"
@@ -52,8 +52,8 @@ case $key in
     PACKAGE_DIR="$2"
     shift # past argument
     ;;
-    -g|--python-pkg-branch)
-    PYTHON_PKG_BRANCH="$2"
+    -r|--python-pkg-branch)
+    PACKAGE_BRANCH="$2"
     shift # past argument
     ;;
     -v|--verbose)
@@ -101,10 +101,10 @@ fi
 echo "Checking for python packages..."
 if [[ -z "${PACKAGE_DIR}" ]]
 then
-    echo "Cloning the GEOS python package repository..."
+    echo "Cloning the GEOS python package repository (branch=$PACKAGE_BRANCH)..."
     TMP_CLONE_DIR=$(mktemp -d)
     PACKAGE_DIR=$TMP_CLONE_DIR/geosPythonPackages
-    git clone --depth 1 --branch $PYTHON_PKG_BRANCH --single-branch https://github.com/GEOS-DEV/geosPythonPackages.git $PACKAGE_DIR
+    git clone --depth 1 --branch $PACKAGE_BRANCH --single-branch https://github.com/GEOS-DEV/geosPythonPackages.git $PACKAGE_DIR
 elif [ ! -d "${PACKAGE_DIR}/geosx_xml_tools_package" ]
 then
     echo "The specified package directory does not contain the expected targets."

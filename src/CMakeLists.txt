@@ -256,13 +256,18 @@ if ( Python3_EXECUTABLE )
         message(WARNING "The \"virtualenv\" package was not found in the target python environment (${Python3_EXECUTABLE}).  This package may be required to build PYGEOSX or the python development environment.")
     endif()
 
+    # Check for the requested branch of geosPythonPackages (used for testing)
+    if( NOT GEOS_PYTHON_PACKAGES_BRANCH )
+      set(GEOS_PYTHON_PACKAGES_BRANCH "main" CACHE STRING "" FORCE)
+    endif()
+
     # Build targets
     set( GEOSX_PYTHON_TOOLS_BINS
          "${CMAKE_BINARY_DIR}/bin/preprocess_xml"
          "${CMAKE_BINARY_DIR}/bin/format_xml" )
 
     add_custom_command( OUTPUT ${GEOSX_PYTHON_TOOLS_BINS}
-                        COMMAND bash ${CMAKE_SOURCE_DIR}/../scripts/setupPythonEnvironment.bash -p ${PYTHON_POST_EXECUTABLE} -b ${CMAKE_BINARY_DIR}/bin ${PYTHON_SETUP_XARGS}
+                        COMMAND bash ${CMAKE_SOURCE_DIR}/../scripts/setupPythonEnvironment.bash -p ${PYTHON_POST_EXECUTABLE} -b ${CMAKE_BINARY_DIR}/bin --python-pkg-branch ${GEOS_PYTHON_PACKAGES_BRANCH}
                         WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
                       )
 
