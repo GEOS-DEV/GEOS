@@ -121,9 +121,9 @@ public:
 
   /**
    * @brief Update all relevant fluid models using current values of pressure and composition
-   * @param dataGroup the group storing the required fields
+   * @param subRegion the subregion storing the required fields
    */
-  void updateFluidModel( ObjectManagerBase & dataGroup ) const;
+  void updateFluidModel( ElementSubRegionBase & subRegion ) const;
 
   /**
    * @brief Update all relevant relperm models using current values of phase volume fraction

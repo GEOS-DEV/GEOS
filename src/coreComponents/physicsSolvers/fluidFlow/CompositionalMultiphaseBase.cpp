@@ -632,17 +632,17 @@ real64 CompositionalMultiphaseBase::updatePhaseVolumeFraction( ObjectManagerBase
   return maxDeltaPhaseVolFrac;
 }
 
-void CompositionalMultiphaseBase::updateFluidModel( ObjectManagerBase & dataGroup ) const
+void CompositionalMultiphaseBase::updateFluidModel( ElementSubRegionBase & subRegion ) const
 {
   GEOS_MARK_FUNCTION;
 
-  arrayView1d< real64 const > const pres = dataGroup.getField< fields::flow::pressure >();
-  arrayView1d< real64 const > const temp = dataGroup.getField< fields::flow::temperature >();
+  arrayView1d< real64 const > const pres = subRegion.getField< fields::flow::pressure >();
+  arrayView1d< real64 const > const temp = subRegion.getField< fields::flow::temperature >();
   arrayView2d< real64 const, compflow::USD_COMP > const compFrac =
-    dataGroup.getField< fields::flow::globalCompFraction >();
+    subRegion.getField< fields::flow::globalCompFraction >();
 
-  string const & fluidName = dataGroup.getReference< string >( viewKeyStruct::fluidNamesString() );
-  MultiFluidBase & fluid = getConstitutiveModel< MultiFluidBase >( dataGroup, fluidName );
+  string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
+  MultiFluidBase & fluid = getConstitutiveModel< MultiFluidBase >( subRegion, fluidName );
 
   constitutiveUpdatePassThru( fluid, [&] ( auto & castedFluid )
   {
@@ -652,7 +652,7 @@ void CompositionalMultiphaseBase::updateFluidModel( ObjectManagerBase & dataGrou
 
     thermalCompositionalMultiphaseBaseKernels::
       FluidUpdateKernel::
-      launch< ExecPolicy >( dataGroup.size(),
+      launch< ExecPolicy >( subRegion.size(),
                             fluidWrapper,
                             pres,
                             temp,

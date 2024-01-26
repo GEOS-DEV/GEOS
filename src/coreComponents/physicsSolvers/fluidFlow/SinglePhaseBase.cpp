@@ -227,21 +227,39 @@ void SinglePhaseBase::initializePreSubGroups()
   initializeAquiferBC();
 }
 
-void SinglePhaseBase::updateFluidModel( ObjectManagerBase & dataGroup ) const
+void SinglePhaseBase::updateFluidModel( ElementSubRegionBase & subRegion ) const
 {
   GEOS_MARK_FUNCTION;
 
-  arrayView1d< real64 const > const pres = dataGroup.getField< fields::flow::pressure >();
-  arrayView1d< real64 const > const temp = dataGroup.getField< fields::flow::temperature >();
+  arrayView1d< real64 const > const pres = subRegion.getField< fields::flow::pressure >();
+  arrayView1d< real64 const > const temp = subRegion.getField< fields::flow::temperature >();
 
   SingleFluidBase & fluid =
-    getConstitutiveModel< SingleFluidBase >( dataGroup, dataGroup.getReference< string >( viewKeyStruct::fluidNamesString() ) );
+    getConstitutiveModel< SingleFluidBase >( subRegion, subRegion.getReference< string >( viewKeyStruct::fluidNamesString() ) );
 
   constitutiveUpdatePassThru( fluid, [&]( auto & castedFluid )
   {
     typename TYPEOFREF( castedFluid ) ::KernelWrapper fluidWrapper = castedFluid.createKernelWrapper();
     thermalSinglePhaseBaseKernels::FluidUpdateKernel::launch( fluidWrapper, pres, temp );
   } );
+
+  // update fluid mass
+  {
+    arrayView1d< real64 > const mass = subRegion.getField< fields::flow::mass >();
+
+    CoupledSolidBase const & porousSolid =
+      getConstitutiveModel< CoupledSolidBase >( subRegion, subRegion.template getReference< string >( viewKeyStruct::solidNamesString() ) );
+    arrayView2d< real64 const > const porosity = porousSolid.getPorosity();
+
+    arrayView1d< real64 const > const volume = subRegion.getElementVolume();
+
+    arrayView2d< real64 const > const density = fluid.density();
+
+    forAll< parallelDevicePolicy<> >( subRegion.size(), [=]    GEOS_HOST_DEVICE ( localIndex const ei )
+    {
+      mass[ei] = porosity[ei][0] * volume[ei] * density[ei][0];
+    } );
+  }
 }
 
 void SinglePhaseBase::updateSolidInternalEnergyModel( ObjectManagerBase & dataGroup ) const
@@ -271,7 +289,7 @@ void SinglePhaseBase::updateThermalConductivity( ElementSubRegionBase & subRegio
   conductivityMaterial.update( porosity );
 }
 
-void SinglePhaseBase::updateFluidState( ObjectManagerBase & subRegion ) const
+void SinglePhaseBase::updateFluidState( ElementSubRegionBase & subRegion ) const
 {
   updateFluidModel( subRegion );
   updateMobility( subRegion );

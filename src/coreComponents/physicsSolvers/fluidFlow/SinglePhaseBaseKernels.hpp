@@ -157,6 +157,7 @@ public:
     m_density_n( fluid.density_n() ),
     m_density( fluid.density() ),
     m_dDensity_dPres( fluid.dDensity_dPressure() ),
+    m_mass_n( subRegion.template getField< fields::flow::mass_n >() ),
     m_localMatrix( localMatrix ),
     m_localRhs( localRhs )
   {}
@@ -242,7 +243,7 @@ public:
                             FUNC && kernelOp = NoOpFunc{} ) const
   {
     // Residual contribution is mass conservation in the cell
-    stack.localResidual[0] = stack.poreVolume * m_density[ei][0] - stack.poreVolume_n * m_density_n[ei][0];
+    stack.localResidual[0] = stack.poreVolume * m_density[ei][0] - m_mass_n[ei];
 
     // Derivative of residual wrt to pressure in the cell
     stack.localJacobian[0][0] = stack.dPoreVolume_dPres * m_density[ei][0] + m_dDensity_dPres[ei][0] * stack.poreVolume;
@@ -322,6 +323,9 @@ protected:
   arrayView2d< real64 const > const m_density_n;
   arrayView2d< real64 const > const m_density;
   arrayView2d< real64 const > const m_dDensity_dPres;
+
+  /// View on mass
+  arrayView1d< real64 const > const m_mass_n;
 
   /// View on the local CRS matrix
   CRSMatrixView< real64, globalIndex const > const m_localMatrix;
@@ -480,24 +484,20 @@ public:
                       arrayView1d< globalIndex const > const & dofNumber,
                       arrayView1d< localIndex const > const & ghostRank,
                       ElementSubRegionBase const & subRegion,
-                      constitutive::SingleFluidBase const & fluid,
-                      constitutive::CoupledSolidBase const & solid,
                       real64 const minNormalizer )
     : Base( rankOffset,
             localResidual,
             dofNumber,
             ghostRank,
             minNormalizer ),
-    m_volume( subRegion.getElementVolume() ),
-    m_porosity_n( solid.getPorosity_n() ),
-    m_density_n( fluid.density_n() )
+    m_mass_n( subRegion.template getField< fields::flow::mass_n >() )
   {}
 
   GEOS_HOST_DEVICE
   virtual void computeLinf( localIndex const ei,
                             LinfStackVariables & stack ) const override
   {
-    real64 const massNormalizer = LvArray::math::max( m_minNormalizer, m_density_n[ei][0] * m_porosity_n[ei][0] * m_volume[ei] );
+    real64 const massNormalizer = LvArray::math::max( m_minNormalizer, m_mass_n[ei] );
     real64 const valMass = LvArray::math::abs( m_localResidual[stack.localRow] ) / massNormalizer;
     if( valMass > stack.localValue[0] )
     {
@@ -509,7 +509,7 @@ public:
   virtual void computeL2( localIndex const ei,
                           L2StackVariables & stack ) const override
   {
-    real64 const massNormalizer = LvArray::math::max( m_minNormalizer, m_density_n[ei][0] * m_porosity_n[ei][0] * m_volume[ei] );
+    real64 const massNormalizer = LvArray::math::max( m_minNormalizer, m_mass_n[ei] );
     stack.localValue[0] += m_localResidual[stack.localRow] * m_localResidual[stack.localRow];
     stack.localNormalizer[0] += massNormalizer;
   }
@@ -517,14 +517,8 @@ public:
 
 protected:
 
-  /// View on the volume
-  arrayView1d< real64 const > const m_volume;
-
-  /// View on porosity at the previous converged time step
-  arrayView2d< real64 const > const m_porosity_n;
-
-  /// View on total mass/molar density at the previous converged time step
-  arrayView2d< real64 const > const m_density_n;
+  /// View on mass at the previous converged time step
+  arrayView1d< real64 const > const m_mass_n;
 
 };
 
@@ -555,8 +549,6 @@ public:
                    string const dofKey,
                    arrayView1d< real64 const > const & localResidual,
                    ElementSubRegionBase const & subRegion,
-                   constitutive::SingleFluidBase const & fluid,
-                   constitutive::CoupledSolidBase const & solid,
                    real64 const minNormalizer,
                    real64 (& residualNorm)[1],
                    real64 (& residualNormalizer)[1] )
@@ -564,7 +556,7 @@ public:
     arrayView1d< globalIndex const > const dofNumber = subRegion.getReference< array1d< globalIndex > >( dofKey );
     arrayView1d< integer const > const ghostRank = subRegion.ghostRank();
 
-    ResidualNormKernel kernel( rankOffset, localResidual, dofNumber, ghostRank, subRegion, fluid, solid, minNormalizer );
+    ResidualNormKernel kernel( rankOffset, localResidual, dofNumber, ghostRank, subRegion, minNormalizer );
     if( normType == solverBaseKernels::NormType::Linf )
     {
       ResidualNormKernel::launchLinf< POLICY >( subRegion.size(), kernel, residualNorm );

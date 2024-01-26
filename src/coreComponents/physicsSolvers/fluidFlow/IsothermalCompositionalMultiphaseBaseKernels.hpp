@@ -779,10 +779,10 @@ public:
           }
         }
 
-      // call the lambda in the phase loop to allow the reuse of the phase amounts and their derivatives
-      // possible use: assemble the derivatives wrt temperature, and the accumulation term of the energy equation for this phase
-      real64 const phaseAmount_n = stack.poreVolume_n * phaseVolFrac_n[ip] * phaseDens_n[ip];
-      phaseAmountKernelOp( ip, phaseAmount, phaseAmount_n, dPhaseAmount_dP, dPhaseAmount_dC );
+        // call the lambda in the phase loop to allow the reuse of the phase amounts and their derivatives
+        // possible use: assemble the derivatives wrt temperature, and the accumulation term of the energy equation for this phase
+        real64 const phaseAmount_n = stack.poreVolume_n * phaseVolFrac_n[ip] * phaseDens_n[ip];
+        phaseAmountKernelOp( ip, phaseAmount, phaseAmount_n, dPhaseAmount_dP, dPhaseAmount_dC );
 
       }
     }

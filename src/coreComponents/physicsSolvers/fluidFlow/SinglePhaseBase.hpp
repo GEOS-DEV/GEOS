@@ -272,10 +272,10 @@ public:
 
   /**
    * @brief Function to update all constitutive state and dependent variables
-   * @param dataGroup group that contains the fields
+   * @param ElementSubRegionBase subregion that contains the fields
    */
   void
-  updateFluidState( ObjectManagerBase & subRegion ) const;
+  updateFluidState( ElementSubRegionBase & subRegion ) const;
 
 
   /**
@@ -283,7 +283,7 @@ public:
    * @param dataGroup group that contains the fields
    */
   virtual void
-  updateFluidModel( ObjectManagerBase & dataGroup ) const;
+  updateFluidModel( ElementSubRegionBase & dataGroup ) const;
 
   /**
    * @brief Update all relevant solid internal energy models using current values of temperature
