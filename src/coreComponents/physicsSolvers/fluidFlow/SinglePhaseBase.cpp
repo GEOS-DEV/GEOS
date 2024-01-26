@@ -1124,7 +1124,7 @@ void SinglePhaseBase::applySourceFluxBC( real64 const time_n,
       }
 
       SourceFluxStatsAggregator::forAllFluxStatData( subRegion, fs.getName(),
-                                                          [&]( SourceFluxStatsAggregator::WrappedStats & wrapper )
+                                                     [&]( SourceFluxStatsAggregator::WrappedStats & wrapper )
       {
         // set the new sub-region statistics for this timestep
         wrapper.setTimeStepStats( dt, producedMass, targetSet.size(),
