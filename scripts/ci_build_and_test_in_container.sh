@@ -143,7 +143,7 @@ EOT
   # The path to the `sccache` executable is available through the SCCACHE environment variable.
   SCCACHE_CMAKE_ARGS="-DCMAKE_CXX_COMPILER_LAUNCHER=${SCCACHE} -DCMAKE_CUDA_COMPILER_LAUNCHER=${SCCACHE}"
 
-  if [[ ${HOSTNAME} == "streak.llnl.gov" ]]; then
+#  if [[ ${HOSTNAME} == "streak.llnl.gov" ]]; then
     DOCKER_CERTS_DIR=/usr/local/share/ca-certificates
     for file in "${GEOS_SRC_DIR}"/certificates/*.crt.pem; do
       if [ -f "$file" ]; then
@@ -156,7 +156,7 @@ EOT
     done
     update-ca-certificates 
     # gcloud config set core/custom_ca_certs_file cert.pem
-  fi
+#  fi
 
 
   echo "sccache initial state"
