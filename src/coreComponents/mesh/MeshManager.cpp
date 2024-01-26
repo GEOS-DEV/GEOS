@@ -43,15 +43,15 @@ MeshManager::~MeshManager()
 Group * MeshManager::createChild( string const & childKey, string const & childName )
 {
   GEOS_LOG_RANK_0( "Adding Mesh: " << childKey << ", " << childName );
-  std::unique_ptr< MeshGeneratorBase > solver = MeshGeneratorBase::CatalogInterface::factory( childKey, childName, this );
-  return &this->registerGroup< MeshGeneratorBase >( childName, std::move( solver ) );
+  std::unique_ptr< MeshBase > mesh = MeshBase::CatalogInterface::factory( childKey, childName, this );
+  return &this->registerGroup< MeshBase >( childName, std::move( mesh ) );
 }
 
 
 void MeshManager::expandObjectCatalogs()
 {
-  // During schema generation, register one of each type derived from MeshGeneratorBase here
-  for( auto & catalogIter: MeshGeneratorBase::getCatalog())
+  // During schema generation, register one of each type derived from MeshBase here
+  for( auto & catalogIter: MeshBase::getCatalog())
   {
     createChild( catalogIter.first, catalogIter.first );
   }

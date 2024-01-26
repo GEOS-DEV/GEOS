@@ -25,11 +25,6 @@ ExternalMeshGeneratorBase::ExternalMeshGeneratorBase( string const & name,
 {
   enableLogLevelInput();
 
-  registerWrapper( viewKeyStruct::filePathString(), &m_filePath ).
-    setInputFlag( InputFlags::REQUIRED ).
-    setRestartFlags( RestartFlags::NO_WRITE ).
-    setDescription( "Path to the mesh file" );
-
   registerWrapper( viewKeyStruct::translateString(), &m_translate ).
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( { 0.0, 0.0, 0.0 } ).

@@ -44,7 +44,6 @@ protected:
   ///@cond DO_NOT_DOCUMENT
   struct viewKeyStruct
   {
-    constexpr static char const * filePathString() { return "file"; }
     constexpr static char const * scaleString() { return "scale"; }
     constexpr static char const * translateString() { return "translate"; }
     constexpr static char const * volumicFieldsToImportString() { return "fieldsToImport"; }
@@ -55,9 +54,6 @@ protected:
   /// @endcond
 
   void postProcessInput() override;
-
-  /// Path to the mesh file
-  Path m_filePath;
 
   /// Translation vector that will be applied to the point coordinates (prior to scaling)
   R1Tensor m_translate;

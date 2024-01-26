@@ -16,6 +16,7 @@ set( mesh_headers
      FaceManager.hpp
      FieldIdentifiers.hpp
      InterObjectRelation.hpp
+     MeshBase.hpp
      MeshBody.hpp
      MeshForLoopInterface.hpp
      MeshLevel.hpp
@@ -96,6 +97,7 @@ set( mesh_sources
      EmbeddedSurfaceSubRegion.cpp
      FaceElementSubRegion.cpp
      FaceManager.cpp
+     MeshBase.cpp
      MeshBody.cpp
      MeshLevel.cpp
      MeshManager.cpp
