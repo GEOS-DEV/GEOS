@@ -119,11 +119,11 @@ jobs:
           script_args+=(--sccache-credentials $(basename ${GOOGLE_GHA_CREDS_PATH}))
         fi
 
-        #if [[${{ inputs.RUNS_ON }}=='self-hosted']]; then
+        if [ ${{ inputs.RUNS_ON }} == 'self-hosted' ]; then
           RUNNER_CERTIFICATES_DIR=/etc/pki/ca-trust/source/anchors/
           mkdir -p ${GITHUB_WORKSPACE}/certificates
           cp ${RUNNER_CERTIFICATES_DIR}/*.crt* ${GITHUB_WORKSPACE}/certificates
-        #fi
+        fi
         # We need to know where the code folder is mounted inside the container so we can run the script at the proper location!
         # Since this information is repeated twice, we use a variable.
         GITHUB_WORKSPACE_MOUNT_POINT=/tmp/geos
