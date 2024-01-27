@@ -1352,10 +1352,10 @@ bool SinglePhaseBase::checkSystemSolution( DomainPartition & domain,
 
 void SinglePhaseBase::saveConvergedState( ElementSubRegionBase & subRegion ) const
 {
-  FlowSolverBase::saveConvergedState(subRegion);
-  
-  arrayView1d < real64 const > const mass = subRegion.template getField< fields::flow::mass >();
-  arrayView1d <real64> const mass_n = subRegion.template getField< fields::flow::mass_n >();
+  FlowSolverBase::saveConvergedState( subRegion );
+
+  arrayView1d< real64 const > const mass = subRegion.template getField< fields::flow::mass >();
+  arrayView1d< real64 > const mass_n = subRegion.template getField< fields::flow::mass_n >();
   mass_n.setValues< parallelDevicePolicy<> >( mass );
 }
 
