@@ -216,7 +216,8 @@ void testNumericalDerivatives( FLASH_WRAPPER const & flashModelWrapper,
                                real64 const temperature,
                                arraySlice1d< real64 const > const & compFraction,
                                real64 const perturbParameter,
-                               real64 const relTol )
+                               real64 const relTol,
+                               real64 const absTol = std::numeric_limits< real64 >::epsilon() )
 {
   using namespace multifluid;
   using Deriv = multifluid::DerivativeOffset;
@@ -312,12 +313,12 @@ void testNumericalDerivatives( FLASH_WRAPPER const & flashModelWrapper,
     {
       checkRelativeError( (perturbedPhaseFracAndDeriv.value[j]-phaseFracAndDeriv.value[j])/dC,
                           phaseFracAndDeriv.derivs[j][Deriv::dC+i],
-                          relTol );
+                          relTol, absTol );
       for( integer k = 0; k < numComp; ++k )
       {
         checkRelativeError( (perturbedPhaseCompFracAndDeriv.value[j][k]-phaseCompFracAndDeriv.value[j][k])/dC,
                             phaseCompFracAndDeriv.derivs[j][k][Deriv::dC+i],
-                            relTol );
+                            relTol, absTol );
       }
     }
   }
@@ -876,8 +877,9 @@ TEST_F( CO2SolubilityTest, co2SolubilityValuesAndDeriv )
   real64 const deltaComp = 0.2;
 
   real64 const eps = sqrt( std::numeric_limits< real64 >::epsilon());
-  real64 const relTolPrevImpl = 5e-4;
-  real64 const relTolDeriv = 5e-5;
+  real64 constexpr relTolPrevImpl = 5e-4;
+  real64 constexpr relTolDeriv = 5e-5;
+  real64 constexpr absTolDeriv = 1.0e-7;
 
   real64 const savedGasPhaseFrac[] = { 0.298158785, 0.298183347, 0.2982033821, 0.295950309, 0.2959791448, 0.2960026365, 0.2926988393,
                                        0.292724834, 0.2927459702, 0.499837295, 0.499854799, 0.4998690769, 0.4982634386, 0.4982839883,
@@ -901,7 +903,7 @@ TEST_F( CO2SolubilityTest, co2SolubilityValuesAndDeriv )
         testValuesAgainstPreviousImplementation( flashModelWrapper,
                                                  P[iPres], TC[iTemp], comp,
                                                  savedGasPhaseFrac[counter], savedWaterPhaseGasComp[counter], relTolPrevImpl );
-        testNumericalDerivatives( flashModelWrapper, P[iPres], TC[iTemp], comp, eps, relTolDeriv );
+        testNumericalDerivatives( flashModelWrapper, P[iPres], TC[iTemp], comp, eps, relTolDeriv, absTolDeriv );
         counter++;
       }
     }

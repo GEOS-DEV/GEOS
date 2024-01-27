@@ -108,10 +108,10 @@ public:
                         DomainPartition & domain ) override;
 
   /**
-   * @brief Recompute component fractions from primary variables (component densities)
+   * @brief Recompute global component fractions from primary variables (component densities)
    * @param dataGroup the group storing the required fields
    */
-  void updateComponentFraction( ObjectManagerBase & dataGroup ) const;
+  void updateGlobalComponentFraction( ObjectManagerBase & dataGroup ) const;
 
   /**
    * @brief Recompute phase volume fractions (saturations) from constitutive and primary variables
@@ -267,7 +267,7 @@ public:
    * from prescribed intermediate values (i.e. global densities from global fractions)
    * and any applicable hydrostatic equilibration of the domain
    */
-  void initializeFluidState( MeshLevel & mesh, string_array const & regionNames );
+  void initializeFluidState( MeshLevel & mesh, DomainPartition & domain, string_array const & regionNames );
 
   /**
    * @brief Compute the hydrostatic equilibrium using the compositions and temperature input tables
@@ -373,6 +373,8 @@ public:
                                       DomainPartition & domain ) override;
 
   virtual void initializePostInitialConditionsPreSubGroups() override;
+
+  integer useSimpleAccumulation() const { return m_useSimpleAccumulation; }
 
   integer useTotalMassEquation() const { return m_useTotalMassEquation; }
 

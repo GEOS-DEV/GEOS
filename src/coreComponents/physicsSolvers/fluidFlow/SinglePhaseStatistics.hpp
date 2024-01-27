@@ -89,6 +89,16 @@ private:
     /// maximum region delta pressure
     real64 maxDeltaPressure;
 
+    // fluid mass
+    real64 totalMass;
+
+    /// average region temperature
+    real64 averageTemperature;
+    /// minimum region temperature
+    real64 minTemperature;
+    /// maximum region temperature
+    real64 maxTemperature;
+
     /// total region pore volume
     real64 totalPoreVolume;
     /// total region uncompacted pore volume
@@ -100,7 +110,8 @@ private:
    * @param[in] mesh the mesh level object
    * @param[in] regionNames the array of target region names
    */
-  void computeRegionStatistics( MeshLevel & mesh,
+  void computeRegionStatistics( real64 const time,
+                                MeshLevel & mesh,
                                 string_array const & regionNames ) const;
 
 

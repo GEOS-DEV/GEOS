@@ -148,11 +148,11 @@ void Group::processInputFileRecursive( xmlWrapper::xmlDocument & xmlDocument,
 
   // Handle the case where the node was imported from a different input file
   // Set the path prefix to make sure all relative Path variables are interpreted correctly
-  string const oldPrefix = Path::pathPrefix();
+  string const oldPrefix = std::string( Path::getPathPrefix() );
   xmlWrapper::xmlAttribute filePath = targetNode.attribute( xmlWrapper::filePathString );
   if( filePath )
   {
-    Path::pathPrefix() = getAbsolutePath( splitPath( filePath.value() ).first );
+    Path::setPathPrefix( getAbsolutePath( splitPath( filePath.value() ).first ) );
   }
 
   // Loop over the child nodes of the targetNode
@@ -205,7 +205,7 @@ void Group::processInputFileRecursive( xmlWrapper::xmlDocument & xmlDocument,
   processInputFile( targetNode, nodePos );
 
   // Restore original prefix once the node is processed
-  Path::pathPrefix() = oldPrefix;
+  Path::setPathPrefix( oldPrefix );
 }
 
 void Group::processInputFile( xmlWrapper::xmlNode const & targetNode,

@@ -148,7 +148,7 @@ struct PrecomputeSourceAndReceiverKernel
             for( localIndex q=0; q< numNodesPerElem; ++q )
             {
               real64 inc[3] = { 0, 0, 0 };
-              sourceNodeIds[isrc][q] = elemsToNodes[k][q];
+              sourceNodeIds[isrc][q] = elemsToNodes( k, q );
               inc[0] += sourceForce[0] * N[q];
               inc[1] += sourceForce[1] * N[q];
               inc[2] += sourceForce[2] * N[q];
@@ -200,7 +200,7 @@ struct PrecomputeSourceAndReceiverKernel
 
             for( localIndex a = 0; a < numNodesPerElem; ++a )
             {
-              receiverNodeIds[ircv][a] = elemsToNodes[k][a];
+              receiverNodeIds[ircv][a] = elemsToNodes( k, a );
               receiverConstants[ircv][a] = Ntest[a];
             }
           }
@@ -328,9 +328,9 @@ struct DampingMatrixKernel
           for( localIndex q = 0; q < numNodesPerFace; ++q )
           {
             real32 const aux = density[e] * m_finiteElement.computeDampingTerm( q, xLocal );
-            real32 const localIncrementx = aux * ( velocityVp[e] * abs( nx ) + velocityVs[e] * sqrt( pow( ny, 2 ) + pow( nz, 2 ) ) );
-            real32 const localIncrementy = aux * ( velocityVp[e] * abs( ny ) + velocityVs[e] * sqrt( pow( nx, 2 ) + pow( nz, 2 ) ) );
-            real32 const localIncrementz = aux * ( velocityVp[e] * abs( nz ) + velocityVs[e] * sqrt( pow( nx, 2 ) + pow( ny, 2 ) ) );
+            real32 const localIncrementx = aux * ( velocityVp[e] * LvArray::math::abs( nx ) + velocityVs[e] * LvArray::math::sqrt( pow( ny, 2 ) + pow( nz, 2 ) ) );
+            real32 const localIncrementy = aux * ( velocityVp[e] * LvArray::math::abs( ny ) + velocityVs[e] * LvArray::math::sqrt( pow( nx, 2 ) + pow( nz, 2 ) ) );
+            real32 const localIncrementz = aux * ( velocityVp[e] * LvArray::math::abs( nz ) + velocityVs[e] * LvArray::math::sqrt( pow( nx, 2 ) + pow( ny, 2 ) ) );
 
             RAJA::atomicAdd< ATOMIC_POLICY >( &dampingx[facesToNodes( f, q )], localIncrementx );
             RAJA::atomicAdd< ATOMIC_POLICY >( &dampingy[facesToNodes( f, q )], localIncrementy );
@@ -420,9 +420,9 @@ public:
     m_stiffnessVectorx( nodeManager.getField< fields::StiffnessVectorx >() ),
     m_stiffnessVectory( nodeManager.getField< fields::StiffnessVectory >() ),
     m_stiffnessVectorz( nodeManager.getField< fields::StiffnessVectorz >() ),
-    m_density( elementSubRegion.template getField< fields::MediumDensity >() ),
-    m_velocityVp( elementSubRegion.template getField< fields::MediumVelocityVp >() ),
-    m_velocityVs( elementSubRegion.template getField< fields::MediumVelocityVs >() ),
+    m_density( elementSubRegion.template getField< fields::ElasticDensity >() ),
+    m_velocityVp( elementSubRegion.template getField< fields::ElasticVelocityVp >() ),
+    m_velocityVs( elementSubRegion.template getField< fields::ElasticVelocityVs >() ),
     m_dt( dt )
   {
     GEOS_UNUSED_VAR( edgeManager );
@@ -527,13 +527,13 @@ protected:
   /// The array containing the nodal displacement array in z direction.
   arrayView1d< real32 > const m_uz_n;
 
-  /// The array containing the product of the stiffness matrix and the nodal pressure.
+  /// The array containing the product of the stiffness matrix and the nodal displacement.
   arrayView1d< real32 > const m_stiffnessVectorx;
 
-  /// The array containing the product of the stiffness matrix and the nodal pressure.
+  /// The array containing the product of the stiffness matrix and the nodal displacement.
   arrayView1d< real32 > const m_stiffnessVectory;
 
-  /// The array containing the product of the stiffness matrix and the nodal pressure.
+  /// The array containing the product of the stiffness matrix and the nodal displacement.
   arrayView1d< real32 > const m_stiffnessVectorz;
 
   /// The array containing the density of the medium
