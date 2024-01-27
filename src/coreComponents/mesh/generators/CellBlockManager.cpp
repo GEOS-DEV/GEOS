@@ -21,6 +21,7 @@
 #include <algorithm>
 
 namespace geos
+
 {
 using namespace dataRepository;
 
@@ -849,26 +850,53 @@ static array1d< real64 > gaussLobattoPoints( int order )
   return GaussLobattoPts;
 }
 
-/*
-static void trilinearInterp( real64 const alpha,
-                             real64 const beta,
-                             real64 const gamma,
-                             real64 const (&X)[8][3],
-                             real64 (& coords)[3] )
+static void linearInterp( real64 const alpha,
+                          arrayView2d< real64, nodes::REFERENCE_POSITION_USD > const refPos,
+                          localIndex const vi[2],
+                          arrayView2d< real64, nodes::REFERENCE_POSITION_USD > refPosNew,
+                          localIndex const v )
 {
   for( int i=0; i<3; i++ )
   {
-    coords[i] = X[0][i]*( 1.0-alpha )*( 1.0-beta )*( 1.0-gamma )+
-                X[1][i]*    alpha    *( 1.0-beta )*( 1.0-gamma )+
-                X[2][i]*( 1.0-alpha )*    beta    *( 1.0-gamma )+
-                X[3][i]*    alpha    *    beta    *( 1.0-gamma )+
-                X[4][i]*( 1.0-alpha )*( 1.0-beta )*  gamma+
-                X[5][i]*    alpha    *( 1.0-beta )*  gamma+
-                X[6][i]*( 1.0-alpha )*    beta    *  gamma+
-                X[7][i]*    alpha    *    beta    *  gamma;
+    refPosNew( v, i ) = refPos( vi[0], i )*( 1.0-alpha )+
+                        refPos( vi[1], i )*    alpha    ;
   }
 }
-*/
+static void bilinearInterp( real64 const alpha,
+                            real64 const beta,
+                            arrayView2d< real64, nodes::REFERENCE_POSITION_USD > const refPos,
+                            localIndex const vi[4],
+                            arrayView2d< real64, nodes::REFERENCE_POSITION_USD > refPosNew,
+                            localIndex const v )
+{
+  for( int i=0; i<3; i++ )
+  {
+    refPosNew( v, i ) = refPos( vi[0], i )*( 1.0-alpha )*( 1.0-beta )+
+                        refPos( vi[1], i )*    alpha    *( 1.0-beta )+
+                        refPos( vi[2], i )*( 1.0-alpha )*    beta    +
+                        refPos( vi[3], i )*    alpha    *    beta    ;
+  }
+}
+static void trilinearInterp( real64 const alpha,
+                             real64 const beta,
+                             real64 const gamma,
+                             arrayView2d< real64, nodes::REFERENCE_POSITION_USD > const refPos,
+                             localIndex const vi[8],
+                             arrayView2d< real64, nodes::REFERENCE_POSITION_USD > refPosNew,
+                             localIndex const v )
+{
+  for( int i=0; i<3; i++ )
+  {
+    refPosNew( v, i ) = refPos( vi[0], i ) *( 1.0-alpha )*( 1.0-beta )*( 1.0-gamma )+
+                        refPos( vi[1], i ) *    alpha    *( 1.0-beta )*( 1.0-gamma )+
+                        refPos( vi[2], i ) *( 1.0-alpha )*    beta    *( 1.0-gamma )+
+                        refPos( vi[3], i ) *    alpha    *    beta    *( 1.0-gamma )+
+                        refPos( vi[4], i ) *( 1.0-alpha )*( 1.0-beta )*  gamma+
+                        refPos( vi[5], i ) *    alpha    *( 1.0-beta )*  gamma+
+                        refPos( vi[6], i ) *( 1.0-alpha )*    beta    *  gamma+
+                        refPos( vi[7], i ) *    alpha    *    beta    *  gamma;
+  }
+}
 
 void CellBlockManager::generateHighOrderMaps( localIndex const order,
                                               globalIndex const maxVertexGlobalID,
@@ -975,25 +1003,35 @@ void CellBlockManager::generateHighOrderMaps( localIndex const order,
                                   refPosNew=refPosNew.toView(),
                                   edgeLocalToGlobal=edgeLocalToGlobal.toView(),
                                   nodeLocalToGlobalNew=nodeLocalToGlobalNew.toView(),
-                                  numInternalNodesPerEdge, globalNodeOffset, glCoords, localNodeOffset]( localIndex const iter_edge)
+                                  numInternalNodesPerEdge, numNodesPerEdge, globalNodeOffset, glCoords, localNodeOffset, order]( localIndex const iter_edge)
   {
+      std::unordered_map< std::array< localIndex, 6 >, localIndex, NodeKeyHasher< localIndex > > nodeIDs;
       localIndex edgeHeadNode = edgeToNodesMapSource[ iter_edge ][ 0 ];
       localIndex edgeEndNode = edgeToNodesMapSource[ iter_edge ][ 1 ];
-
-      edgeToNodeMapNew[ iter_edge ][ 0 ] = edgeHeadNode;
-      edgeToNodeMapNew[ iter_edge ][ numInternalNodesPerEdge + 1] = edgeEndNode;
+      globalIndex edgeHeadNodeG = nodeLocalToGlobalNew[ edgeHeadNode ];
+      globalIndex edgeEndNodeG = nodeLocalToGlobalNew[ edgeEndNode ];
+      localIndex edgeToNodeMapWork[ numNodesPerEdge ];
+      edgeToNodeMapWork[ 0 ] = edgeHeadNode;
+      edgeToNodeMapWork[ 1 ] = edgeEndNode;
+      nodeIDs[ createNodeKey( edgeHeadNode ) ] = 0;
+      nodeIDs[ createNodeKey( edgeEndNode ) ] = 1;
 
       for( localIndex iter_node = 0; iter_node < numInternalNodesPerEdge; iter_node++ )
       {
-        real64 alpha = ( glCoords[ iter_node % numInternalNodesPerEdge ] + 1.0 ) / 2.0;
+        real64 alpha = ( glCoords[ iter_node ] + 1.0 ) / 2.0;
         localIndex nodeLocalID = localNodeOffset + iter_edge * ( numInternalNodesPerEdge ) + iter_node; 
-        edgeToNodeMapNew[ iter_edge ][ iter_node + 1 ] = nodeLocalID;
-        nodeLocalToGlobalNew[ nodeLocalID ] = globalNodeOffset + edgeLocalToGlobal[ iter_edge ] * numInternalNodesPerEdge + iter_node;
-
-        refPosNew[nodeLocalID][0] = refPosSrc[edgeEndNode][0] * alpha + refPosSrc[edgeHeadNode][0] * ( 1.0-alpha ) ;
-        refPosNew[nodeLocalID][1] = refPosSrc[edgeEndNode][1] * alpha + refPosSrc[edgeHeadNode][1] * ( 1.0-alpha ) ;
-        refPosNew[nodeLocalID][2] = refPosSrc[edgeEndNode][2] * alpha + refPosSrc[edgeHeadNode][2] * ( 1.0-alpha ) ;
-
+        edgeToNodeMapWork[ iter_node + 2 ] = nodeLocalID;
+        nodeIDs[ createNodeKey( edgeHeadNode, edgeEndNode, iter_node + 1, order ) ] = iter_node + 2;
+        std::array< globalIndex, 6 > referenceOrientation = createNodeKey( edgeHeadNodeG, edgeEndNodeG, iter_node + 1, order );
+        int gq = referenceOrientation[4] - 1;
+        nodeLocalToGlobalNew[ nodeLocalID ] = globalNodeOffset + edgeLocalToGlobal[ iter_edge ] * numInternalNodesPerEdge + gq;
+        localIndex e[2] = { edgeHeadNode, edgeEndNode };
+        linearInterp( alpha, refPosSrc, e, refPosNew, nodeLocalID );
+      }
+      // reorder map
+      for( localIndex q = 0; q < numNodesPerEdge; q++ )
+      {
+        edgeToNodeMapNew[ iter_edge ][ q ] = edgeToNodeMapWork[ nodeIDs[ createNodeKey( edgeHeadNode, edgeEndNode, q, order ) ] ]; 
       }
   });
   localNodeOffset += numInternalNodesPerEdge * numLocalEdges;
@@ -1037,70 +1075,64 @@ void CellBlockManager::generateHighOrderMaps( localIndex const order,
                                   faceLocalToGlobal=faceLocalToGlobal.toView(),
                                   nodeLocalToGlobalNew=nodeLocalToGlobalNew.toView(),
                                   numNodesPerEdge, numEdgesPerFace, numVerticesPerFace,
-                                  numInternalNodesPerEdge, numInternalNodesPerFace,
-                                  globalNodeOffset, glCoords, localNodeOffset ]( localIndex const iter_face)
+                                  numInternalNodesPerEdge, numInternalNodesPerFace, numNodesPerFace,
+                                  globalNodeOffset, glCoords, localNodeOffset, order ]( localIndex const iter_face)
   {
+      std::unordered_map< std::array< localIndex, 6 >, localIndex, NodeKeyHasher< localIndex > > nodeIDs;
       localIndex faceVertID[ numVerticesPerFace ];
+      globalIndex faceVertGID[ numVerticesPerFace ];
+      localIndex faceToNodeMapWork[ numNodesPerFace ];
       for( localIndex iter_node=0; iter_node<numVerticesPerFace; iter_node++ ) {
         faceVertID[ iter_node ] = faceToNodesMapSource[ iter_face ][ iter_node ];
-        faceToNodeMapNew[ iter_face ][ iter_node ] = faceVertID[ iter_node ];
       }
-      std::swap( faceToNodeMapNew[ iter_face ][2], faceToNodeMapNew[ iter_face ][3] );
-      //std::swap( faceToNodeMapNew[ iter_face ][1], faceToNodeMapNew[ iter_face ][2] );
-
-      if ( std::make_tuple(refPosNew[faceVertID[1]][0], refPosNew[faceVertID[1]][1], refPosNew[faceVertID[1]][2]) >
-           std::make_tuple(refPosNew[faceVertID[3]][0], refPosNew[faceVertID[3]][1], refPosNew[faceVertID[3]][2]) )
-        std::swap( faceVertID[ 1 ], faceVertID[ 3 ] );
+      std::swap( faceVertID[ 2 ], faceVertID[ 3 ] );
+      for( localIndex iter_node=0; iter_node<numVerticesPerFace; iter_node++ ) {
+        faceVertGID[ iter_node ] = nodeLocalToGlobalNew[ faceVertID[ iter_node ] ];
+        faceToNodeMapWork[ iter_node ] = faceVertID[ iter_node ];
+        // store location of nodes for later reordering
+        nodeIDs[ createNodeKey( faceVertID[ iter_node ] ) ] = iter_node;
+      }
 
       for( localIndex iter_edge=0; iter_edge<numEdgesPerFace; iter_edge++ )
+      {
         for( localIndex iter_node=0; iter_node<numInternalNodesPerEdge; iter_node++ )
-          faceToNodeMapNew[ iter_face ][ numVerticesPerFace + iter_edge * numInternalNodesPerEdge + iter_node ] 
-            = edgeToNodeMapNew[m_faceToEdges[iter_face][iter_edge]][iter_node+1];
-
+        {
+          localIndex nodeIdxInMap = numVerticesPerFace + iter_edge * numInternalNodesPerEdge + iter_node;
+          localIndex edge = m_faceToEdges[ iter_face ][ iter_edge ];
+          faceToNodeMapWork[ nodeIdxInMap ] = edgeToNodeMapNew[ edge ][ iter_node + 1 ];
+          nodeIDs[ createNodeKey( edgeToNodeMapNew[ edge ][ 0 ], edgeToNodeMapNew[ edge ][ numNodesPerEdge - 1 ], iter_node + 1, order  ) ] = nodeIdxInMap;
+        }
+      }
       for( localIndex iter_node=0; iter_node<numInternalNodesPerFace; iter_node++ )
       {
-        real64 alpha = ( glCoords[ iter_node % numInternalNodesPerEdge ] + 1.0 ) / 2.0;
-        real64 beta = ( glCoords[  ( iter_node / numInternalNodesPerEdge ) % numInternalNodesPerEdge ] + 1.0 ) / 2.0;
+        localIndex q1 = iter_node % numInternalNodesPerEdge;
+        localIndex q2 = ( iter_node / numInternalNodesPerEdge ) % numInternalNodesPerEdge;
+        real64 alpha = ( glCoords[ q1 ] + 1.0 ) / 2.0;
+        real64 beta = ( glCoords[ q2 ] + 1.0 ) / 2.0;
 
         localIndex nodeLocalID = localNodeOffset + iter_face * numInternalNodesPerFace + iter_node;
-        faceToNodeMapNew[ iter_face ][ numVerticesPerFace + numEdgesPerFace * numInternalNodesPerEdge + iter_node ] = nodeLocalID;
-        nodeLocalToGlobalNew[ nodeLocalID ] = globalNodeOffset + faceLocalToGlobal[ iter_face ] * numInternalNodesPerFace + iter_node;
+        localIndex nodeIdxInMap = numVerticesPerFace + numEdgesPerFace * numInternalNodesPerEdge + iter_node;
+        //faceToNodeMapWork[ nodeIdxInMap ] = nodeLocalID;
+        faceToNodeMapNew[ iter_face ][ (q2 + 1) * numNodesPerEdge + (q1 + 1) ] = nodeIdxInMap;
+        std::array< globalIndex, 6 > referenceOrientation = createNodeKey( faceVertGID[ 0 ], faceVertGID[ 1 ], faceVertGID[ 2 ], faceVertGID[ 3 ],
+                                                                           q1 + 1, q2 + 1, order );
+        int gq1 = referenceOrientation[4] - 1;
+        int gq2 = referenceOrientation[5] - 1;
+        nodeLocalToGlobalNew[ nodeLocalID ] = globalNodeOffset + faceLocalToGlobal[ iter_face ] * numInternalNodesPerFace + gq2 * numInternalNodesPerFace + gq1;
 
-        refPosNew[nodeLocalID][0] = refPosSrc[faceVertID[0]][0]*( 1.0-alpha )*( 1.0-beta ) + refPosSrc[faceVertID[1]][0]*alpha*( 1.0-beta )+
-                                    refPosSrc[faceVertID[3]][0]*( 1.0-alpha )*beta + refPosSrc[faceVertID[2]][0]*alpha*beta;
-
-        refPosNew[nodeLocalID][1] = refPosSrc[faceVertID[0]][1]*( 1.0-alpha )*( 1.0-beta ) + refPosSrc[faceVertID[1]][1]*alpha*( 1.0-beta )+
-                                    refPosSrc[faceVertID[3]][1]*( 1.0-alpha )*beta + refPosSrc[faceVertID[2]][1]*alpha*beta;
-
-        refPosNew[nodeLocalID][2] = refPosSrc[faceVertID[0]][2]*( 1.0-alpha )*( 1.0-beta ) + refPosSrc[faceVertID[1]][2]*alpha*( 1.0-beta )+
-                                    refPosSrc[faceVertID[3]][2]*( 1.0-alpha )*beta + refPosSrc[faceVertID[2]][2]*alpha*beta;
-
-        /*
-        if (iter_face==0)
-        {
-        GEOS_LOG_RANK_0("TEST TEST: iter_face = "<< iter_face << "; node = "<< iter_node << "; alpha = " << alpha << "; beta = "<< beta ); 
-        GEOS_LOG_RANK_0("TEST TEST: nodeLocalID = "<< nodeLocalID );
-        GEOS_LOG_RANK_0("TEST TEST: refPosSrc["<<faceVertID[0]<<"][0]="<<refPosSrc[faceVertID[0]][0]);
-        GEOS_LOG_RANK_0("TEST TEST: refPosSrc["<<faceVertID[0]<<"][1]="<<refPosSrc[faceVertID[0]][1]);
-        GEOS_LOG_RANK_0("TEST TEST: refPosSrc["<<faceVertID[0]<<"][2]="<<refPosSrc[faceVertID[0]][2]);
-
-        GEOS_LOG_RANK_0("TEST TEST: refPosSrc["<<faceVertID[1]<<"][0]="<<refPosSrc[faceVertID[1]][0]);
-        GEOS_LOG_RANK_0("TEST TEST: refPosSrc["<<faceVertID[1]<<"][1]="<<refPosSrc[faceVertID[1]][1]);
-        GEOS_LOG_RANK_0("TEST TEST: refPosSrc["<<faceVertID[1]<<"][2]="<<refPosSrc[faceVertID[1]][2]);
-
-        GEOS_LOG_RANK_0("TEST TEST: refPosSrc["<<faceVertID[2]<<"][0]="<<refPosSrc[faceVertID[2]][0]);
-        GEOS_LOG_RANK_0("TEST TEST: refPosSrc["<<faceVertID[2]<<"][1]="<<refPosSrc[faceVertID[2]][1]);
-        GEOS_LOG_RANK_0("TEST TEST: refPosSrc["<<faceVertID[2]<<"][2]="<<refPosSrc[faceVertID[2]][2]);
-
-        GEOS_LOG_RANK_0("TEST TEST: refPosSrc["<<faceVertID[3]<<"][0]="<<refPosSrc[faceVertID[3]][0]);
-        GEOS_LOG_RANK_0("TEST TEST: refPosSrc["<<faceVertID[3]<<"][1]="<<refPosSrc[faceVertID[3]][1]);
-        GEOS_LOG_RANK_0("TEST TEST: refPosSrc["<<faceVertID[3]<<"][2]="<<refPosSrc[faceVertID[3]][2]);
-
-        GEOS_LOG_RANK_0("TEST TEST: ref[0]="<<refPosNew[nodeLocalID][0]<<"; ref[1]="<<refPosNew[nodeLocalID][1]<<"; ref[2]="<<refPosNew[nodeLocalID][2]);
-        }
-        */
+        bilinearInterp( alpha, beta, refPosSrc, faceVertID, refPosNew, nodeLocalID);  
       }
-
+      // reorder map
+      for( localIndex q = 0; q < numNodesPerFace; q++ )
+      {
+        localIndex q1 = q % numNodesPerEdge;
+        localIndex q2 = ( q / numNodesPerEdge ) % numNodesPerEdge;
+        if( q1 == 0  || q1 == numNodesPerEdge - 1 || q2 == 0 || q2 == numNodesPerEdge - 1)
+        {
+          faceToNodeMapNew[ iter_face ][ q ] = faceToNodeMapWork[ 
+                                                nodeIDs[ createNodeKey( faceVertID[0], faceVertID[1], faceVertID[2], faceVertID[3], q1, q2, order) ] ];
+        }
+      }
   });
   //GEOS_LOG_RANK_0("TEST TEST: faceToNodeMapNew = " << faceToNodeMapNew);
   GEOS_MARK_END("geos::CellBlockManager::generateHighOrderMaps -- Faces");
@@ -1153,60 +1185,75 @@ void CellBlockManager::generateHighOrderMaps( localIndex const order,
                                     elementLocalToGlobal=elementLocalToGlobal.toView(),
                                     nodeLocalToGlobalNew=nodeLocalToGlobalNew.toView(),
                                     numEdgesPerFace, numVerticesPerFace,
-                                    numVerticesPerCell, numEdgesPerCell, numFacesPerCell, numNodesPerCell,
+                                    numVerticesPerCell, numEdgesPerCell, numFacesPerCell, numNodesPerCell, numNodesPerFace, numNodesPerEdge, order,
                                     numInternalNodesPerCell, numInternalNodesPerEdge, numInternalNodesPerFace,
                                     globalNodeOffset, glCoords, localNodeOffset ]( localIndex const iter_elem )
     {
+      std::unordered_map< std::array< localIndex, 6 >, localIndex, NodeKeyHasher< localIndex > > nodeIDs;
       localIndex elemVertID[ numVerticesPerCell];
+      localIndex elemToNodeMapWork[ numNodesPerCell ];
       for( localIndex iter_node=0; iter_node<numVerticesPerCell; iter_node++ )
       {
         elemVertID[ iter_node ] = elemsToNodesSource[ iter_elem ][ iter_node ];
-        elemsToNodesNew[ iter_elem ][ iter_node ] = elemVertID[ iter_node ];
+        elemToNodeMapWork[ iter_node ] = elemVertID[ iter_node ];
+        nodeIDs[ createNodeKey( elemVertID[ iter_node ] ) ] = iter_node;
       }
 
       for( localIndex iter_edge=0; iter_edge<numEdgesPerCell; iter_edge++ )
+      {
         for( localIndex iter_node=0; iter_node<numInternalNodesPerEdge; iter_node++ )
-          elemsToNodesNew[ iter_elem ][ numVerticesPerCell + iter_edge * numInternalNodesPerEdge + iter_node ] 
-            = edgeToNodeMapNew[elemsToEdges[iter_elem][iter_edge]][iter_node+1];
-
+        {
+          localIndex nodeIdxInMap = numVerticesPerCell + iter_edge * numInternalNodesPerEdge + iter_node;
+          localIndex edge = elemsToEdges[iter_elem][iter_edge];
+          elemToNodeMapWork[ nodeIdxInMap ] = edgeToNodeMapNew[ edge ][iter_node+1];
+          nodeIDs[ createNodeKey( edgeToNodeMapNew[ edge ][ 0 ], edgeToNodeMapNew[ edge ][ numNodesPerEdge - 1 ], iter_node + 1, order  ) ] = nodeIdxInMap;
+        }
+      }
       for( localIndex iter_face=0; iter_face<numFacesPerCell; iter_face++ )
+      {
         for( localIndex iter_node=0; iter_node<numInternalNodesPerFace; iter_node++ )
         {
-          elemsToNodesNew[ iter_elem ][ numVerticesPerCell + numEdgesPerCell * numInternalNodesPerEdge + iter_face * numInternalNodesPerFace + iter_node ] 
-            = faceToNodeMapNew[elemsToFaces[iter_elem][iter_face]][numVerticesPerFace + numEdgesPerFace * numInternalNodesPerEdge + iter_node ];
+          localIndex q1 = iter_node % numInternalNodesPerEdge;
+          localIndex q2 = ( iter_node / numInternalNodesPerEdge ) % numInternalNodesPerEdge;
+          localIndex nodeIdxInMap = numVerticesPerCell + numEdgesPerCell * numInternalNodesPerEdge + iter_face * numInternalNodesPerFace + iter_node;
+          localIndex face = elemsToFaces[iter_elem][iter_face];
+          elemToNodeMapWork[ nodeIdxInMap ] = faceToNodeMapNew[face][numVerticesPerFace + numEdgesPerFace * numInternalNodesPerEdge + iter_node ];
+          nodeIDs[ createNodeKey( faceToNodeMapNew[ face ][ 0 ], faceToNodeMapNew[ face ][ numNodesPerEdge - 1 ], 
+                                  faceToNodeMapNew[ face ][ numNodesPerFace - numNodesPerEdge ], faceToNodeMapNew[ face ][ numNodesPerFace- 1 ], q1 + 1, q2 + 1, order ) ] = nodeIdxInMap;
         }
-
+      }
       for( localIndex iter_node=0; iter_node<numInternalNodesPerCell; iter_node++ )
       {
-        real64 alpha = ( glCoords[ iter_node % numInternalNodesPerEdge ] + 1.0 ) / 2.0;
-        real64 beta = ( glCoords[ ( iter_node / numInternalNodesPerEdge ) % numInternalNodesPerEdge ] + 1.0 ) / 2.0;
-        real64 gamma = ( glCoords[ ( iter_node / numInternalNodesPerEdge / numInternalNodesPerEdge ) % numInternalNodesPerEdge ] + 1.0 ) / 2.0;
+        localIndex q1 = iter_node % numInternalNodesPerEdge;
+        localIndex q2 = ( iter_node / numInternalNodesPerEdge ) % numInternalNodesPerEdge;
+        localIndex q3 = ( iter_node / numInternalNodesPerEdge ) / numInternalNodesPerEdge;
+        real64 alpha = ( glCoords[ q1 ] + 1.0 ) / 2.0;
+        real64 beta = ( glCoords[ q2 ] + 1.0 ) / 2.0;
+        real64 gamma = ( glCoords[ q3 ] + 1.0 ) / 2.0;
 
         //GEOS_LOG_RANK_0("TEST TEST: alpha = " << alpha << "; beta = "<< beta << "; gamma= "<< gamma ); 
 
         localIndex nodeLocalID = localNodeOffset + iter_elem * numInternalNodesPerCell + iter_node;
-        elemsToNodesNew[ iter_elem ][ numVerticesPerCell + numEdgesPerCell * numInternalNodesPerEdge + numFacesPerCell * numInternalNodesPerFace + iter_node ] = nodeLocalID;
+        elemsToNodesNew[ iter_elem ][ (q3 + 1)*numNodesPerFace + (q2+1) * numNodesPerEdge + (q1 + 1) ] = nodeLocalID;
         nodeLocalToGlobalNew[ nodeLocalID ] = globalNodeOffset + elementLocalToGlobal[ iter_elem ] * numInternalNodesPerCell + iter_node;
-
-        refPosNew[nodeLocalID][0] = refPosSrc[elemVertID[0]][0]*( 1.0-alpha )*( 1.0-beta )*( 1.0-gamma ) + refPosSrc[elemVertID[1]][0]*alpha*( 1.0-beta )*( 1.0-gamma ) +
-                                    refPosSrc[elemVertID[2]][0]*( 1.0-alpha )*beta*( 1.0-gamma )         + refPosSrc[elemVertID[3]][0]*alpha*beta*( 1.0-gamma ) +
-                                    refPosSrc[elemVertID[4]][0]*( 1.0-alpha )*( 1.0-beta )*gamma         + refPosSrc[elemVertID[5]][0]*alpha*( 1.0-beta )*gamma +
-                                    refPosSrc[elemVertID[6]][0]*( 1.0-alpha )*beta*gamma                 + refPosSrc[elemVertID[7]][0]*alpha*beta*gamma;
-
-        refPosNew[nodeLocalID][1] = refPosSrc[elemVertID[0]][1]*( 1.0-alpha )*( 1.0-beta )*( 1.0-gamma ) + refPosSrc[elemVertID[1]][1]*alpha*( 1.0-beta )*( 1.0-gamma )+
-                                    refPosSrc[elemVertID[2]][1]*( 1.0-alpha )*beta*( 1.0-gamma )         + refPosSrc[elemVertID[3]][1]*alpha*beta*( 1.0-gamma )+
-                                    refPosSrc[elemVertID[4]][1]*( 1.0-alpha )*( 1.0-beta )*gamma         + refPosSrc[elemVertID[5]][1]*alpha*( 1.0-beta )*gamma+
-                                    refPosSrc[elemVertID[6]][1]*( 1.0-alpha )*beta*gamma                 + refPosSrc[elemVertID[7]][1]*alpha*beta*gamma;
-
-        refPosNew[nodeLocalID][2] = refPosSrc[elemVertID[0]][2]*( 1.0-alpha )*( 1.0-beta )*( 1.0-gamma ) + refPosSrc[elemVertID[1]][2]*alpha*( 1.0-beta )*( 1.0-gamma )+
-                                    refPosSrc[elemVertID[2]][2]*( 1.0-alpha )*beta*( 1.0-gamma )         + refPosSrc[elemVertID[3]][2]*alpha*beta*( 1.0-gamma )+
-                                    refPosSrc[elemVertID[4]][2]*( 1.0-alpha )*( 1.0-beta )*gamma         + refPosSrc[elemVertID[5]][2]*alpha*( 1.0-beta )*gamma+
-                                    refPosSrc[elemVertID[6]][2]*( 1.0-alpha )*beta*gamma                 + refPosSrc[elemVertID[7]][2]*alpha*beta*gamma;
+        trilinearInterp( alpha, beta, gamma, refPosSrc, elemVertID, refPosNew, nodeLocalID );
     
         //GEOS_LOG_RANK_0("TEST TEST: refPosNew["<<nodeLocalID<<"][0]="<<refPosNew[nodeLocalID][0]);
         //GEOS_LOG_RANK_0("TEST TEST: refPosNew["<<nodeLocalID<<"][1]="<<refPosNew[nodeLocalID][1]);
         //GEOS_LOG_RANK_0("TEST TEST: refPosNew["<<nodeLocalID<<"][2]="<<refPosNew[nodeLocalID][2]);
 
+      }
+      // reorder map
+      for( localIndex q = 0; q < numNodesPerCell; q++ )
+      {
+        localIndex q1 = q % numNodesPerEdge;
+        localIndex q2 = ( q / numNodesPerEdge ) % numNodesPerEdge;
+        localIndex q3 = ( q / numNodesPerEdge ) / numNodesPerEdge;
+        if( q1 == 0  || q1 == numNodesPerEdge - 1 || q2 == 0 || q2 == numNodesPerEdge - 1 || q3 == 0 || q3 == numNodesPerEdge - 1)
+        {
+          elemsToNodesNew[ iter_elem ][ q ] = elemToNodeMapWork[ 
+                                                 nodeIDs[ createNodeKey( elemVertID, q1, q2, q3, order) ] ];
+        }
       }
     } );
 
