@@ -193,6 +193,13 @@ private:
                                          int const cycleNumber,
                                          DomainPartition & domain ) override final;
 
+
+  /**
+   * @brief Initialize fields on the newly created elements of the fracture.
+   * @param domain the physical domain object
+   */
+  void initializeNewFractureFields( DomainPartition & domain );
+
   // name of the contact relation
   string m_contactRelationName;
 
