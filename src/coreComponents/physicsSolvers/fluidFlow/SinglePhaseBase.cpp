@@ -445,6 +445,8 @@ void SinglePhaseBase::initializePostInitialConditionsPreSubGroups()
       arrayView1d< real64 > const initTemp = subRegion.template getField< fields::flow::initialTemperature >();
       initPres.setValues< parallelDevicePolicy<> >( pres );
       initTemp.setValues< parallelDevicePolicy<> >( temp );
+
+      updateMass( subRegion );
     } );
   } );
 
