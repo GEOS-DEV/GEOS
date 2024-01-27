@@ -229,7 +229,7 @@ public:
 
   void enableFixedStressPoromechanicsUpdate();
 
-  virtual void saveSequentialIterationState( DomainPartition & domain ) const override;
+  virtual void saveSequentialIterationState( DomainPartition & domain ) override;
 
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
