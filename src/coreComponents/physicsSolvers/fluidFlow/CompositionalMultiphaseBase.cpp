@@ -802,6 +802,8 @@ void CompositionalMultiphaseBase::initializeFluidState( MeshLevel & mesh,
       }
     } );
 
+    updateCompAmount( subRegion );
+
   } );
 
   // with initial component densities defined - check if they need to be corrected to avoid zero diags etc

@@ -85,6 +85,9 @@ void SinglePhaseBase::registerDataOnMesh( Group & meshBodies )
       subRegion.registerField< mobility >( getName() );
       subRegion.registerField< dMobility_dPressure >( getName() );
 
+      subRegion.registerField< fields::flow::mass >( getName() );
+      subRegion.registerField< fields::flow::mass_n >( getName() );
+
       if( m_isThermal )
       {
         subRegion.registerField< dMobility_dTemperature >( getName() );
@@ -1345,6 +1348,15 @@ bool SinglePhaseBase::checkSystemSolution( DomainPartition & domain,
                                         getName(), numNegativePressures, fmt::format( "{:.{}f}", minPressure, 3 ) ) );
 
   return (m_allowNegativePressure || numNegativePressures == 0) ?  1 : 0;
+}
+
+void SinglePhaseBase::saveConvergedState( ElementSubRegionBase & subRegion ) const
+{
+  FlowSolverBase::saveConvergedState(subRegion);
+  
+  arrayView1d < real64 const > const mass = subRegion.template getField< fields::flow::mass >();
+  arrayView1d <real64> const mass_n = subRegion.template getField< fields::flow::mass_n >();
+  mass_n.setValues< parallelDevicePolicy<> >( mass );
 }
 
 } /* namespace geos */

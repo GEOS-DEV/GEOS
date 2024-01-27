@@ -177,9 +177,6 @@ void FlowSolverBase::registerDataOnMesh( Group & meshBodies )
       {
         subRegion.registerField< fields::flow::temperature_k >( getName() ); // needed for the fixed-stress porosity update
       }
-
-      subRegion.registerField< fields::flow::mass >( getName() );
-      subRegion.registerField< fields::flow::mass_n >( getName() );
     } );
 
     elemManager.forElementSubRegionsComplete< SurfaceElementSubRegion >( [&]( localIndex const,
@@ -237,10 +234,6 @@ void FlowSolverBase::saveConvergedState( ElementSubRegionBase & subRegion ) cons
   arrayView1d< real64 const > const temp = subRegion.template getField< fields::flow::temperature >();
   arrayView1d< real64 > const temp_n = subRegion.template getField< fields::flow::temperature_n >();
   temp_n.setValues< parallelDevicePolicy<> >( temp );
-
-  arrayView1d< real64 const > const mass = subRegion.template getField< fields::flow::mass >();
-  arrayView1d< real64 > const mass_n = subRegion.template getField< fields::flow::mass_n >();
-  mass_n.setValues< parallelDevicePolicy<> >( mass );
 
   if( m_isFixedStressPoromechanicsUpdate )
   {
