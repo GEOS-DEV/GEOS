@@ -242,24 +242,6 @@ void SinglePhaseBase::updateFluidModel( ElementSubRegionBase & subRegion ) const
     typename TYPEOFREF( castedFluid ) ::KernelWrapper fluidWrapper = castedFluid.createKernelWrapper();
     thermalSinglePhaseBaseKernels::FluidUpdateKernel::launch( fluidWrapper, pres, temp );
   } );
-
-  // update fluid mass
-  {
-    arrayView1d< real64 > const mass = subRegion.getField< fields::flow::mass >();
-
-    CoupledSolidBase const & porousSolid =
-      getConstitutiveModel< CoupledSolidBase >( subRegion, subRegion.template getReference< string >( viewKeyStruct::solidNamesString() ) );
-    arrayView2d< real64 const > const porosity = porousSolid.getPorosity();
-
-    arrayView1d< real64 const > const volume = subRegion.getElementVolume();
-
-    arrayView2d< real64 const > const density = fluid.density();
-
-    forAll< parallelDevicePolicy<> >( subRegion.size(), [=]    GEOS_HOST_DEVICE ( localIndex const ei )
-    {
-      mass[ei] = porosity[ei][0] * volume[ei] * density[ei][0];
-    } );
-  }
 }
 
 void SinglePhaseBase::updateMass( ElementSubRegionBase & subRegion ) const
