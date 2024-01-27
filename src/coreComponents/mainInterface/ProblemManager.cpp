@@ -816,18 +816,9 @@ void ProblemManager::generateMeshLevel( MeshLevel & meshLevel,
   // This is why `faceManager.setDomainBoundaryObjects` is called first.
   faceManager.setDomainBoundaryObjects( elemRegionManager );
   edgeManager.setDomainBoundaryObjects( faceManager );
-  
   nodeManager.setDomainBoundaryObjects( faceManager, edgeManager );
 
-  /*
-  GEOS_LOG_RANK_0("TEST TESTS: faceToNodes = "<< faceManager.nodeList() );
-  elemManager.forElementSubRegions< CellElementSubRegion >( [=]( CellElementSubRegion & subRegion )
-  {
-      GEOS_LOG_RANK_0("TEST TESTS: elemToNodes = "<< subRegion.nodeList() );
-  } );
-  */
-
-     meshLevel.generateSets();
+  meshLevel.generateSets();
 
   elemRegionManager.forElementSubRegions< ElementSubRegionBase >( [&]( ElementSubRegionBase & subRegion )
   {
