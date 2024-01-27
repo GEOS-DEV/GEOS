@@ -227,6 +227,11 @@ public:
 
   void enableFixedStressPoromechanicsUpdate();
 
+  virtual void saveSequentialIterationState( DomainPartition & GEOS_UNUSED_PARAM( domain ) ) const override
+  {
+    // nothing to save
+  }
+
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
     static constexpr char const * cflFactorString() { return "cflFactor"; }
