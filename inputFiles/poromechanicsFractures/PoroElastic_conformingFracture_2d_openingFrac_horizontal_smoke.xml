@@ -125,7 +125,7 @@
       fieldName="totalDisplacement"
       component="2"
       scale="0.0"
-      setNames="{ zneg, zpos }"/>
+      setNames="{ bottomFace }"/>
 
     <FieldSpecification
       name="zeroPressure"
