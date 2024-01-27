@@ -1453,5 +1453,10 @@ void SolidMechanicsLagrangianFEM::enableFixedStressPoromechanicsUpdate()
   m_isFixedStressPoromechanicsUpdate = true;
 }
 
+void SolidMechanicsLagrangianFEM::saveSequentialIterationState( DomainPartition & GEOS_UNUSED_PARAM( domain ) ) const
+{
+  // nothing to save
+}
+
 REGISTER_CATALOG_ENTRY( SolverBase, SolidMechanicsLagrangianFEM, string const &, dataRepository::Group * const )
 }
