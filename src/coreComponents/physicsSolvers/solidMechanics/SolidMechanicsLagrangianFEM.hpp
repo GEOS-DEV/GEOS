@@ -227,10 +227,7 @@ public:
 
   void enableFixedStressPoromechanicsUpdate();
 
-  virtual void saveSequentialIterationState( DomainPartition & GEOS_UNUSED_PARAM( domain ) ) const override
-  {
-    // nothing to save
-  }
+  virtual void saveSequentialIterationState( DomainPartition & domain ) const override;
 
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
