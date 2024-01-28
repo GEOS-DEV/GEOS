@@ -45,6 +45,11 @@ SinglePhasePoromechanicsConformingFractures::SinglePhasePoromechanicsConformingF
     setApplyDefaultValue( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Flag indicating whether the problem is thermal or not. Set isThermal=\"1\" to enable the thermal coupling" );
+
+  m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::singlePhasePoromechanicsConformingFractures;
+  m_linearSolverParameters.get().mgr.separateComponents = false;
+  m_linearSolverParameters.get().mgr.displacementFieldName = solidMechanics::totalDisplacement::key();
+  m_linearSolverParameters.get().dofsPerNode = 3;
 }
 
 void SinglePhasePoromechanicsConformingFractures::initializePostInitialConditionsPostSubGroups()
