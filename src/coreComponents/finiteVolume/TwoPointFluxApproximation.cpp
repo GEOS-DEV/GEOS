@@ -408,6 +408,7 @@ void TwoPointFluxApproximation::initNewFractureFieldsDFM( MeshLevel & mesh,
 #endif
 
 #if ALLOW_CREATION_MASS==0
+  arrayView1d< real64 > const mass = fractureSubRegion.getReference< array1d< real64 > >( "mass_n" );
   arrayView1d< real64 > const dens = fractureSubRegion.getReference< array1d< real64 > >( "density_n" );
 #endif
 
@@ -554,8 +555,9 @@ void TwoPointFluxApproximation::initNewFractureFieldsDFM( MeshLevel & mesh,
     }
     fluidPressure_n[newElemIndex] = fluidPressure[newElemIndex];
 #if ALLOW_CREATION_MASS==0
-    // set the initial density of the face element to 0 to enforce mass conservation ( i.e. no creation of mass)
-    dens[newElemIndex] = 0.0;
+    // set the initial mass/density of the face element to 0 to enforce mass conservation ( i.e. no creation of mass)
+    mass[newElemIndex] = 0.0;
+    density[newElemIndex] = 0.0;
 #endif
 #if SET_CREATION_DISPLACEMENT==1
     // If the aperture has been set, then we can set the estimate of displacements.
