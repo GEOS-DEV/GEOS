@@ -61,9 +61,10 @@ void calculateBrineDensity( PTTableCoordinates const & tableCoords,
 
     for( localIndex j = 0; j < nTemperatures; ++j )
     {
+      real64 const T = tableCoords.getTemperature( j );
       // see Phillips et al. (1981), equations (4) and (5), pages 14 and 15
       real64 const x = c1 * exp( a1 * salinity )
-                       + c2 * exp( a2 * tableCoords.getTemperature( j ) )
+                       + c2 * exp( a2 * T )
                        + c3 * exp( a3 * P );
       densities[j*nPressures+i] = (AA + BB * x + CC * x * x + DD * x * x * x) * 1000.0;
     }
@@ -89,7 +90,7 @@ void calculatePureWaterDensity( PTTableCoordinates const & tableCoords,
 
   for( localIndex i = 0; i < nPressures; ++i )
   {
-    real64 const P = tableCoords.getPressure( i ) / 1e5;
+    real64 const P = tableCoords.getPressure( i );
 
     for( localIndex j = 0; j < nTemperatures; ++j )
     {
@@ -112,14 +113,15 @@ TableFunction const * makeDensityTable( string_array const & inputParams,
                                         string const & functionName,
                                         FunctionManager & functionManager )
 {
+  GEOS_THROW_IF_LT_MSG( inputParams.size(), 9,
+                        GEOS_FMT( "{}: insufficient number of model parameters", functionName ),
+                        InputError );
+
   // initialize the (p,T) coordinates
   PTTableCoordinates tableCoords;
   PVTFunctionHelpers::initializePropertyTable( inputParams, tableCoords );
 
   // initialize salinity
-  GEOS_THROW_IF_LT_MSG( inputParams.size(), 9,
-                        GEOS_FMT( "{}: insufficient number of model parameters", functionName ),
-                        InputError );
   real64 salinity;
   try
   {
@@ -155,8 +157,9 @@ TableFunction const * makeDensityTable( string_array const & inputParams,
   else
   {
     TableFunction * const densityTable = dynamicCast< TableFunction * >( functionManager.createChild( "TableFunction", tableName ) );
-    densityTable->setTableCoordinates( tableCoords.getCoords() );
-    densityTable->setTableValues( densities );
+    densityTable->setTableCoordinates( tableCoords.getCoords(),
+                                       { units::Pressure, units::TemperatureInC } );
+    densityTable->setTableValues( densities, units::Density );
     densityTable->setInterpolationMethod( TableFunction::InterpolationType::Linear );
     return densityTable;
   }
@@ -167,7 +170,8 @@ TableFunction const * makeDensityTable( string_array const & inputParams,
 PhillipsBrineDensity::PhillipsBrineDensity( string const & name,
                                             string_array const & inputParams,
                                             string_array const & componentNames,
-                                            array1d< real64 > const & componentMolarWeight ):
+                                            array1d< real64 > const & componentMolarWeight,
+                                            bool const printTable ):
   PVTFunctionBase( name,
                    componentNames,
                    componentMolarWeight )
@@ -179,6 +183,8 @@ PhillipsBrineDensity::PhillipsBrineDensity( string const & name,
   m_waterIndex = PVTFunctionHelpers::findName( componentNames, expectedWaterComponentNames, "componentNames" );
 
   m_brineDensityTable = makeDensityTable( inputParams, m_functionName, FunctionManager::getInstance() );
+  if( printTable )
+    m_brineDensityTable->print( m_brineDensityTable->getName() );
 }
 
 PhillipsBrineDensity::KernelWrapper
@@ -190,7 +196,14 @@ PhillipsBrineDensity::createKernelWrapper() const
                         m_waterIndex );
 }
 
-REGISTER_CATALOG_ENTRY( PVTFunctionBase, PhillipsBrineDensity, string const &, string_array const &, string_array const &, array1d< real64 > const & )
+void PhillipsBrineDensity::checkTablesParameters( real64 const pressure,
+                                                  real64 const temperature ) const
+{
+  m_brineDensityTable->checkCoord( pressure, 0 );
+  m_brineDensityTable->checkCoord( temperature, 1 );
+}
+
+REGISTER_CATALOG_ENTRY( PVTFunctionBase, PhillipsBrineDensity, string const &, string_array const &, string_array const &, array1d< real64 > const &, bool const )
 
 } // namespace PVTProps
 

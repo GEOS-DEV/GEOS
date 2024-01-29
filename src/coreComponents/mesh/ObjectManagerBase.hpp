@@ -90,7 +90,8 @@ public:
                              arrayView1d< localIndex > & packList,
                              integer const recursive,
                              bool onDevice,
-                             parallelDeviceEvents & events ) override;
+                             parallelDeviceEvents & events,
+                             MPI_Op op=MPI_REPLACE ) override;
 
   /**
    * @brief Packs the elements of each set that actually are in @p packList.
@@ -422,6 +423,12 @@ public:
    * @param destination The destination index.
    */
   void copyObject( localIndex const source, localIndex const destination );
+
+  /**
+   * @brief Erase object from this object manager
+   * @param indicesToErase The local indices of the object to be erased.
+   */
+  void eraseObject( std::set< localIndex > const & indicesToErase );
 
   /**
    * @brief Computes the maximum global index allong all the MPI ranks.

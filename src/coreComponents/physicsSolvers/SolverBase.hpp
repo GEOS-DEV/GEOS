@@ -53,6 +53,11 @@ public:
 
   static string catalogName() { return "SolverBase"; }
 
+  /**
+   * @return Get the final class Catalog name
+   */
+  virtual string getCatalogName() const = 0;
+
 
   virtual void registerDataOnMesh( Group & MeshBodies ) override;
 
@@ -148,7 +153,7 @@ public:
    * @param[in] currentDt the current time step size
    * @return the prescribed time step size
    */
-  real64 setNextDtBasedOnNewtonIter( real64 const & currentDt );
+  virtual real64 setNextDtBasedOnNewtonIter( real64 const & currentDt );
 
   /**
    * @brief function to set the next dt based on state change
@@ -158,6 +163,17 @@ public:
    */
   virtual real64 setNextDtBasedOnStateChange( real64 const & currentDt,
                                               DomainPartition & domain );
+
+  /**
+   * @brief function to set the next dt based on state change
+   * @param [in]  currentDt the current time step size
+   * @param[in] domain the domain object
+   * @return the prescribed time step size
+   */
+  virtual real64 setNextDtBasedOnCFL( real64 const & currentDt,
+                                      DomainPartition & domain );
+
+
 
   /**
    * @brief Entry function for an explicit time integration step
@@ -743,6 +759,9 @@ protected:
   template< typename CONSTITUTIVE_BASE_TYPE >
   static string getConstitutiveName( ElementSubRegionBase const & subRegion );
 
+  template< typename CONSTITUTIVE_BASE_TYPE >
+  static string getConstitutiveName( ParticleSubRegionBase const & subRegion ); // particle overload
+
   /**
    * @brief This function sets constitutive name fields on an
    *  ElementSubRegionBase, and calls the base function it overrides.
@@ -750,6 +769,8 @@ protected:
    *  names set.
    */
   virtual void setConstitutiveNamesCallSuper( ElementSubRegionBase & subRegion ) const { GEOS_UNUSED_VAR( subRegion ); }
+  virtual void setConstitutiveNamesCallSuper( ParticleSubRegionBase & subRegion ) const { GEOS_UNUSED_VAR( subRegion ); } // particle
+                                                                                                                          // overload
 
   template< typename BASETYPE = constitutive::ConstitutiveBase, typename LOOKUP_TYPE >
   static BASETYPE const & getConstitutiveModel( dataRepository::Group const & dataGroup, LOOKUP_TYPE const & key );
@@ -811,6 +832,7 @@ private:
    *  names set.
    */
   virtual void setConstitutiveNames( ElementSubRegionBase & subRegion ) const { GEOS_UNUSED_VAR( subRegion ); }
+  virtual void setConstitutiveNames( ParticleSubRegionBase & subRegion ) const { GEOS_UNUSED_VAR( subRegion ); } // particle overload
 
   bool solveNonlinearSystem( real64 const & time_n,
                              real64 const & dt,
@@ -821,6 +843,20 @@ private:
 
 template< typename CONSTITUTIVE_BASE_TYPE >
 string SolverBase::getConstitutiveName( ElementSubRegionBase const & subRegion )
+{
+  string validName;
+  dataRepository::Group const & constitutiveModels = subRegion.getConstitutiveModels();
+
+  constitutiveModels.forSubGroups< CONSTITUTIVE_BASE_TYPE >( [&]( dataRepository::Group const & model )
+  {
+    GEOS_ERROR_IF( !validName.empty(), "A valid constitutive model was already found." );
+    validName = model.getName();
+  } );
+  return validName;
+}
+
+template< typename CONSTITUTIVE_BASE_TYPE >
+string SolverBase::getConstitutiveName( ParticleSubRegionBase const & subRegion ) // particle overload
 {
   string validName;
   dataRepository::Group const & constitutiveModels = subRegion.getConstitutiveModels();

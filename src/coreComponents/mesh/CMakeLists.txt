@@ -23,12 +23,22 @@ set( mesh_headers
      MeshObjectPath.hpp
      NodeManager.hpp
      ObjectManagerBase.hpp
+     generators/ParticleBlock.hpp
+     generators/ParticleBlockManager.hpp
+     ParticleManager.hpp
+     ParticleRegion.hpp
+     ParticleRegionBase.hpp
+     ParticleSubRegion.hpp
+     ParticleSubRegionBase.hpp
+     generators/ParticleBlockABC.hpp
+     ParticleType.hpp
      Perforation.hpp
      PerforationData.hpp
      PerforationFields.hpp
      SurfaceElementRegion.hpp
      SurfaceElementSubRegion.hpp
      ToElementRelation.hpp
+     ToParticleRelation.hpp
      WellElementRegion.hpp
      WellElementSubRegion.hpp
      generators/CellBlock.hpp
@@ -46,8 +56,10 @@ set( mesh_headers
      generators/InternalWellboreGenerator.hpp
      generators/MeshGeneratorBase.hpp
      generators/ParMETISInterface.hpp
+     generators/ParticleMeshGenerator.hpp
      generators/PartitionDescriptor.hpp
      generators/PrismUtilities.hpp
+     generators/WellGeneratorABC.hpp
      generators/WellGeneratorBase.hpp
      mpiCommunications/CommID.hpp
      mpiCommunications/CommunicationTools.hpp
@@ -69,8 +81,7 @@ set( mesh_headers
      utilities/CIcomputationKernel.hpp
      utilities/ComputationalGeometry.hpp
      utilities/MeshMapUtilities.hpp
-     utilities/StructuredGridUtilities.hpp
-   )
+     utilities/StructuredGridUtilities.hpp )
 
 # Specify all sources
 set( mesh_sources
@@ -92,11 +103,19 @@ set( mesh_sources
      MeshObjectPath.cpp
      NodeManager.cpp
      ObjectManagerBase.cpp
+     generators/ParticleBlock.cpp
+     generators/ParticleBlockManager.cpp
+     ParticleManager.cpp
+     ParticleRegion.cpp
+     ParticleRegionBase.cpp
+     ParticleSubRegion.cpp
+     ParticleSubRegionBase.cpp
      Perforation.cpp
      PerforationData.cpp
      SurfaceElementRegion.cpp
      SurfaceElementSubRegion.cpp
      ToElementRelation.cpp
+     ToParticleRelation.cpp
      WellElementRegion.cpp
      WellElementSubRegion.cpp
      generators/CellBlock.cpp
@@ -110,6 +129,7 @@ set( mesh_sources
      generators/InternalWellboreGenerator.cpp
      generators/MeshGeneratorBase.cpp
      generators/ParMETISInterface.cpp
+     generators/ParticleMeshGenerator.cpp
      generators/WellGeneratorBase.cpp
      mpiCommunications/CommID.cpp
      mpiCommunications/CommunicationTools.cpp
@@ -126,18 +146,18 @@ set( mesh_sources
      simpleGeometricObjects/SimpleGeometricObjectBase.cpp
      simpleGeometricObjects/PlanarGeometricObject.cpp
      simpleGeometricObjects/ThickPlane.cpp
-     utilities/ComputationalGeometry.cpp
-     )
+     utilities/ComputationalGeometry.cpp )
 
 set( dependencyList ${parallelDeps} schema dataRepository constitutive finiteElement parmetis metis )
 
 if( ENABLE_VTK )
-    message(STATUS "Adding VTKMeshGenerator sources and headers")
+    message(STATUS "Adding VTK readers")
     set( mesh_headers ${mesh_headers}
          generators/CollocatedNodes.hpp
          generators/VTKFaceBlockUtilities.hpp
          generators/VTKMeshGenerator.hpp
          generators/VTKMeshGeneratorTools.hpp
+         generators/VTKWellGenerator.hpp
          generators/VTKUtilities.hpp
          )
     set( mesh_sources ${mesh_sources}
@@ -145,26 +165,26 @@ if( ENABLE_VTK )
          generators/VTKFaceBlockUtilities.cpp
          generators/VTKMeshGenerator.cpp
          generators/VTKMeshGeneratorTools.cpp
+         generators/VTKWellGenerator.cpp
          generators/VTKUtilities.cpp
-         )
-    set( dependencyList ${dependencyList} VTK::IOLegacy VTK::FiltersParallelDIY2 )
+         )    
+    list( APPEND dependencyList VTK::IOLegacy VTK::FiltersParallelDIY2 )
     if( ENABLE_MPI )
-      set( dependencyList ${dependencyList} VTK::IOParallelXML VTK::ParallelMPI )
+      list( APPEND dependencyList VTK::IOParallelXML VTK::ParallelMPI )
     endif()
 endif()
 
 if( ENABLE_SCOTCH )
     set( mesh_headers ${mesh_headers} generators/PTScotchInterface.hpp )
     set( mesh_sources ${mesh_sources} generators/PTScotchInterface.cpp )
-    set( dependencyList ${dependencyList} ptscotch )
+    list( APPEND dependencyList ptscotch )
 endif()
 
 blt_add_library( NAME       mesh
                  SOURCES    ${mesh_sources}
                  HEADERS    ${mesh_headers}
                  DEPENDS_ON ${dependencyList}
-                 OBJECT     ${GEOSX_BUILD_OBJ_LIBS}
-               )
+                 OBJECT     ${GEOSX_BUILD_OBJ_LIBS} )
 
 target_include_directories( mesh PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents )
 
@@ -177,4 +197,3 @@ if( GEOS_ENABLE_TESTS )
     add_subdirectory( unitTests )
 endif( )
 
-geosx_add_code_checks( PREFIX mesh )

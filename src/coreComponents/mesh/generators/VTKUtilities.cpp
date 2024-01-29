@@ -37,6 +37,9 @@
 #include <vtkMultiBlockDataSet.h>
 #include <vtkNew.h>
 #include <vtkPartitionedDataSet.h>
+#include <vtkPointData.h>
+#include <vtkPolyData.h>
+#include <vtkPolyDataReader.h>
 #include <vtkRectilinearGrid.h>
 #include <vtkRectilinearGridReader.h>
 #include <vtkRedistributeDataSetFilter.h>
@@ -48,6 +51,8 @@
 #include <vtkXMLImageDataReader.h>
 #include <vtkXMLMultiBlockDataReader.h>
 #include <vtkXMLPImageDataReader.h>
+#include <vtkXMLPolyDataReader.h>
+#include <vtkXMLPPolyDataReader.h>
 #include <vtkXMLPRectilinearGridReader.h>
 #include <vtkXMLPStructuredGridReader.h>
 #include <vtkXMLPUnstructuredGridReader.h>
@@ -81,10 +86,12 @@ enum class VTKMeshExtension : integer
   vtr,  ///< XML serial vtkRectilinearGrid (structured)
   vts,  ///< XML serial vtkStructuredGrid (structured)
   vti,  ///< XML serial vtkImageData (structured)
+  vtp,  ///< XML serial vtkPolyData
   pvtu, ///< XML parallel vtkUnstructuredGrid (unstructured)
   pvtr, ///< XML parallel vtkRectilinearGrid (structured)
   pvts, ///< XML parallel vtkStructuredGrid (structured)
   pvti, ///< XML parallel vtkImageData (structured)
+  pvtp, ///< XML parallel vtkPolyData
 };
 
 /// Strings for VTKMeshGenerator::VTKMeshExtension enumeration
@@ -95,10 +102,12 @@ ENUM_STRINGS( VTKMeshExtension,
               "vtr",
               "vts",
               "vti",
+              "vtp",
               "pvtu",
               "pvtr",
               "pvts",
-              "pvti" );
+              "pvti",
+              "pvtp" );
 
 /**
  * @brief Supported VTK legacy dataset types
@@ -109,6 +118,7 @@ enum class VTKLegacyDatasetType : integer
   structuredGrid,   ///< Structured grid (structured)
   unstructuredGrid, ///< Unstructured grid (unstructured)
   rectilinearGrid,  ///< Rectilinear grid (structured)
+  polyData,         ///< PolyData
 };
 
 /// Strings for VTKMeshGenerator::VTKLegacyDatasetType enumeration
@@ -116,7 +126,8 @@ ENUM_STRINGS( VTKLegacyDatasetType,
               "structuredPoints",
               "structuredGrid",
               "unstructuredGrid",
-              "rectilinearGrid" );
+              "rectilinearGrid",
+              "polyData" );
 
 /**
  * @brief Gathers all the data from all ranks, merge them, sort them, and remove duplicates.
@@ -423,9 +434,14 @@ VTKLegacyDatasetType getVTKLegacyDatasetType( vtkSmartPointer< vtkDataSetReader 
   {
     return VTKLegacyDatasetType::rectilinearGrid;
   }
+  else if( vtkGridReader->IsFilePolyData())
+  {
+    return VTKLegacyDatasetType::polyData;
+  }
   else
   {
-    GEOS_ERROR( "Unsupported legacy VTK dataset format" );
+    GEOS_ERROR( "Unsupported legacy VTK dataset format.\nLegacy supported formats are: " <<
+                EnumStrings< VTKLegacyDatasetType >::concat( ", " ) << '.' );
   }
   return {};
 }
@@ -475,7 +491,8 @@ loadMesh( Path const & filePath,
         vtkCompositeDataSet * compositeDataSet = reader->GetOutput();
         if( !compositeDataSet->IsA( "vtkMultiBlockDataSet" ) )
         {
-          GEOS_ERROR( "Unsupported vtk multi-block format in file \"" << filePath << "\"" );
+          GEOS_ERROR( "Unsupported vtk multi-block format in file \"" << filePath << "\".\n" <<
+                      generalMeshErrorAdvice );
         }
         vtkMultiBlockDataSet * multiBlockDataSet = vtkMultiBlockDataSet::SafeDownCast( compositeDataSet );
 
@@ -494,7 +511,8 @@ loadMesh( Path const & filePath,
             }
           }
         }
-        GEOS_ERROR( "Could not find mesh \"" << blockName << "\" in multi-block vtk file \"" << filePath << "\"" );
+        GEOS_ERROR( "Could not find mesh \"" << blockName << "\" in multi-block vtk file \"" << filePath << "\".\n" <<
+                    generalMeshErrorAdvice );
         return {};
       }
       else
@@ -512,6 +530,7 @@ loadMesh( Path const & filePath,
         case VTKLegacyDatasetType::structuredGrid:   return serialRead( vtkSmartPointer< vtkStructuredGridReader >::New() );
         case VTKLegacyDatasetType::unstructuredGrid: return serialRead( vtkSmartPointer< vtkUnstructuredGridReader >::New() );
         case VTKLegacyDatasetType::rectilinearGrid:  return serialRead( vtkSmartPointer< vtkRectilinearGridReader >::New() );
+        case VTKLegacyDatasetType::polyData:         return serialRead( vtkSmartPointer< vtkPolyDataReader >::New() );
       }
       break;
     }
@@ -519,6 +538,7 @@ loadMesh( Path const & filePath,
     case VTKMeshExtension::vtr: return serialRead( vtkSmartPointer< vtkXMLRectilinearGridReader >::New() );
     case VTKMeshExtension::vts: return serialRead( vtkSmartPointer< vtkXMLStructuredGridReader >::New() );
     case VTKMeshExtension::vti: return serialRead( vtkSmartPointer< vtkXMLImageDataReader >::New() );
+    case VTKMeshExtension::vtp: return serialRead( vtkSmartPointer< vtkXMLPolyDataReader >::New() );
     case VTKMeshExtension::pvtu:
     {
       return parallelRead( vtkSmartPointer< vtkXMLPUnstructuredGridReader >::New() );
@@ -529,9 +549,10 @@ loadMesh( Path const & filePath,
     case VTKMeshExtension::pvts: return parallelRead( vtkSmartPointer< vtkXMLPStructuredGridReader >::New() );
     case VTKMeshExtension::pvtr: return parallelRead( vtkSmartPointer< vtkXMLPRectilinearGridReader >::New() );
     case VTKMeshExtension::pvti: return parallelRead( vtkSmartPointer< vtkXMLPImageDataReader >::New() );
+    case VTKMeshExtension::pvtp: return parallelRead( vtkSmartPointer< vtkXMLPPolyDataReader >::New() );
     default:
     {
-      GEOS_ERROR( extension << " is not a recognized extension for VTKMesh. Please use .vtk, .vtu, .vtr, .vts, .vti, .pvtu, .pvtr, .pvts or .ptvi." );
+      GEOS_ERROR( extension << " is not a recognized extension for VTKMesh. Please use ." << EnumStrings< VTKMeshExtension >::concat( ", ." ) );
       break;
     }
   }
@@ -745,9 +766,11 @@ vtkSmartPointer< vtkDataSet > manageGlobalIds( vtkSmartPointer< vtkDataSet > mes
     vtkIdTypeArray const * const globalCellId = vtkIdTypeArray::FastDownCast( output->GetCellData()->GetGlobalIds() );
     vtkIdTypeArray const * const globalPointId = vtkIdTypeArray::FastDownCast( output->GetPointData()->GetGlobalIds() );
     GEOS_ERROR_IF( globalCellId->GetNumberOfComponents() != 1 && globalCellId->GetNumberOfTuples() != output->GetNumberOfCells(),
-                   "Global cell IDs are invalid. Check the array or enable automatic generation (useGlobalId < 0)" );
+                   "Global cell IDs are invalid. Check the array or enable automatic generation (useGlobalId < 0).\n" <<
+                   generalMeshErrorAdvice );
     GEOS_ERROR_IF( globalPointId->GetNumberOfComponents() != 1 && globalPointId->GetNumberOfTuples() != output->GetNumberOfPoints(),
-                   "Global cell IDs are invalid. Check the array or enable automatic generation (useGlobalId < 0)" );
+                   "Global cell IDs are invalid. Check the array or enable automatic generation (useGlobalId < 0).\n" <<
+                   generalMeshErrorAdvice );
 
     GEOS_LOG_RANK_0( "Using global Ids defined in VTK mesh" );
   }
@@ -1038,7 +1061,7 @@ geos::ElementType buildGeosxPolyhedronType( vtkCell * const cell )
     case 11: return geos::ElementType::Prism11;
     default:
     {
-      GEOS_ERROR( "Prism with " << numQuads << " sides is not supported." );
+      GEOS_ERROR( "Prism with " << numQuads << " sides is not supported.\n" << generalMeshErrorAdvice );
       return{};
     }
   }
@@ -1068,7 +1091,8 @@ ElementType convertVtkToGeosxElementType( vtkCell *cell )
     case VTK_POLYHEDRON:       return buildGeosxPolyhedronType( cell );
     default:
     {
-      GEOS_ERROR( cell->GetCellType() << " is not a recognized cell type to be used with the VTKMeshGenerator" );
+      GEOS_ERROR( cell->GetCellType() << " is not a recognized cell type to be used with the VTKMeshGenerator.\n" <<
+                  generalMeshErrorAdvice );
       return {};
     }
   }
@@ -1392,7 +1416,7 @@ std::vector< localIndex > getWedgeNodeOrderingFromPolyhedron( vtkCell * const ce
     }
   }
 
-  GEOS_ERROR_IF( iFace == numFaces, "Invalid wedge." );
+  GEOS_ERROR_IF( iFace == numFaces, "Invalid wedge.\n" << generalMeshErrorAdvice );
 
   // Get global pointIds for the first triangle
   for( localIndex i = 0; i < 3; ++i )
@@ -1487,7 +1511,7 @@ std::vector< localIndex > getPyramidNodeOrderingFromPolyhedron( vtkCell * const 
     }
   }
 
-  GEOS_ERROR_IF( iFace == numFaces, "Invalid pyramid." );
+  GEOS_ERROR_IF( iFace == numFaces, "Invalid pyramid.\n" << generalMeshErrorAdvice );
 
   // Get global pointIds for the base
   vtkCell * cellFace = cell->GetFace( iFace );
@@ -1561,7 +1585,7 @@ std::vector< localIndex > getPrismNodeOrderingFromPolyhedron( vtkCell * const ce
     }
   }
 
-  GEOS_ERROR_IF( iFace == numFaces, "Invalid prism." );
+  GEOS_ERROR_IF( iFace == numFaces, "Invalid prism.\n" << generalMeshErrorAdvice );
 
   // Get global pointIds for the first base
   vtkCell *cellFace = cell->GetFace( iFace );
@@ -2058,10 +2082,10 @@ real64 writeNodes( integer const logLevel,
     // TODO: remove this check once the input mesh is cleaned of duplicate points via a filter
     //       and make launch policy parallel again
     GEOS_ERROR_IF( nodeGlobalIds.count( pointGlobalID ) > 0,
-                   GEOS_FMT( "Duplicate point detected: globalID = {}\n"
-                             "Consider cleaning the dataset in Paraview using 'Clean to grid' filter.\n"
-                             "Make sure partitionRefinement is set to 1 or higher (this may help).",
-                             pointGlobalID ) );
+                   GEOS_FMT( "At least one duplicate point detected (globalID = {}).\n"
+                             "Potential fixes :\n- Make sure partitionRefinement is set to 1 or higher.\n"
+                             "- {}",
+                             pointGlobalID, generalMeshErrorAdvice ) );
     nodeGlobalIds.insert( pointGlobalID );
   } );
 

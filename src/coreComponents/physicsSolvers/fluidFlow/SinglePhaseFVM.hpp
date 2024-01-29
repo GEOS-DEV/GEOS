@@ -113,6 +113,11 @@ public:
   }
 
   /**
+   * @copydoc SolverBase::getCatalogName()
+   */
+  string getCatalogName() const override { return catalogName(); }
+
+  /**
    * @defgroup Solver Interface Function
    *
    * This function provides the primary interface that is required for derived classes
@@ -153,8 +158,7 @@ public:
                        real64 const dt,
                        DomainPartition & domain ) override;
   virtual void
-  assembleFluxTerms( real64 const time_n,
-                     real64 const dt,
+  assembleFluxTerms( real64 const dt,
                      DomainPartition const & domain,
                      DofManager const & dofManager,
                      CRSMatrixView< real64, globalIndex const > const & localMatrix,
