@@ -8,12 +8,13 @@ restartcheck_params["rtol"] = 1.0E-5
 partitions = ((1, 1, 1), (1, 1, 2))
 
 decks = [
-    TestDeck(name="viscoExtendedDruckerPrager_relaxation_smoke",
-             description="Relaxation test with viscoplastic solver",
-             partitions=((1, 1, 1), (1, 1, 2)),
-             restart_step=0,
-             check_step=2,
-             restartcheck_params=RestartcheckParameters(**restartcheck_params)),
+    TestDeck(
+        name="viscoExtendedDruckerPrager_relaxation_smoke",
+        description="Relaxation test with viscoplastic solver",
+        partitions=((1, 1, 1), (1, 1, 2)),
+        restart_step=0,
+        check_step=2,
+        restartcheck_params=RestartcheckParameters(**restartcheck_params)),
 ]
 
 generate_geos_tests(decks)

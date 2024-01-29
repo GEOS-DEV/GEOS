@@ -39,7 +39,8 @@ def _n_ranks(partition):
     return result
 
 
-def _build_poro_elastic_coupling_case(deck, cycles, partitions, description, restartcheck_params):
+def _build_poro_elastic_coupling_case(deck, cycles, partitions, description,
+                                      restartcheck_params):
     """
     Generic function that build the poro-elastic cases.
     A first run is done and a second takes an intermediate timestep to validate the restart.
@@ -63,25 +64,26 @@ def _build_poro_elastic_coupling_case(deck, cycles, partitions, description, res
     # The simulation will generate data for two cycles
     intermediate_cycle, last_cycle = cycles
 
-    return TestDeck(name=deck.split(".")[0],
-                    description=description.description_builder,
-                    partitions=partitions,
-                    restart_step=intermediate_cycle,
-                    check_step=last_cycle,
-                    restartcheck_params=RestartcheckParameters(**restartcheck_params))
+    return TestDeck(
+        name=deck.split(".")[0],
+        description=description.description_builder,
+        partitions=partitions,
+        restart_step=intermediate_cycle,
+        check_step=last_cycle,
+        restartcheck_params=RestartcheckParameters(**restartcheck_params))
 
 
 def _build_NonlinearAccelerationValidation_cases():
-    description = Description("Nonlinear acceleration validation problem ", "auto", "Sohail Waziri", True)
+    description = Description("Nonlinear acceleration validation problem ",
+                              "auto", "Sohail Waziri", True)
     restartcheck_params = {"atol": 1.0e-4, "rtol": 2.0e-6}
-    return _build_poro_elastic_coupling_case("validationCase.xml", (3, 6), ((1, 1, 1),),
-                                             description, restartcheck_params)
+    return _build_poro_elastic_coupling_case("validationCase.xml", (3, 6),
+                                             ((1, 1, 1), ), description,
+                                             restartcheck_params)
 
 
 def test_poro_elastic_coupling_cases():
-    deck_instances = [
-        _build_NonlinearAccelerationValidation_cases()
-    ]
+    deck_instances = [_build_NonlinearAccelerationValidation_cases()]
 
     generate_geos_tests(deck_instances)
 

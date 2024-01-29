@@ -8,18 +8,20 @@ restartcheck_params["rtol"] = 1.0E-5
 partitions = ((1, 1, 1), (1, 1, 2))
 
 decks = [
-    TestDeck(name="PoroViscoDruckerPrager_smoke",
-             description="PoroViscoDruckerPrager wellbore problem",
-             partitions=((1, 1, 1), (2, 2, 1)),
-             restart_step=2,
-             check_step=6,
-             restartcheck_params=RestartcheckParameters(**restartcheck_params)),
-    TestDeck(name="PoroViscoExtendedDruckerPrager_smoke",
-             description="PoroViscoExtendedDruckerPrager wellbore problem",
-             partitions=((1, 1, 1), (2, 2, 1)),
-             restart_step=2,
-             check_step=6,
-             restartcheck_params=RestartcheckParameters(**restartcheck_params)),
+    TestDeck(
+        name="PoroViscoDruckerPrager_smoke",
+        description="PoroViscoDruckerPrager wellbore problem",
+        partitions=((1, 1, 1), (2, 2, 1)),
+        restart_step=2,
+        check_step=6,
+        restartcheck_params=RestartcheckParameters(**restartcheck_params)),
+    TestDeck(
+        name="PoroViscoExtendedDruckerPrager_smoke",
+        description="PoroViscoExtendedDruckerPrager wellbore problem",
+        partitions=((1, 1, 1), (2, 2, 1)),
+        restart_step=2,
+        check_step=6,
+        restartcheck_params=RestartcheckParameters(**restartcheck_params)),
     TestDeck(name="PoroViscoModifiedCamClay_smoke",
              description="PoroViscoModifiedCamClay wellbore problem",
              partitions=((1, 1, 1), (2, 2, 1)),

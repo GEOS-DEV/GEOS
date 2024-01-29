@@ -7,12 +7,13 @@ restartcheck_params['atol'] = 1e-10
 restartcheck_params['rtol'] = 4e-09
 
 decks = [
-    TestDeck(name="deadOil_fractureMatrixFlow_edfm_horizontalFrac_smoke",
-             description='Multiphase flow EDFM horizontal frac.',
-             partitions=((1, 1, 1), (2, 1, 1), (4, 1, 1)),
-             restart_step=0,
-             check_step=23,
-             restartcheck_params=RestartcheckParameters(**restartcheck_params)),
+    TestDeck(
+        name="deadOil_fractureMatrixFlow_edfm_horizontalFrac_smoke",
+        description='Multiphase flow EDFM horizontal frac.',
+        partitions=((1, 1, 1), (2, 1, 1), (4, 1, 1)),
+        restart_step=0,
+        check_step=23,
+        restartcheck_params=RestartcheckParameters(**restartcheck_params)),
     TestDeck(name="deadOil_fractureMatrixFlow_edfm_inclinedFrac_smoke",
              description='Multiphase flow EDFM inclined frac.',
              partitions=((1, 1, 1), (2, 2, 1)),

@@ -9,17 +9,20 @@ restartcheck_params['rtol'] = 4e-09
 decks = [
     TestDeck(
         name="FlowProppantTransport2d_smoke",
-        description='Coupled Single phase flow and proppant transport test (2D, compressible, gravity, fracture flow)',
+        description=
+        'Coupled Single phase flow and proppant transport test (2D, compressible, gravity, fracture flow)',
         partitions=((1, 1, 1), (1, 2, 2), (1, 3, 3)),
         restart_step=5,
         check_step=10,
         restartcheck_params=RestartcheckParameters(**restartcheck_params)),
-    TestDeck(name="FlowProppantBedTransport2d_smoke",
-             description='Proppant transport and bed-build-up test (2D, proppant, fracture flow)',
-             partitions=((1, 1, 1), (1, 2, 1), (1, 3, 1)),
-             restart_step=20,
-             check_step=40,
-             restartcheck_params=RestartcheckParameters(**restartcheck_params)),
+    TestDeck(
+        name="FlowProppantBedTransport2d_smoke",
+        description=
+        'Proppant transport and bed-build-up test (2D, proppant, fracture flow)',
+        partitions=((1, 1, 1), (1, 2, 1), (1, 3, 1)),
+        restart_step=20,
+        check_step=40,
+        restartcheck_params=RestartcheckParameters(**restartcheck_params)),
     TestDeck(name="ProppantSlotTest_smoke",
              description='Slot test on proppant transport with slickwater',
              partitions=((1, 1, 1), (1, 3, 1), (1, 3, 3)),

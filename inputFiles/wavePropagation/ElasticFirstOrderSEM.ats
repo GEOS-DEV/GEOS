@@ -7,12 +7,14 @@ restartcheck_params['atol'] = 0.0001
 restartcheck_params['rtol'] = 2e-05
 
 decks = [
-    TestDeck(name="elas3D_firstOrder_abc_smoke",
-             description='Elastic wave solver, first-order FE, first order formulation, absorbing BC',
-             partitions=((1, 1, 1), (2, 2, 2)),
-             restart_step=100,
-             check_step=200,
-             restartcheck_params=RestartcheckParameters(**restartcheck_params)),
+    TestDeck(
+        name="elas3D_firstOrder_abc_smoke",
+        description=
+        'Elastic wave solver, first-order FE, first order formulation, absorbing BC',
+        partitions=((1, 1, 1), (2, 2, 2)),
+        restart_step=100,
+        check_step=200,
+        restartcheck_params=RestartcheckParameters(**restartcheck_params)),
     TestDeck(
         name="elas3D_firstOrder_fs_smoke",
         description=
@@ -21,12 +23,14 @@ decks = [
         restart_step=100,
         check_step=200,
         restartcheck_params=RestartcheckParameters(**restartcheck_params)),
-    TestDeck(name="elas3D_Q3_firstOrder_abc_smoke",
-             description='Elastic wave solver, third-order FE, first order formulation, absorbing BC',
-             partitions=((1, 1, 1), (2, 2, 2)),
-             restart_step=100,
-             check_step=200,
-             restartcheck_params=RestartcheckParameters(**restartcheck_params)),
+    TestDeck(
+        name="elas3D_Q3_firstOrder_abc_smoke",
+        description=
+        'Elastic wave solver, third-order FE, first order formulation, absorbing BC',
+        partitions=((1, 1, 1), (2, 2, 2)),
+        restart_step=100,
+        check_step=200,
+        restartcheck_params=RestartcheckParameters(**restartcheck_params)),
     TestDeck(
         name="elas3D_Q3_firstOrder_fs_smoke",
         description=

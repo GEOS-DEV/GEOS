@@ -16,7 +16,8 @@ kgd_viscosity_dominated = {
 
 kgd_viscosity_dominated_poroelastic = {
     "name": "kgdViscosityDominated_poroelastic_smoke",
-    "description": "KGD fracture in viscosity-dominated regime in a poroelastic solid",
+    "description":
+    "KGD fracture in viscosity-dominated regime in a poroelastic solid",
     "partitions": ((1, 1, 1), (2, 3, 1)),
     "restart_step": 0,
     "check_step": 1
@@ -35,7 +36,8 @@ kgd_toughness_dominated = {
 
 kgd_toughness_dominated_poroelastic = {
     "name": "kgdToughnessDominated_poroelastic_smoke",
-    "description": "KGD fracture in toughness-dominated regime in a poroelastic solid",
+    "description":
+    "KGD fracture in toughness-dominated regime in a poroelastic solid",
     "partitions": ((1, 1, 1), (2, 3, 1)),
     "restart_step": 0,
     "check_step": 1
@@ -51,7 +53,8 @@ kgd_validation = {
 
 kgd_node_based_C3D6 = {
     "name": "kgdNodeBased_C3D6_smoke",
-    "description": "KGD hydrofracturing (node-based) problem with C3D6 element type",
+    "description":
+    "KGD hydrofracturing (node-based) problem with C3D6 element type",
     "partitions": ((1, 1, 1), (3, 3, 1)),
     "restart_step": 0,
     "check_step": 1
@@ -59,7 +62,8 @@ kgd_node_based_C3D6 = {
 
 kgd_edge_based_C3D6 = {
     "name": "kgdEdgeBased_C3D6_smoke",
-    "description": "KGD hydrofracturing (edge-based) problem with C3D6 element type",
+    "description":
+    "KGD hydrofracturing (edge-based) problem with C3D6 element type",
     "partitions": ((1, 1, 1), (3, 3, 1)),
     "restart_step": 0,
     "check_step": 1
@@ -86,7 +90,8 @@ penny_shaped_toughness_dominated = {
 
 penny_shaped_toughness_dominated_poroelastic = {
     "name": "pennyShapedToughnessDominated_poroelastic_smoke",
-    "description": "Penny Shaped fracture in Toughness-dominated regime in a poroelastic solid",
+    "description":
+    "Penny Shaped fracture in Toughness-dominated regime in a poroelastic solid",
     "partitions": ((1, 1, 1), (1, 3, 2)),
     "restart_step": 0,
     "check_step": 5
@@ -105,7 +110,8 @@ penny_shaped_viscosity_dominated = {
 
 penny_shaped_viscosity_dominated_poroelastic = {
     "name": "pennyShapedViscosityDominated_poroelastic_smoke",
-    "description": "Penny Shaped fracture in Viscosity-dominated regime in a poroelastic solid",
+    "description":
+    "Penny Shaped fracture in Viscosity-dominated regime in a poroelastic solid",
     "partitions": ((1, 1, 1), (1, 3, 2)),
     "restart_step": 0,
     "check_step": 5
@@ -124,7 +130,8 @@ pkn_viscosity_dominated = {
 
 pkn_viscosity_dominated_poroelastic = {
     "name": "pknViscosityDominated_poroelastic_smoke",
-    "description": "PKN fracture in Viscosity-dominated regime in a poroelastic solid",
+    "description":
+    "PKN fracture in Viscosity-dominated regime in a poroelastic solid",
     "partitions": ((1, 1, 1), (1, 2, 2)),
     "restart_step": 0,
     "check_step": 5
@@ -146,10 +153,13 @@ walsh_quarter_no_chombo = {
     "check_step": 5
 }
 
-decks = (kgd_viscosity_dominated, kgd_viscosity_dominated_poroelastic, kgd_toughness_dominated,
-         kgd_toughness_dominated_poroelastic, kgd_validation, kgd_edge_based_C3D6, kgd_node_based_C3D6,
-         heterogeneous_fracture, penny_shaped_toughness_dominated, penny_shaped_toughness_dominated_poroelastic,
-         penny_shaped_viscosity_dominated, penny_shaped_viscosity_dominated_poroelastic, pkn_viscosity_dominated,
+decks = (kgd_viscosity_dominated, kgd_viscosity_dominated_poroelastic,
+         kgd_toughness_dominated, kgd_toughness_dominated_poroelastic,
+         kgd_validation, kgd_edge_based_C3D6, kgd_node_based_C3D6,
+         heterogeneous_fracture, penny_shaped_toughness_dominated,
+         penny_shaped_toughness_dominated_poroelastic,
+         penny_shaped_viscosity_dominated,
+         penny_shaped_viscosity_dominated_poroelastic, pkn_viscosity_dominated,
          pkn_viscosity_dominated_poroelastic, sneddon, walsh_quarter_no_chombo)
 
 # Check parameters
@@ -161,14 +171,17 @@ curvecheck_params_base["tolerance"] = [1e-10, 1e-10]
 curvecheck_params_base["script_instructions"] = [[
     "./hydrofractureCurveChecks.py", "tbd", "hydraulicAperture", "source"
 ], ["./hydrofractureCurveChecks.py", "tbd", "pressure", "source"]]
-curvecheck_params_base["curves"] = [["hydraulicAperture", "source"], ["pressure", "source"]]
+curvecheck_params_base["curves"] = [["hydraulicAperture", "source"],
+                                    ["pressure", "source"]]
 
 deck_instances = []
 for deck in decks:
     if ("aperture_curve_method" in deck) and ("pressure_curve_method" in deck):
         curvecheck_params = copy.deepcopy(curvecheck_params_base)
-        curvecheck_params["script_instructions"][0][1] = deck["aperture_curve_method"]
-        curvecheck_params["script_instructions"][1][1] = deck["pressure_curve_method"]
+        curvecheck_params["script_instructions"][0][1] = deck[
+            "aperture_curve_method"]
+        curvecheck_params["script_instructions"][1][1] = deck[
+            "pressure_curve_method"]
 
     if ("tolerance" in deck):
         curvecheck_params["tolerance"] = deck["tolerance"]

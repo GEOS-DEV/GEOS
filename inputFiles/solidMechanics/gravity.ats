@@ -8,12 +8,13 @@ restartcheck_params["rtol"] = 1.0E-5
 partitions = ((1, 1, 1), (1, 1, 2))
 
 decks = [
-    TestDeck(name="gravity",
-             description="Test the gravity application in solid mechanics solver",
-             partitions=partitions,
-             restart_step=1,
-             check_step=2,
-             restartcheck_params=RestartcheckParameters(**restartcheck_params))
+    TestDeck(
+        name="gravity",
+        description="Test the gravity application in solid mechanics solver",
+        partitions=partitions,
+        restart_step=1,
+        check_step=2,
+        restartcheck_params=RestartcheckParameters(**restartcheck_params))
 ]
 
 generate_geos_tests(decks)

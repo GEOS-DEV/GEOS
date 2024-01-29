@@ -6,7 +6,9 @@ restartcheck_params = RestartcheckParameters(atol=1.0E-3, rtol=1.0E-7)
 curvecheck_params = CurveCheckParameters(
     filename='displacement_history.hdf5',
     tolerance=[0.0002],
-    script_instructions=[['./beamBending_curve.py', 'curve', 'totalDisplacement', 'trace']],
+    script_instructions=[[
+        './beamBending_curve.py', 'curve', 'totalDisplacement', 'trace'
+    ]],
     curves=[['totalDisplacement', 'trace']])
 
 partitions = ((1, 1, 1), (2, 2, 2))

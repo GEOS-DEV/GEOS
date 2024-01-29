@@ -14,13 +14,14 @@ curvecheck_params['curves'] = [['velocity', 'source']]
 partitions = ((1, 1, 1), (2, 2, 2), (3, 3, 3))
 
 decks = [
-    TestDeck(name="sedov_finiteStrain_smoke",
-             description="Test the basic sedov problem and restart capabilities",
-             partitions=partitions,
-             restart_step=50,
-             check_step=100,
-             restartcheck_params=RestartcheckParameters(**restartcheck_params),
-             curvecheck_params=CurveCheckParameters(**curvecheck_params))
+    TestDeck(
+        name="sedov_finiteStrain_smoke",
+        description="Test the basic sedov problem and restart capabilities",
+        partitions=partitions,
+        restart_step=50,
+        check_step=100,
+        restartcheck_params=RestartcheckParameters(**restartcheck_params),
+        curvecheck_params=CurveCheckParameters(**curvecheck_params))
 ]
 
 generate_geos_tests(decks)

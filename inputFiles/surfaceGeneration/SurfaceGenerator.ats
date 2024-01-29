@@ -9,18 +9,22 @@ restartcheck_params["rtol"] = 2.0E-10
 partitions = ((1, 1, 1), (2, 2, 2))
 
 decks = [
-    TestDeck(name="SurfaceGenerator",
-             description="Test the basic surface generator problem and restart capabilities.",
-             partitions=partitions,
-             restart_step=2,
-             check_step=3,
-             restartcheck_params=RestartcheckParameters(**restartcheck_params)),
-    TestDeck(name="DryFrac_StaticPenny_PrismElem",
-             description="Testing the SIF calculation (node-based) for a penny-shaped fracture",
-             partitions=partitions,
-             restart_step=0,
-             check_step=2,
-             restartcheck_params=RestartcheckParameters(**restartcheck_params)),
+    TestDeck(
+        name="SurfaceGenerator",
+        description=
+        "Test the basic surface generator problem and restart capabilities.",
+        partitions=partitions,
+        restart_step=2,
+        check_step=3,
+        restartcheck_params=RestartcheckParameters(**restartcheck_params)),
+    TestDeck(
+        name="DryFrac_StaticPenny_PrismElem",
+        description=
+        "Testing the SIF calculation (node-based) for a penny-shaped fracture",
+        partitions=partitions,
+        restart_step=0,
+        check_step=2,
+        restartcheck_params=RestartcheckParameters(**restartcheck_params)),
     TestDeck(
         name="DryFrac_ThreeNodesPinched_HorizontalFrac",
         description=
