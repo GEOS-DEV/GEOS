@@ -254,6 +254,13 @@ protected:
                                 NodeManager const & nodeManager,
                                 string const & path );
 
+  /**
+   * @brief Writes the files containing the particle representation
+   * @details There will be one file written per ParticleRegion and per rank
+   * @param[in] time the time-step
+   * @param[in] particleManager the ParticleManager containing the ParticleRegions to be output
+   * @param[in] path the root path where the mesh will be written
+   */
   void writeParticleRegions( real64 const time,
                              ParticleManager const & particleManager,
                              string const & path );
@@ -304,6 +311,11 @@ protected:
   void writeElementFields( ElementRegionBase const & subRegion,
                            vtkCellData * cellData ) const;
 
+  /**
+   * @brief Writes all the fields associated to the elements of \p er if their plotlevel is <= m_plotLevel
+   * @param[in] region ParticleRegion being written
+   * @param[in] cellData a VTK object containing all the fields associated with the elements
+   */
   void writeParticleFields( ParticleRegionBase const & region,
                             vtkCellData * cellData ) const;
 
