@@ -17,4 +17,8 @@ set(FORTRAN_MANGLE_NO_UNDERSCORE OFF CACHE BOOL "")
 set(MPI_HOME /usr/tce/packages/spectrum-mpi/spectrum-mpi-rolling-release-gcc-8.3.1 CACHE PATH "")
 set(MPI_Fortran_COMPILER ${MPI_HOME}/bin/mpifort CACHE PATH "")
 
-include(${CMAKE_CURRENT_LIST_DIR}/lassen-base.cmake)
+# Set Inline profiler for MPM to TRUE/FALSE (0/1)
+set(MPMPROFILER_OPTION 1) 	# 0 off, 1 something, 2 something else.  doesn't work yet
+set(MPM_OPTION 0)      		# 0 default, 1 something, 2 something else.  doesn't work yet
+
+configure_file(${CMAKE_CURRENT_LIST_DIR}/../../src/coreComponents/physicsSolvers/solidMechanics/mpmConfigFiles/config.h.in ${CMAKE_CURRENT_LIST_DIR}/../../src/coreComponents/physicsSolvers/solidMechanics/temp4P2G/config.h @ONLY)
