@@ -317,6 +317,3 @@ target_include_directories( constitutive PUBLIC ${CMAKE_SOURCE_DIR}/coreComponen
 if( GEOS_ENABLE_TESTS )
   add_subdirectory( unitTests )
 endif( )
-
-geosx_add_code_checks( PREFIX constitutive
-                       EXCLUDES PVTPackage )
