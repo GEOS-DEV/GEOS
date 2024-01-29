@@ -141,7 +141,7 @@ void ReactiveBrineFluid< PHASE > ::createPVTModels()
     string str;
     while( std::getline( is, str ) )
     {
-      string_array const strs = stringutilities::tokenizeBySpaces< array1d >( str );
+      string_array const strs = stringutilities::tokenizeBySpaces< std::vector >( str );
 
       if( !strs.empty() )
       {

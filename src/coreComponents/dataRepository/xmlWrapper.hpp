@@ -391,6 +391,20 @@ stringToInputVariable( Array< T, NDIM, PERMUTATION > & array, string const & val
   LvArray::input::stringToArray( array, string( stringutilities::trimSpaces( value ) ) );
 }
 
+template< typename T >
+void stringToInputVariable( std::vector< T > & array, string const & value, Regex const & regex )
+{
+  validateString( value, regex );
+  array1d<T> tmp;
+  LvArray::input::stringToArray( tmp, string( stringutilities::trimSpaces( value ) ) );
+
+  array.resize( tmp.size() );
+  for( localIndex i = 0; i < tmp.size(); ++i )
+  {
+    array[ i ] = tmp[ i ];
+  }
+}
+
 ///@}
 
 namespace internal
@@ -421,6 +435,15 @@ static void equate( T & lhs, T const & rhs )
 template< typename T, int NDIM, typename PERM >
 static void equate( Array< T, NDIM, PERM > const & lhs, T const & rhs )
 { lhs.template setValues< serialPolicy >( rhs ); }
+
+template< typename T >
+static void equate( std::vector< T > & lhs, T const & rhs )
+{ 
+  for( auto & val : lhs )
+  {
+    val = rhs;
+  }
+}
 
 }   // namespace internal
 

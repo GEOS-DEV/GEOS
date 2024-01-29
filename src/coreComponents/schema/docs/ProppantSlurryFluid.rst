@@ -3,7 +3,7 @@
 ========================= ============ ======== ================================================ 
 Name                      Type         Default  Description                                      
 ========================= ============ ======== ================================================ 
-componentNames            string_array {}       List of fluid component names                    
+componentNames            string_array          List of fluid component names                    
 compressibility           real64       0        Fluid compressibility                            
 defaultComponentDensity   real64_array {0}      Default value for the component density.         
 defaultComponentViscosity real64_array {0}      Default value for the component viscosity.       

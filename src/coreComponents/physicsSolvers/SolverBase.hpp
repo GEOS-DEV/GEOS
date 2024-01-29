@@ -686,7 +686,7 @@ public:
     {
       string const meshBodyName = target.first.first;
       string const meshLevelName = target.first.second;
-      string_array const & regionNames = target.second.toViewConst();
+      string_array const & regionNames = target.second;
       MeshBody const & meshBody = meshBodies.getGroup< MeshBody >( meshBodyName );
 
       MeshLevel const * meshLevelPtr = meshBody.getMeshLevels().getGroupPointer< MeshLevel >( meshLevelName );
@@ -712,7 +712,7 @@ public:
     {
       string const meshBodyName = target.first.first;
       string const meshLevelName = target.first.second;
-      string_array const & regionNames = target.second.toViewConst();
+      string_array const & regionNames = target.second;
       MeshBody & meshBody = meshBodies.getGroup< MeshBody >( meshBodyName );
 
       MeshLevel * meshLevelPtr = meshBody.getMeshLevels().getGroupPointer< MeshLevel >( meshLevelName );

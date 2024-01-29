@@ -8,7 +8,7 @@ fieldName              groupNameRef       required The name of the (packable) fi
 name                   groupName          required A name is required for any non-unique nodes                                                 
 objectPath             groupNameRef       required The name of the object from which to retrieve field values.                                 
 onlyOnSetChange        integer            0        Whether or not to only collect when the collected sets of indices change in any way.        
-setNames               groupNameRef_array {}       The set(s) for which to retrieve data.                                                      
+setNames               groupNameRef_array          The set(s) for which to retrieve data.                                                      
 ====================== ================== ======== =========================================================================================== 
 
 

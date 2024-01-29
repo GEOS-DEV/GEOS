@@ -274,7 +274,7 @@ void SinglePhasePoromechanics< FLOW_SOLVER >::assembleElementBasedTerms( real64 
       assemblyLaunch< constitutive::SolidBase,
                       solidMechanicsLagrangianFEMKernels::QuasiStaticFactory >( mesh,
                                                                                 dofManager,
-                                                                                filteredRegionNames.toViewConst(),
+                                                                                filteredRegionNames,
                                                                                 SolidMechanicsLagrangianFEM::viewKeyStruct::solidMaterialNamesString(),
                                                                                 localMatrix,
                                                                                 localRhs,

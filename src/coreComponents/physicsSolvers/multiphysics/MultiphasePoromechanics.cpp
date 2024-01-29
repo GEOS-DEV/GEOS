@@ -235,7 +235,7 @@ void MultiphasePoromechanics< FLOW_SOLVER >::assembleSystem( real64 const GEOS_U
       assemblyLaunch< constitutive::SolidBase,
                       solidMechanicsLagrangianFEMKernels::QuasiStaticFactory >( mesh,
                                                                                 dofManager,
-                                                                                filteredRegionNames.toViewConst(),
+                                                                                filteredRegionNames,
                                                                                 SolidMechanicsLagrangianFEM::viewKeyStruct::solidMaterialNamesString(),
                                                                                 localMatrix,
                                                                                 localRhs,
@@ -373,7 +373,7 @@ void MultiphasePoromechanics< FLOW_SOLVER >::updateStabilizationParameters( Doma
     }
 
     // loop over the elements and update the stabilization constant
-    mesh.getElemManager().forElementSubRegions( filteredTargetRegionNames.toViewConst(), [&]( localIndex const,
+    mesh.getElemManager().forElementSubRegions( filteredTargetRegionNames, [&]( localIndex const,
                                                                                               ElementSubRegionBase & subRegion )
 
     {

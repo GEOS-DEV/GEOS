@@ -74,7 +74,7 @@ void ContactSolverBase::registerDataOnMesh( dataRepository::Group & meshBodies )
   forDiscretizationOnMeshTargets( meshBodies,
                                   [&]( string const,
                                        MeshLevel & meshLevel,
-                                       string_array const &const regionNames )
+                                       string_array const & regionNames )
   {
     ElementRegionManager & elemManager = meshLevel.getElemManager();
     elemManager.forElementRegions< SurfaceElementRegion >( regionNames,

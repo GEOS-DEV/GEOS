@@ -196,7 +196,7 @@ void testOperatorsNumericalDerivatives( ReactiveCompositionalMultiphaseOBL & sol
   localIndex const NC = solver.numFluidComponents();
   localIndex const NOPS = solver.numOBLOperators();
 
-  string_array const operators( NOPS );
+  string_array operators( NOPS );
 
   // update component Fraction and check derivatives
   for( localIndex op = 0; op < NOPS; ++op )

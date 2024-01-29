@@ -116,7 +116,7 @@ bool validateWellPerforations( SolverBase const * const reservoirSolver,
 {
   std::pair< string, string > badPerforation;
 
-  string_array const &const flowTargetRegionNames =
+  string_array const & flowTargetRegionNames =
     reservoirSolver->getReference< string_array >( SolverBase::viewKeyStruct::targetRegionsString() );
 
   wellSolver->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,

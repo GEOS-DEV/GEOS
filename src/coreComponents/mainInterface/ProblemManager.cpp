@@ -577,7 +577,7 @@ void ProblemManager::generateMesh()
 
   // get all the discretizations from the numerical methods.
   // map< pair< mesh body name, pointer to discretization>, array of region names >
-  map< std::pair< string, Group const * const >, string_array const &const >
+  map< std::pair< string, Group const * const >, string_array const & >
   discretizations = getDiscretizations();
 
   // setup the base discretizations (hard code this for now)
@@ -592,7 +592,7 @@ void ProblemManager::generateMesh()
 
       this->generateMeshLevel( baseMesh,
                                particleBlockManager,
-                               junk.toViewConst() );
+                               junk );
     }
     else
     {
@@ -601,7 +601,7 @@ void ProblemManager::generateMesh()
       this->generateMeshLevel( baseMesh,
                                cellBlockManager,
                                nullptr,
-                               junk.toViewConst() );
+                               junk );
 
       ElementRegionManager & elemManager = baseMesh.getElemManager();
       elemManager.generateWells( cellBlockManager, baseMesh );
@@ -629,7 +629,7 @@ void ProblemManager::generateMesh()
       {
         int const order = feDiscretization->getOrder();
         string const & discretizationName = feDiscretization->getName();
-        string_array const &const regionNames = discretizationPair.second;
+        string_array const & regionNames = discretizationPair.second;
         CellBlockManagerABC const & cellBlockManager = meshBody.getCellBlockManager();
 
         // create a high order MeshLevel
@@ -724,11 +724,11 @@ void ProblemManager::applyNumericalMethods()
 
 
 
-map< std::pair< string, Group const * const >, string_array const &const >
+map< std::pair< string, Group const * const >, string_array const & >
 ProblemManager::getDiscretizations() const
 {
 
-  map< std::pair< string, Group const * const >, string_array const &const > meshDiscretizations;
+  map< std::pair< string, Group const * const >, string_array const & > meshDiscretizations;
 
   NumericalMethodsManager const &
   numericalMethodManager = getGroup< NumericalMethodsManager >( groupKeys.numericalMethodsManager.key() );

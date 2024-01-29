@@ -83,7 +83,7 @@ public:
 
     this->template forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                                  MeshLevel & mesh,
-                                                                                 arrayView1d< string const > const & regionNames )
+                                                                                 string_array const & regionNames )
     {
       ElementRegionManager & elementRegionManager = mesh.getElemManager();
       elementRegionManager.forElementSubRegions< ElementSubRegionBase >( regionNames,
@@ -130,7 +130,7 @@ public:
 
     SolverBase::forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
                                                                   MeshLevel & mesh,
-                                                                  arrayView1d< string const > const & regionNames )
+                                                                  string_array const & regionNames )
     {
       ElementRegionManager & elemManager = mesh.getElemManager();
 
@@ -351,7 +351,7 @@ protected:
 
       this->template forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                                   MeshLevel & mesh,
-                                                                                  arrayView1d< string const > const & regionNames )
+                                                                                  string_array const & regionNames )
       {
 
         mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
@@ -373,7 +373,7 @@ protected:
 
       this->template forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                                   MeshLevel & mesh,
-                                                                                  arrayView1d< string const > const & regionNames )
+                                                                                  string_array const & regionNames )
       {
 
         mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
@@ -402,7 +402,7 @@ protected:
   {
     this->template forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                                 MeshLevel & mesh,
-                                                                                arrayView1d< string const > const & regionNames )
+                                                                                string_array const & regionNames )
     {
       mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                             auto & subRegion )

@@ -670,7 +670,7 @@ void ElasticWaveEquationSEM::synchronizeUnknowns( real64 const & time_n,
                                                   integer const,
                                                   DomainPartition & domain,
                                                   MeshLevel & mesh,
-                                                  arrayView1d< string const > const & )
+                                                  string_array const & )
 {
   NodeManager & nodeManager = mesh.getNodeManager();
 
@@ -765,7 +765,7 @@ real64 ElasticWaveEquationSEM::explicitStepInternal( real64 const & time_n,
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
-                                                                arrayView1d< string const > const & regionNames )
+                                                                string_array const & regionNames )
   {
     computeUnknowns( time_n, dt, cycleNumber, domain, mesh, regionNames );
     synchronizeUnknowns( time_n, dt, cycleNumber, domain, mesh, regionNames );

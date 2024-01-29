@@ -65,7 +65,7 @@ The main methods of ``DoF Manager`` are:
   void addField( string const & fieldName,
                  Location const location,
                  localIndex const components,
-                 arrayView1d< string const > const & regions );
+                 string_array const & regions );
 
 * ``addCoupling``: creates a coupling between two fields (``rowField`` and
   ``colField``) according to a given ``connectivity`` in the regions defined by ``regions``.
@@ -79,7 +79,7 @@ The main methods of ``DoF Manager`` are:
   void addCoupling( string const & rowField,
                     string const & colField,
                     Connectivity const connectivity,
-                    arrayView1d< string const > const & regions,
+                    string_array const & regions,
                     bool const symmetric );
 
 * ``reorderByRank``: finish populating field and coupling information and apply DoF
