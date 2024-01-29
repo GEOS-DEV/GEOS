@@ -53,7 +53,7 @@ public:
                        integer const phaseLiquidIndex )
     : FlashModelBaseUpdate( componentMolarWeight ),
     m_CO2SolubilityTable( CO2SolubilityTable.createKernelWrapper() ),
-    //m_WaterVapourisationTable( waterVapourisationTable.createKernelWrapper() ),
+    m_WaterVapourisationTable( waterVapourisationTable.createKernelWrapper() ),
     m_CO2Index( CO2Index ),
     m_waterIndex( waterIndex ),
     m_phaseGasIndex( phaseGasIndex ),
