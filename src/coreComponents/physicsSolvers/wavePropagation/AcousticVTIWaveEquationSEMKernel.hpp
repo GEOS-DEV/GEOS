@@ -464,7 +464,7 @@ public:
     /// C-array stack storage for element local the nodal positions.
     /// only the eight corners of the mesh cell are needed to compute the Jacobian
     real64 xLocal[ 8 ][ 3 ];
-    /// local (to this element) stiffness vectors 
+    /// local (to this element) stiffness vectors
     real32 stiffnessVectorLocal_p[ numNodesPerElem ]{};
     real32 stiffnessVectorLocal_q[ numNodesPerElem ]{};
   };
