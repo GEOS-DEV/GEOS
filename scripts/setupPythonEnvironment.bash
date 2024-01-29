@@ -98,7 +98,7 @@ then
     echo "Cloning the GEOS python package repository..."
     TMP_CLONE_DIR=$(mktemp -d)
     PACKAGE_DIR=$TMP_CLONE_DIR/geosPythonPackages
-    git clone --depth 1 --branch main --single-branch https://github.com/GEOS-DEV/geosPythonPackages.git $PACKAGE_DIR
+    git clone --depth 1 --branch feature/sherman/addCodeFormatChecks --single-branch https://github.com/GEOS-DEV/geosPythonPackages.git $PACKAGE_DIR
 elif [ ! -d "${PACKAGE_DIR}/geosx_xml_tools_package" ]
 then
     echo "The specified package directory does not contain the expected targets."
