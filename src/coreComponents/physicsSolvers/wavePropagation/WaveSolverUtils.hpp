@@ -308,6 +308,7 @@ struct WaveSolverUtils
                                         arrayView2d< wsCoordType const, nodes::REFERENCE_POSITION_USD > const nodeCoords,
                                         real64 (& coordsOnRefElem)[3] )
   {
+    // only the eight corners of the mesh cell are needed to compute the Jacobian
     real64 xLocal[8][3]{};
     for( localIndex a = 0; a < 8; ++a )
     {
