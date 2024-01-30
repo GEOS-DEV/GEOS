@@ -120,6 +120,19 @@ template void stringToInputVariable( Tensor< real32, 3 > & target, string const 
 template void stringToInputVariable( Tensor< real64, 3 > & target, string const & inputValue, Regex const & regex );
 template void stringToInputVariable( Tensor< real64, 6 > & target, string const & inputValue, Regex const & regex );
 
+void stringToInputVariable( std::vector< std::string > & array, string const & value, Regex const & regex )
+{
+  validateString( value, regex );
+  array1d<std::string> tmp;
+  LvArray::input::stringToArray( tmp, string( stringutilities::trimSpaces( value ) ) );
+
+  array.resize( tmp.size() );
+  for( localIndex i = 0; i < tmp.size(); ++i )
+  {
+    array[ i ] = tmp[ i ];
+  }
+}
+
 /**
  * @brief Adds the filePath and character offset info on the node in filePathString
  * and charOffsetString attributes. This function allow to keep track of the source

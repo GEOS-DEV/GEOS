@@ -391,19 +391,7 @@ stringToInputVariable( Array< T, NDIM, PERMUTATION > & array, string const & val
   LvArray::input::stringToArray( array, string( stringutilities::trimSpaces( value ) ) );
 }
 
-template< typename T >
-void stringToInputVariable( std::vector< T > & array, string const & value, Regex const & regex )
-{
-  validateString( value, regex );
-  array1d<T> tmp;
-  LvArray::input::stringToArray( tmp, string( stringutilities::trimSpaces( value ) ) );
-
-  array.resize( tmp.size() );
-  for( localIndex i = 0; i < tmp.size(); ++i )
-  {
-    array[ i ] = tmp[ i ];
-  }
-}
+void stringToInputVariable( std::vector< std::string > & array, string const & value, Regex const & regex );
 
 ///@}
 
