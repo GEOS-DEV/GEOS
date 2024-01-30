@@ -100,15 +100,14 @@ struct PrecomputeSourceAndReceiverKernel
           R2SymTensor const sourceMoment )
   {
     constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
-    integer nsamples = useDAS <= 0 ? 1 : linearDASSamples;
-    array1d< real64 > const samplePointLocationsA( nsamples );
+    integer nSamples = useDAS <= 0 ? 1 : linearDASSamples;
+    array1d< real64 > const samplePointLocationsA( nSamples );
     arrayView1d< real64 > const samplePointLocations = samplePointLocationsA.toView();
-    array1d< real64 > const sampleIntegrationConstantsA( nsamples );
+    array1d< real64 > const sampleIntegrationConstantsA( nSamples );
     arrayView1d< real64 > const sampleIntegrationConstants = sampleIntegrationConstantsA.toView();
 
     forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const k )
     {
-
       real64 const center[3] = { elemCenter[k][0],
                                  elemCenter[k][1],
                                  elemCenter[k][2] };
@@ -188,13 +187,13 @@ struct PrecomputeSourceAndReceiverKernel
       // for DAS, we need multiple points
       
       /// compute locations of samples along receiver
-      if( nsamples == 1 )
+      if( nSamples == 1 )
       {
         samplePointLocations[ 0 ] = 0;
       }
       else
       {
-        for( integer i = 0; i < nsamples; ++i )
+        for( integer i = 0; i < nSamples; ++i )
         {
           samplePointLocations[ i ] = -0.5 + (real64) i / ( linearDASSamples - 1 );
         }
@@ -216,7 +215,7 @@ struct PrecomputeSourceAndReceiverKernel
       {
         for( integer i = 0; i < linearDASSamples; i++ )
         {
-          sampleIntegrationConstants[ i ] = 1.0 / nsamples;
+          sampleIntegrationConstants[ i ] = 1.0 / nSamples;
         }
       }
 
@@ -235,12 +234,12 @@ struct PrecomputeSourceAndReceiverKernel
         }
         real64 receiverLength = useDAS <= 0 ? 0 : linearDASGeometry[ ircv ][ 2 ];
         /// loop over samples
-        for( integer i = 0; i < nsamples; ++i )
+        for( integer iSample = 0; iSample < nSamples; ++iSample )
         {
           /// compute sample coordinates and locate the element containing it
-          real64 const coords[3] = { receiverCenter[ 0 ] + receiverVector[ 0 ] * receiverLength * samplePointLocations[ i ],
-                                     receiverCenter[ 1 ] + receiverVector[ 1 ] * receiverLength * samplePointLocations[ i ],
-                                     receiverCenter[ 2 ] + receiverVector[ 2 ] * receiverLength * samplePointLocations[ i ] };
+          real64 const coords[3] = { receiverCenter[ 0 ] + receiverVector[ 0 ] * receiverLength * samplePointLocations[ iSample ],
+                                     receiverCenter[ 1 ] + receiverVector[ 1 ] * receiverLength * samplePointLocations[ iSample ],
+                                     receiverCenter[ 2 ] + receiverVector[ 2 ] * receiverLength * samplePointLocations[ iSample ] };
           bool const sampleFound =
             WaveSolverUtils::locateSourceElement( numFacesPerElem,
                                                   center,
@@ -271,14 +270,14 @@ struct PrecomputeSourceAndReceiverKernel
             FE_TYPE::calcGradN( coordsOnRefElem, xLocal, gradN );
             for( localIndex a = 0; a < numNodesPerElem; ++a )
             {
-              receiverNodeIds[ircv][i * numNodesPerElem + a] = elemsToNodes( k, a );
+              receiverNodeIds[ircv][iSample * numNodesPerElem + a] = elemsToNodes( k, a );
               if( useDAS == 1 )
               {
-                receiverConstants[ircv][i * numNodesPerElem + a] += ( gradN[a][0] * receiverVector[0] + gradN[a][1] * receiverVector[1] + gradN[a][2] * receiverVector[2] ) * sampleIntegrationConstants[ i ];
+                receiverConstants[ircv][iSample * numNodesPerElem + a] += ( gradN[a][0] * receiverVector[0] + gradN[a][1] * receiverVector[1] + gradN[a][2] * receiverVector[2] ) * sampleIntegrationConstants[ iSample ];
               }
               else
               {
-                receiverConstants[ircv][i * numNodesPerElem + a] += N[a] * sampleIntegrationConstants[ i ];
+                receiverConstants[ircv][iSample * numNodesPerElem + a] += N[a] * sampleIntegrationConstants[ iSample ];
               }
             }
             receiverIsLocal[ ircv ] = 2;

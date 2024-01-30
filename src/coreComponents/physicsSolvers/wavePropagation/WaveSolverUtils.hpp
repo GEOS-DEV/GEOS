@@ -181,7 +181,6 @@ struct WaveSolverUtils
     real32 const a2 = 1.0 - a1;
 
     localIndex const nReceivers = receiverConstants.size( 0 );
-
     forAll< EXEC_POLICY >( nReceivers, [=] GEOS_HOST_DEVICE ( localIndex const ircv )
     {
       if( receiverIsLocal[ircv] > 0 )
@@ -189,8 +188,11 @@ struct WaveSolverUtils
         real32 vtmp_np1 = 0.0, vtmp_n = 0.0;
         for( localIndex inode = 0; inode < receiverConstants.size( 1 ); ++inode )
         {
-          vtmp_np1 += var_np1[receiverNodeIds( ircv, inode )] * receiverConstants( ircv, inode );
-          vtmp_n += var_n[receiverNodeIds( ircv, inode )] * receiverConstants( ircv, inode );
+          if( receiverNodeIds(ircv, inode) >= 0)
+          {
+            vtmp_np1 += var_np1[receiverNodeIds( ircv, inode )] * receiverConstants( ircv, inode );
+            vtmp_n += var_n[receiverNodeIds( ircv, inode )] * receiverConstants( ircv, inode );
+          }
         }
         // linear interpolation between the pressure value at time_n and time_{n+1}
         real32 rcvCoeff = coeffs.size( 0 ) == 0 ? 1.0 : coeffs( ircv );

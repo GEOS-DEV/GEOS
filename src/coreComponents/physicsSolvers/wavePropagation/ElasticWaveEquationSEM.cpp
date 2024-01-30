@@ -108,6 +108,7 @@ void ElasticWaveEquationSEM::initializePreSubGroups()
   localIndex const numReceiversGlobal = m_receiverCoordinates.size( 0 );
   integer nsamples = m_useDAS <= 0 ? 1 : m_linearDASSamples;
   m_receiverConstants.resize( numReceiversGlobal, nsamples * numNodesPerElem );
+  m_receiverNodeIds.resize( numReceiversGlobal, nsamples * numNodesPerElem );
 }
 
 
@@ -189,6 +190,7 @@ void ElasticWaveEquationSEM::postProcessInput()
 
   localIndex const numSourcesGlobal = m_sourceCoordinates.size( 0 );
   m_sourceIsAccessible.resize( numSourcesGlobal );
+  m_sourceValue.resize( nsamples, numSourcesGlobal );
 
   if( m_useDAS <= 0 )
   {
@@ -196,7 +198,6 @@ void ElasticWaveEquationSEM::postProcessInput()
     m_displacementXNp1AtReceivers.resize( m_nsamplesSeismoTrace, numReceiversGlobal + 1 );
     m_displacementYNp1AtReceivers.resize( m_nsamplesSeismoTrace, numReceiversGlobal + 1 );
     m_displacementZNp1AtReceivers.resize( m_nsamplesSeismoTrace, numReceiversGlobal + 1 );
-    m_sourceValue.resize( nsamples, numSourcesGlobal );
     m_displacementXNp1AtReceivers.zero();
     m_displacementYNp1AtReceivers.zero();
     m_displacementZNp1AtReceivers.zero();
@@ -649,9 +650,9 @@ void ElasticWaveEquationSEM::synchronizeUnknowns( real64 const & time_n,
   else
   {
     arrayView2d< real32 > const dasReceivers  = m_dasSignalNp1AtReceivers.toView();
-    computeAllSeismoTraces( time_n, 0.0, ux_np1, ux_n, dasReceivers, m_linearDASVectorX, true );
-    computeAllSeismoTraces( time_n, 0.0, uy_np1, uy_n, dasReceivers, m_linearDASVectorY, true );
-    computeAllSeismoTraces( time_n, 0.0, uz_np1, uz_n, dasReceivers, m_linearDASVectorZ, true );
+    computeAllSeismoTraces( time_n, dt, ux_np1, ux_n, dasReceivers, m_linearDASVectorX.toView(), true );
+    computeAllSeismoTraces( time_n, dt, uy_np1, uy_n, dasReceivers, m_linearDASVectorY.toView(), true );
+    computeAllSeismoTraces( time_n, dt, uz_np1, uz_n, dasReceivers, m_linearDASVectorZ.toView(), true );
   }
 
   incrementIndexSeismoTrace( time_n );
@@ -756,9 +757,9 @@ void ElasticWaveEquationSEM::cleanup( real64 const time_n,
     else
     {
       arrayView2d< real32 > const dasReceivers  = m_dasSignalNp1AtReceivers.toView();
-      computeAllSeismoTraces( time_n, 0.0, ux_np1, ux_n, dasReceivers, m_linearDASVectorX, true );
-      computeAllSeismoTraces( time_n, 0.0, uy_np1, uy_n, dasReceivers, m_linearDASVectorY, true );
-      computeAllSeismoTraces( time_n, 0.0, uz_np1, uz_n, dasReceivers, m_linearDASVectorZ, true );
+      computeAllSeismoTraces( time_n, 0.0, ux_np1, ux_n, dasReceivers, m_linearDASVectorX.toView(), true );
+      computeAllSeismoTraces( time_n, 0.0, uy_np1, uy_n, dasReceivers, m_linearDASVectorY.toView(), true );
+      computeAllSeismoTraces( time_n, 0.0, uz_np1, uz_n, dasReceivers, m_linearDASVectorZ.toView(), true );
       // sum contributions from all MPI ranks, since some receivers might be split among multiple ranks
       MpiWrapper::allReduce( dasReceivers.data(),
                              dasReceivers.data(),
