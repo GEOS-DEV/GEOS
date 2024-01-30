@@ -183,6 +183,11 @@ real64 HydrofractureSolver< POROMECHANICS_SOLVER >::fullyCoupledSolverStep( real
                                                                             int const cycleNumber,
                                                                             DomainPartition & domain )
 {
+  if( cycleNumber == 0 && time_n <= 0 )
+  {
+    initializeNewFractureFields( domain );
+  }
+  
   real64 dtReturn = dt;
 
   implicitStepSetup( time_n, dt, domain );

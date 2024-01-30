@@ -513,8 +513,6 @@ real64 SurfaceGenerator::solverStep( real64 const & time_n,
     }
 
     FaceElementSubRegion & fractureSubRegion = fractureRegion.getUniqueSubRegion< FaceElementSubRegion >();
-    // fractureSubRegion.m_recalculateConnectionsFor2dFaces.clear();
-    // fractureSubRegion.m_newFaceElements.clear();
 
     // Recreate geometric sets
     meshLevel.getNodeManager().buildGeometricSets( GeometricObjectManager::getInstance() );
