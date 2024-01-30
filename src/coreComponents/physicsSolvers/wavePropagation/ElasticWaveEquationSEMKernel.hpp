@@ -185,7 +185,7 @@ struct PrecomputeSourceAndReceiverKernel
 
       // for geophones, we need only a point per receiver.
       // for DAS, we need multiple points
-      
+
       /// compute locations of samples along receiver
       if( nSamples == 1 )
       {
@@ -270,10 +270,12 @@ struct PrecomputeSourceAndReceiverKernel
             FE_TYPE::calcGradN( coordsOnRefElem, xLocal, gradN );
             for( localIndex a = 0; a < numNodesPerElem; ++a )
             {
-              receiverNodeIds[ircv][iSample * numNodesPerElem + a] = elemsToNodes( k, a );
+              receiverNodeIds[ircv][iSample * numNodesPerElem + a] = elemsToNodes( k,
+                                                                                   a );
               if( useDAS == 1 )
               {
-                receiverConstants[ircv][iSample * numNodesPerElem + a] += ( gradN[a][0] * receiverVector[0] + gradN[a][1] * receiverVector[1] + gradN[a][2] * receiverVector[2] ) * sampleIntegrationConstants[ iSample ];
+                receiverConstants[ircv][iSample * numNodesPerElem + a] += ( gradN[a][0] * receiverVector[0] + gradN[a][1] * receiverVector[1] + gradN[a][2] * receiverVector[2] ) *
+                                                                          sampleIntegrationConstants[ iSample ];
               }
               else
               {
@@ -283,7 +285,7 @@ struct PrecomputeSourceAndReceiverKernel
             receiverIsLocal[ ircv ] = 2;
           }
         } // end loop over samples
-        // determine if the current rank is the owner of this receiver 
+        // determine if the current rank is the owner of this receiver
         real64 const coords[3] = { receiverCenter[ 0 ], receiverCenter[ 1 ], receiverCenter[ 2 ] };
         bool const receiverFound =
           WaveSolverUtils::locateSourceElement( numFacesPerElem,

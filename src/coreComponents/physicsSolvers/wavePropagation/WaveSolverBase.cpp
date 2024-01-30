@@ -296,7 +296,7 @@ void WaveSolverBase::postProcessInput()
     m_linearDASVectorZ.resize( m_linearDASGeometry.size( 0 ) );
     for( int ircv = 0; ircv < m_linearDASGeometry.size( 0 ); ircv++ )
     {
-      R1Tensor dasVector = WaveSolverUtils::computeDASVector( m_linearDASGeometry[ ircv ][ 0 ], m_linearDASGeometry[ ircv ][ 1 ] );                              
+      R1Tensor dasVector = WaveSolverUtils::computeDASVector( m_linearDASGeometry[ ircv ][ 0 ], m_linearDASGeometry[ ircv ][ 1 ] );
       m_linearDASVectorX( ircv ) = dasVector[ 0 ];
       m_linearDASVectorY( ircv ) = dasVector[ 1 ];
       m_linearDASVectorZ( ircv ) = dasVector[ 2 ];
@@ -306,7 +306,7 @@ void WaveSolverBase::postProcessInput()
         m_linearDASVectorY( ircv ) /= m_linearDASGeometry[ ircv ][ 2 ];
         m_linearDASVectorZ( ircv ) /= m_linearDASGeometry[ ircv ][ 2 ];
       }
-    } 
+    }
   }
 
   GEOS_THROW_IF( m_sourceCoordinates.size( 0 ) > 0 && m_sourceCoordinates.size( 1 ) != 3,

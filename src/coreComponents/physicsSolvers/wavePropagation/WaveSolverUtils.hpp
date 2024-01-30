@@ -188,7 +188,7 @@ struct WaveSolverUtils
         real32 vtmp_np1 = 0.0, vtmp_n = 0.0;
         for( localIndex inode = 0; inode < receiverConstants.size( 1 ); ++inode )
         {
-          if( receiverNodeIds(ircv, inode) >= 0)
+          if( receiverNodeIds( ircv, inode ) >= 0 )
           {
             vtmp_np1 += var_np1[receiverNodeIds( ircv, inode )] * receiverConstants( ircv, inode );
             vtmp_n += var_n[receiverNodeIds( ircv, inode )] * receiverConstants( ircv, inode );

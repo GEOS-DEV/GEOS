@@ -254,7 +254,7 @@ protected:
 
   /// Coordinates of the receivers in the mesh
   array2d< real64 > m_receiverCoordinates;
- 
+
   /// Flag that indicates the order of the Ricker to be used, order 2 by default
   localIndex m_rickerOrder;
 
