@@ -36,13 +36,13 @@ public:
   using ATOMIC_POLICY = AtomicPolicy< EXEC_POLICY >;
 
   AcousticVTIZhangWaveEquationSEM( const std::string & name,
-                                     Group * const parent );
+                                   Group * const parent );
 
   static string catalogName() { return "AcousticVTIZhangSEM"; }
-  
+
   /**
-  * @copydoc SolverBase::getCatalogName()
-  */
+   * @copydoc SolverBase::getCatalogName()
+   */
   string getCatalogName() const override { return catalogName(); }
 
 

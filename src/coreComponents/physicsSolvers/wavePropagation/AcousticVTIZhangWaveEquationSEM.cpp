@@ -35,7 +35,7 @@ namespace geos
 using namespace dataRepository;
 
 AcousticVTIZhangWaveEquationSEM::AcousticVTIZhangWaveEquationSEM( const std::string & name,
-                                                                      Group * const parent ):
+                                                                  Group * const parent ):
   WaveSolverBase( name,
                   parent )
 {
@@ -110,7 +110,7 @@ void AcousticVTIZhangWaveEquationSEM::postProcessInput()
 }
 
 void AcousticVTIZhangWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh,
-                                                                         arrayView1d< string const > const & regionNames )
+                                                                       arrayView1d< string const > const & regionNames )
 {
   NodeManager const & nodeManager = mesh.getNodeManager();
   FaceManager const & faceManager = mesh.getFaceManager();
@@ -474,10 +474,10 @@ void AcousticVTIZhangWaveEquationSEM::applyFreeSurfaceBC( real64 time, DomainPar
 }
 
 real64 AcousticVTIZhangWaveEquationSEM::explicitStepForward( real64 const & time_n,
-                                                               real64 const & dt,
-                                                               integer cycleNumber,
-                                                               DomainPartition & domain,
-                                                               bool computeGradient )
+                                                             real64 const & dt,
+                                                             integer cycleNumber,
+                                                             DomainPartition & domain,
+                                                             bool computeGradient )
 {
   real64 dtOut = explicitStepInternal( time_n, dt, cycleNumber, domain );
 
@@ -522,26 +522,26 @@ void AcousticVTIZhangWaveEquationSEM::initializePML()
 }
 
 void AcousticVTIZhangWaveEquationSEM::applyPML( real64 const GEOS_UNUSED_PARAM( time ),
-                                                  DomainPartition & GEOS_UNUSED_PARAM( domain ))
+                                                DomainPartition & GEOS_UNUSED_PARAM( domain ))
 {
   GEOS_ERROR( "This option is not supported yet" );
   return;
 }
 
 real64 AcousticVTIZhangWaveEquationSEM::explicitStepBackward( real64 const & GEOS_UNUSED_PARAM( time_n ),
-                                                                real64 const & GEOS_UNUSED_PARAM( dt ),
-                                                                integer GEOS_UNUSED_PARAM( cycleNumber ),
-                                                                DomainPartition & GEOS_UNUSED_PARAM( domain ),
-                                                                bool GEOS_UNUSED_PARAM( computeGradient ) )
+                                                              real64 const & GEOS_UNUSED_PARAM( dt ),
+                                                              integer GEOS_UNUSED_PARAM( cycleNumber ),
+                                                              DomainPartition & GEOS_UNUSED_PARAM( domain ),
+                                                              bool GEOS_UNUSED_PARAM( computeGradient ) )
 {
   GEOS_ERROR( "This option is not supported yet" );
   return -1;
 }
 
 real64 AcousticVTIZhangWaveEquationSEM::explicitStepInternal( real64 const & time_n,
-                                                                real64 const & dt,
-                                                                integer cycleNumber,
-                                                                DomainPartition & domain )
+                                                              real64 const & dt,
+                                                              integer cycleNumber,
+                                                              DomainPartition & domain )
 {
   GEOS_MARK_FUNCTION;
 
@@ -669,10 +669,10 @@ real64 AcousticVTIZhangWaveEquationSEM::explicitStepInternal( real64 const & tim
 }
 
 void AcousticVTIZhangWaveEquationSEM::cleanup( real64 const time_n,
-                                                 integer const cycleNumber,
-                                                 integer const eventCounter,
-                                                 real64 const eventProgress,
-                                                 DomainPartition & domain )
+                                               integer const cycleNumber,
+                                               integer const eventCounter,
+                                               real64 const eventProgress,
+                                               DomainPartition & domain )
 {
   // call the base class cleanup (for reporting purposes)
   SolverBase::cleanup( time_n, cycleNumber, eventCounter, eventProgress, domain );

@@ -380,10 +380,10 @@ template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
           typename FE_TYPE >
 class ExplicitAcousticVTIZhangSEM : public finiteElement::KernelBase< SUBREGION_TYPE,
-                                                                        CONSTITUTIVE_TYPE,
-                                                                        FE_TYPE,
-                                                                        1,
-                                                                        1 >
+                                                                      CONSTITUTIVE_TYPE,
+                                                                      FE_TYPE,
+                                                                      1,
+                                                                      1 >
 {
 public:
 
@@ -418,13 +418,13 @@ public:
    *   elements to be processed during this kernel launch.
    */
   ExplicitAcousticVTIZhangSEM( NodeManager & nodeManager,
-                                 EdgeManager const & edgeManager,
-                                 FaceManager const & faceManager,
-                                 localIndex const targetRegionIndex,
-                                 SUBREGION_TYPE const & elementSubRegion,
-                                 FE_TYPE const & finiteElementSpace,
-                                 CONSTITUTIVE_TYPE & inputConstitutiveType,
-                                 real64 const dt ):
+                               EdgeManager const & edgeManager,
+                               FaceManager const & faceManager,
+                               localIndex const targetRegionIndex,
+                               SUBREGION_TYPE const & elementSubRegion,
+                               FE_TYPE const & finiteElementSpace,
+                               CONSTITUTIVE_TYPE & inputConstitutiveType,
+                               real64 const dt ):
     Base( elementSubRegion,
           finiteElementSpace,
           inputConstitutiveType ),
@@ -499,16 +499,16 @@ public:
                               StackVariables & stack ) const
   {
     // Make sure delta < epsilon (for stability)
-    real32 epsi = abs(m_vti_epsilon[k]);
-    real32 delt = abs(m_vti_delta[k]);
-    if(abs(epsi) < 1e-5)
+    real32 epsi = abs( m_vti_epsilon[k] );
+    real32 delt = abs( m_vti_delta[k] );
+    if( abs( epsi ) < 1e-5 )
       epsi = 0;
-    if(abs(delt) < 1e-5)
+    if( abs( delt ) < 1e-5 )
       delt = 0;
-    if(delt > epsi)
+    if( delt > epsi )
       delt = epsi;
     real32 invDensity = 1./m_density[k];
-    real32 sqrtDelta = sqrt( 1 + 2 * delt);
+    real32 sqrtDelta = sqrt( 1 + 2 * delt );
     // Pseudo Stiffness xy
     m_finiteElementSpace.template computeStiffnessxyTerm( q, stack.xLocal, [&] ( int i, int j, real64 val )
     {
@@ -565,7 +565,7 @@ protected:
 
 /// The factory used to construct a ExplicitAcousticVTIZhangWaveEquation kernel.
 using ExplicitAcousticVTIZhangSEMFactory = finiteElement::KernelFactory< ExplicitAcousticVTIZhangSEM,
-                                                                           real64 >;
+                                                                         real64 >;
 
 } // namespace acousticVTIZhangWaveEquationSEMKernels
 
