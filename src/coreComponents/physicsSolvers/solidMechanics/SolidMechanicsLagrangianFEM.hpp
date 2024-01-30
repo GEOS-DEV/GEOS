@@ -88,7 +88,7 @@ public:
 
   virtual void initializePreSubGroups() override;
 
-  virtual void registerDataOnMesh( Group & meshBodies ) override final;
+  virtual void registerDataOnMesh( Group & meshBodies ) override;
 
   void updateIntrinsicNodalData( DomainPartition * const domain );
 
@@ -143,7 +143,7 @@ public:
                        real64 const dt,
                        DomainPartition & domain ) override;
 
-  virtual void updateState( DomainPartition & domain ) override final
+  virtual void updateState( DomainPartition & domain ) override
   {
     // There should be nothing to update
     GEOS_UNUSED_VAR( domain );
@@ -280,9 +280,9 @@ public:
   }
 
 protected:
-  virtual void postProcessInput() override final;
+  virtual void postProcessInput() override;
 
-  virtual void initializePostInitialConditionsPreSubGroups() override final;
+  virtual void initializePostInitialConditionsPreSubGroups() override;
 
   virtual void setConstitutiveNamesCallSuper( ElementSubRegionBase & subRegion ) const override;
 

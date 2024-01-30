@@ -27,11 +27,11 @@
 namespace geos
 {
 
-class SinglePhasePoromechanicsConformingFractures : public CoupledSolver< SinglePhasePoromechanics< SinglePhaseBase >, LagrangianContactSolver >
+class SinglePhasePoromechanicsConformingFractures : public SinglePhasePoromechanics< SinglePhaseBase, LagrangianContactSolver >
 {
 public:
 
-  using Base = CoupledSolver< SinglePhasePoromechanics< SinglePhaseBase >, LagrangianContactSolver >;
+  using Base = SinglePhasePoromechanics< SinglePhaseBase, LagrangianContactSolver >;
   using Base::m_solvers;
   using Base::m_dofManager;
   using Base::m_localMatrix;
@@ -69,23 +69,23 @@ public:
    */
   string getCatalogName() const override { return catalogName(); }
 
-  /**
-   * @brief accessor for the pointer to the solid mechanics solver
-   * @return a pointer to the solid mechanics solver
-   */
-  LagrangianContactSolver * contactSolver() const
-  {
-    return std::get< toUnderlying( SolverType::Contact ) >( m_solvers );
-  }
-
-  /**
-   * @brief accessor for the pointer to the poromechanics solver
-   * @return a pointer to the flow solver
-   */
-  SinglePhasePoromechanics< SinglePhaseBase > * poromechanicsSolver() const
-  {
-    return std::get< toUnderlying( SolverType::Poromechanics ) >( m_solvers );
-  }
+//  /**
+//   * @brief accessor for the pointer to the solid mechanics solver
+//   * @return a pointer to the solid mechanics solver
+//   */
+//  LagrangianContactSolver * contactSolver() const
+//  {
+//    return std::get< toUnderlying( SolverType::Contact ) >( m_solvers );
+//  }
+//
+//  /**
+//   * @brief accessor for the pointer to the poromechanics solver
+//   * @return a pointer to the flow solver
+//   */
+//  SinglePhasePoromechanics< SinglePhaseBase > * poromechanicsSolver() const
+//  {
+//    return std::get< toUnderlying( SolverType::Poromechanics ) >( m_solvers );
+//  }
 
   /**
    * @defgroup Solver Interface Functions
@@ -136,7 +136,7 @@ public:
 
 private:
 
-  void assembleCellBasedContributions( real64 const time_n,
+  void assembleElementBasedContributions( real64 const time_n,
                                        real64 const dt,
                                        DomainPartition & domain,
                                        DofManager const & dofManager,
@@ -161,11 +161,6 @@ private:
                                                            DofManager const & dofManager,
                                                            CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                            arrayView1d< real64 > const & localRhs );
-
-  void assembleForceResidualDerivativeWrtPressure( MeshLevel & mesh,
-                                                   DofManager const & dofManager,
-                                                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                                   arrayView1d< real64 > const & localRhs );
 
   /**
    * @Brief add the nnz induced by the flux-aperture coupling
@@ -276,7 +271,7 @@ real64 SinglePhasePoromechanicsConformingFractures::assemblyLaunch( MeshLevel & 
                                          CONSTITUTIVE_BASE,
                                          CellElementSubRegion >( mesh,
                                                                  regionNames,
-                                                                 contactSolver()->getSolidSolver()->getDiscretizationName(),
+                                                                 solidMechanicsSolver()->getDiscretizationName(),
                                                                  materialNamesString,
                                                                  kernelWrapper );
 }

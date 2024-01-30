@@ -63,7 +63,7 @@ SolidMechanicsEmbeddedFractures::~SolidMechanicsEmbeddedFractures()
 
 void SolidMechanicsEmbeddedFractures::postProcessInput()
 {
-  m_solidSolver = &this->getParent().getGroup< SolidMechanicsLagrangianFEM >( m_solidSolverName );
+  SolidMechanicsLagrangianFEM::postProcessInput();
 
   LinearSolverParameters & linParams = m_linearSolverParameters.get();
 
@@ -106,7 +106,7 @@ void SolidMechanicsEmbeddedFractures::initializePostInitialConditionsPreSubGroup
 
 void SolidMechanicsEmbeddedFractures::resetStateToBeginningOfStep( DomainPartition & domain )
 {
-  m_solidSolver->resetStateToBeginningOfStep( domain );
+  SolidMechanicsLagrangianFEM::resetStateToBeginningOfStep( domain );
 
   // reset displacementJump
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
@@ -142,18 +142,18 @@ void SolidMechanicsEmbeddedFractures::resetStateToBeginningOfStep( DomainPartiti
   updateState( domain );
 }
 
-void SolidMechanicsEmbeddedFractures::implicitStepSetup( real64 const & time_n,
-                                                         real64 const & dt,
-                                                         DomainPartition & domain )
-{
-  m_solidSolver->implicitStepSetup( time_n, dt, domain );
-}
+//void SolidMechanicsEmbeddedFractures::implicitStepSetup( real64 const & time_n,
+//                                                         real64 const & dt,
+//                                                         DomainPartition & domain )
+//{
+//  m_solidSolver->implicitStepSetup( time_n, dt, domain );
+//}
 
 void SolidMechanicsEmbeddedFractures::implicitStepComplete( real64 const & time_n,
                                                             real64 const & dt,
                                                             DomainPartition & domain )
 {
-  m_solidSolver->implicitStepComplete( time_n, dt, domain );
+  SolidMechanicsLagrangianFEM::implicitStepComplete( time_n, dt, domain );
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
@@ -179,7 +179,7 @@ void SolidMechanicsEmbeddedFractures::setupDofs( DomainPartition const & domain,
                                                  DofManager & dofManager ) const
 {
   GEOS_MARK_FUNCTION;
-  m_solidSolver->setupDofs( domain, dofManager );
+  SolidMechanicsLagrangianFEM::setupDofs( domain, dofManager );
 
   if( !m_useStaticCondensation )
   {
@@ -267,7 +267,7 @@ void SolidMechanicsEmbeddedFractures::setupSystem( DomainPartition & domain,
   }
   else
   {
-    m_solidSolver->setupSystem( domain, dofManager, localMatrix, rhs, solution, setSparsity );
+    SolidMechanicsLagrangianFEM::setupSystem( domain, dofManager, localMatrix, rhs, solution, setSparsity );
   }
 }
 
@@ -280,7 +280,7 @@ void SolidMechanicsEmbeddedFractures::assembleSystem( real64 const time,
 {
   GEOS_MARK_FUNCTION;
 
-  m_solidSolver->assembleSystem( time,
+  SolidMechanicsLagrangianFEM::assembleSystem( time,
                                  dt,
                                  domain,
                                  dofManager,
@@ -325,7 +325,7 @@ void SolidMechanicsEmbeddedFractures::assembleSystem( real64 const time,
                              constitutive::ElasticIsotropic,
                              CellElementSubRegion >( mesh,
                                                      regionNames,
-                                                     m_solidSolver->getDiscretizationName(),
+                                                     getDiscretizationName(),
                                                      SolidMechanicsLagrangianFEM::viewKeyStruct::solidMaterialNamesString(),
                                                      kernelFactory );
 
@@ -347,7 +347,7 @@ void SolidMechanicsEmbeddedFractures::assembleSystem( real64 const time,
                              constitutive::SolidBase,
                              CellElementSubRegion >( mesh,
                                                      regionNames,
-                                                     m_solidSolver->getDiscretizationName(),
+                                                     getDiscretizationName(),
                                                      SolidMechanicsLagrangianFEM::viewKeyStruct::solidMaterialNamesString(),
                                                      kernelFactory );
 
@@ -557,7 +557,7 @@ real64 SolidMechanicsEmbeddedFractures::calculateResidualNorm( real64 const & ti
   GEOS_MARK_FUNCTION;
 
   // Matrix residual
-  real64 const solidResidualNorm = m_solidSolver->calculateResidualNorm( time, dt, domain, dofManager, localRhs );
+  real64 const solidResidualNorm = SolidMechanicsLagrangianFEM::calculateResidualNorm( time, dt, domain, dofManager, localRhs );
 
   if( !m_useStaticCondensation )
   {
@@ -599,7 +599,7 @@ real64 SolidMechanicsEmbeddedFractures::calculateResidualNorm( real64 const & ti
 
       } );
 
-      real64 const localResidualNorm[2] = { localSum.get(), m_solidSolver->getMaxForce() };
+      real64 const localResidualNorm[2] = { localSum.get(), SolidMechanicsLagrangianFEM::getMaxForce() };
 
 
       int const rank     = MpiWrapper::commRank( MPI_COMM_GEOSX );
@@ -651,7 +651,7 @@ void SolidMechanicsEmbeddedFractures::applySystemSolution( DofManager const & do
 {
   GEOS_MARK_FUNCTION;
 
-  m_solidSolver->applySystemSolution( dofManager,
+  SolidMechanicsLagrangianFEM::applySystemSolution( dofManager,
                                       localSolution,
                                       scalingFactor,
                                       dt,
@@ -721,7 +721,7 @@ void SolidMechanicsEmbeddedFractures::updateJump( DofManager const & dofManager,
                            constitutive::SolidBase,
                            CellElementSubRegion >( mesh,
                                                    regionNames,
-                                                   m_solidSolver->getDiscretizationName(),
+                                                   getDiscretizationName(),
                                                    SolidMechanicsLagrangianFEM::viewKeyStruct::solidMaterialNamesString(),
                                                    kernelFactory );
 

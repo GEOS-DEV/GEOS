@@ -61,16 +61,16 @@ public:
 }
 
 // provide a definition for catalogName()
-template< typename FLOW_SOLVER >
+template< typename FLOW_SOLVER, typename MECHANICS_SOLVER >
 string
-SinglePhasePoromechanics< FLOW_SOLVER >::
+SinglePhasePoromechanics< FLOW_SOLVER, MECHANICS_SOLVER >::
 catalogName()
 {
   return SinglePhaseCatalogNames< FLOW_SOLVER >::name();
 }
 
-template< typename FLOW_SOLVER >
-SinglePhasePoromechanics< FLOW_SOLVER >::SinglePhasePoromechanics( const string & name,
+template< typename FLOW_SOLVER, typename MECHANICS_SOLVER >
+SinglePhasePoromechanics< FLOW_SOLVER, MECHANICS_SOLVER >::SinglePhasePoromechanics( const string & name,
                                                                    Group * const parent )
   : Base( name, parent )
 {
@@ -81,8 +81,8 @@ SinglePhasePoromechanics< FLOW_SOLVER >::SinglePhasePoromechanics( const string 
   linearSolverParameters.dofsPerNode = 3;
 }
 
-template< typename FLOW_SOLVER >
-void SinglePhasePoromechanics< FLOW_SOLVER >::postProcessInput()
+template< typename FLOW_SOLVER, typename MECHANICS_SOLVER >
+void SinglePhasePoromechanics< FLOW_SOLVER, MECHANICS_SOLVER >::postProcessInput()
 {
   Base::postProcessInput();
 
@@ -94,8 +94,8 @@ void SinglePhasePoromechanics< FLOW_SOLVER >::postProcessInput()
                            ));
 }
 
-template< typename FLOW_SOLVER >
-void SinglePhasePoromechanics< FLOW_SOLVER >::setupCoupling( DomainPartition const & GEOS_UNUSED_PARAM( domain ),
+template< typename FLOW_SOLVER, typename MECHANICS_SOLVER >
+void SinglePhasePoromechanics< FLOW_SOLVER, MECHANICS_SOLVER >::setupCoupling( DomainPartition const & GEOS_UNUSED_PARAM( domain ),
                                                              DofManager & dofManager ) const
 {
   dofManager.addCoupling( solidMechanics::totalDisplacement::key(),
@@ -103,8 +103,8 @@ void SinglePhasePoromechanics< FLOW_SOLVER >::setupCoupling( DomainPartition con
                           DofManager::Connector::Elem );
 }
 
-template< typename FLOW_SOLVER >
-void SinglePhasePoromechanics< FLOW_SOLVER >::setupSystem( DomainPartition & domain,
+template< typename FLOW_SOLVER, typename MECHANICS_SOLVER >
+void SinglePhasePoromechanics< FLOW_SOLVER, MECHANICS_SOLVER >::setupSystem( DomainPartition & domain,
                                                            DofManager & dofManager,
                                                            CRSMatrix< real64, globalIndex > & localMatrix,
                                                            ParallelVector & rhs,
@@ -125,8 +125,8 @@ void SinglePhasePoromechanics< FLOW_SOLVER >::setupSystem( DomainPartition & dom
   }
 }
 
-template< typename FLOW_SOLVER >
-void SinglePhasePoromechanics< FLOW_SOLVER >::initializePostInitialConditionsPreSubGroups()
+template< typename FLOW_SOLVER, typename MECHANICS_SOLVER >
+void SinglePhasePoromechanics< FLOW_SOLVER, MECHANICS_SOLVER >::initializePostInitialConditionsPreSubGroups()
 {
   Base::initializePostInitialConditionsPreSubGroups();
 
@@ -163,8 +163,8 @@ void SinglePhasePoromechanics< FLOW_SOLVER >::initializePostInitialConditionsPre
   }
 }
 
-template< typename FLOW_SOLVER >
-void SinglePhasePoromechanics< FLOW_SOLVER >::assembleSystem( real64 const time_n,
+template< typename FLOW_SOLVER, typename MECHANICS_SOLVER >
+void SinglePhasePoromechanics< FLOW_SOLVER, MECHANICS_SOLVER >::assembleSystem( real64 const time_n,
                                                               real64 const dt,
                                                               DomainPartition & domain,
                                                               DofManager const & dofManager,
@@ -190,8 +190,8 @@ void SinglePhasePoromechanics< FLOW_SOLVER >::assembleSystem( real64 const time_
 
 }
 
-template< typename FLOW_SOLVER >
-void SinglePhasePoromechanics< FLOW_SOLVER >::assembleElementBasedTerms( real64 const time_n,
+template< typename FLOW_SOLVER, typename MECHANICS_SOLVER >
+void SinglePhasePoromechanics< FLOW_SOLVER, MECHANICS_SOLVER >::assembleElementBasedTerms( real64 const time_n,
                                                                          real64 const dt,
                                                                          DomainPartition & domain,
                                                                          DofManager const & dofManager,
@@ -284,8 +284,8 @@ void SinglePhasePoromechanics< FLOW_SOLVER >::assembleElementBasedTerms( real64 
   this->solidMechanicsSolver()->getMaxForce() = LvArray::math::max( mechanicsMaxForce, poromechanicsMaxForce );
 }
 
-template< typename FLOW_SOLVER >
-void SinglePhasePoromechanics< FLOW_SOLVER >::createPreconditioner()
+template< typename FLOW_SOLVER, typename MECHANICS_SOLVER >
+void SinglePhasePoromechanics< FLOW_SOLVER, MECHANICS_SOLVER >::createPreconditioner()
 {
   if( this->m_linearSolverParameters.get().preconditionerType == LinearSolverParameters::PreconditionerType::block )
   {
@@ -312,8 +312,8 @@ void SinglePhasePoromechanics< FLOW_SOLVER >::createPreconditioner()
   }
 }
 
-template< typename FLOW_SOLVER >
-void SinglePhasePoromechanics< FLOW_SOLVER >::updateState( DomainPartition & domain )
+template< typename FLOW_SOLVER, typename MECHANICS_SOLVER >
+void SinglePhasePoromechanics< FLOW_SOLVER, MECHANICS_SOLVER >::updateState( DomainPartition & domain )
 {
   this->template forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                                MeshLevel & mesh,
@@ -335,8 +335,8 @@ void SinglePhasePoromechanics< FLOW_SOLVER >::updateState( DomainPartition & dom
   } );
 }
 
-template< typename FLOW_SOLVER >
-void SinglePhasePoromechanics< FLOW_SOLVER >::updateBulkDensity( ElementSubRegionBase & subRegion )
+template< typename FLOW_SOLVER, typename MECHANICS_SOLVER >
+void SinglePhasePoromechanics< FLOW_SOLVER, MECHANICS_SOLVER >::updateBulkDensity( ElementSubRegionBase & subRegion )
 {
   // get the fluid model (to access fluid density)
   string const fluidName = subRegion.getReference< string >( FlowSolverBase::viewKeyStruct::fluidNamesString() );

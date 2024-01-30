@@ -65,10 +65,11 @@ LagrangianContactSolver::LagrangianContactSolver( const string & name,
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Name of the stabilization to use in the lagrangian contact solver" );
 
-  m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::lagrangianContactMechanics;
-  m_linearSolverParameters.get().mgr.separateComponents = true;
-  m_linearSolverParameters.get().mgr.displacementFieldName = solidMechanics::totalDisplacement::key();
-  m_linearSolverParameters.get().dofsPerNode = 3;
+  LinearSolverParameters & linSolParams = m_linearSolverParameters.get();
+  linSolParams.mgr.strategy = LinearSolverParameters::MGR::StrategyType::lagrangianContactMechanics;
+  linSolParams.mgr.separateComponents = true;
+  linSolParams.mgr.displacementFieldName = solidMechanics::totalDisplacement::key();
+  linSolParams.dofsPerNode = 3;
 }
 
 void LagrangianContactSolver::registerDataOnMesh( Group & meshBodies )
@@ -213,7 +214,7 @@ void LagrangianContactSolver::implicitStepSetup( real64 const & time_n,
   computeTolerances( domain );
   computeFaceDisplacementJump( domain );
 
-  m_solidSolver->implicitStepSetup( time_n, dt, domain );
+  SolidMechanicsLagrangianFEM::implicitStepSetup( time_n, dt, domain );
 }
 
 void LagrangianContactSolver::implicitStepComplete( real64 const & time_n,
@@ -222,7 +223,7 @@ void LagrangianContactSolver::implicitStepComplete( real64 const & time_n,
 {
   if( m_setupSolidSolverDofs )
   {
-    m_solidSolver->implicitStepComplete( time_n, dt, domain );
+    SolidMechanicsLagrangianFEM::implicitStepComplete( time_n, dt, domain );
   }
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
@@ -261,11 +262,11 @@ void LagrangianContactSolver::implicitStepComplete( real64 const & time_n,
   } );
 }
 
-void LagrangianContactSolver::postProcessInput()
-{
-  m_solidSolver = &this->getParent().getGroup< SolidMechanicsLagrangianFEM >( m_solidSolverName );
-  SolverBase::postProcessInput();
-}
+//void LagrangianContactSolver::postProcessInput()
+//{
+//  m_solidSolver = &this->getParent().getGroup< SolidMechanicsLagrangianFEM >( m_solidSolverName );
+//  SolverBase::postProcessInput();
+//}
 
 LagrangianContactSolver::~LagrangianContactSolver()
 {
@@ -421,7 +422,7 @@ void LagrangianContactSolver::computeTolerances( DomainPartition & domain ) cons
 
 void LagrangianContactSolver::resetStateToBeginningOfStep( DomainPartition & domain )
 {
-  m_solidSolver->resetStateToBeginningOfStep( domain );
+  SolidMechanicsLagrangianFEM::resetStateToBeginningOfStep( domain );
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
@@ -524,7 +525,7 @@ void LagrangianContactSolver::setupDofs( DomainPartition const & domain,
   GEOS_MARK_FUNCTION;
   if( m_setupSolidSolverDofs )
   {
-    m_solidSolver->setupDofs( domain, dofManager );
+    SolidMechanicsLagrangianFEM::setupDofs( domain, dofManager );
   }
   // restrict coupling to fracture regions only
   map< std::pair< string, string >, array1d< string > > meshTargets;
@@ -580,19 +581,30 @@ void LagrangianContactSolver::assembleSystem( real64 const time,
 
   synchronizeFractureState( domain );
 
-  m_solidSolver->assembleSystem( time,
+  SolidMechanicsLagrangianFEM::assembleSystem( time,
                                  dt,
                                  domain,
                                  dofManager,
                                  localMatrix,
                                  localRhs );
 
+  assembleContact( domain, dofManager, localMatrix, localRhs );
+}
+
+void LagrangianContactSolver::assembleContact( DomainPartition & domain,
+                                               DofManager const & dofManager,
+                                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                               arrayView1d <real64> const & localRhs )
+{
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
                                                                 arrayView1d< string const > const & regionNames )
   {
+    /// assemble Kut
     assembleForceResidualDerivativeWrtTraction( mesh, regionNames, dofManager, localMatrix, localRhs );
+    /// assemble Ktu, Ktt blocks.
     assembleTractionResidualDerivativeWrtDisplacementAndTraction( mesh, regionNames, dofManager, localMatrix, localRhs );
+    /// assemble stabilization
     assembleStabilization( mesh, domain.getNumericalMethodManager(), dofManager, localMatrix, localRhs );
   } );
 }
@@ -725,7 +737,7 @@ void LagrangianContactSolver::createPreconditioner( DomainPartition const & doma
     // TODO: move among inputs (xml)
     string const leadingBlockApproximation = "blockJacobi";
 
-    LinearSolverParameters mechParams = m_solidSolver->getLinearSolverParameters();
+    LinearSolverParameters mechParams = getLinearSolverParameters();
     // Because of boundary conditions
     mechParams.isSymmetric = false;
 
@@ -764,18 +776,18 @@ void LagrangianContactSolver::createPreconditioner( DomainPartition const & doma
 
     if( mechParams.amg.nullSpaceType == LinearSolverParameters::AMG::NullSpaceType::rigidBodyModes )
     {
-      if( m_solidSolver->getRigidBodyModes().empty() )
+      if( getRigidBodyModes().empty() )
       {
         MeshLevel const & mesh = domain.getMeshBody( 0 ).getBaseDiscretization();
         LAIHelperFunctions::computeRigidBodyModes( mesh,
                                                    m_dofManager,
                                                    { solidMechanics::totalDisplacement::key() },
-                                                   m_solidSolver->getRigidBodyModes() );
+                                                   getRigidBodyModes() );
       }
     }
 
     // Preconditioner for the Schur complement: mechPrecond
-    std::unique_ptr< PreconditionerBase< LAInterface > > mechPrecond = LAInterface::createPreconditioner( mechParams, m_solidSolver->getRigidBodyModes() );
+    std::unique_ptr< PreconditionerBase< LAInterface > > mechPrecond = LAInterface::createPreconditioner( mechParams, getRigidBodyModes() );
     precond->setupBlock( 1,
                          { { solidMechanics::totalDisplacement::key(), { 3, true } } },
                          std::move( mechPrecond ) );
@@ -1705,7 +1717,7 @@ void LagrangianContactSolver::applySystemSolution( DofManager const & dofManager
 
   if( m_setupSolidSolverDofs )
   {
-    m_solidSolver->applySystemSolution( dofManager, localSolution, scalingFactor, dt, domain );
+    SolidMechanicsLagrangianFEM::applySystemSolution( dofManager, localSolution, scalingFactor, dt, domain );
   }
 
   dofManager.addVectorToField( localSolution,

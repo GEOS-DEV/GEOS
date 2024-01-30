@@ -40,14 +40,14 @@ using namespace fields::contact;
 
 ContactSolverBase::ContactSolverBase( const string & name,
                                       Group * const parent ):
-  SolverBase( name, parent ),
-  m_solidSolver( nullptr ),
+  SolidMechanicsLagrangianFEM( name, parent ),
+//  m_solidSolver( nullptr ),
   m_setupSolidSolverDofs( true )
 {
-  registerWrapper( viewKeyStruct::solidSolverNameString(), &m_solidSolverName ).
-    setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
-    setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "Name of the solid mechanics solver in the rock matrix" );
+//  registerWrapper( viewKeyStruct::solidSolverNameString(), &m_solidSolverName ).
+//    setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
+//    setInputFlag( InputFlags::REQUIRED ).
+//    setDescription( "Name of the solid mechanics solver in the rock matrix" );
 
   registerWrapper( viewKeyStruct::contactRelationNameString(), &m_contactRelationName ).
     setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
@@ -61,14 +61,16 @@ ContactSolverBase::ContactSolverBase( const string & name,
 
 }
 
-void ContactSolverBase::postProcessInput()
-{
-  m_solidSolver = &this->getParent().getGroup< SolidMechanicsLagrangianFEM >( m_solidSolverName );
-  SolverBase::postProcessInput();
-}
+//void ContactSolverBase::postProcessInput()
+//{
+//  m_solidSolver = &this->getParent().getGroup< SolidMechanicsLagrangianFEM >( m_solidSolverName );
+//  SolverBase::postProcessInput();
+//}
 
 void ContactSolverBase::registerDataOnMesh( dataRepository::Group & meshBodies )
 {
+  SolidMechanicsLagrangianFEM::registerDataOnMesh(meshBodies);
+
   using namespace fields::contact;
 
   forDiscretizationOnMeshTargets( meshBodies,
@@ -198,7 +200,7 @@ void ContactSolverBase::applyBoundaryConditions( real64 const time,
 
   if( m_setupSolidSolverDofs )
   {
-    m_solidSolver->applyBoundaryConditions( time,
+    SolidMechanicsLagrangianFEM::applyBoundaryConditions( time,
                                             dt,
                                             domain,
                                             dofManager,

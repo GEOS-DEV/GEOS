@@ -26,8 +26,6 @@ namespace geos
 {
 using namespace constitutive;
 
-class SolidMechanicsLagrangianFEM;
-
 class SolidMechanicsEmbeddedFractures : public ContactSolverBase
 {
 public:

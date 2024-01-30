@@ -20,14 +20,13 @@
 #ifndef GEOS_PHYSICSSOLVERS_CONTACT_CONTACTSOLVERBASE_HPP_
 #define GEOS_PHYSICSSOLVERS_CONTACT_CONTACTSOLVERBASE_HPP_
 
-#include "physicsSolvers/SolverBase.hpp"
+#include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
 #include "physicsSolvers/contact/ContactFields.hpp"
 
 namespace geos
 {
-class SolidMechanicsLagrangianFEM;
 
-class ContactSolverBase : public SolverBase
+class ContactSolverBase : public SolidMechanicsLagrangianFEM
 {
 public:
   ContactSolverBase( const string & name,
@@ -57,7 +56,7 @@ public:
 
   void outputConfigurationStatistics( DomainPartition const & domain ) const override final;
 
-  SolidMechanicsLagrangianFEM * getSolidSolver() { return m_solidSolver; }
+//  SolidMechanicsLagrangianFEM * getSolidSolver() { return m_solidSolver; }
 
   void setSolidSolverDofFlags( bool const flag ) { m_setupSolidSolverDofs = flag; }
 
@@ -82,14 +81,14 @@ protected:
            || ( state0 == fields::contact::FractureState::Slip && state1 == fields::contact::FractureState::NewSlip );
   }
 
-  /// Solid mechanics solver name
-  string m_solidSolverName;
+//  /// Solid mechanics solver name
+//  string m_solidSolverName;
 
   /// fracture region name
   string m_fractureRegionName;
 
-  /// pointer to the solid mechanics solver
-  SolidMechanicsLagrangianFEM * m_solidSolver;
+//  /// pointer to the solid mechanics solver
+//  SolidMechanicsLagrangianFEM * m_solidSolver;
 
   /// contact relation name string
   string m_contactRelationName;
@@ -99,7 +98,7 @@ protected:
 
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
-    constexpr static char const * solidSolverNameString() { return "solidSolverName"; }
+//    constexpr static char const * solidSolverNameString() { return "solidSolverName"; }
 
     constexpr static char const * contactRelationNameString() { return "contactRelationName"; }
 

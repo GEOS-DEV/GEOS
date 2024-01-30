@@ -21,6 +21,8 @@
 #define GEOS_PHYSICSSOLVERS_CONTACT_LAGRANGIANCONTACTSOLVER_HPP_
 
 #include "physicsSolvers/contact/ContactSolverBase.hpp"
+#include "../../linearAlgebra/DofManager.hpp"
+#include "../../common/DataTypes.hpp"
 
 namespace geos
 {
@@ -108,6 +110,11 @@ public:
              DomainPartition & domain ) override;
 
   void updateState( DomainPartition & domain ) override final;
+
+  void assembleContact( DomainPartition & domain,
+                        DofManager const & dofManager,
+                        CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                        arrayView1d <real64> const & localRhs );
 
   void assembleForceResidualDerivativeWrtTraction( MeshLevel const & mesh,
                                                    arrayView1d< string const > const & regionNames,
