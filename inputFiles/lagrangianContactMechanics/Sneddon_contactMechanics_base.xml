@@ -6,11 +6,11 @@
   <!-- SPHINX_SNEDDON_SOLVER -->
     <LagrangianContact
       name="lagrangiancontact"
-      solidSolverName="lagsolve"
       stabilizationName="TPFAstabilization"
+      timeIntegrationOption="QuasiStatic"
       logLevel="1"
       discretization="FE1"
-      targetRegions="{ Region, Fracture }"
+      targetRegions="{ Region }"
       contactRelationName="fractureMaterial"
       fractureRegionName="Fracture">
       <NonlinearSolverParameters
@@ -26,22 +26,6 @@
         directParallel="0"
         logLevel="0"/>
     </LagrangianContact>
-
-    <SolidMechanicsLagrangianSSLE
-      name="lagsolve"
-      timeIntegrationOption="QuasiStatic"
-      logLevel="0"
-      discretization="FE1"
-      surfaceGeneratorName="SurfaceGen"
-      targetRegions="{ Region }"
-      >
-      <NonlinearSolverParameters
-        newtonTol="1.0e-6"
-        newtonMaxIter="5"/>
-      <LinearSolverParameters
-        krylovTol="1.0e-10"
-        logLevel="0"/>
-    </SolidMechanicsLagrangianSSLE>
 
     <SurfaceGenerator
       name="SurfaceGen"
