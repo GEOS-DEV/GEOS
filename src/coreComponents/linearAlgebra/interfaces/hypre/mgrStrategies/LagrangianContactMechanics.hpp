@@ -67,7 +67,7 @@ public:
     // Level 0
     m_levelFRelaxType[0]          = MGRFRelaxationType::none;
     m_levelFRelaxIters[0]         = 0;
-    
+
     m_levelGlobalSmootherType[0]  = MGRGlobalSmootherType::blockJacobi;
     m_levelGlobalSmootherIters[0] = 1;
 
