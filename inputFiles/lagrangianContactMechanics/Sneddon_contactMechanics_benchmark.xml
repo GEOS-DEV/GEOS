@@ -16,7 +16,7 @@
       zCoords="{ 0, 1 }"
       nx="{ 40, 220, 40 }"
       ny="{ 40, 220, 40 }"
-      nz="{ 1 }"
+      nz="{ 2 }"
       cellBlockNames="{ cb1 }"/>
   </Mesh>
   <!-- SPHINX_SNEDDON_MESH_END -->
