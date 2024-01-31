@@ -126,6 +126,21 @@ Pack( buffer_unit_type * & buffer,
   return sizeOfPackedChars;
 }
 
+template< bool DO_PACKING >
+inline
+localIndex
+Pack( buffer_unit_type * & buffer,
+      std::vector< string > const & var )
+{ 
+  size_t const length = var.size();
+  localIndex sizeOfPackedChars = Pack< DO_PACKING >( buffer, length );
+  for( string const & str : var )
+  {
+    sizeOfPackedChars += Pack< DO_PACKING >( buffer, str );
+  }
+  return sizeOfPackedChars;
+}
+
 template< bool DO_PACKING, typename T >
 localIndex Pack( buffer_unit_type * & buffer,
                  ArrayOfArrays< T > const & var )
@@ -378,6 +393,22 @@ Unpack( buffer_unit_type const * & buffer,
   }
 
   sizeOfUnpackedChars += UnpackPointer( buffer, var.data(), var.size() );
+  return sizeOfUnpackedChars;
+}
+
+
+inline
+localIndex
+Unpack( buffer_unit_type const * & buffer,
+        std::vector< string > & var )
+{
+  size_t length;
+  localIndex sizeOfUnpackedChars = Unpack( buffer, length );
+  var.resize( length );
+  for( string & str : var )
+  {
+    sizeOfUnpackedChars += Unpack( buffer, str );
+  }
   return sizeOfUnpackedChars;
 }
 

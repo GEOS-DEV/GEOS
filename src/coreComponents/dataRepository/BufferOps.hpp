@@ -137,6 +137,11 @@ typename std::enable_if< is_packable< T >, localIndex >::type
 Pack( buffer_unit_type * & buffer,
       ArrayView< T, NDIM, USD > const & var );
 
+template< bool DO_PACKING >
+localIndex
+Pack( buffer_unit_type * & buffer,
+      std::vector< string > const & var );
+
 //------------------------------------------------------------------------------
 template< bool DO_PACKING, typename T >
 localIndex
@@ -272,6 +277,11 @@ template< typename T, int NDIM, typename PERMUTATION >
 typename std::enable_if< is_packable< T >, localIndex >::type
 Unpack( buffer_unit_type const * & buffer,
         Array< T, NDIM, PERMUTATION > & var );
+
+localIndex
+Unpack( buffer_unit_type const * & buffer,
+        std::vector< string > & var );
+
 
 //------------------------------------------------------------------------------
 template< typename T >
