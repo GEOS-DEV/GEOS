@@ -258,19 +258,20 @@ inline void FaceElementToCellStencilWrapper::
                   real64 ( & weight )[1][2],
                   real64 ( & dWeight_dVar )[1][2] ) const
 {
-  localIndex const er0  =  m_elementRegionIndices[iconn][0];
-  localIndex const esr0 =  m_elementSubRegionIndices[iconn][0];
-  localIndex const ei0  =  m_elementIndices[iconn][0];
+  // localIndex const er0  =  m_elementRegionIndices[iconn][0];
+  // localIndex const esr0 =  m_elementSubRegionIndices[iconn][0];
+  // localIndex const ei0  =  m_elementIndices[iconn][0];
 
-  // localIndex const er1  =  m_elementRegionIndices[iconn][1];
-  // localIndex const esr1 =  m_elementSubRegionIndices[iconn][1];
-  // localIndex const ei1  =  m_elementIndices[iconn][1];
+  localIndex const er1  =  m_elementRegionIndices[iconn][1];
+  localIndex const esr1 =  m_elementSubRegionIndices[iconn][1];
+  localIndex const ei1  =  m_elementIndices[iconn][1];
 
-  real64 faceConormal[3];
+  // real64 faceConormal[3];
 
   // Will change when implementing collocation points.
-  LvArray::tensorOps::hadamardProduct< 3 >( faceConormal, coefficient[er0][esr0][ei0][0], m_faceNormal[iconn] );
-  real64 const t0 = m_weights[iconn][0] * LvArray::tensorOps::AiBi< 3 >( m_cellToFaceVec[iconn], faceConormal );
+  // LvArray::tensorOps::hadamardProduct< 3 >( faceConormal, coefficient[er0][esr0][ei0][0], m_faceNormal[iconn] );
+  // real64 const t0 = m_weights[iconn][0] * LvArray::tensorOps::AiBi< 3 >( m_cellToFaceVec[iconn], faceConormal );
+  real64 const t0 = m_weights[iconn][0] * coefficient[er1][esr1][ei1][0][2];
   // We consider the 3rd component of the permeability which is the normal one.
   // real64 const t1 = m_weights[iconn][1] * coefficient[er1][esr1][ei1][0][2];
 
@@ -300,7 +301,8 @@ FaceElementToCellStencilWrapper
                     real64 ( & dWeight_dVar )[1][2] ) const
 {
   // Will change when implementing collocation points.
-  real64 const t0 = m_weights[iconn][0] * LvArray::tensorOps::AiBi< 3 >( m_cellToFaceVec[iconn], m_faceNormal[iconn] );
+  // real64 const t0 = m_weights[iconn][0] * LvArray::tensorOps::AiBi< 3 >( m_cellToFaceVec[iconn], m_faceNormal[iconn] );
+  real64 const t0 = m_weights[iconn][0];
   // real64 const t1 = m_weights[iconn][1];
 
   // real64 const sumOfTrans = t0+t1;
@@ -325,19 +327,20 @@ FaceElementToCellStencilWrapper::
                   real64 (& dWeight_dVar1 )[1][2],
                   real64 (& dWeight_dVar2 )[1][2] ) const
 {
-  localIndex const er0  =  m_elementRegionIndices[iconn][0];
-  localIndex const esr0 =  m_elementSubRegionIndices[iconn][0];
-  localIndex const ei0  =  m_elementIndices[iconn][0];
+  // localIndex const er0  =  m_elementRegionIndices[iconn][0];
+  // localIndex const esr0 =  m_elementSubRegionIndices[iconn][0];
+  // localIndex const ei0  =  m_elementIndices[iconn][0];
 
-  // localIndex const er1  =  m_elementRegionIndices[iconn][1];
-  // localIndex const esr1 =  m_elementSubRegionIndices[iconn][1];
-  // localIndex const ei1  =  m_elementIndices[iconn][1];
+  localIndex const er1  =  m_elementRegionIndices[iconn][1];
+  localIndex const esr1 =  m_elementSubRegionIndices[iconn][1];
+  localIndex const ei1  =  m_elementIndices[iconn][1];
 
-  real64 faceConormal[3];
+  // real64 faceConormal[3];
 
   // Will change when implementing collocation points.
-  LvArray::tensorOps::hadamardProduct< 3 >( faceConormal, coefficient[er0][esr0][ei0][0], m_faceNormal[iconn] );
-  real64 const t0 = m_weights[iconn][0] * LvArray::tensorOps::AiBi< 3 >( m_cellToFaceVec[iconn], faceConormal );
+  // LvArray::tensorOps::hadamardProduct< 3 >( faceConormal, coefficient[er0][esr0][ei0][0], m_faceNormal[iconn] );
+  // real64 const t0 = m_weights[iconn][0] * LvArray::tensorOps::AiBi< 3 >( m_cellToFaceVec[iconn], faceConormal );
+  real64 const t0 = m_weights[iconn][0] * coefficient[er1][esr1][ei1][0][2];
   // We consider the 3rd component of the permeability which is the normal one.
   // real64 const t1 = m_weights[iconn][1] * coefficient[er1][esr1][ei1][0][2];
 

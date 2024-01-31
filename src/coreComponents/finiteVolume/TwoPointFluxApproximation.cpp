@@ -30,6 +30,7 @@
 #include "finiteVolume/SurfaceElementStencil.hpp"
 #include "mesh/SurfaceElementRegion.hpp"
 #include "mesh/utilities/ComputationalGeometry.hpp"
+#include "physicsSolvers/fluidFlow/FlowSolverBase.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
 
 #include "LvArray/src/tensorOps.hpp"
@@ -412,8 +413,13 @@ void TwoPointFluxApproximation::initNewFractureFieldsDFM( MeshLevel & mesh,
 #endif
 
 #if SET_CREATION_PRESSURE==1
+  string const & fluidName = fractureSubRegion.getReference< string >( FlowSolverBase::viewKeyStruct::fluidNamesString() );
+  
   arrayView1d< real64 > const fluidPressure_n = fractureSubRegion.getField< fields::flow::pressure_n >();
   arrayView1d< real64 > const fluidPressure = fractureSubRegion.getField< fields::flow::pressure >();
+  arrayView1d< real64 > const fluidTemperature_n = fractureSubRegion.getField< fields::flow::temperature_n >();
+  arrayView1d< real64 > const fluidTemperature = fractureSubRegion.getField< fields::flow::temperature >(); 
+  arrayView2d< real64 > const fluidInternalEnergy_n = fractureSubRegion.getReference< array2d< real64 > >( fluidName + "_internalEnergy_n" );
   // Set the new face elements to some unphysical numbers to make sure they get set by the following routines.
   SortedArrayView< localIndex const > const newFaceElements = fractureSubRegion.m_newFaceElements.toViewConst();
 
@@ -421,6 +427,8 @@ void TwoPointFluxApproximation::initNewFractureFieldsDFM( MeshLevel & mesh,
   {
     localIndex const kfe = newFaceElements[k];
     fluidPressure[kfe] = 1.0e99;
+    fluidTemperature[kfe] = 1.0e99;
+    fluidInternalEnergy_n[kfe][0] = 1.0e99;
 #ifdef GEOSX_USE_SEPARATION_COEFFICIENT
     apertureF[kfe] = aperture[kfe];
 #endif
@@ -445,6 +453,9 @@ void TwoPointFluxApproximation::initNewFractureFieldsDFM( MeshLevel & mesh,
                             elemGhostRank,
                             fluidPressure,
                             fluidPressure_n,
+                            fluidTemperature,
+                            fluidTemperature_n,
+                            fluidInternalEnergy_n,
 #if SET_CREATION_DISPLACEMENT==1
                             faceToNodesMap,
                             totalDisplacement,
@@ -458,6 +469,8 @@ void TwoPointFluxApproximation::initNewFractureFieldsDFM( MeshLevel & mesh,
     localIndex const numElems = fractureConnectorsToFaceElements.sizeOfArray( fci );
 #if SET_CREATION_PRESSURE==1
     real64 initialPressure = 1.0e99;
+    real64 initialTemperature = 1.0e99;
+    real64 initialFluidInternalEnergy_n = 1.0e99;
 #endif
 #if SET_CREATION_DISPLACEMENT==1
     real64 initialAperture = 1.0e99;
@@ -476,6 +489,8 @@ void TwoPointFluxApproximation::initNewFractureFieldsDFM( MeshLevel & mesh,
       {
 #if SET_CREATION_PRESSURE==1
         initialPressure = std::min( initialPressure, fluidPressure_n[fractureElementIndex] );
+        initialTemperature = std::min( initialTemperature, fluidTemperature_n[fractureElementIndex] );
+        initialFluidInternalEnergy_n = std::min( initialFluidInternalEnergy_n, fluidInternalEnergy_n[fractureElementIndex][0] );
 #endif
 #if SET_CREATION_DISPLACEMENT==1
         initialAperture = std::min( initialAperture, aperture[fractureElementIndex] );
@@ -498,6 +513,8 @@ void TwoPointFluxApproximation::initNewFractureFieldsDFM( MeshLevel & mesh,
     {
 #if SET_CREATION_PRESSURE==1
       fluidPressure[newElemIndex] = std::min( fluidPressure[newElemIndex], initialPressure );
+      fluidTemperature[newElemIndex] = std::min( fluidTemperature[newElemIndex], initialTemperature );
+      fluidInternalEnergy_n[newElemIndex][0] = std::min( fluidInternalEnergy_n[newElemIndex][0], initialFluidInternalEnergy_n ); 
 #endif
 #if SET_CREATION_DISPLACEMENT==1
       // Set the aperture/fluid pressure for the new face element to be the minimum
@@ -534,6 +551,9 @@ void TwoPointFluxApproximation::initNewFractureFieldsDFM( MeshLevel & mesh,
                           [ &allNewElems
                             , fluidPressure
                             , fluidPressure_n
+                            , fluidTemperature
+                            , fluidTemperature_n
+                            , fluidInternalEnergy_n
 #if SET_CREATION_DISPLACEMENT==1
                             , aperture
                             , faceMap
@@ -553,6 +573,19 @@ void TwoPointFluxApproximation::initNewFractureFieldsDFM( MeshLevel & mesh,
       fluidPressure[newElemIndex] = 0.0;
     }
     fluidPressure_n[newElemIndex] = fluidPressure[newElemIndex];
+
+    // if the value of temperature was not set, then set it to zero and punt.
+    if( fluidTemperature[newElemIndex] > 1.0e98 )
+    {
+      fluidTemperature[newElemIndex] = 0.0;
+    }
+    fluidTemperature_n[newElemIndex] = fluidTemperature[newElemIndex];
+
+    // if the value of fluid internal energy at time n was not set, then set it to zero and punt.
+    if( fluidInternalEnergy_n[newElemIndex][0] > 1.0e98 )
+    {
+      fluidInternalEnergy_n[newElemIndex][0] = 0.0;
+    }
 #if ALLOW_CREATION_MASS==0
     // set the initial density of the face element to 0 to enforce mass conservation ( i.e. no creation of mass)
     dens[newElemIndex] = 0.0;
@@ -586,10 +619,11 @@ void TwoPointFluxApproximation::initNewFractureFieldsDFM( MeshLevel & mesh,
     }
     if( this->getLogLevel() > 1 )
     {
-      printf( "New elem index, init aper, init press = %4ld, %4.2e, %4.2e \n",
+      printf( "New elem index, init aper, init press, init temp = %4ld, %4.2e, %4.2e, %4.2e \n",
               newElemIndex,
               aperture[newElemIndex],
-              fluidPressure[newElemIndex] );
+              fluidPressure[newElemIndex],
+              fluidTemperature[newElemIndex] );
     }
 #endif
   } );
