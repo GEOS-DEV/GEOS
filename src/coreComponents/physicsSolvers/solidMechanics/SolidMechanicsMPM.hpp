@@ -92,6 +92,10 @@ public:
    * @return The string that may be used to generate a new instance from the SolverBase::CatalogInterface::CatalogType
    */
   static string catalogName() { return "SolidMechanics_MPM"; }
+  /**
+   * @copydoc SolverBase::getCatalogName()
+   */
+  string getCatalogName() const override { return catalogName(); }
 
   virtual void initializePreSubGroups() override;
 
@@ -415,16 +419,16 @@ protected:
   int m_planeStrain;
   int m_numDims;
 
-  real64 m_hEl[3];                // Grid spacing in x-y-z
-  real64 m_xLocalMin[3];          // Minimum local grid coordinate including ghost nodes
-  real64 m_xLocalMax[3];          // Maximum local grid coordinate including ghost nodes
-  real64 m_xLocalMinNoGhost[3];   // Minimum local grid coordinate EXCLUDING ghost nodes
-  real64 m_xLocalMaxNoGhost[3];   // Maximum local grid coordinate EXCLUDING ghost nodes
-  real64 m_xGlobalMin[3];         // Minimum global grid coordinate excluding buffer nodes
-  real64 m_xGlobalMax[3];         // Maximum global grid coordinate excluding buffer nodes
-  real64 m_partitionExtent[3];    // Length of each edge of partition including buffer and ghost cells
-  real64 m_domainExtent[3];       // Length of each edge of global domain excluding buffer cells
-  int m_nEl[3];                   // Number of elements in each grid direction including buffer and ghost cells
+  array1d< real64 > m_hEl;                // Grid spacing in x-y-z
+  array1d< real64 > m_xLocalMin;          // Minimum local grid coordinate including ghost nodes
+  array1d< real64 > m_xLocalMax;          // Maximum local grid coordinate including ghost nodes
+  array1d< real64 > m_xLocalMinNoGhost;   // Minimum local grid coordinate EXCLUDING ghost nodes
+  array1d< real64 > m_xLocalMaxNoGhost;   // Maximum local grid coordinate EXCLUDING ghost nodes
+  array1d< real64 > m_xGlobalMin;         // Minimum global grid coordinate excluding buffer nodes
+  array1d< real64 > m_xGlobalMax;         // Maximum global grid coordinate excluding buffer nodes
+  array1d< real64 > m_partitionExtent;    // Length of each edge of partition including buffer and ghost cells
+  array1d< real64 > m_domainExtent;       // Length of each edge of global domain excluding buffer cells
+  array1d< int > m_nEl;                   // Number of elements in each grid direction including buffer and ghost cells
   array3d< int > m_ijkMap;        // Map from indices in each spatial dimension to local node ID
 
 private:

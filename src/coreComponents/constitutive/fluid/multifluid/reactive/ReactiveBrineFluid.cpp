@@ -193,7 +193,8 @@ void ReactiveBrineFluid< PHASE > ::createPVTModels()
                  InputError );
 
   // then, we are ready to instantiate the phase models
-  m_phase = std::make_unique< PHASE >( getName() + "_phaseModel1", phase1InputParams, m_componentNames, m_componentMolarWeight );
+  m_phase = std::make_unique< PHASE >( getName() + "_phaseModel1", phase1InputParams, m_componentNames, m_componentMolarWeight,
+                                       getLogLevel() > 0 && logger::internal::rank==0 );
 }
 
 template< typename PHASE >

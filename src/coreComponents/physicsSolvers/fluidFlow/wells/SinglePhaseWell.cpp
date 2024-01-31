@@ -90,7 +90,7 @@ void SinglePhaseWell::registerDataOnMesh( Group & meshBodies )
       wellControls.registerWrapper< real64 >( viewKeyStruct::dCurrentVolRate_dRateString() );
 
       // write rates output header
-      if( getLogLevel() > 0 )
+      if( m_writeCSV > 0 && subRegion.isLocallyOwned())
       {
         string const wellControlsName = wellControls.getName();
         integer const useSurfaceConditions = wellControls.useSurfaceConditions();
@@ -98,8 +98,8 @@ void SinglePhaseWell::registerDataOnMesh( Group & meshBodies )
         string const unitKey = useSurfaceConditions ? "s" : "r";
         // format: time,bhp,total_rate,total_vol_rate
         std::ofstream outputFile( m_ratesOutputDir + "/" + wellControlsName + ".csv" );
-        outputFile << "time [s],bhp [Pa],total rate [kg/s],total " << conditionKey << " volumetric rate ["<<unitKey<<"m3/s]";
-        outputFile<<std::endl;
+        outputFile << "Time [s],BHP [Pa],Total rate [kg/s],Total " << conditionKey << " volumetric rate ["<<unitKey<<"m3/s]" << std::endl;
+        outputFile.close();
       }
 
       string & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
@@ -433,8 +433,7 @@ void SinglePhaseWell::initializeWells( DomainPartition & domain )
   } );
 }
 
-void SinglePhaseWell::assembleFluxTerms( real64 const GEOS_UNUSED_PARAM( time_n ),
-                                         real64 const dt,
+void SinglePhaseWell::assembleFluxTerms( real64 const dt,
                                          DomainPartition const & domain,
                                          DofManager const & dofManager,
                                          CRSMatrixView< real64, globalIndex const > const & localMatrix,
@@ -1050,15 +1049,22 @@ void SinglePhaseWell::printRates( real64 const & time_n,
       string const wellControlsName = wellControls.getName();
 
       // format: time,total_rate,total_vol_rate
-      std::ofstream outputFile( m_ratesOutputDir + "/" + wellControlsName + ".csv", std::ios_base::app );
-
-      outputFile << time_n + dt;
+      std::ofstream outputFile;
+      if( m_writeCSV > 0 )
+      {
+        outputFile.open( m_ratesOutputDir + "/" + wellControlsName + ".csv", std::ios_base::app );
+        outputFile << time_n + dt;
+      }
 
       if( !wellControls.isWellOpen( time_n + dt ) )
       {
         GEOS_LOG( GEOS_FMT( "{}: well is shut", wellControlsName ) );
-        // print all zeros in the rates file
-        outputFile << "0.0,0.0,0.0" << std::endl;
+        if( outputFile.is_open())
+        {
+          // print all zeros in the rates file
+          outputFile << ",0.0,0.0,0.0" << std::endl;
+          outputFile.close();
+        }
         return;
       }
 
@@ -1084,10 +1090,14 @@ void SinglePhaseWell::printRates( real64 const & time_n,
         real64 const currentTotalRate = connRate[iwelemRef];
         GEOS_LOG( GEOS_FMT( "{}: BHP (at the specified reference elevation): {} Pa",
                             wellControlsName, currentBHP ) );
-        outputFile << "," << currentBHP;
         GEOS_LOG( GEOS_FMT( "{}: Total rate: {} kg/s; total {} volumetric rate: {} {}m3/s",
                             wellControlsName, currentTotalRate, conditionKey, currentTotalVolRate, unitKey ) );
-        outputFile << "," << currentTotalRate << "," << currentTotalVolRate << std::endl;
+        if( outputFile.is_open())
+        {
+          outputFile << "," << currentBHP;
+          outputFile << "," << currentTotalRate << "," << currentTotalVolRate << std::endl;
+          outputFile.close();
+        }
       } );
     } );
   } );

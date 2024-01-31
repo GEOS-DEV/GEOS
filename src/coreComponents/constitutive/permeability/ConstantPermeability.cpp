@@ -78,7 +78,7 @@ void ConstantPermeability::initializeState() const
       for( integer dim=0; dim < 3; ++dim )
       {
         // The default value is -1 so if it still -1 it needs to be set to something physical
-        if( permView[ei][q][0] < 0 )
+        if( permView[ei][q][dim] < 0 )
         {
           permView[ei][q][dim] =  permComponents[dim];
         }

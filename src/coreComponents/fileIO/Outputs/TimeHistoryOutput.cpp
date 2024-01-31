@@ -32,6 +32,7 @@ TimeHistoryOutput::TimeHistoryOutput( string const & name,
   m_io( )
 {
   registerWrapper( viewKeys::timeHistoryOutputTargetString(), &m_collectorPaths ).
+    setRTTypeName( rtTypes::CustomTypes::groupNameRefArray ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "A list of collectors from which to collect and output time history information." );
 

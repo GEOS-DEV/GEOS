@@ -121,6 +121,17 @@ FlowSolverBase::FlowSolverBase( string const & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Flag indicating whether the problem is thermal or not." );
 
+  this->registerWrapper( viewKeyStruct::maxAbsolutePresChangeString(), &m_maxAbsolutePresChange ).
+    setSizedFromParent( 0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( -1.0 ).       // disabled by default
+    setDescription( "Maximum (absolute) pressure change in a Newton iteration" );
+
+  this->registerWrapper( viewKeyStruct::allowNegativePressureString(), &m_allowNegativePressure ).
+    setApplyDefaultValue( 1 ). // negative pressure is allowed by default
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Flag indicating if negative pressure is allowed" );
+
   // allow the user to select a norm
   getNonlinearSolverParameters().getWrapper< solverBaseKernels::NormType >( NonlinearSolverParameters::viewKeysStruct::normTypeString() ).setInputFlag( InputFlags::OPTIONAL );
 }
@@ -201,14 +212,7 @@ void FlowSolverBase::saveConvergedState( ElementSubRegionBase & subRegion ) cons
   arrayView1d< real64 > const temp_n = subRegion.template getField< fields::flow::temperature_n >();
   temp_n.setValues< parallelDevicePolicy<> >( temp );
 
-  GEOS_THROW_IF( subRegion.hasField< fields::flow::pressure_k >() !=
-                 subRegion.hasField< fields::flow::temperature_k >(),
-                 GEOS_FMT( "`{}` and `{}` must be either both existing or both non-existing on subregion {}",
-                           fields::flow::pressure_k::key(), fields::flow::temperature_k::key(), subRegion.getName() ),
-                 std::runtime_error );
-
-  if( subRegion.hasField< fields::flow::pressure_k >() &&
-      subRegion.hasField< fields::flow::temperature_k >() )
+  if( m_isFixedStressPoromechanicsUpdate )
   {
     arrayView1d< real64 > const pres_k = subRegion.template getField< fields::flow::pressure_k >();
     arrayView1d< real64 > const temp_k = subRegion.template getField< fields::flow::temperature_k >();
@@ -219,11 +223,8 @@ void FlowSolverBase::saveConvergedState( ElementSubRegionBase & subRegion ) cons
 
 void FlowSolverBase::saveIterationState( ElementSubRegionBase & subRegion ) const
 {
-  if( !( subRegion.hasField< fields::flow::pressure_k >() &&
-         subRegion.hasField< fields::flow::temperature_k >() ) )
-  {
+  if( !m_isFixedStressPoromechanicsUpdate )
     return;
-  }
 
   arrayView1d< real64 const > const pres = subRegion.template getField< fields::flow::pressure >();
   arrayView1d< real64 const > const temp = subRegion.template getField< fields::flow::temperature >();
@@ -461,18 +462,11 @@ void FlowSolverBase::updatePorosityAndPermeability( CellElementSubRegion & subRe
   string const & solidName = subRegion.getReference< string >( viewKeyStruct::solidNamesString() );
   CoupledSolidBase & porousSolid = subRegion.template getConstitutiveModel< CoupledSolidBase >( solidName );
 
-  GEOS_THROW_IF( subRegion.hasField< fields::flow::pressure_k >() !=
-                 subRegion.hasField< fields::flow::temperature_k >(),
-                 GEOS_FMT( "`{}` and `{}` must be either both existing or both non-existing on subregion {}",
-                           fields::flow::pressure_k::key(), fields::flow::temperature_k::key(), subRegion.getName() ),
-                 std::runtime_error );
-
   constitutive::ConstitutivePassThru< CoupledSolidBase >::execute( porousSolid, [=, &subRegion] ( auto & castedPorousSolid )
   {
     typename TYPEOFREF( castedPorousSolid ) ::KernelWrapper porousWrapper = castedPorousSolid.createKernelUpdates();
 
-    if( subRegion.hasField< fields::flow::pressure_k >() && // for sequential simulations
-        subRegion.hasField< fields::flow::temperature_k >() )
+    if( m_isFixedStressPoromechanicsUpdate ) // for sequential simulations
     {
       arrayView1d< real64 const > const & pressure_k = subRegion.getField< fields::flow::pressure_k >();
       arrayView1d< real64 const > const & temperature_k = subRegion.getField< fields::flow::temperature_k >();
@@ -707,9 +701,9 @@ void FlowSolverBase::saveAquiferConvergedState( real64 const & time,
 
     if( bc.getLogLevel() >= 1 )
     {
-      GEOS_LOG_RANK_0( GEOS_FMT( string( "FlowSolverBase {}: at time {}s, " )
-                                 + string( "the <{}> boundary condition '{}' produces a flux of {} kg (or moles if useMass=0). " ),
-                                 getDataContext(), time+dt, AquiferBoundaryCondition::catalogName(), bc.getName(), dt * globalSumFluxes[aquiferIndex] ) );
+      GEOS_LOG_RANK_0( GEOS_FMT( "{} {}: at time {} s, the boundary condition produces a volume of {} m3.",
+                                 AquiferBoundaryCondition::catalogName(), bc.getName(),
+                                 time + dt, dt * globalSumFluxes[aquiferIndex] ) );
     }
     bc.saveConvergedState( dt * globalSumFluxes[aquiferIndex] );
   } );

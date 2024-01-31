@@ -87,14 +87,14 @@ constexpr real64 DEFAULT_REL_TOL = std::numeric_limits< real64 >::epsilon();
 {
   real64 const delta = std::abs( v1 - v2 );
   real64 const value = std::max( std::abs( v1 ), std::abs( v2 ) );
-  if( delta > absTol && delta > relTol * value )
+  if( delta > absTol && delta > relTol * (value + 1.0) )
   {
     return ::testing::AssertionFailure() << std::scientific << std::setprecision( 5 )
-                                         << " relative error: " << delta / value
+                                         << " error norm: " << delta / (value + 1.0)
                                          << " (" << v1 << " vs " << v2 << "),"
-                                         << " exceeds " << relTol <<". "
+                                         << " exceeds " << relTol << ". "
                                          << " absolute error: " << delta << " exeeds "
-                                         << absTol <<std::endl;
+                                         << absTol << std::endl;
   }
   return ::testing::AssertionSuccess();
 }

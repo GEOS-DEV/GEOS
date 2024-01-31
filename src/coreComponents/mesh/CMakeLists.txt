@@ -59,6 +59,7 @@ set( mesh_headers
      generators/ParticleMeshGenerator.hpp
      generators/PartitionDescriptor.hpp
      generators/PrismUtilities.hpp
+     generators/WellGeneratorABC.hpp
      generators/WellGeneratorBase.hpp
      mpiCommunications/CommID.hpp
      mpiCommunications/CommunicationTools.hpp
@@ -80,8 +81,7 @@ set( mesh_headers
      utilities/CIcomputationKernel.hpp
      utilities/ComputationalGeometry.hpp
      utilities/MeshMapUtilities.hpp
-     utilities/StructuredGridUtilities.hpp
-   )
+     utilities/StructuredGridUtilities.hpp )
 
 # Specify all sources
 set( mesh_sources
@@ -146,18 +146,18 @@ set( mesh_sources
      simpleGeometricObjects/SimpleGeometricObjectBase.cpp
      simpleGeometricObjects/PlanarGeometricObject.cpp
      simpleGeometricObjects/ThickPlane.cpp
-     utilities/ComputationalGeometry.cpp
-     )
+     utilities/ComputationalGeometry.cpp )
 
 set( dependencyList ${parallelDeps} schema dataRepository constitutive finiteElement parmetis metis )
 
 if( ENABLE_VTK )
-    message(STATUS "Adding VTKMeshGenerator sources and headers")
+    message(STATUS "Adding VTK readers")
     set( mesh_headers ${mesh_headers}
          generators/CollocatedNodes.hpp
          generators/VTKFaceBlockUtilities.hpp
          generators/VTKMeshGenerator.hpp
          generators/VTKMeshGeneratorTools.hpp
+         generators/VTKWellGenerator.hpp
          generators/VTKUtilities.hpp
          )
     set( mesh_sources ${mesh_sources}
@@ -165,26 +165,26 @@ if( ENABLE_VTK )
          generators/VTKFaceBlockUtilities.cpp
          generators/VTKMeshGenerator.cpp
          generators/VTKMeshGeneratorTools.cpp
+         generators/VTKWellGenerator.cpp
          generators/VTKUtilities.cpp
-         )
-    set( dependencyList ${dependencyList} VTK::IOLegacy VTK::FiltersParallelDIY2 )
+         )    
+    list( APPEND dependencyList VTK::IOLegacy VTK::FiltersParallelDIY2 )
     if( ENABLE_MPI )
-      set( dependencyList ${dependencyList} VTK::IOParallelXML VTK::ParallelMPI )
+      list( APPEND dependencyList VTK::IOParallelXML VTK::ParallelMPI )
     endif()
 endif()
 
 if( ENABLE_SCOTCH )
     set( mesh_headers ${mesh_headers} generators/PTScotchInterface.hpp )
     set( mesh_sources ${mesh_sources} generators/PTScotchInterface.cpp )
-    set( dependencyList ${dependencyList} ptscotch )
+    list( APPEND dependencyList ptscotch )
 endif()
 
 blt_add_library( NAME       mesh
                  SOURCES    ${mesh_sources}
                  HEADERS    ${mesh_headers}
                  DEPENDS_ON ${dependencyList}
-                 OBJECT     ${GEOSX_BUILD_OBJ_LIBS}
-               )
+                 OBJECT     ${GEOSX_BUILD_OBJ_LIBS} )
 
 target_include_directories( mesh PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents )
 
@@ -197,4 +197,3 @@ if( GEOS_ENABLE_TESTS )
     add_subdirectory( unitTests )
 endif( )
 
-geosx_add_code_checks( PREFIX mesh )

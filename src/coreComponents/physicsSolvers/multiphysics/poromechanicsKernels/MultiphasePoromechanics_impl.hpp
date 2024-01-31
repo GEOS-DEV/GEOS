@@ -52,6 +52,8 @@ MultiphasePoromechanics( NodeManager const & nodeManager,
                          string const inputFlowDofKey,
                          localIndex const numComponents,
                          localIndex const numPhases,
+                         integer const useSimpleAccumulation,
+                         integer const useTotalMassEquation,
                          string const fluidModelKey ):
   Base( nodeManager,
         edgeManager,
@@ -72,8 +74,12 @@ MultiphasePoromechanics( NodeManager const & nodeManager,
   m_fluidPhaseVolFrac_n( elementSubRegion.template getField< fields::flow::phaseVolumeFraction_n >() ),
   m_dFluidPhaseVolFrac( elementSubRegion.template getField< fields::flow::dPhaseVolumeFraction >() ),
   m_dGlobalCompFraction_dGlobalCompDensity( elementSubRegion.template getField< fields::flow::dGlobalCompFraction_dGlobalCompDensity >() ),
+  m_compDens( elementSubRegion.template getField< fields::flow::globalCompDensity >() ),
+  m_compDens_n( elementSubRegion.template getField< fields::flow::globalCompDensity_n >() ),
   m_numComponents( numComponents ),
-  m_numPhases( numPhases )
+  m_numPhases( numPhases ),
+  m_useSimpleAccumulation( useSimpleAccumulation ),
+  m_useTotalMassEquation( useTotalMassEquation )
 {
   GEOS_ERROR_IF_GT_MSG( m_numComponents, maxNumComponents,
                         "MultiphasePoromechanics solver allows at most " <<
@@ -277,83 +283,111 @@ computeFluidIncrement( localIndex const k,
                        StackVariables & stack,
                        FUNC && fluidIncrementKernelOp ) const
 {
-  using Deriv = constitutive::multifluid::DerivativeOffset;
-
-  GEOS_UNUSED_VAR( dPorosity_dTemperature );
-
-  // temporary work arrays and slices
-  real64 dPhaseAmount_dC[maxNumComponents]{};
-  real64 dPhaseCompFrac_dC[maxNumComponents]{};
-
-  arraySlice1d< real64 const, constitutive::multifluid::USD_PHASE - 2 > const phaseDensity = m_fluidPhaseDensity[k][q];
-  arraySlice1d< real64 const, constitutive::multifluid::USD_PHASE - 2 > const phaseDensity_n = m_fluidPhaseDensity_n[k][q];
-  arraySlice2d< real64 const, constitutive::multifluid::USD_PHASE_DC - 2 > const dPhaseDensity = m_dFluidPhaseDensity[k][q];
-  arraySlice2d< real64 const, constitutive::multifluid::USD_PHASE_COMP - 2 > const phaseCompFrac = m_fluidPhaseCompFrac[k][q];
-  arraySlice2d< real64 const, constitutive::multifluid::USD_PHASE_COMP - 2 > const phaseCompFrac_n = m_fluidPhaseCompFrac_n[k][q];
-  arraySlice3d< real64 const, constitutive::multifluid::USD_PHASE_COMP_DC -2 > const dPhaseCompFrac = m_dFluidPhaseCompFrac[k][q];
-  arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const phaseVolFrac = m_fluidPhaseVolFrac[k];
-  arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const phaseVolFrac_n = m_fluidPhaseVolFrac_n[k];
-  arraySlice2d< real64 const, compflow::USD_PHASE_DC - 1 > const dPhaseVolFrac = m_dFluidPhaseVolFrac[k];
-  arraySlice2d< real64 const, compflow::USD_COMP_DC - 1 > const dGlobalCompFrac_dGlobalCompDensity = m_dGlobalCompFraction_dGlobalCompDensity[k];
-
   LvArray::tensorOps::fill< maxNumComponents >( stack.compMassIncrement, 0.0 );
   LvArray::tensorOps::fill< maxNumComponents >( stack.dCompMassIncrement_dVolStrainIncrement, 0.0 );
   LvArray::tensorOps::fill< maxNumComponents >( stack.dCompMassIncrement_dPressure, 0.0 );
   LvArray::tensorOps::fill< maxNumComponents, maxNumComponents >( stack.dCompMassIncrement_dComponents, 0.0 );
 
-  // loop over the fluid phases
-  for( integer ip = 0; ip < m_numPhases; ++ip )
+  if( m_useSimpleAccumulation )
   {
+    arraySlice1d< real64 const, compflow::USD_COMP - 1 >
+    const compDens = m_compDens[k];
+    arraySlice1d< real64 const, compflow::USD_COMP - 1 >
+    const compDens_n = m_compDens_n[k];
 
-    // compute the mass of the current phase
-    real64 const phaseAmount = porosity * phaseVolFrac( ip ) * phaseDensity( ip );
-    real64 const phaseAmount_n = porosity_n * phaseVolFrac_n( ip ) * phaseDensity_n( ip );
-
-    real64 const dPhaseAmount_dVolStrain = dPorosity_dVolStrain * phaseVolFrac( ip ) * phaseDensity( ip );
-    real64 const dPhaseAmount_dP = dPorosity_dPressure * phaseVolFrac( ip ) * phaseDensity( ip )
-                                   + porosity * ( dPhaseVolFrac( ip, Deriv::dP ) * phaseDensity( ip )
-                                                  + phaseVolFrac( ip ) * dPhaseDensity( ip, Deriv::dP ) );
-
-    applyChainRule( m_numComponents,
-                    dGlobalCompFrac_dGlobalCompDensity,
-                    dPhaseDensity[ip],
-                    dPhaseAmount_dC,
-                    Deriv::dC );
-
-    for( integer jc = 0; jc < m_numComponents; ++jc )
-    {
-      dPhaseAmount_dC[jc] = dPhaseAmount_dC[jc] * phaseVolFrac( ip )
-                            + phaseDensity( ip ) * dPhaseVolFrac( ip, Deriv::dC+jc );
-      dPhaseAmount_dC[jc] *= porosity;
-    }
-
-    // for each phase, compute the amount of each component transported by the phase
     for( integer ic = 0; ic < m_numComponents; ++ic )
     {
-      stack.compMassIncrement[ic] += phaseAmount * phaseCompFrac( ip, ic )
-                                     - phaseAmount_n * phaseCompFrac_n( ip, ic );
+      stack.compMassIncrement[ic] += porosity * compDens[ic] - porosity_n * compDens_n[ic];
+      stack.dCompMassIncrement_dPressure[ic] += dPorosity_dPressure * compDens[ic];
+      stack.dCompMassIncrement_dVolStrainIncrement[ic] += dPorosity_dVolStrain * compDens[ic];
+      stack.dCompMassIncrement_dComponents[ic][ic] += porosity;
+    }
+  }
+  else
+  {
+    using Deriv = constitutive::multifluid::DerivativeOffset;
 
-      stack.dCompMassIncrement_dPressure[ic] += dPhaseAmount_dP * phaseCompFrac( ip, ic )
-                                                + phaseAmount * dPhaseCompFrac( ip, ic, Deriv::dP );
-      stack.dCompMassIncrement_dVolStrainIncrement[ic] += dPhaseAmount_dVolStrain * phaseCompFrac( ip, ic );
+    GEOS_UNUSED_VAR( dPorosity_dTemperature );
+
+    // temporary work arrays and slices
+    real64 dPhaseAmount_dC[maxNumComponents]{};
+    real64 dPhaseCompFrac_dC[maxNumComponents]{};
+
+    arraySlice1d< real64 const, constitutive::multifluid::USD_PHASE - 2 >
+    const phaseDensity = m_fluidPhaseDensity[k][q];
+    arraySlice1d< real64 const, constitutive::multifluid::USD_PHASE - 2 >
+    const phaseDensity_n = m_fluidPhaseDensity_n[k][q];
+    arraySlice2d< real64 const, constitutive::multifluid::USD_PHASE_DC - 2 >
+    const dPhaseDensity = m_dFluidPhaseDensity[k][q];
+    arraySlice2d< real64 const, constitutive::multifluid::USD_PHASE_COMP - 2 >
+    const phaseCompFrac = m_fluidPhaseCompFrac[k][q];
+    arraySlice2d< real64 const, constitutive::multifluid::USD_PHASE_COMP - 2 >
+    const phaseCompFrac_n = m_fluidPhaseCompFrac_n[k][q];
+    arraySlice3d< real64 const, constitutive::multifluid::USD_PHASE_COMP_DC - 2 >
+    const dPhaseCompFrac = m_dFluidPhaseCompFrac[k][q];
+    arraySlice1d< real64 const, compflow::USD_PHASE - 1 >
+    const phaseVolFrac = m_fluidPhaseVolFrac[k];
+    arraySlice1d< real64 const, compflow::USD_PHASE - 1 >
+    const phaseVolFrac_n = m_fluidPhaseVolFrac_n[k];
+    arraySlice2d< real64 const, compflow::USD_PHASE_DC - 1 >
+    const dPhaseVolFrac = m_dFluidPhaseVolFrac[k];
+    arraySlice2d< real64 const, compflow::USD_COMP_DC - 1 >
+    const dGlobalCompFrac_dGlobalCompDensity = m_dGlobalCompFraction_dGlobalCompDensity[k];
+
+    // loop over the fluid phases
+    for( integer ip = 0; ip < m_numPhases; ++ip )
+    {
+
+      // compute the mass of the current phase
+      real64 const phaseAmount = porosity * phaseVolFrac( ip ) * phaseDensity( ip );
+      real64 const phaseAmount_n = porosity_n * phaseVolFrac_n( ip ) * phaseDensity_n( ip );
+
+      real64 const dPhaseAmount_dVolStrain = dPorosity_dVolStrain * phaseVolFrac( ip ) * phaseDensity( ip );
+      real64 const dPhaseAmount_dP = dPorosity_dPressure * phaseVolFrac( ip ) * phaseDensity( ip )
+                                     + porosity * ( dPhaseVolFrac( ip, Deriv::dP ) * phaseDensity( ip )
+                                                    + phaseVolFrac( ip ) * dPhaseDensity( ip, Deriv::dP ) );
 
       applyChainRule( m_numComponents,
                       dGlobalCompFrac_dGlobalCompDensity,
-                      dPhaseCompFrac[ip][ic],
-                      dPhaseCompFrac_dC,
+                      dPhaseDensity[ip],
+                      dPhaseAmount_dC,
                       Deriv::dC );
 
       for( integer jc = 0; jc < m_numComponents; ++jc )
       {
-        stack.dCompMassIncrement_dComponents[ic][jc] += dPhaseAmount_dC[jc] * phaseCompFrac( ip, ic )
-                                                        + phaseAmount * dPhaseCompFrac_dC[jc];
+        dPhaseAmount_dC[jc] = dPhaseAmount_dC[jc] * phaseVolFrac( ip )
+                              + phaseDensity( ip ) * dPhaseVolFrac( ip, Deriv::dC + jc );
+        dPhaseAmount_dC[jc] *= porosity;
       }
+
+      // for each phase, compute the amount of each component transported by the phase
+      for( integer ic = 0; ic < m_numComponents; ++ic )
+      {
+        stack.compMassIncrement[ic] += phaseAmount * phaseCompFrac( ip, ic )
+                                       - phaseAmount_n * phaseCompFrac_n( ip, ic );
+
+        stack.dCompMassIncrement_dPressure[ic] += dPhaseAmount_dP * phaseCompFrac( ip, ic )
+                                                  + phaseAmount * dPhaseCompFrac( ip, ic, Deriv::dP );
+        stack.dCompMassIncrement_dVolStrainIncrement[ic] += dPhaseAmount_dVolStrain * phaseCompFrac( ip, ic );
+
+        applyChainRule( m_numComponents,
+                        dGlobalCompFrac_dGlobalCompDensity,
+                        dPhaseCompFrac[ip][ic],
+                        dPhaseCompFrac_dC,
+                        Deriv::dC );
+
+        for( integer jc = 0; jc < m_numComponents; ++jc )
+        {
+          stack.dCompMassIncrement_dComponents[ic][jc] += dPhaseAmount_dC[jc] * phaseCompFrac( ip, ic )
+                                                          + phaseAmount * dPhaseCompFrac_dC[jc];
+        }
+      }
+
+      // call the lambda in the phase loop to allow the reuse of the phase amounts and their derivatives
+      // possible use: assemble the derivatives wrt temperature, and the accumulation term of the energy equation for this phase
+      fluidIncrementKernelOp( ip, phaseAmount, phaseAmount_n, dPhaseAmount_dVolStrain, dPhaseAmount_dP, dPhaseAmount_dC );
+
     }
-
-    // call the lambda in the phase loop to allow the reuse of the phase amounts and their derivatives
-    // possible use: assemble the derivatives wrt temperature, and the accumulation term of the energy equation for this phase
-    fluidIncrementKernelOp( ip, phaseAmount, phaseAmount_n, dPhaseAmount_dVolStrain, dPhaseAmount_dP, dPhaseAmount_dC );
-
   }
 }
 
@@ -641,12 +675,15 @@ complete( localIndex const k,
   integer numDisplacementDofs = numSupportPoints * numDofPerTestSupportPoint;
   constexpr integer maxNumDisplacementDofs = FE_TYPE::maxSupportPoints * numDofPerTestSupportPoint;
 
-  // Apply equation/variable change transformation(s)
-  real64 work[maxNumDisplacementDofs > ( maxNumComponents + 1 ) ? maxNumDisplacementDofs : maxNumComponents + 1];
-  shiftRowsAheadByOneAndReplaceFirstRowWithColumnSum( m_numComponents, numDisplacementDofs, stack.dLocalResidualMass_dDisplacement, work );
-  shiftRowsAheadByOneAndReplaceFirstRowWithColumnSum( m_numComponents, 1, stack.dLocalResidualMass_dPressure, work );
-  shiftRowsAheadByOneAndReplaceFirstRowWithColumnSum( m_numComponents, m_numComponents, stack.dLocalResidualMass_dComponents, work );
-  shiftElementsAheadByOneAndReplaceFirstElementWithSum( m_numComponents, stack.localResidualMass );
+  if( m_useTotalMassEquation > 0 )
+  {
+    // Apply equation/variable change transformation(s)
+    real64 work[maxNumDisplacementDofs > ( maxNumComponents + 1 ) ? maxNumDisplacementDofs : maxNumComponents + 1];
+    shiftRowsAheadByOneAndReplaceFirstRowWithColumnSum( m_numComponents, numDisplacementDofs, stack.dLocalResidualMass_dDisplacement, work );
+    shiftRowsAheadByOneAndReplaceFirstRowWithColumnSum( m_numComponents, 1, stack.dLocalResidualMass_dPressure, work );
+    shiftRowsAheadByOneAndReplaceFirstRowWithColumnSum( m_numComponents, m_numComponents, stack.dLocalResidualMass_dComponents, work );
+    shiftElementsAheadByOneAndReplaceFirstElementWithSum( m_numComponents, stack.localResidualMass );
+  }
 
   for( int localNode = 0; localNode < numSupportPoints; ++localNode )
   {
