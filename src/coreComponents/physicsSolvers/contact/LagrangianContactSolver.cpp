@@ -82,9 +82,13 @@ void LagrangianContactSolver::registerDataOnMesh( Group & meshBodies )
                                                     MeshLevel & mesh,
                                                     arrayView1d< string const > const & regionNames )
   {
+
     ElementRegionManager & elemManager = mesh.getElemManager();
-    elemManager.forElementSubRegions< FaceElementSubRegion >( regionNames, [&] ( localIndex const,
-                                                                                 SurfaceElementSubRegion & subRegion )
+
+    SurfaceElementRegion & fractureRegion = elemManager.getRegion< SurfaceElementRegion >( getFractureRegionName() );
+    fractureRegion.forElementSubRegions< SurfaceElementSubRegion >( [&]( SurfaceElementSubRegion & subRegion )
+//    fractureRegion.forElementSubRegions< FaceElementSubRegion >( regionNames, [&] ( localIndex const,
+//                                                                                 SurfaceElementSubRegion & subRegion )
     {
       subRegion.registerWrapper< array3d< real64 > >( viewKeyStruct::rotationMatrixString() ).
         setPlotLevel( PlotLevel::NOPLOT ).

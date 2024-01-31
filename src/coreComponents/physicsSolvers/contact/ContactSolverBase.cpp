@@ -49,10 +49,10 @@ ContactSolverBase::ContactSolverBase( const string & name,
 //    setInputFlag( InputFlags::REQUIRED ).
 //    setDescription( "Name of the solid mechanics solver in the rock matrix" );
 
-  registerWrapper( viewKeyStruct::contactRelationNameString(), &m_contactRelationName ).
-    setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
-    setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "Name of contact relation to enforce constraints on fracture boundary." );
+//  registerWrapper( viewKeyStruct::contactRelationNameString(), &m_contactRelationName ).
+//    setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
+//    setInputFlag( InputFlags::REQUIRED ).
+//    setDescription( "Name of contact relation to enforce constraints on fracture boundary." );
 
   registerWrapper( viewKeyStruct::fractureRegionNameString(), &m_fractureRegionName ).
     setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
@@ -75,17 +75,19 @@ void ContactSolverBase::registerDataOnMesh( dataRepository::Group & meshBodies )
 
   forDiscretizationOnMeshTargets( meshBodies,
                                   [&]( string const,
-                                       MeshLevel & meshLevel,
+                                       MeshLevel & mesh,
                                        arrayView1d< string const > const regionNames )
   {
-    ElementRegionManager & elemManager = meshLevel.getElemManager();
-    elemManager.forElementRegions< SurfaceElementRegion >( regionNames,
-                                                           [&] ( localIndex const,
-                                                                 SurfaceElementRegion & region )
-    {
+    ElementRegionManager & elemManager = mesh.getElemManager();
+//    elemManager.forElementRegions< SurfaceElementRegion >( regionNames,
+//                                                           [&] ( localIndex const,
+//                                                                 SurfaceElementRegion & region )
+//    {
+  SurfaceElementRegion & fractureRegion = elemManager.getRegion< SurfaceElementRegion >( getFractureRegionName() );
+
       string const labels[3] = { "normal", "tangent1", "tangent2" };
 
-      region.forElementSubRegions< SurfaceElementSubRegion >( [&]( SurfaceElementSubRegion & subRegion )
+  fractureRegion.forElementSubRegions< SurfaceElementSubRegion >( [&]( SurfaceElementSubRegion & subRegion )
       {
         subRegion.registerField< dispJump >( getName() ).
           setDimLabels( 1, labels ).
@@ -105,7 +107,7 @@ void ContactSolverBase::registerDataOnMesh( dataRepository::Group & meshBodies )
 
         subRegion.registerField< oldFractureState >( getName() );
       } );
-    } );
+//    } );
   } );
 }
 

@@ -91,7 +91,7 @@ protected:
 //  SolidMechanicsLagrangianFEM * m_solidSolver;
 
   /// contact relation name string
-  string m_contactRelationName;
+  //string m_contactRelationName;
 
   ///
   bool m_setupSolidSolverDofs;
