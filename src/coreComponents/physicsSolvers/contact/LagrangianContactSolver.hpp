@@ -156,7 +156,7 @@ public:
   string getStabilizationName() const { return m_stabilizationName; }
 
 protected:
-  virtual void postProcessInput() override final;
+  //virtual void postProcessInput() override final;
 
 private:
   string m_stabilizationName;

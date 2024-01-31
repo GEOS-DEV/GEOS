@@ -64,7 +64,7 @@ public:
 
 protected:
 
-  virtual void postProcessInput() override;
+  //virtual void postProcessInput() override;
 
   void computeFractureStateStatistics( MeshLevel const & mesh,
                                        globalIndex & numStick,

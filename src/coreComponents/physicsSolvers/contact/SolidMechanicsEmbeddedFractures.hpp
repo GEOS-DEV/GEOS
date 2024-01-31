@@ -59,10 +59,10 @@ public:
                             ParallelVector & solution,
                             bool const setSparsity = true ) override;
 
-  virtual void
-  implicitStepSetup( real64 const & time_n,
-                     real64 const & dt,
-                     DomainPartition & domain ) override final;
+//  virtual void
+//  implicitStepSetup( real64 const & time_n,
+//                     real64 const & dt,
+//                     DomainPartition & domain ) override final;
 
   virtual void implicitStepComplete( real64 const & time_n,
                                      real64 const & dt,

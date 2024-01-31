@@ -31,6 +31,8 @@
 #include "physicsSolvers/solidMechanics/SolidMechanicsFields.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
 #include "physicsSolvers/solidMechanics/kernels/ImplicitSmallStrainQuasiStatic.hpp"
+#include "physicsSolvers/contact/LagrangianContactSolver.hpp"
+#include "physicsSolvers/contact/SolidMechanicsEmbeddedFractures.hpp"
 
 namespace geos
 {
@@ -355,6 +357,8 @@ void SinglePhasePoromechanics< FLOW_SOLVER, MECHANICS_SOLVER >::updateBulkDensit
 }
 
 template class SinglePhasePoromechanics< SinglePhaseBase >;
+template class SinglePhasePoromechanics< SinglePhaseBase, LagrangianContactSolver >;
+template class SinglePhasePoromechanics< SinglePhaseBase, SolidMechanicsEmbeddedFractures >;
 template class SinglePhasePoromechanics< SinglePhaseReservoirAndWells< SinglePhaseBase > >;
 
 namespace
