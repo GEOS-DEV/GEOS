@@ -180,11 +180,11 @@ char const * xmlInput =
   </Problem>
   )xml";
 
-class AcousticWaveEquationSEMTest : public ::testing::Test
+class ElasticWaveEquationSEMTest : public ::testing::Test
 {
 public:
 
-  AcousticWaveEquationSEMTest():
+  ElasticWaveEquationSEMTest():
     state( std::make_unique< CommandLineOptions >( g_commandLineOptions ) )
   {}
 
