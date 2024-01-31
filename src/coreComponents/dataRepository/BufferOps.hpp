@@ -60,6 +60,14 @@ constexpr bool is_packable_array< ArraySlice< T, NDIM, USD > > = is_packable_hel
 template< typename T >
 constexpr bool is_packable_array< ArrayOfArrays< T > > = is_packable_helper< T >::value;
 
+
+template< typename >
+constexpr bool is_packable_vector = false;
+
+template< typename T >
+constexpr bool is_packable_vector< std::vector< T > > = is_packable_helper< T >::value;
+
+
 template< typename >
 constexpr bool is_packable_set = false;
 
@@ -79,6 +87,7 @@ template< typename T >
 struct is_packable_helper
 {
   static constexpr bool value = is_noncontainer_type_packable< T > ||
+                                is_packable_vector< T > ||
                                 is_packable_array< T > ||
                                 is_packable_map< T > ||
                                 is_packable_set< T >;
