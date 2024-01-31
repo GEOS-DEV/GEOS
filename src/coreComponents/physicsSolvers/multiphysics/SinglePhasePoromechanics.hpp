@@ -133,13 +133,13 @@ template< typename CONSTITUTIVE_BASE,
           typename KERNEL_WRAPPER,
           typename ... PARAMS >
 real64 SinglePhasePoromechanics< FLOW_SOLVER, MECHANICS_SOLVER >::assemblyLaunch( MeshLevel & mesh,
-                                                                DofManager const & dofManager,
-                                                                arrayView1d< string const > const & regionNames,
-                                                                string const & materialNamesString,
-                                                                CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                                                arrayView1d< real64 > const & localRhs,
-                                                                real64 const dt,
-                                                                PARAMS && ... params )
+                                                                                  DofManager const & dofManager,
+                                                                                  arrayView1d< string const > const & regionNames,
+                                                                                  string const & materialNamesString,
+                                                                                  CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                                                  arrayView1d< real64 > const & localRhs,
+                                                                                  real64 const dt,
+                                                                                  PARAMS && ... params )
 {
   GEOS_MARK_FUNCTION;
 

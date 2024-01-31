@@ -56,7 +56,8 @@ void SinglePhasePoromechanicsConformingFractures::initializePostInitialCondition
 {
 //  contactSolver()->setSolidSolverDofFlags( false );
 //
-//  integer const & isPoromechanicsSolverThermal = poromechanicsSolver()->getReference< integer >( SinglePhasePoromechanics< SinglePhaseBase >::viewKeyStruct::isThermalString() );
+//  integer const & isPoromechanicsSolverThermal = poromechanicsSolver()->getReference< integer >( SinglePhasePoromechanics< SinglePhaseBase
+// >::viewKeyStruct::isThermalString() );
 //
 //  GEOS_ERROR_IF( isPoromechanicsSolverThermal != m_isThermal,
 //                 GEOS_FMT( "{} {}: The attribute `{}` of the poromechanics solver `{}` must be set to the same value as for this solver.",
@@ -175,20 +176,20 @@ void SinglePhasePoromechanicsConformingFractures::assembleSystem( real64 const t
   synchronizeNonLinearParameters();
 
   assembleElementBasedContributions( time_n,
-                                  dt,
-                                  domain,
-                                  dofManager,
-                                  localMatrix,
-                                  localRhs );
+                                     dt,
+                                     domain,
+                                     dofManager,
+                                     localMatrix,
+                                     localRhs );
 
   // Assemble fluxes 3D/2D and get dFluidResidualDAperture
   flowSolver()->assembleHydrofracFluxTerms( time_n,
-                                                                   dt,
-                                                                   domain,
-                                                                   dofManager,
-                                                                   localMatrix,
-                                                                   localRhs,
-                                                                   getDerivativeFluxResidual_dNormalJump() );
+                                            dt,
+                                            domain,
+                                            dofManager,
+                                            localMatrix,
+                                            localRhs,
+                                            getDerivativeFluxResidual_dNormalJump() );
 
   // This step must occur after the fluxes are assembled because that's when DerivativeFluxResidual_dAperture is filled.
   assembleCouplingTerms( time_n,
@@ -200,11 +201,11 @@ void SinglePhasePoromechanicsConformingFractures::assembleSystem( real64 const t
 }
 
 void SinglePhasePoromechanicsConformingFractures::assembleElementBasedContributions( real64 const time_n,
-                                                                                  real64 const dt,
-                                                                                  DomainPartition & domain,
-                                                                                  DofManager const & dofManager,
-                                                                                  CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                                                                  arrayView1d< real64 > const & localRhs )
+                                                                                     real64 const dt,
+                                                                                     DomainPartition & domain,
+                                                                                     DofManager const & dofManager,
+                                                                                     CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                                                     arrayView1d< real64 > const & localRhs )
 {
   GEOS_UNUSED_VAR( time_n, dt );
 

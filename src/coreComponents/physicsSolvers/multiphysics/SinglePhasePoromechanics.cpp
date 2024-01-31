@@ -73,7 +73,7 @@ catalogName()
 
 template< typename FLOW_SOLVER, typename MECHANICS_SOLVER >
 SinglePhasePoromechanics< FLOW_SOLVER, MECHANICS_SOLVER >::SinglePhasePoromechanics( const string & name,
-                                                                   Group * const parent )
+                                                                                     Group * const parent )
   : Base( name, parent )
 {
   LinearSolverParameters & linearSolverParameters = this->m_linearSolverParameters.get();
@@ -98,7 +98,7 @@ void SinglePhasePoromechanics< FLOW_SOLVER, MECHANICS_SOLVER >::postProcessInput
 
 template< typename FLOW_SOLVER, typename MECHANICS_SOLVER >
 void SinglePhasePoromechanics< FLOW_SOLVER, MECHANICS_SOLVER >::setupCoupling( DomainPartition const & GEOS_UNUSED_PARAM( domain ),
-                                                             DofManager & dofManager ) const
+                                                                               DofManager & dofManager ) const
 {
   dofManager.addCoupling( solidMechanics::totalDisplacement::key(),
                           SinglePhaseBase::viewKeyStruct::elemDofFieldString(),
@@ -107,11 +107,11 @@ void SinglePhasePoromechanics< FLOW_SOLVER, MECHANICS_SOLVER >::setupCoupling( D
 
 template< typename FLOW_SOLVER, typename MECHANICS_SOLVER >
 void SinglePhasePoromechanics< FLOW_SOLVER, MECHANICS_SOLVER >::setupSystem( DomainPartition & domain,
-                                                           DofManager & dofManager,
-                                                           CRSMatrix< real64, globalIndex > & localMatrix,
-                                                           ParallelVector & rhs,
-                                                           ParallelVector & solution,
-                                                           bool const setSparsity )
+                                                                             DofManager & dofManager,
+                                                                             CRSMatrix< real64, globalIndex > & localMatrix,
+                                                                             ParallelVector & rhs,
+                                                                             ParallelVector & solution,
+                                                                             bool const setSparsity )
 {
   if( this->m_precond )
   {
@@ -167,11 +167,11 @@ void SinglePhasePoromechanics< FLOW_SOLVER, MECHANICS_SOLVER >::initializePostIn
 
 template< typename FLOW_SOLVER, typename MECHANICS_SOLVER >
 void SinglePhasePoromechanics< FLOW_SOLVER, MECHANICS_SOLVER >::assembleSystem( real64 const time_n,
-                                                              real64 const dt,
-                                                              DomainPartition & domain,
-                                                              DofManager const & dofManager,
-                                                              CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                                              arrayView1d< real64 > const & localRhs )
+                                                                                real64 const dt,
+                                                                                DomainPartition & domain,
+                                                                                DofManager const & dofManager,
+                                                                                CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                                                arrayView1d< real64 > const & localRhs )
 {
   GEOS_MARK_FUNCTION;
 
@@ -194,11 +194,11 @@ void SinglePhasePoromechanics< FLOW_SOLVER, MECHANICS_SOLVER >::assembleSystem( 
 
 template< typename FLOW_SOLVER, typename MECHANICS_SOLVER >
 void SinglePhasePoromechanics< FLOW_SOLVER, MECHANICS_SOLVER >::assembleElementBasedTerms( real64 const time_n,
-                                                                         real64 const dt,
-                                                                         DomainPartition & domain,
-                                                                         DofManager const & dofManager,
-                                                                         CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                                                         arrayView1d< real64 > const & localRhs )
+                                                                                           real64 const dt,
+                                                                                           DomainPartition & domain,
+                                                                                           DofManager const & dofManager,
+                                                                                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                                                           arrayView1d< real64 > const & localRhs )
 {
   GEOS_UNUSED_VAR( time_n );
   GEOS_UNUSED_VAR( dt );

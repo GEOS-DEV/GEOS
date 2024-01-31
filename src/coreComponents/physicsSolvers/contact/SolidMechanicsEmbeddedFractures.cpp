@@ -281,11 +281,11 @@ void SolidMechanicsEmbeddedFractures::assembleSystem( real64 const time,
   GEOS_MARK_FUNCTION;
 
   SolidMechanicsLagrangianFEM::assembleSystem( time,
-                                 dt,
-                                 domain,
-                                 dofManager,
-                                 localMatrix,
-                                 localRhs );
+                                               dt,
+                                               domain,
+                                               dofManager,
+                                               localMatrix,
+                                               localRhs );
 
   // If specified as a b.c. apply traction
   applyTractionBC( time, dt, domain );
@@ -652,10 +652,10 @@ void SolidMechanicsEmbeddedFractures::applySystemSolution( DofManager const & do
   GEOS_MARK_FUNCTION;
 
   SolidMechanicsLagrangianFEM::applySystemSolution( dofManager,
-                                      localSolution,
-                                      scalingFactor,
-                                      dt,
-                                      domain );
+                                                    localSolution,
+                                                    scalingFactor,
+                                                    dt,
+                                                    domain );
 
   if( !m_useStaticCondensation )
   {

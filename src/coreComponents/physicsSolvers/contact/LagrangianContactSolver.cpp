@@ -586,11 +586,11 @@ void LagrangianContactSolver::assembleSystem( real64 const time,
   synchronizeFractureState( domain );
 
   SolidMechanicsLagrangianFEM::assembleSystem( time,
-                                 dt,
-                                 domain,
-                                 dofManager,
-                                 localMatrix,
-                                 localRhs );
+                                               dt,
+                                               domain,
+                                               dofManager,
+                                               localMatrix,
+                                               localRhs );
 
   assembleContact( domain, dofManager, localMatrix, localRhs );
 }
@@ -598,7 +598,7 @@ void LagrangianContactSolver::assembleSystem( real64 const time,
 void LagrangianContactSolver::assembleContact( DomainPartition & domain,
                                                DofManager const & dofManager,
                                                CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                               arrayView1d <real64> const & localRhs )
+                                               arrayView1d< real64 > const & localRhs )
 {
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,

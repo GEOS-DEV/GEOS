@@ -114,7 +114,7 @@ public:
   void assembleContact( DomainPartition & domain,
                         DofManager const & dofManager,
                         CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                        arrayView1d <real64> const & localRhs );
+                        arrayView1d< real64 > const & localRhs );
 
   void assembleForceResidualDerivativeWrtTraction( MeshLevel const & mesh,
                                                    arrayView1d< string const > const & regionNames,

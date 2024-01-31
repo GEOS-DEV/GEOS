@@ -69,7 +69,7 @@ ContactSolverBase::ContactSolverBase( const string & name,
 
 void ContactSolverBase::registerDataOnMesh( dataRepository::Group & meshBodies )
 {
-  SolidMechanicsLagrangianFEM::registerDataOnMesh(meshBodies);
+  SolidMechanicsLagrangianFEM::registerDataOnMesh( meshBodies );
 
   using namespace fields::contact;
 
@@ -83,30 +83,30 @@ void ContactSolverBase::registerDataOnMesh( dataRepository::Group & meshBodies )
 //                                                           [&] ( localIndex const,
 //                                                                 SurfaceElementRegion & region )
 //    {
-  SurfaceElementRegion & fractureRegion = elemManager.getRegion< SurfaceElementRegion >( getFractureRegionName() );
+    SurfaceElementRegion & fractureRegion = elemManager.getRegion< SurfaceElementRegion >( getFractureRegionName() );
 
-      string const labels[3] = { "normal", "tangent1", "tangent2" };
+    string const labels[3] = { "normal", "tangent1", "tangent2" };
 
-  fractureRegion.forElementSubRegions< SurfaceElementSubRegion >( [&]( SurfaceElementSubRegion & subRegion )
-      {
-        subRegion.registerField< dispJump >( getName() ).
-          setDimLabels( 1, labels ).
-          reference().resizeDimension< 1 >( 3 );
+    fractureRegion.forElementSubRegions< SurfaceElementSubRegion >( [&]( SurfaceElementSubRegion & subRegion )
+    {
+      subRegion.registerField< dispJump >( getName() ).
+        setDimLabels( 1, labels ).
+        reference().resizeDimension< 1 >( 3 );
 
-        subRegion.registerField< deltaDispJump >( getName() ).
-          reference().resizeDimension< 1 >( 3 );
+      subRegion.registerField< deltaDispJump >( getName() ).
+        reference().resizeDimension< 1 >( 3 );
 
-        subRegion.registerField< oldDispJump >( getName() ).
-          reference().resizeDimension< 1 >( 3 );
+      subRegion.registerField< oldDispJump >( getName() ).
+        reference().resizeDimension< 1 >( 3 );
 
-        subRegion.registerField< traction >( getName() ).
-          setDimLabels( 1, labels ).
-          reference().resizeDimension< 1 >( 3 );
+      subRegion.registerField< traction >( getName() ).
+        setDimLabels( 1, labels ).
+        reference().resizeDimension< 1 >( 3 );
 
-        subRegion.registerField< fractureState >( getName() );
+      subRegion.registerField< fractureState >( getName() );
 
-        subRegion.registerField< oldFractureState >( getName() );
-      } );
+      subRegion.registerField< oldFractureState >( getName() );
+    } );
 //    } );
   } );
 }
@@ -203,11 +203,11 @@ void ContactSolverBase::applyBoundaryConditions( real64 const time,
   if( m_setupSolidSolverDofs )
   {
     SolidMechanicsLagrangianFEM::applyBoundaryConditions( time,
-                                            dt,
-                                            domain,
-                                            dofManager,
-                                            localMatrix,
-                                            localRhs );
+                                                          dt,
+                                                          domain,
+                                                          dofManager,
+                                                          localMatrix,
+                                                          localRhs );
   }
 }
 

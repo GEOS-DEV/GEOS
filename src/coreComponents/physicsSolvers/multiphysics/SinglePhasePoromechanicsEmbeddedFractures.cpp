@@ -463,10 +463,10 @@ void SinglePhasePoromechanicsEmbeddedFractures::applyBoundaryConditions( real64 
                                                                          arrayView1d< real64 > const & localRhs )
 {
   solidMechanicsSolver()->applyBoundaryConditions( time_n, dt,
-                                              domain,
-                                              dofManager,
-                                              localMatrix,
-                                              localRhs );
+                                                   domain,
+                                                   dofManager,
+                                                   localMatrix,
+                                                   localRhs );
 
   flowSolver()->applyBoundaryConditions( time_n, dt,
                                          domain,
