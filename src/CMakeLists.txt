@@ -266,9 +266,12 @@ if ( Python3_EXECUTABLE )
          "${CMAKE_BINARY_DIR}/bin/preprocess_xml"
          "${CMAKE_BINARY_DIR}/bin/format_xml" )
 
+    add_custom_target( geosx_python_tools_update
+                       COMMAND bash ${CMAKE_SOURCE_DIR}/../scripts/setupPythonEnvironment.bash -p ${PYTHON_POST_EXECUTABLE} -b ${CMAKE_BINARY_DIR}/bin --python-pkg-branch ${GEOS_PYTHON_PACKAGES_BRANCH}
+                        WORKING_DIRECTORY ${CMAKE_BINARY_DIR} )
+
     add_custom_command( OUTPUT ${GEOSX_PYTHON_TOOLS_BINS}
-                        COMMAND bash ${CMAKE_SOURCE_DIR}/../scripts/setupPythonEnvironment.bash -p ${PYTHON_POST_EXECUTABLE} -b ${CMAKE_BINARY_DIR}/bin --python-pkg-branch ${GEOS_PYTHON_PACKAGES_BRANCH}
-                        WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+                        DEPENDS geosx_python_tools_update
                       )
 
     add_custom_target( geosx_python_tools
