@@ -38,17 +38,16 @@ namespace mgr
  * dofLabel: 0 = displacement, x-component
  * dofLabel: 1 = displacement, y-component
  * dofLabel: 2 = displacement, z-component
- * dofLabel: 3 = pressure
+ * dofLabel: 3 = face-centered lagrange multiplier (tn)
+ * dofLabel: 4 = face-centered lagrange multiplier (tt1)
+ * dofLabel: 5 = face-centered lagrange multiplier (tt2)
  *
  * Ingredients:
- * 1. F-points displacement (0,1,2), C-points pressure (3)
+ * 1. F-points displacement (0,1,2), C-points pressure (3,4,5)
  * 2. F-points smoother: AMG, single V-cycle, separate displacemente components
  * 3. C-points coarse-grid/Schur complement solver: boomer AMG
  * 4. Global smoother: none
  *
- * @todo: (Sergey) I changed this from contiguous block setup to an equivalent marker array setup
- *        to make it a little easier (avoid passing DofManager, etc.). Will need to come up with a
- *        way to support both ways equally well. Maybe pass block offsets as constructor input.
  */
 class LagrangianContactMechanics : public MGRStrategyBase< 1 >
 {
@@ -58,9 +57,9 @@ public:
    * @brief Constructor.
    */
   explicit LagrangianContactMechanics( arrayView1d< int const > const & )
-    : MGRStrategyBase( 2 )
+    : MGRStrategyBase( 6 )
   {
-    // Level 0: all three displacements kept
+    // Level 0: we keep all three displacement
     m_labels[0] = { 0, 1, 2 };
 
     setupLabels();
