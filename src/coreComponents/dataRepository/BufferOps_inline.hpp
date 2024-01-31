@@ -126,15 +126,15 @@ Pack( buffer_unit_type * & buffer,
   return sizeOfPackedChars;
 }
 
-template< bool DO_PACKING >
+template< bool DO_PACKING, typename T >
 inline
 localIndex
 Pack( buffer_unit_type * & buffer,
-      std::vector< string > const & var )
+      std::vector< T > const & var )
 { 
   size_t const length = var.size();
   localIndex sizeOfPackedChars = Pack< DO_PACKING >( buffer, length );
-  for( string const & str : var )
+  for( T const & str : var )
   {
     sizeOfPackedChars += Pack< DO_PACKING >( buffer, str );
   }
@@ -397,17 +397,17 @@ Unpack( buffer_unit_type const * & buffer,
 }
 
 
-inline
-localIndex
+template< typename T >
+typename std::enable_if< is_packable< T >, localIndex >::type
 Unpack( buffer_unit_type const * & buffer,
-        std::vector< string > & var )
+        std::vector< T > & var )
 {
   size_t length;
   localIndex sizeOfUnpackedChars = Unpack( buffer, length );
   var.resize( length );
-  for( string & str : var )
+  for( T & val : var )
   {
-    sizeOfUnpackedChars += Unpack( buffer, str );
+    sizeOfUnpackedChars += Unpack( buffer, val );
   }
   return sizeOfUnpackedChars;
 }
