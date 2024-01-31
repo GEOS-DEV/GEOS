@@ -988,14 +988,14 @@ InternalMeshGenerator::
     // Last set of nodes
     int modGlobalIJK[3] = { globalIJK[0], globalIJK[1], globalIJK[2] };
     modGlobalIJK[component] = 0;
-    const localIndex firstNodeIndex = numNodesInDir[1] * numNodesInDir[2] * ( modGlobalIJK[0] - firstElemIndexInPartition[0] )
-                                      + numNodesInDir[2] * ( modGlobalIJK[1] - 0 )
-                                      + ( modGlobalIJK[2] - firstElemIndexInPartition[2] );
+    localIndex const firstNodeIndex = ( modGlobalIJK[0] - firstElemIndexInPartition[0] )
+                                      + numNodesInDir[0] * ( modGlobalIJK[1] - firstElemIndexInPartition[1] )
+                                      + numNodesInDir[0] * numNodesInDir[1] * ( modGlobalIJK[2] - firstElemIndexInPartition[2] );
 
     nodeOfBox[3] = firstNodeIndex;
-    nodeOfBox[2] = numNodesInDir[1] * numNodesInDir[2] + firstNodeIndex;
-    nodeOfBox[7] = firstNodeIndex + 1;
-    nodeOfBox[6] = numNodesInDir[1] * numNodesInDir[2] + firstNodeIndex + 1;
+    nodeOfBox[2] = nodeOfBox[3] + 1;
+    nodeOfBox[7] = nodeOfBox[3] + numNodesInDir[0] * numNodesInDir[1];
+    nodeOfBox[6] = nodeOfBox[7] + 1;
   }
 }
 
