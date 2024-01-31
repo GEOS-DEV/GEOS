@@ -51,8 +51,8 @@ SolidMechanicsEmbeddedFractures::SolidMechanicsEmbeddedFractures( const string &
     setApplyDefaultValue( 0 ).
     setDescription( "Defines whether to use static condensation or not." );
 
-  this->getWrapper< string >( SolverBase::viewKeyStruct::discretizationString() ).
-    setInputFlag( dataRepository::InputFlags::FALSE );
+//  this->getWrapper< string >( SolverBase::viewKeyStruct::discretizationString() ).
+//    setInputFlag( dataRepository::InputFlags::FALSE );
 
 }
 
@@ -90,7 +90,9 @@ void SolidMechanicsEmbeddedFractures::registerDataOnMesh( dataRepository::Group 
                                                     arrayView1d< string const > const & regionNames )
   {
     ElementRegionManager & elemManager = mesh.getElemManager();
-    elemManager.forElementSubRegions< EmbeddedSurfaceSubRegion >( regionNames, [&] ( localIndex const, EmbeddedSurfaceSubRegion & subRegion )
+    SurfaceElementRegion & fractureRegion = elemManager.getRegion< SurfaceElementRegion >( getFractureRegionName() );
+
+    fractureRegion.forElementSubRegions< SurfaceElementSubRegion >( [&]( SurfaceElementSubRegion & subRegion )
     {
       subRegion.registerField< dTraction_dJump >( getName() ).
         reference().resizeDimension< 1, 2 >( 3, 3 );

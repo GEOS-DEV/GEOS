@@ -94,9 +94,11 @@ void ContactSolverBase::registerDataOnMesh( dataRepository::Group & meshBodies )
         reference().resizeDimension< 1 >( 3 );
 
       subRegion.registerField< deltaDispJump >( getName() ).
+        setDimLabels( 1, labels ).
         reference().resizeDimension< 1 >( 3 );
 
       subRegion.registerField< oldDispJump >( getName() ).
+        setDimLabels( 1, labels ).
         reference().resizeDimension< 1 >( 3 );
 
       subRegion.registerField< traction >( getName() ).
