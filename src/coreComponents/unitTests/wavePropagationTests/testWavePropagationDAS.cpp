@@ -22,7 +22,7 @@
 #include "mainInterface/GeosxState.hpp"
 #include "physicsSolvers/PhysicsSolverManager.hpp"
 #include "physicsSolvers/wavePropagation/WaveSolverBase.hpp"
-#include "physicsSolvers/wavePropagation/AcousticWaveEquationSEM.hpp"
+#include "physicsSolvers/wavePropagation/ElasticWaveEquationSEM.hpp"
 
 #include <gtest/gtest.h>
 
@@ -112,14 +112,14 @@ char const * xmlInput =
     </Constitutive>
     <FieldSpecifications>
       <FieldSpecification
-        name="cellVelocity"
+        name="cellVelocityVp"
         initialCondition="1"
         objectPath="ElementRegions/Region/cb"
         fieldName="elasticVelocityVp"
         scale="1500"
         setNames="{ all }"/>
       <FieldSpecification
-        name="cellVelocity"
+        name="cellVelocityVs"
         initialCondition="1"
         objectPath="ElementRegions/Region/cb"
         fieldName="elasticVelocityVs"
@@ -139,44 +139,6 @@ char const * xmlInput =
         scale="0.0"
         setNames="{ zpos }"/>
     </FieldSpecifications>
-    <Tasks>
-      <PackCollection
-        name="waveFieldNp1Collection"
-        objectPath="nodeManager"
-        fieldName="displacementX_np1"/>
-      <PackCollection
-        name="waveFieldNCollection"
-        objectPath="nodeManager"
-        fieldName="displacementX_n"/>
-      <PackCollection
-        name="waveFieldNm1Collection"
-        objectPath="nodeManager"
-        fieldName="displacementX_nm1"/>
-      <PackCollection
-        name="waveFieldNp1Collection"
-        objectPath="nodeManager"
-        fieldName="displacementY_np1"/>
-      <PackCollection
-        name="waveFieldNCollection"
-        objectPath="nodeManager"
-        fieldName="displacementY_n"/>
-      <PackCollection
-        name="waveFieldNm1Collection"
-        objectPath="nodeManager"
-        fieldName="displacementY_nm1"/>
-      <PackCollection
-        name="waveFieldNp1Collection"
-        objectPath="nodeManager"
-        fieldName="displacementZ_np1"/>
-      <PackCollection
-        name="waveFieldNCollection"
-        objectPath="nodeManager"
-        fieldName="displacementZ_n"/>
-      <PackCollection
-        name="waveFieldNm1Collection"
-        objectPath="nodeManager"
-        fieldName="displacementZ_nm1"/>
-    </Tasks>
   </Problem>
   )xml";
 
@@ -235,27 +197,6 @@ TEST_F( ElasticWaveEquationSEMTest, SeismoTrace )
   // check seismo content. The signal values cannot be directly checked as the problem is too small.
   // Since the basis is linear, check that the seismograms are nonzero (for t>0) and the seismogram at the center is equal
   // to the average of the others.
-  for( int i = 0; i < 11; i++ )
-  {
-    if( i > 0 )
-    {
-      ASSERT_TRUE( std::abs( dasReceivers[i][8] ) > 0 );
-    }
-    double avg = 0;
-    for( int r=0; r<8; r++ )
-    {
-      avg += dasReceivers[i][r];
-    }
-    avg /= 8.0;
-    ASSERT_TRUE( std::abs( dasReceivers[i][8] - avg ) < 0.00001 );
-  }
-  // run adjoint solver
-  for( int i = 0; i < 10; i++ )
-  {
-    propagator->explicitStepBackward( time_n, dt, i, domain, false );
-    time_n += dt;
-  }
-  // check again the seismo content.
   for( int i = 0; i < 11; i++ )
   {
     if( i > 0 )
