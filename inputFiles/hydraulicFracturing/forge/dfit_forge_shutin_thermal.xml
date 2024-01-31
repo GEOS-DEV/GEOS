@@ -144,22 +144,13 @@
       name="water"
       defaultDensity="1000"
       defaultViscosity="1.0e-3"
-      referencePressure="0.0"
+      referencePressure="20.8e6"
       referenceTemperature="273.0"
       compressibility="5e-10"
       thermalExpansionCoeff="0.0"
       viscosibility="0.0"
-      volumetricHeatCapacity="4.2e6"
+      volumetricHeatCapacity="4.2e3"
       referenceInternalEnergy="1.1e6"/>
-    
-    <!-- <CompressibleSinglePhaseFluid
-      name="water"
-      defaultDensity="1000"
-      defaultViscosity="1.0e-3"
-      referencePressure="0.0"
-      compressibility="5e-10"
-      referenceViscosity="1.0e-3"
-      viscosibility="0.0"/> -->
 
     <SinglePhaseConstantThermalConductivity
        name="thermalCond"
@@ -167,7 +158,7 @@
       
     <SinglePhaseConstantThermalConductivity
        name="thermalCondFrac"
-       thermalConductivityComponents="{ 1e3, 3.81, 3.81 }"/>   
+       thermalConductivityComponents="{ 0.2, 0.2, 200.0 }"/>  
 
     <CompressibleSolidConstantPermeability
        name="porousRock"
@@ -185,7 +176,7 @@
     <PressurePorosity
        name="rockPorosity"
        defaultReferencePorosity="0.01"
-       referencePressure="0.0"
+       referencePressure="20.8e6"
        compressibility="1.9e-9"/>
 
     <ConstantPermeability
@@ -197,7 +188,7 @@
       defaultDensity="2700"
       defaultBulkModulus="33.3333333333e9"
       defaultShearModulus="20e9"
-      defaultDrainedLinearTEC="10e-7"/>
+      defaultDrainedLinearTEC="6e-6"/>
 
     <CompressibleSolidParallelPlatesPermeability
       name="fractureFilling"
@@ -214,9 +205,9 @@
 
     <SolidInternalEnergy
       name="rockInternalEnergy"
-      volumetricHeatCapacity="1.95e6"
+      volumetricHeatCapacity="3e6"
       referenceTemperature="273.0"
-      referenceInternalEnergy="5.33e8"/> 
+      referenceInternalEnergy="8.19e8"/> 
 
     <NullModel
       name="nullSolid"/>
@@ -229,6 +220,7 @@
 
     <ParallelPlatesPermeability
       name="fracturePerm"
+      transversalPermeability="8e-16"
       timeLagFlag="1"/>
 
     <FrictionlessContact
@@ -337,7 +329,7 @@
        objectPath="ElementRegions/Fracture"
        fieldName="temperature"
        setNames="{all}"
-       scale="290.78"
+       scale="1.0"
        functionName="tempFunction"/>
        
     <FieldSpecification
@@ -345,7 +337,7 @@
        objectPath="ElementRegions/Fracture"
        fieldName="temperature"
        setNames="{all}"
-       scale="290.78"
+       scale="1.0"
        functionName="tempFunction"
        beginTime="0.0"
        endTime="1.0"/>    
@@ -387,22 +379,22 @@
     <TableFunction
       name="presFunction"
       inputVarNames="{ elementCenter }"
-      coordinateFiles="{ table/xlin.geos, table/ylin.geos, table/zlin.geos }"
-      voxelFile="table/pres.geos"
+      coordinateFiles="{ table_thermal/xlin.geos, table_thermal/ylin.geos, table_thermal/zlin.geos }"
+      voxelFile="table_thermal/pres.geos"
       interpolation="nearest"/> 
 
     <TableFunction
       name="tempFunction"
       inputVarNames="{ elementCenter }"
-      coordinateFiles="{ table/xlin.geos, table/ylin.geos, table/zlin.geos }"
-      voxelFile="table/rupture.geos"
+      coordinateFiles="{ table_thermal/xlin.geos, table_thermal/ylin.geos, table_thermal/zlin.geos }"
+      voxelFile="table_thermal/temp.geos"
       interpolation="nearest"/> 
 
     <TableFunction
       name="ruptureFunction"
       inputVarNames="{ faceCenter }"
-      coordinateFiles="{ table/xlin.geos, table/ylin.geos, table/zlin.geos }"
-      voxelFile="table/rupture.geos"
+      coordinateFiles="{ table_thermal/xlin.geos, table_thermal/ylin.geos, table_thermal/zlin.geos }"
+      voxelFile="table_thermal/rupture.geos"
       interpolation="nearest"/> 
   </Functions>
 

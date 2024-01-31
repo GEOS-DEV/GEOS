@@ -110,7 +110,7 @@
       name="solverApplications3"
       beginTime="100060.0"
       endTime="100070.0"
-      maxEventDt="1.0"
+      maxEventDt="2.0"
       target="/Solvers/hydrofracture"/>
     
     <PeriodicEvent
@@ -130,7 +130,7 @@
 
     <SurfaceElementRegion
       name="Fracture"      
-      defaultAperture="12e-3"
+      defaultAperture="15e-3"
       materialList="{ water, rock, fractureFilling, fractureContact }"/>
   </ElementRegions>
 
@@ -158,7 +158,7 @@
 
     <ConstantPermeability
        name="rockPerm"
-       permeabilityComponents="{ 4e-16, 4e-16, 4e-16 }"/> 
+       permeabilityComponents="{ 8e-16, 8e-16, 8e-16 }"/> 
 
     <ElasticIsotropic
       name="rock"
@@ -182,7 +182,8 @@
       compressibility="0.0"/>
 
     <ParallelPlatesPermeability
-      name="fracturePerm"/>
+      name="fracturePerm"
+      transversalPermeability="8e-16"/>
 
     <FrictionlessContact
       name="fractureContact"
@@ -316,8 +317,8 @@
   <Functions>
     <TableFunction
       name="apertureTable"
-      coordinates="{ -0.015, -6e-3, 0.0 }"
-      values="{ 0.002e-3, 7.5e-3, 12e-3 }"/>
+      coordinates="{ -0.015, -7.5e-3, 0.0 }"
+      values="{ 0.002e-3, 9e-3, 15e-3 }"/>
 
     <TableFunction
       name="timeFunction"

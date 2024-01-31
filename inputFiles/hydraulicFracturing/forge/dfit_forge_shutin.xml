@@ -126,7 +126,7 @@
 
     <SurfaceElementRegion
       name="Fracture"      
-      defaultAperture="12e-3"
+      defaultAperture="15e-3"
       materialList="{ water, rock, fractureFilling, fractureContact }"/>
   </ElementRegions>
 
@@ -179,13 +179,14 @@
 
     <ParallelPlatesPermeability
       name="fracturePerm"
+      transversalPermeability="8e-16"
       timeLagFlag="1"/>
 
     <FrictionlessContact
       name="fractureContact"
       penaltyStiffness="1e12"
       useApertureModel="2"
-      refNormalStress="50e6"/>
+      refNormalStress="65e6"/>
   </Constitutive>
 
   <NumericalMethods>
