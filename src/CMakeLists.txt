@@ -305,18 +305,21 @@ endif()
 
 
 if ( ENABLE_ATS )
-    if (NOT ATS_WORKING_DIR)
-        message( FATAL_ERROR "ATS_WORKING_DIR is not defined (required for integrated testing system)" )
+    if (NOT DEFINED ATS_WORKING_DIR)
+        message( WARNING "ATS_WORKING_DIR is not defined (required for integrated testing system)" )
+        message( WARNING "Defaulting to ${CMAKE_BINARY_DIR}/integratedTests/workingDir" )
+        set( ATS_WORKING_DIR "${CMAKE_BINARY_DIR}/integratedTests/workingDir" CACHE PATH "")
     endif()
 
-    if (NOT ATS_BASELINE_DIR)
-        message( FATAL_ERROR "ATS_BASELINE_DIR is not defined (required for integrated testing system)" )
+    if (NOT DEFINED ATS_BASELINE_DIR)
+        message( WARNING "ATS_BASELINE_DIR is not defined (required for integrated testing system)" )
+        message( WARNING "Defaulting to ${CMAKE_SOURCE_DIR}/../integratedTests" )
+        set( ATS_BASELINE_DIR "${CMAKE_SOURCE_DIR}/../integratedTests" CACHE PATH "")
     endif()
 
     if (NOT Python3_EXECUTABLE)
         message( FATAL_ERROR "An appropriate version of python was not found (required for integrated testing system).  Try setting Python3_ROOT_DIR and/or Python3_EXECUTABLE in your host config." )
     endif() 
-
 
      # Setup testing
     set( ATS_SCRIPT
