@@ -218,34 +218,8 @@ TableFunction const * makeSolubilityTable( string_array const & inputParams,
                                            string const & functionName,
                                            FunctionManager & functionManager )
 {
-  // initialize the (p,T) coordinates
-  PTTableCoordinates tableCoords;
-  PVTFunctionHelpers::initializePropertyTable( inputParams, tableCoords );
-
-  // initialize salinity and tolerance
-  GEOS_THROW_IF_LT_MSG( inputParams.size(), 9,
-                        GEOS_FMT( "{}: insufficient number of model parameters", functionName ),
-                        InputError );
-
-  real64 tolerance = 1e-9;
-  real64 salinity = 0.0;
-  try
-  {
-    salinity = stod( inputParams[8] );
-    if( inputParams.size() >= 10 )
-    {
-      tolerance = stod( inputParams[9] );
-    }
-  }
-  catch( const std::invalid_argument & e )
-  {
-    GEOS_THROW( GEOS_FMT( "{}: invalid model parameter value: {}", functionName, e.what() ), InputError );
-  }
-
-  array1d< real64 > values( tableCoords.nPressures() * tableCoords.nTemperatures() );
-  calculateCO2Solubility( functionName, tolerance, tableCoords, salinity, values );
-
   string const tableName = functionName + "_co2Dissolution_table";
+
   if( functionManager.hasGroup< TableFunction >( tableName ) )
   {
     TableFunction * const solubilityTable = functionManager.getGroupPointer< TableFunction >( tableName );
@@ -256,6 +230,33 @@ TableFunction const * makeSolubilityTable( string_array const & inputParams,
   }
   else
   {
+    // initialize the (p,T) coordinates
+    PTTableCoordinates tableCoords;
+    PVTFunctionHelpers::initializePropertyTable( inputParams, tableCoords );
+
+    // initialize salinity and tolerance
+    GEOS_THROW_IF_LT_MSG( inputParams.size(), 9,
+                          GEOS_FMT( "{}: insufficient number of model parameters", functionName ),
+                          InputError );
+
+    real64 tolerance = 1e-9;
+    real64 salinity = 0.0;
+    try
+    {
+      salinity = stod( inputParams[8] );
+      if( inputParams.size() >= 10 )
+      {
+        tolerance = stod( inputParams[9] );
+      }
+    }
+    catch( const std::invalid_argument & e )
+    {
+      GEOS_THROW( GEOS_FMT( "{}: invalid model parameter value: {}", functionName, e.what() ), InputError );
+    }
+
+    array1d< real64 > values( tableCoords.nPressures() * tableCoords.nTemperatures() );
+    calculateCO2Solubility( functionName, tolerance, tableCoords, salinity, values );
+
     TableFunction * const solubilityTable = dynamicCast< TableFunction * >( functionManager.createChild( "TableFunction", tableName ) );
     solubilityTable->setTableCoordinates( tableCoords.getCoords(),
                                           { units::Pressure, units::TemperatureInC } );

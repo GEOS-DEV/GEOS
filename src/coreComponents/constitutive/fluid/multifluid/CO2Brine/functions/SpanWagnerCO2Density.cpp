@@ -211,7 +211,7 @@ TableFunction const * makeDensityTable( string_array const & inputParams,
                                         string const & functionName,
                                         FunctionManager & functionManager )
 {
-  string const & tableName = functionName + "_table";
+  string const tableName = functionName + "_table";
 
   if( functionManager.hasGroup< TableFunction >( tableName ) )
   {
