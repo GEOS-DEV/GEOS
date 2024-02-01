@@ -56,8 +56,6 @@ public:
 
 protected:
   static std::unique_ptr< CO2Solubility > makeFlashModel( string const & fileContent );
-
-  std::unique_ptr< CO2Solubility > flashModel{nullptr};
 };
 
 std::unique_ptr< CO2Solubility >
@@ -87,13 +85,14 @@ CO2SolubilitySpycherPruessTestFixture::makeFlashModel( string const & fileConten
                                             strs,
                                             phaseNames,
                                             componentNames,
-                                            componentMolarWeight );
+                                            componentMolarWeight,
+                                            false );
 }
 
 TEST_P( CO2SolubilitySpycherPruessTestFixture, testExpectedValues )
 {
   constexpr char const * fileContent = "FlashModel CO2Solubility 1e5 1e7 9.9e5 283.15 383.15 10.0 0.15 1.0e-8 SpycherPruess";
-  flashModel = makeFlashModel( fileContent );
+  auto flashModel = makeFlashModel( fileContent );
 
   auto [pressure, temperature, z_co2, expected_V, expected_x_co2, expected_y_wat] = GetParam();
 
@@ -133,7 +132,7 @@ TEST_P( CO2SolubilitySpycherPruessTestFixture, testNumericalDerivatives )
   using Deriv = multifluid::DerivativeOffset;
 
   constexpr char const * fileContent = "FlashModel CO2Solubility 1e5 1e7 9.9e5 283.15 383.15 10.0 0.15 1.0e-8 SpycherPruess";
-  flashModel = makeFlashModel( fileContent );
+  auto flashModel = makeFlashModel( fileContent );
 
   auto [pressure, temperature, z_co2, expected_V, expected_x_co2, expected_y_wat] = GetParam();
   GEOS_UNUSED_VAR( expected_V, expected_x_co2, expected_y_wat );

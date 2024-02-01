@@ -34,9 +34,13 @@ namespace PVTProps
 /**
  * Physical constants
  */
-static constexpr real64 P_ref = 1.0;        // Reference pressure is 1 bar
-static constexpr real64 Pa_2_bar = 1.0e-5;  // Conversion factor from Pa to Bar
-static constexpr real64 R = 83.1446261815;  // Universal gas constant in [bar.cm3/mol.K]
+static constexpr real64 P_ref = 1.0;                        // Reference pressure is 1 bar
+static constexpr real64 Pa_2_bar = 1.0e-5;                  // Conversion factor from Pa to Bar
+static constexpr real64 R = 10.0*constants::gasConstant;    // Universal gas constant in [bar.cm3/mol.K]
+static constexpr real64 molarMassCO2 = 44.01e-3;            // Molar mass of CO2 [kg/mol]
+static constexpr real64 molarMassH2O = 18.01e-3;            // Molar mass of H2O [kg/mol]
+static constexpr real64 v_av_H2O = 18.1;                    // Average partial molar volume of H2O [cm3/mol]
+static constexpr real64 v_av_CO2 = 32.6;                    // Average partial molar volume of CO2 [cm3/mol]
 
 TableFunction const * makeTable( string const & tableName,
                                  PTTableCoordinates const & tableCoords,
@@ -121,7 +125,6 @@ real64 equilibriumConstantH2O( real64 const T )
 real64 fugacityCoefficientCO2( real64 const P, real64 const T, real64 const rhoCO2, real64 const salinity )
 {
   GEOS_UNUSED_VAR( salinity );
-  real64 constexpr molarMassCO2 = 44.01e-3;     // Molar mass of CO2 [kg/mol]
   real64 const V = 1.0e6*molarMassCO2/rhoCO2;   // Molar volume [cm3/mol]
 
   // Mixture parameters from the tuned Redlich-Kwong EOS
@@ -146,7 +149,6 @@ real64 fugacityCoefficientCO2( real64 const P, real64 const T, real64 const rhoC
 real64 fugacityCoefficientH2O( real64 const P, real64 const T, real64 const rhoCO2, real64 const salinity )
 {
   GEOS_UNUSED_VAR( salinity );
-  real64 constexpr molarMassCO2 = 44.01e-3;     // Molar mass of CO2 [kg/mol]
   real64 const V = 1.0e6*molarMassCO2/rhoCO2;   // Molar volume [cm3/mol]
 
   // Mixture parameters from the tuned Redlich-Kwong EOS
@@ -174,11 +176,11 @@ real64 computeA( real64 const P, real64 const T, real64 const rhoCO2, real64 con
 {
   real64 const P_in_bar = P * Pa_2_bar;
   real64 const deltaP = P_in_bar - P_ref;
-  real64 constexpr v_av_H2O = 18.1e-6;   // Average partial molar volume of H2O [m3/mol]
   real64 const TinK = units::convertCToK( T );
   real64 const k0_H2O = equilibriumConstantH2O( T ); // K-value for H2O at 1 bar
   real64 const phi_H2O = fugacityCoefficientH2O( P_in_bar, TinK, rhoCO2, salinity ); // Fugacity coefficient of H2O for the water-CO2 system
-  return k0_H2O/(phi_H2O*P_in_bar) * exp( deltaP*v_av_H2O/(R*TinK));
+  real64 const A = k0_H2O/(phi_H2O*P_in_bar) * exp( deltaP*v_av_H2O/(R*TinK));
+  return A;
 }
 
 /**
@@ -192,11 +194,11 @@ real64 computeB( real64 const P, real64 const T, real64 const rhoCO2, real64 con
 {
   real64 const P_in_bar = P * Pa_2_bar;
   real64 const deltaP = P_in_bar - P_ref;
-  real64 constexpr v_av_CO2 = 32.6e-6;   // Average partial molar volume of CO2 [m3/mol]
   real64 const TinK = units::convertCToK( T );
   real64 const k0_CO2 = equilibriumConstantCO2( T ); // K-value for CO2 at 1 bar
   real64 const phi_CO2 = fugacityCoefficientCO2( P_in_bar, TinK, rhoCO2, salinity ); // Fugacity coefficient of CO2 for the water-CO2 system
-  return phi_CO2*P_in_bar/(55.508*k0_CO2) * exp( -(deltaP*v_av_CO2)/(R*TinK));
+  real64 const B = phi_CO2*P_in_bar/(55.508*k0_CO2) * exp( -(deltaP*v_av_CO2)/(R*TinK) );
+  return B;
 }
 
 std::pair< TableFunction const *, TableFunction const * >
@@ -217,9 +219,6 @@ CO2SolubilitySpycherPruess::makeSolubilityTables( string_array const & inputPara
                                              tolerance,
                                              tableCoords,
                                              densities );
-
-  real64 constexpr co2MolarMass = 44.01e-3;
-  real64 constexpr h2oMolarMass = 18.01e-3;
 
   array1d< real64 > co2Values( nPressures*nTemperatures );
   array1d< real64 > h2oValues( nPressures*nTemperatures );
@@ -244,8 +243,8 @@ CO2SolubilitySpycherPruess::makeSolubilityTables( string_array const & inputPara
       real64 const x_CO2 = B*(1.0 - y_H2O);
 
       // Calculate the solubility
-      co2Values[j*nPressures+i] = x_CO2/((1.0 - x_CO2)*h2oMolarMass);
-      h2oValues[j*nPressures+i] = y_H2O/((1.0 - y_H2O)*co2MolarMass);
+      co2Values[j*nPressures+i] = x_CO2/((1.0 - x_CO2)*molarMassH2O);
+      h2oValues[j*nPressures+i] = y_H2O/((1.0 - y_H2O)*molarMassCO2);
     }
   }
 

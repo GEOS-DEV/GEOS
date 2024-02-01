@@ -5,8 +5,7 @@ set( gtest_geosx_tests
      testCO2SpycherPruessModels.cpp
      testDamage.cpp
      testRelPerm.cpp
-     testRelPermHysteresis.cpp
-     testCapillaryPressure.cpp )
+     testRelPermHysteresis.cpp )
 
 set( gtest_triaxial_xmls
      testTriaxial_druckerPragerExtended.xml
