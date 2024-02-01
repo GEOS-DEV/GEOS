@@ -135,7 +135,7 @@ void CO2EnthalpyUpdate::compute( real64 const & pressure,
   real64 const input[2] = { pressure, temperature };
   real64 CO2EnthalpyDeriv[2]{};
 
-  value = m_CO2EnthalpyTable.compute( input, CO2EnthalpyDeriv );
+//  value = m_CO2EnthalpyTable.compute( input, CO2EnthalpyDeriv );
 
   LvArray::forValuesInSlice( dValue, [] GEOS_HOST_DEVICE ( real64 & val ){ val = 0.0; } );
   dValue[Deriv::dP] = CO2EnthalpyDeriv[0];
