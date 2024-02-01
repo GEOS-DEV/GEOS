@@ -57,13 +57,6 @@ jobs:
         submodules: true
         lfs: ${{ inputs.BUILD_TYPE == 'integrated_tests' }}
         fetch-depth: 1
-    - name: ssh  
-      uses: lhotari/action-upterm@v1
-      with:
-        ## limits ssh access and adds the ssh public key for the user which triggered the workflow
-        limit-access-to-actor: true
-        ## limits ssh access and adds the ssh public keys of the listed GitHub users
-        limit-access-to-users: CusiniM    
 
     - id: 'auth'
       if: ${{ inputs.GCP_BUCKET || inputs.USE_SCCACHE }}
@@ -147,6 +140,11 @@ jobs:
         # GHA set `-e` to bash scripts by default to fail asap,
         # but for this precise call, we want to deal with it more precisely
         set +e
+        echo docker run \
+        ${docker_args[@]} \
+        ${{ inputs.DOCKER_REPOSITORY }}:${{ inputs.DOCKER_IMAGE_TAG }} \
+        ${GITHUB_WORKSPACE_MOUNT_POINT}/scripts/ci_build_and_test_in_container.sh \
+          ${script_args[@]}
         docker run \
           ${docker_args[@]} \
           ${{ inputs.DOCKER_REPOSITORY }}:${{ inputs.DOCKER_IMAGE_TAG }} \
@@ -154,7 +152,7 @@ jobs:
             ${script_args[@]}
         EXIT_STATUS=$?
         echo "Received exit status ${EXIT_STATUS} from the build process."
-        set -e
+        # set -e
         
         # Send to the bucket and print the download link when it makes sense.
         if [[ ! -z "${{ inputs.GCP_BUCKET }}" ]]; then
@@ -164,6 +162,14 @@ jobs:
           fi
         fi
         exit ${EXIT_STATUS}
+
+    - name: ssh  
+      uses: lhotari/action-upterm@v1  
+      with:
+        ## limits ssh access and adds the ssh public key for the user which triggered the workflow
+        limit-access-to-actor: true
+        ## limits ssh access and adds the ssh public keys of the listed GitHub users
+        limit-access-to-users: CusiniM        
 
     - name: Upload coverage to Codecov
       if: inputs.CODE_COVERAGE
