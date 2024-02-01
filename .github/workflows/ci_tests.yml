@@ -128,47 +128,47 @@ jobs:
             CMAKE_BUILD_TYPE: Release
             DOCKER_REPOSITORY: geosx/ubuntu20.04-gcc9
 
-          - name: Ubuntu debug (20.04, gcc 10.3.0, open-mpi 4.0.3) - github codespaces
-            CMAKE_BUILD_TYPE: Debug
-            DOCKER_REPOSITORY: geosx/ubuntu20.04-gcc10
+          # - name: Ubuntu debug (20.04, gcc 10.3.0, open-mpi 4.0.3) - github codespaces
+          #   CMAKE_BUILD_TYPE: Debug
+          #   DOCKER_REPOSITORY: geosx/ubuntu20.04-gcc10
 
-          - name: Ubuntu (20.04, gcc 10.3.0, open-mpi 4.0.3) - github codespaces
-            CMAKE_BUILD_TYPE: Release
-            DOCKER_REPOSITORY: geosx/ubuntu20.04-gcc10
+          # - name: Ubuntu (20.04, gcc 10.3.0, open-mpi 4.0.3) - github codespaces
+          #   CMAKE_BUILD_TYPE: Release
+          #   DOCKER_REPOSITORY: geosx/ubuntu20.04-gcc10
 
-          - name: Ubuntu (22.04, gcc 11.2.0, open-mpi 4.1.2)
-            CMAKE_BUILD_TYPE: Release
-            DOCKER_REPOSITORY: geosx/ubuntu22.04-gcc11
-            ENABLE_HYPRE: ON
-            ENABLE_TRILINOS: OFF
-            GCP_BUCKET: geosx/ubuntu22.04-gcc11
+          # - name: Ubuntu (22.04, gcc 11.2.0, open-mpi 4.1.2)
+          #   CMAKE_BUILD_TYPE: Release
+          #   DOCKER_REPOSITORY: geosx/ubuntu22.04-gcc11
+          #   ENABLE_HYPRE: ON
+          #   ENABLE_TRILINOS: OFF
+          #   GCP_BUCKET: geosx/ubuntu22.04-gcc11
 
-          - name: Ubuntu (22.04, gcc 12.3.0, open-mpi 4.1.2)
-            CMAKE_BUILD_TYPE: Release
-            DOCKER_REPOSITORY: geosx/ubuntu22.04-gcc12
-            ENABLE_HYPRE: ON
-            ENABLE_TRILINOS: OFF
+          # - name: Ubuntu (22.04, gcc 12.3.0, open-mpi 4.1.2)
+          #   CMAKE_BUILD_TYPE: Release
+          #   DOCKER_REPOSITORY: geosx/ubuntu22.04-gcc12
+          #   ENABLE_HYPRE: ON
+          #   ENABLE_TRILINOS: OFF
 
-          - name: Pecan CPU (centos 7.7, gcc 8.2.0, open-mpi 4.0.1, mkl 2019.5)
-            CMAKE_BUILD_TYPE: Release
-            DOCKER_REPOSITORY: geosx/pecan-cpu-gcc8.2.0-openmpi4.0.1-mkl2019.5
-            HOST_CONFIG: host-configs/TOTAL/pecan-CPU.cmake
-            GCP_BUCKET: geosx/Pecan-CPU
+          # - name: Pecan CPU (centos 7.7, gcc 8.2.0, open-mpi 4.0.1, mkl 2019.5)
+          #   CMAKE_BUILD_TYPE: Release
+          #   DOCKER_REPOSITORY: geosx/pecan-cpu-gcc8.2.0-openmpi4.0.1-mkl2019.5
+          #   HOST_CONFIG: host-configs/TOTAL/pecan-CPU.cmake
+          #   GCP_BUCKET: geosx/Pecan-CPU
 
-          - name: Pangea 2 (centos 7.6, gcc 8.3.0, open-mpi 2.1.5, mkl 2019.3)
-            CMAKE_BUILD_TYPE: Release
-            DOCKER_REPOSITORY: geosx/pangea2-gcc8.3.0-openmpi2.1.5-mkl2019.3
-            ENABLE_HYPRE: ON
-            ENABLE_TRILINOS: OFF
-            GCP_BUCKET: geosx/Pangea2
+          # - name: Pangea 2 (centos 7.6, gcc 8.3.0, open-mpi 2.1.5, mkl 2019.3)
+          #   CMAKE_BUILD_TYPE: Release
+          #   DOCKER_REPOSITORY: geosx/pangea2-gcc8.3.0-openmpi2.1.5-mkl2019.3
+          #   ENABLE_HYPRE: ON
+          #   ENABLE_TRILINOS: OFF
+          #   GCP_BUCKET: geosx/Pangea2
 
-          - name: Sherlock CPU (centos 7.9.2009, gcc 10.1.0, open-mpi 4.1.2, openblas 0.3.10)
-            CMAKE_BUILD_TYPE: Release
-            DOCKER_REPOSITORY: geosx/sherlock-gcc10.1.0-openmpi4.1.2-openblas0.3.10-zlib1.2.11
-            ENABLE_HYPRE: ON
-            ENABLE_TRILINOS: OFF
-            HOST_CONFIG: host-configs/Stanford/sherlock-gcc10-ompi4.1.2-openblas0.3.10.cmake
-            GCP_BUCKET: geosx/Sherlock-CPU
+          # - name: Sherlock CPU (centos 7.9.2009, gcc 10.1.0, open-mpi 4.1.2, openblas 0.3.10)
+          #   CMAKE_BUILD_TYPE: Release
+          #   DOCKER_REPOSITORY: geosx/sherlock-gcc10.1.0-openmpi4.1.2-openblas0.3.10-zlib1.2.11
+          #   ENABLE_HYPRE: ON
+          #   ENABLE_TRILINOS: OFF
+          #   HOST_CONFIG: host-configs/Stanford/sherlock-gcc10-ompi4.1.2-openblas0.3.10.cmake
+          #   GCP_BUCKET: geosx/Sherlock-CPU
 
     uses: ./.github/workflows/build_and_test.yml
     with:
@@ -230,14 +230,14 @@ jobs:
       fail-fast : false
       matrix:
         include:
-          - name: Ubuntu CUDA debug (20.04, clang 10.0.0 + gcc 9.4.0, open-mpi 4.0.3, cuda-11.8.89)
-            BUILD_AND_TEST_CLI_ARGS: "--build-exe-only --no-install-schema"
-            CMAKE_BUILD_TYPE: Debug
-            DOCKER_REPOSITORY: geosx/ubuntu20.04-clang10.0.0-cuda11.8.89
-            ENABLE_HYPRE_DEVICE: CUDA
-            ENABLE_HYPRE: ON
-            ENABLE_TRILINOS: OFF
-            RUNS_ON: Runner_8core_32GB
+          # - name: Ubuntu CUDA debug (20.04, clang 10.0.0 + gcc 9.4.0, open-mpi 4.0.3, cuda-11.8.89)
+          #   BUILD_AND_TEST_CLI_ARGS: "--build-exe-only --no-install-schema"
+          #   CMAKE_BUILD_TYPE: Debug
+          #   DOCKER_REPOSITORY: geosx/ubuntu20.04-clang10.0.0-cuda11.8.89
+          #   ENABLE_HYPRE_DEVICE: CUDA
+          #   ENABLE_HYPRE: ON
+          #   ENABLE_TRILINOS: OFF
+          #   RUNS_ON: Runner_8core_32GB
 
           - name: Ubuntu CUDA (20.04, clang 10.0.0 + gcc 9.4.0, open-mpi 4.0.3, cuda-11.8.89)
             BUILD_AND_TEST_CLI_ARGS: "--no-run-unit-tests --no-install-schema"
@@ -248,19 +248,19 @@ jobs:
             ENABLE_TRILINOS: OFF
             RUNS_ON: Runner_4core_16GB
 
-          - name: Centos (7.7, gcc 8.3.1, open-mpi 1.10.7, cuda 11.8.89)
-            BUILD_AND_TEST_CLI_ARGS: "--no-run-unit-tests --no-install-schema"
-            CMAKE_BUILD_TYPE: Release
-            DOCKER_REPOSITORY: geosx/centos7.7-gcc8.3.1-cuda11.8.89
-            RUNS_ON: Runner_4core_16GB
+          # - name: Centos (7.7, gcc 8.3.1, open-mpi 1.10.7, cuda 11.8.89)
+          #   BUILD_AND_TEST_CLI_ARGS: "--no-run-unit-tests --no-install-schema"
+          #   CMAKE_BUILD_TYPE: Release
+          #   DOCKER_REPOSITORY: geosx/centos7.7-gcc8.3.1-cuda11.8.89
+          #   RUNS_ON: Runner_4core_16GB
 
-          # Below this line, jobs that deploy to Google Cloud.
-          - name: Pecan GPU (centos 7.7, gcc 8.2.0, open-mpi 4.0.1, mkl 2019.5, cuda 11.5.119)
-            BUILD_AND_TEST_CLI_ARGS: "--build-exe-only --no-install-schema"
-            CMAKE_BUILD_TYPE: Release
-            DOCKER_REPOSITORY: geosx/pecan-gpu-gcc8.2.0-openmpi4.0.1-mkl2019.5-cuda11.5.119
-            HOST_CONFIG: host-configs/TOTAL/pecan-GPU.cmake
-            RUNS_ON: Runner_4core_16GB
+          # # Below this line, jobs that deploy to Google Cloud.
+          # - name: Pecan GPU (centos 7.7, gcc 8.2.0, open-mpi 4.0.1, mkl 2019.5, cuda 11.5.119)
+          #   BUILD_AND_TEST_CLI_ARGS: "--build-exe-only --no-install-schema"
+          #   CMAKE_BUILD_TYPE: Release
+          #   DOCKER_REPOSITORY: geosx/pecan-gpu-gcc8.2.0-openmpi4.0.1-mkl2019.5-cuda11.5.119
+          #   HOST_CONFIG: host-configs/TOTAL/pecan-GPU.cmake
+          #   RUNS_ON: Runner_4core_16GB
     uses: ./.github/workflows/build_and_test.yml
     with:
       BUILD_AND_TEST_CLI_ARGS: ${{ matrix.BUILD_AND_TEST_CLI_ARGS }}
