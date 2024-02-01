@@ -37,7 +37,7 @@ class SourceFluxStatsAggregator : public FieldStatisticsBase< FlowSolverBase >
 public:
 
   /**
-   * @brief Potentially aggregated statistics flux data
+   * @brief Aggregated flux statistics data.
    */
   struct StatData
   {
@@ -55,6 +55,7 @@ public:
     void combine( StatData const & other );
     /**
      * @brief Aggregate the statistics of the instance with those from all instances from other MPI ranks.
+     * Must be called only once per timestep.
      */
     void mpiReduce();
   };
@@ -80,40 +81,60 @@ public:
      * @param productedMass          time-step producted mass (see StatData::m_producedMass).
      * @param elementCount           number of cell elements concerned by this instance
      */
-    void setTimeStepStats( real64 dt, real64 productedMass, integer elementCount,
-                           bool overwriteTimeStepStats );
+    void gatherTimeStepStats( real64 dt, real64 productedMass, integer elementCount,
+                              bool overwriteTimeStepStats );
 
     /**
-     * @brief Finalize the statistics period and render data.
-     * @return the accumulated statistics of the period.
+     * @brief Finalize the period statistics of each timestep gathering and render data over all mpi ranks.
+     * The result can be read by the data() assessor.
      */
-    StatData finalizePeriod();
+    void finalizePeriod();
 
     /**
-     * @return get the name of the SourceFluxStatsAggregator that want to collect data on this instance.
+     * @return the reference to the wrapped stats data collected over the last period (one timestep or more), computed by finalizePeriod()
+     */
+    StatData & stats()
+    { return m_stats; }
+
+    /**
+     * @return the reference to the wrapped stats data collected over the last period (one timestep or more), computed by finalizePeriod()
+     */
+    StatData const & stats() const
+    { return m_stats; }
+
+    /**
+     * @return the name of the SourceFluxStatsAggregator that want to collect data on this instance.
      */
     string_view getAggregatorName() const
     { return m_aggregatorName; }
 
     /**
-     * @return get the name of the SourceFluxBoundaryCondition from which we are collecting data on this instance.
+     * @return the name of the SourceFluxBoundaryCondition from which we are collecting data on this instance.
      */
     string_view getFluxName() const
     { return m_fluxName; }
 private:
-    /// producted mass of the current time-step.
-    real64 m_currentTimeStepMass = 0.0;
-    /// producted mass sum from all previous time-step of the current period.
-    real64 m_pendingPeriodMass = 0.0;
-    /// delta time the current period
-    real64 m_periodDeltaTime = 0.0;
-    /// number of cell elements concerned by this instance
-    integer m_elementCount = 0;
+    /// stats data collected over the last period (one timestep or more), computed by finalizePeriod()
+    StatData m_stats;
+
+    struct PeriodStats
+    {
+      /// producted mass of the current time-step.
+      real64 m_timeStepMass = 0.0;
+      /// producted mass sum from all previous time-step of the current period.
+      real64 m_periodPendingMass = 0.0;
+      /// delta time the current period
+      real64 m_periodDeltaTime = 0.0;
+      /// number of cell elements concerned by this instance
+      integer m_elementCount = 0;
+    } m_periodStats;
 
     /// Name of the SourceFluxStatsAggregator that want to collect data on this instance.
     string m_aggregatorName;
     /// Name of the SourceFluxBoundaryCondition from which we are collecting data on this instance.
     string m_fluxName;
+
+    std::set<localIndex> elementSet;
   };
 
 
@@ -144,16 +165,16 @@ private:
 
   /**@}*/
 
-  /**
-   * @return a WrappedStats struct that contains the statistics of the flux for the
-   * SourceFluxStatsAggregator instance in the container.
-   * @note To be retrieved, the WrappedStats struct must be registered on the container during the
-   * registerDataOnMesh() call.
-   * @param container the container from which we want the statistics.
-   * @param fluxName  the name of the flux from which we want the statistics.
-   * @throw           a GEOS_ERROR if the flux was not found.
-   */
-  WrappedStats & getFluxStatData( Group & container, string_view fluxName );
+  // /**
+  //  * @return a WrappedStats struct that contains the statistics of the flux for the
+  //  * SourceFluxStatsAggregator instance in the container.
+  //  * @param container the container from which we want the statistics.
+  //  * @param fluxName  the name of the flux from which we want the statistics.
+  //  * @throw           a GEOS_ERROR if the flux was not found.
+  //  * @note To be retrieved, the WrappedStats struct must be registered on the container during the
+  //  * registerDataOnMesh() call.
+  //  */
+  // WrappedStats & getFluxStatData( Group & container, string_view fluxName );
 
   /**
    * @brief Apply a functor to all WrappedStats of the given group that target a given flux (and
@@ -168,13 +189,55 @@ private:
    *                  reference to the currently processed WrappedStats.
    */
   template< typename LAMBDA >
-  static void forAllFluxStatData( Group & container, string_view fluxName, LAMBDA && lambda );
+  static void forAllFluxStatWrappers( Group & container, string_view fluxName, LAMBDA && lambda );
+
+  /**
+   * @brief Loop over the target solver discretization on all mesh targets and ????????????
+   * @param fluxName the name of the flux from which we want the statistics.
+   * @param lambda   the functor that will be called for each WrappedStats. Takes in parameter the MeshLevel reference
+   *                 and the reference to the WrappedStats that combines all stats for the instance.
+   * @tparam LAMBDA  the type of lambda function to call in the function
+   * @note To be retrieved, the WrappedStats structs must be registered on the container during the
+   * registerDataOnMesh() call.
+   */
+  template< typename LAMBDA >
+  void forMeshLevelStatsWrapper( DomainPartition & domain, LAMBDA && lambda );
+  /**
+   * @param fluxName  the name of the flux from which we want the statistics.
+   * @param lambda    the functor that will be called for each WrappedStats. Takes in parameter ???????????
+   * @tparam LAMBDA   the type of lambda function to call in the function
+   * @note To be retrieved, the WrappedStats structs must be registered on the container during the
+   * registerDataOnMesh() call.
+   */
+  template< typename LAMBDA >
+  void forAllFluxStatsWrappers( MeshLevel & meshLevel, LAMBDA && lambda );
+  /**
+   * @param fluxName  the name of the flux from which we want the statistics.
+   * @param lambda    the functor that will be called for each WrappedStats. Takes in parameter ???????????
+   * @tparam LAMBDA   the type of lambda function to call in the function
+   * @note To be retrieved, the WrappedStats structs must be registered on the container during the
+   * registerDataOnMesh() call.
+   */
+  template< typename LAMBDA >
+  void forAllRegionStatsWrappers( MeshLevel & meshLevel, string_view fluxName, LAMBDA && lambda );
+  /**
+   * @brief Apply a functor to all subregion WrappedStats (of the given region) that target a given flux.
+   * @param region    the region from which we want to execute the lambda for each of its sub-region.
+   * @param fluxName  the name of the flux from which we want the statistics.
+   * @param lambda    the functor that will be called for each WrappedStats. Takes in parameter ???????????
+   * @tparam LAMBDA   the type of lambda function to call in the function
+   * @note To be retrieved, the WrappedStats structs must be registered on the container during the
+   * registerDataOnMesh() call.
+   */
+  template< typename LAMBDA >
+  void forAllSubRegionStatsWrappers( ElementRegionBase & region, string_view fluxName, LAMBDA && lambda );
 
   /**
    * @return a string used to name the wrapper that is added to each region that is simulated by the solver.
    * The string is unique within the region for the SourceFluxBoundaryCondition and the SourceFluxStatsAggregator.
+   * @param fluxName The name of the flux. For the mesh-level global stats, fluxSetWrapperString() can be used.
    */
-  inline string getRegionStatDataName( string_view fluxName ) const;
+  inline string getStatWrapperName( string_view fluxName ) const;
 
 
   /**
@@ -183,7 +246,11 @@ private:
   struct viewKeyStruct
   {
     /// @return The key for setName
-    constexpr static char const * fluxNamesString() { return "fluxNames"; }
+    constexpr inline static string_view fluxNamesString() { return "fluxNames"; }
+    /// @return The key for statistics wrapper name that targets all region
+    constexpr inline static string_view allRegionWrapperString() { return "all_regions"; }
+    /// @return The key for statistics wrapper name that targets all fluxes of the set
+    constexpr inline static string_view fluxSetWrapperString() { return "flux_set"; }
   };
 
 protected:
@@ -204,24 +271,25 @@ private:
    */
   void registerDataOnMesh( Group & meshBodies ) override;
 
+  dataRepository::Wrapper< WrappedStats > & registerWrappedStats( Group & group, string_view fluxName );
+
   /**
    * @brief Output in the log the given statistics.
-   * @param regionName the name of the element group (a region, a sub-region...) from which we want
-   * to output the data.
+   * @param regionName the name of the element group (a region, a sub-region...) from which we want to output the data.
    * @param minLogLevel the min log level to output any line.
-   * @param subSetName the region / sub-subregion name concerned by the statistics.
+   * @param elementSetName the region / sub-subregion name concerned by the statistics.
    * @param fluxName the flux name concerned by the statistics.
    * @param stats the statistics that must be output in the log.
    */
-  void writeStatData( integer minLogLevel, string_view subSetName, string_view fluxName, StatData const & stats );
+  void writeStatData( integer minLogLevel, string_view elementSetName, WrappedStats const & stats );
 
 };
 
 
 template< typename LAMBDA >
-void SourceFluxStatsAggregator::forAllFluxStatData( Group & container,
-                                                    string_view fluxName,
-                                                    LAMBDA && lambda )
+void SourceFluxStatsAggregator::forAllFluxStatWrappers( Group & container,
+                                                        string_view fluxName,
+                                                        LAMBDA && lambda )
 {
   container.forWrappers< WrappedStats >( [&]( dataRepository::Wrapper< WrappedStats > & statsWrapper )
   {
@@ -232,7 +300,61 @@ void SourceFluxStatsAggregator::forAllFluxStatData( Group & container,
   } );
 }
 
-inline string SourceFluxStatsAggregator::getRegionStatDataName( string_view fluxName ) const
+template< typename LAMBDA >
+void SourceFluxStatsAggregator::forMeshLevelStatsWrapper( DomainPartition & domain,
+                                                          LAMBDA && lambda )
+{
+  m_solver->forDiscretizationOnMeshTargets( domain.getMeshBodies(),
+                                            [&] ( string const &,
+                                                  MeshLevel & meshLevel,
+                                                  arrayView1d< string const > const & )
+  {
+    string const wrapperName = getStatWrapperName( viewKeyStruct::fluxSetWrapperString() );
+    WrappedStats & stats = meshLevel.getWrapper< WrappedStats >( wrapperName ).reference();
+
+    lambda( meshLevel, stats );
+  } );
+}
+template< typename LAMBDA >
+void SourceFluxStatsAggregator::forAllFluxStatsWrappers( MeshLevel & meshLevel,
+                                                         LAMBDA && lambda )
+{
+  for( string const & fluxName : m_fluxNames )
+  {
+    string const wrapperName = getStatWrapperName( fluxName );
+    WrappedStats & stats = meshLevel.getWrapper< WrappedStats >( wrapperName ).reference();
+
+    lambda( meshLevel, stats );
+  }
+}
+template< typename LAMBDA >
+void SourceFluxStatsAggregator::forAllRegionStatsWrappers( MeshLevel & meshLevel,
+                                                           string_view fluxName,
+                                                           LAMBDA && lambda )
+{
+  string const wrapperName = getStatWrapperName( fluxName );
+  meshLevel.getElemManager().forElementRegions( [&]( ElementRegionBase & region )
+  {
+    WrappedStats & stats = region.getWrapper< WrappedStats >( wrapperName ).reference();
+
+    lambda( region, stats );
+  } );
+}
+template< typename LAMBDA >
+void SourceFluxStatsAggregator::forAllSubRegionStatsWrappers( ElementRegionBase & region,
+                                                              string_view fluxName,
+                                                              LAMBDA && lambda )
+{
+  string const wrapperName = getStatWrapperName( fluxName );
+  region.forElementSubRegions( [&]( ElementSubRegionBase & subRegion )
+  {
+    WrappedStats & stats = subRegion.getWrapper< WrappedStats >( wrapperName ).reference();
+
+    lambda( subRegion, stats );
+  } );
+}
+
+inline string SourceFluxStatsAggregator::getStatWrapperName( string_view fluxName ) const
 { return GEOS_FMT( "{}_region_stats_for_{}", fluxName, getName() ); }
 
 

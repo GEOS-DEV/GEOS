@@ -318,7 +318,7 @@ void CompositionalMultiphaseStatistics::computeRegionStatistics( real64 const ti
                                         subRegionImmobilePhaseMass.toView(),
                                         subRegionComponentMass.toView() );
 
-    ElementRegionBase & region = elemManager.getRegion( subRegion.getParent().getParent().getName() );
+    ElementRegionBase & region = elemManager.getRegion( ElementRegionBase::getParentRegion(subRegion).getName() );
     RegionStatistics & regionStatistics = region.getReference< RegionStatistics >( viewKeyStruct::regionStatisticsString() );
 
     regionStatistics.averagePressure += subRegionAvgPresNumerator;

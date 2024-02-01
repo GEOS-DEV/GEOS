@@ -1123,12 +1123,13 @@ void SinglePhaseBase::applySourceFluxBC( real64 const time_n,
         } );
       }
 
-      SourceFluxStatsAggregator::forAllFluxStatData( subRegion, fs.getName(),
-                                                     [&]( SourceFluxStatsAggregator::WrappedStats & wrapper )
+      SourceFluxStatsAggregator::forAllFluxStatWrappers( subRegion, fs.getName(),
+                                                         [&]( SourceFluxStatsAggregator::WrappedStats & wrapper )
       {
         // set the new sub-region statistics for this timestep
-        wrapper.setTimeStepStats( dt, producedMass, targetSet.size(),
-                                  m_nonlinearSolverParameters.m_numNewtonIterations != 0 );
+        wrapper.gatherTimeStepStats( dt, producedMass, targetSet.size(),
+                                     m_nonlinearSolverParameters.m_numNewtonIterations != 0 );
+                                    //  GEOS_LOG(wrapper.getParent().getPath()<<"->"<<wrapper.getName()<<" productedMass="<<producedMass);
       } );
     } );
   } );

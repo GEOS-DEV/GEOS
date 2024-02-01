@@ -162,7 +162,7 @@ void SinglePhaseStatistics::computeRegionStatistics( MeshLevel & mesh,
               subRegionTotalPoreVol,
               subRegionTotalMass );
 
-    ElementRegionBase & region = elemManager.getRegion( subRegion.getParent().getParent().getName() );
+    ElementRegionBase & region = elemManager.getRegion( ElementRegionBase::getParentRegion( subRegion ).getName() );
     RegionStatistics & regionStatistics = region.getReference< RegionStatistics >( viewKeyStruct::regionStatisticsString() );
 
     regionStatistics.averagePressure += subRegionAvgPresNumerator;

@@ -16,8 +16,6 @@
  * @file SourceFluxStatistics.cpp
  */
 
-//!\\ TODO add a test for this component in SinglePhase and MultiPhase
-
 #include "SourceFluxStatistics.hpp"
 
 #include "SourceFluxBoundaryCondition.hpp"
@@ -38,7 +36,7 @@ SourceFluxStatsAggregator::SourceFluxStatsAggregator( const string & name,
                                  "- Log Level 4 details values for each sub-region.",
                                  SourceFluxBoundaryCondition::catalogName() ) );
 
-  registerWrapper( viewKeyStruct::fluxNamesString(), &m_fluxNames ).
+  registerWrapper( viewKeyStruct::fluxNamesString().data(), &m_fluxNames ).
     setRTTypeName( rtTypes::CustomTypes::groupNameRefArray ).
     setInputFlag( InputFlags::REQUIRED ).
     setSizedFromParent( 0 ).
@@ -76,6 +74,15 @@ void SourceFluxStatsAggregator::postProcessInput()
   }
 }
 
+Wrapper< SourceFluxStatsAggregator::WrappedStats > &
+SourceFluxStatsAggregator::registerWrappedStats( Group & group, string_view fluxName )
+{
+  string const wrapperName = getStatWrapperName( fluxName );
+  Wrapper< WrappedStats > & statsWrapper = group.registerWrapper< WrappedStats >( wrapperName );
+  statsWrapper.setRestartFlags( RestartFlags::NO_WRITE );
+  statsWrapper.reference().setTarget( getName(), fluxName );
+  return statsWrapper;
+}
 void SourceFluxStatsAggregator::registerDataOnMesh( Group & meshBodies )
 {
   // the fields have to be registered in "registerDataOnMesh" (and not later)
@@ -91,53 +98,61 @@ void SourceFluxStatsAggregator::registerDataOnMesh( Group & meshBodies )
                                                               MeshLevel & mesh,
                                                               arrayView1d< string const > const & )
   {
-    // Adding, on each sub-region, a wrapper to hold the stats of each wrapper
-    mesh.getElemManager().forElementSubRegions( [&]( ElementSubRegionBase & subRegion )
+    registerWrappedStats( mesh, viewKeyStruct::fluxSetWrapperString() );
+    for( string const & fluxName : m_fluxNames )
     {
-      for( string const & fluxName : m_fluxNames )
-      {
-        string const wrapperName = getRegionStatDataName( fluxName );
-        Wrapper< WrappedStats > & statsWrapper = subRegion.registerWrapper< WrappedStats >( wrapperName );
-        statsWrapper.setRestartFlags( RestartFlags::NO_WRITE );
-        statsWrapper.reference().setTarget( getName(), fluxName );
-        subRegion.excludeWrappersFromPacking( { wrapperName } );
-      }
-    } );
-    // Do we need to add a similar wrapper for each statistics ? (region-level, mesh-level... to hold as many stats the log levels offer)
-  } );
-}
+      registerWrappedStats( mesh, fluxName );
 
-SourceFluxStatsAggregator::WrappedStats &
-SourceFluxStatsAggregator::getFluxStatData( Group & container,
-                                            string_view fluxName )
-{
-  WrappedStats * r = nullptr;
-  container.forWrappers< WrappedStats >( [&]( dataRepository::Wrapper< WrappedStats > & statsWrapper )
-  {
-    WrappedStats & statsWrapperView = statsWrapper.referenceAsView();
-    if( statsWrapperView.getFluxName() == fluxName && statsWrapperView.getAggregatorName() == getName() )
-    {
-      r = &statsWrapperView;
+      mesh.getElemManager().forElementRegions( [&]( ElementRegionBase & region )
+      {
+        Wrapper< WrappedStats > & regionStatsWrapper = registerWrappedStats( region, fluxName );
+        region.excludeWrappersFromPacking( { regionStatsWrapper.getName() } );
+
+        region.forElementSubRegions( [&]( ElementSubRegionBase & subRegion )
+        {
+          Wrapper< WrappedStats > & subRegionStatsWrapper = registerWrappedStats( subRegion, fluxName );
+          subRegion.excludeWrappersFromPacking( { subRegionStatsWrapper.getName() } );
+        } );
+      } );
     }
   } );
-  // Error if SourceFluxStatsAggregator::registerDataOnMesh() did not work as expected
-  GEOS_ERROR_IF( r == nullptr, GEOS_FMT( "{}: {} data wrongly registered on mesh (no flux stats wrapper was found for {} named {}).",
-                                         getName(), catalogName(),
-                                         SourceFluxBoundaryCondition::catalogName(), fluxName ) );
-  return *r;
 }
 
-void SourceFluxStatsAggregator::writeStatData( integer minLogLevel, string_view subSetName,
-                                               string_view fluxName, StatData const & stats )
+// SourceFluxStatsAggregator::WrappedStats &
+// SourceFluxStatsAggregator::getFluxStatData( Group & container,
+//                                             string_view fluxName )
+// {
+//   WrappedStats * r = nullptr;
+//   container.forWrappers< WrappedStats >( [&]( dataRepository::Wrapper< WrappedStats > & statsWrapper )
+//   {
+//     WrappedStats & statsWrapperView = statsWrapper.referenceAsView();
+//     if( statsWrapperView.getFluxName() == fluxName && statsWrapperView.getAggregatorName() == getName() )
+//     {
+//       r = &statsWrapperView;
+//     }
+//   } );
+//   // Error if SourceFluxStatsAggregator::registerDataOnMesh() did not work as expected
+//   GEOS_ERROR_IF( r == nullptr, GEOS_FMT( "{}: {} data wrongly registered on mesh (no flux stats wrapper was found for {} named {}).",
+//                                          getName(), catalogName(),
+//                                          SourceFluxBoundaryCondition::catalogName(), fluxName ) );
+//   return *r;
+// }
+
+void SourceFluxStatsAggregator::writeStatData( integer minLogLevel,
+                                               string_view elementSetName,
+                                               WrappedStats const & wrappedStats )
 {
   if( getLogLevel() >= minLogLevel && logger::internal::rank == 0 )
   {
-    GEOS_LOG_RANK( GEOS_FMT( "{} ({}) of {} in {}: Producting on {} elements",
-                             catalogName(), getName(), fluxName, subSetName, stats.m_elementCount ) );
-    GEOS_LOG_RANK( GEOS_FMT( "{} ({}) of {} in {}: Produced mass = {} kg",
-                             catalogName(), getName(), fluxName, subSetName, stats.m_producedMass ) );
-    GEOS_LOG_RANK( GEOS_FMT( "{} ({}) of {} in {}: Production rate = {} kg/s",
-                             catalogName(), getName(), fluxName, subSetName, stats.m_productionRate ) );
+    GEOS_LOG_RANK( GEOS_FMT( "{} {} (of {}, in {}): Producting on {} elements",
+                             catalogName(), getName(), wrappedStats.getFluxName(), elementSetName,
+                             wrappedStats.stats().m_elementCount ) );
+    GEOS_LOG_RANK( GEOS_FMT( "{} {} (of {}, in {}): Produced mass = {} kg",
+                             catalogName(), getName(), wrappedStats.getFluxName(), elementSetName,
+                             wrappedStats.stats().m_producedMass ) );
+    GEOS_LOG_RANK( GEOS_FMT( "{} {} (of {}, in {}): Production rate = {} kg/s",
+                             catalogName(), getName(), wrappedStats.getFluxName(), elementSetName,
+                             wrappedStats.stats().m_productionRate ) );
   }
 }
 
@@ -148,41 +163,41 @@ bool SourceFluxStatsAggregator::execute( real64 const GEOS_UNUSED_PARAM( time_n 
                                          real64 const GEOS_UNUSED_PARAM( eventProgress ),
                                          DomainPartition & domain )
 {
-  if( getLogLevel() >= 1 )
+  forMeshLevelStatsWrapper( domain,
+                            [&] ( MeshLevel & meshLevel, WrappedStats & meshLevelStats )
   {
-    StatData allStats;
-    m_solver->forDiscretizationOnMeshTargets( domain.getMeshBodies(),
-                                              [&] ( string const &,
-                                                    MeshLevel & mesh,
-                                                    arrayView1d< string const > const & )
+    meshLevelStats.stats() = StatData();
+
+    forAllFluxStatsWrappers( meshLevel,
+                             [&] ( MeshLevel &, WrappedStats & fluxStats )
     {
-      for( string const & fluxName : m_fluxNames )
+      fluxStats.stats() = StatData();
+      
+      forAllRegionStatsWrappers( meshLevel, fluxStats.getFluxName(),
+                                 [&] ( ElementRegionBase & region, WrappedStats & regionStats )
       {
-        StatData fluxStats;
+        regionStats.stats() = StatData();
 
-        mesh.getElemManager().forElementRegions( [&]( ElementRegionBase & region )
+        forAllSubRegionStatsWrappers( region, regionStats.getFluxName(),
+                                      [&] ( ElementSubRegionBase & subRegion, WrappedStats & subRegionStats )
         {
-          StatData regionStats;
-          region.forElementSubRegions( [&]( ElementSubRegionBase & subRegion )
-          {
-            StatData subRegionStats = getFluxStatData( subRegion, fluxName ).finalizePeriod();
-            subRegionStats.mpiReduce();
+          subRegionStats.finalizePeriod();
 
-            writeStatData( 4, subRegion.getName(), fluxName, subRegionStats );
-            regionStats.combine( subRegionStats );
-          } );
-
-          writeStatData( 3, region.getName(), fluxName, regionStats );
-          fluxStats.combine( regionStats );
+          regionStats.stats().combine( subRegionStats.stats() );
+          writeStatData( 4, subRegion.getName(), subRegionStats );
         } );
 
-        writeStatData( 2, "Whole mesh", fluxName, fluxStats );
-        allStats.combine( fluxStats );
-      }
+        fluxStats.stats().combine( regionStats.stats() );
+        writeStatData( 3, region.getName(), regionStats );
+      } );
 
-      writeStatData( 1, "Whole mesh", "Fluxes sum", allStats );
+      meshLevelStats.stats().combine( fluxStats.stats() );
+      writeStatData( 2, viewKeyStruct::allRegionWrapperString(), fluxStats );
     } );
-  }
+
+    writeStatData( 1, viewKeyStruct::allRegionWrapperString(), meshLevelStats );
+  } );
+
   return false;
 }
 
@@ -196,9 +211,9 @@ void SourceFluxStatsAggregator::StatData::combine( StatData const & other )
 }
 void SourceFluxStatsAggregator::StatData::mpiReduce()
 {
-  m_producedMass += MpiWrapper::sum( m_producedMass );
-  m_productionRate += MpiWrapper::sum( m_productionRate );
-  m_elementCount += MpiWrapper::sum( m_elementCount );
+  m_producedMass = MpiWrapper::sum( m_producedMass );
+  m_productionRate = MpiWrapper::sum( m_productionRate );
+  m_elementCount = MpiWrapper::sum( m_elementCount );
 }
 
 void SourceFluxStatsAggregator::WrappedStats::setTarget( string_view aggregatorName,
@@ -207,38 +222,38 @@ void SourceFluxStatsAggregator::WrappedStats::setTarget( string_view aggregatorN
   m_aggregatorName = aggregatorName;
   m_fluxName = fluxName;
 }
-void SourceFluxStatsAggregator::WrappedStats::setTimeStepStats( real64 dt,
-                                                                real64 productedMass,
-                                                                integer elementCount,
-                                                                bool overwriteTimeStepStats )
+void SourceFluxStatsAggregator::WrappedStats::gatherTimeStepStats( real64 dt,
+                                                                   real64 productedMass,
+                                                                   integer elementCount,
+                                                                   bool overwriteTimeStepStats )
 {
-  // we are beginning a new timestep, so we must aggregate the pending stats before overwriting the current stats data
+  // we are beginning a new timestep, so we must aggregate the pending stats (mass & dt) before collecting the current stats data
   if( !overwriteTimeStepStats )
   {
-    m_pendingPeriodMass += m_currentTimeStepMass;
-    m_periodDeltaTime += dt;
-    m_elementCount = elementCount;
+    m_periodStats.m_periodPendingMass += m_periodStats.m_timeStepMass;
+    m_periodStats.m_timeStepMass = 0;
+    m_periodStats.m_periodDeltaTime += dt;
+    m_periodStats.m_elementCount = elementCount;
   }
 
-  m_currentTimeStepMass = productedMass;
+  m_periodStats.m_timeStepMass = productedMass;
 }
-SourceFluxStatsAggregator::StatData SourceFluxStatsAggregator::WrappedStats::finalizePeriod()
+void SourceFluxStatsAggregator::WrappedStats::finalizePeriod()
 {
-  real64 periodMass = m_currentTimeStepMass + m_pendingPeriodMass;
-  StatData periodStats;
-  periodStats.m_producedMass = periodMass;
-  if( m_periodDeltaTime > 0.0 )
-  {
-    periodStats.m_productionRate = periodMass / m_periodDeltaTime;
-  }
-  periodStats.m_elementCount = m_elementCount;
+  // produce timestep stats of this ranks
+  real64 periodMass = m_periodStats.m_timeStepMass + m_periodStats.m_periodPendingMass;
+  m_stats.m_producedMass = periodMass;
+  m_stats.m_productionRate = m_periodStats.m_periodDeltaTime > 0.0 ?
+                             periodMass / m_periodStats.m_periodDeltaTime :
+                             0.0;
+  m_stats.m_elementCount = m_periodStats.m_elementCount;
 
-  m_currentTimeStepMass = 0.0;
-  m_pendingPeriodMass = 0.0;
-  m_periodDeltaTime = 0.0;
-  m_elementCount = 0;
+  // combine period results from all MPI ranks
+  m_stats.mpiReduce();
 
-  return periodStats;
+  // start a new timestep
+  m_periodStats = WrappedStats::PeriodStats();
+
 }
 
 
