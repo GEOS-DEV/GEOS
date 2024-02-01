@@ -119,7 +119,7 @@ Mesh definition and well geometry
 In the presence of wells, the **Mesh** block of the XML input file includes two parts:
 
  - a sub-block **VTKMesh** defining the reservoir mesh (see :ref:`TutorialSinglePhaseFlowExternalMesh` for more on this),
- - a collection of sub-blocks **InternalWell** defining the geometry of the wells.
+ - a collection of sub-blocks defining the geometry of the wells.
 
 The reservoir mesh is imported from a ``.vtu`` file that contains the mesh geometry
 and also includes the permeability values in the x, y, and z directions.
@@ -128,14 +128,25 @@ for the well geometry and square meters for the permeability field.
 We note that the mesh file only contains the active cells, so there is no keyword
 needed in the XML file  to define them.
 
+.. image:: egg_model.png
+   :width: 400px
+   :align: center          
+
+.. literalinclude:: ../../../../../inputFiles/compositionalMultiphaseWell/benchmarks/Egg/deadOilEgg_benchmark.xml
+  :language: xml
+  :start-after: <!-- SPHINX_TUT_DEAD_OIL_EGG_MESH -->
+  :end-before: <!-- SPHINX_TUT_DEAD_OIL_EGG_MESH_END -->
+
+
+.. _Events_tag_dead_oil_egg_model:
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+**InternalWell** sub-blocks
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 Each well is defined internally (i.e., not imported from a file) in a separate **InternalWell**
-XML sub-block. An **InternalWell** sub-block must point to the reservoir mesh that the well perforates
-using the attribute ``meshName``, to the region corresponding to this well using the attribute
+XML sub-block. An **InternalWell** sub-block must point to the region corresponding to this well using the attribute
 ``wellRegionName``, and to the control of this well using the attribute ``wellControl``.
-Each block **InternalWell** must point to the reservoir mesh
-(using the attribute ``meshName``), the corresponding well region (using
-the attribute ``wellRegionName``), and the corresponding well control
-(using the attribute ``wellControlName``).
 
 Each well is defined using a vertical polyline going through the seven layers of the
 mesh, with a perforation in each layer.
@@ -149,18 +160,30 @@ of the well mesh otherwise an error will be thrown and the simulation will termi
 For each perforation, the well transmissibility factors employed to compute the perforation rates are calculated
 internally using the Peaceman formulation.
 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+**VTKWell** sub-blocks
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. image:: egg_model.png
-   :width: 400px
-   :align: center          
+Each well is loaded from a file in a separate **VTKWell**
+XML sub-block. An **VTKWell** sub-block must point to the region corresponding to this well using the attribute
+``wellRegionName``, and to the control of this well using the attribute ``wellControl``.
 
-.. literalinclude:: ../../../../../inputFiles/compositionalMultiphaseWell/benchmarks/Egg/deadOilEgg_benchmark.xml
+Each well is defined using a vertical VTK polyline going through the seven layers of the
+mesh, with a perforation in each layer.
+The well placement implemented here follows the pattern of the original test case.
+The well geometry must be specified in meters.
+
+The location of the perforations is found internally using the linear distance along the wellbore
+from the top of the well, specified by the attribute ``distanceFromHead``.
+It is the responsibility of the user to make sure that there is a perforation in the bottom cell
+of the well mesh otherwise an error will be thrown and the simulation will terminate.
+For each perforation, the well transmissibility factors employed to compute the perforation rates are calculated
+internally using the Peaceman formulation.
+
+.. literalinclude:: ../../../../../inputFiles/compositionalMultiphaseWell/benchmarks/Egg/deadOilEggVTK_benchmark.xml
   :language: xml
-  :start-after: <!-- SPHINX_TUT_DEAD_OIL_EGG_MESH -->
-  :end-before: <!-- SPHINX_TUT_DEAD_OIL_EGG_MESH_END -->
-
-
-.. _Events_tag_dead_oil_egg_model:
+  :start-after: <!-- SPHINX_TUT_DEAD_OIL_EGG_VTKWELL -->
+  :end-before: <!-- SPHINX_TUT_DEAD_OIL_EGG_VTKWELL_END -->
 
 ------------------------
 Events
