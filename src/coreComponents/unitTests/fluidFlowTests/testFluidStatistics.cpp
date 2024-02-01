@@ -240,44 +240,21 @@ TEST( FluidStatisticsTest, checkSinglePhaseFluxStatistics )
   ProblemManager & problem = state.getProblemManager();
   setupProblemFromXML( problem, testParams.xmlInput.data() );
 
-  problem.printDataHierarchy();//!//
-
   EXPECT_FALSE( problem.runSimulation() ) << "Simulation exited early.";
 
   {
-    SourceFluxStatsAggregator & timestepsStats = problem.getGroupByPath< SourceFluxStatsAggregator >( "/Tasks/timestepsStats" );
     SourceFluxStatsAggregator & wholeSimStats = problem.getGroupByPath< SourceFluxStatsAggregator >( "/Tasks/wholeSimStats" );
     DomainPartition & domain = problem.getDomainPartition();
-
-    timestepsStats.forMeshLevelStatsWrapper( domain,
-                                             [&] ( MeshLevel & meshLevel,
-                                                   SourceFluxStatsAggregator::WrappedStats & meshLevelStats )
-    {
-      GEOS_LOG( "timestepsStats :" );
-      GEOS_LOG( "  - Group "<<meshLevel.getName()<<" :" );
-      GEOS_LOG( "    - producedMass="<<meshLevelStats.stats().m_producedMass );
-      GEOS_LOG( "    - productionRate="<<meshLevelStats.stats().m_productionRate );
-      GEOS_LOG( "    - elementCount="<<meshLevelStats.stats().m_elementCount );
-    } );
 
     // verification that the source flux statistics are correct over the whole simulation
     wholeSimStats.forMeshLevelStatsWrapper( domain,
                                             [&] ( MeshLevel & meshLevel,
                                                   SourceFluxStatsAggregator::WrappedStats & meshLevelStats )
     {
-      GEOS_LOG( "wholeSimStats :" );
-      GEOS_LOG( "  - Group "<<meshLevel.getName()<<" :" );
-      GEOS_LOG( "    - producedMass="<<meshLevelStats.stats().m_producedMass );
-      GEOS_LOG( "    - productionRate="<<meshLevelStats.stats().m_productionRate );
-      GEOS_LOG( "    - elementCount="<<meshLevelStats.stats().m_elementCount );
       wholeSimStats.forAllFluxStatsWrappers( meshLevel,
                                              [&] ( MeshLevel &,
                                                    SourceFluxStatsAggregator::WrappedStats & fluxStats )
       {
-        GEOS_LOG( "  - Group "<<fluxStats.getFluxName()<<" :" );
-        GEOS_LOG( "    - producedMass="<<fluxStats.stats().m_producedMass );
-        GEOS_LOG( "    - productionRate="<<fluxStats.stats().m_productionRate );
-        GEOS_LOG( "    - elementCount="<<fluxStats.stats().m_elementCount );
         if( fluxStats.getFluxName() == testParams.sourceFluxName )
         {
           EXPECT_DOUBLE_EQ( fluxStats.stats().m_producedMass, testParams.totalSourceMassProd ) << "The source flux did not inject the expected total mass.";
