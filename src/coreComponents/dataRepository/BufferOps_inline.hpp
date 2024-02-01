@@ -131,7 +131,7 @@ inline
 localIndex
 Pack( buffer_unit_type * & buffer,
       std::vector< T > const & var )
-{ 
+{
   size_t const length = var.size();
   localIndex sizeOfPackedChars = Pack< DO_PACKING >( buffer, length );
   for( T const & str : var )

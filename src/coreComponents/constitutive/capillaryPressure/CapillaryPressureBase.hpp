@@ -139,7 +139,7 @@ public:
    * @brief Getter for the phase names
    * @return an array of phase names
    */
-  string_array const &phaseNames() const { return m_phaseNames; }
+  string_array const & phaseNames() const { return m_phaseNames; }
 
   /*
    * @brief Getter for the cell-wise phase capillary pressures

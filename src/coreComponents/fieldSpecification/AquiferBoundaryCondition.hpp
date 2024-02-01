@@ -190,7 +190,7 @@ private:
    * @brief Getter for the aquifer water phase component names
    * @return an array storing the water phase component names
    */
-  string_array const &getWaterPhaseComponentNames() const { return m_phaseComponentNames; }
+  string_array const & getWaterPhaseComponentNames() const { return m_phaseComponentNames; }
 
   /**
    * @brief Flag to allow all phases to flow into the aquifer

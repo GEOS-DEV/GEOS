@@ -269,7 +269,7 @@ public:
    */
   void chopNegativeDensities( DomainPartition & domain );
 
-  string_array const &relPermModelNames() const { return m_relPermModelNames; }
+  string_array const & relPermModelNames() const { return m_relPermModelNames; }
 
   struct viewKeyStruct : WellSolverBase::viewKeyStruct
   {

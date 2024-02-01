@@ -677,7 +677,7 @@ int numArrayDims( ArrayView< T const, NDIM, USD > const & GEOS_UNUSED_PARAM( var
 }
 
 template< typename T >
-int numArrayDims( std::vector< T  > const & GEOS_UNUSED_PARAM( var ) )
+int numArrayDims( std::vector< T > const & GEOS_UNUSED_PARAM( var ) )
 {
   return 1;
 }

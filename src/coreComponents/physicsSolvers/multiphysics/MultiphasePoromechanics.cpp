@@ -374,7 +374,7 @@ void MultiphasePoromechanics< FLOW_SOLVER >::updateStabilizationParameters( Doma
 
     // loop over the elements and update the stabilization constant
     mesh.getElemManager().forElementSubRegions( filteredTargetRegionNames, [&]( localIndex const,
-                                                                                              ElementSubRegionBase & subRegion )
+                                                                                ElementSubRegionBase & subRegion )
 
     {
       arrayView1d< integer > const macroElementIndex = subRegion.getField< fields::flow::macroElementIndex >();

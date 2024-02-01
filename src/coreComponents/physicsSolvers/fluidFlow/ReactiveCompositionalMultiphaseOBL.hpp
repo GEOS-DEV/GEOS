@@ -98,7 +98,7 @@ public:
    * @brief Getter for the fluid component names
    * @return an array storing the component names
    */
-  string_array const &componentNames() const { return m_componentNames; }
+  string_array const & componentNames() const { return m_componentNames; }
 
   virtual void registerDataOnMesh( Group & meshBodies ) override;
 //END_SPHINX_INCLUDE_01

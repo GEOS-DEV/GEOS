@@ -1039,7 +1039,7 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium()
       FunctionManager & functionManager = FunctionManager::getInstance();
 
       array1d< TableFunction::KernelWrapper > compFracTableWrappers;
-      string_array const &compFracTableNames = fs.getComponentFractionVsElevationTableNames();
+      string_array const & compFracTableNames = fs.getComponentFractionVsElevationTableNames();
       for( integer ic = 0; ic < numComps; ++ic )
       {
         TableFunction const & compFracTable = functionManager.getGroup< TableFunction >( compFracTableNames[ic] );
@@ -1062,7 +1062,7 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium()
       string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
       MultiFluidBase & fluid = getConstitutiveModel< MultiFluidBase >( subRegion, fluidName );
 
-      string_array const &componentNames = fs.getComponentNames();
+      string_array const & componentNames = fs.getComponentNames();
       GEOS_THROW_IF( fluid.componentNames().size() != componentNames.size(),
                      "Mismatch in number of components between constitutive model "
                      << fluid.getDataContext() << " and the Equilibrium initial condition " << fs.getDataContext(),
@@ -1076,7 +1076,7 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium()
       }
 
       // Note: for now, we assume that the reservoir is in a single-phase state at initialization
-      string_array const &phaseNames = fluid.phaseNames();
+      string_array const & phaseNames = fluid.phaseNames();
       auto const itPhaseNames = std::find( std::begin( phaseNames ), std::end( phaseNames ), initPhaseName );
       GEOS_THROW_IF( itPhaseNames == std::end( phaseNames ),
                      getCatalogName() << " " << getDataContext() << ": phase name " <<

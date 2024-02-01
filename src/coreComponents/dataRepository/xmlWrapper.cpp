@@ -123,7 +123,7 @@ template void stringToInputVariable( Tensor< real64, 6 > & target, string const 
 void stringToInputVariable( std::vector< std::string > & array, string const & value, Regex const & regex )
 {
   validateString( value, regex );
-  array1d<std::string> tmp;
+  array1d< std::string > tmp;
   LvArray::input::stringToArray( tmp, string( stringutilities::trimSpaces( value ) ) );
 
   array.resize( tmp.size() );

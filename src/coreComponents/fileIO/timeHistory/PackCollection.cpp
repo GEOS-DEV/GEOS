@@ -77,7 +77,7 @@ HistoryMetadata PackCollection::getMetaData( DomainPartition const & domain, loc
   }
   else
   {
-    GEOS_ERROR_IF( collectionIdx < 0 || collectionIdx >= LvArray::integerConversion<localIndex>(m_setNames.size()), "Invalid collection index specified." );
+    GEOS_ERROR_IF( collectionIdx < 0 || collectionIdx >= LvArray::integerConversion< localIndex >( m_setNames.size()), "Invalid collection index specified." );
     localIndex collectionSize = m_setsIndices[collectionIdx].size();
     if( ( m_onlyOnSetChange != 0 ) && ( !m_setChanged ) ) // if we're only collecting when the set changes but the set hasn't changed
     {

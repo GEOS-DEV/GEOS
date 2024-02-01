@@ -63,7 +63,7 @@ ExternalMeshGeneratorBase::ExternalMeshGeneratorBase( string const & name,
 
 void ExternalMeshGeneratorBase::postProcessInput()
 {
-  auto const checkSizes = [this]( string_array const &from, string_array const &to,
+  auto const checkSizes = [this]( string_array const & from, string_array const & to,
                                   string const & fromKey, string const & toKey )
   {
     GEOS_THROW_IF_NE_MSG( from.size(), to.size(),
@@ -75,7 +75,7 @@ void ExternalMeshGeneratorBase::postProcessInput()
   checkSizes( m_volumicFieldsToImport, m_volumicFieldsInGEOSX, viewKeyStruct::volumicFieldsToImportString(), viewKeyStruct::volumicFieldsInGEOSXString() );
   checkSizes( m_surfacicFieldsToImport, m_surfacicFieldsInGEOSX, viewKeyStruct::surfacicFieldsToImportString(), viewKeyStruct::surfacicFieldsInGEOSXString() );
 
-  auto const checkDuplicates = [this]( string_array const &v, string const & key )
+  auto const checkDuplicates = [this]( string_array const & v, string const & key )
   {
     std::set< string > const tmp{ v.begin(), v.end() };
     bool const hasDuplicates = tmp.size() != LvArray::integerConversion< std::size_t >( v.size() );
@@ -89,8 +89,8 @@ void ExternalMeshGeneratorBase::postProcessInput()
   checkDuplicates( m_surfacicFieldsInGEOSX, viewKeyStruct::surfacicFieldsInGEOSXString() );
 
   // Building the fields mapping from the two separated input/output vectors.
-  auto const buildMapping = [&]( string_array const &from,
-                                 string_array const &to ) -> std::map< string, string >
+  auto const buildMapping = [&]( string_array const & from,
+                                 string_array const & to ) -> std::map< string, string >
   {
     std::map< string, string > mapping;
     for( size_t i = 0; i < from.size(); i++ )
