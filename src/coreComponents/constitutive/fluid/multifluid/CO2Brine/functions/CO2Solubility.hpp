@@ -311,11 +311,10 @@ CO2SolubilityUpdate::compute( real64 const & pressure,
     integer const activePhase = minForDivision < L ? m_phaseLiquidIndex : m_phaseGasIndex;
 
     // Zero out everything to start
-    auto setZero = []( real64 & val ){ val = 0.0; };
-    LvArray::forValuesInSlice( phaseFraction.value, setZero );
-    LvArray::forValuesInSlice( phaseCompFraction.value, setZero );
-    LvArray::forValuesInSlice( phaseFraction.derivs, setZero );
-    LvArray::forValuesInSlice( phaseCompFraction.derivs, setZero );
+    LvArray::setValueOfSlice( phaseFraction.value, 0.0 );
+    LvArray::setValueOfSlice( phaseCompFraction.value, 0.0 );
+    LvArray::setValueOfSlice( phaseFraction.derivs, 0.0 );
+    LvArray::setValueOfSlice( phaseCompFraction.derivs, 0.0 );
 
     // 1) Compute phase fractions
 

@@ -140,7 +140,7 @@ void SpanWagnerCO2DensityUpdate::compute( real64 const & pressure,
   real64 densityDeriv[2]{};
   value = m_CO2DensityTable.compute( input, densityDeriv );
 
-  LvArray::forValuesInSlice( dValue, []( real64 & val ){ val = 0.0; } );
+  LvArray::setValueOfSlice( dValue, 0.0 );
   dValue[Deriv::dP] = densityDeriv[0];
   dValue[Deriv::dT] = densityDeriv[1];
 
