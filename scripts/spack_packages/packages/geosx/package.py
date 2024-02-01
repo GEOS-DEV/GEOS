@@ -101,7 +101,7 @@ class Geosx(CMakePackage, CudaPackage):
 
     depends_on('umpire +c+openmp~examples+fortran~device_alloc~shared')
 
-    depends_on('chai@2023.06.0 +raja+openmp~examples~shared')
+    depends_on('chai +raja+openmp~examples~shared')
 
     depends_on('camp')
 
@@ -109,7 +109,7 @@ class Geosx(CMakePackage, CudaPackage):
         for sm_ in CudaPackage.cuda_arch_values:
             depends_on('raja+cuda cuda_arch={0}'.format(sm_), when='cuda_arch={0}'.format(sm_))
             depends_on('umpire+cuda cuda_arch={0}'.format(sm_), when='cuda_arch={0}'.format(sm_))
-            depends_on('chai+cuda cuda_arch={0}'.format(sm_), when='cuda_arch={0}'.format(sm_))
+            depends_on('chai+cuda~separable_compilation cuda_arch={0}'.format(sm_), when='cuda_arch={0}'.format(sm_))
             depends_on('camp+cuda cuda_arch={0}'.format(sm_), when='cuda_arch={0}'.format(sm_))
 
     #
