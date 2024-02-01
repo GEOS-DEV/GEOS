@@ -57,6 +57,13 @@ jobs:
         submodules: true
         lfs: ${{ inputs.BUILD_TYPE == 'integrated_tests' }}
         fetch-depth: 1
+    - name: ssh  
+      uses: lhotari/action-upterm@v1
+      with:
+        ## limits ssh access and adds the ssh public key for the user which triggered the workflow
+        limit-access-to-actor: true
+        ## limits ssh access and adds the ssh public keys of the listed GitHub users
+        limit-access-to-users: CusiniM    
 
     - id: 'auth'
       if: ${{ inputs.GCP_BUCKET || inputs.USE_SCCACHE }}
