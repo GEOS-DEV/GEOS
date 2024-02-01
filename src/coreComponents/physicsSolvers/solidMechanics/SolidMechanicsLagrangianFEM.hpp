@@ -374,7 +374,7 @@ void SolidMechanicsLagrangianFEM::assemblyLaunch( DomainPartition & domain,
     }
   } );
 
-  applyContactConstraint( dofManager, domain, localMatrix, localRhs );
+  //applyContactConstraint( dofManager, domain, localMatrix, localRhs );
 }
 
 } /* namespace geos */
