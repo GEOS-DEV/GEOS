@@ -927,8 +927,8 @@ void CellBlockManager::generateHighOrderMaps( localIndex const order,
   localIndex const numLocalEdges = this->numEdges();
   localIndex const numLocalFaces = this->numFaces();
 
-  GEOS_LOG_RANK_0("TEST TEST: numLocalEdges = " << numLocalEdges);
-  GEOS_LOG_RANK_0("TEST TEST: numLocalFaces = " << numLocalFaces);
+//  //GEOS_LOG_RANK_0("TEST TEST: numLocalEdges = " << numLocalEdges);
+//  //GEOS_LOG_RANK_0("TEST TEST: numLocalFaces = " << numLocalFaces);
 
 
   localIndex numLocalCells = 0;
@@ -946,7 +946,7 @@ void CellBlockManager::generateHighOrderMaps( localIndex const order,
                              + numLocalFaces * numInternalNodesPerFace
                              + numLocalCells * numInternalNodesPerCell;
 
-  GEOS_LOG_RANK_0("TEST TEST: numLocalNodes = " << numLocalNodes );
+//  //GEOS_LOG_RANK_0("TEST TEST: numLocalNodes = " << numLocalNodes );
 
   array1d< globalIndex > const nodeLocalToGlobalSource ( m_nodeLocalToGlobal );
   array2d< localIndex > const edgeToNodesMapSource( m_edgeToNodes );
@@ -994,7 +994,7 @@ void CellBlockManager::generateHighOrderMaps( localIndex const order,
   // create / retrieve nodes on edges
   localIndex globalNodeOffset = maxVertexGlobalID;
 
-  //GEOS_LOG_RANK_0("TEST TEST: edgeToNodesMapSource = " << edgeToNodesMapSource);
+//  //GEOS_LOG_RANK_0("TEST TEST: edgeToNodesMapSource = " << edgeToNodesMapSource);
   GEOS_MARK_BEGIN("geos::CellBlockManager::generateHighOrderMaps -- Edges");
   forAll< parallelHostPolicy >( numLocalEdges, 
                                 [ edgeToNodesMapSource=edgeToNodesMapSource.toView(),
@@ -1035,9 +1035,9 @@ void CellBlockManager::generateHighOrderMaps( localIndex const order,
       }
   });
   localNodeOffset += numInternalNodesPerEdge * numLocalEdges;
-  //GEOS_LOG_RANK_0("TEST TEST: Edges refPosNew = " << refPosNew); 
+//  //GEOS_LOG_RANK_0("TEST TEST: Edges refPosNew = " << refPosNew); 
   GEOS_MARK_END("geos::CellBlockManager::generateHighOrderMaps -- Edges");
-  //GEOS_LOG_RANK_0("TEST TEST: edgeToNodeMapNew = " << edgeToNodeMapNew);
+//  GEOS_LOG_RANK_0("TEST TEST: edgeToNodeMapNew = " << edgeToNodeMapNew);
 
 
   /////////////////////////
@@ -1063,7 +1063,7 @@ void CellBlockManager::generateHighOrderMaps( localIndex const order,
 
   globalNodeOffset = maxVertexGlobalID + maxEdgeGlobalID * numInternalNodesPerEdge;
 
-  //GEOS_LOG_RANK_0("TEST TEST: faceToNodesMapSource = " << faceToNodesMapSource);
+//  //GEOS_LOG_RANK_0("TEST TEST: faceToNodesMapSource = " << faceToNodesMapSource);
   GEOS_MARK_BEGIN("geos::CellBlockManager::generateHighOrderMaps -- Faces");
   forAll< parallelHostPolicy >( numLocalFaces, 
                                 [ faceToNodesMapSource=faceToNodesMapSource.toView(),
@@ -1111,9 +1111,7 @@ void CellBlockManager::generateHighOrderMaps( localIndex const order,
         real64 beta = ( glCoords[ q2 ] + 1.0 ) / 2.0;
 
         localIndex nodeLocalID = localNodeOffset + iter_face * numInternalNodesPerFace + iter_node;
-        localIndex nodeIdxInMap = numVerticesPerFace + numEdgesPerFace * numInternalNodesPerEdge + iter_node;
-        //faceToNodeMapWork[ nodeIdxInMap ] = nodeLocalID;
-        faceToNodeMapNew[ iter_face ][ (q2 + 1) * numNodesPerEdge + (q1 + 1) ] = nodeIdxInMap;
+        faceToNodeMapNew[ iter_face ][ (q2 + 1) * numNodesPerEdge + (q1 + 1) ] = nodeLocalID;
         std::array< globalIndex, 6 > referenceOrientation = createNodeKey( faceVertGID[ 0 ], faceVertGID[ 1 ], faceVertGID[ 2 ], faceVertGID[ 3 ],
                                                                            q1 + 1, q2 + 1, order );
         int gq1 = referenceOrientation[4] - 1;
@@ -1134,7 +1132,7 @@ void CellBlockManager::generateHighOrderMaps( localIndex const order,
         }
       }
   });
-  //GEOS_LOG_RANK_0("TEST TEST: faceToNodeMapNew = " << faceToNodeMapNew);
+//  GEOS_LOG_RANK_0("TEST TEST: faceToNodeMapNew = " << faceToNodeMapNew);
   GEOS_MARK_END("geos::CellBlockManager::generateHighOrderMaps -- Faces");
 
   localNodeOffset += numInternalNodesPerFace * numLocalFaces ;
@@ -1217,7 +1215,7 @@ void CellBlockManager::generateHighOrderMaps( localIndex const order,
           localIndex q2 = ( iter_node / numInternalNodesPerEdge ) % numInternalNodesPerEdge;
           localIndex nodeIdxInMap = numVerticesPerCell + numEdgesPerCell * numInternalNodesPerEdge + iter_face * numInternalNodesPerFace + iter_node;
           localIndex face = elemsToFaces[iter_elem][iter_face];
-          elemToNodeMapWork[ nodeIdxInMap ] = faceToNodeMapNew[face][numVerticesPerFace + numEdgesPerFace * numInternalNodesPerEdge + iter_node ];
+          elemToNodeMapWork[ nodeIdxInMap ] = faceToNodeMapNew[face][(q2 + 1) * numNodesPerEdge + (q1 + 1 )];
           nodeIDs[ createNodeKey( faceToNodeMapNew[ face ][ 0 ], faceToNodeMapNew[ face ][ numNodesPerEdge - 1 ], 
                                   faceToNodeMapNew[ face ][ numNodesPerFace - numNodesPerEdge ], faceToNodeMapNew[ face ][ numNodesPerFace- 1 ], q1 + 1, q2 + 1, order ) ] = nodeIdxInMap;
         }
@@ -1231,16 +1229,16 @@ void CellBlockManager::generateHighOrderMaps( localIndex const order,
         real64 beta = ( glCoords[ q2 ] + 1.0 ) / 2.0;
         real64 gamma = ( glCoords[ q3 ] + 1.0 ) / 2.0;
 
-        //GEOS_LOG_RANK_0("TEST TEST: alpha = " << alpha << "; beta = "<< beta << "; gamma= "<< gamma ); 
+//        //GEOS_LOG_RANK_0("TEST TEST: alpha = " << alpha << "; beta = "<< beta << "; gamma= "<< gamma ); 
 
         localIndex nodeLocalID = localNodeOffset + iter_elem * numInternalNodesPerCell + iter_node;
         elemsToNodesNew[ iter_elem ][ (q3 + 1)*numNodesPerFace + (q2+1) * numNodesPerEdge + (q1 + 1) ] = nodeLocalID;
         nodeLocalToGlobalNew[ nodeLocalID ] = globalNodeOffset + elementLocalToGlobal[ iter_elem ] * numInternalNodesPerCell + iter_node;
         trilinearInterp( alpha, beta, gamma, refPosSrc, elemVertID, refPosNew, nodeLocalID );
     
-        //GEOS_LOG_RANK_0("TEST TEST: refPosNew["<<nodeLocalID<<"][0]="<<refPosNew[nodeLocalID][0]);
-        //GEOS_LOG_RANK_0("TEST TEST: refPosNew["<<nodeLocalID<<"][1]="<<refPosNew[nodeLocalID][1]);
-        //GEOS_LOG_RANK_0("TEST TEST: refPosNew["<<nodeLocalID<<"][2]="<<refPosNew[nodeLocalID][2]);
+//        //GEOS_LOG_RANK_0("TEST TEST: refPosNew["<<nodeLocalID<<"][0]="<<refPosNew[nodeLocalID][0]);
+//        //GEOS_LOG_RANK_0("TEST TEST: refPosNew["<<nodeLocalID<<"][1]="<<refPosNew[nodeLocalID][1]);
+//        //GEOS_LOG_RANK_0("TEST TEST: refPosNew["<<nodeLocalID<<"][2]="<<refPosNew[nodeLocalID][2]);
 
       }
       // reorder map
@@ -1257,9 +1255,9 @@ void CellBlockManager::generateHighOrderMaps( localIndex const order,
       }
     } );
 
-    //GEOS_LOG_RANK_0("TEST TEST: elemsToNodesNew = " << elemsToNodesNew);
-    //GEOS_LOG_RANK_0("TEST TEST: elemsToNodesSource = " << elemsToNodesSource);
-    //GEOS_LOG_RANK_0("TEST TEST: refPosNew = " << refPosNew);
+//    GEOS_LOG_RANK_0("TEST TEST: elemsToNodesNew = " << elemsToNodesNew);
+//    //GEOS_LOG_RANK_0("TEST TEST: elemsToNodesSource = " << elemsToNodesSource);
+//    //GEOS_LOG_RANK_0("TEST TEST: refPosNew = " << refPosNew);
     GEOS_MARK_END("geos::CellBlockManager::generateHighOrderMaps -- Elements");
   } );
 }
