@@ -171,7 +171,7 @@ CO2SolubilityUpdate::compute( real64 const & pressure,
   real64 co2SolubilityDeriv[2]{};
   real64 watSolubilityDeriv[2]{0.0, 0.0};
   real64 co2Solubility = m_CO2SolubilityTable.compute( input, co2SolubilityDeriv );
-  real64 watSolubility = 0.0; //m_WaterVapourisationTable.compute( input, watSolubilityDeriv );
+  real64 watSolubility = m_WaterVapourisationTable.compute( input, watSolubilityDeriv );
 
   // Convert the solubility to mole/mole
   co2Solubility *= m_componentMolarWeight[m_waterIndex];

@@ -143,14 +143,14 @@ void PhillipsBrineViscosityUpdate::compute( real64 const & pressure,
 
   // compute the viscosity of pure water as a function of temperature
   real64 dPureWaterVisc_dTemperature;
-  real64 const pureWaterVisc = m_waterViscosityTable.compute( &temperature, &dPureWaterVisc_dTemperature );
+  real64 const pureWaterVisc = 0;//m_waterViscosityTable.compute( &temperature, &dPureWaterVisc_dTemperature );
 
   // then compute the brine viscosity, accounting for the presence of salt
 
   real64 const viscMultiplier = m_coef0 + m_coef1 * temperature;
   real64 const dViscMultiplier_dTemperature = m_coef1;
   value = pureWaterVisc * viscMultiplier;
-  LvArray::forValuesInSlice( dValue, []( real64 & val ){ val = 0.0; } );
+  LvArray::forValuesInSlice( dValue, [] GEOS_HOST_DEVICE ( real64 & val ){ val = 0.0; } );
   dValue[Deriv::dP] = 0.0;
   dValue[Deriv::dT] = dPureWaterVisc_dTemperature * viscMultiplier + pureWaterVisc * dViscMultiplier_dTemperature;
 
