@@ -5,7 +5,7 @@ Name            Type                                 Default  Description
 =============== ==================================== ======== =========================================================================== 
 coordinateFiles path_array                           {}       List of coordinate file names for ND Table                                  
 coordinates     real64_array                         {0}      Coordinates inputs for 1D tables                                            
-inputVarNames   groupNameRef_array                            Name of fields are input to function.                                       
+inputVarNames   groupNameRef_array                   {}       Name of fields are input to function.                                       
 interpolation   geos_TableFunction_InterpolationType linear   | Interpolation method. Valid options:                                        
                                                               | * linear                                                                    
                                                               | * nearest                                                                   

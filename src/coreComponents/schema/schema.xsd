@@ -1059,7 +1059,7 @@ This keyword is ignored for single-phase flow simulations-->
 		<!--aquiferWaterPhaseComponentFraction => Aquifer water phase component fraction. This keyword is ignored for single-phase flow simulations.-->
 		<xsd:attribute name="aquiferWaterPhaseComponentFraction" type="real64_array" default="{0}" />
 		<!--aquiferWaterPhaseComponentNames => Aquifer water phase component names. This keyword is ignored for single-phase flow simulations.-->
-		<xsd:attribute name="aquiferWaterPhaseComponentNames" type="string_array" default="" />
+		<xsd:attribute name="aquiferWaterPhaseComponentNames" type="string_array" default="{}" />
 		<!--aquiferWaterViscosity => Aquifer water viscosity [Pa.s]-->
 		<xsd:attribute name="aquiferWaterViscosity" type="real64" use="required" />
 		<!--bcApplicationTableName => Name of table that specifies the on/off application of the boundary condition.-->
@@ -1148,9 +1148,9 @@ This keyword is ignored for single-phase flow simulations-->
 		<!--beginTime => Time at which the boundary condition will start being applied.-->
 		<xsd:attribute name="beginTime" type="real64" default="-1e+99" />
 		<!--componentFractionVsElevationTableNames => Names of the tables specifying the (component fraction vs elevation) relationship for each component-->
-		<xsd:attribute name="componentFractionVsElevationTableNames" type="groupNameRef_array" default="" />
+		<xsd:attribute name="componentFractionVsElevationTableNames" type="groupNameRef_array" default="{}" />
 		<!--componentNames => Names of the fluid components-->
-		<xsd:attribute name="componentNames" type="string_array" default="" />
+		<xsd:attribute name="componentNames" type="string_array" default="{}" />
 		<!--datumElevation => Datum elevation [m]-->
 		<xsd:attribute name="datumElevation" type="real64" use="required" />
 		<!--datumPressure => Datum pressure [Pa]-->
@@ -1292,17 +1292,17 @@ stress - traction is applied to the faces as specified by the inner product of i
 		<!--expression => Composite math expression-->
 		<xsd:attribute name="expression" type="string" default="" />
 		<!--functionNames => List of source functions. The order must match the variableNames argument.-->
-		<xsd:attribute name="functionNames" type="string_array" default="" />
+		<xsd:attribute name="functionNames" type="string_array" default="{}" />
 		<!--inputVarNames => Name of fields are input to function.-->
-		<xsd:attribute name="inputVarNames" type="groupNameRef_array" default="" />
+		<xsd:attribute name="inputVarNames" type="groupNameRef_array" default="{}" />
 		<!--variableNames => List of variables in expression-->
-		<xsd:attribute name="variableNames" type="groupNameRef_array" default="" />
+		<xsd:attribute name="variableNames" type="groupNameRef_array" default="{}" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="MultivariableTableFunctionType">
 		<!--inputVarNames => Name of fields are input to function.-->
-		<xsd:attribute name="inputVarNames" type="groupNameRef_array" default="" />
+		<xsd:attribute name="inputVarNames" type="groupNameRef_array" default="{}" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -1310,7 +1310,7 @@ stress - traction is applied to the faces as specified by the inner product of i
 		<!--expression => Symbolic math expression-->
 		<xsd:attribute name="expression" type="string" use="required" />
 		<!--inputVarNames => Name of fields are input to function.-->
-		<xsd:attribute name="inputVarNames" type="groupNameRef_array" default="" />
+		<xsd:attribute name="inputVarNames" type="groupNameRef_array" default="{}" />
 		<!--variableNames => List of variables in expression.  The order must match the evaluate argument-->
 		<xsd:attribute name="variableNames" type="groupNameRef_array" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
@@ -1322,7 +1322,7 @@ stress - traction is applied to the faces as specified by the inner product of i
 		<!--coordinates => Coordinates inputs for 1D tables-->
 		<xsd:attribute name="coordinates" type="real64_array" default="{0}" />
 		<!--inputVarNames => Name of fields are input to function.-->
-		<xsd:attribute name="inputVarNames" type="groupNameRef_array" default="" />
+		<xsd:attribute name="inputVarNames" type="groupNameRef_array" default="{}" />
 		<!--interpolation => Interpolation method. Valid options:
 * linear
 * nearest
@@ -1650,11 +1650,11 @@ stress - traction is applied to the faces as specified by the inner product of i
 			</xsd:element>
 		</xsd:choice>
 		<!--faceBlocks => For multi-block files, names of the face mesh block.-->
-		<xsd:attribute name="faceBlocks" type="groupNameRef_array" default="" />
+		<xsd:attribute name="faceBlocks" type="groupNameRef_array" default="{}" />
 		<!--fieldNamesInGEOSX => Names of the volumic fields in GEOSX to import into-->
-		<xsd:attribute name="fieldNamesInGEOSX" type="groupNameRef_array" default="" />
+		<xsd:attribute name="fieldNamesInGEOSX" type="groupNameRef_array" default="{}" />
 		<!--fieldsToImport => Volumic fields to be imported from the external mesh file-->
-		<xsd:attribute name="fieldsToImport" type="groupNameRef_array" default="" />
+		<xsd:attribute name="fieldsToImport" type="groupNameRef_array" default="{}" />
 		<!--file => Path to the mesh file-->
 		<xsd:attribute name="file" type="path" use="required" />
 		<!--logLevel => Log level-->
@@ -1662,7 +1662,7 @@ stress - traction is applied to the faces as specified by the inner product of i
 		<!--mainBlockName => For multi-block files, name of the 3d mesh block.-->
 		<xsd:attribute name="mainBlockName" type="groupNameRef" default="main" />
 		<!--nodesetNames => Names of the VTK nodesets to import-->
-		<xsd:attribute name="nodesetNames" type="groupNameRef_array" default="" />
+		<xsd:attribute name="nodesetNames" type="groupNameRef_array" default="{}" />
 		<!--partitionMethod => Method (library) used to partition the mesh-->
 		<xsd:attribute name="partitionMethod" type="geos_vtk_PartitionMethod" default="parmetis" />
 		<!--partitionRefinement => Number of partitioning refinement iterations (defaults to 1, recommended value).A value of 0 disables graph partitioning and keeps simple kd-tree partitions (not recommended). Values higher than 1 may lead to slightly improved partitioning, but yield diminishing returns.-->
@@ -1672,9 +1672,9 @@ stress - traction is applied to the faces as specified by the inner product of i
 		<!--scale => Scale the coordinates of the vertices by given scale factors (after translation)-->
 		<xsd:attribute name="scale" type="R1Tensor" default="{1,1,1}" />
 		<!--surfacicFieldsInGEOSX => Names of the surfacic fields in GEOSX to import into-->
-		<xsd:attribute name="surfacicFieldsInGEOSX" type="groupNameRef_array" default="" />
+		<xsd:attribute name="surfacicFieldsInGEOSX" type="groupNameRef_array" default="{}" />
 		<!--surfacicFieldsToImport => Surfacic fields to be imported from the external mesh file-->
-		<xsd:attribute name="surfacicFieldsToImport" type="groupNameRef_array" default="" />
+		<xsd:attribute name="surfacicFieldsToImport" type="groupNameRef_array" default="{}" />
 		<!--translate => Translate the coordinates of the vertices by a given vector (prior to scaling)-->
 		<xsd:attribute name="translate" type="R1Tensor" default="{0,0,0}" />
 		<!--useGlobalIds => Controls the use of global IDs in the input file for cells and points. If set to 0 (default value), the GlobalId arrays in the input mesh are used if available, and generated otherwise. If set to a negative value, the GlobalId arrays in the input mesh are not used, and generated global Ids are automatically generated. If set to a positive value, the GlobalId arrays in the input mesh are used and required, and the simulation aborts if they are not available-->
@@ -2026,7 +2026,7 @@ the relative residual norm satisfies:
 		<!--childDirectory => Child directory path-->
 		<xsd:attribute name="childDirectory" type="string" default="" />
 		<!--fieldNames => Names of the fields to output. If this attribute is specified, GEOSX outputs all (and only) the fields specified by the user, regardless of their plotLevel-->
-		<xsd:attribute name="fieldNames" type="groupNameRef_array" default="" />
+		<xsd:attribute name="fieldNames" type="groupNameRef_array" default="{}" />
 		<!--onlyPlotSpecifiedFieldNames => If this flag is equal to 1, then we only plot the fields listed in `fieldNames`. Otherwise, we plot all the fields with the required `plotLevel`, plus the fields listed in `fieldNames`-->
 		<xsd:attribute name="onlyPlotSpecifiedFieldNames" type="integer" default="0" />
 		<!--parallelThreads => Number of plot files.-->
@@ -2064,11 +2064,11 @@ the relative residual norm satisfies:
 		<!--childDirectory => Child directory path-->
 		<xsd:attribute name="childDirectory" type="string" default="" />
 		<!--fieldNames => Names of the fields to output. If this attribute is specified, GEOSX outputs all the fields specified by the user, regardless of their `plotLevel`-->
-		<xsd:attribute name="fieldNames" type="groupNameRef_array" default="" />
+		<xsd:attribute name="fieldNames" type="groupNameRef_array" default="{}" />
 		<!--format => Output data format.  Valid options: ``binary``, ``ascii``-->
 		<xsd:attribute name="format" type="geos_vtk_VTKOutputMode" default="binary" />
 		<!--levelNames => Names of mesh levels to output.-->
-		<xsd:attribute name="levelNames" type="string_array" default="" />
+		<xsd:attribute name="levelNames" type="string_array" default="{}" />
 		<!--logLevel => Log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--onlyPlotSpecifiedFieldNames => If this flag is equal to 1, then we only plot the fields listed in `fieldNames`. Otherwise, we plot all the fields with the required `plotLevel`, plus the fields listed in `fieldNames`-->
@@ -2487,7 +2487,7 @@ the relative residual norm satisfies:
 		<!--stabilizationMultiplier => Constant multiplier of stabilization strength.-->
 		<xsd:attribute name="stabilizationMultiplier" type="real64" default="1" />
 		<!--stabilizationRegionNames => Regions where stabilization is applied.-->
-		<xsd:attribute name="stabilizationRegionNames" type="groupNameRef_array" default="" />
+		<xsd:attribute name="stabilizationRegionNames" type="groupNameRef_array" default="{}" />
 		<!--stabilizationType => Stabilization type. Options are:
 None - Add no stabilization to mass equation,
 Global - Add stabilization to all faces,
@@ -2845,7 +2845,7 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		<!--stabilizationMultiplier => Constant multiplier of stabilization strength.-->
 		<xsd:attribute name="stabilizationMultiplier" type="real64" default="1" />
 		<!--stabilizationRegionNames => Regions where stabilization is applied.-->
-		<xsd:attribute name="stabilizationRegionNames" type="groupNameRef_array" default="" />
+		<xsd:attribute name="stabilizationRegionNames" type="groupNameRef_array" default="{}" />
 		<!--stabilizationType => Stabilization type. Options are:
 None - Add no stabilization to mass equation,
 Global - Add stabilization to all faces,
@@ -2986,7 +2986,7 @@ Local - Add stabilization only to interiors of macro elements.-->
 		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
 		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
 		<!--componentNames => List of component names-->
-		<xsd:attribute name="componentNames" type="string_array" default="" />
+		<xsd:attribute name="componentNames" type="string_array" default="{}" />
 		<!--discretization => Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` discretization should be specified.-->
 		<xsd:attribute name="discretization" type="groupNameRef" use="required" />
 		<!--enableEnergyBalance => Enable energy balance calculation and temperature degree of freedom-->
@@ -3006,7 +3006,7 @@ Local - Add stabilization only to interiors of macro elements.-->
 		<!--numPhases => Number of phases-->
 		<xsd:attribute name="numPhases" type="integer" use="required" />
 		<!--phaseNames => List of fluid phases-->
-		<xsd:attribute name="phaseNames" type="groupNameRef_array" default="" />
+		<xsd:attribute name="phaseNames" type="groupNameRef_array" default="{}" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="groupNameRef_array" use="required" />
 		<!--transMultExp => Exponent of dynamic transmissibility multiplier-->
@@ -3535,7 +3535,7 @@ Local - Add stabilization only to interiors of macro elements.-->
 		<!--onlyOnSetChange => Whether or not to only collect when the collected sets of indices change in any way.-->
 		<xsd:attribute name="onlyOnSetChange" type="integer" default="0" />
 		<!--setNames => The set(s) for which to retrieve data.-->
-		<xsd:attribute name="setNames" type="groupNameRef_array" default="" />
+		<xsd:attribute name="setNames" type="groupNameRef_array" default="{}" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -3754,15 +3754,15 @@ Local - Add stabilization only to interiors of macro elements.-->
 		<!--componentMolarWeight => Component molar weights-->
 		<xsd:attribute name="componentMolarWeight" type="real64_array" use="required" />
 		<!--componentNames => List of component names-->
-		<xsd:attribute name="componentNames" type="string_array" default="" />
+		<xsd:attribute name="componentNames" type="string_array" default="{}" />
 		<!--hydrocarbonFormationVolFactorTableNames => List of formation volume factor TableFunction names from the Functions block. 
 The user must provide one TableFunction per hydrocarbon phase, in the order provided in "phaseNames". 
 For instance, if "oil" is before "gas" in "phaseNames", the table order should be: oilTableName, gasTableName-->
-		<xsd:attribute name="hydrocarbonFormationVolFactorTableNames" type="groupNameRef_array" default="" />
+		<xsd:attribute name="hydrocarbonFormationVolFactorTableNames" type="groupNameRef_array" default="{}" />
 		<!--hydrocarbonViscosityTableNames => List of viscosity TableFunction names from the Functions block. 
 The user must provide one TableFunction per hydrocarbon phase, in the order provided in "phaseNames". 
 For instance, if "oil" is before "gas" in "phaseNames", the table order should be: oilTableName, gasTableName-->
-		<xsd:attribute name="hydrocarbonViscosityTableNames" type="groupNameRef_array" default="" />
+		<xsd:attribute name="hydrocarbonViscosityTableNames" type="groupNameRef_array" default="{}" />
 		<!--phaseNames => List of fluid phases-->
 		<xsd:attribute name="phaseNames" type="groupNameRef_array" use="required" />
 		<!--surfaceDensities => List of surface mass densities for each phase-->
@@ -3852,13 +3852,13 @@ The expected format is "{ waterMax, oilMax }", in that order-->
 		<!--componentMolarWeight => Component molar weights-->
 		<xsd:attribute name="componentMolarWeight" type="real64_array" default="{0}" />
 		<!--componentNames => List of component names-->
-		<xsd:attribute name="componentNames" type="string_array" default="" />
+		<xsd:attribute name="componentNames" type="string_array" default="{}" />
 		<!--flashModelParaFile => Name of the file defining the parameters of the flash model-->
 		<xsd:attribute name="flashModelParaFile" type="path" use="required" />
 		<!--logLevel => Log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--phaseNames => List of fluid phases-->
-		<xsd:attribute name="phaseNames" type="groupNameRef_array" default="" />
+		<xsd:attribute name="phaseNames" type="groupNameRef_array" default="{}" />
 		<!--phasePVTParaFiles => Names of the files defining the parameters of the viscosity and density models-->
 		<xsd:attribute name="phasePVTParaFiles" type="path_array" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
@@ -3870,13 +3870,13 @@ The expected format is "{ waterMax, oilMax }", in that order-->
 		<!--componentMolarWeight => Component molar weights-->
 		<xsd:attribute name="componentMolarWeight" type="real64_array" default="{0}" />
 		<!--componentNames => List of component names-->
-		<xsd:attribute name="componentNames" type="string_array" default="" />
+		<xsd:attribute name="componentNames" type="string_array" default="{}" />
 		<!--flashModelParaFile => Name of the file defining the parameters of the flash model-->
 		<xsd:attribute name="flashModelParaFile" type="path" use="required" />
 		<!--logLevel => Log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--phaseNames => List of fluid phases-->
-		<xsd:attribute name="phaseNames" type="groupNameRef_array" default="" />
+		<xsd:attribute name="phaseNames" type="groupNameRef_array" default="{}" />
 		<!--phasePVTParaFiles => Names of the files defining the parameters of the viscosity and density models-->
 		<xsd:attribute name="phasePVTParaFiles" type="path_array" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
@@ -3888,13 +3888,13 @@ The expected format is "{ waterMax, oilMax }", in that order-->
 		<!--componentMolarWeight => Component molar weights-->
 		<xsd:attribute name="componentMolarWeight" type="real64_array" default="{0}" />
 		<!--componentNames => List of component names-->
-		<xsd:attribute name="componentNames" type="string_array" default="" />
+		<xsd:attribute name="componentNames" type="string_array" default="{}" />
 		<!--flashModelParaFile => Name of the file defining the parameters of the flash model-->
 		<xsd:attribute name="flashModelParaFile" type="path" use="required" />
 		<!--logLevel => Log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--phaseNames => List of fluid phases-->
-		<xsd:attribute name="phaseNames" type="groupNameRef_array" default="" />
+		<xsd:attribute name="phaseNames" type="groupNameRef_array" default="{}" />
 		<!--phasePVTParaFiles => Names of the files defining the parameters of the viscosity and density models-->
 		<xsd:attribute name="phasePVTParaFiles" type="path_array" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
@@ -3906,13 +3906,13 @@ The expected format is "{ waterMax, oilMax }", in that order-->
 		<!--componentMolarWeight => Component molar weights-->
 		<xsd:attribute name="componentMolarWeight" type="real64_array" default="{0}" />
 		<!--componentNames => List of component names-->
-		<xsd:attribute name="componentNames" type="string_array" default="" />
+		<xsd:attribute name="componentNames" type="string_array" default="{}" />
 		<!--flashModelParaFile => Name of the file defining the parameters of the flash model-->
 		<xsd:attribute name="flashModelParaFile" type="path" use="required" />
 		<!--logLevel => Log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--phaseNames => List of fluid phases-->
-		<xsd:attribute name="phaseNames" type="groupNameRef_array" default="" />
+		<xsd:attribute name="phaseNames" type="groupNameRef_array" default="{}" />
 		<!--phasePVTParaFiles => Names of the files defining the parameters of the viscosity and density models-->
 		<xsd:attribute name="phasePVTParaFiles" type="path_array" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
@@ -4265,15 +4265,15 @@ The expected format is "{ waterMax, oilMax }", in that order-->
 		<!--componentMolarWeight => Component molar weights-->
 		<xsd:attribute name="componentMolarWeight" type="real64_array" use="required" />
 		<!--componentNames => List of component names-->
-		<xsd:attribute name="componentNames" type="string_array" default="" />
+		<xsd:attribute name="componentNames" type="string_array" default="{}" />
 		<!--hydrocarbonFormationVolFactorTableNames => List of formation volume factor TableFunction names from the Functions block. 
 The user must provide one TableFunction per hydrocarbon phase, in the order provided in "phaseNames". 
 For instance, if "oil" is before "gas" in "phaseNames", the table order should be: oilTableName, gasTableName-->
-		<xsd:attribute name="hydrocarbonFormationVolFactorTableNames" type="groupNameRef_array" default="" />
+		<xsd:attribute name="hydrocarbonFormationVolFactorTableNames" type="groupNameRef_array" default="{}" />
 		<!--hydrocarbonViscosityTableNames => List of viscosity TableFunction names from the Functions block. 
 The user must provide one TableFunction per hydrocarbon phase, in the order provided in "phaseNames". 
 For instance, if "oil" is before "gas" in "phaseNames", the table order should be: oilTableName, gasTableName-->
-		<xsd:attribute name="hydrocarbonViscosityTableNames" type="groupNameRef_array" default="" />
+		<xsd:attribute name="hydrocarbonViscosityTableNames" type="groupNameRef_array" default="{}" />
 		<!--phaseNames => List of fluid phases-->
 		<xsd:attribute name="phaseNames" type="groupNameRef_array" use="required" />
 		<!--surfaceDensities => List of surface mass densities for each phase-->
@@ -4837,7 +4837,7 @@ If you want to do a three-phase simulation, please use instead wettingIntermedia
 	</xsd:complexType>
 	<xsd:complexType name="ProppantSlurryFluidType">
 		<!--componentNames => List of fluid component names-->
-		<xsd:attribute name="componentNames" type="string_array" default="" />
+		<xsd:attribute name="componentNames" type="string_array" default="{}" />
 		<!--compressibility => Fluid compressibility-->
 		<xsd:attribute name="compressibility" type="real64" default="0" />
 		<!--defaultComponentDensity => Default value for the component density.-->
@@ -4881,9 +4881,9 @@ If you want to do a three-phase simulation, please use instead wettingIntermedia
 		<!--componentMolarWeight => Component molar weights-->
 		<xsd:attribute name="componentMolarWeight" type="real64_array" default="{0}" />
 		<!--componentNames => List of component names-->
-		<xsd:attribute name="componentNames" type="string_array" default="" />
+		<xsd:attribute name="componentNames" type="string_array" default="{}" />
 		<!--phaseNames => List of fluid phases-->
-		<xsd:attribute name="phaseNames" type="groupNameRef_array" default="" />
+		<xsd:attribute name="phaseNames" type="groupNameRef_array" default="{}" />
 		<!--phasePVTParaFiles => Names of the files defining the parameters of the viscosity and density models-->
 		<xsd:attribute name="phasePVTParaFiles" type="path_array" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
@@ -4895,9 +4895,9 @@ If you want to do a three-phase simulation, please use instead wettingIntermedia
 		<!--componentMolarWeight => Component molar weights-->
 		<xsd:attribute name="componentMolarWeight" type="real64_array" default="{0}" />
 		<!--componentNames => List of component names-->
-		<xsd:attribute name="componentNames" type="string_array" default="" />
+		<xsd:attribute name="componentNames" type="string_array" default="{}" />
 		<!--phaseNames => List of fluid phases-->
-		<xsd:attribute name="phaseNames" type="groupNameRef_array" default="" />
+		<xsd:attribute name="phaseNames" type="groupNameRef_array" default="{}" />
 		<!--phasePVTParaFiles => Names of the files defining the parameters of the viscosity and density models-->
 		<xsd:attribute name="phasePVTParaFiles" type="path_array" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
@@ -4952,7 +4952,7 @@ If you want to do a three-phase simulation, please use instead wettingIntermedia
 The expected format is "{ nonWettingPhaseRelPermTableName, intermediatePhaseRelPermTableName }", in that order
 Note that this input is only used for three-phase flow.
 If you want to do a two-phase simulation, please use instead wettingNonWettingRelPermTableNames to specify the table names-->
-		<xsd:attribute name="nonWettingIntermediateRelPermTableNames" type="groupNameRef_array" default="" />
+		<xsd:attribute name="nonWettingIntermediateRelPermTableNames" type="groupNameRef_array" default="{}" />
 		<!--phaseNames => List of fluid phases-->
 		<xsd:attribute name="phaseNames" type="groupNameRef_array" use="required" />
 		<!--threePhaseInterpolator => Type of Three phase interpolator.Valid options 
@@ -4963,12 +4963,12 @@ If you want to do a two-phase simulation, please use instead wettingNonWettingRe
 The expected format is "{ wettingPhaseRelPermTableName, intermediatePhaseRelPermTableName }", in that order
 Note that this input is only used for three-phase flow.
 If you want to do a two-phase simulation, please use instead wettingNonWettingRelPermTableNames to specify the table names-->
-		<xsd:attribute name="wettingIntermediateRelPermTableNames" type="groupNameRef_array" default="" />
+		<xsd:attribute name="wettingIntermediateRelPermTableNames" type="groupNameRef_array" default="{}" />
 		<!--wettingNonWettingRelPermTableNames => List of relative permeability tables for the pair (wetting phase, non-wetting phase)
 The expected format is "{ wettingPhaseRelPermTableName, nonWettingPhaseRelPermTableName }", in that order
 Note that this input is only used for two-phase flow.
 If you want to do a three-phase simulation, please use instead wettingIntermediateRelPermTableNames and nonWettingIntermediateRelPermTableNames to specify the table names-->
-		<xsd:attribute name="wettingNonWettingRelPermTableNames" type="groupNameRef_array" default="" />
+		<xsd:attribute name="wettingNonWettingRelPermTableNames" type="groupNameRef_array" default="{}" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -4982,17 +4982,17 @@ If you want to do a three-phase simulation, please use instead wettingIntermedia
 The expected format is "{ nonWettingPhaseRelPermTableName, intermediatePhaseRelPermTableName }", in that order
 Note that this input is only used for three-phase flow.
 If you want to do a two-phase simulation, please use instead drainageWettingNonWettingRelPermTableNames to specify the table names-->
-		<xsd:attribute name="drainageNonWettingIntermediateRelPermTableNames" type="groupNameRef_array" default="" />
+		<xsd:attribute name="drainageNonWettingIntermediateRelPermTableNames" type="groupNameRef_array" default="{}" />
 		<!--drainageWettingIntermediateRelPermTableNames => List of drainage relative permeability tables for the pair (wetting phase, intermediate phase)
 The expected format is "{ wettingPhaseRelPermTableName, intermediatePhaseRelPermTableName }", in that order
 Note that this input is only used for three-phase flow.
 If you want to do a two-phase simulation, please use instead drainageWettingNonWettingRelPermTableNames to specify the table names-->
-		<xsd:attribute name="drainageWettingIntermediateRelPermTableNames" type="groupNameRef_array" default="" />
+		<xsd:attribute name="drainageWettingIntermediateRelPermTableNames" type="groupNameRef_array" default="{}" />
 		<!--drainageWettingNonWettingRelPermTableNames => List of drainage relative permeability tables for the pair (wetting phase, non-wetting phase)
 The expected format is "{ wettingPhaseRelPermTableName, nonWettingPhaseRelPermTableName }", in that order
 Note that this input is only used for two-phase flow.
 If you want to do a three-phase simulation, please use instead drainageWettingIntermediateRelPermTableNames and drainageNonWettingIntermediateRelPermTableNames to specify the table names-->
-		<xsd:attribute name="drainageWettingNonWettingRelPermTableNames" type="groupNameRef_array" default="" />
+		<xsd:attribute name="drainageWettingNonWettingRelPermTableNames" type="groupNameRef_array" default="{}" />
 		<!--imbibitionNonWettingRelPermTableName => Imbibition relative permeability table name for the non-wetting phase.
 To neglect hysteresis on this phase, just use the same table name for the drainage and imbibition curves-->
 		<xsd:attribute name="imbibitionNonWettingRelPermTableName" type="groupNameRef" default="" />
@@ -5258,7 +5258,7 @@ The expected format is "{ waterMax, oilMax }", in that order-->
 		<!--meshBody => Mesh body that contains this region-->
 		<xsd:attribute name="meshBody" type="string" default="" />
 		<!--particleBlocks => (no description available)-->
-		<xsd:attribute name="particleBlocks" type="string_array" default="" />
+		<xsd:attribute name="particleBlocks" type="string_array" default="{}" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>

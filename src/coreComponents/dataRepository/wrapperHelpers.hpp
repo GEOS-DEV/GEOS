@@ -677,6 +677,12 @@ int numArrayDims( ArrayView< T const, NDIM, USD > const & GEOS_UNUSED_PARAM( var
 }
 
 template< typename T >
+int numArrayDims( std::vector< T  > const & GEOS_UNUSED_PARAM( var ) )
+{
+  return 1;
+}
+
+template< typename T >
 int numArrayDims( T const & GEOS_UNUSED_PARAM( var ) )
 {
   return 0;

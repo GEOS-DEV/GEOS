@@ -5,8 +5,8 @@ Name                                         Type               Default  Descrip
 ============================================ ================== ======== ==================================================================================================== 
 bcApplicationTableName                       groupNameRef                Name of table that specifies the on/off application of the boundary condition.                       
 beginTime                                    real64             -1e+99   Time at which the boundary condition will start being applied.                                       
-componentFractionVsElevationTableNames       groupNameRef_array          Names of the tables specifying the (component fraction vs elevation) relationship for each component 
-componentNames                               string_array                Names of the fluid components                                                                        
+componentFractionVsElevationTableNames       groupNameRef_array {}       Names of the tables specifying the (component fraction vs elevation) relationship for each component 
+componentNames                               string_array       {}       Names of the fluid components                                                                        
 datumElevation                               real64             required Datum elevation [m]                                                                                  
 datumPressure                                real64             required Datum pressure [Pa]                                                                                  
 direction                                    R1Tensor           {0,0,0}  Direction to apply boundary condition to.                                                            
