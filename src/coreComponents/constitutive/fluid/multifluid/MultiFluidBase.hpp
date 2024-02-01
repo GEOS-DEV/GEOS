@@ -1108,8 +1108,8 @@ MultiFluidBase::KernelWrapper::
   integer const numComp = numComponents();
   integer const numPhase = numPhases();
 
-  // totalDensity.value = 0.0;
-  // LvArray::forValuesInSlice( totalDensity.derivs, []( real64 & val ){ val = 0.0; } );
+  totalDensity.value = 0.0;
+  LvArray::forValuesInSlice( totalDensity.derivs, []( real64 & val ){ val = 0.0; } );
 
   // 1. Sum mass/molar fraction/density ratio over all phases to get the inverse of density
   for( integer ip = 0; ip < numPhase; ++ip )

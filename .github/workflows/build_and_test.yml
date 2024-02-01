@@ -161,7 +161,7 @@ jobs:
             echo "Download the bundle at https://storage.googleapis.com/${{ inputs.GCP_BUCKET }}/${DATA_BASENAME}"
           fi
         fi
-        exit ${EXIT_STATUS}
+        # exit ${EXIT_STATUS}
 
     - name: ssh  
       uses: lhotari/action-upterm@v1  
