@@ -111,47 +111,47 @@ protected:
     constexpr static char const * initialFractureStateString() { return "initialFractureState"; }
   };
 
-template< typename LAMBDA >
-void forFractureRegionOnMeshTargets( Group const & meshBodies, LAMBDA && lambda ) const
-{
-  forDiscretizationOnMeshTargets( meshBodies,
-                                  [&]( string const,
-                                       MeshLevel const & mesh,
-                                       arrayView1d< string const > const )
+  template< typename LAMBDA >
+  void forFractureRegionOnMeshTargets( Group const & meshBodies, LAMBDA && lambda ) const
   {
-    ElementRegionManager const & elemManager = mesh.getElemManager();
-
-    std::vector< string > fractureRegionNames { getFractureRegionName() };
-
-    elemManager.forElementRegions< SurfaceElementRegion >( fractureRegionNames,
-                                                           [&] ( localIndex const,
-                                                                 SurfaceElementRegion const & region )
+    forDiscretizationOnMeshTargets( meshBodies,
+                                    [&]( string const,
+                                         MeshLevel const & mesh,
+                                         arrayView1d< string const > const )
     {
-      lambda( region );
-    } );
-  } );
-}
+      ElementRegionManager const & elemManager = mesh.getElemManager();
 
-template< typename LAMBDA >
-void forFractureRegionOnMeshTargets( Group & meshBodies, LAMBDA && lambda ) const
-{
-  forDiscretizationOnMeshTargets( meshBodies,
-                                  [&]( string const,
-                                       MeshLevel & mesh,
-                                       arrayView1d< string const > const )
+      std::vector< string > fractureRegionNames { getFractureRegionName() };
+
+      elemManager.forElementRegions< SurfaceElementRegion >( fractureRegionNames,
+                                                             [&] ( localIndex const,
+                                                                   SurfaceElementRegion const & region )
+      {
+        lambda( region );
+      } );
+    } );
+  }
+
+  template< typename LAMBDA >
+  void forFractureRegionOnMeshTargets( Group & meshBodies, LAMBDA && lambda ) const
   {
-    ElementRegionManager & elemManager = mesh.getElemManager();
-
-    std::vector< string >  fractureRegionNames { getFractureRegionName() };
-
-    elemManager.forElementRegions< SurfaceElementRegion >( fractureRegionNames,
-                                                           [&] ( localIndex const,
-                                                                 SurfaceElementRegion & region )
+    forDiscretizationOnMeshTargets( meshBodies,
+                                    [&]( string const,
+                                         MeshLevel & mesh,
+                                         arrayView1d< string const > const )
     {
-      lambda( region );
+      ElementRegionManager & elemManager = mesh.getElemManager();
+
+      std::vector< string >  fractureRegionNames { getFractureRegionName() };
+
+      elemManager.forElementRegions< SurfaceElementRegion >( fractureRegionNames,
+                                                             [&] ( localIndex const,
+                                                                   SurfaceElementRegion & region )
+      {
+        lambda( region );
+      } );
     } );
-  } );
-}
+  }
 };
 
 } /* namespace geos */

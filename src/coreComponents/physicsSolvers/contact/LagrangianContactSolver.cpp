@@ -78,17 +78,9 @@ void LagrangianContactSolver::registerDataOnMesh( Group & meshBodies )
 
   using namespace fields::contact;
 
-  forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
-                                                    MeshLevel & mesh,
-                                                    arrayView1d< string const > const & regionNames )
+  forFractureRegionOnMeshTargets( meshBodies, [&] ( SurfaceElementRegion & fractureRegion )
   {
-
-    ElementRegionManager & elemManager = mesh.getElemManager();
-
-    SurfaceElementRegion & fractureRegion = elemManager.getRegion< SurfaceElementRegion >( getFractureRegionName() );
     fractureRegion.forElementSubRegions< SurfaceElementSubRegion >( [&]( SurfaceElementSubRegion & subRegion )
-//    fractureRegion.forElementSubRegions< FaceElementSubRegion >( regionNames, [&] ( localIndex const,
-//                                                                                 SurfaceElementSubRegion & subRegion )
     {
       subRegion.registerWrapper< array3d< real64 > >( viewKeyStruct::rotationMatrixString() ).
         setPlotLevel( PlotLevel::NOPLOT ).
@@ -125,12 +117,18 @@ void LagrangianContactSolver::registerDataOnMesh( Group & meshBodies )
 
     } );
 
-    FaceManager & faceManager = mesh.getFaceManager();
-    faceManager.registerWrapper< array1d< real64 > >( viewKeyStruct::transMultiplierString() ).
-      setApplyDefaultValue( 1.0 ).
-      setPlotLevel( PlotLevel::LEVEL_0 ).
-      setRegisteringObjects( this->getName() ).
-      setDescription( "An array that holds the permeability transmissibility multipliers" );
+    forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
+                                                      MeshLevel & mesh,
+                                                      arrayView1d< string const > const & )
+    {
+      FaceManager & faceManager = mesh.getFaceManager();
+
+      faceManager.registerWrapper< array1d< real64 > >( viewKeyStruct::transMultiplierString() ).
+        setApplyDefaultValue( 1.0 ).
+        setPlotLevel( PlotLevel::LEVEL_0 ).
+        setRegisteringObjects( this->getName() ).
+        setDescription( "An array that holds the permeability transmissibility multipliers" );
+    } );
 
   } );
 }

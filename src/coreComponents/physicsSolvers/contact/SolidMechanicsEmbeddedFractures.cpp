@@ -181,13 +181,14 @@ void SolidMechanicsEmbeddedFractures::setupDofs( DomainPartition const & domain,
                                                                   arrayView1d< string const > const & regionNames )
     {
       array1d< string > regions;
-      ElementRegionManager const & elementRegionManager = meshLevel.getElemManager();
-      elementRegionManager.forElementRegions< SurfaceElementRegion >( regionNames,
-                                                                      [&]( localIndex const,
-                                                                           SurfaceElementRegion const & region )
-      {
-        regions.emplace_back( region.getName() );
-      } );
+      regions.emplace_back(getFractureRegionName());
+//      ElementRegionManager const & elementRegionManager = meshLevel.getElemManager();
+//      elementRegionManager.forElementRegions< SurfaceElementRegion >( regionNames,
+//                                                                      [&]( localIndex const,
+//                                                                           SurfaceElementRegion const & region )
+//      {
+//        regions.emplace_back( region.getName() );
+//      } );
       meshTargets[std::make_pair( meshBodyName, meshLevel.getName())] = std::move( regions );
     } );
 
@@ -201,6 +202,7 @@ void SolidMechanicsEmbeddedFractures::setupDofs( DomainPartition const & domain,
                             DofManager::Connector::Elem );
   }
 }
+
 void SolidMechanicsEmbeddedFractures::setupSystem( DomainPartition & domain,
                                                    DofManager & dofManager,
                                                    CRSMatrix< real64, globalIndex > & localMatrix,
@@ -565,13 +567,10 @@ real64 SolidMechanicsEmbeddedFractures::calculateResidualNorm( real64 const & ti
     real64 globalResidualNorm[2] = {0, 0};
 
     // Fracture residual
-    forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                                  MeshLevel const & mesh,
-                                                                  arrayView1d< string const > const & regionNames )
+    forFractureRegionOnMeshTargets( domain.getMeshBodies(), [&] ( SurfaceElementRegion const & fractureRegion )
     {
-      mesh.getElemManager().forElementSubRegions< EmbeddedSurfaceSubRegion >( regionNames, [&]( localIndex const,
-                                                                                                EmbeddedSurfaceSubRegion const & subRegion )
-      {
+      fractureRegion.forElementSubRegions< SurfaceElementSubRegion >( [&]( SurfaceElementSubRegion const & subRegion )
+                                                                      {
         arrayView1d< globalIndex const > const &
         dofNumber = subRegion.getReference< array1d< globalIndex > >( jumpDofKey );
         arrayView1d< integer const > const & ghostRank = subRegion.ghostRank();
