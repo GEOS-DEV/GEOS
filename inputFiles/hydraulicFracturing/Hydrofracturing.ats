@@ -169,8 +169,9 @@ curvecheck_params_base = {}
 curvecheck_params_base["filename"] = "hydrofracture_source_curves.hdf5"
 curvecheck_params_base["tolerance"] = [1e-10, 1e-10]
 curvecheck_params_base["script_instructions"] = [[
-    "./hydrofractureCurveChecks.py", "tbd", "hydraulicAperture", "source"
-], ["./hydrofractureCurveChecks.py", "tbd", "pressure", "source"]]
+    "./scripts/hydrofractureCurveChecks.py", "tbd", "hydraulicAperture",
+    "source"
+], ["./scripts/hydrofractureCurveChecks.py", "tbd", "pressure", "source"]]
 curvecheck_params_base["curves"] = [["hydraulicAperture", "source"],
                                     ["pressure", "source"]]
 

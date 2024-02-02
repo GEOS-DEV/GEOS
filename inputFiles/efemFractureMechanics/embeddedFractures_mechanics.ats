@@ -8,7 +8,7 @@ curvecheck_params = {}
 curvecheck_params["filename"] = "displacementJump_embeddedFrac.hdf5"
 curvecheck_params["tolerance"] = [1e-5]
 curvecheck_params["script_instructions"] = [[
-    "./sneddonCurveChecks.py", "sneddon_curve_check_solution",
+    "./scripts/sneddonCurveChecks.py", "sneddon_curve_check_solution",
     "displacementJump"
 ]]
 curvecheck_params["curves"] = "displacementJump"
