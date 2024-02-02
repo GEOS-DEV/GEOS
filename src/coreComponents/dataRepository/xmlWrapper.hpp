@@ -391,6 +391,12 @@ stringToInputVariable( Array< T, NDIM, PERMUTATION > & array, string const & val
   LvArray::input::stringToArray( array, string( stringutilities::trimSpaces( value ) ) );
 }
 
+/**
+ * @brief Parse a string and fill a vector of strings with the value(s) in the string.
+ * @param[out] array the array to read values into
+ * @param[in]  value the string that contains the data to be parsed into target
+ * @param[in]  regex the regular expression used for validating the string value.
+ */
 void stringToInputVariable( std::vector< std::string > & array, string const & value, Regex const & regex );
 
 ///@}
