@@ -242,10 +242,12 @@ void DomainPartition::setupCommunications( bool use_nonblocking )
         {
           NodeManager & nodeManager = meshLevel.getNodeManager();
           FaceManager & faceManager = meshLevel.getFaceManager();
+          ElementRegionManager & elemManager = meshLevel.getElemManager();
 
           CommunicationTools::getInstance().setupGhosts( meshLevel, m_neighbors, use_nonblocking );
           faceManager.sortAllFaceNodes( nodeManager, meshLevel.getElemManager() );
           faceManager.computeGeometry( nodeManager );
+          elemManager.buildSets( nodeManager );
         }
         else if( !meshLevel.isShallowCopyOf( meshBody.getMeshLevels().getGroup< MeshLevel >( 0 )) )
         {
@@ -255,10 +257,12 @@ void DomainPartition::setupCommunications( bool use_nonblocking )
           }
           NodeManager & nodeManager = meshLevel.getNodeManager();
           FaceManager & faceManager = meshLevel.getFaceManager();
+          ElementRegionManager & elemManager = meshLevel.getElemManager();
 
           CommunicationTools::getInstance().findMatchedPartitionBoundaryObjects( faceManager, m_neighbors );
           CommunicationTools::getInstance().findMatchedPartitionBoundaryObjects( nodeManager, m_neighbors );
           CommunicationTools::getInstance().setupGhosts( meshLevel, m_neighbors, use_nonblocking );
+          elemManager.buildSets( nodeManager );
         }
         else
         {
