@@ -123,12 +123,14 @@ TestParams getSinglephaseXmlInput()
   </Constitutive>
 
   <FieldSpecifications>
+    <!-- The rates are positive, but we need negative values for injection (scale = -1) -->
     <SourceFlux name="sourceFlux"
                 objectPath="ElementRegions/reservoir"
                 component="1"
                 scale="-1"
                 functionName="FluxRate"
-                setNames="{ sourceBox }"/>
+                setNames="{ sourceBox }" />
+    <!-- sink is producing 4x source rate -->
     <SourceFlux name="sinkFlux"
                 objectPath="ElementRegions/reservoir"
                 component="1"
@@ -367,12 +369,14 @@ TestParams getMultiphaseXmlInput()
   </Constitutive>
 
   <FieldSpecifications>
+    <!-- The rates are positive, but we need negative values for injection (scale=-1) -->
     <SourceFlux name="sourceFlux"
                 objectPath="ElementRegions/reservoir"
                 component="1"
                 scale="-1"
                 functionName="FluxRate"
                 setNames="{ sourceBox }" />
+    <!-- sink is producing 4x source rate -->
     <SourceFlux name="sinkFlux"
                 objectPath="ElementRegions/reservoir"
                 component="1"
