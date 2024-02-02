@@ -214,19 +214,76 @@ void calculateCO2Solubility( string const & functionName,
   }
 }
 
+TableFunction const * getSolubilityTable( string const & tableName,
+                                          FunctionManager & functionManager )
+{
+  TableFunction * const table = functionManager.getGroupPointer< TableFunction >( tableName );
+  table->initializeFunction();
+  table->setDimUnits( { units::Pressure, units::TemperatureInC } );
+  table->setValueUnits( units::Solubility );
+  return table;
+}
+
+TableFunction const * makeSolubilityTable( array1d< real64_array > const & coords,
+                                           array1d< real64 > const & values,
+                                           string const & tableName,
+                                           FunctionManager & functionManager )
+{
+  TableFunction * const table = dynamicCast< TableFunction * >( functionManager.createChild( "TableFunction", tableName ) );
+  table->setTableCoordinates( coords, { units::Pressure, units::TemperatureInC } );
+  table->setTableValues( values, units::Solubility );
+  table->setInterpolationMethod( TableFunction::InterpolationType::Linear );
+  return table;
+}
+
+TableFunction const * makeZeroTable( string const & tableName,
+                                     FunctionManager & functionManager )
+{
+  if( functionManager.hasGroup< TableFunction >( tableName ) )
+  {
+    return getSolubilityTable( tableName, functionManager );
+  }
+  else
+  {
+    array1d< array1d< real64 > > coords( 2 );
+    for( integer dim = 0; dim < 2; ++dim )
+    {
+      coords[dim].emplace_back( -1.0e10 );
+      coords[dim].emplace_back( 1.0e10 );
+    }
+    array1d< real64 > values( 4 );
+    values.zero();
+
+    return makeSolubilityTable( coords, values, tableName, functionManager );
+  }
+}
+
 TableFunction const * makeSolubilityTable( string_array const & inputParams,
                                            string const & functionName,
                                            FunctionManager & functionManager )
 {
+  // Check the second argument
+  if( inputParams[1] == "Tables" )
+  {
+    string const inputTableName = inputParams[2];
+    if( inputTableName.empty())
+    {
+      return makeZeroTable( GEOS_FMT( "{}_zeroDissolution_table", CO2Solubility::catalogName() ), functionManager );
+    }
+    else
+    {
+      GEOS_THROW_IF( !functionManager.hasGroup< TableFunction >( inputTableName ),
+                     GEOS_FMT( "{}: Could not find TableFunction with name {}", functionName, inputTableName ),
+                     InputError );
+      return getSolubilityTable( inputTableName, functionManager );
+    }
+  }
+
   string const tableName = functionName + "_co2Dissolution_table";
 
   if( functionManager.hasGroup< TableFunction >( tableName ) )
   {
-    TableFunction * const solubilityTable = functionManager.getGroupPointer< TableFunction >( tableName );
-    solubilityTable->initializeFunction();
-    solubilityTable->setDimUnits( { units::Pressure, units::TemperatureInC } );
-    solubilityTable->setValueUnits( units::Solubility );
-    return solubilityTable;
+    return getSolubilityTable( tableName, functionManager );
   }
   else
   {
@@ -257,12 +314,7 @@ TableFunction const * makeSolubilityTable( string_array const & inputParams,
     array1d< real64 > values( tableCoords.nPressures() * tableCoords.nTemperatures() );
     calculateCO2Solubility( functionName, tolerance, tableCoords, salinity, values );
 
-    TableFunction * const solubilityTable = dynamicCast< TableFunction * >( functionManager.createChild( "TableFunction", tableName ) );
-    solubilityTable->setTableCoordinates( tableCoords.getCoords(),
-                                          { units::Pressure, units::TemperatureInC } );
-    solubilityTable->setTableValues( values, units::Solubility );
-    solubilityTable->setInterpolationMethod( TableFunction::InterpolationType::Linear );
-    return solubilityTable;
+    return makeSolubilityTable( tableCoords.getCoords(), values, tableName, functionManager );
   }
 }
 
@@ -270,15 +322,27 @@ TableFunction const * makeVapourisationTable( string_array const & inputParams,
                                               string const & functionName,
                                               FunctionManager & functionManager )
 {
+  if( inputParams[1] == "Tables" )
+  {
+    string const inputTableName = inputParams[3];
+    if( inputTableName.empty())
+    {
+      return makeZeroTable( GEOS_FMT( "{}_zeroDissolution_table", CO2Solubility::catalogName() ), functionManager );
+    }
+    else
+    {
+      GEOS_THROW_IF( !functionManager.hasGroup< TableFunction >( inputTableName ),
+                     GEOS_FMT( "{}: Could not find TableFunction with name {}", functionName, inputTableName ),
+                     InputError );
+      return getSolubilityTable( inputTableName, functionManager );
+    }
+  }
+
   string const tableName = functionName + "_waterVaporization_table";
 
   if( functionManager.hasGroup< TableFunction >( tableName ) )
   {
-    TableFunction * const vapourisationTable = functionManager.getGroupPointer< TableFunction >( tableName );
-    vapourisationTable->initializeFunction();
-    vapourisationTable->setDimUnits( { units::Pressure, units::TemperatureInC } );
-    vapourisationTable->setValueUnits( units::Solubility );
-    return vapourisationTable;
+    return getSolubilityTable( tableName, functionManager );
   }
   else
   {
@@ -290,12 +354,7 @@ TableFunction const * makeVapourisationTable( string_array const & inputParams,
     array1d< real64 > values( tableCoords.nPressures() * tableCoords.nTemperatures() );
     values.zero();
 
-    TableFunction * const vapourisationTable = dynamicCast< TableFunction * >( functionManager.createChild( "TableFunction", tableName ) );
-    vapourisationTable->setTableCoordinates( tableCoords.getCoords(),
-                                             { units::Pressure, units::TemperatureInC } );
-    vapourisationTable->setTableValues( values, units::Solubility );
-    vapourisationTable->setInterpolationMethod( TableFunction::InterpolationType::Linear );
-    return vapourisationTable;
+    return makeSolubilityTable( tableCoords.getCoords(), values, tableName, functionManager );
   }
 }
 
