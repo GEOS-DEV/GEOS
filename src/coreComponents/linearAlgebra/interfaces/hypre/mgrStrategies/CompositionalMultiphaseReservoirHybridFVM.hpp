@@ -102,8 +102,8 @@ public:
     m_levelFRelaxType[2]          = MGRFRelaxationType::jacobi;
     m_levelFRelaxIters[2]         = 1;
     m_levelInterpType[2]          = MGRInterpolationType::injection;
-    m_levelRestrictType[2]        = MGRRestrictionType::injection;
-    m_levelCoarseGridMethod[2]    = MGRCoarseGridMethod::cprLikeBlockDiag;
+    m_levelRestrictType[2]        = MGRRestrictionType::blockColLumped; // True-IMPES
+    m_levelCoarseGridMethod[2]    = MGRCoarseGridMethod::galerkinRAI;
     m_levelGlobalSmootherType[2]  = MGRGlobalSmootherType::none;
 
     // Level 3
