@@ -194,7 +194,7 @@ TEST_F( ElasticWaveEquationSEMTest, SeismoTrace )
   ASSERT_EQ( dasReceivers.size( 1 ), 10 );
   ASSERT_EQ( dasReceivers.size( 0 ), 11 );
 
-  // check seismo content. The signal values cannot be directly checked as the problem is too small.
+  // check das content. The signal values cannot be directly checked as the problem is too small.
   // Since the basis is linear, check that the seismograms are nonzero (for t>0) and the seismogram at the center is equal
   // to the average of the others.
   for( int i = 0; i < 11; i++ )
