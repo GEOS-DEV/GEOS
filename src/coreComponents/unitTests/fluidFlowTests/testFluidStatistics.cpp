@@ -39,18 +39,21 @@ struct TestParams
   integer sourceElementsCount = 0;
   integer sinkElementsCount = 0;
   integer totalElementsCount = 0;
-  std::vector< real64 > timestepSourceMassProd;
-  std::vector< real64 > timestepSinkMassProd;
-  real64 totalSourceMassProd = 0.0;
+  std::vector< real64 > sourceRates;
+  std::vector< real64 > sinkRates;
+  std::vector< real64 > sourceMassProd;
+  std::vector< real64 > sinkMassProd;
   real64 sourceMeanRate = 0.0;
-  real64 totalSinkMassProd = 0.0;
   real64 sinkMeanRate = 0.0;
+  real64 totalSourceMassProd = 0.0;
+  real64 totalSinkMassProd = 0.0;
   real64 totalMassProd = 0.0;
   real64 totalMeanRate = 0.0;
 };
 
 
 //////////////////////////////// SinglePhase Flux Statistics Test ////////////////////////////////
+
 
 TestParams getSinglephaseXmlInput()
 {
@@ -64,11 +67,13 @@ TestParams getSinglephaseXmlInput()
     <SinglePhaseFVM name="testSolver"
                     discretization="singlePhaseTPFA"
                     targetRegions="{ reservoir }" >
+
       <NonlinearSolverParameters newtonTol="1.0e-6"
                                  newtonMaxIter="8" />
       <LinearSolverParameters solverType="gmres"
                               preconditionerType="amg"
                               krylovTol="1.0e-10" />
+
     </SinglePhaseFVM>
   </Solvers>
 
@@ -103,6 +108,7 @@ TestParams getSinglephaseXmlInput()
                                   referencePressure="0.0"
                                   compressibility="5e-10"
                                   viscosibility="0.0" />
+
     <CompressibleSolidConstantPermeability name="rock"
                                            solidModelName="nullSolid"
                                            porosityModelName="rockPorosity"
@@ -117,12 +123,6 @@ TestParams getSinglephaseXmlInput()
   </Constitutive>
 
   <FieldSpecifications>
-    <FieldSpecification name="initialPressure"
-                        initialCondition="1"
-                        setNames="{ all }"
-                        objectPath="ElementRegions/reservoir/cellBlock"
-                        fieldName="pressure"
-                        scale="5e6" />
     <SourceFlux name="sourceFlux"
                 objectPath="ElementRegions/reservoir"
                 component="1"
@@ -136,6 +136,11 @@ TestParams getSinglephaseXmlInput()
                 functionName="FluxRate"
                 setNames="{ sinkBox }"/>
 
+    <HydrostaticEquilibrium name="equil"
+                            objectPath="ElementRegions"
+                            maxNumberOfEquilibrationIterations="100"
+                            datumElevation="-5"
+                            datumPressure="1.895e7" />
   </FieldSpecifications>
 
   <Geometry>
@@ -171,12 +176,10 @@ TestParams getSinglephaseXmlInput()
   <Tasks>
     <SourceFluxStatistics name="timestepsStats"
                           fluxNames="{ all }"
-                          flowSolverName="testSolver"
-                          logLevel="4" />
+                          flowSolverName="testSolver" />
     <SourceFluxStatistics name="wholeSimStats"
                           fluxNames="{ all }"
-                          flowSolverName="testSolver"
-                          logLevel="4" />
+                          flowSolverName="testSolver" />
   </Tasks>
 
   <Functions>
@@ -207,15 +210,17 @@ TestParams getSinglephaseXmlInput()
 
     // FluxRate table from 0.0s to 5000.0s
     std::vector< real64 > const rates = { 0.000, 0.000, 0.767, 0.894, 0.561, 0.234, 0.194, 0.178, 0.162, 0.059, 0.000 };
-    testParams.timestepSourceMassProd.reserve( rates.size() );
-    testParams.timestepSinkMassProd.reserve( rates.size() );
+    testParams.sourceMassProd.reserve( rates.size() );
+    testParams.sinkMassProd.reserve( rates.size() );
     for( size_t i = 0; i < rates.size(); ++i )
     {
       // mass injection / production calculation (sink is 4x source production)
-      testParams.timestepSourceMassProd.push_back( rates[i] * dt * -1.0 );
-      testParams.totalSourceMassProd += testParams.timestepSourceMassProd.back();
-      testParams.timestepSinkMassProd.push_back( rates[i] * dt * 4.0 );
-      testParams.totalSinkMassProd += testParams.timestepSinkMassProd.back();
+      testParams.sourceRates.push_back( rates[i] * -1.0 );
+      testParams.sourceMassProd.push_back( rates[i] * dt * -1.0 );
+      testParams.totalSourceMassProd += testParams.sourceMassProd.back();
+      testParams.sinkRates.push_back( rates[i] * 4.0 );
+      testParams.sinkMassProd.push_back( rates[i] * dt * 4.0 );
+      testParams.totalSinkMassProd += testParams.sinkMassProd.back();
 
       // rates accumulation
       testParams.sourceMeanRate += rates[i] * -1.0;
@@ -238,13 +243,23 @@ TEST( FluidStatisticsTest, checkSinglePhaseFluxStatistics )
   TestParams const testParams = getSinglephaseXmlInput();
   GeosxState state( std::make_unique< CommandLineOptions >( g_commandLineOptions ) );
   ProblemManager & problem = state.getProblemManager();
-  setupProblemFromXML( problem, testParams.xmlInput.data() );
 
+  // run simulation
+  setupProblemFromXML( problem, testParams.xmlInput.data() );
   EXPECT_FALSE( problem.runSimulation() ) << "Simulation exited early.";
 
+
+  DomainPartition & domain = problem.getDomainPartition();
+  // SourceFluxStatsAggregator & timestepsStats = problem.getGroupByPath< SourceFluxStatsAggregator >( "/Tasks/timestepsStats" );
+  SourceFluxStatsAggregator & wholeSimStats = problem.getGroupByPath< SourceFluxStatsAggregator >( "/Tasks/wholeSimStats" );
+
+  // check timestep statistics
   {
-    SourceFluxStatsAggregator & wholeSimStats = problem.getGroupByPath< SourceFluxStatsAggregator >( "/Tasks/wholeSimStats" );
-    DomainPartition & domain = problem.getDomainPartition();
+    //!\\ TODO
+  }
+
+  // check whole simulation statistics
+  {
 
     // verification that the source flux statistics are correct over the whole simulation
     wholeSimStats.forMeshLevelStatsWrapper( domain,
@@ -279,6 +294,8 @@ TEST( FluidStatisticsTest, checkSinglePhaseFluxStatistics )
   }
 }
 
+
+//////////////////////////////// Main ////////////////////////////////
 
 
 int main( int argc, char * * argv )
