@@ -63,7 +63,7 @@ set(ATS_ARGUMENTS "--machine slurm36"  CACHE STRING "")
 # set(ATS_BASELINE_DIR "/p/lustre2/${USER}/integratedTests/baselines"  CACHE PATH "")
 
 # Temporary argument for python module change testing
-set(GEOS_PYTHON_PACKAGES_BRANCH "feature/sherman/outOfPlaceATS" CACHE STRING "" FORCE)
+# set(GEOS_PYTHON_PACKAGES_BRANCH "feature/sherman/outOfPlaceATS" CACHE STRING "" FORCE)
 
 
 include(${CMAKE_CURRENT_LIST_DIR}/../tpls.cmake)

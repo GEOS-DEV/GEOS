@@ -258,7 +258,10 @@ if ( Python3_EXECUTABLE )
 
     # Check for the requested branch of geosPythonPackages (used for testing)
     if( NOT GEOS_PYTHON_PACKAGES_BRANCH )
-      set(GEOS_PYTHON_PACKAGES_BRANCH "main" CACHE STRING "" FORCE)
+      # set(GEOS_PYTHON_PACKAGES_BRANCH "main" CACHE STRING "" FORCE)
+
+      set(GEOS_PYTHON_PACKAGES_BRANCH "feature/sherman/outOfPlaceATS" CACHE STRING "" FORCE)
+      message(WARNING "Temporarily changing the geosPythonPackages branch to feature/sherman/outOfPlaceATS")
     endif()
 
     set( GEOSX_PYTHON_TOOLS_BINS
@@ -363,7 +366,7 @@ endif()
 if ( ENABLE_YAPF )
     set( integrated_tests_python_sources )
     file( GLOB_RECURSE integrated_tests_python_sources "${CMAKE_SOURCE_DIR}/../inputFiles/*.py" )
-     set( integrated_tests_ats_sources )
+    set( integrated_tests_ats_sources )
     file( GLOB_RECURSE integrated_tests_ats_sources "${CMAKE_SOURCE_DIR}/../inputFiles/*.ats" )
 
     blt_add_code_checks( PREFIX  integrated_tests_yapf_style
