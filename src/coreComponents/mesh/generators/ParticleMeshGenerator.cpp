@@ -194,7 +194,7 @@ void ParticleMeshGenerator::generateMesh( DomainPartition & domain )
       // Reformat particle data and apply defaults to fields not specified
       std::vector< double > lineDataInside;
       // CC: TODO: Can you get the number of options from the enum directly?
-      for(int c = 0; c < 27; c++)
+      for(int c = 0; c < 34; c++)
       {
         if( columnHeaderMap.find( c ) != columnHeaderMap.end() )
         {
@@ -207,7 +207,9 @@ void ParticleMeshGenerator::generateMesh( DomainPartition & domain )
         switch( static_cast< ParticleColumnHeaders >( c ) )
         {
           case ParticleColumnHeaders::StrengthScale:
-          case ParticleColumnHeaders::MaterialDirectionX:
+          case ParticleColumnHeaders::MaterialDirectionXX:
+          case ParticleColumnHeaders::MaterialDirectionYY:
+          case ParticleColumnHeaders::MaterialDirectionZZ:
           case ParticleColumnHeaders::SurfaceNormalX:
             defaultValue = 1.0;
             break;
@@ -216,12 +218,19 @@ void ParticleMeshGenerator::generateMesh( DomainPartition & domain )
           case ParticleColumnHeaders::VelocityX:
           case ParticleColumnHeaders::VelocityY:
           case ParticleColumnHeaders::VelocityZ:
-          case ParticleColumnHeaders::MaterialDirectionY:
-          case ParticleColumnHeaders::MaterialDirectionZ:
+          case ParticleColumnHeaders::MaterialDirectionXY:
+          case ParticleColumnHeaders::MaterialDirectionXZ:
+          case ParticleColumnHeaders::MaterialDirectionYX:
+          case ParticleColumnHeaders::MaterialDirectionYZ:
+          case ParticleColumnHeaders::MaterialDirectionZX:
+          case ParticleColumnHeaders::MaterialDirectionZY:
           case ParticleColumnHeaders::SurfaceNormalY:
           case ParticleColumnHeaders::SurfaceNormalZ:
           case ParticleColumnHeaders::Damage:
             defaultValue = 0.0;
+            break;
+          case ParticleColumnHeaders::ShrinkageFlag:
+            defaultValue = 0;
             break;
           default:
             GEOS_ERROR( EnumStrings< ParticleColumnHeaders >::toString( static_cast< ParticleColumnHeaders >( c ) ) << " must be specified in particle file!" );
@@ -276,14 +285,15 @@ void ParticleMeshGenerator::generateMesh( DomainPartition & domain )
     array1d< globalIndex > particleID( npInBlock );
     array2d< real64 > particleCenter( npInBlock, 3 );
     array2d< real64 > particleVelocity( npInBlock, 3 );
-    array2d< real64 > particleMaterialDirection( npInBlock, 3 );
+    array3d< real64 > particleMaterialDirection( npInBlock, 3, 3 );
     array1d< int > particleGroup( npInBlock );
     array1d< int > particleSurfaceFlag( npInBlock );
     array1d< real64 > particleDamage( npInBlock );
     array1d< real64 > particleVolume( npInBlock );
     array1d< real64 > particleStrengthScale( npInBlock );
     array3d< real64 > particleRVectors( npInBlock, 3, 3 ); // TODO: Flatten the r-vector array into a 1x9 for each particle
-    array2d< real64 > particleSurfaceNormal( npInBlock, 3); // TODO:: read from file eventually
+    array2d< real64 > particleSurfaceNormal( npInBlock, 3);
+    array1d< int > particleShrinkageFlag( npInBlock );
 
     // Assign particle data to the appropriate block.
     std::vector< int > & indices = indexMap[particleBlockName];
@@ -361,15 +371,25 @@ void ParticleMeshGenerator::generateMesh( DomainPartition & domain )
       }
 
       // Material Direction
-      particleMaterialDirection[index][0] = particleData[particleType][i][21];
-      particleMaterialDirection[index][1] = particleData[particleType][i][22];
-      particleMaterialDirection[index][2] = particleData[particleType][i][23];
+      particleMaterialDirection[index][0][0] = particleData[particleType][i][21];
+      particleMaterialDirection[index][0][1] = particleData[particleType][i][22];
+      particleMaterialDirection[index][0][2] = particleData[particleType][i][23];
+
+      particleMaterialDirection[index][1][0] = particleData[particleType][i][24];
+      particleMaterialDirection[index][1][1] = particleData[particleType][i][25];
+      particleMaterialDirection[index][1][2] = particleData[particleType][i][26];
+
+      particleMaterialDirection[index][2][0] = particleData[particleType][i][27];
+      particleMaterialDirection[index][2][1] = particleData[particleType][i][28];
+      particleMaterialDirection[index][2][2] = particleData[particleType][i][29];
 
       // Surface Normal ( currently only works assuming that particles are formatted for CPDI data)
       // CC: TODO eventually include header in particle file for column data
-      particleSurfaceNormal[index][0] = particleData[particleType][i][24];
-      particleSurfaceNormal[index][1] = particleData[particleType][i][25];
-      particleSurfaceNormal[index][2] = particleData[particleType][i][26];
+      particleSurfaceNormal[index][0] = particleData[particleType][i][30];
+      particleSurfaceNormal[index][1] = particleData[particleType][i][31];
+      particleSurfaceNormal[index][2] = particleData[particleType][i][32];
+
+      particleShrinkageFlag[index] = particleData[particleType][i][33];
 
       // Increment index
       index++;
@@ -387,6 +407,8 @@ void ParticleMeshGenerator::generateMesh( DomainPartition & domain )
     particleBlock.setParticleRVectors( particleRVectors );
     particleBlock.setParticleInitialSurfaceNormal( particleSurfaceNormal );
     particleBlock.setParticleSurfaceNormal( particleSurfaceNormal );
+    particleBlock.setParticleShrinkageFlag( particleShrinkageFlag );
+
   } // loop over particle blocks
 
   // Resize particle regions

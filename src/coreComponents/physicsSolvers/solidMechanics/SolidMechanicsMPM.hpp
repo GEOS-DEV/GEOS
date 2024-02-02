@@ -413,8 +413,8 @@ public:
 
 void interpolateTable( real64 x, 
                        real64 dx,
-                       array2d< real64 > table,
-                       arrayView1d< real64 > output,
+                       arrayView2d< real64 const > const table,
+                       arrayView1d< real64 > const output,
                        SolidMechanicsMPM::InterpolationOption interpolationType );
 
   void interpolateFTable( real64 dt, real64 time_n );
@@ -475,6 +475,9 @@ void interpolateTable( real64 x,
   void computeRVectors( ParticleManager & particleManager );
 
   void cpdiDomainScaling( ParticleManager & particleManager );
+
+  void applyThermalDeformations( real64 const dt,
+                                 ParticleManager & particleManager );
 
   void resizeMappingArrays( ParticleManager & particleManager );
 
@@ -586,6 +589,9 @@ protected:
   array1d< real64 > m_domainF;
   array1d< real64 > m_domainL;
 
+  int m_enableTransverseBoundaryVelocities;
+  array1d< real64 > m_prescribedTransverseBoundaryVelocities;
+
   array1d< real64 > m_globalFaceReactions;
 
   array1d< real64 > m_bodyForce;
@@ -634,6 +640,9 @@ protected:
   // Currently initializes all particles to this temperature
   // TODO: read in from particle file
   real64 m_initialTemperature;
+  array2d< real64 > m_shrinkageTable;
+  int m_enableReversibleShrinkage;
+  real64 m_heatTimeScaling;
   int m_shockHeating;
   int m_useArtificialViscosity;
   real64 m_artificialViscosityQ0;

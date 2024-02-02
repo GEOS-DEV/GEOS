@@ -29,5 +29,6 @@
 #include "events/mpmEvents/FrictionCoefficientSwapMPMEvent.hpp"
 #include "events/mpmEvents/BodyForceUpdateMPMEvent.hpp"
 #include "events/mpmEvents/DeformationUpdateMPMEvent.hpp"
+#include "events/mpmEvents/TemperatureProfileMPMEvent.hpp"
 
 #endif /* GEOSX_MPMEVENTS_HPP_ */

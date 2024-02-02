@@ -13,11 +13,11 @@
  */
 
 /**
- * @file TemperatureRampMPMEvent.hpp
+ * @file TemperatureProfileMPMEvent.hpp
  */
 
-#ifndef GEOSX_TEMPERATURERAMP_MPMEVENT_HPP_
-#define GEOSX_TEMPERATURERAMP_MPMEVENT_HPP_
+#ifndef GEOSX_TEMPERATUREPROFILE_MPMEVENT_HPP_
+#define GEOSX_TEMPERATUREPROFILE_MPMEVENT_HPP_
 
 #include "MPMEventBase.hpp"
 
@@ -25,49 +25,46 @@ namespace geos
 {
 
 /**
- * @class TemperatureRampMPMEvent
+ * @class TemperatureProfileMPMEvent
  *
  * This class implements the material swap mpm event for the solid mechanics material point method solver
  */
-class TemperatureRampMPMEvent : public MPMEventBase
+class TemperatureProfileMPMEvent : public MPMEventBase
 {
 public:
   /// @copydoc geos::dataRepository::Group::Group( string const & name, Group * const parent )
-  TemperatureRampMPMEvent( const string & name,
+  TemperatureProfileMPMEvent( const string & name,
                   Group * const parent );
 
   /// Destructor
-  virtual ~TemperatureRampMPMEvent() override;
+  virtual ~TemperatureProfileMPMEvent() override;
 
   /**
    * @brief Catalog name interface.
    * @return This type's catalog name.
    **/
-  static string catalogName() { return "TemperatureRamp"; }
+  static string catalogName() { return "TemperatureProfile"; }
 
  /// @cond DO_NOT_DOCUMENT
   struct viewKeyStruct
   {
-    static constexpr char const * startTemperatureString() { return "startTemperature"; }
-    static constexpr char const * endTemperatureString() { return "endTemperature"; }
+    static constexpr char const * temperatureTableString() { return "temperatureTable"; }
     static constexpr char const * interpTypeString() { return "interpType"; }
-  } TemperatureRampMPMEventViewKeys;
+  } TemperatureProfileMPMEventViewKeys;
   /// @endcond
 
-  real64 getStartTemperature() const { return m_startTemperature; } 
-  real64 getEndTemperature() const { return m_endTemperature; } 
+  arrayView2d< real64 > getTemperatureTable() const { return m_temperatureTable; } 
   int getInterpType() const { return m_interpType; } 
 
 protected:
   virtual void postProcessInput() override final;
 
   // Event variables
-  real64 m_startTemperature;
-  real64 m_endTemperature;
+  array2d< real64 > m_temperatureTable;
   int m_interpType;
 
 };
 
 } /* namespace geos */
 
-#endif /* GEOSX_TEMPERATURERAMP_MPMEVENT_HPP_ */
+#endif /* GEOSX_TEMPERATUREPROFILE_MPMEVENT_HPP_ */

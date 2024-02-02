@@ -64,12 +64,19 @@ public:
     RVectorZX,
     RVectorZY,
     RVectorZZ,
-    MaterialDirectionX,
-    MaterialDirectionY,
-    MaterialDirectionZ,
+    MaterialDirectionXX,
+    MaterialDirectionXY,
+    MaterialDirectionXZ,
+    MaterialDirectionYX,
+    MaterialDirectionYY,
+    MaterialDirectionYZ,
+    MaterialDirectionZX,
+    MaterialDirectionZY,
+    MaterialDirectionZZ,
     SurfaceNormalX,
     SurfaceNormalY,
-    SurfaceNormalZ
+    SurfaceNormalZ,
+    ShrinkageFlag
   };
 
   /**
@@ -166,12 +173,19 @@ ENUM_STRINGS( ParticleMeshGenerator::ParticleColumnHeaders,
               "RVectorZX",
               "RVectorZY",
               "RVectorZZ",
-              "MaterialDirectionX",
-              "MaterialDirectionY",
-              "MaterialDirectionZ",
+              "MaterialDirectionXX",
+              "MaterialDirectionXY",
+              "MaterialDirectionXZ",
+              "MaterialDirectionYX",
+              "MaterialDirectionYY",
+              "MaterialDirectionYZ",
+              "MaterialDirectionZX",
+              "MaterialDirectionZY",
+              "MaterialDirectionZZ",
               "SurfaceNormalX",
               "SurfaceNormalY",
-              "SurfaceNormalZ" );
+              "SurfaceNormalZ",
+              "ShrinkageFlag" );
 
 } /* namespace geos */
 

@@ -43,7 +43,8 @@ ParticleSubRegionBase::ParticleSubRegionBase( string const & name, Group * const
   m_particleType(),
   m_particleRVectors(),
   m_particleInitialSurfaceNormal(),
-  m_particleSurfaceNormal()
+  m_particleSurfaceNormal(),
+  m_particleShrinkageFlag()
 {
   registerGroup( groupKeyStruct::constitutiveModelsString(), &m_constitutiveModels ).
     setSizedFromParent( 1 );
@@ -76,7 +77,7 @@ ParticleSubRegionBase::ParticleSubRegionBase( string const & name, Group * const
 
   registerWrapper( viewKeyStruct::particleInitialMaterialDirectionString(), &m_particleInitialMaterialDirection ).
     setPlotLevel( PlotLevel::LEVEL_1 ).
-    reference().resizeDimension< 1 >( 3 );
+    reference().resizeDimension< 1, 2 >( 3, 3 );
 
   registerWrapper( viewKeyStruct::particleMaterialDirectionString(), &m_particleMaterialDirection ).
     setPlotLevel( PlotLevel::LEVEL_1 ).
@@ -96,6 +97,9 @@ ParticleSubRegionBase::ParticleSubRegionBase( string const & name, Group * const
   registerWrapper( viewKeyStruct::particleSurfaceNormalString(), &m_particleSurfaceNormal ).
     setPlotLevel( PlotLevel::LEVEL_1 ).
     reference().resizeDimension< 1 >( 3 );
+  
+  registerWrapper( viewKeyStruct::particleShrinkageFlagString(), &m_particleShrinkageFlag ).
+    setPlotLevel( PlotLevel::LEVEL_1 );
 }
 
 ParticleSubRegionBase::~ParticleSubRegionBase()

@@ -13,30 +13,24 @@
  */
 
 /**
- * @file TemperatureRampMPMEvent.cpp
+ * @file TemperatureProfileMPMEvent.cpp
  */
 
-#include "TemperatureRampMPMEvent.hpp"
+#include "TemperatureProfileMPMEvent.hpp"
 
 namespace geos
 {
 
   using namespace dataRepository;
   
-  TemperatureRampMPMEvent::TemperatureRampMPMEvent( const string & name,
+  TemperatureProfileMPMEvent::TemperatureProfileMPMEvent( const string & name,
                                                     Group * const parent ) :
                                                     MPMEventBase(  name, parent ),
-                                                    m_startTemperature( 0.0 ),
-                                                    m_endTemperature( 0.0 ),
-                                                    m_interpType( 1 )
+                                                    m_temperatureTable()
   {  
-    registerWrapper( viewKeyStruct::startTemperatureString(), &m_startTemperature ).
+    registerWrapper( viewKeyStruct::temperatureTableString(), &m_temperatureTable ).
         setInputFlag( InputFlags::REQUIRED ).
-        setDescription( "Starting temperature to ramp from" );
-
-    registerWrapper( viewKeyStruct::endTemperatureString(), &m_endTemperature ).
-        setInputFlag( InputFlags::REQUIRED ).
-        setDescription( "End temperature to ramp to" );
+        setDescription( "Temperature profile specified as a table" );
 
     registerWrapper( viewKeyStruct::interpTypeString(), &m_interpType ).
         setInputFlag( InputFlags::OPTIONAL ).
@@ -44,21 +38,26 @@ namespace geos
         setDescription( "Interpolation scheme: 0 (Linear), 1 (Cosine), 2 (Sigmoid)" ); // CC: double check this!
   }
 
-  TemperatureRampMPMEvent::~TemperatureRampMPMEvent() 
+  TemperatureProfileMPMEvent::~TemperatureProfileMPMEvent() 
   {}
 
-  void TemperatureRampMPMEvent::postProcessInput()
+  void TemperatureProfileMPMEvent::postProcessInput()
   {
-    GEOS_ERROR_IF( m_startTemperature < 0.0 || m_endTemperature < 0.0  , "Temperatures must be positive!");
+    int numRows = m_temperatureTable.size( 0 );
+    GEOS_ERROR_IF(numRows == 0, "Temperature profile event was included but temperature profile was specified.");
+    for(int i = 0; i < numRows; ++i)
+    {
+      GEOS_ERROR_IF(m_temperatureTable[i].size() != 2, "Temperature profile must consists of a time column and temperature column" );
+      GEOS_ERROR_IF(m_temperatureTable[i][0] < 0, "Temperature profile times must be positive.");
+    }
 
-    GEOS_LOG_RANK_0( "TemperatureRampEvent: " << 
+    GEOS_LOG_RANK_0( "TemperatureProfileEvent: " << 
                      "Time=" << m_time << ", " << 
                      "Interval=" << m_interval << ", " << 
-                     "startTemperature=" << m_startTemperature << ", " << 
-                     "endTemperature=" << m_endTemperature << ", " << 
                      "interpType=" << m_interpType );
+                     //TODO write temperature table to console
   }
 
-  REGISTER_CATALOG_ENTRY( MPMEventBase, TemperatureRampMPMEvent, string const &, Group * const )
+  REGISTER_CATALOG_ENTRY( MPMEventBase, TemperatureProfileMPMEvent, string const &, Group * const )
 
 } /* namespace geos */

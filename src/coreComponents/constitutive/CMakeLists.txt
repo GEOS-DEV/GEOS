@@ -109,6 +109,8 @@ set( constitutive_headers
      solid/HyperelasticMMS.hpp
      solid/Hyperelastic.hpp
      solid/ElasticIsotropic.hpp
+     solid/ElasticCubic.hpp
+     solid/ElasticCubicThermallySoftening.hpp
      solid/ElasticIsotropicPressureDependent.hpp
      solid/ElasticTransverseIsotropic.hpp
      solid/ElasticOrthotropic.hpp
@@ -236,6 +238,8 @@ set( constitutive_sources
      solid/HyperelasticMMS.cpp
      solid/Hyperelastic.cpp
      solid/ElasticIsotropic.cpp
+     solid/ElasticCubic.cpp
+     solid/ElasticCubicThermallySoftening.cpp
      solid/ElasticIsotropicPressureDependent.cpp
      solid/ElasticTransverseIsotropic.cpp
      solid/ElasticOrthotropic.cpp

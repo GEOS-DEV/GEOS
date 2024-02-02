@@ -31,6 +31,8 @@
 #include "solid/DelftEgg.hpp"
 #include "solid/DuvautLionsSolid.hpp"
 #include "solid/ElasticIsotropic.hpp"
+#include "solid/ElasticCubic.hpp"
+#include "solid/ElasticCubicThermallySoftening.hpp"
 #include "solid/ElasticIsotropicPressureDependent.hpp"
 #include "solid/ElasticTransverseIsotropic.hpp"
 #include "solid/ElasticTransverseIsotropicPressureDependent.hpp"
@@ -182,6 +184,8 @@ struct ConstitutivePassThruMPM< SolidBase >
                                  ElasticTransverseIsotropicPressureDependent,
                                  ElasticTransverseIsotropic,
                                  VonMisesJ,
+                                 ElasticCubicThermallySoftening,
+                                 ElasticCubic,
                                  ElasticIsotropic,
                                  Hyperelastic,
                                  HyperelasticMMS >::execute( constitutiveRelation,

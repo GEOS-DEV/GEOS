@@ -201,13 +201,13 @@ public:
    * @brief Get the initial material direction of each particle in this subregion.
    * @return an arrayView1d of const particle material direction
    */
-  arrayView2d< real64 const > getParticleInitialMaterialDirection() const
+  arrayView3d< real64 const > getParticleInitialMaterialDirection() const
   { return m_particleInitialMaterialDirection; }
 
   /**
    * @copydoc getParticleInitialMaterialDirection() const
    */
-  arrayView2d< real64 > getParticleInitialMaterialDirection()
+  arrayView3d< real64 > getParticleInitialMaterialDirection()
   { return m_particleInitialMaterialDirection; }
 
 
@@ -215,13 +215,13 @@ public:
    * @brief Get the material direction of each particle in this subregion.
    * @return an arrayView1d of const particle material direction
    */
-  arrayView2d< real64 const > getParticleMaterialDirection() const
+  arrayView3d< real64 const > getParticleMaterialDirection() const
   { return m_particleMaterialDirection; }
 
   /**
    * @copydoc getParticleMaterialDirection() const
    */
-  arrayView2d< real64 > getParticleMaterialDirection()
+  arrayView3d< real64 > getParticleMaterialDirection()
   { return m_particleMaterialDirection; }
 
   /**
@@ -265,7 +265,7 @@ public:
 
   /**
    * @brief Get the surface normal of each particle in this subregion.
-   * @return an arrayView1d of const particle surface normal
+   * @return an arrayView2d of const particle surface normal
    */
   arrayView2d< real64 const > getParticleSurfaceNormal() const
   { return m_particleSurfaceNormal; }
@@ -275,6 +275,19 @@ public:
    */
   arrayView2d< real64 > getParticleSurfaceNormal()
   { return m_particleSurfaceNormal; }
+
+  /**
+   * @brief Get the shrinkage flag of each particle in this subregion.
+   * @return an arrayView1d of const particle shrinkage flag
+   */
+  arrayView1d< int const > getParticleShrinkageFlag() const
+  { return m_particleShrinkageFlag; }
+
+  /**
+   * @copydoc getParticleShrinkageFlag() const
+   */
+  arrayView1d< int > getParticleShrinkageFlag()
+  { return m_particleShrinkageFlag; }
 
   /**
    * @brief Get the group in which the constitutive models of this subregion are registered.
@@ -416,6 +429,9 @@ public:
   
     /// @return String key for the member level field for the particle surface normal.
     static constexpr char const * particleSurfaceNormalString() { return "particleSurfaceNormal"; }
+
+    /// @return String key for the member level field for the particle shrinkage flag.
+    static constexpr char const * particleShrinkageFlagString() { return "particleShrinkageFlag"; }
   };
 
   /**
@@ -519,10 +535,10 @@ protected:
   array2d< real64 > m_particleVelocity;
 
   /// Member level field for the particle initial material direction.
-  array2d< real64 > m_particleInitialMaterialDirection;
+  array3d< real64 > m_particleInitialMaterialDirection;
 
   /// Member level field for the particle material direction.
-  array2d< real64 > m_particleMaterialDirection;
+  array3d< real64 > m_particleMaterialDirection;
 
   /// Member level field for the current particle volume.
   array1d< real64 > m_particleVolume;
@@ -538,6 +554,9 @@ protected:
 
   /// Member level field for the particle surface normal.
   array2d< real64 > m_particleSurfaceNormal;
+
+  /// Member level field for the particle shrinkage flag.
+  array1d< int > m_particleShrinkageFlag;
 
   /// Indices of particles that are not ghosts
   SortedArray< localIndex > m_activeParticleIndices;

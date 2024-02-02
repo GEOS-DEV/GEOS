@@ -111,24 +111,24 @@ public:
   void setParticleVelocity( array2d< real64 > const particleVelocity )
   { m_particleVelocity = particleVelocity; }
 
-  array2d< real64 > getParticleInitialMaterialDirection() const override
+  array3d< real64 > getParticleInitialMaterialDirection() const override
   { return m_particleInitialMaterialDirection; }
 
   /**
    * @brief Set the list of material directions in this subregion.
    * @param particleInitialMaterialDirection The input list of initial directions
    */
-  void setParticleInitialMaterialDirection( array2d< real64 > const particleInitialMaterialDirection )
+  void setParticleInitialMaterialDirection( array3d< real64 > const particleInitialMaterialDirection )
   { m_particleInitialMaterialDirection = particleInitialMaterialDirection; }
 
-  array2d< real64 > getParticleMaterialDirection() const override
+  array3d< real64 > getParticleMaterialDirection() const override
   { return m_particleMaterialDirection; }
 
   /**
    * @brief Set the list of material directions in this subregion.
    * @param particleMaterialDirection The input list of directions
    */
-  void setParticleMaterialDirection( array2d< real64 > const particleMaterialDirection )
+  void setParticleMaterialDirection( array3d< real64 > const particleMaterialDirection )
   { m_particleMaterialDirection = particleMaterialDirection; }
 
   array1d< int > getParticleGroup() const override
@@ -210,6 +210,16 @@ public:
   void setParticleSurfaceNormal( array2d< real64 > const particleSurfaceNormal )
   { m_particleSurfaceNormal = particleSurfaceNormal; }
 
+  array1d< int > getParticleShrinkageFlag() const override
+  { return m_particleShrinkageFlag; }
+
+  /**
+   * @brief Set the list of shrinkage flags in this subregion.
+   * @param particleShrinkageFlag The input list of shrinkage flags
+   */
+  void setParticleShrinkageFlag( array1d< int > const particleShrinkageFlag )
+  { m_particleShrinkageFlag = particleShrinkageFlag; }
+
   localIndex numParticles() const override
   { return size(); }
 
@@ -271,10 +281,10 @@ private:
   array2d< real64 > m_particleVelocity;
 
   /// Member level field for the particle initial material direction.
-  array2d< real64 > m_particleInitialMaterialDirection;
+  array3d< real64 > m_particleInitialMaterialDirection;
 
   /// Member level field for the particle material direction.
-  array2d< real64 > m_particleMaterialDirection;
+  array3d< real64 > m_particleMaterialDirection;
 
   /// Member level field for the particle volume.
   array1d< real64 > m_particleVolume;
@@ -293,6 +303,9 @@ private:
 
   /// Member level field for the particle surface normal.
   array2d< real64 > m_particleSurfaceNormal;
+
+  /// Member level field for the particle shrinkage flag
+  array1d< int > m_particleShrinkageFlag;
 
   std::list< dataRepository::WrapperBase * > getExternalProperties() override
   {

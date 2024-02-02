@@ -76,7 +76,7 @@ public:
                    real64 const & defaultShearModulusAxialTransverse,
                    arrayView1d< real64 > const & effectiveBulkModulus,
                    arrayView1d< real64 > const & effectiveShearModulus,
-                   arrayView2d< real64 > const & materialDirection,
+                   arrayView3d< real64 > const & materialDirection,
                    real64 const defaultYoungModulusTransversePressureDerivative,
                    real64 const defaultYoungModulusAxialPressureDerivative,
                    real64 const defaultShearModulusAxialTransversePressureDerivative,
@@ -305,7 +305,7 @@ private:
   
   arrayView1d< real64 > const m_effectiveShearModulus;
   
-  arrayView2d< real64 > const m_materialDirection;
+  arrayView3d< real64 > const m_materialDirection;
   
   real64 const m_defaultYoungModulusTransversePressureDerivative;
   
@@ -493,7 +493,7 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
 
     // make sure material direction is normalized.
     real64 materialDirection[3] = { 0 };
-    LvArray::tensorOps::copy< 3 >( materialDirection, m_materialDirection[k] );
+    LvArray::tensorOps::copy< 3 >( materialDirection, m_materialDirection[k][2] ); // Only need c axis (e.g. material direction index 2) for transformation of stiffness
     LvArray::tensorOps::normalize< 3 >( materialDirection );
 
     // Unrotate material direction
@@ -1529,7 +1529,7 @@ protected:
   array1d< real64 > m_effectiveShearModulus;
     
   /// State variable: The material direction for each element/particle
-  array2d< real64 > m_materialDirection;
+  array3d< real64 > m_materialDirection;
 
   /// The default value of the transverse Young's modulus pressure derivative for new allocations.
   real64 m_defaultYoungModulusTransversePressureDerivative;

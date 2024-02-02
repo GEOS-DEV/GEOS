@@ -111,6 +111,8 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
   m_overlapThreshold2( 1.10 ),
   m_computeSPHJacobian( 0 ),
   m_initialTemperature( 300.0 ),
+  m_shrinkageTable(),
+  m_heatTimeScaling( 1.0 ),
   m_shockHeating( 0 ),
   m_useArtificialViscosity( 0 ),
   m_artificialViscosityQ0( 0.0 ),
@@ -409,6 +411,17 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
     setDefaultValue( m_initialTemperature ).
     setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "Initial particle temperature" );
+
+  registerWrapper( "shrinkageTable", &m_shrinkageTable ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setDescription( "Shrinkage vs temperature table" );
+
+  registerWrapper( "heatTimeScaling", &m_heatTimeScaling ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDefaultValue( m_heatTimeScaling ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setDescription( "Defines the time scaling constant to approximate longer time durations for heat transfer" );
 
   registerWrapper( "shockHeating", &m_shockHeating ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -908,11 +921,13 @@ void SolidMechanicsMPM::registerDataOnMesh( Group & meshBodies )
         subRegion.registerField< particleKineticEnergy >( getName() );
         subRegion.registerField< particleArtificialViscosity >( getName() );
         subRegion.registerField< particleInitialVolume >( getName() );
+        subRegion.registerField< particleReferenceVolume >( getName() );
         subRegion.registerField< particleDensity >( getName() );
         subRegion.registerField< particleOverlap >( getName() );
         subRegion.registerField< particleSPHJacobian >( getName() );
         subRegion.registerField< particlePorosity >( getName() );
         subRegion.registerField< particleReferencePorosity >( getName() );
+        subRegion.registerField< particleInitialTemperature >( getName() );
 
         // Double-indexed fields (vectors and symmetric tensors stored in Voigt notation)
         subRegion.registerField< particleBodyForce >( getName() ).reference().resizeDimension< 1 >( 3 );
@@ -1330,6 +1345,7 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
     arrayView1d< real64 > const particleDensity = subRegion.getField< fields::mpm::particleDensity >();
     arrayView1d< real64 > const particleMass = subRegion.getField< fields::mpm::particleMass >();
     arrayView1d< real64 > const particleHeatCapacity = subRegion.getField< fields::mpm::particleHeatCapacity >();
+    arrayView1d< real64 > const particleInitialTemperature = subRegion.getField< fields::mpm::particleInitialTemperature >();
     arrayView1d< real64 > const particleTemperature = subRegion.getField< fields::mpm::particleTemperature >();
     arrayView1d< real64 > const particleInternalEnergy = subRegion.getField< fields::mpm::particleInternalEnergy >();
     arrayView1d< real64 > const particleKineticEnergy = subRegion.getField< fields::mpm::particleKineticEnergy >();
@@ -1346,12 +1362,18 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
     arrayView1d< real64 > const particlePorosity = subRegion.getField< fields::mpm::particlePorosity >();
     arrayView1d< real64 > const particleReferencePorosity = subRegion.getField< fields::mpm::particleReferencePorosity >();
 
+    arrayView1d< real64 > const particleReferenceVolume = subRegion.getField< fields::mpm::particleReferenceVolume >();
+
     // Set reference position, volume and R-vectors
     for( int p=0; p<subRegion.size(); p++ )
     {
       particleInitialVolume[p] = particleVolume[p];
+      particleReferenceVolume[p] = particleVolume[p];
       particleCrystalHealFlag[p] = 0;
+      
+      particleInitialTemperature[p] = m_initialTemperature;
       particleTemperature[p] = m_initialTemperature;
+
       particleInternalEnergy[p] = 0.0;
       particleKineticEnergy[p] = 0.0;
       particleArtificialViscosity[p] = 0.0;
@@ -1933,6 +1955,15 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
                        particleManager );
   }
 
+  
+  //#######################################################################################
+  GEOS_LOG_RANK_IF( m_debugFlag == 1, "Update particle reference volume according to temperature" );
+  solverProfiling( "Update particle reference volume according to temperature");
+  //#######################################################################################
+  applyThermalDeformations( dt, 
+                            particleManager );
+
+
   //#######################################################################################
   GEOS_LOG_RANK_IF( m_debugFlag == 1, "Update particle geometry (e.g. volume, r-vectors) and density" );
   solverProfiling( "Update particle geometry (e.g. volume, r-vectors) and density" );
@@ -2020,6 +2051,7 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
   solverProfiling( "Calculate stable time step" );
   //#######################################################################################
   real64 dtReturn = getStableTimeStep( particleManager );
+
 
   //#######################################################################################
   GEOS_LOG_RANK_IF( m_debugFlag == 1, "Update global-to-local map" );
@@ -2522,6 +2554,32 @@ void SolidMechanicsMPM::triggerEvents( const real64 dt,
         m_prescribedBoundaryFTable = deformationUpdate.getPrescribedBoundaryFTable();
         m_stressControl = deformationUpdate.getStressControl();
       }
+
+      if( event.getName() == "TemperatureProfile" )
+      {
+        TemperatureProfileMPMEvent & temperatureProfile = dynamicCast< TemperatureProfileMPMEvent & >( event );
+        
+        arrayView2d< real64 const > const temperatureTable = temperatureProfile.getTemperatureTable();
+
+        SolidMechanicsMPM::InterpolationOption interpType = static_cast<SolidMechanicsMPM::InterpolationOption>(temperatureProfile.getInterpType());
+
+        array1d< real64 > tempOut(1);
+        interpolateTable( time_n, dt, temperatureTable, tempOut, interpType );
+        real64 currentTemp = tempOut[0];
+
+        particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
+        {
+          arrayView1d< real64 > const particleTemperature = subRegion.getField< fields::mpm::particleTemperature >();
+
+          SortedArrayView< localIndex const > const activeParticleIndices = subRegion.activeParticleIndices();
+          forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST ( localIndex const pp )
+          {
+            localIndex const p = activeParticleIndices[pp];
+
+            particleTemperature[p] = currentTemp;
+          });
+        });
+      }
     }
   } );
 
@@ -2564,8 +2622,8 @@ void SolidMechanicsMPM::performMaterialSwap( ParticleManager & particleManager,
     arrayView1d< real64 > const sourceParticleHeatCapacity = sourceSubRegion.getField< fields::mpm::particleHeatCapacity >();
 
     arrayView2d< real64 > const sourceParticleReferencePosition = sourceSubRegion.getField< fields::mpm::particleReferencePosition >();
-    arrayView2d< real64 > const sourceParticleInitialMaterialDirection = sourceSubRegion.getParticleInitialMaterialDirection();
-    arrayView2d< real64 > const sourceParticleMaterialDirection = sourceSubRegion.getParticleMaterialDirection();
+    arrayView3d< real64 > const sourceParticleInitialMaterialDirection = sourceSubRegion.getParticleInitialMaterialDirection();
+    arrayView3d< real64 > const sourceParticleMaterialDirection = sourceSubRegion.getParticleMaterialDirection();
     arrayView2d< real64 > const sourceParticleStress = sourceSubRegion.getField< fields::mpm::particleStress >();
     arrayView2d< real64 > const sourceParticlePlasticStrain = sourceSubRegion.getField< fields::mpm::particlePlasticStrain >(); 
     
@@ -2591,8 +2649,8 @@ void SolidMechanicsMPM::performMaterialSwap( ParticleManager & particleManager,
     arrayView1d< real64 > const destinationParticleHeatCapacity = destinationSubRegion.getField< fields::mpm::particleHeatCapacity >();
 
     arrayView2d< real64 > const destinationParticleReferencePosition = destinationSubRegion.getField< fields::mpm::particleReferencePosition >();
-    arrayView2d< real64 > const destinationParticleInitialMaterialDirection = destinationSubRegion.getParticleInitialMaterialDirection();
-    arrayView2d< real64 > const destinationParticleMaterialDirection = destinationSubRegion.getParticleMaterialDirection();
+    arrayView3d< real64 > const destinationParticleInitialMaterialDirection = destinationSubRegion.getParticleInitialMaterialDirection();
+    arrayView3d< real64 > const destinationParticleMaterialDirection = destinationSubRegion.getParticleMaterialDirection();
     arrayView2d< real64 > const destinationParticleStress = destinationSubRegion.getField< fields::mpm::particleStress >();
     arrayView2d< real64 > const destinationParticlePlasticStrain = destinationSubRegion.getField< fields::mpm::particlePlasticStrain >(); 
     
@@ -2634,8 +2692,8 @@ void SolidMechanicsMPM::performMaterialSwap( ParticleManager & particleManager,
       destinationParticleReferencePorosity[p] = sourceParticleReferencePorosity[p];
 
       LvArray::tensorOps::copy< 3 >( destinationParticleReferencePosition[p], sourceParticleReferencePosition[p]);
-      LvArray::tensorOps::copy< 3 >( destinationParticleInitialMaterialDirection[p], sourceParticleInitialMaterialDirection[p] );
-      LvArray::tensorOps::copy< 3 >( destinationParticleMaterialDirection[p], sourceParticleMaterialDirection[p] );
+      LvArray::tensorOps::copy< 3, 3 >( destinationParticleInitialMaterialDirection[p], sourceParticleInitialMaterialDirection[p] );
+      LvArray::tensorOps::copy< 3, 3 >( destinationParticleMaterialDirection[p], sourceParticleMaterialDirection[p] );
       LvArray::tensorOps::copy< 6 >( destinationParticleStress[p], sourceParticleStress[p]);
       LvArray::tensorOps::copy< 6 >( destinationParticlePlasticStrain[p], sourceParticlePlasticStrain[p]);
 
@@ -4446,12 +4504,12 @@ void SolidMechanicsMPM::updateConstitutiveModelDependencies( ParticleManager & p
     if(  solidModel.hasWrapper( "materialDirection" ) )
     {
       // CC: Todo add check for fiber vs plane update to material direction
-      arrayView2d< real64 > const particleMaterialDirection = subRegion.getParticleMaterialDirection();
-      arrayView2d< real64 > const constitutiveMaterialDirection = solidModel.getReference< array2d< real64 > >( "materialDirection" );
+      arrayView3d< real64 > const particleMaterialDirection = subRegion.getParticleMaterialDirection();
+      arrayView3d< real64 > const constitutiveMaterialDirection = solidModel.getReference< array3d< real64 > >( "materialDirection" );
       forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST_DEVICE ( localIndex const pp )
       {
         localIndex const p = activeParticleIndices[pp];
-        LvArray::tensorOps::copy< 3 >(constitutiveMaterialDirection[p], particleMaterialDirection[p]); 
+        LvArray::tensorOps::copy< 3, 3 >(constitutiveMaterialDirection[p], particleMaterialDirection[p]); 
       } );
     }
 
@@ -4548,8 +4606,8 @@ void SolidMechanicsMPM::particleKinematicUpdate( ParticleManager & particleManag
     arrayView3d< real64 > const particleRVectors = subRegion.getParticleRVectors();
     arrayView3d< real64 const > const particleInitialRVectors = subRegion.getField< fields::mpm::particleInitialRVectors >();
     arrayView3d< real64 const > const particleDeformationGradient = subRegion.getField< fields::mpm::particleDeformationGradient >();
-    arrayView2d< real64 const > const particleInitialMaterialDirection = subRegion.getParticleInitialMaterialDirection();
-    arrayView2d< real64 > const particleMaterialDirection = subRegion.getParticleMaterialDirection();
+    arrayView3d< real64 const > const particleInitialMaterialDirection = subRegion.getParticleInitialMaterialDirection();
+    arrayView3d< real64 > const particleMaterialDirection = subRegion.getParticleMaterialDirection();
     arrayView2d< real64 const > const particleInitialSurfaceNormal = subRegion.getParticleInitialSurfaceNormal();
     arrayView2d< real64 > const particleSurfaceNormal = subRegion.getParticleSurfaceNormal();
 
@@ -4595,17 +4653,20 @@ void SolidMechanicsMPM::particleKinematicUpdate( ParticleManager & particleManag
         LvArray::tensorOps::Ri_eq_AijBj< 3, 3 >( surfaceNormal, deformationGradient, particleInitialSurfaceNormal[p] );
         LvArray::tensorOps::copy< 3 >( particleSurfaceNormal[p], surfaceNormal );
 
-        real64 materialDirection[3];
-        if( isFiber )
+        for( int i = 0; i < 3; i++ )
         {
-          LvArray::tensorOps::Ri_eq_AijBj< 3, 3 >( materialDirection, deformationGradient, particleInitialMaterialDirection[p] );
-          LvArray::tensorOps::copy< 3 >(particleMaterialDirection[p], materialDirection);
-        } 
-        else
-        {
-          LvArray::tensorOps::Ri_eq_AijBj< 3, 3 >( materialDirection, deformationGradientCofactor, particleInitialMaterialDirection[p] );
-          LvArray::tensorOps::copy< 3 >(particleMaterialDirection[p], materialDirection);
-        } 
+          real64 materialDirection[3];
+          if( isFiber )
+          {
+            LvArray::tensorOps::Ri_eq_AijBj< 3, 3 >( materialDirection, deformationGradient, particleInitialMaterialDirection[p][i] );
+            LvArray::tensorOps::copy< 3 >(particleMaterialDirection[p][i], materialDirection);
+          } 
+          else
+          {
+            LvArray::tensorOps::Ri_eq_AijBj< 3, 3 >( materialDirection, deformationGradientCofactor, particleInitialMaterialDirection[p][i] );
+            LvArray::tensorOps::copy< 3 >(particleMaterialDirection[p][i], materialDirection);
+          } 
+        }
       } 
       else
       {
@@ -4927,6 +4988,12 @@ void SolidMechanicsMPM::stressControl( real64 dt,
     if( constitutiveModelName == "ElasticTransverseIsotropic" || constitutiveModelName == "ElasticTransverseIsotropicPressureDependent" ){
       const ElasticTransverseIsotropic & elasticTransverseIsotropic = dynamic_cast< const ElasticTransverseIsotropic & >( solidModel );
       bulkModulus = elasticTransverseIsotropic.effectiveBulkModulus();
+    }
+
+    if( constitutiveModelName == "ElasticCubic" || constitutiveModelName == "ElasticCubicThermallySoftening" )
+    {
+      const ElasticCubic & elasticCubic = dynamic_cast< const ElasticCubic & >( solidModel );
+      bulkModulus = elasticCubic.bulkModulus();
     }
 
     if( constitutiveModelName == "Graphite" )
@@ -5408,8 +5475,8 @@ void SolidMechanicsMPM::enforceContact( real64 dt,
 
 void SolidMechanicsMPM::interpolateTable( real64 x, 
                                           real64 dx,
-                                          array2d< real64 > table,
-                                          arrayView1d< real64 > output,
+                                          arrayView2d< real64 const > const table,
+                                          arrayView1d< real64 > const output,
                                           SolidMechanicsMPM::InterpolationOption interpolationType )
 {
   int numRows = table.size(0);
@@ -6925,6 +6992,94 @@ void SolidMechanicsMPM::cpdiDomainScaling( ParticleManager & particleManager )
   } );
 }
 
+void SolidMechanicsMPM::applyThermalDeformations( real64 const dt, 
+                                                  ParticleManager & particleManager )
+{
+  GEOS_MARK_FUNCTION;
+
+  particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
+  {
+    string const & solidMaterialName = subRegion.template getReference< string >( viewKeyStruct::solidMaterialNamesString() );
+    const SolidBase & solidModel = getConstitutiveModel< SolidBase >( subRegion, solidMaterialName );
+    
+    arrayView1d< real64 const > const thermalExpansionCoefficient = solidModel.getThermalExpansionCoefficient();
+
+    arrayView3d< real64 > const particleInitialRVectors = subRegion.getField< fields::mpm::particleInitialRVectors >();
+    arrayView1d< real64 > const particleInitialVolume = subRegion.getField< fields::mpm::particleInitialVolume >();
+    arrayView3d< real64 > const particleDeformationGradient = subRegion.getField< fields::mpm::particleDeformationGradient >();
+    arrayView3d< real64 > const particleFDot = subRegion.getField< fields::mpm::particleFDot >();
+    arrayView3d< real64 > const particleVelocityGradient = subRegion.getField< fields::mpm::particleVelocityGradient >();
+
+    arrayView1d< int const > const particleShrinkageFlag = subRegion.getParticleShrinkageFlag();
+    arrayView1d< real64 const > const particleInitialTemperature = subRegion.getField< fields::mpm::particleInitialTemperature >();
+    arrayView1d< real64 const > const particleTemperature = subRegion.getField< fields::mpm::particleTemperature >();
+    arrayView1d< real64 const > const particleReferenceVolume = subRegion.getField< fields::mpm::particleReferenceVolume >();
+
+    SortedArrayView< localIndex const > const activeParticleIndices = subRegion.activeParticleIndices();
+    forAll< serialPolicy >( activeParticleIndices.size(), [&] GEOS_HOST ( localIndex const pp )
+    {
+      localIndex const p = activeParticleIndices[pp];
+  
+      real64 newReferenceVolume = particleReferenceVolume[p];
+
+      if( particleShrinkageFlag[p] == 1 )
+      {
+        array1d< real64 > output(1);
+        interpolateTable( particleTemperature[p], 0, m_shrinkageTable, output, SolidMechanicsMPM::InterpolationOption::Linear );
+        real64 shrinkage = output[0];
+        newReferenceVolume  *= std::pow( 1.0 - shrinkage, 3 );
+      }
+      
+      real64 dT = particleTemperature[p] - particleInitialTemperature[p];
+      newReferenceVolume *= std::pow( (1.0 + thermalExpansionCoefficient[p] * dT), 3.0);
+
+      real64 scale;
+      if( m_planeStrain == 1 )
+      {
+        scale = std::sqrt( particleInitialVolume[p] / newReferenceVolume );
+      }
+      else
+      {
+        scale = std::pow( particleInitialVolume[p] / newReferenceVolume , 1.0 / 3.0 );
+      }
+
+      // If particle intitial volume hasn't changed, continue
+      if( fabs(scale) - 1.0 < 1e-12 )
+      {
+        return;
+      }
+
+      // Otherwise we update the reference volume, deformation gradient, Fdot, and velocity gradient
+      particleInitialVolume[p] = newReferenceVolume;
+
+      real64 Fold[3][3] = { { 0 } };
+      LvArray::tensorOps::copy< 3, 3 >( Fold, particleDeformationGradient[p] );
+
+      // May need to limit the maximum scaling between timesteps
+
+      // TODO modify p_L as well, consistent with the change to p_F in case a hypoelastic constitutive model
+      // is used, and so the update to the internal energy is consistent with the change in F.
+      for( int i = 0 ; i < m_numDims; i++ )
+      {
+        for( int j = 0 ; j < m_numDims; j++ )
+        {
+          particleInitialRVectors[p][i][j] /= scale;
+          // particleInitialRVectors[p][i][j] *= ( 1.0 - scale );
+
+          particleDeformationGradient[p][i][j] *= scale;
+          particleFDot[p][i][j] += ( particleDeformationGradient[p][i][j] - Fold[i][j] ) / dt;
+
+          // Update velocity gradient without taking the inverse of the particle deformation gradient
+          particleVelocityGradient[p][i][j] /= scale;
+        }
+
+        particleVelocityGradient[p][i][i] += ( scale - 1.0 ) / ( scale * dt );
+      }
+    });
+  });
+
+}
+
 void SolidMechanicsMPM::resizeMappingArrays( ParticleManager & particleManager )
 {
   GEOS_MARK_FUNCTION;
@@ -7536,6 +7691,12 @@ inline void GEOS_DEVICE SolidMechanicsMPM::computeGeneralizedVortexMMSBodyForce(
       shearModulus = elasticTransverseIsotropic.effectiveShearModulus();
     }
 
+    if( constitutiveModelName == "ElasticCubic" || constitutiveModelName == "ElasticCubicThermallySoftening" )
+    {
+      ElasticCubic & elasticCubic = dynamic_cast< ElasticCubic & >( constitutiveRelation );
+      shearModulus = elasticCubic.effectiveShearModulus();
+    }
+
     if( constitutiveModelName == "Graphite" )
     {
       Graphite & graphite = dynamic_cast< Graphite & >( constitutiveRelation );
@@ -7688,6 +7849,13 @@ void SolidMechanicsMPM::computeWavespeed( ParticleManager & particleManager )
       const ElasticTransverseIsotropic & elasticTransverseIsotropic = dynamic_cast< const ElasticTransverseIsotropic & >( constitutiveRelation );
       bulkModulus = elasticTransverseIsotropic.effectiveBulkModulus();
       shearModulus = elasticTransverseIsotropic.effectiveShearModulus();
+    }
+
+    if( constitutiveModelName == "ElasticCubic" || constitutiveModelName == "ElasticCubicThermallySoftening" )
+    {
+      const ElasticCubic & elasticCubic = dynamic_cast< const ElasticCubic & >( constitutiveRelation );
+      bulkModulus = elasticCubic.bulkModulus();
+      shearModulus = elasticCubic.effectiveShearModulus();
     }
 
     if( constitutiveModelName == "Graphite" )
@@ -7981,9 +8149,9 @@ void SolidMechanicsMPM::overlapCorrection( real64 const dt,
   // Compute the grid field gradient as the max of the gradients of the particles mapping to the node
   particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
   {
-    arrayView3d< real64 > particleDeformationGradient = subRegion.getField< fields::mpm::particleDeformationGradient >();
-    arrayView3d< real64 > particleFDot = subRegion.getField< fields::mpm::particleFDot >();
-    arrayView3d< real64 > particleVelocityGradient = subRegion.getField< fields::mpm::particleVelocityGradient >();
+    arrayView3d< real64 > const particleDeformationGradient = subRegion.getField< fields::mpm::particleDeformationGradient >();
+    arrayView3d< real64 > const particleFDot = subRegion.getField< fields::mpm::particleFDot >();
+    arrayView3d< real64 > const particleVelocityGradient = subRegion.getField< fields::mpm::particleVelocityGradient >();
     arrayView1d< real64 const > const particleSPHJacobian = subRegion.getField< fields::mpm::particleSPHJacobian >();
 
     SortedArrayView< localIndex const > const activeParticleIndices = subRegion.activeParticleIndices();

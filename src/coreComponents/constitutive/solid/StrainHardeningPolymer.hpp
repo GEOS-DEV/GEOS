@@ -429,7 +429,7 @@ void StrainHardeningPolymerUpdates::smallStrainUpdateHelper( localIndex const k,
       // Compute change in yield strength
       real64 plasticSoftening = m_shearSofteningMagnitude * std::exp( std::max( -1.0 * gamma_by_r1_to_r2, -16.0 ) );
       real64 stretchHardening = m_strainHardeningSlope * ( maximumStretch * maximumStretch - 1.0 / maximumStretch );
-      yieldStrength = m_yieldStrength[k] + plasticSoftening + stretchHardening; // CC: debugging disabling change in yield strength
+      yieldStrength = m_yieldStrength[k] + plasticSoftening + stretchHardening;
 
       // // CC: need to add this later
       // real64 thermalStrengthReduction = 1.0;

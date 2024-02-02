@@ -72,6 +72,14 @@ DECLARE_FIELD( particleHeatCapacity,
                WRITE_AND_READ,
                "An array that stores particle temperature." );
 
+DECLARE_FIELD( particleInitialTemperature,
+               "particleInitialTemperature",
+               array1d< real64 >,
+               0,
+               LEVEL_1,
+               WRITE_AND_READ,
+               "An array that stores particle initial temperature." );
+
 DECLARE_FIELD( particleTemperature,
                "particleTemperature",
                array1d< real64 >,
@@ -119,6 +127,14 @@ DECLARE_FIELD( particleInitialVolume,
                NOPLOT,
                WRITE_AND_READ,
                "ParticleInitialVolume" );
+
+DECLARE_FIELD( particleReferenceVolume,
+               "particleReferenceVolume",
+               array1d< real64 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "ParticleReferenceVolume" );
 
 DECLARE_FIELD( particleInitialRVectors,
                "particleInitialRVectors",

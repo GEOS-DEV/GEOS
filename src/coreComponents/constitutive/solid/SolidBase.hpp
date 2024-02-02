@@ -770,6 +770,16 @@ public:
     return out.toViewConst();
   }
 
+ /**
+   * @brief Const/non-mutable accessor for thermal expansion coefficient
+   * @return Accessor
+   */
+  arrayView1d< real64 const > const getThermalExpansionCoefficient() const
+  {
+    return m_thermalExpansionCoefficient;
+  }
+
+
 protected:
 
   /// Post-process XML input

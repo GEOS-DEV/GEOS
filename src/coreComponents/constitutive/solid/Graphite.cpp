@@ -218,7 +218,7 @@ void Graphite::allocateConstitutiveData( dataRepository::Group & parent,
 
   m_effectiveBulkModulus.resize( 0 );
   m_effectiveShearModulus.resize( 0 );
-  m_materialDirection.resize( 0, 3 );
+  m_materialDirection.resize( 0, 3, 3 );
   m_velocityGradient.resize( 0, 3, 3 );
   m_plasticStrain.resize( 0, numConstitutivePointsPerParentIndex, 6 );
   m_relaxation.resize( 0, numConstitutivePointsPerParentIndex );
