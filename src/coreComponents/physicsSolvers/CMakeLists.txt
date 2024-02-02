@@ -137,6 +137,7 @@ set( physicsSolvers_headers
      wavePropagation/ElasticFields.hpp
      wavePropagation/ElasticWaveEquationSEM.hpp
      wavePropagation/ElasticWaveEquationSEMKernel.hpp
+     wavePropagation/ElasticTimeSchemeSEMKernel.hpp
      wavePropagation/ElasticFirstOrderWaveEquationSEM.hpp
      wavePropagation/ElasticFirstOrderWaveEquationSEMKernel.hpp
      wavePropagation/AcousticFirstOrderWaveEquationSEM.hpp
