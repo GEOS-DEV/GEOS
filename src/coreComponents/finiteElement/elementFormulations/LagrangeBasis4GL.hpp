@@ -350,9 +350,9 @@ public:
       case 3:
         switch( p )
         {
-          case 0: return -2.6666666666666666667;
-          case 1: return 1.7457431218879390501;
-          case 2: return 0.0;
+          case 0: return 1.4101641779424266628;
+          case 1: return -0.7637626158259733344;
+          case 2: return 1.3365845776954533353;
         }
         break;
       case 4:
