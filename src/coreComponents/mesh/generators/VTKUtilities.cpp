@@ -1646,6 +1646,8 @@ CellMapType buildCellMap( vtkDataSet & mesh, string const & attributeName )
   // Now, actually split into groups according to region attribute, if present
   vtkDataArray * const attributeDataArray =
     vtkDataArray::FastDownCast( mesh.GetCellData()->GetAbstractArray( attributeName.c_str() ) );
+  GEOS_LOG_RANK_0_IF( !attributeName.empty() && attributeDataArray == nullptr,
+                      GEOS_FMT( "Can not find region attribute '{}' on VTK mesh", attributeName ));
 
   CellMapType cellMap =
     splitCellsByTypeAndAttribute( typeToCells, attributeDataArray );

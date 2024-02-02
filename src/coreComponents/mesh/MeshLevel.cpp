@@ -516,7 +516,9 @@ void MeshLevel::generateSets()
       {
         localIndex const numNodes = subRegion.numNodesPerElement( k );
 
-        localIndex elementInSet = true;
+        GEOS_WARNING_IF( numNodes == 0, GEOS_FMT( "Rank {}: zero number of nodes for element {} in subregion {}", logger::internal::rank, k, subRegion.getName()));
+
+        localIndex elementInSet = numNodes > 0;
         for( localIndex i = 0; i < numNodes; ++i )
         {
           if( !nodeInCurSet( elemToNodeMap[ k ][ i ] ) )
