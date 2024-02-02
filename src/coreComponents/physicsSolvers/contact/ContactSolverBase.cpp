@@ -71,45 +71,33 @@ void ContactSolverBase::registerDataOnMesh( dataRepository::Group & meshBodies )
 {
   SolidMechanicsLagrangianFEM::registerDataOnMesh( meshBodies );
 
-  using namespace fields::contact;
-
-  forDiscretizationOnMeshTargets( meshBodies,
-                                  [&]( string const,
-                                       MeshLevel & mesh,
-                                       arrayView1d< string const > const regionNames )
+  forFractureRegionOnMeshTargets( meshBodies, [&] ( SurfaceElementRegion & fractureRegion )
   {
-    ElementRegionManager & elemManager = mesh.getElemManager();
-//    elemManager.forElementRegions< SurfaceElementRegion >( regionNames,
-//                                                           [&] ( localIndex const,
-//                                                                 SurfaceElementRegion & region )
-//    {
-    SurfaceElementRegion & fractureRegion = elemManager.getRegion< SurfaceElementRegion >( getFractureRegionName() );
-
     string const labels[3] = { "normal", "tangent1", "tangent2" };
 
     fractureRegion.forElementSubRegions< SurfaceElementSubRegion >( [&]( SurfaceElementSubRegion & subRegion )
     {
-      subRegion.registerField< dispJump >( getName() ).
+      subRegion.registerField< fields::contact::dispJump >( getName() ).
         setDimLabels( 1, labels ).
         reference().resizeDimension< 1 >( 3 );
 
-      subRegion.registerField< deltaDispJump >( getName() ).
+      subRegion.registerField< fields::contact::deltaDispJump >( getName() ).
         setDimLabels( 1, labels ).
         reference().resizeDimension< 1 >( 3 );
 
-      subRegion.registerField< oldDispJump >( getName() ).
+      subRegion.registerField< fields::contact::oldDispJump >( getName() ).
         setDimLabels( 1, labels ).
         reference().resizeDimension< 1 >( 3 );
 
-      subRegion.registerField< traction >( getName() ).
+      subRegion.registerField< fields::contact::traction >( getName() ).
         setDimLabels( 1, labels ).
         reference().resizeDimension< 1 >( 3 );
 
-      subRegion.registerField< fractureState >( getName() );
+      subRegion.registerField< fields::contact::fractureState >( getName() );
 
-      subRegion.registerField< oldFractureState >( getName() );
+      subRegion.registerField< fields::contact::oldFractureState >( getName() );
     } );
-//    } );
+
   } );
 }
 
