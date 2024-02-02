@@ -1116,7 +1116,7 @@ void CellBlockManager::generateHighOrderMaps( localIndex const order,
                                                                            q1 + 1, q2 + 1, order );
         int gq1 = referenceOrientation[4] - 1;
         int gq2 = referenceOrientation[5] - 1;
-        nodeLocalToGlobalNew[ nodeLocalID ] = globalNodeOffset + faceLocalToGlobal[ iter_face ] * numInternalNodesPerFace + gq2 * numInternalNodesPerFace + gq1;
+        nodeLocalToGlobalNew[ nodeLocalID ] = globalNodeOffset + faceLocalToGlobal[ iter_face ] * numInternalNodesPerFace + gq2 * numInternalNodesPerEdge + gq1;
 
         bilinearInterp( alpha, beta, refPosSrc, faceVertID, refPosNew, nodeLocalID);  
       }
