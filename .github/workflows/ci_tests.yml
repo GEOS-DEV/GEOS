@@ -261,6 +261,14 @@ jobs:
             DOCKER_REPOSITORY: geosx/pecan-gpu-gcc8.2.0-openmpi4.0.1-mkl2019.5-cuda11.5.119
             HOST_CONFIG: host-configs/TOTAL/pecan-GPU.cmake
             RUNS_ON: Runner_4core_16GB
+
+          - name: Sherlock GPU (centos 7.9.2009, gcc 10.1.0, open-mpi 4.1.2, openblas 0.3.10, cuda 11.7.1,)
+            BUILD_AND_TEST_CLI_ARGS: "--build-exe-only --no-install-schema"
+            CMAKE_BUILD_TYPE: Release
+            DOCKER_REPOSITORY: geosx/sherlock-gcc10.1.0-openmpi4.1.2-cuda11.7.1-openblas0.3.10-zlib1.2.11
+            HOST_CONFIG: host-configs/Stanford/sherlock-gcc10-ompi4.1.2-openblas0.3.10-cuda11.7.1-sm80.cmake
+            RUNS_ON: Runner_4core_16GB
+
     uses: ./.github/workflows/build_and_test.yml
     with:
       BUILD_AND_TEST_CLI_ARGS: ${{ matrix.BUILD_AND_TEST_CLI_ARGS }}
